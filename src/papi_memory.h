@@ -2,6 +2,18 @@
 #define _PAPI_MALLOC
 #define DEBUG_FILE_LEN  20
 
+/* If you are tracing memory, then PAPI_DEBUG_MEMORY
+ *  * must be set also.
+ *   */
+#ifdef PAPI_NO_MEMORY_MANAGEMENT
+#undef PAPI_DEBUG_MEMORY
+#undef PAPI_DEBUG_MEMORY_TRACE
+#else
+#ifdef PAPI_DEBUG_MEMORY_TRACE
+#define PAPI_DEBUG_MEMORY
+#endif
+#endif
+
 typedef struct pmem {
   void *ptr;
   int size;
@@ -13,6 +25,7 @@ typedef struct pmem {
   struct pmem *prev;
 } pmem_t;
 
+#ifndef IN_MEM_FILE
 #ifdef PAPI_NO_MEMORY_MANAGEMENT
 #define papi_malloc(a) malloc(a)
 #define papi_free(a)   free(a)
@@ -29,6 +42,7 @@ typedef struct pmem {
 #define papi_valid_free(a) _papi_valid_free(__FILE__,__LINE__,a)
 #define papi_strdup(a) _papi_strdup(__FILE__,__LINE__,a)
 void _papi_cleanup_all_memory();
+#endif
 #endif
 
 char * _papi_strdup(char *, int, const char *s);

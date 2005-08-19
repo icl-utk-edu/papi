@@ -16,6 +16,8 @@
 * Mods:    <your name here>
 *          <your email address>
 */
+#ifndef _PAPI_DATA_H
+#define _PAPI_DATA_H  1
 
 /********************/
 /*  BEGIN GLOBALS   */
@@ -177,3 +179,4 @@ const hwi_describe_t _papi_hwi_err[PAPI_NUM_ERRORS] = {
 /********************/
 /*    END GLOBALS   */
 /********************/
+#endif

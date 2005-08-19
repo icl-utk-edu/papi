@@ -13,29 +13,7 @@
 *          pek@pdc.kth.se
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <unistd.h>
-#include <assert.h>
-#include <errno.h>
-#include <string.h>
-#include <math.h>
-#include <limits.h>
-#include <time.h>
-#include <fcntl.h>
-#include <ctype.h>
-#include <inttypes.h>
-#include <libgen.h>
-#include <sys/syscall.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/times.h>
-#include <sys/ucontext.h>
-
 #ifdef ALTIX
-#include <sys/ioctl.h>
-#include <sys/mman.h>
 #include <sn/mmtimer.h>
 #endif
 
@@ -139,7 +117,7 @@ typedef Itanium_context_t hwd_context_t;
 #endif
 typedef struct sigcontext hwd_ucontext_t;
 
-#define GET_OVERFLOW_ADDRESS(ctx)  (void*)ctx->ucontext->sc_ip
+#define GET_OVERFLOW_ADDRESS(ctx)  ((caddr_t)(((hwd_ucontext_t *)ctx)->sc_ip))
 
 #define PAPI_MAX_NATIVE_EVENTS  MAX_NATIVE_EVENT
 
@@ -149,29 +127,5 @@ typedef struct sigcontext hwd_ucontext_t;
 #define BTB_REGS_MASK       (M_PMD(8)|M_PMD(9)|M_PMD(10)|M_PMD(11)|M_PMD(12)|M_PMD(13)|M_PMD(14)|M_PMD(15)|M_PMD(16))
 
 extern caddr_t _init, _fini, _etext, _edata, __bss_start;
-
-#define MUTEX_OPEN (unsigned int)1
-#define MUTEX_CLOSED (unsigned int)0
-extern volatile unsigned int lock[PAPI_MAX_LOCK];
-
-/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
- * else val = MUTEX_CLOSED */
-
-#ifdef __INTEL_COMPILER
-#define _papi_hwd_lock(lck) { while(_InterlockedCompareExchange_acq(&lock[lck],MUTEX_CLOSED,MUTEX_OPEN) != MUTEX_OPEN) { ; } } 
-
-#define _papi_hwd_unlock(lck) { _InterlockedExchange((volatile int *)&lock[lck], MUTEX_OPEN); }
-#else                           /* GCC */
-#define _papi_hwd_lock(lck)			 			      \
-   { uint64_t res = 0;							      \
-    do {								      \
-      __asm__ __volatile__ ("mov ar.ccv=%0;;" :: "r"(MUTEX_OPEN));            \
-      __asm__ __volatile__ ("cmpxchg4.acq %0=[%1],%2,ar.ccv" : "=r"(res) : "r"(&lock[lck]), "r"(MUTEX_CLOSED) : "memory");				      \
-    } while (res != (uint64_t)MUTEX_OPEN); }
-
-#define _papi_hwd_unlock(lck)			 			      \
-    { uint64_t res = 0;							      \
-    __asm__ __volatile__ ("xchg4 %0=[%1],%2" : "=r"(res) : "r"(&lock[lck]), "r"(MUTEX_OPEN) : "memory"); }
-#endif
 
 #endif

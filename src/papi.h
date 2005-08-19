@@ -37,12 +37,21 @@
 #define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,1,0,0)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
 
+/* This is the official PAPI internal version */
+#define PAPI_SUBSTRATE_VERSION		PAPI_VERSION_NUMBER(1,0,0,0)
+#define PAPI_SUBSTRATE_VER_CURRENT	(PAPI_SUBSTRATE_VERSION & 0xffff0000)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Include files */
+#define HWD_REGISTER            0
+#define HWD_CONTEXT             1
+#define HWD_REG_ALLOC           2
+#define HWD_CONTROL_STATE       3
 
+
+/* Include files */
 #include <sys/types.h>
 #include <limits.h>
 #include "papiStdEventDefs.h"
@@ -137,21 +146,6 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_GRN_SYS     0x8    /* PAPI counters for the current CPU, are you bound? */
 #define PAPI_GRN_SYS_CPU 0x10   /* PAPI counters for all CPU's individually */
 #define PAPI_GRN_MAX     PAPI_GRN_SYS_CPU
-
-#if 0
-/* #define PAPI_GRN_DEFAULT PAPI_GRN_THR NOW DEFINED BY SUBSTRATE */
-
-#define PAPI_PER_CPU     1      /*Counts are accumulated on a per cpu basis */
-#define PAPI_PER_NODE    2      /*Counts are accumulated on a per node or
-                                   processor basis */
-#define PAPI_SYSTEM	 3      /*Counts are accumulated for events occuring in
-                                   either the user context or the kernel context */
-#define PAPI_PER_THR     0      /*Counts are accumulated on a per kernel thread basis */
-#define PAPI_PER_PROC    1      /*Counts are accumulated on a per process basis */
-#define PAPI_ONESHOT	 1      /*Option to the overflow handler 2b called once */
-#define PAPI_RANDOMIZE	 2      /*Option to have the threshold of the overflow
-                                   handler randomized */
-#endif
 
 /* Multiplex definitions */
 
@@ -356,7 +350,7 @@ read the documentation carefully.  */
       int supports_real_cyc;       /* We can use the real_cyc call */
       int supports_virt_usec;      /* We can use the virt_usec call */
       int supports_virt_cyc;       /* We can use the virt_cyc call */
-   } PAPI_substrate_info_t;
+   } PAPI_substrate_option_t;
 
    typedef int (*PAPI_debug_handler_t) (int code);
 
@@ -454,9 +448,6 @@ read the documentation carefully.  */
    typedef union {
       PAPI_preload_info_t preload;
       PAPI_debug_option_t debug;
-#if 0
-      PAPI_inherit_option_t inherit;
-#endif
       PAPI_granularity_option_t granularity;
       PAPI_granularity_option_t defgranularity;
       PAPI_domain_option_t domain;
@@ -466,7 +457,7 @@ read the documentation carefully.  */
       PAPI_shlib_info_t *shlib_info;
       PAPI_exe_info_t *exe_info;
       PAPI_overflow_option_t ovf_info;
-      PAPI_substrate_info_t sub_info;
+      PAPI_substrate_option_t sub_info;
    } PAPI_option_t;
 
 #ifdef PAPI_DMEM_INFO
@@ -529,6 +520,12 @@ read the documentation carefully.  */
                                                 NOTE: could also be implemented for native events. */
    } PAPI_event_info_t;
 
+typedef struct PAPI_substrate_info {
+  char name[PAPI_MAX_STR_LEN];
+  char initialized;
+  int num_cntrs;
+  float version;
+} PAPI_substrate_info_t;
 
 /* The Low Level API (Alphabetical) */
    int   PAPI_accum(int EventSet, long_long * values);
@@ -536,6 +533,8 @@ read the documentation carefully.  */
    int   PAPI_add_events(int EventSet, int *Events, int number);
    int   PAPI_cleanup_eventset(int EventSet);
    int   PAPI_create_eventset(int *EventSet);
+   int   PAPI_create_ext_eventset(int *EventSet, int substrate);
+   int   PAPI_allocate_eventset(int *EventSet, int substrate_idx);
    int   PAPI_destroy_eventset(int *EventSet);
    int   PAPI_enum_event(int *EventCode, int modifier);
    int   PAPI_event_code_to_name(int EventCode, char *out);
@@ -545,6 +544,7 @@ read the documentation carefully.  */
 #endif
    int   PAPI_encode_events(char * event_file, int replace);
    int   PAPI_get_event_info(int EventCode, PAPI_event_info_t * info);
+   int   PAPI_get_substrate_info(int idx, PAPI_substrate_info_t * info);
    int   PAPI_set_event_info(PAPI_event_info_t * info, int *EventCode, int replace);
    const PAPI_exe_info_t *PAPI_get_executable_info(void);
    const PAPI_hw_info_t  *PAPI_get_hardware_info(void);
@@ -592,13 +592,6 @@ read the documentation carefully.  */
    int   PAPI_unregister_thread(void);
    int   PAPI_write(int EventSet, long_long * values);
 
-   /* These functions are implemented in the hwi layers, but not the hwd layers.
-      They shouldn't be exposed to the UI until they are needed somewhere.
-   int PAPI_add_pevent(int EventSet, int code, void *inout);
-   int PAPI_restore(void);
-   int PAPI_save(void);
-   */
-
    /* The High Level API
 
    The simple interface implemented by the following eight routines
@@ -608,6 +601,7 @@ read the documentation carefully.  */
 
    int PAPI_accum_counters(long_long * values, int array_len);
    int PAPI_num_counters(void);
+   int PAPI_num_substrates(void);
    int PAPI_read_counters(long_long * values, int array_len);
    int PAPI_start_counters(int *events, int array_len);
    int PAPI_stop_counters(long_long * values, int array_len);

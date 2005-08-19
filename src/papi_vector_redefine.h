@@ -1,41 +1,41 @@
 #ifndef PAPI_NO_VECTOR
 /* Redfine the calls to vector table lookups */
-#define _papi_hwd_read _papi_vector_table._vec_papi_hwd_read
-#define _papi_hwd_dispatch_timer  _papi_vector_table._vec_papi_hwd_dispatch_timer 
-#define _papi_hwd_get_overflow_address _papi_vector_table._vec_papi_hwd_get_overflow_address
-#define _papi_hwd_start  _papi_vector_table._vec_papi_hwd_start 
-#define _papi_hwd_stop _papi_vector_table._vec_papi_hwd_stop
-#define _papi_hwd_get_real_cycles _papi_vector_table._vec_papi_hwd_get_real_cycles
-#define _papi_hwd_get_real_usec _papi_vector_table._vec_papi_hwd_get_real_usec
-#define _papi_hwd_get_virt_cycles  _papi_vector_table._vec_papi_hwd_get_virt_cycles 
-#define _papi_hwd_get_virt_usec _papi_vector_table._vec_papi_hwd_get_virt_usec
-#define _papi_hwd_reset _papi_vector_table._vec_papi_hwd_reset
-#define _papi_hwd_write _papi_vector_table._vec_papi_hwd_write
-#define _papi_hwd_stop_profiling _papi_vector_table._vec_papi_hwd_stop_profiling
-#define _papi_hwd_init _papi_vector_table._vec_papi_hwd_init
-#define _papi_hwd_init_control_state _papi_vector_table._vec_papi_hwd_init_control_state
-#define _papi_hwd_update_shlib_info _papi_vector_table._vec_papi_hwd_update_shlib_info
-#define _papi_hwd_get_system_info _papi_vector_table._vec_papi_hwd_get_system_info
-#define _papi_hwd_get_memory_info _papi_vector_table._vec_papi_hwd_get_memory_info
-#define _papi_hwd_update_control_state _papi_vector_table._vec_papi_hwd_update_control_state
-#define _papi_hwd_ctl _papi_vector_table._vec_papi_hwd_ctl
-#define _papi_hwd_set_overflow _papi_vector_table._vec_papi_hwd_set_overflow
-#define _papi_hwd_set_profile _papi_vector_table._vec_papi_hwd_set_profile
-#define _papi_hwd_add_prog_event _papi_vector_table._vec_papi_hwd_add_prog_event
-#define _papi_hwd_set_domain _papi_vector_table._vec_papi_hwd_set_domain
-#define _papi_hwd_ntv_enum_events _papi_vector_table._vec_papi_hwd_ntv_enum_events
-#define _papi_hwd_ntv_code_to_name _papi_vector_table._vec_papi_hwd_ntv_code_to_name
-#define _papi_hwd_ntv_code_to_descr _papi_vector_table._vec_papi_hwd_ntv_code_to_descr
-#define _papi_hwd_ntv_code_to_bits _papi_vector_table._vec_papi_hwd_ntv_code_to_bits
-#define _papi_hwd_ntv_bits_to_info _papi_vector_table._vec_papi_hwd_ntv_bits_to_info
-#define _papi_hwd_allocate_registers _papi_vector_table._vec_papi_hwd_allocate_registers
-#define _papi_hwd_bpt_map_avail _papi_vector_table._vec_papi_hwd_bpt_map_avail
-#define _papi_hwd_bpt_map_set _papi_vector_table._vec_papi_hwd_bpt_map_set
-#define _papi_hwd_bpt_map_exclusive _papi_vector_table._vec_papi_hwd_bpt_map_exclusive
-#define _papi_hwd_bpt_map_shared _papi_vector_table._vec_papi_hwd_bpt_map_shared
-#define _papi_hwd_bpt_map_preempt _papi_vector_table._vec_papi_hwd_bpt_map_preempt
-#define _papi_hwd_bpt_map_update _papi_vector_table._vec_papi_hwd_bpt_map_update
-#define _papi_hwd_get_dmem_info _papi_vector_table._vec_papi_hwd_get_dmem_info
-#define _papi_hwd_shutdown _papi_vector_table._vec_papi_hwd_shutdown
-#define _papi_hwd_shutdown_global _papi_vector_table._vec_papi_hwd_shutdown_global
+#define _papi_hwd_read(a,b,c,d,idx) _papi_vector_table[idx]._vec_papi_hwd_read(a,b,c,d)
+#define _papi_hwd_start(a,b,idx)  _papi_vector_table[idx]._vec_papi_hwd_start(a,b) 
+#define _papi_hwd_stop(a,b,idx) _papi_vector_table[idx]._vec_papi_hwd_stop(a,b)
+#define _papi_hwd_reset(a,b,idx) _papi_vector_table[idx]._vec_papi_hwd_reset(a,b)
+#define _papi_hwd_write(a,b,c,idx) _papi_vector_table[idx]._vec_papi_hwd_write(a,b,c)
+#define _papi_hwd_stop_profiling(a,b,idx) _papi_vector_table[idx]._vec_papi_hwd_stop_profiling(a,b)
+#define _papi_hwd_update_control_state(a,b,c,d,idx) _papi_vector_table[idx]._vec_papi_hwd_update_control_state(a,b,c,d)
+#define _papi_hwd_set_overflow(a,b,c,idx) _papi_vector_table[idx]._vec_papi_hwd_set_overflow(a,b,c)
+#define _papi_hwd_set_profile(a,b,c,idx) _papi_vector_table[idx]._vec_papi_hwd_set_profile(a,b,c)
+#define _papi_hwd_allocate_registers(a,idx) _papi_vector_table[idx]._vec_papi_hwd_allocate_registers(a)
+#define _papi_hwd_init_control_state(a,idx) _papi_vector_table[idx]._vec_papi_hwd_init_control_state(a)
+
+#define _papi_hwd_dispatch_timer _papi_vector_table[0]._vec_papi_hwd_dispatch_timer
+
+/* These functions are all tied to the CPU substrate */ 
+#define _papi_hwd_get_real_cycles() _papi_vector_table[0]._vec_papi_hwd_get_real_cycles()
+#define _papi_hwd_get_real_usec() _papi_vector_table[0]._vec_papi_hwd_get_real_usec()
+#define _papi_hwd_get_virt_cycles(a)  _papi_vector_table[0]._vec_papi_hwd_get_virt_cycles(a)
+#define _papi_hwd_get_virt_usec(a) _papi_vector_table[0]._vec_papi_hwd_get_virt_usec(a)
+#define _papi_hwd_update_shlib_info() _papi_vector_table[0]._vec_papi_hwd_update_shlib_info()
+#define _papi_hwd_get_system_info() _papi_vector_table[0]._vec_papi_hwd_get_system_info()
+#define _papi_hwd_get_memory_info(a,b) _papi_vector_table[0]._vec_papi_hwd_get_memory_info(a,b)
+#define _papi_hwd_get_dmem_info(a) _papi_vector_table[0]._vec_papi_hwd_get_dmem_info(a)
+
+/* Figure out what to do with these */
+#define _papi_hwd_ctl(a,b,c) _papi_vector_table[0]._vec_papi_hwd_ctl(a,b,c)
+#define _papi_hwd_ntv_enum_events(a,b) _papi_vector_table[0]._vec_papi_hwd_ntv_enum_events(a,b)
+#define _papi_hwd_ntv_code_to_name(a) _papi_vector_table[0]._vec_papi_hwd_ntv_code_to_name(a)
+#define _papi_hwd_ntv_code_to_descr(a) _papi_vector_table[0]._vec_papi_hwd_ntv_code_to_descr(a)
+#define _papi_hwd_ntv_code_to_bits(a,b) _papi_vector_table[0]._vec_papi_hwd_ntv_code_to_bits(a,b)
+#define _papi_hwd_ntv_bits_to_info(a,b,c,d,e) _papi_vector_table[0]._vec_papi_hwd_ntv_bits_to_info(a,b,c,d,e)
+#define _papi_hwd_bpt_map_avail(a,b) _papi_vector_table[0]._vec_papi_hwd_bpt_map_avail(a,b)
+#define _papi_hwd_bpt_map_set(a,b) _papi_vector_table[0]._vec_papi_hwd_bpt_map_set(a,b)
+#define _papi_hwd_bpt_map_exclusive(a) _papi_vector_table[0]._vec_papi_hwd_bpt_map_exclusive(a)
+#define _papi_hwd_bpt_map_shared(a,b) _papi_vector_table[0]._vec_papi_hwd_bpt_map_shared(a,b)
+#define _papi_hwd_bpt_map_preempt(a,b) _papi_vector_table[0]._vec_papi_hwd_bpt_map_preempt(a,b)
+#define _papi_hwd_bpt_map_update(a,b) _papi_vector_table[0]._vec_papi_hwd_bpt_map_update(a,b)
+#define _papi_hwd_shutdown(a) _papi_vector_table[0]._vec_papi_hwd_shutdown(a)
 #endif

@@ -368,10 +368,6 @@ int _papi_hwd_ctl(hwd_context_t *ctx, int code, _papi_int_option_t *option)
    case PAPI_GRANUL:
    case PAPI_DEFGRN:
       return(PAPI_ESBSTR);
-#if 0
-   case PAPI_INHERIT:
-      return (set_inherit(ctx, option->inherit.inherit));
-#endif
    default:
       return (PAPI_EINVAL);
    }

@@ -9,6 +9,7 @@
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "perfctr-p4.h"
 
 #if defined(__i386__) || defined(__x86_64__)
 /*
@@ -1172,7 +1173,7 @@ static inline void internal_decode_event(unsigned int EventCode, int *event, int
    *mask = (EventCode & 0xffff);        // mask bits are in the first two bytes
 }
 
-int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
+int p4_papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
    /* returns the next valid native event code following the one passed in
       modifier can have different meaning on different platforms 
@@ -1288,7 +1289,7 @@ static char *internal_translate_code(int event, int mask, char *str, char *separ
    return (str);
 }
 
-char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
+char *p4_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
    int event, mask;
 
@@ -1309,7 +1310,7 @@ char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
    return (internal_translate_code(event, mask, name, "_"));
 }
 
-char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
+char *p4_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
    int event, mask;
 
@@ -1336,7 +1337,7 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
    NOTE: the info must be COPIED to the provided pointer,
    not just referenced!
 */
-int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
+int p4_papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 {
    int event, mask, tags;
 
@@ -1416,7 +1417,7 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
    return (PAPI_OK);
 }
 
-int _papi_hwd_ntv_encode(unsigned int *EventCode, char *name, char *description,
+int p4_papi_hwd_ntv_encode(unsigned int *EventCode, char *name, char *description,
                          hwd_register_t * bits)
 {
    hwd_p4_native_map_t *new_event;
@@ -1436,22 +1437,22 @@ int _papi_hwd_ntv_encode(unsigned int *EventCode, char *name, char *description,
    return (PAPI_OK);
 }
 
-int _papi_hwd_ntv_decode(unsigned int EventCode, char *name, char *description,
+int p4_papi_hwd_ntv_decode(unsigned int EventCode, char *name, char *description,
                          hwd_register_t * bits)
 {
    char *str;
 
-   str = _papi_hwd_ntv_code_to_name(EventCode);
+   str = p4_papi_hwd_ntv_code_to_name(EventCode);
    if (!str)
       return (PAPI_ENOEVNT);
    strcpy(name, str);
 
-   str = _papi_hwd_ntv_code_to_descr(EventCode);
+   str = p4_papi_hwd_ntv_code_to_descr(EventCode);
    if (!str)
       return (PAPI_ENOEVNT);
    strcpy(description, str);
 
-   return (_papi_hwd_ntv_code_to_bits(EventCode, bits));
+   return (p4_papi_hwd_ntv_code_to_bits(EventCode, bits));
 }
 
 /* Reports the elements of the hwd_register_t struct as an array of names and a matching array of values.
@@ -1464,7 +1465,7 @@ static void copy_value(unsigned int val, char *nam, char *names, unsigned int *v
    names[len-1] = 0;
 }
 
-int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
+int p4_papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                unsigned int *values, int name_len, int count)
 {
    int i = 0;

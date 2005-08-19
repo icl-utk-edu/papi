@@ -155,36 +155,6 @@ typedef ucontext_t hwd_ucontext_t;
 #define GET_OVERFLOW_ADDRESS(ctx)  (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->eip)
 #endif
 
-/* Locks */
-extern volatile unsigned int lock[PAPI_MAX_LOCK];
-/* volatile uint32_t lock; */
-
-#define MUTEX_OPEN 1
-#define MUTEX_CLOSED 0
-#include <inttypes.h>
-
-/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
- * else val = MUTEX_CLOSED */
-#define  _papi_hwd_lock(lck)                                            \
-do                                                                      \
-{                                                                       \
-   unsigned int res = 0;                                               \
-   do{                                                                  \
-   __asm__ __volatile__ ("lock ; " "cmpxchg %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory"); \
-   } while(res != (unsigned int)MUTEX_OPEN);                           \
-}while(0)
-
-#define  _papi_hwd_unlock(lck)                                          \
-do                                                                      \
-{                                                                       \
-   unsigned int res = 0;                                               \
-__asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");   \
-}while(0)
-
-
-extern int sighold(int);
-extern int sigrelse(int);
-
 /* Undefined identifiers in executable */
 
 extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;

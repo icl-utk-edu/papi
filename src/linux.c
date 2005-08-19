@@ -5,7 +5,7 @@
 *          mucci@cs.utk.edu
 * Mods:    Kevin London
 *          london@cs.utk.edu
-* Mods:    Maynard Johnson
+*          Maynard Johnson
 *          maynardj@us.ibm.com
 */
 
@@ -13,9 +13,10 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include "papi_memory.h"
+#include "papi_protos.h"
 
 /* Prototypes */
-static int mdi_init();
+int mdi_init();
 #ifdef PPC64
 extern int setup_ppc64_presets(int cputype);
 extern int ppc64_setup_vector_table(papi_vectors_t *);
@@ -26,275 +27,40 @@ extern int setup_p3_presets(int cputype);
 extern int setup_p3_vector_table(papi_vectors_t *);
 #endif
 
+
 /* This should be in a linux.h header file maybe. */
 #define FOPEN_ERROR "fopen(%s) returned NULL"
 
-#if defined(PERFCTR26)
-#define PERFCTR_CPU_NAME(pi)    perfctr_info_cpu_name(pi)
-#define PERFCTR_CPU_NRCTRS(pi)  perfctr_info_nrctrs(pi)
-#elif defined(PERFCTR25)
-#define PERFCTR_CPU_NAME        perfctr_info_cpu_name
-#define PERFCTR_CPU_NRCTRS      perfctr_info_nrctrs
-#else
-#define PERFCTR_CPU_NAME        perfctr_cpu_name
-#define PERFCTR_CPU_NRCTRS      perfctr_cpu_nrctrs
-#endif
-
-#ifndef PPC64
-inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
-   switch (perfctr_cpu_type) {
-   case PERFCTR_X86_INTEL_P5:
-   case PERFCTR_X86_INTEL_P5MMX:
-   case PERFCTR_X86_INTEL_P6:
-   case PERFCTR_X86_INTEL_PII:
-   case PERFCTR_X86_INTEL_PIII:
-   case PERFCTR_X86_INTEL_P4:
-   case PERFCTR_X86_INTEL_P4M2:
-#ifdef PERFCTR_X86_INTEL_P4M3
-   case PERFCTR_X86_INTEL_P4M3:
-#endif
-#ifdef PERFCTR_X86_INTEL_PENTM
-   case PERFCTR_X86_INTEL_PENTM:
-#endif
-      return (PAPI_VENDOR_INTEL);
-#ifdef PERFCTR_X86_AMD_K8
-   case PERFCTR_X86_AMD_K8:
-#endif
-#ifdef PERFCTR_X86_AMD_K8C
-   case PERFCTR_X86_AMD_K8C:
-#endif
-   case PERFCTR_X86_AMD_K7:
-      return (PAPI_VENDOR_AMD);
-   case PERFCTR_X86_CYRIX_MII:
-      return (PAPI_VENDOR_CYRIX);
-   default:
-      return (PAPI_VENDOR_UNKNOWN);
-   }
-}
-
-/* 
- * 1 if the processor is a P4, 0 otherwise
- */
-int check_p4(int cputype){
-  switch(cputype) {
-     case PERFCTR_X86_INTEL_P4:
-     case PERFCTR_X86_INTEL_P4M2:
-#ifdef PERFCTR_X86_INTEL_P4M3
-     case PERFCTR_X86_INTEL_P4M3:
-#endif
-        return(1);
-     default:
-	return(0);
-  }
-  return(0);
-}
 /* volatile uint32_t lock; */
 
 #include <inttypes.h>
+
 volatile unsigned int lock[PAPI_MAX_LOCK];
-#else
-unsigned int lock[PAPI_MAX_LOCK];
-#endif //PPC64
 
-int tb_scale_factor; // needed to scale get_cycles
 
-static void lock_init(void) {
+void lock_init(void) {
    int i;
    for (i = 0; i < PAPI_MAX_LOCK; i++) {
       lock[i] = MUTEX_OPEN;
    }
 }
 
+
 #ifndef PAPI_NO_VECTOR
 papi_svector_t _linux_os_table[] = {
- #ifndef __CATAMOUNT__
-   {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
- #endif
- {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
- {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
- {(void (*)())_papi_hwd_ctl, VEC_PAPI_HWD_CTL},
- {(void (*)())_papi_hwd_get_real_usec, VEC_PAPI_HWD_GET_REAL_USEC},
- {(void (*)())_papi_hwd_get_real_cycles, VEC_PAPI_HWD_GET_REAL_CYCLES},
- {(void (*)())_papi_hwd_get_virt_cycles, VEC_PAPI_HWD_GET_VIRT_CYCLES},
- {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
+ {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
  { NULL, VEC_PAPI_END}
 };
 #endif
 
-int _papi_hwd_init_substrate(papi_vectors_t *vtable)
-{
-  int retval;
-  struct perfctr_info info;
-    int fd;
-
-
-  /* Setup the vector entries that the OS knows about */
-#ifndef PAPI_NO_VECTOR
-  retval = _papi_hwi_setup_vector_table( vtable, _linux_os_table);
-  if ( retval != PAPI_OK ) return(retval);
-#endif
-
-   retval = mdi_init();
-   if ( retval ) 
-     return(retval);
-
-   /* Get info from the kernel */
-   /* Use lower level calls per Mikael to get the perfctr info
-      without actually creating a new kernel-side state.
-      Also, close the fd immediately after retrieving the info.
-      This is much lighter weight and doesn't reserve the counter
-      resources. Also compatible with perfctr 2.6.14.
-   */
-   fd = _vperfctr_open(0);
-   if (fd < 0)
-     { PAPIERROR( VOPEN_ERROR); return(PAPI_ESYS); }
-   retval = perfctr_info(fd, &info);
- 	close(fd);
-   if(retval < 0 )
-     { PAPIERROR( VINFO_ERROR); return(PAPI_ESYS); }
-
-    /* copy tsc multiplier to local variable */
- 	tb_scale_factor = info.tsc_to_cpu_mult;
-
-  /* Fill in what we can of the papi_system_info. */
-  retval = _papi_hwd_get_system_info();
-  if (retval != PAPI_OK)
-     return (retval);
-
-   /* Setup memory info */
-   retval = _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info, (int) info.cpu_type);
-   if (retval)
-      return (retval);
-
-   strcpy(_papi_hwi_system_info.substrate, "$Id$");
-
-   /* Setup presets */
-#ifndef PPC64
-   if ( check_p4(info.cpu_type) ){
-     retval = setup_p4_vector_table(vtable);
-     if (!retval)
-     	retval = setup_p4_presets(info.cpu_type);
-   }
-   else{
-     retval = setup_p3_vector_table(vtable);
-     if (!retval)
-     	retval = setup_p3_presets(info.cpu_type);
-   }
-#else
-	/* Setup native and preset events */
-	retval = ppc64_setup_vector_table(vtable);
-    if (!retval)
-    	retval = setup_ppc64_native_table();
-    if (!retval)
-    	retval = setup_ppc64_presets(info.cpu_type);
-#endif // PPC64
-   if ( retval ) 
-     return(retval);
-
-   /* Fixup stuff from linux.c */
-
-   strcpy(_papi_hwi_system_info.hw_info.model_string, PERFCTR_CPU_NAME(&info));
-
-   _papi_hwi_system_info.supports_hw_overflow =
-       (info.cpu_features & PERFCTR_FEATURE_PCINT) ? 1 : 0;
-   SUBDBG("Hardware/OS %s support counter generated interrupts\n",
-          _papi_hwi_system_info.supports_hw_overflow ? "does" : "does not");
-
-   _papi_hwi_system_info.num_cntrs = PERFCTR_CPU_NRCTRS(&info);
-   _papi_hwi_system_info.num_gp_cntrs = PERFCTR_CPU_NRCTRS(&info);
-   _papi_hwi_system_info.hw_info.model = info.cpu_type;
-#ifdef PPC64
-   _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_IBM;
-#else
-   _papi_hwi_system_info.hw_info.vendor = xlate_cpu_type_to_vendor(info.cpu_type);
-
-#endif
-
-#ifdef __CATAMOUNT__
-   if (strstr(info.driver_version,"2.5") != info.driver_version) {
-      fprintf(stderr,"Version mismatch of perfctr: compiled 2.5 or higher vs. installed %s\n",info.driver_version);
-      return(PAPI_ESBSTR);
-    }
-  _papi_hwi_system_info.supports_hw_profile = 0;
-  _papi_hwi_system_info.hw_info.mhz = (float) info.cpu_khz / 1000.0; 
-  SUBDBG("Detected MHZ is %f\n",_papi_hwi_system_info.hw_info.mhz);
-#endif
-
-   lock_init();
-
-   return (PAPI_OK);
-}
-
-
-int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
-{
-   extern int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain);
-   switch (code) {
-   case PAPI_DOMAIN:
-   case PAPI_DEFDOM:
-      return (_papi_hwd_set_domain(&option->domain.ESI->machdep, option->domain.domain));
-   case PAPI_GRANUL:
-   case PAPI_DEFGRN:
-      return(PAPI_ESBSTR);
-   default:
-      return (PAPI_EINVAL);
-   }
-}
-
-void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context) {
-   _papi_hwi_context_t ctx;
-   ThreadInfo_t *master = NULL;
-   int isHardware = 0;
-
-   ctx.si = si;
-   ctx.ucontext = (ucontext_t *)context;
-#ifdef __CATAMOUNT__
-   isHardware = 1;
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx, &isHardware, 0, 1, &master);
-#else
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx, &isHardware, 
-                                      si->si_pmc_ovf_mask, 0, &master);
-#endif
-   /* We are done, resume interrupting counters */
-   if (isHardware) {
-      if (vperfctr_iresume(master->context.perfctr) < 0) {
-         PAPIERROR("vperfctr_iresume errno %d",errno);
-      }
-   }
-}
-
-
-int _papi_hwd_init(hwd_context_t * ctx) {
-   struct vperfctr_control tmp;
-
-   /* Initialize our thread/process pointer. */
-   if ((ctx->perfctr = vperfctr_open()) == NULL)
-     { PAPIERROR( VOPEN_ERROR); return(PAPI_ESYS); }
-   SUBDBG("_papi_hwd_init vperfctr_open() = %p\n", ctx->perfctr);
-
-   /* Initialize the per thread/process virtualized TSC */
-   memset(&tmp, 0x0, sizeof(tmp));
-   tmp.cpu_control.tsc_on = 1;
-
-   /* Start the per thread/process virtualized TSC */
-   if (vperfctr_control(ctx->perfctr, &tmp) < 0)
-     { PAPIERROR( VCNTRL_ERROR); return(PAPI_ESYS); }
-
-   return (PAPI_OK);
+int linux_vector_table_setup(papi_vectors_t *vtable){
+  return(_papi_hwi_setup_vector_table(vtable, _linux_os_table));
 }
 
 /* Initialize the system-specific settings */
 /* Machine info structure. -1 is unused. */
-static int mdi_init() {
+int mdi_init() {
      /* Name of the substrate we're using */
-#ifdef PPC64
-    strcpy(_papi_hwi_system_info.substrate, "$Id$"); 
-#else
-    strcpy(_papi_hwi_system_info.substrate, "$Id$");
-#endif
-   _papi_hwi_system_info.supports_hw_overflow = 1;
-   _papi_hwi_system_info.supports_64bit_counters = 1;
-   _papi_hwi_system_info.supports_inheritance = 1;
    _papi_hwi_system_info.supports_real_usec = 1;
    _papi_hwi_system_info.supports_real_cyc = 1;
    _papi_hwi_system_info.supports_virt_usec = 1;
@@ -302,41 +68,6 @@ static int mdi_init() {
 
    return (PAPI_OK);
 }
-
-#ifdef __CATAMOUNT__
-
-int _papi_hwd_get_system_info(void)
-{
-   pid_t pid;
-
-   /* Software info */
-
-   /* Path and args */
-
-   pid = getpid();
-   if (pid < 0)
-     { PAPIERROR("getpid() returned < 0"); return(PAPI_ESYS); }
-   _papi_hwi_system_info.pid = pid;
-
-   /* executable name is hardcoded for Catamount */
-   sprintf(_papi_hwi_system_info.exe_info.fullname,"/home/a.out");
-	sprintf(_papi_hwi_system_info.exe_info.address_info.name,"%s",
-                  basename(_papi_hwi_system_info.exe_info.fullname));
-
-   /* Hardware info */
-
-  _papi_hwi_system_info.hw_info.ncpu = 1;
-  _papi_hwi_system_info.hw_info.nnodes = 1;
-  _papi_hwi_system_info.hw_info.totalcpus = 1;
-  _papi_hwi_system_info.hw_info.vendor = 2;
-
-	sprintf(_papi_hwi_system_info.hw_info.vendor_string,"AuthenticAMD");
-	_papi_hwi_system_info.hw_info.revision = 1;
-
-  return(PAPI_OK);
-}
-
-#else
 
 int _papi_hwd_update_shlib_info(void)
 {
@@ -491,8 +222,10 @@ int _papi_hwd_update_shlib_info(void)
      }
    papi_free(tmp);
 
-   if (_papi_hwi_system_info.shlib_info.map)
+   if (_papi_hwi_system_info.shlib_info.map){
      papi_free(_papi_hwi_system_info.shlib_info.map);
+     _papi_hwi_system_info.shlib_info.map = NULL;
+   }
    _papi_hwi_system_info.shlib_info.map = tmp2;
    _papi_hwi_system_info.shlib_info.count = index;
 
@@ -518,44 +251,6 @@ static char *search_cpu_info(FILE * f, char *search_str, char *line)
 
    /* End stolen code */
 }
-
-/* Pentium III
- * processor  : 1
- * vendor     : GenuineIntel
- * arch       : IA-64
- * family     : Itanium 2
- * model      : 0
- * revision   : 7
- * archrev    : 0
- * features   : branchlong
- * cpu number : 0
- * cpu regs   : 4
- * cpu MHz    : 900.000000
- * itc MHz    : 900.000000
- * BogoMIPS   : 1346.37
- * */
-/* IA64
- * processor       : 1
- * vendor_id       : GenuineIntel
- * cpu family      : 6
- * model           : 7
- * model name      : Pentium III (Katmai)
- * stepping        : 3
- * cpu MHz         : 547.180
- * cache size      : 512 KB
- * physical id     : 0
- * siblings        : 1
- * fdiv_bug        : no
- * hlt_bug         : no
- * f00f_bug        : no
- * coma_bug        : no
- * fpu             : yes
- * fpu_exception   : yes
- * cpuid level     : 2
- * wp              : yes
- * flags           : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 mmx fxsr sse
- * bogomips        : 1091.17
- * */
 
 int _papi_hwd_get_system_info(void)
 {
@@ -630,12 +325,9 @@ int _papi_hwd_get_system_info(void)
    /* All of this information maybe overwritten by the substrate */ 
 
    /* MHZ */
-   rewind(f);
-   s = search_cpu_info(f, "clock", maxargs);
-   if (!s) {
+
    rewind(f);
    s = search_cpu_info(f, "cpu MHz", maxargs);
-   }
    if (s)
       sscanf(s + 1, "%f", &mhz);
    _papi_hwi_system_info.hw_info.mhz = mhz;
@@ -718,50 +410,6 @@ int _papi_hwd_get_system_info(void)
 
    return (PAPI_OK);
 }
-#endif /* __CATAMOUNT__ */
 
 /* Low level functions, should not handle errors, just return codes. */
-
-#ifndef PPC64
-inline_static long_long get_cycles(void) {
-   long_long ret = 0;
-#ifdef __x86_64__
-   do {
-      unsigned int a,d;
-      asm volatile("rdtsc" : "=a" (a), "=d" (d));
-      (ret) = ((unsigned long)a) | (((unsigned long)d)<<32);
-   } while(0);
-#else
-   __asm__ __volatile__("rdtsc"
-                       : "=A" (ret)
-                       : );
-#endif
-   return ret;
-}
-#else
-inline_static long_long get_cycles(void) {
-   long_long ret = 0;
-   rdtscl(ret);
-   return ret * tb_scale_factor;
-}
-#endif //PPC64
-
-long_long _papi_hwd_get_real_usec(void) {
-   return((long_long)get_cycles() / (long_long)_papi_hwi_system_info.hw_info.mhz);
-}
-
-long_long _papi_hwd_get_real_cycles(void) {
-   return((long_long)get_cycles());
-}
-
-long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
-{
-   return ((long_long)vperfctr_read_tsc(ctx->perfctr));
-}
-
-long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
-{
-   return ((long_long)vperfctr_read_tsc(ctx->perfctr) /
-           (long_long)_papi_hwi_system_info.hw_info.mhz);
-}
 

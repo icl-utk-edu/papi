@@ -346,7 +346,6 @@ static void _papi_lock_init(void)
 }
 
 papi_svector_t _aix_table[] = {
- {(void (*)())_papi_hwd_get_overflow_address, VEC_PAPI_HWD_GET_OVERFLOW_ADDRESS},
  {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
  {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
  {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
@@ -533,10 +532,6 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
    case PAPI_GRANUL:
       return (set_granularity
               (&(option->granularity.ESI->machdep), option->granularity.granularity));
-#if 0
-   case PAPI_INHERIT:
-      return (set_inherit(option->inherit.inherit));
-#endif
    default:
       return (PAPI_EINVAL);
    }
@@ -564,16 +559,6 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
    return (PAPI_OK);
 }
-
-void *_papi_hwd_get_overflow_address(void *context)
-{
-  void *location;
-  struct sigcontext *info = (struct sigcontext *)context;
-  location = (void *)info->sc_jmpbuf.jmp_context.iar;
-
-  return(location);
-}
-
 
 /* Copy the current control_state into the new thread context */
 /*int _papi_hwd_start(EventSetInfo_t *ESI, EventSetInfo_t *zero)*/

@@ -7,7 +7,7 @@
  *          <Your email here>
  */
 
-/* STILL NEED LOCKING FOR THREADS */
+#define IN_MEM_FILE
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,10 +19,6 @@
 /* If you are tracing memory, then PAPI_DEBUG_MEMORY
  * must be set also.
  */
-#ifdef PAPI_DEBUG_MEMORY_TRACE
-#define PAPI_DEBUG_MEMORY 1
-#endif
-
 #define END_PAD 4
 #define END_PATTERN_1 0xC
 #define END_PATTERN_2 0xA
@@ -42,7 +38,7 @@ pmem_t * get_mem_ptr(void * ptr){
   pmem_t **tmp_ptr = (pmem_t **) (ptr - sizeof(void *));
   pmem_t *mem_ptr;
 
-  if ( !tmp_ptr ) return(NULL);
+  if ( !tmp_ptr || !ptr ) return(NULL);
 
   mem_ptr = *tmp_ptr;
   return (mem_ptr);
@@ -114,6 +110,12 @@ void *_papi_malloc(char *file, int line, int size){
   nsize += END_PAD;
 #endif
 
+  if ( size == 0 ){
+#ifdef PAPI_DEBUG_MEMORY_TRACE
+    fprintf(stdout, "Attempting to Allocate: %d bytes from File: %s  Line: %d\n", size, file, line);
+#endif
+    return(NULL);
+  }
   ptr = (void *) malloc(nsize);
 
   if ( !ptr ) return(NULL);
@@ -131,11 +133,11 @@ void *_papi_malloc(char *file, int line, int size){
     _papi_hwi_unlock(MEMORY_LOCK);
 
 #ifdef PAPI_DEBUG_MEMORY
-  chptr = ptr+size;
+  chptr    = ptr+size;
   *chptr++ = END_PATTERN_1;
   *chptr++ = END_PATTERN_2;
   *chptr++ = END_PATTERN_3;
-  *chptr++ = END_PATTERN_4;
+  *chptr   = END_PATTERN_4;
   check_memory_for_overflow();
 #endif
 
@@ -166,6 +168,8 @@ char * _papi_strdup(char *file, int line, const char *s){
 /* Only frees the memory if PAPI malloced it */
 void _papi_valid_free(char *file, int line, void *ptr){
   pmem_t *tmp;
+
+  if ( !ptr ) return;
 
   _papi_hwi_lock(MEMORY_LOCK);
   for(tmp = mem_head; tmp; tmp = tmp->next ){
@@ -300,8 +304,11 @@ void _papi_cleanup_all_memory()
 void insert_mem_ptr(pmem_t *ptr){
   if ( !ptr ) return;
  
-  if ( !mem_head ) 
+  if ( !mem_head ) {
      mem_head = ptr;
+     ptr->next = NULL;
+     ptr->prev = NULL;
+  }
   else {
      mem_head->prev = ptr;
      ptr->next = mem_head;

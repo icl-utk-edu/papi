@@ -16,11 +16,18 @@
 *          <your email address>
 */
 
+#ifndef IN_SUBSTRATE
+#define hwd_context_t void
+#define hwd_control_state_t void
+#define hwd_reg_alloc_t void
+#define hwd_register_t void
+#endif
+
 /* The following PAPI internal functions are defined by the papi_internal.c file. */
  int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI,
                           long_long * values);
- int _papi_hwi_allocate_eventset_map(void);
- int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle);
+ int _papi_hwi_allocate_eventset_map(int sidx);
+ int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle, int sidx);
  int _papi_hwi_add_event(EventSetInfo_t * ESI, int index);
  int _papi_hwi_add_pevent(EventSetInfo_t * ESI, int EventCode, void *inout);
  int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode);
@@ -31,7 +38,7 @@
  int _papi_hwi_convert_eventset_to_multiplex(EventSetInfo_t * ESI);
  int _papi_hwi_lookup_EventCodeIndex(const EventSetInfo_t * ESI,
                                            unsigned int EventCode);
- EventSetInfo_t *_papi_hwi_allocate_EventSet(void);
+ EventSetInfo_t *_papi_hwi_allocate_EventSet(int sidx);
 inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
  int _papi_hwi_remove_EventSet(EventSetInfo_t *);
  void print_state(EventSetInfo_t * ESI);
@@ -72,7 +79,7 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
  int _papi_hwi_stop_signal(int);
  int _papi_hwi_start_signal(int, int);
  int _papi_hwi_initialize(DynamicArray_t **);
- int _papi_hwi_dispatch_overflow_signal(void *context, int *, long_long, int, ThreadInfo_t **master);
+ int _papi_hwi_dispatch_overflow_signal(void *context, int *, long_long, int, ThreadInfo_t **master, caddr_t pc, int sub_idx);
 
  /* The following PAPI internal functions are defined by the papi_data.c file. */
 
@@ -82,7 +89,7 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
 /* The following PAPI internal functions are defined by the substrate file. */
 
  int _papi_hwd_get_system_info(void);
- int _papi_hwd_init_substrate(papi_vectors_t *vtable);
+ int _papi_hwd_init_substrate(papi_vectors_t *vtable, int idx);
  int _papi_hwd_init(hwd_context_t *);
  VECTOR_STATIC void _papi_hwd_init_control_state(hwd_control_state_t * ptr);
  VECTOR_STATIC int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
@@ -93,10 +100,10 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
  VECTOR_STATIC int _papi_hwd_read(hwd_context_t *, hwd_control_state_t *, long_long **, int);
  VECTOR_STATIC int _papi_hwd_shutdown(hwd_context_t *);
 /* The following functions are now defined in the substrate header files to be inline_static */
- long_long _papi_hwd_get_real_cycles(void);
- long_long _papi_hwd_get_real_usec(void);
- long_long _papi_hwd_get_virt_cycles(const hwd_context_t *);
- long_long _papi_hwd_get_virt_usec(const hwd_context_t *);
+ VECTOR_STATIC long_long _papi_hwd_get_real_cycles(void);
+ VECTOR_STATIC long_long _papi_hwd_get_real_usec(void);
+ VECTOR_STATIC long_long _papi_hwd_get_virt_cycles(hwd_context_t *);
+ VECTOR_STATIC long_long _papi_hwd_get_virt_usec(hwd_context_t *);
 /* End of above */
  VECTOR_STATIC int _papi_hwd_start(hwd_context_t *, hwd_control_state_t *);
  VECTOR_STATIC int _papi_hwd_reset(hwd_context_t *, hwd_control_state_t *);
@@ -154,7 +161,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * info, void *tmp);
 	Mods  : Dan Terpstra terpstra@cs.utk.edu
 */
 
- int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t * event_list, int count);
+ int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t * event_list, int count, int sub_idx);
 
 /* The following functions are called by _papi_hwi_bipartite_alloc().
    They are hardware dependent, but don't need to be implemented

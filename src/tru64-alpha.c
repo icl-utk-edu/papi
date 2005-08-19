@@ -9,21 +9,6 @@ extern EventSetInfo_t *default_master_eventset;
 
 /* Globals */
 
-#if 0
-static hwd_search_t findem_ev67[] = {
-   {PAPI_TOT_CYC, {0, {PAPI_NATIVE_MASK | 0, PAPI_NULL}}},
-   {PAPI_TOT_INS, {0, {PAPI_NATIVE_MASK | 1, PAPI_NULL}}},
-   {PAPI_RES_STL, {0, {PAPI_NATIVE_MASK | 2, PAPI_NULL}}},
-   {-1, {-1, -1}}
-};
-static native_info_t ev67_native_table[] = {
-/* 0  */ {"cycles", {PF67_CYCLES_AND_UNDEFINED, -1}},
-/* 1  */ {"retires", {PF67_RET_INST_AND_CYCLES, -1}},
-/* 2  */ {"replaytrap", {-1, PF67_CYCLES_AND_REPLAY_TRAPS}}
-/* 3  */ {"bmiss", {-1, PF67_RET_INST_AND_BCACHE_MISS}},
-};
-#endif
-
 static hwi_search_t findem_ev6[] = {
    {PAPI_TOT_CYC, {0, {PAPI_NATIVE_MASK | 0, PAPI_NULL}}},
    {PAPI_TOT_INS, {0, {PAPI_NATIVE_MASK | 1, PAPI_NULL}}},
@@ -469,17 +454,6 @@ int _papi_hwd_shutdown(hwd_context_t * ctx)
       return (PAPI_ESYS);
    return (PAPI_OK);
 }
-
-/*
-void *_papi_hwd_get_overflow_address(void *context)
-{
-   void *location;
-   struct sigcontext *info = (struct sigcontext *) context;
-   location = (void *) info->sc_pc;
-
-   return (location);
-}
-*/
 
 /* start the hardware counting */
 int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)

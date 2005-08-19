@@ -29,8 +29,11 @@ platform's documentation carefully.
 #define PAPI_PRESET_MASK 0x80000000
 #define PAPI_NATIVE_MASK 0x40000000
 #define PAPI_PRESET_AND_MASK 0x7FFFFFFF
-/*#define PAPI_NATIVE_AND_MASK 0x3FFFFFFF*/ /* this masks both native and preset bits */
-#define PAPI_NATIVE_AND_MASK 0xBFFFFFFF
+#define PAPI_NATIVE_AND_MASK    0x3FFFFFFF
+/* Removes Preset/Native and Substrate Mask */
+#define PAPI_SUBSTRATE_AND_MASK 0x3FFFFFF
+#define PAPI_SUBSTRATE_INDEX(a) ((0x3c000000&a)>>26)
+#define PAPI_SUBSTRATE_MASK(a)  (0x3c000000&(a<<26))
 
 #define PAPI_MAX_PRESET_EVENTS 128      /*The maxmimum number of preset events */
 

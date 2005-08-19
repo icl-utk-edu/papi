@@ -9,6 +9,7 @@ LIBRARY = libpapi.a
 SHLIB   = libpapi.so
 SUBSTR  = perfctr-$(CPU)
 MSUBSTR = linux-perfctr-$(CPU)
+OS      = linux
 
 ifeq ($(CPU_TYPE),ppc64)
 MEMSUBSTR = linux-ppc64
@@ -149,11 +150,11 @@ ifeq ($(ARCH),ppc64)
 #Workaround to gcc bug (see gcc bug #20611)
 OPTFLAGS        += -O2 $(EVENTFLAGS)
 else
-OPTFLAGS	+= -O3 $(EVENTFLAGS)
+OPTFLAGS	+= -O3 # -g $(EVENTFLAGS) -DDEBUG -DPAPI_DEBUG_MEMORY_TRACE
 endif
 
 FFLAGS        	+= -Dlinux $(FARGS)
-TOPTFLAGS	+= -O  
+TOPTFLAGS	+= -O0 
 FTOPTFLAGS	= $(TOPTFLAGS)
 
 #
@@ -186,7 +187,7 @@ PERFCTR_INC_PATH ?= $(PERFCTR_PREFIX)/include
 PERFCTR_KINC_PATH ?= $(PERFCTR_INC_PATH)
 endif
 
-CFLAGS  += -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) $(NOTLS)
+CFLAGS  += -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) $(NOTLS) -DOS_HEADER=\"$(OS).h\"
 
 CFLAGS-2.5.4 := -DPERFCTR25
 CFLAGS-2.6.x := -DPERFCTR26
@@ -204,7 +205,11 @@ PERFCTR_OBJS := $(PERFCTR_OBJS-$(VERSION))
 
 MISCHDRS = perfctr-$(CPU).h
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
-MISCSRCS =  $(CPU)_events.c linux.c $(ARCH_SPEC_EVTS)
+ifeq ("p3",$CPU)
+MISCSRCS = $(CPU)_events.c perfctr-p4.c linux-acpi.c $(ARCH_SPEC_EVTS)
+else
+MISCSRCS = $(CPU)_events.c p3_events.c perfctr-p3.c linux-acpi.c $(ARCH_SPEC_EVTS)
+endif
 MISCOBJS = $(PERFCTR_OBJS) $(MISCSRCS:.c=.o) 
 
 #Dynamic linking loader needs correct version of libperfctr
@@ -248,8 +253,6 @@ $(PERFCTR_OBJS): $(PERFCTR_LIB_PATH)/libperfctr.a
 #$(CPU)_events.o: $(CPU)_events.c $(CONFIG_HEADER)
 $(CPU)_events.o: $(CPU)_events.c
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPU)_events.c -o $@
-linux.o: linux.c
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $^ -o $@
 
 $(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $^ -o $@

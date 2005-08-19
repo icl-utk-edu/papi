@@ -73,6 +73,11 @@ PAPI_FCALL(papif_create_eventset, PAPIF_CREATE_EVENTSET, (int *EventSet, int *ch
    *check = PAPI_create_eventset(EventSet);
 }
 
+PAPI_FCALL(papif_allocate_eventset, PAPIF_ALLOCATE_EVENTSET, (int *EventSet, int substrate_idx,int *check))
+{
+   *check = PAPI_allocate_eventset(EventSet, substrate_idx);
+}
+
 PAPI_FCALL(papif_destroy_eventset, PAPIF_DESTROY_EVENTSET, (int *EventSet, int *check))
 {
    *check = PAPI_destroy_eventset(EventSet);
@@ -643,17 +648,6 @@ PAPI_FCALL(papif_get_domain, PAPIF_GET_DOMAIN,
    }
 }
 
-#if 0
-PAPI_FCALL(papif_get_inherit, PAPIF_GET_INHERIT, (int *inherit, int *check))
-{
-   PAPI_option_t i;
-
-   if ((*check = PAPI_get_opt(PAPI_INHERIT, &i)) == PAPI_OK) {
-      *inherit = i.inherit.inherit;
-   }
-}
-#endif
-
 PAPI_FCALL(papif_set_event_domain, PAPIF_SET_EVENT_DOMAIN,
            (int *es, int *domain, int *check))
 {
@@ -663,13 +657,3 @@ PAPI_FCALL(papif_set_event_domain, PAPIF_SET_EVENT_DOMAIN,
    d.domain.eventset = *es;
    *check = PAPI_set_opt(PAPI_DOMAIN, &d);
 }
-
-#if 0
-PAPI_FCALL(papif_set_inherit, PAPIF_SET_INHERIT, (int *inherit, int *check))
-{
-   PAPI_option_t i;
-
-   i.inherit.inherit = *inherit;
-   *check = PAPI_set_opt(PAPI_INHERIT, &i);
-}
-#endif

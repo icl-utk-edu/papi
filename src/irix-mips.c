@@ -547,7 +547,6 @@ static void lock_init(void)
 /* this function is called by PAPI_library_init */
 #ifndef PAPI_NO_VECTOR
 papi_svector_t _irix_mips_table[] = {
- {(void (*)())_papi_hwd_get_overflow_address,VEC_PAPI_HWD_GET_OVERFLOW_ADDRESS},
  {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
  {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
  {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
@@ -744,7 +743,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
    if (thread == NULL)
      return;
 
-   ESI = (EventSetInfo_t *) thread->running_eventset;
+   ESI = (EventSetInfo_t *) thread->running_eventset[0];
    if ((ESI == NULL) || ((ESI->state & PAPI_OVERFLOWING) == 0))
      {
        OVFDBG("Either no eventset or eventset not set to overflow.\n");
@@ -866,13 +865,6 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    }
 
    return (retval);
-}
-
-void *_papi_hwd_get_overflow_address(void *context)
-{
-   struct sigcontext *info = (struct sigcontext *) context;
-
-   return ((void *) info->sc_pc);
 }
 
 /* start the hardware counting */

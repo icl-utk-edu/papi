@@ -24,7 +24,9 @@ vendors did in the kernel extensions or performance libraries. */
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
+#include "papi_protos.h"
 #include "papi_vector_redefine.h"
+#include "papi_memory.h"
 
 /*******************/
 /* BEGIN EXTERNALS */
@@ -155,13 +157,9 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t * prof,
    }
 }
 
-void dispatch_profile(EventSetInfo_t * ESI, void *context,
-                      long_long over, int profile_index)
+void dispatch_profile(EventSetInfo_t * ESI, long_long over, int profile_index, caddr_t pc)
 {
-  _papi_hwi_context_t *ctx = (_papi_hwi_context_t *) context;
-
    EventSetProfileInfo_t *profile = &ESI->profile;
-   caddr_t pc = (caddr_t) GET_OVERFLOW_ADDRESS(ctx);
    PAPI_sprofil_t *sprof;
 
   caddr_t offset = (caddr_t)0;
@@ -211,14 +209,14 @@ void dispatch_profile(EventSetInfo_t * ESI, void *context,
      situation).
 */
 
-int _papi_hwi_dispatch_overflow_signal(void *papiContext, int *isHardware, long_long overflow_bit, int genOverflowBit, ThreadInfo_t **t)
+int _papi_hwi_dispatch_overflow_signal(void *papiContext, int *isHardware, long_long overflow_bit, int genOverflowBit, ThreadInfo_t **t, caddr_t pc, int sub_idx)
 {
    int retval, event_counter, i, overflow_flag, pos;
    int papi_index, j;
    int profile_index = 0;
    long_long overflow_vector;
 
-   long_long temp[MAX_COUNTERS], over;
+   long_long temp[_papi_hwi_substrate_info[sub_idx].num_cntrs], over;
    long_long latest = 0;
    ThreadInfo_t *thread;
    EventSetInfo_t *ESI;
@@ -233,7 +231,7 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, int *isHardware, long_
    
    if (thread != NULL) 
      {
-       ESI = thread->running_eventset;
+       ESI = thread->running_eventset[sub_idx];
 
        if ((ESI == NULL) || ((ESI->state & PAPI_OVERFLOWING) == 0))
 	 {
@@ -265,7 +263,7 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, int *isHardware, long_
       overflow_vector = 0;
 
       if (!(ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE)) {
-         retval = _papi_hwi_read(&thread->context, ESI, ESI->sw_stop);
+         retval = _papi_hwi_read(thread->context[ESI->SubstrateIndex], ESI, ESI->sw_stop);
          if (retval < PAPI_OK)
 	   return(retval);
          for (i = 0; i < event_counter; i++) {
@@ -310,7 +308,7 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, int *isHardware, long_
                   * events that contain more than one counter without being  *
                   * derived. You've gotta scan all terms to make sure you    *
                   * find the one to profile. */
-                  for(k = 0, pos = 0; k < MAX_COUNTER_TERMS && pos >= 0; k++) {
+                  for(k = 0, pos = 0; k < PAPI_MAX_COUNTER_TERMS && pos >= 0; k++) {
                      pos = ESI->EventInfoArray[papi_index].pos[k];
                      if (i == pos) {
                         profile_index = j;
@@ -329,13 +327,13 @@ foundit:
                   over = 0;
                else
                   over = temp[profile_index];
-               dispatch_profile(ESI, (caddr_t) papiContext, over, profile_index);
+               dispatch_profile(ESI, over, profile_index,pc);
                overflow_vector ^= (long_long )1 << i;
             }
             /* do not use overflow_vector after this place */
          } else {
-            ESI->overflow.handler(ESI->EventSetIndex,
-                  GET_OVERFLOW_ADDRESS(ctx), overflow_vector,ctx->ucontext);
+            ESI->overflow.handler(ESI->EventSetIndex, 
+	    pc,overflow_vector,ctx->ucontext);
          }
       }
        ESI->state &= ~(PAPI_PAUSED);
@@ -561,7 +559,7 @@ int _papi_hwi_query_native_event(unsigned int EventCode)
 int _papi_hwi_native_name_to_code(char *in, int *out)
 {
    char *name;
-   unsigned int i = 0 | PAPI_NATIVE_MASK;
+   unsigned int i = 0 | PAPI_NATIVE_MASK, j;
    int retval = PAPI_ENOEVNT;
 /* Cray X1 doesn't loop on 0, so a code_to_name on this will fail, the
  * first call to enum_events with a 0 will give a valid code
@@ -570,19 +568,21 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
  _papi_hwd_ntv_enum_events(&i, 0);
 #endif
     _papi_hwi_lock(INTERNAL_LOCK);
-   do {
-      name = _papi_hwd_ntv_code_to_name(i);
-/*      printf("name =|%s|\ninput=|%s|\n", name, in); */
+   for(j=0;j<papi_num_substrates;j++,i=(0 | PAPI_NATIVE_MASK)){
+     do {
+      name = _papi_vector_table[j]._vec_papi_hwd_ntv_code_to_name(i);
+/*    printf("name=%s,  input=%s\n", name, in); */
       if (name != NULL) {
          if (strcasecmp(name, in) == 0) {
-            *out = i;
+            *out = i|PAPI_SUBSTRATE_MASK(j);
             retval = PAPI_OK;
          }
      } else {
          *out = 0;
          retval = PAPI_OK;
       }
-   } while ((_papi_hwd_ntv_enum_events(&i, 0) == PAPI_OK) && (retval == PAPI_ENOEVNT)) ;
+     } while ((_papi_vector_table[j]._vec_papi_hwd_ntv_enum_events(&i, 0) == PAPI_OK) && (retval == PAPI_ENOEVNT)) ;
+   }
    _papi_hwi_unlock(INTERNAL_LOCK);
    return (retval);
 }
@@ -629,7 +629,7 @@ int _papi_hwi_native_code_to_descr(unsigned int EventCode, char *hwi_descr, int 
 /* The native event equivalent of PAPI_get_event_info */
 int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * info)
 {
-   hwd_register_t bits;
+   void * bits=NULL;
    int retval;
 
    if (EventCode & PAPI_NATIVE_MASK) {
@@ -650,14 +650,22 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
          /* Convert the register bits structure for this EventCode into
             arrays of names and values (substrate dependent).
          */
-         retval = _papi_hwd_ntv_code_to_bits(EventCode, &bits);
+         /* XXX need to change this */
+	 bits = papi_malloc(papi_sizeof(HWD_REGISTER,0));
+	 if ( bits == NULL ){
+            info->count = 0;
+	    return(PAPI_ENOMEM);
+	 }
+         retval = _papi_hwd_ntv_code_to_bits(EventCode, bits);
          if (retval == PAPI_OK)
-            retval = _papi_hwd_ntv_bits_to_info(&bits, (char *)info->name, info->code, PAPI_MIN_STR_LEN, PAPI_MAX_INFO_TERMS);
+            retval = _papi_hwd_ntv_bits_to_info(bits, (char *)info->name, info->code, PAPI_MIN_STR_LEN, PAPI_MAX_INFO_TERMS);
          if (retval < 0) info->count = 0;
          else info->count = retval;
+         if ( bits ) papi_free(bits);
          return (PAPI_OK);
       }
    }
+   if ( bits ) papi_free(bits);
    return (PAPI_ENOEVNT);
 }
 

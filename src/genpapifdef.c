@@ -33,7 +33,7 @@
 
 #include "papi.h"
 
-#define MAX_COUNTER_TERMS 8 /* to satisfy papi_preset.h */
+#define PAPI_MAX_COUNTER_TERMS 8 /* to satisfy papi_preset.h */
 #include "papi_preset.h"
 #include "papi_data.h"
 

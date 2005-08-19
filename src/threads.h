@@ -15,9 +15,9 @@
 typedef struct _ThreadInfo {
   unsigned long int tid;
   struct _ThreadInfo *next;
-  hwd_context_t context;
+  void ** context;
   void *thread_storage[PAPI_MAX_TLS];
-  EventSetInfo_t *running_eventset;
+  EventSetInfo_t **running_eventset;
   int wants_signal;
 } ThreadInfo_t;
 

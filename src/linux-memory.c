@@ -13,6 +13,9 @@
 
 #include "papi.h"
 #include "papi_internal.h"
+#ifndef __x86_64__
+#include "libperfctr.h"
+#endif
 
 static int init_amd(PAPI_mh_info_t * mh_info);
 static short int init_amd_L2_assoc_inf(unsigned short int pattern);
@@ -729,56 +732,6 @@ static int init_intel(PAPI_mh_info_t * mh_info)
  * it doesn't it is pre pentium K6 series that we don't
  * support.
  */
-#if 0
-/* This routine appears to no longer be called. */
-static int check_cpuid()
-{
-   volatile unsigned long val;
-#ifdef _WIN32
-   __asm {
-	   pushfd
-	   pop eax
-	   mov ebx, eax
-	   xor eax, 0x00200000
-	   push eax 
-	   popfd 
-	   pushfd 
-	   pop eax 
-	   cmp eax, ebx 
-	   jz NO_CPUID 
-	   mov val, 1 
-	   jmp END 
-NO_CPUID:  mov val, 0 
-END:	  }
-#elif defined(__x86_64__)
-   __asm__ __volatile__("pushf;"
-                        "pop %%eax;"
-                        "mov %%eax, %%ebx;"
-                        "xor $0x00200000,%%eax;"
-                        "push %%eax;"
-                        "popf;"
-                        "pushf;"
-                        "pop %%eax;"
-                        "cmp %%eax, %%ebx;"
-                        "jz NO_CPUID;"
-                        "mov $1, %0;"
-                        "jmp END;" "NO_CPUID:" "mov $0, %0;" "END:":"=r"(val));
-#else
-   __asm__ __volatile__("pushfl;"
-                        "pop %%eax;"
-                        "movl %%eax, %%ebx;"
-                        "xor $0x00200000,%%eax;"
-                        "push %%eax;"
-                        "popfl;"
-                        "pop %%eax;"
-                        "cmp %%eax, %%ebx;"
-                        "jz NO_CPUID;"
-                        "movl $1, %0;"
-                        "jmp END;" "NO_CPUID:" "movl $0, %0;" "END:":"=r"(val));
-#endif
-   return (int) val;
-}
-#endif
 #ifdef _WIN32
 inline_static void cpuid(unsigned int *a, unsigned int *b,
                          unsigned int *c, unsigned int *d)

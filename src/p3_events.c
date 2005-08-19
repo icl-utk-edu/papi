@@ -9,6 +9,8 @@
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "libperfctr.h"
+#include "perfctr-p3.h"
 
 native_event_entry_t *native_table;
 hwi_search_t *preset_search_map;
@@ -678,7 +680,11 @@ enum {
    first event is the one that is read. See PAPI_FP_INS for an example.
 */
 
-const hwi_search_t _papi_hwd_p3_preset_map[] = {
+#ifdef XML
+hwi_search_t _papi_hwd_xml_preset_map[PAPI_MAX_PRESET_EVENTS];
+#endif
+
+hwi_search_t _papi_hwd_p3_preset_map[] = {
    {PAPI_L1_DCM,{0,{PNE_P3_DCU_LINES_IN,PAPI_NULL,PAPI_NULL,PAPI_NULL},{0,}}},
    {PAPI_L1_ICM,{0,{PNE_P3_L2_IFETCH_MESI,PAPI_NULL,PAPI_NULL,PAPI_NULL},{0,}}},
    {PAPI_L2_DCM,{DERIVED_SUB,{PNE_P3_L2_LINES_IN,PNE_P3_BUS_TRAN_IFETCH_SELF,PAPI_NULL,PAPI_NULL},{0,}}},
@@ -733,7 +739,7 @@ const hwi_search_t _papi_hwd_p3_preset_map[] = {
    {0, {0, {PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}}
 };
 
-const hwi_search_t _papi_hwd_pm_preset_map[] = {
+hwi_search_t _papi_hwd_pm_preset_map[] = {
    {PAPI_L1_DCM,{0,{PNE_PM_DCU_LINES_IN,PAPI_NULL,PAPI_NULL,PAPI_NULL},{0,}}},
    {PAPI_L1_ICM,{0,{PNE_PM_L2_IFETCH_MESI,PAPI_NULL,PAPI_NULL,PAPI_NULL},{0,}}},
    {PAPI_L2_DCM,{DERIVED_SUB,{PNE_PM_L2_TOT_LINES_IN,PNE_PM_BUS_TRAN_IFETCH_SELF,PAPI_NULL,PAPI_NULL},{0,}}},
@@ -788,7 +794,7 @@ const hwi_search_t _papi_hwd_pm_preset_map[] = {
    {0, {0, {PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}}
 };
 
-const hwi_search_t _papi_hwd_p2_preset_map[] = {
+hwi_search_t _papi_hwd_p2_preset_map[] = {
    {PAPI_L1_DCM, {0, {PNE_P2_DCU_LINES_IN, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_L1_ICM, {0, {PNE_P2_L2_IFETCH_MESI, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_L2_DCM,
@@ -844,7 +850,7 @@ const hwi_search_t _papi_hwd_p2_preset_map[] = {
    {0, {0, {PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}}
 };
 
-const hwi_search_t _papi_hwd_ath_preset_map[] = {
+hwi_search_t _papi_hwd_ath_preset_map[] = {
    {PAPI_L1_DCM, {DERIVED_ADD, {PNE_ATH_SYS_DC_REFILLS_MOES, PNE_ATH_L2_DC_REFILLS_MOES, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_L1_ICM, {0, {PNE_ATH_IC_MISSES, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_L2_DCM, {0, {PNE_ATH_SYS_DC_REFILLS_MOES, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
@@ -885,7 +891,7 @@ const hwi_search_t _papi_hwd_ath_preset_map[] = {
    {0, {0, {PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}}
 };
 
-const hwi_search_t _papi_hwd_opt_preset_map[] = {
+hwi_search_t _papi_hwd_opt_preset_map[] = {
    {PAPI_L1_ICH, {DERIVED_POSTFIX, {PNE_OPT_IC_FETCH, PNE_OPT_IC_SYS_REFILL, PNE_OPT_IC_L2_REFILL, PAPI_NULL}, {"N0|N1|-|N2|-|",}}},
    {PAPI_L2_ICH, {0, {PNE_OPT_IC_L2_REFILL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_L1_DCM, {DERIVED_ADD, {PNE_OPT_DC_SYS_REFILL_MOES, PNE_OPT_DC_L2_REFILL_MOES, PAPI_NULL, PAPI_NULL}, {0,}}},
@@ -943,7 +949,7 @@ const hwi_search_t _papi_hwd_opt_preset_map[] = {
 /* The notes/descriptions of these events have sometimes been truncated */
 /* Please see the architecture's manual for any clarifications.         */
 
-const native_event_entry_t _papi_hwd_p3_native_map[] = {
+native_event_entry_t _papi_hwd_p3_native_map[] = {
    {"DATA_MEM_REFS",
     "All loads/stores from/to any memory type",
     {CNTRS12, 0x43}},
@@ -1297,7 +1303,7 @@ const native_event_entry_t _papi_hwd_p3_native_map[] = {
    {"", "", {0, 0}}
 };
 
-const native_event_entry_t _papi_hwd_pm_native_map[] = {
+native_event_entry_t _papi_hwd_pm_native_map[] = {
    {"DATA_MEM_REFS",
     "All loads/stores from/to any memory type",
     {CNTRS12, 0x43}},
@@ -1770,7 +1776,7 @@ const native_event_entry_t _papi_hwd_pm_native_map[] = {
    {"", "", {0, 0}}
 };
 
-const native_event_entry_t _papi_hwd_p2_native_map[] = {
+native_event_entry_t _papi_hwd_p2_native_map[] = {
    {"DATA_MEM_REFS",
     "All loads/stores from/to any memory type",
     {CNTRS12, 0x43}},
@@ -2094,7 +2100,7 @@ const native_event_entry_t _papi_hwd_p2_native_map[] = {
    {"", "", {0, 0}}
 };
 
-const native_event_entry_t _papi_hwd_k7_native_map[] = {
+native_event_entry_t _papi_hwd_k7_native_map[] = {
    {"SEG_REG_LOADS",
     "Number of segment register loads",
     {ALLCNTRS, 0x20}},
@@ -2274,7 +2280,7 @@ const native_event_entry_t _papi_hwd_k7_native_map[] = {
 /* The first two letters in each entry indicate to which unit
    the event refers. */
 
-const native_event_entry_t _papi_hwd_k8_native_map[] = {
+native_event_entry_t _papi_hwd_k8_native_map[] = {
    {"FP_ADD_PIPE",
     "Dispatched FPU ops - Revision B and later revisions - Speculative add pipe ops excluding junk ops",
     {ALLCNTRS, 0x0100}},
@@ -2776,7 +2782,7 @@ static char *internal_translate_code(int event, int moesi, char *str, char *sepa
 
 
 /* Given a native event code, returns the short text label. */
-char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
+char *p3_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
    unsigned int event, moesi;
 
@@ -2790,7 +2796,7 @@ char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 
 /* Given a native event code, returns the longer native event
    description. */
-char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
+char *p3_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
    unsigned int event, moesi;
 
@@ -2807,7 +2813,7 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
    NOTE: the info must be COPIED to the provided pointer,
    not just referenced!
 */
-int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
+int p3_papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 {
    unsigned int event, moesi;
 
@@ -2823,7 +2829,7 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 /* Given a native event code, looks for next MOESI bit if applicable.
    If not, looks for the next event in the table if the next one exists. 
    If not, returns the proper error code. */
-int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
+int p3_papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
    unsigned int event, moesi;
 
@@ -2862,7 +2868,7 @@ static void copy_value(unsigned int val, char *nam, char *names, unsigned int *v
    names[len-1] = 0;
 }
 
-int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
+int p3_papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                unsigned int *values, int name_len, int count)
 {
    int i = 0;

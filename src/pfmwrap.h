@@ -354,8 +354,8 @@ hweight64 (unsigned long x)
    inline int set_pmds_to_write(EventSetInfo_t * ESI, int index, int value)
    {
       int *pos, count, hwcntr, i;
-      pfmw_param_t *pevt= &(ESI->machdep.evt);
-      hwd_control_state_t *this_state = &ESI->machdep;
+      hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
+      pfmw_param_t *pevt= &(this_state->evt);
 
       pos = ESI->EventInfoArray[index].pos;
       count = 0;
@@ -379,7 +379,7 @@ hweight64 (unsigned long x)
       pfm_uuid_t buf_fmt_id = PFM_DEFAULT_SMPL_UUID;
       int ctx_fd;
       int native_index, EventCode, pos;
-      hwd_context_t *thr_ctx = &ESI->master->context;
+      hwd_context_t *thr_ctx = (hwd_context_t *) ESI->master->context[0];
       void *tmp_ptr;
 
       pos= ESI->EventInfoArray[EventIndex].pos[0];
