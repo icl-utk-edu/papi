@@ -9,6 +9,7 @@
 * Mods:    Maynard Johnson
 *          maynardj@us.ibm.com
 */
+#include SUBSTRATE
 
 #define PAPI_MAX_NATIVE_EVENTS 256
 #define MAX_GROUPS (GROUP_INTS * 32)
@@ -304,7 +305,11 @@ enum native_name {
 
 extern native_event_entry_t native_table[PAPI_MAX_NATIVE_EVENTS];
 #ifndef __perfctr__
+#ifdef PM_INITIALIZE
+extern PMINFO_T pminfo;
+#else
 extern pm_info_t pminfo;
+#endif
 extern pm_groups_info_t pmgroups;
 #endif
 extern PWR4_native_map_t native_name_map[MAX_NATNAME_MAP_INDEX];

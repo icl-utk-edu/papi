@@ -40,7 +40,18 @@ extern _end;
 extern _data;
 
 /* globals */
+#ifdef PM_INITIALIZE
+#ifdef _AIXVERSION_510
+#define PMINFO_T pm_info2_t
+#define PMEVENTS_T pm_events2_t
+#else
+#define PMINFO_T pm_info_t
+#define PMEVENTS_T pm_events_t
+#endif
+PMINFO_T pminfo;
+#else
 pm_info_t pminfo;
+#endif
 
 /* Locks */
 extern atomic_p lock[];

@@ -496,8 +496,11 @@ PWR4_native_map_t native_name_map[MAX_NATNAME_MAP_INDEX] = {
    ,
    {"PM_TB_BIT_TRANS", -1}
 };
-
+#ifdef PM_INITIALIZE
+pm_info2_t pminfo;
+#else
 pm_info_t pminfo;
+#endif
 pm_groups_info_t pmgroups;
 native_event_entry_t native_table[PAPI_MAX_NATIVE_EVENTS];
 hwd_groups_t group_map[MAX_GROUPS] = { 0 };
@@ -546,8 +549,13 @@ static void PWR4_setup_gps(int total)
 /* to setup native_table values, and return number of entries */
 void power4_setup_native_table()
 {
+#ifdef PM_INITIALIZE
+   PMEVENTS_T *wevp;
+   PMINFO_T *info;
+#else
    pm_events_t *wevp;
    pm_info_t *info;
+#endif
    int pmc, ev, i, j, index;
 
    info = &pminfo;

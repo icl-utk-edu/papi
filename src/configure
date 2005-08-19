@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PMAPI MAKEVER AWK CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP LIBOBJS NOTLS altix LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PMAPI MAKEVER AWK CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP LIBOBJS NOTLS altix PMINIT LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -3377,8 +3377,77 @@ fi
 fi
 
 if test "$OS" = "aix"; then
+PMINIT=""
+echo "$as_me:$LINENO: checking for pm_initialize in -lpmapi" >&5
+echo $ECHO_N "checking for pm_initialize in -lpmapi... $ECHO_C" >&6
+if test "${ac_cv_lib_pmapi_pm_initialize+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpmapi  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
 
-echo "$as_me:$LINENO: checking for pm_init in -lpmapi" >&5
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char pm_initialize ();
+int
+main ()
+{
+pm_initialize ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_pmapi_pm_initialize=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_pmapi_pm_initialize=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_pmapi_pm_initialize" >&5
+echo "${ECHO_T}$ac_cv_lib_pmapi_pm_initialize" >&6
+if test $ac_cv_lib_pmapi_pm_initialize = yes; then
+
+      PMINIT="-DPM_INITIALIZE"
+else
+
+      echo "$as_me:$LINENO: checking for pm_init in -lpmapi" >&5
 echo $ECHO_N "checking for pm_init in -lpmapi... $ECHO_C" >&6
 if test "${ac_cv_lib_pmapi_pm_init+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -3443,19 +3512,22 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_pmapi_pm_init" >&5
 echo "${ECHO_T}$ac_cv_lib_pmapi_pm_init" >&6
 if test $ac_cv_lib_pmapi_pm_init = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBPMAPI 1
-_ACEOF
 
-  LIBS="-lpmapi $LIBS"
-
+      PMINIT="-DPM_INIT"
 else
 
-      echo "Error, libpmapi.a is needed on power!"
-      exit -1
+        echo "Error, libpmapi.a is needed on power!"
+        exit -1
 
 fi
 
+fi
+
+
+#AC_CHECK_LIB([pmapi], [pm_init], [], [
+#      echo "Error, libpmapi.a is needed on power!"
+#      exit -1
+#      ])
 fi
 
 if test "$prefix" = "NONE"; then
@@ -7578,6 +7650,7 @@ _ACEOF
 #AC_MSG_RESULT($NOTLS)
 
 
+
 # AC_SUBST(perfctr_prefix)
 # AC_SUBST(perfctr)
 # AC_SUBST(pfm_prefix)
@@ -8243,6 +8316,7 @@ s,@EGREP@,$EGREP,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@NOTLS@,$NOTLS,;t t
 s,@altix@,$altix,;t t
+s,@PMINIT@,$PMINIT,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
 

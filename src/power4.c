@@ -139,7 +139,11 @@ void _papi_hwd_bpt_map_update(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 }
 
 /* initialize preset_search_map table by type of CPU */
+#ifdef PM_INITIALIZE
+int _papi_hwd_init_preset_search_map(PMINFO_T * info)
+#else
 int _papi_hwd_init_preset_search_map(pm_info_t * info)
+#endif
 {
    preset_search_map = _papi_hwd_PWR4_preset_map;
    return 1;

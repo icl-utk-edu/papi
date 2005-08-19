@@ -165,7 +165,7 @@ int main(int argc, char **argv)
             quotcpy(info.name[j], arg[j+6]);
             info.count++;
          }
-//         print_this_event_info(&info);
+/*         print_this_event_info(&info);*/
          printf("Setting preset event info for: %s\n", info.symbol);
          retval = PAPI_set_event_info(&info, &i, replace_event);
          printf("Returns: %d\n", retval);

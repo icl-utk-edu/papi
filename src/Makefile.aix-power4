@@ -11,8 +11,8 @@ SHLIBDEPS = -L$(PMAPI)/lib -lpmapi
 POST_BUILD =
 SPECIAL_REMOVE =
 
-FLAGS	= -I$(PMAPI)/include -qmaxmem=-1 -qarch=pwr4 -qtune=pwr4 -qlanglvl=extended 
-CFLAGS	= $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_POWER4 -DNEED_FFSLL
+FLAGS	= -I$(PMAPI)/include -qmaxmem=-1 -qarch=pwr4 -qtune=pwr4 -qlanglvl=extended
+CFLAGS	= $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_POWER4 -DNEED_FFSLL $(PMINIT)
 OPTFLAGS= -O3 -qstrict
 TOPTFLAGS=
 FFLAGS	= $(FLAGS) -WF,-D_POWER4
