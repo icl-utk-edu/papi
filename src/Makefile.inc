@@ -78,7 +78,7 @@ $(MEMSUBSTR)-memory.o: $(MEMSUBSTR)-memory.c $(HEADERS)
 extras.o: extras.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c extras.c -o extras.o 
 
-papi_table.o: papi_table.o $(HEADERS)
+papi_table.o: papi_table.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_table.c -o papi_table.o
 	
 papi_memory.o: papi_memory.c $(HEADERS)
