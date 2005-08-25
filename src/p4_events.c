@@ -7,9 +7,12 @@
 *          <your email address>
 */
 
+#define IN_SUBSTRATE
+
 #include "papi.h"
 #include "papi_internal.h"
 #include "perfctr-p4.h"
+#include "papi_protos.h"
 
 #if defined(__i386__) || defined(__x86_64__)
 /*
