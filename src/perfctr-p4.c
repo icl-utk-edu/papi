@@ -403,7 +403,8 @@ int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
    P4_reg_alloc_t event_list[MAX_COUNTERS], *e;
    hwd_register_t *ptr;
 
-printf("I AM IN P4 allocate registers\n");
+/* printf("I AM IN P4 allocate registers\n"); */
+
    /* not yet successfully mapped, but have enough slots for events */
 
    /* Initialize the local structure needed 
