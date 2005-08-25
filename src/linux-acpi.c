@@ -319,7 +319,7 @@ static int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * b
  */
 /* Register allocation */
 int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
-   int index, i, j, natNum;
+   int i, natNum;
    hwd_reg_alloc_t event_list[MAX_COUNTERS];
 
    /* Initialize the local structure needed
