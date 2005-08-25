@@ -187,7 +187,7 @@ PERFCTR_INC_PATH ?= $(PERFCTR_PREFIX)/include
 PERFCTR_KINC_PATH ?= $(PERFCTR_INC_PATH)
 endif
 
-CFLAGS  += -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) $(NOTLS) -DOS_HEADER=\"$(OS).h\"
+CFLAGS  +=  -Wno-unused-function -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) $(NOTLS) -DOS_HEADER=\"$(OS).h\"
 
 CFLAGS-2.5.4 := -DPERFCTR25
 CFLAGS-2.6.x := -DPERFCTR26
@@ -205,7 +205,7 @@ PERFCTR_OBJS := $(PERFCTR_OBJS-$(VERSION))
 
 MISCHDRS = perfctr-$(CPU).h
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
-ifeq ("p3",$CPU)
+ifeq ("p3",$(CPU))
 MISCSRCS = $(CPU)_events.c perfctr-p4.c linux-acpi.c $(ARCH_SPEC_EVTS)
 else
 MISCSRCS = $(CPU)_events.c p3_events.c perfctr-p3.c linux-acpi.c $(ARCH_SPEC_EVTS)
