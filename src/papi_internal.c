@@ -1091,7 +1091,6 @@ int _papi_hwi_init_global(void)
 int _papi_hwi_init_global_internal(void)
 {
   int retval;
-  int i;
 
   memset(&_papi_hwi_system_info,0x0,sizeof(_papi_hwi_system_info));
 
