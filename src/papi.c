@@ -335,7 +335,8 @@ int PAPI_get_substrate_info(int idx, PAPI_substrate_info_t *info)
      info->initialized = 1;
      info->num_cntrs = _papi_hwi_substrate_info[idx].num_cntrs;
      info->version = _papi_hwi_substrate_info[idx].version; 
-  }     
+  }
+  return(PAPI_OK);
 }
 
 /* PAPI_get_event_info:
@@ -546,7 +547,7 @@ int PAPI_event_code_to_name(int EventCode, char *out)
 
 int PAPI_event_name_to_code(char *in, int *out)
 {
-   int i,retval;
+   int i;
 
    if ((in == NULL) || (out == NULL))
       papi_return(PAPI_EINVAL);
