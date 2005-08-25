@@ -85,12 +85,14 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
 
  int _papi_hwi_derived_type(char *derived);
  int _papi_hwi_derived_string(int type, char *derived, int len);
+ int papi_sizeof(int type, int idx);
+
 
 /* The following PAPI internal functions are defined by the substrate file. */
 
  int _papi_hwd_get_system_info(void);
  int _papi_hwd_init_substrate(papi_vectors_t *vtable, int idx);
- int _papi_hwd_init(hwd_context_t *);
+ VECTOR_STATIC int _papi_hwd_init(hwd_context_t *);
  VECTOR_STATIC void _papi_hwd_init_control_state(hwd_control_state_t * ptr);
  VECTOR_STATIC int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
                                           NativeInfo_t * native, int count, hwd_context_t *);
@@ -109,13 +111,13 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
  VECTOR_STATIC int _papi_hwd_reset(hwd_context_t *, hwd_control_state_t *);
  VECTOR_STATIC int _papi_hwd_stop(hwd_context_t *, hwd_control_state_t *);
  int _papi_hwd_write(hwd_context_t *, hwd_control_state_t *, long_long events[]);
- int _papi_hwd_ctl(hwd_context_t *, int code, _papi_int_option_t * option);
+ VECTOR_STATIC int _papi_hwd_ctl(hwd_context_t *, int code, _papi_int_option_t * option);
  int _papi_hwd_init_global(void);
  VECTOR_STATIC int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold);
  int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold);
  void *_papi_hwd_get_overflow_address(void *context);
  int _papi_hwd_shutdown_global(void);
- int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI);
+ VECTOR_STATIC int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI);
 
 
 #ifdef _WIN32
@@ -124,7 +126,7 @@ void CALLBACK _papi_hwd_timer_callback(UINT wTimerID, UINT msg, DWORD dwUser, DW
                                        DWORD dw2);
 #else
 /* Callback routine for Linux/Unix timers */
-void _papi_hwd_dispatch_timer(int signal, siginfo_t * info, void *tmp);
+VECTOR_STATIC void _papi_hwd_dispatch_timer(int signal, siginfo_t * info, void *tmp);
 #endif
 
 /* The following functions implement the native event query capability
@@ -142,11 +144,11 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * info, void *tmp);
    All six must at least be stubbed in the substrate file. 
 */
 
- int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer);
- char *_papi_hwd_ntv_code_to_name(unsigned int EventCode);
- char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode);
- int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits);
- int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values,
+ VECTOR_STATIC int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer);
+ VECTOR_STATIC char *_papi_hwd_ntv_code_to_name(unsigned int EventCode);
+ VECTOR_STATIC char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode);
+ VECTOR_STATIC int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits);
+ VECTOR_STATIC int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values,
                                       int name_len, int count);
 /* not completely defined yet... I'm partial to using XML -- dkt
     _papi_hwd_ntv_encode();
