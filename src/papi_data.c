@@ -79,22 +79,6 @@ int _papi_hwi_derived_type(char *derived) {
    return(_papi_hwi_derived[j].value);
 }
 
-int papi_sizeof(int type, int idx){
-   switch(type){
-     case HWD_CONTEXT:
-       return(_papi_hwi_substrate_info[idx].context_size);
-     case HWD_REGISTER:
-       return(_papi_hwi_substrate_info[idx].register_size); 
-     case HWD_REG_ALLOC:
-       return(_papi_hwi_substrate_info[idx].reg_alloc_size);
-     case HWD_CONTROL_STATE:
-       return(_papi_hwi_substrate_info[idx].control_state_size);
-     default:
-       return(0);
-   }
-   return(0);
-}
-
 /* _papi_hwi_derived_string:
    Helper routine to extract a derived string from a derived type
    copies derived type string into derived if found,
@@ -111,6 +95,28 @@ int _papi_hwi_derived_string(int type, char *derived, int len) {
    }
    return(PAPI_EINVAL);
 }
+
+/* papi_sizeof:
+   Helper routine to return the size of hardware dependent data structures.
+   These sizes are stored into the substrate info structure by the substrate
+   at initialization.
+*/
+int papi_sizeof(int type, int idx){
+   switch(type){
+     case HWD_CONTEXT:
+       return(_papi_hwi_substrate_info[idx].context_size);
+     case HWD_REGISTER:
+       return(_papi_hwi_substrate_info[idx].register_size); 
+     case HWD_REG_ALLOC:
+       return(_papi_hwi_substrate_info[idx].reg_alloc_size);
+     case HWD_CONTROL_STATE:
+       return(_papi_hwi_substrate_info[idx].control_state_size);
+     default:
+       return(0);
+   }
+   return(0);
+}
+
 
 /********************/
 /*    END GLOBALS   */
