@@ -12,7 +12,8 @@ int main(int argc, char **argv)
    long_long *values;
    char *success;
    int EventSet = PAPI_NULL, ExEventSet=PAPI_NULL;
-   int i, j, event;
+/*   int i, j, event; */
+   int i, event;
    char errstr[PAPI_HUGE_STR_LEN];
    char * evt[] = {"PAPI_FP_INS", "ACPI_TEMP"};
 
