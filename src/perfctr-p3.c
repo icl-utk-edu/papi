@@ -32,6 +32,17 @@
 
 int sidx;
 
+/* Prototypes */
+#ifdef PPC64
+extern int setup_ppc64_presets(int cputype);
+extern int ppc64_setup_vector_table(papi_vectors_t *);
+#else
+extern int setup_p4_presets(int cputype);
+extern int setup_p4_vector_table(papi_vectors_t *, int idx);
+int setup_p3_presets(int cputype);
+int setup_p3_vector_table(papi_vectors_t *);
+#endif
+
 extern int p3_papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer);
 extern char *p3_papi_hwd_ntv_code_to_name(unsigned int EventCode);
 extern char *p3_papi_hwd_ntv_code_to_descr(unsigned int EventCode);
@@ -592,6 +603,7 @@ papi_svector_t _p3_vector_table[] = {
   {(void (*))_papi_hwd_set_domain, VEC_PAPI_HWD_SET_DOMAIN},
   {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
   {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
+  {(void (*)())_papi_hwd_stop_profiling, VEC_PAPI_HWD_STOP_PROFILING},
   {(void (*)())p3_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
   {(void (*)())p3_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
   {(void (*)())p3_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
@@ -712,7 +724,6 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable, int idx)
 {
   int retval;
   struct perfctr_info info;
-  struct vperfctr *dev;
   int is_p4=0;
   int fd;
 
@@ -760,24 +771,21 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable, int idx)
    is_p4 = check_p4(info.cpu_type);
 
    /* Setup presets */
+   strcpy(_papi_hwi_substrate_info[idx].substrate, "$Id$");
 #ifndef PPC64
    if ( is_p4 ){
-     strcpy(_papi_hwi_substrate_info[idx].substrate, "$Id$");
      retval = setup_p4_vector_table(vtable, idx);
-     retval = setup_p4_presets(info.cpu_type);
-     if ( retval )
-       return(retval);
+     if (!retval)
+        retval = setup_p4_presets(info.cpu_type);
    }
    else{
-     strcpy(_papi_hwi_substrate_info[idx].substrate, "$Id$");
      retval = setup_p3_vector_table(vtable);
-     retval = setup_p3_presets(info.cpu_type);
-     if ( retval )
-       return(retval);
+     if (!retval)
+        retval = setup_p3_presets(info.cpu_type);
    }
 #else
         /* Setup native and preset events */
-        retval = ppc64_setup_vector_table(vtable);
+    retval = ppc64_setup_vector_table(vtable);
     if (!retval)
         retval = setup_ppc64_native_table();
     if (!retval)
