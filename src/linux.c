@@ -17,15 +17,6 @@
 
 /* Prototypes */
 int mdi_init();
-#ifdef PPC64
-extern int setup_ppc64_presets(int cputype);
-extern int ppc64_setup_vector_table(papi_vectors_t *);
-#else
-extern int setup_p4_presets(int cputype);
-extern int setup_p4_vector_table(papi_vectors_t *);
-extern int setup_p3_presets(int cputype);
-extern int setup_p3_vector_table(papi_vectors_t *);
-#endif
 
 
 /* This should be in a linux.h header file maybe. */
