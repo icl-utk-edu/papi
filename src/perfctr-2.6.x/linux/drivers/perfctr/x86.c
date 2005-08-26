@@ -68,6 +68,9 @@ struct perfctr_low_ctrs {
 #define MSR_K7_EVNTSEL0		0xC0010000	/* .. 0xC0010003 */
 #define MSR_K7_PERFCTR0		0xC0010004	/* .. 0xC0010007 */
 
+/* AMD K8 */
+#define IS_K8_NB_EVENT(EVNTSEL)	((((EVNTSEL) >> 5) & 0x7) == 0x7)
+
 /* Intel P4, Intel Pentium M */
 #define MSR_IA32_MISC_ENABLE	0x1A0
 #define MSR_IA32_MISC_ENABLE_PERF_AVAIL (1<<7)	/* read-only status bit */
@@ -374,8 +377,10 @@ static void c6_write_control(const struct perfctr_cpu_state *state)
  * - Most events are symmetric, but a few are not.
  */
 
+static int k8_is_multicore;	/* affects northbridge events */
+
 /* shared with K7 */
-static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7)
+static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, int is_global)
 {
 	unsigned int evntsel, i, nractrs, nrctrs, pmc_mask, pmc;
 
@@ -392,6 +397,9 @@ static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7)
 			return -EINVAL;
 		pmc_mask |= (1<<pmc);
 		evntsel = state->control.evntsel[i];
+		/* prevent the K8 multicore NB event clobber erratum */
+		if (!is_global && k8_is_multicore && IS_K8_NB_EVENT(evntsel))
+			return -EPERM;
 		/* protect reserved bits */
 		if (evntsel & P6_EVNTSEL_RESERVED)
 			return -EPERM;
@@ -428,7 +436,7 @@ static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7)
 
 static int p6_check_control(struct perfctr_cpu_state *state, int is_global)
 {
-	return p6_like_check_control(state, 0);
+	return p6_like_check_control(state, 0, is_global);
 }
 
 #ifdef CONFIG_X86_LOCAL_APIC
@@ -569,7 +577,7 @@ static void p6_clear_counters(void)
 
 static int k7_check_control(struct perfctr_cpu_state *state, int is_global)
 {
-	return p6_like_check_control(state, 1);
+	return p6_like_check_control(state, 1, is_global);
 }
 
 #ifdef CONFIG_X86_LOCAL_APIC
@@ -927,7 +935,7 @@ static noinline void redirect_call(void *ra, void *to)
 }
 
 static void (*write_control)(const struct perfctr_cpu_state*);
-/*static*/ noinline void __perfctr_cpu_write_control(const struct perfctr_cpu_state *state)
+static noinline void perfctr_cpu_write_control(const struct perfctr_cpu_state *state)
 {
 	redirect_call(__builtin_return_address(0), write_control);
 	return write_control(state);
@@ -944,14 +952,14 @@ static noinline void perfctr_cpu_read_counters(const struct perfctr_cpu_state *s
 
 #ifdef CONFIG_X86_LOCAL_APIC
 static void (*cpu_isuspend)(struct perfctr_cpu_state*);
-/*static*/ noinline void __perfctr_cpu_isuspend(struct perfctr_cpu_state *state)
+static noinline void perfctr_cpu_isuspend(struct perfctr_cpu_state *state)
 {
 	redirect_call(__builtin_return_address(0), cpu_isuspend);
 	return cpu_isuspend(state);
 }
 
 static void (*cpu_iresume)(const struct perfctr_cpu_state*);
-/*static*/ noinline void __perfctr_cpu_iresume(const struct perfctr_cpu_state *state)
+static noinline void perfctr_cpu_iresume(const struct perfctr_cpu_state *state)
 {
 	redirect_call(__builtin_return_address(0), cpu_iresume);
 	return cpu_iresume(state);
@@ -1030,8 +1038,8 @@ static inline void debug_no_imode(const struct perfctr_cpu_state *state)
 }
 
 #else	/* CONFIG_X86_LOCAL_APIC */
-static inline void __perfctr_cpu_isuspend(struct perfctr_cpu_state *state) { }
-static inline void __perfctr_cpu_iresume(const struct perfctr_cpu_state *state) { }
+static inline void perfctr_cpu_isuspend(struct perfctr_cpu_state *state) { }
+static inline void perfctr_cpu_iresume(const struct perfctr_cpu_state *state) { }
 static inline int check_ireset(const struct perfctr_cpu_state *state) { return 0; }
 static inline void setup_imode_start_values(struct perfctr_cpu_state *state) { }
 static inline void debug_no_imode(const struct perfctr_cpu_state *state) { }
@@ -1070,7 +1078,7 @@ void perfctr_cpu_suspend(struct perfctr_cpu_state *state)
 	struct perfctr_low_ctrs now;
 
 	if (perfctr_cstatus_has_ictrs(state->cstatus))
-	    __perfctr_cpu_isuspend(state);
+	    perfctr_cpu_isuspend(state);
 	perfctr_cpu_read_counters(state, &now);
 	cstatus = state->cstatus;
 	if (perfctr_cstatus_has_tsc(cstatus))
@@ -1084,9 +1092,9 @@ void perfctr_cpu_suspend(struct perfctr_cpu_state *state)
 void perfctr_cpu_resume(struct perfctr_cpu_state *state)
 {
 	if (perfctr_cstatus_has_ictrs(state->cstatus))
-	    __perfctr_cpu_iresume(state);
+	    perfctr_cpu_iresume(state);
 	/* perfctr_cpu_enable_rdpmc(); */	/* not for x86 or global-mode */
-	__perfctr_cpu_write_control(state);
+	perfctr_cpu_write_control(state);
 	//perfctr_cpu_read_counters(state, &state->start);
 	{
 		struct perfctr_low_ctrs now;
@@ -1159,13 +1167,12 @@ static void __init finalise_backpatching(void)
 	cache = get_cpu_cache();
 	memset(cache, 0, sizeof *cache);
 	memset(&state, 0, sizeof state);
-	state.cstatus =
-		(perfctr_info.cpu_features & PERFCTR_FEATURE_PCINT)
-		? __perfctr_mk_cstatus(0, 1, 0, 0)
-		: 0;
-	perfctr_cpu_sample(&state);
-	perfctr_cpu_resume(&state);
-	perfctr_cpu_suspend(&state);
+	if (perfctr_info.cpu_features & PERFCTR_FEATURE_PCINT) {
+		state.cstatus = __perfctr_mk_cstatus(0, 1, 0, 0);
+		perfctr_cpu_sample(&state);
+		perfctr_cpu_resume(&state);
+		perfctr_cpu_suspend(&state);
+	}
 	state.cstatus = 0;
 	perfctr_cpu_sample(&state);
 	perfctr_cpu_resume(&state);
@@ -1341,6 +1348,50 @@ static int __init intel_init(void)
 	return -ENODEV;
 }
 
+/*
+ * Multicore K8s have issues with northbridge events:
+ * 1. The NB is shared between the cores, so two different cores
+ *    in the same node cannot count NB events simultaneously.
+ *    This can be handled by using perfctr_cpus_forbidden_mask to
+ *    restrict NB-using threads to core0 of all nodes.
+ * 2. The initial multicore chips (Revision E) have an erratum
+ *    which causes the NB counters to be reset when either core
+ *    reprograms its evntsels (even for non-NB events).
+ *    This is only an issue because of scheduling of threads, so
+ *    we restrict NB events to the non thread-centric API.
+ *
+ * For now we only implement the workaround for issue 2, as this
+ * also handles issue 1.
+ *
+ * TODO: Detect post Revision E chips and implement a weaker
+ * workaround for them.
+ */
+#ifdef CONFIG_SMP
+static void __init k8_multicore_init_cpu(void *non0cores)
+{
+	unsigned int core_id = cpuid_ebx(1) >> 27;
+	if (core_id != 0)
+		/* We rely on cpu_set() being atomic! */
+		cpu_set(smp_processor_id(), *(cpumask_t*)non0cores);
+}
+
+static void __init k8_multicore_init(void)
+{
+	cpumask_t non0cores;
+
+	cpus_clear(non0cores);
+	smp_call_function(k8_multicore_init_cpu, &non0cores, 1, 1);
+	k8_multicore_init_cpu(&non0cores);
+	if (cpus_empty(non0cores))
+		return;
+	k8_is_multicore = 1;
+	printk(KERN_INFO "perfctr/x86.c: multi-core K8s detected:"
+	       " restricting access to northbridge events\n");
+}
+#else
+#define k8_multicore_init()	do{}while(0)
+#endif
+
 static int __init amd_init(void)
 {
 	static char amd_name[] __initdata = "AMD K7/K8";
@@ -1358,6 +1409,7 @@ static int __init amd_init(void)
 		} else {
 			perfctr_info.cpu_type = PERFCTR_X86_AMD_K8;
 		}
+		k8_multicore_init();
 		break;
 	default:
 		return -ENODEV;

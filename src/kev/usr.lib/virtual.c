@@ -111,9 +111,10 @@ static int vperfctr_open_pid(int pid, struct vperfctr *perfctr)
     int fd, isnew;
     struct perfctr_info info;
 
-    fd = _vperfctr_open_pid_new(pid, 1, 1, &isnew);
+    fd = _vperfctr_open_pid_new(pid, 1, 0, &isnew);
     if( fd < 0 ) {
-	fd = _vperfctr_open_pid_old(pid, 1, 1, &isnew);
+	if (errno != EEXIST)
+	    fd = _vperfctr_open_pid_old(pid, 1, 0, &isnew);
 	if( fd < 0 )
 	    goto out_perfctr;
     }

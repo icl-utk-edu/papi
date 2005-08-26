@@ -3,6 +3,18 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.15, 2005-05-06
+- Added code to detect multicore K8s and prevent threads in the
+  thread-centric API from using northbridge events. This avoids
+  resource conflicts, and an erratum in Revision E chips.
+- #undef MMCR0_PMXE in ppc_compat.h, to avoid macro redefinition
+  complaints in 2.6 kernels.
+
+Version 2.6.14, 2005-04-09
+- x86: Reverted the workaround in perfctr-2.6.13 for the problem
+  that gcc-4.0 snapshots appeared to ignore 'noinline' on static
+  functions, as recent gcc-4.0 prereleases seem to work correctly.
+
 Version 2.6.13, 2005-02-13
 - global.c: Allow user-space to disable the in-kernel sampling
   timer by setting interval_usec == 0 in the START command.
