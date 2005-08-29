@@ -1,3 +1,7 @@
+2005-08-26  maynardj
+	* ctests/test_utils.c
+		Fix infinite loop possibility in add_two_events
+
 2005-08-15  maynardj
         * configure.in
         * config.h.in

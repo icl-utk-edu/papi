@@ -518,11 +518,11 @@ int add_two_events(int *num_events, int *papi_event,
       PAPI_get_event_info(potential_evt_to_add[i][0], &info);
       if (info.count == 1 || !strcmp(info.derived, "DERIVED_CMPD")) {
 	simple_event_found = 1;
-      } else {
-	i++;
-         }
       }
-   }
+    }
+    if (!simple_event_found)
+      i++;
+  }
   if (simple_event_found) {
     *papi_event = potential_evt_to_add[i][0];
     *mask =  potential_evt_to_add[i][1] | MASK_TOT_CYC;
