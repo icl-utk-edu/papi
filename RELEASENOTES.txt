@@ -1,27 +1,107 @@
 ===============================================================================
-PAPI 3.0.8 RELEASE NOTES                                            02 Mar 2005
+PAPI 3.1.0 RELEASE NOTES                                            30 Aug 2005
 ===============================================================================
 
-This file documents the changes since the PAPI 3.0.7 release.
+This file documents the changes since the PAPI 3.0.8 release.
 For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 
 For specific and detailed information on changes made in this release, grep
-the ChangeLogP308.txt file for keywords of interest or go directly to the PAPI
+the ChangeLogP310.txt file for keywords of interest or go directly to the PAPI
 cvs tree.
 
 
 GENERAL NOTES
 ===============================================================================
-This is a maintenance release for PAPI 3.
-It contains a number of Bug fixes and feature enhancements, 
-as documented below.
+This is an intermediate release for PAPI 3.
+It introduces some significant restructuring that may not be extensively tested
+on all platforms. If you notice strange behavior on your platform, consider
+falling back to the PAPI 3.0.8 release.
+This release also includes support for new platforms and contains a number of 
+bug fixes, as documented below.
 
 As always, if you identify strange behavior or demonstrable bugs, please
 contact the PAPI team or one of the PAPI development lists.
 
 And visit the PAPI website for the latest updates:
 http://icl.cs.utk.edu/papi/
+
+CHANGES IN PAPI 3.1.0 SINCE PAPI 3.0.8
+===============================================================================
+New Platforms:
+-------------
+- Introduced substrates for Linux/POWER4/POWER5/PPC970
+- perfctr 2.7.x added to support above substrates
+- Introduced preliminary support for Cray XT3 Catamount/Opteron
+
+Major Issues:
+-------------
+- Retstructured interface between hardware independent layer and substrates to
+  isolate the interface. This is the first step in componentizing PAPI to allow
+  support for multiple simultaneous substrates.
+  	
+Bug Fixes:
+----------
+- Modifications to make genpapifdef independent of libpapi.
+  This should make it easier to implement on platforms like RedStorm and BGL
+  where the compute node is different from the compile node.
+- Modified Matlab support for Pentium M SSE flops counting
+- Added java support for mem_info
+- ctests/test_utils.c:
+  Modified add_two_events() to do_the_right_thing (TM).
+  Submitted by Maynard Johnson of IBM.
+- Fixed a bug in AIX 5.2.0.30 pmapi that causes failures in pm_init
+  for complex mpi programs. Thanks to Bernd Kallies.
+- Fixed various fopen and dlopen problems on aix and solaris
+- All strings now use PAPI definitions that match their 
+  declarations in papi.h, no more PATH_MAX
+- linux.c: New version of update_SHLIB_info that now does the 'right' thing on
+  all systems including IA64, PPC/32/64 and x86, x86_64.
+- linux.c: BSS is now deprecated!
+- various fixes to libpfm 3 for Itanium
+
+Enhancements:
+-------------
+- perfctr 2.7.x added to support above substrates
+- perfctr 2.6.15 support added
+- Addition of papi memory calls.  This allows papi to track memory
+  and free up all memory in a shutdown call.  All calls should now
+  be papi_free, papi_malloc, papi_realloc and papi_calloc
+  By default papi tracks memory and frees things up.  If:
+  PAPI_DEBUG_MEMORY is defined then in addition it tracks where the
+  memory was allocated from and if there is a memory leak at shutdown
+  prints out the file and line it came from and how many bytes it was.
+  Grep the change log for 'PAPI_DEBUG_MEMORY' for more details.
+- Added two new entry points to the API:
+		- PAPI_set_event_info() is symmetric with PAPI_get_event_info().
+		  It allows a user to add or modify the definition of a preset event for a given platform.
+		  The scope of the modification is only for the duration of that invokation of PAPI.
+		- PAPI_encode_events() reads a csv (comma separated values) file containing
+		  event definition information and loads it into the preset table.
+		  In conjunction with a decode utility, this provides the user (or toolmaker) with
+		  the ability to support custom event definitions or overrides on specific platforms.
+- Two new tests to exercise the new APIs introduced to PAPI.
+		encode.c exercises PAPI_set_event_info
+		encode2.c exercises PAPI_encode_events
+		Both require properly formatted csv files to function.
+		See utils/decode to create such files.
+			* utils/decode.c 1.1:
+- New utility that uses PAPI_get_event_info() to create csv formatted output
+		suitable for use by PAPI_encode_events().
+		Such output can be viewed and edited in a csv-compatible spreadsheet,
+		such as Excel, an can be used as input to the encode and encode2 test programs.
+
+
+Experimental:
+-------------
+- Added substrate support for the Linux ACPI interface
+- Added substrate support for the Myricom MX network card interface
+- Added optional support for XML definition of events on PIII only.
+  This feature is off by default and may never make it to a release.
+
+Known Bugs:
+-----------
+
 
 CHANGES IN PAPI 3.0.8 SINCE PAPI 3.0.7
 ===============================================================================
