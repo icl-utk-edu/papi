@@ -205,8 +205,8 @@ PERFCTR_OBJS := $(PERFCTR_OBJS-$(VERSION))
 
 MISCHDRS = perfctr-$(CPU).h
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
-ifeq ("p3",$(CPU))
-MISCSRCS = $(CPU)_events.c perfctr-p4.c linux-acpi.c $(ARCH_SPEC_EVTS)
+ifeq (p3,$(CPU))
+MISCSRCS = $(CPU)_events.c p4_events.c perfctr-p4.c linux-acpi.c $(ARCH_SPEC_EVTS)
 else
 MISCSRCS = $(CPU)_events.c p3_events.c perfctr-p3.c linux-acpi.c $(ARCH_SPEC_EVTS)
 endif
