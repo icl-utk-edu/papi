@@ -12,7 +12,7 @@
 #include "libperfctr.h"
 #include "perfctr-p3.h"
 
-native_event_entry_t *native_table;
+native_event_entry_t *p3_native_table;
 hwi_search_t *preset_search_map;
 
 /* Note:  MESI (Intel) and MOESI (AMD) bits are programmatically defined
@@ -2746,9 +2746,9 @@ static inline void internal_decode_event(unsigned int EventCode, int *event, int
 static char *internal_translate_code(int event, int moesi, char *str, char *separator)
 {
    if (*separator == '_') /* implied flag for name */
-      strcpy(str, native_table[event].name);
+      strcpy(str, p3_native_table[event].name);
    else
-      strcpy(str, native_table[event].description);
+      strcpy(str, p3_native_table[event].description);
 
    // do a sanity check for valid mask bits
    if (!moesi)
@@ -2760,7 +2760,7 @@ static char *internal_translate_code(int event, int moesi, char *str, char *sepa
    if (*separator == '_') { /* implied flag for name */
       if (moesi & MOESI_M) strcat(str, "M");
       if (moesi & MOESI_O) {
-         if (native_table[event].resources.selector & HAS_MOESI) strcat(str, "O");
+         if (p3_native_table[event].resources.selector & HAS_MOESI) strcat(str, "O");
          else strcat(str, "M");
       }
       if (moesi & MOESI_E) strcat(str, "E");
@@ -2770,7 +2770,7 @@ static char *internal_translate_code(int event, int moesi, char *str, char *sepa
    else {
       if (moesi & MOESI_M) strcat(str, " Modified");
       if (moesi & MOESI_O) {
-         if (native_table[event].resources.selector & HAS_MOESI) strcat(str, " Owner");
+         if (p3_native_table[event].resources.selector & HAS_MOESI) strcat(str, " Owner");
          else strcat(str, " Modified");
       }
       if (moesi & MOESI_E) strcat(str, " Exclusive");
@@ -2788,7 +2788,7 @@ char *p3_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 
    internal_decode_event(EventCode, &event, &moesi);
    if (!moesi)
-      return (native_table[event].name);
+      return (p3_native_table[event].name);
    else {
       return (internal_translate_code(event, moesi, name, "_"));
    }
@@ -2802,7 +2802,7 @@ char *p3_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 
    internal_decode_event(EventCode, &event, &moesi);
    if (!moesi)
-      return (native_table[event].description);
+      return (p3_native_table[event].description);
    else {
       return (internal_translate_code(event, moesi, description, ". Cache bits:"));
    }
@@ -2818,10 +2818,10 @@ int p3_papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
    unsigned int event, moesi;
 
    internal_decode_event(EventCode, &event, &moesi);
-   if(native_table[event].resources.selector == 0) {
+   if(p3_native_table[event].resources.selector == 0) {
       return (PAPI_ENOEVNT);
    }
-   *bits = native_table[event].resources;
+   *bits = p3_native_table[event].resources;
    bits->counter_cmd |= moesi; /* OR MOESI bits into command */
    return (PAPI_OK);
 }
@@ -2837,20 +2837,20 @@ int p3_papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
    moesi += MOESI_I; /* increment by smallest step size */
 
    /* for AMD processors, 5 bits are valid */
-   if (native_table[event].resources.selector & HAS_MOESI) {
+   if (p3_native_table[event].resources.selector & HAS_MOESI) {
       if (moesi <= MOESI_ALL) {
          *EventCode = (event | PAPI_NATIVE_MASK) + moesi;
          return (PAPI_OK);
       }
    }
    /* for Intel processors, only 4 bits are valid */
-   else if (native_table[event].resources.selector & HAS_MESI) {
+   else if (p3_native_table[event].resources.selector & HAS_MESI) {
       if (!(moesi & MOESI_M)) { /* never set top bit */
          *EventCode = (event | PAPI_NATIVE_MASK) + moesi;
          return (PAPI_OK);
       }
    }
-   if (native_table[event + 1].resources.selector) {
+   if (p3_native_table[event + 1].resources.selector) {
       *EventCode = (event | PAPI_NATIVE_MASK) + 1;
       return (PAPI_OK);
    } else {
