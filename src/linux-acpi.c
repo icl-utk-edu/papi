@@ -17,7 +17,7 @@ enum native_name {
    PNE_ACPI_TEMP,
 };
 
-native_event_entry_t native_table[] = {
+static native_event_entry_t native_table[] = {
     {{ 1, "/proc/stat"},
     "ACPI_STAT",
     "kernel statistics"
