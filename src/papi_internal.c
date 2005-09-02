@@ -203,7 +203,7 @@ static void initialize_EventInfoArray(EventSetInfo_t * ESI)
 static void initialize_NativeInfoArray(EventSetInfo_t * ESI)
 {
    int i,sz = papi_sizeof(HWD_REGISTER, ESI->SubstrateIndex);
-   char *ptr = (char *) (ESI->NativeInfoArray+(_papi_hwi_substrate_info[ESI->SubstrateIndex].num_cntrs*sizeof(NativeInfo_t)));
+   char *ptr = (((char *)ESI->NativeInfoArray)+(_papi_hwi_substrate_info[ESI->SubstrateIndex].num_cntrs*sizeof(NativeInfo_t)));
 
    for (i = 0; i < _papi_hwi_substrate_info[ESI->SubstrateIndex].num_cntrs; i++) {
       ESI->NativeInfoArray[i].ni_event = -1;
