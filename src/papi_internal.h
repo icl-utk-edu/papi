@@ -195,10 +195,10 @@ typedef struct _EventInfo {
  */
 
 typedef struct _NativeInfo {
-   int ni_event;                /* native event code; always non-zero unless empty */
-   int ni_position;             /* counter array position where this native event lives */
-   int ni_owners;               /* specifies how many owners share this native event */
    void * ni_bits;      /* Substrate defined resources used by this native event hwd_register_t*/
+   int ni_event;        /* native event code; always non-zero unless empty */
+   int ni_position;     /* counter array position where this native event lives */
+   int ni_owners;       /* specifies how many owners share this native event */
 } NativeInfo_t;
 
 
