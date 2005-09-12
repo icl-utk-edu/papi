@@ -7,7 +7,6 @@ SUBSTR  = linux-ia64
 MEMSUBSTR= linux-ia64
 LIBS	= static shared
 TARGETS = serial multiplex_and_pthreads shared
-OS = linux
 
 #
 # GNU G77/GCC section
@@ -54,9 +53,9 @@ VERSION ?= 3.x
 endif
 endif
 	
-OPTFLAGS	+= -DDEBUG -g 
+OPTFLAGS	+= -O3 # -DDEBUG -g
 FFLAGS        	+= -Dlinux -DITANIUM$(CPU)
-TOPTFLAGS	+= -g  
+TOPTFLAGS	+= -O  
 FTOPTFLAGS	= $(TOPTFLAGS)
 
 #
@@ -96,7 +95,7 @@ CFLAGS += $(CFLAGS-$(VERSION))
 PFM_OBJS := $(PFM_OBJS-$(VERSION))  
 
 MISCHDRS = pfmwrap.h
-MISCSRCS = 
+MISCSRCS = #linux.c
 SHLIBDEPS = -L$(PFM_LIB_PATH) -lpfm
 MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
 
@@ -111,6 +110,9 @@ endif
 
 $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
 	ar xv $<
+
+linux.o: linux.c
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
 
 native_clean:
 ifeq (,${PFM_PREFIX})
