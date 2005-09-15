@@ -15,9 +15,12 @@
    about UltraSparc II and UltraSparc III, then the man pages
    about cpc_take_sample(cpc_event_t *event)
 */
+#define IN_SUBSTRATE
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "solaris-ultra.h"
+#include "papi_protos.h"
 #include "papi_vector.h"
 #include "papi_memory.h"
 
@@ -28,6 +31,8 @@
 #endif
 
 #define MAX_ENAME 40
+
+static int sidx;
 
 static void action(void *arg, int regno, const char *name, uint8_t bits);
 
@@ -123,9 +128,11 @@ static void dispatch_emt(int signal, siginfo_t * sip, void *arg)
 {
    int event_counter;
    _papi_hwi_context_t ctx;
+   caddr_t pc;
 
    ctx.si = sip;
    ctx.ucontext = arg;
+   pc = GET_OVERFLOW_ADDRESS(&ctx);
 
    SUBDBG("%d, %p, %p\n",signal,sip,arg);
 
@@ -151,7 +158,7 @@ static void dispatch_emt(int signal, siginfo_t * sip, void *arg)
 	}
 
       event_counter = ESI->overflow.event_counter;
-      sample = &(ESI->machdep.counter_cmd);
+      sample = &(((hwd_control_state_t *)ESI->machdep)->counter_cmd);
 
       /* GROSS! This is a hack to 'push' the correct values 
          back into the hardware, such that when PAPI handles
@@ -211,7 +218,7 @@ static void dispatch_emt(int signal, siginfo_t * sip, void *arg)
       }
 
       /* Call the regular overflow function in extras.c */
-      _papi_hwi_dispatch_overflow_signal(&ctx, NULL, overflow_vector, 0, &thread);
+      _papi_hwi_dispatch_overflow_signal(&ctx, NULL, overflow_vector, 0, &thread, pc, 0);
 
 #if DEBUG
       dump_cmd(sample);
@@ -350,7 +357,7 @@ static int set_granularity(hwd_control_state_t * this_state, int domain)
 /* Utility functions */
 
 /* This is a wrapper arount fprintf(stderr,...) for cpc_walk_events() */
-void print_walk_names(void *arg, int regno, const char *name, uint8_t bits)
+static void print_walk_names(void *arg, int regno, const char *name, uint8_t bits)
 {
    SUBDBG(arg, regno, name, bits);
 }
@@ -413,12 +420,12 @@ static int get_system_info(void)
       SUBDBG("cpuver (==%d) <= CPC_ULTRA2 (==%d)\n", cpuver, CPC_ULTRA2);
       pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT;
       pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT;
-      _papi_hwi_system_info.supports_hw_overflow = 0;
+      _papi_hwi_substrate_info[0].supports_hw_overflow = 0;
    } else if (cpuver <= LASTULTRA3) {
       SUBDBG("cpuver (==%d) <= CPC_ULTRA3x (==%d)\n", cpuver, LASTULTRA3);
       pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT;
       pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT;
-      _papi_hwi_system_info.supports_hw_overflow = 1;
+      _papi_hwi_substrate_info[0].supports_hw_overflow = 1;
    } else
       return (PAPI_ESBSTR);
 
@@ -502,9 +509,9 @@ static int get_system_info(void)
    retval = cpc_getnpic(cpuver);
    if (retval < 1)
       return (PAPI_ESBSTR);
-   _papi_hwi_system_info.num_gp_cntrs = retval;
-   _papi_hwi_system_info.num_cntrs = retval;
-   SUBDBG("num_cntrs = %d\n", _papi_hwi_system_info.num_cntrs);
+   _papi_hwi_substrate_info[0].num_gp_cntrs = retval;
+   _papi_hwi_substrate_info[0].num_cntrs = retval;
+   SUBDBG("num_cntrs = %d\n", _papi_hwi_substrate_info[0].num_cntrs);
 
    /* program text segment, data segment  address info */
 /*
@@ -517,8 +524,13 @@ static int get_system_info(void)
 */
 
    /* Setup presets */
+  _papi_hwi_substrate_info[0].context_size  = sizeof(hwd_context_t);
+  _papi_hwi_substrate_info[0].register_size = sizeof(hwd_register_t);
+  _papi_hwi_substrate_info[0].reg_alloc_size = sizeof(hwd_reg_alloc_t);
+  _papi_hwi_substrate_info[0].control_state_size =sizeof(hwd_control_state_t);
 
-   retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
+
+   retval = _papi_hwi_setup_all_presets(preset_search_map, NULL, sidx);
    if (retval)
       return (retval);
 
@@ -700,7 +712,7 @@ add_preset(hwi_search_t *tab, int *np, einfo_t e)
     ++*np;
 }
 
-void
+static void
 action(void *arg, int regno, const char *name, uint8_t bits)
 {
     int i;
@@ -790,9 +802,12 @@ papi_svector_t _solaris_ultra_table[] = {
 };
 #endif
 
-int _papi_hwd_init_substrate(papi_vectors_t *vtable)
+
+int _papi_hwd_init_substrate(papi_vectors_t *vtable, int idx)
 {
    int retval;
+
+   sidx = idx;
 
 #ifndef PAPI_NO_VECTOR
    retval = _papi_hwi_setup_vector_table(vtable, _solaris_ultra_table);
@@ -815,7 +830,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 }
 
 /* reset the hardware counter */
-int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
+static int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {
    int retval;
 
@@ -831,7 +846,7 @@ int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 }
 
 
-int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long ** events, int flags)
+static int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long ** events, int flags)
 {
    int retval;
 
@@ -844,44 +859,49 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **
    return PAPI_OK;
 }
 
-int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
+static int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
 
    switch (code) {
    case PAPI_DEFDOM:
-      return (set_default_domain(&option->domain.ESI->machdep, option->domain.domain));
+      return (set_default_domain(option->domain.ESI->machdep, option->domain.domain));
    case PAPI_DOMAIN:
-      return (set_domain(&option->domain.ESI->machdep, option->domain.domain));
+      return (set_domain(option->domain.ESI->machdep, option->domain.domain));
    case PAPI_DEFGRN:
       return (set_default_granularity
-              (&option->domain.ESI->machdep, option->granularity.granularity));
+              (option->domain.ESI->machdep, option->granularity.granularity));
    case PAPI_GRANUL:
       return (set_granularity
-              (&option->granularity.ESI->machdep, option->granularity.granularity));
+              (option->granularity.ESI->machdep, option->granularity.granularity));
    default:
       return (PAPI_EINVAL);
    }
 }
 
-int _papi_hwd_shutdown_global(void)
+static int _papi_hwd_shutdown_global(void)
 {
    (void) cpc_rele();
    return (PAPI_OK);
 }
 
-void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
+static void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
 {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *t = NULL;
+   caddr_t pc;
+
 
    ctx.si = si;
    ctx.ucontext = info;
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, 0, 0, &t);
+
+   pc = GET_OVERFLOW_ADDRESS(&ctx);
+
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, 0, 0, &t, pc, 0);
 }
 
-int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
+static int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
-   hwd_control_state_t *this_state = &ESI->machdep;
+   hwd_control_state_t *this_state = ESI->machdep;
    papi_cpc_event_t *arg = &this_state->counter_cmd;
    int hwcntr;
 
@@ -915,7 +935,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    return (PAPI_OK);
 }
 
-int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
+static int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {
    int retval;
 
@@ -933,24 +953,24 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
    return (PAPI_OK);
 }
 
-int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
+static int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {
    cpc_bind_event(NULL, 0);
    return PAPI_OK;
 }
 
-int _papi_hwd_remove_event(hwd_register_map_t * chosen, unsigned int hardware_index,
+static int _papi_hwd_remove_event(hwd_register_map_t * chosen, unsigned int hardware_index,
                            hwd_control_state_t * out)
 {
    return PAPI_OK;
 }
 
-int _papi_hwd_encode_native(char *name, int *code)
+static int _papi_hwd_encode_native(char *name, int *code)
 {
    return (PAPI_OK);
 }
 
-int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
+static int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 {
    int index = *EventCode & PAPI_NATIVE_AND_MASK;
 
@@ -970,7 +990,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
    return (PAPI_ENOEVNT);
 }
 
-char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
+static char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
    int nidx;
 
@@ -980,7 +1000,7 @@ char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
    return NULL;
 }
 
-char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
+static char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
    return (_papi_hwd_ntv_code_to_name(EventCode));
 }
@@ -992,7 +1012,7 @@ static void copy_value(unsigned int val, char *nam, char *names, unsigned int *v
    names[len-1] = 0;
 }
 
-int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
+static int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                unsigned int *values, int name_len, int count)
 {
    int i = 0;
@@ -1002,7 +1022,7 @@ int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
    return(++i);
 }
 
-int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
+static int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 {
    int index = EventCode & PAPI_NATIVE_AND_MASK;
 
@@ -1021,19 +1041,19 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
    return(PAPI_OK);
 }
 
-void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
+static void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 {
    ptr->counter_cmd.flags = 0x0;
    ptr->counter_cmd.cmd.ce_cpuver = cpuver;
    ptr->counter_cmd.cmd.ce_pcr = 0x0;
    ptr->counter_cmd.cmd.ce_pic[0] = 0;
    ptr->counter_cmd.cmd.ce_pic[1] = 0;
-   set_domain(ptr, _papi_hwi_system_info.default_domain);
-   set_granularity(ptr, _papi_hwi_system_info.default_granularity);
+   set_domain(ptr, _papi_hwi_substrate_info[0].default_domain);
+   set_granularity(ptr, _papi_hwi_substrate_info[0].default_granularity);
    return;
 }
 
-int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
+static int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
                     NativeInfo_t * native, int count, hwd_context_t * zero)
 {
    int nidx1, nidx2, hwcntr;
@@ -1124,27 +1144,27 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    return (PAPI_OK);
 }
 
-long_long _papi_hwd_get_real_usec(void)
+static long_long _papi_hwd_get_real_usec(void)
 {
    return ((long_long) gethrtime() / (long_long) 1000);
 }
 
-long_long _papi_hwd_get_real_cycles(void)
+static long_long _papi_hwd_get_real_cycles(void)
 {
    return(_papi_hwd_get_real_usec() * (long_long) _papi_hwi_system_info.hw_info.mhz);
 }
 
-long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
+static long_long _papi_hwd_get_virt_usec(hwd_context_t * zero)
 {
    return ((long_long) gethrvtime() / (long_long) 1000);
 }
 
-long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
+static long_long _papi_hwd_get_virt_cycles(hwd_context_t * zero)
 {
    return (((long_long) gethrvtime() / (long_long) 1000) * (long_long) _papi_hwi_system_info.hw_info.mhz);
 }
 
-int _papi_hwd_update_shlib_info(void)
+static int _papi_hwd_update_shlib_info(void)
 {
    /*??? system call takes very long */
 

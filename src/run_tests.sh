@@ -7,7 +7,8 @@
 # Mods:    Kevin London
 #          london@cs.utk.edu
 
-export AIXTHREAD_SCOPE=S
+# The export below breaks Solaris, this needs to be fixed somehow
+#export AIXTHREAD_SCOPE=S
 if [ "X$1" = "X-v" ]; then
   shift ; TESTS_QUIET=""
 else

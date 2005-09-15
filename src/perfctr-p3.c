@@ -148,7 +148,7 @@ int setup_p3_presets(int cputype) {
    case PERFCTR_X86_INTEL_PIII:
       p3_native_table = &_papi_hwd_p3_native_map;
 #ifdef XML
-      return(_xml_papi_hwi_setup_all_presets("Pent III", NULL));
+      return(_xml_papi_hwi_setup_all_presets("Pent III", NULL,sidx));
       break;
 #endif
       preset_search_map = &_papi_hwd_p3_preset_map;
