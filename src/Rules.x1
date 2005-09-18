@@ -1,6 +1,7 @@
 LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
 SUBSTR  = x1
+OS      = unicosmp
 MSUBSTR  = x1
 MEMSUBSTR= unicosmp
 LIBS	= static  

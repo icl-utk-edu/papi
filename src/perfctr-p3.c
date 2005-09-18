@@ -658,7 +658,7 @@ static void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context)
    /* We are done, resume interrupting counters */
 
    if (isHardware) {
-      if (vperfctr_iresume(((hwd_context_t *)master->context)->perfctr) < 0) {
+      if (vperfctr_iresume(((hwd_context_t *)master->context[sidx])->perfctr) < 0) {
          PAPIERROR("vperfctr_iresume errno %d",errno);
       }
    }
