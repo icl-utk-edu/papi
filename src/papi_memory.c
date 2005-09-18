@@ -35,7 +35,7 @@ void insert_mem_ptr(pmem_t *);
 
 
 pmem_t * get_mem_ptr(void * ptr){
-  pmem_t **tmp_ptr = (pmem_t **) (ptr - sizeof(void *));
+  pmem_t **tmp_ptr = (pmem_t **) ((char*)ptr - sizeof(void *));
   pmem_t *mem_ptr;
 
   if ( !tmp_ptr || !ptr ) return(NULL);
@@ -58,12 +58,12 @@ void *_papi_realloc(char *file, int line, void *ptr, int size){
   if ( !ptr ) return(_papi_malloc(file, line, size));
 
   mem_ptr = get_mem_ptr(ptr);
-  nptr = (pmem_t *) realloc((ptr-sizeof(void*)), nsize);
+  nptr = (pmem_t *) realloc(((char *)ptr-sizeof(void*)), nsize);
 
   if ( !nptr ) return(NULL);
 
   mem_ptr->size = size;
-  mem_ptr->ptr = nptr+sizeof(void*);
+  mem_ptr->ptr = (char *)nptr+sizeof(void*);
 #ifdef PAPI_DEBUG_MEMORY
   strncpy(mem_ptr->file, file, DEBUG_FILE_LEN);
   mem_ptr->file[DEBUG_FILE_LEN-1] = '\0';
@@ -120,7 +120,7 @@ void *_papi_malloc(char *file, int line, int size){
 
   if ( !ptr ) return(NULL);
   else{
-    if ( (mem_ptr = init_mem_ptr(ptr+sizeof(void *),size,file,line))==NULL) {
+    if ( (mem_ptr = init_mem_ptr((char *)ptr+sizeof(void *),size,file,line))==NULL) {
       free(ptr);
       return(NULL);
     }    
