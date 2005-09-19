@@ -27,9 +27,9 @@
 #define inline_static static
 
 #ifdef MSP
-#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(ctx->ucontext[0].uc_mcontext.scontext[CTX_EPC])
+#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t) (((hwd_ucontext_t *)(ctx.ucontext))[0].uc_mcontext.scontext[CTX_EPC]);
 #else
-#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(ctx->ucontext[0].uc_mcontext.scontext[CTX_EPC])
+#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t) (((hwd_ucontext_t *)(ctx.ucontext))[0].uc_mcontext.scontext[CTX_EPC]);
 #endif
 
 extern int _etext[], _ftext[];

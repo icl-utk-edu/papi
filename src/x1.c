@@ -185,7 +185,7 @@ static long_long _papi_hwd_get_real_cycles(void)
  * This function should return the highest resolution processor timer available
  * in usecs.
  */
-static long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
+static long_long _papi_hwd_get_virt_usec(hwd_context_t * zero)
 {
    long_long retval;
    struct tms buffer;
@@ -197,7 +197,7 @@ static long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
    return (retval);
 }
 
-static long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
+static long_long _papi_hwd_get_virt_cycles(hwd_context_t * zero)
 {
    return (_papi_hwd_get_virt_usec(zero) * (long_long)_papi_hwi_system_info.hw_info.mhz);
 }
@@ -578,16 +578,21 @@ static void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
 {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *t = NULL;
+   caddr_t pc;
+   hwd_ucontext_t tmp;
 
    SUBDBG("si: %x\n", si);
    ctx.si = si;
    ctx.ucontext = info;
+
+   pc = GET_OVERFLOW_ADDRESS(ctx);
+
    if ( si ) {
       SUBDBG("Dispatching overflow signal for counter mask: 0x%x\n", si->si_overflow);
-      _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long_long) si->si_overflow, 0, &t);
+      _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long_long) si->si_overflow, 0, &t, pc, 0);
    }
    else { /* Software overflow */
-      _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long_long) 0, 0, &t);
+      _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long_long) 0, 0, &t, pc, 0);
    }
 }
 
@@ -809,7 +814,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable, int idx)
 
    _papi_hwd_init_preset_search_map();
 
-   retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
+   retval = _papi_hwi_setup_all_presets(preset_search_map, NULL, sidx);
 
    lock_init();
    
