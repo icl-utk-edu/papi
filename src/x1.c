@@ -16,7 +16,7 @@
 #include "papi_vector.h"
 
 static int sidx;
-mutexlock_t lck[PAPI_MAX_LOCK];
+mutexlock_t x1_lck[PAPI_MAX_LOCK];
 
 /*
  * This function has to set the bits needed to count different domains
@@ -748,7 +748,7 @@ static void lock_init(void)
 {
    int i;
    for ( i=0; i<PAPI_MAX_LOCK;i++)
-      init_lock(&lck[i]);
+      init_lock(&x1_lck[i]);
 }
 
 papi_svector_t _unicosmp_x1_table[] = {

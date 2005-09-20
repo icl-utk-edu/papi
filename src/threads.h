@@ -66,7 +66,7 @@ inline_static int _papi_hwi_unlock(int lck)
   if (_papi_hwi_thread_id_fn)
     {
       THRDBG("Unlock %d\n",lck);
-      _papi_hwd_unlock(lck);
+       _papi_hwd_unlock(lck); 
     }
   else 
     { 

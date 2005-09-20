@@ -42,11 +42,8 @@ extern int _fbss[], _end[];
  * spin (busywait) or be suspended until the lock becomes available.
  * I will try that first and check the performance and load -KSL
  */
-extern mutexlock_t lck[PAPI_MAX_LOCK];
+extern mutexlock_t x1_lck[PAPI_MAX_LOCK];
 /* This needs to be fixed */
-/*#define _papi_hwd_lock(idx) {spin_lock(&lck[idx]);}
-#define _papi_hwd_unlock(idx) {release_lock(&lck[idx]);}
-*/
-#define _papi_hwd_lock(idx) ;
-#define _papi_hwd_unlock(idx) ;
+#define _papi_hwd_lock(idx) {spin_lock(&x1_lck[idx]);}
+#define _papi_hwd_unlock(idx) {release_lock(&x1_lck[idx]);}
 #endif
