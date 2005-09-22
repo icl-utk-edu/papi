@@ -1,0 +1,12 @@
+MAKEVER   = @MAKEVER@
+PREFIX    = @prefix@
+PMAPI     = @PMAPI@
+PAPI_DATADIR    =@datadir@
+NOTLS     = @NOTLS@
+ALTIX	  = @altix@
+# PFM_PREFIX= @pfm_prefix@
+# PFM	  = @pfm@
+# PERFCTR_PREFIX= @perfctr_prefix@
+# PERFCTR	  = @perfctr@
+
+include ./Makefile.$(MAKEVER)

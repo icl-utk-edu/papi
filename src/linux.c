@@ -3,6 +3,8 @@
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
+* Mods:    Maynard Johnson
+*          maynardj@us.ibm.com
 * Mods:    <your name here>
 *          <your email address>
 */
@@ -449,9 +451,12 @@ int _papi_hwd_get_system_info(void)
    /* All of this information maybe overwritten by the substrate */ 
 
    /* MHZ */
-
+   rewind(f);
+   s = search_cpu_info(f, "clock", maxargs);
+   if (!s) {
    rewind(f);
    s = search_cpu_info(f, "cpu MHz", maxargs);
+   }
    if (s)
       sscanf(s + 1, "%f", &mhz);
    _papi_hwi_system_info.hw_info.mhz = mhz;

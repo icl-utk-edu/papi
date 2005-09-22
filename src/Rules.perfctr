@@ -1,0 +1,272 @@
+# File: Rules.perfctr
+# Mods: Maynard Johnson
+#       maynardj@us.ibm.com
+
+# $Id$
+
+DESCR   = "Linux with PerfCtr $(VERSION) patch and library"
+LIBRARY = libpapi.a
+SHLIB   = libpapi.so
+SUBSTR  = perfctr-$(CPU)
+MSUBSTR = linux-perfctr-$(CPU)
+
+ifneq (,$(findstring ppc,$(CPU_TYPE)))
+MEMSUBSTR = linux-ppc64
+#LDFLAGS = -lpthread
+else
+MEMSUBSTR = linux
+endif
+
+LIBS    = static shared
+TARGETS = serial multiplex_and_pthreads shared
+
+#
+# GNU G77/GCC section
+#
+
+# Ideally, the else clause should specify -m64, but
+# since most makefiles that need -m32 don't currently
+# specify 'BITS=32', we can't do this without also
+# changing those makefiles.
+ifeq (32,$(BITS))
+F77   		= g77 -m32 -Wall
+CC		= gcc -m32 -Wall
+else
+F77   		= g77 -Wall
+CC		= gcc -Wall
+endif
+CC_R    	= $(CC) -pthread
+CC_SHR		= $(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
+GCCVER3		= $(shell gcc -v 2>&1 | grep version | cut -f3 -d" " | grep "^3")
+FFLAGS		= -ffixed-line-length-132
+ifeq (,$(GCCVER3))
+OPTFLAGS	= 
+else
+GCCVER33	= $(shell gcc -v 2>&1 | tail -n 1 | grep version | cut -f3 -d" " | cut -f2 -d"." | grep "^3")
+ifeq (,$(GCCVER33))
+OPTFLAGS	= $(GCC3ARGS)
+else
+OPTFLAGS	= $(GCC3ARGS)
+endif
+endif
+
+ARCH		:= $(shell uname -m | grep x86_64)
+ifeq (x86_64,$(ARCH))
+ifneq (32,$(BITS))
+SHRFLAGS		:= -fPIC
+LIB_SUFFIX		:= 64
+endif
+endif
+
+# 
+# Portland Group section
+# 
+
+ifeq (PGROUP, $(COMPILER))
+F77       = pgf77
+CC	  = pgcc
+FFLAGS    = 
+OPTFLAGS  =
+TARGETS	  += omp
+endif
+
+# 
+# Pathscale Group PGF77 section
+# 
+
+ifeq (PATHSCALE, $(COMPILER))
+F77       = pathf90
+CC	  = pathcc
+CC_R      = pathcc
+FFLAGS    = 
+OPTFLAGS  =
+endif
+
+#
+#  Linux for PowerPC64/32 section
+#
+ARCH            := $(shell uname -m | grep ppc)
+ifeq ($(ARCH),ppc64)
+ifeq (32,$(BITS))
+F77             = g77 -m32 -Wall
+CC              = gcc -m32 -Wall
+else
+F77             = g77 -m64 -Wall
+CC              = gcc -m64 -Wall
+endif
+CFLAGS 		+= -DPPC64
+LIB_SUFFIX	:= 64
+PLATFORM 	:= $(ARCH)
+ARCH_SPEC_EVTS	:= $(ARCH_EVENTS)_map.c
+else
+ifeq ($(ARCH),ppc)
+F77             = g77 -Wall
+CC              = gcc -Wall
+PLATFORM 	:= $(ARCH)
+else
+ARCH_SPEC_EVTS	:=
+PLATFORM 	:= x86
+endif
+endif
+
+#
+#  Intel compilers
+#
+
+ifeq (INTEL, $(COMPILER))
+IFCVER7  = $(shell ifc -V 2>&1 | grep "Version 7")
+ifneq (,$(IFCVER7))
+F77      = ifc
+LDFLAGS  = -Vaxlib
+else
+F77      = ifort
+endif
+CC	 = icc
+CC_R	 = $(CC) -pthread
+CC_SHR	 = $(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
+OMPCFLGS = -openmp
+OPTFLAGS = -ip
+FFLAGS   = -132
+TARGETS	 += omp
+endif
+
+ifeq ($(ARCH),ppc64)
+#Workaround to gcc bug (see gcc bug #20611)
+OPTFLAGS        += -O2 $(EVENTFLAGS)
+else
+OPTFLAGS	+= -O3 $(EVENTFLAGS)
+endif
+
+FFLAGS        	+= -Dlinux $(FARGS)
+TOPTFLAGS	+= -O  
+FTOPTFLAGS	= $(TOPTFLAGS)
+
+#
+# DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
+#
+
+ifeq (,$(PERFCTR_PREFIX))
+PERFCTR ?= ./perfctr-$(VERSION)
+PERFCTR_LIB_PATH ?= $(PERFCTR)/usr.lib
+PERFCTR_INC_PATH ?= $(PERFCTR)/usr.lib
+PERFCTR_KINC_PATH ?= $(PERFCTR)/linux/include
+else
+ifeq (x86_64,$(ARCH))
+ifneq (32,$(BITS))
+# Early perfctrs didn't put stuff into lib64
+DUMMY	:= $(shell ls $(PERFCTR_PREFIX)/lib64/libperfctr.so 2> /dev/null)
+ifeq (,${DUMMY})
+     PERFCTR_LIB_SUFFIX	:= 
+else
+     PERFCTR_LIB_SUFFIX := 64
+endif
+else
+     PERFCTR_LIB_SUFFIX := 
+endif
+else
+     PERFCTR_LIB_SUFFIX := 
+endif
+PERFCTR_LIB_PATH ?= $(PERFCTR_PREFIX)/lib$(PERFCTR_LIB_SUFFIX)
+PERFCTR_INC_PATH ?= $(PERFCTR_PREFIX)/include
+PERFCTR_KINC_PATH ?= $(PERFCTR_INC_PATH)
+endif
+
+CFLAGS  += -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) $(NOTLS)
+
+CFLAGS-2.6.x := -DPERFCTR26
+CFLAGS-2.7.x := $(CFLAGS-2.6.x)
+
+PERFCTR_OBJS-2.4.5 := libperfctr.o
+PERFCTR_OBJS-2.4.x := $(PERFCTR_OBJS-2.4.5)
+PERFCTR_OBJS-2.6.x := marshal.o global.o misc.o virtual.o $(PLATFORM).o
+PERFCTR_OBJS-2.7.x := misc.o virtual.o $(PLATFORM).o
+
+CFLAGS	+= $(CFLAGS-$(VERSION))
+PERFCTR_OBJS := $(PERFCTR_OBJS-$(VERSION))
+
+MISCHDRS = perfctr-$(CPU).h
+SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
+MISCSRCS =  $(CPU)_events.c linux.c $(ARCH_SPEC_EVTS)
+MISCOBJS = $(PERFCTR_OBJS) $(MISCSRCS:.c=.o) 
+
+#Dynamic linking loader needs correct version of libperfctr
+ifeq ($(VERSION),2.7.x)
+SO_ABIVER=6
+else
+ifeq ($(VERSION),2.6.x)
+i386_ABIVER=5
+x86_64_ABIVER=6
+ppc_ABIVER=5
+SO_ABIVER=$($(ARCH)_ABIVER)
+endif
+endif
+POST_BUILD = cp $(PERFCTR_LIB_PATH)/libperfctr.so .;ln -s libperfctr.so libperfctr.so.$(SO_ABIVER)
+SPECIAL_REMOVE = rm -f libperfctr.so*
+
+include Makefile.inc
+
+$(PERFCTR_LIB_PATH)/libperfctr.a:
+ifeq (,${PERFCTR_PREFIX})
+ifneq (,$(findstring ppc,$(ARCH)))
+	$(MAKE) CC='$(CC)' -C $(PERFCTR)
+else
+ifneq (32,${BITS})
+	$(MAKE) -C $(PERFCTR)
+else
+	$(MAKE) CC="gcc -m32 -U__i386__ -D__x86_64__" LD_FLAGS="-melf_i386" -C $(PERFCTR)
+endif
+endif
+else
+	@echo '$@ not installed!'; exit 1
+endif
+
+$(PERFCTR_OBJS): $(PERFCTR_LIB_PATH)/libperfctr.a
+	ar xv $<
+
+$(CPU)_events.o: $(CPU)_events.c $(CONFIG_HEADER)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPU)_events.c -o $@
+linux.o: linux.c
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $^ -o $@
+
+$(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $^ -o $@
+
+native_clean:
+ifeq (,${PERFCTR_PREFIX})
+	$(MAKE) -C $(PERFCTR) clean
+endif
+
+native_install: perfctr_install arch_specific_install
+
+perfctr_install:
+ifeq (,${PERFCTR_PREFIX})
+ifeq (${VERSION},2.4.x)
+	cp -p $(PERFCTR)/usr.lib/libperfctr.so $(PREFIX)/lib$(LIB_SUFFIX)
+	cp -p $(PERFCTR)/usr.lib/event_codes.h $(PREFIX)/include
+	cp -p $(PERFCTR)/usr.lib/libperfctr.h  $(PREFIX)/include
+else
+ifeq (32,${BITS})
+ifeq (p3,${CPU})
+	$(MAKE) -C $(PERFCTR) PREFIX=$(PREFIX) ARCH="i386" install
+else
+ifeq (p4,${CPU})
+	$(MAKE) -C $(PERFCTR) PREFIX=$(PREFIX) ARCH="i386" install
+endif
+# PPC test will go here
+endif
+else
+	$(MAKE) -C $(PERFCTR) PREFIX=$(PREFIX) install
+endif
+endif
+endif
+
+arch_specific_install:
+ifeq ($(ARCH),ppc64)
+	mkdir -p $(PAPI_DATADIR)
+	cp -Rf ./event_data $(PAPI_DATADIR)
+endif
+
+native_clobber:
+ifeq (,${PFM_PREFIX})
+	$(MAKE) -C $(PERFCTR) distclean
+endif
