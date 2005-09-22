@@ -21,7 +21,18 @@
 
 /* PAPI stuff */
 
-#ifdef PERFCTR26
+#ifdef __CATAMOUNT__
+#ifndef PERFCTR25
+#define PERFCTR25
+#endif
+#include <asm/cpufunc.h>
+#endif
+
+#if defined(PERFCTR26)
+#define PERFCTR_CPU_NAME(pi)    perfctr_info_cpu_name(pi)
+#define PERFCTR_CPU_NRCTRS(pi)  perfctr_info_nrctrs(pi)
+
+#elif defined(PERFCTR25)
 #define PERFCTR_CPU_NAME   perfctr_info_cpu_name
 #define PERFCTR_CPU_NRCTRS perfctr_info_nrctrs
 #else
@@ -31,26 +42,33 @@
 
 #include "papi.h"
 #include "papi_internal.h"
-//guanglei
-#include "perfctr-ppc32.h"
 
-//guanglei
-int sem_set;
-
-extern hwi_search_t _papi_hwd_ppc750_preset_map;
-extern native_event_entry_t _papi_hwd_ppc750_native_map;
-extern hwi_search_t _papi_hwd_ppc7450_preset_map;
-extern native_event_entry_t _papi_hwd_ppc7450_native_map;
-
+extern hwi_search_t _papi_hwd_p3_preset_map;
+extern hwi_search_t _papi_hwd_pm_preset_map;
+extern hwi_search_t _papi_hwd_p2_preset_map;
+extern hwi_search_t _papi_hwd_ath_preset_map;
+extern hwi_search_t _papi_hwd_opt_preset_map;
 extern hwi_search_t *preset_search_map;
+extern native_event_entry_t _papi_hwd_p3_native_map;
+extern native_event_entry_t _papi_hwd_pm_native_map;
+extern native_event_entry_t _papi_hwd_p2_native_map;
+extern native_event_entry_t _papi_hwd_k7_native_map;
+extern native_event_entry_t _papi_hwd_k8_native_map;
 extern native_event_entry_t *native_table;
 extern papi_mdi_t _papi_hwi_system_info;
 
+#ifdef _WIN32
+CRITICAL_SECTION lock[PAPI_MAX_LOCK];
+#else
 volatile unsigned int lock[PAPI_MAX_LOCK];
-static long long tsc_to_cpu_mult = 0;
+#endif
 
 #ifdef DEBUG
+#if _WIN32
+void print_control(const struct pmc_cpu_control *control) {
+#else
 void print_control(const struct perfctr_cpu_control *control) {
+#endif
   unsigned int i;
 
    SUBDBG("Control used:\n");
@@ -58,38 +76,96 @@ void print_control(const struct perfctr_cpu_control *control) {
    SUBDBG("nractrs\t\t\t%u\n", control->nractrs);
    SUBDBG("nrictrs\t\t\t%u\n", control->nrictrs);
    for (i = 0; i < (control->nractrs + control->nrictrs); ++i) {
-     SUBDBG("pmc_map[%u]\t\t%u\n", i, control->pmc_map[i]);
-     SUBDBG("evntsel[%u]\t\t0x%08X\n", i, control->evntsel[i]);
-     if (control->ireset[i])
+      if (control->pmc_map[i] >= 18) {
+         SUBDBG("pmc_map[%u]\t\t0x%08X\n", i, control->pmc_map[i]);
+      } else {
+         SUBDBG("pmc_map[%u]\t\t%u\n", i, control->pmc_map[i]);
+      }
+      SUBDBG("evntsel[%u]\t\t0x%08X\n", i, control->evntsel[i]);
+      if (control->ireset[i])
          SUBDBG("ireset[%u]\t%d\n", i, control->ireset[i]);
    }
 }
 #endif
 
-inline_static void xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type, int *vendor, char *str) {
+inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
    switch (perfctr_cpu_type) {
-   case PERFCTR_PPC_750:
-   case PERFCTR_PPC_7400:
-   case PERFCTR_PPC_7450:
-      *vendor = PAPI_VENDOR_IBM;
-      strcpy(str,"IBM");
-      break;
+   case PERFCTR_X86_INTEL_P5:
+   case PERFCTR_X86_INTEL_P5MMX:
+   case PERFCTR_X86_INTEL_P6:
+   case PERFCTR_X86_INTEL_PII:
+   case PERFCTR_X86_INTEL_PIII:
+   case PERFCTR_X86_INTEL_P4:
+   case PERFCTR_X86_INTEL_P4M2:
+#ifdef PERFCTR_X86_INTEL_P4M3
+   case PERFCTR_X86_INTEL_P4M3:
+#endif
+#ifdef PERFCTR_X86_INTEL_PENTM
+   case PERFCTR_X86_INTEL_PENTM:
+#endif
+      return (PAPI_VENDOR_INTEL);
+#ifdef PERFCTR_X86_AMD_K8
+   case PERFCTR_X86_AMD_K8:
+#endif
+#ifdef PERFCTR_X86_AMD_K8C
+   case PERFCTR_X86_AMD_K8C:
+#endif
+   case PERFCTR_X86_AMD_K7:
+      return (PAPI_VENDOR_AMD);
+   case PERFCTR_X86_CYRIX_MII:
+      return (PAPI_VENDOR_CYRIX);
    default:
-     break;
+      return (PAPI_VENDOR_UNKNOWN);
    }
 }
 
 /* Assign the global native and preset table pointers, find the native
    table's size in memory and then call the preset setup routine. */
-
-static int setup_ppc32_presets(int cputype) {
+inline_static int setup_p3_presets(int cputype) {
    switch (cputype) {
-   case PERFCTR_PPC_750:
-      native_table = &_papi_hwd_ppc750_native_map;
-      preset_search_map = &_papi_hwd_ppc750_preset_map;
-   case PERFCTR_PPC_7450:
-      native_table = &_papi_hwd_ppc7450_native_map;
-      preset_search_map = &_papi_hwd_ppc7450_preset_map;
+   case PERFCTR_X86_GENERIC:
+   case PERFCTR_X86_CYRIX_MII:
+   case PERFCTR_X86_WINCHIP_C6:
+   case PERFCTR_X86_WINCHIP_2:
+   case PERFCTR_X86_VIA_C3:
+   case PERFCTR_X86_INTEL_P5:
+   case PERFCTR_X86_INTEL_P5MMX:
+   case PERFCTR_X86_INTEL_PII:
+      native_table = &_papi_hwd_p2_native_map;
+      preset_search_map = &_papi_hwd_p2_preset_map;
+      break;
+   case PERFCTR_X86_INTEL_P6:
+   case PERFCTR_X86_INTEL_PIII:
+      native_table = &_papi_hwd_p3_native_map;
+      preset_search_map = &_papi_hwd_p3_preset_map;
+      break;
+#ifdef PERFCTR_X86_INTEL_PENTM
+   case PERFCTR_X86_INTEL_PENTM:
+      native_table = &_papi_hwd_pm_native_map;
+      preset_search_map = &_papi_hwd_pm_preset_map;
+      break;
+#endif
+   case PERFCTR_X86_AMD_K7:
+      native_table = &_papi_hwd_k7_native_map;
+      preset_search_map = &_papi_hwd_ath_preset_map;
+      break;
+
+#ifdef PERFCTR_X86_AMD_K8 /* this is defined in perfctr 2.5.x */
+   case PERFCTR_X86_AMD_K8:
+      native_table = &_papi_hwd_k8_native_map;
+      preset_search_map = &_papi_hwd_opt_preset_map;
+      break;
+#endif
+#ifdef PERFCTR_X86_AMD_K8C  /* this is defined in perfctr 2.6.x */
+   case PERFCTR_X86_AMD_K8C:
+      native_table = &_papi_hwd_k8_native_map;
+      preset_search_map = &_papi_hwd_opt_preset_map;
+      break;
+#endif
+
+   default:
+     PAPIERROR(MODEL_ERROR);
+     return(PAPI_ESBSTR);
    }
    return (_papi_hwi_setup_all_presets(preset_search_map, NULL));
 }
@@ -112,12 +188,10 @@ static int mdi_init()
    return (PAPI_OK);
 }
 
-///guanglei:  pay attention
 void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
-   int i; 
-   //int def_mode;
+   int i, def_mode;
 
-/*   switch(_papi_hwi_system_info.default_domain) {
+   switch(_papi_hwi_system_info.default_domain) {
    case PAPI_DOM_USER:
       def_mode = PERF_USR;
       break;
@@ -131,23 +205,39 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
       PAPIERROR("BUG! Unknown domain %d, using PAPI_DOM_USER",_papi_hwi_system_info.default_domain);
       def_mode = PERF_USR;
       break;
-   } */
+   }
    ptr->allocated_registers.selector = 0;
-   ////guanglei note_lgl pay attention here
    switch (_papi_hwi_system_info.hw_info.model) {
-#ifdef PERFCTR26
-   case PERFCTR_PPC_750:
+   case PERFCTR_X86_GENERIC:
+   case PERFCTR_X86_CYRIX_MII:
+   case PERFCTR_X86_WINCHIP_C6:
+   case PERFCTR_X86_WINCHIP_2:
+   case PERFCTR_X86_VIA_C3:
+   case PERFCTR_X86_INTEL_P5:
+   case PERFCTR_X86_INTEL_P5MMX:
+   case PERFCTR_X86_INTEL_PII:
+   case PERFCTR_X86_INTEL_P6:
+   case PERFCTR_X86_INTEL_PIII:
+#ifdef PERFCTR_X86_INTEL_PENTM
+   case PERFCTR_X86_INTEL_PENTM:
 #endif
-/*      ptr->control.cpu_control.evntsel[0] |= PERF_ENABLE;
+      ptr->control.cpu_control.evntsel[0] |= PERF_ENABLE;
       for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
          ptr->control.cpu_control.evntsel[i] |= def_mode;
          ptr->control.cpu_control.pmc_map[i] = i;
       }
-	  */
-	   for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
-		   ptr->control.cpu_control.evntsel[i] = 0;
-		   ptr->control.cpu_control.pmc_map[i] = 0;
-	   }
+      break;
+#ifdef PERFCTR_X86_AMD_K8
+   case PERFCTR_X86_AMD_K8:
+#endif
+#ifdef PERFCTR_X86_AMD_K8C
+   case PERFCTR_X86_AMD_K8C:
+#endif
+   case PERFCTR_X86_AMD_K7:
+      for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
+         ptr->control.cpu_control.evntsel[i] |= PERF_ENABLE | def_mode;
+         ptr->control.cpu_control.pmc_map[i] = i;
+      }
       break;
    }
    /* Make sure the TSC is always on */
@@ -185,36 +275,90 @@ int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain) {
       return(PAPI_OK);
 }
 
-//guanglei  use lock_init from any-null
-#if 0
+#ifdef _WIN32
+
+static void lock_init(void)
+{
+   int i;
+   for (i = 0; i < PAPI_MAX_LOCK; i++) {
+      InitializeCriticalSection(&lock[i]);
+   }
+}
+
+static void lock_release(void)
+{
+   int i;
+   for (i = 0; i < PAPI_MAX_LOCK; i++) {
+      DeleteCriticalSection(&lock[i]);
+   }
+}
+
+HANDLE pmc_dev;	// device handle for kernel driver
+
+/* At init time, the higher level library should always allocate and 
+   reserve EventSet zero. */
+int _papi_hwd_init_global(void) {
+   int retval;
+
+   /* Initialize outstanding values in machine info structure */
+   if (mdi_init() != PAPI_OK) {
+      return (PAPI_ESBSTR);
+   }
+
+   /* Fill in what we can of the papi_system_info. */
+   retval = _papi_hwd_get_system_info();
+   if (retval != PAPI_OK)
+      return (retval);
+
+   /* Setup presets */
+   retval = setup_p3_presets(_papi_hwi_system_info.hw_info.model);
+   if (retval)
+      return (retval);
+
+   /* Setup memory info */
+   retval =
+       _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info, (int) _papi_hwi_system_info.hw_info.vendor);
+   if (retval)
+      return (retval);
+
+   lock_init();
+
+   return (PAPI_OK);
+}
+
+int _papi_hwd_init(hwd_context_t *ctx)
+{
+   /* Initialize our thread/process pointer. */
+   if ((ctx->self = pmc_dev = pmc_open()) == NULL) {
+      PAPIERROR("pmc_open() returned NULL"); 
+      return(PAPI_ESYS);
+   }
+   SUBDBG("_papi_hwd_init pmc_open() = %p\n", ctx->self);
+
+   /* Linux makes sure that each thread has a virtualized TSC here.
+      This makes no sense on Windows, since the counters aren't
+      saved at context switch.
+   */
+
+   return(PAPI_OK);
+}
+
+/* Called once per process. */
+int _papi_hwd_shutdown_global(void) {
+  pmc_close(pmc_dev);
+  lock_release();
+   return (PAPI_OK);
+}
+
+#else
+
 static void lock_init(void) {
    int i;
    for (i = 0; i < PAPI_MAX_LOCK; i++) {
       lock[i] = MUTEX_OPEN;
    }
 }
-#else // guanglei from any-null
-static int lock_init(void) 
-{
-   int retval, i;
-  	union semun val; 
-	val.val=1;
-   if ((retval = semget(IPC_PRIVATE,PAPI_MAX_LOCK,0666)) == -1)
-     {
-       PAPIERROR("semget errno %d",errno); return(PAPI_ESYS);
-     }
-   sem_set = retval;
-   for (i=0;i<PAPI_MAX_LOCK;i++)
-     {
-       if ((retval = semctl(sem_set,i,SETVAL,val)) == -1)
-	 {
-	   PAPIERROR("semctl errno %d",errno); return(PAPI_ESYS);
-	 }
-     }
-   return(PAPI_OK);
-}
 
-#endif
 /* At init time, the higher level library should always allocate and 
    reserve EventSet zero. */
 
@@ -238,7 +382,6 @@ int _papi_hwd_init_global(void)
    close(fd);
    if (retval < 0)
      { PAPIERROR(VINFO_ERROR); return(PAPI_ESYS); }
-   tsc_to_cpu_mult = info.tsc_to_cpu_mult;
 
    /* Initialize outstanding values in machine info structure */
 
@@ -247,7 +390,6 @@ int _papi_hwd_init_global(void)
    }
 
    /* Fill in what we can of the papi_system_info. */
-
    retval = _papi_hwd_get_system_info();
    if (retval != PAPI_OK)
       return (retval);
@@ -264,20 +406,31 @@ int _papi_hwd_init_global(void)
    _papi_hwi_system_info.num_cntrs = PERFCTR_CPU_NRCTRS(&info);
    _papi_hwi_system_info.num_gp_cntrs = PERFCTR_CPU_NRCTRS(&info);
    _papi_hwi_system_info.hw_info.model = info.cpu_type;
-   xlate_cpu_type_to_vendor(info.cpu_type, &_papi_hwi_system_info.hw_info.vendor, _papi_hwi_system_info.hw_info.vendor_string);
+   _papi_hwi_system_info.hw_info.vendor = xlate_cpu_type_to_vendor(info.cpu_type);
+
+#ifdef __CATAMOUNT__
+   if (strstr(info.driver_version,"2.5") != info.driver_version) {
+      fprintf(stderr,"Version mismatch of perfctr: compiled 2.5 or higher vs. installed %s\n",info.driver_version);
+      return(PAPI_ESBSTR);
+    }
+  _papi_hwi_system_info.supports_hw_profile = 0;
+  _papi_hwi_system_info.hw_info.mhz = (float) info.cpu_khz / 1000.0; 
+  SUBDBG("Detected MHZ is %f\n",_papi_hwi_system_info.hw_info.mhz);
+#endif
 
    /* Setup presets */
-
-   retval = setup_ppc32_presets(info.cpu_type);
+   retval = setup_p3_presets(info.cpu_type);
    if (retval)
       return (retval);
 
    /* Setup memory info */
-
    retval =
-       _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info, info.cpu_type);
+       _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info, (int) info.cpu_type);
    if (retval)
       return (retval);
+
+    SUBDBG("_papi_hwd_init_global vperfctr_close(%p)\n", dev);
+    vperfctr_close(dev);
 
     lock_init();
 
@@ -308,6 +461,7 @@ int _papi_hwd_shutdown_global(void) {
    return (PAPI_OK);
 }
 
+#endif /* _WIN32 */
 
 /* This function examines the event to determine
     if it can be mapped to counter ctr.
@@ -369,9 +523,12 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
       for counter allocation and optimization. */
    natNum = ESI->NativeCount;
    for(i = 0; i < natNum; i++) {
-      index = ESI->NativeInfoArray[i].ni_event & PAPI_NATIVE_AND_MASK;
-      event_list[i].ra_bits = native_table[index].resources;
-      event_list[i].ra_selector = event_list[i].ra_bits.selector;
+      /* retrieve the mapping information about this native event */
+      _papi_hwd_ntv_code_to_bits(ESI->NativeInfoArray[i].ni_event, &event_list[i].ra_bits);
+
+      /* make sure register allocator only looks at legal registers */
+      event_list[i].ra_selector = event_list[i].ra_bits.selector & ALLCNTRS;
+
       /* calculate native event rank, which is no. of counters it can live on */
       event_list[i].ra_rank = 0;
       for(j = 0; j < MAX_COUNTERS; j++) {
@@ -392,7 +549,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
       return 0;
 }
 
-static void clear_control_state(hwd_control_state_t *this_state) {
+static void clear_cs_events(hwd_control_state_t *this_state) {
    int i,j;
 
    /* total counters is sum of accumulating (nractrs) and interrupting (nrictrs) */
@@ -401,8 +558,9 @@ static void clear_control_state(hwd_control_state_t *this_state) {
    /* Remove all counter control command values from eventset. */
    for (i = 0; i < j; i++) {
       SUBDBG("Clearing pmc event entry %d\n", i);
-      this_state->control.cpu_control.pmc_map[i] = 0;
-      this_state->control.cpu_control.evntsel[i] = this_state->control.cpu_control.evntsel[i] & (PERF_OS|PERF_USR);
+      this_state->control.cpu_control.pmc_map[i] = i;
+      this_state->control.cpu_control.evntsel[i] 
+         = this_state->control.cpu_control.evntsel[i] & (PERF_ENABLE|PERF_OS|PERF_USR);
       this_state->control.cpu_control.ireset[i] = 0;
    }
 
@@ -414,94 +572,70 @@ static void clear_control_state(hwd_control_state_t *this_state) {
 /* This function clears the current contents of the control structure and 
    updates it with whatever resources are allocated for all the native events
    in the native info structure array. */
-
 int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
                                    NativeInfo_t *native, int count, hwd_context_t * ctx) {
    int i;
-   int pos_pmc_map=0;
 
-   /* clear out everything currently coded */
-   clear_control_state(this_state);
+   /* clear out the events from the control state */
+   clear_cs_events(this_state);
 
    /* fill the counters we're using */
-   _papi_hwd_init_control_state(this_state);
-
-   SUBDBG("adding %d native events\n",count);
-   for (i = 0; i < count; i++) 
-     {
-       SUBDBG("event %d, counter_cmd 0x%x, selector 0x%x\n",i,native[i].ni_bits.counter_cmd,native[i].ni_bits.selector);
-
+   for (i = 0; i < count; i++) {
       /* Add counter control command values to eventset */
-       this_state->control.cpu_control.evntsel[i] |= native[i].ni_bits.counter_cmd;
-
-	  if(native[i].ni_bits.selector == CNTR1) {
-		  this_state->control.cpu_control.pmc_map[i]=0;
-		  pos_pmc_map |= CNTR1;
-	  }
-	  if(native[i].ni_bits.selector == CNTR2) {
-		  this_state->control.cpu_control.pmc_map[i]=1;
-		  pos_pmc_map |= CNTR2;
-	  }
-	  if(native[i].ni_bits.selector == CNTR3) {
-		  this_state->control.cpu_control.pmc_map[i]=2;
-		  pos_pmc_map |= CNTR3;
-	  }
-	  if(native[i].ni_bits.selector == CNTR4) {
-		  this_state->control.cpu_control.pmc_map[i]=3;
-		  pos_pmc_map |= CNTR4;
-	  }
-	  if(native[i].ni_bits.selector == CNTR5) {
-		  this_state->control.cpu_control.pmc_map[i]=4;
-		  pos_pmc_map |= CNTR5;
-	  }
-	  if(native[i].ni_bits.selector == CNTR6) {
-		  this_state->control.cpu_control.pmc_map[i]=5;
-		  pos_pmc_map |= CNTR6;
-	  }
+      this_state->control.cpu_control.evntsel[i] |= native[i].ni_bits.counter_cmd;
    }
-
-   if (_papi_hwi_system_info.hw_info.model == PERFCTR_PPC_7450)
-     {
-       for(i=0; i< count; i++) {
-	 int l;
-	 if(native[i].ni_bits.selector == ALLCNTRS_PPC7450)  {
-	   if(pos_pmc_map == ALLCNTRS_PPC7450) 
-	     return PAPI_EINVAL;
-	   for(l=0; l<6; l++)  {
-	     if( !(pos_pmc_map & (1<<(l)) ) )  {
-	       this_state->control.cpu_control.pmc_map[i] = l;
-	       pos_pmc_map |= (1<<l);
-	       break;
-	     }
-	   }
-	 }
-       }
-     }
-   else if (_papi_hwi_system_info.hw_info.model == PERFCTR_PPC_750)
-     {
-       for(i=0; i< count; i++) {
-	 int l;
-	 if(native[i].ni_bits.selector == ALLCNTRS_PPC750)  {
-	   if(pos_pmc_map == ALLCNTRS_PPC750) 
-	     return PAPI_EINVAL;
-	   for(l=0; l<6; l++)  {
-	     if( !(pos_pmc_map & (1<<(l)) ) )  {
-	       this_state->control.cpu_control.pmc_map[i] = l;
-	       pos_pmc_map |= (1<<l);
-	       break;
-	     }
-	   }
-	 }
-       }
-     }
-
    this_state->control.cpu_control.nractrs = count;
-
-   print_control(&this_state->control.cpu_control);
-
    return (PAPI_OK);
 }
 
+
+#ifdef _WIN32
+
+/* Collected wisdom indicates that each call to pmc_set_control will write 0's
+    into the hardware counters, effecting a reset operation.
+*/
+int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * spc) {
+   int error;
+   struct pmc_control *ctl = (struct pmc_control *)(spc->control.cpu_control.evntsel);
+
+   /* clear the accumulating counter values */
+   memset((void *)spc->state.sum.pmc, 0, _papi_hwi_system_info.num_cntrs * sizeof(long_long) );
+   if((error = pmc_set_control(ctx->self, ctl)) < 0) {
+      SUBDBG("pmc_set_control returns: %d\n", error);
+      { PAPIERROR( "pmc_set_control() returned < 0"); return(PAPI_ESYS); }
+   }
+#ifdef DEBUG
+   print_control(&spc->control.cpu_control);
+#endif
+   return (PAPI_OK);
+}
+
+int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
+  /* Since Windows counts system-wide (no counter saves at context switch)
+      and since PAPI 3 no longer merges event sets, this function doesn't
+      need to do anything in the Windows version.
+  */
+   return(PAPI_OK);
+}
+
+int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** dp, int flags) {
+   pmc_read_state(_papi_hwi_system_info.num_cntrs, &spc->state);
+   *dp = (long_long *) spc->state.sum.pmc;
+#ifdef DEBUG
+   {
+      if (ISLEVEL(DEBUG_SUBSTRATE)) {
+         unsigned int i;
+         for(i = 0; i < spc->control.cpu_control.nractrs; i++) {
+            SUBDBG("raw val hardware index %d is %lld\n", i,
+                   (long_long) spc->state.sum.pmc[i]);
+         }
+      }
+   }
+#endif
+   return (PAPI_OK);
+}
+
+#else
 
 int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * state) {
    int error;
@@ -521,7 +655,7 @@ int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
    return(PAPI_OK);
 }
 
-int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** dp,  int flags) {
+int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** dp, int flags) {
    if ( flags & PAPI_PAUSED ) {
      int i,j=0;
      for ( i=0;i<spc->control.cpu_control.nractrs+spc->control.cpu_control.nrictrs; i++) {
@@ -549,6 +683,8 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** 
    return (PAPI_OK);
 }
 
+#endif /* _WIN32 */
+
 int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *cntrl) {
    return(_papi_hwd_start(ctx, cntrl));
 }
@@ -556,6 +692,47 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *cntrl) {
 int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long * from) {
    return(PAPI_ESBSTR);
 }
+
+#ifdef _WIN32
+
+int _papi_hwd_shutdown(hwd_context_t * ctx) {
+   int retval = 0;
+//   retval = vperfctr_unlink(ctx->self);
+   SUBDBG("_papi_hwd_shutdown vperfctr_unlink(%p) = %d\n", ctx->self, retval);
+   pmc_close(ctx->self);
+   SUBDBG("_papi_hwd_shutdown vperfctr_close(%p)\n", ctx->self);
+   memset(ctx, 0x0, sizeof(hwd_context_t));
+
+   if(retval)
+      return(PAPI_ESYS);
+   return(PAPI_OK);
+}
+
+
+void CALLBACK _papi_hwd_timer_callback(UINT wTimerID, UINT msg, 
+        DWORD dwUser, DWORD dw1, DWORD dw2) 
+{
+    _papi_hwi_context_t ctx;
+    CONTEXT	context;	// processor specific context structure
+    HANDLE	threadHandle;
+    BOOL	error;
+    ThreadInfo_t *t = NULL;
+
+   ctx.ucontext = &context;
+
+   // dwUser is the threadID passed by timeSetEvent
+    // NOTE: This call requires W2000 or later
+    threadHandle = OpenThread(THREAD_GET_CONTEXT, FALSE, dwUser);
+
+    // retrieve the contents of the control registers only
+    context.ContextFlags = CONTEXT_CONTROL;
+    error = GetThreadContext(threadHandle, &context);
+    CloseHandle(threadHandle);
+
+    // pass a void pointer to cpu register data here
+    _papi_hwi_dispatch_overflow_signal((void *)(&ctx), NULL, 0, 0, &t); 
+}
+#else
 
 /* This routine is for shutting down threads, including the
    master thread. */
@@ -578,10 +755,13 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context) {
 
    ctx.si = si;
    ctx.ucontext = (ucontext_t *)context;
-
+#ifdef __CATAMOUNT__
+   isHardware = 1;
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, &isHardware, 0, 1, &master);
+#else
    _papi_hwi_dispatch_overflow_signal((void *) &ctx, &isHardware, 
                                       si->si_pmc_ovf_mask, 0, &master);
-
+#endif
    /* We are done, resume interrupting counters */
    if (isHardware) {
       if (vperfctr_iresume(master->context.perfctr) < 0) {
@@ -589,6 +769,8 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context) {
       }
    }
 }
+
+#endif /* _WIN32 */
 
 /* Perfctr requires that interrupting counters appear at the end of the pmc list
    In the case a user wants to interrupt on a counter in an evntset that is not
@@ -632,6 +814,13 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
    hwd_control_state_t *this_state = &ESI->machdep;
    struct hwd_pmc_control *contr = &this_state->control;
    int i, ncntrs, nricntrs = 0, nracntrs = 0, retval = 0;
+
+#ifdef __CATAMOUNT__
+   if(contr->cpu_control.nrictrs) { 
+      OVFDBG("Catamount can't overflow on more than one event.\n");
+      return PAPI_EINVAL;
+   }
+#endif
 
    OVFDBG("EventIndex=%d\n", EventIndex);
 
@@ -691,6 +880,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
    return (retval);
 }
 
+
 int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold) {
    /* This function is not used and shouldn't be called. */
    return (PAPI_ESBSTR);
@@ -718,30 +908,55 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 
 /* Low level functions, should not handle errors, just return codes. */
 
-inline_static long_long get_cycles(void) {
-	unsigned long tbl=0;
-	unsigned long tbu=0;
-	unsigned long long res=0;
-	asm volatile("mftb %0" : "=r" (tbl));
-	asm volatile("mftbu %0" : "=r" (tbu));
-	res=tbu;
-	res = (res << 32) | tbl;
-	return res;
+#ifdef _WIN32
+inline_static long_long get_cycles (void)
+{
+   __asm rdtsc		// Read Time Stamp Counter
+   // This assembly instruction places the 64-bit value in edx:eax
+   // Which is exactly where it needs to be for a 64-bit return value...
+}
+#else
+#ifdef __x86_64__
+static __inline__ long_long get_cycles(void)
+{
+	unsigned int low, high;
+	__asm __volatile("rdtsc" : "=a" (low), "=d" (high));
+	return (low | ((long_long)high << 32));
 }
 
+#else
+inline_static long_long get_cycles(void)
+{
+	long_long ret;
+   __asm__ __volatile__("rdtsc"
+			    : "=A" (ret)
+			    : /* no inputs */);
+   return ret;
+}
+#endif /* __x86_64__ */
+#endif /* _WIN32 */
+
 long_long _papi_hwd_get_real_usec(void) {
-	return((get_cycles() * tsc_to_cpu_mult) / (long_long)_papi_hwi_system_info.hw_info.mhz);
+   return((long_long)get_cycles() / (long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
 long_long _papi_hwd_get_real_cycles(void) {
-	return(get_cycles() * tsc_to_cpu_mult);
+   return((long_long)get_cycles());
 }
 
 long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx) {
-   return(((long_long)vperfctr_read_tsc(ctx->perfctr) * tsc_to_cpu_mult)/
+#ifdef _WIN32
+   return(PAPI_ESBSTR); // Windows can't read virtual cycles...
+#else
+   return((long_long)vperfctr_read_tsc(ctx->perfctr) /
          (long_long)_papi_hwi_system_info.hw_info.mhz);
+#endif /* _WIN32 */
 }
  
 long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx) {
-   return((long_long)vperfctr_read_tsc(ctx->perfctr) * tsc_to_cpu_mult);
+#ifdef _WIN32
+   return(PAPI_ESBSTR); // Windows can't read virtual cycles...
+#else
+   return((long_long)vperfctr_read_tsc(ctx->perfctr));
+#endif /* _WIN32 */
 }
