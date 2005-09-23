@@ -113,7 +113,6 @@ static int do_profile(unsigned long plength, unsigned scale, int thresh, int buc
    if ((retval = PAPI_stop(EventSet, values[0])) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-   int event = num_events;
    if (!TESTS_QUIET) {
       printf(TAB1, "PAPI_TOT_CYC:", (values[0])[--event]);
       printf(TAB1, "PAPI_TOT_INS:", (values[0])[--event]);
