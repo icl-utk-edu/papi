@@ -1,0 +1,58 @@
+[data from a 3.0 GHz Pentium 4 Model 3 with hyper-threading enabled]
+
+perfctr/x86.c: hyper-threaded P4s detected: restricting access for CPUs 1
+PERFCTR INIT: vendor 0, family 15, model 3, stepping 3, clock 2994145 kHz
+PERFCTR INIT: NITER == 64
+PERFCTR INIT: loop overhead is 840 cycles
+PERFCTR INIT: rdtsc cost is 143.0 cycles (9998 total)
+PERFCTR INIT: rdpmc cost is 293.0 cycles (19597 total)
+PERFCTR INIT: rdmsr (counter) cost is 416.0 cycles (27465 total)
+PERFCTR INIT: rdmsr (escr) cost is 429.0 cycles (28297 total)
+PERFCTR INIT: wrmsr (counter) cost is 1247.2 cycles (80663 total)
+PERFCTR INIT: wrmsr (escr) cost is 1203.6 cycles (77873 total)
+PERFCTR INIT: read cr4 cost is 24.0 cycles (2378 total)
+PERFCTR INIT: write cr4 cost is 421.0 cycles (27787 total)
+PERFCTR INIT: rdpmc (fast) cost is 109.1 cycles (7823 total)
+PERFCTR INIT: rdmsr (cccr) cost is 514.4 cycles (33765 total)
+PERFCTR INIT: wrmsr (cccr) cost is 1400.8 cycles (90495 total)
+PERFCTR INIT: write LVTPC cost is 70.3 cycles (5340 total)
+PERFCTR INIT: sync_core cost is 543.7 cycles (35640 total)
+perfctr: driver 2.7.10, cpu type Intel P4 at 2994145 kHz
+
+[data from a 3.0 GHz Pentium 4 Model 3]
+
+PERFCTR INIT: vendor 0, family 15, model 3, stepping 4, clock 2994546 kHz
+PERFCTR INIT: NITER == 64
+PERFCTR INIT: loop overhead is 772 cycles
+PERFCTR INIT: rdtsc cost is 100.9 cycles (7230 total)
+PERFCTR INIT: rdpmc cost is 227.0 cycles (15300 total)
+PERFCTR INIT: rdmsr (counter) cost is 353.4 cycles (23392 total)
+PERFCTR INIT: rdmsr (escr) cost is 365.2 cycles (24150 total)
+PERFCTR INIT: wrmsr (counter) cost is 990.9 cycles (64192 total)
+PERFCTR INIT: wrmsr (escr) cost is 980.3 cycles (63517 total)
+PERFCTR INIT: read cr4 cost is 22.5 cycles (2212 total)
+PERFCTR INIT: write cr4 cost is 392.7 cycles (25905 total)
+PERFCTR INIT: rdpmc (fast) cost is 90.9 cycles (6593 total)
+PERFCTR INIT: rdmsr (cccr) cost is 374.8 cycles (24765 total)
+PERFCTR INIT: wrmsr (cccr) cost is 938.4 cycles (60832 total)
+PERFCTR INIT: write LVTPC cost is 25.6 cycles (2415 total)
+PERFCTR INIT: sync_core cost is 421.6 cycles (27758 total)
+perfctr: driver 2.7.6, cpu type Intel P4 at 2994546 kHz
+
+[data from a 3.0 GHz Pentium 4 Model 2]
+
+PERFCTR INIT: vendor 0, family 15, model 2, stepping 7, clock 3057662 kHz
+PERFCTR INIT: NITER == 64
+PERFCTR INIT: loop overhead is 264 cycles
+PERFCTR INIT: rdtsc cost is 77.5 cycles (5228 total)
+PERFCTR INIT: rdpmc cost is 146.2 cycles (9624 total)
+PERFCTR INIT: rdmsr (counter) cost is 255.0 cycles (16584 total)
+PERFCTR INIT: rdmsr (escr) cost is 166.2 cycles (10904 total)
+PERFCTR INIT: wrmsr (counter) cost is 794.4 cycles (51108 total)
+PERFCTR INIT: wrmsr (escr) cost is 874.0 cycles (56204 total)
+PERFCTR INIT: read cr4 cost is 5.1 cycles (592 total)
+PERFCTR INIT: write cr4 cost is 258.8 cycles (16828 total)
+PERFCTR INIT: rdpmc (fast) cost is 60.5 cycles (4136 total)
+PERFCTR INIT: rdmsr (cccr) cost is 167.0 cycles (10952 total)
+PERFCTR INIT: wrmsr (cccr) cost is 833.9 cycles (53636 total)
+perfctr: driver 2.6.0 DEBUG, cpu type Intel Pentium 4 Model 2 at 3057662 kHz

@@ -1,0 +1,15 @@
+[data from a 150MHz Pentium MMX]
+
+PERFCTR INIT: vendor 0, family 5, model 4, stepping 3, clock 150074 kHz
+PERFCTR INIT: NITER == 64
+PERFCTR INIT: loop overhead is 69 cycles
+PERFCTR INIT: rdtsc cost is 9.2 cycles (663 total)
+PERFCTR INIT: rdpmc cost is 12.6 cycles (878 total)
+PERFCTR INIT: rdmsr (counter) cost is 28.7 cycles (1907 total)
+PERFCTR INIT: rdmsr (evntsel) cost is 24.1 cycles (1614 total)
+PERFCTR INIT: wrmsr (counter) cost is 36.1 cycles (2383 total)
+PERFCTR INIT: wrmsr (evntsel) cost is 35.4 cycles (2336 total)
+PERFCTR INIT: read cr4 cost is 4.6 cycles (368 total)
+PERFCTR INIT: write cr4 cost is 17.1 cycles (1167 total)
+PERFCTR INIT: sync_core cost is 21.9 cycles (1473 total)
+perfctr: driver 2.7.5, cpu type Intel P5 at 150074 kHz

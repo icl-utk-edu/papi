@@ -1,0 +1,16 @@
+[data from a 466 MHz Celeron (Mendocino)]
+
+PERFCTR INIT: vendor 0, family 6, model 6, stepping 5, clock 465241 kHz
+PERFCTR INIT: NITER == 64
+PERFCTR INIT: loop overhead is 168 cycles
+PERFCTR INIT: rdtsc cost is 38.6 cycles (2641 total)
+PERFCTR INIT: rdpmc cost is 29.5 cycles (2059 total)
+PERFCTR INIT: rdmsr (counter) cost is 82.4 cycles (5442 total)
+PERFCTR INIT: rdmsr (evntsel) cost is 70.7 cycles (4699 total)
+PERFCTR INIT: wrmsr (counter) cost is 88.2 cycles (5819 total)
+PERFCTR INIT: wrmsr (evntsel) cost is 79.9 cycles (5283 total)
+PERFCTR INIT: read cr4 cost is 1.9 cycles (291 total)
+PERFCTR INIT: write cr4 cost is 42.2 cycles (2870 total)
+PERFCTR INIT: write LVTPC cost is 34.8 cycles (2401 total)
+PERFCTR INIT: sync_core cost is 77.3 cycles (5117 total)
+perfctr: driver 2.7.5, cpu type Intel P6 at 465241 kHz

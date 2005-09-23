@@ -1,0 +1,27 @@
+[data from a 500MHz Pentium III]
+
+PERFCTR INIT: vendor 0, family 6, model 8, stepping 6, clock 501331 kHz
+PERFCTR INIT: NITER == 64
+PERFCTR INIT: loop overhead is 199 cycles
+PERFCTR INIT: rdtsc cost is 33.7 cycles (2356 total)
+PERFCTR INIT: rdpmc cost is 34.4 cycles (2403 total)
+PERFCTR INIT: rdmsr (counter) cost is 91.4 cycles (6050 total)
+PERFCTR INIT: rdmsr (evntsel) cost is 72.7 cycles (4855 total)
+PERFCTR INIT: wrmsr (counter) cost is 80.7 cycles (5367 total)
+PERFCTR INIT: wrmsr (evntsel) cost is 76.2 cycles (5079 total)
+PERFCTR INIT: read cr4 cost is 1.9 cycles (322 total)
+PERFCTR INIT: write cr4 cost is 42.2 cycles (2903 total)
+PERFCTR INIT: sync_core cost is 106.9 cycles (7042 total)
+perfctr: driver 2.7.6, cpu type Intel P6 at 501331 kHz
+
+PERFCTR INIT: vendor 0, family 6, model 8, stepping 3, clock 498682 kHz
+PERFCTR INIT: NITER == 64
+PERFCTR INIT: loop overhead is 99 cycles
+PERFCTR INIT: rdtsc cost is 33.5 cycles (2244 total)
+PERFCTR INIT: rdpmc cost is 34.2 cycles (2291 total)
+PERFCTR INIT: rdmsr (counter) cost is 91.2 cycles (5941 total)
+PERFCTR INIT: rdmsr (evntsel) cost is 72.7 cycles (4756 total)
+PERFCTR INIT: wrmsr (counter) cost is 80.6 cycles (5259 total)
+PERFCTR INIT: wrmsr (evntsel) cost is 75.9 cycles (4962 total)
+PERFCTR INIT: read cr4 cost is 1.8 cycles (215 total)
+PERFCTR INIT: write cr4 cost is 42.1 cycles (2797 total)

@@ -1,0 +1,106 @@
+diff -rupN linux-2.6.12-rc1-mm4/arch/ppc64/Kconfig linux-2.6.12-rc1-mm4.perfctr27-ppc64-arch-hooks/arch/ppc64/Kconfig
+--- linux-2.6.12-rc1-mm4/arch/ppc64/Kconfig	2005-03-31 21:08:24.000000000 +0200
++++ linux-2.6.12-rc1-mm4.perfctr27-ppc64-arch-hooks/arch/ppc64/Kconfig	2005-03-31 23:28:07.000000000 +0200
+@@ -297,6 +297,7 @@ config SECCOMP
+ 
+ endmenu
+ 
++source "drivers/perfctr/Kconfig"
+ 
+ menu "General setup"
+ 
+diff -rupN linux-2.6.12-rc1-mm4/arch/ppc64/kernel/misc.S linux-2.6.12-rc1-mm4.perfctr27-ppc64-arch-hooks/arch/ppc64/kernel/misc.S
+--- linux-2.6.12-rc1-mm4/arch/ppc64/kernel/misc.S	2005-03-31 21:08:24.000000000 +0200
++++ linux-2.6.12-rc1-mm4.perfctr27-ppc64-arch-hooks/arch/ppc64/kernel/misc.S	2005-03-31 23:28:07.000000000 +0200
+@@ -956,6 +956,12 @@ _GLOBAL(sys_call_table32)
+ 	.llong .sys32_request_key
+ 	.llong .compat_sys_keyctl
+ 	.llong .compat_sys_waitid
++	.llong .sys_ni_syscall		/* 273 reserved for sys_ioprio_set */
++	.llong .sys_ni_syscall		/* 274 reserved for sys_ioprio_get */
++	.llong .sys_vperfctr_open	/* 275 */
++	.llong .sys_vperfctr_control
++	.llong .sys_vperfctr_write
++	.llong .sys_vperfctr_read
+ 
+ 	.balign 8
+ _GLOBAL(sys_call_table)
+@@ -1232,3 +1238,9 @@ _GLOBAL(sys_call_table)
+ 	.llong .sys_request_key		/* 270 */
+ 	.llong .sys_keyctl
+ 	.llong .sys_waitid
++	.llong .sys_ni_syscall		/* 273 reserved for sys_ioprio_set */
++	.llong .sys_ni_syscall		/* 274 reserved for sys_ioprio_get */
++	.llong .sys_vperfctr_open	/* 275 */
++	.llong .sys_vperfctr_control
++	.llong .sys_vperfctr_write
++	.llong .sys_vperfctr_read
+diff -rupN linux-2.6.12-rc1-mm4/arch/ppc64/kernel/process.c linux-2.6.12-rc1-mm4.perfctr27-ppc64-arch-hooks/arch/ppc64/kernel/process.c
+--- linux-2.6.12-rc1-mm4/arch/ppc64/kernel/process.c	2005-03-31 21:07:46.000000000 +0200
++++ linux-2.6.12-rc1-mm4.perfctr27-ppc64-arch-hooks/arch/ppc64/kernel/process.c	2005-03-31 23:28:07.000000000 +0200
+@@ -36,6 +36,7 @@
+ #include <linux/kallsyms.h>
+ #include <linux/interrupt.h>
+ #include <linux/utsname.h>
++#include <linux/perfctr.h>
+ 
+ #include <asm/pgtable.h>
+ #include <asm/uaccess.h>
+@@ -225,7 +226,9 @@ struct task_struct *__switch_to(struct t
+ 
+ 
+ 	local_irq_save(flags);
++	perfctr_suspend_thread(&prev->thread);
+ 	last = _switch(old_thread, new_thread);
++	perfctr_resume_thread(&current->thread);
+ 
+ 	local_irq_restore(flags);
+ 
+@@ -323,6 +326,7 @@ void exit_thread(void)
+ 		last_task_used_altivec = NULL;
+ #endif /* CONFIG_ALTIVEC */
+ #endif /* CONFIG_SMP */
++	perfctr_exit_thread(&current->thread);
+ }
+ 
+ void flush_thread(void)
+@@ -425,6 +429,8 @@ copy_thread(int nr, unsigned long clone_
+  	 */
+ 	kregs->nip = *((unsigned long *)ret_from_fork);
+ 
++	perfctr_copy_task(p, regs);
++
+ 	return 0;
+ }
+ 
+diff -rupN linux-2.6.12-rc1-mm4/include/asm-ppc64/processor.h linux-2.6.12-rc1-mm4.perfctr27-ppc64-arch-hooks/include/asm-ppc64/processor.h
+--- linux-2.6.12-rc1-mm4/include/asm-ppc64/processor.h	2005-03-31 21:08:31.000000000 +0200
++++ linux-2.6.12-rc1-mm4.perfctr27-ppc64-arch-hooks/include/asm-ppc64/processor.h	2005-03-31 23:28:07.000000000 +0200
+@@ -574,6 +574,8 @@ struct thread_struct {
+ 	unsigned long	vrsave;
+ 	int		used_vr;	/* set if process has used altivec */
+ #endif /* CONFIG_ALTIVEC */
++	/* performance counters */
++	struct vperfctr *perfctr;
+ };
+ 
+ #define ARCH_MIN_TASKALIGN 16
+diff -rupN linux-2.6.12-rc1-mm4/include/asm-ppc64/unistd.h linux-2.6.12-rc1-mm4.perfctr27-ppc64-arch-hooks/include/asm-ppc64/unistd.h
+--- linux-2.6.12-rc1-mm4/include/asm-ppc64/unistd.h	2005-03-31 21:07:54.000000000 +0200
++++ linux-2.6.12-rc1-mm4.perfctr27-ppc64-arch-hooks/include/asm-ppc64/unistd.h	2005-03-31 23:28:07.000000000 +0200
+@@ -283,8 +283,14 @@
+ #define __NR_request_key	270
+ #define __NR_keyctl		271
+ #define __NR_waitid		272
++/* 273 is reserved for ioprio_set */
++/* 274 is reserved for ioprio_get */
++#define __NR_vperfctr_open	275
++#define __NR_vperfctr_control	(__NR_vperfctr_open+1)
++#define __NR_vperfctr_write	(__NR_vperfctr_open+2)
++#define __NR_vperfctr_read	(__NR_vperfctr_open+3)
+ 
+-#define __NR_syscalls		273
++#define __NR_syscalls		279
+ #ifdef __KERNEL__
+ #define NR_syscalls	__NR_syscalls
+ #endif
