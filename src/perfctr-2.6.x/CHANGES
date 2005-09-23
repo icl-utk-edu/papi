@@ -6,6 +6,27 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.15, 2005-05-06
+- Preliminary code in the x86/x86-64 low-level driver to detect
+  multicore AMD K8 processors, and to prevent resource conflicts
+  and an erratum related to northbridge events. On multicore K8s,
+  northbridge events are only allowed when using the global-mode
+  counters API.
+- Updated kernel support: 2.6.9-5.0.5.EL (RHEL4), 2.4.21-27.0.4.EL
+  (RHEL3), 2.4.31-pre1, and 2.6.12-rc3.
+
+Version 2.6.14, 2005-04-09
+- Changed vperfctr_open() so that if the thread already has
+  an attached perfctr state, then the call fails with EEXIST.
+  This allows self-monitoring code to detect if it is under
+  the control of an external monitoring agent, before it
+  changes the counters' control setup.
+- Reverted the workaround in perfctr-2.6.13 for the problem
+  that gcc-4.0 snapshots broke the x86/x86-64 low-level driver,
+  as recent gcc-4.0 prereleases seem to work correctly.
+- Updated kernel support: 2.4.30, 2.6.12-rc2, and 2.6.9-5.0.3
+  (RHEL4).
+
 Version 2.6.13, 2005-02-13
 - Changed the global-mode counters to allow user-space to
   disable the in-kernel sampling timer and to move the sampling

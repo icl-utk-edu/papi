@@ -2,8 +2,10 @@
  * Performance-monitoring counters driver.
  * PPC32-specific compatibility definitions for 2.4/2.6 kernels.
  *
- * Copyright (C) 2004  Mikael Pettersson
+ * Copyright (C) 2004-2005  Mikael Pettersson
  */
+
+#undef MMCR0_PMXE
 
 #define SPRN_MMCR0	0x3B8	/* 604 and up */
 #define SPRN_PMC1	0x3B9	/* 604 and up */

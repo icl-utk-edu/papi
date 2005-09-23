@@ -36,7 +36,7 @@ x86_64_ABIVER=6
 ppc_ABIVER=5
 SO_ABIVER=$($(ARCH)_ABIVER)
 
-SO_LIBVER=2.6.13
+SO_LIBVER=2.6.15
 SO_NAME=libperfctr.so.$(SO_ABIVER)
 SO_LIB=libperfctr.so.$(SO_ABIVER).$(SO_LIBVER)
 
@@ -69,7 +69,7 @@ libperfctr.a:	$(AR_OBJS)
 
 # not installed, only built as a workaround for PAPI's broken Makefiles
 libperfctr.o:	$(AR_OBJS)
-	ld -r -o $@ $(AR_OBJS)
+	ld $(LD_FLAGS) -r -o $@ $(AR_OBJS)
 
 libperfctr.so:	$(SO_OBJS)
 	$(CC) -shared -o $@ -Wl,-soname,$(SO_NAME) $(SO_OBJS)
