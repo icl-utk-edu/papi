@@ -1447,7 +1447,7 @@ void PAPI_shutdown(void)
 
    init_retval = DEADBEEF;
    init_level = PAPI_NOT_INITED;
-   _papi_cleanup_all_memory();
+   papi_mem_cleanup_all();
 }
 
 char *PAPI_strerror(int errorCode)

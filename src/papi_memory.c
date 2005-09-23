@@ -7,6 +7,17 @@
  *          <Your email here>
  */
 
+/* PAPI memory allocation provides for checking and maintenance of all memory
+ * allocated through this interface. Implemented as a series of wrappers around
+ * standard C memory allocation routines, _papi_malloc and associated functions
+ * add a prolog and optional epilog to each malloc'd pointer.
+ * The prolog, sized to preserve memory alignment, contains a pointer to a 
+ * linked list of pmem_t structures that describe every block of memory 
+ * allocated through these calls.
+ * The optional epilog is enabled if PAPI_DEBUG_MEMORY is defined, and contains 
+ * a distinctive pattern that allows checking for pointer overflow.
+ */
+
 #define IN_MEM_FILE
 
 #include <stdio.h>
@@ -16,63 +27,84 @@
 #include "papi_internal.h"
 #include "papi_memory.h"
 
-/* If you are tracing memory, then PAPI_DEBUG_MEMORY
- * must be set also.
+/* Define the amount of extra memory at the beginning of the alloc'd pointer.
+ * This is usually the size of a pointer, but in some cases needs to be bigger
+ * to preserve data alignment.
  */
-#define END_PAD 4
-#define END_PATTERN_1 0xC
-#define END_PATTERN_2 0xA
-#define END_PATTERN_3 0xC
-#define END_PATTERN_4 0xA
+#if ( defined(mips) && defined(sgi) && defined(unix) )
+#define MEM_PROLOG (2*sizeof(void *)) /* preserve memory alignment for irix */
+/* there might be a better way... */
+#else
+#define MEM_PROLOG sizeof(void *) /* normal for most systems */
+#endif
+
+/* If you are tracing memory, then PAPI_DEBUG_MEMORY must be set also. */
+#ifdef PAPI_DEBUG_MEMORY
+/* Define the amount of extra memory at the end of the alloc'd pointer.
+ * Also define the contents: 0xCACA
+ */
+#define MEM_EPILOG 4
+#define MEM_EPILOG_1 0xC
+#define MEM_EPILOG_2 0xA
+#define MEM_EPILOG_3 0xC
+#define MEM_EPILOG_4 0xA
+#endif
 
 /* Local global variables */
 static pmem_t *mem_head=NULL;
 
 /* Local Prototypes */
-pmem_t * init_mem_ptr(void *, int, char *, int);
-void remove_mem_ptr(pmem_t *);
-void insert_mem_ptr(pmem_t *);
+static pmem_t * get_mem_ptr(void * ptr);
+static pmem_t * init_mem_ptr(void *, int, char *, int);
+static void insert_mem_ptr(pmem_t *);
+static void remove_mem_ptr(pmem_t *);
+static int set_epilog(pmem_t *mem_ptr);
 
+/**********************************************************************
+ * Exposed papi versions of std memory management routines:           *
+ *  _papi_realloc                                                     *
+ *  _papi_calloc                                                      *
+ *  _papi_malloc                                                      *
+ *  _papi_strdup                                                      *
+ *  _papi_free                                                        *
+ *  _papi_valid_free                                                  *
+ * Exposed useful papi memory maintenance routines:                   *
+ *  _papi_mem_print_info                                              *
+ *  _papi_mem_print_stats                                             *
+ *  _papi_mem_overhead                                                *
+ *  _papi_mem_cleanup_all                                             *
+ *  _papi_mem_check_buf_overflow                                      *
+ *  _papi_mem_check_all_overflow                                      *
+ **********************************************************************/
 
-pmem_t * get_mem_ptr(void * ptr){
-  pmem_t **tmp_ptr = (pmem_t **) ((char*)ptr - sizeof(void *));
-  pmem_t *mem_ptr;
-
-  if ( !tmp_ptr || !ptr ) return(NULL);
-
-  mem_ptr = *tmp_ptr;
-  return (mem_ptr);
-}
-
+/* _papi_realloc -- given a pointer returned by _papi_malloc, returns a pointer
+ * to the related pmem_t structure describing this pointer.
+ * Checks for NULL pointers and returns NULL if error.
+ */
 void *_papi_realloc(char *file, int line, void *ptr, int size){
-  int nsize = size+sizeof(void *);
+  int nsize = size + MEM_PROLOG;
   pmem_t *mem_ptr; 
   void *nptr;
-#ifdef PAPI_DEBUG_MEMORY
-  char *chptr;
 
-  nsize+=END_PAD;
-  check_memory_for_overflow();
+#ifdef PAPI_DEBUG_MEMORY
+  nsize += MEM_EPILOG;
+  _papi_mem_check_all_overflow();
 #endif
 
   if ( !ptr ) return(_papi_malloc(file, line, size));
 
   mem_ptr = get_mem_ptr(ptr);
-  nptr = (pmem_t *) realloc(((char *)ptr-sizeof(void*)), nsize);
+  nptr = (pmem_t *) realloc(((char *)ptr - MEM_PROLOG), nsize);
 
   if ( !nptr ) return(NULL);
 
   mem_ptr->size = size;
-  mem_ptr->ptr = (char *)nptr+sizeof(void*);
+  mem_ptr->ptr = (char *)nptr + MEM_PROLOG;
 #ifdef PAPI_DEBUG_MEMORY
   strncpy(mem_ptr->file, file, DEBUG_FILE_LEN);
   mem_ptr->file[DEBUG_FILE_LEN-1] = '\0';
   mem_ptr->line = line;
-  chptr = nptr+sizeof(void*)+size;
-  *chptr++ = END_PATTERN_1;
-  *chptr++ = END_PATTERN_2;
-  *chptr++ = END_PATTERN_3;
-  *chptr++ = END_PATTERN_4;
+  set_epilog(mem_ptr);
 #endif
 #ifdef PAPI_DEBUG_MEMORY_TRACE
     fprintf(stdout, "0x%x: Re-allocated: %d bytes from File: %s  Line: %d\n", mem_ptr->ptr, size, file, line);
@@ -82,20 +114,9 @@ void *_papi_realloc(char *file, int line, void *ptr, int size){
 
 void *_papi_calloc(char *file, int line, int nmemb, int size){
   void *ptr = _papi_malloc(file, line, size*nmemb);
-#ifdef PAPI_DEBUG_MEMORY
-  char *chptr;
-#endif
 
   if ( !ptr ) return(NULL);
   memset(ptr, 0, size*nmemb);
-#ifdef PAPI_DEBUG_MEMORY
-  chptr = ptr+size;
-  *chptr++ = END_PATTERN_1;
-  *chptr++ = END_PATTERN_2;
-  *chptr++ = END_PATTERN_3;
-  *chptr++ = END_PATTERN_4;
-  check_memory_for_overflow();
-#endif
   return(ptr);
 }
 
@@ -103,11 +124,10 @@ void *_papi_malloc(char *file, int line, int size){
   void *ptr;
   void **tmp;
   pmem_t *mem_ptr;
-  int nsize = size+sizeof(void *);
-#ifdef PAPI_DEBUG_MEMORY
-  char *chptr;
+  int nsize = size + MEM_PROLOG;
 
-  nsize += END_PAD;
+#ifdef PAPI_DEBUG_MEMORY
+  nsize += MEM_EPILOG;
 #endif
 
   if ( size == 0 ){
@@ -120,7 +140,7 @@ void *_papi_malloc(char *file, int line, int size){
 
   if ( !ptr ) return(NULL);
   else{
-    if ( (mem_ptr = init_mem_ptr((char *)ptr+sizeof(void *),size,file,line))==NULL) {
+    if ( (mem_ptr = init_mem_ptr((char *)ptr + MEM_PROLOG, size, file, line))==NULL) {
       free(ptr);
       return(NULL);
     }    
@@ -131,15 +151,7 @@ void *_papi_malloc(char *file, int line, int size){
     _papi_hwi_lock(MEMORY_LOCK);
     insert_mem_ptr(mem_ptr);
     _papi_hwi_unlock(MEMORY_LOCK);
-
-#ifdef PAPI_DEBUG_MEMORY
-  chptr    = ptr+size;
-  *chptr++ = END_PATTERN_1;
-  *chptr++ = END_PATTERN_2;
-  *chptr++ = END_PATTERN_3;
-  *chptr   = END_PATTERN_4;
-  check_memory_for_overflow();
-#endif
+    set_epilog(mem_ptr);
 
 #ifdef PAPI_DEBUG_MEMORY_TRACE
     fprintf(stdout, "0x%x: Allocated: %d bytes from File: %s  Line: %d\n", mem_ptr->ptr, size, file, line);
@@ -192,29 +204,11 @@ void _papi_free(char *file, int line, void *ptr){
     fprintf(stdout, "0x%x: Freeing:   %d bytes from File: %s  Line: %d\n", mem_ptr->ptr, mem_ptr->size, file, line);
 #endif
 #ifdef PAPI_DEBUG_MEMORY
-  check_memory_for_overflow();
+  _papi_mem_check_all_overflow();
 #endif
   _papi_hwi_lock(MEMORY_LOCK);
   remove_mem_ptr(mem_ptr);
   _papi_hwi_unlock(MEMORY_LOCK);
-}
-
-/* Allocate and initialize a memory pointer */
-pmem_t * init_mem_ptr(void *ptr, int size, char *file, int line){
- pmem_t *mem_ptr=NULL;
- if ((mem_ptr = (pmem_t *) malloc(sizeof(pmem_t)))==NULL)
-   return(NULL);
-
- mem_ptr->ptr = ptr;
- mem_ptr->size = size;
- mem_ptr->next = NULL;
- mem_ptr->prev = NULL;
-#ifdef PAPI_DEBUG_MEMORY
- strncpy(mem_ptr->file, file, DEBUG_FILE_LEN);
- mem_ptr->file[DEBUG_FILE_LEN-1] = '\0';
- mem_ptr->line = line;
-#endif
- return(mem_ptr);
 }
 
 /* Print information about the memory including file and location it came from */
@@ -237,11 +231,7 @@ void _papi_mem_print_stats(){
 
   _papi_hwi_lock(MEMORY_LOCK);
   for(tmp=mem_head;tmp;tmp = tmp->next){
-#ifdef PAPI_DEBUG_MEMORY
-  printf("%p: Allocated %d bytes from file: %s  line: %d\n", tmp->ptr, tmp->size, tmp->file, tmp->line);
-#else
-  printf("%p: Allocated %d bytes.\n", tmp->ptr, tmp->size);
-#endif
+     _papi_mem_print_info(tmp->ptr);
   }
   _papi_hwi_unlock(MEMORY_LOCK);
 }
@@ -252,7 +242,7 @@ void _papi_mem_print_stats(){
  * They both can be | together
  * This only includes "malloc'd memory"
  */
-int papi_mem_overhead(int type){
+int _papi_mem_overhead(int type){
   pmem_t *ptr=NULL;
   int size = 0;
 
@@ -262,9 +252,9 @@ int papi_mem_overhead(int type){
        size+=ptr->size;
     if ( type & PAPI_MEM_OVERHEAD ){
        size+=sizeof(pmem_t);
-       size+=sizeof(void *);
+       size+=MEM_PROLOG;
 #ifdef PAPI_DEBUG_MEMORY
-       size+=END_PAD;
+       size+=MEM_EPILOG;
 #endif
     }
   }
@@ -273,14 +263,14 @@ int papi_mem_overhead(int type){
 }
 
 /* Clean all memory up and print out memory leak information to stderr */
-void _papi_cleanup_all_memory()
+void _papi_mem_cleanup_all()
 {
    pmem_t *ptr=NULL, *tmp=NULL;
 #ifdef PAPI_DEBUG_MEMORY
    int cnt = 0;
 #endif
 
-   check_memory_for_overflow();
+   _papi_mem_check_all_overflow();
    _papi_hwi_lock(MEMORY_LOCK);
    for(ptr=mem_head;ptr;ptr=tmp){
      tmp = ptr->next;
@@ -298,10 +288,66 @@ void _papi_cleanup_all_memory()
 #endif
 }
 
+/* Loop through memory structures and look for buffer overflows 
+ * returns the number of overflows detected
+ */
+int _papi_mem_check_all_overflow()
+{
+   int fnd = 0;
+#ifdef PAPI_DEBUG_MEMORY
+   pmem_t *tmp;
+
+   _papi_hwi_lock(MEMORY_LOCK);
+   for(tmp = mem_head; tmp; tmp = tmp->next){
+     if ( check_buffer_overflow(tmp) ) fnd++;
+   }
+   if ( fnd )
+     fprintf(stderr, "%d Total Buffer overflows detected!\n", fnd);
+   _papi_hwi_unlock(MEMORY_LOCK);
+#endif
+   return(fnd);
+}
+
+/**********************************************************************
+ * Private helper routines for papi memory management                 *
+ **********************************************************************/
+
+/* Given a pointer returned by _papi_malloc, returns a pointer
+ * to the related pmem_t structure describing this pointer.
+ * Checks for NULL pointers and returns NULL if error.
+ */
+static pmem_t * get_mem_ptr(void * ptr){
+  pmem_t **tmp_ptr = (pmem_t **) ((char*)ptr - MEM_PROLOG);
+  pmem_t *mem_ptr;
+
+  if ( !tmp_ptr || !ptr ) return(NULL);
+
+  mem_ptr = *tmp_ptr;
+  return (mem_ptr);
+}
+
+/* Allocate and initialize a memory pointer */
+pmem_t * init_mem_ptr(void *ptr, int size, char *file, int line){
+ pmem_t *mem_ptr=NULL;
+ if ((mem_ptr = (pmem_t *) malloc(sizeof(pmem_t)))==NULL)
+   return(NULL);
+
+ mem_ptr->ptr = ptr;
+ mem_ptr->size = size;
+ mem_ptr->next = NULL;
+ mem_ptr->prev = NULL;
+#ifdef PAPI_DEBUG_MEMORY
+ strncpy(mem_ptr->file, file, DEBUG_FILE_LEN);
+ mem_ptr->file[DEBUG_FILE_LEN-1] = '\0';
+ mem_ptr->line = line;
+#endif
+ return(mem_ptr);
+}
+
 /* Insert the memory information 
  * Do not lock these routines, but lock in routines using these
  */
-void insert_mem_ptr(pmem_t *ptr){
+static void insert_mem_ptr(pmem_t *ptr){
   if ( !ptr ) return;
  
   if ( !mem_head ) {
@@ -321,7 +367,7 @@ void insert_mem_ptr(pmem_t *ptr){
  * Do not using locking in this routine, instead lock around 
  * the sections of code that use this call.
  */
-void remove_mem_ptr(pmem_t *ptr){
+static void remove_mem_ptr(pmem_t *ptr){
   if ( !ptr ) return;
 
   if ( ptr->prev )
@@ -333,12 +379,25 @@ void remove_mem_ptr(pmem_t *ptr){
   free(ptr);
 }
 
+static int set_epilog(pmem_t *mem_ptr) {
+#ifdef PAPI_DEBUG_MEMORY
+  char *chptr = mem_ptr->ptr + mem_ptr->size;
+  *chptr++ = MEM_EPILOG_1;
+  *chptr++ = MEM_EPILOG_2;
+  *chptr++ = MEM_EPILOG_3;
+  *chptr++ = MEM_EPILOG_4;
+  return(_papi_mem_check_all_overflow());
+#else
+  return(0);
+#endif
+}
+
 /* Check for memory buffer overflows */
-int check_buffer_overflow(pmem_t *tmp){
+static int _papi_mem_check_buf_overflow(pmem_t *tmp){
+  int fnd = 0;
 #ifdef PAPI_DEBUG_OVERFLOW
   char *ptr;
   void *tptr;
-  int fnd = 0;
 
   if ( !tmp ) return(0);
 
@@ -347,36 +406,16 @@ int check_buffer_overflow(pmem_t *tmp){
 
   /* Move to the buffer overflow padding */
   ptr = tmp->ptr+tmp->size;
-  if ( *ptr++ != END_PATTERN_1 ) fnd=1;
-  else if ( *ptr++ != END_PATTERN_2 ) fnd = 2;
-  else if ( *ptr++ != END_PATTERN_3 ) fnd = 3;
-  else if ( *ptr++ != END_PATTERN_4 ) fnd = 4;
+  if ( *ptr++ != MEM_EPILOG_1 ) fnd=1;
+  else if ( *ptr++ != MEM_EPILOG_2 ) fnd = 2;
+  else if ( *ptr++ != MEM_EPILOG_3 ) fnd = 3;
+  else if ( *ptr++ != MEM_EPILOG_4 ) fnd = 4;
 
   if ( fnd ) {
     fprintf(stderr, "Buffer Overflow[%d] for %p allocated from %s at line %d\n", fnd, tmp->ptr, tmp->file, tmp->line);
-    return(1);
   }
 #endif
-  return(0);  
+  return(fnd);
 }
 
-/* Loop through memory structures and look for buffer overflows 
- * returns the number of overflows detected
- */
 
-int check_memory_for_overflow()
-{
-   int fnd = 0;
-#ifdef PAPI_DEBUG_MEMORY
-   pmem_t *tmp;
-
-   _papi_hwi_lock(MEMORY_LOCK);
-   for(tmp = mem_head; tmp; tmp = tmp->next){
-     if ( check_buffer_overflow(tmp) ) fnd++;
-   }
-   if ( fnd )
-     fprintf(stderr, "%d Total Buffer overflows detected!\n", fnd);
-   _papi_hwi_unlock(MEMORY_LOCK);
-#endif
-   return(fnd);
-}
