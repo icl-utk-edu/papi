@@ -68,7 +68,6 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 #endif
 #endif
 
-
 #if defined(linux)
 #if defined(_POWER4) || defined(_PPC970)
    /* arbitrarily code events from group 28: pm_fpu3 - Floating point events by unit */
@@ -82,8 +81,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
        { "PM_FPU_1FLOP", "PM_FPU_FMA", "PM_CYC", "PM_INST_CMPL",
        "PM_RUN_CYC", NULL, NULL
    };
-#elif defined(_ppc32)
-   static char *native_name[] = { "DATA_MEM_REFS", "DCU_LINES_IN", NULL, NULL,  NULL, NULL };
+#endif
 #endif
 
 #if defined (__crayx1)

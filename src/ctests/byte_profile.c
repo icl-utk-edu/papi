@@ -91,6 +91,7 @@ static int do_profile(unsigned long plength, unsigned scale, int thresh, int buc
 #endif
 
    int num_bufs = num_events;
+   int event = num_events;
 
    blength = prof_size(plength, scale, bucket, &num_buckets);
    prof_alloc(num_bufs, blength);
