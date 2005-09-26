@@ -2,6 +2,7 @@ LIBRARY = libpapi64.a
 SHLIB = libpapi64.so
 SUBSTR  = irix-mips
 MSUBSTR  = irix-mips
+OS	 = irix
 MEMSUBSTR= irix
 DESCR	= 'IRIX 6.x or greater (64bit ABI) with MIPS R10k/12k/14k'
 LIBS	= static shared 
