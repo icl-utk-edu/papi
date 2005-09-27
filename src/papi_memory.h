@@ -2,6 +2,10 @@
 #define _PAPI_MALLOC
 #define DEBUG_FILE_LEN  20
 
+/* define an alternate entry point for compatibility with papi.c for 3.1.x*/
+/* this line should be deleted for the papi 4.0 head */
+#define _papi_cleanup_all_memory _papi_mem_cleanup_all
+
 /* If you are tracing memory, then PAPI_DEBUG_MEMORY
  *  * must be set also.
  *   */
@@ -33,7 +37,11 @@ typedef struct pmem {
 #define papi_calloc(a,b) calloc(a,b)
 #define papi_valid_free(a) ;
 #define papi_strdup(a) strdup(a)
-#define _papi_cleanup_all_memory() ;
+#define papi_mem_cleanup_all() ;
+#define papi_mem_print_info(a) ;
+#define papi_mem_print_stats() ;
+#define papi_mem_overhead(a) ;
+#define papi_mem_check_all_overflow() ;
 #else
 #define papi_malloc(a) _papi_malloc(__FILE__,__LINE__, a)
 #define papi_free(a) _papi_free(__FILE__,__LINE__, a)
@@ -41,20 +49,25 @@ typedef struct pmem {
 #define papi_calloc(a,b) _papi_calloc(__FILE__,__LINE__,a,b)
 #define papi_valid_free(a) _papi_valid_free(__FILE__,__LINE__,a)
 #define papi_strdup(a) _papi_strdup(__FILE__,__LINE__,a)
-void _papi_cleanup_all_memory();
+#define papi_mem_cleanup_all _papi_mem_cleanup_all
+#define papi_mem_print_info(a) _papi_mem_print_info(a)
+#define papi_mem_print_stats _papi_mem_print_stats
+#define papi_mem_overhead(a) _papi_mem_overhead(a)
+#define papi_mem_check_all_overflow _papi_mem_check_all_overflow
 #endif
 #endif
 
-char * _papi_strdup(char *, int, const char *s);
-void _papi_mem_print_info(void *ptr);
 void *_papi_malloc(char *, int, int);
 void _papi_free(char *, int, void *);
-void _papi_valid_free(char *, int, void *);
 void *_papi_realloc(char *, int, void *, int);
 void *_papi_calloc(char *, int, int, int);
-int check_buffer_overflow(pmem_t *);
-int check_memory_for_overflow();
-int papi_mem_overhead(int);
+void _papi_valid_free(char *, int, void *);
+char *_papi_strdup(char *, int, const char *s);
+void _papi_mem_cleanup_all();
+void _papi_mem_print_info(void *ptr);
+void _papi_mem_print_stats();
+int _papi_mem_overhead(int);
+int _papi_mem_check_all_overflow();
 
 #define PAPI_MEM_LIB_OVERHEAD	1   /* PAPI Library Overhead */
 #define PAPI_MEM_OVERHEAD	2   /* Memory Overhead */
