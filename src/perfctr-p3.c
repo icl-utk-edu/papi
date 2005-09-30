@@ -430,7 +430,6 @@ int _papi_hwd_init_global(void)
       return (retval);
 
     SUBDBG("_papi_hwd_init_global vperfctr_close(%p)\n", dev);
-    vperfctr_close(dev);
 
     lock_init();
 
@@ -516,7 +515,7 @@ void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
 
 /* Register allocation */
 int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
-   int index, i, j, natNum;
+   int i, j, natNum;
    hwd_reg_alloc_t event_list[MAX_COUNTERS];
 
    /* Initialize the local structure needed

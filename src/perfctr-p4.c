@@ -256,7 +256,6 @@ int _papi_hwd_init_global(void)
       return (retval);
 
    SUBDBG("_papi_hwd_init_global vperfctr_close(%p)\n", dev);
-    vperfctr_close(dev);
 
     lock_init();
 
