@@ -11,11 +11,9 @@ int main(int argc, char **argv)
    int num_events;
    long_long *values;
    char *success;
-   int EventSet = PAPI_NULL, ExEventSet=PAPI_NULL;
-/*   int i, j, event; */
-   int i, event;
+   int EventSet = PAPI_NULL;
+   int i, j, event;
    char errstr[PAPI_HUGE_STR_LEN];
-   char * evt[] = {"PAPI_FP_INS", "ACPI_TEMP"};
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
@@ -26,15 +24,12 @@ int main(int argc, char **argv)
    if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
-   if ((retval = PAPI_create_ext_eventset(&ExEventSet,1)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
-
    if ( TESTS_QUIET ) 
      i = 2;
    else
      i = 1;
 
-   num_events = 2;
+   num_events = argc-i;
 
    /* Automatically pass if no events, for run_tests.sh */
    if ( num_events == 0 ) 
@@ -46,33 +41,24 @@ int main(int argc, char **argv)
    if ( success == NULL || values == NULL ) 
       test_fail(__FILE__, __LINE__, "malloc", PAPI_ESYS);
 
-   if ( (retval = PAPI_event_name_to_code(evt[0], &event)) != PAPI_OK )
+   for ( ;i<argc; i++ ){
+     if ( (retval = PAPI_event_name_to_code(argv[i], &event)) != PAPI_OK )
        test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", retval);
 
-   if ( (retval = PAPI_add_event(EventSet, event)) != PAPI_OK ) {
-       PAPI_perror(retval, errstr, 1024 );
-       printf("Failed adding: %s\nbecause: %s\n", evt[0], errstr );
+     if ( (retval = PAPI_add_event(EventSet, event)) != PAPI_OK ) {
+         PAPI_perror(retval, errstr, 1024 );
+         printf("Failed adding: %s\nbecause: %s\n", argv[i], errstr );
+        success[i] = 0;
      }
-   else {
-      printf("Successfully added: %s\n", evt[0]);
-   }
-   if ( (retval = PAPI_event_name_to_code(evt[1], &event)) != PAPI_OK )
-       test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", retval);
-
-   if ( (retval = PAPI_add_event(ExEventSet, event)) != PAPI_OK ) {
-       PAPI_perror(retval, errstr, 1024 );
-       printf("Failed adding: %s\nbecause: %s\n", evt[1], errstr );
+     else {
+        success[i] = 1;
+        printf("Successfully added: %s\n", argv[i]);
      }
-   else {
-      printf("Successfully added: %s\n", evt[1]);
    }
    printf("\n");
 
    do_flops(1);
    do_flush();
-
-   if ((retval = PAPI_start(ExEventSet)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
@@ -80,15 +66,19 @@ int main(int argc, char **argv)
    do_flops(NUM_FLOPS);
    do_misses(1,L1_MISS_BUFFER_SIZE_INTS);
 
-   if ((retval = PAPI_stop(ExEventSet, values)) != PAPI_OK)
+   if ((retval = PAPI_stop(EventSet, values)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-   if ((retval = PAPI_stop(EventSet, &values[1])) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
-
-    printf("Fpins: %lld\tTemp: %lld\n", values[1], values[0]);
+   for(i=1, j=0; i<argc; i++ ) {
+      if (success[i]) {
+         printf("%s : \t%lld\n", argv[i], values[j++]);
+      } else {
+         printf("%s : \t---------\n", argv[i]);
+      }
+   }
 
    printf("\n----------------------------------\n");
+   printf("Verification: None.\n This utility lets you add events from the command line interface to see if they work.\n");
    test_pass(__FILE__, NULL, 0);
    exit(1);
 }
