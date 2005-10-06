@@ -1,7 +1,7 @@
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
 
-/* This file handles the OS dependent part of the POWER3 and POWER4 architectures.
+/* This file handles the OS dependent part of the POWERPC architectures.
   It supports both AIX 4 and AIX 5. The switch between AIX 4 and 5 is driven by the 
   system defined value _AIX_VERSION_510.
   Other routines also include minor conditionally compiled differences.
@@ -75,7 +75,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
       } else
          return (PAPI_ENOEVNT);
    } else if (modifer == PAPI_PWR4_ENUM_GROUPS) {
-#ifdef _POWER4
+#if defined(_POWER4) || defined (_POWER5)
       unsigned int group = (*EventCode & 0x00FF0000) >> 16;
       int index = *EventCode & 0x000000FF;
       int i;
@@ -234,8 +234,8 @@ static int get_system_info(void)
    pid_t pid;
    char maxargs[PAPI_HUGE_STR_LEN];
    char pname[PAPI_HUGE_STR_LEN];
-
-#ifndef _POWER4
+   
+#if !defined(_POWER4) && !defined(_POWER5) 
 #ifdef _AIXVERSION_510
    pm_groups_info_t pmgroups;
 #endif
@@ -258,8 +258,14 @@ static int get_system_info(void)
    strcpy(_papi_hwi_system_info.exe_info.address_info.name,basename(maxargs));
 
 #ifdef _AIXVERSION_510
+#ifdef PM_INITIALIZE
+   SUBDBG("Calling AIX 5 version of pm_initialize...\n");
+   retval = pm_initialize(PM_INIT_FLAGS, &pminfo, &pmgroups, PM_CURRENT);
+#else
    SUBDBG("Calling AIX 5 version of pm_init...\n");
    retval = pm_init(PM_INIT_FLAGS, &pminfo, &pmgroups);
+#endif
+
 #else
    SUBDBG("Calling AIX 4 version of pm_init...\n");
    retval = pm_init(PM_INIT_FLAGS, &pminfo);

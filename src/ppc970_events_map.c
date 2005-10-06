@@ -14,9 +14,9 @@
 *          <your email address>
 */
 
-#include "perfctr-ppc64.h"
+#include SUBSTRATE
 
-PPC970_native_map_t native_name_map[MAX_NATNAME_MAP_INDEX] = {
+PPC64_native_map_t native_name_map[MAX_NATNAME_MAP_INDEX] = {
 	{"PM_0INST_FETCH", -1}
 	,
 	{"PM_1PLUS_PPC_CMPL", -1}

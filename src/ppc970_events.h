@@ -18,6 +18,7 @@
 *          
 */
 
+#define GROUP_INTS 2
 #define PAPI_MAX_NATIVE_EVENTS 256
 #define MAX_GROUPS (GROUP_INTS * 32)
 #define MAX_NATNAME_MAP_INDEX 215

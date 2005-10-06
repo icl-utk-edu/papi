@@ -20,7 +20,6 @@
 #ifdef _POWER5
 #define MAX_COUNTERS 6
 #define NUM_COUNTER_MASKS 4	
-#define GROUP_INTS 5
 /* masks for PMC1-4 should be AND'ed into MMCR1 */
 #define PMC1_SEL_MASK	0xFFFFFFFF00FFFFFFULL
 #define PMC2_SEL_MASK	0xFFFFFFFFFF00FFFFULL
@@ -29,7 +28,6 @@
 /* PMC5_6_FREEZE should be OR'ed into MMCR0 */
 #define PMC5_PMC6_FREEZE	0x00000010UL
 #else
-#define GROUP_INTS 2
 #define MAX_COUNTERS 8
 #define NUM_COUNTER_MASKS	MAX_COUNTERS+1
 #ifdef _POWER4
@@ -59,7 +57,7 @@
 
 
 #include "papi.h"
-#include ARCH_EVTS
+#include "ppc64_events.h"
 #include "linux-ppc64.h"
 #include "papi_preset.h"
 #include "libperfctr.h"

@@ -112,45 +112,13 @@ static int mdi_init()
    return (PAPI_OK);
 }
 
-///guanglei:  pay attention
 void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
-   int i; 
-   //int def_mode;
-
-/*   switch(_papi_hwi_system_info.default_domain) {
-   case PAPI_DOM_USER:
-      def_mode = PERF_USR;
-      break;
-   case PAPI_DOM_KERNEL:
-      def_mode = PERF_OS;
-      break;
-   case PAPI_DOM_ALL:
-      def_mode = PERF_OS | PERF_USR;
-      break;
-   default:
-      PAPIERROR("BUG! Unknown domain %d, using PAPI_DOM_USER",_papi_hwi_system_info.default_domain);
-      def_mode = PERF_USR;
-      break;
-   } */
-   ptr->allocated_registers.selector = 0;
-   ////guanglei note_lgl pay attention here
-   switch (_papi_hwi_system_info.hw_info.model) {
-#ifdef PERFCTR26
-   case PERFCTR_PPC_750:
-#endif
-/*      ptr->control.cpu_control.evntsel[0] |= PERF_ENABLE;
-      for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
-         ptr->control.cpu_control.evntsel[i] |= def_mode;
-         ptr->control.cpu_control.pmc_map[i] = i;
-      }
-	  */
-	   for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
-		   ptr->control.cpu_control.evntsel[i] = 0;
-		   ptr->control.cpu_control.pmc_map[i] = 0;
-	   }
-      break;
+   int i = 0;
+   for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
+      ptr->control.cpu_control.pmc_map[i] = i;
    }
-   /* Make sure the TSC is always on */
+   _papi_hwd_set_domain(ptr,_papi_hwi_system_info.default_domain);
+   ptr->allocated_registers.selector = 0;
    ptr->control.cpu_control.tsc_on = 1;
 }
 
@@ -159,33 +127,26 @@ int _papi_hwd_add_prog_event(hwd_control_state_t * state, unsigned int code, voi
 }
 
 int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain) {
-   int i, did = 0;
+{
+   int did = 0;
     
-     /* Clear the current domain set for this event set */
-     /* We don't touch the Enable bit in this code but  */
-     /* leave it as it is */
-   for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
-      cntrl->control.cpu_control.evntsel[i] &= ~(PERF_OS|PERF_USR);
-   }
-   if(domain & PAPI_DOM_USER) {
+   if(domain == PAPI_DOM_ALL) {
       did = 1;
-      for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
-         cntrl->control.cpu_control.evntsel[i] |= PERF_USR;
-      }
-   }
-   if(domain & PAPI_DOM_KERNEL) {
+      cntrl->control.cpu_control.ppc.mmcr0 |= PERF_USR_AND_OS;
+   } else if (domain == PAPI_DOM_KERNEL) {
       did = 1;
-      for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
-         cntrl->control.cpu_control.evntsel[i] |= PERF_OS;
-      }
+      cntrl->control.cpu_control.ppc.mmcr0 |= PERF_OS_ONLY;
+   } else if(domain == PAPI_DOM_USER) {
+      did = 1;
+      cntrl->control.cpu_control.ppc.mmcr0 |= PERF_USR_ONLY;
    }
+   
    if(!did)
       return(PAPI_EINVAL);
    else
       return(PAPI_OK);
 }
 
-//guanglei  use lock_init from any-null
 #if 0
 static void lock_init(void) {
    int i;
@@ -351,7 +312,7 @@ void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
    shared = dst->ra_selector & src->ra_selector;
    if (shared)
       dst->ra_selector ^= shared;
-   for (i = 0, dst->ra_rank = 0; i < MAX_COUNTERS; i++)
+   for (i = 0, dst->ra_rank = 0; i < _papi_hwi_system_info.num_cntrs; i++)
       if (dst->ra_selector & (1 << i))
          dst->ra_rank++;
 }
@@ -369,12 +330,14 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
       for counter allocation and optimization. */
    natNum = ESI->NativeCount;
    for(i = 0; i < natNum; i++) {
+     /* retrieve mapping info */
       index = ESI->NativeInfoArray[i].ni_event & PAPI_NATIVE_AND_MASK;
+      /* Yuck structure assignment */
       event_list[i].ra_bits = native_table[index].resources;
       event_list[i].ra_selector = event_list[i].ra_bits.selector;
       /* calculate native event rank, which is no. of counters it can live on */
       event_list[i].ra_rank = 0;
-      for(j = 0; j < MAX_COUNTERS; j++) {
+      for(j = 0; j < _papi_hwi_system_info.num_cntrs; j++) {
          if(event_list[i].ra_selector & (1 << j)) {
             event_list[i].ra_rank++;
          }
@@ -386,6 +349,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
          ESI->NativeInfoArray[i].ni_bits = event_list[i].ra_bits;
          /* Array order on perfctr is event ADD order, not counter #... */
          ESI->NativeInfoArray[i].ni_position = i;
+	 this_state->control.cpu_control.pmc_map[i] = event_list[i].ra_position;
       }
       return 1;
    } else
@@ -401,8 +365,8 @@ static void clear_control_state(hwd_control_state_t *this_state) {
    /* Remove all counter control command values from eventset. */
    for (i = 0; i < j; i++) {
       SUBDBG("Clearing pmc event entry %d\n", i);
-      this_state->control.cpu_control.pmc_map[i] = 0;
-      this_state->control.cpu_control.evntsel[i] = this_state->control.cpu_control.evntsel[i] & (PERF_OS|PERF_USR);
+      this_state->control.cpu_control.pmc_map[i] = i;
+      this_state->control.cpu_control.evntsel[i] = 0;
       this_state->control.cpu_control.ireset[i] = 0;
    }
 
@@ -430,69 +394,8 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
    for (i = 0; i < count; i++) 
      {
        SUBDBG("event %d, counter_cmd 0x%x, selector 0x%x\n",i,native[i].ni_bits.counter_cmd,native[i].ni_bits.selector);
-
       /* Add counter control command values to eventset */
        this_state->control.cpu_control.evntsel[i] |= native[i].ni_bits.counter_cmd;
-
-	  if(native[i].ni_bits.selector == CNTR1) {
-		  this_state->control.cpu_control.pmc_map[i]=0;
-		  pos_pmc_map |= CNTR1;
-	  }
-	  if(native[i].ni_bits.selector == CNTR2) {
-		  this_state->control.cpu_control.pmc_map[i]=1;
-		  pos_pmc_map |= CNTR2;
-	  }
-	  if(native[i].ni_bits.selector == CNTR3) {
-		  this_state->control.cpu_control.pmc_map[i]=2;
-		  pos_pmc_map |= CNTR3;
-	  }
-	  if(native[i].ni_bits.selector == CNTR4) {
-		  this_state->control.cpu_control.pmc_map[i]=3;
-		  pos_pmc_map |= CNTR4;
-	  }
-	  if(native[i].ni_bits.selector == CNTR5) {
-		  this_state->control.cpu_control.pmc_map[i]=4;
-		  pos_pmc_map |= CNTR5;
-	  }
-	  if(native[i].ni_bits.selector == CNTR6) {
-		  this_state->control.cpu_control.pmc_map[i]=5;
-		  pos_pmc_map |= CNTR6;
-	  }
-   }
-
-   if (_papi_hwi_system_info.hw_info.model == PERFCTR_PPC_7450)
-     {
-       for(i=0; i< count; i++) {
-	 int l;
-	 if(native[i].ni_bits.selector == ALLCNTRS_PPC7450)  {
-	   if(pos_pmc_map == ALLCNTRS_PPC7450) 
-	     return PAPI_EINVAL;
-	   for(l=0; l<6; l++)  {
-	     if( !(pos_pmc_map & (1<<(l)) ) )  {
-	       this_state->control.cpu_control.pmc_map[i] = l;
-	       pos_pmc_map |= (1<<l);
-	       break;
-	     }
-	   }
-	 }
-       }
-     }
-   else if (_papi_hwi_system_info.hw_info.model == PERFCTR_PPC_750)
-     {
-       for(i=0; i< count; i++) {
-	 int l;
-	 if(native[i].ni_bits.selector == ALLCNTRS_PPC750)  {
-	   if(pos_pmc_map == ALLCNTRS_PPC750) 
-	     return PAPI_EINVAL;
-	   for(l=0; l<6; l++)  {
-	     if( !(pos_pmc_map & (1<<(l)) ) )  {
-	       this_state->control.cpu_control.pmc_map[i] = l;
-	       pos_pmc_map |= (1<<l);
-	       break;
-	     }
-	   }
-	 }
-       }
      }
 
    this_state->control.cpu_control.nractrs = count;
@@ -643,8 +546,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
        return PAPI_EBUG;
    }
    if (threshold != 0) {        /* Set an overflow threshold */
-      if ((ESI->EventInfoArray[EventIndex].derived) &&
-          (ESI->EventInfoArray[EventIndex].derived != DERIVED_CMPD)){
+      if ((ESI->EventInfoArray[EventIndex].derived) {
          OVFDBG("Can't overflow on a derived event.\n");
          return PAPI_EINVAL;
       }
@@ -654,40 +556,34 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
 
       /* overflow interrupt occurs on the NEXT event after overflow occurs
          thus we subtract 1 from the threshold. */
-      contr->cpu_control.ireset[i] = (-threshold + 1);
-      contr->cpu_control.evntsel[i] |= PERF_INT_ENABLE;
-      contr->cpu_control.nrictrs++;
-      contr->cpu_control.nractrs--;
-      nricntrs = contr->cpu_control.nrictrs;
-      nracntrs = contr->cpu_control.nractrs;
+      contr->cpu_control.ireset[i] = PMC_OVFL - threshold;
+      nricntrs = ++contr->cpu_control.nrictrs;
+      nracntrs = --contr->cpu_control.nractrs;
       contr->si_signo = PAPI_SIGNAL;
+      contr->cpu_control.ppc.mmcr0 |= PERF_INT_ENABLE;
 
       /* move this event to the bottom part of the list if needed */
       if (i < nracntrs)
          swap_events(ESI, contr, i, nracntrs);
-      OVFDBG("Modified event set\n");
    } else {
-      if (contr->cpu_control.evntsel[i] & PERF_INT_ENABLE) {
+      if (contr->cpu_control.ppc.mmcr0 & PERF_INT_ENABLE) {
          contr->cpu_control.ireset[i] = 0;
-         contr->cpu_control.evntsel[i] &= (~PERF_INT_ENABLE);
-         contr->cpu_control.nrictrs--;
-         contr->cpu_control.nractrs++;
+         nricntrs = --contr->cpu_control.nrictrs;
+         nracntrs = ++contr->cpu_control.nractrs;
+         if (!nricntrs)
+	         contr->cpu_control.ppc.mmcr0 &= (~PERF_INT_ENABLE);
       }
-      nricntrs = contr->cpu_control.nrictrs;
-      nracntrs = contr->cpu_control.nractrs;
 
       /* move this event to the top part of the list if needed */
       if (i >= nracntrs)
          swap_events(ESI, contr, i, nracntrs - 1);
-
       if (!nricntrs)
          contr->si_signo = 0;
-
-      OVFDBG("Modified event set\n");
-
       retval = _papi_hwi_stop_signal(PAPI_SIGNAL);
    }
-   OVFDBG("End of call. Exit code: %d\n", retval);
+#ifdef DEBUG   
+   print_control(&contr->cpu_control);
+#endif
    return (retval);
 }
 
@@ -703,14 +599,9 @@ int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI) {
 
 int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
-   extern int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain);
    switch (code) {
    case PAPI_DOMAIN:
-   case PAPI_DEFDOM:
       return (_papi_hwd_set_domain(&option->domain.ESI->machdep, option->domain.domain));
-   case PAPI_GRANUL:
-   case PAPI_DEFGRN:
-      return(PAPI_ESBSTR);
    default:
       return (PAPI_EINVAL);
    }

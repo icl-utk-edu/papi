@@ -43,7 +43,7 @@
 #define PERF_MAX_COUNTERS 6
 #define MAX_COUNTERS PERF_MAX_COUNTERS
 #define MAX_COUNTER_TERMS  MAX_COUNTERS
-#define P3_MAX_REGS_PER_EVENT 2
+#define ppc32_MAX_REGS_PER_EVENT 2
 
 #include "papi.h"
 #include "papi_preset.h"
@@ -120,18 +120,16 @@ typedef ucontext_t hwd_ucontext_t;
 /* Linux DOES support hardware overflow */
 #define HW_OVERFLOW 1
 
-typedef struct P3_register {
+typedef struct ppc32_register {
    unsigned int selector;       /* Mask for which counters in use */
    int counter_cmd;             /* The event code */
-   //guanglei
-   //int counter_cmd[MAX_COUNTERS];  //definitions from power3
-} P3_register_t;
+} ppc32_register_t;
 
-typedef struct P3_reg_alloc {
-   P3_register_t ra_bits;       /* Info about this native event mapping */
+typedef struct ppc32_reg_alloc {
+   ppc32_register_t ra_bits;       /* Info about this native event mapping */
    unsigned ra_selector;        /* Bit mask showing which counters can carry this metric */
    unsigned ra_rank;            /* How many counters can carry this metric */
-} P3_reg_alloc_t;
+} ppc32_reg_alloc_t;
 
 /* Per eventset data structure for thread level counters */
 
@@ -154,30 +152,30 @@ typedef struct native_event_entry {
    /* If it exists, then this is the description of this event */
    char *description;
    /* description of the resources required by this native event */
-   P3_register_t resources;
+   ppc32_register_t resources;
 } native_event_entry_t;
 
 /* typedefs to conform to hardware independent PAPI code. */
-typedef P3_reg_alloc_t hwd_reg_alloc_t;
-typedef P3_register_t hwd_register_t;
+typedef ppc32_reg_alloc_t hwd_reg_alloc_t;
+typedef ppc32_register_t hwd_register_t;
 
-typedef struct P3_perfctr_control {
+typedef struct ppc32_perfctr_control {
    hwd_native_t native[MAX_COUNTERS];
    int native_idx;
    unsigned char master_selector;
-   P3_register_t allocated_registers;
+   ppc32_register_t allocated_registers;
    struct vperfctr_control control;
    struct perfctr_sum_ctrs state;
-} P3_perfctr_control_t;
+} ppc32_perfctr_control_t;
 
-typedef struct P3_perfctr_context {
+typedef struct ppc32_perfctr_context {
    struct vperfctr *perfctr;
-/*  P3_perfctr_control_t start; */
-} P3_perfctr_context_t;
+/*  ppc32_perfctr_control_t start; */
+} ppc32_perfctr_context_t;
 
 /* typedefs to conform to hardware independent PAPI code. */
-typedef P3_perfctr_control_t hwd_control_state_t;
-typedef P3_perfctr_context_t hwd_context_t;
+typedef ppc32_perfctr_control_t hwd_control_state_t;
+typedef ppc32_perfctr_context_t hwd_context_t;
 #define hwd_pmc_control vperfctr_control
 
 /* Used in determining on which counters an event can live. */
@@ -194,17 +192,13 @@ typedef P3_perfctr_context_t hwd_context_t;
 #define ALLCNTRS_PPC750 (CNTR1|CNTR2|CNTR3|CNTR4)
 #define ALLCNTRS_PPC7450 (CNTR1|CNTR2|CNTR3|CNTR4|CNTR5|CNTR6)
 
-/* Masks to craft an eventcode to perfctr's liking */
-#define PERF_CTR_MASK          0xFF000000
-#define PERF_INV_CTR_MASK      0x00800000
-#define PERF_ENABLE            0x00400000
-#define PERF_INT_ENABLE        0x00100000
-#define PERF_PIN_CONTROL       0x00080000
-#define PERF_EDGE_DETECT       0x00040000
-#define PERF_OS                0x00020000
-#define PERF_USR               0x00010000
-#define PERF_UNIT_MASK         0x0000FF00
-#define PERF_EVNT_MASK         0x000000FF
+#define PMC_OVFL	       0x80000000
+#define PERF_USR_ONLY          (1<<(31-1))
+#define PERF_OS_ONLY           (1<<(31-2))
+#define PERF_USR_AND_OS        0x00000000 
+#define PERF_INT_ENABLE        (1<<(31-5))
+#define PERF_INT_PMC1EN        (1<<(31-16))
+#define PERF_INT_PMCxEN        (1<<(31-17))
 
 #define AI_ERROR "No support for a-mode counters after adding an i-mode counter"
 #define VOPEN_ERROR "vperfctr_open() returned NULL"
@@ -220,4 +214,31 @@ extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
 extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
 
+/* PPC750 MMCR0
+   bit 1 disable supervisor counting
+   bit 2 disable user counting
+   bit 5 enable interrupts
+   bit 16 enable interrupt PMC1
+   bit 17 enable interrupt PMC2-4 */
+
+/* PPC7450 same as PPC750 */
+#if 0
+AO_test_and_set_full(volatile AO_TS_t *addr) {
+  int oldval;
+  int temp = 1; /* locked value */
+
+  __asm__ __volatile__(
+               "1:\tlwarx %0,0,%3\n"   /* load and reserve               */
+               "\tcmpwi %0, 0\n"       /* if load is                     */
+               "\tbne 2f\n"            /*   non-zero, return already set */
+               "\tstwcx. %2,0,%1\n"    /* else store conditional         */
+               "\tbne- 1b\n"           /* retry if lost reservation      */
+               "2:\t\n"                /* oldval is zero if we set       */
+              : "=&r"(oldval), "=p"(addr)
+              : "r"(temp), "1"(addr)
+              : "memory");
+
+  return oldval;
+}
+#endif
 #endif /* _PAPI_PERFCTR_PPC32_H */

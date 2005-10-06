@@ -94,6 +94,7 @@ case "$OS" in
          else
            family=`uname -m`
            if test "$family" = "ppc64"; then
+             echo "family = ppc64"
              CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
              case "$CPU_info" in
                PPC970*) CPU="PPC970";;
@@ -180,7 +181,7 @@ case "$OS" in
 		     PMAPI="/usr/lpp/pmtoolkit"
 		  fi
 		  ;;
-                power4) PMAPI="/usr/pmapi" ;;
+                power4|power5) PMAPI="/usr/pmapi" ;;
              esac
 	     ;;
          *)
@@ -219,6 +220,10 @@ case "$OS" in
          fi
        fi
        ;;
+   catamount)
+	   MAKEVER="$OS"-perfctr-opteron
+	   ;;
+	   
    solaris)
        if test "${bitmode}" = "64"; then
           if test "`isainfo -v | grep "64"`" = ""; then
@@ -307,8 +312,11 @@ case "$MAKEVER" in
     aix-power3);;
     aix-power4);;
     aix-power4-64bit);;
+    aix-power5);;
+    aix-power5-64bit);;
     aix5-power3);;
     aix5-power3-64bit);;
+    catamount-perfctr-opteron);;
     dadd-alpha);;
     irix-mips);;
     irix-mips-64bit);;
@@ -382,10 +390,20 @@ AC_CHECK_FILE(/etc/sgi-release,[
 fi
 
 if test "$OS" = "aix"; then
-AC_CHECK_LIB([pmapi], [pm_init], [], [
-      echo "Error, libpmapi.a is needed on power!"
-      exit -1
-      ])
+PMINIT=""
+AC_CHECK_LIB([pmapi], [pm_initialize], [
+      PMINIT="-DPM_INITIALIZE"], [
+      AC_CHECK_LIB([pmapi], [pm_init], [
+      PMINIT="-DPM_INIT"], [
+        echo "Error, libpmapi.a is needed on power!"
+        exit -1
+        ])],
+      [])
+
+#AC_CHECK_LIB([pmapi], [pm_init], [], [
+#      echo "Error, libpmapi.a is needed on power!"
+#      exit -1
+#      ])
 fi
 
 if test "$prefix" = "NONE"; then
@@ -413,7 +431,7 @@ AC_CHECK_LIB([lipr], [main])
 # Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-#AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h malloc.h memory.h stddef.h stdlib.h string.h sys/ioctl.h sys/socket.h sys/systeminfo.h sys/time.h unistd.h])
+AC_CHECK_HEADERS([assert.h ctype.h dirent.h dlfcn.h errno.h expat.h fcntl.h inttypes.h libgen.h limits.h malloc.h math.h memory.h signal.h stdarg.h stdio.h stdlib.h string.h stropts.h sys/ioctl.h sys/mman.h sys/processor.h sys/procfs.h sys/resource.h sys/stat.h sys/syscall.h sys/sysinfo.h sys/sysmp.h sys/time.h sys/timers.h sys/times.h sys/types.h ucontext.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -535,6 +553,7 @@ case "$tls" in
 #AC_MSG_RESULT($NOTLS)
 AC_SUBST(NOTLS)
 AC_SUBST(altix)
+AC_SUBST(PMINIT)
 # AC_SUBST(perfctr_prefix)
 # AC_SUBST(perfctr)
 # AC_SUBST(pfm_prefix)
