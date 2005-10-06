@@ -195,7 +195,7 @@ typedef ppc32_perfctr_context_t hwd_context_t;
 #define PMC_OVFL	       0x80000000
 #define PERF_USR_ONLY          (1<<(31-1))
 #define PERF_OS_ONLY           (1<<(31-2))
-#define PERF_USR_AND_OS        0x00000000 
+#define PERF_MODE_MASK         ~(PERF_USR_ONLY|PERF_OS_ONLY) 
 #define PERF_INT_ENABLE        (1<<(31-5))
 #define PERF_INT_PMC1EN        (1<<(31-16))
 #define PERF_INT_PMCxEN        (1<<(31-17))

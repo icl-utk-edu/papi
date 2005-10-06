@@ -54,9 +54,10 @@ void print_control(const struct perfctr_cpu_control *control) {
   unsigned int i;
 
    SUBDBG("Control used:\n");
-   SUBDBG("tsc_on\t\t\t%u\n", control->tsc_on);
-   SUBDBG("nractrs\t\t\t%u\n", control->nractrs);
-   SUBDBG("nrictrs\t\t\t%u\n", control->nrictrs);
+   SUBDBG("tsc_on\t\t%u\n", control->tsc_on);
+   SUBDBG("nractrs\t\t%u\n", control->nractrs);
+   SUBDBG("nrictrs\t\t%u\n", control->nrictrs);
+   SUBDBG("mmcr0\t\t0x%08X\n", control->ppc.mmcr0);
    for (i = 0; i < (control->nractrs + control->nrictrs); ++i) {
      SUBDBG("pmc_map[%u]\t\t%u\n", i, control->pmc_map[i]);
      SUBDBG("evntsel[%u]\t\t0x%08X\n", i, control->evntsel[i]);
@@ -112,11 +113,8 @@ static int mdi_init()
    return (PAPI_OK);
 }
 
-void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
-   int i = 0;
-   for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
-      ptr->control.cpu_control.pmc_map[i] = i;
-   }
+void _papi_hwd_init_control_state(hwd_control_state_t * ptr) 
+{
    _papi_hwd_set_domain(ptr,_papi_hwi_system_info.default_domain);
    ptr->allocated_registers.selector = 0;
    ptr->control.cpu_control.tsc_on = 1;
@@ -126,25 +124,28 @@ int _papi_hwd_add_prog_event(hwd_control_state_t * state, unsigned int code, voi
    return (PAPI_ESBSTR);
 }
 
-int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain) {
+int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain)
 {
    int did = 0;
-    
-   if(domain == PAPI_DOM_ALL) {
-      did = 1;
-      cntrl->control.cpu_control.ppc.mmcr0 |= PERF_USR_AND_OS;
-   } else if (domain == PAPI_DOM_KERNEL) {
-      did = 1;
-      cntrl->control.cpu_control.ppc.mmcr0 |= PERF_OS_ONLY;
-   } else if(domain == PAPI_DOM_USER) {
-      did = 1;
-      cntrl->control.cpu_control.ppc.mmcr0 |= PERF_USR_ONLY;
-   }
+   unsigned long tmp = cntrl->control.cpu_control.ppc.mmcr0;
    
+   SUBDBG("set domain %d, mmcr0 is %08X\n",domain,tmp);
+   if ((domain == PAPI_DOM_ALL) || (domain == (PAPI_DOM_USER|PAPI_DOM_KERNEL))) {
+     did = 1;
+     tmp = tmp & PERF_MODE_MASK;
+   } else if (domain == PAPI_DOM_KERNEL) {
+     did = 1;
+     tmp = (tmp & PERF_MODE_MASK) | PERF_OS_ONLY;
+   } else if(domain == PAPI_DOM_USER) {
+     did = 1;
+     tmp = (tmp & PERF_MODE_MASK) | PERF_USR_ONLY;
+   }
+   SUBDBG("set domain %d, mmcr0 will be %08X\n",domain,tmp);
    if(!did)
       return(PAPI_EINVAL);
-   else
-      return(PAPI_OK);
+   
+   cntrl->control.cpu_control.ppc.mmcr0 = tmp;
+   return(PAPI_OK);
 }
 
 #if 0
@@ -323,25 +324,31 @@ void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
 
 /* Register allocation */
 int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
+   hwd_control_state_t *this_state = &ESI->machdep;
    int index, i, j, natNum;
    hwd_reg_alloc_t event_list[MAX_COUNTERS];
+
+   memset(event_list,0x0,sizeof(hwd_reg_alloc_t)*MAX_COUNTERS);
 
    /* Initialize the local structure needed
       for counter allocation and optimization. */
    natNum = ESI->NativeCount;
-   for(i = 0; i < natNum; i++) {
-     /* retrieve mapping info */
+
+   for(i = 0; i < natNum; i++) 
+     {
+       /* retrieve mapping info */
       index = ESI->NativeInfoArray[i].ni_event & PAPI_NATIVE_AND_MASK;
+      SUBDBG("Native event %d index is %d\n",i,index);
+
       /* Yuck structure assignment */
-      event_list[i].ra_bits = native_table[index].resources;
+      memcpy(&event_list[i].ra_bits,&native_table[index].resources,sizeof(event_list[i].ra_bits));
       event_list[i].ra_selector = event_list[i].ra_bits.selector;
+
       /* calculate native event rank, which is no. of counters it can live on */
-      event_list[i].ra_rank = 0;
       for(j = 0; j < _papi_hwi_system_info.num_cntrs; j++) {
-         if(event_list[i].ra_selector & (1 << j)) {
-            event_list[i].ra_rank++;
-         }
+         if (event_list[i].ra_selector & (1 << j)) event_list[i].ra_rank++;
       }
+      SUBDBG("Can live on %d registers, %08X\n",event_list[i].ra_rank,event_list[i].ra_selector);
    }
    if(_papi_hwi_bipartite_alloc(event_list, natNum)) { /* successfully mapped */
       for(i = 0; i < natNum; i++) {
@@ -349,28 +356,16 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
          ESI->NativeInfoArray[i].ni_bits = event_list[i].ra_bits;
          /* Array order on perfctr is event ADD order, not counter #... */
          ESI->NativeInfoArray[i].ni_position = i;
-	 this_state->control.cpu_control.pmc_map[i] = event_list[i].ra_position;
+	 this_state->control.cpu_control.pmc_map[i] = ffs(event_list[i].ra_selector) - 1;
+	 SUBDBG("bipartite put event_list[%d].ra_selector is %08X, %08X on PMC %d\n",i,event_list[i].ra_selector,event_list[i].ra_bits.selector,ffs(event_list[i].ra_selector)-1);
       }
       return 1;
    } else
       return 0;
 }
 
-static void clear_control_state(hwd_control_state_t *this_state) {
-   int i,j;
-
-   /* total counters is sum of accumulating (nractrs) and interrupting (nrictrs) */
-   j = this_state->control.cpu_control.nractrs + this_state->control.cpu_control.nrictrs;
-
-   /* Remove all counter control command values from eventset. */
-   for (i = 0; i < j; i++) {
-      SUBDBG("Clearing pmc event entry %d\n", i);
-      this_state->control.cpu_control.pmc_map[i] = i;
-      this_state->control.cpu_control.evntsel[i] = 0;
-      this_state->control.cpu_control.ireset[i] = 0;
-   }
-
-   /* clear both a and i counter counts */
+static void clear_control_state(hwd_control_state_t *this_state) 
+{
    this_state->control.cpu_control.nractrs = 0;
    this_state->control.cpu_control.nrictrs = 0;
 }
@@ -382,20 +377,16 @@ static void clear_control_state(hwd_control_state_t *this_state) {
 int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
                                    NativeInfo_t *native, int count, hwd_context_t * ctx) {
    int i;
-   int pos_pmc_map=0;
 
    /* clear out everything currently coded */
    clear_control_state(this_state);
-
-   /* fill the counters we're using */
-   _papi_hwd_init_control_state(this_state);
 
    SUBDBG("adding %d native events\n",count);
    for (i = 0; i < count; i++) 
      {
        SUBDBG("event %d, counter_cmd 0x%x, selector 0x%x\n",i,native[i].ni_bits.counter_cmd,native[i].ni_bits.selector);
       /* Add counter control command values to eventset */
-       this_state->control.cpu_control.evntsel[i] |= native[i].ni_bits.counter_cmd;
+       this_state->control.cpu_control.evntsel[i] = native[i].ni_bits.counter_cmd;
      }
 
    this_state->control.cpu_control.nractrs = count;
@@ -546,7 +537,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
        return PAPI_EBUG;
    }
    if (threshold != 0) {        /* Set an overflow threshold */
-      if ((ESI->EventInfoArray[EventIndex].derived) {
+      if (ESI->EventInfoArray[EventIndex].derived) {
          OVFDBG("Can't overflow on a derived event.\n");
          return PAPI_EINVAL;
       }

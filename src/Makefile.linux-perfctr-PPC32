@@ -6,5 +6,5 @@ CPU_TYPE 	= ppc32
 SHRFLAGS	= 
 CONFIG_HEADER	= config.h
 BITS		= 32
-CFLAGS		= -mcpu=750 -g -DDEBUG -D_$(CPU_MODEL) -DNEED_FFSLL -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\"
+CFLAGS		= -g -DDEBUG -D_$(CPU_MODEL) -DNEED_FFSLL -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\"
 include Rules.perfctr
