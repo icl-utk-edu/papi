@@ -1187,13 +1187,96 @@ static void __init finalise_backpatching(void)
 
 cpumask_t perfctr_cpus_forbidden_mask;
 
+static inline unsigned int find_mask(unsigned int nrvals)
+{
+	unsigned int tmp = nrvals;
+	unsigned int index_msb = 31;
+
+	if (!tmp)
+		return 0;
+	while (!(tmp & (1<<31))) {
+		tmp <<= 1;
+		--index_msb;
+	}
+	if (nrvals & (nrvals - 1))
+		++index_msb;
+	return ~(~0 << index_msb);
+}
+
 static void __init p4_ht_mask_setup_cpu(void *forbidden)
 {
-	unsigned int local_apic_physical_id = cpuid_ebx(1) >> 24;
-	unsigned int logical_processor_id = local_apic_physical_id & 1;
-	if (logical_processor_id != 0)
+	int cpu = smp_processor_id();
+	unsigned int cpuid_maxlev;
+	unsigned int cpuid1_ebx, cpuid1_edx;
+	unsigned int initial_APIC_ID;
+	unsigned int max_cores_per_package;
+	unsigned int max_lp_per_package;
+	unsigned int max_lp_per_core;
+	unsigned int smt_id;
+
+	/*
+	 * The following big chunk of code detects the current logical processor's
+	 * SMT ID (thread number). This is quite complicated, see AP-485 and Volume 3
+	 * of Intel's IA-32 Manual (especially section 7.10) for details.
+	 */
+
+	/* Ensure that CPUID reports all levels. */
+	if (cpu_data[cpu].x86_model == 3) { /* >= 3? */
+		unsigned int low, high;
+		rdmsr(MSR_IA32_MISC_ENABLE, low, high);
+		if (low & (1<<22)) { /* LIMIT_CPUID_MAXVAL */
+			low &= ~(1<<22);
+			wrmsr(MSR_IA32_MISC_ENABLE, low, high);
+			printk(KERN_INFO "perfctr/x86.c: CPU %d: removed CPUID level limitation\n",
+			       cpu);
+		}
+	}
+
+	/* Find the highest standard CPUID level. */
+	cpuid_maxlev = cpuid_eax(0);
+	if (cpuid_maxlev < 1) {
+		printk(KERN_INFO "perfctr/x86: CPU %d: impossibly low # of CPUID levels: %u\n",
+		       cpu, cpuid_maxlev);
+		return;
+	}
+	cpuid1_ebx = cpuid_ebx(1);
+	cpuid1_edx = cpuid_edx(1);
+
+	/* Find the initial (HW-assigned) APIC ID of this logical processor. */
+	initial_APIC_ID = cpuid1_ebx >> 24;
+
+	/* Find the max number of logical processors per physical processor package. */
+	if (cpuid1_edx & (1 << 28))	/* HT is supported */
+		max_lp_per_package = (cpuid1_ebx >> 16) & 0xFF;
+	else				/* HT is not supported */
+		max_lp_per_package = 1;
+	
+	/* Find the max number of processor cores per physical processor package. */
+	if (cpuid_maxlev >= 4) {
+		/* For CPUID level 4 we need a zero in ecx as input to CPUID, but
+		   cpuid_eax() doesn't do that. So we resort to using the plain
+		   cpuid() with reference parameters and dummy outputs. */
+		unsigned int eax, dummy;
+		cpuid(4, &eax, &dummy, &dummy, &dummy);
+		max_cores_per_package = (eax >> 26) + 1;
+	} else
+		max_cores_per_package = 1;
+
+	max_lp_per_core = max_lp_per_package / max_cores_per_package;
+
+	smt_id = initial_APIC_ID & find_mask(max_lp_per_core);
+
+	printk(KERN_INFO "perfctr/x86.c: CPU %d: cpuid_ebx(1) 0x%08x, cpuid_edx(1) 0x%08x, cpuid_maxlev %u, max_cores_per_package %u, SMT_ID %u\n",
+	       cpu, cpuid1_ebx, cpuid1_edx, cpuid_maxlev, max_cores_per_package, smt_id);
+
+	/*
+	 * Now (finally!) check the SMT ID. The CPU numbers for non-zero SMT ID
+	 * threads are recorded in the forbidden set, to allow performance counter
+	 * hardware resource conflicts between sibling threads to be prevented.
+	 */
+	if (smt_id != 0)
 		/* We rely on cpu_set() being atomic! */
-		cpu_set(smp_processor_id(), *(cpumask_t*)forbidden);
+		cpu_set(cpu, *(cpumask_t*)forbidden);
 }
 
 static int __init p4_ht_smp_init(void)
@@ -1226,12 +1309,6 @@ static int __init p4_ht_init(void)
 	if (!cpu_has_ht)
 		return 0;
 	nr_siblings = (cpuid_ebx(1) >> 16) & 0xFF;
-	if (nr_siblings > 2) {
-		printk(KERN_WARNING "perfctr/x86.c: hyper-threaded P4s detected:"
-		       " unsupported number of siblings: %u -- bailing out\n",
-		       nr_siblings);
-		return -ENODEV;
-	}
 	if (nr_siblings < 2)
 		return 0;
 	p4_is_ht = 1;	/* needed even in a UP kernel */
@@ -1577,7 +1654,14 @@ static void perfctr_pm_resume(void)
 
 #include <linux/sysdev.h>
 
-static int perfctr_device_suspend(struct sys_device *dev, u32 state)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,14)
+typedef pm_message_t perfctr_suspend_state_t;
+#else
+typedef u32 perfctr_suspend_state_t;
+#endif
+
+static int perfctr_device_suspend(struct sys_device *dev,
+				  perfctr_suspend_state_t state)
 {
 	perfctr_pm_suspend();
 	return 0;

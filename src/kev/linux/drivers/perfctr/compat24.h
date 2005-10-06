@@ -29,7 +29,12 @@ extern void set_cpus_allowed(struct task_struct*, unsigned long);
 
 /* 2.4.20-8-redhat added put_task_struct() */
 #if defined(put_task_struct)	/* RH 2.4.20-8 */
+/* 2.4.21-37.EL-redhat added EXPORT_SYMBOL_GPL(__put_task_struct) */
+#if defined(HAVE_EXPORT___put_task_struct)
+#define EXPORT_SYMBOL___put_task_struct	/*empty*/
+#else
 #define EXPORT_SYMBOL___put_task_struct	EXPORT_SYMBOL(__put_task_struct)
+#endif
 #else				/* standard 2.4 */
 #define put_task_struct(tsk)	free_task_struct((tsk))
 #define EXPORT_SYMBOL___put_task_struct	/*empty*/

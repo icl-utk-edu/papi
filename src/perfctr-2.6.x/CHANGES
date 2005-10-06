@@ -6,6 +6,20 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.17, 2005-10-02
+- The x86 kernel driver has been updated to work correctly
+  on dual-core P4 processors. Previous versions would fail
+  during CPU detection (on HT DC P4s) or would erroneously
+  restrict access for one of the cores (non-HT DC P4s).
+- Updated kernel support: 2.4.21-37.EL (RHEL3), 2.4.32-rc1,
+  and 2.6.14-rc3.
+
+Version 2.6.16, 2005-09-04
+- The ppc32 driver will now compile in kernels that lack Open
+  Firmware support, which is needed for some embedded systems.
+- Updated kernel support: 2.6.9-11.EL (RHEL4), 2.4.21-32.0.1.EL
+  (RHEL3), 2.6.12, 2.6.13, 2.4.31, and 2.4.32-pre3.
+
 Version 2.6.15, 2005-05-06
 - Preliminary code in the x86/x86-64 low-level driver to detect
   multicore AMD K8 processors, and to prevent resource conflicts

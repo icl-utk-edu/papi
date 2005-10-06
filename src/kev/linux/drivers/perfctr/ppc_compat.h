@@ -4,6 +4,12 @@
  *
  * Copyright (C) 2004-2005  Mikael Pettersson
  */
+#include <linux/config.h>
+#include <linux/version.h>
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0) && defined(CONFIG_ALL_PPC)
+#define CONFIG_PPC_OF 1
+#endif
 
 #undef MMCR0_PMXE
 

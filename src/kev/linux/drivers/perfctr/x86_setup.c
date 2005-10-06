@@ -96,7 +96,7 @@ void perfctr_cpu_set_ihandler(perfctr_ihandler_t ihandler)
 }
 #endif
 
-#ifdef __x86_64__
+#if defined(__x86_64__) || LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
 extern unsigned int cpu_khz;
 #else
 extern unsigned long cpu_khz;
