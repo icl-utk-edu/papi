@@ -3,6 +3,24 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.17, 2005-10-02
+- The dual-core P4s changed the layout rules for the initial
+  APIC ID, which broke the x86 driver on DC P4s. Updated the
+  HT thread ID detection code to match current IA32 SDM Vol3.
+- Kernel 2.4.21-37.EL added EXPORT_SYMBOL_GPL(__put_task_struct).
+  Added new feature #define to the kernel-specific patch for this
+  case. compat24.h now disables our export of __put_task_struct
+  when that feature #define is set.
+- Kernel 2.6.14-rc1 changed the state parameter to ->suspend()
+  methods to be of type 'pm_message_t'. Adjusted x86.c for this,
+  to eliminate a compile-time type mismatch warning.
+
+Version 2.6.16, 2005-09-04
+- cpu_khz changed type in kernel 2.6.13. Adjusted x86_setup.c
+  accordingly, to avoid a compile-time error.
+- The ppc32 driver will now compile in kernels that lack Open
+  Firmware support, which is needed for some embedded systems.
+
 Version 2.6.15, 2005-05-06
 - Added code to detect multicore K8s and prevent threads in the
   thread-centric API from using northbridge events. This avoids
