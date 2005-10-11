@@ -60,6 +60,11 @@ int main(int argc, char **argv)
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
    if (TESTS_QUIET) test_skip(__FILE__, __LINE__, "test_skip", 1);
 
+   if ( argc < 2 ) {
+      print_help();
+      test_skip(__FILE__,__LINE__, "test_skip", 1);
+   }
+
    for (i = 1; i < argc; i++) {
       if (argv[i][0] == '-') {
          if (strstr(argv[i], "a")) {
