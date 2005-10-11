@@ -1,0 +1,15 @@
+[data from a 2.0 GHz Pentium-M]
+
+PERFCTR INIT: vendor 0, family 6, model 13, stepping 6, clock 1993982 kHz
+PERFCTR INIT: NITER == 64
+PERFCTR INIT: loop overhead is 263 cycles
+PERFCTR INIT: rdtsc cost is 49.7 cycles (3448 total)
+PERFCTR INIT: rdpmc cost is 47.9 cycles (3332 total)
+PERFCTR INIT: rdmsr (counter) cost is 104.4 cycles (6947 total)
+PERFCTR INIT: rdmsr (evntsel) cost is 88.0 cycles (5897 total)
+PERFCTR INIT: wrmsr (counter) cost is 154.6 cycles (10159 total)
+PERFCTR INIT: wrmsr (evntsel) cost is 143.3 cycles (9436 total)
+PERFCTR INIT: read cr4 cost is 3.5 cycles (491 total)
+PERFCTR INIT: write cr4 cost is 53.0 cycles (3658 total)
+PERFCTR INIT: sync_core cost is 151.1 cycles (9936 total)
+perfctr: driver 2.6.12, cpu type Intel P6 at 1993982 kHz

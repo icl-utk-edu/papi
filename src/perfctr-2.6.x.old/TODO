@@ -1,0 +1,42 @@
+Changes after perfctr-2.6.0:
+- See if we can work around the PowerPC PMI/DECR/TAU erratum.
+- Automate setting of usr.lib/Makefile:SO_LIBVER !
+- Install perfex with dynamically linked libperfctr.so.
+- Fix vperfctr_reset_sampling_timer() to be cpu_khz-dependent.
+  Assuming 32-bit sampling precision and max sustained rate of
+  one event per core clock, then set the sampling timer to a
+  value N such that N < (2^32 * HZ) / (cpu_khz * 1000).
+- Convert NR_CPUS arrays to per_cpu().
+
+Changes after perfctr-2.7:
+- Implement a patch-less version of the driver. Insert a glue module
+  that hooks into the kernel via code backpatching and symbol table
+  information. Afterwards, the driver module proper can interface with
+  the glue module for the kernel callbacks, IDT, and irq return path.
+  This requires the /proc/<pid>/perfctr removal in perfctr-2.7.
+
+Possible Changes:
+- Change NR_CPUS loops to use the 2.6.2-rc1+ for_each_cpu() macro?
+- Increase [18] arrays in i386 to [24] or [32]? Just in case...
+- SuSE kernels don't use EXTRAVERSION. Fix update-kernel to use
+  rpm to identify the exact version instead.
+- Pull out common parts of *_check_control() and do those once.
+- Consider specialised read_counter() procedures for different uses.
+- Investigate the feasibility of adding back inheritance support.
+- When an overflown perfctr is reset, we should take into account
+  how many events past 0 or 1 it is at.
+- Implement gethrvtime(). Don't ever STOP the counters. To stop PMC
+  updates, call CONTROL with tsc_on == 1 and nractrs == nrictrs == 0.
+  The driver will continue sampling the TSC. Then gethrvtime() reduces
+  to scaling the virtualised TSC with cpu_khz.
+- Describe derived events in event_set.c.
+- Write some documentation :-(
+- The P6 and P4 sub-models don't matter for the driver. Should the driver
+  just export the major model and the cpuid, and let user-space figure
+  out sub-model details?
+- Access control mechanism for global-mode perfctrs?
+- Interrupt support for global-mode perfctrs?
+- Multiplexing support? PAPI seems to do fine w/o it.
+- A "kernel profiling" mode which uses global-mode perfctrs in
+  interrupt mode to profile the kernel?
+- Buffer interrupts and signal user-space when buffer is nearly full?

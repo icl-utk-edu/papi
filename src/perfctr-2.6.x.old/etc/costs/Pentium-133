@@ -1,0 +1,13 @@
+[data from a 133MHz Pentium (classic)]
+
+PERFCTR INIT: vendor 0, family 5, model 2, stepping 12, clock 133270 kHz
+PERFCTR INIT: NITER == 64
+PERFCTR INIT: loop overhead is 53 cycles
+PERFCTR INIT: rdtsc cost is 8.4 cycles (596 total)
+PERFCTR INIT: rdmsr (counter) cost is 27.1 cycles (1789 total)
+PERFCTR INIT: rdmsr (evntsel) cost is 22.0 cycles (1463 total)
+PERFCTR INIT: wrmsr (counter) cost is 34.7 cycles (2274 total)
+PERFCTR INIT: wrmsr (evntsel) cost is 32.9 cycles (2159 total)
+PERFCTR INIT: read %cr4 cost is 4.0 cycles (314 total)
+PERFCTR INIT: write %cr4 cost is 18.0 cycles (1207 total)
+perfctr: driver 2.0-pre5, cpu type Intel Pentium at 133270 kHz

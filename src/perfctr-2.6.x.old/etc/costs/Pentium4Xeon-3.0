@@ -1,0 +1,19 @@
+[data from a 3.0 GHz Pentium 4 Xeon in 64-bit mode (Nocona)]
+
+PERFCTR INIT: vendor 0, family 15, model 3, stepping 4, clock 2992619 kHz
+PERFCTR INIT: NITER == 64
+PERFCTR INIT: loop overhead is 787 cycles
+PERFCTR INIT: rdtsc cost is 97.2 cycles (7012 total)
+PERFCTR INIT: rdpmc cost is 226.7 cycles (15300 total)
+PERFCTR INIT: rdmsr (counter) cost is 354.3 cycles (23467 total)
+PERFCTR INIT: rdmsr (escr) cost is 375.5 cycles (24825 total)
+PERFCTR INIT: wrmsr (counter) cost is 990.4 cycles (64178 total)
+PERFCTR INIT: wrmsr (escr) cost is 979.9 cycles (63502 total)
+PERFCTR INIT: read cr4 cost is 23.9 cycles (2318 total)
+PERFCTR INIT: write cr4 cost is 394.1 cycles (26010 total)
+PERFCTR INIT: rdpmc (fast) cost is 89.5 cycles (6517 total)
+PERFCTR INIT: rdmsr (cccr) cost is 385.0 cycles (25432 total)
+PERFCTR INIT: wrmsr (cccr) cost is 938.0 cycles (60825 total)
+PERFCTR INIT: write LVTPC cost is 25.0 cycles (2393 total)
+PERFCTR INIT: sync_core cost is 490.4 cycles (32175 total)
+perfctr: driver 2.6.10-pre1, cpu type Intel P4 at 2992619 kHz

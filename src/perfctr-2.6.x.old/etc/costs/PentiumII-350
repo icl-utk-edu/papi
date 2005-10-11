@@ -1,0 +1,14 @@
+[data from a 350 MHz Pentium II (Deschutes)]
+
+PERFCTR INIT: vendor 0, family 6, model 5, stepping 1, clock 349410 kHz
+PERFCTR INIT: NITER == 64
+PERFCTR INIT: loop overhead is 88 cycles
+PERFCTR INIT: rdtsc cost is 33.7 cycles (2250 total)
+PERFCTR INIT: rdpmc cost is 29.6 cycles (1986 total)
+PERFCTR INIT: rdmsr (counter) cost is 81.2 cycles (5289 total)
+PERFCTR INIT: rdmsr (evntsel) cost is 69.4 cycles (4534 total)
+PERFCTR INIT: wrmsr (counter) cost is 87.4 cycles (5684 total)
+PERFCTR INIT: wrmsr (evntsel) cost is 79.1 cycles (5153 total)
+PERFCTR INIT: read cr4 cost is 1.9 cycles (211 total)
+PERFCTR INIT: write cr4 cost is 42.2 cycles (2792 total)
+perfctr: driver 2.3.4, cpu type Intel Pentium II at 349410 kHz
