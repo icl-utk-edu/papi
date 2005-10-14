@@ -212,6 +212,5 @@ typedef struct ntv_event_group_info {
 // prototypes
 ntv_event_info_t * perfctr_get_native_evt_info(void);
 ntv_event_group_info_t * perfctr_get_native_group_info(void);
-int _papi_hwd_get_memory_info(PAPI_hw_info_t * mem_info);
 
 #endif                          /* _PAPI_PERFCTR_PPC64 */
