@@ -1,0 +1,44 @@
+MEMSUBSTR=aix
+LIBS	= static shared
+TARGETS	= serial multiplex_and_pthreads smp omp
+#PMAPI	= /usr/pmapi
+SHLIBDEPS = -L$(PMAPI)/lib -lpmapi
+POST_BUILD =
+SPECIAL_REMOVE =
+
+FLAGS	= -I$(PMAPI)/include -qmaxmem=-1 -qarch=$(cpu_option) -qtune=$(cpu_option) -qlanglvl=extended  $(BITS)
+CFLAGS	= $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\"
+OPTFLAGS= -O3 -qstrict
+TOPTFLAGS=
+FFLAGS	= $(FLAGS) -WF,-D_$(CPU_MODEL) -WF,-DARCH_EVTS=\"$(ARCH_EVENTS).h\"
+FOPTFLAGS= $(OPTFLAGS)
+FTOPTFLAGS= $(TOPTFLAGS)
+SMPCFLGS= -qsmp
+OMPCFLGS= -qsmp=omp
+LDFLAGS = -L$(PMAPI)/lib -lpmapi
+CC_R	= xlc_r
+CC	= xlc
+CC_SHR	= xlc -G -bnoentry
+MPICC	= mpcc
+F77	= xlf
+CPP	= xlc -E
+MISCHDRS= aix.h $(ARCH_EVENTS).h ppc64_events.h pmapi-ppc64.h
+MISCSRCS= aix.c pmapi-ppc64_events.c $(ARCH_EVENTS)_map.c
+MISCOBJS= aix.o pmapi-ppc64_events.o $(ARCH_EVENTS)_map.o
+
+include Makefile.inc
+
+pmapi-ppc64_events.o: pmapi-ppc64_events.c  $(HEADERS)
+	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c pmapi-ppc64_events.c -o pmapi-ppc64_events.o
+
+$(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c  $(HEADERS)
+	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c $(ARCH_EVENTS)_map.c -o $(ARCH_EVENTS)_map.o
+
+aix.o: aix.c  $(HEADERS)
+	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
+
+native_install:
+
+native_clean:
+
+native_clobber:
