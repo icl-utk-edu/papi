@@ -260,15 +260,7 @@ static int get_system_info(void)
 #ifdef _AIXVERSION_510
 #ifdef PM_INITIALIZE
    SUBDBG("Calling AIX 5 version of pm_initialize...\n");
-#if defined(PM_CURRENT)
    retval = pm_initialize(PM_INIT_FLAGS, &pminfo, &pmgroups, PM_CURRENT);
-#else
-#if defined(_POWER4)
-   retval = pm_initialize(PM_INIT_FLAGS, &pminfo, &pmgroups, PM_POWER4);
-#elif defined(_POWER5)
-   retval = pm_initialize(PM_INIT_FLAGS, &pminfo, &pmgroups, PM_POWER5);
-#endif
-#endif
 #else
    SUBDBG("Calling AIX 5 version of pm_init...\n");
    retval = pm_init(PM_INIT_FLAGS, &pminfo, &pmgroups);
