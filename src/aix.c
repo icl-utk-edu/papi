@@ -260,7 +260,15 @@ static int get_system_info(void)
 #ifdef _AIXVERSION_510
 #ifdef PM_INITIALIZE
    SUBDBG("Calling AIX 5 version of pm_initialize...\n");
+#if defined(PM_CURRENT)
    retval = pm_initialize(PM_INIT_FLAGS, &pminfo, &pmgroups, PM_CURRENT);
+#else
+#if defined(_POWER4)
+   retval = pm_initialize(PM_INIT_FLAGS, &pminfo, &pmgroups, PM_POWER4);
+#elif defined(_POWER5)
+   retval = pm_initialize(PM_INIT_FLAGS, &pminfo, &pmgroups, PM_POWER5);
+#endif
+#endif
 #else
    SUBDBG("Calling AIX 5 version of pm_init...\n");
    retval = pm_init(PM_INIT_FLAGS, &pminfo, &pmgroups);
@@ -368,7 +376,11 @@ int _papi_hwd_init_global(void)
         _papi_hwi_system_info.hw_info.vendor_string,
         _papi_hwi_system_info.hw_info.model_string, _papi_hwi_system_info.hw_info.mhz);
 
+#if !defined(_POWER4) && !defined(_POWER5)
    setup_native_table();
+#else
+   ppc64_setup_native_table();
+#endif
    if (!_papi_hwd_init_preset_search_map(&pminfo)){ 
       return (PAPI_ESBSTR);}
 

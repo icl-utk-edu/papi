@@ -3,7 +3,9 @@
 
 #include "papi.h"
 #include "papi_internal.h"
+#ifndef PAPI_NO_VECTOR
 #include "papi_vector.h"
+#endif
 
 extern hwd_groups_t group_map[];
 
@@ -317,6 +319,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    return PAPI_OK;
 }
 
+#ifndef PAPI_NO_VECTOR
 papi_svector_t _ppc64_mips_table[] = {
  { (void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE },
  { (void (*)())_papi_hwd_update_control_state, VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
@@ -333,9 +336,7 @@ papi_svector_t _ppc64_mips_table[] = {
                                                                                 
 int ppc64_setup_vector_table(papi_vectors_t *vtable){
   int retval=PAPI_OK;
-#ifndef PAPI_NO_VECTOR
   retval = _papi_hwi_setup_vector_table( vtable, _ppc64_mips_table);
-#endif
   return(retval);
 }
-
+#endif
