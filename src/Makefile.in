@@ -4,6 +4,7 @@ PMAPI     = @PMAPI@
 PAPI_DATADIR    =@datadir@
 NOTLS     = @NOTLS@
 ALTIX	  = @altix@
+PMINIT    = @PMINIT@
 # PFM_PREFIX= @pfm_prefix@
 # PFM	  = @pfm@
 # PERFCTR_PREFIX= @perfctr_prefix@
