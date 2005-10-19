@@ -547,6 +547,7 @@ static void lock_init(void)
 /* this function is called by PAPI_library_init */
 #ifndef PAPI_NO_VECTOR
 papi_svector_t _irix_mips_table[] = {
+ {(void (*)())_papi_hwd_get_overflow_address,VEC_PAPI_HWD_GET_OVERFLOW_ADDRESS},
  {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
  {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
  {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
@@ -554,7 +555,7 @@ papi_svector_t _irix_mips_table[] = {
  {(void (*)())_papi_hwd_get_real_usec, VEC_PAPI_HWD_GET_REAL_USEC},
  {(void (*)())_papi_hwd_get_real_cycles, VEC_PAPI_HWD_GET_REAL_CYCLES},
  {(void (*)())_papi_hwd_get_virt_cycles, VEC_PAPI_HWD_GET_VIRT_CYCLES},
- {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_REAL_USEC},
+ {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
  {(void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE },
  {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
  {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
@@ -743,7 +744,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
    if (thread == NULL)
      return;
 
-   ESI = (EventSetInfo_t *) thread->running_eventset[0];
+   ESI = (EventSetInfo_t *) thread->running_eventset;
    if ((ESI == NULL) || ((ESI->state & PAPI_OVERFLOWING) == 0))
      {
        OVFDBG("Either no eventset or eventset not set to overflow.\n");
@@ -865,6 +866,13 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    }
 
    return (retval);
+}
+
+void *_papi_hwd_get_overflow_address(void *context)
+{
+   struct sigcontext *info = (struct sigcontext *) context;
+
+   return ((void *) info->sc_pc);
 }
 
 /* start the hardware counting */
@@ -1015,7 +1023,7 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
   return(PAPI_OK);
 }
 
-void * dladdr(void *address, Dl_info *dl)
+void * dladdr(void *address, struct Dl_info *dl)
 {
    return( _rld_new_interface(_RLD_DLADDR,address,dl));
 }
@@ -1033,7 +1041,7 @@ int _papi_hwd_update_shlib_info(void)
 {
    char procfile[100];
    prmap_t *p;
-   Dl_info dlip;
+   struct Dl_info dlip;
    void * vaddr;
    int i, nmaps, err, fd, nmaps_allocd, count, t_index;
    PAPI_address_map_t *tmp = NULL;
