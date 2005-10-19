@@ -385,7 +385,7 @@ int PAPI_get_event_info(int EventCode, PAPI_event_info_t * info)
 int PAPI_set_event_info(PAPI_event_info_t * info, int *EventCode, int replace)
 {
    int i, type;
-   unsigned int code;
+   int code;
    EventSetInfo_t *ESI;
 
    if (info == NULL)
@@ -398,7 +398,7 @@ int PAPI_set_event_info(PAPI_event_info_t * info, int *EventCode, int replace)
       for (i=0; i<_papi_hwi_system_info.global_eventset_map.totalSlots; i++) {
          ESI = _papi_hwi_lookup_EventSet(i);
          if (ESI) { /* found an existing EventSet */
-            if(_papi_hwi_lookup_EventCodeIndex(ESI, code) != PAPI_EINVAL)
+            if(_papi_hwi_lookup_EventCodeIndex(ESI, (unsigned int)code) != PAPI_EINVAL)
                papi_return(PAPI_EISRUN); /* can't handle Events in use */
          }
       }
