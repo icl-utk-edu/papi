@@ -565,7 +565,7 @@ static papi_svector_t _irix_mips_table[] = {
  {(void (*)())_papi_hwd_get_real_usec, VEC_PAPI_HWD_GET_REAL_USEC},
  {(void (*)())_papi_hwd_get_real_cycles, VEC_PAPI_HWD_GET_REAL_CYCLES},
  {(void (*)())_papi_hwd_get_virt_cycles, VEC_PAPI_HWD_GET_VIRT_CYCLES},
- {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_REAL_USEC},
+ {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
  {(void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE },
  {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
  {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
@@ -1030,7 +1030,8 @@ static int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * b
   return(PAPI_OK);
 }
 
-static void * dladdr(void *address, Dl_info *dl)
+
+static void * dladdr(void *address, struct Dl_info *dl)
 {
    return( _rld_new_interface(_RLD_DLADDR,address,dl));
 }
@@ -1048,7 +1049,7 @@ static int _papi_hwd_update_shlib_info(void)
 {
    char procfile[100];
    prmap_t *p;
-   Dl_info dlip;
+   struct Dl_info dlip;
    void * vaddr;
    int i, nmaps, err, fd, nmaps_allocd, count, t_index;
    PAPI_address_map_t *tmp = NULL;
