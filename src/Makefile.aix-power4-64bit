@@ -1,47 +1,12 @@
 LIBRARY   = libpapi64.a
 SHLIB     = libpapi64.so
-SUBSTR  = power4
+SUBSTR  = pmapi-ppc64
+ARCH_EVENTS    = power4_events
+CPU_MODEL      = POWER4
+cpu_option     = pwr4
 MSUBSTR = power4
-MEMSUBSTR=aix
 DESCR	= "AIX 5.1.0 or greater with POWER4 64 bit build"
-LIBS	= static shared
-TARGETS	= serial multiplex_and_pthreads smp omp
-#PMAPI	= /usr/pmapi
-SHLIBDEPS = -L$(PMAPI)/lib -lpmapi
-POST_BUILD =
-SPECIAL_REMOVE =
-
-FLAGS	= -I$(PMAPI)/include -qmaxmem=-1 -qarch=pwr4 -qtune=pwr4 -qlanglvl=extended -q64)
-CFLAGS	= $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_POWER4 -DNEED_FFSLL $(PMINIT
-OPTFLAGS= -O3 -qstrict
-TOPTFLAGS=
-FFLAGS	= $(FLAGS) -WF,-D_POWER4
-FOPTFLAGS= $(OPTFLAGS)
-FTOPTFLAGS= $(TOPTFLAGS)
-SMPCFLGS= -qsmp
-OMPCFLGS= -qsmp=omp
-LDFLAGS = -L$(PMAPI)/lib -lpmapi
+BITS    = -q64
 ARG64	= -X64
-CC_R	= xlc_r
-CC	= xlc
-CC_SHR	= xlc -G -bnoentry
-MPICC	= mpcc
-F77	= xlf
-CPP	= xlc -E
-MISCHDRS= aix.h power4_events.h
-MISCSRCS= aix.c power4_events.c
-MISCOBJS= aix.o power4_events.o
 
-include Makefile.inc
-
-power4_events.o: power4_events.c  $(HEADERS)
-	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c power4_events.c -o power4_events.o
-
-aix.o: aix.c  $(HEADERS)
-	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
-
-native_install:
-
-native_clean:
-
-native_clobber:
+include Makefile.aix-powerpc.common

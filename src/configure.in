@@ -1,8 +1,6 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 # File: configure.in
-# Mods: Maynard Johnson
-#       maynardj@us.ibm.com
 
 
 AC_PREREQ(2.59)
@@ -183,9 +181,10 @@ case "$OS" in
 		  fi
 		  ;;
                 power4) PMAPI="/usr/pmapi" ;;
+                 power5) PMAPI="/usr/pmapi" ;;
              esac
-	     ;;
-         *)
+	      ;;
+          *)
              PMAPI="$pmapi" ;;
       esac
       ;;
@@ -265,8 +264,8 @@ case "$OS" in
                  	MAKEVER="$OS"-perfctr-"$CPU""-32bit" 
                  else
                  	MAKEVER="$OS"-perfctr-"$CPU" 
-		 fi
-		;; 
+		         fi
+		         ;; 
             em64t)
                  if test "${with_bitmode}" = "32"; then
                         MAKEVER="$OS"-perfctr-"$CPU""-32bit"
@@ -274,7 +273,7 @@ case "$OS" in
                         MAKEVER="$OS"-perfctr-"$CPU" 
                  fi
                 ;;
-	    p4)
+	        p4)
                  if test "${bitmode}" = "64"; then
                    echo "The bitmode "$with_bitmode" you specified is not supported"
                    exit -1
@@ -308,11 +307,13 @@ case "$OS" in
   unicos)
                  MAKEVER="$OS"-"$CPU" ;;
 esac
-echo $MAKEVER
+#echo $MAKEVER
 case "$MAKEVER" in 
     aix-power3);;
     aix-power4);;
     aix-power4-64bit);;
+    aix-power5);;
+    aix-power5-64bit);;
     aix5-power3);;
     aix5-power3-64bit);;
     catamount-perfctr-opteron);;
