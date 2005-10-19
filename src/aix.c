@@ -77,7 +77,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
       } else
          return (PAPI_ENOEVNT);
    } else if (modifer == PAPI_PWR4_ENUM_GROUPS) {
-#ifdef _POWER4
+#if defined(_POWER4) || defined(_POWER5)
       unsigned int group = (*EventCode & 0x00FF0000) >> 16;
       int index = *EventCode & 0x000000FF;
       int i;
@@ -237,7 +237,7 @@ static int get_system_info(void)
    char maxargs[PAPI_HUGE_STR_LEN];
    char pname[PAPI_HUGE_STR_LEN];
 
-#ifndef _POWER4
+#if !defined(_POWER4) && !defined(_POWER5) 
 #ifdef _AIXVERSION_510
    pm_groups_info_t pmgroups;
 #endif
@@ -262,7 +262,11 @@ static int get_system_info(void)
 #ifdef _AIXVERSION_510
 #ifdef PM_INITIALIZE
     SUBDBG("Calling AIX 5 version of pm_initialize...\n");
+#ifdef _POWER4
     retval = pm_initialize(PM_INIT_FLAGS, &pminfo, &pmgroups,PM_CURRENT);
+#elif defined(_POWER5)
+    retval = pm_initialize(PM_INIT_FLAGS, &pminfo, &pmgroups, PM_POWER5);
+#endif
 #else
     SUBDBG("Calling AIX 5 version of pm_init...\n");
     retval = pm_init(PM_INIT_FLAGS, &pminfo, &pmgroups);
@@ -346,6 +350,7 @@ static void _papi_lock_init(void)
 }
 
 papi_svector_t _aix_table[] = {
+ {(void (*)())_papi_hwd_get_overflow_address, VEC_PAPI_HWD_GET_OVERFLOW_ADDRESS},
  {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
  {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
  {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
@@ -395,12 +400,12 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 /* This ifndef should be removed and switched to a cpu check for Power 3 or
  * power 4 when we merge substrates.
  */
-#ifndef _POWER4
+#if !defined(_POWER4) && !defined(_POWER5)
    power3_setup_native_table(vtable);
    if ((retval = power3_setup_vector_table(vtable))!= 0 )  return retval;
 #else
-   power4_setup_native_table(vtable);
-   if ((retval = power4_setup_vector_table(vtable))!= 0 )  return retval;
+   ppc64_setup_native_table(vtable);
+   if ((retval = ppc64_setup_vector_table(vtable))!= 0 )  return retval;
 #endif
 
    if (!_papi_hwd_init_preset_search_map(&pminfo)){ 
@@ -532,6 +537,10 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
    case PAPI_GRANUL:
       return (set_granularity
               (&(option->granularity.ESI->machdep), option->granularity.granularity));
+#if 0
+   case PAPI_INHERIT:
+      return (set_inherit(option->inherit.inherit));
+#endif
    default:
       return (PAPI_EINVAL);
    }
@@ -559,6 +568,16 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
    return (PAPI_OK);
 }
+
+void *_papi_hwd_get_overflow_address(void *context)
+{
+  void *location;
+  struct sigcontext *info = (struct sigcontext *)context;
+  location = (void *)info->sc_jmpbuf.jmp_context.iar;
+
+  return(location);
+}
+
 
 /* Copy the current control_state into the new thread context */
 /*int _papi_hwd_start(EventSetInfo_t *ESI, EventSetInfo_t *zero)*/
