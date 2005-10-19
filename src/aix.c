@@ -258,7 +258,7 @@ static int get_system_info(void)
    strcpy(_papi_hwi_system_info.exe_info.address_info.name,basename(maxargs));
 
 #ifdef _AIXVERSION_510
-#ifdef PM_INITIALIZE
+#if defined(PM_INITIALIZE) && !defined(_POWER4)
    SUBDBG("Calling AIX 5 version of pm_initialize...\n");
    retval = pm_initialize(PM_INIT_FLAGS, &pminfo, &pmgroups, PM_CURRENT);
 #else
