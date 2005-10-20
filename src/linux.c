@@ -759,9 +759,15 @@ inline_static long_long get_cycles(void) {
    return ret;
 }
 #else
+inline_static unsigned int rdtsc_long(void) {
+   unsigned long tb =0;
+   asm volatile("mftb %0" : "=r" (tb));
+   return (unsigned int)tb;
+}
+
 inline_static long_long get_cycles(void) {
    long_long ret = 0;
-   rdtscl(ret);
+   ret = rdtsc_long();
    return ret * tb_scale_factor;
 }
 #endif //PPC64

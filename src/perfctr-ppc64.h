@@ -57,7 +57,6 @@
 #include "linux-ppc64.h"
 #include "papi_preset.h"
 #include "libperfctr.h"
-#include "ppc64.h"
 
 #define HW_OVERFLOW 1
 //#define PAPI_MAX_STR_LEN 129
