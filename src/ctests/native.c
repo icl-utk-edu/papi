@@ -62,7 +62,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
        "PM_INST_CMPL", "PM_RUN_CYC", NULL
    };
 
-#else
+#elif defined(POWER3)
 #ifdef PMTOOLKIT_1_2
    static char *native_name[] = { "PM_IC_MISS", "PM_FPU1_CMPL", "PM_LD_MISS_L1", "PM_LD_CMPL",
       "PM_FPU0_CMPL", "PM_CYC", "PM_FPU_FMA", "PM_TLB_MISS", NULL
