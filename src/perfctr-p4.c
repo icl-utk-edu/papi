@@ -158,6 +158,7 @@ int _papi_hwd_start(P4_perfctr_context_t * ctx, P4_perfctr_control_t * state)
    int error;
 
 #ifdef DEBUG
+   SUBDBG("Calling vperfctr_control with this control state:\n");
    print_control(&state->control.cpu_control);
 #endif
 
@@ -650,8 +651,8 @@ static void swap_events(EventSetInfo_t * ESI, struct vperfctr_control *contr, in
 VECTOR_STATIC
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
-   hwd_control_state_t *this_state = ESI->machdep;
-   struct vperfctr_control *contr = &this_state->control;
+   hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
+   struct hwd_pmc_control *contr = &this_state->control;
    int i, ncntrs, nricntrs = 0, nracntrs = 0, retval = 0;
 
    OVFDBG("EventIndex=%d\n", EventIndex);
@@ -661,7 +662,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    print_control(&this_state->control.cpu_control);
 #endif
 
-   ncntrs = _papi_hwi_substrate_info[0].num_cntrs;
+   ncntrs = _papi_hwi_substrate_info[ESI->SubstrateIndex].num_cntrs;
    i = ESI->EventInfoArray[EventIndex].pos[0];
    if (i >= ncntrs) 
      {
@@ -691,6 +692,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
       /* move this event to the bottom part of the list if needed */
       if (i < nracntrs) {
+         OVFDBG("Swapping event %d to the bottom\n", i);
          swap_events(ESI, contr, i, nracntrs);
       }
       OVFDBG("Modified event set\n");
@@ -706,6 +708,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
       /* move this event to the top part of the list if needed */
       if (i >= nracntrs) {
+         OVFDBG("Swapping event %d to the top\n", i);
          swap_events(ESI, contr, i, nracntrs - 1);
       }
       if (!nricntrs)
@@ -738,8 +741,8 @@ papi_svector_t _p4_vector_table[] = {
   {(void (*)())_papi_hwd_bpt_map_preempt, VEC_PAPI_HWD_BPT_MAP_PREEMPT },
   {(void (*)())_papi_hwd_bpt_map_update, VEC_PAPI_HWD_BPT_MAP_UPDATE },
   {(void (*)())_papi_hwd_allocate_registers, VEC_PAPI_HWD_ALLOCATE_REGISTERS },
- {(void (*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
-  {(void (*)())_papi_hwd_set_domain, VEC_PAPI_HWD_SET_DOMAIN},
+  {(void (*)())_papi_hwd_update_control_state, VEC_PAPI_HWD_UPDATE_CONTROL_STATE },
+  {(void (*)())_papi_hwd_set_domain, VEC_PAPI_HWD_SET_DOMAIN },
   {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
   {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
   {(void (*)())p4_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
