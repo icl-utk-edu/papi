@@ -863,15 +863,6 @@ int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI)
    return (PAPI_OK);
 }
 
-/*
-void *_papi_hwd_get_overflow_address(void *context)
-{
-   struct sigcontext *info = (struct sigcontext *) context;
-
-   return ((void *) info->sc_pc);
-}
-*/
-
 /* start the hardware counting */
 int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {
@@ -1075,7 +1066,7 @@ void _papi_hwd_bpt_map_update(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 {
 }
 
-void * dladdr(void *address, Dl_info *dl)
+void * dladdr(void *address, struct Dl_info *dl)
 {
    return( _rld_new_interface(_RLD_DLADDR,address,dl));
 }
@@ -1093,7 +1084,7 @@ int _papi_hwd_update_shlib_info(void)
 {
    char procfile[100];
    prmap_t *p;
-   Dl_info dlip;
+   struct Dl_info dlip;
    void * vaddr;
    int i, nmaps, err, fd, nmaps_allocd, count, t_index;
    PAPI_address_map_t *tmp = NULL;
