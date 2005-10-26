@@ -729,6 +729,7 @@ papi_svector_t _p4_vector_table[] = {
   {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
   {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
   {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
+  {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
   {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
   {(void (*)())_papi_hwd_bpt_map_set, VEC_PAPI_HWD_BPT_MAP_SET },
   {(void (*)())_papi_hwd_bpt_map_avail, VEC_PAPI_HWD_BPT_MAP_AVAIL },
@@ -813,5 +814,27 @@ int _papi_hwd_init(P4_perfctr_context_t * ctx)
 #endif
 
    return (PAPI_OK);
+}
+
+static void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context)
+{
+   _papi_hwi_context_t ctx;
+   ThreadInfo_t *master = NULL;
+   int isHardware=0;
+   caddr_t pc;
+   ctx.si = si;
+   ctx.ucontext = (ucontext_t *) context;
+
+   pc = GET_OVERFLOW_ADDRESS(ctx);
+
+   _papi_hwi_dispatch_overflow_signal((void *)&ctx,&isHardware, si->si_pmc_ovf_mask,0,&master,pc,0);
+
+   /* We are done, resume interrupting counters */
+
+   if (isHardware) {
+      if (vperfctr_iresume(((hwd_context_t *)master->context[sidx])->perfctr) < 0) {
+         PAPIERROR("vperfctr_iresume errno %d",errno);
+      }
+   }
 }
 

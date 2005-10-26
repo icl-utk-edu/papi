@@ -299,7 +299,7 @@ char * find_dummy(void * func, char **buf){
     ptr = (void *)vec_long_long_dummy;
     *buf = papi_strdup("vec_long_long_dummy");
   }
-  else if ( vec_char_star_dummy == (unsigned char*(*)())func ){
+  else if ( vec_char_star_dummy == (char*(*)())func ){
     ptr = (void *)vec_char_star_dummy;
     *buf = papi_strdup("vec_char_star_dummy");
   }
