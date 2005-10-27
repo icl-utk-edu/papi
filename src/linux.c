@@ -268,16 +268,22 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context) {
 
    ctx.si = si;
    ctx.ucontext = (ucontext_t *)context;
+
 #ifdef __CATAMOUNT__
-   isHardware = 1;
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx, &isHardware, 0, 1, &master);
+#define OVERFLOW_MASK 0
+#define GEN_OVERFLOW 1
 #else
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx, &isHardware, 
-                                      si->si_pmc_ovf_mask, 0, &master);
+#define OVERFLOW_MASK si->si_pmc_ovf_mask
+#define GEN_OVERFLOW 0
 #endif
+
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, &isHardware, 
+                                      OVERFLOW_MASK, GEN_OVERFLOW, &master);
+
    /* We are done, resume interrupting counters */
    if (isHardware) {
-      if (vperfctr_iresume(master->context.perfctr) < 0) {
+      errno = vperfctr_iresume(master->context.perfctr);
+      if (errno < 0) {
          PAPIERROR("vperfctr_iresume errno %d",errno);
       }
    }
