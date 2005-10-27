@@ -97,7 +97,7 @@ VECTOR_STATIC
 void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 {
    int def_mode, i;
-   switch(_papi_hwi_substrate_info[0].default_domain) {
+   switch(_papi_hwi_substrate_info[sidx].default_domain) {
    case PAPI_DOM_USER:
       def_mode = ESCR_T0_USR;
       break;
@@ -108,11 +108,11 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
       def_mode = ESCR_T0_OS | ESCR_T0_USR;
       break;
    default:
-      PAPIERROR("BUG! Unknown domain %d, using PAPI_DOM_USER",_papi_hwi_substrate_info[0].default_domain);
+      PAPIERROR("BUG! Unknown domain %d, using PAPI_DOM_USER",_papi_hwi_substrate_info[sidx].default_domain);
       def_mode = ESCR_T0_USR;
       break;
    }
-   for(i = 0; i < _papi_hwi_substrate_info[0].num_cntrs; i++) {
+   for(i = 0; i < _papi_hwi_substrate_info[sidx].num_cntrs; i++) {
       ptr->control.cpu_control.evntsel_aux[i] |= def_mode;
    }
    ptr->control.cpu_control.tsc_on = 1;
@@ -572,18 +572,18 @@ int _papi_hwd_set_domain(P4_perfctr_control_t * cntrl, int domain)
      /* Clear the current domain set for this event set */
      /* We don't touch the Enable bit in this code but  */
      /* leave it as it is */
-   for(i = 0; i < _papi_hwi_substrate_info[0].num_cntrs; i++) {
+   for(i = 0; i < _papi_hwi_substrate_info[sidx].num_cntrs; i++) {
       cntrl->control.cpu_control.evntsel_aux[i] &= ~(ESCR_T0_OS|ESCR_T0_USR);
    }
    if(domain & PAPI_DOM_USER) {
       did = 1;
-      for(i = 0; i < _papi_hwi_substrate_info[0].num_cntrs; i++) {
+      for(i = 0; i < _papi_hwi_substrate_info[sidx].num_cntrs; i++) {
          cntrl->control.cpu_control.evntsel_aux[i] |= ESCR_T0_USR;
       }
    }
    if(domain & PAPI_DOM_KERNEL) {
       did = 1;
-      for(i = 0; i < _papi_hwi_substrate_info[0].num_cntrs; i++) {
+      for(i = 0; i < _papi_hwi_substrate_info[sidx].num_cntrs; i++) {
          cntrl->control.cpu_control.evntsel_aux[i] |= ESCR_T0_OS;
       }
    }
@@ -761,16 +761,16 @@ int setup_p4_vector_table(papi_vectors_t * vtable, int idx){
 #ifndef PAPI_NO_VECTOR
   retval = _papi_hwi_setup_vector_table( vtable, _p4_vector_table);
 #endif
-  _papi_hwi_substrate_info[0].context_size  = sizeof(hwd_context_t);
-  _papi_hwi_substrate_info[0].register_size = sizeof(hwd_register_t);
-  _papi_hwi_substrate_info[0].reg_alloc_size = sizeof(hwd_reg_alloc_t);   
-  _papi_hwi_substrate_info[0].control_state_size =sizeof(hwd_control_state_t);
+  _papi_hwi_substrate_info[sidx].context_size  = sizeof(hwd_context_t);
+  _papi_hwi_substrate_info[sidx].register_size = sizeof(hwd_register_t);
+  _papi_hwi_substrate_info[sidx].reg_alloc_size = sizeof(hwd_reg_alloc_t);   
+  _papi_hwi_substrate_info[sidx].control_state_size =sizeof(hwd_control_state_t);
      /* Name of the substrate we're using */
-    strcpy(_papi_hwi_substrate_info[0].substrate, "$Id$");
+    strcpy(_papi_hwi_substrate_info[sidx].substrate, "$Id$");
 
-   _papi_hwi_substrate_info[0].supports_hw_overflow = 1;
-   _papi_hwi_substrate_info[0].supports_64bit_counters = 1;
-   _papi_hwi_substrate_info[0].supports_inheritance = 1;
+   _papi_hwi_substrate_info[sidx].supports_hw_overflow = 1;
+   _papi_hwi_substrate_info[sidx].supports_64bit_counters = 1;
+   _papi_hwi_substrate_info[sidx].supports_inheritance = 1;
 
 
   return ( retval ); 

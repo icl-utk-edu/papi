@@ -286,16 +286,16 @@ static int _internal_scan_cpu_info(inventory_t * item, void *foo)
       switch (imp) {            /* We fill a name here and then remove any \0 characters */
       case C0_IMP_R10000:
          strncpy(_papi_hwi_system_info.hw_info.model_string, "R10000", IPSTRPOS);
-          _papi_hwi_substrate_info[0].num_gp_cntrs = 2;
+          _papi_hwi_substrate_info[sidx].num_gp_cntrs = 2;
          break;
       case C0_IMP_R12000:
          strncpy(_papi_hwi_system_info.hw_info.model_string, "R12000", IPSTRPOS);
-          _papi_hwi_substrate_info[0].num_gp_cntrs = 2;
+          _papi_hwi_substrate_info[sidx].num_gp_cntrs = 2;
          break;
 #ifdef C0_IMP_R14000
       case C0_IMP_R14000:
          strncpy(_papi_hwi_system_info.hw_info.model_string, "R14000", IPSTRPOS);
-          _papi_hwi_substrate_info[0].num_gp_cntrs = 2;
+          _papi_hwi_substrate_info[sidx].num_gp_cntrs = 2;
          break;
 #endif
       default:
@@ -460,11 +460,11 @@ static int _internal_get_system_info(void)
 
    /* Generic info */
 
-    _papi_hwi_substrate_info[0].num_cntrs = HWPERF_EVENTMAX;
+    _papi_hwi_substrate_info[sidx].num_cntrs = HWPERF_EVENTMAX;
 /*
   _papi_hwi_system_info.hw_info.ncpu = get_cpu();
 */
-    _papi_hwi_substrate_info[0].supports_hw_overflow = 1;
+    _papi_hwi_substrate_info[sidx].supports_hw_overflow = 1;
 
    retval = _papi_hwd_update_shlib_info();
    if (retval != PAPI_OK) 
@@ -496,10 +496,10 @@ static int _internal_get_system_info(void)
    }
 #endif
 
-  _papi_hwi_substrate_info[0].context_size  = sizeof(hwd_context_t);
-  _papi_hwi_substrate_info[0].register_size = sizeof(hwd_register_t);
-  _papi_hwi_substrate_info[0].reg_alloc_size = sizeof(hwd_reg_alloc_t);  
-  _papi_hwi_substrate_info[0].control_state_size =sizeof(hwd_control_state_t);
+  _papi_hwi_substrate_info[sidx].context_size  = sizeof(hwd_context_t);
+  _papi_hwi_substrate_info[sidx].register_size = sizeof(hwd_register_t);
+  _papi_hwi_substrate_info[sidx].reg_alloc_size = sizeof(hwd_reg_alloc_t);  
+  _papi_hwi_substrate_info[sidx].control_state_size =sizeof(hwd_control_state_t);
 
 /* setup_all_presets is in papi_preset.c */
    retval = _papi_hwi_setup_all_presets(preset_search_map, NULL, sidx);
@@ -932,12 +932,12 @@ static int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    this_state->counter_cmd.hwp_ovflw_sig=0;
 */
 
-   if (_papi_hwi_substrate_info[0].default_domain & PAPI_DOM_USER) {
+   if (_papi_hwi_substrate_info[sidx].default_domain & PAPI_DOM_USER) {
       mode |= HWPERF_CNTEN_U;
    }
-   if (_papi_hwi_substrate_info[0].default_domain & PAPI_DOM_KERNEL)
+   if (_papi_hwi_substrate_info[sidx].default_domain & PAPI_DOM_KERNEL)
       mode |= HWPERF_CNTEN_K;
-   if (_papi_hwi_substrate_info[0].default_domain & PAPI_DOM_OTHER)
+   if (_papi_hwi_substrate_info[sidx].default_domain & PAPI_DOM_OTHER)
       mode |= HWPERF_CNTEN_E | HWPERF_CNTEN_S;
 
    this_state->num_on_counter[0]=0;

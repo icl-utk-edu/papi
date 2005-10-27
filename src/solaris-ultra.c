@@ -420,12 +420,12 @@ static int get_system_info(void)
       SUBDBG("cpuver (==%d) <= CPC_ULTRA2 (==%d)\n", cpuver, CPC_ULTRA2);
       pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT;
       pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT;
-      _papi_hwi_substrate_info[0].supports_hw_overflow = 0;
+      _papi_hwi_substrate_info[sidx].supports_hw_overflow = 0;
    } else if (cpuver <= LASTULTRA3) {
       SUBDBG("cpuver (==%d) <= CPC_ULTRA3x (==%d)\n", cpuver, LASTULTRA3);
       pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT;
       pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT;
-      _papi_hwi_substrate_info[0].supports_hw_overflow = 1;
+      _papi_hwi_substrate_info[sidx].supports_hw_overflow = 1;
    } else
       return (PAPI_ESBSTR);
 
@@ -509,9 +509,9 @@ static int get_system_info(void)
    retval = cpc_getnpic(cpuver);
    if (retval < 1)
       return (PAPI_ESBSTR);
-   _papi_hwi_substrate_info[0].num_gp_cntrs = retval;
-   _papi_hwi_substrate_info[0].num_cntrs = retval;
-   SUBDBG("num_cntrs = %d\n", _papi_hwi_substrate_info[0].num_cntrs);
+   _papi_hwi_substrate_info[sidx].num_gp_cntrs = retval;
+   _papi_hwi_substrate_info[sidx].num_cntrs = retval;
+   SUBDBG("num_cntrs = %d\n", _papi_hwi_substrate_info[sidx].num_cntrs);
 
    /* program text segment, data segment  address info */
 /*
@@ -524,10 +524,10 @@ static int get_system_info(void)
 */
 
    /* Setup presets */
-  _papi_hwi_substrate_info[0].context_size  = sizeof(hwd_context_t);
-  _papi_hwi_substrate_info[0].register_size = sizeof(hwd_register_t);
-  _papi_hwi_substrate_info[0].reg_alloc_size = sizeof(hwd_reg_alloc_t);
-  _papi_hwi_substrate_info[0].control_state_size =sizeof(hwd_control_state_t);
+  _papi_hwi_substrate_info[sidx].context_size  = sizeof(hwd_context_t);
+  _papi_hwi_substrate_info[sidx].register_size = sizeof(hwd_register_t);
+  _papi_hwi_substrate_info[sidx].reg_alloc_size = sizeof(hwd_reg_alloc_t);
+  _papi_hwi_substrate_info[sidx].control_state_size =sizeof(hwd_control_state_t);
 
 
    retval = _papi_hwi_setup_all_presets(preset_search_map, NULL, sidx);
@@ -1048,8 +1048,8 @@ static void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
    ptr->counter_cmd.cmd.ce_pcr = 0x0;
    ptr->counter_cmd.cmd.ce_pic[0] = 0;
    ptr->counter_cmd.cmd.ce_pic[1] = 0;
-   set_domain(ptr, _papi_hwi_substrate_info[0].default_domain);
-   set_granularity(ptr, _papi_hwi_substrate_info[0].default_granularity);
+   set_domain(ptr, _papi_hwi_substrate_info[sidx].default_domain);
+   set_granularity(ptr, _papi_hwi_substrate_info[sidx].default_granularity);
    return;
 }
 

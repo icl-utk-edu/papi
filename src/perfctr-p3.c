@@ -181,14 +181,13 @@ int setup_p3_presets(int cputype) {
      PAPIERROR(MODEL_ERROR);
      return(PAPI_ESBSTR);
    }
-   return (_papi_hwi_setup_all_presets(preset_search_map, NULL,sidx));
+   return (_papi_hwi_setup_all_presets(preset_search_map, NULL, sidx));
 }
 
 static void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
    int i, def_mode;
 
-   /* XXX Need to change this */
-   switch(_papi_hwi_substrate_info[0].default_domain) {
+   switch(_papi_hwi_substrate_info[sidx].default_domain) {
    case PAPI_DOM_USER:
       def_mode = PERF_USR;
       break;
@@ -199,8 +198,7 @@ static void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
       def_mode = PERF_OS | PERF_USR;
       break;
    default:
-   /* XXX Need to change this */
-      PAPIERROR("BUG! Unknown domain %d, using PAPI_DOM_USER",_papi_hwi_substrate_info[0].default_domain);
+      PAPIERROR("BUG! Unknown domain %d, using PAPI_DOM_USER", _papi_hwi_substrate_info[sidx].default_domain);
       def_mode = PERF_USR;
       break;
    }
@@ -220,8 +218,7 @@ static void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
    case PERFCTR_X86_INTEL_PENTM:
 #endif
       ptr->control.cpu_control.evntsel[0] |= PERF_ENABLE;
-      /* XXX Need to change this */
-      for(i = 0; i < _papi_hwi_substrate_info[0].num_cntrs; i++) {
+      for(i = 0; i < _papi_hwi_substrate_info[sidx].num_cntrs; i++) {
          ptr->control.cpu_control.evntsel[i] |= def_mode;
          ptr->control.cpu_control.pmc_map[i] = i;
       }
@@ -233,8 +230,7 @@ static void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
    case PERFCTR_X86_AMD_K8C:
 #endif
    case PERFCTR_X86_AMD_K7:
-      /* XXX Need to change this */
-      for (i = 0; i < _papi_hwi_substrate_info[0].num_cntrs; i++) {
+      for (i = 0; i < _papi_hwi_substrate_info[sidx].num_cntrs; i++) {
          ptr->control.cpu_control.evntsel[i] |= PERF_ENABLE | def_mode;
          ptr->control.cpu_control.pmc_map[i] = i;
       }
@@ -250,21 +246,18 @@ static int _papi_hwd_set_domain(hwd_control_state_t * cntrl,int domain) {
      /* Clear the current domain set for this event set */
      /* We don't touch the Enable bit in this code but  */
      /* leave it as it is */
-   /* XXX need to change this */
-   for(i = 0; i < _papi_hwi_substrate_info[0].num_cntrs; i++) {
+   for(i = 0; i < _papi_hwi_substrate_info[sidx].num_cntrs; i++) {
       cntrl->control.cpu_control.evntsel[i] &= ~(PERF_OS|PERF_USR);
    }
    if(domain & PAPI_DOM_USER) {
       did = 1;
-      /* XXX need to change this */
-      for(i = 0; i < _papi_hwi_substrate_info[0].num_cntrs; i++) {
+      for(i = 0; i < _papi_hwi_substrate_info[sidx].num_cntrs; i++) {
          cntrl->control.cpu_control.evntsel[i] |= PERF_USR;
       }
    }
    if(domain & PAPI_DOM_KERNEL) {
       did = 1;
-      /* XXX need to change this */
-      for(i = 0; i < _papi_hwi_substrate_info[0].num_cntrs; i++) {
+      for(i = 0; i < _papi_hwi_substrate_info[sidx].num_cntrs; i++) {
          cntrl->control.cpu_control.evntsel[i] |= PERF_OS;
       }
    }
@@ -619,10 +612,10 @@ int setup_p3_vector_table(papi_vectors_t * vtable){
 #ifndef PAPI_NO_VECTOR
   retval = _papi_hwi_setup_vector_table( vtable, _p3_vector_table);
 #endif
-  _papi_hwi_substrate_info[0].context_size  = sizeof(hwd_context_t);
-  _papi_hwi_substrate_info[0].register_size = sizeof(hwd_register_t);
-  _papi_hwi_substrate_info[0].reg_alloc_size = sizeof(hwd_reg_alloc_t);   
-  _papi_hwi_substrate_info[0].control_state_size =sizeof(hwd_control_state_t);
+  _papi_hwi_substrate_info[sidx].context_size  = sizeof(hwd_context_t);
+  _papi_hwi_substrate_info[sidx].register_size = sizeof(hwd_register_t);
+  _papi_hwi_substrate_info[sidx].reg_alloc_size = sizeof(hwd_reg_alloc_t);   
+  _papi_hwi_substrate_info[sidx].control_state_size =sizeof(hwd_control_state_t);
 
   return ( retval );
 }
@@ -814,11 +807,11 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable, int idx)
    _papi_hwi_substrate_info[idx].substrate_index = idx;
 
      /* Name of the substrate we're using */
-    strcpy(_papi_hwi_substrate_info[0].substrate, "$Id$");
+    strcpy(_papi_hwi_substrate_info[sidx].substrate, "$Id$");
 
-   _papi_hwi_substrate_info[0].supports_hw_overflow = 1;
-   _papi_hwi_substrate_info[0].supports_64bit_counters = 1;
-   _papi_hwi_substrate_info[0].supports_inheritance = 1;
+   _papi_hwi_substrate_info[sidx].supports_hw_overflow = 1;
+   _papi_hwi_substrate_info[sidx].supports_64bit_counters = 1;
+   _papi_hwi_substrate_info[sidx].supports_inheritance = 1;
 
 #ifdef __CATAMOUNT__
    if (strstr(info.driver_version,"2.5") != info.driver_version) {

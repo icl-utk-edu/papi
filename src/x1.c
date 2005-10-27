@@ -656,9 +656,9 @@ static void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
   unsigned long enable=0;
   unsigned long enable_reg=0;
 
-  if ( _papi_hwi_substrate_info[0].default_domain & PAPI_DOM_KERNEL )
+  if ( _papi_hwi_substrate_info[sidx].default_domain & PAPI_DOM_KERNEL )
      enable_reg |= HWPERF_ENABLE_KERNEL;
-  else if ( _papi_hwi_substrate_info[0].default_domain & PAPI_DOM_OTHER )
+  else if ( _papi_hwi_substrate_info[sidx].default_domain & PAPI_DOM_OTHER )
      enable_reg |= HWPERF_ENABLE_EXCEPTION;
   else
      enable_reg |= HWPERF_ENABLE_USER;
@@ -830,15 +830,15 @@ static int _papi_hwd_mdi_init()
    _papi_hwi_system_info.supports_virt_usec = 1;
    _papi_hwi_system_info.supports_virt_cyc = 1;
 
-  _papi_hwi_substrate_info[0].supports_write = 1;
-  _papi_hwi_substrate_info[0].supports_hw_overflow = 1;
-  _papi_hwi_substrate_info[0].supports_hw_profile = 0;
-  _papi_hwi_substrate_info[0].supports_64bit_counters = 1;
-  _papi_hwi_substrate_info[0].supports_inheritance = 1;
-  _papi_hwi_substrate_info[0].context_size  = sizeof(hwd_context_t);
-  _papi_hwi_substrate_info[0].register_size = sizeof(hwd_register_t);
-  _papi_hwi_substrate_info[0].reg_alloc_size = sizeof(hwd_reg_alloc_t);
-  _papi_hwi_substrate_info[0].control_state_size =sizeof(hwd_control_state_t);
+  _papi_hwi_substrate_info[sidx].supports_write = 1;
+  _papi_hwi_substrate_info[sidx].supports_hw_overflow = 1;
+  _papi_hwi_substrate_info[sidx].supports_hw_profile = 0;
+  _papi_hwi_substrate_info[sidx].supports_64bit_counters = 1;
+  _papi_hwi_substrate_info[sidx].supports_inheritance = 1;
+  _papi_hwi_substrate_info[sidx].context_size  = sizeof(hwd_context_t);
+  _papi_hwi_substrate_info[sidx].register_size = sizeof(hwd_register_t);
+  _papi_hwi_substrate_info[sidx].reg_alloc_size = sizeof(hwd_reg_alloc_t);
+  _papi_hwi_substrate_info[sidx].control_state_size =sizeof(hwd_control_state_t);
 
    return (PAPI_OK);
 }
@@ -929,12 +929,12 @@ static int _internal_get_system_info(void)
 
    /* Generic info */
    /* Number of counters is 64, 32 P chip, 16 M chip and 16 E chip */
-   _papi_hwi_substrate_info[0].num_cntrs = HWPERF_COUNTMAX+EPERF_COUNTMAX+MPERF_COUNTMAX;
+   _papi_hwi_substrate_info[sidx].num_cntrs = HWPERF_COUNTMAX+EPERF_COUNTMAX+MPERF_COUNTMAX;
    strcpy(_papi_hwi_system_info.hw_info.vendor_string, "Cray");
    _papi_hwi_system_info.hw_info.vendor = -1;
    strcpy(_papi_hwi_system_info.hw_info.model_string ,"X1");
    _papi_hwi_system_info.hw_info.model = -1;
-   _papi_hwi_substrate_info[0].supports_hw_overflow = 1;
+   _papi_hwi_substrate_info[sidx].supports_hw_overflow = 1;
 
    _papi_hwd_update_shlib_info();
 
