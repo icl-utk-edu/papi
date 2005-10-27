@@ -1,12 +1,67 @@
 #ifndef _PAPI_PENTIUM3_H
 #define _PAPI_PENTIUM3_H
 
+#define _GNU_SOURCE
+#define __USE_GNU
+#define __USE_UNIX98
+#define __USE_XOPEN_EXTENDED
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <signal.h>
+
+#ifndef __BSD__ /* #include <malloc.h> */
+#include <malloc.h>
+#endif
+
+#include <assert.h>
+#include <string.h>
+#include <math.h>
+#include <limits.h>
+#include <sys/types.h>
+
+#ifdef XML
+#include <expat.h>
+#endif
+
 #ifdef _WIN32
 #define NEED_FFSLL
 #define inline_static static __inline
 #include <errno.h>
 #include "cpuinfo.h"
 #include "pmclib.h"
+#else
+#define inline_static inline static
+#define HAVE_FFSLL
+#include <unistd.h>
+#include <time.h>
+#include <errno.h>
+#include <ctype.h>
+
+#ifdef __BSD__
+#include <ucontext.h>
+#else
+#include <sys/ucontext.h>
+#endif
+
+#include <sys/times.h>
+#include <sys/time.h>
+
+#ifndef __BSD__ /* #include <linux/unistd.h> */
+  #ifndef __CATAMOUNT__
+    #include <linux/unistd.h>	
+  #endif
+#endif
+
+#ifndef CONFIG_SMP
+/* Assert that CONFIG_SMP is set before including asm/atomic.h to 
+ * get bus-locking atomic_* operations when building on UP kernels
+ */
+#define CONFIG_SMP
+#endif
+#include <inttypes.h>
+#include "libperfctr.h"
 #endif
 
 #define PERF_MAX_COUNTERS 4
@@ -47,18 +102,58 @@ extern CRITICAL_SECTION lock[PAPI_MAX_LOCK];
 #define  _papi_hwd_lock(lck) EnterCriticalSection(&lock[lck])
 #define  _papi_hwd_unlock(lck) LeaveCriticalSection(&lock[lck])
 
+//typedef siginfo_t hwd_siginfo_t;
 typedef int hwd_siginfo_t;
+//typedef ucontext_t hwd_ucontext_t;
 typedef CONTEXT hwd_ucontext_t;
 
-#define GET_OVERFLOW_ADDRESS(ctx) ((caddr_t)(((ucontext_t *)ctx)->Eip))
+#define GET_OVERFLOW_ADDRESS(ctx) ((caddr_t)(ctx->ucontext->Eip))
 
 /* Windows DOES NOT support hardware overflow */
 #define HW_OVERFLOW 0
 
 #else
 
+/* Lock macros. */
+extern volatile unsigned int lock[PAPI_MAX_LOCK];
+#define MUTEX_OPEN 1
+#define MUTEX_CLOSED 0
+
+/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
+ * else val = MUTEX_CLOSED */
+
+#define  _papi_hwd_lock(lck)                    \
+do                                              \
+{                                               \
+   unsigned int res = 0;                        \
+   do {                                         \
+      __asm__ __volatile__ ("lock ; " "cmpxchg %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");  \
+   } while(res != (unsigned int)MUTEX_OPEN);   \
+} while(0)
+
+#define  _papi_hwd_unlock(lck)                  \
+do                                              \
+{                                               \
+   unsigned int res = 0;                       \
+   __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");                                \
+} while(0)
+
 typedef siginfo_t hwd_siginfo_t;
 typedef ucontext_t hwd_ucontext_t;
+
+/* Overflow macros */
+#ifdef __x86_64__
+  #ifdef __CATAMOUNT__
+    #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->sc_rip)
+  #else
+    #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->rip)
+  #endif
+#else
+  #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->eip)
+#endif
+
+/* Linux DOES support hardware overflow */
+#define HW_OVERFLOW 1
 
 #endif /* _WIN32 */
 
@@ -181,38 +276,18 @@ typedef P3_perfctr_context_t hwd_context_t;
 #define PERF_UNIT_MASK         0x0000FF00
 #define PERF_EVNT_MASK         0x000000FF
 
+#define AI_ERROR "No support for a-mode counters after adding an i-mode counter"
+#define VOPEN_ERROR "vperfctr_open() returned NULL"
+#define GOPEN_ERROR "gperfctr_open() returned NULL"
+#define VINFO_ERROR "vperfctr_info() returned < 0"
+#define VCNTRL_ERROR "vperfctr_control() returned < 0"
+#define GCNTRL_ERROR "gperfctr_control() returned < 0"
+#define FOPEN_ERROR "fopen(%s) returned NULL"
+#define STATE_MAL_ERROR "Error allocating perfctr structures"
 #define MODEL_ERROR "This is not a Pentium I,II,III, Athlon or Opteron"
 
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
 extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
 
-/* Overflow macros */
-#ifdef __x86_64__
-  #ifdef __CATAMOUNT__
-    #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext))->sc_rip)
-  #else    
-     #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&((hwd_ucontext_t *)ctx.ucontext)->uc_mcontext))->rip)
-  #endif
-#else
-#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&((hwd_ucontext_t *)ctx.ucontext)->uc_mcontext))->eip)
-#endif
-
-#define HW_OVERFLOW     1
-
-#if defined(PERFCTR26)
-#define PERFCTR_CPU_NAME(pi)    perfctr_info_cpu_name(pi)
-#define PERFCTR_CPU_NRCTRS(pi)  perfctr_info_nrctrs(pi)
-#elif defined(PERFCTR25)
-#define PERFCTR_CPU_NAME        perfctr_info_cpu_name
-#define PERFCTR_CPU_NRCTRS      perfctr_info_nrctrs
-#else
-#define PERFCTR_CPU_NAME        perfctr_cpu_name
-#define PERFCTR_CPU_NRCTRS      perfctr_cpu_nrctrs
-#endif
-
-int check_p4(int);
-int mdi_init();
-int linux_vector_table_setup(papi_vectors_t *vtable);
-void lock_init();
 #endif /* _PAPI_PENTIUM3 */
