@@ -97,9 +97,12 @@ extern int papi_num_substrates;
    necessary, but at this point, we have included anything that might 
    possibly be useful later, and will remove them as we progress */
 
-/* Signal used for overflow delivery */
-
-#define PAPI_ITIMER ITIMER_PROF
+/* Signal used for soft overflow delivery and multiplexing */
+#ifdef __CATAMOUNT__ /* Catamount only defines ITIMER_REAL with a 1 sec(!) resolution */
+  #define PAPI_ITIMER ITIMER_REAL
+#else
+  #define PAPI_ITIMER ITIMER_PROF
+#endif
 #define PAPI_SIGNAL SIGPROF
 #define PAPI_ITIMER_MS 1
 
