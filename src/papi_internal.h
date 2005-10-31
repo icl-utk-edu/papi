@@ -30,7 +30,6 @@
 #define FUNC "?"
 #endif
 
-
   /* Debug Levels */
 
 #define DEBUG_SUBSTRATE         0x2
@@ -80,7 +79,6 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 #endif
 
 #define DEADBEEF 0xdedbeef
-extern int papi_num_substrates;
 
   /********************************************************/
 /* This block provides general strings used in PAPI     */
@@ -99,7 +97,12 @@ extern int papi_num_substrates;
 
 /* Signal used for overflow delivery */
 
-#define PAPI_ITIMER ITIMER_PROF
+#ifdef __CATAMOUNT__ /* Catamount only defines ITIMER_REAL with a 1 sec(!) resolution */
+  #define PAPI_ITIMER ITIMER_REAL
+#else
+  #define PAPI_ITIMER ITIMER_PROF
+#endif
+
 #define PAPI_SIGNAL SIGPROF
 #define PAPI_ITIMER_MS 1
 
@@ -136,11 +139,9 @@ extern int papi_num_substrates;
 #define NEED_CONTEXT		1
 #define DONT_NEED_CONTEXT 	0
 
-#define PAPI_MAX_COUNTER_TERMS	8
-
 /* DEFINES END HERE */
 
-#include OS_HEADER
+#include SUBSTRATE
 #include "papi_preset.h"
 
 typedef struct _EventSetDomainInfo {
@@ -152,23 +153,29 @@ typedef struct _EventSetGranularityInfo {
 } EventSetGranularityInfo_t;
 
 typedef struct _EventSetOverflowInfo {
-   long_long *deadline;
-   int *threshold;
-   int *EventIndex;
-   int *EventCode;
+   long_long deadline[MAX_COUNTERS];
    int count;
+   int threshold[MAX_COUNTERS];
+   int EventIndex[MAX_COUNTERS];
+   int EventCode[MAX_COUNTERS];
    int event_counter;
    int flags;
    int timer_ms;
    PAPI_overflow_handler_t handler;
 } EventSetOverflowInfo_t;
 
+#if 0
+typedef struct _EventSetInheritInfo {
+   int inherit;
+} EventSetInheritInfo_t;
+#endif
+
 typedef struct _EventSetProfileInfo {
-   PAPI_sprofil_t **prof;
-   int *count;     /* Number of buffers */
-   int *threshold;
-   int *EventIndex;
-   int *EventCode;
+   PAPI_sprofil_t *prof[MAX_COUNTERS];
+   int count[MAX_COUNTERS];     /* Number of buffers */
+   int threshold[MAX_COUNTERS];
+   int EventIndex[MAX_COUNTERS];
+   int EventCode[MAX_COUNTERS];
    int flags;
    int overflowcount;           /* number of overflows */
    int event_counter;
@@ -176,15 +183,15 @@ typedef struct _EventSetProfileInfo {
 
 /* This contains info about an individual event added to the EventSet.
    The event can be either PRESET or NATIVE, and either simple or derived.
-   If derived, it can consist of up to PAPI_MAX_COUNTER_TERMS native events.
+   If derived, it can consist of up to MAX_COUNTER_TERMS native events.
    An EventSet contains a pointer to an array of these structures to define
    each added event.
  */
 
 typedef struct _EventInfo {
    unsigned int event_code;     /* Preset or native code for this event as passed to PAPI_add_event() */
-   /* should this be PAPI_MAX_COUNTER_TERMS instead of MAX_COUNTERS ?? (dkt 10/9/03) */
-   int pos[PAPI_MAX_COUNTER_TERMS];   /* position in the counter array for this events components */
+   /* should this be MAX_COUNTER_TERMS instead of MAX_COUNTERS ?? (dkt 10/9/03) */
+   int pos[MAX_COUNTER_TERMS];   /* position in the counter array for this events components */
    char *ops;                   /* operation string of preset */
    int derived;                 /* Counter derivation command used for derived events */
 } EventInfo_t;
@@ -198,7 +205,7 @@ typedef struct _NativeInfo {
    int ni_event;                /* native event code; always non-zero unless empty */
    int ni_position;             /* counter array position where this native event lives */
    int ni_owners;               /* specifies how many owners share this native event */
-   void * ni_bits;      /* Substrate defined resources used by this native event hwd_register_t*/
+   hwd_register_t ni_bits;      /* Substrate defined resources used by this native event */
 } NativeInfo_t;
 
 
@@ -277,12 +284,11 @@ typedef struct _EventSetInfo {
    unsigned long int tid;       /* Thread ID, only used if PAPI_thread_init() is called  */
 
    int EventSetIndex;           /* Index of the EventSet in the array  */
-   int SubstrateIndex;		/* Which Substrate this EventSet Belongs too */
 
    int NumberOfEvents;          /* Number of events added to EventSet */
 
-   void * machdep; /* A chunk of memory of sizeof
-                                   _papi_hwi_system_info bytes. This 
+   hwd_control_state_t machdep; /* A chunk of memory of size 
+                                   _papi_hwi_system_info.size_machdep bytes. This 
                                    will contain the encoding necessary for the 
                                    hardware to set the counters to the appropriate
                                    conditions */
@@ -297,7 +303,7 @@ typedef struct _EventSetInfo {
                                    PAPI_RUNNING or PAPI_STOPPED plus flags */
 
    int NativeCount;             /* How many native events in the array below. */
-   NativeInfo_t *NativeInfoArray;/*Info about each native event in the set */
+   NativeInfo_t NativeInfoArray[MAX_COUNTERS];  /* Info about each native event in the set */
 
    EventInfo_t *EventInfoArray; /* This array contains the mapping from 
                                    events added into the API into hardware 
@@ -355,53 +361,37 @@ typedef struct _papi_int_profile {
    EventSetProfileInfo_t profile;
 } _papi_int_profile_t;
 
+#if 0
+typedef struct _papi_int_inherit {
+   EventSetInfo_t *master;
+   int inherit;
+} _papi_int_inherit_t;
+#endif
+
 typedef union _papi_int_option_t {
    _papi_int_overflow_t overflow;
    _papi_int_profile_t profile;
    _papi_int_domain_t domain;
    _papi_int_defdomain_t defdomain;
+#if 0
+   _papi_int_inherit_t inherit;
+#endif
    _papi_int_granularity_t granularity;
 } _papi_int_option_t;
 
 typedef struct {
-   void * si;
-   void * ucontext;
+   hwd_siginfo_t *si;
+   hwd_ucontext_t *ucontext;
 } _papi_hwi_context_t;
 
 typedef struct _papi_mdi {
+   char substrate[81];          /* Name of the substrate we're using */
+   float version;               /* Version of this substrate */
    pid_t pid;                   /* Process identifier */
    PAPI_hw_info_t hw_info;      /* See definition in papi.h */
    PAPI_exe_info_t exe_info;    /* See definition in papi.h */
    PAPI_shlib_info_t shlib_info;    /* See definition in papi.h */
    PAPI_preload_info_t preload_info; /* See definition in papi.h */ 
-
-
-   /* Begin public feature flags */
-   int supports_multiple_threads;     /* hardware counters support multiple threads */
-
-   int supports_real_usec;      /* We can use the real_usec call */
-   int supports_real_cyc;       /* We can use the real_cyc call */
-   int supports_virt_usec;      /* We can use the virt_usec call */
-   int supports_virt_cyc;       /* We can use the virt_cyc call */
-
-   /* End public feature flags */
-
-   
-
-   /* End private Info */
-   DynamicArray_t global_eventset_map;  /* Global structure to maintain int<->EventSet mapping */
-} papi_mdi_t;
-
-typedef struct _papi_substrate_mdi {
-   int substrate_index;
-   char substrate[81];          /* Name of the substrate we're using */
-   float version;               /* Version of this substrate */
-
-   int default_domain;          /* The default domain when this substrate is used */
-
-   int default_granularity;     /* The default granularity when this substrate is used */
-
-   /* Begin public feature flags */
 
    /* The following variables define the length of the arrays in the 
       EventSetInfo_t structure. Each array is of length num_gp_cntrs + 
@@ -415,14 +405,26 @@ typedef struct _papi_substrate_mdi {
    int num_sp_cntrs;            /* Number of special purpose counters, like 
                                    Time Stamp Counter on IBM or Pentium */
 
+   int default_domain;          /* The default domain when this substrate is used */
+
+   int default_granularity;     /* The default granularity when this substrate is used */
+
+   /* Begin public feature flags */
+
    int supports_program;        /* We can use programmable events */
    int supports_write;          /* We can write the counters */
    int supports_hw_overflow;    /* Needs overflow to be emulated */
    int supports_hw_profile;     /* Needs profile to be emulated */
-
+   int supports_multiple_threads;     /* hardware counters support 
+                                         multiple threads */
    int supports_64bit_counters; /* Only limited precision is available from hardware */
    int supports_inheritance;    /* We can pass on and inherit child counters/values */
    int supports_attach;         /* We can attach PAPI to another process */
+   int supports_real_usec;      /* We can use the real_usec call */
+   int supports_real_cyc;       /* We can use the real_cyc call */
+   int supports_virt_usec;      /* We can use the virt_usec call */
+   int supports_virt_cyc;       /* We can use the virt_cyc call */
+
    /* End public feature flags */
 
    /* Begin private feature flags */
@@ -431,14 +433,11 @@ typedef struct _papi_substrate_mdi {
 
    /* End private feature flags */
 
-   /* Begin private Info */
-   int context_size;
-   int register_size;
-   int reg_alloc_size;
-   int control_state_size;
-} papi_substrate_mdi_t;
+   int size_machdep;            /* Size of the substrate's control structure in bytes */
 
-extern papi_substrate_mdi_t * _papi_hwi_substrate_info;
+   DynamicArray_t global_eventset_map;  /* Global structure to maintain int<->EventSet mapping */
+} papi_mdi_t;
+
 extern papi_mdi_t _papi_hwi_system_info;
 extern int _papi_hwi_error_level;
 extern volatile int _papi_hwi_using_signal;
@@ -578,6 +577,7 @@ inline_static void PRFDBG(char *format, ...)
 
 #include "threads.h"
 #include "papi_vector.h"
+#include "papi_protos.h"
 
 inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset)
 {
@@ -596,5 +596,4 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset)
    return (set);
 }
 
-extern char *const init_str[];
 #endif                          /* PAPI_INTERNAL_H */
