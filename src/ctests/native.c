@@ -49,7 +49,9 @@ static const PAPI_hw_info_t *hwinfo;
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
 #if defined(_AIX) || defined(linux)
-#if defined(_POWER4) || defined(_PPC970)
+#if defined(_PPC32)
+static char *native_name[] = { "CPU_CLK", "FLOPS", NULL };
+#elif defined(_POWER4) || defined(_PPC970)
    /* arbitrarily code events from group 28: pm_fpu3 - Floating point events by unit */
    static char *native_name[] =
        { "PM_FPU0_FDIV", "PM_FPU1_FDIV", "PM_FPU0_FRSP_FCONV", "PM_FPU1_FRSP_FCONV",
@@ -154,7 +156,7 @@ void papimon_start(void)
      (defined(sun) && defined(sparc)) || \
      (defined(__crayx1)) || (defined(_CRAYT3E)) || \
      (defined(__ALPHA) && defined(__osf__)) || \
-     (defined(linux) && (defined(_POWER4) || defined(_PPC970) || defined(_POWER5))))
+     (defined(linux) && (defined(_PPC32) || defined(_POWER4) || defined(_PPC970) || defined(_POWER5))))
 
       for (i = 0; native_name[i] != NULL; i++) {
          retval = PAPI_event_name_to_code(native_name[i], &native);
