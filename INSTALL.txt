@@ -100,13 +100,17 @@ General Installation
 Operating System Specific Installation Steps (In Alphabetical Order by OS)
 *****************************************************************************
 
-AIX - IBM POWER3 and POWER4
+AIX - IBM POWER3, POWER4, POWER5
 *****************************************************************************
-PAPI is supported on both AIX 4.3.3 for POWER3, and AIX 5.1 for POWER3 
-and POWER4. A different make file is used for each of these three 
-configurations.
+PAPI is supported on both AIX 4.3.3 for POWER3, and AIX 5 for POWER3, POWER4
+and POWER5. Different make files are used for each of these three platforms,
+in both 32 bit and 64 bit configurations.
+In general, use ./configure to select the correct makefile for your system, 
+specifying the --with_bitmode=32 or --with-bitmode=64 to select wordlength.
+32 bits is the default.
 
 For AIX 4.3.3 - POWER3:
+*****************************************************************************
 Install Pmtoolkit before compiling PAPI.  Pmtoolkit must be installed as root. 
 The file can be downloaded from the following URL:
 
@@ -134,7 +138,7 @@ at the end of the /etc/rc.net file. **
 After the installation of Pmtoolkit, follow the general installation to 
 install PAPI, using Makefile.aix-power.
 
-For AIX 5.1 - POWER4:
+For AIX 5.1 - POWER5/POWER4/POWER3:
 *****************************************************************************
 1.	On AIX 5.x, the bos.pmapi is a product level fileset (part of the OS).
 	However, it is not installed by default. Consult your sysadmin to 
@@ -151,7 +155,7 @@ For AIX 5.1 - POWER3:
 3.	Follow the general instructions for installing PAPI, using 
 	Makefile.aix5-power3.
 
-Warning about XLC version 5. PAPI excepts xlc version 6 or greater. Your version
+Warning about XLC version 5. PAPI accepts xlc version 6 or greater. Your version
 can be determined by running 'lslpp -a -l | grep -i xlc'. If you have version
 5, you need to build with 'CC_SHR="-G -r"' on the make line, like this:
 	
@@ -192,6 +196,31 @@ set the PFM_PREFIX flag on the make line.
 To build with an uninstalled libpfm not inside the PAPI source tree:
 
 set the PFM flag on the make line.
+
+Linux - PPC64 (POWER3, POWER4, and POWERPC970)
+****************************************************************************
+Linux/PPC64 requires that the kernel be patched and recompiled with the
+PerfCtr patch.   The required patches and complete installation instructions
+are provided in the papi/src/perfctr-2.7.x directory.
+
+*- IF YOU HAVE ALREADY PATCHED YOUR KERNEL AND/OR INSTALLED PERFCTR -*
+
+WARNING: You should always use a PerfCtr distribution that has been distributed
+with a version of PAPI or your build will fail. The reason for this is that
+PAPI builds a shared library of the Perfctr runtime, on which libpapi.so
+depends. PAPI also depends on the .a file, which it decomposes into component
+objects files and includes in the libpapi.a file for convenience. If you
+install a new perfctr, even a shared library, YOU MUST REBUILD PAPI to get
+a proper, working libpapi.a.
+
+If you have already installed PerfCtr under <prefix> then:
+
+make -f Makefile.linux-<processor> PERFCTR_PREFIX=<prefix>
+
+If you have a different PerfCtr source tree other than the ones in papi/src
+AND you have not performed a 'make install' in that directory:
+
+make -f Makefile.linux-<processor> PERFCTR=<PerfCtr source tree location>
 
 Linux/x86 - Intel and AMD
 *****************************************************************************
