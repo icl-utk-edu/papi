@@ -13,7 +13,7 @@ OS      = solaris
 # Sun Workshop compilers: V5.0 and V6.0 R2
 #
 TARGETS		+= smp omp
-CC		= cc 
+CC			= cc 
 CPP     	= $(CC) -E
 CC_R		= $(CC) -mt
 CC_SHR		= $(CC) -ztext -G -Kpic  
@@ -28,13 +28,13 @@ OPTFLAGS	= -fast -xarch=v8plus -xtarget=ultra
 #
 # gcc 
 #
-#CC		= gcc
+#CC			= gcc
 #F77		= g77
 #CPP		= $(CC) -E
 #CC_R		= $(CC) 
 #CC_SHR		= $(CC) -shared -fpic
 #OPTFLAGS	= -O3
-#CFLAGS  	= 
+#CFLAGS  	= -DNEED_FFSLL
 #FFLAGS		= $(CFLAGS)
 #
 # Do not touch below here 
@@ -47,9 +47,6 @@ POST_BUILD =
 SPECIAL_REMOVE =
 
 include Makefile.inc
-
-#get_tick.o: solaris-ultra/get_tick.S
-#	cc -c -D_ASM -xarch=v8plusa -O solaris-ultra/get_tick.S
 
 native_clean:
 
