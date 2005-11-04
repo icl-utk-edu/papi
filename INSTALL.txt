@@ -103,8 +103,8 @@ Operating System Specific Installation Steps (In Alphabetical Order by OS)
 
 AIX - IBM POWER3, POWER4, POWER5
 *****************************************************************************
-PAPI is supported on both AIX 4.3.3 for POWER3, and AIX 5.1 for POWER3 
-and POWER4. A different make file is used for each of these three 
+PAPI is supported on both AIX 4.3.3 for POWER3, and AIX 5.1 for POWER3, POWER4
+and POWER5. A different make file is used for each of these three 
 configurations.
 
 For AIX 4.3.3 - POWER3:
@@ -135,13 +135,13 @@ at the end of the /etc/rc.net file. **
 After the installation of Pmtoolkit, follow the general installation to 
 install PAPI, using Makefile.aix-power.
 
-For AIX 5.1 - POWER5/POWER4:
+For AIX 5.1 - POWER4/POWER5:
 *****************************************************************************
 1.	On AIX 5.x, the bos.pmapi is a product level fileset (part of the OS).
 	However, it is not installed by default. Consult your sysadmin to 
 	make sure it is installed. 
 2.	Follow the general instructions for installing PAPI, using 
-	Makefile.aix-power4.
+	Makefile.aix-power4/5.
 
 For AIX 5.1 - POWER3:
 *****************************************************************************
@@ -194,7 +194,7 @@ To build with an uninstalled libpfm not inside the PAPI source tree:
 
 set the PFM flag on the make line.
 
-Linux - PPC64 (POWER3, POWER4, and POWERPC970)
+Linux - PPC64 (POWER4, POWER5 and PPC970)
 ****************************************************************************
 Linux/PPC64 requires that the kernel be patched and recompiled with the
 PerfCtr patch.   The required patches and complete installation instructions
