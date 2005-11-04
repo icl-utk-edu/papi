@@ -1,5 +1,5 @@
-LIBRARY	=libpapi.a
-SHLIB	=libpapi.so
+LIBRARY	=libpapi64.a
+SHLIB	=libpapi64.so
 SUBSTR  = solaris-ultra
 MSUBSTR  = solaris-ultra
 MEMSUBSTR= solaris
@@ -14,17 +14,17 @@ TARGETS		+= smp omp
 CC			= cc 
 CPP     	= $(CC) -E
 CC_R		= $(CC) -mt
-CC_SHR		= $(CC) -ztext -G -Kpic  
-CFLAGS  	= -DNO_VARARG_MACRO -DNEED_FFSLL  
+CC_SHR		= $(CC) -ztext -G -Kpic 
+CFLAGS  	= -DNO_VARARG_MACRO -DNEED_FFSLL 
 SMPCFLGS	= -xexplicitpar
 OMPCFLGS	= -xopenmp
-F77		= f90
-FFLAGS		= $(CFLAGS)
-TOPTFLAGS	= 
+F77			= f90
+FFLAGS		= $(CFLAGS) -xarch=v9
+TOPTFLAGS	= -xarch=v9
 NOOPT		= -xO0 
-OPTFLAGS	= -fast -xarch=v8plus -xtarget=ultra
+OPTFLAGS	= -fast -xarch=v9 
 #
-# gcc 
+# gcc
 #
 #CC			= gcc
 #F77		= g77
@@ -38,9 +38,9 @@ OPTFLAGS	= -fast -xarch=v8plus -xtarget=ultra
 # Do not touch below here 
 #
 FOPTFLAGS	= $(OPTFLAGS)
-LDFLAGS 	= -lcpc  
-MISCSRCS	=  
-MISCOBJS	=  
+LDFLAGS 	= -lcpc 
+MISCSRCS	= 
+MISCOBJS	= 
 POST_BUILD =
 SPECIAL_REMOVE =
 

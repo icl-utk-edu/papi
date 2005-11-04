@@ -40,10 +40,10 @@ extern _end;
 extern _data;
 
 /* globals */
-#ifdef _POWER4
-pm_info_t pminfo;
-#elif defined(_POWER5)
+#ifdef PM_INITIALIZE
 pm_info2_t pminfo;
+#else
+pm_info_t pminfo;
 #endif
 
 /* Locks */

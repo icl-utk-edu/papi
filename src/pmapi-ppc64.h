@@ -17,12 +17,12 @@
 
 #define PM_INIT_FLAGS PM_VERIFIED|PM_UNVERIFIED|PM_CAVEAT|PM_GET_GROUPS
 
-#ifdef _POWER4
-typedef pm_info_t hwd_pminfo_t;
-typedef pm_events_t hwd_pmevents_t;
-#elif defined(_POWER5)
+#ifdef PM_INITIALIZE
 typedef pm_info2_t hwd_pminfo_t;
 typedef pm_events2_t hwd_pmevents_t;
+#else
+typedef pm_info_t hwd_pminfo_t;
+typedef pm_events_t hwd_pmevents_t;
 #endif
 
 #include "ppc64_events.h"
