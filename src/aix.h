@@ -50,7 +50,9 @@ extern _data;
 #endif
 PMINFO_T pminfo;
 #else
-pm_info_t pminfo;
+#define PMINFO_T pm_info_t
+#define PMEVENTS_T pm_events_t
+/*pm_info_t pminfo;*/
 #endif
 
 /* Locks */
