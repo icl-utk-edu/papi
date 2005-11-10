@@ -35,12 +35,12 @@
 
 #define inline_static inline static
 
-#define MAX_COUNTER_TERMS 4
 #ifdef ITANIUM2
 #define MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
 #else                           /* itanium */
 #define MAX_COUNTERS PMU_ITA_NUM_COUNTERS
 #endif
+#define MAX_COUNTER_TERMS MAX_COUNTERS
 
 typedef int hwd_register_t;
 typedef int hwd_register_map_t;
@@ -98,8 +98,8 @@ typedef struct itanium_preset_search {
    /* Derived code */
    int derived;
    /* Strings to look for */
-   char *(findme[MAX_COUNTERS]);
-   char operation[MAX_COUNTERS*5];
+   char *(findme[MAX_COUNTER_TERMS]);
+   char operation[MAX_COUNTER_TERMS*5];
 } itanium_preset_search_t;
 
 typedef struct Itanium_context {
