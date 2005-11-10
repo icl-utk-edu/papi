@@ -17,8 +17,8 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "linux-ia64.h"
-#include "papi_protos.h"
 #include "papi_vector.h"
+#include "papi_protos.h"
 #include "pfmwrap.h"
 #include "threads.h"
 #include "papi_memory.h"
@@ -27,122 +27,123 @@ static int sidx;
 
 #ifndef ITANIUM2
 static itanium_preset_search_t ia1_preset_search_map[] = {
-   {PAPI_L1_TCM, DERIVED_ADD, {"L1D_READ_MISSES_RETIRED", "L2_INST_DEMAND_READS", 0, 0, 0, 0, 0, 0}},
-   {PAPI_L1_ICM, 0, {"L2_INST_DEMAND_READS", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L1_DCM, 0, {"L1D_READ_MISSES_RETIRED", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L2_TCM, 0, {"L2_MISSES", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L2_DCM, DERIVED_SUB, {"L2_MISSES", "L3_READS_INST_READS_ALL", 0, 0, 0, 0, 0, 0}},
-   {PAPI_L2_ICM, 0, {"L3_READS_INST_READS_ALL", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L3_TCM, 0, {"L3_MISSES", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L3_ICM, 0, {"L3_READS_INST_READS_MISS", 0, 0, 0, 0, 0, 0, 0}},
+   {PAPI_L1_TCM, DERIVED_ADD, {"L1D_READ_MISSES_RETIRED", "L2_INST_DEMAND_READS",  0, 0}},
+   {PAPI_L1_ICM, 0, {"L2_INST_DEMAND_READS",  0, 0, 0}},
+   {PAPI_L1_DCM, 0, {"L1D_READ_MISSES_RETIRED",  0, 0, 0}},
+   {PAPI_L2_TCM, 0, {"L2_MISSES",  0, 0, 0}},
+   {PAPI_L2_DCM, DERIVED_SUB, {"L2_MISSES", "L3_READS_INST_READS_ALL",  0, 0}},
+   {PAPI_L2_ICM, 0, {"L3_READS_INST_READS_ALL",  0, 0, 0}},
+   {PAPI_L3_TCM, 0, {"L3_MISSES",  0, 0, 0}},
+   {PAPI_L3_ICM, 0, {"L3_READS_INST_READS_MISS",  0, 0, 0}},
    {PAPI_L3_DCM, DERIVED_ADD,
-    {"L3_READS_DATA_READS_MISS", "L3_WRITES_DATA_WRITES_MISS", 0, 0, 0, 0, 0, 0}},
-   {PAPI_L3_LDM, 0, {"L3_READS_DATA_READS_MISS", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L3_STM, 0, {"L3_WRITES_DATA_WRITES_MISS", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L1_LDM, 0, {"L1D_READ_MISSES_RETIRED", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L2_LDM, 0, {"L3_READS_DATA_READS_ALL", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L2_STM, 0, {"L3_WRITES_ALL_WRITES_ALL", 0, 0, 0, 0, 0, 0, 0}},
+    {"L3_READS_DATA_READS_MISS", "L3_WRITES_DATA_WRITES_MISS",  0, 0}},
+   {PAPI_L3_LDM, 0, {"L3_READS_DATA_READS_MISS",  0, 0, 0}},
+   {PAPI_L3_STM, 0, {"L3_WRITES_DATA_WRITES_MISS",  0, 0, 0}},
+   {PAPI_L1_LDM, 0, {"L1D_READ_MISSES_RETIRED",  0, 0, 0}},
+   {PAPI_L2_LDM, 0, {"L3_READS_DATA_READS_ALL",  0, 0, 0}},
+   {PAPI_L2_STM, 0, {"L3_WRITES_ALL_WRITES_ALL",  0, 0, 0}},
    {PAPI_L3_DCH, DERIVED_ADD,
-    {"L3_READS_DATA_READS_HIT", "L3_WRITES_DATA_WRITES_HIT", 0, 0, 0, 0, 0, 0}},
-   {PAPI_L1_DCH, DERIVED_SUB, {"L1D_READS_RETIRED", "L1D_READ_MISSES_RETIRED", 0, 0, 0, 0, 0, 0}},
-   {PAPI_L1_DCA, 0, {"L1D_READS_RETIRED", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L2_DCA, 0, {"L2_DATA_REFERENCES_ALL", 0, 0, 0, 0, 0, 0, 0}},
+    {"L3_READS_DATA_READS_HIT", "L3_WRITES_DATA_WRITES_HIT",  0, 0}},
+   {PAPI_L1_DCH, DERIVED_SUB, {"L1D_READS_RETIRED", "L1D_READ_MISSES_RETIRED",  0, 0}},
+   {PAPI_L1_DCA, 0, {"L1D_READS_RETIRED",  0, 0, 0}},
+   {PAPI_L2_DCA, 0, {"L2_DATA_REFERENCES_ALL",  0, 0, 0}},
    {PAPI_L3_DCA, DERIVED_ADD,
-    {"L3_READS_DATA_READS_ALL", "L3_WRITES_DATA_WRITES_ALL", 0, 0, 0, 0, 0, 0}},
-   {PAPI_L2_DCR, 0, {"L2_DATA_REFERENCES_READS", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L3_DCR, 0, {"L3_READS_DATA_READS_ALL", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L2_DCW, 0, {"L2_DATA_REFERENCES_WRITES", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L3_DCW, 0, {"L3_WRITES_DATA_WRITES_ALL", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L3_ICH, 0, {"L3_READS_INST_READS_HIT", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L1_ICR, DERIVED_ADD, {"L1I_PREFETCH_READS", "L1I_DEMAND_READS", 0, 0, 0, 0, 0, 0}},
-   {PAPI_L2_ICR, DERIVED_ADD, {"L2_INST_DEMAND_READS", "L2_INST_PREFETCH_READS", 0, 0, 0, 0, 0, 0}},
-   {PAPI_L3_ICR, 0, {"L3_READS_INST_READS_ALL", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_TLB_DM, 0, {"DTLB_MISSES", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_TLB_IM, 0, {"ITLB_MISSES_FETCH", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_MEM_SCY, 0, {"MEMORY_CYCLE", PAPI_NULL, 0, 0, 0, 0, 0, 0}},
-   {PAPI_STL_ICY, 0, {"UNSTALLED_BACKEND_CYCLE", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_BR_INS, 0, {"BRANCH_EVENT", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_BR_PRC, 0, {"BRANCH_PREDICTOR_ALL_CORRECT_PREDICTIONS", 0, 0, 0, 0, 0, 0, 0}},
+    {"L3_READS_DATA_READS_ALL", "L3_WRITES_DATA_WRITES_ALL",  0, 0}},
+   {PAPI_L2_DCR, 0, {"L2_DATA_REFERENCES_READS",  0, 0, 0}},
+   {PAPI_L3_DCR, 0, {"L3_READS_DATA_READS_ALL",  0, 0, 0}},
+   {PAPI_L2_DCW, 0, {"L2_DATA_REFERENCES_WRITES",  0, 0, 0}},
+   {PAPI_L3_DCW, 0, {"L3_WRITES_DATA_WRITES_ALL",  0, 0, 0}},
+   {PAPI_L3_ICH, 0, {"L3_READS_INST_READS_HIT",  0, 0, 0}},
+   {PAPI_L1_ICR, DERIVED_ADD, {"L1I_PREFETCH_READS", "L1I_DEMAND_READS",  0, 0}},
+   {PAPI_L2_ICR, DERIVED_ADD, {"L2_INST_DEMAND_READS", "L2_INST_PREFETCH_READS",  0, 0}},
+   {PAPI_L3_ICR, 0, {"L3_READS_INST_READS_ALL",  0, 0, 0}},
+   {PAPI_TLB_DM, 0, {"DTLB_MISSES",  0, 0, 0}},
+   {PAPI_TLB_IM, 0, {"ITLB_MISSES_FETCH",  0, 0, 0}},
+   {PAPI_MEM_SCY, 0, {"MEMORY_CYCLE", PAPI_NULL,  0, 0}},
+   {PAPI_STL_ICY, 0, {"UNSTALLED_BACKEND_CYCLE",  0, 0, 0}},
+   {PAPI_BR_INS, 0, {"BRANCH_EVENT",  0, 0, 0}},
+   {PAPI_BR_PRC, 0, {"BRANCH_PREDICTOR_ALL_CORRECT_PREDICTIONS",  0, 0, 0}},
    {PAPI_BR_MSP, DERIVED_ADD,
-    {"BRANCH_PREDICTOR_ALL_WRONG_PATH", "BRANCH_PREDICTOR_ALL_WRONG_TARGET", 0, 0, 0, 0, 0, 0}},
-   {PAPI_TOT_CYC, 0, {"CPU_CYCLES", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_FP_OPS, DERIVED_ADD, {"FP_OPS_RETIRED_HI", "FP_OPS_RETIRED_LO", 0, 0, 0, 0, 0, 0}},
-   {PAPI_TOT_INS, 0, {"IA64_INST_RETIRED", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_LD_INS, 0, {"LOADS_RETIRED", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_SR_INS, 0, {"STORES_RETIRED", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_LST_INS, DERIVED_ADD, {"LOADS_RETIRED", "STORES_RETIRED", 0, 0, 0, 0, 0, 0}},
-   {0, 0, {0, 0, 0, 0, 0, 0, 0, 0}}
+    {"BRANCH_PREDICTOR_ALL_WRONG_PATH", "BRANCH_PREDICTOR_ALL_WRONG_TARGET",  0, 0}},
+   {PAPI_TOT_CYC, 0, {"CPU_CYCLES",  0, 0, 0}},
+   {PAPI_FP_OPS, DERIVED_ADD, {"FP_OPS_RETIRED_HI", "FP_OPS_RETIRED_LO",  0, 0}},
+   {PAPI_TOT_INS, 0, {"IA64_INST_RETIRED",  0, 0, 0}},
+   {PAPI_LD_INS, 0, {"LOADS_RETIRED",  0, 0, 0}},
+   {PAPI_SR_INS, 0, {"STORES_RETIRED",  0, 0, 0}},
+   {PAPI_LST_INS, DERIVED_ADD, {"LOADS_RETIRED", "STORES_RETIRED",  0, 0}},
+   {0, 0, { 0, 0, 0, 0}}
 };
 #define ia_preset_search_map ia1_preset_search_map
 #else
 static itanium_preset_search_t ia2_preset_search_map[] = {
-   {PAPI_CA_SNP, 0, {"BUS_SNOOPS_SELF", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_CA_INV, DERIVED_ADD, {"BUS_MEM_READ_BRIL_SELF", "BUS_MEM_READ_BIL_SELF", 0, 0, 0, 0, 0, 0}},
-   {PAPI_TLB_TL, DERIVED_ADD, {"ITLB_MISSES_FETCH_L2ITLB", "L2DTLB_MISSES", 0, 0, 0, 0, 0, 0}},
-   {PAPI_STL_ICY, 0, {"DISP_STALLED", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_STL_CCY, 0, {"BACK_END_BUBBLE_ALL", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_TOT_IIS, 0, {"INST_DISPERSED", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_RES_STL, 0, {"BE_EXE_BUBBLE_ALL", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_FP_STAL, 0, {"BE_EXE_BUBBLE_FRALL", 0, 0, 0, 0, 0, 0, 0}},
+   {PAPI_CA_SNP, 0, {"BUS_SNOOPS_SELF",  0, 0, 0}},
+   {PAPI_CA_INV, DERIVED_ADD, {"BUS_MEM_READ_BRIL_SELF", "BUS_MEM_READ_BIL_SELF",  0, 0}},
+   {PAPI_TLB_TL, DERIVED_ADD, {"ITLB_MISSES_FETCH_L2ITLB", "L2DTLB_MISSES",  0, 0}},
+   {PAPI_STL_ICY, 0, {"DISP_STALLED",  0, 0, 0}},
+   {PAPI_STL_CCY, 0, {"BACK_END_BUBBLE_ALL",  0, 0, 0}},
+   {PAPI_TOT_IIS, 0, {"INST_DISPERSED",  0, 0, 0}},
+   {PAPI_RES_STL, 0, {"BE_EXE_BUBBLE_ALL",  0, 0, 0}},
+   {PAPI_FP_STAL, 0, {"BE_EXE_BUBBLE_FRALL",  0, 0, 0}},
    {PAPI_L2_TCR, DERIVED_ADD,
     {"L2_DATA_REFERENCES_L2_DATA_READS", "L2_INST_DEMAND_READS", "L2_INST_PREFETCHES",
-     0, 0, 0, 0, 0}},
-   {PAPI_L1_TCM, DERIVED_ADD, {"L2_INST_DEMAND_READS", "L1D_READ_MISSES_ALL", 0, 0, 0, 0, 0, 0}},
-   {PAPI_L1_ICM, 0, {"L2_INST_DEMAND_READS", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L1_DCM, 0, {"L1D_READ_MISSES_ALL", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L2_TCM, 0, {"L2_MISSES", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L2_DCM, DERIVED_SUB, {"L2_MISSES", "L3_READS_INST_FETCH_ALL", 0, 0, 0, 0, 0, 0}},
-   {PAPI_L2_ICM, 0, {"L3_READS_INST_FETCH_ALL", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L3_TCM, 0, {"L3_MISSES", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L3_ICM, 0, {"L3_READS_INST_FETCH_MISS", 0, 0, 0, 0, 0, 0, 0}},
+      0}},
+   {PAPI_L1_TCM, DERIVED_ADD, {"L2_INST_DEMAND_READS", "L1D_READ_MISSES_ALL",  0, 0}},
+   {PAPI_L1_ICM, 0, {"L2_INST_DEMAND_READS",  0, 0, 0}},
+   {PAPI_L1_DCM, 0, {"L1D_READ_MISSES_ALL",  0, 0, 0}},
+   {PAPI_L2_TCM, 0, {"L2_MISSES",  0, 0, 0}},
+   {PAPI_L2_DCM, DERIVED_SUB, {"L2_MISSES", "L3_READS_INST_FETCH_ALL",  0, 0}},
+   {PAPI_L2_ICM, 0, {"L3_READS_INST_FETCH_ALL",  0, 0, 0}},
+   {PAPI_L3_TCM, 0, {"L3_MISSES",  0, 0, 0}},
+   {PAPI_L3_ICM, 0, {"L3_READS_INST_FETCH_MISS",  0, 0, 0}},
    {PAPI_L3_DCM, DERIVED_ADD,
-    {"L3_READS_DATA_READ_MISS", "L3_WRITES_DATA_WRITE_MISS", 0, 0, 0, 0, 0, 0}},
-   {PAPI_L3_LDM, 0, {"L3_READS_ALL_MISS", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L3_STM, 0, {"L3_WRITES_DATA_WRITE_MISS", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L1_LDM, DERIVED_ADD, {"L1D_READ_MISSES_ALL", "L2_INST_DEMAND_READS", 0, 0, 0, 0, 0, 0}},
-   {PAPI_L2_LDM, 0, {"L3_READS_ALL_ALL", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L2_STM, 0, {"L3_WRITES_ALL_ALL", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L1_DCH, DERIVED_SUB, {"L1D_READS_SET1", "L1D_READ_MISSES_ALL", 0, 0, 0, 0, 0, 0}},
-   {PAPI_L2_DCH, DERIVED_SUB, {"L2_DATA_REFERENCES_L2_ALL", "L2_MISSES", 0, 0, 0, 0, 0, 0}},
+    {"L3_READS_DATA_READ_MISS", "L3_WRITES_DATA_WRITE_MISS",  0, 0}},
+   {PAPI_L3_LDM, 0, {"L3_READS_ALL_MISS",  0, 0, 0}},
+   {PAPI_L3_STM, 0, {"L3_WRITES_DATA_WRITE_MISS",  0, 0, 0}},
+   {PAPI_L1_LDM, DERIVED_ADD, {"L1D_READ_MISSES_ALL", "L2_INST_DEMAND_READS",  0, 0}},
+   {PAPI_L2_LDM, 0, {"L3_READS_ALL_ALL",  0, 0, 0}},
+   {PAPI_L2_STM, 0, {"L3_WRITES_ALL_ALL",  0, 0, 0}},
+   {PAPI_L1_DCH, DERIVED_SUB, {"L1D_READS_SET1", "L1D_READ_MISSES_ALL",  0, 0}},
+   {PAPI_L2_DCH, DERIVED_SUB, {"L2_DATA_REFERENCES_L2_ALL", "L2_MISSES",  0, 0}},
    {PAPI_L3_DCH, DERIVED_ADD,
-    {"L3_READS_DATA_READ_HIT", "L3_WRITES_DATA_WRITE_HIT", 0, 0, 0, 0, 0, 0}},
-   {PAPI_L1_DCA, 0, {"L1D_READS_SET1", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L2_DCA, 0, {"L2_DATA_REFERENCES_L2_ALL", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L3_DCA, 0, {"L3_REFERENCES", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L1_DCR, 0, {"L1D_READS_SET1", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L2_DCR, 0, {"L2_DATA_REFERENCES_L2_DATA_READS", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L3_DCR, 0, {"L3_READS_DATA_READ_ALL", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L2_DCW, 0, {"L2_DATA_REFERENCES_L2_DATA_WRITES", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L3_DCW, 0, {"L3_WRITES_DATA_WRITE_ALL", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L3_ICH, 0, {"L3_READS_DINST_FETCH_HIT", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L1_ICR, DERIVED_ADD, {"L1I_PREFETCHES", "L1I_READS", 0, 0, 0, 0, 0, 0}},
-   {PAPI_L2_ICR, DERIVED_ADD, {"L2_INST_DEMAND_READS", "L2_INST_PREFETCHES", 0, 0, 0, 0, 0, 0}},
-   {PAPI_L3_ICR, 0, {"L3_READS_INST_FETCH_ALL", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L1_ICA, DERIVED_ADD, {"L1I_PREFETCHES", "L1I_READS", 0, 0, 0, 0, 0, 0}},
-   {PAPI_L2_TCH, DERIVED_SUB, {"L2_REFERENCES", "L2_MISSES", 0, 0, 0, 0, 0, 0}},
-   {PAPI_L3_TCH, DERIVED_SUB, {"L3_REFERENCES", "L3_MISSES", 0, 0, 0, 0, 0, 0}},
-   {PAPI_L2_TCA, 0, {"L2_REFERENCES", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L3_TCA, 0, {"L3_REFERENCES", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L3_TCR, 0, {"L3_READS_ALL_ALL", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L3_TCW, 0, {"L3_WRITES_ALL_ALL", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_TLB_DM, 0, {"L2DTLB_MISSES", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_TLB_IM, 0, {"ITLB_MISSES_FETCH_L2ITLB", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_BR_INS, 0, {"BRANCH_EVENT", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_BR_PRC, 0, {"BR_MISPRED_DETAIL_ALL_CORRECT_PRED", 0, 0, 0, 0, 0, 0, 0}},
+    {"L3_READS_DATA_READ_HIT", "L3_WRITES_DATA_WRITE_HIT",  0, 0}},
+   {PAPI_L1_DCA, 0, {"L1D_READS_SET1",  0, 0, 0}},
+//   {PAPI_L2_DCA, 0, {"L2_DATA_REFERENCES_L2_ALL",  0, 0, 0}},
+   {PAPI_L2_DCA, 0, {"L2_DATA_REFERENCES_L2_ALL", 0, 0, 0}},
+   {PAPI_L3_DCA, 0, {"L3_REFERENCES",  0, 0, 0}},
+   {PAPI_L1_DCR, 0, {"L1D_READS_SET1",  0, 0, 0}},
+   {PAPI_L2_DCR, 0, {"L2_DATA_REFERENCES_L2_DATA_READS",  0, 0, 0}},
+   {PAPI_L3_DCR, 0, {"L3_READS_DATA_READ_ALL",  0, 0, 0}},
+   {PAPI_L2_DCW, 0, {"L2_DATA_REFERENCES_L2_DATA_WRITES",  0, 0, 0}},
+   {PAPI_L3_DCW, 0, {"L3_WRITES_DATA_WRITE_ALL",  0, 0, 0}},
+   {PAPI_L3_ICH, 0, {"L3_READS_DINST_FETCH_HIT",  0, 0, 0}},
+   {PAPI_L1_ICR, DERIVED_ADD, {"L1I_PREFETCHES", "L1I_READS",  0, 0}},
+   {PAPI_L2_ICR, DERIVED_ADD, {"L2_INST_DEMAND_READS", "L2_INST_PREFETCHES",  0, 0}},
+   {PAPI_L3_ICR, 0, {"L3_READS_INST_FETCH_ALL",  0, 0, 0}},
+   {PAPI_L1_ICA, DERIVED_ADD, {"L1I_PREFETCHES", "L1I_READS",  0, 0}},
+   {PAPI_L2_TCH, DERIVED_SUB, {"L2_REFERENCES", "L2_MISSES",  0, 0}},
+   {PAPI_L3_TCH, DERIVED_SUB, {"L3_REFERENCES", "L3_MISSES",  0, 0}},
+   {PAPI_L2_TCA, 0, {"L2_REFERENCES",  0, 0, 0}},
+   {PAPI_L3_TCA, 0, {"L3_REFERENCES",  0, 0, 0}},
+   {PAPI_L3_TCR, 0, {"L3_READS_ALL_ALL",  0, 0, 0}},
+   {PAPI_L3_TCW, 0, {"L3_WRITES_ALL_ALL",  0, 0, 0}},
+   {PAPI_TLB_DM, 0, {"L2DTLB_MISSES",  0, 0, 0}},
+   {PAPI_TLB_IM, 0, {"ITLB_MISSES_FETCH_L2ITLB",  0, 0, 0}},
+   {PAPI_BR_INS, 0, {"BRANCH_EVENT",  0, 0, 0}},
+   {PAPI_BR_PRC, 0, {"BR_MISPRED_DETAIL_ALL_CORRECT_PRED",  0, 0, 0}},
    {PAPI_BR_MSP, DERIVED_ADD,
-    {"BR_MISPRED_DETAIL_ALL_WRONG_PATH", "BR_MISPRED_DETAIL_ALL_WRONG_TARGET", 0, 0, 0, 0, 0, 0}},
-   {PAPI_TOT_CYC, 0, {"CPU_CYCLES", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_FP_OPS, 0, {"FP_OPS_RETIRED", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_TOT_INS, DERIVED_ADD, {"IA64_INST_RETIRED", "IA32_INST_RETIRED", 0, 0, 0, 0, 0, 0}},
-   {PAPI_LD_INS, 0, {"LOADS_RETIRED", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_SR_INS, 0, {"STORES_RETIRED", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L2_ICA, 0, {"L2_INST_DEMAND_READS", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L3_ICA, 0, {"L3_READS_INST_FETCH_ALL", 0, 0, 0, 0, 0, 0, 0}},
-   {PAPI_L1_TCR, DERIVED_ADD, {"L1D_READS_SET0", "L1I_READS", 0, 0, 0, 0, 0, 0}}, 
-   {PAPI_L1_TCA, DERIVED_ADD, {"L1D_READS_SET0", "L1I_READS", 0, 0, 0, 0, 0, 0}}, 
-   {PAPI_L2_TCW, 0, {"L2_DATA_REFERENCES_L2_DATA_WRITES", 0, 0, 0, 0, 0, 0, 0}},
+    {"BR_MISPRED_DETAIL_ALL_WRONG_PATH", "BR_MISPRED_DETAIL_ALL_WRONG_TARGET",  0, 0}},
+   {PAPI_TOT_CYC, 0, {"CPU_CYCLES",  0, 0, 0}},
+   {PAPI_FP_OPS, 0, {"FP_OPS_RETIRED",  0, 0, 0}},
+   {PAPI_TOT_INS, DERIVED_ADD, {"IA64_INST_RETIRED", "IA32_INST_RETIRED",  0, 0}},
+   {PAPI_LD_INS, 0, {"LOADS_RETIRED",  0, 0, 0}},
+   {PAPI_SR_INS, 0, {"STORES_RETIRED",  0, 0, 0}},
+   {PAPI_L2_ICA, 0, {"L2_INST_DEMAND_READS",  0, 0, 0}},
+   {PAPI_L3_ICA, 0, {"L3_READS_INST_FETCH_ALL",  0, 0, 0}},
+   {PAPI_L1_TCR, DERIVED_ADD, {"L1D_READS_SET0", "L1I_READS",  0, 0}}, 
+   {PAPI_L1_TCA, DERIVED_ADD, {"L1D_READS_SET0", "L1I_READS",  0, 0}}, 
+   {PAPI_L2_TCW, 0, {"L2_DATA_REFERENCES_L2_DATA_WRITES",  0, 0, 0}},
 
-   {0, 0, {0, 0, 0, 0, 0, 0, 0, 0}}
+   {0, 0, { 0, 0, 0, 0}}
 };
 #define ia_preset_search_map ia2_preset_search_map
 #endif
@@ -379,6 +380,7 @@ papi_svector_t _linux_ia64_table[] = {
  {(void (*)())_papi_hwd_set_profile, VEC_PAPI_HWD_SET_PROFILE},
  {(void (*)())_papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
  {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
+ {(void (*)())_papi_hwd_stop_profiling, VEC_PAPI_HWD_STOP_PROFILING},
  {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
  {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
  {(void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
@@ -1126,7 +1128,8 @@ static int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI)
 }
 
 
-static int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
+VECTOR_STATIC
+int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
    struct sigaction act;
    void *tmp;
@@ -1285,11 +1288,6 @@ static void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 #endif
 }
 
-static void _papi_hwd_remove_native(hwd_control_state_t * this_state, NativeInfo_t * nativeInfo)
-{
-   return;
-}
-
 static int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
                    NativeInfo_t * native, int count, hwd_context_t * zero )
 {
@@ -1353,7 +1351,8 @@ static int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    return (PAPI_OK);
 }
 
-static int _papi_hwd_update_shlib_info(void)
+VECTOR_STATIC
+int _papi_hwd_update_shlib_info(void)
 {
    char fname[PAPI_HUGE_STR_LEN];
    unsigned long t_index = 0, d_index = 0, b_index = 0, counting = 1;
@@ -1470,7 +1469,8 @@ static int _papi_hwd_update_shlib_info(void)
 }
                                                                                 
 
-static int _papi_hwd_get_system_info(void)
+VECTOR_STATIC
+int _papi_hwd_get_system_info(void)
 {
    int tmp, retval;
    char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
