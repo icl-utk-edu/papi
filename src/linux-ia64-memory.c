@@ -9,6 +9,7 @@
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "papi_protos.h"
 
 inline void get_cpu_info(unsigned int *rev, unsigned int *model, unsigned int *family, unsigned int *archrev);
 void fline ( FILE *fp, char *buf );
