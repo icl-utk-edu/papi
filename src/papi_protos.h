@@ -90,7 +90,7 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
 
 /* The following PAPI internal functions are defined by the substrate file. */
 
- int _papi_hwd_get_system_info(void);
+ VECTOR_STATIC int _papi_hwd_get_system_info(void);
  int _papi_hwd_init_substrate(papi_vectors_t *vtable, int idx);
  VECTOR_STATIC int _papi_hwd_init(hwd_context_t *);
  VECTOR_STATIC void _papi_hwd_init_control_state(hwd_control_state_t * ptr);
@@ -114,7 +114,7 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
  VECTOR_STATIC int _papi_hwd_ctl(hwd_context_t *, int code, _papi_int_option_t * option);
  int _papi_hwd_init_global(void);
  VECTOR_STATIC int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold);
- int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold);
+ VECTOR_STATIC int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold);
  void *_papi_hwd_get_overflow_address(void *context);
  int _papi_hwd_shutdown_global(void);
  VECTOR_STATIC int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI);
@@ -213,7 +213,7 @@ VECTOR_STATIC void _papi_hwd_dispatch_timer(int signal, siginfo_t * info, void *
  long _papi_hwd_get_dmem_info(int option);
 
 /* Defined by the OS substrate file */
- int _papi_hwd_update_shlib_info(void);
+ VECTOR_STATIC int _papi_hwd_update_shlib_info(void);
 
 /* Defined in a memory file, could be processor or OS specific */
  int _papi_hwd_get_memory_info(PAPI_hw_info_t *, int);
