@@ -28,10 +28,12 @@
 #include <assert.h>
 #include <dirent.h>
 
-#define _GNU_SOURCE
-#define __USE_GNU
-#define __USE_UNIX98
-#define __USE_XOPEN_EXTENDED
+#ifndef _GNU_SOURCE
+  #define _GNU_SOURCE
+  #define __USE_GNU
+  #define __USE_UNIX98
+  #define __USE_XOPEN_EXTENDED
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>

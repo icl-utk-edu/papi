@@ -84,7 +84,7 @@ else
 	PFM_INC_PATH ?= $(PFM_PREFIX)/include
 endif
 
-CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) $(NOTLS) $(ALTIX)
+CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) $(NOTLS) $(ALTIX) -DOS_HEADER=\"$(OS).h\"
 
 CFLAGS-2.x := -DPFM20 -D_GNU_SOURCE
 CFLAGS-3.x := -DPFM30 -D_GNU_SOURCE  
@@ -92,11 +92,12 @@ CFLAGS-3.x := -DPFM30 -D_GNU_SOURCE
 PFM_OBJS-2.x := pfmlib_generic.o pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o 
 PFM_OBJS-3.x := pfmlib_generic_ia64.o pfmlib_os.o pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o 
 
-CFLAGS += $(CFLAGS-$(VERSION))
+CFLAGS += $(CFLAGS-$(VERSION)) -DHAS_ACPI
 PFM_OBJS := $(PFM_OBJS-$(VERSION))  
 
 MISCHDRS = pfmwrap.h
-MISCSRCS = 
+# MISCSRCS =
+MISCSRCS = linux-acpi.c
 SHLIBDEPS = -L$(PFM_LIB_PATH) -lpfm
 MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
 
