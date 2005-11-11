@@ -17,7 +17,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 int main(int argc, char **argv)
 {
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
-#ifdef ACPI
+#ifdef HAS_ACPI
    double c, a = 0.999, b = 1.001;
    int n = 1000;
    int EventSet=PAPI_NULL;
