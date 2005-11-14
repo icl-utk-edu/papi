@@ -92,7 +92,7 @@ CFLAGS-3.x := -DPFM30 -D_GNU_SOURCE
 PFM_OBJS-2.x := pfmlib_generic.o pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o 
 PFM_OBJS-3.x := pfmlib_generic_ia64.o pfmlib_os.o pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o 
 
-CFLAGS += $(CFLAGS-$(VERSION)) -DHAS_ACPI
+CFLAGS += $(CFLAGS-$(VERSION)) -DHAS_ACPI -DDEBUG
 PFM_OBJS := $(PFM_OBJS-$(VERSION))  
 
 MISCHDRS = pfmwrap.h

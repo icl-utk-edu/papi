@@ -7,6 +7,7 @@ LIBS		= static shared
 TARGETS 	= serial multiplex_and_pthreads
 POST_BUILD =
 SPECIAL_REMOVE =
+OS = linux
 
 F77		= g77
 CC		= gcc

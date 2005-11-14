@@ -264,7 +264,7 @@ fail:
 static int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **events, int flags)
 {
     static int failed = 0;
-
+    SUBDBG("In the ACPI read routine...\n");
     if (failed ||
         (ctrl->counts[0] = (long_long)get_load_value()) < 0 ||
         (ctrl->counts[1] = (long_long)get_temperature_value()) < 0)

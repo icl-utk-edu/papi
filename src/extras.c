@@ -544,9 +544,13 @@ int _papi_hwi_stop_timer(void)
 int _papi_hwi_query_native_event(unsigned int EventCode)
 {
    char *name;
+   int idx = PAPI_SUBSTRATE_INDEX(EventCode);
+
+   if ( idx < 0 || idx > papi_num_substrates)
+      return (PAPI_ENOEVNT);
 
    if (EventCode & PAPI_NATIVE_MASK) {
-      name = _papi_hwd_ntv_code_to_name(EventCode);
+      name = _papi_hwd_ntv_code_to_name(EventCode,idx);
       if (name)
          return (PAPI_OK);
    }
@@ -565,12 +569,12 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
  * first call to enum_events with a 0 will give a valid code
  */
 #if defined(__crayx1)
- _papi_hwd_ntv_enum_events(&i, 0);
+ _papi_hwd_ntv_enum_events(&i, j, 0);
 #endif
     _papi_hwi_lock(INTERNAL_LOCK);
    for(j=0;j<papi_num_substrates;j++,i=(0 | PAPI_NATIVE_MASK)){
      do {
-      name = _papi_vector_table[j]._vec_papi_hwd_ntv_code_to_name(i);
+      name = _papi_hwd_ntv_code_to_name(i,j);
 /*    printf("name=%s,  input=%s\n", name, in); */
       if (name != NULL) {
          if (strcasecmp(name, in) == 0) {
@@ -581,7 +585,7 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
          *out = 0;
          retval = PAPI_OK;
       }
-     } while ((_papi_vector_table[j]._vec_papi_hwd_ntv_enum_events(&i, 0) == PAPI_OK) && (retval == PAPI_ENOEVNT)) ;
+     } while ((_papi_hwd_ntv_enum_events(&i, 0, j) == PAPI_OK) && (retval == PAPI_ENOEVNT)) ;
    }
    _papi_hwi_unlock(INTERNAL_LOCK);
    return (retval);
@@ -594,9 +598,14 @@ int _papi_hwi_native_code_to_name(unsigned int EventCode, char *hwi_name, int le
 {
    char *name;
    int retval = PAPI_ENOEVNT;
+   int idx = PAPI_SUBSTRATE_INDEX(EventCode);
+
+   if ( idx < 0 || idx > papi_num_substrates)
+      return (PAPI_ENOEVNT);
+
    if (EventCode & PAPI_NATIVE_MASK) {
       _papi_hwi_lock(INTERNAL_LOCK);
-      name = _papi_hwd_ntv_code_to_name(EventCode);
+      name = _papi_hwd_ntv_code_to_name(EventCode, idx);
       if (name) {
          strncpy(hwi_name, name, len);
          retval = PAPI_OK;
@@ -613,9 +622,14 @@ int _papi_hwi_native_code_to_descr(unsigned int EventCode, char *hwi_descr, int 
 {
    char *descr;
    int retval = PAPI_ENOEVNT;
+   int idx = PAPI_SUBSTRATE_INDEX(EventCode);
+
+   if ( idx < 0 || idx > papi_num_substrates)
+      return (PAPI_ENOEVNT);
+
    if (EventCode & PAPI_NATIVE_MASK) {
       _papi_hwi_lock(INTERNAL_LOCK);
-      descr = _papi_hwd_ntv_code_to_descr(EventCode);
+      descr=_papi_hwd_ntv_code_to_descr(EventCode, idx);
       if (descr) {
          strncpy(hwi_descr, descr, len);
          retval = PAPI_OK;
@@ -631,17 +645,20 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
 {
    void * bits=NULL;
    int retval;
+   int idx = PAPI_SUBSTRATE_INDEX(EventCode);
+
+   if ( idx < 0 || idx > papi_num_substrates)
+      return (PAPI_ENOEVNT);
 
    if (EventCode & PAPI_NATIVE_MASK) {
       _papi_hwi_lock(INTERNAL_LOCK);
-      strncpy(info->symbol, _papi_hwd_ntv_code_to_name(EventCode), PAPI_MAX_STR_LEN);
+      strncpy(info->symbol, _papi_hwd_ntv_code_to_name(EventCode,idx), PAPI_MAX_STR_LEN);
       _papi_hwi_unlock(INTERNAL_LOCK);
       if (&info->symbol) {
          /* Fill in the info structure */
          info->event_code = EventCode;
          _papi_hwi_lock(INTERNAL_LOCK);
-         strncpy(info->long_descr, _papi_hwd_ntv_code_to_descr(EventCode),
-                 PAPI_HUGE_STR_LEN);
+         strncpy(info->long_descr, _papi_hwd_ntv_code_to_descr(EventCode, idx), PAPI_HUGE_STR_LEN);
          _papi_hwi_unlock(INTERNAL_LOCK);
          info->short_descr[0] = 0;
          info->derived[0] = 0;
@@ -656,9 +673,9 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
             info->count = 0;
 	    return(PAPI_ENOMEM);
 	 }
-         retval = _papi_hwd_ntv_code_to_bits(EventCode, bits);
+         retval = _papi_hwd_ntv_code_to_bits(EventCode, bits, idx);
          if (retval == PAPI_OK)
-            retval = _papi_hwd_ntv_bits_to_info(bits, (char *)info->name, info->code, PAPI_MIN_STR_LEN, PAPI_MAX_INFO_TERMS);
+            retval = _papi_hwd_ntv_bits_to_info(bits, (char *)info->name, info->code, PAPI_MIN_STR_LEN, PAPI_MAX_INFO_TERMS, idx);
          if (retval < 0) info->count = 0;
          else info->count = retval;
          if ( bits ) papi_free(bits);

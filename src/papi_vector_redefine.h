@@ -12,6 +12,12 @@
 #define _papi_hwd_allocate_registers(a,idx) _papi_vector_table[idx]._vec_papi_hwd_allocate_registers(a)
 #define _papi_hwd_init_control_state(a,idx) _papi_vector_table[idx]._vec_papi_hwd_init_control_state(a)
 
+#define _papi_hwd_ntv_enum_events(a,b,idx) _papi_vector_table[idx]._vec_papi_hwd_ntv_enum_events(a,b)
+#define _papi_hwd_ntv_code_to_name(a,idx) _papi_vector_table[idx]._vec_papi_hwd_ntv_code_to_name(a)
+#define _papi_hwd_ntv_code_to_descr(a,idx) _papi_vector_table[idx]._vec_papi_hwd_ntv_code_to_descr(a)
+#define _papi_hwd_ntv_code_to_bits(a,b,idx) _papi_vector_table[idx]._vec_papi_hwd_ntv_code_to_bits(a,b)
+#define _papi_hwd_ntv_bits_to_info(a,b,c,d,e,idx) _papi_vector_table[idx]._vec_papi_hwd_ntv_bits_to_info(a,b,c,d,e)
+
 #define _papi_hwd_dispatch_timer _papi_vector_table[0]._vec_papi_hwd_dispatch_timer
 
 /* These functions are all tied to the CPU substrate */ 
@@ -25,12 +31,15 @@
 #define _papi_hwd_get_dmem_info(a) _papi_vector_table[0]._vec_papi_hwd_get_dmem_info(a)
 
 /* Figure out what to do with these */
+/* I'm assuming this comment means we need to map these to substrate dependency */
 #define _papi_hwd_ctl(a,b,c) _papi_vector_table[0]._vec_papi_hwd_ctl(a,b,c)
+/*
 #define _papi_hwd_ntv_enum_events(a,b) _papi_vector_table[0]._vec_papi_hwd_ntv_enum_events(a,b)
 #define _papi_hwd_ntv_code_to_name(a) _papi_vector_table[0]._vec_papi_hwd_ntv_code_to_name(a)
 #define _papi_hwd_ntv_code_to_descr(a) _papi_vector_table[0]._vec_papi_hwd_ntv_code_to_descr(a)
 #define _papi_hwd_ntv_code_to_bits(a,b) _papi_vector_table[0]._vec_papi_hwd_ntv_code_to_bits(a,b)
 #define _papi_hwd_ntv_bits_to_info(a,b,c,d,e) _papi_vector_table[0]._vec_papi_hwd_ntv_bits_to_info(a,b,c,d,e)
+*/
 #define _papi_hwd_bpt_map_avail(a,b) _papi_vector_table[0]._vec_papi_hwd_bpt_map_avail(a,b)
 #define _papi_hwd_bpt_map_set(a,b) _papi_vector_table[0]._vec_papi_hwd_bpt_map_set(a,b)
 #define _papi_hwd_bpt_map_exclusive(a) _papi_vector_table[0]._vec_papi_hwd_bpt_map_exclusive(a)

@@ -573,6 +573,10 @@ int PAPI_event_name_to_code(char *in, int *out)
 int PAPI_enum_event(int *EventCode, int modifier)
 {
    int i = *EventCode;
+   int idx = PAPI_SUBSTRATE_INDEX(*EventCode);
+
+   if ( idx < 0 || idx > papi_num_substrates ) 
+       return (PAPI_ENOEVNT);
 
    if (i & PAPI_PRESET_MASK) {
       i &= PAPI_PRESET_AND_MASK;
@@ -586,12 +590,12 @@ int PAPI_enum_event(int *EventCode, int modifier)
          }
       }
    } else if (i & PAPI_NATIVE_MASK) {
-      return (_papi_hwd_ntv_enum_events((unsigned int *) EventCode, modifier));
+      return (_papi_hwd_ntv_enum_events((unsigned int *) EventCode, modifier, idx));
    }
    return (PAPI_ENOEVNT);
 }
 
-/* Depricated, use PAPI_allocate_eventset */
+/* Deprecated, use PAPI_allocate_eventset */
 int PAPI_create_eventset(int *EventSet)
 {
   return (PAPI_allocate_eventset(EventSet, 0));

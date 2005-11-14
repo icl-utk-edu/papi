@@ -379,8 +379,8 @@ int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle, int sidx)
 
    *EventSet = ESI->EventSetIndex;
    ESI->SubstrateIndex = sidx;
-   INTDBG("(%p,%p): new EventSet in slot %d\n",
-          (void *) EventSet, handle, *EventSet);
+   INTDBG("(%p,%p): new EventSet in slot %d; substrate: %d\n",
+          (void *) EventSet, handle, *EventSet, sidx);
 
    return (retval);
 }
@@ -482,13 +482,17 @@ int _papi_hwi_remove_EventSet(EventSetInfo_t * ESI)
 int _papi_hwi_add_native_precheck(EventSetInfo_t * ESI, int nevt)
 {
    int i;
+   int idx = PAPI_SUBSTRATE_INDEX(nevt);
+
+   if ( idx < 0 || idx > papi_num_substrates)
+      return -1;
 
    /* to find the native event from the native events list */
    for (i = 0; i < ESI->NativeCount; i++) {
       if (nevt == ESI->NativeInfoArray[i].ni_event) {
          ESI->NativeInfoArray[i].ni_owners++;
          INTDBG("found native event already mapped: %s\n",
-                _papi_hwd_ntv_code_to_name(nevt));
+                _papi_hwd_ntv_code_to_name(nevt, idx));
          return i;
       }
    }
@@ -548,6 +552,10 @@ static void remap_event_position(EventSetInfo_t * ESI, int thisindex)
 static int add_native_fail_clean(EventSetInfo_t * ESI, int nevt)
 {
    int i;
+   int idx = PAPI_SUBSTRATE_INDEX(nevt);
+
+   if ( idx < 0 || idx > papi_num_substrates )
+      return -1;
 
    /* to find the native event from the native events list */
    for (i = 0; i < _papi_hwi_substrate_info[ESI->SubstrateIndex].num_cntrs; i++) {
@@ -561,7 +569,7 @@ static int add_native_fail_clean(EventSetInfo_t * ESI, int nevt)
             ESI->NativeCount--;
          }
          INTDBG("add_events fail, and remove added native events of the event: %s\n",
-                _papi_hwd_ntv_code_to_name(nevt));
+                _papi_hwd_ntv_code_to_name(nevt, idx));
          return i;
       }
    }
@@ -1301,7 +1309,7 @@ void print_state(EventSetInfo_t * ESI)
    APIDBG( "\nnative_event_name       ");
    for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++)
       APIDBG( "%15s",
-              _papi_hwd_ntv_code_to_name(ESI->NativeInfoArray[i].ni_event));
+              _papi_hwd_ntv_code_to_name(ESI->NativeInfoArray[i].ni_event, ESI->SubstrateIndex));
    APIDBG( "\n");
 
    APIDBG( "native_event_position     ");
