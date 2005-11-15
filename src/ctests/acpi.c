@@ -25,18 +25,20 @@ int main(int argc, char **argv)
    int retval;
    int j = 0, i;
    long_long g1[2];
+   int sidx;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
    if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
-
    PAPI_event_name_to_code("ACPI_STAT", &evtcode);
    if (PAPI_query_event(evtcode) == PAPI_OK)
       j++;
+
+   sidx = PAPI_SUBSTRATE_INDEX(evtcode);
+   if ((retval = PAPI_allocate_eventset(&EventSet, sidx)) != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_allocate_eventset", retval);
 
    if (j == 1 && (retval = PAPI_add_event(EventSet, evtcode)) != PAPI_OK) {
       if (retval != PAPI_ECNFLCT)
@@ -65,7 +67,7 @@ int main(int argc, char **argv)
          test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
    }
    
-   printf("load: %lld   temprature: %lld\n", g1[0], g1[1]);
+   printf("load: %lld   temperature: %lld\n", g1[0], g1[1]);
    test_pass(__FILE__, NULL, 0);
    exit(1);
 #else
