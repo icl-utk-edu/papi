@@ -5,7 +5,6 @@
 #include "linux-acpi.h"
 #include "papi_protos.h"
 #include "papi_vector.h"
-#include <inttypes.h>
 
 void init_mdi();
 int init_presets();

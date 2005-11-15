@@ -14,37 +14,16 @@
 #ifndef _PAPI_GM_H
 #define _PAPI_GM_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/times.h>
-#include <unistd.h>
-#include <string.h>
-#include <errno.h>
-#include <assert.h>
-#include <dirent.h>
+#include "papi_sys_headers.h"
 
 #define _GNU_SOURCE
 #define __USE_GNU
 #define __USE_UNIX98
 #define __USE_XOPEN_EXTENDED
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <signal.h>
-
 #ifndef __BSD__ /* #include <malloc.h> */
 #include <malloc.h>
 #endif
-
-#include <assert.h>
-#include <string.h>
-#include <math.h>
-#include <limits.h>
-#include <sys/types.h>
 
 #ifdef XML
 #include <expat.h>

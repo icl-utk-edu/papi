@@ -20,9 +20,6 @@
 
 #define IN_MEM_FILE
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_memory.h"

@@ -52,8 +52,8 @@ extern "C" {
 
 
 /* Include files */
-#include <sys/types.h>
-#include <limits.h>
+#include "papi_sys_headers.h"
+
 #include "papiStdEventDefs.h"
 
 /*

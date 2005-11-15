@@ -11,9 +11,6 @@
 */
 
 #include "papi.h"
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <stdio.h>
 
 PAPI_mh_info_t sys_mem_info[3] = {
 	{3,

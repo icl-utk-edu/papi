@@ -2,7 +2,6 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include "papi_memory.h"
-#include <inttypes.h>
 
 void init_mdi();
 void init_presets();
@@ -551,7 +550,6 @@ papi_svector_t _any_null_table[] = {
  {NULL, VEC_PAPI_END}
 };
 
-#include <inttypes.h>
 
 volatile unsigned int lock[PAPI_MAX_LOCK];
 

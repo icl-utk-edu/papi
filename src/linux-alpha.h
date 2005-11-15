@@ -1,26 +1,9 @@
 #ifndef _LINUX_ALPHA_H
 #define _LINUX_ALPHA_H
 
-#include <stdio.h>
-#include <fcntl.h>
-#include <stropts.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <time.h>
-#include <assert.h>
-#include <sys/times.h>
-#include <sys/sysinfo.h>
-#include <sys/procfs.h>
-#include <sys/time.h>
-#include <sys/sysinfo.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <sys/ucontext.h>
+#include "papi_sys_headers.h"
 
+#include <time.h>
 #include <ipr_api_ext_defs.h>
 #include <ipr_base_masks.h>
 #include <ipr_events.h>
@@ -30,7 +13,6 @@ typedef unsigned long ulong_t;
 
 
 /* Below can be removed when we stop using rusuage for PAPI_get_virt_usec -KSL*/
-#include <sys/resource.h>
 
 #include "papi.h"
 

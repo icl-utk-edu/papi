@@ -24,7 +24,6 @@ int mdi_init();
 
 /* volatile uint32_t lock; */
 
-#include <inttypes.h>
 
 volatile unsigned int lock[PAPI_MAX_LOCK];
 

@@ -14,20 +14,11 @@
 #define __USE_XOPEN_EXTENDED
 #endif
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <signal.h>
+#include "papi_sys_headers.h"
 
 #ifndef __BSD__ /* #include <malloc.h> */
 #include <malloc.h>
 #endif
-
-#include <assert.h>
-#include <string.h>
-#include <math.h>
-#include <limits.h>
-#include <sys/types.h>
 
 #ifdef XML
 #include <expat.h>
@@ -35,19 +26,13 @@
 
 #define inline_static inline static
 #define HAVE_FFSLL
-#include <unistd.h>
-#include <fcntl.h>
 #include <time.h>
-#include <errno.h>
-#include <ctype.h>
 
 #ifdef __BSD__
 #include <ucontext.h>
 #else
 #include <sys/ucontext.h>
 #endif
-#include <sys/times.h>
-#include <sys/time.h>
 
 #ifndef __BSD__ /* #include <linux/unistd.h> */
   #ifndef __CATAMOUNT__
@@ -61,7 +46,6 @@
  */
 #define CONFIG_SMP
 #endif
-#include <inttypes.h>
 
 /* Lock macros. Non Itanium*/
 #ifdef ITANIUM2

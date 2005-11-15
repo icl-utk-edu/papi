@@ -1,27 +1,15 @@
 #ifndef _PAPI_UNICOSMP_H
 #define _PAPI_UNICOSMP_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <unistd.h>
+#include "papi_sys_headers.h"
+
 #include <sys/siginfo.h>
-#include <sys/ucontext.h>
 #include <sys/hwperftypes.h>
 #include <sys/hwperfmacros.h>
 #include <mutex.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/sysmp.h>
-#include <sys/sysinfo.h>
-#include <sys/procfs.h>
-#include <sys/times.h>
 #include <sys/errno.h>
-#include <assert.h>
 #include <invent.h>
 #include <intrinsics.h>
-#include <errno.h>
 
 
 #define inline_static static

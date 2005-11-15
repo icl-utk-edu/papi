@@ -6,24 +6,9 @@
 #define __USE_GNU
 #define __USE_UNIX98
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <signal.h>
-#include <malloc.h>
-#include <unistd.h>
-#include <assert.h>
-#include <string.h>
-#include <math.h>
-#include <ctype.h>
-#include <string.h>
-#include <limits.h>
+#include "papi_sys_headers.h"
+
 #include <time.h>
-#include <errno.h>
-#include <sys/times.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/ucontext.h>
 #include <linux/unistd.h>
 
 #include "p4_events.h"

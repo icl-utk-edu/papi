@@ -19,9 +19,6 @@
 *	   min@cs.utk.edu
 */
 
-#include <stdio.h>
-#include <assert.h>
-#include <string.h>
 #if defined ( _CRAYT3E )
 #include  <stdlib.h>
 #include  <fortran.h>

@@ -12,9 +12,8 @@
 */
 
 #include SUBSTRATE
-#include "config.h"
+#include "papi_sys_headers.h"
 #include "papi_internal.h"
-#include <string.h>
 #include "libperfctr.h"
 
 

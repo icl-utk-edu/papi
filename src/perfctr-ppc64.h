@@ -95,8 +95,6 @@
 
 extern unsigned int lock[];
 
-#include <unistd.h>
-
 // similar to __arch_compare_and_exchange_val_32_acq() from libc's atomic.h
 static inline unsigned long _papi_hwd_trylock(unsigned int *lock)
 {

@@ -15,16 +15,14 @@
    Now it relies only on a small collection of papi header files.
 */
 
-#include <stdlib.h>
-#include <stdio.h>
+#undef NDEBUG
+#include "papi_sys_headers.h"
 
   /* Windows doesn't have a unistd.h */
 #ifndef _WIN32
 #include <unistd.h>
 #endif
 
-#include <errno.h>
-#include <sys/types.h>
 #include <memory.h>
 
 #ifndef __BSD__ /* for Cray Red Storm */ 
@@ -36,9 +34,6 @@
 #define PAPI_MAX_COUNTER_TERMS 8 /* to satisfy papi_preset.h */
 #include "papi_preset.h"
 #include "papi_data.h"
-
-#undef NDEBUG
-#include <assert.h>
 
 #define NO_LIBPAPI
 

@@ -1,28 +1,13 @@
 #ifndef _TRU64_ALPHA_H
 #define _TRU64_ALPHA_H
 
-#include <stdio.h>
-#include <fcntl.h>
-#include <stdarg.h>
+#include "papi_sys_headers.h"
+
 #include <time.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/pfcntr.h>
-#include <sys/ioctl.h>
-#include <sys/timers.h>
-#include <stropts.h>
-#include <unistd.h>
-#include <sys/processor.h>
-#include <sys/times.h>
-#include <sys/sysinfo.h>
-#include <sys/procfs.h>
 #include <machine/hal_sysinfo.h>
 #include <machine/cpuconf.h>
-#include <assert.h>
-#include <sys/ucontext.h>
 /* Below can be removed when we stop using rusuage for PAPI_get_virt_usec -KSL*/
-#include <sys/resource.h>
 
 #define inline_static static 
 #define MAX_COUNTERS 2

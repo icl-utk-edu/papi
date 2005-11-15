@@ -7,6 +7,7 @@
 *          mucci@cs.utk.edu
 */
 
+#include <procfs.h> /* this has to be included first to take precedence over <sys/procfs.h> included in papi_sys_headers.h */
 #include "papi.h"
 #include "papi_internal.h"
 
