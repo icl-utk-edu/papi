@@ -18,17 +18,16 @@ enum native_name {
 };
 
 static native_event_entry_t native_table[] = {
-    {{ 1, "/proc/stat"},
+    {{ 0, "/proc/stat"},
     "ACPI_STAT",
     "kernel statistics"
     },
-    {{ 2, "/proc/acpi"},
+    {{ 1, "/proc/acpi"},
     "ACPI_TEMP",
     "ACPI temperature"
     },
     {{0, NULL}, NULL, NULL}
 };
-
 
 static int _papi_return_ok();
 
@@ -45,7 +44,7 @@ papi_svector_t _acpi_table[] = {
  {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
  {(void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
  {(void (*)())_papi_hwd_ntv_code_to_bits, VEC_PAPI_HWD_NTV_CODE_TO_BITS},
- {(void (*)())_papi_hwd_allocate_registers, VEC_PAPI_HWD_ALLOCATE_REGISTERS },
+ {(void (*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
  {NULL, VEC_PAPI_END}
 };
 
@@ -264,7 +263,7 @@ fail:
 static int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **events, int flags)
 {
     static int failed = 0;
-    SUBDBG("In the ACPI read routine...\n");
+
     if (failed ||
         (ctrl->counts[0] = (long_long)get_load_value()) < 0 ||
         (ctrl->counts[1] = (long_long)get_temperature_value()) < 0)
@@ -313,31 +312,16 @@ static int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * b
    return (PAPI_OK);
 }
 
-/* 
- * Counter Allocation Functions, only need to implement if
- *    the substrate needs smart counter allocation.
- */
-/* Register allocation */
-int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
-   int i, natNum;
-   hwd_reg_alloc_t event_list[MAX_COUNTERS];
+static int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
+              NativeInfo_t * native, int count, hwd_context_t * ctx)
+{
+   int i, index;
 
-   /* Initialize the local structure needed
-      for counter allocation and optimization. */
-   natNum = ESI->NativeCount;
-   for(i = 0; i < natNum; i++) {
-      /* retrieve the mapping information about this native event */
-      _papi_hwd_ntv_code_to_bits(ESI->NativeInfoArray[i].ni_event, &(event_list[i].ra_bits));
-
+   for (i = 0; i < count; i++) {
+      index = native[i].ni_event & PAPI_SUBSTRATE_AND_MASK;
+      native[i].ni_position = native_table[index].resources.selector;
    }
-   if(_papi_hwi_bipartite_alloc(event_list, natNum,sidx)) { /* successfully mapped */
-      for(i = 0; i < natNum; i++) {
-         /* Copy all info about this native event to the NativeInfo struct */
-         memcpy(&(ESI->NativeInfoArray[i].ni_bits) , &(event_list[i].ra_bits), sizeof(hwd_register_t));
-         /* Array order on perfctr is event ADD order, not counter #... */
-         ESI->NativeInfoArray[i].ni_position = event_list[i].ra_bits.selector-1;
-      }
-      return 1;
-   } else
-      return 0;
+   return (PAPI_OK);
 }
+
+
