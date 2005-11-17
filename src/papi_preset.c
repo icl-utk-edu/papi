@@ -21,7 +21,7 @@ extern hwi_presets_t _papi_hwi_presets;
    at init time. This method supports adding new events; overriding existing events, or
    deleting deprecated events.
 */
-int _papi_hwi_setup_all_presets(hwi_search_t * findem, hwi_dev_notes_t *notes, int substrate)
+int _papi_hwi_setup_all_presets(hwi_search_t * findem, hwi_dev_notes_t *notes)
 {
    int i, pnum, preset_index, did_something = 0;
 
@@ -36,16 +36,8 @@ int _papi_hwi_setup_all_presets(hwi_search_t * findem, hwi_dev_notes_t *notes, i
          /* find the index for the event to be initialized */
          preset_index = (findem[pnum].event_code & PAPI_PRESET_AND_MASK);
 
-         for(i=0;i<PAPI_MAX_COUNTER_TERMS;i++){
-           if ( findem[pnum].data.native[i] != PAPI_NULL ){
-              int blah = PAPI_SUBSTRATE_MASK(substrate);
-              findem[pnum].data.native[i]|=blah;
-           }
-              //findem[pnum].data.native[i]|=PAPI_SUBSTRATE_MASK(substrate);
-         }
-
          /* count and set the number of native terms in this event */
-         for (i = 0; (i < PAPI_MAX_COUNTER_TERMS) && (findem[pnum].data.native[i] != PAPI_NULL); i++);
+         for (i = 0; (i < MAX_COUNTER_TERMS) && (findem[pnum].data.native[i] != PAPI_NULL); i++);
          _papi_hwi_presets.count[preset_index] = i;
 
          /* if the native event array is empty, free the data pointer.
@@ -85,12 +77,12 @@ int _papi_hwi_cleanup_all_presets(void)
 
    for (preset_index = 0; preset_index < PAPI_MAX_PRESET_EVENTS; preset_index++) {
       /* free the names and descriptions if they were malloc'd by PAPI */
-      papi_valid_free(_papi_hwi_presets.info[preset_index].symbol);
-      _papi_hwi_presets.info[preset_index].symbol = NULL;
-      papi_valid_free(_papi_hwi_presets.info[preset_index].long_descr);
-      _papi_hwi_presets.info[preset_index].long_descr = NULL;
-      papi_valid_free(_papi_hwi_presets.info[preset_index].short_descr);
-      _papi_hwi_presets.info[preset_index].short_descr = NULL;
+      if (papi_valid_free(_papi_hwi_presets.info[preset_index].symbol))
+         _papi_hwi_presets.info[preset_index].symbol = NULL;
+      if (papi_valid_free(_papi_hwi_presets.info[preset_index].long_descr))
+         _papi_hwi_presets.info[preset_index].long_descr = NULL;
+      if (papi_valid_free(_papi_hwi_presets.info[preset_index].short_descr))
+         _papi_hwi_presets.info[preset_index].short_descr = NULL;
 
       /* free the data and or note string if they exist */
       if (_papi_hwi_presets.data[preset_index] != NULL) {
@@ -98,7 +90,8 @@ int _papi_hwi_cleanup_all_presets(void)
          _papi_hwi_presets.data[preset_index] = NULL;
       }
       if (_papi_hwi_presets.dev_note[preset_index] != NULL) {
-         _papi_hwi_presets.dev_note[preset_index] = NULL;
+        papi_free(_papi_hwi_presets.dev_note[preset_index]);
+        _papi_hwi_presets.dev_note[preset_index] = NULL;
       }
    }
    return (PAPI_OK);
