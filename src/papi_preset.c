@@ -85,12 +85,12 @@ int _papi_hwi_cleanup_all_presets(void)
 
    for (preset_index = 0; preset_index < PAPI_MAX_PRESET_EVENTS; preset_index++) {
       /* free the names and descriptions if they were malloc'd by PAPI */
-      papi_valid_free(_papi_hwi_presets.info[preset_index].symbol);
-      _papi_hwi_presets.info[preset_index].symbol = NULL;
-      papi_valid_free(_papi_hwi_presets.info[preset_index].long_descr);
-      _papi_hwi_presets.info[preset_index].long_descr = NULL;
-      papi_valid_free(_papi_hwi_presets.info[preset_index].short_descr);
-      _papi_hwi_presets.info[preset_index].short_descr = NULL;
+      if (papi_valid_free(_papi_hwi_presets.info[preset_index].symbol))
+         _papi_hwi_presets.info[preset_index].symbol = NULL;
+      if (papi_valid_free(_papi_hwi_presets.info[preset_index].long_descr))
+         _papi_hwi_presets.info[preset_index].long_descr = NULL;
+      if (papi_valid_free(_papi_hwi_presets.info[preset_index].short_descr))
+         _papi_hwi_presets.info[preset_index].short_descr = NULL;
 
       /* free the data and or note string if they exist */
       if (_papi_hwi_presets.data[preset_index] != NULL) {
@@ -98,7 +98,8 @@ int _papi_hwi_cleanup_all_presets(void)
          _papi_hwi_presets.data[preset_index] = NULL;
       }
       if (_papi_hwi_presets.dev_note[preset_index] != NULL) {
-         _papi_hwi_presets.dev_note[preset_index] = NULL;
+        papi_free(_papi_hwi_presets.dev_note[preset_index]);
+        _papi_hwi_presets.dev_note[preset_index] = NULL;
       }
    }
    return (PAPI_OK);

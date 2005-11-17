@@ -175,8 +175,12 @@ char * _papi_strdup(char *file, int line, const char *s){
 }
 
 /* Only frees the memory if PAPI malloced it */
-void _papi_valid_free(char *file, int line, void *ptr){
+/* returns 1 if pointer was valid; 0 if not */
+int _papi_valid_free(char *file, int line, void *ptr){
   pmem_t *tmp;
+  int valid = 0;
+
+  if ( !ptr ) return;
 
   if ( !ptr ) return;
 
@@ -184,11 +188,12 @@ void _papi_valid_free(char *file, int line, void *ptr){
   for(tmp = mem_head; tmp; tmp = tmp->next ){
     if ( ptr == tmp->ptr ){
       _papi_free(file, line, ptr);
+      valid = 1;
       break;
     }
   }
   _papi_hwi_unlock(MEMORY_LOCK);
-  return;
+  return(valid);
 }
 
 /* Frees up the ptr */
