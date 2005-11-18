@@ -1,30 +1,81 @@
 ===============================================================================
-PAPI 3.1.0 RELEASE NOTES                                            30 Aug 2005
+PAPI 3.2.0 RELEASE NOTES                                            21 Nov 2005
 ===============================================================================
 
-This file documents the changes since the PAPI 3.0.8 release.
+This file documents the changes since the PAPI 3.1.0 release on August 30, 2005.
 For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 
 For specific and detailed information on changes made in this release, grep
-the ChangeLogP310.txt file for keywords of interest or go directly to the PAPI
+the ChangeLogP320.txt file for keywords of interest or go directly to the PAPI
 cvs tree.
 
 
 GENERAL NOTES
 ===============================================================================
-This is an intermediate release for PAPI 3.
-It introduces some significant restructuring that may not be extensively tested
-on all platforms. If you notice strange behavior on your platform, consider
-falling back to the PAPI 3.0.8 release.
-This release also includes support for new platforms and contains a number of 
-bug fixes, as documented below.
+This release includes support for new platforms and contains a number of 
+bug fixes, as documented below. If you are currently using PAPI 3.1.0 or earlier,
+it is recommended that you upgrade to this version.
+
+Platforms NOT supported by this version:
+- IBM Blue Gene: use PAPI 2.3.4 BGL; upgrade is underway
+- DEC/Compaq/HP Alpha: use PAPI 3.0.8.1
+- Cray T3E: use PAPI 3.0.8.1
 
 As always, if you identify strange behavior or demonstrable bugs, please
 contact the PAPI team or one of the PAPI development lists.
 
 And visit the PAPI website for the latest updates:
 http://icl.cs.utk.edu/papi/
+
+
+CHANGES IN PAPI 3.2.0 SINCE PAPI 3.1.0
+===============================================================================
+New Platforms:
+-------------
+- Introduced support for AIX/POWER5 (i.e. ASCI PURPLE)
+- Enhanced support for Cray XT3 Catamount/Opteron
+
+Major Issues:
+-------------
+- Further hardening and testing of the vectorized substrate interface. 
+  This is the harbinger of a  componentized PAPI that will allow
+  support for multiple simultaneous substrates.
+  	
+Bug Fixes:
+----------
+- Modified Rules.pfm to fix build problem on Itanium/Altix
+- Made installation of SHLIB conditional, since it isn't always built
+- Fixed compilation problems in papi_memory.c on IRIX, Cray X1
+- src/irix-mips.c :
+		Fix mis-assignment in vector table that caused real time counts to fail;
+		modified Dl_info structure reference per Sameer's suggestion.
+- src/Makefile.catamount-perfctr-opteron :
+		Force NOTLS = -DNO_TLS for Catamount, since threads aren't 
+		supported.
+- src/ctests/byte_profile.c, src/ctests/test_utils.c
+		Code rearrangement to satisfy Cray X1. Definitions must occur 
+		before executable code in functions.
+- src/papi_memory.c , src/papi_memory.h, src/papi_preset.c :
+		Modified papi_valid_free to return true or false depending on if the pointer was freed;
+		Use this value when cleaning up to decide if event info pointers should be set to null.
+		This eliminates problem with corrupted strings in multiplex1 reported by Steve Kaufmann @ Cray
+
+Enhancements:
+-------------
+- libpfm 2.1 support added
+- perfctr 2.6.17 support added for Dual Core Pentium D
+
+Experimental:
+-------------
+- Hardened the vectorized interface between hardware independent and substrate layers
+- Reworked and hardened papi_memory interface for better malloc and free control
+
+Known Bugs:
+-----------
+- Solaris-ultra generates a segfault in _papi_hwd_init_control_state only when using
+	the gcc compiler.
+
 
 CHANGES IN PAPI 3.1.0 SINCE PAPI 3.0.8
 ===============================================================================
