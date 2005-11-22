@@ -1031,7 +1031,7 @@ static int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * b
 }
 
 
-static void * dladdr(void *address, struct Dl_info *dl)
+void * dladdr(void *address, struct Dl_info *dl)
 {
    return( _rld_new_interface(_RLD_DLADDR,address,dl));
 }

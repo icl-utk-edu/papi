@@ -152,9 +152,14 @@ install: install-tree install-man install-lib install-utils
 
 install-lib: install-tree native_install
 	cp $(FHEADERS) papi.h papiStdEventDefs.h $(PREFIX)/include
-	cd $(PREFIX)/include; chmod go+r $(FHEADERS) papi.h papiStdEventDefs.h 
-	cp $(LIBRARY) $(SHLIB) $(PREFIX)/lib
-	chmod go+r $(PREFIX)/lib/$(LIBRARY) $(PREFIX)/lib/$(SHLIB)
+	cd $(PREFIX)/include; chmod go+r $(FHEADERS) papi.h papiStdEventDefs.h
+	cp $(LIBRARY) $(PREFIX)/lib
+	chmod go+r $(PREFIX)/lib/$(LIBRARY)
+# copy SHLIB conditionally, since it isn't always made
+	if [[ -r $(SHLIB) ]] ; then \
+		cp $(SHLIB) $(PREFIX)/lib ; \
+		chmod go+r  $(PREFIX)/lib/$(SHLIB) ; \
+	fi
 
 install-man: install-tree
 	cd ../man && $(MAKE) PREFIX=$(PREFIX) install
