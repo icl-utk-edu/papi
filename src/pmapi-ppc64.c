@@ -7,7 +7,8 @@
 
 extern hwd_groups_t group_map[];
 
-static hwi_search_t _papi_hwd_PWR4_preset_map[] = {
+static hwi_search_t _papi_hwd_ppc64_preset_map[] = {
+#ifdef _POWER4
    {PAPI_L1_DCM, {DERIVED_ADD, {PNE_PM_LD_MISS_L1, PNE_PM_ST_MISS_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},      /*Level 1 data cache misses */
    {PAPI_L1_DCA, {DERIVED_ADD, {PNE_PM_LD_REF_L1, PNE_PM_ST_REF_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},        /*Level 1 data cache access */
    {PAPI_FXU_IDL, {0, {PNE_PM_FXU_IDLE, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},      /*Cycles integer units are idle */
@@ -61,6 +62,53 @@ static hwi_search_t _papi_hwd_PWR4_preset_map[] = {
    
 /* Stop editing here */
    {0, {0, {PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}}        /* end of list */
+#elif defined(_POWER5)
+   {PAPI_L1_DCM, {DERIVED_ADD, {PNE_PM_LD_MISS_L1, PNE_PM_ST_MISS_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Level 1 data cache misses */
+   {PAPI_L1_DCA, {DERIVED_ADD, {PNE_PM_LD_REF_L1, PNE_PM_ST_REF_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},        /*Level 1 data cache access */
+   /* can't count level 1 data cache hits due to hardware limitations. */
+   {PAPI_L1_LDM, {0, {PNE_PM_LD_MISS_L1,PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},     /*Level 1 load misses */
+   {PAPI_L1_STM, {0, {PNE_PM_ST_MISS_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},     /*Level 1 store misses */
+   {PAPI_L1_DCW, {0, {PNE_PM_ST_REF_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Level 1 D cache write */
+   {PAPI_L1_DCR, {0, {PNE_PM_LD_REF_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Level 1 D cache read */
+   /* can't count level 2 data cache reads due to hardware limitations. */
+   /* can't count level 2 data cache hits due to hardware limitations. */
+   {PAPI_L2_DCM, {0, {PNE_PM_DATA_FROM_L2MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Level 2 data cache misses */
+   {PAPI_L2_LDM, {0, {PNE_PM_DATA_FROM_L2MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Level 2 cache read misses */
+   {PAPI_L3_DCR, {0, {PNE_PM_DATA_FROM_L2MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Level 3 data cache reads */
+   /* can't count level 3 data cache hits due to hardware limitations. */
+   {PAPI_L3_DCM, {DERIVED_ADD, {PNE_PM_DATA_FROM_LMEM, PNE_PM_DATA_FROM_RMEM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}}, /* Level 3 data cache misses (reads & writes) */
+   {PAPI_L3_LDM, {DERIVED_ADD, {PNE_PM_DATA_FROM_LMEM, PNE_PM_DATA_FROM_RMEM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}}, /* Level 3 data cache read misses */
+   /* can't count level 1 instruction cache accesses due to hardware limitations. */
+   {PAPI_L1_ICH, {0, {PNE_PM_INST_FROM_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},  /* Level 1 inst cache hits */
+   /* can't count level 1 instruction cache misses due to hardware limitations. */
+   /* can't count level 2 instruction cache accesses due to hardware limitations. */
+   /* can't count level 2 instruction cache hits due to hardware limitations. */
+   {PAPI_L2_ICM, {0, {PNE_PM_INST_FROM_L2MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},  /* Level 2 inst cache misses */
+   {PAPI_L3_ICA, {0, {PNE_PM_INST_FROM_L2MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},  /* Level 3 inst cache accesses */
+   /* can't count level 3 instruction cache hits due to hardware limitations. */
+   {PAPI_L3_ICM, {DERIVED_ADD, {PNE_PM_DATA_FROM_LMEM, PNE_PM_DATA_FROM_RMEM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}}, /* Level 3 instruction cache misses (reads & writes) */
+   {PAPI_FMA_INS, {0, {PNE_PM_FPU_FMA, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},       /*FMA instructions completed */
+   {PAPI_TOT_IIS, {0, {PNE_PM_INST_DISP, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},     /*Total instructions issued */
+   {PAPI_TOT_INS, {0, {PNE_PM_INST_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},     /*Total instructions executed */
+   {PAPI_INT_INS, {0, {PNE_PM_FXU_FIN, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},       /*Integer instructions executed */
+   {PAPI_FP_OPS, {DERIVED_ADD, {PNE_PM_FPU_1FLOP, PNE_PM_FPU_FMA, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL},{0}}}, /*Floating point instructions executed */
+   {PAPI_FP_INS, {0, {PNE_PM_FPU_FIN, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Floating point instructions executed */
+   {PAPI_TOT_CYC, {0, {PNE_PM_RUN_CYC, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},   /*Processor cycles gated by the run latch */
+   {PAPI_FDV_INS, {0, {PNE_PM_FPU_FDIV, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*FD ins */
+   {PAPI_FSQ_INS, {0, {PNE_PM_FPU_FSQRT, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},     /*FSq ins */
+   {PAPI_TLB_DM, {0, {PNE_PM_DTLB_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Data translation lookaside buffer misses */
+   {PAPI_TLB_IM, {0, {PNE_PM_ITLB_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Instr translation lookaside buffer misses */
+   {PAPI_TLB_TL, {DERIVED_ADD, {PNE_PM_DTLB_MISS, PNE_PM_ITLB_MISS,PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},        /*Total translation lookaside buffer misses */
+   {PAPI_HW_INT, {0, {PNE_PM_EXT_INT, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},        /*Hardware interrupts */
+   {PAPI_STL_ICY, {0, {PNE_PM_0INST_FETCH, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},   /*Cycles with No Instruction Issue */
+   {PAPI_LD_INS, {0, {PNE_PM_LD_REF_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Load instructions*/
+   {PAPI_SR_INS, {0, {PNE_PM_ST_REF_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Store instructions*/
+   {PAPI_LST_INS, {DERIVED_ADD, {PNE_PM_ST_REF_L1, PNE_PM_LD_REF_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Load and Store instructions*/
+   {PAPI_BR_INS, {0, {PNE_PM_BR_ISSUED, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},   /* Branch instructions*/
+   {PAPI_BR_MSP, {DERIVED_ADD, {PNE_PM_BR_MPRED_CR, PNE_PM_BR_MPRED_TA, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},   /* Branch mispredictions */
+   {PAPI_FXU_IDL, {0, {PNE_PM_FXU_IDLE, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Cycles integer units are idle */
+   {0, {0, {PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}}        /* end of list */
+#endif
 };
 hwi_search_t *preset_search_map;
 
@@ -78,9 +126,9 @@ int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                unsigned int *values, int name_len, int count)
 {
    int i = 0;
-   copy_value(bits->selector, "Power4 event code", &names[i*name_len], &values[i], name_len);
+   copy_value(bits->selector, "PowerPC64 event code", &names[i*name_len], &values[i], name_len);
    if (++i == count) return(i);
-   copy_value((unsigned int)bits->counter_cmd, "Power4 counter_cmd code", &names[i*name_len], &values[i], name_len);
+   copy_value((unsigned int)bits->counter_cmd, "PowerPC64 counter_cmd code", &names[i*name_len], &values[i], name_len);
    return(++i);
 }
 
@@ -139,21 +187,17 @@ void _papi_hwd_bpt_map_update(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 }
 
 /* initialize preset_search_map table by type of CPU */
-#ifdef PM_INITIALIZE
-int _papi_hwd_init_preset_search_map(PMINFO_T * info)
-#else
-int _papi_hwd_init_preset_search_map(pm_info_t * info)
-#endif
+int _papi_hwd_init_preset_search_map(hwd_pminfo_t * info)
 {
-   preset_search_map = _papi_hwd_PWR4_preset_map;
+   preset_search_map = _papi_hwd_ppc64_preset_map;
    return 1;
 }
 
 /* this function recusively does Modified Bipartite Graph counter allocation 
      success  return 1
-	 fail     return 0
+        fail     return 0
 */
-static int do_counter_allocation(PWR4_reg_alloc_t * event_list, int size)
+static int do_counter_allocation(ppc64_reg_alloc_t * event_list, int size)
 {
    int i, j, group = -1;
    unsigned int map[GROUP_INTS];
@@ -190,14 +234,14 @@ static int do_counter_allocation(PWR4_reg_alloc_t * event_list, int size)
 
 /* this function will be called when there are counters available 
      success  return 1
-	 fail     return 0
+        fail     return 0
 */
 int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
 {
    hwd_control_state_t *this_state = &ESI->machdep;
    unsigned char selector;
    int i, j, natNum, index;
-   PWR4_reg_alloc_t event_list[MAX_COUNTERS];
+   ppc64_reg_alloc_t event_list[MAX_COUNTERS];
    int position, group;
 
 
@@ -264,14 +308,14 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
     for all the native events in the native info structure array. */
 int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
                                    NativeInfo_t * native, int count,
-				   hwd_context_t *context)
+                                  hwd_context_t *context)
 {
 
    this_state->counter_cmd.events[0] = this_state->group_id;
    return PAPI_OK;
 }
 
-papi_svector_t _power4_mips_table[] = {
+papi_svector_t _ppc64_mips_table[] = {
  { (void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE },
  { (void (*)())_papi_hwd_update_control_state, VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
  { (void (*)())_papi_hwd_bpt_map_set, VEC_PAPI_HWD_BPT_MAP_SET },
@@ -285,10 +329,10 @@ papi_svector_t _power4_mips_table[] = {
  { NULL, VEC_PAPI_END}
 };
                                                                                 
-int power4_setup_vector_table(papi_vectors_t *vtable){
+int ppc64_setup_vector_table(papi_vectors_t *vtable){
   int retval=PAPI_OK;
 #ifndef PAPI_NO_VECTOR
-  retval = _papi_hwi_setup_vector_table( vtable, _power4_mips_table);
+  retval = _papi_hwi_setup_vector_table( vtable, _ppc64_mips_table);
 #endif
   return(retval);
 }

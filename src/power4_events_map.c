@@ -1,18 +1,6 @@
-/****************************/
-/* THIS IS OPEN SOURCE CODE */
-/****************************/
+#include SUBSTRATE
 
-/* 
-* File:    power4_events_map.c
-* Author:  Maynard Johnson
-*          maynardj@us.ibm.com
-* Mods:    <your name here>
-*          <your email address>
-*/
-
-#include "perfctr-ppc64.h"
-
-PWR4_native_map_t native_name_map[MAX_NATNAME_MAP_INDEX] = {
+PPC64_native_map_t native_name_map[MAX_NATNAME_MAP_INDEX] = {
    {"PM_BIQ_IDU_FULL_CYC", -1}
    ,
    {"PM_BRQ_FULL_CYC", -1}
