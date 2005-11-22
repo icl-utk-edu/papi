@@ -20,7 +20,7 @@
       integer tests_quiet, get_quiet
       external get_quiet
 
-#if defined(POWER3) || defined (_POWER4)
+#if defined(POWER3) || defined (_POWER4) || defined(_POWER5)
       real*4 csec
 #endif
 
@@ -67,6 +67,15 @@
       n = 3
 #endif
 
+#if defined(_POWER5)
+      eventname(1) = 'PM_FPU_FDIV'
+      eventname(2) = 'PM_FPU_FMA'
+      eventname(3) = 'PM_FPU_FMOV_FEST'
+      eventname(4) = 'PM_FPU_FEST'
+      eventname(5) = 'PM_INST_CMPL'
+      eventname(6) = 'PM_RUN_CYC'
+      n = 6
+#endif
 #if defined(_POWER4)
       eventname(1) = 'PM_FPU0_FDIV'
       eventname(2) = 'PM_FPU1_FDIV'
@@ -199,6 +208,18 @@ C     call sleep(1)
       print *, "DCache accesses                   : ",values(2)
       print *, "CPU Cycles                        : ",values(3)
 
+#elif defined(_POWER5)
+      csec = values(5)/ (mhz*1000000.0)
+      print *, "CPU Elapsed Time in sec.   : ", csec
+      print *, "PM_FPU_FDIV operations     : ", values(1)
+      print *, "FPU FMA Instructions       : ", values(2)
+      print *, "Instructions Completed     : ", values(5)
+      print *, "CPU Cycles                 : ", values(6)
+      print *, "------------------------------------------"
+      print *, "CPU MFLOPS                 : ",
+     *((values(2))/500000.0)/csec
+      print *, "%% FMA Instructions         : ",
+     *100.0*(values(2))/values(5)
 #elif defined(_POWER4)
       csec = values(8)/ (mhz*1000000.0)
       print *, "CPU Elapsed Time in sec.   : ", csec
