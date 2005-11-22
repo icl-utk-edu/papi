@@ -60,6 +60,22 @@ typedef CONTEXT hwd_ucontext_t;
 typedef siginfo_t hwd_siginfo_t;
 typedef ucontext_t hwd_ucontext_t;
 
+
+/* Overflow macros */
+#ifdef __x86_64__
+  #ifdef __CATAMOUNT__
+    #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->sc_rip)
+  #else
+    #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->rip)
+  #endif
+#else
+  #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->eip)
+#endif
+
+/* Linux DOES support hardware overflow */
+#define HW_OVERFLOW 1
+
+
 #endif /* _WIN32 */
 
 typedef struct P3_register {
