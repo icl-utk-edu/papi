@@ -34,7 +34,7 @@
 #define PAPI_VERSION_INCREMENT(x)((x)          & 0xff)
 
 /* This is the official PAPI version */
-#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,1,0,0)
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,9,0,0)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
 
 /* This is the official PAPI internal version */

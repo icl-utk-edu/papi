@@ -182,8 +182,6 @@ int _papi_valid_free(char *file, int line, void *ptr){
 
   if ( !ptr ) return;
 
-  if ( !ptr ) return;
-
   _papi_hwi_lock(MEMORY_LOCK);
   for(tmp = mem_head; tmp; tmp = tmp->next ){
     if ( ptr == tmp->ptr ){
