@@ -178,17 +178,22 @@ static void ppc64_clear_counters(void)
 	mtspr(SPRN_MMCR1, 0);
 	mtspr(SPRN_MMCRA, 0);
 
-	mtspr(SPRN_PMC1, 0);
-	mtspr(SPRN_PMC2, 0);
-	mtspr(SPRN_PMC3, 0);
-	mtspr(SPRN_PMC4, 0);
-	mtspr(SPRN_PMC5, 0);
-	mtspr(SPRN_PMC6, 0);
-
-	if (cpu_has_feature(CPU_FTR_PMC8)) {
+	if (cur_cpu_spec->num_pmcs >= 1)
+		mtspr(SPRN_PMC1, 0);
+	if (cur_cpu_spec->num_pmcs >= 2)
+		mtspr(SPRN_PMC2, 0);
+	if (cur_cpu_spec->num_pmcs >= 3)
+		mtspr(SPRN_PMC3, 0);
+	if (cur_cpu_spec->num_pmcs >= 4)
+		mtspr(SPRN_PMC4, 0);
+	if (cur_cpu_spec->num_pmcs >= 5)
+		mtspr(SPRN_PMC5, 0);
+	if (cur_cpu_spec->num_pmcs >= 6)
+		mtspr(SPRN_PMC6, 0);
+	if (cur_cpu_spec->num_pmcs >= 7)
 		mtspr(SPRN_PMC7, 0);
+	if (cur_cpu_spec->num_pmcs >= 8)
 		mtspr(SPRN_PMC8, 0);
-	}
 }
 
 /*
@@ -319,10 +324,7 @@ unsigned int perfctr_cpu_identify_overflow(struct perfctr_cpu_state *state)
 {
 	unsigned int cstatus, nractrs, nrctrs, i;
 	unsigned int pmc_mask = 0;
-	int nr_pmcs = 6;
-
-	if (cpu_has_feature(CPU_FTR_PMC8))
-		nr_pmcs = 8;
+	int nr_pmcs = cur_cpu_spec->num_pmcs;
 
 	cstatus = state->user.cstatus;
 	nractrs = perfctr_cstatus_nractrs(cstatus);
@@ -393,10 +395,7 @@ static inline int check_ireset(struct perfctr_cpu_state *state) { return 0; }
 static int check_control(struct perfctr_cpu_state *state)
 {
 	unsigned int i, nractrs, nrctrs, pmc_mask, pmc;
-	unsigned int nr_pmcs = 6;
-
-	if (cpu_has_feature(CPU_FTR_PMC8))
-		nr_pmcs = 8;
+	unsigned int nr_pmcs = cur_cpu_spec->num_pmcs;
 
 	nractrs = state->control.header.nractrs;
 	nrctrs = nractrs + state->control.header.nrictrs;

@@ -168,7 +168,7 @@ static inline void write_perfseq_begin(__u32 *seq)
 
 static inline void write_perfseq_end(__u32 *seq)
 {
-	++*seq; 
+	++*seq;
 }
 
 #endif	/* __KERNEL__ */

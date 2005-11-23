@@ -888,6 +888,7 @@ static unsigned int __init pll_to_core_khz(enum pll_type pll_type)
 
 /* Extract core and timebase frequencies from Open Firmware. */
 
+#ifdef CONFIG_PPC_OF
 static unsigned int __init of_to_core_khz(void)
 {
 	struct device_node *cpu;
@@ -905,6 +906,9 @@ static unsigned int __init of_to_core_khz(void)
 	perfctr_info.tsc_to_cpu_mult = core / tb;
 	return core / 1000;
 }
+#else
+static inline unsigned int of_to_core_khz(void) { return 0; }
+#endif
 
 static unsigned int __init detect_cpu_khz(enum pll_type pll_type)
 {
