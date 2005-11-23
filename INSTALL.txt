@@ -138,13 +138,13 @@ at the end of the /etc/rc.net file. **
 After the installation of Pmtoolkit, follow the general installation to 
 install PAPI, using Makefile.aix-power.
 
-For AIX 5.1 - POWER4:
+For AIX 5.1 - POWER5/POWER4:
 *****************************************************************************
 1.	On AIX 5.x, the bos.pmapi is a product level fileset (part of the OS).
 	However, it is not installed by default. Consult your sysadmin to 
 	make sure it is installed. 
 2.	Follow the general instructions for installing PAPI, using 
-	Makefile.aix-power4.
+	Makefile.aix-power5 or Makefile.aix-power4.
 
 For AIX 5.1 - POWER3:
 *****************************************************************************
