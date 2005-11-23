@@ -1,8 +1,10 @@
 ===============================================================================
-PAPI 3.2.0 RELEASE NOTES                                            21 Nov 2005
+PAPI 3.2.1 RELEASE NOTES                                            23 Nov 2005
 ===============================================================================
 
-This file documents the changes since the PAPI 3.1.0 release on August 30, 2005.
+This file documents changes in recent PAPI releases in inverse chronological
+order.
+
 For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 
@@ -13,8 +15,12 @@ cvs tree.
 
 GENERAL NOTES
 ===============================================================================
-This release includes support for new platforms and contains a number of 
-bug fixes, as documented below. If you are currently using PAPI 3.1.0 or earlier,
+This release is a cosmetic cleanup and replacement release of PAPI 3.2.0, 
+which included support for new platforms and contains a number of bug fixes, 
+as documented below. The primary change is an import of perfctr-2.7.19 for 
+enhanced support of Linux/PPC substrates.
+
+If you are currently using PAPI 3.1.0 or earlier,
 it is recommended that you upgrade to this version.
 
 Platforms NOT supported by this version:
@@ -27,6 +33,18 @@ contact the PAPI team or one of the PAPI development lists.
 
 And visit the PAPI website for the latest updates:
 http://icl.cs.utk.edu/papi/
+
+
+CHANGES IN PAPI 3.2.1 SINCE PAPI 3.2.0
+===============================================================================
+Bug Fixes:
+----------
+- Bumped version number per Rick Kufrin
+- rebuilt f*.h files to synchronize with new version number per Maynard Johnson
+
+Enhancements:
+-------------
+- Imported perfctr-2.7.19 for better support of Linux/PPC substrates
 
 
 CHANGES IN PAPI 3.2.0 SINCE PAPI 3.1.0
