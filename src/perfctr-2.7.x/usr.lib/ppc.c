@@ -11,7 +11,7 @@
 #include "ppc.h"
 
 #ifndef __NR_vperfctr_open
-#define __NR_vperfctr_open	275
+#define __NR_vperfctr_open	280
 #define __NR_vperfctr_control	(__NR_vperfctr_open+1)
 #define __NR_vperfctr_write	(__NR_vperfctr_open+2)
 #define __NR_vperfctr_read	(__NR_vperfctr_open+3)

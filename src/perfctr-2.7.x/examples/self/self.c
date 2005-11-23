@@ -1,7 +1,7 @@
 /* $Id$
  *
  * This test program illustrates how a process may use the
- * Linux x86 Performance-Monitoring Counters interface to
+ * Linux Performance-Monitoring Counters interface to
  * monitor its own execution.
  *
  * The library uses mmap() to map the kernel's accumulated counter

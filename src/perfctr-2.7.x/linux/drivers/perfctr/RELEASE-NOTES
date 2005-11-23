@@ -3,6 +3,16 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.7.19, 2005-11-08
+- Updated ppc64.c to handle that CPU_FTR_PMC8 has been replaced
+  by cur_cpu_spec->num_pmcs. From David Gibson.
+- The dual-core P4s changed the layout rules for the initial
+  APIC ID, which broke the x86 driver on DC P4s. Updated the
+  HT thread ID detection code to match current IA32 SDM Vol3.
+- x86.c: pm_message_t fix for suspend(), from 2.6.13-mm2.
+- The ppc32 driver will now compile in kernels that lack Open
+  Firmware support, which is needed for some embedded systems.
+
 Version 2.7.17, 2005-05-26
 - (All archs) Added u32 seqlock to user-visible state, replacing
   samplecnt on ppc/ppc64. perfctr_cpu_{suspend,resume,sample}()
