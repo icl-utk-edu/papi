@@ -16,7 +16,7 @@ void do_reads(int n)
    char buf;
 
    if (fd == -1) {
-#if (defined(_CRAYT3E) || defined(__CATAMOUNT__))
+#if defined(_CRAYT3E) || defined(__CATAMOUNT__)
       fd = open("./p3_events.c", O_RDONLY);
       if (fd == -1) {
          fd = open("../p3_events.c", O_RDONLY);
@@ -37,7 +37,7 @@ void do_reads(int n)
       retval = read(fd, &buf, sizeof(buf));
       if (retval != sizeof(buf))
         {
-#if (defined(_CRAYT3E) || defined(__CATAMOUNT__))
+#if defined(_CRAYT3E) || defined(__CATAMOUNT__)
           if (retval < 0)
             perror("p3_events.c cannot be read");
           else
