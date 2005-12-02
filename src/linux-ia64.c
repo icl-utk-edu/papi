@@ -765,7 +765,7 @@ static int ia64_process_profile_entry(void *papiContext)
    if ((ESI->state & PAPI_PROFILING) == 0)
      return(PAPI_EBUG);
 
-   this_state = &ESI->machdep;
+   this_state = (hwd_control_state_t *) &ESI->machdep;
 
    hdr = (pfmw_smpl_hdr_t *) this_state->smpl_vaddr;
    /*
@@ -1018,6 +1018,7 @@ static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
 {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *master = NULL;
+   caddr_t pc;
 
    ctx.si = info;
    ctx.ucontext = context;
@@ -1027,8 +1028,9 @@ static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
       PAPIERROR("received spurious SIGPROF, si_code = %d", info->sy_code);
       return;
    }
+   pc = GET_OVERFLOW_ADDRESS(context);
    _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, 
-                     info->sy_pfm_ovfl[0]>>PMU_FIRST_COUNTER, 0, &master);
+                     info->sy_pfm_ovfl[0]>>PMU_FIRST_COUNTER, 0, &master, pc, sidx);
 
    if (pfmw_perfmonctl(info->sy_pid, 0, PFM_RESTART, 0, 0) == -1) {
      PAPIERROR("perfmonctl(PFM_RESTART) errno %d", errno);
