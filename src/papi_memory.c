@@ -180,17 +180,17 @@ int _papi_valid_free(char *file, int line, void *ptr){
   pmem_t *tmp;
   int valid = 0;
 
-  if ( !ptr ) return;
-
-  _papi_hwi_lock(MEMORY_LOCK);
-  for(tmp = mem_head; tmp; tmp = tmp->next ){
-    if ( ptr == tmp->ptr ){
-      _papi_free(file, line, ptr);
-      valid = 1;
-      break;
-    }
-  }
+  if ( ptr ) {
+      _papi_hwi_lock(MEMORY_LOCK);
+      for(tmp = mem_head; tmp; tmp = tmp->next ){
+         if ( ptr == tmp->ptr ){
+            _papi_free(file, line, ptr);
+            valid = 1;
+            break;
+         }
+      }
   _papi_hwi_unlock(MEMORY_LOCK);
+  }
   return(valid);
 }
 
