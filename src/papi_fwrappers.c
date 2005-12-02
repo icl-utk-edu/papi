@@ -18,9 +18,26 @@
 *          Min Zhou
 *	   min@cs.utk.edu
 */
+#include "config.h"
+
+#ifdef HAVE_ASSERT_H
+#include <assert.h>
+#endif
+
+#ifdef HAVE_STDIO_H
+#include <stdio.h>
+#endif
+
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 
 #if defined ( _CRAYT3E )
-#include  <stdlib.h>
+/* #include  <stdlib.h> */
 #include  <fortran.h>
 #endif
 #include "papi.h"

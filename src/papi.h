@@ -52,7 +52,15 @@ extern "C" {
 
 
 /* Include files */
-#include "papi_sys_headers.h"
+#include "config.h"
+
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
 
 #include "papiStdEventDefs.h"
 
