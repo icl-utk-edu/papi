@@ -23,8 +23,10 @@
 #include <errno.h>
 #endif
 
-#ifdef HAVE_EXPAT_H
-#include <expat.h>
+#ifdef XML
+ #ifdef HAVE_EXPAT_H
+  #include <expat.h>
+ #endif
 #endif
 
 #ifdef HAVE_FCNTL_H
