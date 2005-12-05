@@ -1,6 +1,6 @@
 Name: perfctr
 Summary: Linux performance monitoring counters software
-Version: 2.7.18
+Version: 2.7.19
 Release: 1
 License: LGPL
 Group: Development/Tools

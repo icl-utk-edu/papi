@@ -6,6 +6,17 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.7.19, 2005-11-08
+- The self and signal examples have been updated for Power5/PPC970.
+- The ppc64 driver has been updated to compile correctly in
+  recent 2.6 kernels.
+- The x86 kernel driver has been updated to work correctly
+  on dual-core P4 processors. Previous versions would fail
+  during CPU detection (on HT DC P4s) or would erroneously
+  restrict access for one of the cores (non-HT DC P4s).
+- The ppc32 driver will now compile in kernels that lack Open
+  Firmware support, which is needed for some embedded systems.
+
 Version 2.7.18, 2005-06-06
 - Fixed a 32/64-bit bug in the vperfctr_read_ctrs() library
   function, which caused problems on ppc64 and unnecessary
