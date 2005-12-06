@@ -9,6 +9,13 @@ extern EventSetInfo_t *default_master_eventset;
 
 extern papi_mdi_t _papi_hwi_system_info;
 
+/* NOTE OF CAUTION: The hwi_search_t structure has room for a maximum of 8
+     native event terms. If the list contains less than 8 terms, it MUST
+     ALWAYS be terminated with a PAPI_NULL. More than one PAPI_NULL can be
+     specified, but is not necessary. This is required for the hardware
+     independent code in papi_presets to work properly.
+*/
+
 static hwi_search_t findem_dadd[] = {
    {PAPI_TOT_CYC, {0, {PAPI_NATIVE_MASK | 0, PAPI_NULL}}},
    {PAPI_L1_ICM, {0, {PAPI_NATIVE_MASK | 3, PAPI_NULL}}},
@@ -32,8 +39,8 @@ static hwi_search_t findem_dadd[] = {
    {PAPI_FDV_INS, {0, {PAPI_NATIVE_MASK | 18, PAPI_NULL}}},
    {PAPI_FSQ_INS, {0, {PAPI_NATIVE_MASK | 19, PAPI_NULL}}},
    {PAPI_INT_INS, {0, {PAPI_NATIVE_MASK | 9, PAPI_NULL}}},
-   {PAPI_BR_INS, { DERIVED_ADD, {PAPI_NATIVE_MASK|21, PAPI_NATIVE_MASK |22}}},
-   {PAPI_TLB_TL, { DERIVED_ADD, {PAPI_NATIVE_MASK|27, PAPI_NATIVE_MASK|2}}},
+   {PAPI_BR_INS, { DERIVED_ADD, {PAPI_NATIVE_MASK|21, PAPI_NATIVE_MASK | 22, PAPI_NULL}}},
+   {PAPI_TLB_TL, { DERIVED_ADD, {PAPI_NATIVE_MASK|27, PAPI_NATIVE_MASK| 2, PAPI_NULL}}},
    {PAPI_TLB_IM, {0, {PAPI_NATIVE_MASK | 27, PAPI_NULL}}},
    {PAPI_BR_TKN, {0, {PAPI_NATIVE_MASK | 23, PAPI_NULL}}},
    {0, {0, {0, 0}}}

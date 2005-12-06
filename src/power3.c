@@ -37,122 +37,132 @@
 #endif   /*_AIXVERSION_510*/
 #endif                          /*PMTOOLKIT_1_2 */
 
+/* NOTE OF CAUTION: The hwi_search_t structure has room for a maximum of 8
+     native event terms. If the list contains less than 8 terms, it MUST
+     ALWAYS be terminated with a PAPI_NULL. More than one PAPI_NULL can be
+     specified, but is not necessary. This is required for the hardware
+     independent code in papi_presets to work properly.
+   IMPLEMENTATION NOTE: All the hardware supported in this file support either
+     2 or 4 counters. Each of the entries in the hwi_search_t structures must 
+     be terminated.
+*/
+
 static hwi_search_t _papi_hwd_604_preset_map[] = {
-   {PAPI_L1_DCM, {0, {PNE_PM_DC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Level 1 data cache misses */
-   {PAPI_L1_ICM, {0, {PNE_PM_IC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Level 1 instruction cache misses */
-   {PAPI_L1_TCM, {DERIVED_ADD, {PNE_PM_DC_MISS, PNE_PM_IC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},      /*Level 1 total cache misses */
-   {PAPI_CA_SNP, {0, {PNE_PM_SNOOP, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},       /*Snoops */
-   {PAPI_TLB_DM, {0, {PNE_PM_DTLB_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Data translation lookaside buffer misses */
-   {PAPI_TLB_IM, {0, {PNE_PM_ITLB_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Instr translation lookaside buffer misses */
-   {PAPI_TLB_TL, {DERIVED_ADD, {PNE_PM_DTLB_MISS, PNE_PM_ITLB_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},  /*Total translation lookaside buffer misses */
-   {PAPI_L2_LDM, {0, {PNE_PM_LD_MISS_EXCEED_L2, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Level 2 load misses */
-   {PAPI_L2_STM, {0, {PNE_PM_ST_MISS_EXCEED_L2, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Level 2 store misses */
-   {PAPI_CSR_SUC,{ 0, {PNE_PM_RESRV_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}}, /*Successful store conditional instructions */
-   {PAPI_CSR_FAL, {DERIVED_SUB, {PNE_PM_RESRV_RQ, PNE_PM_RESRV_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}}, /*Failed store conditional instructions */
-   {PAPI_CSR_TOT, {0, {PNE_PM_RESRV_RQ, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Total store conditional instructions */
-   {PAPI_MEM_RCY, {0, {PNE_PM_LD_MISS_CYC, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},        /*Cycles Stalled Waiting for Memory Read */
-   {PAPI_BR_CN, {0, {PNE_PM_BR_FINISH, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},    /*Conditional branch instructions executed */
-   {PAPI_BR_MSP, {0, {PNE_PM_BR_MPRED, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},    /*Conditional branch instructions mispred */
-   {PAPI_TOT_IIS, {0, {PNE_PM_INST_DISP, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},  /*Total instructions issued */
-   {PAPI_TOT_INS, {0, {PNE_PM_INST_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},  /*Total instructions executed */
-   {PAPI_INT_INS, {0, {PNE_PM_FXU_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Integer instructions executed */
-   {PAPI_FP_INS, {0, {PNE_PM_FPU_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},    /*Floating point instructions executed */
-   {PAPI_FP_OPS, {0, {PNE_PM_FPU_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},    /*Floating point instructions executed */
-   {PAPI_LD_INS, {0, {PNE_PM_LD_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Load instructions executed */
-   {PAPI_BR_INS, {0, {PNE_PM_BR_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Total branch instructions executed */
-   {PAPI_TOT_CYC, {0, {PNE_PM_CYC, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},        /*Total cycles */
-   {PAPI_LST_INS, {0, {PNE_PM_LSU_EXEC, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Total load/store inst. executed */
-   {PAPI_SYC_INS, {0, {PNE_PM_SYNC, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},       /*Sync. inst. executed */
-   {0, {0, {PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}}     /* end of list */
+   {PAPI_L1_DCM, {0, {PNE_PM_DC_MISS, PAPI_NULL}, 0}},     /*Level 1 data cache misses */
+   {PAPI_L1_ICM, {0, {PNE_PM_IC_MISS, PAPI_NULL}, 0}},     /*Level 1 instruction cache misses */
+   {PAPI_L1_TCM, {DERIVED_ADD, {PNE_PM_DC_MISS, PNE_PM_IC_MISS, PAPI_NULL}, 0}},      /*Level 1 total cache misses */
+   {PAPI_CA_SNP, {0, {PNE_PM_SNOOP, PAPI_NULL}, 0}},       /*Snoops */
+   {PAPI_TLB_DM, {0, {PNE_PM_DTLB_MISS, PAPI_NULL}, 0}},   /*Data translation lookaside buffer misses */
+   {PAPI_TLB_IM, {0, {PNE_PM_ITLB_MISS, PAPI_NULL}, 0}},   /*Instr translation lookaside buffer misses */
+   {PAPI_TLB_TL, {DERIVED_ADD, {PNE_PM_DTLB_MISS, PNE_PM_ITLB_MISS, PAPI_NULL}, 0}},  /*Total translation lookaside buffer misses */
+   {PAPI_L2_LDM, {0, {PNE_PM_LD_MISS_EXCEED_L2, PAPI_NULL}, 0}},   /*Level 2 load misses */
+   {PAPI_L2_STM, {0, {PNE_PM_ST_MISS_EXCEED_L2, PAPI_NULL}, 0}},   /*Level 2 store misses */
+   {PAPI_CSR_SUC,{ 0, {PNE_PM_RESRV_CMPL, PAPI_NULL}, 0}}, /*Successful store conditional instructions */
+   {PAPI_CSR_FAL, {DERIVED_SUB, {PNE_PM_RESRV_RQ, PNE_PM_RESRV_CMPL, PAPI_NULL}, 0}}, /*Failed store conditional instructions */
+   {PAPI_CSR_TOT, {0, {PNE_PM_RESRV_RQ, PAPI_NULL}, 0}},   /*Total store conditional instructions */
+   {PAPI_MEM_RCY, {0, {PNE_PM_LD_MISS_CYC, PAPI_NULL}, 0}},        /*Cycles Stalled Waiting for Memory Read */
+   {PAPI_BR_CN, {0, {PNE_PM_BR_FINISH, PAPI_NULL}, 0}},    /*Conditional branch instructions executed */
+   {PAPI_BR_MSP, {0, {PNE_PM_BR_MPRED, PAPI_NULL}, 0}},    /*Conditional branch instructions mispred */
+   {PAPI_TOT_IIS, {0, {PNE_PM_INST_DISP, PAPI_NULL}, 0}},  /*Total instructions issued */
+   {PAPI_TOT_INS, {0, {PNE_PM_INST_CMPL, PAPI_NULL}, 0}},  /*Total instructions executed */
+   {PAPI_INT_INS, {0, {PNE_PM_FXU_CMPL, PAPI_NULL}, 0}},   /*Integer instructions executed */
+   {PAPI_FP_INS, {0, {PNE_PM_FPU_CMPL, PAPI_NULL}, 0}},    /*Floating point instructions executed */
+   {PAPI_FP_OPS, {0, {PNE_PM_FPU_CMPL, PAPI_NULL}, 0}},    /*Floating point instructions executed */
+   {PAPI_LD_INS, {0, {PNE_PM_LD_CMPL, PAPI_NULL}, 0}},     /*Load instructions executed */
+   {PAPI_BR_INS, {0, {PNE_PM_BR_CMPL, PAPI_NULL}, 0}},     /*Total branch instructions executed */
+   {PAPI_TOT_CYC, {0, {PNE_PM_CYC, PAPI_NULL}, 0}},        /*Total cycles */
+   {PAPI_LST_INS, {0, {PNE_PM_LSU_EXEC, PAPI_NULL}, 0}},   /*Total load/store inst. executed */
+   {PAPI_SYC_INS, {0, {PNE_PM_SYNC, PAPI_NULL}, 0}},       /*Sync. inst. executed */
+   {0, {0, {PAPI_NULL}, 0}}     /* end of list */
 };
 
 static hwi_search_t _papi_hwd_604e_preset_map[] = {
-   {PAPI_L1_DCM, {0, {PNE_PM_DC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Level 1 data cache misses */
-   {PAPI_L1_ICM, {0, {PNE_PM_IC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Level 1 instruction cache misses */
-   {PAPI_L1_TCM, {DERIVED_ADD, {PNE_PM_DC_MISS, PNE_PM_IC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},      /*Level 1 total cache misses */
-   {PAPI_CA_SNP, {0, {PNE_PM_SNOOP, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},       /*Snoops */
-   {PAPI_CA_SHR, {0, {PNE_PM_LD_MISS_DC_SHR, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},      /*Request for shared cache line (SMP) */
-   {PAPI_CA_INV, {0, {PNE_PM_WR_HIT_SHR_KILL_BRC, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}}, /*Request for cache line Invalidation (SMP) */
-   {PAPI_CA_ITV, {0, {PNE_PM_WR_HIT_SHR_KILL_BRC, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}}, /*Request for cache line Intervention (SMP) */
-   {PAPI_BRU_IDL, {0, {PNE_PM_BRU_IDLE, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Cycles branch units are idle */
-   {PAPI_FXU_IDL, {0, {PNE_PM_MCI_IDLE, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Cycles integer units are idle */
-   {PAPI_FPU_IDL, {0, {PNE_PM_FPU_IDLE, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Cycles floating point units are idle */
-   {PAPI_LSU_IDL, {0, {PNE_PM_LSU_IDLE, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Cycles load/store units are idle */
-   {PAPI_TLB_DM, {0, {PNE_PM_DTLB_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Data translation lookaside buffer misses */
-   {PAPI_TLB_IM, {0, {PNE_PM_ITLB_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Instr translation lookaside buffer misses */
-   {PAPI_TLB_TL, {DERIVED_ADD, {PNE_PM_DTLB_MISS, PNE_PM_ITLB_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},  /*Total translation lookaside buffer misses */
-   {PAPI_L2_LDM, {0, {PNE_PM_LD_MISS_EXCEED_L2, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Level 2 load misses */
-   {PAPI_L2_STM, {0, {PNE_PM_ST_MISS_EXCEED_L2, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Level 2 store misses */
-   {PAPI_CSR_SUC, {0, {PNE_PM_RESRV_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}}, /*Successful store conditional instructions */
-   {PAPI_CSR_FAL, {DERIVED_SUB, {PNE_PM_RESRV_RQ, PNE_PM_RESRV_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}}, /*Failed store conditional instructions */
-   {PAPI_CSR_TOT, {0, {PNE_PM_RESRV_RQ, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Total store conditional instructions */
-   {PAPI_MEM_SCY, {DERIVED_ADD, {PNE_PM_CMPLU_WT_LD, PNE_PM_CMPLU_WT_ST, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Cycles Stalled Waiting for Memory Access */
-   {PAPI_MEM_RCY, {0, {PNE_PM_CMPLU_WT_LD, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},        /*Cycles Stalled Waiting for Memory Read */
-   {PAPI_MEM_WCY, {0, {PNE_PM_CMPLU_WT_ST, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},        /*Cycles Stalled Waiting for Memory Write */
-   {PAPI_STL_ICY, {0, {PNE_PM_DPU_WT_IC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Cycles with No Instruction Issue */
-   {PAPI_FUL_ICY, {0, {PNE_PM_4INST_DISP, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}}, /*Cycles with Maximum Instruction Issue */
-   {PAPI_STL_CCY, {0, {PNE_PM_CMPLU_WT_UNF_INST, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},  /*Cycles with No Instruction Completion */
-   {PAPI_FUL_CCY, {0, {PNE_PM_4INST_DISP, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}}, /*Cycles with Maximum Instruction Completion */
-   {PAPI_BR_CN, {0, {PNE_PM_BR_FINISH, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},    /*Conditional branch instructions executed */
-   {PAPI_BR_MSP, {0, {PNE_PM_BR_MPRED, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},    /*Conditional branch instructions mispred */
-   {PAPI_TOT_IIS, {0, {PNE_PM_INST_DISP, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},  /*Total instructions issued */
-   {PAPI_TOT_INS, {0, {PNE_PM_INST_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},  /*Total instructions executed */
-   {PAPI_INT_INS, {0, {PNE_PM_FXU_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Integer instructions executed */
-   {PAPI_FP_INS, {0, {PNE_PM_FPU_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},    /*Floating point instructions executed */
-   {PAPI_FP_OPS, {0, {PNE_PM_FPU_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},    /*Floating point instructions executed */
-   {PAPI_LD_INS, {0, {PNE_PM_LD_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Load instructions executed */
-   {PAPI_BR_INS, {0, {PNE_PM_BR_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Total branch instructions executed */
-   {PAPI_FP_STAL, {0, {PNE_PM_FPU_WT, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Cycles any FP units are stalled */
-   {PAPI_TOT_CYC, {0, {PNE_PM_CYC, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},        /*Total cycles */
-   {PAPI_LST_INS, {0, {PNE_PM_LSU_EXEC, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Total load/store inst. executed */
-   {PAPI_SYC_INS, {0, {PNE_PM_SYNC, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},       /*Sync. inst. executed */
-   {0, {0, {PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}}     /* end of list */
+   {PAPI_L1_DCM, {0, {PNE_PM_DC_MISS, PAPI_NULL}, 0}},     /*Level 1 data cache misses */
+   {PAPI_L1_ICM, {0, {PNE_PM_IC_MISS, PAPI_NULL}, 0}},     /*Level 1 instruction cache misses */
+   {PAPI_L1_TCM, {DERIVED_ADD, {PNE_PM_DC_MISS, PNE_PM_IC_MISS, PAPI_NULL}, 0}},      /*Level 1 total cache misses */
+   {PAPI_CA_SNP, {0, {PNE_PM_SNOOP, PAPI_NULL}, 0}},       /*Snoops */
+   {PAPI_CA_SHR, {0, {PNE_PM_LD_MISS_DC_SHR, PAPI_NULL}, 0}},      /*Request for shared cache line (SMP) */
+   {PAPI_CA_INV, {0, {PNE_PM_WR_HIT_SHR_KILL_BRC, PAPI_NULL}, 0}}, /*Request for cache line Invalidation (SMP) */
+   {PAPI_CA_ITV, {0, {PNE_PM_WR_HIT_SHR_KILL_BRC, PAPI_NULL}, 0}}, /*Request for cache line Intervention (SMP) */
+   {PAPI_BRU_IDL, {0, {PNE_PM_BRU_IDLE, PAPI_NULL}, 0}},   /*Cycles branch units are idle */
+   {PAPI_FXU_IDL, {0, {PNE_PM_MCI_IDLE, PAPI_NULL}, 0}},   /*Cycles integer units are idle */
+   {PAPI_FPU_IDL, {0, {PNE_PM_FPU_IDLE, PAPI_NULL}, 0}},   /*Cycles floating point units are idle */
+   {PAPI_LSU_IDL, {0, {PNE_PM_LSU_IDLE, PAPI_NULL}, 0}},   /*Cycles load/store units are idle */
+   {PAPI_TLB_DM, {0, {PNE_PM_DTLB_MISS, PAPI_NULL}, 0}},   /*Data translation lookaside buffer misses */
+   {PAPI_TLB_IM, {0, {PNE_PM_ITLB_MISS, PAPI_NULL}, 0}},   /*Instr translation lookaside buffer misses */
+   {PAPI_TLB_TL, {DERIVED_ADD, {PNE_PM_DTLB_MISS, PNE_PM_ITLB_MISS, PAPI_NULL}, 0}},  /*Total translation lookaside buffer misses */
+   {PAPI_L2_LDM, {0, {PNE_PM_LD_MISS_EXCEED_L2, PAPI_NULL}, 0}},   /*Level 2 load misses */
+   {PAPI_L2_STM, {0, {PNE_PM_ST_MISS_EXCEED_L2, PAPI_NULL}, 0}},   /*Level 2 store misses */
+   {PAPI_CSR_SUC, {0, {PNE_PM_RESRV_CMPL, PAPI_NULL}, 0}}, /*Successful store conditional instructions */
+   {PAPI_CSR_FAL, {DERIVED_SUB, {PNE_PM_RESRV_RQ, PNE_PM_RESRV_CMPL, PAPI_NULL}, 0}}, /*Failed store conditional instructions */
+   {PAPI_CSR_TOT, {0, {PNE_PM_RESRV_RQ, PAPI_NULL}, 0}},   /*Total store conditional instructions */
+   {PAPI_MEM_SCY, {DERIVED_ADD, {PNE_PM_CMPLU_WT_LD, PNE_PM_CMPLU_WT_ST, PAPI_NULL}, 0}},     /*Cycles Stalled Waiting for Memory Access */
+   {PAPI_MEM_RCY, {0, {PNE_PM_CMPLU_WT_LD, PAPI_NULL}, 0}},        /*Cycles Stalled Waiting for Memory Read */
+   {PAPI_MEM_WCY, {0, {PNE_PM_CMPLU_WT_ST, PAPI_NULL}, 0}},        /*Cycles Stalled Waiting for Memory Write */
+   {PAPI_STL_ICY, {0, {PNE_PM_DPU_WT_IC_MISS, PAPI_NULL}, 0}},     /*Cycles with No Instruction Issue */
+   {PAPI_FUL_ICY, {0, {PNE_PM_4INST_DISP, PAPI_NULL}, 0}}, /*Cycles with Maximum Instruction Issue */
+   {PAPI_STL_CCY, {0, {PNE_PM_CMPLU_WT_UNF_INST, PAPI_NULL}, 0}},  /*Cycles with No Instruction Completion */
+   {PAPI_FUL_CCY, {0, {PNE_PM_4INST_DISP, PAPI_NULL}, 0}}, /*Cycles with Maximum Instruction Completion */
+   {PAPI_BR_CN, {0, {PNE_PM_BR_FINISH, PAPI_NULL}, 0}},    /*Conditional branch instructions executed */
+   {PAPI_BR_MSP, {0, {PNE_PM_BR_MPRED, PAPI_NULL}, 0}},    /*Conditional branch instructions mispred */
+   {PAPI_TOT_IIS, {0, {PNE_PM_INST_DISP, PAPI_NULL}, 0}},  /*Total instructions issued */
+   {PAPI_TOT_INS, {0, {PNE_PM_INST_CMPL, PAPI_NULL}, 0}},  /*Total instructions executed */
+   {PAPI_INT_INS, {0, {PNE_PM_FXU_CMPL, PAPI_NULL}, 0}},   /*Integer instructions executed */
+   {PAPI_FP_INS, {0, {PNE_PM_FPU_CMPL, PAPI_NULL}, 0}},    /*Floating point instructions executed */
+   {PAPI_FP_OPS, {0, {PNE_PM_FPU_CMPL, PAPI_NULL}, 0}},    /*Floating point instructions executed */
+   {PAPI_LD_INS, {0, {PNE_PM_LD_CMPL, PAPI_NULL}, 0}},     /*Load instructions executed */
+   {PAPI_BR_INS, {0, {PNE_PM_BR_CMPL, PAPI_NULL}, 0}},     /*Total branch instructions executed */
+   {PAPI_FP_STAL, {0, {PNE_PM_FPU_WT, PAPI_NULL}, 0}},     /*Cycles any FP units are stalled */
+   {PAPI_TOT_CYC, {0, {PNE_PM_CYC, PAPI_NULL}, 0}},        /*Total cycles */
+   {PAPI_LST_INS, {0, {PNE_PM_LSU_EXEC, PAPI_NULL}, 0}},   /*Total load/store inst. executed */
+   {PAPI_SYC_INS, {0, {PNE_PM_SYNC, PAPI_NULL}, 0}},       /*Sync. inst. executed */
+   {0, {0, {PAPI_NULL}, 0}}     /* end of list */
 };
 
 static hwi_search_t _papi_hwd_630_preset_map[] = {
-   {PAPI_L1_DCM, {DERIVED_ADD, {PNE_PM_LD_MISS_L1, PNE_PM_ST_MISS_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},        /*Level 1 data cache misses */
-   {PAPI_L1_ICM, {0, {PNE_PM_IC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Level 1 instruction cache misses */
-   {PAPI_L1_TCM, {DERIVED_ADD, {PNE_PM_IC_MISS, PNE_PM_LD_MISS_L1, PNE_PM_ST_MISS_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Level 1 total cache misses */
-   {PAPI_CA_SNP, {0, {PNE_PM_SNOOP, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},       /*Snoops */
-   {PAPI_CA_SHR, {0, {PNE_PM_SNOOP_E_TO_S, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},        /*Request for shared cache line (SMP) */
-   {PAPI_CA_ITV, {0, {PNE_PM_SNOOP_PUSH_INT, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},      /*Request for cache line Intervention (SMP) */
-   {PAPI_BRU_IDL, {0, {PNE_PM_BRU_IDLE, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Cycles branch units are idle */
-   {PAPI_FXU_IDL, {0, {PNE_PM_FXU_IDLE, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Cycles integer units are idle */
-   {PAPI_FPU_IDL, {0, {PNE_PM_FPU_IDLE, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Cycles floating point units are idle */
-   {PAPI_LSU_IDL, {0, {PNE_PM_LSU_IDLE, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Cycles load/store units are idle */
-   {PAPI_TLB_TL, {0, {PNE_PM_TLB_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},    /*Total translation lookaside buffer misses */
-   {PAPI_L1_LDM, {0, {PNE_PM_LD_MISS_L2HIT, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},       /*Level 1 load misses */
-   {PAPI_L1_STM, {0, {PNE_PM_ST_MISS_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},  /*Level 1 store misses */
-   {PAPI_L2_LDM, {0, {PNE_PM_BIU_LD_NORTRY, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},       /*Level 2 load misses */
-   {PAPI_BTAC_M, {0, {PNE_PM_BTAC_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*BTAC miss */
-   {PAPI_PRF_DM, {0, {PNE_PM_PREF_MATCH_DEM_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}}, /*Prefetch data instruction caused a miss */
-   {PAPI_TLB_SD, {0, {PNE_PM_TLBSYNC_RERUN, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},       /*Xlation lookaside buffer shootdowns (SMP) */
-   {PAPI_CSR_SUC, {0, {PNE_PM_RESRV_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}}, /*Successful store conditional instructions */
-   {PAPI_CSR_FAL, {0, {PNE_PM_ST_COND_FAIL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},       /*Failed store conditional instructions */
-   {PAPI_CSR_TOT, {0, {PNE_PM_RESRV_RQ, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*Total store conditional instructions */
-   {PAPI_MEM_SCY, {DERIVED_ADD, {PNE_PM_CMPLU_WT_LD, PNE_PM_CMPLU_WT_ST, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Cycles Stalled Waiting for Memory Access */
-   {PAPI_MEM_RCY, {0, {PNE_PM_CMPLU_WT_LD, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},        /*Cycles Stalled Waiting for Memory Read */
-   {PAPI_MEM_WCY, {0, {PNE_PM_CMPLU_WT_ST, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},        /*Cycles Stalled Waiting for Memory Write */
-   {PAPI_STL_ICY, {0, {PNE_PM_0INST_DISP, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}}, /*Cycles with No Instruction Issue */
-   {PAPI_STL_CCY, {0, {PNE_PM_0INST_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}}, /*Cycles with No Instruction Completion */
-   {PAPI_BR_CN, {0, {PNE_PM_CBR_DISP, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},        /*Conditional branch instructions executed */
-   {PAPI_BR_MSP, {0, {PNE_PM_MPRED_BR, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},    /*Conditional branch instructions mispred */
-   {PAPI_BR_PRC, {0, {PNE_PM_BR_PRED, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Conditional branch instructions corr. pred */
-   {PAPI_FMA_INS, {0, {PNE_PM_EXEC_FMA, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*FMA instructions completed */
-   {PAPI_TOT_IIS, {0, {PNE_PM_INST_DISP, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},  /*Total instructions issued */
-   {PAPI_TOT_INS, {0, {PNE_PM_INST_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},  /*Total instructions executed */
-   {PAPI_INT_INS, {DERIVED_ADD, {PNE_PM_FXU0_PROD_RESULT, PNE_PM_FXU1_PROD_RESULT, PNE_PM_FXU2_PROD_RESULT, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Integer instructions executed */
-   {PAPI_FP_INS, {DERIVED_ADD, {PNE_PM_FPU0_CMPL, PNE_PM_FPU1_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},  /*Floating point instructions executed */
-   {PAPI_FP_OPS, {DERIVED_ADD, {PNE_PM_FPU0_CMPL, PNE_PM_FPU1_CMPL, PNE_PM_EXEC_FMA, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},  /*Floating point instructions executed */
-   {PAPI_LD_INS, {0, {PNE_PM_LD_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Load instructions executed */
-   {PAPI_SR_INS, {0, {PNE_PM_ST_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Store instructions executed */
-   {PAPI_BR_INS, {0, {PNE_PM_BR_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Total branch instructions executed */
-   {PAPI_TOT_CYC, {0, {PNE_PM_CYC, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},        /*Total cycles */
-   {PAPI_LST_INS, {DERIVED_ADD, {PNE_PM_LD_CMPL, PNE_PM_ST_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},     /*Total load/store inst. executed */
-   {PAPI_SYC_INS, {0, {PNE_PM_SYNC, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},       /*Sync. inst. executed */
-   {PAPI_FDV_INS, {0, {PNE_PM_FPU_FDIV, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},   /*FD ins */
-   {PAPI_FSQ_INS, {0, {PNE_PM_FPU_FSQRT, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},  /*FSq ins */
-   {0, {0, {PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}}     /* end of list */
+   {PAPI_L1_DCM, {DERIVED_ADD, {PNE_PM_LD_MISS_L1, PNE_PM_ST_MISS_L1, PAPI_NULL}, 0}},        /*Level 1 data cache misses */
+   {PAPI_L1_ICM, {0, {PNE_PM_IC_MISS, PAPI_NULL}, 0}},     /*Level 1 instruction cache misses */
+   {PAPI_L1_TCM, {DERIVED_ADD, {PNE_PM_IC_MISS, PNE_PM_LD_MISS_L1, PNE_PM_ST_MISS_L1, PAPI_NULL}, 0}},   /*Level 1 total cache misses */
+   {PAPI_CA_SNP, {0, {PNE_PM_SNOOP, PAPI_NULL}, 0}},       /*Snoops */
+   {PAPI_CA_SHR, {0, {PNE_PM_SNOOP_E_TO_S, PAPI_NULL}, 0}},        /*Request for shared cache line (SMP) */
+   {PAPI_CA_ITV, {0, {PNE_PM_SNOOP_PUSH_INT, PAPI_NULL}, 0}},      /*Request for cache line Intervention (SMP) */
+   {PAPI_BRU_IDL, {0, {PNE_PM_BRU_IDLE, PAPI_NULL}, 0}},   /*Cycles branch units are idle */
+   {PAPI_FXU_IDL, {0, {PNE_PM_FXU_IDLE, PAPI_NULL}, 0}},   /*Cycles integer units are idle */
+   {PAPI_FPU_IDL, {0, {PNE_PM_FPU_IDLE, PAPI_NULL}, 0}},   /*Cycles floating point units are idle */
+   {PAPI_LSU_IDL, {0, {PNE_PM_LSU_IDLE, PAPI_NULL}, 0}},   /*Cycles load/store units are idle */
+   {PAPI_TLB_TL, {0, {PNE_PM_TLB_MISS, PAPI_NULL}, 0}},    /*Total translation lookaside buffer misses */
+   {PAPI_L1_LDM, {0, {PNE_PM_LD_MISS_L2HIT, PAPI_NULL}, 0}},       /*Level 1 load misses */
+   {PAPI_L1_STM, {0, {PNE_PM_ST_MISS_L1, PAPI_NULL}, 0}},  /*Level 1 store misses */
+   {PAPI_L2_LDM, {0, {PNE_PM_BIU_LD_NORTRY, PAPI_NULL}, 0}},       /*Level 2 load misses */
+   {PAPI_BTAC_M, {0, {PNE_PM_BTAC_MISS, PAPI_NULL}, 0}},   /*BTAC miss */
+   {PAPI_PRF_DM, {0, {PNE_PM_PREF_MATCH_DEM_MISS, PAPI_NULL}, 0}}, /*Prefetch data instruction caused a miss */
+   {PAPI_TLB_SD, {0, {PNE_PM_TLBSYNC_RERUN, PAPI_NULL}, 0}},       /*Xlation lookaside buffer shootdowns (SMP) */
+   {PAPI_CSR_SUC, {0, {PNE_PM_RESRV_CMPL, PAPI_NULL}, 0}}, /*Successful store conditional instructions */
+   {PAPI_CSR_FAL, {0, {PNE_PM_ST_COND_FAIL, PAPI_NULL}, 0}},       /*Failed store conditional instructions */
+   {PAPI_CSR_TOT, {0, {PNE_PM_RESRV_RQ, PAPI_NULL}, 0}},   /*Total store conditional instructions */
+   {PAPI_MEM_SCY, {DERIVED_ADD, {PNE_PM_CMPLU_WT_LD, PNE_PM_CMPLU_WT_ST, PAPI_NULL}, 0}},     /*Cycles Stalled Waiting for Memory Access */
+   {PAPI_MEM_RCY, {0, {PNE_PM_CMPLU_WT_LD, PAPI_NULL}, 0}},        /*Cycles Stalled Waiting for Memory Read */
+   {PAPI_MEM_WCY, {0, {PNE_PM_CMPLU_WT_ST, PAPI_NULL}, 0}},        /*Cycles Stalled Waiting for Memory Write */
+   {PAPI_STL_ICY, {0, {PNE_PM_0INST_DISP, PAPI_NULL}, 0}}, /*Cycles with No Instruction Issue */
+   {PAPI_STL_CCY, {0, {PNE_PM_0INST_CMPL, PAPI_NULL}, 0}}, /*Cycles with No Instruction Completion */
+   {PAPI_BR_CN, {0, {PNE_PM_CBR_DISP, PAPI_NULL}, 0}},        /*Conditional branch instructions executed */
+   {PAPI_BR_MSP, {0, {PNE_PM_MPRED_BR, PAPI_NULL}, 0}},    /*Conditional branch instructions mispred */
+   {PAPI_BR_PRC, {0, {PNE_PM_BR_PRED, PAPI_NULL}, 0}},     /*Conditional branch instructions corr. pred */
+   {PAPI_FMA_INS, {0, {PNE_PM_EXEC_FMA, PAPI_NULL}, 0}},   /*FMA instructions completed */
+   {PAPI_TOT_IIS, {0, {PNE_PM_INST_DISP, PAPI_NULL}, 0}},  /*Total instructions issued */
+   {PAPI_TOT_INS, {0, {PNE_PM_INST_CMPL, PAPI_NULL}, 0}},  /*Total instructions executed */
+   {PAPI_INT_INS, {DERIVED_ADD, {PNE_PM_FXU0_PROD_RESULT, PNE_PM_FXU1_PROD_RESULT, PNE_PM_FXU2_PROD_RESULT, PAPI_NULL}, 0}},     /*Integer instructions executed */
+   {PAPI_FP_INS, {DERIVED_ADD, {PNE_PM_FPU0_CMPL, PNE_PM_FPU1_CMPL, PAPI_NULL}, 0}},  /*Floating point instructions executed */
+   {PAPI_FP_OPS, {DERIVED_ADD, {PNE_PM_FPU0_CMPL, PNE_PM_FPU1_CMPL, PNE_PM_EXEC_FMA, PAPI_NULL}, 0}},  /*Floating point instructions executed */
+   {PAPI_LD_INS, {0, {PNE_PM_LD_CMPL, PAPI_NULL}, 0}},     /*Load instructions executed */
+   {PAPI_SR_INS, {0, {PNE_PM_ST_CMPL, PAPI_NULL}, 0}},     /*Store instructions executed */
+   {PAPI_BR_INS, {0, {PNE_PM_BR_CMPL, PAPI_NULL}, 0}},     /*Total branch instructions executed */
+   {PAPI_TOT_CYC, {0, {PNE_PM_CYC, PAPI_NULL}, 0}},        /*Total cycles */
+   {PAPI_LST_INS, {DERIVED_ADD, {PNE_PM_LD_CMPL, PNE_PM_ST_CMPL, PAPI_NULL}, 0}},     /*Total load/store inst. executed */
+   {PAPI_SYC_INS, {0, {PNE_PM_SYNC, PAPI_NULL}, 0}},       /*Sync. inst. executed */
+   {PAPI_FDV_INS, {0, {PNE_PM_FPU_FDIV, PAPI_NULL}, 0}},   /*FD ins */
+   {PAPI_FSQ_INS, {0, {PNE_PM_FPU_FSQRT, PAPI_NULL}, 0}},  /*FSq ins */
+   {0, {0, {PAPI_NULL}, 0}}     /* end of list */
 };
 
 hwi_search_t *preset_search_map;
