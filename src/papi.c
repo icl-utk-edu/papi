@@ -1486,9 +1486,10 @@ int PAPI_perror(int code, char *destination, int length)
 int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
                   PAPI_overflow_handler_t handler)
 {
-   int retval, index, event_counter, i;
+   int retval, index, c, i;
    EventSetInfo_t *ESI;
    ThreadInfo_t *thread;
+   EventSetOverflowInfo_t *o;
 
    ESI = _papi_hwi_lookup_EventSet(EventSet);
    if (ESI == NULL)
@@ -1522,88 +1523,93 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
       if (threshold == 0)
          papi_return(PAPI_EINVAL);
    }
-   if (threshold > 0 && ESI->overflow.event_counter >= _papi_hwi_substrate_info[ESI->SubstrateIndex].num_cntrs)
+   
+   o = &ESI->overflow; /* dereference the overflow structure */
+
+   if (threshold > 0 && o->event_counter >= _papi_hwi_substrate_info[ESI->SubstrateIndex].num_cntrs)
       papi_return(PAPI_ECNFLCT);
 
    if (threshold == 0) {
-      for (i = 0; i < ESI->overflow.event_counter; i++) {
-         if (ESI->overflow.EventCode[i] == EventCode)
+      for (i = 0; i < o->event_counter; i++) {
+         if (o->EventCode[i] == EventCode)
             break;
       }
       /* EventCode not found */
-      if (i == ESI->overflow.event_counter)
+      if (i == o->event_counter)
          papi_return(PAPI_EINVAL);
       /* compact these arrays */
-      while (i < ESI->overflow.event_counter - 1) {
-         ESI->overflow.deadline[i] = ESI->overflow.deadline[i + 1];
-         ESI->overflow.threshold[i] = ESI->overflow.threshold[i + 1];
-         ESI->overflow.EventIndex[i] = ESI->overflow.EventIndex[i + 1];
-         ESI->overflow.EventCode[i] = ESI->overflow.EventCode[i + 1];
+      while (i < o->event_counter - 1) {
+         o->deadline[i] = o->deadline[i + 1];
+         o->threshold[i] = o->threshold[i + 1];
+         o->EventIndex[i] = o->EventIndex[i + 1];
+         o->EventCode[i] = o->EventCode[i + 1];
          i++;
       }
-      ESI->overflow.deadline[i] = 0;
-      ESI->overflow.threshold[i] = 0;
-      ESI->overflow.EventIndex[i] = 0;
-      ESI->overflow.EventCode[i] = 0;
+      o->deadline[i] = 0;
+      o->threshold[i] = 0;
+      o->EventIndex[i] = 0;
+      o->EventCode[i] = 0;
 
-      ESI->overflow.event_counter--;
+      o->event_counter--;
    } else {
-      if ( ESI->overflow.event_counter > 0 ){
-         if ( (flags&PAPI_OVERFLOW_FORCE_SW) && (ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
+      if ( o->event_counter > 0 ){
+         if ( (flags&PAPI_OVERFLOW_FORCE_SW) && (o->flags&PAPI_OVERFLOW_HARDWARE))
             papi_return(PAPI_ECNFLCT);
-         if ( !(flags&PAPI_OVERFLOW_FORCE_SW) && (ESI->overflow.flags&PAPI_OVERFLOW_FORCE_SW))
+         if ( !(flags&PAPI_OVERFLOW_FORCE_SW) && (o->flags&PAPI_OVERFLOW_FORCE_SW))
             papi_return(PAPI_ECNFLCT);
       }
-      for (i = 0; i < ESI->overflow.event_counter; i++) {
-         if (ESI->overflow.EventCode[i] == EventCode)
+
+      for (i = 0; i < o->event_counter; i++) {
+         if (o->EventCode[i] == EventCode)
             break;
       }
-      if (i == ESI->overflow.event_counter){
-         ESI->overflow.event_counter++;
-         event_counter = ESI->overflow.event_counter;
-         ESI->overflow.deadline[event_counter - 1] = threshold;
-         ESI->overflow.threshold[event_counter - 1] = threshold;
-         ESI->overflow.EventIndex[event_counter - 1] = index;
-         ESI->overflow.EventCode[event_counter - 1] = EventCode;
-         ESI->overflow.flags = flags;
+
+      if (i == o->event_counter){
+         c = o->event_counter;
+         o->deadline[c] = threshold;
+         o->threshold[c] = threshold;
+         o->EventIndex[c] = index;
+         o->EventCode[c] = EventCode;
+         o->flags = flags;
+         o->event_counter++;
       }
       else {
-         ESI->overflow.deadline[i] = threshold;
-         ESI->overflow.threshold[i] = threshold;
-         ESI->overflow.EventIndex[i] = index;
-         ESI->overflow.flags = flags;
+         o->deadline[i] = threshold;
+         o->threshold[i] = threshold;
+         o->EventIndex[i] = index;
+         o->flags = flags;
       }
    }
-   ESI->overflow.handler = handler;
-   ESI->overflow.count = 0;
+   o->handler = handler;
+   o->count = 0;
 
    /* Set up the option structure for the low level */
 
    if (_papi_hwi_substrate_info[ESI->SubstrateIndex].supports_hw_overflow && 
-       !(ESI->overflow.flags&PAPI_OVERFLOW_FORCE_SW)) {
+       !(o->flags&PAPI_OVERFLOW_FORCE_SW)) {
       if ( threshold != 0 )
-         ESI->overflow.flags |= PAPI_OVERFLOW_HARDWARE;
+         o->flags |= PAPI_OVERFLOW_HARDWARE;
       retval = _papi_hwd_set_overflow(ESI, index, threshold,ESI->SubstrateIndex);
-      if ( !(ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE) )
-         ESI->overflow.timer_ms = PAPI_ITIMER_MS;
+      if ( !(o->flags&PAPI_OVERFLOW_HARDWARE) )
+         o->timer_ms = PAPI_ITIMER_MS;
       else if (retval < PAPI_OK){
-         if ( ESI->overflow.event_counter == 0 )
-            ESI->overflow.flags = 0;
+         if ( o->event_counter == 0 )
+            o->flags = 0;
          papi_return(retval);
       }
    } else{
-      ESI->overflow.timer_ms = PAPI_ITIMER_MS;
-      ESI->overflow.flags &= ~(PAPI_OVERFLOW_HARDWARE);
+      o->timer_ms = PAPI_ITIMER_MS;
+      o->flags &= ~(PAPI_OVERFLOW_HARDWARE);
    }
 
-   APIDBG("Overflow using: %s\n", (ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE?"[Hardware]":ESI->overflow.flags&PAPI_OVERFLOW_FORCE_SW?"[Forced Software]":"[Software]"));
+   APIDBG("Overflow using: %s\n", (o->flags&PAPI_OVERFLOW_HARDWARE?"[Hardware]":o->flags&PAPI_OVERFLOW_FORCE_SW?"[Forced Software]":"[Software]"));
    /* Toggle the overflow flag */
-   if ((ESI->overflow.event_counter == 1 && threshold > 0) ||
-       (ESI->overflow.event_counter == 0 && threshold == 0))
+   if ((o->event_counter == 1 && threshold > 0) ||
+       (o->event_counter == 0 && threshold == 0))
       ESI->state ^= PAPI_OVERFLOWING;
 
-   if ( ESI->overflow.event_counter == 0 )
-      ESI->overflow.flags = 0;
+   if ( o->event_counter == 0 )
+      o->flags = 0;
 
    return(PAPI_OK);
 }

@@ -233,8 +233,11 @@ EventSetInfo_t *_papi_hwi_allocate_EventSet(int sidx)
    ESI->EventInfoArray = (EventInfo_t *) papi_malloc(max_counters * sizeof(EventInfo_t));
    ESI->machdep = (void *) papi_malloc(papi_sizeof(HWD_CONTROL_STATE,sidx));
    ESI->NativeInfoArray = (NativeInfo_t *) papi_malloc(max_counters * sizeof(NativeInfo_t)+max_counters*papi_sizeof(HWD_REGISTER,sidx));
+
+   /* NOTE: the next two malloc allocate blocks of memory that are later parcelled into overflow and profile arrays */
    ESI->overflow.deadline = (long_long *) papi_malloc((sizeof(long_long)+sizeof(int)*3)*max_counters);
    ESI->profile.prof = (PAPI_sprofil_t **) papi_malloc((sizeof(PAPI_sprofil_t *)*max_counters+max_counters*sizeof(int)*4));
+
    if (
          (ESI->sw_stop == NULL) || (ESI->hw_start == NULL)
          || (ESI->EventInfoArray == NULL)||(ESI->NativeInfoArray==NULL)
@@ -261,14 +264,16 @@ EventSetInfo_t *_papi_hwi_allocate_EventSet(int sidx)
    memset(ESI->hw_start, 0x00, max_counters * sizeof(long_long));
    memset(ESI->machdep, 0x00, papi_sizeof(HWD_CONTROL_STATE,sidx));
 
-   /* Setup the pointers */
-   ptr = (char *) ESI->overflow.deadline+sizeof(long_long);
+   /* Carve up the overflow block into separate arrays */
+   ptr = (char *) ESI->overflow.deadline;
+   ptr += sizeof(long_long)*max_counters;
    ESI->overflow.threshold = (int *) ptr;
-   ptr += sizeof(int);
+   ptr += sizeof(int)*max_counters;
    ESI->overflow.EventIndex = (int *) ptr;
-   ptr += sizeof(int);
+   ptr += sizeof(int)*max_counters;
    ESI->overflow.EventCode = (int *) ptr;
 
+   /* Carve up the profile block into separate arrays */
    ptr =(char *)ESI->profile.prof+(sizeof(PAPI_sprofil_t *)*max_counters);
    ESI->profile.count = (int *) ptr;
    ptr += sizeof(int)*max_counters;
