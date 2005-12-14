@@ -447,9 +447,7 @@ static int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *cntrl) {
 /* This routine is for shutting down threads, including the
    master thread. */
 static int _papi_hwd_shutdown(hwd_context_t * ctx) {
-//   why is the following commented out?
-//   int retval; = vperfctr_unlink(ctx->perfctr);
-   int retval = 0;
+   int retval = vperfctr_unlink(ctx->perfctr);
    SUBDBG("_papi_hwd_shutdown vperfctr_unlink(%p) = %d\n", ctx->perfctr, retval);
    vperfctr_close(ctx->perfctr);
    SUBDBG("_papi_hwd_shutdown vperfctr_close(%p)\n", ctx->perfctr);
