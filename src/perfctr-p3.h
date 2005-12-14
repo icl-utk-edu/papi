@@ -62,15 +62,29 @@ typedef ucontext_t hwd_ucontext_t;
 
 
 /* Overflow macros */
+/* old (PAPI <= 3.2.1) style overflow address:
 #ifdef __x86_64__
   #ifdef __CATAMOUNT__
-    #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->sc_rip)
+  #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->sc_rip)
   #else
-    #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->rip)
+  #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->rip)
   #endif
 #else
   #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->eip)
 #endif
+*/
+
+/* new (PAPI => 3.9.0) style overflow address: */
+#ifdef __x86_64__
+  #ifdef __CATAMOUNT__
+    #define OVERFLOW_PC sc_rip
+  #else
+    #define OVERFLOW_PC rip
+  #endif
+#else
+    #define OVERFLOW_PC eip
+#endif
+#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&((hwd_ucontext_t *)ctx.ucontext)->uc_mcontext))->OVERFLOW_PC)
 
 /* Linux DOES support hardware overflow */
 #define HW_OVERFLOW 1
@@ -202,19 +216,6 @@ typedef P3_perfctr_context_t hwd_context_t;
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
 extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
-
-/* Overflow macros */
-#ifdef __x86_64__
-  #ifdef __CATAMOUNT__
-    #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext))->sc_rip)
-  #else    
-     #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&((hwd_ucontext_t *)ctx.ucontext)->uc_mcontext))->rip)
-  #endif
-#else
-#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&((hwd_ucontext_t *)ctx.ucontext)->uc_mcontext))->eip)
-#endif
-
-#define HW_OVERFLOW     1
 
 #if defined(PERFCTR26)
 #define PERFCTR_CPU_NAME(pi)    perfctr_info_cpu_name(pi)
