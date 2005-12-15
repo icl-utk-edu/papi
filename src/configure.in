@@ -163,6 +163,52 @@ dnl             [  --with-pfm=<path>     Specify path of pfm build tree on linux
 dnl             [pfm=$withval],
 dnl             [pfm=default]
 dnl             )
+
+# modified by Yuanlei Zhang
+#perfctr=""
+#perfctr_prefix=""
+#case "$OS" in
+#    linux|solaris)
+#        # check for pre-installed perfctr (/usr/lib)
+#        AC_CHECK_LIB([perfctr], [perfctr_info], [perfctr_prefix="/usr"])
+#
+#        # check for user specified perfctr (--with-perfctr)
+#        if test "x$perfctr_prefix" = "x"; then
+#            AC_ARG_WITH(perfctr,
+#                        [  --with-perfctr=<path>     Specify path of perfctr on linux/x86/x86_64/PPC/PPC64 system ],
+#                        [perfctr=$withval]
+#                        )
+#            if test "x$perfctr" != "x"; then
+#                AC_CHECK_FILE([$perfctr/examples/perfex/perfex], [], [
+#                              AC_MSG_WARN([Invalid perfctr path: $perfctr])
+#                              perfctr=""
+#                              ])
+#                if test "x$perfctr" != "x"; then
+#                    perfctrInfo="`$perfctr/examples/perfex/perfex -i | grep 'PerfCtr Info:'`"
+#                    if test "x$perfctrInfo" = "x"; then
+#                        AC_MSG_WARN([Perfctr is not properly installed])
+#                        perfctr=""
+#                    fi
+#                fi
+#            fi
+#        fi
+#
+#        # 3 options of using perfctr
+#        if test "x$perfctr_prefix" != "x"; then
+#            echo "use pre-installed perfctr in $perfctr_prefix/lib"
+#        elif test "x$perfctr" != "x"; then
+#            echo "use user specified perfctr in $perfctr"
+#        else
+#            echo "use default perfctr distributed with PAPI"
+#        fi
+#        ;;
+#    *)
+#        ;;
+#esac
+#AC_SUBST(perfctr_prefix)
+#AC_SUBST(perfctr)
+# end of Yuanlei's modification
+
 AC_ARG_WITH(pmapi,
             [  --with-pmapi=<path>     Specify path of pmapi on aix system ],
             [pmapi=$withval],
