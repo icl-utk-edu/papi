@@ -51,7 +51,7 @@ OPTFLAGS	= $(GCC3ARGS)
 endif
 endif
 
-ARCH		:= $(shell uname -m | grep x86_64)
+ARCH	:= $(shell uname -m | grep x86_64)
 ifeq (x86_64,$(ARCH))
 ifneq (32,$(BITS))
 SHRFLAGS		:= -fPIC
@@ -101,7 +101,12 @@ endif
 #
 #  Linux for PowerPC64 section
 #
-ARCH            := $(shell uname -m | grep ppc64)
+
+# be careful with ARCH. Right now it can *only* be x86_64 or ppc64...
+ifneq (x86_64,$(ARCH))
+ARCH			:= $(shell uname -m | grep ppc64)
+endif
+
 ifeq ($(ARCH),ppc64)
 ifeq (32,$(BITS))
 F77             = g77 -m32 -Wall
@@ -154,7 +159,7 @@ OPTFLAGS	+= -O3 # -g $(EVENTFLAGS) -DDEBUG -DPAPI_DEBUG_MEMORY_TRACE
 endif
 
 FFLAGS        	+= -Dlinux $(FARGS)
-TOPTFLAGS	+= -O0 
+TOPTFLAGS	+= -O
 FTOPTFLAGS	= $(TOPTFLAGS)
 
 #
@@ -188,6 +193,13 @@ PERFCTR_KINC_PATH ?= $(PERFCTR_INC_PATH)
 endif
 
 CFLAGS  +=  -Wno-unused-function -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) $(NOTLS) -DOS_HEADER=\"$(OS).h\"
+# enable for debugging
+# CFLAGS	+= -g -DDEBUG
+
+# check for ACPI substrate inclusion
+ifdef ACPI
+CFLAGS +=-DHAS_ACPI
+endif
 
 CFLAGS-2.5.4 := -DPERFCTR25
 CFLAGS-2.6.x := -DPERFCTR26
@@ -203,12 +215,29 @@ PERFCTR_OBJS-2.7.x := misc.o virtual.o $(PLATFORM).o
 CFLAGS	+= $(CFLAGS-$(VERSION))
 PERFCTR_OBJS := $(PERFCTR_OBJS-$(VERSION))
 
+# if we're making p3 or p4, we want both;
+# but if we're making opteron, we want *only* opteron (p3)
+
 MISCHDRS = perfctr-$(CPU).h
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
-ifeq (p3,$(CPU))
-MISCSRCS = $(CPU)_events.c p4_events.c perfctr-p4.c linux-acpi.c $(ARCH_SPEC_EVTS)
+ifeq (x86_64,$(ARCH))
+$(warning We're an opteron, skip p4)
+#MISCSRCS = p3_events.c
+MISCSRCS = p3_events.c
 else
-MISCSRCS = $(CPU)_events.c p3_events.c perfctr-p3.c linux-acpi.c $(ARCH_SPEC_EVTS)
+ifeq (p3,$(CPU))
+$(warning We're p3, include p4)
+MISCSRCS = p3_events.c p4_events.c perfctr-p4.c
+endif
+ifeq (p4,$(CPU))
+$(warning We're p4, include p3)
+MISCSRCS = p4_events.c p3_events.c perfctr-p3.c
+endif
+endif
+
+# check for ACPI substrate
+ifdef ACPI
+MISCSRCS += linux-acpi.c
 endif
 MISCOBJS = $(PERFCTR_OBJS) $(MISCSRCS:.c=.o) 
 
