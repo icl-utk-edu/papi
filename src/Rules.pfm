@@ -92,12 +92,19 @@ CFLAGS-3.x := -DPFM30 -D_GNU_SOURCE
 PFM_OBJS-2.x := pfmlib_generic.o pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o 
 PFM_OBJS-3.x := pfmlib_generic_ia64.o pfmlib_os.o pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o 
 
-CFLAGS += $(CFLAGS-$(VERSION)) -DHAS_ACPI -DDEBUG -g
+#CFLAGS += $(CFLAGS-$(VERSION)) -DDEBUG -g
+CFLAGS += $(CFLAGS-$(VERSION))
+
 PFM_OBJS := $(PFM_OBJS-$(VERSION))  
 
 MISCHDRS = pfmwrap.h
-# MISCSRCS =
-MISCSRCS = linux-acpi.c
+MISCSRCS =
+
+ifdef ACPI
+CFLAGS += -DHAS_ACPI
+MISCSRCS += linux-acpi.c
+endif
+
 SHLIBDEPS = -L$(PFM_LIB_PATH) -lpfm
 MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
 
