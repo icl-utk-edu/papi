@@ -37,10 +37,13 @@ int sidx;
 extern int setup_ppc64_presets(int cputype);
 extern int ppc64_setup_vector_table(papi_vectors_t *);
 #else
-extern int setup_p4_presets(int cputype);
-extern int setup_p4_vector_table(papi_vectors_t *, int idx);
 int setup_p3_presets(int cputype);
 int setup_p3_vector_table(papi_vectors_t *);
+#endif
+
+#if (!defined(PPC64) && !defined(__x86_64__))
+extern int setup_p4_presets(int cputype);
+extern int setup_p4_vector_table(papi_vectors_t *, int idx);
 #endif
 
 extern int p3_papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer);
@@ -767,9 +770,11 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable, int idx)
    strcpy(_papi_hwi_substrate_info[idx].substrate, "$Id$");
 #ifndef PPC64
    if ( is_p4 ){
+#ifndef __x86_64__
      retval = setup_p4_vector_table(vtable, idx);
      if (!retval)
         retval = setup_p4_presets(info.cpu_type);
+#endif
    }
    else{
      retval = setup_p3_vector_table(vtable);
@@ -831,8 +836,10 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable, int idx)
 
 /* 
  * 1 if the processor is a P4, 0 otherwise
+ * Opteron code (__x86_64__) doesn't support P4
  */
 int check_p4(int cputype){
+#ifndef __x86_64__
   switch(cputype) {
      case PERFCTR_X86_INTEL_P4:
      case PERFCTR_X86_INTEL_P4M2:
@@ -843,6 +850,7 @@ int check_p4(int cputype){
      default:
         return(0);
   }
+#endif
   return(0);
 }  
 
