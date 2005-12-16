@@ -647,9 +647,18 @@ static void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context)
    ctx.si = si;
    ctx.ucontext = (ucontext_t *) context;
 
+#ifdef __CATAMOUNT__
+#define OVERFLOW_MASK 0
+#define GEN_OVERFLOW 1
+#else
+#define OVERFLOW_MASK si->si_pmc_ovf_mask
+#define GEN_OVERFLOW 0
+#endif
+
    pc = GET_OVERFLOW_ADDRESS(ctx);
 
-   _papi_hwi_dispatch_overflow_signal((void *)&ctx,&isHardware, si->si_pmc_ovf_mask,0,&master,pc,0);
+   _papi_hwi_dispatch_overflow_signal((void *)&ctx,&isHardware,
+                                      OVERFLOW_MASK, GEN_OVERFLOW,&master,pc,0);
 
    /* We are done, resume interrupting counters */
 
@@ -659,7 +668,6 @@ static void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context)
       }
    }
 }
-
 
 static int _papi_hwd_init(hwd_context_t * ctx) {
    struct vperfctr_control tmp;
@@ -721,7 +729,11 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable, int idx)
   int retval;
   struct perfctr_info info;
   int is_p4=0;
+#if defined(PERFCTR26)
   int fd;
+#else
+  struct vperfctr *dev;
+#endif
 
   sidx = idx;
 
@@ -736,7 +748,9 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable, int idx)
    if ( retval )
      return(retval);
 
-   /* Get info from the kernel */
+
+ #if defined(PERFCTR26)
+  /* Get info from the kernel */
    /* Use lower level calls per Mikael to get the perfctr info
       without actually creating a new kernel-side state.
       Also, close the fd immediately after retrieving the info.
@@ -747,12 +761,28 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable, int idx)
    if (fd < 0)
      { PAPIERROR( VOPEN_ERROR); return(PAPI_ESYS); }
    retval = perfctr_info(fd, &info);
-        close(fd);
+ 	close(fd);
    if(retval < 0 )
      { PAPIERROR( VINFO_ERROR); return(PAPI_ESYS); }
 
-    /* copy tsc multiplier to local variable */
-     /*tb_scale_factor = info.tsc_to_cpu_mult;*/
+    /* copy tsc multiplier to local variable        */
+    /* this field appears in perfctr 2.6 and higher */
+ 	/* tb_scale_factor = info.tsc_to_cpu_mult; */
+#else
+   /* Opened once for all threads. */
+   if ((dev = vperfctr_open()) == NULL)
+     { PAPIERROR( VOPEN_ERROR); return(PAPI_ESYS); }
+   SUBDBG("_papi_hwd_init_global vperfctr_open = %p\n", dev);
+
+   /* Get info from the kernel */
+   retval = vperfctr_info(dev, &info);
+   if (retval < 0)
+     { PAPIERROR( VINFO_ERROR); return(PAPI_ESYS); }
+    vperfctr_close(dev);
+
+   /* set local scale variable to default of 1     */
+ 	/* tb_scale_factor = 1; */
+#endif
 
   /* Fill in what we can of the papi_system_info. */
   retval = _papi_hwd_get_system_info();
@@ -823,7 +853,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable, int idx)
       fprintf(stderr,"Version mismatch of perfctr: compiled 2.5 or higher vs. installed %s\n",info.driver_version);
       return(PAPI_ESBSTR);
     }
-  _papi_hwi_system_info.supports_hw_profile = 0;
+  _papi_hwi_substrate_info[sidx].supports_hw_profile = 0;
   _papi_hwi_system_info.hw_info.mhz = (float) info.cpu_khz / 1000.0;
   SUBDBG("Detected MHZ is %f\n",_papi_hwi_system_info.hw_info.mhz);
 #endif
