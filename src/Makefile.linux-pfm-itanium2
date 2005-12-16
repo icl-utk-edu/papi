@@ -4,4 +4,6 @@
 # COMPILER	?= INTEL
 CPU		= 2
 
+# ACPI = TRUE
+
 include Rules.pfm

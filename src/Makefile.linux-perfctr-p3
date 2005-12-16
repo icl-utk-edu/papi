@@ -4,4 +4,6 @@ GCC3ARGS	= -march=pentium3 -msse -DTRAP_DERIVED_UNDERFLOW
 #XMLFLAG		= -DXML
 # COMPILER	?= INTEL or PGROUP
 
+# ACPI = TRUE
+
 include Rules.perfctr
