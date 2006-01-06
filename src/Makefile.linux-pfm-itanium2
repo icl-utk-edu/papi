@@ -4,6 +4,8 @@
 # COMPILER	?= INTEL
 CPU		= 2
 
+# Optional additional substrates
 # ACPI = TRUE
+# MYRINET_MX = TRUE
 
 include Rules.pfm
