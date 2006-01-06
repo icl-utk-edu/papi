@@ -85,7 +85,7 @@ int _papi_hwd_init_acpi_substrate(papi_vectors_t *vtable, int idx)
  * it can be called anything you want as long as the information
  * for the presets are setup here.
  */
-hwi_search_t preset_map[] = {
+static hwi_search_t preset_map[] = {
    {0, {0, {PAPI_NULL, PAPI_NULL}, {0,}}}
 };
 
