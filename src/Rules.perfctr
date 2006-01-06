@@ -194,11 +194,16 @@ endif
 
 CFLAGS  +=  -Wno-unused-function -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) $(NOTLS) -DOS_HEADER=\"$(OS).h\"
 # enable for debugging
-# CFLAGS	+= -g -DDEBUG
+# CFLAGS	+= -g -DDEBUG -DPAPI_DEBUG_MEMORY
 
 # check for ACPI substrate inclusion
 ifdef ACPI
 CFLAGS +=-DHAS_ACPI
+endif
+
+# check for Myrinet MX substrate inclusion
+ifdef MYRINET_MX
+CFLAGS +=-DHAS_MYRINET_MX
 endif
 
 CFLAGS-2.5.4 := -DPERFCTR25
@@ -239,6 +244,12 @@ endif
 ifdef ACPI
 MISCSRCS += linux-acpi.c
 endif
+
+# check for Myrinet MX substrate
+ifdef MYRINET_MX
+MISCSRCS += linux-mx.c
+endif
+
 MISCOBJS = $(PERFCTR_OBJS) $(MISCSRCS:.c=.o) 
 
 #Dynamic linking loader needs correct version of libperfctr
