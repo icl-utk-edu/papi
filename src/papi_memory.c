@@ -56,6 +56,8 @@ static pmem_t * init_mem_ptr(void *, int, char *, int);
 static void insert_mem_ptr(pmem_t *);
 static void remove_mem_ptr(pmem_t *);
 static int set_epilog(pmem_t *mem_ptr);
+static int _papi_mem_check_buf_overflow(pmem_t *tmp);
+
 
 /**********************************************************************
  * Exposed papi versions of std memory management routines:           *
@@ -299,7 +301,7 @@ int _papi_mem_check_all_overflow()
 
    _papi_hwi_lock(MEMORY_LOCK);
    for(tmp = mem_head; tmp; tmp = tmp->next){
-     if ( check_buffer_overflow(tmp) ) fnd++;
+     if ( _papi_mem_check_buf_overflow(tmp) ) fnd++;
    }
    if ( fnd )
      fprintf(stderr, "%d Total Buffer overflows detected!\n", fnd);
