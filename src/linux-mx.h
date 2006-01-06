@@ -11,8 +11,8 @@
 *          <your email address>
 */
 
-#ifndef _PAPI_GM_H
-#define _PAPI_GM_H
+#ifndef _PAPI_MX_H
+#define _PAPI_MX_H
 
 #include "papi_sys_headers.h"
 
@@ -145,7 +145,8 @@ typedef struct gm_register {
    /* indicate which counters this event can live on */
    unsigned int selector;
    /* Buffers containing counter cmds for each possible metric */
-   char *counter_cmd[PAPI_MAX_STR_LEN];
+//   char *counter_cmd[PAPI_MAX_STR_LEN];
+   char *counter_cmd;
 } GM_register_t;
 
 typedef GM_register_t hwd_register_t;
