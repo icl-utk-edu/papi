@@ -558,6 +558,7 @@ typedef struct PAPI_substrate_info {
    const PAPI_hw_info_t  *PAPI_get_hardware_info(void);
    int   PAPI_get_multiplex(int EventSet);
    int   PAPI_get_opt(int option, PAPI_option_t * ptr);
+   int   PAPI_get_substrate_opt(int option, PAPI_option_t * ptr,int sidx);
    long_long PAPI_get_real_cyc(void);
    long_long PAPI_get_real_usec(void);
    const PAPI_shlib_info_t *PAPI_get_shared_lib_info(void);
@@ -571,6 +572,7 @@ typedef struct PAPI_substrate_info {
    int  PAPI_lock(int);
    int   PAPI_multiplex_init(void);
    int   PAPI_num_hwctrs(void);
+   int   PAPI_number_hwctrs(int sidx);
    int   PAPI_num_events(int EventSet);
    int   PAPI_overflow(int EventSet, int EventCode, int threshold,
                      int flags, PAPI_overflow_handler_t handler);

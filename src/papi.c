@@ -1270,6 +1270,11 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
    }
 }
 
+int PAPI_number_hwctrs(int idx)
+{
+   return (PAPI_get_substrate_opt(PAPI_MAX_HWCTRS, NULL, idx));
+}
+
 int PAPI_num_hwctrs(void)
 {
    return (PAPI_get_opt(PAPI_MAX_HWCTRS, NULL));
@@ -1288,7 +1293,45 @@ int PAPI_get_multiplex(int EventSet)
 }
 
 
-/* XXX Need to fix this up as well */
+int PAPI_get_substrate_opt(int option, PAPI_option_t *ptr, int idx)
+{
+   switch (option) {
+   case PAPI_MULTIPLEX:
+   case PAPI_PRELOAD:
+   case PAPI_DEBUG:
+   case PAPI_CLOCKRATE:
+   case PAPI_GRANUL:
+   case PAPI_SHLIBINFO:
+   case PAPI_EXEINFO:
+   case PAPI_DOMAIN:
+   case PAPI_LIB_VERSION:
+      return(PAPI_get_opt(option, ptr));
+   case PAPI_MAX_HWCTRS:
+      return (_papi_hwi_substrate_info[idx].num_cntrs);
+   case PAPI_DEFDOM:
+      return (_papi_hwi_substrate_info[idx].default_domain);
+   case PAPI_DEFGRN:
+      return (_papi_hwi_substrate_info[idx].default_granularity);
+   case PAPI_SUBSTRATE_SUPPORT:
+      if (ptr == NULL)
+         papi_return(PAPI_EINVAL);
+      ptr->sub_info.supports_program = _papi_hwi_substrate_info[idx].supports_program;
+      ptr->sub_info.supports_write = _papi_hwi_substrate_info[idx].supports_write;
+      ptr->sub_info.supports_hw_overflow = _papi_hwi_substrate_info[idx].supports_hw_overflow;
+      ptr->sub_info.supports_hw_profile = _papi_hwi_substrate_info[idx].supports_hw_profile;
+      ptr->sub_info.supports_multiple_threads = _papi_hwi_system_info.supports_multiple_threads;
+      ptr->sub_info.supports_64bit_counters = _papi_hwi_substrate_info[idx].supports_64bit_counters;
+      ptr->sub_info.supports_inheritance = _papi_hwi_substrate_info[idx].supports_inheritance;
+      ptr->sub_info.supports_attach = _papi_hwi_substrate_info[idx].supports_attach;
+      ptr->sub_info.supports_real_usec = _papi_hwi_system_info.supports_real_usec;
+      ptr->sub_info.supports_virt_usec = _papi_hwi_system_info.supports_virt_usec;
+      ptr->sub_info.supports_virt_cyc = _papi_hwi_system_info.supports_virt_cyc;
+      return(PAPI_OK);
+   }
+   return PAPI_EINVAL;
+}
+
+
 int PAPI_get_opt(int option, PAPI_option_t * ptr)
 {
    switch (option) {
@@ -1313,12 +1356,6 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
       return ((int) _papi_hwi_system_info.hw_info.mhz);
    case PAPI_MAX_CPUS:
       return (_papi_hwi_system_info.hw_info.ncpu);
-   case PAPI_MAX_HWCTRS:
-      return (_papi_hwi_substrate_info[0].num_cntrs);
-   case PAPI_DEFDOM:
-      return (_papi_hwi_substrate_info[0].default_domain);
-   case PAPI_DEFGRN:
-      return (_papi_hwi_substrate_info[0].default_granularity);
    case PAPI_GRANUL:
       if (ptr == NULL)
          papi_return(PAPI_EINVAL);
