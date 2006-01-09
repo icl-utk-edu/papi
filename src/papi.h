@@ -541,8 +541,7 @@ typedef struct PAPI_substrate_info {
    int   PAPI_add_events(int EventSet, int *Events, int number);
    int   PAPI_cleanup_eventset(int EventSet);
    int   PAPI_create_eventset(int *EventSet);
-   int   PAPI_create_ext_eventset(int *EventSet, int substrate);
-   int   PAPI_allocate_eventset(int *EventSet, int substrate_idx);
+   int   PAPI_create_sbstr_eventset(int *EventSet, int substrate);
    int   PAPI_destroy_eventset(int *EventSet);
    int   PAPI_enum_event(int *EventCode, int modifier);
    int   PAPI_event_code_to_name(int EventCode, char *out);
@@ -552,13 +551,13 @@ typedef struct PAPI_substrate_info {
 #endif
    int   PAPI_encode_events(char * event_file, int replace);
    int   PAPI_get_event_info(int EventCode, PAPI_event_info_t * info);
-   int   PAPI_get_substrate_info(int idx, PAPI_substrate_info_t * info);
+   int   PAPI_get_sbstr_info(int idx, PAPI_substrate_info_t * info);
    int   PAPI_set_event_info(PAPI_event_info_t * info, int *EventCode, int replace);
    const PAPI_exe_info_t *PAPI_get_executable_info(void);
    const PAPI_hw_info_t  *PAPI_get_hardware_info(void);
    int   PAPI_get_multiplex(int EventSet);
    int   PAPI_get_opt(int option, PAPI_option_t * ptr);
-   int   PAPI_get_substrate_opt(int option, PAPI_option_t * ptr,int sidx);
+   int   PAPI_get_sbstr_opt(int option, PAPI_option_t * ptr,int sidx);
    long_long PAPI_get_real_cyc(void);
    long_long PAPI_get_real_usec(void);
    const PAPI_shlib_info_t *PAPI_get_shared_lib_info(void);
@@ -572,7 +571,7 @@ typedef struct PAPI_substrate_info {
    int  PAPI_lock(int);
    int   PAPI_multiplex_init(void);
    int   PAPI_num_hwctrs(void);
-   int   PAPI_number_hwctrs(int sidx);
+   int   PAPI_num_sbstr_hwctrs(int sidx);
    int   PAPI_num_events(int EventSet);
    int   PAPI_overflow(int EventSet, int EventCode, int threshold,
                      int flags, PAPI_overflow_handler_t handler);

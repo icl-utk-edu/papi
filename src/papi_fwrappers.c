@@ -89,7 +89,7 @@ PAPI_FCALL(papif_create_eventset, PAPIF_CREATE_EVENTSET, (int *EventSet, int *ch
 
 PAPI_FCALL(papif_allocate_eventset, PAPIF_ALLOCATE_EVENTSET, (int *EventSet, int substrate_idx,int *check))
 {
-   *check = PAPI_allocate_eventset(EventSet, substrate_idx);
+   *check = PAPI_create_sbstr_eventset(EventSet, substrate_idx);
 }
 
 PAPI_FCALL(papif_destroy_eventset, PAPIF_DESTROY_EVENTSET, (int *EventSet, int *check))

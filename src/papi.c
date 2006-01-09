@@ -319,7 +319,7 @@ int PAPI_query_event(int EventCode)
    papi_return(PAPI_ENOTPRESET);
 }
 
-int PAPI_get_substrate_info(int idx, PAPI_substrate_info_t *info)
+int PAPI_get_sbstr_info(int idx, PAPI_substrate_info_t *info)
 {
   if ( idx < 0 || idx >= papi_num_substrates )
     return(PAPI_EINVAL);
@@ -595,18 +595,13 @@ int PAPI_enum_event(int *EventCode, int modifier)
    return (PAPI_ENOEVNT);
 }
 
-/* Deprecated, use PAPI_allocate_eventset */
+/* Deprecated, use PAPI_create_sbstr_eventset */
 int PAPI_create_eventset(int *EventSet)
 {
-  return (PAPI_allocate_eventset(EventSet, 0));
+  return (PAPI_create_sbstr_eventset(EventSet, 0));
 }
 
-int PAPI_create_ext_eventset(int *EventSet, int substrate)
-{
-  return (PAPI_allocate_eventset(EventSet, substrate));
-}
-
-int PAPI_allocate_eventset(int *EventSet, int substrate)
+int PAPI_create_sbstr_eventset(int *EventSet, int substrate)
 {
    ThreadInfo_t *master;
    int retval;
@@ -1270,14 +1265,18 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
    }
 }
 
-int PAPI_number_hwctrs(int idx)
-{
-   return (PAPI_get_substrate_opt(PAPI_MAX_HWCTRS, NULL, idx));
-}
-
+/* This is the deprecated PAPI 3 num hwctrs interface.
+   It is preserved for backward compatibility. It calls
+   PAPI_get_sbstr_opt() with a substrate index of 0
+*/
 int PAPI_num_hwctrs(void)
 {
-   return (PAPI_get_opt(PAPI_MAX_HWCTRS, NULL));
+   return (PAPI_get_sbstr_opt(PAPI_MAX_HWCTRS, NULL, 0));
+}
+
+int PAPI_num_sbstr_hwctrs(int idx)
+{
+   return (PAPI_get_sbstr_opt(PAPI_MAX_HWCTRS, NULL, idx));
 }
 
 int PAPI_get_multiplex(int EventSet)
@@ -1286,55 +1285,29 @@ int PAPI_get_multiplex(int EventSet)
    int retval;
 
    popt.multiplex.eventset = EventSet;
-   retval = PAPI_get_opt(PAPI_MULTIPLEX, &popt);
+   retval = PAPI_get_sbstr_opt(PAPI_MULTIPLEX, &popt, 0);
    if (retval < 0)
       retval = 0;
    return retval;
 }
 
-
-int PAPI_get_substrate_opt(int option, PAPI_option_t *ptr, int idx)
-{
-   switch (option) {
-   case PAPI_MULTIPLEX:
-   case PAPI_PRELOAD:
-   case PAPI_DEBUG:
-   case PAPI_CLOCKRATE:
-   case PAPI_GRANUL:
-   case PAPI_SHLIBINFO:
-   case PAPI_EXEINFO:
-   case PAPI_DOMAIN:
-   case PAPI_LIB_VERSION:
-      return(PAPI_get_opt(option, ptr));
-   case PAPI_MAX_HWCTRS:
-      return (_papi_hwi_substrate_info[idx].num_cntrs);
-   case PAPI_DEFDOM:
-      return (_papi_hwi_substrate_info[idx].default_domain);
-   case PAPI_DEFGRN:
-      return (_papi_hwi_substrate_info[idx].default_granularity);
-   case PAPI_SUBSTRATE_SUPPORT:
-      if (ptr == NULL)
-         papi_return(PAPI_EINVAL);
-      ptr->sub_info.supports_program = _papi_hwi_substrate_info[idx].supports_program;
-      ptr->sub_info.supports_write = _papi_hwi_substrate_info[idx].supports_write;
-      ptr->sub_info.supports_hw_overflow = _papi_hwi_substrate_info[idx].supports_hw_overflow;
-      ptr->sub_info.supports_hw_profile = _papi_hwi_substrate_info[idx].supports_hw_profile;
-      ptr->sub_info.supports_multiple_threads = _papi_hwi_system_info.supports_multiple_threads;
-      ptr->sub_info.supports_64bit_counters = _papi_hwi_substrate_info[idx].supports_64bit_counters;
-      ptr->sub_info.supports_inheritance = _papi_hwi_substrate_info[idx].supports_inheritance;
-      ptr->sub_info.supports_attach = _papi_hwi_substrate_info[idx].supports_attach;
-      ptr->sub_info.supports_real_usec = _papi_hwi_system_info.supports_real_usec;
-      ptr->sub_info.supports_virt_usec = _papi_hwi_system_info.supports_virt_usec;
-      ptr->sub_info.supports_virt_cyc = _papi_hwi_system_info.supports_virt_cyc;
-      return(PAPI_OK);
-   }
-   return PAPI_EINVAL;
-}
-
-
+/* This is the deprecated PAPI 3 get option interface.
+   It is preserved for backward compatibility. It calls
+   PAPI_get_sbstr_opt() with a substrate index of 0
+*/
 int PAPI_get_opt(int option, PAPI_option_t * ptr)
 {
+   return PAPI_get_sbstr_opt(option, ptr, 0);
+}
+
+/* This entry point is new for PAPI 4. It implements a per-substrate
+   option function. It supercedes the PAPI_get_opt call
+*/
+int PAPI_get_sbstr_opt(int option, PAPI_option_t *ptr, int sidx)
+{
    switch (option) {
+   case PAPI_MAX_CPUS:
+      return (_papi_hwi_system_info.hw_info.ncpu);
    case PAPI_MULTIPLEX:
       {
          EventSetInfo_t *ESI;
@@ -1354,8 +1327,6 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
       break;
    case PAPI_CLOCKRATE:
       return ((int) _papi_hwi_system_info.hw_info.mhz);
-   case PAPI_MAX_CPUS:
-      return (_papi_hwi_system_info.hw_info.ncpu);
    case PAPI_GRANUL:
       if (ptr == NULL)
          papi_return(PAPI_EINVAL);
@@ -1384,28 +1355,35 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
       if (ptr == NULL)
          papi_return(PAPI_EINVAL);
       return (_papi_hwi_get_domain(&ptr->domain));
+   case PAPI_LIB_VERSION:
+      return (PAPI_VERSION);
+   case PAPI_MAX_HWCTRS:
+      return (_papi_hwi_substrate_info[sidx].num_cntrs);
+   case PAPI_DEFDOM:
+      return (_papi_hwi_substrate_info[sidx].default_domain);
+   case PAPI_DEFGRN:
+      return (_papi_hwi_substrate_info[sidx].default_granularity);
    case PAPI_SUBSTRATE_SUPPORT:
       if (ptr == NULL)
          papi_return(PAPI_EINVAL);
-      ptr->sub_info.supports_program = _papi_hwi_substrate_info[0].supports_program;
-      ptr->sub_info.supports_write = _papi_hwi_substrate_info[0].supports_write;
-      ptr->sub_info.supports_hw_overflow = _papi_hwi_substrate_info[0].supports_hw_overflow;
-      ptr->sub_info.supports_hw_profile = _papi_hwi_substrate_info[0].supports_hw_profile;
+      ptr->sub_info.supports_program = _papi_hwi_substrate_info[sidx].supports_program;
+      ptr->sub_info.supports_write = _papi_hwi_substrate_info[sidx].supports_write;
+      ptr->sub_info.supports_hw_overflow = _papi_hwi_substrate_info[sidx].supports_hw_overflow;
+      ptr->sub_info.supports_hw_profile = _papi_hwi_substrate_info[sidx].supports_hw_profile;
       ptr->sub_info.supports_multiple_threads = _papi_hwi_system_info.supports_multiple_threads;
-      ptr->sub_info.supports_64bit_counters = _papi_hwi_substrate_info[0].supports_64bit_counters;
-      ptr->sub_info.supports_inheritance = _papi_hwi_substrate_info[0].supports_inheritance;
-      ptr->sub_info.supports_attach = _papi_hwi_substrate_info[0].supports_attach;
+      ptr->sub_info.supports_64bit_counters = _papi_hwi_substrate_info[sidx].supports_64bit_counters;
+      ptr->sub_info.supports_inheritance = _papi_hwi_substrate_info[sidx].supports_inheritance;
+      ptr->sub_info.supports_attach = _papi_hwi_substrate_info[sidx].supports_attach;
       ptr->sub_info.supports_real_usec = _papi_hwi_system_info.supports_real_usec;
       ptr->sub_info.supports_virt_usec = _papi_hwi_system_info.supports_virt_usec;
       ptr->sub_info.supports_virt_cyc = _papi_hwi_system_info.supports_virt_cyc;
       return(PAPI_OK);
-   case PAPI_LIB_VERSION:
-      return (PAPI_VERSION);
    default:
-      papi_return(PAPI_EINVAL);
+      papi_return (PAPI_EINVAL);
    }
    return(PAPI_OK);
 }
+
 
 int PAPI_num_events(int EventSet)
 {
@@ -1956,7 +1934,7 @@ const PAPI_exe_info_t *PAPI_get_executable_info(void)
    PAPI_option_t ptr;
    int retval;
 
-   retval = PAPI_get_opt(PAPI_EXEINFO, &ptr);
+   retval = PAPI_get_sbstr_opt(PAPI_EXEINFO, &ptr, 0);
    if (retval == PAPI_OK)
       return (ptr.exe_info);
    else
@@ -1968,7 +1946,7 @@ const PAPI_shlib_info_t *PAPI_get_shared_lib_info(void)
    PAPI_option_t ptr;
    int retval;
 
-   retval = PAPI_get_opt(PAPI_SHLIBINFO, &ptr);
+   retval = PAPI_get_sbstr_opt(PAPI_SHLIBINFO, &ptr, 0);
    if (retval == PAPI_OK)
       return (ptr.shlib_info);
    else
@@ -1980,7 +1958,7 @@ const PAPI_hw_info_t *PAPI_get_hardware_info(void)
    PAPI_option_t ptr;
    int retval;
 
-   retval = PAPI_get_opt(PAPI_HWINFO, &ptr);
+   retval = PAPI_get_sbstr_opt(PAPI_HWINFO, &ptr, 0);
    if (retval == PAPI_OK)
       return (ptr.hw_info);
    else
