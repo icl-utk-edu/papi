@@ -37,8 +37,8 @@ int main(int argc, char **argv)
       j++;
 
    sidx = PAPI_SUBSTRATE_INDEX(evtcode);
-   if ((retval = PAPI_allocate_eventset(&EventSet, sidx)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_allocate_eventset", retval);
+   if ((retval = PAPI_create_sbstr_eventset(&EventSet, sidx)) != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_create_sbstr_eventset", retval);
 
    if (j == 1 && (retval = PAPI_add_event(EventSet, evtcode)) != PAPI_OK) {
       if (retval != PAPI_ECNFLCT)

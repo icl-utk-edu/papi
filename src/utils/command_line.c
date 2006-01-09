@@ -26,8 +26,8 @@ int main(int argc, char **argv)
    if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
-   if ((retval = PAPI_create_ext_eventset(&ExEventSet,1)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
+   if ((retval = PAPI_create_sbstr_eventset(&ExEventSet,1)) != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_create_sbstr_eventset", retval);
 
    if ( TESTS_QUIET ) 
      i = 2;
