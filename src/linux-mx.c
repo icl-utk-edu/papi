@@ -514,34 +514,11 @@ static native_event_entry_t native_table[] = {
    {{0, 0}, "", ""}
 };
 
-long_long _papi_hwd_mx_register_start[MAX_COUNTERS];
-long_long _papi_hwd_mx_register[MAX_COUNTERS];
 
-papi_svector_t _any_null_table[] = {
-// {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
-// {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
-// {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
-// {(void (*)())_papi_hwd_ctl, VEC_PAPI_HWD_CTL},
-// {(void (*)())_papi_hwd_get_real_usec, VEC_PAPI_HWD_GET_REAL_USEC},
-// {(void (*)())_papi_hwd_get_real_cycles, VEC_PAPI_HWD_GET_REAL_CYCLES},
-// {(void (*)())_papi_hwd_get_virt_cycles, VEC_PAPI_HWD_GET_VIRT_CYCLES},
-// {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
-// {(void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE },
-// {(void (*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
-// {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
-// {(void (*)())_papi_hwd_shutdown_global, VEC_PAPI_HWD_SHUTDOWN_GLOBAL},
-// {(void (*)())_papi_hwd_write, VEC_PAPI_HWD_WRITE},
-// {(void (*)())_papi_hwd_stop_profiling, VEC_PAPI_HWD_STOP_PROFILING},
-// {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
-// {(void (*)())_papi_hwd_set_profile, VEC_PAPI_HWD_SET_PROFILE},
-// {(void (*)())_papi_hwd_add_prog_event, VEC_PAPI_HWD_ADD_PROG_EVENT},
-// {(void (*)())_papi_hwd_bpt_map_set, VEC_PAPI_HWD_BPT_MAP_SET },
-// {(void (*)())_papi_hwd_bpt_map_avail, VEC_PAPI_HWD_BPT_MAP_AVAIL },
-// {(void (*)())_papi_hwd_bpt_map_exclusive, VEC_PAPI_HWD_BPT_MAP_EXCLUSIVE },
-// {(void (*)())_papi_hwd_bpt_map_shared, VEC_PAPI_HWD_BPT_MAP_SHARED },
-// {(void (*)())_papi_hwd_bpt_map_preempt, VEC_PAPI_HWD_BPT_MAP_PREEMPT },
-// {(void (*)())_papi_hwd_bpt_map_update, VEC_PAPI_HWD_BPT_MAP_UPDATE },
-// {(void (*)())_papi_hwd_allocate_registers, VEC_PAPI_HWD_ALLOCATE_REGISTERS },
+static long_long _papi_hwd_mx_register_start[MX_MAX_COUNTERS];
+static long_long _papi_hwd_mx_register[MX_MAX_COUNTERS];
+
+static papi_svector_t _mx_table[] = {
  {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
  {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
  {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
@@ -568,7 +545,7 @@ int _papi_hwd_init_myrinet_mx_substrate(papi_vectors_t *vtable, int idx)
 {
    int retval;
 
-   retval = _papi_hwi_setup_vector_table( vtable, _any_null_table);
+   retval = _papi_hwi_setup_vector_table( vtable, _mx_table);
    
    sidx = idx;
 
@@ -578,7 +555,7 @@ int _papi_hwd_init_myrinet_mx_substrate(papi_vectors_t *vtable, int idx)
     * The 0 argument will print out only dummy routines, change
     * it to a 1 to print out all routines.
     */
-   vector_print_table(vtable, 0);
+//   vector_print_table(vtable, 0);
 #endif
    /* Internal function, doesn't necessarily need to be a function */
    init_mdi();
@@ -611,6 +588,7 @@ static int init_presets(){
  * list check out papi_mdi_t, though some of the values are setup
  * and used above the substrate level.
  */
+
 static void init_mdi(){
    strcpy(_papi_hwi_system_info.hw_info.vendor_string,"linux-myrinet_mx");
    strcpy(_papi_hwi_system_info.hw_info.model_string,"linux-myrinet_mx");
@@ -618,7 +596,7 @@ static void init_mdi(){
    _papi_hwi_system_info.hw_info.ncpu = 1;
    _papi_hwi_system_info.hw_info.nnodes = 1;
    _papi_hwi_system_info.hw_info.totalcpus = 1;
-   _papi_hwi_substrate_info[sidx].num_cntrs = MAX_COUNTERS;
+   _papi_hwi_substrate_info[sidx].num_cntrs = MX_MAX_COUNTERS;
    _papi_hwi_substrate_info[sidx].supports_program = 0;
    _papi_hwi_substrate_info[sidx].supports_write = 0;
    _papi_hwi_substrate_info[sidx].supports_hw_overflow = 0;
@@ -631,8 +609,6 @@ static void init_mdi(){
    _papi_hwi_substrate_info[sidx].reg_alloc_size = sizeof(hwd_reg_alloc_t);
    _papi_hwi_substrate_info[sidx].control_state_size = sizeof(hwd_control_state_t);
 }
-
-
 
 
 static int read_mx_counters(long_long *counters)
@@ -685,7 +661,7 @@ static int read_mx_counters(long_long *counters)
 VECTOR_STATIC
 int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *ctrl){
    read_mx_counters(_papi_hwd_mx_register_start);
-   memcpy(_papi_hwd_mx_register, _papi_hwd_mx_register_start, MAX_COUNTERS*sizeof(long_long));
+   memcpy(_papi_hwd_mx_register, _papi_hwd_mx_register_start, MX_MAX_COUNTERS*sizeof(long_long));
 
    return(PAPI_OK);
 }
@@ -697,7 +673,7 @@ int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **ev
     int i;
 
     read_mx_counters(_papi_hwd_mx_register); 
-    for(i = 0; i < MAX_COUNTERS; i++){
+    for(i = 0; i < MX_MAX_COUNTERS; i++){
        ctrl->counts[i] = _papi_hwd_mx_register[i] - _papi_hwd_mx_register_start[i];
       /*printf("%d  %lld\n", i, ctrl->counts[i]);*/
     }
@@ -711,7 +687,7 @@ int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *ctrl)
    int i;
 
    read_mx_counters(_papi_hwd_mx_register);
-   for(i = 0; i < MAX_COUNTERS; i++){
+   for(i = 0; i < MX_MAX_COUNTERS; i++){
       ctrl->counts[i] = _papi_hwd_mx_register[i] - _papi_hwd_mx_register_start[i];
 /*      printf("%d  %lld\n", i, ctrl->counts[i]);*/
    }
@@ -772,4 +748,7 @@ int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *
 {
   return(1);
 }
+
+
+
 
