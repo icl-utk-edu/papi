@@ -30,7 +30,7 @@
 #include "papi_protos.h"
 #include "papi_vector.h"
 
-int sidx;
+static int sidx;
 
 /* Prototypes */
 #ifdef PPC64

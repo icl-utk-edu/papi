@@ -9,7 +9,7 @@
 static void init_mdi();
 static int init_presets();
 
-int sidx;
+static int sidx;
 
 enum native_name {
    PNE_LANAI_UPTIME = 0x40000000,

@@ -70,8 +70,7 @@
 /*#include "libperfctr.h"*/
 #endif
 
-//#define MAX_COUNTERS 100
-#define MX_MAX_COUNTERS 16
+#define MX_MAX_COUNTERS 100
 #define MX_MAX_COUNTER_TERMS  8
 
 #include "papi.h"
