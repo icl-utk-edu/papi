@@ -112,7 +112,7 @@ enum native_name {
    PNE_DMA_METADATA_RACE
 };
 
-#define MXPATH "/opt/mx/bin/mx_counters"
+#define MXPATH "/usr/local/mx/bin/mx_counters"
 
 static native_event_entry_t native_table[] = {
    {{ 1, MXPATH},
@@ -524,6 +524,7 @@ static papi_svector_t _mx_table[] = {
  {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
  {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
  {(void (*)())_papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
+ {(void(*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
  {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
  {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
  {(void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
@@ -555,7 +556,7 @@ int _papi_hwd_init_myrinet_mx_substrate(papi_vectors_t *vtable, int idx)
     * The 0 argument will print out only dummy routines, change
     * it to a 1 to print out all routines.
     */
-//   vector_print_table(vtable, 0);
+   vector_print_table(vtable, 0);
 #endif
    /* Internal function, doesn't necessarily need to be a function */
    init_mdi();
@@ -610,6 +611,17 @@ static void init_mdi(){
    _papi_hwi_substrate_info[sidx].control_state_size = sizeof(hwd_control_state_t);
 }
 
+static int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
+		              NativeInfo_t * native, int count, hwd_context_t * ctx)
+{
+   int i, index;
+
+   for (i = 0; i < count; i++) {
+      index = native[i].ni_event & PAPI_SUBSTRATE_AND_MASK;
+      native[i].ni_position = native_table[index].resources.selector-1;
+   }
+   return (PAPI_OK);
+}
 
 static int read_mx_counters(long_long *counters)
 {
@@ -712,7 +724,7 @@ VECTOR_STATIC
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
    if (modifier == PAPI_ENUM_ALL) {
-      int index = *EventCode & PAPI_NATIVE_AND_MASK;
+      int index = *EventCode & PAPI_SUBSTRATE_AND_MASK;
 
       if (native_table[index + 1].resources.selector) {
          *EventCode = *EventCode + 1;
@@ -727,19 +739,19 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 VECTOR_STATIC
 char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
-   return (native_table[EventCode & PAPI_NATIVE_AND_MASK].name);
+   return (native_table[EventCode & PAPI_SUBSTRATE_AND_MASK].name);
 }
 
 VECTOR_STATIC
 char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
-   return (native_table[EventCode & PAPI_NATIVE_AND_MASK].description);
+   return (native_table[EventCode & PAPI_SUBSTRATE_AND_MASK].description);
 }
 
 VECTOR_STATIC
 int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
-{
-   memcpy(bits, &(native_table[EventCode & PAPI_NATIVE_AND_MASK].resources), sizeof(hwd_register_t)); /* it is not right, different type */
+{ 
+   memcpy(bits, &(native_table[EventCode & PAPI_SUBSTRATE_AND_MASK].resources), sizeof(hwd_register_t)); 
    return (PAPI_OK);
 }
 
@@ -748,7 +760,3 @@ int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *
 {
   return(1);
 }
-
-
-
-
