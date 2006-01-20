@@ -696,7 +696,7 @@ int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long 
 
 int _papi_hwd_shutdown(hwd_context_t * ctx) {
    int retval = 0;
-//   retval = vperfctr_unlink(ctx->self);
+   retval = vperfctr_unlink(ctx->self);
    SUBDBG("_papi_hwd_shutdown vperfctr_unlink(%p) = %d\n", ctx->self, retval);
    pmc_close(ctx->self);
    SUBDBG("_papi_hwd_shutdown vperfctr_close(%p)\n", ctx->self);

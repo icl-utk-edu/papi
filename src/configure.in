@@ -25,6 +25,13 @@ if test "$T3EOS" != ""; then
    OS=unicos
 fi
 
+#checking for catamount
+/bin/rm -f ckcat
+cc ckcatamount.c 2>&1 | cat > ckcat
+if test "`cat ckcat | grep "IS_CATAMOUNT"`" != ""; then
+OS=catamount
+fi
+
 #echo $OS
 #AC_SUBST($OS)
 

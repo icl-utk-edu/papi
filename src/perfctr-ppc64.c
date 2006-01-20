@@ -323,7 +323,9 @@ int _papi_hwd_init_global(void)
      	PAPIERROR(VINFO_ERROR); 
      	return(PAPI_ESYS);
      }
- 	tb_scale_factor = info.tsc_to_cpu_mult;
+   vperfctr_close(dev);
+   tb_scale_factor = info.tsc_to_cpu_mult;
+
    /* Initialize outstanding values in machine info structure */
 
    if (_papi_hwd_mdi_init() != PAPI_OK) {
@@ -364,7 +366,6 @@ int _papi_hwd_init_global(void)
    if (retval)
       return (retval);
     SUBDBG("_papi_hwd_init_global vperfctr_close(%p)\n", dev);
-    vperfctr_close(dev);
     lock_init();
     return (PAPI_OK);
 }

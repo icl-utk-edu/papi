@@ -47,7 +47,7 @@ extern native_event_entry_t *native_table;
 extern papi_mdi_t _papi_hwi_system_info;
 
 volatile unsigned int lock[PAPI_MAX_LOCK];
-static long long tsc_to_cpu_mult = 0;
+static long long tb_scale_factor = 0;
 
 #ifdef DEBUG
 void print_control(const struct perfctr_cpu_control *control) {
@@ -184,23 +184,20 @@ int _papi_hwd_init_global(void)
 {
    int fd, retval;
    struct perfctr_info info;
+   struct vperfctr *dev;
 
-   /* Use lower level calls per Mikael to get the perfctr info
-      without actually creating a new kernel-side state.
-      Also, close the fd immediately after retrieving the info.
-      This is much lighter weight and doesn't reserve the counter
-      resources. Also compatible with perfctr 2.6.14.
-   */
+   if ((dev = vperfctr_open()) == NULL)
+     {PAPIERROR(VOPEN_ERROR); return(PAPI_ESYS);}
+   SUBDBG("_papi_hwd_init_global vperfctr_open = %p\n", dev);
 
-   fd = _vperfctr_open(0);
-   if (fd < 0)
-     { PAPIERROR(VOPEN_ERROR); return(PAPI_ESYS); }
-
-   retval = perfctr_info(fd, &info);
-   close(fd);
-   if (retval < 0)
-     { PAPIERROR(VINFO_ERROR); return(PAPI_ESYS); }
-   tsc_to_cpu_mult = info.tsc_to_cpu_mult;
+   /* Get info from the kernel */ 
+   if (vperfctr_info(dev, &info) < 0)
+     {
+     	PAPIERROR(VINFO_ERROR); 
+     	return(PAPI_ESYS);
+     }
+   vperfctr_close();
+   tb_scale_factor = info.tsc_to_cpu_mult;
 
    /* Initialize outstanding values in machine info structure */
 
@@ -522,59 +519,97 @@ static void swap_events(EventSetInfo_t * ESI, struct hwd_pmc_control *contr, int
    contr->cpu_control.ireset[cntr2] = si;
 }
 
-int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) {
+int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
+{
    hwd_control_state_t *this_state = &ESI->machdep;
    struct hwd_pmc_control *contr = &this_state->control;
    int i, ncntrs, nricntrs = 0, nracntrs = 0, retval = 0;
 
    OVFDBG("EventIndex=%d\n", EventIndex);
-
    /* The correct event to overflow is EventIndex */
+
+   /* Set an overflow threshold */
+   if (ESI->EventInfoArray[EventIndex].derived) 
+     {
+       OVFDBG("Can't overflow on a derived event.\n");
+       return PAPI_EINVAL;
+     }
+
    ncntrs = _papi_hwi_system_info.num_cntrs;
    i = ESI->EventInfoArray[EventIndex].pos[0];
-   if (i >= ncntrs) {
+   if (i >= ncntrs) 
+     {
        PAPIERROR("Selector id %d is larger than ncntrs %d", i, ncntrs);
        return PAPI_EBUG;
-   }
-   if (threshold != 0) {        /* Set an overflow threshold */
-      if (ESI->EventInfoArray[EventIndex].derived) {
-         OVFDBG("Can't overflow on a derived event.\n");
-         return PAPI_EINVAL;
-      }
+     }
+
+   if (threshold != 0) 
+     {
+       unsigned long saved_mmcr0 = contr->cpu_control.ppc.mmcr0;
+
+      if (contr->cpu_control.pmc_map[i] == 0)
+	contr->cpu_control.ppc.mmcr0 |= PERF_INT_PMC1EN;
+      else
+	{
+	  /* Look for other events that use PMCS 2-n, if so, bail. */
+	  for (j=0;j<nractrs+nricntrs;j++)
+	    {
+	      if ((contr->cpu_control.pmc_map[j] != 0) && (j != i))
+		return(PAPI_ESBSTR);
+	    }
+	  /* Ok, we're the only one. */
+	  contr->cpu_control.ppc.mmcr0 |= PERF_INT_PMCxEN;
+	}
+      contr->cpu_control.ppc.mmcr0 |= PERF_INT_ENABLE;
 
       if ((retval = _papi_hwi_start_signal(PAPI_SIGNAL,NEED_CONTEXT)) != PAPI_OK)
-         return(retval);
+	{
+	  contr->cpu_control.ppc.mmcr0 = saved_mmcr0;
+	  return(retval);
+	}
 
       /* overflow interrupt occurs on the NEXT event after overflow occurs
          thus we subtract 1 from the threshold. */
+
       contr->cpu_control.ireset[i] = PMC_OVFL - threshold;
       nricntrs = ++contr->cpu_control.nrictrs;
       nracntrs = --contr->cpu_control.nractrs;
       contr->si_signo = PAPI_SIGNAL;
-      contr->cpu_control.ppc.mmcr0 |= PERF_INT_ENABLE;
 
       /* move this event to the bottom part of the list if needed */
       if (i < nracntrs)
          swap_events(ESI, contr, i, nracntrs);
-   } else {
-      if (contr->cpu_control.ppc.mmcr0 & PERF_INT_ENABLE) {
-         contr->cpu_control.ireset[i] = 0;
-         nricntrs = --contr->cpu_control.nrictrs;
-         nracntrs = ++contr->cpu_control.nractrs;
-         if (!nricntrs)
-	         contr->cpu_control.ppc.mmcr0 &= (~PERF_INT_ENABLE);
-      }
+     }
+   else 
+     {
+       if (contr->cpu_control.ppc.mmcr0 & PERF_INT_ENABLE) 
+	 {
+	   contr->cpu_control.ireset[i] = 0;
+	   nricntrs = --contr->cpu_control.nrictrs;
+	   nracntrs = ++contr->cpu_control.nractrs;
+	   if (!nricntrs)
+	     {
+	       contr->cpu_control.ppc.mmcr0 &= (~PERF_INT_ENABLE);
+	       contr->si_signo = 0;
+	     }
 
-      /* move this event to the top part of the list if needed */
-      if (i >= nracntrs)
-         swap_events(ESI, contr, i, nracntrs - 1);
-      if (!nricntrs)
-         contr->si_signo = 0;
+	   if (contr->cpu_control.pmc_map[i] == 0)
+	     contr->cpu_control.ppc.mmcr0 &= (~PERF_INT_PMC1EN);
+	   else
+	     contr->cpu_control.ppc.mmcr0 &= (~PERF_INT_PMCxEN);
+
+	   /* move this event to the top part of the list if needed */
+	   if (i >= nracntrs)
+	     swap_events(ESI, contr, i, nracntrs - 1);
+	 }
+
       retval = _papi_hwi_stop_signal(PAPI_SIGNAL);
    }
+
 #ifdef DEBUG   
    print_control(&contr->cpu_control);
 #endif
+
    return (retval);
 }
 
@@ -612,18 +647,18 @@ inline_static long_long get_cycles(void) {
 }
 
 long_long _papi_hwd_get_real_usec(void) {
-	return((get_cycles() * tsc_to_cpu_mult) / (long_long)_papi_hwi_system_info.hw_info.mhz);
+	return((get_cycles() * tb_scale_factor) / (long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
 long_long _papi_hwd_get_real_cycles(void) {
-	return(get_cycles() * tsc_to_cpu_mult);
+	return(get_cycles() * tb_scale_factor);
 }
 
 long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx) {
-   return(((long_long)vperfctr_read_tsc(ctx->perfctr) * tsc_to_cpu_mult)/
+   return(((long_long)vperfctr_read_tsc(ctx->perfctr) * tb_scale_factor)/
          (long_long)_papi_hwi_system_info.hw_info.mhz);
 }
  
 long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx) {
-   return((long_long)vperfctr_read_tsc(ctx->perfctr) * tsc_to_cpu_mult);
+   return((long_long)vperfctr_read_tsc(ctx->perfctr) * tb_scale_factor);
 }
