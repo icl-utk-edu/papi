@@ -127,7 +127,6 @@ static __inline__ int perfctr_abi_check_fd(int fd)
 }
 
 int perfctr_info(int fd, struct perfctr_info *info);
-int perfctr_get_info(struct perfctr_info *info);
 struct perfctr_cpus_info *perfctr_cpus_info(int fd);
 unsigned int perfctr_info_nrctrs(const struct perfctr_info*);
 const char *perfctr_info_cpu_name(const struct perfctr_info*);
