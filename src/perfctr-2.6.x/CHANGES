@@ -6,6 +6,15 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.18, 2006-01-03
+- Added perfctr_get_info() library API procedure, which allows
+  users to acquire information about the system without needing
+  a handle to an open perfctr (per-process or global) state.
+- Rearranged structure marshalling descriptor declarations to
+  increase code sharing for all supported architectures.
+- Updated kernel support: 2.6.15, 2.6.14, 2.6.9-22.0.1 (RHEL4),
+  2.6.5-7.201 (SuSE), 2.4.33-pre1, 2.4.32.
+
 Version 2.6.17, 2005-10-02
 - The x86 kernel driver has been updated to work correctly
   on dual-core P4 processors. Previous versions would fail

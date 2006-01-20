@@ -13,7 +13,13 @@
 #include "cpumask.h"
 
 #define EXPORT_SYMBOL_mmu_cr4_features	EXPORT_SYMBOL(mmu_cr4_features)
+
+/* 2.6.5-7.201-suse added EXPORT_SYMBOL_GPL(__put_task_struct) */
+#if defined(HAVE_EXPORT___put_task_struct)
+#define EXPORT_SYMBOL___put_task_struct	/*empty*/
+#else
 #define EXPORT_SYMBOL___put_task_struct	EXPORT_SYMBOL(__put_task_struct)
+#endif
 
 #define task_siglock(tsk)	((tsk)->sighand->siglock)
 

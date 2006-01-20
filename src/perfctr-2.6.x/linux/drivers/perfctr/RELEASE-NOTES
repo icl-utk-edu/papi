@@ -3,6 +3,14 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.18, 2006-01-03
+- 2.6.5-7.201-suse added EXPORT_SYMBOL_GPL(__put_task_struct).
+  Added feature #define to the kernel patch, and modified compat.h
+  to disable our export of __put_task_struct in this case.
+- Merged the structure descriptor declarations in marshal.c
+  to avoid duplicating the parts that are identical across
+  all supported platforms.
+
 Version 2.6.17, 2005-10-02
 - The dual-core P4s changed the layout rules for the initial
   APIC ID, which broke the x86 driver on DC P4s. Updated the
