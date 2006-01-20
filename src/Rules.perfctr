@@ -134,7 +134,7 @@ ifeq ($(ARCH),ppc64)
 #Workaround to gcc bug (see gcc bug #20611)
 OPTFLAGS        += -O2 $(EVENTFLAGS)
 else
-OPTFLAGS	+= -g -DDEBUG $(EVENTFLAGS)
+OPTFLAGS	+= -O3 $(EVENTFLAGS)
 endif
 
 FFLAGS        	+= -Dlinux $(FARGS)
