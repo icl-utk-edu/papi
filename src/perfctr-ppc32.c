@@ -129,7 +129,7 @@ int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain)
    int did = 0;
    unsigned long tmp = cntrl->control.cpu_control.ppc.mmcr0;
    
-   SUBDBG("set domain %d, mmcr0 is %08X\n",domain,tmp);
+   SUBDBG("set domain %d, mmcr0 is %08lX\n",domain,tmp);
    if ((domain == PAPI_DOM_ALL) || (domain == (PAPI_DOM_USER|PAPI_DOM_KERNEL))) {
      did = 1;
      tmp = tmp & PERF_MODE_MASK;
@@ -140,7 +140,7 @@ int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain)
      did = 1;
      tmp = (tmp & PERF_MODE_MASK) | PERF_USR_ONLY;
    }
-   SUBDBG("set domain %d, mmcr0 will be %08X\n",domain,tmp);
+   SUBDBG("set domain %d, mmcr0 will be %08lX\n",domain,tmp);
    if(!did)
       return(PAPI_EINVAL);
    
@@ -182,7 +182,7 @@ static int lock_init(void)
 
 int _papi_hwd_init_global(void) 
 {
-   int fd, retval;
+   int retval;
    struct perfctr_info info;
    struct vperfctr *dev;
 
@@ -196,7 +196,7 @@ int _papi_hwd_init_global(void)
      	PAPIERROR(VINFO_ERROR); 
      	return(PAPI_ESYS);
      }
-   vperfctr_close();
+   vperfctr_close(dev);
    tb_scale_factor = info.tsc_to_cpu_mult;
 
    /* Initialize outstanding values in machine info structure */
@@ -327,10 +327,10 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
 
    memset(event_list,0x0,sizeof(hwd_reg_alloc_t)*MAX_COUNTERS);
 
-   /* Initialize the local structure needed
-      for counter allocation and optimization. */
    natNum = ESI->NativeCount;
 
+   /* Initialize the local structure needed
+      for counter allocation and optimization. */
    for(i = 0; i < natNum; i++) 
      {
        /* retrieve mapping info */
@@ -347,7 +347,35 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
       }
       SUBDBG("Can live on %d registers, %08X\n",event_list[i].ra_rank,event_list[i].ra_selector);
    }
-   if(_papi_hwi_bipartite_alloc(event_list, natNum)) { /* successfully mapped */
+
+   /* Try to find a mapping for all the registers. */
+
+   if(_papi_hwi_bipartite_alloc(event_list, natNum)) 
+     { 
+       struct hwd_pmc_control *contr = this_state->control;
+
+       /* for the PPC32, we have funny interrupt bits that control PMC1 and PMC2-n.
+	  Thus, due to the PAPI API separating add from overflow, we can only allow
+	  1 event with overflow on PMC2-n. Here we see if >=2 events are using PMCS 2-n
+	  and >=1 is overflowing. If so, we cannot allow this event to be allocated
+          because it too will overflow but the user has not asked it to. */
+
+       if (contr->cpu_control.ppc.mmcr0 & PERF_INT_PMCxEN)
+	 {
+	   int pmcx_ov_check = 0;
+	   for(i = 0; i < natNum; i++) 
+	     {
+	       if (contr->cpu_control.pmc_map[i] > 0)
+		 {
+		   if (++pmcx_ov_check > 1)
+		     {
+		       PAPIERROR("Only 1 event on PMC2-n allowed if overflow is enabled!");
+		       return(0);
+		     }
+		 }
+	     }
+	 }
+
       for(i = 0; i < natNum; i++) {
          /* Copy all info about this native event to the NativeInfo struct */
          ESI->NativeInfoArray[i].ni_bits = event_list[i].ra_bits;
@@ -374,7 +402,6 @@ static void clear_control_state(hwd_control_state_t *this_state)
 int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
                                    NativeInfo_t *native, int count, hwd_context_t * ctx) {
    int i;
-
    /* clear out everything currently coded */
    clear_control_state(this_state);
 
@@ -523,7 +550,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
    hwd_control_state_t *this_state = &ESI->machdep;
    struct hwd_pmc_control *contr = &this_state->control;
-   int i, ncntrs, nricntrs = 0, nracntrs = 0, retval = 0;
+   int i, j, ncntrs, nricntrs = 0, nracntrs = 0, retval = 0;
 
    OVFDBG("EventIndex=%d\n", EventIndex);
    /* The correct event to overflow is EventIndex */
@@ -546,20 +573,34 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    if (threshold != 0) 
      {
        unsigned long saved_mmcr0 = contr->cpu_control.ppc.mmcr0;
+       int pmcx_use_check = 0;
+	   
+       /* for the PPC32, we have funny interrupt bits that control PMC1 and PMC2-n.
+	  Thus, due to the PAPI API separating add from overflow, we can only allow
+	  1 event with overflow on PMC2-n. Here we see if >=2 events are using PMCS 2-n
+	  and we ask for 1 of those to overflow. If so, we cannot allow this event to 
+	  be set to overflow because both of those will overflow and the user has not 
+	  specified it to do so. */
+
+       if (contr->cpu_control.pmc_map[i] != 0)
+	 {
+	   for(j = 0; j < ESI->NativeCount; j++) 
+	     {
+	       if (contr->cpu_control.pmc_map[j] > 0)
+		 {
+		   if (++pmcx_use_check > 1)
+		     {
+		       PAPIERROR("Only 1 event on PMC2-n allowed if overflow is enabled!");
+		       return(PAPI_ESBSTR);
+		     }
+		 }
+	     }
+	 }
 
       if (contr->cpu_control.pmc_map[i] == 0)
 	contr->cpu_control.ppc.mmcr0 |= PERF_INT_PMC1EN;
       else
-	{
-	  /* Look for other events that use PMCS 2-n, if so, bail. */
-	  for (j=0;j<nractrs+nricntrs;j++)
-	    {
-	      if ((contr->cpu_control.pmc_map[j] != 0) && (j != i))
-		return(PAPI_ESBSTR);
-	    }
-	  /* Ok, we're the only one. */
-	  contr->cpu_control.ppc.mmcr0 |= PERF_INT_PMCxEN;
-	}
+	contr->cpu_control.ppc.mmcr0 |= PERF_INT_PMCxEN;
       contr->cpu_control.ppc.mmcr0 |= PERF_INT_ENABLE;
 
       if ((retval = _papi_hwi_start_signal(PAPI_SIGNAL,NEED_CONTEXT)) != PAPI_OK)
@@ -572,9 +613,9 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
          thus we subtract 1 from the threshold. */
 
       contr->cpu_control.ireset[i] = PMC_OVFL - threshold;
+      contr->si_signo = PAPI_SIGNAL;
       nricntrs = ++contr->cpu_control.nrictrs;
       nracntrs = --contr->cpu_control.nractrs;
-      contr->si_signo = PAPI_SIGNAL;
 
       /* move this event to the bottom part of the list if needed */
       if (i < nracntrs)
