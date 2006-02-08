@@ -589,14 +589,9 @@ static int init_presets(){
  * list check out papi_mdi_t, though some of the values are setup
  * and used above the substrate level.
  */
-
 static void init_mdi(){
    strcpy(_papi_hwi_system_info.hw_info.vendor_string,"linux-myrinet_mx");
    strcpy(_papi_hwi_system_info.hw_info.model_string,"linux-myrinet_mx");
-   _papi_hwi_system_info.hw_info.mhz = 100.0;
-   _papi_hwi_system_info.hw_info.ncpu = 1;
-   _papi_hwi_system_info.hw_info.nnodes = 1;
-   _papi_hwi_system_info.hw_info.totalcpus = 1;
    _papi_hwi_substrate_info[sidx].num_cntrs = MX_MAX_COUNTERS;
    _papi_hwi_substrate_info[sidx].supports_program = 0;
    _papi_hwi_substrate_info[sidx].supports_write = 0;
@@ -610,7 +605,6 @@ static void init_mdi(){
    _papi_hwi_substrate_info[sidx].reg_alloc_size = sizeof(hwd_reg_alloc_t);
    _papi_hwi_substrate_info[sidx].control_state_size = sizeof(hwd_control_state_t);
 }
-
 static int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
 		              NativeInfo_t * native, int count, hwd_context_t * ctx)
 {
@@ -687,7 +681,7 @@ int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **ev
     read_mx_counters(_papi_hwd_mx_register); 
     for(i = 0; i < MX_MAX_COUNTERS; i++){
        ctrl->counts[i] = _papi_hwd_mx_register[i] - _papi_hwd_mx_register_start[i];
-      /*printf("%d  %lld\n", i, ctrl->counts[i]);*/
+      /*if(ctrl->counts[i]!=0) printf("%d %s  %lld\n", i, native_table[i].name, ctrl->counts[i]);*/
     }
     *events=ctrl->counts;
     return(PAPI_OK);
