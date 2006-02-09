@@ -1325,6 +1325,13 @@ if test "$T3EOS" != ""; then
    OS=unicos
 fi
 
+#checking for catamount
+/bin/rm -f ckcat
+cc ckcatamount.c 2>&1 | cat > ckcat
+if test "`cat ckcat | grep "IS_CATAMOUNT"`" != ""; then
+OS=catamount
+fi
+
 #echo $OS
 #AC_SUBST($OS)
 
@@ -1380,8 +1387,8 @@ case "$OS" in
            fi
          elif test "`cat /proc/cpuinfo | grep AuthenticAMD`" != ""; then
            made=AuthenticAMD
-           if test "`cat /proc/cpuinfo | grep "Athlon${tm} 64"`" != ""; then
-             CPU=opteron
+	   if test "`cat /proc/cpuinfo | grep "Athlon${tm}[:space:]*64"`" != ""; then
+	      CPU=opteron
            else CPU=athlon
            fi
            family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
@@ -1402,7 +1409,7 @@ case "$OS" in
                POWER5*) CPU="POWER5";;
              esac
           elif test "$family" = "ppc"; then
-             CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | cut -d, -f1 | sed '2,$d'`"
+             CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
              case "$CPU_info" in
                74*) CPU="PPC32";;
                750) CPU="PPC32";;
