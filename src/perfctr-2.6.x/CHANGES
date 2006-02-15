@@ -6,6 +6,13 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.19, 2006-01-22
+- Updated ppc32 driver for ppc32/ppc64 kernel merging changes
+  in the 2.6.16-rc1 kernel. The driver now dynamically claims
+  and release the hardware, allowing it to coexist with other
+  PMU drivers such as oprofile.
+- Updated kernel support: 2.6.16-rc1, 2.6.9-22.0.2 (RHEL4).
+
 Version 2.6.18, 2006-01-03
 - Added perfctr_get_info() library API procedure, which allows
   users to acquire information about the system without needing

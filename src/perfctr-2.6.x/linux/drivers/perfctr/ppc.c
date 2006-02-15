@@ -1,7 +1,7 @@
 /* $Id$
  * PPC32 performance-monitoring counters driver.
  *
- * Copyright (C) 2004-2005  Mikael Pettersson
+ * Copyright (C) 2004-2006  Mikael Pettersson
  */
 #include <linux/config.h>
 #define __NO_VERSION__
@@ -1060,14 +1060,12 @@ int __init perfctr_cpu_init(void)
 			goto out;
 	}
 
-	perfctr_cpu_reset();
  out:
 	return err;
 }
 
 void __exit perfctr_cpu_exit(void)
 {
-	perfctr_cpu_reset();
 }
 
 /****************************************************************
@@ -1085,11 +1083,16 @@ const char *perfctr_cpu_reserve(const char *service)
 
 	down(&mutex);
 	ret = current_service;
-	if (!ret)
-	{
-		current_service = service;
-		__module_get(THIS_MODULE);
-	}
+	if (ret)
+		goto out_up;
+	ret = "unknown driver (oprofile?)";
+	if (perfctr_reserve_pmc_hardware() < 0)
+		goto out_up;
+	current_service = service;
+	__module_get(THIS_MODULE);
+	perfctr_cpu_reset();
+	ret = NULL;
+ out_up:
 	up(&mutex);
 	return ret;
 }
@@ -1104,6 +1107,7 @@ void perfctr_cpu_release(const char *service)
 		/* power down the counters */
 		perfctr_cpu_reset();
 		current_service = 0;
+		perfctr_release_pmc_hardware();
 		module_put(THIS_MODULE);
 	}
 	up(&mutex);

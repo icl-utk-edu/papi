@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * PPC32-specific kernel-resident code.
  *
- * Copyright (C) 2004  Mikael Pettersson
+ * Copyright (C) 2004-2006  Mikael Pettersson
  */
 #include <linux/config.h>
 #include <linux/module.h>
@@ -29,12 +29,18 @@ void do_perfctr_interrupt(struct pt_regs *regs)
 	preempt_enable_no_resched();
 }
 
+int perfctr_reserve_pmc_hardware(void)
+{
+	return reserve_pmc_hardware(do_perfctr_interrupt);
+}
+
 void perfctr_cpu_set_ihandler(perfctr_ihandler_t ihandler)
 {
 	perfctr_ihandler = ihandler ? ihandler : perfctr_default_ihandler;
 }
 
 #ifdef CONFIG_PERFCTR_MODULE
+EXPORT_SYMBOL(perfctr_reserve_pmc_hardware);
 EXPORT_SYMBOL(perfctr_cpu_set_ihandler);
 #endif /* MODULE */
 #endif /* CONFIG_PERFCTR_INTERRUPT_SUPPORT */

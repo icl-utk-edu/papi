@@ -3,6 +3,13 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.19, 2006-01-22
+- Updated ppc32 driver for kernel 2.6.16-rc1: dynamically
+  claim the HW and register our interrupt handler via
+  {reserve,release}_pmc_hardware(); simulate these primitives
+  in older kernels; fully migrate patch kit from arch/ppc/
+  to arch/powerpc/.
+
 Version 2.6.18, 2006-01-03
 - 2.6.5-7.201-suse added EXPORT_SYMBOL_GPL(__put_task_struct).
   Added feature #define to the kernel patch, and modified compat.h
