@@ -1263,10 +1263,18 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
    case PAPI_DATA_ADDRESS:
    case PAPI_INSTR_ADDRESS:
       {
+         EventSetInfo_t *ESI;
+
+         ESI = _papi_hwi_lookup_EventSet(ptr->domain.eventset);
+         if (ESI == NULL)
+            papi_return(PAPI_ENOEVST);
+         thread = ESI->master;
+
          internal.address_range.start = ptr->addr.start;
          internal.address_range.end = ptr->addr.end;
-         retval = _papi_hwd_ctl(NULL, option, &internal);
-      }
+         retval = _papi_hwd_ctl(thread->context[0], option, &internal);
+         papi_return (retval);
+     }
 
    default:
       papi_return(PAPI_EINVAL);

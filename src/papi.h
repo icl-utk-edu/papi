@@ -458,6 +458,7 @@ read the documentation carefully.  */
    /* address range specification for range restricted counting */
    /* (could also be used as an atomic structure inside PAPI_address_map_t) */
    typedef struct _papi_addr_range_option { /* if both are zero, range is disabled */
+      int eventset;                 /* eventset to restrict */
       caddr_t start;                /* start address of an address range */
       caddr_t end;                  /* end addressof an address range */
    } PAPI_addr_range_option_t;
