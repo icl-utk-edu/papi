@@ -380,7 +380,6 @@ hweight64 (unsigned long x)
       int ctx_fd;
       int native_index, EventCode, pos;
       hwd_context_t *thr_ctx = (hwd_context_t *) ESI->master->context[0];
-      void *tmp_ptr;
 
       pos= ESI->EventInfoArray[EventIndex].pos[0];
       EventCode= ESI->EventInfoArray[EventIndex].event_code;
