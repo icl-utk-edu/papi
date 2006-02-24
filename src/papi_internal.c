@@ -1052,10 +1052,12 @@ int _papi_hwi_init_global(void)
      /* A processor MUST be initialized and always in slot 0 */
      if ( i > 0 && tot_init == 0 ) return(PAPI_ESBSTR);
 
+     /* Index of the current substrate */
+     _papi_hwi_substrate_info[i].substrate_index = i;
      /* Name of the substrate we're using */
      _papi_hwi_substrate_info[i].substrate[0] = '\0';
      /* Version */
-     _papi_hwi_substrate_info[i].version = 1.0; 
+     _papi_hwi_substrate_info[i].version = PAPI_SUBSTRATE_VERSION; 
 
      /* The PAPI_hw_info_t struct defined in papi.h */
 
