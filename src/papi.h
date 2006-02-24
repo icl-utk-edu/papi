@@ -225,6 +225,10 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_LIB_VERSION        21      /* Option to find out the complete version number of the PAPI library */
 #define PAPI_SUBSTRATE_SUPPORT  22      /* Find out what the substrate supports */
 
+/* Currently the following options are only available on Itanium; they may be supported elsewhere in the future */
+#define PAPI_DATA_ADDRESS       23      /* Option to set data address range restriction */
+#define PAPI_INSTR_ADDRESS      24      /* Option to set instruction address range restriction */
+
 #define PAPI_INIT_SLOTS    64     /*Number of initialized slots in
                                    DynamicArray of EventSets */
 
@@ -451,6 +455,13 @@ read the documentation carefully.  */
       int max_degree;
    } PAPI_multiplex_option_t;
 
+   /* address range specification for range restricted counting */
+   /* (could also be used as an atomic structure inside PAPI_address_map_t) */
+   typedef struct _papi_addr_range_option { /* if both are zero, range is disabled */
+      caddr_t start;                /* start address of an address range */
+      caddr_t end;                  /* end addressof an address range */
+   } PAPI_addr_range_option_t;
+
 /* A pointer to the following is passed to PAPI_set/get_opt() */
 
    typedef union {
@@ -466,6 +477,7 @@ read the documentation carefully.  */
       PAPI_exe_info_t *exe_info;
       PAPI_overflow_option_t ovf_info;
       PAPI_substrate_option_t sub_info;
+      PAPI_addr_range_option_t addr;
    } PAPI_option_t;
 
 #ifdef PAPI_DMEM_INFO

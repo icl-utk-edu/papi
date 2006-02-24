@@ -358,12 +358,18 @@ typedef struct _papi_int_profile {
    EventSetProfileInfo_t profile;
 } _papi_int_profile_t;
 
+typedef struct _papi_int_addr_range { /* if both are zero, range is disabled */
+   caddr_t start;                /* start address of an address range */
+   caddr_t end;                  /* end addressof an address range */
+} _papi_int_addr_range_t;
+
 typedef union _papi_int_option_t {
    _papi_int_overflow_t overflow;
    _papi_int_profile_t profile;
    _papi_int_domain_t domain;
    _papi_int_defdomain_t defdomain;
    _papi_int_granularity_t granularity;
+   _papi_int_addr_range_t address_range;
 } _papi_int_option_t;
 
 typedef struct {
@@ -395,10 +401,11 @@ typedef struct _papi_mdi {
    DynamicArray_t global_eventset_map;  /* Global structure to maintain int<->EventSet mapping */
 } papi_mdi_t;
 
+
 typedef struct _papi_substrate_mdi {
    int substrate_index;
    char substrate[81];          /* Name of the substrate we're using */
-   float version;               /* Version of this substrate */
+   int version;                 /* Version of this substrate: See PAPI_SUBSTRATE_VERSION */
 
    int default_domain;          /* The default domain when this substrate is used */
 

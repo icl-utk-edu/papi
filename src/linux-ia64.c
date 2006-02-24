@@ -635,6 +635,18 @@ static int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * zero)
    return PAPI_OK;
 }
 
+static int set_drange(caddr_t start, caddr_t end)
+{
+   printf("Data Start Address: %p\nData End  Address: %p\n", start, end);
+   return(PAPI_OK);
+}
+
+static int set_irange(caddr_t start, caddr_t end)
+{
+   printf("Instruction Start Address: %p\nInstruction End  Address: %p\n", start, end);
+   return(PAPI_OK);
+}
+
 static int _papi_hwd_ctl(hwd_context_t * zero, int code, _papi_int_option_t * option)
 {
    switch (code) {
@@ -648,6 +660,10 @@ static int _papi_hwd_ctl(hwd_context_t * zero, int code, _papi_int_option_t * op
    case PAPI_GRANUL:
       return (set_granularity
               (option->granularity.ESI->machdep, option->granularity.granularity));
+   case PAPI_DATA_ADDRESS:
+      return (set_drange(option->address_range.start, option->address_range.end));
+   case PAPI_INSTR_ADDRESS:
+      return (set_irange(option->address_range.start, option->address_range.end));
    default:
       return (PAPI_EINVAL);
    }

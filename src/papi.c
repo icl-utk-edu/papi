@@ -1260,6 +1260,14 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
          internal.granularity.ESI->granularity.granularity = grn;
          return (retval);
       }
+   case PAPI_DATA_ADDRESS:
+   case PAPI_INSTR_ADDRESS:
+      {
+         internal.address_range.start = ptr->addr.start;
+         internal.address_range.end = ptr->addr.end;
+         retval = _papi_hwd_ctl(NULL, option, &internal);
+      }
+
    default:
       papi_return(PAPI_EINVAL);
    }
