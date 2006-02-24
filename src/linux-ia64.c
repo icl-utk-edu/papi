@@ -635,15 +635,31 @@ static int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * zero)
    return PAPI_OK;
 }
 
-static int set_drange(caddr_t start, caddr_t end)
+static int set_drange(hwd_context_t * ctx, hwd_control_state_t * current_state)
 {
-   printf("Data Start Address: %p\nData End  Address: %p\n", start, end);
+   int r;
+   pfmw_ita_param_t * param=&(current_state->ita_lib_param);
+   
+   printf("Data Start Address: %p\nData End  Address: %p\n", current_state->start, current_state->end);
+   param->pfp_ita2_drange.rr_used = 1;
+   param->pfp_ita2_drange.rr_limits[0].rr_start = (unsigned long)current_state->start;
+   param->pfp_ita2_drange.rr_limits[0].rr_end   = (unsigned long)current_state->end;
+   
+   /*r = perfmonctl(ctx->tid, PFM_WRITE_DBRS, param->pfp_ita2_drange.rr_br, param->pfp_ita2_drange.rr_nbr_used);*/
    return(PAPI_OK);
 }
 
-static int set_irange(caddr_t start, caddr_t end)
+static int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state)
 {
-   printf("Instruction Start Address: %p\nInstruction End  Address: %p\n", start, end);
+   int r;
+   pfmw_ita_param_t * param=&(current_state->ita_lib_param);
+
+   printf("Instruction Start Address: %p\nInstruction End  Address: %p\n", current_state->start, current_state->end);
+   param->pfp_ita2_irange.rr_used = 1;
+   param->pfp_ita2_irange.rr_limits[0].rr_start = (unsigned long)current_state->start;
+   param->pfp_ita2_irange.rr_limits[0].rr_end   = (unsigned long)current_state->end;
+
+   /*r = perfmonctl(ctx->tid, PFM_WRITE_IBRS, param->pfp_ita2_irange.rr_br, param->pfp_ita2_irange.rr_nbr_used);*/
    return(PAPI_OK);
 }
 
@@ -661,9 +677,13 @@ static int _papi_hwd_ctl(hwd_context_t * zero, int code, _papi_int_option_t * op
       return (set_granularity
               (option->granularity.ESI->machdep, option->granularity.granularity));
    case PAPI_DATA_ADDRESS:
-      return (set_drange(option->address_range.start, option->address_range.end));
+      zero->start=option->address_range.start;
+	  zero->end=option->address_range.end;
+      return (PAPI_OK);
    case PAPI_INSTR_ADDRESS:
-      return (set_irange(option->address_range.start, option->address_range.end));
+      zero->start=option->address_range.start;
+      zero->end=option->address_range.end;
+      return (PAPI_OK);
    default:
       return (PAPI_EINVAL);
    }
@@ -1333,7 +1353,9 @@ static int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    PFMW_PEVT_EVTCOUNT(evt) = 0;
    memset(PFMW_PEVT_PFPPC(evt), 0, sizeof(PFMW_PEVT_PFPPC(evt)));
 
-
+   set_drange(zero, this_state);
+   set_irange(zero, this_state);
+   
    SUBDBG(" original count is %d\n", org_cnt);
 
 /* add new native events to the evt structure */
