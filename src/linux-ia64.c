@@ -635,29 +635,32 @@ static int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * zero)
    return PAPI_OK;
 }
 
-static int set_drange(hwd_context_t * ctx, hwd_control_state_t * current_state)
+static int set_drange(hwd_context_t *ctx, hwd_control_state_t *current_state)
 {
-   int r;
-   pfmw_ita_param_t * param=&(current_state->ita_lib_param);
+   //int r;
+#ifdef PFM20
+   pfmw_ita_param_t *param = &(current_state->ita_lib_param);
    
-   printf("Data Start Address: %p\nData End  Address: %p\n", current_state->start, current_state->end);
+   printf("Data Start Address: %p\nData End  Address: %p\n", ctx->start, ctx->end);
    param->pfp_ita2_drange.rr_used = 1;
-   param->pfp_ita2_drange.rr_limits[0].rr_start = (unsigned long)current_state->start;
-   param->pfp_ita2_drange.rr_limits[0].rr_end   = (unsigned long)current_state->end;
-   
+   param->pfp_ita2_drange.rr_limits[0].rr_start = (unsigned long)ctx->start;
+   param->pfp_ita2_drange.rr_limits[0].rr_end   = (unsigned long)ctx->end;
+#endif   
    /*r = perfmonctl(ctx->tid, PFM_WRITE_DBRS, param->pfp_ita2_drange.rr_br, param->pfp_ita2_drange.rr_nbr_used);*/
    return(PAPI_OK);
 }
 
 static int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state)
 {
-   int r;
-   pfmw_ita_param_t * param=&(current_state->ita_lib_param);
+   //int r;
+#ifdef PFM20
+   pfmw_ita_param_t *param = &(current_state->ita_lib_param);
 
-   printf("Instruction Start Address: %p\nInstruction End  Address: %p\n", current_state->start, current_state->end);
+   printf("Instruction Start Address: %p\nInstruction End  Address: %p\n", ctx->start, ctx->end);
    param->pfp_ita2_irange.rr_used = 1;
-   param->pfp_ita2_irange.rr_limits[0].rr_start = (unsigned long)current_state->start;
-   param->pfp_ita2_irange.rr_limits[0].rr_end   = (unsigned long)current_state->end;
+   param->pfp_ita2_irange.rr_limits[0].rr_start = (unsigned long)ctx->start;
+   param->pfp_ita2_irange.rr_limits[0].rr_end   = (unsigned long)ctx->end;
+#endif   
 
    /*r = perfmonctl(ctx->tid, PFM_WRITE_IBRS, param->pfp_ita2_irange.rr_br, param->pfp_ita2_irange.rr_nbr_used);*/
    return(PAPI_OK);

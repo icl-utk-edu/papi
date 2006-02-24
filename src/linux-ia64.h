@@ -105,6 +105,8 @@ typedef struct itanium_preset_search {
 typedef struct Itanium_context {
    int fd;  /* file descriptor */
    pid_t tid;  /* thread id */
+   caddr_t start;
+   caddr_t end;
 } Itanium_context_t;
 
 typedef Itanium_context_t hwd_context_t;
