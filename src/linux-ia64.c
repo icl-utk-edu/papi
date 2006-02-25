@@ -641,10 +641,22 @@ static int set_drange(hwd_context_t *ctx, hwd_control_state_t *current_state)
 #ifdef PFM20
    pfmw_ita_param_t *param = &(current_state->ita_lib_param);
    
-   printf("Data Start Address: %p\nData End  Address: %p\n", ctx->start, ctx->end);
-   param->pfp_ita2_drange.rr_used = 1;
-   param->pfp_ita2_drange.rr_limits[0].rr_start = (unsigned long)ctx->start;
-   param->pfp_ita2_drange.rr_limits[0].rr_end   = (unsigned long)ctx->end;
+   SUBDBG("Data Start Address: %p\nData End  Address: %p\n", (unsigned long)ctx->start, (unsigned long)ctx->end);
+   if(!((unsigned long)ctx->start==(unsigned long)ctx->end || ((unsigned long)ctx->start==0 && (unsigned long)ctx->end==0))){
+      param->pfp_ita2_drange.rr_used = 1;
+      param->pfp_ita2_drange.rr_limits[0].rr_start = (unsigned long)ctx->start;
+      param->pfp_ita2_drange.rr_limits[0].rr_end   = (unsigned long)ctx->end;
+   }
+#else
+   pfmw_param_t *evt=&(current_state->evt);
+   pfmlib_input_param_t *param = evt->inp;
+
+   SUBDBG("Instruction Start Address: %p\nInstruction End  Address: %p\n", (unsigned long)ctx->start, (unsigned long)ctx->end);
+   if(!((unsigned long)ctx->start==(unsigned long)ctx->end || ((unsigned long)ctx->start==0 && (unsigned long)ctx->end==0))){
+      param->pfp_ita2_drange.rr_used = 1;
+      param->pfp_ita2_drange.rr_limits[0].rr_start = (unsigned long)ctx->start;
+      param->pfp_ita2_drange.rr_limits[0].rr_end   = (unsigned long)ctx->end;
+   }
 #endif   
    /*r = perfmonctl(ctx->tid, PFM_WRITE_DBRS, param->pfp_ita2_drange.rr_br, param->pfp_ita2_drange.rr_nbr_used);*/
    return(PAPI_OK);
@@ -656,10 +668,22 @@ static int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state)
 #ifdef PFM20
    pfmw_ita_param_t *param = &(current_state->ita_lib_param);
 
-   printf("Instruction Start Address: %p\nInstruction End  Address: %p\n", ctx->start, ctx->end);
-   param->pfp_ita2_irange.rr_used = 1;
-   param->pfp_ita2_irange.rr_limits[0].rr_start = (unsigned long)ctx->start;
-   param->pfp_ita2_irange.rr_limits[0].rr_end   = (unsigned long)ctx->end;
+   SUBDBG("Instruction Start Address: %p\nInstruction End  Address: %p\n", (unsigned long)ctx->start, (unsigned long)ctx->end);
+   if(!((unsigned long)ctx->start==(unsigned long)ctx->end || ((unsigned long)ctx->start==0 && (unsigned long)ctx->end==0))){
+      param->pfp_ita2_irange.rr_used = 1;
+      param->pfp_ita2_irange.rr_limits[0].rr_start = (unsigned long)ctx->start;
+      param->pfp_ita2_irange.rr_limits[0].rr_end   = (unsigned long)ctx->end;
+   }
+#else
+   pfmw_param_t *evt=&(current_state->evt);
+   pfmlib_input_param_t *param = evt->inp;
+
+   SUBDBG("Instruction Start Address: %p\nInstruction End  Address: %p\n", (unsigned long)ctx->start, (unsigned long)ctx->end);
+   if(!((unsigned long)ctx->start==(unsigned long)ctx->end || ((unsigned long)ctx->start==0 && (unsigned long)ctx->end==0))){
+      param->pfp_ita2_irange.rr_used = 1;
+      param->pfp_ita2_irange.rr_limits[0].rr_start = (unsigned long)ctx->start;
+      param->pfp_ita2_irange.rr_limits[0].rr_end   = (unsigned long)ctx->end;
+   }
 #endif   
 
    /*r = perfmonctl(ctx->tid, PFM_WRITE_IBRS, param->pfp_ita2_irange.rr_br, param->pfp_ita2_irange.rr_nbr_used);*/
