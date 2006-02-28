@@ -93,7 +93,7 @@ inline pid_t mygettid(void)
       ctx[0].ctx_notify_pid = thr_ctx->tid;
       ctx[0].ctx_flags = PFM_FL_INHERIT_NONE;
 
-      SUBDBG("PFM_CREATE_CONTEXT");
+      SUBDBG("PFM_CREATE_CONTEXT\n");
       if (perfmonctl(thr_ctx->tid, PFM_CREATE_CONTEXT, ctx, 1) == -1) {
 	  if (errno == EBUSY)
 	    {
