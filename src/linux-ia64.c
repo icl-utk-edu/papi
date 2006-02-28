@@ -639,35 +639,63 @@ static int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * zero)
    instruction address range restrictions for counting qualified events.
    These routines must set up or clear the appropriate local static data structures.
    The actual work of loading the hardware registers must be done in update_ctl_state().
-   It may be possible to set multiple disjoint address ranges, and it may be possible
-   to set both drange and irange simultaneously. These edge conditions must be explored
-   and appropriate checks must be implemented.
+   Both drange and irange can be set on the same eventset.
    If start=end=0, the feature is disabled. 
 */
+
+static int irr=0, drr=0;
+
 static int set_drange(hwd_context_t *ctx, hwd_control_state_t *current_state)
 {
-   //int r;
 #ifdef PFM20
-   pfmw_ita_param_t *param = &(current_state->ita_lib_param);
+   int ret;
+   /*pfmw_ita_param_t *param = &(current_state->ita_lib_param);*/
+   pfmw_param_t *evt=&(current_state->evt);
+   pfmw_ita_param_t *param = ITA2_PARAM(evt);
    
-   SUBDBG("Data Start Address: %p\nData End  Address: %p\n", ctx->start, ctx->end);
-   if(!((unsigned long)ctx->start==(unsigned long)ctx->end || ((unsigned long)ctx->start==0 && (unsigned long)ctx->end==0))){
+   printf("**** 0x%x    0x%x\n", param, &(current_state->ita_lib_param));
+   printf("++++ Data Start Address: %p\n++++ Data End  Address: %p\n", ctx->dstart, ctx->dend);
+   if(!((unsigned long)ctx->dstart==(unsigned long)ctx->dend || ((unsigned long)ctx->dstart==0 && (unsigned long)ctx->dend==0))){
+      param->pfp_magic = PFMLIB_ITA2_PARAM_MAGIC;
+	  /*
+	   * set the privilege mode:
+	   * 	PFM_PLM3 : user level only
+	   */
+	  evt->pfp_dfl_plm   = PFM_PLM3; 
       param->pfp_ita2_drange.rr_used = 1;
-      param->pfp_ita2_drange.rr_limits[0].rr_start = (unsigned long)ctx->start;
-      param->pfp_ita2_drange.rr_limits[0].rr_end   = (unsigned long)ctx->end;
+      param->pfp_ita2_drange.rr_limits[0].rr_start = (unsigned long)ctx->dstart;
+      param->pfp_ita2_drange.rr_limits[0].rr_end   = (unsigned long)ctx->dend;
+
+	  /*
+	   * let the library figure out the values for the PMCS
+	   */
+	  if ((ret=pfm_dispatch_events(evt)) != PFMLIB_SUCCESS) {
+		printf("cannot configure events: %s\n", pfm_strerror(ret));
+	  }
+
+	  printf("++++ data range  : [0x%016lx-0x%016lx): %d pair of debug registers used\n" 
+	       "     start_offset:-0x%lx end_offset:+0x%lx\n", 
+			(unsigned long)ctx->dstart, 
+			(unsigned long)ctx->dend, 
+			param->pfp_ita2_drange.rr_nbr_used >> 1, 
+			param->pfp_ita2_drange.rr_limits[0].rr_soff, 
+			param->pfp_ita2_drange.rr_limits[0].rr_eoff);
+      if(perfmonctl(ctx->tid, PFM_WRITE_DBRS, param->pfp_ita2_drange.rr_br, param->pfp_ita2_drange.rr_nbr_used)==-1){
+	     printf( "child: perfmonctl error PFM_WRITE_DBRS errno %d\n",strerror(errno));
+      }
    }
+   drr++;
 #else
    pfmw_param_t *evt=&(current_state->evt);
    pfmlib_input_param_t *param = evt->inp;
 
-   SUBDBG("Instruction Start Address: %p\nInstruction End  Address: %p\n", ctx->start, ctx->end);
-   if(!((unsigned long)ctx->start==(unsigned long)ctx->end || ((unsigned long)ctx->start==0 && (unsigned long)ctx->end==0))){
+   SUBDBG("Data Start Address: %p\nData End  Address: %p\n", ctx->dstart, ctx->dend);
+   if(!((unsigned long)ctx->dstart==(unsigned long)ctx->dend || ((unsigned long)ctx->dstart==0 && (unsigned long)ctx->dend==0))){
       param->pfp_ita2_drange.rr_used = 1;
-      param->pfp_ita2_drange.rr_limits[0].rr_start = (unsigned long)ctx->start;
-      param->pfp_ita2_drange.rr_limits[0].rr_end   = (unsigned long)ctx->end;
+      param->pfp_ita2_drange.rr_limits[0].rr_start = (unsigned long)ctx->dstart;
+      param->pfp_ita2_drange.rr_limits[0].rr_end   = (unsigned long)ctx->dend;
    }
 #endif   
-   /*r = perfmonctl(ctx->tid, PFM_WRITE_DBRS, param->pfp_ita2_drange.rr_br, param->pfp_ita2_drange.rr_nbr_used);*/
    return(PAPI_OK);
 }
 
@@ -675,27 +703,55 @@ static int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state)
 {
    //int r;
 #ifdef PFM20
-   pfmw_ita_param_t *param = &(current_state->ita_lib_param);
+   int ret;
+   /*pfmw_ita_param_t *param = &(current_state->ita_lib_param);*/
+   pfmw_param_t *evt=&(current_state->evt);
+   pfmw_ita_param_t *param = ITA2_PARAM(evt);
 
-   SUBDBG("Instruction Start Address: %p\nInstruction End  Address: %p\n", ctx->start, ctx->end);
-   if(!((unsigned long)ctx->start==(unsigned long)ctx->end || ((unsigned long)ctx->start==0 && (unsigned long)ctx->end==0))){
-      param->pfp_ita2_irange.rr_used = 1;
-      param->pfp_ita2_irange.rr_limits[0].rr_start = (unsigned long)ctx->start;
-      param->pfp_ita2_irange.rr_limits[0].rr_end   = (unsigned long)ctx->end;
+   SUBDBG("---- Instruction Start Address: %p\n---- Instruction End  Address: %p\n", ctx->istart, ctx->iend);
+   if(!((unsigned long)ctx->istart==(unsigned long)ctx->iend || ((unsigned long)ctx->istart==0 && (unsigned long)ctx->iend==0))){
+      param->pfp_magic = PFMLIB_ITA2_PARAM_MAGIC;
+	  /*
+	   * set the privilege mode:
+	   * 	PFM_PLM3 : user level only
+	   */
+	  evt->pfp_dfl_plm   = PFM_PLM3; 
+	  param->pfp_ita2_irange.rr_used = 1;
+      param->pfp_ita2_irange.rr_limits[0].rr_start = (unsigned long)ctx->istart;
+      param->pfp_ita2_irange.rr_limits[0].rr_end   = (unsigned long)ctx->iend;
+
+	  /*
+	    * let the library figure out the values for the PMCS
+	    */
+	  if ((ret=pfm_dispatch_events(evt)) != PFMLIB_SUCCESS) {
+		printf("cannot configure events: %s\n", pfm_strerror(ret));
+	  }
+
+	  printf("---- code range  : [0x%016lx-0x%016lx)\n"
+	       "     start_offset:-0x%lx  end_offset:+0x%lx\n"
+		   "     %d pairs of debug registers used\n",
+			(unsigned long)ctx->istart, 
+			(unsigned long)ctx->iend, 
+			param->pfp_ita2_irange.rr_limits[0].rr_soff, 
+			param->pfp_ita2_irange.rr_limits[0].rr_eoff,
+			param->pfp_ita2_irange.rr_nbr_used >> 1);
+      if(perfmonctl(ctx->tid, PFM_WRITE_IBRS, param->pfp_ita2_irange.rr_br, param->pfp_ita2_irange.rr_nbr_used)==-1){
+	     printf( "child: perfmonctl error PFM_WRITE_DBRS errno %d\n",strerror(errno));
+      }
    }
+   irr++;
 #else
    pfmw_param_t *evt=&(current_state->evt);
    pfmlib_input_param_t *param = evt->inp;
 
-   SUBDBG("Instruction Start Address: %p\nInstruction End  Address: %p\n", ctx->start, ctx->end);
-   if(!((unsigned long)ctx->start==(unsigned long)ctx->end || ((unsigned long)ctx->start==0 && (unsigned long)ctx->end==0))){
+   SUBDBG("Instruction Start Address: %p\nInstruction End  Address: %p\n", ctx->istart, ctx->iend);
+   if(!((unsigned long)ctx->istart==(unsigned long)ctx->iend || ((unsigned long)ctx->istart==0 && (unsigned long)ctx->iend==0))){
       param->pfp_ita2_irange.rr_used = 1;
-      param->pfp_ita2_irange.rr_limits[0].rr_start = (unsigned long)ctx->start;
-      param->pfp_ita2_irange.rr_limits[0].rr_end   = (unsigned long)ctx->end;
+      param->pfp_ita2_irange.rr_limits[0].rr_start = (unsigned long)ctx->istart;
+      param->pfp_ita2_irange.rr_limits[0].rr_end   = (unsigned long)ctx->iend;
    }
 #endif   
 
-   /*r = perfmonctl(ctx->tid, PFM_WRITE_IBRS, param->pfp_ita2_irange.rr_br, param->pfp_ita2_irange.rr_nbr_used);*/
    return(PAPI_OK);
 }
 
@@ -713,12 +769,12 @@ static int _papi_hwd_ctl(hwd_context_t * zero, int code, _papi_int_option_t * op
       return (set_granularity
               (option->granularity.ESI->machdep, option->granularity.granularity));
    case PAPI_DATA_ADDRESS:
-      zero->start=option->address_range.start;
-	   zero->end=option->address_range.end;
+      zero->dstart=option->address_range.dstart;
+	  zero->dend=option->address_range.dend;
       return (PAPI_OK);
    case PAPI_INSTR_ADDRESS:
-      zero->start=option->address_range.start;
-      zero->end=option->address_range.end;
+      zero->istart=option->address_range.istart;
+      zero->iend=option->address_range.iend;
       return (PAPI_OK);
    default:
       return (PAPI_EINVAL);
@@ -1389,9 +1445,6 @@ static int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    PFMW_PEVT_EVTCOUNT(evt) = 0;
    memset(PFMW_PEVT_PFPPC(evt), 0, sizeof(PFMW_PEVT_PFPPC(evt)));
 
-   set_drange(zero, this_state);
-   set_irange(zero, this_state);
-   
    SUBDBG(" original count is %d\n", org_cnt);
 
 /* add new native events to the evt structure */
@@ -1424,6 +1477,9 @@ static int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
       SUBDBG("event_code is %d, reg_num is %d\n", native[i].ni_event & PAPI_NATIVE_AND_MASK,
              native[i].ni_position);
    }
+
+   if(!drr) set_drange(zero, this_state);
+   if(!irr) set_irange(zero, this_state);
 
    return (PAPI_OK);
 }
