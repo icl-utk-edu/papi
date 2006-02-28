@@ -1265,7 +1265,7 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
       {
          EventSetInfo_t *ESI;
 
-         ESI = _papi_hwi_lookup_EventSet(ptr->domain.eventset);
+         ESI = _papi_hwi_lookup_EventSet(ptr->addr.eventset);
          if (ESI == NULL)
             papi_return(PAPI_ENOEVST);
          thread = ESI->master;
