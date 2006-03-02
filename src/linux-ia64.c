@@ -912,18 +912,34 @@ static int _papi_hwd_ctl(hwd_context_t * zero, int code, _papi_int_option_t * op
       return (set_granularity
               (option->granularity.ESI->machdep, option->granularity.granularity));
    case PAPI_DATA_ADDRESS:
-      zero->dstart=option->address_range.dstart;
-	  zero->dend=option->address_range.dend;
+      zero->dstart=option->address_range.start;
+	   zero->dend=option->address_range.end;
+      option->address_range.start_off = -1;
+	   option->address_range.end_off = -1;
 	  /*set_drange(zero, (hwd_control_state_t *) &(option->domain.ESI->machdep));
 	  _papi_hwd_update_control_state((hwd_control_state_t *) &(option->domain.ESI->machdep),
                    (option->domain.ESI->NativeInfoArray), option->domain.ESI->NativeCount, zero );*/
       return (PAPI_OK);
    case PAPI_INSTR_ADDRESS:
-      zero->istart=option->address_range.istart;
-      zero->iend=option->address_range.iend;
+      zero->istart=option->address_range.start;
+      zero->iend=option->address_range.end;
+      option->address_range.start_off = -1;
+	   option->address_range.end_off = -1;
+      return (PAPI_OK);
 	  /*set_irange(zero, (hwd_control_state_t *) &(option->domain.ESI->machdep));
 	  _papi_hwd_update_control_state((hwd_control_state_t *) &(option->domain.ESI->machdep),
                    (option->domain.ESI->NativeInfoArray), option->domain.ESI->NativeCount, zero );*/
+   case PAPI_GET_DATA_ADDRESS:
+      option->address_range.start = zero->dstart;
+	   option->address_range.end = zero->dend;
+      option->address_range.start_off = zero->dstart_off;
+	   option->address_range.end_off = zero->dend_off;
+      return (PAPI_OK);
+   case PAPI_GET_INSTR_ADDRESS:
+      option->address_range.start = zero->istart;
+	   option->address_range.end = zero->iend;
+      option->address_range.start_off = zero->istart_off;
+	   option->address_range.end_off = zero->iend_off;
       return (PAPI_OK);
    default:
       return (PAPI_EINVAL);
