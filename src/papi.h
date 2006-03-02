@@ -456,11 +456,12 @@ read the documentation carefully.  */
    } PAPI_multiplex_option_t;
 
    /* address range specification for range restricted counting */
-   /* (could also be used as an atomic structure inside PAPI_address_map_t) */
    typedef struct _papi_addr_range_option { /* if both are zero, range is disabled */
-      int eventset;                 /* eventset to restrict */
-      caddr_t start;                /* start address of an address range */
-      caddr_t end;                  /* end addressof an address range */
+      int eventset;           /* eventset to restrict */
+      caddr_t start;          /* user requested start address of an address range */
+      caddr_t end;            /* user requested end address of an address range */
+      int start_off;          /* hardware specified offset from start address */
+      int end_off;            /* hardware specified offset from end address */
    } PAPI_addr_range_option_t;
 
 /* A pointer to the following is passed to PAPI_set/get_opt() */

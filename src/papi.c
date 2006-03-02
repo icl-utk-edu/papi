@@ -1272,6 +1272,8 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 
          internal.address_range.start = ptr->addr.start;
          internal.address_range.end = ptr->addr.end;
+         ptr->addr.start_off = -1;
+         ptr->addr.end_off = -1;
          retval = _papi_hwd_ctl(thread->context[0], option, &internal);
          papi_return (retval);
      }
@@ -1394,6 +1396,30 @@ int PAPI_get_sbstr_opt(int option, PAPI_option_t *ptr, int sidx)
       ptr->sub_info.supports_virt_usec = _papi_hwi_system_info.supports_virt_usec;
       ptr->sub_info.supports_virt_cyc = _papi_hwi_system_info.supports_virt_cyc;
       return(PAPI_OK);
+   case PAPI_DATA_ADDRESS:
+   case PAPI_INSTR_ADDRESS:
+      {
+         EventSetInfo_t *ESI;
+         ThreadInfo_t *thread;
+         int retval;
+         _papi_int_option_t internal;
+
+         ESI = _papi_hwi_lookup_EventSet(ptr->addr.eventset);
+         if (ESI == NULL)
+            papi_return(PAPI_ENOEVST);
+         thread = ESI->master;
+
+         if (option == PAPI_DATA_ADDRESS)
+            retval = _papi_hwd_ctl(thread->context[0], PAPI_GET_DATA_ADDRESS, &internal);
+         else
+            retval = _papi_hwd_ctl(thread->context[0], PAPI_GET_INSTR_ADDRESS, &internal);
+         ptr->addr.start = internal.address_range.start;
+         ptr->addr.end = internal.address_range.end;
+         ptr->addr.start_off = internal.address_range.start_off;
+         ptr->addr.end_off = internal.address_range.end_off;
+
+         papi_return (retval);
+      }
    default:
       papi_return (PAPI_EINVAL);
    }
