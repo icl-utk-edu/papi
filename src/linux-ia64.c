@@ -838,7 +838,10 @@ static int set_drange(hwd_context_t *ctx, hwd_control_state_t *current_state)
       param->pfp_ita2_drange.rr_limits[0].rr_start = (unsigned long)ctx->dstart;
       param->pfp_ita2_drange.rr_limits[0].rr_end   = (unsigned long)ctx->dend;
    }
-#endif   
+#endif
+   ctx->dstart_off = param->pfp_ita2_drange.rr_limits[0].rr_soff;
+   ctx->dend_off = param->pfp_ita2_drange.rr_limits[0].rr_eoff;
+   
    return(PAPI_OK);
 }
 
@@ -894,6 +897,8 @@ static int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state)
       param->pfp_ita2_irange.rr_limits[0].rr_end   = (unsigned long)ctx->iend;
    }
 #endif   
+   ctx->istart_off = param->pfp_ita2_irange.rr_limits[0].rr_soff;
+   ctx->iend_off = param->pfp_ita2_irange.rr_limits[0].rr_eoff;
 
    return(PAPI_OK);
 }
