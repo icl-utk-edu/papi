@@ -358,12 +358,6 @@ typedef struct _papi_int_profile {
    EventSetProfileInfo_t profile;
 } _papi_int_profile_t;
 
-/* This is a work-around to circumvent the fact that there is no standard way to get info from the substrate
-   By creating internal get cases from the external PAPI_set_opt cases, we can use the existing 
-   _papi_hwd_ctl hook to process a 'get' request */
-#define PAPI_GET_DATA_ADDRESS       PAPI_DATA_ADDRESS | 0x80   /* gt data address range restriction info*/
-#define PAPI_GET_INSTR_ADDRESS      PAPI_INSTR_ADDRESS | 0x80      /* get instruction address range restriction info */
-
 typedef struct _papi_int_addr_range { /* if both are zero, range is disabled */
    caddr_t start;                /* start address of an address range */
    caddr_t end;                  /* end address of an address range */
