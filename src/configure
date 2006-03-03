@@ -1384,7 +1384,7 @@ case "$OS" in
            fi
          elif test "`cat /proc/cpuinfo | grep AuthenticAMD`" != ""; then
            made=AuthenticAMD
-           if test "`cat /proc/cpuinfo | grep "Athlon${tm} 64"`" != ""; then
+		   if test "`cat /proc/cpuinfo | grep "Athlon${tm}[[:space:]]*64"`" != ""; then
              CPU=opteron
            else CPU=athlon
            fi
