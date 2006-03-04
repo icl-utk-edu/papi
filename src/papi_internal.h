@@ -359,6 +359,8 @@ typedef struct _papi_int_profile {
 } _papi_int_profile_t;
 
 typedef struct _papi_int_addr_range { /* if both are zero, range is disabled */
+   EventSetInfo_t *ESI;
+   int domain;
    caddr_t start;                /* start address of an address range */
    caddr_t end;                  /* end address of an address range */
    int start_off;                /* offset from start address as programmed in hardware */
