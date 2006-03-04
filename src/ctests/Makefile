@@ -8,7 +8,7 @@ MPI	= mpifirst
 SHARED  = shlib
 SERIAL  = realtime first exeinfo zero zero_fork branches dmem_info all_events derived high-level2 describe memory  \
 	zero_flip low-level high-level eventname case1 case2 \
-	calibrate flops second johnmay2 \
+	calibrate flops second data_range johnmay2 \
 	overflow overflow_force_software overflow_single_event \
     overflow_twoevents timer_overflow overflow2 \
 	matrix-hl tenth encode encode2 \
@@ -187,6 +187,9 @@ sprofile: sprofile.c $(UTILOBJS) prof_utils.o $(PAPILIB)
 
 profile: profile.c $(UTILOBJS) prof_utils.o $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) profile.c prof_utils.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile
+
+data_range: data_range.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) data_range.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o data_range
 
 profile_twoevents: profile_twoevents.c $(UTILOBJS) prof_utils.o $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) profile_twoevents.c prof_utils.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile_twoevents
