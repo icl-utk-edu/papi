@@ -187,6 +187,51 @@ inline pid_t mygettid(void)
          return NULL;
    }
 
+   inline int pfmw_is_dear(int i)
+   {
+   #ifdef ITANIUM2
+      return(pfm_ita2_is_dear(i));
+   #else
+      return(pfm_ita_is_dear(i));
+   #endif
+   }
+
+   inline int pfmw_is_iear(int i)
+   {
+   #ifdef ITANIUM2
+      return(pfm_ita2_is_iear(i));
+   #else
+      return(pfm_ita_is_iear(i));
+   #endif
+   }
+
+   inline int pfmw_support_darr(int i)
+   {
+   #ifdef ITANIUM2
+      return(pfm_ita2_support_darr(i));
+   #else
+      return(pfm_ita_support_darr(i));
+   #endif
+   }
+
+   inline int pfmw_support_iarr(int i)
+   {
+   #ifdef ITANIUM2
+      return(pfm_ita2_support_iarr(i));
+   #else
+      return(pfm_ita_support_iarr(i));
+   #endif
+   }
+
+   inline int pfmw_support_opcm(int i)
+   {
+   #ifdef ITANIUM2
+      return(pfm_ita2_support_opcm(i));
+   #else
+      return(pfm_ita_support_opcm(i));
+   #endif
+   }
+
 
 #else
 #ifndef PFM30
@@ -445,7 +490,56 @@ hweight64 (unsigned long x)
          return NULL;
    }
 
+   inline int pfmw_is_dear(unsigned int i)
+   {
+   #ifdef ITANIUM2
+      return(pfm_ita2_is_dear(i));
+   #else
+      return(pfm_ita_is_dear(i));
+   #endif
+   }
+
+   inline int pfmw_is_iear(unsigned int i)
+   {
+   #ifdef ITANIUM2
+      return(pfm_ita2_is_iear(i));
+   #else
+      return(pfm_ita_is_iear(i));
+   #endif
+   }
+
+   inline int pfmw_supports_darr(unsigned int i)
+   {
+   #ifdef ITANIUM2
+      return(pfm_ita2_supports_darr(i));
+   #else
+      return(pfm_ita_supports_darr(i));
+   #endif
+   }
+
+   inline int pfmw_supports_iarr(unsigned int i)
+   {
+   #ifdef ITANIUM2
+      return(pfm_ita2_supports_iarr(i));
+   #else
+      return(pfm_ita_supports_iarr(i));
+   #endif
+   }
+
+   inline int pfmw_supports_opcm(unsigned int i)
+   {
+   #ifdef ITANIUM2
+      return(pfm_ita2_supports_opcm(i));
+   #else
+      return(pfm_ita_supports_opcm(i));
+   #endif
+   }
+
 #endif
+
+/* These routines are the same in PFM20 and PFM30
+   The wrappers hide differences between ITANIUM and ITANIUM2
+*/
 
 #endif /* _PFMWRAP_H */
 

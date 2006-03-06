@@ -261,10 +261,15 @@ enum {
    PAPI_PENT4_ENUM_BITS,		/* all individual bits for given group */
 
    /* POWER 4 specific section */
-   PAPI_PWR4_ENUM_GROUPS = 0x200	/* Enumerate groups an event belongs to */
+   PAPI_PWR4_ENUM_GROUPS = 0x200,	/* Enumerate groups an event belongs to */
+
+   /* ITANIUM specific section */
+   PAPI_ITA_ENUM_IARR = 0x300,	/* Enumerate events that support DAR (instruction address ranging) */
+   PAPI_ITA_ENUM_DARR,         	/* Enumerate events that support IAR (data address ranging) */
+   PAPI_ITA_ENUM_OPCM,           /* Enumerate events that support OPC (opcode matching) */
+   PAPI_ITA_ENUM_IEAR,           /* Enumerate IEAR (instruction event address register) events */
+   PAPI_ITA_ENUM_DEAR            /* Enumerate DEAR (data event address register) events */
 };
-
-
 
 
 /* 

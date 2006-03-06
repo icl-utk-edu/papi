@@ -1470,15 +1470,32 @@ static char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
    return (_papi_hwd_ntv_code_to_name(EventCode));
 }
 
-static int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
+static inline int _hwd_modify_event(unsigned int event, int modifier)
 {
-   int index = *EventCode & PAPI_NATIVE_AND_MASK;
+   switch (modifier) {
+      case PAPI_ITA_ENUM_IARR:
+         return(pfmw_support_iarr(event));
+      case PAPI_ITA_ENUM_DARR:
+         return(pfmw_support_darr(event));
+      case PAPI_ITA_ENUM_OPCM:
+         return(pfmw_support_opcm(event));
+      case PAPI_ITA_ENUM_DEAR:
+         return(pfmw_is_dear(event));
+      case PAPI_ITA_ENUM_IEAR:
+         return(pfmw_is_iear(event));
+      default:
+         return (1);
+   }
+}
 
-   if (index < MAX_NATIVE_EVENT - 1) {
+static int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
+{
+   while ((*EventCode & PAPI_NATIVE_AND_MASK) < MAX_NATIVE_EVENT - 1) {
       *EventCode = *EventCode + 1;
-      return (PAPI_OK);
-   } else
-      return (PAPI_ENOEVNT);
+      if(_hwd_modify_event((*EventCode ^ PAPI_NATIVE_MASK), modifier))
+         return(PAPI_OK);
+   }
+   return (PAPI_ENOEVNT);
 }
 
 static void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
