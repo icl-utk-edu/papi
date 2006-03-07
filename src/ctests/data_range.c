@@ -34,7 +34,10 @@ int main(int argc, char **argv)
 
 #ifndef ITANIUM2
    test_skip(__FILE__, __LINE__, "Currently only works on itanium2", 0);
+   exit(1);
 #endif
+
+   tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
    init_array();
    printf("Malloc'd array  pointers: %p   %p   %p\n", &parray1, &parray2, &parray3);
@@ -106,6 +109,8 @@ int main(int argc, char **argv)
    free(parray1);
    free(parray2);
    free(parray3);
+
+   test_pass(__FILE__, NULL, 0);
    
    exit(1);
 }
