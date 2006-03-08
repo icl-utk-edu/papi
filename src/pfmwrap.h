@@ -187,48 +187,48 @@ inline pid_t mygettid(void)
          return NULL;
    }
 
-   inline int pfmw_is_dear(int i)
+   inline int pfmw_is_dear(unsigned int i)
    {
    #ifdef ITANIUM2
-      return(pfm_ita2_is_dear(i));
+      return(pfm_ita2_is_dear((int)i));
    #else
-      return(pfm_ita_is_dear(i));
+      return(pfm_ita_is_dear((int)i));
    #endif
    }
 
-   inline int pfmw_is_iear(int i)
+   inline int pfmw_is_iear(unsigned int i)
    {
    #ifdef ITANIUM2
-      return(pfm_ita2_is_iear(i));
+      return(pfm_ita2_is_iear((int)i));
    #else
-      return(pfm_ita_is_iear(i));
+      return(pfm_ita_is_iear((int)i));
    #endif
    }
 
-   inline int pfmw_support_darr(int i)
+   inline int pfmw_support_darr(unsigned int i)
    {
    #ifdef ITANIUM2
-      return(pfm_ita2_support_darr(i));
+      return(pfm_ita2_support_darr((int)i));
    #else
-      return(pfm_ita_support_darr(i));
+      return(pfm_ita_support_darr((int)i));
    #endif
    }
 
-   inline int pfmw_support_iarr(int i)
+   inline int pfmw_support_iarr(unsigned int i)
    {
    #ifdef ITANIUM2
-      return(pfm_ita2_support_iarr(i));
+      return(pfm_ita2_support_iarr((int)i));
    #else
-      return(pfm_ita_support_iarr(i));
+      return(pfm_ita_support_iarr((int)i));
    #endif
    }
 
-   inline int pfmw_support_opcm(int i)
+   inline int pfmw_support_opcm(unsigned int i)
    {
    #ifdef ITANIUM2
-      return(pfm_ita2_support_opcm(i));
+      return(pfm_ita2_support_opcm((int)i));
    #else
-      return(pfm_ita_support_opcm(i));
+      return(pfm_ita_support_opcm((int)i));
    #endif
    }
 
@@ -508,30 +508,30 @@ hweight64 (unsigned long x)
    #endif
    }
 
-   inline int pfmw_supports_darr(unsigned int i)
+   inline int pfmw_support_darr(unsigned int i)
    {
    #ifdef ITANIUM2
-      return(pfm_ita2_supports_darr(i));
+      return(pfm_ita2_support_darr(i));
    #else
-      return(pfm_ita_supports_darr(i));
+      return(pfm_ita_support_darr(i));
    #endif
    }
 
-   inline int pfmw_supports_iarr(unsigned int i)
+   inline int pfmw_support_iarr(unsigned int i)
    {
    #ifdef ITANIUM2
-      return(pfm_ita2_supports_iarr(i));
+      return(pfm_ita2_support_iarr(i));
    #else
-      return(pfm_ita_supports_iarr(i));
+      return(pfm_ita_support_iarr(i));
    #endif
    }
 
-   inline int pfmw_supports_opcm(unsigned int i)
+   inline int pfmw_support_opcm(unsigned int i)
    {
    #ifdef ITANIUM2
-      return(pfm_ita2_supports_opcm(i));
+      return(pfm_ita2_support_opcm(i));
    #else
-      return(pfm_ita_supports_opcm(i));
+      return(pfm_ita_support_opcm(i));
    #endif
    }
 
