@@ -205,13 +205,19 @@ static int set_domain(hwd_control_state_t * cntrl, int domain)
     
    if(domain == PAPI_DOM_ALL) {
       did = 1;
+      /* Set user and supervisor bits to '1' (not count) and set them to '0' (count) */
       cntrl->control.cpu_control.ppc64.mmcr0 |= PERF_USR_AND_OS;
+      cntrl->control.cpu_control.ppc64.mmcr0 ^= PERF_USR_AND_OS;
    } else if (domain == PAPI_DOM_KERNEL) {
       did = 1;
-      cntrl->control.cpu_control.ppc64.mmcr0 |= PERF_OS_ONLY;
+      /* Set user and supervisor bits to '1' (not count) and set only supervisor bit to '0' (count) */
+      cntrl->control.cpu_control.ppc64.mmcr0 |= PERF_USR_AND_OS;
+      cntrl->control.cpu_control.ppc64.mmcr0 ^= PERF_OS_ONLY;
    } else if(domain == PAPI_DOM_USER) {
       did = 1;
-      cntrl->control.cpu_control.ppc64.mmcr0 |= PERF_USR_ONLY;
+      /* Set user and supervisor bits to '1' (not count) and set only user bit to '0' (count) */
+      cntrl->control.cpu_control.ppc64.mmcr0 |= PERF_USR_AND_OS;
+      cntrl->control.cpu_control.ppc64.mmcr0 ^= PERF_USR_ONLY;
    }
    
    if(!did)
