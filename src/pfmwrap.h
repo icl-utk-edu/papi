@@ -187,6 +187,17 @@ inline pid_t mygettid(void)
          return NULL;
    }
 
+   // for PFM20
+   inline char* pfmw_get_event_description(unsigned int idx)
+   {
+      char *descr;
+
+      if (pfm_get_event_description(idx, &descr) == PFMLIB_SUCCESS)
+         return descr;
+      else
+         return NULL;
+   }
+
    inline int pfmw_is_dear(unsigned int i)
    {
    #ifdef ITANIUM2
@@ -489,6 +500,14 @@ hweight64 (unsigned long x)
       else
          return NULL;
    }
+
+   /* for PFM30:
+      Unfortunately, libpfm3 deprecated the interface to pfm_get_event_description
+      Even though the data is still available in the event structure
+      Therefore this function only works for libpfm2/Itanium2
+   */
+
+   #define pfmw_get_event_description pfmw_get_event_name
 
    inline int pfmw_is_dear(unsigned int i)
    {

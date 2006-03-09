@@ -1467,7 +1467,7 @@ static char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 
 static char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
-   return (_papi_hwd_ntv_code_to_name(EventCode));
+   return(pfmw_get_event_description(EventCode^PAPI_NATIVE_MASK));
 }
 
 static inline int _hwd_modify_event(unsigned int event, int modifier)
