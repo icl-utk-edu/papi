@@ -1,3 +1,11 @@
+2006-02-15	maynardj
+	* src/perfctr-ppc64.h:
+	* src/perfctr-ppc64.c:
+	* src/ctests/second.c:
+		Enable domain changes on an event set to correctly
+		propogate to PMU.  Also added testcase variations in
+		ctests/second to detect original problem.  Test passes now.
+
 2005-11-23	terpstra
 	* src/perfctr-2.7.x/CHANGES [papi-3-2-0] 1.1.1.1.2.1:
 	* src/perfctr-2.7.x/etc/costs/Sempron-3100+ [papi-3-2-0] 1.1.1.1.2.1:
