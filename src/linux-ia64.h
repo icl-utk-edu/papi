@@ -24,13 +24,13 @@
 
 #include "perfmon/pfmlib.h"
 #include "perfmon/perfmon.h"
-#ifdef PFM30
-#include "perfmon/perfmon_default_smpl.h"
-#endif
 #ifdef ITANIUM2
 #include "perfmon/pfmlib_itanium2.h"
 #else
 #include "perfmon/pfmlib_itanium.h"
+#endif
+#ifdef PFM30
+#include "perfmon/perfmon_default_smpl.h"
 #endif
 
 #define inline_static inline static
@@ -50,11 +50,22 @@ typedef int hwd_reg_alloc_t;
    #define NUM_PMCS PFMLIB_MAX_PMCS
    #define NUM_PMDS PFMLIB_MAX_PMDS
    typedef struct param_t {
+	  pfarg_reg_t pd[NUM_PMDS];
       pfarg_reg_t pc[NUM_PMCS];
       pfmlib_input_param_t inp;
       pfmlib_output_param_t outp;
+	  void	*mod_inp;	/* model specific input parameters to libpfm    */
+	  void	*mod_outp;	/* model specific output parameters from libpfm */
    } pfmw_param_t;
+   typedef struct ita2_param_t {
+      pfmlib_ita2_input_param_t ita2_input_param;
+	  pfmlib_ita2_output_param_t  ita2_output_param;
+   }  pfmw_ita2_param_t;
+ #ifdef ITANIUM2
+   typedef pfmw_ita2_param_t pfmw_ita_param_t;
+ #else
    typedef int pfmw_ita_param_t;
+ #endif
    #define PMU_FIRST_COUNTER  4
    #ifdef ITANIUM2
       #define MAX_NATIVE_EVENT  497 /*the number comes from itanium2_events.h*/

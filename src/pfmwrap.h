@@ -21,6 +21,16 @@ inline pid_t mygettid(void)
 #endif
 }
 
+#ifdef ITANIUM2
+char *retired_events[]={
+	"IA64_TAGGED_INST_RETIRED_IBRP0_PMC8",
+	"IA64_TAGGED_INST_RETIRED_IBRP1_PMC9",
+	"IA64_TAGGED_INST_RETIRED_IBRP2_PMC8",
+	"IA64_TAGGED_INST_RETIRED_IBRP3_PMC9",
+	NULL
+};
+#endif
+
 #if defined(PFM20)
    #define OVFL_SIGNAL SIGPROF
    #define PFMW_PEVT_EVTCOUNT(evt)            (evt->pfp_event_count)
@@ -243,6 +253,201 @@ inline pid_t mygettid(void)
    #endif
    }
 
+static void check_ibrp_events(pfmlib_param_t *evt)
+{
+	pfmlib_ita2_param_t *param = ITA2_PARAM(evt);
+	unsigned long umasks_retired[4];
+	unsigned long umask;
+	int j, i, seen_retired, ibrp, code, idx;
+	int retired_code, incr;
+	
+	/*
+	 * in fine mode, it is enough to use the event
+	 * which only monitors the first debug register
+	 * pair. The two pairs making up the range
+	 * are guaranteed to be consecutive in rr_br[].
+	 */
+	incr = pfm_ita2_irange_is_fine(evt) ? 4 : 2;
+
+	for (i=0; retired_events[i]; i++) {
+		pfm_find_event(retired_events[i], &idx);
+		pfm_ita2_get_event_umask(idx, umasks_retired+i);
+	}
+
+	pfm_get_event_code(idx, &retired_code);
+
+	/*
+	 * print a warning message when the using IA64_TAGGED_INST_RETIRED_IBRP* which does
+	 * not completely cover the all the debug register pairs used to make up the range.
+	 * This could otherwise lead to misinterpretation of the results.
+	 */
+	for (i=0; i < param->pfp_ita2_irange.rr_nbr_used; i+= incr) {
+
+		ibrp = param->pfp_ita2_irange.rr_br[i].dbreg_num >>1;
+
+		seen_retired = 0;
+		for(j=0; j < evt->pfp_event_count; j++) {
+			pfm_get_event_code(evt->pfp_events[j].event, &code);
+			if (code != retired_code) continue;
+			seen_retired = 1;
+			pfm_ita2_get_event_umask(evt->pfp_events[j].event, &umask);
+			if (umask == umasks_retired[ibrp]) break;
+		}
+		if (seen_retired && j == evt->pfp_event_count)
+			printf("warning: code range uses IBR pair %d which is not monitored using %s\n", ibrp, retired_events[ibrp]);
+	}
+}
+
+inline int install_irange(hwd_context_t *pctx, hwd_control_state_t *current_state)
+{
+#ifdef ITANIUM2
+	int  r;
+	int pid=pctx->tid;
+    pfmw_ita_param_t *param = &(current_state->ita_lib_param);
+    pfmw_param_t *evt=&(current_state->evt);
+	
+	check_ibrp_events(evt);
+
+	r = perfmonctl(pid, PFM_WRITE_IBRS, param->pfp_ita2_irange.rr_br, param->pfp_ita2_irange.rr_nbr_used);
+	if (r == -1){
+	   SUBDBG("cannot install code range restriction: %s\n", strerror(errno));
+       return (PAPI_ESYS);
+	}
+    return(PAPI_OK);
+#else
+    return (PAPI_ESBSTR);
+#endif
+}
+
+static int install_drange(hwd_context_t *pctx, hwd_control_state_t *current_state)
+{
+#ifdef ITANIUM2
+	int r;
+	int pid=pctx->tid;
+    pfmw_ita_param_t *param = &(current_state->ita_lib_param);
+    
+	r = perfmonctl(pid, PFM_WRITE_DBRS, param->pfp_ita2_drange.rr_br, param->pfp_ita2_drange.rr_nbr_used);
+	if (r == -1){
+	   SUBDBG("cannot install data range restriction: %s\n", strerror(errno));
+       return (PAPI_ESYS);
+	}
+    return(PAPI_OK);
+#else
+    return (PAPI_ESBSTR);
+#endif
+}
+
+/* The routines set_{d,i}range() provide places to install the data and / or
+   instruction address range restrictions for counting qualified events.
+   These routines must set up or clear the appropriate local static data structures.
+   The actual work of loading the hardware registers must be done in update_ctl_state().
+   Both drange and irange can be set on the same eventset.
+   If start=end=0, the feature is disabled. 
+*/
+inline int set_drange(hwd_context_t *ctx, hwd_control_state_t *current_state, _papi_int_option_t *option)
+{
+   int ret=PAPI_OK;
+#ifdef ITANIUM2
+   pfmw_ita_param_t *param = &(current_state->ita_lib_param);
+   pfmw_param_t *evt=&(current_state->evt);
+   
+   if((unsigned long)option->address_range.start==(unsigned long)option->address_range.end || ((unsigned long)option->address_range.start==0 && (unsigned long)option->address_range.end==0))
+      return(PAPI_EINVAL);
+	  /*
+	   * set the privilege mode:
+	   * 	PFM_PLM3 : user level only
+	   */
+	  evt->pfp_dfl_plm   = PFM_PLM3; 
+      param->pfp_ita2_drange.rr_used = 1;
+	  SUBDBG("++++ before data range  : [0x%016lx-0x%016lx=%ld]: %d pair of debug registers used\n" 
+	       "     start_offset:-0x%lx end_offset:+0x%lx\n", 
+			param->pfp_ita2_drange.rr_limits[0].rr_start, 
+			param->pfp_ita2_drange.rr_limits[0].rr_end, param->pfp_ita2_drange.rr_limits[0].rr_end-param->pfp_ita2_drange.rr_limits[0].rr_start,
+			param->pfp_ita2_drange.rr_nbr_used >> 1, 
+			param->pfp_ita2_drange.rr_limits[0].rr_soff, 
+			param->pfp_ita2_drange.rr_limits[0].rr_eoff);
+      param->pfp_ita2_drange.rr_limits[0].rr_start = (unsigned long)option->address_range.start;
+      param->pfp_ita2_drange.rr_limits[0].rr_end   = (unsigned long)option->address_range.end;
+
+	  /*
+	   * let the library figure out the values for the PMCS
+	   */
+	  if ((ret=pfm_dispatch_events(evt)) != PFMLIB_SUCCESS) {
+		SUBDBG("cannot configure events: %s\n", pfm_strerror(ret));
+	  }
+
+	  SUBDBG("++++ data range  : [0x%016lx-0x%016lx=%ld]: %d pair of debug registers used\n" 
+	       "     start_offset:-0x%lx end_offset:+0x%lx\n", 
+			param->pfp_ita2_drange.rr_limits[0].rr_start, 
+			param->pfp_ita2_drange.rr_limits[0].rr_end, param->pfp_ita2_drange.rr_limits[0].rr_end - param->pfp_ita2_drange.rr_limits[0].rr_start,
+			param->pfp_ita2_drange.rr_nbr_used >> 1, 
+			param->pfp_ita2_drange.rr_limits[0].rr_soff, 
+			param->pfp_ita2_drange.rr_limits[0].rr_eoff);
+			
+   if((ret=install_drange(ctx, current_state)) ==PAPI_OK){
+	  option->address_range.start_off=param->pfp_ita2_drange.rr_limits[0].rr_soff;
+	  option->address_range.end_off=param->pfp_ita2_drange.rr_limits[0].rr_eoff;
+   }
+#else
+   ret=PAPI_ESBSTR;
+#endif
+   return(ret);
+}
+
+inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, _papi_int_option_t *option)
+{
+   int ret=PAPI_OK;
+#ifdef ITANIUM2
+   pfmw_ita_param_t *param = &(current_state->ita_lib_param);
+   pfmw_param_t *evt=&(current_state->evt);
+
+   if((unsigned long)option->address_range.start==(unsigned long)option->address_range.end || ((unsigned long)option->address_range.start==0 && (unsigned long)option->address_range.end==0))
+      return(PAPI_EINVAL);
+	  
+      /*param->pfp_magic = PFMLIB_ITA2_PARAM_MAGIC;*/
+	  /*
+	   * set the privilege mode:
+	   * 	PFM_PLM3 : user level only
+	   */
+	  evt->pfp_dfl_plm   = PFM_PLM3; 
+	  param->pfp_ita2_irange.rr_used = 1;
+
+	  SUBDBG("---- hwd_control_state[0x%x]  before code range  : [0x%016lx-0x%016lx=%ld]\n"
+	       "     start_offset:-0x%lx  end_offset:+0x%lx\n"
+		   "     %d pairs of debug registers used\n",
+			current_state, param->pfp_ita2_irange.rr_limits[0].rr_start, 
+			param->pfp_ita2_irange.rr_limits[0].rr_end, param->pfp_ita2_irange.rr_limits[0].rr_end - param->pfp_ita2_irange.rr_limits[0].rr_start,
+			param->pfp_ita2_irange.rr_limits[0].rr_soff, 
+			param->pfp_ita2_irange.rr_limits[0].rr_eoff,
+			param->pfp_ita2_irange.rr_nbr_used >> 1);
+ 	  
+      param->pfp_ita2_irange.rr_limits[0].rr_start = (unsigned long)option->address_range.start;
+      param->pfp_ita2_irange.rr_limits[0].rr_end   = (unsigned long)option->address_range.end;
+
+	  /*
+	    * let the library figure out the values for the PMCS
+	    */
+	  if ((ret=pfm_dispatch_events(evt)) != PFMLIB_SUCCESS) {
+		SUBDBG("cannot configure events: %s\n", pfm_strerror(ret));
+	  }
+
+	  SUBDBG("---- hwd_control_state[0x%x] code range  : [0x%016lx-0x%016lx=%ld]\n"
+	       "     start_offset:-0x%lx  end_offset:+0x%lx\n"
+		   "     %d pairs of debug registers used\n",
+			current_state, param->pfp_ita2_irange.rr_limits[0].rr_start, 
+			param->pfp_ita2_irange.rr_limits[0].rr_end, param->pfp_ita2_irange.rr_limits[0].rr_end - param->pfp_ita2_irange.rr_limits[0].rr_start,
+			param->pfp_ita2_irange.rr_limits[0].rr_soff, 
+			param->pfp_ita2_irange.rr_limits[0].rr_eoff,
+			param->pfp_ita2_irange.rr_nbr_used >> 1);
+   if((ret=install_irange(ctx, current_state))==PAPI_OK){
+	  option->address_range.start_off=param->pfp_ita2_irange.rr_limits[0].rr_soff;
+	  option->address_range.end_off=param->pfp_ita2_irange.rr_limits[0].rr_eoff;
+   }   
+#else
+   ret=PAPI_ESBSTR;
+#endif
+   return ret;
+}
 
 #else
 #ifndef PFM30
@@ -273,6 +478,7 @@ hweight64 (unsigned long x)
    #define PFMW_PEVT_PLM(evt,idx)           (evt->inp.pfp_events[idx].plm)
    #define PFMW_PEVT_DFLPLM(evt)            (evt->inp.pfp_dfl_plm)
    #define PFMW_PEVT_PFPPC(evt)             (evt->pc)
+   #define PFMW_PEVT_PFPPD(evt)             (evt->pd)
    #define PFMW_PEVT_PFPPC_COUNT(evt)       (evt->outp.pfp_pmc_count)
    #define PFMW_PEVT_PFPPC_REG_NUM(evt,idx) (evt->outp.pfp_pmcs[idx].reg_num)
    #define PFMW_PEVT_PFPPC_REG_VAL(evt,idx) (evt->pc[idx].reg_value)
@@ -282,6 +488,8 @@ hweight64 (unsigned long x)
    #ifdef ITANIUM2
       #define PFMW_ARCH_REG_PMCPLM(reg) (reg.pmc_ita2_counter_reg.pmc_plm)
       #define PFMW_ARCH_REG_PMCES(reg)  (reg.pmc_ita2_counter_reg.pmc_es)
+      #define PFMON_ITA2_MAX_IBRS	8
+      #define PFMON_ITA2_MAX_DBRS	8
    #else /* Itanium */
       #define PFMW_ARCH_REG_PMCPLM(reg) (reg.pmc_ita_count_reg.pmc_plm)
       #define PFMW_ARCH_REG_PMCES(reg)  (reg.pmc_ita_count_reg.pmc_es)
@@ -322,7 +530,7 @@ hweight64 (unsigned long x)
 /*
       PFMW_PEVT_DFLPLM(evt) = PFM_PLM3;
 */
-      ret=pfm_dispatch_events(&evt->inp, NULL, &evt->outp, NULL);   
+      ret=pfm_dispatch_events(&evt->inp, (pfmlib_ita2_input_param_t *)evt->mod_inp, &evt->outp, (pfmlib_ita2_output_param_t *)evt->mod_outp);   
       if (ret) { 
          return PAPI_ESYS;
       } else {
@@ -330,7 +538,9 @@ hweight64 (unsigned long x)
             evt->pc[i].reg_num   = evt->outp.pfp_pmcs[i].reg_num;
             evt->pc[i].reg_value = evt->outp.pfp_pmcs[i].reg_value;
          }
-
+         for (i=0; i < evt->inp.pfp_event_count; i++) {
+            evt->pd[i].reg_num   = evt->pc[i].reg_num;
+	     }
          return PAPI_OK;
       }
    }
@@ -553,6 +763,239 @@ hweight64 (unsigned long x)
       return(pfm_ita_support_opcm(i));
    #endif
    }
+
+static void check_ibrp_events(hwd_control_state_t *current_state)
+{
+    pfmw_param_t *evt = &(current_state->evt);
+	pfmlib_ita2_output_param_t *param = &(current_state->ita_lib_param.ita2_output_param);
+	unsigned long umasks_retired[4];
+	unsigned long umask;
+	unsigned int j, i, seen_retired, ibrp, idx;
+	int code;
+	int retired_code, incr;
+	
+	/*
+	 * in fine mode, it is enough to use the event
+	 * which only monitors the first debug register
+	 * pair. The two pairs making up the range
+	 * are guaranteed to be consecutive in rr_br[].
+	 */
+	incr = pfm_ita2_irange_is_fine(&evt->outp, param) ? 4 : 2;
+
+	for (i=0; retired_events[i]; i++) {
+		pfm_find_event(retired_events[i], &idx);
+		pfm_ita2_get_event_umask(idx, umasks_retired+i);
+	}
+
+	pfm_get_event_code(idx, &retired_code);
+
+	/*
+	 * print a warning message when the using IA64_TAGGED_INST_RETIRED_IBRP* which does
+	 * not completely cover the all the debug register pairs used to make up the range.
+	 * This could otherwise lead to misinterpretation of the results.
+	 */
+	for (i=0; i < param->pfp_ita2_irange.rr_nbr_used; i+= incr) {
+
+		ibrp = param->pfp_ita2_irange.rr_br[i].reg_num >>1;
+
+		seen_retired = 0;
+		for(j=0; j < evt->inp.pfp_event_count; j++) {
+			pfm_get_event_code(evt->inp.pfp_events[j].event, &code);
+			if (code != retired_code) continue;
+			seen_retired = 1;
+			pfm_ita2_get_event_umask(evt->inp.pfp_events[j].event, &umask);
+			if (umask == umasks_retired[ibrp]) break;
+		}
+		if (seen_retired && j == evt->inp.pfp_event_count)
+			printf("warning: code range uses IBR pair %d which is not monitored using %s\n", ibrp, retired_events[ibrp]);
+	}
+}
+
+inline int install_irange(hwd_context_t *pctx, hwd_control_state_t *current_state)
+{
+#ifdef ITANIUM2
+	pfmlib_ita2_output_param_t *param = (pfmlib_ita2_output_param_t *)&(current_state->ita_lib_param.ita2_output_param);
+	pfarg_dbreg_t dbreg[PFMON_ITA2_MAX_IBRS];
+	unsigned int i, used_dbr;
+	int  r;
+	int pid=pctx->fd;
+
+	memset(dbreg, 0, sizeof(dbreg));
+	check_ibrp_events(current_state);
+
+	used_dbr = param->pfp_ita2_irange.rr_nbr_used;
+
+	for(i=0; i < used_dbr; i++) {
+		dbreg[i].dbreg_num   = param->pfp_ita2_irange.rr_br[i].reg_num; 
+		dbreg[i].dbreg_value = param->pfp_ita2_irange.rr_br[i].reg_value; 
+	}
+
+	r = perfmonctl(pid, PFM_WRITE_IBRS, dbreg, param->pfp_ita2_irange.rr_nbr_used);
+	if (r == -1){
+	   SUBDBG("cannot install code range restriction: %s\n", strerror(errno));
+       return (PAPI_ESYS);
+	}
+	return (PAPI_OK);
+#else
+    return (PAPI_ESBSTR);
+#endif
+}
+
+inline int install_drange(hwd_context_t *pctx, hwd_control_state_t *current_state)
+{
+#ifdef ITANIUM2
+	pfmlib_ita2_output_param_t *param = (pfmlib_ita2_output_param_t *)&(current_state->ita_lib_param.ita2_output_param);
+	pfarg_dbreg_t dbreg[PFMON_ITA2_MAX_DBRS];
+	unsigned int i, used_dbr;
+	int r;
+	int pid=pctx->fd;
+
+	memset(dbreg, 0, sizeof(dbreg));
+	used_dbr = param->pfp_ita2_drange.rr_nbr_used;
+
+	for(i=0; i < used_dbr; i++) {
+		dbreg[i].dbreg_num   = param->pfp_ita2_drange.rr_br[i].reg_num; 
+		dbreg[i].dbreg_value = param->pfp_ita2_drange.rr_br[i].reg_value; 
+	}
+
+	r = perfmonctl(pid, PFM_WRITE_DBRS, dbreg, param->pfp_ita2_drange.rr_nbr_used);
+	if (r == -1){
+	   SUBDBG("cannot install data range restriction: %s\n", strerror(errno));
+       return (PAPI_ESYS);
+	}
+	return (PAPI_OK);
+#else
+    return (PAPI_ESBSTR);
+#endif
+}
+
+/* The routines set_{d,i}range() provide places to install the data and / or
+   instruction address range restrictions for counting qualified events.
+   These routines must set up or clear the appropriate local static data structures.
+   The actual work of loading the hardware registers must be done in update_ctl_state().
+   Both drange and irange can be set on the same eventset.
+   If start=end=0, the feature is disabled. 
+*/
+inline int set_drange(hwd_context_t *ctx, hwd_control_state_t *current_state, _papi_int_option_t *option)
+{
+   int ret=PAPI_OK;
+#ifdef ITANIUM2
+   pfmw_ita_param_t *param = &(current_state->ita_lib_param);
+   pfmw_param_t *evt = &(current_state->evt);
+   pfmlib_ita2_input_param_t *ita2_inp = &(param->ita2_input_param);
+   pfmlib_ita2_output_param_t *ita2_outp = &(param->ita2_output_param);
+   pfmlib_input_param_t *inp = &evt->inp;
+
+   if((unsigned long)option->address_range.start==(unsigned long)option->address_range.end || ((unsigned long)option->address_range.start==0 && (unsigned long)option->address_range.end==0))
+      return(PAPI_EINVAL);
+	  /*
+	   * set the privilege mode:
+	   * 	PFM_PLM3 : user level only
+	   */
+	  memset(&ita2_inp->pfp_ita2_drange, 0, sizeof(pfmlib_ita2_input_rr_t));
+	  memset(ita2_outp, 0, sizeof(pfmlib_ita2_output_param_t));
+	  inp->pfp_dfl_plm   = PFM_PLM3; 
+      ita2_inp->pfp_ita2_drange.rr_used = 1;
+      ita2_inp->pfp_ita2_drange.rr_limits[0].rr_start = (unsigned long)option->address_range.start;
+      ita2_inp->pfp_ita2_drange.rr_limits[0].rr_end   = (unsigned long)option->address_range.end;
+	  SUBDBG("++++ before data range  : [0x%016lx-0x%016lx=%ld]: %d pair of debug registers used\n" 
+	       "     start_offset:-0x%lx end_offset:+0x%lx\n", 
+			ita2_inp->pfp_ita2_drange.rr_limits[0].rr_start, 
+			ita2_inp->pfp_ita2_drange.rr_limits[0].rr_end, ita2_inp->pfp_ita2_drange.rr_limits[0].rr_end-ita2_inp->pfp_ita2_drange.rr_limits[0].rr_start,
+			ita2_outp->pfp_ita2_drange.rr_nbr_used >> 1, 
+			ita2_outp->pfp_ita2_drange.rr_infos[0].rr_soff, 
+			ita2_outp->pfp_ita2_drange.rr_infos[0].rr_eoff);
+
+	  /*
+	   * let the library figure out the values for the PMCS
+	   */
+	  if ((ret=pfmw_dispatch_events(evt)) != PFMLIB_SUCCESS) {
+		SUBDBG("cannot configure events: %s\n", pfm_strerror(ret));
+	  }
+
+	  SUBDBG("++++ data range  : [0x%016lx-0x%016lx=%ld]: %d pair of debug registers used\n" 
+	       "     start_offset:-0x%lx end_offset:+0x%lx\n", 
+			ita2_inp->pfp_ita2_drange.rr_limits[0].rr_start, 
+			ita2_inp->pfp_ita2_drange.rr_limits[0].rr_end, ita2_inp->pfp_ita2_drange.rr_limits[0].rr_end-ita2_inp->pfp_ita2_drange.rr_limits[0].rr_start,
+			ita2_outp->pfp_ita2_drange.rr_nbr_used >> 1, 
+			ita2_outp->pfp_ita2_drange.rr_infos[0].rr_soff, 
+			ita2_outp->pfp_ita2_drange.rr_infos[0].rr_eoff);
+			
+/*   if(	ita2_inp->pfp_ita2_irange.rr_limits[0].rr_start!=0 || 	ita2_inp->pfp_ita2_irange.rr_limits[0].rr_end!=0 )
+   if((ret=install_irange(ctx, current_state)) ==PAPI_OK){
+	  option->address_range.start_off=ita2_outp->pfp_ita2_irange.rr_infos[0].rr_soff;
+	  option->address_range.end_off=ita2_outp->pfp_ita2_irange.rr_infos[0].rr_eoff;
+   }
+*/
+   if((ret=install_drange(ctx, current_state)) ==PAPI_OK){
+	  option->address_range.start_off=ita2_outp->pfp_ita2_drange.rr_infos[0].rr_soff;
+	  option->address_range.end_off=ita2_outp->pfp_ita2_drange.rr_infos[0].rr_eoff;
+   }
+#else
+   ret=PAPI_ESBSTR;
+#endif   
+   return(ret);
+}
+
+inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, _papi_int_option_t *option)
+{
+   int ret=PAPI_OK;
+#ifdef ITANIUM2
+   pfmw_ita_param_t *param = &(current_state->ita_lib_param);
+   pfmw_param_t *evt = &(current_state->evt);
+   pfmlib_ita2_input_param_t *ita2_inp = &(param->ita2_input_param);
+   pfmlib_ita2_output_param_t *ita2_outp = &(param->ita2_output_param);
+   pfmlib_input_param_t *inp = &evt->inp;
+
+   if((unsigned long)option->address_range.start==(unsigned long)option->address_range.end || ((unsigned long)option->address_range.start==0 && (unsigned long)option->address_range.end==0))
+      return(PAPI_EINVAL);
+	  /*
+	   * set the privilege mode:
+	   * 	PFM_PLM3 : user level only
+	   */
+	  memset(&ita2_inp->pfp_ita2_irange, 0, sizeof(pfmlib_ita2_input_rr_t));
+	  memset(ita2_outp, 0, sizeof(pfmlib_ita2_output_param_t));
+	  inp->pfp_dfl_plm   = PFM_PLM3; 
+      ita2_inp->pfp_ita2_irange.rr_used = 1;
+      ita2_inp->pfp_ita2_irange.rr_limits[0].rr_start = (unsigned long)option->address_range.start;
+      ita2_inp->pfp_ita2_irange.rr_limits[0].rr_end   = (unsigned long)option->address_range.end;
+	  SUBDBG("++++ before code range  : [0x%016lx-0x%016lx=%ld]: %d pair of debug registers used\n" 
+	       "     start_offset:-0x%lx end_offset:+0x%lx\n", 
+			ita2_inp->pfp_ita2_irange.rr_limits[0].rr_start, 
+			ita2_inp->pfp_ita2_irange.rr_limits[0].rr_end, ita2_inp->pfp_ita2_irange.rr_limits[0].rr_end-ita2_inp->pfp_ita2_irange.rr_limits[0].rr_start,
+			ita2_outp->pfp_ita2_irange.rr_nbr_used >> 1, 
+			ita2_outp->pfp_ita2_irange.rr_infos[0].rr_soff, 
+			ita2_outp->pfp_ita2_irange.rr_infos[0].rr_eoff);
+
+	  /*
+	   * let the library figure out the values for the PMCS
+	   */
+	  if ((ret=pfmw_dispatch_events(evt)) != PFMLIB_SUCCESS) {
+		SUBDBG("cannot configure events: %s\n", pfm_strerror(ret));
+	  }
+
+	  SUBDBG("++++ code range  : [0x%016lx-0x%016lx=%ld]: %d pair of debug registers used\n" 
+	       "     start_offset:-0x%lx end_offset:+0x%lx\n", 
+			ita2_inp->pfp_ita2_irange.rr_limits[0].rr_start, 
+			ita2_inp->pfp_ita2_irange.rr_limits[0].rr_end, ita2_inp->pfp_ita2_irange.rr_limits[0].rr_end-ita2_inp->pfp_ita2_irange.rr_limits[0].rr_start,
+			ita2_outp->pfp_ita2_irange.rr_nbr_used >> 1, 
+			ita2_outp->pfp_ita2_irange.rr_infos[0].rr_soff, 
+			ita2_outp->pfp_ita2_irange.rr_infos[0].rr_eoff);
+/*   if(	ita2_inp->pfp_ita2_drange.rr_limits[0].rr_start!=0 || 	ita2_inp->pfp_ita2_drange.rr_limits[0].rr_end!=0 )
+   if((ret=install_drange(ctx, current_state)) ==PAPI_OK){
+	  option->address_range.start_off=ita2_outp->pfp_ita2_drange.rr_infos[0].rr_soff;
+	  option->address_range.end_off=ita2_outp->pfp_ita2_drange.rr_infos[0].rr_eoff;
+   }
+*/   
+   if((ret=install_irange(ctx, current_state)) ==PAPI_OK){
+	  option->address_range.start_off=ita2_outp->pfp_ita2_irange.rr_infos[0].rr_soff;
+	  option->address_range.end_off=ita2_outp->pfp_ita2_irange.rr_infos[0].rr_eoff;
+   }
+#else
+   ret=PAPI_ESBSTR;
+#endif
+   return(ret);
+}
 
 #endif
 
