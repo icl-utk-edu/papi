@@ -114,6 +114,10 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
    static char *native_name[] = { "cycles", "retinst", NULL, NULL, NULL, NULL };
 #endif
 
+#if defined(_BGL)
+   static char *native_name[] = { "BGL_UPC_PU0_PREF_STREAM_HIT", "BGL_PAPI_TIMEBASE", "BGL_UPC_PU1_PREF_STREAM_HIT", NULL, NULL, NULL, NULL };
+#endif
+
 void papimon_start(void)
 {
    int retval;
@@ -148,7 +152,7 @@ void papimon_start(void)
          native_name[3] = "FP_NONE_RET";
          native_name[4] = NULL;
       }
-#if ((defined(_AIX)) || \
+#if ((defined(_AIX)) || (defined(_BGL)) ||\
      (defined(linux) && ( defined(__i386__) || ( defined __x86_64__) )) || \
      (defined(_WIN32)) || \
      (defined(linux) && defined(__ia64__)) || \
@@ -160,7 +164,7 @@ void papimon_start(void)
 
       for (i = 0; native_name[i] != NULL; i++) {
          retval = PAPI_event_name_to_code(native_name[i], &native);
-         /* printf("native_name[%d] = %s; native = 0x%x\n", i, native_name[i], native); */
+         printf("native_name[%d] = %s; native = 0x%x\n", i, native_name[i], native); 
          if (retval != PAPI_OK)
             test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", retval);
          if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
@@ -183,7 +187,7 @@ void papimon_stop(void)
    int i, retval;
    long_long values[8];
    float rsec;
-#if defined(_AIX) || defined(linux)
+#if defined(_AIX) || defined(linux) || defined(_BGL)
    float csec;
 #endif
 
@@ -255,12 +259,21 @@ void papimon_stop(void)
        (defined(mips) && defined(sgi)) || \
        (defined(sun) && defined(sparc)) || \
        (defined(__crayx1))|| (defined(_CRAYT3E)) || \
-       (defined(__ALPHA) && defined(__osf__)))
+       (defined(__ALPHA) && defined(__osf__))) 
       for (i = 0; native_name[i] != NULL; i++) {
          fprintf(stderr, "%-40s: ", native_name[i]);
          fprintf(stderr, LLDFMT, values[i]);
          fprintf(stderr, "\n");
       }
+#elif defined(_BGL)
+      csec = (float) values[1] / (hwinfo->mhz * 1000000.0);
+      fprintf(stdout, "CPU Elapsed Time in sec.   : %f\n", csec);
+      for (i = 0; native_name[i] != NULL; i++) {
+         fprintf(stdout, "%-40s: ", native_name[i]);
+         fprintf(stdout, LLDFMT, values[i]);
+         fprintf(stdout, "\n");
+      }
+
 #endif
    }
    test_pass(__FILE__, NULL, 0);
