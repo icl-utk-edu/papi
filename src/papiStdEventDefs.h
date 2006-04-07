@@ -29,11 +29,8 @@ platform's documentation carefully.
 #define PAPI_PRESET_MASK 0x80000000
 #define PAPI_NATIVE_MASK 0x40000000
 #define PAPI_PRESET_AND_MASK 0x7FFFFFFF
-#define PAPI_NATIVE_AND_MASK    0x3FFFFFFF
-/* Removes Preset/Native and Substrate Mask */
-#define PAPI_SUBSTRATE_AND_MASK 0x3FFFFFF
-#define PAPI_SUBSTRATE_INDEX(a) ((0x3c000000&a)>>26)
-#define PAPI_SUBSTRATE_MASK(a)  (0x3c000000&(a<<26))
+/*#define PAPI_NATIVE_AND_MASK 0x3FFFFFFF*/ /* this masks both native and preset bits */
+#define PAPI_NATIVE_AND_MASK 0xBFFFFFFF
 
 #define PAPI_MAX_PRESET_EVENTS 128      /*The maxmimum number of preset events */
 
@@ -158,7 +155,13 @@ enum {
    PAPI_FSQ_INS_idx, /*FSq ins */
    PAPI_FNV_INS_idx, /*Finv ins */
    PAPI_FP_OPS_idx,  /*Floating point operations executed */
-
+#ifdef _BGL
+   PAPI_BGL_OED_idx,     /*Oedipus operations */
+   PAPI_BGL_TS_32B_idx , /*Torus 32B chunks sent */
+   PAPI_BGL_TS_FULL_idx, /*Torus no token UPC cycles */ 
+   PAPI_BGL_TR_DPKT_idx, /*Tree 256 byte packets */
+   PAPI_BGL_TR_FULL_idx,  /*UPC cycles (CLOCKx2) tree rcv is full */
+#endif
    PAPI_END_idx      /*This should always be last! */
 };
 
@@ -266,7 +269,23 @@ enum {
 #define PAPI_FNV_INS (PAPI_FNV_INS_idx | PAPI_PRESET_MASK) /*Finv ins */
 #define PAPI_FP_OPS  (PAPI_FP_OPS_idx  | PAPI_PRESET_MASK) /*Floating point operations executed */
 
+#ifdef _BGL
+#define PAPI_BGL_OED (PAPI_BGL_OED_idx | PAPI_PRESET_MASK)
+#define PAPI_BGL_TS_32B (PAPI_BGL_TS_32B_idx | PAPI_PRESET_MASK)
+#define PAPI_BGL_TS_FULL (PAPI_BGL_TS_FULL_idx | PAPI_PRESET_MASK)
+#define PAPI_BGL_TR_DPKT (PAPI_BGL_TR_DPKT_idx | PAPI_PRESET_MASK)
+#define PAPI_BGL_TR_FULL (PAPI_BGL_TR_FULL_idx | PAPI_PRESET_MASK)
+#endif
+
 #define PAPI_END     (PAPI_END_idx  | PAPI_PRESET_MASK)    /*This should always be last! */
 
+#endif
+
+#ifdef _BGL
+/* used to define edge for native events on BGL*/
+#define EDGE_HI   0x00000000
+#define EDGE_RISE 0x10000000
+#define EDGE_FALL 0x20000000
+#define EDGE_LOW  0x30000000
 #endif
 

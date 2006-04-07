@@ -21,7 +21,7 @@ extern hwi_presets_t _papi_hwi_presets;
    at init time. This method supports adding new events; overriding existing events, or
    deleting deprecated events.
 */
-int _papi_hwi_setup_all_presets(hwi_search_t * findem, hwi_dev_notes_t *notes)
+int _papi_hwi_setup_all_presets(hwi_search_t *findem, hwi_dev_notes_t *notes)
 {
    int i, pnum, preset_index, did_something = 0;
 
@@ -35,7 +35,6 @@ int _papi_hwi_setup_all_presets(hwi_search_t * findem, hwi_dev_notes_t *notes)
 
          /* find the index for the event to be initialized */
          preset_index = (findem[pnum].event_code & PAPI_PRESET_AND_MASK);
-
          /* count and set the number of native terms in this event */
          for (i = 0; (i < MAX_COUNTER_TERMS) && (findem[pnum].data.native[i] != PAPI_NULL); i++);
          _papi_hwi_presets.count[preset_index] = i;

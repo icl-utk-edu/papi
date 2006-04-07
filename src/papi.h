@@ -9,8 +9,10 @@
 *          mucci@cs.utk.edu
 * Mods:    dan terpstra
 *          terpstra@cs.utk.edu
+* Mods:    Haihang You
+*	       you@cs.utk.edu
 * Mods:    Kevin London
-*	   london@cs.utk.edu
+*	       london@cs.utk.edu
 * Mods:    Maynard Johnson
 *          maynardj@us.ibm.com
 *

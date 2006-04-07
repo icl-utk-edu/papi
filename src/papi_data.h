@@ -7,6 +7,8 @@
 * CVS:     $Id$
 * Author:  dan terpstra
 *          terpstra@cs.utk.edu
+* Mods:    Haihang You
+*	       you@cs.utk.edu
 * Mods:    Min Zhou
 *          min@cs.utk.edu
 * Mods:    Kevin London
@@ -16,8 +18,6 @@
 * Mods:    <your name here>
 *          <your email address>
 */
-#ifndef _PAPI_DATA_H
-#define _PAPI_DATA_H  1
 
 /********************/
 /*  BEGIN GLOBALS   */
@@ -129,11 +129,19 @@ hwi_preset_info_t _papi_hwi_preset_info[PAPI_MAX_PRESET_EVENTS] = {
    /*101*/ {"PAPI_FNV_INS", "FPU inverse", "Floating point inverse instructions"},
    /*102*/ {"PAPI_FP_OPS",  "FP operations", "Floating point operations"},
    /* empty entries are now null pointers instead of pointers to empty strings */
+#ifdef _BGL
+   /*103*/ {"PAPI_BGL_OED", "Oedipus operations", "BGL special event: Oedipus operations"},
+   /*104*/ {"PAPI_BGL_TS_32B", "Torus 32B chunks sent", "BGL special event: Torus 32B chunks sent"},
+   /*105*/ {"PAPI_BGL_TS_FULL", "Torus no token UPC cycles", "BGL special event: Torus no token UPC cycles"}, 
+   /*106*/ {"PAPI_BGL_TR_DPKT", "Tree 256 byte packets", "BGL special event: Tree 256 byte packets"},
+   /*107*/ {"PAPI_BGL_TR_FULL", "UPC cycles (CLOCKx2) tree rcv is full", "BGL special event: UPC cycles (CLOCKx2) tree rcv is full"},
+#else
    /*103*/ {NULL, NULL, NULL},
    /*104*/ {NULL, NULL, NULL},
    /*105*/ {NULL, NULL, NULL},
    /*106*/ {NULL, NULL, NULL},
    /*107*/ {NULL, NULL, NULL},
+#endif
    /*108*/ {NULL, NULL, NULL},
    /*109*/ {NULL, NULL, NULL},
    /*110*/ {NULL, NULL, NULL},
@@ -179,4 +187,3 @@ const hwi_describe_t _papi_hwi_err[PAPI_NUM_ERRORS] = {
 /********************/
 /*    END GLOBALS   */
 /********************/
-#endif

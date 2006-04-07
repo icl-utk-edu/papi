@@ -47,6 +47,7 @@ enum {
    VEC_PAPI_HWD_CTL,
    VEC_PAPI_HWD_SET_OVERFLOW,
    VEC_PAPI_HWD_SET_PROFILE,
+   VEC_PAPI_HWD_ADD_PROG_EVENT,
    VEC_PAPI_HWD_SET_DOMAIN,
    VEC_PAPI_HWD_NTV_ENUM_EVENTS,
    VEC_PAPI_HWD_NTV_CODE_TO_NAME,
@@ -68,7 +69,8 @@ enum {
 };
 typedef struct papi_vectors{
   int (*_vec_papi_hwd_read) (void *, void *, long_long **, int);
-  void (*_vec_papi_hwd_dispatch_timer) (int, void *, void *);
+  void (*_vec_papi_hwd_dispatch_timer) (int, siginfo_t *, void *);
+  void *(*_vec_papi_hwd_get_overflow_address) (int, char *);
   int (*_vec_papi_hwd_start) (void *, void *);
   int (*_vec_papi_hwd_stop) (void *, void *);
   long_long (*_vec_papi_hwd_get_real_cycles) ();
@@ -87,6 +89,7 @@ typedef struct papi_vectors{
   int (*_vec_papi_hwd_ctl) (void *, int, _papi_int_option_t *);
   int (*_vec_papi_hwd_set_overflow) (EventSetInfo_t *, int, int);
   int (*_vec_papi_hwd_set_profile) (EventSetInfo_t *, int, int);
+  int (*_vec_papi_hwd_add_prog_event) (void *, unsigned int, void *, EventInfo_t *);
   int (*_vec_papi_hwd_set_domain) (void *, int);
   int (*_vec_papi_hwd_ntv_enum_events) (unsigned int *, int);
   char * (*_vec_papi_hwd_ntv_code_to_name) (unsigned int);
@@ -106,16 +109,13 @@ typedef struct papi_vectors{
   int (*_vec_papi_hwd_user) (int, void *, void *);
 }papi_vectors_t;
 
-extern papi_vectors_t * _papi_vector_table;
+extern papi_vectors_t _papi_vector_table;
 
 /* Prototypes */
 int _papi_hwi_setup_vector_table(papi_vectors_t *table, papi_svector_t *stable);
 int _papi_hwi_initialize_vector_table(papi_vectors_t *table);
+void vector_print_table(papi_vectors_t *table, int print_func);
 
-
-typedef int(*InitPtr)(papi_vectors_t *, int);
-
-InitPtr _papi_hwi_find_init(char *name);
 #endif
 
 #endif /* _PAPI_VECTOR_H */

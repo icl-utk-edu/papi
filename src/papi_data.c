@@ -9,6 +9,8 @@
 *          mucci@cs.utk.edu
 * Mods:    dan terpstra
 *          terpstra@cs.utk.edu
+* Mods:    Haihang You
+*	       you@cs.utk.edu
 * Mods:    Min Zhou
 *          min@cs.utk.edu
 * Mods:    Kevin London
@@ -21,8 +23,6 @@
 
 #include "papi.h"
 #include "papi_internal.h"
-#include "papi_protos.h"
-#include "papi_data.h"
 
 /********************/
 /*  BEGIN GLOBALS   */
@@ -33,14 +33,12 @@
 EventSetInfo_t *default_master_eventset = NULL;
 int init_retval = DEADBEEF;
 int init_level = PAPI_NOT_INITED;
-int papi_num_substrates = 0;
 #ifdef DEBUG
 int _papi_hwi_debug = 0;
 #endif
 
 /* Machine dependent info structure */
 papi_mdi_t _papi_hwi_system_info;
-papi_substrate_mdi_t * _papi_hwi_substrate_info=NULL;
 
 unsigned int _papi_hwi_preset_count[PAPI_MAX_PRESET_EVENTS] = {0};
 hwi_preset_data_t *_papi_hwi_preset_data[PAPI_MAX_PRESET_EVENTS] = {NULL};
@@ -95,28 +93,6 @@ int _papi_hwi_derived_string(int type, char *derived, int len) {
    }
    return(PAPI_EINVAL);
 }
-
-/* papi_sizeof:
-   Helper routine to return the size of hardware dependent data structures.
-   These sizes are stored into the substrate info structure by the substrate
-   at initialization.
-*/
-int papi_sizeof(int type, int idx){
-   switch(type){
-     case HWD_CONTEXT:
-       return(_papi_hwi_substrate_info[idx].context_size);
-     case HWD_REGISTER:
-       return(_papi_hwi_substrate_info[idx].register_size); 
-     case HWD_REG_ALLOC:
-       return(_papi_hwi_substrate_info[idx].reg_alloc_size);
-     case HWD_CONTROL_STATE:
-       return(_papi_hwi_substrate_info[idx].control_state_size);
-     default:
-       return(0);
-   }
-   return(0);
-}
-
 
 /********************/
 /*    END GLOBALS   */
