@@ -1,20 +1,7 @@
-# The sources for the Windows PMC driver:
-
 TARGETNAME=WinPMC
 TARGETPATH=obj
 TARGETTYPE=DRIVER
 
-#
-# setup visualC++ source browsing
-#
-BROWSER_INFO=1
-BROWSERFILE=$(TARGETNAME).bsc -n
-
-MSC_WARNING_LEVEL= -W3 -WX
-
-INCLUDES=..\
-
-#SOURCES=winpmc.c winpmc.rc global.c init.c virtual.c virtual_stub.c x86.c x86_setup.c x86_tests.c
-#SOURCES=winpmc.c winpmc.rc pmc_x86.c
-SOURCES=winpmc.c pmc_x86.c
-
+#INCLUDES=..\..
+AMD64_SOURCES=AMD64\cpuid.asm
+SOURCES=winpmc.c pmc_x86.c WinPMC.rc
