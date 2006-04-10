@@ -3,6 +3,9 @@
  *
  */
 
+#ifndef _PMCLIB_H
+#define _PMCLIB_H 
+
 #include "WinPMC.h"
 
 #ifdef DEBUG
@@ -34,3 +37,5 @@ int pmc_init(HANDLE kd);
 int pmc_set_control(HANDLE kd, struct pmc_control *);
 HANDLE pmc_open(void);
 void pmc_close(HANDLE kd);
+
+#endif // _PMCLIB_H 

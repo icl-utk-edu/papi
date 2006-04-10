@@ -13,35 +13,12 @@
 #include <stdio.h>
 #include "WinPMC.h"                           // contains I/O control codes
 
-#define WELCOME_STRING		"Welcome to the Windows 2000 PMC Driver\n"
-#define VERSION_STRING		"PMC Driver Version: 2004/04/06:1  \n"
+#define WELCOME_STRING		"Welcome to the Windows PMC Driver\n"
+#define VERSION_STRING		"PMC Driver Version: 2006/04/07:0  \n"
 
 /* variables */
 
 static PDEVICE_OBJECT DeviceObject;		  // pointer to the device object
-static int TaskSwitchCounter;			  // task switch counter
-
-
-
-/*****************************************************************************
-;*
-;*		COUNTSWITCHES
-;*              count context switches
-;*              this is a kernel hook routine
-;*
-;*              Input:	old thread ID
-;*              	new thread ID
-;*              Output:	none
-;*
-;****************************************************************************/
-
-VOID FASTCALL CountSwitches(HANDLE OldThreadId, HANDLE NewThreadId)
-{
-
-TaskSwitchCounter++;
-
-}
-
 
 
 /*****************************************************************************
@@ -99,12 +76,14 @@ return(strlen(buf)+1);
 
 static NTSTATUS Dispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 {
-PULONG             ioBuffer;
-NTSTATUS           status;
-PIO_STACK_LOCATION irpStack;
-ULONG              ioControlCode;
-ULONG              inputBufferLength;
-ULONG              outputBufferLength;
+   PULONG             ioBuffer;
+   NTSTATUS           status;
+   PIO_STACK_LOCATION irpStack;
+   ULONG              ioControlCode;
+   ULONG              inputBufferLength;
+   ULONG              outputBufferLength;
+
+   struct pmc_info info;
 
 
 /* default is OK and nothing returned */
@@ -157,9 +136,23 @@ switch (irpStack->MajorFunction)
      {
 
 	// Has no input parameters, returns "Hello world." string in the I/O buffer
+   // For now this function has been coopted to display contents of the info structure.
+   // It should ultimately be given its own entry point.
      case HELLO:
-        Irp->IoStatus.Information = HelloWorld((char *) ioBuffer);
-        status = STATUS_SUCCESS;
+//        Irp->IoStatus.Information = HelloWorld((char *) ioBuffer);
+//        status = STATUS_SUCCESS;
+        status = kern_pmc_info(&info);
+        if (status == STATUS_SUCCESS) {
+            if (outputBufferLength > 90) // this is a guess on the required length
+            {
+               strcpy((char *)ioBuffer, "\nVendor  : ");
+	            strncat((char *)ioBuffer, info.vendor, 12);
+               sprintf(((char *)ioBuffer) + strlen((char *)ioBuffer), "\nFamily  : %d\nModel   : %d\nStepping: %d\nFeatures: 0x%8x", 
+                  info.family, info.model, info.stepping, info.features);
+	            Irp->IoStatus.Information = strlen((char *)ioBuffer)+1;
+            }
+            else status = STATUS_BUFFER_TOO_SMALL;
+        }
       break;
 
 	// Has one input parameters, returns "Hello world %d times." string in the I/O buffer
@@ -170,9 +163,10 @@ switch (irpStack->MajorFunction)
       break;
 
 	// Returns number of task switches since the driver was loaded.
+   // This function is no longer relevant
       case TASKSWITCH:
-        ioBuffer[0] = TaskSwitchCounter;
-        Irp->IoStatus.Information = sizeof(TaskSwitchCounter);
+        ioBuffer[0] = 0;
+        Irp->IoStatus.Information = sizeof(int);
         status = STATUS_SUCCESS;
       break;
 
@@ -331,13 +325,6 @@ if (!NT_SUCCESS(ntStatus))
   IoDeleteDevice(DeviceObject);   // delete device if link creation failed
   return(ntStatus);
  }
-
-// Here we hook the context switch
-// but only if we're gonna use it in the check build
-// for some reason this works on W2K but not on WXP
-
-TaskSwitchCounter = 0;
-//KeSetSwapContextNotifyRoutine(CountSwitches);
 
 // That's all to initialization!
 

@@ -129,27 +129,6 @@ static int k7_write_control(int nrctrs, struct pmc_control *control)
 	return STATUS_SUCCESS;
 }
 
-static int mii_check_control(const struct pmc_control *control)
-{
-	/* Protect reserved and pin control bits.
-	 * CESR bits 9 and 25 are reserved in the Cyrix III,
-	 * but not in the earlier processors where they control
-	 * the external PM pins. In either case, we do not
-	 * allow the user to touch them.
-	 */
-	if( control->evntsel[0] & 0xFA00FA00 )
-		return STATUS_MII_RESERVED;
-	/* CTR1 is on if its CPL field is non-zero */
-	if( control->evntsel[0] & 0x00C00000 )
-		return 3;
-	/* CTR0 is on if its CPL field is non-zero */
-	if( control->evntsel[0] & 0x000000C0 )
-		return 2;
-	/* Only TSC is on. */
-	return 1;
-}
-
-
 static int (*check_control)(const struct pmc_control *control);
 static int pmc_cpu_check_control(const struct pmc_control *control)
 {
@@ -191,23 +170,13 @@ static int intel_init(int family, int stepping, int model)
 static int amd_init(int family)
 {
 	switch(family) {
-	case 6:	/* K7 Athlon. Model 1 does not have a local APIC. */
+	case 6:	   /* K7 Athlon. Model 1 does not have a local APIC. */
+	case 15:	/* K8 Opteron. Uses same control routines as Athlon. */
 		write_control = k7_write_control;
 		check_control = k7_check_control;
 		return STATUS_SUCCESS;
 	}
 	return STATUS_NO_AMD_INIT;
-}
-
-static int cyrix_init(int family)
-{
-	switch(family) {
-	case 6:	/* 6x86MX, MII, or III */
-		write_control = p5_write_control;
-		check_control = mii_check_control;
-		return STATUS_SUCCESS;
-	}
-	return STATUS_NO_CYRIX_INIT;
 }
 
 /****************************************************************
@@ -219,46 +188,23 @@ static int cyrix_init(int family)
 // Returns zero if no cpuid instruction; else returns 1
 // Returns completed pmc_info struct on success 
 static int cpu_id(struct pmc_info *info) {
-    unsigned int version, features;
+   unsigned int version, features;
 	char v[12];
 
-	// Check if CPUID exists, if not we are running on a PRE 486 processor
-	// NOTE: this may not work for Cyrix; cpuid instruction defaults to disabled...
-	__asm {
-		pushfd
-		pop eax
-		mov ebx, eax
-		xor eax, 00200000h
-		push eax
-		popfd
-		pushfd
-		pop eax
-		cmp eax, ebx
-		jz NO_CPUID
-		mov version, 1
-		jmp END
-	NO_CPUID:
-		mov version, 0
-	END:
-	}
-    if (!version) return 0;
+   // NOTE: Earlier versions of this routine checked for the existence of
+   // the cpuid instruction before proceeding.
+   // It's 2006. I think we can assume that any processor this is running on
+   // is post-486 and will thus have the cpuid instruction.
 
-	// Get the Vendor String
-	__asm {
-		mov eax, 00h
-		cpuid
-		mov dword ptr[v], ebx
-		mov dword ptr[v+4], edx
-		mov dword ptr[v+8], ecx
-	};
-
-    // Get the features
-	__asm {
-		mov eax, 01h
-		cpuid
-		mov version, eax
-		mov features, edx
-	}
+	// Get the Vendor String, features, and family/model/stepping info
+   struct cpuidVals vals;
+   GetCPUID(0, &vals);
+   *(unsigned long *)(&v[0]) = vals.b;
+   *(unsigned long *)(&v[4]) = vals.d;
+   *(unsigned long *)(&v[8]) = vals.c;
+   GetCPUID(1, &vals);
+   features = vals.d;
+   version = vals.a;
 
 	strncpy(info->vendor, v, 12);
 	info->features = features;
@@ -268,6 +214,26 @@ static int cpu_id(struct pmc_info *info) {
 	return 1;
 }
 
+
+#ifndef _WIN64
+void GetCPUID(unsigned long id, struct cpuidVals *vals)
+{
+   unsigned long a, b, c, d;
+
+   __asm {
+		mov eax, id
+		cpuid
+      mov a, eax
+		mov b, ebx
+		mov c, ecx
+		mov d, edx
+	}
+   vals->a = a;
+   vals->b = b;
+   vals->c = c;
+   vals->d = d;
+}
+#endif
 
 /****************************************************************
  *																*
@@ -284,6 +250,7 @@ int kern_pmc_init(void)
 {
 	int status = STATUS_UNKNOWN_CPU_INIT;
 	struct pmc_info info;
+   ULONG64 cr4;
 
 	if (!cpu_id(&info)) return STATUS_NO_CPUID;
 
@@ -294,9 +261,20 @@ int kern_pmc_init(void)
 
 	if (!strncmp(info.vendor, "GenuineIntel", 12)) status = intel_init(info.family,info.stepping,info.model);
 	else if (!strncmp(info.vendor, "AuthenticAMD", 12)) status = amd_init(info.family);
-	else if (!strncmp(info.vendor, "CyrixInstead", 12)) status = cyrix_init(info.family);
+// we really don't need to claim support for Cyrix, do we?
+// else if (!strncmp(info.vendor, "CyrixInstead", 12)) status = cyrix_init(info.family);
 
 	if(status == STATUS_SUCCESS) set_cr4_pce();
+
+	return status;
+}
+
+// returns 0 for success or negative for failure
+int kern_pmc_info(struct pmc_info *info)
+{
+	int status = STATUS_SUCCESS;
+
+	if (!cpu_id(info)) return STATUS_NO_CPUID;
 
 	return status;
 }

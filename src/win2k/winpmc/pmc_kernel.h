@@ -59,6 +59,7 @@ struct pmc_info {
 
 /* External entry points */
 extern int kern_pmc_init(void);
+extern int kern_pmc_info(struct pmc_info *info);
 extern int kern_pmc_control(struct pmc_control *control);
 extern void kern_pmc_exit(void);
 
