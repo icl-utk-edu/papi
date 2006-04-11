@@ -1,2 +1,0 @@
-#mpirun -np 1 -cwd /home/noeth2/papi-dev/papi3/papi-3.0.8.1-IBM/src/bgl_tests/ -exe $1
-cqsub -q short -t 10 -n 1 -cwd . -exe $1
