@@ -7,7 +7,7 @@ MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
 SERIAL  = realtime first exeinfo zero zero_fork branches dmem_info all_native_events all_events derived high-level2 describe memory  \
-	zero_flip low-level high-level eventname case1 case2 \
+	zero_flip low-level high-level eventname case1 case2 data_range\
 	calibrate flops second johnmay2 \
 	overflow overflow_force_software overflow_single_event \
     overflow_twoevents timer_overflow overflow2 \
@@ -58,6 +58,9 @@ sdsc4-mpx: sdsc4.c $(PAPILIB) $(UTILOBJS)
 
 calibrate: calibrate.c dummy.o $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) calibrate.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o calibrate
+
+data_range: data_range.c dummy.o $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) data_range.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o data_range
 
 acpi: acpi.c dummy.o $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) acpi.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o acpi
