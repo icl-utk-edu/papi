@@ -368,6 +368,16 @@ typedef struct _papi_int_inherit {
 } _papi_int_inherit_t;
 #endif
 
+typedef struct _papi_int_addr_range { /* if both are zero, range is disabled */
+   EventSetInfo_t *ESI;
+   int domain;
+   caddr_t start;                /* start address of an address range */
+   caddr_t end;                  /* end address of an address range */
+   int start_off;                /* offset from start address as programmed in hardware */
+   int end_off;                  /* offset from end address as programmed in hardware */
+                                 /* if offsets are undefined, they are both set to -1 */
+} _papi_int_addr_range_t;
+
 typedef union _papi_int_option_t {
    _papi_int_overflow_t overflow;
    _papi_int_profile_t profile;
@@ -377,6 +387,7 @@ typedef union _papi_int_option_t {
    _papi_int_inherit_t inherit;
 #endif
    _papi_int_granularity_t granularity;
+   _papi_int_addr_range_t address_range;
 } _papi_int_option_t;
 
 typedef struct {

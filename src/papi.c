@@ -1244,6 +1244,32 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
          return (retval);
       }
 #endif
+   case PAPI_DATA_ADDRESS:
+   case PAPI_INSTR_ADDRESS:
+      {
+
+         EventSetInfo_t *ESI;
+
+         ESI = _papi_hwi_lookup_EventSet(ptr->addr.eventset);
+         if (ESI == NULL)
+            papi_return(PAPI_ENOEVST);
+         thread = ESI->master;
+
+         internal.address_range.ESI = ESI;
+
+         if (!(internal.address_range.ESI->state & PAPI_STOPPED))
+            papi_return(PAPI_EISRUN);
+
+         /*set domain to be PAPI_DOM_USER*/
+         internal.address_range.domain = PAPI_DOM_USER;
+
+         internal.address_range.start = ptr->addr.start;
+         internal.address_range.end = ptr->addr.end;
+         retval = _papi_hwd_ctl(&thread->context, option, &internal);
+         ptr->addr.start_off = internal.address_range.start_off;
+         ptr->addr.end_off = internal.address_range.end_off;
+         papi_return (retval);
+     }
    default:
       papi_return(PAPI_EINVAL);
    }
