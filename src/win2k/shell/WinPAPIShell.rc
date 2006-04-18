@@ -109,7 +109,7 @@ END
 // Bitmap
 //
 
-IDB_BITMAP2             BITMAP  DISCARDABLE     "bitmap2.bmp"
+IDB_BITMAP3             BITMAP  DISCARDABLE     "bitmap3.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
