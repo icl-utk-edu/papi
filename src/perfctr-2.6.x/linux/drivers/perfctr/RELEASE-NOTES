@@ -3,6 +3,29 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.21, 2006-04-03
+- Converted mutex-like semaphores to the new mutex type
+  introduced in kernel 2.6.16. Added simulation of the
+  new API in terms of semaphores to compat.h and compat24.h.
+- put_task_struct() uses __put_task_struct() again starting
+  with the 2.6.17-rc1 kernel. Updated compat.h, compat24.h,
+  and virtual_stub.c accordingly.
+- Corrected a botched cleanup of compat24.h in perfctr-2.6.20
+  which broke support for RHEL3 2.4.21 kernels.
+
+Version 2.6.20, 2006-03-12
+- Starting with 2.6.16-rc1, put_task_struct() uses an RCU callback
+  __put_task_struct_cb() instead of the old __put_task_struct().
+  2.6.16-rc6 dropped the EXPORT_SYMBOL() of __put_task_struct_cb().
+  Updated compat.h, compat24.h, and virtual_stub.c accordingly.
+
+Version 2.6.19, 2006-01-22
+- Updated ppc32 driver for kernel 2.6.16-rc1: dynamically
+  claim the HW and register our interrupt handler via
+  {reserve,release}_pmc_hardware(); simulate these primitives
+  in older kernels; fully migrate patch kit from arch/ppc/
+  to arch/powerpc/.
+
 Version 2.6.18, 2006-01-03
 - 2.6.5-7.201-suse added EXPORT_SYMBOL_GPL(__put_task_struct).
   Added feature #define to the kernel patch, and modified compat.h

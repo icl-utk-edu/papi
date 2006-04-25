@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * Compatibility definitions for 2.6 kernels.
  *
- * Copyright (C) 1999-2005  Mikael Pettersson
+ * Copyright (C) 1999-2006  Mikael Pettersson
  */
 #include <linux/version.h>
 
@@ -14,8 +14,14 @@
 
 #define EXPORT_SYMBOL_mmu_cr4_features	EXPORT_SYMBOL(mmu_cr4_features)
 
+/* Starting with 2.6.16-rc1, put_task_struct() uses an RCU callback
+   __put_task_struct_cb() instead of the old __put_task_struct().
+   2.6.16-rc6 dropped the EXPORT_SYMBOL() of __put_task_struct_cb().
+   2.6.17-rc1 reverted to using __put_task_struct() again. */
+#if LINUX_VERSION_CODE == KERNEL_VERSION(2,6,16)
+#define EXPORT_SYMBOL___put_task_struct	EXPORT_SYMBOL(__put_task_struct_cb)
+#elif defined(HAVE_EXPORT___put_task_struct)
 /* 2.6.5-7.201-suse added EXPORT_SYMBOL_GPL(__put_task_struct) */
-#if defined(HAVE_EXPORT___put_task_struct)
 #define EXPORT_SYMBOL___put_task_struct	/*empty*/
 #else
 #define EXPORT_SYMBOL___put_task_struct	EXPORT_SYMBOL(__put_task_struct)
@@ -40,6 +46,13 @@ remap_pfn_range(struct vm_area_struct *vma, unsigned long uvaddr,
 
 #if !defined(DEFINE_SPINLOCK) /* added in 2.6.11-rc1 */
 #define DEFINE_SPINLOCK(x)	spinlock_t x = SPIN_LOCK_UNLOCKED
+#endif
+
+/* 2.6.16 introduced a new mutex type, replacing mutex-like semaphores. */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
+#define DEFINE_MUTEX(mutex)	DECLARE_MUTEX(mutex)
+#define mutex_lock(mutexp)	down(mutexp)
+#define mutex_unlock(mutexp)	up(mutexp)
 #endif
 
 #endif

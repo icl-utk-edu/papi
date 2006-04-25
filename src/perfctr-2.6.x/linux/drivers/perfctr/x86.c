@@ -1,7 +1,7 @@
 /* $Id$
  * x86/x86_64 performance-monitoring counters driver.
  *
- * Copyright (C) 1999-2005  Mikael Pettersson
+ * Copyright (C) 1999-2006  Mikael Pettersson
  */
 #include <linux/config.h>
 #define __NO_VERSION__
@@ -1830,20 +1830,20 @@ void __exit perfctr_cpu_exit(void)
  *								*
  ****************************************************************/
 
-static DECLARE_MUTEX(mutex);
+static DEFINE_MUTEX(mutex);
 static const char *current_service = 0;
 
 const char *perfctr_cpu_reserve(const char *service)
 {
 	const char *ret;
 
-	down(&mutex);
+	mutex_lock(&mutex);
 	ret = current_service;
 	if (ret)
-		goto out_up;
+		goto out_unlock;
 	ret = "unknown driver (oprofile?)";
 	if (reserve_lapic_nmi() < 0)
-		goto out_up;
+		goto out_unlock;
 	current_service = service;
 	__module_get(THIS_MODULE);
 	if (perfctr_info.cpu_features & PERFCTR_FEATURE_RDPMC)
@@ -1852,18 +1852,18 @@ const char *perfctr_cpu_reserve(const char *service)
 	perfctr_cpu_set_ihandler(NULL);
 	x86_pm_init();
 	ret = NULL;
- out_up:
-	up(&mutex);
+ out_unlock:
+	mutex_unlock(&mutex);
 	return ret;
 }
 
 void perfctr_cpu_release(const char *service)
 {
-	down(&mutex);
+	mutex_lock(&mutex);
 	if (service != current_service) {
 		printk(KERN_ERR "%s: attempt by %s to release while reserved by %s\n",
 		       __FUNCTION__, service, current_service);
-		goto out_up;
+		goto out_unlock;
 	}
 	/* power down the counters */
 	if (perfctr_info.cpu_features & PERFCTR_FEATURE_RDPMC)
@@ -1874,6 +1874,6 @@ void perfctr_cpu_release(const char *service)
 	current_service = 0;
 	release_lapic_nmi();
 	module_put(THIS_MODULE);
- out_up:
-	up(&mutex);
+ out_unlock:
+	mutex_unlock(&mutex);
 }

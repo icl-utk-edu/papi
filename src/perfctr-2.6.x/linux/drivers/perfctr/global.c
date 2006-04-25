@@ -1,7 +1,7 @@
 /* $Id$
  * Global-mode performance-monitoring counters via /dev/perfctr.
  *
- * Copyright (C) 2000-2005  Mikael Pettersson
+ * Copyright (C) 2000-2006  Mikael Pettersson
  *
  * XXX: Doesn't do any authentication yet. Should we limit control
  * to root, or base it on having write access to /dev/perfctr?
@@ -23,7 +23,7 @@
 static const char this_service[] = __FILE__;
 static int hardware_is_ours = 0;
 static struct timer_list sampling_timer;
-static DECLARE_MUTEX(control_mutex);
+static DEFINE_MUTEX(control_mutex);
 static unsigned int nr_active_cpus = 0;
 
 struct gperfctr {
@@ -157,10 +157,10 @@ static int gperfctr_control(struct perfctr_struct_buf *argp)
 	/* we don't permit i-mode counters */
 	if( cpu_control.cpu_control.nrictrs != 0 )
 		return -EPERM;
-	down(&control_mutex);
+	mutex_lock(&control_mutex);
 	ret = -EBUSY;
 	if( hardware_is_ours )
-		goto out_up;	/* you have to stop them first */
+		goto out_unlock;	/* you have to stop them first */
 	perfctr = &per_cpu_gperfctr[cpu_control.cpu];
 	spin_lock(&perfctr->lock);
 	perfctr->cpu_state.tsc_start = 0;
@@ -170,12 +170,12 @@ static int gperfctr_control(struct perfctr_struct_buf *argp)
 	ret = perfctr_cpu_update_control(&perfctr->cpu_state, 1);
 	spin_unlock(&perfctr->lock);
 	if( ret < 0 )
-		goto out_up;
+		goto out_unlock;
 	if( perfctr_cstatus_enabled(perfctr->cpu_state.cstatus) )
 		++nr_active_cpus;
 	ret = nr_active_cpus;
- out_up:
-	up(&control_mutex);
+ out_unlock:
+	mutex_unlock(&control_mutex);
 	return ret;
 }
 
@@ -185,7 +185,7 @@ static int gperfctr_start(unsigned int interval_usec)
 
 	if( interval_usec && interval_usec < 10000 )
 		return -EINVAL;
-	down(&control_mutex);
+	mutex_lock(&control_mutex);
 	ret = nr_active_cpus;
 	if( ret > 0 ) {
 		if( reserve_hardware() < 0 ) {
@@ -195,15 +195,15 @@ static int gperfctr_start(unsigned int interval_usec)
 			start_sampling_timer(interval_usec);
 		}
 	}
-	up(&control_mutex);
+	mutex_unlock(&control_mutex);
 	return ret;
 }
 
 static int gperfctr_stop(void)
 {
-	down(&control_mutex);
+	mutex_lock(&control_mutex);
 	release_hardware();
-	up(&control_mutex);
+	mutex_unlock(&control_mutex);
 	return 0;
 }
 

@@ -1,7 +1,7 @@
 /* $Id$
  * PPC32 performance-monitoring counters driver.
  *
- * Copyright (C) 2004-2005  Mikael Pettersson
+ * Copyright (C) 2004-2006  Mikael Pettersson
  */
 #include <linux/config.h>
 #define __NO_VERSION__
@@ -1060,14 +1060,12 @@ int __init perfctr_cpu_init(void)
 			goto out;
 	}
 
-	perfctr_cpu_reset();
  out:
 	return err;
 }
 
 void __exit perfctr_cpu_exit(void)
 {
-	perfctr_cpu_reset();
 }
 
 /****************************************************************
@@ -1076,27 +1074,32 @@ void __exit perfctr_cpu_exit(void)
  *								*
  ****************************************************************/
 
-static DECLARE_MUTEX(mutex);
+static DEFINE_MUTEX(mutex);
 static const char *current_service = 0;
 
 const char *perfctr_cpu_reserve(const char *service)
 {
 	const char *ret;
 
-	down(&mutex);
+	mutex_lock(&mutex);
 	ret = current_service;
-	if (!ret)
-	{
-		current_service = service;
-		__module_get(THIS_MODULE);
-	}
-	up(&mutex);
+	if (ret)
+		goto out_unlock;
+	ret = "unknown driver (oprofile?)";
+	if (perfctr_reserve_pmc_hardware() < 0)
+		goto out_unlock;
+	current_service = service;
+	__module_get(THIS_MODULE);
+	perfctr_cpu_reset();
+	ret = NULL;
+ out_unlock:
+	mutex_unlock(&mutex);
 	return ret;
 }
 
 void perfctr_cpu_release(const char *service)
 {
-	down(&mutex);
+	mutex_lock(&mutex);
 	if (service != current_service) {
 		printk(KERN_ERR "%s: attempt by %s to release while reserved by %s\n",
 		       __FUNCTION__, service, current_service);
@@ -1104,7 +1107,8 @@ void perfctr_cpu_release(const char *service)
 		/* power down the counters */
 		perfctr_cpu_reset();
 		current_service = 0;
+		perfctr_release_pmc_hardware();
 		module_put(THIS_MODULE);
 	}
-	up(&mutex);
+	mutex_unlock(&mutex);
 }

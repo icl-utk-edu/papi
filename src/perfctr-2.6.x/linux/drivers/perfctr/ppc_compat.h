@@ -2,10 +2,19 @@
  * Performance-monitoring counters driver.
  * PPC32-specific compatibility definitions for 2.4/2.6 kernels.
  *
- * Copyright (C) 2004-2005  Mikael Pettersson
+ * Copyright (C) 2004-2006  Mikael Pettersson
  */
 #include <linux/config.h>
 #include <linux/version.h>
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,16)
+#include <asm/pmc.h>
+#else
+static inline int reserve_pmc_hardware(void (*new_perf_irq)(struct pt_regs*)) { return 0; }
+static inline void release_pmc_hardware(void) { }
+#endif
+extern int perfctr_reserve_pmc_hardware(void);
+static inline void perfctr_release_pmc_hardware(void) { release_pmc_hardware(); }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0) && defined(CONFIG_ALL_PPC)
 #define CONFIG_PPC_OF 1

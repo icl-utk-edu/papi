@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * Compatibility definitions for 2.4 kernels.
  *
- * Copyright (C) 1999-2005  Mikael Pettersson
+ * Copyright (C) 1999-2006  Mikael Pettersson
  */
 #include <linux/mm.h>	/* for remap_page_range() [redefined here] */
 
@@ -130,3 +130,8 @@ remap_pfn_range(struct vm_area_struct *vma, unsigned long uvaddr,
 
 /* 2.6.11-rc1 added DEFINE_SPINLOCK() */
 #define DEFINE_SPINLOCK(x)	spinlock_t x = SPIN_LOCK_UNLOCKED
+
+/* 2.6.16 introduced a new mutex type, replacing mutex-like semaphores. */
+#define DEFINE_MUTEX(mutex)	DECLARE_MUTEX(mutex)
+#define mutex_lock(mutexp)	down(mutexp)
+#define mutex_unlock(mutexp)	up(mutexp)
