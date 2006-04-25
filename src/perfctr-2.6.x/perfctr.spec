@@ -1,6 +1,6 @@
 Name: perfctr
-Summary: Linux/x86 performance monitoring counters software
-Version: 2.6.5
+Summary: Linux performance monitoring counters software
+Version: 2.6.21
 Release: 1
 License: LGPL
 Group: Development/Tools
@@ -89,6 +89,9 @@ fi
 
 
 %changelog
+* Tue Sep 16 2004 Mikael Pettersson <mikpe@csd.uu.se> -
+- Dropped obsolete x86 qualification from Summary.
+
 * Sun Dec 21 2003 Mikael Pettersson <mikpe@csd.uu.se> -
 - Create /dev/perfctr in %post, not in %install and %files.
   This avoids incorrect deletion of the node on package uninstall.

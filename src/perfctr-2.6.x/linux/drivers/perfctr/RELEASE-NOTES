@@ -3,6 +3,237 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.21, 2006-04-03
+- Converted mutex-like semaphores to the new mutex type
+  introduced in kernel 2.6.16. Added simulation of the
+  new API in terms of semaphores to compat.h and compat24.h.
+- put_task_struct() uses __put_task_struct() again starting
+  with the 2.6.17-rc1 kernel. Updated compat.h, compat24.h,
+  and virtual_stub.c accordingly.
+- Corrected a botched cleanup of compat24.h in perfctr-2.6.20
+  which broke support for RHEL3 2.4.21 kernels.
+
+Version 2.6.20, 2006-03-12
+- Starting with 2.6.16-rc1, put_task_struct() uses an RCU callback
+  __put_task_struct_cb() instead of the old __put_task_struct().
+  2.6.16-rc6 dropped the EXPORT_SYMBOL() of __put_task_struct_cb().
+  Updated compat.h, compat24.h, and virtual_stub.c accordingly.
+
+Version 2.6.19, 2006-01-22
+- Updated ppc32 driver for kernel 2.6.16-rc1: dynamically
+  claim the HW and register our interrupt handler via
+  {reserve,release}_pmc_hardware(); simulate these primitives
+  in older kernels; fully migrate patch kit from arch/ppc/
+  to arch/powerpc/.
+
+Version 2.6.18, 2006-01-03
+- 2.6.5-7.201-suse added EXPORT_SYMBOL_GPL(__put_task_struct).
+  Added feature #define to the kernel patch, and modified compat.h
+  to disable our export of __put_task_struct in this case.
+- Merged the structure descriptor declarations in marshal.c
+  to avoid duplicating the parts that are identical across
+  all supported platforms.
+
+Version 2.6.17, 2005-10-02
+- The dual-core P4s changed the layout rules for the initial
+  APIC ID, which broke the x86 driver on DC P4s. Updated the
+  HT thread ID detection code to match current IA32 SDM Vol3.
+- Kernel 2.4.21-37.EL added EXPORT_SYMBOL_GPL(__put_task_struct).
+  Added new feature #define to the kernel-specific patch for this
+  case. compat24.h now disables our export of __put_task_struct
+  when that feature #define is set.
+- Kernel 2.6.14-rc1 changed the state parameter to ->suspend()
+  methods to be of type 'pm_message_t'. Adjusted x86.c for this,
+  to eliminate a compile-time type mismatch warning.
+
+Version 2.6.16, 2005-09-04
+- cpu_khz changed type in kernel 2.6.13. Adjusted x86_setup.c
+  accordingly, to avoid a compile-time error.
+- The ppc32 driver will now compile in kernels that lack Open
+  Firmware support, which is needed for some embedded systems.
+
+Version 2.6.15, 2005-05-06
+- Added code to detect multicore K8s and prevent threads in the
+  thread-centric API from using northbridge events. This avoids
+  resource conflicts, and an erratum in Revision E chips.
+- #undef MMCR0_PMXE in ppc_compat.h, to avoid macro redefinition
+  complaints in 2.6 kernels.
+
+Version 2.6.14, 2005-04-09
+- x86: Reverted the workaround in perfctr-2.6.13 for the problem
+  that gcc-4.0 snapshots appeared to ignore 'noinline' on static
+  functions, as recent gcc-4.0 prereleases seem to work correctly.
+
+Version 2.6.13, 2005-02-13
+- global.c: Allow user-space to disable the in-kernel sampling
+  timer by setting interval_usec == 0 in the START command.
+  In this case sampling is done by the READ command.
+- Modified x86 call backpatching code to avoid breaking with
+  gcc-4.0 snapshots:
+  * gcc-4.0 may clone control flows, resulting in more sites
+    with backpatchable calls. finalise_backpatching() now sets
+    things up to exercise all affected control flow paths.
+  * gcc-4.0 appears to ignore 'noinline' on static functions
+    that are only called from one place, at least on x86-64.
+    This broke perfctr_cpu_{write_control,isuspend,iresume}().
+    Things work again if they are made non-static.
+- Only define our own version of get_sb_pseudo() in kernels older
+  than 2.6.11, since 2.6.11-rc1 added EXPORT_SYMBOL(get_sb_pseudo).
+- In 2.6.11-rc2 and newer kernels, bind ioctls to ->unlocked_ioctl
+  and ->compat_ioctl, and don't use register_ioctl32_conversion().
+- Remove unused inode parameter to gperfctr_ioctl().
+- Define static spinlocks with DEFINE_SPINLOCK(), following new
+  coding style in 2.6.11-rc1. Add compat macros for older kernels.
+
+Version 2.6.12, 2004-12-19
+- PPC32 driver updated to be more robust in its detection of
+  timebase and core clock frequencies. Some information sources
+  can give wrong values for those frequencies, so the driver
+  now tries other more reliable methods first.
+
+Version 2.6.11, 2004-11-14
+- Compat stuff updated for tsk->sighand->siglock,
+  recalc_sigpending(), and preempt_enable_no_resched().
+- Silence compiler warning from compat.h:remap_pfn_range().
+- PPC32 overflow interrupt support backported from perfctr-2.7.
+- Backported inheritance handling calls from perfctr-2.7
+  to kernel patch kit. They are currently stubs, but can be
+  implemented later without having to update the patch kit.
+- Overflow interrupts fixes backported from perfctr-2.7.7:
+  * x86/x86-64: move perfctr_suspend_thread() call from
+    __switch_to() to the start of switch_to()
+  * x86/x86-64: mask interrupts at suspend and record if
+    any overflows are pending; unmask interrupts at resume
+  * virtual: handle pending overflows in resume path
+  * ppc32: provide dummy pending overflow checking function
+
+Version 2.6.10.3, 2004-10-24
+- virtual.c, linux/perfctr.h: reformatted "if( x )" to "if (x)"
+  and similarly for while and switch statements.
+- PPC32: Add support for MPC7447A. Add support for MPC7448,
+  except for decoding its PLL_CFG.
+- Move x86 cpu_type definitions from <linux/perfctr.h>
+  to <asm-i386/perfctr.h>.
+- Make PERFCTR_INTERRUPT_SUPPORT a Kconfig-derived option.
+  Ditto PERFCTR_CPUS_FORBIDDEN_MASK_NEEDED.
+  Also implement this in Config.in for 2.4 kernels.
+- Kernel 2.6.10-rc1 removed the export of put_filp().
+  Reordered the allocations in vperfctr_get_filp() to
+  avoid the need to use put_filp().
+- remap_page_range() was replaced with remap_pfn_range() in
+  kernel 2.6.10-rc1. Updated virtual.c accordingly, and added
+  remap_pfn_range() emulations for older kernels.
+
+Version 2.6.10.2, 2004-10-19
+- virtual.c: replace nrctrs_lock with a mutex. Avoids illegal
+  may-sleep-while-holding-lock, caused by mutex operations in
+  perfctr_cpu_{reserve,release}().
+  Backport from perfctr-2.7.6.
+- PPC32: Correct MMCR0 handling for FCECE/TRIGGER. Read
+  MMCR0 at suspend and then freeze the counters. Move
+  this code from read_counters() to suspend(). At resume,
+  reload MMCR0 to unfreeze the counters. Clean up the
+  cstatus checks controlling this behaviour.
+  Backport from perfctr-2.7.6.
+
+Version 2.6.10, 2004-09-14
+- Fixed p4_clear_counters() to not access IQ_ESCR{0,1}
+  on P4 models >= 3.
+
+Version 2.6.10-pre1, 2004-08-03
+- Changed x86-64 to use the x86 include file and driver.
+  Intel's 64-bit P4 should now work in the x86-64 kernel.
+- Replaced PERFCTR_INTERRUPT_SUPPORT and NMI_LOCAL_APIC
+  #if:s in x86 code by #ifdef:s on CONFIG_X86_LOCAL_APIC.
+- Use macros to clean up x86 per-cpu cache accesses.
+- Recognize model 13 Pentium-Ms.
+- Changed isuspend_cpu on x86 to be like x86-64's: it
+  now stores a CPU number instead of a cache pointer.
+- x86: make perfctr_cpu_name more approximate.
+- The x86 driver records a simplified CPU type for x86_tests,
+  but this only occurs if PERFCTR_INIT_TESTS is configured.
+  perfctr_info.cpu_type is now unused.
+- Changed P4 driver to set up and check an explicit flag
+  for EXTENDED_CASCADE availability. perfctr_info.cpu_type
+  is now unused except for perfctr_x86_init_tests().
+- x86: Reformatted "if( x )" to "if (x)" and similarly for while
+  and switch statements. Deleted #if 0 blocks.
+
+Version 2.6.9, 2004-07-27
+- Fix ppc_check_control() to allow 7400/7410 processors to
+  specify MMCR2[THRESHMULT].
+- PPC32 cleanups: make get_cpu_cache() return pointer not lvalue,
+  eliminate duplicated initialisation/cleanup code.
+- Makefile: enforce -fno-unit-at-a-time with gcc-3.4 on x86,
+  to prevent stack overflow in 2.6 kernels < 2.6.6.
+- Do sync_core() before rdtsc() in x86_tests, to avoid bogus
+  benchmarking data on K8. Add sync_core() implementation for
+  the 32-bit kernel. Add sync_core() benchmark.
+- Added __perfctr_mk_cstatus() to allow x86.c:finalise_backpatching()
+  to create a cstatus with i-mode counters marked as present, but
+  with zero actual counters. This prevents perfctr_cpu_isuspend()
+  from clearing the control register for counter #0 at init-time,
+  when the hardware doesn't belong to this driver. On AMD and P6
+  this would accidentally disable the NMI watchdog.
+- x86: Marked initial targets of backpatchable calls
+  'noinline' to prevent gcc from inlining them, which
+  completely breaks the backpatching mechanism.
+- x86_tests: fix CONFIG_X86_LOCAL_APIC=n linkage error.
+- 2.6.8-rc1 no longer makes cpu_online_map a #define on UP,
+  breaking modules. Reintroduce the macro.
+- 2.6.8-rc1 changed cpus_complement() calling convention.
+  Replace cpus_complement();cpus_and() with cpus_andnot(),
+  and provide cpus_andnot() compat macro.
+- PPC32: support generic CPUs using only the TB.
+- PPC32: query OF for CPU/TB frequencies, drop /proc/cpuinfo
+  parsing code.
+- PPC32: avoid CPU re-detection in tests code.
+- PPC32: clean up and sync with current perfctr-2.7 code.
+
+Version 2.6.8, 2004-05-29
+- Added recognition of PowerPC 750GX.
+- Changes for the {reserve,release}_lapic_nmi() API added in
+  kernel 2.6.6 backported from perfctr-2.7.1:
+  * Starting with kernel 2.6.6 we no longer need access to
+    nmi_perfctr_msr, so removed EXPORT_SYMBOL() and <asm/apic.h>
+    patches related to this variable (except for older kernels).
+  * Updated x86.c to use the new API. Added simulation (without
+    the non-conflict guarantees) for older kernels.
+  * Moved hardware reservation to x86.c's "reserve" procedure.
+    The init code now only does read-only hardware detection.
+  * Added a mutex to the reserve/release procedures, eliminating
+  * a long-standing race possibility.
+  * Changed x86.c to reserve and release the hardware around its
+    call to perfctr_x86_init_tests().
+  * Similarly updated x86_64.c for the new API.
+
+Version 2.6.7, 2004-05-04
+- Replaced x86_64_tests.{c,h} with x86_tests.{c,h}.
+- sys_device_{,un}register() was renamed as sysdev_{,un}register()
+  in 2.6.4-rc2. Updated x86.c and x86_64.c accordingly, and
+  added a compatibility definition in compat.h.
+- Removed unnecessary '#include "compat.h"' from x86_tests.c.
+- Replaced x86_64_setup.c with x86_setup.c.
+- Replaced x86_64_compat.h with x86_compat.h.
+- Moved perfctr_interrupt entry point from x86_setup.c to patch kit,
+  for kernels older than 2.4.21. Cleanup to facilitate future merge
+  of x86_setup.c and x86_64_setup.c.
+
+Version 2.6.6, 2004-02-21
+- Fixed a bug in x86-64's perfctr interrupt entry code in 2.4 kernels,
+  causing it to pass the wrong value for "struct pt_regs*". This
+  was harmless since the retrieved "rip" was unused, but still wrong.
+  Renamed do_perfctr_interrupt to smp_perfctr_interrupt to allow
+  using the 2.4 kernel's standard BUILD_SMP_INTERRUPT macro.
+- Unmask LVTPC after interrupt on Pentium-M. An oprofile user
+  reports that P-M auto-masks LVTPC just like P4. Preliminary
+  measurements indicate a 40 to 60 cycle cost for the apic write
+  on P4s and P6s, so the unmask is not done unconditionally.
+- Measure LVTPC write overhead in x86{,_64}_tests.c.
+- Add Pentium 4 Model 3 detection.
+- The 2.4.21-193 SuSE kernel does EXPORT_SYMBOL(mmu_cr4_features).
+  Add compat24.h workaround for this.
+
 Version 2.6.5, 2004-01-26
 - Added perfctr_info.cpu_type constants to <asm-ppc/perfctr.h>.
 - Init filp->f_mapping in virtual.c for 2.6.2-rc1+ kernels.

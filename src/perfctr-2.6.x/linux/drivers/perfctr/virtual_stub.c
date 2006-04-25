@@ -2,7 +2,7 @@
  * Kernel stub used to support virtual perfctrs when the
  * perfctr driver is built as a module.
  *
- * Copyright (C) 2000-2003  Mikael Pettersson
+ * Copyright (C) 2000-2006  Mikael Pettersson
  */
 #include <linux/config.h>
 #include <linux/module.h>
@@ -17,7 +17,7 @@ static void bug_void_perfctr(struct vperfctr *perfctr)
 	BUG();
 }
 
-#if PERFCTR_CPUS_FORBIDDEN_MASK_NEEDED
+#ifdef CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK
 static void bug_set_cpus_allowed(struct task_struct *owner, struct vperfctr *perfctr, cpumask_t new_mask)
 {
 	owner->thread.perfctr = NULL;
@@ -30,7 +30,7 @@ struct vperfctr_stub vperfctr_stub = {
 	.suspend = bug_void_perfctr,
 	.resume = bug_void_perfctr,
 	.sample = bug_void_perfctr,
-#if PERFCTR_CPUS_FORBIDDEN_MASK_NEEDED
+#ifdef CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK
 	.set_cpus_allowed = bug_set_cpus_allowed,
 #endif
 };
