@@ -21,6 +21,7 @@ patches to be installed first.
 
 The general installation steps are below, but first find your particular 
 Operating System's section for any additional steps that may be necessary.
+NOTE: the configure and make files are located in the papi/src directory.
 
 General Installation
 
