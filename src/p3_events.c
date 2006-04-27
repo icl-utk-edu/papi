@@ -2750,7 +2750,7 @@ const native_event_entry_t _papi_hwd_k8_native_map[] = {
 static char name[128];
 static char description[1024];
 
-static inline void internal_decode_event(unsigned int EventCode, int *event, int *moesi)
+inline_static void internal_decode_event(unsigned int EventCode, int *event, int *moesi)
 {
    /* mask off the native event flag and the MOESI bits */
    *event = (EventCode & PAPI_NATIVE_AND_MASK) & (~MOESI_ALL);

@@ -35,8 +35,15 @@ u_long_long vec_dummy_get_real_cycles (void);
 
 u_long_long vec_dummy_get_real_usec (void)
 {
+#ifdef _WIN32
+	LARGE_INTEGER PerformanceCount, Frequency;
+	QueryPerformanceCounter(&PerformanceCount);
+	QueryPerformanceFrequency(&Frequency);
+	return((PerformanceCount.QuadPart * 1000000) / Frequency.QuadPart);
+#else
   struct timeval tv;
     gettimeofday(&tv,NULL);  return((tv.tv_sec * 1000000) + tv.tv_usec);
+#endif
 } 
         
 u_long_long vec_dummy_get_real_cycles (void)
@@ -45,7 +52,7 @@ u_long_long vec_dummy_get_real_cycles (void)
 
   usec = (float)vec_dummy_get_real_usec();
   cyc = usec * _papi_hwi_system_info.hw_info.mhz;
-  return((long long)cyc);
+  return((long_long)cyc);
 }
 
 #ifdef _BGL
@@ -56,11 +63,14 @@ u_long_long vec_dummy_get_real_cycles (void)
 
 u_long_long vec_dummy_get_virt_usec (const hwd_context_t *zero)
 {
-  long long retval;
+  long_long retval;
 #ifdef _BGL
       struct rusage ruse;
       getrusage(RUSAGE_SELF, &ruse);
       retval = (long long)(ruse.ru_utime.tv_sec * 1000000 + ruse.ru_utime.tv_usec);
+#elif _WIN32
+  /****WIN32: don' know if there's a way to get virtual vs real time... */
+  retval = vec_dummy_get_real_usec();
 #else
 
   struct tms buffer;
@@ -81,7 +91,7 @@ u_long_long vec_dummy_get_virt_cycles (const hwd_context_t *zero)
 
   usec = (float)vec_dummy_get_virt_usec(zero);
   cyc = usec * _papi_hwi_system_info.hw_info.mhz;
-  return((long long)cyc);
+  return((long_long)cyc);
 }
 
 int vec_int_ok_dummy (){
@@ -128,9 +138,11 @@ int _papi_hwi_setup_vector_table(papi_vectors_t *table, papi_svector_t *stable)
        case VEC_PAPI_HWD_READ:
         table->_vec_papi_hwd_read = (int (*) (void *, void *, long_long **, int)) stable[i].func;
          break;
+#ifndef _WIN32 /****WIN32: haven't figured out how to handle this yet... */
        case VEC_PAPI_HWD_DISPATCH_TIMER:
         table->_vec_papi_hwd_dispatch_timer = (void (*) (int, siginfo_t *, void *)) stable[i].func;
          break;
+#endif
        case VEC_PAPI_HWD_GET_OVERFLOW_ADDRESS:
         table->_vec_papi_hwd_get_overflow_address = (void * (*) (int, char *)) stable[i].func;
          break;
@@ -147,10 +159,10 @@ int _papi_hwi_setup_vector_table(papi_vectors_t *table, papi_svector_t *stable)
         table->_vec_papi_hwd_get_real_usec = (long_long (*) ()) stable[i].func;
          break;
        case VEC_PAPI_HWD_GET_VIRT_CYCLES:
-        table->_vec_papi_hwd_get_virt_cycles = (long_long (*) ()) stable[i].func;
+        table->_vec_papi_hwd_get_virt_cycles = (long_long (*) (void *)) stable[i].func;
          break;
        case VEC_PAPI_HWD_GET_VIRT_USEC:
-        table->_vec_papi_hwd_get_virt_usec = (long_long (*) ()) stable[i].func;
+        table->_vec_papi_hwd_get_virt_usec = (long_long (*) (void *)) stable[i].func;
          break;
        case VEC_PAPI_HWD_RESET:
         table->_vec_papi_hwd_reset = (int (*) (void *, void *)) stable[i].func;
@@ -168,7 +180,7 @@ int _papi_hwi_setup_vector_table(papi_vectors_t *table, papi_svector_t *stable)
         table->_vec_papi_hwd_init_control_state = (void (*)(void *)) stable[i].func;
          break;
        case VEC_PAPI_HWD_UPDATE_SHLIB_INFO:
-        table->_vec_papi_hwd_update_shlib_info = (int (*) ()) stable[i].func;
+        table->_vec_papi_hwd_update_shlib_info = (int (*) (void)) stable[i].func;
          break;
        case VEC_PAPI_HWD_GET_MEMORY_INFO:
         table->_vec_papi_hwd_get_memory_info = (int (*) (PAPI_hw_info_t *, int)) stable[i].func;
@@ -250,7 +262,9 @@ int _papi_hwi_setup_vector_table(papi_vectors_t *table, papi_svector_t *stable)
 int _papi_hwi_initialize_vector_table(papi_vectors_t *table){
  if ( !table ) return (PAPI_EINVAL);
  table->_vec_papi_hwd_read = (int (*)(void *,void *, long_long **, int)) vec_int_dummy;
+#ifndef _WIN32 /****WIN32: haven't figured this one out yet... */
  table->_vec_papi_hwd_dispatch_timer = (void (*)(int, siginfo_t *, void *)) vec_void_dummy;
+#endif
  table->_vec_papi_hwd_get_overflow_address = (void *(*) (int, char *)) vec_void_star_dummy;
  table->_vec_papi_hwd_start = (int (*) (void *, void *)) vec_int_dummy;
  table->_vec_papi_hwd_stop = (int (*) (void *, void *)) vec_int_dummy;
@@ -330,19 +344,19 @@ char * find_dummy(void * func, char **buf){
     ptr = (void *)vec_long_dummy;  
     *buf = papi_strdup("vec_long_dummy");
   }
-  else if ( vec_dummy_get_real_usec == (unsigned long_long(*)())func ) {
+  else if ( vec_dummy_get_real_usec == (u_long_long(*)(void))func ) {
     ptr = (void *)vec_dummy_get_real_usec;
     *buf = papi_strdup("vec_dummy_get_real_usec");
   }
-  else if ( vec_dummy_get_real_cycles == (unsigned long_long(*)())func ) {
+  else if ( vec_dummy_get_real_cycles == (u_long_long(*)(void))func ) {
     ptr = (void *)vec_dummy_get_real_cycles;
     *buf = papi_strdup("vec_dummy_get_real_cycles");
   }
-  else if ( vec_dummy_get_virt_usec == (unsigned long_long(*)())func ) {
+  else if ( vec_dummy_get_virt_usec == (u_long_long(*)(const hwd_context_t *))func ) {
     ptr = (void *)vec_dummy_get_virt_usec;
     *buf = papi_strdup("vec_dummy_get_virt_usec");
   }
-  else if ( vec_dummy_get_virt_cycles == (unsigned long_long(*)())func ) {
+  else if ( vec_dummy_get_virt_cycles == (u_long_long(*)(const hwd_context_t *))func ) {
     ptr = (void *)vec_dummy_get_virt_cycles;
     *buf = papi_strdup("vec_dummy_get_virt_cycles");
   }
@@ -370,7 +384,11 @@ void vector_print_table(papi_vectors_t *table, int print_func){
  if ( !table ) return;
 
  vector_print_routine((void *)table->_vec_papi_hwd_read,"_papi_hwd_read",print_func);
+#ifdef _WIN32 /*WIN32: haven't figured this out yet... */
+// vector_print_routine((void *)table->_vec_papi_hwd_timer_callback, "_papi_hwd_timer_callback",print_func);
+#else
  vector_print_routine((void *)table->_vec_papi_hwd_dispatch_timer, "_papi_hwd_dispatch_timer",print_func);
+#endif
  vector_print_routine((void *)table->_vec_papi_hwd_get_overflow_address, "_papi_hwd_get_overflow_address",print_func);
  vector_print_routine((void *)table->_vec_papi_hwd_start, "_papi_hwd_start",print_func);
  vector_print_routine((void *)table->_vec_papi_hwd_stop, "_papi_hwd_stop",print_func);

@@ -69,7 +69,13 @@ enum {
 };
 typedef struct papi_vectors{
   int (*_vec_papi_hwd_read) (void *, void *, long_long **, int);
+#ifdef _WIN32 /****WIN32 has a different callback protocol */
+  /* for now we haven't quite figured it out yet...
+  void (CALLBACK) *(*_vec_papi_hwd_timer_callback) (UINT, UINT, DWORD, DWORD, DWORD);
+  */
+#else
   void (*_vec_papi_hwd_dispatch_timer) (int, siginfo_t *, void *);
+#endif
   void *(*_vec_papi_hwd_get_overflow_address) (int, char *);
   int (*_vec_papi_hwd_start) (void *, void *);
   int (*_vec_papi_hwd_stop) (void *, void *);
