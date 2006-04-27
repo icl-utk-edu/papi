@@ -6,6 +6,9 @@
  *               <your email address>
  */
 
+#ifndef CPUINFO_H
+#define CPUINFO_H
+
 // Prcoessor definitions
 #define PROC_UNKNOWN		0
 #define INTEL_486			1
@@ -27,7 +30,6 @@
 #define AMD_K63				104
 #define AMD_DURON			105
 #define AMD_ATHLON			106
-
 
 struct wininfo {
 	int vendor;
@@ -122,3 +124,5 @@ struct wininfo {
 
 
 int init_hwinfo( struct wininfo *);
+
+#endif /* CPUINFO_H */
