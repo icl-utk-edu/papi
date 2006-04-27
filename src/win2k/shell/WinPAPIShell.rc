@@ -1,4 +1,4 @@
-//Microsoft Developer Studio generated resource script.
+// Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
 
@@ -31,8 +31,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_WINPAPISHELL        ICON    DISCARDABLE     "WinPAPIShell.ICO"
-IDI_SMALL               ICON    DISCARDABLE     "Papismall.ico"
+IDI_WINPAPISHELL        ICON                    "WinPAPIShell.ICO"
+IDI_SMALL               ICON                    "Papismall.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -40,12 +40,11 @@ IDI_SMALL               ICON    DISCARDABLE     "Papismall.ico"
 //
 
 IDD_ABOUTBOX1 DIALOGEX 0, 0, 384, 279
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "WinPAPI"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
-    LTEXT           "The WinPMC Driver is not available.",IDC_STATIC,0,0,384,
-                    12,SS_CENTERIMAGE | NOT WS_GROUP,WS_EX_STATICEDGE
+    LTEXT           "The WinPMC Driver is not available.",IDC_STATIC,0,0,384,12,SS_CENTERIMAGE | NOT WS_GROUP,WS_EX_STATICEDGE
     CONTROL         143,IDC_STATIC,"Static",SS_BITMAP,0,13,384,266
     DEFPUSHBUTTON   "Exit",IDOK,322,258,50,14
     PUSHBUTTON      "Diagnostics",IDDIAGNOSTIC,323,236,50,14
@@ -57,8 +56,8 @@ BEGIN
     PUSHBUTTON      "Help",IDHELP,85,236,50,14
 END
 
-IDD_ABOUTBOX2 DIALOG DISCARDABLE  0, 0, 384, 54
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+IDD_ABOUTBOX2 DIALOG  0, 0, 384, 54
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "WinPAPI Diagnostics"
 FONT 8, "MS Sans Serif"
 BEGIN
@@ -81,7 +80,7 @@ END
 // TEXTINCLUDE
 //
 
-2 TEXTINCLUDE DISCARDABLE 
+2 TEXTINCLUDE 
 BEGIN
     "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
     "#include ""windows.h""\r\n"
@@ -90,13 +89,13 @@ BEGIN
     "\0"
 END
 
-3 TEXTINCLUDE DISCARDABLE 
+3 TEXTINCLUDE 
 BEGIN
     "\r\n"
     "\0"
 END
 
-1 TEXTINCLUDE DISCARDABLE 
+1 TEXTINCLUDE 
 BEGIN
     "resource.h\0"
 END
@@ -106,18 +105,11 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Bitmap
-//
-
-IDB_BITMAP3             BITMAP  DISCARDABLE     "bitmap3.bmp"
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // DESIGNINFO
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO DISCARDABLE 
+GUIDELINES DESIGNINFO 
 BEGIN
     IDD_ABOUTBOX2, DIALOG
     BEGIN
@@ -134,7 +126,7 @@ END
 // String Table
 //
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
     IDS_STRING1             "n"
 END

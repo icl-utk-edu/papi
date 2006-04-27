@@ -1,5 +1,5 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
+// Microsoft Visual C++ generated include file.
 // Used by WinPAPIShell.rc
 //
 #define IDS_STRING1                     1
@@ -17,7 +17,6 @@
 #define IDI_SMALL                       108
 #define IDC_WINPAPISHELL                109
 #define IDR_MAINFRAME                   128
-#define IDB_BITMAP3                     132
 #define IDD_ABOUTBOX1                   135
 #define IDB_BITMAP1                     136
 #define IDD_ABOUTBOX2                   136
