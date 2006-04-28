@@ -4,7 +4,6 @@ CPU_MODEL	= POWER4
 ARCH_EVENTS	= power4_events
 CPU_TYPE 	= ppc64
 SHRFLAGS	= -fPIC
-CONFIG_HEADER	= config.h
 # for Debian, comment the following line out
 BITS		= 32
 CFLAGS	= -g -DDEBUG -D_$(CPU_MODEL) -DNEED_FFSLL  -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\"

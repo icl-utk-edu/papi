@@ -218,6 +218,9 @@ SPECIAL_REMOVE = rm -f libperfctr.so*
 
 include Makefile.inc
 
+config.h:
+	@echo 'Please clean your build and run ./configure. Direct Makefile access has been deprecated."
+
 $(PERFCTR_LIB_PATH)/libperfctr.a:
 ifeq (,${PERFCTR_PREFIX})
 	$(MAKE) CC='$(CC)' LD_FLAGS='$(LD_FLAGS)' -C $(PERFCTR)
@@ -228,7 +231,7 @@ endif
 $(PERFCTR_OBJS): $(PERFCTR_LIB_PATH)/libperfctr.a
 	ar xv $<
 
-$(CPU)_events.o: $(CPU)_events.c $(CONFIG_HEADER)
+$(CPU)_events.o: $(CPU)_events.c config.h
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPU)_events.c -o $@
 linux.o: linux.c
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $^ -o $@
