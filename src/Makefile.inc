@@ -146,12 +146,12 @@ install: install-tree install-man install-lib install-utils
 install-lib: install-tree native_install
 	cp $(FHEADERS) papi.h papiStdEventDefs.h $(PREFIX)/include
 	cd $(PREFIX)/include; chmod go+r $(FHEADERS) papi.h papiStdEventDefs.h
-	cp $(LIBRARY) $(PREFIX)/lib
-	chmod go+r $(PREFIX)/lib/$(LIBRARY)
+	cp $(LIBRARY) $(PREFIX)/lib$(LIB_SUFFIX)
+	chmod go+r $(PREFIX)/lib$(LIB_SUFFIX)/$(LIBRARY)
 # copy SHLIB conditionally, since it isn't always made
 	if [[ -r $(SHLIB) ]] ; then \
-		cp $(SHLIB) $(PREFIX)/lib ; \
-		chmod go+r  $(PREFIX)/lib/$(SHLIB) ; \
+		cp $(SHLIB) $(PREFIX)/lib$(LIB_SUFFIX) ; \
+		chmod go+r  $(PREFIX)/lib$(LIB_SUFFIX)/$(SHLIB) ; \
 	fi
 
 install-man: install-tree
@@ -167,7 +167,7 @@ install-tests: install-tree
 install-tree:
 	@if [ \"$(PREFIX)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make PREFIX=/usr/local"; exit 1; fi 
 	@echo "Root of destination directory is: \"$(PREFIX)\""; 
-	-mkdir -p $(PREFIX)/lib
+	-mkdir -p $(PREFIX)/lib$(LIB_SUFFIX)
 	# chmod go+rx $(PREFIX)/lib
 	-mkdir -p $(PREFIX)/include
 	# chmod go+rx $(PREFIX)/include
