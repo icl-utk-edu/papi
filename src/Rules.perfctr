@@ -5,37 +5,39 @@
 #       maynardj@us.ibm.com
 
 DESCR   = "Linux with PerfCtr $(VERSION) patch and library"
+LIBS    = static shared
+TARGETS = serial multiplex_and_pthreads shared
 LIBRARY = libpapi.a
 SHLIB   = libpapi.so
 SUBSTR  = perfctr-$(CPU)
-MSUBSTR = linux-perfctr-$(CPU)
-OS      = linux
-
 ifeq ($(CPU_TYPE),ppc64)
 MEMSUBSTR = linux-ppc64
-#LDFLAGS = -lpthread
 else
 MEMSUBSTR = linux
 endif
-
-LIBS    = static shared
-TARGETS = serial multiplex_and_pthreads shared
 
 #
 # GNU G77/GCC section
 #
 
-# Ideally, the else clause should specify -m64, but
-# since most makefiles that need -m32 don't currently
-# specify 'BITS=32', we can't do this without also
-# changing those makefiles.
+ifeq (x86_64,$(ARCH))
 ifeq (32,$(BITS))
-F77   		= g77 -m32 -Wall
-CC		= gcc -m32 -Wall
+F77   		= g77 -m32 -U__i386__ -D__x86_64__ -Wall
+CC		= gcc -m32 -U__i386__ -D__x86_64__ -Wall
+LD_FLAGS	= -melf_i386
 else
 F77   		= g77 -Wall
 CC		= gcc -Wall
+SHRFLAGS	:= -fPIC
+LIB_SUFFIX	:= 64
 endif
+endif
+
+ifeq (i386,$(ARCH))
+F77   		= g77 -Wall
+CC		= gcc -Wall
+endif
+
 CC_R    	= $(CC) -pthread
 CC_SHR		= $(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
 GCCVER3		= $(shell gcc -v 2>&1 | grep version | cut -f3 -d" " | grep "^3")
@@ -51,13 +53,6 @@ OPTFLAGS	= $(GCC3ARGS)
 endif
 endif
 
-ARCH		:= $(shell uname -m | grep x86_64)
-ifeq (x86_64,$(ARCH))
-ifneq (32,$(BITS))
-SHRFLAGS		:= -fPIC
-LIB_SUFFIX		:= 64
-endif
-endif
 ifneq (,$(XMLFLAG))
 LDFLAGS		= -lexpat
 OPTFLAGS	+= -DXML
@@ -101,7 +96,6 @@ endif
 #
 #  Linux for PowerPC64 section
 #
-ARCH            := $(shell uname -m | grep ppc64)
 ifeq ($(ARCH),ppc64)
 ifeq (32,$(BITS))
 F77             = g77 -m32 -Wall
@@ -150,11 +144,11 @@ ifeq ($(ARCH),ppc64)
 #Workaround to gcc bug (see gcc bug #20611)
 OPTFLAGS        += -O2 $(EVENTFLAGS)
 else
-OPTFLAGS	+= -O3 # -g $(EVENTFLAGS) -DDEBUG -DPAPI_DEBUG_MEMORY_TRACE
+OPTFLAGS	+= -O3 $(EVENTFLAGS)
 endif
 
 FFLAGS        	+= -Dlinux $(FARGS)
-TOPTFLAGS	+= -O0 
+TOPTFLAGS	+= -O  
 FTOPTFLAGS	= $(TOPTFLAGS)
 
 #
@@ -187,7 +181,7 @@ PERFCTR_INC_PATH ?= $(PERFCTR_PREFIX)/include
 PERFCTR_KINC_PATH ?= $(PERFCTR_INC_PATH)
 endif
 
-CFLAGS  +=  -Wno-unused-function -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) $(NOTLS) -DOS_HEADER=\"$(OS).h\"
+CFLAGS  += -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) $(NOTLS)
 
 CFLAGS-2.5.4 := -DPERFCTR25
 CFLAGS-2.6.x := -DPERFCTR26
@@ -205,11 +199,7 @@ PERFCTR_OBJS := $(PERFCTR_OBJS-$(VERSION))
 
 MISCHDRS = perfctr-$(CPU).h
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
-ifeq ("p3",$(CPU))
-MISCSRCS = $(CPU)_events.c perfctr-p4.c linux-acpi.c $(ARCH_SPEC_EVTS)
-else
-MISCSRCS = $(CPU)_events.c p3_events.c perfctr-p3.c linux-acpi.c $(ARCH_SPEC_EVTS)
-endif
+MISCSRCS =  $(CPU)_events.c linux.c $(ARCH_SPEC_EVTS)
 MISCOBJS = $(PERFCTR_OBJS) $(MISCSRCS:.c=.o) 
 
 #Dynamic linking loader needs correct version of libperfctr
@@ -230,19 +220,7 @@ include Makefile.inc
 
 $(PERFCTR_LIB_PATH)/libperfctr.a:
 ifeq (,${PERFCTR_PREFIX})
-ifeq ($(ARCH),ppc64)
-	$(MAKE) CC='$(CC)' -C $(PERFCTR)
-else
-ifneq (32,${BITS})
-ifeq (CATAMOUNT, $(COMPILER))
-	$(MAKE) CC=$(CC) -C $(PERFCTR)
-else
-	$(MAKE) -C $(PERFCTR)
-endif
-else
-	$(MAKE) CC="gcc -m32 -U__i386__ -D__x86_64__" LD_FLAGS="-melf_i386" -C $(PERFCTR)
-endif
-endif
+	$(MAKE) CC='$(CC)' LD_FLAGS='$(LD_FLAGS)' -C $(PERFCTR)
 else
 	@echo '$@ not installed!'; exit 1
 endif
@@ -250,9 +228,10 @@ endif
 $(PERFCTR_OBJS): $(PERFCTR_LIB_PATH)/libperfctr.a
 	ar xv $<
 
-#$(CPU)_events.o: $(CPU)_events.c $(CONFIG_HEADER)
-$(CPU)_events.o: $(CPU)_events.c
+$(CPU)_events.o: $(CPU)_events.c $(CONFIG_HEADER)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPU)_events.c -o $@
+linux.o: linux.c
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $^ -o $@
 
 $(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $^ -o $@
@@ -293,6 +272,6 @@ ifeq ($(ARCH),ppc64)
 endif
 
 native_clobber:
-ifeq (,${PFM_PREFIX})
+ifeq (,${PERFCTR_PREFIX})
 	$(MAKE) -C $(PERFCTR) distclean
 endif
