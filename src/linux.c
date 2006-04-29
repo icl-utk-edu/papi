@@ -755,7 +755,7 @@ inline_static long_long get_cycles(void) {
    do {
       unsigned int a,d;
       asm volatile("rdtsc" : "=a" (a), "=d" (d));
-      (ret) = ((unsigned long)a) | (((unsigned long)d)<<32);
+      (ret) = ((long_long)a) | (((long_long)d)<<32);
    } while(0);
 #else
    __asm__ __volatile__("rdtsc"
