@@ -102,6 +102,7 @@ ifeq (32,$(BITS))
 F77             = g77 -m32 -Wall
 CC              = gcc -m32 -Wall
 else
+LIB_SUFFIX	:= 64
 ifeq (64,$(BITS))
 F77             = g77 -m64 -Wall
 CC              = gcc -m64 -Wall
@@ -111,7 +112,6 @@ CC              = gcc -Wall
 endif
 endif
 CFLAGS 		+= -DPPC64
-LIB_SUFFIX	:= 64
 PLATFORM 	:= $(ARCH)
 ARCH_SPEC_EVTS	:= $(ARCH_EVENTS)_map.c
 else
@@ -269,7 +269,15 @@ else
 	$(MAKE) -C $(PERFCTR) PREFIX=$(PREFIX) install
 endif
 else
+ifeq (ppc64,${ARCH})
+ifeq (32,${BITS})
 	$(MAKE) -C $(PERFCTR) PREFIX=$(PREFIX) install
+else
+	$(MAKE) -C $(PERFCTR) "BINDIR=$(PREFIX)/bin" "LIBDIR=$(PREFIX)/lib64" "INCLDIR=$(PREFIX)/include" install2
+endif
+else
+	$(MAKE) -C $(PERFCTR) PREFIX=$(PREFIX) install
+endif
 endif
 endif
 endif
