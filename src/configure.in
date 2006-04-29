@@ -419,7 +419,7 @@ else
 fi
 PAPI_DATADIR=`eval echo "$datadir/"`
 AC_DEFINE_UNQUOTED(PAPI_DATADIR, "$PAPI_DATADIR", [package data directory])
-
+AC_SUBST(PAPI_DATADIR)
 AC_CHECK_LIB([pthread], [pthread_self])
 
 if test "$OS" = "osf1"; then
