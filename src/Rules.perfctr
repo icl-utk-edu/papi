@@ -10,6 +10,8 @@ TARGETS = serial multiplex_and_pthreads shared
 LIBRARY = libpapi.a
 SHLIB   = libpapi.so
 SUBSTR  = perfctr-$(CPU)
+ARCH	= $(shell uname -m)
+
 ifeq ($(CPU_TYPE),ppc64)
 MEMSUBSTR = linux-ppc64
 else
@@ -22,9 +24,8 @@ endif
 
 ifeq (x86_64,$(ARCH))
 ifeq (32,$(BITS))
-F77   		= g77 -m32 -U__i386__ -D__x86_64__ -Wall
-CC		= gcc -m32 -U__i386__ -D__x86_64__ -Wall
-LD_FLAGS	= -melf_i386
+F77   		= g77 -m32 -Wall
+CC		= gcc -m32 -Wall
 else
 F77   		= g77 -Wall
 CC		= gcc -Wall
@@ -223,7 +224,15 @@ config.h:
 
 $(PERFCTR_LIB_PATH)/libperfctr.a:
 ifeq (,${PERFCTR_PREFIX})
-	$(MAKE) CC='$(CC)' LD_FLAGS='$(LD_FLAGS)' -C $(PERFCTR)
+ifeq (x86_64,${ARCH})
+ifeq (32,${BITS})
+	$(MAKE) CC='$(CC)' LD_FLAGS="-melf_i386" ARCH="i386" -C $(PERFCTR)
+else
+	$(MAKE) -C $(PERFCTR)
+endif
+else
+	$(MAKE) -C $(PERFCTR)
+endif
 else
 	@echo '$@ not installed!'; exit 1
 endif
@@ -253,14 +262,11 @@ ifeq (${VERSION},2.4.x)
 	cp -p $(PERFCTR)/usr.lib/event_codes.h $(PREFIX)/include
 	cp -p $(PERFCTR)/usr.lib/libperfctr.h  $(PREFIX)/include
 else
+ifeq (x86_64,${ARCH})
 ifeq (32,${BITS})
-ifeq (p3,${CPU})
 	$(MAKE) -C $(PERFCTR) PREFIX=$(PREFIX) ARCH="i386" install
 else
-ifeq (p4,${CPU})
-	$(MAKE) -C $(PERFCTR) PREFIX=$(PREFIX) ARCH="i386" install
-endif
-# PPC test will go here
+	$(MAKE) -C $(PERFCTR) PREFIX=$(PREFIX) install
 endif
 else
 	$(MAKE) -C $(PERFCTR) PREFIX=$(PREFIX) install
