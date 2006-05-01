@@ -224,6 +224,9 @@ config.h:
 
 $(PERFCTR_LIB_PATH)/libperfctr.a:
 ifeq (,${PERFCTR_PREFIX})
+ifeq (ppc64,${ARCH})
+	$(MAKE) CC='$(CC)' -C $(PERFCTR)
+endif
 ifeq (x86_64,${ARCH})
 ifeq (32,${BITS})
 	$(MAKE) CC='$(CC)' LD_FLAGS="-melf_i386" ARCH="i386" -C $(PERFCTR)
