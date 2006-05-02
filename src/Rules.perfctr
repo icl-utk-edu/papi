@@ -12,7 +12,7 @@ SHLIB   = libpapi.so
 SUBSTR  = perfctr-$(CPU)
 ARCH	= $(shell uname -m)
 
-ifeq ($(CPU_TYPE),ppc64)
+ifneq (,$(findstring ppc,$(CPU_TYPE)))
 MEMSUBSTR = linux-ppc64
 else
 MEMSUBSTR = linux
@@ -32,11 +32,39 @@ CC		= gcc -Wall
 SHRFLAGS	:= -fPIC
 LIB_SUFFIX	:= 64
 endif
+PLATFORM 	:= x86
 endif
 
 ifeq (i386,$(ARCH))
 F77   		= g77 -Wall
 CC		= gcc -Wall
+PLATFORM	:= x86
+endif
+
+ifeq (ppc,$(ARCH))
+F77             = g77 -Wall
+CC              = gcc -Wall
+PLATFORM 	:= $(ARCH)
+CFLAGS 		+= -DPPC32
+endif
+
+ifeq ($(ARCH),ppc64)
+ifeq (32,$(BITS))
+F77             = g77 -m32 -Wall
+CC              = gcc -m32 -Wall
+else
+LIB_SUFFIX	:= 64
+ifeq (64,$(BITS))
+F77             = g77 -m64 -Wall
+CC              = gcc -m64 -Wall
+else
+F77             = g77 -Wall
+CC              = gcc -Wall
+endif
+endif
+CFLAGS 		+= -DPPC64
+PLATFORM 	:= $(ARCH)
+ARCH_SPEC_EVTS	:= $(ARCH_EVENTS)_map.c
 endif
 
 CC_R    	= $(CC) -pthread
@@ -93,32 +121,6 @@ CC_R      = pathcc
 FFLAGS    = 
 OPTFLAGS  =
 endif
-
-#
-#  Linux for PowerPC64 section
-#
-ifeq ($(ARCH),ppc64)
-ifeq (32,$(BITS))
-F77             = g77 -m32 -Wall
-CC              = gcc -m32 -Wall
-else
-LIB_SUFFIX	:= 64
-ifeq (64,$(BITS))
-F77             = g77 -m64 -Wall
-CC              = gcc -m64 -Wall
-else
-F77             = g77 -Wall
-CC              = gcc -Wall
-endif
-endif
-CFLAGS 		+= -DPPC64
-PLATFORM 	:= $(ARCH)
-ARCH_SPEC_EVTS	:= $(ARCH_EVENTS)_map.c
-else
-ARCH_SPEC_EVTS	:=
-PLATFORM 	:= x86
-endif
-
 
 #
 #  Intel compilers
@@ -192,7 +194,7 @@ PERFCTR_OBJS-2.4.5 := libperfctr.o
 PERFCTR_OBJS-2.4.x := $(PERFCTR_OBJS-2.4.5)
 # 2.5.4 support is for Red Storm Catamount only
 PERFCTR_OBJS-2.5.4 := global.o misc.o virtual.o event_set.o event_set_amd.o catamount.o x86_64.o
-PERFCTR_OBJS-2.6.x := marshal.o global.o misc.o virtual.o x86.o
+PERFCTR_OBJS-2.6.x := marshal.o global.o misc.o virtual.o $(PLATFORM).o
 PERFCTR_OBJS-2.7.x := misc.o virtual.o $(PLATFORM).o
 
 CFLAGS	+= $(CFLAGS-$(VERSION))

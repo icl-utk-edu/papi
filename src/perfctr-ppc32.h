@@ -67,8 +67,6 @@ union semun {
 };
 #endif
 
-/* Lock macros. */
-extern volatile unsigned int lock[PAPI_MAX_LOCK];
 extern int sem_set;
 
 #define MUTEX_OPEN 1

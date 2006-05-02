@@ -148,35 +148,6 @@ int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain)
    return(PAPI_OK);
 }
 
-#if 0
-static void lock_init(void) {
-   int i;
-   for (i = 0; i < PAPI_MAX_LOCK; i++) {
-      lock[i] = MUTEX_OPEN;
-   }
-}
-#else // guanglei from any-null
-static int lock_init(void) 
-{
-   int retval, i;
-  	union semun val; 
-	val.val=1;
-   if ((retval = semget(IPC_PRIVATE,PAPI_MAX_LOCK,0666)) == -1)
-     {
-       PAPIERROR("semget errno %d",errno); return(PAPI_ESYS);
-     }
-   sem_set = retval;
-   for (i=0;i<PAPI_MAX_LOCK;i++)
-     {
-       if ((retval = semctl(sem_set,i,SETVAL,val)) == -1)
-	 {
-	   PAPIERROR("semctl errno %d",errno); return(PAPI_ESYS);
-	 }
-     }
-   return(PAPI_OK);
-}
-
-#endif
 /* At init time, the higher level library should always allocate and 
    reserve EventSet zero. */
 
@@ -352,7 +323,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
 
    if(_papi_hwi_bipartite_alloc(event_list, natNum)) 
      { 
-       struct hwd_pmc_control *contr = this_state->control;
+       struct hwd_pmc_control *contr = &this_state->control;
 
        /* for the PPC32, we have funny interrupt bits that control PMC1 and PMC2-n.
 	  Thus, due to the PAPI API separating add from overflow, we can only allow
@@ -487,25 +458,6 @@ int _papi_hwd_shutdown(hwd_context_t * ctx) {
    if(retval)
       return(PAPI_ESYS);
    return(PAPI_OK);
-}
-
-void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context) {
-   _papi_hwi_context_t ctx;
-   ThreadInfo_t *master = NULL;
-   int isHardware = 0;
-
-   ctx.si = si;
-   ctx.ucontext = (ucontext_t *)context;
-
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx, &isHardware, 
-                                      si->si_pmc_ovf_mask, 0, &master);
-
-   /* We are done, resume interrupting counters */
-   if (isHardware) {
-      if (vperfctr_iresume(master->context.perfctr) < 0) {
-         PAPIERROR("vperfctr_iresume errno %d",errno);
-      }
-   }
 }
 
 /* Perfctr requires that interrupting counters appear at the end of the pmc list
@@ -672,34 +624,4 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
    default:
       return (PAPI_EINVAL);
    }
-}
-
-/* Low level functions, should not handle errors, just return codes. */
-
-inline_static long_long get_cycles(void) {
-	unsigned long tbl=0;
-	unsigned long tbu=0;
-	unsigned long long res=0;
-	asm volatile("mftb %0" : "=r" (tbl));
-	asm volatile("mftbu %0" : "=r" (tbu));
-	res=tbu;
-	res = (res << 32) | tbl;
-	return res;
-}
-
-long_long _papi_hwd_get_real_usec(void) {
-	return((get_cycles() * tb_scale_factor) / (long_long)_papi_hwi_system_info.hw_info.mhz);
-}
-
-long_long _papi_hwd_get_real_cycles(void) {
-	return(get_cycles() * tb_scale_factor);
-}
-
-long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx) {
-   return(((long_long)vperfctr_read_tsc(ctx->perfctr) * tb_scale_factor)/
-         (long_long)_papi_hwi_system_info.hw_info.mhz);
-}
- 
-long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx) {
-   return((long_long)vperfctr_read_tsc(ctx->perfctr) * tb_scale_factor);
 }

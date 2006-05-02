@@ -19,6 +19,9 @@ static int mdi_init();
 #ifdef PPC64
 extern int setup_ppc64_presets(int cputype);
 extern int ppc64_setup_vector_table(papi_vectors_t *);
+#elif defined(PPC32)
+extern int setup_ppc32_presets(int cputype);
+extern int ppc32_setup_vector_table(papi_vectors_t *);
 #else
 extern int setup_p4_presets(int cputype);
 extern int setup_p4_vector_table(papi_vectors_t *);
@@ -40,7 +43,7 @@ extern int setup_p3_vector_table(papi_vectors_t *);
 #define PERFCTR_CPU_NRCTRS      perfctr_cpu_nrctrs
 #endif
 
-#ifndef PPC64
+#if (!defined(PPC64) && !defined(PPC32))
 inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
    switch (perfctr_cpu_type) {
    case PERFCTR_X86_INTEL_P5:
@@ -88,22 +91,42 @@ int check_p4(int cputype){
   }
   return(0);
 }
+#endif
+
 /* volatile uint32_t lock; */
 
-#include <inttypes.h>
 volatile unsigned int lock[PAPI_MAX_LOCK];
-#else
-unsigned int lock[PAPI_MAX_LOCK];
-#endif //PPC64
 
 int tb_scale_factor; // needed to scale get_cycles
 
+#if (defined(PPC32))
+static int lock_init(void) 
+{
+   int retval, i;
+  	union semun val; 
+	val.val=1;
+   if ((retval = semget(IPC_PRIVATE,PAPI_MAX_LOCK,0666)) == -1)
+     {
+       PAPIERROR("semget errno %d",errno); return(PAPI_ESYS);
+     }
+   sem_set = retval;
+   for (i=0;i<PAPI_MAX_LOCK;i++)
+     {
+       if ((retval = semctl(sem_set,i,SETVAL,val)) == -1)
+	 {
+	   PAPIERROR("semctl errno %d",errno); return(PAPI_ESYS);
+	 }
+     }
+   return(PAPI_OK);
+}
+#else
 static void lock_init(void) {
    int i;
    for (i = 0; i < PAPI_MAX_LOCK; i++) {
       lock[i] = MUTEX_OPEN;
    }
 }
+#endif
 
 #ifndef PAPI_NO_VECTOR
 papi_svector_t _linux_os_table[] = {
@@ -189,7 +212,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    strcpy(_papi_hwi_system_info.substrate, "$Id$");
 
    /* Setup presets */
-#ifndef PPC64
+#if (!defined(PPC64) && !defined(PPC32))
    if ( check_p4(info.cpu_type) ){
      retval = setup_p4_vector_table(vtable);
      if (!retval)
@@ -200,14 +223,21 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
      if (!retval)
      	retval = setup_p3_presets(info.cpu_type);
    }
-#else
+#elif (defined(PPC64))
 	/* Setup native and preset events */
 	retval = ppc64_setup_vector_table(vtable);
     if (!retval)
     	retval = setup_ppc64_native_table();
     if (!retval)
     	retval = setup_ppc64_presets(info.cpu_type);
-#endif // PPC64
+#elif (defined(PPC32))
+	/* Setup native and preset events */
+	retval = ppc32_setup_vector_table(vtable);
+    if (!retval)
+    	retval = setup_ppc32_native_table();
+    if (!retval)
+    	retval = setup_ppc32_presets(info.cpu_type);
+#endif
    if ( retval ) 
      return(retval);
 
@@ -223,7 +253,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    _papi_hwi_system_info.num_cntrs = PERFCTR_CPU_NRCTRS(&info);
    _papi_hwi_system_info.num_gp_cntrs = PERFCTR_CPU_NRCTRS(&info);
    _papi_hwi_system_info.hw_info.model = info.cpu_type;
-#ifdef PPC64
+#if (defined(PPC64)||defined(PPC32))
    _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_IBM;
 #else
    _papi_hwi_system_info.hw_info.vendor = xlate_cpu_type_to_vendor(info.cpu_type);
@@ -313,11 +343,7 @@ int _papi_hwd_init(hwd_context_t * ctx) {
 /* Machine info structure. -1 is unused. */
 static int mdi_init() {
      /* Name of the substrate we're using */
-#ifdef PPC64
-    strcpy(_papi_hwi_system_info.substrate, "$Id$"); 
-#else
     strcpy(_papi_hwi_system_info.substrate, "$Id$");
-#endif
    _papi_hwi_system_info.supports_hw_overflow = 1;
    _papi_hwi_system_info.supports_64bit_counters = 1;
    _papi_hwi_system_info.supports_inheritance = 1;
@@ -748,7 +774,7 @@ int _papi_hwd_get_system_info(void)
 
 /* Low level functions, should not handle errors, just return codes. */
 
-#ifndef PPC64
+#if (!defined(PPC64) && !defined(PPC32))
 inline_static long_long get_cycles(void) {
    long_long ret = 0;
 #ifdef __x86_64__
@@ -764,7 +790,18 @@ inline_static long_long get_cycles(void) {
 #endif
    return ret;
 }
-#else
+#elif defined(PPC32)
+inline_static long_long get_cycles(void) {
+	unsigned long tbl=0;
+	unsigned long tbu=0;
+	unsigned long long res=0;
+	asm volatile("mftb %0" : "=r" (tbl));
+	asm volatile("mftbu %0" : "=r" (tbu));
+	res=tbu;
+	res = (res << 32) | tbl;
+	return res;
+}
+#elif defined(PPC64)
 inline_static unsigned int rdtsc_long(void) {
    unsigned long tb =0;
    asm volatile("mftb %0" : "=r" (tb));
