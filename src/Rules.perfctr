@@ -35,6 +35,18 @@ endif
 PLATFORM 	:= x86
 endif
 
+ifeq (i686,$(ARCH))
+ARCH = i386
+endif
+
+ifeq (i586,$(ARCH))
+ARCH = i386
+endif
+
+ifeq (i486,$(ARCH))
+ARCH = i386
+endif
+
 ifeq (i386,$(ARCH))
 F77   		= g77 -Wall
 CC		= gcc -Wall
@@ -222,7 +234,7 @@ SPECIAL_REMOVE = rm -f libperfctr.so*
 include Makefile.inc
 
 config.h:
-	@echo 'Please clean your build and run ./configure. Direct Makefile access has been deprecated."
+	@echo 'Please clean your build and run ./configure. Direct Makefile access has been deprecated.'
 
 $(PERFCTR_LIB_PATH)/libperfctr.a:
 ifeq (,${PERFCTR_PREFIX})
