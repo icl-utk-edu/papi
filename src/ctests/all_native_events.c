@@ -13,7 +13,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
 int main(int argc, char **argv)
 {
-   int i, j, k, EventSet=PAPI_NULL, count=0;
+   int i, j, k, loop, EventSet=PAPI_NULL, count=0;
    long_long values;
    int retval;
    PAPI_event_info_t info;
@@ -87,28 +87,34 @@ int main(int argc, char **argv)
          do {
             j++;
             retval = PAPI_get_event_info(k, &info);
-      retval = PAPI_add_event(EventSet, info.event_code);       /* JT */
-      if (retval != PAPI_OK) {
-         if (!TESTS_QUIET)
-            printf("Error adding %s\n", info.symbol);
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      } else { 
-         if (!TESTS_QUIET) 
-            printf("Added %s successful\n", info.symbol);
-         count++;
-      }
-      retval = PAPI_start(EventSet);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_start", retval);
-      retval = PAPI_stop(EventSet, &values);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
-
-      retval = PAPI_remove_event(EventSet, info.event_code);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_remove_event", retval);
+            retval = PAPI_add_event(EventSet, info.event_code);       /* JT */
+            if (retval != PAPI_OK) {
+               if (!TESTS_QUIET)
+                  printf("Error adding %s\n", info.symbol);
+               test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+            } else { 
+               if (!TESTS_QUIET) 
+                  printf("Added %s successful\n", info.symbol);
+               count++;
+            }
+			/*
+            retval = PAPI_start(EventSet);
+            if (retval != PAPI_OK)
+               test_fail(__FILE__, __LINE__, "PAPI_start", retval);
+			   
+			for(loop=0;loop<10;loop++);
+			   
+            retval = PAPI_stop(EventSet, &values);
+            if (retval != PAPI_OK)
+               test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+            */
+            retval = PAPI_remove_event(EventSet, info.event_code);
+            if (retval != PAPI_OK)
+               test_fail(__FILE__, __LINE__, "PAPI_remove_event", retval);
          } while (PAPI_enum_event(&k, PAPI_PENT4_ENUM_BITS) == PAPI_OK);
-      }
+	  }
+      if (!TESTS_QUIET && retval == PAPI_OK)
+         printf("\n");
    } while (PAPI_enum_event(&i, PAPI_PENT4_ENUM_GROUPS) == PAPI_OK);
 #else
       retval = PAPI_add_event(EventSet, info.event_code);       /* JT */
@@ -121,13 +127,14 @@ int main(int argc, char **argv)
             printf("Added %s successful\n", info.symbol);
          count++;
       }
+	  /*
       retval = PAPI_start(EventSet);
       if (retval != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_start", retval);
       retval = PAPI_stop(EventSet, &values);
       if (retval != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
-
+      */
       retval = PAPI_remove_event(EventSet, info.event_code);
       if (retval != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_remove_event", retval);
