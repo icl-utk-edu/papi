@@ -13,11 +13,14 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
 int main(int argc, char **argv)
 {
-   int i, j, k, loop, EventSet=PAPI_NULL, count=0;
+   int i, j, k, loop, event_code, EventSet=PAPI_NULL, count=0;
    long_long values;
    int retval;
    PAPI_event_info_t info;
    const PAPI_hw_info_t *hwinfo = NULL;
+#ifdef _POWER4
+   int group = 0;
+#endif
 #ifdef PENTIUM4
    int l;
 #endif
@@ -72,7 +75,17 @@ int main(int argc, char **argv)
    PAPI_enum_event(&i, 0);
 #endif
    do {
+#ifdef _POWER4
+      group = (i & 0x00FF0000) >> 16;
+      if (group) {
+         if (!TESTS_QUIET)
+            printf("%10d", group - 1);
+      } else {
+         if (!TESTS_QUIET)
+            printf("\n\n");
+#endif
          j++;
+	 /*memset(&info, 0, sizeof(PAPI_event_info_t));*/
          retval = PAPI_get_event_info(i, &info);
 
 	 printf("%s\t0x%x  %d\n",
@@ -80,6 +93,11 @@ int main(int argc, char **argv)
 		info.event_code,
 		info.count);
 
+#ifdef _POWER4
+         if (!TESTS_QUIET)
+            printf("Groups: ");
+      }
+#endif
 #ifdef PENTIUM4
       k = i;
       if (PAPI_enum_event(&k, PAPI_PENT4_ENUM_BITS) == PAPI_OK) {
@@ -118,8 +136,8 @@ int main(int argc, char **argv)
    } while (PAPI_enum_event(&i, PAPI_PENT4_ENUM_GROUPS) == PAPI_OK);
 #else
 #if defined(_POWER4)
-      info.event_code = info.event_code & 0xff00ffff;
-      retval = PAPI_add_event(EventSet, info.event_code);       /* JT */
+      event_code = info.event_code & 0xff00ffff;
+      retval = PAPI_add_event(EventSet, event_code);       /* JT */
       if (retval != PAPI_OK) {
          if (!TESTS_QUIET)
             printf("Error adding %s\n", info.symbol);
@@ -137,7 +155,7 @@ int main(int argc, char **argv)
       if (retval != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
       */
-      retval = PAPI_remove_event(EventSet, info.event_code);
+      retval = PAPI_remove_event(EventSet, event_code);
       if (retval != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_remove_event", retval);
 /* this function would return the next native event code.
