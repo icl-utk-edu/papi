@@ -117,6 +117,8 @@ int main(int argc, char **argv)
          printf("\n");
    } while (PAPI_enum_event(&i, PAPI_PENT4_ENUM_GROUPS) == PAPI_OK);
 #else
+#if defined(_POWER4)
+      info.event_code = info.event_code & 0xff00ffff;
       retval = PAPI_add_event(EventSet, info.event_code);       /* JT */
       if (retval != PAPI_OK) {
          if (!TESTS_QUIET)
@@ -138,7 +140,6 @@ int main(int argc, char **argv)
       retval = PAPI_remove_event(EventSet, info.event_code);
       if (retval != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_remove_event", retval);
-#if defined(_POWER4)
 /* this function would return the next native event code.
     modifer = PAPI_ENUM_ALL
 		 it simply returns next native event code
@@ -154,6 +155,27 @@ int main(int argc, char **argv)
 */
    } while (PAPI_enum_event(&i, PAPI_PWR4_ENUM_GROUPS) == PAPI_OK);
 #else
+      retval = PAPI_add_event(EventSet, info.event_code);       /* JT */
+      if (retval != PAPI_OK) {
+         if (!TESTS_QUIET)
+            printf("Error adding %s\n", info.symbol);
+         /*test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);*/ continue;
+      } else { 
+         if (!TESTS_QUIET) 
+            printf("Added %s successful\n", info.symbol);
+         count++;
+      }
+	  /*
+      retval = PAPI_start(EventSet);
+      if (retval != PAPI_OK)
+         test_fail(__FILE__, __LINE__, "PAPI_start", retval);
+      retval = PAPI_stop(EventSet, &values);
+      if (retval != PAPI_OK)
+         test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+      */
+      retval = PAPI_remove_event(EventSet, info.event_code);
+      if (retval != PAPI_OK)
+         test_fail(__FILE__, __LINE__, "PAPI_remove_event", retval);
    } while (PAPI_enum_event(&i, PAPI_ENUM_ALL) == PAPI_OK);
 #endif
 #endif
