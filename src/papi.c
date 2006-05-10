@@ -1903,15 +1903,15 @@ int PAPI_list_events(int EventSet, int *Events, int *number)
   return(PAPI_OK);
 }
 
-#ifdef PAPI_DMEM_INFO
-long PAPI_get_dmem_info(int option)
+int PAPI_get_dmem_info(PAPI_dmem_info_t *dest)
 {
-   if (option != PAPI_GET_PAGESIZE) {
-      return (_papi_hwd_get_dmem_info(option));
-   } else
-      return ((long) getpagesize());
+  if (dest == NULL)
+    return PAPI_EINVAL;
+
+  memset((void *)dest,0x0,sizeof(PAPI_dmem_info_t));
+  return(_papi_hwd_get_dmem_info(dest));
 }
-#endif
+
 
 const PAPI_exe_info_t *PAPI_get_executable_info(void)
 {

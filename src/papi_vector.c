@@ -240,7 +240,7 @@ int _papi_hwi_setup_vector_table(papi_vectors_t *table, papi_svector_t *stable)
         table->_vec_papi_hwd_bpt_map_update = (void (*) (void *, void *)) stable[i].func;
          break;
        case VEC_PAPI_HWD_GET_DMEM_INFO:
-        table->_vec_papi_hwd_get_dmem_info = (long (*) (int)) stable[i].func;
+        table->_vec_papi_hwd_get_dmem_info = (int (*) (PAPI_dmem_info_t *)) stable[i].func;
          break;
        case VEC_PAPI_HWD_SHUTDOWN:
         table->_vec_papi_hwd_shutdown = (int (*) (void *)) stable[i].func;
@@ -298,7 +298,7 @@ int _papi_hwi_initialize_vector_table(papi_vectors_t *table){
  table->_vec_papi_hwd_bpt_map_shared = (int (*) (void *, void *)) vec_int_dummy;
  table->_vec_papi_hwd_bpt_map_preempt = (void (*) (void *, void *)) vec_void_dummy;
  table->_vec_papi_hwd_bpt_map_update = (void (*) (void *, void *)) vec_void_dummy;
- table->_vec_papi_hwd_get_dmem_info = (long (*) (int)) vec_long_dummy;
+ table->_vec_papi_hwd_get_dmem_info = (int (*) (PAPI_dmem_info_t *)) vec_int_dummy;
  table->_vec_papi_hwd_shutdown = (int (*) (void *)) vec_int_dummy;
  table->_vec_papi_hwd_shutdown_global = (int (*) (void)) vec_int_ok_dummy;
  table->_vec_papi_hwd_user = (int (*) (int, void *, void *)) vec_int_dummy;

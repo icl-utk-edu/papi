@@ -13,7 +13,6 @@
 
 #include "papi.h"
 #include "papi_internal.h"
-#include "libperfctr.h"
 
 static int init_amd(PAPI_mh_info_t * mh_info);
 static short int init_amd_L2_assoc_inf(unsigned short int pattern);
@@ -730,6 +729,56 @@ static int init_intel(PAPI_mh_info_t * mh_info)
  * it doesn't it is pre pentium K6 series that we don't
  * support.
  */
+#if 0
+/* This routine appears to no longer be called. */
+static int check_cpuid()
+{
+   volatile unsigned long val;
+#ifdef _WIN32
+   __asm {
+	   pushfd
+	   pop eax
+	   mov ebx, eax
+	   xor eax, 0x00200000
+	   push eax 
+	   popfd 
+	   pushfd 
+	   pop eax 
+	   cmp eax, ebx 
+	   jz NO_CPUID 
+	   mov val, 1 
+	   jmp END 
+NO_CPUID:  mov val, 0 
+END:	  }
+#elif defined(__x86_64__)
+   __asm__ __volatile__("pushf;"
+                        "pop %%eax;"
+                        "mov %%eax, %%ebx;"
+                        "xor $0x00200000,%%eax;"
+                        "push %%eax;"
+                        "popf;"
+                        "pushf;"
+                        "pop %%eax;"
+                        "cmp %%eax, %%ebx;"
+                        "jz NO_CPUID;"
+                        "mov $1, %0;"
+                        "jmp END;" "NO_CPUID:" "mov $0, %0;" "END:":"=r"(val));
+#else
+   __asm__ __volatile__("pushfl;"
+                        "pop %%eax;"
+                        "movl %%eax, %%ebx;"
+                        "xor $0x00200000,%%eax;"
+                        "push %%eax;"
+                        "popfl;"
+                        "pop %%eax;"
+                        "cmp %%eax, %%ebx;"
+                        "jz NO_CPUID;"
+                        "movl $1, %0;"
+                        "jmp END;" "NO_CPUID:" "movl $0, %0;" "END:":"=r"(val));
+#endif
+   return (int) val;
+}
+#endif
 #ifdef _WIN32
 inline_static void cpuid(unsigned int *a, unsigned int *b,
                          unsigned int *c, unsigned int *d)
@@ -771,7 +820,7 @@ inline_static void cpuid(unsigned int *eax, unsigned int *ebx,
 
 #ifdef _WIN32
 #include <Psapi.h>
-long _papi_hwd_get_dmem_info(int option)
+int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
 {
    int tmp;
    HANDLE proc = GetCurrentProcess();
@@ -793,44 +842,101 @@ long _papi_hwd_get_dmem_info(int option)
 }
 #else
 #ifdef __CATAMOUNT__
-long _papi_hwd_get_dmem_info(int option)
+int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
 {
 	return( PAPI_EINVAL );
 }
 #else
-long _papi_hwd_get_dmem_info(int option)
+//int get_dmem_info(long_long *size, long_long *resident, long_long *shared, long_long *text, long_long *library, long_long *heap, long_long *locked, long_long *stack, long_long *ps, long_long *vmhwm)
+int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
 {
-   pid_t pid = getpid();
-   char pfile[256];
-   FILE *fd;
-   int tmp;
-   unsigned int vsize, rss;
+  char fn[PATH_MAX], tmp[PATH_MAX];
+  FILE *f;
+  int ret;
+  long_long sz = 0, lck = 0, res = 0, shr = 0, stk = 0, txt = 0, dat = 0, dum = 0, lib = 0, hwm = 0;
 
-   sprintf(pfile, "/proc/%d/stat", pid);
-   if ((fd = fopen(pfile, "r")) == NULL) {
-      SUBDBG("PAPI_get_dmem_info can't open /proc/%d/stat\n", pid);
-      return (PAPI_ESYS);
-   }
-   fgets(pfile, 256, fd);
-   fclose(fd);
+  sprintf(fn,"/proc/%ld/status",(long)getpid());
+  f = fopen(fn,"r");
+  if (f == NULL)
+    {
+      PAPIERROR("fopen(%s): %s\n",fn,strerror(errno));
+      return PAPI_ESBSTR;
+    }
+  while (1)
+    {
+      if (fgets(tmp,PATH_MAX,f) == NULL)
+	break;
+      if (strspn(tmp,"VmSize:") == strlen("VmSize:"))
+	{
+	  sscanf(tmp+strlen("VmSize:"),"%lld",&sz);
+	  d->size = sz;
+	  continue;
+	}
+      if (strspn(tmp,"VmHWM:") == strlen("VmHWM:"))
+	{
+	  sscanf(tmp+strlen("VmHWM:"),"%lld",&hwm);
+	  d->high_water_mark = hwm;
+	  continue;
+	}
+      if (strspn(tmp,"VmLck:") == strlen("VmLck:"))
+	{
+	  sscanf(tmp+strlen("VmLck:"),"%lld",&lck);
+	  d->locked = lck;
+	  continue;
+	}
+      if (strspn(tmp,"VmRSS:") == strlen("VmRSS:"))
+	{
+	  sscanf(tmp+strlen("VmRSS:"),"%lld",&res);
+	  d->resident = res;
+	  continue;
+	}
+      if (strspn(tmp,"VmData:") == strlen("VmData:"))
+	{
+	  sscanf(tmp+strlen("VmData:"),"%lld",&dat);
+	  d->heap = dat;
+	  continue;
+	}
+      if (strspn(tmp,"VmStk:") == strlen("VmStk:"))
+	{
+	  sscanf(tmp+strlen("VmStk:"),"%lld",&stk);
+	  d->stack = stk;
+	  continue;
+	}
+      if (strspn(tmp,"VmExe:") == strlen("VmExe:"))
+	{
+	  sscanf(tmp+strlen("VmExe:"),"%lld",&txt);
+	  d->text = txt;
+	  continue;
+	}
+      if (strspn(tmp,"VmLib:") == strlen("VmLib:"))
+	{
+	  sscanf(tmp+strlen("VmLib:"),"%lld",&lib);
+	  d->library = lib;
+	  continue;
+	}
+    }
+  fclose(f);
 
-   /* Scan through the information */
-   sscanf(pfile,
-          "%d %s %c %d %d %d %d %d %u %u %u %u %u %d %d %d %d %d %d %d %d %d %u %u", &tmp,
-          pfile, pfile, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp,
-          &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &vsize, &rss);
-   switch (option) {
-   case PAPI_GET_RESSIZE:
-      return (rss);
-   case PAPI_GET_SIZE:
-      tmp = getpagesize();
-      if (tmp == 0)
-         tmp = 1;
-      return ((vsize / tmp));
-   default:
-      return (PAPI_EINVAL);
-   }
+  sprintf(fn,"/proc/%ld/statm",(long)getpid());
+  f = fopen(fn,"r");
+  if (f == NULL)
+    {
+      PAPIERROR("fopen(%s): %s\n",fn,strerror(errno));
+      return PAPI_ESBSTR;
+    }
+  ret = fscanf(f,"%lld %lld %lld %lld %lld %lld %lld",&dum,&dum,&shr,&dum,&dum,&dat,&dum);
+  if (ret != 7)
+    {
+      PAPIERROR("fscanf(7 items): %d\n",ret);
+      return PAPI_ESBSTR;
+    }
+  d->pagesize = getpagesize();
+  d->shared = (shr * d->pagesize)/1024;
+  fclose(f);
+
+  return PAPI_OK;
 }
+
 #endif /* __CATAMOUNT__ */
 #endif /* _WIN32 */
 

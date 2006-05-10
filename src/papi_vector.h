@@ -109,7 +109,7 @@ typedef struct papi_vectors{
   int (*_vec_papi_hwd_bpt_map_shared) (void *, void *);
   void (*_vec_papi_hwd_bpt_map_preempt) (void *, void *);
   void (*_vec_papi_hwd_bpt_map_update) (void *, void *);
-  long (*_vec_papi_hwd_get_dmem_info) (int);
+  int (*_vec_papi_hwd_get_dmem_info) (PAPI_dmem_info_t *);
   int (*_vec_papi_hwd_shutdown) (void *);
   int (*_vec_papi_hwd_shutdown_global) (void);
   int (*_vec_papi_hwd_user) (int, void *, void *);

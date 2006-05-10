@@ -492,15 +492,33 @@ read the documentation carefully.  */
       PAPI_addr_range_option_t addr;
    } PAPI_option_t;
 
-#ifdef PAPI_DMEM_INFO
 /* A pointer to the following is passed to PAPI_get_dmem_info() */
-   typedef struct _dmem_t {
-      long_long total_memory;
-      long_long max_memory;
-      long_long total_swapping;
-      /* Memory Locality */
-   } PAPI_dmem_t;
-#endif
+	typedef struct _dmem_t {
+	  long_long size;
+	  long_long resident;
+	  long_long high_water_mark;
+	  long_long shared;
+	  long_long text;
+	  long_long library;
+	  long_long heap;
+	  long_long locked;
+	  long_long stack;
+	  long_long pagesize;
+	} PAPI_dmem_info_t;
+
+/* Fortran offsets into PAPI_dmem_info_t structure. */
+
+#define PAPIF_DMEM_VMSIZE     1
+#define PAPIF_DMEM_RESIDENT   2
+#define PAPIF_DMEM_HIGH_WATER 3
+#define PAPIF_DMEM_SHARED     4
+#define PAPIF_DMEM_TEXT       5
+#define PAPIF_DMEM_LIBRARY    6
+#define PAPIF_DMEM_HEAP       7
+#define PAPIF_DMEM_LOCKED     8
+#define PAPIF_DMEM_STACK      9
+#define PAPIF_DMEM_PAGESIZE   10
+#define PAPIF_DMEM_MAXVAL     10
 
 /*
    This structure is the event information that is exposed to the user through the API.
@@ -563,9 +581,7 @@ read the documentation carefully.  */
    int   PAPI_enum_event(int *EventCode, int modifier);
    int   PAPI_event_code_to_name(int EventCode, char *out);
    int   PAPI_event_name_to_code(char *in, int *out);
-#if PAPI_DMEM_INFO
-   long  PAPI_get_dmem_info(int option);
-#endif
+   int  PAPI_get_dmem_info(PAPI_dmem_info_t *dest);
    int   PAPI_encode_events(char * event_file, int replace);
    int   PAPI_get_event_info(int EventCode, PAPI_event_info_t * info);
    int   PAPI_set_event_info(PAPI_event_info_t * info, int *EventCode, int replace);

@@ -15,11 +15,17 @@ int get_memory_info(PAPI_hw_info_t * mem_info)
    return PAPI_OK;
 }
 
-long _papi_hwd_get_dmem_info(int option)
+int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
 {
+	/* This function has been reimplemented 
+		to conform to current interface.
+		It has not been tested.
+		Nor has it been confirmed for completeness.
+		dkt 05-10-06
+	*/
+
    FILE *fd;
    struct psinfo psi;
-   long pgsz = getpagesize();
 
    if ((fd = fopen("/proc/self/psinfo", "r")) == NULL) {
       SUBDBG("fopen(/proc/self) errno %d",errno);
@@ -29,14 +35,18 @@ long _papi_hwd_get_dmem_info(int option)
    fread((void *) &psi, sizeof(struct psinfo), 1, fd);
    fclose(fd);
 
-   switch (option) {
-   case PAPI_GET_RESSIZE:
-      return (((1024 * psi.pr_size) / pgsz));
-   case PAPI_GET_SIZE:
-      return (((1024 * psi.pr_rssize) / pgsz));
-   default:
-      return (PAPI_EINVAL);
-   }
+   d->pagesize = getpagesize();
+   d->size = ((1024 * psi.pr_rssize) / d->pagesize);
+   d->resident = ((1024 * psi.pr_size) / d->pagesize);
+   d->high_water_mark = PAPI_EINVAL;
+   d->shared = PAPI_EINVAL;
+   d->text = PAPI_EINVAL;
+   d->library = PAPI_EINVAL;
+   d->heap = PAPI_EINVAL;
+   d->locked = PAPI_EINVAL;
+   d->stack = PAPI_EINVAL;
+
+   return (PAPI_OK);
 
 /*  Depending on OS we may need this, so going to leave
  *  the code here for now. -KSL

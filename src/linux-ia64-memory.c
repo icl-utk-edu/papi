@@ -142,36 +142,94 @@ int get_number( char *buf ){
    return(-1);
 }
 
-long _papi_hwd_get_dmem_info(int option)
+
+int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
 {
-   char pfile[256];
-   FILE *fd;
-   int tmp;
-   unsigned int vsize, rss;
+  char fn[PATH_MAX], tmp[PATH_MAX];
+  FILE *f;
+  int ret;
+  long_long sz = 0, lck = 0, res = 0, shr = 0, stk = 0, txt = 0, dat = 0, dum = 0, lib = 0, hwm = 0;
 
-   if ((fd = fopen("/proc/self/stat", "r")) == NULL) {
-      SUBDBG("PAPI_get_dmem_info can't open /proc/self/stat\n");
-      return (PAPI_ESYS);
-   }
-   fgets(pfile, 256, fd);
-   fclose(fd);
+  sprintf(fn,"/proc/%ld/status",(long)getpid());
+  f = fopen(fn,"r");
+  if (f == NULL)
+    {
+      PAPIERROR("fopen(%s): %s\n",fn,strerror(errno));
+      return PAPI_ESBSTR;
+    }
+  while (1)
+    {
+      if (fgets(tmp,PATH_MAX,f) == NULL)
+	break;
+      if (strspn(tmp,"VmSize:") == strlen("VmSize:"))
+	{
+	  sscanf(tmp+strlen("VmSize:"),"%lld",&sz);
+	  d->size = sz;
+	  continue;
+	}
+      if (strspn(tmp,"VmHWM:") == strlen("VmHWM:"))
+	{
+	  sscanf(tmp+strlen("VmHWM:"),"%lld",&hwm);
+	  d->high_water_mark = hwm;
+	  continue;
+	}
+      if (strspn(tmp,"VmLck:") == strlen("VmLck:"))
+	{
+	  sscanf(tmp+strlen("VmLck:"),"%lld",&lck);
+	  d->locked = lck;
+	  continue;
+	}
+      if (strspn(tmp,"VmRSS:") == strlen("VmRSS:"))
+	{
+	  sscanf(tmp+strlen("VmRSS:"),"%lld",&res);
+	  d->resident = res;
+	  continue;
+	}
+      if (strspn(tmp,"VmData:") == strlen("VmData:"))
+	{
+	  sscanf(tmp+strlen("VmData:"),"%lld",&dat);
+	  d->heap = dat;
+	  continue;
+	}
+      if (strspn(tmp,"VmStk:") == strlen("VmStk:"))
+	{
+	  sscanf(tmp+strlen("VmStk:"),"%lld",&stk);
+	  d->stack = stk;
+	  continue;
+	}
+      if (strspn(tmp,"VmExe:") == strlen("VmExe:"))
+	{
+	  sscanf(tmp+strlen("VmExe:"),"%lld",&txt);
+	  d->text = txt;
+	  continue;
+	}
+      if (strspn(tmp,"VmLib:") == strlen("VmLib:"))
+	{
+	  sscanf(tmp+strlen("VmLib:"),"%lld",&lib);
+	  d->library = lib;
+	  continue;
+	}
+    }
+  fclose(f);
 
-   /* Scan through the information */
-   sscanf(pfile,
-          "%d %s %c %d %d %d %d %d %u %u %u %u %u %d %d %d %d %d %d %d %d %d %u %u", &tmp,
-          pfile, pfile, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp,
-          &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &vsize, &rss);
-   switch (option) {
-   case PAPI_GET_RESSIZE:
-      return (rss);
-   case PAPI_GET_SIZE:
-      tmp = getpagesize();
-      if (tmp == 0)
-         tmp = 1;
-      return ((vsize / tmp));
-   default:
-      return (PAPI_EINVAL);
-   }
+  sprintf(fn,"/proc/%ld/statm",(long)getpid());
+  f = fopen(fn,"r");
+  if (f == NULL)
+    {
+      PAPIERROR("fopen(%s): %s\n",fn,strerror(errno));
+      return PAPI_ESBSTR;
+    }
+  ret = fscanf(f,"%lld %lld %lld %lld %lld %lld %lld",&dum,&dum,&shr,&dum,&dum,&dat,&dum);
+  if (ret != 7)
+    {
+      PAPIERROR("fscanf(7 items): %d\n",ret);
+      return PAPI_ESBSTR;
+    }
+  d->pagesize = getpagesize();
+  d->shared = (shr * d->pagesize)/1024;
+  fclose(f);
+
+  return PAPI_OK;
 }
 
 

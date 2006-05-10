@@ -6,14 +6,18 @@ int get_memory_info(PAPI_hw_info_t * mem_info)
    return PAPI_OK;
 }
 
-long _papi_hwd_get_dmem_info(int option)
+int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
 {
-   switch (option) {
-   case PAPI_GET_RESSIZE:
-      return (1);
-   case PAPI_GET_SIZE:
-      return (2);
-   default:
-      return (PAPI_OK);
-   }
+   d->size = 1;
+   d->resident = 2;
+   d->high_water_mark = 3;
+   d->shared = 4;
+   d->text = 5;
+   d->library = 6;
+   d->heap = 7;
+   d->locked = 8;
+   d->stack = 9;
+   d->pagesize = getpagesize();
+
+   return (PAPI_OK);
 }

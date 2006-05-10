@@ -33,7 +33,7 @@
 
 #include "papi.h"
 
-#define PAPI_MAX_COUNTER_TERMS 8 /* to satisfy papi_preset.h */
+#define MAX_COUNTER_TERMS 8 /* to satisfy papi_preset.h */
 #include "papi_preset.h"
 #include "papi_data.h"
 
@@ -134,7 +134,21 @@ const hwi_describe_t _papi_def[] = {
    {PAPI_USR2_LOCK, "PAPI_USR2_LOCK", NULL},
 
    {PAPI_USR1_TLS, "PAPI_USR1_TLS", NULL},
-   {PAPI_USR2_TLS, "PAPI_USR2_TLS", NULL}
+   {PAPI_USR2_TLS, "PAPI_USR2_TLS", NULL},
+
+/* Fortran offsets into PAPI_dmem_info_t structure. */
+   {PAPIF_DMEM_VMSIZE, "PAPIF_DMEM_VMSIZE", NULL},
+   {PAPIF_DMEM_RESIDENT, "PAPIF_DMEM_RESIDENT", NULL},
+   {PAPIF_DMEM_HIGH_WATER, "PAPIF_DMEM_HIGH_WATER", NULL},
+   {PAPIF_DMEM_SHARED, "PAPIF_DMEM_SHARED", NULL},
+   {PAPIF_DMEM_TEXT, "PAPIF_DMEM_TEXT", NULL},
+   {PAPIF_DMEM_LIBRARY, "PAPIF_DMEM_LIBRARY", NULL},
+   {PAPIF_DMEM_HEAP, "PAPIF_DMEM_HEAP", NULL},
+   {PAPIF_DMEM_LOCKED, "PAPIF_DMEM_LOCKED", NULL},
+   {PAPIF_DMEM_STACK, "PAPIF_DMEM_STACK", NULL},
+   {PAPIF_DMEM_PAGESIZE, "PAPIF_DMEM_PAGESIZE", NULL},
+   {PAPIF_DMEM_MAXVAL, "PAPIF_DMEM_MAXVAL", NULL}
+
 };
 
 

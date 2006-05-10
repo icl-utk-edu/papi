@@ -16,18 +16,11 @@
 *          <your email address>
 */
 
-#ifndef IN_SUBSTRATE
-#define hwd_context_t void
-#define hwd_control_state_t void
-#define hwd_reg_alloc_t void
-#define hwd_register_t void
-#endif
-
 /* The following PAPI internal functions are defined by the papi_internal.c file. */
  int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI,
                           long_long * values);
- int _papi_hwi_allocate_eventset_map(int sidx);
- int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle, int sidx);
+ int _papi_hwi_allocate_eventset_map(void);
+ int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle);
  int _papi_hwi_add_event(EventSetInfo_t * ESI, int index);
  int _papi_hwi_add_pevent(EventSetInfo_t * ESI, int EventCode, void *inout);
  int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode);
@@ -38,7 +31,7 @@
  int _papi_hwi_convert_eventset_to_multiplex(EventSetInfo_t * ESI);
  int _papi_hwi_lookup_EventCodeIndex(const EventSetInfo_t * ESI,
                                            unsigned int EventCode);
- EventSetInfo_t *_papi_hwi_allocate_EventSet(int sidx);
+ EventSetInfo_t *_papi_hwi_allocate_EventSet(void);
 inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
  int _papi_hwi_remove_EventSet(EventSetInfo_t *);
  void print_state(EventSetInfo_t * ESI);
@@ -79,20 +72,18 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
  int _papi_hwi_stop_signal(int);
  int _papi_hwi_start_signal(int, int);
  int _papi_hwi_initialize(DynamicArray_t **);
- int _papi_hwi_dispatch_overflow_signal(void *context, int *, long_long, int, ThreadInfo_t **master, caddr_t pc, int sub_idx);
+ int _papi_hwi_dispatch_overflow_signal(void *context, int *, long_long, int, ThreadInfo_t **master);
 
  /* The following PAPI internal functions are defined by the papi_data.c file. */
 
  int _papi_hwi_derived_type(char *derived);
  int _papi_hwi_derived_string(int type, char *derived, int len);
- int papi_sizeof(int type, int idx);
-
 
 /* The following PAPI internal functions are defined by the substrate file. */
 
  int _papi_hwd_get_system_info(void);
- int _papi_hwd_init_substrate(papi_vectors_t *vtable, int idx);
- VECTOR_STATIC int _papi_hwd_init(hwd_context_t *);
+ int _papi_hwd_init_substrate(papi_vectors_t *vtable);
+ int _papi_hwd_init(hwd_context_t *);
  VECTOR_STATIC void _papi_hwd_init_control_state(hwd_control_state_t * ptr);
  VECTOR_STATIC int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
                                           NativeInfo_t * native, int count, hwd_context_t *);
@@ -102,22 +93,22 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
  VECTOR_STATIC int _papi_hwd_read(hwd_context_t *, hwd_control_state_t *, long_long **, int);
  VECTOR_STATIC int _papi_hwd_shutdown(hwd_context_t *);
 /* The following functions are now defined in the substrate header files to be inline_static */
- VECTOR_STATIC long_long _papi_hwd_get_real_cycles(void);
- VECTOR_STATIC long_long _papi_hwd_get_real_usec(void);
- VECTOR_STATIC long_long _papi_hwd_get_virt_cycles(hwd_context_t *);
- VECTOR_STATIC long_long _papi_hwd_get_virt_usec(hwd_context_t *);
+ long_long _papi_hwd_get_real_cycles(void);
+ long_long _papi_hwd_get_real_usec(void);
+ long_long _papi_hwd_get_virt_cycles(const hwd_context_t *);
+ long_long _papi_hwd_get_virt_usec(const hwd_context_t *);
 /* End of above */
  VECTOR_STATIC int _papi_hwd_start(hwd_context_t *, hwd_control_state_t *);
  VECTOR_STATIC int _papi_hwd_reset(hwd_context_t *, hwd_control_state_t *);
  VECTOR_STATIC int _papi_hwd_stop(hwd_context_t *, hwd_control_state_t *);
  int _papi_hwd_write(hwd_context_t *, hwd_control_state_t *, long_long events[]);
- VECTOR_STATIC int _papi_hwd_ctl(hwd_context_t *, int code, _papi_int_option_t * option);
+ int _papi_hwd_ctl(hwd_context_t *, int code, _papi_int_option_t * option);
  int _papi_hwd_init_global(void);
  VECTOR_STATIC int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold);
  int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold);
  void *_papi_hwd_get_overflow_address(void *context);
  int _papi_hwd_shutdown_global(void);
- VECTOR_STATIC int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI);
+ int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI);
 
 
 #ifdef _WIN32
@@ -126,7 +117,7 @@ void CALLBACK _papi_hwd_timer_callback(UINT wTimerID, UINT msg, DWORD dwUser, DW
                                        DWORD dw2);
 #else
 /* Callback routine for Linux/Unix timers */
-VECTOR_STATIC void _papi_hwd_dispatch_timer(int signal, siginfo_t * info, void *tmp);
+void _papi_hwd_dispatch_timer(int signal, siginfo_t * info, void *tmp);
 #endif
 
 /* The following functions implement the native event query capability
@@ -144,11 +135,11 @@ VECTOR_STATIC void _papi_hwd_dispatch_timer(int signal, siginfo_t * info, void *
    All six must at least be stubbed in the substrate file. 
 */
 
- VECTOR_STATIC int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer);
- VECTOR_STATIC char *_papi_hwd_ntv_code_to_name(unsigned int EventCode);
- VECTOR_STATIC char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode);
- VECTOR_STATIC int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits);
- VECTOR_STATIC int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values,
+ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer);
+ char *_papi_hwd_ntv_code_to_name(unsigned int EventCode);
+ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode);
+ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits);
+ int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values,
                                       int name_len, int count);
 /* not completely defined yet... I'm partial to using XML -- dkt
     _papi_hwd_ntv_encode();
@@ -163,7 +154,7 @@ VECTOR_STATIC void _papi_hwd_dispatch_timer(int signal, siginfo_t * info, void *
 	Mods  : Dan Terpstra terpstra@cs.utk.edu
 */
 
- int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t * event_list, int count, int sub_idx);
+ int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t * event_list, int count);
 
 /* The following functions are called by _papi_hwi_bipartite_alloc().
    They are hardware dependent, but don't need to be implemented
@@ -210,7 +201,7 @@ VECTOR_STATIC void _papi_hwd_dispatch_timer(int signal, siginfo_t * info, void *
 
 /* The following functions are defined by the memory file. */
 
- long _papi_hwd_get_dmem_info(int option);
+ int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *);
 
 /* Defined by the OS substrate file */
  int _papi_hwd_update_shlib_info(void);

@@ -40,8 +40,3 @@ int init_bgl( PAPI_mh_info_t * mem_info ) {
   //fprintf(stderr,"mem_info not est up [%s (%d)]\n",__FUNCTION__,__LINE__);
   return PAPI_OK;
 }
-
-long _papi_hwd_get_dmem_info(int option){
-  return(PAPI_ESBSTR);
-}
-
