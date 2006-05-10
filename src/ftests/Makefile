@@ -1,5 +1,5 @@
 INCLUDE = -I.. -I../ctests
-TESTS 	= zero first  second tenth description \
+TESTS 	= zero first  second tenth description fdmemtest\
           accum highlevel cost johnmay2 native \
 	  avail case1 case2 clockres eventname fmatrixlowpapi \
 	  fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2
@@ -41,6 +41,9 @@ case1: case1.F $(FTEST_DEPENDENCE)
 
 case2: case2.F $(FTEST_DEPENDENCE)  
 	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) case2.F $(PAPILIB) $(LDFLAGS) -o case2
+
+fdmemtest: fdmemtest.F $(FTEST_DEPENDENCE)  
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fdmemtest.F $(PAPILIB) $(LDFLAGS) -o fdmemtest
 
 fmatrixlowpapi: fmatrixlowpapi.F $(FTEST_DEPENDENCE)  
 	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixlowpapi.F $(PAPILIB) $(LDFLAGS) -o fmatrixlowpapi
