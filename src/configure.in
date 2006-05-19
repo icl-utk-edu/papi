@@ -63,7 +63,7 @@ case "$OS" in
            family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
            model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
            if test "$family" = "15"; then
-             if test "$model" = "3"; then
+             if (test "$model" = "3" || test "$model" = "6"); then
                CPU=em64t
              elif test "$model" = "2"; then
                CPU=p4
