@@ -97,7 +97,7 @@ int check_p4(int cputype){
 
 volatile unsigned int lock[PAPI_MAX_LOCK];
 
-int tb_scale_factor; // needed to scale get_cycles
+long_long tb_scale_factor = (long_long)1; /* needed to scale get_cycles on PPC series */
 
 #if (defined(PPC32))
 static int lock_init(void) 
@@ -183,7 +183,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 
     /* copy tsc multiplier to local variable        */
     /* this field appears in perfctr 2.6 and higher */
- 	tb_scale_factor = info.tsc_to_cpu_mult;
+ 	tb_scale_factor = (long_long)info.tsc_to_cpu_mult;
 #else
    /* Opened once for all threads. */
    if ((dev = vperfctr_open()) == NULL)
@@ -195,9 +195,6 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    if (retval < 0)
      { PAPIERROR( VINFO_ERROR); return(PAPI_ESYS); }
     vperfctr_close(dev);
-
-   /* set local scale variable to default of 1     */
- 	tb_scale_factor = 1;
 #endif
 
   /* Fill in what we can of the papi_system_info. */
@@ -826,12 +823,12 @@ long_long _papi_hwd_get_real_cycles(void) {
 
 long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
 {
-   return ((long_long)vperfctr_read_tsc(ctx->perfctr));
+   return ((long_long)vperfctr_read_tsc(ctx->perfctr) * tb_scale_factor);
 }
 
 long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
 {
-   return ((long_long)vperfctr_read_tsc(ctx->perfctr) /
+   return (((long_long)vperfctr_read_tsc(ctx->perfctr) * tb_scale_factor) /
            (long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
