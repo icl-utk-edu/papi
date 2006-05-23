@@ -491,6 +491,20 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 
 int _papi_hwd_init(hwd_context_t * zero)
 {
+#if defined(HAS_PER_PROCESS_TIMES)
+  {
+    char buf[LINE_MAX];
+    int fd;
+    sprintf(buf,"/proc/%d/task/%d/stat",getpid(),mygettid());
+    fd = open(buf,O_RDONLY);
+    if (fd == -1)
+      {
+	PAPIERROR("open(%s)",buf);
+	return(PAPI_ESYS);
+      }
+    zero->stat_fd = fd;
+  }
+#endif
   return(pfmw_create_context(zero));
 }
 
@@ -505,13 +519,48 @@ long_long _papi_hwd_get_real_cycles(void) {
 long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 {
    long_long retval;
-   struct tms buffer;
+#if defined(HAS_PER_PROCESS_TIMES)
+   {
+     char buf[LINE_MAX];
+     long_long utime, stime;
+     int retval, cnt = 0, i = 0;
 
-   times(&buffer);
-   SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
-   retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*
-     (1000000/sysconf(_SC_CLK_TCK)));
-   /* NOT CLOCKS_PER_SEC as in the headers! */
+     rv = read(zero->stat_fd,buf,LINE_MAX*sizeof(char));
+     if (rv == -1)
+       {
+	 PAPIERROR("read()");
+	 return(PAPI_ESYS);
+       }
+
+     buf[rv] = '\0';
+     SUBDBG("Thread stat file is:%s\n",buf);
+     while ((cnt != 13) && (i < rv))
+       {
+	 if (buf[i] == ' ')
+	   { cnt++; }
+	 i++;
+       }
+     if (cnt != 13)
+       {
+	 PAPIERROR("utime and stime not in thread stat file?");
+	 return(PAPI_ESBSTR);
+       }
+     
+     if (sscanf(buf+i,"%llu %llu",&utime,&stime) != 2)
+       {
+	 PAPIERROR("Unable to scan two items from thread stat file at 13th space?");
+	 return(PAPI_ESBSTR);
+       }
+     retval = (utime+stime)*(long_long)(1000000/sysconf(_SC_CLK_TCK));
+#else
+   {
+     struct tms buffer;
+     times(&buffer);
+     SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
+     retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*(1000000/sysconf(_SC_CLK_TCK)));
+     /* NOT CLOCKS_PER_SEC as in the headers! */
+   }
+#endif
    return (retval);
 }
 
@@ -661,6 +710,9 @@ int _papi_hwd_ctl(hwd_context_t * zero, int code, _papi_int_option_t * option)
 
 int _papi_hwd_shutdown(hwd_context_t * ctx)
 {
+#if defined(HAS_PER_PROCESS_TIMES)
+  close(ctx->stat_fd);
+#endif  
    return (pfmw_destroy_context(ctx));
 }
 

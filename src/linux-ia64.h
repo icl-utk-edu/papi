@@ -138,6 +138,9 @@ typedef struct itanium_preset_search {
 typedef struct Itanium_context {
    int fd;  /* file descriptor */
    pid_t tid;  /* thread id */
+#if defined(HAS_PER_PROCESS_TIMES)
+   int stat_fd;
+#endif
 } Itanium_context_t;
 
 typedef Itanium_context_t hwd_context_t;
