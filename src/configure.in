@@ -582,69 +582,76 @@ case "$PTtimer" in
       AC_MSG_CHECKING(for working per-thread timer)
       #echo $with_PTtimer
       AC_TRY_RUN([
-             #include <sys/times.h>
-             #include <assert.h>
-             #include <stdio.h>
-             #include <sys/types.h>
-             #include <unistd.h>
-             #include <sys/unistd.h>
-             #include <syscall.h>
+        #include <pthread.h>
+        #include <sys/signal.h>
+        #include <sys/times.h>
+        #include <assert.h>
+        #include <stdio.h>
+        #include <sys/types.h>
+        #include <unistd.h>
+        #include <sys/unistd.h>
+        #include <syscall.h>
+        #include <stdlib.h>
 
-             #if ! defined( SYS_gettid )
-             #define SYS_gettid 1105
-             #endif
+        #if ! defined( SYS_gettid )
+        #define SYS_gettid 1105
+        #endif
 
-             long threadone = 0;
-             long threadtwo = 0;
+        long threadone = 0;
+        long threadtwo = 0;
+        pthread_t threadOne, threadTwo;
+        volatile int done = 0;
 
-             int gettid() {
-               return syscall( SYS_gettid );
-             }
+        int gettid() {
+            return syscall( SYS_gettid );
+        }
 
-             int doThreadOne( void * v ) {
-               struct tms tm;
-               int status;
+        int doThreadOne( void * v ) {
+            struct tms tm;
+            int status;
 
-               sleep( 10 );
+            while (!done)
+	          sleep(1);
         
-               status = times( & tm );
-               assert( status != -1 );
-               threadone = tm.tms_utime;
+            status = times( & tm );
+            assert( status != -1 );
+            threadone = tm.tms_utime;
         
-               return 0;
-             } 
+            return 0;
+        } 
 
-             int doThreadTwo( void * v ) {
-               struct tms tm;
-               long i;
-               int status;
+        int doThreadTwo( void * v ) {
+            struct tms tm;
+            long i;
+            int status;
         
-               for( i = 0; i < 0xFFFFFFFF; ++i ) { ; }
+            for( i = 0; i < 0xFFFFFFF; ++i ) { ; }
 
-               status = times( & tm );
-               assert( status != -1 );
+            status = times( & tm );
+            assert( status != -1 );
         
-               threadtwo = tm.tms_utime;
-               return 0;
-             }
+            threadtwo = tm.tms_utime;
+            done = 1;
+	        return 0;
+        } 
 
-             int main( int argc, char ** argv ) {
-               int status;
-               pthread_t threadOne, threadTwo;
+        int main( int argc, char ** argv ) {
+            int status;
+
         
-               status = pthread_create( & threadOne, NULL, doThreadOne, NULL );
-               assert( status == 0 );
-               status = pthread_create( & threadTwo, NULL, doThreadTwo, NULL );
-               assert( status == 0 );  
+            status = pthread_create( & threadOne, NULL, doThreadOne, NULL );
+            assert( status == 0 );
+            status = pthread_create( & threadTwo, NULL, doThreadTwo, NULL );
+            assert( status == 0 );  
 
 
-               status = pthread_join( threadTwo, NULL );
-               assert( status == 0 );
-               status = pthread_join( threadOne, NULL );
-               assert( status == 0 );
+            status = pthread_join( threadTwo, NULL );
+            assert( status == 0 );
+            status = pthread_join( threadOne, NULL );
+            assert( status == 0 );
 
-	           return (threadone == threadtwo);
-             } 
+	        return (threadone == threadtwo);
+        } 
       ], [
             AC_MSG_RESULT(yes)
       ], [
