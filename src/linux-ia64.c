@@ -523,7 +523,7 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
    {
      char buf[LINE_MAX];
      long_long utime, stime;
-     int retval, cnt = 0, i = 0;
+     int rv, cnt = 0, i = 0;
 
      rv = read(zero->stat_fd,buf,LINE_MAX*sizeof(char));
      if (rv == -1)
@@ -552,6 +552,7 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 	 return(PAPI_ESBSTR);
        }
      retval = (utime+stime)*(long_long)(1000000/sysconf(_SC_CLK_TCK));
+   }
 #else
    {
      struct tms buffer;

@@ -15,7 +15,7 @@ TARGETS = serial multiplex_and_pthreads shared
 F77   		= g77 -Wall
 CC		= gcc -Wall 
 CC_R    	= $(CC) -pthread
-CC_SHR		= $(CC) $(NOTLS) -fPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
+CC_SHR		= $(CC) -fPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
 FFLAGS		= -ffixed-line-length-132
 
 #
@@ -83,7 +83,7 @@ else
 	PFM_INC_PATH ?= $(PFM_PREFIX)/include
 endif
 
-CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) $(NOTLS) $(ALTIX)
+CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) $(NOTLS) $(NOPTTIMER) $(ALTIX)
 
 CFLAGS-2.x := -DPFM20 -D_GNU_SOURCE
 CFLAGS-3.x := -DPFM30 -D_GNU_SOURCE  
