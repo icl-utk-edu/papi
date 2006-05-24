@@ -352,7 +352,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
 
    if(_papi_hwi_bipartite_alloc(event_list, natNum)) 
      { 
-       struct hwd_pmc_control *contr = this_state->control;
+       struct hwd_pmc_control *contr = &this_state->control;
 
        /* for the PPC32, we have funny interrupt bits that control PMC1 and PMC2-n.
 	  Thus, due to the PAPI API separating add from overflow, we can only allow
