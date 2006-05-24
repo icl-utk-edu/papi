@@ -90,7 +90,7 @@
 #define MUTEX_LOCKED 1
 #define MUTEX_OPEN 0
 
-extern unsigned int lock[];
+extern volatile unsigned int lock[];
 
 #include <unistd.h>
 
