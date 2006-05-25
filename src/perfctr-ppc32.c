@@ -1,5 +1,5 @@
 /* 
-* File:    perfctr-p3.c
+* File:    perfctr-ppc32.c
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -47,7 +47,6 @@ extern native_event_entry_t *native_table;
 extern papi_mdi_t _papi_hwi_system_info;
 
 volatile unsigned int lock[PAPI_MAX_LOCK];
-static long long tb_scale_factor = 0;
 
 #ifdef DEBUG
 void print_control(const struct perfctr_cpu_control *control) {
@@ -67,23 +66,11 @@ void print_control(const struct perfctr_cpu_control *control) {
 }
 #endif
 
-inline_static void xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type, int *vendor, char *str) {
-   switch (perfctr_cpu_type) {
-   case PERFCTR_PPC_750:
-   case PERFCTR_PPC_7400:
-   case PERFCTR_PPC_7450:
-      *vendor = PAPI_VENDOR_IBM;
-      strcpy(str,"IBM");
-      break;
-   default:
-     break;
-   }
-}
 
 /* Assign the global native and preset table pointers, find the native
    table's size in memory and then call the preset setup routine. */
 
-static int setup_ppc32_presets(int cputype) {
+int setup_ppc32_presets(int cputype) {
    switch (cputype) {
    case PERFCTR_PPC_750:
       native_table = &_papi_hwd_ppc750_native_map;
@@ -93,35 +80,6 @@ static int setup_ppc32_presets(int cputype) {
       preset_search_map = &_papi_hwd_ppc7450_preset_map;
    }
    return (_papi_hwi_setup_all_presets(preset_search_map, NULL));
-}
-
-/* Initialize the system-specific settings */
-/* Machine info structure. -1 is unused. */
-static int mdi_init() 
-   {
-     /* Name of the substrate we're using */
-    strcpy(_papi_hwi_system_info.substrate, "$Id$");       
-
-   _papi_hwi_system_info.supports_hw_overflow = HW_OVERFLOW;
-   _papi_hwi_system_info.supports_64bit_counters = 1;
-   _papi_hwi_system_info.supports_inheritance = 1;
-   _papi_hwi_system_info.supports_real_usec = 1;
-   _papi_hwi_system_info.supports_real_cyc = 1;
-   _papi_hwi_system_info.supports_virt_usec = 1;
-   _papi_hwi_system_info.supports_virt_cyc = 1;
-
-   return (PAPI_OK);
-}
-
-void _papi_hwd_init_control_state(hwd_control_state_t * ptr) 
-{
-   _papi_hwd_set_domain(ptr,_papi_hwi_system_info.default_domain);
-   ptr->allocated_registers.selector = 0;
-   ptr->control.cpu_control.tsc_on = 1;
-}
-
-int _papi_hwd_add_prog_event(hwd_control_state_t * state, unsigned int code, void *tmp, EventInfo_t *tmp2) {
-   return (PAPI_ESBSTR);
 }
 
 int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain)
@@ -148,94 +106,11 @@ int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain)
    return(PAPI_OK);
 }
 
-/* At init time, the higher level library should always allocate and 
-   reserve EventSet zero. */
-
-int _papi_hwd_init_global(void) 
+void _papi_hwd_init_control_state(hwd_control_state_t * ptr) 
 {
-   int retval;
-   struct perfctr_info info;
-   struct vperfctr *dev;
-
-   if ((dev = vperfctr_open()) == NULL)
-     {PAPIERROR(VOPEN_ERROR); return(PAPI_ESYS);}
-   SUBDBG("_papi_hwd_init_global vperfctr_open = %p\n", dev);
-
-   /* Get info from the kernel */ 
-   if (vperfctr_info(dev, &info) < 0)
-     {
-     	PAPIERROR(VINFO_ERROR); 
-     	return(PAPI_ESYS);
-     }
-   vperfctr_close(dev);
-   tb_scale_factor = info.tsc_to_cpu_mult;
-
-   /* Initialize outstanding values in machine info structure */
-
-   if (mdi_init() != PAPI_OK) {
-      return (PAPI_ESBSTR);
-   }
-
-   /* Fill in what we can of the papi_system_info. */
-
-   retval = _papi_hwd_get_system_info();
-   if (retval != PAPI_OK)
-      return (retval);
-
-   /* Fixup stuff from linux.c */
-
-   strcpy(_papi_hwi_system_info.hw_info.model_string, PERFCTR_CPU_NAME(&info));
-
-   _papi_hwi_system_info.supports_hw_overflow =
-       (info.cpu_features & PERFCTR_FEATURE_PCINT) ? 1 : 0;
-   SUBDBG("Hardware/OS %s support counter generated interrupts\n",
-          _papi_hwi_system_info.supports_hw_overflow ? "does" : "does not");
-
-   _papi_hwi_system_info.num_cntrs = PERFCTR_CPU_NRCTRS(&info);
-   _papi_hwi_system_info.num_gp_cntrs = PERFCTR_CPU_NRCTRS(&info);
-   _papi_hwi_system_info.hw_info.model = info.cpu_type;
-   xlate_cpu_type_to_vendor(info.cpu_type, &_papi_hwi_system_info.hw_info.vendor, _papi_hwi_system_info.hw_info.vendor_string);
-
-   /* Setup presets */
-
-   retval = setup_ppc32_presets(info.cpu_type);
-   if (retval)
-      return (retval);
-
-   /* Setup memory info */
-
-   retval =
-       _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info, info.cpu_type);
-   if (retval)
-      return (retval);
-
-    lock_init();
-
-    return (PAPI_OK);
-}
-
-int _papi_hwd_init(hwd_context_t * ctx) {
-   struct vperfctr_control tmp;
-
-   /* Initialize our thread/process pointer. */
-   if ((ctx->perfctr = vperfctr_open()) == NULL)
-     { PAPIERROR( VOPEN_ERROR); return(PAPI_ESYS); }
-   SUBDBG("_papi_hwd_init vperfctr_open() = %p\n", ctx->perfctr);
-
-   /* Initialize the per thread/process virtualized TSC */
-   memset(&tmp, 0x0, sizeof(tmp));
-   tmp.cpu_control.tsc_on = 1;
-
-   /* Start the per thread/process virtualized TSC */
-   if (vperfctr_control(ctx->perfctr, &tmp) < 0)
-     { PAPIERROR( VCNTRL_ERROR); return(PAPI_ESYS); }
-
-   return (PAPI_OK);
-}
-
-/* Called once per process. */
-int _papi_hwd_shutdown_global(void) {
-   return (PAPI_OK);
+   _papi_hwd_set_domain(ptr,_papi_hwi_system_info.default_domain);
+   ptr->allocated_registers.selector = 0;
+   ptr->control.cpu_control.tsc_on = 1;
 }
 
 
@@ -442,10 +317,6 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *cntrl) {
    return(_papi_hwd_start(ctx, cntrl));
 }
 
-int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long * from) {
-   return(PAPI_ESBSTR);
-}
-
 /* This routine is for shutting down threads, including the
    master thread. */
 int _papi_hwd_shutdown(hwd_context_t * ctx) {
@@ -616,12 +487,42 @@ int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI) {
    return (PAPI_OK);
 }
 
-int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
-{
-   switch (code) {
-   case PAPI_DOMAIN:
-      return (_papi_hwd_set_domain(&option->domain.ESI->machdep, option->domain.domain));
-   default:
-      return (PAPI_EINVAL);
-   }
+  
+papi_svector_t _ppc32_vector_table[] = {
+  {(void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE },
+  {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
+  {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
+  {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
+  {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
+  {(void (*)())_papi_hwd_bpt_map_set, VEC_PAPI_HWD_BPT_MAP_SET },
+  {(void (*)())_papi_hwd_bpt_map_avail, VEC_PAPI_HWD_BPT_MAP_AVAIL },
+  {(void (*)())_papi_hwd_bpt_map_exclusive, VEC_PAPI_HWD_BPT_MAP_EXCLUSIVE },
+  {(void (*)())_papi_hwd_bpt_map_shared, VEC_PAPI_HWD_BPT_MAP_SHARED },
+  {(void (*)())_papi_hwd_bpt_map_preempt, VEC_PAPI_HWD_BPT_MAP_PREEMPT },
+  {(void (*)())_papi_hwd_bpt_map_update, VEC_PAPI_HWD_BPT_MAP_UPDATE },
+  {(void (*)())_papi_hwd_allocate_registers, VEC_PAPI_HWD_ALLOCATE_REGISTERS },
+  {(void(*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
+  {(void (*))_papi_hwd_set_domain, VEC_PAPI_HWD_SET_DOMAIN},
+  {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
+  {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
+  {(void (*)())_papi_hwd_set_profile, VEC_PAPI_HWD_SET_PROFILE},
+  {(void (*)())_papi_hwd_stop_profiling, VEC_PAPI_HWD_STOP_PROFILING},
+ // {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
+ // {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
+ // {(void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
+ // {(void (*)())_papi_hwd_ntv_code_to_bits, VEC_PAPI_HWD_NTV_CODE_TO_BITS},
+ // {(void (*)())_papi_hwd_ntv_bits_to_info, VEC_PAPI_HWD_NTV_BITS_TO_INFO},
+  { NULL, VEC_PAPI_END }
+};
+
+int ppc32_setup_vector_table(papi_vectors_t * vtable){
+  int retval=PAPI_OK; 
+ 
+#ifndef PAPI_NO_VECTOR
+  retval = _papi_hwi_setup_vector_table( vtable, _ppc32_vector_table);
+#endif
+  return ( retval );
 }
+
+
+

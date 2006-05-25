@@ -1,5 +1,5 @@
 /* 
-* File:    p3_events.c
+* File:    ppc32_events.c
 * CVS:     $Id$
 * Author:  Joseph Thomas
 *          jthomas@cs.utk.edu
@@ -12,21 +12,6 @@
 
 native_event_entry_t *native_table;
 hwi_search_t *preset_search_map;
-
-/* Events that require tagging should be ordered such that the
-   first event is the one that is read. See PAPI_FP_INS for an example. */
-
-/* Note:  MESI and unit mask bits can be summed into the same event.
-          This can be done, in some instances, using a predefined
-          "TOT" event or by ORing the events together manually.
-          For instance, L2 Instruction fetches can be further defined
-          to count only invalid and shared fetches by simply defining
-          your event as (L2_IFETCH_INV | L2_IFETCH_SHR).  An event has
-          been added that can count all L2 Instruction Fetches as well.
-          It's name is L2_IFETCH_TOT (for total).  This scheme has been
-          implemented for any event dealing with a MESI bit.  Unit masks
-          have been left to the user to simply OR together.
-*/
 
 /* These enumeration tables will be used to define the location
    in the native event tables.  Each even has a unique name so as

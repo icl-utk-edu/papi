@@ -112,9 +112,8 @@ typedef siginfo_t hwd_siginfo_t;
 typedef ucontext_t hwd_ucontext_t;
 
 /* Overflow macros */
+#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)ctx->ucontext->uc_mcontext.regs->nip
 
-#define GET_OVERFLOW_ADDRESS(ctx) ((struct ucontext *)ctx)->uc_mcontext.regs->nip
-#define GET_OVERFLOW_CTR_BITS(ctx) ((_papi_hwi_context_t *)ctx)->overflow_vector
 /* Linux DOES support hardware overflow */
 #define HW_OVERFLOW 1
 
