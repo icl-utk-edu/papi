@@ -188,7 +188,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    /* Opened once for all threads. */
    if ((dev = vperfctr_open()) == NULL)
      { PAPIERROR( VOPEN_ERROR); return(PAPI_ESYS); }
-   SUBDBG("_papi_hwd_init_global vperfctr_open = %p\n", dev);
+   SUBDBG("_papi_hwd_init_substrate vperfctr_open = %p\n", dev);
 
    /* Get info from the kernel */
    retval = vperfctr_info(dev, &info);
@@ -231,9 +231,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 #elif (defined(PPC32))
 	/* Setup native and preset events */
 	retval = ppc32_setup_vector_table(vtable);
-    if (!retval)
-    	retval = setup_ppc32_native_table();
-    if (!retval)
+	if (!retval)
     	retval = setup_ppc32_presets(info.cpu_type);
 #endif
    if ( retval ) 
@@ -342,7 +340,7 @@ int _papi_hwd_init(hwd_context_t * ctx) {
 static int mdi_init() {
      /* Name of the substrate we're using */
     strcpy(_papi_hwi_system_info.substrate, "$Id$");
-   _papi_hwi_system_info.supports_hw_overflow = 1;
+   _papi_hwi_system_info.supports_hw_overflow = HW_OVERFLOW;
    _papi_hwi_system_info.supports_64bit_counters = 1;
    _papi_hwi_system_info.supports_inheritance = 1;
    _papi_hwi_system_info.supports_real_usec = 1;
