@@ -147,6 +147,8 @@ const native_event_entry_t _papi_hwd_ppc750_native_map[] = {
 	{"L1_LDM",
 	"Number of loads that miss the L1 with latencies that exceeded the threshold value",
 	{CNTR1, 0x0a}},
+
+	{"", "", {0, 0}}
 };
 
 /* PPC7450 Defs */
@@ -531,7 +533,7 @@ const native_event_entry_t _papi_hwd_ppc7450_native_map[] = {
 	"Number of completed instructions",
 	{CNTRS1234, 0x02}},
 
-	{"BR_MSP",
+	{"BR_TKN",
 	"Number of completed branch instructions",
 	{CNTR1, 0x22}},
 
@@ -618,6 +620,8 @@ const native_event_entry_t _papi_hwd_ppc7450_native_map[] = {
 	{"L1_LDM",
 	"Number of loads that miss the L1 with latencies that exceeded the threshold value",
 	{CNTR1, 0x2b}},
+
+	{"", "", {0, 0}}
 };
 
 
