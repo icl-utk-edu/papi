@@ -13,8 +13,11 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
 int main(int argc, char **argv)
 {
-   int i, j, k, loop, event_code, EventSet=PAPI_NULL, count=0;
+   /*
+   int loop;
    long_long values;
+   */
+   int i, j, EventSet=PAPI_NULL, count=0;
    int retval;
    PAPI_event_info_t info;
    const PAPI_hw_info_t *hwinfo = NULL;
@@ -22,7 +25,7 @@ int main(int argc, char **argv)
    int group = 0;
 #endif
 #ifdef PENTIUM4
-   int l;
+   int k, l, event_code;
 #endif
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
@@ -62,12 +65,6 @@ int main(int argc, char **argv)
       printf("Max Multiplex Counters   : %d\n", PAPI_MPX_DEF_DEG);
       printf
           ("-------------------------------------------------------------------------\n");
-
-      printf("The following correspond to fields in the PAPI_event_info_t structure.\n");
-      
-      printf("Symbol\tEvent Code\tCount\n |Short Description|\n |Long Description|\n |Derived|\n |PostFix|\n");
-      printf("The count field indicates whether it is a) available (count >= 1) and b) derived (count > 1)\n");
-
    }
    i = 0 | PAPI_NATIVE_MASK;
    j = 0;
@@ -88,10 +85,10 @@ int main(int argc, char **argv)
 	 /*memset(&info, 0, sizeof(PAPI_event_info_t));*/
          retval = PAPI_get_event_info(i, &info);
 
-	 printf("%s\t0x%x  %d\n",
+	 printf("\n%s\t0x%x  \n%s\n",
 		info.symbol,
 		info.event_code,
-		info.count);
+		info.long_descr);
 
 #ifdef _POWER4
          if (!TESTS_QUIET)
@@ -144,7 +141,7 @@ int main(int argc, char **argv)
          /*test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);*/ continue;
       } else { 
          if (!TESTS_QUIET) 
-            printf("Added %s successful\n", info.symbol);
+            printf("Added %s successfully\n", info.symbol);
          count++;
       }
 	  /*
@@ -180,7 +177,7 @@ int main(int argc, char **argv)
          /*test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);*/ continue;
       } else { 
          if (!TESTS_QUIET) 
-            printf("Added %s successful\n", info.symbol);
+            printf("Added %s successfully\n", info.symbol);
          count++;
       }
 	  /*
@@ -199,7 +196,7 @@ int main(int argc, char **argv)
 #endif
 
    if (!TESTS_QUIET)
-      printf("Successfully added,started and stopped %d events.\n", count);
+      printf("\nSuccessfully added,started and stopped %d events.\n", count);
    if ( count > 0 )
       test_pass(__FILE__, NULL, 0);
    else

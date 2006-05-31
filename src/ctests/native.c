@@ -61,7 +61,11 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
        { "PM_FPU_FDIV", "PM_FPU_FMA", "PM_FPU_FMOV_FEST", "PM_FPU_FEST",
        "PM_INST_CMPL", "PM_RUN_CYC", NULL
    };
-
+#elif (defined(PPC32))
+   /* Select 4 events common to both ppc750 and ppc7450*/
+   static char *native_name[] =
+       { "CPU_CLK", "FLOPS", "TOT_INS", "BR_MSP", NULL
+   };
 #elif defined(POWER3)
 #ifdef PMTOOLKIT_1_2
    static char *native_name[] = { "PM_IC_MISS", "PM_FPU1_CMPL", "PM_LD_MISS_L1", "PM_LD_CMPL",
@@ -160,7 +164,7 @@ void papimon_start(void)
      (defined(sun) && defined(sparc)) || \
      (defined(__crayx1)) || (defined(_CRAYT3E)) || \
      (defined(__ALPHA) && defined(__osf__)) || \
-     (defined(linux) && (defined(_POWER4) || defined(_PPC970) || defined(_POWER5))))
+     (defined(linux) && (defined(_POWER4) || defined(_PPC970) || defined(_POWER5) || defined(PPC32))))
 
       for (i = 0; native_name[i] != NULL; i++) {
          retval = PAPI_event_name_to_code(native_name[i], &native);
@@ -187,6 +191,8 @@ void papimon_stop(void)
    int i, retval;
    long_long values[8];
    float rsec;
+
+/* There's something not right about ORing (linux) into this qualifier... */
 #if defined(_AIX) || defined(linux) || defined(_BGL)
    float csec;
 #endif
@@ -228,6 +234,13 @@ void papimon_stop(void)
               (((float) values[1]) / 500000.0) / csec);
       fprintf(stderr, "%% FMA Instructions         : %.2f\n",
               100.0 * ((float) values[1]) / (float) values[4]);
+#elif defined (PPC32)
+      for (i = 0; native_name[i] != NULL; i++) {
+         fprintf(stderr, "%-40s: ", native_name[i]);
+         fprintf(stderr, LLDFMT, values[i]);
+         fprintf(stderr, "\n");
+      }
+
 #else
       csec = (float) values[5] / (hwinfo->mhz * 1000000.0);
       fprintf(stderr, "CPU Elapsed Time in sec.   : %f\n", csec);
