@@ -199,31 +199,36 @@ static void clear_unused_pmcsel_bits(hwd_control_state_t * cntrl) {
 		cpu_ctl->ppc64.mmcr0 |= PMC5_PMC6_FREEZE;
 #endif	
 }
-static int set_domain(hwd_control_state_t * cntrl, int domain) 
+static int set_domain(hwd_control_state_t * cntrl, unsigned int domain) 
 {
    int did = 0;
     
-   if(domain == PAPI_DOM_ALL) {
+	/* A bit setting of '0' indicates "count this context".
+	 * Start off by turning off counting for all contexts; 
+	 * then, selectively re-enable.
+	 */
+	cntrl->control.cpu_control.ppc64.mmcr0 |= PERF_USER | PERF_KERNEL | PERF_HYPERVISOR;
+   if(domain & PAPI_DOM_USER) {
+   	cntrl->control.cpu_control.ppc64.mmcr0 |= PERF_USER;
+   	cntrl->control.cpu_control.ppc64.mmcr0 ^= PERF_USER;
       did = 1;
-      /* Set user and supervisor bits to '1' (not count) and set them to '0' (count) */
-      cntrl->control.cpu_control.ppc64.mmcr0 |= PERF_USR_AND_OS;
-      cntrl->control.cpu_control.ppc64.mmcr0 ^= PERF_USR_AND_OS;
-   } else if (domain == PAPI_DOM_KERNEL) {
+   }
+   if(domain & PAPI_DOM_KERNEL) {
+   	cntrl->control.cpu_control.ppc64.mmcr0 |= PERF_KERNEL;
+   	cntrl->control.cpu_control.ppc64.mmcr0 ^= PERF_KERNEL;
       did = 1;
-      /* Set user and supervisor bits to '1' (not count) and set only supervisor bit to '0' (count) */
-      cntrl->control.cpu_control.ppc64.mmcr0 |= PERF_USR_AND_OS;
-      cntrl->control.cpu_control.ppc64.mmcr0 ^= PERF_OS_ONLY;
-   } else if(domain == PAPI_DOM_USER) {
+   }
+   if(domain & PAPI_DOM_SUPERVISOR) {
+   	cntrl->control.cpu_control.ppc64.mmcr0 |= PERF_HYPERVISOR;
+   	cntrl->control.cpu_control.ppc64.mmcr0 ^= PERF_HYPERVISOR;
       did = 1;
-      /* Set user and supervisor bits to '1' (not count) and set only user bit to '0' (count) */
-      cntrl->control.cpu_control.ppc64.mmcr0 |= PERF_USR_AND_OS;
-      cntrl->control.cpu_control.ppc64.mmcr0 ^= PERF_USR_ONLY;
    }
    
-   if(!did)
-      return(PAPI_EINVAL);
-   else
+   if(did) {
       return(PAPI_OK);
+   } else {
+      return(PAPI_EINVAL);
+   }
 	
 }
 

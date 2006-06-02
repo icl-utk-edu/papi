@@ -95,7 +95,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_DOM_MIN     PAPI_DOM_USER
 #define PAPI_DOM_KERNEL	 0x2    /* Kernel/OS context counted */
 #define PAPI_DOM_OTHER	 0x4    /* Exception/transient mode (like user TLB misses ) */
-#define PAPI_DOM_ALL	 (PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_OTHER) /* All contexts counted */
+#define PAPI_DOM_SUPERVISOR 0x8 /* Supervisor/hypervisor context counted */
+#define PAPI_DOM_ALL	 (PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_OTHER|PAPI_DOM_SUPERVISOR) /* All contexts counted */
 /* #define PAPI_DOM_DEFAULT PAPI_DOM_USER NOW DEFINED BY SUBSTRATE */
 #define PAPI_DOM_MAX     PAPI_DOM_ALL
 #define PAPI_DOM_HWSPEC  0x80000000     /* Flag that indicates we are not reading CPU like stuff.

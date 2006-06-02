@@ -71,10 +71,11 @@
 // control bits MMCR0
 #define PERF_INT_ENABLE			0x0000C000 // enables interrupts on PMC1 as well as PMC2-PMCj (2<=j<=MAX_COUNTERS)
 #define PMC_OVFL                        0x80000000
-#define PERF_USR_AND_OS                 0x60000000
-#define PERF_OS_ONLY                    0x40000000
-#define PERF_USR_ONLY                   0x20000000
-#define PERF_CONTROL_MASK               0xFFFFE000
+#define PERF_KERNEL                     0x40000000
+#define PERF_USER                       0x20000000
+#define PERF_HYPERVISOR                 0x00000001
+#define PERF_CONTROL_MASK               0xFFFFE001
+
 
 #define AI_ERROR "No support for a-mode counters after adding an i-mode counter"
 #define VOPEN_ERROR "vperfctr_open() returned NULL"
