@@ -1,3 +1,7 @@
+/****************************/
+/* THIS IS OPEN SOURCE CODE */
+/****************************/
+
 #ifndef _PAPI_POWER5_EVENTS_H
 #define _PAPI_POWER5_EVENTS_H
 
@@ -485,4 +489,4 @@ enum native_name {
 	PNE_PM_XER_MAP_FULL_CYC,
 };
 
-#endif
+#endif  /* _PAPI_POWER5_EVENTS_H */

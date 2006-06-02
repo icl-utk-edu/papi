@@ -1316,7 +1316,13 @@ char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 
 char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
+  char *tmp = NULL;
+#ifdef PFM20
+  if (pfm_get_event_description(EventCode^PAPI_NATIVE_MASK, &tmp) == PFMLIB_SUCCESS)
+    return(tmp);
+#else
    return (_papi_hwd_ntv_code_to_name(EventCode));
+#endif
 }
 
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)

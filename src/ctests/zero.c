@@ -22,7 +22,7 @@ int main(int argc, char **argv)
    int PAPI_event, mask1;
    int num_events1;
    long_long **values;
-   long_long elapsed_us, elapsed_cyc;
+   long_long elapsed_us, elapsed_cyc, elapsed_virt_us, elapsed_virt_cyc;
    char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
    const PAPI_hw_info_t *hw_info;
 
@@ -60,6 +60,10 @@ int main(int argc, char **argv)
 
    elapsed_cyc = PAPI_get_real_cyc();
 
+   elapsed_virt_us = PAPI_get_virt_usec();
+
+   elapsed_virt_cyc = PAPI_get_virt_cyc();
+
    retval = PAPI_start(EventSet1);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
@@ -69,6 +73,10 @@ int main(int argc, char **argv)
    retval = PAPI_stop(EventSet1, values[0]);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+
+   elapsed_virt_us = PAPI_get_virt_usec() - elapsed_virt_us;
+
+   elapsed_virt_cyc = PAPI_get_virt_cyc() - elapsed_virt_cyc;
 
    elapsed_us = PAPI_get_real_usec() - elapsed_us;
 
@@ -94,6 +102,8 @@ int main(int argc, char **argv)
       printf(TAB1, "PAPI_TOT_CYC : \t", (values[0])[1]);
       printf(TAB1, "Real usec    : \t", elapsed_us);
       printf(TAB1, "Real cycles  : \t", elapsed_cyc);
+      printf(TAB1, "Virt usec    : \t", elapsed_virt_us);
+      printf(TAB1, "Virt cycles  : \t", elapsed_virt_cyc);
 
       printf
           ("-------------------------------------------------------------------------\n");

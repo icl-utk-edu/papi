@@ -22,6 +22,13 @@ all:
 	@echo "make -f Makefile.linux-perfctr-p4 (see ./perfctr-2.6.x)";
 	@echo "make -f Makefile.linux-perfctr-em64t (see ./perfctr-2.6.x)";
 	@echo "make -f Makefile.linux-perfctr-em64t-32bit (see ./perfctr-2.6.x)";
+	@echo "make -f Makefile.linux-perfctr-POWER4"
+	@echo "make -f Makefile.linux-perfctr-POWER4-64bit"
+	@echo "make -f Makefile.linux-perfctr-POWER5"
+	@echo "make -f Makefile.linux-perfctr-POWER5-64bit"
+	@echo "make -f Makefile.linux-perfctr-PPC32"
+	@echo "make -f Makefile.linux-perfctr-PPC970"
+	@echo "make -f Makefile.linux-perfctr-PPC970-64bit"
 	@echo "make -f Makefile.linux-athlon (see ./perfctr-2.6.x)";
 	@echo "make -f Makefile.linux-opteron (see ./perfctr-2.6.x)";
 	@echo "make -f Makefile.linux-opteron-32bit (see ./perfctr-2.6.x)";

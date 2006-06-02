@@ -6,9 +6,9 @@ SHLIBDEPS = -L$(PMAPI)/lib -lpmapi
 POST_BUILD =
 SPECIAL_REMOVE =
 
-FLAGS  = -I$(PMAPI)/include -qmaxmem=-1 -qarch=$(cpu_option) -qtune=$(cpu_option) -qlanglvl=extended $(BITS)
-CFLAGS = $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" $(PMINIT)
-OPTFLAGS= -O3 -qstrict
+FLAGS	= -I$(PMAPI)/include -qmaxmem=-1 -qarch=$(cpu_option) -qtune=$(cpu_option) -qlanglvl=extended  $(BITS)
+CFLAGS	= $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DPAPI_NO_VECTOR
+OPTFLAGS= -O3 -qstrict $(PMINIT)
 TOPTFLAGS=
 FFLAGS = $(FLAGS) -WF,-D_$(CPU_MODEL) -WF,-DARCH_EVTS=\"$(ARCH_EVENTS).h\"
 FOPTFLAGS= $(OPTFLAGS)

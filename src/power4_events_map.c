@@ -1,3 +1,15 @@
+/****************************/
+/* THIS IS OPEN SOURCE CODE */
+/****************************/
+
+/* 
+* File:    power4_events_map.c
+* Author:  Maynard Johnson
+*          maynardj@us.ibm.com
+* Mods:    <your name here>
+*          <your email address>
+*/
+
 #include SUBSTRATE
 
 PPC64_native_map_t native_name_map[MAX_NATNAME_MAP_INDEX] = {
