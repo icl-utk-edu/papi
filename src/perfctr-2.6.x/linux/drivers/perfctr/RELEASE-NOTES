@@ -3,6 +3,18 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.22, 2006-06-02
+- Preliminary support for Intel Core (family 6 model 14) processors.
+- x86: The code to extract max_cores_per_package from CPUID(4):EAX
+  needs cpuid() to put zero in ecx, but it only does that in fairly
+  new 32-bit kernels, not in 64-bit kernels or older 32-bit kernels.
+  This badly broke the SMT_ID detection on a dual-processor dual-core
+  hyper-threaded 64-bit Xeon machine. Fixed by using cpuid_count()
+  instead. Added compatibility definition of it for kernels < 2.6.12.
+- Fixed x86_tests.c compilation error in the i386 2.6.16 kernel
+  by moving sync_core() definition from x86_tests.c to x86_compat.h
+  and only defining it in i386 kernels older than 2.6.16.
+
 Version 2.6.21, 2006-04-03
 - Converted mutex-like semaphores to the new mutex type
   introduced in kernel 2.6.16. Added simulation of the

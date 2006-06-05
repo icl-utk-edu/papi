@@ -1,10 +1,30 @@
 /* $Id$
- * x86 Performance-Monitoring Counters driver
+ * x86/x86_64 Performance-Monitoring Counters driver
  *
  * Copyright (C) 1999-2004  Mikael Pettersson
  */
 #ifndef _ASM_I386_PERFCTR_H
 #define _ASM_I386_PERFCTR_H
+
+/* cpu_type values */
+#define PERFCTR_X86_GENERIC	0	/* any x86 with rdtsc */
+#define PERFCTR_X86_INTEL_P5	1	/* no rdpmc */
+#define PERFCTR_X86_INTEL_P5MMX	2
+#define PERFCTR_X86_INTEL_P6	3
+#define PERFCTR_X86_INTEL_PII	4
+#define PERFCTR_X86_INTEL_PIII	5
+#define PERFCTR_X86_CYRIX_MII	6
+#define PERFCTR_X86_WINCHIP_C6	7	/* no rdtsc */
+#define PERFCTR_X86_WINCHIP_2	8	/* no rdtsc */
+#define PERFCTR_X86_AMD_K7	9
+#define PERFCTR_X86_VIA_C3	10	/* no pmc0 */
+#define PERFCTR_X86_INTEL_P4	11	/* model 0 and 1 */
+#define PERFCTR_X86_INTEL_P4M2	12	/* model 2 */
+#define PERFCTR_X86_AMD_K8	13
+#define PERFCTR_X86_INTEL_PENTM	14	/* Pentium M */
+#define PERFCTR_X86_AMD_K8C	15	/* Revision C */
+#define PERFCTR_X86_INTEL_P4M3	16	/* model 3 and above */
+#define PERFCTR_X86_INTEL_CORE	17
 
 struct perfctr_sum_ctrs {
 	unsigned long long tsc;
@@ -33,7 +53,7 @@ struct perfctr_cpu_state {
 	unsigned int cstatus;
 	struct {	/* k1 is opaque in the user ABI */
 		unsigned int id;
-		const void *isuspend_cpu;
+		int isuspend_cpu;
 	} k1;
 	/* The two tsc fields must be inlined. Placing them in a
 	   sub-struct causes unwanted internal padding on x86-64. */
@@ -47,6 +67,9 @@ struct perfctr_cpu_state {
 #ifdef __KERNEL__
 	struct perfctr_cpu_control control;
 	unsigned int p4_escr_map[18];
+#ifdef CONFIG_PERFCTR_INTERRUPT_SUPPORT
+	unsigned int pending_interrupt;
+#endif
 #endif
 };
 
@@ -54,10 +77,17 @@ struct perfctr_cpu_state {
    which should have less overhead in most cases */
 
 static inline
+unsigned int __perfctr_mk_cstatus(unsigned int tsc_on, unsigned int have_ictrs,
+				  unsigned int nrictrs, unsigned int nractrs)
+{
+	return (tsc_on<<31) | (have_ictrs<<16) | ((nractrs+nrictrs)<<8) | nractrs;
+}
+
+static inline
 unsigned int perfctr_mk_cstatus(unsigned int tsc_on, unsigned int nractrs,
 				unsigned int nrictrs)
 {
-	return (tsc_on<<31) | (nrictrs<<16) | ((nractrs+nrictrs)<<8) | nractrs;
+	return __perfctr_mk_cstatus(tsc_on, nrictrs, nrictrs, nractrs);
 }
 
 static inline unsigned int perfctr_cstatus_enabled(unsigned int cstatus)
@@ -104,7 +134,7 @@ static inline unsigned int perfctr_cstatus_has_ictrs(unsigned int cstatus)
 #define si_pmc_ovf_mask	_sifields._pad[0] /* XXX: use an unsigned field later */
 
 /* version number for user-visible CPU-specific data */
-#define PERFCTR_CPU_VERSION	0x0500	/* 5.0 */
+#define PERFCTR_CPU_VERSION	0x0501	/* 5.1 */
 
 #ifdef __KERNEL__
 
@@ -145,30 +175,28 @@ extern void perfctr_cpu_sample(struct perfctr_cpu_state *state);
    It will be called in IRQ context, with preemption disabled. */
 typedef void (*perfctr_ihandler_t)(unsigned long pc);
 
-#if defined(CONFIG_X86_LOCAL_APIC)
-#define PERFCTR_INTERRUPT_SUPPORT 1
-#endif
-
-#if PERFCTR_INTERRUPT_SUPPORT
+/* Operations related to overflow interrupt handling. */
+#ifdef CONFIG_X86_LOCAL_APIC
+extern void __perfctr_cpu_mask_interrupts(void);
+extern void __perfctr_cpu_unmask_interrupts(void);
 extern void perfctr_cpu_set_ihandler(perfctr_ihandler_t);
 extern void perfctr_cpu_ireload(struct perfctr_cpu_state*);
 extern unsigned int perfctr_cpu_identify_overflow(struct perfctr_cpu_state*);
+static inline int perfctr_cpu_has_pending_interrupt(const struct perfctr_cpu_state *state)
+{
+	return state->pending_interrupt;
+}
 #else
 static inline void perfctr_cpu_set_ihandler(perfctr_ihandler_t x) { }
-#endif
-
-#if defined(CONFIG_SMP)
-/* CPUs in `perfctr_cpus_forbidden_mask' must not use the
-   performance-monitoring counters. TSC use is unrestricted.
-   This is needed to prevent resource conflicts on hyper-threaded P4s.
-   The declaration of `perfctr_cpus_forbidden_mask' is in the driver's
-   private compat.h, since it needs to handle cpumask_t incompatibilities. */
-#define PERFCTR_CPUS_FORBIDDEN_MASK_NEEDED 1
+static inline int perfctr_cpu_has_pending_interrupt(const struct perfctr_cpu_state *state)
+{
+	return 0;
+}
 #endif
 
 #endif	/* CONFIG_PERFCTR */
 
-#if defined(CONFIG_KPERFCTR) && PERFCTR_INTERRUPT_SUPPORT
+#if defined(CONFIG_KPERFCTR) && defined(CONFIG_X86_LOCAL_APIC)
 asmlinkage void perfctr_interrupt(struct pt_regs*);
 #define perfctr_vector_init()	\
 	set_intr_gate(LOCAL_PERFCTR_VECTOR, perfctr_interrupt)

@@ -41,6 +41,7 @@ void setup_control(const struct perfctr_info *info,
       case PERFCTR_X86_INTEL_PII:
       case PERFCTR_X86_INTEL_PIII:
       case PERFCTR_X86_INTEL_PENTM:
+      case PERFCTR_X86_INTEL_CORE:
 	/* note: FLOPS is only available in PERFCTR0 */
 	/* event 0xC1 (FLOPS), any CPL, Enable */
 	evntsel0 = 0xC1 | (3 << 16) | (1 << 22);
@@ -68,6 +69,8 @@ void setup_control(const struct perfctr_info *info,
 	break;
       case PERFCTR_X86_INTEL_P4:
       case PERFCTR_X86_INTEL_P4M2:
+#endif
+      case PERFCTR_X86_INTEL_P4M3:
 	nractrs = 2;
 	/* set up PMC(1) to produce tagged x87_FP_uop:s */
 	control->pmc_map[1] = 0x8 | (1 << 31);
@@ -78,7 +81,6 @@ void setup_control(const struct perfctr_info *info,
 	evntsel0 = (0x3 << 16) | (5 << 13) | (1 << 12);
 	control->p4.escr[0] = (0xC << 25) | (1 << 9) | (1 << 2);
 	break;
-#endif
       default:
 	fprintf(stderr, "cpu_type %u (%s) not supported\n",
 		info->cpu_type, perfctr_info_cpu_name(info));

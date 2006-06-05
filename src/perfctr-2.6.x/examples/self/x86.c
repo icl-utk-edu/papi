@@ -36,6 +36,7 @@ void do_setup(const struct perfctr_info *info,
       case PERFCTR_X86_INTEL_PII:
       case PERFCTR_X86_INTEL_PIII:
       case PERFCTR_X86_INTEL_PENTM:
+      case PERFCTR_X86_INTEL_CORE:
       case PERFCTR_X86_AMD_K7:
 #endif
       case PERFCTR_X86_AMD_K8:
@@ -58,6 +59,8 @@ void do_setup(const struct perfctr_info *info,
 	break;
       case PERFCTR_X86_INTEL_P4:
       case PERFCTR_X86_INTEL_P4M2:
+#endif
+      case PERFCTR_X86_INTEL_P4M3:
 	/* PMC0: IQ_COUNTER0 with fast RDPMC */
 	pmc_map0 = 0x0C | (1 << 31);
 	/* IQ_CCCR0: required flags, ESCR 4 (CRU_ESCR0), Enable */
@@ -65,7 +68,6 @@ void do_setup(const struct perfctr_info *info,
 	/* CRU_ESCR0: event 2 (instr_retired), NBOGUSNTAG, CPL>0 */
 	cpu_control->p4.escr[0] = (2 << 25) | (1 << 9) | (1 << 2);
 	break;
-#endif
       default:
 	fprintf(stderr, "cpu type %u (%s) not supported\n",
 		info->cpu_type, perfctr_info_cpu_name(info));

@@ -23,9 +23,14 @@
 #define REG_PC REG_EIP
 #endif
 
-unsigned long mcontext_pc(const mcontext_t *mc)
+static inline unsigned long mcontext_pc(const mcontext_t *mc)
 {
     return mc->gregs[REG_PC];
+}
+
+unsigned long ucontext_pc(const struct ucontext *uc)
+{
+    return mcontext_pc(&uc->uc_mcontext);
 }
 
 void do_setup(const struct perfctr_info *info,
@@ -43,19 +48,22 @@ void do_setup(const struct perfctr_info *info,
       case PERFCTR_X86_INTEL_PII:
       case PERFCTR_X86_INTEL_PIII:
       case PERFCTR_X86_INTEL_PENTM:
+      case PERFCTR_X86_INTEL_CORE:
 	/* FLOPS, USR, ENable, INT */
 	evntsel0 = 0xC1 | (1 << 16) | (1 << 22) | (1 << 20);
 	/* BR_TAKEN_RETIRED, USR, INT */
 	evntsel1 = 0xC9 | (1 << 16) | (1 << 20);
 	break;
       case PERFCTR_X86_AMD_K7:
-	/* K7 can't count FLOPS. Count RETIRED_OPS instead. */
-	evntsel0 = 0xC1 | (1 << 16) | (1 << 22) | (1 << 20);
+	/* K7 can't count FLOPS. Count RETIRED_INSTRUCTIONS instead. */
+	evntsel0 = 0xC0 | (1 << 16) | (1 << 22) | (1 << 20);
 	/* RETIRED_TAKEN_BRANCHES, USR, INT */
 	evntsel1 = 0xC4 | (1 << 16) | (1 << 22) | (1 << 20);
 	break;
       case PERFCTR_X86_INTEL_P4:
       case PERFCTR_X86_INTEL_P4M2:
+#endif
+      case PERFCTR_X86_INTEL_P4M3:
 	nractrs = 1;
 	/* PMC(0) produces tagged x87_FP_uop:s (FLAME_CCCR0, FIRM_ESCR0) */
 	cpu_control->pmc_map[0] = 0x8 | (1 << 31);
@@ -70,7 +78,6 @@ void do_setup(const struct perfctr_info *info,
 	evntsel1 = (1 << 26) | (0x3 << 16) | (5 << 13) | (1 << 12);
 	cpu_control->p4.escr[2] = (6 << 25) | (((1 << 3)|(1 << 2)) << 9) | (1 << 2);
 	break;
-#endif
       case PERFCTR_X86_AMD_K8:
       case PERFCTR_X86_AMD_K8C:
 	/* RETIRED_FPU_INSTRS, Unit Mask "x87 instrs", any CPL, Enable, INT */
