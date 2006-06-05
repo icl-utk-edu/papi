@@ -48,6 +48,7 @@ void do_setup(const struct perfctr_info *info,
       case PERFCTR_X86_INTEL_PII:
       case PERFCTR_X86_INTEL_PIII:
       case PERFCTR_X86_INTEL_PENTM:
+      case PERFCTR_X86_INTEL_CORE:
 	/* FLOPS, USR, ENable, INT */
 	evntsel0 = 0xC1 | (1 << 16) | (1 << 22) | (1 << 20);
 	/* BR_TAKEN_RETIRED, USR, INT */

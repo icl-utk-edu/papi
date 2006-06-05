@@ -36,6 +36,7 @@ void do_setup(const struct perfctr_info *info,
       case PERFCTR_X86_INTEL_PII:
       case PERFCTR_X86_INTEL_PIII:
       case PERFCTR_X86_INTEL_PENTM:
+      case PERFCTR_X86_INTEL_CORE:
       case PERFCTR_X86_AMD_K7:
 #endif
       case PERFCTR_X86_AMD_K8:

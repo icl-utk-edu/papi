@@ -24,6 +24,7 @@
 #define PERFCTR_X86_INTEL_PENTM	14	/* Pentium M */
 #define PERFCTR_X86_AMD_K8C	15	/* Revision C */
 #define PERFCTR_X86_INTEL_P4M3	16	/* model 3 and above */
+#define PERFCTR_X86_INTEL_CORE	17
 
 struct perfctr_sum_ctrs {
 	unsigned long long tsc;

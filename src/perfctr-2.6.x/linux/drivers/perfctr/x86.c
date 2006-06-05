@@ -71,7 +71,7 @@ struct perfctr_low_ctrs {
 /* AMD K8 */
 #define IS_K8_NB_EVENT(EVNTSEL)	((((EVNTSEL) >> 5) & 0x7) == 0x7)
 
-/* Intel P4, Intel Pentium M */
+/* Intel P4, Intel Pentium M, Intel Core */
 #define MSR_IA32_MISC_ENABLE	0x1A0
 #define MSR_IA32_MISC_ENABLE_PERF_AVAIL (1<<7)	/* read-only status bit */
 #define MSR_IA32_MISC_ENABLE_PEBS_UNAVAIL (1<<12) /* read-only status bit */
@@ -363,8 +363,8 @@ static void c6_write_control(const struct perfctr_cpu_state *state)
 #endif
 
 /*
- * Intel P6 family (Pentium Pro, Pentium II, and Pentium III cores,
- * and Xeon and Celeron versions of Pentium II and III cores).
+ * Intel P6 family (Pentium Pro, Pentium II, Pentium III, Pentium M, and
+ * Intel Core, including Xeon and Celeron versions of Pentium II and III).
  * - One TSC and two 40-bit PMCs.
  * - One 32-bit EVNTSEL MSR for each PMC.
  * - EVNTSEL0 contains a global enable/disable bit.
@@ -1207,7 +1207,7 @@ static void __init p4_ht_mask_setup_cpu(void *forbidden)
 {
 	int cpu = smp_processor_id();
 	unsigned int cpuid_maxlev;
-	unsigned int cpuid1_ebx, cpuid1_edx;
+	unsigned int cpuid1_ebx, cpuid1_edx, cpuid4_eax;
 	unsigned int initial_APIC_ID;
 	unsigned int max_cores_per_package;
 	unsigned int max_lp_per_package;
@@ -1254,20 +1254,22 @@ static void __init p4_ht_mask_setup_cpu(void *forbidden)
 	/* Find the max number of processor cores per physical processor package. */
 	if (cpuid_maxlev >= 4) {
 		/* For CPUID level 4 we need a zero in ecx as input to CPUID, but
-		   cpuid_eax() doesn't do that. So we resort to using the plain
-		   cpuid() with reference parameters and dummy outputs. */
-		unsigned int eax, dummy;
-		cpuid(4, &eax, &dummy, &dummy, &dummy);
-		max_cores_per_package = (eax >> 26) + 1;
-	} else
+		   cpuid_eax() doesn't do that. So we resort to using cpuid_count()
+		   with reference parameters and dummy outputs. */
+		unsigned int dummy;
+		cpuid_count(4, 0, &cpuid4_eax, &dummy, &dummy, &dummy);
+		max_cores_per_package = (cpuid4_eax >> 26) + 1;
+	} else {
+		cpuid4_eax = 0;
 		max_cores_per_package = 1;
+	}
 
 	max_lp_per_core = max_lp_per_package / max_cores_per_package;
 
 	smt_id = initial_APIC_ID & find_mask(max_lp_per_core);
 
-	printk(KERN_INFO "perfctr/x86.c: CPU %d: cpuid_ebx(1) 0x%08x, cpuid_edx(1) 0x%08x, cpuid_maxlev %u, max_cores_per_package %u, SMT_ID %u\n",
-	       cpu, cpuid1_ebx, cpuid1_edx, cpuid_maxlev, max_cores_per_package, smt_id);
+	printk(KERN_INFO "perfctr/x86.c: CPU %d: cpuid_ebx(1) 0x%08x, cpuid_edx(1) 0x%08x, cpuid_eax(4) 0x%08x, cpuid_maxlev %u, max_cores_per_package %u, SMT_ID %u\n",
+	       cpu, cpuid1_ebx, cpuid1_edx, cpuid4_eax, cpuid_maxlev, max_cores_per_package, smt_id);
 
 	/*
 	 * Now (finally!) check the SMT ID. The CPU numbers for non-zero SMT ID
@@ -1348,12 +1350,19 @@ static int __init intel_init(void)
 		clear_counters = p5_clear_counters;
 		return 0;
 	case 6:
-		if (current_cpu_data.x86_model == 9 ||
-		    current_cpu_data.x86_model == 13) {	/* Pentium M */
-			/* Pentium M added the MISC_ENABLE MSR from P4. */
+		/* Check MSR_IA32_MISC_ENABLE_PERF_AVAIL on relevant models. */
+		if (current_cpu_data.x86_model == 9 ||	/* Pentium M */
+		    current_cpu_data.x86_model == 13 || /* Pentium M */
+		    current_cpu_data.x86_model == 14) { /* Intel Core */
 			rdmsr_low(MSR_IA32_MISC_ENABLE, misc_enable);
 			if (!(misc_enable & MSR_IA32_MISC_ENABLE_PERF_AVAIL))
 				break;
+		}
+		if (current_cpu_data.x86_model == 14) {	/* Intel Core */
+			/* XXX: what about erratum AE19? */
+			perfctr_info.cpu_type = PERFCTR_X86_INTEL_CORE;
+		} else if (current_cpu_data.x86_model == 9 ||	/* Pentium M */
+			   current_cpu_data.x86_model == 13) {	/* Pentium M */
 			/* Erratum Y3 probably does not apply since we
 			   read only the low 32 bits. */
 			perfctr_info.cpu_type = PERFCTR_X86_INTEL_PENTM;
@@ -1381,7 +1390,8 @@ static int __init intel_init(void)
 			cpu_iresume = p6_iresume;
 			/* P-M apparently inherited P4's LVTPC auto-masking :-( */
 			if (current_cpu_data.x86_model == 9 ||
-			    current_cpu_data.x86_model == 13)
+			    current_cpu_data.x86_model == 13 ||
+			    current_cpu_data.x86_model == 14)
 				lvtpc_reinit_needed = 1;
 		}
 #endif

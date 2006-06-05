@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * Optional x86/x86_64-specific init-time tests.
  *
- * Copyright (C) 1999-2004  Mikael Pettersson
+ * Copyright (C) 1999-2006  Mikael Pettersson
  */
 #include <linux/config.h>
 #define __NO_VERSION__
@@ -49,15 +49,6 @@
 #ifndef CONFIG_X86_LOCAL_APIC
 #undef apic_write
 #define apic_write(reg,vector)			do{}while(0)
-#endif
-
-#if !defined(__x86_64__)
-/* Avoid speculative execution by the CPU */
-extern inline void sync_core(void)
-{
-	int tmp;
-	asm volatile("cpuid" : "=a" (tmp) : "0" (1) : "ebx","ecx","edx","memory");
-}
 #endif
 
 static void __init do_rdpmc(unsigned pmc, unsigned unused2)
@@ -281,7 +272,7 @@ void __init perfctr_x86_init_tests(void)
 	case PTT_P5: /* Intel P5, P5MMX; Cyrix 6x86MX, MII, III */
 		perfctr_p5_init_tests();
 		break;
-	case PTT_P6: /* Intel PPro, PII, PIII, PENTM */
+	case PTT_P6: /* Intel PPro, PII, PIII, PENTM, CORE */
 		perfctr_p6_init_tests();
 		break;
 #if !defined(CONFIG_X86_TSC)
