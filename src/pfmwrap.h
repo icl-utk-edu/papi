@@ -198,6 +198,7 @@ char *retired_events[]={
    }
 
    // for PFM20
+#ifndef ALTIX
    inline char* pfmw_get_event_description(unsigned int idx)
    {
       char *descr;
@@ -207,6 +208,7 @@ char *retired_events[]={
       else
          return NULL;
    }
+#endif
 
    inline int pfmw_is_dear(unsigned int i)
    {
