@@ -1316,6 +1316,9 @@ char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 
 char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
+	/* It was thought that this was supported in pfm2.0, but apparently not on Altix...
+		Joe Thomas can't get this to build on DOD Altix Eagle
+		undefined reference to pfm_get_event_description
   char *tmp = NULL;
 #ifdef PFM20
   if (pfm_get_event_description(EventCode^PAPI_NATIVE_MASK, &tmp) == PFMLIB_SUCCESS)
@@ -1323,6 +1326,8 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 #else
    return (_papi_hwd_ntv_code_to_name(EventCode));
 #endif
+   */
+   return (_papi_hwd_ntv_code_to_name(EventCode));
 }
 
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
