@@ -67,6 +67,11 @@
       n = 3
 #endif
 
+#if defined(_PPC32)
+      eventname(1) = 'CPU_CLK'
+      eventname(2) = 'FLOPS'
+      n = 2
+#endif
 #if defined(_POWER5)
       eventname(1) = 'PM_FPU_FDIV'
       eventname(2) = 'PM_FPU_FMA'
