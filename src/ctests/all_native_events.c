@@ -22,7 +22,7 @@ int main(int argc, char **argv)
    PAPI_event_info_t info;
    const PAPI_hw_info_t *hwinfo = NULL;
 #ifdef _POWER4
-   int group = 0;
+   int group = 0, event_code;
 #endif
 #ifdef PENTIUM4
    int k, l, event_code;
