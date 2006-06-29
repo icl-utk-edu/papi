@@ -715,6 +715,12 @@ const hwi_search_t _papi_hwd_p3_preset_map[] = {
    {PAPI_TOT_INS, {0, {PNE_P3_INST_RETIRED, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_FP_INS, {0, {PNE_P3_FLOPS, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_FP_OPS, {0, {PNE_P3_FLOPS, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
+/* Katmai introduced the KNI (Katmai New Instruction) set, including single precision SSE.
+   It would be good to support these, but they only matter for SP optimized code, like ATLAS.
+   A multiple table approach, like on Pentium 4 would be useful, but requires restructuring.
+   Maybe for 4.0...
+   {PAPI_FP_OPS, {0, {PNE_P3_FLOPS, PNE_P3_EMON_KNI_COMP_INST_RET_PACKED_AND_SCALAR, PAPI_NULL, PAPI_NULL}, {0,}}},
+*/
    {PAPI_BR_INS, {0, {PNE_P3_BR_INST_RETIRED, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
 /*   { PAPI_VEC_INS,       {0, {PNE_P3_MMX_INSTR_EXEC,PAPI_NULL,PAPI_NULL,PAPI_NULL},{0,}}},  Says event exists on P2 only  */
    {PAPI_RES_STL, {0, {PNE_P3_RESOURCE_STALLS, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
