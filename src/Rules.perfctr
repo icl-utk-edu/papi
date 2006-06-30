@@ -218,18 +218,22 @@ config.h:
 
 $(PERFCTR_LIB_PATH)/libperfctr.a:
 ifeq (,${PERFCTR_PREFIX})
-ifeq (ppc64,${ARCH})
+ ifeq (ppc64,${ARCH})
 	$(MAKE) CC='$(CC) $(BITFLAGS)' -C $(PERFCTR_ROOT)
-endif
-ifeq (x86_64,${ARCH})
-ifeq (32,${BITS})
-	$(MAKE) CC='$(CC) $(BITFLAGS)' LD_FLAGS="-melf_i386" ARCH="i386" -C $(PERFCTR_ROOT)
-else
+ endif
+ ifeq (CATAMOUNT, $(COMPILER))
+	$(MAKE) CC='$(CC)' -C $(PERFCTR_ROOT)
+ else
+  ifeq (x86_64,${ARCH})
+   ifeq (32,${BITS})
+	$(MAKE) CC='$(CC)' LD_FLAGS="-melf_i386" ARCH="i386" -C $(PERFCTR)
+   else
 	$(MAKE) -C $(PERFCTR_ROOT)
-endif
-else
+   endif
+  else
 	$(MAKE) -C $(PERFCTR_ROOT)
-endif
+  endif
+ endif
 else
 	@echo '$@ not installed!'; exit 1
 endif
