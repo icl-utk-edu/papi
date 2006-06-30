@@ -822,6 +822,9 @@ inline_static void cpuid(unsigned int *eax, unsigned int *ebx,
 #include <Psapi.h>
 int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
 {
+   /* for now we'll just punt this one... */
+   return( PAPI_EINVAL );
+/*
    int tmp;
    HANDLE proc = GetCurrentProcess();
    PROCESS_MEMORY_COUNTERS cntr;
@@ -839,6 +842,7 @@ int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
      default:
 	return (PAPI_EINVAL);
    }
+*/
 }
 #else
 #ifdef __CATAMOUNT__
