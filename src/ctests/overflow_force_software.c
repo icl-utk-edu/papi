@@ -82,7 +82,7 @@ int main(int argc, char **argv)
    }
 
    retval = PAPI_get_opt(PAPI_SUBSTRATE_SUPPORT, &opt);
-   if ( !opt.sub_info.supports_hw_overflow )
+   if ( !opt.sub_info->hardware_intr )
       test_skip(__FILE__, __LINE__, "Platform does not support Hardware overflow", 0);
 
    /* query and set up the right instruction to monitor */

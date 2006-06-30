@@ -47,7 +47,7 @@ int main(int argc, char **argv)
    QUIETPRINTF("Test case %s: start, stop with a derived counter.\n", __FILE__);
    QUIETPRINTF("------------------------------------------------\n");
    tmp = PAPI_get_opt(PAPI_DEFDOM, NULL);
-   QUIETPRINTF("Default domain is: %d (%s)\n", tmp, stringify_domain(tmp));
+   QUIETPRINTF("Default domain is: %d (%s)\n", tmp, stringify_all_domains(tmp));
    tmp = PAPI_get_opt(PAPI_DEFGRN, NULL);
    QUIETPRINTF("Default granularity is: %d (%s)\n\n", tmp, stringify_granularity(tmp));
 

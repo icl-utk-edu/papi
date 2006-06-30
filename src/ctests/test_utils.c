@@ -339,9 +339,30 @@ int remove_test_events(int *EventSet, int mask)
    return (PAPI_destroy_eventset(EventSet));
 }
 
+char *stringify_all_domains(int domains)
+{
+  static char buf[PAPI_HUGE_STR_LEN];
+  int i, did = 0;
+  buf[0] = '\0';
+
+  for (i=PAPI_DOM_MIN;i<=PAPI_DOM_MAX;i=i<<1)
+    if (domains&i)
+      {
+	if (did)
+	  strcpy(buf+strlen(buf),"|");
+	strcpy(buf+strlen(buf),stringify_domain(domains&i));
+	did++;
+      }
+  if (did == 0)
+     test_fail(__FILE__, __LINE__, "Unrecognized domains!", 0);    
+  return(buf);
+}
+
 char *stringify_domain(int domain)
 {
-   switch (domain) {
+  switch (domain) {
+   case PAPI_DOM_SUPERVISOR:
+      return ("PAPI_DOM_SUPERVISOR");
    case PAPI_DOM_USER:
       return ("PAPI_DOM_USER");
    case PAPI_DOM_KERNEL:
@@ -351,9 +372,29 @@ char *stringify_domain(int domain)
    case PAPI_DOM_ALL:
       return ("PAPI_DOM_ALL");
    default:
-      abort();
+     test_fail(__FILE__, __LINE__, "Unrecognized domains!", 0);
    }
    return (NULL);
+}
+
+char *stringify_all_granularities(int granularities)
+{
+  static char buf[PAPI_HUGE_STR_LEN];
+  int i, did = 0;
+
+  buf[0] = '\0';
+  for (i=PAPI_GRN_MIN;i<=PAPI_GRN_MAX;i=i<<1)
+    if (granularities&i)
+      {
+	if (did)
+	  strcpy(buf+strlen(buf),"|");
+	strcpy(buf+strlen(buf),stringify_granularity(granularities&i));
+	did++;
+      }
+  if (did == 0)
+     test_fail(__FILE__, __LINE__, "Unrecognized granularity!", 0);    
+    
+  return(buf);
 }
 
 char *stringify_granularity(int granularity)
@@ -370,7 +411,7 @@ char *stringify_granularity(int granularity)
    case PAPI_GRN_SYS:
       return ("PAPI_GRN_SYS");
    default:
-      abort();
+     test_fail(__FILE__, __LINE__, "Unrecognized granularity!", 0);
    }
    return (NULL);
 }
@@ -414,7 +455,11 @@ void test_fail(char *file, int line, char *call, int retval)
    } else if (retval > 0) {
       fprintf(stdout,"Error: %s\n", call);
    } else if (retval == 0) {
+#if defined(sgi)
       fprintf(stdout,"SGI requires root permissions for this test\n");
+#else
+      fprintf(stdout,"Error: %s\n", call);
+#endif
    } else {
       char errstring[PAPI_MAX_STR_LEN];
       PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN);
