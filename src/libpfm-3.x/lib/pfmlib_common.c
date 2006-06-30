@@ -1,7 +1,7 @@
 /*
  * pfmlib_common.c: set of functions common to all PMU models
  *
- * Copyright (c) 2001-2004 Hewlett-Packard Development Company, L.P.
+ * Copyright (c) 2001-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,11 +20,7 @@
  * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * This file is part of libpfm, a performance monitoring support library for
- * applications on Linux/ia64.
-*/
-
+ */
 #include <sys/types.h>
 #include <ctype.h>
 #include <string.h>
@@ -37,20 +33,48 @@
 
 #include "pfmlib_priv.h"
 
+extern pfm_pmu_support_t montecito_support;
 extern pfm_pmu_support_t itanium2_support;
 extern pfm_pmu_support_t itanium_support;
 extern pfm_pmu_support_t generic_ia64_support;
+extern pfm_pmu_support_t amd_x86_64_support;
+extern pfm_pmu_support_t i386_p6_support;
+extern pfm_pmu_support_t i386_pm_support;
+extern pfm_pmu_support_t gen_ia32_support;
+extern pfm_pmu_support_t generic_mips64_support;
 
 static pfm_pmu_support_t *supported_pmus[]=
 {
+#ifdef CONFIG_PFMLIB_MONTECITO
+	&montecito_support,
+#endif
+
 #ifdef CONFIG_PFMLIB_ITANIUM2
 	&itanium2_support,
 #endif
+
 #ifdef CONFIG_PFMLIB_ITANIUM
 	&itanium_support,
 #endif
 
-#ifdef CONFIG_PFMLIB_GENERIC_IA64
+#ifdef CONFIG_PFMLIB_AMD_X86_64
+	&amd_x86_64_support,
+#endif
+
+#ifdef CONFIG_PFMLIB_I386_P6
+	&i386_p6_support,
+	&i386_pm_support,
+#endif
+
+#ifdef CONFIG_PFMLIB_GEN_IA32
+	&gen_ia32_support, /* must always be last of i386 arch */
+#endif
+
+#ifdef CONFIG_PFMLIB_GEN_MIPS64
+	&generic_mips64_support,
+#endif
+
+#ifdef CONFIG_PFMLIB_GEN_IA64
 	&generic_ia64_support,	/* must always be last (matches any IA-64 PMU) */
 #endif
 	NULL
@@ -91,7 +115,7 @@ pfm_set_options(pfmlib_options_t *opt)
  * of PMU actually compiled in the library will be returned.
  */
 int
-pfm_get_pmu_name_bytype(int type, char *name, int maxlen)
+pfm_get_pmu_name_bytype(int type, char *name, size_t maxlen)
 {
 	pfm_pmu_support_t **p = supported_pmus;
 
@@ -228,35 +252,37 @@ found:
 	return PFMLIB_SUCCESS;
 }
 
-static int
-pfm_find_event_byvcode(unsigned long vcode, unsigned int *idx)
-{
-	unsigned int i;
-
-	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
-
-	if (idx == NULL) return PFMLIB_ERR_INVAL;
-
-	for(i=0; i < pfm_current->pme_count; i++) {
-		if (pfm_current->get_event_vcode(i) == vcode) goto found;
-	}
-	return PFMLIB_ERR_NOTFOUND;
-found:
-	*idx = i;
-	return PFMLIB_SUCCESS;
-}
-
 int
 pfm_find_event_bycode(int code, unsigned int *idx)
 {
-	unsigned int i;
+	pfmlib_regmask_t impl_cnt;
+	unsigned int i, j, num_cnt;
+	int code2;
 
 	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
 
 	if (idx == NULL) return PFMLIB_ERR_INVAL;
 
-	for(i=0; i < pfm_current->pme_count; i++) {
-		if (pfm_current->get_event_code(i) == code) goto found;
+	if (pfm_current->flags & PFMLIB_MULT_CODE_EVENT) {
+
+		pfm_current->get_impl_counters(&impl_cnt);
+		num_cnt = pfm_current->num_cnt;
+
+		for(i=0; i < pfm_current->pme_count; i++) {
+			for(j=0; num_cnt; j++) {
+				if (pfm_regmask_isset(&impl_cnt, j)) {
+					pfm_current->get_event_code(i, j, &code2);
+					if (code2 == code)
+						goto found;
+					num_cnt--;
+				}
+			}
+		}
+	} else {
+		for(i=0; i < pfm_current->pme_count; i++) {
+			pfm_current->get_event_code(i, PFMLIB_CNT_FIRST, &code2);
+			if (code2 == code) goto found;
+		}
 	}
 	return PFMLIB_ERR_NOTFOUND;
 found:
@@ -282,10 +308,7 @@ pfm_find_event(const char *v, unsigned int *ev)
 			int the_int_number = (int)number;
 
 			ret = pfm_find_event_bycode(the_int_number, ev);
-			if (ret == PFMLIB_SUCCESS) return ret;
 		}
-		/* try the vcode now */
-		ret  = pfm_find_event_byvcode(number, ev);
 	} else {
 		ret = pfm_find_event_byname(v, ev);
 	}
@@ -295,30 +318,15 @@ pfm_find_event(const char *v, unsigned int *ev)
 int
 pfm_find_event_bycode_next(int code, unsigned int i, unsigned int *next)
 {
+	int code2;
+
 	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
 
 	if (next == NULL) return PFMLIB_ERR_INVAL;
 
 	for(++i; i < pfm_current->pme_count; i++) {
-		if (pfm_current->get_event_code(i) == code) goto found;
-	}
-	return PFMLIB_ERR_NOTFOUND;
-found:
-	*next = i;
-	return PFMLIB_SUCCESS;
-}
-
-static int
-pfm_find_event_byvcode_next(unsigned long vcode, unsigned int i, unsigned int *next)
-{
-	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
-
-	if (next == NULL) return PFMLIB_ERR_INVAL;
-
-	
-
-	for(++i; i < pfm_current->pme_count; i++) {
-		if (pfm_current->get_event_vcode(i) == vcode) goto found;
+		pfm_current->get_event_code(i, PFMLIB_CNT_FIRST, &code2);
+		if (code2 == code) goto found;
 	}
 	return PFMLIB_ERR_NOTFOUND;
 found:
@@ -327,7 +335,29 @@ found:
 }
 
 int
-pfm_get_event_name(unsigned int i, char *name, int maxlen)
+pfm_find_event_mask(unsigned int event_idx, const char *str, unsigned int *mask_idx)
+{
+	unsigned int i, num_masks = 0;
+
+	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
+
+	if (str == NULL || mask_idx == NULL) return PFMLIB_ERR_INVAL;
+
+	if (PFMLIB_HAS_EVENT_MASKS()) {
+		pfm_current->get_num_event_masks(event_idx, &num_masks);
+		for (i = 0; i < num_masks; i++) {
+			if (!strcasecmp(pfm_current->get_event_mask_name(event_idx, i), str)) {
+				*mask_idx = i;
+				return PFMLIB_SUCCESS;
+			}
+		}
+	}
+
+	return PFMLIB_ERR_NOTFOUND;
+}
+
+int
+pfm_get_event_name(unsigned int i, char *name, size_t maxlen)
 {
 	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
 
@@ -347,9 +377,18 @@ pfm_get_event_code(unsigned int i, int *code)
 
 	if (i >= pfm_current->pme_count || code == NULL) return PFMLIB_ERR_INVAL;
 
-	*code = pfm_current->get_event_code(i);
+	return pfm_current->get_event_code(i, PFMLIB_CNT_FIRST, code);
 
-	return PFMLIB_SUCCESS;
+}
+
+int
+pfm_get_event_code_counter(unsigned int i, unsigned int cnt, int *code)
+{
+	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
+
+	if (i >= pfm_current->pme_count || code == NULL) return PFMLIB_ERR_INVAL;
+
+	return pfm_current->get_event_code(i, cnt, code);
 }
 
 int
@@ -364,6 +403,22 @@ pfm_get_event_counters(unsigned int i, pfmlib_regmask_t *counters)
 	return PFMLIB_SUCCESS;
 }
 
+int
+pfm_get_event_mask_name(unsigned int event_idx, unsigned int mask_idx, char *name, size_t maxlen)
+{
+	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
+
+	if (event_idx >= pfm_current->pme_count || name == NULL || maxlen < 1) return PFMLIB_ERR_INVAL;
+
+	if (!PFMLIB_HAS_EVENT_MASKS()) {
+		return PFMLIB_ERR_NOTSUPP;
+	}
+
+	strncpy(name, pfm_current->get_event_mask_name(event_idx, mask_idx), maxlen-1);
+	name[maxlen-1] = '\0';
+
+	return PFMLIB_SUCCESS;
+}
 
 int
 pfm_get_num_events(unsigned int *count)
@@ -377,6 +432,20 @@ pfm_get_num_events(unsigned int *count)
 	return PFMLIB_SUCCESS;
 }
 
+int
+pfm_get_num_event_masks(unsigned int event_idx, unsigned int *count)
+{
+	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
+
+	if (event_idx >= pfm_current->pme_count || count == NULL) return PFMLIB_ERR_INVAL;
+
+	if (!PFMLIB_HAS_EVENT_MASKS()) {
+		*count = 0;
+		return PFMLIB_SUCCESS;
+	}
+
+	return pfm_current->get_num_event_masks(event_idx, count);
+}
 
 /*
  * Function used to print information about a specific events. More than
@@ -386,18 +455,18 @@ pfm_get_num_events(unsigned int *count)
 int
 pfm_print_event_info(const char *name, int (*pf)(const char *fmt,...))
 {
-	unsigned long number, vcode;
+	unsigned long number;
 	pfmlib_regmask_t cmask, impl_counters;
-        int code, ret;
-	int code_is_used = 1, event_is_digit = 0;
-	unsigned int idx, next_idx, n, num_counters, i;
+        int code, ret, n;
+	int event_is_digit = 0;
+	unsigned int idx, next_idx, num_counters, i;
+	unsigned int num_masks;
 
 	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
 
 	if (name == NULL || pf == NULL) return PFMLIB_ERR_INVAL;
 
-	pfm_current->get_num_counters(&num_counters);
-	pfm_current->get_impl_counters(&impl_counters);
+	num_counters = pfm_current->num_cnt;
 
 	/* we can't quite use pfm_findevent() because we need to try
 	 * both ways systematically.
@@ -415,46 +484,45 @@ pfm_print_event_info(const char *name, int (*pf)(const char *fmt,...))
 			ret = pfm_find_event_bycode(the_int_number, &idx);
 			if (ret == PFMLIB_SUCCESS) goto start_loop;
 		}
-		code_is_used = 0;
-
-		/* try the vcode now */
-		ret  = pfm_find_event_byvcode(number, &idx);
 	} else {
 		ret  = pfm_find_event_byname(name, &idx);
 	}
 
 	if (ret != PFMLIB_SUCCESS) return PFMLIB_ERR_NOTFOUND;
 
+
 start_loop:
 	do {
-		code  = pfm_current->get_event_code(idx);
-		vcode = pfm_current->get_event_vcode(idx);
+		pfm_current->get_event_code(idx, PFMLIB_CNT_FIRST, &code);
 
 		(*pf)(	"Name   : %s\n"
-			"VCode  : 0x%lx\n"
 			"Code   : 0x%x\n",
 			pfm_current->get_event_name(idx),
-			vcode,
 			code);
 		
-		(*pf)(	"PMD/PMC: [ ");
+		(*pf)(	"counter: [ ");
 
 		pfm_current->get_event_counters(idx, &cmask);
 		n = num_counters;
 		for (i=0; n; i++) {
-			if (PFMLIB_REGMASK_ISSET(&impl_counters, i)) n--;
-			if (PFMLIB_REGMASK_ISSET(&cmask, i)) (*pf)("%d ", i);
+			if (pfm_regmask_isset(&impl_counters, i)) n--;
+			if (pfm_regmask_isset(&cmask, i)) (*pf)("%d ", i);
 		}
 		(*pf)(	"]\n");
+
+		if (PFMLIB_HAS_EVENT_MASKS()) {
+			pfm_current->get_num_event_masks(idx, &num_masks);
+			for (i = 0; i < num_masks; i++) {
+				(*pf)("Unit-mask %d: %s\n",
+					i, pfm_current->get_event_mask_name(idx, i));
+			}
+		}
 
 		/* print PMU specific information */
 		if (pfm_current->print_info) {
 			pfm_current->print_info(idx, pf);
 		}
-		ret = code_is_used ?
-			pfm_find_event_bycode_next(code, idx, &next_idx) :
-			pfm_find_event_byvcode_next(vcode, idx, &next_idx);
-
+		ret = pfm_find_event_bycode_next(code, idx, &next_idx);
 		idx = next_idx;
 
 	} while (event_is_digit && ret == PFMLIB_SUCCESS);
@@ -466,30 +534,39 @@ int
 pfm_print_event_info_byindex(unsigned int v, int (*pf)(const char *fmt,...))
 {
 	pfmlib_regmask_t cmask, impl_counters;
-	unsigned int i, n;
+	unsigned int i, n, num_masks;
+	int code;
 
 	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
 
 	if (v >= pfm_current->pme_count || pf == NULL) return PFMLIB_ERR_INVAL;
 
+	pfm_current->get_event_code(v, PFMLIB_CNT_FIRST, &code);
+
 	(*pf)(	"Name   : %s\n"
-		"VCode  : 0x%lx\n"
 		"Code   : 0x%x\n",
 		pfm_current->get_event_name(v),
-		pfm_current->get_event_vcode(v),
-		pfm_current->get_event_code(v));
+		code);
 	
-	(*pf)(	"PMD/PMC: [ ");
+	(*pf)(	"counter: [ ");
 
-	pfm_current->get_num_counters(&n);
+	n = pfm_current->num_cnt;
 	pfm_current->get_event_counters(v, &cmask);
 	pfm_current->get_impl_counters(&impl_counters);
 
 	for (i=0; n; i++) {
-		if (PFMLIB_REGMASK_ISSET(&impl_counters, i)) n--;
-		if (PFMLIB_REGMASK_ISSET(&cmask, i)) (*pf)("%d ", i);
+		if (pfm_regmask_isset(&impl_counters, i)) n--;
+		if (pfm_regmask_isset(&cmask, i)) (*pf)("%d ", i);
 	}
 	(*pf)(	"]\n");
+
+	if (PFMLIB_HAS_EVENT_MASKS()) {
+		pfm_current->get_num_event_masks(v, &num_masks);
+		for (i = 0; i < num_masks; i++) {
+			(*pf)("Unit-mask %d: %s\n",
+				v, pfm_current->get_event_mask_name(v, i));
+		}
+	}
 
 	/* print PMU specific information */
 	if (pfm_current->print_info) {
@@ -498,6 +575,30 @@ pfm_print_event_info_byindex(unsigned int v, int (*pf)(const char *fmt,...))
 	return PFMLIB_SUCCESS;
 }
 
+#if 0
+/*
+ * check that the unavailable PMCs registers correspond
+ * to implemented PMC registers
+ */
+static int
+pfm_check_unavail_pmcs(pfmlib_regmask_t *pmcs)
+{
+	pfmlib_regmask_t impl_pmcs;
+	pfm_current->get_impl_pmcs(&impl_pmcs);
+	unsigned int i;
+
+	for (i=0; i < PFMLIB_REG_BV; i++) {
+		if ((pmcs->bits[i] & impl_pmcs.bits[i]) != pmcs->bits[i])
+			return PFMLIB_ERR_INVAL;
+	}
+	return PFMLIB_SUCCESS;
+}
+#endif
+
+/*
+ * we do not check if pfp_unavail_pmcs contains only implemented PMC
+ * registers. In other words, invalid registers are ignored
+ */
 int
 pfm_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_output_param_t *outp, void *model_out)
 {
@@ -520,8 +621,6 @@ pfm_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_output_par
 
 	/*
 	 * check that event descriptors are correct
-	 *
-	 * invalid plm bits are simply ignored
 	 */
 	for (i=0; i < count; i++) {
 		if (inp->pfp_events[i].event >= max_count) return PFMLIB_ERR_INVAL;
@@ -543,7 +642,7 @@ pfm_get_num_counters(unsigned int *num)
 
 	if (num == NULL) return PFMLIB_ERR_INVAL;
 	
-	pfm_current->get_num_counters(num);
+	*num = pfm_current->num_cnt;
 
 	return PFMLIB_SUCCESS;
 }
@@ -555,7 +654,7 @@ pfm_get_num_pmcs(unsigned int *num)
 
 	if (num == NULL) return PFMLIB_ERR_INVAL;
 	
-	pfm_current->get_num_pmcs(num);
+	*num = pfm_current->pmc_count;
 
 	return PFMLIB_SUCCESS;
 }
@@ -567,7 +666,7 @@ pfm_get_num_pmds(unsigned int *num)
 
 	if (num == NULL) return PFMLIB_ERR_INVAL;
 	
-	pfm_current->get_num_pmds(num);
+	*num = pfm_current->pmd_count;
 
 	return PFMLIB_SUCCESS;
 }
@@ -626,7 +725,7 @@ static char *pfmlib_err_list[]=
 	"pfmlib not initialized",
 	"object not found",
 	"cannot assign events to counters",
-	"buffer is full",
+	"buffer is full (obsolete)",
 	"event used more than once",
 	"invalid model specific magic number",
 	"invalid combination of model specific features",
@@ -640,9 +739,10 @@ static char *pfmlib_err_list[]=
 	"invalid data range",
 	"too many data ranges",
 	"not supported by host cpu",
-	"code range is not bundle-aligned"
+	"code range is not bundle-aligned",
+	"code range requires some flags in rr_flags",
 };
-static int pfmlib_err_count = sizeof(pfmlib_err_list)/sizeof(char *);
+static size_t pfmlib_err_count = sizeof(pfmlib_err_list)/sizeof(char *);
 
 char *
 pfm_strerror(int code)
@@ -673,10 +773,10 @@ pfm_get_version(unsigned int *version)
 }
 
 int
-pfm_get_max_event_name_len(unsigned int *len)
+pfm_get_max_name_len(size_t *len)
 {
-	unsigned int i;
-	unsigned int max = 0, l;
+	unsigned int i, j, num_masks;
+	size_t max = 0, l;
 
 	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
 	if (len == NULL) return PFMLIB_ERR_INVAL;
@@ -684,9 +784,86 @@ pfm_get_max_event_name_len(unsigned int *len)
 	for(i=0; i < pfm_current->pme_count; i++) {
 		l = strlen(pfm_current->get_event_name(i));
 		if (l > max) max = l;
+
+		if (PFMLIB_HAS_EVENT_MASKS()) {
+			pfm_current->get_num_event_masks(i, &num_masks);
+			for (j = 0; j < num_masks; j++) {
+				l = strlen(pfm_current->get_event_mask_name(i, j));
+				if (l > max) max = l;
+			}
+		}
 	}
 	*len = max;
 
 	return PFMLIB_SUCCESS;
+}
+
+int
+pfm_get_max_event_name_len(size_t *len)
+{
+	return pfm_get_max_name_len(len);
+}
+
+/*
+ * return the index of the event that counts elapsed cycles
+ */
+int
+pfm_get_cycle_event(unsigned int *ev)
+{
+	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
+	if (ev == NULL) return PFMLIB_ERR_INVAL;
+
+	if (pfm_current->cycle_event == PFMLIB_NO_EVT)
+		return PFMLIB_ERR_NOTSUPP;
+
+	*ev = pfm_current->cycle_event;
+
+	return PFMLIB_SUCCESS;
+}
+
+/*
+ * return the index of the event that retired instructions
+ */
+int
+pfm_get_inst_retired_event(unsigned int *ev)
+{
+	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
+	if (ev == NULL) return PFMLIB_ERR_INVAL;
+
+	if (pfm_current->inst_retired_event == PFMLIB_NO_EVT)
+		return PFMLIB_ERR_NOTSUPP;
+
+	*ev = pfm_current->inst_retired_event;
+
+	return PFMLIB_SUCCESS;
+}
+
+int
+pfm_get_event_description(unsigned int i, char **str)
+{
+	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
+
+	if (i >= pfm_current->pme_count || str == NULL) return PFMLIB_ERR_INVAL;
+
+	if (pfm_current->get_event_desc == NULL) {
+		*str = NULL;	
+		return PFMLIB_SUCCESS;
+	}
+	return pfm_current->get_event_desc(i, str);
+}
+
+int
+pfm_get_event_mask_description(unsigned int event_idx, unsigned int mask_idx, char **desc)
+{
+	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
+
+	if (event_idx >= pfm_current->pme_count || desc == NULL) return PFMLIB_ERR_INVAL;
+
+	if (pfm_current->get_event_mask_desc == NULL) {
+		*desc = NULL;
+		return PFMLIB_SUCCESS;
+	}
+
+	return pfm_current->get_event_mask_desc(event_idx, mask_idx, desc);
 }
 

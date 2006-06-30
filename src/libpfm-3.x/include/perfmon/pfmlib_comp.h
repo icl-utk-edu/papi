@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2004 Hewlett-Packard Development Company, L.P.
+ * Copyright (c) 2004-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -18,16 +18,24 @@
  * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * This file is part of libpfm, a performance monitoring support library for
- * applications on Linux/ia64.
- *
  */
 #ifndef __PFMLIB_COMP_H__
 #define __PFMLIB_COMP_H__
 
 #ifdef __ia64__
 #include <perfmon/pfmlib_comp_ia64.h>
+#endif
+
+#ifdef __x86_64__
+#include <perfmon/pfmlib_comp_x86_64.h>
+#endif
+
+#ifdef __i386__
+#include <perfmon/pfmlib_comp_i386.h>
+#endif
+
+#ifdef __mips__
+#include <perfmon/pfmlib_comp_mips64.h>
 #endif
 
 #endif /* __PFMLIB_COMP_H__ */

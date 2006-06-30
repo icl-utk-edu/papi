@@ -5,11 +5,13 @@ pfm_get_event_name, pfm_get_event_code, pfm_get_event_counters, pfm_get_num_even
 .nf
 .B #include <perfmon/pfmlib.h>
 .sp
-.BI "int pfm_get_event_name(unsigned int " e ", char *"name ", int " maxlen);
+.BI "int pfm_get_event_name(unsigned int " e ", char *"name ", size_t" maxlen);
 .BI "int pfm_get_event_code(unsigned int " e ", int *"code);
+.BI "int pfm_get_event_code_counter(unsigned int " e ", unsigned int " cnt ", int *"code);
 .BI "int pfm_get_event_counters(int " e ", pfmlib_regmask_t "counters ");"
 .BI "int pfm_get_num_events(unsigned int *" count);
-.BI "int pfm_get_max_event_name_len(unsigned int *" len);
+.BI "int pfm_get_max_event_name_len(size_t *" len);
+.BI "int pfm_get_event_description(unsigned int " ev ", char **" str);
 .sp
 .SH DESCRIPTION
 The PMU counters can be programmed to measure the number of occurrences
@@ -33,6 +35,12 @@ termination character.
 .sp
 The \fBpfm_get_event_code\fR function returns the event code in \fBcode\fR
 given its opaque descriptor \fBe\fR.
+.sp
+On some PMU models, the code associated with an event is different based
+on the counter it is programmed into. The \fBpfm_get_event_code_counter\fR
+function is used to retrieve the event code in \fBcode\fR when the event \fBe\fR
+is programmed into counter \fBcnt\fR. The counter index must correspond to the
+index of a counting PMC register.
 .sp
 Given an opaque event descriptor \fBe\fR, the \fBpfm_get_event_counters\fR 
 function returns \fBcounters\fR a bitmask of type \fBpfmlib_regmask_t where 
@@ -72,6 +80,14 @@ and then increment your loop variable until you reach that count.
 The \fBpfm_get_max_event_name_len\fR function returns in \fBlen\fR 
 the maximum length in bytes for the name of the events available on one PMU 
 implementation. The value excludes the string termination character ('\0').
+.sp
+The \fBpfm_get_event_description\fR functions returns in \fBstr\fR the
+description string associated with the event specified in \fBev\Fr. 
+Depending on the PMU model, some events may not have a description in
+which case the \fBstr\fR pointer is set to NULL.  Otherwise, a buffer
+is allocated to hold the entire description text. It is the responsibility
+of the caller to free the buffer when it becomes useless by calling the
+\fBfree(3)\fR function.
 
 .SH RETURN
 All functions return whether or not the call was successful.  A return value of 
@@ -81,9 +97,9 @@ All functions return whether or not the call was successful.  A return value of
 the library has not been initialized properly.
 .TP
 .B PFMLIB_ERR_INVAL
-the event descriptor is invalid, or the pointer argument is NULL.
+the event descriptor or the \fBcnt\fR argument is invalid, or the pointer argument is NULL.
 .SH SEE ALSO
-pfm_get_impl_counters(3)
+pfm_get_impl_counters(3), free(3)
 .SH AUTHOR
 Stephane Eranian <eranian@hpl.hp.com>
 .PP

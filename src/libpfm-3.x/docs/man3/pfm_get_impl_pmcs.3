@@ -1,6 +1,8 @@
 .TH LIBPFM 3  "July, 2003" "" "Linux Programmer's Manual"
 .SH NAME
-pfm_get_impl_pmcs, pfm_get_impl_pmds, pfm_get_impl_counters, pfm_get_num_counters, pfm_get_num_pmcs, pfm_get_num_pmds \- return 
+pfm_get_impl_pmcs, pfm_get_impl_pmds, pfm_get_impl_counters,
+pfm_get_num_counters, pfm_get_num_pmcs, pfm_get_num_pmds,
+pfm_get_hw_counter_width \- return 
 bitmask of implemented PMU registers or number of PMU registers
 .SH SYNOPSIS
 .nf
@@ -9,13 +11,11 @@ bitmask of implemented PMU registers or number of PMU registers
 .BI "int pfm_get_impl_pmcs(pfmlib_regmask_t *" impl_pmcs ");"
 .BI "int pfm_get_impl_pmds(pfmlib_regmask_t *" impl_pmds ");"
 .BI "int pfm_get_impl_counters(pfmlib_regmask_t *" impl_counters ");"
-.BI "int pfm_get_num_counters(unsigned int " *num ");"
-.BI "int pfm_get_num_pmcs(unsigned int " *num ");"
-.BI "int pfm_get_num_pmds(unsigned int " *num ");"
-.BI "int pfm_get_num_counters(unsigned int " *num ");"
-.BI "int pfm_get_hw_counter_width(unsigned int " *width ");"
-.BI "unsigned int pfmlib_regmask_weight(pfmlib_regmask_t " *mask");"
-.BI "int pfmlib_regmask_eq(pfmlib_regmask_t " *mask1", pfmlib_regmask_t " *mask2");"
+.BI "int pfm_get_num_counters(unsigned int *"num ");"
+.BI "int pfm_get_num_pmcs(unsigned int *"num ");"
+.BI "int pfm_get_num_pmds(unsigned int *"num ");"
+.BI "int pfm_get_num_counters(unsigned int *"num ");"
+.BI "int pfm_get_hw_counter_width(unsigned int *"width ");"
 .sp
 .SH DESCRIPTION
 The \fBpfm_get_impl_*\fR functions can be used to figure out which
@@ -35,23 +35,8 @@ different purposes: control, counting, buffers. The counters are used
 to accumulate the number of occurrences of events and are typically the
 one used by monitoring tools.
 .sp
-The returned bitmask must be accessed using the following accessor macros and functions:
-.TP
-.B PFMLIB_REGMASK_ISSET(bmask, idx)
-A macro which returns true if register \fBidx\fR is set in the bitmask pointed by \fBbmask\fR.
-.TP
-.B PFMLIB_REGMASK_SET(bmask, idx)
-A macro which sets the bit corresponding to  register \fBidx\fR in the bitmask pointed by \fBbmask\fR.
-.TP
-.B PFMLIB_REGMASK_CLR(bmask, idx)
-A macro which clears the bit corresponding to  register \fBidx\fR in the bitmask pointed by \fBbmask\fR.
-.TP
-.B pfmlib_regmask_weight(mask)
-A function which returns the number of bits set in \fBmask\fR, i.e., the number of register implemented.
-.TP
-.B pfmlib_regmask_eq(mask1, mask2)
-A function which returns \fB1\fR if \fBmask1\fR and \fBmask2\fR are equal, otherwise it returns \fB0\fR.
-.PP
+The returned bitmask must be accessed using the set of functions provided by the
+library to ensure portability. See related man pages below.
 .sp
 The \fBpfm_get_num_counters\fR function returns in \fBnum\fR the number of counters
 implemented by the host PMU. A counter is a PMD which is used to accumulate the
@@ -76,6 +61,8 @@ otherwise the value is the error code.
 .SH ERRORS
 .B PFMLIB_ERR_NOINIT
 the library has not been initialized properly.
+.SH SEE ALSO
+pfm_regmask_set(3), pfm_regmask_isset(3)
 .SH AUTHOR
 Stephane Eranian <eranian@hpl.hp.com>
 .PP

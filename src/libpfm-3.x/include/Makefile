@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2002-2003 Hewlett-Packard Co
+# Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
 # Contributed by Stephane Eranian <eranian@hpl.hp.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy 
@@ -18,9 +18,6 @@
 # HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
 # CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
 # OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-# 
-# This file is part of libpfm, a performance monitoring support library for
-# applications on Linux/ia64.
 #
 
 TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)/..
@@ -28,16 +25,64 @@ TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)/..
 include $(TOPDIR)/config.mk
 include $(TOPDIR)/rules.mk
 
-HEADERS=perfmon/perfmon.h              \
-	perfmon/perfmon_default_smpl.h \
-	perfmon/pfmlib.h               \
-	perfmon/pfmlib_comp.h          \
-	perfmon/pfmlib_comp_ia64.h     \
-	perfmon/pfmlib_os.h            \
-	perfmon/pfmlib_os_ia64.h       \
-        perfmon/pfmlib_generic_ia64.h  \
-        perfmon/pfmlib_itanium.h       \
-        perfmon/pfmlib_itanium2.h 
+HEADERS=perfmon/perfmon.h          \
+	perfmon/perfmon_dfl_smpl.h \
+	perfmon/pfmlib.h           \
+	perfmon/pfmlib_comp.h      \
+	perfmon/pfmlib_os.h
+
+ifeq ($(CONFIG_PFMLIB_ARCH_IA64),y)
+HEADERS += perfmon/pfmlib_os_ia64.h       \
+	   perfmon/pfmlib_comp_ia64.h     \
+	   perfmon/perfmon_ia64.h         \
+	   perfmon/perfmon_default_smpl.h
+endif
+
+ifeq ($(CONFIG_PFMLIB_ARCH_X86_64),y)
+HEADERS += perfmon/pfmlib_os_x86_64.h   \
+	   perfmon/pfmlib_comp_x86_64.h \
+	   perfmon/perfmon_i386.h
+endif
+
+ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
+HEADERS += perfmon/pfmlib_os_i386.h   \
+	   perfmon/perfmon_i386.h     \
+	   perfmon/pfmlib_comp_i386.h
+endif
+
+ifeq ($(CONFIG_PFMLIB_GENERIC_IA64),y)
+HEADERS += perfmon/pfmlib_gen_ia64.h
+endif
+
+ifeq ($(CONFIG_PFMLIB_ITANIUM),y)
+HEADERS += perfmon/pfmlib_itanium.h
+endif
+
+ifeq ($(CONFIG_PFMLIB_ITANIUM2),y)
+HEADERS += perfmon/pfmlib_itanium2.h
+endif
+
+ifeq ($(CONFIG_PFMLIB_MONTECITO),y)
+HEADERS += perfmon/pfmlib_montecito.h
+endif
+
+ifeq ($(CONFIG_PFMLIB_AMD_X86_64),y)
+HEADERS += perfmon/pfmlib_amd_x86_64.h
+endif
+
+ifeq ($(CONFIG_PFMLIB_I386_P6),y)
+HEADERS += perfmon/pfmlib_i386_p6.h
+endif
+
+ifeq ($(CONFIG_PFMLIB_GEN_IA32),y)
+HEADERS += perfmon/pfmlib_gen_ia32.h
+endif
+
+ifeq ($(CONFIG_PFMLIB_ARCH_MIPS64),y)
+HEADERS += perfmon/pfmlib_os_mips64.h   \
+	   perfmon/perfmon_mips64.h     \
+	   perfmon/pfmlib_comp_mips64.h
+endif
 
 .PHONY: all clean distclean depend
 

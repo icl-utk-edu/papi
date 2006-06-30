@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2004 Hewlett-Packard Development Company, L.P.
+ * Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,7 +20,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * This file is part of libpfm, a performance monitoring support library for
- * applications on Linux/ia64.
+ * applications on Linux.
  */
 
 /*

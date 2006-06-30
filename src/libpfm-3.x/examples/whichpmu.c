@@ -1,7 +1,7 @@
 /*
  * whichpmu.c - example of how to figure out the host PMU model detected by pfmlib
  *
- * Copyright (C) 2002-2003 Hewlett-Packard Co
+ * Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,9 +20,6 @@
  * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * This file is part of libpfm, a performance monitoring support library for
- * applications on Linux/ia64.
  */
 #include <sys/types.h>
 #include <stdio.h>
@@ -40,12 +37,14 @@ main(void)
 	unsigned int num_pmds, num_pmcs, num_counters, num_events;
 	unsigned int width = 0;
 	unsigned int i;
+	int ret;
 	char model[MAX_PMU_NAME_LEN];
 
 	/*
 	 * Initialize pfm library (required before we can use it)
 	 */
-	if (pfm_initialize() != PFMLIB_SUCCESS) {
+	ret = pfm_initialize();
+	if (ret != PFMLIB_SUCCESS) {
 		printf("Can't initialize library\n");
 		return 1;
 	}
@@ -77,10 +76,10 @@ main(void)
 
 	printf("PMU model detected by pfmlib: %s\n", model);
 
-	printf("]\nnumber of PMD registers     : %u\n", num_pmds);
+	printf("number of PMD registers     : %u\n", num_pmds);
 	printf("implemented PMD registers   : [ ");
 	for (i=0; num_pmds; i++) {
-		if (PFMLIB_REGMASK_ISSET(&impl_pmds, i) == 0) continue;
+		if (pfm_regmask_isset(&impl_pmds, i) == 0) continue;
 		printf("%-3u", i);
 		num_pmds--;
 	}
@@ -88,7 +87,7 @@ main(void)
 	printf("]\nnumber of PMC registers     : %u\n", num_pmcs);
 	printf("implemented PMC registers   : [ ");
 	for (i=0; num_pmcs; i++) {
-		if (PFMLIB_REGMASK_ISSET(&impl_pmcs, i) == 0) continue;
+		if (pfm_regmask_isset(&impl_pmcs, i) == 0) continue;
 		printf("%-3u", i);
 		num_pmcs--;
 	}
@@ -96,7 +95,7 @@ main(void)
 	printf("]\nnumber of counters          : %u\n", num_counters);
 	printf("implemented counters        : [ ");
 	for (i=0; num_counters; i++) {
-		if (PFMLIB_REGMASK_ISSET(&impl_counters, i) == 0) continue;
+		if (pfm_regmask_isset(&impl_counters, i) == 0) continue;
 		printf("%-3u", i);
 		num_counters--;
 	}

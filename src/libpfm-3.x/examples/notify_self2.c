@@ -1,7 +1,7 @@
 /*
  * notify_self2.c - example of how you can use overflow notifications with F_SETSIG
  *
- * Copyright (C) 2002-2003 Hewlett-Packard Co
+ * Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,8 +22,9 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * This file is part of libpfm, a performance monitoring support library for
- * applications on Linux/ia64.
+ * applications on Linux.
  */
+#define _GNU_SOURCE 1
 #include <sys/types.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -38,25 +39,18 @@
 #include <perfmon/perfmon.h>
 #include <perfmon/pfmlib.h>
 
+#include "detect_pmcs.h"
 
-#define SMPL_PERIOD	1000000000UL
-
-/*
- * This array must contain at least 2 events
- */
-static char *event_list[]={
-	"cpu_cycles",
-	"IA64_INST_RETIRED",
-};
-#define N_EVENTS	sizeof(event_list)/sizeof(const char *)
+#define SMPL_PERIOD	1000000000ULL
 
 static volatile unsigned long notification_received;
 
 #define NUM_PMCS PFMLIB_MAX_PMCS
 #define NUM_PMDS PFMLIB_MAX_PMDS
 
-static pfarg_reg_t pd[NUM_PMDS];
+static pfarg_pmd_t pd[NUM_PMDS];
 static int ctx_fd;
+static char *event1_name;
 
 static void fatal_error(char *fmt,...) __attribute__((noreturn));
 
@@ -72,43 +66,44 @@ fatal_error(char *fmt, ...)
 	exit(1);
 }
 
+static void
+warning(char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+}
 
 static void
-sigio_handler(int n, struct siginfo *info, struct sigcontext *sc)
+sigio_handler(int n, struct siginfo *info, void *data)
 {
 	pfm_msg_t msg;
-	int fd = info->si_fd;
-	int r;
+	int fd;
+	int r =0;
 
+	if (info == NULL) {
+		fatal_error("info is NULL\n");
+	}
+	fd = info->si_fd;
 	if (fd != ctx_fd) {
 		fatal_error("handler does not get valid file descriptor\n");
 	}
-
-	if (perfmonctl(fd, PFM_READ_PMDS, pd+1, 1) == -1) {
-		fatal_error("PFM_READ_PMDS: %s", strerror(errno));
-	}
-
+	if (event1_name && pfm_read_pmds(fd, pd+1, 1))
+		fatal_error("pfm_read_pmds: %s", strerror(errno));
+retry:
 	r = read(fd, &msg, sizeof(msg));
 	if (r != sizeof(msg)) {
+		if(r == -1 && errno == EINTR) {
+			warning("read interrupted, retrying\n");
+			goto retry;
+		}
 		fatal_error("cannot read overflow message: %s\n", strerror(errno));
 	}
 
-	if (msg.pfm_gen_msg.msg_type != PFM_MSG_OVFL) {
-		fatal_error("unexpected msg type: %d\n",msg.pfm_gen_msg.msg_type);
-	}
-
-	/*
-	 * XXX: risky to do printf() in signal handler!
-	 */
-	printf("Notification %lu: %"PRIu64" %s\n",
-		notification_received,
-		pd[1].reg_value,
-		event_list[1]);
-
-	/*
-	 * At this point, the counter used for the sampling period has already
-	 * be reset by the kernel because we are in non-blocking mode, self-monitoring.
-	 */
+	if (msg.type != PFM_MSG_OVFL)
+		fatal_error("unexpected msg type: %d\n",msg.type);
 
 	/*
 	 * increment our notification counter
@@ -116,11 +111,18 @@ sigio_handler(int n, struct siginfo *info, struct sigcontext *sc)
 	notification_received++;
 
 	/*
+	 * XXX: risky to do printf() in signal handler!
+	 */
+	if (event1_name)
+		printf("Notification %lu: %"PRIu64" %s\n", notification_received, pd[1].reg_value, event1_name);
+	else
+		printf("Notification %lu\n", notification_received);
+
+	/*
 	 * And resume monitoring
 	 */
-	if (perfmonctl(fd, PFM_RESTART,NULL, 0) == -1) {
-		fatal_error("PFM_RESTART: %s", strerror(errno));
-	}
+	if (pfm_restart(fd))
+		fatal_error("pfm_restart: %d\n", errno);
 }
 
 /*
@@ -132,37 +134,40 @@ busyloop(void)
 	/*
 	 * busy loop to burn CPU cycles
 	 */
-	for(;notification_received < 3;) ;
+	for(;notification_received < 20;) ;
 }
 
 
 int
 main(int argc, char **argv)
 {
-	char **p;
-	pfarg_context_t ctx[1];
+	pfarg_ctx_t ctx;
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
-	pfarg_reg_t pc[NUM_PMCS];
+	pfarg_pmc_t pc[NUM_PMCS];
 	pfarg_load_t load_args;
 	pfmlib_options_t pfmlib_options;
 	struct sigaction act;
-	unsigned int i;
+	unsigned int i, j, num_counters;
+	size_t len;
 	int ret;
 
 	/*
 	 * Initialize pfm library (required before we can use it)
 	 */
-	if (pfm_initialize() != PFMLIB_SUCCESS) {
-		printf("Can't initialize library\n");
-		exit(1);
-	}
+	ret = pfm_initialize();
+	if (ret != PFMLIB_SUCCESS)
+		fatal_error("Cannot initialize library: %s\n", pfm_strerror(ret));
 
 	/*
 	 * Install the signal handler (SIGIO)
+	 *
+	 * SA_SIGINFO required on some platforms
+	 * to get siginfo passed to handler.
 	 */
 	memset(&act, 0, sizeof(act));
 	act.sa_handler = (sig_t)sigio_handler;
+	act.sa_flags   = SA_SIGINFO;
 	sigaction (SIGIO, &act, 0);
 
 	/*
@@ -173,17 +178,20 @@ main(int argc, char **argv)
 	pfm_set_options(&pfmlib_options);
 
 	memset(pc, 0, sizeof(pc));
-	memset(ctx, 0, sizeof(ctx));
+	memset(&ctx, 0, sizeof(ctx));
 	memset(&load_args, 0, sizeof(load_args));
 	memset(&inp,0, sizeof(inp));
 	memset(&outp,0, sizeof(outp));
 
-	p = event_list;
-	for (i=0; i < N_EVENTS ; i++, p++) {
-		if (pfm_find_event(*p, &inp.pfp_events[i].event) != PFMLIB_SUCCESS) {
-			fatal_error("Cannot find %s event\n", *p);
-		}
-	}
+	pfm_get_num_counters(&num_counters);
+
+	if (pfm_get_cycle_event(&inp.pfp_events[0].event) != PFMLIB_SUCCESS)
+		fatal_error("cannot find cycle event\n");
+
+	if (pfm_get_inst_retired_event(&inp.pfp_events[1].event) != PFMLIB_SUCCESS)
+		fatal_error("cannot find inst retired event\n");
+
+	i = 2;
 
 	/*
 	 * set the default privilege mode for all counters:
@@ -191,57 +199,87 @@ main(int argc, char **argv)
 	 */
 	inp.pfp_dfl_plm = PFM_PLM3;
 
+	if (i > num_counters) {
+		i = num_counters;
+		printf("too many events provided (max=%d events), using first %d event(s)\n", num_counters, i);
+	}
+
 	/*
 	 * how many counters we use
 	 */
 	inp.pfp_event_count = i;
 
-	/*
-	 * let the library figure out the values for the PMCS
-	 */
-	if ((ret=pfm_dispatch_events(&inp, NULL, &outp, NULL)) != PFMLIB_SUCCESS) {
-		fatal_error("Cannot configure events: %s\n", pfm_strerror(ret));
+	if (i > 1) {
+		pfm_get_max_event_name_len(&len);
+		event1_name = malloc(len+1);
+		if (event1_name == NULL)
+			fatal_error("cannot allocate event name\n");
+
+		pfm_get_event_name(inp.pfp_events[1].event, event1_name, len+1);
 	}
 
 	/*
 	 * now create the context for self monitoring/per-task
 	 */
-	if (perfmonctl(0, PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
+	if (pfm_create_context(&ctx, NULL, 0)) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
 		fatal_error("Can't create PFM context %s\n", strerror(errno));
 	}
-	ctx_fd = ctx->ctx_fd;
+	ctx_fd = ctx.ctx_fd;
+
+	/*
+	 * build the pfp_unavail_pmcs bitmask by looking
+	 * at what perfmon has available. It is not always
+	 * the case that all PMU registers are actually available
+	 * to applications. For instance, on IA-32 platforms, some
+	 * registers may be reserved for the NMI watchdog timer.
+	 *
+	 * With this bitmap, the library knows which registers NOT to
+	 * use. Of source, it is possible that no valid assignement may
+	 * be possible if certina PMU registers  are not available.
+	 */
+	detect_unavail_pmcs(ctx_fd, &inp.pfp_unavail_pmcs);
+
+	/*
+	 * let the library figure out the values for the PMCS
+	 */
+	if ((ret=pfm_dispatch_events(&inp, NULL, &outp, NULL)) != PFMLIB_SUCCESS)
+		fatal_error("Cannot configure events: %s\n", pfm_strerror(ret));
 
 	/*
 	 * Now prepare the argument to initialize the PMDs and PMCS.
 	 * We use pfp_pmc_count to determine the number of registers to
 	 * setup. Note that this field can be >= pfp_event_count.
 	 */
-
 	for (i=0; i < outp.pfp_pmc_count; i++) {
 		pc[i].reg_num   = outp.pfp_pmcs[i].reg_num;
 		pc[i].reg_value = outp.pfp_pmcs[i].reg_value;
 	}
 
-	for (i=0; i < inp.pfp_event_count; i++) {
-		pd[i].reg_num   = pc[i].reg_num;
+	/*
+	 * figure out pmd mapping from output pmc
+	 */
+	for (i=0, j=0; i < inp.pfp_event_count; i++) {
+		pd[i].reg_num   = outp.pfp_pmcs[i].reg_pmd_num;
+		for(; j < outp.pfp_pmc_count; j++)  if (outp.pfp_pmcs[j].reg_evt_idx != i) break;
 	}
 	/*
 	 * We want to get notified when the counter used for our first
 	 * event overflows
 	 */
-	pc[0].reg_flags 	|= PFM_REGFL_OVFL_NOTIFY;
-	pc[0].reg_reset_pmds[0] |= 1UL << outp.pfp_pmcs[1].reg_num;
+	pd[0].reg_flags 	|= PFM_REGFL_OVFL_NOTIFY;
+	if (inp.pfp_event_count > 1)
+		pd[0].reg_reset_pmds[0] |= 1UL << pd[1].reg_num;
 
 	/*
 	 * we arm the first counter, such that it will overflow
 	 * after SMPL_PERIOD events have been observed
 	 */
-	pd[0].reg_value       = (~0UL) - SMPL_PERIOD + 1;
-	pd[0].reg_long_reset  = (~0UL) - SMPL_PERIOD + 1;
-	pd[0].reg_short_reset = (~0UL) - SMPL_PERIOD + 1;
+	pd[0].reg_value       = - SMPL_PERIOD;
+	pd[0].reg_long_reset  = - SMPL_PERIOD;
+	pd[0].reg_short_reset = - SMPL_PERIOD;
 
 	/*
 	 * Now program the registers
@@ -250,38 +288,37 @@ main(int argc, char **argv)
 	 * the kernel because, as we said earlier, pc may contain more elements than
 	 * the number of events we specified, i.e., contains more than counting monitors.
 	 */
-	if (perfmonctl(ctx_fd, PFM_WRITE_PMCS, pc, outp.pfp_pmc_count) == -1) {
-		fatal_error("perfmonctl error PFM_WRITE_PMCS errno %d\n",errno);
-	}
+	if (pfm_write_pmcs(ctx_fd, pc, outp.pfp_pmc_count))
+		fatal_error("pfm_write_pmcs error errno %d\n",errno);
 
-	if (perfmonctl(ctx_fd, PFM_WRITE_PMDS, pd, inp.pfp_event_count) == -1) {
-		fatal_error("perfmonctl error PFM_WRITE_PMDS errno %d\n",errno);
-	}
+	/*
+	 * To be read, each PMD must be either written or declared
+	 * as being part of a sample (reg_smpl_pmds)
+	 */
+	if (pfm_write_pmds(ctx_fd, pd, inp.pfp_event_count))
+		fatal_error("pfm_write_pmds error errno %d\n",errno);
 
 	/*
 	 * we want to monitor ourself
 	 */
 	load_args.load_pid = getpid();
-
-	if (perfmonctl(ctx_fd, PFM_LOAD_CONTEXT, &load_args, 1) == -1) {
-		fatal_error("perfmonctl error PFM_WRITE_PMDS errno %d\n",errno);
-	}
+	if (pfm_load_context(ctx_fd, &load_args))
+		fatal_error("pfm_load_context error errno %d\n",errno);
 
 	/*
 	 * setup asynchronous notification on the file descriptor
 	 */
 	ret = fcntl(ctx_fd, F_SETFL, fcntl(ctx_fd, F_GETFL, 0) | O_ASYNC);
-	if (ret == -1) {
+	if (ret == -1)
 		fatal_error("cannot set ASYNC: %s\n", strerror(errno));
-	}
 
 	/*
 	 * get ownership of the descriptor
 	 */
 	ret = fcntl(ctx_fd, F_SETOWN, getpid());
-	if (ret == -1) {
+	if (ret == -1)
 		fatal_error("cannot setown: %s\n", strerror(errno));
-	}
+
 #ifndef _GNU_SOURCE
 #error "this program must be compiled with -D_GNU_SOURCE"
 #else
@@ -295,9 +332,8 @@ main(int argc, char **argv)
 	 * multiple tasks from a single thread.
 	 */
 	ret = fcntl(ctx_fd, F_SETSIG, SIGIO);
-	if (ret == -1) {
+	if (ret == -1)
 		fatal_error("cannot setsig: %s\n", strerror(errno));
-	}
 #endif
 	/*
 	 * Let's roll now
@@ -312,6 +348,9 @@ main(int argc, char **argv)
 	 * free our context
 	 */
 	close(ctx_fd);
+
+	if (event1_name)
+		free(event1_name);
 
 	return 0;
 }
