@@ -12,11 +12,10 @@ TARGETS = serial multiplex_and_pthreads shared
 # GNU G77/GCC section
 #
 
-F77   		= g77 -Wall
-CC		= gcc -Wall 
 CC_R    	= $(CC) -pthread
 CC_SHR		= $(CC) -fPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
-FFLAGS		= -ffixed-line-length-132
+FFLAGS		+= -ffixed-line-length-132
+CFLAGS		+= -Wall 
 
 #
 #  Intel compilers
@@ -71,60 +70,58 @@ ifneq (,$(wildcard /etc/sgi-release))
 endif
 
 ifeq (,$(PFM_PREFIX))
-	PFM ?= ./libpfm-$(VERSION)
+	PFM_ROOT := ./libpfm-$(VERSION)
 ifeq (2.x,$(VERSION))
-	PFM_LIB_PATH ?= $(PFM)/libpfm
+	PFM_LIB_PATH ?= $(PFM_ROOT)/libpfm
 else
-	PFM_LIB_PATH ?= $(PFM)/lib
+	PFM_LIB_PATH ?= $(PFM_ROOT)/lib
 endif
-	PFM_INC_PATH ?= $(PFM)/include
+	PFM_INC_PATH ?= $(PFM_ROOT)/include
 else
 	PFM_LIB_PATH ?= $(PFM_PREFIX)/lib
 	PFM_INC_PATH ?= $(PFM_PREFIX)/include
 endif
 
-CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) $(NOTLS) $(NOPTTIMER) $(ALTIX)
-
 CFLAGS-2.x := -DPFM20 -D_GNU_SOURCE
 CFLAGS-3.x := -DPFM30 -D_GNU_SOURCE  
-
-PFM_OBJS-2.x := pfmlib_generic.o pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o 
-PFM_OBJS-3.x := pfmlib_generic_ia64.o pfmlib_os.o pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o 
-
-CFLAGS += $(CFLAGS-$(VERSION))
-PFM_OBJS := $(PFM_OBJS-$(VERSION))  
+CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) $(NOTLS) $(NOPTTIMER) $(ALTIX) $(CFLAGS-$(VERSION))
 
 MISCHDRS = pfmwrap.h
 MISCSRCS = #linux.c
 SHLIBDEPS = -L$(PFM_LIB_PATH) -lpfm
+PFM_OBJS = $(shell ar t $(PFM_LIB_PATH)/libpfm.a)
+ifeq (,$(PERFCTR_OBJS))
+	PERFCTR_OBJS = dummy
+endif
 MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
 
 include Makefile.inc
 
 $(PFM_LIB_PATH)/libpfm.a:
 ifeq (,${PFM_PREFIX})
-	$(MAKE) -C $(PFM) CC="$(CC)"
+	$(MAKE) CC='$(CC)' -C $(PFM_ROOT) 
 else
 	@echo '$@ not installed!'; exit 1
 endif
 
 $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
 	ar xv $<
+	$(MAKE) $(MAKEFLAGS)
 
 linux.o: linux.c
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
 
 native_clean:
 ifeq (,${PFM_PREFIX})
-	rm -f $(MISCOBJS); $(MAKE) -C $(PFM) clean
+	rm -f $(MISCOBJS); $(MAKE) -C $(PFM_ROOT) clean
 endif
 
 native_install:
 ifeq (,${PFM_PREFIX})
-	$(MAKE) -C $(PFM) DESTDIR=$(PREFIX) install
+	$(MAKE) -C $(PFM_ROOT) DESTDIR=$(PREFIX) install
 endif
 
 native_clobber:
 ifeq (,${PFM_PREFIX})
-	 $(MAKE) -C $(PFM) distclean
+	 $(MAKE) -C $(PFM_ROOT) distclean
 endif

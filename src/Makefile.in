@@ -6,9 +6,12 @@ NOPTTIMER = @NOPTTIMER@
 ALTIX	  = @altix@
 PMINIT	  = @PMINIT@
 PAPI_DATADIR = @PAPI_DATADIR@
-# PFM_PREFIX= @pfm_prefix@
-# PFM	  = @pfm@
-# PERFCTR_PREFIX= @perfctr_prefix@
-# PERFCTR	  = @perfctr@
+F77	  = @F77@
+CC	  = @CC@
+PFM_PREFIX	= @pfm_prefix@ 
+PFM_ROOT  	= @pfm@
+PERFCTR_PREFIX 	= @perfctr_prefix@
+PERFCTR_ROOT 	= @perfctr@
+DEBUGFLAGS	= @DEBUGFLAGS@
 
 include ./Makefile.$(MAKEVER)

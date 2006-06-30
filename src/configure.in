@@ -4,7 +4,7 @@
 
 
 AC_PREREQ(2.59)
-AC_INIT(FULL-PACKAGE-NAME, VERSION, BUG-REPORT-ADDRESS)
+AC_INIT(PAPI, 3.2.2, ptools-perfapi@cs.utk.edu)
 AC_CONFIG_SRCDIR([papi.c])
 AC_CONFIG_HEADER([config.h])
 
@@ -159,16 +159,44 @@ case "$bitmode" in
       ;;
 esac
 
-dnl AC_ARG_WITH(perfctr,
-dnl             [  --with-perfctr=<path>     Specify path of perfctr on linux/x86/x86_64/PPC/PPC64 system ],
-dnl             [perfctr=$withval],
-dnl             [perfctr=./perfctr-2.6.x]
-dnl             )
-dnl AC_ARG_WITH(pfm,
-dnl             [  --with-pfm=<path>     Specify path of pfm build tree on linux/ia64 system ],
-dnl             [pfm=$withval],
-dnl             [pfm=default]
-dnl             )
+AC_ARG_WITH(debug,
+            [  --with-debug=<no,yes,memory>     Build a debugging version of the library ],
+            [debug=$withval],
+            [debug=no]
+            )
+case "$debug" in
+   yes)
+      DEBUGFLAGS="-DDEBUG" ;;
+   memory)
+      DEBUGFLAGS="" ;;
+   no)
+      DEBUGFLAGS="-DPAPI_NO_MEMORY_MANAGEMENT" ;;
+   *)					     
+      echo "The debug option you specified is not supported"
+      exit -1	
+      ;;
+esac
+
+AC_ARG_WITH(perfctr,
+            [  --with-perfctr=<path>     Specify path to prebuilt perfctr distribution ],
+            [perfctr=$withval],
+            [perfctr=""]
+            )
+AC_ARG_WITH(perfctr_prefix,
+            [  --with-perfctr-prefix=<path>     Specify prefix to installed perfctr distribution ],
+            [perfctr_prefix=$withval],
+            [perfctr_prefix=""]
+            )
+AC_ARG_WITH(pfm,
+           [  --with-pfm=<path>     Specify path to prebuilt pfm distribution ],
+           [pfm=$withval],
+           [pfm=""]
+            )
+AC_ARG_WITH(pfm_prefix,
+           [  --with-pfm-prefix=<path>     Specify prefix to installed pfm distribution ],
+           [pfm_prefix=$withval],
+           [pfm_prefix=""]
+            )
 AC_ARG_WITH(pmapi,
             [  --with-pmapi=<path>     Specify path of pmapi on aix system ],
             [pmapi=$withval],
@@ -204,7 +232,6 @@ case "$OS" in
       ;;
 esac 
 #AC_MSG_RESULT($PMAPI)
-AC_SUBST(PMAPI)
 
 case "$OS" in
    aix)
@@ -357,17 +384,16 @@ case "$MAKEVER" in
     ;;
 esac
 
-AC_SUBST(MAKEVER)
-AC_SUBST(prefix)
-
 # Checks for programs.
 AC_PROG_AWK
 AC_PROG_CC
+AC_PROG_F77
 AC_PROG_CPP
 #AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_RANLIB
+AC_PROG_GCC_TRADITIONAL
 
 # Checks for libraries.
 if test "$OS" = "solaris"; then
@@ -377,9 +403,35 @@ AC_CHECK_LIB([cpc], [cpc_take_sample], [], [
       ])
 fi
 
-AC_CHECK_LIB([dl], [dlopen])
+#AC_CHECK_LIB([dl], [dlopen])
 
-AC_CHECK_LIB([m], [sqrt])
+#AC_CHECK_LIB([m], [sqrt])
+
+if test "$perfctr" != ""; then
+AC_CHECK_LIB([perfctr], [vperfctr_open], [], [
+      echo "Error, libperfctr.a could not be found, please build the distribution and set LDFLAGS and rerun configure."
+      exit -1
+      ])
+fi
+if test "$perfctr_prefix" != ""; then
+AC_CHECK_LIB([perfctr], [vperfctr_open], [], [
+      echo "Error, libperfctr.a could not be found, please set LDFLAGS and rerun configure."
+      exit -1
+      ])
+fi
+
+if test "$pfm" != ""; then
+AC_CHECK_LIB([pfm], [pfm_initialize], [], [
+      echo "Error, libpfm.a could not be found, please build the distribution and set LDFLAGS and rerun configure."
+      exit -1
+      ])
+fi
+if test "$pfm_prefix" != ""; then
+AC_CHECK_LIB([pfm], [pfm_initialize], [], [
+      echo "Error, libpfm.a could not be found, please set LDFLAGS and rerun configure."
+      exit -1
+      ])
+fi
 
 if test "$CPU" = "itanium"; then
 AC_CHECK_LIB([pfm], [pfm_initialize])
@@ -431,7 +483,6 @@ else
 fi
 PAPI_DATADIR=`eval echo "$datadir/"`
 AC_DEFINE_UNQUOTED(PAPI_DATADIR, "$PAPI_DATADIR", [package data directory])
-AC_SUBST(PAPI_DATADIR)
 AC_CHECK_LIB([pthread], [pthread_self])
 
 if test "$OS" = "osf1"; then
@@ -443,38 +494,37 @@ AC_CHECK_LIB([lipr], [main])
 
 # Checks for header files.
 AC_HEADER_STDC
+AC_HEADER_TIME
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS([assert.h ctype.h dirent.h dlfcn.h errno.h expat.h fcntl.h inttypes.h libgen.h limits.h malloc.h math.h memory.h signal.h stdarg.h stdio.h stdlib.h string.h stropts.h sys/ioctl.h sys/mman.h sys/processor.h sys/procfs.h sys/resource.h sys/stat.h sys/syscall.h sys/sysinfo.h sys/sysmp.h sys/time.h sys/timers.h sys/times.h sys/types.h ucontext.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
-AC_TYPE_UID_T
 AC_C_INLINE
+AC_C_VOLATILE
+AC_TYPE_UID_T
 AC_TYPE_MODE_T
 AC_TYPE_OFF_T
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
+AC_TYPE_SIGNAL
 AC_CHECK_DECLS([sys_siglist])
-AC_HEADER_TIME
-AC_C_VOLATILE
 
 # Checks for library functions.
 AC_FUNC_FORK
-AC_PROG_GCC_TRADITIONAL
 AC_FUNC_MALLOC
 AC_FUNC_MEMCMP
 AC_FUNC_MMAP
 AC_FUNC_REALLOC
 AC_FUNC_SELECT_ARGTYPES
 AC_FUNC_SETVBUF_REVERSED
-AC_TYPE_SIGNAL
 AC_FUNC_STRCOLL
 AC_FUNC_STRERROR_R
 AC_FUNC_VPRINTF
-#AC_CHECK_FUNCS([bzero clock_gettime getcwd gethrtime getpagesize gettimeofday memchr memmove memset munmap realpath select sqrt strcasecmp strchr strcspn strdup strerror strncasecmp strpbrk strrchr strspn strstr strtol strtoul sysinfo uname])
+AC_CHECK_FUNCS([bzero clock_gettime getcwd gethrtime getpagesize gettimeofday memchr memmove memset munmap realpath select sqrt strcasecmp strchr strcspn strdup strerror strncasecmp strpbrk strrchr strspn strstr strtol strtoul sysinfo uname])
 
 AC_ARG_WITH(tls,
-            [  --with-tls=<no>         To disable tls support ],
+            [  --with-tls=<no>         To disable GCC thread local storage support and use the PAPI implementation ],
             [tls=$withval],
             [tls=yes]
             )
@@ -487,20 +537,22 @@ case "$tls" in
       with_tls="__thread"
       AC_MSG_CHECKING(for working __thread)
       #echo $with_tls
+      OLDLDFLAGS=$LDFLAGS
+      LDFLAGS=""
       AC_TRY_RUN([
              #include <pthread.h>
-
+             #include <unistd.h>
              extern __thread int i;
              static int res1, res2;
 
              void thread_main (void *arg)
              {
-               i = arg;
+               i = (int)arg;
                sleep (1);
-               if (arg == 1)
-                  res1 = (i == arg);
+               if ((int)arg == 1)
+		 res1 = (i == (int)arg);
                else
-                  res2 = (i == arg);
+		 res2 = (i == (int)arg);
              }
 
 	     __thread int i;
@@ -511,8 +563,8 @@ case "$tls" in
 
                i = 5;
 
-               pthread_create (&t1, NULL, thread_main, 1);
-               pthread_create (&t2, NULL, thread_main, 2);
+               pthread_create (&t1, NULL, thread_main, (void *)1);
+               pthread_create (&t2, NULL, thread_main, (void *)2);
 
                pthread_join (t1, NULL);
                pthread_join (t2, NULL);
@@ -525,7 +577,7 @@ case "$tls" in
             AC_MSG_RESULT(no)
             with_tls=pthread
       ])
-
+      LDFLAGS=$OLDLDFLAGS
      #if test "x$TARGET" = "xAMD64" -o "x$TARGET" = "xX86"; then
      if test "$OS" = "linux"; then
         if test "x$with_tls" = "x__thread"; then
@@ -564,11 +616,8 @@ case "$tls" in
  esac
 
 #AC_MSG_RESULT($NOTLS)
-AC_SUBST(NOTLS)
-
-
 AC_ARG_WITH(PTtimer,
-            [  --with-PTtimer=<no>         To disable PTtimer support ],
+            [  --with-PTtimer=<no>         To disable per thread times() and use /proc instead ],
             [PTtimer=$withval],
             [PTtimer=yes]
             )
@@ -670,14 +719,21 @@ case "$PTtimer" in
  esac
 
 #AC_MSG_RESULT($NOPTTIMER)
+AC_SUBST(DEBUGFLAGS)
 AC_SUBST(NOPTTIMER)
-
+AC_SUBST(MAKEVER)
+AC_SUBST(prefix)
+AC_SUBST(PMAPI)
+AC_SUBST(F77)
+AC_SUBST(CC)
+AC_SUBST(PAPI_DATADIR)
+AC_SUBST(NOTLS)
 AC_SUBST(altix)
 AC_SUBST(PMINIT)
-# AC_SUBST(perfctr_prefix)
-# AC_SUBST(perfctr)
-# AC_SUBST(pfm_prefix)
-# AC_SUBST(pfm)
+AC_SUBST(perfctr_prefix)
+AC_SUBST(perfctr)
+AC_SUBST(pfm_prefix)
+AC_SUBST(pfm)
 
 get_bitmode()
 {
