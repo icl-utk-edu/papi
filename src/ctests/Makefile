@@ -6,14 +6,14 @@ MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
-SERIAL  = realtime first exeinfo zero zero_fork branches dmem_info all_native_events all_events derived high-level2 describe memory  \
+SERIAL  = subinfo realtime first exeinfo zero zero_fork branches dmem_info all_native_events all_events derived high-level2 describe memory  \
 	zero_flip low-level high-level eventname case1 case2 data_range p4_lst_ins \
 	calibrate flops second johnmay2 \
 	overflow overflow_force_software overflow_single_event \
     overflow_twoevents timer_overflow overflow2 \
 	matrix-hl tenth encode encode2 \
 	profile sprofile profile_twoevents earprofile byte_profile\
-	ipc native overflow_index overflow_one_and_read acpi
+	ipc native overflow_index overflow_one_and_read acpi 
 BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
 TESTS 	= $(PTHREADS) $(SERIAL) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM) $(SHARED)
@@ -257,6 +257,9 @@ shlib: shlib.c $(PAPILIB) $(UTILOBJS)
 
 exeinfo: exeinfo.c $(PAPILIB) $(UTILOBJS)
 	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) exeinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o exeinfo 
+
+subinfo: subinfo.c $(PAPILIB) $(UTILOBJS)
+	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) subinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o subinfo 
 
 prof_utils.o: prof_utils.c papi_test.h prof_utils.h
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c prof_utils.c
