@@ -1,7 +1,7 @@
 #include "papi.h"
 #include "papi_internal.h"
 
-int get_memory_info(PAPI_hw_info_t * mem_info)
+int _papi_hwd_get_memory_info(PAPI_hw_info_t *hw, int id)
 {
    return PAPI_OK;
 }

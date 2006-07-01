@@ -14,8 +14,6 @@
 #include "papi_vector.h"
 #include "papi_memory.h"
 
-/* Prototypes */
-static int mdi_init();
 #ifdef PPC64
 extern int setup_ppc64_presets(int cputype);
 extern int ppc64_setup_vector_table(papi_vectors_t *);
@@ -149,6 +147,8 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {
   int retval;
   struct perfctr_info info;
+  char abiv[PAPI_MIN_STR_LEN];
+
 #if defined(PERFCTR26)
   int fd;
 #else
@@ -160,10 +160,6 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   retval = _papi_hwi_setup_vector_table( vtable, _linux_os_table);
   if ( retval != PAPI_OK ) return(retval);
 #endif
-
-   retval = mdi_init();
-   if ( retval ) 
-     return(retval);
 
  #if defined(PERFCTR26)
   /* Get info from the kernel */
@@ -207,8 +203,6 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    if (retval)
       return (retval);
 
-   strcpy(_papi_hwi_system_info.substrate, "$Id$");
-
    /* Setup presets */
 #if (!defined(PPC64) && !defined(PPC32))
    if ( check_p4(info.cpu_type) ){
@@ -237,17 +231,26 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    if ( retval ) 
      return(retval);
 
-   /* Fixup stuff from linux.c */
+   strcpy(_papi_hwi_system_info.sub_info.name, "$Id$");
+   strcpy(_papi_hwi_system_info.sub_info.version, "$Revision$");
+   sprintf(abiv,"0x%08X",info.abi_version);
+   strcpy(_papi_hwi_system_info.sub_info.support_version, abiv);
+   strcpy(_papi_hwi_system_info.sub_info.kernel_version, info.driver_version);
+   _papi_hwi_system_info.sub_info.num_cntrs = PERFCTR_CPU_NRCTRS(&info);
+   _papi_hwi_system_info.sub_info.fast_counter_read = (info.cpu_features & PERFCTR_FEATURE_RDPMC) ? 1 : 0;
+   _papi_hwi_system_info.sub_info.fast_real_timer = 1;
+   _papi_hwi_system_info.sub_info.fast_virtual_timer = 1;
+   _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
+   _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
+   _papi_hwi_system_info.sub_info.default_granularity = PAPI_GRN_THR;
+   _papi_hwi_system_info.sub_info.available_granularities = PAPI_GRN_THR;
+   _papi_hwi_system_info.sub_info.hardware_intr =
+       (info.cpu_features & PERFCTR_FEATURE_PCINT) ? 1 : 0;
+
+   SUBDBG("Hardware/OS %s support counter generated interrupts\n",
+          _papi_hwi_system_info.sub_info.hardware_intr ? "does" : "does not");
 
    strcpy(_papi_hwi_system_info.hw_info.model_string, PERFCTR_CPU_NAME(&info));
-
-   _papi_hwi_system_info.supports_hw_overflow =
-       (info.cpu_features & PERFCTR_FEATURE_PCINT) ? 1 : 0;
-   SUBDBG("Hardware/OS %s support counter generated interrupts\n",
-          _papi_hwi_system_info.supports_hw_overflow ? "does" : "does not");
-
-   _papi_hwi_system_info.num_cntrs = PERFCTR_CPU_NRCTRS(&info);
-   _papi_hwi_system_info.num_gp_cntrs = PERFCTR_CPU_NRCTRS(&info);
    _papi_hwi_system_info.hw_info.model = info.cpu_type;
 #if (defined(PPC64)||defined(PPC32))
    _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_IBM;
@@ -331,22 +334,6 @@ int _papi_hwd_init(hwd_context_t * ctx) {
    /* Start the per thread/process virtualized TSC */
    if (vperfctr_control(ctx->perfctr, &tmp) < 0)
      { PAPIERROR( VCNTRL_ERROR); return(PAPI_ESYS); }
-
-   return (PAPI_OK);
-}
-
-/* Initialize the system-specific settings */
-/* Machine info structure. -1 is unused. */
-static int mdi_init() {
-     /* Name of the substrate we're using */
-    strcpy(_papi_hwi_system_info.substrate, "$Id$");
-   _papi_hwi_system_info.supports_hw_overflow = HW_OVERFLOW;
-   _papi_hwi_system_info.supports_64bit_counters = 1;
-   _papi_hwi_system_info.supports_inheritance = 1;
-   _papi_hwi_system_info.supports_real_usec = 1;
-   _papi_hwi_system_info.supports_real_cyc = 1;
-   _papi_hwi_system_info.supports_virt_usec = 1;
-   _papi_hwi_system_info.supports_virt_cyc = 1;
 
    return (PAPI_OK);
 }
@@ -829,4 +816,3 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
    return (((long_long)vperfctr_read_tsc(ctx->perfctr) * tb_scale_factor) /
            (long_long)_papi_hwi_system_info.hw_info.mhz);
 }
-

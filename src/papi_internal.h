@@ -39,7 +39,8 @@
 #define DEBUG_MULTIPLEX         0x20
 #define DEBUG_OVERFLOW          0x40
 #define DEBUG_PROFILE           0x80
-#define DEBUG_ALL               (DEBUG_SUBSTRATE|DEBUG_API|DEBUG_INTERNAL|DEBUG_THREADS|DEBUG_MULTIPLEX|DEBUG_OVERFLOW|DEBUG_PROFILE)
+#define DEBUG_MEMORY            0x100
+#define DEBUG_ALL               (DEBUG_SUBSTRATE|DEBUG_API|DEBUG_INTERNAL|DEBUG_THREADS|DEBUG_MULTIPLEX|DEBUG_OVERFLOW|DEBUG_PROFILE|DEBUG_MEMORY)
 
   /* Please get rid of the DBG macro from your code */
 
@@ -49,7 +50,7 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 #define DEBUGLABEL(a) if (_papi_hwi_thread_id_fn) fprintf(stderr, "%s:%s:%s:%d:0x%lx ",a,__FILE__, FUNC, __LINE__,_papi_hwi_thread_id_fn()); else fprintf(stderr, "%s:%s:%s:%d: ",a,__FILE__, FUNC, __LINE__)
 #define ISLEVEL(a) (_papi_hwi_debug&a)
 
-#define DEBUGLEVEL(a) ((a&DEBUG_SUBSTRATE)?"SUBSTRATE":(a&DEBUG_API)?"API":(a&DEBUG_INTERNAL)?"INTERNAL":(a&DEBUG_THREADS)?"THREADS":(a&DEBUG_MULTIPLEX)?"MULTIPLEX":(a&DEBUG_OVERFLOW)?"OVERFLOW":(a&DEBUG_PROFILE)?"PROFILE":"UNKNOWN")
+#define DEBUGLEVEL(a) ((a&DEBUG_SUBSTRATE)?"SUBSTRATE":(a&DEBUG_API)?"API":(a&DEBUG_INTERNAL)?"INTERNAL":(a&DEBUG_THREADS)?"THREADS":(a&DEBUG_MULTIPLEX)?"MULTIPLEX":(a&DEBUG_OVERFLOW)?"OVERFLOW":(a&DEBUG_PROFILE)?"PROFILE":(a&DEBUG_MEMORY)?"MEMORY":"UNKNOWN")
 
 #ifndef NO_VARARG_MACRO         /* Has variable arg macro support */
 #define PAPIDEBUG(level,format, args...) { if(_papi_hwi_debug&level){DEBUGLABEL(DEBUGLEVEL(level));fprintf(stderr,format, ## args);}}
@@ -63,6 +64,7 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 #define MPXDBG(format, args...) (PAPIDEBUG(DEBUG_MULTIPLEX,format, ## args))
 #define OVFDBG(format, args...) (PAPIDEBUG(DEBUG_OVERFLOW,format, ## args))
 #define PRFDBG(format, args...) (PAPIDEBUG(DEBUG_PROFILE,format, ## args))
+#define MEMDBG(format, args...) (PAPIDEBUG(DEBUG_MEMORY,format, ## args))
 #endif
 
 #else
@@ -74,6 +76,7 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 #define MPXDBG(format, args...) { ; }
 #define OVFDBG(format, args...) { ; }
 #define PRFDBG(format, args...) { ; }
+#define MEMDBG(format, args...) { ; }
 #define PAPIDEBUG(level, format, args...) { ; }
 #endif
 #endif
@@ -144,6 +147,10 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
 #define NEED_CONTEXT		1
 #define DONT_NEED_CONTEXT 	0
+
+/* Replacement for bogus supports_multiple_threads item */
+
+#define SUPPORTS_MULTIPLE_THREADS(mdi) (mdi.sub_info.available_granularities & PAPI_GRN_THR)
 
 /* DEFINES END HERE */
 
@@ -293,9 +300,7 @@ typedef struct _EventSetInfo {
 
    int NumberOfEvents;          /* Number of events added to EventSet */
 
-   hwd_control_state_t machdep; /* A chunk of memory of size 
-                                   _papi_hwi_system_info.size_machdep bytes. This 
-                                   will contain the encoding necessary for the 
+   hwd_control_state_t machdep; /* This contains the encoding necessary for the 
                                    hardware to set the counters to the appropriate
                                    conditions */
 
@@ -402,57 +407,13 @@ typedef struct {
 } _papi_hwi_context_t;
 
 typedef struct _papi_mdi {
-   char substrate[81];          /* Name of the substrate we're using */
-   float version;               /* Version of this substrate */
+   DynamicArray_t global_eventset_map;  /* Global structure to maintain int<->EventSet mapping */
    pid_t pid;                   /* Process identifier */
+   PAPI_substrate_info_t sub_info; /* See definition in papi.h */
    PAPI_hw_info_t hw_info;      /* See definition in papi.h */
    PAPI_exe_info_t exe_info;    /* See definition in papi.h */
    PAPI_shlib_info_t shlib_info;    /* See definition in papi.h */
    PAPI_preload_info_t preload_info; /* See definition in papi.h */ 
-
-   /* The following variables define the length of the arrays in the 
-      EventSetInfo_t structure. Each array is of length num_gp_cntrs + 
-      num_sp_cntrs * sizeof(long_long) */
-
-   int num_cntrs;               /* Number of counters returned by a substrate read/write */
-
-   int num_gp_cntrs;            /* Number of general purpose counters or counters
-                                   per group */
-   int grouped_counters;        /* Number of counter groups, zero for no groups */
-   int num_sp_cntrs;            /* Number of special purpose counters, like 
-                                   Time Stamp Counter on IBM or Pentium */
-
-   int default_domain;          /* The default domain when this substrate is used */
-
-   int default_granularity;     /* The default granularity when this substrate is used */
-
-   /* Begin public feature flags */
-
-   int supports_program;        /* We can use programmable events */
-   int supports_write;          /* We can write the counters */
-   int supports_hw_overflow;    /* Needs overflow to be emulated */
-   int supports_hw_profile;     /* Needs profile to be emulated */
-   int supports_multiple_threads;     /* hardware counters support 
-                                         multiple threads */
-   int supports_64bit_counters; /* Only limited precision is available from hardware */
-   int supports_inheritance;    /* We can pass on and inherit child counters/values */
-   int supports_attach;         /* We can attach PAPI to another process */
-   int supports_real_usec;      /* We can use the real_usec call */
-   int supports_real_cyc;       /* We can use the real_cyc call */
-   int supports_virt_usec;      /* We can use the virt_usec call */
-   int supports_virt_cyc;       /* We can use the virt_cyc call */
-
-   /* End public feature flags */
-
-   /* Begin private feature flags */
-
-   int supports_read_reset;     /* The read call from the kernel resets the counters */
-
-   /* End private feature flags */
-
-   int size_machdep;            /* Size of the substrate's control structure in bytes */
-
-   DynamicArray_t global_eventset_map;  /* Global structure to maintain int<->EventSet mapping */
 } papi_mdi_t;
 
 extern papi_mdi_t _papi_hwi_system_info;
@@ -580,6 +541,22 @@ inline_static void PRFDBG(char *format, ...)
 #ifdef DEBUG
    va_list args;
    int level = DEBUG_PROFILE;
+
+   if (ISLEVEL(level)) {
+      va_start(args, format);
+      DEBUGLABEL(DEBUGLEVEL(level));
+      vfprintf(stderr, format, args);
+      va_end(args);
+   } else
+#endif
+      return;
+}
+
+inline_static void MEMDBG(char *format, ...)
+{
+#ifdef DEBUG
+   va_list args;
+   int level = DEBUG_MEMORY;
 
    if (ISLEVEL(level)) {
       va_start(args, format);

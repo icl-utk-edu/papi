@@ -117,7 +117,7 @@ void CALLBACK _papi_hwd_timer_callback(UINT wTimerID, UINT msg, DWORD dwUser, DW
                                        DWORD dw2);
 #else
 /* Callback routine for Linux/Unix timers */
-void _papi_hwd_dispatch_timer(int signal, siginfo_t * info, void *tmp);
+void _papi_hwd_dispatch_timer(int signal, hwd_siginfo_t * info, void *tmp);
 #endif
 
 /* The following functions implement the native event query capability

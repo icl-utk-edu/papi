@@ -1,52 +1,17 @@
-all:
-	@echo "The below is being deprecated. Please use ./configure first!"
-	@echo "";
-	@echo "Please use one of the following commands:";
-	@echo "";
-	@echo "make -f Makefile.linux-pfm-itanium (see ./libpfm-2.0/3.0)";
-	@echo "make -f Makefile.linux-pfm-itanium2 (see ./libpfm-2.0/3.0)";
-	@echo "make -f Makefile.unicos-t3e";
-	@echo "make -f Makefile.unicos-t3e-msp";
-	@echo "make -f Makefile.unicos-t3e-ssp";
-	@echo "make -f Makefile.aix5-power3";
-	@echo "make -f Makefile.aix5-power3-64bit";
-	@echo "make -f Makefile.aix-power4";
-	@echo "make -f Makefile.aix-power4-64bit";
-	@echo "make -f Makefile.aix-power";
-	@echo "make -f Makefile.solaris-ultra";
-	@echo "make -f Makefile.solaris-ultra-64bit";
-	@echo "make -f Makefile.irix-mips";
-	@echo "make -f Makefile.irix-mips-64bit";
-	@echo "make -f Makefile.linux-perfctr-p2 (see ./perfctr-2.6.x)";
-	@echo "make -f Makefile.linux-perfctr-p3 (see ./perfctr-2.6.x)";
-	@echo "make -f Makefile.linux-perfctr-p4 (see ./perfctr-2.6.x)";
-	@echo "make -f Makefile.linux-perfctr-em64t (see ./perfctr-2.6.x)";
-	@echo "make -f Makefile.linux-perfctr-em64t-32bit (see ./perfctr-2.6.x)";
-	@echo "make -f Makefile.linux-perfctr-POWER4"
-	@echo "make -f Makefile.linux-perfctr-POWER4-64bit"
-	@echo "make -f Makefile.linux-perfctr-POWER5"
-	@echo "make -f Makefile.linux-perfctr-POWER5-64bit"
-	@echo "make -f Makefile.linux-perfctr-PPC32"
-	@echo "make -f Makefile.linux-perfctr-PPC970"
-	@echo "make -f Makefile.linux-perfctr-PPC970-64bit"
-	@echo "make -f Makefile.linux-athlon (see ./perfctr-2.6.x)";
-	@echo "make -f Makefile.linux-opteron (see ./perfctr-2.6.x)";
-	@echo "make -f Makefile.linux-opteron-32bit (see ./perfctr-2.6.x)";
-	@echo "make -f Makefile.dadd-alpha (EV6/67/7 only)";
-	@echo "make -f Makefile.tru64-alpha (EV6/67 only)";
-	@echo "make -f Makefile.linux-alpha (with patched iprobe)";
-	@echo "make -f Makefile.any-null (for testing)";
-	@echo "";
-	@echo "With one of the following targets as an argument";
-	@echo "";
-	@echo "<none>		- Compiles the library and tests";
-	@echo "test		- Runs the simplest test case";
-	@echo "fulltest		- Runs the all the test cases";
-	@echo "install PREFIX=<dir> - Installs PAPI and man pages in PREFIX/..."; 
-	@echo "install-lib PREFIX=<dir> - Installs PAPI in PREFIX/..."; 
-	@echo "install-man PREFIX=<dir> - Installs man pages in PREFIX/..."; 
-	@echo "install-tests PREFIX=<dir> - Installs tests in PREFIX/..."; 
-	@echo "install-all PREFIX=<dir> - Installs everything in PREFIX/..."; 
-	@echo "clean		- Removes object files and temporary files";
-	@echo "clobber		- Removes libraries, executables and generated header files";
-	@echo "dist		- Prepares a binary tarball in the curent directory";
+MAKEVER   = linux-perfctr-p4
+PREFIX    = /usr/local
+PMAPI     = 
+NOTLS     = -DUSE_COMPILER_TLS
+NOPTTIMER = -DHAS_PER_PROCESS_TIMES
+ALTIX	  = 
+PMINIT	  = 
+PAPI_DATADIR = /usr/local/share/papi/
+F77	  = f95
+CC	  = gcc
+PFM_PREFIX	=  
+PFM_ROOT  	= 
+PERFCTR_PREFIX 	= 
+PERFCTR_ROOT 	= 
+DEBUGFLAGS	= -DPAPI_NO_MEMORY_MANAGEMENT
+
+include ./Makefile.$(MAKEVER)

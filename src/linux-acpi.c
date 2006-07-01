@@ -557,7 +557,6 @@ void init_mdi(){
    _papi_hwi_system_info.supports_real_cyc = 0;
    _papi_hwi_system_info.supports_virt_usec = 0;
    _papi_hwi_system_info.supports_virt_cyc = 0;
-   _papi_hwi_system_info.supports_read_reset = 0;
    _papi_hwi_system_info.size_machdep = sizeof(hwd_control_state_t);
 }
 

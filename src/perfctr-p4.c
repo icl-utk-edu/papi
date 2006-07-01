@@ -85,23 +85,13 @@ int setup_p4_presets(int cputype)
 VECTOR_STATIC
 void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 {
-   int def_mode, i;
-   switch(_papi_hwi_system_info.default_domain) {
-   case PAPI_DOM_USER:
-      def_mode = ESCR_T0_USR;
-      break;
-   case PAPI_DOM_KERNEL:
-      def_mode = ESCR_T0_OS;
-      break;
-   case PAPI_DOM_ALL:
-      def_mode = ESCR_T0_OS | ESCR_T0_USR;
-      break;
-   default:
-      PAPIERROR("BUG! Unknown domain %d, using PAPI_DOM_USER",_papi_hwi_system_info.default_domain);
-      def_mode = ESCR_T0_USR;
-      break;
-   }
-   for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
+   int def_mode = 0, i;
+   if (_papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_USER)
+      def_mode |= ESCR_T0_USR;
+   if (_papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_KERNEL)
+     def_mode |= ESCR_T0_OS;
+
+   for(i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
       ptr->control.cpu_control.evntsel_aux[i] |= def_mode;
    }
    ptr->control.cpu_control.tsc_on = 1;
@@ -566,18 +556,18 @@ int _papi_hwd_set_domain(P4_perfctr_control_t * cntrl, int domain)
      /* Clear the current domain set for this event set */
      /* We don't touch the Enable bit in this code but  */
      /* leave it as it is */
-   for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
+   for(i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
       cntrl->control.cpu_control.evntsel_aux[i] &= ~(ESCR_T0_OS|ESCR_T0_USR);
    }
    if(domain & PAPI_DOM_USER) {
       did = 1;
-      for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
+      for(i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
          cntrl->control.cpu_control.evntsel_aux[i] |= ESCR_T0_USR;
       }
    }
    if(domain & PAPI_DOM_KERNEL) {
       did = 1;
-      for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
+      for(i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
          cntrl->control.cpu_control.evntsel_aux[i] |= ESCR_T0_OS;
       }
    }
@@ -656,7 +646,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    print_control(&this_state->control.cpu_control);
 #endif
 
-   ncntrs = _papi_hwi_system_info.num_cntrs;
+   ncntrs = _papi_hwi_system_info.sub_info.num_cntrs;
    i = ESI->EventInfoArray[EventIndex].pos[0];
    if (i >= ncntrs) 
      {

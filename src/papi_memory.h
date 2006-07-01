@@ -6,22 +6,10 @@
 /* this line should be deleted for the papi 4.0 head */
 #define _papi_cleanup_all_memory _papi_mem_cleanup_all
 
-/* If you are tracing memory, then PAPI_DEBUG_MEMORY
- *  * must be set also.
- *   */
-#ifdef PAPI_NO_MEMORY_MANAGEMENT
-#undef PAPI_DEBUG_MEMORY
-#undef PAPI_DEBUG_MEMORY_TRACE
-#else
-#ifdef PAPI_DEBUG_MEMORY_TRACE
-#define PAPI_DEBUG_MEMORY
-#endif
-#endif
-
 typedef struct pmem {
   void *ptr;
   int size;
-#ifdef PAPI_DEBUG_MEMORY
+#ifdef DEBUG
   char file[DEBUG_FILE_LEN];
   int  line;
 #endif
@@ -35,7 +23,7 @@ typedef struct pmem {
 #define papi_free(a)   free(a)
 #define papi_realloc(a,b) realloc(a,b)
 #define papi_calloc(a,b) calloc(a,b)
-#define papi_valid_free(a) ;
+#define papi_valid_free(a) 1
 #define papi_strdup(a) strdup(a)
 #define papi_mem_cleanup_all() ;
 #define papi_mem_print_info(a) ;

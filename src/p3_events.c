@@ -2816,7 +2816,7 @@ static char *internal_translate_code(int event, int moesi, char *str, char *sepa
 /* Given a native event code, returns the short text label. */
 char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
-   unsigned int event, moesi;
+   int event, moesi;
 
    internal_decode_event(EventCode, &event, &moesi);
    if (!moesi)
@@ -2830,7 +2830,7 @@ char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
    description. */
 char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
-   unsigned int event, moesi;
+   int event, moesi;
 
    internal_decode_event(EventCode, &event, &moesi);
    if (!moesi)
@@ -2847,7 +2847,7 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 */
 int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 {
-   unsigned int event, moesi;
+   int event, moesi;
 
    internal_decode_event(EventCode, &event, &moesi);
    if(native_table[event].resources.selector == 0) {
@@ -2863,7 +2863,7 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
    If not, returns the proper error code. */
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
-   unsigned int event, moesi;
+   int event, moesi;
 
    internal_decode_event(*EventCode, &event, &moesi);
    moesi += MOESI_I; /* increment by smallest step size */

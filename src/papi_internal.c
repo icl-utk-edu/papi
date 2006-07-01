@@ -182,7 +182,7 @@ static int EventInfoArrayLength(const EventSetInfo_t * ESI)
    if (ESI->state & PAPI_MULTIPLEXING)
       return (PAPI_MPX_DEF_DEG);
    else
-      return (_papi_hwi_system_info.num_cntrs);
+      return (_papi_hwi_system_info.sub_info.num_cntrs);
 }
 
 static void initialize_EventInfoArray(EventSetInfo_t * ESI)
@@ -222,7 +222,7 @@ EventSetInfo_t *_papi_hwi_allocate_EventSet(void)
       return (NULL);
    memset(ESI, 0x00, sizeof(EventSetInfo_t));
 
-   max_counters = _papi_hwi_system_info.num_cntrs;
+   max_counters = _papi_hwi_system_info.sub_info.num_cntrs;
 /*  ESI->machdep = (hwd_control_state_t *)papi_malloc(sizeof(hwd_control_state_t)); */
    ESI->sw_stop = (long_long *) papi_malloc(max_counters * sizeof(long_long));
    ESI->hw_start = (long_long *) papi_malloc(max_counters * sizeof(long_long));
@@ -881,7 +881,7 @@ int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long_long * va
       changed.  
     */
 
-   for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) 
+   for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) 
      {
        index = ESI->EventInfoArray[i].pos[0];
       if (index == -1)
@@ -1043,51 +1043,55 @@ int _papi_hwi_init_global_internal(void)
    if (retval != PAPI_OK)
      return(retval);
 
-   _papi_hwi_system_info.substrate[0] = '\0';   /* Name of the substrate we're using */
-   _papi_hwi_system_info.version = 1.0; /* version */
    _papi_hwi_system_info.pid = 0;       /* Process identifier */
 
+   /* The PAPI_substrate_info_t struct defined in papi.h */
+
+   _papi_hwi_system_info.sub_info.name[0] = '\0';              /* Name of the substrate we're using, usually CVS RCS Id */
+   _papi_hwi_system_info.sub_info.version[0] = '\0';           /* Version of this substrate, usually CVS Revision */
+   _papi_hwi_system_info.sub_info.support_version[0] = '\0';   /* Version of the support library */
+   _papi_hwi_system_info.sub_info.kernel_version[0] = '\0';    /* Version of the kernel PMC support driver */
+   _papi_hwi_system_info.sub_info.num_cntrs = 0;               /* Number of counters the substrate supports */
+   _papi_hwi_system_info.sub_info.num_preset_events = 0;       
+   _papi_hwi_system_info.sub_info.default_domain = 0;          /* The default domain when this substrate is used */
+   _papi_hwi_system_info.sub_info.available_domains = 0;       /* Available domains */ 
+   _papi_hwi_system_info.sub_info.default_granularity = 0;     /* The default granularity when this substrate is used */
+   _papi_hwi_system_info.sub_info.available_granularities = 0; /* Available granularities */
+   _papi_hwi_system_info.sub_info.opcode_match_width = 0;      /* Width of opcode matcher if exists, 0 if not */
+   _papi_hwi_system_info.sub_info.multiplex_timer_sig = PAPI_SIGNAL;
+   _papi_hwi_system_info.sub_info.multiplex_timer_num = PAPI_ITIMER;
+   _papi_hwi_system_info.sub_info.multiplex_timer_us = PAPI_MPX_DEF_US;
+   _papi_hwi_system_info.sub_info.hardware_intr_sig = PAPI_SIGNAL;
+   _papi_hwi_system_info.sub_info.reserved_ints[0] = 0;
+   _papi_hwi_system_info.sub_info.reserved_ints[1] = 0;
+   _papi_hwi_system_info.sub_info.reserved_ints[2] = 0;
+   _papi_hwi_system_info.sub_info.reserved_ints[3] = 0;
+   _papi_hwi_system_info.sub_info.hardware_intr = 0;         /* Needs hw overflow intr to be emulated in software*/
+   _papi_hwi_system_info.sub_info.precise_intr = 0;          /* Performance interrupts happen precisely */
+   _papi_hwi_system_info.sub_info.posix1b_timers = 0;        
+   _papi_hwi_system_info.sub_info.kernel_profile = 0;        /* Needs kernel profile support (buffered interrupts) to be emulated */
+   _papi_hwi_system_info.sub_info.kernel_multiplex = 0;      /* In kernel multiplexing */
+   _papi_hwi_system_info.sub_info.data_address_range = 0;    /* Supports data address range limiting */
+   _papi_hwi_system_info.sub_info.instr_address_range = 0;   /* Supports instruction address range limiting */
+   _papi_hwi_system_info.sub_info.fast_real_timer = 0;       /* Has a fast real timer */
+   _papi_hwi_system_info.sub_info.fast_virtual_timer = 0;    /* Has a fast virtual timer */
+   _papi_hwi_system_info.sub_info.data_address_smpl = 0;     /* Supports data/instr miss address sampling */
+   _papi_hwi_system_info.sub_info.branch_tracing = 0;        /* Supports branch trace buffering */
+   _papi_hwi_system_info.sub_info.tlb_address_smpl = 0;      /* Supports TLB miss address sampling */
+   _papi_hwi_system_info.sub_info.grouped_cntrs = 0;         
+   _papi_hwi_system_info.sub_info.reserved_bits = 0;
+
    /* The PAPI_hw_info_t struct defined in papi.h */
-   _papi_hwi_system_info.hw_info.ncpu = -1;     /* ncpu */
+   _papi_hwi_system_info.hw_info.ncpu = 0;     /* ncpu */
    _papi_hwi_system_info.hw_info.nnodes = 1;    /* nnodes */
-   _papi_hwi_system_info.hw_info.totalcpus = -1;        /* totalcpus */
-   _papi_hwi_system_info.hw_info.vendor = -1;   /* vendor */
+   _papi_hwi_system_info.hw_info.totalcpus = 0;        /* totalcpus */
+   _papi_hwi_system_info.hw_info.vendor = 0;   /* vendor */
    _papi_hwi_system_info.hw_info.vendor_string[0] = '\0';       /* vendor_string */
-   _papi_hwi_system_info.hw_info.model = -1;    /* model */
+   _papi_hwi_system_info.hw_info.model = 0;    /* model */
    _papi_hwi_system_info.hw_info.model_string[0] = '\0';        /* model_string */
    _papi_hwi_system_info.hw_info.revision = 0.0;        /* revision */
    _papi_hwi_system_info.hw_info.mhz = 0.0;     /* mhz */
-
-   /* The following variables define the length of the arrays in the
-      EventSetInfo_t structure. Each array is of length num_gp_cntrs +
-      num_sp_cntrs * sizeof(long_long) */
-   _papi_hwi_system_info.num_cntrs = -1;
-   _papi_hwi_system_info.num_gp_cntrs = -1;
-   _papi_hwi_system_info.grouped_counters = -1;
-   _papi_hwi_system_info.num_sp_cntrs = -1;
-   _papi_hwi_system_info.default_domain = PAPI_DOM_USER;
-   _papi_hwi_system_info.default_granularity = PAPI_GRN_THR;
-
-   /* Public feature flags */
-   _papi_hwi_system_info.supports_program = 0;
-   _papi_hwi_system_info.supports_write = 0;
-   _papi_hwi_system_info.supports_hw_overflow = 0;
-   _papi_hwi_system_info.supports_hw_profile = 0;
-   _papi_hwi_system_info.supports_multiple_threads = 1;
-   _papi_hwi_system_info.supports_64bit_counters = 0;
-   _papi_hwi_system_info.supports_inheritance = 0;
-   _papi_hwi_system_info.supports_attach = 0;
-   _papi_hwi_system_info.supports_real_usec = 0;
-   _papi_hwi_system_info.supports_real_cyc = 0;
-   _papi_hwi_system_info.supports_virt_usec = 0;
-   _papi_hwi_system_info.supports_virt_cyc = 0;
-
-   /* Does the read call from the kernel reset the counters? */
-   _papi_hwi_system_info.supports_read_reset = 0;       /* Private flag */
-
-   /* Size of the substrate's control struct in bytes */
-   _papi_hwi_system_info.size_machdep = sizeof(hwd_control_state_t);
-  
+ 
    return (PAPI_OK);
 }
 

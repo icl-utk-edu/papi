@@ -98,7 +98,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_DOM_SUPERVISOR 0x8 /* Supervisor/hypervisor context counted */
 #define PAPI_DOM_ALL	 (PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_OTHER|PAPI_DOM_SUPERVISOR) /* All contexts counted */
 /* #define PAPI_DOM_DEFAULT PAPI_DOM_USER NOW DEFINED BY SUBSTRATE */
-#define PAPI_DOM_MAX     PAPI_DOM_ALL
+#define PAPI_DOM_MAX     PAPI_DOM_SUPERVISOR
 #define PAPI_DOM_HWSPEC  0x80000000     /* Flag that indicates we are not reading CPU like stuff.
                                            The lower 31 bits can be decoded by the substrate into something
                                            meaningful. i.e. SGI HUB counters */
@@ -203,18 +203,13 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_INHERIT_ALL  1     /* The flag to this to inherit all children's counters */
 #define PAPI_INHERIT_NONE 0     /* The flag to this to inherit none of the children's counters */
 
-#define PAPI_DEBUG         2       /* Option to turn on  debugging features of the PAPI library */
+#define PAPI_DEBUG              2       /* Option to turn on  debugging features of the PAPI library */
 #define PAPI_MULTIPLEX 		3       /* Turn on/off or multiplexing for an eventset */
 #define PAPI_DEFDOM  		4       /* Domain for all new eventsets. Takes non-NULL option pointer. */
-
 #define PAPI_DOMAIN  		5       /* Domain for an eventset */
 #define PAPI_DEFGRN  		6       /* Granularity for all new eventsets */
 #define PAPI_GRANUL  		7       /* Granularity for an eventset */
-#define PAPI_INHERIT 		8       /* Child threads/processes inherit counter config and progate values up upon exit. */
-
-#define PAPI_CPUS    		9       /* Return the maximum number of CPU's usable/detected */
-#define PAPI_THREADS 		10      /* Return the number of threads usable/detected by PAPI */
-#define PAPI_NUMCTRS 		11      /* The number of counters returned by reading this eventset */
+#define PAPI_MULTIPLEX_USEC     8       /* Multiplexing interval in US */
 #define PAPI_PROFIL  		12      /* Option to turn on the overflow/profil reporting software */
 #define PAPI_PRELOAD 		13      /* Option to find out the environment variable that can preload libraries */
 #define PAPI_CLOCKRATE  	14      /* Clock rate in MHz */
@@ -224,7 +219,9 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_MAX_CPUS 		18      /* Number of ncpus we can talk to from here */
 #define PAPI_SHLIBINFO          20      /* Shared Library information */
 #define PAPI_LIB_VERSION        21      /* Option to find out the complete version number of the PAPI library */
-#define PAPI_SUBSTRATE_SUPPORT  22      /* Find out what the substrate supports */
+#define PAPI_SUBSTRATEINFO      22      /* Find out what the substrate supports */
+#define PAPI_SUBSTRATE_SUPPORT  PAPI_SUBSTRATEINFO      /* Bogus previous definition */
+#define PAPI_MAX_CTRS           25      /* Number of counters supported by the substrate, >= PAPI_MAX_HWCTRS */
 
 /* Currently the following options are only available on Itanium; they may be supported elsewhere in the future */
 #define PAPI_DATA_ADDRESS       23      /* Option to set data address range restriction */
@@ -357,19 +354,37 @@ read the documentation carefully.  */
    } PAPI_preload_info_t;
 
    typedef struct _papi_substrate_option {
-      int supports_program;        /* We can use programmable events */
-      int supports_write;          /* We can write the counters */
-      int supports_hw_overflow;    /* Needs overflow to be emulated */
-      int supports_hw_profile;     /* Needs profile to be emulated */
-      int supports_multiple_threads;     /* hardware counters support
-                                            multiple threads */
-      int supports_64bit_counters; /* Only limited precision is available from hardware */
-      int supports_inheritance;    /* We can pass on and inherit child counters/values */
-      int supports_attach;         /* We can attach PAPI to another process */
-      int supports_real_usec;      /* We can use the real_usec call */
-      int supports_real_cyc;       /* We can use the real_cyc call */
-      int supports_virt_usec;      /* We can use the virt_usec call */
-      int supports_virt_cyc;       /* We can use the virt_cyc call */
+     char name[PAPI_MAX_STR_LEN];            /* Name of the substrate we're using, usually CVS RCS Id */
+     char version[PAPI_MIN_STR_LEN];         /* Version of this substrate, usually CVS Revision */
+     char support_version[PAPI_MIN_STR_LEN]; /* Version of the support library */
+     char kernel_version[PAPI_MIN_STR_LEN];  /* Version of the kernel PMC support driver */
+     int num_cntrs;               /* Number of hardware counters the substrate supports */
+     int num_preset_events;       /* Number of preset events the substrate supports */
+     int default_domain;          /* The default domain when this substrate is used */
+     int available_domains;       /* Available domains */ 
+     int default_granularity;     /* The default granularity when this substrate is used */
+     int available_granularities; /* Available granularities */
+     int multiplex_timer_sig;     /* Signal number used by the multiplex timer, 0 if not */
+     int multiplex_timer_num;     /* Number of the itimer or POSIX 1 timer used by the multiplex timer */
+     int multiplex_timer_us;   /* uS between switching of sets */
+     int hardware_intr_sig;       /* Signal used by hardware to deliver PMC events */
+     int opcode_match_width;      /* Width of opcode matcher if exists, 0 if not */
+     int reserved_ints[4];        
+     unsigned int hardware_intr:1;         /* Needs hw overflow intr to be emulated in software*/
+     unsigned int precise_intr:1;          /* Performance interrupts happen precisely */
+     unsigned int posix1b_timers:1;        /* Using POSIX 1b interval timers (timer_create) instead of setitimer */
+     unsigned int kernel_profile:1;        /* Needs kernel profile support (buffered interrupts) to be emulated */
+     unsigned int kernel_multiplex:1;      /* In kernel multiplexing */
+     unsigned int data_address_range:1;    /* Supports data address range limiting */
+     unsigned int instr_address_range:1;   /* Supports instruction address range limiting */
+     unsigned int fast_counter_read:1;     /* Has a user level PMC read instruction */
+     unsigned int fast_real_timer:1;       /* Has a fast real timer */
+     unsigned int fast_virtual_timer:1;    /* Has a fast virtual timer */
+     unsigned int data_address_smpl:1;     /* Supports data/instr miss address sampling */
+     unsigned int branch_tracing:1;        /* Supports branch trace buffering */
+     unsigned int tlb_address_smpl:1;      /* Supports TLB miss address sampling */
+     unsigned int grouped_cntrs:1;         /* Underlying hardware uses counter groups */
+     unsigned int reserved_bits:18;
    } PAPI_substrate_info_t;
 
    typedef int (*PAPI_debug_handler_t) (int code);
@@ -453,7 +468,7 @@ read the documentation carefully.  */
       float revision;               /* Revision of CPU */
       float mhz;                    /* Cycle time of this CPU, *may* be estimated at 
                                        init time with a quick timing routine */
-     PAPI_mh_info_t mem_hierarchy;  /* PAPI memory heirarchy description */
+      PAPI_mh_info_t mem_hierarchy;  /* PAPI memory heirarchy description */
    } PAPI_hw_info_t;
 
 
@@ -488,8 +503,8 @@ read the documentation carefully.  */
       PAPI_hw_info_t *hw_info;
       PAPI_shlib_info_t *shlib_info;
       PAPI_exe_info_t *exe_info;
+      PAPI_substrate_info_t *sub_info;
       PAPI_overflow_option_t ovf_info;
-      PAPI_substrate_info_t sub_info;
       PAPI_addr_range_option_t addr;
    } PAPI_option_t;
 
@@ -587,7 +602,8 @@ read the documentation carefully.  */
    int   PAPI_get_event_info(int EventCode, PAPI_event_info_t * info);
    int   PAPI_set_event_info(PAPI_event_info_t * info, int *EventCode, int replace);
    const PAPI_exe_info_t *PAPI_get_executable_info(void);
-   const PAPI_hw_info_t  *PAPI_get_hardware_info(void);
+   const PAPI_hw_info_t *PAPI_get_hardware_info(void);
+   const PAPI_substrate_info_t *PAPI_get_substrate_info(void);
    int   PAPI_get_multiplex(int EventSet);
    int   PAPI_get_opt(int option, PAPI_option_t * ptr);
    long_long PAPI_get_real_cyc(void);

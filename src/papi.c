@@ -84,7 +84,7 @@ int PAPI_thread_init(unsigned long int (*id_fn) (void))
    if ((init_level&PAPI_THREAD_LEVEL_INITED))
       papi_return(PAPI_OK);
 
-   if (! _papi_hwi_system_info.supports_multiple_threads)
+   if (!SUPPORTS_MULTIPLE_THREADS(_papi_hwi_system_info))
       papi_return(PAPI_ESBSTR);
 
    init_level |= PAPI_THREAD_LEVEL_INITED;
@@ -809,7 +809,7 @@ int PAPI_stop(int EventSet, long_long * values)
       papi_return(PAPI_ENOTRUN);
 
    if (ESI->state & PAPI_PROFILING) {
-      if (_papi_hwi_system_info.supports_hw_profile && !(ESI->profile.flags&PAPI_PROFIL_FORCE_SW)) {
+      if (_papi_hwi_system_info.sub_info.hardware_intr && !(ESI->profile.flags&PAPI_PROFIL_FORCE_SW)) {
          retval = _papi_hwd_stop_profiling(thread, ESI);
          if (retval < PAPI_OK)
             papi_return(retval);
@@ -907,7 +907,7 @@ int PAPI_reset(int EventSet)
              (ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
             ESI->overflow.count = 0;
 
-         if ((ESI->state & PAPI_PROFILING) && (_papi_hwi_system_info.supports_hw_profile) &&
+         if ((ESI->state & PAPI_PROFILING) && (_papi_hwi_system_info.sub_info.hardware_intr) &&
              !(ESI->profile.flags&PAPI_PROFIL_FORCE_SW))
             ESI->profile.overflowcount = 0;
       }
@@ -1011,7 +1011,7 @@ int PAPI_write(int EventSet, long_long * values)
          return (retval);
    }
 
-   memcpy(ESI->hw_start, values, _papi_hwi_system_info.num_cntrs * sizeof(long_long));
+   memcpy(ESI->hw_start, values, _papi_hwi_system_info.sub_info.num_cntrs * sizeof(long_long));
 
    return (retval);
 }
@@ -1048,7 +1048,7 @@ int PAPI_cleanup_eventset(int EventSet)
    }
    /* clear profile flag and turn off hardware profile handler */
    if ( (ESI->state & PAPI_PROFILING) && 
-          _papi_hwi_system_info.supports_hw_profile && !(ESI->profile.flags&PAPI_PROFIL_FORCE_SW)) {
+          _papi_hwi_system_info.sub_info.hardware_intr && !(ESI->profile.flags&PAPI_PROFIL_FORCE_SW)) {
       total=ESI->profile.event_counter;
       for (i = 0; i < total; i++) {
          retval = PAPI_sprofil(NULL,0,EventSet,ESI->profile.EventCode[0],0,
@@ -1073,7 +1073,7 @@ int PAPI_multiplex_init(void)
 {
    int retval;
 
-   retval = mpx_init(PAPI_MPX_DEF_US);
+   retval = mpx_init(_papi_hwi_system_info.sub_info.multiplex_timer_us);
    papi_return(retval);
 }
 
@@ -1112,8 +1112,6 @@ int PAPI_set_multiplex(int EventSet)
    PAPI_option_t mpx;
 
    mpx.multiplex.eventset = EventSet;
-   mpx.multiplex.us = PAPI_MPX_DEF_US;
-   mpx.multiplex.max_degree = PAPI_MPX_DEF_DEG;
 
    return (PAPI_set_opt(PAPI_MULTIPLEX, &mpx));
 }
@@ -1131,15 +1129,16 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
    memset(&internal, 0x0, sizeof(_papi_int_option_t));
 
    switch (option) {
+   case PAPI_MULTIPLEX_USEC:
+     {
+       if (ptr->multiplex.us <= 1)
+	 papi_return(PAPI_EINVAL);
+       _papi_hwi_system_info.sub_info.multiplex_timer_us = ptr->multiplex.us;
+       return(PAPI_OK);
+     }
    case PAPI_MULTIPLEX:
       {
          EventSetInfo_t *ESI;
-
-         if (ptr->multiplex.us < 1)
-            papi_return(PAPI_EINVAL);
-         if (ptr->multiplex.max_degree <= _papi_hwi_system_info.num_cntrs) {
-            return(PAPI_OK);
-         }
          ESI = _papi_hwi_lookup_EventSet(ptr->multiplex.eventset);
          if (ESI == NULL)
             papi_return(PAPI_ENOEVST);
@@ -1174,7 +1173,7 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 	    in the substrates gets information from the global structure instead of
             per-thread information. */
 
-         _papi_hwi_system_info.default_domain = dom;
+         _papi_hwi_system_info.sub_info.default_domain = dom;
 
          return (PAPI_OK);
       }
@@ -1277,7 +1276,7 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 
 int PAPI_num_hwctrs(void)
 {
-   return (PAPI_get_opt(PAPI_MAX_HWCTRS, NULL));
+   return (PAPI_get_opt(PAPI_MAX_CTRS, NULL));
 }
 
 int PAPI_get_multiplex(int EventSet)
@@ -1296,33 +1295,46 @@ int PAPI_get_multiplex(int EventSet)
 int PAPI_get_opt(int option, PAPI_option_t * ptr)
 {
    switch (option) {
+   case PAPI_MULTIPLEX_USEC:
+     {
+       if (ptr == NULL)
+	 papi_return(PAPI_EINVAL);
+       ptr->multiplex.us = _papi_hwi_system_info.sub_info.multiplex_timer_us;
+       return(PAPI_OK);
+     }
    case PAPI_MULTIPLEX:
       {
          EventSetInfo_t *ESI;
 
+	 if (ptr == NULL)
+	   papi_return(PAPI_EINVAL);
          ESI = _papi_hwi_lookup_EventSet(ptr->multiplex.eventset);
          if (ESI == NULL)
             papi_return(PAPI_ENOEVST);
+	 ptr->multiplex.us = _papi_hwi_system_info.sub_info.multiplex_timer_us;
          return (ESI->state & PAPI_MULTIPLEXING) != 0;
       }
-      break;
    case PAPI_PRELOAD:
+     if (ptr == NULL)
+       papi_return(PAPI_EINVAL);
      memcpy(&ptr->preload,&_papi_hwi_system_info.preload_info,sizeof(PAPI_preload_info_t));
-      break;
+     break;
    case PAPI_DEBUG:
-      ptr->debug.level = _papi_hwi_error_level;
-      ptr->debug.handler = _papi_hwi_debug_handler;
-      break;
+     if (ptr == NULL)
+       papi_return(PAPI_EINVAL);
+     ptr->debug.level = _papi_hwi_error_level;
+     ptr->debug.handler = _papi_hwi_debug_handler;
+     break;
    case PAPI_CLOCKRATE:
       return ((int) _papi_hwi_system_info.hw_info.mhz);
    case PAPI_MAX_CPUS:
       return (_papi_hwi_system_info.hw_info.ncpu);
-   case PAPI_MAX_HWCTRS:
-      return (_papi_hwi_system_info.num_cntrs);
+   case PAPI_MAX_CTRS:
+      return (_papi_hwi_system_info.sub_info.num_cntrs);
    case PAPI_DEFDOM:
-      return (_papi_hwi_system_info.default_domain);
+      return (_papi_hwi_system_info.sub_info.default_domain);
    case PAPI_DEFGRN:
-      return (_papi_hwi_system_info.default_granularity);
+      return (_papi_hwi_system_info.sub_info.default_granularity);
 #if 0
    case PAPI_INHERIT:
       {
@@ -1358,25 +1370,15 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
          papi_return(PAPI_EINVAL);
       ptr->hw_info = &_papi_hwi_system_info.hw_info;
       break;
+   case PAPI_SUBSTRATEINFO:
+      if (ptr == NULL)
+         papi_return(PAPI_EINVAL);
+      ptr->sub_info = &_papi_hwi_system_info.sub_info;
+      return(PAPI_OK);
    case PAPI_DOMAIN:
       if (ptr == NULL)
          papi_return(PAPI_EINVAL);
       return (_papi_hwi_get_domain(&ptr->domain));
-   case PAPI_SUBSTRATE_SUPPORT:
-      if (ptr == NULL)
-         papi_return(PAPI_EINVAL);
-      ptr->sub_info.supports_program = _papi_hwi_system_info.supports_program;
-      ptr->sub_info.supports_write = _papi_hwi_system_info.supports_write;
-      ptr->sub_info.supports_hw_overflow = _papi_hwi_system_info.supports_hw_overflow;
-      ptr->sub_info.supports_hw_profile = _papi_hwi_system_info.supports_hw_profile;
-      ptr->sub_info.supports_multiple_threads = _papi_hwi_system_info.supports_multiple_threads;
-      ptr->sub_info.supports_64bit_counters = _papi_hwi_system_info.supports_64bit_counters;
-      ptr->sub_info.supports_inheritance = _papi_hwi_system_info.supports_inheritance;
-      ptr->sub_info.supports_attach = _papi_hwi_system_info.supports_attach;
-      ptr->sub_info.supports_real_usec = _papi_hwi_system_info.supports_real_usec;
-      ptr->sub_info.supports_virt_usec = _papi_hwi_system_info.supports_virt_usec;
-      ptr->sub_info.supports_virt_cyc = _papi_hwi_system_info.supports_virt_cyc;
-      return(PAPI_OK);
    case PAPI_LIB_VERSION:
       return (PAPI_VERSION);
    default:
@@ -1584,7 +1586,7 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
 
    /* Set up the option structure for the low level */
 
-   if (_papi_hwi_system_info.supports_hw_overflow && 
+   if (_papi_hwi_system_info.sub_info.hardware_intr && 
        !(ESI->overflow.flags&PAPI_OVERFLOW_FORCE_SW)) {
       if ( threshold != 0 )
          ESI->overflow.flags |= PAPI_OVERFLOW_HARDWARE;
@@ -1737,7 +1739,7 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
 
    ESI->profile.flags = flags;
 
-   if (_papi_hwi_system_info.supports_hw_profile && !forceSW)
+   if (_papi_hwi_system_info.sub_info.hardware_intr && !forceSW)
       retval = _papi_hwd_set_profile(ESI, index, threshold);
    else
       retval = PAPI_overflow(EventSet, EventCode, threshold, forceSW, _papi_hwi_dummy_handler);
@@ -1945,6 +1947,18 @@ const PAPI_hw_info_t *PAPI_get_hardware_info(void)
    retval = PAPI_get_opt(PAPI_HWINFO, &ptr);
    if (retval == PAPI_OK)
       return (ptr.hw_info);
+   else
+      return (NULL);
+}
+
+const PAPI_substrate_info_t *PAPI_get_substrate_info(void)
+{
+   PAPI_option_t ptr;
+   int retval;
+
+   retval = PAPI_get_opt(PAPI_SUBSTRATEINFO, &ptr);
+   if (retval == PAPI_OK)
+      return (ptr.sub_info);
    else
       return (NULL);
 }
