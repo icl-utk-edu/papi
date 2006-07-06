@@ -35,6 +35,7 @@ else
 SHRFLAGS	+= -fPIC
 LIB_SUFFIX	:= 64
 endif
+MEMSUBSTR	:= linux
 endif
 
 ifeq (i386,$(ARCH))
@@ -91,6 +92,7 @@ F77		  = ftn
 CC		  = qk-gcc
 LIBS    = static
 TARGETS = serial
+MEMSUBSTR	  = linux
 endif
 
 # 
