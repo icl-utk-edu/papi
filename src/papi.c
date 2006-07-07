@@ -1329,6 +1329,10 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
       return ((int) _papi_hwi_system_info.hw_info.mhz);
    case PAPI_MAX_CPUS:
       return (_papi_hwi_system_info.hw_info.ncpu);
+  /* For now, MAX_HWCTRS and MAX CTRS are identical.
+     At some future point, they may map onto different values.
+  */
+   case PAPI_MAX_HWCTRS:
    case PAPI_MAX_CTRS:
       return (_papi_hwi_system_info.sub_info.num_cntrs);
    case PAPI_DEFDOM:
