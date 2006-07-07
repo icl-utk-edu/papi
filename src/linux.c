@@ -264,7 +264,10 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
       fprintf(stderr,"Version mismatch of perfctr: compiled 2.5 or higher vs. installed %s\n",info.driver_version);
       return(PAPI_ESBSTR);
     }
+   /* I think this was replaced by sub_info.kernel_profile
+   which is initialized to 0 in papi_internal:_papi_hwi_init_global_internal
   _papi_hwi_system_info.supports_hw_profile = 0;
+  */
   _papi_hwi_system_info.hw_info.mhz = (float) info.cpu_khz / 1000.0; 
   SUBDBG("Detected MHZ is %f\n",_papi_hwi_system_info.hw_info.mhz);
 #endif
