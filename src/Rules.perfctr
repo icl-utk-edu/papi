@@ -193,7 +193,7 @@ CFLAGS += $(EVENTFLAGS) -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) $(CFLAGS-$(
 MISCHDRS = perfctr-$(CPU).h
 MISCSRCS =  $(CPU)_events.c linux.c $(ARCH_SPEC_EVTS)
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
-PERFCTR_OBJS = $(shell ar t $(PERFCTR_LIB_PATH)/libperfctr.a)
+PERFCTR_OBJS = $(shell ar t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
 ifeq (,$(PERFCTR_OBJS))
 	PERFCTR_OBJS = dummy
 endif
@@ -216,7 +216,7 @@ SPECIAL_REMOVE = rm -f libperfctr.so*
 include Makefile.inc
 
 config.h:
-	@echo 'Please clean your build and run ./configure. Direct Makefile access has been deprecated.'
+	@echo 'Please clobber your build and run ./configure. Direct Makefile access has been deprecated.'
 
 $(PERFCTR_LIB_PATH)/libperfctr.a:
 ifeq (,${PERFCTR_PREFIX})
@@ -241,9 +241,10 @@ else
 endif
 
 $(PERFCTR_OBJS): $(PERFCTR_LIB_PATH)/libperfctr.a
-	ar xv $(PERFCTR_LIB_PATH)/libperfctr.a
-	$(MAKE) $(MAKEFLAGS)
-
+	ar xv $<
+# exit is necessary due to NFS not updating times correctly at UTK
+	$(MAKE) $(MAKEFLAGS); echo "If you made it here, you may safely ignore this error."; exit 1
+	
 $(CPU)_events.o: $(CPU)_events.c config.h
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPU)_events.c -o $@
 
