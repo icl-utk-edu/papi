@@ -88,11 +88,11 @@ endif
 # 
 
 ifeq (CATAMOUNT, $(COMPILER))
-F77		  = ftn
-CC		  = qk-gcc
-LIBS    = static
-TARGETS = serial
-MEMSUBSTR	  = linux
+F77		= ftn
+CC		= qk-gcc
+LIBS    	= static
+TARGETS 	= serial
+MEMSUBSTR	 = linux
 endif
 
 # 
@@ -228,7 +228,7 @@ ifeq (,${PERFCTR_PREFIX})
  else
   ifeq (x86_64,${ARCH})
    ifeq (32,${BITS})
-	$(MAKE) CC='$(CC)' LD_FLAGS="-melf_i386" ARCH="i386" -C $(PERFCTR)
+	$(MAKE) CC='$(CC)' LD_FLAGS="-melf_i386" ARCH="i386" -C $(PERFCTR_ROOT)
    else
 	$(MAKE) -C $(PERFCTR_ROOT)
    endif
@@ -241,7 +241,7 @@ else
 endif
 
 $(PERFCTR_OBJS): $(PERFCTR_LIB_PATH)/libperfctr.a
-	ar xv $<
+	ar xv $(PERFCTR_LIB_PATH)/libperfctr.a
 	$(MAKE) $(MAKEFLAGS)
 
 $(CPU)_events.o: $(CPU)_events.c config.h
