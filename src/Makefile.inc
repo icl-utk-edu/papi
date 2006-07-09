@@ -130,7 +130,7 @@ clean: native_clean
 	-cd utils;  $(MAKE) clean
 
 clobber: clean native_clobber
-	-rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) $(SPECIAL_REMOVE) Makefile
+	-rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) $(SPECIAL_REMOVE) Makefile config.h
 	-cd utils;  $(MAKE) clobber
 null:
 
