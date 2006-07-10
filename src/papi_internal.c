@@ -600,7 +600,6 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
 
    /* Make sure the event is not present and get the next
       free slot. */
-
    thisindex = get_free_EventCodeIndex(ESI, EventCode);
    if (thisindex < PAPI_OK)
       return (thisindex);
@@ -1053,9 +1052,9 @@ int _papi_hwi_init_global_internal(void)
    _papi_hwi_system_info.sub_info.kernel_version[0] = '\0';    /* Version of the kernel PMC support driver */
    _papi_hwi_system_info.sub_info.num_cntrs = 0;               /* Number of counters the substrate supports */
    _papi_hwi_system_info.sub_info.num_preset_events = 0;       
-   _papi_hwi_system_info.sub_info.default_domain = 0;          /* The default domain when this substrate is used */
+   _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;          /* The default domain when this substrate is used */
    _papi_hwi_system_info.sub_info.available_domains = 0;       /* Available domains */ 
-   _papi_hwi_system_info.sub_info.default_granularity = 0;     /* The default granularity when this substrate is used */
+   _papi_hwi_system_info.sub_info.default_granularity = PAPI_GRN_THR;     /* The default granularity when this substrate is used */
    _papi_hwi_system_info.sub_info.available_granularities = 0; /* Available granularities */
    _papi_hwi_system_info.sub_info.opcode_match_width = 0;      /* Width of opcode matcher if exists, 0 if not */
    _papi_hwi_system_info.sub_info.multiplex_timer_sig = PAPI_SIGNAL;
