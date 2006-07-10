@@ -219,9 +219,9 @@ int _papi_hwd_mdi_init()
       _papi_hwd_update_shlib_info();
    }
 
-   _papi_hwi_system_info.supports_64bit_counters = 1;
-   _papi_hwi_system_info.supports_real_usec = 1;
-   _papi_hwi_system_info.supports_real_cyc = 1;
+/*   _papi_hwi_system_info.supports_64bit_counters = 1;
+   _papi_hwi_system_info.supports_real_usec = 1; */
+   _papi_hwi_system_info.sub_info.fast_real_timer = 1;
 
 
    return (PAPI_OK);
@@ -281,7 +281,7 @@ static int get_system_info(void)
    if (retval > 0)
       return (retval);
 
-   strcpy(_papi_hwi_system_info.substrate, "$Id$");  /* Name of the substrate we're using */
+   strcpy(_papi_hwi_system_info.sub_info.name, "$Id$");  /* Name of the substrate we're using */
 
    _papi_hwd_mdi_init();
 
@@ -294,9 +294,10 @@ static int get_system_info(void)
    strcpy(_papi_hwi_system_info.hw_info.model_string, pminfo.proc_name);
    _papi_hwi_system_info.hw_info.revision = (float) _system_configuration.version;
    _papi_hwi_system_info.hw_info.mhz = (float) (pm_cycles() / 1000000.0);
-   _papi_hwi_system_info.num_gp_cntrs = pminfo.maxpmcs;
-   _papi_hwi_system_info.num_cntrs = pminfo.maxpmcs;
-   _papi_hwi_system_info.supports_multiple_threads = 1;  
+/*   _papi_hwi_system_info.num_gp_cntrs = pminfo.maxpmcs;*/
+   _papi_hwi_system_info.sub_info.num_cntrs = pminfo.maxpmcs;
+   _papi_hwi_system_info.sub_info.grouped_cntrs = 1;
+/*   _papi_hwi_system_info.supports_multiple_threads = 1;  */
 /* This field doesn't appear to exist in the PAPI 3.0 structure 
   _papi_hwi_system_info.cpunum = mycpu(); 
 */
@@ -446,7 +447,7 @@ static void set_hwcntr_codes(int selector, unsigned char *from, int *to)
 {
    int useme, i;
 
-   for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
+   for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
       useme = (1 << i) & selector;
       if (useme) {
          to[i] = from[i];
