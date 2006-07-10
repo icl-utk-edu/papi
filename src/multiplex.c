@@ -638,7 +638,7 @@ static void mpx_handler(int signal)
 	if ((t->tid == _papi_hwi_thread_id_fn()) || (t->head == NULL))
 	  continue;
          MPXDBG("forwarding signal to thread %lx\n", t->tid);
-         retval = (*_papi_hwi_thread_kill_fn) (t->tid, MPX_SIGNAL);
+         retval = (*_papi_hwi_thread_kill_fn) (t->tid, _papi_hwi_system_info.sub_info.multiplex_timer_sig);
          if (retval != 0) {
             MPXDBG("forwarding signal to thread %lx returned %d\n",
                    t->tid, retval);
