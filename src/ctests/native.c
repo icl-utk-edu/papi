@@ -115,6 +115,7 @@ int main(int argc, char **argv)
 
    printf("Architecture %s, %d\n",hwinfo->model_string, hwinfo->model);
 
+#if ((defined(linux) && (defined(__i386__) || (defined __x86_64__))) || defined(_WIN32))
    if(!strncmp(hwinfo->model_string, "Intel Pentium 4", 15)) {
          native_name = p4_native_name;
    }
@@ -124,6 +125,7 @@ int main(int argc, char **argv)
    else if(!strncmp(hwinfo->model_string, "AMD K8", 6)) {
      native_name = k8_native_name;
    }
+#endif
 
    for (i = 0; native_name[i] != NULL; i++) {
      retval = PAPI_event_name_to_code(native_name[i], &native);
