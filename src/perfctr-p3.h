@@ -288,6 +288,13 @@ typedef P3_perfctr_context_t hwd_context_t;
 
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
-extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
+
+#if __CATAMOUNT__
+  extern void _start ( );
+  extern caddr_t _etext[ ], _edata[ ];
+  extern caddr_t __stop___libc_freeres_ptrs[ ];
+#else
+  extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
+#endif
 
 #endif /* _PAPI_PENTIUM3 */

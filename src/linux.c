@@ -343,6 +343,15 @@ int _papi_hwd_init(hwd_context_t * ctx) {
 
 #ifdef __CATAMOUNT__
 
+    /* Best guess at address space */
+    _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) _start;
+    _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t) _etext;
+    _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) _etext;
+    _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) _edata;
+    _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) _edata;
+    _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) 
+    __stop___libc_freeres_ptrs;
+
 int _papi_hwd_get_system_info(void)
 {
    pid_t pid;

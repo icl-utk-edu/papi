@@ -425,7 +425,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
    int i, ncntrs, nricntrs = 0, nracntrs = 0, retval = 0;
 
 #ifdef __CATAMOUNT__
-   if(contr->cpu_control.nrictrs) { 
+   if(contr->cpu_control.nrictrs  && (threshold != 0)) { 
       OVFDBG("Catamount can't overflow on more than one event.\n");
       return PAPI_EINVAL;
    }

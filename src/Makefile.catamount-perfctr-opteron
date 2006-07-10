@@ -3,7 +3,8 @@ CPU	        = p3
 GCC3ARGS	= -msse -msse2
 #GCC3ARGS	= -march=k8 -msse -msse2
 NOTLS       = -DNO_TLS
-CFLAGS	    = -D__x86_64__ -D__CATAMOUNT__
+CFLAGS	    = -D__CATAMOUNT__
+TOPTFLAGS	= -D__x86_64__
 COMPILER	= CATAMOUNT
 
 include Rules.perfctr
