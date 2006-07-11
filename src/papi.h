@@ -98,7 +98,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_DOM_SUPERVISOR 0x8 /* Supervisor/hypervisor context counted */
 #define PAPI_DOM_ALL	 (PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_OTHER|PAPI_DOM_SUPERVISOR) /* All contexts counted */
 /* #define PAPI_DOM_DEFAULT PAPI_DOM_USER NOW DEFINED BY SUBSTRATE */
-#define PAPI_DOM_MAX     PAPI_DOM_SUPERVISOR
+#define PAPI_DOM_MAX     PAPI_DOM_ALL
 #define PAPI_DOM_HWSPEC  0x80000000     /* Flag that indicates we are not reading CPU like stuff.
                                            The lower 31 bits can be decoded by the substrate into something
                                            meaningful. i.e. SGI HUB counters */

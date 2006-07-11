@@ -118,6 +118,21 @@ static void unset_config(hwd_control_state_t * ptr, int arg1)
    ptr->counter_cmd.events[arg1] = 0;
 }
 
+int init_domain()
+{
+   int domain = 0;
+
+   domain = PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_OTHER;
+#ifdef PM_INITIALIZE
+#ifdef _AIXVERSION_510
+   if (pminfo.proc_feature.b.hypervisor) {
+      domain |= PAPI_DOM_SUPERVISOR;
+   }
+#endif
+#endif
+   return (domain);
+}
+
 int set_domain(hwd_control_state_t * this_state, int domain)
 {
    pm_mode_t *mode = &(this_state->counter_cmd.mode);
@@ -126,13 +141,21 @@ int set_domain(hwd_control_state_t * this_state, int domain)
    mode->b.user = 0;
    mode->b.kernel = 0;
    if (domain & PAPI_DOM_USER) {
-      did = 1;
+      did++;
       mode->b.user = 1;
    }
    if (domain & PAPI_DOM_KERNEL) {
-      did = 1;
+      did++;
       mode->b.kernel = 1;
    }
+#ifdef PM_INITIALIZE
+#ifdef _AIXVERSION_510
+   if ((domain & PAPI_DOM_SUPERVISOR) && pminfo.proc_feature.b.hypervisor) {
+      did++;
+      mode->b.hypervisor = 1;
+   }
+#endif
+#endif
    if (did)
       return (PAPI_OK);
    else
@@ -222,6 +245,7 @@ int _papi_hwd_mdi_init()
 /*   _papi_hwi_system_info.supports_64bit_counters = 1;
    _papi_hwi_system_info.supports_real_usec = 1; */
    _papi_hwi_system_info.sub_info.fast_real_timer = 1;
+/*   _papi_hwi_system_info.sub_info->available_domains = init_domain();*/
 
 
    return (PAPI_OK);
@@ -301,7 +325,7 @@ static int get_system_info(void)
 /* This field doesn't appear to exist in the PAPI 3.0 structure 
   _papi_hwi_system_info.cpunum = mycpu(); 
 */
-
+   _papi_hwi_system_info.sub_info.available_domains = init_domain();
    return (PAPI_OK);
 }
 
