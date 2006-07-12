@@ -122,6 +122,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {
   int retval;
   int cpu_type;
+  char abiv[PAPI_MIN_STR_LEN];
 
   /* Setup the vector entries that the OS knows about */
 #ifndef PAPI_NO_VECTOR
@@ -129,9 +130,10 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   if ( retval != PAPI_OK ) return(retval);
 #endif
 
-   retval = mdi_init();
-   if ( retval ) 
-     return(retval);
+// **** Phil's Changes
+//   retval = mdi_init();
+//   if ( retval ) 
+//     return(retval);
 
   /* Fill in what we can of the papi_system_info. */
   retval = _papi_hwd_get_system_info();
@@ -144,7 +146,8 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    if (retval)
       return (retval);
 
-   strcpy(_papi_hwi_system_info.substrate, "$Id$");
+// **** Phil's Changes
+//   strcpy(_papi_hwi_system_info.sub_info.name, "$Id$");
 
    /* Setup presets */
    if ( check_p4(cpu_type) ){
@@ -159,6 +162,30 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    }
    if ( retval ) 
      return(retval);
+
+   // **** Phil's Changes
+   // This stuff needs to be carefully examined in the Windows context
+   strcpy(_papi_hwi_system_info.sub_info.name, "$Id$");
+   strcpy(_papi_hwi_system_info.sub_info.version, "$Revision$");
+//   sprintf(abiv,"0x%08X",info.abi_version);
+   strcpy(_papi_hwi_system_info.sub_info.support_version, abiv);
+//   strcpy(_papi_hwi_system_info.sub_info.kernel_version, info.driver_version);
+//   _papi_hwi_system_info.sub_info.num_cntrs = PERFCTR_CPU_NRCTRS(&info);
+//   _papi_hwi_system_info.sub_info.fast_counter_read = (info.cpu_features & PERFCTR_FEATURE_RDPMC) ? 1 : 0;
+   _papi_hwi_system_info.sub_info.fast_real_timer = 1;
+   _papi_hwi_system_info.sub_info.fast_virtual_timer = 1;
+   _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
+   _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
+   _papi_hwi_system_info.sub_info.default_granularity = PAPI_GRN_THR;
+   _papi_hwi_system_info.sub_info.available_granularities = PAPI_GRN_THR;
+//   _papi_hwi_system_info.sub_info.hardware_intr =
+//       (info.cpu_features & PERFCTR_FEATURE_PCINT) ? 1 : 0;
+
+   SUBDBG("Hardware/OS %s support counter generated interrupts\n",
+          _papi_hwi_system_info.sub_info.hardware_intr ? "does" : "does not");
+
+//   strcpy(_papi_hwi_system_info.hw_info.model_string, PERFCTR_CPU_NAME(&info));
+
 
    /* Fixup stuff from os_windows.c */
 
@@ -256,12 +283,14 @@ int _papi_hwd_init(hwd_context_t *ctx)
    return(PAPI_OK);
 }
 
+// **** Phil's  Changes
 /* Initialize the system-specific settings */
 /* Machine info structure. -1 is unused. */
+/*
 static int mdi_init() {
      /* Name of the substrate we're using */
-    strcpy(_papi_hwi_system_info.substrate, "$Id$");
-   _papi_hwi_system_info.supports_hw_overflow = 0;
+/*
+   _papi_hwi_system_info.sub_info.supports_hw_overflow = 0;
    _papi_hwi_system_info.supports_64bit_counters = 1;
    _papi_hwi_system_info.supports_inheritance = 0;
    _papi_hwi_system_info.supports_real_usec = 1;
@@ -269,9 +298,9 @@ static int mdi_init() {
    _papi_hwi_system_info.supports_virt_usec = 0;
    _papi_hwi_system_info.supports_virt_cyc = 0;
 
-   return (PAPI_OK);
+    return (PAPI_OK);
 }
-
+*/
 int _papi_hwd_update_shlib_info(void)
 {
    char fname[PAPI_HUGE_STR_LEN];
@@ -504,8 +533,8 @@ int _papi_hwd_get_system_info(void)
 
   strcpy(_papi_hwi_system_info.hw_info.model_string,win_hwinfo.model_string);
 
-  _papi_hwi_system_info.num_cntrs = win_hwinfo.nrctr;
-  _papi_hwi_system_info.num_gp_cntrs = _papi_hwi_system_info.num_cntrs;
+  _papi_hwi_system_info.sub_info.num_cntrs = win_hwinfo.nrctr;
+//  _papi_hwi_system_info.num_gp_cntrs = _papi_hwi_system_info.num_cntrs;
 
   _papi_hwi_system_info.hw_info.mhz = (float)win_hwinfo.mhz;
 

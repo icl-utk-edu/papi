@@ -100,17 +100,17 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
 /* Signal used for overflow delivery */
 
-#ifdef __CATAMOUNT__ /* Catamount only defines ITIMER_REAL with a 1 sec(!) resolution */
-  #define PAPI_ITIMER ITIMER_REAL
-#else
-  #define PAPI_ITIMER ITIMER_PROF
-#endif
-
 /**** WIN32 We'll need to figure out how to handle this for Windows */
 #ifdef _WIN32
-#define PAPI_SIGNAL 1
+  #define PAPI_SIGNAL 1
+  #define PAPI_ITIMER 1
 #else
-#define PAPI_SIGNAL SIGPROF
+  #define PAPI_SIGNAL SIGPROF
+  #ifdef __CATAMOUNT__ /* Catamount only defines ITIMER_REAL with a 1 sec(!) resolution */
+    #define PAPI_ITIMER ITIMER_REAL
+  #else
+    #define PAPI_ITIMER ITIMER_PROF
+  #endif
 #endif
 
 #define PAPI_ITIMER_MS 1

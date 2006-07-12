@@ -113,21 +113,11 @@ int setup_p3_presets(int cputype) {
 void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
    int i, def_mode;
 
-   switch(_papi_hwi_system_info.default_domain) {
-   case PAPI_DOM_USER:
-      def_mode = PERF_USR;
-      break;
-   case PAPI_DOM_KERNEL:
-      def_mode = PERF_OS;
-      break;
-   case PAPI_DOM_ALL:
-      def_mode = PERF_OS | PERF_USR;
-      break;
-   default:
-      PAPIERROR("BUG! Unknown domain %d, using PAPI_DOM_USER",_papi_hwi_system_info.default_domain);
-      def_mode = PERF_USR;
-      break;
-   }
+   if (_papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_USER)
+      def_mode |= PERF_USR;
+   if (_papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_KERNEL)
+     def_mode |= PERF_OS;
+
    ptr->allocated_registers.selector = 0;
    switch (_papi_hwi_system_info.hw_info.model) {
    case PERFCTR_X86_GENERIC:
@@ -144,7 +134,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
    case PERFCTR_X86_INTEL_PENTM:
 #endif
       ptr->control.cpu_control.evntsel[0] |= PERF_ENABLE;
-      for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
+      for(i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
          ptr->control.cpu_control.evntsel[i] |= def_mode;
          ptr->control.cpu_control.pmc_map[i] = i;
       }
@@ -156,7 +146,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
    case PERFCTR_X86_AMD_K8C:
 #endif
    case PERFCTR_X86_AMD_K7:
-      for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
+      for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
          ptr->control.cpu_control.evntsel[i] |= PERF_ENABLE | def_mode;
          ptr->control.cpu_control.pmc_map[i] = i;
       }
@@ -172,18 +162,18 @@ int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain) {
      /* Clear the current domain set for this event set */
      /* We don't touch the Enable bit in this code but  */
      /* leave it as it is */
-   for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
+   for(i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
       cntrl->control.cpu_control.evntsel[i] &= ~(PERF_OS|PERF_USR);
    }
    if(domain & PAPI_DOM_USER) {
       did = 1;
-      for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
+      for(i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
          cntrl->control.cpu_control.evntsel[i] |= PERF_USR;
       }
    }
    if(domain & PAPI_DOM_KERNEL) {
       did = 1;
-      for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
+      for(i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
          cntrl->control.cpu_control.evntsel[i] |= PERF_OS;
       }
    }
@@ -326,7 +316,7 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * spc) {
    struct pmc_control *ctl = (struct pmc_control *)(spc->control.cpu_control.evntsel);
 
    /* clear the accumulating counter values */
-   memset((void *)spc->state.sum.pmc, 0, _papi_hwi_system_info.num_cntrs * sizeof(long_long) );
+   memset((void *)spc->state.sum.pmc, 0, _papi_hwi_system_info.sub_info.num_cntrs * sizeof(long_long) );
    if((error = pmc_set_control(ctx->self, ctl)) < 0) {
       SUBDBG("pmc_set_control returns: %d\n", error);
       { PAPIERROR( "pmc_set_control() returned < 0"); return(PAPI_ESYS); }
@@ -346,7 +336,7 @@ int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
 }
 
 int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** dp, int flags) {
-   pmc_read_state(_papi_hwi_system_info.num_cntrs, &spc->state);
+   pmc_read_state(_papi_hwi_system_info.sub_info.num_cntrs, &spc->state);
    *dp = (long_long *) spc->state.sum.pmc;
 #ifdef DEBUG
    {
@@ -435,7 +425,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
    OVFDBG("EventIndex=%d\n", EventIndex);
 
    /* The correct event to overflow is EventIndex */
-   ncntrs = _papi_hwi_system_info.num_cntrs;
+   ncntrs = _papi_hwi_system_info.sub_info.num_cntrs;
    i = ESI->EventInfoArray[EventIndex].pos[0];
    if (i >= ncntrs) {
        PAPIERROR("Selector id %d is larger than ncntrs %d", i, ncntrs);
