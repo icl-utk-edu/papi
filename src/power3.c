@@ -310,11 +310,11 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 {
    int i;
 
-   for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
+   for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
       ptr->counter_cmd.events[i] = COUNT_NOTHING;
    }
-   set_domain(ptr, _papi_hwi_system_info.default_domain);
-   set_granularity(ptr, _papi_hwi_system_info.default_granularity);
+   set_domain(ptr, _papi_hwi_system_info.sub_info.default_domain);
+   set_granularity(ptr, _papi_hwi_system_info.sub_info.default_granularity);
 }
 
 
