@@ -68,7 +68,43 @@ case "$OS" in
              elif test "$model" = "2"; then
                CPU=p4
              fi
-           fi
+#
+# Montecito test can go here. For now we just look for family 32,
+# but we should use the below code if we know we are on an itanium at
+# all because cpuinfo will likely change.
+#
+#if defined(__GNUC__)
+#static inline unsigned long
+#ia64_get_cpuid (unsigned long regnum)
+#{
+#	unsigned long r;
+#
+#	asm ("mov %0=cpuid[%r1]" : "=r"(r) : "rO"(regnum));
+#	return r;
+#}
+#elif defined(__ECC) && defined(__INTEL_COMPILER)
+#include <ia64intrin.h>
+#define ia64_get_cpuid(regnum)	__getIndReg(_IA64_REG_INDR_CPUID, (regnum))
+#else
+#error "Unknown compiler or compiler too old!"
+#endif
+#
+#static inline int
+#pfm_ia64_get_cpu_family(void)
+#{
+#	return (int)((ia64_get_cpuid(3) >> 24) & 0xff);
+#}
+#
+#main()
+#{
+#	tmp = pfm_ia64_get_cpu_family();
+#	if (tmp == 0x20) 
+#	  exit(0);
+#	exit(1);
+#}
+           elif test "$family" = "32"; then
+	       CPU=itanium2
+	   fi	   
            if test "$CPU" = "" ; then       
              if test "`cat /proc/cpuinfo | grep "Pentium${R} 4"`" != ""; then
                CPU=p4
