@@ -1030,56 +1030,6 @@ pfm_ita_get_ear_mode(unsigned int i, pfmlib_ita_ear_mode_t *m)
 }
 
 
-/*
- * Function used to print information about a specific events. More than
- * one event can be printed in case an event code is given rather than
- * a specific name. A callback function is used for printing.
- */
-static int
-pfm_ita_print_info(unsigned int v, int (*pf)(const char *fmt,...))
-{
-	pme_ita_entry_t *e;
-        const char *quals[]={ "[Instruction Address Range]", "[OpCode Match]", "[Data Address Range]" };
-	long c;
-        int i;
-
-	if (v >= PME_ITA_EVENT_COUNT || pf == NULL) return PFMLIB_ERR_INVAL;
-	e = itanium_pe+v;
-
-	(*pf)("Umask  : ");
-	c = e->pme_umask;
-	for (i=3; i >=0; i--) {
-		(*pf)("%d", c & 1<<i ? 1 : 0);
-	}
-	(*pf)("\n");
-
-	(*pf)( "EAR    : %s (%s)\n",
-		e->pme_ear ? (e->pme_dear ? "Data" : "Inst") : "No",
-		e->pme_ear ? (e->pme_tlb ? "TLB Mode": "Cache Mode"): "N/A");
-	
-
-	(*pf)("BTB    : %s\n", e->pme_btb ? "Yes" : "No");
-
-	if (e->pme_maxincr > 1)
-		(*pf)("MaxIncr: %u  (Threshold [0-%u])\n", e->pme_maxincr,  e->pme_maxincr-1);
- 	else
-		(*pf)("MaxIncr: %u  (Threshold 0)\n", e->pme_maxincr);
-
-	(*pf)("Qual   : ");
-
-	c = e->pme_qualifiers.qual;
-	if ((c & 0x7) == 0) {
-		(*pf)("None");
-	} else {
-		for (i=0; i < 3; i++ ) {
-                	if (c & 0x1) (*pf)("%s ", quals[i]);
-                	c >>= 1;
-        	}
-	}
-	(*pf)("\n");
-	return PFMLIB_SUCCESS;
-}
-
 static int
 pfm_ita_get_event_code(unsigned int i, unsigned int cnt, int *code)
 {
@@ -1177,7 +1127,6 @@ pfm_pmu_support_t itanium_support={
 	.get_event_code		= pfm_ita_get_event_code,
 	.get_event_name		= pfm_ita_get_event_name,
 	.get_event_counters	= pfm_ita_get_event_counters,
-	.print_info		= pfm_ita_print_info,
 	.dispatch_events	= pfm_ita_dispatch_events,
 	.pmu_detect		= pfm_ita_detect,
 	.get_impl_pmcs		= pfm_ita_get_impl_pmcs,

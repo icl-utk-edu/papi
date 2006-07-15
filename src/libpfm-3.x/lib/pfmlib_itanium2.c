@@ -1530,7 +1530,7 @@ pfm_dispatch_irange(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in
 static const unsigned long iod_tab[8]={
 	/* --- */	3,
 	/* --D */	2,
-	/* -O- */	1, /* =IO safe because IBR not enabled in PMC14 */
+	/* -O- */	3, /* should not be used */
 	/* -OD */	0, /* =IOD safe because default IBR is harmless */
 	/* I-- */	1, /* =IO safe because by defaut OPC is turned off */
 	/* I-D */	0, /* =IOD safe because by default opc is turned off */
@@ -1563,11 +1563,10 @@ pfm_dispatch_drange(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in
 
 	if (param == NULL) return PFMLIB_SUCCESS;
 	/*
-	 * nothing to do here, the default value for pmc13 is good enough
+	 * if only pmc8/pmc9 opcode matching is used, we do not need to change
+	 * the default value of pmc13 regardless of the events being measured.
 	 */
-	if (  param->pfp_ita2_pmc8.opcm_used == 0
-	   && param->pfp_ita2_pmc9.opcm_used == 0
-	   && param->pfp_ita2_drange.rr_used == 0
+	if (  param->pfp_ita2_drange.rr_used == 0
 	   && param->pfp_ita2_irange.rr_used == 0) return PFMLIB_SUCCESS;
 
 	/*
@@ -1898,75 +1897,6 @@ done:
 	return PFMLIB_SUCCESS;
 }
 
-/*
- * Function used to print information about a specific events. More than
- * one event can be printed in case an event code is given rather than
- * a specific name. A callback function is used for printing.
- */
-static int
-pfm_ita2_print_info(unsigned int v, int (*pf)(const char *fmt,...))
-{
-	pme_ita2_entry_t *e;
-        static const char *quals[]={ "[Instruction Address Range]", "[OpCode Match]", "[Data Address Range]" };
-	static const char *groups[]= {"???", "L1D Cache", "L2 Cache"};
-	long c;
-        int i;
-
-	if (v >= PME_ITA2_EVENT_COUNT || pf == NULL) return PFMLIB_ERR_INVAL;
-	e = itanium2_pe+v;
-
-	if (is_iear(e-itanium2_pe)) {
-		i= is_ear_tlb(e-itanium2_pe) ? 6 : 7;
-	} else {
-		i=3;
-	}
-	(*pf)("Umask  : ");
-	c = e->pme_umask;
-	for (; i >=0; i--) {
-		(*pf)("%c", c & 1<<i ? '1' : '0');
-	}
-	(*pf)("\n");
-
-	(*pf)( "EAR    : %s (%s)\n",
-		event_is_ear(e) ? (event_is_dear(e) ? "Data" : "Inst") : "No",
-		event_is_ear(e) ? (event_is_ear_tlb(e) ? "TLB Mode": (event_is_ear_alat(e) ? "ALAT Mode": "Cache Mode")): "N/A");
-	
-	(*pf)("BTB    : %s\n", event_is_btb(e) ? "Yes" : "No");
-	if (e->pme_maxincr > 1)
-		(*pf)("MaxIncr: %u  (Threshold [0-%u])\n", e->pme_maxincr,  e->pme_maxincr-1);
- 	else
-		(*pf)("MaxIncr: %u  (Threshold 0)\n", e->pme_maxincr);
-
-	(*pf)("Qual   : ");
-
-	c = e->pme_qualifiers.qual;
-	if ((c&0x7) == 0) {
-		(*pf)("None");
-	} else {
-		for (i=0; i < 3; i++ ) {
-                	if (c & 0x1) (*pf)("%s ", quals[i]);
-                	c >>= 1;
-        	}
-	}
-	(*pf)("\n");
-
-	if (e->pme_qualifiers.pme_qual.pme_group == PFMLIB_ITA2_EVT_NO_GRP)
-		(*pf)("Group  : None\n");
-	else {
-		unsigned long g = e->pme_qualifiers.pme_qual.pme_group;
-		const char *str =  g < 3 ? groups[g]: "none";
-		(*pf)("Group  : %s\n", str);
-	}
-	if (e->pme_qualifiers.pme_qual.pme_set == 0xf)
-		(*pf)("Set    : None\n");
-	else
-		(*pf)("Set    : %ld\n", e->pme_qualifiers.pme_qual.pme_set);
-
-	if (e->pme_desc) (*pf)("Desc   : %s\n", e->pme_desc);
-
-	return PFMLIB_SUCCESS;
-}
-
 static int
 pfm_ita2_get_event_code(unsigned int i, unsigned int cnt, int *code)
 {
@@ -2001,7 +1931,7 @@ int
 pfm_ita2_get_event_set(unsigned int i, int *set)
 {
 	if (i >= PME_ITA2_EVENT_COUNT || set == NULL) return PFMLIB_ERR_INVAL;
-	*set = evt_set(i) == 0xf ? -1 : evt_set(i);
+	*set = evt_set(i) == 0xf ? PFMLIB_ITA2_EVT_NO_SET : evt_set(i);
 	return PFMLIB_SUCCESS;
 }
 
@@ -2120,7 +2050,6 @@ pfm_pmu_support_t itanium2_support={
 	.get_event_code		= pfm_ita2_get_event_code,
 	.get_event_name		= pfm_ita2_get_event_name,
 	.get_event_counters	= pfm_ita2_get_event_counters,
-	.print_info		= pfm_ita2_print_info,
 	.dispatch_events	= pfm_ita2_dispatch_events,
 	.pmu_detect		= pfm_ita2_detect,
 	.get_impl_pmcs		= pfm_ita2_get_impl_pmcs,

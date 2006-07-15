@@ -12,8 +12,8 @@ of several modern processors.
 
 
 This version of libpfm supports:
-	- For IA-64 :  Itanium (Merced), Itanium2 (McKinley, Madison, Deerfield) and Generic
-	- For X86-64:  AMD X86-64 processors (does not work for EM64T processors)
+	- For IA-64 :  Itanium (Merced), Itanium 2 (McKinley, Madison, Deerfield), Itanium 2 9000 (Montecito)  and Generic
+	- For X86-64:  AMD X86-64 processors 32 and 64 bit modes (does not work for EM64T processors)
 	- For IA-32 :  Pentium M/P6 cores only, architected PMU (Core Duo/Solo or newer)
 	- For MIPS64:  5K, 20K only
 
@@ -27,7 +27,7 @@ WHAT'S THERE
 	- a set of examples showing how the library can be used with the perfmon2
 	  version 2.2 or higher kernel interface.
 
-	- set set of older examples for IA-64 only showing the legacy perfmon2 interface.
+	- a set of older examples for IA-64 only showing the legacy perfmon2 interface.
 	  This is NOT for use on any other platforms.
 
 	- a set of library header files and the perfmon2 kernel interface headers
@@ -51,7 +51,7 @@ INSTALLATION
 REQUIREMENTS:
 -------------
 	- to run the programs in the examples subdir, you MUST be using a linux kernel version of
-	  2.6.16-rc5 or later with the corresponding perfmon new code base patch installed.
+	  2.6.17-rc6 or later with the corresponding perfmon new code base patch installed.
 	  The patch can be downloaded from:
 	  		http://www.sf.net/projects/perfmon2
 
@@ -64,4 +64,4 @@ DOCUMENTATION
 
 LIMITATIONS:
 ------------
-	For Pentium M/P6 partial event tables are available at this point.
+	For Pentium M/P6, partial event tables are available at this point.

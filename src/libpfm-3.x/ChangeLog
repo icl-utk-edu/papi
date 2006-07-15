@@ -1,3 +1,29 @@
+2006-07-10 Stephane Eranian <eranian@hpl.hp.com>
+	* removed PFM_FL_X86_INSECURE because it is not needed anymore
+	* removed perfmon_i386.h and perfmon_mips64.h because empty
+
+2006-06-28 Stephane Eranian <eranian@hpl.hp.com>
+	* added pfmsetup.c (Kevin Corry IBM)
+	* fixed pfmsetup.c to correctly handle sampling format uuid
+
+2006-06-28 Stephane Eranian <eranian@hpl.hp.com>
+	* added libpfm_montecito.3 man page
+	* updated libpfm_itanium2.3 man page
+	* removed pfm_print_event_info() and related calls from library
+	* removed unused pfmlib_mont_ipear_mode_t struct
+	* remove etb_ds from Montecito ETB struct as it can only have one value
+	* added showevtinfo.c example
+	* added PFMLIB_ITA2_EVT_NO_SET to pfmlib_itanium2.h
+	* added PFMLIB_MONT_EVT_NO_SET to pfmlib_montecito.h
+	* replaced pfm_mont_get_event_caf() by pfm_mont_get_event_type()
+	* added missing perfmon_compat.h from include install (Will Cohen)
+	* fortify showreginfo.c for FC6 (Will Cohen)
+
+2006-06-13 Stephane Eranian <eranian@hpl.hp.com>
+	* added generic support or event umask (Kevin Corry from IBM)
+	* changed detect_pmcs.c to use pfm-getinfo_evtsets()
+	* updated all examples to use the new detect_unavailable_pmcs()
+	* the examples require 2.6.17-rc6 to run
 
 2006-05-22 Stephane Eranian <eranian@hpl.hp.com>
 	* corrected architected IA-32 PMU detection code, e.g., PIC assembly

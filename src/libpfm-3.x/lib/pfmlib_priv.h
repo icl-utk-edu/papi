@@ -44,7 +44,6 @@ typedef struct {
 	char		*(*get_event_mask_name)(unsigned int event_idx, unsigned int mask_idx);
 	void		(*get_event_counters)(unsigned int i, pfmlib_regmask_t *counters);
 	int		(*get_num_event_masks)(unsigned int event_idx, unsigned int *count);
-	int		(*print_info)(unsigned int v, int (*pf)(const char *fmt,...));
 	int 		(*dispatch_events)(pfmlib_input_param_t *p, void *model_in, pfmlib_output_param_t *q, void *model_out);
 	int 		(*pmu_detect)(void);
 	void		(*get_impl_pmcs)(pfmlib_regmask_t *impl_pmcs);

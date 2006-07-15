@@ -182,9 +182,6 @@ extern int pfm_get_event_code_counter(unsigned int idx, unsigned int cnt, int *c
 extern int pfm_get_event_mask_name(unsigned int event_idx, unsigned int mask_idx, char *name, size_t maxlen);
 extern int pfm_get_event_mask_description(unsigned int event_idx, unsigned int mask_idx, char **desc);
 
-extern int pfm_print_event_info(const char *name, int (*pf)(const char *fmt,...));
-extern int pfm_print_event_info_byindex(unsigned int idx, int (*pf)(const char *fmt,...));
-
 extern int pfm_dispatch_events(pfmlib_input_param_t *p, void *model_in, pfmlib_output_param_t *q, void *model_out);
 
 extern int pfm_get_impl_pmcs(pfmlib_regmask_t *impl_pmcs);

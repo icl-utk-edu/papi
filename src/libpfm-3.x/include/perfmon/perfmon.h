@@ -39,14 +39,6 @@ typedef unsigned char pfm_uuid_t[16];	/* custom sampling buffer identifier type 
 #include <perfmon/perfmon_ia64.h>
 #endif
 
-#if defined(__i386__) || defined(__x86_64__)
-#include <perfmon/perfmon_i386.h>
-#endif
-
-#ifdef __mips__
-#include <perfmon/perfmon_mips64.h>
-#endif
-
 /*
  * PMC/PMD flags to use with pfm_write_pmds() or pfm_write_pmcs()
  *

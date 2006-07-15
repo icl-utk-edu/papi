@@ -49,7 +49,8 @@ INCDIR=-I$(PFMINCDIR)
 TARGETS=self self_view task task_attach task_attach_timeout syst \
 	notify_self notify_self2 notify_self3 \
 	whichpmu multiplex multiplex2 set_notify \
-	showreginfo task_smpl task_smpl_user
+	showreginfo task_smpl task_smpl_user showevtinfo \
+	pfmsetup
 
 XTRA=rtop self_standalone notify_standalone smpl_standalone
 

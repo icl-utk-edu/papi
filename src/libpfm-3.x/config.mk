@@ -59,6 +59,7 @@ ifeq ($(ARCH),ia32)
 CONFIG_PFMLIB_I386_P6=y
 CONFIG_PFMLIB_GEN_IA32=y
 CONFIG_PFMLIB_ARCH_I386=y
+CONFIG_PFMLIB_AMD_X86_64=y
 endif
 
 ifeq ($(ARCH),mips64)
@@ -80,9 +81,10 @@ OPTIM=-O2
 # icc the Intel Itanium Compiler (7.x,8.x, 9.x)
 # or GNU C
 #CC=icc
-CC=gcc -Wall -Werror
+CC=gcc
 
-CFLAGS=$(OPTIM) -g
+DBG=-g -Wall -Werror
+CFLAGS=$(OPTIM) $(DBG)
 LDFLAGS=-L$(TOPDIR)/libpfm
 MKDEP=makedepend
 
