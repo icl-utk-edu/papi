@@ -1,0 +1,1103 @@
+/*
+* File:    linux-ia64.c
+* CVS:     $Id$
+* Author:  Philip Mucci
+*          mucci@cs.utk.edu
+* Mods:	   Kevin London
+*	   london@cs.utk.edu
+*          Per Ekman
+*          pek@pdc.kth.se
+*          Zhou Min
+*          min@cs.utk.edu
+*/
+
+
+#include "papi.h"
+#include "papi_internal.h"
+#include "papi_vector.h"
+#include "threads.h"
+#include "papi_memory.h"
+
+static pfm_preset_search_entry_t pfm_preset_search_map[] = {
+  { PAPI_TOT_CYC, 0, },
+  { PAPI_TOT_INS, 0, },
+  { 0, 0, }};
+
+#define NUM_OF_PRESET_EVENTS (sizeof(pfm_preset_search_map)/sizeof(pfm_preset_search_entry_t)-1)
+static hwi_search_t preset_search_map[NUM_OF_PRESET_EVENTS + 1];
+static hwd_native_event_entry_t *native_map = NULL;
+
+volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
+
+papi_svector_t _linux_pfm_table[] = {
+  {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
+  {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
+  {(void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE},
+  {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
+  {(void (*)())_papi_hwd_ctl, VEC_PAPI_HWD_CTL},
+  {(void (*)())_papi_hwd_get_real_usec, VEC_PAPI_HWD_GET_REAL_USEC},
+  {(void (*)())_papi_hwd_get_real_cycles, VEC_PAPI_HWD_GET_REAL_CYCLES},
+  {(void (*)())_papi_hwd_get_virt_cycles, VEC_PAPI_HWD_GET_VIRT_CYCLES},
+  {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
+  {(void (*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE}, {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
+  {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
+  {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
+  {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
+  {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
+  {(void (*)())_papi_hwd_set_profile, VEC_PAPI_HWD_SET_PROFILE},
+  {(void (*)())_papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
+  {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
+  {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
+  {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
+  {(void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
+  {(void (*)())_papi_hwd_ntv_code_to_bits, VEC_PAPI_HWD_NTV_CODE_TO_BITS},
+  {(void (*)())_papi_hwd_ntv_bits_to_info, VEC_PAPI_HWD_NTV_BITS_TO_INFO},
+ {NULL, VEC_PAPI_END}
+};
+
+
+/* BEGIN COMMON CODE */
+
+int _papi_hwd_update_shlib_info(void)
+{
+   char fname[PAPI_HUGE_STR_LEN];
+   unsigned long t_index = 0, d_index = 0, b_index = 0, counting = 1;
+   PAPI_address_map_t *tmp = NULL;
+   FILE *f;
+                                                                                
+   sprintf(fname, "/proc/%ld/maps", (long) _papi_hwi_system_info.pid);
+   f = fopen(fname, "r");
+                                                                                
+   if (!f)
+     {
+         PAPIERROR("fopen(%s) returned < 0", fname);
+         return(PAPI_OK);
+     }
+                                                                                
+ again:
+   while (!feof(f)) {
+      char buf[PAPI_HUGE_STR_LEN+PAPI_HUGE_STR_LEN], perm[5], dev[6], mapname[PATH_MAX], lastmapname[PAPI_HUGE_STR_LEN];
+      unsigned long begin, end, size, inode, foo;
+                                                                                
+      if (fgets(buf, sizeof(buf), f) == 0)
+         break;
+      if (strlen(mapname))
+        strcpy(lastmapname,mapname);
+      else
+        lastmapname[0] = '\0';
+      mapname[0] = '\0';
+      sscanf(buf, "%lx-%lx %4s %lx %5s %ld %s", &begin, &end, perm,
+             &foo, dev, &inode, mapname);
+      size = end - begin;
+                                                                                
+      /* the permission string looks like "rwxp", where each character can
+       * be either the letter, or a hyphen.  The final character is either
+       * p for private or s for shared. */
+                                                                                
+      if (counting)
+        {
+          if ((perm[2] == 'x') && (perm[0] == 'r') && (inode != 0))
+            {
+              if  (strcmp(_papi_hwi_system_info.exe_info.fullname,mapname) == 0)                {
+                  _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) begin;
+                  _papi_hwi_system_info.exe_info.address_info.text_end =
+                    (caddr_t) (begin + size);
+                }
+              t_index++;
+            }
+          else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode != 0) && (strcmp(_papi_hwi_system_info.exe_info.fullname,mapname) == 0))
+            {
+              _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) begin;
+              _papi_hwi_system_info.exe_info.address_info.data_end =
+                (caddr_t) (begin + size);
+              d_index++;
+            }
+          else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode == 0) && (strcmp(_papi_hwi_system_info.exe_info.fullname,lastmapname) == 0))
+            {
+              _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) begin;
+              _papi_hwi_system_info.exe_info.address_info.bss_end =
+                (caddr_t) (begin + size);
+              b_index++;
+            }
+        }
+      else if (!counting)
+        {
+          if ((perm[2] == 'x') && (perm[0] == 'r') && (inode != 0))
+            {
+              if (strcmp(_papi_hwi_system_info.exe_info.fullname,mapname) != 0)
+                {
+              t_index++;
+                  tmp[t_index-1 ].text_start = (caddr_t) begin;
+                  tmp[t_index-1 ].text_end = (caddr_t) (begin + size);
+                  strncpy(tmp[t_index-1 ].name, mapname, PAPI_MAX_STR_LEN);
+                }
+            }
+          else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode != 0))
+            {
+              if ( (strcmp(_papi_hwi_system_info.exe_info.fullname,mapname) != 0)
+               && (t_index >0 ) && (tmp[t_index-1 ].data_start == 0))
+                {
+                  tmp[t_index-1 ].data_start = (caddr_t) begin;
+                  tmp[t_index-1 ].data_end = (caddr_t) (begin + size);
+                }
+            }
+          else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode == 0))
+            {
+              if ((t_index > 0 ) && (tmp[t_index-1].bss_start == 0))
+                {
+                  tmp[t_index-1].bss_start = (caddr_t) begin;
+                  tmp[t_index-1].bss_end = (caddr_t) (begin + size);
+                }
+            }
+        }
+   }
+                                                                                
+   if (counting) {
+      /* When we get here, we have counted the number of entries in the map
+         for us to allocate */
+                                                                                
+      tmp = (PAPI_address_map_t *) papi_calloc(t_index-1, sizeof(PAPI_address_map_t));
+      if (tmp == NULL)
+        { PAPIERROR("Error allocating shared library address map"); return(PAPI_ENOMEM); }
+      t_index = 0;
+      rewind(f);
+      counting = 0;
+      goto again;
+   } else {
+      if (_papi_hwi_system_info.shlib_info.map)
+         papi_free(_papi_hwi_system_info.shlib_info.map);
+      _papi_hwi_system_info.shlib_info.map = tmp;
+      _papi_hwi_system_info.shlib_info.count = t_index;
+                                                                                
+      fclose(f);
+   }
+   return (PAPI_OK);
+}
+                                                                                
+static char *search_cpu_info(FILE * f, char *search_str, char *line)
+{
+   /* This code courtesy of our friends in Germany. Thanks Rudolph Berrendorf! */
+   /* See the PCL home page for the German version of PAPI. */
+
+   char *s;
+
+   while (fgets(line, 256, f) != NULL) {
+      if (strstr(line, search_str) != NULL) {
+         /* ignore all characters in line up to : */
+         for (s = line; *s && (*s != ':'); ++s);
+         if (*s)
+            return (s);
+      }
+   }
+   return (NULL);
+
+   /* End stolen code */
+}
+
+int _papi_hwd_get_system_info(void)
+{
+   int tmp, retval;
+   char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
+   pid_t pid;
+   float mhz = 0.0;
+   FILE *f;
+                                                                                
+   /* Software info */
+                                                                                
+   /* Path and args */
+                                                                                
+   pid = getpid();
+   if (pid < 0)
+     { PAPIERROR("getpid() returned < 0"); return(PAPI_ESYS); }
+   _papi_hwi_system_info.pid = pid;
+                                                                                
+   sprintf(maxargs, "/proc/%d/exe", (int) pid);
+   if (readlink(maxargs, _papi_hwi_system_info.exe_info.fullname, PAPI_HUGE_STR_LEN) < 0)
+     { PAPIERROR("readlink(%s) returned < 0", maxargs); return(PAPI_ESYS); }
+                                                                                
+   /* basename can modify it's argument */
+   strcpy(maxargs,_papi_hwi_system_info.exe_info.fullname);
+   strcpy(_papi_hwi_system_info.exe_info.address_info.name, basename(maxargs));
+                                                                                
+   /* Executable regions, may require reading /proc/pid/maps file */
+                                                                                
+   retval = _papi_hwd_update_shlib_info();
+                                                                                
+   /* PAPI_preload_option information */
+                                                                                
+   strcpy(_papi_hwi_system_info.preload_info.lib_preload_env, "LD_PRELOAD");
+   _papi_hwi_system_info.preload_info.lib_preload_sep = ' ';
+   strcpy(_papi_hwi_system_info.preload_info.lib_dir_env, "LD_LIBRARY_PATH");
+   _papi_hwi_system_info.preload_info.lib_dir_sep = ':';
+                                                                                
+   SUBDBG("Executable is %s\n", _papi_hwi_system_info.exe_info.address_info.name);
+   SUBDBG("Full Executable is %s\n", _papi_hwi_system_info.exe_info.fullname);
+   SUBDBG("Text: Start %p, End %p, length %d\n",
+          _papi_hwi_system_info.exe_info.address_info.text_start,
+          _papi_hwi_system_info.exe_info.address_info.text_end,
+          (int)(_papi_hwi_system_info.exe_info.address_info.text_end -
+          _papi_hwi_system_info.exe_info.address_info.text_start));
+   SUBDBG("Data: Start %p, End %p, length %d\n",
+          _papi_hwi_system_info.exe_info.address_info.data_start,
+          _papi_hwi_system_info.exe_info.address_info.data_end,
+          (int)(_papi_hwi_system_info.exe_info.address_info.data_end -
+          _papi_hwi_system_info.exe_info.address_info.data_start));
+   SUBDBG("Bss: Start %p, End %p, length %d\n",
+          _papi_hwi_system_info.exe_info.address_info.bss_start,
+          _papi_hwi_system_info.exe_info.address_info.bss_end,
+          (int)(_papi_hwi_system_info.exe_info.address_info.bss_end -
+          _papi_hwi_system_info.exe_info.address_info.bss_start));
+                                                                                
+   /* Hardware info */
+                                                                                
+   _papi_hwi_system_info.hw_info.ncpu = sysconf(_SC_NPROCESSORS_ONLN);
+   _papi_hwi_system_info.hw_info.nnodes = 1;
+   _papi_hwi_system_info.hw_info.totalcpus = sysconf(_SC_NPROCESSORS_CONF);
+   _papi_hwi_system_info.hw_info.vendor = -1;
+                                                                                
+   if ((f = fopen("/proc/cpuinfo", "r")) == NULL)
+     { PAPIERROR("fopen(/proc/cpuinfo) errno %d",errno); return(PAPI_ESYS); }
+                                                                                
+   /* All of this information maybe overwritten by the substrate */
+                                                                                
+   /* MHZ */
+                                                                                
+   rewind(f);
+   s = search_cpu_info(f, "cpu MHz", maxargs);
+   if (s)
+      sscanf(s + 1, "%f", &mhz);
+   _papi_hwi_system_info.hw_info.mhz = mhz;
+                                                                                
+   /* Vendor Name */
+                                                                                
+   rewind(f);
+   s = search_cpu_info(f, "vendor_id", maxargs);
+   if (s && (t = strchr(s + 2, '\n')))
+     {
+      *t = '\0';
+      strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
+     }
+   else
+     {
+       rewind(f);
+       s = search_cpu_info(f, "vendor", maxargs);
+       if (s && (t = strchr(s + 2, '\n'))) {
+         *t = '\0';
+         strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
+       }
+     }
+                                                                                
+   /* Revision */
+                                                                                
+   rewind(f);
+   s = search_cpu_info(f, "stepping", maxargs);
+   if (s)
+      {
+        sscanf(s + 1, "%d", &tmp);
+        _papi_hwi_system_info.hw_info.revision = (float) tmp;
+      }
+   else
+     {
+       rewind(f);
+       s = search_cpu_info(f, "revision", maxargs);
+       if (s)
+         {
+           sscanf(s + 1, "%d", &tmp);
+           _papi_hwi_system_info.hw_info.revision = (float) tmp;
+         }
+     }
+                                                                                
+   /* Model Name */
+                                                                                
+   rewind(f);
+   s = search_cpu_info(f, "model name", maxargs);
+   if (s && (t = strchr(s + 2, '\n')))
+     {
+       *t = '\0';
+       strcpy(_papi_hwi_system_info.hw_info.model_string, s + 2);
+     }
+   else
+     {
+       rewind(f);
+       s = search_cpu_info(f, "family", maxargs);
+       if (s && (t = strchr(s + 2, '\n')))
+         {
+           *t = '\0';
+           strcpy(_papi_hwi_system_info.hw_info.model_string, s + 2);
+         }
+     }
+                                                                                
+   rewind(f);
+   s = search_cpu_info(f, "model", maxargs);
+   if (s)
+      {
+        sscanf(s + 1, "%d", &tmp);
+        _papi_hwi_system_info.hw_info.model = tmp;
+      }
+                                                                                
+   fclose(f);
+                                                                                
+   SUBDBG("Found %d %s(%d) %s(%d) CPU's at %f Mhz.\n",
+          _papi_hwi_system_info.hw_info.totalcpus,
+          _papi_hwi_system_info.hw_info.vendor_string,
+          _papi_hwi_system_info.hw_info.vendor,
+          _papi_hwi_system_info.hw_info.model_string,
+          _papi_hwi_system_info.hw_info.model, _papi_hwi_system_info.hw_info.mhz);
+                                                                                
+   return (PAPI_OK);
+}
+
+inline_static pid_t mygettid(void)
+{
+#ifdef SYS_gettid
+  return(syscall(SYS_gettid));
+#elif defined(__NR_gettid)
+  return(syscall(__NR_gettid));
+#else
+  return(syscall(1105));  
+#endif
+}
+
+inline_static long_long get_cycles(void) {
+   long_long ret = 0;
+#ifdef __x86_64__
+   do {
+      unsigned int a,d;
+      asm volatile("rdtsc" : "=a" (a), "=d" (d));
+      (ret) = ((long_long)a) | (((long_long)d)<<32);
+   } while(0);
+#else
+   __asm__ __volatile__("rdtsc"
+                       : "=A" (ret)
+                       : );
+#endif
+   return ret;
+}
+
+static int generate_preset_search_map(pfm_preset_search_entry_t *strmap, hwi_search_t *psmap)
+{
+  int i = 0;
+
+  while (strmap[i].preset)
+    {
+      psmap[i].event_code = strmap[i].preset;
+      psmap[i].data.derived = strmap[i].derived;
+      if (strmap[i].preset == PAPI_TOT_CYC) 
+	pfm_get_cycle_event((unsigned int *)psmap[i].data.native);
+      else if (strmap[i].preset == PAPI_TOT_INS) 
+	pfm_get_inst_retired_event((unsigned int *)psmap[i].data.native);
+      i++;
+    }
+
+       
+   if (NUM_OF_PRESET_EVENTS != i) 
+     {
+       PAPIERROR("NUM_OF_PRESET_EVENTS %d != pnum %d\n", (int)NUM_OF_PRESET_EVENTS,i);
+       return(PAPI_ENOEVNT);
+     }
+
+   return (PAPI_OK);
+}
+
+static int generate_native_event_map(hwd_native_event_entry_t **nmap, unsigned int cnt)
+{
+  int ret, did_something;
+  unsigned int num_cnt, n, i, j;
+  char *findme;
+  hwd_native_event_entry_t *ntmp, *orig_ntmp;
+  pfmlib_regmask_t impl_cnt;
+
+  if ((ret = pfm_get_num_counters(&num_cnt)) != PFMLIB_SUCCESS)
+    {
+      PAPIERROR("pfm_get_num_counters(%p): %s", &num_cnt, pfm_strerror(ret));
+      return(PAPI_ESBSTR);
+    }
+  if ((ret = pfm_get_impl_counters(&impl_cnt)) != PFMLIB_SUCCESS)
+    {
+      PAPIERROR("pfm_get_impl_counters(%p): %s", &impl_cnt, pfm_strerror(ret));
+      return(PAPI_ESBSTR);
+    }
+  orig_ntmp = ntmp = (hwd_native_event_entry_t *)malloc(cnt*sizeof(hwd_native_event_entry_t));
+  for (i=0;i<cnt;i++)
+    {
+      if ((ret = pfm_get_event_name(i,ntmp->name,sizeof(ntmp->name))) != PFMLIB_SUCCESS)
+	{
+	  PAPIERROR("pfm_get_event_name(%d,%p,%d): %s", i,ntmp->name,sizeof(ntmp->name),pfm_strerror(ret));
+	bail:
+	  free(orig_ntmp);
+	  return(PAPI_ESBSTR);
+	}
+      if ((ret = pfm_get_event_description(i,&findme)) != PFMLIB_SUCCESS)
+	{
+	  PAPIERROR("pfm_get_event_description(%d,%p): %s", i,&findme, pfm_strerror(ret));
+	  goto bail;
+	}
+      strncpy(ntmp->description,findme,sizeof(ntmp->description));
+      free(findme);
+      if ((ret = pfm_get_event_counters(i,&ntmp->resources.selector)) != PFMLIB_SUCCESS)
+	{
+	  PAPIERROR("pfm_get_event_counters(%d,%p): %s", i,&ntmp->resources.selector,pfm_strerror(ret));
+	  goto bail;
+	}
+      did_something = 0;
+      n = num_cnt;
+      for (j=0;n;j++)
+	{
+	  if (pfm_regmask_isset(&impl_cnt, j))
+	    n--;
+	  if (pfm_regmask_isset(&ntmp->resources.selector,j))
+	    {
+	      int foo;
+	      if (pfm_get_event_code_counter(i,j,&foo) != PFMLIB_SUCCESS)
+		{
+		  PAPIERROR("pfm_get_event_code_counter(%d,%d,%p): %s", i,j,&foo,pfm_strerror(ret));
+		  goto bail;
+		}
+	      SUBDBG("PFM event index %d: Event code %d, lives on counter %d.\n",i,foo,j);
+	    }
+	  did_something++;
+	}
+      if (did_something == 0)
+	{
+	  PAPIERROR("Could not get an event code for pfm index %d.\n",i);
+	  goto bail;
+	}
+      ntmp++;
+    }
+  *nmap = orig_ntmp;
+  return(PAPI_OK);
+}
+
+inline static int set_domain(hwd_control_state_t * this_state, int domain)
+{
+   int mode = 0, did = 0;
+   pfmlib_input_param_t *evt = &this_state->in;
+
+   if (domain & PAPI_DOM_USER) {
+      did = 1;
+      mode |= PFM_PLM3;
+   }
+
+   if (domain & PAPI_DOM_KERNEL) {
+      did = 1;
+      mode |= PFM_PLM2;
+   }
+
+   if (domain & PAPI_DOM_SUPERVISOR) {
+      did = 1;
+      mode |= PFM_PLM1;
+   }
+
+   if (domain & PAPI_DOM_OTHER) {
+      did = 1;
+      mode |= PFM_PLM0;
+   }
+
+   if (!did)
+      return (PAPI_EINVAL);
+
+   evt->pfp_dfl_plm = mode;
+   return (PAPI_OK);
+}
+
+inline static int set_granularity(hwd_control_state_t * this_state, int domain)
+{
+   switch (domain) {
+   case PAPI_GRN_PROCG:
+   case PAPI_GRN_SYS:
+   case PAPI_GRN_SYS_CPU:
+   case PAPI_GRN_PROC:
+      return(PAPI_ESBSTR);
+   case PAPI_GRN_THR:
+      break;
+   default:
+      return (PAPI_EINVAL);
+   }
+   return (PAPI_OK);
+}
+
+/* This function should tell your kernel extension that your children
+   inherit performance register information and propagate the values up
+   upon child exit and parent wait. */
+
+inline static int set_inherit(int arg)
+{
+   return (PAPI_ESBSTR);
+}
+
+inline static int set_default_domain(hwd_control_state_t * this_state, int domain)
+{
+   return (set_domain(this_state, domain));
+}
+
+inline static int set_default_granularity(hwd_control_state_t * this_state,
+                                          int granularity)
+{
+   return (set_granularity(this_state, granularity));
+}
+
+static int get_string_from_file(char *file, char *str, int len)
+{
+  FILE *f = fopen(file,"r");
+  char buf[PAPI_HUGE_STR_LEN];
+  if (f == NULL)
+    {
+      PAPIERROR("fopen(%s): %s", file, strerror(errno));
+      return(PAPI_ESYS);
+    }
+  if (fscanf(f,"%s\n",buf) != 1)
+    {
+      PAPIERROR("fscanf(%s, %%s\\n): Unable to scan 1 token", file);
+      fclose(f);
+    }
+  strncpy(str,buf,(len > PAPI_HUGE_STR_LEN ? PAPI_HUGE_STR_LEN : len));
+  fclose(f);
+  return(PAPI_OK);
+}
+
+int _papi_hwd_init_substrate(papi_vectors_t *vtable)
+{
+  int i, retval, type;
+  unsigned int ncnt;
+  unsigned int version;
+  pfmlib_options_t pfmlib_options;
+  char buf[PAPI_HUGE_STR_LEN];
+
+  /* Setup the vector entries that the OS knows about */
+#ifndef PAPI_NO_VECTOR
+  retval = _papi_hwi_setup_vector_table( vtable, _linux_pfm_table);
+  if ( retval != PAPI_OK ) return(retval);
+#endif
+
+   /* Opened once for all threads. */
+   if (pfm_initialize() != PFMLIB_SUCCESS)
+      return (PAPI_ESYS);
+
+   if (pfm_get_pmu_type(&type) != PFMLIB_SUCCESS)
+      return (PAPI_ESYS);
+
+   if (pfm_get_version(&version) != PFMLIB_SUCCESS)
+      return (PAPI_ESBSTR);
+
+   if (PFM_VERSION_MAJOR(version) != PFM_VERSION_MAJOR(PFMLIB_VERSION)) {
+      PAPIERROR("Version mismatch of libpfm: compiled %x vs. installed %x",
+              PFM_VERSION_MAJOR(PFMLIB_VERSION), PFM_VERSION_MAJOR(version));
+      return (PAPI_ESBSTR);
+   }
+
+   memset(&pfmlib_options, 0, sizeof(pfmlib_options));
+#ifdef DEBUG
+   if (ISLEVEL(DEBUG_SUBSTRATE)) {
+      pfmlib_options.pfm_debug = 1;
+      pfmlib_options.pfm_verbose = 1;
+   }
+#endif
+
+   if (pfm_set_options(&pfmlib_options))
+      return (PAPI_ESYS);
+
+   /* Fill in sub_info */
+
+  if ((retval = pfm_get_num_events(&ncnt)) != PFMLIB_SUCCESS)
+    {
+      PAPIERROR("pfm_get_num_events(%p): %s", &ncnt, pfm_strerror(retval));
+      return(PAPI_ESBSTR);
+    }
+  _papi_hwi_system_info.sub_info.num_native_events = ncnt;
+  strcpy(_papi_hwi_system_info.sub_info.name, "$Id$");          
+  strcpy(_papi_hwi_system_info.sub_info.version, "$Revision$");  
+  sprintf(buf,"%08x",version);
+  strncpy(_papi_hwi_system_info.sub_info.support_version,buf,sizeof(_papi_hwi_system_info.sub_info.support_version));
+  get_string_from_file("/sys/kernel/perfmon/version",_papi_hwi_system_info.sub_info.kernel_version,sizeof(_papi_hwi_system_info.sub_info.kernel_version));
+  pfm_get_num_counters((unsigned int *)&_papi_hwi_system_info.sub_info.num_cntrs);
+  _papi_hwi_system_info.sub_info.hardware_intr_sig = SIGIO;
+  _papi_hwi_system_info.sub_info.hardware_intr = 1;
+  _papi_hwi_system_info.sub_info.fast_counter_read = 0;
+  _papi_hwi_system_info.sub_info.fast_real_timer = 1;
+  _papi_hwi_system_info.sub_info.fast_virtual_timer = 0;
+
+
+   /* Fill in what we can of the papi_system_info. */
+   retval = _papi_hwd_get_system_info();
+   if (retval)
+      return (retval);
+
+   _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_INTEL;
+
+   /* get_memory_info has a CPU model argument that is not used,
+    * fakining it here with hw_info.model which is not set by this
+    * substrate 
+    */
+   retval = _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info,
+                            _papi_hwi_system_info.hw_info.model);
+   if (retval)
+     return(retval);
+
+   /* Setup presets */
+
+   retval = generate_preset_search_map(pfm_preset_search_map,preset_search_map);
+   if (retval)
+      return (retval);
+
+   retval = generate_native_event_map(&native_map, _papi_hwi_system_info.sub_info.num_native_events);
+   if (retval)
+     {
+       free(preset_search_map);
+       return (retval);
+     }
+
+   retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
+   if (retval)
+     {
+       free(preset_search_map);
+       free(native_map);
+       return (retval);
+     }
+
+   for (i = 0; i < PAPI_MAX_LOCK; i++)
+      _papi_hwd_lock_data[i] = MUTEX_OPEN;
+   
+   return (PAPI_OK);
+}
+
+int _papi_hwd_init(hwd_context_t * thr_ctx)
+{
+  pfarg_ctx_t ctx;
+  int ret;
+
+#if defined(HAS_PER_PROCESS_TIMES)
+  {
+    char buf[LINE_MAX];
+    int fd;
+    sprintf(buf,"/proc/%d/task/%d/stat",getpid(),mygettid());
+    fd = open(buf,O_RDONLY);
+    if (fd == -1)
+      {
+	PAPIERROR("open(%s)",buf);
+	return(PAPI_ESYS);
+      }
+    thr_ctx->stat_fd = fd;
+  }
+#endif
+
+  memset(&ctx, 0, sizeof(ctx));
+  SUBDBG("PFM_CREATE_CONTEXT\n");
+  if ((ret = pfm_create_context(&ctx, NULL, 0)))
+    {
+      PAPIERROR("pfm_create_context(): %s", pfm_strerror(ret));
+      return(PAPI_ESBSTR);
+    }
+  
+  memcpy(&thr_ctx->ctx,&ctx,sizeof(ctx));
+  return(PAPI_OK);
+}
+
+long_long _papi_hwd_get_real_usec(void) {
+   return((long_long)get_cycles() / (long_long)_papi_hwi_system_info.hw_info.mhz);
+}
+                                                                                
+long_long _papi_hwd_get_real_cycles(void) {
+   return((long_long)get_cycles());
+}
+
+long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
+{
+   long_long retval;
+#if defined(HAS_PER_PROCESS_TIMES)
+   {
+     char buf[LINE_MAX];
+     long_long utime, stime;
+     int rv, cnt = 0, i = 0;
+
+     rv = read(zero->stat_fd,buf,LINE_MAX*sizeof(char));
+     if (rv == -1)
+       {
+	 PAPIERROR("read()");
+	 return(PAPI_ESYS);
+       }
+
+     buf[rv] = '\0';
+     SUBDBG("Thread stat file is:%s\n",buf);
+     while ((cnt != 13) && (i < rv))
+       {
+	 if (buf[i] == ' ')
+	   { cnt++; }
+	 i++;
+       }
+     if (cnt != 13)
+       {
+	 PAPIERROR("utime and stime not in thread stat file?");
+	 return(PAPI_ESBSTR);
+       }
+     
+     if (sscanf(buf+i,"%llu %llu",&utime,&stime) != 2)
+       {
+	 PAPIERROR("Unable to scan two items from thread stat file at 13th space?");
+	 return(PAPI_ESBSTR);
+       }
+     retval = (utime+stime)*(long_long)(1000000/sysconf(_SC_CLK_TCK));
+   }
+#else
+   {
+     struct tms buffer;
+     times(&buffer);
+     SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
+     retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*(1000000/sysconf(_SC_CLK_TCK)));
+     /* NOT CLOCKS_PER_SEC as in the headers! */
+   }
+#endif
+   return (retval);
+}
+
+long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
+{
+   return (_papi_hwd_get_virt_usec(zero) * (long_long)_papi_hwi_system_info.hw_info.mhz);
+}
+
+/* reset the hardware counters */
+int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * machdep)
+{
+   return (PAPI_OK);
+}
+
+int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * machdep,
+                   long_long ** events, int flags)
+{
+   return PAPI_OK;
+}
+
+
+int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * current_state)
+{
+  int ret; 
+  if ((ret = pfm_start(ctx->ctx.ctx_fd, NULL)))
+    {
+      PAPIERROR("pfm_start(%d): %s", ctx->ctx.ctx_fd, pfm_strerror(ret));
+      return(PAPI_ESYS);
+    }
+   return PAPI_OK;
+}
+
+int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * zero)
+{
+  int ret;
+  if ((ret = pfm_stop(ctx->ctx.ctx_fd)))
+    {
+      PAPIERROR("pfm_stop(%d): %s", ctx->ctx.ctx_fd, pfm_strerror(ret));
+      return(PAPI_ESYS);
+    }
+   return PAPI_OK;
+}
+
+int _papi_hwd_ctl(hwd_context_t * zero, int code, _papi_int_option_t * option)
+{
+   switch (code) {
+   case PAPI_DEFDOM:
+      return (set_default_domain(&option->domain.ESI->machdep, option->domain.domain));
+   case PAPI_DOMAIN:
+      return (set_domain(&option->domain.ESI->machdep, option->domain.domain));
+   case PAPI_DEFGRN:
+      return (set_default_granularity
+              (&option->domain.ESI->machdep, option->granularity.granularity));
+   case PAPI_GRANUL:
+      return (set_granularity
+              (&option->granularity.ESI->machdep, option->granularity.granularity));
+#if 0
+   case PAPI_DATA_ADDRESS:
+      ret=set_default_domain(&option->address_range.ESI->machdep, option->address_range.domain);
+	  if(ret != PAPI_OK) return(ret);
+	  set_drange(zero, &option->address_range.ESI->machdep, option);
+      return (PAPI_OK);
+   case PAPI_INSTR_ADDRESS:
+      ret=set_default_domain(&option->address_range.ESI->machdep, option->address_range.domain);
+	  if(ret != PAPI_OK) return(ret);
+	  set_irange(zero, &option->address_range.ESI->machdep, option);
+      return (PAPI_OK);
+#endif
+   default:
+      return (PAPI_EINVAL);
+   }
+}
+
+int _papi_hwd_shutdown(hwd_context_t * ctx)
+{
+#if defined(HAS_PER_PROCESS_TIMES)
+  close(ctx->stat_fd);
+#endif  
+  return (close(ctx->ctx.ctx_fd));
+}
+
+/* This function only used when hardware overflows ARE working */
+
+void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
+{
+   _papi_hwi_context_t ctx;
+   pfm_msg_t msg;
+   int ret, fd;
+   ThreadInfo_t *master = NULL;
+
+   ctx.si = info;
+   ctx.ucontext = (ucontext_t *)uc;
+   fd = info->si_fd;
+
+ retry:
+   ret = read(fd, &msg, sizeof(msg));
+   if (ret == -1)
+     {
+       if (errno == EINTR) 
+	 {
+	   SUBDBG("read(%d) interrupted, retrying\n", fd);
+	   goto retry;
+	 }
+       else
+	 {
+	   PAPIERROR("read(%d): errno %d", fd, errno); 
+	 }
+     }
+   else if (ret != sizeof(msg)) 
+     {
+       PAPIERROR("read(%d): short %d vs. %d bytes", ret, sizeof(msg)); 
+       ret = -1;
+     }
+   
+   if (msg.type != PFM_MSG_OVFL) 
+     {
+       PAPIERROR("unexpected msg type %d",msg.type);
+       ret = -1;
+     }
+
+   if (ret != -1)
+     _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, 
+          msg.pfm_ovfl_msg.msg_ovfl_pmds[0], 0, &master);
+ 
+   if ((ret = pfm_restart(info->si_fd)))
+     {
+       PAPIERROR("pfm_restart(%d): %s", info->si_fd, pfm_strerror(ret));
+     }
+}
+
+static int set_notify(EventSetInfo_t * ESI, int index, int value)
+{
+   return (PAPI_OK);
+}
+
+int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI)
+{
+   return (PAPI_OK);
+}
+
+
+int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
+{
+   return (PAPI_OK);
+}
+
+int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
+{
+   hwd_control_state_t *this_state = &ESI->machdep;
+   int j, retval = PAPI_OK, *pos;
+
+   if (threshold == 0) {
+      /* Remove the overflow notifier on the proper event. 
+       */
+      set_notify(ESI, EventIndex, 0);
+
+      pos = ESI->EventInfoArray[EventIndex].pos;
+      j = pos[0];
+      SUBDBG("counter %d used in overflow, threshold %d\n",
+             j, threshold);
+      this_state->pd[j].reg_value = 0;
+      this_state->pd[j].reg_long_reset = 0;
+      this_state->pd[j].reg_short_reset = 0;
+
+      /* Remove the signal handler */
+
+      _papi_hwi_lock(INTERNAL_LOCK);
+      _papi_hwi_using_signal--;
+      SUBDBG("_papi_hwi_using_signal=%d\n", _papi_hwi_using_signal);
+      if (_papi_hwi_using_signal == 0) {
+
+         if (sigaction(_papi_hwi_system_info.sub_info.hardware_intr_sig, NULL, NULL) == -1)
+            retval = PAPI_ESYS;
+      }
+      _papi_hwi_unlock(INTERNAL_LOCK);
+   } else {
+      struct sigaction act;
+
+      /* Set up the signal handler */
+
+      memset(&act, 0x0, sizeof(struct sigaction));
+      act.sa_handler = (sig_t) _papi_hwd_dispatch_timer;
+      act.sa_flags = SA_RESTART|SA_SIGINFO;
+      if (sigaction(_papi_hwi_system_info.sub_info.hardware_intr_sig, &act, NULL) == -1)
+         return (PAPI_ESYS);
+
+      /*Set the overflow notifier on the proper event. Remember that selector
+       */
+      set_notify(ESI, EventIndex, PFM_REGFL_OVFL_NOTIFY);
+
+/* set initial value in pd array */
+
+      pos = ESI->EventInfoArray[EventIndex].pos;
+      j = pos[0];
+      SUBDBG("counter %d used in overflow, threshold %d\n",
+             j, threshold);
+      this_state->pd[j].reg_value = (~0UL) - (unsigned long) threshold + 1;
+      this_state->pd[j].reg_short_reset = (~0UL)-(unsigned long) threshold+1;
+      this_state->pd[j].reg_long_reset = (~0UL) - (unsigned long) threshold + 1;
+
+      _papi_hwi_lock(INTERNAL_LOCK);
+      _papi_hwi_using_signal++;
+      SUBDBG("_papi_hwi_using_signal=%d\n", _papi_hwi_using_signal);
+      _papi_hwi_unlock(INTERNAL_LOCK);
+   }
+   return (retval);
+}
+
+char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
+{
+  return(native_map[EventCode^PAPI_NATIVE_MASK].name);
+}
+
+char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
+{
+  return(native_map[EventCode^PAPI_NATIVE_MASK].description);
+}
+
+int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
+{
+   int index = *EventCode & PAPI_NATIVE_AND_MASK;
+
+   if (strlen(native_map[index + 1].name)) {
+      *EventCode = (index | PAPI_NATIVE_MASK) + 1;
+      return (PAPI_OK);
+   } else {
+      return (PAPI_ENOEVNT);
+   }
+}
+
+int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
+{
+   int index = EventCode & PAPI_NATIVE_AND_MASK;
+
+   /* For PFM & Perfmon, native info is just an index into the PFM event table. */
+   *bits = index;
+
+   return (PAPI_OK);
+}
+
+int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
+                               unsigned int *values, int name_len, int count)
+{
+  int ret;
+  pfmlib_regmask_t selector = native_map[*bits].resources.selector;
+  int j, n = _papi_hwi_system_info.sub_info.num_cntrs;
+  int foo, did_something=0;
+
+  for (j=0;n;j++)
+    {
+      if (pfm_regmask_isset(&selector,j))
+	{
+	  n--;
+	  if (pfm_get_event_code_counter(*bits,j,&foo) != PFMLIB_SUCCESS)
+	    {
+	      PAPIERROR("pfm_get_event_code_counter(%d,%d,%p): %s",*bits,j,&foo,pfm_strerror(ret));
+	      return(PAPI_EBUG);
+	    }
+	  values[j] = foo;
+	  strncpy(&names[j*name_len],"Counter",name_len);
+	  names[j*name_len - 1] = 0;
+	  did_something++;
+	}
+    }
+  return(did_something);
+}
+
+void _papi_hwd_init_control_state(hwd_control_state_t *this_state)
+{
+   pfmlib_input_param_t *inp = &this_state->in;
+   pfmlib_output_param_t *outp = &this_state->out;
+   pfarg_pmd_t *pd = this_state->pd;
+   pfarg_pmc_t *pc = this_state->pc;
+
+   memset(inp,0,sizeof(*inp));
+   memset(outp,0,sizeof(*inp));
+   memset(pc,0,sizeof(this_state->pc));
+   memset(pd,0,sizeof(this_state->pd));
+   set_domain(this_state,_papi_hwi_system_info.sub_info.default_domain);
+}
+
+/* This function clears the current contents of the control structure and 
+   updates it with whatever resources are allocated for all the native events
+   in the native info structure array. */
+
+int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
+                                   NativeInfo_t *native, int count, hwd_context_t * ctx) {
+  int i, j, ret;
+   pfmlib_input_param_t *inp = &this_state->in;
+   pfmlib_output_param_t *outp = &this_state->out;
+   pfarg_pmd_t *pd = this_state->pd;
+   pfarg_pmc_t *pc = this_state->pc;
+
+   if (count == 0)
+     {
+       SUBDBG("Called with count == 0\n");
+       memset(inp,0,sizeof(*inp));
+       return(PAPI_OK);
+     }
+
+   inp->pfp_event_count = count;
+   for (i=0;i<count;i++)
+     {
+       SUBDBG("Stuffing event %d (PFM event %d) into input structure.\n",
+	      i,native[i].ni_bits);
+       inp->pfp_events[i].event = native[i].ni_bits;
+     }
+
+   /*
+    * let the library figure out the values for the PMCS
+    */
+   
+   if ((ret = pfm_dispatch_events(inp, NULL, outp, NULL)) != PFMLIB_SUCCESS)
+     {
+       PAPIERROR("pfm_dispatch_events(): %s", pfm_strerror(ret));
+       return(PAPI_ECNFLCT);
+     }
+
+   /*
+    * Now prepare the argument to initialize the PMDs and PMCS.
+    * We must pfp_pmc_count to determine the number of PMC to intialize.
+    * We must use pfp_event_count to determine the number of PMD to initialize.
+    * Some events causes extra PMCs to be used, so  pfp_pmc_count may be >= pfp_event_count.
+    *
+    * This step is new compared to libpfm-2.x. It is necessary because the library no
+    * longer knows about the kernel data structures.
+    */
+
+   for (i=0; i < outp->pfp_pmc_count; i++) {
+     SUBDBG("Input Event %d: PC num %d, PC value %llx\n",i,outp->pfp_pmcs[i].reg_num,outp->pfp_pmcs[i].reg_value);
+     pc[i].reg_num   = outp->pfp_pmcs[i].reg_num;
+     pc[i].reg_value = outp->pfp_pmcs[i].reg_value;
+   }
+   
+   /*
+    * figure out pmd mapping from output pmc
+    */
+   for (i=0, j=0; i < inp->pfp_event_count; i++) {
+     SUBDBG("Output event %d: PD num %d, PD value %llx\n",i,outp->pfp_pmcs[i].reg_num,outp->pfp_pmcs[i].reg_value);
+     pd[i].reg_num   = outp->pfp_pmcs[j].reg_pmd_num;
+     for(; j < outp->pfp_pmc_count; j++)  if (outp->pfp_pmcs[j].reg_evt_idx != i) break;
+   }
+
+  /* Update the native structure with the allocation, because the allocation is done here.
+   */
+
+   for (i=0;i<inp->pfp_event_count;i++)
+     {
+       native[i].ni_position = outp->pfp_pmcs[i].reg_num;
+       SUBDBG("PAPI Native[%d].ni_position is %d\n", i, native[i].ni_position);
+     }
+
+   return (PAPI_OK);
+}
+
