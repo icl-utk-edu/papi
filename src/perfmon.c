@@ -24,7 +24,7 @@ static pfm_preset_search_entry_t pfm_preset_search_map[] = {
   { 0, 0, }};
 
 #define NUM_OF_PRESET_EVENTS (sizeof(pfm_preset_search_map)/sizeof(pfm_preset_search_entry_t)-1)
-static hwi_search_t preset_search_map[NUM_OF_PRESET_EVENTS + 1];
+hwi_search_t preset_search_map[NUM_OF_PRESET_EVENTS + 1];
 static hwd_native_event_entry_t *native_map = NULL;
 
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
@@ -1005,8 +1005,7 @@ int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
 	      return(PAPI_EBUG);
 	    }
 	  values[j] = foo;
-	  strncpy(&names[j*name_len],"Counter",name_len);
-	  names[j*name_len - 1] = 0;
+	  strncpy(&names[j*name_len],"Event Code",name_len);
 	  did_something++;
 	}
     }

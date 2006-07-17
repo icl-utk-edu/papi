@@ -11,7 +11,7 @@
 #define _PAPI_PRESET
 
 
-#define OPS PAPI_MAX_COUNTER_TERMS*5
+#define OPS MAX_COUNTER_TERMS*5
 
 typedef struct hwi_preset_info { /* descriptive text information for each preset */
    char *symbol;      /* name of the preset event; i.e. PAPI_TOT_INS, etc. */
@@ -21,7 +21,7 @@ typedef struct hwi_preset_info { /* descriptive text information for each preset
 
 typedef struct hwi_preset_data {  /* preset event data for each defined preset */
    int derived;                   /* Derived type code */
-   int native[PAPI_MAX_COUNTER_TERMS]; /* array of native event code(s) for this preset event */
+   int native[MAX_COUNTER_TERMS]; /* array of native event code(s) for this preset event */
    char operation[OPS];           /* operation string: +,-,*,/,@(number of metrics), $(constant Mhz), %(1000000.0) */
 } hwi_preset_data_t;
 
@@ -49,8 +49,7 @@ typedef struct hwi_describe {
    char *descr;               /* description of the element */
 } hwi_describe_t;
 
-extern hwi_search_t *preset_search_map;
-extern int _papi_hwi_setup_all_presets(hwi_search_t * preset_search_map, hwi_dev_notes_t *notes, int substrate_idx);
+extern int _papi_hwi_setup_all_presets(hwi_search_t * preset_search_map, hwi_dev_notes_t *notes);
 #ifdef XML
 extern int _xml_papi_hwi_setup_all_presets(char *arch, hwi_dev_notes_t *notes);
 #endif

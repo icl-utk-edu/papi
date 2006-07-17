@@ -52,8 +52,7 @@ int main(int argc, char **argv)
 
       printf("The following correspond to fields in the PAPI_event_info_t structure.\n");
       
-      printf("Symbol\tEvent Code\tCount\n |Short Description|\n |Long Description|\n |Derived|\n |PostFix|\n");
-      printf("The count field indicates whether it is a) available (count >= 1) and b) derived (count > 1)\n");
+      printf("Symbol Event_Code Long_Description\n\n");
 
    }
    i = 0 | PAPI_NATIVE_MASK;
@@ -74,14 +73,17 @@ int main(int argc, char **argv)
          j++;
          retval = PAPI_get_event_info(i, &info);
 
-	 printf("%s\t0x%x\n |%s|\n",
+	 printf("%-26s 0x%-10x %s\n",
 		info.symbol,
 		info.event_code,
 		info.long_descr);
 
    for (k=0;k<(int)info.count;k++)
-      printf(" |Register Value[%d]: 0x%-10x  %s|\n",k,info.code[k], info.name[k]);
-   printf("\n");
+     {
+       printf("\tRegister Name[%d]: %s\n",k,info.name[k]);
+       printf("\tRegister Value[%d]: 0x%-10x\n",k,info.code[k]);
+     }
+   if (k) printf("\n");
 
 #ifdef _POWER4
          if (!TESTS_QUIET)
@@ -96,7 +98,7 @@ int main(int argc, char **argv)
             j++;
             retval = PAPI_get_event_info(k, &info);
             if (!TESTS_QUIET && retval == PAPI_OK) {
-               printf("    %-26s 0x%-10x    %s\n",
+               printf("%-26s 0x%-10x %s\n",
                       info.symbol, info.event_code, info.long_descr + l);
             }
          } while (PAPI_enum_event(&k, PAPI_PENT4_ENUM_BITS) == PAPI_OK);
