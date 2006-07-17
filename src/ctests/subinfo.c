@@ -34,6 +34,7 @@ int main(int argc, char **argv)
    printf("kernel_version: %s\n",subinfo->kernel_version);
    printf("num_cntrs: %d\n",subinfo->num_cntrs);
    printf("num_preset_events: %d\n",subinfo->num_preset_events);           /* Number of counters the substrate supports */
+   printf("num_native_events: %d\n",subinfo->num_native_events);           /* Number of counters the substrate supports */
    printf("default_domain: 0x%x (%s)\n",subinfo->default_domain,stringify_all_domains(subinfo->default_domain));
    printf("available_domains: 0x%x (%s)\n",subinfo->available_domains,stringify_all_domains(subinfo->available_domains));       /* Available domains */ 
    printf("default_granularity: 0x%x (%s)\n",subinfo->default_granularity,stringify_granularity(subinfo->default_granularity));
