@@ -360,6 +360,7 @@ read the documentation carefully.  */
      char kernel_version[PAPI_MIN_STR_LEN];  /* Version of the kernel PMC support driver */
      int num_cntrs;               /* Number of hardware counters the substrate supports */
      int num_preset_events;       /* Number of preset events the substrate supports */
+     int num_native_events;       /* Number of native events the substrate supports */
      int default_domain;          /* The default domain when this substrate is used */
      int available_domains;       /* Available domains */ 
      int default_granularity;     /* The default granularity when this substrate is used */
