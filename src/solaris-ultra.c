@@ -413,12 +413,12 @@ static int get_system_info(void)
       SUBDBG("cpuver (==%d) <= CPC_ULTRA2 (==%d)\n", cpuver, CPC_ULTRA2);
       pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT;
       pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT;
-      _papi_hwi_system_info.supports_hw_overflow = 0;
+      _papi_hwi_system_info.sub_info.hardware_intr = 0;
    } else if (cpuver <= LASTULTRA3) {
       SUBDBG("cpuver (==%d) <= CPC_ULTRA3x (==%d)\n", cpuver, LASTULTRA3);
       pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT;
       pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT;
-      _papi_hwi_system_info.supports_hw_overflow = 1;
+      _papi_hwi_system_info.sub_info.hardware_intr = 1;
    } else
       return (PAPI_ESBSTR);
 
@@ -502,9 +502,9 @@ static int get_system_info(void)
    retval = cpc_getnpic(cpuver);
    if (retval < 1)
       return (PAPI_ESBSTR);
-   _papi_hwi_system_info.num_gp_cntrs = retval;
-   _papi_hwi_system_info.num_cntrs = retval;
-   SUBDBG("num_cntrs = %d\n", _papi_hwi_system_info.num_cntrs);
+/*   _papi_hwi_system_info.num_gp_cntrs = retval;*/
+   _papi_hwi_system_info.sub_info.num_cntrs = retval;
+   SUBDBG("num_cntrs = %d\n", _papi_hwi_system_info.sub_info.num_cntrs);
 
    /* program text segment, data segment  address info */
 /*
@@ -1057,8 +1057,8 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
    ptr->counter_cmd.cmd.ce_pcr = 0x0;
    ptr->counter_cmd.cmd.ce_pic[0] = 0;
    ptr->counter_cmd.cmd.ce_pic[1] = 0;
-   set_domain(ptr, _papi_hwi_system_info.default_domain);
-   set_granularity(ptr, _papi_hwi_system_info.default_granularity);
+   set_domain(ptr, _papi_hwi_system_info.sub_info.default_domain);
+   set_granularity(ptr, _papi_hwi_system_info.sub_info.default_granularity);
    return;
 }
 
