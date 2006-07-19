@@ -208,6 +208,7 @@ extern int pfm_get_inst_retired_event(unsigned int *ev);
 #define PFMLIB_AMD_X86_64_PMU		16	/* AMD X86_64 */
 #define PFMLIB_GEN_IA32_PMU		63	/* IA-32 architected PMU */
 #define PFMLIB_I386_P6_PMU		32	/* P6/Pentium M */
+#define PFMLIB_PENTIUM4_PMU		33	/* Pentium4/Xeon/EM64T */
 
 #define PFMLIB_GEN_MIPS64_PMU           64      /* 5KC,20KC,25KF */
 
