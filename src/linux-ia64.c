@@ -290,15 +290,19 @@ inline static int set_domain(hwd_control_state_t * this_state, int domain)
 inline static int mdi_init() 
 {
   /* Name of the substrate we're using */
-  strcpy(_papi_hwi_system_info.substrate, "$Id$");          
+  strcpy(_papi_hwi_system_info.sub_info.name, "$Id$");          
   
-  _papi_hwi_system_info.num_cntrs = MAX_COUNTERS;
-  _papi_hwi_system_info.supports_hw_overflow = 1;
-  _papi_hwi_system_info.supports_hw_profile = 0;
-  _papi_hwi_system_info.supports_64bit_counters = 1;
-  _papi_hwi_system_info.supports_inheritance = 1;
-  _papi_hwi_system_info.supports_real_usec = 1;
-  _papi_hwi_system_info.supports_real_cyc = 1;
+  _papi_hwi_system_info.sub_info.num_cntrs = MAX_COUNTERS;
+  _papi_hwi_system_info.sub_info.hardware_intr = 1;
+/*  _papi_hwi_system_info.sub_info.kernel_profile = 0; */
+/*  _papi_hwi_system_info.supports_64bit_counters = 1;
+  _papi_hwi_system_info.supports_inheritance = 1;*/
+  _papi_hwi_system_info.sub_info.fast_real_timer = 1;
+  _papi_hwi_system_info.sub_info.fast_virtual_timer = 1;
+  _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
+  _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
+  _papi_hwi_system_info.sub_info.default_granularity = PAPI_GRN_THR;
+  _papi_hwi_system_info.sub_info.available_granularities = PAPI_GRN_THR;
   
   return(PAPI_OK);
 }
@@ -366,6 +370,7 @@ papi_svector_t _linux_ia64_table[] = {
  {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
  {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
  {(void (*)())_papi_hwd_set_profile, VEC_PAPI_HWD_SET_PROFILE},
+ {(void (*)())_papi_hwd_stop_profiling, VEC_PAPI_HWD_STOP_PROFILING},
  {(void (*)())_papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
  {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
  {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
@@ -461,8 +466,8 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    }
 #endif
 
-   _papi_hwi_system_info.num_cntrs = MAX_COUNTERS;
-   _papi_hwi_system_info.num_gp_cntrs = MAX_COUNTERS;
+   _papi_hwi_system_info.sub_info.num_cntrs = MAX_COUNTERS;
+/*   _papi_hwi_system_info.num_gp_cntrs = MAX_COUNTERS;*/
    _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_INTEL;
 
    /* Setup presets */
@@ -610,7 +615,7 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * machdep,
       return PAPI_ESYS;
    }
 
-   for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
+   for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
       machdep->counters[i] = readem[i].reg_value;
       SUBDBG("read counters is %ld\n", readem[i].reg_value);
    }
@@ -1040,7 +1045,7 @@ static int ia64_process_profile_entry(void *papiContext)
 
 /* This function only used when hardware overflows ARE working */
 
-void _papi_hwd_dispatch_timer(int signal, siginfo_t * info, void *context)
+void _papi_hwd_dispatch_timer(int signal, hwd_siginfo_t * info, void *context)
  {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *t = NULL;
@@ -1176,12 +1181,13 @@ int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI)
 {
    _papi_hwi_context_t ctx;
    struct sigcontext info;
-
+   int retval=PAPI_OK;
+   
    ctx.ucontext = &info;
    pfmw_stop(&master->context);
    ESI->profile.overflowcount = 0;
    ia64_process_profile_entry(&ctx);
-   return (PAPI_OK);
+   return (retval);
 }
 
 
@@ -1346,7 +1352,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
    memset(evt, 0, sizeof(pfmw_param_t));
    memset(param, 0, sizeof(pfmw_ita_param_t));
 
-   set_domain(ptr, _papi_hwi_system_info.default_domain);
+   set_domain(ptr, _papi_hwi_system_info.sub_info.default_domain);
 /* set library parameter pointer */
 #ifdef PFM20
 #ifdef ITANIUM2
@@ -1481,15 +1487,13 @@ int _papi_hwd_update_shlib_info(void)
           else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode != 0) && (strcmp(_papi_hwi_system_info.exe_info.fullname,mapname) == 0))
             {
               _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) begin;
-              _papi_hwi_system_info.exe_info.address_info.data_end =
-                (caddr_t) (begin + size);
+              _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) (begin + size);
               d_index++;
             }
           else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode == 0) && (strcmp(_papi_hwi_system_info.exe_info.fullname,lastmapname) == 0))
             {
               _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) begin;
-              _papi_hwi_system_info.exe_info.address_info.bss_end =
-                (caddr_t) (begin + size);
+              _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) (begin + size);
               b_index++;
             }
         }
