@@ -76,6 +76,11 @@ SRCS   += pfmlib_gen_ia32.c
 CFLAGS += -DCONFIG_PFMLIB_GEN_IA32
 endif
 
+ifeq ($(CONFIG_PFMLIB_PENTIUM4),y)
+SRCS   += pfmlib_pentium4.c
+CFLAGS += -DCONFIG_PFMLIB_PENTIUM4
+endif
+
 ifeq ($(CONFIG_PFMLIB_GEN_MIPS64),y)
 SRCS   += pfmlib_gen_mips64.c
 CFLAGS += -DCONFIG_PFMLIB_GEN_MIPS64
@@ -97,6 +102,7 @@ pfmlib_itanium2.o : itanium2_events.h
 pfmlib_montecito.o : montecito_events.h
 pfmlib_amd_x86_64.o : amd_x86_64_events.h
 pfmlib_i386_p6.o : i386_p6_events.h
+pfmlib_pentium4.o : pentium4_events.h
 pfmlib_gen_mips64.o : gen_mips64_events.h
 
 libpfm.a:  $(OBJS)

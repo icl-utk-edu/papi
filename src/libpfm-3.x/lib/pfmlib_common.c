@@ -42,6 +42,7 @@ extern pfm_pmu_support_t i386_p6_support;
 extern pfm_pmu_support_t i386_pm_support;
 extern pfm_pmu_support_t gen_ia32_support;
 extern pfm_pmu_support_t generic_mips64_support;
+extern pfm_pmu_support_t pentium4_support;
 
 static pfm_pmu_support_t *supported_pmus[]=
 {
@@ -64,6 +65,10 @@ static pfm_pmu_support_t *supported_pmus[]=
 #ifdef CONFIG_PFMLIB_I386_P6
 	&i386_p6_support,
 	&i386_pm_support,
+#endif
+
+#ifdef CONFIG_PFMLIB_PENTIUM4
+	&pentium4_support,
 #endif
 
 #ifdef CONFIG_PFMLIB_GEN_IA32
@@ -406,6 +411,7 @@ pfm_get_event_counters(unsigned int i, pfmlib_regmask_t *counters)
 int
 pfm_get_event_mask_name(unsigned int event_idx, unsigned int mask_idx, char *name, size_t maxlen)
 {
+	char *n;
 	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
 
 	if (event_idx >= pfm_current->pme_count || name == NULL || maxlen < 1) return PFMLIB_ERR_INVAL;
@@ -414,7 +420,11 @@ pfm_get_event_mask_name(unsigned int event_idx, unsigned int mask_idx, char *nam
 		return PFMLIB_ERR_NOTSUPP;
 	}
 
-	strncpy(name, pfm_current->get_event_mask_name(event_idx, mask_idx), maxlen-1);
+	n = pfm_current->get_event_mask_name(event_idx, mask_idx);
+	if (n == NULL)
+		return PFMLIB_ERR_INVAL;
+
+	strncpy(name, n, maxlen-1);
 	name[maxlen-1] = '\0';
 
 	return PFMLIB_SUCCESS;
