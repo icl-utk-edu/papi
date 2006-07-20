@@ -19,12 +19,12 @@
 #include "papi_memory.h"
 
 static pfm_preset_search_entry_t pfm_preset_search_map[] = {
-  { PAPI_TOT_CYC, 0, },
-  { PAPI_TOT_INS, 0, },
+  { PAPI_TOT_CYC, NOT_DERIVED, },
+  { PAPI_TOT_INS, NOT_DERIVED, },
   { 0, 0, }};
 
-#define NUM_OF_PRESET_EVENTS (sizeof(pfm_preset_search_map)/sizeof(pfm_preset_search_entry_t)-1)
-hwi_search_t preset_search_map[NUM_OF_PRESET_EVENTS + 1];
+#define NUM_OF_PRESET_EVENTS (sizeof(pfm_preset_search_map)/sizeof(pfm_preset_search_entry_t))
+hwi_search_t preset_search_map[NUM_OF_PRESET_EVENTS];
 static hwd_native_event_entry_t *native_map = NULL;
 
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
@@ -374,51 +374,94 @@ inline_static long_long get_cycles(void) {
    return ret;
 }
 
-static int generate_preset_search_map(pfm_preset_search_entry_t *strmap, hwi_search_t *psmap)
+static int setup_preset(hwi_search_t *entry, unsigned int event, unsigned int preset, unsigned int derived, int cntrs)
 {
-  int i = 0;
+  pfmlib_regmask_t impl_cnt, evnt_cnt;
+  int n, j, ret, did = 0;
+
+  /* find out which counters it lives on */
+
+  if ((ret = pfm_get_event_counters(event,&evnt_cnt)) != PFMLIB_SUCCESS)
+    {
+      PAPIERROR("pfm_get_event_counters(%d,%p): %s",event,&evnt_cnt,pfm_strerror(ret));
+      return(PAPI_EBUG);
+    }
+  if ((ret = pfm_get_impl_counters(&impl_cnt)) != PFMLIB_SUCCESS)
+    {
+      PAPIERROR("pfm_get_impl_counters(%p): %s", &impl_cnt, pfm_strerror(ret));
+      return(PAPI_EBUG);
+    }
+
+  n = cntrs;
+  for (j=0;n;j++)
+    {
+      if (pfm_regmask_isset(&impl_cnt, j))
+	n--;
+      if (pfm_regmask_isset(&evnt_cnt,j))
+	{
+	  SUBDBG("Preset 0x%x has PFM event %u on counter %d.\n",preset,event,j);
+	  entry->data.native[j] = event;
+	  did++;
+	}
+      else entry->data.native[j] = PAPI_NULL;
+    }
+
+  if (did)
+    {
+      entry->event_code = preset;
+      entry->data.derived = derived;
+      entry->data.native[j] = PAPI_NULL;
+    }
+
+  return(PAPI_OK);
+}
+
+static int generate_preset_search_map(pfm_preset_search_entry_t *strmap, hwi_search_t *psmap, int cntrs)
+{
+  int i = 0, j = 0;
+  unsigned int event;
 
   while (strmap[i].preset)
     {
-      psmap[i].event_code = strmap[i].preset;
-      psmap[i].data.derived = strmap[i].derived;
       if (strmap[i].preset == PAPI_TOT_CYC) 
-	pfm_get_cycle_event((unsigned int *)psmap[i].data.native);
+	{
+	  pfm_get_cycle_event(&event);
+	  if (setup_preset(&psmap[i], event, strmap[i].preset, strmap[i].derived, cntrs) == PAPI_OK)
+	    j++;
+	}
       else if (strmap[i].preset == PAPI_TOT_INS) 
-	pfm_get_inst_retired_event((unsigned int *)psmap[i].data.native);
+	{
+	  pfm_get_inst_retired_event(&event);
+	  if (setup_preset(&psmap[i], event, strmap[i].preset, strmap[i].derived, cntrs) == PAPI_OK)
+	    j++;
+	}
       i++;
     }
-
        
-   if (NUM_OF_PRESET_EVENTS != i) 
+   if (i != j) 
      {
-       PAPIERROR("NUM_OF_PRESET_EVENTS %d != pnum %d\n", (int)NUM_OF_PRESET_EVENTS,i);
+       PAPIERROR("NUM_OF_PRESET_EVENTS %d != setup preset events %d\n",i,j);
        return(PAPI_ENOEVNT);
      }
 
    return (PAPI_OK);
 }
 
-static int generate_native_event_map(hwd_native_event_entry_t **nmap, unsigned int cnt)
+static int generate_native_event_map(hwd_native_event_entry_t **nmap, unsigned int native_cnt, int num_cnt)
 {
   int ret, did_something;
-  unsigned int num_cnt, n, i, j;
+  unsigned int n, i, j;
   char *findme;
   hwd_native_event_entry_t *ntmp, *orig_ntmp;
   pfmlib_regmask_t impl_cnt;
 
-  if ((ret = pfm_get_num_counters(&num_cnt)) != PFMLIB_SUCCESS)
-    {
-      PAPIERROR("pfm_get_num_counters(%p): %s", &num_cnt, pfm_strerror(ret));
-      return(PAPI_ESBSTR);
-    }
   if ((ret = pfm_get_impl_counters(&impl_cnt)) != PFMLIB_SUCCESS)
     {
       PAPIERROR("pfm_get_impl_counters(%p): %s", &impl_cnt, pfm_strerror(ret));
       return(PAPI_ESBSTR);
     }
-  orig_ntmp = ntmp = (hwd_native_event_entry_t *)malloc(cnt*sizeof(hwd_native_event_entry_t));
-  for (i=0;i<cnt;i++)
+  orig_ntmp = ntmp = (hwd_native_event_entry_t *)malloc(native_cnt*sizeof(hwd_native_event_entry_t));
+  for (i=0;i<native_cnt;i++)
     {
       if ((ret = pfm_get_event_name(i,ntmp->name,sizeof(ntmp->name))) != PFMLIB_SUCCESS)
 	{
@@ -453,7 +496,7 @@ static int generate_native_event_map(hwd_native_event_entry_t **nmap, unsigned i
 		  PAPIERROR("pfm_get_event_code_counter(%d,%d,%p): %s", i,j,&foo,pfm_strerror(ret));
 		  goto bail;
 		}
-	      SUBDBG("PFM event index %d: Event code %d, lives on counter %d.\n",i,foo,j);
+	      SUBDBG("PFM event index %d: Event code 0x%x, lives on counter %d.\n",i,foo,j);
 	    }
 	  did_something++;
 	}
@@ -635,11 +678,11 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 
    /* Setup presets */
 
-   retval = generate_preset_search_map(pfm_preset_search_map,preset_search_map);
+   retval = generate_preset_search_map(pfm_preset_search_map,preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
    if (retval)
       return (retval);
 
-   retval = generate_native_event_map(&native_map, _papi_hwi_system_info.sub_info.num_native_events);
+   retval = generate_native_event_map(&native_map,_papi_hwi_system_info.sub_info.num_native_events,_papi_hwi_system_info.sub_info.num_cntrs);
    if (retval)
      {
        free(preset_search_map);
@@ -715,6 +758,7 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 	 PAPIERROR("read()");
 	 return(PAPI_ESYS);
        }
+     lseek(zero->stat_fd,0,SEEK_SET);
 
      buf[rv] = '\0';
      SUBDBG("Thread stat file is:%s\n",buf);
@@ -1049,8 +1093,8 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
    for (i=0;i<count;i++)
      {
        SUBDBG("Stuffing event %d (PFM event %d) into input structure.\n",
-	      i,native[i].ni_bits);
-       inp->pfp_events[i].event = native[i].ni_bits;
+	      i,native[i].ni_event);
+       inp->pfp_events[i].event = native[i].ni_event;
      }
 
    /*
