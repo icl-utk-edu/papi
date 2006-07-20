@@ -536,6 +536,7 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 	 PAPIERROR("read()");
 	 return(PAPI_ESYS);
        }
+     lseek(zero->stat_fd,0,SEEK_SET);
 
      buf[rv] = '\0';
      SUBDBG("Thread stat file is:%s\n",buf);
