@@ -1416,8 +1416,8 @@ int _papi_hwi_get_event_info(int EventCode, PAPI_event_info_t * info)
          strncpy(info->short_descr, _papi_hwi_presets.info[i].short_descr, PAPI_MIN_STR_LEN);
       if(_papi_hwi_presets.info[i].long_descr != NULL)
          strncpy(info->long_descr, _papi_hwi_presets.info[i].long_descr, PAPI_HUGE_STR_LEN);
-      info->derived[0] = 0;
-      info->postfix[0] = 0;
+      info->derived[0] = '\0';
+      info->postfix[0] = '\0';
       if (_papi_hwi_presets.data[i]) { /* if the event exists on this platform */
          strncpy(info->postfix, _papi_hwi_presets.data[i]->operation, PAPI_MIN_STR_LEN);
          _papi_hwi_derived_string(_papi_hwi_presets.data[i]->derived, info->derived, PAPI_MIN_STR_LEN);
