@@ -356,7 +356,7 @@ static void remove_mem_ptr(pmem_t *ptr){
 
 static int set_epilog(pmem_t *mem_ptr) {
 #ifdef DEBUG
-  char *chptr = mem_ptr->ptr + mem_ptr->size;
+  char *chptr = (char *)mem_ptr->ptr + mem_ptr->size;
   *chptr++ = MEM_EPILOG_1;
   *chptr++ = MEM_EPILOG_2;
   *chptr++ = MEM_EPILOG_3;
@@ -372,7 +372,7 @@ static int set_epilog(pmem_t *mem_ptr) {
 static int _papi_mem_check_buf_overflow(pmem_t *tmp){
   int fnd = 0;
   char *ptr;
-  void *tptr;
+  char *tptr;
 
   if ( !tmp ) return(0);
 
@@ -380,7 +380,7 @@ static int _papi_mem_check_buf_overflow(pmem_t *tmp){
   tptr += tmp->size;
 
   /* Move to the buffer overflow padding */
-  ptr = tmp->ptr+tmp->size;
+  ptr = ((char *)tmp->ptr)+tmp->size;
   if ( *ptr++ != MEM_EPILOG_1 ) fnd=1;
   else if ( *ptr++ != MEM_EPILOG_2 ) fnd = 2;
   else if ( *ptr++ != MEM_EPILOG_3 ) fnd = 3;
