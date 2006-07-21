@@ -42,7 +42,7 @@ typedef int hwd_reg_alloc_t;
 #define MAX_COUNTERS PFMLIB_MAX_PMCS
 #define MAX_COUNTER_TERMS PFMLIB_MAX_PMCS
 
-typedef struct itanium_preset_search {
+typedef struct {
    /* Preset code */
    int preset;
    /* Derived code */
@@ -52,7 +52,7 @@ typedef struct itanium_preset_search {
    char operation[MAX_COUNTERS*5];
 } pfm_preset_search_entry_t;
 
-typedef struct hwd_control_state {
+typedef struct {
   /* Which counters to use? Bits encode counters to use, may be duplicates */
   hwd_register_map_t bits;
   /* Buffer to pass to library to control the counters */
@@ -63,11 +63,14 @@ typedef struct hwd_control_state {
   pfarg_pmc_t pc[PFMLIB_MAX_PMCS];
   /* Arguments to the kernel */
   pfarg_pmd_t pd[PFMLIB_MAX_PMDS];
+  /* Buffer to gather counters */
+  long_long counts[PFMLIB_MAX_PMDS];
 } hwd_control_state_t;
 
-typedef struct Itanium_context {
+typedef struct {
   int fd;  /* file descriptor */
   pfarg_ctx_t ctx;
+  pfarg_load_t load;
 #if defined(HAS_PER_PROCESS_TIMES)
    int stat_fd;
 #endif

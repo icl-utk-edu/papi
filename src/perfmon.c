@@ -174,6 +174,18 @@ int _papi_hwd_update_shlib_info(void)
    return (PAPI_OK);
 }
                                                                                 
+static void decode_vendor_string(char *s, int *vendor)
+{
+  if (strcasecmp(s,"GenuineIntel") == 0)
+    *vendor = PAPI_VENDOR_INTEL;
+  else if (strcasecmp(s,"IBM") == 0)
+    *vendor = PAPI_VENDOR_IBM;
+  else if (strcasecmp(s,"MIPS") == 0)
+    *vendor = PAPI_VENDOR_IBM;
+  else
+    *vendor = PAPI_VENDOR_UNKNOWN;
+}
+
 static char *search_cpu_info(FILE * f, char *search_str, char *line)
 {
    /* This code courtesy of our friends in Germany. Thanks Rudolph Berrendorf! */
@@ -276,6 +288,8 @@ int _papi_hwd_get_system_info(void)
      {
       *t = '\0';
       strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
+      decode_vendor_string(_papi_hwi_system_info.hw_info.vendor_string,
+			   &_papi_hwi_system_info.hw_info.vendor);
      }
    else
      {
@@ -284,6 +298,8 @@ int _papi_hwd_get_system_info(void)
        if (s && (t = strchr(s + 2, '\n'))) {
          *t = '\0';
          strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
+	 decode_vendor_string(_papi_hwi_system_info.hw_info.vendor_string,
+			      &_papi_hwi_system_info.hw_info.vendor);
        }
      }
                                                                                 
@@ -511,10 +527,53 @@ static int generate_native_event_map(hwd_native_event_entry_t **nmap, unsigned i
   return(PAPI_OK);
 }
 
+inline static int compute_kernel_args(pfmlib_input_param_t *inp, 
+				      pfmlib_output_param_t *outp,
+				      pfarg_pmd_t *pd,
+				      pfarg_pmc_t *pc)
+{
+  int ret, i, j;
+  
+  if ((ret = pfm_dispatch_events(inp, NULL, outp, NULL)) != PFMLIB_SUCCESS)
+    {
+      PAPIERROR("pfm_dispatch_events(): %s", pfm_strerror(ret));
+      return(PAPI_ECNFLCT);
+    }
+  
+  /*
+    * Now prepare the argument to initialize the PMDs and PMCS.
+    * We must pfp_pmc_count to determine the number of PMC to intialize.
+    * We must use pfp_event_count to determine the number of PMD to initialize.
+    * Some events causes extra PMCs to be used, so  pfp_pmc_count may be >= pfp_event_count.
+    *
+    * This step is new compared to libpfm-2.x. It is necessary because the library no
+    * longer knows about the kernel data structures.
+    */
+
+   for (i=0; i < outp->pfp_pmc_count; i++) {
+     SUBDBG("Input Event %d: PC num %d, PC value %llx\n",i,outp->pfp_pmcs[i].reg_num,outp->pfp_pmcs[i].reg_value);
+     pc[i].reg_num   = outp->pfp_pmcs[i].reg_num;
+     pc[i].reg_value = outp->pfp_pmcs[i].reg_value;
+   }
+   
+   /*
+    * figure out pmd mapping from output pmc
+    */
+   for (i=0, j=0; i < inp->pfp_event_count; i++) {
+     SUBDBG("Output event %d: PD num %d, PD value %llx\n",i,outp->pfp_pmcs[i].reg_num,outp->pfp_pmcs[i].reg_value);
+     pd[i].reg_num   = outp->pfp_pmcs[j].reg_pmd_num;
+     for(; j < outp->pfp_pmc_count; j++)  if (outp->pfp_pmcs[j].reg_evt_idx != i) break;
+   }
+   return(PAPI_OK);
+}
+
 inline static int set_domain(hwd_control_state_t * this_state, int domain)
 {
-   int mode = 0, did = 0;
-   pfmlib_input_param_t *evt = &this_state->in;
+  int mode = 0, did = 0;
+  pfmlib_input_param_t *inp = &this_state->in;
+  pfmlib_output_param_t *outp = &this_state->out;
+  pfarg_pmd_t *pd = this_state->pd;
+  pfarg_pmc_t *pc = this_state->pc;
 
    if (domain & PAPI_DOM_USER) {
       did = 1;
@@ -523,7 +582,13 @@ inline static int set_domain(hwd_control_state_t * this_state, int domain)
 
    if (domain & PAPI_DOM_KERNEL) {
       did = 1;
+#if (defined(__i386__) || defined(__x86_64__) || defined(__ia64__))
+      mode |= PFM_PLM0;
+#elif defined(mips)
       mode |= PFM_PLM2;
+#else
+#error "Must implement set_domain for this architecture. Check PFM sources."
+#endif
    }
 
    if (domain & PAPI_DOM_SUPERVISOR) {
@@ -539,8 +604,9 @@ inline static int set_domain(hwd_control_state_t * this_state, int domain)
    if (!did)
       return (PAPI_EINVAL);
 
-   evt->pfp_dfl_plm = mode;
-   return (PAPI_OK);
+   inp->pfp_dfl_plm = mode;
+
+   return(compute_kernel_args(inp,outp,pd,pc));
 }
 
 inline static int set_granularity(hwd_control_state_t * this_state, int domain)
@@ -566,17 +632,6 @@ inline static int set_granularity(hwd_control_state_t * this_state, int domain)
 inline static int set_inherit(int arg)
 {
    return (PAPI_ESBSTR);
-}
-
-inline static int set_default_domain(hwd_control_state_t * this_state, int domain)
-{
-   return (set_domain(this_state, domain));
-}
-
-inline static int set_default_granularity(hwd_control_state_t * this_state,
-                                          int granularity)
-{
-   return (set_granularity(this_state, granularity));
 }
 
 static int get_string_from_file(char *file, char *str, int len)
@@ -653,6 +708,11 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   strncpy(_papi_hwi_system_info.sub_info.support_version,buf,sizeof(_papi_hwi_system_info.sub_info.support_version));
   get_string_from_file("/sys/kernel/perfmon/version",_papi_hwi_system_info.sub_info.kernel_version,sizeof(_papi_hwi_system_info.sub_info.kernel_version));
   pfm_get_num_counters((unsigned int *)&_papi_hwi_system_info.sub_info.num_cntrs);
+#if (defined(__i386__) || defined(__x86_64__) || defined(__ia64__))
+  _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL;
+#elif defined(mips)
+  _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR|PAPI_DOM_OTHER;
+#endif
   _papi_hwi_system_info.sub_info.hardware_intr_sig = SIGIO;
   _papi_hwi_system_info.sub_info.hardware_intr = 1;
   _papi_hwi_system_info.sub_info.fast_counter_read = 0;
@@ -706,6 +766,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 int _papi_hwd_init(hwd_context_t * thr_ctx)
 {
   pfarg_ctx_t ctx;
+  pfarg_load_t load_args;
   int ret;
 
 #if defined(HAS_PER_PROCESS_TIMES)
@@ -724,14 +785,32 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
 #endif
 
   memset(&ctx, 0, sizeof(ctx));
-  SUBDBG("PFM_CREATE_CONTEXT\n");
+  SUBDBG("PFM_CREATE_CONTEXT(%p)\n",&ctx);
   if ((ret = pfm_create_context(&ctx, NULL, 0)))
     {
       PAPIERROR("pfm_create_context(): %s", pfm_strerror(ret));
-      return(PAPI_ESBSTR);
+    bail:
+#if defined(HAS_PER_PROCESS_TIMES)
+      close(thr_ctx->stat_fd);
+      thr_ctx->stat_fd = -1;
+#endif
+      return(PAPI_ESYS);
     }
-  
+  SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",ctx.ctx_fd);
+
+  memset(&load_args, 0, sizeof(load_args));
+  load_args.load_pid = mygettid();
+  SUBDBG("PFM_LOAD_CONTEXT(%d,%p(%d))\n",ctx.ctx_fd,&load_args,mygettid());
+  if ((ret = pfm_load_context(ctx.ctx_fd, &load_args)))
+    {
+      PAPIERROR("pfm_create_context(): %s", pfm_strerror(ret));
+      close(ctx.ctx_fd);
+      ctx.ctx_fd = -1;
+      goto bail;
+    }
+
   memcpy(&thr_ctx->ctx,&ctx,sizeof(ctx));
+  memcpy(&thr_ctx->load,&load_args,sizeof(load_args));
   return(PAPI_OK);
 }
 
@@ -799,21 +878,83 @@ long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 }
 
 /* reset the hardware counters */
-int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * machdep)
+int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * current_state)
 {
-   return (PAPI_OK);
+  int i, ret;
+
+  for (i=0; i < current_state->in.pfp_event_count; i++) 
+    current_state->pd[i].reg_value = 0ULL;
+
+  SUBDBG("PFM_WRITE_PMDS(%d,%p,%d)\n",ctx->ctx.ctx_fd, current_state->pd, current_state->in.pfp_event_count);
+  if ((ret = pfm_write_pmds(ctx->ctx.ctx_fd, current_state->pd, current_state->in.pfp_event_count)))
+    {
+      PAPIERROR("pfm_write_pmds(%d,%p,%d): %s",ctx->ctx.ctx_fd,current_state->pd,current_state->in.pfp_event_count, pfm_strerror(ret));
+      return(PAPI_ESYS);
+    }
+
+  return (PAPI_OK);
 }
 
-int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * machdep,
+int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * current_state,
                    long_long ** events, int flags)
 {
+  int i, ret;
+
+  SUBDBG("PFM_READ_PMDS(%d,%p,%d)\n",ctx->ctx.ctx_fd, current_state->pd, current_state->in.pfp_event_count);
+  if ((ret = pfm_read_pmds(ctx->ctx.ctx_fd, current_state->pd, current_state->in.pfp_event_count)))
+    {
+      PAPIERROR("pfm_read_pmds(%d,%p,%d): %s",ctx->ctx.ctx_fd,current_state->pd,current_state->in.pfp_event_count, pfm_strerror(ret));
+      *events = NULL;
+      return(PAPI_ESYS);
+    }
+  
+  for (i=0; i < current_state->in.pfp_event_count; i++) 
+    {
+      current_state->counts[i] = current_state->pd[i].reg_value;
+    }
+  *events = current_state->counts;
+
    return PAPI_OK;
 }
 
 
 int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * current_state)
 {
-  int ret; 
+  int i, ret; 
+
+  /*
+   * Now program the registers
+   *
+   * We don't use the same variable to indicate the number of elements passed to
+   * the kernel because, as we said earlier, pc may contain more elements than
+   * the number of events (pmd) we specified, i.e., contains more than counting
+   * monitors.
+   */
+
+  SUBDBG("PFM_WRITE_PMCS(%d,%p,%d)\n",ctx->ctx.ctx_fd, current_state->pc, current_state->out.pfp_pmc_count);
+  if ((ret = pfm_write_pmcs(ctx->ctx.ctx_fd, current_state->pc, current_state->out.pfp_pmc_count)))
+    {
+      PAPIERROR("pfm_write_pmcs(%d,%p,%d): %s",ctx->ctx.ctx_fd,current_state->pc,current_state->out.pfp_pmc_count, pfm_strerror(ret));
+      return(PAPI_ESYS);
+    }
+  
+  /* Set counters to zero as per PAPI_start man page. */
+
+  for (i=0; i < current_state->in.pfp_event_count; i++) 
+    current_state->pd[i].reg_value = 0ULL; 
+
+  /*
+   * To be read, each PMD must be either written or declared
+   * as being part of a sample (reg_smpl_pmds)
+   */
+  SUBDBG("PFM_WRITE_PMDS(%d,%p,%d)\n",ctx->ctx.ctx_fd, current_state->pd, current_state->in.pfp_event_count);
+  if ((ret = pfm_write_pmds(ctx->ctx.ctx_fd, current_state->pd, current_state->in.pfp_event_count)))
+    {
+      PAPIERROR("pfm_write_pmds(%d,%p,%d): %s",ctx->ctx.ctx_fd,current_state->pd,current_state->in.pfp_event_count, pfm_strerror(ret));
+      return(PAPI_ESYS);
+    }
+
+  SUBDBG("PFM_START(%d,%p)\n",ctx->ctx.ctx_fd, NULL);
   if ((ret = pfm_start(ctx->ctx.ctx_fd, NULL)))
     {
       PAPIERROR("pfm_start(%d): %s", ctx->ctx.ctx_fd, pfm_strerror(ret));
@@ -825,6 +966,7 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * current_state)
 int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * zero)
 {
   int ret;
+  SUBDBG("PFM_STOP(%d)\n",ctx->ctx.ctx_fd);
   if ((ret = pfm_stop(ctx->ctx.ctx_fd)))
     {
       PAPIERROR("pfm_stop(%d): %s", ctx->ctx.ctx_fd, pfm_strerror(ret));
@@ -836,13 +978,8 @@ int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * zero)
 int _papi_hwd_ctl(hwd_context_t * zero, int code, _papi_int_option_t * option)
 {
    switch (code) {
-   case PAPI_DEFDOM:
-      return (set_default_domain(&option->domain.ESI->machdep, option->domain.domain));
    case PAPI_DOMAIN:
-      return (set_domain(&option->domain.ESI->machdep, option->domain.domain));
-   case PAPI_DEFGRN:
-      return (set_default_granularity
-              (&option->domain.ESI->machdep, option->granularity.granularity));
+     return(set_domain(&option->domain.ESI->machdep, option->domain.domain));
    case PAPI_GRANUL:
       return (set_granularity
               (&option->granularity.ESI->machdep, option->granularity.granularity));
@@ -865,9 +1002,13 @@ int _papi_hwd_ctl(hwd_context_t * zero, int code, _papi_int_option_t * option)
 
 int _papi_hwd_shutdown(hwd_context_t * ctx)
 {
+  int ret;
 #if defined(HAS_PER_PROCESS_TIMES)
   close(ctx->stat_fd);
 #endif  
+  SUBDBG("PFM_UNLOAD_CONTEXT(%d)\n",ctx->ctx.ctx_fd);
+  if ((ret = pfm_unload_context(ctx->ctx.ctx_fd)))
+    PAPIERROR("pfm_unload_context(%d): %s", ctx->ctx.ctx_fd, pfm_strerror(ret));
   return (close(ctx->ctx.ctx_fd));
 }
 
@@ -1076,7 +1217,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t *this_state)
 
 int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
                                    NativeInfo_t *native, int count, hwd_context_t * ctx) {
-  int i, j, ret;
+  int i, ret;
    pfmlib_input_param_t *inp = &this_state->in;
    pfmlib_output_param_t *outp = &this_state->out;
    pfarg_pmd_t *pd = this_state->pd;
@@ -1101,36 +1242,9 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
     * let the library figure out the values for the PMCS
     */
    
-   if ((ret = pfm_dispatch_events(inp, NULL, outp, NULL)) != PFMLIB_SUCCESS)
-     {
-       PAPIERROR("pfm_dispatch_events(): %s", pfm_strerror(ret));
-       return(PAPI_ECNFLCT);
-     }
-
-   /*
-    * Now prepare the argument to initialize the PMDs and PMCS.
-    * We must pfp_pmc_count to determine the number of PMC to intialize.
-    * We must use pfp_event_count to determine the number of PMD to initialize.
-    * Some events causes extra PMCs to be used, so  pfp_pmc_count may be >= pfp_event_count.
-    *
-    * This step is new compared to libpfm-2.x. It is necessary because the library no
-    * longer knows about the kernel data structures.
-    */
-
-   for (i=0; i < outp->pfp_pmc_count; i++) {
-     SUBDBG("Input Event %d: PC num %d, PC value %llx\n",i,outp->pfp_pmcs[i].reg_num,outp->pfp_pmcs[i].reg_value);
-     pc[i].reg_num   = outp->pfp_pmcs[i].reg_num;
-     pc[i].reg_value = outp->pfp_pmcs[i].reg_value;
-   }
-   
-   /*
-    * figure out pmd mapping from output pmc
-    */
-   for (i=0, j=0; i < inp->pfp_event_count; i++) {
-     SUBDBG("Output event %d: PD num %d, PD value %llx\n",i,outp->pfp_pmcs[i].reg_num,outp->pfp_pmcs[i].reg_value);
-     pd[i].reg_num   = outp->pfp_pmcs[j].reg_pmd_num;
-     for(; j < outp->pfp_pmc_count; j++)  if (outp->pfp_pmcs[j].reg_evt_idx != i) break;
-   }
+   ret = compute_kernel_args(inp,outp,pd,pc);
+   if (ret != PAPI_OK)
+     return(ret);
 
   /* Update the native structure with the allocation, because the allocation is done here.
    */
