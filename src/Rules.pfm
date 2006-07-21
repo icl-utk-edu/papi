@@ -90,7 +90,7 @@ MISCHDRS = pfmwrap.h
 MISCSRCS = #linux.c
 SHLIBDEPS = -L$(PFM_LIB_PATH) -lpfm
 PFM_OBJS = $(shell ar t $(PFM_LIB_PATH)/libpfm.a 2> /dev/null)
-ifeq (,$(PERFCTR_OBJS))
+ifeq (,$(PFM_OBJS))
 	PFM_OBJS = dummy
 endif
 MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
