@@ -1173,6 +1173,14 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 	    in the substrates gets information from the global structure instead of
             per-thread information. */
 
+	 /* Check what the substrate supports */
+
+	 if (dom == PAPI_DOM_ALL)
+	   dom = _papi_hwi_system_info.sub_info.available_domains;
+
+	 if (dom & ~_papi_hwi_system_info.sub_info.available_domains)
+	   papi_return(PAPI_EINVAL);
+
          _papi_hwi_system_info.sub_info.default_domain = dom;
 
          return (PAPI_OK);
@@ -1182,6 +1190,14 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
          int dom = ptr->domain.domain;
          if ((dom < PAPI_DOM_MIN) || (dom > PAPI_DOM_MAX))
             papi_return(PAPI_EINVAL);
+
+	 /* Check what the substrate supports */
+
+	 if (dom == PAPI_DOM_ALL)
+	   dom = _papi_hwi_system_info.sub_info.available_domains;
+
+	 if (dom & ~_papi_hwi_system_info.sub_info.available_domains)
+	   papi_return(PAPI_EINVAL);
 
          internal.domain.ESI = _papi_hwi_lookup_EventSet(ptr->domain.eventset);
          if (internal.domain.ESI == NULL)
@@ -1205,12 +1221,44 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 
          return (retval);
       }
+   case PAPI_DEFGRN:
+      {
+         int grn = ptr->defgranularity.granularity;
+         if ((grn < PAPI_GRN_MIN) || (grn > PAPI_GRN_MAX))
+            papi_return(PAPI_EINVAL);
+
+         /* Change the global structure. The _papi_hwd_init_control_state function 
+	    in the substrates gets information from the global structure instead of
+            per-thread information. */
+
+	 /* Check what the substrate supports */
+
+	 if (grn & ~_papi_hwi_system_info.sub_info.available_granularities)
+	   papi_return(PAPI_EINVAL);
+
+	 /* Make sure there is only 1 set. */
+	 if (grn ^ (1 << (ffs(grn) - 1)))
+	   papi_return(PAPI_EINVAL);
+	 
+         _papi_hwi_system_info.sub_info.default_granularity = grn;
+
+         return (PAPI_OK);
+      }
    case PAPI_GRANUL:
       {
          int grn = ptr->granularity.granularity;
 
          if ((grn < PAPI_GRN_MIN) || (grn > PAPI_GRN_MAX))
             papi_return(PAPI_EINVAL);
+
+	 /* Check what the substrate supports */
+
+	 if (grn & ~_papi_hwi_system_info.sub_info.available_granularities)
+	   papi_return(PAPI_EINVAL);
+
+	 /* Make sure there is only 1 set. */
+	 if (grn ^ (1 << (ffs(grn) - 1)))
+	   papi_return(PAPI_EINVAL);
 
          internal.granularity.ESI = _papi_hwi_lookup_EventSet(ptr->granularity.eventset);
          if (internal.granularity.ESI == NULL)
@@ -1825,7 +1873,7 @@ int PAPI_set_granularity(int granularity)
    PAPI_option_t ptr;
 
    ptr.defgranularity.granularity = granularity;
-   papi_return(PAPI_set_opt(PAPI_GRANUL, &ptr));
+   papi_return(PAPI_set_opt(PAPI_DEFGRN, &ptr));
 }
 
 /* This function sets the low level default counting domain
