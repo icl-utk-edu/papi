@@ -8,6 +8,17 @@
 */
 int TESTS_QUIET = 0;
 
+int approx_equals(double a, double b)
+{
+  if ((a >= b*(1.0-TOLERANCE)) && (a <= b*(1.0+TOLERANCE)))
+    return 1;
+  else
+    {
+      printf("Out of tolerance range %2.2f: %.0f vs %.0f [%.0f,%.0f]\n",TOLERANCE,a,b,b*(1.0-TOLERANCE),b*(1.0+TOLERANCE));
+      return 0;
+    }
+}
+
 long_long **allocate_test_space(int num_tests, int num_events)
 {
    long_long **values;
@@ -563,7 +574,7 @@ int add_two_events(int *num_events, int *papi_event,
   while ((i < 3) && (!simple_event_found)) {
     if (PAPI_query_event(potential_evt_to_add[i][0]) == PAPI_OK) {
       PAPI_get_event_info(potential_evt_to_add[i][0], &info);
-      if (info.count == 1 || !strcmp(info.derived, "DERIVED_CMPD")) {
+      if (!strcmp(info.derived, "DERIVED_CMPD") || !strcmp(info.derived, "NOT_DERIVED")) {
 	simple_event_found = 1;
       }
     }

@@ -32,7 +32,7 @@
 
 void dump_and_verify(int test_case, long_long **values)
 {
-      long_long min, max;
+  long_long min, max, min2, max2;
 
       printf("-----------------------------------------------------------------\n");
       printf("Using %d iterations of c += a*b\n", NUM_FLOPS);
@@ -63,34 +63,40 @@ void dump_and_verify(int test_case, long_long **values)
 		      printf(TAB_DOM, "PAPI_TOT_CYC: ", (values[1])[1], (values[2])[1], (values[0])[1]);
 		      printf("-------------------------------------------------------------\n");
 		
+      printf("Verification:\n");
+      printf("Both rows approximately equal '(N+n)  n  N', where n << N\n");
+      printf("Column 1 approximately equals column 2 plus column 3\n");
       } 
       else if (test_case == SUPERVISOR) {
       		printf("Test type   :   PAPI_DOM_ALL  All-minus-supervisor  Supervisor-only\n");
 		      printf(TAB_DOM, "PAPI_TOT_INS: ", (values[0])[0], (values[1])[0], (values[2])[0]);
 		      printf(TAB_DOM, "PAPI_TOT_CYC: ", (values[0])[1], (values[1])[1], (values[2])[1]);
 		      printf("-------------------------------------------------------------\n");
+      printf("Verification:\n");
+      printf("Both rows approximately equal '(N+n)  n  N', where n << N\n");
+      printf("Column 1 approximately equals column 2 plus column 3\n");
       } 
       else {	  
 		      min = (long_long) (values[2][0] * (1.0 - TOLERANCE));
 		      max = (long_long) (values[2][0] * (1.0 + TOLERANCE));
-		      if (values[0][0] > max || values[0][0] < min)
-		         test_fail(__FILE__, __LINE__, "PAPI_TOT_INS", 1);
 		
-		      min = (long_long) (values[0][1] * (1.0 - TOLERANCE));
-		      max = (long_long) (values[0][1] * (1.0 + TOLERANCE));
-		      if ((values[1][1] + values[2][1]) > max || (values[1][1] + values[2][1]) < min)
-		         test_fail(__FILE__, __LINE__, "PAPI_TOT_CYC", 1);		
+		      min2 = (long_long) (values[0][1] * (1.0 - TOLERANCE));
+		      max2 = (long_long) (values[0][1] * (1.0 + TOLERANCE));
 		
       		printf("Test type   :   PAPI_DOM_ALL  PAPI_DOM_KERNEL  PAPI_DOM_USER\n");
 		      printf(TAB_DOM, "PAPI_TOT_INS: ", (values[0])[0], (values[1])[0], (values[2])[0]);
 		      printf(TAB_DOM, "PAPI_TOT_CYC: ", (values[0])[1], (values[1])[1], (values[2])[1]);
 		      printf("-------------------------------------------------------------\n");
-		
-		}
-
       printf("Verification:\n");
       printf("Both rows approximately equal '(N+n)  n  N', where n << N\n");
       printf("Column 1 approximately equals column 2 plus column 3\n");
+		
+		      if (values[0][0] > max || values[0][0] < min)
+		         test_fail(__FILE__, __LINE__, "PAPI_TOT_INS", 1);
+
+		      if ((values[1][1] + values[2][1]) > max2 || (values[1][1] + values[2][1]) < min2)
+		         test_fail(__FILE__, __LINE__, "PAPI_TOT_CYC", 1);		
+		}
 
       if (values[0][0] == 0 || values[0][1] == 0 ||
 			values[1][0] == 0 || values[1][1] == 0 )
@@ -411,7 +417,7 @@ void case2(int num, int domain, long_long *values)
    if (num == CREATE)
        {
 	   printf("\nTest case 2, CREATE: Call PAPI_set_domain(%s) before create\n",stringify_domain(domain));
-	   printf("This should override the default domain setting for this EventSet.\n");
+	   printf("This should override the domain setting for this EventSet.\n");
 
 	   retval = PAPI_set_domain(domain);
 	   if (retval != PAPI_OK)
@@ -425,7 +431,7 @@ void case2(int num, int domain, long_long *values)
    if (num == ADD)
        {
 	   printf("\nTest case 2, ADD: Call PAPI_set_domain(%s) before add\n",stringify_domain(domain));
-	   printf("This should have no effect on the default domain setting for this EventSet.\n");
+	   printf("This should have no effect on the domain setting for this EventSet.\n");
 
 	   retval = PAPI_set_domain(domain);
 	   if (retval != PAPI_OK)
@@ -439,7 +445,7 @@ void case2(int num, int domain, long_long *values)
    if (num == MIDDLE)
        {
 	   printf("\nTest case 2, MIDDLE: Call PAPI_set_domain(%s) between adds\n",stringify_domain(domain));
-	   printf("This should have no effect on the default domain setting for this EventSet.\n");
+	   printf("This should have no effect on the domain setting for this EventSet.\n");
 
 	   retval = PAPI_set_domain(domain);
 	   if (retval != PAPI_OK)
@@ -517,9 +523,9 @@ int main(int argc, char **argv)
 #endif
 
    printf("Test second.c: set domain of eventset via PAPI_set_domain and PAPI_set_opt.\n\n");
-   printf("PAPI_set_domain sets the default domain \napplied to subsequently created EventSets.\n");
+   printf("* PAPI_set_domain(DOMAIN) sets the default domain \napplied to subsequently created EventSets.\n");
    printf("It should have no effect on existing EventSets.\n\n");
-   printf("PAPI_set_opt(DOMAIN,xxx) sets the domain for a specific EventSet.\n");
+   printf("* PAPI_set_opt(DOMAIN,xxx) sets the domain for a specific EventSet.\n");
    printf("It should always override the default setting for that EventSet.\n");
    case2_driver();
    case1_driver();

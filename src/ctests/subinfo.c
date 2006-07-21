@@ -56,6 +56,8 @@ int main(int argc, char **argv)
    printf("fast_counter_read: %d\n",subinfo->fast_counter_read);       /* Has a fast counter read */
    printf("fast_real_timer: %d\n",subinfo->fast_real_timer);       /* Has a fast real timer */
    printf("fast_virtual_timer: %d\n",subinfo->fast_virtual_timer);    /* Has a fast virtual timer */
+   printf("edge_detect: %d\n",subinfo->edge_detect);    /* Has a fast virtual timer */
+   printf("invert: %d\n",subinfo->invert);    /* Has a fast virtual timer */
    printf("data_address_smpl: %d\n",subinfo->data_address_smpl);     /* Supports data/instr miss address sampling */
    printf("branch_tracing: %d\n",subinfo->branch_tracing);        /* Supports branch trace buffering */
    printf("tlb_address_smpl: %d\n",subinfo->tlb_address_smpl);      /* Supports TLB miss address sampling */
