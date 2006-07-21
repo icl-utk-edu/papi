@@ -130,6 +130,9 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_VENDOR_AMD     2
 #define PAPI_VENDOR_CYRIX   3
 #define PAPI_VENDOR_IBM     4
+#define PAPI_VENDOR_MIPS    5
+#define PAPI_VENDOR_CRAY    6
+#define PAPI_VENDOR_SUN     7
 
 /* Granularity definitions */
 
@@ -210,6 +213,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_DEFGRN  		6       /* Granularity for all new eventsets */
 #define PAPI_GRANUL  		7       /* Granularity for an eventset */
 #define PAPI_MULTIPLEX_USEC     8       /* Multiplexing interval in US */
+#define PAPI_EDGE_DETECT        9
+#define PAPI_INVERT             10
 #define PAPI_PROFIL  		12      /* Option to turn on the overflow/profil reporting software */
 #define PAPI_PRELOAD 		13      /* Option to find out the environment variable that can preload libraries */
 #define PAPI_CLOCKRATE  	14      /* Clock rate in MHz */
@@ -378,14 +383,16 @@ read the documentation carefully.  */
      unsigned int kernel_multiplex:1;      /* In kernel multiplexing */
      unsigned int data_address_range:1;    /* Supports data address range limiting */
      unsigned int instr_address_range:1;   /* Supports instruction address range limiting */
-     unsigned int fast_counter_read:1;     /* Has a user level PMC read instruction */
-     unsigned int fast_real_timer:1;       /* Has a fast real timer */
-     unsigned int fast_virtual_timer:1;    /* Has a fast virtual timer */
+     unsigned int fast_counter_read:1;     /* Supports a user level PMC read instruction */
+     unsigned int fast_real_timer:1;       /* Supports a fast real timer */
+     unsigned int fast_virtual_timer:1;    /* Supports a fast virtual timer */
+     unsigned int edge_detect:1;           /* Supports edge detection on events */
+     unsigned int invert:1;                /* Supports invert detection on events */
      unsigned int data_address_smpl:1;     /* Supports data/instr miss address sampling */
      unsigned int branch_tracing:1;        /* Supports branch trace buffering */
      unsigned int tlb_address_smpl:1;      /* Supports TLB miss address sampling */
      unsigned int grouped_cntrs:1;         /* Underlying hardware uses counter groups */
-     unsigned int reserved_bits:18;
+     unsigned int reserved_bits:16;
    } PAPI_substrate_info_t;
 
    typedef int (*PAPI_debug_handler_t) (int code);
