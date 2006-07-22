@@ -119,7 +119,7 @@ void case1(int num)
    long_long **values;
    int EventSet1=PAPI_NULL, EventSet2=PAPI_NULL, EventSet3=PAPI_NULL;
    PAPI_option_t options;
-   PAPI_substrate_info_t *subinfo;
+   const PAPI_substrate_info_t *subinfo;
 
    memset(&options, 0x0, sizeof(options));
 
@@ -135,7 +135,7 @@ void case1(int num)
    
    subinfo = PAPI_get_substrate_info();
    if (subinfo == NULL)
-      test_fail(__FILE__, __LINE__, "PAPI_get_substrate_info", subinfo);
+      test_fail(__FILE__, __LINE__, "PAPI_get_substrate_info", PAPI_ESBSTR);
    
    if ((retval = PAPI_query_event(PAPI_TOT_INS)) != PAPI_OK)
       test_skip(__FILE__, __LINE__, "PAPI_query_event", retval);
@@ -300,8 +300,10 @@ void case1(int num)
 	}
 
 	if (num == SUPERVISOR && (subinfo->available_domains & PAPI_DOM_SUPERVISOR)) {
-		printf("\nTest case CHANGE 2: Change domain on EventSets to include/exclude supervisor events:\n");
 		PAPI_option_t option;
+
+		printf("\nTest case CHANGE 2: Change domain on EventSets to include/exclude supervisor events:\n");
+
 		option.domain.domain = PAPI_DOM_ALL;
 		option.domain.eventset = EventSet1;
 		retval = PAPI_set_opt(PAPI_DOMAIN, &option);
