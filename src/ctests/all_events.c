@@ -53,6 +53,10 @@ int main(int argc, char **argv)
          test_fail(__FILE__, __LINE__, "PAPI_remove_event", retval);
 
    }
+   retval = PAPI_destroy_eventset(&EventSet);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_destroy_eventset", retval);
+
    if (!TESTS_QUIET)
       printf("Successfully added,started and stopped %d events.\n", count);
    if ( count > 0 )
