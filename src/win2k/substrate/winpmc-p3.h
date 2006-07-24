@@ -1,11 +1,11 @@
 #ifndef _PAPI_WINPMC3_H
 #define _PAPI_WINPMC3_H
-
+/*
 #define _GNU_SOURCE
 #define __USE_GNU
 #define __USE_UNIX98
 #define __USE_XOPEN_EXTENDED
-
+*/
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -27,37 +27,8 @@
 #include <errno.h>
 #include "cpuinfo.h"
 #include "pmclib.h"
+
 #else
-#define inline_static inline static
-#define HAVE_FFSLL
-#include <unistd.h>
-#include <time.h>
-#include <errno.h>
-#include <ctype.h>
-
-#ifdef __BSD__
-#include <ucontext.h>
-#else
-#include <sys/ucontext.h>
-#endif
-
-#include <sys/times.h>
-#include <sys/time.h>
-
-#ifndef __BSD__ /* #include <linux/unistd.h> */
-  #ifndef __CATAMOUNT__
-    #include <linux/unistd.h>	
-  #endif
-#endif
-
-#ifndef CONFIG_SMP
-/* Assert that CONFIG_SMP is set before including asm/atomic.h to 
- * get bus-locking atomic_* operations when building on UP kernels
- */
-#define CONFIG_SMP
-#endif
-#include <inttypes.h>
-#include "libperfctr.h"
 #endif
 
 #define PERF_MAX_COUNTERS 4
@@ -109,48 +80,6 @@ typedef CONTEXT hwd_ucontext_t;
 #define HW_OVERFLOW 0
 
 #else
-
-/* Lock macros. */
-extern volatile unsigned int lock[PAPI_MAX_LOCK];
-#define MUTEX_OPEN 1
-#define MUTEX_CLOSED 0
-
-/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
- * else val = MUTEX_CLOSED */
-
-#define  _papi_hwd_lock(lck)                    \
-do                                              \
-{                                               \
-   unsigned int res = 0;                        \
-   do {                                         \
-      __asm__ __volatile__ ("lock ; " "cmpxchg %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");  \
-   } while(res != (unsigned int)MUTEX_OPEN);   \
-} while(0)
-
-#define  _papi_hwd_unlock(lck)                  \
-do                                              \
-{                                               \
-   unsigned int res = 0;                       \
-   __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");                                \
-} while(0)
-
-typedef siginfo_t hwd_siginfo_t;
-typedef ucontext_t hwd_ucontext_t;
-
-/* Overflow macros */
-#ifdef __x86_64__
-  #ifdef __CATAMOUNT__
-    #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->sc_rip)
-  #else
-    #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->rip)
-  #endif
-#else
-  #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->eip)
-#endif
-
-/* Linux DOES support hardware overflow */
-#define HW_OVERFLOW 1
-
 #endif /* _WIN32 */
 
 typedef struct P3_register {
@@ -219,26 +148,6 @@ typedef P3_WinPMC_context_t hwd_context_t;
 #define hwd_pmc_control vpmc_control
 
 #else
-
-typedef struct P3_perfctr_control {
-   hwd_native_t native[MAX_COUNTERS];
-   int native_idx;
-   unsigned char master_selector;
-   P3_register_t allocated_registers;
-   struct vperfctr_control control;
-   struct perfctr_sum_ctrs state;
-} P3_perfctr_control_t;
-
-typedef struct P3_perfctr_context {
-   struct vperfctr *perfctr;
-/*  P3_perfctr_control_t start; */
-} P3_perfctr_context_t;
-
-/* typedefs to conform to hardware independent PAPI code. */
-typedef P3_perfctr_control_t hwd_control_state_t;
-typedef P3_perfctr_context_t hwd_context_t;
-#define hwd_pmc_control vperfctr_control
-
 #endif
 
 /* Used in resources.selector to determine on which counters an event can live. */
@@ -271,7 +180,7 @@ typedef P3_perfctr_context_t hwd_context_t;
 #define PERF_USR               0x00010000
 #define PERF_UNIT_MASK         0x0000FF00
 #define PERF_EVNT_MASK         0x000000FF
-
+/*
 #define AI_ERROR "No support for a-mode counters after adding an i-mode counter"
 #define VOPEN_ERROR "vperfctr_open() returned NULL"
 #define GOPEN_ERROR "gperfctr_open() returned NULL"
@@ -280,6 +189,7 @@ typedef P3_perfctr_context_t hwd_context_t;
 #define GCNTRL_ERROR "gperfctr_control() returned < 0"
 #define FOPEN_ERROR "fopen(%s) returned NULL"
 #define STATE_MAL_ERROR "Error allocating perfctr structures"
+*/
 #define MODEL_ERROR "This is not a Pentium I,II,III, Athlon or Opteron"
 
 extern native_event_entry_t *native_table;

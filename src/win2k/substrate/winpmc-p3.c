@@ -111,7 +111,7 @@ int setup_p3_presets(int cputype) {
 }
 
 void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
-   int i, def_mode;
+   int i, def_mode = 0;
 
    if (_papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_USER)
       def_mode |= PERF_USR;
@@ -363,6 +363,7 @@ static void lock_release(void)
       DeleteCriticalSection(&lock[i]);
    }
 }
+
 
 /* This routine is for shutting down threads, including the
    master thread. */

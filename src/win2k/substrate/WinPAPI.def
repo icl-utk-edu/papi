@@ -15,7 +15,7 @@ EXPORTS
 	PAPI_get_executable_info		@108
 	PAPI_get_hardware_info			@109
 	PAPI_get_opt				@110
-;	PAPI_get_dmem_info			@111
+	PAPI_get_dmem_info			@111
 	PAPI_get_real_cyc			@112
 	PAPI_get_real_usec			@113
 	PAPI_get_virt_cyc			@114
@@ -34,7 +34,7 @@ EXPORTS
         PAPI_get_event_info                     @127
         PAPI_is_initialized                     @128
 	PAPI_query_event			@129
-
+	PAPI_get_substrate_info			@130
 	PAPI_event_code_to_name			@131
 	PAPI_event_name_to_code			@132
 	PAPI_read				@133

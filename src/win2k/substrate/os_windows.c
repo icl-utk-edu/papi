@@ -21,7 +21,7 @@ extern int setup_p4_vector_table(papi_vectors_t *);
 extern int setup_p3_presets(int cputype);
 extern int setup_p3_vector_table(papi_vectors_t *);
 
-/* This should be in a linux.h header file maybe. */
+/* This should be in a os_windows.h header file maybe. */
 #define FOPEN_ERROR "fopen(%s) returned NULL"
 
 #if defined(PERFCTR26)
@@ -226,7 +226,6 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
    }
 }
 
-
 void CALLBACK _papi_hwd_timer_callback(UINT wTimerID, UINT msg, 
         DWORD dwUser, DWORD dw1, DWORD dw2) 
 {
@@ -253,7 +252,7 @@ void CALLBACK _papi_hwd_timer_callback(UINT wTimerID, UINT msg,
 
     // pass a void pointer to cpu register data here
     _papi_hwi_dispatch_overflow_signal((void *)&ctx, &isHardware, 
-										OVERFLOW_MASK, GEN_OVERFLOW, &master); 
+	OVERFLOW_MASK, GEN_OVERFLOW, &master); 
 }
 
 HANDLE pmc_dev;	// device handle for kernel driver
