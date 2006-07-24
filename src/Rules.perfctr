@@ -30,7 +30,7 @@ endif
 
 ifeq (x86_64,$(ARCH))
 ifeq (32,$(BITS))
-BITFLAGS	?= -m32
+BITFLAGS	?= -m32 -U__i386__ -D__x86_64__
 else
 SHRFLAGS	+= -fPIC
 LIB_SUFFIX	:= 64
@@ -228,7 +228,7 @@ ifeq (,${PERFCTR_PREFIX})
  else
   ifeq (x86_64,${ARCH})
    ifeq (32,${BITS})
-	$(MAKE) CC='$(CC)' LD_FLAGS="-melf_i386" ARCH="i386" -C $(PERFCTR_ROOT)
+	$(MAKE) CC='$(CC) $(BITFLAGS)' LD_FLAGS="-melf_i386" ARCH="i386" -C $(PERFCTR_ROOT)
    else
 	$(MAKE) -C $(PERFCTR_ROOT)
    endif
