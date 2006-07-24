@@ -49,6 +49,7 @@ typedef struct hwi_describe {
    char *descr;               /* description of the element */
 } hwi_describe_t;
 
+extern hwi_search_t *preset_search_map;
 extern int _papi_hwi_setup_all_presets(hwi_search_t * preset_search_map, hwi_dev_notes_t *notes);
 #ifdef XML
 extern int _xml_papi_hwi_setup_all_presets(char *arch, hwi_dev_notes_t *notes);
