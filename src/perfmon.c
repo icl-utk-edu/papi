@@ -18,13 +18,50 @@
 #include "threads.h"
 #include "papi_memory.h"
 
-static pfm_preset_search_entry_t pfm_preset_search_map[] = {
+static pfm_preset_search_entry_t pfm_mips5k_preset_search_map[] = {
   { PAPI_TOT_CYC, NOT_DERIVED, },
   { PAPI_TOT_INS, NOT_DERIVED, },
-  { 0, 0, }};
+  { PAPI_L1_ICA, NOT_DERIVED, { "FETCHED_INST",}, },
+  { PAPI_LD_INS, NOT_DERIVED, { "LOAD_PREF_SYNC_CACHE_OPS", }, },
+  { PAPI_SR_INS, NOT_DERIVED, { "STORES_COND_ST", }, },
+  { PAPI_CSR_FAL, NOT_DERIVED, { "COND_STORE_FAIL", }, },
+  { PAPI_FP_INS, NOT_DERIVED, { "FP_INST", }, },
+  { PAPI_BR_INS, NOT_DERIVED, { "BRANCHES", }, },
+  { PAPI_TLB_IM, NOT_DERIVED, { "ITLB_MISS", }, },
+  { PAPI_TLB_TL, NOT_DERIVED, { "TLM_MISS_EXC", }, }, 
+  { PAPI_TLB_DM, NOT_DERIVED, { "DTLB_MISS", }, },
+  { PAPI_BR_MSP, NOT_DERIVED, { "BR_MISPRED", }, },  
+  { PAPI_L1_ICM, NOT_DERIVED, { "IC_MISS", }, },
+  { PAPI_L1_DCM, NOT_DERIVED, { "DC_MISS", }, },
+  { PAPI_MEM_SCY, NOT_DERIVED, { "INST_STALL_M", }, },
+  { PAPI_FUL_ICY, NOT_DERIVED, { "DUAL_ISSUE_INST", }, }, };
 
-#define NUM_OF_PRESET_EVENTS (sizeof(pfm_preset_search_map)/sizeof(pfm_preset_search_entry_t))
-hwi_search_t preset_search_map[NUM_OF_PRESET_EVENTS];
+static pfm_preset_search_entry_t pfm_mips20k_preset_search_map[] = {
+  { PAPI_TOT_CYC, NOT_DERIVED, },
+  { PAPI_TOT_INS, NOT_DERIVED, },
+  { PAPI_FP_INS, NOT_DERIVED, { "FP_INST", }, },
+  { PAPI_BR_INS, NOT_DERIVED, { "BRANCHES", }, },
+  { PAPI_BR_MSP, NOT_DERIVED, { "BR_MISPRED", }, }, 
+  { PAPI_TLB_TL, NOT_DERIVED, { "TLB_MISS_EXC", }, }, 
+  { PAPI_L1_ICA, NOT_DERIVED, { "INST_RQ", }, },};
+    
+static pfm_preset_search_entry_t pfm_i386_p6_preset_search_map[] = {
+  { PAPI_TOT_CYC, NOT_DERIVED, },
+  { PAPI_TOT_INS, NOT_DERIVED, }, 
+  { PAPI_TOT_INS, NOT_DERIVED, { "FLOPS", }, }, 
+};
+
+static pfm_preset_search_entry_t pfm_i386_pM_preset_search_map[] = {
+  { PAPI_TOT_CYC, NOT_DERIVED, },
+  { PAPI_TOT_INS, NOT_DERIVED, }, 
+  { PAPI_TOT_INS, NOT_DERIVED, { "FLOPS", }, }, 
+};
+
+static pfm_preset_search_entry_t pfm_unknown_preset_search_map[] = {
+  { PAPI_TOT_CYC, NOT_DERIVED, },
+  { PAPI_TOT_INS, NOT_DERIVED, }, };
+
+hwi_search_t *preset_search_map = NULL;
 static hwd_native_event_entry_t *native_map = NULL;
 
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
@@ -181,7 +218,7 @@ static void decode_vendor_string(char *s, int *vendor)
   else if (strcasecmp(s,"IBM") == 0)
     *vendor = PAPI_VENDOR_IBM;
   else if (strcasecmp(s,"MIPS") == 0)
-    *vendor = PAPI_VENDOR_IBM;
+    *vendor = PAPI_VENDOR_MIPS;
   else
     *vendor = PAPI_VENDOR_UNKNOWN;
 }
@@ -432,23 +469,34 @@ static int setup_preset(hwi_search_t *entry, unsigned int event, unsigned int pr
   return(PAPI_OK);
 }
 
-static int generate_preset_search_map(pfm_preset_search_entry_t *strmap, hwi_search_t *psmap, int cntrs)
+static int generate_preset_search_map(hwi_search_t **maploc, pfm_preset_search_entry_t *strmap, int num_cnt)
 {
   int i = 0, j = 0;
   unsigned int event;
+  hwi_search_t *psmap;
 
+  /* Count up the presets */
+  while (strmap[i].preset)
+    i++;
+  /* Add null entry */
+  psmap = (hwi_search_t *)papi_malloc(i*sizeof(hwi_search_t));
+  if (psmap == NULL)
+    return(PAPI_ENOMEM);
+  memset(psmap,0x0,i*sizeof(hwi_search_t));
+
+  i = 0;
   while (strmap[i].preset)
     {
       if (strmap[i].preset == PAPI_TOT_CYC) 
 	{
 	  pfm_get_cycle_event(&event);
-	  if (setup_preset(&psmap[i], event, strmap[i].preset, strmap[i].derived, cntrs) == PAPI_OK)
+	  if (setup_preset(&psmap[i], event, strmap[i].preset, strmap[i].derived, num_cnt) == PAPI_OK)
 	    j++;
 	}
       else if (strmap[i].preset == PAPI_TOT_INS) 
 	{
 	  pfm_get_inst_retired_event(&event);
-	  if (setup_preset(&psmap[i], event, strmap[i].preset, strmap[i].derived, cntrs) == PAPI_OK)
+	  if (setup_preset(&psmap[i], event, strmap[i].preset, strmap[i].derived, num_cnt) == PAPI_OK)
 	    j++;
 	}
       i++;
@@ -460,6 +508,7 @@ static int generate_preset_search_map(pfm_preset_search_entry_t *strmap, hwi_sea
        return(PAPI_ENOEVNT);
      }
 
+   *maploc = psmap;
    return (PAPI_OK);
 }
 
@@ -476,7 +525,7 @@ static int generate_native_event_map(hwd_native_event_entry_t **nmap, unsigned i
       PAPIERROR("pfm_get_impl_counters(%p): %s", &impl_cnt, pfm_strerror(ret));
       return(PAPI_ESBSTR);
     }
-  orig_ntmp = ntmp = (hwd_native_event_entry_t *)malloc(native_cnt*sizeof(hwd_native_event_entry_t));
+  orig_ntmp = ntmp = (hwd_native_event_entry_t *)papi_malloc(native_cnt*sizeof(hwd_native_event_entry_t));
   for (i=0;i<native_cnt;i++)
     {
       if ((ret = pfm_get_event_name(i,ntmp->name,sizeof(ntmp->name))) != PFMLIB_SUCCESS)
@@ -582,13 +631,10 @@ inline static int set_domain(hwd_control_state_t * this_state, int domain)
 
    if (domain & PAPI_DOM_KERNEL) {
       did = 1;
-#if (defined(__i386__) || defined(__x86_64__) || defined(__ia64__))
-      mode |= PFM_PLM0;
-#elif defined(mips)
-      mode |= PFM_PLM2;
-#else
-#error "Must implement set_domain for this architecture. Check PFM sources."
-#endif
+      if (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_MIPS)
+	mode |= PFM_PLM2;
+      else
+	mode |= PFM_PLM0;
    }
 
    if (domain & PAPI_DOM_SUPERVISOR) {
@@ -659,7 +705,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   unsigned int ncnt;
   unsigned int version;
   pfmlib_options_t pfmlib_options;
-  char buf[PAPI_HUGE_STR_LEN];
+  char buf[PAPI_HUGE_STR_LEN],pmuname[PAPI_HUGE_STR_LEN];
 
   /* Setup the vector entries that the OS knows about */
 #ifndef PAPI_NO_VECTOR
@@ -668,14 +714,34 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 #endif
 
    /* Opened once for all threads. */
+   SUBDBG("pfm_initialize()\n");
    if (pfm_initialize() != PFMLIB_SUCCESS)
-      return (PAPI_ESYS);
+     {
+       PAPIERROR("pfm_initialize(): %s", pfm_strerror(retval));
+       return (PAPI_ESBSTR);
+     }
 
+   SUBDBG("pfm_get_pmu_type(%p)\n",&type);
    if (pfm_get_pmu_type(&type) != PFMLIB_SUCCESS)
-      return (PAPI_ESYS);
+     {
+       PAPIERROR("pfm_get_pmu_type(%p): %s", type, pfm_strerror(retval));
+       return (PAPI_ESBSTR);
+     }
 
+   SUBDBG("pfm_get_pmu_name(%p,%d)\n",pmuname,PAPI_HUGE_STR_LEN);
+   if (pfm_get_pmu_name(pmuname,PAPI_HUGE_STR_LEN) != PFMLIB_SUCCESS)
+     {
+       PAPIERROR("pfm_get_pmu_name(%p,%d): %s", pmuname,PAPI_HUGE_STR_LEN,pfm_strerror(retval));
+       return (PAPI_ESBSTR);
+     }
+   SUBDBG("PMU is a %s\n",pmuname);
+
+   SUBDBG("pfm_get_version(%p)\n",&version);
    if (pfm_get_version(&version) != PFMLIB_SUCCESS)
-      return (PAPI_ESBSTR);
+     {
+       PAPIERROR("pfm_get_version(%p): %s", version, pfm_strerror(retval));
+       return (PAPI_ESBSTR);
+     }
 
    if (PFM_VERSION_MAJOR(version) != PFM_VERSION_MAJOR(PFMLIB_VERSION)) {
       PAPIERROR("Version mismatch of libpfm: compiled %x vs. installed %x",
@@ -683,19 +749,23 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
       return (PAPI_ESBSTR);
    }
 
-   memset(&pfmlib_options, 0, sizeof(pfmlib_options));
 #ifdef DEBUG
+   memset(&pfmlib_options, 0, sizeof(pfmlib_options));
    if (ISLEVEL(DEBUG_SUBSTRATE)) {
       pfmlib_options.pfm_debug = 1;
       pfmlib_options.pfm_verbose = 1;
    }
-#endif
-
+   SUBDBG("pfm_set_options(%p)\n",&pfmlib_options);
    if (pfm_set_options(&pfmlib_options))
-      return (PAPI_ESYS);
+     {
+       PAPIERROR("pfm_set_options(%p): %s", &pfmlib_options, pfm_strerror(retval));
+       return (PAPI_ESBSTR);
+     }
+#endif
 
    /* Fill in sub_info */
 
+   SUBDBG("pfm_get_num_events(%p)\n",&ncnt);
   if ((retval = pfm_get_num_events(&ncnt)) != PFMLIB_SUCCESS)
     {
       PAPIERROR("pfm_get_num_events(%p): %s", &ncnt, pfm_strerror(retval));
@@ -708,11 +778,12 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   strncpy(_papi_hwi_system_info.sub_info.support_version,buf,sizeof(_papi_hwi_system_info.sub_info.support_version));
   get_string_from_file("/sys/kernel/perfmon/version",_papi_hwi_system_info.sub_info.kernel_version,sizeof(_papi_hwi_system_info.sub_info.kernel_version));
   pfm_get_num_counters((unsigned int *)&_papi_hwi_system_info.sub_info.num_cntrs);
-#if (defined(__i386__) || defined(__x86_64__) || defined(__ia64__))
-  _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL;
-#elif defined(mips)
-  _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR|PAPI_DOM_OTHER;
-#endif
+
+  if (type == PFMLIB_GEN_MIPS64_PMU)
+    _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR|PAPI_DOM_OTHER;
+  else
+    _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL;    
+
   _papi_hwi_system_info.sub_info.hardware_intr_sig = SIGIO;
   _papi_hwi_system_info.sub_info.hardware_intr = 1;
   _papi_hwi_system_info.sub_info.fast_counter_read = 0;
@@ -725,8 +796,6 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    if (retval)
       return (retval);
 
-   _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_INTEL;
-
    /* get_memory_info has a CPU model argument that is not used,
     * fakining it here with hw_info.model which is not set by this
     * substrate 
@@ -738,7 +807,27 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 
    /* Setup presets */
 
-   retval = generate_preset_search_map(pfm_preset_search_map,preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
+   if (type == PFMLIB_GEN_MIPS64_PMU)
+     {
+       if (strcmp(pmuname,"MIPS20K") == 0)
+	 retval = generate_preset_search_map(&preset_search_map,pfm_mips20k_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
+       else if (strcmp(pmuname,"MIPS5K") == 0)
+	 retval = generate_preset_search_map(&preset_search_map,pfm_mips5k_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
+       else
+	 retval = generate_preset_search_map(&preset_search_map,pfm_unknown_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
+     }
+   else if (type == PFMLIB_I386_P6_PMU)
+     {
+       if (strcmp(pmuname,"Pentium M") == 0)
+	 retval = generate_preset_search_map(&preset_search_map,pfm_i386_pM_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
+       else if (strcmp(pmuname,"P6 Processor Family") == 0)
+	 retval = generate_preset_search_map(&preset_search_map,pfm_i386_p6_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
+       else
+	 retval = generate_preset_search_map(&preset_search_map,pfm_unknown_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
+     }
+   else
+    retval = generate_preset_search_map(&preset_search_map,pfm_unknown_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
+
    if (retval)
       return (retval);
 

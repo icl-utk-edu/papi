@@ -644,7 +644,7 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
       _papi_hwi_lock(INTERNAL_LOCK);
       strncpy(info->symbol, _papi_hwd_ntv_code_to_name(EventCode), PAPI_MAX_STR_LEN);
       _papi_hwi_unlock(INTERNAL_LOCK);
-      if (&info->symbol) {
+      if (strlen(info->symbol)) {
          /* Fill in the info structure */
          info->event_code = EventCode;
          _papi_hwi_lock(INTERNAL_LOCK);

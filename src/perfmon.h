@@ -47,9 +47,10 @@ typedef struct {
    int preset;
    /* Derived code */
    int derived;
-   /* Strings to look for */
+   /* Strings to look for, more than 1 means derived */
    char *(findme[MAX_COUNTERS]);
-   char operation[MAX_COUNTERS*5];
+   /* Operations between entities */
+   char operation[MAX_COUNTERS];
 } pfm_preset_search_entry_t;
 
 typedef struct {
