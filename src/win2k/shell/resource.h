@@ -20,7 +20,7 @@
 #define IDD_ABOUTBOX1                   135
 #define IDB_BITMAP1                     136
 #define IDD_ABOUTBOX2                   136
-#define IDB_BITMAP2                     143
+#define IDB_BITMAP2                     146
 #define IDFORTRANEX                     1002
 #define IDCEX                           1003
 #define IDSMOKE                         1004
@@ -31,6 +31,7 @@
 #define IDHELLONUM                      1011
 #define IDTASKSWITCH                    1012
 #define IDEMPTY                         1013
+#define IDDOLOOP                        1014
 #define IDM_TEST_KERNEL                 32787
 #define IDM_PAPI_TESTS                  32793
 #define IDC_STATIC                      -1
@@ -39,7 +40,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        144
+#define _APS_NEXT_RESOURCE_VALUE        147
 #define _APS_NEXT_COMMAND_VALUE         32794
 #define _APS_NEXT_CONTROL_VALUE         1014
 #define _APS_NEXT_SYMED_VALUE           110

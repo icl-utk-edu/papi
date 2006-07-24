@@ -45,7 +45,7 @@ CAPTION "WinPAPI"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     LTEXT           "The WinPMC Driver is not available.",IDC_STATIC,0,0,384,12,SS_CENTERIMAGE | NOT WS_GROUP,WS_EX_STATICEDGE
-    CONTROL         143,IDC_STATIC,"Static",SS_BITMAP,0,13,384,266
+    CONTROL         146,IDC_STATIC,"Static",SS_BITMAP,0,13,512,354
     DEFPUSHBUTTON   "Exit",IDOK,322,258,50,14
     PUSHBUTTON      "Diagnostics",IDDIAGNOSTIC,323,236,50,14
     PUSHBUTTON      "Fortran Examples",IDFORTRANEX,245,258,58,14
@@ -56,18 +56,18 @@ BEGIN
     PUSHBUTTON      "Help",IDHELP,85,236,50,14
 END
 
-IDD_ABOUTBOX2 DIALOG  0, 0, 384, 54
+IDD_ABOUTBOX2 DIALOGEX 0, 0, 384, 54
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "WinPAPI Diagnostics"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     DEFPUSHBUTTON   "Return",IDOK,322,33,50,14
     PUSHBUTTON      "Smoke Test",IDSMOKE,323,11,50,14
     PUSHBUTTON      "RDPMC Test",IDRDPMC,245,33,58,14
     PUSHBUTTON      "Driver Version",IDVERSION,246,11,57,14
     PUSHBUTTON      "HelloNum Test",IDHELLONUM,154,33,72,14
-    PUSHBUTTON      "Hello Test",IDHELLO,155,11,71,14
-    PUSHBUTTON      "<open>",IDEMPTY,85,33,50,14
+    PUSHBUTTON      "PMC Info",IDHELLO,155,11,71,14
+    PUSHBUTTON      "do_loops",IDDOLOOP,85,33,50,14
     PUSHBUTTON      "Task Switch",IDTASKSWITCH,85,11,50,14
     PUSHBUTTON      "Web",IDWEB2,14,33,50,14
     PUSHBUTTON      "Help",IDHELP2,14,11,50,14
@@ -120,6 +120,13 @@ BEGIN
 END
 #endif    // APSTUDIO_INVOKED
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BITMAP2             BITMAP                  "WinPAPI32splash.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
