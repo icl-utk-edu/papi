@@ -1469,14 +1469,14 @@ int _papi_hwd_update_shlib_info(void)
       sscanf(buf, "%lx-%lx %4s %lx %5s %ld %s", &begin, &end, perm,
              &foo, dev, &inode, mapname);
       size = end - begin;
-                                                                                
+
       /* the permission string looks like "rwxp", where each character can
        * be either the letter, or a hyphen.  The final character is either
        * p for private or s for shared. */
                                                                                 
       if (counting)
         {
-          if ((perm[2] == 'x') && (perm[0] == 'r') && (inode != 0))
+          if ((perm[2] == 'x') && (perm[0] == 'r')  && (perm[1] != 'w') && (inode != 0))
             {
               if  (strcmp(_papi_hwi_system_info.exe_info.fullname,mapname) == 0)                {
                   _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) begin;
@@ -1500,7 +1500,7 @@ int _papi_hwd_update_shlib_info(void)
         }
       else if (!counting)
         {
-          if ((perm[2] == 'x') && (perm[0] == 'r') && (inode != 0))
+          if ((perm[2] == 'x') && (perm[0] == 'r')  && (perm[1] != 'w') && (inode != 0))
             {
               if (strcmp(_papi_hwi_system_info.exe_info.fullname,mapname) != 0)
                 {
