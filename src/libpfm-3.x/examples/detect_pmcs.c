@@ -58,6 +58,9 @@ detect_unavail_pmcs(int fd, pfmlib_regmask_t *r_pmcs)
 
 	memset(&ctx, 0, sizeof(ctx));
 	memset(&setf, 0, sizeof(setf));
+#if  PFMLIB_REG_MAX < PFM_MAX_PMCS
+#error "PFMLIB_REG_MAX too small for PFM_MAX_PMCS"
+#endif
 
 	/*
 	 * if no context descriptor is passed, then create

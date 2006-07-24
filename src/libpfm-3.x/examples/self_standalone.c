@@ -171,7 +171,6 @@ main(int argc, char **argv)
 	memset(&load_args, 0, sizeof(load_args));
 
 	nloop = argc > 1 ? strtoull(argv[1], NULL, 0) : 1000000;
-
 	/*
 	 * create a new context, per-thread context.
 	 * This just creates a new context with some initial state, it is not
@@ -216,7 +215,6 @@ main(int argc, char **argv)
 	 */
 	if (pfm_start(fd, NULL) == -1)
 		fatal_error("pfm_start error errno %d\n",errno);
-
 	/*
 	 * do some work
 	 */

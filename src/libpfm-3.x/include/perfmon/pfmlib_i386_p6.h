@@ -25,11 +25,16 @@
 #define __PFMLIB_I386_P6_H__
 
 #include <perfmon/pfmlib.h>
-#include <endian.h>
 
-#if BYTE_ORDER != LITTLE_ENDIAN
-#error "this file only supports little endian environments"
-#endif
+/*
+ * privilege level mask usage for i386-p6:
+ *
+ * PFM_PLM0 = OS (kernel, hypervisor, ..)
+ * PFM_PLM1 = unused (ignored)
+ * PFM_PLM2 = unused (ignored)
+ * PFM_PLM3 = USR (user level)
+ */
+
 #ifdef __cplusplus
 extern "C" {
 #endif

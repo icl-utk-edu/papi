@@ -27,11 +27,14 @@
 #define __PFMLIB_GEN_MIPS64_H__
 
 #include <perfmon/pfmlib.h>
-#include <endian.h>
-
-#if BYTE_ORDER != LITTLE_ENDIAN
-#error "this file only supports little endian environments"
-#endif
+/*
+ * privilege level mask usage for MIPS:
+ *
+ * PFM_PLM0 = SUPERVISOR
+ * PFM_PLM1 = INTERRUPT
+ * PFM_PLM2 = KERNEL
+ * PFM_PLM3 = USER
+ */
 
 #ifdef __cplusplus
 extern "C" {

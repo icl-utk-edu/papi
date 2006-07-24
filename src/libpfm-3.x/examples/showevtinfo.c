@@ -91,7 +91,7 @@ show_event_info(unsigned int idx)
 
 	pfm_get_num_event_masks(idx, &n);
 	printf("Umasks   :\n");
-	for (i = 0; n; n--) {
+	for (i = 0; i < n; i++) {
 		pfm_get_event_mask_description(idx, i, &desc);
 		pfm_get_event_mask_name(idx, i, name, len);
 

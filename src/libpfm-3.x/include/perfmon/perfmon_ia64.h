@@ -11,6 +11,15 @@
 #define _PERFMON_IA64_H_
 
 /*
+ * privilege level mask usage for ia-64:
+ *
+ * PFM_PLM0 = most privileged (kernel, hypervisor, ..)
+ * PFM_PLM1 = privilege level 1
+ * PFM_PLM2 = privilege level 2
+ * PFM_PLM3 = least privileged (user level)
+ */
+
+/*
  * Itanium specific context flags
  */
 #define PFM_ITA_FL_INSECURE	0x10000		/* force psr.sp=0 for non self-monitoring */

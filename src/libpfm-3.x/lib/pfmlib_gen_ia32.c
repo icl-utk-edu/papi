@@ -33,6 +33,7 @@
 #include <sys/types.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 
 /* public headers */

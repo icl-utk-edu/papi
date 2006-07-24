@@ -25,7 +25,14 @@
 #define __PFMLIB_GEN_IA32_H__
 
 #include <perfmon/pfmlib.h>
-#include <endian.h>
+/*
+ * privilege level mask usage for architected IA-32 PMU:
+ *
+ * PFM_PLM0 = OS (kernel, hypervisor, ..)
+ * PFM_PLM1 = unused (ignored)
+ * PFM_PLM2 = unused (ignored)
+ * PFM_PLM3 = USR (user level)
+ */
 
 #ifdef __cplusplus
 extern "C" {

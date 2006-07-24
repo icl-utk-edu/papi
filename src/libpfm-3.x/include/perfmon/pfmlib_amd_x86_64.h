@@ -26,11 +26,15 @@
 #define __PFMLIB_AMD_X86_64_H__
 
 #include <perfmon/pfmlib.h>
-#include <endian.h>
+/*
+ * privilege level mask usage for AMD64:
+ *
+ * PFM_PLM0 = OS (kernel, hypervisor, ..)
+ * PFM_PLM1 = unused (ignored)
+ * PFM_PLM2 = unused (ignored)
+ * PFM_PLM3 = USR (user level)
+ */
 
-#if BYTE_ORDER != LITTLE_ENDIAN
-#error "this file only supports little endian environments"
-#endif
 #ifdef __cplusplus
 extern "C" {
 #endif

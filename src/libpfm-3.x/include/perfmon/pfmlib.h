@@ -38,16 +38,19 @@ extern "C" {
 /*
  * Maximum number of PMCs/PMDs supported by the library (especially bitmasks)
  */
-#define PFMLIB_MAX_PMCS		256		/* maximum number of PMCS supported by the library */
-#define PFMLIB_MAX_PMDS		256		/* maximum number of PMDS supported by the library */
+#define PFMLIB_MAX_PMCS		512 /* maximum number of PMCS supported by the library */
+#define PFMLIB_MAX_PMDS		512 /* maximum number of PMDS supported by the library */
 
 /*
  * privilege level mask (mask can be combined)
+ * The interpretation of the level is specific to each
+ * architecture. Checkout the architecture specific header
+ * file for more details.
  */
-#define PFM_PLM0	0x1			/* kernel level (most privileged) */
-#define PFM_PLM1	0x2			/* priv level 1 */
-#define PFM_PLM2	0x4			/* priv level 2 */
-#define PFM_PLM3	0x8			/* user level (least privileged) */
+#define PFM_PLM0	0x1	/* priv level 0 */
+#define PFM_PLM1	0x2	/* priv level 1 */
+#define PFM_PLM2	0x4	/* priv level 2 */
+#define PFM_PLM3	0x8	/* priv level 3 */
 
 /*
  * type used to describe a set of bits in the mask (container type)
@@ -65,7 +68,7 @@ typedef unsigned long pfmlib_regmask_bits_t;
 
 #define __PFMLIB_REG_BV_BITS (sizeof(pfmlib_regmask_bits_t)<<3)
 #define PFMLIB_BVSIZE(x) (((x)+(__PFMLIB_REG_BV_BITS)-1) / __PFMLIB_REG_BV_BITS)
-#define PFMLIB_REG_BV PFMLIB_BVSIZE(__PFMLIB_REG_BV_BITS)
+#define PFMLIB_REG_BV PFMLIB_BVSIZE(PFMLIB_REG_MAX)
 
 typedef struct {
 	pfmlib_regmask_bits_t bits[PFMLIB_REG_BV];
