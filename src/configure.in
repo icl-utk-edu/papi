@@ -799,6 +799,28 @@ get_bitmode()
  done
 }
 
+AC_CHECK_FILE(./genpapifdef, 
+		[rm -f ./genpapifdef
+		 ${CC}  genpapifdef.c -o genpapifdef
+		],
+		[${CC}  genpapifdef.c -o genpapifdef
+		])
+
+AC_CHECK_FILE(./fpapi.h,
+	[],
+	[./genpapifdef -c > fpapi.h
+	])
+
+AC_CHECK_FILE(./f77papi.h,
+	[],
+	[./genpapifdef -f77 > f77papi.h
+	])
+
+AC_CHECK_FILE(./f90papi.h,
+	[],
+	[./genpapifdef -f90 > f90papi.h
+	])
+
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

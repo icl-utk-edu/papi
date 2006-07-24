@@ -8513,6 +8513,108 @@ get_bitmode()
  done
 }
 
+echo "$as_me:$LINENO: checking for ./genpapifdef" >&5
+echo $ECHO_N "checking for ./genpapifdef... $ECHO_C" >&6
+if test "${ac_cv_file___genpapifdef+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "./genpapifdef"; then
+  ac_cv_file___genpapifdef=yes
+else
+  ac_cv_file___genpapifdef=no
+fi
+fi
+echo "$as_me:$LINENO: result: $ac_cv_file___genpapifdef" >&5
+echo "${ECHO_T}$ac_cv_file___genpapifdef" >&6
+if test $ac_cv_file___genpapifdef = yes; then
+  rm -f ./genpapifdef
+		 ${CC}  genpapifdef.c -o genpapifdef
+
+else
+  ${CC}  genpapifdef.c -o genpapifdef
+
+fi
+
+
+echo "$as_me:$LINENO: checking for ./fpapi.h" >&5
+echo $ECHO_N "checking for ./fpapi.h... $ECHO_C" >&6
+if test "${ac_cv_file___fpapi_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "./fpapi.h"; then
+  ac_cv_file___fpapi_h=yes
+else
+  ac_cv_file___fpapi_h=no
+fi
+fi
+echo "$as_me:$LINENO: result: $ac_cv_file___fpapi_h" >&5
+echo "${ECHO_T}$ac_cv_file___fpapi_h" >&6
+if test $ac_cv_file___fpapi_h = yes; then
+  :
+else
+  ./genpapifdef -c > fpapi.h
+
+fi
+
+
+echo "$as_me:$LINENO: checking for ./f77papi.h" >&5
+echo $ECHO_N "checking for ./f77papi.h... $ECHO_C" >&6
+if test "${ac_cv_file___f77papi_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "./f77papi.h"; then
+  ac_cv_file___f77papi_h=yes
+else
+  ac_cv_file___f77papi_h=no
+fi
+fi
+echo "$as_me:$LINENO: result: $ac_cv_file___f77papi_h" >&5
+echo "${ECHO_T}$ac_cv_file___f77papi_h" >&6
+if test $ac_cv_file___f77papi_h = yes; then
+  :
+else
+  ./genpapifdef -f77 > f77papi.h
+
+fi
+
+
+echo "$as_me:$LINENO: checking for ./f90papi.h" >&5
+echo $ECHO_N "checking for ./f90papi.h... $ECHO_C" >&6
+if test "${ac_cv_file___f90papi_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "./f90papi.h"; then
+  ac_cv_file___f90papi_h=yes
+else
+  ac_cv_file___f90papi_h=no
+fi
+fi
+echo "$as_me:$LINENO: result: $ac_cv_file___f90papi_h" >&5
+echo "${ECHO_T}$ac_cv_file___f90papi_h" >&6
+if test $ac_cv_file___f90papi_h = yes; then
+  :
+else
+  ./genpapifdef -f90 > f90papi.h
+
+fi
+
+
 
           ac_config_files="$ac_config_files Makefile"
 
