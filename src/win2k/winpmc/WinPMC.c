@@ -192,14 +192,21 @@ switch (irpStack->MajorFunction)
 		else status = STATUS_BUFFER_TOO_SMALL;
 	  break;
 
-/*	  case IOCTL_PMC_INIT:
-//		status = kern_pmc_init();
-		Irp->IoStatus.Information = sizeof(struct pmc_info);
+	  case IOCTL_PMC_INFO:
+		if (outputBufferLength > strlen(WELCOME_STRING)+1)
+		{
+		    status = kern_pmc_info(&info);
+		    if (status == STATUS_SUCCESS) {
+			*(struct pmc_info *)ioBuffer = info;
+			Irp->IoStatus.Information = sizeof(struct pmc_info);
+		    }
+		}
+		else status = STATUS_BUFFER_TOO_SMALL;
 	  break;
-*/
+
 	  case IOCTL_PMC_CONTROL:
 		status = kern_pmc_control((struct pmc_control *)ioBuffer);
-		*(int *)ioBuffer = status;
+	        *(int *)ioBuffer = status;
 		if (status >= 0) status = STATUS_SUCCESS;
 		Irp->IoStatus.Information = sizeof(int);
 	  break;
