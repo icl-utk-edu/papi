@@ -3,6 +3,18 @@
 #include "papi_test.h"
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
+static char *is_derived(PAPI_event_info_t *info)
+{
+  if (strlen(info->derived) == 0)
+    return("No");
+  else if (strcmp(info->derived,"NOT_DERIVED") == 0)
+    return("No");
+  else if (strcmp(info->derived,"DERIVED_CMPD") == 0)
+    return("No");
+  else
+    return("Yes");
+}
+
 static void print_help(void)
 {
    printf("This is the PAPI avail program.\n");
@@ -126,17 +138,17 @@ int main(int argc, char **argv)
          do {
             if (PAPI_get_event_info(i, &info) == PAPI_OK) {
                if (print_tabular) {
-                  if (print_avail_only) {
+                  if (print_avail_only && info.count) {
 		               printf("%s\t%s\t%s (%s)\n",
 			               info.symbol,
-			               (info.count > 1 ? "Yes" : "No"),
+				       is_derived(&info),
 			               info.long_descr, (info.note ? info.note : ""));
                   } else {
 		               printf("%s\t0x%x\t%s\t%s\t%s (%s)\n",
-		                     info.symbol,
-		                     info.event_code,
-		                     (info.count ? "Yes" : "No"),
-		                     (info.count > 1 ? "Yes" : "No"),
+				      info.symbol,
+		                      info.event_code,
+				      (info.count ? "Yes" : "No"),
+				      is_derived(&info),
 		                     info.long_descr, (info.note ? info.note : ""));
                   }
                } else {
