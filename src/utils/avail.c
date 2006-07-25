@@ -138,7 +138,8 @@ int main(int argc, char **argv)
          do {
             if (PAPI_get_event_info(i, &info) == PAPI_OK) {
                if (print_tabular) {
-                  if (print_avail_only && info.count) {
+                  if (print_avail_only) {
+		    if (info.count)
 		               printf("%s\t%s\t%s (%s)\n",
 			               info.symbol,
 				       is_derived(&info),
