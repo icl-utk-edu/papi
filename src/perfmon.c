@@ -48,21 +48,21 @@ static pfm_preset_search_entry_t pfm_mips20k_preset_search_map[] = {
 static pfm_preset_search_entry_t pfm_i386_p6_preset_search_map[] = {
   { PAPI_TOT_CYC, NOT_DERIVED, },
   { PAPI_TOT_INS, NOT_DERIVED, }, 
-  { PAPI_TOT_INS, NOT_DERIVED, { "FLOPS", }, }, 
+  { PAPI_FP_INS, NOT_DERIVED, { "FLOPS", }, }, 
 };
 
 static pfm_preset_search_entry_t pfm_i386_pM_preset_search_map[] = {
   { PAPI_TOT_CYC, NOT_DERIVED, },
   { PAPI_TOT_INS, NOT_DERIVED, }, 
-  { PAPI_TOT_INS, NOT_DERIVED, { "FLOPS", }, }, 
+  { PAPI_FP_INS, NOT_DERIVED, { "FLOPS", }, }, 
 };
 
 static pfm_preset_search_entry_t pfm_unknown_preset_search_map[] = {
   { PAPI_TOT_CYC, NOT_DERIVED, },
   { PAPI_TOT_INS, NOT_DERIVED, }, };
 
-hwi_search_t *preset_search_map = NULL;
-static hwd_native_event_entry_t *native_map = NULL;
+hwi_search_t *preset_search_map;
+static hwd_native_event_entry_t *native_map;
 
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 
@@ -427,9 +427,10 @@ inline_static long_long get_cycles(void) {
    return ret;
 }
 
-static int setup_preset(hwi_search_t *entry, unsigned int event, unsigned int preset, unsigned int derived, int cntrs)
+static int setup_preset(hwi_search_t *entry, hwi_dev_notes_t *note_entry, unsigned int event, unsigned int preset, unsigned int derived, int cntrs)
 {
   pfmlib_regmask_t impl_cnt, evnt_cnt;
+  char *findme;
   int n, j, ret, did = 0;
 
   /* find out which counters it lives on */
@@ -466,38 +467,79 @@ static int setup_preset(hwi_search_t *entry, unsigned int event, unsigned int pr
       entry->data.native[j] = PAPI_NULL;
     }
 
+  if ((ret = pfm_get_event_description(event,&findme)) != PFMLIB_SUCCESS)
+    {
+      PAPIERROR("pfm_get_event_description(%d,%p): %s",event,&findme,pfm_strerror(ret));
+    }
+  else
+    {
+      note_entry->event_code = preset;
+      if (strlen(findme))
+	note_entry->dev_note = strdup(findme);
+      free(findme);
+    }
   return(PAPI_OK);
 }
 
-static int generate_preset_search_map(hwi_search_t **maploc, pfm_preset_search_entry_t *strmap, int num_cnt)
+static int generate_preset_search_map(hwi_search_t **maploc, hwi_dev_notes_t **noteloc, pfm_preset_search_entry_t *strmap, int num_cnt)
 {
-  int i = 0, j = 0;
+  int i = 0, j = 0, ret;
   unsigned int event;
   hwi_search_t *psmap;
+  hwi_dev_notes_t *notemap;
 
   /* Count up the presets */
   while (strmap[i].preset)
     i++;
+  i++;
   /* Add null entry */
   psmap = (hwi_search_t *)papi_malloc(i*sizeof(hwi_search_t));
-  if (psmap == NULL)
+  notemap = (hwi_dev_notes_t *)papi_malloc(i*sizeof(hwi_dev_notes_t));
+  if ((psmap == NULL) || (notemap == NULL))
     return(PAPI_ENOMEM);
   memset(psmap,0x0,i*sizeof(hwi_search_t));
+  memset(notemap,0x0,i*sizeof(hwi_dev_notes_t));
 
   i = 0;
   while (strmap[i].preset)
     {
       if (strmap[i].preset == PAPI_TOT_CYC) 
 	{
-	  pfm_get_cycle_event(&event);
-	  if (setup_preset(&psmap[i], event, strmap[i].preset, strmap[i].derived, num_cnt) == PAPI_OK)
-	    j++;
+	  if ((ret = pfm_get_cycle_event(&event)) == PFMLIB_SUCCESS)
+	    {
+	      if (setup_preset(&psmap[i], &notemap[i], event, strmap[i].preset, strmap[i].derived, num_cnt) == PAPI_OK)
+		{
+		  j++;
+		}
+	    }
+	  else
+	    PAPIERROR("pfm_get_cycle_event(%p): %s\n",&event, pfm_strerror(ret));	    
 	}
       else if (strmap[i].preset == PAPI_TOT_INS) 
 	{
-	  pfm_get_inst_retired_event(&event);
-	  if (setup_preset(&psmap[i], event, strmap[i].preset, strmap[i].derived, num_cnt) == PAPI_OK)
-	    j++;
+	  if ((ret = pfm_get_inst_retired_event(&event)) == PFMLIB_SUCCESS)
+	    {
+	      if (setup_preset(&psmap[i], &notemap[i], event, strmap[i].preset, strmap[i].derived, num_cnt) == PAPI_OK)
+		{
+		  j++;
+		}
+	    }
+	  else
+	    PAPIERROR("pfm_get_inst_retired_event(%p): %s\n",&event, pfm_strerror(ret));	    
+	}
+      else
+	{
+	  /* Does not handle derived events yet */
+	  SUBDBG("pfm_find_event_byname(%s,%p)\n",strmap[i].findme[0],&event);
+	  if ((ret = pfm_find_event_byname(strmap[i].findme[0],&event)) == PFMLIB_SUCCESS)
+	    {
+	      if (setup_preset(&psmap[i], &notemap[i], event, strmap[i].preset, strmap[i].derived, num_cnt) == PAPI_OK)
+		{
+		  j++;
+		}
+	    }
+	  else
+	    PAPIERROR("pfm_find_event_byname(%s,%p): %s\n",strmap[i].findme[0],&event, pfm_strerror(ret));	    
 	}
       i++;
     }
@@ -509,6 +551,7 @@ static int generate_preset_search_map(hwi_search_t **maploc, pfm_preset_search_e
      }
 
    *maploc = psmap;
+   *noteloc = notemap;
    return (PAPI_OK);
 }
 
@@ -706,12 +749,17 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   unsigned int version;
   pfmlib_options_t pfmlib_options;
   char buf[PAPI_HUGE_STR_LEN],pmuname[PAPI_HUGE_STR_LEN];
+  hwi_dev_notes_t *notemap = NULL;
 
   /* Setup the vector entries that the OS knows about */
 #ifndef PAPI_NO_VECTOR
   retval = _papi_hwi_setup_vector_table( vtable, _linux_pfm_table);
   if ( retval != PAPI_OK ) return(retval);
 #endif
+
+  /* Always initialize globals dynamically to handle forks properly. */
+  preset_search_map = NULL;
+  native_map = NULL;
 
    /* Opened once for all threads. */
    SUBDBG("pfm_initialize()\n");
@@ -810,23 +858,23 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    if (type == PFMLIB_GEN_MIPS64_PMU)
      {
        if (strcmp(pmuname,"MIPS20K") == 0)
-	 retval = generate_preset_search_map(&preset_search_map,pfm_mips20k_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
+	 retval = generate_preset_search_map(&preset_search_map,&notemap,pfm_mips20k_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
        else if (strcmp(pmuname,"MIPS5K") == 0)
-	 retval = generate_preset_search_map(&preset_search_map,pfm_mips5k_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
+	 retval = generate_preset_search_map(&preset_search_map,&notemap,pfm_mips5k_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
        else
-	 retval = generate_preset_search_map(&preset_search_map,pfm_unknown_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
+	 retval = generate_preset_search_map(&preset_search_map,&notemap,pfm_unknown_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
      }
    else if (type == PFMLIB_I386_P6_PMU)
      {
        if (strcmp(pmuname,"Pentium M") == 0)
-	 retval = generate_preset_search_map(&preset_search_map,pfm_i386_pM_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
+	 retval = generate_preset_search_map(&preset_search_map,&notemap,pfm_i386_pM_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
        else if (strcmp(pmuname,"P6 Processor Family") == 0)
-	 retval = generate_preset_search_map(&preset_search_map,pfm_i386_p6_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
+	 retval = generate_preset_search_map(&preset_search_map,&notemap,pfm_i386_p6_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
        else
-	 retval = generate_preset_search_map(&preset_search_map,pfm_unknown_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
+	 retval = generate_preset_search_map(&preset_search_map,&notemap,pfm_unknown_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
      }
    else
-    retval = generate_preset_search_map(&preset_search_map,pfm_unknown_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
+    retval = generate_preset_search_map(&preset_search_map,&notemap,pfm_unknown_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
 
    if (retval)
       return (retval);
@@ -838,7 +886,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
        return (retval);
      }
 
-   retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
+   retval = _papi_hwi_setup_all_presets(preset_search_map, notemap);
    if (retval)
      {
        free(preset_search_map);
