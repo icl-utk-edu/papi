@@ -940,7 +940,7 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
   SUBDBG("PFM_LOAD_CONTEXT(%d,%p(%d))\n",ctx.ctx_fd,&load_args,mygettid());
   if ((ret = pfm_load_context(ctx.ctx_fd, &load_args)))
     {
-      PAPIERROR("pfm_create_context(): %s", pfm_strerror(ret));
+      PAPIERROR("pfm_load_context(%p): %s", &load_args, pfm_strerror(ret));
       close(ctx.ctx_fd);
       ctx.ctx_fd = -1;
       goto bail;
