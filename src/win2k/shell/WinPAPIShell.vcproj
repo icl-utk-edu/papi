@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="WinPAPIShell"
 	ProjectGUID="{E9E9AEF3-998F-4E03-B498-0B14E0A1A726}"
+	RootNamespace="WinPAPIShell"
 	>
 	<Platforms>
 		<Platform
@@ -291,8 +292,7 @@
 				>
 			</File>
 			<File
-				RelativePath="WinPAPI3splash.bmp"
-				SubType="Designer"
+				RelativePath=".\WinPAPI32splash.bmp"
 				>
 			</File>
 			<File

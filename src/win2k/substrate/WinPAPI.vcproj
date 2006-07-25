@@ -46,10 +46,10 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/D SUBSTRATE=&lt;winpmc-p3.h&gt;"
+				AdditionalOptions="/D &quot;SUBSTRATE=&lt;winpmc-p3.h&gt;&quot;"
 				Optimization="0"
-				AdditionalIncludeDirectories=".,..\..,..\winpmc,..\winpmc\sys"
-				PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;_USRDLL;FORTRANCAPS;WinPAPI_EXPORTS;NO_VARARG_MACRO;NO_FUNCTION_MACRO;_CRT_SECURE_NO_DEPRECATE"
+				AdditionalIncludeDirectories=".;..\..;..\winpmc;..\winpmc\sys"
+				PreprocessorDefinitions="_DEBUG;_WINDOWS;_USRDLL;FORTRANCAPS;WinPAPI_EXPORTS;NO_VARARG_MACRO;NO_FUNCTION_MACRO;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -150,8 +150,8 @@
 				AdditionalOptions="/D SUBSTRATE=&lt;winpmc-p3.h&gt;&#x0D;&#x0A;"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories=".,..\..,..\winpmc,..\winpmc\sys"
-				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;_USRDLL;FORTRANCAPS;WinPAPI_EXPORTS;NO_VARARG_MACRO;NO_FUNCTION_MACRO;_CRT_SECURE_NO_DEPRECATE"
+				AdditionalIncludeDirectories=".;..\..;..\winpmc;..\winpmc\sys"
+				PreprocessorDefinitions="NDEBUG;_WINDOWS;_USRDLL;FORTRANCAPS;WinPAPI_EXPORTS;NO_VARARG_MACRO;NO_FUNCTION_MACRO;_CRT_SECURE_NO_DEPRECATE"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -537,6 +537,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\perfctr-2.6.x\usr.lib\libperfctr.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\papi.h"
 				>
 			</File>
@@ -558,6 +562,10 @@
 			</File>
 			<File
 				RelativePath="..\..\papiStdEventDefs.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\perfctr-2.6.x\linux\include\linux\perfctr.h"
 				>
 			</File>
 			<File

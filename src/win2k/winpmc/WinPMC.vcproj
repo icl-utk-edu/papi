@@ -113,6 +113,10 @@
 				RelativePath="SOURCES"
 				>
 			</File>
+			<File
+				RelativePath=".\winpmc.html"
+				>
+			</File>
 		</Filter>
 		<File
 			RelativePath="WinPMC.bsc"
