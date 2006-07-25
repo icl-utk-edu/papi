@@ -34,6 +34,8 @@ OPTFLAGS	= -fast -xarch=v8plus -xtarget=ultra
 #OPTFLAGS	= -O3
 #CFLAGS  	= -DNEED_FFSLL
 #FFLAGS		= $(CFLAGS)
+#TOPTFLAGS   =
+#SMPCFLGS    =
 #
 # Do not touch below here 
 #
