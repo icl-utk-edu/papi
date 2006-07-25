@@ -504,6 +504,8 @@ static int get_system_info(void)
       return (PAPI_ESBSTR);
 /*   _papi_hwi_system_info.num_gp_cntrs = retval;*/
    _papi_hwi_system_info.sub_info.num_cntrs = retval;
+   _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
+   _papi_hwi_system_info.sub_info.available_granularities = PAPI_GRN_THR;
    SUBDBG("num_cntrs = %d\n", _papi_hwi_system_info.sub_info.num_cntrs);
 
    /* program text segment, data segment  address info */
