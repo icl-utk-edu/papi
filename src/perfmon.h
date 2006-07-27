@@ -92,13 +92,30 @@ typedef struct hwd_native_event_entry {
 } hwd_native_event_entry_t;
 
 /* Lock macros. */
+/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
+ * else val = MUTEX_CLOSED */
+
 extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 #define MUTEX_OPEN 1
 #define MUTEX_CLOSED 0
 
-/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
- * else val = MUTEX_CLOSED */
+#if defined(__ia64__)
+#ifdef __INTEL_COMPILER
+#define _papi_hwd_lock(lck) { while(_InterlockedCompareExchange_acq(&lock[lck],MUTEX_CLOSED,MUTEX_OPEN) != MUTEX_OPEN) { ; } } 
+#define _papi_hwd_unlock(lck) { _InterlockedExchange((volatile int *)&lock[lck], MUTEX_OPEN); }
+#else                           /* GCC */
+#define _papi_hwd_lock(lck)			 			      \
+   { uint64_t res = 0;							      \
+    do {								      \
+      __asm__ __volatile__ ("mov ar.ccv=%0;;" :: "r"(MUTEX_OPEN));            \
+      __asm__ __volatile__ ("cmpxchg4.acq %0=[%1],%2,ar.ccv" : "=r"(res) : "r"(&lock[lck]), "r"(MUTEX_CLOSED) : "memory");				      \
+    } while (res != (uint64_t)MUTEX_OPEN); }
 
+#define _papi_hwd_unlock(lck)			 			      \
+    { uint64_t res = 0;							      \
+    __asm__ __volatile__ ("xchg4 %0=[%1],%2" : "=r"(res) : "r"(&lock[lck]), "r"(MUTEX_OPEN) : "memory"); }
+#endif
+#elif defined(__i386__)||defined(__x86_64__)
 #define  _papi_hwd_lock(lck)                    \
 do                                              \
 {                                               \
@@ -107,15 +124,30 @@ do                                              \
       __asm__ __volatile__ ("lock ; " "cmpxchg %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(_papi_hwd_lock_data[lck]), "0"(MUTEX_OPEN) : "memory");  \
    } while(res != (unsigned int)MUTEX_OPEN);   \
 } while(0)
-
 #define  _papi_hwd_unlock(lck)                  \
 do                                              \
 {                                               \
    unsigned int res = 0;                       \
    __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(_papi_hwd_lock_data[lck]), "0"(MUTEX_OPEN) : "memory");                                \
 } while(0)
+#elif defined(mips)
+#else
+#error "_papi_hwd_lock/unlock undefined!"
+#endif
 
+#if defined(__ia64__)
+#define GET_OVERFLOW_ADDRESS(ctx)  (caddr_t)(ctx->ucontext->sc_ip)
+#elif defined(__i386__)
 #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->eip)
+#elif defined(__x86_64__)
+#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->rip)
+#elif defined(mips)
+#define GET_OVERFLOW_ADDRESS(ctx)  (caddr_t)(ctx->ucontext->sc_pc)
+#else
+#error "GET_OVERFLOW_ADDRESS() undefined!"
+#endif
+
+
 
 typedef struct siginfo hwd_siginfo_t;
 typedef ucontext_t hwd_ucontext_t;
