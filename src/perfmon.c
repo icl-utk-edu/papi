@@ -60,13 +60,13 @@ static pfm_preset_search_entry_t pfm_i386_pM_preset_search_map[] = {
 static pfm_preset_search_entry_t pfm_montecito_preset_search_map[] = {
   { PAPI_TOT_CYC, NOT_DERIVED, },
   { PAPI_TOT_INS, NOT_DERIVED, },
-  { PAPI_FP_OPS, NOT_DERIVED, { "FP_OPS_RETIRED", }},
+  { PAPI_FP_OPS, NOT_DERIVED, { "FP_OPS_RETIRED", }, },
  };
 
 static pfm_preset_search_entry_t pfm_itanium2_preset_search_map[] = {
   { PAPI_TOT_CYC, NOT_DERIVED, },
   { PAPI_TOT_INS, NOT_DERIVED, },
-  { PAPI_FP_OPS, NOT_DERIVED, { "FP_OPS_RETIRED", }},
+  { PAPI_FP_OPS, NOT_DERIVED, { "FP_OPS_RETIRED", }, },
  };
 
 static pfm_preset_search_entry_t pfm_unknown_preset_search_map[] = {
@@ -421,22 +421,6 @@ inline_static pid_t mygettid(void)
 #else
   return(syscall(1105));  
 #endif
-}
-
-inline_static long_long get_cycles(void) {
-   long_long ret = 0;
-#ifdef __x86_64__
-   do {
-      unsigned int a,d;
-      asm volatile("rdtsc" : "=a" (a), "=d" (d));
-      (ret) = ((long_long)a) | (((long_long)d)<<32);
-   } while(0);
-#else
-   __asm__ __volatile__("rdtsc"
-                       : "=A" (ret)
-                       : );
-#endif
-   return ret;
 }
 
 static int setup_preset(hwi_search_t *entry, hwi_dev_notes_t *note_entry, unsigned int event, unsigned int preset, unsigned int derived, int cntrs)
