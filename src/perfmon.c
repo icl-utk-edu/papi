@@ -1159,7 +1159,7 @@ void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
    ThreadInfo_t *master = NULL;
 
    ctx.si = info;
-   ctx.ucontext = (ucontext_t *)uc;
+   ctx.ucontext = (hwd_ucontext_t *)uc;
    fd = info->si_fd;
 
  retry:
