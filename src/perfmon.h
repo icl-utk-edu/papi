@@ -136,10 +136,13 @@ do                                              \
 #endif
 
 #if defined(__ia64__)
+typedef struct sigcontext hwd_ucontext_t;
 #define GET_OVERFLOW_ADDRESS(ctx)  (caddr_t)(ctx->ucontext->sc_ip)
 #elif defined(__i386__)
+typedef ucontext_t hwd_ucontext_t;
 #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->eip)
 #elif defined(__x86_64__)
+typedef ucontext_t hwd_ucontext_t;
 #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->rip)
 #elif defined(mips)
 #define GET_OVERFLOW_ADDRESS(ctx)  (caddr_t)(ctx->ucontext->sc_pc)
@@ -147,9 +150,6 @@ do                                              \
 #error "GET_OVERFLOW_ADDRESS() undefined!"
 #endif
 
-
-
 typedef struct siginfo hwd_siginfo_t;
-typedef ucontext_t hwd_ucontext_t;
 
 #endif
