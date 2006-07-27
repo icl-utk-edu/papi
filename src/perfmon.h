@@ -99,6 +99,8 @@ extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 #define MUTEX_OPEN 1
 #define MUTEX_CLOSED 0
 
+/* Locking functions */
+
 #if defined(__ia64__)
 #ifdef __INTEL_COMPILER
 #define _papi_hwd_lock(lck) { while(_InterlockedCompareExchange_acq(&lock[lck],MUTEX_CLOSED,MUTEX_OPEN) != MUTEX_OPEN) { ; } } 
@@ -135,6 +137,10 @@ do                                              \
 #error "_papi_hwd_lock/unlock undefined!"
 #endif
 
+/* Signal handling functions */
+
+typedef struct siginfo hwd_siginfo_t;
+
 #if defined(__ia64__)
 typedef struct sigcontext hwd_ucontext_t;
 #define GET_OVERFLOW_ADDRESS(ctx)  (caddr_t)(ctx->ucontext->sc_ip)
@@ -150,6 +156,41 @@ typedef ucontext_t hwd_ucontext_t;
 #error "GET_OVERFLOW_ADDRESS() undefined!"
 #endif
 
-typedef struct siginfo hwd_siginfo_t;
+/* Hardware clock functions */
+
+#if defined(__ia64__)
+inline_static unsigned long get_cycles(void)
+{
+   unsigned long tmp;
+#ifdef ALTIX
+   tmp = mmdev_clicks_per_tick * (*mmdev_timer_addr);
+#elif defined(__INTEL_COMPILER)
+   tmp = __getReg(_IA64_REG_AR_ITC);
+#else                           /* GCC */
+   /* XXX: need more to adjust for Itanium itc bug */
+   __asm__ __volatile__("mov %0=ar.itc":"=r"(tmp)::"memory");
+#endif
+   return tmp;
+}
+#elif defined(__i386__)||defined(__x86_64__)
+inline_static long_long get_cycles(void) {
+   long_long ret = 0;
+#ifdef __x86_64__
+   do {
+      unsigned int a,d;
+      asm volatile("rdtsc" : "=a" (a), "=d" (d));
+      (ret) = ((long_long)a) | (((long_long)d)<<32);
+   } while(0);
+#else
+   __asm__ __volatile__("rdtsc"
+                       : "=A" (ret)
+                       : );
+#endif
+   return ret;
+}
+#elif defined(mips)
+#else
+#error "get_cycles defined!"
+#endif
 
 #endif
