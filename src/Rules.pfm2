@@ -1,0 +1,77 @@
+# $Id$
+
+DESCR   = "Linux with PFM $(VERSION) kernel support and library"
+LIBRARY = libpapi.a
+SHLIB   = libpapi.so
+LIBS	= static shared
+TARGETS = serial multiplex_and_pthreads shared
+ARCH	= $(shell uname -m)
+SUBSTR	= perfmon
+MEMSUBSTR = any-null
+
+#
+# GNU G77/GCC section
+#
+
+CC_R    	= $(CC) -pthread
+CC_SHR		= $(CC) -fPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
+FFLAGS		+= -ffixed-line-length-132
+CFLAGS		+= -D_GNU_SOURCE -Wall -g -DDEBUG $(NOTLS) $(NOPTTIMER) $(ALTIX) 
+OPTFLAGS	+= 
+TOPTFLAGS	+= -g  
+FTOPTFLAGS	= $(TOPTFLAGS)
+
+#
+# DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
+#
+
+ifeq (,$(PFM_PREFIX))
+	PFM_ROOT := ./libpfm-3.x
+	PFM_LIB_PATH ?= $(PFM_ROOT)/lib
+	PFM_INC_PATH ?= $(PFM_ROOT)/include
+else
+	PFM_LIB_PATH ?= $(PFM_PREFIX)/lib
+	PFM_INC_PATH ?= $(PFM_PREFIX)/include
+endif
+
+CFLAGS	+= -I$(PFM_INC_PATH) 
+
+MISCHDRS = perfmon.h config.h
+MISCSRCS = 
+SHLIBDEPS = -L$(PFM_LIB_PATH) -lpfm
+PFM_OBJS = $(shell ar t $(PFM_LIB_PATH)/libpfm.a)
+ifeq (,$(PFM_OBJS))
+	PFM_OBJS = dummy
+endif
+MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
+
+include Makefile.inc
+
+config.h:
+	@echo 'Please clobber your build and run ./configure."
+
+$(PFM_LIB_PATH)/libpfm.a:
+ifeq (,${PFM_PREFIX})
+	$(MAKE) -C $(PFM_ROOT) CC="$(CC)"
+else
+	@echo '$@ not installed!'; exit 1
+endif
+
+$(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
+	ar xv $<
+	$(MAKE) $(MAKEFLAGS); echo "If you made it here, you may safely ignore this error."; exit 1
+
+native_clean:
+ifeq (,${PFM_PREFIX})
+	rm -f $(MISCOBJS); $(MAKE) -C $(PFM_ROOT) clean
+endif
+
+native_install:
+ifeq (,${PFM_PREFIX})
+	$(MAKE) -C $(PFM_ROOT) DESTDIR=$(PREFIX) install
+endif
+
+native_clobber:
+ifeq (,${PFM_PREFIX})
+	 $(MAKE) -C $(PFM_ROOT) distclean
+endif
