@@ -57,6 +57,18 @@ static pfm_preset_search_entry_t pfm_i386_pM_preset_search_map[] = {
   { PAPI_FP_INS, NOT_DERIVED, { "FLOPS", }, }, 
 };
 
+static pfm_preset_search_entry_t pfm_montecito_preset_search_map[] = {
+  { PAPI_TOT_CYC, NOT_DERIVED, },
+  { PAPI_TOT_INS, NOT_DERIVED, },
+  { PAPI_FP_OPS, NOT_DERIVED, { "FP_OPS_RETIRED", }},
+ };
+
+static pfm_preset_search_entry_t pfm_itanium2_preset_search_map[] = {
+  { PAPI_TOT_CYC, NOT_DERIVED, },
+  { PAPI_TOT_INS, NOT_DERIVED, },
+  { PAPI_FP_OPS, NOT_DERIVED, { "FP_OPS_RETIRED", }},
+ };
+
 static pfm_preset_search_entry_t pfm_unknown_preset_search_map[] = {
   { PAPI_TOT_CYC, NOT_DERIVED, },
   { PAPI_TOT_INS, NOT_DERIVED, }, };
@@ -873,8 +885,12 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
        else
 	 retval = generate_preset_search_map(&preset_search_map,&notemap,pfm_unknown_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
      }
+   else if (type == PFMLIB_ITANIUM2_PMU)
+     retval = generate_preset_search_map(&preset_search_map,&notemap,pfm_itanium2_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
+   else if (type == PFMLIB_MONTECITO_PMU)
+     retval = generate_preset_search_map(&preset_search_map,&notemap,pfm_montecito_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
    else
-    retval = generate_preset_search_map(&preset_search_map,&notemap,pfm_unknown_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
+     retval = generate_preset_search_map(&preset_search_map,&notemap,pfm_unknown_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
 
    if (retval)
       return (retval);
