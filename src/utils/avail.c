@@ -140,31 +140,35 @@ int main(int argc, char **argv)
                if (print_tabular) {
                   if (print_avail_only) {
 		    if (info.count)
-		               printf("%s\t%s\t%s (%s)\n",
-			               info.symbol,
-				       is_derived(&info),
-			               info.long_descr, (info.note ? info.note : ""));
+	               printf("%s\t%s\t%s",
+			   info.symbol,
+			   is_derived(&info),
+			   info.long_descr);
+	               if (info.note[0]) printf(" (%s)", info.note);
+	               printf("\n");
                   } else {
-		               printf("%s\t0x%x\t%s\t%s\t%s (%s)\n",
-				      info.symbol,
-		                      info.event_code,
-				      (info.count ? "Yes" : "No"),
-				      is_derived(&info),
-		                     info.long_descr, (info.note ? info.note : ""));
+	               printf("%s\t0x%x\t%s\t%s\t%s",
+			      info.symbol,
+	                      info.event_code,
+			      (info.count ? "Yes" : "No"),
+			      is_derived(&info),
+			      info.long_descr);
+	               if (info.note[0]) printf(" (%s)", info.note);
+	               printf("\n");
                   }
                } else {
-	               printf("%s\t0x%x\t%d\n |%s|\n |%s|\n |%s|\n |%s|\n |%s|\n",
-		               info.symbol,
-		               info.event_code,
-		               info.count,
-		               info.short_descr,
-		               info.long_descr,
-		               info.note,
-                     info.derived,
-                     info.postfix);
-                  for (j=0;j<(int)info.count;j++) printf(" |Native Code[%d]: 0x%x  %s|\n",j,info.code[j], info.name[j]);
+		   printf("%s\t0x%x\t%d\n |%s|\n |%s|\n |%s|\n |%s|\n |%s|\n",
+			   info.symbol,
+			   info.event_code,
+			   info.count,
+			   info.short_descr,
+			   info.long_descr,
+			   info.note,
+			   info.derived,
+			   info.postfix);
+		    for (j=0;j<(int)info.count;j++) printf(" |Native Code[%d]: 0x%x  %s|\n",j,info.code[j], info.name[j]);
                }
-	         }
+	    }
          } while (PAPI_enum_event(&i, print_avail_only) == PAPI_OK);
       }
       printf
