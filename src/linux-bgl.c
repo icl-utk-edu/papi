@@ -258,10 +258,10 @@ int _papi_hwd_get_system_info(void)
 	    chipID,sizeof(chipID));
   }
 
-  _papi_hwi_system_info.supports_hw_overflow = 0;
+/*  _papi_hwi_system_info.supports_hw_overflow = 0;
   _papi_hwi_system_info.supports_hw_profile = 0;
-  
-  _papi_hwi_system_info.num_cntrs = BGL_PERFCTR_NUM_COUNTERS;
+*/  
+  _papi_hwi_system_info.sub_info.num_cntrs = BGL_PERFCTR_NUM_COUNTERS;
   _papi_hwi_system_info.hw_info.mhz = (float) bgl.clockHz * 1.0e-6; 
   SUBDBG((stdout,"Detected MHZ is %f\n",_papi_hwi_system_info.hw_info.mhz));
   
@@ -290,15 +290,15 @@ inline_static int setup_bgl_presets(int cpu_type)
 static int mdi_init() 
 {
   /* Name of the substrate we're using */
-  strcpy(_papi_hwi_system_info.substrate, "$Id: linux-bgl.c,v 1.00 2005/07/01 20:43:32 noeth2");       
+  strcpy(_papi_hwi_system_info.sub_info.name, "$Id: linux-bgl.c,v 1.00 2005/07/01 20:43:32 noeth2");       
   
-  _papi_hwi_system_info.supports_hw_overflow = 0;
-  _papi_hwi_system_info.supports_64bit_counters = 1;
-  _papi_hwi_system_info.supports_inheritance = 1;
-  _papi_hwi_system_info.supports_real_usec = 1;
-  _papi_hwi_system_info.supports_real_cyc = 1;
-  _papi_hwi_system_info.supports_virt_usec = 0;
-  _papi_hwi_system_info.supports_virt_cyc = 0;
+  _papi_hwi_system_info.sub_info.hardware_intr = 0;
+  _papi_hwi_system_info.sub_info.fast_real_timer = 1;
+  _papi_hwi_system_info.sub_info.fast_virtual_timer = 0;
+  _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
+  _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
+  _papi_hwi_system_info.sub_info.default_granularity = PAPI_GRN_THR;
+  _papi_hwi_system_info.sub_info.available_granularities = PAPI_GRN_THR;
   
   return (PAPI_OK);
 }
@@ -730,7 +730,7 @@ int _papi_hwd_shutdown(hwd_context_t * ctx)
   return(PAPI_OK);
 }
 
-void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context) 
+void _papi_hwd_dispatch_timer(int signal, hwd_siginfo_t * si, void *context) 
 {
 }
 
