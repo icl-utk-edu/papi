@@ -32,12 +32,6 @@
         event = PAPI_FP_INS
       end if
 
-      call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
-      if ( retval.NE.PAPI_OK) then
-        call ftest_fail(__FILE__, __LINE__,
-     .       'PAPIf_set_debug', retval)
-      end if
-      
       call PAPIf_create_eventset(es, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
