@@ -737,6 +737,7 @@ static int get_string_from_file(char *file, char *str, int len)
     {
       PAPIERROR("fscanf(%s, %%s\\n): Unable to scan 1 token", file);
       fclose(f);
+      return(PAPI_ESBSTR);
     }
   strncpy(str,buf,(len > PAPI_HUGE_STR_LEN ? PAPI_HUGE_STR_LEN : len));
   fclose(f);
@@ -825,7 +826,10 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   strcpy(_papi_hwi_system_info.sub_info.version, "$Revision$");  
   sprintf(buf,"%08x",version);
   strncpy(_papi_hwi_system_info.sub_info.support_version,buf,sizeof(_papi_hwi_system_info.sub_info.support_version));
-  get_string_from_file("/sys/kernel/perfmon/version",_papi_hwi_system_info.sub_info.kernel_version,sizeof(_papi_hwi_system_info.sub_info.kernel_version));
+  retval = get_string_from_file("/sys/kernel/perfmon/version",_papi_hwi_system_info.sub_info.kernel_version,sizeof(_papi_hwi_system_info.sub_info.kernel_version));
+  if (retval != PAPI_OK)
+    return(retval);
+    
   pfm_get_num_counters((unsigned int *)&_papi_hwi_system_info.sub_info.num_cntrs);
 
   if (type == PFMLIB_GEN_MIPS64_PMU)
