@@ -21,12 +21,6 @@ void init_papi(void)
    retval = PAPI_library_init(PAPI_VER_CURRENT);
    if (retval != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
-
-   /* Turn on automatic error reporting */
-
-   retval = PAPI_set_debug(PAPI_VERB_ECONT);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
 }
 
 /* Tests that we can really multiplex a lot. */

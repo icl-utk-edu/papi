@@ -75,12 +75,6 @@ int main(int argc, char **argv)
    if (retval != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   if (!TESTS_QUIET) {
-      retval = PAPI_set_debug(PAPI_VERB_ECONT);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
-   }
-
    retval = PAPI_get_opt(PAPI_SUBSTRATE_SUPPORT, &opt);
    if ( !opt.sub_info->hardware_intr )
       test_skip(__FILE__, __LINE__, "Platform does not support Hardware overflow", 0);

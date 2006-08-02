@@ -429,10 +429,18 @@ char *stringify_granularity(int granularity)
 
 void tests_quiet(int argc, char **argv)
 {
-   if (argc > 1) {
-      if (!strcmp(argv[1], "TESTS_QUIET"))
-         TESTS_QUIET = 1;
-   }
+  if ((argc > 1) && (strcasecmp(argv[1], "TESTS_QUIET") == 0))
+    {
+      TESTS_QUIET = 1;
+    }
+  else
+    {
+      int retval;
+      
+      retval = PAPI_set_debug(PAPI_VERB_ECONT);
+      if (retval != PAPI_OK)
+	test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
+    }
 }
 
 void test_pass(char *file, long_long ** values, int num_tests)
@@ -440,7 +448,6 @@ void test_pass(char *file, long_long ** values, int num_tests)
    fprintf(stdout,"%-40s PASSED\n", file);
    if (values)
       free_test_space(values, num_tests);
-   PAPI_set_debug(PAPI_QUIET);  /* Prevent error messages on Alpha */
    if ( PAPI_is_initialized() ) PAPI_shutdown();
    exit(0);
 }
@@ -461,7 +468,7 @@ void test_fail(char *file, int line, char *call, int retval)
          fprintf(stdout,"Line # %d\n", line);
    }
    if (retval == PAPI_ESYS) {
-      sprintf(buf, "System error in %s:", call);
+      sprintf(buf, "System error in %s", call);
       perror(buf);
    } else if (retval > 0) {
       fprintf(stdout,"Error: %s\n", call);

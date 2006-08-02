@@ -42,11 +42,6 @@ char *argv[];
    if (retval != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   if (!TESTS_QUIET) {
-      retval = PAPI_set_debug(PAPI_VERB_ECONT);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
-   }
 #ifdef MULTIPLEX
    if (!TESTS_QUIET) {
       printf("Activating PAPI Multiplex\n");

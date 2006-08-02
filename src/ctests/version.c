@@ -14,12 +14,6 @@ int main(int argc, char **argv)
    if (init_version != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", init_version);
 
-   if (!TESTS_QUIET) {
-      retval = PAPI_set_debug(PAPI_VERB_ECONT);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
-   }
-
    if ((lib_version = PAPI_get_opt(PAPI_LIB_VERSION, NULL)) == PAPI_EINVAL)
       test_fail(__FILE__, __LINE__, "PAPI_get_opt", PAPI_EINVAL);
 

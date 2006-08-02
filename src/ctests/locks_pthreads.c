@@ -81,10 +81,6 @@ int main(int argc, char **argv)
          test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
    }
 
-   if (!TESTS_QUIET)
-      if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
-
    PAPI_lock(PAPI_USR2_LOCK);
    rc = pthread_create(&master, NULL, Master, NULL);
    if (rc) {

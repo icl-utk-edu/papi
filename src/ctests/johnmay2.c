@@ -19,10 +19,6 @@ int main(int argc, char **argv)
    else
       PAPI_event = PAPI_TOT_INS;
 
-   if (!TESTS_QUIET)
-      if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
-
    if ((retval = PAPI_query_event(PAPI_event)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_query_event", retval);
 

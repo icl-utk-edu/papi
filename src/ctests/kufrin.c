@@ -97,10 +97,6 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", ret);
     }
 
-   if (!TESTS_QUIET)
-     if ((ret = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
-       test_fail(__FILE__, __LINE__, "PAPI_set_debug", ret);
-
     ret = PAPI_thread_init((unsigned long (*)(void)) pthread_self);
     if ( ret != PAPI_OK ) {
       test_fail(__FILE__, __LINE__, "PAPI_thread_init", ret);

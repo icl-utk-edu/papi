@@ -32,12 +32,6 @@ int main(int argc, char **argv)
    if (retval != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   if (!TESTS_QUIET) {
-      retval = PAPI_set_debug(PAPI_VERB_ECONT);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
-   }
-
    /* query and set up the right instruction to monitor */
    if (PAPI_query_event(PAPI_FP_OPS) == PAPI_OK)
       PAPI_event = PAPI_FP_OPS;
