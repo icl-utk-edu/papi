@@ -48,19 +48,19 @@ int main(int argc, char* argv[]) {
   if((perr=PAPI_add_event(ev_set,PAPI_TOT_CYC)))
     printf("PAPI_add_event failed. %s\n",PAPI_strerror(perr));
 
-  encoding=( N_BGL_FPU_ARITH_TRINARY_OP );
+  encoding=( PNE_BGL_FPU_ARITH_TRINARY_OP );
   if((perr=PAPI_add_event(ev_set,encoding)))
     printf("\nPAPI_add_event failed. %s\n",PAPI_strerror(perr));
 
-  encoding=( N_BGL_2NDFPU_ARITH_TRINARY_OP );
+  encoding=( PNE_BGL_2NDFPU_ARITH_TRINARY_OP );
   if((perr=PAPI_add_event(ev_set,encoding)))
     printf("\nPAPI_add_event failed. %s\n",PAPI_strerror(perr));
 
-  encoding=( N_BGL_FPU_LDST_DBL_LD );
+  encoding=( PNE_BGL_FPU_LDST_DBL_LD );
   if((perr=PAPI_add_event(ev_set,encoding)))
     printf("\nPAPI_add_event failed. %s\n",PAPI_strerror(perr));
 
-  encoding=( N_BGL_2NDFPU_LDST_DBL_LD );
+  encoding=( PNE_BGL_2NDFPU_LDST_DBL_LD );
   if((perr=PAPI_add_event(ev_set,encoding)))
     printf("\nPAPI_add_event failed. %s\n",PAPI_strerror(perr));
 

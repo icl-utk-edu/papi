@@ -5,6 +5,7 @@ PTHREADS=
 MPX	= 
 MPXPTHR	= 
 MPI	= 
+SUBSTR  = linux-bgl
 
 BLRTS_GNU_ROOT = /bgl/BlueLight/ppcfloor/blrts-gnu
 BGLSYS_ROOT    = /bgl/BlueLight/ppcfloor/bglsys
@@ -14,7 +15,7 @@ LIBRARY = libpapi.a
  
 CC      = $(SILENT) $(BLRTS_GNU_ROOT)/bin/powerpc-bgl-blrts-gnu-gcc
 F77     = $(SILENT) $(BLRTS_GNU_ROOT)/bin/powerpc-bgl-blrts-gnu-g77
-CFLAGS  = -D_BGL -g -gdwarf-2 -O2 -Wall -I$(BGLSYS_ROOT)/include
+CFLAGS  = -D_BGL -DSUBSTRATE=\"$(SUBSTR).h\" -g -gdwarf-2 -O2 -Wall -I$(BGLSYS_ROOT)/include
 FFLAGS  = -g -gdwarf-2 -O2 -Wall -I$(BGLSYS_ROOT)/include -Dlinux
 
 SERIAL  = hummermult.rts hummermult-inf.rts test_bgl_perfctr.rts \
