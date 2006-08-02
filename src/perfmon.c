@@ -18,64 +18,10 @@
 #include "threads.h"
 #include "papi_memory.h"
 
-static pfm_preset_search_entry_t pfm_mips5k_preset_search_map[] = {
-  { PAPI_TOT_CYC, NOT_DERIVED, },
-  { PAPI_TOT_INS, NOT_DERIVED, },
-  { PAPI_L1_ICA, NOT_DERIVED, { "FETCHED_INST",}, },
-  { PAPI_LD_INS, NOT_DERIVED, { "LOAD_PREF_SYNC_CACHE_OPS", }, },
-  { PAPI_SR_INS, NOT_DERIVED, { "STORES_COND_ST", }, },
-  { PAPI_CSR_FAL, NOT_DERIVED, { "COND_STORE_FAIL", }, },
-  { PAPI_FP_INS, NOT_DERIVED, { "FP_INST", }, },
-  { PAPI_BR_INS, NOT_DERIVED, { "BRANCHES", }, },
-  { PAPI_TLB_IM, NOT_DERIVED, { "ITLB_MISS", }, },
-  { PAPI_TLB_TL, NOT_DERIVED, { "TLM_MISS_EXC", }, }, 
-  { PAPI_TLB_DM, NOT_DERIVED, { "DTLB_MISS", }, },
-  { PAPI_BR_MSP, NOT_DERIVED, { "BR_MISPRED", }, },  
-  { PAPI_L1_ICM, NOT_DERIVED, { "IC_MISS", }, },
-  { PAPI_L1_DCM, NOT_DERIVED, { "DC_MISS", }, },
-  { PAPI_MEM_SCY, NOT_DERIVED, { "INST_STALL_M", }, },
-  { PAPI_FUL_ICY, NOT_DERIVED, { "DUAL_ISSUE_INST", }, }, };
-
-static pfm_preset_search_entry_t pfm_mips20k_preset_search_map[] = {
-  { PAPI_TOT_CYC, NOT_DERIVED, },
-  { PAPI_TOT_INS, NOT_DERIVED, },
-  { PAPI_FP_INS, NOT_DERIVED, { "FP_INST", }, },
-  { PAPI_BR_INS, NOT_DERIVED, { "BRANCHES", }, },
-  { PAPI_BR_MSP, NOT_DERIVED, { "BR_MISPRED", }, }, 
-  { PAPI_TLB_TL, NOT_DERIVED, { "TLB_MISS_EXC", }, }, 
-  { PAPI_L1_ICA, NOT_DERIVED, { "INST_RQ", }, },};
-    
-static pfm_preset_search_entry_t pfm_i386_p6_preset_search_map[] = {
-  { PAPI_TOT_CYC, NOT_DERIVED, },
-  { PAPI_TOT_INS, NOT_DERIVED, }, 
-  { PAPI_FP_INS, NOT_DERIVED, { "FLOPS", }, }, 
-};
-
-static pfm_preset_search_entry_t pfm_i386_pM_preset_search_map[] = {
-  { PAPI_TOT_CYC, NOT_DERIVED, },
-  { PAPI_TOT_INS, NOT_DERIVED, }, 
-  { PAPI_FP_INS, NOT_DERIVED, { "FLOPS", }, }, 
-};
-
-static pfm_preset_search_entry_t pfm_montecito_preset_search_map[] = {
-  { PAPI_TOT_CYC, NOT_DERIVED, },
-  { PAPI_TOT_INS, NOT_DERIVED, },
-  { PAPI_FP_OPS, NOT_DERIVED, { "FP_OPS_RETIRED", }, },
- };
-
-static pfm_preset_search_entry_t pfm_itanium2_preset_search_map[] = {
-  { PAPI_TOT_CYC, NOT_DERIVED, },
-  { PAPI_TOT_INS, NOT_DERIVED, },
-  { PAPI_FP_OPS, NOT_DERIVED, { "FP_OPS_RETIRED", }, },
- };
-
-static pfm_preset_search_entry_t pfm_unknown_preset_search_map[] = {
-  { PAPI_TOT_CYC, NOT_DERIVED, },
-  { PAPI_TOT_INS, NOT_DERIVED, }, };
+/* Globals declared extern elsewhere */
 
 hwi_search_t *preset_search_map;
 static hwd_native_event_entry_t *native_map;
-
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 
 papi_svector_t _linux_pfm_table[] = {
@@ -104,6 +50,65 @@ papi_svector_t _linux_pfm_table[] = {
  {NULL, VEC_PAPI_END}
 };
 
+/* Static locals */
+
+static pfm_preset_search_entry_t pfm_mips5k_preset_search_map[] = {
+  { PAPI_TOT_CYC, NOT_DERIVED, },
+  { PAPI_TOT_INS, NOT_DERIVED, },
+  { PAPI_L1_ICA, NOT_DERIVED, { "FETCHED_INST",}, },
+  { PAPI_LD_INS, NOT_DERIVED, { "LOAD_PREF_SYNC_CACHE_OPS", }, },
+  { PAPI_SR_INS, NOT_DERIVED, { "STORES_COND_ST", }, },
+  { PAPI_CSR_FAL, NOT_DERIVED, { "COND_STORE_FAIL", }, },
+  { PAPI_FP_INS, NOT_DERIVED, { "FP_INST", }, },
+  { PAPI_BR_INS, NOT_DERIVED, { "BRANCHES", }, },
+  { PAPI_TLB_IM, NOT_DERIVED, { "ITLB_MISS", }, },
+  { PAPI_TLB_TL, NOT_DERIVED, { "TLM_MISS_EXC", }, }, 
+  { PAPI_TLB_DM, NOT_DERIVED, { "DTLB_MISS", }, },
+  { PAPI_BR_MSP, NOT_DERIVED, { "BR_MISPRED", }, },  
+  { PAPI_L1_ICM, NOT_DERIVED, { "IC_MISS", }, },
+  { PAPI_L1_DCM, NOT_DERIVED, { "DC_MISS", }, },
+  { PAPI_MEM_SCY, NOT_DERIVED, { "INST_STALL_M", }, },
+  { PAPI_FUL_ICY, NOT_DERIVED, { "DUAL_ISSUE_INST", }, },
+  { 0, } };
+
+static pfm_preset_search_entry_t pfm_mips20k_preset_search_map[] = {
+  { PAPI_TOT_CYC, NOT_DERIVED, },
+  { PAPI_TOT_INS, NOT_DERIVED, },
+  { PAPI_FP_INS, NOT_DERIVED, { "FP_INST", }, },
+  { PAPI_BR_INS, NOT_DERIVED, { "BRANCHES", }, },
+  { PAPI_BR_MSP, NOT_DERIVED, { "BR_MISPRED", }, }, 
+  { PAPI_TLB_TL, NOT_DERIVED, { "TLB_MISS_EXC", }, }, 
+  { PAPI_L1_ICA, NOT_DERIVED, { "INST_RQ", }, }, 
+  { 0, } };
+    
+static pfm_preset_search_entry_t pfm_i386_p6_preset_search_map[] = {
+  { PAPI_TOT_CYC, NOT_DERIVED, },
+  { PAPI_TOT_INS, NOT_DERIVED, }, 
+  { PAPI_FP_INS, NOT_DERIVED, { "FLOPS", }, }, 
+  { 0, } };
+
+static pfm_preset_search_entry_t pfm_i386_pM_preset_search_map[] = {
+  { PAPI_TOT_CYC, NOT_DERIVED, },
+  { PAPI_TOT_INS, NOT_DERIVED, }, 
+  { PAPI_FP_INS, NOT_DERIVED, { "FLOPS", }, }, 
+  { 0, } };
+
+static pfm_preset_search_entry_t pfm_montecito_preset_search_map[] = {
+  { PAPI_TOT_CYC, NOT_DERIVED, },
+  { PAPI_TOT_INS, NOT_DERIVED, },
+  { PAPI_FP_OPS, NOT_DERIVED, { "FP_OPS_RETIRED", }, }, 
+  { 0, } };
+
+static pfm_preset_search_entry_t pfm_itanium2_preset_search_map[] = {
+  { PAPI_TOT_CYC, NOT_DERIVED, },
+  { PAPI_TOT_INS, NOT_DERIVED, },
+  { PAPI_FP_OPS, NOT_DERIVED, { "FP_OPS_RETIRED", }, }, 
+  { 0, } };
+
+static pfm_preset_search_entry_t pfm_unknown_preset_search_map[] = {
+  { PAPI_TOT_CYC, NOT_DERIVED, },
+  { PAPI_TOT_INS, NOT_DERIVED, }, 
+  { 0, } };
 
 /* BEGIN COMMON CODE */
 
