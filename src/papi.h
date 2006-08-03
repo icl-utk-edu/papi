@@ -109,19 +109,26 @@ All of the functions in the PerfAPI should use the following set of constants.
  * make sure to look at both places -KSL
  */
 
-#define PAPI_USR1_TLS		0
-#define PAPI_USR2_TLS		1
-#define PAPI_HIGH_LEVEL_TLS     2
-#define PAPI_NUM_TLS		3
-
+#define PAPI_USR1_TLS		0x0
+#define PAPI_USR2_TLS		0x1
+#define PAPI_HIGH_LEVEL_TLS     0x2
+#define PAPI_NUM_TLS		0x3
+#define PAPI_TLS_USR1		PAPI_USR1_TLS
+#define PAPI_TLS_USR2		PAPI_USR2_TLS
+#define PAPI_TLS_HIGH_LEVEL     PAPI_HIGH_LEVEL_TLS
+#define PAPI_TLS_NUM		PAPI_NUM_TLS
+#define PAPI_TLS_ALL_THREADS	0x10
 /* Locking Mechanisms defines 
  * This can never go over 31, because of the Cray T3E uses
  * _semt which has a max index of 31 
  */
 
-#define PAPI_USR1_LOCK          	0       /* User controlled locks */
-#define PAPI_USR2_LOCK          	1       /* User controlled locks */
-#define PAPI_NUM_LOCK           	2       /* Used with setting up array */
+#define PAPI_USR1_LOCK          	0x0    /* User controlled locks */
+#define PAPI_USR2_LOCK          	0x1    /* User controlled locks */
+#define PAPI_NUM_LOCK           	0x2    /* Used with setting up array */
+#define PAPI_LOCK_USR1          	PAPI_USR1_LOCK
+#define PAPI_LOCK_USR2          	PAPI_USR2_LOCK
+#define PAPI_LOCK_NUM			PAPI_NUM_LOCK
 
 /* Vendor definitions */
 
@@ -319,6 +326,12 @@ read the documentation carefully.  */
 #define papi_ui64  u_long_long
 #define papi_ui32  unsigned int
 #define papi_ui16  unsigned short
+
+   typedef struct _papi_all_thr_spec {
+     int num;
+     unsigned long *id;
+     void **data;
+   } PAPI_all_thr_spec_t;
 
    typedef void (*PAPI_overflow_handler_t) (int EventSet, void *address,
                               long_long overflow_vector, void *context);

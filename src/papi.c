@@ -134,18 +134,26 @@ int PAPI_unregister_thread(void)
 int PAPI_get_thr_specific(int tag, void **ptr)
 {
    ThreadInfo_t *thread;
-   int retval = PAPI_OK;
+   int doall = 0, retval = PAPI_OK;
 
-   if ((tag < 0) || (tag > PAPI_NUM_TLS))
+   if (tag & PAPI_TLS_ALL_THREADS)
+     {
+       tag = tag ^ PAPI_TLS_ALL_THREADS;
+       doall = 1;
+     }
+   if ((tag < 0) || (tag > PAPI_TLS_NUM))
       papi_return(PAPI_EINVAL);
 
+   if (doall)
+     papi_return(_papi_hwi_gather_all_thrspec_data(tag,(PAPI_all_thr_spec_t *)ptr));
+   
    retval = _papi_hwi_lookup_or_create_thread(&thread);
    if (retval == PAPI_OK)
      *ptr = thread->thread_storage[tag];
    else
-     return(retval);
+     papi_return(retval);
 
-   return(retval);
+   return(PAPI_OK);
 }
 
 /*

@@ -64,6 +64,7 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
  ThreadInfo_t *_papi_hwi_lookup_in_thread_list();
  void _papi_hwi_shutdown_the_thread_list(void);
  int  _papi_hwi_get_thr_context(void ** );
+ int _papi_hwi_gather_all_thrspec_data(int tag, PAPI_all_thr_spec_t *where);
 
 /* The following PAPI internal functions are defined by the extras.c file. */
 
