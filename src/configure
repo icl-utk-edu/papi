@@ -8523,7 +8523,7 @@ void *doThreadOne( void * v ) {
 
   if (syscall(__NR_clock_gettime,CLOCK_THREAD_CPUTIME_ID,&threadone) == -1)
     {
-      perror("clock_gettime(CLOCK_THREAD_CPUTIME_ID): %s");
+      perror("clock_gettime(CLOCK_THREAD_CPUTIME_ID)");
       exit(1);
     }
 
@@ -8538,7 +8538,7 @@ void *doThreadTwo( void * v ) {
 
   if (syscall(__NR_clock_gettime,CLOCK_THREAD_CPUTIME_ID,&threadtwo) == -1)
     {
-      perror("clock_gettime(CLOCK_THREAD_CPUTIME_ID): %s");
+      perror("clock_gettime(CLOCK_THREAD_CPUTIME_ID)");
       exit(1);
     }
 
@@ -8564,7 +8564,8 @@ int main( int argc, char ** argv ) {
     if ((threadone.tv_sec != threadtwo.tv_sec) || (threadone.tv_nsec != threadtwo.tv_nsec))
        exit(0);
     else
-       exit(1);
+	{	fprintf(stderr,"T1 %ld %ld T2 %ld %ld\n",threadone.tv_sec,threadone.tv_nsec,threadtwo.tv_sec,threadtwo.tv_nsec);
+	exit(1); }
 }
 _ACEOF
 rm -f conftest$ac_exeext
@@ -8647,29 +8648,23 @@ cat >>confdefs.h <<\_ACEOF
 #define HAVE_CLOCK_GETTIME_THREAD CLOCK_THREAD_CPUTIME_ID
 _ACEOF
 
-   else
-	if "$times" = "yes"; then
+   elif test "$times" = "yes"; then
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_PER_THREAD_TIMES 1
 _ACEOF
 
-	else
+   else
 
 cat >>confdefs.h <<\_ACEOF
 #define USE_PROC_PTTIMER 1
 _ACEOF
 
-	fi
    fi
    ;;
 esac
 
-#	    exit 1;
 
-#AC_MSG_RESULT($NOPTTIMER)
-
-#AC_SUBST(NOPTTIMER)
 
 
 
