@@ -80,6 +80,7 @@ int setup_p3_presets(int cputype) {
       break;
    case PERFCTR_X86_INTEL_P6:
    case PERFCTR_X86_INTEL_PIII:
+   case PERFCTR_X86_INTEL_CORE:
       native_table = &_papi_hwd_p3_native_map;
 #ifdef XML
       return(_xml_papi_hwi_setup_all_presets("Pent III", NULL));
@@ -138,6 +139,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
    case PERFCTR_X86_INTEL_PII:
    case PERFCTR_X86_INTEL_P6:
    case PERFCTR_X86_INTEL_PIII:
+   case PERFCTR_X86_INTEL_CORE:
 #ifdef PERFCTR_X86_INTEL_PENTM
    case PERFCTR_X86_INTEL_PENTM:
 #endif
