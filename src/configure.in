@@ -468,8 +468,29 @@ AC_CHECK_LIB(pfm, pfm_initialize, [
 fi
 AC_CHECK_FILE(/etc/sgi-release,[
 	AC_CHECK_FILE(sn/mmtimer.h,[
-		altix="-DALTIX"],[
-		altix=""])], [])
+		AC_TRY_RUN([
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <sys/ioctl.h>
+#include <sn/mmtimer.h>
+
+int main()
+{
+  int offset;
+  int fd;
+
+     if((fd = open(MMTIMER_FULLNAME, O_RDONLY)) == -1) {
+       exit(1);
+     }
+     if ((offset = ioctl(fd, MMTIMER_GETOFFSET, 0)) == -ENOSYS) {
+       exit(1);
+     }
+     close(fd);
+     exit(0);
+}
+],[altix="-DALTIX"],[])],[])],[])
 fi
 
 if test "$OS" = "aix"; then
