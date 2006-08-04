@@ -6,8 +6,11 @@
 /* Define to 1 if you have the `bzero' function. */
 #undef HAVE_BZERO
 
-/* Define to 1 if you have the `clock_gettime' function. */
-#undef HAVE_CLOCK_GETTIME
+/* POSIX 1b realtime clock */
+#undef HAVE_CLOCK_GETTIME_REALTIME
+
+/* POSIX 1b per-thread clock */
+#undef HAVE_CLOCK_GETTIME_THREAD
 
 /* Define to 1 if you have the <ctype.h> header file. */
 #undef HAVE_CTYPE_H
@@ -59,23 +62,14 @@
 /* Define to 1 if you have the `cpc' library (-lcpc). */
 #undef HAVE_LIBCPC
 
-/* Define to 1 if you have the `dl' library (-ldl). */
-#undef HAVE_LIBDL
-
 /* Define to 1 if you have the <libgen.h> header file. */
 #undef HAVE_LIBGEN_H
 
 /* Define to 1 if you have the `lipr' library (-llipr). */
 #undef HAVE_LIBLIPR
 
-/* Define to 1 if you have the `m' library (-lm). */
-#undef HAVE_LIBM
-
-/* Define to 1 if you have the `pfm' library (-lpfm). */
-#undef HAVE_LIBPFM
-
-/* Define to 1 if you have the `pmapi' library (-lpmapi). */
-#undef HAVE_LIBPMAPI
+/* Define to 1 if you have the `perfctr' library (-lperfctr). */
+#undef HAVE_LIBPERFCTR
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #undef HAVE_LIBPTHREAD
@@ -85,9 +79,6 @@
 
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
-
-/* Define to 1 if you have the <linux/unistd.h> header file. */
-#undef HAVE_LINUX_UNISTD_H
 
 /* Define to 1 if your system has a GNU libc compatible `malloc' function, and
    to 0 otherwise. */
@@ -117,6 +108,12 @@
 /* Define to 1 if you have the `munmap' function. */
 #undef HAVE_MUNMAP
 
+/* Working per thread times() */
+#undef HAVE_PER_THREAD_TIMES
+
+/* event description function */
+#undef HAVE_PFM_GET_EVENT_DESCRIPTION
+
 /* Define to 1 if your system has a GNU libc compatible `realloc' function,
    and to 0 otherwise. */
 #undef HAVE_REALLOC
@@ -135,9 +132,6 @@
 
 /* Define to 1 if you have the <stdarg.h> header file. */
 #undef HAVE_STDARG_H
-
-/* Define to 1 if you have the <stddef.h> header file. */
-#undef HAVE_STDDEF_H
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
@@ -228,7 +222,7 @@
 #undef HAVE_SYS_STAT_H
 
 /* Define to 1 if you have the <sys/syscall.h> header file. */
-#undef HAVE_SYSCALL_H
+#undef HAVE_SYS_SYSCALL_H
 
 /* Define to 1 if you have the <sys/sysinfo.h> header file. */
 #undef HAVE_SYS_SYSINFO_H
@@ -236,28 +230,22 @@
 /* Define to 1 if you have the <sys/sysmp.h> header file. */
 #undef HAVE_SYS_SYSMP_H
 
-/* Define to 1 if you have the <sys/systeminfo.h> header file. */
-#undef HAVE_SYS_SYSTEMINFO_H
-
-/* Define to 1 if you have the <sys/time.h> header file. */
-#undef HAVE_SYS_TIME_H
-
 /* Define to 1 if you have the <sys/timers.h> header file. */
 #undef HAVE_SYS_TIMERS_H
 
 /* Define to 1 if you have the <sys/times.h> header file. */
 #undef HAVE_SYS_TIMES_H
 
+/* Define to 1 if you have the <sys/time.h> header file. */
+#undef HAVE_SYS_TIME_H
+
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
-
-/* Define to 1 if you have the <sys/ucontext.h> header file. */
-#undef HAVE_SYS_UCONTEXT_H
 
 /* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #undef HAVE_SYS_WAIT_H
 
-/* Define to 1 if you have <ucontext.h> header file. */
+/* Define to 1 if you have the <ucontext.h> header file. */
 #undef HAVE_UCONTEXT_H
 
 /* Define to 1 if you have the `uname' function. */
@@ -296,6 +284,9 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* package data directory */
+#undef PAPI_DATADIR
+
 /* Define to 1 if the C compiler supports function prototypes. */
 #undef PROTOTYPES
 
@@ -324,6 +315,9 @@
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #undef TIME_WITH_SYS_TIME
+
+/* Use /proc for per-thread times */
+#undef USE_PROC_PTTIMER
 
 /* Define like PROTOTYPES; this can be used by system headers. */
 #undef __PROTOTYPES
@@ -367,7 +361,3 @@
 /* Define to empty if the keyword `volatile' does not work. Warning: valid
    code using `volatile' can become incorrect without. Disable with care. */
 #undef volatile
-
-/* define data dir for PAPI */
-#undef PAPI_DATADIR
-

@@ -496,7 +496,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 
 int _papi_hwd_init(hwd_context_t * zero)
 {
-#if defined(HAS_PER_PROCESS_TIMES)
+#if defined(USE_PROC_PTTIMER)
   {
     char buf[LINE_MAX];
     int fd;
@@ -524,7 +524,7 @@ long_long _papi_hwd_get_real_cycles(void) {
 long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 {
    long_long retval;
-#if defined(HAS_PER_PROCESS_TIMES)
+#if defined(USE_PROC_PTTIMER)
    {
      char buf[LINE_MAX];
      long_long utime, stime;
@@ -559,7 +559,16 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
        }
      retval = (utime+stime)*(long_long)(1000000/sysconf(_SC_CLK_TCK));
    }
-#else
+#elif defined(HAVE_CLOCK_GETTIME_THREAD)
+   {
+     struct timespec foo;
+     double bar;
+     
+     syscall(__NR_clock_gettime,HAVE_CLOCK_GETTIME_THREAD,&foo);
+     bar = (double)foo.tv_nsec/1000.0 + (double)foo.tv_sec*1000000.0;
+     retval = (long_long) bar;
+   }
+#elif defined(HAVE_PER_THREAD_TIMES)
    {
      struct tms buffer;
      times(&buffer);
@@ -567,6 +576,8 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
      retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*(1000000/sysconf(_SC_CLK_TCK)));
      /* NOT CLOCKS_PER_SEC as in the headers! */
    }
+#else
+#error "No working per thread timer"
 #endif
    return (retval);
 }
@@ -717,7 +728,7 @@ int _papi_hwd_ctl(hwd_context_t * zero, int code, _papi_int_option_t * option)
 
 int _papi_hwd_shutdown(hwd_context_t * ctx)
 {
-#if defined(HAS_PER_PROCESS_TIMES)
+#if defined(USE_PROC_PTTIMER)
   close(ctx->stat_fd);
 #endif  
    return (pfmw_destroy_context(ctx));
@@ -1324,7 +1335,7 @@ char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
   char *tmp = NULL;
-#if ((defined PFM20) && (!defined ALTIX))
+#if defined(HAVE_PFM_GET_EVENT_DESCRIPTION)
   if (pfm_get_event_description(EventCode^PAPI_NATIVE_MASK, &tmp) == PFMLIB_SUCCESS)
     return(tmp);
 #else

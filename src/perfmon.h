@@ -72,7 +72,7 @@ typedef struct {
   int fd;  /* file descriptor */
   pfarg_ctx_t ctx;
   pfarg_load_t load;
-#if defined(HAS_PER_PROCESS_TIMES)
+#if defined(USE_PROC_PTTIMER)
    int stat_fd;
 #endif
 } hwd_context_t;
@@ -189,8 +189,17 @@ inline_static long_long get_cycles(void) {
    return ret;
 }
 #elif defined(mips)
+inline_static long_long get_cycles(void) {
+  struct timespec foo;
+  double bar;
+  
+  syscall(__NR_clock_gettime,HAVE_CLOCK_GETTIME_REALTIME,&foo);
+  bar = (double)foo.tv_nsec/1000000000.0 + (double)foo.tv_sec;
+  bar = bar * (double)_papi_hwi_system_info.hw_info.mhz;
+  return((long_long)bar);
+}
 #else
-#error "get_cycles defined!"
+#error "get_cycles undefined!"
 #endif
 
 #endif

@@ -17,6 +17,7 @@
 #include "papi_vector.h"
 #include "threads.h"
 #include "papi_memory.h"
+#include "config.h"
 
 /* Globals declared extern elsewhere */
 
@@ -915,7 +916,7 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
   pfarg_load_t load_args;
   int ret;
 
-#if defined(HAS_PER_PROCESS_TIMES)
+#if defined(USE_PROC_PTTIMER)
   {
     char buf[LINE_MAX];
     int fd;
@@ -936,7 +937,7 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
     {
       PAPIERROR("pfm_create_context(): %s", pfm_strerror(ret));
     bail:
-#if defined(HAS_PER_PROCESS_TIMES)
+#if defined(USE_PROC_PTTIMER)
       close(thr_ctx->stat_fd);
       thr_ctx->stat_fd = -1;
 #endif
@@ -971,7 +972,7 @@ long_long _papi_hwd_get_real_cycles(void) {
 long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 {
    long_long retval;
-#if defined(HAS_PER_PROCESS_TIMES)
+#if defined(USE_PROC_PTTIMER)
    {
      char buf[LINE_MAX];
      long_long utime, stime;
@@ -1006,7 +1007,16 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
        }
      retval = (utime+stime)*(long_long)(1000000/sysconf(_SC_CLK_TCK));
    }
-#else
+#elif defined(HAVE_CLOCK_GETTIME_THREAD)
+   {
+     struct timespec foo;
+     double bar;
+     
+     syscall(__NR_clock_gettime,HAVE_CLOCK_GETTIME_THREAD,&foo);
+     bar = (double)foo.tv_nsec/1000.0 + (double)foo.tv_sec*1000000.0;
+     retval = (long_long) bar;
+   }
+#elif defined(HAVE_PER_THREAD_TIMES)
    {
      struct tms buffer;
      times(&buffer);
@@ -1014,6 +1024,8 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
      retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*(1000000/sysconf(_SC_CLK_TCK)));
      /* NOT CLOCKS_PER_SEC as in the headers! */
    }
+#else
+#error "No working per thread timer"
 #endif
    return (retval);
 }
@@ -1149,7 +1161,7 @@ int _papi_hwd_ctl(hwd_context_t * zero, int code, _papi_int_option_t * option)
 int _papi_hwd_shutdown(hwd_context_t * ctx)
 {
   int ret;
-#if defined(HAS_PER_PROCESS_TIMES)
+#if defined(USR_PROC_PTTIMER)
   close(ctx->stat_fd);
 #endif  
   SUBDBG("PFM_UNLOAD_CONTEXT(%d)\n",ctx->ctx.ctx_fd);
