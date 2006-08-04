@@ -84,10 +84,10 @@ endif
 
 CFLAGS-2.x := -DPFM20 -D_GNU_SOURCE
 CFLAGS-3.x := -DPFM30 -D_GNU_SOURCE  
-CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) $(NOTLS) $(NOPTTIMER) $(ALTIX) $(CFLAGS-$(VERSION))
+CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) $(NOTLS) $(ALTIX) $(CFLAGS-$(VERSION))
 
-MISCHDRS = pfmwrap.h
-MISCSRCS = #linux.c
+MISCHDRS = pfmwrap.h config.h
+MISCSRCS = 
 SHLIBDEPS = -L$(PFM_LIB_PATH) -lpfm
 PFM_OBJS = $(shell ar t $(PFM_LIB_PATH)/libpfm.a 2> /dev/null)
 ifeq (,$(PFM_OBJS))
@@ -98,7 +98,7 @@ MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
 include Makefile.inc
 
 config.h:
-	@echo 'Please clobber your build and run ./configure. Direct Makefile access has been deprecated.'
+	@echo 'Please clobber your build and run ./configure."
 
 $(PFM_LIB_PATH)/libpfm.a:
 ifeq (,${PFM_PREFIX})
@@ -109,11 +109,7 @@ endif
 
 $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
 	ar xv $<
-# exit is necessary due to NFS not updating times correctly at UTK
 	$(MAKE) $(MAKEFLAGS); echo "If you made it here, you may safely ignore this error."; exit 1
-
-linux.o: linux.c
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
 
 native_clean:
 ifeq (,${PFM_PREFIX})

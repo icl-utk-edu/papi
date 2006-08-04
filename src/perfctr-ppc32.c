@@ -426,7 +426,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 	contr->cpu_control.ppc.mmcr0 |= PERF_INT_PMCxEN;
       contr->cpu_control.ppc.mmcr0 |= PERF_INT_ENABLE;
 
-      if ((retval = _papi_hwi_start_signal(PAPI_SIGNAL,NEED_CONTEXT)) != PAPI_OK)
+      if ((retval = _papi_hwi_start_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig,NEED_CONTEXT)) != PAPI_OK)
 	{
 	  contr->cpu_control.ppc.mmcr0 = saved_mmcr0;
 	  return(retval);
@@ -436,7 +436,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
          thus we subtract 1 from the threshold. */
 
       contr->cpu_control.ireset[i] = PMC_OVFL - threshold;
-      contr->si_signo = PAPI_SIGNAL;
+      contr->si_signo = _papi_hwi_system_info.sub_info.hardware_intr_sig;
       nricntrs = ++contr->cpu_control.nrictrs;
       nracntrs = --contr->cpu_control.nractrs;
 
@@ -467,7 +467,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 	     swap_events(ESI, contr, i, nracntrs - 1);
 	 }
 
-      retval = _papi_hwi_stop_signal(PAPI_SIGNAL);
+      retval = _papi_hwi_stop_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig);
    }
 
 #ifdef DEBUG   

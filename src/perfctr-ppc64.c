@@ -591,13 +591,13 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
          return PAPI_EINVAL;
       }
 
-      if ((retval = _papi_hwi_start_signal(PAPI_SIGNAL,NEED_CONTEXT)) != PAPI_OK)
+      if ((retval = _papi_hwi_start_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig,NEED_CONTEXT)) != PAPI_OK)
 	      return(retval);
 
       contr->cpu_control.ireset[i] = PMC_OVFL - threshold;
       nricntrs = ++contr->cpu_control.nrictrs;
       nracntrs = --contr->cpu_control.nractrs;
-      contr->si_signo = PAPI_SIGNAL;
+      contr->si_signo = _papi_hwi_system_info.sub_info.hardware_intr_sig;
       contr->cpu_control.ppc64.mmcr0 |= PERF_INT_ENABLE;
 
       /* move this event to the bottom part of the list if needed */
@@ -621,7 +621,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
 
       OVFDBG("Modified event set\n");
 
-      retval = _papi_hwi_stop_signal(PAPI_SIGNAL);
+      retval = _papi_hwi_stop_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig);
    }
 #ifdef DEBUG   
    print_control(&contr->cpu_control);

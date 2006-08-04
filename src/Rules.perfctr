@@ -190,7 +190,7 @@ CFLAGS-2.6.x := -DPERFCTR26
 CFLAGS-2.7.x := $(CFLAGS-2.6.x)
 CFLAGS += $(EVENTFLAGS) -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) $(CFLAGS-$(VERSION))
 
-MISCHDRS = perfctr-$(CPU).h
+MISCHDRS = perfctr-$(CPU).h config.h
 MISCSRCS =  $(CPU)_events.c linux.c $(ARCH_SPEC_EVTS)
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
 PERFCTR_OBJS = $(shell ar t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
@@ -245,7 +245,7 @@ $(PERFCTR_OBJS): $(PERFCTR_LIB_PATH)/libperfctr.a
 # exit is necessary due to NFS not updating times correctly at UTK
 	$(MAKE) $(MAKEFLAGS); echo "If you made it here, you may safely ignore this error."; exit 1
 	
-$(CPU)_events.o: $(CPU)_events.c config.h
+$(CPU)_events.o: $(CPU)_events.c
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPU)_events.c -o $@
 
 linux.o: linux.c

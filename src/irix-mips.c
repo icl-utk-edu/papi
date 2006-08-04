@@ -804,7 +804,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
       _papi_hwi_lock(INTERNAL_LOCK);
       _papi_hwi_using_signal--;
       if (_papi_hwi_using_signal == 0) {
-         if (sigaction(PAPI_SIGNAL, NULL, NULL) == -1)
+         if (sigaction(_papi_hwi_system_info.sub_info.hardware_intr_sig, NULL, NULL) == -1)
             retval = PAPI_ESYS;
       }
       _papi_hwi_unlock(INTERNAL_LOCK);
@@ -812,17 +812,17 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
       struct sigaction act;
       void *tmp;
 
-      tmp = (void *) signal(PAPI_SIGNAL, SIG_IGN);
+      tmp = (void *) signal(_papi_hwi_system_info.sub_info.hardware_intr_sig, SIG_IGN);
       if ((tmp != (void *) SIG_DFL) && (tmp != (void *) _papi_hwd_dispatch_timer))
          return (PAPI_EMISC);
 
       memset(&act, 0x0, sizeof(struct sigaction));
       act.sa_handler = _papi_hwd_dispatch_timer;
       act.sa_flags = SA_RESTART;
-      if (sigaction(PAPI_SIGNAL, &act, NULL) == -1)
+      if (sigaction(_papi_hwi_system_info.sub_info.hardware_intr_sig, &act, NULL) == -1)
          return (PAPI_ESYS);
 
-      arg->hwp_ovflw_sig = PAPI_SIGNAL;
+      arg->hwp_ovflw_sig = _papi_hwi_system_info.sub_info.hardware_intr_sig;
       hwcntr = ESI->EventInfoArray[EventIndex].pos[0];
       this_state->overflow_event_count++;
       /* when the user set overflow on two or more events and these
