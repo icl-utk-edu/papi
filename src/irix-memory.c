@@ -110,7 +110,7 @@ int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
    close(fd);
 
    d->size = info.pr_size;
-   d->resident = piinfo.pr_rssize;
+   d->resident = info.pr_rssize;
    d->high_water_mark = PAPI_EINVAL;
    d->shared = PAPI_EINVAL;
    d->text = PAPI_EINVAL;
