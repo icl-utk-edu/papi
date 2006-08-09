@@ -651,6 +651,7 @@ case "$tls" in
              NOTLS="-DNO_TLS" ;;
  esac
 
+if test "$OS" = "linux"; then
 AC_MSG_CHECKING(for working CLOCK_REALTIME_HR POSIX 1b timer)
 AC_TRY_RUN([
 #include <unistd.h>
@@ -909,6 +910,7 @@ case "$PTtimer" in
    fi
    ;;
 esac
+fi
 
 AC_SUBST(DEBUGFLAGS)
 AC_SUBST(MAKEVER)

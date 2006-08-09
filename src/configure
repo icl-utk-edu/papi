@@ -8165,6 +8165,7 @@ echo "$as_me: WARNING: Disabling usage of __thread." >&2;};
              NOTLS="-DNO_TLS" ;;
  esac
 
+if test "$OS" = "linux"; then
 echo "$as_me:$LINENO: checking for working CLOCK_REALTIME_HR POSIX 1b timer" >&5
 echo $ECHO_N "checking for working CLOCK_REALTIME_HR POSIX 1b timer... $ECHO_C" >&6
 if test "$cross_compiling" = yes; then
@@ -8612,6 +8613,7 @@ _ACEOF
    fi
    ;;
 esac
+fi
 
 
 
