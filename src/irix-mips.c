@@ -452,14 +452,18 @@ static int _internal_get_system_info(void)
    _papi_hwi_system_info.hw_info.vendor = -1;
    strcpy(_papi_hwi_system_info.hw_info.vendor_string, "MIPS");
 
-   /* Generic info */
+   /* Substrate info */
 
-   _papi_hwi_system_info.num_cntrs = HWPERF_EVENTMAX;
-/*
-  _papi_hwi_system_info.hw_info.ncpu = get_cpu();
-*/
-   _papi_hwi_system_info.supports_hw_overflow = 1;
-
+   strcpy(_papi_hwi_system_info.sub_info.name, "$Id$");
+   strcpy(_papi_hwi_system_info.sub_info.version, "$Revision$");
+   _papi_hwi_system_info.sub_info.num_cntrs = HWPERF_EVENTMAX;
+   _papi_hwi_system_info.sub_info.fast_counter_read = 0;
+   _papi_hwi_system_info.sub_info.fast_real_timer = 1;
+   _papi_hwi_system_info.sub_info.fast_virtual_timer = 0;
+   _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
+   _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_OTHER|PAPI_DOM_SUPERVISOR;
+   _papi_hwi_system_info.sub_info.hardware_intr = 1;
+   
    retval = _papi_hwd_update_shlib_info();
    if (retval != PAPI_OK) 
    {
@@ -925,13 +929,14 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    this_state->counter_cmd.hwp_ovflw_sig=0;
 */
 
-   if (_papi_hwi_system_info.default_domain & PAPI_DOM_USER) {
+   if (_papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_USER) 
       mode |= HWPERF_CNTEN_U;
-   }
-   if (_papi_hwi_system_info.default_domain & PAPI_DOM_KERNEL)
+   if (_papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_KERNEL)
       mode |= HWPERF_CNTEN_K;
-   if (_papi_hwi_system_info.default_domain & PAPI_DOM_OTHER)
-      mode |= HWPERF_CNTEN_E | HWPERF_CNTEN_S;
+   if (_papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_OTHER)
+     mode |= HWPERF_CNTEN_E;
+   if (_papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_SUPERVISOR)
+     mode |= HWPERF_CNTEN_S;
 
    this_state->num_on_counter[0]=0;
    this_state->num_on_counter[1]=0;
