@@ -286,15 +286,17 @@ static int mpx_startup_itimer(void)
 static void mpx_restore_signal(void)
 {
   MPXDBG("restore signal\n");
-  if (signal(_papi_hwi_system_info.sub_info.multiplex_timer_sig, SIG_IGN) == SIG_ERR)
-     PAPIERROR("sigaction stop errno %d",errno);
+  if (_papi_hwi_system_info.sub_info.multiplex_timer_sig != PAPI_NULL) { 
+	if (signal(_papi_hwi_system_info.sub_info.multiplex_timer_sig, SIG_IGN) == SIG_ERR)
+     	PAPIERROR("sigaction stop errno %d",errno); }
 }
 
 static void mpx_shutdown_itimer(void)
 {
   MPXDBG("setitimer off\n");
-   if (setitimer(_papi_hwi_system_info.sub_info.multiplex_timer_num, &itimestop, NULL) == -1)
-     PAPIERROR("setitimer stop errno %d",errno);
+  if (_papi_hwi_system_info.sub_info.multiplex_timer_num != PAPI_NULL) {
+ 	if (setitimer(_papi_hwi_system_info.sub_info.multiplex_timer_num, &itimestop, NULL) == -1)
+     	PAPIERROR("setitimer stop errno %d",errno); }
 }
 #endif                          /* _WIN32 */
 

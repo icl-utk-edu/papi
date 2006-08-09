@@ -280,16 +280,13 @@ static int _internal_scan_cpu_info(inventory_t * item, void *foo)
       switch (imp) {            /* We fill a name here and then remove any \0 characters */
       case C0_IMP_R10000:
          strncpy(_papi_hwi_system_info.hw_info.model_string, "R10000", IPSTRPOS);
-         _papi_hwi_system_info.num_gp_cntrs = 2;
          break;
       case C0_IMP_R12000:
          strncpy(_papi_hwi_system_info.hw_info.model_string, "R12000", IPSTRPOS);
-         _papi_hwi_system_info.num_gp_cntrs = 2;
          break;
 #ifdef C0_IMP_R14000
       case C0_IMP_R14000:
          strncpy(_papi_hwi_system_info.hw_info.model_string, "R14000", IPSTRPOS);
-         _papi_hwi_system_info.num_gp_cntrs = 2;
          break;
 #endif
       default:
@@ -392,7 +389,7 @@ static int set_default_granularity(hwd_control_state_t * current_state, int gran
 
 static int _internal_get_system_info(void)
 {
-   int fd, retval;
+   int fd, retval, nn = 0;
    pid_t pid;
    char pidstr[PAPI_MAX_STR_LEN];
    char pname[PAPI_HUGE_STR_LEN];
@@ -463,6 +460,10 @@ static int _internal_get_system_info(void)
    _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
    _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_OTHER|PAPI_DOM_SUPERVISOR;
    _papi_hwi_system_info.sub_info.hardware_intr = 1;
+   _papi_hwi_system_info.sub_info.multiplex_timer_us = PAPI_NULL;
+   _papi_hwi_system_info.sub_info.multiplex_timer_num = PAPI_NULL;
+   _papi_hwi_system_info.sub_info.multiplex_timer_sig = PAPI_NULL;
+   _papi_hwi_system_info.sub_info.kernel_multiplex = 1;
    
    retval = _papi_hwd_update_shlib_info();
    if (retval != PAPI_OK) 
@@ -483,14 +484,17 @@ static int _internal_get_system_info(void)
    if ((_papi_hwi_system_info.hw_info.model & 0xff) == C0_IMP_R10000) {
       preset_search_map = findem_r10k;
       native_table = r10k_native_events_table;
+      nn = sizeof(r10k_native_events_table)/sizeof(char *)-1;
    } else if ((_papi_hwi_system_info.hw_info.model & 0xff) == C0_IMP_R12000) {
       preset_search_map = findem_r12k;
       native_table = r12k_native_events_table;
+      nn = sizeof(r12k_native_events_table)/sizeof(char *)-1;
    }
 #ifdef C0_IMP_R14000
    else if ((_papi_hwi_system_info.hw_info.model & 0xff) == C0_IMP_R14000) {
       preset_search_map = findem_r12k;
       native_table = r12k_native_events_table;
+      nn = sizeof(r12k_native_events_table)/sizeof(char *)-1;
    }
 #endif
 
@@ -498,7 +502,7 @@ static int _internal_get_system_info(void)
    retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
    if (retval)
       return (retval);
-
+   _papi_hwi_system_info.sub_info.num_native_events = nn;
    return (PAPI_OK);
 }
 
