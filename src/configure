@@ -8630,6 +8630,7 @@ fi
 
 
 
+
 get_bitmode()
 {
  input="bad"
