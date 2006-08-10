@@ -8,6 +8,8 @@
   /* Windows doesn't have a unistd.h */
 #ifndef _WIN32
 #include <unistd.h>
+#include <sys/ptrace.h>
+#include <sys/wait.h>
 #ifndef NO_DLFCN
 #include <dlfcn.h>
 #endif

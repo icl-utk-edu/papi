@@ -29,6 +29,7 @@ int main(int argc, char **argv)
    printf("support_version: %s\n",subinfo->support_version);
    printf("kernel_version: %s\n",subinfo->kernel_version);
    printf("num_cntrs: %d\n",subinfo->num_cntrs);
+   printf("num_mpx_cntrs: %d\n",subinfo->num_mpx_cntrs);
    printf("num_preset_events: %d\n",subinfo->num_preset_events);           /* Number of counters the substrate supports */
    printf("num_native_events: %d\n",subinfo->num_native_events);           /* Number of counters the substrate supports */
    printf("default_domain: 0x%x (%s)\n",subinfo->default_domain,stringify_all_domains(subinfo->default_domain));
@@ -52,6 +53,8 @@ int main(int argc, char **argv)
    printf("fast_counter_read: %d\n",subinfo->fast_counter_read);       /* Has a fast counter read */
    printf("fast_real_timer: %d\n",subinfo->fast_real_timer);       /* Has a fast real timer */
    printf("fast_virtual_timer: %d\n",subinfo->fast_virtual_timer);    /* Has a fast virtual timer */
+   printf("attach: %d\n",subinfo->attach);    /* Has a fast virtual timer */
+   printf("attach_must_ptrace: %d\n",subinfo->attach_must_ptrace);    /* Has a fast virtual timer */
    printf("edge_detect: %d\n",subinfo->edge_detect);    /* Has a fast virtual timer */
    printf("invert: %d\n",subinfo->invert);    /* Has a fast virtual timer */
    printf("data_address_smpl: %d\n",subinfo->data_address_smpl);     /* Supports data/instr miss address sampling */
