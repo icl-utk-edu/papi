@@ -830,14 +830,15 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   retval = get_string_from_file("/sys/kernel/perfmon/version",_papi_hwi_system_info.sub_info.kernel_version,sizeof(_papi_hwi_system_info.sub_info.kernel_version));
   if (retval != PAPI_OK)
     return(retval);
-    
   pfm_get_num_counters((unsigned int *)&_papi_hwi_system_info.sub_info.num_cntrs);
-
+#if 0
+  _papi_hwi_system_info.sub_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
+  _papi_hwi_system_info.sub_info.kernel_multiplex = 1;
+#endif
   if (type == PFMLIB_GEN_MIPS64_PMU)
     _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR|PAPI_DOM_OTHER;
   else
     _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL;    
-
   _papi_hwi_system_info.sub_info.hardware_intr_sig = SIGIO;
   _papi_hwi_system_info.sub_info.hardware_intr = 1;
   _papi_hwi_system_info.sub_info.fast_counter_read = 0;

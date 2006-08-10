@@ -37,8 +37,6 @@ typedef int hwd_register_t;
 typedef int hwd_register_map_t;
 typedef int hwd_reg_alloc_t;
 
-#define NUM_PMCS PFMLIB_MAX_PMCS
-#define NUM_PMDS PFMLIB_MAX_PMCS
 #define MAX_COUNTERS PFMLIB_MAX_PMCS
 #define MAX_COUNTER_TERMS PFMLIB_MAX_PMCS
 
