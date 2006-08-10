@@ -115,6 +115,10 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
 #define PAPI_ITIMER_MS 1
 
+/* Multiplex definitions */
+
+#define PAPI_MPX_DEF_US 10000   /*Default resolution in us. of mpx handler */
+
 /* Commands used to compute derived events */
 
 #define NOT_DERIVED      0x0    /* Do nothing */
@@ -176,6 +180,10 @@ typedef struct _EventSetOverflowInfo {
    int timer_ms;
    PAPI_overflow_handler_t handler;
 } EventSetOverflowInfo_t;
+
+typedef struct _EventSetAttachInfo {
+  unsigned long tid;
+} EventSetAttachInfo_t;
 
 #if 0
 typedef struct _EventSetInheritInfo {
@@ -287,7 +295,11 @@ typedef struct _MPX_EventSet {
    long_long start_hc[PAPI_MPX_DEF_DEG];
 } MPX_EventSet;
 
-typedef MPX_EventSet *EventSetMultiplexInfo_t;
+typedef struct EventSetMultiplexInfo {
+  MPX_EventSet *mpx_evset;
+  int us;
+  int flags; 
+} EventSetMultiplexInfo_t;
 
 /* Opaque struct, not defined yet...due to threads.h <-> papi_internal.h */
 
@@ -330,6 +342,8 @@ typedef struct _EventSetInfo {
 
    EventSetMultiplexInfo_t multiplex;
 
+   EventSetAttachInfo_t attach;
+
    EventSetProfileInfo_t profile;
 
    struct _ThreadInfo *master;
@@ -345,6 +359,11 @@ typedef struct _dynamic_array {
 } DynamicArray_t;
 
 /* Substrate option types for _papi_hwd_ctl. */
+
+typedef struct _papi_int_attach {
+   unsigned long tid;
+   EventSetInfo_t *ESI;
+} _papi_int_attach_t;
 
 typedef struct _papi_int_defdomain {
    int defdomain;
@@ -393,7 +412,7 @@ typedef union _papi_int_option_t {
    _papi_int_overflow_t overflow;
    _papi_int_profile_t profile;
    _papi_int_domain_t domain;
-   _papi_int_defdomain_t defdomain;
+   _papi_int_attach_t attach;
 #if 0
    _papi_int_inherit_t inherit;
 #endif
@@ -588,6 +607,23 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset)
 #endif
 
    return (set);
+}
+
+inline_static int _papi_hwi_is_sw_multiplex(EventSetInfo_t *ESI)
+{
+  /* Are we multiplexing at all */
+  if ((ESI->state & PAPI_MULTIPLEXING) == 0)
+    return(0);
+  /* Does the substrate support kernel multiplexing */
+  if (_papi_hwi_system_info.sub_info.kernel_multiplex)
+    {
+      /* Have we forced software multiplexing */
+      if (ESI->multiplex.flags == PAPI_MULTIPLEX_FORCE_SW)
+	return(1);
+      return(0);
+    }
+  else
+    return(1);
 }
 
 #endif                          /* PAPI_INTERNAL_H */
