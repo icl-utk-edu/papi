@@ -269,11 +269,11 @@ int setup_ppc64_presets(int cputype) {
 /*called when an EventSet is allocated */
 void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
    int i = 0;
-   for(i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
+   for(i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
       ptr->control.cpu_control.pmc_map[i] = i;
    }
    ptr->control.cpu_control.tsc_on = 1;
-   set_domain(ptr, _papi_hwi_system_info.default_domain);
+   set_domain(ptr, _papi_hwi_system_info.sub_info.default_domain);
 }
 
 /* No longer needed if not implemented
@@ -579,7 +579,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
    OVFDBG("EventIndex=%d, threshold = %d\n", EventIndex, threshold);
 
    /* The correct event to overflow is EventIndex */
-   ncntrs = _papi_hwi_system_info.num_cntrs;
+   ncntrs = _papi_hwi_system_info.sub_info.num_cntrs;
    i = ESI->EventInfoArray[EventIndex].pos[0];
    if (i >= ncntrs) {
       OVFDBG("Selector id (%d) larger than ncntrs (%d)\n", i, ncntrs);
