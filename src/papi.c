@@ -742,9 +742,9 @@ int PAPI_start(int EventSet)
    /* If multiplexing is enabled for this eventset,
       call John May's code. */
 
-   if (ESI->state & PAPI_MULTIPLEXING) 
+   if (_papi_hwi_is_sw_multiplex(ESI))
      {
-      retval = MPX_start(ESI->multiplex);
+      retval = MPX_start(ESI->multiplex.mpx_evset);
       if (retval != PAPI_OK)
          papi_return(retval);
 
@@ -840,8 +840,8 @@ int PAPI_stop(int EventSet, long_long * values)
 
    /* If multiplexing is enabled for this eventset, turn if off */
 
-   if (ESI->state & PAPI_MULTIPLEXING) {
-      retval = MPX_stop(ESI->multiplex, values);
+   if (_papi_hwi_is_sw_multiplex(ESI)) {
+      retval = MPX_stop(ESI->multiplex.mpx_evset, values);
       if (retval != PAPI_OK)
          papi_return(retval);
 
@@ -901,8 +901,8 @@ int PAPI_reset(int EventSet)
    thread = ESI->master;
 
    if (ESI->state & PAPI_RUNNING) {
-      if (ESI->state & PAPI_MULTIPLEXING)
-         retval = MPX_reset(ESI->multiplex);
+      if (_papi_hwi_is_sw_multiplex(ESI))
+         retval = MPX_reset(ESI->multiplex.mpx_evset);
       else {
          /* If we're not the only one running, then just
             read the current values into the ESI->start
@@ -942,8 +942,8 @@ int PAPI_read(int EventSet, long_long * values)
       papi_return(PAPI_EINVAL);
 
    if (ESI->state & PAPI_RUNNING) {
-      if (ESI->state & PAPI_MULTIPLEXING)
-         retval = MPX_read(ESI->multiplex, values);
+      if (_papi_hwi_is_sw_multiplex(ESI))
+         retval = MPX_read(ESI->multiplex.mpx_evset, values);
       else
          retval = _papi_hwi_read(&thread->context, ESI, values);
       if (retval != PAPI_OK)
@@ -981,8 +981,8 @@ int PAPI_accum(int EventSet, long_long * values)
       papi_return(PAPI_EINVAL);
 
    if (ESI->state & PAPI_RUNNING) {
-      if (ESI->state & PAPI_MULTIPLEXING)
-         retval = MPX_read(ESI->multiplex, ESI->sw_stop);
+      if (_papi_hwi_is_sw_multiplex(ESI))
+         retval = MPX_read(ESI->multiplex.mpx_evset, ESI->sw_stop);
       else
          retval = _papi_hwi_read(&thread->context, ESI, ESI->sw_stop);
       if (retval != PAPI_OK)
@@ -1066,8 +1066,8 @@ int PAPI_cleanup_eventset(int EventSet)
       }
    }
 
-   if (ESI->state & PAPI_MULTIPLEXING) {
-      retval = MPX_cleanup(&ESI->multiplex);
+   if (_papi_hwi_is_sw_multiplex(ESI)) {
+      retval = MPX_cleanup(&ESI->multiplex.mpx_evset);
       if (retval != PAPI_OK)
          papi_return(retval);
    }
@@ -1112,18 +1112,27 @@ int PAPI_set_debug(int level)
   memset(&option,0x0,sizeof(option));
   option.debug.level = level;
   option.debug.handler = _papi_hwi_debug_handler;
-  papi_return(PAPI_set_opt(PAPI_DEBUG,&option));
+  return(PAPI_set_opt(PAPI_DEBUG,&option));
+}
+
+int PAPI_attach(int EventSet, unsigned long tid)
+{
+  PAPI_option_t attach;
+
+  memset(&attach,0x0,sizeof(attach));
+  attach.attach.eventset = EventSet;
+  attach.attach.tid = tid;
+  return(PAPI_set_opt(PAPI_ATTACH,&attach));
 }
 
 int PAPI_set_multiplex(int EventSet)
 {
    PAPI_option_t mpx;
 
+   memset(&mpx,0x0,sizeof(mpx));
    mpx.multiplex.eventset = EventSet;
-
-   return (PAPI_set_opt(PAPI_MULTIPLEX, &mpx));
+   return(PAPI_set_opt(PAPI_MULTIPLEX, &mpx));
 }
-
 
 int PAPI_set_opt(int option, PAPI_option_t * ptr)
 {
@@ -1137,6 +1146,54 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
    memset(&internal, 0x0, sizeof(_papi_int_option_t));
 
    switch (option) {
+   case PAPI_DETACH:
+     {
+       if (_papi_hwi_system_info.sub_info.attach == 0)
+	 papi_return(PAPI_ESBSTR);
+
+       internal.attach.ESI = _papi_hwi_lookup_EventSet(ptr->attach.eventset);
+       if (internal.attach.ESI == NULL)
+	 papi_return(PAPI_ENOEVST);
+
+       if ((internal.attach.ESI->state & PAPI_STOPPED) == 0)
+	 papi_return(PAPI_EISRUN);
+
+       if ((internal.attach.ESI->state & PAPI_ATTACHED) == 0)
+	 papi_return(PAPI_EINVAL);
+
+       internal.attach.tid = internal.attach.ESI->attach.tid;
+       retval = _papi_hwd_ctl(thread, PAPI_DETACH, &internal);
+       if (retval != PAPI_OK)
+	 papi_return(retval);
+
+       internal.attach.ESI->state ^= PAPI_ATTACHED;
+       internal.attach.ESI->attach.tid = 0;
+       return(PAPI_OK);
+     }
+   case PAPI_ATTACH:
+     {
+       if (_papi_hwi_system_info.sub_info.attach == 0)
+	 papi_return(PAPI_ESBSTR);
+
+       internal.attach.ESI = _papi_hwi_lookup_EventSet(ptr->attach.eventset);
+       if (internal.attach.ESI == NULL)
+	 papi_return(PAPI_ENOEVST);
+
+       if ((internal.attach.ESI->state & PAPI_STOPPED) == 0)
+	 papi_return(PAPI_EISRUN);
+
+       if (internal.attach.ESI->state & PAPI_ATTACHED)
+	 papi_return(PAPI_EINVAL);
+
+       internal.attach.tid = ptr->attach.tid;
+       retval = _papi_hwd_ctl(thread, PAPI_ATTACH, &internal);
+       if (retval != PAPI_OK)
+	 papi_return(retval);
+
+       internal.attach.ESI->state |= PAPI_ATTACHED;
+       internal.attach.ESI->attach.tid = ptr->attach.tid;
+       return(PAPI_OK);
+     }
    case PAPI_MULTIPLEX_USEC:
      {
        if (ptr->multiplex.us <= 1)
@@ -1154,8 +1211,8 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
             papi_return(PAPI_EISRUN);
          if (ESI->state & PAPI_MULTIPLEXING)
             papi_return(PAPI_EINVAL);
-
-         papi_return(_papi_hwi_convert_eventset_to_multiplex(ESI));
+	   
+         papi_return(_papi_hwi_convert_eventset_to_multiplex(ESI, ptr->multiplex.flags));
       }
    case PAPI_DEBUG: 
       {
@@ -1332,7 +1389,7 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 
 int PAPI_num_hwctrs(void)
 {
-   return (PAPI_get_opt(PAPI_MAX_CTRS, NULL));
+   return (PAPI_get_opt(PAPI_MAX_HWCTRS, NULL));
 }
 
 int PAPI_get_multiplex(int EventSet)
@@ -1347,10 +1404,31 @@ int PAPI_get_multiplex(int EventSet)
    return retval;
 }
 
-
 int PAPI_get_opt(int option, PAPI_option_t * ptr)
 {
+  EventSetInfo_t *ESI;
+	 
    switch (option) {
+   case PAPI_DETACH:
+     {
+       if (ptr == NULL)
+	 papi_return(PAPI_EINVAL);
+       ESI = _papi_hwi_lookup_EventSet(ptr->attach.eventset);
+       if (ESI == NULL)
+	 papi_return(PAPI_ENOEVST);
+       ptr->attach.tid = ESI->attach.tid;
+       return ((ESI->state & PAPI_ATTACHED) == 0);
+     }
+   case PAPI_ATTACH:
+     {
+       if (ptr == NULL)
+	 papi_return(PAPI_EINVAL);
+       ESI = _papi_hwi_lookup_EventSet(ptr->attach.eventset);
+       if (ESI == NULL)
+	 papi_return(PAPI_ENOEVST);
+       ptr->attach.tid = ESI->attach.tid;
+       return ((ESI->state & PAPI_ATTACHED) != 0);
+     }
    case PAPI_MULTIPLEX_USEC:
      {
        if (ptr == NULL)
@@ -1360,8 +1438,6 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
      }
    case PAPI_MULTIPLEX:
       {
-         EventSetInfo_t *ESI;
-
 	 if (ptr == NULL)
 	   papi_return(PAPI_EINVAL);
          ESI = _papi_hwi_lookup_EventSet(ptr->multiplex.eventset);
@@ -1389,8 +1465,9 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
      At some future point, they may map onto different values.
   */
    case PAPI_MAX_HWCTRS:
-   case PAPI_MAX_CTRS:
       return (_papi_hwi_system_info.sub_info.num_cntrs);
+   case PAPI_MAX_MPX_CTRS:
+      return (_papi_hwi_system_info.sub_info.num_mpx_cntrs);
    case PAPI_DEFDOM:
       return (_papi_hwi_system_info.sub_info.default_domain);
    case PAPI_DEFGRN:
@@ -1409,7 +1486,10 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
    case PAPI_GRANUL:
       if (ptr == NULL)
          papi_return(PAPI_EINVAL);
-      return (_papi_hwi_get_granularity(&ptr->granularity));
+      ESI = _papi_hwi_lookup_EventSet(ptr->granularity.eventset);
+      if (ESI == NULL)
+	papi_return(PAPI_ENOEVST);
+      ptr->granularity.granularity = ESI->granularity.granularity;
    case PAPI_SHLIBINFO:
       {
          int retval;
@@ -1438,7 +1518,11 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
    case PAPI_DOMAIN:
       if (ptr == NULL)
          papi_return(PAPI_EINVAL);
-      return (_papi_hwi_get_domain(&ptr->domain));
+      ESI = _papi_hwi_lookup_EventSet(ptr->domain.eventset);
+      if (ESI == NULL)
+	papi_return(PAPI_ENOEVST);
+      ptr->domain.domain = ESI->domain.domain;
+      return(PAPI_OK);
    case PAPI_LIB_VERSION:
       return (PAPI_VERSION);
    default:
@@ -1881,7 +1965,7 @@ int PAPI_set_granularity(int granularity)
    PAPI_option_t ptr;
 
    ptr.defgranularity.granularity = granularity;
-   papi_return(PAPI_set_opt(PAPI_DEFGRN, &ptr));
+   return(PAPI_set_opt(PAPI_DEFGRN, &ptr));
 }
 
 /* This function sets the low level default counting domain
@@ -1892,7 +1976,7 @@ int PAPI_set_domain(int domain)
    PAPI_option_t ptr;
 
    ptr.defdomain.domain = domain;
-   papi_return(PAPI_set_opt(PAPI_DEFDOM, &ptr));
+   return(PAPI_set_opt(PAPI_DEFDOM, &ptr));
 }
 
 int PAPI_add_events(int EventSet, int *Events, int number)
