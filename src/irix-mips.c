@@ -453,16 +453,14 @@ static int _internal_get_system_info(void)
 
    strcpy(_papi_hwi_system_info.sub_info.name, "$Id$");
    strcpy(_papi_hwi_system_info.sub_info.version, "$Revision$");
-   _papi_hwi_system_info.sub_info.num_cntrs = HWPERF_EVENTMAX;
+   _papi_hwi_system_info.sub_info.num_cntrs = 2;
+   _papi_hwi_system_info.sub_info.num_mpx_cntrs = HWPERF_EVENTMAX;
    _papi_hwi_system_info.sub_info.fast_counter_read = 0;
    _papi_hwi_system_info.sub_info.fast_real_timer = 1;
    _papi_hwi_system_info.sub_info.fast_virtual_timer = 0;
    _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
    _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_OTHER|PAPI_DOM_SUPERVISOR;
    _papi_hwi_system_info.sub_info.hardware_intr = 1;
-   _papi_hwi_system_info.sub_info.multiplex_timer_us = PAPI_NULL;
-   _papi_hwi_system_info.sub_info.multiplex_timer_num = PAPI_NULL;
-   _papi_hwi_system_info.sub_info.multiplex_timer_sig = PAPI_NULL;
    _papi_hwi_system_info.sub_info.kernel_multiplex = 1;
    
    retval = _papi_hwd_update_shlib_info();
