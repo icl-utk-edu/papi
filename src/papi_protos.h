@@ -28,7 +28,7 @@
  int _papi_hwi_cleanup_eventset(EventSetInfo_t * ESI);
  int _papi_hwi_get_domain(PAPI_domain_option_t * opt);
  int _papi_hwi_get_granularity(PAPI_granularity_option_t * opt);
- int _papi_hwi_convert_eventset_to_multiplex(EventSetInfo_t * ESI);
+ int _papi_hwi_convert_eventset_to_multiplex(EventSetInfo_t * ESI, int flags);
  int _papi_hwi_lookup_EventCodeIndex(const EventSetInfo_t * ESI,
                                            unsigned int EventCode);
  EventSetInfo_t *_papi_hwi_allocate_EventSet(void);
