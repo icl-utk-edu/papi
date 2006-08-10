@@ -523,7 +523,7 @@ long_long _papi_hwd_get_real_cycles(void) {
 
 long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 {
-   long_long retval;
+   long_long retval = 0;
 #if defined(USE_PROC_PTTIMER)
    {
      char buf[LINE_MAX];
