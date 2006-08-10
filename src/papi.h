@@ -130,6 +130,9 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_LOCK_USR2          	PAPI_USR2_LOCK
 #define PAPI_LOCK_NUM			PAPI_NUM_LOCK
 
+/* You really shouldn't use this, use PAPI_get_opt(PAPI_MAX_MPX_CTRS) */
+#define PAPI_MPX_DEF_DEG 32     /* Maximum number of counters we can mpx */
+
 /* Vendor definitions */
 
 #define PAPI_VENDOR_UNKNOWN -1
@@ -166,11 +169,6 @@ All of the functions in the PerfAPI should use the following set of constants.
                                    handler randomized */
 #endif
 
-/* Multiplex definitions */
-
-#define PAPI_MPX_DEF_US 10000   /*Default resolution in us. of mpx handler */
-#define PAPI_MPX_DEF_DEG 32     /* Maximum number of counters we can mpx */
-
 /* States of an EventSet */
 
 #define PAPI_STOPPED      0x01  /* EventSet stopped */
@@ -180,6 +178,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_OVERFLOWING  0x10  /* EventSet has overflowing enabled */
 #define PAPI_PROFILING    0x20  /* EventSet has profiling enabled */
 #define PAPI_MULTIPLEXING 0x40  /* EventSet has multiplexing enabled */
+#define PAPI_ATTACHED	  0x80  /* EventSet is attached to another thread/process */
 
 /* Error predefines */
 
@@ -208,11 +207,17 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_OVERFLOW_FORCE_SW 0x40	/* Force using Software */
 #define PAPI_OVERFLOW_HARDWARE 0x80	/* Using Hardware */
 
+/* Multiplex flags definitions */
+#define PAPI_MULTIPLEX_DEFAULT	0x0	/* Use whatever method is available, prefer kernel of course. */
+#define PAPI_MULTIPLEX_FORCE_SW 0x1	/* Force PAPI multiplexing instead of kernel */
+
 /* Option definitions */
 
 #define PAPI_INHERIT_ALL  1     /* The flag to this to inherit all children's counters */
 #define PAPI_INHERIT_NONE 0     /* The flag to this to inherit none of the children's counters */
 
+
+#define PAPI_DETACH		1	/* Detch */
 #define PAPI_DEBUG              2       /* Option to turn on  debugging features of the PAPI library */
 #define PAPI_MULTIPLEX 		3       /* Turn on/off or multiplexing for an eventset */
 #define PAPI_DEFDOM  		4       /* Domain for all new eventsets. Takes non-NULL option pointer. */
@@ -220,8 +225,9 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_DEFGRN  		6       /* Granularity for all new eventsets */
 #define PAPI_GRANUL  		7       /* Granularity for an eventset */
 #define PAPI_MULTIPLEX_USEC     8       /* Multiplexing interval in US */
-#define PAPI_EDGE_DETECT        9
-#define PAPI_INVERT             10
+#define PAPI_EDGE_DETECT        9       /* Count cycles of events if supported */
+#define PAPI_INVERT             10	/* Invert count detect if supported */
+#define PAPI_MAX_MPX_CTRS	11      /* Maximum number of counters we can multiplex */
 #define PAPI_PROFIL  		12      /* Option to turn on the overflow/profil reporting software */
 #define PAPI_PRELOAD 		13      /* Option to find out the environment variable that can preload libraries */
 #define PAPI_CLOCKRATE  	14      /* Clock rate in MHz */
@@ -229,12 +235,11 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_HWINFO  		16      /* Hardware information */
 #define PAPI_EXEINFO  		17      /* Executable information */
 #define PAPI_MAX_CPUS 		18      /* Number of ncpus we can talk to from here */
+#define PAPI_ATTACH		19      /* Attach to a another tid/pid instead of ourself */
 #define PAPI_SHLIBINFO          20      /* Shared Library information */
 #define PAPI_LIB_VERSION        21      /* Option to find out the complete version number of the PAPI library */
 #define PAPI_SUBSTRATEINFO      22      /* Find out what the substrate supports */
 #define PAPI_SUBSTRATE_SUPPORT  PAPI_SUBSTRATEINFO      /* Bogus previous definition */
-#define PAPI_MAX_CTRS           25      /* Number of counters supported by the substrate, >= PAPI_MAX_HWCTRS */
-
 /* Currently the following options are only available on Itanium; they may be supported elsewhere in the future */
 #define PAPI_DATA_ADDRESS       23      /* Option to set data address range restriction */
 #define PAPI_INSTR_ADDRESS      24      /* Option to set instruction address range restriction */
@@ -377,6 +382,7 @@ read the documentation carefully.  */
      char support_version[PAPI_MIN_STR_LEN]; /* Version of the support library */
      char kernel_version[PAPI_MIN_STR_LEN];  /* Version of the kernel PMC support driver */
      int num_cntrs;               /* Number of hardware counters the substrate supports */
+     int num_mpx_cntrs;           /* Number of hardware counters the substrate or PAPI can multiplex supports */
      int num_preset_events;       /* Number of preset events the substrate supports */
      int num_native_events;       /* Number of native events the substrate supports */
      int default_domain;          /* The default domain when this substrate is used */
@@ -399,6 +405,8 @@ read the documentation carefully.  */
      unsigned int fast_counter_read:1;     /* Supports a user level PMC read instruction */
      unsigned int fast_real_timer:1;       /* Supports a fast real timer */
      unsigned int fast_virtual_timer:1;    /* Supports a fast virtual timer */
+     unsigned int attach:1;		   /* Supports attach */
+     unsigned int attach_must_ptrace:1;	   /* Attach must first ptrace and stop the thread/process*/
      unsigned int edge_detect:1;           /* Supports edge detection on events */
      unsigned int invert:1;                /* Supports invert detection on events */
      unsigned int data_address_smpl:1;     /* Supports data/instr miss address sampling */
@@ -493,10 +501,15 @@ read the documentation carefully.  */
    } PAPI_hw_info_t;
 
 
+   typedef struct _papi_attach_option {
+      int eventset;
+      unsigned long tid;
+   } PAPI_attach_option_t;
+
    typedef struct _papi_multiplex_option {
       int eventset;
       int us;
-      int max_degree;
+      int flags;
    } PAPI_multiplex_option_t;
 
    /* address range specification for range restricted counting */
@@ -520,6 +533,7 @@ read the documentation carefully.  */
       PAPI_granularity_option_t defgranularity;
       PAPI_domain_option_t domain;
       PAPI_domain_option_t defdomain;
+      PAPI_attach_option_t attach;
       PAPI_multiplex_option_t multiplex;
       PAPI_hw_info_t *hw_info;
       PAPI_shlib_info_t *shlib_info;
@@ -612,6 +626,7 @@ read the documentation carefully.  */
    int   PAPI_accum(int EventSet, long_long * values);
    int   PAPI_add_event(int EventSet, int Event);
    int   PAPI_add_events(int EventSet, int *Events, int number);
+   int   PAPI_attach(int EventSet, unsigned long tid);
    int   PAPI_cleanup_eventset(int EventSet);
    int   PAPI_create_eventset(int *EventSet);
    int   PAPI_destroy_eventset(int *EventSet);
