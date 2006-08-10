@@ -180,7 +180,7 @@ static int expand_dynamic_array(DynamicArray_t * DA)
 static int EventInfoArrayLength(const EventSetInfo_t * ESI)
 {
    if (ESI->state & PAPI_MULTIPLEXING)
-      return (PAPI_MPX_DEF_DEG);
+      return (_papi_hwi_system_info.sub_info.num_mpx_cntrs);
    else
       return (_papi_hwi_system_info.sub_info.num_cntrs);
 }
@@ -222,7 +222,7 @@ EventSetInfo_t *_papi_hwi_allocate_EventSet(void)
       return (NULL);
    memset(ESI, 0x00, sizeof(EventSetInfo_t));
 
-   max_counters = _papi_hwi_system_info.sub_info.num_cntrs;
+   max_counters = _papi_hwi_system_info.sub_info.num_mpx_cntrs;
 /*  ESI->machdep = (hwd_control_state_t *)papi_malloc(sizeof(hwd_control_state_t)); */
    ESI->sw_stop = (long_long *) papi_malloc(max_counters * sizeof(long_long));
    ESI->hw_start = (long_long *) papi_malloc(max_counters * sizeof(long_long));
@@ -274,8 +274,8 @@ static void free_EventSet(EventSetInfo_t * ESI)
       papi_free(ESI->sw_stop);
    if (ESI->hw_start)
       papi_free(ESI->hw_start);
-   if ((ESI->state & PAPI_MULTIPLEXING) && ESI->multiplex)
-      papi_free(ESI->multiplex);
+   if ((ESI->state & PAPI_MULTIPLEXING) && ESI->multiplex.mpx_evset)
+     papi_free(ESI->multiplex.mpx_evset);
 
 #ifdef DEBUG
    memset(ESI, 0x00, sizeof(EventSetInfo_t));
@@ -348,30 +348,6 @@ int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle)
           (void *) EventSet, handle, *EventSet);
 
    return (retval);
-}
-
-int _papi_hwi_get_domain(PAPI_domain_option_t * opt)
-{
-   EventSetInfo_t *ESI;
-
-   ESI = _papi_hwi_lookup_EventSet(opt->eventset);
-   if (ESI == NULL)
-      return(PAPI_ENOEVST);
-
-   opt->domain = ESI->domain.domain;
-   return (PAPI_OK);
-}
-
-int _papi_hwi_get_granularity(PAPI_granularity_option_t * opt)
-{
-   EventSetInfo_t *ESI;
-
-   ESI = _papi_hwi_lookup_EventSet(opt->eventset);
-   if (ESI == NULL)
-      return(PAPI_ENOEVST);
-
-   opt->granularity = ESI->granularity.granularity;
-   return(PAPI_OK);
 }
 
 /* This function returns the index of the the next free slot
@@ -607,7 +583,7 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
    /* If it is a MPX EventSet, add it to the multiplex data structure and
       this threads multiplex list */
 
-   if (!(ESI->state & PAPI_MULTIPLEXING)) {
+   if (!_papi_hwi_is_sw_multiplex(ESI)) {
 
       if (EventCode & PAPI_PRESET_MASK) {
          int count;
@@ -688,7 +664,7 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
 
    } else {
       /* Multiplexing is special. See multiplex.c */
-      retval = mpx_add_event(&ESI->multiplex, EventCode);
+     retval = mpx_add_event(&ESI->multiplex.mpx_evset, EventCode);
       if (retval < PAPI_OK)
          return (retval);
       ESI->EventInfoArray[thisindex].event_code = EventCode;    /* Relevant */
@@ -808,8 +784,8 @@ int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode)
    /* If it is a MPX EventSet, remove it from the multiplex data structure and
       this threads multiplex list */
 
-   if (ESI->state & PAPI_MULTIPLEXING) {
-      retval = mpx_remove_event(&ESI->multiplex, EventCode);
+   if (_papi_hwi_is_sw_multiplex(ESI)) {
+      retval = mpx_remove_event(&ESI->multiplex.mpx_evset, EventCode);
       if (retval < PAPI_OK)
          return (retval);
    } else
@@ -929,67 +905,51 @@ int _papi_hwi_cleanup_eventset(EventSetInfo_t * ESI)
    return (PAPI_OK);
 }
 
-int _papi_hwi_convert_eventset_to_multiplex(EventSetInfo_t * ESI)
+int _papi_hwi_convert_eventset_to_multiplex(EventSetInfo_t * ESI, int flags)
 {
-   EventInfo_t *tmp;
    int retval, i, j = 0, *mpxlist = NULL;
-
-   tmp = (EventInfo_t *) papi_malloc(PAPI_MPX_DEF_DEG * sizeof(EventInfo_t));
-   if (tmp == NULL)
-      return (PAPI_ENOMEM);
 
    /* If there are any events in the EventSet, 
       convert them to multiplex events */
 
-   if (ESI->NumberOfEvents) {
-      mpxlist = (int *) papi_malloc(sizeof(int) * ESI->NumberOfEvents);
-      if (mpxlist == NULL) {
-         papi_free(tmp);
-         return (PAPI_ENOMEM);
-      }
+   if (ESI->NumberOfEvents)
+     {											  
+       mpxlist = (int *) papi_malloc(sizeof(int) * ESI->NumberOfEvents);
+       if (mpxlist == NULL) 
+	   return (PAPI_ENOMEM);
 
-      /* Build the args to MPX_add_events(). */
+       /* Build the args to MPX_add_events(). */
 
-      /* Remember the EventInfoArray can be sparse
-         and the data can be non-contiguous */
+       /* Remember the EventInfoArray can be sparse
+	  and the data can be non-contiguous */
 
-      for (i = 0; i < EventInfoArrayLength(ESI); i++)
+       for (i = 0; i < EventInfoArrayLength(ESI); i++)
          if (ESI->EventInfoArray[i].event_code != PAPI_NULL)
-            mpxlist[j++] = ESI->EventInfoArray[i].event_code;
+	   mpxlist[j++] = ESI->EventInfoArray[i].event_code;
 
-      retval = MPX_add_events(&ESI->multiplex, mpxlist, j);
-      if (retval != PAPI_OK) {
-         papi_free(mpxlist);
-         papi_free(tmp);
-         return (retval);
-      }
-   }
-
-   /* Resize the EventInfo_t array */
-
-   papi_free(ESI->EventInfoArray);
-   ESI->EventInfoArray = tmp;
+       /* Resize the EventInfo_t array */
+       
+       if ((_papi_hwi_system_info.sub_info.kernel_multiplex == 0) || 
+	   ((_papi_hwi_system_info.sub_info.kernel_multiplex) && 
+	    (flags & PAPI_MULTIPLEX_FORCE_SW))) 
+	 {
+	   retval = MPX_add_events(&ESI->multiplex.mpx_evset, mpxlist, j);
+	   if (retval != PAPI_OK) 
+	     {
+	       papi_free(mpxlist);
+	       return (retval);
+	     }
+	   papi_free(mpxlist);
+	 }
+     }
 
    /* Update the state before initialization! */
 
    ESI->state |= PAPI_MULTIPLEXING;
-
-   /* Initialize it */
-
-   initialize_EventInfoArray(ESI);
-
-   /* Copy only the relevant contents of EventInfoArray to
-      this multiplexing eventset. This allows PAPI_list_events
-      to work transparently and allows quick lookups of what's
-      in this eventset without having to iterate through all
-      it's 'sub-eventsets'. */
-
-   if (mpxlist != NULL) {
-      for (i = 0; i < ESI->NumberOfEvents; i++)
-         ESI->EventInfoArray[i].event_code = mpxlist[i];
-      papi_free(mpxlist);
-   }
-
+   if (_papi_hwi_system_info.sub_info.kernel_multiplex && (flags & PAPI_MULTIPLEX_FORCE_SW))
+     ESI->multiplex.flags = PAPI_MULTIPLEX_FORCE_SW;
+   ESI->multiplex.us = _papi_hwi_system_info.sub_info.multiplex_timer_us;
+ 
    return (PAPI_OK);
 }
 
@@ -1051,6 +1011,7 @@ int _papi_hwi_init_global_internal(void)
    _papi_hwi_system_info.sub_info.support_version[0] = '\0';   /* Version of the support library */
    _papi_hwi_system_info.sub_info.kernel_version[0] = '\0';    /* Version of the kernel PMC support driver */
    _papi_hwi_system_info.sub_info.num_cntrs = 0;               /* Number of counters the substrate supports */
+   _papi_hwi_system_info.sub_info.num_mpx_cntrs = PAPI_MPX_DEF_DEG; /* Number of counters the substrate (or PAPI) can multiplex */
    _papi_hwi_system_info.sub_info.num_preset_events = 0;       
    _papi_hwi_system_info.sub_info.num_native_events = 0;       
    _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;          /* The default domain when this substrate is used */
@@ -1074,6 +1035,9 @@ int _papi_hwi_init_global_internal(void)
    _papi_hwi_system_info.sub_info.data_address_range = 0;    /* Supports data address range limiting */
    _papi_hwi_system_info.sub_info.instr_address_range = 0;   /* Supports instruction address range limiting */
    _papi_hwi_system_info.sub_info.fast_real_timer = 0;       /* Has a fast real timer */
+   _papi_hwi_system_info.sub_info.fast_virtual_timer = 0;    /* Has a fast virtual timer */
+   _papi_hwi_system_info.sub_info.attach = 0;    	     /* Can attach */
+   _papi_hwi_system_info.sub_info.attach_must_ptrace = 0;    /* Attaching code must first ptrace and stop the child */
    _papi_hwi_system_info.sub_info.fast_virtual_timer = 0;    /* Has a fast virtual timer */
    _papi_hwi_system_info.sub_info.data_address_smpl = 0;     /* Supports data/instr miss address sampling */
    _papi_hwi_system_info.sub_info.branch_tracing = 0;        /* Supports branch trace buffering */
