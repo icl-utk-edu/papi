@@ -224,7 +224,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_DOMAIN  		5       /* Domain for an eventset */
 #define PAPI_DEFGRN  		6       /* Granularity for all new eventsets */
 #define PAPI_GRANUL  		7       /* Granularity for an eventset */
-#define PAPI_MULTIPLEX_USEC     8       /* Multiplexing interval in US */
+#define PAPI_DEF_MPX_USEC       8       /* Multiplexing interval in US */
 #define PAPI_EDGE_DETECT        9       /* Count cycles of events if supported */
 #define PAPI_INVERT             10	/* Invert count detect if supported */
 #define PAPI_MAX_MPX_CTRS	11      /* Maximum number of counters we can multiplex */
