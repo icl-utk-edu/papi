@@ -212,15 +212,22 @@ static void initialize_NativeInfoArray(EventSetInfo_t * ESI)
 }
 
 
-EventSetInfo_t *_papi_hwi_allocate_EventSet(void)
+static int allocate_EventSet(EventSetInfo_t **here)
 {
    EventSetInfo_t *ESI;
-   int max_counters;
+   int max_counters, ret;
 
    ESI = (EventSetInfo_t *) papi_malloc(sizeof(EventSetInfo_t));
    if (ESI == NULL)
-      return (NULL);
+      return (PAPI_ENOMEM);
    memset(ESI, 0x00, sizeof(EventSetInfo_t));
+
+   ret = _papi_hwd_init_control_state(&ESI->machdep); /* this used to be init_config */
+   if (ret != PAPI_OK)
+     {
+       papi_free(ESI);
+       return(ret);
+     }
 
    max_counters = _papi_hwi_system_info.sub_info.num_mpx_cntrs;
 /*  ESI->machdep = (hwd_control_state_t *)papi_malloc(sizeof(hwd_control_state_t)); */
@@ -240,7 +247,7 @@ EventSetInfo_t *_papi_hwi_allocate_EventSet(void)
       if (ESI->EventInfoArray)
          papi_free(ESI->EventInfoArray);
       papi_free(ESI);
-      return (NULL);
+      return (PAPI_ENOMEM);
    }
 /*  memset(ESI->machdep,       0x00,_papi_system_info.size_machdep); */
    memset(ESI->sw_stop, 0x00, max_counters * sizeof(long_long));
@@ -248,14 +255,14 @@ EventSetInfo_t *_papi_hwi_allocate_EventSet(void)
 
    initialize_EventInfoArray(ESI);
    initialize_NativeInfoArray(ESI);
-   _papi_hwd_init_control_state(&ESI->machdep); /* this used to be init_config */
 
    ESI->state = PAPI_STOPPED;
 
    /* ESI->domain.domain = 0;
       ESI->granularity.granularity = 0; */
 
-   return (ESI);
+   *here = ESI;
+   return(PAPI_OK);
 }
 
 /*========================================================================*/
@@ -331,9 +338,9 @@ int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle)
       return (PAPI_EINVAL);
    /* Well, then allocate a new one. Use n to keep track of a NEW EventSet */
 
-   ESI = _papi_hwi_allocate_EventSet();
-   if (ESI == NULL)
-      return (PAPI_ENOMEM);
+   retval = allocate_EventSet(&ESI);
+   if (retval != PAPI_OK)
+      return (retval);
 
    /* Add it to the global table */
 
@@ -905,9 +912,11 @@ int _papi_hwi_cleanup_eventset(EventSetInfo_t * ESI)
    return (PAPI_OK);
 }
 
-int _papi_hwi_convert_eventset_to_multiplex(EventSetInfo_t * ESI, int flags)
+int _papi_hwi_convert_eventset_to_multiplex(_papi_int_multiplex_t *mpx)
 {
-   int retval, i, j = 0, *mpxlist = NULL;
+  int retval, i, j = 0, *mpxlist = NULL;
+  EventSetInfo_t * ESI = mpx->ESI;
+  int flags = mpx->flags;
 
    /* If there are any events in the EventSet, 
       convert them to multiplex events */
@@ -948,7 +957,7 @@ int _papi_hwi_convert_eventset_to_multiplex(EventSetInfo_t * ESI, int flags)
    ESI->state |= PAPI_MULTIPLEXING;
    if (_papi_hwi_system_info.sub_info.kernel_multiplex && (flags & PAPI_MULTIPLEX_FORCE_SW))
      ESI->multiplex.flags = PAPI_MULTIPLEX_FORCE_SW;
-   ESI->multiplex.us = _papi_hwi_system_info.sub_info.multiplex_timer_us;
+   ESI->multiplex.us = mpx->us;
  
    return (PAPI_OK);
 }

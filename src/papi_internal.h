@@ -365,6 +365,12 @@ typedef struct _papi_int_attach {
    EventSetInfo_t *ESI;
 } _papi_int_attach_t;
 
+typedef struct _papi_int_multiplex {
+   int flags;
+   unsigned long us;
+   EventSetInfo_t *ESI;
+} _papi_int_multiplex_t;
+
 typedef struct _papi_int_defdomain {
    int defdomain;
 } _papi_int_defdomain_t;
@@ -413,6 +419,7 @@ typedef union _papi_int_option_t {
    _papi_int_profile_t profile;
    _papi_int_domain_t domain;
    _papi_int_attach_t attach;
+   _papi_int_multiplex_t multiplex;
 #if 0
    _papi_int_inherit_t inherit;
 #endif
