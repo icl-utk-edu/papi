@@ -49,7 +49,7 @@
 				AdditionalOptions="/D &quot;SUBSTRATE=&lt;winpmc-p3.h&gt;&quot;"
 				Optimization="0"
 				AdditionalIncludeDirectories=".;..\..;..\winpmc;..\winpmc\sys"
-				PreprocessorDefinitions="_DEBUG;_WINDOWS;_USRDLL;FORTRANCAPS;WinPAPI_EXPORTS;NO_VARARG_MACRO;NO_FUNCTION_MACRO;_CRT_SECURE_NO_DEPRECATE"
+				PreprocessorDefinitions="_DEBUG;DEBUG;_WINDOWS;_USRDLL;FORTRANCAPS;WinPAPI_EXPORTS;NO_VARARG_MACRO;NO_FUNCTION_MACRO;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
