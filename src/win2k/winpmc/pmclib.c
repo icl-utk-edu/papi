@@ -201,3 +201,22 @@ void pmc_close(HANDLE kd)
     }
 }
 
+char *pmc_revision(void)
+{
+    return("$Revision$"); // assumes this file is under cvs control
+}
+
+char *pmc_kernel_version(HANDLE kd)
+{
+    DWORD dwBytesReturned;
+    BOOL  bReturnCode = FALSE;
+    static char version[256]; 
+
+    // Dispatch the PMC_VERSION_STRING IOCTL to our driver.
+    bReturnCode = DeviceIoControl(kd, IOCTL_PMC_VERSION_STRING,
+	NULL, 0, (int *)version, 255, &dwBytesReturned, NULL);
+    version[dwBytesReturned-2] = 0; // make sure it's terminated
+    return(version);
+}
+
+

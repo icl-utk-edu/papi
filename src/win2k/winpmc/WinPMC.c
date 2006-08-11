@@ -14,7 +14,7 @@
 #include "WinPMC.h"                           // contains I/O control codes
 
 #define WELCOME_STRING		"Welcome to the Windows PMC Driver\n"
-#define VERSION_STRING		"PMC Driver Version: 2006/07/28:1  \n"
+#define VERSION_STRING		"PMC Driver Version: 2006/08/11:2  \n"
 
 /* variables */
 

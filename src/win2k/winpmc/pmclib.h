@@ -8,12 +8,14 @@
 
 #include "WinPMC.h"
 
-#ifdef DEBUG
-  #define PMCDBG(a) { extern int _papi_hwi_debug; if (papi_hwi_debug) { fprintf(stderr,"DEBUG:%s:%d: ",__FILE__,__LINE__); fprintf a; } }
-#else
+/****WIN32: Supporting var args in Windows will take some research
+    For now we'll just suppress the printing of debug statements in the 
+    kernel driver. Also, this may need to be folded into papi_internal.
+*/
+//#ifdef DEBUG
+//  #define PMCDBG(a) { extern int _papi_hwi_debug; if (papi_hwi_debug) { fprintf(stderr,"DEBUG:%s:%d: ",__FILE__,__LINE__); fprintf a; } }
+//#else
   #define PMCDBG(a)
-#endif
-
 
 /* user-visible state of an mmap:ed virtual perfctr */
 struct pmc_state {
@@ -37,5 +39,7 @@ int pmc_init(HANDLE kd);
 int pmc_set_control(HANDLE kd, struct pmc_control *);
 HANDLE pmc_open(void);
 void pmc_close(HANDLE kd);
+char *pmc_revision(void);
+char *pmc_kernel_version(HANDLE kd);
 
 #endif // _PMCLIB_H 
