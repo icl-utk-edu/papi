@@ -661,6 +661,56 @@ inline static int compute_kernel_args(pfmlib_input_param_t *inp,
    return(PAPI_OK);
 }
 
+static int attach(hwd_control_state_t *ctl, unsigned long tid)
+{
+  pfarg_ctx_t newctx;
+  pfarg_load_t load_args;
+  int ret;
+
+  memset(&newctx,0x0,sizeof(newctx));
+  SUBDBG("PFM_CREATE_CONTEXT(%p)\n",&newctx);
+  if ((ret = pfm_create_context(&newctx, NULL, 0)))
+    {
+      PAPIERROR("pfm_create_context(): %s", pfm_strerror(ret));
+      return(PAPI_ESYS);
+    }
+  SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",newctx.ctx_fd);
+
+  memset(&load_args, 0, sizeof(load_args));
+  load_args.load_pid = tid;
+  SUBDBG("PFM_LOAD_CONTEXT(%d,%p(%u))\n",newctx.ctx_fd,&load_args,load_args.load_pid);
+  if ((ret = pfm_load_context(newctx.ctx_fd, &load_args)))
+    {
+      PAPIERROR("pfm_load_context(%d,%p(%u)): %s", newctx.ctx_fd, &load_args, tid, pfm_strerror(ret));
+      close(newctx.ctx_fd);
+      return PAPI_ESYS;
+    }
+
+  memcpy(&ctl->load,&load_args,sizeof(load_args));
+  memcpy(&ctl->ctx,&newctx,sizeof(newctx));
+  return(PAPI_OK);
+}
+
+static int detach(hwd_context_t *ctx, hwd_control_state_t *ctl)
+{
+  int ret;
+
+  SUBDBG("PFM_UNLOAD_CONTEXT(%d) (tid %u)\n",ctl->ctx.ctx_fd,ctl->load.load_pid);
+  if ((ret = pfm_unload_context(ctl->ctx.ctx_fd)))
+    {
+      PAPIERROR("pfm_unload_context(%d): %s", ctl->ctx.ctx_fd, pfm_strerror(ret));
+      return PAPI_ESYS;
+    }
+  return (PAPI_OK);
+  close(ctl->ctx.ctx_fd);
+
+  /* Restore to original context */
+  memcpy(&ctl->load,&ctx->load,sizeof(ctx->load));
+  memcpy(&ctl->ctx,&ctx->ctx,sizeof(ctx->ctx));
+
+  return(PAPI_OK);
+}
+
 inline static int set_domain(hwd_control_state_t * this_state, int domain)
 {
   int mode = 0, did = 0;
@@ -844,7 +894,8 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   _papi_hwi_system_info.sub_info.fast_counter_read = 0;
   _papi_hwi_system_info.sub_info.fast_real_timer = 1;
   _papi_hwi_system_info.sub_info.fast_virtual_timer = 0;
-
+  _papi_hwi_system_info.sub_info.attach = 1;
+  _papi_hwi_system_info.sub_info.attach_must_ptrace = 1;
 
    /* Fill in what we can of the papi_system_info. */
    retval = _papi_hwd_get_system_info();
@@ -913,8 +964,8 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 
 int _papi_hwd_init(hwd_context_t * thr_ctx)
 {
-  pfarg_ctx_t ctx;
   pfarg_load_t load_args;
+  pfarg_ctx_t newctx;
   int ret;
 
 #if defined(USE_PROC_PTTIMER)
@@ -932,32 +983,26 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
   }
 #endif
 
-  memset(&ctx, 0, sizeof(ctx));
-  SUBDBG("PFM_CREATE_CONTEXT(%p)\n",&ctx);
-  if ((ret = pfm_create_context(&ctx, NULL, 0)))
+  memset(&newctx, 0, sizeof(newctx));
+  SUBDBG("PFM_CREATE_CONTEXT(%p)\n",&newctx);
+  if ((ret = pfm_create_context(&newctx, NULL, 0)))
     {
       PAPIERROR("pfm_create_context(): %s", pfm_strerror(ret));
-    bail:
-#if defined(USE_PROC_PTTIMER)
-      close(thr_ctx->stat_fd);
-      thr_ctx->stat_fd = -1;
-#endif
       return(PAPI_ESYS);
     }
-  SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",ctx.ctx_fd);
+  SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",newctx.ctx_fd);
 
   memset(&load_args, 0, sizeof(load_args));
   load_args.load_pid = mygettid();
-  SUBDBG("PFM_LOAD_CONTEXT(%d,%p(%d))\n",ctx.ctx_fd,&load_args,mygettid());
-  if ((ret = pfm_load_context(ctx.ctx_fd, &load_args)))
+  SUBDBG("PFM_LOAD_CONTEXT(%d,%p(%d))\n",newctx.ctx_fd,&load_args,mygettid());
+  if ((ret = pfm_load_context(newctx.ctx_fd, &load_args)))
     {
-      PAPIERROR("pfm_load_context(%p): %s", &load_args, pfm_strerror(ret));
-      close(ctx.ctx_fd);
-      ctx.ctx_fd = -1;
-      goto bail;
+      PAPIERROR("pfm_load_context(%d,%p(%d)): %s",
+		newctx.ctx_fd,&load_args,mygettid(),pfm_strerror(ret));
+      return(PAPI_ESYS);
     }
 
-  memcpy(&thr_ctx->ctx,&ctx,sizeof(ctx));
+  memcpy(&thr_ctx->ctx,&newctx,sizeof(newctx));
   memcpy(&thr_ctx->load,&load_args,sizeof(load_args));
   return(PAPI_OK);
 }
@@ -1037,47 +1082,48 @@ long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 }
 
 /* reset the hardware counters */
-int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * current_state)
+int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t *ctl)
 {
   int i, ret;
 
-  for (i=0; i < current_state->in.pfp_event_count; i++) 
-    current_state->pd[i].reg_value = 0ULL;
+  for (i=0; i < ctl->in.pfp_event_count; i++) 
+    ctl->pd[i].reg_value = 0ULL;
 
-  SUBDBG("PFM_WRITE_PMDS(%d,%p,%d)\n",ctx->ctx.ctx_fd, current_state->pd, current_state->in.pfp_event_count);
-  if ((ret = pfm_write_pmds(ctx->ctx.ctx_fd, current_state->pd, current_state->in.pfp_event_count)))
+  SUBDBG("PFM_WRITE_PMDS(%d,%p,%d)\n",ctl->ctx.ctx_fd, ctl->pd, ctl->in.pfp_event_count);
+  if ((ret = pfm_write_pmds(ctl->ctx.ctx_fd, ctl->pd, ctl->in.pfp_event_count)))
     {
-      PAPIERROR("pfm_write_pmds(%d,%p,%d): %s",ctx->ctx.ctx_fd,current_state->pd,current_state->in.pfp_event_count, pfm_strerror(ret));
+      PAPIERROR("pfm_write_pmds(%d,%p,%d): %s",ctl->ctx.ctx_fd,ctl->pd,ctl->in.pfp_event_count, pfm_strerror(ret));
       return(PAPI_ESYS);
     }
 
   return (PAPI_OK);
 }
 
-int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * current_state,
+int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctl,
                    long_long ** events, int flags)
 {
   int i, ret;
 
-  SUBDBG("PFM_READ_PMDS(%d,%p,%d)\n",ctx->ctx.ctx_fd, current_state->pd, current_state->in.pfp_event_count);
-  if ((ret = pfm_read_pmds(ctx->ctx.ctx_fd, current_state->pd, current_state->in.pfp_event_count)))
+  SUBDBG("PFM_READ_PMDS(%d,%p,%d)\n",ctl->ctx.ctx_fd, ctl->pd, ctl->in.pfp_event_count);
+  if ((ret = pfm_read_pmds(ctl->ctx.ctx_fd, ctl->pd, ctl->in.pfp_event_count)))
     {
-      PAPIERROR("pfm_read_pmds(%d,%p,%d): %s",ctx->ctx.ctx_fd,current_state->pd,current_state->in.pfp_event_count, pfm_strerror(ret));
+      PAPIERROR("pfm_read_pmds(%d,%p,%d): %s",ctl->ctx.ctx_fd,ctl->pd,ctl->in.pfp_event_count, pfm_strerror(ret));
       *events = NULL;
       return(PAPI_ESYS);
     }
   
-  for (i=0; i < current_state->in.pfp_event_count; i++) 
+  for (i=0; i < ctl->in.pfp_event_count; i++) 
     {
-      current_state->counts[i] = current_state->pd[i].reg_value;
+      ctl->counts[i] = ctl->pd[i].reg_value;
+      SUBDBG("PMD[%d] = %lld\n",i,ctl->pd[i].reg_value);
     }
-  *events = current_state->counts;
+  *events = ctl->counts;
 
    return PAPI_OK;
 }
 
 
-int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * current_state)
+int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctl)
 {
   int i, ret; 
 
@@ -1090,53 +1136,66 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * current_state)
    * monitors.
    */
 
-  SUBDBG("PFM_WRITE_PMCS(%d,%p,%d)\n",ctx->ctx.ctx_fd, current_state->pc, current_state->out.pfp_pmc_count);
-  if ((ret = pfm_write_pmcs(ctx->ctx.ctx_fd, current_state->pc, current_state->out.pfp_pmc_count)))
+  SUBDBG("PFM_WRITE_PMCS(%d,%p,%d)\n",ctl->ctx.ctx_fd, ctl->pc, ctl->out.pfp_pmc_count);
+  if ((ret = pfm_write_pmcs(ctl->ctx.ctx_fd, ctl->pc, ctl->out.pfp_pmc_count)))
     {
-      PAPIERROR("pfm_write_pmcs(%d,%p,%d): %s",ctx->ctx.ctx_fd,current_state->pc,current_state->out.pfp_pmc_count, pfm_strerror(ret));
+      PAPIERROR("pfm_write_pmcs(%d,%p,%d): %s",ctl->ctx.ctx_fd,ctl->pc,ctl->out.pfp_pmc_count, pfm_strerror(ret));
       return(PAPI_ESYS);
     }
   
   /* Set counters to zero as per PAPI_start man page. */
 
-  for (i=0; i < current_state->in.pfp_event_count; i++) 
-    current_state->pd[i].reg_value = 0ULL; 
+  for (i=0; i < ctl->in.pfp_event_count; i++) 
+    ctl->pd[i].reg_value = 0ULL; 
 
   /*
    * To be read, each PMD must be either written or declared
    * as being part of a sample (reg_smpl_pmds)
    */
-  SUBDBG("PFM_WRITE_PMDS(%d,%p,%d)\n",ctx->ctx.ctx_fd, current_state->pd, current_state->in.pfp_event_count);
-  if ((ret = pfm_write_pmds(ctx->ctx.ctx_fd, current_state->pd, current_state->in.pfp_event_count)))
+  SUBDBG("PFM_WRITE_PMDS(%d,%p,%d)\n",ctl->ctx.ctx_fd, ctl->pd, ctl->in.pfp_event_count);
+  if ((ret = pfm_write_pmds(ctl->ctx.ctx_fd, ctl->pd, ctl->in.pfp_event_count)))
     {
-      PAPIERROR("pfm_write_pmds(%d,%p,%d): %s",ctx->ctx.ctx_fd,current_state->pd,current_state->in.pfp_event_count, pfm_strerror(ret));
+      PAPIERROR("pfm_write_pmds(%d,%p,%d): %s",ctl->ctx.ctx_fd,ctl->pd,ctl->in.pfp_event_count, pfm_strerror(ret));
       return(PAPI_ESYS);
     }
 
-  SUBDBG("PFM_START(%d,%p)\n",ctx->ctx.ctx_fd, NULL);
-  if ((ret = pfm_start(ctx->ctx.ctx_fd, NULL)))
+  SUBDBG("PFM_START(%d,%p)\n",ctl->ctx.ctx_fd, NULL);
+  if ((ret = pfm_start(ctl->ctx.ctx_fd, NULL)))
     {
-      PAPIERROR("pfm_start(%d): %s", ctx->ctx.ctx_fd, pfm_strerror(ret));
+      PAPIERROR("pfm_start(%d): %s", ctl->ctx.ctx_fd, pfm_strerror(ret));
       return(PAPI_ESYS);
     }
    return PAPI_OK;
 }
 
-int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * zero)
+int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctl)
 {
   int ret;
-  SUBDBG("PFM_STOP(%d)\n",ctx->ctx.ctx_fd);
-  if ((ret = pfm_stop(ctx->ctx.ctx_fd)))
+  SUBDBG("PFM_STOP(%d)\n",ctl->ctx.ctx_fd);
+  if ((ret = pfm_stop(ctl->ctx.ctx_fd)))
     {
-      PAPIERROR("pfm_stop(%d): %s", ctx->ctx.ctx_fd, pfm_strerror(ret));
+      /* If this thread is attached to another thread, and that thread
+	 has exited, we can safely discard the error here. */
+
+      if ((ret == PFMLIB_ERR_NOTSUPP) && (ctl->load.load_pid != mygettid()))
+	return(PAPI_OK);
+
+      PAPIERROR("pfm_stop(%d): %s", ctl->ctx.ctx_fd, pfm_strerror(ret));
       return(PAPI_ESYS);
     }
    return PAPI_OK;
 }
 
-int _papi_hwd_ctl(hwd_context_t * zero, int code, _papi_int_option_t * option)
+int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
    switch (code) {
+   case PAPI_MULTIPLEX:
+     option->domain.ESI->machdep.multiplexed = 1;
+     return(PAPI_OK);
+   case PAPI_ATTACH:
+     return(attach(&option->attach.ESI->machdep, option->attach.tid));
+   case PAPI_DETACH:
+     return(detach(ctx, &option->attach.ESI->machdep));
    case PAPI_DOMAIN:
      return(set_domain(&option->domain.ESI->machdep, option->domain.domain));
    case PAPI_GRANUL:
@@ -1146,12 +1205,12 @@ int _papi_hwd_ctl(hwd_context_t * zero, int code, _papi_int_option_t * option)
    case PAPI_DATA_ADDRESS:
       ret=set_default_domain(&option->address_range.ESI->machdep, option->address_range.domain);
 	  if(ret != PAPI_OK) return(ret);
-	  set_drange(zero, &option->address_range.ESI->machdep, option);
+	  set_drange(ctx, &option->address_range.ESI->machdep, option);
       return (PAPI_OK);
    case PAPI_INSTR_ADDRESS:
       ret=set_default_domain(&option->address_range.ESI->machdep, option->address_range.domain);
 	  if(ret != PAPI_OK) return(ret);
-	  set_irange(zero, &option->address_range.ESI->machdep, option);
+	  set_irange(ctx, &option->address_range.ESI->machdep, option);
       return (PAPI_OK);
 #endif
    default:
@@ -1162,13 +1221,18 @@ int _papi_hwd_ctl(hwd_context_t * zero, int code, _papi_int_option_t * option)
 int _papi_hwd_shutdown(hwd_context_t * ctx)
 {
   int ret;
+
 #if defined(USR_PROC_PTTIMER)
   close(ctx->stat_fd);
 #endif  
-  SUBDBG("PFM_UNLOAD_CONTEXT(%d)\n",ctx->ctx.ctx_fd);
+  SUBDBG("PFM_UNLOAD_CONTEXT(%d) (tid %u)\n",ctx->ctx.ctx_fd,ctx->load.load_pid);
   if ((ret = pfm_unload_context(ctx->ctx.ctx_fd)))
-    PAPIERROR("pfm_unload_context(%d): %s", ctx->ctx.ctx_fd, pfm_strerror(ret));
-  return (close(ctx->ctx.ctx_fd));
+    {
+      PAPIERROR("pfm_unload_context(%d): %s", ctx->ctx.ctx_fd, pfm_strerror(ret));
+      return PAPI_ESYS;
+    }
+  close(ctx->ctx.ctx_fd);
+  return (PAPI_OK);
 }
 
 /* This function only used when hardware overflows ARE working */
@@ -1356,18 +1420,19 @@ int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
   return(did_something);
 }
 
-void _papi_hwd_init_control_state(hwd_control_state_t *this_state)
+int _papi_hwd_init_control_state(hwd_control_state_t *this_state)
 {
-   pfmlib_input_param_t *inp = &this_state->in;
-   pfmlib_output_param_t *outp = &this_state->out;
-   pfarg_pmd_t *pd = this_state->pd;
-   pfarg_pmc_t *pc = this_state->pc;
-
-   memset(inp,0,sizeof(*inp));
-   memset(outp,0,sizeof(*inp));
-   memset(pc,0,sizeof(this_state->pc));
-   memset(pd,0,sizeof(this_state->pd));
-   set_domain(this_state,_papi_hwi_system_info.sub_info.default_domain);
+  pfmlib_input_param_t *inp = &this_state->in;
+  pfmlib_output_param_t *outp = &this_state->out;
+  pfarg_pmd_t *pd = this_state->pd;
+  pfarg_pmc_t *pc = this_state->pc;
+  
+  memset(inp,0,sizeof(*inp));
+  memset(outp,0,sizeof(*inp));
+  memset(pc,0,sizeof(this_state->pc));
+  memset(pd,0,sizeof(this_state->pd));
+  set_domain(this_state,_papi_hwi_system_info.sub_info.default_domain);
+  return(PAPI_OK);
 }
 
 /* This function clears the current contents of the control structure and 

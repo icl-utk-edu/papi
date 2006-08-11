@@ -52,6 +52,10 @@ typedef struct {
 } pfm_preset_search_entry_t;
 
 typedef struct {
+  /* Context structure to kernel, only different for attached */
+  pfarg_ctx_t ctx;
+  /* Load structure to kernel, only different for attached */
+  pfarg_load_t load;
   /* Which counters to use? Bits encode counters to use, may be duplicates */
   hwd_register_map_t bits;
   /* Buffer to pass to library to control the counters */
@@ -64,15 +68,18 @@ typedef struct {
   pfarg_pmd_t pd[PFMLIB_MAX_PMDS];
   /* Buffer to gather counters */
   long_long counts[PFMLIB_MAX_PMDS];
+  /* Is this set kernel multiplexed? */
+  int multiplexed;
 } hwd_control_state_t;
 
 typedef struct {
-  int fd;  /* file descriptor */
-  pfarg_ctx_t ctx;
-  pfarg_load_t load;
 #if defined(USE_PROC_PTTIMER)
    int stat_fd;
 #endif
+  /* Main context structure to kernel */
+  pfarg_ctx_t ctx;
+  /* Main load structure to kernel */
+  pfarg_load_t load;
 } hwd_context_t;
 
 typedef struct hwd_native_register {
