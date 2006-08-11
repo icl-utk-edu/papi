@@ -306,7 +306,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
 /* This used to be init_config, static to the substrate.
    Now its exposed to the hwi layer and called when an EventSet is allocated.
 */
-void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
+int _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 {
    int i;
 
@@ -315,6 +315,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
    }
    set_domain(ptr, _papi_hwi_system_info.sub_info.default_domain);
    set_granularity(ptr, _papi_hwi_system_info.sub_info.default_granularity);
+   return(PAPI_OK);
 }
 
 

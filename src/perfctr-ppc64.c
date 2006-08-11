@@ -267,13 +267,14 @@ int setup_ppc64_presets(int cputype) {
 }
 
 /*called when an EventSet is allocated */
-void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
+int _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
    int i = 0;
    for(i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
       ptr->control.cpu_control.pmc_map[i] = i;
    }
    ptr->control.cpu_control.tsc_on = 1;
    set_domain(ptr, _papi_hwi_system_info.sub_info.default_domain);
+   return(PAPI_OK);
 }
 
 /* No longer needed if not implemented

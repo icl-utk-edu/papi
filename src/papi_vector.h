@@ -87,7 +87,7 @@ typedef struct papi_vectors{
   int (*_vec_papi_hwd_write) (void *, void *, long_long[]);
   int (*_vec_papi_hwd_stop_profiling) (ThreadInfo_t *, EventSetInfo_t *);
   int (*_vec_papi_hwd_init) (void *);
-  void (*_vec_papi_hwd_init_control_state) (void *);
+  int (*_vec_papi_hwd_init_control_state) (void *);
   int (*_vec_papi_hwd_update_shlib_info) (void);
   int (*_vec_papi_hwd_get_system_info) ();
   int (*_vec_papi_hwd_get_memory_info) (PAPI_hw_info_t *, int);

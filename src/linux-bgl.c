@@ -303,10 +303,10 @@ static int mdi_init()
   return (PAPI_OK);
 }
 
-void _papi_hwd_init_control_state(hwd_control_state_t * ptr) 
+int _papi_hwd_init_control_state(hwd_control_state_t * ptr) 
 {
-
   memset(ptr, 0, sizeof(hwd_control_state_t));
+  return(PAPI_OK);
 }
 
 inline static int set_domain(hwd_control_state_t *this_state, int domain)

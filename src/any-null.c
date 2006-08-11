@@ -240,8 +240,8 @@ int _papi_hwd_shutdown_global(void)
  * Control of counters (Reading/Writing/Starting/Stopping/Setup)
  * functions
  */
-void _papi_hwd_init_control_state(hwd_control_state_t *ptr){
-   return;
+int _papi_hwd_init_control_state(hwd_control_state_t *ptr){
+   return PAPI_OK;
 }
 
 int _papi_hwd_update_control_state(hwd_control_state_t *ptr, NativeInfo_t *native, int count, hwd_context_t *ctx){

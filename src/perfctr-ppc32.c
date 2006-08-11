@@ -106,11 +106,12 @@ int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain)
    return(PAPI_OK);
 }
 
-void _papi_hwd_init_control_state(hwd_control_state_t * ptr) 
+int _papi_hwd_init_control_state(hwd_control_state_t * ptr) 
 {
    _papi_hwd_set_domain(ptr,_papi_hwi_system_info.default_domain);
    ptr->allocated_registers.selector = 0;
    ptr->control.cpu_control.tsc_on = 1;
+   return(PAPI_OK);
 }
 
 

@@ -638,7 +638,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
     return(PAPI_EINVAL);
 }
 
-void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
+int _papi_hwd_init_control_state(hwd_control_state_t *ptr)
 {
   int i;
   unsigned long enable=0;
@@ -655,6 +655,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
     ptr->p_evtctr[i].hwp_control = HWPERF_CNTRL_START;
     ptr->p_evtctr[i].hwp_enable = ~HWPERF_ENABLE_MBZ & (HWPERF_ENABLE_RW|enable_reg);
   }
+  return(PAPI_OK);
 }
 
 /*

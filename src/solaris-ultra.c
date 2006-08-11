@@ -1052,7 +1052,7 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
    return(PAPI_OK);
 }
 
-void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
+int _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 {
    ptr->counter_cmd.flags = 0x0;
    ptr->counter_cmd.cmd.ce_cpuver = cpuver;
@@ -1061,7 +1061,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
    ptr->counter_cmd.cmd.ce_pic[1] = 0;
    set_domain(ptr, _papi_hwi_system_info.sub_info.default_domain);
    set_granularity(ptr, _papi_hwi_system_info.sub_info.default_granularity);
-   return;
+   return PAPI_OK;
 }
 
 int _papi_hwd_update_control_state(hwd_control_state_t * this_state,

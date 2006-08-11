@@ -19,7 +19,6 @@
 /* The following PAPI internal functions are defined by the papi_internal.c file. */
  int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI,
                           long_long * values);
- int _papi_hwi_allocate_eventset_map(void);
  int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle);
  int _papi_hwi_add_event(EventSetInfo_t * ESI, int index);
  int _papi_hwi_add_pevent(EventSetInfo_t * ESI, int EventCode, void *inout);
@@ -28,10 +27,9 @@
  int _papi_hwi_cleanup_eventset(EventSetInfo_t * ESI);
  int _papi_hwi_get_domain(PAPI_domain_option_t * opt);
  int _papi_hwi_get_granularity(PAPI_granularity_option_t * opt);
- int _papi_hwi_convert_eventset_to_multiplex(EventSetInfo_t * ESI, int flags);
+ int _papi_hwi_convert_eventset_to_multiplex(_papi_int_multiplex_t *opt);
  int _papi_hwi_lookup_EventCodeIndex(const EventSetInfo_t * ESI,
                                            unsigned int EventCode);
- EventSetInfo_t *_papi_hwi_allocate_EventSet(void);
 inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
  int _papi_hwi_remove_EventSet(EventSetInfo_t *);
  void print_state(EventSetInfo_t * ESI);
@@ -85,7 +83,7 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
  int _papi_hwd_get_system_info(void);
  int _papi_hwd_init_substrate(papi_vectors_t *vtable);
  int _papi_hwd_init(hwd_context_t *);
- VECTOR_STATIC void _papi_hwd_init_control_state(hwd_control_state_t * ptr);
+ VECTOR_STATIC int _papi_hwd_init_control_state(hwd_control_state_t * ptr);
  VECTOR_STATIC int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
                                           NativeInfo_t * native, int count, hwd_context_t *);
  int _papi_hwd_add_prog_event(hwd_control_state_t *, unsigned int, void *,

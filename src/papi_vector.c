@@ -177,7 +177,7 @@ int _papi_hwi_setup_vector_table(papi_vectors_t *table, papi_svector_t *stable)
         table->_vec_papi_hwd_init = (int (*) (void *)) stable[i].func;
          break;
        case VEC_PAPI_HWD_INIT_CONTROL_STATE:
-        table->_vec_papi_hwd_init_control_state = (void (*)(void *)) stable[i].func;
+        table->_vec_papi_hwd_init_control_state = (int (*)(void *)) stable[i].func;
          break;
        case VEC_PAPI_HWD_UPDATE_SHLIB_INFO:
         table->_vec_papi_hwd_update_shlib_info = (int (*) (void)) stable[i].func;
@@ -276,7 +276,7 @@ int _papi_hwi_initialize_vector_table(papi_vectors_t *table){
  table->_vec_papi_hwd_write = (int (*) (void *, void *, long_long[])) vec_int_dummy;
  table->_vec_papi_hwd_stop_profiling = (int (*) (ThreadInfo_t *, EventSetInfo_t *)) vec_int_dummy;
  table->_vec_papi_hwd_init = (int (*) (void *)) vec_int_ok_dummy;
- table->_vec_papi_hwd_init_control_state = (void (*) (void *)) vec_void_dummy;
+ table->_vec_papi_hwd_init_control_state = (int (*) (void *)) vec_void_dummy;
  table->_vec_papi_hwd_update_shlib_info = (int (*) (void)) vec_int_dummy;
  table->_vec_papi_hwd_get_system_info = (int (*) ()) vec_int_dummy;
  table->_vec_papi_hwd_get_memory_info = (int (*) (PAPI_hw_info_t *, int)) vec_int_dummy;

@@ -83,7 +83,7 @@ int setup_p4_presets(int cputype)
    Now its exposed to the hwi layer and called when an EventSet is allocated.
 */
 VECTOR_STATIC
-void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
+int _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 {
    int def_mode = 0, i;
    if (_papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_USER)
@@ -101,6 +101,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
    ptr->interval_usec = sampling_interval;
    ptr->nrcpus = all_cpus;
 #endif
+   return(PAPI_OK);
 }
 
 #ifdef DEBUG

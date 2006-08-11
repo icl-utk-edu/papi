@@ -119,7 +119,7 @@ int setup_p3_presets(int cputype) {
    return (_papi_hwi_setup_all_presets(preset_search_map, NULL));
 }
 
-void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
+int _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
    int i, def_mode = 0;
 
    if (_papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_USER)
@@ -164,6 +164,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
    }
    /* Make sure the TSC is always on */
    ptr->control.cpu_control.tsc_on = 1;
+   return(PAPI_OK);
 }
 
 int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain) {

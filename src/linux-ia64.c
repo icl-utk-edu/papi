@@ -1354,7 +1354,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
       return (PAPI_ENOEVNT);
 }
 
-void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
+int _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 {
    pfmw_param_t *evt;
    pfmw_ita_param_t *param;
@@ -1380,6 +1380,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 	evt->mod_outp = &(ptr->ita_lib_param.ita2_output_param);
 #endif
 #endif
+	return(PAPI_OK);
 }
 
 void _papi_hwd_remove_native(hwd_control_state_t * this_state, NativeInfo_t * nativeInfo)
