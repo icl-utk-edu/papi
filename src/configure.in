@@ -50,6 +50,7 @@ R="(R)"
 tm="(tm)"
 TM="(TM)"
 CPU=""
+perfmon="no"
 case "$OS" in
   aix)
          CPU="`/usr/sbin/lsattr -E -l proc0 | grep type | cut -d '_' -f 2 | cut -d ' ' -f 1 | tr '[A-Z]' '[a-z]'`"
@@ -218,22 +219,6 @@ case "$debug" in
       ;;
 esac
 
-# Check for perfmon v2 or v1
-
-perfmon="no"
-case "$OS" in
-     linux)
-	  AC_CHECK_FILE(/sys/kernel/perfmon/version,[perfmon=2])
-	  if test "$perfmon" = "no" ; then
-	     case "$CPU" in
-		  itanium|itanium2|montecito)
-			AC_CHECK_FILE(/proc/perfmon,[perfmon=1])
-			;;
-	     esac
-	  fi	
-	  ;;
-esac
-
 AC_ARG_WITH(perfctr,
             [  --with-perfctr=<path>     Specify path to prebuilt perfctr distribution ],
             [perfctr=$withval],
@@ -259,6 +244,7 @@ AC_ARG_WITH(pmapi,
             [pmapi=$withval],
             [pmapi=default]
             )
+
 case "$OS" in
    aix)
       case "$pmapi" in
@@ -324,6 +310,15 @@ case "$OS" in
        MAKEVER="$OS"-"$CPU""$BM"
        ;;
    linux) 
+# Check for perfmon v2 or v1
+	AC_CHECK_FILE(/sys/kernel/perfmon/version,[perfmon=2])
+	if test "$perfmon" = "no" ; then
+	   case "$CPU" in
+		itanium|itanium2|montecito)
+		AC_CHECK_FILE(/proc/perfmon,[perfmon=1])
+		;;
+	   esac
+	fi	
        case "$CPU" in
             alpha)
                  if test "${bitmode}" = "64"; then
@@ -345,11 +340,13 @@ case "$OS" in
                  if test "${with_bitmode}" = "32"; then
                  	MAKEVER="$OS"-perfctr-"$CPU""-32bit" 
                  else
-			if test "$perfmon" = 2; then
+			if test "$perfctr" != "" -o "$perfctr_prefix" != ""; then
+			   MAKEVER="$OS"-perfctr-"$CPU" 
+		        elif test "$pfm" != "" -o "$pfm_prefix" != "" -o "$perfmon" = 2; then
 			   MAKEVER="$OS"-perfmon2
 			else
-			   MAKEVER="$OS"-perfctr-"$CPU" 
-		        fi
+			   MAKEVER="$OS"-perfctr-"$CPU"
+			fi
 		 fi
 		 ;; 
             athlon|p4|p3|p2)
@@ -357,11 +354,14 @@ case "$OS" in
                    echo "The bitmode "$with_bitmode" you specified is not supported"
                    exit -1
                  fi
-		 if test "$perfmon" = 2; then
-		    MAKEVER="$OS"-perfmon2
-		 else
-                    MAKEVER="$OS"-perfctr-"$CPU"
-		 fi ;;
+		if test "$perfctr" != "" -o "$perfctr_prefix" != ""; then
+		   MAKEVER="$OS"-perfctr-"$CPU" 
+		elif test "$pfm" != "" -o "$pfm_prefix" != "" -o "$perfmon" = 2; then
+		   MAKEVER="$OS"-perfmon2
+		else
+		   MAKEVER="$OS"-perfctr-"$CPU"
+		fi
+		;;
             PPC32)
                  if test "${bitmode}" = "64"; then
                    echo "The bitmode "$with_bitmode" you specified is not supported"
@@ -482,7 +482,7 @@ int main()
      if((fd = open(MMTIMER_FULLNAME, O_RDONLY)) == -1) {
        exit(1);
      }
-     if ((offset = ioctl(fd, MMTIMER_GETOFFSET, 0)) == -ENOSYS) {
+     if ((offset = ioctl(fd, MMTIMER_GETOFFSET, 0)) < 0) {
        exit(1);
      }
      close(fd);
@@ -575,7 +575,11 @@ case "$tls" in
       AC_MSG_CHECKING(for working __thread)
       #echo $with_tls
       OLDLDFLAGS=$LDFLAGS
+      OLDCFLAGS=$CFLAGS
+      OLDLIBS=$LIBS
       LDFLAGS=""
+      CFLAGS="-pthread"
+      LIBS=""
       AC_TRY_RUN([
              #include <pthread.h>
              #include <unistd.h>
@@ -615,6 +619,8 @@ case "$tls" in
             with_tls=pthread
       ])
       LDFLAGS=$OLDLDFLAGS
+      CFLAGS=$OLDCFLAGS
+      LIBS=$OLDLIBS
      #if test "x$TARGET" = "xAMD64" -o "x$TARGET" = "xX86"; then
      if test "$OS" = "linux"; then
         if test "x$with_tls" = "x__thread"; then
@@ -652,6 +658,12 @@ case "$tls" in
  esac
 
 if test "$OS" = "linux"; then
+OLDLDFLAGS=$LDFLAGS
+OLDCFLAGS=$CFLAGS
+OLDLIBS=$LIBS
+LDFLAGS=""
+CFLAGS=""
+LIBS=""
 AC_MSG_CHECKING(for working CLOCK_REALTIME_HR POSIX 1b timer)
 AC_TRY_RUN([
 #include <unistd.h>
@@ -711,6 +723,7 @@ main()
       dnl ***********************************
       dnl *** Checks for working per thread timer***
       dnl ***********************************
+      CFLAGS="-pthread"
       AC_MSG_CHECKING(for working per-thread times() timer)
       AC_TRY_RUN([
         #include <pthread.h>
@@ -910,6 +923,9 @@ case "$PTtimer" in
    fi
    ;;
 esac
+LDFLAGS=$OLDLDFLAGS
+CFLAGS=$OLDCFLAGS
+LIBS=$OLDLIBS
 fi
 
 AC_SUBST(DEBUGFLAGS)

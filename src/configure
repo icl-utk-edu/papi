@@ -1368,6 +1368,7 @@ R="(R)"
 tm="(tm)"
 TM="(TM)"
 CPU=""
+perfmon="no"
 case "$OS" in
   aix)
          CPU="`/usr/sbin/lsattr -E -l proc0 | grep type | cut -d '_' -f 2 | cut -d ' ' -f 1 | tr 'A-Z' 'a-z'`"
@@ -1544,62 +1545,6 @@ case "$debug" in
       ;;
 esac
 
-# Check for perfmon v2 or v1
-
-perfmon="no"
-case "$OS" in
-     linux)
-	  echo "$as_me:$LINENO: checking for /sys/kernel/perfmon/version" >&5
-echo $ECHO_N "checking for /sys/kernel/perfmon/version... $ECHO_C" >&6
-if test "${ac_cv_file__sys_kernel_perfmon_version+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  test "$cross_compiling" = yes &&
-  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "/sys/kernel/perfmon/version"; then
-  ac_cv_file__sys_kernel_perfmon_version=yes
-else
-  ac_cv_file__sys_kernel_perfmon_version=no
-fi
-fi
-echo "$as_me:$LINENO: result: $ac_cv_file__sys_kernel_perfmon_version" >&5
-echo "${ECHO_T}$ac_cv_file__sys_kernel_perfmon_version" >&6
-if test $ac_cv_file__sys_kernel_perfmon_version = yes; then
-  perfmon=2
-fi
-
-	  if test "$perfmon" = "no" ; then
-	     case "$CPU" in
-		  itanium|itanium2|montecito)
-			echo "$as_me:$LINENO: checking for /proc/perfmon" >&5
-echo $ECHO_N "checking for /proc/perfmon... $ECHO_C" >&6
-if test "${ac_cv_file__proc_perfmon+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  test "$cross_compiling" = yes &&
-  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "/proc/perfmon"; then
-  ac_cv_file__proc_perfmon=yes
-else
-  ac_cv_file__proc_perfmon=no
-fi
-fi
-echo "$as_me:$LINENO: result: $ac_cv_file__proc_perfmon" >&5
-echo "${ECHO_T}$ac_cv_file__proc_perfmon" >&6
-if test $ac_cv_file__proc_perfmon = yes; then
-  perfmon=1
-fi
-
-			;;
-	     esac
-	  fi
-	  ;;
-esac
-
 
 # Check whether --with-perfctr or --without-perfctr was given.
 if test "${with_perfctr+set}" = set; then
@@ -1645,6 +1590,7 @@ else
   pmapi=default
 
 fi;
+
 case "$OS" in
    aix)
       case "$pmapi" in
@@ -1710,6 +1656,55 @@ case "$OS" in
        MAKEVER="$OS"-"$CPU""$BM"
        ;;
    linux)
+# Check for perfmon v2 or v1
+	echo "$as_me:$LINENO: checking for /sys/kernel/perfmon/version" >&5
+echo $ECHO_N "checking for /sys/kernel/perfmon/version... $ECHO_C" >&6
+if test "${ac_cv_file__sys_kernel_perfmon_version+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "/sys/kernel/perfmon/version"; then
+  ac_cv_file__sys_kernel_perfmon_version=yes
+else
+  ac_cv_file__sys_kernel_perfmon_version=no
+fi
+fi
+echo "$as_me:$LINENO: result: $ac_cv_file__sys_kernel_perfmon_version" >&5
+echo "${ECHO_T}$ac_cv_file__sys_kernel_perfmon_version" >&6
+if test $ac_cv_file__sys_kernel_perfmon_version = yes; then
+  perfmon=2
+fi
+
+	if test "$perfmon" = "no" ; then
+	   case "$CPU" in
+		itanium|itanium2|montecito)
+		echo "$as_me:$LINENO: checking for /proc/perfmon" >&5
+echo $ECHO_N "checking for /proc/perfmon... $ECHO_C" >&6
+if test "${ac_cv_file__proc_perfmon+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "/proc/perfmon"; then
+  ac_cv_file__proc_perfmon=yes
+else
+  ac_cv_file__proc_perfmon=no
+fi
+fi
+echo "$as_me:$LINENO: result: $ac_cv_file__proc_perfmon" >&5
+echo "${ECHO_T}$ac_cv_file__proc_perfmon" >&6
+if test $ac_cv_file__proc_perfmon = yes; then
+  perfmon=1
+fi
+
+		;;
+	   esac
+	fi
        case "$CPU" in
             alpha)
                  if test "${bitmode}" = "64"; then
@@ -1731,11 +1726,13 @@ case "$OS" in
                  if test "${with_bitmode}" = "32"; then
                  	MAKEVER="$OS"-perfctr-"$CPU""-32bit"
                  else
-			if test "$perfmon" = 2; then
+			if test "$perfctr" != "" -o "$perfctr_prefix" != ""; then
+			   MAKEVER="$OS"-perfctr-"$CPU"
+		        elif test "$pfm" != "" -o "$pfm_prefix" != "" -o "$perfmon" = 2; then
 			   MAKEVER="$OS"-perfmon2
 			else
 			   MAKEVER="$OS"-perfctr-"$CPU"
-		        fi
+			fi
 		 fi
 		 ;;
             athlon|p4|p3|p2)
@@ -1743,11 +1740,14 @@ case "$OS" in
                    echo "The bitmode "$with_bitmode" you specified is not supported"
                    exit -1
                  fi
-		 if test "$perfmon" = 2; then
-		    MAKEVER="$OS"-perfmon2
-		 else
-                    MAKEVER="$OS"-perfctr-"$CPU"
-		 fi ;;
+		if test "$perfctr" != "" -o "$perfctr_prefix" != ""; then
+		   MAKEVER="$OS"-perfctr-"$CPU"
+		elif test "$pfm" != "" -o "$pfm_prefix" != "" -o "$perfmon" = 2; then
+		   MAKEVER="$OS"-perfmon2
+		else
+		   MAKEVER="$OS"-perfctr-"$CPU"
+		fi
+		;;
             PPC32)
                  if test "${bitmode}" = "64"; then
                    echo "The bitmode "$with_bitmode" you specified is not supported"
@@ -3787,7 +3787,7 @@ int main()
      if((fd = open(MMTIMER_FULLNAME, O_RDONLY)) == -1) {
        exit(1);
      }
-     if ((offset = ioctl(fd, MMTIMER_GETOFFSET, 0)) == -ENOSYS) {
+     if ((offset = ioctl(fd, MMTIMER_GETOFFSET, 0)) < 0) {
        exit(1);
      }
      close(fd);
@@ -8050,7 +8050,11 @@ case "$tls" in
 echo $ECHO_N "checking for working __thread... $ECHO_C" >&6
       #echo $with_tls
       OLDLDFLAGS=$LDFLAGS
+      OLDCFLAGS=$CFLAGS
+      OLDLIBS=$LIBS
       LDFLAGS=""
+      CFLAGS="-pthread"
+      LIBS=""
       if test "$cross_compiling" = yes; then
   { { echo "$as_me:$LINENO: error: cannot run test program while cross compiling
 See \`config.log' for more details." >&5
@@ -8128,6 +8132,8 @@ fi
 rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
       LDFLAGS=$OLDLDFLAGS
+      CFLAGS=$OLDCFLAGS
+      LIBS=$OLDLIBS
      #if test "x$TARGET" = "xAMD64" -o "x$TARGET" = "xX86"; then
      if test "$OS" = "linux"; then
         if test "x$with_tls" = "x__thread"; then
@@ -8166,6 +8172,12 @@ echo "$as_me: WARNING: Disabling usage of __thread." >&2;};
  esac
 
 if test "$OS" = "linux"; then
+OLDLDFLAGS=$LDFLAGS
+OLDCFLAGS=$CFLAGS
+OLDLIBS=$LIBS
+LDFLAGS=""
+CFLAGS=""
+LIBS=""
 echo "$as_me:$LINENO: checking for working CLOCK_REALTIME_HR POSIX 1b timer" >&5
 echo $ECHO_N "checking for working CLOCK_REALTIME_HR POSIX 1b timer... $ECHO_C" >&6
 if test "$cross_compiling" = yes; then
@@ -8308,7 +8320,8 @@ rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftes
 fi
 
       #       NOTLS="" ;;
-                        echo "$as_me:$LINENO: checking for working per-thread times() timer" >&5
+                        CFLAGS="-pthread"
+      echo "$as_me:$LINENO: checking for working per-thread times() timer" >&5
 echo $ECHO_N "checking for working per-thread times() timer... $ECHO_C" >&6
       if test "$cross_compiling" = yes; then
   { { echo "$as_me:$LINENO: error: cannot run test program while cross compiling
@@ -8613,6 +8626,9 @@ _ACEOF
    fi
    ;;
 esac
+LDFLAGS=$OLDLDFLAGS
+CFLAGS=$OLDCFLAGS
+LIBS=$OLDLIBS
 fi
 
 
