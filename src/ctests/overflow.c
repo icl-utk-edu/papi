@@ -67,10 +67,6 @@ int main(int argc, char **argv)
    if (hw_info == NULL)
      test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
-   retval = PAPI_create_eventset(&EventSet);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
-
    /* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
       PAPI_TOT_INS, depending on the availability of the event on the
       platform */
@@ -130,6 +126,15 @@ int main(int argc, char **argv)
       printf("Overflows    : %16s%16d\n", "", total);
       printf("-----------------------------------------------\n");
 
+   retval = PAPI_cleanup_eventset(EventSet);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_cleanup_eventset", retval);
+
+   retval = PAPI_destroy_eventset(&EventSet);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_destroy_eventset", retval);
+
+   if (!TESTS_QUIET) {
       printf("Verification:\n");
 #if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_CRAYT3E) || defined(_POWER4) || defined (__crayx1)
    num_flops *= 2;
