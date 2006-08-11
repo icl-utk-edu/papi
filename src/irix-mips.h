@@ -44,13 +44,16 @@ typedef struct hwd_control_state {
    int selector;
    /* Buffer to pass to the kernel to control the counters */
    hwperf_profevctrarg_t counter_cmd;
-   /* Number on each hwcounter */
+   /* Number on each hwcounter, > 1 if above multiplex variable is 1*/
    unsigned num_on_counter[2];
+   /* Unknown */
    int overflow_event_count;
    /* Buffer for reading counters */
    hwperf_cntr_t cntrs_read;
    /* Buffer for generating overflow vector */
    hwperf_cntr_t cntrs_last_read;
+   /* Is this set kernel multiplexed? */
+   int multiplexed;
 } hwd_control_state_t;
 
 typedef struct _Context {

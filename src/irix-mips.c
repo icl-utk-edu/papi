@@ -713,6 +713,9 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **
 int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
    switch (code) {
+   case PAPI_MULTIPLEX:
+     option->domain.ESI->machdep.multiplexed = 1;
+     return(PAPI_OK);
    case PAPI_DEFDOM:
       return (set_default_domain(&option->domain.ESI->machdep, option->domain.domain));
    case PAPI_DOMAIN:
@@ -911,9 +914,9 @@ int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
    return PAPI_OK;
 }
 
-void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
+int _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 {
-   return;
+   return PAPI_OK;
 }
 
 /* this function will be called when adding events to the eventset and
@@ -922,8 +925,24 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
               NativeInfo_t * native, int count,  hwd_context_t * ctx)
 {
-   int index, i, selector = 0, mode = 0, threshold;
+  int index, i, selector = 0, mode = 0, threshold, num_on_cntr[2] = { 0, 0 };
    hwperf_eventctrl_t *to = &this_state->counter_cmd.hwp_evctrargs;
+
+   /* Compute conflicts if we are not kernel multiplexing */
+
+   if (this_state->multiplexed == 0)
+     {
+       for (i = 0; i < count; i++) 
+	 {
+	   index = native[i].ni_event & PAPI_NATIVE_AND_MASK;
+	   if (index > HWPERF_MAXEVENT) 
+	     num_on_cntr[1]++;
+	   else
+	     num_on_cntr[0]++;
+	 }
+       if ((num_on_cntr[1] > 1) || (num_on_cntr[0] > 1))
+	 return(PAPI_ECNFLCT);
+     }
 
    memset(to, 0, sizeof(hwperf_eventctrl_t));
 
