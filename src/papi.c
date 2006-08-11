@@ -792,8 +792,9 @@ int PAPI_start(int EventSet)
    ESI->state ^= PAPI_STOPPED;
    ESI->state |= PAPI_RUNNING;
 
-   /* Update the running event set  for this thread */
-   thread->running_eventset = ESI;
+   /* Update the running event set for this thread */
+   if (!(ESI->state & PAPI_ATTACHED))
+     thread->running_eventset = ESI;
 
    APIDBG("PAPI_start returns %d\n", retval);
    return (retval);
@@ -872,8 +873,9 @@ int PAPI_stop(int EventSet, long_long * values)
    ESI->state ^= PAPI_RUNNING;
    ESI->state |= PAPI_STOPPED;
 
-   /* Update the running event set  for this thread */
-   thread->running_eventset = NULL ;
+   /* Update the running event set for this thread */
+   if (!(ESI->state & PAPI_ATTACHED))
+     thread->running_eventset = NULL ;
 
 #if defined(DEBUG)
      if (_papi_hwi_debug & DEBUG_API)
@@ -1131,14 +1133,16 @@ int PAPI_set_multiplex(int EventSet)
 
    memset(&mpx,0x0,sizeof(mpx));
    mpx.multiplex.eventset = EventSet;
+   mpx.multiplex.flags = PAPI_MULTIPLEX_DEFAULT;
+   mpx.multiplex.us = _papi_hwi_system_info.sub_info.multiplex_timer_us;
    return(PAPI_set_opt(PAPI_MULTIPLEX, &mpx));
 }
 
 int PAPI_set_opt(int option, PAPI_option_t * ptr)
 {
    _papi_int_option_t internal;
-   int retval;
-   ThreadInfo_t *thread;
+   int retval = PAPI_OK;
+   ThreadInfo_t *thread = NULL;
 
    if (ptr == NULL)
       papi_return(PAPI_EINVAL);
@@ -1162,7 +1166,8 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 	 papi_return(PAPI_EINVAL);
 
        internal.attach.tid = internal.attach.ESI->attach.tid;
-       retval = _papi_hwd_ctl(thread, PAPI_DETACH, &internal);
+       thread = internal.attach.ESI->master;
+       retval = _papi_hwd_ctl(&thread->context, PAPI_DETACH, &internal);
        if (retval != PAPI_OK)
 	 papi_return(retval);
 
@@ -1186,7 +1191,8 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 	 papi_return(PAPI_EINVAL);
 
        internal.attach.tid = ptr->attach.tid;
-       retval = _papi_hwd_ctl(thread, PAPI_ATTACH, &internal);
+       thread = internal.attach.ESI->master;
+       retval = _papi_hwd_ctl(&thread->context, PAPI_ATTACH, &internal);
        if (retval != PAPI_OK)
 	 papi_return(retval);
 
@@ -1194,10 +1200,12 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
        internal.attach.ESI->attach.tid = ptr->attach.tid;
        return(PAPI_OK);
      }
-   case PAPI_MULTIPLEX_USEC:
+   case PAPI_DEF_MPX_USEC:
      {
        if (ptr->multiplex.us <= 1)
 	 papi_return(PAPI_EINVAL);
+       /* We should check the resolution here with the system, either
+	  substrate if kernel multiplexing or PAPI if SW multiplexing. */
        _papi_hwi_system_info.sub_info.multiplex_timer_us = ptr->multiplex.us;
        return(PAPI_OK);
      }
@@ -1211,8 +1219,15 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
             papi_return(PAPI_EISRUN);
          if (ESI->state & PAPI_MULTIPLEXING)
             papi_return(PAPI_EINVAL);
-	   
-         papi_return(_papi_hwi_convert_eventset_to_multiplex(ESI, ptr->multiplex.flags));
+	 internal.multiplex.ESI = ESI;
+	 internal.multiplex.us = ptr->multiplex.us;
+	 internal.multiplex.flags = ptr->multiplex.flags;
+	 if ((_papi_hwi_system_info.sub_info.kernel_multiplex) && ((ptr->multiplex.flags & PAPI_MULTIPLEX_FORCE_SW) == 0))
+	   retval = _papi_hwd_ctl(&thread->context, PAPI_MULTIPLEX, &internal);
+	 if (retval == PAPI_OK)
+	   papi_return(_papi_hwi_convert_eventset_to_multiplex(&internal.multiplex));
+	 /* Kernel or PAPI may have changed this value so send it back out to the user */
+	 ptr->multiplex.us = internal.multiplex.us;
       }
    case PAPI_DEBUG: 
       {
@@ -1429,7 +1444,7 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
        ptr->attach.tid = ESI->attach.tid;
        return ((ESI->state & PAPI_ATTACHED) != 0);
      }
-   case PAPI_MULTIPLEX_USEC:
+   case PAPI_DEF_MPX_USEC:
      {
        if (ptr == NULL)
 	 papi_return(PAPI_EINVAL);
@@ -1443,7 +1458,8 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
          ESI = _papi_hwi_lookup_EventSet(ptr->multiplex.eventset);
          if (ESI == NULL)
             papi_return(PAPI_ENOEVST);
-	 ptr->multiplex.us = _papi_hwi_system_info.sub_info.multiplex_timer_us;
+	 ptr->multiplex.us = ESI->multiplex.us;
+	 ptr->multiplex.flags = ESI->multiplex.flags;
          return (ESI->state & PAPI_MULTIPLEXING) != 0;
       }
    case PAPI_PRELOAD:
