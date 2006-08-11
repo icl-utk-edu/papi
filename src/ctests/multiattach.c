@@ -1,5 +1,5 @@
 /* This file performs the following test: start, stop and timer functionality for
-   attached processes.
+   multiple attached processes.
 
    - It attempts to use the following two counters. It may use less depending on
      hardware counter resource limitations. These are counted in the default counting
@@ -25,8 +25,8 @@ int wait_for_attach_and_loop(void)
 
 int main(int argc, char **argv)
 {
-  int status, retval, num_tests = 1, tmp;
-   int EventSet1=PAPI_NULL;
+  int status, retval, num_tests = 2, tmp;
+  int EventSet1=PAPI_NULL, EventSet2 = PAPI_NULL;
    int PAPI_event, mask1;
    int num_events1;
    long_long **values;
@@ -34,12 +34,17 @@ int main(int argc, char **argv)
    char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
    const PAPI_hw_info_t *hw_info;
    const PAPI_substrate_info_t *subinfo;
-   unsigned long pid;
+   unsigned long pid, pid2;
 
    pid = fork();
    if (pid < 0)
      test_fail(__FILE__,__LINE__,"fork()",PAPI_ESYS);
    if (pid == 0)
+     exit(wait_for_attach_and_loop());
+   pid2 = fork();
+   if (pid2 < 0)
+     test_fail(__FILE__,__LINE__,"fork()",PAPI_ESYS);
+   if (pid2 == 0)
      exit(wait_for_attach_and_loop());
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
@@ -62,6 +67,7 @@ int main(int argc, char **argv)
       PAPI_TOT_INS, depending on the availability of the event on the
       platform */
    EventSet1 = add_two_events(&num_events1, &PAPI_event, hw_info, &mask1);
+   EventSet2 = add_two_events(&num_events1, &PAPI_event, hw_info, &mask1);
 
   if (subinfo->attach_must_ptrace)
     {
@@ -77,9 +83,26 @@ int main(int argc, char **argv)
 	}
       if (WIFSTOPPED(status) == 0)
 	test_fail(__FILE__, __LINE__, "Child process didnt return true to WIFSTOPPED", 0);
+
+      if (ptrace(PTRACE_ATTACH,pid2,NULL,NULL) == -1)
+	{
+	  perror("ptrace(PTRACE_ATTACH)");
+	  return(1);
+	}
+      if (waitpid(pid2,&status,0) == -1)
+	{
+	  perror("waitpid()");
+	  exit(1);
+	}
+      if (WIFSTOPPED(status) == 0)
+	test_fail(__FILE__, __LINE__, "Child process didnt return true to WIFSTOPPED", 0);
     }
 
    retval = PAPI_attach(EventSet1, pid);
+   if (retval != PAPI_OK)
+     test_fail(__FILE__, __LINE__, "PAPI_attach", retval);
+
+   retval = PAPI_attach(EventSet2, pid2);
    if (retval != PAPI_OK)
      test_fail(__FILE__, __LINE__, "PAPI_attach", retval);
 
@@ -104,9 +127,18 @@ int main(int argc, char **argv)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
+   retval = PAPI_start(EventSet2);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_start", retval);
+
   if (subinfo->attach_must_ptrace)
     {
       if (ptrace(PTRACE_CONT,pid,NULL,NULL) == -1)
+	{
+	  perror("ptrace(PTRACE_ATTACH)");
+	  return(1);
+	}
+      if (ptrace(PTRACE_CONT,pid2,NULL,NULL) == -1)
 	{
 	  perror("ptrace(PTRACE_ATTACH)");
 	  return(1);
@@ -120,13 +152,25 @@ int main(int argc, char **argv)
     }
   if (WIFEXITED(status) == 0)
     test_fail(__FILE__, __LINE__, "Child process didn't return true to WIFEXITED", 0);
+
+  if (waitpid(pid2,&status,0) == -1)
+    {
+      perror("waitpid()");
+      exit(1);
+    }
+  if (WIFEXITED(status) == 0)
+    test_fail(__FILE__, __LINE__, "Child process didn't return true to WIFEXITED", 0);
   
   /* This code isn't necessary as we know the child has exited,
-     it *may* return an error if the substrate so chooses. */
+     it *may* return an error if the substrate so chooses. You should use read() instead. */
 
-  retval = PAPI_stop(EventSet1, values[0]);
-  if (retval != PAPI_OK)
-    printf("Warning: PAPI_stop returned error %d, probably ok.\n", retval);
+   retval = PAPI_stop(EventSet1, values[0]);
+   if (retval != PAPI_OK)
+     printf("Warning: PAPI_stop returned error %d, probably ok.\n", retval);
+
+   retval = PAPI_stop(EventSet2, values[1]);
+   if (retval != PAPI_OK)
+     printf("Warning: PAPI_stop returned error %d, probably ok.\n", retval);
 
    elapsed_virt_us = PAPI_get_virt_usec() - elapsed_virt_us;
 
@@ -137,8 +181,9 @@ int main(int argc, char **argv)
    elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
 
    remove_test_events(&EventSet1, mask1);
+   remove_test_events(&EventSet2, mask1);
 
-      printf("Test case: 3rd party attach start, stop.\n");
+      printf("Test case: multiple 3rd party attach start, stop.\n");
       printf("-----------------------------------------------\n");
       tmp = PAPI_get_opt(PAPI_DEFDOM, NULL);
       printf("Default domain is: %d (%s)\n", tmp, stringify_all_domains(tmp));
@@ -148,11 +193,14 @@ int main(int argc, char **argv)
       printf
           ("-------------------------------------------------------------------------\n");
 
-      printf("Test type    : \t           1\n");
-
-      sprintf(add_event_str, "%-12s : \t", event_name);
+      sprintf(add_event_str, "(PID%lu) %-12s : \t", pid,event_name);
       printf(TAB1, add_event_str, (values[0])[0]);
-      printf(TAB1, "PAPI_TOT_CYC : \t", (values[0])[1]);
+      sprintf(add_event_str, "(PID%lu) PAPI_TOT_CYC : \t",pid);
+      printf(TAB1, add_event_str, (values[0])[1]);
+      sprintf(add_event_str, "(PID%lu) %-12s : \t", pid2,event_name);
+      printf(TAB1, add_event_str, (values[1])[0]);
+      sprintf(add_event_str, "(PID%lu) PAPI_TOT_CYC : \t",pid2);
+      printf(TAB1, add_event_str, (values[1])[1]);
       printf(TAB1, "Real usec    : \t", elapsed_us);
       printf(TAB1, "Real cycles  : \t", elapsed_cyc);
       printf(TAB1, "Virt usec    : \t", elapsed_virt_us);
