@@ -381,10 +381,8 @@ int _papi_hwi_start_timer(int milliseconds)
    //    triggering every (milliseconds) 
    //    and calling (_papi_hwd_timer_callback())
    //    with no data
-   /****WIN32: we haven't quite figured out how to handle the callback yet...
    wTimerID = timeSetEvent(milliseconds, wTimerRes,
-                           _papi_hwd_timer_callback, threadID, TIME_PERIODIC);
-   */
+                          (LPTIMECALLBACK) _papi_hwd_timer_callback, threadID, TIME_PERIODIC);
    if (!wTimerID)
       return PAPI_ESYS;
 

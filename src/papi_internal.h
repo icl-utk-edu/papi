@@ -100,7 +100,7 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
 /* Signal used for overflow delivery */
 
-/**** WIN32 We'll need to figure out how to handle this for Windows */
+/****WIN32 We'll need to figure out how to handle this for Windows */
 #ifdef _WIN32
   #define PAPI_SIGNAL 1
   #define PAPI_ITIMER 1

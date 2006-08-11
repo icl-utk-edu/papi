@@ -186,7 +186,7 @@ static int mpx_startup_itimer(void)
 
    /* initialize a periodic timer
       triggering every (milliseconds) 
-      and calling (_papi_hwd_timer_callback())
+      and calling (mpx_timer_callback())
       with no data */
    mpxTimerID = timeSetEvent(mpx_time, wTimerRes,
                              mpx_timer_callback, (DWORD) NULL, TIME_PERIODIC);

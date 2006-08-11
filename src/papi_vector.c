@@ -69,8 +69,20 @@ u_long_long vec_dummy_get_virt_usec (const hwd_context_t *zero)
       getrusage(RUSAGE_SELF, &ruse);
       retval = (long long)(ruse.ru_utime.tv_sec * 1000000 + ruse.ru_utime.tv_usec);
 #elif _WIN32
-  /****WIN32: don' know if there's a way to get virtual vs real time... */
-  retval = vec_dummy_get_real_usec();
+  /* identical code is found in the windows substrate */
+    HANDLE p;
+    BOOL ret;
+    FILETIME Creation, Exit, Kernel, User;
+    long_long virt;
+
+    p = GetCurrentProcess();
+    ret = GetProcessTimes(p, &Creation, &Exit, &Kernel, &User);
+    if (ret) {
+	virt = (((long_long)(Kernel.dwHighDateTime + User.dwHighDateTime))<<32)
+	     + Kernel.dwLowDateTime + User.dwLowDateTime;
+	retval = virt/1000;
+    }
+    else return(PAPI_ESBSTR);
 #else
 
   struct tms buffer;
@@ -138,11 +150,13 @@ int _papi_hwi_setup_vector_table(papi_vectors_t *table, papi_svector_t *stable)
        case VEC_PAPI_HWD_READ:
         table->_vec_papi_hwd_read = (int (*) (void *, void *, long_long **, int)) stable[i].func;
          break;
-#ifndef _WIN32 /****WIN32: haven't figured out how to handle this yet... */
        case VEC_PAPI_HWD_DISPATCH_TIMER:
-        table->_vec_papi_hwd_dispatch_timer = (void (*) (int, siginfo_t *, void *)) stable[i].func;
-         break;
+#ifdef _WIN32 /* Windows requires a different callback format */
+        table->_vec_papi_hwd_timer_callback = (void (*) (UINT, UINT, DWORD, DWORD, DWORD)) stable[i].func;
+#else
+	table->_vec_papi_hwd_dispatch_timer = (void (*) (int, siginfo_t *, void *)) stable[i].func;
 #endif
+         break;
        case VEC_PAPI_HWD_GET_OVERFLOW_ADDRESS:
         table->_vec_papi_hwd_get_overflow_address = (void * (*) (int, char *)) stable[i].func;
          break;
@@ -262,7 +276,9 @@ int _papi_hwi_setup_vector_table(papi_vectors_t *table, papi_svector_t *stable)
 int _papi_hwi_initialize_vector_table(papi_vectors_t *table){
  if ( !table ) return (PAPI_EINVAL);
  table->_vec_papi_hwd_read = (int (*)(void *,void *, long_long **, int)) vec_int_dummy;
-#ifndef _WIN32 /****WIN32: haven't figured this one out yet... */
+#ifdef _WIN32 /* Windows requires a different callback format */
+ table->_vec_papi_hwd_timer_callback = (void (*) (UINT, UINT, DWORD, DWORD, DWORD)) vec_void_dummy;
+#else
  table->_vec_papi_hwd_dispatch_timer = (void (*)(int, siginfo_t *, void *)) vec_void_dummy;
 #endif
  table->_vec_papi_hwd_get_overflow_address = (void *(*) (int, char *)) vec_void_star_dummy;
@@ -384,8 +400,8 @@ void vector_print_table(papi_vectors_t *table, int print_func){
  if ( !table ) return;
 
  vector_print_routine((void *)table->_vec_papi_hwd_read,"_papi_hwd_read",print_func);
-#ifdef _WIN32 /*WIN32: haven't figured this out yet... */
-// vector_print_routine((void *)table->_vec_papi_hwd_timer_callback, "_papi_hwd_timer_callback",print_func);
+#ifdef _WIN32 /* Windows requires a different callback format */
+ vector_print_routine((void *)table->_vec_papi_hwd_timer_callback, "_papi_hwd_timer_callback",print_func);
 #else
  vector_print_routine((void *)table->_vec_papi_hwd_dispatch_timer, "_papi_hwd_dispatch_timer",print_func);
 #endif
