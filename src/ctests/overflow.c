@@ -125,6 +125,7 @@ int main(int argc, char **argv)
       printf(OUT_FMT, "PAPI_TOT_CYC", (values[0])[1], (values[1])[1]);
       printf("Overflows    : %16s%16d\n", "", total);
       printf("-----------------------------------------------\n");
+   }
 
    retval = PAPI_cleanup_eventset(EventSet);
    if (retval != PAPI_OK)
