@@ -1206,7 +1206,19 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 	 papi_return(PAPI_EINVAL);
        /* We should check the resolution here with the system, either
 	  substrate if kernel multiplexing or PAPI if SW multiplexing. */
-       _papi_hwi_system_info.sub_info.multiplex_timer_us = ptr->multiplex.us;
+       internal.multiplex.us = ptr->multiplex.us;
+       if (_papi_hwi_system_info.sub_info.kernel_multiplex)
+	{
+         retval = _papi_hwi_lookup_or_create_thread(&thread);
+         if (retval != PAPI_OK)
+		return(retval);
+	 retval = _papi_hwd_ctl(&thread->context, PAPI_DEF_MPX_USEC, &internal);
+	}
+       if (retval == PAPI_OK)
+	{
+	_papi_hwi_system_info.sub_info.multiplex_timer_us = internal.multiplex.us;
+	 ptr->multiplex.us = internal.multiplex.us;
+	}
        return(PAPI_OK);
      }
    case PAPI_MULTIPLEX:
@@ -1223,9 +1235,12 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 	 internal.multiplex.us = ptr->multiplex.us;
 	 internal.multiplex.flags = ptr->multiplex.flags;
 	 if ((_papi_hwi_system_info.sub_info.kernel_multiplex) && ((ptr->multiplex.flags & PAPI_MULTIPLEX_FORCE_SW) == 0))
-	   retval = _papi_hwd_ctl(&thread->context, PAPI_MULTIPLEX, &internal);
-	 if (retval == PAPI_OK)
-	   papi_return(_papi_hwi_convert_eventset_to_multiplex(&internal.multiplex));
+	   {
+       	    thread = internal.multiplex.ESI->master;
+            retval = _papi_hwd_ctl(&thread->context, PAPI_MULTIPLEX, &internal);
+	}
+	    if (retval == PAPI_OK)
+	   	papi_return(_papi_hwi_convert_eventset_to_multiplex(&internal.multiplex));
 	 /* Kernel or PAPI may have changed this value so send it back out to the user */
 	 ptr->multiplex.us = internal.multiplex.us;
       }
