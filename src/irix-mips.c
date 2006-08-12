@@ -462,6 +462,7 @@ static int _internal_get_system_info(void)
    _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_OTHER|PAPI_DOM_SUPERVISOR;
    _papi_hwi_system_info.sub_info.hardware_intr = 1;
    _papi_hwi_system_info.sub_info.kernel_multiplex = 1;
+   _papi_hwi_system_info.sub_info.multiplex_timer_us = 1000000/sysconf(_SC_CLK_TCK);
    
    retval = _papi_hwd_update_shlib_info();
    if (retval != PAPI_OK) 
@@ -685,6 +686,14 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **
    retval = ioctl(ctx->fd, PIOCGETEVCTRS, (void *) &ctrl->cntrs_read);
    if (retval < 0)
       return (PAPI_ESYS);
+#if defined(DEBUG)
+if (ISLEVEL(DEBUG_SUBSTRATE)) {
+	int i;
+	for (i=0;i<HWPERF_EVENTMAX;i++) {
+	SUBDBG("Kernel values index %d: Value %lld\n",i,ctrl->cntrs_read.hwp_evctr[i]);
+	}
+	}
+#endif
 
 /* generation number should be the same */
    if (retval != ctrl->generation) {
@@ -692,7 +701,8 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **
       return (PAPI_ESBSTR);
    }
    /* adjust the read value by how many events in count 0 and count 1 */
-   if (ctrl->num_on_counter[0]>1 || ctrl->num_on_counter[1]>1) {
+   SUBDBG("(%d,%d)\n",ctrl->num_on_counter[0],ctrl->num_on_counter[1]);
+	if (ctrl->num_on_counter[0]>1 || ctrl->num_on_counter[1]>1) {
       selector = ctrl->selector;
       while ( selector ) {
          index = ffs(selector)-1;
@@ -704,6 +714,15 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **
          selector ^= 1<<index;
       }
    }
+#if defined(DEBUG)
+if (ISLEVEL(DEBUG_SUBSTRATE)) {
+        int i;
+        for (i=0;i<HWPERF_EVENTMAX;i++) {
+        SUBDBG("Scaled values index %d: Value %lld\n",i,ctrl->cntrs_read.hwp_evctr[i]);
+        }
+        }
+#endif
+
 /* set the buffer address */
    *events = (long_long *) ctrl->cntrs_read.hwp_evctr;
 
@@ -713,6 +732,8 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **
 int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
    switch (code) {
+   case PAPI_DEF_MPX_USEC:
+   	return(PAPI_ESBSTR);
    case PAPI_MULTIPLEX:
      option->domain.ESI->machdep.multiplexed = 1;
      return(PAPI_OK);
@@ -939,7 +960,8 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
 	     num_on_cntr[1]++;
 	   else
 	     num_on_cntr[0]++;
-	 }
+	 SUBDBG("Not multiplexed (%d,%d)\n",num_on_cntr[0],num_on_cntr[1]); 
+	}
        if ((num_on_cntr[1] > 1) || (num_on_cntr[0] > 1))
 	 return(PAPI_ECNFLCT);
      }
@@ -964,7 +986,6 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    for (i = 0; i < count; i++) {
       index = native[i].ni_event & PAPI_NATIVE_AND_MASK;
       selector |= 1 << index;
-      SUBDBG("update_control_state index = %d mode=0x%x\n", index, mode);
       if (index > HWPERF_MAXEVENT) {
          to->hwp_evctrl[index].hwperf_creg.hwp_ev = index - HWPERF_CNT1BASE;
          this_state->num_on_counter[1]++;
@@ -973,8 +994,8 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
          this_state->num_on_counter[0]++;
       }
       native[i].ni_position = index;
-
       to->hwp_evctrl[index].hwperf_creg.hwp_mode = mode;
+      SUBDBG("update_control_state selector=0x%x index=%d mode=0x%x ev=%d (%d,%d)\n", selector, index, mode, to->hwp_evctrl[index].hwperf_creg.hwp_ev, this_state->num_on_counter[0],this_state->num_on_counter[1]);
    }
    this_state->selector = selector;
    if (this_state->overflow_event_count) {
