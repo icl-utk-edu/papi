@@ -187,7 +187,8 @@ static int EventInfoArrayLength(const EventSetInfo_t * ESI)
 
 static void initialize_EventInfoArray(EventSetInfo_t * ESI)
 {
-   int i, j, limit = EventInfoArrayLength(ESI);
+   int i, j, limit = _papi_hwi_system_info.sub_info.num_mpx_cntrs;
+   /* Always initialize the whole thing */
 
    for (i = 0; i < limit; i++) {
       ESI->EventInfoArray[i].event_code = PAPI_NULL;
@@ -863,7 +864,7 @@ int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long_long * va
       changed.  
     */
 
-   for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) 
+   for (i = 0; i < _papi_hwi_system_info.sub_info.num_mpx_cntrs; i++) 
      {
        index = ESI->EventInfoArray[i].pos[0];
       if (index == -1)
@@ -899,7 +900,8 @@ int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long_long * va
 
 int _papi_hwi_cleanup_eventset(EventSetInfo_t * ESI)
 {
-   int retval, i, tmp = EventInfoArrayLength(ESI);
+   int retval, i, tmp = _papi_hwi_system_info.sub_info.num_mpx_cntrs;
+   /* Always clean the whole thing */
 
    for (i = (tmp - 1); i >= 0; i--) {
       if (ESI->EventInfoArray[i].event_code != PAPI_NULL) {
