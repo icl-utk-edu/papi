@@ -143,7 +143,7 @@ int _papi_hwd_init(hwd_context_t *ctx)
 int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {
   int retval;
-  int cpu_type;
+  int model;
   HANDLE dh;	// device handle for kernel driver
 
 
@@ -157,23 +157,23 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   retval = _papi_hwd_get_system_info();
   if (retval != PAPI_OK)
      return (retval);
-  cpu_type = (int) _papi_hwi_system_info.hw_info.vendor;
+  model = (int) _papi_hwi_system_info.hw_info.model;
 
    /* Setup memory info */
-   retval = _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info, cpu_type);
+   retval = _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info, model);
    if (retval)
       return (retval);
 
    /* Setup presets */
-   if ( check_p4(cpu_type) ){
+   if ( check_p4(model) ){
      retval = setup_p4_vector_table(vtable);
      if (!retval)
-     	retval = setup_p4_presets(cpu_type);
+     	retval = setup_p4_presets(model);
    }
    else{
      retval = setup_p3_vector_table(vtable);
      if (!retval)
-     	retval = setup_p3_presets(cpu_type);
+     	retval = setup_p3_presets(model);
    }
    if ( retval ) 
      return(retval);
@@ -318,6 +318,9 @@ int _papi_hwd_get_system_info(void)
 
   if (IS_AMDDURON(&win_hwinfo) || IS_AMDATHLON(&win_hwinfo))
     _papi_hwi_system_info.hw_info.model = PERFCTR_X86_AMD_K7;
+
+  if (IS_AMDOPTERON(&win_hwinfo))
+    _papi_hwi_system_info.hw_info.model = PERFCTR_X86_AMD_K8;
 
   strcpy(_papi_hwi_system_info.hw_info.model_string,win_hwinfo.model_string);
 

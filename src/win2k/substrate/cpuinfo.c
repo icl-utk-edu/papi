@@ -197,6 +197,8 @@ static int init_amd( struct wininfo * hwinfo ) {
   hwinfo->processor_id = amd_proc( hwinfo );
   hwinfo->nrctr = 4;
   // Setup model information
+  if ( IS_AMDOPTERON(hwinfo) )
+	  strcpy ( hwinfo->model_string, "Opteron");
   if ( IS_AMDATHLON(hwinfo) )
 	  strcpy ( hwinfo->model_string, "Athlon");
   else if ( IS_AMDDURON( hwinfo ) )
@@ -295,15 +297,45 @@ static int amd_proc( struct wininfo * hwinfo ) {
 		case 4:
 			return AMD_486;
 		case 5:
-			if ( model==9 ) return AMD_K63;
-			else if ( model==8 ) return AMD_K62;
-			else if ( model==7 || model==6 ) return AMD_K6;
-			else if ( model<4 && model>=0 ) return AMD_K5;
-			else return PROC_UNKNOWN;
+			switch (model) {
+				case 0:
+				case 1:
+				case 2:
+				case 3:
+					return AMD_K5;
+				case 7:
+				case 6:
+					return AMD_K6;
+				case 8:
+					return AMD_K62;
+				case 9:
+					return AMD_K63;
+				default:
+					return PROC_UNKNOWN;
+			}
 		case 6:
-			if ( model==3 ) return AMD_DURON;
-			else if ( model==4 || model==2 || model==1 ) return AMD_ATHLON;
-			else return PROC_UNKNOWN;
+			switch (model) {
+				case 1:
+				case 2:
+				case 4:
+					return AMD_ATHLON;
+				case 3:
+					return AMD_DURON;
+				default:
+					return PROC_UNKNOWN;
+			}
+		case 15:
+			return AMD_OPTERON;
+			/* There's a whole bunch of Opteron codes, but I'm not sure how
+				much they matter. See: "Revision Guide for AMD Athlon 64 and
+				AMD Opteron Processors" AMD Publication # 25759.pdf for details.
+			switch (model) {
+				case 5:
+					return AMD_OPTERON;
+				default:
+					return PROC_UNKNOWN;
+			}
+			*/
 	}
 }
 
