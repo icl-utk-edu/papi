@@ -32,24 +32,20 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type)
 
    /* Defaults to Intel which is *probably* a safe assumption -KSL */
    switch (cpu_type) {
-#ifdef _WIN32
-   case AMD:
-#else
-   case PERFCTR_X86_AMD_K7:
+	   case PERFCTR_X86_AMD_K7:
+		  retval = init_amd(&hw_info->mem_hierarchy);
+		  break;
+#ifdef PERFCTR_X86_AMD_K8 /* this is defined in perfctr 2.5.x, ff */
+	   case PERFCTR_X86_AMD_K8:
 #endif
-      retval = init_amd(&hw_info->mem_hierarchy);
-      break;
-#ifdef __x86_64__
-   case PERFCTR_X86_AMD_K8:
 #ifdef PERFCTR_X86_AMD_K8C  /* this is defined in perfctr 2.6.x */
-   case PERFCTR_X86_AMD_K8C:
+	   case PERFCTR_X86_AMD_K8C:
 #endif
-      retval = init_amd(&hw_info->mem_hierarchy);
-      break;
-#endif
-   default:
-      retval = init_intel(&hw_info->mem_hierarchy);
-      break;
+		  retval = init_amd(&hw_info->mem_hierarchy);
+		  break;
+	   default:
+		  retval = init_intel(&hw_info->mem_hierarchy);
+		  break;
    }
 
    /* Do some post-processing */
@@ -89,6 +85,7 @@ static int init_amd(PAPI_mh_info_t * mh_info)
    /*
     * Layout of CPU information taken from :
     * "AMD Processor Recognition Application Note", 20734W-1 November 2002 
+	* ****Does this properly decode Opterons (K8)?
     */
 
    SUBDBG("Initializing AMD (K7) memory\n");
