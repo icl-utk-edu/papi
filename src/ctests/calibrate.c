@@ -25,6 +25,12 @@ static void headerlines(char *title, int TESTS_QUIET);
 #define INDEX5 500
 
 /* #define DONT_FAIL */
+#if _WIN32 /* recognize that Windows has more noise */
+  #define MAX_ERROR 20
+#else
+  #define MAX_ERROR 10
+#endif
+#define MAX_DIFF  14
 
 extern int TESTS_QUIET;
 
@@ -299,10 +305,10 @@ static void resultline(int i, int j, int TESTS_QUIET)
       printf("%8d %12d %12d %8d %10.4f\n", i, papi, theory, diff, ferror);
 
 #ifndef DONT_FAIL
-   if (ferror > 10 && diff > 14)
+   if (ferror > MAX_ERROR && diff > MAX_DIFF)
 #if defined(__ALPHA) && defined(__osf__)
       if (!TESTS_QUIET)
-         fprintf(stderr, "Calibrate: error exceeds 10 percent\n");
+         fprintf(stderr, "Calibrate: error exceeds %d percent\n", MAX_ERROR);
 #else
       test_fail(__FILE__, __LINE__, "Calibrate: error exceeds 10%", PAPI_EMISC);
 #endif
