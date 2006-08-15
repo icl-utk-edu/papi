@@ -23,6 +23,7 @@
 
 hwi_search_t *preset_search_map;
 static hwd_native_event_entry_t *native_map;
+
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 
 papi_svector_t _linux_pfm_table[] = {
@@ -1376,11 +1377,11 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 {
    int index = *EventCode & PAPI_NATIVE_AND_MASK;
 
-   if (strlen(native_map[index + 1].name)) {
-      *EventCode = (index | PAPI_NATIVE_MASK) + 1;
-      return (PAPI_OK);
+   if (index < _papi_hwi_system_info.sub_info.num_native_events - 1) {
+     *EventCode += 1;
+     return (PAPI_OK);
    } else {
-      return (PAPI_ENOEVNT);
+     return (PAPI_ENOEVNT);
    }
 }
 
