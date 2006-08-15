@@ -1718,7 +1718,12 @@ fi
                    exit -1
                  fi
 		 if test "$perfmon" = 2; then
-		    MAKEVER="$OS"-perfmon2
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_PFMLIB_MONTECITO_H 1
+_ACEOF
+
+		     MAKEVER="$OS"-perfmon2
 		 elif test "$CPU" = "montecito"; then
 		    MAKEVER="$OS"-pfm-itanium2
 		 else
@@ -2876,7 +2881,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2879:" \
+echo "$as_me:2884:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5

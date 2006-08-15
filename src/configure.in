@@ -332,7 +332,8 @@ case "$OS" in
                    exit -1
                  fi
 		 if test "$perfmon" = 2; then
-		    MAKEVER="$OS"-perfmon2
+		     AC_DEFINE(HAVE_PFMLIB_MONTECITO_H,1,["Have montecito header file"])
+		     MAKEVER="$OS"-perfmon2
 		 elif test "$CPU" = "montecito"; then 
 		    MAKEVER="$OS"-pfm-itanium2
 		 else

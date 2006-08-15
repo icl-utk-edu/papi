@@ -298,9 +298,9 @@ int generate_preset_search_map(hwi_search_t **maploc, itanium_preset_search_t *o
       if (oldmap[i].preset == 0)
          break;
       pnum++;
-      preset_search_map[i].event_code = oldmap[i].preset;
-      preset_search_map[i].data.derived = oldmap[i].derived;
-      strcpy(preset_search_map[i].data.operation,oldmap[i].operation);
+      psmap[i].event_code = oldmap[i].preset;
+      psmap[i].data.derived = oldmap[i].derived;
+      strcpy(psmap[i].data.operation,oldmap[i].operation);
       findme = oldmap[i].findme;
       cnt = 0;
       while (*findme != NULL) {
@@ -308,15 +308,15 @@ int generate_preset_search_map(hwi_search_t **maploc, itanium_preset_search_t *o
 	    PAPIERROR("Count (%d) == MAX_COUNTER_TERMS (%d)\n",cnt,MAX_COUNTER_TERMS);
             return(PAPI_ENOEVNT);
          }
-         if (pfm_find_event_byname(*findme, (unsigned int *)&preset_search_map[i].data.native[cnt]) !=
+         if (pfm_find_event_byname(*findme, (unsigned int *)&psmap[i].data.native[cnt]) !=
              PFMLIB_SUCCESS)
             return (PAPI_ENOEVNT);
          else
-            preset_search_map[i].data.native[cnt] ^= PAPI_NATIVE_MASK;
+            psmap[i].data.native[cnt] ^= PAPI_NATIVE_MASK;
          findme++;
          cnt++;
       }
-      preset_search_map[i].data.native[cnt] = PAPI_NULL;
+      psmap[i].data.native[cnt] = PAPI_NULL;
    }
 
    *maploc = psmap;
@@ -1581,7 +1581,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
    int index = *EventCode & PAPI_NATIVE_AND_MASK;
 
   if (index < _papi_hwi_system_info.sub_info.num_native_events - 1) {
-    *EventCode += *EventCode + 1;
+    *EventCode += 1;
     return (PAPI_OK);
   } else {
     return (PAPI_ENOEVNT);

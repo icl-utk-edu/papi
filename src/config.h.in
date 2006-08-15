@@ -108,8 +108,11 @@
 /* Define to 1 if you have the `munmap' function. */
 #undef HAVE_MUNMAP
 
-/* Working per thread times() */
+/* Working per thread times */
 #undef HAVE_PER_THREAD_TIMES
+
+/* "Have montecito header file" */
+#undef HAVE_PFMLIB_MONTECITO_H
 
 /* event description function */
 #undef HAVE_PFM_GET_EVENT_DESCRIPTION

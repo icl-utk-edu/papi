@@ -52,7 +52,7 @@
 #endif
 #ifdef ITANIUM2
 #include "perfmon/pfmlib_itanium2.h"
-#ifdef HAVE_PERFMON_PFMLIB_MONTECITO_H
+#ifdef HAVE_PFMLIB_MONTECITO_H
 #include "perfmon/pfmlib_montecito.h"
 #endif
 #else
