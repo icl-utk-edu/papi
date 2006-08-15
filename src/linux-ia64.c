@@ -19,6 +19,44 @@
 #include "threads.h"
 #include "papi_memory.h"
 
+/* Globals declared extern elsewhere */
+
+hwi_search_t *preset_search_map;
+volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
+
+/* this function is called by PAPI_library_init */
+papi_svector_t _linux_ia64_table[] = {
+ {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
+ {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
+ {(void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE},
+ {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
+ {(void (*)())_papi_hwd_ctl, VEC_PAPI_HWD_CTL},
+ {(void (*)())_papi_hwd_get_real_usec, VEC_PAPI_HWD_GET_REAL_USEC},
+ {(void (*)())_papi_hwd_get_real_cycles, VEC_PAPI_HWD_GET_REAL_CYCLES},
+ {(void (*)())_papi_hwd_get_virt_cycles, VEC_PAPI_HWD_GET_VIRT_CYCLES},
+ {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
+ {(void (*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE}, {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
+ {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
+ {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
+ {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
+ {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
+ {(void (*)())_papi_hwd_set_profile, VEC_PAPI_HWD_SET_PROFILE},
+ {(void (*)())_papi_hwd_stop_profiling, VEC_PAPI_HWD_STOP_PROFILING},
+ {(void (*)())_papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
+ {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
+ {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
+ {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
+ {(void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
+ {NULL, VEC_PAPI_END}
+};
+
+/* Static locals */
+
+#ifdef ALTIX
+static unsigned long mmdev_clicks_per_tick;
+static volatile unsigned long *mmdev_timer_addr;
+#endif
+
 #ifndef ITANIUM2
 static const itanium_preset_search_t ia1_preset_search_map[] = {
    {PAPI_L1_TCM, DERIVED_ADD, {"L1D_READ_MISSES_RETIRED", "L2_INST_DEMAND_READS", 0, 0}},
@@ -67,7 +105,6 @@ static const itanium_preset_search_t ia1_preset_search_map[] = {
    {PAPI_LST_INS, DERIVED_ADD, {"LOADS_RETIRED", "STORES_RETIRED", 0, 0}},
    {0, 0, {0, 0, 0, 0}}
 };
-#define ia_preset_search_map ia1_preset_search_map
 #else
 static const itanium_preset_search_t ia2_preset_search_map[] = {
    {PAPI_CA_SNP, 0, {"BUS_SNOOPS_SELF", 0, 0, 0}},
@@ -135,24 +172,88 @@ static const itanium_preset_search_t ia2_preset_search_map[] = {
    {PAPI_L1_TCR, DERIVED_ADD, {"L1D_READS_SET0", "L1I_READS", 0, 0}}, 
    {PAPI_L1_TCA, DERIVED_ADD, {"L1D_READS_SET0", "L1I_READS", 0, 0}}, 
    {PAPI_L2_TCW, 0, {"L2_DATA_REFERENCES_L2_DATA_WRITES", 0, 0, 0}},
-
    {0, 0, {0, 0, 0, 0}}
 };
-#define ia_preset_search_map ia2_preset_search_map
+
+static const itanium_preset_search_t ia3_preset_search_map[] = {
+/* not sure */
+   {PAPI_CA_SNP, 0, {"BUS_SNOOPS_STALL_CYCLES", 0, 0, 0}},
+   {PAPI_CA_INV, DERIVED_ADD, {"BUS_MEM_READ_BRIL_SELF", "BUS_MEM_READ_BIL_SELF", 0, 0}},
+/* should be OK */
+   {PAPI_TLB_TL, DERIVED_ADD, {"ITLB_MISSES_FETCH_L2ITLB", "L2DTLB_MISSES", 0, 0}},
+   {PAPI_STL_ICY, 0, {"DISP_STALLED", 0, 0, 0}},
+   {PAPI_STL_CCY, 0, {"BACK_END_BUBBLE_ALL", 0, 0, 0}},
+   {PAPI_TOT_IIS, 0, {"INST_DISPERSED", 0, 0, 0}},
+   {PAPI_RES_STL, 0, {"BE_EXE_BUBBLE_ALL", 0, 0, 0}},
+   {PAPI_FP_STAL, 0, {"BE_EXE_BUBBLE_FRALL", 0, 0, 0}},
+/* should be OK */
+   {PAPI_L2_TCR, DERIVED_ADD, {"L2D_REFERENCES_READS", "L2I_READS_ALL_DMND", "L2I_READS_ALL_PFTCH", 0}},
+/* what is the correct name here: L2I_READS_ALL_DMND or L2I_DEMANDS_READ ?
+ * do not have papi_native_avail at this time, going to use L2I_READS_ALL_DMND always
+ * just replace on demand
+ */
+   {PAPI_L1_TCM, DERIVED_ADD, {"L2I_READS_ALL_DMND", "L1D_READ_MISSES_ALL", 0}},
+   {PAPI_L1_ICM, 0, {"L2I_READS_ALL_DMND", 0, 0, 0}},
+   {PAPI_L1_DCM, 0, {"L1D_READ_MISSES_ALL", 0, 0, 0}},
+   {PAPI_L2_TCM, 0, {"L2I_READS_MISS_ALL", "L2D_MISSES", 0, 0}},
+   {PAPI_L2_DCM, DERIVED_SUB, {"L2D_MISSES", 0, 0, 0}},
+   {PAPI_L2_ICM, 0, {"L2I_READS_MISS_ALL", 0, 0, 0}},
+   {PAPI_L3_TCM, 0, {"L3_MISSES", 0, 0, 0}},
+   {PAPI_L3_ICM, 0, {"L3_READS_INST_FETCH_MISS", 0, 0, 0}},
+   {PAPI_L3_DCM, DERIVED_ADD, {"L3_READS_DATA_READ_MISS", "L3_WRITES_DATA_WRITE_MISS", 0, 0}},
+   {PAPI_L3_LDM, 0, {"L3_READS_ALL_MISS", 0, 0, 0}},
+   {PAPI_L3_STM, 0, {"L3_WRITES_DATA_WRITE_MISS", 0, 0, 0}},
+/* why L2_INST_DEMAND_READS has been added here for the Itanium II ?
+ * OLD:  {PAPI_L1_LDM, DERIVED_ADD, {"L1D_READ_MISSES_ALL", "L2_INST_DEMAND_READS", 0, 0}}
+ */
+   {PAPI_L1_LDM, 0, {"L1D_READ_MISSES_ALL", 0, 0, 0}},
+   {PAPI_L2_LDM, 0, {"L3_READS_ALL_ALL", 0, 0, 0}},
+   {PAPI_L2_STM, 0, {"L3_WRITES_ALL_ALL", 0, 0, 0}},
+   {PAPI_L1_DCH, DERIVED_SUB, {"L1D_READS_SET1", "L1D_READ_MISSES_ALL", 0, 0}},
+   {PAPI_L2_DCH, DERIVED_SUB, {"L2D_REFERENCES_ALL", "L2_MISSES", 0, 0}},
+   {PAPI_L3_DCH, DERIVED_ADD,
+    {"L3_READS_DATA_READ_HIT", "L3_WRITES_DATA_WRITE_HIT", 0, 0}},
+   {PAPI_L1_DCA, 0, {"L1D_READS_SET1", 0, 0, 0}},
+   {PAPI_L2_DCA, 0, {"L2D_REFERENCES_ALL", 0, 0, 0}},
+   {PAPI_L3_DCA, 0, {"L3_REFERENCES", 0, 0, 0}},
+   {PAPI_L1_DCR, 0, {"L1D_READS_SET1", 0, 0, 0}},
+   {PAPI_L2_DCR, 0, {"L2D_REFERENCES_READS", 0, 0, 0}},
+   {PAPI_L3_DCR, 0, {"L3_READS_DATA_READ_ALL", 0, 0, 0}},
+   {PAPI_L2_DCW, 0, {"L2D_REFERENCES_WRITES", 0, 0, 0}},
+   {PAPI_L3_DCW, 0, {"L3_WRITES_DATA_WRITE_ALL", 0, 0, 0}},
+   {PAPI_L3_ICH, 0, {"L3_READS_DINST_FETCH_HIT", 0, 0, 0}},
+   {PAPI_L1_ICR, DERIVED_ADD, {"L1I_PREFETCHES", "L1I_READS", 0, 0}},
+   {PAPI_L2_ICR, DERIVED_ADD, {"L2I_READS_ALL_DMND", "L2_INST_PREFETCHES", 0, 0}},
+   {PAPI_L3_ICR, 0, {"L3_READS_INST_FETCH_ALL", 0, 0, 0}},
+   {PAPI_L1_ICA, DERIVED_ADD, {"L1I_PREFETCHES", "L1I_READS", 0, 0}},
+   {PAPI_L2_TCH, DERIVED_SUB, {"L2_REFERENCES", "L2_MISSES", 0, 0}},
+   {PAPI_L3_TCH, DERIVED_SUB, {"L3_REFERENCES", "L3_MISSES", 0, 0}},
+   {PAPI_L2_TCA, DERIVED_ADD, {"L2I_READS_ALL_ALL", "L2D_REFERENCES_ALL", 0, 0}},
+   {PAPI_L3_TCA, 0, {"L3_REFERENCES", 0, 0, 0}},
+   {PAPI_L3_TCR, 0, {"L3_READS_ALL_ALL", 0, 0, 0}},
+   {PAPI_L3_TCW, 0, {"L3_WRITES_ALL_ALL", 0, 0, 0}},
+   {PAPI_TLB_DM, 0, {"L2DTLB_MISSES", 0, 0, 0}},
+   {PAPI_TLB_IM, 0, {"ITLB_MISSES_FETCH_L2ITLB", 0, 0, 0}},
+   {PAPI_BR_INS, 0, {"BRANCH_EVENT", 0, 0, 0}},
+   {PAPI_BR_PRC, 0, {"BR_MISPRED_DETAIL_ALL_CORRECT_PRED", 0, 0, 0}},
+   {PAPI_BR_MSP, DERIVED_ADD,
+    {"BR_MISPRED_DETAIL_ALL_WRONG_PATH", "BR_MISPRED_DETAIL_ALL_WRONG_TARGET", 0, 0}},
+   {PAPI_TOT_CYC, 0, {"CPU_OP_CYCLES", 0, 0, 0}},
+   {PAPI_FP_OPS, 0, {"FP_OPS_RETIRED", 0, 0, 0}},
+   {PAPI_TOT_INS, DERIVED_ADD, {"IA64_INST_RETIRED", "IA32_INST_RETIRED", 0, 0}},
+   {PAPI_LD_INS, 0, {"LOADS_RETIRED", 0, 0, 0}},
+   {PAPI_SR_INS, 0, {"STORES_RETIRED", 0, 0, 0}},
+   {PAPI_L2_ICA, 0, {"L2_INST_DEMAND_READS", 0, 0, 0}},
+   {PAPI_L3_ICA, 0, {"L3_READS_INST_FETCH_ALL", 0, 0, 0}},
+   {PAPI_L1_TCR, DERIVED_ADD, {"L2I_READS_ALL_DMND", "L1D_READ_MISSES_ALL", "L1I_READS_SET0"}}, 
+/* Why are TCA READS+READS_SET0? I the same as PAPI_L1_TCR, because its an write through cache
+ * OLD: {PAPI_L1_TCA, DERIVED_ADD, {"L1D_READS_SET0", "L1I_READS", 0, 0}}, 
+ */
+   {PAPI_L1_TCA, DERIVED_ADD, {"L2I_READS_ALL_DMND", "L1D_READ_MISSES_ALL", "L1I_READS_SET0", "L1I_READS_SET1"}}, 
+   {PAPI_L2_TCW, 0, {"L2D_REFERENCES_L2_DATA_WRITES", 0, 0, 0}},
+   {0, 0, {0, 0, 0, 0}}
+};
 #endif
-
-#define NUM_OF_PRESET_EVENTS (sizeof(ia_preset_search_map)/sizeof(itanium_preset_search_t)-1)
-hwi_search_t ia_preset_search_map_bycode[NUM_OF_PRESET_EVENTS + 1];
-hwi_search_t *preset_search_map = ia_preset_search_map_bycode;
-
-#ifdef ALTIX
-static unsigned long mmdev_clicks_per_tick;
-static volatile unsigned long *mmdev_timer_addr;
-#endif
-
-/* Machine info structure. -1 is unused. */
-extern papi_mdi_t _papi_hwi_system_info;
-extern hwi_preset_data_t _papi_hwi_preset_data[PAPI_MAX_PRESET_EVENTS];
 
 extern void dispatch_profile(EventSetInfo_t * ESI, void *context,
                              long_long over, int profile_index);
@@ -173,13 +274,24 @@ extern void dispatch_profile(EventSetInfo_t * ESI, void *context,
    still keep the old way to define preset search table, but 
    I add this function to generate the preset search map in papi3 
 */
-int generate_preset_search_map(itanium_preset_search_t * oldmap)
+int generate_preset_search_map(hwi_search_t **maploc, itanium_preset_search_t *oldmap, int num_cnt)
 {
-   int pnum, i, cnt;
-   char **findme;
+  int pnum, i, cnt;
+  char **findme;
+  hwi_search_t *psmap;
 
-   pnum = 0;                    /* preset event counter */
-   memset(ia_preset_search_map_bycode, 0x0, sizeof(ia_preset_search_map_bycode));
+  /* Count up the presets */
+  while (strmap[i].preset)
+    i++;
+  /* Add null entry */
+  i++;
+
+  psmap = (hwi_search_t *)papi_malloc(i*sizeof(hwi_search_t));
+  if (psmap == NULL)
+    return(PAPI_ENOMEM);
+  memset(ia_preset_search_map_bycode, 0x0, i*sizeof(hwi_search_t));
+
+  pnum = 0;                    /* preset event counter */
    for (i = 0; i <= PAPI_MAX_PRESET_EVENTS; i++) {
       if (oldmap[i].preset == 0)
          break;
@@ -208,6 +320,8 @@ int generate_preset_search_map(itanium_preset_search_t * oldmap)
      PAPIERROR("NUM_OF_PRESET_EVENTS %d != pnum %d\n", (int)NUM_OF_PRESET_EVENTS,pnum);
      return(PAPI_ENOEVNT);
    }
+   
+   *maploc = psmap;
    return (PAPI_OK);
 }
 
@@ -255,13 +369,11 @@ inline static int set_domain(hwd_control_state_t * this_state, int domain)
       did = 1;
       mode |= PFM_PLM3;
    }
+
    if (domain & PAPI_DOM_KERNEL) {
       did = 1;
       mode |= PFM_PLM0;
    }
-
-   if (domain == PAPI_DOM_OTHER) 
-      return (PAPI_ESBSTR);
 
    if (!did)
       return (PAPI_EINVAL);
@@ -269,7 +381,9 @@ inline static int set_domain(hwd_control_state_t * this_state, int domain)
    PFMW_PEVT_DFLPLM(evt) = mode;
 
    /* Bug fix in case we don't call pfmw_dispatch_events after this code */
-   for (i = 0; i < MAX_COUNTERS; i++) {
+   /* Who did this? This sucks, we should always call it here -PJM */
+
+   for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
       if (PFMW_PEVT_PFPPC_REG_NUM(evt,i)) {
          pfmw_arch_pmc_reg_t value;
          SUBDBG("slot %d, register %lud active, config value 0x%lx\n",
@@ -285,26 +399,6 @@ inline static int set_domain(hwd_control_state_t * this_state, int domain)
    }
 
    return (PAPI_OK);
-}
-
-inline static int mdi_init() 
-{
-  /* Name of the substrate we're using */
-  strcpy(_papi_hwi_system_info.sub_info.name, "$Id$");          
-  
-  _papi_hwi_system_info.sub_info.num_cntrs = MAX_COUNTERS;
-  _papi_hwi_system_info.sub_info.hardware_intr = 1;
-/*  _papi_hwi_system_info.sub_info.kernel_profile = 0; */
-/*  _papi_hwi_system_info.supports_64bit_counters = 1;
-  _papi_hwi_system_info.supports_inheritance = 1;*/
-  _papi_hwi_system_info.sub_info.fast_real_timer = 1;
-  _papi_hwi_system_info.sub_info.fast_virtual_timer = 1;
-  _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
-  _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
-  _papi_hwi_system_info.sub_info.default_granularity = PAPI_GRN_THR;
-  _papi_hwi_system_info.sub_info.available_granularities = PAPI_GRN_THR;
-  
-  return(PAPI_OK);
 }
 
 inline static int set_granularity(hwd_control_state_t * this_state, int domain)
@@ -344,71 +438,200 @@ inline static int set_default_granularity(hwd_control_state_t * this_state,
 }
 
 
-volatile unsigned int lock[PAPI_MAX_LOCK];
-
-static void lock_init(void)
+static int get_system_info(void)
 {
-   int i;
-   for (i = 0; i < PAPI_MAX_LOCK; i++)
-      lock[i] = MUTEX_OPEN;
-}
+   int tmp, retval;
+   char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
+   pid_t pid;
+   float mhz = 0.0;
+   FILE *f;
+   int ncnt, nnev;
+                                                                                
+  retval = pfmw_get_num_events(&nnev);
+  if (retval != PAPI_OK)
+    return(retval);
 
-/* this function is called by PAPI_library_init */
-papi_svector_t _linux_ia64_table[] = {
- {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
- {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
- {(void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE},
- {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
- {(void (*)())_papi_hwd_ctl, VEC_PAPI_HWD_CTL},
- {(void (*)())_papi_hwd_get_real_usec, VEC_PAPI_HWD_GET_REAL_USEC},
- {(void (*)())_papi_hwd_get_real_cycles, VEC_PAPI_HWD_GET_REAL_CYCLES},
- {(void (*)())_papi_hwd_get_virt_cycles, VEC_PAPI_HWD_GET_VIRT_CYCLES},
- {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
- {(void (*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE}, {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
- {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
- {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
- {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
- {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
- {(void (*)())_papi_hwd_set_profile, VEC_PAPI_HWD_SET_PROFILE},
- {(void (*)())_papi_hwd_stop_profiling, VEC_PAPI_HWD_STOP_PROFILING},
- {(void (*)())_papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
- {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
- {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
- {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
- {(void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
- {NULL, VEC_PAPI_END}
-};
+  retval = pfmw_get_num_counters(&ncnt);
+  if (retval != PAPI_OK)
+    return(retval);
+
+   /* Path and args */
+                                                                                
+   pid = getpid();
+   if (pid < 0)
+     { PAPIERROR("getpid() returned < 0"); return(PAPI_ESYS); }
+   _papi_hwi_system_info.pid = pid;
+                                                                                
+   sprintf(maxargs, "/proc/%d/exe", (int) pid);
+   if (readlink(maxargs, _papi_hwi_system_info.exe_info.fullname, PAPI_HUGE_STR_LEN) < 0)
+     { PAPIERROR("readlink(%s) returned < 0", maxargs); return(PAPI_ESYS); }
+                                                                                
+   /* basename can modify it's argument */
+   strcpy(maxargs,_papi_hwi_system_info.exe_info.fullname);
+   strcpy(_papi_hwi_system_info.exe_info.address_info.name, basename(maxargs));
+                                                                                
+   /* Executable regions, may require reading /proc/pid/maps file */
+                                                                                
+   retval = _papi_hwd_update_shlib_info();
+                                                                                
+   /* PAPI_preload_option information */
+                                                                                
+   strcpy(_papi_hwi_system_info.preload_info.lib_preload_env, "LD_PRELOAD");
+   _papi_hwi_system_info.preload_info.lib_preload_sep = ' ';
+   strcpy(_papi_hwi_system_info.preload_info.lib_dir_env, "LD_LIBRARY_PATH");
+   _papi_hwi_system_info.preload_info.lib_dir_sep = ':';
+                                                                                
+   SUBDBG("Executable is %s\n", _papi_hwi_system_info.exe_info.address_info.name);
+   SUBDBG("Full Executable is %s\n", _papi_hwi_system_info.exe_info.fullname);
+   SUBDBG("Text: Start %p, End %p, length %d\n",
+          _papi_hwi_system_info.exe_info.address_info.text_start,
+          _papi_hwi_system_info.exe_info.address_info.text_end,
+          (int)(_papi_hwi_system_info.exe_info.address_info.text_end -
+          _papi_hwi_system_info.exe_info.address_info.text_start));
+   SUBDBG("Data: Start %p, End %p, length %d\n",
+          _papi_hwi_system_info.exe_info.address_info.data_start,
+          _papi_hwi_system_info.exe_info.address_info.data_end,
+          (int)(_papi_hwi_system_info.exe_info.address_info.data_end -
+          _papi_hwi_system_info.exe_info.address_info.data_start));
+   SUBDBG("Bss: Start %p, End %p, length %d\n",
+          _papi_hwi_system_info.exe_info.address_info.bss_start,
+          _papi_hwi_system_info.exe_info.address_info.bss_end,
+          (int)(_papi_hwi_system_info.exe_info.address_info.bss_end -
+          _papi_hwi_system_info.exe_info.address_info.bss_start));
+                                                                                
+   /* Hardware info */
+                                                                                
+   _papi_hwi_system_info.hw_info.ncpu = sysconf(_SC_NPROCESSORS_ONLN);
+   _papi_hwi_system_info.hw_info.nnodes = 1;
+   _papi_hwi_system_info.hw_info.totalcpus = sysconf(_SC_NPROCESSORS_CONF);
+   _papi_hwi_system_info.hw_info.vendor = -1;
+                                                                                
+   if ((f = fopen("/proc/cpuinfo", "r")) == NULL)
+     { PAPIERROR("fopen(/proc/cpuinfo) errno %d",errno); return(PAPI_ESYS); }
+                                                                                
+   /* All of this information maybe overwritten by the substrate */
+                                                                                
+   /* MHZ */
+                                                                                
+   rewind(f);
+   s = search_cpu_info(f, "cpu MHz", maxargs);
+   if (s)
+      sscanf(s + 1, "%f", &mhz);
+   _papi_hwi_system_info.hw_info.mhz = mhz;
+                                                                                
+   /* Vendor Name */
+                                                                                
+   rewind(f);
+   s = search_cpu_info(f, "vendor_id", maxargs);
+   if (s && (t = strchr(s + 2, '\n')))
+     {
+      *t = '\0';
+      strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
+     }
+   else
+     {
+       rewind(f);
+       s = search_cpu_info(f, "vendor", maxargs);
+       if (s && (t = strchr(s + 2, '\n'))) {
+         *t = '\0';
+         strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
+       }
+     }
+                                                                                
+   /* Revision */
+                                                                                
+   rewind(f);
+   s = search_cpu_info(f, "stepping", maxargs);
+   if (s)
+      {
+        sscanf(s + 1, "%d", &tmp);
+        _papi_hwi_system_info.hw_info.revision = (float) tmp;
+      }
+   else
+     {
+       rewind(f);
+       s = search_cpu_info(f, "revision", maxargs);
+       if (s)
+         {
+           sscanf(s + 1, "%d", &tmp);
+           _papi_hwi_system_info.hw_info.revision = (float) tmp;
+         }
+     }
+                                                                                
+   /* Model Name */
+                                                                                
+   rewind(f);
+   s = search_cpu_info(f, "family", maxargs);
+   if (s && (t = strchr(s + 2, '\n')))
+     {
+       *t = '\0';
+       strcpy(_papi_hwi_system_info.hw_info.model_string, s + 2);
+     }
+   else
+     {
+       rewind(f);
+       s = search_cpu_info(f, "vendor", maxargs);
+       if (s && (t = strchr(s + 2, '\n')))
+         {
+           *t = '\0';
+           strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
+         }
+     }
+                                                                                
+   rewind(f);
+   s = search_cpu_info(f, "model", maxargs);
+   if (s)
+      {
+        sscanf(s + 1, "%d", &tmp);
+        _papi_hwi_system_info.hw_info.model = tmp;
+      }
+                                                                                
+   fclose(f);
+                                                                                
+   SUBDBG("Found %d %s(%d) %s(%d) CPU's at %f Mhz.\n",
+          _papi_hwi_system_info.hw_info.totalcpus,
+          _papi_hwi_system_info.hw_info.vendor_string,
+          _papi_hwi_system_info.hw_info.vendor,
+          _papi_hwi_system_info.hw_info.model_string,
+          _papi_hwi_system_info.hw_info.model, _papi_hwi_system_info.hw_info.mhz);
+                                                                                
+
+  /* Name of the substrate we're using */
+  strcpy(_papi_hwi_system_info.sub_info.name, "$Id$");          
+  strcpy(_papi_hwi_system_info.sub_info.version, "$Revision$");  
+  _papi_hwi_system_info.sub_info.num_native_events = nnev;  
+  _papi_hwi_system_info.sub_info.num_cntrs = ncnt;
+  _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_INTEL;
+  _papi_hwi_system_info.sub_info.hardware_intr = 1;
+  _papi_hwi_system_info.sub_info.fast_real_timer = 1;
+  _papi_hwi_system_info.sub_info.fast_virtual_timer = 0;
+  _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
+  _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
+  _papi_hwi_system_info.sub_info.default_granularity = PAPI_GRN_THR;
+  _papi_hwi_system_info.sub_info.available_granularities = PAPI_GRN_THR;
+   }
+
+   return (PAPI_OK);
+}
 
 int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {
-   int retval, type;
+  int retval, type, i;
    unsigned int version;
    pfmlib_options_t pfmlib_options;
+
+  /* Always initialize globals dynamically to handle forks properly. */
+  preset_search_map = NULL;
 
   /* Setup the vector entries that the OS knows about */
 #ifndef PAPI_NO_VECTOR
   retval = _papi_hwi_setup_vector_table( vtable, _linux_ia64_table);
   if ( retval != PAPI_OK ) return(retval);
 #endif
-
+  
    /* Opened once for all threads. */
    if (pfm_initialize() != PFMLIB_SUCCESS)
       return (PAPI_ESYS);
-
-   if (pfm_get_pmu_type(&type) != PFMLIB_SUCCESS)
-      return (PAPI_ESYS);
-
-#ifdef ITANIUM2
-   if (type != PFMLIB_ITANIUM2_PMU) {
-      PAPIERROR("Intel Itanium I is not supported by this substrate");
-      return (PAPI_ESBSTR);
-   }
-#else
-   if (type != PFMLIB_ITANIUM_PMU) {
-      PAPIERROR("Intel Itanium II is not supported by this substrate");
-      return (PAPI_ESBSTR);
-   }
-#endif
 
    if (pfm_get_version(&version) != PFMLIB_SUCCESS)
       return (PAPI_ESBSTR);
@@ -430,13 +653,28 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    if (pfm_set_options(&pfmlib_options))
       return (PAPI_ESYS);
 
-   /* Initialize outstanding values in machine info structure */
-   if (mdi_init() != PAPI_OK) {
-      return (PAPI_ESBSTR);
+   if (pfm_get_pmu_type(&type) != PFMLIB_SUCCESS)
+      return (PAPI_ESYS);
+
+   /* Setup presets */
+   
+   switch (type) {
+   case PFMLIB_ITANIUM_PMU:
+     ia_preset_search_map = ia1_preset_search_map;
+     break;
+   case PFMLIB_ITANIUM2_PMU:
+     ia_preset_search_map = ia2_preset_search_map;
+     break;
+   case PFMLIB_MONTECITO_PMU:
+     ia_preset_search_map = ia3_preset_search_map;
+     break;
+   default:
+     PAPIERROR("PMU type %d is not supported by this substrate",type);
+     return(PAPI_EBUG);
    }
 
    /* Fill in what we can of the papi_system_info. */
-   retval = _papi_hwd_get_system_info();
+   retval = get_system_info();
    if (retval)
       return (retval);
 
@@ -466,13 +704,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    }
 #endif
 
-   _papi_hwi_system_info.sub_info.num_cntrs = MAX_COUNTERS;
-/*   _papi_hwi_system_info.num_gp_cntrs = MAX_COUNTERS;*/
-   _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_INTEL;
-
-   /* Setup presets */
-
-   retval = generate_preset_search_map((itanium_preset_search_t *)ia_preset_search_map);
+   retval = generate_preset_search_map(&preset_search_map, ia_preset_search_map, _papi_hwi_system_info.sub_info.num_cntrs);
    if (retval)
       return (retval);
 
@@ -489,8 +721,9 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    if (retval)
       return (retval);
 
-   lock_init();
-   
+   for (i = 0; i < PAPI_MAX_LOCK; i++)
+      _papi_hwd_lock_data[i] = MUTEX_OPEN;
+
    return (PAPI_OK);
 }
 
@@ -595,11 +828,11 @@ int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * machdep)
 
    pfmw_stop(ctx);
    memset(writeem, 0, sizeof writeem);
-   for (i = 0; i < MAX_COUNTERS; i++) {
+   for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
       /* Writing doesn't matter, we're just zeroing the counter. */
-      writeem[i].reg_num = MAX_COUNTERS + i;
+      writeem[i].reg_num = PMU_FIRST_COUNTER + i;
    }
-   if (pfmw_perfmonctl(ctx->tid, ctx->fd, PFM_WRITE_PMDS, writeem, MAX_COUNTERS) == -1) {
+   if (pfmw_perfmonctl(ctx->tid, ctx->fd, PFM_WRITE_PMDS, writeem, _papi_hwi_system_info.sub_info.num_cntrs) == -1) {
       PAPIERROR("perfmonctl(PFM_WRITE_PMDS) errno %d", errno);
       return PAPI_ESYS;
    }
@@ -618,11 +851,11 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * machdep,
 /* read the 4 counters, the high level function will process the 
    mapping for papi event to hardware counter 
 */
-   for (i = 0; i < MAX_COUNTERS; i++) {
-      readem[i].reg_num = MAX_COUNTERS + i;
+   for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
+      readem[i].reg_num = PMU_FIRST_COUNTER + i;
    }
 
-   if (pfmw_perfmonctl(ctx->tid, ctx->fd, PFM_READ_PMDS, readem, MAX_COUNTERS) == -1) {
+   if (pfmw_perfmonctl(ctx->tid, ctx->fd, PFM_READ_PMDS, readem, _papi_hwi_system_info.sub_info.num_cntrs) == -1) {
       SUBDBG("perfmonctl error READ_PMDS errno %d\n", errno);
       return PAPI_ESYS;
    }
@@ -673,11 +906,11 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * current_state)
 /* set the initial value of the hardware counter , if PAPI_overflow or
   PAPI_profil are called, then the initial value is the threshold
 */
-   for (i = 0; i < MAX_COUNTERS; i++)
-      current_state->pd[i].reg_num = MAX_COUNTERS + i;
+   for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
+      current_state->pd[i].reg_num = PMU_FIRST_COUNTER + i;
 
    if (pfmw_perfmonctl(ctx->tid, ctx->fd, 
-           PFM_WRITE_PMDS, current_state->pd, MAX_COUNTERS) == -1) {
+           PFM_WRITE_PMDS, current_state->pd, _papi_hwi_system_info.sub_info.num_cntrs) == -1) {
       PAPIERROR("perfmonctl(WRITE_PMDS) errno %d", errno);
       return (PAPI_ESYS);
    }
@@ -1144,7 +1377,7 @@ static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
       return;
    }
 
-   if (msg.msg_type != PFM_MSG_OVFL) {
+   if (msg.type != PFM_MSG_OVFL) {
       PAPIERROR("unexpected msg type %d",msg.msg_type);
       return;
    }
@@ -1167,9 +1400,9 @@ static int set_notify(EventSetInfo_t * ESI, int index, int value)
 
    pos = ESI->EventInfoArray[index].pos;
    count = 0;
-   while (pos[count] != -1 && count < MAX_COUNTERS) {
+   while (pos[count] != -1 && count < _papi_hwi_system_info.sub_info.num_cntrs) {
       hwcntr = pos[count] + PMU_FIRST_COUNTER;
-      for (i = 0; i < MAX_COUNTERS; i++) {
+      for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
          if ( PFMW_PEVT_PFPPC_REG_NUM(pevt,i) == hwcntr) {
             SUBDBG("Found hw counter %d in %d, flags %d\n", hwcntr, i, value);
             PFMW_PEVT_PFPPC_REG_FLG(pevt,i) = value;
@@ -1347,11 +1580,12 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 {
    int index = *EventCode & PAPI_NATIVE_AND_MASK;
 
-   if (index < MAX_NATIVE_EVENT - 1) {
-      *EventCode = *EventCode + 1;
-      return (PAPI_OK);
-   } else
-      return (PAPI_ENOEVNT);
+  if (index < _papi_hwi_system_info.sub_info.num_native_events - 1) {
+    *EventCode += *EventCode + 1;
+    return (PAPI_OK);
+  } else {
+    return (PAPI_ENOEVNT);
+  }
 }
 
 int _papi_hwd_init_control_state(hwd_control_state_t * ptr)
@@ -1397,7 +1631,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    int index;
 
    if (count == 0) {
-      for (i = 0; i < MAX_COUNTERS; i++)
+      for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
          PFMW_PEVT_EVENT(evt,i) = 0;
       PFMW_PEVT_EVTCOUNT(evt) = 0;
       memset(PFMW_PEVT_PFPPC(evt), 0, sizeof(PFMW_PEVT_PFPPC(evt)));
@@ -1406,10 +1640,10 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
 
 /* save the old data */
    org_cnt = PFMW_PEVT_EVTCOUNT(evt);
-   for (i = 0; i < MAX_COUNTERS; i++)
+   for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
       events[i] = PFMW_PEVT_EVENT(evt,i);
 
-   for (i = 0; i < MAX_COUNTERS; i++)
+   for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
          PFMW_PEVT_EVENT(evt,i) = 0;
    PFMW_PEVT_EVTCOUNT(evt) = 0;
    memset(PFMW_PEVT_PFPPC(evt), 0, sizeof(PFMW_PEVT_PFPPC(evt)));
@@ -1434,7 +1668,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    if (pfmw_dispatch_events(evt)) {
       /* recover the old data */
       PFMW_PEVT_EVTCOUNT(evt) = org_cnt;
-      for (i = 0; i < MAX_COUNTERS; i++)
+      for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
          PFMW_PEVT_EVENT(evt,i) = events[i];
       return (PAPI_ECNFLCT);
    }
@@ -1563,158 +1797,6 @@ int _papi_hwd_update_shlib_info(void)
    }
    return (PAPI_OK);
 }
-                                                                                
+                                                                            
 
-int _papi_hwd_get_system_info(void)
-{
-   int tmp, retval;
-   char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
-   pid_t pid;
-   float mhz = 0.0;
-   FILE *f;
-                                                                                
-   /* Software info */
-                                                                                
-   /* Path and args */
-                                                                                
-   pid = getpid();
-   if (pid < 0)
-     { PAPIERROR("getpid() returned < 0"); return(PAPI_ESYS); }
-   _papi_hwi_system_info.pid = pid;
-                                                                                
-   sprintf(maxargs, "/proc/%d/exe", (int) pid);
-   if (readlink(maxargs, _papi_hwi_system_info.exe_info.fullname, PAPI_HUGE_STR_LEN) < 0)
-     { PAPIERROR("readlink(%s) returned < 0", maxargs); return(PAPI_ESYS); }
-                                                                                
-   /* basename can modify it's argument */
-   strcpy(maxargs,_papi_hwi_system_info.exe_info.fullname);
-   strcpy(_papi_hwi_system_info.exe_info.address_info.name, basename(maxargs));
-                                                                                
-   /* Executable regions, may require reading /proc/pid/maps file */
-                                                                                
-   retval = _papi_hwd_update_shlib_info();
-                                                                                
-   /* PAPI_preload_option information */
-                                                                                
-   strcpy(_papi_hwi_system_info.preload_info.lib_preload_env, "LD_PRELOAD");
-   _papi_hwi_system_info.preload_info.lib_preload_sep = ' ';
-   strcpy(_papi_hwi_system_info.preload_info.lib_dir_env, "LD_LIBRARY_PATH");
-   _papi_hwi_system_info.preload_info.lib_dir_sep = ':';
-                                                                                
-   SUBDBG("Executable is %s\n", _papi_hwi_system_info.exe_info.address_info.name);
-   SUBDBG("Full Executable is %s\n", _papi_hwi_system_info.exe_info.fullname);
-   SUBDBG("Text: Start %p, End %p, length %d\n",
-          _papi_hwi_system_info.exe_info.address_info.text_start,
-          _papi_hwi_system_info.exe_info.address_info.text_end,
-          (int)(_papi_hwi_system_info.exe_info.address_info.text_end -
-          _papi_hwi_system_info.exe_info.address_info.text_start));
-   SUBDBG("Data: Start %p, End %p, length %d\n",
-          _papi_hwi_system_info.exe_info.address_info.data_start,
-          _papi_hwi_system_info.exe_info.address_info.data_end,
-          (int)(_papi_hwi_system_info.exe_info.address_info.data_end -
-          _papi_hwi_system_info.exe_info.address_info.data_start));
-   SUBDBG("Bss: Start %p, End %p, length %d\n",
-          _papi_hwi_system_info.exe_info.address_info.bss_start,
-          _papi_hwi_system_info.exe_info.address_info.bss_end,
-          (int)(_papi_hwi_system_info.exe_info.address_info.bss_end -
-          _papi_hwi_system_info.exe_info.address_info.bss_start));
-                                                                                
-   /* Hardware info */
-                                                                                
-   _papi_hwi_system_info.hw_info.ncpu = sysconf(_SC_NPROCESSORS_ONLN);
-   _papi_hwi_system_info.hw_info.nnodes = 1;
-   _papi_hwi_system_info.hw_info.totalcpus = sysconf(_SC_NPROCESSORS_CONF);
-   _papi_hwi_system_info.hw_info.vendor = -1;
-                                                                                
-   if ((f = fopen("/proc/cpuinfo", "r")) == NULL)
-     { PAPIERROR("fopen(/proc/cpuinfo) errno %d",errno); return(PAPI_ESYS); }
-                                                                                
-   /* All of this information maybe overwritten by the substrate */
-                                                                                
-   /* MHZ */
-                                                                                
-   rewind(f);
-   s = search_cpu_info(f, "cpu MHz", maxargs);
-   if (s)
-      sscanf(s + 1, "%f", &mhz);
-   _papi_hwi_system_info.hw_info.mhz = mhz;
-                                                                                
-   /* Vendor Name */
-                                                                                
-   rewind(f);
-   s = search_cpu_info(f, "vendor_id", maxargs);
-   if (s && (t = strchr(s + 2, '\n')))
-     {
-      *t = '\0';
-      strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
-     }
-   else
-     {
-       rewind(f);
-       s = search_cpu_info(f, "vendor", maxargs);
-       if (s && (t = strchr(s + 2, '\n'))) {
-         *t = '\0';
-         strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
-       }
-     }
-                                                                                
-   /* Revision */
-                                                                                
-   rewind(f);
-   s = search_cpu_info(f, "stepping", maxargs);
-   if (s)
-      {
-        sscanf(s + 1, "%d", &tmp);
-        _papi_hwi_system_info.hw_info.revision = (float) tmp;
-      }
-   else
-     {
-       rewind(f);
-       s = search_cpu_info(f, "revision", maxargs);
-       if (s)
-         {
-           sscanf(s + 1, "%d", &tmp);
-           _papi_hwi_system_info.hw_info.revision = (float) tmp;
-         }
-     }
-                                                                                
-   /* Model Name */
-                                                                                
-   rewind(f);
-   s = search_cpu_info(f, "family", maxargs);
-   if (s && (t = strchr(s + 2, '\n')))
-     {
-       *t = '\0';
-       strcpy(_papi_hwi_system_info.hw_info.model_string, s + 2);
-     }
-   else
-     {
-       rewind(f);
-       s = search_cpu_info(f, "vendor", maxargs);
-       if (s && (t = strchr(s + 2, '\n')))
-         {
-           *t = '\0';
-           strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
-         }
-     }
-                                                                                
-   rewind(f);
-   s = search_cpu_info(f, "model", maxargs);
-   if (s)
-      {
-        sscanf(s + 1, "%d", &tmp);
-        _papi_hwi_system_info.hw_info.model = tmp;
-      }
-                                                                                
-   fclose(f);
-                                                                                
-   SUBDBG("Found %d %s(%d) %s(%d) CPU's at %f Mhz.\n",
-          _papi_hwi_system_info.hw_info.totalcpus,
-          _papi_hwi_system_info.hw_info.vendor_string,
-          _papi_hwi_system_info.hw_info.vendor,
-          _papi_hwi_system_info.hw_info.model_string,
-          _papi_hwi_system_info.hw_info.model, _papi_hwi_system_info.hw_info.mhz);
-                                                                                
-   return (PAPI_OK);
-}
 
