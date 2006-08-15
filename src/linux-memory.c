@@ -815,32 +815,42 @@ inline_static void cpuid(unsigned int *eax, unsigned int *ebx,
 }
 #endif
 
+/* A pointer to the following is passed to PAPI_get_dmem_info() 
+	typedef struct _dmem_t {
+	  long_long size;
+	  long_long resident;
+	  long_long high_water_mark;
+	  long_long shared;
+	  long_long text;
+	  long_long library;
+	  long_long heap;
+	  long_long locked;
+	  long_long stack;
+	  long_long pagesize;
+	} PAPI_dmem_info_t;
+*/
+
+
 #ifdef _WIN32
 #include <Psapi.h>
 int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
 {
-   /* for now we'll just punt this one... */
-   return( PAPI_EINVAL );
-/*
-   int tmp;
+
    HANDLE proc = GetCurrentProcess();
    PROCESS_MEMORY_COUNTERS cntr;
+   SYSTEM_INFO SystemInfo;      // system information structure  
 
+   GetSystemInfo(&SystemInfo);
    GetProcessMemoryInfo(proc, &cntr, sizeof(cntr));
 
-   tmp = getpagesize();
-   if (tmp == 0) tmp = 1;
-
-   switch (option) {
-     case PAPI_GET_RESSIZE:
-	return ((cntr.WorkingSetSize-cntr.PagefileUsage) / tmp);
-     case PAPI_GET_SIZE:	    
-	return (cntr.WorkingSetSize / tmp);
-     default:
-	return (PAPI_EINVAL);
-   }
-*/
+   d->pagesize = SystemInfo.dwPageSize;
+   d->size = (cntr.WorkingSetSize - cntr.PagefileUsage) / SystemInfo.dwPageSize;
+   d->resident = cntr.WorkingSetSize / SystemInfo.dwPageSize;
+   d->high_water_mark = cntr.PeakWorkingSetSize / SystemInfo.dwPageSize;
+  
+   return PAPI_OK;
 }
+
 #else
 #ifdef __CATAMOUNT__
 int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
