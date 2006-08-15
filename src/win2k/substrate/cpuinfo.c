@@ -198,11 +198,11 @@ static int init_amd( struct wininfo * hwinfo ) {
   hwinfo->nrctr = 4;
   // Setup model information
   if ( IS_AMDOPTERON(hwinfo) )
-	  strcpy ( hwinfo->model_string, "Opteron");
-  if ( IS_AMDATHLON(hwinfo) )
-	  strcpy ( hwinfo->model_string, "Athlon");
+	  strcpy ( hwinfo->model_string, "AMD K8 Opteron");
+  else if ( IS_AMDATHLON(hwinfo) )
+	  strcpy ( hwinfo->model_string, "AMD K7 Athlon");
   else if ( IS_AMDDURON( hwinfo ) )
-	  strcpy ( hwinfo->model_string, "Duron" );
+	  strcpy ( hwinfo->model_string, "AMD K7 Duron" );
   else if ( IS_AMDK63(hwinfo) )
 	  strcpy ( hwinfo->model_string, "K6-III");
   else if ( IS_AMDK62(hwinfo) )
