@@ -148,6 +148,13 @@ int main(int argc, char **argv)
       }
    }
 
+   retval = PAPI_cleanup_eventset(EventSet);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_cleanup", retval);
+   retval = PAPI_destroy_eventset(&EventSet);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_destroy_eventset", retval);
+
    test_pass(__FILE__, NULL, 0);
    exit(0);
 }
