@@ -251,7 +251,14 @@ int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **ev
       }
       memcpy(ctrl->values,&ctrl->p_evtctr[0].hwp_countval[0],sizeof(long_long)*HWPERF_COUNTMAX);
       for (i=1;i<NUM_SSP;i++){
-        for(j=0;j<HWPERF_COUNTMAX;j++) 
+        /* P:0:0 (cycles) counts whether the SSP is idle or not.
+	   It's the only event on counter 0.
+	   The following code sums across SSPs.
+	   To keep from over-counting cycles, we index j from 1 instead of 0.
+	   This assumes cycles is the same on all SSPs (it should be!)
+	   Thanks to Nikhil Bhatia for identifying this.
+	*/
+        for(j=1;j<HWPERF_COUNTMAX;j++) 
            ctrl->values[j] += ctrl->p_evtctr[i].hwp_countval[j];
       }
    }
