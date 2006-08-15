@@ -63,7 +63,24 @@ char *retired_events[]={
       typedef pfm_ita_reg_t pfmw_arch_pmd_reg_t;
    #endif
 
+static inline int pfmw_get_num_counters(int *num) {
+  int tmp;
+  tmp = pfm_get_num_counters();
+  if (tmp <= 0)
+    return(PAPI_ESYS);
+  *num = tmp;
+  return(PAPI_OK);
+}
 
+static inline int pfmw_get_num_events(int *num) {
+  int tmp;
+  tmp = pfm_get_first_event();
+  if (tmp < 0)
+    return(PAPI_ESYS);
+  while ((tmp = pfm_get_next_event(tmp)) == -1);
+  *num = tmp;
+  return(PAPI_OK);
+}
 
    static inline void pfmw_start(hwd_context_t *ctx) {
       pfm_start();
@@ -197,8 +214,6 @@ char *retired_events[]={
          return NULL;
    }
 
-   // for PFM20
-#ifndef ALTIX
    inline char* pfmw_get_event_description(unsigned int idx)
    {
       char *descr;
@@ -208,7 +223,6 @@ char *retired_events[]={
       else
          return NULL;
    }
-#endif
 
    inline int pfmw_is_dear(unsigned int i)
    {
@@ -997,6 +1011,22 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
    ret=PAPI_ESBSTR;
 #endif
    return(ret);
+}
+
+static inline int pfmw_get_num_counters(int *num) {
+  int tmp;
+  if (pfm_get_num_counters(&tmp) != PFMLIB_SUCCESS)
+    return(PAPI_ESYS);
+  *num = tmp;
+  return(PAPI_OK);
+}
+
+static inline int pfmw_get_num_events(int *num) {
+  int tmp;
+  if (pfm_get_num_events(&tmp) != PFMLIB_SUCCESS)
+    return(PAPI_ESYS);
+  *num = tmp;
+  return(PAPI_OK);
 }
 
 #endif
