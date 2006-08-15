@@ -58,7 +58,7 @@ static volatile unsigned long *mmdev_timer_addr;
 #endif
 
 #ifndef ITANIUM2
-static const itanium_preset_search_t ia1_preset_search_map[] = {
+static itanium_preset_search_t ia1_preset_search_map[] = {
    {PAPI_L1_TCM, DERIVED_ADD, {"L1D_READ_MISSES_RETIRED", "L2_INST_DEMAND_READS", 0, 0}},
    {PAPI_L1_ICM, 0, {"L2_INST_DEMAND_READS", 0, 0, 0}},
    {PAPI_L1_DCM, 0, {"L1D_READ_MISSES_RETIRED", 0, 0, 0}},
@@ -106,7 +106,7 @@ static const itanium_preset_search_t ia1_preset_search_map[] = {
    {0, 0, {0, 0, 0, 0}}
 };
 #else
-static const itanium_preset_search_t ia2_preset_search_map[] = {
+static itanium_preset_search_t ia2_preset_search_map[] = {
    {PAPI_CA_SNP, 0, {"BUS_SNOOPS_SELF", 0, 0, 0}},
    {PAPI_CA_INV, DERIVED_ADD, {"BUS_MEM_READ_BRIL_SELF", "BUS_MEM_READ_BIL_SELF", 0, 0}},
    {PAPI_TLB_TL, DERIVED_ADD, {"ITLB_MISSES_FETCH_L2ITLB", "L2DTLB_MISSES", 0, 0}},
@@ -175,7 +175,8 @@ static const itanium_preset_search_t ia2_preset_search_map[] = {
    {0, 0, {0, 0, 0, 0}}
 };
 
-static const itanium_preset_search_t ia3_preset_search_map[] = {
+#if defined(PFMLIB_MONTECITO_PMU)
+static itanium_preset_search_t ia3_preset_search_map[] = {
 /* not sure */
    {PAPI_CA_SNP, 0, {"BUS_SNOOPS_STALL_CYCLES", 0, 0, 0}},
    {PAPI_CA_INV, DERIVED_ADD, {"BUS_MEM_READ_BRIL_SELF", "BUS_MEM_READ_BIL_SELF", 0, 0}},
@@ -254,6 +255,7 @@ static const itanium_preset_search_t ia3_preset_search_map[] = {
    {0, 0, {0, 0, 0, 0}}
 };
 #endif
+#endif
 
 extern void dispatch_profile(EventSetInfo_t * ESI, void *context,
                              long_long over, int profile_index);
@@ -276,12 +278,12 @@ extern void dispatch_profile(EventSetInfo_t * ESI, void *context,
 */
 int generate_preset_search_map(hwi_search_t **maploc, itanium_preset_search_t *oldmap, int num_cnt)
 {
-  int pnum, i, cnt;
+  int pnum, i = 0, cnt;
   char **findme;
   hwi_search_t *psmap;
 
   /* Count up the presets */
-  while (strmap[i].preset)
+  while (oldmap[i].preset)
     i++;
   /* Add null entry */
   i++;
@@ -289,7 +291,7 @@ int generate_preset_search_map(hwi_search_t **maploc, itanium_preset_search_t *o
   psmap = (hwi_search_t *)papi_malloc(i*sizeof(hwi_search_t));
   if (psmap == NULL)
     return(PAPI_ENOMEM);
-  memset(ia_preset_search_map_bycode, 0x0, i*sizeof(hwi_search_t));
+  memset(psmap, 0x0, i*sizeof(hwi_search_t));
 
   pnum = 0;                    /* preset event counter */
    for (i = 0; i <= PAPI_MAX_PRESET_EVENTS; i++) {
@@ -316,11 +318,7 @@ int generate_preset_search_map(hwi_search_t **maploc, itanium_preset_search_t *o
       }
       preset_search_map[i].data.native[cnt] = PAPI_NULL;
    }
-   if (NUM_OF_PRESET_EVENTS != pnum){
-     PAPIERROR("NUM_OF_PRESET_EVENTS %d != pnum %d\n", (int)NUM_OF_PRESET_EVENTS,pnum);
-     return(PAPI_ENOEVNT);
-   }
-   
+
    *maploc = psmap;
    return (PAPI_OK);
 }
@@ -609,7 +607,6 @@ static int get_system_info(void)
   _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
   _papi_hwi_system_info.sub_info.default_granularity = PAPI_GRN_THR;
   _papi_hwi_system_info.sub_info.available_granularities = PAPI_GRN_THR;
-   }
 
    return (PAPI_OK);
 }
@@ -619,7 +616,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   int retval, type, i;
    unsigned int version;
    pfmlib_options_t pfmlib_options;
-
+   itanium_preset_search_t *ia_preset_search_map = NULL;
   /* Always initialize globals dynamically to handle forks properly. */
   preset_search_map = NULL;
 
@@ -659,15 +656,19 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    /* Setup presets */
    
    switch (type) {
+#if !defined(ITANIUM2)
    case PFMLIB_ITANIUM_PMU:
      ia_preset_search_map = ia1_preset_search_map;
      break;
+#endif
    case PFMLIB_ITANIUM2_PMU:
      ia_preset_search_map = ia2_preset_search_map;
      break;
+#if defined(PFMLIB_MONTECITO_PMU)
    case PFMLIB_MONTECITO_PMU:
      ia_preset_search_map = ia3_preset_search_map;
      break;
+#endif
    default:
      PAPIERROR("PMU type %d is not supported by this substrate",type);
      return(PAPI_EBUG);
@@ -1294,8 +1295,7 @@ void _papi_hwd_dispatch_timer(int signal, hwd_siginfo_t * info, void *context)
  {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *t = NULL;
-   hwd_siginfo_t *tmp = (hwd_siginfo_t *) info;
-
+ 
    ctx.si = (hwd_siginfo_t *) info;
    ctx.ucontext = (hwd_ucontext_t *) context;
 
@@ -1378,7 +1378,7 @@ static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
    }
 
    if (msg.type != PFM_MSG_OVFL) {
-      PAPIERROR("unexpected msg type %d",msg.msg_type);
+      PAPIERROR("unexpected msg type %d",msg.type);
       return;
    }
 
@@ -1567,10 +1567,10 @@ char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 
 char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
-  char *tmp = NULL;
 #if defined(HAVE_PFM_GET_EVENT_DESCRIPTION)
-  if (pfm_get_event_description(EventCode^PAPI_NATIVE_MASK, &tmp) == PFMLIB_SUCCESS)
-    return(tmp);
+  char *tmp = "";
+  pfm_get_event_description(EventCode^PAPI_NATIVE_MASK, &tmp);
+  return(tmp);
 #else
    return (_papi_hwd_ntv_code_to_name(EventCode));
 #endif

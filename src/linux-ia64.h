@@ -44,6 +44,7 @@
 #include <ia64regs.h>
 #endif
 
+#include "config.h"
 #include "perfmon/pfmlib.h"
 #include "perfmon/perfmon.h"
 #ifdef PFM30
@@ -60,8 +61,6 @@
 
 #define inline_static inline static
 
-#define MAX_COUNTER_TERMS MAX_COUNTERS
-
 typedef int hwd_register_t;
 typedef int hwd_register_map_t;
 typedef int hwd_reg_alloc_t;
@@ -71,7 +70,7 @@ typedef int hwd_reg_alloc_t;
    #define NUM_PMDS PFMLIB_MAX_PMDS
 #ifdef HAVE_PERFMON_PFMLIB_MONTECITO_H
    #define MAX_COUNTERS PMU_MONT_NUM_COUNTERS
-#elif !defined(ITANIUM2)
+#elif defined(ITANIUM2)
    #define MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
 #else
    #define MAX_COUNTERS PMU_ITA_NUM_COUNTERS
@@ -106,6 +105,8 @@ typedef int hwd_reg_alloc_t;
  #endif
    typedef pfmlib_param_t pfmw_param_t;
 #endif
+
+#define MAX_COUNTER_TERMS MAX_COUNTERS
 
 typedef struct hwd_control_state {
    /* Which counters to use? Bits encode counters to use, may be duplicates */

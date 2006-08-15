@@ -1719,6 +1719,8 @@ fi
                  fi
 		 if test "$perfmon" = 2; then
 		    MAKEVER="$OS"-perfmon2
+		 elif test "$CPU" = "montecito"; then
+		    MAKEVER="$OS"-pfm-itanium2
 		 else
 		    MAKEVER="$OS"-pfm-"$CPU"
 		 fi ;;
@@ -2874,7 +2876,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2877:" \
+echo "$as_me:2879:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -3719,7 +3721,14 @@ else
 
 fi
 
+else
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_PFM_GET_EVENT_DESCRIPTION 1
+_ACEOF
+
 fi
+
 echo "$as_me:$LINENO: checking for /etc/sgi-release" >&5
 echo $ECHO_N "checking for /etc/sgi-release... $ECHO_C" >&6
 if test "${ac_cv_file__etc_sgi_release+set}" = set; then
