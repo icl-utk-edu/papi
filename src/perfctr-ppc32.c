@@ -108,7 +108,7 @@ int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain)
 
 int _papi_hwd_init_control_state(hwd_control_state_t * ptr) 
 {
-   _papi_hwd_set_domain(ptr,_papi_hwi_system_info.default_domain);
+   _papi_hwd_set_domain(ptr,_papi_hwi_system_info.sub_info.default_domain);
    ptr->allocated_registers.selector = 0;
    ptr->control.cpu_control.tsc_on = 1;
    return(PAPI_OK);
@@ -157,7 +157,7 @@ void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
    shared = dst->ra_selector & src->ra_selector;
    if (shared)
       dst->ra_selector ^= shared;
-   for (i = 0, dst->ra_rank = 0; i < _papi_hwi_system_info.num_cntrs; i++)
+   for (i = 0, dst->ra_rank = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
       if (dst->ra_selector & (1 << i))
          dst->ra_rank++;
 }
@@ -189,7 +189,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
       event_list[i].ra_selector = event_list[i].ra_bits.selector;
 
       /* calculate native event rank, which is no. of counters it can live on */
-      for(j = 0; j < _papi_hwi_system_info.num_cntrs; j++) {
+      for(j = 0; j < _papi_hwi_system_info.sub_info.num_cntrs; j++) {
          if (event_list[i].ra_selector & (1 << j)) event_list[i].ra_rank++;
       }
       SUBDBG("Can live on %d registers, %08X\n",event_list[i].ra_rank,event_list[i].ra_selector);
@@ -386,7 +386,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
        return PAPI_EINVAL;
      }
 
-   ncntrs = _papi_hwi_system_info.num_cntrs;
+   ncntrs = _papi_hwi_system_info.sub_info.num_cntrs;
    i = ESI->EventInfoArray[EventIndex].pos[0];
    if (i >= ncntrs) 
      {
