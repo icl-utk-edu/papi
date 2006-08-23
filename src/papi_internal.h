@@ -158,6 +158,7 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
 /* DEFINES END HERE */
 
+#include "config.h"
 #include SUBSTRATE
 #include "papi_preset.h"
 
