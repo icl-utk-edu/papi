@@ -11,12 +11,9 @@
 *          <your email address>
 */
 
-#include SUBSTRATE
-#include "config.h"
 #include "papi_internal.h"
 #include <string.h>
 #include "libperfctr.h"
-
 
 hwd_groups_t group_map[MAX_GROUPS] = { {0}, {0}, {0}, {0}, {0} };
 native_event_entry_t native_table[PAPI_MAX_NATIVE_EVENTS];
