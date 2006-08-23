@@ -6,6 +6,15 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.23, 2006-08-20
+- Intel Core 2 fixes: detect Core2 processors (Model 15) and
+  allow them to be used in 64-bit builds.
+- Updated kernel support: 2.6.18-rc4, 2.6.17, 2.6.9-34.0.2.EL (RHEL4),
+  2.4.33, 2.4.34-pre1, and 2.4.21-47.EL (RHEL3).
+- The update-kernel script is now able to automatically identify
+  SuSE Linux kernel versions. A SuSE kernel MUST be configured
+  (".config" exists) for the identification to work.
+
 Version 2.6.22, 2006-06-02
 - Preliminary support for Intel Core (family 6 model 14) processors.
 - A serious error in the x86 driver's code to identify hyper-threads

@@ -61,12 +61,12 @@ static inline void perfctr_release_pmc_hardware(void) { release_pmc_hardware(); 
 #define MMCR0_TRIGGER		0x00002000 /* Disable PMC2-PMC6 until PMC1 overflow or other event.
 					    * 74xx: cleared by hardware when the event occurs.
 					    */
-#define MMCR0_PMC1SEL		0x00001FB0 /* PMC1 event selector, 7 bits. */
+#define MMCR0_PMC1SEL		0x00001FC0 /* PMC1 event selector, 7 bits. */
 #define MMCR0_PMC2SEL		0x0000003F /* PMC2 event selector, 6 bits. */
 
 /* MMCR1 layout (604e-7457) */
 #define MMCR1_PMC3SEL		0xF8000000 /* PMC3 event selector, 5 bits. */
-#define MMCR1_PMC4SEL		0x07B00000 /* PMC4 event selector, 5 bits. */
+#define MMCR1_PMC4SEL		0x07C00000 /* PMC4 event selector, 5 bits. */
 #define MMCR1_PMC5SEL		0x003E0000 /* PMC5 event selector, 5 bits. (745x only) */
 #define MMCR1_PMC6SEL		0x0001F800 /* PMC6 event selector, 6 bits. (745x only) */
 #define MMCR1__RESERVED		0x000007FF /* should be zero */

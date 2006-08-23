@@ -12,6 +12,7 @@ dryrun=
 sym=
 backup=
 maybe_redhat=
+maybe_suse=
 VERSION=
 PATCHLEVEL=
 SUBLEVEL=
@@ -96,11 +97,28 @@ get_makefile_variable() {
     eval `grep "^$1 *=" Makefile | head -n 1 | sed 's/ *= */=/'`
 }
 
+get_extra_version() {
+    EXTRAVERSION=`grep "^EXTRAVERSION *=" Makefile | head -n 1 | sed 's/ *= */=/'`
+    case "$EXTRAVERSION" in
+    'EXTRAVERSION=-$(shell echo $(CONFIG_RELEASE)-$(CONFIG_CFGNAME))')
+	maybe_suse=1
+	EXTRAVERSION='EXTRAVERSION=-$(shell echo $(CONFIG_RELEASE))'
+	;;
+    esac
+    MKF=`cat <<EOF
+-include .config
+$EXTRAVERSION
+default:
+	@echo EXTRAVERSION='\\$(EXTRAVERSION)'
+EOF`
+    eval `echo "$MKF" | make -f -`
+}
+
 get_kernel_version() {
     get_makefile_variable VERSION
     get_makefile_variable PATCHLEVEL
     get_makefile_variable SUBLEVEL
-    get_makefile_variable EXTRAVERSION
+    get_extra_version
     case "$EXTRAVERSION" in
     *custom)
 	maybe_redhat=1
@@ -156,10 +174,28 @@ try_redhat() {
     fi
 }
 
+try_suse() {
+    if [ -n "$EXTRAVERSION" -a -n "$maybe_suse" ]; then
+	if [ -f "$perfctr/patches/patch-kernel-$kernel-suse" ]; then
+	    patch="$kernel-suse"
+	    echo Found patch for SuSE kernel "$kernel"
+	else
+	    alias=`grep ^$kernel-suse $perfctr/patches/aliases | awk -F/ '{ print $2 }'`
+	    if [ -n "$alias" -a -f "$perfctr/patches/patch-kernel-$alias" ]; then
+		patch="$alias"
+		echo Using patch "$alias" for SuSE kernel "$kernel"
+	    fi
+	fi
+    fi
+}
+
 deduce_patch() {
     try_standard
     if [ -z "$patch" ]; then
 	try_redhat
+    fi
+    if [ -z "$patch" ]; then
+	try_suse
     fi
     if [ -z "$patch" ]; then
 	echo Error: no suitable patch found for kernel "$kernel"
