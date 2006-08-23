@@ -52,8 +52,8 @@ int main(int argc, char **argv)
       printf
           ("------------------------------------------------------------------------\n");
       for (i = 0; i < 7; i++)
-         printf("Malloc additional: %d KB  Memory Size in KB: %lld\n",
-                ((sizeof(double) * ALLOCMEM) / 1024), value[i]);
+         printf("Malloc additional: %d KB  Memory Size in KB: %d\n",
+                (int)((sizeof(double) * ALLOCMEM) / 1024), (int)value[i]);
       printf
           ("------------------------------------------------------------------------\n");
    }
@@ -61,7 +61,7 @@ int main(int argc, char **argv)
        && value[3] >= value[2] && value[2] >= value[1] && value[1] >= value[0])
       test_pass(__FILE__, NULL, 0);
    else
-      test_fail(__FILE__, __LINE__, "Calculating Resident Memory", value[6]);
+      test_fail(__FILE__, __LINE__, "Calculating Resident Memory", (int)value[6]);
 
    exit(1);
 }
