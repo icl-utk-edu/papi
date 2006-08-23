@@ -667,7 +667,7 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
    return (PAPI_ENOEVNT);
 }
 
-#ifdef NEED_FFSLL
+#if !defined(HAVE_FFSLL)
 /* find the first set bit in long_long */
 
 int ffsll(long_long lli)
