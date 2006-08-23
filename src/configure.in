@@ -245,6 +245,11 @@ AC_ARG_WITH(pmapi,
             [pmapi=default]
             )
 
+# We should check for conflicting arguments and the below file here.
+#
+# 		    AC_DEFINE(HAVE_PFMLIB_MONTECITO_H,1,["Have montecito header file"])
+#
+
 case "$OS" in
    aix)
       case "$pmapi" in
@@ -274,7 +279,6 @@ case "$OS" in
       PMAPI=""
       ;;
 esac 
-#AC_MSG_RESULT($PMAPI)
 
 case "$OS" in
    aix)
@@ -332,10 +336,14 @@ case "$OS" in
                    exit -1
                  fi
 		 if test "$perfmon" = 2; then
-		     AC_DEFINE(HAVE_PFMLIB_MONTECITO_H,1,["Have montecito header file"])
-		     MAKEVER="$OS"-perfmon2
-		 elif test "$CPU" = "montecito"; then 
+		    MAKEVER="$OS"-perfmon2
+#
+# This needs to be fixed to actually look for the MONTECITO HEADER FILE in any of the arguments.
+#
+		    AC_DEFINE(HAVE_PFMLIB_MONTECITO_H,1,["Have montecito header file"])
+		 elif test "$CPU" = "montecito"; then
 		    MAKEVER="$OS"-pfm-itanium2
+		    AC_DEFINE(HAVE_PFMLIB_MONTECITO_H,1,["Have montecito header file"])
 		 else
 		    MAKEVER="$OS"-pfm-"$CPU"
 		 fi ;;
@@ -428,6 +436,8 @@ case "$MAKEVER" in
     ;;
 esac
 
+# Check for GNU extensions
+AC_GNU_SOURCE
 # Checks for programs.
 AC_PROG_AWK
 AC_PROG_CC
@@ -458,15 +468,17 @@ fi
 
 if test "$perfmon" != "no"; then
 if test "$pfm" != "" -o "$pfm_prefix" != ""; then
-AC_CHECK_LIB(pfm, pfm_initialize, [
+AC_CHECK_LIB([pfm], [pfm_initialize], [
 	oLIBS=$LIBS
 	LIBS="$LIBS -lpfm"
+	AC_CHECK_HEADERS([perfmon/pfmlib_montecito.h])
 	AC_CHECK_FUNC(pfm_get_event_description, [AC_DEFINE(HAVE_PFM_GET_EVENT_DESCRIPTION,1,[event description function])],[])
 	LIBS=$oLIBS], [
       echo "Error, libpfm.a could not be found, please build the distribution and set LDFLAGS and rerun configure."
       exit -1
       ])
 else
+# included snapshots have this function
 AC_DEFINE(HAVE_PFM_GET_EVENT_DESCRIPTION,1,[event description function])
 fi
 
@@ -532,39 +544,8 @@ if test "$OS" = "osf1"; then
 AC_CHECK_LIB([rt], [clock_gettime])
 fi
 
-# FIXME: Replace `main' with a function in `-llipr':
-AC_CHECK_LIB([lipr], [main])
-
-# Checks for header files.
-AC_HEADER_STDC
-AC_HEADER_TIME
-AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([assert.h ctype.h dirent.h dlfcn.h errno.h expat.h fcntl.h inttypes.h libgen.h limits.h malloc.h math.h memory.h signal.h stdarg.h stdio.h stdlib.h string.h stropts.h sys/ioctl.h sys/mman.h sys/processor.h sys/procfs.h sys/resource.h sys/stat.h sys/syscall.h sys/sysinfo.h sys/sysmp.h sys/time.h sys/timers.h sys/times.h sys/types.h ucontext.h unistd.h])
-
-# Checks for typedefs, structures, and compiler characteristics.
-AC_C_CONST
-AC_C_INLINE
-AC_C_VOLATILE
-AC_TYPE_UID_T
-AC_TYPE_MODE_T
-AC_TYPE_OFF_T
-AC_TYPE_PID_T
-AC_TYPE_SIZE_T
-AC_TYPE_SIGNAL
-AC_CHECK_DECLS([sys_siglist])
-
 # Checks for library functions.
-AC_FUNC_FORK
-AC_FUNC_MALLOC
-AC_FUNC_MEMCMP
-AC_FUNC_MMAP
-AC_FUNC_REALLOC
-AC_FUNC_SELECT_ARGTYPES
-AC_FUNC_SETVBUF_REVERSED
-AC_FUNC_STRCOLL
-AC_FUNC_STRERROR_R
-AC_FUNC_VPRINTF
-AC_CHECK_FUNCS([bzero getcwd gethrtime getpagesize gettimeofday memchr memmove memset munmap realpath select sqrt strcasecmp strchr strcspn strdup strerror strncasecmp strpbrk strrchr strspn strstr strtol strtoul sysinfo uname])
+AC_CHECK_FUNC(ffsll)
 
 AC_ARG_WITH(tls,
             [  --with-tls=<no>         To disable GCC thread local storage support and use the PAPI implementation ],
