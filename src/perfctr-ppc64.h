@@ -63,8 +63,6 @@
 
 
 #ifdef __GNUC__
-#define HAVE_FFSLL
-#define _GNU_SOURCE
 #define __USE_GNU
 #endif
 
@@ -165,8 +163,9 @@ typedef struct ppc64_perfctr_control {
    hwd_register_t allocated_registers;
    struct vperfctr_control control;
    struct perfctr_sum_ctrs state;
+   /* Allow attach to be per-eventset. */
+   struct rvperfctr * rvperfctr;
 } ppc64_perfctr_control_t;
-
 
 typedef struct ppc64_perfctr_context {
    struct vperfctr *perfctr;

@@ -9,8 +9,6 @@
 *          <your email address>
 */
 
-#define IN_SUBSTRATE
-
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
@@ -140,11 +138,19 @@ VECTOR_STATIC
 int _papi_hwd_start(P4_perfctr_context_t * ctx, P4_perfctr_control_t * state)
 {
    int error;
-
 #ifdef DEBUG
    print_control(&state->control.cpu_control);
 #endif
-
+   if (state->rvperfctr != NULL) 
+     {
+       if((error = rvperfctr_control(state->rvperfctr, &state->control)) < 0) 
+	 {
+	   SUBDBG("rvperfctr_control returns: %d\n", error);
+	   PAPIERROR(VCNTRL_ERROR); 
+	   return(PAPI_ESYS); 
+	 }
+       return (PAPI_OK);
+     }
    error = vperfctr_control(ctx->perfctr, &state->control);
    if (error < 0) {
       SUBDBG("vperfctr_control returns: %d\n", error);
@@ -161,6 +167,11 @@ int _papi_hwd_start(P4_perfctr_context_t * ctx, P4_perfctr_control_t * state)
 VECTOR_STATIC
 int _papi_hwd_stop(P4_perfctr_context_t * ctx, P4_perfctr_control_t * state)
 {
+   if( state->rvperfctr != NULL ) {
+     if(rvperfctr_stop(ctx->perfctr) < 0)
+       { PAPIERROR( VCNTRL_ERROR); return(PAPI_ESYS); }
+     return (PAPI_OK);
+   }
    if (vperfctr_stop(ctx->perfctr) < 0)
      { PAPIERROR(VCNTRL_ERROR); return(PAPI_ESYS); }
 #if 0
@@ -170,7 +181,6 @@ int _papi_hwd_stop(P4_perfctr_context_t * ctx, P4_perfctr_control_t * state)
 
    return (PAPI_OK);
 }
-
 
 VECTOR_STATIC
 int _papi_hwd_read(P4_perfctr_context_t * ctx, P4_perfctr_control_t * spc,
@@ -187,7 +197,12 @@ int _papi_hwd_read(P4_perfctr_context_t * ctx, P4_perfctr_control_t * spc,
      }
    }  
    else {
-      vperfctr_read_ctrs(ctx->perfctr, &spc->state);
+      SUBDBG("vperfctr_read_ctrs\n");
+      if( spc->rvperfctr != NULL ) {
+        rvperfctr_read_ctrs( spc->rvperfctr, &spc->state );
+      } else {
+        vperfctr_read_ctrs(ctx->perfctr, &spc->state);
+        }
    }
       *dp = (long_long *) spc->state.pmc;
 #ifdef DEBUG

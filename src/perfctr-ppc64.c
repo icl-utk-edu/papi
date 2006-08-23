@@ -455,16 +455,27 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
    this_state->control.cpu_control.ppc64.mmcra = 
    	group_map[this_state->group_id].mmcra;
 
+   clear_unused_pmcsel_bits(this_state);   
    return PAPI_OK;
 }
 
 
 int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * state) {
    int error;
-   clear_unused_pmcsel_bits(state);   
+/*   clear_unused_pmcsel_bits(this_state);   moved to update_control_state */
 #ifdef DEBUG
    print_control(&state->control.cpu_control);
 #endif
+   if (state->rvperfctr != NULL) 
+     {
+       if((error = rvperfctr_control(state->rvperfctr, &state->control)) < 0) 
+	 {
+	   SUBDBG("rvperfctr_control returns: %d\n", error);
+	   PAPIERROR(VCNTRL_ERROR); 
+	   return(PAPI_ESYS); 
+	 }
+       return (PAPI_OK);
+     }
    if((error = vperfctr_control(ctx->perfctr, &state->control)) < 0) {
       SUBDBG("vperfctr_control returns: %d\n", error);
       PAPIERROR(VCNTRL_ERROR); 
@@ -474,6 +485,11 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * state) {
 }
 
 int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
+   if( state->rvperfctr != NULL ) {
+     if(rvperfctr_stop(ctx->perfctr) < 0)
+       { PAPIERROR( VCNTRL_ERROR); return(PAPI_ESYS); }
+     return (PAPI_OK);
+   }
    if(vperfctr_stop(ctx->perfctr) < 0)
      {PAPIERROR(VCNTRL_ERROR); return(PAPI_ESYS);}      
    return(PAPI_OK);
@@ -489,16 +505,22 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** 
        }
        spc->state.pmc[i] = vperfctr_read_pmc(ctx->perfctr, i);
      }
-   } else 
-      vperfctr_read_ctrs(ctx->perfctr, &spc->state);
-   
+   } else {
+      SUBDBG("vperfctr_read_ctrs\n");
+      if( spc->rvperfctr != NULL ) {
+        rvperfctr_read_ctrs( spc->rvperfctr, &spc->state );
+      } else {
+        vperfctr_read_ctrs(ctx->perfctr, &spc->state);
+        }
+   }
+       
    *dp = (long_long *) spc->state.pmc;
 #ifdef DEBUG
    {
-      if(_papi_hwi_debug & DEBUG_SUBSTRATE) {
+     if (ISLEVEL(DEBUG_SUBSTRATE)) {
          int i;
          for(i = 0; i < spc->control.cpu_control.nractrs + spc->control.cpu_control.nrictrs; i++) {
-            SUBDBG("raw val hardware index %d is 0x%016lld\n", i,
+            SUBDBG("raw val hardware index %d is %lld\n", i,
                    (long_long) spc->state.pmc[i]);
          }
       }

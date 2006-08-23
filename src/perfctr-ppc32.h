@@ -1,8 +1,6 @@
 #ifndef _PAPI_PERFCTR_PPC32_H
 #define _PAPI_PERFCTR_PPC32_H
 
-#define HAVE_FFSLL
-#define _GNU_SOURCE
 #define __USE_GNU
 #define __USE_UNIX98
 #define __USE_XOPEN_EXTENDED
@@ -163,6 +161,8 @@ typedef struct ppc32_perfctr_control {
    ppc32_register_t allocated_registers;
    struct vperfctr_control control;
    struct perfctr_sum_ctrs state;
+   /* Allow attach to be per-eventset. */
+   struct rvperfctr * rvperfctr;
 } ppc32_perfctr_control_t;
 
 typedef struct ppc32_perfctr_context {

@@ -1,8 +1,6 @@
 #ifndef _PAPI_PENTIUM4_H
 #define _PAPI_PENTIUM4_H
 
-#define HAVE_FFSLL
-#define _GNU_SOURCE
 #define __USE_GNU
 #define __USE_UNIX98
 
@@ -117,6 +115,8 @@ typedef struct hwd_p4_mask {
 typedef struct P4_perfctr_control {
    struct vperfctr_control control;
    struct perfctr_sum_ctrs state;
+   /* Allow attach to be per-eventset. */
+   struct rvperfctr * rvperfctr;
 } P4_perfctr_control_t;
 
 /* Per thread data structure for thread level counters */

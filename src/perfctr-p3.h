@@ -1,7 +1,6 @@
 #ifndef _PAPI_PENTIUM3_H
 #define _PAPI_PENTIUM3_H
 
-#define _GNU_SOURCE
 #define __USE_GNU
 #define __USE_UNIX98
 #define __USE_XOPEN_EXTENDED
@@ -26,7 +25,6 @@
 #endif
 
 #define inline_static inline static
-#define HAVE_FFSLL
 #include <unistd.h>
 #include <time.h>
 #include <errno.h>
@@ -152,6 +150,8 @@ typedef struct P3_perfctr_control {
    P3_register_t allocated_registers;
    struct vperfctr_control control;
    struct perfctr_sum_ctrs state;
+   /* Allow attach to be per-eventset. */
+   struct rvperfctr * rvperfctr;
 } P3_perfctr_control_t;
 
 typedef struct P3_perfctr_context {
