@@ -240,6 +240,8 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    _papi_hwi_system_info.sub_info.fast_counter_read = (info.cpu_features & PERFCTR_FEATURE_RDPMC) ? 1 : 0;
    _papi_hwi_system_info.sub_info.fast_real_timer = 1;
    _papi_hwi_system_info.sub_info.fast_virtual_timer = 1;
+   _papi_hwi_system_info.sub_info.attach = 1;
+   _papi_hwi_system_info.sub_info.attach_must_ptrace = 1;
    _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
    _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
    _papi_hwi_system_info.sub_info.default_granularity = PAPI_GRN_THR;
@@ -277,6 +279,31 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    return (PAPI_OK);
 }
 
+static int attach( hwd_control_state_t * ctl, unsigned long tid ) {
+	struct vperfctr_control tmp;
+
+	ctl->rvperfctr = rvperfctr_open( tid );
+	if( ctl->rvperfctr == NULL ) {
+		PAPIERROR( VOPEN_ERROR ); return (PAPI_ESYS);
+		}
+	SUBDBG( "_papi_hwd_ctl rvperfctr_open() = %p\n", ctl->rvperfctr );
+	
+	/* Initialize the per thread/process virtualized TSC */
+	memset( &tmp, 0x0, sizeof(tmp) );
+	tmp.cpu_control.tsc_on = 1;
+
+	/* Start the per thread/process virtualized TSC */
+	if( rvperfctr_control( ctl->rvperfctr, & tmp ) < 0 ) {
+		PAPIERROR(VCNTRL_ERROR); return(PAPI_ESYS);
+		}
+
+	return (PAPI_OK);
+	} /* end attach() */
+
+static int detach( hwd_control_state_t * ctl, unsigned long tid ) {
+	rvperfctr_close( ctl->rvperfctr );
+	return (PAPI_OK);
+	} /* end detach() */
 
 int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
@@ -288,6 +315,10 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
    case PAPI_GRANUL:
    case PAPI_DEFGRN:
       return(PAPI_ESBSTR);
+   case PAPI_ATTACH:
+      return (attach(&option->attach.ESI->machdep, option->attach.tid));
+   case PAPI_DETACH:
+      return (detach(&option->attach.ESI->machdep, option->attach.tid));
    default:
       return (PAPI_EINVAL);
    }
