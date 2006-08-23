@@ -97,10 +97,12 @@ int setup_p3_presets(int cputype) {
       preset_search_map = &_papi_hwd_pm_preset_map;
       break;
 #endif
+#ifdef PERFCTR_X86_INTEL_CORE
    case PERFCTR_X86_INTEL_CORE:
       native_table = &_papi_hwd_core_native_map;
       preset_search_map = &_papi_hwd_core_preset_map;
 	  break;
+#endif
    case PERFCTR_X86_AMD_K7:
       native_table = &_papi_hwd_k7_native_map;
       preset_search_map = &_papi_hwd_ath_preset_map;
@@ -146,7 +148,9 @@ int _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
    case PERFCTR_X86_INTEL_PII:
    case PERFCTR_X86_INTEL_P6:
    case PERFCTR_X86_INTEL_PIII:
-//   case PERFCTR_X86_INTEL_CORE:
+#ifdef PERFCTR_X86_INTEL_CORE
+   case PERFCTR_X86_INTEL_CORE:
+#endif
 #ifdef PERFCTR_X86_INTEL_PENTM
    case PERFCTR_X86_INTEL_PENTM:
 #endif
@@ -162,7 +166,6 @@ int _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
 #ifdef PERFCTR_X86_AMD_K8C
    case PERFCTR_X86_AMD_K8C:
 #endif
-   case PERFCTR_X86_INTEL_CORE:
    case PERFCTR_X86_AMD_K7:
       for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
          ptr->control.cpu_control.evntsel[i] |= PERF_ENABLE | def_mode;
