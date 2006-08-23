@@ -27,7 +27,6 @@
 #include <sys/time.h>
 #include <sys/times.h>
 #include <sys/ucontext.h>
-
 #include "perfmon/pfmlib.h"
 #include "perfmon/perfmon.h"
 

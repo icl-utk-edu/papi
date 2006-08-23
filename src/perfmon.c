@@ -17,7 +17,6 @@
 #include "papi_vector.h"
 #include "threads.h"
 #include "papi_memory.h"
-#include "config.h"
 
 /* Globals declared extern elsewhere */
 
@@ -1440,18 +1439,19 @@ int _papi_hwd_init_control_state(hwd_control_state_t *this_state)
    updates it with whatever resources are allocated for all the native events
    in the native info structure array. */
 
-int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
+int _papi_hwd_update_control_state(hwd_control_state_t *ctl,
                                    NativeInfo_t *native, int count, hwd_context_t * ctx) {
   int i, ret;
-   pfmlib_input_param_t *inp = &this_state->in;
-   pfmlib_output_param_t *outp = &this_state->out;
-   pfarg_pmd_t *pd = this_state->pd;
-   pfarg_pmc_t *pc = this_state->pc;
+   pfmlib_input_param_t *inp = &ctl->in;
+   pfmlib_output_param_t *outp = &ctl->out;
+   pfarg_pmd_t *pd = ctl->pd;
+   pfarg_pmc_t *pc = ctl->pc;
 
    if (count == 0)
      {
        SUBDBG("Called with count == 0\n");
-       memset(inp,0,sizeof(*inp));
+//       memset(inp,0,sizeof(*inp));
+       abort();
        return(PAPI_OK);
      }
 
@@ -1480,6 +1480,16 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
        SUBDBG("PAPI Native[%d].ni_position is %d\n", i, native[i].ni_position);
      }
 
+   /* If structure has not yet been filled with a context, fill it
+      from the thread's context. This should happen in init_control_state
+      when we give that a *ctx argument */
+
+   if (ctl->load.load_pid == 0)
+     {
+       memcpy(&ctl->load,&ctx->load,sizeof(ctx->load));
+       memcpy(&ctl->ctx,&ctx->ctx,sizeof(ctx->ctx));
+     }
+       
    return (PAPI_OK);
 }
 
