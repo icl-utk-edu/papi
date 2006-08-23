@@ -3,6 +3,21 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.23, 2006-08-20
+- Testing done by the PAPI folks indicate that Intel Core 2 has
+  a single master Enable bit in EVNTSEL0, just like previous P6s.
+  Restore Intel Core to the classic P6 rule: EVNTSEL0 must be
+  enabled, EVNTSEL1 must not be enabled.
+- Intel Core updates: each EVNTSEL has its own Enable bit like
+  AMD and P4, recognise Model 15 (Core2), Core2 is 64-bit so
+  make P6 testing code available in both 32- and 64-bit builds.
+- ppc32: correct PMC1SEL and PMC4SEL definitions.
+- virtual: new vperfctrfs_get_sb() for kernel 2.6.18-rc1 and
+  later: ->get_sb() and get_sb_pseudo() changed prototype.
+- x86: #include <asm/nmi.h> to get lapic NMI declarations in
+  kernel 2.6.18-rc1 and later. Do not do this if we're going
+  to stub them because !CONFIG_X86_LOCAL_APIC.
+
 Version 2.6.22, 2006-06-02
 - Preliminary support for Intel Core (family 6 model 14) processors.
 - x86: The code to extract max_cores_per_package from CPUID(4):EAX

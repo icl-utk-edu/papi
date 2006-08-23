@@ -1,5 +1,5 @@
---- linux-2.4.33-pre3.perfctr/CREDITS.~1~	2005-01-19 18:00:52.000000000 +0100
-+++ linux-2.4.33-pre3.perfctr/CREDITS	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/CREDITS.~1~	2006-08-11 11:46:17.000000000 +0200
++++ linux-2.4.33.perfctr/CREDITS	2006-08-11 11:52:48.000000000 +0200
 @@ -2430,6 +2430,7 @@ N: Mikael Pettersson
  E: mikpe@csd.uu.se
  W: http://www.csd.uu.se/~mikpe/
@@ -8,8 +8,8 @@
  
  N: Reed H. Petty
  E: rhp@draper.net
---- linux-2.4.33-pre3.perfctr/Documentation/Configure.help.~1~	2006-05-01 11:31:18.000000000 +0200
-+++ linux-2.4.33-pre3.perfctr/Documentation/Configure.help	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/Documentation/Configure.help.~1~	2006-08-11 11:46:17.000000000 +0200
++++ linux-2.4.33.perfctr/Documentation/Configure.help	2006-08-11 11:52:48.000000000 +0200
 @@ -4859,6 +4859,65 @@ CONFIG_PDC_NARROW
  
    If unsure, say N.
@@ -76,8 +76,8 @@
  VGA text console
  CONFIG_VGA_CONSOLE
    Saying Y here will allow you to use Linux in text mode through a
---- linux-2.4.33-pre3.perfctr/Documentation/ioctl-number.txt.~1~	2004-08-08 10:56:30.000000000 +0200
-+++ linux-2.4.33-pre3.perfctr/Documentation/ioctl-number.txt	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/Documentation/ioctl-number.txt.~1~	2004-08-08 10:56:30.000000000 +0200
++++ linux-2.4.33.perfctr/Documentation/ioctl-number.txt	2006-08-11 11:52:48.000000000 +0200
 @@ -183,6 +183,8 @@ Code	Seq#	Include File		Comments
  0xB1	00-1F	PPPoX			<mailto:mostrows@styx.uwaterloo.ca>
  0xCB	00-1F	CBM serial IEC bus	in development:
@@ -87,8 +87,8 @@
  0xF3    00-3F   linux/sisfb.h 		SiS framebuffer device driver
  					<mailto:thomas@winischhofer.net>
  0xFE	00-9F	Logical Volume Manager	<mailto:linux-lvm@sistina.com>
---- linux-2.4.33-pre3.perfctr/MAINTAINERS.~1~	2005-11-17 13:27:30.000000000 +0100
-+++ linux-2.4.33-pre3.perfctr/MAINTAINERS	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/MAINTAINERS.~1~	2005-11-17 13:27:30.000000000 +0100
++++ linux-2.4.33.perfctr/MAINTAINERS	2006-08-11 11:52:48.000000000 +0200
 @@ -1481,6 +1481,12 @@ M:	tsbogend@alpha.franken.de
  L:	linux-net@vger.kernel.org
  S:	Maintained
@@ -102,8 +102,8 @@
  PERMEDIA 3 FRAMEBUFFER DRIVER
  P:	Romain Dolbeau
  M:	dolbeau@caps-entreprise.com
---- linux-2.4.33-pre3.perfctr/Makefile.~1~	2006-05-01 11:31:18.000000000 +0200
-+++ linux-2.4.33-pre3.perfctr/Makefile	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/Makefile.~1~	2006-08-11 11:46:18.000000000 +0200
++++ linux-2.4.33.perfctr/Makefile	2006-08-11 11:52:48.000000000 +0200
 @@ -194,6 +194,7 @@ DRIVERS-$(CONFIG_BLUEZ) += drivers/bluet
  DRIVERS-$(CONFIG_HOTPLUG_PCI) += drivers/hotplug/vmlinux-obj.o
  DRIVERS-$(CONFIG_ISDN_BOOL) += drivers/isdn/vmlinux-obj.o
@@ -112,8 +112,8 @@
  
  DRIVERS := $(DRIVERS-y)
  
---- linux-2.4.33-pre3.perfctr/arch/i386/config.in.~1~	2006-05-01 11:31:18.000000000 +0200
-+++ linux-2.4.33-pre3.perfctr/arch/i386/config.in	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/arch/i386/config.in.~1~	2006-08-11 11:46:17.000000000 +0200
++++ linux-2.4.33.perfctr/arch/i386/config.in	2006-08-11 11:52:48.000000000 +0200
 @@ -263,6 +263,9 @@ fi
  if [ "$CONFIG_SMP" = "y" -a "$CONFIG_X86_CMPXCHG" = "y" ]; then
     define_bool CONFIG_HAVE_DEC_LOCK y
@@ -124,8 +124,8 @@
  endmenu
  
  mainmenu_option next_comment
---- linux-2.4.33-pre3.perfctr/arch/i386/kernel/i8259.c.~1~	2004-08-08 10:56:30.000000000 +0200
-+++ linux-2.4.33-pre3.perfctr/arch/i386/kernel/i8259.c	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/arch/i386/kernel/i8259.c.~1~	2004-08-08 10:56:30.000000000 +0200
++++ linux-2.4.33.perfctr/arch/i386/kernel/i8259.c	2006-08-11 11:52:48.000000000 +0200
 @@ -22,6 +22,7 @@
  #include <asm/delay.h>
  #include <asm/desc.h>
@@ -153,8 +153,8 @@
  	/*
  	 * Set the clock to HZ Hz, we already have a valid
  	 * vector now:
---- linux-2.4.33-pre3.perfctr/arch/i386/kernel/process.c.~1~	2005-11-17 13:27:30.000000000 +0100
-+++ linux-2.4.33-pre3.perfctr/arch/i386/kernel/process.c	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/arch/i386/kernel/process.c.~1~	2005-11-17 13:27:30.000000000 +0100
++++ linux-2.4.33.perfctr/arch/i386/kernel/process.c	2006-08-11 11:52:48.000000000 +0200
 @@ -32,6 +32,7 @@
  #include <linux/delay.h>
  #include <linux/reboot.h>
@@ -190,8 +190,8 @@
  }
  
  asmlinkage int sys_fork(struct pt_regs regs)
---- linux-2.4.33-pre3.perfctr/arch/ppc/config.in.~1~	2004-08-08 10:56:30.000000000 +0200
-+++ linux-2.4.33-pre3.perfctr/arch/ppc/config.in	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/arch/ppc/config.in.~1~	2004-08-08 10:56:30.000000000 +0200
++++ linux-2.4.33.perfctr/arch/ppc/config.in	2006-08-11 11:52:48.000000000 +0200
 @@ -298,6 +298,9 @@ fi
  if [ "$CONFIG_8xx" = "y" -o "$CONFIG_8260" = "y" ]; then
      define_bool CONFIG_EMBEDDEDBOOT y
@@ -202,8 +202,8 @@
  endmenu
  
  mainmenu_option next_comment
---- linux-2.4.33-pre3.perfctr/arch/ppc/kernel/head.S.~1~	2004-04-14 20:22:20.000000000 +0200
-+++ linux-2.4.33-pre3.perfctr/arch/ppc/kernel/head.S	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/arch/ppc/kernel/head.S.~1~	2004-04-14 20:22:20.000000000 +0200
++++ linux-2.4.33.perfctr/arch/ppc/kernel/head.S	2006-08-11 11:52:48.000000000 +0200
 @@ -514,20 +514,24 @@ SystemCall:
   */
  	. = 0xf00
@@ -252,8 +252,8 @@
  #endif /* CONFIG_ALTIVEC */
  
  #ifdef CONFIG_PPC64BRIDGE
---- linux-2.4.33-pre3.perfctr/arch/ppc/kernel/process.c.~1~	2003-11-29 00:28:11.000000000 +0100
-+++ linux-2.4.33-pre3.perfctr/arch/ppc/kernel/process.c	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/arch/ppc/kernel/process.c.~1~	2003-11-29 00:28:11.000000000 +0100
++++ linux-2.4.33.perfctr/arch/ppc/kernel/process.c	2006-08-11 11:52:48.000000000 +0200
 @@ -32,6 +32,7 @@
  #include <linux/elf.h>
  #include <linux/init.h>
@@ -289,8 +289,8 @@
  	return 0;
  }
  
---- linux-2.4.33-pre3.perfctr/arch/x86_64/config.in.~1~	2004-11-17 18:36:41.000000000 +0100
-+++ linux-2.4.33-pre3.perfctr/arch/x86_64/config.in	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/arch/x86_64/config.in.~1~	2004-11-17 18:36:41.000000000 +0100
++++ linux-2.4.33.perfctr/arch/x86_64/config.in	2006-08-11 11:52:48.000000000 +0200
 @@ -87,6 +87,8 @@ if [ "$CONFIG_SMP" = "y" ]; then
     fi
  fi
@@ -300,8 +300,8 @@
  endmenu
  
  mainmenu_option next_comment
---- linux-2.4.33-pre3.perfctr/arch/x86_64/kernel/entry.S.~1~	2003-11-29 00:28:11.000000000 +0100
-+++ linux-2.4.33-pre3.perfctr/arch/x86_64/kernel/entry.S	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/arch/x86_64/kernel/entry.S.~1~	2003-11-29 00:28:11.000000000 +0100
++++ linux-2.4.33.perfctr/arch/x86_64/kernel/entry.S	2006-08-11 11:52:48.000000000 +0200
 @@ -420,6 +420,9 @@ ENTRY(\x)
  	BUILD_SMP_INTERRUPT spurious_interrupt,SPURIOUS_APIC_VECTOR
  #endif
@@ -312,8 +312,8 @@
  		
  /*
   * Exception entry points.
---- linux-2.4.33-pre3.perfctr/arch/x86_64/kernel/i8259.c.~1~	2004-08-08 10:56:30.000000000 +0200
-+++ linux-2.4.33-pre3.perfctr/arch/x86_64/kernel/i8259.c	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/arch/x86_64/kernel/i8259.c.~1~	2004-08-08 10:56:30.000000000 +0200
++++ linux-2.4.33.perfctr/arch/x86_64/kernel/i8259.c	2006-08-11 11:52:48.000000000 +0200
 @@ -24,6 +24,7 @@
  #include <asm/delay.h>
  #include <asm/desc.h>
@@ -331,8 +331,8 @@
  #ifndef CONFIG_VISWS
  	if (!acpi_ioapic)
  		setup_irq(2, &irq2);
---- linux-2.4.33-pre3.perfctr/arch/x86_64/kernel/process.c.~1~	2006-05-01 11:31:18.000000000 +0200
-+++ linux-2.4.33-pre3.perfctr/arch/x86_64/kernel/process.c	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/arch/x86_64/kernel/process.c.~1~	2006-08-11 11:46:17.000000000 +0200
++++ linux-2.4.33.perfctr/arch/x86_64/kernel/process.c	2006-08-11 11:52:48.000000000 +0200
 @@ -38,6 +38,7 @@
  #include <linux/delay.h>
  #include <linux/reboot.h>
@@ -366,8 +366,8 @@
  
  	return prev_p;
  }
---- linux-2.4.33-pre3.perfctr/drivers/Makefile.~1~	2003-11-29 00:28:11.000000000 +0100
-+++ linux-2.4.33-pre3.perfctr/drivers/Makefile	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/drivers/Makefile.~1~	2003-11-29 00:28:11.000000000 +0100
++++ linux-2.4.33.perfctr/drivers/Makefile	2006-08-11 11:52:48.000000000 +0200
 @@ -49,4 +49,7 @@ subdir-$(CONFIG_ACPI_BOOT)	+= acpi
  
  subdir-$(CONFIG_BLUEZ)		+= bluetooth
@@ -376,8 +376,8 @@
 +subdir-$(CONFIG_KPERFCTR)	+= perfctr
 +
  include $(TOPDIR)/Rules.make
---- linux-2.4.33-pre3.perfctr/include/asm-i386/apic.h.~1~	2004-11-17 18:36:42.000000000 +0100
-+++ linux-2.4.33-pre3.perfctr/include/asm-i386/apic.h	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/include/asm-i386/apic.h.~1~	2004-11-17 18:36:42.000000000 +0100
++++ linux-2.4.33.perfctr/include/asm-i386/apic.h	2006-08-11 11:52:48.000000000 +0200
 @@ -94,6 +94,9 @@ extern unsigned int nmi_watchdog;
  #define NMI_LOCAL_APIC	2
  #define NMI_INVALID	3
@@ -388,8 +388,8 @@
  #endif /* CONFIG_X86_LOCAL_APIC */
  
  #endif /* __ASM_APIC_H */
---- linux-2.4.33-pre3.perfctr/include/asm-i386/hw_irq.h.~1~	2003-08-25 20:07:47.000000000 +0200
-+++ linux-2.4.33-pre3.perfctr/include/asm-i386/hw_irq.h	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/include/asm-i386/hw_irq.h.~1~	2003-08-25 20:07:47.000000000 +0200
++++ linux-2.4.33.perfctr/include/asm-i386/hw_irq.h	2006-08-11 11:52:48.000000000 +0200
 @@ -49,14 +49,15 @@
   * sources per level' errata.
   */
@@ -408,8 +408,8 @@
  
  extern int irq_vector[NR_IRQS];
  #define IO_APIC_VECTOR(irq)	irq_vector[irq]
---- linux-2.4.33-pre3.perfctr/include/asm-i386/processor.h.~1~	2004-02-18 15:16:24.000000000 +0100
-+++ linux-2.4.33-pre3.perfctr/include/asm-i386/processor.h	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/include/asm-i386/processor.h.~1~	2004-02-18 15:16:24.000000000 +0100
++++ linux-2.4.33.perfctr/include/asm-i386/processor.h	2006-08-11 11:52:48.000000000 +0200
 @@ -376,6 +376,8 @@ struct thread_struct {
  /* IO permissions */
  	int		ioperm;
@@ -419,8 +419,8 @@
  };
  
  #define INIT_THREAD  {						\
---- linux-2.4.33-pre3.perfctr/include/asm-i386/system.h.~1~	2005-11-17 13:27:30.000000000 +0100
-+++ linux-2.4.33-pre3.perfctr/include/asm-i386/system.h	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/include/asm-i386/system.h.~1~	2005-11-17 13:27:30.000000000 +0100
++++ linux-2.4.33.perfctr/include/asm-i386/system.h	2006-08-11 11:52:48.000000000 +0200
 @@ -14,6 +14,7 @@ extern void FASTCALL(__switch_to(struct 
  
  #define prepare_to_switch()	do { } while(0)
@@ -429,8 +429,8 @@
  	asm volatile("pushl %%esi\n\t"					\
  		     "pushl %%edi\n\t"					\
  		     "pushl %%ebp\n\t"					\
---- linux-2.4.33-pre3.perfctr/include/asm-ppc/processor.h.~1~	2005-04-04 19:56:05.000000000 +0200
-+++ linux-2.4.33-pre3.perfctr/include/asm-ppc/processor.h	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/include/asm-ppc/processor.h.~1~	2005-04-04 19:56:05.000000000 +0200
++++ linux-2.4.33.perfctr/include/asm-ppc/processor.h	2006-08-11 11:52:48.000000000 +0200
 @@ -843,6 +843,9 @@ struct thread_struct {
  	/* Saved 4xx debug registers */
  	unsigned long dbcr0;
@@ -441,8 +441,8 @@
  };
  
  #define INIT_SP		(sizeof(init_stack) + (unsigned long) &init_stack)
---- linux-2.4.33-pre3.perfctr/include/asm-x86_64/apic.h.~1~	2004-11-17 18:36:42.000000000 +0100
-+++ linux-2.4.33-pre3.perfctr/include/asm-x86_64/apic.h	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/include/asm-x86_64/apic.h.~1~	2004-11-17 18:36:42.000000000 +0100
++++ linux-2.4.33.perfctr/include/asm-x86_64/apic.h	2006-08-11 11:52:48.000000000 +0200
 @@ -96,6 +96,9 @@ extern unsigned int nmi_watchdog;
  #define NMI_LOCAL_APIC	2
  #define NMI_INVALID	3
@@ -453,8 +453,8 @@
  #endif /* CONFIG_X86_LOCAL_APIC */
  
  #define clustered_apic_mode 0
---- linux-2.4.33-pre3.perfctr/include/asm-x86_64/hw_irq.h.~1~	2003-06-14 13:30:28.000000000 +0200
-+++ linux-2.4.33-pre3.perfctr/include/asm-x86_64/hw_irq.h	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/include/asm-x86_64/hw_irq.h.~1~	2003-06-14 13:30:28.000000000 +0200
++++ linux-2.4.33.perfctr/include/asm-x86_64/hw_irq.h	2006-08-11 11:52:48.000000000 +0200
 @@ -59,14 +59,15 @@
   * sources per level' errata.
   */
@@ -473,8 +473,8 @@
  
  #ifndef __ASSEMBLY__
  extern int irq_vector[NR_IRQS];
---- linux-2.4.33-pre3.perfctr/include/asm-x86_64/processor.h.~1~	2005-11-17 13:27:30.000000000 +0100
-+++ linux-2.4.33-pre3.perfctr/include/asm-x86_64/processor.h	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/include/asm-x86_64/processor.h.~1~	2005-11-17 13:27:30.000000000 +0100
++++ linux-2.4.33.perfctr/include/asm-x86_64/processor.h	2006-08-11 11:52:48.000000000 +0200
 @@ -318,6 +318,8 @@ struct thread_struct {
  /* floating point info */
  	union i387_union	i387;
@@ -484,8 +484,8 @@
  };
  
  #define INIT_THREAD  {						\
---- linux-2.4.33-pre3.perfctr/include/asm-x86_64/system.h.~1~	2003-11-29 00:28:14.000000000 +0100
-+++ linux-2.4.33-pre3.perfctr/include/asm-x86_64/system.h	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/include/asm-x86_64/system.h.~1~	2003-11-29 00:28:14.000000000 +0100
++++ linux-2.4.33.perfctr/include/asm-x86_64/system.h	2006-08-11 11:52:48.000000000 +0200
 @@ -51,6 +51,7 @@ struct save_context_frame { 
  	__POP(rdi) __POP(rsi)
  
@@ -494,8 +494,8 @@
  	asm volatile(SAVE_CONTEXT					\
  		     "movq %%rsp,%0\n\t"	/* save RSP */		\
  		     "movq %3,%%rsp\n\t"	/* restore RSP */	\
---- linux-2.4.33-pre3.perfctr/kernel/exit.c.~1~	2002-11-30 17:12:32.000000000 +0100
-+++ linux-2.4.33-pre3.perfctr/kernel/exit.c	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/kernel/exit.c.~1~	2002-11-30 17:12:32.000000000 +0100
++++ linux-2.4.33.perfctr/kernel/exit.c	2006-08-11 11:52:48.000000000 +0200
 @@ -13,6 +13,7 @@
  #include <linux/personality.h>
  #include <linux/tty.h>
@@ -512,8 +512,8 @@
  		current->cmin_flt += p->min_flt + p->cmin_flt;
  		current->cmaj_flt += p->maj_flt + p->cmaj_flt;
  		current->cnswap += p->nswap + p->cnswap;
---- linux-2.4.33-pre3.perfctr/kernel/sched.c.~1~	2004-11-17 18:36:43.000000000 +0100
-+++ linux-2.4.33-pre3.perfctr/kernel/sched.c	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/kernel/sched.c.~1~	2004-11-17 18:36:43.000000000 +0100
++++ linux-2.4.33.perfctr/kernel/sched.c	2006-08-11 11:52:48.000000000 +0200
 @@ -26,6 +26,7 @@
  #include <linux/nmi.h>
  #include <linux/interrupt.h>
@@ -531,8 +531,8 @@
  	p->cpus_allowed = new_mask;
  
  	/*
---- linux-2.4.33-pre3.perfctr/kernel/timer.c.~1~	2002-11-30 17:12:32.000000000 +0100
-+++ linux-2.4.33-pre3.perfctr/kernel/timer.c	2006-05-01 11:41:57.000000000 +0200
+--- linux-2.4.33.perfctr/kernel/timer.c.~1~	2002-11-30 17:12:32.000000000 +0100
++++ linux-2.4.33.perfctr/kernel/timer.c	2006-08-11 11:52:48.000000000 +0200
 @@ -19,6 +19,7 @@
  #include <linux/mm.h>
  #include <linux/timex.h>

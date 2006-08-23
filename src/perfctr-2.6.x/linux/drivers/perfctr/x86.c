@@ -18,6 +18,9 @@
 #include <asm/apic.h>
 struct hw_interrupt_type;
 #include <asm/hw_irq.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,18) && defined(CONFIG_X86_LOCAL_APIC)
+#include <asm/nmi.h>
+#endif
 
 #include "compat.h"
 #include "x86_compat.h"
@@ -1353,12 +1356,14 @@ static int __init intel_init(void)
 		/* Check MSR_IA32_MISC_ENABLE_PERF_AVAIL on relevant models. */
 		if (current_cpu_data.x86_model == 9 ||	/* Pentium M */
 		    current_cpu_data.x86_model == 13 || /* Pentium M */
-		    current_cpu_data.x86_model == 14) { /* Intel Core */
+		    current_cpu_data.x86_model == 14 ||
+		    current_cpu_data.x86_model == 15) { /* Intel Core */
 			rdmsr_low(MSR_IA32_MISC_ENABLE, misc_enable);
 			if (!(misc_enable & MSR_IA32_MISC_ENABLE_PERF_AVAIL))
 				break;
 		}
-		if (current_cpu_data.x86_model == 14) {	/* Intel Core */
+		if (current_cpu_data.x86_model == 14 ||
+		    current_cpu_data.x86_model == 15) {	/* Intel Core */
 			/* XXX: what about erratum AE19? */
 			perfctr_info.cpu_type = PERFCTR_X86_INTEL_CORE;
 		} else if (current_cpu_data.x86_model == 9 ||	/* Pentium M */
@@ -1391,7 +1396,8 @@ static int __init intel_init(void)
 			/* P-M apparently inherited P4's LVTPC auto-masking :-( */
 			if (current_cpu_data.x86_model == 9 ||
 			    current_cpu_data.x86_model == 13 ||
-			    current_cpu_data.x86_model == 14)
+			    current_cpu_data.x86_model == 14 ||
+			    current_cpu_data.x86_model == 15)
 				lvtpc_reinit_needed = 1;
 		}
 #endif

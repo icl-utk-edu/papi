@@ -1,7 +1,7 @@
 /* $Id$
  * Virtual per-process performance counters.
  *
- * Copyright (C) 1999-2005  Mikael Pettersson
+ * Copyright (C) 1999-2006  Mikael Pettersson
  */
 #include <linux/config.h>
 #define __NO_VERSION__
@@ -802,12 +802,22 @@ Enomem:
 #define get_sb_pseudo perfctr_get_sb_pseudo
 #endif	/* MODULE && VERSION < 2.6.11 */
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,18)
+static int
+vperfctrfs_get_sb(struct file_system_type *fs_type,
+		  int flags, const char *dev_name, void *data,
+		  struct vfsmount *mnt)
+{
+	return get_sb_pseudo(fs_type, "vperfctr:", NULL, VPERFCTRFS_MAGIC, mnt);
+}
+#else
 static struct super_block *
 vperfctrfs_get_sb(struct file_system_type *fs_type,
 		  int flags, const char *dev_name, void *data)
 {
 	return get_sb_pseudo(fs_type, "vperfctr:", NULL, VPERFCTRFS_MAGIC);
 }
+#endif
 
 static struct file_system_type vperfctrfs_type = {
 	.name		= "vperfctrfs",

@@ -272,9 +272,6 @@ void __init perfctr_x86_init_tests(void)
 	case PTT_P5: /* Intel P5, P5MMX; Cyrix 6x86MX, MII, III */
 		perfctr_p5_init_tests();
 		break;
-	case PTT_P6: /* Intel PPro, PII, PIII, PENTM, CORE */
-		perfctr_p6_init_tests();
-		break;
 #if !defined(CONFIG_X86_TSC)
 	case PTT_WINCHIP: /* WinChip C6, 2, 3 */
 		perfctr_c6_init_tests();
@@ -284,6 +281,9 @@ void __init perfctr_x86_init_tests(void)
 		perfctr_vc3_init_tests();
 		break;
 #endif /* !__x86_64__ */
+	case PTT_P6: /* Intel PPro, PII, PIII, PENTM, CORE */
+		perfctr_p6_init_tests();
+		break;
 	case PTT_P4: /* Intel P4 */
 		perfctr_p4_init_tests();
 		break;

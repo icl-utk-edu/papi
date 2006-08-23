@@ -42,18 +42,22 @@ void do_setup(const struct perfctr_info *info,
 
     memset(cpu_control, 0, sizeof *cpu_control);
 
-    switch( info->cpu_type ) {
+    switch (info->cpu_type) {
 #if !defined(__x86_64__)
       case PERFCTR_X86_INTEL_P6:
       case PERFCTR_X86_INTEL_PII:
       case PERFCTR_X86_INTEL_PIII:
       case PERFCTR_X86_INTEL_PENTM:
+#endif
       case PERFCTR_X86_INTEL_CORE:
 	/* FLOPS, USR, ENable, INT */
 	evntsel0 = 0xC1 | (1 << 16) | (1 << 22) | (1 << 20);
 	/* BR_TAKEN_RETIRED, USR, INT */
 	evntsel1 = 0xC9 | (1 << 16) | (1 << 20);
+	if (info->cpu_type == PERFCTR_X86_INTEL_CORE)
+	    evntsel1 |= (1 << 22);
 	break;
+#if !defined(__x86_64__)
       case PERFCTR_X86_AMD_K7:
 	/* K7 can't count FLOPS. Count RETIRED_INSTRUCTIONS instead. */
 	evntsel0 = 0xC0 | (1 << 16) | (1 << 22) | (1 << 20);
