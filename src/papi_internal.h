@@ -158,7 +158,10 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
 /* DEFINES END HERE */
 
+#if !defined(__CATAMOUNT__) && !defined(_BGL) && !defined(_WIN32)
 #include "config.h"
+#endif
+
 #include SUBSTRATE
 #include "papi_preset.h"
 
