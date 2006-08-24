@@ -306,11 +306,12 @@ int generate_preset_search_map(hwi_search_t **maploc, itanium_preset_search_t *o
       while (*findme != NULL) {
          if (cnt == MAX_COUNTER_TERMS){
 	    PAPIERROR("Count (%d) == MAX_COUNTER_TERMS (%d)\n",cnt,MAX_COUNTER_TERMS);
-            return(PAPI_ENOEVNT);
+            return(PAPI_EBUG);
          }
          if (pfm_find_event_byname(*findme, (unsigned int *)&psmap[i].data.native[cnt]) !=
-             PFMLIB_SUCCESS)
-            return (PAPI_ENOEVNT);
+             PFMLIB_SUCCESS) {
+	   PAPIERROR("pfm_find_event_byname(%s) failed\n",*findme);
+	   return (PAPI_EBUG); }
          else
             psmap[i].data.native[cnt] ^= PAPI_NATIVE_MASK;
          findme++;
