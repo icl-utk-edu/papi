@@ -67,6 +67,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
 #elif ((defined(linux) && (defined(__i386__) || (defined __x86_64__))) || defined(_WIN32))
    static char *p3_native_name[] = { "DATA_MEM_REFS", "DCU_LINES_IN", NULL };
+   static char *core_native_name[] = { "UnhltCore_Cycles", "Instr_Retired", NULL };
    static char *k7_native_name[] = { "TOT_CYC", "IC_MISSES", "DC_ACCESSES", "DC_MISSES", NULL };
    static char *k8_native_name[] = { "FP_ADD_PIPE", "FP_MULT_PIPE", "FP_ST_PIPE", "FP_NONE_RET", NULL };
    static char *p4_native_name[] = { "retired_mispred_branch_type_CONDITIONAL", "resource_stall_SBFULL", 
@@ -120,6 +121,9 @@ int main(int argc, char **argv)
    }
    else if(!strncmp(hwinfo->model_string, "AMD K8", 6)) {
      native_name = k8_native_name;
+   }
+   else if(!strncmp(hwinfo->model_string, "Intel Core", 17)) {
+     native_name = core_native_name;
    }
 #endif
 
