@@ -4,6 +4,7 @@
 
 /*
 * File:    perfctr-ppc64.h
+* CVS:     $Id$
 * Author:  Maynard Johnson
 *          maynardj@us.ibm.com
 * Mods:    <your name here>
@@ -61,11 +62,6 @@
 #define HW_OVERFLOW 1
 //#define PAPI_MAX_STR_LEN 129
 
-
-#ifdef __GNUC__
-#define __USE_GNU
-#endif
-
 // control bits MMCR0
 #define PERF_INT_ENABLE			0x0000C000 // enables interrupts on PMC1 as well as PMC2-PMCj (2<=j<=MAX_COUNTERS)
 #define PMC_OVFL                        0x80000000
@@ -80,6 +76,7 @@
 #define GOPEN_ERROR "gperfctr_open() returned NULL"
 #define VINFO_ERROR "vperfctr_info() returned < 0"
 #define VCNTRL_ERROR "vperfctr_control() returned < 0"
+#define RCNTRL_ERROR "rvperfctr_control() returned < 0"
 #define GCNTRL_ERROR "gperfctr_control() returned < 0"
 #define FOPEN_ERROR "fopen(%s) returned NULL"
 #define STATE_MAL_ERROR "Error allocating perfctr structures"

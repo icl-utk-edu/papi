@@ -146,7 +146,7 @@ int _papi_hwd_start(P4_perfctr_context_t * ctx, P4_perfctr_control_t * state)
        if((error = rvperfctr_control(state->rvperfctr, &state->control)) < 0) 
 	 {
 	   SUBDBG("rvperfctr_control returns: %d\n", error);
-	   PAPIERROR(VCNTRL_ERROR); 
+	   PAPIERROR(RCNTRL_ERROR); 
 	   return(PAPI_ESYS); 
 	 }
        return (PAPI_OK);
@@ -168,8 +168,8 @@ VECTOR_STATIC
 int _papi_hwd_stop(P4_perfctr_context_t * ctx, P4_perfctr_control_t * state)
 {
    if( state->rvperfctr != NULL ) {
-     if(rvperfctr_stop(ctx->perfctr) < 0)
-       { PAPIERROR( VCNTRL_ERROR); return(PAPI_ESYS); }
+     if(rvperfctr_stop((struct rvperfctr*)ctx->perfctr) < 0)
+       { PAPIERROR( RCNTRL_ERROR); return(PAPI_ESYS); }
      return (PAPI_OK);
    }
    if (vperfctr_stop(ctx->perfctr) < 0)

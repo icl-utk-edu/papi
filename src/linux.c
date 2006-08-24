@@ -294,7 +294,7 @@ static int attach( hwd_control_state_t * ctl, unsigned long tid ) {
 
 	/* Start the per thread/process virtualized TSC */
 	if( rvperfctr_control( ctl->rvperfctr, & tmp ) < 0 ) {
-		PAPIERROR(VCNTRL_ERROR); return(PAPI_ESYS);
+		PAPIERROR(RCNTRL_ERROR); return(PAPI_ESYS);
 		}
 
 	return (PAPI_OK);

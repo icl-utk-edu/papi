@@ -4,6 +4,7 @@
 
 /*
 * File:    perfctr-ppc64.c
+* CVS:     $Id$
 * Author:  Maynard Johnson
 *          maynardj@us.ibm.com
 * Mods:    <your name here>
@@ -15,9 +16,6 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include SUBSTRATE
-//#include "papi_memory.h"
-//#include "papi_protos.h"
-//#include "libperfctr.h"
 
 #ifdef PERFCTR26
 #define PERFCTR_CPU_NAME   perfctr_info_cpu_name
@@ -471,7 +469,7 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * state) {
        if((error = rvperfctr_control(state->rvperfctr, &state->control)) < 0) 
 	 {
 	   SUBDBG("rvperfctr_control returns: %d\n", error);
-	   PAPIERROR(VCNTRL_ERROR); 
+	   PAPIERROR(RCNTRL_ERROR); 
 	   return(PAPI_ESYS); 
 	 }
        return (PAPI_OK);
@@ -486,8 +484,8 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * state) {
 
 int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
    if( state->rvperfctr != NULL ) {
-     if(rvperfctr_stop(ctx->perfctr) < 0)
-       { PAPIERROR( VCNTRL_ERROR); return(PAPI_ESYS); }
+     if(rvperfctr_stop((struct rvperfctr*)ctx->perfctr) < 0)
+       { PAPIERROR( RCNTRL_ERROR); return(PAPI_ESYS); }
      return (PAPI_OK);
    }
    if(vperfctr_stop(ctx->perfctr) < 0)
