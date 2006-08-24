@@ -3,6 +3,16 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.7.20, 2006-08-20
+- Moved ppc64 perfctr.h from asm-ppc64/ to asm-powerpc/.
+- Updated ppc.c to use {reserve,release}_pmc_hardware()
+  to dynamically claim and release the PMC resources.
+- Updated ppc.c, virtual.c, and x86.c to use new-style
+  mutexes instead of old-style binary semaphores.
+- Updated virtual.c for get_sb_pseudo() change in kernel 2.6.18.
+- Updated x86.c for <asm/nmi.h> change in kernel 2.6.18.
+- Updated x86_tests.c for sync_core() change in kernel 2.6.16.
+
 Version 2.7.19, 2005-11-08
 - Updated ppc64.c to handle that CPU_FTR_PMC8 has been replaced
   by cur_cpu_spec->num_pmcs. From David Gibson.

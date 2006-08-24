@@ -11,7 +11,7 @@
 #include "ppc.h"
 
 #ifndef __NR_vperfctr_open
-#define __NR_vperfctr_open	280
+#define __NR_vperfctr_open	301
 #define __NR_vperfctr_control	(__NR_vperfctr_open+1)
 #define __NR_vperfctr_write	(__NR_vperfctr_open+2)
 #define __NR_vperfctr_read	(__NR_vperfctr_open+3)
@@ -81,7 +81,7 @@ int _sys_vperfctr_iresume(int fd)
 #define SPRN_PMC5       0x3B1   /* Performance Counter Register 5 (7450 and up) */
 #define SPRN_PMC6       0x3B2   /* Performance Counter Register 6 (7450 and up) */
 
-#define MMCR0_PMC1SEL           0x00001FB0 /* PMC1 event selector, 7 bits. */
+#define MMCR0_PMC1SEL           0x00001FC0 /* PMC1 event selector, 7 bits. */
 #define MMCR0_PMC2SEL           0x0000003F /* PMC2 event selector, 6 bits. */
 
 #if 0

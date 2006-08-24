@@ -8,6 +8,8 @@
 #include <linux/sched.h>
 #include <linux/interrupt.h>
 #include <linux/perfctr.h>
+#include <linux/mutex.h>
+#include <linux/version.h>
 
 #include <asm/msr.h>
 #undef MSR_P6_PERFCTR0
@@ -17,6 +19,9 @@
 struct hw_interrupt_type;
 #include <asm/hw_irq.h>
 #include <asm/timex.h>	/* cpu_khz */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,18) && defined(CONFIG_X86_LOCAL_APIC)
+#include <asm/nmi.h>
+#endif
 
 #include "cpumask.h"
 #include "x86_tests.h"
@@ -1828,7 +1833,7 @@ void __exit perfctr_cpu_exit(void)
  *								*
  ****************************************************************/
 
-static DECLARE_MUTEX(mutex);
+static DEFINE_MUTEX(mutex);
 static const char *current_service = 0;
 
 const char *perfctr_cpu_reserve(const char *service)
@@ -1837,13 +1842,13 @@ const char *perfctr_cpu_reserve(const char *service)
 
 	if (!init_done)
 		return "unsupported hardware";
-	down(&mutex);
+	mutex_lock(&mutex);
 	ret = current_service;
 	if (ret)
-		goto out_up;
+		goto out_unlock;
 	ret = "unknown driver (oprofile?)";
 	if (reserve_lapic_nmi() < 0)
-		goto out_up;
+		goto out_unlock;
 	current_service = service;
 	if (perfctr_info.cpu_features & PERFCTR_FEATURE_RDPMC)
 		mmu_cr4_features |= X86_CR4_PCE;
@@ -1851,18 +1856,18 @@ const char *perfctr_cpu_reserve(const char *service)
 	perfctr_cpu_set_ihandler(NULL);
 	x86_pm_init();
 	ret = NULL;
- out_up:
-	up(&mutex);
+ out_unlock:
+	mutex_unlock(&mutex);
 	return ret;
 }
 
 void perfctr_cpu_release(const char *service)
 {
-	down(&mutex);
+	mutex_lock(&mutex);
 	if (service != current_service) {
 		printk(KERN_ERR "%s: attempt by %s to release while reserved by %s\n",
 		       __FUNCTION__, service, current_service);
-		goto out_up;
+		goto out_unlock;
 	}
 	/* power down the counters */
 	if (perfctr_info.cpu_features & PERFCTR_FEATURE_RDPMC)
@@ -1872,6 +1877,6 @@ void perfctr_cpu_release(const char *service)
 	x86_pm_exit();
 	current_service = 0;
 	release_lapic_nmi();
- out_up:
-	up(&mutex);
+ out_unlock:
+	mutex_unlock(&mutex);
 }

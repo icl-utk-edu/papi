@@ -13,9 +13,9 @@
 
 #ifndef __NR_vperfctr_open
 #ifdef __x86_64__
-#define __NR_vperfctr_open	257
+#define __NR_vperfctr_open	280
 #else
-#define __NR_vperfctr_open	296
+#define __NR_vperfctr_open	318
 #endif
 #define __NR_vperfctr_control	(__NR_vperfctr_open+1)
 #define __NR_vperfctr_write	(__NR_vperfctr_open+2)

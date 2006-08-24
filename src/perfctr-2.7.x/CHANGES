@@ -6,6 +6,12 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.7.20, 2006-08-20
+- Updated to support kernels 2.6.16, 2.6.17, and 2.6.18-rc4.
+- Migrated ppc64 from include/asm-ppc64/ to include/asm-powerpc/.
+- Updated perfctr system call numbers on all platforms, due to
+  other system call additions since kernel 2.6.14.
+
 Version 2.7.19, 2005-11-08
 - The self and signal examples have been updated for Power5/PPC970.
 - The ppc64 driver has been updated to compile correctly in

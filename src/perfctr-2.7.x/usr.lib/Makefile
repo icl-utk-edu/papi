@@ -37,7 +37,7 @@ AR_OBJS=misc.o virtual.o $(EVENT_SET_OBJS) $(ARCH_OBJS)
 
 SO_OBJS=$(AR_OBJS:.o=.os)
 SO_ABIVER=6
-SO_LIBVER=2.7.19
+SO_LIBVER=2.7.20
 SO_NAME=libperfctr.so.$(SO_ABIVER)
 SO_LIB=libperfctr.so.$(SO_ABIVER).$(SO_LIBVER)
 
@@ -45,8 +45,8 @@ HDEP=libperfctr.h $(BUILD_INCLDIR)/linux/perfctr.h $(BUILD_INCLDIR)/asm/perfctr.
 
 i386_ASM_DIR=i386
 x86_64_ASM_DIR=i386
-ppc_ASM_DIR=ppc
-ppc64_ASM_DIR=ppc64
+ppc_ASM_DIR=powerpc
+ppc64_ASM_DIR=powerpc
 ARCH_ASM_DIR=asm-$($(ARCH)_ASM_DIR)
 
 INSTALL_FILES=$(BUILD_INCLDIR)/$(ARCH_ASM_DIR)/perfctr.h $(BUILD_INCLDIR)/linux/perfctr.h\
