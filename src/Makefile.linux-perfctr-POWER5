@@ -6,5 +6,5 @@ CPU_TYPE 	= ppc64
 SHRFLAGS	= -fPIC
 # for Debian, comment the following line out
 BITS		= 32
-CFLAGS	= -g -DDEBUG -D_$(CPU_MODEL) -DNEED_FFSLL -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\"
+CFLAGS	= -g -DDEBUG -D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\"
 include Rules.perfctr
