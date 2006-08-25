@@ -178,7 +178,7 @@ static itanium_preset_search_t ia2_preset_search_map[] = {
 #if defined(PFMLIB_MONTECITO_PMU)
 static itanium_preset_search_t ia3_preset_search_map[] = {
 /* not sure */
-   {PAPI_CA_SNP, 0, {"BUS_SNOOPS_STALL_CYCLES", 0, 0, 0}},
+   {PAPI_CA_SNP, 0, {"BUS_SNOOP_STALL_CYCLES_ANY", 0, 0, 0}},
    {PAPI_CA_INV, DERIVED_ADD, {"BUS_MEM_READ_BRIL_SELF", "BUS_MEM_READ_BIL_SELF", 0, 0}},
 /* should be OK */
    {PAPI_TLB_TL, DERIVED_ADD, {"ITLB_MISSES_FETCH_L2ITLB", "L2DTLB_MISSES", 0, 0}},
@@ -211,7 +211,7 @@ static itanium_preset_search_t ia3_preset_search_map[] = {
    {PAPI_L2_LDM, 0, {"L3_READS_ALL_ALL", 0, 0, 0}},
    {PAPI_L2_STM, 0, {"L3_WRITES_ALL_ALL", 0, 0, 0}},
    {PAPI_L1_DCH, DERIVED_SUB, {"L1D_READS_SET1", "L1D_READ_MISSES_ALL", 0, 0}},
-   {PAPI_L2_DCH, DERIVED_SUB, {"L2D_REFERENCES_ALL", "L2_MISSES", 0, 0}},
+   {PAPI_L2_DCH, DERIVED_SUB, {"L2D_REFERENCES_ALL", "L2D_MISSES", 0, 0}},
    {PAPI_L3_DCH, DERIVED_ADD,
     {"L3_READS_DATA_READ_HIT", "L3_WRITES_DATA_WRITE_HIT", 0, 0}},
    {PAPI_L1_DCA, 0, {"L1D_READS_SET1", 0, 0, 0}},
@@ -224,10 +224,10 @@ static itanium_preset_search_t ia3_preset_search_map[] = {
    {PAPI_L3_DCW, 0, {"L3_WRITES_DATA_WRITE_ALL", 0, 0, 0}},
    {PAPI_L3_ICH, 0, {"L3_READS_DINST_FETCH_HIT", 0, 0, 0}},
    {PAPI_L1_ICR, DERIVED_ADD, {"L1I_PREFETCHES", "L1I_READS", 0, 0}},
-   {PAPI_L2_ICR, DERIVED_ADD, {"L2I_READS_ALL_DMND", "L2_INST_PREFETCHES", 0, 0}},
+   {PAPI_L2_ICR, DERIVED_ADD, {"L2I_READS_ALL_DMND", "L2I_PREFETCHES", 0, 0}},
    {PAPI_L3_ICR, 0, {"L3_READS_INST_FETCH_ALL", 0, 0, 0}},
    {PAPI_L1_ICA, DERIVED_ADD, {"L1I_PREFETCHES", "L1I_READS", 0, 0}},
-   {PAPI_L2_TCH, DERIVED_SUB, {"L2_REFERENCES", "L2_MISSES", 0, 0}},
+   {PAPI_L2_TCH, DERIVED_SUB, {"L2I_READS_HIT_ALL", "L2D_INSERT_HITS", 0, 0}},
    {PAPI_L3_TCH, DERIVED_SUB, {"L3_REFERENCES", "L3_MISSES", 0, 0}},
    {PAPI_L2_TCA, DERIVED_ADD, {"L2I_READS_ALL_ALL", "L2D_REFERENCES_ALL", 0, 0}},
    {PAPI_L3_TCA, 0, {"L3_REFERENCES", 0, 0, 0}},
@@ -239,19 +239,20 @@ static itanium_preset_search_t ia3_preset_search_map[] = {
    {PAPI_BR_PRC, 0, {"BR_MISPRED_DETAIL_ALL_CORRECT_PRED", 0, 0, 0}},
    {PAPI_BR_MSP, DERIVED_ADD,
     {"BR_MISPRED_DETAIL_ALL_WRONG_PATH", "BR_MISPRED_DETAIL_ALL_WRONG_TARGET", 0, 0}},
-   {PAPI_TOT_CYC, 0, {"CPU_OP_CYCLES", 0, 0, 0}},
+   {PAPI_TOT_CYC, 0, {"CPU_OP_CYCLES_ALL", 0, 0, 0}},
    {PAPI_FP_OPS, 0, {"FP_OPS_RETIRED", 0, 0, 0}},
-   {PAPI_TOT_INS, DERIVED_ADD, {"IA64_INST_RETIRED", "IA32_INST_RETIRED", 0, 0}},
+//   {PAPI_TOT_INS, DERIVED_ADD, {"IA64_INST_RETIRED", "IA32_INST_RETIRED", 0, 0}},
+   {PAPI_TOT_INS, 0, {"IA64_INST_RETIRED", 0, 0, 0}},
    {PAPI_LD_INS, 0, {"LOADS_RETIRED", 0, 0, 0}},
    {PAPI_SR_INS, 0, {"STORES_RETIRED", 0, 0, 0}},
-   {PAPI_L2_ICA, 0, {"L2_INST_DEMAND_READS", 0, 0, 0}},
+   {PAPI_L2_ICA, 0, {"L2I_DEMAND_READS", 0, 0, 0}},
    {PAPI_L3_ICA, 0, {"L3_READS_INST_FETCH_ALL", 0, 0, 0}},
-   {PAPI_L1_TCR, DERIVED_ADD, {"L2I_READS_ALL_DMND", "L1D_READ_MISSES_ALL", "L1I_READS_SET0"}}, 
-/* Why are TCA READS+READS_SET0? I the same as PAPI_L1_TCR, because its an write through cache
+   {PAPI_L1_TCR, 0, {"L2I_READS_ALL_ALL", 0, 0, 0}}, 
+/* Why are TCA READS+READS_SET0? I used the same as PAPI_L1_TCR, because its an write through cache
  * OLD: {PAPI_L1_TCA, DERIVED_ADD, {"L1D_READS_SET0", "L1I_READS", 0, 0}}, 
  */
-   {PAPI_L1_TCA, DERIVED_ADD, {"L2I_READS_ALL_DMND", "L1D_READ_MISSES_ALL", "L1I_READS_SET0", "L1I_READS_SET1"}}, 
-   {PAPI_L2_TCW, 0, {"L2D_REFERENCES_L2_DATA_WRITES", 0, 0, 0}},
+   {PAPI_L1_TCA, DERIVED_ADD, {"L1I_PREFETCHES", "L1I_READS", "L1D_READS_SET0", 0}}, 
+   {PAPI_L2_TCW, 0, {"L2D_REFERENCES_WRITES", 0, 0, 0}},
    {0, 0, {0, 0, 0, 0}}
 };
 #endif
@@ -309,9 +310,11 @@ int generate_preset_search_map(hwi_search_t **maploc, itanium_preset_search_t *o
             return(PAPI_EBUG);
          }
          if (pfm_find_event_byname(*findme, (unsigned int *)&psmap[i].data.native[cnt]) !=
-             PFMLIB_SUCCESS) {
-	   PAPIERROR("pfm_find_event_byname(%s) failed\n",*findme);
-	   return (PAPI_EBUG); }
+             PFMLIB_SUCCESS)
+         {
+            PAPIERROR("pfm_find_event_byname(%s) failed\n", *findme);
+            return (PAPI_EBUG);
+         }
          else
             psmap[i].data.native[cnt] ^= PAPI_NATIVE_MASK;
          findme++;
