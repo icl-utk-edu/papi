@@ -1,6 +1,10 @@
 #ifndef _PAPI_PENTIUM3_H
 #define _PAPI_PENTIUM3_H
 
+#ifdef __CATAMOUNT__
+  #define _GNU_SOURCE
+#endif
+
 #define __USE_GNU
 #define __USE_UNIX98
 #define __USE_XOPEN_EXTENDED
