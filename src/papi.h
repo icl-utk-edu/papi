@@ -398,7 +398,7 @@ read the documentation carefully.  */
      unsigned int hardware_intr:1;         /* Needs hw overflow intr to be emulated in software*/
      unsigned int precise_intr:1;          /* Performance interrupts happen precisely */
      unsigned int posix1b_timers:1;        /* Using POSIX 1b interval timers (timer_create) instead of setitimer */
-     unsigned int kernel_profile:1;        /* Needs kernel profile support (buffered interrupts) to be emulated */
+     unsigned int kernel_profile:1;        /* Has kernel profiling support (buffered interrupts or sprofil-like) */
      unsigned int kernel_multiplex:1;      /* In kernel multiplexing */
      unsigned int data_address_range:1;    /* Supports data address range limiting */
      unsigned int instr_address_range:1;   /* Supports instruction address range limiting */

@@ -818,7 +818,7 @@ int PAPI_stop(int EventSet, long_long * values)
       papi_return(PAPI_ENOTRUN);
 
    if (ESI->state & PAPI_PROFILING) {
-      if (_papi_hwi_system_info.sub_info.hardware_intr && !(ESI->profile.flags&PAPI_PROFIL_FORCE_SW)) {
+     if (_papi_hwi_system_info.sub_info.kernel_profile && !(ESI->profile.flags&PAPI_PROFIL_FORCE_SW)) {
          retval = _papi_hwd_stop_profiling(thread, ESI);
          if (retval < PAPI_OK)
             papi_return(retval);
@@ -1684,6 +1684,9 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
    if ((ESI->state & PAPI_STOPPED) != PAPI_STOPPED)
       papi_return(PAPI_EISRUN);
 
+   if (ESI->state & PAPI_ATTACHED)
+      papi_return(PAPI_EINVAL);
+
    if ((index = _papi_hwi_lookup_EventCodeIndex(ESI, EventCode)) < 0)
       papi_return(PAPI_ENOEVNT);
 
@@ -1804,6 +1807,9 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
    if ((ESI->state & PAPI_STOPPED) != PAPI_STOPPED)
       papi_return(PAPI_EISRUN);
 
+   if (ESI->state & PAPI_ATTACHED)
+      papi_return(PAPI_EINVAL);
+
    if ((index = _papi_hwi_lookup_EventCodeIndex(ESI, EventCode)) < 0)
       papi_return(PAPI_ENOEVNT);
 
@@ -1897,7 +1903,7 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
                | PAPI_PROFIL_COMPRESS | PAPI_PROFIL_BUCKETS | PAPI_PROFIL_FORCE_SW))
       papi_return(PAPI_EINVAL);
 
-   if ( (flags&PAPI_PROFIL_FORCE_SW) ) 
+   if ((flags & PAPI_PROFIL_FORCE_SW)) 
       forceSW = PAPI_OVERFLOW_FORCE_SW;
 
    /* make sure one and only one bucket size is set */
@@ -1914,10 +1920,10 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
 
    ESI->profile.flags = flags;
 
-   if (_papi_hwi_system_info.sub_info.hardware_intr && !forceSW)
+   if ((forceSW) || (_papi_hwi_system_info.sub_info.kernel_profile == 0))
+     retval = PAPI_overflow(EventSet, EventCode, threshold, forceSW, _papi_hwi_dummy_handler);
+   else 
       retval = _papi_hwd_set_profile(ESI, index, threshold);
-   else
-      retval = PAPI_overflow(EventSet, EventCode, threshold, forceSW, _papi_hwi_dummy_handler);
 
    if (retval < PAPI_OK)
       return (retval);
