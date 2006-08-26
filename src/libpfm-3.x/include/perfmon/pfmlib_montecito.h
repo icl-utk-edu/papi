@@ -648,7 +648,7 @@ extern int pfm_mont_get_event_type(unsigned int i, int *type);
 /*
  * possible values returned in set by pfm_mont_get_event_set()
  */
-#define PFMLIB_ITA2_EVT_NO_SET		-1 /* event does not belong to a set */
+#define PFMLIB_MONT_EVT_NO_SET		-1 /* event does not belong to a set */
 
 /*
  * values of type returned by pfm_mont_get_event_type()
@@ -657,12 +657,6 @@ extern int pfm_mont_get_event_type(unsigned int i, int *type);
 #define PFMLIB_MONT_EVT_FLOATING	 1
 #define PFMLIB_MONT_EVT_CAUSAL		 2
 #define PFMLIB_MONT_EVT_SELF_FLOATING	 3 /* floating with .self, causal otherwise */
-
-/*
- * values of set (set) returned by pfm_mont_get_event_set(int i, int *set)
- * If *set != PFMLIB_MONT_EVT_NO_SET, then this is set the value
- */
-#define PFMLIB_MONT_EVT_NO_SET	 	15 /* event does not belong to a group */
 
 #ifdef __cplusplus /* extern C */
 }

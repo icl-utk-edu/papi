@@ -1,17 +1,22 @@
-.TH LIBPFM 3  "November, 2003" "" "Linux Programmer's Manual"
+.TH LIBPFM 3  "August, 2006" "" "Linux Programmer's Manual"
 .SH NAME
-pfm_get_event_name, pfm_get_event_code, pfm_get_event_counters, pfm_get_num_events, pfm_get_max_event_name_len \- get event information
+pfm_get_event_name, pfm_get_event_mask_name, pfm_get_event_code, pfm_get_event_mask_code, pfm_get_event_counters,
+pfm_get_num_events, pfm_get_max_event_name_len, pfm_get_event_description,
+pfm_get_event_mask_description \- get event information
 .SH SYNOPSIS
 .nf
 .B #include <perfmon/pfmlib.h>
 .sp
-.BI "int pfm_get_event_name(unsigned int " e ", char *"name ", size_t" maxlen);
-.BI "int pfm_get_event_code(unsigned int " e ", int *"code);
-.BI "int pfm_get_event_code_counter(unsigned int " e ", unsigned int " cnt ", int *"code);
+.BI "int pfm_get_event_name(unsigned int " e ", char *"name ", size_t" maxlen ");"
+.BI "int pfm_get_event_mask_name(unsigned int " e ", unsigned int "mask ", char *"name ", size_t" maxlen ");"
+.BI "int pfm_get_event_code(unsigned int " e ", int *"code ");"
+.BI "int pfm_get_event_mask_code(unsigned int " e ", unsigned int "mask ", int *"code ");"
+.BI "int pfm_get_event_code_counter(unsigned int " e ", unsigned int " cnt ", int *"code ");"
 .BI "int pfm_get_event_counters(int " e ", pfmlib_regmask_t "counters ");"
-.BI "int pfm_get_num_events(unsigned int *" count);
-.BI "int pfm_get_max_event_name_len(size_t *" len);
-.BI "int pfm_get_event_description(unsigned int " ev ", char **" str);
+.BI "int pfm_get_num_events(unsigned int *" count ");"
+.BI "int pfm_get_max_event_name_len(size_t *" len ");"
+.BI "int pfm_get_event_description(unsigned int " ev ", char **" str ");"
+.BI "int pfm_get_event_mask_description(unsigned int " ev ", unsigned int "mask ", char **" str ");"
 .sp
 .SH DESCRIPTION
 The PMU counters can be programmed to measure the number of occurrences
@@ -81,13 +86,27 @@ The \fBpfm_get_max_event_name_len\fR function returns in \fBlen\fR
 the maximum length in bytes for the name of the events available on one PMU 
 implementation. The value excludes the string termination character ('\0').
 .sp
-The \fBpfm_get_event_description\fR functions returns in \fBstr\fR the
-description string associated with the event specified in \fBev\Fr. 
-Depending on the PMU model, some events may not have a description in
-which case the \fBstr\fR pointer is set to NULL.  Otherwise, a buffer
-is allocated to hold the entire description text. It is the responsibility
-of the caller to free the buffer when it becomes useless by calling the
-\fBfree(3)\fR function.
+The \fBpfm_get_event_description\fR function returns in \fBstr\fR the
+description string associated with the event specified in \fBev\fR. 
+The description is returned into a buffer that is allocated to hold the entire
+description text. It is the responsibility of the caller to free the buffer when
+it becomes useless by calling the \fBfree(3)\fR function.
+.sp
+The \fBpfm_get_event_mask_code\fR function must be used to retrieve the actual
+unit mask value given a event descriptor in \fBe\fR and a unit mask descriptor
+in \fBmask\fR. The value is returned in \fBcode\fR.
+.sp
+The \fBpfm_get_event_mask_name\fR function must be used to retrieve the name
+associated with a unit mask specified in \fBmask\fR for event \fBe\fR. The
+name is returned in the buffer specified in \fBname\fR. The maximum size
+of the  buffer must be specified in \fBmaxlen\fR.
+.sp
+The \fBpfm_get_event_mask_description\fR function  returns in \fBstr\fR the
+description string associated with the unit mask specified in \fBmask\fR for
+the event specified in \fBev\fR. The description is returned into a buffer that
+is allocated to hold the entire description text. It is the responsibility of
+the caller to free the buffer when it becomes useless by calling the \fBfree(3)\fR
+function.
 
 .SH RETURN
 All functions return whether or not the call was successful.  A return value of 
@@ -97,7 +116,7 @@ All functions return whether or not the call was successful.  A return value of
 the library has not been initialized properly.
 .TP
 .B PFMLIB_ERR_INVAL
-the event descriptor or the \fBcnt\fR argument is invalid, or the pointer argument is NULL.
+the event or unit mask descriptor, or the \fBcnt\fR argument is invalid, or a pointer argument is NULL.
 .SH SEE ALSO
 pfm_get_impl_counters(3), free(3)
 .SH AUTHOR

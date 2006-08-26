@@ -1,3 +1,7 @@
+2006-08-21 Stephane Eranian <eranian@hpl.hp.com>
+	This file will not be updated anymore,  Refer to
+	SF.net CVS log for diff information
+
 2006-07-10 Stephane Eranian <eranian@hpl.hp.com>
 	* removed PFM_FL_X86_INSECURE because it is not needed anymore
 	* removed perfmon_i386.h and perfmon_mips64.h because empty

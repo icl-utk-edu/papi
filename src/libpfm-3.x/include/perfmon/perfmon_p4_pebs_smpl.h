@@ -1,10 +1,58 @@
 /*
  * Copyright (c) 2005-2006 Hewlett-Packard Development Company, L.P.
  *               Contributed by Stephane Eranian <eranian@hpl.hp.com>
- *
- * This file implements the PEBS sampling format for 32-bit
- * Intel Pentium 4/Xeon processors. Not to be used with Intel EM64T
+ * 
+ * This file implements the sampling format to support Intel
+ * Pentium 4 Precise Event Based Sampling (PEBS) feature of Pentium 4
  * processors.
+ *
+ * What is PEBS?
+ *  This is a hardware feature to enhance sampling by providing
+ *  better precision as to where a sample is taken. This avoids the
+ *  typical skew in the instruction one can observe with any
+ *  interrupt-based sampling technique.
+ *
+ *  PEBS also lowers sampling overhead significantly by having the
+ *  processor store samples instead of the OS. PMU interrupt are only
+ *  generated after multiple samples are written.
+ *
+ *  Another benefit of PEBS is that samples can be captured inside
+ *  critical sections where interrupts are masked.
+ *
+ * How does it work?
+ *  PEBS effectively implements a Hw buffer. The Os must pass a region
+ *  of memory where samples are to be stored. The region can have any
+ *  size. The OS must also specify the sampling period to reload. The PMU
+ *  will interrupt when it reaches the end of the buffer or a specified
+ *  threshold location inside the memory region.
+ *
+ *  The description of the buffer is stored in the Data Save Area (DS).
+ *  The samples are stored sequentially in the buffer. The format of the
+ *  buffer is fixed and specified in the PEBS documentation.  The sample
+ *  format changes between 32-bit and 64-bit modes due to extended register
+ *  file.
+ *
+ *  PEBS does not work when HyperThreading is enabled due to certain MSR
+ *  being shared being to two threads.
+ *
+ *  What does the format do?
+ *   It provides access to the PEBS feature for both 32-bit and 64-bit
+ *   processors that support it.
+ *
+ *   The same code is used for both 32-bit and 64-bit mode, but different
+ *   UUID are used because the two modes are not compatible due to
+ *   data model and register file differences. Similarly the public data
+ *   structures describing the samples are different.
+ *
+ *   It is important to realize that the format provide a zero-copy environment
+ *   for the samples, i.e,, the OS never touches the samples. Whatever the
+ *   processor write is directly accessible to the user.
+ *
+ *   Parameters to the buffer can be passed via pfm_create_context() in
+ *   the pfm_p4_pebs_smpl_arg structure.
+ *
+ *   It is not possible to mix a 32-bit PEBS application on top of a 64-bit
+ *   host kernel.
  */
 #ifndef __PERFMON_P4_PEBS_SMPL_H__
 #define __PERFMON_P4_PEBS_SMPL_H__ 1
@@ -15,37 +63,40 @@ extern "C" {
 
 #include <perfmon/perfmon.h>
 
+#ifdef __i386__
 #define PFM_P4_PEBS_SMPL_UUID { \
 	0x0d, 0x85, 0x91, 0xe7, 0x49, 0x3f, 0x49, 0xae,\
 	0x8c, 0xfc, 0xe8, 0xb9, 0x33, 0xe4, 0xeb, 0x8b}
+#else
+#define PFM_P4_PEBS_SMPL_UUID { \
+	0x36, 0xbe, 0x97, 0x94, 0x1f, 0xbf, 0x41, 0xdf,\
+	0xb4, 0x63, 0x10, 0x62, 0xeb, 0x72, 0x9b, 0xad}
+#endif
 
 /*
  * format specific parameters (passed at context creation)
  */
 typedef struct {
+	uint64_t	cnt_reset;	/* counter reset value */
 	size_t		buf_size;	/* size of the buffer in bytes */
 	size_t		intr_thres;	/* index of interrupt threshold entry */
-	uint32_t	flags;		/* buffer specific flags */
-	uint64_t	cnt_reset;	/* counter reset value */
-	uint32_t	res1;		/* for future use */
-	uint64_t	reserved[2];	/* for future use */
+	uint64_t	reserved[6];	/* for future use */
 } pfm_p4_pebs_smpl_arg_t;
 
 /*
  * DS Save Area as described in section 15.10.5
  */
 typedef struct {
-	uint32_t bts_buf_base;
-	uint32_t bts_index;
-	uint32_t bts_abs_max;
-	uint32_t bts_intr_thres;
-	uint32_t pebs_buf_base;
-	uint32_t pebs_index;
-	uint32_t pebs_abs_max;
-	uint32_t pebs_intr_thres;
-	uint64_t pebs_cnt_reset;
-} pfm_p4_ds_area_t;
-
+	unsigned long	bts_buf_base;
+	unsigned long	bts_index;
+	unsigned long	bts_abs_max;
+	unsigned long	bts_intr_thres;
+	unsigned long	pebs_buf_base;
+	unsigned long	pebs_index;
+	unsigned long	pebs_abs_max;
+	unsigned long	pebs_intr_thres;
+	uint64_t	pebs_cnt_reset;
+} pfm_p4_ds_area_t; 
 
 /*
  * This header is at the beginning of the sampling buffer returned to the user.
@@ -58,28 +109,39 @@ typedef struct {
  * 	actual_buffer = (unsigned long)(hdr+1)+hdr->hdr_start_offs
  */
 typedef struct {
-	uint64_t		hdr_overflows;	/* #overflows for buffer */
-	size_t			hdr_buf_size;	/* bytes in the buffer */
-	size_t			hdr_start_offs; /* actual buffer start offset */
-	uint32_t		hdr_version;	/* smpl format version */
-	uint64_t		hdr_res[3];	/* for future use */
-	pfm_p4_ds_area_t	hdr_ds;		/* DS management Area */
+	uint64_t		overflows;	/* #overflows for buffer */
+	size_t			buf_size;	/* bytes in the buffer */
+	size_t			start_offs;	/* actual buffer start offset */
+	uint32_t		version;	/* smpl format version */
+	uint32_t		reserved1;	/* for future use */
+	uint64_t		reserved2[5];	/* for future use */
+	pfm_p4_ds_area_t	ds;		/* DS management Area */
 } pfm_p4_pebs_smpl_hdr_t;
 
 /*
  * PEBS record format as described in section 15.10.6
  */
 typedef struct {
-	uint32_t eflags;
-	uint32_t ip;
-	uint32_t eax;
-	uint32_t ebx;
-	uint32_t ecx;
-	uint32_t edx;
-	uint32_t esi;
-	uint32_t edi;
-	uint32_t ebp;
-	uint32_t esp;
+	unsigned long eflags;
+	unsigned long ip;
+	unsigned long eax;
+	unsigned long ebx;
+	unsigned long ecx;
+	unsigned long edx;
+	unsigned long esi;
+	unsigned long edi;
+	unsigned long ebp;
+	unsigned long esp;
+#ifdef __x86_64__
+	unsigned long r8;
+	unsigned long r9;
+	unsigned long r10;
+	unsigned long r11;
+	unsigned long r12;
+	unsigned long r13;
+	unsigned long r14;
+	unsigned long r15;
+#endif
 } pfm_p4_pebs_smpl_entry_t;
 
 #define PFM_P4_PEBS_SMPL_VERSION_MAJ 1U

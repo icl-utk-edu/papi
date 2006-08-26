@@ -66,12 +66,6 @@ pfm_ita_detect(void)
 	int ret = PFMLIB_ERR_NOTSUPP;
 
 	/*
-	 * check that the core library supports enough registers
-	 */
-	if (PFMLIB_MAX_PMCS < PMU_ITA_NUM_PMCS) return ret;
-	if (PFMLIB_MAX_PMDS < PMU_ITA_NUM_PMDS) return ret;
-
-	/*
 	 * we support all chips (there is only one!) in the Itanium family
 	 */
 	if (pfm_ia64_get_cpu_family() == 0x07) ret = PFMLIB_SUCCESS;

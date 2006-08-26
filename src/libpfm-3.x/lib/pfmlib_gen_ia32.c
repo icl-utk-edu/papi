@@ -1,5 +1,5 @@
 /*
- * pfmlib_gen_ia32.c : support for architected IA-32 PMU
+ * pfmlib_gen_ia32.c : IA-32 architectural PMU 
  *
  * Copyright (c) 2005-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
@@ -22,8 +22,8 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  *
- * This file implements supports for the IA-32 architected PMU as specified in the
- * following document:
+ * This file implements supports for the IA-32 architectural PMU as specified
+ * in the following document:
  * 	"IA-32 Intel Architecture Software Developer's Manual - Volume 3B: System
  * 	Programming Guide, Part 2"
  * 	Order Number: 253669-019
@@ -86,7 +86,7 @@ static pme_gen_ia32_entry_t gen_ia32_all_pe[]={
 	 .pme_entry_code.pme_vcode = 0x00c4,
 	 .pme_desc =  "count branch instructions at retirement. Specifically, this event counts the retirement of the last micro-op of a branch instruction",
 	},
-	{.pme_name = "ALL_BRANCH_MISPREDICT_RETIRED",
+	{.pme_name = "MISPREDICTED_BRANCH_RETIRED",
 	 .pme_entry_code.pme_vcode = 0x00c5,
 	 .pme_desc =  "count mispredicted branch instructions at retirement. Specifically, this event counts at retirement of the last micro-op of a branch instruction in the architectural path of the execution and experienced misprediction in the branch prediction hardware",
 	}
@@ -94,17 +94,6 @@ static pme_gen_ia32_entry_t gen_ia32_all_pe[]={
 #define PFMLIB_GEN_IA32_DEF_NUM_EVENTS	(sizeof(gen_ia32_all_pe)/sizeof(pme_gen_ia32_entry_t))
 
 static pme_gen_ia32_entry_t *gen_ia32_pe;
-
-static inline unsigned int cpuid_eax(unsigned int op)
-{
-	unsigned int eax;
-
-	__asm__("pushl %%ebx; cpuid; popl %%ebx"
-			: "=a" (eax)
-			: "0" (op)
-			: "ecx", "edx");
-	return eax;
-}
 
 static inline void cpuid(unsigned int op, unsigned int *eax, unsigned int *ebx)
 {
@@ -138,9 +127,22 @@ pfm_gen_ia32_detect(void)
 	pme_gen_ia32_entry_t *pe;
 	unsigned int ebx = 0, mask;
 	unsigned int i, num_events;
+	int ret;
+	char buffer[128];
+
+	ret = __pfm_getcpuinfo_attr("vendor_id", buffer, sizeof(buffer));
+	if (ret == -1)
+		return PFMLIB_ERR_NOTSUPP;
+
+	if (strcmp(buffer, "GenuineIntel"))
+		return PFMLIB_ERR_NOTSUPP;
 
 	/*
-	 * check if CPU supoprt 0xa function of CPUID
+	 * XXX: need to check for CPUID instruction first
+	 */
+
+	/*
+	 * check if CPU support 0xa function of CPUID
 	 * 0xa started with Core Duo. Needed to detect if
 	 * architected PMU is present
 	 */

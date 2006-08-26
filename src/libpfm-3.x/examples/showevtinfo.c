@@ -55,8 +55,8 @@ show_event_info(unsigned int idx)
 {
 	pfmlib_regmask_t cnt, impl_cnt;
 	char *desc;
-	unsigned int n, i;
-	int code;
+	unsigned int n1, n2, i, c;
+	int code, prev_code = 0, first = 1;
 	size_t len;
 	char *name;
 
@@ -69,40 +69,53 @@ show_event_info(unsigned int idx)
 		fatal_error("cannot allocate name buffer\n");
 
 	pfm_get_event_name(idx, name, len);
-	pfm_get_event_code(idx, &code);
 	pfm_get_event_counters(idx, &cnt);
-	pfm_get_num_counters(&n);
+	pfm_get_num_counters(&n2);
 	pfm_get_impl_counters(&impl_cnt);
 
-	printf("Name     : %s\n"
-			"Code     : 0x%x\n"
-			"Counters : [ "
-			,
-			name,
-			code);
+	n1 = n2;
+	printf("#-----------------------------\n"
+	       "Name     : %s\n",
+	       name);
 
-	for (i=0; n; i++) {
+	pfm_get_event_description(idx, &desc);
+ 	printf("Desc     : %s\n", desc);
+	free(desc);
+
+	printf("Code     :");
+	for (i=0; n1; i++) {
 		if (pfm_regmask_isset(&impl_cnt, i))
-			n--;
+			n1--;
+		if (pfm_regmask_isset(&cnt, i)) {
+		    pfm_get_event_code_counter(idx,i,&code);
+		    if (first == 1 || code != prev_code) {
+			    printf(" 0x%x", code);
+		    	    first = 0;
+		    }
+		    prev_code = code;
+		}
+	}
+	putchar('\n');
+
+
+	n1 = n2;
+	printf("Counters : [ ");
+	for (i=0; n1; i++) {
+		if (pfm_regmask_isset(&impl_cnt, i))
+			n1--;
 		if (pfm_regmask_isset(&cnt, i))
 			printf("%d ", i);
 	}
 	puts("]");
 
-	pfm_get_num_event_masks(idx, &n);
-	printf("Umasks   :\n");
-	for (i = 0; i < n; i++) {
+	pfm_get_num_event_masks(idx, &n1);
+	for (i = 0; i < n1; i++) {
 		pfm_get_event_mask_description(idx, i, &desc);
+		pfm_get_event_mask_code(idx, i, &c);
 		pfm_get_event_mask_name(idx, i, name, len);
-
-		printf("\t [%s] : %s\n", name, desc);
-
+		printf("Umask    : 0x%02x : [%s] : %s\n", c, name, desc);
 		free(desc);
 	}
-	pfm_get_event_description(idx, &desc);
- 	printf("Desc     : %s\n", desc);
-
-	free(desc);
 }
 
 int

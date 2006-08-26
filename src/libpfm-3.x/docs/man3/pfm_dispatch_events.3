@@ -24,16 +24,14 @@ to a structure of type \fBpfmlib_ita2_input_param_t\fR. The generic output param
 contains the register number and values for the PMC registers needed to make the measurement.
 .sp
 The typical sequence of calls first starts by initializing the library, then
-each event to be monitored is searched using variations of the \fBpfm_find_event\fR
-function. The results are stored into the \fBpfmlib_input_param_t\fR structure. Other
+each event to be monitored is searched using variations of the
+\fBpfm_find_event()\fR function. The results are stored into the \fBpfmlib_input_param_t\fR structure. Other
 adjustments are made in this structure and optionally a model-specific structure is also
 initialized. Then \fBpfm_dispatch_events\fR is called. Upon successful return from this 
 function, the register numbers and values for the PMC registers are contained in the
 \fBpfp_pmcs\fR table of the \fBpfmlib_output_param_t\fR structure passed as argument to
 the call. The number of PMC registers in that table is contained in the 
-\fBpfp_pmc_count\fR field of that structure. On Linux/ia64, the table does not have the 
-format required to program the PMC via the \fBperfmonctl\fR system call, therefore the 
-relevant values must first be copied into the right data structure.
+\fBpfp_pmc_count\fR field of that structure. 
 .sp
 The current implementation of the \fBpfm_dispatch_events\fR completely overwrites
 the \fBpfmlib_output_param\fR structure. In other words, results do not accumulate
@@ -44,8 +42,11 @@ The \fBpfmlib_input_param_t\fR structure is defined as follows:
 .sp
 .nf
 typedef struct 
-	int          event;
-	unsigned int plm;
+	int           event;
+	unsigned int  plm;
+	unsigned long flags;
+	unsigned int  unit_masks[PFMLIB_MAX_MASKS_PER_EVENT];
+	unsigned int  num_masks;
 } pfmlib_event_t;
 
 typedef struct {
@@ -62,14 +63,22 @@ the events to be measured. The number of submitted events is indicated by
 \fBpfp_event_count\fR.
 
 Each event is described in the \fBpfp_events\fR table by an opaque descriptor stored in
-the \fBevent\fR field. This descriptor is obtained with the \fBpfm_find_event()\fR or derivatives functions.
+the \fBevent\fR field. This descriptor is obtained with the \fBpfm_find_event()\fR or derivative functions.
+For some events, it may be necessary to specify at least one unit mask in the
+\fBunit_masks\fR table. A unit mask is yet another opaque descriptor obtained via
+\fBpfm_find_event_mask()\fR. Typically, if an event supports multiple unit
+masks, they can be combined in which case more than one entry in
+\fBunit_masks\fR must be specified. The acutal number of unit mask descriptors
+passed must be indicated in \fBnum_masks\fR. When no unit mask is used, this
+field must be set to 0.
+
 A privilege level mask for the event can be provided in \fBplm\fR.  This is a bitmask where each bit indicates
 a privilege level at which to monitor, more than one bit can be set.  The library supports
 up to four levels, but depending on the PMU model, some levels may not be available. The
 levels are as follows:
 .TP
 .B PFM_PLM0
-monitor at the privilege level 0, e.g., kernel level
+monitor at the privilege level 0. For many architectures, this means kernel level
 .TP 
 .B PFM_PLM1
 monitor at privilege level 1
@@ -78,10 +87,10 @@ monitor at privilege level 1
 monitor at privilege level 2
 .TP 
 .B PFM_PLM3
-monitor at the privilege level 3, e.g., user level
+monitor at the privilege level 3. For many architectures, this means user level
 .sp
 .LP
-To monitor at both level and kernel levels for the first event, the application
+To monitor at level 0 and 3 for the first event, the application
 can simply use:
 .sp
 .nf
@@ -120,9 +129,10 @@ structure which is defined as:
 .sp
 .nf
 typedef struct {
-    unsigned int  reg_num;
-    unsigned int  reg_reserved;
-    unsigned long reg_value;
+    unsigned int       reg_num;
+    unsigned int       reg_evt_idx;
+    unsigned int       reg_pmd_num;
+    unsigned long long reg_value;
 } pfmlib_pmc_t;
 
 typedef struct {
@@ -133,8 +143,11 @@ typedef struct {
 .sp
 The number of valid entries  in the \fBpfp_pmcs\fR table is indicated by \fBpfp_pmc_count\fR.
 Each entry in the table is of type \fBpfmlib_pmc_t\fR and contains the PMC register index
-in \fBreg_num\fR and its value in \fBreg_value\fR. Those two fields must be copied to the
-appropriate OS dependent data structure and passed to the kernel.
+in \fBreg_num\fR and its 64-bit value in \fBreg_value\fR. Those two fields must be copied to the
+appropriate OS dependent data structure and passed to the kernel. In addition,
+the \fBreg_evt_idx\fR ield indicates which of the event given on input the PMC
+register corresponds to. Finally the \fBreg_pmd_num\fR field indicates which
+counter (or data register), if any, corresponds to this PMC.
 
 Refer to the PMU specific manual for a description of the model-specific 
 output parameters to be returned in \fBmod_out\fR.
@@ -267,8 +280,12 @@ Some events cannot be measured at the same time (Itanium 2).
 .TP
 .B PFMLIB_ERR_IRRTOOBIG
 Code range is too big (Itanium 2).
+.TP
+.B PFMLIB_ERR_UMASK
+Invalid or missing unit mask.
 .SH SEE ALSO
-libpfm_itanium(3), libpfm_itanium2(3), pfm_regmask_set(3), pfm_regmask_clr(3)
+libpfm_itanium(3), libpfm_itanium2(3), pfm_regmask_set(3), pfm_regmask_clr(3),
+pfm_find_event_code_mask(3)
 .SH AUTHOR
 Stephane Eranian <eranian@hpl.hp.com>
 .PP

@@ -83,12 +83,6 @@ pfm_ita2_detect(void)
 	int tmp;
 	int ret = PFMLIB_ERR_NOTSUPP;
 
-	/*
-	 * check that the core library supports enough registers
-	 */
-	if (PFMLIB_MAX_PMCS < PMU_ITA2_NUM_PMCS) return ret;
-	if (PFMLIB_MAX_PMDS < PMU_ITA2_NUM_PMDS) return ret;
-
 	tmp = pfm_ia64_get_cpu_family();
 	if (tmp == 0x1f) {
 		has_fine_mode_bug = 1;

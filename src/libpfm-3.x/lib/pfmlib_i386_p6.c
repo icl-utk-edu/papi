@@ -26,6 +26,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 /* public headers */
 #include <perfmon/pfmlib_i386_p6.h>
@@ -51,90 +52,46 @@ static char * pfm_i386_p6_get_event_name(unsigned int i);
 static pme_i386_p6_entry_t *i386_pe;
 static unsigned int i386_p6_num_events;
 
-static inline unsigned int cpuid_eax(unsigned int op)
-{
-	unsigned int eax;
-
-	__asm__("pushl %%ebx; cpuid; popl %%ebx"
-			: "=a" (eax)
-			: "0" (op)
-			: "cx", "dx");
-	return eax;
-}
-
-/*
- * Verify we are on an Intel processor
- * XXX: siwtch to CPUID to avoid dependency on /proc/cpuinfo
- */
 static int
-check_intel_vendor(void)
+pfm_i386_detect_common(void)
 {
-	FILE *fp1;	
-	char buffer[128], *p, *value;
+	int ret, family;
+	char buffer[128];
 
-	fp1 = fopen("/proc/cpuinfo", "r");
-	if (fp1 == NULL) return 0;
+	ret = __pfm_getcpuinfo_attr("vendor_id", buffer, sizeof(buffer));
+	if (ret == -1)
+		return PFMLIB_ERR_NOTSUPP;
 
-	for (;;) {
-		buffer[0] = '\0';
+	if (strcmp(buffer, "GenuineIntel"))
+		return PFMLIB_ERR_NOTSUPP;
 
-		p  = fgets(buffer, 127, fp1);
-		if (p == NULL)
-			break;
+	ret = __pfm_getcpuinfo_attr("cpu family", buffer, sizeof(buffer));
+	if (ret == -1)
+		return PFMLIB_ERR_NOTSUPP;
 
-		/* skip  blank lines */
-		if (*p == '\n') continue;
+	family = atoi(buffer);
 
-		p = strchr(buffer, ':');
-		if (p == NULL)
-			break;
-
-		/*
-		 * p+2: +1 = space, +2= firt character
-		 * strlen()-1 gets rid of \n
-		 */
-		*p = '\0';
-		value = p+2;
-
-		value[strlen(value)-1] = '\0';
-
-		if (!strncmp("vendor_id", buffer, 9)) {
-			return strcmp(value, "GenuineIntel");
-		}
-	}
-	fclose(fp1);
-	return -1;
+	return family != 6 ? PFMLIB_ERR_NOTSUPP : PFMLIB_SUCCESS;
 }
 
 /*
- * detect only non Pentium P6 cores
+ * detect non Pentium M P6 cores
  */
 static int
 pfm_i386_p6_detect(void)
 {
-	unsigned long eax;
-	unsigned long family, model;
+	int ret, model;
+	char buffer[128];
 
-	/*
-	 * check that the core library supports enough registers
-	 */
-	if (PFMLIB_MAX_PMCS < PMU_I386_P6_NUM_PERFSEL) return PFMLIB_ERR_NOTSUPP;
-	if (PFMLIB_MAX_PMDS < PMU_I386_P6_NUM_PERFCTR) return PFMLIB_ERR_NOTSUPP;
+	ret = pfm_i386_detect_common();
+	if (ret != PFMLIB_SUCCESS)
+		return ret;
 
-	eax = cpuid_eax(1);
-
-	/*
-	 * we cannot check MSR_MISC_ENABLE from user level. Host
-	 * processoor may not have PMU.
-	 */
-	family = (eax>>8) & 0xf;
-	model  = (eax>>4) & 0xf;
-
-	if (family != 0x6)
+	ret = __pfm_getcpuinfo_attr("model", buffer, sizeof(buffer));
+	if (ret == -1)
 		return PFMLIB_ERR_NOTSUPP;
 
-	if (check_intel_vendor())
-		return PFMLIB_ERR_NOTSUPP;
+	model = atoi(buffer);
 
 	switch(model) {
                 case 3: /* Pentium II */
@@ -152,37 +109,33 @@ pfm_i386_p6_detect(void)
 	return PFMLIB_SUCCESS;
 }
 
+/*
+ * detect only Pentium M core
+ */
 static int
 pfm_i386_pm_detect(void)
 {
-	unsigned long eax;
-	unsigned long family, model;
+	int ret, model;
+	char buffer[128];
 
-	/*
-	 * check that the core library supports enough registers
-	 */
-	if (PFMLIB_MAX_PMCS < PMU_I386_P6_NUM_PERFSEL) return PFMLIB_ERR_NOTSUPP;
-	if (PFMLIB_MAX_PMDS < PMU_I386_P6_NUM_PERFCTR) return PFMLIB_ERR_NOTSUPP;
+	ret = pfm_i386_detect_common();
+	if (ret != PFMLIB_SUCCESS)
+		return ret;
 
-	eax = cpuid_eax(1);
+	ret = __pfm_getcpuinfo_attr("model", buffer, sizeof(buffer));
+	if (ret == -1)
+		return PFMLIB_ERR_NOTSUPP;
 
-	/*
-	 * we cannot check MSR_MISC_ENABLE from user level. Host
-	 * processor may not have PMU.
-	 */
-	family = (eax>>8) & 0xf;
-	model  = (eax>>4) & 0xf;
-
-	/*
-	 * only looking for Pentium M
-	 */
-	if (family != 0x6 || model != 13) return PFMLIB_ERR_NOTSUPP;
+	model = atoi(buffer);
+	if (model != 13)
+		return PFMLIB_ERR_NOTSUPP;
 
 	i386_pe = i386_pm_pe;
 	i386_p6_num_events = PME_I386_PM_EVENT_COUNT;
 
 	return PFMLIB_SUCCESS;
 }
+
 /*
  * Automatically dispatch events to corresponding counters following constraints.
  * Upon return the pfarg_regt structure is ready to be submitted to kernel
@@ -244,7 +197,12 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 		reg.sel_unit_mask  = i386_pe[e[j].event].pme_entry_code.pme_code.pme_umask;
 		reg.sel_usr        = plm & PFM_PLM3 ? 1 : 0;
 		reg.sel_os         = plm & PFM_PLM0 ? 1 : 0;
-		reg.sel_en         = 1; /* force enable bit to 1 */
+		/*
+		 * only perfevtsel0 has an enable bit (allows atomic start/stop)
+		 */
+		if (assign[j] == 0) 
+			reg.sel_en = 1; /* force enable bit to 1 */
+
 		reg.sel_int        = 1; /* force APIC int to 1 */
 		if (cntrs) {
 			reg.sel_cnt_mask   = cntrs[j].cnt_mask;

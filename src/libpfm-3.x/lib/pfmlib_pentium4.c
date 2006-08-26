@@ -31,75 +31,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <perfmon/pfmlib_pentium4.h>
 
+/* private headers */
 #include "pfmlib_priv.h"
 #include "pfmlib_pentium4_priv.h"
 #include "pentium4_events.h"
-
-#ifdef __x86_64__
-static inline void cpuid(int op, unsigned int *eax,
-				 unsigned int *ebx,
-				 unsigned int *ecx,
-				 unsigned int *edx)
-{
-	__asm__("cpuid"
-			: "=a" (*eax),
-			"=b" (*ebx),
-			"=c" (*ecx),
-			"=d" (*edx)
-			: "0" (op));
-}
-
-static inline unsigned int cpuid_family(void)
-{
-	unsigned int eax, ebx, ecx, edx;
-	cpuid(1, &eax, &ebx, &ecx, &edx);
-	return eax;
-}
-
-static inline void cpuid_vendor(int op, unsigned int *ebx,
-				 unsigned int *ecx,
-				 unsigned int *edx)
-{
-	unsigned int eax;
-
-	cpuid(op, &eax, ebx, ecx, edx);
-}
-#endif
-
-#ifdef __i386__
-static inline unsigned int cpuid_family(void)
-{
-	unsigned int eax, op = 1;
-
-	__asm__("pushl %%ebx; cpuid; popl %%ebx"
-			: "=a" (eax)
-			: "0" (op)
-			: "ecx", "edx");
-	return eax;
-}
-
-static inline void cpuid_vendor(int op,
-				 unsigned int *ebx,
-				 unsigned int *ecx,
-				 unsigned int *edx)
-{	
-	/*
-	 * because ebx is used in Pic mode, we need to save/restore because
-	 * cpuid clobbers it. I could not figure out a way to get ebx out in
-	 * one cpuid instruction. To extract ebx, we need to  move it to another
-	 * register (here eax)
-	 */
-	__asm__("pushl %%ebx;cpuid; movl %%ebx, %%eax;popl %%ebx"
-			:"=a" (*ebx)
-			: "a" (op)
-			: "ecx", "edx");
-
-	__asm__("pushl %%ebx;cpuid; popl %%ebx"
-			:"=c" (*ecx), "=d" (*edx)
-			: "a" (op));
-}
-#endif
 
 /**
  * pentium4_get_event_code
@@ -212,17 +149,14 @@ static void pentium4_get_event_counters(unsigned int event,
  * valid masks in pentium4_events[].event_masks are contiguous in the array
  * and have a non-NULL name.
  **/
-static int pentium4_get_num_event_masks(unsigned int event,
-					unsigned int *count)
+static unsigned int pentium4_get_num_event_masks(unsigned int event)
 {
-	int i = 0;
+	unsigned int i = 0;
 
 	while (pentium4_events[event].event_masks[i].name) {
 		i++;
 	}
-
-	*count = i;
-	return PFMLIB_SUCCESS;
+	return i;
 }
 
 /**
@@ -394,30 +328,23 @@ static int pentium4_dispatch_events(pfmlib_input_param_t *input,
  **/
 static int pentium4_pmu_detect(void)
 {
-	unsigned int eax;
-	int ret;
-	char vendor_id[16];
+	int ret, family;
+	char buffer[128];
 
-	/* Check that the core library supports enough registers. */
-	if (PFMLIB_MAX_PMCS < PENTIUM4_NUM_PMCS ||
-	    PFMLIB_MAX_PMDS < PENTIUM4_NUM_PMDS) {
+	ret = __pfm_getcpuinfo_attr("vendor_id", buffer, sizeof(buffer));
+	if (ret == -1)
 		return PFMLIB_ERR_NOTSUPP;
-	}
 
-	eax = cpuid_family();
-	cpuid_vendor(0, (unsigned int *)&vendor_id[0],
-			(unsigned int *)&vendor_id[8],
-			(unsigned int *)&vendor_id[4]);
-	/*
-	 * this file only supports Intel P4 (32-bit, EM64T).
-	 *
-	 * accept family 15 Intel processors, all models
-	 */
-	ret = PFMLIB_ERR_NOTSUPP;
-	if (((eax>>8) & 0xf) == 15 && !strcmp(vendor_id, "GenuineIntel")) {
-		ret = PFMLIB_SUCCESS;
-	}
-	return ret;
+	if (strcmp(buffer, "GenuineIntel"))
+		return PFMLIB_ERR_NOTSUPP;
+
+	ret = __pfm_getcpuinfo_attr("cpu family", buffer, sizeof(buffer));
+	if (ret == -1)
+		return PFMLIB_ERR_NOTSUPP;
+
+	family = atoi(buffer);
+
+	return family == 15 ? PFMLIB_SUCCESS : PFMLIB_ERR_NOTSUPP;
 }
 
 /**
@@ -517,6 +444,14 @@ static int pentium4_get_event_mask_desc(unsigned int event,
 	return PFMLIB_SUCCESS;
 }
 
+static int pentium4_get_event_mask_code(unsigned int event,
+				 	unsigned int mask, unsigned int *code)
+{
+	*code = 1U << pentium4_events[event].event_masks[mask].bit;
+	return PFMLIB_SUCCESS;
+}
+
+
 /**
  * pentium4_support
  **/
@@ -542,5 +477,6 @@ pfm_pmu_support_t pentium4_support = {
 	.get_hw_counter_width	= pentium4_get_hw_counter_width,
 	.get_event_desc         = pentium4_get_event_desc,
 	.get_event_mask_desc	= pentium4_get_event_mask_desc,
+	.get_event_mask_code	= pentium4_get_event_mask_code
 };
 

@@ -179,6 +179,7 @@ extern int pfm_get_num_events(unsigned int *count);
 extern int pfm_get_num_event_masks(unsigned int event_idx, unsigned int *count);
 extern int pfm_get_event_name(unsigned int idx, char *name, size_t maxlen);
 extern int pfm_get_event_code(unsigned int idx, int *code);
+extern int pfm_get_event_mask_code(unsigned int idx, unsigned int mask_idx, unsigned int *code);
 extern int pfm_get_event_counters(unsigned int idx, pfmlib_regmask_t *counters);
 extern int pfm_get_event_description(unsigned int idx, char **str);
 extern int pfm_get_event_code_counter(unsigned int idx, unsigned int cnt, int *code);
@@ -204,16 +205,17 @@ extern int pfm_get_inst_retired_event(unsigned int *ev);
  * Supported PMU family (must fit in 64 bits)
  */
 #define PFMLIB_NO_PMU	 	 	0	/* unsupported */
-#define PFMLIB_GEN_IA64_PMU	 	1	/* IA-64 architected PMU */
-#define PFMLIB_ITANIUM_PMU	 	2	/* Itanium   */
-#define PFMLIB_ITANIUM2_PMU 	 	3	/* Itanium 2 */
-#define PFMLIB_MONTECITO_PMU 	 	4	/* dual-core Itanium 2 */
-#define PFMLIB_AMD_X86_64_PMU		16	/* AMD X86_64 */
-#define PFMLIB_GEN_IA32_PMU		63	/* IA-32 architected PMU */
-#define PFMLIB_I386_P6_PMU		32	/* P6/Pentium M */
-#define PFMLIB_PENTIUM4_PMU		33	/* Pentium4/Xeon/EM64T */
+#define PFMLIB_GEN_IA64_PMU	 	1	/* Intel IA-64 architected PMU */
+#define PFMLIB_ITANIUM_PMU	 	2	/* Intel Itanium   */
+#define PFMLIB_ITANIUM2_PMU 	 	3	/* Intel Itanium 2 */
+#define PFMLIB_MONTECITO_PMU 	 	4	/* Intel Dual-Core Itanium 2 9000 */
+#define PFMLIB_AMD64_PMU		16	/* AMD AMD64 */
+#define PFMLIB_GEN_IA32_PMU		63	/* Intel IA-32 architected PMU */
+#define PFMLIB_I386_P6_PMU		32	/* Intel P6/Pentium M */
+#define PFMLIB_PENTIUM4_PMU		33	/* Intel Pentium4/Xeon/EM64T */
+#define PFMLIB_COREDUO_PMU		34	/* Intel Core Duo/Core Solo */
 
-#define PFMLIB_GEN_MIPS64_PMU           64      /* 5KC,20KC,25KF */
+#define PFMLIB_GEN_MIPS64_PMU           64      /* MIPS 5KC,20KC,25KF */
 
 /*
  * pfmlib error codes
@@ -241,6 +243,7 @@ extern int pfm_get_inst_retired_event(unsigned int *ev);
 #define PFMLIB_ERR_BADHOST	-19	/* not supported by host CPU */
 #define PFMLIB_ERR_IRRALIGN	-20	/* bad alignment for code range */
 #define PFMLIB_ERR_IRRFLAGS	-21	/* code range missing flags */
+#define PFMLIB_ERR_UMASK	-22	/* invalid or missing unit mask */
 
 #define __PFMLIB_REGMASK_EL(g)		((g)/__PFMLIB_REG_BV_BITS)
 #define __PFMLIB_REGMASK_MASK(g)	(((pfmlib_regmask_bits_t)1) << ((g) % __PFMLIB_REG_BV_BITS))

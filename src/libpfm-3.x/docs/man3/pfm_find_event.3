@@ -1,14 +1,17 @@
-.TH LIBPFM 3  "November, 2003" "" "Linux Programmer's Manual"
+.TH LIBPFM 3  "August, 2006" "" "Linux Programmer's Manual"
 .SH NAME
-pfm_find_event, pfm_find_event_byname, pfm_find_event_bycode, pfm_find_event_bycode_next \- search for events
+pfm_find_event, pfm_find_event_byname, pfm_find_event_bycode,
+pfm_find_event_bycode_next, pfm_find_event_mask \- search for events and unit
+masks
 .SH SYNOPSIS
 .nf
 .B #include <perfmon/pfmlib.h>
 .sp
-.BI "int pfm_find_event(const char *"str ", unsigned int *"desc);
-.BI "int pfm_find_event_byname(const char *"v ", unsigned int *"desc);
-.BI "int pfm_find_event_bycode(int "code ", unsigned int *"desc);
-.BI "int pfm_find_event_bycode_next(unsigned int "desc1 ", int "code ", unsigned int *"desc);
+.BI "int pfm_find_event(const char *"str ", unsigned int *"desc ");"
+.BI "int pfm_find_event_byname(const char *"v ", unsigned int *"desc ");"
+.BI "int pfm_find_event_bycode(int "code ", unsigned int *"desc ");"
+.BI "int pfm_find_event_bycode_next(unsigned int "desc1 ", int "code ", unsigned int *"desc ");"
+.BI "int pfm_find_event_mask(unsigned int *"idx ", const char *"str ", unsigned int *"mask_idx ");"
 .sp
 .SH DESCRIPTION
 The PMU counters can be programmed to measure the number of occurrences
@@ -51,6 +54,10 @@ such an event exists, its descriptor will be stored into \fBdesc\fR.
 It is not necessary to have called \fBpfm_find_event_bycode\fR prior
 to calling this function. This function is fully threadsafe as it does
 not maintain any state between calls.
+.sp
+The \fBpfm_find_event_mask\fR function is used to find the unit mask descriptor
+based on its name passed in \fBstr\fR for the event specified in \fBidx\fR. Some
+events do not have unit masks, in which case this function returns an error.
 .SH RETURN
 All functions return whether or not the call was successful.
 A return value of \fBPFMLIB_SUCCESS\fR indicates success, 
@@ -63,7 +70,7 @@ the library has not been initialized properly.
 the event descriptor is invalid, or the pointer argument is NULL.
 .TP
 .B PFMLIB_ERR_NOTFOUND
-no matching event was found.
+no matching event or unit mask was found.
 .SH AUTHOR
 Stephane Eranian <eranian@hpl.hp.com>
 .PP

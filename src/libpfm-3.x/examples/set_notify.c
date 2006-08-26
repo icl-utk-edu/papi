@@ -107,7 +107,7 @@ retry:
 	/*
 	 * XXX: risky to do printf() in signal handler!
 	 */
-	printf("Notification %lu: set_id=%u pd[0]=%"PRIx64" pd[1]=%"PRIx64"\n",
+	printf("Notification %lu: set%u pd[0]=%"PRIx64" pd[1]=%"PRIx64"\n",
 		notification_received,
 		pd[0].reg_set,
 		pd[0].reg_value,
@@ -149,7 +149,7 @@ busyloop(void)
 #ifdef __ia64__
 #define FUDGE 1
 #else
-#define FUDGE 6
+#define FUDGE 0x100
 #endif
 
 /*
@@ -174,15 +174,13 @@ setup_end_marker(int fd, unsigned int set_id, uint64_t num_ovfls, int plm_mask)
 	/*
 	 * we use the cycle event twice:
 	 *   - first as sampling period to force switch to set 0
-	 *   - second as sampling periods to force notification
+	 *   - second as sampling period to force notification
 	 */
-	if (pfm_get_cycle_event(&inp.pfp_events[0].event) != PFMLIB_SUCCESS) {
+	if (pfm_get_cycle_event(&inp.pfp_events[0].event) != PFMLIB_SUCCESS)
 		fatal_error("cannot find cycle event\n");
-	}
 
-	if (pfm_get_cycle_event(&inp.pfp_events[1].event) != PFMLIB_SUCCESS) {
-		fatal_error("cannot find cycle event\n");
-	}
+	inp.pfp_events[1].event = inp.pfp_events[0].event;
+
 	inp.pfp_dfl_plm     = plm_mask;
 	inp.pfp_event_count = 2;
 
@@ -198,7 +196,6 @@ setup_end_marker(int fd, unsigned int set_id, uint64_t num_ovfls, int plm_mask)
 	 * be possible if certina PMU registers  are not available.
 	 */
 	detect_unavail_pmcs(fd, &inp.pfp_unavail_pmcs);
-
 
 	if ((ret=pfm_dispatch_events(&inp, NULL, &outp, NULL)) != PFMLIB_SUCCESS)
 		fatal_error("Cannot configure events: %s\n", pfm_strerror(ret));
@@ -234,7 +231,7 @@ setup_end_marker(int fd, unsigned int set_id, uint64_t num_ovfls, int plm_mask)
 	pd[1].reg_value           = -num_ovfls*FUDGE;
 	pd[1].reg_long_reset      = -num_ovfls*FUDGE;
 	pd[1].reg_short_reset     = -num_ovfls*FUDGE;
-	pd[1].reg_ovfl_switch_cnt =  num_ovfls;
+	pd[1].reg_ovfl_switch_cnt =  1;
 
 	/*
 	 * set uses overflow switch
@@ -432,7 +429,7 @@ main(int argc, char **argv)
 	if (pfm_load_context(ctx_fd, &load_args) == -1) {
 		fatal_error("pfm_load_context error errno %d\n",errno);
 	}
-	printf("done load\n");
+
 	/*
 	 * setup asynchronous notification on the file descriptor
 	 */

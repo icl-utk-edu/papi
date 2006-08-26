@@ -61,9 +61,9 @@ SRCS   += pfmlib_montecito.c
 CFLAGS += -DCONFIG_PFMLIB_MONTECITO
 endif
 
-ifeq ($(CONFIG_PFMLIB_AMD_X86_64),y)
-SRCS   += pfmlib_amd_x86_64.c
-CFLAGS += -DCONFIG_PFMLIB_AMD_X86_64
+ifeq ($(CONFIG_PFMLIB_AMD64),y)
+SRCS   += pfmlib_amd64.c
+CFLAGS += -DCONFIG_PFMLIB_AMD64
 endif
 
 ifeq ($(CONFIG_PFMLIB_I386_P6),y)
@@ -79,6 +79,11 @@ endif
 ifeq ($(CONFIG_PFMLIB_PENTIUM4),y)
 SRCS   += pfmlib_pentium4.c
 CFLAGS += -DCONFIG_PFMLIB_PENTIUM4
+endif
+
+ifeq ($(CONFIG_PFMLIB_COREDUO),y)
+SRCS   += pfmlib_coreduo.c
+CFLAGS += -DCONFIG_PFMLIB_COREDUO
 endif
 
 ifeq ($(CONFIG_PFMLIB_GEN_MIPS64),y)
@@ -100,10 +105,11 @@ $(OBJS) $(SOBJS): $(TOPDIR)/config.mk $(TOPDIR)/rules.mk Makefile
 pfmlib_itanium.o : itanium_events.h
 pfmlib_itanium2.o : itanium2_events.h
 pfmlib_montecito.o : montecito_events.h
-pfmlib_amd_x86_64.o : amd_x86_64_events.h
+pfmlib_amd64.o : amd64_events.h
 pfmlib_i386_p6.o : i386_p6_events.h
 pfmlib_pentium4.o : pentium4_events.h
 pfmlib_gen_mips64.o : gen_mips64_events.h
+pfmlib_coreduo.o : coreduo_events.h
 
 libpfm.a:  $(OBJS)
 	$(RM) $@

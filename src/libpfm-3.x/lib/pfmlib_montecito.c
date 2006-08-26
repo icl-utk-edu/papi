@@ -87,12 +87,6 @@ pfm_mont_detect(void)
 	int tmp;
 	int ret = PFMLIB_ERR_NOTSUPP;
 
-	/*
-	 * check that the core library supports enough registers
-	 */
-	if (PFMLIB_MAX_PMCS < PMU_MONT_NUM_PMCS) return ret;
-	if (PFMLIB_MAX_PMDS < PMU_MONT_NUM_PMDS) return ret;
-
 	tmp = pfm_ia64_get_cpu_family();
 	if (tmp == 0x20) {
 		ret = PFMLIB_SUCCESS;

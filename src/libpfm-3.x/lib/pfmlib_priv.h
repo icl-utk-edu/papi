@@ -40,10 +40,11 @@ typedef struct {
 	unsigned int	inst_retired_event;
 	unsigned int	flags;
 	int		(*get_event_code)(unsigned int i, unsigned int cnt, int *code);
+	int		(*get_event_mask_code)(unsigned int i, unsigned int mask_idx, unsigned int *code);
 	char		*(*get_event_name)(unsigned int i);
 	char		*(*get_event_mask_name)(unsigned int event_idx, unsigned int mask_idx);
 	void		(*get_event_counters)(unsigned int i, pfmlib_regmask_t *counters);
-	int		(*get_num_event_masks)(unsigned int event_idx, unsigned int *count);
+	unsigned int	(*get_num_event_masks)(unsigned int event_idx);
 	int 		(*dispatch_events)(pfmlib_input_param_t *p, void *model_in, pfmlib_output_param_t *q, void *model_out);
 	int 		(*pmu_detect)(void);
 	void		(*get_impl_pmcs)(pfmlib_regmask_t *impl_pmcs);
@@ -77,6 +78,7 @@ extern pfm_config_t pfm_config;
 				  pfm_current->get_event_mask_name != NULL)
 
 extern void __pfm_vbprintf(const char *fmt,...);
+extern int __pfm_getcpuinfo_attr(char *attr, char *ret_buf, size_t maxlen);
 
 #ifdef PFMLIB_DEBUG
 #define DPRINT(a) \

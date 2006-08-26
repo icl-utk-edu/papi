@@ -213,6 +213,16 @@ main(int argc, char **argv)
 	 * the number of events (pmd) we specified, i.e., contains more than counting
 	 * monitors.
 	 */
+	if (pfm_write_pmcs(ctx_fd, pc, outp.pfp_pmc_count))
+		fatal_error("pfm_write_pmcs error errno %d\n",errno);
+
+	/*
+	 * To be read, each PMD must be either written or declared
+	 * as being part of a sample (reg_smpl_pmds)
+	 */
+	if (pfm_write_pmds(ctx_fd, pd, inp.pfp_event_count))
+		fatal_error("pfm_write_pmds error errno %d\n",errno);
+
 	/*
 	 * now we load (i.e., attach) the context to ourself
 	 */
@@ -220,32 +230,22 @@ main(int argc, char **argv)
 	if (pfm_load_context(ctx_fd, &load_args))
 		fatal_error("pfm_load_context error errno %d\n",errno);
 
-	if (pfm_write_pmcs(ctx_fd, pc, outp.pfp_pmc_count))
-		fatal_error("pfm_write_pmcs error errno %d\n",errno);
-
-	/*
-	 * To be read, each PMD must be either written or declared
-	 * as being part of a sample (reg_smpl_pmds)
-	 */
-	if (pfm_write_pmds(ctx_fd, pd, inp.pfp_event_count))
-		fatal_error("pfm_write_pmds error errno %d\n",errno);
-
 	/*
 	 * Let's roll now
 	 */
 	if (pfm_start(ctx_fd, NULL))
 		fatal_error("pfm_start error errno %d\n",errno);
 
-	noploop(10000000ULL);
+	noploop(1000000000ULL);
+
+	if (pfm_stop(ctx_fd))
+		fatal_error("pfm_stop error errno %d\n",errno);
 
 	/*
 	 * now read the results
 	 */
-	if (pfm_stop(ctx_fd))
-		fatal_error("pfm_stop error errno %d\n",errno);
 	if (pfm_read_pmds(ctx_fd, pd, inp.pfp_event_count))
 		fatal_error( "pfm_read_pmds error errno %d\n",errno);
-
 
 	/*
 	 * print the results
@@ -256,45 +256,10 @@ main(int argc, char **argv)
 			pd[i].reg_num,
 			pd[i].reg_value,
 			name);
-		pd[i].reg_value = 0ULL;
 	}
-	if (pfm_write_pmcs(ctx_fd, pc, outp.pfp_pmc_count))
-		fatal_error("pfm_write_pmcs error errno %d\n",errno);
-
-	/*
-	 * To be read, each PMD must be either written or declared
-	 * as being part of a sample (reg_smpl_pmds)
-	 */
-	if (pfm_write_pmds(ctx_fd, pd, inp.pfp_event_count))
-		fatal_error("pfm_write_pmds error errno %d\n",errno);
 	/*
 	 * and destroy our context
 	 */
-	if (pfm_start(ctx_fd, NULL))
-		fatal_error("pfm_start error errno %d\n",errno);
-
-	noploop(10000000ULL);
-
-	/*
-	 * now read the results
-	 */
-	if (pfm_stop(ctx_fd))
-		fatal_error("pfm_stop error errno %d\n",errno);
-	if (pfm_read_pmds(ctx_fd, pd, inp.pfp_event_count))
-		fatal_error( "pfm_read_pmds error errno %d\n",errno);
-
-
-	/*
-	 * print the results
-	 */
-	for (i=0; i < inp.pfp_event_count; i++) {
-		pfm_get_event_name(inp.pfp_events[i].event, name, MAX_EVT_NAME_LEN);
-		printf("PMD%u %20"PRIu64" %s\n",
-			pd[i].reg_num,
-			pd[i].reg_value,
-			name);
-		pd[i].reg_value = 0ULL;
-	}
 	close(ctx_fd);
 
 	return 0;

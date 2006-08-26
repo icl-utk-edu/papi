@@ -22,29 +22,35 @@
  * This file is part of libpfm, a performance monitoring support library for
  * applications on Linux.
  */
-#ifndef __PFMLIB_I386_P6_PRIV_H__
-#define __PFMLIB_I386_P6_PRIV_H__
+#ifndef __PFMLIB_COREDUO_PRIV_H__
+#define __PFMLIB_COREDUO_PRIV_H__
+
+#define PFMLIB_COREDUO_MAX_UMASK	16
+
+typedef struct {
+	char			*pme_uname; /* unit mask name */
+	char			*pme_udesc; /* event/umask description */
+	unsigned int		pme_ucode;  /* unit mask code */
+} pme_coreduo_umask_t;
+
+typedef struct {
+	char			*pme_name;	/* event name */
+	char			*pme_desc;	/* event description */
+	pme_coreduo_umask_t	pme_umasks[PFMLIB_COREDUO_MAX_UMASK]; /* umask desc */
+	unsigned int		pme_code; 	/* event code */
+	unsigned int		pme_numasks;	/* number of umasks */
+	unsigned int		pme_flags;	/* flags */
+} pme_coreduo_entry_t;
 
 /*
- * I386_P6 encoding structure
- * (code must be first 8 bits)
+ * pme_flags values
  */
-typedef struct {
-	unsigned long pme_emask:8;	/* event mask */
-	unsigned long pme_umask:8;	/* unit mask */
-	unsigned long pme_edge:1;	/* requires edge detect */
-	unsigned long pme_res:15;	/* reserved */
-} pme_i386_p6_entry_code_t;		
+#define PFMLIB_COREDUO_REQ_NONE		0x00
+#define PFMLIB_COREDUO_UMASK_COMBO	0x01 /* unit mask can be combined */
+#define PFMLIB_COREDUO_REQ_CORE		0x02
+#define PFMLIB_COREDUO_REQ_AGENT	0x04
+#define PFMLIB_COREDUO_REQ_PREFETCH	0x08
+#define PFMLIB_COREDUO_REQ_MESI		0x10 /* must have one of the MESI bit set */
+#define PFMLIB_COREDUO_HAS_MESI		0x20 /* event support MESI qualification */
 
-typedef union {
-	pme_i386_p6_entry_code_t pme_code;
-	unsigned long 		pme_vcode;
-} pme_i386_p6_code_t;
-
-typedef struct {
-	char			*pme_name;
-	pme_i386_p6_code_t	pme_entry_code;
-	char			*pme_desc;		/* text description of the event */
-} pme_i386_p6_entry_t;
-
-#endif /* __PFMLIB_I386_P6_PRIV_H__ */
+#endif /* __PFMLIB_COREDUO_PRIV_H__ */

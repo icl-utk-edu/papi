@@ -56,50 +56,16 @@ pfm_pmu_support_t generic_mips64_support;
 static int
 pfm_gen_mips64_detect(void)
 {
-	int fd, rv, ret = PFMLIB_ERR_NOTSUPP;
-	extern pfm_pmu_support_t generic_mips64_support;
-	char buf[4096];
-	static char *tmp, mips20k_name[] = "MIPS20K";
+	static char mips20k_name[] = "MIPS20K";
 	static char mips5k_name[] = "MIPS5K";
+	int ret;
+	char buffer[128];
 
-	/*
-	 * check that the core library supports enough registers
-	 */
+	ret = __pfm_getcpuinfo_attr("cpu model", buffer, sizeof(buffer));
+	if (ret == -1)
+		return PFMLIB_ERR_NOTSUPP;
 
-	if (PFMLIB_MAX_PMCS < PMU_GEN_MIPS64_NUM_PERFSEL) return ret;
-	if (PFMLIB_MAX_PMDS < PMU_GEN_MIPS64_NUM_PERFCTR) return ret;
-
-	fd = open("/proc/cpuinfo",O_RDONLY);
-	if (fd == -1)
-	  {
-	    DPRINT(("open(/proc/cpuinfo) failed: %d\n", fd));
-	    return ret;
-	  }
-	rv = read(fd,buf,4096); 
-	if (rv <= 0)
-	  {
-	    DPRINT(("read(/proc/cpuinfo,4096) failed: %d\n", rv));
-	    return ret;
-	  }
-	close(fd);
-	tmp = strstr(buf,"cpu model");
-	if (tmp == NULL)
-	  {
-	    DPRINT(("could not find cpu model in /proc/cpuinfo\n"));
-	    return ret;
-	  }
-	tmp = strstr(tmp,": ");
-	if (tmp == NULL)
-	  {
-	    DPRINT(("could not find : after cpu model in /proc/cpuinfo\n"));
-	    return ret;
-	  }
-	if (strtok(tmp,"\n") == NULL)
-	  {
-	    DPRINT(("could not find newline after cpu model in /proc/cpuinfo\n"));
-	    return ret;
-	  }
-	if (strstr(tmp,"MIPS 25Kf") || strstr(tmp,"MIPS 20Kc"))
+	if (strstr(buffer,"MIPS 25Kf") || strstr(buffer,"MIPS 20Kc"))
 	  {
 	    gen_mips64_pe = gen_mips64_20k_pe;
 	    generic_mips64_support.pme_count = (sizeof(gen_mips64_20k_pe)/sizeof(pme_gen_mips64_entry_t));
@@ -123,13 +89,11 @@ pfm_gen_mips64_detect(void)
 #if 0
 	else
 	  {
-	    return ret;
+	    return PFMLIB_ERR_NOTSUPP;
 	  }
 #endif
 	generic_mips64_support.num_cnt = generic_mips64_support.pmd_count;
-	
-	ret = PFMLIB_SUCCESS;
-	return ret;
+	return PFMLIB_SUCCESS;
 }
 
 /*
@@ -246,14 +210,20 @@ pfm_gen_mips64_get_event_code(unsigned int i, unsigned int cnt, int *code)
 	extern pfm_pmu_support_t generic_mips64_support;
 
 	/* check validity of counter index */
-	if (cnt != PFMLIB_CNT_FIRST && (cnt < 0 || cnt >= generic_mips64_support.pmc_count))
-		return PFMLIB_ERR_INVAL;
-
+	if (cnt != PFMLIB_CNT_FIRST) {
+	  if (cnt < 0 || cnt >= generic_mips64_support.pmc_count)
+	    return PFMLIB_ERR_INVAL; }
+	else 	  {
+	    cnt = ffs(gen_mips64_pe[i].pme_counters)-1;
+	    if (cnt == -1)
+	      return(PFMLIB_ERR_INVAL);
+	  }
+ 
 	/* if cnt == 1, shift right by 0, if cnt == 2, shift right by 4 */
 	/* Works on both 5k anf 20K */
 
 	if (gen_mips64_pe[i].pme_counters & (1<< cnt))
-	  *code = (gen_mips64_pe[i].pme_entry_code.pme_code.pme_emask >> ((cnt-1)*4));
+	  *code = 0xf & (gen_mips64_pe[i].pme_entry_code.pme_code.pme_emask >> (cnt*4));
 	else
 	  return PFMLIB_ERR_INVAL;
 
@@ -357,7 +327,7 @@ pfm_pmu_support_t generic_mips64_support={
 	.flags			= PFMLIB_MULT_CODE_EVENT,
 	.cycle_event		= PME_GEN_MIPS64_CYC,
 	.inst_retired_event	= PME_GEN_MIPS64_INST,
-	.get_event_code		= NULL,
+	.get_event_code		= pfm_gen_mips64_get_event_code,
 	.get_event_name		= pfm_gen_mips64_get_event_name,
 	.get_event_counters	= pfm_gen_mips64_get_event_counters,
 	.dispatch_events	= pfm_gen_mips64_dispatch_events,

@@ -21,6 +21,7 @@
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+#define _GNU_SOURCE /* for getline */
 #include <sys/types.h>
 #include <ctype.h>
 #include <string.h>
@@ -37,12 +38,13 @@ extern pfm_pmu_support_t montecito_support;
 extern pfm_pmu_support_t itanium2_support;
 extern pfm_pmu_support_t itanium_support;
 extern pfm_pmu_support_t generic_ia64_support;
-extern pfm_pmu_support_t amd_x86_64_support;
+extern pfm_pmu_support_t amd64_support;
 extern pfm_pmu_support_t i386_p6_support;
 extern pfm_pmu_support_t i386_pm_support;
 extern pfm_pmu_support_t gen_ia32_support;
 extern pfm_pmu_support_t generic_mips64_support;
 extern pfm_pmu_support_t pentium4_support;
+extern pfm_pmu_support_t coreduo_support;
 
 static pfm_pmu_support_t *supported_pmus[]=
 {
@@ -58,8 +60,12 @@ static pfm_pmu_support_t *supported_pmus[]=
 	&itanium_support,
 #endif
 
-#ifdef CONFIG_PFMLIB_AMD_X86_64
-	&amd_x86_64_support,
+#ifdef CONFIG_PFMLIB_AMD64
+	&amd64_support,
+#endif
+
+#ifdef CONFIG_PFMLIB_COREDUO
+	&coreduo_support,
 #endif
 
 #ifdef CONFIG_PFMLIB_I386_P6
@@ -70,6 +76,7 @@ static pfm_pmu_support_t *supported_pmus[]=
 #ifdef CONFIG_PFMLIB_PENTIUM4
 	&pentium4_support,
 #endif
+
 
 #ifdef CONFIG_PFMLIB_GEN_IA32
 	&gen_ia32_support, /* must always be last of i386 arch */
@@ -95,12 +102,22 @@ int
 pfm_initialize(void)
 {
 	pfm_pmu_support_t **p = supported_pmus;
-	while (*p) {
-		if ((*p)->pmu_detect() == PFMLIB_SUCCESS) goto found;
+
+	while(*p) {
+		if ((*p)->pmu_detect() == PFMLIB_SUCCESS)
+			goto found;
 		p++;
 	}
 	return PFMLIB_ERR_NOTSUPP;
 found:
+	/*
+	 * run a few sanity checks
+	 */
+	if ((*p)->pmc_count >= PFMLIB_MAX_PMCS)
+		return PFMLIB_ERR_NOTSUPP;
+	if ((*p)->pmd_count >= PFMLIB_MAX_PMDS)
+		return PFMLIB_ERR_NOTSUPP;
+
 	pfm_current = *p;
 	return PFMLIB_SUCCESS;
 }
@@ -349,7 +366,7 @@ pfm_find_event_mask(unsigned int event_idx, const char *str, unsigned int *mask_
 	if (str == NULL || mask_idx == NULL) return PFMLIB_ERR_INVAL;
 
 	if (PFMLIB_HAS_EVENT_MASKS()) {
-		pfm_current->get_num_event_masks(event_idx, &num_masks);
+		num_masks = pfm_current->get_num_event_masks(event_idx);
 		for (i = 0; i < num_masks; i++) {
 			if (!strcasecmp(pfm_current->get_event_mask_name(event_idx, i), str)) {
 				*mask_idx = i;
@@ -419,6 +436,8 @@ pfm_get_event_mask_name(unsigned int event_idx, unsigned int mask_idx, char *nam
 	if (!PFMLIB_HAS_EVENT_MASKS()) {
 		return PFMLIB_ERR_NOTSUPP;
 	}
+	if (mask_idx >= pfm_current->get_num_event_masks(event_idx))
+		return PFMLIB_ERR_INVAL;
 
 	n = pfm_current->get_event_mask_name(event_idx, mask_idx);
 	if (n == NULL)
@@ -454,7 +473,8 @@ pfm_get_num_event_masks(unsigned int event_idx, unsigned int *count)
 		return PFMLIB_SUCCESS;
 	}
 
-	return pfm_current->get_num_event_masks(event_idx, count);
+	*count = pfm_current->get_num_event_masks(event_idx);
+	return PFMLIB_SUCCESS;
 }
 
 #if 0
@@ -484,8 +504,8 @@ pfm_check_unavail_pmcs(pfmlib_regmask_t *pmcs)
 int
 pfm_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_output_param_t *outp, void *model_out)
 {
-	unsigned int max_count, count;
-	unsigned int i;
+	unsigned int max_count, count, n;
+	unsigned int i, j;
 
 	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
 
@@ -502,10 +522,22 @@ pfm_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_output_par
 	count     = inp->pfp_event_count;
 
 	/*
-	 * check that event descriptors are correct
+	 * check that event and unit masks descriptors are correct
 	 */
 	for (i=0; i < count; i++) {
-		if (inp->pfp_events[i].event >= max_count) return PFMLIB_ERR_INVAL;
+		if (inp->pfp_events[i].event >= max_count)
+			return PFMLIB_ERR_INVAL;
+		if (PFMLIB_HAS_EVENT_MASKS()) {
+			n = pfm_current->get_num_event_masks(inp->pfp_events[i].event);
+			for(j=0; j < inp->pfp_events[i].num_masks; j++) {
+				if (inp->pfp_events[i].unit_masks[j] >= n)
+					return PFMLIB_ERR_UMASK;
+			}
+			/* need to specify at least one umask */
+			if (n && j == 0)
+				return PFMLIB_ERR_UMASK;
+		} else if (inp->pfp_events[i].num_masks)
+			return PFMLIB_ERR_UMASK;
 	}
 
 	/* reset pc counter */
@@ -623,6 +655,7 @@ static char *pfmlib_err_list[]=
 	"not supported by host cpu",
 	"code range is not bundle-aligned",
 	"code range requires some flags in rr_flags",
+	"invalid or missing unit mask"
 };
 static size_t pfmlib_err_count = sizeof(pfmlib_err_list)/sizeof(char *);
 
@@ -668,7 +701,7 @@ pfm_get_max_name_len(size_t *len)
 		if (l > max) max = l;
 
 		if (PFMLIB_HAS_EVENT_MASKS()) {
-			pfm_current->get_num_event_masks(i, &num_masks);
+			num_masks = pfm_current->get_num_event_masks(i);
 			for (j = 0; j < num_masks; j++) {
 				l = strlen(pfm_current->get_event_mask_name(i, j));
 				if (l > max) max = l;
@@ -728,7 +761,7 @@ pfm_get_event_description(unsigned int i, char **str)
 	if (i >= pfm_current->pme_count || str == NULL) return PFMLIB_ERR_INVAL;
 
 	if (pfm_current->get_event_desc == NULL) {
-		*str = NULL;	
+		*str = strdup("no description available");
 		return PFMLIB_SUCCESS;
 	}
 	return pfm_current->get_event_desc(i, str);
@@ -742,10 +775,90 @@ pfm_get_event_mask_description(unsigned int event_idx, unsigned int mask_idx, ch
 	if (event_idx >= pfm_current->pme_count || desc == NULL) return PFMLIB_ERR_INVAL;
 
 	if (pfm_current->get_event_mask_desc == NULL) {
-		*desc = NULL;
+		*desc = strdup("no description available");
 		return PFMLIB_SUCCESS;
 	}
+	if (mask_idx >= pfm_current->get_num_event_masks(event_idx))
+		return PFMLIB_ERR_INVAL;
 
 	return pfm_current->get_event_mask_desc(event_idx, mask_idx, desc);
 }
 
+int
+pfm_get_event_mask_code(unsigned int event_idx, unsigned int mask_idx, unsigned int *code)
+{
+	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
+
+	if (event_idx >= pfm_current->pme_count || code == NULL) return PFMLIB_ERR_INVAL;
+
+	if (pfm_current->get_event_mask_code == NULL) {
+		*code = 0;
+		return PFMLIB_SUCCESS;
+	}
+	if (mask_idx >= pfm_current->get_num_event_masks(event_idx))
+		return PFMLIB_ERR_INVAL;
+
+	return pfm_current->get_event_mask_code(event_idx, mask_idx, code);
+}
+	
+/*
+ * helper function to retrieve one value from /proc/cpuinfo
+ * for internal libpfm use only
+ * attr: the attribute (line) to look for
+ * ret_buf: a buffer to store the value of the attribute (as a string)
+ * maxlen : number of bytes of capacity in ret_buf
+ *
+ * ret_buf is null terminated.
+ *
+ * Return:
+ * 	0 : attribute found, ret_buf populated
+ * 	-1: attribute not found
+ */
+int
+__pfm_getcpuinfo_attr(char *attr, char *ret_buf, size_t maxlen)
+{
+	FILE *fp;
+	int ret = -1;
+	size_t attr_len, buf_len = 0;
+	char *p, *value = NULL;
+	char *buffer = NULL;
+
+	if (attr == NULL || ret_buf == NULL || maxlen < 1)
+		return -1;
+
+	attr_len = strlen(attr);
+
+	fp = fopen("/proc/cpuinfo", "r");
+	if (fp == NULL)
+		return -1;
+
+	while(getline(&buffer, &buf_len, fp) != -1){
+
+		/* skip  blank lines */
+		if (*buffer == '\n')
+			continue;
+
+		p = strchr(buffer, ':');
+		if (p == NULL)
+			goto error;
+
+		/*
+		 * p+2: +1 = space, +2= firt character
+		 * strlen()-1 gets rid of \n
+		 */
+		*p = '\0';
+		value = p+2;
+
+		value[strlen(value)-1] = '\0';
+
+		if (!strncmp(attr, buffer, attr_len))
+			break;
+	}
+	strncpy(ret_buf, value, maxlen-1);
+	ret_buf[maxlen-1] = '\0';
+	ret = 0;
+error:
+	free(buffer);
+	fclose(fp);
+	return ret;
+}

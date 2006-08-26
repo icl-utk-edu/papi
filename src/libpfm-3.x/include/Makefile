@@ -66,8 +66,16 @@ ifeq ($(CONFIG_PFMLIB_MONTECITO),y)
 HEADERS += perfmon/pfmlib_montecito.h
 endif
 
-ifeq ($(CONFIG_PFMLIB_AMD_X86_64),y)
-HEADERS += perfmon/pfmlib_amd_x86_64.h
+ifeq ($(CONFIG_PFMLIB_AMD64),y)
+HEADERS += perfmon/pfmlib_amd64.h
+endif
+
+ifeq ($(CONFIG_PFMLIB_PENTIUM4),y)
+HEADERS += perfmon/pfmlib_pentium4.h
+endif
+
+ifeq ($(CONFIG_PFMLIB_COREDUO),y)
+HEADERS += perfmon/pfmlib_coreduo.h
 endif
 
 ifeq ($(CONFIG_PFMLIB_I386_P6),y)
