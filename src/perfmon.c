@@ -889,7 +889,6 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
     _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR|PAPI_DOM_OTHER;
   else
     _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL;    
-  _papi_hwi_system_info.sub_info.hardware_intr_sig = SIGIO;
   _papi_hwi_system_info.sub_info.hardware_intr = 1;
   _papi_hwi_system_info.sub_info.fast_counter_read = 0;
   _papi_hwi_system_info.sub_info.fast_real_timer = 1;
@@ -999,6 +998,45 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
     {
       PAPIERROR("pfm_load_context(%d,%p(%d)): %s",
 		newctx.ctx_fd,&load_args,mygettid(),pfm_strerror(ret));
+      pfm_unload_context(newctx.ctx_fd);
+      return(PAPI_ESYS);
+    }
+
+  /* setup asynchronous notification on the file descriptor */
+
+  ret = fcntl(newctx.ctx_fd, F_SETFL, fcntl(newctx.ctx_fd, F_GETFL, 0) | O_ASYNC);
+  if (ret == -1)
+    {
+      PAPIERROR("cannot fcntl(O_ASYNC) on %d: %s\n", newctx.ctx_fd,strerror(errno));
+      pfm_unload_context(newctx.ctx_fd);
+      return(PAPI_ESYS);
+    }
+
+  /* get ownership of the descriptor */
+
+  ret = fcntl(newctx.ctx_fd, F_SETOWN, mygettid());
+  if (ret == -1)
+    {
+      PAPIERROR("cannot fcntl(F_SETOWN) on %d: %s\n", newctx.ctx_fd,strerror(errno));
+      pfm_unload_context(newctx.ctx_fd);
+      return(PAPI_ESYS);
+    }
+
+  /*
+   * when you explicitely declare that you want a particular signal,
+   * even with you use the default signal, the kernel will send more
+   * information concerning the event to the signal handler.
+   *
+   * In particular, it will send the file descriptor from which the
+   * event is originating which can be quite useful when monitoring
+   * multiple tasks from a single thread.
+   */
+
+  ret = fcntl(newctx.ctx_fd, F_SETSIG, _papi_hwi_system_info.sub_info.hardware_intr_sig);
+  if (ret == -1)
+    {
+      PAPIERROR("cannot fcntl(F_SETSIG,%d) on %d: %s\n", _papi_hwi_system_info.sub_info.hardware_intr_sig, newctx.ctx_fd, strerror(errno));
+      pfm_unload_context(newctx.ctx_fd);
       return(PAPI_ESYS);
     }
 
@@ -1114,8 +1152,11 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctl,
   
   for (i=0; i < ctl->in.pfp_event_count; i++) 
     {
-      ctl->counts[i] = ctl->pd[i].reg_value;
-      SUBDBG("PMD[%d] = %lld\n",i,ctl->pd[i].reg_value);
+      SUBDBG("PMD[%d] = %lld (LLD),%llu (LLU)\n",i,ctl->counts[i],ctl->pd[i].reg_value);
+      if (ctl->pd[i].reg_flags & PFM_REGFL_OVFL_NOTIFY)
+	ctl->counts[i] = ctl->pd[i].reg_value - ctl->pd[i].reg_long_reset;
+      else
+	ctl->counts[i] = ctl->pd[i].reg_value;
     }
   *events = ctl->counts;
 
@@ -1143,10 +1184,11 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctl)
       return(PAPI_ESYS);
     }
   
-  /* Set counters to zero as per PAPI_start man page. */
+  /* Set counters to zero as per PAPI_start man page, unless it is set to overflow */
 
   for (i=0; i < ctl->in.pfp_event_count; i++) 
-    ctl->pd[i].reg_value = 0ULL; 
+    if (!(ctl->pd[i].reg_flags & PFM_REGFL_OVFL_NOTIFY))
+      ctl->pd[i].reg_value = 0ULL; 
 
   /*
    * To be read, each PMD must be either written or declared
@@ -1284,11 +1326,6 @@ void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
      }
 }
 
-static int set_notify(EventSetInfo_t * ESI, int index, int value)
-{
-   return (PAPI_OK);
-}
-
 int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI)
 {
    return (PAPI_OK);
@@ -1305,60 +1342,70 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    hwd_control_state_t *this_state = &ESI->machdep;
    int j, retval = PAPI_OK, *pos;
 
-   if (threshold == 0) {
-      /* Remove the overflow notifier on the proper event. 
-       */
-      set_notify(ESI, EventIndex, 0);
+   /* Which counter are we on, this looks suspicious because of the pos[0],
+      but this could be because of derived events. We should do more here
+      to figure out exactly what the position is, because the event may
+      actually have more than one position. */
+   
+   pos = ESI->EventInfoArray[EventIndex].pos;
+   j = pos[0];
+   SUBDBG("Hardware counter %d used in overflow, threshold %d\n", j, threshold);
 
-      pos = ESI->EventInfoArray[EventIndex].pos;
-      j = pos[0];
-      SUBDBG("counter %d used in overflow, threshold %d\n",
-             j, threshold);
+   if (threshold == 0) 
+     {
+      /* Remove the signal handler */
+
+       retval = _papi_hwi_stop_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig);
+       if (retval != PAPI_OK)
+	 return(retval);
+
+       /* Disable overflow */
+
+       this_state->pd[j].reg_flags ^= PFM_REGFL_OVFL_NOTIFY;
+
+	/*
+	 * we may want to reset the other PMDs on
+	 * every overflow. If we do not set
+	 * this, the non-overflowed counters
+	 * will be untouched.
+
+	 if (inp.pfp_event_count > 1)
+	 this_state->pd[j].reg_reset_pmds[0] ^= 1UL << counter_to_reset */
+
+       /* Clear the overflow period */
+
       this_state->pd[j].reg_value = 0;
       this_state->pd[j].reg_long_reset = 0;
       this_state->pd[j].reg_short_reset = 0;
 
-      /* Remove the signal handler */
+     } 
+   else
+     {
+       /* Enable the signal handler */
 
-      _papi_hwi_lock(INTERNAL_LOCK);
-      _papi_hwi_using_signal--;
-      SUBDBG("_papi_hwi_using_signal=%d\n", _papi_hwi_using_signal);
-      if (_papi_hwi_using_signal == 0) {
+       retval = _papi_hwi_start_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig, 1);
+       if (retval != PAPI_OK)
+	 return(retval);
 
-         if (sigaction(_papi_hwi_system_info.sub_info.hardware_intr_sig, NULL, NULL) == -1)
-            retval = PAPI_ESYS;
-      }
-      _papi_hwi_unlock(INTERNAL_LOCK);
-   } else {
-      struct sigaction act;
+       /* Set it to overflow */
 
-      /* Set up the signal handler */
+       this_state->pd[j].reg_flags |= PFM_REGFL_OVFL_NOTIFY;
+       
+	/*
+	 * we may want to reset the other PMDs on
+	 * every overflow. If we do not set
+	 * this, the non-overflowed counters
+	 * will be untouched.
 
-      memset(&act, 0x0, sizeof(struct sigaction));
-      act.sa_handler = (sig_t) _papi_hwd_dispatch_timer;
-      act.sa_flags = SA_RESTART|SA_SIGINFO;
-      if (sigaction(_papi_hwi_system_info.sub_info.hardware_intr_sig, &act, NULL) == -1)
-         return (PAPI_ESYS);
+	 if (inp.pfp_event_count > 1)
+	 this_state->pd[j].reg_reset_pmds[0] |= 1UL << counter_to_reset */
+       
+       /* Set the overflow period */
 
-      /*Set the overflow notifier on the proper event. Remember that selector
-       */
-      set_notify(ESI, EventIndex, PFM_REGFL_OVFL_NOTIFY);
-
-/* set initial value in pd array */
-
-      pos = ESI->EventInfoArray[EventIndex].pos;
-      j = pos[0];
-      SUBDBG("counter %d used in overflow, threshold %d\n",
-             j, threshold);
-      this_state->pd[j].reg_value = (~0UL) - (unsigned long) threshold + 1;
-      this_state->pd[j].reg_short_reset = (~0UL)-(unsigned long) threshold+1;
-      this_state->pd[j].reg_long_reset = (~0UL) - (unsigned long) threshold + 1;
-
-      _papi_hwi_lock(INTERNAL_LOCK);
-      _papi_hwi_using_signal++;
-      SUBDBG("_papi_hwi_using_signal=%d\n", _papi_hwi_using_signal);
-      _papi_hwi_unlock(INTERNAL_LOCK);
-   }
+       this_state->pd[j].reg_value = - (unsigned long long) threshold;
+       this_state->pd[j].reg_short_reset = - (unsigned long long) threshold;
+       this_state->pd[j].reg_long_reset = - (unsigned long long) threshold;
+     }
    return (retval);
 }
 
