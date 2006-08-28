@@ -45,36 +45,27 @@ int case1(void)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_set_multiplex", retval);
 
-   for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++) {
-      if ( (i|PAPI_PRESET_MASK) == PAPI_L1_ICM ) continue;
-      if ( (i|PAPI_PRESET_MASK) == PAPI_L2_ICM ) continue;
-      if ( (i|PAPI_PRESET_MASK) == PAPI_TLB_IM ) continue;
+    /* Fill up the event set with as many non-derived events as we can */
 
-      retval = PAPI_get_event_info(i | PAPI_PRESET_MASK, &pset);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_get_event_info", retval);
+    i = PAPI_PRESET_MASK;
+    do {
+        if (PAPI_get_event_info(i, &pset) == PAPI_OK) 
+	  {
+	    if (pset.count && (strcmp(pset.derived,"NOT_DERIVED") == 0))
+	      {
+		retval = PAPI_add_event(EventSet, pset.event_code);
+		if (retval != PAPI_OK)
+		  test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+		else
+		  {
+		    printf("Added %s\n", pset.symbol);
+		    j++;
+		  }
+	      }
+	  }
+    } while ((PAPI_enum_event(&i, PAPI_PRESET_ENUM_AVAIL) == PAPI_OK) && (j <= MAX_TO_ADD));
 
-      if (pset.count) {
-            printf("Adding %s\n", pset.symbol);
-
-         retval = PAPI_add_event(EventSet, pset.event_code);
-         if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
-            test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-
-    if (retval == PAPI_OK) {
-               printf("Added %s\n", pset.symbol);
-	   } else {
-               printf("Could not add %s\n", pset.symbol);
-	   }
- 
-         if (retval == PAPI_OK) {
-            if (++j >= MAX_TO_ADD)
-               break;
-         }
-      }
-   }
-
-   values = (long long *) malloc(MAX_TO_ADD * sizeof(long long));
+   values = (long long *) malloc(j * sizeof(long long));
    if (values == NULL)
       test_fail(__FILE__, __LINE__, "malloc", 0);
 
@@ -89,7 +80,7 @@ int case1(void)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
    test_print_event_header("multiplex2:\n", EventSet);
-   for (i = 0; i < MAX_TO_ADD; i++) {
+   for (i = 0; i < j; i++) {
      printf(ONENUM, values[i]);
      if (values[i] == 0)
        allvalid = 0;
@@ -116,16 +107,11 @@ int case1(void)
 int main(int argc, char **argv)
 {
 
-   if (argc > 1) {
-      if (!strcmp(argv[1], "TESTS_QUIET"))
-         TESTS_QUIET = 1;
-   }
+   tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
-   if (!TESTS_QUIET) {
-      printf("%s: Using %d iterations\n\n", argv[0], NUM_ITERS);
+   printf("%s: Does PAPI_multiplex_init() handle lots of events?\n",argv[0]);
+   printf("%s: Using %d iterations\n\n", argv[0], NUM_ITERS);
 
-      printf("case1: Does PAPI_multiplex_init() handle lots of events?\n");
-   }
    case1();
    test_pass(__FILE__, NULL, 0);
    exit(1);
