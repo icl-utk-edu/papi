@@ -11,18 +11,25 @@
 #include "x86.h"
 #include "x86_cpuinfo.h"
 
-#ifndef __NR_vperfctr_open
-#ifdef __x86_64__
-#define __NR_vperfctr_open	280
-#else
-#define __NR_vperfctr_open	318
-#endif
+static unsigned int __NR_vperfctr_open;
 #define __NR_vperfctr_control	(__NR_vperfctr_open+1)
 #define __NR_vperfctr_write	(__NR_vperfctr_open+2)
 #define __NR_vperfctr_read	(__NR_vperfctr_open+3)
-#endif
 
 #include <unistd.h>
+
+static void init_sys_vperfctr(void)
+{
+    if (!__NR_vperfctr_open)
+	__NR_vperfctr_open =
+	    (perfctr_linux_version_code() >= PERFCTR_KERNEL_VERSION(2,6,16))
+#ifdef __x86_64__
+	    ? 280 : 257
+#else
+	    ? 318 : 296
+#endif
+	    ;
+}
 
 /*
  * The actual syscalls.
@@ -30,21 +37,25 @@
 
 int _sys_vperfctr_open(int fd_unused, int tid, int creat)
 {
+    init_sys_vperfctr();
     return syscall(__NR_vperfctr_open, tid, creat);
 }
 
 static int _sys_vperfctr_control(int fd, unsigned int cmd)
 {
+    init_sys_vperfctr();
     return syscall(__NR_vperfctr_control, fd, cmd);
 }
 
 static int _sys_vperfctr_write(int fd, unsigned int domain, const void *arg, unsigned int argbytes)
 {
+    init_sys_vperfctr();
     return syscall(__NR_vperfctr_write, fd, domain, arg, argbytes);
 }
 
 static int _sys_vperfctr_read(int fd, unsigned int domain, void *arg, unsigned int argbytes)
 {
+    init_sys_vperfctr();
     return syscall(__NR_vperfctr_read, fd, domain, arg, argbytes);
 }
 
