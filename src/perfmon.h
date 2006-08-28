@@ -30,6 +30,12 @@
 #include "perfmon/pfmlib.h"
 #include "perfmon/perfmon.h"
 
+#if defined(DEBUG)
+#define DEBUGCALL(a,b) { if (ISLEVEL(a)) { b; } }
+#else
+#define DEBUGCALL(a,b)
+#endif
+
 #define inline_static inline static
 
 typedef int hwd_register_t;
@@ -61,14 +67,20 @@ typedef struct {
   pfmlib_input_param_t in;
   /* Buffer to pass from the library to control the counters */
   pfmlib_output_param_t out;
+  /* Is this eventset multiplexed? */
+  int multiplexed;
+  /* Arguments to kernel for multiplexing, first number of sets */
+  int num_sets;
+  /* Arguments to kernel to set up the sets */
+  pfarg_setdesc_t set[PFMLIB_MAX_PMDS];
+  /* Buffer to get information out of the sets when reading */
+  pfarg_setinfo_t setinfo[PFMLIB_MAX_PMDS];
   /* Arguments to the kernel */
   pfarg_pmc_t pc[PFMLIB_MAX_PMCS];
   /* Arguments to the kernel */
   pfarg_pmd_t pd[PFMLIB_MAX_PMDS];
   /* Buffer to gather counters */
   long_long counts[PFMLIB_MAX_PMDS];
-  /* Is this set kernel multiplexed? */
-  int multiplexed;
 } hwd_control_state_t;
 
 typedef struct {

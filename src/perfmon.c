@@ -113,6 +113,83 @@ static pfm_preset_search_entry_t pfm_unknown_preset_search_map[] = {
 
 /* BEGIN COMMON CODE */
 
+#ifdef DEBUG
+void dump_sets(pfarg_setdesc_t *set, int num_sets)
+{
+  int i;
+
+  for (i=0;i<num_sets;i++)
+    {
+      SUBDBG("SET[%d]\n",i);
+      SUBDBG("SET[%d].set_id = %d\n",i,set[i].set_id);
+      SUBDBG("SET[%d].set_id_next = %d\n",i,set[i].set_id_next);
+      SUBDBG("SET[%d].set_flags = %d\n",i,set[i].set_flags);
+      SUBDBG("SET[%d].set_timeout = %d\n",i,set[i].set_timeout);
+      SUBDBG("SET[%d].set_mmap_offset = 0x%016llx\n",i,set[i].set_mmap_offset);
+    }
+}
+
+void dump_setinfo(hwd_control_state_t * ctl)
+{
+  int i;
+  pfarg_setinfo_t *setinfo = ctl->setinfo;
+
+  for (i=0;i<ctl->num_sets;i++)
+    {
+      SUBDBG("SETINFO[%d]\n",i);
+      SUBDBG("SETINFO[%d].set_id = %d\n",i,setinfo[i].set_id);
+      SUBDBG("SETINFO[%d].set_id_next = %d\n",i,setinfo[i].set_id_next);
+      SUBDBG("SETINFO[%d].set_flags = %d\n",i,setinfo[i].set_flags);
+      SUBDBG("SETINFO[%d].set_ovfl_pmds[0] = 0x%016llx\n",i,setinfo[i].set_ovfl_pmds[0]);
+      SUBDBG("SETINFO[%d].set_runs = %llu\n",i,setinfo[i].set_runs);
+      SUBDBG("SETINFO[%d].set_timeout = %did\n",i,setinfo[i].set_timeout);
+      SUBDBG("SETINFO[%d].set_act_duration = %llu\n",i,setinfo[i].set_act_duration);
+      SUBDBG("SETINFO[%d].set_mmap_offset = 0x%016llx\n",i,setinfo[i].set_mmap_offset);
+      SUBDBG("SETINFO[%d].set_avail_pmcs[0] = 0x%016llx\n",i,setinfo[i].set_avail_pmcs[0]);
+      SUBDBG("SETINFO[%d].set_avail_pmds[0] = 0x%016llx\n",i,setinfo[i].set_avail_pmds[0]);
+    }
+}
+
+void dump_pmc(hwd_control_state_t * ctl)
+{
+  int i;
+  pfarg_pmc_t *pc = ctl->pc;
+
+  for (i=0;i<ctl->out.pfp_pmc_count;i++)
+    {
+      SUBDBG("PC[%d]\n",i);
+      SUBDBG("PC[%d].reg_num = %d\n",i,pc[i].reg_num);
+      SUBDBG("PC[%d].reg_set = %d\n",i,pc[i].reg_set);
+      SUBDBG("PC[%d].reg_flags = 0x%08x\n",i,pc[i].reg_flags);
+      SUBDBG("PC[%d].reg_value = 0x%016llx\n",i,pc[i].reg_value);
+    }
+}
+
+void dump_pmd(hwd_control_state_t * ctl)
+{
+  int i;
+  pfarg_pmd_t *pd = ctl->pd;
+
+  for (i=0;i<ctl->in.pfp_event_count;i++)
+    {
+      SUBDBG("PD[%d]\n",i);
+      SUBDBG("PD[%d].reg_num = %d\n",i,pd[i].reg_num);
+      SUBDBG("PD[%d].reg_set = %d\n",i,pd[i].reg_set);
+      SUBDBG("PD[%d].reg_flags = 0x%08x\n",i,pd[i].reg_flags);
+      SUBDBG("PD[%d].reg_value = 0x%016llx\n",i,pd[i].reg_value);
+      SUBDBG("PD[%d].reg_long_reset = %llu\n",i,pd[i].reg_long_reset);
+      SUBDBG("PD[%d].reg_short_reset = %llu\n",i,pd[i].reg_short_reset);
+      SUBDBG("PD[%d].reg_last_reset_val = %llu\n",i,pd[i].reg_last_reset_val);
+      SUBDBG("PD[%d].reg_ovfl_switch_cnt = %llu\n",i,pd[i].reg_ovfl_switch_cnt);
+      SUBDBG("PD[%d].reg_reset_pmds[0] = 0x%016llx\n",i,pd[i].reg_reset_pmds[0]);
+      SUBDBG("PD[%d].reg_smpl_pmds[0] = 0x%016llx\n",i,pd[i].reg_smpl_pmds[0]);
+      SUBDBG("PD[%d].reg_smpl_eventid = %llu\n",i,pd[i].reg_smpl_eventid);
+      SUBDBG("PD[%d].reg_random_mask = %llu\n",i,pd[i].reg_random_mask);
+      SUBDBG("PD[%d].reg_random_seed = %d\n",i,pd[i].reg_random_seed);
+    }
+}
+#endif
+
 int _papi_hwd_update_shlib_info(void)
 {
    char fname[PAPI_HUGE_STR_LEN];
@@ -621,18 +698,44 @@ static int generate_native_event_map(hwd_native_event_entry_t **nmap, unsigned i
   return(PAPI_OK);
 }
 
-inline static int compute_kernel_args(pfmlib_input_param_t *inp, 
-				      pfmlib_output_param_t *outp,
-				      pfarg_pmd_t *pd,
-				      pfarg_pmc_t *pc)
+inline static int compute_kernel_args(hwd_control_state_t * ctl)
 {
-  int ret, i, j;
+  pfmlib_input_param_t *inp = &ctl->in;
+  pfmlib_output_param_t *outp = &ctl->out;
+  pfmlib_input_param_t tmpin;
+  pfmlib_output_param_t tmpout;
+  pfarg_pmd_t *pd = ctl->pd;
+  pfarg_pmc_t *pc = ctl->pc;
+  pfarg_setdesc_t *sets = ctl->set;
+  pfarg_setinfo_t *setinfos = ctl->setinfo;
+  int *num_sets = &ctl->num_sets;
+  int set = 0, donepc = 0, donepd = 0, ret, i, j;
+  int togo = inp->pfp_event_count, dispatch_count = inp->pfp_event_count, done = 0;
   
-  if ((ret = pfm_dispatch_events(inp, NULL, outp, NULL)) != PFMLIB_SUCCESS)
+  if ((ctl->multiplexed) && (inp->pfp_event_count > _papi_hwi_system_info.sub_info.num_cntrs))
     {
-      PAPIERROR("pfm_dispatch_events(): %s", pfm_strerror(ret));
-      return(PAPI_ECNFLCT);
+      dispatch_count = _papi_hwi_system_info.sub_info.num_cntrs;
     }
+
+  while (togo)
+    {
+      memset(&tmpin,0x0,sizeof(tmpin));
+      memset(&tmpout,0x0,sizeof(tmpout));
+      
+      SUBDBG("togo %d, done %d, dispatch_count %d\n",togo,done,dispatch_count);
+      tmpin.pfp_event_count = dispatch_count;
+      tmpin.pfp_dfl_plm = inp->pfp_dfl_plm;
+
+      for (i=0,j=done;i<dispatch_count;i++,j++)
+	{
+	  tmpin.pfp_events[i].event = inp->pfp_events[j].event;
+	}
+
+      if ((ret = pfm_dispatch_events(&tmpin, NULL, &tmpout, NULL)) != PFMLIB_SUCCESS)
+	{
+	  PAPIERROR("pfm_dispatch_events(): %s", pfm_strerror(ret));
+	  return(PAPI_ECNFLCT);
+	}
   
   /*
     * Now prepare the argument to initialize the PMDs and PMCS.
@@ -644,21 +747,41 @@ inline static int compute_kernel_args(pfmlib_input_param_t *inp,
     * longer knows about the kernel data structures.
     */
 
-   for (i=0; i < outp->pfp_pmc_count; i++) {
-     SUBDBG("Input Event %d: PC num %d, PC value %llx\n",i,outp->pfp_pmcs[i].reg_num,outp->pfp_pmcs[i].reg_value);
-     pc[i].reg_num   = outp->pfp_pmcs[i].reg_num;
-     pc[i].reg_value = outp->pfp_pmcs[i].reg_value;
-   }
+      for (i=0; i < tmpout.pfp_pmc_count; i++, donepc++) 
+	{
+	  pc[donepc].reg_num   = tmpout.pfp_pmcs[i].reg_num;
+	  pc[donepc].reg_value = tmpout.pfp_pmcs[i].reg_value;
+	  pc[donepc].reg_set = set;
+	}
    
-   /*
-    * figure out pmd mapping from output pmc
-    */
-   for (i=0, j=0; i < inp->pfp_event_count; i++) {
-     SUBDBG("Output event %d: PD num %d, PD value %llx\n",i,outp->pfp_pmcs[i].reg_num,outp->pfp_pmcs[i].reg_value);
-     pd[i].reg_num   = outp->pfp_pmcs[j].reg_pmd_num;
-     for(; j < outp->pfp_pmc_count; j++)  if (outp->pfp_pmcs[j].reg_evt_idx != i) break;
-   }
-   return(PAPI_OK);
+      /* figure out pmd mapping from output pmc */
+
+      for (i=0, j=0; i < tmpin.pfp_event_count; i++, donepd++) 
+	{
+	  pd[donepd].reg_num = tmpout.pfp_pmcs[j].reg_pmd_num;
+	  pd[donepd].reg_set = set;
+	  for(; j < tmpout.pfp_pmc_count; j++)  
+	    if (tmpout.pfp_pmcs[j].reg_evt_idx != i) break;
+	}
+      
+      togo -= dispatch_count;
+      done += dispatch_count;
+      if (togo > _papi_hwi_system_info.sub_info.num_cntrs)
+	dispatch_count = _papi_hwi_system_info.sub_info.num_cntrs;
+      else
+	dispatch_count = togo;
+
+      setinfos[set].set_id = set;
+      sets[set].set_id = set;
+      sets[set].set_flags = PFM_SETFL_TIME_SWITCH;
+      sets[set].set_timeout = _papi_hwi_system_info.sub_info.multiplex_timer_us;
+      set++;
+    }
+
+  *num_sets = set;
+  outp->pfp_pmc_count = donepc;
+
+  return(PAPI_OK);
 }
 
 static int attach(hwd_control_state_t *ctl, unsigned long tid)
@@ -711,13 +834,69 @@ static int detach(hwd_context_t *ctx, hwd_control_state_t *ctl)
   return(PAPI_OK);
 }
 
-inline static int set_domain(hwd_control_state_t * this_state, int domain)
+/* This routine effectively does argument checking as the real magic will happen
+   in compute_kernel_args. This just gets the value back from the kernel. */
+
+inline static int check_multiplex_timeout(hwd_context_t *ctx, unsigned long *timeout)
+{
+  int ret, ctx_fd;
+  pfarg_setdesc_t set;
+  pfarg_ctx_t newctx;
+
+  return(PAPI_OK);
+
+  if (ctx == NULL)
+    ctx_fd = 0; /* This happens from inside init_substrate_global, where no context yet exists. */
+  else
+    ctx_fd = ctx->ctx.ctx_fd;
+
+  memset(&set,0,sizeof(set));
+  set.set_timeout = *timeout;
+  SUBDBG("Requested multiplexing interval is %d usecs.\n",set.set_timeout);
+
+  /* This may be called before we have a context, so we should build one
+     if we need one. */
+
+  if (ctx_fd == 0)
+    {
+      memset(&newctx, 0, sizeof(newctx));
+
+      SUBDBG("PFM_CREATE_CONTEXT(%p)\n",&newctx);
+      if ((ret = pfm_create_context(&newctx, NULL, 0)))
+	{
+	  PAPIERROR("pfm_create_context(): %s", pfm_strerror(ret));
+	  return(PAPI_ESYS);
+	}
+      SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",newctx.ctx_fd);
+      ctx_fd = newctx.ctx_fd;
+    }
+      
+  SUBDBG("PFM_CREATE_EVTSETS(%d,%p,1)\n",ctx_fd,&set);
+  if ((ret = pfm_create_evtsets(ctx_fd, &set, 1)) != PFMLIB_SUCCESS)
+    {
+      DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(&set,1));
+      PAPIERROR("pfm_create_evtsets(%d,%p,1): %s", ctx_fd, &set, pfm_strerror(ret));
+      return(PAPI_ESYS);
+    }      
+
+  SUBDBG("Multiplexing interval is now %d usecs.\n",set.set_timeout);
+  *timeout = set.set_timeout;
+  
+  /* If we created a context, get rid of it */
+  if (newctx.ctx_fd) 
+    {
+      pfm_delete_evtsets(ctx_fd,&set,1);
+      pfm_unload_context(newctx.ctx_fd);
+      close(newctx.ctx_fd);
+    }
+
+  return(PAPI_OK);
+}
+
+inline static int set_domain(hwd_control_state_t * ctl, int domain)
 {
   int mode = 0, did = 0;
-  pfmlib_input_param_t *inp = &this_state->in;
-  pfmlib_output_param_t *outp = &this_state->out;
-  pfarg_pmd_t *pd = this_state->pd;
-  pfarg_pmc_t *pc = this_state->pc;
+  pfmlib_input_param_t *inp = &ctl->in;
 
    if (domain & PAPI_DOM_USER) {
       did = 1;
@@ -747,7 +926,7 @@ inline static int set_domain(hwd_control_state_t * this_state, int domain)
 
    inp->pfp_dfl_plm = mode;
 
-   return(compute_kernel_args(inp,outp,pd,pc));
+   return(compute_kernel_args(ctl));
 }
 
 inline static int set_granularity(hwd_control_state_t * this_state, int domain)
@@ -881,10 +1060,6 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   if (retval != PAPI_OK)
     return(retval);
   pfm_get_num_counters((unsigned int *)&_papi_hwi_system_info.sub_info.num_cntrs);
-#if 0
-  _papi_hwi_system_info.sub_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
-  _papi_hwi_system_info.sub_info.kernel_multiplex = 1;
-#endif
   if (type == PFMLIB_GEN_MIPS64_PMU)
     _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR|PAPI_DOM_OTHER;
   else
@@ -895,6 +1070,9 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   _papi_hwi_system_info.sub_info.fast_virtual_timer = 0;
   _papi_hwi_system_info.sub_info.attach = 1;
   _papi_hwi_system_info.sub_info.attach_must_ptrace = 1;
+  _papi_hwi_system_info.sub_info.kernel_multiplex = 1;
+  _papi_hwi_system_info.sub_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
+  check_multiplex_timeout(NULL, (unsigned long *)&_papi_hwi_system_info.sub_info.multiplex_timer_us);
 
    /* Fill in what we can of the papi_system_info. */
    retval = _papi_hwd_get_system_info();
@@ -1001,6 +1179,19 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
       pfm_unload_context(newctx.ctx_fd);
       return(PAPI_ESYS);
     }
+
+#if 0
+  /* set close-on-exec to ensure we will be getting the PFM_END_MSG, i.e.,
+   * fd not visible to child. */
+
+  ret = fcntl(newctx.ctx_fd, F_SETFD, FD_CLOEXEC);
+  if (ret == -1)
+    {
+      PAPIERROR("cannot fcntl(FD_CLOEXEC) on %d: %s\n", newctx.ctx_fd,strerror(errno));
+      pfm_unload_context(newctx.ctx_fd);
+      return(PAPI_ESYS);
+    }
+#endif
 
   /* setup asynchronous notification on the file descriptor */
 
@@ -1141,15 +1332,20 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctl,
                    long_long ** events, int flags)
 {
   int i, ret;
+  long_long tot_runs = 0LL;
 
   SUBDBG("PFM_READ_PMDS(%d,%p,%d)\n",ctl->ctx.ctx_fd, ctl->pd, ctl->in.pfp_event_count);
   if ((ret = pfm_read_pmds(ctl->ctx.ctx_fd, ctl->pd, ctl->in.pfp_event_count)))
     {
+      DEBUGCALL(DEBUG_SUBSTRATE,dump_pmd(ctl));
       PAPIERROR("pfm_read_pmds(%d,%p,%d): %s",ctl->ctx.ctx_fd,ctl->pd,ctl->in.pfp_event_count, pfm_strerror(ret));
       *events = NULL;
       return(PAPI_ESYS);
     }
+  DEBUGCALL(DEBUG_SUBSTRATE,dump_pmd(ctl));
   
+  /* Copy the values over */
+
   for (i=0; i < ctl->in.pfp_event_count; i++) 
     {
       SUBDBG("PMD[%d] = %lld (LLD),%llu (LLU)\n",i,ctl->counts[i],ctl->pd[i].reg_value);
@@ -1160,6 +1356,42 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctl,
     }
   *events = ctl->counts;
 
+  /* If we're not multiplexing, bail now */
+
+  if (ctl->num_sets == 1)
+    return(PAPI_OK);
+
+  /* If we're multiplexing, get the scaling information */
+
+  SUBDBG("PFM_GETINFO_EVTSETS(%d,%p,%d)\n",ctl->ctx.ctx_fd, ctl->setinfo, ctl->num_sets);
+  if ((ret = pfm_getinfo_evtsets(ctl->ctx.ctx_fd, ctl->setinfo, ctl->num_sets)))
+    {
+      DEBUGCALL(DEBUG_SUBSTRATE,dump_setinfo(ctl));
+      PAPIERROR("pfm_getinfo_evtsets(%d,%p,%d): %s\n",ctl->ctx.ctx_fd, ctl->setinfo, ctl->num_sets, pfm_strerror(ret));
+      *events = NULL;
+      return(PAPI_ESYS);
+    }
+  DEBUGCALL(DEBUG_SUBSTRATE,dump_setinfo(ctl));
+
+  /* Add up the number of total runs */
+  
+  for (i=0;i<ctl->num_sets;i++)
+    tot_runs += ctl->setinfo[i].set_runs;
+
+  /* Now scale the values */
+
+  for (i=0; i < ctl->in.pfp_event_count; i++) 
+    {
+      SUBDBG("Counter %d is in set %d ran %llu of %llu times, old count %lld.\n",
+	     i,
+	     ctl->pd[i].reg_set,
+	     ctl->setinfo[ctl->pd[i].reg_set].set_runs,
+	     tot_runs,
+	     ctl->counts[i]);
+      ctl->counts[i] = (ctl->counts[i]*tot_runs)/ctl->setinfo[ctl->pd[i].reg_set].set_runs;
+      SUBDBG("Counter %d, new count %lld.\n",i,ctl->counts[i]);
+    }
+
    return PAPI_OK;
 }
 
@@ -1167,6 +1399,25 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctl,
 int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctl)
 {
   int i, ret; 
+
+  if (ctl->num_sets > 1)
+    {
+      SUBDBG("PFM_UNLOAD_CONTEXT(%d) (tid %u)\n",ctx->ctx.ctx_fd,ctx->load.load_pid);
+      if ((ret = pfm_unload_context(ctx->ctx.ctx_fd)))
+	{
+	  PAPIERROR("pfm_unload_context(%d): %s", ctx->ctx.ctx_fd, pfm_strerror(ret));
+	  return PAPI_ESYS;
+	}
+
+      SUBDBG("PFM_CREATE_EVTSETS(%d,%p,%d)\n",ctl->ctx.ctx_fd,ctl->set,ctl->num_sets);
+      if ((ret = pfm_create_evtsets(ctl->ctx.ctx_fd,ctl->set,ctl->num_sets)) != PFMLIB_SUCCESS)
+	{
+	  DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(ctl->set,ctl->num_sets));
+	  PAPIERROR("pfm_create_evtsets(%d,%p,%d): %s", ctl->ctx.ctx_fd,ctl->set,ctl->num_sets, pfm_strerror(ret));
+	  return(PAPI_ESYS);
+	}
+      DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(ctl->set,ctl->num_sets));
+    }      
 
   /*
    * Now program the registers
@@ -1180,9 +1431,11 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctl)
   SUBDBG("PFM_WRITE_PMCS(%d,%p,%d)\n",ctl->ctx.ctx_fd, ctl->pc, ctl->out.pfp_pmc_count);
   if ((ret = pfm_write_pmcs(ctl->ctx.ctx_fd, ctl->pc, ctl->out.pfp_pmc_count)))
     {
+      DEBUGCALL(DEBUG_SUBSTRATE,dump_pmc(ctl));
       PAPIERROR("pfm_write_pmcs(%d,%p,%d): %s",ctl->ctx.ctx_fd,ctl->pc,ctl->out.pfp_pmc_count, pfm_strerror(ret));
       return(PAPI_ESYS);
     }
+  DEBUGCALL(DEBUG_SUBSTRATE,dump_pmc(ctl));
   
   /* Set counters to zero as per PAPI_start man page, unless it is set to overflow */
 
@@ -1194,11 +1447,24 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctl)
    * To be read, each PMD must be either written or declared
    * as being part of a sample (reg_smpl_pmds)
    */
+
   SUBDBG("PFM_WRITE_PMDS(%d,%p,%d)\n",ctl->ctx.ctx_fd, ctl->pd, ctl->in.pfp_event_count);
   if ((ret = pfm_write_pmds(ctl->ctx.ctx_fd, ctl->pd, ctl->in.pfp_event_count)))
     {
+      DEBUGCALL(DEBUG_SUBSTRATE,dump_pmd(ctl));
       PAPIERROR("pfm_write_pmds(%d,%p,%d): %s",ctl->ctx.ctx_fd,ctl->pd,ctl->in.pfp_event_count, pfm_strerror(ret));
       return(PAPI_ESYS);
+    }
+  DEBUGCALL(DEBUG_SUBSTRATE,dump_pmd(ctl));
+
+  if (ctl->num_sets > 1)
+    {
+      SUBDBG("PFM_LOAD_CONTEXT(%d,%p(%u))\n",ctx->ctx.ctx_fd,&ctx->load,ctx->load.load_pid);
+      if ((ret = pfm_load_context(ctx->ctx.ctx_fd,&ctx->load)))
+	{
+	  PAPIERROR("pfm_load_context(%d,%p(%u)): %s", ctx->ctx.ctx_fd,&ctx->load,ctx->load.load_pid, pfm_strerror(ret));
+	  return PAPI_ESYS;
+	}
     }
 
   SUBDBG("PFM_START(%d,%p)\n",ctl->ctx.ctx_fd, NULL);
@@ -1230,34 +1496,40 @@ int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctl)
 
 int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
-   switch (code) {
-   case PAPI_MULTIPLEX:
-     option->domain.ESI->machdep.multiplexed = 1;
-     return(PAPI_OK);
-   case PAPI_ATTACH:
-     return(attach(&option->attach.ESI->machdep, option->attach.tid));
-   case PAPI_DETACH:
-     return(detach(ctx, &option->attach.ESI->machdep));
-   case PAPI_DOMAIN:
-     return(set_domain(&option->domain.ESI->machdep, option->domain.domain));
-   case PAPI_GRANUL:
-      return (set_granularity
-              (&option->granularity.ESI->machdep, option->granularity.granularity));
+  int ret;
+
+  switch (code) {
+  case PAPI_DEF_MPX_USEC:
+    return(check_multiplex_timeout(ctx,&option->multiplex.us));
+  case PAPI_MULTIPLEX:
+    ret = check_multiplex_timeout(ctx,&option->multiplex.us);
+    if (ret == PAPI_OK)
+      option->domain.ESI->machdep.multiplexed = 1;
+    return(ret);
+  case PAPI_ATTACH:
+    return(attach(&option->attach.ESI->machdep, option->attach.tid));
+  case PAPI_DETACH:
+    return(detach(ctx, &option->attach.ESI->machdep));
+  case PAPI_DOMAIN:
+    return(set_domain(&option->domain.ESI->machdep, option->domain.domain));
+  case PAPI_GRANUL:
+    return (set_granularity
+	    (&option->granularity.ESI->machdep, option->granularity.granularity));
 #if 0
-   case PAPI_DATA_ADDRESS:
-      ret=set_default_domain(&option->address_range.ESI->machdep, option->address_range.domain);
-	  if(ret != PAPI_OK) return(ret);
-	  set_drange(ctx, &option->address_range.ESI->machdep, option);
-      return (PAPI_OK);
-   case PAPI_INSTR_ADDRESS:
-      ret=set_default_domain(&option->address_range.ESI->machdep, option->address_range.domain);
-	  if(ret != PAPI_OK) return(ret);
-	  set_irange(ctx, &option->address_range.ESI->machdep, option);
-      return (PAPI_OK);
+  case PAPI_DATA_ADDRESS:
+    ret=set_default_domain(&option->address_range.ESI->machdep, option->address_range.domain);
+    if(ret != PAPI_OK) return(ret);
+    set_drange(ctx, &option->address_range.ESI->machdep, option);
+    return (PAPI_OK);
+  case PAPI_INSTR_ADDRESS:
+    ret=set_default_domain(&option->address_range.ESI->machdep, option->address_range.domain);
+    if(ret != PAPI_OK) return(ret);
+    set_irange(ctx, &option->address_range.ESI->machdep, option);
+    return (PAPI_OK);
 #endif
-   default:
-      return (PAPI_EINVAL);
-   }
+  default:
+    return (PAPI_EINVAL);
+  }
 }
 
 int _papi_hwd_shutdown(hwd_context_t * ctx)
@@ -1467,18 +1739,23 @@ int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
   return(did_something);
 }
 
-int _papi_hwd_init_control_state(hwd_control_state_t *this_state)
+int _papi_hwd_init_control_state(hwd_control_state_t *ctl)
 {
-  pfmlib_input_param_t *inp = &this_state->in;
-  pfmlib_output_param_t *outp = &this_state->out;
-  pfarg_pmd_t *pd = this_state->pd;
-  pfarg_pmc_t *pc = this_state->pc;
-  
+  pfmlib_input_param_t *inp = &ctl->in;
+  pfmlib_output_param_t *outp = &ctl->out;
+  pfarg_pmd_t *pd = ctl->pd;
+  pfarg_pmc_t *pc = ctl->pc;
+  pfarg_setdesc_t *set = ctl->set;
+  pfarg_setinfo_t *setinfo = ctl->setinfo;
+
   memset(inp,0,sizeof(*inp));
   memset(outp,0,sizeof(*inp));
-  memset(pc,0,sizeof(this_state->pc));
-  memset(pd,0,sizeof(this_state->pd));
-  set_domain(this_state,_papi_hwi_system_info.sub_info.default_domain);
+  memset(pc,0,sizeof(ctl->pc));
+  memset(pd,0,sizeof(ctl->pd));
+  memset(set,0,sizeof(ctl->set));
+  memset(setinfo,0,sizeof(ctl->setinfo));
+
+  set_domain(ctl,_papi_hwi_system_info.sub_info.default_domain);
   return(PAPI_OK);
 }
 
@@ -1488,45 +1765,53 @@ int _papi_hwd_init_control_state(hwd_control_state_t *this_state)
 
 int _papi_hwd_update_control_state(hwd_control_state_t *ctl,
                                    NativeInfo_t *native, int count, hwd_context_t * ctx) {
-  int i, ret;
-   pfmlib_input_param_t *inp = &ctl->in;
-   pfmlib_output_param_t *outp = &ctl->out;
-   pfarg_pmd_t *pd = ctl->pd;
-   pfarg_pmc_t *pc = ctl->pc;
+  int i = 0, j, ret, dispatch_count = count, togo = count, done = 0;
+  int last_reg_set = 0, reg_set_done = 0, offset = 0;
+  pfmlib_input_param_t *inp = &ctl->in;
+  pfmlib_output_param_t *outp = &ctl->out;
+  pfarg_pmd_t *pd = ctl->pd;
 
-   if (count == 0)
-     {
-       SUBDBG("Called with count == 0\n");
-//       memset(inp,0,sizeof(*inp));
-       abort();
-       return(PAPI_OK);
-     }
+  if (count == 0)
+    {
+      SUBDBG("Called with count == 0\n");
+      inp->pfp_event_count = 0;
+      outp->pfp_pmc_count = 0;
+      memset(inp->pfp_events,0x0,sizeof(inp->pfp_events));
+      return(PAPI_OK);
+    }
+  
+  for (i=0;i<count;i++)
+    {
+      SUBDBG("Stuffing native event index %d (code 0x%x) into input structure.\n",
+	     i,native[i].ni_event);
+      inp->pfp_events[i].event = native[i].ni_event;
+    }
+  inp->pfp_event_count = count;
+      
+  /* let the library figure out the values for the PMCS */
+  
+  ret = compute_kernel_args(ctl);
+  if (ret != PAPI_OK)
+    return(ret);
+  
+  /* Update the native structure, because the allocation is done here. */
+  
+  last_reg_set = pd[0].reg_set;
+  for (i=0;i<count;i++)
+    {
+      SUBDBG("outp->pfp_pmcs[%d].reg_num = %d, outp->pfp_pmcs[%d].reg_pmd_num = %d, pd[%d].reg_num = %d, pd[%d].reg_set = %d\n",
+	     i,outp->pfp_pmcs[i].reg_num,i,outp->pfp_pmcs[i].reg_pmd_num,i,pd[i].reg_num,i,pd[i].reg_set);
+      if (pd[i].reg_set != last_reg_set)
+	{
+	  offset += reg_set_done;
+	  reg_set_done = 0;
+	}
+      reg_set_done++;
 
-   inp->pfp_event_count = count;
-   for (i=0;i<count;i++)
-     {
-       SUBDBG("Stuffing event %d (PFM event %d) into input structure.\n",
-	      i,native[i].ni_event);
-       inp->pfp_events[i].event = native[i].ni_event;
-     }
-
-   /*
-    * let the library figure out the values for the PMCS
-    */
-   
-   ret = compute_kernel_args(inp,outp,pd,pc);
-   if (ret != PAPI_OK)
-     return(ret);
-
-  /* Update the native structure with the allocation, because the allocation is done here.
-   */
-
-   for (i=0;i<inp->pfp_event_count;i++)
-     {
-       native[i].ni_position = outp->pfp_pmcs[i].reg_num;
-       SUBDBG("PAPI Native[%d].ni_position is %d\n", i, native[i].ni_position);
-     }
-
+      native[i].ni_position = pd[i].reg_num + offset;
+      SUBDBG("native event index %d (code 0x%x) is at PMD offset %d\n", i, native[i].ni_event, native[i].ni_position);
+    }
+      
    /* If structure has not yet been filled with a context, fill it
       from the thread's context. This should happen in init_control_state
       when we give that a *ctx argument */
@@ -1536,7 +1821,6 @@ int _papi_hwd_update_control_state(hwd_control_state_t *ctl,
        memcpy(&ctl->load,&ctx->load,sizeof(ctx->load));
        memcpy(&ctl->ctx,&ctx->ctx,sizeof(ctx->ctx));
      }
-       
+
    return (PAPI_OK);
 }
-
