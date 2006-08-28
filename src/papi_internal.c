@@ -1439,11 +1439,23 @@ int _papi_hwi_set_event_info(PAPI_event_info_t * info, int *EventCode)
 
    *EventCode = i | PAPI_PRESET_MASK; /* set new EventCode (may not have changed) */
    _papi_hwi_presets.count[i] = info->count;
+
+   /* There's currently a debate over the use of papi_xxx memory functions.
+      One camp says they should always be used; the other says they're only
+      for debug. Meanwhile, our code had better not rely on their function...
+   */
+#ifndef PAPI_NO_MEMORY_MANAGEMENT
+  /* free the names and descriptions only if they were malloc'd by PAPI
+   * Generally, this info is statically allocated at compile time.
+   * This code overrides existing info, or appends new info to the table.
+   * In these cases, papi_valid_free prevents pointers from being stranded.
+   */
    if (_papi_hwi_presets.info[i].symbol) papi_valid_free(_papi_hwi_presets.info[i].symbol);
-   _papi_hwi_presets.info[i].symbol = papi_strdup(info->symbol);
    if (_papi_hwi_presets.info[i].short_descr) papi_valid_free(_papi_hwi_presets.info[i].short_descr);
-   _papi_hwi_presets.info[i].short_descr = papi_strdup(info->short_descr);
    if (_papi_hwi_presets.info[i].long_descr) papi_valid_free(_papi_hwi_presets.info[i].long_descr);
+#endif
+   _papi_hwi_presets.info[i].symbol = papi_strdup(info->symbol);
+   _papi_hwi_presets.info[i].short_descr = papi_strdup(info->short_descr);
    _papi_hwi_presets.info[i].long_descr = papi_strdup(info->long_descr);
 
    if (_papi_hwi_presets.data[i] == NULL)
