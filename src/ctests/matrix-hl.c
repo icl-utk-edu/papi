@@ -85,10 +85,10 @@ int main(int argc, char **argv)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop_counters", retval);
 
-   /*     Make sure the compiler does not optimize away the multiplication
-    *  dummy(r);
+   /*  Make sure the compiler does not optimize away the multiplication
+    *  with dummy(r);
     */
-#if defined(__ALPHA) && defined(__osf__)
+#if ((defined(__ALPHA) && defined(__osf__)) || defined(PPC64))
    dummy(r);
 #endif
 
@@ -100,6 +100,11 @@ int main(int argc, char **argv)
       }
       printf(TAB1, "Cycles:", values[1]);
    }
+
+   /*  
+    *  Intel Core overreports flops by 50% when using -O
+    *  Use -O2 or -O3 to produce the expected # of flops
+    */
 
    if (event[0] == PAPI_FP_INS) {
       /*     Compare measured FLOPS to expected value */
