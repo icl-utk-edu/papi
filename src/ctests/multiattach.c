@@ -18,8 +18,9 @@
 
 int wait_for_attach_and_loop(void)
 {
-  sleep(1);
+  kill( getpid(), SIGSTOP );
   do_flops(NUM_FLOPS);
+  kill( getpid(), SIGSTOP );
   return(0);
 }
 
@@ -123,6 +124,40 @@ int main(int argc, char **argv)
 
    elapsed_virt_cyc = PAPI_get_virt_cyc();
 
+   /* Wait for the SIGSTOP. */
+   if( subinfo->attach_must_ptrace ) 
+     {
+       if( ptrace( PTRACE_CONT, pid, NULL, NULL ) == -1 ) {
+	 perror( "ptrace(PTRACE_CONT)" );
+	 return 1;
+       }
+       if( waitpid( pid, & status, 0 ) == -1 ) {
+	 perror("waitpid()");
+	 exit(1);
+       }
+       if( WIFSTOPPED(status) == 0 ) {
+	 test_fail(__FILE__, __LINE__, "Child process didn't return true to WIFSTOPPED", 0);
+       }
+       if( WSTOPSIG(status) != SIGSTOP ) {
+	 test_fail(__FILE__, __LINE__, "Child process didn't stop on SIGSTOP", 0);
+       }
+
+       if( ptrace( PTRACE_CONT, pid2, NULL, NULL ) == -1 ) {
+	 perror( "ptrace(PTRACE_CONT)" );
+	 return 1;
+       }
+       if( waitpid( pid2, & status, 0 ) == -1 ) {
+	 perror("waitpid()");
+	 exit(1);
+       }
+       if( WIFSTOPPED(status) == 0 ) {
+	 test_fail(__FILE__, __LINE__, "Child process didn't return true to WIFSTOPPED", 0);
+       }
+       if( WSTOPSIG(status) != SIGSTOP ) {
+	 test_fail(__FILE__, __LINE__, "Child process didn't stop on SIGSTOP", 0);
+       }
+     }
+
    retval = PAPI_start(EventSet1);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
@@ -131,19 +166,70 @@ int main(int argc, char **argv)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-  if (subinfo->attach_must_ptrace)
+   /* Wait for the SIGSTOP. */
+   if (subinfo->attach_must_ptrace)
     {
-      if (ptrace(PTRACE_CONT,pid,NULL,NULL) == -1)
-	{
-	  perror("ptrace(PTRACE_ATTACH)");
-	  return(1);
-	}
-      if (ptrace(PTRACE_CONT,pid2,NULL,NULL) == -1)
-	{
-	  perror("ptrace(PTRACE_ATTACH)");
-	  return(1);
-	}
+      if (ptrace(PTRACE_CONT,pid,NULL,NULL) == -1) {
+	perror("ptrace(PTRACE_ATTACH)");
+	return(1);
+      }
+      if( waitpid( pid, & status, 0 ) == -1 ) {
+        perror("waitpid()");
+        exit(1);
+      }
+      if( WIFSTOPPED(status) == 0 ) {
+	test_fail(__FILE__, __LINE__, "Child process didn't return true to WIFSTOPPED", 0);
+      }
+      if( WSTOPSIG(status) != SIGSTOP ) {
+	test_fail(__FILE__, __LINE__, "Child process didn't stop on SIGSTOP", 0);
+      }
+	
+      if (ptrace(PTRACE_CONT,pid2,NULL,NULL) == -1) {
+	perror("ptrace(PTRACE_ATTACH)");
+	return(1);
+      }
+      if( waitpid( pid2, & status, 0 ) == -1 ) {
+        perror("waitpid()");
+        exit(1);
+      }
+      if( WIFSTOPPED(status) == 0 ) {
+	test_fail(__FILE__, __LINE__, "Child process didn't return true to WIFSTOPPED", 0);
+      }
+      if( WSTOPSIG(status) != SIGSTOP ) {
+	test_fail(__FILE__, __LINE__, "Child process didn't stop on SIGSTOP", 0);
+      }
     }
+
+   elapsed_virt_us = PAPI_get_virt_usec() - elapsed_virt_us;
+
+   elapsed_virt_cyc = PAPI_get_virt_cyc() - elapsed_virt_cyc;
+
+   elapsed_us = PAPI_get_real_usec() - elapsed_us;
+
+   elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
+
+   retval = PAPI_stop(EventSet1, values[0]);
+   if (retval != PAPI_OK)
+     printf("Warning: PAPI_stop returned error %d, probably ok.\n", retval);
+
+   retval = PAPI_stop(EventSet2, values[1]);
+   if (retval != PAPI_OK)
+     printf("Warning: PAPI_stop returned error %d, probably ok.\n", retval);
+
+   remove_test_events(&EventSet1, mask1);
+   remove_test_events(&EventSet2, mask1);
+
+   if( subinfo->attach_must_ptrace ) 
+     {
+       if( ptrace( PTRACE_CONT, pid, NULL, NULL ) == -1 ) {
+	 perror( "ptrace(PTRACE_CONT)" );
+	 return 1;
+       }
+       if( ptrace( PTRACE_CONT, pid2, NULL, NULL ) == -1 ) {
+	 perror( "ptrace(PTRACE_CONT)" );
+	 return 1;
+       }
+     }
 
   if (waitpid(pid,&status,0) == -1)
     {
@@ -164,24 +250,6 @@ int main(int argc, char **argv)
   /* This code isn't necessary as we know the child has exited,
      it *may* return an error if the substrate so chooses. You should use read() instead. */
 
-   retval = PAPI_stop(EventSet1, values[0]);
-   if (retval != PAPI_OK)
-     printf("Warning: PAPI_stop returned error %d, probably ok.\n", retval);
-
-   retval = PAPI_stop(EventSet2, values[1]);
-   if (retval != PAPI_OK)
-     printf("Warning: PAPI_stop returned error %d, probably ok.\n", retval);
-
-   elapsed_virt_us = PAPI_get_virt_usec() - elapsed_virt_us;
-
-   elapsed_virt_cyc = PAPI_get_virt_cyc() - elapsed_virt_cyc;
-
-   elapsed_us = PAPI_get_real_usec() - elapsed_us;
-
-   elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
-
-   remove_test_events(&EventSet1, mask1);
-   remove_test_events(&EventSet2, mask1);
 
       printf("Test case: multiple 3rd party attach start, stop.\n");
       printf("-----------------------------------------------\n");
