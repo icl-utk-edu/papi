@@ -9,6 +9,7 @@
 #if defined(_CRAYT3E) || defined(__crayx1)
       integer ilen,ierror
 #endif
+      integer retval
       integer quiet
       common quiet
 
