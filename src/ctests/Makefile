@@ -19,9 +19,12 @@ EAR	= earprofile
 RANGE	= data_range
 BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
-TESTS 	= $(PTHREADS) $(SERIAL) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM) $(SHARED)
+TESTS	= $(PTHREADS) $(SERIAL) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM)\
+	$(SHARED) $(EAR) $(RANGE) $(ACPI)
 INCLUDE = -I.. -I/usr/include 
 PAPILIB	= ../$(LIBRARY)
+
+acpi_test: $(ACPI)
 
 ear: $(EAR)
 
