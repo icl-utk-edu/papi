@@ -4,7 +4,7 @@ SUBSTR  	= linux-acpi
 MEMSUBSTR 	= linux-acpi
 DESCR		= "Sample substrate: Any hardware platform with GNU compilers"
 LIBS		= static shared
-TARGETS 	= serial multiplex_and_pthreads
+TARGETS 	= serial multiplex_and_pthreads acpi
 POST_BUILD =
 SPECIAL_REMOVE =
 

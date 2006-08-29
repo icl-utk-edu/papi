@@ -7,18 +7,25 @@ MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
 SERIAL  = multiattach zero_attach reset subinfo realtime first exeinfo zero zero_fork branches dmem_info all_native_events all_events derived high-level2 describe memory  \
-	zero_flip low-level high-level eventname case1 case2 data_range p4_lst_ins \
+	zero_flip low-level high-level eventname case1 case2 p4_lst_ins \
 	calibrate flops second johnmay2 \
 	overflow overflow_force_software overflow_single_event \
-    overflow_twoevents timer_overflow overflow2 \
+	overflow_twoevents timer_overflow overflow2 \
 	matrix-hl tenth encode encode2 \
-	profile sprofile profile_twoevents earprofile byte_profile\
-	ipc native overflow_index overflow_one_and_read acpi 
+	profile sprofile profile_twoevents byte_profile\
+	ipc native overflow_index overflow_one_and_read
+ACPI	= acpi 
+EAR	= earprofile
+RANGE	= data_range
 BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
 TESTS 	= $(PTHREADS) $(SERIAL) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM) $(SHARED)
 INCLUDE = -I.. -I/usr/include 
 PAPILIB	= ../$(LIBRARY)
+
+ear: $(EAR)
+
+data_range: $(RANGE)
 
 mpi: $(MPI)
 
@@ -246,7 +253,7 @@ low-level: low-level.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) low-level.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o low-level
 
 matrix-hl: matrix-hl.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) matrix-hl.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o matrix-hl
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -O2 matrix-hl.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o matrix-hl
 
 high-level: high-level.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) high-level.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o high-level

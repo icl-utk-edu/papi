@@ -6,7 +6,7 @@ SHLIB     = libpapi.so
 SUBSTR  = linux-ia64
 MEMSUBSTR= linux-ia64
 LIBS	= static shared
-TARGETS = serial multiplex_and_pthreads shared
+TARGETS = serial multiplex_and_pthreads shared ear data_range
 
 #
 # GNU G77/GCC section
