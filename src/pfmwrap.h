@@ -73,11 +73,15 @@ static inline int pfmw_get_num_counters(int *num) {
 }
 
 static inline int pfmw_get_num_events(int *num) {
-  int tmp;
-  tmp = pfm_get_first_event();
-  if (tmp < 0)
-    return(PAPI_ESYS);
-  while ((tmp = pfm_get_next_event(tmp)) == -1);
+  int tmp = 0;
+
+  while (1)
+    {
+      int newtmp = pfm_get_next_event(tmp);
+      if (newtmp == -1)
+	break;
+      tmp = newtmp;
+    }
   *num = tmp;
   return(PAPI_OK);
 }
