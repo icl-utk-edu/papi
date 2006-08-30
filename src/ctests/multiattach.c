@@ -261,13 +261,13 @@ int main(int argc, char **argv)
       printf
           ("-------------------------------------------------------------------------\n");
 
-      sprintf(add_event_str, "(PID%lu) %-12s : \t", pid,event_name);
+      sprintf(add_event_str, "(PID %lu) %-12s : \t", pid,event_name);
       printf(TAB1, add_event_str, (values[0])[0]);
-      sprintf(add_event_str, "(PID%lu) PAPI_TOT_CYC : \t",pid);
+      sprintf(add_event_str, "(PID %lu) PAPI_TOT_CYC : \t",pid);
       printf(TAB1, add_event_str, (values[0])[1]);
-      sprintf(add_event_str, "(PID%lu) %-12s : \t", pid2,event_name);
+      sprintf(add_event_str, "(PID %lu) %-12s : \t", pid2,event_name);
       printf(TAB1, add_event_str, (values[1])[0]);
-      sprintf(add_event_str, "(PID%lu) PAPI_TOT_CYC : \t",pid2);
+      sprintf(add_event_str, "(PID %lu) PAPI_TOT_CYC : \t",pid2);
       printf(TAB1, add_event_str, (values[1])[1]);
       printf(TAB1, "Real usec    : \t", elapsed_us);
       printf(TAB1, "Real cycles  : \t", elapsed_cyc);
