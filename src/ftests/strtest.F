@@ -46,6 +46,8 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       check=PAPI_VER_CURRENT
       call PAPIF_library_init(check)
       if ( check.NE.PAPI_VER_CURRENT) then
+           call PAPIF_perror(check,papierr,code)
+           print *,'*ERROR* '//papierr(1:getstrlen(papierr))
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPI_library_init', check)
       end if
@@ -302,6 +304,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       integer getstrlen
       external getstrlen
 
+#if 0
       call PAPIF_describe_event(name,code,string,check)
  100  format(t1,a,'"',a,'"')
       if (quiet .EQ. 0) then
@@ -323,6 +326,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
 
       call findnull(string,quiet)
       call findnull(name,quiet)
+#endif
 
       return
       end
