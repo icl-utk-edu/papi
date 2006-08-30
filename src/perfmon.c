@@ -41,6 +41,7 @@ papi_svector_t _linux_pfm_table[] = {
   {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
   {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
   {(void (*)())_papi_hwd_set_profile, VEC_PAPI_HWD_SET_PROFILE},
+  {(void (*)())_papi_hwd_stop_profiling, VEC_PAPI_HWD_STOP_PROFILING},
   {(void (*)())_papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
   {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
   {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
@@ -114,6 +115,12 @@ static pfm_preset_search_entry_t pfm_unknown_preset_search_map[] = {
 /* BEGIN COMMON CODE */
 
 #ifdef DEBUG
+void dump_smpl_arg(pfm_dfl_smpl_arg_t *arg)
+{
+  SUBDBG("SMPL_ARG.buf_size = %lld\n",arg->buf_size);
+  SUBDBG("SMPL_ARG.buf_flags = %d\n",arg->buf_flags);
+}
+
 void dump_sets(pfarg_setdesc_t *set, int num_sets)
 {
   int i;
@@ -187,6 +194,29 @@ void dump_pmd(hwd_control_state_t * ctl)
       SUBDBG("PD[%d].reg_random_mask = %llu\n",i,pd[i].reg_random_mask);
       SUBDBG("PD[%d].reg_random_seed = %d\n",i,pd[i].reg_random_seed);
     }
+}
+
+void dump_smpl_hdr(pfm_dfl_smpl_hdr_t *hdr)
+{
+  SUBDBG("SMPL_HDR.hdr_count = %llu\n",hdr->hdr_count);
+  SUBDBG("SMPL_HDR.hdr_cur_offs = %llu\n",hdr->hdr_cur_offs);
+  SUBDBG("SMPL_HDR.hdr_overflows = %llu\n",hdr->hdr_overflows);
+  SUBDBG("SMPL_HDR.hdr_buf_size = %llu\n",hdr->hdr_buf_size);
+  SUBDBG("SMPL_HDR.hdr_min_buf_space = %llu\n",hdr->hdr_min_buf_space);
+  SUBDBG("SMPL_HDR.hdr_version = %d\n",hdr->hdr_version);
+  SUBDBG("SMPL_HDR.hdr_buf_flags = %d\n",hdr->hdr_buf_flags);
+}
+
+void dump_smpl(pfm_dfl_smpl_entry_t *entry)
+{
+  SUBDBG("SMPL.pid = %d\n",entry->pid);
+  SUBDBG("SMPL.ovfl_pmd = %d\n",entry->ovfl_pmd);
+  SUBDBG("SMPL.last_reset_val = %llu\n",entry->last_reset_val);
+  SUBDBG("SMPL.ip = 0x%llx\n",entry->ip);
+  SUBDBG("SMPL.tstamp = %llu\n",entry->tstamp);
+  SUBDBG("SMPL.cpu = %d\n",entry->cpu);
+  SUBDBG("SMPL.set = %d\n",entry->set);
+  SUBDBG("SMPL.tgid = %d\n",entry->tgid);
 }
 #endif
 
@@ -786,50 +816,58 @@ inline static int compute_kernel_args(hwd_control_state_t * ctl)
 
 static int attach(hwd_control_state_t *ctl, unsigned long tid)
 {
-  pfarg_ctx_t newctx;
-  pfarg_load_t load_args;
+  pfarg_ctx_t *newctx = (pfarg_ctx_t *)malloc(sizeof(pfarg_ctx_t));
+  pfarg_load_t *load_args = (pfarg_load_t *)malloc(sizeof(pfarg_load_t));
   int ret;
 
-  memset(&newctx,0x0,sizeof(newctx));
-  SUBDBG("PFM_CREATE_CONTEXT(%p)\n",&newctx);
-  if ((ret = pfm_create_context(&newctx, NULL, 0)))
+  if ((newctx == NULL) || (load_args == NULL))
+    return(PAPI_ENOMEM);
+  memset(newctx,0x0,sizeof(*newctx));
+  memset(load_args,0,sizeof(*load_args));
+
+  /* Make sure the process exists and is being ptraced() */
+
+  ret = ptrace(PTRACE_ATTACH, tid, NULL, NULL);
+  if (ret == 0)
+    {
+      ptrace(PTRACE_DETACH, tid, NULL, NULL);
+      PAPIERROR("Process/thread %d is not being ptraced.\n",tid);
+      free(newctx); free(load_args);
+      return(PAPI_EINVAL);
+    }
+  /* If we get here, then we should hope that the process is being
+     ptraced, if not, then we probably can't attach to it. */
+
+  if ((ret == -1) && (errno != EPERM))
+    {
+      PAPIERROR("Process/thread %d cannot be ptraced: %s\n",tid,strerror(errno));
+      free(newctx); free(load_args);
+      return(PAPI_EINVAL);
+    }
+
+  SUBDBG("PFM_CREATE_CONTEXT(%p,%p,%d)\n",newctx,NULL,0);
+  if ((ret = pfm_create_context(newctx, NULL, 0)))
     {
       PAPIERROR("pfm_create_context(): %s", pfm_strerror(ret));
+      free(newctx); free(load_args);
       return(PAPI_ESYS);
     }
-  SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",newctx.ctx_fd);
+  SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",newctx->ctx_fd);
 
-  memset(&load_args, 0, sizeof(load_args));
-  load_args.load_pid = tid;
-  SUBDBG("PFM_LOAD_CONTEXT(%d,%p(%u))\n",newctx.ctx_fd,&load_args,load_args.load_pid);
-  if ((ret = pfm_load_context(newctx.ctx_fd, &load_args)))
-    {
-      PAPIERROR("pfm_load_context(%d,%p(%u)): %s", newctx.ctx_fd, &load_args, tid, pfm_strerror(ret));
-      close(newctx.ctx_fd);
-      return PAPI_ESYS;
-    }
+  ctl->ctx = newctx;
+  load_args->load_pid = tid;
+  ctl->load = load_args;
 
-  memcpy(&ctl->load,&load_args,sizeof(load_args));
-  memcpy(&ctl->ctx,&newctx,sizeof(newctx));
   return(PAPI_OK);
 }
 
 static int detach(hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
-  int ret;
-
-  SUBDBG("PFM_UNLOAD_CONTEXT(%d) (tid %u)\n",ctl->ctx.ctx_fd,ctl->load.load_pid);
-  if ((ret = pfm_unload_context(ctl->ctx.ctx_fd)))
-    {
-      PAPIERROR("pfm_unload_context(%d): %s", ctl->ctx.ctx_fd, pfm_strerror(ret));
-      return PAPI_ESYS;
-    }
-  return (PAPI_OK);
-  close(ctl->ctx.ctx_fd);
+  close(ctl->ctx->ctx_fd);
 
   /* Restore to original context */
-  memcpy(&ctl->load,&ctx->load,sizeof(ctx->load));
-  memcpy(&ctl->ctx,&ctx->ctx,sizeof(ctx->ctx));
+  ctl->ctx = &ctx->ctx;
+  ctl->load = &ctx->load;
 
   return(PAPI_OK);
 }
@@ -861,7 +899,7 @@ inline static int check_multiplex_timeout(hwd_context_t *ctx, unsigned long *tim
     {
       memset(&newctx, 0, sizeof(newctx));
 
-      SUBDBG("PFM_CREATE_CONTEXT(%p)\n",&newctx);
+      SUBDBG("PFM_CREATE_CONTEXT(%p,%p,%d)\n",&newctx,NULL,0);
       if ((ret = pfm_create_context(&newctx, NULL, 0)))
 	{
 	  PAPIERROR("pfm_create_context(): %s", pfm_strerror(ret));
@@ -1071,8 +1109,9 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   _papi_hwi_system_info.sub_info.attach = 1;
   _papi_hwi_system_info.sub_info.attach_must_ptrace = 1;
   _papi_hwi_system_info.sub_info.kernel_multiplex = 1;
+  _papi_hwi_system_info.sub_info.kernel_profile = 1;
   _papi_hwi_system_info.sub_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
-  check_multiplex_timeout(NULL, (unsigned long *)&_papi_hwi_system_info.sub_info.multiplex_timer_us);
+//  check_multiplex_timeout(NULL, (unsigned long *)&_papi_hwi_system_info.sub_info.multiplex_timer_us);
 
    /* Fill in what we can of the papi_system_info. */
    retval = _papi_hwd_get_system_info();
@@ -1161,34 +1200,28 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
 #endif
 
   memset(&newctx, 0, sizeof(newctx));
-  SUBDBG("PFM_CREATE_CONTEXT(%p)\n",&newctx);
+  memset(&load_args, 0, sizeof(load_args));
+
+  SUBDBG("PFM_CREATE_CONTEXT(%p,%p,%d)\n",&newctx, NULL, 0);
   if ((ret = pfm_create_context(&newctx, NULL, 0)))
     {
-      PAPIERROR("pfm_create_context(): %s", pfm_strerror(ret));
+      PAPIERROR("pfm_create_context(%p,%p,%d): %s",&newctx,NULL,0);
+    bail:
       return(PAPI_ESYS);
     }
   SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",newctx.ctx_fd);
 
-  memset(&load_args, 0, sizeof(load_args));
-  load_args.load_pid = mygettid();
-  SUBDBG("PFM_LOAD_CONTEXT(%d,%p(%d))\n",newctx.ctx_fd,&load_args,mygettid());
-  if ((ret = pfm_load_context(newctx.ctx_fd, &load_args)))
-    {
-      PAPIERROR("pfm_load_context(%d,%p(%d)): %s",
-		newctx.ctx_fd,&load_args,mygettid(),pfm_strerror(ret));
-      pfm_unload_context(newctx.ctx_fd);
-      return(PAPI_ESYS);
-    }
-
-#if 0
   /* set close-on-exec to ensure we will be getting the PFM_END_MSG, i.e.,
    * fd not visible to child. */
 
+#if 0
   ret = fcntl(newctx.ctx_fd, F_SETFD, FD_CLOEXEC);
   if (ret == -1)
     {
       PAPIERROR("cannot fcntl(FD_CLOEXEC) on %d: %s\n", newctx.ctx_fd,strerror(errno));
+    bail:
       pfm_unload_context(newctx.ctx_fd);
+      close(newctx.ctx_fd);
       return(PAPI_ESYS);
     }
 #endif
@@ -1199,8 +1232,7 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
   if (ret == -1)
     {
       PAPIERROR("cannot fcntl(O_ASYNC) on %d: %s\n", newctx.ctx_fd,strerror(errno));
-      pfm_unload_context(newctx.ctx_fd);
-      return(PAPI_ESYS);
+      goto bail;
     }
 
   /* get ownership of the descriptor */
@@ -1209,8 +1241,7 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
   if (ret == -1)
     {
       PAPIERROR("cannot fcntl(F_SETOWN) on %d: %s\n", newctx.ctx_fd,strerror(errno));
-      pfm_unload_context(newctx.ctx_fd);
-      return(PAPI_ESYS);
+      goto bail;
     }
 
   /*
@@ -1227,12 +1258,13 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
   if (ret == -1)
     {
       PAPIERROR("cannot fcntl(F_SETSIG,%d) on %d: %s\n", _papi_hwi_system_info.sub_info.hardware_intr_sig, newctx.ctx_fd, strerror(errno));
-      pfm_unload_context(newctx.ctx_fd);
-      return(PAPI_ESYS);
+      goto bail;
     }
 
   memcpy(&thr_ctx->ctx,&newctx,sizeof(newctx));
+  load_args.load_pid = mygettid();
   memcpy(&thr_ctx->load,&load_args,sizeof(load_args));
+
   return(PAPI_OK);
 }
 
@@ -1318,10 +1350,10 @@ int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t *ctl)
   for (i=0; i < ctl->in.pfp_event_count; i++) 
     ctl->pd[i].reg_value = 0ULL;
 
-  SUBDBG("PFM_WRITE_PMDS(%d,%p,%d)\n",ctl->ctx.ctx_fd, ctl->pd, ctl->in.pfp_event_count);
-  if ((ret = pfm_write_pmds(ctl->ctx.ctx_fd, ctl->pd, ctl->in.pfp_event_count)))
+  SUBDBG("PFM_WRITE_PMDS(%d,%p,%d)\n",ctl->ctx->ctx_fd, ctl->pd, ctl->in.pfp_event_count);
+  if ((ret = pfm_write_pmds(ctl->ctx->ctx_fd, ctl->pd, ctl->in.pfp_event_count)))
     {
-      PAPIERROR("pfm_write_pmds(%d,%p,%d): %s",ctl->ctx.ctx_fd,ctl->pd,ctl->in.pfp_event_count, pfm_strerror(ret));
+      PAPIERROR("pfm_write_pmds(%d,%p,%d): %s",ctl->ctx->ctx_fd,ctl->pd,ctl->in.pfp_event_count, pfm_strerror(ret));
       return(PAPI_ESYS);
     }
 
@@ -1334,11 +1366,11 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctl,
   int i, ret;
   long_long tot_runs = 0LL;
 
-  SUBDBG("PFM_READ_PMDS(%d,%p,%d)\n",ctl->ctx.ctx_fd, ctl->pd, ctl->in.pfp_event_count);
-  if ((ret = pfm_read_pmds(ctl->ctx.ctx_fd, ctl->pd, ctl->in.pfp_event_count)))
+  SUBDBG("PFM_READ_PMDS(%d,%p,%d)\n",ctl->ctx->ctx_fd, ctl->pd, ctl->in.pfp_event_count);
+  if ((ret = pfm_read_pmds(ctl->ctx->ctx_fd, ctl->pd, ctl->in.pfp_event_count)))
     {
       DEBUGCALL(DEBUG_SUBSTRATE,dump_pmd(ctl));
-      PAPIERROR("pfm_read_pmds(%d,%p,%d): %s",ctl->ctx.ctx_fd,ctl->pd,ctl->in.pfp_event_count, pfm_strerror(ret));
+      PAPIERROR("pfm_read_pmds(%d,%p,%d): %s",ctl->ctx->ctx_fd,ctl->pd,ctl->in.pfp_event_count, pfm_strerror(ret));
       *events = NULL;
       return(PAPI_ESYS);
     }
@@ -1363,11 +1395,11 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctl,
 
   /* If we're multiplexing, get the scaling information */
 
-  SUBDBG("PFM_GETINFO_EVTSETS(%d,%p,%d)\n",ctl->ctx.ctx_fd, ctl->setinfo, ctl->num_sets);
-  if ((ret = pfm_getinfo_evtsets(ctl->ctx.ctx_fd, ctl->setinfo, ctl->num_sets)))
+  SUBDBG("PFM_GETINFO_EVTSETS(%d,%p,%d)\n",ctl->ctx->ctx_fd, ctl->setinfo, ctl->num_sets);
+  if ((ret = pfm_getinfo_evtsets(ctl->ctx->ctx_fd, ctl->setinfo, ctl->num_sets)))
     {
       DEBUGCALL(DEBUG_SUBSTRATE,dump_setinfo(ctl));
-      PAPIERROR("pfm_getinfo_evtsets(%d,%p,%d): %s\n",ctl->ctx.ctx_fd, ctl->setinfo, ctl->num_sets, pfm_strerror(ret));
+      PAPIERROR("pfm_getinfo_evtsets(%d,%p,%d): %s\n",ctl->ctx->ctx_fd, ctl->setinfo, ctl->num_sets, pfm_strerror(ret));
       *events = NULL;
       return(PAPI_ESYS);
     }
@@ -1402,18 +1434,11 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctl)
 
   if (ctl->num_sets > 1)
     {
-      SUBDBG("PFM_UNLOAD_CONTEXT(%d) (tid %u)\n",ctx->ctx.ctx_fd,ctx->load.load_pid);
-      if ((ret = pfm_unload_context(ctx->ctx.ctx_fd)))
-	{
-	  PAPIERROR("pfm_unload_context(%d): %s", ctx->ctx.ctx_fd, pfm_strerror(ret));
-	  return PAPI_ESYS;
-	}
-
-      SUBDBG("PFM_CREATE_EVTSETS(%d,%p,%d)\n",ctl->ctx.ctx_fd,ctl->set,ctl->num_sets);
-      if ((ret = pfm_create_evtsets(ctl->ctx.ctx_fd,ctl->set,ctl->num_sets)) != PFMLIB_SUCCESS)
+      SUBDBG("PFM_CREATE_EVTSETS(%d,%p,%d)\n",ctl->ctx->ctx_fd,ctl->set,ctl->num_sets);
+      if ((ret = pfm_create_evtsets(ctl->ctx->ctx_fd,ctl->set,ctl->num_sets)) != PFMLIB_SUCCESS)
 	{
 	  DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(ctl->set,ctl->num_sets));
-	  PAPIERROR("pfm_create_evtsets(%d,%p,%d): %s", ctl->ctx.ctx_fd,ctl->set,ctl->num_sets, pfm_strerror(ret));
+	  PAPIERROR("pfm_create_evtsets(%d,%p,%d): %s", ctl->ctx->ctx_fd,ctl->set,ctl->num_sets, pfm_strerror(ret));
 	  return(PAPI_ESYS);
 	}
       DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(ctl->set,ctl->num_sets));
@@ -1428,11 +1453,11 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctl)
    * monitors.
    */
 
-  SUBDBG("PFM_WRITE_PMCS(%d,%p,%d)\n",ctl->ctx.ctx_fd, ctl->pc, ctl->out.pfp_pmc_count);
-  if ((ret = pfm_write_pmcs(ctl->ctx.ctx_fd, ctl->pc, ctl->out.pfp_pmc_count)))
+  SUBDBG("PFM_WRITE_PMCS(%d,%p,%d)\n",ctl->ctx->ctx_fd, ctl->pc, ctl->out.pfp_pmc_count);
+  if ((ret = pfm_write_pmcs(ctl->ctx->ctx_fd, ctl->pc, ctl->out.pfp_pmc_count)))
     {
       DEBUGCALL(DEBUG_SUBSTRATE,dump_pmc(ctl));
-      PAPIERROR("pfm_write_pmcs(%d,%p,%d): %s",ctl->ctx.ctx_fd,ctl->pc,ctl->out.pfp_pmc_count, pfm_strerror(ret));
+      PAPIERROR("pfm_write_pmcs(%d,%p,%d): %s",ctl->ctx->ctx_fd,ctl->pc,ctl->out.pfp_pmc_count, pfm_strerror(ret));
       return(PAPI_ESYS);
     }
   DEBUGCALL(DEBUG_SUBSTRATE,dump_pmc(ctl));
@@ -1448,29 +1473,26 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctl)
    * as being part of a sample (reg_smpl_pmds)
    */
 
-  SUBDBG("PFM_WRITE_PMDS(%d,%p,%d)\n",ctl->ctx.ctx_fd, ctl->pd, ctl->in.pfp_event_count);
-  if ((ret = pfm_write_pmds(ctl->ctx.ctx_fd, ctl->pd, ctl->in.pfp_event_count)))
+  SUBDBG("PFM_WRITE_PMDS(%d,%p,%d)\n",ctl->ctx->ctx_fd, ctl->pd, ctl->in.pfp_event_count);
+  if ((ret = pfm_write_pmds(ctl->ctx->ctx_fd, ctl->pd, ctl->in.pfp_event_count)))
     {
       DEBUGCALL(DEBUG_SUBSTRATE,dump_pmd(ctl));
-      PAPIERROR("pfm_write_pmds(%d,%p,%d): %s",ctl->ctx.ctx_fd,ctl->pd,ctl->in.pfp_event_count, pfm_strerror(ret));
+      PAPIERROR("pfm_write_pmds(%d,%p,%d): %s",ctl->ctx->ctx_fd,ctl->pd,ctl->in.pfp_event_count, pfm_strerror(ret));
       return(PAPI_ESYS);
     }
   DEBUGCALL(DEBUG_SUBSTRATE,dump_pmd(ctl));
 
-  if (ctl->num_sets > 1)
+  SUBDBG("PFM_LOAD_CONTEXT(%d,%p(%u))\n",ctl->ctx->ctx_fd,ctl->load,ctl->load->load_pid);
+  if ((ret = pfm_load_context(ctl->ctx->ctx_fd,ctl->load)))
     {
-      SUBDBG("PFM_LOAD_CONTEXT(%d,%p(%u))\n",ctx->ctx.ctx_fd,&ctx->load,ctx->load.load_pid);
-      if ((ret = pfm_load_context(ctx->ctx.ctx_fd,&ctx->load)))
-	{
-	  PAPIERROR("pfm_load_context(%d,%p(%u)): %s", ctx->ctx.ctx_fd,&ctx->load,ctx->load.load_pid, pfm_strerror(ret));
-	  return PAPI_ESYS;
-	}
+      PAPIERROR("pfm_load_context(%d,%p(%u)): %s", ctl->ctx->ctx_fd,ctl->load,ctl->load->load_pid, pfm_strerror(ret));
+      return PAPI_ESYS;
     }
 
-  SUBDBG("PFM_START(%d,%p)\n",ctl->ctx.ctx_fd, NULL);
-  if ((ret = pfm_start(ctl->ctx.ctx_fd, NULL)))
+  SUBDBG("PFM_START(%d,%p)\n",ctl->ctx->ctx_fd, NULL);
+  if ((ret = pfm_start(ctl->ctx->ctx_fd, NULL)))
     {
-      PAPIERROR("pfm_start(%d): %s", ctl->ctx.ctx_fd, pfm_strerror(ret));
+      PAPIERROR("pfm_start(%d): %s", ctl->ctx->ctx_fd, pfm_strerror(ret));
       return(PAPI_ESYS);
     }
    return PAPI_OK;
@@ -1479,18 +1501,27 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctl)
 int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctl)
 {
   int ret;
-  SUBDBG("PFM_STOP(%d)\n",ctl->ctx.ctx_fd);
-  if ((ret = pfm_stop(ctl->ctx.ctx_fd)))
+
+  SUBDBG("PFM_STOP(%d)\n",ctl->ctx->ctx_fd);
+  if ((ret = pfm_stop(ctl->ctx->ctx_fd)))
     {
       /* If this thread is attached to another thread, and that thread
 	 has exited, we can safely discard the error here. */
 
-      if ((ret == PFMLIB_ERR_NOTSUPP) && (ctl->load.load_pid != mygettid()))
+      if ((ret == PFMLIB_ERR_NOTSUPP) && (ctl->load->load_pid != mygettid()))
 	return(PAPI_OK);
 
-      PAPIERROR("pfm_stop(%d): %s", ctl->ctx.ctx_fd, pfm_strerror(ret));
+      PAPIERROR("pfm_stop(%d): %s", ctl->ctx->ctx_fd, pfm_strerror(ret));
       return(PAPI_ESYS);
     }
+
+  SUBDBG("PFM_UNLOAD_CONTEXT(%d) (tid %u)\n",ctl->ctx->ctx_fd,ctl->load->load_pid);
+  if ((ret = pfm_unload_context(ctl->ctx->ctx_fd)))
+    {
+      PAPIERROR("pfm_unload_context(%d): %s", ctl->ctx->ctx_fd, pfm_strerror(ret));
+      return PAPI_ESYS;
+    }
+
    return PAPI_OK;
 }
 
@@ -1534,19 +1565,77 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 
 int _papi_hwd_shutdown(hwd_context_t * ctx)
 {
-  int ret;
-
 #if defined(USR_PROC_PTTIMER)
   close(ctx->stat_fd);
 #endif  
-  SUBDBG("PFM_UNLOAD_CONTEXT(%d) (tid %u)\n",ctx->ctx.ctx_fd,ctx->load.load_pid);
-  if ((ret = pfm_unload_context(ctx->ctx.ctx_fd)))
-    {
-      PAPIERROR("pfm_unload_context(%d): %s", ctx->ctx.ctx_fd, pfm_strerror(ret));
-      return PAPI_ESYS;
-    }
   close(ctx->ctx.ctx_fd);
   return (PAPI_OK);
+}
+
+/* This will need to be modified for the Pentium IV */
+
+static inline int find_profile_index(EventSetInfo_t *ESI, int pmd, int *index)
+{
+  int pos, esi_index, count;
+
+  SUBDBG("(%p,%d,%p)\n",ESI,pmd,index);
+  for (count = 0; count < ESI->profile.event_counter; count++) 
+    {
+      /* Find offset of PMD that gets read from the kernel */
+      esi_index = ESI->profile.EventIndex[count];
+      pos = ESI->EventInfoArray[esi_index].pos[0];
+      SUBDBG("Examining event at ESI index %d, PMD position %d\n",esi_index,pos);
+      // PMU_FIRST_COUNTER
+      if (pos == pmd) 
+	{
+	  *index = count;
+	  SUBDBG("Event is at profile index %d\n",*index);
+	  return(PAPI_OK);
+	}
+    }
+  
+  PAPIERROR("wrong count: %d vs. ESI->profile.event_counter %d", count, ESI->profile.event_counter);
+  return(PAPI_EBUG);
+}
+
+static inline int
+process_smpl_buf(int num_smpl_pmds, int entry_size, _papi_hwi_context_t *ctx, ThreadInfo_t **thr)
+{
+  pfm_dfl_smpl_entry_t *ent;
+  size_t pos, count;
+  uint64_t entry;
+  pfm_dfl_smpl_hdr_t *hdr = (*thr)->context.smpl_buf;
+  int ret, profile_index;
+
+  DEBUGCALL(DEBUG_SUBSTRATE,dump_smpl_hdr(hdr));
+  count = hdr->hdr_count;
+  ent   = (pfm_dfl_smpl_entry_t *)(hdr+1);
+  pos   = (unsigned long)ent;
+  entry = 0;
+  
+  SUBDBG("This buffer has %d samples in it.\n",count);
+  while(count--) 
+    {
+      SUBDBG("Processing sample entry %llu\n",entry);
+      DEBUGCALL(DEBUG_SUBSTRATE,dump_smpl(ent));
+
+      /* Find the index of the profile buffers if we are profiling on many events */
+
+      ret = find_profile_index((*thr)->running_eventset,ent->ovfl_pmd,&profile_index);
+      if (ret != PAPI_OK)
+	return(ret);
+
+      (*thr)->running_eventset->profile.overflowcount++;
+      /* Fixup EAR stuff here */      
+      OVERFLOW_ADDRESS((*ctx)) = ent->ip;
+
+      _papi_hwi_dispatch_profile((*thr)->running_eventset, ctx, (long_long)0,profile_index);
+ 
+      pos += entry_size;
+      ent = (pfm_dfl_smpl_entry_t *)pos;
+      entry++;
+    }
+  return(PAPI_OK);
 }
 
 /* This function only used when hardware overflows ARE working */
@@ -1555,12 +1644,19 @@ void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
 {
    _papi_hwi_context_t ctx;
    pfm_msg_t msg;
-   int ret, fd;
-   ThreadInfo_t *master = NULL;
+   int ret, fd = info->si_fd;
+   ThreadInfo_t *thread = _papi_hwi_lookup_thread();
+
+#if defined(DEBUG)
+   if (thread == NULL)
+     {
+       PAPIERROR("thread == NULL in _papi_hwd_dispatch_timer!\n");
+       abort();
+     }
+#endif
 
    ctx.si = info;
    ctx.ucontext = (hwd_ucontext_t *)uc;
-   fd = info->si_fd;
 
  retry:
    ret = read(fd, &msg, sizeof(msg));
@@ -1589,24 +1685,136 @@ void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
      }
 
    if (ret != -1)
-     _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, 
-          msg.pfm_ovfl_msg.msg_ovfl_pmds[0], 0, &master);
- 
+     {
+       if (thread->running_eventset->state & PAPI_PROFILING)
+	 process_smpl_buf(0, sizeof(pfm_dfl_smpl_entry_t), &ctx, &thread);
+       else
+	 {
+	   OVERFLOW_ADDRESS(ctx) = msg.pfm_ovfl_msg.msg_ovfl_ip;
+	   _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, 
+					      msg.pfm_ovfl_msg.msg_ovfl_pmds[0], 0, &thread);
+	 }
+     }
+
    if ((ret = pfm_restart(info->si_fd)))
      {
        PAPIERROR("pfm_restart(%d): %s", info->si_fd, pfm_strerror(ret));
      }
 }
 
-int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI)
+int _papi_hwd_stop_profiling(ThreadInfo_t * thread, EventSetInfo_t * ESI)
 {
-   return (PAPI_OK);
+  _papi_hwi_context_t bogus;
+  hwd_ucontext_t uc;
+  hwd_siginfo_t si;
+  
+  memset(&bogus,0,sizeof(bogus));
+  memset(&si,0,sizeof(si));
+  memset(&uc,0,sizeof(uc));
+  bogus.ucontext = &uc;
+  bogus.si = &si;
+  return(process_smpl_buf(0, sizeof(pfm_dfl_smpl_entry_t), &bogus, &thread));
 }
-
 
 int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
-   return (PAPI_OK);
+  hwd_control_state_t *ctl = &ESI->machdep;
+  hwd_context_t *ctx = &ESI->master->context;
+  pfarg_ctx_t newctx;
+  pfm_uuid_t buf_fmt_id = PFM_DFL_SMPL_UUID;
+  void *buf_addr = NULL;
+  pfm_dfl_smpl_arg_t buf_arg;
+  pfm_dfl_smpl_hdr_t *hdr;
+  int ret;
+
+  memset(&newctx, 0, sizeof(newctx));
+
+  if (threshold == 0)
+    {
+      SUBDBG("PFM_CREATE_CONTEXT(%p,%p,%d)\n",&newctx, NULL, 0);
+      if ((ret = pfm_create_context(&newctx, NULL, 0)))
+	{
+	  PAPIERROR("pfm_create_context(%p,%p,%d): %s",&newctx,NULL,0);
+	  return(PAPI_ESYS);
+	}
+      SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",newctx.ctx_fd);
+
+      SUBDBG("MUNMAP(%p,%lld)\n",ctx->smpl_buf,ctx->ctx.ctx_smpl_buf_size);
+      munmap(ctx->smpl_buf,ctx->ctx.ctx_smpl_buf_size);
+
+      SUBDBG("CLOSE(%d)\n",ctx->ctx.ctx_fd);
+      close(ctx->ctx.ctx_fd);
+      memcpy(&ctx->ctx,&newctx,sizeof(newctx));
+      memset(&ctx->smpl,0,sizeof(buf_arg));
+      ctx->smpl_buf = NULL;
+//      ESI->state &= ~(PAPI_OVERFLOWING);
+//      ESI->overflow.flags &= ~(PAPI_OVERFLOW_HARDWARE);
+      ESI->profile.overflowcount = 0;  
+      return(PAPI_OK);
+    }
+
+  memset(&buf_arg, 0, sizeof(buf_arg));
+  memcpy(newctx.ctx_smpl_buf_id, buf_fmt_id, sizeof(pfm_uuid_t));
+//  newctx.ctx_flags = PFM_FL_NOTIFY_BLOCK;
+  buf_arg.buf_size = 4*getpagesize();
+
+  SUBDBG("PFM_CREATE_CONTEXT(%p,%p,%d)\n",&newctx, &buf_arg, sizeof(buf_arg));
+  if ((ret = pfm_create_context(&newctx, &buf_arg, sizeof(buf_arg))))
+    {
+      DEBUGCALL(DEBUG_SUBSTRATE,dump_smpl_arg(&buf_arg));
+      PAPIERROR("pfm_create_context(%p,%p,%d): %s",&newctx,&buf_arg,sizeof(buf_arg),pfm_strerror(ret));
+      return(PAPI_ESYS);
+    }
+  SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",newctx.ctx_fd);
+
+  SUBDBG("MMAP(NULL,%lld,%d,%d,%d,0)\n",newctx.ctx_smpl_buf_size,PROT_READ,MAP_PRIVATE,newctx.ctx_fd);
+  buf_addr = mmap(NULL, (size_t)newctx.ctx_smpl_buf_size, PROT_READ, MAP_PRIVATE, newctx.ctx_fd, 0);
+  if (buf_addr == MAP_FAILED)
+    {
+      PAPIERROR("mmap(NULL,%d,%d,%d,%d,0): %s\n",newctx.ctx_smpl_buf_size,PROT_READ,MAP_PRIVATE,newctx.ctx_fd,strerror(errno));
+      close(newctx.ctx_fd);
+      return(PAPI_ESYS);
+    }
+  SUBDBG("Sample buffer is located at %p\n",buf_addr);
+
+  hdr = (pfm_dfl_smpl_hdr_t *)buf_addr;
+  SUBDBG("hdr_cur_offs=%llu version=%u.%u\n",
+	 (unsigned long long)hdr->hdr_cur_offs,
+	 PFM_VERSION_MAJOR(hdr->hdr_version),
+	 PFM_VERSION_MINOR(hdr->hdr_version));
+  
+  if (PFM_VERSION_MAJOR(hdr->hdr_version) < 1)
+    {
+      PAPIERROR("invalid buffer format version %d\n",PFM_VERSION_MAJOR(hdr->hdr_version));
+      munmap(buf_addr,newctx.ctx_smpl_buf_size);
+      close(newctx.ctx_fd);
+      return(PAPI_ESBSTR);
+    }
+
+  ret = _papi_hwd_set_overflow(ESI,EventIndex,threshold);
+  if (ret != PAPI_OK)
+    {
+      munmap(buf_addr,newctx.ctx_smpl_buf_size);
+      close(newctx.ctx_fd);
+      return(ret);
+    }
+  
+  /* Now close our context it is safe */
+
+  close(ctx->ctx.ctx_fd);
+
+  /* Copy the new data to the threads context control block */
+
+  memcpy(&ctx->ctx,&newctx,sizeof(newctx));
+  memcpy(&ctx->smpl,&buf_arg,sizeof(buf_arg));
+  ctx->smpl_buf = buf_addr;
+
+  /* We need overflowing because we use the overflow dispatch handler */
+  
+  ESI->state |= PAPI_OVERFLOWING;
+  ESI->overflow.flags |= PAPI_OVERFLOW_HARDWARE;
+
+  return(PAPI_OK);
 }
 
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
@@ -1754,7 +1962,9 @@ int _papi_hwd_init_control_state(hwd_control_state_t *ctl)
   memset(pd,0,sizeof(ctl->pd));
   memset(set,0,sizeof(ctl->set));
   memset(setinfo,0,sizeof(ctl->setinfo));
-
+  /* Will be filled by update now...until this gets another arg */
+  ctl->ctx = NULL;
+  ctl->load = NULL;
   set_domain(ctl,_papi_hwi_system_info.sub_info.default_domain);
   return(PAPI_OK);
 }
@@ -1816,11 +2026,11 @@ int _papi_hwd_update_control_state(hwd_control_state_t *ctl,
       from the thread's context. This should happen in init_control_state
       when we give that a *ctx argument */
 
-   if (ctl->load.load_pid == 0)
-     {
-       memcpy(&ctl->load,&ctx->load,sizeof(ctx->load));
-       memcpy(&ctl->ctx,&ctx->ctx,sizeof(ctx->ctx));
-     }
+  if (ctl->ctx == NULL)
+    {
+      ctl->ctx = &ctx->ctx;
+      ctl->load = &ctx->load;
+    }
 
    return (PAPI_OK);
 }

@@ -22,13 +22,16 @@
 #include <ctype.h>
 #include <inttypes.h>
 #include <libgen.h>
+#include <sys/mman.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/times.h>
 #include <sys/ucontext.h>
+#include <sys/ptrace.h>
 #include "perfmon/pfmlib.h"
 #include "perfmon/perfmon.h"
+#include "perfmon/perfmon_dfl_smpl.h"
 
 #if defined(DEBUG)
 #define DEBUGCALL(a,b) { if (ISLEVEL(a)) { b; } }
@@ -57,10 +60,10 @@ typedef struct {
 } pfm_preset_search_entry_t;
 
 typedef struct {
-  /* Context structure to kernel, only different for attached */
-  pfarg_ctx_t ctx;
-  /* Load structure to kernel, only different for attached */
-  pfarg_load_t load;
+  /* Context structure to kernel, different for attached */
+  pfarg_ctx_t *ctx;
+  /* Load structure to kernel, different for attached */
+  pfarg_load_t *load;
   /* Which counters to use? Bits encode counters to use, may be duplicates */
   hwd_register_map_t bits;
   /* Buffer to pass to library to control the counters */
@@ -91,6 +94,10 @@ typedef struct {
   pfarg_ctx_t ctx;
   /* Main load structure to kernel */
   pfarg_load_t load;
+  /* Structure to inform the kernel about sampling */
+  pfm_dfl_smpl_arg_t smpl;
+  /* Address of mmap()'ed sample buffer */
+  void *smpl_buf;
 } hwd_context_t;
 
 typedef struct hwd_native_register {
@@ -156,21 +163,21 @@ do                                              \
 /* Signal handling functions */
 
 typedef struct siginfo hwd_siginfo_t;
+typedef ucontext_t hwd_ucontext_t;
 
 #if defined(__ia64__)
-typedef struct sigcontext hwd_ucontext_t;
-#define GET_OVERFLOW_ADDRESS(ctx)  (caddr_t)(ctx->ucontext->sc_ip)
+#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.sc_ip
 #elif defined(__i386__)
-typedef ucontext_t hwd_ucontext_t;
-#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->eip)
+#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.gregs[REG_EIP]
 #elif defined(__x86_64__)
-typedef ucontext_t hwd_ucontext_t;
-#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->rip)
+#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.rip
 #elif defined(mips)
-#define GET_OVERFLOW_ADDRESS(ctx)  (caddr_t)(ctx->ucontext->sc_pc)
+#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.sc_pc
 #else
-#error "GET_OVERFLOW_ADDRESS() undefined!"
+#error "OVERFLOW_ADDRESS() undefined!"
 #endif
+
+#define GET_OVERFLOW_ADDRESS(ctx) ((caddr_t)OVERFLOW_ADDRESS((*ctx)))
 
 /* Hardware clock functions */
 
