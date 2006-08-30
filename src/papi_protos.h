@@ -72,6 +72,7 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
  int _papi_hwi_start_signal(int, int);
  int _papi_hwi_initialize(DynamicArray_t **);
  int _papi_hwi_dispatch_overflow_signal(void *context, int *, long_long, int, ThreadInfo_t **master);
+ void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, void *context, long_long over, int profile_index);
 
  /* The following PAPI internal functions are defined by the papi_data.c file. */
 

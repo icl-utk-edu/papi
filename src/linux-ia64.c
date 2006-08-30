@@ -258,9 +258,6 @@ static itanium_preset_search_t ia3_preset_search_map[] = {
 #endif
 #endif
 
-extern void dispatch_profile(EventSetInfo_t * ESI, void *context,
-                             long_long over, int profile_index);
-
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
 
@@ -1157,7 +1154,7 @@ static int ia64_process_profile_entry(void *papiContext)
             info->sc_ip = check_btb(reg, reg + 8);
          }
 
-         dispatch_profile(ESI, papiContext, (long_long) 0, count);
+         _papi_hwi_dispatch_profile(ESI, papiContext, (long_long) 0, count);
          overflow_vector ^= (1 << reg_num);
       }
 
@@ -1280,7 +1277,7 @@ static int ia64_process_profile_entry(void *papiContext)
             buf_pos += (hweight64(DEAR_REGS_MASK)<<3);
          };
 
-         dispatch_profile(ESI, papiContext, (long_long) 0, count);
+         _papi_hwi_dispatch_profile(ESI, papiContext, (long_long) 0, count);
       }
 
       /*  move to next entry */

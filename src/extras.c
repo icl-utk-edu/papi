@@ -157,7 +157,7 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t * prof,
    }
 }
 
-void dispatch_profile(EventSetInfo_t * ESI, void *context,
+void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, void *context,
                       long_long over, int profile_index)
 {
   _papi_hwi_context_t *ctx = (_papi_hwi_context_t *) context;
@@ -331,7 +331,7 @@ foundit:
                   over = 0;
                else
                   over = temp[profile_index];
-               dispatch_profile(ESI, (caddr_t) papiContext, over, profile_index);
+               _papi_hwi_dispatch_profile(ESI, (caddr_t) papiContext, over, profile_index);
                overflow_vector ^= (long_long )1 << i;
             }
             /* do not use overflow_vector after this place */
