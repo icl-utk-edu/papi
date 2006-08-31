@@ -86,7 +86,8 @@ int main(int argc, char **argv)
    }
 	
    if (name == NULL) {
-      test_skip(__FILE__, __LINE__, "fopen", PAPI_EINVAL);
+      if (!TESTS_QUIET) print_help();
+      test_skip(__FILE__, __LINE__, "fopen: no filename given", PAPI_EINVAL);
    }
 
    retval = PAPI_library_init(PAPI_VER_CURRENT);

@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 #if defined(__powerpc__) && defined(__perfctr__ )
    mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_INS;
 #else
-   mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_OPS | MASK_L1_DCM;
+   mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_OPS | MASK_L2_TCM;
 #endif
    EventSet = add_test_events(&num_events, &mask);
    values = allocate_test_space(1, num_events);
@@ -85,9 +85,9 @@ static int do_profile(unsigned long plength, unsigned scale, int thresh, int buc
    int num_events = 3;
    char * header =  "address\t\t\tcyc\tins\tfp_ins\n";
 #else
-   unsigned int events[] = {PAPI_TOT_CYC, PAPI_TOT_INS, PAPI_FP_OPS, PAPI_L1_DCM };
+   unsigned int events[] = {PAPI_TOT_CYC, PAPI_TOT_INS, PAPI_FP_OPS, PAPI_L2_TCM };
    int num_events = 4;
-   char * header =  "address\t\t\tcyc\tins\tfp_ops\tl1_dcm\n";
+   char * header =  "address\t\t\tcyc\tins\tfp_ops\tl2_tcm\n";
 #endif
 
    int num_bufs = num_events;
@@ -120,7 +120,7 @@ static int do_profile(unsigned long plength, unsigned scale, int thresh, int buc
       printf(TAB1, "PAPI_FP_INS", (values[0])[--event]);
 #else
       printf(TAB1, "PAPI_FP_OPS:", (values[0])[--event]);
-      printf(TAB1, "PAPI_L1_DCM:", (values[0])[--event]);
+      printf(TAB1, "PAPI_L2_TCM:", (values[0])[--event]);
 #endif
    }
 
