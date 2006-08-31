@@ -1495,6 +1495,12 @@ void _papi_hwd_fixup_fp(hwi_search_t **s, const hwi_dev_notes_t **n)
    char *str = getenv("PAPI_PENTIUM4_FP");
    int mask = FP_NONE;
 
+   /* CRAP CODE ALERT */
+   /* This should absolutely not be here but the below maps are static */
+
+   if (_papi_hwi_system_info.sub_info.num_native_events == 0)
+     _papi_hwi_system_info.sub_info.num_native_events = (sizeof(_papi_hwd_pentium4_native_map) + sizeof(_papi_hwd_pentium4_custom_map))/sizeof(hwd_p4_native_map_t);
+
    /* if the env variable isn't set, return the defaults */
    if ((str == NULL) || (strlen(str) == 0)) {
       *s = FPU;
