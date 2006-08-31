@@ -330,7 +330,6 @@ C      call PAPIF_describe_event(name,code,string,check)
 
       call findnull(string,quiet)
       call findnull(name,quiet)
-#endif
 
       return
       end
