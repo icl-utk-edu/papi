@@ -12,6 +12,10 @@ SHLIB   = libpapi.so
 SUBSTR  = perfctr-$(CPU)
 ARCH	= $(shell uname -m)
 
+ifeq (p4,$(CPU))
+TARGETS += p4
+endif
+
 ifeq (i686,$(ARCH))
 ARCH = i386
 endif
