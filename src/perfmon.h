@@ -156,6 +156,9 @@ do                                              \
    __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(_papi_hwd_lock_data[lck]), "0"(MUTEX_OPEN) : "memory");                                \
 } while(0)
 #elif defined(mips)
+#warning "No locks defined"
+#define  _papi_hwd_lock(lck)                    
+#define  _papi_hwd_unlock(lck)                  
 #else
 #error "_papi_hwd_lock/unlock undefined!"
 #endif
@@ -172,57 +175,11 @@ typedef ucontext_t hwd_ucontext_t;
 #elif defined(__x86_64__)
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.rip
 #elif defined(mips)
-#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.sc_pc
+#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.pc
 #else
 #error "OVERFLOW_ADDRESS() undefined!"
 #endif
 
 #define GET_OVERFLOW_ADDRESS(ctx) ((caddr_t)OVERFLOW_ADDRESS((*ctx)))
-
-/* Hardware clock functions */
-
-#if defined(__ia64__)
-inline_static unsigned long get_cycles(void)
-{
-   unsigned long tmp;
-#ifdef ALTIX
-   tmp = mmdev_clicks_per_tick * (*mmdev_timer_addr);
-#elif defined(__INTEL_COMPILER)
-   tmp = __getReg(_IA64_REG_AR_ITC);
-#else                           /* GCC */
-   /* XXX: need more to adjust for Itanium itc bug */
-   __asm__ __volatile__("mov %0=ar.itc":"=r"(tmp)::"memory");
-#endif
-   return tmp;
-}
-#elif defined(__i386__)||defined(__x86_64__)
-inline_static long_long get_cycles(void) {
-   long_long ret = 0;
-#ifdef __x86_64__
-   do {
-      unsigned int a,d;
-      asm volatile("rdtsc" : "=a" (a), "=d" (d));
-      (ret) = ((long_long)a) | (((long_long)d)<<32);
-   } while(0);
-#else
-   __asm__ __volatile__("rdtsc"
-                       : "=A" (ret)
-                       : );
-#endif
-   return ret;
-}
-#elif defined(mips)
-inline_static long_long get_cycles(void) {
-  struct timespec foo;
-  double bar;
-  
-  syscall(__NR_clock_gettime,HAVE_CLOCK_GETTIME_REALTIME,&foo);
-  bar = (double)foo.tv_nsec/1000000000.0 + (double)foo.tv_sec;
-  bar = bar * (double)_papi_hwi_system_info.hw_info.mhz;
-  return((long_long)bar);
-}
-#else
-#error "get_cycles undefined!"
-#endif
 
 #endif
