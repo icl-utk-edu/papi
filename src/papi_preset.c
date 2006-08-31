@@ -70,7 +70,7 @@ int _papi_hwi_setup_all_presets(hwi_search_t *findem, hwi_dev_notes_t *notes)
          _papi_hwi_presets.dev_note[preset_index] = papi_strdup(notes[pnum].dev_note);
       }
    }
-   _papi_hwi_system_info.sub_info.num_preset_events = did_something;
+   _papi_hwi_system_info.sub_info.num_preset_events += did_something;
    return (did_something ? 0 : PAPI_ESBSTR);
 }
 
