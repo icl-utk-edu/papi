@@ -16,9 +16,13 @@ MEMSUBSTR = any-null
 CC_R    	= $(CC) -pthread
 CC_SHR		= $(CC) -fPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
 FFLAGS		+= -ffixed-line-length-132
-CFLAGS		+= -D_GNU_SOURCE -Wall -g -DDEBUG $(NOTLS) $(ALTIX) 
-OPTFLAGS	+= 
-TOPTFLAGS	+= -g  
+CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) 
+ifeq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))
+OPTFLAGS	+= -O3 $(DEBUGFLAGS)
+else
+OPTFLAGS	+= -g $(DEBUGFLAGS)
+endif
+TOPTFLAGS	+= -g -O 
 FTOPTFLAGS	= $(TOPTFLAGS)
 
 #
