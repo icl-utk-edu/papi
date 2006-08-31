@@ -25,7 +25,7 @@ int main(int argc, char **argv)
    int group = 0, event_code;
 #endif
 #ifdef PENTIUM4
-   int k, l, event_code;
+   int k, l;
 #endif
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
