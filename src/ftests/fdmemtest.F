@@ -36,5 +36,5 @@
 		  print *, "Mem Stack: ", dmeminfo(PAPIF_DMEM_STACK)
 		  print *, "Mem Pagesize: ", dmeminfo(PAPIF_DMEM_PAGESIZE)
       end if
-
+      call ftests_pass(__FILE__)
       end
