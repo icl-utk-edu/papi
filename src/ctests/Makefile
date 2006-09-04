@@ -31,7 +31,7 @@ acpi_test: $(ACPI)
 
 ear: $(EAR)
 
-data_range: $(RANGE)
+range: $(RANGE)
 
 mpi: $(MPI)
 

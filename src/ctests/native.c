@@ -78,7 +78,8 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
    static char *native_name[] = { "Primary_instruction_cache_misses",
       "Primary_data_cache_misses", NULL
    };
-
+#elif defined(mips) && defined(linux)
+   static char *native_name[] = { "CYCLES", NULL };
 #elif defined(sun) && defined(sparc)
    static char *native_name[] = { "Cycle_cnt", "Instr_cnt", NULL };
 
