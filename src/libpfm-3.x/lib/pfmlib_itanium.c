@@ -255,7 +255,7 @@ pfm_dispatch_iear(pfmlib_input_param_t *inp, pfmlib_ita_input_param_t *mod_in, p
 
 	pc[pos].reg_num     = 10;  /* PMC10 is I-EAR config register */
 	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-	pc[pos].reg_evt_idx = PFMLIB_EVENT_NONE;
+	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 	pc[pos].reg_value   = reg.pmc_val;
 
 	pos++;
@@ -331,7 +331,7 @@ pfm_dispatch_dear(pfmlib_input_param_t *inp, pfmlib_ita_input_param_t *mod_in, p
 
 	pc[pos].reg_num     = 11;  /* PMC11 is D-EAR config register */
 	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-	pc[pos].reg_evt_idx = PFMLIB_EVENT_NONE;
+	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 	pc[pos].reg_value   = reg.pmc_val;
 
 	pos++;
@@ -370,7 +370,7 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_ita_input_param_t *mod_in, p
 
 		pc[pos].reg_num     = 8;
 		pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-		pc[pos].reg_evt_idx = PFMLIB_EVENT_NONE;
+		pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 		pc[pos++].reg_value = reg.pmc_val;
 
 
@@ -393,7 +393,7 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_ita_input_param_t *mod_in, p
 
 		pc[pos].reg_num     = 9;
 		pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-		pc[pos].reg_evt_idx = PFMLIB_EVENT_NONE;
+		pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 		pc[pos++].reg_value = reg.pmc_val;
 
 
@@ -473,7 +473,7 @@ pfm_dispatch_btb(pfmlib_input_param_t *inp, pfmlib_ita_input_param_t *mod_in, pf
 
 	pc[pos].reg_num     = 12;
 	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-	pc[pos].reg_evt_idx = PFMLIB_EVENT_NONE;
+	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 	pc[pos++].reg_value = reg.pmc_val;
 
 
@@ -765,7 +765,7 @@ pfm_dispatch_irange(pfmlib_input_param_t *inp, pfmlib_ita_input_param_t *mod_in,
 
 	pc[pos].reg_num     = 13;
 	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-	pc[pos].reg_evt_idx = PFMLIB_EVENT_NONE;
+	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 	pc[pos++].reg_value = reg.pmc_val;
 
 	__pfm_vbprintf("[pmc13=0x%lx ta=%d]\n", reg.pmc_val, reg.pmc13_ita_reg.irange_ta);
@@ -832,7 +832,7 @@ pfm_dispatch_drange(pfmlib_input_param_t *inp, pfmlib_ita_input_param_t *mod_in,
 
 	pc[pos].reg_num     = 11;
 	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-	pc[pos].reg_evt_idx = PFMLIB_EVENT_NONE;
+	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 	pc[pos++].reg_value = reg.pmc_val;
 
 	__pfm_vbprintf("[pmc11=0x%lx tlb=%s plm=%d pm=%d ism=0x%x umask=0x%x pt=%d]\n",

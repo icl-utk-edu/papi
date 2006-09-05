@@ -681,7 +681,7 @@ pfm_dispatch_iear(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 
 	pc[pos].reg_num     = 37; /* PMC37 is I-EAR config register */
 	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-	pc[pos].reg_evt_idx = PFMLIB_EVENT_NONE;
+	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 	pc[pos++].reg_value = reg.pmc_val;
 
 	if (param->pfp_mont_iear.ear_mode == PFMLIB_MONT_EAR_TLB_MODE) {
@@ -763,7 +763,7 @@ pfm_dispatch_dear(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 
 	pc[pos].reg_num     = 40;  /* PMC11 is D-EAR config register */
 	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-	pc[pos].reg_evt_idx = PFMLIB_EVENT_NONE;
+	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 	pc[pos++].reg_value = reg.pmc_val;
 
 	__pfm_vbprintf("[pmc40=0x%lx mode=%s plm=%d pm=%d ism=0x%x umask=0x%x]\n",
@@ -848,7 +848,7 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 
 		pc[pos].reg_num     = 32;
 		pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-		pc[pos].reg_evt_idx = PFMLIB_EVENT_NONE;
+		pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 		pc[pos++].reg_value = reg1.pmc_val;
 
 		/*
@@ -862,7 +862,7 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 			 */
 			pc[pos].reg_num     = 33;
 			pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-			pc[pos].reg_evt_idx = PFMLIB_EVENT_NONE;
+			pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 			pc[pos++].reg_value = reg2.pmc_val;
 
 			has_1st_pair = has_2nd_pair = 0;
@@ -916,11 +916,11 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 
 		pc[pos].reg_num     = 34;
 		pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-		pc[pos].reg_evt_idx = PFMLIB_EVENT_NONE;
+		pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 		pc[pos++].reg_value = reg1.pmc_val;
 		pc[pos].reg_num     = 35;
 		pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-		pc[pos].reg_evt_idx = PFMLIB_EVENT_NONE;
+		pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 		pc[pos++].reg_value = reg2.pmc_val;
 
 		has_1st_pair = has_2nd_pair = 0;
@@ -954,7 +954,7 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 
 		pc[pos].reg_num     = 36;
 		pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-		pc[pos].reg_evt_idx = PFMLIB_EVENT_NONE;
+		pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 		pc[pos++].reg_value = pmc36.pmc_val;
 
 		__pfm_vbprintf("[pmc36=0x%lx ch0_ig_op=%d ch1_ig_op=%d ch2_ig_op=%d ch3_ig_op=%d]\n",
@@ -1076,7 +1076,7 @@ assign_zero:
 
 	pc[pos].reg_num     = 39;
 	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-	pc[pos].reg_evt_idx = PFMLIB_EVENT_NONE;
+	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 	pc[pos++].reg_value = reg.pmc_val;
 
 	__pfm_vbprintf("[pmc39=0x%lx plm=%d pm=%d ds=%d tm=%d ptm=%d ppm=%d brt=%d]\n",
@@ -1623,7 +1623,7 @@ pfm_dispatch_irange(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in
 
 	pc[pos].reg_num     = 38;
 	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-	pc[pos].reg_evt_idx = PFMLIB_EVENT_NONE;
+	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 	pc[pos++].reg_value = reg.pmc_val;
 
 	__pfm_vbprintf("[pmc38=0x%lx ig_ibrp0=%d ig_ibrp1=%d ig_ibrp2=%d ig_ibrp3=%d fine=%d]\n",
@@ -1791,7 +1791,7 @@ pfm_dispatch_drange(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in
 
 	pc[pos].reg_num     = 41;
 	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-	pc[pos].reg_evt_idx = PFMLIB_EVENT_NONE;
+	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 	pc[pos++].reg_value = reg.pmc_val;
 
 	__pfm_vbprintf("[pmc41=0x%lx cfg_dtag0=%d cfg_dtag1=%d cfg_dtag2=%d cfg_dtag3=%d ena_dbrp0=%d ena_dbrp1=%d ena_dbrp2=%d ena_dbrp3=%d]\n",
@@ -1896,7 +1896,7 @@ pfm_dispatch_ipear(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in,
 
 	pc[pos].reg_num     = 42;
 	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-	pc[pos].reg_evt_idx = PFMLIB_EVENT_NONE;
+	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 	pc[pos++].reg_value = reg.pmc_val;
 
 	outp->pfp_pmc_count = pos;

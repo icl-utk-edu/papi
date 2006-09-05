@@ -38,9 +38,6 @@ PFMLIB=$(PFMLIBDIR)/libpfm.a
 all: $(TARGETS)
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 
-pebs_smpl: pebs_smpl.o
-	$(CC) $(INCDIR) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^
-
 $(TARGETS):  %:%.o $(PFMLIB)
 	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $^ $(LIBS) 
 

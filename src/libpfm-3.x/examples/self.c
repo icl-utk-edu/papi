@@ -45,14 +45,19 @@
 
 #define MAX_EVT_NAME_LEN	128
 
+#define TABSIZE 1024
+static int a[TABSIZE], b[TABSIZE];
+
 /*
  * our test code (function cannot be made static otherwise it is optimized away)
  */
 uint64_t
 noploop(uint64_t loop)
 {
-	while (loop--) {}
-	return loop;
+	unsigned int j = 0;
+
+	while (loop--) { a[j] += a[j]*loop + b[j];j = (j+1)%TABSIZE; }
+	return a[0];
 }
 
 static void fatal_error(char *fmt,...) __attribute__((noreturn));

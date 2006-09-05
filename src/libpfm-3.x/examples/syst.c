@@ -84,6 +84,7 @@ main(int argc, char **argv)
 	char **p;
 	pfarg_pmc_t pc[NUM_PMCS];
 	pfarg_pmd_t pd[NUM_PMDS];
+	uint64_t pdo[NUM_PMDS];
 	pfarg_ctx_t ctx[1];
 	pfarg_load_t load_args;
 	pfmlib_input_param_t inp;
@@ -91,7 +92,7 @@ main(int argc, char **argv)
 	pfmlib_options_t pfmlib_options;
 	unsigned int which_cpu;
 	int ret, ctx_fd;
-	unsigned int i, j;
+	unsigned int i, j, l;
 	unsigned int num_counters;
 	char name[MAX_EVT_NAME_LEN];
 
@@ -103,7 +104,7 @@ main(int argc, char **argv)
 		fatal_error("Cannot initialize library: %s\n", pfm_strerror(ret));
 
 	pfm_get_num_counters(&num_counters);
-	
+
 	/*
 	 * pass options to library (optional)
 	 */
@@ -114,6 +115,7 @@ main(int argc, char **argv)
 
 	memset(pc, 0, sizeof(pc));
 	memset(pd, 0, sizeof(pd));
+	memset(pdo, 0, sizeof(pdo));
 	memset(ctx, 0, sizeof(ctx));
 	memset(&inp,0, sizeof(inp));
 	memset(&outp,0, sizeof(outp));
@@ -249,72 +251,67 @@ main(int argc, char **argv)
 	 * the kernel because, as we said earlier, pc may contain more elements than
 	 * the number of events we specified, i.e., contains more thann coutning monitors.
 	 */
-	if (pfm_write_pmcs(ctx_fd, pc, outp.pfp_pmc_count) == -1) {
+	if (pfm_write_pmcs(ctx_fd, pc, outp.pfp_pmc_count) == -1)
 		fatal_error("pfm_write_pmcs error errno %d\n",errno);
-	}
+
 	/*
 	 * To be read, each PMD must be either written or declared
 	 * as being part of a sample (reg_smpl_pmds)
 	 */
-	if (pfm_write_pmds(ctx_fd, pd, inp.pfp_event_count) == -1) {
+	if (pfm_write_pmds(ctx_fd, pd, inp.pfp_event_count) == -1)
 		fatal_error("pfm_write_pmds error errno %d\n",errno);
-	}
 
 	/*
-	 * for system wide session, we can only attached to ourself
+	 * in system-wide mode, this field must provide the CPU the caller wants
+	 * to monitor. The kernel checks and if calling from the wrong CPU, the
+	 * call fails. The affinity is not affected.
 	 */
-	load_args.load_pid = getpid();
+	load_args.load_pid = which_cpu;
 
-	if (pfm_load_context(ctx_fd, &load_args) == -1) {
+	if (pfm_load_context(ctx_fd, &load_args) == -1)
 		fatal_error("pfm_load_context error errno %d\n",errno);
-	}
 
-	/*
-	 * start monitoring. We must go to the kernel because psr.pp cannot be
-	 * changed at the user level.
-	 */
-	if (pfm_start(ctx_fd, NULL) == -1) {
-		fatal_error("pfm_start error errno %d\n",errno);
-	}
 	printf("<monitoring started on CPU%d>\n", which_cpu);
 
-	printf("<press a key to stop monitoring>\n");
-	getchar();
-	/*
-	 * stop monitoring. We must go to the kernel because psr.pp cannot be
-	 * changed at the user level.
-	 */
-	if (pfm_stop(ctx_fd) == -1) {
-		fatal_error("pfm_stop error errno %d\n",errno);
-	}
+	for(l=0; l < 10; l++) {
+		/*
+		 * start monitoring
+		 */
+		if (pfm_start(ctx_fd, NULL) == -1)
+			fatal_error("pfm_start error errno %d\n",errno);
 
-	printf("<monitoring stopped on CPU%d>\n\n", which_cpu);
-	/*
-	 * now read the results
-	 */
-	if (pfm_read_pmds(ctx_fd, pd, inp.pfp_event_count) == -1) {
-		fatal_error( "pfm_read_pmds error errno %d\n",errno);
-		return -1;
-	}
+		sleep(2);
 
-	/*
-	 * print the results
-	 *
-	 * It is important to realize, that the first event we specified may not
-	 * be in PMD4. Not all events can be measured by any monitor. That's why
-	 * we need to use the pc[] array to figure out where event i was allocated.
-	 *
-	 */
-	for (i=0; i < inp.pfp_event_count; i++) {
-		pfm_get_event_name(inp.pfp_events[i].event, name, MAX_EVT_NAME_LEN);
-		printf("CPU%-2d PMD%u %20"PRIu64" %s\n",
-			which_cpu,
-			pd[i].reg_num,
-			pd[i].reg_value,
-			name);
+		/*
+		 * stop monitoring. 
+		 * changed at the user level.
+		 */
+		if (pfm_stop(ctx_fd) == -1)
+			fatal_error("pfm_stop error errno %d\n",errno);
+
+		/*
+		 * read the results
+		 */
+		if (pfm_read_pmds(ctx_fd, pd, inp.pfp_event_count) == -1)
+			fatal_error( "pfm_read_pmds error errno %d\n",errno);
+
+		/*
+		 * print the results
+		 */
+		puts("------------------------");
+		for (i=0; i < inp.pfp_event_count; i++) {
+			pfm_get_event_name(inp.pfp_events[i].event, name, MAX_EVT_NAME_LEN);
+			printf("CPU%-2d PMD%u raw=%-20"PRIu64" delta=%-20"PRIu64" %s\n",
+					which_cpu,
+					pd[i].reg_num,
+					pd[i].reg_value,
+					pd[i].reg_value - pdo[i],
+					name);
+			pdo[i] = pd[i].reg_value;
+		}
 	}
 	/*
-	 * let's stop this now
+	 * destroy everything
 	 */
 	close(ctx_fd);
 

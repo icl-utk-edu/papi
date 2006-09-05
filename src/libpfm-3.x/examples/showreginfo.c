@@ -26,6 +26,7 @@
  */
 #include <sys/types.h>
 #include <stdio.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <inttypes.h>
 #include <stdarg.h>
@@ -60,30 +61,35 @@ fatal_error(char *fmt, ...)
 int
 main(int argc, char **argv)
 {
-	FILE *fp;
+	int fd;
 	unsigned int num_pmcs;
 	unsigned int num_pmds;
 	char *lname, *p, *s, *buffer, *ptr;
 	unsigned long long def, reset;
-	size_t pgsz, elements;
+	size_t pgsz;
+	ssize_t n;
 
 	num_pmcs = num_pmds = 0;
 
-	fp = fopen("/sys/kernel/perfmon/pmu_desc/mappings", "r");
-	if (fp == NULL)
+	fd = open("/sys/kernel/perfmon/pmu_desc/mappings", O_RDONLY);
+	if (fd == -1)
 		fatal_error("invalid or missing perfmon support for your CPU (need at least v2.2)\n");
 
 	pgsz = getpagesize();
-	buffer = ptr = malloc(pgsz);
+
+	buffer = ptr = calloc(1, pgsz);
 	if (buffer == NULL)
 		fatal_error("cannot allocate read buffer\n");
 
 	/*
 	 * sysfs file cannot exceed the size of a page.
 	 */
-	elements=fread(buffer, pgsz, 1, fp);
+	n =read(fd, buffer, pgsz);
 
-	fclose(fp);
+	close(fd);
+
+	if (n < 1)
+		fatal_error("cannot read PMU mappings\n");
 
 	puts( "--------------------------------------------------------------\n"
 	       "name   |   default  value   |   reserved  mask(*)| description\n"

@@ -28,29 +28,26 @@
 # It is included by every Makefile
 #
 #
-#
 ARCH := $(shell uname -m) 
 ifeq (i686,$(findstring i686,$(ARCH)))
-ARCH=ia32
+override ARCH=ia32
 endif
 ifeq (i586,$(findstring i586,$(ARCH)))
-ARCH=ia32
+override ARCH=ia32
 endif
 ifeq (i486,$(findstring i486,$(ARCH)))
-ARCH=ia32
+override ARCH=ia32
 endif
 ifeq (i386,$(findstring i386,$(ARCH)))
-ARCH=ia32
+override ARCH=ia32
 endif
 #
+# Where should things (lib, headers, man) go in the end.
 #
-# Where should things go in the end. the package will put things in lib and
-# bin under this base.
-#
-install_prefix?=/usr/local
-DESTLIBDIR?=$(install_prefix)/lib
-DESTINCDIR?=$(install_prefix)/include
-MANDIR?=$(install_prefix)/share/man
+install_prefix=/usr/local
+DESTLIBDIR=$(install_prefix)/lib
+DESTINCDIR=$(install_prefix)/include
+MANDIR=$(install_prefix)/share/man
 
 #
 # Configuration Paramaters for libpfm library

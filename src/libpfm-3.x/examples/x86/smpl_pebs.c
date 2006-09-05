@@ -1,5 +1,6 @@
 /*
- * smpl_pebs.c - PEBS self-contained (no libpfm) sampling example for 32-bit P4/Xeon ONLY
+ * smpl_pebs.c - PEBS standalone (no libpfm) sampling example for P4/Xeon
+ * 		 (support 32-bit and 64-bit modes)
  *
  * Copyright (c) 2005-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
@@ -25,6 +26,7 @@
  * applications on Linux.
  */
 
+#define _GNU_SOURCE /* for getline */
 #include <sys/types.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -34,7 +36,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
-#include <fcntl.h>
 #include <syscall.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -48,7 +49,6 @@
 
 #define SMPL_PERIOD	100000ULL	 /* must not use more bits than actual HW counter width */
 
-typedef pfm_p4_pebs_smpl_arg_t		smpl_fmt_arg_t;
 typedef pfm_p4_pebs_smpl_hdr_t		smpl_hdr_t;
 typedef pfm_p4_pebs_smpl_entry_t	smpl_entry_t;
 typedef pfm_p4_pebs_smpl_arg_t		smpl_arg_t;
@@ -103,23 +103,23 @@ process_smpl_buf(smpl_hdr_t *hdr)
 	unsigned long count;
 	uint64_t entry;
 
-	if (hdr->hdr_overflows <= last_overflow && last_overflow != ~0) {
+	if (hdr->overflows <= last_overflow && last_overflow != ~0) {
 		warning("skipping identical set of samples %"PRIu64" <= %"PRIu64"\n",
-			hdr->hdr_overflows, last_overflow);
+			hdr->overflows, last_overflow);
 		return;	
 	}
-	last_overflow = hdr->hdr_overflows;
+	last_overflow = hdr->overflows;
 
-	count = (hdr->hdr_ds.pebs_index - hdr->hdr_ds.pebs_buf_base)/sizeof(*ent);
+	count = (hdr->ds.pebs_index - hdr->ds.pebs_buf_base)/sizeof(*ent);
 	/*
 	 * the beginning of the buffer does not necessarily follow the header
 	 * due to alignement.
 	 */
-	ent   = (smpl_entry_t *)((unsigned long)(hdr+1)+ hdr->hdr_start_offs);
+	ent   = (smpl_entry_t *)((unsigned long)(hdr+1)+ hdr->start_offs);
 	entry = collected_samples;
 
 	while(count--) {
-		printf("entry %06"PRIu64" eflags:0x%08x EAX:0x%08x ESP:0x%08x IP:0x%08x\n",
+		printf("entry %06"PRIu64" eflags:0x%08lx EAX:0x%08lx ESP:0x%08lx IP:0x%08lx\n",
 			entry,
 			ent->eflags,
 			ent->eax,
@@ -131,64 +131,33 @@ process_smpl_buf(smpl_hdr_t *hdr)
 	collected_samples = entry;
 }
 
-static inline int
-bit_weight(unsigned long x)
-{
-	int sum = 0;
-	for (; x ; x>>=1) {
-		if (x & 0x1UL) sum++;
-	}
-	return sum;
-
-}
-
-static inline unsigned int cpuid_eax(unsigned int op)
-{
-	unsigned long eax;
-
-	__asm__("pushl %%ebx; cpuid; popl %%ebx"
-			: "=a" (eax)
-			: "0" (op)
-			: "cx", "dx");
-	return eax;
-}
-
-/*
- * check if processor has HT and if it is on
- * PEBS does not work with HT on.
- *
- * Not clear how to reliably test this from user space.
- * I have seen mentions of /dev/cpu/cpuid but this requires
- * that this option be enabled.
- *
- * Here we use another approach with /proc/cpuinfo, looking
- * at the siblings line
- */
 static int
-has_ht_on(void)
+get_cpuinfo_attr(char *attr, char *ret_buf, size_t maxlen)
 {
-	FILE *fp1;
-	uint32_t sib = 0;
-	char buffer[128], *p, *value;
+	FILE *fp;
+	int ret = -1;
+	size_t attr_len, buf_len = 0;
+	char *p, *value = NULL;
+	char *buffer = NULL;
 
-	memset(buffer, 0, sizeof(buffer));
+	if (attr == NULL || ret_buf == NULL || maxlen < 1)
+		return -1;
 
-	fp1 = fopen("/proc/cpuinfo", "r");
-	if (fp1 == NULL) return 0;
+	attr_len = strlen(attr);
 
-	for (;;) {
-		buffer[0] = '\0';
+	fp = fopen("/proc/cpuinfo", "r");
+	if (fp == NULL)
+		return -1;
 
-		p  = fgets(buffer, 127, fp1);
-		if (p == NULL)
-			break;
+	while(getline(&buffer, &buf_len, fp) != -1){
 
 		/* skip  blank lines */
-		if (*p == '\n') continue;
+		if (*buffer == '\n')
+			continue;
 
 		p = strchr(buffer, ':');
 		if (p == NULL)
-			break;
+			goto error;
 
 		/*
 		 * p+2: +1 = space, +2= firt character
@@ -199,13 +168,49 @@ has_ht_on(void)
 
 		value[strlen(value)-1] = '\0';
 
-		if (!strncmp("siblings", buffer, 8)) {
-			sscanf(value, "%u", &sib);
+		if (!strncmp(attr, buffer, attr_len))
 			break;
-		}
 	}
-	fclose(fp1);
-	return sib < 2 ? 0 : 1;
+	strncpy(ret_buf, value, maxlen-1);
+	ret_buf[maxlen-1] = '\0';
+	ret = 0;
+error:
+	free(buffer);
+	fclose(fp);
+	return ret;
+}
+
+static void
+check_valid_cpu(void)
+{
+	int ret, siblings, family, cores;
+	char buffer[128];
+
+	ret = get_cpuinfo_attr("vendor_id", buffer, sizeof(buffer));
+	if (ret == -1 || strcmp(buffer, "GenuineIntel"))
+		fatal_error("this programs works only with Intel processors\n");
+
+	ret = get_cpuinfo_attr("cpu family", buffer, sizeof(buffer));
+	if (ret == -1)
+		fatal_error("cannot determine processor family\n");
+
+	family = atoi(buffer);
+	if (family != 15)
+		fatal_error("this program only works for P4/Xeon with PEBS (found family=%d)\n", family);
+
+	ret = get_cpuinfo_attr("siblings", buffer, sizeof(buffer));
+	if (ret == -1)
+		fatal_error("cannot deterimine number of siblings\n");
+	
+	siblings = atoi(buffer);
+
+	ret = get_cpuinfo_attr("cpu cores", buffer, sizeof(buffer));
+	if (ret == -1)
+		fatal_error("cannot determine number of cpu cores\n");
+
+	cores = atoi(buffer);
+	if (siblings > cores)
+		fatal_error("PEBS does not work when HyperThreading is enabled\n");
 }
 
 int
@@ -220,22 +225,10 @@ main(int argc, char **argv)
 	smpl_hdr_t *hdr;
 	void *buf_addr;
 	pid_t pid;
-	unsigned long eax;
 	int ret, fd, status, npmcs = 0;
-	int family, model;
 
-	eax = cpuid_eax(1);
-	family = (eax>>8) & 0xf;
-	model  = (eax>>4) & 0xf;
-	/*
-	 * the sanity test may be relaxed for other models in family 15
-	 */
-	if (family == 15 && model != 2) {
-		fatal_error("this program only works for P4/Xeon with PEBS (found family=%d model=%d)\n", family, model);
-	}
 
-	if (sysconf(_SC_NPROCESSORS_ONLN) > 1 && has_ht_on())
-		fatal_error("PEBS is not supported when HyperThreading is enabled\n");
+	check_valid_cpu();
 
 	if (argc < 2)
 		fatal_error("you need to pass a program to sample\n");
@@ -279,20 +272,19 @@ main(int argc, char **argv)
 
 	hdr = (smpl_hdr_t *)buf_addr;
 
-	printf("pebs_base=0x%x pebs_end=0x%x index=0x%x\n"
-	       "intr=0x%x (thres=%zu) version=%u.%u\n"
+	printf("pebs_base=0x%lx pebs_end=0x%lx index=0x%lx\n"
+	       "intr=0x%lx version=%u.%u\n"
 	       "entry_size=%zu ds_size=%zu\n",
-			hdr->hdr_ds.pebs_buf_base,
-			hdr->hdr_ds.pebs_abs_max,
-			hdr->hdr_ds.pebs_index,
-			hdr->hdr_ds.pebs_intr_thres,
-			buf_arg.intr_thres,
-			PFM_VERSION_MAJOR(hdr->hdr_version),
-			PFM_VERSION_MINOR(hdr->hdr_version),
+			hdr->ds.pebs_buf_base,
+			hdr->ds.pebs_abs_max,
+			hdr->ds.pebs_index,
+			hdr->ds.pebs_intr_thres,
+			PFM_VERSION_MAJOR(hdr->version),
+			PFM_VERSION_MINOR(hdr->version),
 			sizeof(smpl_entry_t),
-			sizeof(hdr->hdr_ds));
+			sizeof(hdr->ds));
 
-	if (PFM_VERSION_MAJOR(hdr->hdr_version) < 1)
+	if (PFM_VERSION_MAJOR(hdr->version) < 1)
 		fatal_error("invalid buffer format version\n");
 
 	/*
@@ -361,13 +353,6 @@ main(int argc, char **argv)
 		fatal_error("pfm_write_pmds error errno %d\n",errno);
 	}
 
-	/*
-	 * get ownership of the descriptor
-	 */
-	ret = fcntl(fd, F_SETOWN, getpid());
-	if (ret == -1) {
-		fatal_error("cannot setown: %s\n", strerror(errno));
-	}
 	signal(SIGCHLD, SIG_IGN);
 	/*
 	 * Create the child task

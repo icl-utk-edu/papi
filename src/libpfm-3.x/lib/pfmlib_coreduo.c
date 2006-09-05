@@ -1,5 +1,6 @@
 /*
  * pfmlib_coreduo.c : support for Intel Core Duo/Core Solo processors
+ *		      (using architectural perfmon)
  *
  * Copyright (c) 2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
@@ -169,7 +170,7 @@ pfm_coreduo_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_coreduo_input_pa
 		 * specific umask entry in this case. The umask code is taken
 		 * out of the (extended) event code (2nd byte)
 		 */
-		umask = coreduo_pe[e[j].event].pme_code >> 8 ;
+		umask = (coreduo_pe[e[j].event].pme_code >> 8) & 0xff;
 
 		for(k=0; k < e[j].num_masks; k++) {
 			umask |= coreduo_pe[e[j].event].pme_umasks[e[j].unit_masks[k]].pme_ucode;
@@ -230,22 +231,18 @@ pfm_coreduo_get_event_code(unsigned int i, unsigned int cnt, int *code)
 	if (cnt != PFMLIB_CNT_FIRST && cnt > 3)
 		return PFMLIB_ERR_INVAL;
 
+	/*
+	 * we return the full value.
+	 * Event with a single umask do not have explicit umask
+	 * table. In this case, the unit mask value if merged with the
+	 * event code value. So this function may return more than just
+	 * the plain event code.
+	 */
 	*code = coreduo_pe[i].pme_code;
 
 	return PFMLIB_SUCCESS;
 }
 
-/*
- * This function is accessible directly to the user
- */
-int
-pfm_coreduo_get_event_umask(unsigned int i, unsigned long *umask)
-{
-	if (i >= PME_COREDUO_EVENT_COUNT || umask == NULL) return PFMLIB_ERR_INVAL;
-	*umask = 0;
-	return PFMLIB_SUCCESS;
-}
-	
 static void
 pfm_coreduo_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 {
@@ -309,12 +306,12 @@ static int
 pfm_coreduo_get_event_desc(unsigned int ev, char **str)
 {
 	char *s;
+
 	s = coreduo_pe[ev].pme_desc;
-	if (s) {
+	if (s)
 		*str = strdup(s);
-	} else {
+	else
 		*str = NULL;
-	}
 	return PFMLIB_SUCCESS;
 }
 
@@ -330,11 +327,10 @@ pfm_coreduo_get_event_mask_desc(unsigned int ev, unsigned int midx, char **str)
 	char *s;
 
 	s = coreduo_pe[ev].pme_umasks[midx].pme_udesc;
-	if (s) {
+	if (s)
 		*str = strdup(s);
-	} else {
+	else
 		*str = NULL;
-	}
 	return PFMLIB_SUCCESS;
 }
 

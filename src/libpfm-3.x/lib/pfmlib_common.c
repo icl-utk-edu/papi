@@ -365,7 +365,7 @@ pfm_find_event_mask(unsigned int event_idx, const char *str, unsigned int *mask_
 
 	if (str == NULL || mask_idx == NULL) return PFMLIB_ERR_INVAL;
 
-	if (PFMLIB_HAS_EVENT_MASKS()) {
+	if (PMU_HAS_EVENT_MASKS()) {
 		num_masks = pfm_current->get_num_event_masks(event_idx);
 		for (i = 0; i < num_masks; i++) {
 			if (!strcasecmp(pfm_current->get_event_mask_name(event_idx, i), str)) {
@@ -433,7 +433,7 @@ pfm_get_event_mask_name(unsigned int event_idx, unsigned int mask_idx, char *nam
 
 	if (event_idx >= pfm_current->pme_count || name == NULL || maxlen < 1) return PFMLIB_ERR_INVAL;
 
-	if (!PFMLIB_HAS_EVENT_MASKS()) {
+	if (!PMU_HAS_EVENT_MASKS()) {
 		return PFMLIB_ERR_NOTSUPP;
 	}
 	if (mask_idx >= pfm_current->get_num_event_masks(event_idx))
@@ -467,13 +467,11 @@ pfm_get_num_event_masks(unsigned int event_idx, unsigned int *count)
 	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
 
 	if (event_idx >= pfm_current->pme_count || count == NULL) return PFMLIB_ERR_INVAL;
-
-	if (!PFMLIB_HAS_EVENT_MASKS()) {
+	if (PMU_HAS_EVENT_MASKS()) {
+		*count = pfm_current->get_num_event_masks(event_idx);
+	} else
 		*count = 0;
-		return PFMLIB_SUCCESS;
-	}
 
-	*count = pfm_current->get_num_event_masks(event_idx);
 	return PFMLIB_SUCCESS;
 }
 
@@ -527,7 +525,7 @@ pfm_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_output_par
 	for (i=0; i < count; i++) {
 		if (inp->pfp_events[i].event >= max_count)
 			return PFMLIB_ERR_INVAL;
-		if (PFMLIB_HAS_EVENT_MASKS()) {
+		if (PMU_HAS_EVENT_MASKS()) {
 			n = pfm_current->get_num_event_masks(inp->pfp_events[i].event);
 			for(j=0; j < inp->pfp_events[i].num_masks; j++) {
 				if (inp->pfp_events[i].unit_masks[j] >= n)
@@ -667,18 +665,6 @@ pfm_strerror(int code)
 	return pfmlib_err_list[code];
 }
 
-void
-__pfm_vbprintf(const char *fmt, ...)
-{
-	va_list ap;
-
-	if (pfm_config.options.pfm_verbose == 0) return;
-
-	va_start(ap, fmt);
-	vprintf(fmt, ap);
-	va_end(ap);
-}
-
 int
 pfm_get_version(unsigned int *version)
 {
@@ -688,7 +674,7 @@ pfm_get_version(unsigned int *version)
 }
 
 int
-pfm_get_max_name_len(size_t *len)
+pfm_get_max_event_name_len(size_t *len)
 {
 	unsigned int i, j, num_masks;
 	size_t max = 0, l;
@@ -700,7 +686,7 @@ pfm_get_max_name_len(size_t *len)
 		l = strlen(pfm_current->get_event_name(i));
 		if (l > max) max = l;
 
-		if (PFMLIB_HAS_EVENT_MASKS()) {
+		if (PMU_HAS_EVENT_MASKS()) {
 			num_masks = pfm_current->get_num_event_masks(i);
 			for (j = 0; j < num_masks; j++) {
 				l = strlen(pfm_current->get_event_mask_name(i, j));
@@ -711,12 +697,6 @@ pfm_get_max_name_len(size_t *len)
 	*len = max;
 
 	return PFMLIB_SUCCESS;
-}
-
-int
-pfm_get_max_event_name_len(size_t *len)
-{
-	return pfm_get_max_name_len(len);
 }
 
 /*
@@ -799,66 +779,4 @@ pfm_get_event_mask_code(unsigned int event_idx, unsigned int mask_idx, unsigned 
 		return PFMLIB_ERR_INVAL;
 
 	return pfm_current->get_event_mask_code(event_idx, mask_idx, code);
-}
-	
-/*
- * helper function to retrieve one value from /proc/cpuinfo
- * for internal libpfm use only
- * attr: the attribute (line) to look for
- * ret_buf: a buffer to store the value of the attribute (as a string)
- * maxlen : number of bytes of capacity in ret_buf
- *
- * ret_buf is null terminated.
- *
- * Return:
- * 	0 : attribute found, ret_buf populated
- * 	-1: attribute not found
- */
-int
-__pfm_getcpuinfo_attr(char *attr, char *ret_buf, size_t maxlen)
-{
-	FILE *fp;
-	int ret = -1;
-	size_t attr_len, buf_len = 0;
-	char *p, *value = NULL;
-	char *buffer = NULL;
-
-	if (attr == NULL || ret_buf == NULL || maxlen < 1)
-		return -1;
-
-	attr_len = strlen(attr);
-
-	fp = fopen("/proc/cpuinfo", "r");
-	if (fp == NULL)
-		return -1;
-
-	while(getline(&buffer, &buf_len, fp) != -1){
-
-		/* skip  blank lines */
-		if (*buffer == '\n')
-			continue;
-
-		p = strchr(buffer, ':');
-		if (p == NULL)
-			goto error;
-
-		/*
-		 * p+2: +1 = space, +2= firt character
-		 * strlen()-1 gets rid of \n
-		 */
-		*p = '\0';
-		value = p+2;
-
-		value[strlen(value)-1] = '\0';
-
-		if (!strncmp(attr, buffer, attr_len))
-			break;
-	}
-	strncpy(ret_buf, value, maxlen-1);
-	ret_buf[maxlen-1] = '\0';
-	ret = 0;
-error:
-	free(buffer);
-	fclose(fp);
-	return ret;
 }

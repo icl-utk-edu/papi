@@ -32,15 +32,14 @@ DIRS +=ia64
 endif
 
 ifeq ($(ARCH),ia32)
-#DIRS +=x86
+DIRS +=x86
 endif
 
 ifeq ($(ARCH),x86_64)
-#DIRS +=x86
+DIRS +=x86
 endif
 
 CFLAGS+= -pthread -D_GNU_SOURCE
-LDFLAGS+=-static 
 
 LIBS += -L$(PFMLIBDIR) -lpfm -lm
 

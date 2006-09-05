@@ -17,13 +17,13 @@
 /* Add 12 */
 #if (_MIPS_SIM == _ABIN32) || (_MIPS_SIM == _MIPS_SIM_NABI32)
 #define __NR_Linux 6000
-#define __NR_pfm_create_context		__NR_Linux+250
+#define __NR_pfm_create_context		__NR_Linux+269
 #elif (_MIPS_SIM == _ABI32) || (_MIPS_SIM == _MIPS_SIM_ABI32)
 #define __NR_Linux 4000
-#define __NR_pfm_create_context		__NR_Linux+287
+#define __NR_pfm_create_context		__NR_Linux+306
 #elif (_MIPS_SIM == _ABI64) || (_MIPS_SIM == _MIPS_SIM_ABI64)
 #define __NR_Linux 5000
-#define __NR_pfm_create_context		__NR_Linux+246
+#define __NR_pfm_create_context		__NR_Linux+265
 #endif
 #else
 #error "you need to define based syscall number"
@@ -146,7 +146,7 @@ static inline int cpu_detect(void)
 			return -1;
 		close(ctx.ctx_fd);
 	}
-	fp = fopen("/sys/kernel/perfmon/pmu_model", "r");
+	fp = fopen("/sys/kernel/perfmon/pmu_desc/model", "r");
 	if (fp == NULL) return -1;
 
 	p  = fgets(buffer, 255, fp);

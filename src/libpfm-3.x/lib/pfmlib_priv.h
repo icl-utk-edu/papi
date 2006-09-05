@@ -74,11 +74,11 @@ extern pfm_config_t pfm_config;
 #define PFMLIB_VERBOSE()	pfm_config.options.pfm_verbose
 #define pfm_current		pfm_config.current
 
-#define PFMLIB_HAS_EVENT_MASKS() (pfm_current->get_num_event_masks != NULL && \
-				  pfm_current->get_event_mask_name != NULL)
+#define PMU_HAS_EVENT_MASKS() (pfm_current->get_num_event_masks != NULL && \
+			   pfm_current->get_event_mask_name != NULL)
 
 extern void __pfm_vbprintf(const char *fmt,...);
-extern int __pfm_getcpuinfo_attr(char *attr, char *ret_buf, size_t maxlen);
+extern int __pfm_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen);
 
 #ifdef PFMLIB_DEBUG
 #define DPRINT(a) \

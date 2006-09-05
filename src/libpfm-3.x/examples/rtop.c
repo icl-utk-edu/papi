@@ -48,6 +48,8 @@
 
 #include "detect_pmcs.h"
 
+#define SWITCH_TIMEOUT	1000000 /* in micro-seconds */
+
 #define RTOP_VERSION "0.1"
 
 #define RTOP_MAX_CPUS		1024	/* maximum number of CPU supported */
@@ -119,6 +121,7 @@ typedef struct _setdesc_t {
 	pfmlib_output_param_t	outp;
 	uint16_t		set_id;
 	uint32_t		set_flags;
+	uint32_t		set_timeout; /* actual timeout */
 	int			(*handler)(int fd, FILE *fp, thread_desc_t *td, struct _setdesc_t *my_sdesc);
 	void 			*data;
 	eventdesc_t		*evt_desc;
@@ -164,7 +167,6 @@ static int handler_set0(int fd, FILE *fp, thread_desc_t *td, setdesc_t *my_sdesc
 
 static setdesc_t setdesc_tab[]={
 	{ .set_id    = 0,
-	  .set_flags = PFM_SETFL_EXCL_IDLE,
 	  .evt_desc  = set0_evt,
 	  .handler   = handler_set0
 	}
@@ -480,15 +482,15 @@ handler_set0(int fd, FILE *fp, thread_desc_t *td, setdesc_t *my_sdesc)
 	double k_cycles, u_cycles, i_cycles;
 	set0_data_t *sd1;
 	pfarg_setinfo_t info;
-	uint64_t itc_delta;
+	uint64_t itc_delta, act_delta;
 	long mycpu;
 
 	mycpu = td->cpuid;
 
 	if (my_sdesc->data == NULL) {
-		my_sdesc->data = sd1 = malloc(sizeof(set0_data_t));
-		if (sd1 == NULL) return -1;
-		memset(sd1, 0, sizeof(*sd1));
+		my_sdesc->data = sd1 = calloc(1, sizeof(set0_data_t));
+		if (sd1 == NULL)
+			return -1;
 
 	}
 	sd1 = my_sdesc->data;
@@ -510,33 +512,41 @@ handler_set0(int fd, FILE *fp, thread_desc_t *td, setdesc_t *my_sdesc)
 		return -1;
 	}
 
-	itc_delta = info.set_act_duration - sd1->prev_itc_cycles;
+	/*
+	 * actual duration monitoring was active for this set
+	 */
+	act_delta = (info.set_act_duration - sd1->prev_itc_cycles)/1000; /* in us */
 
-	k_cycles   = (double)(my_sdesc->pd[0].reg_value - sd1->prev_k_cycles) / (double)itc_delta;
-	u_cycles   = (double)(my_sdesc->pd[1].reg_value - sd1->prev_u_cycles) / (double)itc_delta;
-	i_cycles   = 1.0 - (k_cycles + u_cycles);
+	/*
+	 * expected maximum duration with monitoring active for this set
+	 */
+	itc_delta =  my_sdesc->set_timeout*options.cpu_mhz;
+
+	k_cycles   = (double)(my_sdesc->pd[0].reg_value - sd1->prev_k_cycles)*100.0/ (double)itc_delta;
+	u_cycles   = (double)(my_sdesc->pd[1].reg_value - sd1->prev_u_cycles)*100.0/ (double)itc_delta;
+	i_cycles   = 100.0 - (k_cycles + u_cycles);
 
 	/*
 	 * adjust for rounding errors
 	 */
 	if (i_cycles < 0.0) i_cycles = 0.0;
 
+	printw("CPU%-2ld %6.2f%% usr %6.2f%% sys %6.2f%% idle\n",
+		mycpu,
+		u_cycles,
+		k_cycles,
+		i_cycles);
+
 	sd1->prev_k_cycles   = my_sdesc->pd[0].reg_value;
 	sd1->prev_u_cycles   = my_sdesc->pd[1].reg_value;
 	sd1->prev_itc_cycles = info.set_act_duration;
 
-	printw("CPU%-2ld %6.2f%% usr %6.2f%% sys %6.2f%% idle\n",
-		mycpu,
-		u_cycles*100.0,
-		k_cycles*100.0,
-		i_cycles*100.0);
-
 	if (fp)
 		fprintf(fp, "%"PRIu64" %6.2f %6.2f %6.2f\n",
 			td->nsamples,
-			u_cycles*100.0,
-			k_cycles*100.0,
-			i_cycles*100.0);
+			u_cycles,
+			k_cycles,
+			i_cycles);
 	td->nsamples++;
 	return 0;
 }
@@ -632,13 +642,13 @@ do_measure_one_cpu(void *data)
 
 		setd.set_id    = my_sdesc->set_id;
 		setd.set_flags = my_sdesc->set_flags;
-		setd.set_timeout =  500000;
-
+		setd.set_timeout =  SWITCH_TIMEOUT; /* in us */
 
 		if (pfm_create_evtsets(fd, &setd, 1) == -1) {
 			warning("CPU%ld cannot create set%u: %d\n", mycpu, j, errno);
 			goto error;
 		}
+		my_sdesc->set_timeout = setd.set_timeout;
 
 		if (pfm_write_pmcs(fd, my_sdesc->pc, my_sdesc->outp.pfp_pmc_count) == -1) {
 			warning("CPU%ld pfm_write_pmcs error errno %d\n", mycpu, errno);
@@ -655,7 +665,12 @@ do_measure_one_cpu(void *data)
 		}
 	}
 
-	load_args.load_pid = gettid();
+	/*
+	 * in system-wide mode, this field must provide the CPU the caller wants
+	 * to monitor. The kernel checks and if calling from the wrong CPU, the
+	 * call fails. The affinity is not affected.
+	 */
+	load_args.load_pid = mycpu;
 
 	if (pfm_load_context(fd, &load_args) == -1) {
 		warning("CPU%ld pfm_load_context error errno %d\n", mycpu, errno);
@@ -797,7 +812,11 @@ mainloop(void)
 				refresh();
 				barrier_wait(&barrier);
 				break;
-			case -1: warning("polling error: %s\n", strerror(errno));
+			case -1:
+				/* restart in case of signal */
+				if (errno == EINTR)
+					continue;
+				warning("polling error: %s\n", strerror(errno));
 				 /* fall through */
 			default: time_to_quit = 1;
 		}

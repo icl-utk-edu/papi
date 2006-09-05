@@ -299,12 +299,33 @@ static int pentium4_dispatch_events(pfmlib_input_param_t *input,
 				output->pfp_pmcs[j].reg_evt_idx = i;
 				output->pfp_pmcs[j].reg_value = escr_value.val;
 				output->pfp_pmcs[j].reg_pmd_num = cccr_pmd;
+
+				__pfm_vbprintf("[escr=0x%lx os=%lu usr=%lu tag=%lu tagval=0x%lx mask=%lu sel=0x%lx] %s\n",
+						escr_value.val,
+						escr_value.bits.t0_usr,
+						escr_value.bits.t1_usr,
+						escr_value.bits.tag_enable,
+						escr_value.bits.tag_value,
+						escr_value.bits.event_mask,
+						escr_value.bits.event_select,
+						pentium4_events[event].name);
+
 				j++;
 
 				output->pfp_pmcs[j].reg_num = cccr_pmc;
 				output->pfp_pmcs[j].reg_evt_idx = i;
 				output->pfp_pmcs[j].reg_value = cccr_value.val;
 				output->pfp_pmcs[j].reg_pmd_num = cccr_pmd;
+
+				__pfm_vbprintf("[cccr=0x%lx ena=1 sel=0x%lx cmp=%lu cmpl=%lu thres=%lu edg=%lu cas=%lu] %s\n",
+						cccr_value.val,
+						cccr_value.bits.escr_select,
+						cccr_value.bits.compare,
+						cccr_value.bits.complement,
+						cccr_value.bits.threshold,
+						cccr_value.bits.edge,
+						cccr_value.bits.cascade,
+						pentium4_events[event].name);
 				j++;
 
 				output->pfp_pmc_count += 2;

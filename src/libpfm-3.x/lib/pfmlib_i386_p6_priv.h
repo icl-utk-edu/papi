@@ -25,26 +25,26 @@
 #ifndef __PFMLIB_I386_P6_PRIV_H__
 #define __PFMLIB_I386_P6_PRIV_H__
 
-/*
- * I386_P6 encoding structure
- * (code must be first 8 bits)
- */
-typedef struct {
-	unsigned long pme_emask:8;	/* event mask */
-	unsigned long pme_umask:8;	/* unit mask */
-	unsigned long pme_edge:1;	/* requires edge detect */
-	unsigned long pme_res:15;	/* reserved */
-} pme_i386_p6_entry_code_t;		
-
-typedef union {
-	pme_i386_p6_entry_code_t pme_code;
-	unsigned long 		pme_vcode;
-} pme_i386_p6_code_t;
+#define PFMLIB_I386_P6_MAX_UMASK	16
 
 typedef struct {
-	char			*pme_name;
-	pme_i386_p6_code_t	pme_entry_code;
-	char			*pme_desc;		/* text description of the event */
+	char			*pme_uname; /* unit mask name */
+	char			*pme_udesc; /* event/umask description */
+	unsigned int		pme_ucode;  /* unit mask code */
+} pme_i386_p6_umask_t;
+
+typedef struct {
+	char			*pme_name;	/* event name */
+	char			*pme_desc;	/* event description */
+	pme_i386_p6_umask_t	pme_umasks[PFMLIB_I386_P6_MAX_UMASK]; /* umask desc */
+	unsigned int		pme_code; 	/* event code */
+	unsigned int		pme_numasks;	/* number of umasks */
+	unsigned int		pme_flags;	/* flags */
 } pme_i386_p6_entry_t;
+
+/*
+ * pme_flags values
+ */
+#define PFMLIB_I386_P6_UMASK_COMBO	0x01 /* unit mask can be combined */
 
 #endif /* __PFMLIB_I386_P6_PRIV_H__ */

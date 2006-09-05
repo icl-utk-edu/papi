@@ -52,6 +52,12 @@ static char * pfm_i386_p6_get_event_name(unsigned int i);
 static pme_i386_p6_entry_t *i386_pe;
 static unsigned int i386_p6_num_events;
 
+#define PFMLIB_I386_P6_HAS_COMBO(_e) ((i386_pe[_e].pme_flags & PFMLIB_I386_P6_UMASK_COMBO) != 0)
+
+#define PFMLIB_I386_P6_ALL_FLAGS \
+	(PFM_I386_P6_SEL_INV|PFM_I386_P6_SEL_EDGE)
+
+
 static int
 pfm_i386_detect_common(void)
 {
@@ -150,7 +156,7 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 	pfmlib_reg_t *pc;
 	pfmlib_regmask_t *r_pmcs;
 	unsigned long plm;
-	unsigned int i, j, cnt;
+	unsigned int i, j, cnt, k, umask;
 	unsigned int assign[PMU_I386_P6_NUM_COUNTERS];
 
 	e      = inp->pfp_events;
@@ -175,7 +181,19 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 			DPRINT(("event=%d invalid plm=%d\n", e[j].event, e[j].plm));
 			return PFMLIB_ERR_INVAL;
 		}
-		
+
+		if (e[j].flags & ~PFMLIB_I386_P6_ALL_FLAGS) {
+			DPRINT(("event=%d invalid flags=0x%lx\n", e[j].event, e[j].flags));
+			return PFMLIB_ERR_INVAL;
+		}
+
+		/*
+		 * check illegal unit masks combination
+		 */
+		if (e[j].num_masks > 1 && PFMLIB_I386_P6_HAS_COMBO(e[j].event) == 0) {
+			DPRINT(("event does not supports unit mask combination\n"));
+			return PFMLIB_ERR_FEATCOMB;
+		}
 		/*
 		 * exclude restricted registers from assignement
 		 */
@@ -193,27 +211,31 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 		/* if plm is 0, then assume not specified per-event and use default */
 		plm = e[j].plm ? e[j].plm : inp->pfp_dfl_plm;
 
-		reg.sel_event_mask = i386_pe[e[j].event].pme_entry_code.pme_code.pme_emask;
-		reg.sel_unit_mask  = i386_pe[e[j].event].pme_entry_code.pme_code.pme_umask;
+		reg.sel_event_mask = i386_pe[e[j].event].pme_code;
+		/*
+		 * some events have only a single umask. We do not create
+		 * specific umask entry in this case. The umask code is taken
+		 * out of the (extended) event code (2nd byte)
+		 */
+		umask = (i386_pe[e[j].event].pme_code >> 8) & 0xff;
+
+		for(k=0; k < e[j].num_masks; k++) {
+			umask |= i386_pe[e[j].event].pme_umasks[e[j].unit_masks[k]].pme_ucode;
+		}
+		reg.sel_unit_mask  = umask;
 		reg.sel_usr        = plm & PFM_PLM3 ? 1 : 0;
 		reg.sel_os         = plm & PFM_PLM0 ? 1 : 0;
+		reg.sel_int        = 1; /* force APIC int to 1 */
 		/*
 		 * only perfevtsel0 has an enable bit (allows atomic start/stop)
 		 */
 		if (assign[j] == 0) 
 			reg.sel_en = 1; /* force enable bit to 1 */
 
-		reg.sel_int        = 1; /* force APIC int to 1 */
 		if (cntrs) {
-			reg.sel_cnt_mask   = cntrs[j].cnt_mask;
-
-			/*
-			 * certain events require edge to be set
-			 */
-			reg.sel_edge	   = cntrs[j].flags & PFM_I386_P6_SEL_EDGE
-					   ||  i386_pe[e[j].event].pme_entry_code.pme_code.pme_edge ? 1 : 0;
-
-			reg.sel_inv	   = cntrs[j].flags & PFM_I386_P6_SEL_INV ? 1 : 0;
+			reg.sel_cnt_mask = cntrs[j].cnt_mask;
+			reg.sel_edge	 = cntrs[j].flags & PFM_I386_P6_SEL_EDGE ? 1 : 0;
+			reg.sel_inv	 = cntrs[j].flags & PFM_I386_P6_SEL_INV ? 1 : 0;
 		}
 
 		/*
@@ -224,7 +246,7 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 		pc[j].reg_evt_idx = j;
 		pc[j].reg_value   = reg.val;
 
-		__pfm_vbprintf("[perfsel%u=0x%lx emask=0x%lx umask=0x%lx os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d] %s\n",
+		__pfm_vbprintf("[perfevtsel%u=0x%lx emask=0x%lx umask=0x%lx os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d] %s\n",
 			assign[j],
 			reg.val,
 			reg.sel_event_mask,
@@ -261,23 +283,19 @@ pfm_i386_p6_get_event_code(unsigned int i, unsigned int cnt, int *code)
 {
 	if (cnt != PFMLIB_CNT_FIRST && cnt > 2)
 		return PFMLIB_ERR_INVAL;
-	
-	*code = i386_pe[i].pme_entry_code.pme_code.pme_emask;
+
+	/*
+	 * we return the full value.
+	 * Event with a single umask do not have explicit umask
+	 * table. In this case, the unit mask value if merged with the
+	 * event code value. So this function may return more than just
+	 * the plain event code.
+	 */
+	*code = i386_pe[i].pme_code & 0xff;
 
 	return PFMLIB_SUCCESS;
 }
 
-/*
- * This function is accessible directly to the user
- */
-int
-pfm_i386_p6_get_event_umask(unsigned int i, unsigned long *umask)
-{
-	if (i >= i386_p6_num_events || umask == NULL) return PFMLIB_ERR_INVAL;
-	*umask = 0;
-	return PFMLIB_SUCCESS;
-}
-	
 static void
 pfm_i386_p6_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 {
@@ -350,6 +368,40 @@ pfm_i386_p6_get_event_description(unsigned int ev, char **str)
 	return PFMLIB_SUCCESS;
 }
 
+static char *
+pfm_i386_p6_get_event_mask_name(unsigned int ev, unsigned int midx)
+{
+	return i386_pe[ev].pme_umasks[midx].pme_uname;
+}
+
+static int
+pfm_i386_p6_get_event_mask_desc(unsigned int ev, unsigned int midx, char **str)
+{
+	char *s;
+
+	s = i386_pe[ev].pme_umasks[midx].pme_udesc;
+	if (s) {
+		*str = strdup(s);
+	} else {
+		*str = NULL;
+	}
+	return PFMLIB_SUCCESS;
+}
+
+static unsigned int
+pfm_i386_p6_get_num_event_masks(unsigned int ev)
+{
+	return i386_pe[ev].pme_numasks;
+}
+
+static int
+pfm_i386_p6_get_event_mask_code(unsigned int ev, unsigned int midx, unsigned int *code)
+{
+	*code = i386_pe[ev].pme_umasks[midx].pme_ucode;
+	return PFMLIB_SUCCESS;
+}
+
+
 /* Generic P6 processor support (not incl. Pentium M) */
 pfm_pmu_support_t i386_p6_support={
 	.pmu_name		= "P6 Processor Family",
@@ -391,5 +443,9 @@ pfm_pmu_support_t i386_pm_support={
 	.get_impl_pmds		= pfm_i386_p6_get_impl_perfctr,
 	.get_impl_counters	= pfm_i386_p6_get_impl_counters,
 	.get_hw_counter_width	= pfm_i386_p6_get_hw_counter_width,
-	.get_event_desc         = pfm_i386_p6_get_event_description
+	.get_event_desc         = pfm_i386_p6_get_event_description,
+	.get_num_event_masks	= pfm_i386_p6_get_num_event_masks,
+	.get_event_mask_name	= pfm_i386_p6_get_event_mask_name,
+	.get_event_mask_code	= pfm_i386_p6_get_event_mask_code,
+	.get_event_mask_desc	= pfm_i386_p6_get_event_mask_desc
 };

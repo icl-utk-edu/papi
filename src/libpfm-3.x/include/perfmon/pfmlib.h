@@ -75,7 +75,7 @@ typedef struct {
 } pfmlib_regmask_t;
 
 
-#define PFMLIB_MAX_MASKS_PER_EVENT 32
+#define PFMLIB_MAX_MASKS_PER_EVENT 48 /* maximum number of unit masks per event */
 
 /*
  * event description for pfmlib_input_param_t
@@ -90,17 +90,6 @@ typedef struct {
 } pfmlib_event_t;
 
 /*
- * type used to describe the value of a PMD counter
- * (not to be confused with the value of a PMC)
- */
-typedef uint64_t pfmlib_counter_t;
-
-/*
- * generic PMD type
- */
-typedef pfmlib_counter_t pfmlib_pmd_t;
-
-/*
  * generic register definition.
  */
 typedef struct {
@@ -111,8 +100,16 @@ typedef struct {
 	unsigned int		reg_reserved1;	/* for future use */
 	unsigned long		reg_reserved[1];/* for future use */
 } pfmlib_reg_t;
+
+/*
+ * reg_evt_idx possible value
+ */
+#define PFMLIB_REG_EVT_IDX_NONE	(~0)	/* PMC is not associated with counter */
+
+/*
+ * reg_pmd_num possible value
+ */
 #define PFMLIB_REG_PMD_NONE	(~0)	/* PMC is not associated with counter */
-#define PFMLIB_EVENT_NONE	(~0)	/* PMC is not associated with counter */
 
 /*
  * generic PMC register definition.
@@ -133,12 +130,12 @@ typedef struct {
 } pfmlib_input_param_t;
 
 /*
- * possible values for the flags (pfp_flags) in generic input parameters (apply to all events)
+ * pfp_flags possible values (apply to all events)
  */
 #define PFMLIB_PFP_SYSTEMWIDE		0x1	/* indicate monitors will be used in a system-wide session */
 
 /*
- * library generic output parameters from pfm_dispatch_event()
+ * library generic output parameters for pfm_dispatch_event()
  */
 typedef struct {
 	unsigned int	pfp_pmc_count;		 	/* how many PMCS were setup in pfp_pmc[] */
@@ -173,7 +170,6 @@ extern int pfm_find_event_bycode(int code, unsigned int *idx);
 extern int pfm_find_event_bycode_next(int code, unsigned int start, unsigned int *next);
 extern int pfm_find_event_mask(unsigned int event_idx, const char *str, unsigned int *mask_idx);
 extern int pfm_get_max_event_name_len(size_t *len);
-extern int pfm_get_max_name_len(size_t *len);
 
 extern int pfm_get_num_events(unsigned int *count);
 extern int pfm_get_num_event_masks(unsigned int event_idx, unsigned int *count);
@@ -202,7 +198,7 @@ extern int pfm_get_cycle_event(unsigned int *ev);
 extern int pfm_get_inst_retired_event(unsigned int *ev);
 
 /*
- * Supported PMU family (must fit in 64 bits)
+ * Supported PMU family
  */
 #define PFMLIB_NO_PMU	 	 	0	/* unsupported */
 #define PFMLIB_GEN_IA64_PMU	 	1	/* Intel IA-64 architected PMU */

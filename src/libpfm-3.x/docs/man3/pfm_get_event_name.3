@@ -83,8 +83,9 @@ to retrieve the total number of events for the host PMU
 and then increment your loop variable until you reach that count.
 .sp
 The \fBpfm_get_max_event_name_len\fR function returns in \fBlen\fR 
-the maximum length in bytes for the name of the events available on one PMU 
-implementation. The value excludes the string termination character ('\0').
+the maximum length in bytes for the name of the events or its unit masks, if any,
+available on one PMU implementation. The value excludes the string termination
+character ('\\0').
 .sp
 The \fBpfm_get_event_description\fR function returns in \fBstr\fR the
 description string associated with the event specified in \fBev\fR. 

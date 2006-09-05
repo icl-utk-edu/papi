@@ -34,7 +34,7 @@ AGE=0
 #
 # Common files
 #
-SRCS=pfmlib_common.c pfmlib_os.c
+SRCS=pfmlib_common.c pfmlib_os.c pfmlib_priv.c
 
 CFLAGS+=-D_REENTRANT
 
@@ -100,7 +100,7 @@ SOBJS=$(OBJS:.o=.lo)
 
 all: $(TARGETS)
 
-$(OBJS) $(SOBJS): $(TOPDIR)/config.mk $(TOPDIR)/rules.mk Makefile
+$(OBJS) $(SOBJS): $(TOPDIR)/config.mk $(TOPDIR)/rules.mk Makefile pfmlib_priv.h
 
 pfmlib_itanium.o : itanium_events.h
 pfmlib_itanium2.o : itanium2_events.h

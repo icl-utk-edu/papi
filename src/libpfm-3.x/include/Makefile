@@ -46,7 +46,6 @@ endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
 HEADERS += perfmon/pfmlib_os_i386.h   \
-	   perfmon/perfmon_i386.h     \
 	   perfmon/pfmlib_comp_i386.h
 endif
 

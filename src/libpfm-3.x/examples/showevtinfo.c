@@ -38,6 +38,8 @@
 
 static void fatal_error(char *fmt,...) __attribute__((noreturn));
 
+static size_t max_len;
+
 static void
 fatal_error(char *fmt, ...)
 {
@@ -51,24 +53,13 @@ fatal_error(char *fmt, ...)
 }
 
 static void
-show_event_info(unsigned int idx)
+show_event_info(char *name, unsigned int idx)
 {
 	pfmlib_regmask_t cnt, impl_cnt;
 	char *desc;
 	unsigned int n1, n2, i, c;
 	int code, prev_code = 0, first = 1;
-	size_t len;
-	char *name;
 
-	/*
-	 * figure out maximum size for event and umask names
-	 */
-	pfm_get_max_event_name_len(&len);
-	name = malloc(len+1);
-	if (name == NULL)
-		fatal_error("cannot allocate name buffer\n");
-
-	pfm_get_event_name(idx, name, len);
 	pfm_get_event_counters(idx, &cnt);
 	pfm_get_num_counters(&n2);
 	pfm_get_impl_counters(&impl_cnt);
@@ -97,7 +88,6 @@ show_event_info(unsigned int idx)
 	}
 	putchar('\n');
 
-
 	n1 = n2;
 	printf("Counters : [ ");
 	for (i=0; n1; i++) {
@@ -107,13 +97,12 @@ show_event_info(unsigned int idx)
 			printf("%d ", i);
 	}
 	puts("]");
-
 	pfm_get_num_event_masks(idx, &n1);
 	for (i = 0; i < n1; i++) {
 		pfm_get_event_mask_description(idx, i, &desc);
 		pfm_get_event_mask_code(idx, i, &c);
-		pfm_get_event_mask_name(idx, i, name, len);
-		printf("Umask    : 0x%02x : [%s] : %s\n", c, name, desc);
+		pfm_get_event_mask_name(idx, i, name, max_len+1);
+		printf("Umask-%02u : 0x%02x : [%s] : %s\n", i, c, name, desc);
 		free(desc);
 	}
 }
@@ -122,21 +111,18 @@ int
 main(int argc, char **argv)
 {
 	unsigned int i, count, match;
-	size_t len;
 	char *name;
 	regex_t preg;
 
 	if (pfm_initialize() != PFMLIB_SUCCESS)
 		fatal_error("PMU model not supported by library\n");
 
-	pfm_get_max_event_name_len(&len);
-	name = malloc(len+1);
+	pfm_get_max_event_name_len(&max_len);
+	name = malloc(max_len+1);
 	if (name == NULL)
 		fatal_error("cannot allocate name buffer\n");
 
-
 	pfm_get_num_events(&count);
-
 
 	if (argc == 1)
 		*argv = ".*"; /* match everything */
@@ -150,9 +136,9 @@ main(int argc, char **argv)
 		match = 0;
 
 		for(i=0; i < count; i++) {
-			pfm_get_event_name(i, name, len);
+			pfm_get_event_name(i, name, max_len+1);
 			if (regexec(&preg, name, 0, NULL, 0) == 0) {
-				show_event_info(i);
+				show_event_info(name, i);
 				match++;
 			}
 		}
@@ -161,5 +147,6 @@ main(int argc, char **argv)
 
 		argv++;
 	}
+	free(name);
 	return 0;
 }

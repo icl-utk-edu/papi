@@ -127,7 +127,7 @@ pfm_gen_ia32_detect(void)
 	pme_gen_ia32_entry_t *pe;
 	unsigned int ebx = 0, mask;
 	unsigned int i, num_events;
-	int ret;
+	int ret, family;
 	char buffer[128];
 
 	ret = __pfm_getcpuinfo_attr("vendor_id", buffer, sizeof(buffer));
@@ -137,12 +137,21 @@ pfm_gen_ia32_detect(void)
 	if (strcmp(buffer, "GenuineIntel"))
 		return PFMLIB_ERR_NOTSUPP;
 
-	/*
-	 * XXX: need to check for CPUID instruction first
-	 */
+	ret = __pfm_getcpuinfo_attr("cpu family", buffer, sizeof(buffer));
+	if (ret == -1)
+		return PFMLIB_ERR_NOTSUPP;
 
 	/*
-	 * check if CPU support 0xa function of CPUID
+	 * check family number to reject for processors
+	 * older than Pentium (family=5). Those processors
+	 * did not have the CPUID instruction
+	 */
+	family = atoi(buffer);
+	if (family < 5)
+		return PFMLIB_ERR_NOTSUPP;
+
+	/*
+	 * check if CPU supports 0xa function of CPUID
 	 * 0xa started with Core Duo. Needed to detect if
 	 * architected PMU is present
 	 */
