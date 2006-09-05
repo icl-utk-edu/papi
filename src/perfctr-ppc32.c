@@ -71,6 +71,7 @@ void print_control(const struct perfctr_cpu_control *control) {
    table's size in memory and then call the preset setup routine. */
 
 int setup_ppc32_presets(int cputype) {
+  int i = 0;
    switch (cputype) {
    case PERFCTR_PPC_750:
       native_table = &_papi_hwd_ppc750_native_map;
@@ -79,6 +80,8 @@ int setup_ppc32_presets(int cputype) {
       native_table = &_papi_hwd_ppc7450_native_map;
       preset_search_map = &_papi_hwd_ppc7450_preset_map;
    }
+   while (native_table[i].resources.selector) i++;
+   _papi_hwi_system_info.sub_info.num_native_events = i;
    return (_papi_hwi_setup_all_presets(preset_search_map, NULL));
 }
 

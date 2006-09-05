@@ -21,7 +21,7 @@ native_event_entry_t native_table[PAPI_MAX_NATIVE_EVENTS];
 void initialize_native_table()
 {
 	int i, j;
-	memset(native_table, '\0', PAPI_MAX_NATIVE_EVENTS * sizeof(native_event_entry_t));
+	memset(native_table, 0, PAPI_MAX_NATIVE_EVENTS * sizeof(native_event_entry_t));
 	for (i = 0; i < PAPI_MAX_NATIVE_EVENTS; i++) {
 		for (j = 0; j < MAX_COUNTERS; j++)
 		native_table[i].resources.counter_cmd[j] = -1;
@@ -103,6 +103,7 @@ int setup_ppc64_native_table()
 	}
 	
 	ppc64_setup_gps(index, gp_info);
+	_papi_hwi_system_info.sub_info.num_native_events = index;
 	return PAPI_OK;
 }
 
