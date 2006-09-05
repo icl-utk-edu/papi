@@ -260,6 +260,10 @@ int PAPI_library_init(int version)
 	     _papi_hwi_debug |= DEBUG_OVERFLOW;
 	   if (strstr(var,"PROFILE"))
 	     _papi_hwi_debug |= DEBUG_PROFILE;
+	   if (strstr(var,"MEMORY"))
+	     _papi_hwi_debug |= DEBUG_MEMORY;
+	   if (strstr(var,"LEAK"))
+	     _papi_hwi_debug |= DEBUG_LEAK;
 	   if (strstr(var,"ALL"))
 	     _papi_hwi_debug |= DEBUG_ALL;
 	 }

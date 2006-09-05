@@ -266,7 +266,7 @@ void _papi_mem_cleanup_all()
    for(ptr=mem_head;ptr;ptr=tmp){
      tmp = ptr->next;
 #ifdef DEBUG
-     fprintf(stderr, "MEMORY LEAK: %p of %d bytes, from File: %s Line: %d\n", ptr->ptr, ptr->size, ptr->file, ptr->line);
+     LEAKDBG("MEMORY LEAK: %p of %d bytes, from File: %s Line: %d\n", ptr->ptr, ptr->size, ptr->file, ptr->line);
      cnt += ptr->size;
 #endif
      
@@ -275,7 +275,7 @@ void _papi_mem_cleanup_all()
    _papi_hwi_unlock(MEMORY_LOCK);
 #ifdef DEBUG
    if ( cnt )
-     fprintf(stderr, "TOTAL MEMORY LEAK: %d bytes.\n", cnt);
+     LEAKDBG("TOTAL MEMORY LEAK: %d bytes.\n", cnt);
 #endif
 }
 
@@ -387,7 +387,7 @@ static int _papi_mem_check_buf_overflow(pmem_t *tmp){
   else if ( *ptr++ != MEM_EPILOG_4 ) fnd = 4;
 
   if ( fnd ) {
-    fprintf(stderr, "Buffer Overflow[%d] for %p allocated from %s at line %d\n", fnd, tmp->ptr, tmp->file, tmp->line);
+    LEAKDBG("Buffer Overflow[%d] for %p allocated from %s at line %d\n", fnd, tmp->ptr, tmp->file, tmp->line);
   }
   return(fnd);
 }
@@ -404,7 +404,7 @@ int _papi_mem_check_all_overflow()
      if ( _papi_mem_check_buf_overflow(tmp) ) fnd++;
    }
    if ( fnd )
-     fprintf(stderr, "%d Total Buffer overflows detected!\n", fnd);
+     LEAKDBG("%d Total Buffer overflows detected!\n", fnd);
    _papi_hwi_unlock(MEMORY_LOCK);
 #endif
    return(fnd);

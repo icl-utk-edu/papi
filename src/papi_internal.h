@@ -32,15 +32,16 @@
 
   /* Debug Levels */
 
-#define DEBUG_SUBSTRATE         0x2
-#define DEBUG_API               0x4
-#define DEBUG_INTERNAL          0x8
-#define DEBUG_THREADS           0x10
-#define DEBUG_MULTIPLEX         0x20
-#define DEBUG_OVERFLOW          0x40
-#define DEBUG_PROFILE           0x80
+#define DEBUG_SUBSTRATE         0x002
+#define DEBUG_API               0x004
+#define DEBUG_INTERNAL          0x008
+#define DEBUG_THREADS           0x010
+#define DEBUG_MULTIPLEX         0x020
+#define DEBUG_OVERFLOW          0x040
+#define DEBUG_PROFILE           0x080
 #define DEBUG_MEMORY            0x100
-#define DEBUG_ALL               (DEBUG_SUBSTRATE|DEBUG_API|DEBUG_INTERNAL|DEBUG_THREADS|DEBUG_MULTIPLEX|DEBUG_OVERFLOW|DEBUG_PROFILE|DEBUG_MEMORY)
+#define DEBUG_LEAK              0x200
+#define DEBUG_ALL               (DEBUG_SUBSTRATE|DEBUG_API|DEBUG_INTERNAL|DEBUG_THREADS|DEBUG_MULTIPLEX|DEBUG_OVERFLOW|DEBUG_PROFILE|DEBUG_MEMORY|DEBUG_LEAK)
 
   /* Please get rid of the DBG macro from your code */
 
@@ -50,7 +51,7 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 #define DEBUGLABEL(a) if (_papi_hwi_thread_id_fn) fprintf(stderr, "%s:%s:%s:%d:0x%lx ",a,__FILE__, FUNC, __LINE__,_papi_hwi_thread_id_fn()); else fprintf(stderr, "%s:%s:%s:%d: ",a,__FILE__, FUNC, __LINE__)
 #define ISLEVEL(a) (_papi_hwi_debug&a)
 
-#define DEBUGLEVEL(a) ((a&DEBUG_SUBSTRATE)?"SUBSTRATE":(a&DEBUG_API)?"API":(a&DEBUG_INTERNAL)?"INTERNAL":(a&DEBUG_THREADS)?"THREADS":(a&DEBUG_MULTIPLEX)?"MULTIPLEX":(a&DEBUG_OVERFLOW)?"OVERFLOW":(a&DEBUG_PROFILE)?"PROFILE":(a&DEBUG_MEMORY)?"MEMORY":"UNKNOWN")
+#define DEBUGLEVEL(a) ((a&DEBUG_SUBSTRATE)?"SUBSTRATE":(a&DEBUG_API)?"API":(a&DEBUG_INTERNAL)?"INTERNAL":(a&DEBUG_THREADS)?"THREADS":(a&DEBUG_MULTIPLEX)?"MULTIPLEX":(a&DEBUG_OVERFLOW)?"OVERFLOW":(a&DEBUG_PROFILE)?"PROFILE":(a&DEBUG_MEMORY)?"MEMORY":(a&DEBUG_LEAK)?"LEAK":"UNKNOWN")
 
 #ifndef NO_VARARG_MACRO         /* Has variable arg macro support */
 #define PAPIDEBUG(level,format, args...) { if(_papi_hwi_debug&level){DEBUGLABEL(DEBUGLEVEL(level));fprintf(stderr,format, ## args);}}
@@ -65,6 +66,7 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 #define OVFDBG(format, args...) (PAPIDEBUG(DEBUG_OVERFLOW,format, ## args))
 #define PRFDBG(format, args...) (PAPIDEBUG(DEBUG_PROFILE,format, ## args))
 #define MEMDBG(format, args...) (PAPIDEBUG(DEBUG_MEMORY,format, ## args))
+#define LEAKDBG(format, args...) (PAPIDEBUG(DEBUG_LEAK,format, ## args))
 #endif
 
 #else
@@ -77,6 +79,7 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 #define OVFDBG(format, args...) { ; }
 #define PRFDBG(format, args...) { ; }
 #define MEMDBG(format, args...) { ; }
+#define LEAKDBG(format, args...) { ; }
 #define PAPIDEBUG(level, format, args...) { ; }
 #endif
 #endif
