@@ -25,10 +25,8 @@ TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)/..
 include $(TOPDIR)/config.mk
 include $(TOPDIR)/rules.mk
 
-MANDIR=$(DESTDIR)/share/man/man3
-
 .PHONY: all clean distclean depend
 
 install:
-	-mkdir -p $(MANDIR)
-	( cd man3; $(INSTALL) -m 644 *.3 $(MANDIR) )
+	-mkdir -p $(MANDIR)/man3
+	( cd man3; $(INSTALL) -m 644 *.3 $(MANDIR)/man3 )

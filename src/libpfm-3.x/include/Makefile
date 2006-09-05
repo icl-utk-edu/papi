@@ -94,5 +94,5 @@ endif
 .PHONY: all clean distclean depend
 
 install:
-	-mkdir -p $(DESTDIR)/include/perfmon
-	$(INSTALL) -m 644 $(HEADERS) $(DESTDIR)/include/perfmon
+	-mkdir -p $(DESTINCDIR)/perfmon
+	$(INSTALL) -m 644 $(HEADERS) $(DESTINCDIR)/perfmon

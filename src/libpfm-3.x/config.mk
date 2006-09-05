@@ -29,8 +29,19 @@
 #
 #
 #
-ARCH = $(shell uname -m | sed s,i[3456789]86,ia32,)
-
+ARCH := $(shell uname -m) 
+ifeq (i686,$(findstring i686,$(ARCH)))
+ARCH=ia32
+endif
+ifeq (i586,$(findstring i586,$(ARCH)))
+ARCH=ia32
+endif
+ifeq (i486,$(findstring i486,$(ARCH)))
+ARCH=ia32
+endif
+ifeq (i386,$(findstring i386,$(ARCH)))
+ARCH=ia32
+endif
 #
 #
 # Where should things go in the end. the package will put things in lib and
@@ -38,6 +49,9 @@ ARCH = $(shell uname -m | sed s,i[3456789]86,ia32,)
 #
 install_prefix=/usr/local
 DESTDIR=$(install_prefix)
+DESTLIBDIR=$(install_prefix)/lib
+DESTINCDIR=$(install_prefix)/include
+MANDIR=$(install_prefix)/share/man
 
 #
 # Configuration Paramaters for libpfm library

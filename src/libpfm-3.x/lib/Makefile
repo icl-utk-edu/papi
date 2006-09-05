@@ -129,5 +129,5 @@ depend:
 	$(MKDEP) $(INCDIR) $(CFLAGS) $(SRCS)
 
 install: $(TARGETS)
-	-mkdir -p $(DESTDIR)/lib
-	$(INSTALL) -m 644 $(TARGETS) $(DESTDIR)/lib
+	-mkdir -p $(DESTLIBDIR)
+	$(INSTALL) -m 644 $(TARGETS) $(DESTLIBDIR)
