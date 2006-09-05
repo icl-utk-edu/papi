@@ -59,10 +59,12 @@
       n = 3
 #endif
 
-#if defined(_PPC32)
+#if defined(PPC32)
       eventname(1) = 'CPU_CLK'
       eventname(2) = 'FLOPS'
-      n = 2
+      eventname(3) = 'TOT_INS'
+      eventname(4) = 'BR_MSP'
+      n = 4
 #endif
 #if defined(_POWER5)
       eventname(1) = 'PM_FPU_FDIV'
@@ -73,7 +75,7 @@
       eventname(6) = 'PM_RUN_CYC'
       n = 6
 #endif
-#if defined(_POWER4)
+#if defined(_POWER4) || defined(_PPC970)
       eventname(1) = 'PM_FPU0_FDIV'
       eventname(2) = 'PM_FPU1_FDIV'
       eventname(3) = 'PM_FPU0_FRSP_FCONV'
@@ -92,7 +94,6 @@
       eventname(5) = 'PM_FPU0_CMPL'
       eventname(6) = 'PM_CYC'
       eventname(7) = 'PM_TLB_MISS'
-      eventname(8) = 'PM_FPU_FMA'
       n = 7
 #endif
 
@@ -243,7 +244,6 @@ C     call sleep(1)
       print *, "FPU0 Instructions          : ", values(5)
       print *, "CPU Cycles                 : ", values(6)
       print *, "TLB Misses                 : ", values(7)
-      print *, "FMA Instructions           : ", values(8)
       print *, "------------------------------------------"
       print *, "CPU MFLOPS                 : ",
      *((values(5)+values(2))/1000000.0)/csec
