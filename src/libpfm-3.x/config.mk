@@ -47,11 +47,10 @@ endif
 # Where should things go in the end. the package will put things in lib and
 # bin under this base.
 #
-install_prefix=/usr/local
-DESTDIR=$(install_prefix)
-DESTLIBDIR=$(install_prefix)/lib
-DESTINCDIR=$(install_prefix)/include
-MANDIR=$(install_prefix)/share/man
+install_prefix?=/usr/local
+DESTLIBDIR?=$(install_prefix)/lib
+DESTINCDIR?=$(install_prefix)/include
+MANDIR?=$(install_prefix)/share/man
 
 #
 # Configuration Paramaters for libpfm library
