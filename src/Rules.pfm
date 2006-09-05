@@ -118,7 +118,7 @@ endif
 
 native_install:
 ifeq (,${PFM_PREFIX})
-	$(MAKE) -C $(PFM_ROOT) DESTDIR=$(PREFIX) install
+	$(MAKE) -C $(PFM_ROOT) DESTDIR=$(PREFIX) install_prefix=$(PREFIX) install
 endif
 
 native_clobber:
