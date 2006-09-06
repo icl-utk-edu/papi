@@ -2,20 +2,21 @@ C  Strtest - Perform some basic tests of the functionality of the
 C  string passing to and from the PAPI Fortran interface. 
 C
 C    Test 1: Look up an event name from an event code. Use this name
-C    to try and locate the event code using the name received. Long,
-C    short and too short strings are used in the tests
+C            to try and locate the event code using the name received.
+C            Long, short and too short strings are used in the tests
 C
 C    Test 2: Look up a PAPI error string. Use long, short and too 
-C    short strings to store the result.
+C            short strings to store the result.
 C
-C    Test 3: Look up and display event descriptions using PAPIf_get_event_info.
+C    Test 3: Look up and display event descriptions 
+C            using PAPIf_get_event_info.
 C
 C    Comments:
 C    When using the Fortran interface it may not always be possible to
 C    use the PAPI predefined constants as actual arguments. Due to the
 C    values in these compilers might occasionally cast these into the
-C    wrong type. In the code below the line code=MSGCODE is used to make
-C    sure that the event code get the right type.
+C    wrong type. In the code below the line code=MSGCODE is used to 
+C    make sure that the event code get the right type.
 C
 #include "fpapi_test.h"
 C Set MSGLEN to the number of characters in the named event in MSGCODE
@@ -309,7 +310,8 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
 
 C      This API was deprecated with PAPI 3
 C      call PAPIF_describe_event(name,code,string,check)
-      call PAPIF_get_event_info(code,name,string,label,count,note,flags,check)
+      call PAPIF_get_event_info(code,name,string,label,count,
+     $     note,flags,check)
  100  format(t1,a,'"',a,'"')
       if (quiet .EQ. 0) then
         print 100,'The event description is: ',
