@@ -156,9 +156,62 @@ do                                              \
    __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(_papi_hwd_lock_data[lck]), "0"(MUTEX_OPEN) : "memory");                                \
 } while(0)
 #elif defined(mips)
-#warning "No locks defined"
-#define  _papi_hwd_lock(lck)                    
-#define  _papi_hwd_unlock(lck)                  
+static inline unsigned long papi_cmpxchg_u32(volatile int * m, unsigned long old,
+	unsigned long new)
+{
+	unsigned long retval;
+		__asm__ __volatile__(
+		"	.set	push					\n"
+		"	.set	noat					\n"
+		"	.set	mips3					\n"
+		"1:	ll	%0, %2			# __cmpxchg_u32	\n"
+		"	bne	%0, %z3, 2f				\n"
+		"	.set	mips0					\n"
+		"	move	$1, %z4					\n"
+		"	.set	mips3					\n"
+		"	sc	$1, %1					\n"
+		"	beqz	$1, 1b					\n"
+		"	sync						\n"
+		"2:							\n"
+		"	.set	pop					\n"
+		: "=&r" (retval), "=R" (*m)
+		: "R" (*m), "Jr" (old), "Jr" (new)
+		: "memory");
+	return retval;
+}
+static inline unsigned long papi_xchg_u32(volatile int * m, unsigned int val)
+{
+	unsigned long retval;
+	unsigned long dummy;
+	
+	__asm__ __volatile__(
+		"	.set	mips3					\n"
+		"1:	ll	%0, %3			# xchg_u32	\n"
+		"	.set	mips0					\n"
+		"	move	%2, %z4					\n"
+		"	.set	mips3					\n"
+		"	sc	%2, %1					\n"
+		"	beqz	%2, 1b					\n"
+		"	sync						\n"
+		"	.set	mips0					\n"
+		: "=&r" (retval), "=m" (*m), "=&r" (dummy)
+		: "R" (*m), "Jr" (val)
+		: "memory");
+	return retval;
+}
+
+#define  _papi_hwd_lock(lck)                          \
+do {                                                    \
+  unsigned long retval;                                 \
+  do {                                                  \
+  retval = papi_cmpxchg_u32(&_papi_hwd_lock_data[lck],MUTEX_CLOSED,MUTEX_OPEN);  \
+  } while(retval != (unsigned long)MUTEX_OPEN);	        \
+} while(0)
+#define  _papi_hwd_unlock(lck)                          \
+do {                                                    \
+  unsigned long retval;                                 \
+  retval = papi_xchg_u32(&_papi_hwd_lock_data[lck],MUTEX_OPEN); \
+} while(0)
 #else
 #error "_papi_hwd_lock/unlock undefined!"
 #endif
