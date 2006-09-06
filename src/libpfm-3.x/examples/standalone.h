@@ -17,13 +17,13 @@
 /* Add 12 */
 #if (_MIPS_SIM == _ABIN32) || (_MIPS_SIM == _MIPS_SIM_NABI32)
 #define __NR_Linux 6000
-#define __NR_pfm_create_context		__NR_Linux+269
+#define __NR_pfm_create_context		__NR_Linux+250
 #elif (_MIPS_SIM == _ABI32) || (_MIPS_SIM == _MIPS_SIM_ABI32)
 #define __NR_Linux 4000
-#define __NR_pfm_create_context		__NR_Linux+306
+#define __NR_pfm_create_context		__NR_Linux+287
 #elif (_MIPS_SIM == _ABI64) || (_MIPS_SIM == _MIPS_SIM_ABI64)
 #define __NR_Linux 5000
-#define __NR_pfm_create_context		__NR_Linux+265
+#define __NR_pfm_create_context		__NR_Linux+246
 #endif
 #else
 #error "you need to define based syscall number"
