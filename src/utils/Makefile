@@ -1,6 +1,6 @@
 TARGETS = papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail papi_command_line papi_event_chooser papi_decode
 UTILOBJS= do_loops.o dummy.o test_utils.o
-INCLUDE = -I.. -I/usr/include -I../ctests
+INCLUDE = -I.. -I../ctests
 PAPILIB=../$(LIBRARY)
 
 util: $(TARGETS)
