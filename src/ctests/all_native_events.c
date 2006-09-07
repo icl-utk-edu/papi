@@ -112,7 +112,7 @@ int main(int argc, char **argv)
 
     printf("\n\nSuccessfully found, added, and removed %d events.\n", add_count);
     if (err_count)
-    printf("\nFailed to add %d events.\n", err_count);
+    printf("Failed to add %d events.\n", err_count);
     if ( add_count > 0 )
       test_pass(__FILE__, NULL, 0);
     else
