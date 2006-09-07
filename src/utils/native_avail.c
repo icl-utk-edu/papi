@@ -65,7 +65,7 @@ int main(int argc, char **argv)
       group = (i & 0x00FF0000) >> 16;
       if (group) {
          if (!TESTS_QUIET)
-            printf("%10d", group - 1);
+            printf("%4d", group - 1);
       } else {
          if (!TESTS_QUIET)
             printf("\n\n");
@@ -127,7 +127,7 @@ int main(int argc, char **argv)
 
    if (!TESTS_QUIET) {
       printf
-          ("-------------------------------------------------------------------------\n");
+          ("\n-------------------------------------------------------------------------\n");
       printf("Total events reported: %d\n", j);
    }
    test_pass(__FILE__, NULL, 0);
