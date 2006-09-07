@@ -158,6 +158,15 @@
       n = 2
 #endif
 
+      call PAPIF_GET_HARDWARE_INFO (ncpu, nnodes, totalcpus, 
+     *vendor, vendor_string, model, model_string, revision, mhz)
+
+      if(model_string(1:10).eq.'Intel Core')then
+         eventname(1) = 'UnhltCore_Cycles'
+         eventname(2) = 'Instr_Retired'
+         n = 2
+      end if
+
       do i = 1, n
       call PAPIf_event_name_to_code(eventname(i), nativees, retval )
       if ( retval .NE. PAPI_OK ) then
@@ -170,9 +179,6 @@
           call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
         end if
       end do
-
-      call PAPIF_GET_HARDWARE_INFO (ncpu, nnodes, totalcpus, 
-     *vendor, vendor_string, model, model_string, revision, mhz)
 
       call PAPIf_get_real_usec(uso)
 
