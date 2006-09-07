@@ -22,7 +22,7 @@ BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
 TESTS	= $(PTHREADS) $(SERIAL) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM)\
 	$(SHARED) $(EAR) $(RANGE) $(P4_TEST) $(ACPI)
-INCLUDE = -I.. -I/usr/include 
+INCLUDE = -I..  
 PAPILIB	= ../$(LIBRARY)
 
 p4: $(P4_TEST)
