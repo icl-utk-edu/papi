@@ -816,7 +816,7 @@ inline_static long_long get_cycles(void) {
 #endif
    return ret;
 }
-#elif defined(PPC32)
+#elif defined(PPC32) || defined(PPC64)
 inline_static long_long get_cycles(void) {
 	unsigned long tbl=0;
 	unsigned long tbu=0;
@@ -825,19 +825,7 @@ inline_static long_long get_cycles(void) {
 	asm volatile("mftbu %0" : "=r" (tbu));
 	res=tbu;
 	res = (res << 32) | tbl;
-	return res;
-}
-#elif defined(PPC64)
-inline_static unsigned int rdtsc_long(void) {
-   unsigned long tb =0;
-   asm volatile("mftb %0" : "=r" (tb));
-   return (unsigned int)tb;
-}
-
-inline_static long_long get_cycles(void) {
-   long_long ret = 0;
-   ret = rdtsc_long();
-   return ret * tb_scale_factor;
+	return (res * tb_scale_factor);
 }
 #endif //PPC64
 
