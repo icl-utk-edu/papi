@@ -1,7 +1,9 @@
 #ifndef _PAPI_PENTIUM4_H
 #define _PAPI_PENTIUM4_H
 
+#ifndef __USE_GNU
 #define __USE_GNU
+#endif
 #define __USE_UNIX98
 
 #include <stdlib.h>
