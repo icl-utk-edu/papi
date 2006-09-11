@@ -72,7 +72,7 @@
 
 
 #define AI_ERROR "No support for a-mode counters after adding an i-mode counter"
-#define VOPEN_ERROR "vperfctr_open() returned NULL"
+#define VOPEN_ERROR "vperfctr_open() returned NULL, please run perfex -i to verify your perfctr installation"
 #define GOPEN_ERROR "gperfctr_open() returned NULL"
 #define VINFO_ERROR "vperfctr_info() returned < 0"
 #define VCNTRL_ERROR "vperfctr_control() returned < 0"

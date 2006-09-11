@@ -4,7 +4,12 @@
 #ifndef __USE_GNU
 #define __USE_GNU
 #endif
+#ifndef __USE_UNIX98
 #define __USE_UNIX98
+#endif
+#ifndef __USE_XOPEN_EXTENDED
+#define __USE_XOPEN_EXTENDED
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -139,7 +144,7 @@ typedef P4_perfctr_context_t hwd_context_t;
 typedef P4_perfctr_event_t hwd_event_t;
 
 #define AI_ERROR "No support for a-mode counters after adding an i-mode counter"
-#define VOPEN_ERROR "vperfctr_open() returned NULL"
+#define VOPEN_ERROR "vperfctr_open() returned NULL, please run perfex -i to verify your perfctr installation"
 #define GOPEN_ERROR "gperfctr_open() returned NULL"
 #define VINFO_ERROR "vperfctr_info() returned < 0"
 #define VCNTRL_ERROR "vperfctr_control() returned < 0"

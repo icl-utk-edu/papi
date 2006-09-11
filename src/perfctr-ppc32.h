@@ -1,9 +1,15 @@
 #ifndef _PAPI_PERFCTR_PPC32_H
 #define _PAPI_PERFCTR_PPC32_H
 
+#ifndef __USE_GNU
 #define __USE_GNU
+#endif
+#ifndef __USE_UNIX98
 #define __USE_UNIX98
+#endif
+#ifndef __USE_XOPEN_EXTENDED
 #define __USE_XOPEN_EXTENDED
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -198,7 +204,7 @@ typedef ppc32_perfctr_context_t hwd_context_t;
 #define PERF_INT_PMCxEN        (1<<(31-17))
 
 #define AI_ERROR "No support for a-mode counters after adding an i-mode counter"
-#define VOPEN_ERROR "vperfctr_open() returned NULL"
+#define VOPEN_ERROR "vperfctr_open() returned NULL, please run perfex -i to verify your perfctr installation"
 #define GOPEN_ERROR "gperfctr_open() returned NULL"
 #define VINFO_ERROR "vperfctr_info() returned < 0"
 #define VCNTRL_ERROR "vperfctr_control() returned < 0"

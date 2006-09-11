@@ -1,13 +1,15 @@
 #ifndef _PAPI_PENTIUM3_H
 #define _PAPI_PENTIUM3_H
 
-#ifdef __CATAMOUNT__
-  #define _GNU_SOURCE
-#endif
-
+#ifndef __USE_GNU
 #define __USE_GNU
+#endif
+#ifndef __USE_UNIX98
 #define __USE_UNIX98
+#endif
+#ifndef __USE_XOPEN_EXTENDED
 #define __USE_XOPEN_EXTENDED
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -200,7 +202,7 @@ typedef P3_perfctr_context_t hwd_context_t;
 #define PERF_EVNT_MASK         0x000000FF
 
 #define AI_ERROR "No support for a-mode counters after adding an i-mode counter"
-#define VOPEN_ERROR "vperfctr_open() returned NULL"
+#define VOPEN_ERROR "vperfctr_open() returned NULL, please run perfex -i to verify your perfctr installation"
 #define GOPEN_ERROR "gperfctr_open() returned NULL"
 #define VINFO_ERROR "vperfctr_info() returned < 0"
 #define VCNTRL_ERROR "vperfctr_control() returned < 0"
