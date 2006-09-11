@@ -6,7 +6,7 @@ MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
-SERIAL  = multiattach zero_attach reset subinfo realtime first exeinfo zero zero_fork branches dmem_info all_native_events all_events derived high-level2 describe memory  \
+SERIAL  = code2name multiattach zero_attach reset subinfo realtime first exeinfo zero zero_fork branches dmem_info all_native_events all_events derived high-level2 describe memory  \
 	zero_flip low-level high-level eventname case1 case2 \
 	calibrate flops second johnmay2 \
 	overflow overflow_force_software overflow_single_event \
@@ -280,6 +280,9 @@ subinfo: subinfo.c $(PAPILIB) $(UTILOBJS)
 zero_attach: zero_attach.c $(PAPILIB) $(UTILOBJS)
 	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) zero_attach.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero_attach 
 
+code2name: code2name.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) code2name.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o code2name
+
 multiattach: multiattach.c $(PAPILIB) $(UTILOBJS)
 	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) multiattach.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o multiattach 
 
@@ -302,10 +305,10 @@ clean:
 	rm -f *.o *.stderr *.stdout core *~ $(TESTS)
 
 install: $(TARGETS)
-	@if [ \"$(PREFIX)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make PREFIX=/usr/local"; exit 1; fi 
-	@echo "Root of destination directory is: \"$(PREFIX)\""; 
-	-mkdir -p $(PREFIX)/share/papi/ctests
-	-chmod go+rx $(PREFIX)/share/papi/ctests
-	-find . -perm -100 -type f -exec cp {} $(PREFIX)/share/papi/ctests \;
-	-chmod go+rx $(PREFIX)/share/papi/ctests/*
-	-find . -name "*.[ch]" -type f -exec cp {} $(PREFIX)/share/papi/ctests \;
+	@echo "C tests (DATADIR) being installed in: \"$(DATADIR)\""; 
+	-mkdir -p $(DATADIR)/ctests
+	-chmod go+rx $(DATADIR)
+	-chmod go+rx $(DATADIR)/ctests
+	-find . -perm -100 -type f -exec cp {} $(DATADIR)/ctests \;
+	-chmod go+rx $(DATADIR)/ctests/*
+	-find . -name "*.[ch]" -type f -exec cp {} $(DATADIR)/ctests \;
