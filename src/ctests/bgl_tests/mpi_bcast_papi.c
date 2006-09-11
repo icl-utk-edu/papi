@@ -9,6 +9,40 @@
 #define ROOT 0
 #define NCOUNTS 6
 
+int Pt2Pt_MPI_Bcast(char *buf, int sz, MPI_Datatype dt, int root, MPI_Comm comm)
+{
+  int i,localrank,localsize;
+  int perr=MPI_SUCCESS;
+  MPI_Status status;
+
+  if((perr=MPI_Comm_rank(MPI_COMM_WORLD,&localrank)))
+    {
+      printf("\n[ERROR! ERROR! ERROR! %s:%d] MPI_Comm_rank failed. err=%d\n",__FILE__,__LINE__,perr);
+      return perr;
+    }
+
+  if((perr=MPI_Comm_size(MPI_COMM_WORLD,&localsize)))
+    {
+      printf("\n[ERROR! ERROR! ERROR! %s:%d] MPI_Comm_size failed. err=%d\n",__FILE__,__LINE__,perr);
+      return perr;
+    }
+
+  if (localrank==root)
+    {
+      for (i=0; i<localsize; i++)
+      {
+        if (i!=localrank) perr=MPI_Send(buf,sz,dt,i,42,comm);
+        if (perr!=MPI_SUCCESS) return perr;
+     }
+    }
+  else
+    {
+      perr=MPI_Recv(buf,sz,dt,root,42,comm,&status);
+    }
+  MPI_Barrier(comm);
+  return perr;
+}
+
 int main(int argc, char* argv[]) {
   char v[N];
   int i, rank;
@@ -42,25 +76,25 @@ int main(int argc, char* argv[]) {
   if((perr=PAPI_add_event(ev_set2, EventCode )))
     printf("\n[ERROR! ERROR! ERROR! %s:%d] PAPI_add_event failed. %s\n",__FILE__,__LINE__,PAPI_strerror(perr));
 
-  retval = PAPI_event_name_to_code("BGL_UPC_TS_YM_32B_CHUNKS)", &EventCode);
+  retval = PAPI_event_name_to_code("BGL_UPC_TS_YM_32B_CHUNKS", &EventCode);
   if (retval != PAPI_OK)
      printf("%s:%d  PAPI_event_name_to_code  %d\n", __FILE__,__LINE__, retval);
   if((perr=PAPI_add_event(ev_set2, EventCode )))
     printf("\n[ERROR! ERROR! ERROR! %s:%d] PAPI_add_event failed. %s\n",__FILE__,__LINE__,PAPI_strerror(perr));
 
-  retval = PAPI_event_name_to_code("BGL_UPC_TS_YP_32B_CHUNKS)", &EventCode);
+  retval = PAPI_event_name_to_code("BGL_UPC_TS_YP_32B_CHUNKS", &EventCode);
   if (retval != PAPI_OK)
      printf("%s:%d  PAPI_event_name_to_code  %d\n", __FILE__,__LINE__, retval);
   if((perr=PAPI_add_event(ev_set2, EventCode )))
     printf("\n[ERROR! ERROR! ERROR! %s:%d] PAPI_add_event failed. %s\n",__FILE__,__LINE__,PAPI_strerror(perr));
 
-  retval = PAPI_event_name_to_code("BGL_UPC_TS_ZM_32B_CHUNKS)", &EventCode);
+  retval = PAPI_event_name_to_code("BGL_UPC_TS_ZM_32B_CHUNKS", &EventCode);
   if (retval != PAPI_OK)
      printf("%s:%d  PAPI_event_name_to_code  %d\n", __FILE__,__LINE__, retval);
   if((perr=PAPI_add_event(ev_set2, EventCode )))
     printf("\n[ERROR! ERROR! ERROR! %s:%d] PAPI_add_event failed. %s\n",__FILE__,__LINE__,PAPI_strerror(perr));
 
-  retval = PAPI_event_name_to_code("BGL_UPC_TS_ZP_32B_CHUNKS)", &EventCode);
+  retval = PAPI_event_name_to_code("BGL_UPC_TS_ZP_32B_CHUNKS", &EventCode);
   if (retval != PAPI_OK)
      printf("%s:%d  PAPI_event_name_to_code  %d\n", __FILE__,__LINE__, retval);
   if((perr=PAPI_add_event(ev_set2, EventCode )))
@@ -114,7 +148,8 @@ int main(int argc, char* argv[]) {
   if((perr=PAPI_start(ev_set)))
     printf("\n[ERROR! ERROR! ERROR! %s:%d] PAPI_start failed. %s\n",__FILE__,__LINE__,PAPI_strerror(perr));
 
-  if((perr=MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD)))
+/*  if((perr=MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD))) */
+  if((perr=Pt2Pt_MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD)))
     printf("\n[ERROR! ERROR! ERROR! %s:%d] MPI_Bcast failed. err=%d\n",__FILE__,__LINE__,perr);
 
 #ifdef DEBUG
@@ -147,7 +182,8 @@ int main(int argc, char* argv[]) {
   if((perr=PAPI_start(ev_set2)))
     printf("\n[ERROR! ERROR! ERROR! %s:%d] PAPI_start failed. %s\n",__FILE__,__LINE__,PAPI_strerror(perr));
 
-  if((perr=MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD)))
+/*  if((perr=MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD))) */
+  if((perr=Pt2Pt_MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD)))
     printf("\n[ERROR! ERROR! ERROR! %s:%d] MPI_Bcast failed. err=%d\n",__FILE__,__LINE__,perr);
   
 #ifdef DEBUG
@@ -176,7 +212,8 @@ int main(int argc, char* argv[]) {
   if((perr=PAPI_start(ev_set2)))
     printf("\n[ERROR! ERROR! ERROR! %s:%d] PAPI_start 2 failed. %s\n",__FILE__,__LINE__,PAPI_strerror(perr));
 
-  if((perr=MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD)))
+/*  if((perr=MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD))) */
+  if((perr=Pt2Pt_MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD)))
     printf("\n[ERROR! ERROR! ERROR! %s:%d] MPI_Bcast failed. err=%d\n",__FILE__,__LINE__,perr);
   
 #ifdef DEBUG
@@ -197,7 +234,8 @@ int main(int argc, char* argv[]) {
   if((perr=PAPI_reset(ev_set2)))
     printf("\n[ERROR! ERROR! ERROR! %s:%d] PAPI_start failed. %s\n",__FILE__,__LINE__,PAPI_strerror(perr));
 
-  if((perr=MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD)))
+/*  if((perr=MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD))) */
+  if((perr=Pt2Pt_MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD)))  
     printf("\n[ERROR! ERROR! ERROR! %s:%d] MPI_Bcast failed. err=%d\n",__FILE__,__LINE__,perr);
   
 #ifdef DEBUG
@@ -314,7 +352,8 @@ int main(int argc, char* argv[]) {
   if((perr=PAPI_start(ev_set)))
     printf("\n[ERROR! ERROR! ERROR! %s:%d] PAPI_start failed. %s\n",__FILE__,__LINE__,PAPI_strerror(perr));
 
-  if((perr=MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD)))
+/*  if((perr=MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD))) */
+  if((perr=Pt2Pt_MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD)))
     printf("\n[ERROR! ERROR! ERROR! %s:%d] MPI_Bcast failed. err=%d\n",__FILE__,__LINE__,perr);
 
 #ifdef DEBUG
@@ -347,7 +386,8 @@ int main(int argc, char* argv[]) {
   if((perr=PAPI_start(ev_set2)))
     printf("\n[ERROR! ERROR! ERROR! %s:%d] PAPI_start failed. %s\n",__FILE__,__LINE__,PAPI_strerror(perr));
 
-  if((perr=MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD)))
+ /* if((perr=MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD))) */
+  if((perr=Pt2Pt_MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD)))
     printf("\n[ERROR! ERROR! ERROR! %s:%d] MPI_Bcast failed. err=%d\n",__FILE__,__LINE__,perr);
   
 #ifdef DEBUG
@@ -376,7 +416,8 @@ int main(int argc, char* argv[]) {
   if((perr=PAPI_start(ev_set2)))
     printf("\n[ERROR! ERROR! ERROR! %s:%d] PAPI_start 2 failed. %s\n",__FILE__,__LINE__,PAPI_strerror(perr));
 
-  if((perr=MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD)))
+  /*if((perr=MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD)))*/
+  if((perr=Pt2Pt_MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD)))
     printf("\n[ERROR! ERROR! ERROR! %s:%d] MPI_Bcast failed. err=%d\n",__FILE__,__LINE__,perr);
   
 #ifdef DEBUG
@@ -397,7 +438,8 @@ int main(int argc, char* argv[]) {
   if((perr=PAPI_reset(ev_set2)))
     printf("\n[ERROR! ERROR! ERROR! %s:%d] PAPI_start failed. %s\n",__FILE__,__LINE__,PAPI_strerror(perr));
 
-  if((perr=MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD)))
+  /*if((perr=MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD)))*/
+  if((perr=Pt2Pt_MPI_Bcast(v,N,MPI_CHAR,ROOT,MPI_COMM_WORLD)))
     printf("\n[ERROR! ERROR! ERROR! %s:%d] MPI_Bcast failed. err=%d\n",__FILE__,__LINE__,perr);
   
 #ifdef DEBUG

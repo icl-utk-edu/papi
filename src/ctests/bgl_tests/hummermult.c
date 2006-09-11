@@ -11,7 +11,7 @@ int main(int argc, char* argv[]) {
   double v1[N], v2[N], v3[N], r1[N], r2[N];
   double a=1.01,b=1.02,c=1.03,t=0.0,t2=0.0;
   int i, rank;
-  int perr, ev_set = PAPI_NULL;
+  int retval, perr, ev_set = PAPI_NULL;
   int encoding;
   long_long counts[NCOUNTS];
 
@@ -48,19 +48,32 @@ int main(int argc, char* argv[]) {
   if((perr=PAPI_add_event(ev_set,PAPI_TOT_CYC)))
     printf("PAPI_add_event failed. %s\n",PAPI_strerror(perr));
 
-  encoding=( BGL_FPU_ARITH_OEDIPUS_OP & 0x3FF );
+  retval = PAPI_event_name_to_code("BGL_FPU_ARITH_OEDIPUS_OP", &encoding);
+  if (retval != PAPI_OK)
+      printf("%s:%d  PAPI_event_name_to_code  %d\n", __FILE__,__LINE__, retval);
+
   if((perr=PAPI_add_event(ev_set,encoding)))
     printf("\nPAPI_add_event failed. %s\n",PAPI_strerror(perr));
 
-  encoding=( BGL_2NDFPU_ARITH_OEDIPUS_OP & 0x3FF );
+  retval = PAPI_event_name_to_code("BGL_2NDFPU_ARITH_OEDIPUS_OP", &encoding);
+  if (retval != PAPI_OK)
+      printf("%s:%d  PAPI_event_name_to_code  %d\n", __FILE__,__LINE__, retval);
+  
   if((perr=PAPI_add_event(ev_set,encoding)))
     printf("\nPAPI_add_event failed. %s\n",PAPI_strerror(perr));
 
-  encoding=( BGL_FPU_LDST_QUAD_LD & 0x3FF );
+  retval = PAPI_event_name_to_code("BGL_FPU_LDST_QUAD_LD", &encoding);
+  if (retval != PAPI_OK)
+      printf("%s:%d  PAPI_event_name_to_code  %d\n", __FILE__,__LINE__, retval);
+
   if((perr=PAPI_add_event(ev_set,encoding)))
     printf("\nPAPI_add_event failed. %s\n",PAPI_strerror(perr));
 
-  encoding=( BGL_2NDFPU_LDST_QUAD_LD & 0x3FF );
+
+  retval = PAPI_event_name_to_code("BGL_2NDFPU_LDST_QUAD_LD", &encoding);
+  if (retval != PAPI_OK)
+      printf("%s:%d  PAPI_event_name_to_code  %d\n", __FILE__,__LINE__, retval);
+  
   if((perr=PAPI_add_event(ev_set,encoding)))
     printf("\nPAPI_add_event failed. %s\n",PAPI_strerror(perr));
 
