@@ -22,7 +22,6 @@
 #include <sys/types.h>
 
 #ifdef _WIN32
-#define NEED_FFSLL
 #define inline_static static __inline
 #include <errno.h>
 #include "cpuinfo.h"

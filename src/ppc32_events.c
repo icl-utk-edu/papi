@@ -227,7 +227,7 @@ const hwi_search_t _papi_hwd_ppc7450_preset_map[] = {
    and the Native Event Code.                                           */
 /* The notes/descriptions of these events have sometimes been truncated */
 /* Please see the architecture's manual for any clarifications.         */
-/* From http://www.freescale.com/files/32bit/doc/ref_manual/MPC7450UM.pdf (/
+/* From http://www.freescale.com/files/32bit/doc/ref_manual/MPC7450UM.pdf?srch=1 (/
 P ev
 1  6   -- External performance monitor
 1 40   AltiVec load instructions completed
@@ -607,7 +607,7 @@ const native_event_entry_t _papi_hwd_ppc7450_native_map[] = {
 
 	{"SR_INS",
 	"Number of store instructions",
-	{CNTRS12, 0x14a}},
+	{CNTRS12, 0x14}},
 
 	{"TLB_DM",
 	"Number of DTLB misses",
