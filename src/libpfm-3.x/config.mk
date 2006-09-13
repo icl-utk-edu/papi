@@ -28,18 +28,18 @@
 # It is included by every Makefile
 #
 #
-ARCH := $(shell uname -m)
+ARCH:=$(shell uname -m)
 ifeq (i686,$(findstring i686,$(ARCH)))
-ARCH=ia32
+override ARCH=ia32
 endif
 ifeq (i586,$(findstring i586,$(ARCH)))
-ARCH=ia32
+override ARCH=ia32
 endif
 ifeq (i486,$(findstring i486,$(ARCH)))
-ARCH=ia32
+override ARCH=ia32
 endif
 ifeq (i386,$(findstring i386,$(ARCH)))
-ARCH=ia32
+override ARCH=ia32
 endif
 #
 # Where should things (lib, headers, man) go in the end.
