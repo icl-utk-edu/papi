@@ -225,11 +225,6 @@ static inline void perfctr_p5_init_tests(void)
 	measure_overheads(MSR_P5_CESR, P5_CESR_VAL, MSR_P5_CTR0, 0, 0);
 }
 
-static inline void perfctr_p6_init_tests(void)
-{
-	measure_overheads(MSR_P6_EVNTSEL0, P6_EVNTSEL0_VAL, MSR_P6_PERFCTR0, 0, 0);
-}
-
 #if !defined(CONFIG_X86_TSC)
 static inline void perfctr_c6_init_tests(void)
 {
@@ -246,6 +241,11 @@ static inline void perfctr_vc3_init_tests(void)
 	measure_overheads(MSR_P6_EVNTSEL0+1, VC3_EVNTSEL1_VAL, MSR_P6_PERFCTR0+1, 0, 0);
 }
 #endif /* !__x86_64__ */
+
+static inline void perfctr_p6_init_tests(void)
+{
+	measure_overheads(MSR_P6_EVNTSEL0, P6_EVNTSEL0_VAL, MSR_P6_PERFCTR0, 0, 0);
+}
 
 static inline void perfctr_p4_init_tests(void)
 {
