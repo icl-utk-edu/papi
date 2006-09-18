@@ -1312,6 +1312,9 @@ char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
       return (_papi_hwd_pentium4_user_map[mask].name);
    }
 
+   if (event > sizeof(_papi_hwd_pentium4_native_map)/sizeof(hwd_p4_native_map_t))
+       return (NULL);
+
    return (internal_translate_code(event, mask, name, "_"));
 }
 
@@ -1333,6 +1336,9 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
       return (_papi_hwd_pentium4_user_map[mask].description);
    }
 
+   if (event > sizeof(_papi_hwd_pentium4_native_map)/sizeof(hwd_p4_native_map_t))
+       return (NULL);
+
    return (internal_translate_code(event, mask, description, ": "));
 }
 
@@ -1350,6 +1356,10 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
    mask = (EventCode & 0xffff); // mask bits are in the first two bytes
 
    *bits = _papi_hwd_pentium4_native_map[event].bits;
+
+   if ((event > sizeof(_papi_hwd_pentium4_native_map)/sizeof(hwd_p4_native_map_t))
+       && (event != P4_custom_event) && (event != P4_user_event))
+       return (PAPI_ENOEVNT);
 
    switch (event) {
    case P4_custom_event:
