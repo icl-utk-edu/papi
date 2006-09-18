@@ -476,129 +476,64 @@ inline_static void PAPIDEBUG(int level, char *format, ...)
 inline_static void SUBDBG(char *format, ...)
 {
 #ifdef DEBUG
-   va_list args;
-   int level = DEBUG_SUBSTRATE;
-
-   if (ISLEVEL(level)) {
-      va_start(args, format);
-      DEBUGLABEL(DEBUGLEVEL(level));
-      vfprintf(stderr, format, args);
-      va_end(args);
-   } else
+   PAPIDEBUG(DEBUG_SUBSTRATE, format);
 #endif
-      return;
 }
 
 inline_static void APIDBG(char *format, ...)
 {
 #ifdef DEBUG
-   va_list args;
-   int level = DEBUG_API;
-
-   if (ISLEVEL(level)) {
-      va_start(args, format);
-      DEBUGLABEL(DEBUGLEVEL(level));
-      vfprintf(stderr, format, args);
-      va_end(args);
-   } else
+   PAPIDEBUG(DEBUG_API, format);
 #endif
-      return;
 }
 
 inline_static void INTDBG(char *format, ...)
 {
 #ifdef DEBUG
-   va_list args;
-   int level = DEBUG_INTERNAL;
-
-   if (ISLEVEL(level)) {
-      va_start(args, format);
-      DEBUGLABEL(DEBUGLEVEL(level));
-      vfprintf(stderr, format, args);
-      va_end(args);
-   } else
+   PAPIDEBUG(DEBUG_INTERNAL, format);
 #endif
-      return;
 }
 
 inline_static void THRDBG(char *format, ...)
 {
 #ifdef DEBUG
-   va_list args;
-   int level = DEBUG_THREADS;
-
-   if (ISLEVEL(level)) {
-      va_start(args, format);
-      DEBUGLABEL(DEBUGLEVEL(level));
-      vfprintf(stderr, format, args);
-      va_end(args);
-   } else
+   PAPIDEBUG(DEBUG_THREADS, format);
 #endif
-      return;
 }
 
 inline_static void MPXDBG(char *format, ...)
 {
 #ifdef DEBUG
-   va_list args;
-   int level = DEBUG_MULTIPLEX;
-
-   if (ISLEVEL(level)) {
-      va_start(args, format);
-      DEBUGLABEL(DEBUGLEVEL(level));
-      vfprintf(stderr, format, args);
-      va_end(args);
-   } else
+   PAPIDEBUG(DEBUG_MULTIPLEX, format);
 #endif
-      return;
 }
 
 inline_static void OVFDBG(char *format, ...)
 {
 #ifdef DEBUG
-   va_list args;
-   int level = DEBUG_OVERFLOW;
-
-   if (ISLEVEL(level)) {
-      va_start(args, format);
-      DEBUGLABEL(DEBUGLEVEL(level));
-      vfprintf(stderr, format, args);
-      va_end(args);
-   } else
+   PAPIDEBUG(DEBUG_OVERFLOW,format);
 #endif
-      return;
 }
 
 inline_static void PRFDBG(char *format, ...)
 {
 #ifdef DEBUG
-   va_list args;
-   int level = DEBUG_PROFILE;
-
-   if (ISLEVEL(level)) {
-      va_start(args, format);
-      DEBUGLABEL(DEBUGLEVEL(level));
-      vfprintf(stderr, format, args);
-      va_end(args);
-   } else
+   PAPIDEBUG(DEBUG_PROFILE, format);
 #endif
-      return;
 }
 
 inline_static void MEMDBG(char *format, ...)
 {
 #ifdef DEBUG
-   va_list args;
-   int level = DEBUG_MEMORY;
-
-   if (ISLEVEL(level)) {
-      va_start(args, format);
-      DEBUGLABEL(DEBUGLEVEL(level));
-      vfprintf(stderr, format, args);
-      va_end(args);
-   } else
+   PAPIDEBUG(DEBUG_MEMORY, format);
 #endif
-      return;
+}
+
+inline_static void LEAKDBG(char *format, ...)
+{
+#ifdef DEBUG
+   PAPIDEBUG(DEBUG_LEAK, format);
+#endif
 }
 #endif
 
