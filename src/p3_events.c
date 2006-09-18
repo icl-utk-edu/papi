@@ -151,7 +151,8 @@ enum {
    PNE_P3_SEG_REG_RENAMES_FS,
    PNE_P3_SEG_REG_RENAMES_GS,
    PNE_P3_SEG_REG_RENAMES_TOT,
-   PNE_P3_RET_SEG_RENAMES
+   PNE_P3_RET_SEG_RENAMES,
+   PNE_P3_LAST_NATIVE_EVENT
 };
 /* These are special Pentium III events with MESI bits set as used in the preset table */
 #define PNE_P3_L2_IFETCH_MESI (PNE_P3_L2_IFETCH | MOESI_M_INTEL | MOESI_E | MOESI_S | MOESI_I)
@@ -324,7 +325,8 @@ enum {
    PNE_PM_SEG_REG_RENAMES_FS,
    PNE_PM_SEG_REG_RENAMES_GS,
    PNE_PM_SEG_REG_RENAMES_TOT,
-   PNE_PM_RET_SEG_RENAMES
+   PNE_PM_RET_SEG_RENAMES,
+   PNE_PM_LAST_NATIVE_EVENT
 };
 /* These are special Pentium M events with MESI bits set as used in the preset table */
 #define PNE_PM_L2_IFETCH_MESI (PNE_PM_L2_IFETCH | MOESI_M_INTEL | MOESI_E | MOESI_S | MOESI_I)
@@ -351,6 +353,7 @@ enum {
    PNE_CORE_SSE_PREFT2_RET,
    PNE_CORE_SSE_NTSTORES_RET,
    PNE_CORE_FP_COMPS_OP_EXE,
+// 0x40000010
    PNE_CORE_FP_ASSIST,
    PNE_CORE_MUL,
    PNE_CORE_DIV,
@@ -367,6 +370,7 @@ enum {
    PNE_CORE_L2_LINES_IN_BOTH_CORES_ANY,
    PNE_CORE_L2_LINES_IN_BOTH_CORES_DEMAND,
    PNE_CORE_L2_LINES_IN_BOTH_CORES_PREFETCH,
+// 0x40000020
    PNE_CORE_L2_M_LINES_IN_SELF,
    PNE_CORE_L2_M_LINES_IN_BOTH_CORES,
    PNE_CORE_L2_LINES_OUT_SELF_ANY,
@@ -383,6 +387,7 @@ enum {
    PNE_CORE_L2_M_LINES_OUT_BOTH_CORES_PREFETCH,
    PNE_CORE_L2_IFETCH_SELF,
    PNE_CORE_L2_IFETCH_BOTH_CORES,
+// 0x40000030
    PNE_CORE_L2_LD_SELF_ANY,
    PNE_CORE_L2_LD_SELF_DEMAND,
    PNE_CORE_L2_LD_SELF_PREFETCH,
@@ -399,6 +404,7 @@ enum {
    PNE_CORE_L2_RQSTS_BOTH_CORES_PREFETCH,
    PNE_CORE_L2_REJECT_CYCLES_SELF_ANY,
    PNE_CORE_L2_REJECT_CYCLES_SELF_DEMAND,
+// 0x40000040
    PNE_CORE_L2_REJECT_CYCLES_SELF_PREFETCH,
    PNE_CORE_L2_REJECT_CYCLES_BOTH_CORES_ANY,
    PNE_CORE_L2_REJECT_CYCLES_BOTH_CORES_DEMAND,
@@ -415,6 +421,7 @@ enum {
    PNE_CORE_DCACHE_CACHE_LOCK,
    PNE_CORE_DATA_MEM_REF,
    PNE_CORE_DATA_MEM_CACHE_REF,
+// 0x40000050
    PNE_CORE_DCACHE_REPL,
    PNE_CORE_DCACHE_M_REPL,
    PNE_CORE_DCACHE_M_EVICT,
@@ -431,6 +438,7 @@ enum {
    PNE_CORE_BUS_BNR_CLOCKS,
    PNE_CORE_BUS_DRDY_CLOCKS_THIS_AGENT,
    PNE_CORE_BUS_DRDY_CLOCKS_ALL_AGENTS,
+// 0x40000060
    PNE_CORE_BUS_LOCKS_CLOCKS_SELF,
    PNE_CORE_BUS_LOCKS_CLOCKS_BOTH_CORES_THIS_AGENT,
    PNE_CORE_BUS_LOCKS_CLOCKS_ALL_AGENTS,
@@ -447,6 +455,7 @@ enum {
    PNE_CORE_BUS_TRANS_INVAL_SELF,
    PNE_CORE_BUS_TRANS_INVAL_BOTH_CORES_THIS_AGENT,
    PNE_CORE_BUS_TRANS_INVAL_ALL_AGENTS,
+// 0x40000070
    PNE_CORE_BUS_TRANS_PWR_SELF,
    PNE_CORE_BUS_TRANS_PWR_BOTH_CORES_THIS_AGENT,
    PNE_CORE_BUS_TRANS_PWR_ALL_AGENTS,
@@ -463,6 +472,7 @@ enum {
    PNE_CORE_BUS_TRANS_ANY,
    PNE_CORE_BUS_SNOOPS,
    PNE_CORE_DCU_SNOOP_TO_SHARE,
+// 0x40000080
    PNE_CORE_BUS_NOT_IN_USE,
    PNE_CORE_BUS_SNOOP_STALL,
    PNE_CORE_ICACHE_READS,
@@ -479,6 +489,7 @@ enum {
    PNE_CORE_BR_IND_MISSP_EXEC,
    PNE_CORE_BR_RET_EXEC,
    PNE_CORE_BR_RET_MISSP_EXEC,
+// 0x40000090
    PNE_CORE_BR_RET_BAC_MISSP_EXEC,
    PNE_CORE_BR_CALL_EXEC,
    PNE_CORE_BR_CALL_MISSP_EXEC,
@@ -495,6 +506,7 @@ enum {
    PNE_CORE_INSTR_RET,
    PNE_CORE_FP_COMP_INSTR_RET,
    PNE_CORE_UOPS_RET,
+// 0x400000A0
    PNE_CORE_SMC_DETECTED,
    PNE_CORE_BR_INSTR_RET,
    PNE_CORE_BR_MISPRED_RET,
@@ -511,6 +523,7 @@ enum {
    PNE_CORE_ESP_UOPS,
    PNE_CORE_SIMD_FP_SP_RET,
    PNE_CORE_SIMD_FP_SP_S_RET,
+// 0x400000B0
    PNE_CORE_SIMD_FP_DP_P_RET,
    PNE_CORE_SIMD_FP_DP_S_RET,
    PNE_CORE_SIMD_INT_128_RET,
@@ -527,7 +540,9 @@ enum {
    PNE_CORE_BR_BOGUS,
    PNE_CORE_BACLEARS,
    PNE_CORE_PREF_RQSTS_UP,
-   PNE_CORE_PREF_RQSTS_DN
+// 0x400000C0
+   PNE_CORE_PREF_RQSTS_DN,
+   PNE_CORE_LAST_NATIVE_EVENT /* used to initialize sub_info.num_native_events */
 };
 
 /* These are special Pentium M events with MESI bits set as used in the preset table */
@@ -659,7 +674,8 @@ enum {
    PNE_P2_SEG_REG_RENAMES_FS,
    PNE_P2_SEG_REG_RENAMES_GS,
    PNE_P2_SEG_REG_RENAMES_TOT,
-   PNE_P2_RET_SEG_RENAMES
+   PNE_P2_RET_SEG_RENAMES,
+   PNE_P2_LAST_NATIVE_EVENT
 };
 /* These are special Pentium II events with MESI bits set as used in the preset table */
 #define PNE_P2_L2_IFETCH_MESI (PNE_P2_L2_IFETCH | MOESI_M_INTEL | MOESI_E | MOESI_S | MOESI_I)
@@ -728,7 +744,8 @@ enum {
    PNE_ATH_BP_DR0,
    PNE_ATH_BP_DR1,
    PNE_ATH_BP_DR2,
-   PNE_ATH_BP_DR3
+   PNE_ATH_BP_DR3,
+   PNE_ATH_LAST_NATIVE_EVENT
 };
 /* These are special Athlon events with MOESI bits set as used in the preset table */
 #define PNE_ATH_L2_DC_REFILLS_M     (PNE_ATH_L2_DC_REFILLS  | MOESI_M)
@@ -886,7 +903,8 @@ enum {
    PNE_OPT_NB_HT_BUS2_DATA,
    PNE_OPT_NB_HT_BUS2_BUFF,
    PNE_OPT_NB_HT_BUS2_NOP,
-   PNE_OPT_CPU_CLK_UNHALTED
+   PNE_OPT_CPU_CLK_UNHALTED,
+   PNE_OPT_LAST_NATIVE_EVENT
 };
 /* These are special Opteron events with MOESI bits set as used in the preset table */
 #define PNE_OPT_DC_L2_REFILL_M      (PNE_OPT_DC_L2_REFILL | MOESI_M)
@@ -907,7 +925,6 @@ enum {
    Events that require tagging should be ordered such that the
    first event is the one that is read. See PAPI_FP_INS for an example.
 */
-
 const hwi_search_t _papi_hwd_p3_preset_map[] = {
    {PAPI_L1_DCM,{0,{PNE_P3_DCU_LINES_IN,PAPI_NULL,PAPI_NULL,PAPI_NULL},{0,}}},
    {PAPI_L1_ICM,{0,{PNE_P3_L2_IFETCH_MESI,PAPI_NULL,PAPI_NULL,PAPI_NULL},{0,}}},
@@ -1235,6 +1252,7 @@ const hwi_search_t _papi_hwd_opt_preset_map[] = {
 /* The notes/descriptions of these events have sometimes been truncated */
 /* Please see the architecture's manual for any clarifications.         */
 
+const int _papi_hwd_p3_native_count = (PNE_P3_LAST_NATIVE_EVENT & PAPI_NATIVE_AND_MASK);
 const native_event_entry_t _papi_hwd_p3_native_map[] = {
    {"DATA_MEM_REFS",
     "All loads/stores from/to any memory type",
@@ -1589,6 +1607,7 @@ const native_event_entry_t _papi_hwd_p3_native_map[] = {
    {"", "", {0, 0}}
 };
 
+const int _papi_hwd_pm_native_count = (PNE_PM_LAST_NATIVE_EVENT & PAPI_NATIVE_AND_MASK);
 const native_event_entry_t _papi_hwd_pm_native_map[] = {
    {"DATA_MEM_REFS",
     "All loads/stores from/to any memory type",
@@ -2062,7 +2081,9 @@ const native_event_entry_t _papi_hwd_pm_native_map[] = {
    {"", "", {0, 0}}
 };
 
+const int _papi_hwd_core_native_count = (PNE_CORE_LAST_NATIVE_EVENT & PAPI_NATIVE_AND_MASK);
 const native_event_entry_t _papi_hwd_core_native_map[] = {
+// 0x40000000
    {"UnhltCore_Cycles",
     "Unhalted core cycles",
     {CNTRS12, 0x3c}},
@@ -2111,6 +2132,7 @@ const native_event_entry_t _papi_hwd_core_native_map[] = {
    {"FP_Comps_Op_Exe",
     "FP computational Instruction executed",
     {CNTRS12, 0x10}},
+// 0x40000010
    {"FP_Assist",
     "FP exceptions experienced microcode assists",
     {CNTRS12, 0x11}},
@@ -2159,6 +2181,7 @@ const native_event_entry_t _papi_hwd_core_native_map[] = {
    {"L2_Lines_In_Both_Cores_Prefetch",
     "L2 cache lines allocated Require corespecificity and HW prefetch qualification.",
     {CNTRS12, 0xd024}},
+// 0x40000020
    {"L2_M_Lines_In_Self",
     "L2 Modified-state cache lines allocated Require corespecificity",
     {CNTRS12, 0x4025}},
@@ -2207,6 +2230,7 @@ const native_event_entry_t _papi_hwd_core_native_map[] = {
    {"L2_IFetch_Both_Cores",
     "Support MESI qualification L2 instruction fetches from instruction fetch unit",
     {CNTRS12 | HAS_MESI, 0xc028}},
+// 0x40000030
    {"L2_LD_Self_Any",
     "Support MESI qualification L2 cache reads Require corespecificity.",
     {CNTRS12 | HAS_MESI, 0x7029}},
@@ -2255,6 +2279,7 @@ const native_event_entry_t _papi_hwd_core_native_map[] = {
    {"L2_Reject_Cycles_Self_Demand",
     "Support MESI qualification Cycles L2 is busy and rejecting new requests",
     {CNTRS12 | HAS_MESI, 0x4030}},
+// 0x40000040
    {"L2_Reject_Cycles_Self_Prefetch",
     "Support MESI qualification Cycles L2 is busy and rejecting new requests",
     {CNTRS12 | HAS_MESI, 0x5030}},
@@ -2303,6 +2328,7 @@ const native_event_entry_t _papi_hwd_core_native_map[] = {
    {"Data_Mem_Cache_Ref",
     "L1 data cacheable read and write operations",
     {CNTRS12, 0x244}},
+// 0x40000050
    {"DCache_Repl",
     "L1 data cache line replacements",
     {CNTRS12, 0xf45}},
@@ -2351,6 +2377,7 @@ const native_event_entry_t _papi_hwd_core_native_map[] = {
    {"Bus_DRDY_Clocks_All_Agents",
     "External bus cycles while DRDY asserted Require agent specificity",
     {CNTRS12, 0x2062}},
+// 0x40000060
    {"Bus_Locks_Clocks_Self",
     "External bus cycles while bus lock signal asserted Require core specificity",
     {CNTRS12, 0x4063}},
@@ -2399,6 +2426,7 @@ const native_event_entry_t _papi_hwd_core_native_map[] = {
    {"Bus_Trans_Inval_All_Agents",
     "Completed invalidate transactions.",
     {CNTRS12, 0xe069}},
+// 0x40000070
    {"Bus_Trans_Pwr_Self",
     "Completed partial write transactions.",
     {CNTRS12, 0x406a}},
@@ -2435,6 +2463,9 @@ const native_event_entry_t _papi_hwd_core_native_map[] = {
    {"Bus_Trans_Burst",
     "Completed burst transactions ( full line transactions include reads, write, RFO, and writebacks).",
     {CNTRS12, 0xc06e}},
+   {"Bus_Trans_Mem",
+    "Completed memory transactions. This includes Bus_Trans_Burst + Bus_Trans_P + Bus_Trans_Inval.",
+    {CNTRS12, 0xc06f}},
    {"Bus_Trans_Any",
     "Any completed bus transactions.",
     {CNTRS12, 0xc070}},
@@ -2444,6 +2475,7 @@ const native_event_entry_t _papi_hwd_core_native_map[] = {
    {"DCU_Snoop_To_Share",
     "DCU snoops to share-state L1 cache line due to L1 misses",
     {CNTRS12, 0x178}},
+// 0x40000080
    {"Bus_Not_In_Use",
     "Number of cycles there is no transaction from the core",
     {CNTRS12, 0x7d}},
@@ -2492,6 +2524,7 @@ const native_event_entry_t _papi_hwd_core_native_map[] = {
    {"Br_Ret_Missp_Exec",
     "Return branch instruction executed that were mispredicted.",
     {CNTRS12, 0x90}},
+// 0x40000090
    {"Br_Ret_BAC_Missp_Exec",
     "Return branch instruction executed that were mispredicted at the Front End.",
     {CNTRS12, 0x91}},
@@ -2540,6 +2573,7 @@ const native_event_entry_t _papi_hwd_core_native_map[] = {
    {"Uops_Ret",
     "Number of micro-ops retired (include fused uops).",
     {CNTRS12, 0xc2}},
+// 0x400000A0
    {"SMC_Detected",
     "Number of times self-modifying code condition is detected.",
     {CNTRS12, 0xc3}},
@@ -2588,6 +2622,7 @@ const native_event_entry_t _papi_hwd_core_native_map[] = {
    {"SIMD_FP_SP_S_Ret",
     "Number of SSE/SSE2 scalar single precision instructions retired.",
     {CNTRS12, 0x1d8}},
+// 0x400000B0
    {"SIMD_FP_DP_P_Ret",
     "Number of SSE/SSE2 packed double precision instructions retired.",
     {CNTRS12, 0x2d8}},
@@ -2636,12 +2671,14 @@ const native_event_entry_t _papi_hwd_core_native_map[] = {
    {"Pref_Rqsts_Up",
     "Number of hardware prefetch request issued in forward streams",
     {CNTRS12, 0xf0}},
+// 0x400000C0
    {"Pref_Rqsts_Dn",
     "Number of hardware prefetch request issued in backward streams",
     {CNTRS12, 0xf8}},
    {"", "", {0, 0}}
 };
 
+const int _papi_hwd_p2_native_count = (PNE_P2_LAST_NATIVE_EVENT & PAPI_NATIVE_AND_MASK);
 const native_event_entry_t _papi_hwd_p2_native_map[] = {
    {"DATA_MEM_REFS",
     "All loads/stores from/to any memory type",
@@ -2966,6 +3003,7 @@ const native_event_entry_t _papi_hwd_p2_native_map[] = {
    {"", "", {0, 0}}
 };
 
+const int _papi_hwd_k7_native_count = (PNE_ATH_LAST_NATIVE_EVENT & PAPI_NATIVE_AND_MASK);
 const native_event_entry_t _papi_hwd_k7_native_map[] = {
    {"SEG_REG_LOADS",
     "Number of segment register loads",
@@ -3146,6 +3184,7 @@ const native_event_entry_t _papi_hwd_k7_native_map[] = {
 /* The first two letters in each entry indicate to which unit
    the event refers. */
 
+const int _papi_hwd_k8_native_count = (PNE_OPT_LAST_NATIVE_EVENT & PAPI_NATIVE_AND_MASK);
 const native_event_entry_t _papi_hwd_k8_native_map[] = {
    {"FP_ADD_PIPE",
     "Dispatched FPU ops - Revision B and later revisions - Speculative add pipe ops excluding junk ops",
@@ -3677,6 +3716,10 @@ char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
    int event, moesi;
 
    internal_decode_event(EventCode, &event, &moesi);
+   if (event > _papi_hwi_system_info.sub_info.num_native_events) {
+       return (NULL);
+   }
+
    if (!moesi)
       return (native_table[event].name);
    else {
@@ -3691,6 +3734,9 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
    int event, moesi;
 
    internal_decode_event(EventCode, &event, &moesi);
+//   if (event > _papi_hwi_system_info.sub_info.num_native_events)
+//       return (NULL);
+
    if (!moesi)
       return (native_table[event].description);
    else {
@@ -3708,6 +3754,9 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
    int event, moesi;
 
    internal_decode_event(EventCode, &event, &moesi);
+//   if (event > _papi_hwi_system_info.sub_info.num_native_events)
+//       return (PAPI_ENOEVNT);
+
    if(native_table[event].resources.selector == 0) {
       return (PAPI_ENOEVNT);
    }
@@ -3724,6 +3773,9 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
    int event, moesi;
 
    internal_decode_event(*EventCode, &event, &moesi);
+   if (event > _papi_hwi_system_info.sub_info.num_native_events)
+       return (PAPI_ENOEVNT);
+
    moesi += MOESI_I; /* increment by smallest step size */
 
    /* for AMD processors, 5 bits are valid */
@@ -3762,8 +3814,8 @@ int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                unsigned int *values, int name_len, int count)
 {
    int i = 0;
-   copy_value(bits->selector, "P3 Ctr Mask", &names[i*name_len], &values[i], name_len);
+   copy_value(bits->selector, "Event Mask", &names[i*name_len], &values[i], name_len);
    if (++i == count) return(i);
-   copy_value(bits->counter_cmd, "P3 Ctr Code", &names[i*name_len], &values[i], name_len);
+   copy_value(bits->counter_cmd, "Event Code", &names[i*name_len], &values[i], name_len);
    return(++i);
 }
