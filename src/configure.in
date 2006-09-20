@@ -230,7 +230,7 @@ case "$OS" in
          else
            family=`uname -m`
            if test "$family" = "ppc64"; then
-             echo "family = ppc64"
+#             echo "family = ppc64"
              CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
              case "$CPU_info" in
                PPC970*) CPU="PPC970";;
@@ -333,7 +333,11 @@ AC_MSG_RESULT($debug)
 
 # Checks for programs.
 AC_PROG_AWK
-AC_PROG_CC(xlc cc gcc)
+if test "$OS" != "linux"; then
+   AC_PROG_CC(xlc cc gcc)
+else
+   AC_PROG_CC
+fi
 AC_PROG_F77
 AC_PROG_CPP
 AC_PROG_LN_S
@@ -344,9 +348,11 @@ AC_GNU_SOURCE
 # Check for standard headers
 AC_HEADER_STDC
 # defines inline keyword to be inline keyword
-AC_C_INLINE
+# This breaks for some dumb reason on PPC64
+# AC_C_INLINE
 # defines const keyword to be inline keyword
-AC_C_CONST
+# This breaks for some dumb reason on PPC64
+# AC_C_CONST
 
 didcheck=0
 if test "x$ffsll" = "x"; then
