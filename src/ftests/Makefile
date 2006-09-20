@@ -1,4 +1,4 @@
-INCLUDE = -I.. -I../ctests
+INCLUDE = -I. -I.. -I../ctests
 TESTS 	= strtest zero first  second tenth description fdmemtest\
           accum highlevel cost johnmay2 native \
 	  avail case1 case2 clockres eventname fmatrixlowpapi \
