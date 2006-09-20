@@ -57,6 +57,9 @@ inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
 #ifdef PERFCTR_X86_INTEL_PENTM
    case PERFCTR_X86_INTEL_PENTM:
 #endif
+#ifdef PERFCTR_X86_INTEL_CORE
+   case PERFCTR_X86_INTEL_CORE:
+#endif
       return (PAPI_VENDOR_INTEL);
 #ifdef PERFCTR_X86_AMD_K8
    case PERFCTR_X86_AMD_K8:
