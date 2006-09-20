@@ -1598,7 +1598,8 @@ case "$OS" in
           elif test "$family" = "ppc"; then
              CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
              case "$CPU_info" in
-               744*/745*) CPU="PPC32";;
+               744*) CPU="PPC32";;
+	       745*) CPU="PPC32";;
                750) CPU="PPC32";;
              esac
           elif test "$family" = "mips"; then
@@ -3288,7 +3289,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:3291:" \
+echo "$as_me:3292:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5

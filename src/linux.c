@@ -257,10 +257,14 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 
    strcpy(_papi_hwi_system_info.hw_info.model_string, PERFCTR_CPU_NAME(&info));
    _papi_hwi_system_info.hw_info.model = info.cpu_type;
-#if (defined(PPC64)||defined(PPC32))
+#if defined(PPC64)
    _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_IBM;
    if (strlen(_papi_hwi_system_info.hw_info.vendor_string) == 0)
      strcpy(_papi_hwi_system_info.hw_info.vendor_string,"IBM");
+#elif defined(PPC32)
+   _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_FREESCALE;
+   if (strlen(_papi_hwi_system_info.hw_info.vendor_string) == 0)
+     strcpy(_papi_hwi_system_info.hw_info.vendor_string,"Freescale");
 #else
    _papi_hwi_system_info.hw_info.vendor = xlate_cpu_type_to_vendor(info.cpu_type);
 

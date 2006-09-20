@@ -240,7 +240,8 @@ case "$OS" in
           elif test "$family" = "ppc"; then
              CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
              case "$CPU_info" in
-               744*/745*) CPU="PPC32";;
+               744*) CPU="PPC32";;
+	       745*) CPU="PPC32";;
                750) CPU="PPC32";;
              esac
           elif test "$family" = "mips"; then
