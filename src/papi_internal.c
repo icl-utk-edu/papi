@@ -1049,10 +1049,9 @@ int _papi_hwi_init_global_internal(void)
    _papi_hwi_system_info.sub_info.fast_virtual_timer = 0;    /* Has a fast virtual timer */
    _papi_hwi_system_info.sub_info.attach = 0;    	     /* Can attach */
    _papi_hwi_system_info.sub_info.attach_must_ptrace = 0;    /* Attaching code must first ptrace and stop the child */
-   _papi_hwi_system_info.sub_info.fast_virtual_timer = 0;    /* Has a fast virtual timer */
-   _papi_hwi_system_info.sub_info.data_address_smpl = 0;     /* Supports data/instr miss address sampling */
-   _papi_hwi_system_info.sub_info.branch_tracing = 0;        /* Supports branch trace buffering */
-   _papi_hwi_system_info.sub_info.tlb_address_smpl = 0;      /* Supports TLB miss address sampling */
+   _papi_hwi_system_info.sub_info.edge_detect = 0;           /* Supports edge detection on events */
+   _papi_hwi_system_info.sub_info.invert = 0;                /* Supports invert detection on events */
+   _papi_hwi_system_info.sub_info.profile_ear = 0;           /* Supports data/instr/tlb miss address sampling */
    _papi_hwi_system_info.sub_info.grouped_cntrs = 0;         
    _papi_hwi_system_info.sub_info.reserved_bits = 0;
 
@@ -1388,22 +1387,22 @@ int _papi_hwi_get_event_info(int EventCode, PAPI_event_info_t * info)
       info->count = _papi_hwi_presets.count[i];
       strcpy(info->symbol, _papi_hwi_presets.info[i].symbol);
       if(_papi_hwi_presets.info[i].short_descr != NULL)
-         strncpy(info->short_descr, _papi_hwi_presets.info[i].short_descr, PAPI_MIN_STR_LEN);
+         strncpy(info->short_descr, _papi_hwi_presets.info[i].short_descr, sizeof(info->short_descr));
       if(_papi_hwi_presets.info[i].long_descr != NULL)
-         strncpy(info->long_descr, _papi_hwi_presets.info[i].long_descr, PAPI_HUGE_STR_LEN);
+         strncpy(info->long_descr, _papi_hwi_presets.info[i].long_descr, sizeof(info->long_descr));
       info->derived[0] = '\0';
       info->postfix[0] = '\0';
       if (_papi_hwi_presets.data[i]) { /* if the event exists on this platform */
-         strncpy(info->postfix, _papi_hwi_presets.data[i]->operation, PAPI_MIN_STR_LEN);
-         _papi_hwi_derived_string(_papi_hwi_presets.data[i]->derived, info->derived, PAPI_MIN_STR_LEN);
+         strncpy(info->postfix, _papi_hwi_presets.data[i]->operation, sizeof(info->postfix));
+         _papi_hwi_derived_string(_papi_hwi_presets.data[i]->derived, info->derived, sizeof(info->derived));
          for (j=0; j < (int)info->count; j++) {
             info->code[j] = _papi_hwi_presets.data[i]->native[j];
-            _papi_hwi_native_code_to_name(info->code[j], info->name[j], PAPI_MAX_STR_LEN);
+            _papi_hwi_native_code_to_name(info->code[j], info->name[j], sizeof(info->name[j]));
          }
       }
       if (_papi_hwi_presets.dev_note[i]) { /* if a developer's note exists for this event */
-         strncpy(info->note, _papi_hwi_presets.dev_note[i], PAPI_HUGE_STR_LEN);
-      } else info->note[0] = 0;
+         strncpy(info->note, _papi_hwi_presets.dev_note[i], sizeof(info->note));
+      } else info->note[0] = '\0';
 
       return(PAPI_OK);
    } else {
@@ -1462,13 +1461,12 @@ int _papi_hwi_set_event_info(PAPI_event_info_t * info, int *EventCode)
       _papi_hwi_presets.data[i] = papi_malloc(sizeof(hwi_preset_data_t));
 
    /* extract the derived type from the info->derived string */
-   _papi_hwi_presets.data[i]->derived = _papi_hwi_derived_type(info->derived);
-   if (_papi_hwi_presets.data[i]->derived == -1) 
-      _papi_hwi_presets.data[i]->derived = NOT_DERIVED;
+   if (_papi_hwi_derived_type(info->derived,&_papi_hwi_presets.data[i]->derived) != PAPI_OK)
+     return(PAPI_EINVAL);
 
    /* only copy the postfix string if it's a DERIVED_POSTFIX event */
    if (_papi_hwi_presets.data[i]->derived == DERIVED_POSTFIX)
-      strncpy(_papi_hwi_presets.data[i]->operation, info->postfix, OPS);
+      strncpy(_papi_hwi_presets.data[i]->operation, info->postfix, sizeof(info->postfix));
 
 	/* copy the native event terms into the preset structure */
    /* names are passed in. check for validity and convert to codes */

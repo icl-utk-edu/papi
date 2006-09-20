@@ -1,16 +1,22 @@
 /*
-* File:    linux-ia64.c
+* File:    perfmon.c
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
-* Mods:	   Kevin London
-*	   london@cs.utk.edu
-*          Per Ekman
-*          pek@pdc.kth.se
-*          Zhou Min
-*          min@cs.utk.edu
 */
 
+/* TODO LIST:
+   - Events for all platforms
+   - Derived events for all platforms
+   - Latency profiling
+   - BTB/IPIEAR sampling
+   - Test on ITA2, Pentium 4
+   - hwd_ntv_code_to_name
+   - Make native map carry major events, not umasks
+   - Enum event uses native_map not pfm()
+   - Hook up globals to be freed to sub_info
+   - Better feature bit support for IEAR
+*/
 
 #include "papi.h"
 #include "papi_internal.h"
@@ -20,7 +26,6 @@
 /* Globals declared extern elsewhere */
 
 hwi_search_t *preset_search_map;
-static hwd_native_event_entry_t *native_map;
 
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 
@@ -34,7 +39,9 @@ papi_svector_t _linux_pfm_table[] = {
   {(void (*)())_papi_hwd_get_real_cycles, VEC_PAPI_HWD_GET_REAL_CYCLES},
   {(void (*)())_papi_hwd_get_virt_cycles, VEC_PAPI_HWD_GET_VIRT_CYCLES},
   {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
-  {(void (*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE}, {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
+  {(void (*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
+  {(void (*)())_papi_hwd_allocate_registers,VEC_PAPI_HWD_ALLOCATE_REGISTERS},
+  {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
   {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
   {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
   {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
@@ -53,63 +60,10 @@ papi_svector_t _linux_pfm_table[] = {
 
 /* Static locals */
 
-static pfm_preset_search_entry_t pfm_mips5k_preset_search_map[] = {
-  { PAPI_TOT_CYC, NOT_DERIVED, },
-  { PAPI_TOT_INS, NOT_DERIVED, },
-  { PAPI_L1_ICA, NOT_DERIVED, { "FETCHED_INST",}, },
-  { PAPI_LD_INS, NOT_DERIVED, { "LOAD_PREF_SYNC_CACHE_OPS", }, },
-  { PAPI_SR_INS, NOT_DERIVED, { "STORES_COND_ST", }, },
-  { PAPI_CSR_FAL, NOT_DERIVED, { "COND_STORE_FAIL", }, },
-  { PAPI_FP_INS, NOT_DERIVED, { "FP_INST", }, },
-  { PAPI_BR_INS, NOT_DERIVED, { "BRANCHES", }, },
-  { PAPI_TLB_IM, NOT_DERIVED, { "ITLB_MISS", }, },
-  { PAPI_TLB_TL, NOT_DERIVED, { "TLM_MISS_EXC", }, }, 
-  { PAPI_TLB_DM, NOT_DERIVED, { "DTLB_MISS", }, },
-  { PAPI_BR_MSP, NOT_DERIVED, { "BR_MISPRED", }, },  
-  { PAPI_L1_ICM, NOT_DERIVED, { "IC_MISS", }, },
-  { PAPI_L1_DCM, NOT_DERIVED, { "DC_MISS", }, },
-  { PAPI_MEM_SCY, NOT_DERIVED, { "INST_STALL_M", }, },
-  { PAPI_FUL_ICY, NOT_DERIVED, { "DUAL_ISSUE_INST", }, },
-  { 0, } };
-
-static pfm_preset_search_entry_t pfm_mips20k_preset_search_map[] = {
-  { PAPI_TOT_CYC, NOT_DERIVED, },
-  { PAPI_TOT_INS, NOT_DERIVED, },
-  { PAPI_FP_INS, NOT_DERIVED, { "FP_INST", }, },
-  { PAPI_BR_INS, NOT_DERIVED, { "BRANCHES", }, },
-  { PAPI_BR_MSP, NOT_DERIVED, { "BR_MISPRED", }, }, 
-  { PAPI_TLB_TL, NOT_DERIVED, { "TLB_MISS_EXC", }, }, 
-  { PAPI_L1_ICA, NOT_DERIVED, { "INST_RQ", }, }, 
-  { 0, } };
-    
-static pfm_preset_search_entry_t pfm_i386_p6_preset_search_map[] = {
-  { PAPI_TOT_CYC, NOT_DERIVED, },
-  { PAPI_TOT_INS, NOT_DERIVED, }, 
-  { PAPI_FP_INS, NOT_DERIVED, { "FLOPS", }, }, 
-  { 0, } };
-
-static pfm_preset_search_entry_t pfm_i386_pM_preset_search_map[] = {
-  { PAPI_TOT_CYC, NOT_DERIVED, },
-  { PAPI_TOT_INS, NOT_DERIVED, }, 
-  { PAPI_FP_INS, NOT_DERIVED, { "FLOPS", }, }, 
-  { 0, } };
-
-static pfm_preset_search_entry_t pfm_montecito_preset_search_map[] = {
-  { PAPI_TOT_CYC, NOT_DERIVED, },
-  { PAPI_TOT_INS, NOT_DERIVED, },
-  { PAPI_FP_OPS, NOT_DERIVED, { "FP_OPS_RETIRED", }, }, 
-  { 0, } };
-
-static pfm_preset_search_entry_t pfm_itanium2_preset_search_map[] = {
-  { PAPI_TOT_CYC, NOT_DERIVED, },
-  { PAPI_TOT_INS, NOT_DERIVED, },
-  { PAPI_FP_OPS, NOT_DERIVED, { "FP_OPS_RETIRED", }, }, 
-  { 0, } };
-
-static pfm_preset_search_entry_t pfm_unknown_preset_search_map[] = {
-  { PAPI_TOT_CYC, NOT_DERIVED, },
-  { PAPI_TOT_INS, NOT_DERIVED, }, 
-  { 0, } };
+static pfm_preset_search_entry_t *_perfmon2_pfm_preset_search_map;
+static hwd_native_event_entry_t *_perfmon2_pfm_native_map;
+static int _perfmon2_pfm_pmu_type;
+static char _perfmon2_pfm_pmu_name[PAPI_MIN_STR_LEN];
 
 /* Hardware clock functions */
 
@@ -162,7 +116,7 @@ inline_static long_long get_cycles(void) {
 #ifdef DEBUG
 void dump_smpl_arg(pfm_dfl_smpl_arg_t *arg)
 {
-  SUBDBG("SMPL_ARG.buf_size = %lld\n",arg->buf_size);
+  SUBDBG("SMPL_ARG.buf_size = %llu\n",(unsigned long long)arg->buf_size);
   SUBDBG("SMPL_ARG.buf_flags = %d\n",arg->buf_flags);
 }
 
@@ -177,7 +131,7 @@ void dump_sets(pfarg_setdesc_t *set, int num_sets)
       SUBDBG("SET[%d].set_id_next = %d\n",i,set[i].set_id_next);
       SUBDBG("SET[%d].set_flags = %d\n",i,set[i].set_flags);
       SUBDBG("SET[%d].set_timeout = %d\n",i,set[i].set_timeout);
-      SUBDBG("SET[%d].set_mmap_offset = 0x%016llx\n",i,set[i].set_mmap_offset);
+      SUBDBG("SET[%d].set_mmap_offset = 0x%016llx\n",i,(unsigned long long)set[i].set_mmap_offset);
     }
 }
 
@@ -192,13 +146,13 @@ void dump_setinfo(hwd_control_state_t * ctl)
       SUBDBG("SETINFO[%d].set_id = %d\n",i,setinfo[i].set_id);
       SUBDBG("SETINFO[%d].set_id_next = %d\n",i,setinfo[i].set_id_next);
       SUBDBG("SETINFO[%d].set_flags = %d\n",i,setinfo[i].set_flags);
-      SUBDBG("SETINFO[%d].set_ovfl_pmds[0] = 0x%016llx\n",i,setinfo[i].set_ovfl_pmds[0]);
-      SUBDBG("SETINFO[%d].set_runs = %llu\n",i,setinfo[i].set_runs);
+      SUBDBG("SETINFO[%d].set_ovfl_pmds[0] = 0x%016llx\n",i,(unsigned long long)setinfo[i].set_ovfl_pmds[0]);
+      SUBDBG("SETINFO[%d].set_runs = %llu\n",i,(unsigned long long)setinfo[i].set_runs);
       SUBDBG("SETINFO[%d].set_timeout = %did\n",i,setinfo[i].set_timeout);
-      SUBDBG("SETINFO[%d].set_act_duration = %llu\n",i,setinfo[i].set_act_duration);
-      SUBDBG("SETINFO[%d].set_mmap_offset = 0x%016llx\n",i,setinfo[i].set_mmap_offset);
-      SUBDBG("SETINFO[%d].set_avail_pmcs[0] = 0x%016llx\n",i,setinfo[i].set_avail_pmcs[0]);
-      SUBDBG("SETINFO[%d].set_avail_pmds[0] = 0x%016llx\n",i,setinfo[i].set_avail_pmds[0]);
+      SUBDBG("SETINFO[%d].set_act_duration = %llu\n",i,(unsigned long long)setinfo[i].set_act_duration);
+      SUBDBG("SETINFO[%d].set_mmap_offset = 0x%016llx\n",i,(unsigned long long)setinfo[i].set_mmap_offset);
+      SUBDBG("SETINFO[%d].set_avail_pmcs[0] = 0x%016llx\n",i,(unsigned long long)setinfo[i].set_avail_pmcs[0]);
+      SUBDBG("SETINFO[%d].set_avail_pmds[0] = 0x%016llx\n",i,(unsigned long long)setinfo[i].set_avail_pmds[0]);
     }
 }
 
@@ -213,7 +167,7 @@ void dump_pmc(hwd_control_state_t * ctl)
       SUBDBG("PC[%d].reg_num = %d\n",i,pc[i].reg_num);
       SUBDBG("PC[%d].reg_set = %d\n",i,pc[i].reg_set);
       SUBDBG("PC[%d].reg_flags = 0x%08x\n",i,pc[i].reg_flags);
-      SUBDBG("PC[%d].reg_value = 0x%016llx\n",i,pc[i].reg_value);
+      SUBDBG("PC[%d].reg_value = 0x%016llx\n",i,(unsigned long long)pc[i].reg_value);
     }
 }
 
@@ -228,26 +182,26 @@ void dump_pmd(hwd_control_state_t * ctl)
       SUBDBG("PD[%d].reg_num = %d\n",i,pd[i].reg_num);
       SUBDBG("PD[%d].reg_set = %d\n",i,pd[i].reg_set);
       SUBDBG("PD[%d].reg_flags = 0x%08x\n",i,pd[i].reg_flags);
-      SUBDBG("PD[%d].reg_value = 0x%016llx\n",i,pd[i].reg_value);
-      SUBDBG("PD[%d].reg_long_reset = %llu\n",i,pd[i].reg_long_reset);
-      SUBDBG("PD[%d].reg_short_reset = %llu\n",i,pd[i].reg_short_reset);
-      SUBDBG("PD[%d].reg_last_reset_val = %llu\n",i,pd[i].reg_last_reset_val);
-      SUBDBG("PD[%d].reg_ovfl_switch_cnt = %llu\n",i,pd[i].reg_ovfl_switch_cnt);
-      SUBDBG("PD[%d].reg_reset_pmds[0] = 0x%016llx\n",i,pd[i].reg_reset_pmds[0]);
-      SUBDBG("PD[%d].reg_smpl_pmds[0] = 0x%016llx\n",i,pd[i].reg_smpl_pmds[0]);
-      SUBDBG("PD[%d].reg_smpl_eventid = %llu\n",i,pd[i].reg_smpl_eventid);
-      SUBDBG("PD[%d].reg_random_mask = %llu\n",i,pd[i].reg_random_mask);
+      SUBDBG("PD[%d].reg_value = 0x%016llx\n",i,(unsigned long long)pd[i].reg_value);
+      SUBDBG("PD[%d].reg_long_reset = %llu\n",i,(unsigned long long)pd[i].reg_long_reset);
+      SUBDBG("PD[%d].reg_short_reset = %llu\n",i,(unsigned long long)pd[i].reg_short_reset);
+      SUBDBG("PD[%d].reg_last_reset_val = %llu\n",i,(unsigned long long)pd[i].reg_last_reset_val);
+      SUBDBG("PD[%d].reg_ovfl_switch_cnt = %llu\n",i,(unsigned long long)pd[i].reg_ovfl_switch_cnt);
+      SUBDBG("PD[%d].reg_reset_pmds[0] = 0x%016llx\n",i,(unsigned long long)pd[i].reg_reset_pmds[0]);
+      SUBDBG("PD[%d].reg_smpl_pmds[0] = 0x%016llx\n",i,(unsigned long long)pd[i].reg_smpl_pmds[0]);
+      SUBDBG("PD[%d].reg_smpl_eventid = %llu\n",i,(unsigned long long)pd[i].reg_smpl_eventid);
+      SUBDBG("PD[%d].reg_random_mask = %llu\n",i,(unsigned long long)pd[i].reg_random_mask);
       SUBDBG("PD[%d].reg_random_seed = %d\n",i,pd[i].reg_random_seed);
     }
 }
 
 void dump_smpl_hdr(pfm_dfl_smpl_hdr_t *hdr)
 {
-  SUBDBG("SMPL_HDR.hdr_count = %llu\n",hdr->hdr_count);
-  SUBDBG("SMPL_HDR.hdr_cur_offs = %llu\n",hdr->hdr_cur_offs);
-  SUBDBG("SMPL_HDR.hdr_overflows = %llu\n",hdr->hdr_overflows);
-  SUBDBG("SMPL_HDR.hdr_buf_size = %llu\n",hdr->hdr_buf_size);
-  SUBDBG("SMPL_HDR.hdr_min_buf_space = %llu\n",hdr->hdr_min_buf_space);
+  SUBDBG("SMPL_HDR.hdr_count = %llu\n",(unsigned long long)hdr->hdr_count);
+  SUBDBG("SMPL_HDR.hdr_cur_offs = %llu\n",(unsigned long long)hdr->hdr_cur_offs);
+  SUBDBG("SMPL_HDR.hdr_overflows = %llu\n",(unsigned long long)hdr->hdr_overflows);
+  SUBDBG("SMPL_HDR.hdr_buf_size = %llu\n",(unsigned long long)hdr->hdr_buf_size);
+  SUBDBG("SMPL_HDR.hdr_min_buf_space = %llu\n",(unsigned long long)hdr->hdr_min_buf_space);
   SUBDBG("SMPL_HDR.hdr_version = %d\n",hdr->hdr_version);
   SUBDBG("SMPL_HDR.hdr_buf_flags = %d\n",hdr->hdr_buf_flags);
 }
@@ -256,9 +210,9 @@ void dump_smpl(pfm_dfl_smpl_entry_t *entry)
 {
   SUBDBG("SMPL.pid = %d\n",entry->pid);
   SUBDBG("SMPL.ovfl_pmd = %d\n",entry->ovfl_pmd);
-  SUBDBG("SMPL.last_reset_val = %llu\n",entry->last_reset_val);
-  SUBDBG("SMPL.ip = 0x%llx\n",entry->ip);
-  SUBDBG("SMPL.tstamp = %llu\n",entry->tstamp);
+  SUBDBG("SMPL.last_reset_val = %llu\n",(unsigned long long)entry->last_reset_val);
+  SUBDBG("SMPL.ip = 0x%llx\n",(unsigned long long)entry->ip);
+  SUBDBG("SMPL.tstamp = %llu\n",(unsigned long long)entry->tstamp);
   SUBDBG("SMPL.cpu = %d\n",entry->cpu);
   SUBDBG("SMPL.set = %d\n",entry->set);
   SUBDBG("SMPL.tgid = %d\n",entry->tgid);
@@ -581,7 +535,31 @@ inline_static pid_t mygettid(void)
 #endif
 }
 
-static int setup_preset(hwi_search_t *entry, hwi_dev_notes_t *note_entry, unsigned int event, unsigned int preset, unsigned int derived, int cntrs)
+#define PAPI_NATIVE_EVENT_AND_MASK 0x0000ffff
+#define PAPI_NATIVE_EVENT_SHIFT 0
+#define PAPI_NATIVE_UMASK_AND_MASK 0x00ff0000
+#define PAPI_NATIVE_UMASK_SHIFT 16
+
+static inline int encode_native_event_raw(unsigned int event, unsigned int mask)
+{
+  unsigned int tmp = event << PAPI_NATIVE_EVENT_SHIFT;
+  SUBDBG("Old native index was 0x%08x with 0x%08x mask\n",tmp,mask);
+  tmp = tmp | (mask << PAPI_NATIVE_UMASK_SHIFT);
+  SUBDBG("New encoding is 0x%08x\n",tmp|PAPI_NATIVE_MASK);
+  return(tmp|PAPI_NATIVE_MASK);
+}
+
+static inline int encode_native_event(unsigned int event, unsigned int num_mask, unsigned int *mask_values)
+{
+  unsigned int tmp = event << PAPI_NATIVE_EVENT_SHIFT;
+  SUBDBG("Old native index was 0x%08x with %d masks\n",tmp,num_mask);
+  if (num_mask)
+    tmp = tmp | (((1 << num_mask) - 1) << PAPI_NATIVE_UMASK_SHIFT);
+  SUBDBG("New encoding is 0x%08x\n",tmp|PAPI_NATIVE_MASK);
+  return(tmp|PAPI_NATIVE_MASK);
+}
+
+static int setup_preset(hwi_search_t *entry, hwi_dev_notes_t *note_entry, pfmlib_event_t *event, unsigned int preset, unsigned int derived, int cntrs)
 {
   pfmlib_regmask_t impl_cnt, evnt_cnt;
   char *findme;
@@ -589,9 +567,9 @@ static int setup_preset(hwi_search_t *entry, hwi_dev_notes_t *note_entry, unsign
 
   /* find out which counters it lives on */
 
-  if ((ret = pfm_get_event_counters(event,&evnt_cnt)) != PFMLIB_SUCCESS)
+  if ((ret = pfm_get_event_counters(event->event,&evnt_cnt)) != PFMLIB_SUCCESS)
     {
-      PAPIERROR("pfm_get_event_counters(%d,%p): %s",event,&evnt_cnt,pfm_strerror(ret));
+      PAPIERROR("pfm_get_event_counters(%d,%p): %s",event->event,&evnt_cnt,pfm_strerror(ret));
       return(PAPI_EBUG);
     }
   if ((ret = pfm_get_impl_counters(&impl_cnt)) != PFMLIB_SUCCESS)
@@ -600,55 +578,254 @@ static int setup_preset(hwi_search_t *entry, hwi_dev_notes_t *note_entry, unsign
       return(PAPI_EBUG);
     }
 
+  /* Initialize the data.native array to NULL because braindead
+     middle PAPI code checks this value. */
+
+  for (j=0;j<PFMLIB_MAX_PMCS;j++)
+    entry->data.native[j] = PAPI_NULL;
+
+  /* Make sure this event lives on some counter, if so, put in the description. If not, BUG */
   n = cntrs;
   for (j=0;n;j++)
     {
       if (pfm_regmask_isset(&impl_cnt, j))
-	n--;
-      if (pfm_regmask_isset(&evnt_cnt,j))
 	{
-	  SUBDBG("Preset 0x%x has PFM event %u on counter %d.\n",preset,event,j);
-	  entry->data.native[j] = event;
-	  did++;
+	  n--;
+	  if (pfm_regmask_isset(&evnt_cnt,j))
+	    {
+	      entry->data.native[did] = encode_native_event(event->event,event->num_masks,event->unit_masks);
+	      if ((ret = pfm_get_event_description(event->event,&findme)) != PFMLIB_SUCCESS)
+		{
+		  PAPIERROR("pfm_get_event_description(%d,%p): %s",event,&findme,pfm_strerror(ret));
+		}
+	      else 
+		{
+		  if ((findme) && strlen(findme))
+		    note_entry->dev_note = strdup(findme);
+		  free(findme);
+		}
+	      entry->event_code = preset;
+	      entry->data.derived = derived;
+	      return(PAPI_OK);
+	    }
 	}
-      else entry->data.native[j] = PAPI_NULL;
     }
 
-  if (did)
+  PAPIERROR("PAPI preset 0x%08x PFM event %d did not have any available counters");
+  return(PAPI_ENOEVNT);
+}
+
+static inline char *trim_string(char *in)
+{
+  int len, i = 0;
+  char *start = in;
+
+  if (in == NULL)
+    return(in);
+  len = strlen(in);
+  if (len == 0)
+    return(in);
+  /* Trim left */
+  while (i < len)
     {
-      entry->event_code = preset;
-      entry->data.derived = derived;
-      entry->data.native[j] = PAPI_NULL;
+      if (isblank(in[i]))
+	{
+	  in[i] = '\0';
+	  start++;
+	}
+      else
+	break;
+      i++;
+    }
+  /* Trim right */
+  i = strlen(start) - 1;
+  while (i >= 0)
+    {
+      if (isblank(start[i]))
+	start[i] = '\0';
+      else
+	break;
+      i--;
+    }
+  return(start);
+}
+
+static inline int find_preset_code(char *tmp, int *code)
+{
+  int i = 0;
+  extern hwi_presets_t _papi_hwi_presets;
+  while (_papi_hwi_presets.info[i].symbol != NULL)
+    {
+      if (strcasecmp(tmp,_papi_hwi_presets.info[i].symbol) == 0)
+	{
+	  *code = i|PAPI_PRESET_MASK;
+	  return(PAPI_OK);
+	}
+      i++;
+    }
+  return(PAPI_EINVAL);
+}
+
+static int load_preset_table(pfm_preset_search_entry_t **here)
+{
+  char name[PATH_MAX], line[LINE_MAX];
+  FILE *table;
+  int line_no = 1, get_presets = 0, derived = 0, insert = 2, preset = 0;
+  static pfm_preset_search_entry_t tmp[PAPI_MAX_PRESET_EVENTS];
+
+  SUBDBG("%p\n",here);
+  memset(tmp,0x0,sizeof(tmp));
+  tmp[0].preset = PAPI_TOT_CYC;
+  tmp[0].derived = NOT_DERIVED;
+  tmp[1].preset = PAPI_TOT_INS;
+  tmp[1].derived = NOT_DERIVED;
+
+  sprintf(name,"%s/%s",PAPI_DATADIR,PERFMON_EVENT_FILE);
+  table = fopen(name,"r");
+  if (table == NULL)
+    {
+      SUBDBG("Open %s failed, trying CWD.\n",name);
+      table = fopen(PERFMON_EVENT_FILE,"r");
+      if (table == NULL)
+	{
+	  PAPIERROR("fopen(%s): %s\n",name,strerror(errno));
+	  return(PAPI_ESYS);
+	}
+      strcpy(name,PERFMON_EVENT_FILE);
+    }
+  SUBDBG("Open %s succeeded.\n",name);
+  while (fgets(line,LINE_MAX,table))
+    {
+      char *t;
+      int i;
+      i = strlen(line);
+      if (line[i-1] == '\n')
+	line[i-1] = '\0';
+      t = trim_string(strtok(line,","));
+      if ((t == NULL) || (strlen(t) == 0))
+	continue;
+      if (t[0] == '#')
+	{
+	  SUBDBG("Comment found on line %d\n",line_no);
+	  goto nextline;
+	}
+      else if (strcasecmp(t,"CPU") == 0)
+	{
+	  SUBDBG("CPU token found on line %d\n",line_no);
+	  if (get_presets != 0)
+	    {
+	      SUBDBG("Ending preset scanning at line %d of %s.\n",line_no,name);
+	      goto done;
+	    }
+	  t = trim_string(strtok(NULL,","));
+	  if ((t == NULL) || (strlen(t) == 0))
+	    {
+	      PAPIERROR("Expected name after CPU token at line %d of %s -- ignoring",line_no,name);
+	      goto nextline;
+	    }
+	  SUBDBG("Examining CPU %s vs. %s\n",t,_perfmon2_pfm_pmu_name);
+	  if (strcasecmp(t,_perfmon2_pfm_pmu_name) == 0)
+	    {
+	      int type;
+
+	      SUBDBG("Found CPU %s at line %d of %s.\n",t,line_no,name);
+	      t = trim_string(strtok(NULL,","));
+	      if ((t == NULL) || (strlen(t) == 0))
+		{
+		  SUBDBG("No additional qualifier found, matching on string.\n");
+		  get_presets = 1;
+		}
+	      else if ((sscanf(t,"%d",&type) == 1) && (type == _perfmon2_pfm_pmu_type))
+		{
+		  SUBDBG("Found CPU %s type %d at line %d of %s.\n",_perfmon2_pfm_pmu_name,type,line_no,name);
+		  get_presets = 1;
+		}
+	      else
+		SUBDBG("Additional qualifier match failed %d vs %d.\n",_perfmon2_pfm_pmu_type,type);
+	    }
+	}
+      else if (strcasecmp(t,"PRESET") == 0)
+	{
+	  SUBDBG("PRESET token found on line %d\n",line_no);
+	  if (get_presets == 0)
+	    goto nextline;
+	  t = trim_string(strtok(NULL,","));
+	  if ((t == NULL) || (strlen(t) == 0))
+	    {
+	      PAPIERROR("Expected name after PRESET token at line %d of %s -- ignoring",line_no,name);
+	      goto nextline;
+	    }
+	  SUBDBG("Examining preset %s\n",t);
+	  if (find_preset_code(t,&preset) != PAPI_OK)
+	    {
+	      PAPIERROR("Invalid preset name %s after PRESET token at line %d of %s -- ignoring",t,line_no,name);
+	      goto nextline;
+	    }
+	  SUBDBG("Found 0x%08x for %s\n",preset,t);
+	  t = trim_string(strtok(NULL,","));
+	  if ((t == NULL) || (strlen(t) == 0))
+	    {
+	      PAPIERROR("Expected derived type after PRESET token at line %d of %s -- ignoring",line_no,name);
+	      goto nextline;
+	    }
+	  SUBDBG("Examining derived %s\n",t);
+	  if (_papi_hwi_derived_type(t,&derived) != PAPI_OK)
+	    {
+	      PAPIERROR("Invalid derived name %s after PRESET token at line %d of %s -- ignoring",t,line_no,name);
+	      goto nextline;
+	    }
+	  SUBDBG("Found %d for %s\n",derived,t);
+
+	  /* Add derived support here */
+
+	  t = trim_string(strtok(NULL,","));
+	  if ((t == NULL) || (strlen(t) == 0))
+	    {
+	      PAPIERROR("Expected PFM event after DERIVED token at line %d of %s -- ignoring",line_no,name);
+	      goto nextline;
+	    }
+	  SUBDBG("Adding 0x%x,%d,%s to preset search table.\n",preset,derived,t);
+	  tmp[insert].preset = preset;
+	  tmp[insert].derived = derived;
+	  tmp[insert].findme[0] = strdup(t);
+	  insert++;
+	}
+      else
+	{
+	  PAPIERROR("Unrecognized token %s at line %d of %s -- ignoring",t,line_no,name);
+	  goto nextline;
+	}
+    nextline:
+      line_no++;
+    }
+ done:
+  fclose(table);
+  if (get_presets != 0) /* It at least found the CPU */
+    {
+      *here = tmp;
+      return(PAPI_OK);
     }
 
-  if ((ret = pfm_get_event_description(event,&findme)) != PFMLIB_SUCCESS)
-    {
-      PAPIERROR("pfm_get_event_description(%d,%p): %s",event,&findme,pfm_strerror(ret));
-    }
-  else
-    {
-      note_entry->event_code = preset;
-      if (strlen(findme))
-	note_entry->dev_note = strdup(findme);
-      free(findme);
-    }
-  return(PAPI_OK);
+  PAPIERROR("Failed to events for CPU %s, type %d in %s",_perfmon2_pfm_pmu_name,_perfmon2_pfm_pmu_type,PERFMON_EVENT_FILE);
+  return(PAPI_ESBSTR);
 }
 
 static int generate_preset_search_map(hwi_search_t **maploc, hwi_dev_notes_t **noteloc, pfm_preset_search_entry_t *strmap, int num_cnt)
 {
   int i = 0, j = 0, ret;
-  unsigned int event;
   hwi_search_t *psmap;
   hwi_dev_notes_t *notemap;
+  pfmlib_event_t event;
 
-  /* Count up the presets */
+  /* Count up the proposed presets */
   while (strmap[i].preset)
     i++;
+  SUBDBG("generate_preset_search_map(%p,%p,%p,%d) %d proposed presets\n",maploc,noteloc,strmap,num_cnt,i);
   i++;
+
   /* Add null entry */
-  psmap = (hwi_search_t *)papi_malloc(i*sizeof(hwi_search_t));
-  notemap = (hwi_dev_notes_t *)papi_malloc(i*sizeof(hwi_dev_notes_t));
+  psmap = (hwi_search_t *)malloc(i*sizeof(hwi_search_t));
+  notemap = (hwi_dev_notes_t *)malloc(i*sizeof(hwi_dev_notes_t));
   if ((psmap == NULL) || (notemap == NULL))
     return(PAPI_ENOMEM);
   memset(psmap,0x0,i*sizeof(hwi_search_t));
@@ -659,51 +836,52 @@ static int generate_preset_search_map(hwi_search_t **maploc, hwi_dev_notes_t **n
     {
       if (strmap[i].preset == PAPI_TOT_CYC) 
 	{
+	  SUBDBG("pfm_get_cycle_event(%p)\n",&event);
 	  if ((ret = pfm_get_cycle_event(&event)) == PFMLIB_SUCCESS)
 	    {
-	      if (setup_preset(&psmap[i], &notemap[i], event, strmap[i].preset, strmap[i].derived, num_cnt) == PAPI_OK)
+	      if (setup_preset(&psmap[i], &notemap[i], &event, strmap[i].preset, strmap[i].derived, num_cnt) == PAPI_OK)
 		{
 		  j++;
 		}
 	    }
 	  else
-	    PAPIERROR("pfm_get_cycle_event(%p): %s\n",&event, pfm_strerror(ret));	    
+	    PAPIERROR("pfm_get_cycle_event(%p): %s",&event, pfm_strerror(ret));	    
 	}
       else if (strmap[i].preset == PAPI_TOT_INS) 
 	{
+	  SUBDBG("pfm_get_inst_retired_event(%p)\n",&event);
 	  if ((ret = pfm_get_inst_retired_event(&event)) == PFMLIB_SUCCESS)
 	    {
-	      if (setup_preset(&psmap[i], &notemap[i], event, strmap[i].preset, strmap[i].derived, num_cnt) == PAPI_OK)
+	      if (setup_preset(&psmap[i], &notemap[i], &event, strmap[i].preset, strmap[i].derived, num_cnt) == PAPI_OK)
 		{
 		  j++;
 		}
 	    }
 	  else
-	    PAPIERROR("pfm_get_inst_retired_event(%p): %s\n",&event, pfm_strerror(ret));	    
+	    PAPIERROR("pfm_get_inst_retired_event(%p): %s",&event, pfm_strerror(ret));	    
 	}
       else
 	{
 	  /* Does not handle derived events yet */
-	  SUBDBG("pfm_find_event_byname(%s,%p)\n",strmap[i].findme[0],&event);
-	  if ((ret = pfm_find_event_byname(strmap[i].findme[0],&event)) == PFMLIB_SUCCESS)
+	  SUBDBG("pfm_find_full_event(%s,%p)\n",strmap[i].findme[0],&event);
+	  if ((ret = pfm_find_full_event(strmap[i].findme[0],&event)) == PFMLIB_SUCCESS)
 	    {
-	      if (setup_preset(&psmap[i], &notemap[i], event, strmap[i].preset, strmap[i].derived, num_cnt) == PAPI_OK)
+	      if (setup_preset(&psmap[i], &notemap[i], &event, strmap[i].preset, strmap[i].derived, num_cnt) == PAPI_OK)
 		{
 		  j++;
 		}
 	    }
 	  else
-	    PAPIERROR("pfm_find_event_byname(%s,%p): %s\n",strmap[i].findme[0],&event, pfm_strerror(ret));	    
+	    PAPIERROR("pfm_find_full_event(%s,%p): %s",strmap[i].findme[0],&event,pfm_strerror(ret));	    
 	}
       i++;
     }
        
    if (i != j) 
      {
-       PAPIERROR("NUM_OF_PRESET_EVENTS %d != setup preset events %d\n",i,j);
-       return(PAPI_ENOEVNT);
+       PAPIERROR("%d of %d events in %s were not valid",i-j,i,PERFMON_EVENT_FILE);
      }
-
+   SUBDBG("generate_preset_search_map(%p,%p,%p,%d) %d actual presets\n",maploc,noteloc,strmap,num_cnt,j);
    *maploc = psmap;
    *noteloc = notemap;
    return (PAPI_OK);
@@ -713,19 +891,26 @@ static int generate_native_event_map(hwd_native_event_entry_t **nmap, unsigned i
 {
   int ret, did_something;
   unsigned int n, i, j;
-  char *findme;
+  size_t max_len;
+  char *findme = NULL, maskname[PAPI_MAX_STR_LEN],eventname[PAPI_MAX_STR_LEN];
   hwd_native_event_entry_t *ntmp, *orig_ntmp;
   pfmlib_regmask_t impl_cnt;
+
+  if ((ret = pfm_get_max_event_name_len(&max_len)) != PFMLIB_SUCCESS)
+    {
+      PAPIERROR("pfm_get_max_event_name_len(%p): %s", &max_len, pfm_strerror(ret));
+      return(PAPI_ESBSTR);
+    }
 
   if ((ret = pfm_get_impl_counters(&impl_cnt)) != PFMLIB_SUCCESS)
     {
       PAPIERROR("pfm_get_impl_counters(%p): %s", &impl_cnt, pfm_strerror(ret));
       return(PAPI_ESBSTR);
     }
-  orig_ntmp = ntmp = (hwd_native_event_entry_t *)papi_malloc(native_cnt*sizeof(hwd_native_event_entry_t));
+  orig_ntmp = ntmp = (hwd_native_event_entry_t *)malloc(native_cnt*sizeof(hwd_native_event_entry_t));
   for (i=0;i<native_cnt;i++)
     {
-      if ((ret = pfm_get_event_name(i,ntmp->name,sizeof(ntmp->name))) != PFMLIB_SUCCESS)
+      if ((ret = pfm_get_event_name(i,eventname,sizeof(eventname))) != PFMLIB_SUCCESS)
 	{
 	  PAPIERROR("pfm_get_event_name(%d,%p,%d): %s", i,ntmp->name,sizeof(ntmp->name),pfm_strerror(ret));
 	bail:
@@ -737,35 +922,87 @@ static int generate_native_event_map(hwd_native_event_entry_t **nmap, unsigned i
 	  PAPIERROR("pfm_get_event_description(%d,%p): %s", i,&findme, pfm_strerror(ret));
 	  goto bail;
 	}
-      strncpy(ntmp->description,findme,sizeof(ntmp->description));
-      free(findme);
       if ((ret = pfm_get_event_counters(i,&ntmp->resources.selector)) != PFMLIB_SUCCESS)
 	{
 	  PAPIERROR("pfm_get_event_counters(%d,%p): %s", i,&ntmp->resources.selector,pfm_strerror(ret));
-	  goto bail;
+	  free(orig_ntmp);
+	  free(findme);
+	  return(PAPI_ESBSTR);
 	}
       did_something = 0;
       n = num_cnt;
       for (j=0;n;j++)
 	{
-	  if (pfm_regmask_isset(&impl_cnt, j))
-	    n--;
-	  if (pfm_regmask_isset(&ntmp->resources.selector,j))
-	    {
-	      int foo;
-	      if (pfm_get_event_code_counter(i,j,&foo) != PFMLIB_SUCCESS)
-		{
-		  PAPIERROR("pfm_get_event_code_counter(%d,%d,%p): %s", i,j,&foo,pfm_strerror(ret));
-		  goto bail;
-		}
-	      SUBDBG("PFM event index %d: Event code 0x%x, lives on counter %d.\n",i,foo,j);
-	    }
-	  did_something++;
+	  if (pfm_regmask_isset(&impl_cnt, j) != PFMLIB_SUCCESS)
+	      {
+		n--;
+		if (pfm_regmask_isset(&ntmp->resources.selector,j))
+		  {
+		    int foo;
+		    if ((ret = pfm_get_event_code_counter(i,j,&foo)) != PFMLIB_SUCCESS)
+		      {
+			PAPIERROR("pfm_get_event_code_counter(%d,%d,%p): %s", i,j,&foo,pfm_strerror(ret));
+			free(orig_ntmp);
+			free(findme);
+			return(PAPI_ESBSTR);
+		      }
+		    did_something++;
+		  }
+	      }
 	}
-      if (did_something == 0)
+      if (did_something)
 	{
-	  PAPIERROR("Could not get an event code for pfm index %d.\n",i);
-	  goto bail;
+	  unsigned int num_masks,c;
+	  char *desc;
+
+	  if ((ret = pfm_get_num_event_masks(i,&num_masks)) != PFMLIB_SUCCESS)
+	    {
+	      PAPIERROR("pfm_get_num_event_masks(%d,%p): %s\n",
+			i,&num_masks,pfm_strerror(ret));
+	      free(orig_ntmp);
+	      free(findme);
+	      return(PAPI_ESBSTR);
+	    }
+	  for (j=0;j<num_masks;j++)
+	    {
+	      if ((ret = pfm_get_event_mask_description(i, j, &desc)) != PFMLIB_SUCCESS)
+		{
+		  PAPIERROR("pfm_get_event_mask_description(%d,%d,%p): %s\n",
+			    i,j,&desc,pfm_strerror(ret));
+	      free(orig_ntmp);
+	      free(findme);
+		  return(PAPI_ESBSTR);
+		}
+	      if ((ret = pfm_get_event_mask_code(i, j, &c)) != PFMLIB_SUCCESS)
+		{
+		  PAPIERROR("pfm_get_event_mask_code(%d,%d,%p): %s\n",
+			    i,j,&c,pfm_strerror(ret));
+	      free(orig_ntmp);
+	      free(findme);
+	      free(desc);
+		  return(PAPI_ESBSTR);
+		  }
+	      if ((ret = pfm_get_event_mask_name(i, j, maskname, PAPI_MAX_STR_LEN)) != PFMLIB_SUCCESS)
+		{
+		  PAPIERROR("pfm_get_event_mask_name(%d,%d,%p,%d): %s\n",
+			    i,j,maskname,PAPI_MAX_STR_LEN);
+	      free(orig_ntmp);
+	      free(findme);
+	      free(desc);
+		  return(PAPI_ESBSTR);
+		}
+	      SUBDBG("PFM event %d has umask %s,%d,%s\n",i,maskname,c,desc);
+	      free(desc);
+	    }
+	  strncpy(ntmp->name,eventname,sizeof(ntmp->name));
+	  strncpy(ntmp->description,findme,sizeof(ntmp->description));
+	  free(findme);
+	}
+      else if (did_something == 0)
+	{
+	  PAPIERROR("Could not get an event code for pfm index %d.",i);
+	  free(orig_ntmp);
+	  return(PAPI_ESBSTR);
 	}
       ntmp++;
     }
@@ -779,7 +1016,7 @@ inline static int compute_kernel_args(hwd_control_state_t * ctl)
   pfmlib_output_param_t *outp = &ctl->out;
   pfmlib_input_param_t tmpin;
   pfmlib_output_param_t tmpout;
-  pfarg_pmd_t *pd = ctl->pd;
+  pfarg_pmd_t oldpd, *pd = ctl->pd;
   pfarg_pmc_t *pc = ctl->pc;
   pfarg_setdesc_t *sets = ctl->set;
   pfarg_setinfo_t *setinfos = ctl->setinfo;
@@ -787,6 +1024,10 @@ inline static int compute_kernel_args(hwd_control_state_t * ctl)
   int set = 0, donepc = 0, donepd = 0, ret, i, j;
   int togo = inp->pfp_event_count, dispatch_count = inp->pfp_event_count, done = 0;
   
+  /* Save old PD array so we can reconstruct certain flags. This can be removed
+     when we have higher level code call set_profile,set_overflow etc when there
+     is hardware (substrate) support, but this change won't happen for PAPI 3.5 */
+
   if ((ctl->multiplexed) && (inp->pfp_event_count > _papi_hwi_system_info.sub_info.num_cntrs))
     {
       dispatch_count = _papi_hwi_system_info.sub_info.num_cntrs;
@@ -835,6 +1076,10 @@ inline static int compute_kernel_args(hwd_control_state_t * ctl)
 	{
 	  pd[donepd].reg_num = tmpout.pfp_pmcs[j].reg_pmd_num;
 	  pd[donepd].reg_set = set;
+
+	  /* Skip over entries that map to the same PMD, 
+	     PIV has 2 PMCS for every PMD */
+
 	  for(; j < tmpout.pfp_pmc_count; j++)  
 	    if (tmpout.pfp_pmcs[j].reg_evt_idx != i) break;
 	}
@@ -876,7 +1121,7 @@ static int attach(hwd_control_state_t *ctl, unsigned long tid)
   if (ret == 0)
     {
       ptrace(PTRACE_DETACH, tid, NULL, NULL);
-      PAPIERROR("Process/thread %d is not being ptraced.\n",tid);
+      PAPIERROR("Process/thread %d is not being ptraced",tid);
       free(newctx); free(load_args);
       return(PAPI_EINVAL);
     }
@@ -885,7 +1130,7 @@ static int attach(hwd_control_state_t *ctl, unsigned long tid)
 
   if ((ret == -1) && (errno != EPERM))
     {
-      PAPIERROR("Process/thread %d cannot be ptraced: %s\n",tid,strerror(errno));
+      PAPIERROR("Process/thread %d cannot be ptraced: %s",tid,strerror(errno));
       free(newctx); free(load_args);
       return(PAPI_EINVAL);
     }
@@ -1059,11 +1304,11 @@ static int get_string_from_file(char *file, char *str, int len)
 
 int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {
-  int i, retval, type;
+  int i, retval;
   unsigned int ncnt;
   unsigned int version;
   pfmlib_options_t pfmlib_options;
-  char buf[PAPI_HUGE_STR_LEN],pmuname[PAPI_HUGE_STR_LEN];
+  char buf[PAPI_HUGE_STR_LEN];
   hwi_dev_notes_t *notemap = NULL;
 
   /* Setup the vector entries that the OS knows about */
@@ -1073,8 +1318,11 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 #endif
 
   /* Always initialize globals dynamically to handle forks properly. */
-  preset_search_map = NULL;
-  native_map = NULL;
+
+  _perfmon2_pfm_preset_search_map = NULL;
+  _perfmon2_pfm_native_map = NULL;
+  _perfmon2_pfm_pmu_type = -1;
+  _perfmon2_pfm_pmu_name[0] = '\0';
 
    /* Opened once for all threads. */
    SUBDBG("pfm_initialize()\n");
@@ -1084,20 +1332,20 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
        return (PAPI_ESBSTR);
      }
 
-   SUBDBG("pfm_get_pmu_type(%p)\n",&type);
-   if (pfm_get_pmu_type(&type) != PFMLIB_SUCCESS)
+   SUBDBG("pfm_get_pmu_type(%p)\n",&_perfmon2_pfm_pmu_type);
+   if (pfm_get_pmu_type(&_perfmon2_pfm_pmu_type) != PFMLIB_SUCCESS)
      {
-       PAPIERROR("pfm_get_pmu_type(%p): %s", type, pfm_strerror(retval));
+       PAPIERROR("pfm_get_pmu_type(%p): %s", _perfmon2_pfm_pmu_type, pfm_strerror(retval));
        return (PAPI_ESBSTR);
      }
 
-   SUBDBG("pfm_get_pmu_name(%p,%d)\n",pmuname,PAPI_HUGE_STR_LEN);
-   if (pfm_get_pmu_name(pmuname,PAPI_HUGE_STR_LEN) != PFMLIB_SUCCESS)
+   SUBDBG("pfm_get_pmu_name(%p,%d)\n",_perfmon2_pfm_pmu_name,PAPI_MIN_STR_LEN);
+   if (pfm_get_pmu_name(_perfmon2_pfm_pmu_name,PAPI_MIN_STR_LEN) != PFMLIB_SUCCESS)
      {
-       PAPIERROR("pfm_get_pmu_name(%p,%d): %s", pmuname,PAPI_HUGE_STR_LEN,pfm_strerror(retval));
+       PAPIERROR("pfm_get_pmu_name(%p,%d): %s",_perfmon2_pfm_pmu_name,PAPI_MIN_STR_LEN,pfm_strerror(retval));
        return (PAPI_ESBSTR);
      }
-   SUBDBG("PMU is a %s\n",pmuname);
+   SUBDBG("PMU is a %s, type %d\n",_perfmon2_pfm_pmu_name,_perfmon2_pfm_pmu_type);
 
    SUBDBG("pfm_get_version(%p)\n",&version);
    if (pfm_get_version(&version) != PFMLIB_SUCCESS)
@@ -1143,7 +1391,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   if (retval != PAPI_OK)
     return(retval);
   pfm_get_num_counters((unsigned int *)&_papi_hwi_system_info.sub_info.num_cntrs);
-  if (type == PFMLIB_GEN_MIPS64_PMU)
+  if (_perfmon2_pfm_pmu_type == PFMLIB_GEN_MIPS64_PMU)
     _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR|PAPI_DOM_OTHER;
   else
     _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL;    
@@ -1155,6 +1403,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   _papi_hwi_system_info.sub_info.attach_must_ptrace = 1;
   _papi_hwi_system_info.sub_info.kernel_multiplex = 1;
   _papi_hwi_system_info.sub_info.kernel_profile = 1;
+  _papi_hwi_system_info.sub_info.profile_ear = 1;  
   _papi_hwi_system_info.sub_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
 //  check_multiplex_timeout(NULL, (unsigned long *)&_papi_hwi_system_info.sub_info.multiplex_timer_us);
 
@@ -1174,35 +1423,17 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 
    /* Setup presets */
 
-   if (type == PFMLIB_GEN_MIPS64_PMU)
-     {
-       if (strcmp(pmuname,"MIPS20K") == 0)
-	 retval = generate_preset_search_map(&preset_search_map,&notemap,pfm_mips20k_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
-       else if (strcmp(pmuname,"MIPS5K") == 0)
-	 retval = generate_preset_search_map(&preset_search_map,&notemap,pfm_mips5k_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
-       else
-	 retval = generate_preset_search_map(&preset_search_map,&notemap,pfm_unknown_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
-     }
-   else if (type == PFMLIB_I386_P6_PMU)
-     {
-       if (strcmp(pmuname,"Pentium M") == 0)
-	 retval = generate_preset_search_map(&preset_search_map,&notemap,pfm_i386_pM_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
-       else if (strcmp(pmuname,"P6 Processor Family") == 0)
-	 retval = generate_preset_search_map(&preset_search_map,&notemap,pfm_i386_p6_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
-       else
-	 retval = generate_preset_search_map(&preset_search_map,&notemap,pfm_unknown_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
-     }
-   else if (type == PFMLIB_ITANIUM2_PMU)
-     retval = generate_preset_search_map(&preset_search_map,&notemap,pfm_itanium2_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
-   else if (type == PFMLIB_MONTECITO_PMU)
-     retval = generate_preset_search_map(&preset_search_map,&notemap,pfm_montecito_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
-   else
-     retval = generate_preset_search_map(&preset_search_map,&notemap,pfm_unknown_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
-
+   retval = load_preset_table(&_perfmon2_pfm_preset_search_map);
    if (retval)
-      return (retval);
+     return(retval);
 
-   retval = generate_native_event_map(&native_map,_papi_hwi_system_info.sub_info.num_native_events,_papi_hwi_system_info.sub_info.num_cntrs);
+   retval = generate_preset_search_map(&preset_search_map,&notemap,_perfmon2_pfm_preset_search_map,_papi_hwi_system_info.sub_info.num_cntrs);
+   if (retval)
+     {
+       return (retval);
+     }
+
+   retval = generate_native_event_map(&_perfmon2_pfm_native_map,_papi_hwi_system_info.sub_info.num_native_events,_papi_hwi_system_info.sub_info.num_cntrs);
    if (retval)
      {
        free(preset_search_map);
@@ -1213,7 +1444,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    if (retval)
      {
        free(preset_search_map);
-       free(native_map);
+       free(_perfmon2_pfm_native_map);
        return (retval);
      }
 
@@ -1263,7 +1494,7 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
   ret = fcntl(newctx.ctx_fd, F_SETFD, FD_CLOEXEC);
   if (ret == -1)
     {
-      PAPIERROR("cannot fcntl(FD_CLOEXEC) on %d: %s\n", newctx.ctx_fd,strerror(errno));
+      PAPIERROR("cannot fcntl(FD_CLOEXEC) on %d: %s", newctx.ctx_fd,strerror(errno));
     bail:
       pfm_unload_context(newctx.ctx_fd);
       close(newctx.ctx_fd);
@@ -1276,7 +1507,7 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
   ret = fcntl(newctx.ctx_fd, F_SETFL, fcntl(newctx.ctx_fd, F_GETFL, 0) | O_ASYNC);
   if (ret == -1)
     {
-      PAPIERROR("cannot fcntl(O_ASYNC) on %d: %s\n", newctx.ctx_fd,strerror(errno));
+      PAPIERROR("cannot fcntl(O_ASYNC) on %d: %s", newctx.ctx_fd,strerror(errno));
       goto bail;
     }
 
@@ -1285,7 +1516,7 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
   ret = fcntl(newctx.ctx_fd, F_SETOWN, mygettid());
   if (ret == -1)
     {
-      PAPIERROR("cannot fcntl(F_SETOWN) on %d: %s\n", newctx.ctx_fd,strerror(errno));
+      PAPIERROR("cannot fcntl(F_SETOWN) on %d: %s", newctx.ctx_fd,strerror(errno));
       goto bail;
     }
 
@@ -1302,7 +1533,7 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
   ret = fcntl(newctx.ctx_fd, F_SETSIG, _papi_hwi_system_info.sub_info.hardware_intr_sig);
   if (ret == -1)
     {
-      PAPIERROR("cannot fcntl(F_SETSIG,%d) on %d: %s\n", _papi_hwi_system_info.sub_info.hardware_intr_sig, newctx.ctx_fd, strerror(errno));
+      PAPIERROR("cannot fcntl(F_SETSIG,%d) on %d: %s", _papi_hwi_system_info.sub_info.hardware_intr_sig, newctx.ctx_fd, strerror(errno));
       goto bail;
     }
 
@@ -1425,7 +1656,7 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctl,
 
   for (i=0; i < ctl->in.pfp_event_count; i++) 
     {
-      SUBDBG("PMD[%d] = %lld (LLD),%llu (LLU)\n",i,ctl->counts[i],ctl->pd[i].reg_value);
+      SUBDBG("PMD[%d] = %lld (LLD),%llu (LLU)\n",i,(unsigned long long)ctl->counts[i],(unsigned long long)ctl->pd[i].reg_value);
       if (ctl->pd[i].reg_flags & PFM_REGFL_OVFL_NOTIFY)
 	ctl->counts[i] = ctl->pd[i].reg_value - ctl->pd[i].reg_long_reset;
       else
@@ -1444,7 +1675,7 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctl,
   if ((ret = pfm_getinfo_evtsets(ctl->ctx->ctx_fd, ctl->setinfo, ctl->num_sets)))
     {
       DEBUGCALL(DEBUG_SUBSTRATE,dump_setinfo(ctl));
-      PAPIERROR("pfm_getinfo_evtsets(%d,%p,%d): %s\n",ctl->ctx->ctx_fd, ctl->setinfo, ctl->num_sets, pfm_strerror(ret));
+      PAPIERROR("pfm_getinfo_evtsets(%d,%p,%d): %s",ctl->ctx->ctx_fd, ctl->setinfo, ctl->num_sets, pfm_strerror(ret));
       *events = NULL;
       return(PAPI_ESYS);
     }
@@ -1462,8 +1693,8 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctl,
       SUBDBG("Counter %d is in set %d ran %llu of %llu times, old count %lld.\n",
 	     i,
 	     ctl->pd[i].reg_set,
-	     ctl->setinfo[ctl->pd[i].reg_set].set_runs,
-	     tot_runs,
+	     (unsigned long long)ctl->setinfo[ctl->pd[i].reg_set].set_runs,
+	     (unsigned long long)tot_runs,
 	     ctl->counts[i]);
       ctl->counts[i] = (ctl->counts[i]*tot_runs)/ctl->setinfo[ctl->pd[i].reg_set].set_runs;
       SUBDBG("Counter %d, new count %lld.\n",i,ctl->counts[i]);
@@ -1619,9 +1850,29 @@ int _papi_hwd_shutdown(hwd_context_t * ctx)
 
 /* This will need to be modified for the Pentium IV */
 
-static inline int find_profile_index(EventSetInfo_t *ESI, int pmd, int *index)
+static inline int find_profile_index(EventSetInfo_t *ESI, int pmd, int *flags, unsigned int *native_index, int *profile_index)
 {
   int pos, esi_index, count;
+  hwd_control_state_t *ctl = &ESI->machdep;
+  pfarg_pmd_t *pd;
+  pfarg_pmc_t *pc;
+  int i;
+
+  pd = ctl->pd;
+  pc = ctl->pc;
+  
+  /* Find virtual PMD index, the one we actually read from the physical PMD number that
+     overflowed. This index is the one related to the profile buffer. */
+
+  for (i=0;i<ctl->in.pfp_event_count;i++)
+    {
+      if (pd[i].reg_num == pmd)
+	{
+	  SUBDBG("Physical PMD %d is Virtual PMD %d\n",pmd,i);
+	  pmd = i;
+	  break;
+	}
+    }
 
   SUBDBG("(%p,%d,%p)\n",ESI,pmd,index);
   for (count = 0; count < ESI->profile.event_counter; count++) 
@@ -1633,8 +1884,10 @@ static inline int find_profile_index(EventSetInfo_t *ESI, int pmd, int *index)
       // PMU_FIRST_COUNTER
       if (pos == pmd) 
 	{
-	  *index = count;
-	  SUBDBG("Event is at profile index %d\n",*index);
+	  *profile_index = count;
+	  *native_index = ESI->NativeInfoArray[pos].ni_event & PAPI_NATIVE_AND_MASK;
+	  *flags = ESI->profile.flags;
+	  SUBDBG("Native event %d is at profile index %d, flags %d\n",*native_index,*profile_index,*flags);
 	  return(PAPI_OK);
 	}
     }
@@ -1643,14 +1896,325 @@ static inline int find_profile_index(EventSetInfo_t *ESI, int pmd, int *index)
   return(PAPI_EBUG);
 }
 
+#if defined(__ia64__)
+static inline int is_montecito_and_dear(unsigned int native_index)
+{
+  if (_perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU)
+    {
+      if (pfm_mont_is_dear(native_index))
+	return(1);
+    }
+  return(0);
+}
+static inline int is_montecito_and_iear(unsigned int native_index)
+{
+  if (_perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU)
+    {
+      if (pfm_mont_is_iear(native_index))
+	return(1);
+    }
+  return(0);
+}
+static inline int is_itanium2_and_dear(unsigned int native_index)
+{
+  if (_perfmon2_pfm_pmu_type == PFMLIB_ITANIUM2_PMU)
+    {
+      if (pfm_ita2_is_dear(native_index))
+	return(1);
+    }
+  return(0);
+}
+static inline int is_itanium2_and_iear(unsigned int native_index)
+{
+  if (_perfmon2_pfm_pmu_type == PFMLIB_ITANIUM2_PMU)
+    {
+      if (pfm_ita2_is_iear(native_index))
+	return(1);
+    }
+  return(0);
+}
+#endif
+
+#define BPL (sizeof(uint64_t)<<3)
+#define LBPL	6
+static inline void pfm_bv_set(uint64_t *bv, uint16_t rnum)
+{
+	bv[rnum>>LBPL] |= 1UL << (rnum&(BPL-1));
+}
+
+static inline int setup_ear_event(unsigned int native_index, pfarg_pmd_t *pd, int flags)
+{
+#if defined(__ia64__)
+  if (_perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU)
+    {
+      if (pfm_mont_is_dear(native_index)) /* 2,3,17 */
+	{
+	  pfm_bv_set(pd[0].reg_smpl_pmds, 32);
+	  pfm_bv_set(pd[0].reg_smpl_pmds, 33);
+	  pfm_bv_set(pd[0].reg_smpl_pmds, 36);
+	  pfm_bv_set(pd[0].reg_reset_pmds, 36);
+	  return(1);
+	}
+      else if (pfm_mont_is_iear(native_index))  /* O,1 MK */
+	{
+	  pfm_bv_set(pd[0].reg_smpl_pmds, 34);
+	  pfm_bv_set(pd[0].reg_smpl_pmds, 35);
+	  pfm_bv_set(pd[0].reg_reset_pmds, 34);
+	  return(1);
+	}
+      return(0);
+    }
+  else if (_perfmon2_pfm_pmu_type == PFMLIB_ITANIUM2_PMU)
+    {
+      if (pfm_mont_is_dear(native_index)) /* 2,3,17 */
+	{
+	  pfm_bv_set(pd[0].reg_smpl_pmds, 2);
+	  pfm_bv_set(pd[0].reg_smpl_pmds, 3);
+	  pfm_bv_set(pd[0].reg_smpl_pmds, 17);
+	  pfm_bv_set(pd[0].reg_reset_pmds, 17);
+	  return(1);
+	}
+      else if (pfm_mont_is_iear(native_index))  /* O,1 MK */
+	{
+	  pfm_bv_set(pd[0].reg_smpl_pmds, 0);
+	  pfm_bv_set(pd[0].reg_smpl_pmds, 1);
+	  pfm_bv_set(pd[0].reg_reset_pmds, 0);
+	  return(1);
+	}
+      return(0);    
+    }
+#endif
+  return(0);
+}
+
+static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, pfm_dfl_smpl_entry_t **ent, _papi_hwi_context_t *ctx)
+{
+  SUBDBG("process_smpl_entry(%d,%d,%p,%p)\n",native_pfm_index,flags,ent,ctx);
+
+#ifdef __ia64__
+  /* Fixup EAR stuff here */      
+  if (is_montecito_and_dear(native_pfm_index))
+    {
+      pfm_mont_pmd_reg_t data_addr; 
+      pfm_mont_pmd_reg_t latency;
+      pfm_mont_pmd_reg_t load_addr;
+      unsigned long newent;
+      
+      if ((flags & (PAPI_PROFIL_DATA_EAR|PAPI_PROFIL_INST_EAR)) == 0)
+	goto safety;
+
+      /* Skip the header */
+      ++(*ent);
+      
+      // PMD32 has data address on Montecito
+      // PMD33 has latency on Montecito
+      // PMD36 has instruction address on Montecito
+      data_addr = *(pfm_mont_pmd_reg_t *)*ent;
+      latency = *(pfm_mont_pmd_reg_t *)((unsigned long)*ent + sizeof(data_addr));
+      load_addr = *(pfm_mont_pmd_reg_t *)((unsigned long)*ent + sizeof(data_addr)+sizeof(latency));
+      
+      SUBDBG("PMD[32]: 0x%016llx\n",(unsigned long long)data_addr.pmd_val);
+      SUBDBG("PMD[33]: 0x%016llx\n",(unsigned long long)latency.pmd_val);
+      SUBDBG("PMD[36]: 0x%016llx\n",(unsigned long long)load_addr.pmd_val);
+
+      if ((!load_addr.pmd36_mont_reg.dear_vl) || (!load_addr.pmd33_mont_reg.dear_stat))
+	{
+	  SUBDBG("Invalid DEAR sample found, dear_vl = %d, dear_stat = 0x%x\n",load_addr.pmd36_mont_reg.dear_vl,load_addr.pmd36_mont_reg.dear_stat);
+	bail1:
+	  newent = (unsigned long)*ent;
+	  newent += 3*sizeof(pfm_mont_pmd_reg_t);
+	  *ent = (pfm_dfl_smpl_entry_t *)newent;
+	  return 0;
+	}
+
+      if (flags & PAPI_PROFIL_DATA_EAR)
+	OVERFLOW_ADDRESS((*ctx)) = data_addr.pmd_val;
+      else if (flags & PAPI_PROFIL_INST_EAR)
+	{
+	  unsigned long tmp = ((load_addr.pmd36_mont_reg.dear_iaddr + (unsigned long)load_addr.pmd36_mont_reg.dear_bn) << 4) | (unsigned long)load_addr.pmd36_mont_reg.dear_slot;
+	  OVERFLOW_ADDRESS((*ctx)) = tmp;
+	}
+      else
+	{
+	  PAPIERROR("BUG!");
+	  goto bail1;
+	}
+
+      newent = (unsigned long)*ent;
+      newent += 3*sizeof(pfm_mont_pmd_reg_t);
+      *ent = (pfm_dfl_smpl_entry_t *)newent;
+      return latency;
+    }
+  else if (is_montecito_and_iear(native_pfm_index))
+    {
+      pfm_mont_pmd_reg_t latency;
+      pfm_mont_pmd_reg_t icache_line_addr;
+      unsigned long newent;
+      
+      if ((flags & PAPI_PROFIL_INST_EAR) == 0)
+	goto safety;
+
+      /* Skip the header */
+      ++(*ent);
+      
+      // PMD34 has data address on Montecito
+      // PMD35 has latency on Montecito
+      icache_line_addr = *(pfm_mont_pmd_reg_t *)*ent;
+      latency = *(pfm_mont_pmd_reg_t *)((unsigned long)*ent + sizeof(icache_line_addr));
+     
+      SUBDBG("PMD[34]: 0x%016llx\n",(unsigned long long)icache_line_addr.pmd_val);
+      SUBDBG("PMD[35]: 0x%016llx\n",(unsigned long long)latency.pmd_val);
+
+      if (icache_line.pmd34_mont_reg.iear_stat & 0x1 == 0)
+	{
+	  SUBDBG("Invalid IEAR sample found, iear_stat = 0x%x\n",icache_line.pmd34_mont_reg.iear_stat);
+	bail2:
+	  newent = (unsigned long)*ent;
+	  newent += 2*sizeof(pfm_mont_pmd_reg_t);
+	  *ent = (pfm_dfl_smpl_entry_t *)newent;
+	  return(0);
+	}
+
+      if (flags & PAPI_PROFIL_INST_EAR)
+	{
+	  unsigned long tmp = icache_line_addr.pmd34_mont_reg.iear_iaddr << 5;
+	  OVERFLOW_ADDRESS((*ctx)) = tmp;
+	}
+      else 
+      	{
+	  PAPIERROR("BUG!");
+	  goto bail2;
+	}
+
+      newent = (unsigned long)*ent;
+      newent += 2*sizeof(pfm_mont_pmd_reg_t);
+      *ent = (pfm_dfl_smpl_entry_t *)newent;
+      return latency;
+    }
+  else if (is_itanium2_and_dear(native_pfm_index))
+    {
+      pfm_ita2_pmd_reg_t data_addr; 
+      pfm_ita2_pmd_reg_t latency;
+      pfm_ita2_pmd_reg_t load_addr;
+      unsigned long newent;
+      
+      if ((flags & (PAPI_PROFIL_DATA_EAR|PAPI_PROFIL_INST_EAR)) == 0)
+	goto safety;
+
+      /* Skip the header */
+      ++(*ent);
+      
+      // PMD2 has data address on Itanium 2
+      // PMD3 has latency on Itanium 2
+      // PMD17 has instruction address on Itanium 2
+      data_addr = *(pfm_ita2_pmd_reg_t *)*ent;
+      latency = *(pfm_ita2_pmd_reg_t *)((unsigned long)*ent + sizeof(data_addr));
+      load_addr = *(pfm_ita2_pmd_reg_t *)((unsigned long)*ent + sizeof(data_addr)+sizeof(latency));
+      
+      SUBDBG("PMD[2]: 0x%016llx\n",(unsigned long long)data_addr.pmd_val);
+      SUBDBG("PMD[3]: 0x%016llx\n",(unsigned long long)latency.pmd_val);
+      SUBDBG("PMD[17]: 0x%016llx\n",(unsigned long long)load_addr.pmd_val);
+
+      if ((!load_addr.pmd17_ita2_reg.dear_vl) || (!load_addr.pmd3_ita2_reg.dear_stat))
+	{
+	  SUBDBG("Invalid DEAR sample found, dear_vl = %d, dear_stat = 0x%x\n",load_addr.pmd17_ita2_reg.dear_vl,load_addr.pmd3_ita2_reg.dear_stat);
+	bail3:
+	  newent = (unsigned long)*ent;
+	  newent += 3*sizeof(pfm_mont_pmd_reg_t);
+	  *ent = (pfm_dfl_smpl_entry_t *)newent;
+	  return 0;
+	}
+
+      if (flags & PAPI_PROFIL_DATA_EAR)
+	OVERFLOW_ADDRESS((*ctx)) = data_addr.pmd_val;
+      else if (flags & PAPI_PROFIL_INST_EAR)
+	{
+	  unsigned long tmp = ((load_addr.pmd17_ita2_reg.dear_iaddr + (unsigned long)load_addr.pmd17_ita2_reg.dear_bn) << 4) | (unsigned long)load_addr.pmd17_ita2_reg.dear_slot;
+	  OVERFLOW_ADDRESS((*ctx)) = tmp;
+	}
+      else
+	{
+	  PAPIERROR("BUG!");
+	  goto bail3;
+	}
+      
+      newent = (unsigned long)*ent;
+      newent += 3*sizeof(pfm_ita2_pmd_reg_t);
+      *ent = (pfm_dfl_smpl_entry_t *)newent;
+      return latency;
+    }
+  else if (is_itanium2_and_iear(native_pfm_index))
+    {
+      pfm_ita2_pmd_reg_t latency;
+      pfm_ita2_pmd_reg_t icache_line_addr;
+      unsigned long newent;
+      
+      if ((flags & PAPI_PROFIL_INST_EAR) == 0)
+	goto safety;
+
+      /* Skip the header */
+      ++(*ent);
+      
+      // PMD0 has address on Itanium 2
+      // PMD1 has latency on Itanium 2
+      icache_line_addr = *(pfm_ita2_pmd_reg_t *)*ent;
+      latency = *(pfm_ita2_pmd_reg_t *)((unsigned long)*ent + sizeof(icache_line_addr));
+     
+      SUBDBG("PMD[0]: 0x%016llx\n",(unsigned long long)icache_line_addr.pmd_val);
+      SUBDBG("PMD[1]: 0x%016llx\n",(unsigned long long)latency.pmd_val);
+
+      if (icache_line_addr.pmd34_ita2_reg.iear_stat & 0x1 == 0) 
+	{
+	  SUBDBG("Invalid IEAR sample found, iear_stat = 0x%x\n",icache_line.pmd34_mont_reg.iear_stat);
+	bail4:
+	  newent = (unsigned long)*ent;
+	  newent += 2*sizeof(pfm_mont_pmd_reg_t);
+	  *ent = (pfm_dfl_smpl_entry_t *)newent;
+	  return(0);
+	}
+
+      if (flags & PAPI_PROFIL_INST_EAR)
+	{
+	  unsigned long tmp = icache_line_addr.pmd0_ita2_reg.iear_iaddr << 5;
+	  OVERFLOW_ADDRESS((*ctx)) = tmp;
+	}
+      else 
+	{
+	  PAPIERROR("BUG!");
+	  goto bail4;
+	}
+
+      newent = (unsigned long)*ent;
+      newent += 2*sizeof(pfm_ita2_pmd_reg_t);
+      *ent = (pfm_dfl_smpl_entry_t *)newent;
+      return latency;
+    }
+#if 0
+  (is_btb(native_pfm_index))
+    {
+      // PMD48-63,39 on Montecito
+      // PMD8-15,16 on Itanium 2
+    }
+#endif
+  else
+    safety:
+#endif
+    {
+      OVERFLOW_ADDRESS((*ctx)) = (*ent)->ip;
+      ++(*ent);
+      return(1);
+    }
+}
+
 static inline int
 process_smpl_buf(int num_smpl_pmds, int entry_size, _papi_hwi_context_t *ctx, ThreadInfo_t **thr)
 {
   pfm_dfl_smpl_entry_t *ent;
-  size_t pos, count;
-  uint64_t entry;
+  size_t pos;
+  uint64_t entry, count;
   pfm_dfl_smpl_hdr_t *hdr = (*thr)->context.smpl_buf;
-  int ret, profile_index;
+  int ret, profile_index, flags;
+  unsigned int native_pfm_index;
 
   DEBUGCALL(DEBUG_SUBSTRATE,dump_smpl_hdr(hdr));
   count = hdr->hdr_count;
@@ -1658,26 +2222,24 @@ process_smpl_buf(int num_smpl_pmds, int entry_size, _papi_hwi_context_t *ctx, Th
   pos   = (unsigned long)ent;
   entry = 0;
   
-  SUBDBG("This buffer has %d samples in it.\n",count);
+  SUBDBG("This buffer has %llu samples in it.\n",(unsigned long long)count);
   while(count--) 
     {
-      SUBDBG("Processing sample entry %llu\n",entry);
+      SUBDBG("Processing sample entry %llu\n",(unsigned long long)entry);
       DEBUGCALL(DEBUG_SUBSTRATE,dump_smpl(ent));
 
       /* Find the index of the profile buffers if we are profiling on many events */
 
-      ret = find_profile_index((*thr)->running_eventset,ent->ovfl_pmd,&profile_index);
+      ret = find_profile_index((*thr)->running_eventset,ent->ovfl_pmd,&flags,&native_pfm_index,&profile_index);
       if (ret != PAPI_OK)
 	return(ret);
 
       (*thr)->running_eventset->profile.overflowcount++;
-      /* Fixup EAR stuff here */      
-      OVERFLOW_ADDRESS((*ctx)) = ent->ip;
+
+      process_smpl_entry(native_pfm_index,flags,&ent,ctx);
 
       _papi_hwi_dispatch_profile((*thr)->running_eventset, ctx, (long_long)0,profile_index);
  
-      pos += entry_size;
-      ent = (pfm_dfl_smpl_entry_t *)pos;
       entry++;
     }
   return(PAPI_OK);
@@ -1695,7 +2257,7 @@ void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
 #if defined(DEBUG)
    if (thread == NULL)
      {
-       PAPIERROR("thread == NULL in _papi_hwd_dispatch_timer!\n");
+       PAPIERROR("thread == NULL in _papi_hwd_dispatch_timer!");
        abort();
      }
 #endif
@@ -1784,7 +2346,7 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
 	}
       SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",newctx.ctx_fd);
 
-      SUBDBG("MUNMAP(%p,%lld)\n",ctx->smpl_buf,ctx->ctx.ctx_smpl_buf_size);
+      SUBDBG("MUNMAP(%p,%lld)\n",ctx->smpl_buf,(unsigned long long)ctx->ctx.ctx_smpl_buf_size);
       munmap(ctx->smpl_buf,ctx->ctx.ctx_smpl_buf_size);
 
       SUBDBG("CLOSE(%d)\n",ctx->ctx.ctx_fd);
@@ -1803,7 +2365,7 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
 //  newctx.ctx_flags = PFM_FL_NOTIFY_BLOCK;
   buf_arg.buf_size = 4*getpagesize();
 
-  SUBDBG("PFM_CREATE_CONTEXT(%p,%p,%d)\n",&newctx, &buf_arg, sizeof(buf_arg));
+  SUBDBG("PFM_CREATE_CONTEXT(%p,%p,%d)\n",&newctx, &buf_arg, (int)sizeof(buf_arg));
   if ((ret = pfm_create_context(&newctx, &buf_arg, sizeof(buf_arg))))
     {
       DEBUGCALL(DEBUG_SUBSTRATE,dump_smpl_arg(&buf_arg));
@@ -1812,11 +2374,11 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
     }
   SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",newctx.ctx_fd);
 
-  SUBDBG("MMAP(NULL,%lld,%d,%d,%d,0)\n",newctx.ctx_smpl_buf_size,PROT_READ,MAP_PRIVATE,newctx.ctx_fd);
+  SUBDBG("MMAP(NULL,%lld,%d,%d,%d,0)\n",(unsigned long long)newctx.ctx_smpl_buf_size,PROT_READ,MAP_PRIVATE,newctx.ctx_fd);
   buf_addr = mmap(NULL, (size_t)newctx.ctx_smpl_buf_size, PROT_READ, MAP_PRIVATE, newctx.ctx_fd, 0);
   if (buf_addr == MAP_FAILED)
     {
-      PAPIERROR("mmap(NULL,%d,%d,%d,%d,0): %s\n",newctx.ctx_smpl_buf_size,PROT_READ,MAP_PRIVATE,newctx.ctx_fd,strerror(errno));
+      PAPIERROR("mmap(NULL,%d,%d,%d,%d,0): %s",newctx.ctx_smpl_buf_size,PROT_READ,MAP_PRIVATE,newctx.ctx_fd,strerror(errno));
       close(newctx.ctx_fd);
       return(PAPI_ESYS);
     }
@@ -1830,7 +2392,7 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
   
   if (PFM_VERSION_MAJOR(hdr->hdr_version) < 1)
     {
-      PAPIERROR("invalid buffer format version %d\n",PFM_VERSION_MAJOR(hdr->hdr_version));
+      PAPIERROR("invalid buffer format version %d",PFM_VERSION_MAJOR(hdr->hdr_version));
       munmap(buf_addr,newctx.ctx_smpl_buf_size);
       close(newctx.ctx_fd);
       return(PAPI_ESBSTR);
@@ -1844,6 +2406,18 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
       return(ret);
     }
   
+  /* Look up the native event code */
+
+  if (ESI->profile.flags & (PAPI_PROFIL_DATA_EAR|PAPI_PROFIL_INST_EAR))
+    {
+      pfarg_pmd_t *pd;
+      int pos, native_index;
+      pd = ctl->pd;
+      pos = ESI->EventInfoArray[EventIndex].pos[0];
+      native_index = ESI->NativeInfoArray[pos].ni_bits.event;
+      setup_ear_event(native_index,&pd[pos],ESI->profile.flags);
+    }
+
   /* Now close our context it is safe */
 
   close(ctx->ctx.ctx_fd);
@@ -1934,58 +2508,257 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    return (retval);
 }
 
+static inline int decode_native_event(unsigned int EventCode, unsigned int *event, unsigned int *umask)
+{
+  unsigned int tevent, major, minor;
+
+  tevent = EventCode & PAPI_NATIVE_AND_MASK;
+  major = (tevent & PAPI_NATIVE_EVENT_AND_MASK) >> PAPI_NATIVE_EVENT_SHIFT;
+  if (major >= _papi_hwi_system_info.sub_info.num_native_events)
+    return(PAPI_ENOEVNT);
+
+  minor = (tevent & PAPI_NATIVE_UMASK_AND_MASK) >> PAPI_NATIVE_UMASK_SHIFT;
+  *event = major;
+  *umask = minor;
+  SUBDBG("EventCode 0x%08x is event %d, umask 0x%x\n",EventCode,major,minor);
+  return(PAPI_OK);
+}
+
+static inline int prepare_umask(unsigned int foo,unsigned int *values)
+{
+  unsigned int tmp = foo, i, j = 0;
+
+  SUBDBG("umask 0x%x\n",tmp);
+  while ((i = ffs(tmp)))
+    {
+      tmp = tmp ^ (1 << (i-1));
+      values[j] = i - 1;
+      SUBDBG("umask %d is %d\n",j,values[j]);
+      j++;
+    }
+  return(j);
+}
+      
 char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
-  return(native_map[EventCode^PAPI_NATIVE_MASK].name);
+  int ret;
+  unsigned int event, umask;
+  pfmlib_event_t gete;
+  char name[PAPI_MAX_STR_LEN];
+
+  memset(&gete,0,sizeof(gete));
+  
+  if (decode_native_event(EventCode,&event,&umask) != PAPI_OK)
+    return(NULL);
+  
+  gete.event = event;
+  gete.num_masks = prepare_umask(umask,gete.unit_masks);
+  
+  ret = pfm_get_full_event_name(&gete,name,PAPI_MAX_STR_LEN);
+  if (ret != PFMLIB_SUCCESS)
+    {
+      char tmp[PAPI_MAX_STR_LEN];
+      pfm_get_event_name(gete.event,tmp,PAPI_MAX_STR_LEN);
+      PAPIERROR("pfm_get_full_event_name(%p(event %d,%s,%d masks),%p,%d): %s",
+		&gete,gete.event,tmp,gete.num_masks,name,PAPI_MAX_STR_LEN,pfm_strerror(ret));
+      return(NULL);
+    }
+
+  return(strdup(name));
 }
 
 char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
-  return(native_map[EventCode^PAPI_NATIVE_MASK].description);
+  unsigned int event, umask;
+  char *eventd, **maskd, *tmp;
+  int i, ret, total_len = 0;
+  pfmlib_event_t gete;
+
+  memset(&gete,0,sizeof(gete));
+  
+  if (decode_native_event(EventCode,&event,&umask) != PAPI_OK)
+    return(NULL);
+  
+  ret = pfm_get_event_description(event,&eventd);
+  if (ret != PFMLIB_SUCCESS)
+    {
+      PAPIERROR("pfm_get_event_description(%d,%p): %s\n",
+		event,&eventd,pfm_strerror(ret));
+      return(NULL);
+    }
+
+  if ((gete.num_masks = prepare_umask(umask,gete.unit_masks)))
+    {
+      maskd = (char **)malloc(gete.num_masks*sizeof(char *));
+      if (maskd == NULL)
+	{
+	  free(eventd);
+	  return(NULL);
+	}
+      for (i=0;i<gete.num_masks;i++)
+	{
+	  ret = pfm_get_event_mask_description(event,gete.unit_masks[i],&maskd[i]);
+	  if (ret != PFMLIB_SUCCESS)
+	    {
+	      PAPIERROR("pfm_get_event_mask_description(%d,%d,%p): %s\n",
+			event,umask,&maskd,pfm_strerror(ret));
+	      free(eventd);
+	      for (;i>=0;i--)
+		free(maskd[i]);
+	      free(maskd);
+	      return(NULL);
+	    }
+	  total_len += strlen(maskd[i]);
+	}
+      tmp = (char *)malloc(strlen(eventd)+strlen(", masks:")+total_len+gete.num_masks+1);
+      if (tmp == NULL)
+	{
+	  for (i=gete.num_masks-1;i>=0;i--)
+	    free(maskd[i]);
+	  free(maskd);
+	  free(eventd);
+	}
+      tmp[0] = '\0';
+      strcat(tmp,eventd);
+      strcat(tmp,", masks:");
+      for (i=0;i<gete.num_masks;i++)
+	{
+	  if (i!=0)
+	    strcat(tmp,",");
+	  strcat(tmp,maskd[i]);
+	  free(maskd[i]);
+	}
+      free(maskd);
+    }
+  else
+    {
+      tmp = (char *)malloc(strlen(eventd)+1); 
+      if (tmp == NULL)
+	{
+	  free(eventd);
+	  return(NULL);
+	}
+      tmp[0] = '\0';
+      strcat(tmp,eventd);
+      free(eventd);
+    }
+
+  return(tmp);
 }
 
-int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
+int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
-   int index = *EventCode & PAPI_NATIVE_AND_MASK;
+  unsigned int event, umask, num_masks;
+  int ret;
+  pfmlib_event_t gete;
 
-   if (index < _papi_hwi_system_info.sub_info.num_native_events - 1) {
-     *EventCode += 1;
-     return (PAPI_OK);
-   } else {
-     return (PAPI_ENOEVNT);
-   }
+  if (decode_native_event(*EventCode,&event,&umask) != PAPI_OK)
+    return(PAPI_ENOEVNT);
+
+  ret = pfm_get_num_event_masks(event,&num_masks);
+  if (ret != PFMLIB_SUCCESS)
+    {
+      PAPIERROR("pfm_get_num_event_masks(%d,%p): %s\n",event,&num_masks,pfm_strerror(ret));
+      return(PAPI_ENOEVNT);
+    }
+  SUBDBG("This is umask %d of %d\n",umask,num_masks);
+
+  if (modifier == PAPI_ENUM_EVENTS)
+    {
+      if (event < _papi_hwi_system_info.sub_info.num_native_events - 1) 
+	{
+	  *EventCode += 1;
+	  return (PAPI_OK);
+	}
+      return (PAPI_ENOEVNT);
+    }
+  else if (modifier == PAPI_ENUM_ALL)
+    {
+      if (umask+1 < (1<<num_masks))
+	{
+	  *EventCode = encode_native_event_raw(event,umask+1);
+	  return (PAPI_OK);
+	}
+      else if (event < _papi_hwi_system_info.sub_info.num_native_events - 1) 
+	{
+	  /* Lookup event + 1 and return first umask of group */
+	  ret = pfm_get_num_event_masks(event+1,&num_masks);
+	  if (ret != PFMLIB_SUCCESS)
+	    {
+	      PAPIERROR("pfm_get_num_event_masks(%d,%p): %s\n",event,&num_masks,pfm_strerror(ret));
+	      return(PAPI_ENOEVNT);
+	    }
+	  if (num_masks)
+	    *EventCode = encode_native_event_raw(event+1,1);
+	  else
+	    *EventCode = encode_native_event_raw(event+1,0);
+	  return(PAPI_OK);
+	}
+      return (PAPI_ENOEVNT);
+    }
+  else if (modifier == PAPI_ENUM_UMASK_COMBOS)
+    {
+      if (umask+1 < (1<<num_masks))
+	{
+	  *EventCode = encode_native_event_raw(event,umask+1);
+	  return (PAPI_OK);
+	}
+      return(PAPI_ENOEVNT);
+    }
+  else if (modifier == PAPI_ENUM_UMASKS)
+    {
+      int thisbit = ffs(umask);
+      
+      SUBDBG("First bit is %d in %08x\b",thisbit-1,umask);
+      thisbit = 1 << thisbit;
+
+      if (thisbit & ((1<<num_masks)-1))
+	{
+	  *EventCode = encode_native_event_raw(event,thisbit);
+	  return (PAPI_OK);
+	}
+      return(PAPI_ENOEVNT);
+    }
+  else
+    return(PAPI_EINVAL);
+  
 }
 
 int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
 {
-   int index = EventCode & PAPI_NATIVE_AND_MASK;
+  unsigned int event, umask;
+  pfmlib_event_t gete;
 
-   /* For PFM & Perfmon, native info is just an index into the PFM event table. */
-   *bits = index;
+  /* For PFM & Perfmon, native info is just an index into the PFM event table. */
+  if (decode_native_event(EventCode,&event,&umask) != PAPI_OK)
+    return(PAPI_ENOEVNT);
 
-   return (PAPI_OK);
+  gete.event = event;
+  gete.num_masks = prepare_umask(umask,gete.unit_masks);
+  
+  memcpy(bits,&gete,sizeof(*bits));
+  return (PAPI_OK);
 }
 
 int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                unsigned int *values, int name_len, int count)
 {
   int ret;
-  pfmlib_regmask_t selector = native_map[*bits].resources.selector;
+  pfmlib_regmask_t selector = _perfmon2_pfm_native_map[bits->event].resources.selector;
   int j, n = _papi_hwi_system_info.sub_info.num_cntrs;
   int foo, did_something=0;
-
   for (j=0;n;j++)
     {
       if (pfm_regmask_isset(&selector,j))
 	{
 	  n--;
-	  if ((ret = pfm_get_event_code_counter(*bits,j,&foo)) != PFMLIB_SUCCESS)
+	  if ((ret = pfm_get_event_code_counter(bits->event,j,&foo)) != PFMLIB_SUCCESS)
 	    {
 	      PAPIERROR("pfm_get_event_code_counter(%d,%d,%p): %s",*bits,j,&foo,pfm_strerror(ret));
 	      return(PAPI_EBUG);
 	    }
-	  values[j] = foo;
-	  strncpy(&names[j*name_len],"Event Code",name_len);
+	  values[did_something] = foo;
+	  strncpy(&names[did_something*name_len],"Event Code",name_len);
 	  did_something++;
 	}
     }
@@ -2014,6 +2787,21 @@ int _papi_hwd_init_control_state(hwd_control_state_t *ctl)
   return(PAPI_OK);
 }
 
+int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
+{
+  int i, j;
+  for (i = 0; i < ESI->NativeCount; i++) 
+    {
+      if (_papi_hwd_ntv_code_to_bits(ESI->NativeInfoArray[i].ni_event,&ESI->NativeInfoArray[i].ni_bits) != PAPI_OK)
+	goto bail;
+    }
+  return(1);
+ bail:
+  for (j = 0; j < i; j++) 
+    memset(&ESI->NativeInfoArray[j].ni_bits,0x0,sizeof(ESI->NativeInfoArray[j].ni_bits));
+  return(0);
+}
+
 /* This function clears the current contents of the control structure and 
    updates it with whatever resources are allocated for all the native events
    in the native info structure array. */
@@ -2038,8 +2826,8 @@ int _papi_hwd_update_control_state(hwd_control_state_t *ctl,
   for (i=0;i<count;i++)
     {
       SUBDBG("Stuffing native event index %d (code 0x%x) into input structure.\n",
-	     i,native[i].ni_event);
-      inp->pfp_events[i].event = native[i].ni_event;
+	     i,native[i].ni_bits.event);
+      inp->pfp_events[i].event = native[i].ni_bits.event;
     }
   inp->pfp_event_count = count;
       
@@ -2063,8 +2851,8 @@ int _papi_hwd_update_control_state(hwd_control_state_t *ctl,
 	}
       reg_set_done++;
 
-      native[i].ni_position = pd[i].reg_num + offset;
-      SUBDBG("native event index %d (code 0x%x) is at PMD offset %d\n", i, native[i].ni_event, native[i].ni_position);
+      native[i].ni_position = i;
+      SUBDBG("native event index %d (code 0x%x) is at PMD offset %d\n", i, native[i].ni_bits.event, native[i].ni_position);
     }
       
    /* If structure has not yet been filled with a context, fill it

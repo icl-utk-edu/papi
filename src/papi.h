@@ -204,6 +204,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_PROFIL_BUCKET_32 0x10       /* Use 32 bit buckets to accumulate profile info */
 #define PAPI_PROFIL_BUCKET_64 0x20       /* Use 64 bit buckets to accumulate profile info */
 #define PAPI_PROFIL_FORCE_SW  0x40       /* Force Software overflow in profiling */
+#define PAPI_PROFIL_DATA_EAR  0x80       /* Use data address register profiling */
+#define PAPI_PROFIL_INST_EAR  0x100      /* Use instruction address register profiling */
 #define PAPI_PROFIL_BUCKETS   (PAPI_PROFIL_BUCKET_16 | PAPI_PROFIL_BUCKET_32 | PAPI_PROFIL_BUCKET_64)
 
 /* Overflow definitions */
@@ -289,8 +291,12 @@ enum {
    PAPI_ITA_ENUM_DEAR            /* Enumerate DEAR (data event address register) events */
 };
 
+/* These will replace the others eventually */
 
-
+#define PAPI_ENUM_UMASK_COMBOS PAPI_PENT4_ENUM_COMBOS
+#define PAPI_ENUM_UMASKS PAPI_PENT4_ENUM_BITS
+#define PAPI_ENUM_EVENTS PAPI_PENT4_ENUM_GROUPS
+#define PAPI_ENUM_GROUPS PAPI_PWR4_ENUM_GROUPS
 
 /* 
 The Low Level API
@@ -335,9 +341,11 @@ read the documentation carefully.  */
 #define papi_ui32  unsigned int
 #define papi_ui16  unsigned short
 
+  typedef unsigned long PAPI_thread_id_t;
+
    typedef struct _papi_all_thr_spec {
      int num;
-     unsigned long *id;
+     PAPI_thread_id_t *id;
      void **data;
    } PAPI_all_thr_spec_t;
 
@@ -412,9 +420,7 @@ read the documentation carefully.  */
      unsigned int attach_must_ptrace:1;	   /* Attach must first ptrace and stop the thread/process*/
      unsigned int edge_detect:1;           /* Supports edge detection on events */
      unsigned int invert:1;                /* Supports invert detection on events */
-     unsigned int data_address_smpl:1;     /* Supports data/instr miss address sampling */
-     unsigned int branch_tracing:1;        /* Supports branch trace buffering */
-     unsigned int tlb_address_smpl:1;      /* Supports TLB miss address sampling */
+     unsigned int profile_ear:1;      	   /* Supports data/instr/tlb miss address sampling */
      unsigned int grouped_cntrs:1;         /* Underlying hardware uses counter groups */
      unsigned int reserved_bits:16;
    } PAPI_substrate_info_t;
@@ -591,7 +597,8 @@ read the documentation carefully.  */
    The various fields and their usage is discussed below.
 */
 /* MAX_TERMS is the current max value of MAX_COUNTER_TERMS as defined in SUBSTRATEs */
-#define PAPI_MAX_INFO_TERMS 8
+/* This definition also is HORRIBLE and should be replaced by a dynamic value. -pjm */
+#define PAPI_MAX_INFO_TERMS 12
    typedef struct event_info {
       unsigned int event_code;               /* preset (0x8xxxxxxx) or native (0x4xxxxxxx) event code */
       unsigned int count;                    /* number of terms (usually 1) in the code and name fields
@@ -655,6 +662,7 @@ read the documentation carefully.  */
    int   PAPI_is_initialized(void);
    int   PAPI_library_init(int version);
    int   PAPI_list_events(int EventSet, int *Events, int *number);
+   int   PAPI_list_threads(unsigned long *tids, int *number);
    int  PAPI_lock(int);
    int   PAPI_multiplex_init(void);
    int   PAPI_num_hwctrs(void);
@@ -682,7 +690,7 @@ read the documentation carefully.  */
    int   PAPI_stop(int EventSet, long_long * values);
    char *PAPI_strerror(int);
    unsigned long PAPI_thread_id(void);
-   int   PAPI_thread_init(unsigned long int (*id_fn) (void));
+   int   PAPI_thread_init(unsigned long (*id_fn) (void));
    int   PAPI_unlock(int);
    int   PAPI_unregister_thread(void);
    int   PAPI_write(int EventSet, long_long * values);

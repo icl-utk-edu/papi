@@ -23,54 +23,69 @@ extern hwi_presets_t _papi_hwi_presets;
 */
 int _papi_hwi_setup_all_presets(hwi_search_t *findem, hwi_dev_notes_t *notes)
 {
-   int i, pnum, preset_index, did_something = 0;
+   int i, j, pnum, preset_index, did_something = 0;
 
    /* dense array of events is terminated with a 0 preset.
       don't do anything if NULL pointer. This allows just notes to be loaded.
       It's also good defensive programming. 
    */
-   if (findem != NULL) {
-      for (pnum = 0; (pnum < PAPI_MAX_PRESET_EVENTS) && (findem[pnum].event_code != 0);
-         pnum++) {
+   if (findem != NULL) 
+     {
+       for (pnum = 0; (pnum < PAPI_MAX_PRESET_EVENTS) && (findem[pnum].event_code != 0); pnum++) 
+	 {
+	   /* find the index for the event to be initialized */
+	   preset_index = (findem[pnum].event_code & PAPI_PRESET_AND_MASK);
+	   
+	   /* count and set the number of native terms in this event */
+	   /* This code is BROKEN and TERRIBLE we should never check a NATIVE code against any value -pjm*/
+	   i = 0;
+	   j = 0;
+	   while (i < MAX_COUNTER_TERMS)
+	     {
+	       if (findem[pnum].data.native[i] != PAPI_NULL)
+		 j++;
+	       i++;
+	     }
+	   
+	   _papi_hwi_presets.count[preset_index] = j;
+	   
+	   /* if the native event array is empty, free the data pointer.
+	      this allows existing events to be 'undefined' by overloading with nulls */
 
-         /* find the index for the event to be initialized */
-         preset_index = (findem[pnum].event_code & PAPI_PRESET_AND_MASK);
-         /* count and set the number of native terms in this event */
-         for (i = 0; (i < MAX_COUNTER_TERMS) && (findem[pnum].data.native[i] != PAPI_NULL); i++);
-         _papi_hwi_presets.count[preset_index] = i;
+	   if (j == 0) 
+	     {
+	       if (_papi_hwi_presets.data[preset_index] != NULL) 
+		 {
+		   papi_free(_papi_hwi_presets.data[preset_index]);
+		   _papi_hwi_presets.data[preset_index] = NULL;
+		 }
+	     }
+	   /* otherwise malloc a data istructure for the sparse array and copy 
+	      the event data into it. Kevin assures me that the data won't 
+	      *actually* be duplicated unless it is modified */
+	   else 
+	     {
+	       _papi_hwi_presets.data[preset_index] = papi_malloc(sizeof(hwi_preset_data_t));
+	       memcpy(_papi_hwi_presets.data[preset_index],&findem[pnum].data,sizeof(hwi_preset_data_t));
+	     }
+	   did_something++;
+	 }
+     }
 
-         /* if the native event array is empty, free the data pointer.
-            this allows existing events to be 'undefined' by overloading with nulls */
-         if (i == 0) {
-	    if (_papi_hwi_presets.data[preset_index] != NULL) {
-               papi_free(_papi_hwi_presets.data[preset_index]);
-	       _papi_hwi_presets.data[preset_index] = NULL;
-	    }
-
-         }
-         /* otherwise malloc a data istructure for the sparse array and copy 
-            the event data into it. Kevin assures me that the data won't 
-            *actually* be duplicated unless it is modified */
-        else {
-            _papi_hwi_presets.data[preset_index] = papi_malloc(sizeof(hwi_preset_data_t));
-            memcpy(_papi_hwi_presets.data[preset_index],&findem[pnum].data,sizeof(hwi_preset_data_t));
-         }
-         did_something++;
-      }
-   }
    /* optional dense array of event notes is terminated with a 0 preset */
-   if (notes != NULL) {
-      for (pnum = 0; (pnum < PAPI_MAX_PRESET_EVENTS) && (notes[pnum].event_code != 0);
-         pnum++) {
-
-         /* strdup the note string into the sparse preset data array */
-         preset_index = (notes[pnum].event_code & PAPI_PRESET_AND_MASK);
-         if (_papi_hwi_presets.dev_note[preset_index] != NULL)
-            papi_free(_papi_hwi_presets.dev_note[preset_index]);
-         _papi_hwi_presets.dev_note[preset_index] = papi_strdup(notes[pnum].dev_note);
-      }
-   }
+   if (notes != NULL) 
+     {
+       for (pnum = 0; (pnum < PAPI_MAX_PRESET_EVENTS) && (notes[pnum].event_code != 0); pnum++) 
+	 {
+	   /* strdup the note string into the sparse preset data array */
+	   preset_index = (notes[pnum].event_code & PAPI_PRESET_AND_MASK);
+	   if (_papi_hwi_presets.dev_note[preset_index] != NULL)
+	     papi_free(_papi_hwi_presets.dev_note[preset_index]);
+	   _papi_hwi_presets.dev_note[preset_index] = papi_strdup(notes[pnum].dev_note);
+	 }
+     }
    _papi_hwi_system_info.sub_info.num_preset_events += did_something;
+
    return (did_something ? 0 : PAPI_ESBSTR);
 }
 

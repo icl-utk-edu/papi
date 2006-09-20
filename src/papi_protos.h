@@ -40,6 +40,13 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
  int _papi_hwi_get_event_info(int EventCode, PAPI_event_info_t * info);
  int _papi_hwi_set_event_info(PAPI_event_info_t * info, int *EventCode);
 
+/* The following PAPI internal functions are defined by the papi_preset.c file. */
+
+int _papi_hwi_setup_all_presets(hwi_search_t *findem, hwi_dev_notes_t *notes);
+int _papi_hwi_cleanup_all_presets(void);
+#ifdef XML
+int _xml_papi_hwi_setup_all_presets(char *arch, hwi_dev_notes_t *notes);
+#endif
 
 /* The following PAPI internal functions are defined by the multiplex.c file. */
 
@@ -76,7 +83,7 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
 
  /* The following PAPI internal functions are defined by the papi_data.c file. */
 
- int _papi_hwi_derived_type(char *derived);
+int _papi_hwi_derived_type(char *derived, int *code);
  int _papi_hwi_derived_string(int type, char *derived, int len);
 
 /* The following PAPI internal functions are defined by the substrate file. */

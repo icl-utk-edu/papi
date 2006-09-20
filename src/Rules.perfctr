@@ -69,7 +69,7 @@ CC_R    	:= $(CC) -pthread
 CC_SHR		:= $(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
 GCCVER3		= $(shell gcc -v 2>&1 | grep version | cut -f3 -d" " | grep "^3")
 FFLAGS		+= -Wall -ffixed-line-length-132 $(BITFLAGS)
-CFLAGS		+= -Wall $(NOTLS) $(BITFLAGS)
+CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(BITFLAGS)
 
 ifeq (,$(GCCVER3))
 OPTFLAGS	= 
@@ -92,8 +92,6 @@ endif
 # 
 
 ifeq (CATAMOUNT, $(COMPILER))
-F77		= ftn
-CC		= qk-gcc
 LIBS    	= static
 TARGETS 	= serial
 MEMSUBSTR	 = linux
@@ -163,30 +161,20 @@ FTOPTFLAGS	= $(TOPTFLAGS)
 # DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
 #
 
-ifeq (,$(PERFCTR_PREFIX))
-PERFCTR_ROOT := ./perfctr-$(VERSION)
-PERFCTR_LIB_PATH ?= $(PERFCTR_ROOT)/usr.lib
-PERFCTR_INC_PATH ?= $(PERFCTR_ROOT)/usr.lib
-PERFCTR_KINC_PATH ?= $(PERFCTR_ROOT)/linux/include
-else
-ifeq (x86_64,$(ARCH))
-ifneq (32,$(BITS))
-# Early perfctrs didn't put stuff into lib64
-DUMMY	:= $(shell ls $(PERFCTR_PREFIX)/lib64/libperfctr.so 2> /dev/null)
-ifeq (,${DUMMY})
-     PERFCTR_LIB_SUFFIX	:= 
-else
-     PERFCTR_LIB_SUFFIX := 64
+ifeq (,$(PERFCTR_LIB_PATH))
+ifeq (,$(PERFCTR_ROOT))
+	PERFCTR_ROOT := ./perfctr-$(VERSION)
 endif
-else
-     PERFCTR_LIB_SUFFIX := 
+	PERFCTR_LIB_PATH := $(PERFCTR_ROOT)/usr.lib
 endif
-else
-     PERFCTR_LIB_SUFFIX := 
+ifeq (,$(PERFCTR_INC_PATH))
+ifeq (,$(PERFCTR_ROOT))
+	PERFCTR_ROOT := ./perfctr-$(VERSION)
 endif
-PERFCTR_LIB_PATH ?= $(PERFCTR_PREFIX)/lib$(PERFCTR_LIB_SUFFIX)
-PERFCTR_INC_PATH ?= $(PERFCTR_PREFIX)/include
-PERFCTR_KINC_PATH ?= $(PERFCTR_INC_PATH)
+	PERFCTR_INC_PATH := $(PERFCTR_ROOT)/usr.lib
+	PERFCTR_KINC_PATH := $(PERFCTR_ROOT)/linux/include
+else
+	PERFCTR_KINC_PATH := $(PERFCTR_INC_PATH)
 endif
 
 CFLAGS-2.5.4 := -DPERFCTR25
@@ -194,7 +182,7 @@ CFLAGS-2.6.x := -DPERFCTR26
 CFLAGS-2.7.x := $(CFLAGS-2.6.x)
 CFLAGS += $(EVENTFLAGS) -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) $(CFLAGS-$(VERSION))
 
-MISCHDRS = perfctr-$(CPU).h config.h
+MISCHDRS = perfctr-$(CPU).h
 MISCSRCS =  $(CPU)_events.c linux.c $(ARCH_SPEC_EVTS)
 SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
 PERFCTR_OBJS = $(shell ar t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
@@ -214,7 +202,7 @@ ifeq ($(VERSION),2.6.x)
 	SO_ABIVER=$($(ARCH)_ABIVER)
 endif
 endif
-POST_BUILD = cp $(PERFCTR_LIB_PATH)/libperfctr.so .;ln -s libperfctr.so libperfctr.so.$(SO_ABIVER)
+POST_BUILD = cp $(PERFCTR_LIB_PATH)/libperfctr.so .;ln -fs libperfctr.so libperfctr.so.$(SO_ABIVER)
 SPECIAL_REMOVE = rm -f libperfctr.so*
 
 include Makefile.inc
@@ -249,13 +237,13 @@ $(PERFCTR_OBJS): $(PERFCTR_LIB_PATH)/libperfctr.a
 # exit is necessary due to NFS not updating times correctly at UTK
 	$(MAKE) $(MAKEFLAGS); echo "If you made it here, you may safely ignore this error."; exit 1
 	
-$(CPU)_events.o: $(CPU)_events.c
+$(CPU)_events.o: $(CPU)_events.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPU)_events.c -o $@
 
-linux.o: linux.c
+linux.o: linux.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $^ -o $@
 
-$(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c
+$(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $^ -o $@
 
 native_clean:
@@ -274,28 +262,21 @@ ifeq (${VERSION},2.4.x)
 else
 ifeq (x86_64,${ARCH})
 ifeq (32,${BITS})
-	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(PREFIX) ARCH="i386" install
+	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(PREFIX) BINDIR=$(BINDIR) LIBDIR=$(LIBDIR) INCLDIR=$(INCDIR) ARCH="i386" install
 else
-	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(PREFIX) install
+	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(PREFIX) BINDIR=$(BINDIR) LIBDIR=$(LIBDIR) INCLDIR=$(INCDIR) install
 endif
 else
-ifeq (ppc64,${ARCH})
-ifeq (32,${BITS})
-	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(PREFIX) install
-else
-	$(MAKE) -C $(PERFCTR_ROOT) "BINDIR=$(PREFIX)/bin" "LIBDIR=$(PREFIX)/lib64" "INCLDIR=$(PREFIX)/include" install2
-endif
-else
-	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(PREFIX) install
-endif
+	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(PREFIX) BINDIR=$(BINDIR) LIBDIR=$(LIBDIR) INCLDIR=$(INCDIR) install
 endif
 endif
 endif
 
 arch_specific_install:
 ifeq ($(ARCH),ppc64)
-	mkdir -p $(PAPI_DATADIR)
-	cp -Rf ./event_data $(PAPI_DATADIR)
+	-mkdir -p $(DATADIR)
+	-chmod go+rx $(DATADIR)
+	cp -Rf ./event_data $(DATADIR)
 endif
 
 native_clobber:

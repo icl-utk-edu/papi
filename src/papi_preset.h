@@ -10,9 +10,6 @@
 #ifndef _PAPI_PRESET            /* _PAPI_PRESET */
 #define _PAPI_PRESET
 
-
-#define OPS MAX_COUNTER_TERMS*5
-
 typedef struct hwi_preset_info { /* descriptive text information for each preset */
    char *symbol;      /* name of the preset event; i.e. PAPI_TOT_INS, etc. */
    char *short_descr; /* short description of the event for labels, etc. */
@@ -21,11 +18,15 @@ typedef struct hwi_preset_info { /* descriptive text information for each preset
 
 typedef struct hwi_preset_data {  /* preset event data for each defined preset */
    int derived;                   /* Derived type code */
-   int native[MAX_COUNTER_TERMS]; /* array of native event code(s) for this preset event */
-   char operation[OPS];           /* operation string: +,-,*,/,@(number of metrics), $(constant Mhz), %(1000000.0) */
+/* Unused but should be to prevent checking native against PAPI_NULL:
+   unsigned int mask;
+   unsigned int count; */
+   int native[MAX_COUNTER_TERMS];    /* array of native event code(s) for this preset event */
+   char operation[PAPI_MIN_STR_LEN]; /* operation string: +,-,*,/,@(number of metrics), $(constant Mhz), %(1000000.0) */
 } hwi_preset_data_t;
 
 typedef struct hwi_search {   /* search element for preset events defined for each platform */
+  /* eventcode should have a more specific name, like papi_preset! -pjm */
    unsigned int event_code;   /* Preset code that keys back to sparse preset array */
    hwi_preset_data_t data;    /* Event data for this preset event */
 } hwi_search_t;
@@ -50,9 +51,5 @@ typedef struct hwi_describe {
 } hwi_describe_t;
 
 extern hwi_search_t *preset_search_map;
-extern int _papi_hwi_setup_all_presets(hwi_search_t * preset_search_map, hwi_dev_notes_t *notes);
-#ifdef XML
-extern int _xml_papi_hwi_setup_all_presets(char *arch, hwi_dev_notes_t *notes);
-#endif
 
 #endif                          /* _PAPI_PRESET */

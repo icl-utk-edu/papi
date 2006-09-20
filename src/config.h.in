@@ -6,32 +6,29 @@
 /* POSIX 1b per-thread clock */
 #undef HAVE_CLOCK_GETTIME_THREAD
 
+/* This platform has the ffsll() function */
+#undef HAVE_FFSLL
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
 /* Define to 1 if you have the `cpc' library (-lcpc). */
 #undef HAVE_LIBCPC
 
-/* Define to 1 if you have the `perfctr' library (-lperfctr). */
-#undef HAVE_LIBPERFCTR
-
-/* Define to 1 if you have the `pthread' library (-lpthread). */
-#undef HAVE_LIBPTHREAD
-
-/* Define to 1 if you have the `rt' library (-lrt). */
-#undef HAVE_LIBRT
+/* perfctr header file */
+#undef HAVE_LIBPERFCTR_H
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
-/* Define to 1 if you have the <perfmon/pfmlib_montecito.h> header file. */
+/* Altix memory mapped global cycle counter */
+#undef HAVE_MMTIMER
+
+/* Montecito headers */
 #undef HAVE_PERFMON_PFMLIB_MONTECITO_H
 
-/* Working per thread times */
+/* Working per thread timer */
 #undef HAVE_PER_THREAD_TIMES
-
-/* "Have montecito header file" */
-#undef HAVE_PFMLIB_MONTECITO_H
 
 /* event description function */
 #undef HAVE_PFM_GET_EVENT_DESCRIPTION
@@ -53,6 +50,9 @@
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
+
+/* Keyword for per-thread variables */
+#undef HAVE_THREAD_LOCAL_STORAGE
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
@@ -78,10 +78,22 @@
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
+/* Use the perfctr virtual TSC for per-thread times */
+#undef USE_PERFCTR_PTTIMER
+
 /* Use /proc for per-thread times */
 #undef USE_PROC_PTTIMER
 
 /* Enable GNU extensions on systems that have them.  */
 #ifndef _GNU_SOURCE
 # undef _GNU_SOURCE
+#endif
+
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#undef inline
 #endif

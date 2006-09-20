@@ -649,18 +649,20 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
          strncpy(info->long_descr, _papi_hwd_ntv_code_to_descr(EventCode),
                  PAPI_HUGE_STR_LEN);
          _papi_hwi_unlock(INTERNAL_LOCK);
-         info->short_descr[0] = 0;
-         info->derived[0] = 0;
-         info->postfix[0] = 0;
+         info->short_descr[0] = '\0';
+         info->derived[0] = '\0';
+         info->postfix[0] = '\0';
 
          /* Convert the register bits structure for this EventCode into
             arrays of names and values (substrate dependent).
          */
          retval = _papi_hwd_ntv_code_to_bits(EventCode, &bits);
          if (retval == PAPI_OK)
-            retval = _papi_hwd_ntv_bits_to_info(&bits, (char *)info->name, info->code, PAPI_MAX_STR_LEN, PAPI_MAX_INFO_TERMS);
-         if (retval < 0) info->count = 0;
-         else info->count = retval;
+	   retval = _papi_hwd_ntv_bits_to_info(&bits, (char *)info->name, info->code, PAPI_MAX_STR_LEN, PAPI_MAX_INFO_TERMS);
+         if (retval < 0) 
+	   info->count = 0;
+         else 
+	   info->count = retval;
          return (PAPI_OK);
       }
    }

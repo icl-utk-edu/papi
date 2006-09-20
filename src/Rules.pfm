@@ -69,24 +69,28 @@ ifneq (,$(wildcard /etc/sgi-release))
 	ALTIX ?= -DALTIX
 endif
 
-ifeq (,$(PFM_PREFIX))
-	PFM_ROOT := ./libpfm-$(VERSION)
-ifeq (2.x,$(VERSION))
-	PFM_LIB_PATH ?= $(PFM_ROOT)/libpfm
-else
-	PFM_LIB_PATH ?= $(PFM_ROOT)/lib
+ifeq (,$(PFM_LIB_PATH))
+ifeq (,$(PFM_ROOT))
+        PFM_ROOT := ./libpfm-3.x
 endif
-	PFM_INC_PATH ?= $(PFM_ROOT)/include
+ifeq (2.x,$(VERSION))
+	PFM_LIB_PATH := $(PFM_ROOT)/libpfm
 else
-	PFM_LIB_PATH ?= $(PFM_PREFIX)/lib
-	PFM_INC_PATH ?= $(PFM_PREFIX)/include
+	PFM_LIB_PATH := $(PFM_ROOT)/lib
+endif
+endif
+ifeq (,$(PFM_INC_PATH))
+ifeq (,$(PFM_ROOT))
+        PFM_ROOT := ./libpfm-3.x
+endif
+        PFM_INC_PATH := $(PFM_ROOT)/include
 endif
 
 CFLAGS-2.x := -DPFM20 -D_GNU_SOURCE
 CFLAGS-3.x := -DPFM30 -D_GNU_SOURCE  
 CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) $(NOTLS) $(ALTIX) $(CFLAGS-$(VERSION))
 
-MISCHDRS = pfmwrap.h config.h
+MISCHDRS = pfmwrap.h
 MISCSRCS = 
 SHLIBDEPS = -L$(PFM_LIB_PATH) -lpfm
 PFM_OBJS = $(shell ar t $(PFM_LIB_PATH)/libpfm.a 2> /dev/null)
@@ -118,7 +122,7 @@ endif
 
 native_install:
 ifeq (,${PFM_PREFIX})
-	$(MAKE) -C $(PFM_ROOT) DESTDIR=$(PREFIX) install_prefix=$(PREFIX) install
+	$(MAKE) -C $(PFM_ROOT) DESTDIR=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
 
 native_clobber:

@@ -33,6 +33,11 @@
 #include "perfmon/perfmon.h"
 #include "perfmon/perfmon_dfl_smpl.h"
 
+#ifdef __ia64__
+#include "perfmon/pfmlib_itanium2.h"
+#include "perfmon/pfmlib_montecito.h"
+#endif
+
 #if defined(DEBUG)
 #define DEBUGCALL(a,b) { if (ISLEVEL(a)) { b; } }
 #else
@@ -41,12 +46,13 @@
 
 #define inline_static inline static
 
-typedef int hwd_register_t;
+typedef pfmlib_event_t hwd_register_t;
 typedef int hwd_register_map_t;
 typedef int hwd_reg_alloc_t;
 
 #define MAX_COUNTERS PFMLIB_MAX_PMCS
 #define MAX_COUNTER_TERMS PFMLIB_MAX_PMCS
+#define PERFMON_EVENT_FILE "perfmon_events.csv"
 
 typedef struct {
    /* Preset code */
@@ -156,10 +162,10 @@ do                                              \
    __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(_papi_hwd_lock_data[lck]), "0"(MUTEX_OPEN) : "memory");                                \
 } while(0)
 #elif defined(mips)
-static inline unsigned long papi_cmpxchg_u32(volatile int * m, unsigned long old,
-	unsigned long new)
+static inline unsigned int papi_cmpxchg_u32(volatile unsigned int * m, unsigned int old,
+	unsigned int new)
 {
-	unsigned long retval;
+	unsigned int retval;
 		__asm__ __volatile__(
 		"	.set	push					\n"
 		"	.set	noat					\n"
@@ -179,10 +185,10 @@ static inline unsigned long papi_cmpxchg_u32(volatile int * m, unsigned long old
 		: "memory");
 	return retval;
 }
-static inline unsigned long papi_xchg_u32(volatile int * m, unsigned int val)
+static inline unsigned int papi_xchg_u32(volatile unsigned int * m, unsigned int val)
 {
-	unsigned long retval;
-	unsigned long dummy;
+	unsigned int retval;
+	unsigned int dummy;
 	
 	__asm__ __volatile__(
 		"	.set	mips3					\n"
@@ -202,14 +208,14 @@ static inline unsigned long papi_xchg_u32(volatile int * m, unsigned int val)
 
 #define  _papi_hwd_lock(lck)                          \
 do {                                                    \
-  unsigned long retval;                                 \
+  unsigned int retval;                                 \
   do {                                                  \
   retval = papi_cmpxchg_u32(&_papi_hwd_lock_data[lck],MUTEX_CLOSED,MUTEX_OPEN);  \
-  } while(retval != (unsigned long)MUTEX_OPEN);	        \
+  } while(retval != (unsigned int)MUTEX_OPEN);	        \
 } while(0)
 #define  _papi_hwd_unlock(lck)                          \
 do {                                                    \
-  unsigned long retval;                                 \
+  unsigned int retval;                                 \
   retval = papi_xchg_u32(&_papi_hwd_lock_data[lck],MUTEX_OPEN); \
 } while(0)
 #else
@@ -233,6 +239,6 @@ typedef ucontext_t hwd_ucontext_t;
 #error "OVERFLOW_ADDRESS() undefined!"
 #endif
 
-#define GET_OVERFLOW_ADDRESS(ctx) ((caddr_t)OVERFLOW_ADDRESS((*ctx)))
+#define GET_OVERFLOW_ADDRESS(ctx) (OVERFLOW_ADDRESS((*ctx)))
 
 #endif

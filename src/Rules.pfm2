@@ -4,7 +4,7 @@ DESCR   = "Linux with PFM $(VERSION) kernel support and library"
 LIBRARY = libpapi.a
 SHLIB   = libpapi.so
 LIBS	= static shared
-TARGETS = serial multiplex_and_pthreads shared ear range
+TARGETS = ear serial multiplex_and_pthreads shared
 SUBSTR	= perfmon
 MEMSUBSTR = any-null
 
@@ -28,15 +28,22 @@ FTOPTFLAGS	= $(TOPTFLAGS)
 # DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
 #
 
-ifneq (,$(PFM_ROOT))
-	PFM_ROOT := ./libpfm-3.x
-	PFM_LIB_PATH := $(PFM_ROOT)/lib
-	PFM_INC_PATH := $(PFM_ROOT)/include
+ifeq (,$(PFM_LIB_PATH))
+ifeq (,$(PFM_ROOT))
+        PFM_ROOT := ./libpfm-3.x
+endif
+        PFM_LIB_PATH := $(PFM_ROOT)/lib
+endif
+ifeq (,$(PFM_INC_PATH))
+ifeq (,$(PFM_ROOT))
+        PFM_ROOT := ./libpfm-3.x
+endif
+        PFM_INC_PATH := $(PFM_ROOT)/include
 endif
 
 CFLAGS	+= -I$(PFM_INC_PATH) 
 
-MISCHDRS = perfmon.h config.h
+MISCHDRS = perfmon.h
 MISCSRCS = 
 SHLIBDEPS = -L$(PFM_LIB_PATH) -lpfm
 PFM_OBJS = $(shell ar t $(PFM_LIB_PATH)/libpfm.a)
@@ -44,7 +51,6 @@ ifeq (,$(PFM_OBJS))
 	PFM_OBJS = dummy
 endif
 MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
-PFMARCH = $(shell echo $(ARCH) | sed s,i[3456789]86,ia32,)
 
 include Makefile.inc
 
@@ -53,7 +59,7 @@ config.h:
 
 $(PFM_LIB_PATH)/libpfm.a:
 ifneq (,${PFM_ROOT})
-	-$(MAKE) -C $(PFM_ROOT) ARCH="$(PFMARCH)" CC="$(CC)"
+	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)"
 else
 	@echo '$@ not installed!'; exit 1
 endif
@@ -65,15 +71,18 @@ $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
 native_clean:
 	rm -f $(MISCOBJS); 
 ifneq (,${PFM_ROOT})
-	$(MAKE) -C $(PFM_ROOT) ARCH="$(PFMARCH)" clean
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" clean
 endif
 
 native_install:
 ifneq (,${PFM_ROOT})
-	-$(MAKE) -C $(PFM_ROOT) ARCH="$(PFMARCH)" install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
+	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
+	-mkdir -p $(DESTDIR)$(DATADIR)
+	-chmod go+rx $(DESTDIR)$(DATADIR)
+	cp -f ./perfmon_events.csv $(DESTDIR)$(DATADIR)
 
 native_clobber:
 ifneq (,${PFM_ROOT})
-	 $(MAKE) -C $(PFM_ROOT) ARCH="$(PFMARCH)" distclean
+	 $(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" distclean
 endif

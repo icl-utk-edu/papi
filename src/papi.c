@@ -60,9 +60,6 @@ extern hwi_preset_data_t _papi_hwi_preset_data[];
 /*****************************/
 /* END EXTERNAL DECLARATIONS */
 /*****************************/
-int _papi_hwi_get_event_info(int EventCode, PAPI_event_info_t * info);
-int _papi_hwi_encode_preset_event(PAPI_event_info_t * info, int *EventCode);
-
 
 /********************/
 /*  BEGIN LOCALS    */
@@ -126,6 +123,23 @@ int PAPI_unregister_thread(void)
      papi_return(_papi_hwi_shutdown_thread(thread));
 
    papi_return(PAPI_EMISC);
+}
+
+int PAPI_list_threads(PAPI_thread_id_t *id, int *num)
+{
+  PAPI_all_thr_spec_t tmp;
+
+  if ((num == NULL) || (*num <= 0))
+    papi_return(PAPI_EINVAL);
+
+  memset(&tmp,0x0,sizeof(tmp));
+
+  /* If id == NULL, then just count the threads */
+
+  tmp.num = *num;
+  tmp.id = id;
+  tmp.data = NULL;
+  papi_return(_papi_hwi_gather_all_thrspec_data(0,&tmp));
 }
 
 /*
@@ -395,14 +409,8 @@ int PAPI_set_event_info(PAPI_event_info_t * info, int *EventCode, int replace)
    if (info->event_code & PAPI_PRESET_MASK) {
       /* do some sanity checks */
       if (info->derived) {
-         type = _papi_hwi_derived_type(info->derived);
-
-         if(type == -1)
-            papi_return(PAPI_EINVAL); /* not a valid Derived type string */
-         if(type != NOT_DERIVED && info->count < 2)
-            papi_return(PAPI_EINVAL); /* can't be derived with only one term */
-         if(type == NOT_DERIVED && info->count > 1)
-            papi_return(PAPI_EINVAL); /* must be derived if more than one term */
+	if (_papi_hwi_derived_type(info->derived,&type) != PAPI_OK)
+	  return(PAPI_EINVAL);
       }
       papi_return(_papi_hwi_set_event_info(info, EventCode));
    }
@@ -1904,8 +1912,11 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
 
    /* make sure no invalid flags are set */
    if (flags & ~(PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM | PAPI_PROFIL_WEIGHTED
-               | PAPI_PROFIL_COMPRESS | PAPI_PROFIL_BUCKETS | PAPI_PROFIL_FORCE_SW))
+               | PAPI_PROFIL_COMPRESS | PAPI_PROFIL_BUCKETS | PAPI_PROFIL_FORCE_SW | PAPI_PROFIL_INST_EAR | PAPI_PROFIL_DATA_EAR))
       papi_return(PAPI_EINVAL);
+
+   if ((flags & (PAPI_PROFIL_INST_EAR | PAPI_PROFIL_DATA_EAR)) && (_papi_hwi_system_info.sub_info.profile_ear == 0))
+     papi_return(PAPI_ESBSTR);
 
    if ((flags & PAPI_PROFIL_FORCE_SW)) 
       forceSW = PAPI_OVERFLOW_FORCE_SW;

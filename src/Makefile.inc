@@ -9,18 +9,25 @@ OBJECTS   = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o multiplex.o \
     papi_vector.o papi_memory.o
 HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h \
     papi_preset.h threads.h papi_protos.h papi_vector.h papi_vector_redefine.h \
-    papi_memory.h papi_data.h
+    papi_memory.h papi_data.h config.h
 LIBCFLAGS = $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" 
 FHEADERS  = fpapi.h f77papi.h f90papi.h
 
-all: showconf $(LIBS) genpapifdef $(FHEADERS) utils tests
+all: showconf $(LIBS) utils tests
 
 showconf:
 		@echo; 
 		@echo "Host architecture: $(DESCR)"; 
 		@echo "Host substrate   : $(SUBSTR).c"; 
 		@echo "Host examples    : $(TARGETS)";
-		@if [ \"$(PREFIX)\" = \"\" ]; then echo "Installation prefix: <unset> (You should do a make PREFIX=/usr/local or equivalent)"; else echo "Installation root: $(PREFIX)"; fi 
+		@echo "Installation DESTDIR: $(DESTDIR)"; 
+		@echo "Installation PREFIX : $(PREFIX)"; 
+		@echo "Installation EPREFIX: $(EPREFIX)"; 
+		@echo "Installation INCDIR : $(INCDIR)"; 
+		@echo "Installation LIBDIR : $(LIBDIR)"; 
+		@echo "Installation BINDIR : $(BINDIR)"; 
+		@echo "Installation MANDIR : $(MANDIR)"; 
+		@echo "Installation DATADIR: $(DATADIR)"; 
 		@echo
 
 static: $(LIBRARY)
@@ -91,9 +98,11 @@ multiplex.o: multiplex.c $(HEADERS)
 
 $(SUBSTR).o: $(SUBSTR).c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(SUBSTR).c -o $(SUBSTR).o 
-
+#
+# This is all done by configure now
+#
 genpapifdef: genpapifdef.c papi.h papi_preset.h papi_data.h
-	$(CC)  genpapifdef.c -o genpapifdef
+	$(CC) -I. genpapifdef.c -o genpapifdef
 
 fpapi.h: papi.h
 	./genpapifdef -c > fpapi.h
@@ -128,7 +137,7 @@ clean: native_clean
 	-cd ftests; $(MAKE) clean
 	-cd utils;  $(MAKE) clean
 
-clobber: clean native_clobber
+clobber distclean: clean native_clobber
 	-rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) $(SPECIAL_REMOVE) Makefile config.h
 	-cd utils;  $(MAKE) clobber
 null:
@@ -141,38 +150,31 @@ dist:
 
 install-all: install install-tests
 
-install: install-tree install-man install-lib install-utils
+install: install-lib install-man install-utils
 
-install-lib: install-tree native_install
-	cp $(FHEADERS) papi.h papiStdEventDefs.h $(PREFIX)/include
-	cd $(PREFIX)/include; chmod go+r $(FHEADERS) papi.h papiStdEventDefs.h
-	cp $(LIBRARY) $(PREFIX)/lib$(LIB_SUFFIX)
-	chmod go+r $(PREFIX)/lib$(LIB_SUFFIX)/$(LIBRARY)
+install-lib: native_install
+	@echo "Headers (INCDIR) being installed in: \"$(DESTDIR)$(INCDIR)\""; 
+	-mkdir -p $(DESTDIR)$(INCDIR)
+	-chmod go+rx $(DESTDIR)$(INCDIR)
+	cp $(FHEADERS) papi.h papiStdEventDefs.h $(DESTDIR)$(INCDIR)
+	cd $(DESTDIR)$(INCDIR); chmod go+r $(FHEADERS) papi.h papiStdEventDefs.h
+	@echo "Libraries (LIBDIR) being installed in: \"$(DESTDIR)$(LIBDIR)\""; 
+	-mkdir -p $(DESTDOR)$(LIBDIR)
+	-chmod go+rx $(DESTDIR)$(LIBDIR)
+	cp $(LIBRARY) $(DESTDIR)$(LIBDIR)
+	chmod go+r $(DESTDIR)$(LIBDIR)/$(LIBRARY)
 # copy SHLIB conditionally, since it isn't always made
 	if [[ -r $(SHLIB) ]] ; then \
-		cp $(SHLIB) $(PREFIX)/lib$(LIB_SUFFIX) ; \
-		chmod go+r  $(PREFIX)/lib$(LIB_SUFFIX)/$(SHLIB) ; \
+		cp $(SHLIB) $(DESTDIR)$(LIBDIR); \
+		chmod go+r $(DESTDIR)$(LIBDIR)/$(SHLIB) ; \
 	fi
 
-install-man: install-tree
-	cd ../man && $(MAKE) PREFIX=$(PREFIX) install
+install-man: 
+	cd ../man && $(MAKE) MANDIR=$(DESTDIR)$(MANDIR) install
 
-install-utils: install-tree
-	cd utils; $(MAKE) PREFIX=$(PREFIX) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' LIBRARY="$(LIBRARY)" install
-
-install-tests: install-tree
-	cd ctests; $(MAKE) PREFIX=$(PREFIX) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install
-	cd ftests; $(MAKE) PREFIX=$(PREFIX) F77="$(F77)" CC="$(CC)" OPTFLAGS="$(TOPTFLAGS)" FTOPTFLAGS="$(FTOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" SUBSTR="$(SUBSTR)" CFLAGS="$(CFLAGS)" TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install
-
-install-tree:
-	@if [ \"$(PREFIX)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make PREFIX=/usr/local"; exit 1; fi 
-	@echo "Root of destination directory is: \"$(PREFIX)\""; 
-	-mkdir -p $(PREFIX)/lib$(LIB_SUFFIX)
-	# chmod go+rx $(PREFIX)/lib
-	-mkdir -p $(PREFIX)/include
-	# chmod go+rx $(PREFIX)/include
-	-mkdir -p $(PREFIX)/man
-	# chmod go+rx $(PREFIX)/man
-	-mkdir -p $(PREFIX)/share/papi
-	# chmod go+rx $(PREFIX)/share/papi
+install-utils: 
+	cd utils; $(MAKE) BINDIR="$(DESTDIR)$(BINDIR)" CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' LIBRARY="$(LIBRARY)" install
 	
+install-tests: 
+	cd ctests; $(MAKE) DATADIR="$(DESTDIR)$(DATADIR)" CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install
+	cd ftests; $(MAKE) DATADIR="$(DESTDIR)$(DATADIR)" F77="$(F77)" CC="$(CC)" OPTFLAGS="$(TOPTFLAGS)" FTOPTFLAGS="$(FTOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" SUBSTR="$(SUBSTR)" CFLAGS="$(CFLAGS)" TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install

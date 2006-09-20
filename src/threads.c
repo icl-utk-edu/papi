@@ -37,9 +37,9 @@ ThreadInfo_t *_papi_hwi_thread_head;
 THREAD_LOCAL_STORAGE_KEYWORD ThreadInfo_t *_papi_hwi_my_thread;
 #endif
 
-/* Function that returns and unsigned long int thread identifier */
+/* Function that returns and unsigned long thread identifier */
 
-unsigned long int (*_papi_hwi_thread_id_fn)(void);
+unsigned long (*_papi_hwi_thread_id_fn)(void);
 
 /* Function that sends a signal to other threads */
 
@@ -272,7 +272,7 @@ int _papi_hwi_broadcast_signal(unsigned int mytid)
 /* This is undefined for systems that enable ANY_THREAD_GETS_SIGNAL
    since we always must enable threads for safety. */
 
-int _papi_hwi_set_thread_id_fn(unsigned long int (*id_fn) (void))
+int _papi_hwi_set_thread_id_fn(unsigned long (*id_fn) (void))
 {
 #if !defined(ANY_THREAD_GETS_SIGNAL)
   /* Check for multiple threads still in the list, if so, we can't change it */
@@ -306,7 +306,7 @@ int _papi_hwi_set_thread_id_fn(unsigned long int (*id_fn) (void))
 int _papi_hwi_shutdown_thread(ThreadInfo_t *thread)
 {
    int retval = PAPI_OK;
-   unsigned long int tid;
+   unsigned long tid;
 
    if (_papi_hwi_thread_id_fn)
      tid = (*_papi_hwi_thread_id_fn)();
@@ -399,8 +399,12 @@ int _papi_hwi_gather_all_thrspec_data(int tag, PAPI_all_thr_spec_t *where)
 
   for (foo = _papi_hwi_thread_head; foo != NULL; foo = foo->next)
     {
-      where->id[didsomething] = foo->tid;
-      where->data[didsomething] = foo->thread_storage[tag];
+      /* Could be just counting */
+      if (where->id)
+	memcpy(&where->id[didsomething],&foo->tid,sizeof(where->id[didsomething]));
+      /* Could be just listing */
+      if (where->data)
+	where->data[didsomething] = foo->thread_storage[tag];
       didsomething++;
       if (foo->next == _papi_hwi_thread_head)
 	break;
