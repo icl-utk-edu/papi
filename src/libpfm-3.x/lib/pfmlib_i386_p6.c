@@ -27,7 +27,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
 /* public headers */
 #include <perfmon/pfmlib_i386_p6.h>
 
@@ -56,7 +55,14 @@ static unsigned int i386_p6_num_events;
 
 #define PFMLIB_I386_P6_ALL_FLAGS \
 	(PFM_I386_P6_SEL_INV|PFM_I386_P6_SEL_EDGE)
-
+/*
+ * Description of the PMC register mappings use by
+ * this module (as reported in pfmlib_reg_t.reg_num):
+ *
+ * 0 -> PMC0 -> PERFEVTSEL0 -> MSR @ 0x186
+ * 1 -> PMC1 -> PERFEVTSEL1 -> MSR @ 0x187
+ */
+#define PFMLIB_I386_P6_PMC_BASE	0x186
 
 static int
 pfm_i386_detect_common(void)
@@ -191,7 +197,7 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 		 * check illegal unit masks combination
 		 */
 		if (e[j].num_masks > 1 && PFMLIB_I386_P6_HAS_COMBO(e[j].event) == 0) {
-			DPRINT(("event does not supports unit mask combination\n"));
+			DPRINT(("event does not support unit mask combination\n"));
 			return PFMLIB_ERR_FEATCOMB;
 		}
 		/*
@@ -238,15 +244,14 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 			reg.sel_inv	 = cntrs[j].flags & PFM_I386_P6_SEL_INV ? 1 : 0;
 		}
 
-		/*
-		 * XXX: assumes perfmon2 mappings
-		 */
 		pc[j].reg_num     = assign[j];
 		pc[j].reg_pmd_num = assign[j];
 		pc[j].reg_evt_idx = j;
 		pc[j].reg_value   = reg.val;
+		pc[j].reg_addr    = PFMLIB_I386_P6_PMC_BASE+j;
 
-		__pfm_vbprintf("[perfevtsel%u=0x%lx emask=0x%lx umask=0x%lx os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d] %s\n",
+		__pfm_vbprintf("[PERFEVTSEL%u(pmc%u)=0x%lx emask=0x%x umask=0x%x os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d] %s\n",
+			assign[j],
 			assign[j],
 			reg.val,
 			reg.sel_event_mask,
@@ -284,14 +289,7 @@ pfm_i386_p6_get_event_code(unsigned int i, unsigned int cnt, int *code)
 	if (cnt != PFMLIB_CNT_FIRST && cnt > 2)
 		return PFMLIB_ERR_INVAL;
 
-	/*
-	 * we return the full value.
-	 * Event with a single umask do not have explicit umask
-	 * table. In this case, the unit mask value if merged with the
-	 * event code value. So this function may return more than just
-	 * the plain event code.
-	 */
-	*code = i386_pe[i].pme_code & 0xff;
+	*code = i386_pe[i].pme_code;
 
 	return PFMLIB_SUCCESS;
 }
@@ -400,18 +398,45 @@ pfm_i386_p6_get_event_mask_code(unsigned int ev, unsigned int midx, unsigned int
 	*code = i386_pe[ev].pme_umasks[midx].pme_ucode;
 	return PFMLIB_SUCCESS;
 }
+	
+static int
+pfm_i386_p6_get_cycle_event(pfmlib_event_t *e)
+{
+	e->event = PME_I386_P6_CPU_CLK_UNHALTED;
+	return PFMLIB_SUCCESS;
 
+}
+
+static int
+pfm_i386_p6_get_inst_retired(pfmlib_event_t *e)
+{
+	e->event = PME_I386_P6_INST_RETIRED;
+	return PFMLIB_SUCCESS;
+}
+
+static int
+pfm_i386_pm_get_cycle_event(pfmlib_event_t *e)
+{
+	e->event = PME_I386_PM_CPU_CLK_UNHALTED;
+	return PFMLIB_SUCCESS;
+
+}
+
+static int
+pfm_i386_pm_get_inst_retired(pfmlib_event_t *e)
+{
+	e->event = PME_I386_PM_INST_RETIRED;
+	return PFMLIB_SUCCESS;
+}
 
 /* Generic P6 processor support (not incl. Pentium M) */
 pfm_pmu_support_t i386_p6_support={
-	.pmu_name		= "P6 Processor Family",
+	.pmu_name		= "Intel P6 Processor Family",
 	.pmu_type		= PFMLIB_I386_P6_PMU,
 	.pme_count		= PME_I386_P6_EVENT_COUNT,
 	.pmc_count		= PMU_I386_P6_NUM_PERFSEL,
 	.pmd_count		= PMU_I386_P6_NUM_PERFCTR,
 	.num_cnt		= PMU_I386_P6_NUM_COUNTERS,
-	.cycle_event		= PME_I386_P6_CPU_CLK_UNHALTED,
-	.inst_retired_event	= PME_I386_P6_INST_RETIRED,
 	.get_event_code		= pfm_i386_p6_get_event_code,
 	.get_event_name		= pfm_i386_p6_get_event_name,
 	.get_event_counters	= pfm_i386_p6_get_event_counters,
@@ -421,19 +446,19 @@ pfm_pmu_support_t i386_p6_support={
 	.get_impl_pmds		= pfm_i386_p6_get_impl_perfctr,
 	.get_impl_counters	= pfm_i386_p6_get_impl_counters,
 	.get_hw_counter_width	= pfm_i386_p6_get_hw_counter_width,
-	.get_event_desc         = pfm_i386_p6_get_event_description
+	.get_event_desc         = pfm_i386_p6_get_event_description,
+	.get_cycle_event	= pfm_i386_p6_get_cycle_event,
+	.get_inst_retired_event = pfm_i386_p6_get_inst_retired
 };
 
 /* Pentium M support */
 pfm_pmu_support_t i386_pm_support={
-	.pmu_name		= "Pentium M",
-	.pmu_type		= PFMLIB_I386_P6_PMU,
+	.pmu_name		= "Intel Pentium M",
+	.pmu_type		= PFMLIB_I386_PM_PMU,
 	.pme_count		= PME_I386_PM_EVENT_COUNT,
 	.pmc_count		= PMU_I386_P6_NUM_PERFSEL,
 	.pmd_count		= PMU_I386_P6_NUM_PERFCTR,
 	.num_cnt		= PMU_I386_P6_NUM_COUNTERS,
-	.cycle_event		= PME_I386_PM_CPU_CLK_UNHALTED,
-	.inst_retired_event	= PME_I386_PM_INST_RETIRED,
 	.get_event_code		= pfm_i386_p6_get_event_code,
 	.get_event_name		= pfm_i386_p6_get_event_name,
 	.get_event_counters	= pfm_i386_p6_get_event_counters,
@@ -447,5 +472,7 @@ pfm_pmu_support_t i386_pm_support={
 	.get_num_event_masks	= pfm_i386_p6_get_num_event_masks,
 	.get_event_mask_name	= pfm_i386_p6_get_event_mask_name,
 	.get_event_mask_code	= pfm_i386_p6_get_event_mask_code,
-	.get_event_mask_desc	= pfm_i386_p6_get_event_mask_desc
+	.get_event_mask_desc	= pfm_i386_p6_get_event_mask_desc,
+	.get_cycle_event	= pfm_i386_pm_get_cycle_event,
+	.get_inst_retired_event = pfm_i386_pm_get_inst_retired
 };

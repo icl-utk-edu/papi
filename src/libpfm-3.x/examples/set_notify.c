@@ -159,7 +159,7 @@ void
 setup_end_marker(int fd, unsigned int set_id, uint64_t num_ovfls, int plm_mask)
 {
 	pfarg_setdesc_t setdesc;
-	pfarg_pmc_t pc[2];
+	pfarg_pmc_t pc[8];
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
 	unsigned int i, j;
@@ -176,10 +176,10 @@ setup_end_marker(int fd, unsigned int set_id, uint64_t num_ovfls, int plm_mask)
 	 *   - first as sampling period to force switch to set 0
 	 *   - second as sampling period to force notification
 	 */
-	if (pfm_get_cycle_event(&inp.pfp_events[0].event) != PFMLIB_SUCCESS)
+	if (pfm_get_cycle_event(&inp.pfp_events[0]) != PFMLIB_SUCCESS)
 		fatal_error("cannot find cycle event\n");
 
-	inp.pfp_events[1].event = inp.pfp_events[0].event;
+	inp.pfp_events[1] = inp.pfp_events[0];
 
 	inp.pfp_dfl_plm     = plm_mask;
 	inp.pfp_event_count = 2;
@@ -210,7 +210,7 @@ setup_end_marker(int fd, unsigned int set_id, uint64_t num_ovfls, int plm_mask)
 	 * figure out pmd mapping from output pmc
 	 */
 	for (i=0, j=0; i < inp.pfp_event_count; i++) {
-		pd[i].reg_num   = outp.pfp_pmcs[i].reg_pmd_num;
+		pd[i].reg_num   = outp.pfp_pmcs[j].reg_pmd_num;
 		pd[i].reg_set   = set_id;
 		for(; j < outp.pfp_pmc_count; j++)  if (outp.pfp_pmcs[j].reg_evt_idx != i) break;
 	}
@@ -240,21 +240,17 @@ setup_end_marker(int fd, unsigned int set_id, uint64_t num_ovfls, int plm_mask)
 	setdesc.set_flags           = PFM_SETFL_OVFL_SWITCH;
 	setdesc.set_timeout	    = 0;
 
-
-	if (pfm_create_evtsets(fd, &setdesc, 1) == -1) {
+	if (pfm_create_evtsets(fd, &setdesc, 1) == -1)
 		fatal_error("pfm_create_evtsets error errno %d\n",errno);
-	}
 
-	if (pfm_write_pmcs(fd, pc, outp.pfp_pmc_count) == -1) {
+	if (pfm_write_pmcs(fd, pc, outp.pfp_pmc_count) == -1)
 		fatal_error("pfm_write_pmcs error errno %d\n",errno);
-	}
 	/*
 	 * To be read, each PMD must be either written or declared
 	 * as being part of a sample (reg_smpl_pmds)
 	 */
-	if (pfm_write_pmds(fd, pd, inp.pfp_event_count) == -1) {
+	if (pfm_write_pmds(fd, pd, inp.pfp_event_count) == -1)
 		fatal_error("pfm_write_pmds error errno %d\n",errno);
-	}
 }
 
 int
@@ -315,16 +311,15 @@ main(int argc, char **argv)
 	memset(&outp,0, sizeof(outp));
 	memset(&setdesc,0, sizeof(setdesc));
 
-	if (pfm_get_cycle_event(&inp.pfp_events[0].event) != PFMLIB_SUCCESS) {
+	if (pfm_get_cycle_event(&inp.pfp_events[0]) != PFMLIB_SUCCESS)
 		fatal_error("cannot find cycle event\n");
-	}
 
 	pfm_get_max_event_name_len(&len);
 	event1_name = malloc(len+1);
 	if (event1_name == NULL) {
 		fatal_error("cannot allocate event name\n");
 	}
-	pfm_get_event_name(inp.pfp_events[1].event, event1_name, len+1);
+	pfm_get_full_event_name(&inp.pfp_events[1], event1_name, len+1);
 
 	/*
 	 * set the default privilege mode for all counters:
@@ -341,9 +336,8 @@ main(int argc, char **argv)
 	 * now create the context for self monitoring/per-task
 	 */
 	if (pfm_create_context(ctx, NULL, 0) == -1 ) {
-		if (errno == ENOSYS) {
+		if (errno == ENOSYS)
 			fatal_error("Your kernel does not have performance monitoring support!\n");
-		}
 		fatal_error("Can't create PFM context %s\n", strerror(errno));
 	}
 	ctx_fd = ctx->ctx_fd;
@@ -364,9 +358,8 @@ main(int argc, char **argv)
 	/*
 	 * let the library figure out the values for the PMCS
 	 */
-	if ((ret=pfm_dispatch_events(&inp, NULL, &outp, NULL)) != PFMLIB_SUCCESS) {
+	if ((ret=pfm_dispatch_events(&inp, NULL, &outp, NULL)) != PFMLIB_SUCCESS)
 		fatal_error("Cannot configure events: %s\n", pfm_strerror(ret));
-	}
 
 	/*
 	 * Now prepare the argument to initialize the PMDs and PMCS.

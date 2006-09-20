@@ -26,22 +26,16 @@ include $(TOPDIR)/config.mk
 include $(TOPDIR)/rules.mk
 
 DIRS=lib
-
-PFMSINCDIR=include
-
-CFLAGS+= -pthread -D_GNU_SOURCE
+CFLAGS+= -pthread -D_GNU_SOURCE -I./include
 LDFLAGS+=-static 
-
-LIBS += -lm
-
-INCDIR=-I$(PFMINCDIR)  -I$(PFMSINCDIR)
+LIBS += -L./lib -lpfms -lpfm -lm
 
 TARGETS=syst_smp
 
 all: $(TARGETS)
 
 syst_smp: subdirs syst_smp.o
-	$(CC) $(INCDIR) $(LDFLAGS) -D_GNU_SOURCE -o $@ syst_smp.o -L lib  -lpfms -L$(PFMLIBDIR) -lpfm $(LIBS) -lpthread
+	$(CC) $(LDFLAGS) -o $@ syst_smp.o $(LIBS) -lpthread
 
 clean:
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done

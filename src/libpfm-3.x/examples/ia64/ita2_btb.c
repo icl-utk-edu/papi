@@ -336,7 +336,7 @@ main(void)
 	ita2_inp.pfp_ita2_btb.btb_brt = 0x0;
 	ita2_inp.pfp_ita2_btb.btb_plm = PFM_PLM3;
 
-	if (pfm_find_event_byname("BRANCH_EVENT", &inp.pfp_events[0].event) != PFMLIB_SUCCESS) {
+	if (pfm_find_full_event("BRANCH_EVENT", &inp.pfp_events[0]) != PFMLIB_SUCCESS) {
 		fatal_error("cannot find event BRANCH_EVENT\n");
 	}
 

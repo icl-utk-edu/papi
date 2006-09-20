@@ -175,7 +175,8 @@ pfm_amd64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_amd64_input_param_
 		pc[j].reg_evt_idx = j;
 		pc[j].reg_value   = reg.val;
 
-		__pfm_vbprintf("[perfsel%u=0x%llx emask=0x%lx umask=0x%lx os=%d usr=%d inv=%d en=%d int=%d edge=%d cnt_mask=%d] %s\n",
+		__pfm_vbprintf("[PERFSEL%u(pmc%u)=0x%llx emask=0x%x umask=0x%x os=%d usr=%d inv=%d en=%d int=%d edge=%d cnt_mask=%d] %s\n",
+			assign[j],
 			assign[j],
 			reg.val,
 			reg.sel_event_mask,
@@ -334,6 +335,21 @@ pfm_amd64_get_event_mask_code(unsigned int ev, unsigned int midx, unsigned int *
 	return PFMLIB_SUCCESS;
 }
 
+static int
+pfm_amd64_get_cycle_event(pfmlib_event_t *e)
+{
+	e->event = PME_AMD64_CPU_CLK_UNHALTED;
+	return PFMLIB_SUCCESS;
+
+}
+
+static int
+pfm_amd64_get_inst_retired(pfmlib_event_t *e)
+{
+	e->event = PME_AMD64_RETIRED_INSTRUCTIONS;
+	return PFMLIB_SUCCESS;
+}
+
 pfm_pmu_support_t amd64_support={
 	.pmu_name		= "AMD64",
 	.pmu_type		= PFMLIB_AMD64_PMU,
@@ -341,8 +357,6 @@ pfm_pmu_support_t amd64_support={
 	.pmc_count		= PMU_AMD64_NUM_PERFSEL,
 	.pmd_count		= PMU_AMD64_NUM_PERFCTR,
 	.num_cnt		= PMU_AMD64_NUM_COUNTERS,
-	.cycle_event		= PME_AMD64_CPU_CLK_UNHALTED,
-	.inst_retired_event	= PME_AMD64_RETIRED_INSTRUCTIONS,
 	.get_event_code		= pfm_amd64_get_event_code,
 	.get_event_name		= pfm_amd64_get_event_name,
 	.get_event_counters	= pfm_amd64_get_event_counters,
@@ -356,5 +370,7 @@ pfm_pmu_support_t amd64_support={
 	.get_num_event_masks	= pfm_amd64_get_num_event_masks,
 	.get_event_mask_name	= pfm_amd64_get_event_mask_name,
 	.get_event_mask_code	= pfm_amd64_get_event_mask_code,
-	.get_event_mask_desc	= pfm_amd64_get_event_mask_desc
+	.get_event_mask_desc	= pfm_amd64_get_event_mask_desc,
+	.get_cycle_event	= pfm_amd64_get_cycle_event,
+	.get_inst_retired_event = pfm_amd64_get_inst_retired
 };

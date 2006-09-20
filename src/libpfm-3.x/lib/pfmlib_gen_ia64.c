@@ -39,6 +39,16 @@
 #define PME_GEN_COUNT	2
 
 /*
+ * Description of the PMC register mappings use by
+ * this module (as reported in pfmlib_reg_t.reg_num):
+ *
+ * 0 -> PMC0
+ * 1 -> PMC1
+ * n -> PMCn
+ */ 
+#define PFMLIB_GEN_IA64_PMC_BASE	0
+
+/*
  * generic event as described by architecture
  */
 typedef	struct {
@@ -84,6 +94,18 @@ static int pfm_gen_ia64_counter_width;
 static int pfm_gen_ia64_counters;
 static pfmlib_regmask_bits_t pfm_gen_ia64_impl_pmcs[PFMLIB_REG_BV];
 static pfmlib_regmask_bits_t pfm_gen_ia64_impl_pmds[PFMLIB_REG_BV];
+/*
+ * Description of the PMC register mappings use by
+ * this module (as reported in pfmlib_reg_t.reg_num):
+ *
+ * 0 -> PMC0
+ * 1 -> PMC1
+ * n -> PMCn
+ * We do not use a mapping table, instead we make up the
+ * values on the fly given the base.
+ */
+#define PFMLIB_GEN_IA64_PMC_BASE 0
+
 
 /*
  * convert text range (e.g. 4-15 18 12-26) into actual bitmask
@@ -244,7 +266,7 @@ pfm_gen_ia64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_output_param_t 
 	unsigned int assign[PMU_GEN_IA64_MAX_COUNTERS];
 	pfm_gen_ia64_pmc_reg_t reg;
 	pfmlib_event_t *e;
-	pfmlib_pmc_t *pc;
+	pfmlib_reg_t *pc;
 	pfmlib_regmask_t *r_pmcs;
 	unsigned int i,j,k,l;
 	unsigned int cnt;
@@ -328,9 +350,12 @@ done:
 		pc[j].reg_pmd_num = assign[j];
 		pc[j].reg_evt_idx = j;
 		pc[j].reg_value   = reg.pmc_val;
+		pc[j].reg_addr    = PFMLIB_GEN_IA64_PMC_BASE+j;
 
-		__pfm_vbprintf("[pmc%u=0x%lx,es=0x%02x,plm=%d pm=%d] %s\n",
-				assign[j], reg.pmc_val,
+		__pfm_vbprintf("[PMC%u(pmc%u)=0x%lx,es=0x%02x,plm=%d pm=%d] %s\n",
+				assign[j],
+				assign[j],
+				reg.pmc_val,
 				reg.pmc_es,reg.pmc_plm,
 				reg.pmc_pm,
 				generic_pe[e[j].event].pme_name);
@@ -353,7 +378,7 @@ pfm_gen_ia64_get_event_code(unsigned int i, unsigned int cnt, int *code)
 	if (cnt != PFMLIB_CNT_FIRST && (cnt < 4 || cnt > 7))
 		return PFMLIB_ERR_INVAL;
 
-	*code = generic_pe[i].pme_entry_code.pme_gen_code.pme_code;
+	*code = (int)generic_pe[i].pme_entry_code.pme_gen_code.pme_code;
 
 	return PFMLIB_SUCCESS;
 }
@@ -424,6 +449,21 @@ pfm_gen_ia64_get_event_desc(unsigned int ev, char **str)
 	return PFMLIB_SUCCESS;
 }
 
+static int
+pfm_gen_ia64_get_cycle_event(pfmlib_event_t *e)
+{
+	e->event = PME_IA64_GEN_CPU_CYCLES;
+	return PFMLIB_SUCCESS;
+
+}
+
+static int
+pfm_gen_ia64_get_inst_retired(pfmlib_event_t *e)
+{
+	e->event = PME_IA64_GEN_INST_RETIRED;
+	return PFMLIB_SUCCESS;
+}
+
 pfm_pmu_support_t generic_ia64_support={
 	.pmu_name		="IA-64",
 	.pmu_type		= PFMLIB_GEN_IA64_PMU,
@@ -431,8 +471,6 @@ pfm_pmu_support_t generic_ia64_support={
 	.pmc_count		= 4+4,
 	.pmd_count		= PMU_GEN_IA64_MAX_COUNTERS,
 	.num_cnt		= PMU_GEN_IA64_MAX_COUNTERS,
-	.cycle_event		= PME_IA64_GEN_CPU_CYCLES,
-	.inst_retired_event	= PME_IA64_GEN_INST_RETIRED,
 	.get_event_code		= pfm_gen_ia64_get_event_code,
 	.get_event_name		= pfm_gen_ia64_get_event_name,
 	.get_event_counters	= pfm_gen_ia64_get_event_counters,
@@ -442,5 +480,7 @@ pfm_pmu_support_t generic_ia64_support={
 	.get_impl_pmds		= pfm_gen_ia64_get_impl_pmds,
 	.get_impl_counters	= pfm_gen_ia64_get_impl_counters,
 	.get_hw_counter_width	= pfm_gen_ia64_get_hw_counter_width,
-	.get_event_desc		= pfm_gen_ia64_get_event_desc
+	.get_event_desc		= pfm_gen_ia64_get_event_desc,
+	.get_cycle_event	= pfm_gen_ia64_get_cycle_event,
+	.get_inst_retired_event = pfm_gen_ia64_get_inst_retired
 };

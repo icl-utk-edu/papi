@@ -737,10 +737,11 @@ mainloop(char **argv)
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
 	pfmlib_regmask_t impl_counters, used_pmcs;
+	pfmlib_event_t cycle_event;
 	unsigned int i, j, k;
 	char *p, *str;
 	int ret;
-	unsigned int max_counters, allowed_counters, cycles_event_idx;
+	unsigned int max_counters, allowed_counters;
 
 	pfm_get_num_counters(&max_counters);
 
@@ -779,7 +780,7 @@ mainloop(char **argv)
 		/*
 		 * look for our trigger event
 		 */
-		if (pfm_get_cycle_event(&cycles_event_idx) != PFMLIB_SUCCESS) {
+		if (pfm_get_cycle_event(&cycle_event) != PFMLIB_SUCCESS) {
 			fatal_error("Cannot find cycle event\n");
 		}
 	}
@@ -823,14 +824,12 @@ mainloop(char **argv)
 		for(j=0, p = str; p && j < allowed_counters; j++) {
 
 			p = strchr(str, ',');
-			if (p) *p = '\0';
-
-			if (pfm_find_event(str, &inp.pfp_events[j].event) != PFMLIB_SUCCESS) {
+			if (p)
+				*p = '\0';
+			if (pfm_find_full_event(str, &inp.pfp_events[j]) != PFMLIB_SUCCESS)
 				fatal_error("Cannot find %s event for set %d event %d\n", str, i, j);
-			}
-			if (p) {
+			if (p)
 				str = p + 1;
-			}
 		}
 		if (p) {
 			fatal_error("error in set %d: cannot have more than %d event(s) per set %s\n",
@@ -842,16 +841,16 @@ mainloop(char **argv)
 		 * add the cycle event as the last event when we switch on overflow
 		 */
 		if (options.opt_ovfl_switch) {
-			inp.pfp_events[j].event = cycles_event_idx;
-			inp.pfp_event_count     = j+1;
-			inp.pfp_dfl_plm         = options.opt_plm;
-			e->n_events		= j+1;
+			inp.pfp_events[j]   = cycle_event;
+			inp.pfp_event_count = j+1;
+			inp.pfp_dfl_plm     = options.opt_plm;
+			e->n_events	    = j+1;
 		} else {
-			e->n_events             = j;
-			inp.pfp_event_count     = j;
+			e->n_events         = j;
+			inp.pfp_event_count = j;
 		}
 
-		inp.pfp_dfl_plm         = options.opt_plm;
+		inp.pfp_dfl_plm = options.opt_plm;
 
 		if (options.opt_is_system) 
 			inp.pfp_flags = PFMLIB_PFP_SYSTEMWIDE;
@@ -967,17 +966,17 @@ static void
 generate_default_sets(void)
 {
 	event_set_t *es, *tail = NULL;
-	unsigned int idx[2];
+	pfmlib_event_t events[2];
 	size_t len;
 	char *name;
 	unsigned int i;
 	int ret;
 	
-	ret = pfm_get_cycle_event(idx);
+	ret = pfm_get_cycle_event(&events[0]);
 	if (ret != PFMLIB_SUCCESS)
 		fatal_error("cannot find cycle event\n");
 
-	ret = pfm_get_inst_retired_event(idx+1);
+	ret = pfm_get_inst_retired_event(&events[1]);
 	if (ret != PFMLIB_SUCCESS)
 		fatal_error("cannot find instruction retired event\n");
 
@@ -988,7 +987,7 @@ generate_default_sets(void)
 		if (name == NULL) {
 			fatal_error("cannot allocate space for event name\n");
 		}
-		pfm_get_event_name(idx[i], name, len+1);
+		pfm_get_full_event_name(events+i, name, len+1);
 
 		es = (event_set_t *)malloc(sizeof(event_set_t));
 		if (es == NULL)

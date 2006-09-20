@@ -78,7 +78,7 @@ typedef struct {
 #define PFMLIB_MAX_MASKS_PER_EVENT 48 /* maximum number of unit masks per event */
 
 /*
- * event description for pfmlib_input_param_t
+ * event definition for pfmlib_input_param_t
  */
 typedef struct {
 	unsigned int	event;		/* event descriptor */
@@ -90,14 +90,15 @@ typedef struct {
 } pfmlib_event_t;
 
 /*
- * generic register definition.
+ * generic register definition
  */
 typedef struct {
-	unsigned int 		reg_num;	/* register index */
-	unsigned int 		reg_evt_idx;	/* event idx in pfp_events */
 	unsigned long long	reg_value;	/* register value */
+	unsigned int 		reg_num;	/* logical register index (perfmon2) */
+	unsigned int 		reg_evt_idx;	/* event idx in pfp_events */
 	unsigned int		reg_pmd_num;	/* which counter is used */
 	unsigned int		reg_reserved1;	/* for future use */
+	unsigned long		reg_addr;	/* hardware register addr or index */
 	unsigned long		reg_reserved[1];/* for future use */
 } pfmlib_reg_t;
 
@@ -110,11 +111,6 @@ typedef struct {
  * reg_pmd_num possible value
  */
 #define PFMLIB_REG_PMD_NONE	(~0)	/* PMC is not associated with counter */
-
-/*
- * generic PMC register definition.
- */
-typedef pfmlib_reg_t	pfmlib_pmc_t;
 
 /*
  * library generic input parameters for pfm_dispatch_event()
@@ -132,18 +128,17 @@ typedef struct {
 /*
  * pfp_flags possible values (apply to all events)
  */
-#define PFMLIB_PFP_SYSTEMWIDE		0x1	/* indicate monitors will be used in a system-wide session */
+#define PFMLIB_PFP_SYSTEMWIDE	0x1 /* indicate monitors will be used in a system-wide session */
 
 /*
  * library generic output parameters for pfm_dispatch_event()
  */
 typedef struct {
-	unsigned int	pfp_pmc_count;		 	/* how many PMCS were setup in pfp_pmc[] */
-	unsigned int	reserved1;			/* for future use */
-	pfmlib_pmc_t	pfp_pmcs[PFMLIB_MAX_PMCS];	/* PMC registers number and values */
-	unsigned long	reserved[7];			/* for future use */
+	unsigned int	 pfp_pmc_count;		 	/* how many PMCS were setup in pfp_pmc[] */
+	unsigned int	 reserved1;			/* for future use */
+	pfmlib_reg_t	 pfp_pmcs[PFMLIB_MAX_PMCS];	/* PMC registers number and values */
+	unsigned long	 reserved[7];			/* for future use */
 } pfmlib_output_param_t;
-
 
 /*
  * library configuration options
@@ -164,16 +159,22 @@ extern int pfm_get_pmu_name_bytype(int type, char *name, size_t maxlen);
 extern int pfm_is_pmu_supported(int type);
 extern int pfm_force_pmu(int type);
 
+/*
+ * pfm_find_event_byname() is obsolete, use pfm_find_event
+ */
 extern int pfm_find_event(const char *str, unsigned int *idx);
 extern int pfm_find_event_byname(const char *name, unsigned int *idx);
 extern int pfm_find_event_bycode(int code, unsigned int *idx);
 extern int pfm_find_event_bycode_next(int code, unsigned int start, unsigned int *next);
 extern int pfm_find_event_mask(unsigned int event_idx, const char *str, unsigned int *mask_idx);
+extern int pfm_find_full_event(const char *str, pfmlib_event_t *e);
+
 extern int pfm_get_max_event_name_len(size_t *len);
 
 extern int pfm_get_num_events(unsigned int *count);
 extern int pfm_get_num_event_masks(unsigned int event_idx, unsigned int *count);
 extern int pfm_get_event_name(unsigned int idx, char *name, size_t maxlen);
+extern int pfm_get_full_event_name(pfmlib_event_t *e, char *name, size_t maxlen);
 extern int pfm_get_event_code(unsigned int idx, int *code);
 extern int pfm_get_event_mask_code(unsigned int idx, unsigned int mask_idx, unsigned int *code);
 extern int pfm_get_event_counters(unsigned int idx, pfmlib_regmask_t *counters);
@@ -194,8 +195,8 @@ extern int pfm_get_num_counters(unsigned int *num);
 extern int pfm_get_hw_counter_width(unsigned int *width);
 extern int pfm_get_version(unsigned int *version);
 extern char *pfm_strerror(int code);
-extern int pfm_get_cycle_event(unsigned int *ev);
-extern int pfm_get_inst_retired_event(unsigned int *ev);
+extern int pfm_get_cycle_event(pfmlib_event_t *e);
+extern int pfm_get_inst_retired_event(pfmlib_event_t *e);
 
 /*
  * Supported PMU family
@@ -206,10 +207,11 @@ extern int pfm_get_inst_retired_event(unsigned int *ev);
 #define PFMLIB_ITANIUM2_PMU 	 	3	/* Intel Itanium 2 */
 #define PFMLIB_MONTECITO_PMU 	 	4	/* Intel Dual-Core Itanium 2 9000 */
 #define PFMLIB_AMD64_PMU		16	/* AMD AMD64 */
-#define PFMLIB_GEN_IA32_PMU		63	/* Intel IA-32 architected PMU */
-#define PFMLIB_I386_P6_PMU		32	/* Intel P6/Pentium M */
+#define PFMLIB_GEN_IA32_PMU		63	/* Intel IA-32 architectural PMU */
+#define PFMLIB_I386_P6_PMU		32	/* Intel P6 (excl. Pentium M) */
 #define PFMLIB_PENTIUM4_PMU		33	/* Intel Pentium4/Xeon/EM64T */
 #define PFMLIB_COREDUO_PMU		34	/* Intel Core Duo/Core Solo */
+#define PFMLIB_I386_PM_PMU		35	/* Intel Pentium M */
 
 #define PFMLIB_GEN_MIPS64_PMU           64      /* MIPS 5KC,20KC,25KF */
 
@@ -222,13 +224,13 @@ extern int pfm_get_inst_retired_event(unsigned int *ev);
 #define PFMLIB_ERR_NOINIT	 -3	/* library was not initialized */
 #define PFMLIB_ERR_NOTFOUND	 -4	/* object not found */
 #define PFMLIB_ERR_NOASSIGN	 -5	/* cannot assign events to counters */
-#define PFMLIB_ERR_FULL	 	 -6	/* buffer is full (obsolete) */
+#define PFMLIB_ERR_FULL	 	 -6	/* buffer is full or too small */
 #define PFMLIB_ERR_EVTMANY	 -7	/* event used more than once */
 #define PFMLIB_ERR_MAGIC	 -8	/* invalid library magic number */
 #define PFMLIB_ERR_FEATCOMB	 -9	/* invalid combination of features */
 #define PFMLIB_ERR_EVTSET	-10	/* incompatible event sets */
 #define PFMLIB_ERR_EVTINCOMP	-11	/* incompatible event combination */
-#define PFMLIB_ERR_TOOMANY	-12	/* too many events */
+#define PFMLIB_ERR_TOOMANY	-12	/* too many events or unit masks */
 
 #define PFMLIB_ERR_IRRTOOBIG	-13	/* code range too big */
 #define PFMLIB_ERR_IRREMPTY	-14	/* empty code range */
@@ -240,6 +242,7 @@ extern int pfm_get_inst_retired_event(unsigned int *ev);
 #define PFMLIB_ERR_IRRALIGN	-20	/* bad alignment for code range */
 #define PFMLIB_ERR_IRRFLAGS	-21	/* code range missing flags */
 #define PFMLIB_ERR_UMASK	-22	/* invalid or missing unit mask */
+#define PFMLIB_ERR_NOMEM	-23	/* out of memory */
 
 #define __PFMLIB_REGMASK_EL(g)		((g)/__PFMLIB_REG_BV_BITS)
 #define __PFMLIB_REGMASK_MASK(g)	(((pfmlib_regmask_bits_t)1) << ((g) % __PFMLIB_REG_BV_BITS))

@@ -149,10 +149,10 @@ main(int argc, char **argv)
 
 	pfm_get_num_counters(&num_counters);
 
-	if (pfm_get_cycle_event(&inp.pfp_events[0].event) != PFMLIB_SUCCESS)
+	if (pfm_get_cycle_event(&inp.pfp_events[0]) != PFMLIB_SUCCESS)
 		fatal_error("cannot find cycle event\n");
 
-	if (pfm_get_inst_retired_event(&inp.pfp_events[1].event) != PFMLIB_SUCCESS)
+	if (pfm_get_inst_retired_event(&inp.pfp_events[1]) != PFMLIB_SUCCESS)
 		fatal_error("cannot find inst retired event\n");
 
 	i = 2;
@@ -179,7 +179,7 @@ main(int argc, char **argv)
 		if (event1_name == NULL)
 			fatal_error("cannot allocate event name\n");
 
-		pfm_get_event_name(inp.pfp_events[1].event, event1_name, len+1);
+		pfm_get_full_event_name(&inp.pfp_events[1], event1_name, len+1);
 	}
 
 	/*

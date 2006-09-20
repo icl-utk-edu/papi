@@ -25,26 +25,27 @@
 #ifndef __PFMLIB_GEN_IA32_PRIV_H__
 #define __PFMLIB_GEN_IA32_PRIV_H__
 
-/*
- * architected PMU encoding structure
- * (code must be first 8 bits)
- */
-typedef struct {
-	unsigned int pme_sel:8;		/* event select */
-	unsigned int pme_umask:8;	/* unit mask */
-	unsigned int pme_res:16;	/* reserved */
-} pme_gen_ia32_entry_code_t;		
-
-typedef union {
-	pme_gen_ia32_entry_code_t pme_code;
-	unsigned int pme_vcode;
-} pme_gen_ia32_code_t;
+#define PFMLIB_GEN_IA32_MAX_UMASK 16
 
 typedef struct {
-	char			*pme_name;
-	pme_gen_ia32_code_t	pme_entry_code;
-	char			*pme_desc;		/* text description of the event */
+	char			*pme_uname; /* unit mask name */
+	char			*pme_udesc; /* event/umask description */
+	unsigned int		pme_ucode;  /* unit mask code */
+} pme_gen_ia32_umask_t;
+
+typedef struct {
+	char			*pme_name;	/* event name */
+	char			*pme_desc;	/* event description */
+	unsigned int		pme_code; 	/* event code */
+	unsigned int		pme_numasks;	/* number of umasks */
+	unsigned int		pme_flags;	/* flags */
+	pme_gen_ia32_umask_t	pme_umasks[PFMLIB_GEN_IA32_MAX_UMASK]; /* umask desc */
 } pme_gen_ia32_entry_t;
+
+/*
+ * pme_flags value
+ */
+#define PFMLIB_GEN_IA32_UMASK_COMBO	0x01 /* unit mask can be combined (default exclusive) */
 
 typedef struct {
 	unsigned int version:8;
@@ -63,6 +64,5 @@ typedef struct {
 	unsigned int no_br_mispred_retired:1;
 	unsigned int reserved:25;
 } pmu_ebx_t;
-
 
 #endif /* __PFMLIB_GEN_IA32_PRIV_H__ */

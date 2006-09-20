@@ -80,9 +80,8 @@ sigio_handler(int n, struct siginfo *info, struct sigcontext *sc)
 	int fd = ctx_fd;
 	int r;
 
-	if (fd != ctx_fd) {
+	if (fd != ctx_fd)
 		fatal_error("handler does not get valid file descriptor\n");
-	}
 
 	if (event1_name && pfm_read_pmds(fd, pd+1, 1) == -1)
 		fatal_error("pfm_read_pmds: %s", strerror(errno));
@@ -132,6 +131,13 @@ busyloop(void)
 	for(;notification_received < 3;) ;
 }
 
+#define BPL (sizeof(uint64_t)<<3)
+#define LBPL	6
+
+static inline void pfm_bv_set(uint64_t *bv, uint16_t rnum)
+{
+	bv[rnum>>LBPL] |= 1UL << (rnum&(BPL-1));
+}
 
 int
 main(int argc, char **argv)
@@ -166,6 +172,7 @@ main(int argc, char **argv)
 	 */
 	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
 	pfmlib_options.pfm_debug = 0; /* set to 1 for debug */
+	pfmlib_options.pfm_verbose = 1; /* set to 1 for verbose */
 	pfm_set_options(&pfmlib_options);
 
 	memset(pc, 0, sizeof(pc));
@@ -176,30 +183,30 @@ main(int argc, char **argv)
 
 	pfm_get_num_counters(&num_counters);
 
-	if (pfm_get_cycle_event(&inp.pfp_events[0].event) != PFMLIB_SUCCESS)
+	if (pfm_get_cycle_event(&inp.pfp_events[0]) != PFMLIB_SUCCESS)
 		fatal_error("cannot find cycle event\n");
 
-	if (pfm_get_inst_retired_event(&inp.pfp_events[1].event) != PFMLIB_SUCCESS)
+	if (pfm_get_inst_retired_event(&inp.pfp_events[1]) != PFMLIB_SUCCESS)
 		fatal_error("cannot find inst retired event\n");
 
 	i = 2;
 	
-	if (i > num_counters) {
-		i = num_counters;
-		printf("too many events provided (max=%d events), using first %d event(s)\n", num_counters, i);
-	}
-
 	/*
 	 * set the default privilege mode for all counters:
 	 * 	PFM_PLM3 : user level only
 	 */
 	inp.pfp_dfl_plm = PFM_PLM3;
+	if (i > num_counters) {
+		i = num_counters;
+		printf("too many events provided (max=%d events), using first %d event(s)\n", num_counters, i);
+	}
+
+	inp.pfp_event_count = i;
 
 	/*
 	 * how many counters we use
 	 */
 	if (i > 1) {
-		inp.pfp_event_count = i;
 
 		pfm_get_max_event_name_len(&len);
 
@@ -207,7 +214,7 @@ main(int argc, char **argv)
 		if (event1_name == NULL)
 			fatal_error("cannot allocate event name\n");
 
-		pfm_get_event_name(inp.pfp_events[1].event, event1_name, len+1);
+		pfm_get_full_event_name(&inp.pfp_events[1], event1_name, len+1);
 	}
 
 	/*
@@ -268,7 +275,7 @@ main(int argc, char **argv)
 	 * nothing to sample when only one counter
 	 */
 	if (inp.pfp_event_count > 1)
-		pd[0].reg_reset_pmds[0] |= 1UL << pd[1].reg_num;
+		pfm_bv_set(pd[0].reg_reset_pmds, pd[1].reg_num);
 
 	/*
 	 * we arm the first counter, such that it will overflow

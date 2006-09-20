@@ -23,7 +23,7 @@
  * applications on Linux.
  */
 
-static pme_coreduo_entry_t coreduo_pe[]={
+static pme_gen_ia32_entry_t coreduo_pe[]={
 	/*
 	 * BEGIN architectural perfmon events
 	 */
@@ -79,7 +79,7 @@ static pme_coreduo_entry_t coreduo_pe[]={
 /* 11 */{.pme_name = "SSE_PREFETCH",
 	.pme_code = 0x7,
 	.pme_desc = "SSE software prefetch instruction",
-	.pme_flags   = PFMLIB_COREDUO_UMASK_COMBO,
+	.pme_flags   = PFMLIB_GEN_IA32_UMASK_COMBO,
 	.pme_numasks = 3,
 	.pme_umasks  = {
 		{ .pme_uname = "NTA",
@@ -202,4 +202,4 @@ static pme_coreduo_entry_t coreduo_pe[]={
 };
 #define PME_COREDUO_CPU_CLK_UNHALTED		0
 #define PME_COREDUO_RETIRED_INSTRUCTIONS	2
-#define PME_COREDUO_EVENT_COUNT	   (sizeof(coreduo_pe)/sizeof(pme_coreduo_entry_t))
+#define PME_COREDUO_EVENT_COUNT	   (sizeof(coreduo_pe)/sizeof(pme_gen_ia32_entry_t))

@@ -209,7 +209,7 @@ main(void)
 	pfarg_load_t load_args;
 	pfmlib_options_t pfmlib_options;
 	struct sigaction act;
-	unsigned int i, ev, j;
+	unsigned int i, j;
 	int ret, type = 0;
 
 	/*
@@ -266,7 +266,7 @@ main(void)
 	 * program a counting monitor with the IA64_TAGGED_INST_RETIRED_PMC8
 	 * event.
 	 */
-	if (pfm_find_event_byname(EVENT_NAME, &ev) != PFMLIB_SUCCESS) {
+	if (pfm_find_full_event(EVENT_NAME, &inp.pfp_events[0]) != PFMLIB_SUCCESS) {
 		fatal_error("cannot find event %s\n", EVENT_NAME);
 	}
 
@@ -281,11 +281,6 @@ main(void)
 	 */
 	inp.pfp_event_count = 1;
 
-	/*
-	 * propagate the event descriptor
-	 */
-	inp.pfp_events[0].event = ev;
-	
 	/*
 	 * let the library figure out the values for the PMCS
 	 *

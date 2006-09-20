@@ -43,8 +43,6 @@
 #define NUM_PMCS PFMLIB_MAX_PMCS
 #define NUM_PMDS PFMLIB_MAX_PMDS
 
-#define MAX_EVT_NAME_LEN	128
-
 #define TABSIZE 1024
 static int a[TABSIZE], b[TABSIZE];
 
@@ -88,7 +86,8 @@ main(int argc, char **argv)
 	pfarg_load_t load_args;
 	pfmlib_options_t pfmlib_options;
 	unsigned int num_counters;
-	char name[MAX_EVT_NAME_LEN];
+	size_t len;
+	char *name;
 
 	/*
 	 * Initialize pfm library (required before we can use it)
@@ -96,6 +95,11 @@ main(int argc, char **argv)
 	ret = pfm_initialize();
 	if (ret != PFMLIB_SUCCESS)
 		fatal_error("Cannot initialize library: %s\n", pfm_strerror(ret));
+
+	pfm_get_max_event_name_len(&len);
+	name = malloc(len+1);
+	if (!name)
+		fatal_error("cannot allocate event name buffer\n");
 
 	pfm_get_num_counters(&num_counters);
 
@@ -124,14 +128,15 @@ main(int argc, char **argv)
 	if (argc > 1) {
 		p = argv+1;
 		for (i=0; *p ; i++, p++) {
-			if (pfm_find_event(*p, &inp.pfp_events[i].event) != PFMLIB_SUCCESS)
-				fatal_error("Cannot find %s event\n", *p);
+			ret = pfm_find_full_event(*p, &inp.pfp_events[i]);
+			if (ret != PFMLIB_SUCCESS)
+				fatal_error("event %s: %s\n", *p, pfm_strerror(ret));
 		}
 	} else {
-		if (pfm_get_cycle_event(&inp.pfp_events[0].event) != PFMLIB_SUCCESS)
+		if (pfm_get_cycle_event(&inp.pfp_events[0]) != PFMLIB_SUCCESS)
 			fatal_error("cannot find cycle event\n");
 
-		if (pfm_get_inst_retired_event(&inp.pfp_events[1].event) != PFMLIB_SUCCESS)
+		if (pfm_get_inst_retired_event(&inp.pfp_events[1]) != PFMLIB_SUCCESS)
 			fatal_error("cannot find inst retired event\n");
 		i = 2;
 	}
@@ -256,12 +261,13 @@ main(int argc, char **argv)
 	 * print the results
 	 */
 	for (i=0; i < inp.pfp_event_count; i++) {
-		pfm_get_event_name(inp.pfp_events[i].event, name, MAX_EVT_NAME_LEN);
+		pfm_get_full_event_name(&inp.pfp_events[i], name, len+1);
 		printf("PMD%u %20"PRIu64" %s\n",
 			pd[i].reg_num,
 			pd[i].reg_value,
 			name);
 	}
+	free(name);
 	/*
 	 * and destroy our context
 	 */

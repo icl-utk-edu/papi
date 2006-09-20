@@ -39,11 +39,8 @@ ifeq ($(ARCH),x86_64)
 DIRS +=x86
 endif
 
-CFLAGS+= -pthread -D_GNU_SOURCE
-
-LIBS += -L$(PFMLIBDIR) -lpfm -lm
-
-INCDIR=-I$(PFMINCDIR)
+CFLAGS+= -pthread -D_GNU_SOURCE -I$(PFMINCDIR)
+LIBS += -lpfm -lm
 
 TARGETS=self self_view task task_attach task_attach_timeout syst \
 	notify_self notify_self2 notify_self3 \
@@ -57,19 +54,20 @@ all: $(TARGETS) $(XTRA)
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 
 rtop: rtop.o detect_pmcs.o
-	$(CC) $(INCDIR) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^ $(LIBS)  -lpthread -lncurses
+	$(CC) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^ $(LIBS)  -lpthread -lncurses
 
 self_standalone: self_standalone.o
-	$(CC) $(INCDIR) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^
+	$(CC) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^
 
 notify_standalone: notify_standalone.o
-	$(CC) $(INCDIR) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^
+	$(CC) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^
 
 smpl_standalone: smpl_standalone.o
-	$(CC) $(INCDIR) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^
+	$(CC) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^
 
 $(TARGETS):  %:%.o  detect_pmcs.o
-	$(CC) -o $@ $(LDFLAGS) $^ $(LIBS) 
+	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS) 
+
 clean:
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 	$(RM) -f *.o 

@@ -50,6 +50,24 @@ fatal_error(char *fmt, ...)
 	exit(1);
 }
 
+static int
+get_value(char *fn, char *buffer, size_t maxlen)
+{
+	int fd;
+	ssize_t ret;
+
+	fd = open(fn, O_RDONLY);
+	if (fd == -1)
+		return -1;
+
+	ret = read(fd, buffer, maxlen-1);
+	if (ret == -1)
+		fatal_error("cannot read from %s\n", fn);
+	buffer[ret-1] = '\0';
+	close(fd);
+	return 0;
+}
+
 /*
  * This example shows how to retrieve the PMU register mapping information.
  * It does not use the libpfm library. 
@@ -61,92 +79,81 @@ fatal_error(char *fmt, ...)
 int
 main(int argc, char **argv)
 {
-	int fd;
-	unsigned int num_pmcs;
-	unsigned int num_pmds;
-	char *lname, *p, *s, *buffer, *ptr;
-	unsigned long long def, reset;
-	size_t pgsz;
-	ssize_t n;
+	unsigned long long dfl, rsvd;
+	unsigned long hw_addr;
+	char pname[64];
+	char name[64], buffer[32];
+	unsigned int i, num_pmcs = 0, num_pmds = 0;
+	int ret;
 
-	num_pmcs = num_pmds = 0;
+	ret = get_value("/sys/kernel/perfmon/pmu_desc/model", buffer, sizeof(buffer));
+	if (ret == -1)
+		fatal_error("invalid or missing perfmon support for your CPU (need at least v2.3)\n");
 
-	fd = open("/sys/kernel/perfmon/pmu_desc/mappings", O_RDONLY);
-	if (fd == -1)
-		fatal_error("invalid or missing perfmon support for your CPU (need at least v2.2)\n");
+	printf("model  : %s\n", buffer);
+	puts(  "-------------------------------------------------------------------------------------\n"
+	       "name   |   default  value   |   reserved  mask   | hw address or index | description\n"
+	       "-------+--------------------+--------------------+---------------------+-------------");
 
-	pgsz = getpagesize();
+	for(i=0; i < PFM_MAX_PMCS; i++) {
 
-	buffer = ptr = calloc(1, pgsz);
-	if (buffer == NULL)
-		fatal_error("cannot allocate read buffer\n");
+		sprintf(pname, "/sys/kernel/perfmon/pmu_desc/pmc%d/name", i);
+		ret = get_value(pname, name, sizeof(name));
+		if (ret)
+			continue;
 
-	/*
-	 * sysfs file cannot exceed the size of a page.
-	 */
-	n =read(fd, buffer, pgsz);
+		num_pmcs++;
 
-	close(fd);
+		sprintf(pname, "/sys/kernel/perfmon/pmu_desc/pmc%d/dfl_val", i);
+		get_value(pname, buffer, sizeof(buffer));
+		dfl = strtoull(buffer, NULL, 16);
 
-	if (n < 1)
-		fatal_error("cannot read PMU mappings\n");
+		sprintf(pname, "/sys/kernel/perfmon/pmu_desc/pmc%d/rsvd_msk", i);
+		get_value(pname, buffer, sizeof(buffer));
+		rsvd = strtoull(buffer, NULL, 16);
 
-	puts( "--------------------------------------------------------------\n"
-	       "name   |   default  value   |   reserved  mask(*)| description\n"
-	       "-------+--------------------+--------------------+------------");
+		sprintf(pname, "/sys/kernel/perfmon/pmu_desc/pmc%d/addr", i);
+		get_value(pname, buffer, sizeof(buffer));
+		hw_addr = strtoul(buffer, NULL, 0);
 
-	for(;;) {
-		lname = ptr;
-		p = strchr(lname, ':');
-		if (p == NULL) goto error;
-		*p++ = '\0';
+		printf("pmc%-3d | 0x%016llx | 0x%016llx | 0x%-17lx | %s\n",
+			i,
+			dfl,
+			rsvd,
+			hw_addr,
+			name);
 
-		s = p;
-		p = strchr(s,':');
-		if (p == NULL) goto error;
-
-		*p++ = '\0';
-		def = strtoull(s, NULL, 0);
-
-		s = p;
-		p = strchr(s,':');
-		if (p == NULL) goto error;
-		*p++ = '\0';
-		reset = strtoull(s, NULL, 0);
-
-
-		if (lname[2] == 'C') 
-			num_pmcs++;
-		else
-			num_pmds++;
-
-	       if (num_pmds == 1)
-		       puts("-------+--------------------+--------------------+------------");
-
-		/*
-		 * for the perfmon subsystem, the reserved bits are zero
-		 * in the reserved mask. To make it more natural to users
-		 * we inverse the mask, i.e., reserved bits are 1
-		 */
-		ptr = strchr(p, '\n');
-		*ptr++ = '\0';
-
-		printf("%-6s | 0x%016llx | 0x%016llx | %s\n",
-			lname,
-			def, ~reset, p);
-
-		if (*ptr != 'P')
-			break;
 	}
-	free(buffer);
+	puts("-------+--------------------+--------------------+---------------------+-------------");
 
-	printf("(*) reserved mask: when a bit is set, it means the bit is reserved in the register\n");
-	if (num_pmds == 0 && num_pmcs == 0)
-		printf("No PMU description is installed\n");
-	else 
-		printf("%u PMC registers, %u PMD registers\n", num_pmcs, num_pmds);
+	for(i=0; i < PFM_MAX_PMDS; i++) {
+		
+		sprintf(pname, "/sys/kernel/perfmon/pmu_desc/pmd%d/name", i);
+		ret = get_value(pname, name, sizeof(name));
+		if (ret)
+			continue;
 
+		num_pmds++;
+		sprintf(pname, "/sys/kernel/perfmon/pmu_desc/pmd%d/dfl_val", i);
+		get_value(pname, buffer, sizeof(buffer));
+		dfl = strtoull(buffer, NULL, 16);
+
+		sprintf(pname, "/sys/kernel/perfmon/pmu_desc/pmd%d/rsvd_msk", i);
+		get_value(pname, buffer, sizeof(buffer));
+		rsvd = strtoull(buffer, NULL, 16);
+
+		sprintf(pname, "/sys/kernel/perfmon/pmu_desc/pmd%d/addr", i);
+		get_value(pname, buffer, sizeof(buffer));
+		hw_addr = strtoul(buffer, NULL, 0);
+
+		printf("pmd%-3d | 0x%016llx | 0x%016llx | 0x%-17lx | %s\n",
+			i,
+			dfl,
+			rsvd,
+			hw_addr,
+			name);
+	}
+	puts("-------------------------------------------------------------------------------------");
+	printf("%u PMC registers, %u PMD registers\n", num_pmcs, num_pmds);
 	return 0;
-error:
-	fatal_error("invalid format in /proc/perfmon_map\n");
 }

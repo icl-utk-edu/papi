@@ -81,17 +81,12 @@ SRCS   += pfmlib_pentium4.c
 CFLAGS += -DCONFIG_PFMLIB_PENTIUM4
 endif
 
-ifeq ($(CONFIG_PFMLIB_COREDUO),y)
-SRCS   += pfmlib_coreduo.c
-CFLAGS += -DCONFIG_PFMLIB_COREDUO
-endif
-
 ifeq ($(CONFIG_PFMLIB_GEN_MIPS64),y)
 SRCS   += pfmlib_gen_mips64.c
 CFLAGS += -DCONFIG_PFMLIB_GEN_MIPS64
 endif
 
-INCDIR=-I$(PFMINCDIR) -I.
+CFLAGS+=-I.
 SLIBPFM=libpfm.so.$(VERSION).$(REVISION).$(AGE)
 TARGETS=libpfm.a $(SLIBPFM)
 
@@ -109,7 +104,7 @@ pfmlib_amd64.o : amd64_events.h
 pfmlib_i386_p6.o : i386_p6_events.h
 pfmlib_pentium4.o : pentium4_events.h
 pfmlib_gen_mips64.o : gen_mips64_events.h
-pfmlib_coreduo.o : coreduo_events.h
+pfmlib_gen_ia32.o : coreduo_events.h
 
 libpfm.a:  $(OBJS)
 	$(RM) $@
@@ -126,8 +121,8 @@ distclean: clean
 	$(RM) -f $(TARGETS) *.so* *~
 
 depend:
-	$(MKDEP) $(INCDIR) $(CFLAGS) $(SRCS)
+	$(MKDEP) $(CFLAGS) $(SRCS)
 
 install: $(TARGETS)
-	-mkdir -p $(DESTLIBDIR)
-	$(INSTALL) -m 644 $(TARGETS) $(DESTLIBDIR)
+	-mkdir -p $(DESTDIR)$(LIBDIR)
+	$(INSTALL) -m 644 $(TARGETS) $(DESTDIR)$(LIBDIR)

@@ -73,10 +73,6 @@ ifeq ($(CONFIG_PFMLIB_PENTIUM4),y)
 HEADERS += perfmon/pfmlib_pentium4.h
 endif
 
-ifeq ($(CONFIG_PFMLIB_COREDUO),y)
-HEADERS += perfmon/pfmlib_coreduo.h
-endif
-
 ifeq ($(CONFIG_PFMLIB_I386_P6),y)
 HEADERS += perfmon/pfmlib_i386_p6.h
 endif
@@ -93,5 +89,5 @@ endif
 .PHONY: all clean distclean depend
 
 install:
-	-mkdir -p $(DESTINCDIR)/perfmon
-	$(INSTALL) -m 644 $(HEADERS) $(DESTINCDIR)/perfmon
+	-mkdir -p $(DESTDIR)$(INCDIR)/perfmon
+	$(INSTALL) -m 644 $(HEADERS) $(DESTDIR)$(INCDIR)/perfmon

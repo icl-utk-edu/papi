@@ -127,15 +127,15 @@ main(int argc, char **argv)
 	if (argc > 1) {
 		p = argv+1;
 		for (i=0; *p ; i++, p++) {
-			if (pfm_find_event(*p, &inp.pfp_events[i].event) != PFMLIB_SUCCESS) {
+			if (pfm_find_full_event(*p, &inp.pfp_events[i]) != PFMLIB_SUCCESS) {
 				fatal_error("Cannot find %s event\n", *p);
 			}
 		}
 	} else {
-		if (pfm_get_cycle_event(&inp.pfp_events[0].event) != PFMLIB_SUCCESS) {
+		if (pfm_get_cycle_event(&inp.pfp_events[0]) != PFMLIB_SUCCESS) {
 			fatal_error("cannot find cycle event\n");
 		}
-		if (pfm_get_inst_retired_event(&inp.pfp_events[1].event) != PFMLIB_SUCCESS) {
+		if (pfm_get_inst_retired_event(&inp.pfp_events[1]) != PFMLIB_SUCCESS) {
 			fatal_error("cannot find inst retired event\n");
 		}
 		i = 2;
@@ -300,7 +300,7 @@ main(int argc, char **argv)
 		 */
 		puts("------------------------");
 		for (i=0; i < inp.pfp_event_count; i++) {
-			pfm_get_event_name(inp.pfp_events[i].event, name, MAX_EVT_NAME_LEN);
+			pfm_get_full_event_name(&inp.pfp_events[i], name, MAX_EVT_NAME_LEN);
 			printf("CPU%-2d PMD%u raw=%-20"PRIu64" delta=%-20"PRIu64" %s\n",
 					which_cpu,
 					pd[i].reg_num,

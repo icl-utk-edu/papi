@@ -317,6 +317,20 @@ pfm_gen_mips64_get_event_description(unsigned int ev, char **str)
 	return PFMLIB_SUCCESS;
 }
 
+static int
+pfm_gen_mips64_get_cycle_event(pfmlib_event_t *e)
+{
+	e->event = PME_GEN_MIPS64_CYC;
+	return PFMLIB_SUCCESS;
+
+}
+
+static int
+pfm_gen_mips64_get_inst_retired(pfmlib_event_t *e)
+{
+	e->event = PME_GEN_MIPS64_INST;
+	return PFMLIB_SUCCESS;
+}
 pfm_pmu_support_t generic_mips64_support={
 	.pmu_name		= "",
 	.pmu_type		= PFMLIB_GEN_MIPS64_PMU,
@@ -325,8 +339,6 @@ pfm_pmu_support_t generic_mips64_support={
 	.pmd_count		= 0,
 	.num_cnt		= 0,
 	.flags			= PFMLIB_MULT_CODE_EVENT,
-	.cycle_event		= PME_GEN_MIPS64_CYC,
-	.inst_retired_event	= PME_GEN_MIPS64_INST,
 	.get_event_code		= pfm_gen_mips64_get_event_code,
 	.get_event_name		= pfm_gen_mips64_get_event_name,
 	.get_event_counters	= pfm_gen_mips64_get_event_counters,
@@ -336,5 +348,7 @@ pfm_pmu_support_t generic_mips64_support={
 	.get_impl_pmds		= pfm_gen_mips64_get_impl_perfctr,
 	.get_impl_counters	= pfm_gen_mips64_get_impl_counters,
 	.get_hw_counter_width	= pfm_gen_mips64_get_hw_counter_width,
-	.get_event_desc         = pfm_gen_mips64_get_event_description
+	.get_event_desc         = pfm_gen_mips64_get_event_description,
+	.get_cycle_event	= pfm_gen_mips64_get_cycle_event,
+	.get_inst_retired_event = pfm_gen_mips64_get_inst_retired
 };

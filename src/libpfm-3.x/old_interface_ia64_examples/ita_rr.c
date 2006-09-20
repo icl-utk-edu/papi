@@ -391,7 +391,7 @@ main(int argc, char **argv)
 	 *
 	 */
 	for (i=0; i < inp.pfp_event_count; i++) {
-		pfm_get_event_name(inp.pfp_events[i].event, name, MAX_EVT_NAME_LEN);
+		pfm_get_full_event_name(&inp.pfp_events[i], name, MAX_EVT_NAME_LEN);
 		printf("PMD%u %20lu %s (expected %lu)\n",
 			pd[i].reg_num,
 			pd[i].reg_value,

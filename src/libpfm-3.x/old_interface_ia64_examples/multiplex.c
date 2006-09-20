@@ -370,7 +370,8 @@ parent(char **arg)
 	pfm_msg_t msg;
 	struct pollfd ctx_pollfd;
 	pfmlib_regmask_t impl_counters, used_pmcs;
-	unsigned int i, j, k, l, cycles_event_idx, idx;
+	pfmlib_event_t cycle_event;
+	unsigned int i, j, k, l,idx;
 	int r, status, ret;
 	unsigned int max_counters, allowed_counters;
 	pid_t pid;
@@ -389,7 +390,7 @@ parent(char **arg)
 	memset(ctx, 0, sizeof(ctx));
 	memset(&load_arg, 0, sizeof(load_arg));
 
-	if (pfm_get_cycle_event(&cycles_event_idx) != PFMLIB_SUCCESS) {
+	if (pfm_get_cycle_event(&cycle_event) != PFMLIB_SUCCESS) {
 		fatal_error("Cannot find cycle event\n");
 	}
 
@@ -415,9 +416,9 @@ parent(char **arg)
 		if (e->event_names[j]) {
 			fatal_error("cannot have more than %d events per set (CPU_CYCLES uses 1 slot)\n", allowed_counters);
 		}
-		e->pfm_inp.pfp_events[j].event = cycles_event_idx;
-		e->pfm_inp.pfp_event_count     = j+1;
-		e->pfm_inp.pfp_dfl_plm         = options.opt_plm;
+		e->pfm_inp.pfp_events[j]   = cycle_event;
+		e->pfm_inp.pfp_event_count = j+1;
+		e->pfm_inp.pfp_dfl_plm     = options.opt_plm;
 
 		e->n_pmcs     = j+1; 		/* used pmcs +1=sampling period */
 		e->n_counters = j+1;		/* used pmd/pmc counter pairs  +1=sampling period */

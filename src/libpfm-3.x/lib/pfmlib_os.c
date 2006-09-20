@@ -31,73 +31,73 @@
 int
 pfm_create_context(pfarg_ctx_t *ctx, void *smpl_arg, size_t smpl_size)
 {
-	return syscall(__NR_pfm_create_context, ctx, smpl_arg, smpl_size);
+	return (int)syscall(__NR_pfm_create_context, ctx, smpl_arg, smpl_size);
 }
 
 int
 pfm_write_pmcs(int fd, pfarg_pmc_t *pmcs, int count)
 {
-	return syscall(__NR_pfm_write_pmcs, fd, pmcs, count);
+	return (int)syscall(__NR_pfm_write_pmcs, fd, pmcs, count);
 }
 
 int
 pfm_write_pmds(int fd, pfarg_pmd_t *pmds, int count)
 {
-	return syscall(__NR_pfm_write_pmds, fd, pmds, count);
+	return (int)syscall(__NR_pfm_write_pmds, fd, pmds, count);
 }
 
 int
 pfm_read_pmds(int fd, pfarg_pmd_t *pmds, int count)
 {
-	return syscall(__NR_pfm_read_pmds, fd, pmds, count);
+	return (int)syscall(__NR_pfm_read_pmds, fd, pmds, count);
 }
 
 int
 pfm_load_context(int fd, pfarg_load_t *load)
 {
-	return syscall(__NR_pfm_load_context, fd, load);
+	return (int)syscall(__NR_pfm_load_context, fd, load);
 }
 
 int
 pfm_start(int fd, pfarg_start_t *start)
 {
-	return syscall(__NR_pfm_start, fd, start);
+	return (int)syscall(__NR_pfm_start, fd, start);
 }
 
 int
 pfm_stop(int fd)
 {
-	return syscall(__NR_pfm_stop, fd);
+	return (int)syscall(__NR_pfm_stop, fd);
 }
 
 int
 pfm_restart(int fd)
 {
-	return syscall(__NR_pfm_restart, fd);
+	return (int)syscall(__NR_pfm_restart, fd);
 }
 
 int
 pfm_create_evtsets(int fd, pfarg_setdesc_t *setd, int count)
 {
-	return syscall(__NR_pfm_create_evtsets, fd, setd, count);
+	return (int)syscall(__NR_pfm_create_evtsets, fd, setd, count);
 }
 
 int
 pfm_delete_evtsets(int fd, pfarg_setdesc_t *setd, int count)
 {
-	return syscall(__NR_pfm_delete_evtsets, fd, setd, count);
+	return (int)syscall(__NR_pfm_delete_evtsets, fd, setd, count);
 }
 
 int
 pfm_getinfo_evtsets(int fd, pfarg_setinfo_t *info, int count)
 {
-	return syscall(__NR_pfm_getinfo_evtsets, fd, info, count);
+	return (int)syscall(__NR_pfm_getinfo_evtsets, fd, info, count);
 }
 
 int
 pfm_unload_context(int fd)
 {
-	return syscall(__NR_pfm_unload_context, fd);
+	return (int)syscall(__NR_pfm_unload_context, fd);
 }
 
 

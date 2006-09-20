@@ -45,7 +45,7 @@ OBJS=$(SRCS:.c=.o)
 SOBJS=$(OBJS:.o=.lo)
 
 
-INCDIR=-I$(PFMINCDIR) -I$(PFMSINCDIR)
+CFLAGS+=-I$(PFMSINCDIR)
 
 all: $(TARGETS)
 

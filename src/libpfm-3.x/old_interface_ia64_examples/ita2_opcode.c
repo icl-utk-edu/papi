@@ -167,7 +167,7 @@ main(void)
 	 * program a counting monitor with the IA64_TAGGED_INST_RETIRED_PMC8
 	 * event.
 	 */
-	if (pfm_find_event_byname("IA64_TAGGED_INST_RETIRED_IBRP0_PMC8", &inp.pfp_events[0].event) != PFMLIB_SUCCESS) {
+	if (pfm_find_full_event("IA64_TAGGED_INST_RETIRED_IBRP0_PMC8", &inp.pfp_events[0]) != PFMLIB_SUCCESS) {
 		fatal_error("cannot find event IA64_TAGGED_INST_RETIRED_IBRP0_PMC8\n");
 	}
 
@@ -267,7 +267,7 @@ main(void)
 	/*
 	 * print the results
 	 */
-	pfm_get_event_name(inp.pfp_events[0].event, name, MAX_EVT_NAME_LEN);
+	pfm_get_full_event_name(&inp.pfp_events[0], name, MAX_EVT_NAME_LEN);
 	printf("PMD%u %20lu %s\n",
 			pd[0].reg_num,
 			pd[0].reg_value,

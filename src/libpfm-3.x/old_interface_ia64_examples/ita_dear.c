@@ -217,11 +217,12 @@ main(void)
 	pfarg_reg_t pc[NUM_PMCS];
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
+	pfmlib_event_t ev;
 	dear_ctx_t ctx[1];
 	pfarg_load_t load_args;
 	pfmlib_options_t pfmlib_options;
 	struct sigaction act;
-	unsigned int i, ev;
+	unsigned int i;
 	int ret, type = 0;
 
 	/*
@@ -276,7 +277,7 @@ main(void)
 	 * program a counting monitor with the IA64_TAGGED_INST_RETIRED_PMC8
 	 * event.
 	 */
-	if (pfm_find_event_byname(EVENT_NAME, &ev) != PFMLIB_SUCCESS) {
+	if (pfm_find_full_event(EVENT_NAME, &ev) != PFMLIB_SUCCESS) {
 		fatal_error("cannot find event %s\n", EVENT_NAME);
 	}
 
@@ -294,7 +295,7 @@ main(void)
 	/*
 	 * propagate the event descriptor
 	 */
-	inp.pfp_events[0].event = ev;
+	inp.pfp_events[0] = ev;
 	
 	/*
 	 * let the library figure out the values for the PMCS

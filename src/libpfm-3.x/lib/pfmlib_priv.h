@@ -36,8 +36,6 @@ typedef struct {
  	unsigned int	pmd_count; /* number of PMD registers */
  	unsigned int	pmc_count; /* number of PMC registers */
 	unsigned int 	num_cnt;   /* number of counters (counting PMD registers) */
-	unsigned int	cycle_event;
-	unsigned int	inst_retired_event;
 	unsigned int	flags;
 	int		(*get_event_code)(unsigned int i, unsigned int cnt, int *code);
 	int		(*get_event_mask_code)(unsigned int i, unsigned int mask_idx, unsigned int *code);
@@ -53,6 +51,8 @@ typedef struct {
 	void		(*get_hw_counter_width)(unsigned int *width);
 	int		(*get_event_desc)(unsigned int i, char **buf);
 	int		(*get_event_mask_desc)(unsigned int event_idx, unsigned int mask_idx, char **buf);
+	int		(*get_cycle_event)(pfmlib_event_t *e);
+	int		(*get_inst_retired_event)(pfmlib_event_t *e);
 } pfm_pmu_support_t;
 
 #define PFMLIB_MULT_CODE_EVENT	0x1	/* more than one code per event (depending on counter) */
@@ -74,9 +74,6 @@ extern pfm_config_t pfm_config;
 #define PFMLIB_VERBOSE()	pfm_config.options.pfm_verbose
 #define pfm_current		pfm_config.current
 
-#define PMU_HAS_EVENT_MASKS() (pfm_current->get_num_event_masks != NULL && \
-			   pfm_current->get_event_mask_name != NULL)
-
 extern void __pfm_vbprintf(const char *fmt,...);
 extern int __pfm_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen);
 
@@ -92,5 +89,17 @@ extern int __pfm_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen)
 
 #define ALIGN_DOWN(a,p)	((a) & ~((1UL<<(p))-1))
 #define ALIGN_UP(a,p)	((((a) + ((1UL<<(p))-1))) & ~((1UL<<(p))-1))
+
+extern pfm_pmu_support_t montecito_support;
+extern pfm_pmu_support_t itanium2_support;
+extern pfm_pmu_support_t itanium_support;
+extern pfm_pmu_support_t generic_ia64_support;
+extern pfm_pmu_support_t amd64_support;
+extern pfm_pmu_support_t i386_p6_support;
+extern pfm_pmu_support_t i386_pm_support;
+extern pfm_pmu_support_t gen_ia32_support;
+extern pfm_pmu_support_t generic_mips64_support;
+extern pfm_pmu_support_t pentium4_support;
+extern pfm_pmu_support_t coreduo_support;
 
 #endif /* __PFMLIB_PRIV_H__ */

@@ -851,8 +851,8 @@ setup_measurement(void)
 	pfmlib_options_t pfmlib_options;
 	eventdesc_t *evt;
 	setdesc_t *sdesc;
+	pfmlib_event_t trigger_event;
 	unsigned int i, j, k;
-	unsigned int trigger_event;
 	int ret;
 
 	/*
@@ -892,11 +892,10 @@ setup_measurement(void)
 		evt = sdesc->evt_desc;
 
 		for(j=0; evt[j].name ; j++) {
-			if (*evt[j].name == '*') {
-				sdesc->inp.pfp_events[j].event = trigger_event;
-			} else if (pfm_find_event(evt[j].name, &sdesc->inp.pfp_events[j].event) != PFMLIB_SUCCESS) {
+			if (*evt[j].name == '*')
+				sdesc->inp.pfp_events[j] = trigger_event;
+			else if (pfm_find_full_event(evt[j].name, &sdesc->inp.pfp_events[j]) != PFMLIB_SUCCESS)
 				fatal_error("cannot find %s event\n", evt[j].name);
-			}
 			sdesc->inp.pfp_events[j].plm   = evt[j].plm;
 		}
 
@@ -920,9 +919,8 @@ setup_measurement(void)
 		/*
 		 * let the library figure out the values for the PMCS
 		 */
-		if ((ret=pfm_dispatch_events(&sdesc->inp, NULL, &sdesc->outp, NULL)) != PFMLIB_SUCCESS) {
+		if ((ret=pfm_dispatch_events(&sdesc->inp, NULL, &sdesc->outp, NULL)) != PFMLIB_SUCCESS)
 			fatal_error("cannot configure events: %s\n", pfm_strerror(ret));
-		}
 
 		for (j=0; j < sdesc->outp.pfp_pmc_count; j++) {
 			sdesc->pc[j].reg_set   = i;

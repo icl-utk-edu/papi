@@ -53,11 +53,11 @@
 #define evt_use_irange(e)	((e)->pfp_mont_irange.rr_used)
 #define evt_use_drange(e)	((e)->pfp_mont_drange.rr_used)
 
-#define evt_grp(e)	montecito_pe[e].pme_qualifiers.pme_qual.pme_group
-#define evt_set(e)	montecito_pe[e].pme_qualifiers.pme_qual.pme_set
+#define evt_grp(e)	(int)montecito_pe[e].pme_qualifiers.pme_qual.pme_group
+#define evt_set(e)	(int)montecito_pe[e].pme_qualifiers.pme_qual.pme_set
 #define evt_umask(e)	montecito_pe[e].pme_umask
-#define evt_type(e)	montecito_pe[e].pme_type
-#define evt_caf(e)	montecito_pe[e].pme_caf
+#define evt_type(e)	(int)montecito_pe[e].pme_type
+#define evt_caf(e)	(int)montecito_pe[e].pme_caf
 
 #define FINE_MODE_BOUNDARY_BITS	16
 #define FINE_MODE_MASK		~((1U<<FINE_MODE_BOUNDARY_BITS)-1)
@@ -80,6 +80,27 @@
 #define UNEXISTING_SET	0xff
 
 static char * pfm_mont_get_event_name(unsigned int i);
+/*
+ * Description of the PMC register mappings use by
+ * this module (as reported in pfmlib_reg_t.reg_num):
+ *
+ * 0 -> PMC0
+ * 1 -> PMC1
+ * n -> PMCn
+ *
+ * The following are in the model specific rr_br[]:
+ * IBR0 -> 0
+ * IBR1 -> 1
+ * ...
+ * IBR7 -> 7
+ * DBR0 -> 0
+ * DBR1 -> 1
+ * ...
+ * DBR7 -> 7
+ *
+ * We do not use a mapping table, instead we make up the
+ * values on the fly given the base.
+ */
 
 static int
 pfm_mont_detect(void)
@@ -114,12 +135,13 @@ pfm_mont_detect(void)
  */
 static int
 check_cross_groups(pfmlib_input_param_t *inp, unsigned int *l1d_event, 
-		unsigned long *l2d_set1_mask, unsigned long*l2d_set2_mask)
+		unsigned long *l2d_set1_mask, unsigned long *l2d_set2_mask)
 {
 	int g, s, s1, s2;
 	unsigned int cnt = inp->pfp_event_count;
 	pfmlib_event_t *e = inp->pfp_events;
-	unsigned int i, j, l2d_mask1 = 0, l2d_mask2 = 0;
+	unsigned int i, j;
+	unsigned long l2d_mask1 = 0, l2d_mask2 = 0;
 	unsigned int l1d_event_idx = UNEXISTING_SET;
 
 	/*
@@ -440,13 +462,13 @@ pfm_mont_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t 
 	pfmlib_event_t *e;
 	pfmlib_reg_t *pc;
 	pfmlib_regmask_t *r_pmcs;
-	unsigned int i,j;
+	unsigned int i,j, k;
 	unsigned int assign[PMU_MONT_NUM_COUNTERS];
 	unsigned int m, cnt;
 	unsigned int l1d_set;
-	unsigned long l2d_set1_mask, l2d_set2_mask, evt_mask;
+	unsigned long l2d_set1_mask, l2d_set2_mask, evt_mask, mesi;
 	unsigned long not_assigned_events, free_counter_mask;
-	int l2d_set1_p, l2d_set2_p, mesi;
+	int l2d_set1_p, l2d_set2_p;
 	int ret, not_found;
 
 	e      = inp->pfp_events;
@@ -571,11 +593,13 @@ pfm_mont_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t 
 
 	for (j=0; j < cnt ; j++ ) {
 		mesi = 0;
-		if (param && has_mesi(e[j].event)) {
-			mesi |= param->pfp_mont_counters[j].flags & PFMLIB_MONT_FL_MESI_M ? 1<<3 : 0;
-			mesi |= param->pfp_mont_counters[j].flags & PFMLIB_MONT_FL_MESI_E ? 1<<2 : 0;
-			mesi |= param->pfp_mont_counters[j].flags & PFMLIB_MONT_FL_MESI_S ? 1<<1 : 0;
-			mesi |= param->pfp_mont_counters[j].flags & PFMLIB_MONT_FL_MESI_I ? 1 : 0;
+		if (has_mesi(e[j].event)) {
+			for(k=0;k< e[j].num_masks; k++) {
+				mesi |= 1UL << e[j].unit_masks[k];
+			}
+			/* by default we capture everything */
+			if (mesi == 0)
+				mesi = 0xf;
 		}
 		reg.pmc_val    = 0; /* clear all, bits 26-27 must be zero for proper operations */
 		/* if plm is 0, then assume not specified per-event and use default */
@@ -586,10 +610,10 @@ pfm_mont_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t 
 		reg.pmc_ism    = 0x2; /* force IA-64 mode */
 		reg.pmc_umask  = is_ear(e[j].event) ? 0x0 : montecito_pe[e[j].event].pme_umask;
 		reg.pmc_es     = montecito_pe[e[j].event].pme_code;
-		reg.pmc_m      = mesi & (1<<3);
-		reg.pmc_e      = mesi & (1<<2);
-		reg.pmc_s      = mesi & (1<<1);
-		reg.pmc_i      = mesi & 1;
+		reg.pmc_m      = (mesi>>3) & 0x1;
+		reg.pmc_e      = (mesi>>2) & 0x1;
+		reg.pmc_s      = (mesi>>1) & 0x1;
+		reg.pmc_i      =  mesi     & 0x1;
 		/*
 		 * Note that we don't force PMC4.pmc_ena = 1 because the kernel takes care of this for us.
 		 * This way we don't have to program something in PMC4 even when we don't use it
@@ -598,9 +622,12 @@ pfm_mont_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t 
 		pc[j].reg_pmd_num = assign[j];
 		pc[j].reg_evt_idx = j;
 		pc[j].reg_value   = reg.pmc_val;
+		pc[j].reg_addr    = assign[j];
 
-		__pfm_vbprintf("[pmc%u=0x%06lx m=%d e=%d s=%d i=%d thres=%d all=%d es=0x%02x plm=%d umask=0x%x pm=%d ism=0x%x oi=%d] %s\n",
-				assign[j], reg.pmc_val,
+		__pfm_vbprintf("[PMC%u(pmc%u)=0x%06lx m=%d e=%d s=%d i=%d thres=%d all=%d es=0x%02x plm=%d umask=0x%x pm=%d ism=0x%x oi=%d] %s\n",
+				assign[j],
+				assign[j],
+				reg.pmc_val,
 				reg.pmc_m,
 				reg.pmc_e,
 				reg.pmc_s,
@@ -682,16 +709,17 @@ pfm_dispatch_iear(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 	pc[pos].reg_num     = 37; /* PMC37 is I-EAR config register */
 	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
 	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
-	pc[pos++].reg_value = reg.pmc_val;
+	pc[pos].reg_value   = reg.pmc_val;
+	pc[pos++].reg_addr  = 37;
 
 	if (param->pfp_mont_iear.ear_mode == PFMLIB_MONT_EAR_TLB_MODE) {
-		__pfm_vbprintf("[pmc10=0x%lx ctb=tlb plm=%d pm=%d umask=0x%x]\n",
+		__pfm_vbprintf("[PMC37(pmc37)=0x%lx ctb=tlb plm=%d pm=%d umask=0x%x]\n",
 			reg.pmc_val,
 			reg.pmc37_mont_tlb_reg.iear_plm,
 			reg.pmc37_mont_tlb_reg.iear_pm,
 			reg.pmc37_mont_tlb_reg.iear_umask);
 	} else {
-		__pfm_vbprintf("[pmc10=0x%lx ctb=cache plm=%d pm=%d umask=0x%x]\n",
+		__pfm_vbprintf("[PMC37(pmc37)=0x%lx ctb=cache plm=%d pm=%d umask=0x%x]\n",
 			reg.pmc_val,
 			reg.pmc37_mont_cache_reg.iear_plm,
 			reg.pmc37_mont_cache_reg.iear_pm,
@@ -764,9 +792,10 @@ pfm_dispatch_dear(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 	pc[pos].reg_num     = 40;  /* PMC11 is D-EAR config register */
 	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
 	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
-	pc[pos++].reg_value = reg.pmc_val;
+	pc[pos].reg_value   = reg.pmc_val;
+	pc[pos++].reg_addr  = 40;
 
-	__pfm_vbprintf("[pmc40=0x%lx mode=%s plm=%d pm=%d ism=0x%x umask=0x%x]\n",
+	__pfm_vbprintf("[PMC40(pmc40)=0x%lx mode=%s plm=%d pm=%d ism=0x%x umask=0x%x]\n",
 			reg.pmc_val,
 			reg.pmc40_mont_reg.dear_mode == 0 ? "L1D" :
 			(reg.pmc40_mont_reg.dear_mode == 1 ? "L1DTLB" : "ALAT"),
@@ -813,7 +842,8 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 	 * check in any feature is used.
 	 * PMC36 must be setup when opcode matching is used OR when code range restriction is used
 	 */
-	if (used_pmc32 == 0 && used_pmc34 == 0 && param->pfp_mont_irange.rr_used == 0) return 0;
+	if (used_pmc32 == 0 && used_pmc34 == 0 && param->pfp_mont_irange.rr_used == 0)
+		return 0;
 
 	/*
 	 * check for rr_nbr_used to make sure that the range request produced something on output
@@ -849,7 +879,8 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 		pc[pos].reg_num     = 32;
 		pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
 		pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
-		pc[pos++].reg_value = reg1.pmc_val;
+		pc[pos].reg_value   = reg1.pmc_val;
+		pc[pos++].reg_addr  = 32;
 
 		/*
 		 * will be constrained by PMC32
@@ -863,7 +894,8 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 			pc[pos].reg_num     = 33;
 			pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
 			pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
-			pc[pos++].reg_value = reg2.pmc_val;
+			pc[pos].reg_value   = reg2.pmc_val;
+			pc[pos++].reg_addr  = 33;
 
 			has_1st_pair = has_2nd_pair = 0;
 			count        = inp->pfp_event_count;
@@ -876,7 +908,7 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 			if (has_2nd_pair || has_1st_pair == 0) pmc36.pmc36_mont_reg.opcm_ch2_ig_opcm = 0;
 		}
 
-		__pfm_vbprintf("[pmc32=0x%lx m=%d i=%d f=%d b=%d mask=0x%lx inv=%d ig_ad=%d]\n",
+		__pfm_vbprintf("[PMC32(pmc32)=0x%lx m=%d i=%d f=%d b=%d mask=0x%lx inv=%d ig_ad=%d]\n",
 				reg1.pmc_val,
 				reg1.pmc32_34_mont_reg.opcm_m,
 				reg1.pmc32_34_mont_reg.opcm_i,
@@ -885,8 +917,8 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 				reg1.pmc32_34_mont_reg.opcm_mask,
 				reg1.pmc32_34_mont_reg.opcm_inv,
 				reg1.pmc32_34_mont_reg.opcm_ig_ad);
-		if (used_pmc32) 
-			__pfm_vbprintf("[pmc33=0x%lx match=0x%lx]\n",
+		if (used_pmc32)
+			__pfm_vbprintf("[PMC33(pmc33)=0x%lx match=0x%lx]\n",
 					reg2.pmc_val,
 					reg2.pmc33_35_mont_reg.opcm_match);
 	}
@@ -917,11 +949,13 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 		pc[pos].reg_num     = 34;
 		pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
 		pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
-		pc[pos++].reg_value = reg1.pmc_val;
+		pc[pos].reg_value   = reg1.pmc_val;
+		pc[pos++].reg_addr  = 34;
 		pc[pos].reg_num     = 35;
 		pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
 		pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
-		pc[pos++].reg_value = reg2.pmc_val;
+		pc[pos].reg_value   = reg2.pmc_val;
+		pc[pos++].reg_addr  = 35;
 
 		has_1st_pair = has_2nd_pair = 0;
 		count        = inp->pfp_event_count;
@@ -932,7 +966,7 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 		if (has_1st_pair || has_2nd_pair == 0) pmc36.pmc36_mont_reg.opcm_ch1_ig_opcm = 0;
 		if (has_2nd_pair || has_1st_pair == 0) pmc36.pmc36_mont_reg.opcm_ch3_ig_opcm = 0;
 
-		__pfm_vbprintf("[pmc34=0x%lx m=%d i=%d f=%d b=%d mask=0x%lx]\n",
+		__pfm_vbprintf("[PMC34(pmc34)=0x%lx m=%d i=%d f=%d b=%d mask=0x%lx]\n",
 				reg1.pmc_val,
 				reg1.pmc32_34_mont_reg.opcm_m,
 				reg1.pmc32_34_mont_reg.opcm_i,
@@ -940,7 +974,7 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 				reg1.pmc32_34_mont_reg.opcm_b,
 				reg1.pmc32_34_mont_reg.opcm_mask);
 
-		__pfm_vbprintf("[pmc35=0x%lx match=0x%lx]\n",
+		__pfm_vbprintf("[PMC35(pmc35)=0x%lx match=0x%lx]\n",
 				reg2.pmc_val,
 				reg2.pmc33_35_mont_reg.opcm_match);
 
@@ -955,9 +989,10 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 		pc[pos].reg_num     = 36;
 		pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
 		pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
-		pc[pos++].reg_value = pmc36.pmc_val;
+		pc[pos].reg_value   = pmc36.pmc_val;
+		pc[pos++].reg_addr  = 36;
 
-		__pfm_vbprintf("[pmc36=0x%lx ch0_ig_op=%d ch1_ig_op=%d ch2_ig_op=%d ch3_ig_op=%d]\n",
+		__pfm_vbprintf("[PMC36(pmc36)=0x%lx ch0_ig_op=%d ch1_ig_op=%d ch2_ig_op=%d ch3_ig_op=%d]\n",
 				pmc36.pmc_val,
 				pmc36.pmc36_mont_reg.opcm_ch0_ig_opcm,
 				pmc36.pmc36_mont_reg.opcm_ch1_ig_opcm,
@@ -1077,9 +1112,10 @@ assign_zero:
 	pc[pos].reg_num     = 39;
 	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
 	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
-	pc[pos++].reg_value = reg.pmc_val;
+	pc[pos].reg_value   = reg.pmc_val;
+	pc[pos++].reg_addr  = 39;
 
-	__pfm_vbprintf("[pmc39=0x%lx plm=%d pm=%d ds=%d tm=%d ptm=%d ppm=%d brt=%d]\n",
+	__pfm_vbprintf("[PMC39(pmc39)=0x%lx plm=%d pm=%d ds=%d tm=%d ptm=%d ppm=%d brt=%d]\n",
 				reg.pmc_val,
 				reg.pmc39_mont_reg.etbc_plm,
 				reg.pmc39_mont_reg.etbc_pm,
@@ -1181,11 +1217,13 @@ do_normal_rr(unsigned long start, unsigned long end,
 	db.db.db_plm  = plm;
 
 
-	br[*idx].reg_num     = *reg_idx;
-	br[*idx].reg_value   = l_addr;
+	br[*idx].reg_num    = *reg_idx;
+	br[*idx].reg_value  = l_addr;
+	br[*idx].reg_addr   = *reg_idx;
 
 	br[*idx+1].reg_num   = *reg_idx+1;
 	br[*idx+1].reg_value = db.val;
+	br[*idx+1].reg_addr  = *reg_idx+1;
 
 	*idx     += 2;
 	*reg_idx += 2;
@@ -1293,8 +1331,10 @@ compute_fine_rr(pfmlib_mont_input_rr_t *irr, int dfl_plm, int n, int *base_idx, 
 
 		br[0].reg_num   = reg_idx;
 		br[0].reg_value = addr;
+		br[0].reg_addr  = 1+reg_idx;
 		br[1].reg_num   = reg_idx+1;
 		br[1].reg_value = db.val;
+		br[1].reg_addr  = 1+reg_idx+1;
 
 		/*
 		 * setup upper limit pair
@@ -1317,9 +1357,11 @@ compute_fine_rr(pfmlib_mont_input_rr_t *irr, int dfl_plm, int n, int *base_idx, 
 
 		br[2].reg_num   = reg_idx+4;
 		br[2].reg_value = addr;
+		br[2].reg_addr  = 1+reg_idx+4;
 
 		br[3].reg_num   = reg_idx+5;
 		br[3].reg_value = db.val;
+		br[3].reg_addr  = 1+reg_idx+5;
 
 		if (PFMLIB_VERBOSE()) print_one_range(in_rr, out_rr, br, 0, 2, 1, irr->rr_flags);
 	}
@@ -1383,6 +1425,7 @@ found:
 	/* when the event is not IA64_INST_RETIRED, then we MUST use ibrp0 */
 	br[0].reg_num   = reg_idx;
 	br[0].reg_value = p_start;
+	br[0].reg_addr  = 1+reg_idx;
 
 	db.val        = 0;
 	db.db.db_mask = ~((1UL << m)-1);
@@ -1391,6 +1434,7 @@ found:
 
 	br[1].reg_num   = reg_idx + 1;
 	br[1].reg_value = db.val;
+	br[1].reg_addr  = 1+reg_idx+1;
 
 	out_rr->rr_soff = start - p_start;
 	out_rr->rr_eoff = p_end - end;
@@ -1436,7 +1480,7 @@ compute_normal_rr(pfmlib_mont_input_rr_t *irr, int dfl_plm, int n, int *base_idx
 				4 - (reg_idx>>1), /* how many pairs available */
 				0,
 				&br_index,
-				&reg_idx, in_rr->rr_plm ? in_rr->rr_plm : (unsigned long)dfl_plm);
+				&reg_idx, in_rr->rr_plm ? in_rr->rr_plm : dfl_plm);
 
 		DPRINT(("br_index=%d reg_idx=%d\n", br_index, reg_idx));
 
@@ -1624,9 +1668,10 @@ pfm_dispatch_irange(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in
 	pc[pos].reg_num     = 38;
 	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
 	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
-	pc[pos++].reg_value = reg.pmc_val;
+	pc[pos].reg_value   = reg.pmc_val;
+	pc[pos++].reg_addr  = 38;
 
-	__pfm_vbprintf("[pmc38=0x%lx ig_ibrp0=%d ig_ibrp1=%d ig_ibrp2=%d ig_ibrp3=%d fine=%d]\n",
+	__pfm_vbprintf("[PMC38(pmc38)=0x%lx ig_ibrp0=%d ig_ibrp1=%d ig_ibrp2=%d ig_ibrp3=%d fine=%d]\n",
 			reg.pmc_val,
 			reg.pmc38_mont_reg.iarc_ig_ibrp0,
 			reg.pmc38_mont_reg.iarc_ig_ibrp1,
@@ -1792,9 +1837,10 @@ pfm_dispatch_drange(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in
 	pc[pos].reg_num     = 41;
 	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
 	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
-	pc[pos++].reg_value = reg.pmc_val;
+	pc[pos].reg_value   = reg.pmc_val;
+	pc[pos++].reg_addr  = 41;
 
-	__pfm_vbprintf("[pmc41=0x%lx cfg_dtag0=%d cfg_dtag1=%d cfg_dtag2=%d cfg_dtag3=%d ena_dbrp0=%d ena_dbrp1=%d ena_dbrp2=%d ena_dbrp3=%d]\n",
+	__pfm_vbprintf("[PMC41(pmc41)=0x%lx cfg_dtag0=%d cfg_dtag1=%d cfg_dtag2=%d cfg_dtag3=%d ena_dbrp0=%d ena_dbrp1=%d ena_dbrp2=%d ena_dbrp3=%d]\n",
 			reg.pmc_val,
 			reg.pmc41_mont_reg.darc_cfg_dtag0,
 			reg.pmc41_mont_reg.darc_cfg_dtag1,
@@ -1897,11 +1943,12 @@ pfm_dispatch_ipear(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in,
 	pc[pos].reg_num     = 42;
 	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
 	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
-	pc[pos++].reg_value = reg.pmc_val;
+	pc[pos].reg_value   = reg.pmc_val;
+	pc[pos++].reg_addr  = 42;
 
 	outp->pfp_pmc_count = pos;
 
-	__pfm_vbprintf("[pmc42=0x%lx plm=%d pm=%d mode=%d delay=%d]\n",
+	__pfm_vbprintf("[PMC42(pmc42)=0x%lx plm=%d pm=%d mode=%d delay=%d]\n",
 			reg.pmc_val,
 			reg.pmc42_mont_reg.ipear_plm,
 			reg.pmc42_mont_reg.ipear_pm,
@@ -2077,10 +2124,10 @@ done:
 static int
 pfm_mont_get_event_code(unsigned int i, unsigned int cnt, int *code)
 {
-	if (cnt != PFMLIB_CNT_FIRST && (cnt < 4 || cnt > 7))
+	if (cnt != PFMLIB_CNT_FIRST && (cnt < 4 || cnt > 15))
 		return PFMLIB_ERR_INVAL;
 
-	*code = montecito_pe[i].pme_code;
+	*code = (int)montecito_pe[i].pme_code;
 
 	return PFMLIB_SUCCESS;
 }
@@ -2228,6 +2275,65 @@ pfm_mont_get_event_description(unsigned int ev, char **str)
 	return PFMLIB_SUCCESS;
 }
 
+static int
+pfm_mont_get_cycle_event(pfmlib_event_t *e)
+{
+	e->event = PME_MONT_CPU_OP_CYCLES_ALL;
+	return PFMLIB_SUCCESS;
+
+}
+
+static int
+pfm_mont_get_inst_retired(pfmlib_event_t *e)
+{
+	e->event = PME_MONT_IA64_INST_RETIRED;
+	return PFMLIB_SUCCESS;
+}
+
+static unsigned int
+pfm_mont_get_num_event_masks(unsigned int event)
+{
+	return has_mesi(event) ? 4 : 0;
+}
+
+static char *
+pfm_mont_get_event_mask_name(unsigned int event, unsigned int mask)
+{
+	switch(mask) {
+		case 0: return "I";
+		case 1: return "S";
+		case 2: return "E";
+		case 3: return "M";	
+	}
+	return NULL;
+}
+
+static int
+pfm_mont_get_event_mask_desc(unsigned int event, unsigned int mask, char **desc)
+{
+	switch(mask) {
+		case 0: *desc = strdup("invalid");
+			break;
+		case 1: *desc = strdup("shared");
+			break;
+		case 2: *desc = strdup("exclusive");
+			break;
+		case 3: *desc = strdup("modified");	
+			break;
+		default:
+			return PFMLIB_ERR_INVAL;
+	}
+	return PFMLIB_SUCCESS;
+}
+
+static int
+pfm_mont_get_event_mask_code(unsigned int event,
+		 	     unsigned int mask, unsigned int *code)
+{
+	*code = mask;
+	return PFMLIB_SUCCESS;
+}
+
 pfm_pmu_support_t montecito_support={
 	.pmu_name		= "dual-core Itanium 2",
 	.pmu_type		= PFMLIB_MONTECITO_PMU,
@@ -2235,8 +2341,6 @@ pfm_pmu_support_t montecito_support={
 	.pmc_count		= PMU_MONT_NUM_PMCS,
 	.pmd_count		= PMU_MONT_NUM_PMDS,
 	.num_cnt		= PMU_MONT_NUM_COUNTERS,
-	.cycle_event		= PME_MONT_CPU_OP_CYCLES_ALL,
-	.inst_retired_event	= PME_MONT_IA64_INST_RETIRED,
 	.get_event_code		= pfm_mont_get_event_code,
 	.get_event_name		= pfm_mont_get_event_name,
 	.get_event_counters	= pfm_mont_get_event_counters,
@@ -2246,5 +2350,11 @@ pfm_pmu_support_t montecito_support={
 	.get_impl_pmds		= pfm_mont_get_impl_pmds,
 	.get_impl_counters	= pfm_mont_get_impl_counters,
 	.get_hw_counter_width	= pfm_mont_get_hw_counter_width,
-	.get_event_desc         = pfm_mont_get_event_description
+	.get_event_desc         = pfm_mont_get_event_description,
+	.get_cycle_event	= pfm_mont_get_cycle_event,
+	.get_inst_retired_event = pfm_mont_get_inst_retired,
+	.get_num_event_masks	= pfm_mont_get_num_event_masks,
+	.get_event_mask_name	= pfm_mont_get_event_mask_name,
+	.get_event_mask_desc	= pfm_mont_get_event_mask_desc,
+	.get_event_mask_code	= pfm_mont_get_event_mask_code
 };

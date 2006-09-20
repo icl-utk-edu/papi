@@ -291,8 +291,8 @@ pentium4_cccr_reg_t pentium4_cccrs[] = {
 	 .allowed_escrs = { 0, 1, 2, 3, 4, 5, 6, 7 },
 	},
 	{.name = "BPU_CCCR3",
-	 .pmc = 55,
-	 .pmd = 10,
+	 .pmc = 10,
+	 .pmd = 1,
 	 .allowed_escrs = { 23, 24, 25, 26, 27, 28, 29, 30 },
 	},
 	{.name = "MS_CCCR1",
@@ -1512,7 +1512,7 @@ pentium4_event_t pentium4_events[] = {
 	 },
 	*/
 	},
-
+	/* 32 */
 	{.name = "bnr",
 	 .desc = "Number of bus-not-ready conditions.",
 	 .event_select = 0x8,
@@ -1528,7 +1528,7 @@ pentium4_event_t pentium4_events[] = {
 	*/
 	},
 
-	/* 32 */
+	/* 33 */
 	{.name = "snoop",
 	 .desc = "Number of snoop hit modified bus traffic.",
 	 .event_select = 0x6,
@@ -1544,7 +1544,7 @@ pentium4_event_t pentium4_events[] = {
 	*/
 	},
 
-	/* 33 */
+	/* 34 */
 	{.name = "response",
 	 .desc = "Count of different types of responses.",
 	 .event_select = 0x4,
@@ -1560,7 +1560,7 @@ pentium4_event_t pentium4_events[] = {
 	*/
 	},
 
-	/* 34 */
+	/* 35 */
 	{.name = "front_end_event",
 	 .desc = "Number of retirements of tagged uops which are specified "
 		 "through the front-end tagging mechanism.",
@@ -1579,7 +1579,7 @@ pentium4_event_t pentium4_events[] = {
 	 },
 	},
 
-	/* 35 */
+	/* 36 */
 	{.name = "execution_event",
 	 .desc = "Number of retirements of tagged uops which are specified "
 		 "through the execution tagging mechanism. The event-mask "
@@ -1623,7 +1623,7 @@ pentium4_event_t pentium4_events[] = {
 	 },
 	},
 
-	/* 36 */
+	/* 37 */
 	{.name = "replay_event",
 	 .desc = "Number of retirements of tagged uops which are specified "
 		 "through the replay tagging mechanism.",
@@ -1642,7 +1642,7 @@ pentium4_event_t pentium4_events[] = {
 	 },
 	},
 
-	/* 37 */
+	/* 38 */
 	{.name = "instr_retired",
 	 .desc = "Number of instructions retired during a clock cycle.",
 	 .event_select = 0x2,
@@ -1668,7 +1668,7 @@ pentium4_event_t pentium4_events[] = {
 	 },
 	},
 
-	/* 38 */
+	/* 39 */
 	{.name = "uops_retired",
 	 .desc = "Number of uops retired during a clock cycle.",
 	 .event_select = 0x1,
@@ -1686,7 +1686,7 @@ pentium4_event_t pentium4_events[] = {
 	 },
 	},
 
-	/* 39 */
+	/* 40 */
 	{.name = "uops_type",
 	 .desc = "This event is used in conjunction with with the front-end "
 		 "mechanism to tag load and store uops.",
@@ -1705,7 +1705,7 @@ pentium4_event_t pentium4_events[] = {
 	 },
 	},
 
-	/* 40 */
+	/* 41 */
 	{.name = "branch_retired",
 	 .desc = "Number of retirements of a branch.",
 	 .event_select = 0x6,
@@ -1731,7 +1731,7 @@ pentium4_event_t pentium4_events[] = {
 	 },
 	},
 
-	/* 41 */
+	/* 42 */
 	{.name = "mispred_branch_retired",
 	 .desc = "Number of retirements of mispredicted "
 		 "IA-32 branch instructions",
@@ -1746,7 +1746,7 @@ pentium4_event_t pentium4_events[] = {
 	 },
 	},
 
-	/* 42 */
+	/* 43 */
 	{.name = "x87_assist",
 	 .desc = "Number of retirements of x87 instructions that required "
 		 "special handling.",
@@ -1777,7 +1777,7 @@ pentium4_event_t pentium4_events[] = {
 	 },
 	},
 
-	/* 43 */
+	/* 44 */
 	{.name = "machine_clear",
 	 .desc = "Number of occurances when the entire "
 		 "pipeline of the machine is cleared.",
@@ -1805,7 +1805,7 @@ pentium4_event_t pentium4_events[] = {
 	 },
 	},
 
-	/* 44 */
+	/* 45 */
 	{.name = "instr_completed",
 	 .desc = "Instructions that have completed and "
 		 "retired during a clock cycle",
@@ -1831,7 +1831,7 @@ pentium4_event_t pentium4_events[] = {
  * INST_RETIRED uses the instr_retired event.
  */
 #define PENTIUM4_CPU_CLK_UNHALTED 24
-#define PENTIUM4_INST_RETIRED     37
+#define PENTIUM4_INST_RETIRED     38
 
 #endif
 

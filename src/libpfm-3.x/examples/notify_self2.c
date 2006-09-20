@@ -83,13 +83,13 @@ sigio_handler(int n, struct siginfo *info, void *data)
 	int fd;
 	int r =0;
 
-	if (info == NULL) {
+	if (info == NULL)
 		fatal_error("info is NULL\n");
-	}
+
 	fd = info->si_fd;
-	if (fd != ctx_fd) {
+	if (fd != ctx_fd)
 		fatal_error("handler does not get valid file descriptor\n");
-	}
+
 	if (event1_name && pfm_read_pmds(fd, pd+1, 1))
 		fatal_error("pfm_read_pmds: %s", strerror(errno));
 retry:
@@ -137,6 +137,13 @@ busyloop(void)
 	for(;notification_received < 20;) ;
 }
 
+#define BPL (sizeof(uint64_t)<<3)
+#define LBPL	6
+
+static inline void pfm_bv_set(uint64_t *bv, uint16_t rnum)
+{
+	bv[rnum>>LBPL] |= 1UL << (rnum&(BPL-1));
+}
 
 int
 main(int argc, char **argv)
@@ -175,6 +182,7 @@ main(int argc, char **argv)
 	 */
 	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
 	pfmlib_options.pfm_debug = 0; /* set to 1 for debug */
+	pfmlib_options.pfm_verbose = 1; /* set to 1 for verbose */
 	pfm_set_options(&pfmlib_options);
 
 	memset(pc, 0, sizeof(pc));
@@ -185,10 +193,10 @@ main(int argc, char **argv)
 
 	pfm_get_num_counters(&num_counters);
 
-	if (pfm_get_cycle_event(&inp.pfp_events[0].event) != PFMLIB_SUCCESS)
+	if (pfm_get_cycle_event(&inp.pfp_events[0]) != PFMLIB_SUCCESS)
 		fatal_error("cannot find cycle event\n");
 
-	if (pfm_get_inst_retired_event(&inp.pfp_events[1].event) != PFMLIB_SUCCESS)
+	if (pfm_get_inst_retired_event(&inp.pfp_events[1]) != PFMLIB_SUCCESS)
 		fatal_error("cannot find inst retired event\n");
 
 	i = 2;
@@ -204,18 +212,17 @@ main(int argc, char **argv)
 		printf("too many events provided (max=%d events), using first %d event(s)\n", num_counters, i);
 	}
 
+	inp.pfp_event_count = i;
 	/*
 	 * how many counters we use
 	 */
-	inp.pfp_event_count = i;
-
 	if (i > 1) {
 		pfm_get_max_event_name_len(&len);
 		event1_name = malloc(len+1);
 		if (event1_name == NULL)
 			fatal_error("cannot allocate event name\n");
 
-		pfm_get_event_name(inp.pfp_events[1].event, event1_name, len+1);
+		pfm_get_full_event_name(&inp.pfp_events[1], event1_name, len+1);
 	}
 
 	/*
@@ -262,16 +269,17 @@ main(int argc, char **argv)
 	 * figure out pmd mapping from output pmc
 	 */
 	for (i=0, j=0; i < inp.pfp_event_count; i++) {
-		pd[i].reg_num   = outp.pfp_pmcs[i].reg_pmd_num;
+		pd[i].reg_num   = outp.pfp_pmcs[j].reg_pmd_num;
 		for(; j < outp.pfp_pmc_count; j++)  if (outp.pfp_pmcs[j].reg_evt_idx != i) break;
 	}
 	/*
 	 * We want to get notified when the counter used for our first
 	 * event overflows
 	 */
-	pd[0].reg_flags 	|= PFM_REGFL_OVFL_NOTIFY;
+	pd[0].reg_flags |= PFM_REGFL_OVFL_NOTIFY;
+
 	if (inp.pfp_event_count > 1)
-		pd[0].reg_reset_pmds[0] |= 1UL << pd[1].reg_num;
+		pfm_bv_set(pd[0].reg_reset_pmds, pd[1].reg_num);
 
 	/*
 	 * we arm the first counter, such that it will overflow
@@ -318,7 +326,6 @@ main(int argc, char **argv)
 	ret = fcntl(ctx_fd, F_SETOWN, getpid());
 	if (ret == -1)
 		fatal_error("cannot setown: %s\n", strerror(errno));
-
 #ifndef _GNU_SOURCE
 #error "this program must be compiled with -D_GNU_SOURCE"
 #else

@@ -258,10 +258,10 @@ mainloop(char **arg)
 
 	pfm_get_num_counters(&num_counters);
 
-	if (pfm_get_cycle_event(&inp.pfp_events[0].event) != PFMLIB_SUCCESS)
+	if (pfm_get_cycle_event(&inp.pfp_events[0]) != PFMLIB_SUCCESS)
 		fatal_error("cannot find cycle event\n");
 
-	if (pfm_get_inst_retired_event(&inp.pfp_events[1].event) != PFMLIB_SUCCESS)
+	if (pfm_get_inst_retired_event(&inp.pfp_events[1]) != PFMLIB_SUCCESS)
 		fatal_error("cannot find inst retired event\n");
 
 	i = 2;

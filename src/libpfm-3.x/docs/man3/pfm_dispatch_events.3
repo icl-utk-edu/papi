@@ -129,24 +129,27 @@ structure which is defined as:
 .sp
 .nf
 typedef struct {
+    unsigned long long reg_value;
     unsigned int       reg_num;
     unsigned int       reg_evt_idx;
     unsigned int       reg_pmd_num;
-    unsigned long long reg_value;
-} pfmlib_pmc_t;
+    unsigned long      reg_addr;
+} pfmlib_reg_t;
 
 typedef struct {
     unsigned int pfp_pmc_count;
-    pfmlib_pmc_t pfp_pmcs[PFMLIB_MAX_PMCS];
+    pfmlib_reg_t pfp_pmcs[PFMLIB_MAX_PMCS];
 } pfmlib_output_param_t;
 .fi
 .sp
 The number of valid entries  in the \fBpfp_pmcs\fR table is indicated by \fBpfp_pmc_count\fR.
-Each entry in the table is of type \fBpfmlib_pmc_t\fR and contains the PMC register index
-in \fBreg_num\fR and its 64-bit value in \fBreg_value\fR. Those two fields must be copied to the
-appropriate OS dependent data structure and passed to the kernel. In addition,
-the \fBreg_evt_idx\fR ield indicates which of the event given on input the PMC
-register corresponds to. Finally the \fBreg_pmd_num\fR field indicates which
+Each entry in the table is of type \fBpfmlib_reg_t\fR and contains the PMC register index
+in \fBreg_num\fR and its 64-bit value in \fBreg_value\fR. The index value corresponds to the
+logical PMC index as implemented by the library. It may be different from your operating system
+expected values.  The mapping from logical register index to actual hardware register is indicated
+in the \fBreg_addr\fR field which contains the hardware address of index of register.
+The \fBreg_evt_idx\fR ield indicates which of the event given on input, the PMC
+register corresponds to. Finally, The \fBreg_pmd_num\fR field indicates which
 counter (or data register), if any, corresponds to this PMC.
 
 Refer to the PMU specific manual for a description of the model-specific 

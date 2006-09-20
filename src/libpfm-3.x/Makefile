@@ -34,6 +34,7 @@ DIRS +=old_interface_ia64_examples
 endif
 
 all: 
+	@echo Compiling for \'$(ARCH)\' target
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 
 clean: 

@@ -363,7 +363,7 @@ main(void)
 	 * program a counting monitor with the IA64_TAGGED_INST_RETIRED_PMC8
 	 * event.
 	 */
-	if (pfm_find_event_byname("BRANCH_EVENT", &inp.pfp_events[0].event) != PFMLIB_SUCCESS)
+	if (pfm_find_full_event("BRANCH_EVENT", &inp.pfp_events[0]) != PFMLIB_SUCCESS)
 		fatal_error("cannot find event BRANCH_EVENT\n");
 
 	/*

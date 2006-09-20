@@ -28,7 +28,7 @@
 # It is included by every Makefile
 #
 #
-ARCH:=$(shell uname -m)
+ARCH := $(shell uname -m)
 ifeq (i686,$(findstring i686,$(ARCH)))
 override ARCH=ia32
 endif
@@ -45,9 +45,10 @@ endif
 # Where should things (lib, headers, man) go in the end.
 #
 install_prefix=/usr/local
-DESTLIBDIR=$(install_prefix)/lib
-DESTINCDIR=$(install_prefix)/include
-MANDIR=$(install_prefix)/share/man
+PREFIX=$(install_prefix)
+LIBDIR=$(PREFIX)/lib
+INCDIR=$(PREFIX)/include
+MANDIR=$(PREFIX)/share/man
 
 #
 # Configuration Paramaters for libpfm library
@@ -64,6 +65,7 @@ ifeq ($(ARCH),x86_64)
 CONFIG_PFMLIB_ARCH_X86_64=y
 CONFIG_PFMLIB_AMD64=y
 CONFIG_PFMLIB_PENTIUM4=y
+CONFIG_PFMLIB_GEN_IA32=y
 endif
 
 ifeq ($(ARCH),ia32)
@@ -72,7 +74,6 @@ CONFIG_PFMLIB_I386_P6=y
 CONFIG_PFMLIB_GEN_IA32=y
 CONFIG_PFMLIB_AMD64=y
 CONFIG_PFMLIB_PENTIUM4=y
-CONFIG_PFMLIB_COREDUO=y
 endif
 
 ifeq ($(ARCH),mips64)
@@ -95,15 +96,14 @@ OPTIM=-O2
 # or GNU C
 #CC=icc
 CC=gcc
-
-DBG=-g -Wall -Werror
-CFLAGS=$(OPTIM) $(DBG)
-LDFLAGS=-L$(TOPDIR)/libpfm
-MKDEP=makedepend
-
-
 LIBS=
 INSTALL=install
 LN=ln -sf
 PFMINCDIR=$(TOPDIR)/include
 PFMLIBDIR=$(TOPDIR)/lib
+DBG=-g -Wall -Werror
+CFLAGS=$(OPTIM) $(DBG) -I$(PFMINCDIR)
+LDFLAGS=-L$(PFMLIBDIR)
+MKDEP=makedepend
+
+

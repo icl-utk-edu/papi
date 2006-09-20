@@ -25,15 +25,9 @@ TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)/../..
 include $(TOPDIR)/config.mk
 include $(TOPDIR)/rules.mk
 
-#LDFLAGS+=-static 
-
-LIBS += -lm
-
-INCDIR=-I$(PFMINCDIR) 
+LIBS += -lpfm -lm
 
 TARGETS=smpl_pebs
-
-PFMLIB=$(PFMLIBDIR)/libpfm.a
 
 all: $(TARGETS)
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done

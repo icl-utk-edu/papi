@@ -38,6 +38,81 @@
 #include "pfmlib_pentium4_priv.h"
 #include "pentium4_events.h"
 
+typedef struct {
+	unsigned long addr;
+	char *name;
+} p4_regmap_t;
+
+#define P4_REGMAP(a, n) { .addr = a, .name = n }
+
+static p4_regmap_t p4_regmap[]={
+/* 0 */ P4_REGMAP(0x3b2, "BPU_ESCR0"),
+/* 1 */ P4_REGMAP(0x3b4, "IS_ESCR0"),
+/* 2 */ P4_REGMAP(0x3aa, "MOB_ESCR0"),
+/* 3 */ P4_REGMAP(0x3b6, "ITLB_ESCR0"),
+/* 4 */ P4_REGMAP(0x3ac, "PMH_ESCR0"),
+/* 5 */ P4_REGMAP(0x3c8, "IX_ESCR0"),
+/* 6 */ P4_REGMAP(0x3a2, "FSB_ESCR0"),
+/* 7 */ P4_REGMAP(0x3a0, "BSU_ESCR0"),
+/* 8 */ P4_REGMAP(0x3c0, "MS_ESCR0"),
+/* 9 */ P4_REGMAP(0x3c4, "TC_ESCR0"),
+/* 10 */ P4_REGMAP(0x3c2, "TBPU_ESCR0"),
+/* 11 */ P4_REGMAP(0x3a6, "FLAME_ESCR0"),
+/* 12 */ P4_REGMAP(0x3a4, "FIRM_ESCR0"),
+/* 13 */ P4_REGMAP(0x3ae, "SAAT_ESCR0"),
+/* 14 */ P4_REGMAP(0x3b0, "U2L_ESCR0"),
+/* 15 */ P4_REGMAP(0x3a8, "DAC_ESCR0"),
+/* 16 */ P4_REGMAP(0x3ba, "IQ_ESCR0"),
+/* 17 */ P4_REGMAP(0x3ca, "ALF_ESCR0"),
+/* 18 */ P4_REGMAP(0x3bc, "RAT_ESCR0"),
+/* 19 */ P4_REGMAP(0x3be, "SSU_ESCR0"),
+/* 20 */ P4_REGMAP(0x3b8, "CRU_ESCR0"),
+/* 21 */ P4_REGMAP(0x3cc, "CRU_ESCR2"),
+/* 22 */ P4_REGMAP(0x3e0, "CRU_ESCR4"),
+/* 23 */ P4_REGMAP(0x360, "BPU_CCCR0"),
+/* 24 */ P4_REGMAP(0x362, "BPU_CCCR2"),
+/* 25 */ P4_REGMAP(0x364, "MS_CCCR0"),
+/* 26 */ P4_REGMAP(0x366, "MS_CCCR2"),
+/* 27 */ P4_REGMAP(0x368, "FLAME_CCCR0"),
+/* 28 */ P4_REGMAP(0x36a, "FLAME_CCCR2"),
+/* 29 */ P4_REGMAP(0x36c, "IQ_CCCR0"),
+/* 30 */ P4_REGMAP(0x36e, "IQ_CCCR2"),
+/* 31 */ P4_REGMAP(0x370, "IQ_CCCR4"),
+/* 32 */ P4_REGMAP(0x3b3, "BPU_ESCR1"),
+/* 33 */ P4_REGMAP(0x3b5, "IS_ESCR1"),
+/* 34 */ P4_REGMAP(0x3ab, "MOB_ESCR1"),
+/* 35 */ P4_REGMAP(0x3b7, "ITLB_ESCR1"),
+/* 36 */ P4_REGMAP(0x3ad, "PMH_ESCR1"),
+/* 37 */ P4_REGMAP(0x3c9, "IX_ESCR1"),
+/* 38 */ P4_REGMAP(0x3a3, "FSB_ESCR1"),
+/* 39 */ P4_REGMAP(0x3a1, "BSU_ESCR1"),
+/* 40 */ P4_REGMAP(0x3c1, "MS_ESCR1"),
+/* 41 */ P4_REGMAP(0x3c5, "TC_ESCR1"),
+/* 42 */ P4_REGMAP(0x3c3, "TBPU_ESCR1"),
+/* 43 */ P4_REGMAP(0x3a7, "FLAME_ESCR1"),
+/* 44 */ P4_REGMAP(0x3a5, "FIRM_ESCR1"),
+/* 45 */ P4_REGMAP(0x3af, "SAAT_ESCR1"),
+/* 46 */ P4_REGMAP(0x3b1, "U2L_ESCR1"),
+/* 47 */ P4_REGMAP(0x3a9, "DAC_ESCR1"),
+/* 48 */ P4_REGMAP(0x3bb, "IQ_ESCR1"),
+/* 49 */ P4_REGMAP(0x3cb, "ALF_ESCR1"),
+/* 50 */ P4_REGMAP(0x3bd, "RAT_ESCR1"),
+/* 51 */ P4_REGMAP(0x3b9, "CRU_ESCR1"),
+/* 52 */ P4_REGMAP(0x3cd, "CRU_ESCR3"),
+/* 53 */ P4_REGMAP(0x3e1, "CRU_ESCR5"),
+/* 54 */ P4_REGMAP(0x361, "BPU_CCCR1"),
+/* 55 */ P4_REGMAP(0x363, "BPU_CCCR3"),
+/* 56 */ P4_REGMAP(0x365, "MS_CCCR1"),
+/* 57 */ P4_REGMAP(0x367, "MS_CCCR3"),
+/* 58 */ P4_REGMAP(0x369, "FLAME_CCCR1"),
+/* 59 */ P4_REGMAP(0x36b, "FLAME_CCCR3"),
+/* 60 */ P4_REGMAP(0x36d, "IQ_CCCR1"),
+/* 61 */ P4_REGMAP(0x36f, "IQ_CCCR3"),
+/* 62 */ P4_REGMAP(0x371, "IQ_CCCR5"),
+/* 63 */ P4_REGMAP(0x3f2, "PEBS_MATRIX_VERT"),
+/* 64 */ P4_REGMAP(0x3f1, "PEBS_ENABLE"),
+};
+
 /**
  * pentium4_get_event_code
  *
@@ -213,9 +288,8 @@ static int pentium4_dispatch_events(pfmlib_input_param_t *input,
 		/* Examine each ESCR that this event could be assigned to. */
 		for (k = 0; k < MAX_ESCRS_PER_EVENT && !assigned; k++) {
 			escr = pentium4_events[event].allowed_escrs[k];
-			if (escr < 0) {
+			if (escr < 0)
 				continue;
-			}
 
 			/* Make sure this ESCR isn't already assigned
 			 * and isn't on the "unavailable" list.
@@ -263,8 +337,8 @@ static int pentium4_dispatch_events(pfmlib_input_param_t *input,
 				/* Set up the ESCR and CCCR register values. */
 				escr_value.val = 0;
 
-				escr_value.bits.t1_usr       = 0; /* FIXME: Assumes non-HT */
-				escr_value.bits.t1_os        = 0; /* FIXME: Assumes non-HT */
+				escr_value.bits.t1_usr       = 0; /* controlled by kernel */
+				escr_value.bits.t1_os        = 0; /* controlled by kernel */
 				escr_value.bits.t0_usr       = (plm & PFM_PLM3) ? 1 : 0;
 				escr_value.bits.t0_os        = (plm & PFM_PLM0) ? 1 : 0;
 				escr_value.bits.tag_enable   = 0; /* FIXME: What do we do with the "tag" entries? */
@@ -287,7 +361,7 @@ static int pentium4_dispatch_events(pfmlib_input_param_t *input,
 				cccr_value.bits.force_ovf     = 0; /* FIXME: Do we want to allow "forcing" overflow
 								    *        interrupts on all counter increments? */
 				cccr_value.bits.ovf_pmi_t0    = 1;
-				cccr_value.bits.ovf_pmi_t1    = 0; /* FIXME: Assumes non-HT. */
+				cccr_value.bits.ovf_pmi_t1    = 0; /* PMI taken care of by kernel typically */
 				cccr_value.bits.reserved2     = 0;
 				cccr_value.bits.cascade       = 0; /* FIXME: How do we handle "cascading" counters? */
 				cccr_value.bits.overflow      = 0;
@@ -299,11 +373,14 @@ static int pentium4_dispatch_events(pfmlib_input_param_t *input,
 				output->pfp_pmcs[j].reg_evt_idx = i;
 				output->pfp_pmcs[j].reg_value = escr_value.val;
 				output->pfp_pmcs[j].reg_pmd_num = cccr_pmd;
+				output->pfp_pmcs[j].reg_addr = p4_regmap[escr_pmc].addr;
 
-				__pfm_vbprintf("[escr=0x%lx os=%lu usr=%lu tag=%lu tagval=0x%lx mask=%lu sel=0x%lx] %s\n",
+				__pfm_vbprintf("[%s(pmc%u)=0x%lx os=%u usr=%u tag=%u tagval=0x%x mask=%u sel=0x%x] %s\n",
+						p4_regmap[escr_pmc].name,
+						escr_pmc,
 						escr_value.val,
+						escr_value.bits.t0_os,
 						escr_value.bits.t0_usr,
-						escr_value.bits.t1_usr,
 						escr_value.bits.tag_enable,
 						escr_value.bits.tag_value,
 						escr_value.bits.event_mask,
@@ -316,9 +393,13 @@ static int pentium4_dispatch_events(pfmlib_input_param_t *input,
 				output->pfp_pmcs[j].reg_evt_idx = i;
 				output->pfp_pmcs[j].reg_value = cccr_value.val;
 				output->pfp_pmcs[j].reg_pmd_num = cccr_pmd;
+				output->pfp_pmcs[j].reg_addr = p4_regmap[cccr_pmc].addr;
 
-				__pfm_vbprintf("[cccr=0x%lx ena=1 sel=0x%lx cmp=%lu cmpl=%lu thres=%lu edg=%lu cas=%lu] %s\n",
+				__pfm_vbprintf("[%s(pmc%u)=0x%lx pmd=%u ena=1 sel=0x%x cmp=%u cmpl=%u thres=%u edg=%u cas=%u] %s\n",
+						p4_regmap[cccr_pmc].name,
+						cccr_pmc,
 						cccr_value.val,
+						cccr_pmd,
 						cccr_value.bits.escr_select,
 						cccr_value.bits.compare,
 						cccr_value.bits.complement,
@@ -331,13 +412,11 @@ static int pentium4_dispatch_events(pfmlib_input_param_t *input,
 				output->pfp_pmc_count += 2;
 			}
 		}
-
-		if (k == MAX_ESCRS_PER_EVENT) {
+		if (k == MAX_ESCRS_PER_EVENT && !assigned) {
 			/* Couldn't find an available ESCR and/or CCCR. */
 			return PFMLIB_ERR_NOASSIGN;
 		}
 	}
-
 	return PFMLIB_SUCCESS;
 }
 
@@ -472,6 +551,26 @@ static int pentium4_get_event_mask_code(unsigned int event,
 	return PFMLIB_SUCCESS;
 }
 
+static int
+pentium4_get_cycle_event(pfmlib_event_t *e)
+{
+	e->event = PENTIUM4_CPU_CLK_UNHALTED;
+	e->num_masks = 1;
+	e->unit_masks[0] = 0;
+	return PFMLIB_SUCCESS;
+
+}
+
+static int
+pentium4_get_inst_retired(pfmlib_event_t *e)
+{
+	e->event = PENTIUM4_INST_RETIRED;
+	e->num_masks = 1;
+	e->unit_masks[0] = 0;
+	return PFMLIB_SUCCESS;
+}
+
+
 
 /**
  * pentium4_support
@@ -483,8 +582,6 @@ pfm_pmu_support_t pentium4_support = {
 	.pmd_count		= PENTIUM4_NUM_PMDS,
 	.pmc_count		= PENTIUM4_NUM_PMCS,
 	.num_cnt		= PENTIUM4_NUM_PMDS,
-	.cycle_event		= PENTIUM4_CPU_CLK_UNHALTED,
-	.inst_retired_event	= PENTIUM4_INST_RETIRED,
 	.get_event_code		= pentium4_get_event_code,
 	.get_event_name		= pentium4_get_event_name,
 	.get_event_mask_name	= pentium4_get_event_mask_name,
@@ -498,6 +595,8 @@ pfm_pmu_support_t pentium4_support = {
 	.get_hw_counter_width	= pentium4_get_hw_counter_width,
 	.get_event_desc         = pentium4_get_event_desc,
 	.get_event_mask_desc	= pentium4_get_event_mask_desc,
-	.get_event_mask_code	= pentium4_get_event_mask_code
+	.get_event_mask_code	= pentium4_get_event_mask_code,
+	.get_cycle_event	= pentium4_get_cycle_event,
+	.get_inst_retired_event = pentium4_get_inst_retired
 };
 

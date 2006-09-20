@@ -346,7 +346,7 @@ main(void)
 	mont_inp.pfp_mont_etb.etb_brt = 0x0;
 	mont_inp.pfp_mont_etb.etb_plm = PFM_PLM3;
 
-	if (pfm_find_event_byname("ETB_EVENT", &inp.pfp_events[0].event) != PFMLIB_SUCCESS)
+	if (pfm_find_full_event("ETB_EVENT", &inp.pfp_events[0]) != PFMLIB_SUCCESS)
 		fatal_error("cannot find event ETB_EVENT\n");
 
 	/*

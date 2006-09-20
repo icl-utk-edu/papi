@@ -110,10 +110,10 @@ main(int argc, char **argv)
 		fatal_error("cannot allocate memory for event name\n");
 
 
-	if (pfm_get_cycle_event(&inp.pfp_events[0].event) != PFMLIB_SUCCESS)
+	if (pfm_get_cycle_event(&inp.pfp_events[0]) != PFMLIB_SUCCESS)
 		fatal_error("cannot find cycle event\n");
 
-	if (pfm_get_inst_retired_event(&inp.pfp_events[1].event) != PFMLIB_SUCCESS)
+	if (pfm_get_inst_retired_event(&inp.pfp_events[1]) != PFMLIB_SUCCESS)
 		fatal_error("cannot find inst retired event\n");
 
 	i = 2;
@@ -248,7 +248,7 @@ main(int argc, char **argv)
 	 */
 	for(j=0, k= 0; j < ncpus; j++) {
 		for (i=0; i < inp.pfp_event_count; i++, k++) {
-			pfm_get_event_name(inp.pfp_events[i].event, name, len);
+			pfm_get_full_event_name(&inp.pfp_events[i], name, len);
 			printf("CPU%-3d PMD%u %20"PRIu64" %s\n",
 			j,
 			pd[k].reg_num,

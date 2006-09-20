@@ -909,7 +909,7 @@ main(int argc, char **argv)
 	 */
 	for(j=0, k= 0; j < ncpus; j++) {
 		for (i=0; i < inp.pfp_event_count; i++, k++) {
-			pfm_get_event_name(inp.pfp_events[i].event, name, len);
+			pfm_get_full_event_name(&inp.pfp_events[i], name, len);
 			printf("CPU%-3d PMD%u %20"PRIu64" %s\n",
 			j,
 			pd[k].reg_num,

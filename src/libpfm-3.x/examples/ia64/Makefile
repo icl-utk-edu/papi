@@ -32,8 +32,6 @@ LDFLAGS+=-static
 
 LIBS += -lm
 
-INCDIR=-I$(PFMINCDIR) 
-
 ifeq ($(CONFIG_PFMLIB_ITANIUM),y)
 SRCS +=ita_rr.c ita_irr.c ita_opcode.c ita_btb.c ita_dear.c
 endif
@@ -62,7 +60,7 @@ distclean: clean
 	$(RM) -f $(TARGETS)
 
 depend:
-	$(MKDEP) $(INCDIR) $(CFLAGS) $(SRCS)
+	$(MKDEP) $(CFLAGS) $(SRCS)
 
 #
 # examples are installed as part of the RPM install, typically in /usr/share/doc/libpfm-X.Y/

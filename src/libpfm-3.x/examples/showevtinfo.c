@@ -107,12 +107,14 @@ show_event_info(char *name, unsigned int idx)
 	}
 }
 
+#define MAX_PMU_NAME_LEN 32
 int
 main(int argc, char **argv)
 {
 	unsigned int i, count, match;
 	char *name;
 	regex_t preg;
+	char model[MAX_PMU_NAME_LEN];
 
 	if (pfm_initialize() != PFMLIB_SUCCESS)
 		fatal_error("PMU model not supported by library\n");
@@ -129,6 +131,8 @@ main(int argc, char **argv)
 	else
 		++argv;
 
+	pfm_get_pmu_name(model, MAX_PMU_NAME_LEN);
+	printf("PMU model: %s\n", model);
 	while(*argv) {
 		if (regcomp(&preg, *argv, REG_ICASE|REG_NOSUB))
 			fatal_error("error in regular expression for event \"%s\"\n", *argv);

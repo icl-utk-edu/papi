@@ -28,5 +28,5 @@ include $(TOPDIR)/rules.mk
 .PHONY: all clean distclean depend
 
 install:
-	-mkdir -p $(MANDIR)
-	( cd man3; $(INSTALL) -m 644 *.3 $(MANDIR) )
+	-mkdir -p $(DESTDIR)$(MANDIR)
+	( cd man3; $(INSTALL) -m 644 *.3 $(DESTDIR)$(MANDIR) )

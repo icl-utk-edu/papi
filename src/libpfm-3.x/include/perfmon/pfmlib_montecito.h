@@ -453,12 +453,6 @@ typedef struct {
 #define PFMLIB_MONT_FL_EVT_ACTIVE_ONLY	0x4 /* measure the event only when the thread is active */
 #define PFMLIB_MONT_FL_EVT_ALWAYS	0x8 /* measure the event at all times (active or inactive) */
 
-#define PFMLIB_MONT_FL_MESI_M	0x10 /* MESI Modified */
-#define PFMLIB_MONT_FL_MESI_E	0x20 /* MESI Exclusive */
-#define PFMLIB_MONT_FL_MESI_S	0x40 /* MESI Shared */
-#define PFMLIB_MONT_FL_MESI_I	0x80 /* MESI Invalid */
-#define PFMLIB_MONT_FL_MESI_ALL	(PFMLIB_MONT_FL_MESI_M|PFMLIB_MONT_FL_MESI_E|PFMLIB_MONT_FL_MESI_S|PFMLIB_MONT_FL_MESI_I)
-
 /*
  *
  * The ETB can be configured via 4 different methods:

@@ -25,12 +25,12 @@
 .SUFFIXES: .c .S .o .lo .cpp
 
 .S.o:
-	$(CC) $(INCDIR) $(CFLAGS) -c $*.S
+	$(CC) $(CFLAGS) -c $*.S
 .c.o:
-	$(CC) $(INCDIR) $(CFLAGS) -c $*.c
+	$(CC) $(CFLAGS) -c $*.c
 .cpp.o:
-	$(CXX) $(INCDIR) $(CFLAGS) -c $*.cpp
+	$(CXX) $(CFLAGS) -c $*.cpp
 .c.lo:
-	$(CC) -fPIC -DPIC $(INCDIR) $(CFLAGS) -c $*.c -o $*.lo
+	$(CC) -fPIC -DPIC $(CFLAGS) -c $*.c -o $*.lo
 .S.lo:
-	$(CC) -fPIC -DPIC $(INCDIR) $(CFLAGS) -c $*.S -o $*.lo
+	$(CC) -fPIC -DPIC $(CFLAGS) -c $*.S -o $*.lo

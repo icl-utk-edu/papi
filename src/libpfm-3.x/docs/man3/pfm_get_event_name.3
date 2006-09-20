@@ -1,13 +1,14 @@
 .TH LIBPFM 3  "August, 2006" "" "Linux Programmer's Manual"
 .SH NAME
-pfm_get_event_name, pfm_get_event_mask_name, pfm_get_event_code, pfm_get_event_mask_code, pfm_get_event_counters,
-pfm_get_num_events, pfm_get_max_event_name_len, pfm_get_event_description,
-pfm_get_event_mask_description \- get event information
+pfm_get_event_name, pfm_get_full_event_name, pfm_get_event_mask_name, pfm_get_event_code,
+pfm_get_event_mask_code, pfm_get_event_counters, pfm_get_num_events, pfm_get_max_event_name_len,
+pfm_get_event_description, pfm_get_event_mask_description \- get event information
 .SH SYNOPSIS
 .nf
 .B #include <perfmon/pfmlib.h>
 .sp
 .BI "int pfm_get_event_name(unsigned int " e ", char *"name ", size_t" maxlen ");"
+.BI "int pfm_get_full_event_name(pfmlib_event_t *" ev ", char *"name ", size_t" maxlen ");"
 .BI "int pfm_get_event_mask_name(unsigned int " e ", unsigned int "mask ", char *"name ", size_t" maxlen ");"
 .BI "int pfm_get_event_code(unsigned int " e ", int *"code ");"
 .BI "int pfm_get_event_mask_code(unsigned int " e ", unsigned int "mask ", int *"code ");"
@@ -19,24 +20,21 @@ pfm_get_event_mask_description \- get event information
 .BI "int pfm_get_event_mask_description(unsigned int " ev ", unsigned int "mask ", char **" str ");"
 .sp
 .SH DESCRIPTION
-The PMU counters can be programmed to measure the number of occurrences
-of certain events. The number of events varies from one PMU implementation
-to the other. Each event has a name and a code which is used to program
-the actual PMU register. Not all events can necessarily be programmed on
-any of the available counters due to hardware constraints.
-.sp
-The library does not directly expose the event code to user applications
-because it is not necessary. Instead applications use names to
-query the library for particular information about events. Given
-a name, the library returns an opaque descriptor to applications. 
-Each descriptor is unique and has no relationship to the event code.
-All functions require the library to be properly initialized.
-.sp
 The \fBpfm_get_event_name\fR function returns in \fBname\fR the event 
-name given its opaque descriptor \fBe\fR. The \fBmaxlen\fR argument 
+name given its opaque descriptor in \fBe\fR. The \fBmaxlen\fR argument 
 indicates the maximum length of the buffer provided for \fBname\fR.
 Up to \fBmaxlen-1\fR characters will be returned, not including the
-termination character.
+termination character. Event names are returned in all upper case.
+.sp
+The \fBpfm_get_full_event_name\fR function returns in \fBname\fR the event 
+name given the full event description in \fBev\fR. The description contains
+the event code in \fBev->event\fR and optional unit masks descriptors in
+\fBev->unit_masks\fR. The \fBmaxlen\fR argument indicates the maximum length
+of the buffer provided for \fBname\fR.  If more than \fBmaxlen-1\fR characters
+are needed to represent the event, an error is returned.
+In case unit masks are provided, the final event name string is structured as:
+event_name:unit_masks1[:unit_masks2]. Event names and unit masks names are
+returned in all upper case.
 .sp
 The \fBpfm_get_event_code\fR function returns the event code in \fBcode\fR
 given its opaque descriptor \fBe\fR.
@@ -115,6 +113,9 @@ All functions return whether or not the call was successful.  A return value of
 .SH ERRORS
 .B PFMLIB_ERR_NOINIT
 the library has not been initialized properly.
+.TP
+.B PFMLIB_ERR_FULL
+the string buffer provided is too small
 .TP
 .B PFMLIB_ERR_INVAL
 the event or unit mask descriptor, or the \fBcnt\fR argument is invalid, or a pointer argument is NULL.
