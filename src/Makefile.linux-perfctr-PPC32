@@ -6,6 +6,6 @@ CPU_TYPE 	= ppc32
 SHRFLAGS	= 
 
 BITS		= 32
-CFLAGS		= -g -DDEBUG -D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\"
+CFLAGS		= -D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\"
 FFLAGS		= -D$(CPU_MODEL)
 include Rules.perfctr
