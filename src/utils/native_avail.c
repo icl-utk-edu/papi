@@ -3,6 +3,16 @@
 #include "papi_test.h"
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
+static void print_help(char **argv)
+{
+   printf("Usage: %s [-dh]\n",argv[0]);
+   printf("Options:\n\n");
+   printf("\t-d            Display detailed information about all native events\n");
+   printf("\t-h            Print this help message\n");
+   printf("\n");
+   printf("This program provides information about PAPI native events.\n");
+}
+
 int main(int argc, char **argv)
 {
    int i, j, k;
@@ -15,9 +25,31 @@ int main(int argc, char **argv)
 #ifdef PENTIUM4
    int l;
 #endif
+   int print_event_info = 0;
+   char *name = NULL;
+   int print_tabular = 0;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
-   /*for(i=0;i<argc;i++) */
+
+   for (i = 0; i < argc; i++)
+     {
+       if (strstr(argv[i], "-e")) 
+	 {
+	   print_event_info = 1;
+	   name = argv[i+1];
+	   if ((name == NULL) || (strlen(name) == 0))
+	     {
+	       print_help(argv);
+	       exit(1);
+	     }
+	 }
+       else if (strstr(argv[i], "-d"))
+	 print_tabular = 1;
+       else if (strstr(argv[i], "-h")) {
+	 print_help(argv);
+	 exit(1);
+       }
+     }
 
    retval = PAPI_library_init(PAPI_VER_CURRENT);
    if (retval != PAPI_VER_CURRENT)
@@ -34,7 +66,7 @@ int main(int argc, char **argv)
 
    if (!TESTS_QUIET) {
       printf
-          ("Test case NATIVE_AVAIL: Available native events and hardware information.\n");
+          ("Available native events and hardware information.\n");
       printf
           ("-------------------------------------------------------------------------\n");
       printf("Vendor string and code   : %s (%d)\n", hwinfo->vendor_string,
@@ -50,9 +82,9 @@ int main(int argc, char **argv)
       printf
           ("-------------------------------------------------------------------------\n");
 
-      printf("The following correspond to fields in the PAPI_event_info_t structure.\n");
+      printf("The following correspond to fields in the PAPI_event_info_t structure.\n\n");
       
-      printf("Symbol Event_Code Long_Description\n\n");
+      printf("%-32s %-12s %s\n Register Name[n]\n Register Value[n]\n\n","Symbol","Event Code","Long Description");
 
    }
    i = 0 | PAPI_NATIVE_MASK;
@@ -73,18 +105,20 @@ int main(int argc, char **argv)
          j++;
          retval = PAPI_get_event_info(i, &info);
 
-	 printf("%-26s 0x%-10x %s\n",
+	 printf("%-32s 0x%-10x %s\n",
 		info.symbol,
 		info.event_code,
 		info.long_descr);
 
-   for (k=0;k<(int)info.count;k++)
-     {
-       printf("\tRegister Name[%d]: %s\n",k,info.name[k]);
-       printf("\tRegister Value[%d]: 0x%-10x\n",k,info.code[k]);
-     }
-   if (k) printf("\n");
-
+     if (print_tabular)
+       {
+	 for (k=0;k<(int)info.count;k++)
+	   {
+	     printf(" Register Name[%d]: %s\n",k,info.name[k]);
+	     printf(" Register Value[%d]: 0x%-10x\n",k,info.code[k]);
+	   }
+	 if (k) printf("\n");
+       }
 #ifdef _POWER4
          if (!TESTS_QUIET)
             printf("Groups: ");
