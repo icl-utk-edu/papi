@@ -125,7 +125,9 @@ void do_misses(int n, int size)
     {
       for (i = 0; i < len; i++)
 	{
-	  buf[i] = tmp;
+	  /* We need to read, modify, write here to look
+	     out for the write allocate policies. */
+	  buf[i] += tmp;
 	}
       tmp += len;
     }
