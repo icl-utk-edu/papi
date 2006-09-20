@@ -1076,31 +1076,43 @@ case "$OS" in
    else
 		    MAKEVER="$OS"-pfm-"$CPU"
 		 fi ;;
-            opteron|em64t)
-                 if test "${with_bitmode}" = "32"; then
-                 	MAKEVER="$OS"-perfctr-"$CPU""-32bit" 
-                 else
+            opteron|em64t|athlon|p4|p3)
+		if test "$arch" = "x86_64"; then
 			if test "$perfctr" != "no"; then
+				if test "${with_bitmode}" = "32"; then
+				 	MAKEVER="$OS"-perfctr-"$CPU""-32bit" 
+				else
+					MAKEVER="$OS"-perfctr-"$CPU" 
+				fi
+			elif test "$perfmon" != "no"; then
+				MAKEVER="$OS"-perfmon2
+			else
+				MAKEVER="$OS"-perfctr-"$CPU"
+			fi
+		else
+		        if test "${bitmode}" = "64"; then
+			   AC_MSG_ERROR([The bitmode you specified is not supported])
+			elif test "$perfctr" != "no"; then
 			   MAKEVER="$OS"-perfctr-"$CPU" 
-		        elif test "$perfmon" != "no"; then
+			elif test "$perfmon" != "no"; then
 			   MAKEVER="$OS"-perfmon2
 			else
 			   MAKEVER="$OS"-perfctr-"$CPU"
 			fi
-		 fi
+		fi
 		 ;; 
-            athlon|p4|p3|p2)
-                 if test "${bitmode}" = "64"; then
+            p2)
+                if test "${bitmode}" = "64"; then
                    AC_MSG_ERROR([The bitmode you specified is not supported])
-                 fi
+                fi
 		if test "$perfctr" != "no"; then
 		   MAKEVER="$OS"-perfctr-"$CPU" 
 		elif test "$perfmon" != "no"; then
 		   MAKEVER="$OS"-perfmon2
 		else
 		   MAKEVER="$OS"-perfctr-"$CPU"
-   fi
-   ;;
+		fi
+		;;
             PPC32)
                  if test "${bitmode}" = "64"; then
                    AC_MSG_ERROR([The bitmode you specified is not supported])
@@ -1197,7 +1209,7 @@ fi
 if test "$OS" = "linux" -a "$bitmode" = "64"; then
    if test "$arch" = "mips64" -o "$arch" = "ppc64" -o "$arch" = "x86_64"; then
       if test "$libdir" = '${exec_prefix}/lib'; then
-        $libdir='${exec_prefix}/lib64'
+        libdir='${exec_prefix}/lib64'
       fi
    fi
 fi

@@ -241,10 +241,10 @@ $(CPU)_events.o: $(CPU)_events.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPU)_events.c -o $@
 
 linux.o: linux.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $^ -o $@
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
 
 $(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $^ -o $@
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c  $(ARCH_EVENTS)_map.c -o $@
 
 native_clean:
 ifeq (,${PERFCTR_PREFIX})
