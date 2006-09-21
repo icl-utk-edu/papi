@@ -52,7 +52,11 @@ VERSION ?= 3.x
 endif
 endif
 	
-OPTFLAGS	+= -O3 # -DDEBUG -g
+ifeq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))
+OPTFLAGS	+= -O3 $(DEBUGFLAGS)
+else
+OPTFLAGS	+= -g $(DEBUGFLAGS)
+endif
 FFLAGS        	+= -Dlinux -DITANIUM$(CPU)
 TOPTFLAGS	+= -O  
 FTOPTFLAGS	= $(TOPTFLAGS)
@@ -111,8 +115,8 @@ else
 	@echo '$@ not installed!'; exit 1
 endif
 
-$(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
-	ar xv $<
+$(PFM_OBJS): 
+	ar xv $(PFM_LIB_PATH)/libpfm.a
 	$(MAKE) $(MAKEFLAGS); echo "If you made it here, you may safely ignore this error."; exit 1
 
 native_clean:
