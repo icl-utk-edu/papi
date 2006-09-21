@@ -131,7 +131,7 @@ main(int argc, char **argv)
 	pfarg_context_t ctx;
 	pfarg_load_t load_args;
 	pfmlib_options_t pfmlib_options;
-	unsigned int i, j;
+	unsigned int i;
 	int id, num_pmcs = 0;
 	char name[MAX_EVT_NAME_LEN];
 
@@ -290,10 +290,8 @@ main(int argc, char **argv)
 	/*
 	 * figure out pmd mapping from output pmc
 	 */
-	for (i=0, j=0; i < inp.pfp_event_count; i++) {
-		pd[i].reg_num   = outp.pfp_pmcs[j].reg_pmd_num;
-		for(; j < outp.pfp_pmc_count; j++)  if (outp.pfp_pmcs[j].reg_evt_idx != i) break;
-	}
+	for (i=0; i < outp.pfp_pmd_count; i++)
+		pd[i].reg_num   = outp.pfp_pmds[i].reg_num;
 
 	/*
 	 * Now program the registers
@@ -310,7 +308,7 @@ main(int argc, char **argv)
 	if (perfmonctl(id, PFM_WRITE_PMCS, pc, num_pmcs))
 		fatal_error("child: pfm_write_pmcs error errno %d\n",errno);
 
-	if (perfmonctl(id, PFM_WRITE_PMDS, pd, inp.pfp_event_count))
+	if (perfmonctl(id, PFM_WRITE_PMDS, pd, outp.pfp_pmd_count))
 		fatal_error( "child: pfm_write_pmds error errno %d\n",errno);
 
 	/*
@@ -367,7 +365,7 @@ main(int argc, char **argv)
 	 */
 	for (i=0; i < inp.pfp_event_count; i++) {
 		pfm_get_full_event_name(&inp.pfp_events[i], name, MAX_EVT_NAME_LEN);
-		printf("PMD%u %20lu %s (expected %lu)\n",
+		printf("PMD%-3u %20lu %s (expected %lu)\n",
 			pd[i].reg_num,
 			pd[i].reg_value,
 			name, N_LOOP);

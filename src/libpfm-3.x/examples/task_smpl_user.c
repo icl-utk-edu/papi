@@ -232,7 +232,7 @@ mainloop(char **arg)
 	uint64_t ovfl_count = 0;
 	pid_t pid;
 	int status, ret, fd;
-	unsigned int i, j, num_counters;
+	unsigned int i, num_counters;
 
 	/*
 	 * intialize all locals
@@ -307,14 +307,8 @@ mainloop(char **arg)
 		pc[i].reg_num   = outp.pfp_pmcs[i].reg_num;
 		pc[i].reg_value = outp.pfp_pmcs[i].reg_value;
 	}
-
-	/*
-	 * figure out pmd mapping from output pmc
-	 */
-	for (i=0, j=0; i < inp.pfp_event_count; i++, num_pmds++) {
-		pd[i].reg_num = outp.pfp_pmcs[j].reg_pmd_num;
-		for(; j < outp.pfp_pmc_count; j++)  if (outp.pfp_pmcs[j].reg_evt_idx != i) break;
-
+	for (i=0; i < outp.pfp_pmd_count; i++) {
+		pd[i].reg_num = outp.pfp_pmds[i].reg_num;
 		/*
 		 * we also want to reset the other PMDs on
 		 * every overflow. If we do not set
@@ -322,7 +316,7 @@ mainloop(char **arg)
 		 * will be untouched.
 		 */
 		if (i)
-			pfm_bv_set(pd[0].reg_reset_pmds, pd[0].reg_num);
+			pfm_bv_set(pd[0].reg_reset_pmds, pd[i].reg_num);
 	}
 
 	/*
@@ -389,7 +383,7 @@ mainloop(char **arg)
 	 * To be read, each PMD must be either written or declared
 	 * as being part of a sample (reg_smpl_pmds)
 	 */
-	if (pfm_write_pmds(fd, pd, inp.pfp_event_count))
+	if (pfm_write_pmds(fd, pd, outp.pfp_pmd_count))
 		fatal_error("pfm_write_pmds error errno %d\n",errno);
 
 

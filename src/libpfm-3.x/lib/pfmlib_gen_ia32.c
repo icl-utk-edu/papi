@@ -71,7 +71,8 @@ pfm_pmu_support_t *gen_support;
  * We do not use a mapping table, instead we make up the
  * values on the fly given the base.
  */
-#define PFMLIB_GEN_IA32_MSR_BASE 0x186
+#define GEN_IA32_SEL_BASE 0x186
+#define GEN_IA32_CTR_BASE 0xc1
 
 #define PFMLIB_GEN_IA32_ALL_FLAGS \
 	(PFM_GEN_IA32_SEL_INV|PFM_GEN_IA32_SEL_EDGE)
@@ -281,7 +282,7 @@ pfm_gen_ia32_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_ia32_input_
 	pfmlib_gen_ia32_counter_t *cntrs;
 	pfm_gen_ia32_sel_reg_t reg;
 	pfmlib_event_t *e;
-	pfmlib_reg_t *pc;
+	pfmlib_reg_t *pc, *pd;
 	pfmlib_regmask_t *r_pmcs;
 	unsigned long plm;
 	unsigned int i, j, cnt, k, umask;
@@ -289,6 +290,7 @@ pfm_gen_ia32_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_ia32_input_
 
 	e      = inp->pfp_events;
 	pc     = outp->pfp_pmcs;
+	pd     = outp->pfp_pmds;
 	cnt    = inp->pfp_event_count;
 	r_pmcs = &inp->pfp_unavail_pmcs;
 	cntrs  = param ? param->pfp_gen_ia32_counters : NULL;
@@ -355,10 +357,10 @@ pfm_gen_ia32_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_ia32_input_
 		}
 
 		pc[j].reg_num     = assign[j];
-		pc[j].reg_pmd_num = assign[j];
-		pc[j].reg_evt_idx = j;
-		pc[j].reg_value   = reg.val;
-		pc[j].reg_addr    = PFMLIB_GEN_IA32_MSR_BASE+j;
+		pc[j].reg_addr    = GEN_IA32_SEL_BASE+assign[j];
+
+		pd[j].reg_num  = assign[j];
+		pd[j].reg_addr = GEN_IA32_CTR_BASE+assign[j];
 
 		__pfm_vbprintf("[PERFEVTSEL%u(pmc%u)=0x%llx event_sel=0x%x umask=0x%x os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d] %s\n",
 			assign[j],
@@ -374,9 +376,12 @@ pfm_gen_ia32_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_ia32_input_
 			reg.sel_edge,
 			reg.sel_cnt_mask,
 			gen_ia32_pe[e[j].event].pme_name);
+
+		__pfm_vbprintf("[PMC%u(pmd%u)]\n", pd[j].reg_num, pd[j].reg_num);
 	}
 	/* number of evtsel registers programmed */
 	outp->pfp_pmc_count = cnt;
+	outp->pfp_pmd_count = cnt;
 
 	return PFMLIB_SUCCESS;
 }

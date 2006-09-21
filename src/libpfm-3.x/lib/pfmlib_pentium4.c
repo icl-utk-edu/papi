@@ -45,7 +45,7 @@ typedef struct {
 
 #define P4_REGMAP(a, n) { .addr = a, .name = n }
 
-static p4_regmap_t p4_regmap[]={
+static p4_regmap_t p4_pmc_regmap[]={
 /* 0 */ P4_REGMAP(0x3b2, "BPU_ESCR0"),
 /* 1 */ P4_REGMAP(0x3b4, "IS_ESCR0"),
 /* 2 */ P4_REGMAP(0x3aa, "MOB_ESCR0"),
@@ -112,6 +112,29 @@ static p4_regmap_t p4_regmap[]={
 /* 63 */ P4_REGMAP(0x3f2, "PEBS_MATRIX_VERT"),
 /* 64 */ P4_REGMAP(0x3f1, "PEBS_ENABLE"),
 };
+
+static p4_regmap_t p4_pmd_regmap[]={
+/* 0 */ P4_REGMAP(0x300, "BPU_CTR0"),
+/* 1 */ P4_REGMAP(0x302, "BPU_CTR2"),
+/* 2 */ P4_REGMAP(0x304, "MS_CTR0"),
+/* 3 */ P4_REGMAP(0x306, "MS_CTR2"),
+/* 4 */ P4_REGMAP(0x308, "FLAME_CTR0"),
+/* 5 */ P4_REGMAP(0x30a, "FLAME_CTR2"),
+/* 6 */ P4_REGMAP(0x30c, "IQ_CTR0"),
+/* 7 */ P4_REGMAP(0x30e, "IQ_CTR2"),
+/* 8 */ P4_REGMAP(0x310, "IQ_CTR4"),
+/* 9 */ P4_REGMAP(0x301, "BPU_CTR1"),
+/* 10 */ P4_REGMAP(0x303, "BPU_CTR3"),
+/* 11 */ P4_REGMAP(0x305, "MS_CTR1"),
+/* 12 */ P4_REGMAP(0x307, "MS_CTR3"),
+/* 13 */ P4_REGMAP(0x309, "FLAME_CTR1"),
+/* 14 */ P4_REGMAP(0x30b, "FLAME_CTR3"),
+/* 15 */ P4_REGMAP(0x30d, "IQ_CTR1"),
+/* 16 */ P4_REGMAP(0x30f, "IQ_CTR3"),
+/* 17 */ P4_REGMAP(0x311, "IQ_CTR5"),
+};
+
+static int p4_model;
 
 /**
  * pentium4_get_event_code
@@ -370,13 +393,12 @@ static int pentium4_dispatch_events(pfmlib_input_param_t *input,
 				 * output->pfp_pmcs array.
 				 */
 				output->pfp_pmcs[j].reg_num = escr_pmc;
-				output->pfp_pmcs[j].reg_evt_idx = i;
 				output->pfp_pmcs[j].reg_value = escr_value.val;
-				output->pfp_pmcs[j].reg_pmd_num = cccr_pmd;
-				output->pfp_pmcs[j].reg_addr = p4_regmap[escr_pmc].addr;
+				output->pfp_pmcs[j].reg_addr = p4_pmc_regmap[escr_pmc].addr;
+
 
 				__pfm_vbprintf("[%s(pmc%u)=0x%lx os=%u usr=%u tag=%u tagval=0x%x mask=%u sel=0x%x] %s\n",
-						p4_regmap[escr_pmc].name,
+						p4_pmc_regmap[escr_pmc].name,
 						escr_pmc,
 						escr_value.val,
 						escr_value.bits.t0_os,
@@ -390,16 +412,16 @@ static int pentium4_dispatch_events(pfmlib_input_param_t *input,
 				j++;
 
 				output->pfp_pmcs[j].reg_num = cccr_pmc;
-				output->pfp_pmcs[j].reg_evt_idx = i;
 				output->pfp_pmcs[j].reg_value = cccr_value.val;
-				output->pfp_pmcs[j].reg_pmd_num = cccr_pmd;
-				output->pfp_pmcs[j].reg_addr = p4_regmap[cccr_pmc].addr;
+				output->pfp_pmcs[j].reg_addr = p4_pmc_regmap[cccr_pmc].addr;
 
-				__pfm_vbprintf("[%s(pmc%u)=0x%lx pmd=%u ena=1 sel=0x%x cmp=%u cmpl=%u thres=%u edg=%u cas=%u] %s\n",
-						p4_regmap[cccr_pmc].name,
+				output->pfp_pmds[i].reg_num = cccr_pmd;
+				output->pfp_pmds[i].reg_addr = p4_pmd_regmap[cccr_pmd].addr;
+
+				__pfm_vbprintf("[%s(pmc%u)=0x%lx ena=1 sel=0x%x cmp=%u cmpl=%u thres=%u edg=%u cas=%u] %s\n",
+						p4_pmc_regmap[cccr_pmc].name,
 						cccr_pmc,
 						cccr_value.val,
-						cccr_pmd,
 						cccr_value.bits.escr_select,
 						cccr_value.bits.compare,
 						cccr_value.bits.complement,
@@ -407,6 +429,7 @@ static int pentium4_dispatch_events(pfmlib_input_param_t *input,
 						cccr_value.bits.edge,
 						cccr_value.bits.cascade,
 						pentium4_events[event].name);
+				__pfm_vbprintf("[%s(pmd%u)]\n", p4_pmd_regmap[output->pfp_pmds[i].reg_num].name, output->pfp_pmds[i].reg_num);
 				j++;
 
 				output->pfp_pmc_count += 2;
@@ -417,6 +440,8 @@ static int pentium4_dispatch_events(pfmlib_input_param_t *input,
 			return PFMLIB_ERR_NOASSIGN;
 		}
 	}
+	output->pfp_pmd_count = input->pfp_event_count;
+
 	return PFMLIB_SUCCESS;
 }
 
@@ -443,6 +468,15 @@ static int pentium4_pmu_detect(void)
 		return PFMLIB_ERR_NOTSUPP;
 
 	family = atoi(buffer);
+
+	ret = __pfm_getcpuinfo_attr("model", buffer, sizeof(buffer));
+	if (ret == -1)
+		return PFMLIB_ERR_NOTSUPP;
+
+	/*
+	 * we use model to detect model 2 which has one more counter IQ_ESCR1
+	 */
+	p4_model = atoi(buffer);
 
 	return family == 15 ? PFMLIB_SUCCESS : PFMLIB_ERR_NOTSUPP;
 }

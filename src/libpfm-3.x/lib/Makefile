@@ -104,7 +104,7 @@ pfmlib_amd64.o : amd64_events.h
 pfmlib_i386_p6.o : i386_p6_events.h
 pfmlib_pentium4.o : pentium4_events.h
 pfmlib_gen_mips64.o : gen_mips64_events.h
-pfmlib_gen_ia32.o : coreduo_events.h
+pfmlib_gen_ia32.o : gen_ia32_events.h coreduo_events.h
 
 libpfm.a:  $(OBJS)
 	$(RM) $@
@@ -125,4 +125,5 @@ depend:
 
 install: $(TARGETS)
 	-mkdir -p $(DESTDIR)$(LIBDIR)
-	$(INSTALL) -m 644 $(TARGETS) $(DESTDIR)$(LIBDIR)
+	$(INSTALL) -m 644 libpfm.a $(DESTDIR)$(LIBDIR)
+	$(INSTALL) $(SLIBPFM) $(DESTDIR)$(LIBDIR)

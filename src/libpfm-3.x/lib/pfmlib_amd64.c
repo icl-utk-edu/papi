@@ -51,6 +51,19 @@
 static char * pfm_amd64_get_event_name(unsigned int i);
 
 #define PFMLIB_AMD64_HAS_COMBO(_e) ((amd64_pe[_e].pme_flags & PFMLIB_AMD64_UMASK_COMBO) != 0)
+/*
+ * Description of the PMC register mappings use by
+ * this module:
+ * pfp_pmcs[].reg_num:
+ * 	0 -> PMC0 -> PERFEVTSEL0 -> MSR @ 0xc0010000
+ * 	1 -> PMC1 -> PERFEVTSEL1 -> MSR @ 0xc0010001
+ * 
+ * pfp_pmds[].reg_num:
+ * 	0 -> PMD0 -> PERCTR0 -> MSR @ 0xc0010004
+ * 	1 -> PMD1 -> PERCTR1 -> MSR @ 0xc0010005
+ */
+#define AMD64_SEL_BASE	0xc0010000
+#define AMD64_CTR_BASE	0xc0010004
 
 static int
 pfm_amd64_detect(void)
@@ -84,7 +97,7 @@ pfm_amd64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_amd64_input_param_
 	pfmlib_amd64_counter_t *cntrs;
 	pfm_amd64_sel_reg_t reg;
 	pfmlib_event_t *e;
-	pfmlib_reg_t *pc;
+	pfmlib_reg_t *pc, *pd;
 	pfmlib_regmask_t *r_pmcs;
 	unsigned long plm;
 	unsigned int i, j, k, cnt, umask;
@@ -92,6 +105,7 @@ pfm_amd64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_amd64_input_param_
 
 	e      = inp->pfp_events;
 	pc     = outp->pfp_pmcs;
+	pd     = outp->pfp_pmds;
 	cnt    = inp->pfp_event_count;
 	r_pmcs = &inp->pfp_unavail_pmcs;
 	cntrs  = param ? param->pfp_amd64_counters : NULL;
@@ -167,13 +181,12 @@ pfm_amd64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_amd64_input_param_
 			reg.sel_edge	 = cntrs[j].flags & PFM_AMD64_SEL_EDGE ? 1 : 0;
 			reg.sel_inv	 = cntrs[j].flags & PFM_AMD64_SEL_INV ? 1 : 0;
 		}
-		pc[j].reg_num = assign[j];
-		/*
-		 * XXX: assumes perfmon2 AMD64 mappings!
-		 */
-		pc[j].reg_pmd_num = assign[j];
-		pc[j].reg_evt_idx = j;
-		pc[j].reg_value   = reg.val;
+		pc[j].reg_num   = assign[j];
+		pc[j].reg_value = reg.val;
+		pc[j].reg_addr	= AMD64_SEL_BASE+assign[j];
+
+		pd[j].reg_num  = assign[j];
+		pd[j].reg_addr = AMD64_CTR_BASE+assign[j];
 
 		__pfm_vbprintf("[PERFSEL%u(pmc%u)=0x%llx emask=0x%x umask=0x%x os=%d usr=%d inv=%d en=%d int=%d edge=%d cnt_mask=%d] %s\n",
 			assign[j],
@@ -189,9 +202,12 @@ pfm_amd64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_amd64_input_param_
 			reg.sel_edge,
 			reg.sel_cnt_mask,
 			amd64_pe[e[j].event].pme_name);
+
+		__pfm_vbprintf("[PERFCTR%u(pmd%u)]\n", pd[j].reg_num, pd[j].reg_num);
 	}
-	/* number of evtsel registers programmed */
+	/* number of evtsel/ctr registers programmed */
 	outp->pfp_pmc_count = cnt;
+	outp->pfp_pmd_count = cnt;
 
 	return PFMLIB_SUCCESS;
 }

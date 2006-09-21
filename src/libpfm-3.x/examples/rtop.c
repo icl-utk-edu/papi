@@ -852,7 +852,7 @@ setup_measurement(void)
 	eventdesc_t *evt;
 	setdesc_t *sdesc;
 	pfmlib_event_t trigger_event;
-	unsigned int i, j, k;
+	unsigned int i, j;
 	int ret;
 
 	/*
@@ -927,10 +927,9 @@ setup_measurement(void)
 			sdesc->pc[j].reg_num   = sdesc->outp.pfp_pmcs[j].reg_num;
 			sdesc->pc[j].reg_value = sdesc->outp.pfp_pmcs[j].reg_value;
 		}
-		for (j=0, k=0; j < sdesc->inp.pfp_event_count; j++) {
+		for (j=0; j < sdesc->outp.pfp_pmd_count; j++) {
+			sdesc->pd[j].reg_num = sdesc->outp.pfp_pmds[j].reg_num;
 			sdesc->pd[j].reg_set = i;
-			sdesc->pd[j].reg_num = sdesc->outp.pfp_pmcs[k].reg_pmd_num;
-			for(; k < sdesc->outp.pfp_pmc_count; k++)  if (sdesc->outp.pfp_pmcs[k].reg_evt_idx != j) break;
 		}
 	}
 }

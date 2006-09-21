@@ -95,22 +95,10 @@ typedef struct {
 typedef struct {
 	unsigned long long	reg_value;	/* register value */
 	unsigned int 		reg_num;	/* logical register index (perfmon2) */
-	unsigned int 		reg_evt_idx;	/* event idx in pfp_events */
-	unsigned int		reg_pmd_num;	/* which counter is used */
 	unsigned int		reg_reserved1;	/* for future use */
 	unsigned long		reg_addr;	/* hardware register addr or index */
 	unsigned long		reg_reserved[1];/* for future use */
 } pfmlib_reg_t;
-
-/*
- * reg_evt_idx possible value
- */
-#define PFMLIB_REG_EVT_IDX_NONE	(~0)	/* PMC is not associated with counter */
-
-/*
- * reg_pmd_num possible value
- */
-#define PFMLIB_REG_PMD_NONE	(~0)	/* PMC is not associated with counter */
 
 /*
  * library generic input parameters for pfm_dispatch_event()
@@ -134,9 +122,10 @@ typedef struct {
  * library generic output parameters for pfm_dispatch_event()
  */
 typedef struct {
-	unsigned int	 pfp_pmc_count;		 	/* how many PMCS were setup in pfp_pmc[] */
-	unsigned int	 reserved1;			/* for future use */
+	unsigned int	 pfp_pmc_count;		 	/* number of entries in pfp_pmcs */
+	unsigned int	 pfp_pmd_count;			/* number of entries in pfp_pmds */
 	pfmlib_reg_t	 pfp_pmcs[PFMLIB_MAX_PMCS];	/* PMC registers number and values */
+	pfmlib_reg_t	 pfp_pmds[PFMLIB_MAX_PMDS];	/* PMD registers numbers */
 	unsigned long	 reserved[7];			/* for future use */
 } pfmlib_output_param_t;
 

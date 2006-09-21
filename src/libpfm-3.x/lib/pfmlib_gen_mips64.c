@@ -106,12 +106,15 @@ pfm_gen_mips64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_mips64_in
         /* pfmlib_gen_mips64_input_param_t *param = mod_in; */
 	pfm_gen_mips64_sel_reg_t reg;
 	pfmlib_event_t *e = inp->pfp_events;
-	pfmlib_reg_t *pc = outp->pfp_pmcs;
+	pfmlib_reg_t *pc, *pd;
 	unsigned long plm;
 	unsigned int j, cnt = inp->pfp_event_count;
 	unsigned int assign[PMU_GEN_MIPS64_NUM_COUNTERS];
 	unsigned int used = 0;
 	extern pfm_pmu_support_t generic_mips64_support;
+
+	pc = outp->pfp_pmcs;
+	pd = outp->pfp_pmds;
 
 	/* Degree 2 rank based allocation */
 	if (cnt > generic_mips64_support.pmc_count) return PFMLIB_ERR_TOOMANY;
@@ -143,10 +146,14 @@ pfm_gen_mips64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_mips64_in
 		reg.sel_exl = plm & PFM_PLM0 ? 1 : 0;
 		reg.sel_int = 1; /* force int to 1 */
 		reg.sel_event_mask = (gen_mips64_pe[e[j].event].pme_entry_code.pme_code.pme_emask >> ((assign[j]-1)*4)) & 0xf;
+
 		pc[j].reg_num     = ffs(assign[j]) - 1;
-		pc[j].reg_pmd_num = ffs(assign[j]) - 1;
-		pc[j].reg_evt_idx = ffs(assign[j]) - 1;
 		pc[j].reg_value   = reg.val;
+		pc[j].reg_addr    = pc[j].reg_num;
+
+		pd[j].reg_num  = ffs(assign[j]) - 1;
+		pd[j].reg_addr = pc[j].reg_num + 1;
+
 		used |= assign[j];
 		DPRINT(("Degree 1: Used is now %x\n",used));
 	  }
@@ -176,9 +183,12 @@ pfm_gen_mips64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_mips64_in
 	    reg.sel_int = 1; /* force int to 1 */
 	    reg.sel_event_mask = (gen_mips64_pe[e[j].event].pme_entry_code.pme_code.pme_emask >> ((avail-1)*4)) & 0xf;;
 	    pc[j].reg_num     = ffs(avail) - 1;
-	    pc[j].reg_pmd_num = ffs(avail) - 1;
-	    pc[j].reg_evt_idx = ffs(avail) - 1;
 	    pc[j].reg_value   = reg.val;
+	    pc[j].reg_addr    = pc[j].reg_num;
+
+	    pd[j].reg_num  = ffs(avail) - 1;
+	    pd[j].reg_addr = pc[j].reg_num + 1;
+
 	    used |= avail;
 	    DPRINT(("Degree 2: Used is now %x\n",used));
 	  }
@@ -186,6 +196,7 @@ pfm_gen_mips64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_mips64_in
 
 	/* number of evtsel registers programmed */
 	outp->pfp_pmc_count = cnt;
+	outp->pfp_pmd_count = cnt;
 
 	return PFMLIB_SUCCESS;
 }

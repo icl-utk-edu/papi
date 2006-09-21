@@ -48,7 +48,7 @@ TARGETS=self self_view task task_attach task_attach_timeout syst \
 	showreginfo task_smpl task_smpl_user showevtinfo \
 	pfmsetup
 
-XTRA=rtop self_standalone notify_standalone smpl_standalone
+XTRA=self_standalone notify_standalone smpl_standalone rtop
 
 all: $(TARGETS) $(XTRA)
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done

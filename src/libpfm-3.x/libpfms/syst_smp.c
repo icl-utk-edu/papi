@@ -78,7 +78,7 @@ main(int argc, char **argv)
 	uint64_t cpu_list;
 	void *desc;
 	unsigned int num_counters;
-	uint32_t i, j, k, l, ncpus, npmds;
+	uint32_t i, j, l, k, ncpus, npmds;
 	size_t len;
 	int ret;
 	char *name;
@@ -166,11 +166,9 @@ main(int argc, char **argv)
 	 * propagate the PMD setup beyond just the first pfp_event_count
 	 * elements of pd[].
 	 */
-	for(l=0, k = 0; l < ncpus; l++) {
-		for (i=0, j=0; i < inp.pfp_event_count; i++, k++) {
-			pd[k].reg_num   = outp.pfp_pmcs[j].reg_pmd_num;
-			for(; j < outp.pfp_pmc_count; j++)  if (outp.pfp_pmcs[j].reg_evt_idx != i) break;
-		}
+	for(l=0, k= 0; l < ncpus; l++) {
+		for (i=0; i < outp.pfp_pmd_count; i++, k++)
+			pd[k].reg_num   = outp.pfp_pmds[i].reg_num;
 	}
 
 	/*
@@ -198,7 +196,7 @@ main(int argc, char **argv)
 	/*
 	 * program the PMD registers on all CPUs of interest
 	 */
-	ret = pfms_write_pmds(desc, pd, inp.pfp_event_count);
+	ret = pfms_write_pmds(desc, pd, outp.pfp_pmd_count);
 	if (ret == -1)
 		fatal_error("write_pmds error %d\n", ret);
 

@@ -204,7 +204,7 @@ main(void)
 	pfarg_load_t load_args;
 	pfmlib_options_t pfmlib_options;
 	struct sigaction act;
-	unsigned int i, j;
+	unsigned int i;
 	int ret, type = 0;
 
 	/*
@@ -348,10 +348,8 @@ main(void)
 	/*
 	 * figure out pmd mapping from output pmc
 	 */
-	for (i=0, j=0; i < inp.pfp_event_count; i++) {
-		pd[i].reg_num   = outp.pfp_pmcs[j].reg_pmd_num;
-		for(; j < outp.pfp_pmc_count; j++)  if (outp.pfp_pmcs[j].reg_evt_idx != i) break;
-	}
+	for (i=0; i < outp.pfp_pmd_count; i++)
+		pd[i].reg_num   = outp.pfp_pmds[i].reg_num;
 
 	/*
 	 * indicate we want notification when buffer is full
@@ -380,7 +378,7 @@ main(void)
 	if (pfm_write_pmcs(id, pc, outp.pfp_pmc_count))
 		fatal_error("pfm_write_pmcs error errno %d\n",errno);
 
-	if (pfm_write_pmds(id, pd, inp.pfp_event_count))
+	if (pfm_write_pmds(id, pd, outp.pfp_pmd_count))
 		fatal_error("pfm_write_pmds error errno %d\n",errno);
 
 	/*

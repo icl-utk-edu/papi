@@ -92,7 +92,7 @@ main(int argc, char **argv)
 	pfmlib_options_t pfmlib_options;
 	unsigned int which_cpu;
 	int ret, ctx_fd;
-	unsigned int i, j, l;
+	unsigned int i, l;
 	unsigned int num_counters;
 	char name[MAX_EVT_NAME_LEN];
 
@@ -236,14 +236,8 @@ main(int argc, char **argv)
 		pc[i].reg_num   = outp.pfp_pmcs[i].reg_num;
 		pc[i].reg_value = outp.pfp_pmcs[i].reg_value;
 	}
-	/*
-	 * figure out pmd mapping from output pmc
-	 */
-	for (i=0, j=0; i < inp.pfp_event_count; i++) {
-		pd[i].reg_num   = outp.pfp_pmcs[j].reg_pmd_num;
-		for(; j < outp.pfp_pmc_count; j++)  if (outp.pfp_pmcs[j].reg_evt_idx != i) break;
-	}
-
+	for (i=0; i < outp.pfp_pmd_count; i++)
+		pd[i].reg_num = outp.pfp_pmds[i].reg_num;
 	/*
 	 * Now program the registers
 	 *
@@ -258,7 +252,7 @@ main(int argc, char **argv)
 	 * To be read, each PMD must be either written or declared
 	 * as being part of a sample (reg_smpl_pmds)
 	 */
-	if (pfm_write_pmds(ctx_fd, pd, inp.pfp_event_count) == -1)
+	if (pfm_write_pmds(ctx_fd, pd, outp.pfp_pmd_count) == -1)
 		fatal_error("pfm_write_pmds error errno %d\n",errno);
 
 	/*
@@ -301,7 +295,7 @@ main(int argc, char **argv)
 		puts("------------------------");
 		for (i=0; i < inp.pfp_event_count; i++) {
 			pfm_get_full_event_name(&inp.pfp_events[i], name, MAX_EVT_NAME_LEN);
-			printf("CPU%-2d PMD%u raw=%-20"PRIu64" delta=%-20"PRIu64" %s\n",
+			printf("CPU%-2d PMD%-3u raw=%-20"PRIu64" delta=%-20"PRIu64" %s\n",
 					which_cpu,
 					pd[i].reg_num,
 					pd[i].reg_value,

@@ -200,6 +200,6 @@ static pme_gen_ia32_entry_t coreduo_pe[]={
 	 }
 	}
 };
-#define PME_COREDUO_CPU_CLK_UNHALTED		0
-#define PME_COREDUO_RETIRED_INSTRUCTIONS	2
+#define PME_COREDUO_UNHALTED_CORE_CYCLES	0
+#define PME_COREDUO_INSTRUCTIONS_RETIRED	2
 #define PME_COREDUO_EVENT_COUNT	   (sizeof(coreduo_pe)/sizeof(pme_gen_ia32_entry_t))

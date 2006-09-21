@@ -85,7 +85,7 @@ parent(char **arg)
 	pfarg_pmc_t pc[NUM_PMCS];
 	pfarg_pmd_t pd[NUM_PMDS];
 	pfarg_load_t load_args;
-	unsigned int i, j, num_counters;
+	unsigned int i, num_counters;
 	int status, ret;
 	int ctx_fd;
 	pid_t pid;
@@ -169,14 +169,9 @@ parent(char **arg)
 		pc[i].reg_num   = outp.pfp_pmcs[i].reg_num;
 		pc[i].reg_value = outp.pfp_pmcs[i].reg_value;
 	}
+	for(i=0; i < outp.pfp_pmd_count; i++)
+		pd[i].reg_num = outp.pfp_pmds[i].reg_num;
 
-	/*
-	 * figure out pmd mapping from output pmc
-	 */
-	for (i=0, j=0; i < inp.pfp_event_count; i++) {
-		pd[i].reg_num   = outp.pfp_pmcs[j].reg_pmd_num;
-		for(; j < outp.pfp_pmc_count; j++)  if (outp.pfp_pmcs[j].reg_evt_idx != i) break;
-	}
 	/*
 	 * Now program the registers
 	 *
@@ -193,7 +188,7 @@ parent(char **arg)
 	 * To be read, each PMD must be either written or declared
 	 * as being part of a sample (reg_smpl_pmds)
 	 */
-	if (pfm_write_pmds(ctx_fd, pd, inp.pfp_event_count) == -1) {
+	if (pfm_write_pmds(ctx_fd, pd, outp.pfp_pmd_count) == -1) {
 		fatal_error("pfm_write_pmds error errno %d\n",errno);
 	}
 
@@ -228,17 +223,15 @@ parent(char **arg)
 	 */
 	load_args.load_pid = pid;
 
-	if (pfm_load_context(ctx_fd, &load_args) == -1) {
+	if (pfm_load_context(ctx_fd, &load_args) == -1)
 		fatal_error("pfm_load_context error errno %d\n",errno);
-	}
 
 	/*
 	 * activate monitoring. The task is still STOPPED at this point. Monitoring
 	 * will not take effect until the execution of the task is resumed.
 	 */
-	if (pfm_start(ctx_fd, NULL) == -1) {
+	if (pfm_start(ctx_fd, NULL) == -1)
 		fatal_error("pfm_start error errno %d\n",errno);
-	}
 
 	/*
 	 * now resume execution of the task, effectively activating
@@ -263,10 +256,9 @@ parent(char **arg)
 	/*
 	 * now simply read the results.
 	 */
-	if (pfm_read_pmds(ctx_fd, pd, inp.pfp_event_count) == -1) {
+	if (pfm_read_pmds(ctx_fd, pd, inp.pfp_event_count) == -1)
 		fatal_error("pfm_read_pmds error errno %d\n",errno);
-		return -1;
-	}
+
 	/*
 	 * print the results
 	 *
@@ -277,7 +269,7 @@ parent(char **arg)
 	 */
 	for (i=0; i < inp.pfp_event_count; i++) {
 		pfm_get_full_event_name(&inp.pfp_events[i], name, MAX_EVT_NAME_LEN);
-		printf("PMD%u %20"PRIu64" %s\n",
+		printf("PMD%-3u %20"PRIu64" %s\n",
 			pd[i].reg_num,
 			pd[i].reg_value,
 			name);

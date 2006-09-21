@@ -149,7 +149,7 @@ main(int argc, char **argv)
 	pfarg_load_t load_args;
 	pfmlib_options_t pfmlib_options;
 	struct sigaction act;
-	unsigned int i, j, num_counters;
+	unsigned int i, num_counters;
 	size_t len;
 	int ret;
 
@@ -257,19 +257,13 @@ main(int argc, char **argv)
 		pc[i].reg_num   = outp.pfp_pmcs[i].reg_num;
 		pc[i].reg_value = outp.pfp_pmcs[i].reg_value;
 	}
-
-	/*
-	 * figure out pmd mapping from output pmc
-	 */
-	for (i=0, j=0; i < inp.pfp_event_count; i++) {
-		pd[i].reg_num   = outp.pfp_pmcs[j].reg_pmd_num;
-		for(; j < outp.pfp_pmc_count; j++)  if (outp.pfp_pmcs[j].reg_evt_idx != i) break;
-	}
+	for (i=0; i < outp.pfp_pmd_count; i++)
+		pd[i].reg_num = outp.pfp_pmds[i].reg_num;
 	/*
 	 * We want to get notified when the counter used for our first
 	 * event overflows
 	 */
-	pd[0].reg_flags 	|= PFM_REGFL_OVFL_NOTIFY;
+	pd[0].reg_flags |= PFM_REGFL_OVFL_NOTIFY;
 
 	/*
 	 * nothing to sample when only one counter
@@ -299,7 +293,7 @@ main(int argc, char **argv)
 	 * To be read, each PMD must be either written or declared
 	 * as being part of a sample (reg_smpl_pmds)
 	 */
-	if (pfm_write_pmds(ctx_fd, pd, inp.pfp_event_count))
+	if (pfm_write_pmds(ctx_fd, pd, outp.pfp_pmd_count))
 		fatal_error("pfm_write_pmds error errno %d\n",errno);
 
 	/*

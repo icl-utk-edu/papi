@@ -86,7 +86,7 @@ main(void)
 	int ret;
 	int type = 0;
 	int id;
-	unsigned int i, j;
+	unsigned int i;
 	char name[MAX_EVT_NAME_LEN];
 
 	/*
@@ -206,10 +206,8 @@ main(void)
 	/*
 	 * figure out pmd mapping from output pmc
 	 */
-	for (i=0, j=0; i < inp.pfp_event_count; i++) {
-		pd[i].reg_num   = outp.pfp_pmcs[j].reg_pmd_num;
-		for(; j < outp.pfp_pmc_count; j++)  if (outp.pfp_pmcs[j].reg_evt_idx != i) break;
-	}
+	for (i=0; i < outp.pfp_pmd_count; i++)
+		pd[i].reg_num   = outp.pfp_pmds[i].reg_num;
 
 	/*
 	 * Now program the registers
@@ -221,7 +219,7 @@ main(void)
 	if (perfmonctl(id, PFM_WRITE_PMCS, pc, outp.pfp_pmc_count))
 		fatal_error("pfm_write_pmcs error errno %d\n",errno);
 
-	if (perfmonctl(id, PFM_WRITE_PMDS, pd, inp.pfp_event_count))
+	if (perfmonctl(id, PFM_WRITE_PMDS, pd, outp.pfp_pmd_count))
 		fatal_error("pfm_write_pmds error errno %d\n",errno);
 
 	/*
@@ -252,10 +250,10 @@ main(void)
 	 */
 	pfm_get_full_event_name(&inp.pfp_events[0], name, MAX_EVT_NAME_LEN);
 
-	printf("PMD%u %20lu %s (expected %lu)\n",
-			pd[0].reg_num,
-			pd[0].reg_value,
-			name, NLOOP);
+	printf("PMD%-3u %20lu %s (expected %lu)\n",
+		pd[0].reg_num,
+		pd[0].reg_value,
+		name, NLOOP);
 
 	if (pd[0].reg_value != 0)
 		printf("compiler used br.cloop\n");

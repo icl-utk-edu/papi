@@ -81,7 +81,7 @@ main(void)
 	pfarg_ctx_t ctx[1];
 	pfarg_load_t load_args;
 	pfmlib_options_t pfmlib_options;
-	unsigned int i, j;
+	unsigned int i;
 	int id;
 	char name[MAX_EVT_NAME_LEN];
 
@@ -215,10 +215,8 @@ main(void)
 	/*
 	 * figure out pmd mapping from output pmc
 	 */
-	for (i=0, j=0; i < inp.pfp_event_count; i++) {
-		pd[i].reg_num   = outp.pfp_pmcs[j].reg_pmd_num;
-		for(; j < outp.pfp_pmc_count; j++)  if (outp.pfp_pmcs[j].reg_evt_idx != i) break;
-	}
+	for (i=0; i < outp.pfp_pmd_count; i++)
+		pd[i].reg_num   = outp.pfp_pmds[i].reg_num;
 
 	/*
 	 * Now program the registers
@@ -227,21 +225,19 @@ main(void)
 	 * the kernel because, as we said earlier, pc may contain more elements than
 	 * the number of events we specified, i.e., contains more thann coutning monitors.
 	 */
-	if (pfm_write_pmcs(id, pc, outp.pfp_pmc_count) == -1) {
+	if (pfm_write_pmcs(id, pc, outp.pfp_pmc_count) == -1)
 		fatal_error("pfm_write_pmcs error errno %d\n",errno);
-	}
-	if (pfm_write_pmds(id, pd, inp.pfp_event_count) == -1) {
+
+	if (pfm_write_pmds(id, pd, outp.pfp_pmd_count) == -1)
 		fatal_error("pfm_write_pmds error errno %d\n",errno);
-	}
+
 	/*
 	 * now we load (i.e., attach) the context to ourself
 	 */
 	load_args.load_pid = getpid();
 
-	if (pfm_load_context(id, &load_args) == -1) {
+	if (pfm_load_context(id, &load_args) == -1)
 		fatal_error("pfm_load_context error errno %d\n",errno);
-	}
-
 	/*
 	 * Let's roll now.
 	 */
@@ -254,18 +250,17 @@ main(void)
 	/*
 	 * now read the results
 	 */
-	if (pfm_read_pmds(id, pd, inp.pfp_event_count) == -1) {
+	if (pfm_read_pmds(id, pd, inp.pfp_event_count) == -1)
 		fatal_error( "pfm_read_pmds error errno %d\n",errno);
-	}
 
 	/*
 	 * print the results
 	 */
 	pfm_get_full_event_name(&inp.pfp_events[0], name, MAX_EVT_NAME_LEN);
-	printf("PMD%u %20lu %s\n",
-			pd[0].reg_num,
-			pd[0].reg_value,
-			name);
+	printf("PMD%-3u %20lu %s\n",
+		pd[0].reg_num,
+		pd[0].reg_value,
+		name);
 
 	if (pd[0].reg_value != 0)
 		printf("compiler used br.cloop\n");

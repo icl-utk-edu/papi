@@ -33,7 +33,7 @@
 /* private headers */
 #include "pfmlib_priv.h"			/* library private */
 #include "pfmlib_i386_p6_priv.h"		/* architecture private */
-#include "i386_p6_events.h"			/* event tables */
+#include "i386_p6_events.h"			/* event tables P6 and Pentium M */
 
 /* let's define some handy shortcuts! */
 #define sel_event_mask	perfsel.sel_event_mask
@@ -57,12 +57,16 @@ static unsigned int i386_p6_num_events;
 	(PFM_I386_P6_SEL_INV|PFM_I386_P6_SEL_EDGE)
 /*
  * Description of the PMC register mappings use by
- * this module (as reported in pfmlib_reg_t.reg_num):
- *
- * 0 -> PMC0 -> PERFEVTSEL0 -> MSR @ 0x186
- * 1 -> PMC1 -> PERFEVTSEL1 -> MSR @ 0x187
+ * this module.
+ * pfp_pmcs[].reg_num:
+ *	0 -> PMC0 -> PERFEVTSEL0 -> MSR @ 0x186
+ *	1 -> PMC1 -> PERFEVTSEL1 -> MSR @ 0x187
+ * pfp_pmds[].reg_num:
+ *	0 -> PMD0 -> PERFCTR0 -> MSR @ 0xc1
+ *	1 -> PMD1 -> PERFCTR1 -> MSR @ 0xc2
  */
-#define PFMLIB_I386_P6_PMC_BASE	0x186
+#define I386_P6_SEL_BASE	0x186
+#define I386_P6_CTR_BASE	0xc1
 
 static int
 pfm_i386_detect_common(void)
@@ -159,7 +163,7 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 	pfmlib_i386_p6_counter_t *cntrs;
 	pfm_i386_p6_sel_reg_t reg;
 	pfmlib_event_t *e;
-	pfmlib_reg_t *pc;
+	pfmlib_reg_t *pc, *pd;
 	pfmlib_regmask_t *r_pmcs;
 	unsigned long plm;
 	unsigned int i, j, cnt, k, umask;
@@ -167,6 +171,7 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 
 	e      = inp->pfp_events;
 	pc     = outp->pfp_pmcs;
+	pd     = outp->pfp_pmds;
 	cnt    = inp->pfp_event_count;
 	r_pmcs = &inp->pfp_unavail_pmcs;
 	cntrs  = param ? param->pfp_i386_p6_counters : NULL;
@@ -245,10 +250,11 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 		}
 
 		pc[j].reg_num     = assign[j];
-		pc[j].reg_pmd_num = assign[j];
-		pc[j].reg_evt_idx = j;
 		pc[j].reg_value   = reg.val;
-		pc[j].reg_addr    = PFMLIB_I386_P6_PMC_BASE+j;
+		pc[j].reg_addr    = I386_P6_SEL_BASE+assign[j];
+
+		pd[j].reg_num  = assign[j];
+		pd[j].reg_addr = I386_P6_CTR_BASE+assign[j];
 
 		__pfm_vbprintf("[PERFEVTSEL%u(pmc%u)=0x%lx emask=0x%x umask=0x%x os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d] %s\n",
 			assign[j],
@@ -264,9 +270,12 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 			reg.sel_edge,
 			reg.sel_cnt_mask,
 			i386_pe[e[j].event].pme_name);
+
+		__pfm_vbprintf("[PMC%u(pmd%u)]\n", pd[j].reg_num, pd[j].reg_num);
 	}
 	/* number of evtsel registers programmed */
 	outp->pfp_pmc_count = cnt;
+	outp->pfp_pmd_count = cnt;
 
 	return PFMLIB_SUCCESS;
 }

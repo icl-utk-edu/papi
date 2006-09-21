@@ -76,7 +76,7 @@ int
 main(int argc, char **argv)
 {
 	char **p;
-	unsigned int i, j;
+	unsigned int i;
 	int ret, ctx_fd;
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
@@ -108,7 +108,7 @@ main(int argc, char **argv)
 	 */
 	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
 	pfmlib_options.pfm_debug   = 0; /* set to 1 for debug */
-	pfmlib_options.pfm_verbose = 1; /* set to 1 for debug */
+	pfmlib_options.pfm_verbose = 1; /* set to 1 for verbose */
 	pfm_set_options(&pfmlib_options);
 
 	memset(pd, 0, sizeof(pd));
@@ -201,18 +201,13 @@ main(int argc, char **argv)
 	 * This step is new compared to libpfm-2.x. It is necessary because the library no
 	 * longer knows about the kernel data structures.
 	 */
-
 	for (i=0; i < outp.pfp_pmc_count; i++) {
 		pc[i].reg_num   = outp.pfp_pmcs[i].reg_num;
 		pc[i].reg_value = outp.pfp_pmcs[i].reg_value;
 	}
 
-	/*
-	 * figure out pmd mapping from output pmc
-	 */
-	for (i=0, j=0; i < inp.pfp_event_count; i++) {
-		pd[i].reg_num   = outp.pfp_pmcs[j].reg_pmd_num;
-		for(; j < outp.pfp_pmc_count; j++)  if (outp.pfp_pmcs[j].reg_evt_idx != i) break;
+	for (i=0; i < outp.pfp_pmd_count; i++) {
+		pd[i].reg_num   = outp.pfp_pmds[i].reg_num;
 	}
 
 	/*
@@ -230,7 +225,7 @@ main(int argc, char **argv)
 	 * To be read, each PMD must be either written or declared
 	 * as being part of a sample (reg_smpl_pmds)
 	 */
-	if (pfm_write_pmds(ctx_fd, pd, inp.pfp_event_count))
+	if (pfm_write_pmds(ctx_fd, pd, outp.pfp_pmd_count))
 		fatal_error("pfm_write_pmds error errno %d\n",errno);
 
 	/*
@@ -262,7 +257,7 @@ main(int argc, char **argv)
 	 */
 	for (i=0; i < inp.pfp_event_count; i++) {
 		pfm_get_full_event_name(&inp.pfp_events[i], name, len+1);
-		printf("PMD%u %20"PRIu64" %s\n",
+		printf("PMD%-3u %20"PRIu64" %s\n",
 			pd[i].reg_num,
 			pd[i].reg_value,
 			name);

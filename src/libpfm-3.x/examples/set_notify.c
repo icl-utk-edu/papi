@@ -162,7 +162,7 @@ setup_end_marker(int fd, unsigned int set_id, uint64_t num_ovfls, int plm_mask)
 	pfarg_pmc_t pc[8];
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
-	unsigned int i, j;
+	unsigned int i;
 	int ret;
 
 	memset(&setdesc, 0, sizeof(setdesc));
@@ -205,14 +205,9 @@ setup_end_marker(int fd, unsigned int set_id, uint64_t num_ovfls, int plm_mask)
 		pc[i].reg_value = outp.pfp_pmcs[i].reg_value;
 		pc[i].reg_set   = set_id;
 	}
-
-	/*
-	 * figure out pmd mapping from output pmc
-	 */
-	for (i=0, j=0; i < inp.pfp_event_count; i++) {
-		pd[i].reg_num   = outp.pfp_pmcs[j].reg_pmd_num;
-		pd[i].reg_set   = set_id;
-		for(; j < outp.pfp_pmc_count; j++)  if (outp.pfp_pmcs[j].reg_evt_idx != i) break;
+	for (i=0; i < outp.pfp_pmd_count; i++) {
+		pd[i].reg_num = outp.pfp_pmds[i].reg_num;
+		pd[i].reg_set = set_id;
 	}
 
 	/*
@@ -249,7 +244,7 @@ setup_end_marker(int fd, unsigned int set_id, uint64_t num_ovfls, int plm_mask)
 	 * To be read, each PMD must be either written or declared
 	 * as being part of a sample (reg_smpl_pmds)
 	 */
-	if (pfm_write_pmds(fd, pd, inp.pfp_event_count) == -1)
+	if (pfm_write_pmds(fd, pd, outp.pfp_pmd_count) == -1)
 		fatal_error("pfm_write_pmds error errno %d\n",errno);
 }
 
@@ -266,7 +261,7 @@ main(int argc, char **argv)
 	pfmlib_options_t pfmlib_options;
 	struct sigaction act;
 	uint64_t num_ovfls;
-	unsigned int i, j, k;
+	unsigned int i, k;
 	size_t len;
 	int ret;
 
@@ -371,14 +366,8 @@ main(int argc, char **argv)
 		pc[i].reg_num   = outp.pfp_pmcs[i].reg_num;
 		pc[i].reg_value = outp.pfp_pmcs[i].reg_value;
 	}
-
-	/*
-	 * figure out pmd mapping from output pmc
-	 */
-	for (i=0, j=0; i < inp.pfp_event_count; i++) {
-		pd[i].reg_num   = outp.pfp_pmcs[i].reg_pmd_num;
-		for(; j < outp.pfp_pmc_count; j++)  if (outp.pfp_pmcs[j].reg_evt_idx != i) break;
-	}
+	for (i=0; i < outp.pfp_pmd_count; i++)
+		pd[i].reg_num = outp.pfp_pmds[i].reg_num;
 
 	pd[0].reg_value           = 0;
 	pd[0].reg_long_reset      = 0;
@@ -391,25 +380,24 @@ main(int argc, char **argv)
 		setdesc.set_flags           = PFM_SETFL_TIME_SWITCH;
 		setdesc.set_timeout	    = THE_TIMEOUT * 1000000;
 
-		for (i=0; i < outp.pfp_pmc_count; i++) {
+		for (i=0; i < outp.pfp_pmc_count; i++)
 			pc[i].reg_set = k;
-		}
-		for (i=0; i < inp.pfp_event_count; i++) {
+
+		for (i=0; i < outp.pfp_pmd_count; i++)
 			pd[i].reg_set = k;
-		}
-		if (pfm_create_evtsets(ctx_fd, &setdesc, 1) == -1) {
+
+		if (pfm_create_evtsets(ctx_fd, &setdesc, 1) == -1)
 			fatal_error("pfm_create_evtsets error errno %d\n",errno);
-		}
-		if (pfm_write_pmcs(ctx_fd, pc, outp.pfp_pmc_count) == -1) {
+
+		if (pfm_write_pmcs(ctx_fd, pc, outp.pfp_pmc_count) == -1)
 			fatal_error("pfm_write_pmcs error errno %d\n",errno);
-		}
+
 		/*
 	 	 * To be read, each PMD must be either written or declared
 	 	 * as being part of a sample (reg_smpl_pmds)
 	 	 */
-		if (pfm_write_pmds(ctx_fd, pd, inp.pfp_event_count) == -1) {
+		if (pfm_write_pmds(ctx_fd, pd, outp.pfp_pmd_count) == -1)
 			fatal_error("pfm_write_pmds error errno %d\n",errno);
-		}
 	}
 	setup_end_marker(ctx_fd, k, num_ovfls, inp.pfp_dfl_plm);
 

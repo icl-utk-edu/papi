@@ -266,13 +266,14 @@ pfm_gen_ia64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_output_param_t 
 	unsigned int assign[PMU_GEN_IA64_MAX_COUNTERS];
 	pfm_gen_ia64_pmc_reg_t reg;
 	pfmlib_event_t *e;
-	pfmlib_reg_t *pc;
+	pfmlib_reg_t *pc, *pd;
 	pfmlib_regmask_t *r_pmcs;
 	unsigned int i,j,k,l;
 	unsigned int cnt;
 
 	e      = inp->pfp_events;
 	pc     = outp->pfp_pmcs;
+	pd     = outp->pfp_pmds;
 	cnt    = inp->pfp_event_count;
 	r_pmcs = &inp->pfp_unavail_pmcs;
 
@@ -337,7 +338,8 @@ pfm_gen_ia64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_output_param_t 
 	/* we cannot satisfy the constraints */
 	return PFMLIB_ERR_NOASSIGN;
 done:
-
+	memset(pc, 0, cnt*sizeof(pfmlib_reg_t));
+	memset(pd, 0, cnt*sizeof(pfmlib_reg_t));
 	for (j=0; j < cnt ; j++ ) {
 		reg.pmc_val    = 0; /* clear all */
 		/* if not specified per event, then use default (could be zero: measure nothing) */
@@ -347,10 +349,11 @@ done:
 		reg.pmc_es     = generic_pe[e[j].event].pme_entry_code.pme_gen_code.pme_code;
 
 		pc[j].reg_num     = assign[j];
-		pc[j].reg_pmd_num = assign[j];
-		pc[j].reg_evt_idx = j;
 		pc[j].reg_value   = reg.pmc_val;
 		pc[j].reg_addr    = PFMLIB_GEN_IA64_PMC_BASE+j;
+
+		pd[j].reg_num  = assign[j];
+		pd[j].reg_addr = assign[j];
 
 		__pfm_vbprintf("[PMC%u(pmc%u)=0x%lx,es=0x%02x,plm=%d pm=%d] %s\n",
 				assign[j],
@@ -359,9 +362,12 @@ done:
 				reg.pmc_es,reg.pmc_plm,
 				reg.pmc_pm,
 				generic_pe[e[j].event].pme_name);
+
+		__pfm_vbprintf("[PMD%u(pmd%u)]\n", pd[j].reg_num, pd[j].reg_num);
 	}
 	/* number of PMC programmed */
 	outp->pfp_pmc_count = cnt;
+	outp->pfp_pmd_count = cnt;
 
 	return PFMLIB_SUCCESS;
 }

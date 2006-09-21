@@ -138,7 +138,7 @@ main(int argc, char **argv)
 		unsigned long addr;
 		unsigned long gp;
 	} *fd;
-	unsigned int i, j;
+	unsigned int i;
 	int id;
 	char name[MAX_EVT_NAME_LEN];
 
@@ -294,10 +294,8 @@ main(int argc, char **argv)
 	/*
 	 * figure out pmd mapping from output pmc
 	 */
-	for (i=0, j=0; i < inp.pfp_event_count; i++) {
-		pd[i].reg_num   = outp.pfp_pmcs[j].reg_pmd_num;
-		for(; j < outp.pfp_pmc_count; j++)  if (outp.pfp_pmcs[j].reg_evt_idx != i) break;
-	}
+	for (i=0; i < outp.pfp_pmd_count; i++)
+		pd[i].reg_num   = outp.pfp_pmds[i].reg_num;
 
 	/*
 	 * propagate the setup for the debug registers from the library to the arguments
@@ -315,21 +313,18 @@ main(int argc, char **argv)
 	 * the kernel because, as we said earlier, pc may contain more elements than
 	 * the number of events we specified, i.e., contains more than coutning monitors.
 	 */
-	if (pfm_write_pmcs(id, pc, outp.pfp_pmc_count) == -1) {
+	if (pfm_write_pmcs(id, pc, outp.pfp_pmc_count) == -1)
 		fatal_error("child: pfm_write_pmcs error errno %d\n",errno);
-	}
 
 	/*
 	 * Program the code debug registers.
 	 */
-	if (pfm_write_pmcs(id, ibrs, ita2_outp.pfp_ita2_irange.rr_nbr_used) == -1) {
+	if (pfm_write_pmcs(id, ibrs, ita2_outp.pfp_ita2_irange.rr_nbr_used) == -1)
 		fatal_error("child: pfm_write_pmcs error errno %d\n",errno);
-	}
 
 
-	if (pfm_write_pmds(id, pd, inp.pfp_event_count) == -1) {
+	if (pfm_write_pmds(id, pd, outp.pfp_pmd_count) == -1)
 		fatal_error("child: pfm_write_pmds error errno %d\n",errno);
-	}
 	/*
 	 * now we load (i.e., attach) the context to ourself
 	 */
@@ -355,9 +350,8 @@ main(int argc, char **argv)
 	/*
 	 * now read the results
 	 */
-	if (pfm_read_pmds(id, pd, inp.pfp_event_count) == -1) {
+	if (pfm_read_pmds(id, pd, inp.pfp_event_count) == -1)
 		fatal_error("pfm_read_pmds error errno %d\n",errno);
-	}
 
 	/*
 	 * print the results
@@ -368,7 +362,7 @@ main(int argc, char **argv)
 	 */
 	for (i=0; i < inp.pfp_event_count; i++) {
 		pfm_get_full_event_name(&inp.pfp_events[i], name, MAX_EVT_NAME_LEN);
-		printf("PMD%u %20lu %s (expected %lu)\n",
+		printf("PMD%-3u %20lu %s (expected %lu)\n",
 			pd[i].reg_num,
 			pd[i].reg_value,
 			name, event_list[i].expected_value);

@@ -287,7 +287,7 @@ main(void)
 	pfarg_load_t load_args;
 	pfmlib_options_t pfmlib_options;
 	struct sigaction act;
-	unsigned int i, j;
+	unsigned int i;
 
 	/*
 	 * Initialize pfm library (required before we can use it)
@@ -419,17 +419,11 @@ main(void)
 
 	/*
 	 * figure out pmd mapping from output pmc
+	 * PMD38 is part of the set of used PMD returned by libpfm.
+	 * It will be reset automatically
 	 */
-	for (i=0, j=0; i < inp.pfp_event_count; i++) {
-		pd[i].reg_num   = outp.pfp_pmcs[j].reg_pmd_num;
-		for(; j < outp.pfp_pmc_count; j++)  if (outp.pfp_pmcs[j].reg_evt_idx != i) break;
-	}
-	/*
-	 * reset pmd38 (ETB index)
-	 */
-	pd[i].reg_num   = 38;
-	pd[i].reg_value = 0;
-
+	for (i=0; i < outp.pfp_pmd_count; i++)
+		pd[i].reg_num   = outp.pfp_pmds[i].reg_num;
 	/*
 	 * indicate we want notification when buffer is full and randomization
 	 */
@@ -470,10 +464,7 @@ main(void)
 	if (pfm_write_pmcs(id, pc, outp.pfp_pmc_count))
 		fatal_error("pfm_write_pmcs error errno %d\n",errno);
 
-	/*
-	 * we use 2 registers = 1 for the branch_event + 1 to reset PMD38
-	 */
-	if (pfm_write_pmds(id, pd, 2))
+	if (pfm_write_pmds(id, pd, outp.pfp_pmd_count))
 		fatal_error("pfm_write_pmds error errno %d\n",errno);
 
 	/*

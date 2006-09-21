@@ -67,7 +67,7 @@ parent(pid_t pid)
 	pfarg_pmd_t pd[NUM_PMDS];
 	pfarg_load_t load_args;
 	pfm_msg_t msg;
-	unsigned int i, j, num_counters;
+	unsigned int i, num_counters;
 	int status, ret;
 	int ctx_fd;
 	char name[MAX_EVT_NAME_LEN];
@@ -154,14 +154,8 @@ parent(pid_t pid)
 		pc[i].reg_num   = outp.pfp_pmcs[i].reg_num;
 		pc[i].reg_value = outp.pfp_pmcs[i].reg_value;
 	}
-
-	/*
-	 * figure out pmd mapping from output pmc
-	 */
-	for (i=0, j=0; i < inp.pfp_event_count; i++) {
-		pd[i].reg_num   = outp.pfp_pmcs[j].reg_pmd_num;
-		for(; j < outp.pfp_pmc_count; j++)  if (outp.pfp_pmcs[j].reg_evt_idx != i) break;
-	}
+	for(i=0; i < outp.pfp_pmd_count; i++)
+		pd[i].reg_num = outp.pfp_pmds[i].reg_num;
 
 	/*
 	 * Now program the registers
@@ -171,17 +165,15 @@ parent(pid_t pid)
 	 * the number of events we specified, i.e., contains more thann counting monitors.
 	 */
 
-	if (pfm_write_pmcs(ctx_fd, pc, outp.pfp_pmc_count) == -1) {
+	if (pfm_write_pmcs(ctx_fd, pc, outp.pfp_pmc_count) == -1)
 		fatal_error("pfm_write_pmcs error errno %d\n",errno);
-	}
 
 	/*
 	 * To be read, each PMD must be either written or declared
 	 * as being part of a sample (reg_smpl_pmds)
 	 */
-	if (pfm_write_pmds(ctx_fd, pd, inp.pfp_event_count) == -1) {
+	if (pfm_write_pmds(ctx_fd, pd, outp.pfp_pmd_count) == -1)
 		fatal_error("pfm_write_pmds error errno %d\n",errno);
-	}
 
 	ret = ptrace(PTRACE_ATTACH, pid, NULL, 0);
 	if (ret == -1) {
@@ -276,7 +268,7 @@ parent(pid_t pid)
 	 */
 	for (i=0; i < inp.pfp_event_count; i++) {
 		pfm_get_full_event_name(&inp.pfp_events[i], name, MAX_EVT_NAME_LEN);
-		printf("PMD%u %20"PRIu64" %s\n",
+		printf("PMD%-3u %20"PRIu64" %s\n",
 			pd[i].reg_num,
 			pd[i].reg_value,
 			name);

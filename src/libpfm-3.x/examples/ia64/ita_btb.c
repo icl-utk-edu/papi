@@ -269,7 +269,7 @@ main(void)
 	pfarg_load_t load_args;
 	pfmlib_options_t pfmlib_options;
 	struct sigaction act;
-	unsigned int i, j;
+	unsigned int i;
 
 	/*
 	 * Initialize pfm library (required before we can use it)
@@ -410,11 +410,11 @@ main(void)
 
 	/*
 	 * figure out pmd mapping from output pmc
+	 * PMD16 is part of the set of used PMD returned by libpfm.
+	 * It will be reset automatically
 	 */
-	for (i=0, j=0; i < inp.pfp_event_count; i++) {
-		pd[i].reg_num   = outp.pfp_pmcs[j].reg_pmd_num;
-		for(; j < outp.pfp_pmc_count; j++)  if (outp.pfp_pmcs[j].reg_evt_idx != i) break;
-	}
+	for (i=0; i < outp.pfp_pmd_count; i++)
+		pd[i].reg_num   = outp.pfp_pmds[i].reg_num;
 	/*
 	 * indicate we want notification when buffer is full
 	 */
@@ -446,14 +446,6 @@ main(void)
 	pfm_bv_set(pd[0].reg_reset_pmds, 16);
 
 	/*
-	 * reset pmd16 (BTB index), short and long reset value are set to zero as well
-	 *
-	 * We use slot 1 of our pd[] array for this.
-	 */
-	pd[1].reg_num         = 16;
-	pd[1].reg_value       = 0;
-
-	/*
 	 * Now program the registers
 	 *
 	 * We don't use the save variable to indicate the number of elements passed to
@@ -462,10 +454,8 @@ main(void)
 	 */
 	if (pfm_write_pmcs(id, pc, outp.pfp_pmc_count) == -1)
 		fatal_error("pfm_write_pmcs error errno %d\n",errno);
-	/*
-	 * we use 2 = 1 for the branch_event + 1 for the reset of PMD16.
-	 */
-	if (pfm_write_pmds(id, pd, 2) == -1)
+
+	if (pfm_write_pmds(id, pd, outp.pfp_pmd_count) == -1)
 		fatal_error("pfm_write_pmds error errno %d\n",errno);
 
 	/*

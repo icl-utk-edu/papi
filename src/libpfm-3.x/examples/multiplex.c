@@ -741,7 +741,7 @@ mainloop(char **argv)
 	pfmlib_output_param_t outp;
 	pfmlib_regmask_t impl_counters, used_pmcs;
 	pfmlib_event_t cycle_event;
-	unsigned int i, j, k;
+	unsigned int i, j;
 	char *p, *str;
 	unsigned int max_counters, allowed_counters;
 	int ret;
@@ -875,14 +875,12 @@ mainloop(char **argv)
 		for (j=0; j < outp.pfp_pmc_count; j++, num_pmcs++) {
 			all_pmcs[num_pmcs].reg_num   = outp.pfp_pmcs[j].reg_num;
 			all_pmcs[num_pmcs].reg_value = outp.pfp_pmcs[j].reg_value;
+		}
+		for (j=0; j < outp.pfp_pmd_count; j++, num_pmds++)
+			all_pmds[num_pmds].reg_num = outp.pfp_pmds[j].reg_num;
 
-		}
-		e->npmcs  = j;
-		for (j=0, k=0; j < inp.pfp_event_count; j++, num_pmds++) {
-			all_pmds[num_pmds].reg_num   = outp.pfp_pmcs[k].reg_pmd_num;;
-			for(; k < outp.pfp_pmc_count; k++)  if (outp.pfp_pmcs[k].reg_evt_idx != j) break;
-		}
-		e->npmds  = j;
+		e->npmcs  = num_pmcs - e->pmcs_base;
+		e->npmds  = num_pmds - e->pmds_base;
 
 		if (options.opt_ovfl_switch) {
 			/*

@@ -460,7 +460,7 @@ pfm_mont_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t 
 	pfmlib_mont_input_param_t *param = mod_in;
 	pfm_mont_pmc_reg_t reg;
 	pfmlib_event_t *e;
-	pfmlib_reg_t *pc;
+	pfmlib_reg_t *pc, *pd;
 	pfmlib_regmask_t *r_pmcs;
 	unsigned int i,j, k;
 	unsigned int assign[PMU_MONT_NUM_COUNTERS];
@@ -473,6 +473,7 @@ pfm_mont_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t 
 
 	e      = inp->pfp_events;
 	pc     = outp->pfp_pmcs;
+	pd     = outp->pfp_pmds;
 	cnt    = inp->pfp_event_count;
 	r_pmcs = &inp->pfp_unavail_pmcs;
 
@@ -619,10 +620,11 @@ pfm_mont_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t 
 		 * This way we don't have to program something in PMC4 even when we don't use it
 		 */
 		pc[j].reg_num     = assign[j];
-		pc[j].reg_pmd_num = assign[j];
-		pc[j].reg_evt_idx = j;
 		pc[j].reg_value   = reg.pmc_val;
 		pc[j].reg_addr    = assign[j];
+
+		pd[j].reg_num  = assign[j];
+		pd[j].reg_addr = assign[j];
 
 		__pfm_vbprintf("[PMC%u(pmc%u)=0x%06lx m=%d e=%d s=%d i=%d thres=%d all=%d es=0x%02x plm=%d umask=0x%x pm=%d ism=0x%x oi=%d] %s\n",
 				assign[j],
@@ -639,9 +641,11 @@ pfm_mont_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t 
 				reg.pmc_ism,
 				reg.pmc_oi,
 				montecito_pe[e[j].event].pme_name);
+		__pfm_vbprintf("[PMD%u(pmd%u)]\n", pd[j].reg_num, pd[j].reg_num);
 	}
 	/* number of PMC registers programmed */
 	outp->pfp_pmc_count = cnt;
+	outp->pfp_pmd_count = cnt;
 
 	return PFMLIB_SUCCESS;
 }
@@ -651,12 +655,17 @@ pfm_dispatch_iear(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 {
 	pfm_mont_pmc_reg_t reg;
 	pfmlib_mont_input_param_t *param = mod_in;
-	pfmlib_reg_t *pc = outp->pfp_pmcs;
+	pfmlib_reg_t *pc, *pd;
 	pfmlib_mont_input_param_t fake_param;
-	int pos = outp->pfp_pmc_count;
+	unsigned int pos1, pos2;
 	unsigned int i, count;
 
+	pc = outp->pfp_pmcs;
+	pd = outp->pfp_pmds;
+	pos1 = outp->pfp_pmc_count;
+	pos2 = outp->pfp_pmd_count;
 	count = inp->pfp_event_count;
+
 	for (i=0; i < count; i++) {
 		if (is_iear(inp->pfp_events[i].event)) break;
 	}
@@ -706,11 +715,15 @@ pfm_dispatch_iear(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 	if (pfm_regmask_isset(&inp->pfp_unavail_pmcs, 37))
 		return PFMLIB_ERR_NOASSIGN;
 
-	pc[pos].reg_num     = 37; /* PMC37 is I-EAR config register */
-	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
-	pc[pos].reg_value   = reg.pmc_val;
-	pc[pos++].reg_addr  = 37;
+	pc[pos1].reg_num     = 37; /* PMC37 is I-EAR config register */
+	pc[pos1].reg_value   = reg.pmc_val;
+	pc[pos1].reg_addr  = 37;
+	pos1++;
+
+	pd[pos2].reg_num  = 34;
+	pd[pos2++].reg_addr = 34; 
+	pd[pos2].reg_num  = 35;
+	pd[pos2++].reg_addr = 35; 
 
 	if (param->pfp_mont_iear.ear_mode == PFMLIB_MONT_EAR_TLB_MODE) {
 		__pfm_vbprintf("[PMC37(pmc37)=0x%lx ctb=tlb plm=%d pm=%d umask=0x%x]\n",
@@ -725,9 +738,11 @@ pfm_dispatch_iear(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 			reg.pmc37_mont_cache_reg.iear_pm,
 			reg.pmc37_mont_cache_reg.iear_umask);
 	}
+	__pfm_vbprintf("[PMD34(pmd34)]\n[PMD35(pmd35)\n");
 
 	/* update final number of entries used */
-	outp->pfp_pmc_count = pos;
+	outp->pfp_pmc_count = pos1;
+	outp->pfp_pmd_count = pos2;
 
 	return PFMLIB_SUCCESS;
 }
@@ -737,10 +752,15 @@ pfm_dispatch_dear(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 {
 	pfm_mont_pmc_reg_t reg;
 	pfmlib_mont_input_param_t *param = mod_in;
-	pfmlib_reg_t *pc = outp->pfp_pmcs;
+	pfmlib_reg_t *pc, *pd;
 	pfmlib_mont_input_param_t fake_param;
-	int pos = outp->pfp_pmc_count;
+	unsigned int pos1, pos2;
 	unsigned int i, count;
+
+	pc = outp->pfp_pmcs;
+	pd = outp->pfp_pmds;
+	pos1 = outp->pfp_pmc_count;
+	pos2 = outp->pfp_pmd_count;
 
 	count = inp->pfp_event_count;
 	for (i=0; i < count; i++) {
@@ -789,11 +809,17 @@ pfm_dispatch_dear(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 	if (pfm_regmask_isset(&inp->pfp_unavail_pmcs, 40))
 		return PFMLIB_ERR_NOASSIGN;
 
-	pc[pos].reg_num     = 40;  /* PMC11 is D-EAR config register */
-	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
-	pc[pos].reg_value   = reg.pmc_val;
-	pc[pos++].reg_addr  = 40;
+	pc[pos1].reg_num     = 40;  /* PMC11 is D-EAR config register */
+	pc[pos1].reg_value   = reg.pmc_val;
+	pc[pos1].reg_addr  = 40;
+	pos1++;
+
+	pd[pos2].reg_num  = 32;
+	pd[pos2++].reg_addr = 32; 
+	pd[pos2].reg_num  = 33;
+	pd[pos2++].reg_addr = 33; 
+	pd[pos2].reg_num  = 36;
+	pd[pos2++].reg_addr = 36; 
 
 	__pfm_vbprintf("[PMC40(pmc40)=0x%lx mode=%s plm=%d pm=%d ism=0x%x umask=0x%x]\n",
 			reg.pmc_val,
@@ -803,10 +829,11 @@ pfm_dispatch_dear(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 			reg.pmc40_mont_reg.dear_pm,
 			reg.pmc40_mont_reg.dear_ism,
 			reg.pmc40_mont_reg.dear_umask);
-
+	__pfm_vbprintf("[PMD32(pmd32)]\n[PMD33(pmd33)\nPMD36(pmd36)\n");
 
 	/* update final number of entries used */
-	outp->pfp_pmc_count = pos;
+	outp->pfp_pmc_count = pos1;
+	outp->pfp_pmd_count = pos2;
 
 	return PFMLIB_SUCCESS;
 }
@@ -824,6 +851,7 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 	if (param == NULL) return PFMLIB_SUCCESS;
 
 #define PMC36_DFL_VAL 0xfffffff0
+
 
 	/* 
 	 * mandatory default value for PMC36 as described in the documentation
@@ -871,14 +899,10 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 			reg1.pmc32_34_mont_reg.opcm_inv   = 0;
 		}
 
-		memset(pc+pos, 0, sizeof(pfmlib_reg_t));
-
 		if (pfm_regmask_isset(&inp->pfp_unavail_pmcs, 32))
 			return PFMLIB_ERR_NOASSIGN;
 
 		pc[pos].reg_num     = 32;
-		pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-		pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 		pc[pos].reg_value   = reg1.pmc_val;
 		pc[pos++].reg_addr  = 32;
 
@@ -892,8 +916,6 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 			 * used pmc33 only when we have active opcode matching
 			 */
 			pc[pos].reg_num     = 33;
-			pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-			pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 			pc[pos].reg_value   = reg2.pmc_val;
 			pc[pos++].reg_addr  = 33;
 
@@ -927,8 +949,6 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 	 * will be constrained by PMC34
 	 */
 	if (used_pmc34) {
-		memset(pc+pos, 0, sizeof(pfmlib_reg_t));
-
 		reg1.pmc_val = 0x01ffffffffff; /* pmc34 default value */
 		reg2.pmc_val = 0;
 
@@ -947,13 +967,9 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 			return PFMLIB_ERR_NOASSIGN;
 
 		pc[pos].reg_num     = 34;
-		pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-		pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 		pc[pos].reg_value   = reg1.pmc_val;
 		pc[pos++].reg_addr  = 34;
 		pc[pos].reg_num     = 35;
-		pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-		pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 		pc[pos].reg_value   = reg2.pmc_val;
 		pc[pos++].reg_addr  = 35;
 
@@ -979,16 +995,12 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, 
 				reg2.pmc33_35_mont_reg.opcm_match);
 
 	}
-	memset(pc+pos, 0, sizeof(pfmlib_reg_t));
-
 	if (pmc36.pmc_val != PMC36_DFL_VAL) {
 
 		if (pfm_regmask_isset(&inp->pfp_unavail_pmcs, 36))
 			return PFMLIB_ERR_NOASSIGN;
 
 		pc[pos].reg_num     = 36;
-		pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-		pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 		pc[pos].reg_value   = pmc36.pmc_val;
 		pc[pos++].reg_addr  = 36;
 
@@ -1011,13 +1023,17 @@ pfm_dispatch_etb(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in, p
 	pfmlib_event_t *e= inp->pfp_events;
 	pfm_mont_pmc_reg_t reg;
 	pfmlib_mont_input_param_t *param = mod_in;
-	pfmlib_reg_t *pc = outp->pfp_pmcs;
+	pfmlib_reg_t *pc, *pd;
 	pfmlib_mont_input_param_t fake_param;
 	int found_etb = 0, found_bad_dear = 0;
 	int has_etb_param;
-	unsigned int i, pos = outp->pfp_pmc_count;
+	unsigned int i, pos1, pos2;
 	unsigned int count;
 
+	pc = outp->pfp_pmcs;
+	pd = outp->pfp_pmds;
+	pos1 = outp->pfp_pmc_count;
+	pos2 = outp->pfp_pmd_count;
 	/*
 	 * explicit ETB settings
 	 */
@@ -1109,11 +1125,10 @@ assign_zero:
 	if (pfm_regmask_isset(&inp->pfp_unavail_pmcs, 39))
 		return PFMLIB_ERR_NOASSIGN;
 
-	pc[pos].reg_num     = 39;
-	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
-	pc[pos].reg_value   = reg.pmc_val;
-	pc[pos++].reg_addr  = 39;
+	pc[pos1].reg_num     = 39;
+	pc[pos1].reg_value   = reg.pmc_val;
+	pc[pos1].reg_addr  = 39;
+	pos1++;
 
 	__pfm_vbprintf("[PMC39(pmc39)=0x%lx plm=%d pm=%d ds=%d tm=%d ptm=%d ppm=%d brt=%d]\n",
 				reg.pmc_val,
@@ -1125,8 +1140,21 @@ assign_zero:
 				reg.pmc39_mont_reg.etbc_ppm,
 				reg.pmc39_mont_reg.etbc_brt);
 
+	pd[pos2].reg_num = 38;
+	pd[pos2++].reg_addr = 38;
+	pd[pos2].reg_num = 39;
+	pd[pos2++].reg_addr = 39;
+	__pfm_vbprintf("[PMD38(pmd38)]\n[PMD39(pmd39)\n");
+
+	for(i=48; i < 64; i++, pos2++) {
+		pd[pos2].reg_num = i;
+		pd[pos2].reg_addr = i;
+		__pfm_vbprintf("[PMD%u(pmd%u)]\n", pd[pos2].reg_num, pd[pos2].reg_num);
+	}
+
 	/* update final number of entries used */
-	outp->pfp_pmc_count = pos;
+	outp->pfp_pmc_count = pos1;
+	outp->pfp_pmd_count = pos2;
 
 	return PFMLIB_SUCCESS;
 }
@@ -1659,15 +1687,10 @@ pfm_dispatch_irange(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in
 		if ((retired_mask & 0x8) == 0 &&  reg.pmc38_mont_reg.iarc_ig_ibrp3 == 0) return PFMLIB_ERR_IRRINVAL;
 	}
 
-	/* initialize pmc request slot */
-	memset(pc+pos, 0, sizeof(pfmlib_reg_t));
-
 	if (pfm_regmask_isset(&inp->pfp_unavail_pmcs, 38))
 		return PFMLIB_ERR_NOASSIGN;
 
 	pc[pos].reg_num     = 38;
-	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 	pc[pos].reg_value   = reg.pmc_val;
 	pc[pos++].reg_addr  = 38;
 
@@ -1835,8 +1858,6 @@ pfm_dispatch_drange(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in
 		return PFMLIB_ERR_NOASSIGN;
 
 	pc[pos].reg_num     = 41;
-	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
 	pc[pos].reg_value   = reg.pmc_val;
 	pc[pos++].reg_addr  = 41;
 
@@ -1908,10 +1929,14 @@ pfm_dispatch_ipear(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in,
 	pfm_mont_pmc_reg_t reg;
 	pfmlib_mont_input_param_t *param = mod_in;
 	pfmlib_event_t *e = inp->pfp_events;
-	pfmlib_reg_t *pc = outp->pfp_pmcs;
-	int pos = outp->pfp_pmc_count;
+	pfmlib_reg_t *pc, *pd;
+	unsigned int pos1, pos2;
 	unsigned int i, count;
 
+	pc = outp->pfp_pmcs;
+	pd = outp->pfp_pmds;
+	pos1 = outp->pfp_pmc_count;
+	pos2 = outp->pfp_pmd_count;
 	/*
 	 * check if there is something to do
 	 */
@@ -1940,13 +1965,10 @@ pfm_dispatch_ipear(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in,
 	if (pfm_regmask_isset(&inp->pfp_unavail_pmcs, 42))
 		return PFMLIB_ERR_NOASSIGN;
 
-	pc[pos].reg_num     = 42;
-	pc[pos].reg_pmd_num = PFMLIB_REG_PMD_NONE;
-	pc[pos].reg_evt_idx = PFMLIB_REG_EVT_IDX_NONE;
-	pc[pos].reg_value   = reg.pmc_val;
-	pc[pos++].reg_addr  = 42;
-
-	outp->pfp_pmc_count = pos;
+	pc[pos1].reg_num     = 42;
+	pc[pos1].reg_value   = reg.pmc_val;
+	pc[pos1].reg_addr  = 42;
+	pos1++;
 
 	__pfm_vbprintf("[PMC42(pmc42)=0x%lx plm=%d pm=%d mode=%d delay=%d]\n",
 			reg.pmc_val,
@@ -1954,6 +1976,21 @@ pfm_dispatch_ipear(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in,
 			reg.pmc42_mont_reg.ipear_pm,
 			reg.pmc42_mont_reg.ipear_mode,
 			reg.pmc42_mont_reg.ipear_delay);
+
+	pd[pos2].reg_num = 38;
+	pd[pos2++].reg_addr = 38;
+	pd[pos2].reg_num = 39;
+	pd[pos2++].reg_addr = 39;
+	__pfm_vbprintf("[PMD38(pmd38)]\n[PMD39(pmd39)\n");
+
+	for(i=48; i < 64; i++, pos2++) {
+		pd[pos2].reg_num = i;
+		pd[pos2].reg_addr = i;
+		__pfm_vbprintf("[PMD%u(pmd%u)]\n", pd[pos2].reg_num, pd[pos2].reg_num);
+	}
+
+	outp->pfp_pmc_count = pos1;
+	outp->pfp_pmd_count = pos2;
 
 	return PFMLIB_SUCCESS;
 }
