@@ -438,8 +438,20 @@ int _papi_hwd_get_system_info(void)
    rewind(f);
    s = search_cpu_info(f, "cpu MHz", maxargs);
    if (s)
-      sscanf(s + 1, "%f", &mhz);
-   _papi_hwi_system_info.hw_info.mhz = mhz;
+     {
+       sscanf(s + 1, "%f", &mhz);
+       _papi_hwi_system_info.hw_info.mhz = mhz;
+     }
+   else
+     {
+       rewind(f);
+       s = search_cpu_info(f, "BogoMIPS", maxargs);
+       if (s)
+	 {
+	   sscanf(s + 1, "%f", &mhz);
+	   _papi_hwi_system_info.hw_info.mhz = mhz;
+	 }
+     }       
                                                                                 
    /* Vendor Name */
                                                                                 
@@ -456,12 +468,26 @@ int _papi_hwd_get_system_info(void)
      {
        rewind(f);
        s = search_cpu_info(f, "vendor", maxargs);
-       if (s && (t = strchr(s + 2, '\n'))) {
-         *t = '\0';
-         strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
-	 decode_vendor_string(_papi_hwi_system_info.hw_info.vendor_string,
-			      &_papi_hwi_system_info.hw_info.vendor);
-       }
+       if (s && (t = strchr(s + 2, '\n'))) 
+	 {
+	   *t = '\0';
+	   strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
+	   decode_vendor_string(_papi_hwi_system_info.hw_info.vendor_string,
+				&_papi_hwi_system_info.hw_info.vendor);
+	 }
+       else
+	 {
+	   rewind(f);
+	   s = search_cpu_info(f, "system type", maxargs);
+	   if (s && (t = strchr(s + 2, '\n'))) 
+	     {
+	       *t = '\0';
+	       s = strtok(s+2," ");
+	       strcpy(_papi_hwi_system_info.hw_info.vendor_string, s);
+	       decode_vendor_string(_papi_hwi_system_info.hw_info.vendor_string,
+				    &_papi_hwi_system_info.hw_info.vendor);
+	     }
+	 }
      }
                                                                                 
    /* Revision */
@@ -502,6 +528,18 @@ int _papi_hwd_get_system_info(void)
            *t = '\0';
            strcpy(_papi_hwi_system_info.hw_info.model_string, s + 2);
          }
+       else
+	 {
+	   rewind(f);
+	   s = search_cpu_info(f, "cpu model", maxargs);
+	   if (s && (t = strchr(s + 2, '\n')))
+	     {
+	       *t = '\0';
+	       s = strtok(s + 2," ");
+	       s = strtok(NULL," ");
+	       strcpy(_papi_hwi_system_info.hw_info.model_string, s);
+	     }
+	 }
      }
                                                                                 
    rewind(f);
@@ -1416,6 +1454,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
     * fakining it here with hw_info.model which is not set by this
     * substrate 
     */
+   _papi_hwi_system_info.hw_info.model = _perfmon2_pfm_pmu_type;
    retval = _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info,
                             _papi_hwi_system_info.hw_info.model);
    if (retval)
