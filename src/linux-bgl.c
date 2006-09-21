@@ -263,9 +263,9 @@ int _papi_hwd_get_system_info(void)
 */  
   _papi_hwi_system_info.sub_info.num_cntrs = BGL_PERFCTR_NUM_COUNTERS;
   _papi_hwi_system_info.hw_info.mhz = (float) bgl.clockHz * 1.0e-6; 
-  SUBDBG((stdout,"Detected MHZ is %f\n",_papi_hwi_system_info.hw_info.mhz));
+  SUBDBG("Detected MHZ is %f\n",_papi_hwi_system_info.hw_info.mhz);
   
-  SUBDBG((stderr,"Successful return\n"));
+  SUBDBG(("Successful return\n"));
   return(PAPI_OK);
 }
 
@@ -305,7 +305,6 @@ static int mdi_init()
 
 int _papi_hwd_init_control_state(hwd_control_state_t * ptr) 
 {
-  memset(ptr, 0, sizeof(hwd_control_state_t));
   return(PAPI_OK);
 }
 
@@ -340,33 +339,9 @@ static void lock_release(void)
 
 int _papi_hwd_init(hwd_context_t *ctx)
 {
-/*  int bgl_mode=BGL_PERFCTR_MODE_SYNC;
-  bgl_mode=bgl_perfctr_init_synch(bgl_mode);
-  
-  if(bgl_mode < 0) {
-    fprintf(stderr, "bgl_perfctr_init_synch() returned %d\n", bgl_mode);
-    return bgl_mode;
-  }
-  
-  &ctx->ctr_state = bgl_perfctr_hwstate();
-  return(PAPI_OK);
-*/
-  int err, bgl_mode=BGL_PERFCTR_MODE_SYNC;
-  hwd_control_state_t *this_state=&ctx->ctr_state;
-  
-  _papi_hwd_init_control_state(this_state);
 
-  bgl_mode=bgl_perfctr_init_synch(bgl_mode);
-  if(bgl_mode < 0) {
-    SUBDBG(stderr, "bgl_perfctr_init_synch() returned %d\n", bgl_mode);
-    return PAPI_ESYS;
-  }
-  
-  err = bgl_perfctr_copy_state(&this_state->perfctr_state, sizeof(bgl_perfctr_control_t));
-  if(err) {
-    return (err);
-  }
-
+  ctx->perfstate = bgl_perfctr_hwstate();
+  SUBDBG("ctx->perfstate: = 0x%x\n", ctx->perfstate);
   return(PAPI_OK);
 
   /* sigaction isn't implemented yet
@@ -500,7 +475,7 @@ void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
 
 int check_added_event(BGL_PERFCTR_event_t event, hwd_control_state_t *this_state)
 {
-   bgl_perfctr_control_t *bst = &this_state->perfctr_state;
+   bgl_perfctr_control_t *bst = &this_state->perfctr;
    int i;
    
    for(i=0;i<bst->nmapped;i++){
@@ -510,14 +485,24 @@ int check_added_event(BGL_PERFCTR_event_t event, hwd_control_state_t *this_state
    return 0;
 }
 
+int update_control_state(hwd_control_state_t *ctrlstate)
+{
+  int err;
+  
+  err = bgl_perfctr_copy_state(&ctrlstate->perfctr, sizeof(bgl_perfctr_control_t));
+  if(err) {
+    return (err);
+  }
+  ctrlstate->cycles = get_cycles();
+}
 
 /* Register allocation */
-int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) 
+int _papi_hwd_allocate_registers_foo(EventSetInfo_t *ESI) 
 {
    hwd_context_t *ctx = &ESI->master->context;
-   hwd_control_state_t *this_state = &ctx->ctr_state;
+   hwd_control_state_t *this_state = &ESI->machdep;
    int i, err=0, natNum, count=0;
-
+   SUBDBG("############## _papi_hwd_allocate_registers ########################\n");
    /* not yet successfully mapped, but have enough slots for events */
 
    /* Initialize the local structure needed 
@@ -528,7 +513,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
          to access the native table directly, but in general this is a bad idea */
       BGL_PERFCTR_event_t event;
       get_bgl_native_event(ESI->NativeInfoArray[i].ni_event, &event);
-	  SUBDBG("--- event.num = 0x%x   event.edge=%d\n", event.num, event.edge);
+	  SUBDBG("---ctx->perfstate(%p): nmapped = %d  event.num = 0x%x   event.edge=%d\n", ctx->perfstate, ctx->perfstate->nmapped,event.num, event.edge);
       if (event.num == -1)
          return 0;
       if(event.num != BGL_PAPI_TIMEBASE) {
@@ -539,25 +524,26 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI)
 		 }
       }
    }
+   
    if(count){
      if(err) {
        bgl_perfctr_revoke();
        return 0;
      }
-
+     /* revoke all events */
+	 
+	 //bgl_perfctr_revoke();
      err = bgl_perfctr_commit();
      if(err) {
        bgl_perfctr_revoke();
        return 0;
      }
-  
    }
+   
+//  update_control_state(this_state);
 
-   err = bgl_perfctr_copy_state(&this_state->perfctr_state, sizeof(bgl_perfctr_control_t));
-   if(err) {
-     return 0;
-   }
-  
+  SUBDBG("ctx->perfstate: 0x%x  bgl_perfctr_hwstate(): 0x%x\n", ctx->perfstate, bgl_perfctr_hwstate());
+
   return 1;
 }
 
@@ -570,9 +556,9 @@ static int get_register(int EventCode, hwd_control_state_t *current_state)
    if (event.num == -1)
       return -1;
    
-   for(i=0;i<current_state->perfctr_state.nmapped;i++){
-      if(event.num==current_state->perfctr_state.map[i].event.num)
-	     return current_state->perfctr_state.map[i].counter_register;
+   for(i=0;i<current_state->perfctr.nmapped;i++){
+      if(event.num==current_state->perfctr.map[i].event.num)
+	     return current_state->perfctr.map[i].counter_register;
    }
 
    if(event.num == BGL_PAPI_TIMEBASE)
@@ -581,30 +567,62 @@ static int get_register(int EventCode, hwd_control_state_t *current_state)
    return -1;
 }
 
-static int remove_events(hwd_control_state_t *current_state, NativeInfo_t *native, int count)
+/* remove event which does not exist in native from perfstate, and add events that mapped */
+static int check_and_update_events(bgl_perfctr_control_t *perfstate, NativeInfo_t *native, int count)
 {
    int i, j, err=0; 
-   BGL_PERFCTR_event_t event;
+   BGL_PERFCTR_event_t event[count];
 
-   for(i=0;i<current_state->perfctr_state.nmapped;i++){
-   SUBDBG("nmapped = %d  event.num = 0x%x\n", current_state->perfctr_state.nmapped, current_state->perfctr_state.map[i].event.num);
+   for(j=0;j<count;j++)
+      get_bgl_native_event(native[j].ni_event, &event[j]);
+   
+   for(i=0;i<perfstate->nmapped;i++){
+   SUBDBG("++++++perfstate(%p): nmapped = %d  event.num = 0x%x\n",perfstate, perfstate->nmapped, perfstate->map[i].event.num);
       for(j=0;j<count;j++){
-         get_bgl_native_event(native[j].ni_event, &event);
-         if (event.num == -1)
+         if (event[j].num == -1)
             return PAPI_ENOEVNT;
-         if(event.num == BGL_PAPI_TIMEBASE)
+         if(event[j].num == BGL_PAPI_TIMEBASE)
 		    continue;
-         if(event.num==current_state->perfctr_state.map[i].event.num)
+         if(event[j].num==perfstate->map[i].event.num)
             break;
 	  }
 	  if(j==count){
-         err = bgl_perfctr_remove_event(current_state->perfctr_state.map[i].event);
-		 SUBDBG("bgl_perfctr_remove_event: event=0x%x err=%d\n", current_state->perfctr_state.map[i].event.num, err);
+         err = bgl_perfctr_remove_event(perfstate->map[i].event);
+		 SUBDBG("++bgl_perfctr_remove_event: event=0x%x err=%d\n", perfstate->map[i].event.num, err);
          if(err)
 		    break;
 	  }
    }
+   if(err) {
+      bgl_perfctr_revoke();
+      return PAPI_ECNFLCT;
+   }
 
+   err=bgl_perfctr_commit();
+   if(err) {
+      bgl_perfctr_revoke();
+      return PAPI_ESBSTR;
+   }
+
+   /* add event */	  
+   for(j=0;j<count;j++){
+      for(i=0;i<perfstate->nmapped;i++){
+         SUBDBG("-------nmapped = %d  event.num = 0x%x\n", perfstate->nmapped, perfstate->map[i].event.num);
+         if (event[j].num == -1)
+            return PAPI_ENOEVNT;
+         if(event[j].num == BGL_PAPI_TIMEBASE)
+		    continue;
+         if(event[j].num==perfstate->map[i].event.num)
+            break;
+	  }
+	  if(i==perfstate->nmapped){
+         err = bgl_perfctr_add_event(event[j]);
+ 		 SUBDBG("--bgl_perfctr_add_event: event=0x%x err=%d\n",event[j].num, err);
+		 if(err)
+           break;
+	  }
+   }
+   
    if(err) {
       bgl_perfctr_revoke();
       return PAPI_ECNFLCT;
@@ -618,6 +636,10 @@ static int remove_events(hwd_control_state_t *current_state, NativeInfo_t *nativ
    return PAPI_OK;
 }
 
+/* Register allocation */
+int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) 
+{
+}
 /* This function clears the current contents of the control structure and 
    updates it with whatever resources are allocated for all the native events
    in the native info structure array. */
@@ -625,14 +647,16 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
                                    NativeInfo_t *native, int count, hwd_context_t * ctx) 
 {
   int ev, pos, retval;
-  hwd_control_state_t *current_state=&ctx->ctr_state;
-  
-  retval = remove_events(current_state, native, count);
+  bgl_perfctr_control_t *perfstate=ctx->perfstate;
+  SUBDBG("===================_papi_hwd_update_control_state(%p) %d native events\n", perfstate, count);
+  retval = check_and_update_events(perfstate, native, count);
   if(retval != PAPI_OK)
      return retval;
+
+  update_control_state(this_state);
 	 
   for(ev = 0; ev < count; ev++) {
-      pos = get_register(native[ev].ni_event, current_state);
+      pos = get_register(native[ev].ni_event, this_state);
 
       if(pos != -1)
 	     native[ev].ni_position = pos;
@@ -645,27 +669,26 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
   return PAPI_OK;
 }
 
-int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *state) 
+/* inline */ static int update_global_hwcounters(hwd_context_t *ctx)
 {
-  int err = 0;
-  hwd_control_state_t *current_state = &ctx->ctr_state;
-  
-  current_state->cycles = get_cycles();
-  
-  err = bgl_perfctr_copy_state(&current_state->perfctr_state, sizeof(bgl_perfctr_control_t));
-  if(err) {
-    return (err);
-  }
+
+  ctx->cycles = get_cycles();
+  bgl_perfctr_get_counters();
+
+  bgl_perfctr_release_counters();
+
+  return(PAPI_OK);
+}
+
+int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *ctrlstate) 
+{
+  update_global_hwcounters(ctx);
+  update_control_state(ctrlstate);
 
    /* If we are nested, merge the global counter structure
       with the current eventset */
 
    SUBDBG("Start\n");
-
-   /* Copy the global counter structure to the current eventset */
-
-   SUBDBG("Copying states\n");
-   memcpy(state, current_state, sizeof(hwd_control_state_t));
 
   return(PAPI_OK);
 }
@@ -677,41 +700,31 @@ int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *state)
 
 int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *this_state, long_long **dp, int flags) 
 {
-  int err, i;
-  hwd_control_state_t *current_state = &ctx->ctr_state;
-  
-  current_state->cycles = get_cycles();
+  int i;
 
-  /* update the counters */
-  err = bgl_perfctr_copy_state(&current_state->perfctr_state, sizeof(bgl_perfctr_control_t));
-  if(err) {
-    return (err);
-  }
-  
+  update_global_hwcounters(ctx);
+
   for(i=0;i<MAX_COUNTERS-1;i++)
-     vdata[i] = current_state->perfctr_state.vdata[i] - this_state->perfctr_state.vdata[i];
+     vdata[i] = ctx->perfstate->vdata[i] - this_state->perfctr.vdata[i];
 
-  vdata[i] = current_state->cycles - this_state->cycles;
+  vdata[i] = ctx->cycles - this_state->cycles;
 
   *dp = vdata;
 
   return (PAPI_OK);
 }
 
-int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *this_state) 
+int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctrlstate) 
 {
-  int retval;
-  hwd_control_state_t *current_state = &ctx->ctr_state;
-  
-  /* update the counters */
-  retval = bgl_perfctr_copy_state(&current_state->perfctr_state, sizeof(bgl_perfctr_control_t));
-  if(retval) {
-    return (retval);
-  }
-  current_state->cycles = get_cycles();
-  
-  memcpy(this_state, current_state, sizeof(hwd_control_state_t));
+  return(_papi_hwd_start(ctx, ctrlstate));
+}
 
+/* This routine is for shutting down threads, including the
+   master thread. */
+int _papi_hwd_shutdown(hwd_context_t * ctx) 
+{
+  bgl_perfctr_shutdown();
+  memset(ctx,0x0,sizeof(hwd_context_t));
   return(PAPI_OK);
 }
 
@@ -720,15 +733,6 @@ int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long 
   return(PAPI_ESBSTR);
 }
 
-/* This routine is for shutting down threads, including the
-   master thread. */
-int _papi_hwd_shutdown(hwd_context_t * ctx) 
-{
-  hwd_control_state_t *machdep = &ctx->ctr_state;
-  bgl_perfctr_shutdown();
-  memset(machdep,0x0,sizeof(hwd_control_state_t));
-  return(PAPI_OK);
-}
 
 void _papi_hwd_dispatch_timer(int signal, hwd_siginfo_t * si, void *context) 
 {

@@ -34,7 +34,7 @@
 //#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->eip)
 
 typedef struct bgl_control_state {
-  bgl_perfctr_control_t perfctr_state;
+  bgl_perfctr_control_t perfctr;
   unsigned long long cycles;
 } bgl_control_state_t;
 
@@ -49,8 +49,9 @@ typedef struct bgl_reg_alloc {
 typedef bgl_control_state_t hwd_control_state_t;
 
 typedef struct bgl_context {
-   /* this structure is a work in progress */
-   bgl_control_state_t ctr_state;
+  bgl_perfctr_control_t *perfstate;
+  unsigned long long cycles;
+//   bgl_control_state_t ctr_state;
 } bgl_context_t;
 
 typedef bgl_context_t hwd_context_t;
