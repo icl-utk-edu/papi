@@ -334,10 +334,9 @@ AC_MSG_RESULT($debug)
 
 # Checks for programs.
 AC_PROG_AWK
+AC_PROG_CC
 if test "$OS" != "linux"; then
    AC_PROG_CC(xlc cc gcc)
-else
-   AC_PROG_CC
 fi
 AC_PROG_F77
 AC_PROG_CPP
@@ -974,11 +973,13 @@ else
 fi
 if test "$dotest" = 1; then
 AC_CHECK_LIB([pfm], [pfm_initialize], [
+	AC_CHECK_HEADERS([perfmon/pfmlib.h],[
 	if test "$arch" = "ia64"; then
 		AC_CHECK_HEADERS([perfmon/pfmlib_montecito.h])
         fi
 	AC_CHECK_FUNC(pfm_get_event_description, [AC_DEFINE(HAVE_PFM_GET_EVENT_DESCRIPTION,1,[event description function])],[])
-      ], [
+	AC_CHECK_MEMBER(pfmlib_reg_t.reg_evt_idx, [AC_DEFINE(HAVE_PFM_REG_EVT_IDX,1,[Old interface to pfm_dispatch_events])],[],[#include "perfmon/pfmlib.h"])
+      ], [AC_MSG_ERROR([perfmon/pfmlib.h could not be found, please rerun configure])])], [
 	AC_MSG_ERROR([libpfm.a could not be found, please rerun configure])
       ])
 else

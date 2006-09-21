@@ -1114,6 +1114,7 @@ inline static int compute_kernel_args(hwd_control_state_t * ctl)
    
       /* figure out pmd mapping from output pmc */
 
+#if defined(HAVE_PFM_REG_EVT_IDX)
       for (i=0, j=0; i < tmpin.pfp_event_count; i++, donepd++) 
 	{
 	  pd[donepd].reg_num = tmpout.pfp_pmcs[j].reg_pmd_num;
@@ -1125,6 +1126,12 @@ inline static int compute_kernel_args(hwd_control_state_t * ctl)
 	  for(; j < tmpout.pfp_pmc_count; j++)  
 	    if (tmpout.pfp_pmcs[j].reg_evt_idx != i) break;
 	}
+#else
+      for (i=0; i < tmpout.pfp_pmd_count; i++, donepd++) 
+        {
+          pd[donepd].reg_num = tmpout.pfp_pmds[i].reg_num;
+        }
+#endif
       
       togo -= dispatch_count;
       done += dispatch_count;

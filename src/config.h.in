@@ -24,6 +24,9 @@
 /* Altix memory mapped global cycle counter */
 #undef HAVE_MMTIMER
 
+/* Define to 1 if you have the <perfmon/pfmlib.h> header file. */
+#undef HAVE_PERFMON_PFMLIB_H
+
 /* Montecito headers */
 #undef HAVE_PERFMON_PFMLIB_MONTECITO_H
 
@@ -32,6 +35,9 @@
 
 /* event description function */
 #undef HAVE_PFM_GET_EVENT_DESCRIPTION
+
+/* Old interface to pfm_dispatch_events */
+#undef HAVE_PFM_REG_EVT_IDX
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
@@ -87,13 +93,4 @@
 /* Enable GNU extensions on systems that have them.  */
 #ifndef _GNU_SOURCE
 # undef _GNU_SOURCE
-#endif
-
-/* Define to empty if `const' does not conform to ANSI C. */
-#undef const
-
-/* Define to `__inline__' or `__inline' if that's what the C compiler
-   calls it, or to nothing if 'inline' is not supported under any name.  */
-#ifndef __cplusplus
-#undef inline
 #endif
