@@ -5541,8 +5541,8 @@ fi
 
 else
 
-	{ { echo "$as_me:$LINENO: error: libperfctr.h could not be found, please rerun configure" >&5
-echo "$as_me: error: libperfctr.h could not be found, please rerun configure" >&2;}
+	{ { echo "$as_me:$LINENO: error: libperfctr.h could not be found, please examine config.log and rerun configure with different flags" >&5
+echo "$as_me: error: libperfctr.h could not be found, please examine config.log and rerun configure with different flags" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -5550,8 +5550,8 @@ done
 
 else
 
-{ { echo "$as_me:$LINENO: error: libperfctr.a could not be found, please rerun configure" >&5
-echo "$as_me: error: libperfctr.a could not be found, please rerun configure" >&2;}
+{ { echo "$as_me:$LINENO: error: libperfctr.a could not be found, please examine config.log and rerun configure with different flags" >&5
+echo "$as_me: error: libperfctr.a could not be found, please examine config.log and rerun configure with different flags" >&2;}
    { (exit 1); exit 1; }; }
 
 fi
@@ -6179,8 +6179,8 @@ fi
 
 
 else
-  { { echo "$as_me:$LINENO: error: perfmon/pfmlib.h could not be found, please rerun configure" >&5
-echo "$as_me: error: perfmon/pfmlib.h could not be found, please rerun configure" >&2;}
+  { { echo "$as_me:$LINENO: error: perfmon/pfmlib.h could not be found, please examine config.log and rerun configure with different flags" >&5
+echo "$as_me: error: perfmon/pfmlib.h could not be found, please examine config.log and rerun configure with different flags" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -6188,8 +6188,8 @@ done
 
 else
 
-	{ { echo "$as_me:$LINENO: error: libpfm.a could not be found, please rerun configure" >&5
-echo "$as_me: error: libpfm.a could not be found, please rerun configure" >&2;}
+	{ { echo "$as_me:$LINENO: error: libpfm.a could not be found, please examine config.log and rerun configure with different flags" >&5
+echo "$as_me: error: libpfm.a could not be found, please examine config.log and rerun configure with different flags" >&2;}
    { (exit 1); exit 1; }; }
 
 fi
@@ -6373,8 +6373,8 @@ if test $ac_cv_lib_pmapi_pm_init = yes; then
 			    PMINIT="-DPM_INIT"
 else
 
-			    { { echo "$as_me:$LINENO: error: libpmapi.a is needed on AIX, please rerun configure" >&5
-echo "$as_me: error: libpmapi.a is needed on AIX, please rerun configure" >&2;}
+			    { { echo "$as_me:$LINENO: error: libpmapi.a is needed on AIX, please examine config.log and rerun configure with different flags" >&5
+echo "$as_me: error: libpmapi.a is needed on AIX, please examine config.log and rerun configure with different flags" >&2;}
    { (exit 1); exit 1; }; }
 
 fi

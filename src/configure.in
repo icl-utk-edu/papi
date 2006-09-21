@@ -930,8 +930,8 @@ AC_CHECK_LIB([perfctr], [vperfctr_open], [
 	],[perfctr=6],[perfctr=7])
 	CFLAGS=$oCFLAGS
 ], [
-	AC_MSG_ERROR([libperfctr.h could not be found, please rerun configure])])],[
-AC_MSG_ERROR([libperfctr.a could not be found, please rerun configure])
+	AC_MSG_ERROR([libperfctr.h could not be found, please examine config.log and rerun configure with different flags])])],[
+AC_MSG_ERROR([libperfctr.a could not be found, please examine config.log and rerun configure with different flags])
 ])
     else
 AC_DEFINE(HAVE_LIBPERFCTR_H,1,[perfctr header file])
@@ -979,8 +979,8 @@ AC_CHECK_LIB([pfm], [pfm_initialize], [
         fi
 	AC_CHECK_FUNC(pfm_get_event_description, [AC_DEFINE(HAVE_PFM_GET_EVENT_DESCRIPTION,1,[event description function])],[])
 	AC_CHECK_MEMBER(pfmlib_reg_t.reg_evt_idx, [AC_DEFINE(HAVE_PFM_REG_EVT_IDX,1,[Old interface to pfm_dispatch_events])],[],[#include "perfmon/pfmlib.h"])
-      ], [AC_MSG_ERROR([perfmon/pfmlib.h could not be found, please rerun configure])])], [
-	AC_MSG_ERROR([libpfm.a could not be found, please rerun configure])
+      ], [AC_MSG_ERROR([perfmon/pfmlib.h could not be found, please examine config.log and rerun configure with different flags])])], [
+	AC_MSG_ERROR([libpfm.a could not be found, please examine config.log and rerun configure with different flags])
       ])
 else
 # included snapshots have this function
@@ -1016,7 +1016,7 @@ if test "$OS" = "aix"; then
 			    PMINIT="-DPM_INITIALIZE"], [
 			    AC_CHECK_LIB([pmapi], [pm_init], [
 			    PMINIT="-DPM_INIT"], [
-			    AC_MSG_ERROR([libpmapi.a is needed on AIX, please rerun configure])
+			    AC_MSG_ERROR([libpmapi.a is needed on AIX, please examine config.log and rerun configure with different flags])
 			    ])],[])
    else
 	PMAPI="$pmapi"
