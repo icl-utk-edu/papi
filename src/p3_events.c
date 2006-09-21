@@ -905,6 +905,12 @@ enum {
    PNE_OPT_NB_HT_BUS2_BUFF,
    PNE_OPT_NB_HT_BUS2_NOP,
    PNE_OPT_CPU_CLK_UNHALTED,
+   PNE_OPT_HT_LL_MEM_XFR,
+   PNE_OPT_HT_LR_MEM_XFR,
+   PNE_OPT_HT_RL_MEM_XFR,
+   PNE_OPT_HT_LL_IO_XFR,
+   PNE_OPT_HT_LR_IO_XFR,
+   PNE_OPT_HT_RL_IO_XFR,
    PNE_OPT_LAST_NATIVE_EVENT
 };
 /* These are special Opteron events with MOESI bits set as used in the preset table */
@@ -3721,7 +3727,7 @@ char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 
    internal_decode_event(EventCode, &event, &moesi);
    if (event > _papi_hwi_system_info.sub_info.num_native_events) {
-       return (NULL);
+       return ('\0'); // return a null string for invalid events
    }
 
    if (!moesi)
@@ -3738,8 +3744,8 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
    int event, moesi;
 
    internal_decode_event(EventCode, &event, &moesi);
-//   if (event > _papi_hwi_system_info.sub_info.num_native_events)
-//       return (NULL);
+   if (event > _papi_hwi_system_info.sub_info.num_native_events)
+       return ('\0'); // return a null string for invalid events
 
    if (!moesi)
       return (native_table[event].description);
@@ -3758,8 +3764,8 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
    int event, moesi;
 
    internal_decode_event(EventCode, &event, &moesi);
-//   if (event > _papi_hwi_system_info.sub_info.num_native_events)
-//       return (PAPI_ENOEVNT);
+   if (event > _papi_hwi_system_info.sub_info.num_native_events)
+       return (PAPI_ENOEVNT);
 
    if(native_table[event].resources.selector == 0) {
       return (PAPI_ENOEVNT);
