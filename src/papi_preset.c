@@ -44,6 +44,8 @@ int _papi_hwi_setup_all_presets(hwi_search_t *findem, hwi_dev_notes_t *notes)
 	     {
 	       if (findem[pnum].data.native[i] != PAPI_NULL)
 		 j++;
+	       else if (j)
+		 break;
 	       i++;
 	     }
 	   
