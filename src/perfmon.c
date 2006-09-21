@@ -706,7 +706,7 @@ static inline int find_preset_code(char *tmp, int *code)
 
 static int load_preset_table(pfm_preset_search_entry_t **here)
 {
-  char name[PATH_MAX], line[LINE_MAX];
+  char name[PATH_MAX], line[LINE_MAX], *tmpn;
   FILE *table;
   int line_no = 1, get_presets = 0, derived = 0, insert = 2, preset = 0;
   static pfm_preset_search_entry_t tmp[PAPI_MAX_PRESET_EVENTS];
@@ -718,15 +718,19 @@ static int load_preset_table(pfm_preset_search_entry_t **here)
   tmp[1].preset = PAPI_TOT_INS;
   tmp[1].derived = NOT_DERIVED;
 
-  sprintf(name,"%s/%s",PAPI_DATADIR,PERFMON_EVENT_FILE);
+  if ((tmpn = getenv("PAPI_PERFMON_EVENT_FILE")) && (strlen(tmpn) != 0))
+    sprintf(name,"%s",tmpn);
+  else
+    sprintf(name,"%s/%s",PAPI_DATADIR,PERFMON_EVENT_FILE);
+  SUBDBG("Opening %s\n",name);
   table = fopen(name,"r");
   if (table == NULL)
     {
-      SUBDBG("Open %s failed, trying CWD.\n",name);
+      SUBDBG("Open %s failed, trying ./%s.\n",name,PERFMON_EVENT_FILE);
       table = fopen(PERFMON_EVENT_FILE,"r");
       if (table == NULL)
 	{
-	  PAPIERROR("fopen(%s): %s\n",name,strerror(errno));
+	  PAPIERROR("fopen(%s): %s, please set the PAPI_PERFMON_EVENT_FILE env. variable",name,strerror(errno));
 	  return(PAPI_ESYS);
 	}
       strcpy(name,PERFMON_EVENT_FILE);
@@ -761,7 +765,7 @@ static int load_preset_table(pfm_preset_search_entry_t **here)
 	      PAPIERROR("Expected name after CPU token at line %d of %s -- ignoring",line_no,name);
 	      goto nextline;
 	    }
-	  SUBDBG("Examining CPU %s vs. %s\n",t,_perfmon2_pfm_pmu_name);
+	  SUBDBG("Examining CPU (%s) vs. (%s)\n",t,_perfmon2_pfm_pmu_name);
 	  if (strcasecmp(t,_perfmon2_pfm_pmu_name) == 0)
 	    {
 	      int type;
@@ -844,7 +848,7 @@ static int load_preset_table(pfm_preset_search_entry_t **here)
       return(PAPI_OK);
     }
 
-  PAPIERROR("Failed to events for CPU %s, type %d in %s",_perfmon2_pfm_pmu_name,_perfmon2_pfm_pmu_type,PERFMON_EVENT_FILE);
+  PAPIERROR("Failed to find events for CPU %s, type %d in %s",_perfmon2_pfm_pmu_name,_perfmon2_pfm_pmu_type,PERFMON_EVENT_FILE);
   return(PAPI_ESBSTR);
 }
 
@@ -995,7 +999,7 @@ static int generate_native_event_map(hwd_native_event_entry_t **nmap, unsigned i
 
 	  if ((ret = pfm_get_num_event_masks(i,&num_masks)) != PFMLIB_SUCCESS)
 	    {
-	      PAPIERROR("pfm_get_num_event_masks(%d,%p): %s\n",
+	      PAPIERROR("pfm_get_num_event_masks(%d,%p): %s",
 			i,&num_masks,pfm_strerror(ret));
 	      free(orig_ntmp);
 	      free(findme);
@@ -1005,7 +1009,7 @@ static int generate_native_event_map(hwd_native_event_entry_t **nmap, unsigned i
 	    {
 	      if ((ret = pfm_get_event_mask_description(i, j, &desc)) != PFMLIB_SUCCESS)
 		{
-		  PAPIERROR("pfm_get_event_mask_description(%d,%d,%p): %s\n",
+		  PAPIERROR("pfm_get_event_mask_description(%d,%d,%p): %s",
 			    i,j,&desc,pfm_strerror(ret));
 	      free(orig_ntmp);
 	      free(findme);
@@ -1013,7 +1017,7 @@ static int generate_native_event_map(hwd_native_event_entry_t **nmap, unsigned i
 		}
 	      if ((ret = pfm_get_event_mask_code(i, j, &c)) != PFMLIB_SUCCESS)
 		{
-		  PAPIERROR("pfm_get_event_mask_code(%d,%d,%p): %s\n",
+		  PAPIERROR("pfm_get_event_mask_code(%d,%d,%p): %s",
 			    i,j,&c,pfm_strerror(ret));
 	      free(orig_ntmp);
 	      free(findme);
@@ -1022,7 +1026,7 @@ static int generate_native_event_map(hwd_native_event_entry_t **nmap, unsigned i
 		  }
 	      if ((ret = pfm_get_event_mask_name(i, j, maskname, PAPI_MAX_STR_LEN)) != PFMLIB_SUCCESS)
 		{
-		  PAPIERROR("pfm_get_event_mask_name(%d,%d,%p,%d): %s\n",
+		  PAPIERROR("pfm_get_event_mask_name(%d,%d,%p,%d): %s",
 			    i,j,maskname,PAPI_MAX_STR_LEN);
 	      free(orig_ntmp);
 	      free(findme);
@@ -2621,7 +2625,7 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
   ret = pfm_get_event_description(event,&eventd);
   if (ret != PFMLIB_SUCCESS)
     {
-      PAPIERROR("pfm_get_event_description(%d,%p): %s\n",
+      PAPIERROR("pfm_get_event_description(%d,%p): %s",
 		event,&eventd,pfm_strerror(ret));
       return(NULL);
     }
@@ -2639,7 +2643,7 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 	  ret = pfm_get_event_mask_description(event,gete.unit_masks[i],&maskd[i]);
 	  if (ret != PFMLIB_SUCCESS)
 	    {
-	      PAPIERROR("pfm_get_event_mask_description(%d,%d,%p): %s\n",
+	      PAPIERROR("pfm_get_event_mask_description(%d,%d,%p): %s",
 			event,umask,&maskd,pfm_strerror(ret));
 	      free(eventd);
 	      for (;i>=0;i--)
@@ -2689,7 +2693,6 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
   unsigned int event, umask, num_masks;
   int ret;
-  pfmlib_event_t gete;
 
   if (decode_native_event(*EventCode,&event,&umask) != PAPI_OK)
     return(PAPI_ENOEVNT);
@@ -2697,7 +2700,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
   ret = pfm_get_num_event_masks(event,&num_masks);
   if (ret != PFMLIB_SUCCESS)
     {
-      PAPIERROR("pfm_get_num_event_masks(%d,%p): %s\n",event,&num_masks,pfm_strerror(ret));
+      PAPIERROR("pfm_get_num_event_masks(%d,%p): %s",event,&num_masks,pfm_strerror(ret));
       return(PAPI_ENOEVNT);
     }
   SUBDBG("This is umask %d of %d\n",umask,num_masks);
@@ -2724,7 +2727,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 	  ret = pfm_get_num_event_masks(event+1,&num_masks);
 	  if (ret != PFMLIB_SUCCESS)
 	    {
-	      PAPIERROR("pfm_get_num_event_masks(%d,%p): %s\n",event,&num_masks,pfm_strerror(ret));
+	      PAPIERROR("pfm_get_num_event_masks(%d,%p): %s",event,&num_masks,pfm_strerror(ret));
 	      return(PAPI_ENOEVNT);
 	    }
 	  if (num_masks)
@@ -2847,7 +2850,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
 
 int _papi_hwd_update_control_state(hwd_control_state_t *ctl,
                                    NativeInfo_t *native, int count, hwd_context_t * ctx) {
-  int i = 0, j, ret, dispatch_count = count, togo = count, done = 0;
+  int i = 0, ret;
   int last_reg_set = 0, reg_set_done = 0, offset = 0;
   pfmlib_input_param_t *inp = &ctl->in;
   pfmlib_output_param_t *outp = &ctl->out;
