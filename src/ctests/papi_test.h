@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <sys/ptrace.h>
 #include <sys/wait.h>
-#ifndef NO_DLFCN
+#if (!defined(NO_DLFCN) && !defined(_BGL)) 
 #include <dlfcn.h>
 #endif
 #endif
