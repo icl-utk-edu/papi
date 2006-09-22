@@ -612,7 +612,7 @@ static int check_and_update_events(bgl_perfctr_control_t *perfstate, NativeInfo_
          if(event[j].num==perfstate->map[i].event.num)
             break;
 	  }
-	  if(i==perfstate->nmapped){
+	  if(i==perfstate->nmapped && event[j].num != BGL_PAPI_TIMEBASE){
          err = bgl_perfctr_add_event(event[j]);
  		 SUBDBG("--bgl_perfctr_add_event: event=0x%x err=%d\n",event[j].num, err);
 		 if(err)
@@ -713,7 +713,7 @@ static int swap_events(bgl_perfctr_control_t *perfstate, bgl_perfctr_control_t *
          if(currentstate->map[j].event.num==perfstate->map[i].event.num)
             break;
 	  }
-	  if(i==perfstate->nmapped){
+	  if(i==perfstate->nmapped && currentstate->map[j].event.num != BGL_PAPI_TIMEBASE){
          err = bgl_perfctr_add_event(currentstate->map[j].event);
  		 SUBDBG("--bgl_perfctr_add_event: event=0x%x err=%d\n",currentstate->map[j].event.num, err);
 		 if(err)
