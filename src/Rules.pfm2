@@ -46,9 +46,16 @@ CFLAGS	+= -I$(PFM_INC_PATH)
 MISCHDRS = perfmon.h
 MISCSRCS = 
 SHLIBDEPS = -L$(PFM_LIB_PATH) -lpfm
-PFM_OBJS = $(shell ar t $(PFM_LIB_PATH)/libpfm.a)
+
+PFM_OBJS=$(shell ar t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
 ifeq (,$(PFM_OBJS))
-	PFM_OBJS = dummy
+$(PFM_LIB_PATH)/libpfm.a:
+ifneq (,${PFM_ROOT})
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)"
+else
+	@echo '$@ not installed!'; exit 1
+endif
+	$(MAKE) $(MAKEFLAGS)
 endif
 MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
 
@@ -57,16 +64,8 @@ include Makefile.inc
 config.h:
 	@echo 'Please clobber your build and run ./configure."
 
-$(PFM_LIB_PATH)/libpfm.a:
-ifneq (,${PFM_ROOT})
-	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)"
-else
-	@echo '$@ not installed!'; exit 1
-endif
-
 $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
 	ar xv $<
-	$(MAKE) $(MAKEFLAGS); echo "If you made it here, you may safely ignore this error."; exit 1
 
 native_clean:
 	rm -f $(MISCOBJS); 
