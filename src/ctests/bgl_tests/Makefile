@@ -22,7 +22,8 @@ SERIAL  = hummermult.rts hummermult-inf.rts test_bgl_perfctr.rts \
 	cachetest.rts cachetest-vn.rts mpi_bcast_papi.rts test_bgl_perfctr-overf.rts
 ### This functionality is not present in BG/L: test_bgl_perfctr-overf.rts
 BROKEN	= inherit pernode
-UTILOBJS= 
+UTILOBJS=../do_loops.o ../test_utils.o ../dummy.o 
+
 ALL 	= $(SERIAL) $(MPI)
 #ALL 	= $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM) $(PTHREADS) $(SERIAL) 
 INCLUDE = -I../.. #-I/bgl/BlueLight/ppcfloor/bglsys/include
@@ -58,7 +59,7 @@ run:
 	sh ./run_tests.sh
 
 mpi_bcast_papi.rts: mpi_bcast_papi.rts.o $(PAPILIB)
-	$(CC) -o $@ $^ $(LIBS_MPI) $(LIBS_MPI) $(LDFLAGS) $(PAPILIB)
+	$(CC) -o $@ $^ $(LIBS_MPI) $(LIBS_MPI) $(LDFLAGS) $(PAPILIB) $(UTILOBJS)
 
 mpi_bcast_papi.rts.o: mpi_bcast_papi.c
 	$(CC) -c -o $@ $(CFLAGS) $(INCLUDE) $< $
