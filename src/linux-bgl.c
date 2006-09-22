@@ -532,7 +532,6 @@ int _papi_hwd_allocate_registers_foo(EventSetInfo_t *ESI)
      }
      /* revoke all events */
 	 
-	 //bgl_perfctr_revoke();
      err = bgl_perfctr_commit();
      if(err) {
        bgl_perfctr_revoke();
@@ -540,8 +539,6 @@ int _papi_hwd_allocate_registers_foo(EventSetInfo_t *ESI)
      }
    }
    
-//  update_control_state(this_state);
-
   SUBDBG("ctx->perfstate: 0x%x  bgl_perfctr_hwstate(): 0x%x\n", ctx->perfstate, bgl_perfctr_hwstate());
 
   return 1;
@@ -661,7 +658,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
       if(pos != -1)
 	     native[ev].ni_position = pos;
       else {
-	     SUBDBG(stderr, "Internal inconsistency - conflicting native events\n");
+	     SUBDBG("Internal inconsistency - conflicting native events\n");
 	     return PAPI_ESBSTR;
       }
   }
@@ -680,8 +677,73 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
   return(PAPI_OK);
 }
 
+/* remove event which does not exist in native from perfstate, and add events that mapped */
+static int swap_events(bgl_perfctr_control_t *perfstate, bgl_perfctr_control_t *currentstate)
+{
+   int i, j, err=0; 
+   
+   for(i=0;i<perfstate->nmapped;i++){
+   SUBDBG("++++++perfstate(%p): nmapped = %d  event.num = 0x%x\n",perfstate, perfstate->nmapped, perfstate->map[i].event.num);
+      for(j=0;j<currentstate->nmapped;j++){
+         if(currentstate->map[j].event.num==perfstate->map[i].event.num)
+            break;
+	  }
+	  if(j==currentstate->nmapped){
+         err = bgl_perfctr_remove_event(perfstate->map[i].event);
+		 SUBDBG("++bgl_perfctr_remove_event: event=0x%x err=%d\n", perfstate->map[i].event.num, err);
+         if(err)
+		    break;
+	  }
+   }
+   if(err) {
+      bgl_perfctr_revoke();
+      return PAPI_ECNFLCT;
+   }
+
+   err=bgl_perfctr_commit();
+   if(err) {
+      bgl_perfctr_revoke();
+      return PAPI_ESBSTR;
+   }
+
+   /* add event */	  
+   for(j=0;j<currentstate->nmapped;j++){
+      for(i=0;i<perfstate->nmapped;i++){
+         SUBDBG("-------nmapped = %d  event.num = 0x%x\n", perfstate->nmapped, perfstate->map[i].event.num);
+         if(currentstate->map[j].event.num==perfstate->map[i].event.num)
+            break;
+	  }
+	  if(i==perfstate->nmapped){
+         err = bgl_perfctr_add_event(currentstate->map[j].event);
+ 		 SUBDBG("--bgl_perfctr_add_event: event=0x%x err=%d\n",currentstate->map[j].event.num, err);
+		 if(err)
+           break;
+	  }
+   }
+   
+   if(err) {
+      bgl_perfctr_revoke();
+      return PAPI_ECNFLCT;
+   }
+
+   err=bgl_perfctr_commit();
+   if(err) {
+      bgl_perfctr_revoke();
+      return PAPI_ESBSTR;
+   }
+   return PAPI_OK;
+}
+
 int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *ctrlstate) 
 {
+  int retval;
+  
+  bgl_perfctr_control_t *perfstate=ctx->perfstate;
+  
+  retval = swap_events(perfstate, &ctrlstate->perfctr);
+  if(retval != PAPI_OK)
+     return retval;
+	 
   update_global_hwcounters(ctx);
   update_control_state(ctrlstate);
 
@@ -738,47 +800,6 @@ void _papi_hwd_dispatch_timer(int signal, hwd_siginfo_t * si, void *context)
 {
 }
 
-/* Perfctr requires that interrupting counters appear at the end of the pmc list
-   In the case a user wants to interrupt on a counter in an evntset that is not
-   among the last events, we need to move the perfctr virtual events around to
-   make it last. This function swaps two perfctr events, and then adjust the
-   position entries in both the NativeInfoArray and the EventInfoArray to keep
-   everything consistent.
-*/
-static void swap_events(EventSetInfo_t * ESI, struct hwd_pmc_control *contr, int cntr1, int cntr2) 
-{
-  // MIKE DEBUG
-#if 0
-   unsigned int ui;
-   int si, i, j;
-
-   for(i = 0; i < ESI->NativeCount; i++) {
-      if(ESI->NativeInfoArray[i].ni_position == cntr1)
-         ESI->NativeInfoArray[i].ni_position = cntr2;
-      else if(ESI->NativeInfoArray[i].ni_position == cntr2)
-         ESI->NativeInfoArray[i].ni_position = cntr1;
-   }
-   for(i = 0; i < ESI->NumberOfEvents; i++) {
-      for(j = 0; ESI->EventInfoArray[i].pos[j] >= 0; j++) {
-         if(ESI->EventInfoArray[i].pos[j] == cntr1)
-            ESI->EventInfoArray[i].pos[j] = cntr2;
-         else if(ESI->EventInfoArray[i].pos[j] == cntr2)
-            ESI->EventInfoArray[i].pos[j] = cntr1;
-      }
-   }
-   ui = contr->cpu_control.pmc_map[cntr1];
-   contr->cpu_control.pmc_map[cntr1] = contr->cpu_control.pmc_map[cntr2];
-   contr->cpu_control.pmc_map[cntr2] = ui;
-
-   ui = contr->cpu_control.evntsel[cntr1];
-   contr->cpu_control.evntsel[cntr1] = contr->cpu_control.evntsel[cntr2];
-   contr->cpu_control.evntsel[cntr2] = ui;
-
-   si = contr->cpu_control.ireset[cntr1];
-   contr->cpu_control.ireset[cntr1] = contr->cpu_control.ireset[cntr2];
-   contr->cpu_control.ireset[cntr2] = si;
-#endif
-}
 
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
 {
