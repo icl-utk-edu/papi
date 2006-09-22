@@ -94,7 +94,8 @@ endif
 ifeq (CATAMOUNT, $(COMPILER))
 LIBS    	= static
 TARGETS 	= serial
-MEMSUBSTR	 = linux
+MEMSUBSTR	= linux
+FFLAGS		= $(BITFLAGS)
 endif
 
 # 
@@ -102,11 +103,11 @@ endif
 # 
 
 ifeq (PGROUP, $(COMPILER))
-F77       = pgf77
-CC	  = pgcc
-FFLAGS    = 
-OPTFLAGS  =
-TARGETS	  += omp
+F77       	= pgf77
+CC	  	= pgcc
+FFLAGS    	= 
+OPTFLAGS  	=
+TARGETS	  	+= omp
 endif
 
 # 
@@ -114,11 +115,11 @@ endif
 # 
 
 ifeq (PATHSCALE, $(COMPILER))
-F77       = pathf90
-CC	  = pathcc
-CC_R      = pathcc
-FFLAGS    = 
-OPTFLAGS  =
+F77       	= pathf90
+CC	  	= pathcc
+CC_R      	= pathcc
+FFLAGS    	= 
+OPTFLAGS  	=
 endif
 
 #
@@ -126,20 +127,20 @@ endif
 #
 
 ifeq (INTEL, $(COMPILER))
-IFCVER7  = $(shell ifc -V 2>&1 | grep "Version 7")
+IFCVER7  	= $(shell ifc -V 2>&1 | grep "Version 7")
 ifneq (,$(IFCVER7))
-F77      = ifc
-LDFLAGS  = -Vaxlib
+F77      	= ifc
+LDFLAGS  	= -Vaxlib
 else
-F77      = ifort
+F77      	= ifort
 endif
-CC	 = icc
-CC_R	 = $(CC) -pthread
-CC_SHR	 = $(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
-OMPCFLGS = -openmp
-OPTFLAGS = -ip
-FFLAGS   = -132
-TARGETS	 += omp
+CC	 	= icc
+CC_R	 	= $(CC) -pthread
+CC_SHR	 	= $(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
+OMPCFLGS 	= -openmp
+OPTFLAGS 	= -ip
+FFLAGS   	= -132
+TARGETS	 	+= omp
 endif
 
 ifeq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))
