@@ -678,8 +678,8 @@ char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 
 int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 {
-   bits = &(native_table[EventCode & PAPI_NATIVE_AND_MASK].resources); 
-   return (PAPI_OK);
+  memcpy(bits,&native_table[native_name_map[EventCode & PAPI_NATIVE_AND_MASK].index].resources,sizeof(hwd_register_t)); 
+  return (PAPI_OK);
 }
 
 static void copy_value(unsigned int val, char *nam, char *names, unsigned int *values, int len)
