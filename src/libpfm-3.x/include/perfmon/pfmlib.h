@@ -201,8 +201,19 @@ extern int pfm_get_inst_retired_event(pfmlib_event_t *e);
 #define PFMLIB_PENTIUM4_PMU		33	/* Intel Pentium4/Xeon/EM64T */
 #define PFMLIB_COREDUO_PMU		34	/* Intel Core Duo/Core Solo */
 #define PFMLIB_I386_PM_PMU		35	/* Intel Pentium M */
-
-#define PFMLIB_GEN_MIPS64_PMU           64      /* MIPS 5KC,20KC,25KF */
+#define PFMLIB_MIPS_20KC_PMU		64	/* MIPS 20KC */
+#define PFMLIB_MIPS_24K_PMU		65	/* MIPS 24K */
+#define PFMLIB_MIPS_25KF_PMU		66	/* MIPS 25KF */
+#define PFMLIB_MIPS_34K_PMU		67	/* MIPS 34K */
+#define PFMLIB_MIPS_5KC_PMU		68	/* MIPS 5KC */
+#define PFMLIB_MIPS_74K_PMU		69	/* MIPS 74K */
+#define PFMLIB_MIPS_R10000_PMU		70	/* MIPS R10000 */
+#define PFMLIB_MIPS_R12000_PMU		71	/* MIPS R12000 */
+#define PFMLIB_MIPS_RM7000_PMU		72	/* MIPS RM7000 */
+#define PFMLIB_MIPS_RM9000_PMU		73	/* MIPS RM9000 */
+#define PFMLIB_MIPS_SB1_PMU		74	/* MIPS SB1/SB1A */
+#define PFMLIB_MIPS_VR5432_PMU		75	/* MIPS VR5432 */
+#define PFMLIB_MIPS_VR5500_PMU		76	/* MIPS VR5500 */
 
 /*
  * pfmlib error codes

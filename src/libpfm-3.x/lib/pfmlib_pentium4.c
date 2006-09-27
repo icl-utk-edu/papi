@@ -47,7 +47,7 @@ typedef struct {
 
 static p4_regmap_t p4_pmc_regmap[]={
 /* 0 */ P4_REGMAP(0x3b2, "BPU_ESCR0"),
-/* 1 */ P4_REGMAP(0x3b4, "IS_ESCR0"),
+/* 1 */ P4_REGMAP(0x3ba, "IS_ESCR0"),
 /* 2 */ P4_REGMAP(0x3aa, "MOB_ESCR0"),
 /* 3 */ P4_REGMAP(0x3b6, "ITLB_ESCR0"),
 /* 4 */ P4_REGMAP(0x3ac, "PMH_ESCR0"),
@@ -70,13 +70,13 @@ static p4_regmap_t p4_pmc_regmap[]={
 /* 21 */ P4_REGMAP(0x3cc, "CRU_ESCR2"),
 /* 22 */ P4_REGMAP(0x3e0, "CRU_ESCR4"),
 /* 23 */ P4_REGMAP(0x360, "BPU_CCCR0"),
-/* 24 */ P4_REGMAP(0x362, "BPU_CCCR2"),
+/* 24 */ P4_REGMAP(0x361, "BPU_CCCR1"),
 /* 25 */ P4_REGMAP(0x364, "MS_CCCR0"),
-/* 26 */ P4_REGMAP(0x366, "MS_CCCR2"),
+/* 26 */ P4_REGMAP(0x365, "MS_CCCR1"),
 /* 27 */ P4_REGMAP(0x368, "FLAME_CCCR0"),
-/* 28 */ P4_REGMAP(0x36a, "FLAME_CCCR2"),
+/* 28 */ P4_REGMAP(0x369, "FLAME_CCCR1"),
 /* 29 */ P4_REGMAP(0x36c, "IQ_CCCR0"),
-/* 30 */ P4_REGMAP(0x36e, "IQ_CCCR2"),
+/* 30 */ P4_REGMAP(0x36d, "IQ_CCCR1"),
 /* 31 */ P4_REGMAP(0x370, "IQ_CCCR4"),
 /* 32 */ P4_REGMAP(0x3b3, "BPU_ESCR1"),
 /* 33 */ P4_REGMAP(0x3b5, "IS_ESCR1"),
@@ -100,13 +100,13 @@ static p4_regmap_t p4_pmc_regmap[]={
 /* 51 */ P4_REGMAP(0x3b9, "CRU_ESCR1"),
 /* 52 */ P4_REGMAP(0x3cd, "CRU_ESCR3"),
 /* 53 */ P4_REGMAP(0x3e1, "CRU_ESCR5"),
-/* 54 */ P4_REGMAP(0x361, "BPU_CCCR1"),
+/* 54 */ P4_REGMAP(0x362, "BPU_CCCR2"),
 /* 55 */ P4_REGMAP(0x363, "BPU_CCCR3"),
-/* 56 */ P4_REGMAP(0x365, "MS_CCCR1"),
+/* 56 */ P4_REGMAP(0x366, "MS_CCCR2"),
 /* 57 */ P4_REGMAP(0x367, "MS_CCCR3"),
-/* 58 */ P4_REGMAP(0x369, "FLAME_CCCR1"),
+/* 58 */ P4_REGMAP(0x36a, "FLAME_CCCR2"),
 /* 59 */ P4_REGMAP(0x36b, "FLAME_CCCR3"),
-/* 60 */ P4_REGMAP(0x36d, "IQ_CCCR1"),
+/* 60 */ P4_REGMAP(0x36e, "IQ_CCCR2"),
 /* 61 */ P4_REGMAP(0x36f, "IQ_CCCR3"),
 /* 62 */ P4_REGMAP(0x371, "IQ_CCCR5"),
 /* 63 */ P4_REGMAP(0x3f2, "PEBS_MATRIX_VERT"),
@@ -115,21 +115,21 @@ static p4_regmap_t p4_pmc_regmap[]={
 
 static p4_regmap_t p4_pmd_regmap[]={
 /* 0 */ P4_REGMAP(0x300, "BPU_CTR0"),
-/* 1 */ P4_REGMAP(0x302, "BPU_CTR2"),
+/* 1 */ P4_REGMAP(0x301, "BPU_CTR1"),
 /* 2 */ P4_REGMAP(0x304, "MS_CTR0"),
-/* 3 */ P4_REGMAP(0x306, "MS_CTR2"),
+/* 3 */ P4_REGMAP(0x305, "MS_CTR1"),
 /* 4 */ P4_REGMAP(0x308, "FLAME_CTR0"),
-/* 5 */ P4_REGMAP(0x30a, "FLAME_CTR2"),
+/* 5 */ P4_REGMAP(0x309, "FLAME_CTR1"),
 /* 6 */ P4_REGMAP(0x30c, "IQ_CTR0"),
-/* 7 */ P4_REGMAP(0x30e, "IQ_CTR2"),
+/* 7 */ P4_REGMAP(0x30d, "IQ_CTR1"),
 /* 8 */ P4_REGMAP(0x310, "IQ_CTR4"),
-/* 9 */ P4_REGMAP(0x301, "BPU_CTR1"),
+/* 9 */ P4_REGMAP(0x302, "BPU_CTR2"),
 /* 10 */ P4_REGMAP(0x303, "BPU_CTR3"),
-/* 11 */ P4_REGMAP(0x305, "MS_CTR1"),
+/* 11 */ P4_REGMAP(0x306, "MS_CTR2"),
 /* 12 */ P4_REGMAP(0x307, "MS_CTR3"),
-/* 13 */ P4_REGMAP(0x309, "FLAME_CTR1"),
+/* 13 */ P4_REGMAP(0x30a, "FLAME_CTR2"),
 /* 14 */ P4_REGMAP(0x30b, "FLAME_CTR3"),
-/* 15 */ P4_REGMAP(0x30d, "IQ_CTR1"),
+/* 15 */ P4_REGMAP(0x30d, "IQ_CTR2"),
 /* 16 */ P4_REGMAP(0x30f, "IQ_CTR3"),
 /* 17 */ P4_REGMAP(0x311, "IQ_CTR5"),
 };
@@ -299,6 +299,13 @@ static int pentium4_dispatch_events(pfmlib_input_param_t *input,
 			return PFMLIB_ERR_INVAL;
 		}
 
+		/*
+		 * INSTR_COMPLETED event only exist for model 3, 4, 6 (Prescott)
+		 */
+		if (input->pfp_events[i].event == PME_INSTR_COMPLETED &&
+		    p4_model != 3 && p4_model != 4 && p4_model != 6)
+				return PFMLIB_ERR_EVTINCOMP;
+
 		event = input->pfp_events[i].event;
 		assigned = 0;
 
@@ -395,7 +402,7 @@ static int pentium4_dispatch_events(pfmlib_input_param_t *input,
 				output->pfp_pmcs[j].reg_num = escr_pmc;
 				output->pfp_pmcs[j].reg_value = escr_value.val;
 				output->pfp_pmcs[j].reg_addr = p4_pmc_regmap[escr_pmc].addr;
-
+				j++;
 
 				__pfm_vbprintf("[%s(pmc%u)=0x%lx os=%u usr=%u tag=%u tagval=0x%x mask=%u sel=0x%x] %s\n",
 						p4_pmc_regmap[escr_pmc].name,
@@ -408,8 +415,6 @@ static int pentium4_dispatch_events(pfmlib_input_param_t *input,
 						escr_value.bits.event_mask,
 						escr_value.bits.event_select,
 						pentium4_events[event].name);
-
-				j++;
 
 				output->pfp_pmcs[j].reg_num = cccr_pmc;
 				output->pfp_pmcs[j].reg_value = cccr_value.val;

@@ -31,7 +31,7 @@
  * (code must be first 4 bits)
  */
 typedef struct {
-	unsigned long pme_emask:8; /* event mask, holds room for two events, low 4 bits cntr0, high 4 bits cntr1 */
+	unsigned long pme_emask:32; /* event mask, holds room for four events, low 8 bits cntr0, ... high 8 bits cntr3 */
 } pme_gen_mips64_entry_code_t;		
 
 typedef union {

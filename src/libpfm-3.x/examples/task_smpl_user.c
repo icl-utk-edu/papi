@@ -297,12 +297,13 @@ mainloop(char **arg)
 		fatal_error("cannot configure events: %s\n", pfm_strerror(ret));
 
 	/*
-	   Now prepare the argument to initialize the PMDs and PMCS.
-	 * We must pfp_pmc_count to determine the number of PMC to intialize.
-	 * We must use pfp_event_count to determine the number of PMD to initialize.
-	 * Some events causes extra PMCs to be used, so  pfp_pmc_count may be >= pfp_event_count.
+	 * Now prepare the argument to initialize the PMDs and PMCS.
+	 * We use pfp_pmc_count to determine the number of PMC to intialize.
+	 * We use pfp_pmd_count to determine the number of PMD to initialize.
+	 * Some events/features may cause extra PMCs to be used, leading to:
+	 * 	- pfp_pmc_count may be >= pfp_event_count
+	 * 	- pfp_pmd_count may be >= pfp_event_count
 	 */
-
 	for (i=0; i < outp.pfp_pmc_count; i++) {
 		pc[i].reg_num   = outp.pfp_pmcs[i].reg_num;
 		pc[i].reg_value = outp.pfp_pmcs[i].reg_value;

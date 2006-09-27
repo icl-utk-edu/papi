@@ -1242,8 +1242,7 @@ static int create_eventset(int argc, char **argv)
 	set_arg.set_timeout = timeout;
 	set_arg.set_flags = (switch_on_overflow ? PFM_SETFL_OVFL_SWITCH : 0) |
 			    (switch_on_timeout  ? PFM_SETFL_TIME_SWITCH : 0) |
-			    (explicit_next_set  ? PFM_SETFL_EXPL_NEXT   : 0) |
-			    (exclude_idle       ? PFM_SETFL_EXCL_IDLE   : 0);
+			    (explicit_next_set  ? PFM_SETFL_EXPL_NEXT   : 0);
 
 	rc = pfm_create_evtsets(ctx->ctx_arg.ctx_fd, &set_arg, 1);
 	if (rc) {

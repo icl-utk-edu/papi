@@ -194,12 +194,11 @@ main(int argc, char **argv)
 
 	/*
 	 * Now prepare the argument to initialize the PMDs and PMCS.
-	 * We must pfp_pmc_count to determine the number of PMC to intialize.
-	 * We must use pfp_event_count to determine the number of PMD to initialize.
-	 * Some events causes extra PMCs to be used, so  pfp_pmc_count may be >= pfp_event_count.
-	 *
-	 * This step is new compared to libpfm-2.x. It is necessary because the library no
-	 * longer knows about the kernel data structures.
+	 * We use pfp_pmc_count to determine the number of PMC to intialize.
+	 * We use pfp_pmd_count to determine the number of PMD to initialize.
+	 * Some events/features may cause extra PMCs to be used, leading to:
+	 * 	- pfp_pmc_count may be >= pfp_event_count
+	 * 	- pfp_pmd_count may be >= pfp_event_count
 	 */
 	for (i=0; i < outp.pfp_pmc_count; i++) {
 		pc[i].reg_num   = outp.pfp_pmcs[i].reg_num;
@@ -212,19 +211,10 @@ main(int argc, char **argv)
 
 	/*
 	 * Now program the registers
-	 *
-	 * We don't use the same variable to indicate the number of elements passed to
-	 * the kernel because, as we said earlier, pc may contain more elements than
-	 * the number of events (pmd) we specified, i.e., contains more than counting
-	 * monitors.
 	 */
 	if (pfm_write_pmcs(ctx_fd, pc, outp.pfp_pmc_count))
 		fatal_error("pfm_write_pmcs error errno %d\n",errno);
 
-	/*
-	 * To be read, each PMD must be either written or declared
-	 * as being part of a sample (reg_smpl_pmds)
-	 */
 	if (pfm_write_pmds(ctx_fd, pd, outp.pfp_pmd_count))
 		fatal_error("pfm_write_pmds error errno %d\n",errno);
 
@@ -247,7 +237,9 @@ main(int argc, char **argv)
 		fatal_error("pfm_stop error errno %d\n",errno);
 
 	/*
-	 * now read the results
+	 * now read the results. We use pfp_event_count because
+	 * libpfm guarantees that counters for the events always
+	 * come first.
 	 */
 	if (pfm_read_pmds(ctx_fd, pd, inp.pfp_event_count))
 		fatal_error( "pfm_read_pmds error errno %d\n",errno);

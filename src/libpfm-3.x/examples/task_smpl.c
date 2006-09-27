@@ -304,14 +304,12 @@ mainloop(char **arg)
 
 	/*
 	 * Now prepare the argument to initialize the PMDs and PMCS.
-	 * We must pfp_pmc_count to determine the number of PMC to intialize.
-	 * We must use pfp_event_count to determine the number of PMD to initialize.
-	 * Some events causes extra PMCs to be used, so  pfp_pmc_count may be >= pfp_event_count.
-	 *
-	 * This step is new compared to libpfm-2.x. It is necessary because the library no
-	 * longer knows about the kernel data structures.
+	 * We use pfp_pmc_count to determine the number of PMC to intialize.
+	 * We use pfp_pmd_count to determine the number of PMD to initialize.
+	 * Some events/features may cause extra PMCs to be used, leading to:
+	 * 	- pfp_pmc_count may be >= pfp_event_count
+	 * 	- pfp_pmd_count may be >= pfp_event_count
 	 */
-
 	for (i=0; i < outp.pfp_pmc_count; i++) {
 		pc[i].reg_num   = outp.pfp_pmcs[i].reg_num;
 		pc[i].reg_value = outp.pfp_pmcs[i].reg_value;
@@ -594,7 +592,7 @@ main(int argc, char **argv)
 	 */
 	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
 	pfmlib_options.pfm_debug   = 0; /* set to 1 for debug */
-	pfmlib_options.pfm_verbose = 0; /* set to 1 for verbose */
+	pfmlib_options.pfm_verbose = 1; /* set to 1 for verbose */
 	pfm_set_options(&pfmlib_options);
 
 	return mainloop(argv+optind);

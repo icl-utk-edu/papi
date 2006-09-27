@@ -58,7 +58,6 @@ typedef unsigned char pfm_uuid_t[16];	/* custom sampling buffer identifier type 
 #define PFM_SETFL_OVFL_SWITCH	0x01 /* enable switch on overflow (subject to individual switch_cnt */
 #define PFM_SETFL_TIME_SWITCH	0x02 /* switch set on timeout */
 #define PFM_SETFL_EXPL_NEXT	0x04 /* use set_id_next as the next set */
-#define PFM_SETFL_EXCL_IDLE	0x08 /* exclude idle task (system-wide only) */
 
 /*
  * PMD/PMC return flags in case of error (ignored on input)
@@ -238,11 +237,11 @@ extern int pfm_unload_context(int fd);
  */
 #ifndef __NR_pfm_create_context
 #ifdef __x86_64__
-#define __NR_pfm_create_context		279
+#define __NR_pfm_create_context		280
 #endif /* __x86_64__ */
 
 #ifdef __i386__
-#define __NR_pfm_create_context		317
+#define __NR_pfm_create_context		318
 #endif
 
 #ifdef __ia64__
@@ -253,13 +252,13 @@ extern int pfm_unload_context(int fd);
 /* Add 12 */
 #if (_MIPS_SIM == _ABIN32) || (_MIPS_SIM == _MIPS_SIM_NABI32)
 #define __NR_Linux 6000
-#define __NR_pfm_create_context         __NR_Linux+269
+#define __NR_pfm_create_context         __NR_Linux+272
 #elif (_MIPS_SIM == _ABI32) || (_MIPS_SIM == _MIPS_SIM_ABI32)
 #define __NR_Linux 4000
-#define __NR_pfm_create_context         __NR_Linux+306
+#define __NR_pfm_create_context         __NR_Linux+309
 #elif (_MIPS_SIM == _ABI64) || (_MIPS_SIM == _MIPS_SIM_ABI64)
 #define __NR_Linux 5000
-#define __NR_pfm_create_context         __NR_Linux+265
+#define __NR_pfm_create_context         __NR_Linux+268
 #endif
 #endif
 

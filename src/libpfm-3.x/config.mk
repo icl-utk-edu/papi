@@ -105,3 +105,4 @@ DBG=-g -Wall -Werror
 CFLAGS=$(OPTIM) $(DBG) -I$(PFMINCDIR)
 LDFLAGS=-L$(PFMLIBDIR)
 MKDEP=makedepend
+PFMLIB=$(PFMLIBDIR)/libpfm.a

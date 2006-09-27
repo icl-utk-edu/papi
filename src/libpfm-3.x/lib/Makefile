@@ -41,6 +41,24 @@ CFLAGS+=-D_REENTRANT
 #
 # list all library support modules
 #
+INCDEP=$(INC_COMMON)
+
+ifeq ($(ARCH),ia64)
+INCDEP := $(INCDEP) $(INC_IA64)
+endif
+
+ifeq ($(ARCH),ia32)
+INCDEP := $(INCDEP) $(INC_IA32)
+endif
+
+ifeq ($(ARCH),x86_64)
+INCDEP := $(INCDEP) $(INC_X86_64)
+endif
+
+ifeq ($(ARCH),mips64)
+INCDEP := $(INCDEP) $(INC_MIPS64)
+endif
+
 ifeq ($(CONFIG_PFMLIB_GEN_IA64),y)
 SRCS   += pfmlib_gen_ia64.c
 CFLAGS += -DCONFIG_PFMLIB_GEN_IA64
@@ -95,16 +113,7 @@ SOBJS=$(OBJS:.o=.lo)
 
 all: $(TARGETS)
 
-$(OBJS) $(SOBJS): $(TOPDIR)/config.mk $(TOPDIR)/rules.mk Makefile pfmlib_priv.h
-
-pfmlib_itanium.o : itanium_events.h
-pfmlib_itanium2.o : itanium2_events.h
-pfmlib_montecito.o : montecito_events.h
-pfmlib_amd64.o : amd64_events.h
-pfmlib_i386_p6.o : i386_p6_events.h
-pfmlib_pentium4.o : pentium4_events.h
-pfmlib_gen_mips64.o : gen_mips64_events.h
-pfmlib_gen_ia32.o : gen_ia32_events.h coreduo_events.h
+$(OBJS) $(SOBJS): $(TOPDIR)/config.mk $(TOPDIR)/rules.mk Makefile $(INCDEP)
 
 libpfm.a:  $(OBJS)
 	$(RM) $@
@@ -127,3 +136,43 @@ install: $(TARGETS)
 	-mkdir -p $(DESTDIR)$(LIBDIR)
 	$(INSTALL) -m 644 libpfm.a $(DESTDIR)$(LIBDIR)
 	$(INSTALL) $(SLIBPFM) $(DESTDIR)$(LIBDIR)
+
+
+INC_COMMON= $(PFMINCDIR)/perfmon/pfmlib.h \
+  $(PFMINCDIR)/perfmon/pfmlib_comp.h \
+  $(PFMINCDIR)/perfmon/pfmlib_os.h \
+  $(PFMINCDIR)/perfmon/perfmon.h \
+  $(PFMINCDIR)/perfmon/perfmon_dfl_smpl.h \
+  pfmlib_priv.h pfmlib_priv_comp.h \
+
+INC_IA64= $(PFMINCDIR)/perfmon/pfmlib_itanium.h \
+  $(PFMINCDIR)/perfmon/pfmlib_itanium2.h \
+  $(PFMINCDIR)/perfmon/pfmlib_montecito.h \
+  $(PFMINCDIR)/perfmon/perfmon_compat.h \
+  $(PFMINCDIR)/perfmon/perfmon_default_smpl.h \
+  $(PFMINCDIR)/perfmon/perfmon_ia64.h \
+  $(PFMINCDIR)/perfmon/pfmlib_comp_ia64.h \
+  $(PFMINCDIR)/perfmon/pfmlib_gen_ia64.h \
+  $(PFMINCDIR)/perfmon/pfmlib_os_ia64.h \
+  itanium_events.h  itanium2_events.h montecito_events.h
+
+INC_X86_64= $(PFMINCDIR)/perfmon/perfmon_p4_pebs_smpl.h \
+  $(PFMINCDIR)/perfmon/pfmlib_amd64.h \
+  $(PFMINCDIR)/perfmon/pfmlib_gen_ia32.h \
+  $(PFMINCDIR)/perfmon/pfmlib_pentium4.h \
+  $(PFMINCDIR)/perfmon/pfmlib_comp_x86_64.h \
+  $(PFMINCDIR)/perfmon/pfmlib_os_x86_64.h \
+  amd64_events.h  pentium4_events.h gen_ia32_events.h
+
+INC_IA32= $(PFMINCDIR)/perfmon/pfmlib_pentium4.h \
+  $(PFMINCDIR)/perfmon/pfmlib_comp_i386.h \
+  $(PFMINCDIR)/perfmon/pfmlib_i386_p6.h \
+  $(PFMINCDIR)/perfmon/pfmlib_os_i386.h \
+  $(PFMINCDIR)/perfmon/pfmlib_gen_ia32.h \
+  amd64_events.h  i386_p6_events.h \
+  pentium4_events.h gen_ia32_events.h coreduo_events.h
+
+INC_MIPS64= $(PFMINCDIR)/perfmon/pfmlib_gen_mips64.h \
+  $(PFMINCDIR)/perfmon/pfmlib_comp_mips64.h \
+  $(PFMINCDIR)/perfmon/pfmlib_os_mips64.h \
+  gen_mips64_events.h

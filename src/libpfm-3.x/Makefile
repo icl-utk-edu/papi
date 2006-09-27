@@ -48,3 +48,4 @@ depend:
 
 install: 
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
+# DO NOT DELETE

@@ -40,12 +40,8 @@
 extern "C" {
 #endif
 
-#define PMU_GEN_MIPS64_NUM_COUNTERS		2	/* total numbers of EvtSel/EvtCtr */
-#define PMU_GEN_MIPS64_NUM_PERFSEL		2	/* total number of EvtSel defined */
-#define PMU_GEN_MIPS64_NUM_PERFCTR		2	/* total number of EvtCtr defined */
+#define PMU_GEN_MIPS64_NUM_COUNTERS		4	/* total numbers of EvtSel/EvtCtr */
 #define PMU_GEN_MIPS64_COUNTER_WIDTH		32	/* hardware counter bit width   */
-
-#define PMU_GEN_MIPS64_CNT_MASK_MAX		2 	/* max cnt_mask value */
 /*
  * This structure provides a detailed way to setup a PMC register.
  * Once value is loaded, it must be copied (via pmu_reg) to the

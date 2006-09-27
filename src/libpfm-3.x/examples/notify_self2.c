@@ -257,8 +257,6 @@ main(int argc, char **argv)
 
 	/*
 	 * Now prepare the argument to initialize the PMDs and PMCS.
-	 * We use pfp_pmc_count to determine the number of registers to
-	 * setup. Note that this field can be >= pfp_event_count.
 	 */
 	for (i=0; i < outp.pfp_pmc_count; i++) {
 		pc[i].reg_num   = outp.pfp_pmcs[i].reg_num;
@@ -285,18 +283,10 @@ main(int argc, char **argv)
 
 	/*
 	 * Now program the registers
-	 *
-	 * We don't use the save variable to indicate the number of elements passed to
-	 * the kernel because, as we said earlier, pc may contain more elements than
-	 * the number of events we specified, i.e., contains more than counting monitors.
 	 */
 	if (pfm_write_pmcs(ctx_fd, pc, outp.pfp_pmc_count))
 		fatal_error("pfm_write_pmcs error errno %d\n",errno);
 
-	/*
-	 * To be read, each PMD must be either written or declared
-	 * as being part of a sample (reg_smpl_pmds)
-	 */
 	if (pfm_write_pmds(ctx_fd, pd, outp.pfp_pmd_count))
 		fatal_error("pfm_write_pmds error errno %d\n",errno);
 

@@ -182,9 +182,8 @@ main(int argc, char **argv)
 	 * the call.
 	 */
 	ret = pin_cpu(getpid(), which_cpu);
-	if (ret == -1) {
+	if (ret == -1)
 		fatal_error("cannot set affinity to CPU%d: %s\n", which_cpu, strerror(errno));
-	}
 	/*
 	 * after the call the task is pinned to which_cpu
 	 */
@@ -219,18 +218,16 @@ main(int argc, char **argv)
 	/*
 	 * let the library figure out the values for the PMCS
 	 */
-	if ((ret=pfm_dispatch_events(&inp, NULL, &outp, NULL)) != PFMLIB_SUCCESS) {
+	if ((ret=pfm_dispatch_events(&inp, NULL, &outp, NULL)) != PFMLIB_SUCCESS)
 		fatal_error("cannot configure events: %s\n", pfm_strerror(ret));
-	}
 
 	/*
 	 * Now prepare the argument to initialize the PMDs and PMCS.
-	 * We must pfp_pmc_count to determine the number of PMC to intialize.
-	 * We must use pfp_event_count to determine the number of PMD to initialize.
-	 * Some events causes extra PMCs to be used, so  pfp_pmc_count may be >= pfp_event_count.
-	 *
-	 * This step is new compared to libpfm-2.x. It is necessary because the library no
-	 * longer knows about the kernel data structures.
+	 * We use pfp_pmc_count to determine the number of PMC to intialize.
+	 * We use pfp_pmd_count to determine the number of PMD to initialize.
+	 * Some events/features may cause extra PMCs to be used, leading to:
+	 * 	- pfp_pmc_count may be >= pfp_event_count
+	 * 	- pfp_pmd_count may be >= pfp_event_count
 	 */
 	for (i=0; i < outp.pfp_pmc_count; i++) {
 		pc[i].reg_num   = outp.pfp_pmcs[i].reg_num;
@@ -240,18 +237,10 @@ main(int argc, char **argv)
 		pd[i].reg_num = outp.pfp_pmds[i].reg_num;
 	/*
 	 * Now program the registers
-	 *
-	 * We don't use the save variable to indicate the number of elements passed to
-	 * the kernel because, as we said earlier, pc may contain more elements than
-	 * the number of events we specified, i.e., contains more thann coutning monitors.
 	 */
 	if (pfm_write_pmcs(ctx_fd, pc, outp.pfp_pmc_count) == -1)
 		fatal_error("pfm_write_pmcs error errno %d\n",errno);
 
-	/*
-	 * To be read, each PMD must be either written or declared
-	 * as being part of a sample (reg_smpl_pmds)
-	 */
 	if (pfm_write_pmds(ctx_fd, pd, outp.pfp_pmd_count) == -1)
 		fatal_error("pfm_write_pmds error errno %d\n",errno);
 
@@ -261,7 +250,6 @@ main(int argc, char **argv)
 	 * call fails. The affinity is not affected.
 	 */
 	load_args.load_pid = which_cpu;
-
 	if (pfm_load_context(ctx_fd, &load_args) == -1)
 		fatal_error("pfm_load_context error errno %d\n",errno);
 

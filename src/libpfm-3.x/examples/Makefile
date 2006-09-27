@@ -65,7 +65,7 @@ notify_standalone: notify_standalone.o
 smpl_standalone: smpl_standalone.o
 	$(CC) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^
 
-$(TARGETS):  %:%.o  detect_pmcs.o
+$(TARGETS):  %:%.o  detect_pmcs.o $(PFMLIB)
 	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS) 
 
 clean:

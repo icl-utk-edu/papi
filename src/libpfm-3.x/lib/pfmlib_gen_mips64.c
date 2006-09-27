@@ -51,47 +51,141 @@ static pme_gen_mips64_entry_t *gen_mips64_pe = NULL;
 
 static char * pfm_gen_mips64_get_event_name(unsigned int i);
 
-pfm_pmu_support_t generic_mips64_support;
-
 static int
 pfm_gen_mips64_detect(void)
 {
-	static char mips20k_name[] = "MIPS20K";
-	static char mips5k_name[] = "MIPS5K";
+	static char mips_name[64] = "";
 	int ret;
 	char buffer[128];
+	extern pfm_pmu_support_t generic_mips64_support;
 
 	ret = __pfm_getcpuinfo_attr("cpu model", buffer, sizeof(buffer));
 	if (ret == -1)
 		return PFMLIB_ERR_NOTSUPP;
 
-	if (strstr(buffer,"MIPS 25Kf") || strstr(buffer,"MIPS 20Kc"))
+	generic_mips64_support.pmu_name = mips_name;
+	if (strstr(buffer,"MIPS 20Kc"))
 	  {
-	    gen_mips64_pe = gen_mips64_20k_pe;
-	    generic_mips64_support.pme_count = (sizeof(gen_mips64_20k_pe)/sizeof(pme_gen_mips64_entry_t));
-	    generic_mips64_support.pmu_name = mips20k_name;
+	    gen_mips64_pe = gen_mips64_20K_pe;
+	    strcpy(generic_mips64_support.pmu_name,"MIPS20KC"),
+	    generic_mips64_support.pme_count = (sizeof(gen_mips64_20K_pe)/sizeof(pme_gen_mips64_entry_t));
 	    generic_mips64_support.pmc_count = 1;
 	    generic_mips64_support.pmd_count = 1;
+	    generic_mips64_support.pmu_type = PFMLIB_MIPS_20KC_PMU;
 	  }
-#if 0
-	else if (strstr(tmp,"MIPS 5Kc"))
-#else
-	  else
-#endif
+	else if (strstr(buffer,"MIPS 24K"))
 	  {
-	    DPRINT(("warning: assuming MIPS5Kc\n"));
-	    gen_mips64_pe = gen_mips64_5k_pe;
-	    generic_mips64_support.pme_count = (sizeof(gen_mips64_5k_pe)/sizeof(pme_gen_mips64_entry_t));
-	    generic_mips64_support.pmu_name = mips5k_name;
+	    gen_mips64_pe = gen_mips64_24K_pe;
+	    strcpy(generic_mips64_support.pmu_name,"MIPS24K"),
+	    generic_mips64_support.pme_count = (sizeof(gen_mips64_24K_pe)/sizeof(pme_gen_mips64_entry_t));
 	    generic_mips64_support.pmc_count = 2;
 	    generic_mips64_support.pmd_count = 2;
+	    generic_mips64_support.pmu_type = PFMLIB_MIPS_24K_PMU;
+	  }
+	else if (strstr(buffer,"MIPS 25Kf"))
+	  {
+	    gen_mips64_pe = gen_mips64_25K_pe;
+	    strcpy(generic_mips64_support.pmu_name,"MIPS25KF"),
+	    generic_mips64_support.pme_count = (sizeof(gen_mips64_25K_pe)/sizeof(pme_gen_mips64_entry_t));
+	    generic_mips64_support.pmc_count = 2;
+	    generic_mips64_support.pmd_count = 2;
+	    generic_mips64_support.pmu_type = PFMLIB_MIPS_25KF_PMU;
+	  }
+	else if (strstr(buffer,"MIPS 34K"))
+	  {
+	    gen_mips64_pe = gen_mips64_34K_pe;
+	    strcpy(generic_mips64_support.pmu_name,"MIPS34K"),
+	    generic_mips64_support.pme_count = (sizeof(gen_mips64_34K_pe)/sizeof(pme_gen_mips64_entry_t));
+	    generic_mips64_support.pmc_count = 4;
+	    generic_mips64_support.pmd_count = 4;
+	    generic_mips64_support.pmu_type = PFMLIB_MIPS_34K_PMU;
+	  }
+	else if (strstr(buffer,"MIPS 5Kc"))
+	  {
+	    gen_mips64_pe = gen_mips64_5K_pe;
+	    strcpy(generic_mips64_support.pmu_name,"MIPS5KC"),
+	    generic_mips64_support.pme_count = (sizeof(gen_mips64_5K_pe)/sizeof(pme_gen_mips64_entry_t));
+	    generic_mips64_support.pmc_count = 2;
+	    generic_mips64_support.pmd_count = 2;
+	    generic_mips64_support.pmu_type = PFMLIB_MIPS_5KC_PMU;
 	  }
 #if 0
-	else
+	else if (strstr(buffer,"MIPS 74K"))
 	  {
-	    return PFMLIB_ERR_NOTSUPP;
+	    gen_mips64_pe = gen_mips64_74K_pe;
+	    strcpy(generic_mips64_support.pmu_name,"MIPS74K"),
+	    generic_mips64_support.pme_count = (sizeof(gen_mips64_74K_pe)/sizeof(pme_gen_mips64_entry_t));
+	    generic_mips64_support.pmc_count = 4;
+	    generic_mips64_support.pmd_count = 4;
+	    generic_mips64_support.pmu_type = PFMLIB_MIPS_74K_PMU;
 	  }
 #endif
+	else if (strstr(buffer,"MIPS R10000"))
+	  {
+	    gen_mips64_pe = gen_mips64_r10000_pe;
+	    strcpy(generic_mips64_support.pmu_name,"MIPSR10000"),
+	    generic_mips64_support.pme_count = (sizeof(gen_mips64_r10000_pe)/sizeof(pme_gen_mips64_entry_t));
+	    generic_mips64_support.pmc_count = 2;
+	    generic_mips64_support.pmd_count = 2;
+	    generic_mips64_support.pmu_type = PFMLIB_MIPS_R10000_PMU;
+	  }
+	else if (strstr(buffer,"MIPS R12000"))
+	  {
+	    gen_mips64_pe = gen_mips64_r12000_pe;
+	    strcpy(generic_mips64_support.pmu_name,"MIPSR12000"),
+	    generic_mips64_support.pme_count = (sizeof(gen_mips64_r12000_pe)/sizeof(pme_gen_mips64_entry_t));
+	    generic_mips64_support.pmc_count = 4;
+	    generic_mips64_support.pmd_count = 4;
+	    generic_mips64_support.pmu_type = PFMLIB_MIPS_R12000_PMU;
+	  }
+	else if (strstr(buffer,"MIPS RM7000"))
+	  {
+	    gen_mips64_pe = gen_mips64_rm7000_pe;
+	    strcpy(generic_mips64_support.pmu_name,"MIPSRM7000"),
+	    generic_mips64_support.pme_count = (sizeof(gen_mips64_rm7000_pe)/sizeof(pme_gen_mips64_entry_t));
+	    generic_mips64_support.pmc_count = 2;
+	    generic_mips64_support.pmd_count = 2;
+	    generic_mips64_support.pmu_type = PFMLIB_MIPS_RM7000_PMU;
+	  }
+	else if (strstr(buffer,"MIPS RM9000"))
+	  {
+	    gen_mips64_pe = gen_mips64_rm9000_pe;
+	    strcpy(generic_mips64_support.pmu_name,"MIPSRM9000"),
+	    generic_mips64_support.pme_count = (sizeof(gen_mips64_rm9000_pe)/sizeof(pme_gen_mips64_entry_t));
+	    generic_mips64_support.pmc_count = 2;
+	    generic_mips64_support.pmd_count = 2;
+	    generic_mips64_support.pmu_type = PFMLIB_MIPS_RM9000_PMU;
+	  }
+	else if (strstr(buffer,"MIPS SB1"))
+	  {
+	    gen_mips64_pe = gen_mips64_sb1_pe;
+	    strcpy(generic_mips64_support.pmu_name,"MIPSSB1"),
+	    generic_mips64_support.pme_count = (sizeof(gen_mips64_sb1_pe)/sizeof(pme_gen_mips64_entry_t));
+	    generic_mips64_support.pmc_count = 4;
+	    generic_mips64_support.pmd_count = 4;
+	    generic_mips64_support.pmu_type = PFMLIB_MIPS_SB1_PMU;
+	  }
+	else if (strstr(buffer,"MIPS VR5432"))
+	  {
+	    gen_mips64_pe = gen_mips64_vr5432_pe;
+	    generic_mips64_support.pme_count = (sizeof(gen_mips64_vr5432_pe)/sizeof(pme_gen_mips64_entry_t));
+	    strcpy(generic_mips64_support.pmu_name,"MIPSVR5432"),
+	    generic_mips64_support.pmc_count = 2;
+	    generic_mips64_support.pmd_count = 2;
+	    generic_mips64_support.pmu_type = PFMLIB_MIPS_VR5432_PMU;
+	  }
+	else if (strstr(buffer,"MIPS VR5500"))
+	  {
+	    gen_mips64_pe = gen_mips64_vr5500_pe;
+	    generic_mips64_support.pme_count = (sizeof(gen_mips64_vr5500_pe)/sizeof(pme_gen_mips64_entry_t));
+	    strcpy(generic_mips64_support.pmu_name,"MIPSVR5500"),
+	    generic_mips64_support.pmc_count = 2;
+	    generic_mips64_support.pmd_count = 2;
+	    generic_mips64_support.pmu_type = PFMLIB_MIPS_VR5500_PMU;
+	  }
+	else
+	  return PFMLIB_ERR_NOTSUPP;
+
 	generic_mips64_support.num_cnt = generic_mips64_support.pmd_count;
 	return PFMLIB_SUCCESS;
 }
@@ -125,18 +219,20 @@ pfm_gen_mips64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_mips64_in
 	  }
 	}
 
-	/* First fine out which events live on only 1 counter. */
-	for (j=0; j < cnt ; j++ ) {
-	  uint32_t tmp = gen_mips64_pe[e[j].event].pme_counters;
-	  if ((tmp & 0x3) == 0x3)
+	/* First find out which events live on only 1 counter. */
+	for (j=0; j < cnt ; j++ ) 
+	  {
+	    unsigned long tmp = gen_mips64_pe[e[j].event].pme_counters;
+	    if (pfmlib_popcnt(tmp) != 1)
 	      assign[j] = 0;
-	  else 
-	      assign[j] = gen_mips64_pe[e[j].event].pme_counters;
-	}
+	    else 
+	      assign[j] = tmp;
+	  }
 
 	/* Assign them first */
 	for (j=0; j < cnt ; j++ ) {
 	  if ((assign[j] & used) == 0) {
+	        uint32_t cntr;
 		reg.val    = 0; /* assume reserved bits are zerooed */
 		/* if plm is 0, then assume not specified per-event and use default */
 		plm = e[j].plm ? e[j].plm : inp->pfp_dfl_plm;
@@ -145,17 +241,19 @@ pfm_gen_mips64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_mips64_in
 		reg.sel_sup = plm & PFM_PLM1 ? 1 : 0;
 		reg.sel_exl = plm & PFM_PLM0 ? 1 : 0;
 		reg.sel_int = 1; /* force int to 1 */
-		reg.sel_event_mask = (gen_mips64_pe[e[j].event].pme_entry_code.pme_code.pme_emask >> ((assign[j]-1)*4)) & 0xf;
+		cntr = ffs(assign[j]) - 1;
 
-		pc[j].reg_num     = ffs(assign[j]) - 1;
+		reg.sel_event_mask = (gen_mips64_pe[e[j].event].pme_entry_code.pme_code.pme_emask >> (cntr*8)) & 0xff;
+
+		pc[j].reg_num     = cntr;
 		pc[j].reg_value   = reg.val;
-		pc[j].reg_addr    = pc[j].reg_num;
+		pc[j].reg_addr    = cntr*2;
 
-		pd[j].reg_num  = ffs(assign[j]) - 1;
-		pd[j].reg_addr = pc[j].reg_num + 1;
+		pd[j].reg_num  = cntr;
+		pd[j].reg_addr = cntr*2 + 1;
 
-		used |= assign[j];
-		DPRINT(("Degree 1: Used is now %x\n",used));
+		used |= (1 << cntr);
+		DPRINT(("Degree 1: Used counters %x\n",used));
 	  }
 	  else {
 	    return PFMLIB_ERR_NOASSIGN;
@@ -166,13 +264,11 @@ pfm_gen_mips64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_mips64_in
 	for (j=0; j < cnt ; j++ ) {
 	  if (assign[j] == 0) {
 	    /* Which counters are available */
-	    unsigned int avail = (~used & 0x3);
+	    unsigned int cntr, avail = (~used & 0xf);
 	    DPRINT(("Counters available: %x\n",avail));
 	    if (avail == 0x0)
 	      return PFMLIB_ERR_NOASSIGN;
 	    /* Pick one */
-	    avail = 1 << (ffs(avail) - 1);
-	    DPRINT(("Selected: %x\n",used));
 	    reg.val    = 0; /* assume reserved bits are zerooed */
 	    /* if plm is 0, then assume not specified per-event and use default */
 	    plm = e[j].plm ? e[j].plm : inp->pfp_dfl_plm;
@@ -181,16 +277,21 @@ pfm_gen_mips64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_mips64_in
 	    reg.sel_sup = plm & PFM_PLM1 ? 1 : 0;
 	    reg.sel_exl = plm & PFM_PLM0 ? 1 : 0;
 	    reg.sel_int = 1; /* force int to 1 */
-	    reg.sel_event_mask = (gen_mips64_pe[e[j].event].pme_entry_code.pme_code.pme_emask >> ((avail-1)*4)) & 0xf;;
-	    pc[j].reg_num     = ffs(avail) - 1;
+	    cntr = ffs(avail) - 1;
+	    avail = 1 << cntr;
+	    DPRINT(("Selected counter %d\n",avail));
+
+	    reg.sel_event_mask = (gen_mips64_pe[e[j].event].pme_entry_code.pme_code.pme_emask >> (cntr*8)) & 0xff;
+
+	    pc[j].reg_num     = cntr;
 	    pc[j].reg_value   = reg.val;
-	    pc[j].reg_addr    = pc[j].reg_num;
+	    pc[j].reg_addr    = cntr*2;
 
-	    pd[j].reg_num  = ffs(avail) - 1;
-	    pd[j].reg_addr = pc[j].reg_num + 1;
+	    pd[j].reg_num  = cntr;
+	    pd[j].reg_addr = cntr*2 + 1;
 
-	    used |= avail;
-	    DPRINT(("Degree 2: Used is now %x\n",used));
+	    used |= (1 << cntr);
+	    DPRINT(("Degree N: Used counters %x\n",used));
 	  }
 	}
 
@@ -331,20 +432,47 @@ pfm_gen_mips64_get_event_description(unsigned int ev, char **str)
 static int
 pfm_gen_mips64_get_cycle_event(pfmlib_event_t *e)
 {
-	e->event = PME_GEN_MIPS64_CYC;
-	return PFMLIB_SUCCESS;
-
+  return pfm_find_full_event("CYCLES",e);
 }
 
 static int
 pfm_gen_mips64_get_inst_retired(pfmlib_event_t *e)
 {
-	e->event = PME_GEN_MIPS64_INST;
-	return PFMLIB_SUCCESS;
+  if (pfm_current == NULL)
+    return(PFMLIB_ERR_NOINIT);
+
+  switch (pfm_current->pmu_type)
+    {
+    case PFMLIB_MIPS_20KC_PMU:
+      return pfm_find_full_event("INSNS_COMPLETED",e);
+    case PFMLIB_MIPS_24K_PMU:
+      return pfm_find_full_event("INSTRUCTIONS",e); 
+    case PFMLIB_MIPS_25KF_PMU:
+      return pfm_find_full_event("INSNS_COMPLETE",e);
+    case PFMLIB_MIPS_34K_PMU:
+      return pfm_find_full_event("INSTRUCTIONS",e); 
+    case PFMLIB_MIPS_5KC_PMU:
+      return pfm_find_full_event("INSNS_EXECD",e); 
+    case PFMLIB_MIPS_R10000_PMU:
+    case PFMLIB_MIPS_R12000_PMU:
+      return pfm_find_full_event("INSTRUCTIONS_GRADUATED",e); 
+    case PFMLIB_MIPS_RM7000_PMU:
+    case PFMLIB_MIPS_RM9000_PMU:
+      return pfm_find_full_event("INSTRUCTIONS_ISSUED",e); 
+    case PFMLIB_MIPS_VR5432_PMU:
+    case PFMLIB_MIPS_VR5500_PMU:
+      return pfm_find_full_event("INSTRUCTIONS_EXECUTED",e); 
+    case PFMLIB_MIPS_SB1_PMU:
+      return pfm_find_full_event("INSN_SURVIVED_STAGE7",e); 
+    case PFMLIB_MIPS_74K_PMU:
+    default:
+      return(PFMLIB_ERR_NOTFOUND);
+    }
 }
-pfm_pmu_support_t generic_mips64_support={
-	.pmu_name		= "",
-	.pmu_type		= PFMLIB_GEN_MIPS64_PMU,
+
+pfm_pmu_support_t generic_mips64_support = {
+	.pmu_name		= NULL,
+	.pmu_type		= 0,
 	.pme_count		= 0,
 	.pmc_count		= 0,
 	.pmd_count		= 0,
@@ -363,3 +491,4 @@ pfm_pmu_support_t generic_mips64_support={
 	.get_cycle_event	= pfm_gen_mips64_get_cycle_event,
 	.get_inst_retired_event = pfm_gen_mips64_get_inst_retired
 };
+

@@ -50,11 +50,7 @@
 
 #define SMPL_FREQ_IN_HZ	300
 
-#define NUM_PMCS PMU_MAX_PMCS
-#define NUM_PMDS PMU_MAX_PMDS
-
-#define MAX_NUM_COUNTERS	NUM_PMDS
-#define MAX_PMU_NAME_LEN	32
+#define NUM_PMCS 256
 
 typedef struct {
 	struct {
@@ -417,8 +413,8 @@ measure_one_task(char **argv)
 	pid_t pid;
 	int status, ret;
 
-	my_pmcs = malloc(sizeof(pfarg_pmc_t)*total_events);
-	my_pmds = malloc(sizeof(pfarg_pmd_t)*total_events);
+	my_pmcs = malloc(sizeof(pfarg_pmc_t)*num_pmcs);
+	my_pmds = malloc(sizeof(pfarg_pmd_t)*num_pmds);
 	my_sets = malloc(sizeof(pfarg_setdesc_t)*num_sets);
 
 	if (my_pmcs == NULL || my_pmds == NULL || my_sets == NULL)
@@ -780,24 +776,22 @@ mainloop(char **argv)
 		/*
 		 * look for our trigger event
 		 */
-		if (pfm_get_cycle_event(&cycle_event) != PFMLIB_SUCCESS) {
+		if (pfm_get_cycle_event(&cycle_event) != PFMLIB_SUCCESS)
 			fatal_error("Cannot find cycle event\n");
-		}
 	}
 
 	vbprintf("total_events=%u\n", total_events);
 
-	all_pmcs = malloc(sizeof(pfarg_pmc_t)*total_events);
-	all_pmds = malloc(sizeof(pfarg_pmd_t)*total_events);
-	all_sets = malloc(sizeof(pfarg_setdesc_t)*num_sets);
-
-	memset(all_pmcs, 0, sizeof(pfarg_pmc_t)*total_events);
-	memset(all_pmds, 0, sizeof(pfarg_pmd_t)*total_events);
-	memset(all_sets, 0, sizeof(pfarg_setdesc_t)*num_sets);
+	/*
+	 * assumes number of pmds = number  of events
+	 * cannot assume number of pmcs = num of events (e.g., P4 2 PMCS per event)
+	 */
+	all_pmcs = calloc(NUM_PMCS, sizeof(pfarg_pmc_t));
+	all_pmds = calloc(total_events, sizeof(pfarg_pmd_t));
+	all_sets = calloc(num_sets, sizeof(pfarg_setdesc_t));
 
 	if (all_pmcs == NULL || all_pmds == NULL || all_sets == NULL)
 		fatal_error("cannot allocate event tables\n");
-
 
 	/*
 	 * use the library to figure out assignments for all events of all sets
@@ -914,12 +908,6 @@ mainloop(char **argv)
 			all_sets[i].set_timeout  = 1000000 / options.smpl_freq;
 		}
 #ifdef __ia64__
-		/*
-		 * setup additional per set flags
-		 */
-		if (options.opt_excl_idle && options.opt_is_system)
-			all_sets[i].set_flags  |= PFM_SETFL_EXCL_IDLE;
-
 		if (options.opt_excl_intr && options.opt_is_system)
 			all_sets[i].set_flags  |= PFM_ITA_SETFL_EXCL_INTR;
 
@@ -951,7 +939,6 @@ static struct option multiplex_options[]={
 	{ "us-counter-format", 0, &options.opt_us_format, 1},
 	{ "ovfl-switch", 0, &options.opt_ovfl_switch, 1},
 	{ "system-wide", 0, &options.opt_is_system, 1},
-	{ "excl-idle", 0, &options.opt_excl_idle, 1},
 #ifdef __ia64__
 	{ "excl-intr", 0, &options.opt_excl_intr, 1},
 	{ "intr-only", 0, &options.opt_intr_only, 1},
