@@ -75,7 +75,7 @@ endif
 
 ifeq (,$(PFM_LIB_PATH))
 ifeq (,$(PFM_ROOT))
-        PFM_ROOT := ./libpfm-3.x
+        PFM_ROOT := ./libpfm-$(VERSION)
 endif
 ifeq (2.x,$(VERSION))
 	PFM_LIB_PATH := $(PFM_ROOT)/libpfm
@@ -85,7 +85,7 @@ endif
 endif
 ifeq (,$(PFM_INC_PATH))
 ifeq (,$(PFM_ROOT))
-        PFM_ROOT := ./libpfm-3.x
+        PFM_ROOT := ./libpfm-$(VERSION)
 endif
         PFM_INC_PATH := $(PFM_ROOT)/include
 endif
