@@ -103,8 +103,11 @@ inline_static long_long get_cycles(void) {
   double bar;
   
   syscall(__NR_clock_gettime,HAVE_CLOCK_GETTIME_REALTIME,&foo);
+  SUBDBG("%lld,%lld\n",(long_long)foo.tv_sec,(long_long)foo.tv_nsec);
   bar = (double)foo.tv_nsec/1000000000.0 + (double)foo.tv_sec;
-  bar = bar * (double)_papi_hwi_system_info.hw_info.mhz;
+  SUBDBG("%f\n",bar);
+  bar = bar * (double)_papi_hwi_system_info.hw_info.mhz * (double)1000000;
+  SUBDBG("%lld\n",(long_long)bar);
   return((long_long)bar);
 }
 #else
@@ -848,7 +851,7 @@ static int load_preset_table(pfm_preset_search_entry_t **here)
       return(PAPI_OK);
     }
 
-  PAPIERROR("Failed to find events for CPU %s, type %d in %s",_perfmon2_pfm_pmu_name,_perfmon2_pfm_pmu_type,PERFMON_EVENT_FILE);
+  PAPIERROR("Failed to find events for CPU %s, type %d in %s",_perfmon2_pfm_pmu_name,_perfmon2_pfm_pmu_type,name);
   return(PAPI_ESBSTR);
 }
 
@@ -1440,7 +1443,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   if (retval != PAPI_OK)
     return(retval);
   pfm_get_num_counters((unsigned int *)&_papi_hwi_system_info.sub_info.num_cntrs);
-  if (_perfmon2_pfm_pmu_type == PFMLIB_GEN_MIPS64_PMU)
+  if ((_perfmon2_pfm_pmu_type >= PFMLIB_MIPS_20KC_PMU) && (_perfmon2_pfm_pmu_type <= PFMLIB_MIPS_VR5500_PMU))
     _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR|PAPI_DOM_OTHER;
   else
     _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL;    
@@ -2891,8 +2894,6 @@ int _papi_hwd_update_control_state(hwd_control_state_t *ctl,
   last_reg_set = pd[0].reg_set;
   for (i=0;i<count;i++)
     {
-      SUBDBG("outp->pfp_pmcs[%d].reg_num = %d, outp->pfp_pmcs[%d].reg_pmd_num = %d, pd[%d].reg_num = %d, pd[%d].reg_set = %d\n",
-	     i,outp->pfp_pmcs[i].reg_num,i,outp->pfp_pmcs[i].reg_pmd_num,i,pd[i].reg_num,i,pd[i].reg_set);
       if (pd[i].reg_set != last_reg_set)
 	{
 	  offset += reg_set_done;
