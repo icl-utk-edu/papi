@@ -114,6 +114,7 @@ static int set_default_granularity(hwd_context_t * current_state, int granularit
  * upon child exit and parent wait. 
  * This is the default for Cray X1
  */
+#if 0
 static int set_inherit(hwd_context_t *ptr)
 {
    int flags;
@@ -129,6 +130,7 @@ static int set_inherit(hwd_context_t *ptr)
    }
    return (PAPI_OK);
 }
+#endif
 
 /*
  * This function takes care of setting various features
@@ -144,8 +146,10 @@ int _papi_hwd_ctl(hwd_context_t * ptr, int code, _papi_int_option_t * option)
       return (set_default_granularity(ptr, option->granularity.granularity));
    case PAPI_GRANUL:
       return (set_granularity (ptr, option->granularity.granularity));
+#if 0
    case PAPI_INHERIT:
       return (set_inherit(ptr));
+#endif
    default:
       return (PAPI_EINVAL);
    }
@@ -651,9 +655,9 @@ int _papi_hwd_init_control_state(hwd_control_state_t *ptr)
   unsigned long enable=0;
   unsigned long enable_reg=0;
 
-  if ( _papi_hwi_system_info.default_domain & PAPI_DOM_KERNEL )
+  if ( _papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_KERNEL )
      enable_reg |= HWPERF_ENABLE_KERNEL;
-  else if ( _papi_hwi_system_info.default_domain & PAPI_DOM_OTHER )
+  else if ( _papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_OTHER )
      enable_reg |= HWPERF_ENABLE_EXCEPTION;
   else
      enable_reg |= HWPERF_ENABLE_USER;
@@ -801,13 +805,9 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 
 
    SUBDBG("Found %d %s %s CPU's at %f Mhz.\n",
-        _papi_hwi_system_info.hw_info.totalcpus,
-        _papi_hwi_system_info.hw_info.vendor_string,
-        _papi_hwi_system_info.hw_info.model_string, _papi_hwi_system_info.hw_info.mhz);
-
-   if (_papi_hwd_mdi_init() != PAPI_OK) {
-      return (PAPI_ESBSTR);
-   }
+    _papi_hwi_system_info.hw_info.totalcpus,
+    _papi_hwi_system_info.hw_info.vendor_string,
+    _papi_hwi_system_info.hw_info.model_string, _papi_hwi_system_info.hw_info.mhz);
 
    _papi_hwd_init_preset_search_map();
 
@@ -816,24 +816,6 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    lock_init();
    
    return (retval);
-}
-
-extern int _papi_hwd_mdi_init()
-{
-  /* Name of the substrate we're using */
-   _papi_hwi_system_info.supports_write = 1;
-   _papi_hwi_system_info.supports_hw_overflow = 1;
-   _papi_hwi_system_info.supports_hw_profile = 0;
-   _papi_hwi_system_info.supports_multiple_threads = 1;
-   _papi_hwi_system_info.supports_64bit_counters = 1;
-   _papi_hwi_system_info.supports_inheritance = 1;
-   _papi_hwi_system_info.supports_attach = 0;
-   _papi_hwi_system_info.supports_real_usec = 1;
-   _papi_hwi_system_info.supports_real_cyc = 1;
-   _papi_hwi_system_info.supports_virt_usec = 1;
-   _papi_hwi_system_info.supports_virt_cyc = 1;
-
-   return (PAPI_OK);
 }
 
 /* Initialize preset_search_map table by type of CPU *Planning for X2* */
@@ -919,15 +901,23 @@ static int _internal_get_system_info(void)
       _papi_hwi_system_info.hw_info.nnodes = 0;
    }
 
+      /* Substrate info */
+
+   strcpy(_papi_hwi_system_info.sub_info.name, "$Id$");
+   strcpy(_papi_hwi_system_info.sub_info.version, "$Revision$");
+
+   /* Number of counters is 64, 32 P chip, 16 M chip and 16 E chip */
+   _papi_hwi_system_info.sub_info.num_cntrs = HWPERF_COUNTMAX+EPERF_COUNTMAX+MPERF_COUNTMAX;
+
+   _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_OTHER;
+   _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
+   _papi_hwi_system_info.sub_info.hardware_intr = 1;
 
    /* Generic info */
-   /* Number of counters is 64, 32 P chip, 16 M chip and 16 E chip */
-   _papi_hwi_system_info.num_cntrs = HWPERF_COUNTMAX+EPERF_COUNTMAX+MPERF_COUNTMAX;
    strcpy(_papi_hwi_system_info.hw_info.vendor_string, "Cray");
    _papi_hwi_system_info.hw_info.vendor = -1;
    strcpy(_papi_hwi_system_info.hw_info.model_string ,"X1");
    _papi_hwi_system_info.hw_info.model = -1;
-   _papi_hwi_system_info.supports_hw_overflow = 1;
 
    _papi_hwd_update_shlib_info();
 
