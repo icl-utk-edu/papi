@@ -91,6 +91,8 @@ int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
 		to conform to current interface.
 		It has not been tested.
 		Nor has it been confirmed for completeness.
+		An identical copy exists inside unicosmp-memory.c
+		If you change this one, check that one too.
 		dkt 05-10-06
 	*/
 
