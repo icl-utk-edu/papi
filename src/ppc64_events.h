@@ -63,4 +63,6 @@ extern pm_groups_info_t pmgroups;
 extern PPC64_native_map_t native_name_map[MAX_NATNAME_MAP_INDEX];
 extern hwd_groups_t group_map[MAX_GROUPS];
 
+int check_native_name();
+
 #endif /*PPC64_EVENTS_H_*/

@@ -8,8 +8,10 @@
 *          maynardj@us.ibm.com
 * Mods:    <your name here>
 *          <your email address>
+*
+* This file MUST be kept synchronised with the events file.
+*
 */
-
 #include SUBSTRATE
 
 PPC64_native_map_t native_name_map[MAX_NATNAME_MAP_INDEX] = {
@@ -389,6 +391,8 @@ PPC64_native_map_t native_name_map[MAX_NATNAME_MAP_INDEX] = {
    ,
    {"PM_HV_CYC", -1}
    ,
+	{"PM_FXLS1_FULL_CYC", -1}
+	,
    {"PM_DATA_FROM_L2", -1}
    ,
    {"PM_FPU_FIN", -1}
@@ -497,5 +501,4 @@ PPC64_native_map_t native_name_map[MAX_NATNAME_MAP_INDEX] = {
    ,
    {"PM_MRK_LSU_FLUSH_ULD", -1}
    ,
-   {"PM_TB_BIT_TRANS", -1}
-};
+	{"PM_TB_BIT_TRANS", -1}};
