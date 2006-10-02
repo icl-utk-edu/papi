@@ -162,6 +162,15 @@ can be determined by running 'lslpp -a -l | grep -i xlc'. If you have version
 	
 	> make -f Makefile.aix5-power3 CC_SHR="-G -r"
 
+For BG/L 
+*****************************************************************************
+1.  To compile PAPI on BG/L, user has to do a little extra at configure step:
+    ./configure --with-OS=bgl
+    make
+	
+	Warning: ./configure might fail if cross compiler is not in your path. In 
+	that case, just add it to the path, everything should work.
+
 Linux - Alpha
 *****************************************************************************
 PAPI 3.0 and Linux/Alpha hasn't been tested nor active supported for a while.
