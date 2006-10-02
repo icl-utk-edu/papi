@@ -240,47 +240,4 @@ PNE_PM_BRQ_FULL_CYC = PAPI_NATIVE_MASK,
 	PNE_PM_TB_BIT_TRANS,
 	NATNAME_GUARD,
 };
-
-typedef struct PPC970_register {
-   /* indicate which counters this event can live on */
-   unsigned int selector;
-   /* Buffers containing counter cmds for each possible metric */
-   int counter_cmd[MAX_COUNTERS];
-   /* which group this event belongs */
-   unsigned int group[GROUP_INTS];
-} PPC970_register_t;
-
-typedef PPC970_register_t hwd_register_t;
-
-typedef struct PPC970_groups {
-  unsigned int mmcr0;
-  unsigned int mmcr1L;
-  unsigned int mmcr1U;
-  unsigned int mmcra;
-  unsigned int counter_cmd[MAX_COUNTERS];
-} PPC970_groups_t;
-
-typedef PPC970_groups_t hwd_groups_t;
-
-typedef struct native_event_entry {
-   /* description of the resources required by this native event */
-   hwd_register_t resources;
-   /* If it exists, then this is the name of this event */
-   char *name;
-   /* If it exists, then this is the description of this event */
-   char *description;
-} native_event_entry_t;
-
-typedef struct PPC970_native_map {
-   /* native event name */
-   char *name;
-   /* real index in the native table */
-   int index;
-} PPC970_native_map_t;
-
-
-extern native_event_entry_t native_table[PAPI_MAX_NATIVE_EVENTS];
-extern PPC970_native_map_t native_name_map[MAX_NATNAME_MAP_INDEX];
-extern hwd_groups_t group_map[MAX_GROUPS];
-
 #endif  //_PAPI_PPC970_EVENTS_H
