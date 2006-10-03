@@ -112,7 +112,7 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * mem_info, int cpu_type)
    }
 
    /* Compute and store the number of levels of hierarchy actually used */
-   for (i=0; i<PAPI_MAX_MEM_HIERARCHY_LEVELS; i++) {
+   for (i=0; i<PAPI_MH_MAX_LEVELS; i++) {
       for (j=0; j<2; j++) {
          if (L[i].tlb[j].type != PAPI_MH_TYPE_EMPTY ||
             L[i].cache[j].type != PAPI_MH_TYPE_EMPTY)
