@@ -1290,9 +1290,13 @@ static int mips_get_tlb(char *s, int *u, int *size2)
   retval = sscanf(s,"%d %dK",u,size2);
   *size2 *= 1024;
 
-  if (retval != 2)
+  if (retval <= 0)
     PAPIERROR("Could not get tlb entries from %s\nPlease send this line to ptools-perfapi@cs.utk.edu",s);
-      
+  else if (retval >= 1)
+    {
+      if (*size2 == 0)
+	*size2 = getpagesize();
+    }
   SUBDBG("Got tlb %d %d pages\n",*u,*size2);
   return(PAPI_OK);
 }
@@ -1301,7 +1305,7 @@ static int mips_get_memory_info(PAPI_mh_info_t *mh_info)
 {
   char *s;
   int retval = PAPI_OK;
-  int i = 0, cached = 0, policy = 0, num = 0, pagesize = 0;
+  int i = 0, cached = 0, policy = 0, num = 0, pagesize = 0, maxlevel = 0;
   int sizeB, assoc, lineB;
   char maxargs[PAPI_HUGE_STR_LEN];
 
@@ -1318,7 +1322,7 @@ static int mips_get_memory_info(PAPI_mh_info_t *mh_info)
    s = search_cpu_info(f, "default cache policy", maxargs);
    if (s && strlen(s))
      {
-       mips_get_policy(s+1,&cached,&policy);
+       mips_get_policy(s+2,&cached,&policy);
        if (cached == 0)
 	 {
 	   SUBDBG("Uncached default policy detected, reporting zero cache entries.\n");
@@ -1327,53 +1331,56 @@ static int mips_get_memory_info(PAPI_mh_info_t *mh_info)
      }
    else
      {
-       PAPIERROR("Could not locate 'default cache policy' in /proc/cpuinfo\n,Please send the contents of this file to ptools-perfapi@cs.utk.edu");
+       PAPIERROR("Could not locate 'default cache policy' in /proc/cpuinfo\nPlease send the contents of this file to ptools-perfapi@cs.utk.edu");
      }
 
    rewind(f);
    s = search_cpu_info(f, "icache size", maxargs);
    if (s)
      {
-       mips_get_cache(s + 1, &sizeB, &assoc, &lineB);
+       mips_get_cache(s + 2, &sizeB, &assoc, &lineB);
        mh_info->level[0].cache[i].size = sizeB;
        mh_info->level[0].cache[i].line_size = lineB;
        mh_info->level[0].cache[i].num_lines = sizeB / lineB;
        mh_info->level[0].cache[i].associativity = assoc;
        mh_info->level[0].cache[i].type = PAPI_MH_TYPE_INST | policy;
        i++;
+       if (!maxlevel) maxlevel++;
      }
    else
      {
-       PAPIERROR("Could not locate 'icache size' in /proc/cpuinfo\n,Please send the contents of this file to ptools-perfapi@cs.utk.edu");
+       PAPIERROR("Could not locate 'icache size' in /proc/cpuinfo\nPlease send the contents of this file to ptools-perfapi@cs.utk.edu");
      }       
 
    rewind(f);
    s = search_cpu_info(f, "dcache size", maxargs);
    if (s)
      {
-       mips_get_cache(s + 1, &sizeB, &assoc, &lineB);
+       mips_get_cache(s + 2, &sizeB, &assoc, &lineB);
        mh_info->level[0].cache[i].size = sizeB;
        mh_info->level[0].cache[i].line_size = lineB;
        mh_info->level[0].cache[i].num_lines = sizeB / lineB;
        mh_info->level[0].cache[i].associativity = assoc;
        mh_info->level[0].cache[i].type = PAPI_MH_TYPE_DATA | policy;
        i++;
+       if (!maxlevel) maxlevel++;
      }
    else
      {
-       PAPIERROR("Could not locate 'dcache size' in /proc/cpuinfo\n,Please send the contents of this file to ptools-perfapi@cs.utk.edu");
+       PAPIERROR("Could not locate 'dcache size' in /proc/cpuinfo\nPlease send the contents of this file to ptools-perfapi@cs.utk.edu");
      }       
 
    rewind(f);
    s = search_cpu_info(f, "scache size", maxargs);
    if (s)
      {
-       mips_get_cache(s + 1, &sizeB, &assoc, &lineB);
+       mips_get_cache(s + 2, &sizeB, &assoc, &lineB);
        mh_info->level[1].cache[0].size = sizeB;
        mh_info->level[1].cache[0].line_size = lineB;
        mh_info->level[1].cache[0].num_lines = sizeB / lineB;
        mh_info->level[1].cache[0].associativity = assoc;
        mh_info->level[1].cache[0].type = PAPI_MH_TYPE_UNIFIED | policy;
+       maxlevel++;
      }
    else
      {
@@ -1390,16 +1397,20 @@ static int mips_get_memory_info(PAPI_mh_info_t *mh_info)
    s = search_cpu_info(f, "tlb_entries", maxargs);
    if (s && strlen(s))
      {
-       mips_get_tlb(s+1,&num,&pagesize);
+       mips_get_tlb(s+2,&num,&pagesize);
        mh_info->level[0].tlb[0].num_entries = num;
        mh_info->level[0].tlb[0].associativity = num;
        mh_info->level[0].tlb[0].type = PAPI_MH_TYPE_UNIFIED;
+       if (!maxlevel) maxlevel++;
      }
    else
      {
-       PAPIERROR("Could not locate 'tlb_entries' in /proc/cpuinfo\n,Please send the contents of this file to ptools-perfapi@cs.utk.edu");
+       PAPIERROR("Could not locate 'tlb_entries' in /proc/cpuinfo\nPlease send the contents of this file to ptools-perfapi@cs.utk.edu");
      }
 
+   fclose(f);
+
+   mh_info->levels = maxlevel;
    return retval;
 }
 #endif
