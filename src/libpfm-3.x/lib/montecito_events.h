@@ -428,7 +428,7 @@ static pme_mont_entry_t montecito_pe []={
 #define PME_MONT_CPU_CPL_CHANGES_LVL3 198
 { "CPU_CPL_CHANGES_LVL3", {0x80013}, 0xfff0, 1, {0xffff0000}, "Privilege Level Changes -- All changes to/from privilege level3 are counted"},
 #define PME_MONT_CPU_OP_CYCLES_ALL 199
-{ "CPU_OP_CYCLES_ALL", {0x1012}, 0xfff0, 1, {0xffff0003}, "CPU Operating Cycles -- All CPU cycles counted"},
+{ "CPU_OP_CYCLES_ALL", {0x1012}, 0xfff0, 1, {0xffff0000}, "CPU Operating Cycles -- All CPU cycles counted"},
 #define PME_MONT_CPU_OP_CYCLES_QUAL 200
 { "CPU_OP_CYCLES_QUAL", {0x11012}, 0xfff0, 1, {0xffff0003}, "CPU Operating Cycles -- Qualified cycles only"},
 #define PME_MONT_CPU_OP_CYCLES_HALTED 201
