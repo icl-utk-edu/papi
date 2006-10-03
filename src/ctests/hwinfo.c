@@ -31,8 +31,8 @@ int main(int argc, char **argv)
   printf("Max Multiplex Counters   : %d\n", PAPI_get_opt(PAPI_MAX_MPX_CTRS, NULL));
   printf("----------------------------------------------------------\n\n");
 
-  validate_string(hwinfo->vendor_string,"vendor_string");
-  validate_string(hwinfo->model_string,"model_string");
+  validate_string((char *)hwinfo->vendor_string,"vendor_string");
+  validate_string((char *)hwinfo->model_string,"model_string");
 
   if (hwinfo->vendor == PAPI_VENDOR_UNKNOWN)
     test_fail(__FILE__,__LINE__,"Vendor unknown",0);
@@ -63,8 +63,8 @@ int main(int argc, char **argv)
     {
       for (j=0;j<PAPI_MH_MAX_LEVELS;j++)
 	{
-	  PAPI_mh_cache_info_t *c = &mh->level[i].cache[j];
-	  PAPI_mh_tlb_info_t *t = &mh->level[i].tlb[j];
+	  const PAPI_mh_cache_info_t *c = &mh->level[i].cache[j];
+	  const PAPI_mh_tlb_info_t *t = &mh->level[i].tlb[j];
 	  printf("Level %d, TLB %d: %d, %d, %d\n",i,j,t->type,t->num_entries,t->associativity);
 	  printf("Level %d, Cache %d: %d, %d, %d, %d, %d\n",i,j,c->type,c->size,c->line_size,c->num_lines,c->associativity);
 	}
