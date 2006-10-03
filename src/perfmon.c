@@ -49,6 +49,7 @@ papi_svector_t _linux_pfm_table[] = {
   {(void (*)())_papi_hwd_set_profile, VEC_PAPI_HWD_SET_PROFILE},
   {(void (*)())_papi_hwd_stop_profiling, VEC_PAPI_HWD_STOP_PROFILING},
   {(void (*)())_papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
+  {(void (*)())_papi_hwd_get_memory_info, VEC_PAPI_HWD_GET_MEMORY_INFO},
   {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
   {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
   {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
@@ -71,7 +72,7 @@ static char _perfmon2_pfm_pmu_name[PAPI_MIN_STR_LEN];
 inline_static unsigned long get_cycles(void)
 {
    unsigned long tmp;
-#ifdef ALTIX
+#ifdef HAVE_MMTIMER
    tmp = mmdev_clicks_per_tick * (*mmdev_timer_addr);
 #elif defined(__INTEL_COMPILER)
    tmp = __getReg(_IA64_REG_AR_ITC);
@@ -115,6 +116,1310 @@ inline_static long_long get_cycles(void) {
 #endif
 
 /* BEGIN COMMON CODE */
+
+static void decode_vendor_string(char *s, int *vendor)
+{
+  if (strcasecmp(s,"GenuineIntel") == 0)
+    *vendor = PAPI_VENDOR_INTEL;
+  else if (strstr(s,"AMD") == 0)
+    *vendor = PAPI_VENDOR_AMD;
+  else if (strcasecmp(s,"IBM") == 0)
+    *vendor = PAPI_VENDOR_IBM;
+  else if (strcasecmp(s,"MIPS") == 0)
+    *vendor = PAPI_VENDOR_MIPS;
+  else
+    *vendor = PAPI_VENDOR_UNKNOWN;
+}
+
+static char *search_cpu_info(FILE * f, char *search_str, char *line)
+{
+   /* This code courtesy of our friends in Germany. Thanks Rudolph Berrendorf! */
+   /* See the PCL home page for the German version of PAPI. */
+
+   char *s;
+
+   while (fgets(line, 256, f) != NULL) {
+      if (strstr(line, search_str) != NULL) {
+         /* ignore all characters in line up to : */
+         for (s = line; *s && (*s != ':'); ++s);
+         if (*s)
+            return (s);
+      }
+   }
+   return (NULL);
+
+   /* End stolen code */
+}
+
+static int get_cpu_info(PAPI_hw_info_t *hw_info)
+{
+   int tmp, retval = PAPI_OK;
+   char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
+   float mhz = 0.0;
+   FILE *f;
+
+   if ((f = fopen("/proc/cpuinfo", "r")) == NULL)
+     { PAPIERROR("fopen(/proc/cpuinfo) errno %d",errno); return(PAPI_ESYS); }
+
+   /* All of this information maybe overwritten by the substrate */
+
+   /* MHZ */
+
+   rewind(f);
+   s = search_cpu_info(f, "cpu MHz", maxargs);
+   if (s)
+     {
+       sscanf(s + 1, "%f", &mhz);
+       hw_info->mhz = mhz;
+     }
+   else
+     {
+       rewind(f);
+       s = search_cpu_info(f, "BogoMIPS", maxargs);
+       if (s)
+	 {
+	   sscanf(s + 1, "%f", &mhz);
+	   hw_info->mhz = mhz;
+	 }
+     }       
+
+   /* Vendor Name and Vendor Code */
+
+   rewind(f);
+   s = search_cpu_info(f, "vendor_id", maxargs);
+   if (s && (t = strchr(s + 2, '\n')))
+     {
+      *t = '\0';
+      strcpy(hw_info->vendor_string, s + 2);
+     }
+   else
+     {
+       rewind(f);
+       s = search_cpu_info(f, "vendor", maxargs);
+       if (s && (t = strchr(s + 2, '\n'))) 
+	 {
+	   *t = '\0';
+	   strcpy(hw_info->vendor_string, s + 2);
+	 }
+       else
+	 {
+	   rewind(f);
+	   s = search_cpu_info(f, "system type", maxargs);
+	   if (s && (t = strchr(s + 2, '\n'))) 
+	     {
+	       *t = '\0';
+	       s = strtok(s+2," ");
+	       strcpy(hw_info->vendor_string, s);
+	     }
+	 }
+     }
+   if (strlen(hw_info->vendor_string))
+     decode_vendor_string(hw_info->vendor_string,
+			  &hw_info->vendor);
+
+   /* Revision */
+
+   rewind(f);
+   s = search_cpu_info(f, "stepping", maxargs);
+   if (s)
+      {
+        sscanf(s + 1, "%d", &tmp);
+        hw_info->revision = (float) tmp;
+      }
+   else
+     {
+       rewind(f);
+       s = search_cpu_info(f, "revision", maxargs);
+       if (s)
+         {
+           sscanf(s + 1, "%d", &tmp);
+           hw_info->revision = (float) tmp;
+         }
+     }
+
+   /* Model Name */
+
+   rewind(f);
+   s = search_cpu_info(f, "model name", maxargs);
+   if (s && (t = strchr(s + 2, '\n')))
+     {
+       *t = '\0';
+       strcpy(hw_info->model_string, s + 2);
+     }
+   else
+     {
+       rewind(f);
+       s = search_cpu_info(f, "family", maxargs);
+       if (s && (t = strchr(s + 2, '\n')))
+         {
+           *t = '\0';
+           strcpy(hw_info->model_string, s + 2);
+         }
+       else
+	 {
+	   rewind(f);
+	   s = search_cpu_info(f, "cpu model", maxargs);
+	   if (s && (t = strchr(s + 2, '\n')))
+	     {
+	       *t = '\0';
+	       s = strtok(s + 2," ");
+	       s = strtok(NULL," ");
+	       strcpy(hw_info->model_string, s);
+	     }
+	 }
+     }
+
+#if 0
+   rewind(f);
+   s = search_cpu_info(f, "model", maxargs);
+   if (s)
+      {
+        sscanf(s + 1, "%d", &tmp);
+        hw_info->model = tmp;
+      }
+#endif
+   fclose(f);
+
+   return (retval);
+}
+
+#if defined(__i386__)||defined(__x86_64__)
+static short int init_amd_L2_assoc_inf(unsigned short int pattern)
+{
+   short int assoc;
+   /* "AMD Processor Recognition Application Note", 20734W-1 November 2002 */
+   switch (pattern) {
+   case 0x0:
+      assoc = 0;
+      break;
+   case 0x1:
+   case 0x2:
+   case 0x4:
+      assoc = pattern;
+      break;
+   case 0x6:
+      assoc = 8;
+      break;
+   case 0x8:
+      assoc = 16;
+      break;
+   case 0xf:
+      assoc = SHRT_MAX;         /* Full associativity */
+      break;
+   default:
+      /* We've encountered a pattern marked "reserved" in my manual */
+      assoc = -1;
+      break;
+   }
+   return assoc;
+}
+
+inline_static void cpuid(unsigned int *a, unsigned int *b,
+                         unsigned int *c, unsigned int *d)
+{
+  unsigned int op = *a;
+  asm volatile ("movl %%ebx, %%edi\n\tcpuid\n\tmovl %%ebx, %%esi\n\tmovl %%edi, %%ebx"
+       : "=a" (*a),
+	 "=S" (*b),
+	 "=c" (*c),
+	 "=d" (*d)
+       : "a" (op));
+}
+
+static int init_intel(PAPI_mh_info_t * mh_info)
+{
+   unsigned int reg_eax, reg_ebx, reg_ecx, reg_edx, value;
+   int i, j, k, count;
+   PAPI_mh_level_t *L = mh_info->level;
+
+   /*
+    * "Intel® Processor Identification and the CPUID Instruction",
+    * Application Note, AP-485, Nov 2002, 241618-022
+    */
+   for (i = 0; i < 3; i++) {
+      L[i].tlb[0].type = PAPI_MH_TYPE_EMPTY;
+      L[i].tlb[0].num_entries = 0;
+      L[i].tlb[0].associativity = 0;
+      L[i].tlb[1].type = PAPI_MH_TYPE_EMPTY;
+      L[i].tlb[1].num_entries = 0;
+      L[i].tlb[1].associativity = 0;
+      L[i].cache[0].type = PAPI_MH_TYPE_EMPTY;
+      L[i].cache[0].associativity = 0;
+      L[i].cache[0].line_size = 0;
+      L[i].cache[0].size = 0;
+      L[i].cache[1].type = PAPI_MH_TYPE_EMPTY;
+      L[i].cache[1].associativity = 0;
+      L[i].cache[1].line_size = 0;
+      L[i].cache[1].size = 0;
+   }
+
+   SUBDBG("Initializing Intel Memory\n");
+   /* All of Intels cache info is in 1 call to cpuid
+    * however it is a table lookup :(
+    */
+   reg_eax = 0x2;
+   cpuid(&reg_eax, &reg_ebx, &reg_ecx, &reg_edx);
+   SUBDBG("eax=0x%8.8x ebx=0x%8.8x ecx=0x%8.8x edx=0x%8.8x\n",
+        reg_eax, reg_ebx, reg_ecx, reg_edx);
+
+   count = (0xff & reg_eax);
+   for (j = 0; j < count; j++) {
+      for (i = 0; i < 4; i++) {
+         if (i == 0)
+            value = reg_eax;
+         else if (i == 1)
+            value = reg_ebx;
+         else if (i == 2)
+            value = reg_ecx;
+         else
+            value = reg_edx;
+         if (value & (1 << 31)) {       /* Bit 31 is 0 if information is valid */
+            SUBDBG("Register %d does not contain valid information (skipped)\n",
+                 i);
+            continue;
+         }
+         for (k = 0; k <= 4; k++) {
+            if (i == 0 && j == 0 && k == 0) {
+               value = value >> 8;
+               continue;
+            }
+            switch ((value & 0xff)) {
+            case 0x01:
+               L[0].tlb[0].num_entries = 128;
+               L[0].tlb[0].associativity = 4;
+               break;
+            case 0x02:
+               L[0].tlb[0].num_entries = 8;
+               L[0].tlb[0].associativity = 1;
+               break;
+            case 0x03:
+               L[0].tlb[1].num_entries = 256;
+               L[0].tlb[1].associativity = 4;
+               break;
+            case 0x04:
+               L[0].tlb[1].num_entries = 32;
+               L[0].tlb[1].associativity = 4;
+               break;
+            case 0x06:
+               L[0].cache[0].size = 8;
+               L[0].cache[0].associativity = 4;
+               L[0].cache[0].line_size = 32;
+               break;
+            case 0x08:
+               L[0].cache[0].size = 16;
+               L[0].cache[0].associativity = 4;
+               L[0].cache[0].line_size = 32;
+               break;
+            case 0x0A:
+               L[0].cache[1].size = 8;
+               L[0].cache[1].associativity = 2;
+               L[0].cache[1].line_size = 32;
+               break;
+            case 0x0C:
+               L[0].cache[1].size = 16;
+               L[0].cache[1].associativity = 4;
+               L[0].cache[1].line_size = 32;
+               break;
+            case 0x10:
+               /* This value is not in my copy of the Intel manual */
+               /* IA64 codes, can most likely be moved to the IA64 memory,
+                * If we can't combine the two *Still Hoping ;) * -KSL
+                * This is L1 data cache
+                */
+               L[0].cache[1].size = 16;
+               L[0].cache[1].associativity = 4;
+               L[0].cache[1].line_size = 32;
+               break;
+            case 0x15:
+               /* This value is not in my copy of the Intel manual */
+               /* IA64 codes, can most likely be moved to the IA64 memory,
+                * If we can't combine the two *Still Hoping ;) * -KSL
+                * This is L1 instruction cache
+                */
+               L[0].cache[0].size = 16;
+               L[0].cache[0].associativity = 4;
+               L[0].cache[0].line_size = 32;
+               break;
+            case 0x1A:
+               /* This value is not in my copy of the Intel manual */
+               /* IA64 codes, can most likely be moved to the IA64 memory,
+                * If we can't combine the two *Still Hoping ;) * -KSL
+                * This is L1 instruction AND data cache
+                */
+               L[1].cache[0].size = 96;
+               L[1].cache[0].associativity = 6;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x22:
+               L[2].cache[0].associativity = 4;
+               L[2].cache[0].line_size = 64;
+               L[2].cache[0].size = 512;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x23:
+               L[2].cache[0].associativity = 8;
+               L[2].cache[0].line_size = 64;
+               L[2].cache[0].size = 1024;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x25:
+               L[2].cache[0].associativity = 8;
+               L[2].cache[0].line_size = 64;
+               L[2].cache[0].size = 2048;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x29:
+               L[2].cache[0].associativity = 8;
+               L[2].cache[0].line_size = 64;
+               L[2].cache[0].size = 4096;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x2C:
+	       L[0].cache[1].associativity = 8;
+               L[0].cache[1].line_size = 64;
+               L[0].cache[1].size = 32;
+               break;
+            case 0x30:
+	       L[0].cache[0].associativity = 8;
+               L[0].cache[0].line_size = 64;
+               L[0].cache[0].size = 32;
+            case 0x39:
+               L[1].cache[0].associativity = 4;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 128;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x3B:
+               L[1].cache[0].associativity = 2;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 128;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x3C:
+               L[1].cache[0].associativity = 4;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 256;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x40:
+               if (L[1].cache[1].size) {
+                  /* We have valid L2 cache, but no L3 */
+                  L[2].cache[1].size = 0;
+               } else {
+                  /* We have no L2 cache */
+                  L[1].cache[1].size = 0;
+               }
+               break;
+            case 0x41:
+               L[1].cache[0].size = 128;
+               L[1].cache[0].associativity = 4;
+               L[1].cache[0].line_size = 32;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x42:
+               L[1].cache[0].size = 256;
+               L[1].cache[0].associativity = 4;
+               L[1].cache[0].line_size = 32;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x43:
+               L[1].cache[0].size = 512;
+               L[1].cache[0].associativity = 4;
+               L[1].cache[0].line_size = 32;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x44:
+               L[1].cache[0].size = 1024;
+               L[1].cache[0].associativity = 4;
+               L[1].cache[0].line_size = 32;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x45:
+               L[1].cache[0].size = 2048;
+               L[1].cache[0].associativity = 4;
+               L[1].cache[0].line_size = 32;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+               /* Events 0x50--0x5d: TLB size info */
+               /*There is no way to determine
+                * the size since the page size
+                * can be 4K,2M or 4M and there
+                * is no way to determine it
+                * Sigh -KSL
+                */
+               /* I object, the size is 64, 128, 256 entries even
+                * though the page size is unknown
+                * Smile -smeds 
+                */
+            case 0x50:
+               L[0].tlb[0].num_entries = 64;
+               L[0].tlb[0].associativity = 1;
+               break;
+            case 0x51:
+               L[0].tlb[0].num_entries = 128;
+               L[0].tlb[0].associativity = 1;
+               break;
+            case 0x52:
+               L[0].tlb[0].num_entries = 256;
+               L[0].tlb[0].associativity = 1;
+               break;
+            case 0x5B:
+               L[0].tlb[1].num_entries = 64;
+               L[0].tlb[1].associativity = 1;
+               break;
+            case 0x5C:
+               L[0].tlb[1].num_entries = 128;
+               L[0].tlb[1].associativity = 1;
+               break;
+            case 0x5D:
+               L[0].tlb[1].num_entries = 256;
+               L[0].tlb[1].associativity = 1;
+               break;
+	    case 0x60:
+	       L[0].cache[1].associativity = 8;
+               L[0].cache[1].line_size = 64;
+               L[0].cache[1].size = 16;
+               break;
+            case 0x66:
+               L[0].cache[1].associativity = 4;
+               L[0].cache[1].line_size = 64;
+               L[0].cache[1].size = 8;
+               break;
+            case 0x67:
+               L[0].cache[1].associativity = 4;
+               L[0].cache[1].line_size = 64;
+               L[0].cache[1].size = 16;
+               break;
+            case 0x68:
+               L[0].cache[1].associativity = 4;
+               L[0].cache[1].line_size = 64;
+               L[0].cache[1].size = 32;
+               break;
+            case 0x70:
+               /* 12k-uops trace cache */
+               L[0].cache[0].associativity = 8;
+               L[0].cache[0].size = 12;
+               L[0].cache[0].line_size = 0;
+               break;
+            case 0x71:
+               /* 16k-uops trace cache */
+               L[0].cache[0].associativity = 8;
+               L[0].cache[0].size = 16;
+               L[0].cache[0].line_size = 0;
+               break;
+            case 0x72:
+               /* 32k-uops trace cache */
+               L[0].cache[0].associativity = 8;
+               L[0].cache[0].size = 32;
+               L[0].cache[0].line_size = 0;
+               break;
+            case 0x77:
+               /* This value is not in my copy of the Intel manual */
+               /* Once again IA-64 code, will most likely have to be moved */
+               /* This is sectored */
+               L[0].cache[0].size = 16;
+               L[0].cache[0].associativity = 4;
+               L[0].cache[0].line_size = 64;
+               break;
+            case 0x78:
+               L[1].cache[0].size = 1024;
+               L[1].cache[0].associativity = 4;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x79:
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 128;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x7A:
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 256;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x7B:
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 512;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x7C:
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 1024;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x7D:
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 2048;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x7E:
+               /* This value is not in my copy of the Intel manual */
+               /* IA64 value */
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 128;
+               L[1].cache[0].size = 256;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x7F:
+               L[1].cache[0].associativity = 2;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 512;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x81:
+               /* This value is not in my copy of the Intel manual */
+               /* This is not listed as IA64, but it might be, 
+                * Perhaps it is in an errata somewhere, I found the
+                * info at sandpile.org -KSL
+                */
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 32;
+               L[1].cache[0].size = 128;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+            case 0x82:
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 32;
+               L[1].cache[0].size = 256;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x83:
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 32;
+               L[1].cache[0].size = 512;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x84:
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 32;
+               L[1].cache[0].size = 1024;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x85:
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 32;
+               L[1].cache[0].size = 2048;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x86:
+               L[1].cache[0].associativity = 4;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 512;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x87:
+               L[1].cache[0].associativity = 8;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 1024;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x88:
+               /* This value is not in my copy of the Intel manual */
+               /* IA64 */
+               L[2].cache[0].associativity = 4;
+               L[2].cache[0].line_size = 64;
+               L[2].cache[0].size = 2048;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x89:
+               /* This value is not in my copy of the Intel manual */
+               /* IA64 */
+               L[2].cache[0].associativity = 4;
+               L[2].cache[0].line_size = 64;
+               L[2].cache[0].size = 4096;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x8A:
+               /* This value is not in my copy of the Intel manual */
+               /* IA64 */
+               L[2].cache[0].associativity = 4;
+               L[2].cache[0].line_size = 64;
+               L[2].cache[0].size = 8192;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x8D:
+               /* This value is not in my copy of the Intel manual */
+               /* IA64 */
+               L[2].cache[0].associativity = 12;
+               L[2].cache[0].line_size = 128;
+               L[2].cache[0].size = 3096;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x90:
+               L[0].tlb[0].associativity = 1;
+               L[0].tlb[0].num_entries = 64;
+               break;
+            case 0x96:
+               L[0].tlb[1].associativity = 1;
+               L[0].tlb[1].num_entries = 32;
+               break;
+            case 0x9b:
+               L[1].tlb[1].associativity = 1;
+               L[1].tlb[1].num_entries = 96;
+               break;
+            case 0xb0:
+               L[0].tlb[0].associativity = 4;
+               L[0].tlb[0].num_entries = 512;
+               break;
+            case 0xb3:
+               L[0].tlb[1].associativity = 4;
+               L[0].tlb[1].num_entries = 512;
+               break;
+               /* Note, there are still various IA64 cases not mapped yet */
+               /* I think I have them all now 9/10/04 */
+            }
+            value = value >> 8;
+         }
+      }
+   }
+   /* Scan memory hierarchy elements to look for non-zero structures.
+      If a structure is not empty, it must be marked as type DATA or type INST.
+      By convention, this routine always assumes {tlb,cache}[0] is INST and
+      {tlb,cache}[1] is DATA. If Intel produces a unified TLB or cache, this
+      algorithm will fail.
+   */
+  /* There are a bunch of Unified caches, changed slightly to support this 
+   * Unified should be in slot 0
+   */
+   for (i = 0; i < 3; i++) {
+      if( L[i].tlb[0].type == PAPI_MH_TYPE_EMPTY ) {
+         if (L[i].tlb[0].num_entries) L[i].tlb[0].type = PAPI_MH_TYPE_INST;
+         if (L[i].tlb[1].num_entries) L[i].tlb[1].type = PAPI_MH_TYPE_DATA;
+      }
+      if ( L[i].cache[0].type == PAPI_MH_TYPE_EMPTY) {
+         if (L[i].cache[0].size) L[i].cache[0].type = PAPI_MH_TYPE_INST;
+         if (L[i].cache[1].size) L[i].cache[1].type = PAPI_MH_TYPE_DATA;
+      }
+   }
+
+   return PAPI_OK;
+}
+
+/* Cache configuration for AMD AThlon/Duron */
+static int init_amd(PAPI_mh_info_t * mh_info)
+{
+   unsigned int reg_eax, reg_ebx, reg_ecx, reg_edx;
+   unsigned short int pattern;
+   PAPI_mh_level_t *L = mh_info->level;
+   /*
+    * Layout of CPU information taken from :
+    * "AMD Processor Recognition Application Note", 20734W-1 November 2002 
+	* ****Does this properly decode Opterons (K8)?
+    */
+
+   SUBDBG("Initializing AMD (K7) memory\n");
+   /* AMD level 1 cache info */
+   reg_eax = 0x80000005;
+   cpuid(&reg_eax, &reg_ebx, &reg_ecx, &reg_edx);
+
+   SUBDBG("eax=0x%8.8x ebx=0x%8.8x ecx=0x%8.8x edx=0x%8.8x\n",
+        reg_eax, reg_ebx, reg_ecx, reg_edx);
+   /* TLB info in L1-cache */
+
+   /* 2MB memory page information, 4MB pages has half the number of entries */
+   /* Most people run 4k pages on Linux systems, don't they? */
+   /*
+    * L[0].tlb[0].type          = PAPI_MH_TYPE_INST;
+    * L[0].tlb[0].num_entries   = (reg_eax&0xff);
+    * L[0].tlb[0].associativity = ((reg_eax&0xff00)>>8);
+    * L[0].tlb[1].type          = PAPI_MH_TYPE_DATA;
+    * L[0].tlb[1].num_entries   = ((reg_eax&0xff0000)>>16);
+    * L[0].tlb[1].associativity = ((reg_eax&0xff000000)>>24);
+    */
+
+   /* 4k page information */
+   L[0].tlb[0].type          = PAPI_MH_TYPE_INST;
+   L[0].tlb[0].num_entries   = ((reg_ebx & 0x000000ff));
+   L[0].tlb[0].associativity = ((reg_ebx & 0x0000ff00) >> 8);
+   switch (L[0].tlb[0].associativity) {
+   case 0x00:                  /* Reserved */
+      L[0].tlb[0].associativity = -1;
+      break;
+   case 0xff:
+      L[0].tlb[0].associativity = SHRT_MAX;
+      break;
+   }
+   L[0].tlb[1].type          = PAPI_MH_TYPE_DATA;
+   L[0].tlb[1].num_entries          = ((reg_ebx & 0x00ff0000) >> 16);
+   L[0].tlb[1].associativity = ((reg_ebx & 0xff000000) >> 24);
+   switch (L[0].tlb[1].associativity) {
+   case 0x00:                  /* Reserved */
+      L[0].tlb[1].associativity = -1;
+      break;
+   case 0xff:
+      L[0].tlb[1].associativity = SHRT_MAX;
+      break;
+   }
+
+   SUBDBG("L1 TLB info (to be over-written by L2):\n");
+   SUBDBG("\tI-num_entries %d,  I-assoc %d\n\tD-num_entries %d,  D-assoc %d\n",
+        L[0].tlb[0].num_entries, L[0].tlb[0].associativity,
+	  L[0].tlb[1].num_entries, L[0].tlb[1].associativity);
+
+   /* L1 D-cache/I-cache info */
+
+   L[0].cache[1].type = PAPI_MH_TYPE_DATA | PAPI_MH_TYPE_WB | PAPI_MH_TYPE_PSEUDO_LRU;
+   L[0].cache[1].size = ((reg_ecx & 0xff000000) >> 24);
+   L[0].cache[1].associativity = ((reg_ecx & 0x00ff0000) >> 16);
+   switch (L[0].cache[1].associativity) {
+   case 0x00:                  /* Reserved */
+      L[0].cache[1].associativity = -1;
+      break;
+   case 0xff:                  /* Fully assoc. */
+      L[0].cache[1].associativity = SHRT_MAX;
+      break;
+   }
+   /* Bit 15-8 is "Lines per tag" */
+   /* L[0].cache[1].num_lines = ((reg_ecx & 0x0000ff00) >> 8); */
+   L[0].cache[1].line_size = ((reg_ecx & 0x000000ff));
+
+   L[0].cache[0].type = PAPI_MH_TYPE_INST;
+   L[0].cache[0].size = ((reg_edx & 0xff000000) >> 24);
+   L[0].cache[0].associativity = ((reg_edx & 0x00ff0000) >> 16);
+   switch (L[0].cache[0].associativity) {
+   case 0x00:                  /* Reserved */
+      L[0].cache[0].associativity = -1;
+      break;
+   case 0xff:
+      L[0].cache[0].associativity = SHRT_MAX;
+      break;
+   }
+   /* Bit 15-8 is "Lines per tag" */
+   /* L[0].cache[0].num_lines = ((reg_edx & 0x0000ff00) >> 8); */
+   L[0].cache[0].line_size = ((reg_edx & 0x000000ff));
+
+   reg_eax = 0x80000006;
+   cpuid(&reg_eax, &reg_ebx, &reg_ecx, &reg_edx);
+
+   SUBDBG("eax=0x%8.8x ebx=0x%8.8x ecx=0x%8.8x edx=0x%8.8x\n",
+        reg_eax, reg_ebx, reg_ecx, reg_edx);
+
+   /* AMD level 2 cache info */
+   L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED | PAPI_MH_TYPE_WT | PAPI_MH_TYPE_PSEUDO_LRU;
+   L[1].cache[0].size = ((reg_ecx & 0xffff0000) >> 16);
+   pattern = ((reg_ecx & 0x0000f000) >> 12);
+   L[1].cache[0].associativity = init_amd_L2_assoc_inf(pattern);
+   /*   L[1].cache[0].num_lines = ((reg_ecx & 0x00000f00) >> 8); */
+   L[1].cache[0].line_size = ((reg_ecx & 0x000000ff));
+
+   /* L2 cache TLB information. This over-writes the L1 cache TLB info */
+
+   /* 2MB memory page information, 4MB pages has half the number of entris */
+   /* Most people run 4k pages on Linux systems, don't they? */
+   /*
+    * mem_info->dtlb_size      = ((reg_eax&0x0fff0000)>>16);
+    * pattern = ((reg_eax&0xf0000000)>>28);
+    * mem_info->dtlb_assoc = init_amd_L2_assoc_inf(pattern);
+    * mem_info->itlb_size      = (reg_eax&0xfff);
+    * pattern = ((reg_eax&0xf000)>>12);
+    * mem_info->itlb_assoc = init_amd_L2_assoc_inf(pattern);
+    * if (!mem_info->dtlb_size) {
+    *   mem_info->total_tlb_size = mem_info->itlb_size  ; mem_info->itlb_size = 0;
+    * }
+    */
+
+   /* 4k page information */
+   L[0].tlb[1].type = PAPI_MH_TYPE_DATA;
+   L[0].tlb[1].num_entries = ((reg_ebx & 0x0fff0000) >> 16);
+   pattern = ((reg_ebx & 0xf0000000) >> 28);
+   L[0].tlb[1].associativity = init_amd_L2_assoc_inf(pattern);
+   L[0].tlb[0].type = PAPI_MH_TYPE_INST;
+   L[0].tlb[0].num_entries = ((reg_ebx & 0x00000fff));
+   pattern = ((reg_ebx & 0x0000f000) >> 12);
+   L[0].tlb[0].associativity = init_amd_L2_assoc_inf(pattern);
+
+   if (!L[0].tlb[1].num_entries) {       /* The L2 TLB is a unified TLB, with the size itlb_size */
+      L[0].tlb[0].num_entries = 0;
+   }
+
+   /* AMD doesn't have Level 3 cache yet..... */
+   return PAPI_OK;
+}
+
+static int x86_get_memory_info(PAPI_hw_info_t *hw_info)
+{
+   int retval = PAPI_OK;
+   int i,j;
+
+   /* Defaults to Intel which is *probably* a safe assumption -KSL */
+   switch (hw_info->vendor) 
+     {
+     case PAPI_VENDOR_AMD:
+       retval = init_amd(&hw_info->mem_hierarchy);
+       break;
+     case PAPI_VENDOR_INTEL:
+       retval = init_intel(&hw_info->mem_hierarchy);
+       break;
+     default:
+       PAPIERROR("Unknown vendor in memory information call for x86.");
+       return(PAPI_ESBSTR);
+     }
+
+   /* Do some post-processing */
+   if (retval == PAPI_OK) {
+      for (i=0; i<PAPI_MH_MAX_LEVELS; i++) {
+         for (j=0; j<2; j++) {
+            /* Compute the number of levels of hierarchy actually used */
+            if (hw_info->mem_hierarchy.level[i].tlb[j].type != PAPI_MH_TYPE_EMPTY ||
+               hw_info->mem_hierarchy.level[i].cache[j].type != PAPI_MH_TYPE_EMPTY)
+               hw_info->mem_hierarchy.levels = i+1;
+            /* Cache sizes were reported as KB; convert to Bytes by multipying by 2^10 */
+            if (hw_info->mem_hierarchy.level[i].cache[j].size != 0)
+               hw_info->mem_hierarchy.level[i].cache[j].size <<= 10;
+            /* if line_size was reported without num_lines, compute it */
+             if ((hw_info->mem_hierarchy.level[i].cache[j].line_size != 0) &&
+                 (hw_info->mem_hierarchy.level[i].cache[j].size != 0))
+               hw_info->mem_hierarchy.level[i].cache[j].num_lines = 
+                  hw_info->mem_hierarchy.level[i].cache[j].size / hw_info->mem_hierarchy.level[i].cache[j].line_size;
+        }
+      }
+   }
+
+   /* This works only because an empty cache element is initialized to 0 */
+   SUBDBG("Detected L1: %d L2: %d  L3: %d\n",
+        hw_info->mem_hierarchy.level[0].cache[0].size + hw_info->mem_hierarchy.level[0].cache[1].size, 
+        hw_info->mem_hierarchy.level[1].cache[0].size + hw_info->mem_hierarchy.level[1].cache[1].size, 
+        hw_info->mem_hierarchy.level[2].cache[0].size + hw_info->mem_hierarchy.level[2].cache[1].size);
+   return retval;
+}
+#endif
+
+int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
+{
+  char fn[PATH_MAX], tmp[PATH_MAX];
+  FILE *f;
+  int ret;
+  long_long sz = 0, lck = 0, res = 0, shr = 0, stk = 0, txt = 0, dat = 0, dum = 0, lib = 0, hwm = 0;
+
+  sprintf(fn,"/proc/%ld/status",(long)getpid());
+  f = fopen(fn,"r");
+  if (f == NULL)
+    {
+      PAPIERROR("fopen(%s): %s\n",fn,strerror(errno));
+      return PAPI_ESBSTR;
+    }
+  while (1)
+    {
+      if (fgets(tmp,PATH_MAX,f) == NULL)
+	break;
+      if (strspn(tmp,"VmSize:") == strlen("VmSize:"))
+	{
+	  sscanf(tmp+strlen("VmSize:"),"%lld",&sz);
+	  d->size = sz;
+	  continue;
+	}
+      if (strspn(tmp,"VmHWM:") == strlen("VmHWM:"))
+	{
+	  sscanf(tmp+strlen("VmHWM:"),"%lld",&hwm);
+	  d->high_water_mark = hwm;
+	  continue;
+	}
+      if (strspn(tmp,"VmLck:") == strlen("VmLck:"))
+	{
+	  sscanf(tmp+strlen("VmLck:"),"%lld",&lck);
+	  d->locked = lck;
+	  continue;
+	}
+      if (strspn(tmp,"VmRSS:") == strlen("VmRSS:"))
+	{
+	  sscanf(tmp+strlen("VmRSS:"),"%lld",&res);
+	  d->resident = res;
+	  continue;
+	}
+      if (strspn(tmp,"VmData:") == strlen("VmData:"))
+	{
+	  sscanf(tmp+strlen("VmData:"),"%lld",&dat);
+	  d->heap = dat;
+	  continue;
+	}
+      if (strspn(tmp,"VmStk:") == strlen("VmStk:"))
+	{
+	  sscanf(tmp+strlen("VmStk:"),"%lld",&stk);
+	  d->stack = stk;
+	  continue;
+	}
+      if (strspn(tmp,"VmExe:") == strlen("VmExe:"))
+	{
+	  sscanf(tmp+strlen("VmExe:"),"%lld",&txt);
+	  d->text = txt;
+	  continue;
+	}
+      if (strspn(tmp,"VmLib:") == strlen("VmLib:"))
+	{
+	  sscanf(tmp+strlen("VmLib:"),"%lld",&lib);
+	  d->library = lib;
+	  continue;
+	}
+    }
+  fclose(f);
+
+  sprintf(fn,"/proc/%ld/statm",(long)getpid());
+  f = fopen(fn,"r");
+  if (f == NULL)
+    {
+      PAPIERROR("fopen(%s): %s\n",fn,strerror(errno));
+      return PAPI_ESBSTR;
+    }
+  ret = fscanf(f,"%lld %lld %lld %lld %lld %lld %lld",&dum,&dum,&shr,&dum,&dum,&dat,&dum);
+  if (ret != 7)
+    {
+      PAPIERROR("fscanf(7 items): %d\n",ret);
+      return PAPI_ESBSTR;
+    }
+  d->pagesize = getpagesize();
+  d->shared = (shr * d->pagesize)/1024;
+  fclose(f);
+
+  return PAPI_OK;
+}
+
+#if defined(ia64)
+static int get_number( char *buf ){
+   char numbers[] = "0123456789";
+   int num;
+   char *tmp, *end;
+
+   tmp = strpbrk(buf, numbers);
+   if ( tmp != NULL ){
+	end = tmp;
+	while(isdigit(*end)) end++;
+	*end='\0';
+        num = atoi(tmp);
+        return(num);
+    }
+
+   PAPIERROR("Number could not be parsed from %s",buf);
+   return(-1);
+}
+
+static void fline ( FILE *fp, char *rline ) {
+  char *tmp,*end,c;
+
+  tmp = rline;
+  end = &rline[1023];
+   
+  memset(rline, '\0', 1024);
+
+  do {
+    if ( feof(fp))  return;
+    c = getc(fp);
+  } while (isspace(c) || c == '\n' || c == '\r');
+
+  ungetc( c, fp);
+
+  for(;;) {
+    if ( feof(fp) ) {
+       return;
+    }
+    c = getc( fp);
+    if ( c == '\n' || c == '\r' )
+      break;
+    *tmp++ = c;
+    if ( tmp == end ) {
+       *tmp = '\0';
+       return;
+    }
+  }
+  return;
+} 
+
+static int ia64_get_memory_info(PAPI_hw_info_t *hw_info)
+{
+   int retval = 0;
+   FILE *f;
+   int clevel = 0, cindex = -1;
+   char buf[1024];
+   int num, i, j;
+   PAPI_mh_info_t *meminfo = &hw_info->mem_hierarchy;
+   PAPI_mh_level_t *L = hw_info->mem_hierarchy.level;
+
+   f = fopen("/proc/pal/cpu0/cache_info","r");
+
+   if (!f)
+     { PAPIERROR("fopen(/proc/pal/cpu0/cache_info) returned < 0"); return(PAPI_ESYS); }
+
+   while (!feof(f)) {
+      fline(f, buf);
+      if ( buf[0] == '\0' ) break;
+      if (  !strncmp(buf, "Data Cache", 10) ) {
+         cindex = 1;
+         clevel = get_number( buf );
+         L[clevel - 1].cache[cindex].type = PAPI_MH_TYPE_DATA;
+      }
+      else if ( !strncmp(buf, "Instruction Cache", 17) ) {
+         cindex = 0;
+         clevel = get_number( buf );
+         L[clevel - 1].cache[cindex].type = PAPI_MH_TYPE_INST;
+      }
+      else if ( !strncmp(buf, "Data/Instruction Cache", 22)) {
+         cindex = 0;
+         clevel = get_number( buf );
+         L[clevel - 1].cache[cindex].type = PAPI_MH_TYPE_UNIFIED;
+      }
+      else {
+         if ( (clevel == 0 || clevel > 3) && cindex >= 0)
+	   { PAPIERROR("Cache type could not be recognized, please send /proc/pal/cpu0/cache_info"); return(PAPI_EBUG); }
+
+         if ( !strncmp(buf, "Size", 4) ) {
+            num = get_number( buf );
+            L[clevel - 1].cache[cindex].size = num;
+         }
+         else if ( !strncmp(buf, "Associativity", 13) ) {
+            num = get_number( buf );
+            L[clevel - 1].cache[cindex].associativity = num;
+         }
+         else if ( !strncmp(buf, "Line size", 9) ) {
+            num = get_number( buf );
+            L[clevel - 1].cache[cindex].line_size = num;
+            L[clevel - 1].cache[cindex].num_lines = L[clevel - 1].cache[cindex].size/num;
+         }
+      }
+   } 
+
+   fclose(f);
+
+   f = fopen("/proc/pal/cpu0/vm_info","r");
+   /* No errors on fopen as I am not sure this is always on the systems */
+   if ( f != NULL ) {
+      cindex = -1;
+      clevel = 0;
+      while (!feof(f)) {
+         fline(f, buf);
+         if ( buf[0] == '\0' ) break;
+         if (  !strncmp(buf, "Data Translation", 16) ) {
+            cindex = 1;
+	         clevel = get_number( buf );
+            L[clevel - 1].tlb[cindex].type = PAPI_MH_TYPE_DATA;
+         }
+         else if ( !strncmp(buf, "Instruction Translation", 23) ){
+            cindex = 0;
+            clevel = get_number( buf );
+            L[clevel - 1].tlb[cindex].type = PAPI_MH_TYPE_INST;
+         }
+         else {
+	         if ( (clevel == 0 || clevel > 2) && cindex >= 0)
+		   { PAPIERROR("TLB type could not be recognized, send /proc/pal/cpu0/vm_info"); return(PAPI_EBUG); }
+
+	         if ( !strncmp(buf, "Number of entries", 17) ){
+	            num = get_number( buf );
+               L[clevel - 1].tlb[cindex].num_entries = num;
+	         }
+  	         else if ( !strncmp(buf, "Associativity", 13) ) {
+	            num = get_number( buf );
+               L[clevel - 1].tlb[cindex].associativity = num;
+	         }
+         }
+      } 
+      fclose(f);
+   }
+
+   /* Compute and store the number of levels of hierarchy actually used */
+   for (i=0; i<PAPI_MH_MAX_LEVELS; i++) {
+      for (j=0; j<2; j++) {
+         if (L[i].tlb[j].type != PAPI_MH_TYPE_EMPTY ||
+            L[i].cache[j].type != PAPI_MH_TYPE_EMPTY)
+            meminfo->levels = i+1;
+      }
+   }
+   return retval;
+}
+#endif
+
+#if defined(mips)
+/* system type             : MIPS Malta
+processor               : 0
+cpu model               : MIPS 20Kc V2.0  FPU V2.0
+BogoMIPS                : 478.20
+wait instruction        : no
+microsecond timers      : yes
+tlb_entries             : 48 64K pages
+icache size             : 32K sets 256 ways 4 linesize 32
+dcache size             : 32K sets 256 ways 4 linesize 32
+scache....
+default cache policy    : cached write-back
+extra interrupt vector  : yes
+hardware watchpoint     : yes
+ASEs implemented        : mips3d
+VCED exceptions         : not available
+VCEI exceptions         : not available
+*/
+
+static int mips_get_cache(char *entry, int *sizeB, int *assoc, int *lineB)
+{
+  int retval, dummy;
+
+  retval = sscanf(entry,"%dK sets %d ways %d linesize %d",sizeB,&dummy,assoc,lineB);
+  *sizeB *= 1024;
+
+  if (retval != 4)
+    PAPIERROR("Could not get 4 integers from %s\nPlease send this line to ptools-perfapi@cs.utk.edu",entry);
+
+  SUBDBG("Got cache %d, %d, %d\n",*sizeB,*assoc,*lineB);      
+  return(PAPI_OK);
+}
+
+static int mips_get_policy(char *s, int *cached, int *policy)
+{
+  char *entry = strtok(s," ");
+
+  do {
+    if (strcasecmp(entry,"cached") == 0)
+      *cached = 1;
+    else if (strcasecmp(entry,"write-back") == 0)
+      *policy = PAPI_MH_TYPE_WB | PAPI_MH_TYPE_LRU;
+    else if (strcasecmp(entry,"write-through") == 0)
+      *policy = PAPI_MH_TYPE_WT | PAPI_MH_TYPE_LRU;
+  } while ((entry = strtok(NULL," ")));
+
+  if (*policy == 0)
+    PAPIERROR("Could not get cache policy from %s\nPlease send this line to ptools-perfapi@cs.utk.edu",entry);
+      
+  SUBDBG("Got policy 0x%x, cached \n",*policy,*cached);
+  return(PAPI_OK);
+}
+
+static int mips_get_tlb(char *s, int *u, int *size2)
+{
+  int retval;
+  
+  retval = sscanf(s,"%d %dK",u,size2);
+  *size2 *= 1024;
+
+  if (retval != 2)
+    PAPIERROR("Could not get tlb entries from %s\nPlease send this line to ptools-perfapi@cs.utk.edu",s);
+      
+  SUBDBG("Got tlb %d %d pages\n",*u,*size2);
+  return(PAPI_OK);
+}
+
+static int mips_get_memory_info(PAPI_mh_info_t *mh_info)
+{
+  char *s;
+  int retval = PAPI_OK;
+  int i = 0, cached = 0, policy = 0, num = 0, pagesize = 0;
+  int sizeB, assoc, lineB;
+  char maxargs[PAPI_HUGE_STR_LEN];
+
+   FILE *f;
+
+   if ((f = fopen("/proc/cpuinfo", "r")) == NULL)
+     { PAPIERROR("fopen(/proc/cpuinfo) errno %d",errno); return(PAPI_ESYS); }
+
+   /* All of this information maybe overwritten by the substrate */
+
+   /* MHZ */
+
+   rewind(f);
+   s = search_cpu_info(f, "default cache policy", maxargs);
+   if (s && strlen(s))
+     {
+       mips_get_policy(s+1,&cached,&policy);
+       if (cached == 0)
+	 {
+	   SUBDBG("Uncached default policy detected, reporting zero cache entries.\n");
+	   goto nocache;
+	 }
+     }
+   else
+     {
+       PAPIERROR("Could not locate 'default cache policy' in /proc/cpuinfo\n,Please send the contents of this file to ptools-perfapi@cs.utk.edu");
+     }
+
+   rewind(f);
+   s = search_cpu_info(f, "icache size", maxargs);
+   if (s)
+     {
+       mips_get_cache(s + 1, &sizeB, &assoc, &lineB);
+       mh_info->level[0].cache[i].size = sizeB;
+       mh_info->level[0].cache[i].line_size = lineB;
+       mh_info->level[0].cache[i].num_lines = sizeB / lineB;
+       mh_info->level[0].cache[i].associativity = assoc;
+       mh_info->level[0].cache[i].type = PAPI_MH_TYPE_INST | policy;
+       i++;
+     }
+   else
+     {
+       PAPIERROR("Could not locate 'icache size' in /proc/cpuinfo\n,Please send the contents of this file to ptools-perfapi@cs.utk.edu");
+     }       
+
+   rewind(f);
+   s = search_cpu_info(f, "dcache size", maxargs);
+   if (s)
+     {
+       mips_get_cache(s + 1, &sizeB, &assoc, &lineB);
+       mh_info->level[0].cache[i].size = sizeB;
+       mh_info->level[0].cache[i].line_size = lineB;
+       mh_info->level[0].cache[i].num_lines = sizeB / lineB;
+       mh_info->level[0].cache[i].associativity = assoc;
+       mh_info->level[0].cache[i].type = PAPI_MH_TYPE_DATA | policy;
+       i++;
+     }
+   else
+     {
+       PAPIERROR("Could not locate 'dcache size' in /proc/cpuinfo\n,Please send the contents of this file to ptools-perfapi@cs.utk.edu");
+     }       
+
+   rewind(f);
+   s = search_cpu_info(f, "scache size", maxargs);
+   if (s)
+     {
+       mips_get_cache(s + 1, &sizeB, &assoc, &lineB);
+       mh_info->level[1].cache[0].size = sizeB;
+       mh_info->level[1].cache[0].line_size = lineB;
+       mh_info->level[1].cache[0].num_lines = sizeB / lineB;
+       mh_info->level[1].cache[0].associativity = assoc;
+       mh_info->level[1].cache[0].type = PAPI_MH_TYPE_UNIFIED | policy;
+     }
+   else
+     {
+       /* Hey, it's ok not to have an L2. Slow, but ok. */
+     }       
+
+
+   /* Currently only reports on the JTLB. This is in-fact missing the dual 4-entry uTLB
+      that only works on systems with 4K pages. */
+
+ nocache:
+
+   rewind(f);
+   s = search_cpu_info(f, "tlb_entries", maxargs);
+   if (s && strlen(s))
+     {
+       mips_get_tlb(s+1,&num,&pagesize);
+       mh_info->level[0].tlb[0].num_entries = num;
+       mh_info->level[0].tlb[0].associativity = num;
+       mh_info->level[0].tlb[0].type = PAPI_MH_TYPE_UNIFIED;
+     }
+   else
+     {
+       PAPIERROR("Could not locate 'tlb_entries' in /proc/cpuinfo\n,Please send the contents of this file to ptools-perfapi@cs.utk.edu");
+     }
+
+   return retval;
+}
+#endif
+
+int _papi_hwd_get_memory_info(PAPI_hw_info_t * hwinfo, int unused)
+{
+  int retval = PAPI_OK;
+
+#if defined(mips)
+  mips_get_memory_info(&hwinfo->mem_hierarchy);
+#elif defined(__i386__)||defined(__x86_64__)
+  x86_get_memory_info(hwinfo);
+#elif defined(ia64)
+  ia64_get_memory_info(&hwinfo->mem_hierarchy);
+#else
+#error "No support for this architecture. Please modify perfmon.c"
+#endif
+
+  return(retval);
+}
 
 #ifdef DEBUG
 void dump_smpl_arg(pfm_dfl_smpl_arg_t *arg)
@@ -338,230 +1643,80 @@ int _papi_hwd_update_shlib_info(void)
    return (PAPI_OK);
 }
                                                                                 
-static void decode_vendor_string(char *s, int *vendor)
+static int get_system_info(papi_mdi_t *mdi)
 {
-  if (strcasecmp(s,"GenuineIntel") == 0)
-    *vendor = PAPI_VENDOR_INTEL;
-  else if (strcasecmp(s,"IBM") == 0)
-    *vendor = PAPI_VENDOR_IBM;
-  else if (strcasecmp(s,"MIPS") == 0)
-    *vendor = PAPI_VENDOR_MIPS;
-  else
-    *vendor = PAPI_VENDOR_UNKNOWN;
-}
-
-static char *search_cpu_info(FILE * f, char *search_str, char *line)
-{
-   /* This code courtesy of our friends in Germany. Thanks Rudolph Berrendorf! */
-   /* See the PCL home page for the German version of PAPI. */
-
-   char *s;
-
-   while (fgets(line, 256, f) != NULL) {
-      if (strstr(line, search_str) != NULL) {
-         /* ignore all characters in line up to : */
-         for (s = line; *s && (*s != ':'); ++s);
-         if (*s)
-            return (s);
-      }
-   }
-   return (NULL);
-
-   /* End stolen code */
-}
-
-int _papi_hwd_get_system_info(void)
-{
-   int tmp, retval;
-   char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
+   int retval;
+   char maxargs[PAPI_HUGE_STR_LEN];
    pid_t pid;
-   float mhz = 0.0;
-   FILE *f;
-                                                                                
+
    /* Software info */
-                                                                                
+
    /* Path and args */
-                                                                                
+
    pid = getpid();
    if (pid < 0)
      { PAPIERROR("getpid() returned < 0"); return(PAPI_ESYS); }
-   _papi_hwi_system_info.pid = pid;
-                                                                                
+   mdi->pid = pid;
+
    sprintf(maxargs, "/proc/%d/exe", (int) pid);
-   if (readlink(maxargs, _papi_hwi_system_info.exe_info.fullname, PAPI_HUGE_STR_LEN) < 0)
+   if (readlink(maxargs, mdi->exe_info.fullname, PAPI_HUGE_STR_LEN) < 0)
      { PAPIERROR("readlink(%s) returned < 0", maxargs); return(PAPI_ESYS); }
-                                                                                
-   /* basename can modify it's argument */
-   strcpy(maxargs,_papi_hwi_system_info.exe_info.fullname);
-   strcpy(_papi_hwi_system_info.exe_info.address_info.name, basename(maxargs));
-                                                                                
+
+   /* Careful, basename can modify it's argument */
+
+   strcpy(maxargs,mdi->exe_info.fullname);
+   strcpy(mdi->exe_info.address_info.name, basename(maxargs));
+   SUBDBG("Executable is %s\n", mdi->exe_info.address_info.name);
+   SUBDBG("Full Executable is %s\n", mdi->exe_info.fullname);
+
    /* Executable regions, may require reading /proc/pid/maps file */
-                                                                                
+
    retval = _papi_hwd_update_shlib_info();
-                                                                                
-   /* PAPI_preload_option information */
-                                                                                
-   strcpy(_papi_hwi_system_info.preload_info.lib_preload_env, "LD_PRELOAD");
-   _papi_hwi_system_info.preload_info.lib_preload_sep = ' ';
-   strcpy(_papi_hwi_system_info.preload_info.lib_dir_env, "LD_LIBRARY_PATH");
-   _papi_hwi_system_info.preload_info.lib_dir_sep = ':';
-                                                                                
-   SUBDBG("Executable is %s\n", _papi_hwi_system_info.exe_info.address_info.name);
-   SUBDBG("Full Executable is %s\n", _papi_hwi_system_info.exe_info.fullname);
    SUBDBG("Text: Start %p, End %p, length %d\n",
-          _papi_hwi_system_info.exe_info.address_info.text_start,
-          _papi_hwi_system_info.exe_info.address_info.text_end,
-          (int)(_papi_hwi_system_info.exe_info.address_info.text_end -
-          _papi_hwi_system_info.exe_info.address_info.text_start));
+          mdi->exe_info.address_info.text_start,
+          mdi->exe_info.address_info.text_end,
+          (int)(mdi->exe_info.address_info.text_end -
+          mdi->exe_info.address_info.text_start));
    SUBDBG("Data: Start %p, End %p, length %d\n",
-          _papi_hwi_system_info.exe_info.address_info.data_start,
-          _papi_hwi_system_info.exe_info.address_info.data_end,
-          (int)(_papi_hwi_system_info.exe_info.address_info.data_end -
-          _papi_hwi_system_info.exe_info.address_info.data_start));
+          mdi->exe_info.address_info.data_start,
+          mdi->exe_info.address_info.data_end,
+          (int)(mdi->exe_info.address_info.data_end -
+          mdi->exe_info.address_info.data_start));
    SUBDBG("Bss: Start %p, End %p, length %d\n",
-          _papi_hwi_system_info.exe_info.address_info.bss_start,
-          _papi_hwi_system_info.exe_info.address_info.bss_end,
-          (int)(_papi_hwi_system_info.exe_info.address_info.bss_end -
-          _papi_hwi_system_info.exe_info.address_info.bss_start));
-                                                                                
+          mdi->exe_info.address_info.bss_start,
+          mdi->exe_info.address_info.bss_end,
+          (int)(mdi->exe_info.address_info.bss_end -
+          mdi->exe_info.address_info.bss_start));
+
+   /* PAPI_preload_option information */
+
+   strcpy(mdi->preload_info.lib_preload_env, "LD_PRELOAD");
+   mdi->preload_info.lib_preload_sep = ' ';
+   strcpy(mdi->preload_info.lib_dir_env, "LD_LIBRARY_PATH");
+   mdi->preload_info.lib_dir_sep = ':';
+
    /* Hardware info */
-                                                                                
-   _papi_hwi_system_info.hw_info.ncpu = sysconf(_SC_NPROCESSORS_ONLN);
-   _papi_hwi_system_info.hw_info.nnodes = 1;
-   _papi_hwi_system_info.hw_info.totalcpus = sysconf(_SC_NPROCESSORS_CONF);
-   _papi_hwi_system_info.hw_info.vendor = -1;
-                                                                                
-   if ((f = fopen("/proc/cpuinfo", "r")) == NULL)
-     { PAPIERROR("fopen(/proc/cpuinfo) errno %d",errno); return(PAPI_ESYS); }
-                                                                                
-   /* All of this information maybe overwritten by the substrate */
-                                                                                
-   /* MHZ */
-                                                                                
-   rewind(f);
-   s = search_cpu_info(f, "cpu MHz", maxargs);
-   if (s)
-     {
-       sscanf(s + 1, "%f", &mhz);
-       _papi_hwi_system_info.hw_info.mhz = mhz;
-     }
-   else
-     {
-       rewind(f);
-       s = search_cpu_info(f, "BogoMIPS", maxargs);
-       if (s)
-	 {
-	   sscanf(s + 1, "%f", &mhz);
-	   _papi_hwi_system_info.hw_info.mhz = mhz;
-	 }
-     }       
-                                                                                
-   /* Vendor Name */
-                                                                                
-   rewind(f);
-   s = search_cpu_info(f, "vendor_id", maxargs);
-   if (s && (t = strchr(s + 2, '\n')))
-     {
-      *t = '\0';
-      strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
-      decode_vendor_string(_papi_hwi_system_info.hw_info.vendor_string,
-			   &_papi_hwi_system_info.hw_info.vendor);
-     }
-   else
-     {
-       rewind(f);
-       s = search_cpu_info(f, "vendor", maxargs);
-       if (s && (t = strchr(s + 2, '\n'))) 
-	 {
-	   *t = '\0';
-	   strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
-	   decode_vendor_string(_papi_hwi_system_info.hw_info.vendor_string,
-				&_papi_hwi_system_info.hw_info.vendor);
-	 }
-       else
-	 {
-	   rewind(f);
-	   s = search_cpu_info(f, "system type", maxargs);
-	   if (s && (t = strchr(s + 2, '\n'))) 
-	     {
-	       *t = '\0';
-	       s = strtok(s+2," ");
-	       strcpy(_papi_hwi_system_info.hw_info.vendor_string, s);
-	       decode_vendor_string(_papi_hwi_system_info.hw_info.vendor_string,
-				    &_papi_hwi_system_info.hw_info.vendor);
-	     }
-	 }
-     }
-                                                                                
-   /* Revision */
-                                                                                
-   rewind(f);
-   s = search_cpu_info(f, "stepping", maxargs);
-   if (s)
-      {
-        sscanf(s + 1, "%d", &tmp);
-        _papi_hwi_system_info.hw_info.revision = (float) tmp;
-      }
-   else
-     {
-       rewind(f);
-       s = search_cpu_info(f, "revision", maxargs);
-       if (s)
-         {
-           sscanf(s + 1, "%d", &tmp);
-           _papi_hwi_system_info.hw_info.revision = (float) tmp;
-         }
-     }
-                                                                                
-   /* Model Name */
-                                                                                
-   rewind(f);
-   s = search_cpu_info(f, "model name", maxargs);
-   if (s && (t = strchr(s + 2, '\n')))
-     {
-       *t = '\0';
-       strcpy(_papi_hwi_system_info.hw_info.model_string, s + 2);
-     }
-   else
-     {
-       rewind(f);
-       s = search_cpu_info(f, "family", maxargs);
-       if (s && (t = strchr(s + 2, '\n')))
-         {
-           *t = '\0';
-           strcpy(_papi_hwi_system_info.hw_info.model_string, s + 2);
-         }
-       else
-	 {
-	   rewind(f);
-	   s = search_cpu_info(f, "cpu model", maxargs);
-	   if (s && (t = strchr(s + 2, '\n')))
-	     {
-	       *t = '\0';
-	       s = strtok(s + 2," ");
-	       s = strtok(NULL," ");
-	       strcpy(_papi_hwi_system_info.hw_info.model_string, s);
-	     }
-	 }
-     }
-                                                                                
-   rewind(f);
-   s = search_cpu_info(f, "model", maxargs);
-   if (s)
-      {
-        sscanf(s + 1, "%d", &tmp);
-        _papi_hwi_system_info.hw_info.model = tmp;
-      }
-                                                                                
-   fclose(f);
-                                                                                
+
+  mdi->hw_info.ncpu = sysconf(_SC_NPROCESSORS_ONLN);
+  mdi->hw_info.nnodes = 1;
+  mdi->hw_info.totalcpus = sysconf(_SC_NPROCESSORS_CONF);
+
+  retval = get_cpu_info(&mdi->hw_info);
+  if (retval)
+    return(retval);
+
+  retval = _papi_hwd_get_memory_info(&mdi->hw_info,mdi->hw_info.model);
+  if (retval)
+    return(retval);
+
    SUBDBG("Found %d %s(%d) %s(%d) CPU's at %f Mhz.\n",
-          _papi_hwi_system_info.hw_info.totalcpus,
-          _papi_hwi_system_info.hw_info.vendor_string,
-          _papi_hwi_system_info.hw_info.vendor,
-          _papi_hwi_system_info.hw_info.model_string,
-          _papi_hwi_system_info.hw_info.model, _papi_hwi_system_info.hw_info.mhz);
-                                                                                
+          mdi->hw_info.totalcpus,
+          mdi->hw_info.vendor_string,
+          mdi->hw_info.vendor,
+          mdi->hw_info.model_string,
+          mdi->hw_info.model,
+	  mdi->hw_info.mhz);
+                                                                               
    return (PAPI_OK);
 }
 
@@ -1061,7 +2216,11 @@ inline static int compute_kernel_args(hwd_control_state_t * ctl)
   pfmlib_output_param_t *outp = &ctl->out;
   pfmlib_input_param_t tmpin;
   pfmlib_output_param_t tmpout;
-  pfarg_pmd_t oldpd, *pd = ctl->pd;
+#if 0
+  /* This will be used to fixup the overflow and sample args after re-allocation */
+  pfarg_pmd_t oldpd;
+#endif
+  pfarg_pmd_t *pd = ctl->pd;
   pfarg_pmc_t *pc = ctl->pc;
   pfarg_setdesc_t *sets = ctl->set;
   pfarg_setinfo_t *setinfos = ctl->setinfo;
@@ -1359,7 +2518,9 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   int i, retval;
   unsigned int ncnt;
   unsigned int version;
+#ifdef DEBUG
   pfmlib_options_t pfmlib_options;
+#endif
   char buf[PAPI_HUGE_STR_LEN];
   hwi_dev_notes_t *notemap = NULL;
 
@@ -1443,36 +2604,34 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   if (retval != PAPI_OK)
     return(retval);
   pfm_get_num_counters((unsigned int *)&_papi_hwi_system_info.sub_info.num_cntrs);
-  if ((_perfmon2_pfm_pmu_type >= PFMLIB_MIPS_20KC_PMU) && (_perfmon2_pfm_pmu_type <= PFMLIB_MIPS_VR5500_PMU))
+
+  if (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_MIPS)
     _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR|PAPI_DOM_OTHER;
   else
     _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL;    
+
+  if ((_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL) ||
+      (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_AMD))
+    {
+      _papi_hwi_system_info.sub_info.fast_counter_read = 1;
+      _papi_hwi_system_info.sub_info.fast_real_timer = 1;
+    }
+
   _papi_hwi_system_info.sub_info.hardware_intr = 1;
-  _papi_hwi_system_info.sub_info.fast_counter_read = 0;
-  _papi_hwi_system_info.sub_info.fast_real_timer = 1;
-  _papi_hwi_system_info.sub_info.fast_virtual_timer = 0;
   _papi_hwi_system_info.sub_info.attach = 1;
   _papi_hwi_system_info.sub_info.attach_must_ptrace = 1;
   _papi_hwi_system_info.sub_info.kernel_multiplex = 1;
   _papi_hwi_system_info.sub_info.kernel_profile = 1;
   _papi_hwi_system_info.sub_info.profile_ear = 1;  
   _papi_hwi_system_info.sub_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
-//  check_multiplex_timeout(NULL, (unsigned long *)&_papi_hwi_system_info.sub_info.multiplex_timer_us);
+  //  check_multiplex_timeout(NULL, (unsigned long *)&_papi_hwi_system_info.sub_info.multiplex_timer_us);
 
-   /* Fill in what we can of the papi_system_info. */
-   retval = _papi_hwd_get_system_info();
+  /* FIX: For now, use the pmu_type from Perfmon */
+
+  _papi_hwi_system_info.hw_info.model = _perfmon2_pfm_pmu_type;
+   retval = get_system_info(&_papi_hwi_system_info);
    if (retval)
       return (retval);
-
-   /* get_memory_info has a CPU model argument that is not used,
-    * fakining it here with hw_info.model which is not set by this
-    * substrate 
-    */
-   _papi_hwi_system_info.hw_info.model = _perfmon2_pfm_pmu_type;
-   retval = _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info,
-                            _papi_hwi_system_info.hw_info.model);
-   if (retval)
-     return(retval);
 
    /* Setup presets */
 
@@ -1534,7 +2693,7 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
   SUBDBG("PFM_CREATE_CONTEXT(%p,%p,%d)\n",&newctx, NULL, 0);
   if ((ret = pfm_create_context(&newctx, NULL, 0)))
     {
-      PAPIERROR("pfm_create_context(%p,%p,%d): %s",&newctx,NULL,0);
+      PAPIERROR("pfm_create_context(%p,%p,%d): %s",&newctx,NULL,0,pfm_strerror(errno));
     bail:
       return(PAPI_ESYS);
     }
