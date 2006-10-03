@@ -138,7 +138,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 /* Vendor definitions */
 
-#define PAPI_VENDOR_UNKNOWN -1
+#define PAPI_VENDOR_UNKNOWN 0
 #define PAPI_VENDOR_INTEL   1
 #define PAPI_VENDOR_AMD     2
 #define PAPI_VENDOR_CYRIX   3
@@ -457,7 +457,6 @@ read the documentation carefully.  */
    /* All sizes are in BYTES */
    /* Except tlb size, which is in entries */
 
-#define PAPI_MAX_MEM_HIERARCHY_LEVELS 	  3
 #define PAPI_MH_TYPE_EMPTY    0x0
 #define PAPI_MH_TYPE_INST     0x1
 #define PAPI_MH_TYPE_DATA     0x2
@@ -471,6 +470,8 @@ read the documentation carefully.  */
 #define PAPI_MH_TYPE_LRU      0x100
 #define PAPI_MH_TYPE_PSEUDO_LRU 0x200
 #define PAPI_MH_CACHE_REPLACEMENT_POLICY(a) (a & 0xf00)
+#define PAPI_MH_MAX_LEVELS    3
+#define PAPI_MAX_MEM_HIERARCHY_LEVELS 	  PAPI_MH_MAX_LEVELS
 
    typedef struct _papi_mh_tlb_info {
       int type; /* Empty, instr, data, vector, unified */
@@ -487,13 +488,13 @@ read the documentation carefully.  */
    } PAPI_mh_cache_info_t;
 
    typedef struct _papi_mh_level_info {
-      PAPI_mh_tlb_info_t   tlb[2];
-      PAPI_mh_cache_info_t cache[2];
+      PAPI_mh_tlb_info_t   tlb[PAPI_MH_MAX_LEVELS];
+      PAPI_mh_cache_info_t cache[PAPI_MH_MAX_LEVELS];
    } PAPI_mh_level_t;
 
    typedef struct _papi_mh_info { /* mh for mem hierarchy maybe? */
       int levels;
-      PAPI_mh_level_t level[PAPI_MAX_MEM_HIERARCHY_LEVELS];
+      PAPI_mh_level_t level[PAPI_MH_MAX_LEVELS];
    } PAPI_mh_info_t;
 
    typedef struct _papi_hw_info {
@@ -505,8 +506,7 @@ read the documentation carefully.  */
       int model;                    /* Model number of CPU */
       char model_string[PAPI_MAX_STR_LEN];      /* Model string of CPU */
       float revision;               /* Revision of CPU */
-      float mhz;                    /* Cycle time of this CPU, *may* be estimated at 
-                                       init time with a quick timing routine */
+      float mhz;                    /* Cycle time of this CPU */
       PAPI_mh_info_t mem_hierarchy;  /* PAPI memory heirarchy description */
    } PAPI_hw_info_t;
 
