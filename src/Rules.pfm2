@@ -6,7 +6,7 @@ SHLIB   = libpapi.so
 LIBS	= static shared
 TARGETS = ear serial multiplex_and_pthreads shared
 SUBSTR	= perfmon
-MEMSUBSTR = any-null
+MEMSUBSTR = perfmon
 
 #
 # GNU G77/GCC section
