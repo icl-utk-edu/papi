@@ -6,7 +6,7 @@ MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
-SERIAL  = code2name multiattach zero_attach reset subinfo realtime first exeinfo zero zero_fork branches dmem_info all_native_events all_events derived high-level2 describe memory  \
+SERIAL  = hwinfo code2name multiattach zero_attach reset subinfo realtime first exeinfo zero zero_fork branches dmem_info all_native_events all_events derived high-level2 describe memory  \
 	zero_flip low-level high-level eventname case1 case2 \
 	calibrate flops second johnmay2 \
 	overflow overflow_force_software overflow_single_event \
@@ -279,6 +279,9 @@ subinfo: subinfo.c $(PAPILIB) $(UTILOBJS)
 
 zero_attach: zero_attach.c $(PAPILIB) $(UTILOBJS)
 	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) zero_attach.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero_attach 
+
+hwinfo: hwinfo.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) hwinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o hwinfo
 
 code2name: code2name.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) code2name.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o code2name

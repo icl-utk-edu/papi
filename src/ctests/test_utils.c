@@ -8,6 +8,16 @@
 */
 int TESTS_QUIET = 0;
 
+void validate_string(char *name, char *s)
+{
+  if ((s == NULL) || (strlen(s) == 0))
+    {
+      char s2[1024] = "";
+      sprintf(s2,"%s was NULL or length 0",name);
+      test_fail(__FILE__,__LINE__,s2,0);
+    }
+}
+
 int approx_equals(double a, double b)
 {
   if ((a >= b*(1.0-TOLERANCE)) && (a <= b*(1.0+TOLERANCE)))

@@ -53,6 +53,7 @@
 #define MASK_TOT_INS 0x00002
 #define MASK_TOT_CYC 0x00001
 
+void validate_string(char *name, char *s);
 void *get_overflow_address(void *context);
 void free_test_space(long_long ** values, int num_tests);
 long_long **allocate_test_space(int num_tests, int num_events);
