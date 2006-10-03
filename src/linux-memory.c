@@ -50,7 +50,7 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type)
 
    /* Do some post-processing */
    if (retval == PAPI_OK) {
-      for (i=0; i<PAPI_MAX_MEM_HIERARCHY_LEVELS; i++) {
+      for (i=0; i<PAPI_MH_MAX_LEVELS; i++) {
          for (j=0; j<2; j++) {
             /* Compute the number of levels of hierarchy actually used */
             if (hw_info->mem_hierarchy.level[i].tlb[j].type != PAPI_MH_TYPE_EMPTY ||
@@ -797,21 +797,17 @@ inline_static void cpuid(unsigned int *a, unsigned int *b,
    *c = tmp3;
    *d = tmp4;
 }
-#elif defined(__x86_64__)
-inline_static void cpuid(unsigned int *eax, unsigned int *ebx,
-                         unsigned int *ecx, unsigned int *edx)
-{
- __asm__("cpuid":"+a"(*eax), "=b"(*ebx), "=c"(*ecx), "=d"(*edx)
- :
-   );
-}
 #else
-inline_static void cpuid(unsigned int *eax, unsigned int *ebx,
-                         unsigned int *ecx, unsigned int *edx)
+inline_static void cpuid(unsigned int *a, unsigned int *b,
+                         unsigned int *c, unsigned int *d)
 {
- __asm__("cpuid":"+a"(*eax), "=b"(*ebx), "=c"(*ecx), "=d"(*edx)
- :
-   );
+  unsigned int op = *a;
+  asm volatile ("movl %%ebx, %%edi\n\tcpuid\n\tmovl %%ebx, %%esi\n\tmovl %%edi, %%ebx"
+       : "=a" (*a),
+	 "=S" (*b),
+	 "=c" (*c),
+	 "=d" (*d)
+       : "a" (op));
 }
 #endif
 
