@@ -545,6 +545,7 @@ static int add_native_events(EventSetInfo_t * ESI, int *nevt, int size, EventInf
          }
          /* there is an empty slot for the native event;
             initialize the native index for the new added event */
+         INTDBG("Adding %s\n", _papi_hwd_ntv_code_to_name(nevt[i]));
          ESI->NativeInfoArray[ESI->NativeCount].ni_event = nevt[i];
          ESI->NativeInfoArray[ESI->NativeCount].ni_owners = 1;
          ESI->NativeCount++;
