@@ -762,9 +762,9 @@ enum {
    PNE_OPT_FP_MULT_PIPE,
    PNE_OPT_FP_MULT_AND_ADD_PIPE,
    PNE_OPT_FP_ST_PIPE,
-   PNE_OPT_FP_ADD_PIPE_JUNK,
-   PNE_OPT_FP_MULT_PIPE_JUNK,
-   PNE_OPT_FP_ST_PIPE_JUNK,
+   PNE_OPT_FP_ADD_PIPE_LOAD,
+   PNE_OPT_FP_MULT_PIPE_LOAD,
+   PNE_OPT_FP_ST_PIPE_LOAD,
    PNE_OPT_FP_NONE_RET,
    PNE_OPT_FP_FAST_FLAG,
    PNE_OPT_LS_SEG_REG_LOADS_ES,
@@ -844,6 +844,7 @@ enum {
    PNE_OPT_FR_FPU_SSE_SSE2_PACKED,
    PNE_OPT_FR_FPU_SSE_SSE2_SCALAR,
    PNE_OPT_FR_FPU_X87_SSE_SSE2_SCALAR,
+   PNE_OPT_FR_FPU_X87_SSE_SSE2_SCALAR_PACKED,
    PNE_OPT_FR_FASTPATH_POS0,
    PNE_OPT_FR_FASTPATH_POS1,
    PNE_OPT_FR_FASTPATH_POS2,
@@ -1223,12 +1224,25 @@ const hwi_search_t _papi_hwd_opt_preset_map[] = {
    {PAPI_BR_TKN, {0, {PNE_OPT_FR_BR_TAKEN, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_BR_MSP, {0, {PNE_OPT_FR_BR_MIS, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_TOT_INS, {0, {PNE_OPT_FR_X86_INS, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-//   {PAPI_FP_INS, {0, {PNE_OPT_FR_FPU_X87_SSE_SSE2_SCALAR, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_FP_INS, {0, {PNE_OPT_FP_MULT_AND_ADD_PIPE, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
+
+   // This definition give an accurate count of the instructions retired through the FP unit
+   // It counts just about everything except MMX and 3DNow instructions
+   // Unfortunately, it also counts loads and stores. Therefore the count will be uniformly
+   // high, but proportional to the work done.
+   {PAPI_FP_INS, {0, {PNE_OPT_FR_FPU_X87_SSE_SSE2_SCALAR_PACKED, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
+
+   // This definition is speculative but gives good answers on our simple test cases
+   // It overcounts FP operations, sometimes by A LOT, but doesn't count loads and stores
    {PAPI_FP_OPS, {0, {PNE_OPT_FP_MULT_AND_ADD_PIPE, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-//   {PAPI_FP_OPS, {DERIVED_SUB, {PNE_OPT_FR_FPU_X87_SSE_SSE2_SCALAR, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-//   {PAPI_FP_OPS, {DERIVED_SUB, {PNE_OPT_FR_FPU_X87_SSE_SSE2_SCALAR, PNE_OPT_FP_ST_PIPE, PAPI_NULL, PAPI_NULL}, {0,}}},
-//   {PAPI_FP_OPS, {DERIVED_SUB, {PNE_OPT_FR_FPU_X87_SSE_SSE2_SCALAR, PNE_OPT_FP_ST_PIPE, PNE_OPT_FP_ST_PIPE_JUNK, PAPI_NULL}, {0,}}},
+
+   // These definitions try to correct high counting of retired flop events
+   // by subtracting speculative loads and stores, which trend high
+   // The resulting value therefore trends low, sometimes by A LOT
+   // The first seems most appropriate for SINGLE precision operations;
+//   {PAPI_FP_OPS, {DERIVED_SUB, {PNE_OPT_FR_FPU_X87_SSE_SSE2_SCALAR_PACKED, PNE_OPT_FP_ST_PIPE, PAPI_NULL, PAPI_NULL}, {0,}}},
+   // The second works best for DOUBLE precision operations;
+//   {PAPI_FP_OPS, {DERIVED_SUB, {PNE_OPT_FR_FPU_X87_SSE_SSE2_SCALAR_PACKED, PNE_OPT_FP_ST_PIPE, PNE_OPT_FP_ST_PIPE_LOAD, PAPI_NULL}, {0,}}},
+
    {PAPI_BR_INS, {0, {PNE_OPT_FR_BR, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_VEC_INS, {0, {PNE_OPT_FR_FPU_SSE_SSE2_PACKED, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_RES_STL, {0, {PNE_OPT_FR_DISPATCH_STALLS, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
@@ -1249,6 +1263,74 @@ const hwi_search_t _papi_hwd_opt_preset_map[] = {
    {PAPI_FAD_INS, {0, {PNE_OPT_FP_ADD_PIPE, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_L1_TCH, {DERIVED_POSTFIX, {PNE_OPT_DC_ACCESS,PNE_OPT_IC_FETCH,PNE_OPT_DC_MISS,PNE_OPT_IC_MISS}, {"N0|N1|+|N2|-|N3|-|"}}},
    {0, {0, {PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}}
+};
+
+#if defined(PAPI_OPTERON_FP_RETIRED)
+   #define FPU _papi_hwd_opt_FP_RETIRED
+   #define FPU_DESC _papi_hwd_opt_FP_RETIRED_dev_notes
+#elif defined(PAPI_OPTERON_FP_SSE_SP)
+   #define FPU _papi_hwd_opt_FP_SSE_SP
+   #define FPU_DESC _papi_hwd_opt_FP_SSE_SP_dev_notes
+#elif defined(PAPI_OPTERON_FP_SSE_DP)
+   #define FPU _papi_hwd_opt_FP_SSE_DP
+   #define FPU_DESC _papi_hwd_opt_FP_SSE_DP_dev_notes
+#else
+   #define FPU _papi_hwd_opt_FP_SPECULATIVE
+   #define FPU_DESC _papi_hwd_opt_FP_SPECULATIVE_dev_notes
+#endif
+
+/* Table defining PAPI_FP_OPS as all ops retired */
+hwi_search_t _papi_hwd_opt_FP_RETIRED[] = {
+   {PAPI_FP_OPS, {0, {PNE_OPT_FR_FPU_X87_SSE_SSE2_SCALAR_PACKED, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
+   {0, {0, {0,}, {0,}}}
+};
+
+/* Table defining PAPI_FP_OPS as all ops retired minus one type of speculative store */
+hwi_search_t _papi_hwd_opt_FP_SSE_SP[] = {
+   {PAPI_FP_OPS, {DERIVED_SUB, {PNE_OPT_FR_FPU_X87_SSE_SSE2_SCALAR_PACKED, PNE_OPT_FP_ST_PIPE, PAPI_NULL, PAPI_NULL}, {0,}}},
+   {0, {0, {0,}, {0,}}}
+};
+
+/* Table defining PAPI_FP_OPS as all ops retired minus two types of speculative stores */
+hwi_search_t _papi_hwd_opt_FP_SSE_DP[] = {
+   {PAPI_FP_OPS, {DERIVED_SUB, {PNE_OPT_FR_FPU_X87_SSE_SSE2_SCALAR_PACKED, PNE_OPT_FP_ST_PIPE, PNE_OPT_FP_ST_PIPE_LOAD, PAPI_NULL}, {0,}}},
+   {0, {0, {0,}, {0,}}}
+};
+
+/* Table defining PAPI_FP_OPS as speculative multiplys and adds */
+hwi_search_t _papi_hwd_opt_FP_SPECULATIVE[] = {
+   {PAPI_FP_OPS, {0, {PNE_OPT_FP_MULT_AND_ADD_PIPE, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
+   {0, {0, {0,}, {0,}}}
+};
+
+/* These are examples of dense developer notes arrays. Each consists of an array
+   of structures containing an event and a note string. Pointers to these strings 
+   are inserted into a sparse event description structure at init time. This allows
+   the use of rare developer strings with no string copies and very little space
+   wasted on unused structure elements.
+*/
+const hwi_dev_notes_t _papi_hwd_opt_FP_RETIRED_dev_notes[] = {
+/* preset, note */
+   {PAPI_FP_OPS, "Counts all retired floating point operations, including data movement. Precise, and proportional to work done, but much higher than theoretical."},
+   {0, NULL}
+};
+
+const hwi_dev_notes_t _papi_hwd_opt_FP_SPECULATIVE_dev_notes[] = {
+/* preset, note */
+   {PAPI_FP_OPS, "Counts speculative adds and multiplies. Variable and higher than theoretical."},
+   {0, NULL}
+};
+
+const hwi_dev_notes_t _papi_hwd_opt_FP_SSE_SP_dev_notes[] = {
+/* preset, note */
+   {PAPI_FP_OPS, "Counts retired ops corrected for data motion. Optimized for single precision; lower than theoretical."},
+   {0, NULL}
+};
+
+const hwi_dev_notes_t _papi_hwd_opt_FP_SSE_DP_dev_notes[] = {
+/* preset, note */
+   {PAPI_FP_OPS, "Counts retired ops corrected for data motion. Optimized for double precision; lower than theoretical."},
+   {0, NULL}
 };
 
 /* The following are the (huge) native tables.  They contain the 
@@ -3198,31 +3280,31 @@ const native_event_entry_t _papi_hwd_k7_native_map[] = {
 const int _papi_hwd_k8_native_count = (PNE_OPT_LAST_NATIVE_EVENT & PAPI_NATIVE_AND_MASK);
 const native_event_entry_t _papi_hwd_k8_native_map[] = {
    {"FP_ADD_PIPE",
-    "Dispatched FPU ops - Revision B and later revisions - Speculative add pipe ops excluding junk ops",
+    "Dispatched FPU ops - Revision B and later - Speculative add pipe ops",
     {ALLCNTRS, 0x0100}},
    {"FP_MULT_PIPE",
-    "Dispatched FPU ops - Revision B and later revisions - Speculative multiply pipe ops excluding junk ops",
+    "Dispatched FPU ops - Revision B and later - Speculative multiply pipe ops",
     {ALLCNTRS, 0x0200}},
    {"FP_MULT_AND_ADD_PIPE",
-    "Dispatched FPU ops - Revision B and later revisions - Speculative multiply and add pipe ops excluding junk ops",
+    "Dispatched FPU ops - Revision B and later - Speculative multiply and add pipe ops",
     {ALLCNTRS, 0x0300}},
    {"FP_ST_PIPE",
-    "Dispatched FPU ops - Revision B and later revisions - Store pipe ops excluding junk ops",
+    "Dispatched FPU ops - Revision B and later - Store pipe ops",
     {ALLCNTRS, 0x0400}},
-   {"FP_ADD_PIPE_JUNK",
-    "Dispatched FPU ops - Revision B and later revisions - Add pipe junk ops",
+   {"FP_ADD_PIPE_LOAD",
+    "Dispatched FPU ops - Revision B and later - Add pipe load ops",
     {ALLCNTRS, 0x0800}},
-   {"FP_MULT_PIPE_JUNK",
-    "Dispatched FPU ops - Revision B and later revisions - Multiply pipe junk ops",
+   {"FP_MULT_PIPE_LOAD",
+    "Dispatched FPU ops - Revision B and later - Multiply pipe load ops",
     {ALLCNTRS, 0x1000}},
-   {"FP_ST_PIPE_JUNK",
-    "Dispatched FPU ops - Revision B and later revisions - Store pipe junk ops",
+   {"FP_ST_PIPE_LOAD",
+    "Dispatched FPU ops - Revision B and later - Store pipe load ops",
     {ALLCNTRS, 0x2000}},
    {"FP_NONE_RET",
-    "Cycles with no FPU ops retired - Revision B and later revisions",
+    "Cycles with no FPU ops retired - Revision B and later",
     {ALLCNTRS, 0x01}},
    {"FP_FAST_FLAG",
-    "Dispatched FPU ops that use the fast flag interface - Revision B and later revisions",
+    "Dispatched FPU ops that use the fast flag interface - Revision B and later",
     {ALLCNTRS, 0x02}},
    {"LS_SEG_REG_LOADS_ES",
     "Number of segment register loads - ES",
@@ -3441,20 +3523,23 @@ const native_event_entry_t _papi_hwd_k8_native_map[] = {
     "Retired taken branches mispredicted only due to address miscompare",
     {ALLCNTRS, 0xCa}},
    {"FR_FPU_X87",
-    "Retired FPU instructions - Revision B and later revisions - x87 instructions",
+    "Retired FPU instructions - Revision B and later - x87 instructions",
     {ALLCNTRS, 0x1Cb}},
    {"FR_FPU_MMX_3D",
-    "Retired FPU instructions - Revision B and later revisions - Combined MMX and 3DNow! instructions",
+    "Retired FPU instructions - Revision B and later - Combined MMX and 3DNow! instructions",
     {ALLCNTRS, 0x2Cb}},
    {"FR_FPU_SSE_SSE2_PACKED",
-    "Retired FPU instructions - Revision B and later revisions - Combined packed SSE and SSE2 instructions",
+    "Retired FPU instructions - Revision B and later - Combined packed SSE and SSE2 instructions",
     {ALLCNTRS, 0x4Cb}},
    {"FR_FPU_SSE_SSE2_SCALAR",
-    "Retired FPU instructions - Revision B and later revisions - Combined scalar SSE and SSE2 instructions",
+    "Retired FPU instructions - Revision B and later - Combined scalar SSE and SSE2 instructions",
     {ALLCNTRS, 0x8Cb}},
    {"FR_FPU_X87_SSE_SSE2_SCALAR",
-    "Retired FPU instructions - Revision B and later revisions - Combined x87, scalar SSE and SSE2 instructions",
+    "Retired FPU instructions - Revision B and later - Combined x87, scalar SSE and SSE2 instructions",
     {ALLCNTRS, 0x9Cb}},
+   {"FR_FPU_X87_SSE_SSE2_SCALAR_PACKED",
+    "Retired FPU instructions - Revision B and later - Combined x87, scalar & packed SSE and SSE2 instructions",
+    {ALLCNTRS, 0xDCb}},
    {"FR_FASTPATH_POS0",
     "Retired fastpath double op instructions - Revision B and later revisions - With low op in position 0",
     {ALLCNTRS, 0x1Cc}},
@@ -3832,4 +3917,53 @@ int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
    if (++i == count) return(i);
    copy_value(bits->counter_cmd, "Event Code", &names[i*name_len], &values[i], name_len);
    return(++i);
+}
+
+
+
+#define FP_NONE 0
+#define  FP_RETIRED 1
+#define  FP_SPECULATIVE 2
+#define   FP_SP 3
+#define   FP_DP 4
+void _papi_hwd_fixup_fp(hwi_search_t **s, const hwi_dev_notes_t **n)
+{
+   char *str = getenv("PAPI_OPTERON_FP");
+   int mask = FP_NONE;
+
+   /* if the env variable isn't set, return the defaults */
+   if ((str == NULL) || (strlen(str) == 0)) {
+      *s = FPU;
+      *n = FPU_DESC;
+      return;
+   }
+
+   if (strstr(str,"RETIRED"))    mask = FP_RETIRED;
+   if (strstr(str,"SPECULATIVE"))    mask = FP_SPECULATIVE;
+   if (strstr(str,"SSE_SP")) mask =  FP_SP;
+   if (strstr(str,"SSE_DP")) mask =  FP_DP;
+
+   switch (mask) {
+     case FP_RETIRED:
+        *s = _papi_hwd_opt_FP_RETIRED;
+        *n = _papi_hwd_opt_FP_RETIRED_dev_notes;
+        break;
+     case FP_SPECULATIVE:
+        *s = _papi_hwd_opt_FP_SPECULATIVE;
+        *n = _papi_hwd_opt_FP_SPECULATIVE_dev_notes;
+        break;
+     case FP_SP:
+        *s = _papi_hwd_opt_FP_SSE_SP;
+        *n = _papi_hwd_opt_FP_SSE_SP_dev_notes;
+        break;
+     case FP_DP:
+        *s = _papi_hwd_opt_FP_SSE_DP;
+        *n = _papi_hwd_opt_FP_SSE_DP_dev_notes;
+        break;
+     default:
+        PAPIERROR("Improper usage of PAPI_OPTERON_FP environment variable");
+        PAPIERROR("Use one of RETIRED,SPECULATIVE,SSE_SP,SSE_DP");
+        *s = NULL;
+        *n = NULL;
+   }
 }

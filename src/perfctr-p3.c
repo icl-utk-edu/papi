@@ -78,6 +78,11 @@ void print_control(const struct perfctr_cpu_control *control) {
 /* Assign the global native and preset table pointers, find the native
    table's size in memory and then call the preset setup routine. */
 int setup_p3_presets(int cputype) {
+   int retval;
+   hwi_search_t *s = NULL;
+   hwi_dev_notes_t *n = NULL;
+   extern void _papi_hwd_fixup_fp(hwi_search_t **s, hwi_dev_notes_t **n);
+
    switch (cputype) {
    case PERFCTR_X86_GENERIC:
    case PERFCTR_X86_CYRIX_MII:
@@ -126,6 +131,7 @@ int setup_p3_presets(int cputype) {
       native_table = &_papi_hwd_k8_native_map;
       _papi_hwi_system_info.sub_info.num_native_events = _papi_hwd_k8_native_count;
       preset_search_map = &_papi_hwd_opt_preset_map;
+      _papi_hwd_fixup_fp(&s, &n);
       break;
 #endif
 #ifdef PERFCTR_X86_AMD_K8C  /* this is defined in perfctr 2.6.x */
@@ -133,6 +139,7 @@ int setup_p3_presets(int cputype) {
       native_table = &_papi_hwd_k8_native_map;
       _papi_hwi_system_info.sub_info.num_native_events = _papi_hwd_k8_native_count;
       preset_search_map = &_papi_hwd_opt_preset_map;
+      _papi_hwd_fixup_fp(&s, &n);
       break;
 #endif
 
@@ -141,7 +148,12 @@ int setup_p3_presets(int cputype) {
      return(PAPI_ESBSTR);
    }
    SUBDBG("Number of native events: %d\n",_papi_hwi_system_info.sub_info.num_native_events);
-   return (_papi_hwi_setup_all_presets(preset_search_map, NULL));
+   retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
+
+   /* fix up the floating point ops if needed for opteron */
+   if (s) retval =_papi_hwi_setup_all_presets(s,n);
+
+   return(retval);
 }
 
 int _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
