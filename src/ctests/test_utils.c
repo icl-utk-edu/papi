@@ -582,30 +582,27 @@ int add_two_events(int *num_events, int *papi_event,
   /* query and set up the right event to monitor */
    int EventSet = PAPI_NULL;
   PAPI_event_info_t info;
-  unsigned int potential_evt_to_add[3][2] = {{ PAPI_FP_INS,MASK_FP_INS},{ PAPI_FP_OPS, MASK_FP_OPS}, { PAPI_TOT_INS, MASK_TOT_INS}};
+  unsigned int potential_evt_to_add[3][2] = {{ PAPI_FP_INS, MASK_FP_INS},{ PAPI_FP_OPS, MASK_FP_OPS}, { PAPI_TOT_INS, MASK_TOT_INS}};
   int i = 0;
-  int simple_event_found = 0;
+  unsigned int counters, event_found = 0;
   
   *mask = 0;
-  
-  while ((i < 3) && (!simple_event_found)) {
+  counters = (unsigned int)PAPI_num_hwctrs();
+  while ((i < 3) && (!event_found)) {
     if (PAPI_query_event(potential_evt_to_add[i][0]) == PAPI_OK) {
-      PAPI_get_event_info(potential_evt_to_add[i][0], &info);
-      if (!strcmp(info.derived, "DERIVED_CMPD") || !strcmp(info.derived, "NOT_DERIVED")) {
-	simple_event_found = 1;
+      if (PAPI_get_event_info(potential_evt_to_add[i][0], &info) == PAPI_OK) {
+	if ((info.count > 0) && (counters > info.count)) event_found = 1;
       }
     }
-    if (!simple_event_found)
+    if (!event_found)
       i++;
   }
-  if (simple_event_found) {
+  if (event_found) {
     *papi_event = potential_evt_to_add[i][0];
     *mask =  potential_evt_to_add[i][1] | MASK_TOT_CYC;
    EventSet = add_test_events(num_events, mask);
   } else {
-    test_fail(__FILE__, __LINE__, "Simple non-derived event not found!", 0);
+    test_fail(__FILE__, __LINE__, "Not enough room to add an event!", 0);
   }
-
-   
    return(EventSet);
 }
