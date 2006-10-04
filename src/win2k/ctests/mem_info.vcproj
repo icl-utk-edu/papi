@@ -70,7 +70,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib ..\substrate\Release\WinPAPI.lib"
-				OutputFile=".\Release/mem_info.exe"
+				OutputFile=".\Release/papi_mem_info.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				ProgramDatabaseFile=".\Release/mem_info.pdb"
@@ -161,7 +161,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib ..\substrate\Debug\WinPAPI.lib"
-				OutputFile=".\Debug/mem_info.exe"
+				OutputFile=".\Debug/papi_mem_info.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
