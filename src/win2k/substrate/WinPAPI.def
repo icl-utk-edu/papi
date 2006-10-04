@@ -55,6 +55,7 @@ EXPORTS
 	PAPI_strerror				@148
 	PAPI_unlock				@149
 	PAPI_write				@150
+	PAPI_num_hwctrs				@151
 ;
 ; High Level Interface
 ;
