@@ -37,7 +37,7 @@ int _papi_hwi_setup_all_presets(hwi_search_t *findem, hwi_dev_notes_t *notes)
 	   preset_index = (findem[pnum].event_code & PAPI_PRESET_AND_MASK);
 	   
 	   /* count and set the number of native terms in this event, these items are contiguous 
-	   /* This code is TERRIBLE. First:
+	   This code is TERRIBLE. First:
 
 	   - MAX_COUNTER_TERMS should be a substrate variable. What it means no one knows. 
 	   - We should never EVER check a NATIVE code against any value. PAPI_NULL could be a valid event code! 
