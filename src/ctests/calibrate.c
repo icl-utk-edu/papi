@@ -18,7 +18,7 @@
 
 #include "papi_test.h"
 
-static void resultline(int i, int j, int TESTS_QUIET);
+static void resultline(int i, int j, int EventSet);
 static void headerlines(char *title, int TESTS_QUIET);
 
 #define INDEX1 100
@@ -42,6 +42,7 @@ static void print_help(char **argv)
    printf("\t-v            Matrix-Vector multiply test.\n");
    printf("\t-m            Matrix-Matrix multiply test.\n");
    printf("\t-d            Double precision data. Default is float.\n");
+   printf("\t-e event      Use <event> as PAPI event instead of PAPI_FP_OPS\n");
    printf("\t-h            Print this help message\n");
    printf("\n");
    printf("This test measures floating point operations for the specified test.\n");
@@ -107,21 +108,14 @@ static void matrix_double(int n, double *c, double *a, double *b)
             c[i * n + j] = c[i * n + j] + a[i * n + k] * b[k * n + j];
 }
 
-static void reset_flops(char *title) {
+static void reset_flops(char *title, int EventSet) {
     int retval;
     char err_str[PAPI_MAX_STR_LEN];
-    float real_time, proc_time, mflops;
-    long_long flpins;
 
-    retval = PAPI_stop_counters(NULL, 0);
-    if (!(retval == PAPI_OK || retval == PAPI_ENOTRUN)){
-	sprintf(err_str, "%s: PAPI_stop_counters", title);
-	test_fail(__FILE__, __LINE__, err_str, retval);
-    }
-    retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops);
+    retval = PAPI_start(EventSet);
     if (retval != PAPI_OK) {
-	sprintf(err_str, "%s: PAPI_flops", title);
-	test_fail(__FILE__, __LINE__, err_str, retval);
+      sprintf(err_str, "%s: PAPI_start", title);
+      test_fail(__FILE__, __LINE__, err_str, retval);
     }
 }
 
@@ -138,6 +132,9 @@ int main(int argc, char *argv[])
    int double_precision = 0;
    int element_size;
    int retval = PAPI_OK;
+   char papi_event_str[PAPI_MIN_STR_LEN] = "PAPI_FP_OPS";
+   int papi_event;
+   int EventSet = PAPI_NULL;
 
 /* Parse the input arguments */
    for (i = 0; i < argc; i++)
@@ -148,6 +145,16 @@ int main(int argc, char *argv[])
 	 vector = 1;
        else if (strstr(argv[i], "-m"))
 	 matrix = 1;
+       else if (strstr(argv[i], "-e"))
+	 {
+	   if ((argv[i+1] == NULL) || (strlen(argv[i+1]) == 0))
+	     {
+	       print_help(argv);
+	       exit(1);
+	     }
+	   strncpy(papi_event_str,argv[i+1],sizeof(papi_event_str));
+	   i++;
+	 }
        else if (strstr(argv[i], "-d"))
 	 double_precision = 1;
        else if (strstr(argv[i], "-h")) {
@@ -169,15 +176,26 @@ int main(int argc, char *argv[])
    /* Initialize PAPI */
    retval = PAPI_library_init(PAPI_VER_CURRENT);
    if (retval != PAPI_VER_CURRENT)
-      test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+     test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+   
+   /* Translate name */
+   retval = PAPI_event_name_to_code(papi_event_str, &papi_event);
+   if (retval != PAPI_OK)
+     test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", retval);
+   
+   if (PAPI_query_event(papi_event) != PAPI_OK) 
+     test_skip(__FILE__, __LINE__, "PAPI_query_event", PAPI_ENOEVNT);
+   
+   if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
+     test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
+   
+   if ((retval = PAPI_add_event(EventSet, papi_event)) != PAPI_OK)
+     test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
-/* If this platform doesn't support floating point, skip the test */
-   if (PAPI_query_event(PAPI_FP_OPS) != PAPI_OK) {
-      test_skip(__FILE__, __LINE__, "PAPI_query_event", PAPI_ENOEVNT);
-   }
-
-if (double_precision) element_size = sizeof(double);
-else element_size = sizeof(float);
+   if (double_precision) 
+     element_size = sizeof(double);
+   else 
+     element_size = sizeof(float);
 
    retval = PAPI_OK;
 
@@ -212,7 +230,7 @@ else element_size = sizeof(float);
 		}
 
                /* reset PAPI flops count */
-		reset_flops("Inner Product Test");
+		reset_flops("Inner Product Test",EventSet);
 
                /* do the multiplication */
 	       if (double_precision) {
@@ -222,7 +240,7 @@ else element_size = sizeof(float);
 		   aa = inner_single(n, x, y);
 		   dummy((void *) &aa);
 	       }
-	       resultline(n, 1, TESTS_QUIET);
+	       resultline(n, 1, EventSet);
             }
          }
       }
@@ -267,7 +285,7 @@ else element_size = sizeof(float);
 		}
 
                /* reset PAPI flops count */
-		reset_flops("Matrix Vector Test");
+		reset_flops("Matrix Vector Test",EventSet);
 
                /* compute the resultant vector */
 		if (double_precision) {
@@ -277,7 +295,7 @@ else element_size = sizeof(float);
 		    vector_single(n, a, x, y);
 		    dummy((void *) y);
 		}
-                resultline(n, 2, TESTS_QUIET);
+                resultline(n, 2, EventSet);
             }
          }
       }
@@ -321,7 +339,7 @@ else element_size = sizeof(float);
 		}
 
                /* reset PAPI flops count */
-		reset_flops("Matrix Multiply Test");
+		reset_flops("Matrix Multiply Test",EventSet);
 
                /* compute the resultant matrix */
 		if (double_precision) {
@@ -331,7 +349,7 @@ else element_size = sizeof(float);
 		    matrix_single(n, c, a, b);
 		    dummy((void *) c);
 		}
-		resultline(n, 3, TESTS_QUIET);
+		resultline(n, 3, EventSet);
             }
          }
       }
@@ -385,47 +403,38 @@ static void headerlines(char *title, int TESTS_QUIET)
   Compute error without using floating ops.
 */
 #if defined(mips)
-#define SLOPE 9
 #define FMA 1
 #elif (defined(sparc) && defined(sun))
-#define SLOPE 0
 #define FMA 1
 #else
-#define SLOPE 0
 #define FMA 0
 #endif
 
-static void resultline(int i, int j, int TESTS_QUIET)
+static void resultline(int i, int j, int EventSet)
 {
-   float real_time, proc_time, mflops, ferror = 0;
-   long_long flpins = 0;
-   int papi, theory, diff = 0;
-   int retval;
+  float ferror = 0;
+  long_long flpins = 0;
+  long_long papi, theory;
+  int diff, retval;
+  
+  retval = PAPI_stop(EventSet, &flpins);
+  if (retval != PAPI_OK) 
+    test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+  
+  i++;                         /* convert to 1s base  */
+  theory = 2;
+  while (j--)
+    theory *= i;              /* theoretical ops   */
+  papi = flpins << FMA;
 
-   retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "resultline: PAPI_flops", retval);
+  diff = (int)(papi - theory);
 
-   i++;                         /* convert to 1s base  */
-   theory = 2;
-   while (j--)
-      theory *= i;              /* theoretical ops   */
-   papi = (int) (flpins) << FMA;
-
-   diff = papi - theory;
-
-   ferror = ((float) abs(diff)) / ((float) theory) * 100;
-
-   if (!TESTS_QUIET)
-      printf("%8d %12d %12d %8d %10.4f\n", i, papi, theory, diff, ferror);
-
+  ferror = ((float) abs(diff)) / ((float) theory) * 100;
+  
+  printf("%8d %12lld %12lld %8d %10.4f\n", i, papi, theory, diff, ferror);
+  
 #ifndef DONT_FAIL
-   if (ferror > MAX_ERROR && diff > MAX_DIFF)
-#if defined(__ALPHA) && defined(__osf__)
-      if (!TESTS_QUIET)
-         fprintf(stderr, "Calibrate: error exceeds %d percent\n", MAX_ERROR);
-#else
-      test_fail(__FILE__, __LINE__, "Calibrate: error exceeds 10%", PAPI_EMISC);
-#endif
+  if (ferror > MAX_ERROR && diff > MAX_DIFF)
+    test_fail(__FILE__, __LINE__, "Calibrate: error exceeds 10%", PAPI_EMISC);
 #endif
 }
