@@ -569,20 +569,27 @@ int PAPI_enum_event(int *EventCode, int modifier)
 {
    int i = *EventCode;
 
-   if (i & PAPI_PRESET_MASK) {
-      i &= PAPI_PRESET_AND_MASK;
-      while (++i < PAPI_MAX_PRESET_EVENTS) {
-         if ((!modifier) || (_papi_hwi_presets.count[i])) {
-            *EventCode = i | PAPI_PRESET_MASK;
-            if (_papi_hwi_presets.info[i].symbol == NULL)
-                return (PAPI_ENOEVNT); /* NULL pointer terminates list */
-             else
-                return (PAPI_OK);
+   if (i & PAPI_PRESET_MASK) 
+     {
+       i &= PAPI_PRESET_AND_MASK;
+       while (++i < PAPI_MAX_PRESET_EVENTS) 
+	 {
+	   if (_papi_hwi_presets.info[i].symbol == NULL)
+	     return (PAPI_ENOEVNT); /* NULL pointer terminates list */
+	   if (modifier & PAPI_ENUM_PRESET_AVAIL)
+	     {
+	       if (_papi_hwi_presets.count[i] == 0)
+		 continue;
+	     }
+	   *EventCode = i | PAPI_PRESET_MASK;
+	   return (PAPI_OK);
          }
-      }
-   } else if (i & PAPI_NATIVE_MASK) {
-      return (_papi_hwd_ntv_enum_events((unsigned int *) EventCode, modifier));
-   }
+     }
+   else if (i & PAPI_NATIVE_MASK) 
+     {
+       /* Should check against num native events here */
+       return (_papi_hwd_ntv_enum_events((unsigned int *) EventCode, modifier));
+     }
    return (PAPI_ENOEVNT);
 }
 
