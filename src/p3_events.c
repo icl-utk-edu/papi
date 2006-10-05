@@ -24,7 +24,7 @@ hwi_search_t *preset_search_map;
           as needed. Otherwise the user can access these native events
           using _papi_hwd_name_to_code() with the proper bit characters
           appended to the event name.
-*/
+*/ 
 
 /* These enumeration tables will be used to define the location
    in the native event tables.  Each even has a unique name so as
@@ -765,6 +765,7 @@ enum {
    PNE_OPT_FP_ADD_PIPE_LOAD,
    PNE_OPT_FP_MULT_PIPE_LOAD,
    PNE_OPT_FP_ST_PIPE_LOAD,
+   PNE_OPT_FP_ST_PIPE_AND_LOAD,
    PNE_OPT_FP_NONE_RET,
    PNE_OPT_FP_FAST_FLAG,
    PNE_OPT_LS_SEG_REG_LOADS_ES,
@@ -1241,7 +1242,7 @@ const hwi_search_t _papi_hwd_opt_preset_map[] = {
    // The first seems most appropriate for SINGLE precision operations;
 //   {PAPI_FP_OPS, {DERIVED_SUB, {PNE_OPT_FR_FPU_X87_SSE_SSE2_SCALAR_PACKED, PNE_OPT_FP_ST_PIPE, PAPI_NULL, PAPI_NULL}, {0,}}},
    // The second works best for DOUBLE precision operations;
-//   {PAPI_FP_OPS, {DERIVED_SUB, {PNE_OPT_FR_FPU_X87_SSE_SSE2_SCALAR_PACKED, PNE_OPT_FP_ST_PIPE, PNE_OPT_FP_ST_PIPE_LOAD, PAPI_NULL}, {0,}}},
+//   {PAPI_FP_OPS, {DERIVED_SUB, {PNE_OPT_FR_FPU_X87_SSE_SSE2_SCALAR_PACKED, PNE_OPT_FP_ST_PIPE_AND_LOAD, PAPI_NULL, PAPI_NULL}, {0,}}},
 
    {PAPI_BR_INS, {0, {PNE_OPT_FR_BR, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_VEC_INS, {0, {PNE_OPT_FR_FPU_SSE_SSE2_PACKED, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
@@ -1293,7 +1294,7 @@ hwi_search_t _papi_hwd_opt_FP_SSE_SP[] = {
 
 /* Table defining PAPI_FP_OPS as all ops retired minus two types of speculative stores */
 hwi_search_t _papi_hwd_opt_FP_SSE_DP[] = {
-   {PAPI_FP_OPS, {DERIVED_SUB, {PNE_OPT_FR_FPU_X87_SSE_SSE2_SCALAR_PACKED, PNE_OPT_FP_ST_PIPE, PNE_OPT_FP_ST_PIPE_LOAD, PAPI_NULL}, {0,}}},
+   {PAPI_FP_OPS, {DERIVED_SUB, {PNE_OPT_FR_FPU_X87_SSE_SSE2_SCALAR_PACKED, PNE_OPT_FP_ST_PIPE_AND_LOAD, PAPI_NULL, PAPI_NULL}, {0,}}},
    {0, {0, {0,}, {0,}}}
 };
 
@@ -3300,6 +3301,9 @@ const native_event_entry_t _papi_hwd_k8_native_map[] = {
    {"FP_ST_PIPE_LOAD",
     "Dispatched FPU ops - Revision B and later - Store pipe load ops",
     {ALLCNTRS, 0x2000}},
+   {"FP_ST_PIPE_AND_LOAD",
+    "Dispatched FPU ops - Revision B and later - Store pipe ops and load ops",
+    {ALLCNTRS, 0x2400}},
    {"FP_NONE_RET",
     "Cycles with no FPU ops retired - Revision B and later",
     {ALLCNTRS, 0x01}},
