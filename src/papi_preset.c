@@ -36,8 +36,14 @@ int _papi_hwi_setup_all_presets(hwi_search_t *findem, hwi_dev_notes_t *notes)
 	   /* find the index for the event to be initialized */
 	   preset_index = (findem[pnum].event_code & PAPI_PRESET_AND_MASK);
 	   
-	   /* count and set the number of native terms in this event */
-	   /* This code is BROKEN and TERRIBLE we should never check a NATIVE code against any value -pjm*/
+	   /* count and set the number of native terms in this event, these items are contiguous 
+	   /* This code is TERRIBLE. First:
+
+	   - MAX_COUNTER_TERMS should be a substrate variable. What it means no one knows. 
+	   - We should never EVER check a NATIVE code against any value. PAPI_NULL could be a valid event code! 
+	     pjm */
+	   
+	   INTDBG("Counting number of terms for preset index %d, search map index %d.\n",preset_index,pnum);
 	   i = 0;
 	   j = 0;
 	   while (i < MAX_COUNTER_TERMS)
@@ -48,14 +54,19 @@ int _papi_hwi_setup_all_presets(hwi_search_t *findem, hwi_dev_notes_t *notes)
 		 break;
 	       i++;
 	     }
-	   
+
+	   INTDBG("This preset has %d terms.\n",j);
 	   _papi_hwi_presets.count[preset_index] = j;
 	   
 	   /* if the native event array is empty, free the data pointer.
 	      this allows existing events to be 'undefined' by overloading with nulls */
 
+	   /* This also makes no sense at all. This code is called at initialization time. 
+	      Why would a preset be set up with no events. Hello? Please kill this code. -pjm */
+	 
 	   if (j == 0) 
 	     {
+	       INTDBG("WARNING! COUNT == 0 for preset index %d, search map index %d.\n",preset_index,pnum);
 	       if (_papi_hwi_presets.data[preset_index] != NULL) 
 		 {
 		   papi_free(_papi_hwi_presets.data[preset_index]);
