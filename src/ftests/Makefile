@@ -110,10 +110,10 @@ clean:
 	rm -f *.o *.stderr *.stdout core *~ $(TESTS)
 
 install: $(TARGETS)
-	@if [ \"$(PREFIX)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make PREFIX=/usr/local"; exit 1; fi 
-	@echo "Root of destination directory is: \"$(PREFIX)\""; 
-	-mkdir -p $(PREFIX)/share/papi/ftests
-	-chmod go+rx $(PREFIX)/share/papi/ftests
-	-find . -perm -100 -type f -exec cp {} $(PREFIX)/share/papi/ftests \;
-	-chmod go+rx $(PREFIX)/share/papi/ftests/*
-	-find . -name "*.F" -type f -exec cp {} $(PREFIX)/share/papi/ftests \;
+	@echo "Fortran tests (DATADIR) being installed in: \"$(DATADIR)\""; 
+	-mkdir -p $(DATADIR)/ftests
+	-chmod go+rx $(DATADIR)
+	-chmod go+rx $(DATADIR)/ftests
+	-find . -perm -100 -type f -exec cp {} $(DATADIR)/ftests \;
+	-chmod go+rx $(DATADIR)/ftests/*
+	-find . -name "*.F" -type f -exec cp {} $(DATADIR)/ftests \;
