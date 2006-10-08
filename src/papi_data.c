@@ -23,7 +23,6 @@
 
 #include "papi.h"
 #include "papi_internal.h"
-#include "papi_data.h"
 
 int init_retval = DEADBEEF;
 int init_level = PAPI_NOT_INITED;
