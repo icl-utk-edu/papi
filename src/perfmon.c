@@ -1078,7 +1078,7 @@ int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
   return PAPI_OK;
 }
 
-#if defined(ia64)
+#if defined(__ia64__)
 static int get_number( char *buf ){
    char numbers[] = "0123456789";
    int num;
@@ -1301,13 +1301,14 @@ static int mips_get_tlb(char *s, int *u, int *size2)
   return(PAPI_OK);
 }
 
-static int mips_get_memory_info(PAPI_mh_info_t *mh_info)
+static int mips_get_memory_info(PAPI_hw_info_t *hw_info)
 {
   char *s;
   int retval = PAPI_OK;
   int i = 0, cached = 0, policy = 0, num = 0, pagesize = 0, maxlevel = 0;
   int sizeB, assoc, lineB;
   char maxargs[PAPI_HUGE_STR_LEN];
+  PAPI_mh_info_t *mh_info = &hw_info->mem_hierarchy;
 
    FILE *f;
 
@@ -1420,11 +1421,11 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * hwinfo, int unused)
   int retval = PAPI_OK;
 
 #if defined(mips)
-  mips_get_memory_info(&hwinfo->mem_hierarchy);
+  mips_get_memory_info(hwinfo);
 #elif defined(__i386__)||defined(__x86_64__)
   x86_get_memory_info(hwinfo);
-#elif defined(ia64)
-  ia64_get_memory_info(&hwinfo->mem_hierarchy);
+#elif defined(__ia64__)
+  ia64_get_memory_info(hwinfo);
 #else
 #error "No support for this architecture. Please modify perfmon.c"
 #endif
@@ -3266,7 +3267,7 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
       newent = (unsigned long)*ent;
       newent += 3*sizeof(pfm_mont_pmd_reg_t);
       *ent = (pfm_dfl_smpl_entry_t *)newent;
-      return latency;
+      return 0;
     }
   else if (is_montecito_and_iear(native_pfm_index))
     {
@@ -3288,7 +3289,7 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
       SUBDBG("PMD[34]: 0x%016llx\n",(unsigned long long)icache_line_addr.pmd_val);
       SUBDBG("PMD[35]: 0x%016llx\n",(unsigned long long)latency.pmd_val);
 
-      if (icache_line.pmd34_mont_reg.iear_stat & 0x1 == 0)
+      if ((icache_line_addr.pmd34_mont_reg.iear_stat & 0x1) == 0)
 	{
 	  SUBDBG("Invalid IEAR sample found, iear_stat = 0x%x\n",icache_line.pmd34_mont_reg.iear_stat);
 	bail2:
@@ -3312,7 +3313,7 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
       newent = (unsigned long)*ent;
       newent += 2*sizeof(pfm_mont_pmd_reg_t);
       *ent = (pfm_dfl_smpl_entry_t *)newent;
-      return latency;
+      return 0;
     }
   else if (is_itanium2_and_dear(native_pfm_index))
     {
@@ -3364,7 +3365,7 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
       newent = (unsigned long)*ent;
       newent += 3*sizeof(pfm_ita2_pmd_reg_t);
       *ent = (pfm_dfl_smpl_entry_t *)newent;
-      return latency;
+      return 0;
     }
   else if (is_itanium2_and_iear(native_pfm_index))
     {
@@ -3386,9 +3387,9 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
       SUBDBG("PMD[0]: 0x%016llx\n",(unsigned long long)icache_line_addr.pmd_val);
       SUBDBG("PMD[1]: 0x%016llx\n",(unsigned long long)latency.pmd_val);
 
-      if (icache_line_addr.pmd34_ita2_reg.iear_stat & 0x1 == 0) 
+      if ((icache_line_addr.pmd0_ita2_reg.iear_stat & 0x1) == 0) 
 	{
-	  SUBDBG("Invalid IEAR sample found, iear_stat = 0x%x\n",icache_line.pmd34_mont_reg.iear_stat);
+	  SUBDBG("Invalid IEAR sample found, iear_stat = 0x%x\n",icache_line.pmd0_ita2_reg.iear_stat);
 	bail4:
 	  newent = (unsigned long)*ent;
 	  newent += 2*sizeof(pfm_mont_pmd_reg_t);
@@ -3410,7 +3411,7 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
       newent = (unsigned long)*ent;
       newent += 2*sizeof(pfm_ita2_pmd_reg_t);
       *ent = (pfm_dfl_smpl_entry_t *)newent;
-      return latency;
+      return 0;
     }
 #if 0
   (is_btb(native_pfm_index))
