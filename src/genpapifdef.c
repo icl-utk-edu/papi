@@ -32,10 +32,8 @@
 #endif
 
 #include "papi.h"
-
-#define MAX_COUNTER_TERMS 8 /* to satisfy papi_preset.h */
-#include "papi_preset.h"
-#include "papi_data.h"
+#define SUBSTRATE "any-null.h"
+#include "papi_data.c"
 
 #undef NDEBUG
 #include <assert.h>
@@ -231,6 +229,8 @@ static void createDef(char *title, const hwi_describe_t *descr, int size, enum d
 
 int main(int argc, char **argv)
 {
+  extern const hwi_preset_info_t _papi_hwi_preset_info[PAPI_MAX_PRESET_EVENTS];
+  extern const hwi_describe_t _papi_hwi_err[PAPI_NUM_ERRORS];
    int i;
    enum deftype_t deftype = CDEFINE;
 

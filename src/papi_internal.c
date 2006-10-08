@@ -1006,6 +1006,11 @@ int _papi_hwi_init_global(void)
 int _papi_hwi_init_global_internal(void)
 {
   int retval;
+  extern const hwi_preset_info_t _papi_hwi_preset_info[PAPI_MAX_PRESET_EVENTS];
+
+  memset(&_papi_hwi_presets,0x0,sizeof(_papi_hwi_presets));
+  /* This member is static */
+  _papi_hwi_presets.info = _papi_hwi_preset_info;
 
   memset(&_papi_hwi_system_info,0x0,sizeof(_papi_hwi_system_info));
 
