@@ -13,7 +13,7 @@ MEMSUBSTR = perfmon
 #
 
 CC_R    	= $(CC) -pthread
-CC_SHR		= $(CC) -fPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
+CC_SHR		= $(CC) -fPIC -dPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
 FFLAGS		+= -ffixed-line-length-132
 CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) 
 ifeq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))
@@ -45,7 +45,7 @@ CFLAGS	+= -I$(PFM_INC_PATH)
 
 MISCHDRS = perfmon.h
 MISCSRCS = 
-SHLIBDEPS = -L$(PFM_LIB_PATH) -lpfm
+SHLIBDEPS = $(PFM_LIB_PATH)/libpfm.so.3
 
 PFM_OBJS=$(shell ar t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
 ifeq (,$(PFM_OBJS))
