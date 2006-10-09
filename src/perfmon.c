@@ -2706,7 +2706,6 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
   if ((ret = pfm_create_context(&newctx, NULL, 0)))
     {
       PAPIERROR("pfm_create_context(%p,%p,%d): %s",&newctx,NULL,0,pfm_strerror(errno));
-    bail:
       return(PAPI_ESYS);
     }
   SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",newctx.ctx_fd);
@@ -2714,7 +2713,6 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
   /* set close-on-exec to ensure we will be getting the PFM_END_MSG, i.e.,
    * fd not visible to child. */
 
-#if 0
   ret = fcntl(newctx.ctx_fd, F_SETFD, FD_CLOEXEC);
   if (ret == -1)
     {
@@ -2724,7 +2722,6 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
       close(newctx.ctx_fd);
       return(PAPI_ESYS);
     }
-#endif
 
   /* setup asynchronous notification on the file descriptor */
 

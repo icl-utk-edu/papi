@@ -24,8 +24,9 @@
 hwi_search_t *preset_search_map;
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 
-/* this function is called by PAPI_library_init */
-papi_svector_t _linux_ia64_table[] = {
+/* Static locals */
+
+static papi_svector_t _linux_ia64_table[] = {
  {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
  {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
  {(void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE},
@@ -35,7 +36,8 @@ papi_svector_t _linux_ia64_table[] = {
  {(void (*)())_papi_hwd_get_real_cycles, VEC_PAPI_HWD_GET_REAL_CYCLES},
  {(void (*)())_papi_hwd_get_virt_cycles, VEC_PAPI_HWD_GET_VIRT_CYCLES},
  {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
- {(void (*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE}, {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
+ {(void (*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE}, 
+ {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
  {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
  {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
  {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
@@ -50,9 +52,8 @@ papi_svector_t _linux_ia64_table[] = {
  {NULL, VEC_PAPI_END}
 };
 
-/* Static locals */
-
-#ifdef ALTIX
+#ifdef HAVE_MMTIMER
+static int mmdev_fd;
 static unsigned long mmdev_clicks_per_tick;
 static volatile unsigned long *mmdev_timer_addr;
 #endif
@@ -348,7 +349,7 @@ static inline char *search_cpu_info(FILE * f, char *search_str, char *line)
 inline_static unsigned long get_cycles(void)
 {
    unsigned long tmp;
-#ifdef ALTIX
+#ifdef HAVE_MMTIMER
    tmp = mmdev_clicks_per_tick * (*mmdev_timer_addr);
 #elif defined(__INTEL_COMPILER)
    tmp = __getReg(_IA64_REG_AR_ITC);
@@ -618,8 +619,12 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    unsigned int version;
    pfmlib_options_t pfmlib_options;
    itanium_preset_search_t *ia_preset_search_map = NULL;
+
   /* Always initialize globals dynamically to handle forks properly. */
+
   preset_search_map = NULL;
+  for (i = 0; i < PAPI_MAX_LOCK; i++)
+    _papi_hwd_lock_data[i] = MUTEX_OPEN;
 
   /* Setup the vector entries that the OS knows about */
 #ifndef PAPI_NO_VECTOR
@@ -680,29 +685,43 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    if (retval)
       return (retval);
 
-#if defined(ALTIX)
+#if defined(HAVE_MMTIMER)
    {
-     int fd;
      unsigned long femtosecs_per_tick = 0;
      int offset;
-     
-     if((fd = open(MMTIMER_FULLNAME, O_RDONLY)) == -1) {
-       PAPIERROR("Failed to open MM timer");
-       return(PAPI_ESBSTR);
-     }
-     if ((offset = ioctl(fd, MMTIMER_GETOFFSET, 0)) == -ENOSYS) {
-       PAPIERROR("Failed to get offset of MM timer");
-       return(PAPI_ESBSTR);
-     }
-     if ((mmdev_timer_addr = mmap(0, getpagesize(), PROT_READ, MAP_SHARED, fd, 0)) == NULL) {
-       PAPIERROR("Failed to mmap MM timer");
-       return(PAPI_ESBSTR);
-     }
 
+     SUBDBG("MMTIMER Opening %s\n",MMTIMER_FULLNAME);
+     if ((mmdev_fd = open(MMTIMER_FULLNAME, O_RDONLY)) == -1) {
+       PAPIERROR("Failed to open MM timer %s",MMTIMER_FULLNAME);
+       return(PAPI_ESYS);
+     }
+     SUBDBG("MMTIMER setting close on EXEC flag\n");
+     if (fcntl(mmdev_fd, F_SETFD, FD_CLOEXEC) == -1) {
+       PAPIERROR("Failed to fcntl(FD_CLOEXEC) on %d: %s", mmdev_fd,strerror(errno));
+       return(PAPI_ESYS);
+     }
+     SUBDBG("MMTIMER is on FD %d, getting offset\n",mmdev_fd);
+     if ((offset = ioctl(mmdev_fd, MMTIMER_GETOFFSET, 0)) < 0) {
+       PAPIERROR("Failed to get offset of MM timer");
+       return(PAPI_ESYS);
+     }
+     SUBDBG("MMTIMER offset is %d, getting mapped page\n",offset);
+     if ((mmdev_timer_addr = mmap(0, getpagesize(), PROT_READ, MAP_SHARED, mmdev_fd, 0)) == NULL) {
+       PAPIERROR("Failed to mmap MM timer");
+       return(PAPI_ESYS);
+     }
+     SUBDBG("MMTIMER page is at %p, actual address is %p\n",mmdev_timer_addr,mmdev_timer_addr+offset);
      mmdev_timer_addr += offset;
-     ioctl(fd, MMTIMER_GETRES, &femtosecs_per_tick);
-     mmdev_clicks_per_tick = (_papi_hwi_system_info.hw_info.mhz * 1.0e-9) * femtosecs_per_tick;
-     close(fd);
+     SUBDBG("MMTIMER getting femtoseconds per tick\n");
+     if (ioctl(fd, MMTIMER_GETRES, &femtosecs_per_tick) == -1) {
+       PAPIERROR("Failed to get femtoseconds per tick\n");
+       return(PAPI_ESYS);
+     }
+     SUBDBG("MMTIMER has %lu femtoseconds (10^-15) per tick or %f Mhz\n",femtosecs_per_tick,1.0e9/(double)femtosecs_per_tick);
+     mmdev_clicks_per_tick = (_papi_hwi_system_info.hw_info.mhz) / (1.0e9/(double)femtosecs_per_tick);
+     SUBDBG("MMTIMER has a ratio of %f to the CPU's clock\n",mmdev_clicks_per_tick);
+
+     /* mmdev_fd should be closed and page should be unmapped in a global shutdown routine */
    }
 #endif
 
@@ -722,9 +741,6 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
                             _papi_hwi_system_info.hw_info.model);
    if (retval)
       return (retval);
-
-   for (i = 0; i < PAPI_MAX_LOCK; i++)
-      _papi_hwd_lock_data[i] = MUTEX_OPEN;
 
    return (PAPI_OK);
 }
