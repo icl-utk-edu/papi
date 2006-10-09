@@ -32,14 +32,15 @@
 #endif
 
 #include "papi.h"
-#define SUBSTRATE "any-null.h"
-#include "papi_data.c"
 
 #undef NDEBUG
 #include <assert.h>
 
 #define NO_LIBPAPI
-
+#define MAX_COUNTER_TERMS 8 /* to satisfy papi_preset.h */
+#include "papi_preset.h"
+#include "papi_data.c"
+#undef NO_LIB_PAPI
 /*
 	The following array is used to create a series of defines
 	for use with PAPI in Fortran programs.
@@ -229,8 +230,6 @@ static void createDef(char *title, const hwi_describe_t *descr, int size, enum d
 
 int main(int argc, char **argv)
 {
-  extern const hwi_preset_info_t _papi_hwi_preset_info[PAPI_MAX_PRESET_EVENTS];
-  extern const hwi_describe_t _papi_hwi_err[PAPI_NUM_ERRORS];
    int i;
    enum deftype_t deftype = CDEFINE;
 
