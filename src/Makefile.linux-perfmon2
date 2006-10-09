@@ -1,2 +1,1 @@
-VERSION		?= 3.x
 include Rules.pfm2

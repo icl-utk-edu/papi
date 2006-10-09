@@ -2,7 +2,10 @@
 
 DESCR   = "Linux with PFM $(VERSION) kernel support and library"
 LIBRARY = libpapi.a
-SHLIB   = libpapi.so
+VERSION = 3
+REVISION = 5
+AGE = 0
+SHLIB   = libpapi.so.$(VERSION).$(REVISION).$(AGE)
 LIBS	= static shared
 TARGETS = ear serial multiplex_and_pthreads shared
 SUBSTR	= perfmon
@@ -12,8 +15,12 @@ MEMSUBSTR = perfmon
 # GNU G77/GCC section
 #
 
-CC_R    	= $(CC) -pthread
-CC_SHR		= $(CC) -fPIC -dPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
+CC_R    	:= $(CC) -pthread
+ifeq (,$(PFM_LIB_PATH))
+	CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.$(VERSION) -Wl,-rpath -Wl,$(LIBDIR)
+else
+	CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.$(VERSION) -Wl,-rpath -Wl,$(PFM_LIB_PATH)
+endif
 FFLAGS		+= -ffixed-line-length-132
 CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) 
 ifeq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))
@@ -45,7 +52,8 @@ CFLAGS	+= -I$(PFM_INC_PATH)
 
 MISCHDRS = perfmon.h
 MISCSRCS = 
-SHLIBDEPS = $(PFM_LIB_PATH)/libpfm.so.3
+# Why does this cause text relocations?
+SHLIBDEPS = -L$(PFM_LIB_PATH) -lpfm
 
 PFM_OBJS=$(shell ar t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
 ifeq (,$(PFM_OBJS))
@@ -77,6 +85,7 @@ native_install:
 ifneq (,${PFM_ROOT})
 	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
+	cd $(DESTDIR)/$(LIBDIR); ln -sf $(SHLIB) libpapi.so.$(VERSION)
 	-mkdir -p $(DESTDIR)$(DATADIR)
 	-chmod go+rx $(DESTDIR)$(DATADIR)
 	cp -f ./perfmon_events.csv $(DESTDIR)$(DATADIR)
