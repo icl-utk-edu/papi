@@ -350,7 +350,9 @@ inline_static unsigned long get_cycles(void)
 {
    unsigned long tmp;
 #ifdef HAVE_MMTIMER
-   tmp = mmdev_clicks_per_tick * (*mmdev_timer_addr);
+   tmp = *mmdev_timer_addr;
+   SUBDBG("MMTIMER is %lu, scaled %lu\n",tmp,tmp*mmdev_clicks_per_tick);
+   tmp *= mmdev_clicks_per_tick;
 #elif defined(__INTEL_COMPILER)
    tmp = __getReg(_IA64_REG_AR_ITC);
 #else                           /* GCC */
