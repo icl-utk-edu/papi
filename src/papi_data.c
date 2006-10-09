@@ -21,6 +21,8 @@
 *          <your email address>
 */
 
+#ifndef NO_LIBPAPI
+
 #include "papi.h"
 #include "papi_internal.h"
 
@@ -58,6 +60,8 @@ const hwi_describe_t _papi_hwi_derived[] = {
    {DERIVED_POSTFIX, "DERIVED_POSTFIX", "Process counters based on specified postfix string"},
    {-1, NULL, NULL}
 };
+
+#endif /* NO_LIBPAPI */
 
 const hwi_preset_info_t _papi_hwi_preset_info[PAPI_MAX_PRESET_EVENTS] = {
    /*  0*/ {"PAPI_L1_DCM",  "L1D cache misses", "Level 1 data cache misses"},
@@ -218,6 +222,8 @@ const hwi_describe_t _papi_hwi_err[PAPI_NUM_ERRORS] = {
    /*15*/ {PAPI_EPERM, "PAPI_EPERM", "Permission level does not permit operation"}
 };
 
+#ifndef NO_LIBPAPI
+
 /* _papi_hwi_derived_type:
    Helper routine to extract a derived type from a derived string
    returns type value if found, otherwise returns -1
@@ -255,6 +261,9 @@ int _papi_hwi_derived_string(int type, char *derived, int len) {
    INTDBG("Invalid derived type %d\n",type);
    return(PAPI_EINVAL);
 }
+
+#endif /* NO_LIBPAPI */
+
 
 /********************/
 /*    END GLOBALS   */
