@@ -8,14 +8,12 @@
 /* 
 * File:    power5_events.h
 * CVS:     
-* Author:  Maynard Johnson
-*          maynardj@us.ibm.com
-* Mods:    <your name here>
-*          <your email address>
 *          
 * This file MUST be kept synchronised with the events file.
 *
 */
+#include "papiStdEventDefs.h"
+
 #define GROUP_INTS 5
 #define PAPI_MAX_NATIVE_EVENTS 512
 #define MAX_GROUPS (GROUP_INTS * 32)
