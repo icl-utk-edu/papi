@@ -54,7 +54,8 @@ static papi_svector_t _linux_ia64_table[] = {
 
 #ifdef HAVE_MMTIMER
 static int mmdev_fd;
-static unsigned long mmdev_clicks_per_tick;
+static unsigned long mmdev_mask;
+static unsigned long mmdev_ratio;
 static volatile unsigned long *mmdev_timer_addr;
 #endif
 
@@ -350,9 +351,9 @@ inline_static unsigned long get_cycles(void)
 {
    unsigned long tmp;
 #ifdef HAVE_MMTIMER
-   tmp = *mmdev_timer_addr;
-   SUBDBG("MMTIMER is %lu, scaled %lu\n",tmp,tmp*mmdev_clicks_per_tick);
-   tmp *= mmdev_clicks_per_tick;
+   tmp = *mmdev_timer_addr & mmdev_mask;
+   SUBDBG("MMTIMER is %lu, scaled %lu\n",tmp,tmp*mmdev_ratio);
+   tmp *= mmdev_ratio;
 #elif defined(__INTEL_COMPILER)
    tmp = __getReg(_IA64_REG_AR_ITC);
 #else                           /* GCC */
@@ -690,6 +691,8 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 #if defined(HAVE_MMTIMER)
    {
      unsigned long femtosecs_per_tick = 0;
+     unsigned long freq = 0;
+     int result;
      int offset;
 
      SUBDBG("MMTIMER Opening %s\n",MMTIMER_FULLNAME);
@@ -697,9 +700,14 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
        PAPIERROR("Failed to open MM timer %s",MMTIMER_FULLNAME);
        return(PAPI_ESYS);
      }
+     SUBDBG("MMTIMER checking if we can mmap");
+     if (ioctl(mmdev_fd, MMTIMER_MMAPAVAIL, 0) != 1) {
+       PAPIERROR("mmap of MM timer unavailable");
+       return(PAPI_ESBSTR);
+     }
      SUBDBG("MMTIMER setting close on EXEC flag\n");
      if (fcntl(mmdev_fd, F_SETFD, FD_CLOEXEC) == -1) {
-       PAPIERROR("Failed to fcntl(FD_CLOEXEC) on %d: %s", mmdev_fd,strerror(errno));
+       PAPIERROR("Failed to fcntl(FD_CLOEXEC) on MM timer FD %d: %s", mmdev_fd,strerror(errno));
        return(PAPI_ESYS);
      }
      SUBDBG("MMTIMER is on FD %d, getting offset\n",mmdev_fd);
@@ -707,22 +715,31 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
        PAPIERROR("Failed to get offset of MM timer");
        return(PAPI_ESYS);
      }
-     SUBDBG("MMTIMER offset is %d, getting mapped page\n",offset);
-     if ((mmdev_timer_addr = mmap(0, getpagesize(), PROT_READ, MAP_SHARED, mmdev_fd, 0)) == NULL) {
+     SUBDBG("MMTIMER has offset of %d, getting frequency\n",offset);
+     if (ioctl(mmdev_fd, MMTIMER_GETFREQ, &freq) == -1) {
+       PAPIERROR("Failed to get frequency of MM timer");
+       return(PAPI_ESYS);
+     }
+     SUBDBG("MMTIMER has frequency %lu Mhz\n",freq/1000000);
+     mmdev_ratio = (freq/1000000) / (unsigned long)_papi_hwi_system_info.hw_info.mhz;
+     SUBDBG("MMTIMER has a ratio of %f to the CPU's clock, getting resolution\n",mmdev_ratio);
+     if (ioctl(mmdev_fd, MMTIMER_GETRES, &femtosecs_per_tick) == -1) {
+       PAPIERROR("Failed to get femtoseconds per tick");
+       return(PAPI_ESYS);
+     }
+     SUBDBG("MMTIMER res is %lu femtosecs/tick (10^-15s) or %f Mhz, getting valid bits\n",femtosecs_per_tick,1.0e9/(double)femtosecs_per_tick);
+     if ((result = ioctl(mmdev_fd, MMTIMER_GETBITS, 0)) == -ENOSYS) {
+       PAPIERROR("Failed to get number of bits in MMTIMER");
+       return(PAPI_ESYS);
+     }
+     mmdev_mask = ~(0xffffffffffffffff << result);
+     SUBDBG("MMTIMER has %d valid bits, mask 0x%16lx, getting mmaped page\n",result,mask);
+     if ((mmdev_timer_addr = (unsigned long *)mmap(0, getpagesize(), PROT_READ, MAP_PRIVATE, mmdev_fd, 0)) == NULL) {
        PAPIERROR("Failed to mmap MM timer");
        return(PAPI_ESYS);
      }
      SUBDBG("MMTIMER page is at %p, actual address is %p\n",mmdev_timer_addr,mmdev_timer_addr+offset);
      mmdev_timer_addr += offset;
-     SUBDBG("MMTIMER getting femtoseconds per tick\n");
-     if (ioctl(fd, MMTIMER_GETRES, &femtosecs_per_tick) == -1) {
-       PAPIERROR("Failed to get femtoseconds per tick\n");
-       return(PAPI_ESYS);
-     }
-     SUBDBG("MMTIMER has %lu femtoseconds (10^-15) per tick or %f Mhz\n",femtosecs_per_tick,1.0e9/(double)femtosecs_per_tick);
-     mmdev_clicks_per_tick = (_papi_hwi_system_info.hw_info.mhz) / (1.0e9/(double)femtosecs_per_tick);
-     SUBDBG("MMTIMER has a ratio of %f to the CPU's clock\n",mmdev_clicks_per_tick);
-
      /* mmdev_fd should be closed and page should be unmapped in a global shutdown routine */
    }
 #endif
