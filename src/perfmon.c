@@ -3240,7 +3240,8 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
 
       if ((!load_addr.pmd36_mont_reg.dear_vl) || (!load_addr.pmd33_mont_reg.dear_stat))
 	{
-	  SUBDBG("Invalid DEAR sample found, dear_vl = %d, dear_stat = 0x%x\n",load_addr.pmd36_mont_reg.dear_vl,load_addr.pmd36_mont_reg.dear_stat);
+	  SUBDBG("Invalid DEAR sample found, dear_vl = %d, dear_stat = 0x%x\n",
+		 load_addr.pmd36_mont_reg.dear_vl,load_addr.pmd33_mont_reg.dear_stat);
 	bail1:
 	  newent = (unsigned long)*ent;
 	  newent += 3*sizeof(pfm_mont_pmd_reg_t);
@@ -3288,7 +3289,7 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
 
       if ((icache_line_addr.pmd34_mont_reg.iear_stat & 0x1) == 0)
 	{
-	  SUBDBG("Invalid IEAR sample found, iear_stat = 0x%x\n",icache_line.pmd34_mont_reg.iear_stat);
+	  SUBDBG("Invalid IEAR sample found, iear_stat = 0x%x\n",icache_line_addr.pmd34_mont_reg.iear_stat);
 	bail2:
 	  newent = (unsigned long)*ent;
 	  newent += 2*sizeof(pfm_mont_pmd_reg_t);
@@ -3386,7 +3387,7 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
 
       if ((icache_line_addr.pmd0_ita2_reg.iear_stat & 0x1) == 0) 
 	{
-	  SUBDBG("Invalid IEAR sample found, iear_stat = 0x%x\n",icache_line.pmd0_ita2_reg.iear_stat);
+	  SUBDBG("Invalid IEAR sample found, iear_stat = 0x%x\n",icache_line_addr.pmd0_ita2_reg.iear_stat);
 	bail4:
 	  newent = (unsigned long)*ent;
 	  newent += 2*sizeof(pfm_mont_pmd_reg_t);
