@@ -722,7 +722,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
      }
      SUBDBG("MMTIMER has frequency %lu Mhz\n",freq/1000000);
      mmdev_ratio = (freq/1000000) / (unsigned long)_papi_hwi_system_info.hw_info.mhz;
-     SUBDBG("MMTIMER has a ratio of %f to the CPU's clock, getting resolution\n",mmdev_ratio);
+     SUBDBG("MMTIMER has a ratio of %d to the CPU's clock, getting resolution\n",mmdev_ratio);
      if (ioctl(mmdev_fd, MMTIMER_GETRES, &femtosecs_per_tick) == -1) {
        PAPIERROR("Failed to get femtoseconds per tick");
        return(PAPI_ESYS);
@@ -733,7 +733,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
        return(PAPI_ESYS);
      }
      mmdev_mask = ~(0xffffffffffffffff << result);
-     SUBDBG("MMTIMER has %d valid bits, mask 0x%16lx, getting mmaped page\n",result,mask);
+     SUBDBG("MMTIMER has %d valid bits, mask 0x%16lx, getting mmaped page\n",result,mmdev_mask);
      if ((mmdev_timer_addr = (unsigned long *)mmap(0, getpagesize(), PROT_READ, MAP_PRIVATE, mmdev_fd, 0)) == NULL) {
        PAPIERROR("Failed to mmap MM timer");
        return(PAPI_ESYS);
