@@ -32,9 +32,6 @@
 #endif
 
 #include "papi.h"
-#define NO_CONFIG 1
-#define SUBSTRATE "any-null.h"
-#include "papi_data.c"
 
 #undef NDEBUG
 #include <assert.h>
