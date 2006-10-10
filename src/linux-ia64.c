@@ -721,7 +721,9 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
        return(PAPI_ESYS);
      }
      SUBDBG("MMTIMER has frequency %lu Mhz\n",freq/1000000);
-     mmdev_ratio = (freq/1000000) / (unsigned long)_papi_hwi_system_info.hw_info.mhz;
+// don't know for sure, but I think this ratio is inverted
+//     mmdev_ratio = (freq/1000000) / (unsigned long)_papi_hwi_system_info.hw_info.mhz;
+     mmdev_ratio = (unsigned long)_papi_hwi_system_info.hw_info.mhz / (freq/1000000);
      SUBDBG("MMTIMER has a ratio of %d to the CPU's clock, getting resolution\n",mmdev_ratio);
      if (ioctl(mmdev_fd, MMTIMER_GETRES, &femtosecs_per_tick) == -1) {
        PAPIERROR("Failed to get femtoseconds per tick");
