@@ -161,7 +161,7 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
 /* DEFINES END HERE */
 
-#if !defined(_WIN32)
+#if !(defined(_WIN32) || defined(NO_CONFIG))
 #include "config.h"
 #endif
 
