@@ -352,7 +352,7 @@ inline_static unsigned long get_cycles(void)
    unsigned long tmp;
 #ifdef HAVE_MMTIMER
    tmp = *mmdev_timer_addr & mmdev_mask;
-   SUBDBG("MMTIMER is %lu, scaled %lu\n",tmp,tmp*mmdev_ratio);
+//   SUBDBG("MMTIMER is %lu, scaled %lu\n",tmp,tmp*mmdev_ratio);
    tmp *= mmdev_ratio;
 #elif defined(__INTEL_COMPILER)
    tmp = __getReg(_IA64_REG_AR_ITC);
