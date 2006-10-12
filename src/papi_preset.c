@@ -118,12 +118,14 @@ int _papi_hwi_cleanup_all_presets(void)
        * info to the table. In these cases, papi_valid_free can prevent
        * pointers from being stranded.
        */
+  #ifdef PAPI_MOD_EVENTS /* this can only happen if events are modifiable */
       if (papi_valid_free(_papi_hwi_presets.info[preset_index].symbol))
          _papi_hwi_presets.info[preset_index].symbol = NULL;
       if (papi_valid_free(_papi_hwi_presets.info[preset_index].long_descr))
          _papi_hwi_presets.info[preset_index].long_descr = NULL;
       if (papi_valid_free(_papi_hwi_presets.info[preset_index].short_descr))
          _papi_hwi_presets.info[preset_index].short_descr = NULL;
+  #endif
 #endif
 
       /* free the data and or note string if they exist */
