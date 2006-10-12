@@ -386,6 +386,9 @@ int PAPI_get_event_info(int EventCode, PAPI_event_info_t * info)
 */
 int PAPI_set_event_info(PAPI_event_info_t * info, int *EventCode, int replace)
 {
+#ifndef PAPI_MOD_EVENTS /* defined if a modifiable event table is supported */
+      papi_return(PAPI_ESBSTR);
+#else
    int i, type;
    int code;
    EventSetInfo_t *ESI;
@@ -421,6 +424,7 @@ int PAPI_set_event_info(PAPI_event_info_t * info, int *EventCode, int replace)
 }*/
 
    papi_return(PAPI_ENOEVNT);
+#endif /* PAPI_MOD_EVENTS */
 }
 
 /* PAPI_encode_events:
@@ -432,6 +436,7 @@ int PAPI_set_event_info(PAPI_event_info_t * info, int *EventCode, int replace)
    on the fly. Bails if events to be modified have been added to existing EventSets.
 */
 
+#ifdef PAPI_MOD_EVENTS /* defined if a modifiable event table is supported */
 /* copy the contents of a potentially quoted string */
 static char *quotcpy(char *d, char *s) {
    if (s && *s == '\"') {
@@ -441,9 +446,14 @@ static char *quotcpy(char *d, char *s) {
    strcpy(d, s);
    return (d);
 }
+#endif
 
 int PAPI_encode_events(char * event_file, int replace)
 {
+#ifndef PAPI_MOD_EVENTS /* defined if a modifiable event table is supported */
+      papi_return(PAPI_ESBSTR);
+#else
+
    int i, j, line, field;
    int retval;
    PAPI_event_info_t info;
@@ -517,6 +527,7 @@ int PAPI_encode_events(char * event_file, int replace)
    }
 	fclose(file);
    papi_return(PAPI_OK);
+   #endif /* PAPI_MOD_EVENTS */
 }
 
 int PAPI_event_code_to_name(int EventCode, char *out)

@@ -1416,6 +1416,7 @@ int _papi_hwi_get_event_info(int EventCode, PAPI_event_info_t * info)
    }
 }
 
+#ifdef PAPI_MOD_EVENTS /* defined if a modifiable event table is supported */
 /* _papi_hwi_set_event_info:
    This is the internal version of the set_event_info code.
    Assumes that parameters are valid and that it is legal to
@@ -1489,3 +1490,5 @@ int _papi_hwi_set_event_info(PAPI_event_info_t * info, int *EventCode)
    } else _papi_hwi_presets.dev_note[i] = NULL;
    return(PAPI_OK);
 }
+#endif /* PAPI_MOD_EVENTS */
+
