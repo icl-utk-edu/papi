@@ -16,6 +16,8 @@
 * This file MUST be kept synchronised with the events file.
 *
 */
+include "papiStdEventDefs.h"
+
 #define GROUP_INTS 2
 #define PAPI_MAX_NATIVE_EVENTS 256
 #define MAX_GROUPS (GROUP_INTS * 32)
