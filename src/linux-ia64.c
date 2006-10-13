@@ -1417,13 +1417,17 @@ static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
 
 #if defined(HAVE_PFM_MSG_TYPE)
    if (msg.type != PFM_MSG_OVFL) 
-#else
-   if (msg.pfm_gen_msg.msg_type != PFM_MSG_OVFL)
-#endif
 {
       PAPIERROR("unexpected msg type %d",msg.type);
       return;
    }
+#else
+   if (msg.pfm_gen_msg.msg_type != PFM_MSG_OVFL)
+{
+      PAPIERROR("unexpected msg type %d",msg.pfm_gen_msg.msg_type);
+      return;
+   }
+#endif
 
    _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, 
           msg.pfm_ovfl_msg.msg_ovfl_pmds[0]>>PMU_FIRST_COUNTER, 0, &master);
