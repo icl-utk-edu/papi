@@ -100,6 +100,7 @@ int main(int argc, char **argv)
    printf("Encoding information from: %s...\n", name);
    retval = PAPI_encode_events(name, replace_event);
    printf("Encoding complete\n\n");
+   if (retval == PAPI_ESBSTR) printf("This feature isn't supported!\n");
    if (retval == PAPI_EPERM) printf("Non-modifiable event conflict!\n");
    if (retval == PAPI_EISRUN) printf("Event is referenced from an EventSet!\n");
    if (retval == PAPI_EINVAL) printf("This event data doesn't make sense!\n");

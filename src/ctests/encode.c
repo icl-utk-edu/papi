@@ -164,6 +164,7 @@ int main(int argc, char **argv)
          printf("Setting preset event info for: %s\n", info.symbol);
          retval = PAPI_set_event_info(&info, &i, replace_event);
          printf("Returns: %d\n", retval);
+         if (retval == PAPI_ESBSTR) printf("This feature isn't supported!\n");
          if (retval == PAPI_EPERM) printf("Non-modifiable event conflict!\n");
          if (retval == PAPI_EISRUN) printf("Event is referenced from an EventSet!\n");
          if (retval == PAPI_EINVAL) printf("This event data doesn't make sense!\n");
