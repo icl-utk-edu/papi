@@ -6288,9 +6288,9 @@ _ACEOF
 
 fi
 
-	echo "$as_me:$LINENO: checking for pfm_msg_t.pfm_gen_msg.msg_type" >&5
-echo $ECHO_N "checking for pfm_msg_t.pfm_gen_msg.msg_type... $ECHO_C" >&6
-if test "${ac_cv_member_pfm_msg_t_pfm_gen_msg_msg_type+set}" = set; then
+	echo "$as_me:$LINENO: checking for pfm_msg_t.type" >&5
+echo $ECHO_N "checking for pfm_msg_t.type... $ECHO_C" >&6
+if test "${ac_cv_member_pfm_msg_t_type+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
@@ -6299,13 +6299,13 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include "perfmon/pfmlib.h"
+#include "perfmon/perfmon.h"
 
 int
 main ()
 {
 static pfm_msg_t ac_aggr;
-if (ac_aggr.pfm_gen_msg.msg_type)
+if (ac_aggr.type)
 return 0;
   ;
   return 0;
@@ -6333,7 +6333,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_member_pfm_msg_t_pfm_gen_msg_msg_type=yes
+  ac_cv_member_pfm_msg_t_type=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
@@ -6344,13 +6344,13 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include "perfmon/pfmlib.h"
+#include "perfmon/perfmon.h"
 
 int
 main ()
 {
 static pfm_msg_t ac_aggr;
-if (sizeof ac_aggr.pfm_gen_msg.msg_type)
+if (sizeof ac_aggr.type)
 return 0;
   ;
   return 0;
@@ -6378,23 +6378,23 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_member_pfm_msg_t_pfm_gen_msg_msg_type=yes
+  ac_cv_member_pfm_msg_t_type=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_member_pfm_msg_t_pfm_gen_msg_msg_type=no
+ac_cv_member_pfm_msg_t_type=no
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:$LINENO: result: $ac_cv_member_pfm_msg_t_pfm_gen_msg_msg_type" >&5
-echo "${ECHO_T}$ac_cv_member_pfm_msg_t_pfm_gen_msg_msg_type" >&6
-if test $ac_cv_member_pfm_msg_t_pfm_gen_msg_msg_type = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_member_pfm_msg_t_type" >&5
+echo "${ECHO_T}$ac_cv_member_pfm_msg_t_type" >&6
+if test $ac_cv_member_pfm_msg_t_type = yes; then
 
 cat >>confdefs.h <<\_ACEOF
-#define HAVE_PFM_MSG_PFM_GEN_MSG_MSG_TYPE 1
+#define HAVE_PFM_MSG_TYPE 1
 _ACEOF
 
 fi
@@ -6431,6 +6431,11 @@ _ACEOF
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT 1
+_ACEOF
+
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_PFM_MSG_TYPE 1
 _ACEOF
 
 fi

@@ -980,7 +980,7 @@ AC_CHECK_LIB([pfm], [pfm_initialize], [
 	AC_CHECK_FUNC(pfm_get_event_description, [AC_DEFINE(HAVE_PFM_GET_EVENT_DESCRIPTION,1,[event description function])],[])
 	AC_CHECK_MEMBER(pfmlib_reg_t.reg_evt_idx, [AC_DEFINE(HAVE_PFM_REG_EVT_IDX,1,[old reg_evt_idx])],[],[#include "perfmon/pfmlib.h"])
 	AC_CHECK_MEMBER(pfmlib_output_param_t.pfp_pmd_count, [AC_DEFINE(HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT,1,[new pfmlib_output_param_t])],[],[#include "perfmon/pfmlib.h"])
-	AC_CHECK_MEMBER(pfm_msg_t.pfm_gen_msg.msg_type, [AC_DEFINE(HAVE_PFM_MSG_PFM_GEN_MSG_MSG_TYPE,1,[old pfm_msg_t])],[],[#include "perfmon/pfmlib.h"])
+	AC_CHECK_MEMBER(pfm_msg_t.type, [AC_DEFINE(HAVE_PFM_MSG_TYPE,1,[new pfm_msg_t])],[],[#include "perfmon/perfmon.h"])
       ], [AC_MSG_ERROR([perfmon/pfmlib.h could not be found, please examine config.log and rerun configure with different flags])])], [
 	AC_MSG_ERROR([libpfm.a could not be found, please examine config.log and rerun configure with different flags])
       ])
@@ -989,6 +989,7 @@ else
 AC_DEFINE(HAVE_PERFMON_PFMLIB_MONTECITO_H,1,[Montecito headers])
 AC_DEFINE(HAVE_PFM_GET_EVENT_DESCRIPTION,1,[event description function])
 AC_DEFINE(HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT,1,[new pfmlib_output_param_t])
+AC_DEFINE(HAVE_PFM_MSG_TYPE,1,[new pfm_msg_t])
 fi
 fi
 

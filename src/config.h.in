@@ -39,8 +39,8 @@
 /* event description function */
 #undef HAVE_PFM_GET_EVENT_DESCRIPTION
 
-/* old pfm_msg_t */
-#undef HAVE_PFM_MSG_PFM_GEN_MSG_MSG_TYPE
+/* new pfm_msg_t */
+#undef HAVE_PFM_MSG_TYPE
 
 /* old reg_evt_idx */
 #undef HAVE_PFM_REG_EVT_IDX
