@@ -118,23 +118,16 @@ static inline int pfmw_get_num_events(int *num) {
 
    inline int pfmw_create_context( hwd_context_t *thr_ctx) {
       pfarg_context_t ctx[1];
-      memset(ctx, 0, sizeof(ctx));
 
-      thr_ctx->tid = mygettid();
+      memset(ctx, 0, sizeof(ctx));
       ctx[0].ctx_notify_pid = thr_ctx->tid;
       ctx[0].ctx_flags = PFM_FL_INHERIT_NONE;
 
       SUBDBG("PFM_CREATE_CONTEXT\n");
-      if (perfmonctl(thr_ctx->tid, PFM_CREATE_CONTEXT, ctx, 1) == -1) {
-	  if (errno == EBUSY)
-	    {
-	      SUBDBG("Context is busy!\n");
-	    }
-	  else
-	    {
-	      PAPIERROR("perfmonctl(PFM_CREATE_CONTEXT) errno %d", errno);
-	      return(PAPI_ESYS);
-	    }
+      if (perfmonctl(mygettid(), PFM_CREATE_CONTEXT, ctx, 1) == -1) 
+	{
+	  PAPIERROR("perfmonctl(PFM_CREATE_CONTEXT) errno %d", errno);
+	  return(PAPI_ESYS);
 	}
 
       /*
@@ -142,7 +135,7 @@ static inline int pfmw_get_num_events(int *num) {
        * must be done before writing to any PMC/PMD
        */
 
-      if (perfmonctl(thr_ctx->tid, PFM_ENABLE, 0, 0) == -1) {
+      if (perfmonctl(mygettid(), PFM_ENABLE, 0, 0) == -1) {
          if (errno == ENOSYS)
 	   PAPIERROR("Your kernel does not have performance monitoring support");
 	 else
@@ -150,6 +143,7 @@ static inline int pfmw_get_num_events(int *num) {
          return(PAPI_ESYS);
       }
 
+      thr_ctx->tid = mygettid();
       return(PAPI_OK);
    }
 
@@ -614,6 +608,14 @@ hweight64 (unsigned long x)
         return(PAPI_ESYS);
       }
 
+      /* set close-on-exec to ensure we will be getting the PFM_END_MSG, i.e.,
+       * fd not visible to child. */
+
+      ret = fcntl(ctx->fd, F_SETFD, FD_CLOEXEC);
+      if (ret == -1) {
+	PAPIERROR("fcntl(%d,FD_CLOEXEC) errno %d", ctx->fd, errno);
+	return(PAPI_ESYS);
+      }
 
       return(PAPI_OK);
 
@@ -621,25 +623,15 @@ hweight64 (unsigned long x)
 
    inline int pfmw_create_context(hwd_context_t *thr_ctx) {
       pfarg_context_t ctx[1];
-      pfarg_load_t load_args;
-      int ctx_fd;
-
       memset(ctx, 0, sizeof(ctx));
-      memset(&load_args, 0, sizeof(load_args));
 
-      if (perfmonctl(thr_ctx->tid, PFM_CREATE_CONTEXT, ctx, 1) == -1) {
-	  if (errno == EBUSY)
-	    {
-	      SUBDBG("Context is busy!\n");
-	    }
-	  else
-	    {
-	      PAPIERROR("perfmonctl(PFM_CREATE_CONTEXT) errno %d", errno);
-	      return(PAPI_ESYS);
-	    }
+      if (perfmonctl(mygettid(), PFM_CREATE_CONTEXT, ctx, 1) == -1) 
+	{
+	  PAPIERROR("perfmonctl(PFM_CREATE_CONTEXT) errno %d", errno);
+	  return(PAPI_ESYS);
       }
-      ctx_fd = ctx[0].ctx_fd;
-      thr_ctx->fd = ctx_fd;
+
+      thr_ctx->fd = ctx[0].ctx_fd;
       thr_ctx->tid = mygettid();
 
       return(pfmw_create_ctx_common(thr_ctx)); 
