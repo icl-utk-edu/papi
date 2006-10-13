@@ -1415,7 +1415,12 @@ static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
       return;
    }
 
-   if (msg.type != PFM_MSG_OVFL) {
+#if defined(HAVE_PFM_MSG_PFM_GEN_MSG_MSG_TYPE)
+   if (msg.pfm_gen_msg.msg_type != PFM_MSG_OVFL)
+#else
+   if (msg.type != PFM_MSG_OVFL) 
+#endif
+{
       PAPIERROR("unexpected msg type %d",msg.type);
       return;
    }
