@@ -552,17 +552,16 @@ hweight64 (unsigned long x)
             evt->pc[i].reg_num   = evt->outp.pfp_pmcs[i].reg_num;
             evt->pc[i].reg_value = evt->outp.pfp_pmcs[i].reg_value;
          }
-#if defined(HAVE_PFM_REG_EVT_IDX)
+#if defined(HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT)
+         for (i=0; i < evt->outp.pfp_pmd_count; i++) {
+	   evt->pd[i].reg_num   = evt->outp.pfp_pmds[i].reg_num;
+	 }
+#else
 	 /* This is really broken */
          for (i=0; i < evt->inp.pfp_event_count; i++) {
 	   evt->pd[i].reg_num   = evt->pc[i].reg_num;
 	 }
-#else
-         for (i=0; i < evt->outp.pfp_pmd_count; i++) {
-	   evt->pd[i].reg_num   = evt->outp.pfp_pmds[i].reg_num;
-	 }
 #endif
-
          return PAPI_OK;
       }
    }

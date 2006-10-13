@@ -33,13 +33,16 @@
 /* Working per thread timer */
 #undef HAVE_PER_THREAD_TIMES
 
+/* new pfmlib_output_param_t */
+#undef HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT
+
 /* event description function */
 #undef HAVE_PFM_GET_EVENT_DESCRIPTION
 
-/* Old interface to pfm_msg_t */
+/* old pfm_msg_t */
 #undef HAVE_PFM_MSG_PFM_GEN_MSG_MSG_TYPE
 
-/* Old interface to pfm_dispatch_events */
+/* old reg_evt_idx */
 #undef HAVE_PFM_REG_EVT_IDX
 
 /* Define to 1 if you have the <stdint.h> header file. */
