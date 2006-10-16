@@ -120,6 +120,13 @@ int setup_p3_presets(int cputype) {
       preset_search_map = &_papi_hwd_core_preset_map;
 	  break;
 #endif
+#ifdef PERFCTR_X86_INTEL_CORE2
+   case PERFCTR_X86_INTEL_CORE2:
+      native_table = &_papi_hwd_core_native_map;
+      _papi_hwi_system_info.sub_info.num_native_events = _papi_hwd_core_native_count;
+      preset_search_map = &_papi_hwd_core_preset_map;
+	  break;
+#endif
    case PERFCTR_X86_AMD_K7:
       native_table = &_papi_hwd_k7_native_map;
       _papi_hwi_system_info.sub_info.num_native_events = _papi_hwd_k7_native_count;
@@ -188,6 +195,9 @@ int _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
          ptr->control.cpu_control.pmc_map[i] = i;
       }
       break;
+#ifdef PERFCTR_X86_INTEL_CORE2
+   case PERFCTR_X86_INTEL_CORE2:
+#endif
 #ifdef PERFCTR_X86_AMD_K8
    case PERFCTR_X86_AMD_K8:
 #endif
