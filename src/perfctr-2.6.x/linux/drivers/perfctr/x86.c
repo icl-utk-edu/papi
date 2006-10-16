@@ -3,7 +3,10 @@
  *
  * Copyright (C) 1999-2006  Mikael Pettersson
  */
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 #include <linux/config.h>
+#endif
 #define __NO_VERSION__
 #include <linux/module.h>
 #include <linux/init.h>
@@ -48,6 +51,18 @@ static struct per_cpu_cache per_cpu_cache[NR_CPUS] __cacheline_aligned;
 struct perfctr_low_ctrs {
 	unsigned int tsc;
 	unsigned int pmc[18];
+};
+
+/* Structures for describing the set of PMU MSRs. */
+struct perfctr_msr_range {
+	unsigned int first_msr;
+	unsigned int nr_msrs;
+};
+
+struct perfctr_pmu_msrs {
+	const struct perfctr_msr_range *perfctrs; /* for {reserve,release}_perfctr_nmi() */
+	const struct perfctr_msr_range *evntsels; /* for {reserve,release}_evntsel_nmi() */
+	const struct perfctr_msr_range *extras;
 };
 
 /* Intel P5, Cyrix 6x86MX/MII/III, Centaur WinChip C6/2/3 */
@@ -159,13 +174,13 @@ static inline void perfctr_cpu_unmask_interrupts(const struct per_cpu_cache *cac
 	__perfctr_cpu_unmask_interrupts();
 }
 
-#else
+#else	/* CONFIG_X86_LOCAL_APIC */
 #define perfctr_cstatus_has_ictrs(cstatus)	0
 #undef cpu_has_apic
 #define cpu_has_apic				0
 #undef apic_write
 #define apic_write(reg,vector)			do{}while(0)
-#endif
+#endif	/* CONFIG_X86_LOCAL_APIC */
 
 #if defined(CONFIG_SMP)
 
@@ -186,11 +201,11 @@ static inline void clear_isuspend_cpu(struct perfctr_cpu_state *state)
 	state->k1.isuspend_cpu = NR_CPUS;
 }
 
-#else
+#else	/* CONFIG_SMP */
 static inline void set_isuspend_cpu(struct perfctr_cpu_state *state, int cpu) { }
 static inline int is_isuspend_cpu(const struct perfctr_cpu_state *state, int cpu) { return 1; }
 static inline void clear_isuspend_cpu(struct perfctr_cpu_state *state) { }
-#endif
+#endif	/* CONFIG_SMP */
 
 /****************************************************************
  *								*
@@ -301,10 +316,14 @@ static void rdpmc_read_counters(const struct perfctr_cpu_state *state,
 }
 
 /* shared with MII and C6 */
-static void p5_clear_counters(void)
-{
-	clear_msr_range(MSR_P5_CESR, 1+2);
-}
+static const struct perfctr_msr_range p5_extras[] = {
+	{ MSR_P5_CESR, 1+2 },
+	{ 0, 0 },
+};
+
+static const struct perfctr_pmu_msrs p5_pmu_msrs = {
+	.extras = p5_extras,
+};
 
 /*
  * Cyrix 6x86/MII/III.
@@ -363,7 +382,7 @@ static void c6_write_control(const struct perfctr_cpu_state *state)
 		wrmsr(MSR_P5_CESR, cesr, 0);
 	}
 }
-#endif
+#endif	/* !CONFIG_X86_TSC */
 
 /*
  * Intel P6 family (Pentium Pro, Pentium II, Pentium III, Pentium M, and
@@ -381,6 +400,7 @@ static void c6_write_control(const struct perfctr_cpu_state *state)
  */
 
 static int k8_is_multicore;	/* affects northbridge events */
+static int p6_is_core2;		/* affects P6_EVNTSEL_ENABLE usage */
 
 /* shared with K7 */
 static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, int is_global)
@@ -407,7 +427,7 @@ static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, int
 		if (evntsel & P6_EVNTSEL_RESERVED)
 			return -EPERM;
 		/* check ENable bit */
-		if (is_k7) {
+		if (is_k7 || p6_is_core2) {
 			/* ENable bit must be set in each evntsel */
 			if (!(evntsel & P6_EVNTSEL_ENABLE))
 				return -EINVAL;
@@ -555,11 +575,20 @@ static void p6_write_control(const struct perfctr_cpu_state *state)
 	p6_like_write_control(state, MSR_P6_EVNTSEL0);
 }
 
-static void p6_clear_counters(void)
-{
-	clear_msr_range(MSR_P6_EVNTSEL0, 2);
-	clear_msr_range(MSR_P6_PERFCTR0, 2);
-}
+static const struct perfctr_msr_range p6_perfctrs[] = {
+	{ MSR_P6_PERFCTR0, 2 },
+	{ 0, 0 },
+};
+
+static const struct perfctr_msr_range p6_evntsels[] = {
+	{ MSR_P6_EVNTSEL0, 2 },
+	{ 0, 0 },
+};
+
+static const struct perfctr_pmu_msrs p6_pmu_msrs = {
+	.perfctrs = p6_perfctrs,
+	.evntsels = p6_evntsels,
+};
 
 /*
  * AMD K7 family (Athlon, Duron).
@@ -600,10 +629,20 @@ static void k7_write_control(const struct perfctr_cpu_state *state)
 	p6_like_write_control(state, MSR_K7_EVNTSEL0);
 }
 
-static void k7_clear_counters(void)
-{
-	clear_msr_range(MSR_K7_EVNTSEL0, 4+4);
-}
+static const struct perfctr_msr_range k7_perfctrs[] = {
+	{ MSR_K7_PERFCTR0, 4 },
+	{ 0, 0 },
+};
+
+static const struct perfctr_msr_range k7_evntsels[] = {
+	{ MSR_K7_EVNTSEL0, 4 },
+	{ 0, 0 },
+};
+
+static const struct perfctr_pmu_msrs k7_pmu_msrs = {
+	.perfctrs = k7_perfctrs,
+	.evntsels = k7_evntsels,
+};
 
 /*
  * VIA C3 family.
@@ -868,23 +907,42 @@ static void p4_write_control(const struct perfctr_cpu_state *state)
 	cache->k1.id = state->k1.id;
 }
 
-static void p4_clear_counters(void)
-{
+static const struct perfctr_msr_range p4_perfctrs[] = {
+	{ MSR_P4_PERFCTR0, 18 },
+	{ 0, 0 },
+};
+
+static const struct perfctr_msr_range p4_evntsels[] = {
+	{ 0x3BA, 2 },	/* IQ_ESCR{0,1}: only models <= 2 have them */
+	{ 0x3A0, 26 },
+	{ 0x3BC, 3 },
+	{ 0x3C0, 6 },
+	{ 0x3C8, 6 },
+	{ 0x3E0, 2 },
+	{ 0, 0 },
+};
+
+static const struct perfctr_msr_range p4_extras[] = {
 	/* MSR 0x3F0 seems to have a default value of 0xFC00, but current
 	   docs doesn't fully define it, so leave it alone for now. */
-	/* clear PEBS_ENABLE and PEBS_MATRIX_VERT; they handle both PEBS
-	   and ReplayTagging, and should exist even if PEBS is disabled */
-	clear_msr_range(0x3F1, 2);
-	clear_msr_range(0x3A0, 26);
-	if (p4_IQ_ESCR_ok)
-		clear_msr_range(0x3BA, 2);
-	clear_msr_range(0x3BC, 3);
-	clear_msr_range(0x3C0, 6);
-	clear_msr_range(0x3C8, 6);
-	clear_msr_range(0x3E0, 2);
-	clear_msr_range(MSR_P4_CCCR0, 18);
-	clear_msr_range(MSR_P4_PERFCTR0, 18);
-}
+	/* PEBS_ENABLE and PEBS_MATRIX_VERT handle both PEBS and
+	   ReplayTagging, and should exist even if PEBS is disabled */
+	{ 0x3F1, 2 },
+	{ MSR_P4_CCCR0, 18 },
+	{ 0, 0 },
+};
+
+static const struct perfctr_pmu_msrs p4_pmu_msrs_models_0to2 = {
+	.perfctrs = p4_perfctrs,
+	.evntsels = p4_evntsels,
+	.extras = p4_extras,
+};
+
+static const struct perfctr_pmu_msrs p4_pmu_msrs_models_3up = {
+	.perfctrs = p4_perfctrs,
+	.evntsels = p4_evntsels+1,
+	.extras = p4_extras,
+};
 
 /*
  * Generic driver for any x86 with a working TSC.
@@ -895,10 +953,6 @@ static int generic_check_control(struct perfctr_cpu_state *state, int is_global)
 	if (state->control.nractrs || state->control.nrictrs)
 		return -EINVAL;
 	return 0;
-}
-
-static void generic_clear_counters(void)
-{
 }
 
 /*
@@ -1131,10 +1185,38 @@ void perfctr_cpu_sample(struct perfctr_cpu_state *state)
 	}
 }
 
-static void (*clear_counters)(void);
+static void (*clear_counters)(void); /* VIA C3 needs non-standard initialisation */
+static const struct perfctr_pmu_msrs *pmu_msrs;
+
 static void perfctr_cpu_clear_counters(void)
 {
-	return clear_counters();
+	const struct perfctr_pmu_msrs *pmu;
+	const struct perfctr_msr_range *msrs;
+	int i;
+
+	if (clear_counters) {
+		clear_counters();
+		return;
+	}
+
+	pmu = pmu_msrs;
+	if (!pmu)
+		return;
+
+	/* The order below is significant: evntsels must be cleared
+	   before the perfctrs. */
+	msrs = pmu->evntsels;
+	if (msrs)
+		for(i = 0; msrs[i].first_msr; ++i)
+			clear_msr_range(msrs[i].first_msr, msrs[i].nr_msrs);
+	msrs = pmu->extras;
+	if (msrs)
+		for(i = 0; msrs[i].first_msr; ++i)
+			clear_msr_range(msrs[i].first_msr, msrs[i].nr_msrs);
+	msrs = pmu->perfctrs;
+	if (msrs)
+		for(i = 0; msrs[i].first_msr; ++i)
+			clear_msr_range(msrs[i].first_msr, msrs[i].nr_msrs);
 }
 
 /****************************************************************
@@ -1350,20 +1432,22 @@ static int __init intel_init(void)
 		perfctr_cpu_name = p5_name;
 		write_control = p5_write_control;
 		check_control = p5_check_control;
-		clear_counters = p5_clear_counters;
+		pmu_msrs = &p5_pmu_msrs;
 		return 0;
 	case 6:
 		/* Check MSR_IA32_MISC_ENABLE_PERF_AVAIL on relevant models. */
 		if (current_cpu_data.x86_model == 9 ||	/* Pentium M */
 		    current_cpu_data.x86_model == 13 || /* Pentium M */
-		    current_cpu_data.x86_model == 14 ||
-		    current_cpu_data.x86_model == 15) { /* Intel Core */
+		    current_cpu_data.x86_model == 14 || /* Intel Core */
+		    current_cpu_data.x86_model == 15) { /* Intel Core 2 */
 			rdmsr_low(MSR_IA32_MISC_ENABLE, misc_enable);
 			if (!(misc_enable & MSR_IA32_MISC_ENABLE_PERF_AVAIL))
 				break;
 		}
-		if (current_cpu_data.x86_model == 14 ||
-		    current_cpu_data.x86_model == 15) {	/* Intel Core */
+		if (current_cpu_data.x86_model == 15) {	/* Intel Core 2 */
+			perfctr_info.cpu_type = PERFCTR_X86_INTEL_CORE2;
+			p6_is_core2 = 1;
+		} else if (current_cpu_data.x86_model == 14) {	/* Intel Core */
 			/* XXX: what about erratum AE19? */
 			perfctr_info.cpu_type = PERFCTR_X86_INTEL_CORE;
 		} else if (current_cpu_data.x86_model == 9 ||	/* Pentium M */
@@ -1387,7 +1471,7 @@ static int __init intel_init(void)
 		read_counters = rdpmc_read_counters;
 		write_control = p6_write_control;
 		check_control = p6_check_control;
-		clear_counters = p6_clear_counters;
+		pmu_msrs = &p6_pmu_msrs;
 #ifdef CONFIG_X86_LOCAL_APIC
 		if (cpu_has_apic) {
 			perfctr_info.cpu_features |= PERFCTR_FEATURE_PCINT;
@@ -1427,7 +1511,10 @@ static int __init intel_init(void)
 		read_counters = rdpmc_read_counters;
 		write_control = p4_write_control;
 		check_control = p4_check_control;
-		clear_counters = p4_clear_counters;
+		if (current_cpu_data.x86_model <= 2)
+			pmu_msrs = &p4_pmu_msrs_models_0to2;
+		else
+			pmu_msrs = &p4_pmu_msrs_models_3up;
 #ifdef CONFIG_X86_LOCAL_APIC
 		if (cpu_has_apic) {
 			perfctr_info.cpu_features |= PERFCTR_FEATURE_PCINT;
@@ -1481,9 +1568,9 @@ static void __init k8_multicore_init(void)
 	printk(KERN_INFO "perfctr/x86.c: multi-core K8s detected:"
 	       " restricting access to northbridge events\n");
 }
-#else
+#else	/* CONFIG_SMP */
 #define k8_multicore_init()	do{}while(0)
-#endif
+#endif	/* CONFIG_SMP */
 
 static int __init amd_init(void)
 {
@@ -1512,7 +1599,7 @@ static int __init amd_init(void)
 	read_counters = rdpmc_read_counters;
 	write_control = k7_write_control;
 	check_control = k7_check_control;
-	clear_counters = k7_clear_counters;
+	pmu_msrs = &k7_pmu_msrs;
 #ifdef CONFIG_X86_LOCAL_APIC
 	if (cpu_has_apic) {
 		perfctr_info.cpu_features |= PERFCTR_FEATURE_PCINT;
@@ -1536,7 +1623,7 @@ static int __init cyrix_init(void)
 		read_counters = rdpmc_read_counters;
 		write_control = p5_write_control;
 		check_control = mii_check_control;
-		clear_counters = p5_clear_counters;
+		pmu_msrs = &p5_pmu_msrs;
 		return 0;
 	}
 	return -ENODEV;
@@ -1573,9 +1660,9 @@ static int __init centaur_init(void)
 		read_counters = rdpmc_read_counters;
 		write_control = c6_write_control;
 		check_control = c6_check_control;
-		clear_counters = p5_clear_counters;
+		pmu_msrs = &p5_pmu_msrs;
 		return 0;
-#endif
+#endif	/* !CONFIG_X86_TSC */
 	case 6: /* VIA C3 */
 		if (!cpu_has_tsc)
 			return -ENODEV;
@@ -1595,6 +1682,7 @@ static int __init centaur_init(void)
 		write_control = p6_write_control;
 		check_control = vc3_check_control;
 		clear_counters = vc3_clear_counters;
+		pmu_msrs = NULL;
 		return 0;
 	}
 	return -ENODEV;
@@ -1612,7 +1700,7 @@ static int __init generic_init(void)
 	check_control = generic_check_control;
 	write_control = p6_write_control;
 	read_counters = rdpmc_read_counters;
-	clear_counters = generic_clear_counters;
+	pmu_msrs = NULL;
 	return 0;
 }
 
@@ -1744,7 +1832,7 @@ static void x86_pm_exit(void)
 
 #endif	/* 2.4 kernel */
 
-#else
+#else	/* CONFIG_X86_LOCAL_APIC && CONFIG_PM */
 
 static inline void x86_pm_init(void) { }
 static inline void x86_pm_exit(void) { }
@@ -1780,10 +1868,148 @@ static int reserve_lapic_nmi(void)
 static inline void release_lapic_nmi(void) { }
 #endif
 
-#else
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,19)
+
+static void perfctr_release_perfctr_range(unsigned int first_msr, unsigned int nr_msrs)
+{
+	unsigned int i;
+
+	for(i = 0; i < nr_msrs; ++i)
+		release_perfctr_nmi(first_msr + i);
+}
+
+static int perfctr_reserve_perfctr_range(unsigned int first_msr, unsigned int nr_msrs)
+{
+	unsigned int i;
+
+	for(i = 0; i < nr_msrs; ++i)
+		if (!reserve_perfctr_nmi(first_msr + i)) {
+			printk(KERN_ERR "perfctr/x86.c: failed to reserve perfctr MSR %#x\n",
+			       first_msr + i);
+			perfctr_release_perfctr_range(first_msr, i);
+			return -1;
+		}
+	return 0;
+}
+
+static void perfctr_release_evntsel_range(unsigned int first_msr, unsigned int nr_msrs)
+{
+	unsigned int i;
+
+	for(i = 0; i < nr_msrs; ++i)
+		release_evntsel_nmi(first_msr + i);
+}
+
+static int perfctr_reserve_evntsel_range(unsigned int first_msr, unsigned int nr_msrs)
+{
+	unsigned int i;
+
+	for(i = 0; i < nr_msrs; ++i)
+		if (!reserve_evntsel_nmi(first_msr + i)) {
+			printk(KERN_ERR "perfctr/x86.c: failed to reserve evntsel MSR %#x\n",
+			       first_msr + i);
+			perfctr_release_evntsel_range(first_msr, i);
+			return -1;
+		}
+	return 0;
+}
+
+static void perfctr_release_counters_cpu(void *ignore)
+{
+	const struct perfctr_pmu_msrs *pmu;
+	const struct perfctr_msr_range *msrs;
+	int i;
+
+	pmu = pmu_msrs;
+	if (!pmu)
+		return;
+	msrs = pmu->perfctrs;
+	if (msrs)
+		for(i = 0; msrs[i].first_msr; ++i)
+			perfctr_release_perfctr_range(msrs[i].first_msr, msrs[i].nr_msrs);
+	msrs = pmu->evntsels;
+	if (msrs)
+		for(i = 0; msrs[i].first_msr; ++i)
+			perfctr_release_evntsel_range(msrs[i].first_msr, msrs[i].nr_msrs);
+}
+
+static void perfctr_release_counters(void)
+{
+	on_each_cpu(perfctr_release_counters_cpu, NULL, 1, 1);
+}
+
+static void perfctr_reserve_counters_cpu(void *error)
+{
+	const struct perfctr_pmu_msrs *pmu;
+	const struct perfctr_msr_range *msrs;
+	int i;
+
+	pmu = pmu_msrs;
+	if (!pmu)
+		return;
+	msrs = pmu->perfctrs;
+	if (msrs) {
+		for(i = 0; msrs[i].first_msr; ++i)
+			if (perfctr_reserve_perfctr_range(msrs[i].first_msr, msrs[i].nr_msrs))
+				goto err_perfctrs;
+	}
+	msrs = pmu->evntsels;
+	if (msrs) {
+		for(i = 0; msrs[i].first_msr; ++i)
+			if (perfctr_reserve_evntsel_range(msrs[i].first_msr, msrs[i].nr_msrs))
+				goto err_evntsels;
+	}
+	return;
+
+ err_evntsels:
+	while (--i >= 0)
+		perfctr_release_evntsel_range(msrs[i].first_msr, msrs[i].nr_msrs);
+
+	msrs = pmu->perfctrs;
+	if (!msrs)
+		goto err;
+	for(i = 0; msrs[i].first_msr; ++i)
+		;
+ err_perfctrs:
+	while (--i >= 0)
+		perfctr_release_perfctr_range(msrs[i].first_msr, msrs[i].nr_msrs);
+ err:
+	atomic_set((atomic_t*)error, -1);
+}
+
+static int perfctr_reserve_counters(void)
+{
+	atomic_t error = ATOMIC_INIT(0);
+
+	on_each_cpu(perfctr_reserve_counters_cpu, &error, 1, 1);
+	return atomic_read(&error);
+}
+
+static int reserve_lapic_nmi(void)
+{
+	if (nmi_watchdog != NMI_LOCAL_APIC)
+		return 0;
+	if (atomic_read(&nmi_active) <= 0)
+		return 0;
+	on_each_cpu(stop_apic_nmi_watchdog, NULL, 1, 1);
+	return perfctr_reserve_counters();
+}
+
+static void release_lapic_nmi(void)
+{
+	perfctr_release_counters();
+	if (nmi_watchdog != NMI_LOCAL_APIC)
+		return;
+	if (atomic_read(&nmi_active) != 0)
+		return;
+	on_each_cpu(setup_apic_nmi_watchdog, NULL, 1, 1);
+}
+#endif
+
+#else	/* CONFIG_X86_LOCAL_APIC */
 static inline int reserve_lapic_nmi(void) { return 0; }
 static inline void release_lapic_nmi(void) { }
-#endif
+#endif	/* CONFIG_X86_LOCAL_APIC */
 
 static void do_init_tests(void)
 {

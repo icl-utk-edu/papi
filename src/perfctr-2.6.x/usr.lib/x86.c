@@ -1,7 +1,7 @@
 /* $Id$
  * x86-specific perfctr library procedures.
  *
- * Copyright (C) 1999-2004  Mikael Pettersson
+ * Copyright (C) 1999-2006  Mikael Pettersson
  */
 #include <stdio.h>
 #include "libperfctr.h"
@@ -19,6 +19,7 @@ unsigned int perfctr_info_nrctrs(const struct perfctr_info *info)
       case PERFCTR_X86_WINCHIP_C6:
       case PERFCTR_X86_WINCHIP_2:
       case PERFCTR_X86_INTEL_PENTM:
+      case PERFCTR_X86_INTEL_CORE:
 	return 2;
       case PERFCTR_X86_AMD_K7:
 	return 4;
@@ -33,7 +34,7 @@ unsigned int perfctr_info_nrctrs(const struct perfctr_info *info)
       case PERFCTR_X86_AMD_K8:
       case PERFCTR_X86_AMD_K8C:
 	return 4;
-      case PERFCTR_X86_INTEL_CORE:
+      case PERFCTR_X86_INTEL_CORE2:
 	return 2;
       case PERFCTR_X86_GENERIC:
       default:
@@ -73,9 +74,11 @@ const char *perfctr_info_cpu_name(const struct perfctr_info *info)
 	return "Intel Pentium 4 Model 2";
       case PERFCTR_X86_INTEL_PENTM:
 	return "Intel Pentium M";
-#endif
       case PERFCTR_X86_INTEL_CORE:
 	return "Intel Core";
+#endif
+      case PERFCTR_X86_INTEL_CORE2:
+	return "Intel Core 2";
       case PERFCTR_X86_INTEL_P4M3:
 	return "Intel Pentium 4 Model 3";
       case PERFCTR_X86_AMD_K8:

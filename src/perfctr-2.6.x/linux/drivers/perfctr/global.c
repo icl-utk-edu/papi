@@ -6,7 +6,10 @@
  * XXX: Doesn't do any authentication yet. Should we limit control
  * to root, or base it on having write access to /dev/perfctr?
  */
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 #include <linux/config.h>
+#endif
 #define __NO_VERSION__
 #include <linux/module.h>
 #include <linux/sched.h>

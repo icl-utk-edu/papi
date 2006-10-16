@@ -1,7 +1,7 @@
 /* $Id$
  *
  * NAME
- *	perfex - a command-line interface to x86 performance counters
+ *	perfex - a command-line interface to processor performance counters
  *
  * SYNOPSIS
  *	perfex [-e event] .. [--p4pe=value] [--p4pmv=value] [-o file] command
@@ -90,15 +90,15 @@
  *	metric. Note that bit 25 is NOT set in PEBS_ENABLE.
  *
  * DEPENDENCIES
- *	perfex only works on Linux/x86 systems which have been modified
- *	to include the perfctr driver. This driver is available at
+ *	perfex only works on Linux systems which have been modified
+ *	to include the perfctr kernel extension. Perfctr is available at
  *	http://www.csd.uu.se/~mikpe/linux/perfctr/.
  *
  * NOTES
  *	perfex is superficially similar to IRIX' perfex(1).
  *	The -a, -mp, -s, and -x options are not yet implemented.
  *
- * Copyright (C) 1999-2004  Mikael Pettersson
+ * Copyright (C) 1999-2006  Mikael Pettersson
  */
 
 /*
@@ -397,7 +397,7 @@ static void do_print_event_set(const struct perfctr_event_set *event_set,
 	do_print_event(&event_set->events[i], long_format, event_set->event_prefix);
 }
 
-static int do_list(const struct perfctr_info *info, int long_format)
+static void do_list(const struct perfctr_info *info, int long_format)
 {
     const struct perfctr_event_set *event_set;
     unsigned int nrctrs;
@@ -412,23 +412,41 @@ static int do_list(const struct perfctr_info *info, int long_format)
 	   (info->cpu_features & PERFCTR_FEATURE_PCINT) ? "" : " not");
 
     event_set = perfctr_cpu_event_set(info->cpu_type);
-    if( !event_set ) {
-	fprintf(stderr, "perfex: perfctr_cpu_event_set(%u) failed\n",
-		info->cpu_type);
-	return 1;
+    if( !event_set || !event_set->nevents ) {
+	printf("\nThe event list for this CPU type is not available\n");
+	return;
     }
-    if( !event_set->nevents ) /* the 'generic' CPU type */
-	return 0;
     printf("\nEvents Available:\n");
     if( long_format )
 	printf("Name:EvntSel:CounterSet:DefaultUnitMask\n");
     do_print_event_set(event_set, long_format);
-    return 0;
+    return;
+}
+
+/* Hack while phasing out an old number parsing bug. */
+static unsigned int strtoul_base = 16;
+static unsigned int quiet;
+
+unsigned long my_strtoul(const char *nptr, char **endptr)
+{
+    unsigned long val1;
+
+    val1 = strtoul(nptr, endptr, strtoul_base);
+    if (strtoul_base == 16 && !quiet) {
+	unsigned long val2 = strtoul(nptr, NULL, 0);
+	if (val1 != val2)
+	    fprintf(stderr, "perfex: warning: string '%s' is base-dependent, assuming base 16."
+		    " Please prefix hexadecimal numbers with '0x'.\n",
+		    nptr);
+    }
+    return val1;
 }
 
 static const struct option long_options[] = {
+    { "decimal", 0, NULL, 'd' },
     { "event", 1, NULL, 'e' },
     { "help", 0, NULL, 'h' },
+    { "hex", 0, NULL, 'x' },
     { "info", 0, NULL, 'i' },
     { "list", 0, NULL, 'l' },
     { "long-list", 0, NULL, 'L' },
@@ -450,6 +468,8 @@ static void do_usage(void)
     fprintf(stderr, "\t-i | --info\t\t\tPrint PerfCtr driver information\n");
     fprintf(stderr, "\t-l | --list\t\t\tList available events\n");
     fprintf(stderr, "\t-L | --long-list\t\tList available events in long format\n");
+    fprintf(stderr, "\t-d | --decimal\t\t\tAllow decimal numbers in event specifications\n");
+    fprintf(stderr, "\t-x | --hex\t\t\tOnly accept hexadecimal numbers in event specifications\n");
     do_arch_usage();
 }
 
@@ -472,7 +492,7 @@ int main(int argc, char **argv)
 
     for(;;) {
 	/* the '+' is there to prevent permutation of argv[] */
-	int ch = getopt_long(argc, argv, "+e:hilLo:", long_options, NULL);
+	int ch = getopt_long(argc, argv, "+de:hilLo:x", long_options, NULL);
 	switch( ch ) {
 	  case -1:	/* no more options */
 	    if( optind >= argc ) {
@@ -487,14 +507,23 @@ int main(int argc, char **argv)
 	  case 'i':
 	    return do_info(&info);
 	  case 'l':
-	    return do_list(&info, 0);
+	    do_list(&info, 0);
+	    return 0;
 	  case 'L':
-	    return do_list(&info, 1);
+	    do_list(&info, 1);
+	    return 0;
 	  case 'o':
 	    if( (resfile = fopen(optarg, "w")) == NULL ) {
 		fprintf(stderr, "perfex: %s: %s\n", optarg, strerror(errno));
 		return 1;
 	    }
+	    continue;
+	  case 'd':
+	    strtoul_base = 0;
+	    continue;
+	  case 'x':
+	    strtoul_base = 16;
+	    quiet = 1;
 	    continue;
 	  case 'e':
 	    n = do_event_spec(n, optarg, &control.cpu_control);

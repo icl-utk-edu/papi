@@ -4,7 +4,10 @@
  *
  * Copyright (C) 2000-2006  Mikael Pettersson
  */
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 #include <linux/config.h>
+#endif
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

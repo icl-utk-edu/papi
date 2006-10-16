@@ -3,7 +3,10 @@
  *
  * Copyright (C) 1999-2006  Mikael Pettersson
  */
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 #include <linux/config.h>
+#endif
 #define __NO_VERSION__
 #include <linux/module.h>
 #include <linux/init.h>
@@ -154,6 +157,31 @@ static inline void vperfctr_task_unlock(struct task_struct *p)
 }
 
 #endif	/* !CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK */
+
+/* How to lock around find_task_by_pid(). The tasklist_lock always
+   works, but it's no longer exported starting with kernel 2.6.18.
+   For kernels 2.6.18 and newer use rcu_read_{lock,unlock}(). */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,18)
+static inline void vperfctr_lock_find_task_by_pid(void)
+{
+	rcu_read_lock();
+}
+
+static inline void vperfctr_unlock_find_task_by_pid(void)
+{
+	rcu_read_unlock();
+}
+#else	/* < 2.6.18 */
+static inline void vperfctr_lock_find_task_by_pid(void)
+{
+	read_lock(&tasklist_lock);
+}
+
+static inline void vperfctr_unlock_find_task_by_pid(void)
+{
+	read_unlock(&tasklist_lock);
+}
+#endif	/* < 2.6.18 */
 
 /****************************************************************
  *								*
@@ -914,7 +942,9 @@ static struct inode *vperfctr_get_inode(void)
 	inode->i_uid = current->fsuid;
 	inode->i_gid = current->fsgid;
 	inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 	inode->i_blksize = 0;
+#endif
 	return inode;
 }
 
@@ -1017,11 +1047,11 @@ int vperfctr_attach(int tid, int creat)
 	}
 	tsk = current;
 	if (tid != 0 && tid != tsk->pid) { /* remote? */
-		read_lock(&tasklist_lock);
+		vperfctr_lock_find_task_by_pid();
 		tsk = find_task_by_pid(tid);
 		if (tsk)
 			get_task_struct(tsk);
-		read_unlock(&tasklist_lock);
+		vperfctr_unlock_find_task_by_pid();
 		err = -ESRCH;
 		if (!tsk)
 			goto err_perfctr;
