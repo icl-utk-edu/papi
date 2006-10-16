@@ -2,9 +2,12 @@
  * Performance-monitoring counters driver.
  * Top-level initialisation code.
  *
- * Copyright (C) 1999-2005  Mikael Pettersson
+ * Copyright (C) 1999-2006  Mikael Pettersson
  */
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 #include <linux/config.h>
+#endif
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/init.h>

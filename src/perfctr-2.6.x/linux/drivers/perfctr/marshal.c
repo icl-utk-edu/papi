@@ -2,10 +2,13 @@
  * Performance-monitoring counters driver.
  * Structure marshalling support.
  *
- * Copyright (C) 2003-2005  Mikael Pettersson
+ * Copyright (C) 2003-2006  Mikael Pettersson
  */
 #ifdef __KERNEL__
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 #include <linux/config.h>
+#endif
 struct inode;
 #include <linux/sched.h>
 #include <linux/perfctr.h>

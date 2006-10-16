@@ -1,7 +1,7 @@
 /* $Id$
  * x86-specific code.
  *
- * Copyright (C) 1999-2004  Mikael Pettersson
+ * Copyright (C) 1999-2006  Mikael Pettersson
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,8 +37,9 @@ void do_setup(const struct perfctr_info *info,
       case PERFCTR_X86_INTEL_PIII:
       case PERFCTR_X86_INTEL_PENTM:
       case PERFCTR_X86_AMD_K7:
-#endif
       case PERFCTR_X86_INTEL_CORE:
+#endif
+      case PERFCTR_X86_INTEL_CORE2:
       case PERFCTR_X86_AMD_K8:
       case PERFCTR_X86_AMD_K8C:
 	/* event 0xC0 (INST_RETIRED), count at CPL > 0, Enable */

@@ -98,7 +98,7 @@
  *	perfex is superficially similar to IRIX' perfex(1).
  *	The -a, -mp, -s, and -x options are not yet implemented.
  *
- * Copyright (C) 1999-2004  Mikael Pettersson
+ * Copyright (C) 1999-2006  Mikael Pettersson
  */
 
 /*
@@ -397,7 +397,7 @@ static void do_print_event_set(const struct perfctr_event_set *event_set,
 	do_print_event(&event_set->events[i], long_format, event_set->event_prefix);
 }
 
-static int do_list(const struct perfctr_info *info, int long_format)
+static void do_list(const struct perfctr_info *info, int long_format)
 {
     const struct perfctr_event_set *event_set;
     unsigned int nrctrs;
@@ -412,18 +412,15 @@ static int do_list(const struct perfctr_info *info, int long_format)
 	   (info->cpu_features & PERFCTR_FEATURE_PCINT) ? "" : " not");
 
     event_set = perfctr_cpu_event_set(info->cpu_type);
-    if( !event_set ) {
-	fprintf(stderr, "perfex: perfctr_cpu_event_set(%u) failed\n",
-		info->cpu_type);
-	return 1;
+    if( !event_set || !event_set->nevents ) {
+	printf("\nThe event list for this CPU type is not available\n");
+	return;
     }
-    if( !event_set->nevents ) /* the 'generic' CPU type */
-	return 0;
     printf("\nEvents Available:\n");
     if( long_format )
 	printf("Name:EvntSel:CounterSet:DefaultUnitMask\n");
     do_print_event_set(event_set, long_format);
-    return 0;
+    return;
 }
 
 /* Hack while phasing out an old number parsing bug. */
@@ -510,9 +507,11 @@ int main(int argc, char **argv)
 	  case 'i':
 	    return do_info(&info);
 	  case 'l':
-	    return do_list(&info, 0);
+	    do_list(&info, 0);
+	    return 0;
 	  case 'L':
-	    return do_list(&info, 1);
+	    do_list(&info, 1);
+	    return 0;
 	  case 'o':
 	    if( (resfile = fopen(optarg, "w")) == NULL ) {
 		fprintf(stderr, "perfex: %s: %s\n", optarg, strerror(errno));

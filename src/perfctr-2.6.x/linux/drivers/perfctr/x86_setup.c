@@ -2,9 +2,12 @@
  * Performance-monitoring counters driver.
  * x86/x86_64-specific kernel-resident code.
  *
- * Copyright (C) 1999-2004  Mikael Pettersson
+ * Copyright (C) 1999-2006  Mikael Pettersson
  */
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 #include <linux/config.h>
+#endif
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
@@ -113,6 +116,13 @@ EXPORT_SYMBOL_mmu_cr4_features;
 EXPORT_SYMBOL(perfctr_cpu_khz);
 
 #ifdef CONFIG_X86_LOCAL_APIC
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,19)
+#include <asm/nmi.h>
+EXPORT_SYMBOL(setup_apic_nmi_watchdog);
+EXPORT_SYMBOL(stop_apic_nmi_watchdog);
+#endif
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,6)
 EXPORT_SYMBOL(nmi_perfctr_msr);
 #endif

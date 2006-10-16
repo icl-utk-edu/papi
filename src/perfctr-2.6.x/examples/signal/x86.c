@@ -1,7 +1,7 @@
 /* $Id$
  * x86-specific code.
  *
- * Copyright (C) 2001-2004  Mikael Pettersson
+ * Copyright (C) 2001-2006  Mikael Pettersson
  */
 #define __USE_GNU /* enable symbolic names for gregset_t[] indices */
 #include <sys/ucontext.h>
@@ -48,13 +48,14 @@ void do_setup(const struct perfctr_info *info,
       case PERFCTR_X86_INTEL_PII:
       case PERFCTR_X86_INTEL_PIII:
       case PERFCTR_X86_INTEL_PENTM:
-#endif
       case PERFCTR_X86_INTEL_CORE:
+#endif
+      case PERFCTR_X86_INTEL_CORE2:
 	/* FLOPS, USR, ENable, INT */
 	evntsel0 = 0xC1 | (1 << 16) | (1 << 22) | (1 << 20);
 	/* BR_TAKEN_RETIRED, USR, INT */
 	evntsel1 = 0xC9 | (1 << 16) | (1 << 20);
-	if (info->cpu_type == PERFCTR_X86_INTEL_CORE)
+	if (info->cpu_type == PERFCTR_X86_INTEL_CORE2)
 	    evntsel1 |= (1 << 22);
 	break;
 #if !defined(__x86_64__)

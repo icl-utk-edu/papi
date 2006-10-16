@@ -1,7 +1,7 @@
 /* $Id$
  * x86/x86_64 Performance-Monitoring Counters driver
  *
- * Copyright (C) 1999-2004  Mikael Pettersson
+ * Copyright (C) 1999-2006  Mikael Pettersson
  */
 #ifndef _ASM_I386_PERFCTR_H
 #define _ASM_I386_PERFCTR_H
@@ -24,7 +24,8 @@
 #define PERFCTR_X86_INTEL_PENTM	14	/* Pentium M */
 #define PERFCTR_X86_AMD_K8C	15	/* Revision C */
 #define PERFCTR_X86_INTEL_P4M3	16	/* model 3 and above */
-#define PERFCTR_X86_INTEL_CORE	17
+#define PERFCTR_X86_INTEL_CORE	17	/* family 6 model 14 */
+#define PERFCTR_X86_INTEL_CORE2	18	/* family 6 model 15 */
 
 struct perfctr_sum_ctrs {
 	unsigned long long tsc;

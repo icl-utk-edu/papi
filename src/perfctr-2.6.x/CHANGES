@@ -6,6 +6,21 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.25, 2006-10-15
+- The Intel Core 2 processors are substantially different from
+  the old Core processors. Core 2 processors are now mapped to a
+  new cpu_type PERFCTR_X86_INTEL_CORE2, and must be programmed
+  so that every EVNTSEL used has its Enable flag set. This is
+  consistent with Intel's documentation and observations made by
+  others on later steppings of the Core 2. Early steppings may
+  be more P6-like (master Enable in EVNTSEL0), but as long as a
+  control setup includes EVNTSEL0 it should work on any stepping.
+- Major x86 driver updates for changes in kernel 2.6.19-rc1.
+- Updated kernel support: 2.6.19-rc2, 2.6.18, 2.6.9-42.0.3.EL (RHEL4),
+  and 2.4.34-pre4.
+- Fixed perfex -l/-L to handle unavailability of event set data
+  gracefully and not signal an error in those cases.
+
 Version 2.6.24, 2006-09-17
 - Fixed a driver linkage failure in 64-bit x86 kernels when
   CONFIG_PERFCTR_INIT_TESTS was enabled, caused by an omission

@@ -4,8 +4,10 @@
  *
  * Copyright (C) 2004-2006  Mikael Pettersson
  */
-#include <linux/config.h>
 #include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
+#include <linux/config.h>
+#endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,16)
 #include <asm/pmc.h>
