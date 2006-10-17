@@ -7,7 +7,7 @@ REVISION = 5
 AGE = 0
 SHLIB   = libpapi.so.$(VERSION).$(REVISION).$(AGE)
 LIBS	= static shared
-TARGETS = ear serial multiplex_and_pthreads shared
+TARGETS = ear serial attach multiplex_and_pthreads shared
 SUBSTR	= perfmon
 MEMSUBSTR = perfmon
 

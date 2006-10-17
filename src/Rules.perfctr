@@ -6,7 +6,7 @@
 
 DESCR   = "Linux with PerfCtr $(VERSION) patch and library"
 LIBS    = static shared
-TARGETS = serial multiplex_and_pthreads shared
+TARGETS = serial attach multiplex_and_pthreads shared
 LIBRARY = libpapi.a
 SHLIB   = libpapi.so
 SUBSTR  = perfctr-$(CPU)
