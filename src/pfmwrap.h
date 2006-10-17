@@ -120,7 +120,7 @@ static inline int pfmw_get_num_events(int *num) {
       pfarg_context_t ctx[1];
 
       memset(ctx, 0, sizeof(ctx));
-      ctx[0].ctx_notify_pid = thr_ctx->tid;
+      ctx[0].ctx_notify_pid = mygettid();
       ctx[0].ctx_flags = PFM_FL_INHERIT_NONE;
 
       SUBDBG("PFM_CREATE_CONTEXT\n");
@@ -578,8 +578,9 @@ hweight64 (unsigned long x)
 
       load_args.load_pid = ctx->tid;
 
+      SUBDBG("PFM_LOAD_CONTEXT FD %d, PID %d\n",ctx->fd,ctx->tid);
       if (perfmonctl(ctx->fd, PFM_LOAD_CONTEXT, &load_args, 1) == -1) {
-         PAPIERROR("perfmonctl(PFM_WRITE_PMDS) errno %d",errno);
+         PAPIERROR("perfmonctl(PFM_LOAD_CONTEXT) errno %d",errno);
          return(PAPI_ESYS);
       }
       /*
@@ -624,14 +625,15 @@ hweight64 (unsigned long x)
       pfarg_context_t ctx[1];
       memset(ctx, 0, sizeof(ctx));
 
-      if (perfmonctl(mygettid(), PFM_CREATE_CONTEXT, ctx, 1) == -1) 
+      SUBDBG("PFM_CREATE_CONTEXT on 0\n");
+      if (perfmonctl(0, PFM_CREATE_CONTEXT, ctx, 1) == -1) 
 	{
 	  PAPIERROR("perfmonctl(PFM_CREATE_CONTEXT) errno %d", errno);
 	  return(PAPI_ESYS);
       }
-
       thr_ctx->fd = ctx[0].ctx_fd;
       thr_ctx->tid = mygettid();
+      SUBDBG("PFM_CREATE_CONTEXT returns FD %d, TID %d\n",(int)thr_ctx->fd,(int)thr_ctx->tid);
 
       return(pfmw_create_ctx_common(thr_ctx)); 
    }
@@ -669,7 +671,7 @@ hweight64 (unsigned long x)
       pos= ESI->EventInfoArray[EventIndex].pos[0];
       EventCode= ESI->EventInfoArray[EventIndex].event_code;
       native_index= ESI->NativeInfoArray[pos].ni_event & PAPI_NATIVE_AND_MASK;
-
+      memset(ctx,0,sizeof(ctx[0]));
       /*
        * We initialize the format specific information.
        * The format is identified by its UUID which must be copied
@@ -685,7 +687,8 @@ hweight64 (unsigned long x)
       /*
        * now create the context for self monitoring/per-task
        */
-      if (perfmonctl(thr_ctx->fd, PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
+      SUBDBG("PFM_CREATE_CONTEXT on 0\n");
+      if (perfmonctl(0, PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
          if (errno == ENOSYS) 
 	   PAPIERROR("Your kernel does not have performance monitoring support");
 	 else
@@ -698,7 +701,9 @@ hweight64 (unsigned long x)
        */
       ctx_fd = ctx[0].ctx_arg.ctx_fd;
       /* save the fd into the thread context struct */
-      thr_ctx->fd=ctx_fd;
+      thr_ctx->fd = ctx_fd;
+      thr_ctx->tid = mygettid();
+      SUBDBG("PFM_CREATE_CONTEXT returns FD %d, TID %d\n",(int)thr_ctx->fd,(int)thr_ctx->tid);
       /* indicate which PMD to include in the sample */
 /* DEAR and BTB events */
 #ifdef ITANIUM2
