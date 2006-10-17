@@ -908,6 +908,7 @@ static int _internal_get_system_info(void)
 
    /* Number of counters is 64, 32 P chip, 16 M chip and 16 E chip */
    _papi_hwi_system_info.sub_info.num_cntrs = HWPERF_COUNTMAX+EPERF_COUNTMAX+MPERF_COUNTMAX;
+   _papi_hwi_system_info.sub_info.num_mpx_cntrs = _papi_hwi_system_info.sub_info.num_cntrs;
 
    _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_OTHER;
    _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
