@@ -22,7 +22,7 @@ typedef struct _ThreadInfo {
 
 /* The list of threads, gets initialized to master process with TID of getpid() */
 
-extern ThreadInfo_t *_papi_hwi_thread_head;
+extern volatile ThreadInfo_t *_papi_hwi_thread_head;
 
 /* If we have TLS, this variable ALWAYS points to our thread descriptor. It's like magic! */
 
@@ -49,8 +49,8 @@ inline_static int _papi_hwi_lock(int lck)
 {
   if (_papi_hwi_thread_id_fn)
     {
-      THRDBG("Lock %d\n",lck);
       _papi_hwd_lock(lck);
+      THRDBG("Lock %d\n",lck);
     }
   else
     { 
@@ -64,8 +64,8 @@ inline_static int _papi_hwi_unlock(int lck)
 {
   if (_papi_hwi_thread_id_fn)
     {
-      THRDBG("Unlock %d\n",lck);
       _papi_hwd_unlock(lck);
+      THRDBG("Unlock %d\n",lck);
     }
   else 
     { 

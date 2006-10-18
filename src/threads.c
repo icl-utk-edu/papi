@@ -29,7 +29,7 @@
 
 /* list of threads, gets initialized to master process with TID of getpid() */
 
-ThreadInfo_t *_papi_hwi_thread_head;
+volatile ThreadInfo_t *_papi_hwi_thread_head;
 
 /* If we have TLS, this variable ALWAYS points to our thread descriptor. It's like magic! */
 
@@ -135,7 +135,7 @@ static void insert_thread (ThreadInfo_t * entry)
     {
       THRDBG ("_papi_hwi_thread_head was thread 0x%lx at %p\n",_papi_hwi_thread_head->tid,_papi_hwi_thread_head);
       _papi_hwi_thread_head->next = entry;
-      entry->next = _papi_hwi_thread_head;
+      entry->next = (ThreadInfo_t *)_papi_hwi_thread_head;
     }
   else /* 2+ elements */
     {
@@ -167,7 +167,7 @@ static int remove_thread (ThreadInfo_t * entry)
   /* Find the preceding element and the matched element,
      short circuit if we've seen the head twice */
 
-  for (tmp = _papi_hwi_thread_head; (entry != tmp) || (prev == NULL); tmp = tmp->next)
+  for (tmp = (ThreadInfo_t *)_papi_hwi_thread_head; (entry != tmp) || (prev == NULL); tmp = tmp->next)
     {
       prev = tmp;
     }
@@ -397,7 +397,7 @@ int _papi_hwi_gather_all_thrspec_data(int tag, PAPI_all_thr_spec_t *where)
 
   _papi_hwi_lock(THREADS_LOCK);
 
-  for (foo = _papi_hwi_thread_head; foo != NULL; foo = foo->next)
+  for (foo = (ThreadInfo_t *)_papi_hwi_thread_head; foo != NULL; foo = foo->next)
     {
       /* Could be just counting */
       if (where->id)
