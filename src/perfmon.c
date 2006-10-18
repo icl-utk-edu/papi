@@ -314,7 +314,7 @@ static short int init_amd_L2_assoc_inf(unsigned short int pattern)
    return assoc;
 }
 
-inline_static void cpuid(unsigned int *a, unsigned int *b,
+static void cpuid(unsigned int *a, unsigned int *b,
                          unsigned int *c, unsigned int *d)
 {
   unsigned int op = *a;

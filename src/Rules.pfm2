@@ -24,7 +24,7 @@ endif
 FFLAGS		+= -ffixed-line-length-132
 CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) 
 ifeq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))
-OPTFLAGS	+= -O3 $(DEBUGFLAGS)
+OPTFLAGS	+= -O2 -g $(DEBUGFLAGS)
 else
 OPTFLAGS	+= -g $(DEBUGFLAGS)
 endif
