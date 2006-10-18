@@ -87,7 +87,7 @@ inline_static ThreadInfo_t *_papi_hwi_lookup_thread(void)
   if (_papi_hwi_thread_id_fn == NULL)
     {
       THRDBG("Threads not initialized, returning master thread at %p\n",_papi_hwi_thread_head);
-      return (_papi_hwi_thread_head);
+      return ((ThreadInfo_t *)_papi_hwi_thread_head);
     }
 
   tid = (*_papi_hwi_thread_id_fn) ();
@@ -95,7 +95,7 @@ inline_static ThreadInfo_t *_papi_hwi_lookup_thread(void)
   
   _papi_hwi_lock (THREADS_LOCK);	
 
-  tmp = _papi_hwi_thread_head;
+  tmp = (ThreadInfo_t *)_papi_hwi_thread_head;
   while (tmp != NULL)
     {
       THRDBG("Examining thread tid 0x%lx at %p\n",tmp->tid,tmp);
