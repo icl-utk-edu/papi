@@ -119,16 +119,17 @@ $(PFM_OBJS):
 	ar xv $(PFM_LIB_PATH)/libpfm.a
 
 native_clean:
-ifeq (,${PFM_PREFIX})
-	rm -f $(MISCOBJS); $(MAKE) -C $(PFM_ROOT) clean
+	-rm -f $(MISCOBJS) 
+ifneq (,${PFM_ROOT})
+	$(MAKE) -C $(PFM_ROOT) clean
 endif
 
 native_install:
-ifeq (,${PFM_PREFIX})
+ifneq (,${PFM_ROOT})
 	$(MAKE) -C $(PFM_ROOT) DESTDIR=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
 
 native_clobber:
-ifeq (,${PFM_PREFIX})
+ifneq (,${PFM_ROOT})
 	 $(MAKE) -C $(PFM_ROOT) distclean
 endif

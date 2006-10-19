@@ -1,7 +1,4 @@
 VERSION		?= 2.6.x
 CPU		= p3
-GCC3ARGS	= -msse
-#XMLFLAG		= -DXML
-# COMPILER	?= INTEL or PGROUP
 
 include Rules.perfctr

@@ -25,5 +25,6 @@ PERFCTR_ROOT 	= @perfctr_root@
 PERFCTR_LIB_PATH = @perfctr_libdir@
 PERFCTR_INC_PATH = @perfctr_incdir@
 DEBUGFLAGS	= @DEBUGFLAGS@
+BITS	= @bitmode@
 
 include ./Makefile.$(MAKEVER)

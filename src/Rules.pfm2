@@ -76,7 +76,7 @@ $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
 	ar xv $<
 
 native_clean:
-	rm -f $(MISCOBJS); 
+	-rm -f $(MISCOBJS) 
 ifneq (,${PFM_ROOT})
 	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" clean
 endif

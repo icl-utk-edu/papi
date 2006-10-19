@@ -1173,6 +1173,7 @@ case "$MAKEVER" in
     linux-perfctr-opteron-32bit);;
     linux-perfctr-p2);;
     linux-perfctr-p3);;
+    linux-perfctr-p3-32bit);;
     linux-perfctr-p4);;
     linux-pfm-itanium);;
     linux-pfm-itanium2);;
@@ -1252,6 +1253,7 @@ AC_SUBST(pfm_root)
 AC_SUBST(pfm_prefix)
 AC_SUBST(pfm_incdir)
 AC_SUBST(pfm_libdir)
+AC_SUBST(bitmode)
 
 if test "$cross_compiling" = "yes" ; then
    AC_MSG_NOTICE(Compiling genpapifdef with $nativecc because cross compiling)

@@ -34,7 +34,7 @@ endif
 
 ifeq (x86_64,$(ARCH))
 ifeq (32,$(BITS))
-BITFLAGS	?= -m32 -U__i386__ -D__x86_64__
+BITFLAGS	?= -m32 
 else
 SHRFLAGS	+= -fPIC
 LIB_SUFFIX	:= 64
@@ -189,7 +189,6 @@ SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
 PERFCTR_OBJS = $(shell ar t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
 ifeq (,$(PERFCTR_OBJS))
 $(PERFCTR_LIB_PATH)/libperfctr.a:
-	echo "$@ |$(PERFCTR_OBJS)|"
 ifneq (,${PERFCTR_ROOT})
  ifeq (ppc64,${ARCH})
 	$(MAKE) CC='$(CC) $(BITFLAGS)' -C $(PERFCTR_ROOT)
@@ -246,14 +245,18 @@ $(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c  $(ARCH_EVENTS)_map.c -o $@
 
 native_clean:
-ifeq (,${PERFCTR_PREFIX})
+	-rm -f $(MISCOBJS)
+ifneq (,${PERFCTR_ROOT})
 	$(MAKE) -C $(PERFCTR_ROOT) clean
 endif
 
-native_install: perfctr_install arch_specific_install
-
-perfctr_install:
-ifeq (,${PERFCTR_PREFIX})
+native_install: 
+ifeq ($(ARCH),ppc64)
+	-mkdir -p $(DATADIR)
+	-chmod go+rx $(DATADIR)
+	cp -Rf ./event_data $(DATADIR)
+endif
+ifneq (,${PERFCTR_ROOT})
 ifeq (${VERSION},2.4.x)
 	cp -p $(PERFCTR_ROOT)/usr.lib/libperfctr.so $(PREFIX)/lib$(LIB_SUFFIX)
 	cp -p $(PERFCTR_ROOT)/usr.lib/event_codes.h $(PREFIX)/include
@@ -271,14 +274,7 @@ endif
 endif
 endif
 
-arch_specific_install:
-ifeq ($(ARCH),ppc64)
-	-mkdir -p $(DATADIR)
-	-chmod go+rx $(DATADIR)
-	cp -Rf ./event_data $(DATADIR)
-endif
-
 native_clobber:
-ifeq (,${PERFCTR_PREFIX})
+ifneq (,${PERFCTR_ROOT})
 	$(MAKE) -C $(PERFCTR_ROOT) distclean
 endif
