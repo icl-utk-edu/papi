@@ -194,12 +194,13 @@ void prof_out(int n, int bucket, int num_buckets, int scale) {
 
    if (!TESTS_QUIET) {
       /* printf("0x%lx\n",(unsigned long) start + (unsigned long) (2 * i)); */
+      /* printf("start: %p; i: %x; scale: %x; i*scale: %x; i*scale >>15: %x\n", start, i, scale, i*scale, (i*scale)>>15); */
       switch (bucket) {
          case PAPI_PROFIL_BUCKET_16:
             for (i = 0; i < num_buckets; i++) {
                for(j=0,buf_16=0;j<n;j++) buf_16 |= (buf16[j])[i];
                if (buf_16) {
-                  printf("%-16p", start + (int)(((long_long)i * scale)>>17)); 
+                  printf("%-16p", start + (int)(((long_long)i * scale)>>15)); 
                   for(j=0,buf_16=0;j<n;j++)
                      printf("\t%d", (buf16[j])[i]);
                   printf("\n");
@@ -210,7 +211,7 @@ void prof_out(int n, int bucket, int num_buckets, int scale) {
             for (i = 0; i < num_buckets; i++) {
                for(j=0,buf_32=0;j<n;j++) buf_32 |= (buf32[j])[i];
                if (buf_32) {
-                  printf("%-16p", start + (int)(((long_long)i * scale)>>17));
+                  printf("%-16p", start + (int)(((long_long)i * scale)>>15));
                   for(j=0,buf_32=0;j<n;j++)
                      printf("\t%d", (buf32[j])[i]);
                   printf("\n");
@@ -221,7 +222,7 @@ void prof_out(int n, int bucket, int num_buckets, int scale) {
             for (i = 0; i < num_buckets; i++) {
                for(j=0,buf_64=0;j<n;j++) buf_64 |= (buf64[j])[i];
                if (buf_64) {
-                  printf("%-16p", start + (int)(((long_long)i * scale)>>17));
+                  printf("%-16p", start + (int)(((long_long)i * scale)>>15));
                   for(j=0,buf_64=0;j<n;j++)
                      printf("\t%lld", (buf64[j])[i]);
                   printf("\n");
