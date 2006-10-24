@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_get_dmem_info 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_get_dmem_info 3 "May, 2006" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -283,8 +283,18 @@ PAPI_get_dmem_info - get information about the dynamic memory usage of the curre
 <PRE>
 <!-- .B #include <papi.h> -->
 <B>#include &lt;papi.h&gt;</B> 
-<!-- .BI " long PAPI_get_dmem_info(int option);" -->
-<B> long PAPI_get_dmem_info(int option);</B> 
+<!-- .BI "int PAPI_get_dmem_info(PAPI_dmem_info_t *" "dmem" ");" -->
+<B>int PAPI_get_dmem_info(PAPI_dmem_info_t *</B><I>dmem</I><B>);</B> 
+<!-- .fi -->
+</PRE>
+<!-- .fi -->
+<!-- .B Fortran Interface -->
+<B>Fortran Interface</B> <!-- .nf -->
+<PRE>
+<!-- .B #include "fpapi.h" -->
+<B>#include fpapi.h</B> 
+<!-- .BI PAPIF_get_dmem_info(C_LONG_LONG(*)\  dmem,\  C_INT\  check ) -->
+<B>PAPIF_get_dmem_info(C_LONG_LONG(*) </B><I>dmem, </I><B>C_INT </B><I>check</I><B>)</B> 
 <!-- .fi -->
 </PRE>
 <P>
@@ -296,9 +306,9 @@ PAPI_get_dmem_info - get information about the dynamic memory usage of the curre
 
 </A>
 <BLOCKQUOTE>
-In C, this function returns a value specified by the option.
-There is no Fortran equivalent call. This function has been depricated
-until a better interface can be provided.
+In C, this function takes a pointer to a PAPI_dmem_info_t structure and returns with the structure fields
+filled in. In Fortran, this function takes a pointer to an array of long_long values and fills in the
+array on return. A value of PAPI_EINVAL in any field indicates an undefined parameter.
 <P>
 <!-- .SH NOTE -->
 </BLOCKQUOTE>
@@ -308,7 +318,7 @@ until a better interface can be provided.
 
 </A>
 <BLOCKQUOTE>
-The exact calling syntax and returned information for this function is likely to change.
+This function is currently implemented only for the Linux operating system.
 <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
@@ -320,14 +330,49 @@ The exact calling syntax and returned information for this function is likely to
 <BLOCKQUOTE>
 <!-- .LP -->
 <P>
-<!-- .I option -->
-<I>option</I> --  Can currently be one of the following:
-<!-- .B PAPI_GET_SIZE  -->
-<B>PAPI_GET_SIZE</B> (Size of process image in pages),
-<!-- .B PAPI_GET_RESSIZE  -->
-<B>PAPI_GET_RESSIZE</B> (Resident set size in pages),
-<!-- .B PAPI_GET_PAGESIZE  -->
-<B>PAPI_GET_PAGESIZE</B> (Pagesize in bytes).
+<!-- .I dmem -->
+<I>dmem</I> --  Structure (C) or array (Fortran) containing the following values
+(Fortran values can be accessed using the specified indices):
+<!-- .LP -->
+<P>
+<!-- .B size [PAPIF_DMEM_VMSIZE]  -->
+<B>size [PAPIF_DMEM_VMSIZE]</B> (Size of process image),
+<!-- .LP -->
+<P>
+<!-- .B resident [PAPIF_DMEM_RESIDENT]  -->
+<B>resident [PAPIF_DMEM_RESIDENT]</B> (Resident set size),
+<!-- .LP -->
+<P>
+<!-- .B high_water_mark [PAPIF_DMEM_HIGH_WATER] -->
+<B>high_water_mark [PAPIF_DMEM_HIGH_WATER]</B> (High water memory usage),
+<!-- .LP -->
+<P>
+<!-- .B shared [PAPIF_DMEM_SHARED] -->
+<B>shared [PAPIF_DMEM_SHARED]</B> (Shared memory),
+<!-- .LP -->
+<P>
+<!-- .B text [PAPIF_DMEM_TEXT] -->
+<B>text [PAPIF_DMEM_TEXT]</B> (Memory allocated to code),
+<!-- .LP -->
+<P>
+<!-- .B library [PAPIF_DMEM_LIBRARY] -->
+<B>library [PAPIF_DMEM_LIBRARY]</B> (Memory allocated to libraries),
+<!-- .LP -->
+<P>
+<!-- .B heap [PAPIF_DMEM_HEAP] -->
+<B>heap [PAPIF_DMEM_HEAP]</B> (Size of the heap),
+<!-- .LP -->
+<P>
+<!-- .B locked [PAPIF_DMEM_LOCKED] -->
+<B>locked [PAPIF_DMEM_LOCKED]</B> (Locked memory),
+<!-- .LP -->
+<P>
+<!-- .B stack [PAPIF_DMEM_STACK] -->
+<B>stack [PAPIF_DMEM_STACK]</B> (Size of the stack)
+<!-- .LP -->
+<P>
+<!-- .B pagesize [PAPIF_DMEM_PAGESIZE] -->
+<B>pagesize [PAPIF_DMEM_PAGESIZE]</B> (Size of a page in bytes),
 <P>
 <!-- .SH RETURN VALUES -->
 </BLOCKQUOTE>
@@ -337,7 +382,7 @@ The exact calling syntax and returned information for this function is likely to
 
 </A>
 <BLOCKQUOTE>
-On success, this function returns the positive value of the specified option.
+On success, this function returns PAPI_OK with the data structure or array values filled in.
 On error a negative error value is returned.
 <P>
 <!-- .SH ERRORS -->
@@ -351,11 +396,15 @@ On error a negative error value is returned.
 <!-- .TP -->
 <TABLE cellpadding=3>
 <TR valign=top><TD colspan=2>
+<!-- .B "PAPI_ESBSTR" -->
+<B>PAPI_ESBSTR</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The funtion is not implemented for the current substrate.
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
 <!-- .B "PAPI_EINVAL" -->
 <B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The value of
-<!-- .I option  -->
-<I>option</I> is invalid.
+Any value in the structure or array may be undefined as indicated by this error value.
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
@@ -378,7 +427,8 @@ A system error occured.
 <PRE>
 <!-- .if t .ft CW -->
 <TT>   int retval;
-<P>
+   PAPI_dmem_info_t dmem;
+  
    if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
    exit(1);
 <P>
@@ -386,10 +436,17 @@ A system error occured.
    if (retval != PAPI_VER_CURRENT)
       handle_error(retval);
 <P>
-   printf("Resident Size in Pages: %ld  Size in Pages: %ld  Pagesize in bytes: %ld0,
-           PAPI_get_dmem_info(PAPI_GET_RESSIZE),
-           PAPI_get_dmem_info(PAPI_GET_SIZE),
-           PAPI_get_dmem_info(PAPI_GET_PAGESIZE));
+   PAPI_get_dmem_info(&dmem);
+   printf("Mem Size:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%lld0,dmem.size);
+   printf("Mem Resident:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%lld0,dmem.resident);
+   printf("Mem High Water Mark:&nbsp;%lld0,dmem.high_water_mark);
+   printf("Mem Shared:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%lld0,dmem.shared);
+   printf("Mem Text:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%lld0,dmem.text);
+   printf("Mem Library:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%lld0,dmem.library);
+   printf("Mem Heap:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%lld0,dmem.heap);
+   printf("Mem Locked:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%lld0,dmem.locked);
+   printf("Mem Stack:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%lld0,dmem.stack);
+   printf("Mem Pagesize:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%lld0,dmem.pagesize);
 <!-- .if t .ft P -->
 </TT><!-- .fi -->
 </PRE>
@@ -424,7 +481,7 @@ If called before
 <A HREF="papi_get_executable_info.html">PAPI_get_executable_info (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_dmem_info (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_dmem_info (3)</TD> <TD align=right width=33%><I>May, 2006</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>
