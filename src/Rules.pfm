@@ -126,7 +126,7 @@ endif
 
 native_install:
 ifneq (,${PFM_ROOT})
-	$(MAKE) -C $(PFM_ROOT) DESTDIR=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
+	$(MAKE) -C $(PFM_ROOT) DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
 
 native_clobber:

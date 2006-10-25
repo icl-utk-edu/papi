@@ -159,7 +159,7 @@ install-lib: native_install
 	cp $(FHEADERS) papi.h papiStdEventDefs.h $(DESTDIR)$(INCDIR)
 	cd $(DESTDIR)$(INCDIR); chmod go+r $(FHEADERS) papi.h papiStdEventDefs.h
 	@echo "Libraries (LIBDIR) being installed in: \"$(DESTDIR)$(LIBDIR)\""; 
-	-mkdir -p $(DESTDOR)$(LIBDIR)
+	-mkdir -p $(DESTDIR)$(LIBDIR)
 	-chmod go+rx $(DESTDIR)$(LIBDIR)
 	cp $(LIBRARY) $(DESTDIR)$(LIBDIR)
 	chmod go+r $(DESTDIR)$(LIBDIR)/$(LIBRARY)
