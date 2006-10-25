@@ -8,6 +8,12 @@ FTEST_DEPENDENCE=$(PAPILIB) fpapi_test.h ../fpapi.h ../ctests/test_utils.h
 
 default: $(TESTS)
 
+attach:
+
+ear:
+
+range:
+
 mpi:
 
 shared:
@@ -25,7 +31,6 @@ shmem:
 multiplex_and_pthreads: 
 
 serial:  $(TESTS)
-
 
 clockres: clockres.F $(FTEST_DEPENDENCE) 
 	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) clockres.F $(PAPILIB) $(LDFLAGS) -o clockres
