@@ -128,6 +128,7 @@ int PAPI_unregister_thread(void)
 int PAPI_list_threads(PAPI_thread_id_t *id, int *num)
 {
   PAPI_all_thr_spec_t tmp;
+  int retval;
 
   if ((num == NULL) || (*num <= 0))
     papi_return(PAPI_EINVAL);
@@ -139,7 +140,12 @@ int PAPI_list_threads(PAPI_thread_id_t *id, int *num)
   tmp.num = *num;
   tmp.id = id;
   tmp.data = NULL;
-  papi_return(_papi_hwi_gather_all_thrspec_data(0,&tmp));
+
+  retval = _papi_hwi_gather_all_thrspec_data(0,&tmp);
+  if (retval == PAPI_OK)
+    *num = tmp.num;
+
+  papi_return(retval);
 }
 
 /*
