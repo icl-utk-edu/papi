@@ -5,14 +5,18 @@
 PAPI_thread_init \- initialize thread support in the PAPI library
 
 .SH SYNOPSIS
-.B C Interface
+
+C Interface
+
 .nf
-.B #include <papi.h>
+.B #include """papi.h"""
 .BI "int PAPI_thread_init (unsigned long int (*" handle ")());"
 .fi
-.B Fortran Interface
+
+Fortran Interface
+
 .nf
-.B #include "fpapi.h"
+.B #include """fpapi.h"""
 .BI PAPIF_thread_init(C_INT\ FUNCTION\  handle,\  C_INT\  check )
 .fi
 
@@ -21,49 +25,44 @@ PAPI_thread_init \- initialize thread support in the PAPI library
 initializes thread support in the PAPI library. Applications that 
 make no use of threads do not need to call this routine. This function
 MUST return a UNIQUE thread ID for every new thread/LWP created. The 
-OpenMP call omp_get_thread_num() violates this rule, as the underlying
+OpenMP call 
+.B omp_get_thread_num(\|)
+violates this rule, as the underlying
 LWPs may have been killed off by the run-time system or by a call to
-omp_set_num_threads(). In that case, it is still possible to use
-omp_get_thread_num() in conjunction with
+.BR omp_set_num_threads(\|) "." 
+In that case, it may still possible to use
+.B omp_get_thread_num() 
+in conjunction with
 .B PAPI_unregister_thread()
-when the OpenMP thread has finished. 
+when the OpenMP thread has finished. However it is much better to use the
+underlying thread subsystem's call, which is 
+.B pthread_self()
+on Linux platforms.
 
 .SH ARGUMENTS
 .I "handle"
 --  Pointer to a function that returns current thread ID.
 
 .SH RETURN VALUES
-On success, this function returns
-.B "PAPI_OK."
- On error, a non-zero error code is returned.
-
-.SH ERRORS
+.TP
+.B "PAPI_OK"
+The call returned successfully.
 .TP
 .B "PAPI_EINVAL"
 One or more of the arguments is invalid.
 
 .SH EXAMPLES
-.I For Pthreads:
 .nf         
 .if t .ft CW
 if (PAPI_thread_init(pthread_self) != PAPI_OK)
-  handle_error(1);
+  exit(1);
 .if t .ft P
 .fi        
-.LP
-.I For OpenMP:
-.nf         
-.if t .ft CW
-if (PAPI_thread_init(omp_get_thread_num) != PAPI_OK)
-  handle_error(1);
-.if t .ft P
-.fi
 
 .SH BUGS
 This function has no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_library_init "(3), " PAPI_thread_id "(3), "
+.BR PAPI_thread_id "(3), " PAPI_list_threads "(3), "
 .BR PAPI_get_thr_specific "(3), " PAPI_set_thr_specific "(3), "
-.BR PAPI_register_thread "(3), " PAPI_unregister_thread " (3) "
-
+.BR PAPI_register_thread "(3), " PAPI_unregister_thread " (3), " PAPI "(3)"
