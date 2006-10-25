@@ -232,7 +232,7 @@ typedef ucontext_t hwd_ucontext_t;
 #elif defined(__i386__)
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.gregs[REG_EIP]
 #elif defined(__x86_64__)
-#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.rip
+#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.gregs[REG_RIP]
 #elif defined(mips)
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.pc
 #else
