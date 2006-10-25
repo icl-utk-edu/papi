@@ -3,7 +3,7 @@ TESTS 	= strtest zero first  second tenth description fdmemtest\
           accum highlevel cost johnmay2 native \
 	  avail case1 case2 clockres eventname fmatrixlowpapi \
 	  fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2
-PAPILIB=../ctests/do_loops.o ../ctests/dummy.o ftests_util.o ../$(LIBRARY)
+PAPILIB	= do_loops.o dummy.o ftests_util.o ../$(LIBRARY)
 FTEST_DEPENDENCE=$(PAPILIB) fpapi_test.h ../fpapi.h ../ctests/test_utils.h
 
 default: $(TESTS)
@@ -105,11 +105,11 @@ fmultiplex2: fmultiplex2.F $(FTEST_DEPENDENCE)
 ftests_util.o: ftests_util.F fpapi_test.h ../fpapi.h ../ctests/test_utils.h
 	$(F77) $(FTOPTFLAGS) -c $(FFLAGS) $(INCLUDE) ftests_util.F
 
-do_loops.o: do_loops.F fpapi_test.h ../fpapi.h ../ctests/test_utils.h
-	$(F77) $(FFLAGS) $(INCLUDE) $(FTOPTFLAGS) -c do_loops.F
+do_loops.o: ../ctests/do_loops.c ../ctests/papi_test.h ../ctests/test_utils.h
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c ../ctests/do_loops.c
 
-dummy.o: dummy.F
-	$(F77) $(FFLAGS) $(INCLUDE) $(FTOPTFLAGS) -c dummy.F
+dummy.o: ../ctests/dummy.c
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c ../ctests/dummy.c
 
 clean:
 	rm -f *.o *.stderr *.stdout core *~ $(TESTS)
