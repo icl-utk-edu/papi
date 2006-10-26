@@ -223,7 +223,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_INHERIT_NONE 0     /* The flag to this to inherit none of the children's counters */
 
 
-#define PAPI_DETACH		1	/* Detch */
+#define PAPI_DETACH		1	/* Detach */
 #define PAPI_DEBUG              2       /* Option to turn on  debugging features of the PAPI library */
 #define PAPI_MULTIPLEX 		3       /* Turn on/off or multiplexing for an eventset */
 #define PAPI_DEFDOM  		4       /* Domain for all new eventsets. Takes non-NULL option pointer. */
@@ -245,7 +245,6 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_SHLIBINFO          20      /* Shared Library information */
 #define PAPI_LIB_VERSION        21      /* Option to find out the complete version number of the PAPI library */
 #define PAPI_SUBSTRATEINFO      22      /* Find out what the substrate supports */
-#define PAPI_SUBSTRATE_SUPPORT  PAPI_SUBSTRATEINFO      /* Bogus previous definition */
 /* Currently the following options are only available on Itanium; they may be supported elsewhere in the future */
 #define PAPI_DATA_ADDRESS       23      /* Option to set data address range restriction */
 #define PAPI_INSTR_ADDRESS      24      /* Option to set instruction address range restriction */
@@ -641,6 +640,7 @@ read the documentation carefully.  */
    int   PAPI_attach(int EventSet, unsigned long tid);
    int   PAPI_cleanup_eventset(int EventSet);
    int   PAPI_create_eventset(int *EventSet);
+   int   PAPI_detach(int EventSet);
    int   PAPI_destroy_eventset(int *EventSet);
    int   PAPI_enum_event(int *EventCode, int modifier);
    int   PAPI_event_code_to_name(int EventCode, char *out);
@@ -665,7 +665,7 @@ read the documentation carefully.  */
    int   PAPI_library_init(int version);
    int   PAPI_list_events(int EventSet, int *Events, int *number);
    int   PAPI_list_threads(unsigned long *tids, int *number);
-   int  PAPI_lock(int);
+   int   PAPI_lock(int);
    int   PAPI_multiplex_init(void);
    int   PAPI_num_hwctrs(void);
    int   PAPI_num_events(int EventSet);
