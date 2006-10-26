@@ -201,6 +201,7 @@ extern int pfm_get_inst_retired_event(pfmlib_event_t *e);
 #define PFMLIB_PENTIUM4_PMU		33	/* Intel Pentium4/Xeon/EM64T */
 #define PFMLIB_COREDUO_PMU		34	/* Intel Core Duo/Core Solo */
 #define PFMLIB_I386_PM_PMU		35	/* Intel Pentium M */
+#define PFMLIB_CORE_PMU			36	/* Intel Core */
 #define PFMLIB_MIPS_20KC_PMU		64	/* MIPS 20KC */
 #define PFMLIB_MIPS_24K_PMU		65	/* MIPS 24K */
 #define PFMLIB_MIPS_25KF_PMU		66	/* MIPS 25KF */

@@ -73,9 +73,8 @@ typedef unsigned char pfm_uuid_t[16];	/* custom sampling buffer identifier type 
 
 #define PFM_REG_HAS_ERROR(flag)	(((flag) & PFM_REG_RETFL_MASK) != 0)
 
-
 /*
- * Request structure used to define a context
+ * argument to pfm_create_context()
  */
 typedef struct {
 	pfm_uuid_t	ctx_smpl_buf_id;	/* which buffer format to use (if needed) */
@@ -96,9 +95,7 @@ typedef struct {
 
 
 /*
- * argument structure for PFM_WRITE_PMCS2/PFM_GET_DEFAULT_PMC_VAL2 (only).
- *
- * For PFM_WRITE_PMCS and PFM_WRITE_PMDS, see perfmon_compat.h
+ * argument for pfm_write_pmcs()
  */
 typedef struct {
 	uint16_t reg_num;	   			/* which register */
@@ -109,9 +106,7 @@ typedef struct {
 } pfarg_pmc_t;
 
 /*
- * argument structure for PFM_WRITE_PMDS2/PFM_READ_PMDS2
- *
- * For PFM_WRITE_PMCS and PFM_WRITE_PMDS, see perfmon_compat.h
+ * argument pfm_write_pmds() and pfm_read_pmds()
  */
 typedef struct {
 	uint16_t reg_num;	   	/* which register */
@@ -132,7 +127,7 @@ typedef struct {
 
 
 /*
- * optional argument to PFM_START, pass NULL if no arg needed
+ * optional argument to pfm_start(), pass NULL if no arg needed
  */
 typedef struct {
 	uint16_t start_set;		/* event set to start with */
@@ -142,17 +137,17 @@ typedef struct {
 } pfarg_start_t;
 
 /*
- * argument to PFM_LOAD_CONTEXT
+ * argument to pfm_load_context()
  */
 typedef struct {
-	uint32_t	load_pid;          /* thread to attach to */
+	uint32_t	load_pid;          /* thread or CPU to attach to */
 	uint16_t        load_set;          /* set to load first */
 	uint16_t        load_reserved1;    /* for future use */
 	uint64_t        load_reserved2[3]; /* for future use */
 } pfarg_load_t;
 
 /*
- * argument to PFM_CREATE_EVTSETS/PFM_DELETE_EVTSETS
+ * argument to pfm_create_evtsets()/pfm_delete_evtsets()
  */
 typedef struct {
 	uint16_t	set_id;		  /* which set */
@@ -165,7 +160,7 @@ typedef struct {
 } pfarg_setdesc_t;
 
 /*
- * argument to PFM_GETINFO_EVTSETS
+ * argument to pfm_getinfo_evtsets()
  */
 typedef struct {
         uint16_t	set_id;             /* which set */

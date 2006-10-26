@@ -105,8 +105,10 @@ CFLAGS += -DCONFIG_PFMLIB_GEN_MIPS64
 endif
 
 CFLAGS+=-I.
+ALIBPFM=libpfm.a
 SLIBPFM=libpfm.so.$(VERSION).$(REVISION).$(AGE)
-TARGETS=libpfm.a $(SLIBPFM)
+VLIBPFM=libpfm.so.$(VERSION)
+TARGETS=$(ALIBPFM) $(SLIBPFM)
 
 OBJS=$(SRCS:.c=.o)
 SOBJS=$(OBJS:.o=.lo)
@@ -120,8 +122,8 @@ libpfm.a:  $(OBJS)
 	$(AR) cru $@ $(OBJS)
 
 $(SLIBPFM):  $(SOBJS)
-	$(CC) -shared -Wl,-soname -Wl,libpfm.so.$(VERSION) -o $@ $(SOBJS)
-	$(LN) -sf $@ libpfm.so.$(VERSION)
+	$(CC) -shared -Wl,-soname -Wl,$(VLIBPFM) -o $@ $(SOBJS)
+	$(LN) -sf $@ $(VLIBPFM)
 
 clean:
 	$(RM) -f $(OBJS) $(SOBJS) $(SUPP_OBJS)
@@ -134,7 +136,7 @@ depend:
 
 install: $(TARGETS)
 	-mkdir -p $(DESTDIR)$(LIBDIR)
-	$(INSTALL) -m 644 libpfm.a $(DESTDIR)$(LIBDIR)
+	$(INSTALL) -m 644 $(ALIBPFM) $(DESTDIR)$(LIBDIR)
 	$(INSTALL) $(SLIBPFM) $(DESTDIR)$(LIBDIR)
 
 

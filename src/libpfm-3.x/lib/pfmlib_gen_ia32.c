@@ -270,6 +270,8 @@ pfm_coreduo_detect(void)
 	if (family == 6 && model == 14) {
 		gen_ia32_pe = coreduo_pe;
 		gen_support = &coreduo_support;
+		gen_ia32_cycle_event = PME_COREDUO_UNHALTED_CORE_CYCLES;
+		gen_ia32_inst_retired_event = PME_COREDUO_INSTRUCTIONS_RETIRED;
 		return PFMLIB_SUCCESS;
 	}
 	return PFMLIB_ERR_NOTSUPP;
@@ -358,6 +360,7 @@ pfm_gen_ia32_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_ia32_input_
 
 		pc[j].reg_num     = assign[j];
 		pc[j].reg_addr    = GEN_IA32_SEL_BASE+assign[j];
+		pc[j].reg_value   = reg.val;
 
 		pd[j].reg_num  = assign[j];
 		pd[j].reg_addr = GEN_IA32_CTR_BASE+assign[j];

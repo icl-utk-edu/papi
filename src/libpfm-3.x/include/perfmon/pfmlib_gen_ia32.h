@@ -1,5 +1,5 @@
 /*
- * IA-32 architected PMU
+ * Intel IA-32 architectural PMU
  *
  * Copyright (c) 2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
@@ -51,11 +51,6 @@ extern "C" {
  */
 #define PMU_GEN_IA32_COUNTER_WIDTH       32
 
-/*
- * This structure provides a detailed way to setup a PMC register.
- * Once value is loaded, it must be copied (via pmu_reg) to the
- * perfmon_req_t and passed to the kernel via perfmonctl().
- */
 typedef union {
 	unsigned long long val;			/* complete register value */
 	struct {
@@ -83,7 +78,7 @@ typedef struct {
 #define PFM_GEN_IA32_SEL_EDGE	0x2	/* edge detect */
 
 /*
- * P6-specific parameters for the library
+ * model-specific parameters for the library
  */
 typedef struct {
 	pfmlib_gen_ia32_counter_t	pfp_gen_ia32_counters[PMU_GEN_IA32_MAX_COUNTERS];
@@ -98,4 +93,4 @@ typedef struct {
 }
 #endif
 
-#endif /* __PFMLIB_I386_P6_H__ */
+#endif /* __PFMLIB_GEN_IA32__H__ */

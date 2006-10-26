@@ -190,6 +190,28 @@ pfm_gen_mips64_detect(void)
 	return PFMLIB_SUCCESS;
 }
 
+static void stuff_regs(pfmlib_event_t *e, int plm, pfmlib_reg_t *pc, pfmlib_reg_t *pd, int cntr, int j)
+{
+  pfm_gen_mips64_sel_reg_t reg;
+  reg.val    = 0; /* assume reserved bits are zerooed */
+  /* if plm is 0, then assume not specified per-event and use default */
+  plm = e[j].plm ? e[j].plm : plm;
+  reg.sel_usr = plm & PFM_PLM3 ? 1 : 0;
+  reg.sel_os  = plm & PFM_PLM2 ? 1 : 0;
+  reg.sel_sup = plm & PFM_PLM1 ? 1 : 0;
+  reg.sel_exl = plm & PFM_PLM0 ? 1 : 0;
+  reg.sel_int = 1; /* force int to 1 */
+
+  reg.sel_event_mask = (gen_mips64_pe[e[j].event].pme_entry_code.pme_code.pme_emask 
+			>> (cntr*8)) & 0xff;
+  DPRINT(("sel_event_mask is 0x%x\n",reg.sel_event_mask));
+  pc[j].reg_num     = cntr;
+  pc[j].reg_value   = reg.val;
+  pc[j].reg_addr    = cntr*2;
+
+  pd[j].reg_num  = cntr;
+  pd[j].reg_addr = cntr*2 + 1;
+}
 /*
  * Automatically dispatch events to corresponding counters following constraints.
  * Upon return the pfarg_regt structure is ready to be submitted to kernel
@@ -198,12 +220,9 @@ static int
 pfm_gen_mips64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_mips64_input_param_t *mod_in, pfmlib_output_param_t *outp)
 {
         /* pfmlib_gen_mips64_input_param_t *param = mod_in; */
-	pfm_gen_mips64_sel_reg_t reg;
 	pfmlib_event_t *e = inp->pfp_events;
 	pfmlib_reg_t *pc, *pd;
-	unsigned long plm;
-	unsigned int j, cnt = inp->pfp_event_count;
-	unsigned int assign[PMU_GEN_MIPS64_NUM_COUNTERS];
+	unsigned int i, j, cnt = inp->pfp_event_count;
 	unsigned int used = 0;
 	extern pfm_pmu_support_t generic_mips64_support;
 
@@ -219,81 +238,33 @@ pfm_gen_mips64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_mips64_in
 	  }
 	}
 
-	/* First find out which events live on only 1 counter. */
-	for (j=0; j < cnt ; j++ ) 
+	/* Do rank based allocation, counters that live on 1 reg 
+	   before counters that live on 2 regs etc. */
+	for (i=1;i<=PMU_GEN_MIPS64_NUM_COUNTERS;i++)
 	  {
-	    unsigned long tmp = gen_mips64_pe[e[j].event].pme_counters;
-	    if (pfmlib_popcnt(tmp) != 1)
-	      assign[j] = 0;
-	    else 
-	      assign[j] = tmp;
+	    for (j=0; j < cnt;j++) 
+	      {
+		unsigned int cntr, avail;
+		if (pfmlib_popcnt(gen_mips64_pe[e[j].event].pme_counters) == i)
+		  {
+		    /* These counters can be used for this event */
+		    avail = ~used & gen_mips64_pe[e[j].event].pme_counters;
+		    DPRINT(("%d: Counters available %x\n",i,avail));
+		    if (avail == 0x0)
+		      return PFMLIB_ERR_NOASSIGN;
+
+		    /* Pick one, mark as used*/
+		    cntr = ffs(avail) - 1;
+		    DPRINT(("%d: Chose counter %d\n",i,cntr));
+	    
+		    /* Update registers */
+		    stuff_regs(e,inp->pfp_dfl_plm,pc,pd,cntr,j);
+		    
+		    used |= (1 << cntr);
+		    DPRINT(("%d: Used counters %x\n",i, used));
+		  }
+	      }
 	  }
-
-	/* Assign them first */
-	for (j=0; j < cnt ; j++ ) {
-	  if ((assign[j] & used) == 0) {
-	        uint32_t cntr;
-		reg.val    = 0; /* assume reserved bits are zerooed */
-		/* if plm is 0, then assume not specified per-event and use default */
-		plm = e[j].plm ? e[j].plm : inp->pfp_dfl_plm;
-		reg.sel_usr = plm & PFM_PLM3 ? 1 : 0;
-		reg.sel_os  = plm & PFM_PLM2 ? 1 : 0;
-		reg.sel_sup = plm & PFM_PLM1 ? 1 : 0;
-		reg.sel_exl = plm & PFM_PLM0 ? 1 : 0;
-		reg.sel_int = 1; /* force int to 1 */
-		cntr = ffs(assign[j]) - 1;
-
-		reg.sel_event_mask = (gen_mips64_pe[e[j].event].pme_entry_code.pme_code.pme_emask >> (cntr*8)) & 0xff;
-
-		pc[j].reg_num     = cntr;
-		pc[j].reg_value   = reg.val;
-		pc[j].reg_addr    = cntr*2;
-
-		pd[j].reg_num  = cntr;
-		pd[j].reg_addr = cntr*2 + 1;
-
-		used |= (1 << cntr);
-		DPRINT(("Degree 1: Used counters %x\n",used));
-	  }
-	  else {
-	    return PFMLIB_ERR_NOASSIGN;
-	  }
-	}
-
-	/* Now assign those that live on two counters. */
-	for (j=0; j < cnt ; j++ ) {
-	  if (assign[j] == 0) {
-	    /* Which counters are available */
-	    unsigned int cntr, avail = (~used & 0xf);
-	    DPRINT(("Counters available: %x\n",avail));
-	    if (avail == 0x0)
-	      return PFMLIB_ERR_NOASSIGN;
-	    /* Pick one */
-	    reg.val    = 0; /* assume reserved bits are zerooed */
-	    /* if plm is 0, then assume not specified per-event and use default */
-	    plm = e[j].plm ? e[j].plm : inp->pfp_dfl_plm;
-	    reg.sel_usr = plm & PFM_PLM3 ? 1 : 0;
-	    reg.sel_os  = plm & PFM_PLM2 ? 1 : 0;
-	    reg.sel_sup = plm & PFM_PLM1 ? 1 : 0;
-	    reg.sel_exl = plm & PFM_PLM0 ? 1 : 0;
-	    reg.sel_int = 1; /* force int to 1 */
-	    cntr = ffs(avail) - 1;
-	    avail = 1 << cntr;
-	    DPRINT(("Selected counter %d\n",avail));
-
-	    reg.sel_event_mask = (gen_mips64_pe[e[j].event].pme_entry_code.pme_code.pme_emask >> (cntr*8)) & 0xff;
-
-	    pc[j].reg_num     = cntr;
-	    pc[j].reg_value   = reg.val;
-	    pc[j].reg_addr    = cntr*2;
-
-	    pd[j].reg_num  = cntr;
-	    pd[j].reg_addr = cntr*2 + 1;
-
-	    used |= (1 << cntr);
-	    DPRINT(("Degree N: Used counters %x\n",used));
-	  }
-	}
 
 	/* number of evtsel registers programmed */
 	outp->pfp_pmc_count = cnt;
