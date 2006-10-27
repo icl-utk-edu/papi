@@ -1154,7 +1154,7 @@ int PAPI_set_debug(int level)
 }
 
 /* Attaches to or detaches from the specified thread id */
-inline_static _papi_set_attach(int option, int EventSet, unsigned long tid)
+inline_static int _papi_set_attach(int option, int EventSet, unsigned long tid)
 {
   PAPI_option_t attach;
 
@@ -1171,7 +1171,7 @@ int PAPI_attach(int EventSet, unsigned long tid)
 
 int PAPI_detach(int EventSet)
 {
-  return(_papi_set_attach(PAPI_DETACH, EventSet, tid));
+  return(_papi_set_attach(PAPI_DETACH, EventSet, 0));
 }
 
 int PAPI_set_multiplex(int EventSet)
