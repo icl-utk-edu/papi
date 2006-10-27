@@ -1,9 +1,9 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_thread_init 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_attach 3 "October, 2006" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
-Manual Page - PAPI_thread_init(3)</TITLE>
+Manual Page - PAPI_attach(3)</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
 
 <STYLE TYPE="text/css">
@@ -256,7 +256,12 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_thread_init - initialize thread support in the PAPI library
+<!-- .nf -->
+<PRE>
+PAPI_attach  - attach PAPI event set to the specified thread id
+PAPI_detach  - detach PAPI event set from previously specified thread id and restore to executing thread
+<!-- .fi -->
+</PRE>
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -266,36 +271,33 @@ PAPI_thread_init - initialize thread support in the PAPI library
 <A HREF=#2>Description</A><BR>
 <A HREF=#3>Arguments</A><BR>
 <A HREF=#4>Return Values</A><BR>
-<A HREF=#5>Examples</A><BR>
-<A HREF=#6>Bugs</A><BR>
-<A HREF=#7>See Also</A><BR>
+<A HREF=#5>Errors</A><BR>
+<A HREF=#6>Examples</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=8>
+<A name=9>
 
      <H3>SYNOPSIS</H3>
 
 </A>
 <BLOCKQUOTE>
-<P>
-C Interface
-<P>
-<!-- .nf -->
+<!-- .B C Interface -->
+<B>C Interface</B> <!-- .nf -->
 <PRE>
-<!-- .B #include """papi.h""" -->
-<B>#include  papi.h </B> 
-<!-- .BI "int PAPI_thread_init (unsigned long int (*" handle ")());" -->
-<B>int PAPI_thread_init (unsigned long int (*</B><I>handle</I><B>)());</B> 
+<!-- .B #include <papi.h> -->
+<B>#include &lt;papi.h&gt;</B> 
+<!-- .BI "int\ PAPI_attach(int " EventSet ", unsigned long " tid ");" -->
+<B>int PAPI_attach(int </B><I>EventSet</I><B>, unsigned long </B><I>tid</I><B>);</B> 
+<!-- .BI "int\ PAPI_detach(int " EventSet ");" -->
+<B>int PAPI_detach(int </B><I>EventSet</I><B>);</B> 
 <!-- .fi -->
 </PRE>
-<P>
-Fortran Interface
-<P>
-<!-- .nf -->
+<!-- .B Fortran Interface -->
+<B>Fortran Interface</B> <!-- .nf -->
 <PRE>
-<!-- .B #include """fpapi.h""" -->
-<B>#include  fpapi.h </B> 
-<!-- .BI PAPIF_thread_init(C_INT\ FUNCTION\  handle,\  C_INT\  check ) -->
-<B>PAPIF_thread_init(C_INT FUNCTION </B><I>handle, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .B <none> -->
+<B>&lt;none&gt;</B> 
 <!-- .fi -->
 </PRE>
 <P>
@@ -307,23 +309,17 @@ Fortran Interface
 
 </A>
 <BLOCKQUOTE>
-<!-- .B "PAPI_thread_init" -->
-<B>PAPI_thread_init</B> initializes thread support in the PAPI library. Applications that
-make no use of threads do not need to call this routine. This function
-MUST return a UNIQUE thread ID for every new thread/LWP created. The
-OpenMP call
-<!-- .B omp_get_thread_num(\|) -->
-<B>omp_get_thread_num()</B> violates this rule, as the underlying
-LWPs may have been killed off by the run-time system or by a call to
-<!-- .BR omp_set_num_threads(\|) "."  -->
-<B>omp_set_num_threads()</B>. In that case, it may still possible to use
-<!-- .B omp_get_thread_num()  -->
-<B>omp_get_thread_num()</B> in conjunction with
-<!-- .B PAPI_unregister_thread() -->
-<B>PAPI_unregister_thread()</B> when the OpenMP thread has finished. However it is much better to use the
-underlying thread subsystem&#146;s call, which is
-<!-- .B pthread_self() -->
-<B>pthread_self()</B> on Linux platforms.
+<!-- .B PAPI_attach() -->
+<B>PAPI_attach()</B> and
+<!-- .B PAPI_detach() -->
+<B>PAPI_detach()</B> are wrapper functions that access
+<!-- .BR "PAPI_set_opt() (3)" " to allow PAPI to monitor performance counts" -->
+<A HREF="papi_set_opt().html">PAPI_set_opt() (3)</A>  to allow PAPI to monitor performance counts
+on a thread other than the one currently executing. This is sometimes referred to as third party monitoring.
+<!-- .B PAPI_attach() -->
+<B>PAPI_attach()</B> connects the specified EventSet to the specifed thread;
+<!-- .B PAPI_detach() -->
+<B>PAPI_detach()</B> breaks that connection and restores the EventSet to the original executing thread.
 <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
@@ -333,8 +329,18 @@ underlying thread subsystem&#146;s call, which is
 
 </A>
 <BLOCKQUOTE>
-<!-- .I "handle" -->
-<I>handle</I> --  Pointer to a function that returns current thread ID.
+<!-- .I EventSet -->
+<I>EventSet</I> --  an integer handle for a PAPI Event Set as created by
+<!-- .BR "PAPI_create_eventset" (3) -->
+<A HREF="papi_create_eventset.html">PAPI_create_eventset (3)</A>
+<!-- .LP -->
+<P>
+<!-- .I tid -->
+<I>tid</I> -- a thread id as obtained from, for example,
+<!-- .BR "PAPI_list_threads" "(3) or " -->
+<A HREF="papi_list_threads.html">PAPI_list_threads (3)</A> or 
+<!-- .BR "PAPI_thread_id" "(3)." -->
+<A HREF="papi_thread_id.html">PAPI_thread_id (3)</A>.
 <P>
 <!-- .SH RETURN VALUES -->
 </BLOCKQUOTE>
@@ -344,68 +350,108 @@ underlying thread subsystem&#146;s call, which is
 
 </A>
 <BLOCKQUOTE>
+On success, these functions return
+<!-- .B "PAPI_OK."  -->
+<B>PAPI_OK.</B> On error, a negative error code is returned.
+<P>
+<!-- .SH ERRORS -->
+</BLOCKQUOTE>
+<A name=5>
+
+     <H3>ERRORS</H3>
+
+</A>
+<BLOCKQUOTE>
 <!-- .TP -->
 <TABLE cellpadding=3>
 <TR valign=top><TD colspan=2>
-<!-- .B "PAPI_OK" -->
-<B>PAPI_OK</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The call returned successfully.
+<!-- .B "PAPI_ESBSTR" -->
+<B>PAPI_ESBSTR</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+This feature is unsupported on this substrate.
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
 <!-- .B "PAPI_EINVAL" -->
 <B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
 One or more of the arguments is invalid.
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<!-- .B "PAPI_ENOEVST" -->
+<B>PAPI_ENOEVST</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The event set specified does not exist.
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<!-- .B "PAPI_EISRUN" -->
+<B>PAPI_EISRUN</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The event set is currently counting events.
+<P>
 <P>
 <!-- .SH EXAMPLES -->
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
-<A name=5>
+<A name=6>
 
      <H3>EXAMPLES</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .nf          -->
+<!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>if (PAPI_thread_init(pthread_self) != PAPI_OK)
+<TT>int EventSet = PAPI_NULL;
+unsigned long pid;
+<P>
+pid = fork();
+if (pid &lt;= 0)
   exit(1);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+if (PAPI_create_eventset(&EventSet) != PAPI_OK)
+  exit(1);
+<P>
+/* Add Total Instructions Executed to our EventSet */
+<P>
+if (PAPI_add_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
+  exit(1);
+<P>
+/* Attach this EventSet to the forked process */
+<P>
+if (PAPI_attach(EventSet, pid) != PAPI_OK)
+  exit(1);
+<P>
+<P>
 <!-- .if t .ft P -->
-</TT><!-- .fi         -->
+</TT><!-- .fi -->
 </PRE>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=6>
+<A name=7>
 
      <H3>BUGS</H3>
 
 </A>
 <BLOCKQUOTE>
-This function has no known bugs.
+There are no known bugs in these functions.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=7>
+<A name=8>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_thread_id "(3), " PAPI_list_threads "(3), " -->
-<A HREF="papi_thread_id.html">PAPI_thread_id (3)</A>, 
+<!-- .BR PAPI_list_threads "(3), " PAPI_thread_id "(3), " PAPI_thread_init "(3), " -->
 <A HREF="papi_list_threads.html">PAPI_list_threads (3)</A>, 
-<!-- .BR PAPI_get_thr_specific "(3), " PAPI_set_thr_specific "(3), " -->
-<A HREF="papi_get_thr_specific.html">PAPI_get_thr_specific (3)</A>, 
-<A HREF="papi_set_thr_specific.html">PAPI_set_thr_specific (3)</A>, 
-<!-- .BR PAPI_register_thread "(3), " PAPI_unregister_thread " (3), " PAPI "(3)" -->
-<A HREF="papi_register_thread.html">PAPI_register_thread (3)</A>, 
-PAPI_unregister_thread  (3), 
-<A HREF="papi.html">PAPI (3)</A>
+<A HREF="papi_thread_id.html">PAPI_thread_id (3)</A>, 
+<A HREF="papi_thread_init.html">PAPI_thread_init (3)</A>, 
+<!-- .BR PAPI_set_opt "(3)"  -->
+<A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_thread_init (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_attach (3)</TD> <TD align=right width=33%><I>October, 2006</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

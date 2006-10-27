@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI 3 "March, 2005" "PAPI Programmer's Reference" "PAPI"
+.TH PAPI 3 "October, 2006" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
 PAPI \- Performance Application Programming Interface
@@ -64,13 +64,15 @@ See individual functions for details on usage and support.
 .BR PAPI_accum(3) " - accumulate and reset hardware events from an event set"
 .BR PAPI_add_event(3) " - add single PAPI preset or native hardware event to an event set"
 .BR PAPI_add_events(3) " - add array of PAPI preset or native hardware events to an event set"
+.BR PAPI_attach(3) " - attach specified event set to a specific process or thread id"
 .BR PAPI_cleanup_eventset(3) " - remove all PAPI events from an event set"
 .BR PAPI_create_eventset(3) " - create a new empty PAPI event set"
 .BR PAPI_destroy_eventset(3) " - deallocates memory associated with an empty PAPI event set"
+.BR PAPI_detach(3) " - detach specified event set from a previously specified process or thread id"
 .BR PAPI_enum_event(3) " - return the event code for the next available preset or natvie event"
 .BR PAPI_event_code_to_name(3) " - translate an integer PAPI event code into an ASCII PAPI preset or native name"
 .BR PAPI_event_name_to_code(3) " - translate an ASCII PAPI preset or native name into an integer PAPI event code"
-.BR PAPI_get_dmem_info(3) " - get dynamic memory usage information <<currently deprecated>>"
+.BR PAPI_get_dmem_info(3) " - get dynamic memory usage information"
 .BR PAPI_get_event_info(3) " - get the name and descriptions for a given preset or native event code"
 .BR PAPI_get_executable_info(3) " - get the executable’s address space information"
 .BR PAPIF_get_exe_info(3) " - Fortran version of PAPI_get_executable_info with different calling semantics"
@@ -84,6 +86,7 @@ See individual functions for details on usage and support.
 .BR PAPI_get_real_cyc(3) " - return the total number of cycles since some arbitrary starting point"
 .BR PAPI_get_real_usec(3) " - return the total number of microseconds since some arbitrary starting point"
 .BR PAPI_get_shared_lib_info(3) " - get information about the shared libraries used by the process"
+.BR PAPI_get_substrate_info(3) " - get information about the substrate features"
 .BR PAPI_get_thr_specific(3) " - return a pointer to a thread specific stored data structure"
 .BR PAPI_get_overflow_event_index(3) " - decomposes an overflow_vector into an event index array"
 .BR PAPI_get_virt_cyc(3) " - return the process cycles since some arbitrary starting point"
@@ -91,6 +94,7 @@ See individual functions for details on usage and support.
 .BR PAPI_is_initialized(3) " - return the initialized state of the PAPI library"
 .BR PAPI_library_init(3) " - initialize the PAPI library"
 .BR PAPI_list_events(3) " - list the events that are members of an event set"
+.BR PAPI_list_threads(3) " - list the thread ids currently known to PAPI"
 .BR PAPI_lock(3) " - lock one of two PAPI internal user mutex variables"
 .BR PAPI_multiplex_init(3) " - initialize multiplex support in the PAPI library"
 .BR PAPI_num_hwctrs(3) " - return the number of hardware counters"

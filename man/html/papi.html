@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI 3 "March, 2005" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI 3 "October, 2006" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -385,20 +385,24 @@ See individual functions for details on usage and support.
 <A HREF="papi_add_event.html">PAPI_add_event (3)</A>  - add single PAPI preset or native hardware event to an event set
 <!-- .BR PAPI_add_events(3) " - add array of PAPI preset or native hardware events to an event set" -->
 <A HREF="papi_add_events.html">PAPI_add_events (3)</A>  - add array of PAPI preset or native hardware events to an event set
+<!-- .BR PAPI_attach(3) " - attach specified event set to a specific process or thread id" -->
+<A HREF="papi_attach.html">PAPI_attach (3)</A>  - attach specified event set to a specific process or thread id
 <!-- .BR PAPI_cleanup_eventset(3) " - remove all PAPI events from an event set" -->
 <A HREF="papi_cleanup_eventset.html">PAPI_cleanup_eventset (3)</A>  - remove all PAPI events from an event set
 <!-- .BR PAPI_create_eventset(3) " - create a new empty PAPI event set" -->
 <A HREF="papi_create_eventset.html">PAPI_create_eventset (3)</A>  - create a new empty PAPI event set
 <!-- .BR PAPI_destroy_eventset(3) " - deallocates memory associated with an empty PAPI event set" -->
 <A HREF="papi_destroy_eventset.html">PAPI_destroy_eventset (3)</A>  - deallocates memory associated with an empty PAPI event set
+<!-- .BR PAPI_detach(3) " - detach specified event set from a previously specified process or thread id" -->
+<A HREF="papi_detach.html">PAPI_detach (3)</A>  - detach specified event set from a previously specified process or thread id
 <!-- .BR PAPI_enum_event(3) " - return the event code for the next available preset or natvie event" -->
 <A HREF="papi_enum_event.html">PAPI_enum_event (3)</A>  - return the event code for the next available preset or natvie event
 <!-- .BR PAPI_event_code_to_name(3) " - translate an integer PAPI event code into an ASCII PAPI preset or native name" -->
 <A HREF="papi_event_code_to_name.html">PAPI_event_code_to_name (3)</A>  - translate an integer PAPI event code into an ASCII PAPI preset or native name
 <!-- .BR PAPI_event_name_to_code(3) " - translate an ASCII PAPI preset or native name into an integer PAPI event code" -->
 <A HREF="papi_event_name_to_code.html">PAPI_event_name_to_code (3)</A>  - translate an ASCII PAPI preset or native name into an integer PAPI event code
-<!-- .BR PAPI_get_dmem_info(3) " - get dynamic memory usage information <<currently deprecated>>" -->
-<A HREF="papi_get_dmem_info.html">PAPI_get_dmem_info (3)</A>  - get dynamic memory usage information &lt;&lt;currently deprecated&gt;&gt;
+<!-- .BR PAPI_get_dmem_info(3) " - get dynamic memory usage information" -->
+<A HREF="papi_get_dmem_info.html">PAPI_get_dmem_info (3)</A>  - get dynamic memory usage information
 <!-- .BR PAPI_get_event_info(3) " - get the name and descriptions for a given preset or native event code" -->
 <A HREF="papi_get_event_info.html">PAPI_get_event_info (3)</A>  - get the name and descriptions for a given preset or native event code
 <!-- .BR PAPI_get_executable_info(3) " - get the executable’s address space information" -->
@@ -425,6 +429,8 @@ See individual functions for details on usage and support.
 <A HREF="papi_get_real_usec.html">PAPI_get_real_usec (3)</A>  - return the total number of microseconds since some arbitrary starting point
 <!-- .BR PAPI_get_shared_lib_info(3) " - get information about the shared libraries used by the process" -->
 <A HREF="papi_get_shared_lib_info.html">PAPI_get_shared_lib_info (3)</A>  - get information about the shared libraries used by the process
+<!-- .BR PAPI_get_substrate_info(3) " - get information about the substrate features" -->
+<A HREF="papi_get_substrate_info.html">PAPI_get_substrate_info (3)</A>  - get information about the substrate features
 <!-- .BR PAPI_get_thr_specific(3) " - return a pointer to a thread specific stored data structure" -->
 <A HREF="papi_get_thr_specific.html">PAPI_get_thr_specific (3)</A>  - return a pointer to a thread specific stored data structure
 <!-- .BR PAPI_get_overflow_event_index(3) " - decomposes an overflow_vector into an event index array" -->
@@ -439,6 +445,8 @@ See individual functions for details on usage and support.
 <A HREF="papi_library_init.html">PAPI_library_init (3)</A>  - initialize the PAPI library
 <!-- .BR PAPI_list_events(3) " - list the events that are members of an event set" -->
 <A HREF="papi_list_events.html">PAPI_list_events (3)</A>  - list the events that are members of an event set
+<!-- .BR PAPI_list_threads(3) " - list the thread ids currently known to PAPI" -->
+<A HREF="papi_list_threads.html">PAPI_list_threads (3)</A>  - list the thread ids currently known to PAPI
 <!-- .BR PAPI_lock(3) " - lock one of two PAPI internal user mutex variables" -->
 <A HREF="papi_lock.html">PAPI_lock (3)</A>  - lock one of two PAPI internal user mutex variables
 <!-- .BR PAPI_multiplex_init(3) " - initialize multiplex support in the PAPI library" -->
@@ -559,7 +567,7 @@ The PAPI Web site: <A HREF="http://icl.cs.utk.edu/papi">http://icl.cs.utk.edu/pa
 <P>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI (3)</TD> <TD align=right width=33%><I>March, 2005</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI (3)</TD> <TD align=right width=33%><I>October, 2006</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>

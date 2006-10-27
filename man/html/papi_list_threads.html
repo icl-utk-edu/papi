@@ -256,7 +256,7 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-PAPI_list_threads - list the thread ids associated with a process ??
+PAPI_list_threads - list the registered thread ids
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
 <A name=contents></A><H3>CONTENTS</H3></A>
@@ -275,17 +275,21 @@ PAPI_list_threads - list the thread ids associated with a process ??
 
 </A>
 <BLOCKQUOTE>
-<!-- .B C Interface -->
-<B>C Interface</B> <!-- .nf -->
+<P>
+C Interface
+<P>
+<!-- .nf -->
 <PRE>
 <!-- .B #include <papi.h> -->
 <B>#include &lt;papi.h&gt;</B> 
-<!-- .BI "int PAPI_list_threads(PAPI_thread_id_t *" id", int *" number ");" -->
+<!-- .BI "int PAPI_list_threads(PAPI_thread_id_t *" id ", int *" number ");" -->
 <B>int PAPI_list_threads(PAPI_thread_id_t *</B><I>id</I><B>, int *</B><I>number</I><B>);</B> 
 <!-- .fi -->
 </PRE>
-<!-- .B Fortran Interface -->
-<B>Fortran Interface</B> <!-- .nf -->
+<P>
+Fortran Interface
+<P>
+<!-- .nf -->
 <PRE>
 <!-- .B <none> -->
 <B>&lt;none&gt;</B> 
@@ -303,10 +307,10 @@ PAPI_list_threads - list the thread ids associated with a process ??
 <!-- .LP -->
 <P>
 <!-- .B PAPI_list_threads(\|) -->
-<B>PAPI_list_threads()</B> does what ???
+<B>PAPI_list_threads()</B> returns to the caller a list of all thread ID&#146;s known to PAPI.
 <!-- .LP -->
 <P>
-This call assumes ...
+This call assumes an initialized PAPI library.
 <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
@@ -317,15 +321,17 @@ This call assumes ...
 </A>
 <BLOCKQUOTE>
 <!-- .I *id  -->
-<I>*id</I> --  a pointer to an array of type
-<!-- .I PAPI_thread_id_t -->
-<I>PAPI_thread_id_t</I> containing
-<!-- .I number -->
-<I>number</I> elements.
+<I>*id</I> -- A pointer to a preallocated array. This may be NULL
+to only return a count of threads. No more than
+<!-- .I *number -->
+<I>*number</I> codes will be stored in the array.
 <!-- .LP -->
 <P>
 <!-- .I *number  -->
-<I>*number</I> -- Specifies the maximum number of threads to list.
+<I>*number</I> -- An input and output parameter, input specifies the number of allocated elements
+in
+<!-- .I *id -->
+<I>*id</I> (if non-NULL) and output specifies the number of threads.
 <!-- .LP -->
 <P>
 <P>
@@ -337,11 +343,22 @@ This call assumes ...
 
 </A>
 <BLOCKQUOTE>
-This function always returns
-<!-- .B "PAPI_OK." -->
-<B>PAPI_OK.</B> <P>
+<!-- .TP -->
+<TABLE cellpadding=3>
+<TR valign=top><TD colspan=2>
+<!-- .B "PAPI_OK" -->
+<B>PAPI_OK</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The call returned successfully.
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<!-- .B "PAPI_EINVAL" -->
+<B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+One or more of the arguments is invalid.
+<P>
 <!-- .SH EXAMPLES -->
-</BLOCKQUOTE>
+</TD></TR>
+<TR></TR></TABLE></BLOCKQUOTE>
 <A name=5>
 
      <H3>EXAMPLES</H3>
@@ -351,7 +368,7 @@ This function always returns
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>  /* Reserved for example usage */
+<TT>/* Reserved for example usage */
 <!-- .if t .ft P -->
 </TT><!-- .fi -->
 </PRE>
