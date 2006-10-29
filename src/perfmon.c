@@ -323,7 +323,8 @@ static void cpuid(unsigned int *a, unsigned int *b,
 	 "=S" (*b),
 	 "=c" (*c),
 	 "=d" (*d)
-       : "a" (op));
+       : "a" (op)
+       : "%edi" );
 }
 
 static int init_intel(PAPI_mh_info_t * mh_info)

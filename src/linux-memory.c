@@ -807,7 +807,8 @@ inline_static void cpuid(unsigned int *a, unsigned int *b,
 	 "=S" (*b),
 	 "=c" (*c),
 	 "=d" (*d)
-       : "a" (op));
+       : "a" (op)
+       : "%edi" );
 }
 #endif
 
