@@ -96,7 +96,10 @@ CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) $(NOTLS) $(ALTIX) $(CFLAGS-$(VERSION
 
 MISCHDRS = pfmwrap.h
 MISCSRCS = 
-SHLIBDEPS = -L$(PFM_LIB_PATH) -lpfm
+# This is necessary to avoid text relocations. You cannot do -Lxx -lx because
+# it will attempt to use the static library if a shared library ending in
+# .so does not exist
+SHLIBDEPS = $(shell ls $(PFM_LIB_PATH)/*.so.?.?.? | head -1)
 
 PFM_OBJS = $(shell ar t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
 ifeq (,$(PFM_OBJS))
