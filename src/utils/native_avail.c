@@ -105,6 +105,10 @@ int main(int argc, char **argv)
          j++;
          retval = PAPI_get_event_info(i, &info);
 
+	 /* This event may not exist */
+	 if (retval == PAPI_ENOEVNT)
+	   continue;
+
 	 printf("%-32s 0x%-10x %s\n",
 		info.symbol,
 		info.event_code,
