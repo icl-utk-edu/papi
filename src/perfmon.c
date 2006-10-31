@@ -125,7 +125,7 @@ static void decode_vendor_string(char *s, int *vendor)
 {
   if (strcasecmp(s,"GenuineIntel") == 0)
     *vendor = PAPI_VENDOR_INTEL;
-  else if (strstr(s,"AMD") == 0)
+  else if ((strstr(s,"AMD") == 0) || (strstr(s,"AuthenticAMD") == 0))
     *vendor = PAPI_VENDOR_AMD;
   else if (strcasecmp(s,"IBM") == 0)
     *vendor = PAPI_VENDOR_IBM;
@@ -3776,7 +3776,7 @@ char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
   memset(&gete,0,sizeof(gete));
   
   if (decode_native_event(EventCode,&event,&umask) != PAPI_OK)
-    return(NULL);
+    return("");
   
   gete.event = event;
   gete.num_masks = prepare_umask(umask,gete.unit_masks);
@@ -3788,7 +3788,7 @@ char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
       pfm_get_event_name(gete.event,tmp,PAPI_MAX_STR_LEN);
       PAPIERROR("pfm_get_full_event_name(%p(event %d,%s,%d masks),%p,%d): %s",
 		&gete,gete.event,tmp,gete.num_masks,name,PAPI_MAX_STR_LEN,pfm_strerror(ret));
-      return(NULL);
+      return("");
     }
 
   return(strdup(name));
