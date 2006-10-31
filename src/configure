@@ -6741,7 +6741,11 @@ echo "$as_me: error: The bitmode you specified is not supported" >&2;}
             POWER4|POWER5|PPC970)
                  MAKEVER="$OS"-perfctr-"$CPU""$BM" ;;
 	    mips64)
-		 MAKEVER="$OS"-perfmon2
+		 MAKEVER="$OS"-perfmon2 ;;
+	    mx)
+		 MAKEVER="$OS"-"$CPU" ;;
+	    acpi)
+		 MAKEVER="$OS"-"$CPU" ;;
        esac
        ;;
   irix)
@@ -6775,6 +6779,8 @@ case "$MAKEVER" in
     irix-mips-64bit);;
     linux-alpha);;
     linux-bgl);;
+    linux-acpi);;
+    linux-mx);;
     linux-perfctr-athlon);;
     linux-perfctr-em64t);;
     linux-perfctr-em64t-32bit);;
