@@ -26,6 +26,8 @@ volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 
 /* Static locals */
 
+static int _perfmon2_pfm_pmu_type;
+
 static papi_svector_t _linux_ia64_table[] = {
  {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
  {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
@@ -356,9 +358,13 @@ inline_static unsigned long get_cycles(void)
    tmp *= mmdev_ratio;
 #elif defined(__INTEL_COMPILER)
    tmp = __getReg(_IA64_REG_AR_ITC);
+   if (_perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU)
+     tmp = tmp * (unsigned long)4;
 #else                           /* GCC */
    /* XXX: need more to adjust for Itanium itc bug */
    __asm__ __volatile__("mov %0=ar.itc":"=r"(tmp)::"memory");
+   if (_perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU)
+     tmp = tmp * (unsigned long)4;
 #endif
    return tmp;
 }
@@ -661,6 +667,8 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 
    if (pfm_get_pmu_type(&type) != PFMLIB_SUCCESS)
       return (PAPI_ESYS);
+
+   _perfmon2_pfm_pmu_type = type;
 
    /* Setup presets */
    

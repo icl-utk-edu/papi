@@ -76,11 +76,15 @@ inline_static unsigned long get_cycles(void)
    tmp = mmdev_clicks_per_tick * (*mmdev_timer_addr);
 #elif defined(__INTEL_COMPILER)
    tmp = __getReg(_IA64_REG_AR_ITC);
+   if (_perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU)
+     tmp = tmp * (unsigned long)4;
 #else                           /* GCC */
    /* XXX: need more to adjust for Itanium itc bug */
    __asm__ __volatile__("mov %0=ar.itc":"=r"(tmp)::"memory");
+   if (_perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU)
+     tmp = tmp * (unsigned long)4;
 #endif
-   return tmp;
+   return tmp ;
 }
 #elif defined(__i386__)||defined(__x86_64__)
 inline_static long_long get_cycles(void) {
