@@ -125,7 +125,7 @@ static void decode_vendor_string(char *s, int *vendor)
 {
   if (strcasecmp(s,"GenuineIntel") == 0)
     *vendor = PAPI_VENDOR_INTEL;
-  else if ((strstr(s,"AMD") == 0) || (strstr(s,"AuthenticAMD") == 0))
+  else if ((strcasecmp(s,"AMD") == 0) || (strcasecmp(s,"AuthenticAMD") == 0))
     *vendor = PAPI_VENDOR_AMD;
   else if (strcasecmp(s,"IBM") == 0)
     *vendor = PAPI_VENDOR_IBM;
