@@ -64,6 +64,7 @@ papi_svector_t _linux_pfm_table[] = {
 static pfm_preset_search_entry_t *_perfmon2_pfm_preset_search_map;
 static hwd_native_event_entry_t *_perfmon2_pfm_native_map;
 static int _perfmon2_pfm_pmu_type;
+static pfmlib_regmask_t _perfmon2_pfm_unavailable_pmcs;
 static char _perfmon2_pfm_pmu_name[PAPI_MIN_STR_LEN];
 
 /* Hardware clock functions */
@@ -118,6 +119,41 @@ inline_static long_long get_cycles(void) {
 #else
 #error "get_cycles undefined!"
 #endif
+
+/* The below function is stolen from libpfm from Stephane Eranian */
+static int
+detect_unavail_pmcs(int fd, pfmlib_regmask_t *r_pmcs)
+{
+  pfarg_setinfo_t	setf;
+  int ret, i, j;
+  
+  memset(r_pmcs, 0, sizeof(*r_pmcs));
+  memset(&setf, 0, sizeof(setf));
+
+  /*
+   * retrieve available register bitmasks from set0
+   * which is guaranteed to exist for every context
+   */
+  ret = pfm_getinfo_evtsets(fd, &setf, 1);
+  if (ret == PFMLIB_SUCCESS) 
+    {
+      for(i=0; i < PFM_PMC_BV; i++) 
+	{
+	  for(j=0; j < 64; j++) 
+	    {
+	      if ((setf.set_avail_pmcs[i] & (1ULL << j)) == 0)
+		{
+		  pfm_regmask_set(r_pmcs, (i<<6)+j);
+		  SUBDBG("Found unavailable PMC %d\n",(i<<6)+j);
+		}
+	    }
+	}
+    }
+  else
+    PAPIERROR("pfm_getinfo_evtsets(%d,%p,%d): %s",fd, &setf, 1, pfm_strerror(ret));
+
+  return ret;
+}
 
 /* BEGIN COMMON CODE */
 
@@ -2263,9 +2299,12 @@ inline static int compute_kernel_args(hwd_control_state_t * ctl)
       tmpin.pfp_event_count = dispatch_count;
       tmpin.pfp_dfl_plm = inp->pfp_dfl_plm;
 
+      /* Make sure we tell dispatch that these PMC's are not available */
+      memcpy(&tmpin.pfp_unavail_pmcs,&_perfmon2_pfm_unavailable_pmcs,sizeof(_perfmon2_pfm_unavailable_pmcs));
+
       for (i=0,j=done;i<dispatch_count;i++,j++)
 	{
-	  tmpin.pfp_events[i].event = inp->pfp_events[j].event;
+	  memcpy(tmpin.pfp_events+i,inp->pfp_events+j,sizeof(pfmlib_event_t));
 	}
 
       if ((ret = pfm_dispatch_events(&tmpin, NULL, &tmpout, NULL)) != PFMLIB_SUCCESS)
@@ -2551,6 +2590,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 
   _perfmon2_pfm_preset_search_map = NULL;
   _perfmon2_pfm_native_map = NULL;
+  memset(&_perfmon2_pfm_unavailable_pmcs,0,sizeof(_perfmon2_pfm_unavailable_pmcs));
   _perfmon2_pfm_pmu_type = -1;
   _perfmon2_pfm_pmu_name[0] = '\0';
 
@@ -2714,6 +2754,11 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
       return(PAPI_ESYS);
     }
   SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",newctx.ctx_fd);
+
+  /* Find out if any PMC's are off limits */
+
+  if (detect_unavail_pmcs(newctx.ctx_fd,&_perfmon2_pfm_unavailable_pmcs))
+    return(PAPI_ESYS);
 
   /* set close-on-exec to ensure we will be getting the PFM_END_MSG, i.e.,
    * fd not visible to child. */
@@ -4053,7 +4098,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t *ctl,
     {
       SUBDBG("Stuffing native event index %d (code 0x%x) into input structure.\n",
 	     i,native[i].ni_bits.event);
-      inp->pfp_events[i].event = native[i].ni_bits.event;
+      memcpy(inp->pfp_events+i,&(native[i].ni_bits),sizeof(pfmlib_event_t));
     }
   inp->pfp_event_count = count;
       
