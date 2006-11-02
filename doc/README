@@ -17,11 +17,10 @@ and then converted to HTML, PDF, and PostScript formats.
 
 Three documents make up the basic collection:
 
-PAPI_Software_Spec.doc	  Design of the PAPI Interface.
 PAPI_USERS_GUIDE.doc	  General overview of using PAPI
 PAPI_Prog_Ref.doc	  Specific details on calling individual routines.
 			  This file is generated from the man pages 
-			  which are found in papi/man/man3
+			  which are found in papi/man/man1 and man3
 
 Production of the PAPI_Prog_Ref.doc file is somewhat complicated.
 A number of support files in this directory are involved in this process:
