@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI_enum_event 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
+.TH PAPI_enum_event 3 "October, 2006" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
 .nf
@@ -48,15 +48,34 @@ See platform-specific documentation for details
 The following values are implemented for 
 .I modifier
 on Pentium 4:
-.B "  PAPI_PENT4_ENUM_GROUPS" - 45 groups + custom + user event types
-.B "  PAPI_PENT4_ENUM_COMBOS" - all combinations of mask bits for given group
-.B "  PAPI_PENT4_ENUM_BITS"   - all individual bits for a given group
+.B "  PAPI_PENT4_ENUM_GROUPS"
+- 45 groups + custom + user event types
+.B "  PAPI_PENT4_ENUM_COMBOS"
+- all combinations of mask bits for given group
+.B "  PAPI_PENT4_ENUM_BITS  "
+- all individual bits for a given group
+
+.SH ITANIUM
+The following values are implemented for 
+.I modifier
+on Itanium:
+.B "  PAPI_ITA_ENUM_IARR"
+- Enumerate IAR (instruction address ranging) events
+.B "  PAPI_ITA_ENUM_DARR"
+- Enumerate DAR (data address ranging) events
+.B "  PAPI_ITA_ENUM_OPCM"
+- Enumerate OPC (opcode matching) events
+.B "  PAPI_ITA_ENUM_IEAR"
+- Enumerate IEAR (instr event address register) events
+.B "  PAPI_ITA_ENUM_DEAR"
+- Enumerate DEAR (data event address register) events
 
 .SH POWER 4
 The following values are implemented for 
 .I modifier
 on POWER 4:
-.B "  PAPI_PWR4_ENUM_GROUPS" - Enumerate groups to which an event belongs
+.B "  PAPI_PWR4_ENUM_GROUPS"
+- Enumerate groups to which an event belongs
 
 .SH RETURN VALUES
 On success, this function returns
