@@ -17,7 +17,7 @@
 static int init_amd(PAPI_mh_info_t * mh_info);
 static short int init_amd_L2_assoc_inf(unsigned short int pattern);
 static int init_intel(PAPI_mh_info_t * mh_info);
-inline_static void cpuid(unsigned int *, unsigned int *, unsigned int *, unsigned int *);
+static void cpuid(unsigned int *, unsigned int *, unsigned int *, unsigned int *);
 
 int _papi_hwd_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type)
 {
@@ -777,7 +777,7 @@ END:	  }
 }
 #endif
 #ifdef _WIN32
-inline_static void cpuid(unsigned int *a, unsigned int *b,
+static void cpuid(unsigned int *a, unsigned int *b,
                          unsigned int *c, unsigned int *d)
 {
    volatile unsigned long tmp, tmp2, tmp3, tmp4;
@@ -798,17 +798,15 @@ inline_static void cpuid(unsigned int *a, unsigned int *b,
    *d = tmp4;
 }
 #else
-inline_static void cpuid(unsigned int *a, unsigned int *b,
+static void cpuid(unsigned int *a, unsigned int *b,
                          unsigned int *c, unsigned int *d)
 {
-  unsigned int op = *a;
-  asm volatile ("movl %%ebx, %%edi\n\tcpuid\n\tmovl %%ebx, %%esi\n\tmovl %%edi, %%ebx"
-       : "=a" (*a),
-	 "=S" (*b),
-	 "=c" (*c),
-	 "=d" (*d)
-       : "a" (op)
-       : "%edi" );
+     asm("cpuid"
+         : "=a" (*a),
+           "=b" (*b),
+           "=c" (*c),
+           "=d" (*d)
+         : "a" (*a));
 }
 #endif
 
