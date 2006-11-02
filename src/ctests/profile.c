@@ -31,7 +31,7 @@
 #include "prof_utils.h"
 #define PROFILE_ALL
 
-static int do_profile(unsigned long plength, unsigned scale, int thresh, int bucket);
+static int do_profile(unsigned long long start, unsigned long plength, unsigned scale, int thresh, int bucket);
 
 int main(int argc, char **argv)
 {
@@ -39,18 +39,21 @@ int main(int argc, char **argv)
    long length;
    int mask;
    int retval;
+   const PAPI_hw_info_t *hw_info;
+   const PAPI_exe_info_t *prginfo;
+   unsigned long long start, end;
 
-   prof_init(argc, argv);
-   mask = prof_events(num_tests);
+  prof_init(argc, argv, &hw_info, &prginfo);
+  mask = prof_events(num_tests,hw_info);
 
 #ifdef PROFILE_ALL
 /* use these lines to profile entire code address space */
-   start = prginfo->address_info.text_start;
-   end = prginfo->address_info.text_end;
+   start = (unsigned long long)prginfo->address_info.text_start;
+   end = (unsigned long long)prginfo->address_info.text_end;
 #else
 /* use these lines to profile only do_flops address space */
-   start = (caddr_t)do_flops;
-   end = (caddr_t)fdo_flops;
+   start = (unsigned long long)do_flops;
+   end = (unsigned long long)fdo_flops;
 /* Itanium and ppc64 processors return function descriptors instead of function addresses.
    You must dereference the descriptor to get the address.
 */
@@ -64,14 +67,13 @@ int main(int argc, char **argv)
    if (length < 0)
       test_fail(__FILE__, __LINE__, "Profile length < 0!", length);
 
-   prof_print_address(start, end,
-               "Test case profile: POSIX compatible profiling with hardware counters.\n");
-   prof_print_prof_info();
-   retval = do_profile(length, FULL_SCALE, THRESHOLD, PAPI_PROFIL_BUCKET_16);
+   prof_print_address("Test case profile: POSIX compatible profiling with hardware counters.\n",prginfo);
+   prof_print_prof_info(start,end,THRESHOLD,event_name);
+   retval = do_profile(start, length, FULL_SCALE, THRESHOLD, PAPI_PROFIL_BUCKET_16);
    if (retval)
-      retval = do_profile(length, FULL_SCALE, THRESHOLD, PAPI_PROFIL_BUCKET_32);
+      retval = do_profile(start, length, FULL_SCALE, THRESHOLD, PAPI_PROFIL_BUCKET_32);
    if (retval)
-      retval = do_profile(length, FULL_SCALE, THRESHOLD, PAPI_PROFIL_BUCKET_64);
+      retval = do_profile(start, length, FULL_SCALE, THRESHOLD, PAPI_PROFIL_BUCKET_64);
 
    remove_test_events(&EventSet, mask);
 
@@ -82,7 +84,7 @@ int main(int argc, char **argv)
    exit(1);
 }
 
-static int do_profile(unsigned long plength, unsigned scale, int thresh, int bucket) {
+static int do_profile(unsigned long long start, unsigned long plength, unsigned scale, int thresh, int bucket) {
    int i, retval;
    unsigned long blength;
    int num_buckets;
@@ -108,7 +110,7 @@ static int do_profile(unsigned long plength, unsigned scale, int thresh, int buc
       if (!TESTS_QUIET)
          printf("Test type   : \t%s\n", profstr[i]);
 
-      if ((retval = PAPI_profil(profbuf[i], blength, start, scale,
+      if ((retval = PAPI_profil(profbuf[i], blength, (caddr_t)start, scale,
                               EventSet, PAPI_event, thresh,
                               profflags[i] | bucket)) != PAPI_OK) {
          test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
@@ -125,14 +127,14 @@ static int do_profile(unsigned long plength, unsigned scale, int thresh, int buc
          printf(TAB1, event_name, (values[1])[0]);
          printf(TAB1, "PAPI_TOT_CYC:", (values[1])[1]);
       }
-      if ((retval = PAPI_profil(profbuf[i], blength, start, scale,
+      if ((retval = PAPI_profil(profbuf[i], blength, (caddr_t)start, scale,
                               EventSet, PAPI_event, 0, profflags[i])) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
    }
 
    prof_head(blength, bucket, num_buckets, 
       "address\t\t\tflat\trandom\tweight\tcomprs\tall\n");
-   prof_out(5, bucket, num_buckets, scale);
+   prof_out(start, 5, bucket, num_buckets, scale);
 
    retval = prof_check(5, bucket, num_buckets);
 

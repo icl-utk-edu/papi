@@ -18,15 +18,13 @@
 */
 
 #include "papi_test.h"
+#include "prof_utils.h"
 
 /* variables global to profiling tests */
 long_long **values;
-const PAPI_exe_info_t *prginfo = NULL;
-const PAPI_hw_info_t *hw_info;
 char event_name[PAPI_MAX_STR_LEN];
 int PAPI_event;
 int EventSet = PAPI_NULL;
-caddr_t start, end;
 void *profbuf[5];
 
 /* This function does the generic initialization stuff found at the top of most
@@ -37,7 +35,7 @@ void *profbuf[5];
    - getting hardware and executable info.
    It assumes that prginfo and hw_info are global to the parent routine.
 */
-void prof_init(int argc, char **argv) {
+void prof_init(int argc, char **argv, const PAPI_hw_info_t **hw_info, const PAPI_exe_info_t **prginfo) {
    int retval;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
@@ -45,11 +43,11 @@ void prof_init(int argc, char **argv) {
    if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   hw_info = PAPI_get_hardware_info();
+   *hw_info = PAPI_get_hardware_info();
    if (hw_info == NULL)
      test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
-   if ((prginfo = PAPI_get_executable_info()) == NULL)
+   if ((*prginfo = PAPI_get_executable_info()) == NULL)
       test_fail(__FILE__, __LINE__, "PAPI_get_executable_info", 1);
 }
 
@@ -58,7 +56,7 @@ void prof_init(int argc, char **argv) {
    It also initializes the global event_name string to the event selected.
    Assumed globals: EventSet, PAPI_event, hw_info, event_name.
 */
-int prof_events(int num_tests) {
+int prof_events(int num_tests, const PAPI_hw_info_t *hw_info) {
    int retval;
    int num_events, mask;
 
@@ -77,7 +75,7 @@ int prof_events(int num_tests) {
 
 /* This function displays info from the prginfo structure in a standardized format.
 */
-void prof_print_address(caddr_t start, caddr_t end, char *title) {
+void prof_print_address(char *title, const PAPI_exe_info_t *prginfo) {
    printf(title);
    printf("----------------------------------------------------------------\n");
    printf("Text start: %p, Text end: %p, Text length: 0x%x\n",
@@ -95,11 +93,11 @@ void prof_print_address(caddr_t start, caddr_t end, char *title) {
    probably be a passed parameter.
    Assumed globals: event_name, start, stop.
 */
-void prof_print_prof_info(void) {
+void prof_print_prof_info(unsigned long long start, unsigned long long end, int threshold, char *event_name)
+{
    printf("Profiling event  : %s\n", event_name);
    printf("Profile Threshold: %d\n", THRESHOLD);
-   printf("Profile Addresses: begins: %p\n", start);
-   printf("                   ends  : %p\n", end);
+   printf("Profile Range    : 0x%llx to 0x%llx\n",start,end);
    printf("----------------------------------------------------------------\n");
    printf("\n");
 }
@@ -119,7 +117,7 @@ void do_no_profile (void) {
    if ((retval = PAPI_stop(EventSet, values[0])) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-   printf("Test type   : \tNo profiling\n");
+   printf("Test type\t\t: No profiling\n");
    printf(TAB1, event_name, (values[0])[0]);
    printf(TAB1, "PAPI_TOT_CYC:", (values[0])[1]);
 }
@@ -183,7 +181,7 @@ void prof_head(unsigned long blength, int bucket, int num_buckets, char *header)
    address with at least one non-zero bucket.
    Assumes global profbuf[] array pointers.
 */
-void prof_out(int n, int bucket, int num_buckets, int scale) {
+void prof_out(unsigned long long start, int n, int bucket, int num_buckets, int scale) {
    int i,j;
    unsigned short buf_16;
    unsigned int   buf_32;

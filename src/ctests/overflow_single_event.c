@@ -88,6 +88,8 @@ int main(int argc, char **argv)
       }
    }
 
+   mythreshold = THRESHOLD;
+
    retval = PAPI_create_eventset(&EventSet);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);

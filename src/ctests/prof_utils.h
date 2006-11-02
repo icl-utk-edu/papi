@@ -25,14 +25,13 @@
 #define FULL_SCALE 65536
 
 /* Internal prototype */
-void prof_init(int argc, char **argv);
-int prof_events(int num_tests);
-void prof_print_address(caddr_t start, caddr_t end, char *title);
-void prof_print_address(caddr_t start, caddr_t end, char *title);
-void prof_print_prof_info(void);
+void prof_init(int argc, char **argv, const PAPI_hw_info_t **hw_info, const PAPI_exe_info_t **prginfo);
+int prof_events(int num_tests, const PAPI_hw_info_t *hw_info);
+void prof_print_address(char *title, const PAPI_exe_info_t *prginfo);
+void prof_print_prof_info(unsigned long long start, unsigned long long end, int threshold, char *event_name);
 void prof_alloc(int num, unsigned long plength);
 void prof_head(unsigned long blength, int bucket_size, int num_buckets, char *header);
-void prof_out(int n, int bucket, int num_buckets, int scale);
+void prof_out(unsigned long long start, int n, int bucket, int num_buckets, int scale);
 unsigned long prof_size(unsigned long plength, unsigned scale, int bucket, int *num_buckets);
 int prof_check(int n, int bucket, int num_buckets);
 int prof_buckets(int bucket);
@@ -40,12 +39,9 @@ void do_no_profile(void);
 
 /* variables global to profiling tests */
 extern long_long **values;
-extern const PAPI_exe_info_t *prginfo;
-extern const PAPI_hw_info_t *hw_info;
 extern char event_name[PAPI_MAX_STR_LEN];
 extern int PAPI_event;
 extern int EventSet;
-extern caddr_t start, end;
 extern void *profbuf[5];
 
 /* Itanium returns function descriptors instead of function addresses.
