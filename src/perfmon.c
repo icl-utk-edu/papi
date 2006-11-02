@@ -3082,7 +3082,7 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
   case PAPI_MULTIPLEX:
     ret = check_multiplex_timeout(ctx,&option->multiplex.us);
     if (ret == PAPI_OK)
-      option->domain.ESI->machdep.multiplexed = 1;
+      option->multiplex.ESI->machdep.multiplexed = 1;
     return(ret);
   case PAPI_ATTACH:
     return(attach(&option->attach.ESI->machdep, option->attach.tid));
