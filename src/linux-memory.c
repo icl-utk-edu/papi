@@ -801,12 +801,23 @@ static void cpuid(unsigned int *a, unsigned int *b,
 static void cpuid(unsigned int *a, unsigned int *b,
                          unsigned int *c, unsigned int *d)
 {
-     asm("cpuid"
-         : "=a" (*a),
-           "=b" (*b),
-           "=c" (*c),
-           "=d" (*d)
-         : "a" (*a));
+  unsigned int input = *a;
+  __asm__ __volatile__ (
+#if (defined(__amd64__) || defined(__x86_64__))
+	   "push %%rbx\n\t"
+#else
+	   "pushl %%ebx\n\t"
+#endif
+	   "cpuid\n\t"
+	   "movl %%ebx,%1 \n\t" 
+#if (defined(__amd64__) || defined(__x86_64__))
+	   "pop %%rbx"
+#else
+	   "popl %%ebx"
+#endif
+	   : "=a" (*a), "=D" (*b), "=c" (*c), "=d" (*d)
+	   : "a" (input)
+	   );
 }
 #endif
 
