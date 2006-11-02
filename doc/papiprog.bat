@@ -1,4 +1,14 @@
 cd ..\man
+REM PAPI Utility Pages
+perl ../doc/papi_progref.pl -o ../doc/progref man1/papi_avail.1
+perl ../doc/papi_progref.pl -o ../doc/progref man1/papi_clockres.1
+perl ../doc/papi_progref.pl -o ../doc/progref man1/papi_cost.1
+perl ../doc/papi_progref.pl -o ../doc/progref man1/papi_command_line.1
+perl ../doc/papi_progref.pl -o ../doc/progref man1/papi_decode.1
+perl ../doc/papi_progref.pl -o ../doc/progref man1/papi_event_chooser.1
+perl ../doc/papi_progref.pl -o ../doc/progref man1/papi_mem_info.1
+perl ../doc/papi_progref.pl -o ../doc/progref man1/papi_native_avail.1
+
 REM PAPI Miscellaneous Pages
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_help.3
@@ -9,9 +19,12 @@ REM PAPI Low Level Interface
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_accum.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_add_event.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_add_events.3
+perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_attach.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_cleanup_eventset.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_create_eventset.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_destroy_eventset.3
+perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_detach.3
+perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_encode_events.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_enum_event.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_event_code_to_name.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_event_name_to_code.3
@@ -25,12 +38,14 @@ perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_get_overflow_event_index
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_get_real_cyc.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_get_real_usec.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_get_shared_lib_info.3
+perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_get_substrate_info.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_get_thr_specific.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_get_virt_cyc.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_get_virt_usec.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_is_initialized.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_library_init.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_list_events.3
+perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_list_threads.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_lock.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_multiplex_init.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_num_events.3
@@ -46,6 +61,7 @@ perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_remove_events.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_reset.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_set_debug.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_set_domain.3
+perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_set_event_info.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_set_granularity.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_set_multiplex.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_set_opt.3
@@ -59,6 +75,7 @@ perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_strerror.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_thread_id.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_thread_init.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_unlock.3
+perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_unregister_thread.3
 perl ../doc/papi_progref.pl -o ../doc/progref man3/PAPI_write.3
 
 REM PAPI High Level Interface

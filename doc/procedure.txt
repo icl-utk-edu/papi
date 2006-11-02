@@ -24,41 +24,48 @@ __8.  execute cat_progref.bat (on Windows)
       A suggested file order is:
 	papi.html			papif.html	
 	papi_presets.html		papi_native.html
-        papi_accum.html                 papi_accum_counters.html
-	papi_add_event.html             papi_add_events.html
-	papi_cleanup_eventset.html	papi_create_eventset.html
-	papi_destroy_eventset.html      papi_enum_event.html
-	papi_event_code_to_name.html	papi_event_name_to_code.html
-	papi_flips.html			papi_flops.html
-        papi_get_dmem_info.html         papi_get_event_info.html
-        papi_get_executable_info.html	papi_get_hardware_info.html
-	papi_get_multiplex.html		papi_get_opt.html
-	papi_get_overflow_index.html	papi_get_real_cyc.html
-	papi_get_real_usec.html		papi_get_shared_lib_info.html
+	papi_avail.html			papi_clockres.html
+	papi_cost.html			papi_command_line.html
+	papi_decode.html		papi_event_chooser.html
+	papi_mem_info.html		papi_native_avail.html
+	papi_accum.html			papi_accum_counters.html
+	papi_add_event.html		papi_add_events.html
+	papi_attach.html		papi_cleanup_eventset.html
+	papi_create_eventset.html	papi_destroy_eventset.html
+	papi_detach.html		papi_encode_events.html
+	papi_enum_event.html		papi_event_code_to_name.html
+	papi_event_name_to_code.html	papi_flips.html
+	papi_flops.html			papi_get_dmem_info.html
+	papi_get_event_info.html	papi_get_executable_info.html
+	papi_get_hardware_info.html	papi_get_multiplex.html
+	papi_get_opt.html		papi_get_overflow_index.html
+	papi_get_real_cyc.html		papi_get_real_usec.html
+	papi_get_shared_lib_info.html	papi_get_substrate_info.html
 	papi_get_thr_specific.html	papi_get_virt_cyc.html
 	papi_get_virt_usec.html		papif_get_clockrate.html
 	papif_get_domain.html		papif_get_exe_info.html
-	papif_get_granularity.html      papif_get_preload.html
-	papi_ipc.html                   papi_is_initialized.html
-	papi_library_init.html
-	papi_list_events.html           papi_lock.html
-	papi_multiplex_init.html        papi_num_events.html		
+	papif_get_granularity.html	papif_get_preload.html
+	papi_ipc.html			papi_is_initialized.html
+	papi_library_init.html		papi_list_events.html
+	papi_list_threads.html		papi_lock.html
+	papi_multiplex_init.html	papi_num_events.html
 	papi_num_counters.html		papi_num_hwctrs.html
 	papi_overflow.html		papi_perror.html
-	papi_profil.html		papi_query_event.html		
+	papi_profil.html		papi_query_event.html
 	papi_read.html			papi_read_counters.html
-        papi_register_thread.html       papi_remove_event.html
-        papi_remove_events.html         papi_reset.html			
+	papi_register_thread.html	papi_remove_event.html
+	papi_remove_events.html		papi_reset.html
 	papi_set_debug.html		papi_set_domain.html
-	papi_set_granularity.html	papi_set_multiplex.html
-	papi_set_opt.html		papi_set_thr_specific.html
-	papif_set_event_domain.html
+	papi_set_event_info.html	papi_set_granularity.html
+	papi_set_multiplex.html		papi_set_opt.html
+	papi_set_thr_specific.html	papif_set_event_domain.html
 	papi_shutdown.html		papi_sprofil.html
 	papi_start.html			papi_start_counters.html
 	papi_state.html			papi_stop.html
 	papi_stop_counters.html		papi_strerror.html
 	papi_thread_id.html		papi_thread_init.html
-	papi_unlock.html		papi_write.html
+	papi_unlock.html		papi_unregister_thread.html
+	papi_write.html
 
 __9.  Using your favorite search and replace utility, open progref.html and
       replace all "<TR></TR>" with null. Word displays empty table lines
@@ -73,7 +80,9 @@ __16. Run the ProgRef_Replacements Macro by double-clicking it,
       or by selecting it and pressing the Run button.
       This macro will insert page breaks at the end of each man page,
       and eliminate a bunch of extraneous empty paragraphs.
-__17. Scan the document for any other formatting changes (page breaks, etc.)
+__17a. Check paragraph formatting for inappropriate indents. This may require
+	modifying styles to remove indents as needed.
+__17b. Scan the document for any other formatting changes (page breaks, etc.)
 __18. Save As... "PAPI_Prog_Ref.doc" or another name of your choice.
 ******For Adobe Acrobat 4.0.x******************************************************
 __19. Use Adobe Acrobat Distiller to create both ps and pdf formats:
@@ -84,17 +93,20 @@ __19b. For pdf, General should optimize for screen. Display options Links set to
 ******For Adobe Acrobat 6.0.x******************************************************
 __19a. Use Adobe Acrobat PDFWriter to create a pdf version of the file.
 __19b. From Adobe Acrobat, save a copy of the file as postscript (.ps).
+******For OpenOffice 2.0.x******************************************************
+__19a. Open file in OpenOffice. Export to PDF using defaults. No postscript file is created.
+__19b. Close OpenOffice.
 ***********************************************************************************
 __20. Close Word; copy target documents to their appropriate locations.
 
 
 Creating User's Guide and Software Specification Materials
 
-__1. Open Word and open PAPI_USERS_GUIDE.doc.
+__1. Open Word or OpenOffice and open PAPI_USERS_GUIDE.doc.
 __2. Make any changes needed for current release.
 __3. Commit changes to cvs.
 __4. Save As... under a version specific name such as PAPI_USERS_GUIDE_23.doc.
-__5. Use Adobe Acrobat to create both ps and pdf formats, following step 19 above.
+__5. Use Adobe Acrobat or OpenOffice to create both ps and pdf formats, following step 19 above.
 __6. Save As HTML. Change the 'Title' field of the document to 'PAPI User's Guide'.
 __7. Repeat steps 2 - 6 for PAPI_Software_Spec.doc.
-__8. Close Word; copy target documents to their appropriate locations.
+__8. Close Word or OpenOffice; copy target documents to their appropriate locations.
