@@ -3,7 +3,6 @@ CPU		= ppc64
 CPU_MODEL	= POWER5
 ARCH_EVENTS	= power5_events
 CPU_TYPE 	= ppc64
-SHRFLAGS	= -fPIC
 # for Debian, comment the following line out
 BITS		= 32
 CFLAGS		= -D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\"

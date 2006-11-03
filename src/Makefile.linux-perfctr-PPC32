@@ -3,8 +3,6 @@ CPU		= ppc32
 CPU_MODEL	= PPC32
 ARCH_EVENTS	= ppc32_events
 CPU_TYPE 	= ppc32
-SHRFLAGS	= 
-
 BITS		= 32
 CFLAGS		= -D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\"
 FFLAGS		= -D$(CPU_MODEL)
