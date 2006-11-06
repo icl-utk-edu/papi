@@ -191,11 +191,6 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_VERB_ECONT  1      /* Option to automatically report any return codes < 0 to stderr and continue. */
 #define PAPI_VERB_ESTOP  2      /* Option to automatically report any return codes < 0 to stderr and exit. */
 
-/* dmem_info definitions, these should change. */
-#define PAPI_GET_SIZE        1  /* Size of process image in pages */
-#define PAPI_GET_RESSIZE     2  /* Resident set size in pages */
-#define PAPI_GET_PAGESIZE    3  /* Pagesize in bytes */
-
 /* Profile definitions */
 #define PAPI_PROFIL_POSIX     0x0        /* Default type of profiling, similar to 'man profil'. */
 #define PAPI_PROFIL_RANDOM    0x1        /* Drop a random 25% of the samples. */
@@ -284,8 +279,8 @@ enum {
    PAPI_PWR4_ENUM_GROUPS = 0x200,	/* Enumerate groups an event belongs to */
 
    /* ITANIUM specific section */
-   PAPI_ITA_ENUM_IARR = 0x300,	/* Enumerate events that support DAR (instruction address ranging) */
-   PAPI_ITA_ENUM_DARR,         	/* Enumerate events that support IAR (data address ranging) */
+   PAPI_ITA_ENUM_IARR = 0x300,	/* Enumerate events that support IAR (instruction address ranging) */
+   PAPI_ITA_ENUM_DARR,         	/* Enumerate events that support DAR (data address ranging) */
    PAPI_ITA_ENUM_OPCM,           /* Enumerate events that support OPC (opcode matching) */
    PAPI_ITA_ENUM_IEAR,           /* Enumerate IEAR (instruction event address register) events */
    PAPI_ITA_ENUM_DEAR            /* Enumerate DEAR (data event address register) events */
@@ -549,7 +544,7 @@ read the documentation carefully.  */
       PAPI_shlib_info_t *shlib_info;
       PAPI_exe_info_t *exe_info;
       PAPI_substrate_info_t *sub_info;
-      PAPI_overflow_option_t ovf_info;
+      PAPI_overflow_option_t ovf_info; /* not used anywhere I could find - dkt */
       PAPI_addr_range_option_t addr;
    } PAPI_option_t;
 
