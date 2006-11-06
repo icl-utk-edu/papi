@@ -295,7 +295,7 @@ static void mpx_shutdown_itimer(void)
 {
   MPXDBG("setitimer off\n");
   if (_papi_hwi_system_info.sub_info.multiplex_timer_num != PAPI_NULL) {
- 	if (setitimer(_papi_hwi_system_info.sub_info.multiplex_timer_num, &itimestop, NULL) == -1)
+ 	if (setitimer(_papi_hwi_system_info.sub_info.multiplex_timer_num, (struct itimerval *)&itimestop, NULL) == -1)
      	PAPIERROR("setitimer stop errno %d",errno); }
 }
 #endif                          /* _WIN32 */
