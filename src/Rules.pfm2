@@ -16,11 +16,7 @@ MEMSUBSTR = perfmon
 #
 
 CC_R    	:= $(CC) -pthread
-ifeq (,$(PFM_LIB_PATH))
-	CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.$(VERSION) -Wl,-rpath -Wl,$(LIBDIR)
-else
-	CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.$(VERSION) -Wl,-rpath -Wl,$(PFM_LIB_PATH)
-endif
+CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.$(VERSION) 
 FFLAGS		+= -ffixed-line-length-132
 CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) 
 ifeq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))
@@ -37,10 +33,12 @@ FTOPTFLAGS	= $(TOPTFLAGS)
 
 ifeq (,$(PFM_LIB_PATH))
 ifeq (,$(PFM_ROOT))
-        PFM_ROOT := ./libpfm-3.x
+        PFM_ROOT := $(PWD)/libpfm-3.x
 endif
         PFM_LIB_PATH := $(PFM_ROOT)/lib
+	CC_SHR += -Wl,-rpath-link -Wl,$(PFM_LIB_PATH)
 endif
+
 ifeq (,$(PFM_INC_PATH))
 ifeq (,$(PFM_ROOT))
         PFM_ROOT := ./libpfm-3.x
