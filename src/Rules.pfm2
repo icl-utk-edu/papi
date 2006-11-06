@@ -5,7 +5,7 @@ LIBRARY = libpapi.a
 VERSION = 3
 REVISION = 5
 AGE = 0
-SHLIB   = libpapi.so.$(VERSION).$(REVISION).$(AGE)
+SHLIB   = libpapi.so.$(VERSION)
 LIBS	= static shared
 TARGETS = ear serial multiplex_and_pthreads shared
 SUBSTR	= perfmon
@@ -85,7 +85,7 @@ native_install:
 ifneq (,${PFM_ROOT})
 	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
-	cd $(DESTDIR)/$(LIBDIR); ln -sf $(SHLIB) libpapi.so.$(VERSION)
+	cd $(DESTDIR)/$(LIBDIR); cp -p $(SHLIB) libpapi.so.$(VERSION).$(REVISION).$(AGE)
 	-mkdir -p $(DESTDIR)$(DATADIR)
 	-chmod go+rx $(DESTDIR)$(DATADIR)
 	cp -f ./perfmon_events.csv $(DESTDIR)$(DATADIR)
