@@ -22,7 +22,7 @@ F77		= f90
 FFLAGS		= $(CFLAGS)
 TOPTFLAGS	= 
 NOOPT		= -xO0 
-OPTFLAGS	= -g -fast 
+OPTFLAGS	= -g -fast -xtarget=ultra3 -xarch=v8plusa 
 #
 # gcc 
 #
