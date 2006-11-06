@@ -15,6 +15,7 @@
 */
 
 #include "papi_test.h"
+#include <sys/ptrace.h>
 
 int wait_for_attach_and_loop(void)
 {
