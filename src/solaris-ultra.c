@@ -490,8 +490,8 @@ static int get_system_info(void)
 
    strcpy(_papi_hwi_system_info.hw_info.model_string, cpc_getcciname(cpuver));
    _papi_hwi_system_info.hw_info.model = cpuver;
-   strcpy(_papi_hwi_system_info.hw_info.vendor_string, "SUN unknown");
-   _papi_hwi_system_info.hw_info.vendor = -1;
+   strcpy(_papi_hwi_system_info.hw_info.vendor_string, "SUN");
+   _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_SUN;
    _papi_hwi_system_info.hw_info.revision = version;
 
    _papi_hwi_system_info.hw_info.mhz = ((float) hz / 1.0e6);
@@ -500,23 +500,15 @@ static int get_system_info(void)
    /* Number of PMCs */
 
    retval = cpc_getnpic(cpuver);
-   if (retval < 1)
+   if (retval < 0)
       return (PAPI_ESBSTR);
-/*   _papi_hwi_system_info.num_gp_cntrs = retval;*/
-   _papi_hwi_system_info.sub_info.num_cntrs = retval;
-   _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
-   _papi_hwi_system_info.sub_info.available_granularities = PAPI_GRN_THR;
-   SUBDBG("num_cntrs = %d\n", _papi_hwi_system_info.sub_info.num_cntrs);
 
-   /* program text segment, data segment  address info */
-/*
-   _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) & _start;
-   _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t) & _etext;
-   _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) & _etext + 1;
-   _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) & _edata;
-   _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) & _edata + 1;
-   _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) & _end;
-*/
+   _papi_hwi_system_info.sub_info.num_cntrs = retval;
+   _papi_hwi_system_info.sub_info.fast_real_timer = 1;
+   _papi_hwi_system_info.sub_info.fast_virtual_timer = 1;
+   _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
+   _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
+   _papi_hwi_system_info.sub_info.hardware_intr = 1;
 
    /* Setup presets */
 
@@ -686,7 +678,7 @@ add_preset(hwi_search_t *tab, int *np, einfo_t e)
 	tab[*np].data.derived = 0;
 	tab[*np].data.native[0] = PAPI_NATIVE_MASK | ne;
 	tab[*np].data.native[1] = PAPI_NULL;
-	memset(tab[*np].data.operation, 0, OPS);
+	memset(tab[*np].data.operation, 0, sizeof(tab[*np].data.operation));
 	++*np;
 	return;
     }
@@ -698,7 +690,7 @@ add_preset(hwi_search_t *tab, int *np, einfo_t e)
     tab[*np].data.derived = (op == '-') ? DERIVED_SUB : DERIVED_ADD;
     tab[*np].data.native[0] = PAPI_NATIVE_MASK | ne;
     tab[*np].data.native[1] = PAPI_NATIVE_MASK | ne2;
-    memset(tab[*np].data.operation, 0, OPS);
+    memset(tab[*np].data.operation, 0, sizeof(tab[*np].data.operation));
     ++*np;
 }
 
