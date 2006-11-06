@@ -39,7 +39,7 @@
 /* 1st beta version of 3.4.9
     This will culminate in version 3.5.0 when the beta process is complete.
 */
-#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,4,9,1)
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,5,0,0)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
 
 #ifdef __cplusplus
