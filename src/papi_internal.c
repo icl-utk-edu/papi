@@ -560,21 +560,22 @@ static int add_native_events(EventSetInfo_t * ESI, int *nevt, int size, EventInf
              _papi_hwd_update_control_state(&ESI->machdep, ESI->NativeInfoArray,
                                             ESI->NativeCount,&ESI->master->context);
          if (retval != PAPI_OK)
-            return (retval);
-
+	   {
+	   clean:
+	     for (i = 0; i < size; i++) {
+	       if ((nidx = add_native_fail_clean(ESI, nevt[i])) >= 0) {
+		 out->pos[i] = -1;
+		 continue;
+	       }
+	       INTDBG("should not happen!\n");
+	     }
+	     return (retval);
+	   }
          return 1;
       } else {
-         for (i = 0; i < size; i++) {
-            if ((nidx = add_native_fail_clean(ESI, nevt[i])) >= 0) {
-               out->pos[i] = -1;
-               continue;
-            }
-            INTDBG("should not happen!\n");
-         }
-         return -1;
+	goto clean;
       }
    }
-
    return 0;
 }
 
