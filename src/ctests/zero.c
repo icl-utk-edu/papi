@@ -93,7 +93,7 @@ int main(int argc, char **argv)
 
       sprintf(add_event_str, "%-12s : \t", event_name);
       printf(TAB1, add_event_str, (values[0])[0]);
-      printf(TAB1, "PAPI_TOT_CYC : \t", (values[0])[1]);
+      if (mask1 & MASK_TOT_CYC) printf(TAB1, "PAPI_TOT_CYC : \t", (values[0])[1]);
       printf(TAB1, "Real usec    : \t", elapsed_us);
       printf(TAB1, "Real cycles  : \t", elapsed_cyc);
       printf(TAB1, "Virt usec    : \t", elapsed_virt_us);
