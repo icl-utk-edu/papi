@@ -122,19 +122,46 @@ inline_static long_long get_cycles(void) {
 
 /* The below function is stolen from libpfm from Stephane Eranian */
 static int
-detect_unavail_pmcs(int fd, pfmlib_regmask_t *r_pmcs)
+detect_unavail_pmcs(pfmlib_regmask_t *r_pmcs, unsigned int *n_pmds)
 {
   pfarg_setinfo_t	setf;
-  int ret, i, j;
+  pfmlib_regmask_t r_pmds, ipmds, ipmcs, tpmcs, tpmds;
+  pfarg_ctx_t newctx;
+  int ret, i, j, ctx_fd;
+  unsigned int c;
   
   memset(r_pmcs, 0, sizeof(*r_pmcs));
+  memset(&r_pmds, 0, sizeof(r_pmds));
+  memset(&ipmds, 0, sizeof(ipmds));
+  memset(&ipmcs, 0, sizeof(ipmcs));
+  memset(&tpmds, 0, sizeof(tpmds));
+  memset(&tpmcs, 0, sizeof(tpmcs));
   memset(&setf, 0, sizeof(setf));
+  memset(&newctx, 0, sizeof(newctx));
+
+  SUBDBG("PFM_CREATE_CONTEXT(%p,%p,%d)\n",&newctx,NULL,0);
+  if ((ret = pfm_create_context(&newctx, NULL, 0)))
+    {
+      PAPIERROR("pfm_create_context(): %s", pfm_strerror(ret));
+      return(PAPI_ESYS);
+    }
+  SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",newctx.ctx_fd);
+  ctx_fd = newctx.ctx_fd;
+
+  if (pfm_get_impl_pmcs(&ipmcs) != PFMLIB_SUCCESS)
+    return(PAPI_ESYS);
+
+  if (pfm_get_impl_pmds(&ipmds) != PFMLIB_SUCCESS)
+    return(PAPI_ESYS);
+  
+  if (pfm_get_num_counters(&c) != PFMLIB_SUCCESS)
+    return(PAPI_ESYS);
 
   /*
    * retrieve available register bitmasks from set0
    * which is guaranteed to exist for every context
    */
-  ret = pfm_getinfo_evtsets(fd, &setf, 1);
+  ret = pfm_getinfo_evtsets(ctx_fd, &setf, 1);
   if (ret == PFMLIB_SUCCESS) 
     {
       for(i=0; i < PFM_PMC_BV; i++) 
@@ -143,15 +170,30 @@ detect_unavail_pmcs(int fd, pfmlib_regmask_t *r_pmcs)
 	    {
 	      if ((setf.set_avail_pmcs[i] & (1ULL << j)) == 0)
 		{
-		  pfm_regmask_set(r_pmcs, (i<<6)+j);
+		  pfm_regmask_set(&tpmcs, (i<<6)+j);
 		  SUBDBG("Found unavailable PMC %d\n",(i<<6)+j);
 		}
 	    }
 	}
+      pfm_regmask_and(r_pmcs, &ipmcs, &tpmcs);
+      for(i=0; i < PFM_PMC_BV; i++) 
+	{
+	  for(j=0; (j < 64) && ((i<<6)+j < c); j++) 
+	    {
+	      if ((setf.set_avail_pmds[i] & (1ULL << j)) == 0)
+		{
+		  pfm_regmask_set(&r_pmds, (i<<6)+j);
+		  SUBDBG("Found unavailable PMD %d\n",(i<<6)+j);
+		}
+	    }
+	}
+      pfm_regmask_and(&tpmds, &ipmds, &r_pmds);
+      pfm_regmask_weight(&r_pmds, n_pmds);
     }
   else
-    PAPIERROR("pfm_getinfo_evtsets(%d,%p,%d): %s",fd, &setf, 1, pfm_strerror(ret));
+    PAPIERROR("pfm_getinfo_evtsets(%d,%p,%d): %s",ctx_fd, &setf, 1, pfm_strerror(ret));
 
+  close(ctx_fd);
   return ret;
 }
 
@@ -2572,7 +2614,7 @@ static int get_string_from_file(char *file, char *str, int len)
 int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {
   int i, retval;
-  unsigned int ncnt;
+  unsigned int ncnt,ncnt_no_avail = 0;
   unsigned int version;
 #ifdef DEBUG
   pfmlib_options_t pfmlib_options;
@@ -2601,6 +2643,13 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
        PAPIERROR("pfm_initialize(): %s", pfm_strerror(retval));
        return (PAPI_ESBSTR);
      }
+
+  /* Find out if any PMC's/PMD's are off limits */
+
+  retval = detect_unavail_pmcs(&_perfmon2_pfm_unavailable_pmcs,
+			       &ncnt_no_avail);
+  if (retval != PFMLIB_SUCCESS)
+    return(retval);
 
    SUBDBG("pfm_get_pmu_type(%p)\n",&_perfmon2_pfm_pmu_type);
    if (pfm_get_pmu_type(&_perfmon2_pfm_pmu_type) != PFMLIB_SUCCESS)
@@ -2661,7 +2710,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   if (retval != PAPI_OK)
     return(retval);
   pfm_get_num_counters((unsigned int *)&_papi_hwi_system_info.sub_info.num_cntrs);
-
+  _papi_hwi_system_info.sub_info.num_cntrs -= ncnt_no_avail;
   if (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_MIPS)
     _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR|PAPI_DOM_OTHER;
   else
@@ -2754,11 +2803,6 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
       return(PAPI_ESYS);
     }
   SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",newctx.ctx_fd);
-
-  /* Find out if any PMC's are off limits */
-
-  if (detect_unavail_pmcs(newctx.ctx_fd,&_perfmon2_pfm_unavailable_pmcs))
-    return(PAPI_ESYS);
 
   /* set close-on-exec to ensure we will be getting the PFM_END_MSG, i.e.,
    * fd not visible to child. */
@@ -4004,6 +4048,8 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
   if (decode_native_event(EventCode,&event,&umask) != PAPI_OK)
     return(PAPI_ENOEVNT);
 
+  memset(&gete,0x0,sizeof(gete));
+
   gete.event = event;
   gete.num_masks = prepare_umask(umask,gete.unit_masks);
   
@@ -4081,8 +4127,8 @@ int _papi_hwd_update_control_state(hwd_control_state_t *ctl,
                                    NativeInfo_t *native, int count, hwd_context_t * ctx) {
   int i = 0, ret;
   int last_reg_set = 0, reg_set_done = 0, offset = 0;
-  pfmlib_input_param_t *inp = &ctl->in;
-  pfmlib_output_param_t *outp = &ctl->out;
+  pfmlib_input_param_t tmpin,*inp = &ctl->in;
+  pfmlib_output_param_t tmpout,*outp = &ctl->out;
   pfarg_pmd_t *pd = ctl->pd;
 
   if (count == 0)
@@ -4094,6 +4140,9 @@ int _papi_hwd_update_control_state(hwd_control_state_t *ctl,
       return(PAPI_OK);
     }
   
+  memcpy(&tmpin,inp,sizeof(tmpin));
+  memcpy(&tmpout,outp,sizeof(tmpout));
+
   for (i=0;i<count;i++)
     {
       SUBDBG("Stuffing native event index %d (code 0x%x) into input structure.\n",
@@ -4106,7 +4155,12 @@ int _papi_hwd_update_control_state(hwd_control_state_t *ctl,
   
   ret = compute_kernel_args(ctl);
   if (ret != PAPI_OK)
-    return(ret);
+    {
+      /* Restore values */
+      memcpy(inp,&tmpin,sizeof(tmpin));
+      memcpy(outp,&tmpout,sizeof(tmpout));
+      return(ret);
+    }
   
   /* Update the native structure, because the allocation is done here. */
   
