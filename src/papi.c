@@ -1003,6 +1003,19 @@ int PAPI_read(int EventSet, long_long * values)
    return (retval);
 }
 
+int PAPI_read_fast_ts(int EventSet, long_long * values, long_long *cyc)
+{
+   EventSetInfo_t *ESI;
+   ThreadInfo_t *thread;
+   int retval;
+
+   ESI = _papi_hwi_lookup_EventSet(EventSet);
+   thread = ESI->master;
+   retval = _papi_hwi_read(&thread->context, ESI, values);
+   *cyc = PAPI_get_real_cyc();
+   return(retval);
+}
+
 int PAPI_accum(int EventSet, long_long * values)
 {
    EventSetInfo_t *ESI;
