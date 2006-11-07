@@ -413,7 +413,6 @@ static int get_system_info(void)
       SUBDBG("cpuver (==%d) <= CPC_ULTRA2 (==%d)\n", cpuver, CPC_ULTRA2);
       pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT;
       pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT;
-      _papi_hwi_system_info.sub_info.hardware_intr = 0;
    } else if (cpuver <= LASTULTRA3) {
       SUBDBG("cpuver (==%d) <= CPC_ULTRA3x (==%d)\n", cpuver, LASTULTRA3);
       pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT;
@@ -508,7 +507,7 @@ static int get_system_info(void)
    _papi_hwi_system_info.sub_info.fast_virtual_timer = 1;
    _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
    _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
-   _papi_hwi_system_info.sub_info.hardware_intr = 1;
+   _papi_hwi_system_info.sub_info.hardware_intr_sig = SIGEMT;
 
    /* Setup presets */
 
@@ -894,7 +893,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    if (threshold == 0) {
       if (this_state->overflow_num == 1) {
          arg->flags ^= CPC_BIND_EMT_OVF;
-         if (sigaction(SIGEMT, NULL, NULL) == -1)
+         if (sigaction(_papi_hwi_system_info.sub_info.hardware_intr_sig, NULL, NULL) == -1)
             return (PAPI_ESYS);
          this_state->overflow_num = 0;
       } else this_state->overflow_num--;
@@ -907,7 +906,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
       act.sa_sigaction = dispatch_emt;
       memset(&act.sa_mask, 0x0, sizeof(act.sa_mask));
       act.sa_flags = SA_RESTART | SA_SIGINFO;
-      if (sigaction(SIGEMT, &act, NULL) == -1)
+      if (sigaction(_papi_hwi_system_info.sub_info.hardware_intr_sig, &act, NULL) == -1)
          return (PAPI_ESYS);
 
       arg->flags |= CPC_BIND_EMT_OVF;
