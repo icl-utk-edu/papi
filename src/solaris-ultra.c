@@ -507,7 +507,7 @@ static int get_system_info(void)
    _papi_hwi_system_info.sub_info.fast_virtual_timer = 1;
    _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
    _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
-   _papi_hwi_system_info.sub_info.hardware_intr_sig = SIGEMT;
+   _papi_hwi_system_info.sub_info.hardware_intr_sig = SIGPROF;
 
    /* Setup presets */
 
