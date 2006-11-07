@@ -317,6 +317,7 @@ int _sys_vperfctr_read_control(int fd, unsigned int cpu_type, struct vperfctr_co
 #define PV_970FX	0x003C
 #define PV_630        	0x0040
 #define PV_630p	        0x0041
+#define PV_970MP        0x0044
 
 static unsigned int mfpvr(void)
 {
@@ -340,6 +341,7 @@ void perfctr_info_cpu_init(struct perfctr_info *info)
 	break;
       case PV_970:
       case PV_970FX:
+      case PV_970MP:
 	cpu_type = PERFCTR_PPC64_970;
 	break;
       case PV_POWER5:
