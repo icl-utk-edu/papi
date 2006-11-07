@@ -83,11 +83,20 @@ static int parse_value(const char *arg, unsigned long *value)
     return endp[0] != '\0';
 }
 
+static int parse_value_ull(const char *arg, unsigned long long *value)
+{
+    char *endp;
+
+    *value = strtoull(arg, &endp, 16);
+    return endp[0] != '\0';
+}
+
 int do_arch_option(int ch,
 		   const char *arg,
 		   struct perfctr_cpu_control *cpu_control)
 {
     unsigned long spec_value;
+    unsigned long long spec_value_ull;
 
     switch( ch ) {
       case 1:
@@ -98,11 +107,11 @@ int do_arch_option(int ch,
 	cpu_control->ppc64.mmcr0 = spec_value;
 	return 0;
       case 2:
-	if( parse_value(arg, &spec_value) ) {
+	if( parse_value_ull(arg, &spec_value_ull) ) {
 	    fprintf(stderr, "perfex: invalid value: '%s'\n", arg);
 	    exit(1);
 	}
-	cpu_control->ppc64.mmcr1 = spec_value;
+	cpu_control->ppc64.mmcr1 = spec_value_ull;
 	return 0;
       case 3:
 	if( parse_value(arg, &spec_value) ) {
