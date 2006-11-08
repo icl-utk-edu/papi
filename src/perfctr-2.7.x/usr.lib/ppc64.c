@@ -341,7 +341,6 @@ void perfctr_info_cpu_init(struct perfctr_info *info)
 	break;
       case PV_970:
       case PV_970FX:
-      case PV_970MP:
 	cpu_type = PERFCTR_PPC64_970;
 	break;
       case PV_970MP:
