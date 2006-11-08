@@ -344,6 +344,9 @@ void perfctr_info_cpu_init(struct perfctr_info *info)
       case PV_970MP:
 	cpu_type = PERFCTR_PPC64_970;
 	break;
+      case PV_970MP:
+	cpu_type = PERFCTR_PPC64_970MP;
+	break;
       case PV_POWER5:
       case PV_POWER5p: 
 	cpu_type = PERFCTR_PPC64_POWER5;
@@ -364,6 +367,7 @@ unsigned int perfctr_info_nrctrs(const struct perfctr_info *info)
       case PERFCTR_PPC64_POWER4:
       case PERFCTR_PPC64_POWER4p:
       case PERFCTR_PPC64_970:
+      case PERFCTR_PPC64_970MP:
       	return 8;
       case PERFCTR_PPC64_POWER5:
       	return 6;
@@ -383,6 +387,8 @@ const char *perfctr_info_cpu_name(const struct perfctr_info *info)
 	return "POWER4+";
       case PERFCTR_PPC64_970:
 	return "PowerPC 970";
+      case PERFCTR_PPC64_970MP:
+	return "PowerPC 970MP";
       case PERFCTR_PPC64_POWER5:
 	return "POWER5";
       default:
