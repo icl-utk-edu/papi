@@ -25,28 +25,21 @@ NOTE: the configure and make files are located in the papi/src directory.
 
 General Installation
 
-1.      % ./configure
-        % make
-
-        OR	
-
-        Pick the appropriate Makefile.<arch> for your system in the papi 
-	source distribution, edit it (if necessary) and compile.
-
-	% make -f Makefile.<arch>
+1.	% ./configure
+	% make
 
 2.	Check for errors. 
 
 	a) Run a simple test case: (This will run ctests/zero)
 
-	% make -f Makefile.<arch> test
+	% make test
 
 	If you get good counts, you can optionally run all the test programs
-	with the include test harness. 	This will run the tests in quiet mode, 
+	with the included test harness. This will run the tests in quiet mode, 
 	which will print PASSED, FAILED, or SKIPPED. Tests are SKIPPED if the
 	functionality being tested is not supported by that platform.
 
-	% make -f Makefile.<arch> fulltest (This will run ./run_tests.sh)
+	% make fulltest (This will run ./run_tests.sh)
 
 	To run the tests in verbose mode:
 
@@ -56,46 +49,33 @@ General Installation
 
 	a) To install PAPI libraries and header files from the build tree:
 
-        If you created the Makefile with configure:
-        % make install
-   
-        Otherwise:
-	% make -f Makefile.<arch> PREFIX=<install-dir> install
-
-	Please use an absolute pathname for <install-dir>, not a relative 
-	pathname.
+	% make install
 
 	b) To install PAPI manual pages from the build tree:
-        If you created the Makefile with configure:
-        % make install-man
-   
-        Otherwise:
 
-	% make -f Makefile.<arch> PREFIX=<install-dir> install-man
+	% make install-man
 
 	c) To install PAPI test programs from the build tree:
 
-        If you created the Makefile with configure:
-        % make install-tests
-   
-        Otherwise:
-	% make -f Makefile.<arch> PREFIX=<install-dir> install-tests
+	% make install-tests
 
 	d) To install all of the above in one step from the build tree:
 
-        If you created the Makefile with configure:
-        % make install-all
-   
-        Otherwise:
-	% make -f Makefile.<arch> PREFIX=<install-dir> install-all
+	% make install-all
 
 	e) To create a binary kit, papi-<arch>.tgz:
 
-        If you created the Makefile with configure:
-        % make dist
-  
-        Otherwise:
-	% make -f Makefile.<arch> dist
+	% make dist
+
+*****************************************************************************
+MORE ABOUT CONFIGURE OPTIONS
+*****************************************************************************
+
+Beginning with PAPI 3.5.0, there is an extensive array of options available
+from the configure command-line. These options select default directories,
+32- or 64-bit library modes, driver versions, compiler settings and more.
+For complete details on the command-line options:
+	% ./configure --help
 
 *****************************************************************************
 Operating System Specific Installation Steps (In Alphabetical Order by OS)
@@ -103,115 +83,87 @@ Operating System Specific Installation Steps (In Alphabetical Order by OS)
 
 AIX - IBM POWER3, POWER4, POWER5
 *****************************************************************************
-PAPI is supported on both AIX 4.3.3 for POWER3, and AIX 5 for POWER3, POWER4
-and POWER5. Different make files are used for each of these three platforms,
-in both 32 bit and 64 bit configurations.
-In general, use ./configure to select the correct makefile for your system, 
+PAPI is supported on AIX 5.x for POWER3, POWER4 and POWER5.
+Use ./configure to select the desired make options for your system, 
 specifying the --with_bitmode=32 or --with-bitmode=64 to select wordlength.
 32 bits is the default.
 
-For AIX 4.3.3 - POWER3:
-*****************************************************************************
-Install Pmtoolkit before compiling PAPI.  Pmtoolkit must be installed as root. 
-The file can be downloaded from the following URL:
-
-	http://www.alphaworks.ibm.com/aw.nsf/download/pmapi
-
-Installation instructions for PMTOOLKIT on AIX 4.3.3:
-1.	Make sure you have AIX 4.3.3 installed.
-2.	Store pmtoolkit.latest in /usr/sys/inst.images. 
-3.	Type "installp -X -acd /usr/sys/inst.images/pmtoolkit.obj all" to 
-	install. This file goes in 
-	/usr/lpp/pmtoolkit/doc/pmapi.toolkit.guide.html.
-4.	After the installation, run pmloadsvcs as root to load the kernel 
-	extension.  
-5.	A simple way of testing the installation and load is by running 
-	pmcycles. It should return: 
-		This machine runs at xxx MHz
-
-**NOTE: Whenever the machine is rebooted, Pmtoolkit must be reloaded. 
-This step can be done automatically at boot time by putting the line: 
-	% /usr/lpp/pmtoolkit/bin/pmloadsvcs  
-at the end of the /etc/rc.net file. **
-
-**NOTE In order to unload the kernel extension, run pmunloadsvcs. **
-
-After the installation of Pmtoolkit, follow the general installation to 
-install PAPI, using Makefile.aix-power.
-
-For AIX 5.1 - POWER5/POWER4:
-*****************************************************************************
 1.	On AIX 5.x, the bos.pmapi is a product level fileset (part of the OS).
 	However, it is not installed by default. Consult your sysadmin to 
 	make sure it is installed. 
-2.	Follow the general instructions for installing PAPI, using 
-	Makefile.aix-power5 or Makefile.aix-power4.
+2.	Follow the general instructions for installing PAPI.
 
-For AIX 5.1 - POWER3:
+WARNING: PAPI requires XLC version 6 or greater.
+Your version can be determined by running 'lslpp -a -l | grep -i xlc'.
+
+BG/L 
 *****************************************************************************
-1.	If you are upgrading from AIX 4.3.x, first unload and uninstall 
-	pmtoolkit if it has been installed.
-2.	After upgrading to AIX 5.x, consult your sysadmin to make sure the 
-	bos.pmapi is properly installed. 
-3.	Follow the general instructions for installing PAPI, using 
-	Makefile.aix5-power3.
+BG/L is a cross-compiled environment. The machine on which PAPI is compiled
+is not the machine on which PAPI runs. To compile PAPI on BG/L, specify the 
+BG/L environment as shown below:
 
-Warning about XLC version 5. PAPI accepts xlc version 6 or greater. Your version
-can be determined by running 'lslpp -a -l | grep -i xlc'. If you have version
-5, you need to build with 'CC_SHR="-G -r"' on the make line, like this:
-	
-	> make -f Makefile.aix5-power3 CC_SHR="-G -r"
+	% ./configure --with-OS=bgl
+	% make
 
-For BG/L 
+The testing targets in the make file will not work in the BG/L environment.
+Since BG/L supports multiple queueing systems, you must manually execute
+programs in the ctests and ftests directories to check for successful
+library creation. You can also manually edit the run_tests.sh script to
+automate testing for your installation. 
+
+WARNING: ./configure might fail if the cross compiler is not in your path.
+	 In that is the case, just add it to your path 
+	 and everything should work.
+
+Catamount - Cray XT3 Opteron
 *****************************************************************************
-1.  To compile PAPI on BG/L, user has to do a little extra at configure step:
-    ./configure --with-OS=bgl
-    make
-	
-	Warning: ./configure might fail if cross compiler is not in your path. In 
-	that case, just add it to the path, everything should work.
+The Cray XT3 is also a cross-compiled environment. In this case, configure
+can automatically detect that fact and make appropriate default assignments.
+Please note that although Catamount contains the necessary PerfCtr patches
+to access the hardware counters, a customzed copy of the Perfctr 2.5.4 source
+is necessary to compile and link PAPI. Contact Cray for a copy of these sources.
 
-Linux - Alpha
-*****************************************************************************
-PAPI 3.0 and Linux/Alpha hasn't been tested nor active supported for a while.
-If you are interested, please send mail to ptools-perfapi@ptools.org.
+The testing targets in the make file will not work in the Catamount 
+environment. It is necessary to log into an interactive session and run the 
+tests manually through the job submission system. For example, instead of:
+	% make test
+use:
+	% yod -sz 1 ctests/zero
+and instead of:
+	% make fulltest
+use:
+	% ./run_cat_tests.sh
 
-PAPI on Alpha Linux requires the iprobe driver patch from Compaq/HP, which 
-requires a minimum kernel version of 2.1.132. For details on installing this 
-kernel driver see the README at: 
-ftp://ftp.support.compaq.com/private/alpha-tools-software/iprobe/readme.txt
-The patch itself is in the papi/src/alpha-linux directory.
-Once the driver is properly installed, follow the general instructions for 
-installing PAPI, using Makefile.linux-alpha.
-
+PLATFORM NOTES:
+PAPI on Catamount currently supports single event overflow. It does not 
+support multiple event overflow or profiling. Many of the overflow and
+profile tests in the PAPI distribution WILL SEGFAULT in this release.
 
 Linux - Itanium I & II
 *****************************************************************************
-PAPI on Itanium Linux links to libpfm, version 2.0 requires a kernel version
-of 2.4.x, version 3.0 requires kernel version 2.6.x or higher. The kernel
-version is detected automatically in the Rules.libpfm file. 
+PAPI on Itanium Linux links to the perfmon library. The library version and 
+the Itanium version are automatically determined by configure.
+If you wish to override the defaults, a number of pfm options are available
+to configure. Use:
+	% ./configure --help
+to learn more about these options.
 
-To build for this platform, use the Makefile.linux-libpfm-<processor> makefile,
-where processor is either itanium or itanium2.
+Follow the general installation instructions to complete your installation.
 
-To build with a different version of PFM than is detected by the makefile: 
-(version 2.0 or 3.0)
+Linux - Itanium Montecito
+*****************************************************************************
+A preliminary implementation of PAPI for Montecito is available in this
+release. It can be configured using either libpfm or the beta perfmon2
+implementation. Your operating system will require a kernel patch to use
+perfmon2. Contact the PAPI team if you are interested in experimenting
+with this implementation. CAVEAT EMPTOR.
 
-set VERSION=2.0 or VERSION=3.0 on the make line.
-
-To build with an installed libpfm:
-
-set the PFM_PREFIX flag on the make line.
-
-To build with an uninstalled libpfm not inside the PAPI source tree:
-
-set the PFM flag on the make line.
-
-Linux - PPC64 (POWER5, POWER4, and POWERPC970)
+Linux - PPC64 (POWER5, POWER4, and PowerPC970)
 ****************************************************************************
 Linux/PPC64 requires that the kernel be patched and recompiled with the
 PerfCtr patch.   The required patches and complete installation instructions
-are provided in the papi/src/perfctr-2.7.x directory.
+are provided in the papi/src/perfctr-2.7.x directory. PPC64 is the ONLY 
+platform that REQUIRES use of PerfCtr 2.7.x.
 
 *- IF YOU HAVE ALREADY PATCHED YOUR KERNEL AND/OR INSTALLED PERFCTR -*
 
@@ -223,21 +175,19 @@ objects files and includes in the libpapi.a file for convenience. If you
 install a new perfctr, even a shared library, YOU MUST REBUILD PAPI to get
 a proper, working libpapi.a.
 
-If you have already installed PerfCtr under <prefix> then:
+There are several options in configure to allow you to specify your perfctr 
+version and location. Use:
+	% ./configure --help
+to learn more about these options.
 
-make -f Makefile.linux-<processor> PERFCTR_PREFIX=<prefix>
+Follow the general installation instructions to complete your installation.
 
-If you have a different PerfCtr source tree other than the ones in papi/src
-AND you have not performed a 'make install' in that directory:
-
-make -f Makefile.linux-<processor> PERFCTR=<PerfCtr source tree location>
-
-Linux/x86 - Intel and AMD
+Linux/x86 - Intel Pentium, Core and AMD Athlon, Opteron
 *****************************************************************************
 Linux/x86 requires that the kernel be patched and recompiled with the PerfCtr
 patch. The required patches and complete installation instructions are 
 provided in the papi/src/perfctr-x.y directory. Please see the INSTALL file
-in that directory. 
+in that directory.
 
 Do not forget, you also need to build your kernel with APIC support in order
 for hardware overflow to work. This is very important for accurate statistical
@@ -257,39 +207,35 @@ In our 2.4.x kernels:
 /usr/src/linux/.config:CONFIG_X86_IO_APIC=y
 
 You can verify the APIC is working after rebooting with the new kernel
-and running the 'perfex -i' command found in the perfctr/examples/perfex
+by running the 'perfex -i' command found in the perfctr/examples/perfex
 directory.
 
-PAPI supports 2 versions of PerfCtr. The 2.4.x series and the 2.6.x series.
-By default, PAPI assumes 2.6.x. You can change this by setting the
-VERSION flag on the make line to either 2.4.x or 2.6.x. NOTE: THE VERSIONS
-OF PERFCTR DO NOT CORRESPOND TO LINUX KERNEL VERSIONS. PLEASE USE PERFCTR 
-2.6.x ALWAYS UNLESS YOU ARE RUNNING A VERY OLD (AND UNSUPPORTED) KERNEL.
-
-make -f Makefile.linux-<processor> VERSION=2.4.x
+PAPI on x86 assumes PerfCtr 2.6.x. You can change this with the 
+'--with-perfctr=<5,6,7> option to ./configure. THIS IS NOT ADVISED.
+PerfCtr version 2.5.4 is specific for Cray XT3, and PerfCtr 2.7.x is
+supported only for PPC64.
+NOTE: THE VERSIONS OF PERFCTR DO NOT CORRESPOND TO LINUX KERNEL VERSIONS.
 
 *- IF YOU HAVE ALREADY PATCHED YOUR KERNEL AND/OR INSTALLED PERFCTR -*
 
 WARNING: You should always use a PerfCtr distribution that has been distributed
-with a version of PAPI or your build will fail. The reason for this is that
-PAPI builds a shared library of the Perfctr runtime, on which libpapi.so
-depends. PAPI also depends on the .a file, which it decomposes into component
-objects files and includes in the libpapi.a file for convenience. If you
-install a new perfctr, even a shared library, YOU MUST REBUILD PAPI to get
-a proper, working libpapi.a. 
+with a version of PAPI or your build may fail. Newer versions with backward
+compatibility may also work. PAPI builds a shared library of the Perfctr 
+runtime, on which libpapi.so depends. PAPI also depends on the .a file, 
+which it decomposes into component objects files and includes in the libpapi.a 
+file for convenience. If you install a new PerfCtr, even a shared library, 
+YOU MUST REBUILD PAPI to get a proper, working libpapi.a. 
 
-If you have already installed PerfCtr under <prefix> then:
+There are several options in configure to allow you to specify your perfctr 
+version and location. Use:
+	% ./configure --help
+to learn more about these options.
 
-make -f Makefile.linux-<processor> PERFCTR_PREFIX=<prefix>
-
-If you have a different PerfCtr source tree other than the ones in papi/src
-AND you have not performed a 'make install' in that directory:
-
-make -f Makefile.linux-<processor> PERFCTR=<PerfCtr source tree location>
+Follow the general installation instructions to complete your installation.
 
 MIPS - IRIX 6.5
 *****************************************************************************
-No additional steps are required to get PAPI working on IRIX. Follow the 
+No additional steps are required to install PAPI on IRIX. Follow the 
 general installation guide, and everything should work.
 
 
@@ -297,19 +243,7 @@ Solaris 8 - Ultrasparc
 *****************************************************************************
 The only requirement for Solaris is that you must be running version 2.8 or 
 newer.  As long as that requirement is met, no additional steps are required 
-to get PAPI working and you can follow the general installation guide.
-
-Tru64 UNIX - Alpha
-*****************************************************************************
-On Tru64 UNIX, PAPI uses a service called "Dynamic Access to DCPI
-Data (DADD)" to acquire performance data. DADD is a service provided
-by the HP Continuous Profiling Infrastructure (DCPI.) DCPI with DADD
-is not part of the PAPI distribution and is available from Hewlett
-Packard. Contact dcpi@hp.com for further details.
-
-PAPI support using the PFM device driver is deprecated and will be
-replaced by DCPI with DADD.
-
+to install PAPI and you can follow the general installation guide.
 
 Unicos - Cray 
 *****************************************************************************
@@ -317,15 +251,22 @@ No additional steps are required to get PAPI working on Unicos.
 Follow the general installation guide, and everything should work.
 
 
-Windows XP/2000 - Intel
+Windows XP/2000/Server 2003 - Intel Pentium III or AMD Athlon / Opteron
 *****************************************************************************
+PAPI 3.5 for Windows runs on Pentium III, Athlon and Opteron, for 
+Windows 2000, Windows XP and Windows Server 2003.
 
-Download the self-installing executable from the PAPI site.
-Double-click it and follow the prompts.
-The installer requires administrator privileges, since it installs a device 
-driver to access the counters.
-This executable includes binaries for the library, device driver, examples, 
-and perfometer as well as source code for the examples.
+Earlier versions of PAPI for Windows provided a self-installing executable.
+That is not the case with the current release.
+
+The Windows source tree comes with Microsoft Visual Studio Version 8 projects
+to build a graphical shell application, the PAPI library as a DLL, a kernel 
+driver to provide access to the counters, and a collection of C test programs.
+
+The WinPMC driver must be installed with administrator privileges. See the 
+winpmc.html file in the papi/win2k/winpmc directory for details on building 
+and installing this driver.
+
 The general installation instructions are irrelevant for Windows.
 
 

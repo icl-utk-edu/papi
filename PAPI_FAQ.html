@@ -76,6 +76,7 @@
 &nbsp; &nbsp; &nbsp; <a href="#186">Hardware Multiplexing</a><br />
 &nbsp; &nbsp; &nbsp; <a href="#187">Bugs</a><br />
 &nbsp; &nbsp; &nbsp; <a href="#217">Why when I compile PAPI 3.0, do I get Dl_info undefined in irix-mips.c?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#260">My code forks and my counts are high, what's the problem?</a><br />
 <br />
 <strong><a href="#44">Linux-Alpha</a></strong><br />
 &nbsp; &nbsp; &nbsp; <a href="#188">General Comments</a><br />
@@ -97,6 +98,7 @@
 &nbsp; &nbsp; &nbsp; <a href="#214">Vector instruction counts on the Pentium 4 series</a><br />
 &nbsp; &nbsp; &nbsp; <a href="#215">The memory test sometimes fails on Athlon Processors.</a><br />
 &nbsp; &nbsp; &nbsp; <a href="#121">How do I patch my Linux/Pentium I, II, III, IV, AMD K7, K8 box to work with PAPI?</a><br />
+&nbsp; &nbsp; &nbsp; <a href="#262">Floating Point counts on AMD Opteron</a><br />
 <br />
 <strong><a href="#47">Solaris-Ultra</a></strong><br />
 &nbsp; &nbsp; &nbsp; <a href="#193">General Comments</a><br />
@@ -338,7 +340,7 @@ __thread implementation, please report it to us.</p></blockquote>
 <strong>How do I access the PAPI CVS tree remotely?</strong>
 <blockquote><p>If you would like to interactively browse the PAPI CVS Repository by the WWW, go to the Web based <A HREF="http://icl.cs.utk.edu/viewcvs/viewcvs.cgi/papi/?cvsroot=PAPI">PAPI CVS Viewer</a>.</p><p>To access cvs directly, do the following:</p><p>The first time, the Checkout phase:<br>
  <br>
-> setenv CVSROOT :pserver:anonymous@icl.cs.utk.edu:/cvs/homes/papi<br>
+> setenv CVSROOT :pserver:anonymous@cvs.cs.utk.edu:/cvs/homes/papi<br>
 > cvs login<br>
 > Password: <cr><br>
 > cvs co all|papi|src|man|spec|tools<br>
@@ -657,7 +659,7 @@ you will need to set LD_LIBRARYN32_PATH or LD_LIBRARY64_PATH to the location of 
 <br /> <br />
 <a name="186"></a>
 <strong>Hardware Multiplexing</strong>
-<blockquote><p>Hardware multiplexing is implemented and in use for IRIX-MIPS. You can count all 32 events simultaneously.</p></blockquote>
+<blockquote><p>Hardware multiplexing is implemented and in use for IRIX-MIPS. You can count all 32 events simultaneously, but this must be enabled explicitly as with the other substrates.</p></blockquote>
 <center><font size="-1"><a href="#top">back to top</a></font></center>
 <br /> <br />
 <a name="187"></a>
@@ -671,6 +673,11 @@ See: man r10k_counters</p></blockquote>
 <a name="217"></a>
 <strong>Why when I compile PAPI 3.0, do I get Dl_info undefined in irix-mips.c?</strong>
 <blockquote><p>You have an older run-time system than what PAPI was developed on. The fix is to change the definition to &#039;struct Dl_info&#039;.</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="260"></a>
+<strong>My code forks and my counts are high, what's the problem?</strong>
+<blockquote><p>IRIX is brain-dead, and subprocesses automatically inherit the counter state of the parent process. Solution: call PAPI_stop() just before you fork and PAPI_start() after you fork.</p></blockquote>
 <center><font size="-1"><a href="#top">back to top</a></font></center>
 <br /> <br />
 <br />
@@ -924,6 +931,36 @@ Makefile.linux-perfctr-p4 or<br>
 <a name="121"></a>
 <strong>How do I patch my Linux/Pentium I, II, III, IV, AMD K7, K8 box to work with PAPI?</strong>
 <blockquote><p>See the INSTALL file in papi/src/perfctr-2.6.x. The instructions are very, very simple. Do not use perfctr-2.4.x unless you have to. There is no link of perfctr version to linux kernel version!</p></blockquote>
+<center><font size="-1"><a href="#top">back to top</a></font></center>
+<br /> <br />
+<a name="262"></a>
+<strong>Floating Point counts on AMD Opteron</strong>
+<blockquote><p>The AMD Opteron is the first chip series from AMD that can measure and report floating point operations. Two native events measure floating point activity. One measures speculative operations that enter the FP units; the other measures operations that retire from the FP units.<br></p><p>The retired event generates precise event counts that scale with the amount of work done. However, it measures data movement as well as floating point operations, resulting in counts that are consistently significantly higher than the expected theoretical counts, often by factors of 2 or more.<br></p><p>The speculative event can be configured to generate counts of only the operations typically of interest. Since these counts are speculative, they tend to be higher by often widely variable amounts than expected theoretical counts, especially on complex production codes.<br></p><p>PAPI provides 2 preset events to count floating point operations:<br><br>
+- PAPI_FP_INS counts intstructions passing through the floating point unit;<br>
+- PAPI_FP_OPS is intended to count something closer to theoretical floating point operations.<br><br>
+ 
+To minimize the overlap and maximize the usefulness of these two events on AMD Opteron, we have made the following choices:<br><br></p><p>- PAPI_FP_INS always counts retired floating point operations. This value will be precise and accurate, but will include FP loads and stores as well as computations.<br></p><p>- PAPI_FP_OPS counts speculative computation operations by default, but can be customized as discussed below.<br><br></p><p>As an alternative to counting speculative computations, PAPI_FP_OPS can be configured to retired operations corrected for data movement. Unfortunately, the correction factors themselves are speculative, and can lead to undercounting errors similar in magnitude to those seen in the pure speculative counts.<br></p><p>Two methods are provided to allow customization of PAPI_FP_OPS:<br><br>
+ 
+1) The PAPI_OPTERON_FP_xxx defines.<br><br>
+ 
+   Set these in the CFLAGS variable of Makefile.linux-perfctr-opteron.<br><br>
+ 
+   -DPAPI_OPTERON_FP_RETIRED<br>
+   -DPAPI_OPTERON_FP_SSE_SP<br>
+   -DPAPI_OPTERON_FP_SSE_DP<br>
+   -DPAPI_OPTERON_FP_SPECULATIVE<br><br>
+ 
+   The default value is equivalent to:<br><br>
+ 
+      -DPAPI_OPTERON_FP_SPECULATIVE.<br><br>
+  
+2) The PAPI_OPTERON_FP environment variable.<br><br>
+ 
+   Set this to one of the following, and it will change the
+   behavior of PAPI_FP_OPS.<br><br></p><p>   RETIRED: count all retired FP instructions<br>
+   SSE_SP: correct retired counts optimized for single precision<br>
+   SSE_DP: correct retired counts optimized for double precision<br>
+   SPECULATIVE: count speculative computations (default)<br></p></blockquote>
 <center><font size="-1"><a href="#top">back to top</a></font></center>
 <br /> <br />
 <br />
