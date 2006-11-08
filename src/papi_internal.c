@@ -573,7 +573,8 @@ static int add_native_events(EventSetInfo_t * ESI, int *nevt, int size, EventInf
 	   }
          return 1;
       } else {
-	goto clean;
+	  retval = -1;
+	  goto clean;
       }
    }
    return 0;
