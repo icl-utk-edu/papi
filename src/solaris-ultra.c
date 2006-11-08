@@ -418,6 +418,7 @@ static int get_system_info(void)
       pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT;
       pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT;
       _papi_hwi_system_info.sub_info.hardware_intr = 1;
+      _papi_hwi_system_info.sub_info.hardware_intr_sig = SIGEMT;
    } else
       return (PAPI_ESBSTR);
 
@@ -507,7 +508,6 @@ static int get_system_info(void)
    _papi_hwi_system_info.sub_info.fast_virtual_timer = 1;
    _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
    _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
-   _papi_hwi_system_info.sub_info.hardware_intr_sig = SIGPROF;
 
    /* Setup presets */
 
