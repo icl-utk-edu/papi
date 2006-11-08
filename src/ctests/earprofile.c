@@ -46,7 +46,7 @@ static void ear_no_profile (void) {
    printf(TAB1, "PAPI_TOT_CYC:", (values[0])[1]);
 }
 
-static int do_profile(unsigned long long start, unsigned long plength, unsigned scale, int thresh, int bucket) {
+static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int thresh, int bucket) {
    int i, retval;
    unsigned long blength;
    int num_buckets;
@@ -63,7 +63,7 @@ static int do_profile(unsigned long long start, unsigned long plength, unsigned 
       if (!TESTS_QUIET)
          printf("Test type   : \t%s\n", profstr[i]);
 
-      if ((retval = PAPI_profil(profbuf[i], blength, (caddr_t)start, scale,
+      if ((retval = PAPI_profil(profbuf[i], blength, start, scale,
                               EventSet, PAPI_event, thresh,
                               profflags[i] | bucket)) != PAPI_OK) {
          test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
@@ -80,7 +80,7 @@ static int do_profile(unsigned long long start, unsigned long plength, unsigned 
          printf(TAB1, event_name, (values[1])[0]);
          printf(TAB1, "PAPI_TOT_CYC:", (values[1])[1]);
       }
-      if ((retval = PAPI_profil(profbuf[i], blength, (caddr_t)start, scale,
+      if ((retval = PAPI_profil(profbuf[i], blength, start, scale,
                               EventSet, PAPI_event, 0, profflags[i])) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
    }
@@ -106,7 +106,7 @@ int main(int argc, char **argv)
    int retval, retval2;
    const PAPI_hw_info_t *hw_info;
    const PAPI_exe_info_t *prginfo;
-   unsigned long long start, end;
+   caddr_t start, end;
 
    prof_init(argc, argv, &hw_info, &prginfo);
 
@@ -131,8 +131,8 @@ int main(int argc, char **argv)
    values = allocate_test_space(num_tests, num_events);
 
 /* use these lines to profile entire code address space */
-   start = (unsigned long long)prginfo->address_info.text_start;
-   end = (unsigned long long)prginfo->address_info.text_end;
+   start = prginfo->address_info.text_start;
+   end = prginfo->address_info.text_end;
    length = end - start;
    if (length < 0)
       test_fail(__FILE__, __LINE__, "Profile length < 0!", length);

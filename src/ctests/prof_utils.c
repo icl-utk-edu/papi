@@ -93,11 +93,11 @@ void prof_print_address(char *title, const PAPI_exe_info_t *prginfo) {
    probably be a passed parameter.
    Assumed globals: event_name, start, stop.
 */
-void prof_print_prof_info(unsigned long long start, unsigned long long end, int threshold, char *event_name)
+void prof_print_prof_info(caddr_t start, caddr_t end, int threshold, char *event_name)
 {
    printf("Profiling event  : %s\n", event_name);
    printf("Profile Threshold: %d\n", THRESHOLD);
-   printf("Profile Range    : 0x%llx to 0x%llx\n",start,end);
+   printf("Profile Range    : 0x%p to 0x%p\n",start,end);
    printf("----------------------------------------------------------------\n");
    printf("\n");
 }
@@ -181,7 +181,7 @@ void prof_head(unsigned long blength, int bucket, int num_buckets, char *header)
    address with at least one non-zero bucket.
    Assumes global profbuf[] array pointers.
 */
-void prof_out(unsigned long long start, int n, int bucket, int num_buckets, int scale) {
+void prof_out(caddr_t start, int n, int bucket, int num_buckets, int scale) {
    int i,j;
    unsigned short buf_16;
    unsigned int   buf_32;

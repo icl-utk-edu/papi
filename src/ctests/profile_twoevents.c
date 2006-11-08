@@ -20,13 +20,13 @@ int main(int argc, char **argv)
    int retval;
    const PAPI_hw_info_t *hw_info;
    const PAPI_exe_info_t *prginfo;
-   unsigned long long start, end;
+   caddr_t start, end;
 
    prof_init(argc, argv, &hw_info, &prginfo);
 
    mask = prof_events(num_tests,hw_info);
-   start = (unsigned long long)prginfo->address_info.text_start;
-   end = (unsigned long long)prginfo->address_info.text_end;
+   start = prginfo->address_info.text_start;
+   end = prginfo->address_info.text_end;
 
    /* Must have at least FP instr or Tot ins */
 
@@ -47,12 +47,12 @@ int main(int argc, char **argv)
    if (!TESTS_QUIET) {
       printf("Test type   : \tPAPI_PROFIL_POSIX\n");
    }
-   if ((retval = PAPI_profil(profbuf[0], blength, (caddr_t)start, FULL_SCALE,
+   if ((retval = PAPI_profil(profbuf[0], blength, start, FULL_SCALE,
                              EventSet, PAPI_event, THRESHOLD,
                              PAPI_PROFIL_POSIX)) != PAPI_OK) {
       test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
    }
-   if ((retval = PAPI_profil(profbuf[1], blength, (caddr_t)start, FULL_SCALE,
+   if ((retval = PAPI_profil(profbuf[1], blength, start, FULL_SCALE,
                              EventSet, PAPI_TOT_CYC, THRESHOLD,
                              PAPI_PROFIL_POSIX)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
@@ -69,11 +69,11 @@ int main(int argc, char **argv)
       printf(TAB1, event_name, (values[1])[0]);
       printf(TAB1, "PAPI_TOT_CYC:", (values[1])[1]);
    }
-   if ((retval = PAPI_profil(profbuf[0], blength, (caddr_t)start, FULL_SCALE,
+   if ((retval = PAPI_profil(profbuf[0], blength, start, FULL_SCALE,
                              EventSet, PAPI_event, 0, PAPI_PROFIL_POSIX)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
 
-   if ((retval = PAPI_profil(profbuf[1], blength, (caddr_t)start, FULL_SCALE,
+   if ((retval = PAPI_profil(profbuf[1], blength, start, FULL_SCALE,
                              EventSet, PAPI_TOT_CYC, 0, PAPI_PROFIL_POSIX)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
 

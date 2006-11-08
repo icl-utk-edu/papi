@@ -34,12 +34,12 @@ int main(int argc, char **argv)
    int retval;
    const PAPI_hw_info_t *hw_info;
    const PAPI_exe_info_t *prginfo;
-   unsigned long long start, end;
+   caddr_t start, end;
 
    prof_init(argc, argv, &hw_info, &prginfo);
 
-   start = (unsigned long long)prginfo->address_info.text_start;
-   end = (unsigned long long)prginfo->address_info.text_end;
+   start = prginfo->address_info.text_start;
+   end = prginfo->address_info.text_end;
    if (start > end)
       test_fail(__FILE__, __LINE__, "Profile length < 0!", PAPI_ESBSTR);
    length = end - start;
