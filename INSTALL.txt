@@ -150,6 +150,10 @@ to learn more about these options.
 
 Follow the general installation instructions to complete your installation.
 
+PLATFORM NOTES:
+The earprofile test fails under perfmon for Itanium I and II. It has been
+reconfigured to work on the upcoming perfmon2 interface.
+
 Linux - Itanium Montecito
 *****************************************************************************
 A preliminary implementation of PAPI for Montecito is available in this
@@ -233,6 +237,10 @@ to learn more about these options.
 
 Follow the general installation instructions to complete your installation.
 
+PLATFORM NOTES:
+Opteron fails the matrix-hl test because the default definition of PAPI_FP_OPS
+overcounts speculative floating point operations.
+
 MIPS - IRIX 6.5
 *****************************************************************************
 No additional steps are required to install PAPI on IRIX. Follow the 
@@ -245,10 +253,13 @@ The only requirement for Solaris is that you must be running version 2.8 or
 newer.  As long as that requirement is met, no additional steps are required 
 to install PAPI and you can follow the general installation guide.
 
-Unicos - Cray 
+Unicos - Cray X1
 *****************************************************************************
 No additional steps are required to get PAPI working on Unicos.
 Follow the general installation guide, and everything should work.
+
+PLATFORM NOTES:
+Cray X1 currently fails on ctests/overflow_force_software.
 
 
 Windows XP/2000/Server 2003 - Intel Pentium III or AMD Athlon / Opteron

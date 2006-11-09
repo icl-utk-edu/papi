@@ -19,7 +19,7 @@
 #include "prof_utils.h"
 #define PROFILE_ALL
 
-static int do_profile(unsigned long long start, unsigned long plength, unsigned scale, int thresh, int bucket);
+static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int thresh, int bucket);
 static void cleara(double a[]);
 static void my_main();
 static int my_dummy(int i);
@@ -32,7 +32,7 @@ int main(int argc, char **argv)
    int retval;
    const PAPI_hw_info_t *hw_info;
    const PAPI_exe_info_t *prginfo;
-   unsigned long long start, end;
+   caddr_t start, end;
 
    prof_init(argc, argv, &hw_info, &prginfo);
 
@@ -45,15 +45,15 @@ int main(int argc, char **argv)
    values = allocate_test_space(1, num_events);
 
 /* profile the cleara and my_main address space */
-   start = (unsigned long long)cleara;
-   end = (unsigned long long)dummy;
+   start = (caddr_t)cleara;
+   end = (caddr_t)dummy;
 
 /* Itanium and PowerPC64 processors return function descriptors instead
  * of function addresses. You must dereference the descriptor to get the address.
 */
 #if defined(ITANIUM1) || defined(ITANIUM2) || defined(__powerpc64__)
-   start = (unsigned long long)(((struct fdesc *)start)->ip);
-   end = (unsigned long long)(((struct fdesc *)end)->ip);
+   start = (caddr_t)(((struct fdesc *)start)->ip);
+   end = (caddr_t)(((struct fdesc *)end)->ip);
 #endif
 
    /* call dummy so it doesn't get optimized away */
@@ -77,7 +77,7 @@ int main(int argc, char **argv)
    exit(1);
 }
 
-static int do_profile(unsigned long long start, unsigned long plength, unsigned scale, int thresh, int bucket) {
+static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int thresh, int bucket) {
    int i, retval;
    unsigned long blength;
    int num_buckets;
@@ -102,7 +102,7 @@ static int do_profile(unsigned long long start, unsigned long plength, unsigned 
       printf("Overall event counts:\n");
 
    for (i=0;i<num_events;i++) {
-      if ((retval = PAPI_profil(profbuf[i], blength, (caddr_t)start, scale,
+      if ((retval = PAPI_profil(profbuf[i], blength, start, scale,
             EventSet, events[i], thresh, PAPI_PROFIL_POSIX | bucket)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
    }
@@ -127,7 +127,7 @@ static int do_profile(unsigned long long start, unsigned long plength, unsigned 
    }
 
    for (i=0;i<num_events;i++) {
-      if ((retval = PAPI_profil(profbuf[i], blength, (caddr_t)start, scale,
+      if ((retval = PAPI_profil(profbuf[i], blength, start, scale,
             EventSet, events[i], 0, PAPI_PROFIL_POSIX)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
    }

@@ -1,5 +1,5 @@
 ===============================================================================
-PAPI 3.2.1 RELEASE NOTES                                            23 Nov 2005
+PAPI 3.5.0 RELEASE NOTES                                            07 Nov 2006
 ===============================================================================
 
 This file documents changes in recent PAPI releases in inverse chronological
@@ -9,30 +9,83 @@ For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 
 For specific and detailed information on changes made in this release, grep
-the ChangeLogP320.txt file for keywords of interest or go directly to the PAPI
+the ChangeLogP350.txt file for keywords of interest or go directly to the PAPI
 cvs tree.
 
 
 GENERAL NOTES
 ===============================================================================
-This release is a cosmetic cleanup and replacement release of PAPI 3.2.0, 
-which included support for new platforms and contains a number of bug fixes, 
-as documented below. The primary change is an import of perfctr-2.7.19 for 
-enhanced support of Linux/PPC substrates.
+This release is a major upgrade to PAPI 3.2.1. It introduces support for  
+several new platforms, introduces a few new features, and contains a myriad 
+number of bug fixes, consolidations, and enhancements. These changes are
+summarized below.
 
-If you are currently using PAPI 3.1.0 or earlier,
+If you are currently using PAPI 3.2.1 or earlier,
 it is recommended that you upgrade to this version.
-
-Platforms NOT supported by this version:
-- IBM Blue Gene: use PAPI 2.3.4 BGL; upgrade is underway
-- DEC/Compaq/HP Alpha: use PAPI 3.0.8.1
-- Cray T3E: use PAPI 3.0.8.1
 
 As always, if you identify strange behavior or demonstrable bugs, please
 contact the PAPI team or one of the PAPI development lists.
 
 And visit the PAPI website for the latest updates:
 http://icl.cs.utk.edu/papi/
+
+
+CHANGES IN PAPI 3.5.0 SINCE PAPI 3.2.1
+===============================================================================
+Bug Fixes:
+----------
+- too numerous to enumerate...
+
+Enhancements:
+-------------
+- Massive changes to 'configure' to support a wide range of customization.
+  ./configure is now *required* for all builds
+  See:
+    % ./configure --help 
+  for details.
+- Data Address Range and Instruction Address Range support for Itanium
+  (see documentation for PAPI_set_opt).
+- PAPI_dmem_info has been resurrected to provide dynamic memory information.
+- PAPI_attach and PAPI_detach for monitoring other threads.
+- PAPI_get_substrate_info for detailed information on substrate features.
+- PAPI_list_threads for enumerating all threads known to PAPI.
+- Hypervisor domain support -- see PAPI_set_domain.
+- Imported perfctr-2.6.25 to support Intel Core2Duo and Pentium D.
+- Imported perfctr-2.7.20.2 to support Linux/PPC substrates on current kernels.
+
+New Platforms:
+-------------
+- Intel Core2Duo
+- Intel Pentium D
+- IBM PPC32
+- Windows Server 2003 64-bit / Opteron
+- IBM Blue Gene -- major update 
+- Cray XT3 -- major update; now supports limited event overflows
+
+Major Issues:
+-------------
+- Floating Point Operations on Opteron varied widely depending on code 
+  constructs. This was found to be due to speculative counting in some
+  cases, and counting FP loads in other cases. We modified the Opteron
+  substrate to support buildtime and runtime redefinition of the FP_OPS.
+  event. See the PAPI FAQ for details.
+
+Experimental:
+-------------
+- Experimental support for Itanium Montecito.
+- Experimental support has been added for perfmon2 (requires a kernel patch;
+  currently only implemented for Montecito).
+- Experimental support for IBM PPC970MP as found in Mare Nostrum.
+
+Known Bugs:
+-----------
+- Itanium -- earprofile now requires perfmon2 to run. The earprofile
+  test will fail on standard perfmon installations.
+- Cray XT3 -- seg faults on several overflow and profile tests.
+- Cray X1 fails software_overflow test.
+- Problems unresolved with OpenMP on Itanium SMP. See:
+  http://icl.cs.utk.edu/projects/papi/bugz/show_bug.cgi?id=66
+  This bug could not be readily duplicated on machines at UTK.
 
 
 CHANGES IN PAPI 3.2.1 SINCE PAPI 3.2.0

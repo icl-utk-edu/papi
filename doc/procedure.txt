@@ -84,29 +84,18 @@ __17a. Check paragraph formatting for inappropriate indents. This may require
 	modifying styles to remove indents as needed.
 __17b. Scan the document for any other formatting changes (page breaks, etc.)
 __18. Save As... "PAPI_Prog_Ref.doc" or another name of your choice.
-******For Adobe Acrobat 4.0.x******************************************************
-__19. Use Adobe Acrobat Distiller to create both ps and pdf formats:
-__19a. For ps, General should optimize for print, and ps file should not be deleted.
-      Display options Links should be set to 'invisible'.
-      Rename output file to xxx_ps.ps to avoid conflict in the next step.
-__19b. For pdf, General should optimize for screen. Display options Links set to 'thin line'.
-******For Adobe Acrobat 6.0.x******************************************************
-__19a. Use Adobe Acrobat PDFWriter to create a pdf version of the file.
-__19b. From Adobe Acrobat, save a copy of the file as postscript (.ps).
-******For OpenOffice 2.0.x******************************************************
-__19a. Open file in OpenOffice. Export to PDF using defaults. No postscript file is created.
-__19b. Close OpenOffice.
+__19. Open file in OpenOffice 2.0. Export to PDF using defaults. No postscript file is created.
+__20. Close OpenOffice.
 ***********************************************************************************
-__20. Close Word; copy target documents to their appropriate locations.
+__21. Close Word; copy target documents to their appropriate locations.
 
 
-Creating User's Guide and Software Specification Materials
+Creating User's Guide Materials
 
 __1. Open Word or OpenOffice and open PAPI_USERS_GUIDE.doc.
 __2. Make any changes needed for current release.
 __3. Commit changes to cvs.
 __4. Save As... under a version specific name such as PAPI_USERS_GUIDE_23.doc.
-__5. Use Adobe Acrobat or OpenOffice to create both ps and pdf formats, following step 19 above.
+__5. Use or OpenOffice 2.0 to create pdf format, following step 19 above.
 __6. Save As HTML. Change the 'Title' field of the document to 'PAPI User's Guide'.
-__7. Repeat steps 2 - 6 for PAPI_Software_Spec.doc.
-__8. Close Word or OpenOffice; copy target documents to their appropriate locations.
+__7. Close Word or OpenOffice; copy target documents to their appropriate locations.
