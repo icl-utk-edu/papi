@@ -10,6 +10,8 @@ default: $(TESTS)
 
 attach:
 
+p4:
+
 ear:
 
 range:
