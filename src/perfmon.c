@@ -1353,9 +1353,9 @@ static int mips_get_policy(char *s, int *cached, int *policy)
   do {
     if (strcasecmp(entry,"cached") == 0)
       *cached = 1;
-    else if (strcasecmp(entry,"write-back") == 0)
+    else if (strncasecmp(entry,"write-back",strlen("write-back")) == 0)
       *policy = PAPI_MH_TYPE_WB | PAPI_MH_TYPE_LRU;
-    else if (strcasecmp(entry,"write-through") == 0)
+    else if (strncasecmp(entry,"write-through",strlen("write-through")) == 0)
       *policy = PAPI_MH_TYPE_WT | PAPI_MH_TYPE_LRU;
   } while ((entry = strtok(NULL," ")));
 
