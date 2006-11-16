@@ -34,6 +34,11 @@ static void		DiagRDPMC(void);
 static void		TaskSwitchTest(void);
 static void		HelloNumTest(void);
 static void		HelloTest(void);
+static void		DoLoop(void);
+
+// support routines for exercising counters
+static void do_flops(int n);
+static unsigned __int64 read_pmc(int reg);
 
 
 int APIENTRY WinMain(HINSTANCE hInstance,
@@ -429,6 +434,10 @@ LRESULT CALLBACK Diagnostics(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 		  TaskSwitchTest();
 		  return TRUE;
 
+		case IDDOLOOP:
+		  DoLoop();
+		  return TRUE;
+
 		case IDHELLO:
 		  HelloTest();
 		  return TRUE;
@@ -572,7 +581,93 @@ static void DiagRDPMC(void)
 }
 
 
+// set the counters, do some work, and report the results
+static void DoLoop(void)
+{    
+    HANDLE hDriver;
+    DWORD dwBytesReturned;
+    BOOL  bReturnCode = FALSE;
+    char szString[256]; // character buffer
+    int iobuf[256];     // I/O buffer
+
+	unsigned int evntsel[nPMC] = {0}; // raw events to program into the counters
+	unsigned __int64 pmc[nPMC];	/* pmc[0], ..., pmc[n] */
+	struct pmc_info *info;	// a pointer to the processor info
+	int i, n;
+
+    // Try opening a static device driver. 
+    hDriver = LoadDriver();
+
+    if (hDriver != INVALID_HANDLE_VALUE) {
+		// Get some processor info from the driver with an IOCTL_PMC_INFO call
+		bReturnCode = DeviceIoControl(hDriver, IOCTL_PMC_INFO, NULL, 0, iobuf, sizeof(iobuf), &dwBytesReturned, NULL);
+		if (bReturnCode) {
+			info = (struct pmc_info *)iobuf;
+			sprintf(szString, "IOCTL_PMC_INFO succeeded;\nRETURNING %d bytes\n", dwBytesReturned);
+			strcat(szString, "\nVendor  : ");
+			strncat(szString, info->vendor, 12);
+			sprintf(szString + strlen(szString), "\nFamily  : %d\nModel   : %d\nStepping: %d\nFeatures: 0x%8x\n", 
+			    info->family, info->model, info->stepping, info->features);
+			if (info->family == 6) {
+			    MessageBox(NULL, szString, "DoLoops",MB_OK);
+			    evntsel[0] = 0x4100c1;	// floating point operations (Pentium M)
+			    evntsel[1] = 0x010079;	// cycles (Pentium M)
+				
+			}
+			else if (info->family == 15 && !strncmp(info->vendor, "AuthenticAMD",12)) {
+			    MessageBox(NULL, szString, "DoLoops",MB_OK);
+			    evntsel[0] = 0x410300;	// floating point operations (Opteron)
+			    evntsel[1] = 0x410076;	// cycles (Opteron)
+			    evntsel[2] = 0x010000;	// NOP
+			    evntsel[3] = 0x010000;	// NOP
+			}
+			else {
+			    strcat(szString, "Sorry, this test only works on Pentium III and Opteron class cpus");
+			    MessageBox(NULL, szString, "DoLoops",MB_OK);
+			    CloseHandle(hDriver);
+			    return;
+			}
+		}
+		else {
+		    bReturnCode = GetLastError();
+		    sprintf(szString, "IOCTL_PMC_INFO Failed\nLast Error Code: %d\n", bReturnCode);
+		    MessageBox(NULL, szString, "DoLoops", MB_OK);
+		    CloseHandle(hDriver);
+		    return;
+		}
+		// Send two event control codes to the driver with an IOCTL_PMC_CONTROL call
+		sprintf(szString, "Calling IOCTL_PMC_CONTROL with event codes:\nCode 1: %10x \nCode 2: %10x", evntsel[0], evntsel[1]);
+		MessageBox(NULL, szString, "DoLoops",MB_OK);
+		bReturnCode = DeviceIoControl(hDriver, IOCTL_PMC_CONTROL, (LPVOID)(evntsel), sizeof(evntsel), iobuf, sizeof(iobuf), &dwBytesReturned, NULL);
+		n = *iobuf;
+		if (bReturnCode) {
+		    sprintf(szString, "IOCTL_PMC_CONTROL succeeded;\nRETURNING %d bytes\nReturned value (nctrs): 0x%x", dwBytesReturned, n);
+		    MessageBox(NULL, szString, "DoLoops",MB_OK);
+		}
+		else {
+		    bReturnCode = GetLastError();
+		    sprintf(szString, "IOCTL_PMC_CONTROL Failed\nLast Error Code: %x\nReturned value: %x", bReturnCode, n);
+		    MessageBox(NULL, szString, "DoLoops", MB_OK);
+		    CloseHandle(hDriver);
+		    return;
+		}
+		for (i=0; i<n-1; i++)
+			pmc[i] = read_pmc(i);	// read the counters
+		do_flops(1000000);		// do some work
+		for (i=0; i<n-1; i++)
+			pmc[i] = read_pmc(i) - pmc[i];	// read the counters
+		sprintf(szString, "I just completed 1,000,000 iterations of do_flops.\n");
+		for (i=0; i<n-1; i++)
+			sprintf(szString+strlen(szString),"PMC %d: %10lld \n", i, pmc[i]);
+		MessageBox(NULL,szString,"DoLoops",MB_OK);
+		CloseHandle(hDriver);
+	}
+}
+
+
 // put the driver through its paces to make sure it's there and active
+// this test has been modified to provide the content from the kern_info call
+// only the names remain the same to confuse the innocent...
 static void HelloTest(void)
 {    
     HANDLE hDriver;
@@ -588,14 +683,13 @@ static void HelloTest(void)
 	// Send a request to the driver. The request code is HELLO, no parameters
 	bReturnCode = DeviceIoControl(hDriver, HELLO, NULL, 0, iobuf, sizeof(iobuf), &dwBytesReturned, NULL);
 	if (bReturnCode) {
-	  sprintf(szString, "HELLO RETURNED %d bytes: >%s<\n", dwBytesReturned, iobuf);
-		MessageBox(NULL, szString, "HELLO Test",MB_OK);
+	  sprintf(szString, "PMC INFO RETURNED %d bytes: %s\n", dwBytesReturned, iobuf);
+		MessageBox(NULL, szString, "PMC Info",MB_OK);
 	}
-	else 	MessageBox(NULL,"HELLO failed.","HELLO Test",MB_OK);
+	else 	MessageBox(NULL,"PMC Info failed.","PMC Info",MB_OK);
 	CloseHandle(hDriver);
     }
 }
-
 
 // put the driver through its paces to make sure it's there and active
 static void HelloNumTest(void)
@@ -758,5 +852,32 @@ static void centerDiagnostics(HWND hdlg)
 	// center a dialog on the screen
 	GetWindowRect(hdlg, &r);
 	SetWindowPos(hdlg, NULL, left, bottom - (r.bottom - r.top), 0, 0, SWP_NOSIZE | SWP_NOACTIVATE);
+}
+
+//______________________________________________________________________________________
+// Support routines for the DoLoops button
+
+// as found in papi/src/ctests/do_loops.c
+volatile double a = 0.5, b = 2.2;
+static void do_flops(int n)
+{
+   int i;
+   double c = 0.11;
+
+   for (i = 0; i < n; i++) {
+      c += a * b;
+   }
+}
+
+static unsigned __int64 read_pmc(int reg) {
+    unsigned int v1, v2;
+    __asm {
+	mov ecx, reg
+	rdpmc
+	mov v1, eax
+	and edx, 0x000000FF
+	mov v2, edx
+    };
+    return(v1 + ((unsigned __int64)v2<<32));
 }
 
