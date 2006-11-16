@@ -1,0 +1,96 @@
+# $Id$
+
+DESCR   = "Linux with PFM $(VERSION) kernel support and library"
+LIBRARY = libpapi.a
+VERSION = 3
+REVISION = 5
+AGE = 0
+SHLIB   = libpapi.so.$(VERSION)
+LIBS	= static shared
+TARGETS = ear serial multiplex_and_pthreads shared
+SUBSTR	= perfmon
+MEMSUBSTR = perfmon
+
+#
+# GNU G77/GCC section
+#
+
+CC_R    	:= $(CC) -pthread
+CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.$(VERSION) 
+FFLAGS		+= -ffixed-line-length-132
+CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) 
+ifeq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))
+OPTFLAGS	+= -O3 -g $(DEBUGFLAGS)
+else
+OPTFLAGS	+= -g $(DEBUGFLAGS)
+endif
+TOPTFLAGS	+= -g -O 
+FTOPTFLAGS	= $(TOPTFLAGS)
+
+#
+# DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
+#
+
+ifeq (,$(PFM_LIB_PATH))
+ifeq (,$(PFM_ROOT))
+        PFM_ROOT := $(PWD)/libpfm-3.x
+endif
+        PFM_LIB_PATH := $(PFM_ROOT)/lib
+	CC_SHR += -Wl,-rpath-link -Wl,$(PFM_LIB_PATH)
+endif
+
+ifeq (,$(PFM_INC_PATH))
+ifeq (,$(PFM_ROOT))
+        PFM_ROOT := ./libpfm-3.x
+endif
+        PFM_INC_PATH := $(PFM_ROOT)/include
+endif
+
+CFLAGS	+= -I$(PFM_INC_PATH) 
+
+MISCHDRS = perfmon.h
+MISCSRCS = 
+# This is necessary to avoid text relocations. You cannot do -Lxx -lx because
+# it will attempt to use the static library if a shared library ending in
+# .so does not exist
+SHLIBDEPS = $(shell ls $(PFM_LIB_PATH)/*.so.?.?.? | head -1)
+
+PFM_OBJS=$(shell ar t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
+ifeq (,$(PFM_OBJS))
+$(PFM_LIB_PATH)/libpfm.a:
+ifneq (,${PFM_ROOT})
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)"
+else
+	@echo '$@ not installed!'; exit 1
+endif
+	$(MAKE) $(MAKEFLAGS)
+endif
+MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
+
+include Makefile.inc
+
+config.h:
+	@echo 'Please clobber your build and run ./configure."
+
+$(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
+	ar xv $<
+
+native_clean:
+	-rm -f $(MISCOBJS) 
+ifneq (,${PFM_ROOT})
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" clean
+endif
+
+native_install:
+ifneq (,${PFM_ROOT})
+	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
+endif
+	cd $(DESTDIR)/$(LIBDIR); cp -p $(SHLIB) libpapi.so.$(VERSION).$(REVISION).$(AGE)
+	-mkdir -p $(DESTDIR)$(DATADIR)
+	-chmod go+rx $(DESTDIR)$(DATADIR)
+	cp -f ./perfmon_events.csv $(DESTDIR)$(DATADIR)
+
+native_clobber:
+ifneq (,${PFM_ROOT})
+	 $(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" distclean
+endif
