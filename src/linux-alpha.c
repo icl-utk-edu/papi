@@ -335,6 +335,9 @@ extern u_int read_virt_cycle_counter(void);
 
 long_long _papi_hwd_get_real_usec(void)
 {
+#ifdef O
+   return ((long_long) read_cycle_counter() / _papi_system_info.hw_info.mhz);
+#endif
    struct timeval res;
 
    if ((gettimeofday(&res, NULL) == -1))
@@ -349,6 +352,9 @@ long_long _papi_hwd_get_real_cycles(void)
 
 long_long _papi_hwd_get_virt_usec(EventSetInfo_t * zero)
 {
+#ifdef O
+   return ((long_long) read_virt_cycle_counter() / _papi_system_info.hw_info.mhz);
+#endif
    struct rusage res;
 
    if ((getrusage(RUSAGE_SELF, &res) == -1))
@@ -366,6 +372,7 @@ static void lock_init(void)
 }
 
 papi_svector_t _linux_alpha_table[] = {
+ {(void (*)())_papi_hwd_get_overflow_address,VEC_PAPI_HWD_GET_OVERFLOW_ADDRESS},
  {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
  {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
  {(void (*)())_papi_hwd_ctl, VEC_PAPI_HWD_CTL},
@@ -786,6 +793,15 @@ int _papi_hwd_query(int preset_index, int *flags, char **note)
    if (preset_map[preset_index].note)
       *note = preset_map[preset_index].note;
    return (1);
+}
+
+void *_papi_hwd_get_overflow_address(void *context)
+{
+   void *location;
+   struct sigcontext *info = (struct sigcontext *) context;
+   location = (void *) info->sc_pc;
+
+   return (location);
 }
 
 void _papi_hwd_lock(void)

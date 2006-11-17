@@ -39,12 +39,6 @@ int main(int argc, char **argv)
    if (retval != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   if (!TESTS_QUIET) {
-      retval = PAPI_set_debug(PAPI_VERB_ECONT);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
-   }
-
    /* gotta count flops to run this test */
    if ((retval = PAPI_query_event(PAPI_FP_OPS)) != PAPI_OK)
       test_skip(__FILE__, __LINE__, "PAPI_query_event", retval);
@@ -93,7 +87,7 @@ int main(int argc, char **argv)
       printf("Test case 9: start, stop for derived event PAPI_FLOPS.\n");
       printf("------------------------------------------------------\n");
       tmp = PAPI_get_opt(PAPI_DEFDOM, NULL);
-      printf("Default domain is: %d (%s)\n", tmp, stringify_domain(tmp));
+      printf("Default domain is: %d (%s)\n", tmp, stringify_all_domains(tmp));
       tmp = PAPI_get_opt(PAPI_DEFGRN, NULL);
       printf("Default granularity is: %d (%s)\n", tmp, stringify_granularity(tmp));
       printf("Using %d iterations of c += a*b\n", NUM_FLOPS);

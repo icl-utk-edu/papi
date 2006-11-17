@@ -3,19 +3,29 @@
 #include "papi_test.h"
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
-static void print_help(void)
+static char *is_derived(PAPI_event_info_t *info)
 {
-   printf("This is the PAPI avail program.\n");
-   printf("It provides availability and detail information\nfor PAPI preset and native events.  Usage:\n\n");
-   printf("    avail [options] [event name]\n");
-   printf("    avail TESTS_QUIET\n\n");
+  if (strlen(info->derived) == 0)
+    return("No");
+  else if (strcmp(info->derived,"NOT_DERIVED") == 0)
+    return("No");
+  else if (strcmp(info->derived,"DERIVED_CMPD") == 0)
+    return("No");
+  else
+    return("Yes");
+}
+
+static void print_help(char **argv)
+{
+   printf("Usage: %s [-adht] [-e event name]\n",argv[0]);
    printf("Options:\n\n");
-   printf("  -a            display only available PAPI preset events\n");
-   printf("  -d            display PAPI preset event info in detailed format\n");
-   printf("  -e EVENTNAME  display full detail for named preset or native event\n");
-   printf("  -h            print this help message\n");
-   printf("  -t            display PAPI preset event info in tabular format (default)\n");
+   printf("\t-a            Display all available preset events\n");
+   printf("\t-d            Display detailed information about all preset events\n");
+   printf("\t-h            Print this help message\n");
+   printf("\t-t            Display PAPI preset event info in tabular format (default)\n");
+   printf("\t-e EVENTNAME  Display detail information about specified preset or native event\n");
    printf("\n");
+   printf("This program provides information about PAPI preset and native events.\n");
 }
 
 int main(int argc, char **argv)
@@ -30,23 +40,28 @@ int main(int argc, char **argv)
    const PAPI_hw_info_t *hwinfo = NULL;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
-   if (argv[1]) {
-      if (strstr(argv[1], "-e")) {
-         print_event_info = 1;
-         name = argv[2];
-      }
-   }
+
    for (i = 0; i < argc; i++)
-      if (argv[i]) {
-         if (strstr(argv[i], "-a"))
-            print_avail_only = PAPI_PRESET_ENUM_AVAIL;
-         if (strstr(argv[i], "-d"))
-            print_tabular = 0;
-         if (strstr(argv[i], "-h")) {
-            print_help();
-            exit(1);
-         }
-      }
+     {
+       if (strstr(argv[i], "-e")) 
+	 {
+	   print_event_info = 1;
+	   name = argv[i+1];
+	   if ((name == NULL) || (strlen(name) == 0))
+	     {
+	       print_help(argv);
+	       exit(1);
+	     }
+	 }
+       else if (strstr(argv[i], "-a"))
+	 print_avail_only = PAPI_PRESET_ENUM_AVAIL;
+       else if (strstr(argv[i], "-d"))
+	 print_tabular = 0;
+       else if (strstr(argv[i], "-h")) {
+	 print_help(argv);
+	 exit(1);
+       }
+     }
 
    retval = PAPI_library_init(PAPI_VER_CURRENT);
    if (retval != PAPI_VER_CURRENT)
@@ -62,7 +77,7 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
    if (!TESTS_QUIET) {
-      printf("Test case avail.c: Available events and hardware information.\n");
+      printf("Available events and hardware information.\n");
       printf
           ("-------------------------------------------------------------------------\n");
       printf("Vendor string and code   : %s (%d)\n", hwinfo->vendor_string,
@@ -74,10 +89,10 @@ int main(int argc, char **argv)
       printf("Nodes in this System     : %d\n", hwinfo->nnodes);
       printf("Total CPU's              : %d\n", hwinfo->totalcpus);
       printf("Number Hardware Counters : %d\n", PAPI_get_opt(PAPI_MAX_HWCTRS, NULL));
-      printf("Max Multiplex Counters   : %d\n", PAPI_MPX_DEF_DEG);
+      printf("Max Multiplex Counters   : %d\n", PAPI_get_opt(PAPI_MAX_MPX_CTRS, NULL));
       printf
           ("-------------------------------------------------------------------------\n");
-
+      printf("The following correspond to fields in the PAPI_event_info_t structure.\n\n");
       if (print_event_info) {
          if (PAPI_event_name_to_code(name, &i) == PAPI_OK) {
             if (PAPI_get_event_info(i, &info) == PAPI_OK) {
@@ -90,12 +105,12 @@ int main(int argc, char **argv)
                      printf("Derived Type:\t\t\t|%s|\nPostfix Processing String:\t|%s|\n",
                      info.derived, info.postfix);
                   for (j=0;j<(int)info.count;j++) {
-                     printf(" |Native Code[%d]: 0x%x  %s|\n",j,info.code[j], info.name[j]);
+                     printf(" Native Code[%d]: 0x%x |%s|\n",j,info.code[j], info.name[j]);
                      PAPI_get_event_info(info.code[j], &n_info);
-                     printf(" |Number of Register Values: %d|\n", n_info.count);
+                     printf(" Number of Register Values: %d\n", n_info.count);
                      for (k=0;k<(int)n_info.count;k++)
-                        printf(" |Register[%d]: 0x%-10x  %s|\n",k, n_info.code[k], n_info.name[k]);
-                     printf(" |Native Event Description: |%s|\n\n", n_info.long_descr);
+                        printf(" Register[%2d]: 0x%-10x |%s|\n",k, n_info.code[k], n_info.name[k]);
+                     printf(" Native Event Description: |%s|\n\n", n_info.long_descr);
                  }
                }
                else { /* must be a native event code */
@@ -104,7 +119,7 @@ int main(int argc, char **argv)
 		               info.event_code,
 		               info.long_descr);
                   for (k=0;k<(int)info.count;k++)
-                     printf(" |Register Value[%d]: 0x%-10x  %s|\n",k,info.code[k], info.name[k]);
+                     printf(" Register Value[%2d]: 0x%-10x %s|\n",k,info.code[k], info.name[k]);
                }
 	         }
          }
@@ -120,38 +135,46 @@ int main(int argc, char **argv)
             }
          }
          else {
-            printf("The following correspond to fields in the PAPI_event_info_t structure.\n");
-            printf("Symbol\tEvent Code\tCount\n |Short Description|\n |Long Description|\n |Developer's Notes|\n Derived|\n |PostFix|\n");
+            printf("%-16s%-16s%-8s%-16s\n |Long Description|\n |Developer's Notes|\n |Derived|\n |PostFix|\n Native Code[n]: <hex> |name|\n","Symbol","Event Code","Count","|Short Description|");
          }
          do {
             if (PAPI_get_event_info(i, &info) == PAPI_OK) {
                if (print_tabular) {
                   if (print_avail_only) {
-		               printf("%s\t%s\t%s (%s)\n",
-			               info.symbol,
-			               (info.count > 1 ? "Yes" : "No"),
-			               info.long_descr, (info.note ? info.note : ""));
+		    if (info.count)
+	               printf("%s\t%s\t%s",
+			   info.symbol,
+			   is_derived(&info),
+			   info.long_descr);
+	               if (info.note[0]) printf(" (%s)", info.note);
+	               printf("\n");
                   } else {
-		               printf("%s\t0x%x\t%s\t%s\t%s (%s)\n",
-		                     info.symbol,
-		                     info.event_code,
-		                     (info.count ? "Yes" : "No"),
-		                     (info.count > 1 ? "Yes" : "No"),
-		                     info.long_descr, (info.note ? info.note : ""));
+	               printf("%s\t0x%x\t%s\t%s\t%s",
+			      info.symbol,
+	                      info.event_code,
+			      (info.count ? "Yes" : "No"),
+			      is_derived(&info),
+			      info.long_descr);
+	               if (info.note[0]) printf(" (%s)", info.note);
+	               printf("\n");
                   }
                } else {
-	               printf("%s\t0x%x\t%d\n |%s|\n |%s|\n |%s|\n |%s|\n |%s|\n",
-		               info.symbol,
-		               info.event_code,
-		               info.count,
-		               info.short_descr,
-		               info.long_descr,
-		               info.note,
-                     info.derived,
-                     info.postfix);
-                  for (j=0;j<(int)info.count;j++) printf(" |Native Code[%d]: 0x%x  %s|\n",j,info.code[j], info.name[j]);
+		 if ((print_avail_only && info.count) || (print_avail_only == 0))
+		   {
+		     printf("%s\t0x%x\t%d\t|%s|\n |%s|\n |%s|\n |%s|\n |%s|\n",
+			    info.symbol,
+			    info.event_code,
+			    info.count,
+			    info.short_descr,
+			    info.long_descr,
+			    info.note,
+			    info.derived,
+			    info.postfix);
+		     for (j=0;j<(int)info.count;j++) 
+		       printf(" Native Code[%d]: 0x%x |%s|\n",j,info.code[j], info.name[j]);
+		   }
                }
-	         }
+	    }
          } while (PAPI_enum_event(&i, print_avail_only) == PAPI_OK);
       }
       printf

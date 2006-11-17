@@ -266,31 +266,34 @@ PAPI_thread_init - initialize thread support in the PAPI library
 <A HREF=#2>Description</A><BR>
 <A HREF=#3>Arguments</A><BR>
 <A HREF=#4>Return Values</A><BR>
-<A HREF=#5>Errors</A><BR>
-<A HREF=#6>Examples</A><BR>
-<A HREF=#7>Bugs</A><BR>
-<A HREF=#8>See Also</A><BR>
+<A HREF=#5>Examples</A><BR>
+<A HREF=#6>Bugs</A><BR>
+<A HREF=#7>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>SYNOPSIS</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .B C Interface -->
-<B>C Interface</B> <!-- .nf -->
+<P>
+C Interface
+<P>
+<!-- .nf -->
 <PRE>
-<!-- .B #include <papi.h> -->
-<B>#include &lt;papi.h&gt;</B> 
+<!-- .B #include """papi.h""" -->
+<B>#include  papi.h </B> 
 <!-- .BI "int PAPI_thread_init (unsigned long int (*" handle ")());" -->
 <B>int PAPI_thread_init (unsigned long int (*</B><I>handle</I><B>)());</B> 
 <!-- .fi -->
 </PRE>
-<!-- .B Fortran Interface -->
-<B>Fortran Interface</B> <!-- .nf -->
+<P>
+Fortran Interface
+<P>
+<!-- .nf -->
 <PRE>
-<!-- .B #include "fpapi.h" -->
-<B>#include fpapi.h</B> 
+<!-- .B #include """fpapi.h""" -->
+<B>#include  fpapi.h </B> 
 <!-- .BI PAPIF_thread_init(C_INT\ FUNCTION\  handle,\  C_INT\  check ) -->
 <B>PAPIF_thread_init(C_INT FUNCTION </B><I>handle, </I><B>C_INT </B><I>check</I><B>)</B> 
 <!-- .fi -->
@@ -308,12 +311,19 @@ PAPI_thread_init - initialize thread support in the PAPI library
 <B>PAPI_thread_init</B> initializes thread support in the PAPI library. Applications that
 make no use of threads do not need to call this routine. This function
 MUST return a UNIQUE thread ID for every new thread/LWP created. The
-OpenMP call omp_get_thread_num() violates this rule, as the underlying
+OpenMP call
+<!-- .B omp_get_thread_num(\|) -->
+<B>omp_get_thread_num()</B> violates this rule, as the underlying
 LWPs may have been killed off by the run-time system or by a call to
-omp_set_num_threads(). In that case, it is still possible to use
-omp_get_thread_num() in conjunction with
+<!-- .BR omp_set_num_threads(\|) "."  -->
+<B>omp_set_num_threads()</B>. In that case, it may still possible to use
+<!-- .B omp_get_thread_num()  -->
+<B>omp_get_thread_num()</B> in conjunction with
 <!-- .B PAPI_unregister_thread() -->
-<B>PAPI_unregister_thread()</B> when the OpenMP thread has finished.
+<B>PAPI_unregister_thread()</B> when the OpenMP thread has finished. However it is much better to use the
+underlying thread subsystem&#146;s call, which is
+<!-- .B pthread_self() -->
+<B>pthread_self()</B> on Linux platforms.
 <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
@@ -334,21 +344,14 @@ omp_get_thread_num() in conjunction with
 
 </A>
 <BLOCKQUOTE>
-On success, this function returns
-<!-- .B "PAPI_OK." -->
-<B>PAPI_OK.</B> <BR>
- On error, a non-zero error code is returned.
-<P>
-<!-- .SH ERRORS -->
-</BLOCKQUOTE>
-<A name=5>
-
-     <H3>ERRORS</H3>
-
-</A>
-<BLOCKQUOTE>
 <!-- .TP -->
 <TABLE cellpadding=3>
+<TR valign=top><TD colspan=2>
+<!-- .B "PAPI_OK" -->
+<B>PAPI_OK</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The call returned successfully.
+<!-- .TP -->
+</TD></TR>
 <TR valign=top><TD colspan=2>
 <!-- .B "PAPI_EINVAL" -->
 <B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
@@ -357,36 +360,24 @@ One or more of the arguments is invalid.
 <!-- .SH EXAMPLES -->
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
-<A name=6>
+<A name=5>
 
      <H3>EXAMPLES</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .I For Pthreads: -->
-<I>For Pthreads:</I> <!-- .nf          -->
+<!-- .nf          -->
 <PRE>
 <!-- .if t .ft CW -->
 <TT>if (PAPI_thread_init(pthread_self) != PAPI_OK)
-  handle_error(1);
+  exit(1);
 <!-- .if t .ft P -->
 </TT><!-- .fi         -->
-</PRE>
-<!-- .LP -->
-<P>
-<!-- .I For OpenMP: -->
-<I>For OpenMP:</I> <!-- .nf          -->
-<PRE>
-<!-- .if t .ft CW -->
-<TT>if (PAPI_thread_init(omp_get_thread_num) != PAPI_OK)
-  handle_error(1);
-<!-- .if t .ft P -->
-</TT><!-- .fi -->
 </PRE>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=7>
+<A name=6>
 
      <H3>BUGS</H3>
 
@@ -396,22 +387,22 @@ This function has no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=7>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_library_init "(3), " PAPI_thread_id "(3), " -->
-<A HREF="papi_library_init.html">PAPI_library_init (3)</A>, 
+<!-- .BR PAPI_thread_id "(3), " PAPI_list_threads "(3), " -->
 <A HREF="papi_thread_id.html">PAPI_thread_id (3)</A>, 
+<A HREF="papi_list_threads.html">PAPI_list_threads (3)</A>, 
 <!-- .BR PAPI_get_thr_specific "(3), " PAPI_set_thr_specific "(3), " -->
 <A HREF="papi_get_thr_specific.html">PAPI_get_thr_specific (3)</A>, 
 <A HREF="papi_set_thr_specific.html">PAPI_set_thr_specific (3)</A>, 
-<!-- .BR PAPI_register_thread "(3), " PAPI_unregister_thread " (3) " -->
+<!-- .BR PAPI_register_thread "(3), " PAPI_unregister_thread " (3), " PAPI "(3)" -->
 <A HREF="papi_register_thread.html">PAPI_register_thread (3)</A>, 
-PAPI_unregister_thread  (3) 
-<P>
+PAPI_unregister_thread  (3), 
+<A HREF="papi.html">PAPI (3)</A>
 </BLOCKQUOTE>
 <P><HR>
 <TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_thread_init (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>

@@ -1,9 +1,8 @@
 #ifndef PAPI_THREADS_H
 #define PAPI_THREADS_H
 
-#if defined (linux) && defined(__GNUC__) && (__GNUC__ >= 3) && (__GNUC_MINOR__ >= 3) && !defined(ANY_THREAD_GETS_SIGNAL) && !defined(__PATHSCALE__) && !defined(NO_TLS)
-#define HAVE_THREAD_LOCAL_STORAGE
-#define THREAD_LOCAL_STORAGE_KEYWORD __thread
+#ifdef HAVE_THREAD_LOCAL_STORAGE
+#define THREAD_LOCAL_STORAGE_KEYWORD HAVE_THREAD_LOCAL_STORAGE
 #else
 #define THREAD_LOCAL_STORAGE_KEYWORD
 #endif
@@ -15,15 +14,15 @@
 typedef struct _ThreadInfo {
   unsigned long int tid;
   struct _ThreadInfo *next;
-  void ** context;
+  hwd_context_t context;
   void *thread_storage[PAPI_MAX_TLS];
-  EventSetInfo_t **running_eventset;
+  EventSetInfo_t *running_eventset;
   int wants_signal;
 } ThreadInfo_t;
 
 /* The list of threads, gets initialized to master process with TID of getpid() */
 
-extern ThreadInfo_t *_papi_hwi_thread_head;
+extern volatile ThreadInfo_t *_papi_hwi_thread_head;
 
 /* If we have TLS, this variable ALWAYS points to our thread descriptor. It's like magic! */
 
@@ -50,8 +49,8 @@ inline_static int _papi_hwi_lock(int lck)
 {
   if (_papi_hwi_thread_id_fn)
     {
-      THRDBG("Lock %d\n",lck);
       _papi_hwd_lock(lck);
+      THRDBG("Lock %d\n",lck);
     }
   else
     { 
@@ -65,8 +64,8 @@ inline_static int _papi_hwi_unlock(int lck)
 {
   if (_papi_hwi_thread_id_fn)
     {
+      _papi_hwd_unlock(lck);
       THRDBG("Unlock %d\n",lck);
-       _papi_hwd_unlock(lck); 
     }
   else 
     { 
@@ -88,7 +87,7 @@ inline_static ThreadInfo_t *_papi_hwi_lookup_thread(void)
   if (_papi_hwi_thread_id_fn == NULL)
     {
       THRDBG("Threads not initialized, returning master thread at %p\n",_papi_hwi_thread_head);
-      return (_papi_hwi_thread_head);
+      return ((ThreadInfo_t *)_papi_hwi_thread_head);
     }
 
   tid = (*_papi_hwi_thread_id_fn) ();
@@ -96,7 +95,7 @@ inline_static ThreadInfo_t *_papi_hwi_lookup_thread(void)
   
   _papi_hwi_lock (THREADS_LOCK);	
 
-  tmp = _papi_hwi_thread_head;
+  tmp = (ThreadInfo_t *)_papi_hwi_thread_head;
   while (tmp != NULL)
     {
       THRDBG("Examining thread tid 0x%lx at %p\n",tmp->tid,tmp);
@@ -112,8 +111,16 @@ inline_static ThreadInfo_t *_papi_hwi_lookup_thread(void)
   
   if (tmp)
     {
-      THRDBG("Found thread 0x%lx at %p, updating head\n",tid,tmp);
-      _papi_hwi_thread_head = tmp;
+#ifndef HAVE_MMTIMER
+      /* Conditionalize this update as this implies a barrier (and cache line traffic on SMP/NUMA systems) */
+      if (tmp != _papi_hwi_thread_head)
+	{
+	  THRDBG("Found thread 0x%lx at %p, updating to new head\n",tid,tmp);
+	  _papi_hwi_thread_head = tmp;
+	}
+#else
+      THRDBG("Found thread 0x%lx at %p\n",tid,tmp);
+#endif
     }
   else
     {

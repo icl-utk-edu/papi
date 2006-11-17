@@ -8,6 +8,27 @@
 */
 int TESTS_QUIET = 0;
 
+void validate_string(char *name, char *s)
+{
+  if ((s == NULL) || (strlen(s) == 0))
+    {
+      char s2[1024] = "";
+      sprintf(s2,"%s was NULL or length 0",name);
+      test_fail(__FILE__,__LINE__,s2,0);
+    }
+}
+
+int approx_equals(double a, double b)
+{
+  if ((a >= b*(1.0-TOLERANCE)) && (a <= b*(1.0+TOLERANCE)))
+    return 1;
+  else
+    {
+      printf("Out of tolerance range %2.2f: %.0f vs %.0f [%.0f,%.0f]\n",TOLERANCE,a,b,b*(1.0-TOLERANCE),b*(1.0+TOLERANCE));
+      return 0;
+    }
+}
+
 long_long **allocate_test_space(int num_tests, int num_events)
 {
    long_long **values;
@@ -339,9 +360,30 @@ int remove_test_events(int *EventSet, int mask)
    return (PAPI_destroy_eventset(EventSet));
 }
 
+char *stringify_all_domains(int domains)
+{
+  static char buf[PAPI_HUGE_STR_LEN];
+  int i, did = 0;
+  buf[0] = '\0';
+
+  for (i=PAPI_DOM_MIN;i<=PAPI_DOM_MAX;i=i<<1)
+    if (domains&i)
+      {
+	if (did)
+	  strcpy(buf+strlen(buf),"|");
+	strcpy(buf+strlen(buf),stringify_domain(domains&i));
+	did++;
+      }
+  if (did == 0)
+     test_fail(__FILE__, __LINE__, "Unrecognized domains!", 0);    
+  return(buf);
+}
+
 char *stringify_domain(int domain)
 {
-   switch (domain) {
+  switch (domain) {
+   case PAPI_DOM_SUPERVISOR:
+      return ("PAPI_DOM_SUPERVISOR");
    case PAPI_DOM_USER:
       return ("PAPI_DOM_USER");
    case PAPI_DOM_KERNEL:
@@ -351,9 +393,29 @@ char *stringify_domain(int domain)
    case PAPI_DOM_ALL:
       return ("PAPI_DOM_ALL");
    default:
-      abort();
+     test_fail(__FILE__, __LINE__, "Unrecognized domains!", 0);
    }
    return (NULL);
+}
+
+char *stringify_all_granularities(int granularities)
+{
+  static char buf[PAPI_HUGE_STR_LEN];
+  int i, did = 0;
+
+  buf[0] = '\0';
+  for (i=PAPI_GRN_MIN;i<=PAPI_GRN_MAX;i=i<<1)
+    if (granularities&i)
+      {
+	if (did)
+	  strcpy(buf+strlen(buf),"|");
+	strcpy(buf+strlen(buf),stringify_granularity(granularities&i));
+	did++;
+      }
+  if (did == 0)
+     test_fail(__FILE__, __LINE__, "Unrecognized granularity!", 0);    
+    
+  return(buf);
 }
 
 char *stringify_granularity(int granularity)
@@ -370,17 +432,25 @@ char *stringify_granularity(int granularity)
    case PAPI_GRN_SYS:
       return ("PAPI_GRN_SYS");
    default:
-      abort();
+     test_fail(__FILE__, __LINE__, "Unrecognized granularity!", 0);
    }
    return (NULL);
 }
 
 void tests_quiet(int argc, char **argv)
 {
-   if (argc > 1) {
-      if (!strcmp(argv[1], "TESTS_QUIET"))
-         TESTS_QUIET = 1;
-   }
+  if ((argc > 1) && (strcasecmp(argv[1], "TESTS_QUIET") == 0))
+    {
+      TESTS_QUIET = 1;
+    }
+  else
+    {
+      int retval;
+      
+      retval = PAPI_set_debug(PAPI_VERB_ECONT);
+      if (retval != PAPI_OK)
+	test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
+    }
 }
 
 void test_pass(char *file, long_long ** values, int num_tests)
@@ -388,7 +458,6 @@ void test_pass(char *file, long_long ** values, int num_tests)
    fprintf(stdout,"%-40s PASSED\n", file);
    if (values)
       free_test_space(values, num_tests);
-   PAPI_set_debug(PAPI_QUIET);  /* Prevent error messages on Alpha */
    if ( PAPI_is_initialized() ) PAPI_shutdown();
    exit(0);
 }
@@ -409,12 +478,16 @@ void test_fail(char *file, int line, char *call, int retval)
          fprintf(stdout,"Line # %d\n", line);
    }
    if (retval == PAPI_ESYS) {
-      sprintf(buf, "System error in %s:", call);
+      sprintf(buf, "System error in %s", call);
       perror(buf);
    } else if (retval > 0) {
       fprintf(stdout,"Error: %s\n", call);
    } else if (retval == 0) {
+#if defined(sgi)
       fprintf(stdout,"SGI requires root permissions for this test\n");
+#else
+      fprintf(stdout,"Error: %s\n", call);
+#endif
    } else {
       char errstring[PAPI_MAX_STR_LEN];
       PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN);
@@ -509,30 +582,27 @@ int add_two_events(int *num_events, int *papi_event,
   /* query and set up the right event to monitor */
    int EventSet = PAPI_NULL;
   PAPI_event_info_t info;
-  unsigned int potential_evt_to_add[3][2] = {{ PAPI_FP_INS,MASK_FP_INS},{ PAPI_FP_OPS, MASK_FP_OPS}, { PAPI_TOT_INS, MASK_TOT_INS}};
+  unsigned int potential_evt_to_add[3][2] = {{ PAPI_FP_INS, MASK_FP_INS},{ PAPI_FP_OPS, MASK_FP_OPS}, { PAPI_TOT_INS, MASK_TOT_INS}};
   int i = 0;
-  int simple_event_found = 0;
+  unsigned int counters, event_found = 0;
   
   *mask = 0;
-  
-  while ((i < 3) && (!simple_event_found)) {
+  counters = (unsigned int)PAPI_num_hwctrs();
+  while ((i < 3) && (!event_found)) {
     if (PAPI_query_event(potential_evt_to_add[i][0]) == PAPI_OK) {
-      PAPI_get_event_info(potential_evt_to_add[i][0], &info);
-      if (info.count == 1 || !strcmp(info.derived, "DERIVED_CMPD")) {
-	simple_event_found = 1;
+      if (PAPI_get_event_info(potential_evt_to_add[i][0], &info) == PAPI_OK) {
+	if ((info.count > 0) && (counters > info.count)) event_found = 1;
       }
     }
-    if (!simple_event_found)
+    if (!event_found)
       i++;
   }
-  if (simple_event_found) {
+  if (event_found) {
     *papi_event = potential_evt_to_add[i][0];
     *mask =  potential_evt_to_add[i][1] | MASK_TOT_CYC;
    EventSet = add_test_events(num_events, mask);
   } else {
-    test_fail(__FILE__, __LINE__, "Simple non-derived event not found!", 0);
+    test_fail(__FILE__, __LINE__, "Not enough room to add an event!", 0);
   }
-
-   
    return(EventSet);
 }

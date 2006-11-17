@@ -32,12 +32,6 @@ int main(int argc, char **argv)
    if (retval != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   if (!TESTS_QUIET) {
-      retval = PAPI_set_debug(PAPI_VERB_ECONT);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
-   }
-
    /* query and set up the right instruction to monitor */
    if (PAPI_query_event(PAPI_FP_OPS) == PAPI_OK)
       PAPI_event = PAPI_FP_OPS;
@@ -132,7 +126,7 @@ int main(int argc, char **argv)
       printf("Test case 0: start, stop.\n");
       printf("-----------------------------------------------\n");
       tmp = PAPI_get_opt(PAPI_DEFDOM, NULL);
-      printf("Default domain is: %d (%s)\n", tmp, stringify_domain(tmp));
+      printf("Default domain is: %d (%s)\n", tmp, stringify_all_domains(tmp));
       tmp = PAPI_get_opt(PAPI_DEFGRN, NULL);
       printf("Default granularity is: %d (%s)\n", tmp, stringify_granularity(tmp));
       printf("Using %d iterations of c += a*b\n", NUM_FLOPS);

@@ -4,20 +4,21 @@
 /* 
 * File:    power4_events.h
 * CVS:     
-* Author:  Haihang You
-*          you@cs.utk.edu
-* Mods:    Maynard Johnson
-*          maynardj@us.ibm.com
+*
+* This file MUST be kept synchronised with the events file.
+*
 */
-#include SUBSTRATE
+
+#include "papiStdEventDefs.h"
 
 #define GROUP_INTS 2
 #define PAPI_MAX_NATIVE_EVENTS 256
 #define MAX_GROUPS (GROUP_INTS * 32)
-#define MAX_NATNAME_MAP_INDEX 243
+#define MAX_NATNAME_MAP_INDEX 244
+
 
 enum native_name {
-   PNE_PM_BIQ_IDU_FULL_CYC = 0x40000000,
+PNE_PM_BIQ_IDU_FULL_CYC = PAPI_NATIVE_MASK,
    PNE_PM_BRQ_FULL_CYC,
    PNE_PM_CR_MAP_FULL_CYC,
    PNE_PM_DC_PREF_L2_CLONE_L3,
@@ -205,6 +206,7 @@ enum native_name {
    PNE_PM_MRK_ST_CMPL_INT,
    PNE_PM_STOP_COMPLETION,
    PNE_PM_HV_CYC,
+	PNE_PM_FXLS1_FULL_CYC,
    PNE_PM_DATA_FROM_L2,
    PNE_PM_FPU_FIN,
    PNE_PM_FXU1_BUSY_FXU0_IDLE,
@@ -259,7 +261,8 @@ enum native_name {
    PNE_PM_MRK_DATA_FROM_L25_MOD,
    PNE_PM_MRK_LSU_FIN,
    PNE_PM_MRK_LSU_FLUSH_ULD,
-   PNE_PM_TB_BIT_TRANS
+	PNE_PM_TB_BIT_TRANS,
+	NATNAME_GUARD,
 };
 
 #endif

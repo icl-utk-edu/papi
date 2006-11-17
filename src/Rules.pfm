@@ -6,18 +6,16 @@ SHLIB     = libpapi.so
 SUBSTR  = linux-ia64
 MEMSUBSTR= linux-ia64
 LIBS	= static shared
-TARGETS = serial multiplex_and_pthreads shared
-OS = linux
+TARGETS = serial multiplex_and_pthreads shared ear range
 
 #
 # GNU G77/GCC section
 #
 
-F77   		= g77 -Wall
-CC		= gcc -Wall -Wno-unused-function 
 CC_R    	= $(CC) -pthread
-CC_SHR		= $(CC) $(NOTLS) -fPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
-FFLAGS		= -ffixed-line-length-132
+CC_SHR		= $(CC) -fPIC -DPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
+FFLAGS		+= -ffixed-line-length-132
+CFLAGS		+= -Wall 
 
 #
 #  Intel compilers
@@ -33,7 +31,7 @@ F77      = ifort
 CC	 = icc
 endif
 CC_R	 = $(CC) -pthread
-CC_SHR	 = $(CC) $(SHRFLAGS) -fPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
+CC_SHR	 = $(CC) -fPIC -DPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
 OMPCFLGS = -openmp
 OPTFLAGS = -ip
 FFLAGS   = -132
@@ -54,9 +52,13 @@ VERSION ?= 3.x
 endif
 endif
 	
-OPTFLAGS	+= -DDEBUG -g 
+ifeq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))
+OPTFLAGS	+= -g -O3 $(DEBUGFLAGS)
+else
+OPTFLAGS	+= -g $(DEBUGFLAGS)
+endif
 FFLAGS        	+= -Dlinux -DITANIUM$(CPU)
-TOPTFLAGS	+= -g  
+TOPTFLAGS	+= -O  
 FTOPTFLAGS	= $(TOPTFLAGS)
 
 #
@@ -71,66 +73,66 @@ ifneq (,$(wildcard /etc/sgi-release))
 	ALTIX ?= -DALTIX
 endif
 
-ifeq (,$(PFM_PREFIX))
-	PFM ?= ./libpfm-$(VERSION)
+ifeq (,$(PFM_LIB_PATH))
+ifeq (,$(PFM_ROOT))
+        PFM_ROOT := ./libpfm-$(VERSION)
+endif
 ifeq (2.x,$(VERSION))
-	PFM_LIB_PATH ?= $(PFM)/libpfm
+	PFM_LIB_PATH := $(PFM_ROOT)/libpfm
 else
-	PFM_LIB_PATH ?= $(PFM)/lib
+	PFM_LIB_PATH := $(PFM_ROOT)/lib
 endif
-	PFM_INC_PATH ?= $(PFM)/include
-else
-	PFM_LIB_PATH ?= $(PFM_PREFIX)/lib
-	PFM_INC_PATH ?= $(PFM_PREFIX)/include
 endif
-
-CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) $(NOTLS) $(ALTIX) -DOS_HEADER=\"$(OS).h\"
+ifeq (,$(PFM_INC_PATH))
+ifeq (,$(PFM_ROOT))
+        PFM_ROOT := ./libpfm-$(VERSION)
+endif
+        PFM_INC_PATH := $(PFM_ROOT)/include
+endif
 
 CFLAGS-2.x := -DPFM20 -D_GNU_SOURCE
 CFLAGS-3.x := -DPFM30 -D_GNU_SOURCE  
-
-PFM_OBJS-2.x := pfmlib_generic.o pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o 
-PFM_OBJS-3.x := pfmlib_generic_ia64.o pfmlib_os.o pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o 
-
-#CFLAGS += $(CFLAGS-$(VERSION)) -DDEBUG -g
-CFLAGS += $(CFLAGS-$(VERSION))
-
-PFM_OBJS := $(PFM_OBJS-$(VERSION))  
+CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) $(NOTLS) $(ALTIX) $(CFLAGS-$(VERSION))
 
 MISCHDRS = pfmwrap.h
-MISCSRCS =
+MISCSRCS = 
+# This is necessary to avoid text relocations. You cannot do -Lxx -lx because
+# it will attempt to use the static library if a shared library ending in
+# .so does not exist
+SHLIBDEPS = $(shell ls $(PFM_LIB_PATH)/*.so.?.?.? | head -1)
 
-ifdef ACPI
-CFLAGS += -DHAS_ACPI
-MISCSRCS += linux-acpi.c
+PFM_OBJS = $(shell ar t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
+ifeq (,$(PFM_OBJS))
+$(PFM_LIB_PATH)/libpfm.a:
+ifneq (,${PFM_ROOT})
+	$(MAKE) -C $(PFM_ROOT) CC="$(CC)" 
+else
+	@echo '$@ not installed!'; exit 1
 endif
-
-SHLIBDEPS = -L$(PFM_LIB_PATH) -lpfm
+	$(MAKE) $(MAKEFLAGS)
+endif
 MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
 
 include Makefile.inc
 
-$(PFM_LIB_PATH)/libpfm.a:
-ifeq (,${PFM_PREFIX})
-	$(MAKE) -C $(PFM) CC="$(CC)"
-else
-	@echo '$@ not installed!'; exit 1
-endif
+config.h:
+	@echo 'Please clobber your build and run ./configure."
 
-$(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
-	ar xv $<
+$(PFM_OBJS): 
+	ar xv $(PFM_LIB_PATH)/libpfm.a
 
 native_clean:
-ifeq (,${PFM_PREFIX})
-	rm -f $(MISCOBJS); $(MAKE) -C $(PFM) clean
+	-rm -f $(MISCOBJS) 
+ifneq (,${PFM_ROOT})
+	$(MAKE) -C $(PFM_ROOT) clean
 endif
 
 native_install:
-ifeq (,${PFM_PREFIX})
-	$(MAKE) -C $(PFM) DESTDIR=$(PREFIX) install
+ifneq (,${PFM_ROOT})
+	$(MAKE) -C $(PFM_ROOT) DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
 
 native_clobber:
-ifeq (,${PFM_PREFIX})
-	 $(MAKE) -C $(PFM) distclean
+ifneq (,${PFM_ROOT})
+	 $(MAKE) -C $(PFM_ROOT) distclean
 endif

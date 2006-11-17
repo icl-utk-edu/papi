@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2002-2003 Hewlett-Packard Co
+# Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
 # Contributed by Stephane Eranian <eranian@hpl.hp.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy 
@@ -20,7 +20,7 @@
 # OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # 
 # This file is part of libpfm, a performance monitoring support library for
-# applications on Linux/ia64.
+# applications on Linux.
 #
 
 #
@@ -28,21 +28,58 @@
 # It is included by every Makefile
 #
 #
+ARCH := $(shell uname -m)
+ifeq (i686,$(findstring i686,$(ARCH)))
+override ARCH=ia32
+endif
+ifeq (i586,$(findstring i586,$(ARCH)))
+override ARCH=ia32
+endif
+ifeq (i486,$(findstring i486,$(ARCH)))
+override ARCH=ia32
+endif
+ifeq (i386,$(findstring i386,$(ARCH)))
+override ARCH=ia32
+endif
+#
+# Where should things (lib, headers, man) go in the end.
+#
+install_prefix=/usr/local
+PREFIX=$(install_prefix)
+LIBDIR=$(PREFIX)/lib
+INCDIR=$(PREFIX)/include
+MANDIR=$(PREFIX)/share/man
 
 #
-# Where should things go in the end. the package will put things in lib and
-# bin under this base.
-#
-DESTDIR=/usr/local
-
-#
-# XXX: should split library and pfmon packages
-#
-
 # Configuration Paramaters for libpfm library
-CONFIG_PFMLIB_GENERIC_IA64=y
+#
+ifeq ($(ARCH),ia64)
+CONFIG_PFMLIB_ARCH_IA64=y
+CONFIG_PFMLIB_GEN_IA64=y
 CONFIG_PFMLIB_ITANIUM=y
 CONFIG_PFMLIB_ITANIUM2=y
+CONFIG_PFMLIB_MONTECITO=y
+endif
+
+ifeq ($(ARCH),x86_64)
+CONFIG_PFMLIB_ARCH_X86_64=y
+CONFIG_PFMLIB_AMD64=y
+CONFIG_PFMLIB_PENTIUM4=y
+CONFIG_PFMLIB_GEN_IA32=y
+endif
+
+ifeq ($(ARCH),ia32)
+CONFIG_PFMLIB_ARCH_I386=y
+CONFIG_PFMLIB_I386_P6=y
+CONFIG_PFMLIB_GEN_IA32=y
+CONFIG_PFMLIB_AMD64=y
+CONFIG_PFMLIB_PENTIUM4=y
+endif
+
+ifeq ($(ARCH),mips64)
+CONFIG_PFMLIB_GEN_MIPS64=y
+CONFIG_PFMLIB_ARCH_MIPS64=y
+endif
 
 #
 # optimization level
@@ -55,19 +92,17 @@ OPTIM=-O2
 
 #
 # The entire package can be compiled using 
-# ecc the Intel Itanium Compiler (7.x or 8.x)
-# gcc-3.2, 3.4, 3.1
-#
+# icc the Intel Itanium Compiler (7.x,8.x, 9.x)
+# or GNU C
 #CC=icc
-CC=gcc -Wall
-
-CFLAGS=$(OPTIM) -g $(CONFIG_FLAGS)
-LDFLAGS=-L$(TOPDIR)/libpfm
-MKDEP=makedepend
-
-
+CC=gcc
 LIBS=
 INSTALL=install
 LN=ln -sf
 PFMINCDIR=$(TOPDIR)/include
 PFMLIBDIR=$(TOPDIR)/lib
+DBG=-g -Wall -Werror
+CFLAGS=$(OPTIM) $(DBG) -I$(PFMINCDIR)
+LDFLAGS=-L$(PFMLIBDIR)
+MKDEP=makedepend
+PFMLIB=$(PFMLIBDIR)/libpfm.a

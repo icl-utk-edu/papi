@@ -1,7 +1,7 @@
 /*
  * Itanium PMU specific types and definitions
  *
- * Copyright (c) 2001-2004 Hewlett-Packard Development Company, L.P.
+ * Copyright (c) 2001-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,9 +20,6 @@
  * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * This file is part of libpfm, a performance monitoring support library for
- * applications on Linux/ia64.
  */
 #ifndef __PFMLIB_ITANIUM_H__
 #define __PFMLIB_ITANIUM_H__

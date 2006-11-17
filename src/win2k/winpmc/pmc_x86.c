@@ -94,14 +94,17 @@ static int k7_check_control(const struct pmc_control *control)
 	last_pmc_on = -1;
 	for(i = 0; i < 4; ++i) {
 		/* protect reserved, interrupt control, and pin control bits */
-		if( control->evntsel[i] & 0x00380000 )
+		if( control->evntsel[i] & 0x00380000 ) {
 			return STATUS_K7_RESERVED;
+		}
 		/* check enable bit and CPL field */
 		if( !(control->evntsel[i] & 0x00400000) ||
 		  !(control->evntsel[i] & 0x00030000) ) {
 		    /* not enabled; disallow random junk */
-		    if( control->evntsel[i] != 0 )
-		      return STATUS_K7_DISABLED;
+		    // this causes an error exit when only the domain bit is set
+		    //if( control->evntsel[i] != 0 )
+		    //  return STATUS_K7_DISABLED;
+			  break;
 		}
 		last_pmc_on = i;
 	}
@@ -113,19 +116,38 @@ static int k7_write_control(int nrctrs, struct pmc_control *control)
 	int i;
 	unsigned evntsel;
 
-	evntsel = control->evntsel[0];
-	_wrmsr(MSR_K7_EVNTSEL0+0, evntsel, 0);
-	_wrmsr(MSR_K7_PERFCTR0+0, 0, 0);		// clear the counters
-	evntsel = control->evntsel[1];
-	_wrmsr(MSR_K7_EVNTSEL0+1, evntsel, 0);
-	_wrmsr(MSR_K7_PERFCTR0+1, 0, 0);		// clear the counters
-	evntsel = control->evntsel[2];
-	_wrmsr(MSR_K7_EVNTSEL0+2, evntsel, 0);
-	_wrmsr(MSR_K7_PERFCTR0+2, 0, 0);		// clear the counters
-	evntsel = control->evntsel[3];
-	_wrmsr(MSR_K7_EVNTSEL0+3, evntsel, 0);
-	_wrmsr(MSR_K7_PERFCTR0+3, 0, 0);		// clear the counters
+	// clear all four counters
+	_wrmsr(MSR_K7_PERFCTR0+0, 0, 0);
+	_wrmsr(MSR_K7_PERFCTR0+1, 0, 0);
+	_wrmsr(MSR_K7_PERFCTR0+2, 0, 0);
+	_wrmsr(MSR_K7_PERFCTR0+3, 0, 0);
 
+	// clear the unused counter control registers
+	evntsel = 0;
+	switch(nrctrs) {
+		case 2:
+			_wrmsr(MSR_K7_EVNTSEL0+3, evntsel, 0);
+		case 3:
+			_wrmsr(MSR_K7_EVNTSEL0+2, evntsel, 0);
+		case 4:
+			_wrmsr(MSR_K7_EVNTSEL0+1, evntsel, 0);
+	}
+
+	// program the counters in use
+	switch(nrctrs) {
+		case 5:
+			evntsel = control->evntsel[3];
+			_wrmsr(MSR_K7_EVNTSEL0+3, evntsel, 0);
+		case 4:
+			evntsel = control->evntsel[2];
+			_wrmsr(MSR_K7_EVNTSEL0+2, evntsel, 0);
+		case 3:
+			evntsel = control->evntsel[1];
+			_wrmsr(MSR_K7_EVNTSEL0+1, evntsel, 0);
+		case 2:
+			evntsel = control->evntsel[0];
+			_wrmsr(MSR_K7_EVNTSEL0+0, evntsel, 0);
+	}
 	return STATUS_SUCCESS;
 }
 

@@ -1,11 +1,4 @@
 VERSION 	= 2.6.x
 CPU		= p3
-GCC3ARGS	= -march=k8 -msse -msse2
-TOPTFLAGS	= -D__x86_64__
-# COMPILER	?= PATHSCALE or PGROUP
-
-# Optional additional substrates
-# ACPI = TRUE
-# MYRINET_MX = TRUE
 
 include Rules.perfctr

@@ -21,61 +21,84 @@ extern hwi_presets_t _papi_hwi_presets;
    at init time. This method supports adding new events; overriding existing events, or
    deleting deprecated events.
 */
-int _papi_hwi_setup_all_presets(hwi_search_t * findem, hwi_dev_notes_t *notes, int substrate)
+int _papi_hwi_setup_all_presets(hwi_search_t *findem, hwi_dev_notes_t *notes)
 {
-   int i, pnum, preset_index, did_something = 0;
+   int i, j, pnum, preset_index, did_something = 0;
 
    /* dense array of events is terminated with a 0 preset.
       don't do anything if NULL pointer. This allows just notes to be loaded.
       It's also good defensive programming. 
    */
-   if (findem != NULL) {
-      for (pnum = 0; (pnum < PAPI_MAX_PRESET_EVENTS) && (findem[pnum].event_code != 0);
-         pnum++) {
+   if (findem != NULL) 
+     {
+       for (pnum = 0; (pnum < PAPI_MAX_PRESET_EVENTS) && (findem[pnum].event_code != 0); pnum++) 
+	 {
+	   /* find the index for the event to be initialized */
+	   preset_index = (findem[pnum].event_code & PAPI_PRESET_AND_MASK);
+	   
+	   /* count and set the number of native terms in this event, these items are contiguous 
+	   This code is TERRIBLE. First:
 
-         /* find the index for the event to be initialized */
-         preset_index = (findem[pnum].event_code & PAPI_PRESET_AND_MASK);
+	   - MAX_COUNTER_TERMS should be a substrate variable. What it means no one knows. 
+	   - We should never EVER check a NATIVE code against any value. PAPI_NULL could be a valid event code! 
+	     pjm */
+	   
+	   INTDBG("Counting number of terms for preset index %d, search map index %d.\n",preset_index,pnum);
+	   i = 0;
+	   j = 0;
+	   while (i < MAX_COUNTER_TERMS)
+	     {
+	       if (findem[pnum].data.native[i] != PAPI_NULL)
+		 j++;
+	       else if (j)
+		 break;
+	       i++;
+	     }
 
-         for(i=0;i<PAPI_MAX_COUNTER_TERMS;i++){
-           if ( findem[pnum].data.native[i] != PAPI_NULL ){
-              int blah = PAPI_SUBSTRATE_MASK(substrate);
-              findem[pnum].data.native[i]|=blah;
-           }
-              //findem[pnum].data.native[i]|=PAPI_SUBSTRATE_MASK(substrate);
-         }
+	   INTDBG("This preset has %d terms.\n",j);
+	   _papi_hwi_presets.count[preset_index] = j;
+	   
+	   /* if the native event array is empty, free the data pointer.
+	      this allows existing events to be 'undefined' by overloading with nulls */
 
-         /* count and set the number of native terms in this event */
-         for (i = 0; (i < PAPI_MAX_COUNTER_TERMS) && (findem[pnum].data.native[i] != PAPI_NULL); i++);
-         _papi_hwi_presets.count[preset_index] = i;
+	   /* This also makes no sense at all. This code is called at initialization time. 
+	      Why would a preset be set up with no events. Hello? Please kill this code. -pjm */
+	 
+	   if (j == 0) 
+	     {
+	       INTDBG("WARNING! COUNT == 0 for preset index %d, search map index %d.\n",preset_index,pnum);
+	       if (_papi_hwi_presets.data[preset_index] != NULL) 
+		 {
+		   papi_free(_papi_hwi_presets.data[preset_index]);
+		   _papi_hwi_presets.data[preset_index] = NULL;
+		 }
+	     }
+	   /* otherwise malloc a data istructure for the sparse array and copy 
+	      the event data into it. Kevin assures me that the data won't 
+	      *actually* be duplicated unless it is modified */
+	   else 
+	     {
+	       _papi_hwi_presets.data[preset_index] = papi_malloc(sizeof(hwi_preset_data_t));
+	       memcpy(_papi_hwi_presets.data[preset_index],&findem[pnum].data,sizeof(hwi_preset_data_t));
+	     }
+	   did_something++;
+	 }
+     }
 
-         /* if the native event array is empty, free the data pointer.
-            this allows existing events to be 'undefined' by overloading with nulls */
-         if (i == 0) {
-            if (_papi_hwi_presets.data[preset_index] != NULL) 
-               papi_valid_free(_papi_hwi_presets.data[preset_index]);
-         }
-         /* otherwise malloc a data istructure for the sparse array and copy 
-            the event data into it. Kevin assures me that the data won't 
-            *actually* be duplicated unless it is modified */
-        else {
-            _papi_hwi_presets.data[preset_index] = papi_malloc(sizeof(hwi_preset_data_t));
-            *_papi_hwi_presets.data[preset_index] = findem[pnum].data;
-         }
-         did_something++;
-      }
-   }
    /* optional dense array of event notes is terminated with a 0 preset */
-   if (notes != NULL) {
-      for (pnum = 0; (pnum < PAPI_MAX_PRESET_EVENTS) && (notes[pnum].event_code != 0);
-         pnum++) {
+   if (notes != NULL) 
+     {
+       for (pnum = 0; (pnum < PAPI_MAX_PRESET_EVENTS) && (notes[pnum].event_code != 0); pnum++) 
+	 {
+	   /* strdup the note string into the sparse preset data array */
+	   preset_index = (notes[pnum].event_code & PAPI_PRESET_AND_MASK);
+	   if (_papi_hwi_presets.dev_note[preset_index] != NULL)
+	     papi_free(_papi_hwi_presets.dev_note[preset_index]);
+	   _papi_hwi_presets.dev_note[preset_index] = papi_strdup(notes[pnum].dev_note);
+	 }
+     }
+   _papi_hwi_system_info.sub_info.num_preset_events += did_something;
 
-         /* strdup the note string into the sparse preset data array */
-         preset_index = (notes[pnum].event_code & PAPI_PRESET_AND_MASK);
-         if (_papi_hwi_presets.dev_note[preset_index] != NULL)
-            papi_free(_papi_hwi_presets.dev_note[preset_index]);
-         _papi_hwi_presets.dev_note[preset_index] = papi_strdup(notes[pnum].dev_note);
-      }
-   }
    return (did_something ? 0 : PAPI_ESBSTR);
 }
 
@@ -84,13 +107,26 @@ int _papi_hwi_cleanup_all_presets(void)
    int preset_index;
 
    for (preset_index = 0; preset_index < PAPI_MAX_PRESET_EVENTS; preset_index++) {
-      /* free the names and descriptions if they were malloc'd by PAPI */
+       /* There's currently a debate over the use of papi_xxx memory functions.
+	  One camp says they should always be used; the other says they're only
+	  for debug. Meanwhile, our code had better not rely on their function...
+       */
+#ifndef PAPI_NO_MEMORY_MANAGEMENT
+      /* free the names and descriptions only if they were malloc'd by PAPI
+       * Generally, this info is statically allocated at compile time.
+       * However, it is possible to override existing info, or append new
+       * info to the table. In these cases, papi_valid_free can prevent
+       * pointers from being stranded.
+       */
+  #ifdef PAPI_MOD_EVENTS /* this can only happen if events are modifiable */
       if (papi_valid_free(_papi_hwi_presets.info[preset_index].symbol))
          _papi_hwi_presets.info[preset_index].symbol = NULL;
       if (papi_valid_free(_papi_hwi_presets.info[preset_index].long_descr))
          _papi_hwi_presets.info[preset_index].long_descr = NULL;
       if (papi_valid_free(_papi_hwi_presets.info[preset_index].short_descr))
          _papi_hwi_presets.info[preset_index].short_descr = NULL;
+  #endif
+#endif
 
       /* free the data and or note string if they exist */
       if (_papi_hwi_presets.data[preset_index] != NULL) {
@@ -102,6 +138,7 @@ int _papi_hwi_cleanup_all_presets(void)
         _papi_hwi_presets.dev_note[preset_index] = NULL;
       }
    }
+   _papi_hwi_system_info.sub_info.num_preset_events = 0;
    return (PAPI_OK);
 }
 

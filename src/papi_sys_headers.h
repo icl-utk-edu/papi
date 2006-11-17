@@ -1,6 +1,3 @@
-#ifndef _PAPI_SYS_HEADERS_H               /* _PAPI_SYS_HEADERS_H */
-#define _PAPI_SYS_HEADERS_H
-
 #include "config.h"
 
 #ifdef HAVE_ASSERT_H
@@ -23,13 +20,11 @@
 #include <errno.h>
 #endif
 
-#ifdef XML
- #ifdef HAVE_EXPAT_H
-  #include <expat.h>
- #endif
+#ifdef HAVE_EXPAT_H
+#include <expat.h>
 #endif
 
-#ifdef HAVE_FCNTL_H
+#ifdef HAVE_FCNT_H
 #include <fcntl.h>
 #endif
 
@@ -93,7 +88,7 @@
 #include <sys/procfs.h>
 #endif
 
-#ifdef HAVE_SYS_RESOURCE_H
+#ifdef HAVE_RESOURCE_H
 #include <sys/resource.h>
 #endif
 
@@ -142,6 +137,3 @@
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #define TIME_WITH_SYS_TIME 1
-
-#endif               /* _PAPI_SYS_HEADERS_H */
-

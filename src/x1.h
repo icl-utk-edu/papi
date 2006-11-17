@@ -1,7 +1,31 @@
 #ifndef _PAPI_X1                /* _PAPI_X1 */
 #define _PAPI_X1
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <unistd.h>
+#include <sys/siginfo.h>
+#include <sys/ucontext.h>
+#include <sys/hwperftypes.h>
+#include <sys/hwperfmacros.h>
+#include <mutex.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/sysmp.h>
+#include <sys/sysinfo.h>
+#include <sys/procfs.h>
+#include <sys/times.h>
+#include <sys/errno.h>
+#include <assert.h>
+#include <invent.h>
+#include <intrinsics.h>
+#include <errno.h>
+#include "papi.h"
 
+#define inline_static static
 #define X1_MAX_COUNTERS 64
+#define MAX_COUNTERS X1_MAX_COUNTERS
 #define MAX_COUNTER_TERMS 8  /* Number of Native events that can be used for a derived event */
 
 #include "papi_preset.h"
@@ -82,8 +106,27 @@ typedef struct hwd_native_info {
 typedef X1_reg_alloc_t hwd_reg_alloc_t;
 
 
+/*
+#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(ctx->ucontext[ctx->si->si_ssp].uc_mcontext.scontext[CTX_EPC])
+*/
+#ifdef MSP
+#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(ctx->ucontext[0].uc_mcontext.scontext[CTX_EPC])
+#else
+#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(ctx->ucontext[0].uc_mcontext.scontext[CTX_EPC])
+#endif
+
 #include  "x1-native.h"
 #include "x1-native-presets.h"
 #include "x1-presets.h"
 
+extern int _etext[], _ftext[];
+extern int _edata[], _fdata[];
+extern int _fbss[], _end[];
+
+
+/* Prototypes */
+extern int set_domain(hwd_context_t * this_state, int domain);
+extern int set_granularity(hwd_context_t * this_state, int domain);
+void _papi_hwd_lock(int index);
+void _papi_hwd_unlock(int index);
 #endif                          /* _PAPI_X1 */

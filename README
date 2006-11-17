@@ -18,8 +18,6 @@ doc/ 		User documentation and support files.
 man/ 		Stuff related to PAPI man pages. See man/README for details.
 src/ 		The PAPI library source files and support files.
 		See src/README for more details.
-tools/		A growing collection of sample tools for use with PAPI.
-		See README files for individual tools for more information.
 
 
 Getting Started
@@ -48,7 +46,10 @@ To install PAPI on your system:
 - Follow the directions to install required components and build the PAPI
   libraries.
 - Run the test suite when you are finished to verify that everything went ok.
-
+  NOTE: Although we make every attempt to get all tests to PASS or SKIP on all
+  platforms, there are occasional instances of FAILures due to excessively 
+  tight compliance thresholds or platform ideosynchracies. Don't panic if one
+  or two tests FAIL. Contact us with complete output and we'll see what we can do.
 
 Using PAPI
 ----------
@@ -68,7 +69,10 @@ To use PAPI in your own programs:
 Bugs and Questions
 ------------------
 - Visit our FAQ at: <http://icl.cs.utk.edu/papi/faq/>
+  or read a snapshot of the FAQ in papi/PAPI_FAQ.html
 - Subscribe to the PAPI mailing list at:
-  <http://www.nacse.org/mailman/listinfo/ptools-perfapi>
+  <http://lists.cs.utk.edu/listinfo/ptools-perfapi>
 - Read historical postings to the list.
-- Post questions or bugs to the list.
+- Post questions to the list.
+- Post bugs to the PAPIZilla bug tracker at:
+  <http://icl.cs.utk.edu/projects/papi/bugz/>

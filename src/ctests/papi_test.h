@@ -8,7 +8,8 @@
   /* Windows doesn't have a unistd.h */
 #ifndef _WIN32
 #include <unistd.h>
-#ifndef NO_DLFCN
+#include <sys/wait.h>
+#if (!defined(NO_DLFCN) && !defined(_BGL)) 
 #include <dlfcn.h>
 #endif
 #endif
@@ -51,6 +52,7 @@
 #define MASK_TOT_INS 0x00002
 #define MASK_TOT_CYC 0x00001
 
+void validate_string(char *name, char *s);
 void *get_overflow_address(void *context);
 void free_test_space(long_long ** values, int num_tests);
 long_long **allocate_test_space(int num_tests, int num_events);
@@ -68,13 +70,16 @@ void do_both(int n);
 void do_l1misses(int n);
 void dummy(void *);
 char *stringify_domain(int domain);
+char *stringify_all_domains(int domains);
 char *stringify_granularity(int granularity);
+char *stringify_all_granularities(int granularities);
 void tests_quiet(int argc, char **argv);
 void test_pass(char *file, long_long ** values, int num_tests);
 void test_fail(char *file, int line, char *call, int retval);
 void test_skip(char *file, int line, char *call, int retval);
 void test_print_event_header(char *call, int evset);
 void touch_dummy(double *ptr, int size);
+int approx_equals(double a, double b);
 
 /*
 	In Windows, all exit() calls are vectored to

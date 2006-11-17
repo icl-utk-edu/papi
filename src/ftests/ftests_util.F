@@ -9,6 +9,7 @@
 #if defined(_CRAYT3E) || defined(__crayx1)
       integer ilen,ierror
 #endif
+      integer retval
       integer quiet
       common quiet
 
@@ -26,6 +27,12 @@ C     And also to make the test code read cleaner
       get_quiet = 0
       if (LGE(chbuf, 'TESTS_QUIET')) then
         get_quiet=1
+      else
+         call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
+         if ( retval.NE.PAPI_OK) then
+            call ftest_fail(__FILE__, __LINE__,
+     .       'PAPIf_set_debug', retval)
+         end if
       end if
       quiet=get_quiet
       end

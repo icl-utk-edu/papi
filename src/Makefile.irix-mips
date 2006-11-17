@@ -2,7 +2,6 @@ LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
 SUBSTR  = irix-mips
 MSUBSTR  = irix-mips
-OS	 = irix
 MEMSUBSTR= irix
 DESCR	= "IRIX 6.x or greater with MIPS R10k/12k/14k"
 LIBS	= static shared 
@@ -10,7 +9,6 @@ TARGETS	= serial multiplex smp omp shared
 FLAGS  	= 
 CFLAGS  = -c99 -woff 1116,1552 $(FLAGS) -DNO_VARARG_MACRO -DNEED_FFSLL 
 TOPTFLAGS= -O0
-# OPTFLAGS= -O3  -DPAPI_NO_MEMORY_MANAGEMENT
 OPTFLAGS= -O3
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(TOPTFLAGS) 
@@ -23,15 +21,12 @@ POST_BUILD =
 SPECIAL_REMOVE =
 
 CC_SHR  = cc -shared -all -check_registry /usr/lib32/so_locations -soname $(SHLIB)
-CC_R	= cc -D_SGI_MP_SOURCE
-CC	= cc
-CPP	= cc -E
-F77	= f77
+CC_R	= $(CC) -D_SGI_MP_SOURCE -D_POSIX_C_SOURCE
+CC      = cc   
+CPP     = cc -E   
+F77     = f77 
 
 include ./Makefile.inc
-
-#svr4.o: svr4.c
-#	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c svr4.c -o $@
 
 native_clean:
 

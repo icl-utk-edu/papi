@@ -32,13 +32,6 @@ void init_papi(unsigned int *out_events, int *len)
    if (retval != PAPI_VER_CURRENT)
       CPP_TEST_FAIL("PAPI_library_init", retval);
 
-   /* Turn on automatic error reporting */
-   if (!TESTS_QUIET) {
-      retval = PAPI_set_debug(PAPI_VERB_ECONT);
-      if (retval != PAPI_OK)
-         CPP_TEST_FAIL("PAPI_set_debug", retval);
-   }
-
    retval = PAPI_multiplex_init();
    if (retval != PAPI_OK)
       CPP_TEST_FAIL("PAPI_multiplex_init", retval);

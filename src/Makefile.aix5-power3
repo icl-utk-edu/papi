@@ -2,7 +2,6 @@ LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
 SUBSTR  = power3
 MSUBSTR = power3
-OS	= aix
 MEMSUBSTR=aix
 DESCR   = "AIX 5.1.0 or greater with 604, 604e or 630"
 LIBS    = static shared

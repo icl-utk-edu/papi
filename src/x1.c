@@ -7,16 +7,9 @@
 *          <your email here>
 */
 
-#define IN_SUBSTRATE 
-
-#include "papi.h"
-#include "papi_internal.h"
 #include "x1.h"
-#include "papi_protos.h"
+#include "papi_internal.h"
 #include "papi_vector.h"
-
-static int sidx;
-mutexlock_t x1_lck[PAPI_MAX_LOCK];
 
 /*
  * This function has to set the bits needed to count different domains
@@ -121,6 +114,7 @@ static int set_default_granularity(hwd_context_t * current_state, int granularit
  * upon child exit and parent wait. 
  * This is the default for Cray X1
  */
+#if 0
 static int set_inherit(hwd_context_t *ptr)
 {
    int flags;
@@ -136,11 +130,12 @@ static int set_inherit(hwd_context_t *ptr)
    }
    return (PAPI_OK);
 }
+#endif
 
 /*
  * This function takes care of setting various features
  */
-static int _papi_hwd_ctl(hwd_context_t * ptr, int code, _papi_int_option_t * option)
+int _papi_hwd_ctl(hwd_context_t * ptr, int code, _papi_int_option_t * option)
 {
    switch (code) {
    case PAPI_DEFDOM:
@@ -151,8 +146,10 @@ static int _papi_hwd_ctl(hwd_context_t * ptr, int code, _papi_int_option_t * opt
       return (set_default_granularity(ptr, option->granularity.granularity));
    case PAPI_GRANUL:
       return (set_granularity (ptr, option->granularity.granularity));
+#if 0
    case PAPI_INHERIT:
       return (set_inherit(ptr));
+#endif
    default:
       return (PAPI_EINVAL);
    }
@@ -162,7 +159,7 @@ static int _papi_hwd_ctl(hwd_context_t * ptr, int code, _papi_int_option_t * opt
  * This function should return the highest resolution wallclock timer available
  * in usecs. 
  */
-static long_long _papi_hwd_get_real_usec(void)
+long_long _papi_hwd_get_real_usec(void)
 {
    return ((_rtc()/IRTC_RATE())*1000000);
 }
@@ -172,7 +169,7 @@ static long_long _papi_hwd_get_real_usec(void)
  * in cycles. Since the Cray X1 does not have a high resolution we have to
  * use gettimeofday.
  */
-static long_long _papi_hwd_get_real_cycles(void)
+long_long _papi_hwd_get_real_cycles(void)
 {
    long_long usec, cyc;
 
@@ -185,7 +182,7 @@ static long_long _papi_hwd_get_real_cycles(void)
  * This function should return the highest resolution processor timer available
  * in usecs.
  */
-static long_long _papi_hwd_get_virt_usec(hwd_context_t * zero)
+long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 {
    long_long retval;
    struct tms buffer;
@@ -197,7 +194,7 @@ static long_long _papi_hwd_get_virt_usec(hwd_context_t * zero)
    return (retval);
 }
 
-static long_long _papi_hwd_get_virt_cycles(hwd_context_t * zero)
+long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 {
    return (_papi_hwd_get_virt_usec(zero) * (long_long)_papi_hwi_system_info.hw_info.mhz);
 }
@@ -210,7 +207,7 @@ static long_long _papi_hwd_get_virt_cycles(hwd_context_t * zero)
 /*
  * Start the hardware counters
  */
-static int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *ctrl)
+int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 {
   int retval;
   
@@ -248,7 +245,7 @@ static int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 /*
  * Read the hardware counters
  */
-static int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **events, int flags)
+int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **events, int flags)
 {
    int i,j;
    if ( ctrl->has_p ){
@@ -258,7 +255,14 @@ static int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_lo
       }
       memcpy(ctrl->values,&ctrl->p_evtctr[0].hwp_countval[0],sizeof(long_long)*HWPERF_COUNTMAX);
       for (i=1;i<NUM_SSP;i++){
-        for(j=0;j<HWPERF_COUNTMAX;j++) 
+        /* P:0:0 (cycles) counts whether the SSP is idle or not.
+	   It's the only event on counter 0.
+	   The following code sums across SSPs.
+	   To keep from over-counting cycles, we index j from 1 instead of 0.
+	   This assumes cycles is the same on all SSPs (it should be!)
+	   Thanks to Nikhil Bhatia for identifying this.
+	*/
+        for(j=1;j<HWPERF_COUNTMAX;j++) 
            ctrl->values[j] += ctrl->p_evtctr[i].hwp_countval[j];
       }
    }
@@ -320,7 +324,7 @@ static int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_lo
 /*
  * Reset the hardware counters
  */
-static int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctrl)
+int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 {
   /* Right now I stop and restart the counters, but perhaps I can just
    * call control with reset, or start/reset.  I must test and change
@@ -382,7 +386,7 @@ static int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 /*
  * Stop the hardware counters
  */
-static int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *ctrl)
+int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 {
   if( ctrl->has_p ) {
     int i;
@@ -417,7 +421,7 @@ static int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 /*
  * Write a value into the hardware counters
  */
-static int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long *from)
+int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long *from)
 {
   int i,j;
   if ( ctrl->has_p )
@@ -452,7 +456,7 @@ static int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_l
   return (PAPI_OK);
 }
 
-static int _papi_hwd_shutdown(hwd_context_t *ctx)
+int _papi_hwd_shutdown(hwd_context_t *ctx)
 {
   hwperf_x1_t p_evtctr[NUM_SSP];
   eperf_x1_t e_evtctr;
@@ -495,10 +499,10 @@ static int _papi_hwd_shutdown(hwd_context_t *ctx)
 /*
  * Set an event to overflow
  */
-static int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
+int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
 {
-  hwd_control_state_t *this_state = ESI->machdep;
-  hwd_context_t *ctx = ESI->master->context[sidx];
+  hwd_control_state_t *this_state = &ESI->machdep;
+  hwd_context_t *ctx = &ESI->master->context;
   int retval = PAPI_OK;
   int event,counter;
   int i;
@@ -538,7 +542,7 @@ static int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int thres
       _papi_hwi_lock(INTERNAL_LOCK);
       _papi_hwi_using_signal--;
       if (_papi_hwi_using_signal == 0) {
-         if (sigaction(PAPI_SIGNAL, NULL, NULL) == -1)
+         if (sigaction(_papi_hwi_system_info.sub_info.hardware_intr_sig, NULL, NULL) == -1)
             retval = PAPI_ESYS;
       }
       _papi_hwi_unlock(INTERNAL_LOCK);
@@ -547,19 +551,19 @@ static int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int thres
       struct sigaction act;
       void *tmp;
 
-      tmp = (void *) signal(PAPI_SIGNAL, SIG_IGN);
+      tmp = (void *) signal(_papi_hwi_system_info.sub_info.hardware_intr_sig, SIG_IGN);
       if ((tmp != (void *) SIG_DFL) && (tmp != (void *) _papi_hwd_dispatch_timer))
          return (PAPI_EMISC);
 
       memset(&act, 0x0, sizeof(struct sigaction));
       act.sa_handler = _papi_hwd_dispatch_timer;
       act.sa_flags = SA_RESTART|SA_SIGINFO;
-      if (sigaction(PAPI_SIGNAL, &act, NULL) == -1)
+      if (sigaction(_papi_hwi_system_info.sub_info.hardware_intr_sig, &act, NULL) == -1)
          return (PAPI_ESYS);
       /* Setup Overflow */
       for(i=0;i<NUM_SSP;i++){
         this_state->p_evtctr[i].hwp_overflow_freq[counter] = threshold;
-        this_state->p_evtctr[i].hwp_overflow_sig = PAPI_SIGNAL;
+        this_state->p_evtctr[i].hwp_overflow_sig = _papi_hwi_system_info.sub_info.hardware_intr_sig;
       }
       if ( ioctl(ctx->fd, PIOCSETPERFOVRFLWFREQ, this_state->p_evtctr) < 0 ){
          SUBDBG("Error setting overflow to %d for event on counter %d. Error: %d\n",threshold,counter,oserror());
@@ -574,29 +578,24 @@ static int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int thres
   return(retval);
 }
 
-static void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
+void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
 {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *t = NULL;
-   caddr_t pc;
-   hwd_ucontext_t tmp;
 
    SUBDBG("si: %x\n", si);
    ctx.si = si;
    ctx.ucontext = info;
-
-   pc = GET_OVERFLOW_ADDRESS(ctx);
-
    if ( si ) {
       SUBDBG("Dispatching overflow signal for counter mask: 0x%x\n", si->si_overflow);
-      _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long_long) si->si_overflow, 0, &t, pc, 0);
+      _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long_long) si->si_overflow, 0, &t);
    }
    else { /* Software overflow */
-      _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long_long) 0, 0, &t, pc, 0);
+      _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long_long) 0, 0, &t);
    }
 }
 
-static char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
+char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
   int i;
   for(i=0; ;i++ ){
@@ -608,7 +607,7 @@ static char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
   return(NULL);
 }
 
-static char * _papi_hwd_ntv_code_to_descr(unsigned int EventCode)
+char * _papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
   int i;
   for(i=0; ;i++ ){
@@ -623,7 +622,7 @@ static char * _papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 /*
  * Native Enumerate Events
  */
-static int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
+int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
   int i;
   
@@ -650,15 +649,15 @@ static int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
     return(PAPI_EINVAL);
 }
 
-static void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
+int _papi_hwd_init_control_state(hwd_control_state_t *ptr)
 {
   int i;
   unsigned long enable=0;
   unsigned long enable_reg=0;
 
-  if ( _papi_hwi_substrate_info[sidx].default_domain & PAPI_DOM_KERNEL )
+  if ( _papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_KERNEL )
      enable_reg |= HWPERF_ENABLE_KERNEL;
-  else if ( _papi_hwi_substrate_info[sidx].default_domain & PAPI_DOM_OTHER )
+  else if ( _papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_OTHER )
      enable_reg |= HWPERF_ENABLE_EXCEPTION;
   else
      enable_reg |= HWPERF_ENABLE_USER;
@@ -667,13 +666,14 @@ static void _papi_hwd_init_control_state(hwd_control_state_t *ptr)
     ptr->p_evtctr[i].hwp_control = HWPERF_CNTRL_START;
     ptr->p_evtctr[i].hwp_enable = ~HWPERF_ENABLE_MBZ & (HWPERF_ENABLE_RW|enable_reg);
   }
+  return(PAPI_OK);
 }
 
 /*
  * This Function will be called when adding events to the eventset and
  * deleting events from the eventset
  */
-static int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t *native, int count, 
+int _papi_hwd_update_control_state(hwd_control_state_t *this_state, NativeInfo_t *native, int count, 
 	hwd_context_t *ctx)
 {
   int i,j;
@@ -744,11 +744,13 @@ static int _papi_hwd_update_control_state(hwd_control_state_t *this_state, Nativ
   return(PAPI_OK);
 }
 
+static mutexlock_t lck[PAPI_MAX_LOCK];
+
 static void lock_init(void)
 {
    int i;
    for ( i=0; i<PAPI_MAX_LOCK;i++)
-      init_lock(&x1_lck[i]);
+      init_lock(&lck[i]);
 }
 
 papi_svector_t _unicosmp_x1_table[] = {
@@ -782,11 +784,10 @@ papi_svector_t _unicosmp_x1_table[] = {
 /* Initialize hardware counters and get information, this is called
  * when the PAPI/process is initialized
  */
-int _papi_hwd_init_substrate(papi_vectors_t *vtable, int idx)
+int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {
    int retval;
 
-   sidx = idx;
   /* Setup the vector entries that the OS knows about */
 #ifndef PAPI_NO_VECTOR
   retval = _papi_hwi_setup_vector_table( vtable, _unicosmp_x1_table);
@@ -804,47 +805,21 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable, int idx)
 
 
    SUBDBG("Found %d %s %s CPU's at %f Mhz.\n",
-        _papi_hwi_system_info.hw_info.totalcpus,
-        _papi_hwi_system_info.hw_info.vendor_string,
-        _papi_hwi_system_info.hw_info.model_string, _papi_hwi_system_info.hw_info.mhz);
-
-   if (_papi_hwd_mdi_init() != PAPI_OK) {
-      return (PAPI_ESBSTR);
-   }
+    _papi_hwi_system_info.hw_info.totalcpus,
+    _papi_hwi_system_info.hw_info.vendor_string,
+    _papi_hwi_system_info.hw_info.model_string, _papi_hwi_system_info.hw_info.mhz);
 
    _papi_hwd_init_preset_search_map();
 
-   retval = _papi_hwi_setup_all_presets(preset_search_map, NULL, sidx);
+   retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
 
    lock_init();
    
    return (retval);
 }
 
-static int _papi_hwd_mdi_init()
-{
-  /* Name of the substrate we're using */
-   _papi_hwi_system_info.supports_multiple_threads = 1;
-   _papi_hwi_system_info.supports_real_usec = 1;
-   _papi_hwi_system_info.supports_real_cyc = 1;
-   _papi_hwi_system_info.supports_virt_usec = 1;
-   _papi_hwi_system_info.supports_virt_cyc = 1;
-
-  _papi_hwi_substrate_info[sidx].supports_write = 1;
-  _papi_hwi_substrate_info[sidx].supports_hw_overflow = 1;
-  _papi_hwi_substrate_info[sidx].supports_hw_profile = 0;
-  _papi_hwi_substrate_info[sidx].supports_64bit_counters = 1;
-  _papi_hwi_substrate_info[sidx].supports_inheritance = 1;
-  _papi_hwi_substrate_info[sidx].context_size  = sizeof(hwd_context_t);
-  _papi_hwi_substrate_info[sidx].register_size = sizeof(hwd_register_t);
-  _papi_hwi_substrate_info[sidx].reg_alloc_size = sizeof(hwd_reg_alloc_t);
-  _papi_hwi_substrate_info[sidx].control_state_size =sizeof(hwd_control_state_t);
-
-   return (PAPI_OK);
-}
-
 /* Initialize preset_search_map table by type of CPU *Planning for X2* */
-static int _papi_hwd_init_preset_search_map()
+int _papi_hwd_init_preset_search_map()
 {
   preset_search_map = preset_name_map_x1;
   return(1);
@@ -926,15 +901,24 @@ static int _internal_get_system_info(void)
       _papi_hwi_system_info.hw_info.nnodes = 0;
    }
 
+      /* Substrate info */
+
+   strcpy(_papi_hwi_system_info.sub_info.name, "$Id$");
+   strcpy(_papi_hwi_system_info.sub_info.version, "$Revision$");
+
+   /* Number of counters is 64, 32 P chip, 16 M chip and 16 E chip */
+   _papi_hwi_system_info.sub_info.num_cntrs = HWPERF_COUNTMAX+EPERF_COUNTMAX+MPERF_COUNTMAX;
+   _papi_hwi_system_info.sub_info.num_mpx_cntrs = _papi_hwi_system_info.sub_info.num_cntrs;
+
+   _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_OTHER;
+   _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
+   _papi_hwi_system_info.sub_info.hardware_intr = 1;
 
    /* Generic info */
-   /* Number of counters is 64, 32 P chip, 16 M chip and 16 E chip */
-   _papi_hwi_substrate_info[sidx].num_cntrs = HWPERF_COUNTMAX+EPERF_COUNTMAX+MPERF_COUNTMAX;
    strcpy(_papi_hwi_system_info.hw_info.vendor_string, "Cray");
    _papi_hwi_system_info.hw_info.vendor = -1;
    strcpy(_papi_hwi_system_info.hw_info.model_string ,"X1");
    _papi_hwi_system_info.hw_info.model = -1;
-   _papi_hwi_substrate_info[sidx].supports_hw_overflow = 1;
 
    _papi_hwd_update_shlib_info();
 
@@ -946,7 +930,7 @@ static int _internal_get_system_info(void)
 /*
  * This is called whenever a thread is initialized
  */
-static int _papi_hwd_init(hwd_context_t * ptr)
+int _papi_hwd_init(hwd_context_t * ptr)
 {
    char pidstr[PAPI_MAX_STR_LEN];
    hwperf_x1_t evtctr[NUM_SSP];
@@ -996,7 +980,7 @@ static int _papi_hwd_init(hwd_context_t * ptr)
  * Shared objects are not supported on the X1
  * so we use the normal addresses
  */
-static int _papi_hwd_update_shlib_info()
+int _papi_hwd_update_shlib_info()
 {
    _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) & _ftext;
    _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t) & _etext;
@@ -1011,7 +995,26 @@ static int _papi_hwd_update_shlib_info()
  * Utility Functions
  */
 
-static int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
+/* This will always aquire a lock, while acquire_lock is not
+ * guaranteed, while spin_lock states:
+ * If the lock isnot immediately available, the calling process will either
+ * spin (busywait) or be suspended until the lock becomes available.
+ * I will try that first and check the performance and load -KSL
+ */
+void _papi_hwd_lock(int index)
+{
+  spin_lock(&lck[index]);
+}
+
+void _papi_hwd_unlock(int index)
+{
+/* This call uncoditionally unlocks the mutex
+ * caller beware
+ */
+  release_lock(&lck[index]);
+}
+
+int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                unsigned int *values, int name_len, int count)
 {
   char buf[128];
@@ -1034,7 +1037,7 @@ static int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
   return(3);  
 }
 
-static int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
+int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 {
    bits->event = EventCode;
 }

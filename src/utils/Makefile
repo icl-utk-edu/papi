@@ -1,6 +1,6 @@
 TARGETS = papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail papi_command_line papi_event_chooser papi_decode
 UTILOBJS= do_loops.o dummy.o test_utils.o
-INCLUDE = -I.. -I/usr/include -I../ctests
+INCLUDE = -I.. -I../ctests
 PAPILIB=../$(LIBRARY)
 
 util: $(TARGETS)
@@ -45,10 +45,7 @@ clobber: clean
 	rm -f $(TARGETS) 
 
 install: $(TARGETS)
-	@if [ \"$(PREFIX)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make PREFIX=/usr/local"; exit 1; fi 
-	@echo "Root of destination directory is: \"$(PREFIX)\""; 
-	-mkdir -p $(PREFIX)/share/papi/utils
-	-chmod go+rx $(PREFIX)/share/papi/utils
-	-find . -perm -100 -type f -exec cp {} $(PREFIX)/share/papi/utils \;
-	-chmod go+rx $(PREFIX)/share/papi/utils/*
-	-find . -name "*.[ch]" -type f -exec cp {} $(PREFIX)/share/papi/utils \;
+	@echo "Utilities (BINDIR) being installed in: \"$(BINDIR)\""; 
+	-mkdir -p $(BINDIR)
+	-chmod go+rx $(BINDIR)
+	-find . -perm -100 -type f -exec cp {} $(BINDIR) \;

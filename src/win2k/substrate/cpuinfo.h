@@ -6,6 +6,9 @@
  *               <your email address>
  */
 
+#ifndef CPUINFO_H
+#define CPUINFO_H
+
 // Prcoessor definitions
 #define PROC_UNKNOWN		0
 #define INTEL_486			1
@@ -27,7 +30,7 @@
 #define AMD_K63				104
 #define AMD_DURON			105
 #define AMD_ATHLON			106
-
+#define AMD_OPTERON			107
 
 struct wininfo {
 	int vendor;
@@ -107,6 +110,7 @@ struct wininfo {
 #define IS_AMDK63(hwinfo)		((hwinfo)->processor_id==AMD_K63)
 #define IS_AMDDURON(hwinfo)		((hwinfo)->processor_id==AMD_DURON)
 #define IS_AMDATHLON(hwinfo)	((hwinfo)->processor_id==AMD_ATHLON)
+#define IS_AMDOPTERON(hwinfo)	((hwinfo)->processor_id==AMD_OPTERON)
 // Intel Processors
 #define IS_486(hwinfo)			((hwinfo)->processor_id==INTEL_486)
 #define IS_PENTIUM(hwinfo)		((hwinfo)->processor_id==INTEL_PENTIUM)
@@ -122,3 +126,5 @@ struct wininfo {
 
 
 int init_hwinfo( struct wininfo *);
+
+#endif /* CPUINFO_H */

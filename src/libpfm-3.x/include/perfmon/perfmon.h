@@ -1,247 +1,278 @@
 /*
- * This file contains the interface description for
- * the perfmon-2.x interface on Linux/ia64.
+ * This file contains the user level interface description for
+ * the perfmon-2.x interface on Linux.
  *
- * Copyright (c) 2001-2004 Hewlett-Packard Development Company, L.P.
- *               Stephane Eranian <eranian@hpl.hp.com>
+ * Copyright (c) 2001-2006 Hewlett-Packard Development Company, L.P.
+ * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  */
 
 #ifndef __PERFMON_H__
 #define __PERFMON_H__
 
 #include <sys/types.h>
+#include <stdint.h>
+#include <syscall.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#define PFM_MAX_HW_PMCS	256
+#define PFM_MAX_HW_PMDS	256
+#define PFM_MAX_SW_PMCS	64
+#define PFM_MAX_SW_PMDS	64
+
+#define PFM_MAX_PMCS	(PFM_MAX_HW_PMCS+PFM_MAX_SW_PMCS)
+#define PFM_MAX_PMDS	(PFM_MAX_HW_PMDS+PFM_MAX_SW_PMDS)
 
 /*
- * perfmon comamnds supported on all CPU models
+ * number of element for each type of bitvector
  */
-#define PFM_WRITE_PMCS		0x01
-#define PFM_WRITE_PMDS		0x02
-#define PFM_READ_PMDS		0x03
-#define PFM_STOP		0x04
-#define PFM_START		0x05
-#define PFM_ENABLE		0x06 /* obsolete */
-#define PFM_DISABLE		0x07 /* obsolete */
-#define PFM_CREATE_CONTEXT	0x08
-#define PFM_DESTROY_CONTEXT	0x09 /* obsolete use close() */
-#define PFM_RESTART		0x0a
-#define PFM_PROTECT_CONTEXT	0x0b /* obsolete */
-#define PFM_GET_FEATURES	0x0c
-#define PFM_DEBUG		0x0d
-#define PFM_UNPROTECT_CONTEXT	0x0e /* obsolete */
-#define PFM_GET_PMC_RESET_VAL	0x0f
-#define PFM_LOAD_CONTEXT	0x10
-#define PFM_UNLOAD_CONTEXT	0x11
-
-/*
- * PMU model specific commands (may not be supported on all PMU models)
- */
-#define PFM_WRITE_IBRS		0x20
-#define PFM_WRITE_DBRS		0x21
-
-/*
- * context flags
- */
-#define PFM_FL_NOTIFY_BLOCK    	 0x01	/* block task on user level notifications */
-#define PFM_FL_SYSTEM_WIDE	 0x02	/* create a system wide context */
-#define PFM_FL_OVFL_NO_MSG	 0x80   /* do not post overflow/end messages for notification */
-
-/*
- * PMC flags
- */
-#define PFM_REGFL_OVFL_NOTIFY	0x1	/* send notification on overflow */
-#define PFM_REGFL_RANDOM	0x2	/* randomize sampling interval   */
-
-/*
- * PMD/PMC/IBR/DBR return flags (ignored on input)
- *
- * Those flags are used on output and must be checked in case EAGAIN is returned
- * by any of the calls using a pfarg_reg_t or pfarg_dbreg_t structure.
- */
-#define PFM_REG_RETFL_NOTAVAIL	(1UL<<31) /* set if register is implemented but not available */
-#define PFM_REG_RETFL_EINVAL	(1UL<<30) /* set if register entry is invalid */
-#define PFM_REG_RETFL_MASK	(PFM_REG_RETFL_NOTAVAIL|PFM_REG_RETFL_EINVAL)
-
-#define PFM_REG_HAS_ERROR(flag)	(((flag) & PFM_REG_RETFL_MASK) != 0)
+#define PFM_BPL		(sizeof(uint64_t)<<3)
+#define PFM_BVSIZE(x)   (((x)+PFM_BPL-1) / PFM_BPL)
+#define PFM_HW_PMD_BV   PFM_BVSIZE(PFM_MAX_HW_PMDS)
+#define PFM_PMD_BV      PFM_BVSIZE(PFM_MAX_PMDS)
+#define PFM_PMC_BV      PFM_BVSIZE(PFM_MAX_PMCS)
 
 typedef unsigned char pfm_uuid_t[16];	/* custom sampling buffer identifier type */
 
-/*
- * Request structure used to define a context
- */
-typedef struct {
-	pfm_uuid_t     ctx_smpl_buf_id;	 /* which buffer format to use (if needed) */
-	unsigned long  ctx_flags;	 /* noblock/block */
-	unsigned short ctx_nextra_sets;	 /* number of extra event sets (you always get 1) */
-	unsigned short ctx_reserved1;	 /* for future use */
-	int	       ctx_fd;		 /* return arg: unique identification for context */
-	void	       *ctx_smpl_vaddr;	 /* return arg: virtual address of sampling buffer, is used */
-	unsigned long  ctx_reserved2[11];/* for future use */
-} pfarg_context_t;
+#ifdef __ia64__
+#include <perfmon/perfmon_ia64.h>
+#endif
 
 /*
- * Request structure used to write/read a PMC or PMD
+ * PMC/PMD flags to use with pfm_write_pmds() or pfm_write_pmcs()
+ *
+ * reg_flags layout:
+ * bit 00-15 : generic flags
+ * bit 16-23 : arch-specific flags
+ * bit 24-31 : error codes
+ */
+#define PFM_REGFL_OVFL_NOTIFY	0x1	/* PMD: send notification on overflow */
+#define PFM_REGFL_RANDOM	0x2	/* PMD: randomize sampling interval   */
+#define PFM_REGFL_NO_EMUL64	0x4	/* PMC: no 64-bit emulation for counter */
+
+/*
+ * generic event set flags
+ */
+#define PFM_SETFL_OVFL_SWITCH	0x01 /* enable switch on overflow (subject to individual switch_cnt */
+#define PFM_SETFL_TIME_SWITCH	0x02 /* switch set on timeout */
+#define PFM_SETFL_EXPL_NEXT	0x04 /* use set_id_next as the next set */
+
+/*
+ * PMD/PMC return flags in case of error (ignored on input)
+ *
+ * Those flags are used on output and must be checked in case EINVAL is returned
+ * by a command accepting a vector of values and each has a flag field, such as
+ * pfarg_pmc_t or pfarg_pmd_t.
+ */
+#define PFM_REG_RETFL_NOTAVAIL	(1<<31) /* set if register is implemented but not available */
+#define PFM_REG_RETFL_EINVAL	(1<<30) /* set if register entry is invalid */
+#define PFM_REG_RETFL_NOSET	(1<<29) /* event set does not exist */
+#define PFM_REG_RETFL_MASK	(PFM_REG_RETFL_NOTAVAIL|PFM_REG_RETFL_EINVAL|PFM_REG_RETFL_NOSET)
+
+#define PFM_REG_HAS_ERROR(flag)	(((flag) & PFM_REG_RETFL_MASK) != 0)
+
+/*
+ * argument to pfm_create_context()
  */
 typedef struct {
-	unsigned int	reg_num;	   /* which register */
-	unsigned short	reg_set;	   /* event set for this register */
-	unsigned short	reg_reserved1;	   /* for future use */
+	pfm_uuid_t	ctx_smpl_buf_id;	/* which buffer format to use (if needed) */
+	uint32_t	ctx_flags;	   /* noblock/block/syswide */
+	int		ctx_fd;		 	/* return arg: unique identification for context */
+	uint64_t	ctx_smpl_buf_size;	/* return arg: actual smpl buffer size */
+	uint64_t	ctx_reserved3[12];	/* for future use */
+} pfarg_ctx_t;
 
-	unsigned long	reg_value;	   /* initial pmc/pmd value */
-	unsigned long	reg_flags;	   /* input: pmc/pmd flags, return: reg error */
+/*
+ * context flags (ctx_flags)
+ *
+ */
+#define PFM_FL_NOTIFY_BLOCK    	 0x01	/* block task on user notifications */
+#define PFM_FL_SYSTEM_WIDE	 0x02	/* create a system wide context */
+#define PFM_FL_OVFL_NO_MSG	 0x80   /* no overflow msgs */
+#define PFM_FL_MAP_SETS		 0x10	/* event sets are remapped */
 
-	unsigned long	reg_long_reset;	   /* reset after buffer overflow notification */
-	unsigned long	reg_short_reset;   /* reset after counter overflow */
 
-	unsigned long	reg_reset_pmds[4]; /* which other counters to reset on overflow */
-	unsigned long	reg_random_seed;   /* seed value when randomization is used */
-	unsigned long	reg_random_mask;   /* bitmask used to limit random value */
-	unsigned long   reg_last_reset_val;/* return: PMD last reset value */
-
-	unsigned long	reg_smpl_pmds[4];  /* which pmds are accessed when PMC overflows */
-	unsigned long	reg_smpl_eventid;  /* opaque sampling event identifier */
-
-	unsigned long   reg_reserved2[3];   /* for future use */
-} pfarg_reg_t;
-
+/*
+ * argument for pfm_write_pmcs()
+ */
 typedef struct {
-	unsigned int	dbreg_num;		/* which debug register */
-	unsigned short	dbreg_set;		/* event set for this register */
-	unsigned short	dbreg_reserved1;	/* for future use */
-	unsigned long	dbreg_value;		/* value for debug register */
-	unsigned long	dbreg_flags;		/* return: dbreg error */
-	unsigned long	dbreg_reserved2[1];	/* for future use */
-} pfarg_dbreg_t;
+	uint16_t reg_num;	   			/* which register */
+	uint16_t reg_set;	   			/* event set for this register */
+	uint32_t reg_flags;	   			/* input: flags, return: reg error */
+	uint64_t reg_value;	   			/* pmc value */
+	uint64_t reg_reserved2[4];			/* for future use */
+} pfarg_pmc_t;
 
+/*
+ * argument pfm_write_pmds() and pfm_read_pmds()
+ */
 typedef struct {
-	unsigned int	ft_version;	/* perfmon: major [16-31], minor [0-15] */
-	unsigned int	ft_reserved;	/* reserved for future use              */
-	unsigned long	reserved[4];	/* for future use                       */
-} pfarg_features_t;
+	uint16_t reg_num;	   	/* which register */
+	uint16_t reg_set;	   	/* event set for this register */
+	uint32_t reg_flags;	   	/* input: flags, return: reg error */
+	uint64_t reg_value;	   	/* initial pmc/pmd value */
+	uint64_t reg_long_reset;	/* reset after buffer overflow notification */
+	uint64_t reg_short_reset;   	/* reset after counter overflow */
+	uint64_t reg_last_reset_val;	/* return: PMD last reset value */
+	uint64_t reg_ovfl_switch_cnt;	/* how many overflow before switch for next set */
+	uint64_t reg_reset_pmds[PFM_PMD_BV]; /* which other PMDS to reset on overflow */
+	uint64_t reg_smpl_pmds[PFM_PMD_BV];  /* which other PMDS to record when the associated PMD overflows */
+	uint64_t reg_smpl_eventid;  			/* opaque sampling event identifier */
+	uint64_t reg_random_mask; 	/* bitmask used to limit random value */
+	uint32_t reg_random_seed;   	/* seed value when randomization is used */
+	uint32_t reg_reserved2[7];	/* for future use */
+} pfarg_pmd_t;
 
+
+/*
+ * optional argument to pfm_start(), pass NULL if no arg needed
+ */
 typedef struct {
-	pid_t		load_pid;	   /* process to load the context into */
-	unsigned short	load_set;	   /* first event set to load */
-	unsigned short	load_reserved1;	   /* for future use */
-	unsigned long	load_reserved2[3]; /* for future use */
+	uint16_t start_set;		/* event set to start with */
+	uint16_t start_reserved1;	/* for future use */
+	uint32_t start_reserved2;	/* for future use */
+	uint64_t reserved3[3];		/* for future use */
+} pfarg_start_t;
+
+/*
+ * argument to pfm_load_context()
+ */
+typedef struct {
+	uint32_t	load_pid;          /* thread or CPU to attach to */
+	uint16_t        load_set;          /* set to load first */
+	uint16_t        load_reserved1;    /* for future use */
+	uint64_t        load_reserved2[3]; /* for future use */
 } pfarg_load_t;
 
+/*
+ * argument to pfm_create_evtsets()/pfm_delete_evtsets()
+ */
 typedef struct {
-	int		msg_type;		/* generic message header */
-	int		msg_ctx_fd;		/* generic message header */
-	unsigned long	msg_ovfl_pmds[4];	/* which PMDs overflowed */
-	unsigned short  msg_active_set;		/* active set at the time of overflow */
-	unsigned short  msg_reserved1;		/* for future use */
-	unsigned int    msg_reserved2;		/* for future use */
-	unsigned long	msg_tstamp;		/* for perf tuning/debug */
+	uint16_t	set_id;		  /* which set */
+	uint16_t	set_id_next;	  /* next set to go to (must use PFM_SETFL_EXPL_NEXT) */
+	uint32_t    	set_flags; 	  /* input: flags for set, output: err flag */
+	uint32_t	set_timeout;	  /* requested/effective switch timeout in usecs */
+	uint32_t	set_reserved1;	  /* for future use */
+	uint64_t	set_mmap_offset;  /* cookie to pass as mmap offset to access 64-bit virtual PMD */
+	uint64_t	reserved[5];	  /* for future use */
+} pfarg_setdesc_t;
+
+/*
+ * argument to pfm_getinfo_evtsets()
+ */
+typedef struct {
+        uint16_t	set_id;             /* which set */
+        uint16_t	set_id_next;        /* output: next set to go to (must use PFM_SETFL_EXPL_NEXT) */
+        uint32_t	set_flags;          /* output:flags or error */
+        uint64_t 	set_ovfl_pmds[PFM_PMD_BV]; /* output: last ovfl PMDs which triggered a switch from set */
+        uint64_t	set_runs;           /* output: number of times the set was active */
+        uint32_t	set_timeout;        /* output:effective switch timeout     */
+	uint32_t	set_reserved1;	    /* for future use */
+        uint64_t	set_act_duration;   /* DO NOT USE: number of cycles set was active (syswide only) */
+	uint64_t	set_mmap_offset;    /* cookie to pass as mmap offset to access 64-bit virtual PMD */
+	uint64_t	set_avail_pmcs[PFM_PMC_BV];
+	uint64_t	set_avail_pmds[PFM_PMD_BV];
+        uint64_t	reserved[4];        /* for future use */
+} pfarg_setinfo_t;
+
+typedef struct {
+        uint32_t        set_status;             /* set status: active/inact */
+        uint32_t        set_reserved1;          /* for future use */
+        uint64_t        set_runs;               /* number of activations */
+        uint64_t        set_pmds[PFM_MAX_PMDS]; /* 64-bit value of PMDS */
+        volatile unsigned long  set_seq;        /* sequence number of updates */
+} pfm_set_view_t;
+#define PFM_SETVFL_ACTIVE       0x1             /* set is active */
+
+typedef struct {
+	uint32_t 	msg_type;		/* generic message header */
+	uint32_t 	msg_ovfl_pid;		/* process id */
+	uint64_t	msg_ovfl_pmds[PFM_HW_PMD_BV];	/* which PMDs overflowed */
+	uint16_t 	msg_active_set;		/* active set at the time of overflow */
+	uint16_t 	msg_ovfl_cpu;		/* cpu on which the overflow occurred */
+	uint32_t	msg_ovfl_tid;		/* kernel thread id */
+	uint64_t	msg_ovfl_ip;		/* instruction pointer where overflow interrupt happened */
 } pfm_ovfl_msg_t;
-
-typedef struct {
-	int		msg_type;		/* generic message header */
-	int		msg_ctx_fd;		/* generic message header */
-	unsigned long	msg_tstamp;		/* for perf tuning */
-} pfm_end_msg_t;
-
-typedef struct {
-	int		msg_type;		/* type of the message */
-	int		msg_ctx_fd;		/* unique identifier for the context */
-	unsigned long	msg_tstamp;		/* for perf tuning */
-} pfm_gen_msg_t;
 
 #define PFM_MSG_OVFL	1	/* an overflow happened */
 #define PFM_MSG_END	2	/* task to which context was attached ended */
 
 typedef union {
+	uint32_t	type;
 	pfm_ovfl_msg_t	pfm_ovfl_msg;
-	pfm_end_msg_t	pfm_end_msg;
-	pfm_gen_msg_t	pfm_gen_msg;
 } pfm_msg_t;
 
 /*
- * Define the version numbers for both perfmon as a whole and the sampling buffer format.
+ * perfmon version number
  */
 #define PFM_VERSION_MAJ		 2U
-#define PFM_VERSION_MIN		 0U
-#define PFM_SMPL_HDR_VERSION_MAJ 2U
-#define PFM_SMPL_HDR_VERSION_MIN 0U
+#define PFM_VERSION_MIN		 2U
 #define PFM_VERSION		 (((PFM_VERSION_MAJ&0xffff)<<16)|(PFM_VERSION_MIN & 0xffff))
 #define PFM_VERSION_MAJOR(x)	 (((x)>>16) & 0xffff)
 #define PFM_VERSION_MINOR(x)	 ((x) & 0xffff)
 
-extern int perfmonctl(int fd, int cmd, void *arg, int narg);
+extern int pfm_create_context(pfarg_ctx_t *ctx, void *smpl_arg, size_t smpl_size);
+extern int pfm_write_pmcs(int fd, pfarg_pmc_t *pmcs, int count);
+extern int pfm_write_pmds(int fd, pfarg_pmd_t *pmds, int count);
+extern int pfm_read_pmds(int fd, pfarg_pmd_t *pmds, int count);
+extern int pfm_load_context(int fd, pfarg_load_t *load);
+extern int pfm_start(int fd, pfarg_start_t *start);
+extern int pfm_stop(int fd);
+extern int pfm_restart(int fd);
+extern int pfm_create_evtsets(int fd, pfarg_setdesc_t *setd, int count);
+extern int pfm_getinfo_evtsets(int fd, pfarg_setinfo_t *info, int count);
+extern int pfm_delete_evtsets(int fd, pfarg_setdesc_t *setd, int count);
+extern int pfm_unload_context(int fd);
 
-#ifdef __cplusplus /* extern C */
-}
+/*
+ * until the syscall stubs are implemented by glibc
+ * we define them here
+ */
+#ifndef __NR_pfm_create_context
+#ifdef __x86_64__
+#define __NR_pfm_create_context		280
+#endif /* __x86_64__ */
+
+#ifdef __i386__
+#define __NR_pfm_create_context		318
 #endif
 
-/*
- * Perfmon module interface
- */
-#ifdef __KERNEL__
-/*
- * Reset PMD register flags
- */
-#define PFM_PMD_SHORT_RESET	0
-#define PFM_PMD_LONG_RESET	1
+#ifdef __ia64__
+#define __NR_pfm_create_context		1303
+#endif
 
-typedef union {
-	unsigned int val;
-	struct {
-		unsigned int notify_user:1;	/* notify user program of overflow */
-		unsigned int reset_ovfl_pmds:1;	/* reset overflowed PMDs */
-		unsigned int block_task:1;	/* block monitored task on kernel exit */
-		unsigned int mask_monitoring:1; /* mask monitors via PMCx.plm */
-		unsigned int reserved:28;	/* for future use */
-	} bits;
-} pfm_ovfl_ctrl_t;
+#if defined(__mips__)
+/* Add 12 */
+#if (_MIPS_SIM == _ABIN32) || (_MIPS_SIM == _MIPS_SIM_NABI32)
+#define __NR_Linux 6000
+#define __NR_pfm_create_context         __NR_Linux+272
+#elif (_MIPS_SIM == _ABI32) || (_MIPS_SIM == _MIPS_SIM_ABI32)
+#define __NR_Linux 4000
+#define __NR_pfm_create_context         __NR_Linux+309
+#elif (_MIPS_SIM == _ABI64) || (_MIPS_SIM == _MIPS_SIM_ABI64)
+#define __NR_Linux 5000
+#define __NR_pfm_create_context         __NR_Linux+268
+#endif
+#endif
 
-typedef struct {
-	unsigned char	ovfl_pmd;			/* index of overflowed PMD  */
-	unsigned char   ovfl_notify;			/* =1 if monitor requested overflow notification */
-	unsigned short  active_set;			/* event set active at the time of the overflow */
-	pfm_ovfl_ctrl_t ovfl_ctrl;			/* return: perfmon controls to set by handler */
+#define __NR_pfm_write_pmcs		(__NR_pfm_create_context+1)
+#define __NR_pfm_write_pmds		(__NR_pfm_create_context+2)
+#define __NR_pfm_read_pmds		(__NR_pfm_create_context+3)
+#define __NR_pfm_load_context		(__NR_pfm_create_context+4)
+#define __NR_pfm_start			(__NR_pfm_create_context+5)
+#define __NR_pfm_stop			(__NR_pfm_create_context+6)
+#define __NR_pfm_restart		(__NR_pfm_create_context+7)
+#define __NR_pfm_create_evtsets		(__NR_pfm_create_context+8)
+#define __NR_pfm_getinfo_evtsets	(__NR_pfm_create_context+9)
+#define __NR_pfm_delete_evtsets		(__NR_pfm_create_context+10)
+#define __NR_pfm_unload_context		(__NR_pfm_create_context+11)
+#endif /* __NR_pfm_create_context */
 
-	unsigned long   pmd_last_reset;			/* last reset value of of the PMD */
-	unsigned long	smpl_pmds[4];			/* bitmask of other PMD of interest on overflow */
-	unsigned long   smpl_pmds_values[PMU_MAX_PMDS]; /* values for the other PMDs of interest */
-	unsigned long   pmd_value;			/* current 64-bit value of the PMD */
-	unsigned long	pmd_eventid;			/* eventid associated with PMD */
-} pfm_ovfl_arg_t;
 
-typedef struct _pfm_buffer_fmt_t {
-	char		*fmt_name;
-	pfm_uuid_t	fmt_uuid;
-	size_t		fmt_arg_size;
-	unsigned long	fmt_flags;
-
-	int		(*fmt_validate)(struct task_struct *task, unsigned int flags, int cpu, void *arg);
-	int		(*fmt_getsize)(struct task_struct *task, unsigned int flags, int cpu, void *arg, unsigned long *size);
-	int 		(*fmt_init)(struct task_struct *task, void *buf, unsigned int flags, int cpu, void *arg);
-	int		(*fmt_handler)(struct task_struct *task, void *buf, pfm_ovfl_arg_t *arg, struct pt_regs *regs, unsigned long stamp);
-	int		(*fmt_restart)(struct task_struct *task, pfm_ovfl_ctrl_t *ctrl, void *buf, struct pt_regs *regs);
-	int		(*fmt_restart_active)(struct task_struct *task, pfm_ovfl_ctrl_t *ctrl, void *buf, struct pt_regs *regs);
-	int		(*fmt_exit)(struct task_struct *task, void *buf, struct pt_regs *regs);
-
-	struct _pfm_buffer_fmt_t *fmt_next;
-	struct _pfm_buffer_fmt_t *fmt_prev;
-} pfm_buffer_fmt_t;
-
-extern int pfm_register_buffer_fmt(pfm_buffer_fmt_t *fmt);
-extern int pfm_unregister_buffer_fmt(pfm_uuid_t uuid);
-
-/*
- * perfmon interface exported to modules
- */
-extern long pfm_mod_fast_read_pmds(struct task_struct *, unsigned long mask[4], unsigned long *addr, struct pt_regs *regs);
-extern long pfm_mod_read_pmds(struct task_struct *, pfarg_reg_t *req, unsigned int nreq, struct pt_regs *regs);
-extern long pfm_mod_write_pmcs(struct task_struct *, pfarg_reg_t *req, unsigned int nreq, struct pt_regs *regs);
-extern int pfm_mod_write_ibrs(struct task_struct *task, void *req, unsigned int nreq, struct pt_regs *regs);
-extern int pfm_mod_write_dbrs(struct task_struct *task, void *req, unsigned int nreq, struct pt_regs *regs);
-
-#endif /* __KERNEL__ */
+#ifdef __cplusplus
+};
+#endif
 
 #endif /* _PERFMON_H */

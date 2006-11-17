@@ -8,4 +8,3 @@ TODO list:
 
 - add support for cumulative calls to pfm_dispatch_events()
 
-- type cleanup of examples + header file for 32 bits

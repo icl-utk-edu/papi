@@ -49,12 +49,6 @@ int main(int argc, char **argv)
       mask = MASK_TOT_INS | MASK_TOT_CYC;
    }
 
-   if (!TESTS_QUIET) {
-      retval = PAPI_set_debug(PAPI_VERB_ECONT);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
-   }
-
    retval = PAPI_event_code_to_name(PAPI_event, event_name);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
@@ -106,7 +100,7 @@ int main(int argc, char **argv)
       printf("Test case 1: Non-overlapping start, stop, read.\n");
       printf("-----------------------------------------------\n");
       tmp = PAPI_get_opt(PAPI_DEFDOM, NULL);
-      printf("Default domain is: %d (%s)\n", tmp, stringify_domain(tmp));
+      printf("Default domain is: %d (%s)\n", tmp, stringify_all_domains(tmp));
       tmp = PAPI_get_opt(PAPI_DEFGRN, NULL);
       printf("Default granularity is: %d (%s)\n", tmp, stringify_granularity(tmp));
       printf("Using %d iterations of c += a*b\n", NUM_FLOPS);

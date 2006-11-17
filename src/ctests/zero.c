@@ -32,12 +32,6 @@ int main(int argc, char **argv)
    if (retval != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   if (!TESTS_QUIET) {
-      retval = PAPI_set_debug(PAPI_VERB_ECONT);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
-   }
-
     hw_info = PAPI_get_hardware_info();
     if (hw_info == NULL)
       test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
@@ -88,7 +82,7 @@ int main(int argc, char **argv)
       printf("Test case 0: start, stop.\n");
       printf("-----------------------------------------------\n");
       tmp = PAPI_get_opt(PAPI_DEFDOM, NULL);
-      printf("Default domain is: %d (%s)\n", tmp, stringify_domain(tmp));
+      printf("Default domain is: %d (%s)\n", tmp, stringify_all_domains(tmp));
       tmp = PAPI_get_opt(PAPI_DEFGRN, NULL);
       printf("Default granularity is: %d (%s)\n", tmp, stringify_granularity(tmp));
       printf("Using %d iterations of c += a*b\n", NUM_FLOPS);
@@ -99,7 +93,7 @@ int main(int argc, char **argv)
 
       sprintf(add_event_str, "%-12s : \t", event_name);
       printf(TAB1, add_event_str, (values[0])[0]);
-      printf(TAB1, "PAPI_TOT_CYC : \t", (values[0])[1]);
+      if (mask1 & MASK_TOT_CYC) printf(TAB1, "PAPI_TOT_CYC : \t", (values[0])[1]);
       printf(TAB1, "Real usec    : \t", elapsed_us);
       printf(TAB1, "Real cycles  : \t", elapsed_cyc);
       printf(TAB1, "Virt usec    : \t", elapsed_virt_us);

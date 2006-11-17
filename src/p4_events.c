@@ -7,12 +7,8 @@
 *          <your email address>
 */
 
-#define IN_SUBSTRATE
-
 #include "papi.h"
 #include "papi_internal.h"
-#include "perfctr-p4.h"
-#include "papi_protos.h"
 
 #if defined(__i386__) || defined(__x86_64__)
 /*
@@ -76,12 +72,7 @@
 #define PNE_uop_type_load_store (PAPI_NATIVE_MASK + (P4_uop_type<<16) + (1<<TAGLOADS) + (1<<TAGSTORES))
 
 /* L2 and L3 cache events via BSQ_cache_reference */
-#define PNE_BSQ_cache_reference_L2_RD_hit (PAPI_NATIVE_MASK + (P4_BSQ_cache_reference<<16) + (1<<RD_2ndL_HITS) + (1<<RD_2ndL_HITE) + (1<<RD_2ndL_HITM))
-#define PNE_BSQ_cache_reference_L3_RD_hit (PAPI_NATIVE_MASK + (P4_BSQ_cache_reference<<16) + (1<<RD_3rdL_HITS) + (1<<RD_3rdL_HITE) + (1<<RD_3rdL_HITM))
-#define PNE_BSQ_cache_reference_L2_RD_miss (PAPI_NATIVE_MASK + (P4_BSQ_cache_reference<<16) + (1<<RD_2ndL_MISS))
-#define PNE_BSQ_cache_reference_L3_RD_miss (PAPI_NATIVE_MASK + (P4_BSQ_cache_reference<<16) + (1<<RD_3rdL_MISS))
-#define PNE_BSQ_cache_reference_L2_WR_miss (PAPI_NATIVE_MASK + (P4_BSQ_cache_reference<<16) + (1<<WR_2ndL_MISS))
-#define PNE_BSQ_cache_reference_L2_RD_WR_miss (PAPI_NATIVE_MASK + (P4_BSQ_cache_reference<<16) + (1<<RD_2ndL_MISS) + (1<<WR_2ndL_MISS))
+#define PNE_BSQ_cache_reference (PAPI_NATIVE_MASK + (P4_BSQ_cache_reference<<16))
 
 /* instruction events */
 #define PNE_instr_retired_non_bogus (PAPI_NATIVE_MASK + (P4_instr_retired<<16) + (1<<NBOGUSNTAG) + (1<<NBOGUSTAG))
@@ -174,6 +165,12 @@ hwi_search_t _papi_hwd_pentium4_base_preset_map[] = {
    {PAPI_TLB_IM, {0, {PNE_page_walk_type_instr_miss, PAPI_NULL,}, {0,}}},
    {PAPI_TLB_TL, {0, {PNE_page_walk_type_all, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_INS, {0, {PNE_instr_retired_non_bogus, PAPI_NULL,}, {0,}}},
+
+   /* NOTE: The following three events rely on a common tagging mechanism.
+		Load and/or store events are tagged at the front of the pipeline;
+		Tagged events are counted at the back of the pipeline. Tags for
+		front end events only come in one color. Therefore if any combination
+		of these events will produce (load + store) in every counter. */
    {PAPI_LD_INS, {DERIVED_CMPD, {PNE_front_end_event, PNE_uop_type_load, PAPI_NULL,}, {0,}}},
    {PAPI_SR_INS, {DERIVED_CMPD, {PNE_front_end_event, PNE_uop_type_store, PAPI_NULL,}, {0,}}},
    {PAPI_LST_INS, {DERIVED_CMPD, {PNE_front_end_event, PNE_uop_type_load_store, PAPI_NULL,}, {0,}}},
@@ -181,25 +178,30 @@ hwi_search_t _papi_hwd_pentium4_base_preset_map[] = {
    {PAPI_FP_INS, {DERIVED_CMPD, {PNE_execution_event_nbogus0, PNE_x87_FP_uop_tag0, PAPI_NULL, PAPI_NULL, }, {0,}}},
 //   {PAPI_TOT_CYC, {0, {PNE_cycles, PAPI_NULL,}, {0,}}},
    {PAPI_TOT_CYC, {0, {PNE_global_power_running, PAPI_NULL,}, {0,}}},
-   {PAPI_L1_LDM, {0, {PNE_replay_event_L1_load_miss, PAPI_NULL,}, {0,}}},
-//  {PAPI_L1_STM,  {0, { PNE_replay_event_L1_store_miss, PAPI_NULL,},{0,}}},
-   {PAPI_L1_DCM, {0, {PNE_replay_event_L1_data_miss, PAPI_NULL,}, {0,}}},
-//   {PAPI_L2_LDM, {0, {PNE_replay_event_L2_load_miss, PAPI_NULL,}, {0,}}},
-//   {PAPI_L2_STM,  {0, { PNE_replay_event_L2_store_miss, PAPI_NULL,},{0,}}},
-   {PAPI_L2_LDM, {0, {PNE_BSQ_cache_reference_L2_RD_miss, PAPI_NULL,}, {0,}}},
-   {PAPI_L2_STM, {0, {PNE_BSQ_cache_reference_L2_WR_miss, PAPI_NULL,},{0,}}},
-   {PAPI_L2_TCM, {0, {PNE_BSQ_cache_reference_L2_RD_WR_miss, PAPI_NULL,}, {0,}}},
+
+   /* Level 1 cache events */
+   /* we need working/tested definitions of data cache events */
    {PAPI_L1_ICM, {0, {PNE_bpu_fetch_request_tcmiss, PAPI_NULL,}, {0,}}},
    {PAPI_L1_ICA, {0, {PNE_uop_queue_writes_from_tc_build_deliver, PAPI_NULL,}, {0,}}},
+
+   /* Level 2 is a unified cache so we only map total cache events */
+   /* NOTE1: These events include speculative accesses */
+   /* NOTE2: Intel documentation (2004) reports this event causes 
+		both over and undercounting by as much as a factor of two 
+		due to an erratum on the chip. */
+   {PAPI_L2_TCH, {0, {PNE_BSQ_cache_reference + (1<<RD_2ndL_HITS) + (1<<RD_2ndL_HITE) + (1<<RD_2ndL_HITM), PAPI_NULL,}, {0,}}},
+   {PAPI_L2_TCM, {0, {PNE_BSQ_cache_reference + (1<<RD_2ndL_MISS), PAPI_NULL,}, {0,}}},
+   {PAPI_L2_TCA, {0, {PNE_BSQ_cache_reference + (1<<RD_2ndL_MISS) + (1<<RD_2ndL_HITS) + (1<<RD_2ndL_HITE) + (1<<RD_2ndL_HITM), PAPI_NULL,}, {0,}}},
    {0, {0, {0,}, {0,}}}
 };
 
 /* L3 cache events for machines (Xeon) that have L3 cache */
+/* Like L2, L3 is unified so we implement only total cache events */
 hwi_search_t _papi_hwd_pentium4_L3_cache_map[] = {
 /* preset, derived, native index array */
-   {PAPI_L3_LDM, {0, {PNE_BSQ_cache_reference_L3_RD_miss, PAPI_NULL,}, {0,}}},
-   {PAPI_L2_DCR, {0, {PNE_BSQ_cache_reference_L2_RD_hit, PAPI_NULL,}, {0,}}},
-   {PAPI_L3_DCR, {0, {PNE_BSQ_cache_reference_L3_RD_hit, PAPI_NULL,}, {0,}}},
+   {PAPI_L3_TCH, {0, {PNE_BSQ_cache_reference + (1<<RD_3rdL_HITS) + (1<<RD_3rdL_HITE) + (1<<RD_3rdL_HITM), PAPI_NULL,}, {0,}}},
+   {PAPI_L3_TCM, {0, {PNE_BSQ_cache_reference + (1<<RD_3rdL_MISS), PAPI_NULL,}, {0,}}},
+   {PAPI_L3_TCA, {0, {PNE_BSQ_cache_reference + (1<<RD_3rdL_MISS) + (1<<RD_3rdL_HITS) + (1<<RD_3rdL_HITE) + (1<<RD_3rdL_HITM), PAPI_NULL,}, {0,}}},
    {0, {0, {0,}, {0,}}}
 };
 
@@ -1176,7 +1178,7 @@ static inline void internal_decode_event(unsigned int EventCode, int *event, int
    *mask = (EventCode & 0xffff);        // mask bits are in the first two bytes
 }
 
-int p4_papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
+int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
    /* returns the next valid native event code following the one passed in
       modifier can have different meaning on different platforms 
@@ -1292,7 +1294,7 @@ static char *internal_translate_code(int event, int mask, char *str, char *separ
    return (str);
 }
 
-char *p4_papi_hwd_ntv_code_to_name(unsigned int EventCode)
+char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
    int event, mask;
 
@@ -1310,10 +1312,13 @@ char *p4_papi_hwd_ntv_code_to_name(unsigned int EventCode)
       return (_papi_hwd_pentium4_user_map[mask].name);
    }
 
+   if (event > sizeof(_papi_hwd_pentium4_native_map)/sizeof(hwd_p4_native_map_t))
+       return (NULL);
+
    return (internal_translate_code(event, mask, name, "_"));
 }
 
-char *p4_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
+char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
    int event, mask;
 
@@ -1331,6 +1336,9 @@ char *p4_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
       return (_papi_hwd_pentium4_user_map[mask].description);
    }
 
+   if (event > sizeof(_papi_hwd_pentium4_native_map)/sizeof(hwd_p4_native_map_t))
+       return (NULL);
+
    return (internal_translate_code(event, mask, description, ": "));
 }
 
@@ -1340,7 +1348,7 @@ char *p4_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
    NOTE: the info must be COPIED to the provided pointer,
    not just referenced!
 */
-int p4_papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
+int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 {
    int event, mask, tags;
 
@@ -1348,6 +1356,10 @@ int p4_papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
    mask = (EventCode & 0xffff); // mask bits are in the first two bytes
 
    *bits = _papi_hwd_pentium4_native_map[event].bits;
+
+   if ((event > sizeof(_papi_hwd_pentium4_native_map)/sizeof(hwd_p4_native_map_t))
+       && (event != P4_custom_event) && (event != P4_user_event))
+       return (PAPI_ENOEVNT);
 
    switch (event) {
    case P4_custom_event:
@@ -1420,7 +1432,7 @@ int p4_papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
    return (PAPI_OK);
 }
 
-int p4_papi_hwd_ntv_encode(unsigned int *EventCode, char *name, char *description,
+int _papi_hwd_ntv_encode(unsigned int *EventCode, char *name, char *description,
                          hwd_register_t * bits)
 {
    hwd_p4_native_map_t *new_event;
@@ -1440,22 +1452,22 @@ int p4_papi_hwd_ntv_encode(unsigned int *EventCode, char *name, char *descriptio
    return (PAPI_OK);
 }
 
-int p4_papi_hwd_ntv_decode(unsigned int EventCode, char *name, char *description,
+int _papi_hwd_ntv_decode(unsigned int EventCode, char *name, char *description,
                          hwd_register_t * bits)
 {
    char *str;
 
-   str = p4_papi_hwd_ntv_code_to_name(EventCode);
+   str = _papi_hwd_ntv_code_to_name(EventCode);
    if (!str)
       return (PAPI_ENOEVNT);
    strcpy(name, str);
 
-   str = p4_papi_hwd_ntv_code_to_descr(EventCode);
+   str = _papi_hwd_ntv_code_to_descr(EventCode);
    if (!str)
       return (PAPI_ENOEVNT);
    strcpy(description, str);
 
-   return (p4_papi_hwd_ntv_code_to_bits(EventCode, bits));
+   return (_papi_hwd_ntv_code_to_bits(EventCode, bits));
 }
 
 /* Reports the elements of the hwd_register_t struct as an array of names and a matching array of values.
@@ -1468,7 +1480,7 @@ static void copy_value(unsigned int val, char *nam, char *names, unsigned int *v
    names[len-1] = 0;
 }
 
-int p4_papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
+int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                unsigned int *values, int name_len, int count)
 {
    int i = 0;
@@ -1492,6 +1504,12 @@ void _papi_hwd_fixup_fp(hwi_search_t **s, const hwi_dev_notes_t **n)
 {
    char *str = getenv("PAPI_PENTIUM4_FP");
    int mask = FP_NONE;
+
+   /* CRAP CODE ALERT */
+   /* This should absolutely not be here but the below maps are static */
+
+   if (_papi_hwi_system_info.sub_info.num_native_events == 0)
+     _papi_hwi_system_info.sub_info.num_native_events = (sizeof(_papi_hwd_pentium4_native_map) + sizeof(_papi_hwd_pentium4_custom_map))/sizeof(hwd_p4_native_map_t);
 
    /* if the env variable isn't set, return the defaults */
    if ((str == NULL) || (strlen(str) == 0)) {

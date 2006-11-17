@@ -4,6 +4,7 @@
 
 /*
 * File:    perfctr-ppc64.h
+* CVS:     $Id$
 * Author:  Maynard Johnson
 *          maynardj@us.ibm.com
 * Mods:    <your name here>
@@ -61,26 +62,21 @@
 #define HW_OVERFLOW 1
 //#define PAPI_MAX_STR_LEN 129
 
-
-#ifdef __GNUC__
-#define HAVE_FFSLL
-#define _GNU_SOURCE
-#define __USE_GNU
-#endif
-
 // control bits MMCR0
 #define PERF_INT_ENABLE			0x0000C000 // enables interrupts on PMC1 as well as PMC2-PMCj (2<=j<=MAX_COUNTERS)
 #define PMC_OVFL                        0x80000000
-#define PERF_USR_AND_OS                 0x60000000
-#define PERF_OS_ONLY                    0x40000000
-#define PERF_USR_ONLY                   0x20000000
-#define PERF_CONTROL_MASK               0xFFFFE000
+#define PERF_KERNEL                     0x40000000
+#define PERF_USER                       0x20000000
+#define PERF_HYPERVISOR                 0x00000001
+#define PERF_CONTROL_MASK               0xFFFFE001
+
 
 #define AI_ERROR "No support for a-mode counters after adding an i-mode counter"
-#define VOPEN_ERROR "vperfctr_open() returned NULL"
+#define VOPEN_ERROR "vperfctr_open() returned NULL, please run perfex -i to verify your perfctr installation"
 #define GOPEN_ERROR "gperfctr_open() returned NULL"
 #define VINFO_ERROR "vperfctr_info() returned < 0"
 #define VCNTRL_ERROR "vperfctr_control() returned < 0"
+#define RCNTRL_ERROR "rvperfctr_control() returned < 0"
 #define GCNTRL_ERROR "gperfctr_control() returned < 0"
 #define FOPEN_ERROR "fopen(%s) returned NULL"
 #define STATE_MAL_ERROR "Error allocating perfctr structures"
@@ -90,7 +86,9 @@
 #define MUTEX_LOCKED 1
 #define MUTEX_OPEN 0
 
-extern unsigned int lock[];
+extern volatile unsigned int lock[];
+
+#include <unistd.h>
 
 // similar to __arch_compare_and_exchange_val_32_acq() from libc's atomic.h
 static inline unsigned long _papi_hwd_trylock(unsigned int *lock)
@@ -162,8 +160,9 @@ typedef struct ppc64_perfctr_control {
    hwd_register_t allocated_registers;
    struct vperfctr_control control;
    struct perfctr_sum_ctrs state;
+   /* Allow attach to be per-eventset. */
+   struct rvperfctr * rvperfctr;
 } ppc64_perfctr_control_t;
-
 
 typedef struct ppc64_perfctr_context {
    struct vperfctr *perfctr;

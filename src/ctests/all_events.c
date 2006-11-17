@@ -7,14 +7,15 @@
  *         london@cs.utk.edu
  */
 #include "papi_test.h"
-extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
 int main(int argc, char **argv)
 {
    int retval, i;
-   int EventSet=PAPI_NULL, count = 0;
+   int EventSet=PAPI_NULL, count = 0, err_count = 0;
    long_long values;
    PAPI_event_info_t info;
+   char errstring[PAPI_MAX_STR_LEN];
+
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
@@ -31,30 +32,42 @@ int main(int argc, char **argv)
          continue;
       if (!(info.count))
          continue;
-      retval = PAPI_add_event(EventSet, info.event_code);       /* JT */
+      printf("Adding %-14s", info.symbol);
+      retval = PAPI_add_event(EventSet, info.event_code);
       if (retval != PAPI_OK) {
-         if (!TESTS_QUIET)
-            printf("Error adding %s\n", info.symbol);
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+	PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN);
+	fprintf(stdout,"Error: %s\n", errstring);
+	err_count++;
       } else { 
-         if (!TESTS_QUIET) 
-            printf("Added %s successful\n", info.symbol);
-         count++;
+	 retval = PAPI_start(EventSet);
+	 if (retval != PAPI_OK) {
+	    PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN);
+	    fprintf(stdout,"Error Starting: %s\n", errstring);
+	    err_count++;
+	 } else { 
+	    retval = PAPI_stop(EventSet, &values);
+	    if (retval != PAPI_OK) {
+		PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN);
+		fprintf(stdout,"Error Stopping: %s\n", errstring);
+		err_count++;
+	    }
+	    else {
+		printf("successful\n");
+		count++;
+	    }
+	 }
+	 retval = PAPI_remove_event(EventSet, info.event_code);
+	 if (retval != PAPI_OK)
+	    test_fail(__FILE__, __LINE__, "PAPI_remove_event", retval);
       }
-      retval = PAPI_start(EventSet);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_start", retval);
-      retval = PAPI_stop(EventSet, &values);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
-
-      retval = PAPI_remove_event(EventSet, info.event_code);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_remove_event", retval);
-
    }
-   if (!TESTS_QUIET)
-      printf("Successfully added,started and stopped %d events.\n", count);
+   retval = PAPI_destroy_eventset(&EventSet);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_destroy_eventset", retval);
+
+   printf("Successfully added, started and stopped %d events.\n", count);
+   if (err_count)
+	printf("Failed to add, start or stop %d events.\n", err_count);
    if ( count > 0 )
       test_pass(__FILE__, NULL, 0);
    else

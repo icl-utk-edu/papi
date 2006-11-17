@@ -44,7 +44,7 @@ CONFIG_PFMLIB_GENERIC=y
 CONFIG_PFMLIB_ITANIUM=y
 CONFIG_PFMLIB_ITANIUM2=y
 
-OPTIM=-O2
+OPTIM=-g -O
 
 #
 # you shouldn't have to touch anything beyond this point

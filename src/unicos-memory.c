@@ -15,6 +15,7 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * mem_info, int cpu)
    return PAPI_OK;
 }
 
-long _papi_hwd_get_dmem_info(int option)
+int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
 {
+	return(PAPI_ESBSTR);
 }

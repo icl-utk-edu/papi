@@ -11,11 +11,9 @@
 *          <your email address>
 */
 
-#include SUBSTRATE
-#include "papi_sys_headers.h"
 #include "papi_internal.h"
+#include <string.h>
 #include "libperfctr.h"
-
 
 hwd_groups_t group_map[MAX_GROUPS] = { {0}, {0}, {0}, {0}, {0} };
 native_event_entry_t native_table[PAPI_MAX_NATIVE_EVENTS];
@@ -23,7 +21,7 @@ native_event_entry_t native_table[PAPI_MAX_NATIVE_EVENTS];
 void initialize_native_table()
 {
 	int i, j;
-	memset(native_table, '\0', PAPI_MAX_NATIVE_EVENTS * sizeof(native_event_entry_t));
+	memset(native_table, 0, PAPI_MAX_NATIVE_EVENTS * sizeof(native_event_entry_t));
 	for (i = 0; i < PAPI_MAX_NATIVE_EVENTS; i++) {
 		for (j = 0; j < MAX_COUNTERS; j++)
 		native_table[i].resources.counter_cmd[j] = -1;
@@ -63,6 +61,9 @@ void ppc64_setup_gps(int total, ntv_event_group_info_t * group_info)
 int setup_ppc64_native_table()
 {
 	int pmc, ev, i, j, index;
+	/* This is for initialisation-testing of consistency between
+	native_name_map and our events file */
+	int itemCount = 0;
 	index = 0;
 	initialize_native_table();
 	ntv_event_info_t * info = perfctr_get_native_evt_info();
@@ -90,12 +91,48 @@ int setup_ppc64_native_table()
 				native_table[i].description = wevp->description;
 				index++;
 				for (j = 0; j < MAX_NATNAME_MAP_INDEX; j++) {
+					/* It appears that here, if I'm right, that the events
+					file entry matches the event from native_name_map, */
+					/* This here check is to ensure that native_name_map in fact
+					has MAX_NATNAME_MAP_INDEX elements, or rather that it never
+					tries to access one that has not been initialised. */
+					if(native_name_map[j].name == NULL)
+					{
+						SUBDBG("native_name_map has a NULL at position %i\n", j);
+						PAPIERROR("Inconsistency between events_map file and events header.");
+						return PAPI_EBUG;
+					}
 					if (strcmp(native_table[i].name, native_name_map[j].name) == 0)
+					{
 						native_name_map[j].index = i;
+						itemCount++;
+						break;
+					}
+				}
+				/* If we never set native_name_map[j], then there is an
+				inconsistency between native_name_map and native_table */
+				if( (!(j < MAX_NATNAME_MAP_INDEX )) || native_name_map[j].index != i)
+				{
+					SUBDBG("No match found between native_name_map and native_table.  "
+						"Values was %s at position %i in native_table.\n", 
+						native_table[i].name, i);
+					PAPIERROR("Inconsistency between native_name_map and events file.");
+					return PAPI_EBUG;
 				}
 			}
 		}
 	}	
+	/* given the previous evidence that native_name_map is a superset of
+	native_table, ensuring this match in their cardinality shows them to
+	be equivalent. */
+	if(itemCount != MAX_NATNAME_MAP_INDEX)
+	{
+		SUBDBG("%i events found in native_table, but really should be %i\n",
+			itemCount, MAX_NATNAME_MAP_INDEX);
+		PAPIERROR("Inconsistent cardinality between native_name_map and events file",
+			itemCount, MAX_NATNAME_MAP_INDEX);
+		return PAPI_EBUG;
+	}
 	
 	ntv_event_group_info_t * gp_info = perfctr_get_native_group_info();
 	if (gp_info == NULL) {
@@ -105,6 +142,56 @@ int setup_ppc64_native_table()
 	}
 	
 	ppc64_setup_gps(index, gp_info);
+	_papi_hwi_system_info.sub_info.num_native_events = index;
+
+	return check_native_name();
+}
+
+int check_native_name()
+{
+	enum native_name foo;
+	int itemCount = 0;
+	int i;
+
+	/* This should ensure that the cardinality of native_name is the same
+   	   as that of native_name_map which may be true iff native_name 
+	   expresses the same data as native_name_map and there is a 1:1 
+	   mapping from one onto the other, though there is no guarantee of 
+	   order. */
+	if((NATNAME_GUARD - PAPI_NATIVE_MASK) != MAX_NATNAME_MAP_INDEX)
+	{
+		SUBDBG("%i is the number of elements apparently in native_name, "
+			"but really should be %i, according to native_name_map.\n",
+			(NATNAME_GUARD - PAPI_NATIVE_MASK), MAX_NATNAME_MAP_INDEX);
+		PAPIERROR("Inconsistent cardinality between native_name and native_name_map "
+			"detected in preliminary check\n");
+		return PAPI_EBUG;
+	}
+
+	/* The following is sanity checking only.  It attempts to verify some level
+   	   of consistency between native_name and native_name_map and native_table.
+   	   This should imply that native_name is a subset of native_name_map. */
+	for(foo = PAPI_NATIVE_MASK; foo < NATNAME_GUARD; foo++)
+	{
+		for(i = 0; i < MAX_NATNAME_MAP_INDEX; i++)
+		{
+			/* Now, if the event we are on is the native event we seek... */
+			if((native_name_map[i].index | PAPI_NATIVE_MASK) == foo)
+			{
+				itemCount++;
+				break;
+			}
+		}
+	}
+	if(itemCount != MAX_NATNAME_MAP_INDEX)
+	{
+		SUBDBG("Inconsistency between native_name_map and native_name.  "
+			"%i events matched, but really should be %i\n", itemCount, 
+			MAX_NATNAME_MAP_INDEX);
+		PAPIERROR("Inconsistent cardinality between native_name and native_name_map\n");
+		return PAPI_EBUG;
+	}
+
 	return PAPI_OK;
 }
 

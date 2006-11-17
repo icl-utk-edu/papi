@@ -32,11 +32,6 @@ int main()
       exit(1);
    }
 
-   if (PAPI_set_debug(PAPI_VERB_ECONT) != PAPI_OK) {
-      fprintf(stderr, "PAPI_set_debug(PAPI_VERB_ECONT) failed, debug this.\n");
-      abort();
-   }
-
    if (PAPI_create_eventset(&EventSet) != PAPI_OK)
       exit(1);
 

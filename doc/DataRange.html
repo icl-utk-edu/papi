@@ -16,9 +16,7 @@
 			PAPI interface for data structure and instruction range performance 
 			instrumentation, also referred to as data and instruction range specification, 
 			and applied that interface to the specific instance of the Itanium2 platform to 
-			demonstrate its viability. This feature is currently implemented and available 
-			only in the HEAD branch of the PAPI cvs repository. See the PAPI web page for 
-			details on accessing cvs.
+			demonstrate its viability. This feature is being introduced for the first time in the PAPI 3.5 release.
 		</P>
 		<H2>The PAPI Interface</H2>
 		<P>Since PAPI is a platform-independent library, care must be taken when extending 
@@ -95,7 +93,10 @@
 			Although four independent pairs of data address registers exist in the hardware 
 			and would suggest that four disjoint address regions can be monitored 
 			simultaneously, the Intel documentation strongly suggests that this is not a 
-			good idea. No reason is given; further investigation is warranted.</P>
+			good idea. Further,
+                    the underlying software takes advantage of these register pairs to tune the range
+                    of addresses that is actually monitored. See the discussion under <strong>Data Address
+                        Ranges</strong> for further detail.</P>
 		<H3 style="mso-layout-grid-align: none">Instruction Address Ranges</H3>
 		<P style="mso-layout-grid-align: none">Instruction ranges can be specified in one 
 			of two ways: coarse and fine. In fine mode, addresses can be specified exactly, 

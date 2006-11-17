@@ -39,7 +39,7 @@ void papi_init(int argc, char **argv)
       printf("Nodes in this System     : %d\n", hwinfo->nnodes);
       printf("Total CPU's              : %d\n", hwinfo->totalcpus);
       printf("Number Hardware Counters : %d\n", PAPI_get_opt(PAPI_MAX_HWCTRS, NULL));
-      printf("Max Multiplex Counters   : %d\n", PAPI_MPX_DEF_DEG);
+      printf("Max Multiplex Counters   : %d\n", PAPI_get_opt(PAPI_MAX_MPX_CTRS, NULL));
       printf
           ("-------------------------------------------------------------------------\n");
 

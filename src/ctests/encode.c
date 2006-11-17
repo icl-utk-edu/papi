@@ -74,11 +74,6 @@ int main(int argc, char **argv)
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
    if (TESTS_QUIET) test_skip(__FILE__, __LINE__, "test_skip", 1);
 
-   if ( argc < 2 ) {
-      print_help();
-      test_skip(__FILE__,__LINE__, "test_skip", 1);
-   }
-
    for (i = 1; i < argc; i++) {
       if (argv[i][0] == '-') {
          if (strstr(argv[i], "a")) {
@@ -105,7 +100,8 @@ int main(int argc, char **argv)
    }
 	
    if (name == NULL) {
-      test_skip(__FILE__, __LINE__, "fopen", PAPI_EINVAL);
+      if (!TESTS_QUIET) print_help();
+      test_skip(__FILE__, __LINE__, "fopen: no filename given", PAPI_EINVAL);
    }
    file = fopen(name, "r");
 	if (file == NULL) {
@@ -114,12 +110,6 @@ int main(int argc, char **argv)
    retval = PAPI_library_init(PAPI_VER_CURRENT);
    if (retval != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
-
-   if (!TESTS_QUIET) {
-      retval = PAPI_set_debug(PAPI_VERB_ECONT);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
-   }
 
    if ((hwinfo = PAPI_get_hardware_info()) == NULL)
       test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
@@ -174,6 +164,7 @@ int main(int argc, char **argv)
          printf("Setting preset event info for: %s\n", info.symbol);
          retval = PAPI_set_event_info(&info, &i, replace_event);
          printf("Returns: %d\n", retval);
+         if (retval == PAPI_ESBSTR) printf("This feature isn't supported!\n");
          if (retval == PAPI_EPERM) printf("Non-modifiable event conflict!\n");
          if (retval == PAPI_EISRUN) printf("Event is referenced from an EventSet!\n");
          if (retval == PAPI_EINVAL) printf("This event data doesn't make sense!\n");

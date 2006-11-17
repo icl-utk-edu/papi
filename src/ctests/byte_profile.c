@@ -19,7 +19,7 @@
 #include "prof_utils.h"
 #define PROFILE_ALL
 
-static int do_profile(unsigned long plength, unsigned scale, int thresh, int bucket);
+static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int thresh, int bucket);
 static void cleara(double a[]);
 static void my_main();
 static int my_dummy(int i);
@@ -30,13 +30,16 @@ int main(int argc, char **argv)
    long length;
    int mask;
    int retval;
+   const PAPI_hw_info_t *hw_info;
+   const PAPI_exe_info_t *prginfo;
+   caddr_t start, end;
 
-   prof_init(argc, argv);
+   prof_init(argc, argv, &hw_info, &prginfo);
 
 #if defined(__powerpc__) && defined(__perfctr__ )
    mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_INS;
 #else
-   mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_OPS | MASK_L1_DCM;
+   mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_OPS | MASK_L2_TCM;
 #endif
    EventSet = add_test_events(&num_events, &mask);
    values = allocate_test_space(1, num_events);
@@ -60,11 +63,10 @@ int main(int argc, char **argv)
    if (length < 0)
       test_fail(__FILE__, __LINE__, "Profile length < 0!", length);
 
-   prof_print_address(start, end,
-               "Test case byte_profile: Multi-event profiling at byte resolution.\n");
-   prof_print_prof_info();
+   prof_print_address("Test case byte_profile: Multi-event profiling at byte resolution.\n",prginfo);
+   prof_print_prof_info(start,end,THRESHOLD,event_name);
    
-   retval = do_profile(length, FULL_SCALE*2, THRESHOLD, PAPI_PROFIL_BUCKET_32);
+   retval = do_profile(start, length, FULL_SCALE*2, THRESHOLD, PAPI_PROFIL_BUCKET_32);
 
    remove_test_events(&EventSet, mask);
 
@@ -75,7 +77,7 @@ int main(int argc, char **argv)
    exit(1);
 }
 
-static int do_profile(unsigned long plength, unsigned scale, int thresh, int bucket) {
+static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int thresh, int bucket) {
    int i, retval;
    unsigned long blength;
    int num_buckets;
@@ -85,9 +87,9 @@ static int do_profile(unsigned long plength, unsigned scale, int thresh, int buc
    int num_events = 3;
    char * header =  "address\t\t\tcyc\tins\tfp_ins\n";
 #else
-   unsigned int events[] = {PAPI_TOT_CYC, PAPI_TOT_INS, PAPI_FP_OPS, PAPI_L1_DCM };
+   unsigned int events[] = {PAPI_TOT_CYC, PAPI_TOT_INS, PAPI_FP_OPS, PAPI_L2_TCM };
    int num_events = 4;
-   char * header =  "address\t\t\tcyc\tins\tfp_ops\tl1_dcm\n";
+   char * header =  "address\t\t\tcyc\tins\tfp_ops\tl2_tcm\n";
 #endif
 
    int num_bufs = num_events;
@@ -120,7 +122,7 @@ static int do_profile(unsigned long plength, unsigned scale, int thresh, int buc
       printf(TAB1, "PAPI_FP_INS", (values[0])[--event]);
 #else
       printf(TAB1, "PAPI_FP_OPS:", (values[0])[--event]);
-      printf(TAB1, "PAPI_L1_DCM:", (values[0])[--event]);
+      printf(TAB1, "PAPI_L2_TCM:", (values[0])[--event]);
 #endif
    }
 
@@ -131,7 +133,7 @@ static int do_profile(unsigned long plength, unsigned scale, int thresh, int buc
    }
 
    prof_head(blength, bucket, num_buckets, header);
-   prof_out(num_events, bucket, num_buckets, scale);
+   prof_out(start, num_events, bucket, num_buckets, scale);
    retval = prof_check(num_bufs, bucket, num_buckets);
    for(i=0;i<num_bufs;i++) {
       free(profbuf[i]);

@@ -36,12 +36,19 @@
 #define getpid GetCurrentProcessId
 
 // Routine found in Unix strings support
-#define strcasecmp stricmp
+#define strcasecmp _stricmp
+
+// Convert to a linux conformant sleep function
+#define sleep(s) Sleep(s*1000)
+
+// Convert to a POSIX conformant name
+#define putenv _putenv
 
 // Prototypes for routines not found in MS Visual C++
 extern int ffs(int i);
 extern int rand_r (unsigned int *Seed);
 extern int getpagesize(void);
+
 
 
 #endif // _WIN_EXTRAS

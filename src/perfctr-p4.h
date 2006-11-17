@@ -1,14 +1,34 @@
 #ifndef _PAPI_PENTIUM4_H
 #define _PAPI_PENTIUM4_H
 
-#define HAVE_FFSLL
-#define _GNU_SOURCE
+#ifndef __USE_GNU
 #define __USE_GNU
+#endif
+#ifndef __USE_UNIX98
 #define __USE_UNIX98
+#endif
+#ifndef __USE_XOPEN_EXTENDED
+#define __USE_XOPEN_EXTENDED
+#endif
 
-#include "papi_sys_headers.h"
-
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <signal.h>
+#include <malloc.h>
+#include <unistd.h>
+#include <assert.h>
+#include <string.h>
+#include <math.h>
+#include <ctype.h>
+#include <string.h>
+#include <limits.h>
 #include <time.h>
+#include <errno.h>
+#include <sys/times.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/ucontext.h>
 #include <linux/unistd.h>
 
 #include "p4_events.h"
@@ -102,6 +122,8 @@ typedef struct hwd_p4_mask {
 typedef struct P4_perfctr_control {
    struct vperfctr_control control;
    struct perfctr_sum_ctrs state;
+   /* Allow attach to be per-eventset. */
+   struct rvperfctr * rvperfctr;
 } P4_perfctr_control_t;
 
 /* Per thread data structure for thread level counters */
@@ -121,13 +143,12 @@ typedef P4_perfctr_context_t hwd_context_t;
 
 typedef P4_perfctr_event_t hwd_event_t;
 
-#define hwd_pmc_control vperfctr_control
-
 #define AI_ERROR "No support for a-mode counters after adding an i-mode counter"
-#define VOPEN_ERROR "vperfctr_open() returned NULL"
+#define VOPEN_ERROR "vperfctr_open() returned NULL, please run perfex -i to verify your perfctr installation"
 #define GOPEN_ERROR "gperfctr_open() returned NULL"
 #define VINFO_ERROR "vperfctr_info() returned < 0"
 #define VCNTRL_ERROR "vperfctr_control() returned < 0"
+#define RCNTRL_ERROR "rvperfctr_control() returned < 0"
 #define GCNTRL_ERROR "gperfctr_control() returned < 0"
 #define FOPEN_ERROR "fopen(%s) returned NULL"
 #define STATE_MAL_ERROR "Error allocating perfctr structures"
@@ -137,10 +158,43 @@ typedef siginfo_t hwd_siginfo_t;
 typedef ucontext_t hwd_ucontext_t;
 
 #ifdef __x86_64__
-#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&((hwd_ucontext_t *)ctx.ucontext)->uc_mcontext))->rip)
+#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->rip)
 #else
-#define GET_OVERFLOW_ADDRESS(ctx)  (caddr_t)(((struct sigcontext *)(&((hwd_ucontext_t *)ctx.ucontext)->uc_mcontext))->eip)
+#define GET_OVERFLOW_ADDRESS(ctx)  (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->eip)
 #endif
+
+/* Linux DOES support hardware overflow */
+#define HW_OVERFLOW 1
+
+/* Locks */
+extern volatile unsigned int lock[PAPI_MAX_LOCK];
+/* volatile uint32_t lock; */
+
+#define MUTEX_OPEN 1
+#define MUTEX_CLOSED 0
+#include <inttypes.h>
+
+/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
+ * else val = MUTEX_CLOSED */
+#define  _papi_hwd_lock(lck)                                            \
+do                                                                      \
+{                                                                       \
+   unsigned int res = 0;                                               \
+   do{                                                                  \
+   __asm__ __volatile__ ("lock ; " "cmpxchg %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory"); \
+   } while(res != (unsigned int)MUTEX_OPEN);                           \
+}while(0)
+
+#define  _papi_hwd_unlock(lck)                                          \
+do                                                                      \
+{                                                                       \
+   unsigned int res = 0;                                               \
+__asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");   \
+}while(0)
+
+
+extern int sighold(int);
+extern int sigrelse(int);
 
 /* Undefined identifiers in executable */
 

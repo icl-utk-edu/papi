@@ -118,6 +118,21 @@ static void unset_config(hwd_control_state_t * ptr, int arg1)
    ptr->counter_cmd.events[arg1] = 0;
 }
 
+int init_domain()
+{
+   int domain = 0;
+
+   domain = PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_OTHER;
+#ifdef PM_INITIALIZE
+#ifdef _AIXVERSION_510
+   if (pminfo.proc_feature.b.hypervisor) {
+      domain |= PAPI_DOM_SUPERVISOR;
+   }
+#endif
+#endif
+   return (domain);
+}
+
 int set_domain(hwd_control_state_t * this_state, int domain)
 {
    pm_mode_t *mode = &(this_state->counter_cmd.mode);
@@ -126,13 +141,21 @@ int set_domain(hwd_control_state_t * this_state, int domain)
    mode->b.user = 0;
    mode->b.kernel = 0;
    if (domain & PAPI_DOM_USER) {
-      did = 1;
+      did++;
       mode->b.user = 1;
    }
    if (domain & PAPI_DOM_KERNEL) {
-      did = 1;
+      did++;
       mode->b.kernel = 1;
    }
+#ifdef PM_INITIALIZE
+#ifdef _AIXVERSION_510
+   if ((domain & PAPI_DOM_SUPERVISOR) && pminfo.proc_feature.b.hypervisor) {
+      did++;
+      mode->b.hypervisor = 1;
+   }
+#endif
+#endif
    if (did)
       return (PAPI_OK);
    else
@@ -219,9 +242,10 @@ int _papi_hwd_mdi_init()
       _papi_hwd_update_shlib_info();
    }
 
-   _papi_hwi_system_info.supports_64bit_counters = 1;
-   _papi_hwi_system_info.supports_real_usec = 1;
-   _papi_hwi_system_info.supports_real_cyc = 1;
+/*   _papi_hwi_system_info.supports_64bit_counters = 1;
+   _papi_hwi_system_info.supports_real_usec = 1; */
+   _papi_hwi_system_info.sub_info.fast_real_timer = 1;
+/*   _papi_hwi_system_info.sub_info->available_domains = init_domain();*/
 
 
    return (PAPI_OK);
@@ -281,7 +305,7 @@ static int get_system_info(void)
    if (retval > 0)
       return (retval);
 
-   strcpy(_papi_hwi_system_info.substrate, "$Id$");  /* Name of the substrate we're using */
+   strcpy(_papi_hwi_system_info.sub_info.name, "$Id$");  /* Name of the substrate we're using */
 
    _papi_hwd_mdi_init();
 
@@ -294,13 +318,14 @@ static int get_system_info(void)
    strcpy(_papi_hwi_system_info.hw_info.model_string, pminfo.proc_name);
    _papi_hwi_system_info.hw_info.revision = (float) _system_configuration.version;
    _papi_hwi_system_info.hw_info.mhz = (float) (pm_cycles() / 1000000.0);
-   _papi_hwi_system_info.num_gp_cntrs = pminfo.maxpmcs;
-   _papi_hwi_system_info.num_cntrs = pminfo.maxpmcs;
-   _papi_hwi_system_info.supports_multiple_threads = 1;  
+/*   _papi_hwi_system_info.num_gp_cntrs = pminfo.maxpmcs;*/
+   _papi_hwi_system_info.sub_info.num_cntrs = pminfo.maxpmcs;
+   _papi_hwi_system_info.sub_info.grouped_cntrs = 1;
+   _papi_hwi_system_info.sub_info.available_granularities = PAPI_GRN_THR;
 /* This field doesn't appear to exist in the PAPI 3.0 structure 
   _papi_hwi_system_info.cpunum = mycpu(); 
 */
-
+   _papi_hwi_system_info.sub_info.available_domains = init_domain();
    return (PAPI_OK);
 }
 
@@ -350,6 +375,7 @@ static void _papi_lock_init(void)
 }
 
 papi_svector_t _aix_table[] = {
+ {(void (*)())_papi_hwd_get_overflow_address, VEC_PAPI_HWD_GET_OVERFLOW_ADDRESS},
  {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
  {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
  {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
@@ -445,7 +471,7 @@ static void set_hwcntr_codes(int selector, unsigned char *from, int *to)
 {
    int useme, i;
 
-   for (i = 0; i < _papi_hwi_system_info.num_cntrs; i++) {
+   for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
       useme = (1 << i) & selector;
       if (useme) {
          to[i] = from[i];
@@ -536,6 +562,10 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
    case PAPI_GRANUL:
       return (set_granularity
               (&(option->granularity.ESI->machdep), option->granularity.granularity));
+#if 0
+   case PAPI_INHERIT:
+      return (set_inherit(option->inherit.inherit));
+#endif
    default:
       return (PAPI_EINVAL);
    }
@@ -563,6 +593,16 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
    return (PAPI_OK);
 }
+
+void *_papi_hwd_get_overflow_address(void *context)
+{
+  void *location;
+  struct sigcontext *info = (struct sigcontext *)context;
+  location = (void *)info->sc_jmpbuf.jmp_context.iar;
+
+  return(location);
+}
+
 
 /* Copy the current control_state into the new thread context */
 /*int _papi_hwd_start(EventSetInfo_t *ESI, EventSetInfo_t *zero)*/

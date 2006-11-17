@@ -3,9 +3,7 @@ CPU		= ppc64
 CPU_MODEL	= POWER5
 ARCH_EVENTS	= power5_events
 CPU_TYPE 	= ppc64
-SHRFLAGS	= -fPIC
-CONFIG_HEADER	= config.h
 # for Debian, comment the following line out
 BITS		= 64
-CFLAGS	= -g -DDEBUG -D_$(CPU_MODEL) -DNEED_FFSLL -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\"
+CFLAGS		= -D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\"
 include Rules.perfctr

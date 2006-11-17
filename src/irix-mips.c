@@ -6,16 +6,10 @@
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
 
-#define IN_SUBSTRATE
-
 #include "papi.h"
 #include "papi_internal.h"
-#include "irix-mips.h"
-#include "papi_protos.h"
 #include "papi_vector.h"
 #include "papi_memory.h"
-
-static int sidx;
 
 char *(r10k_native_events_table[]) = {
    /* 0  */ "Cycles",
@@ -98,61 +92,61 @@ hwi_search_t *preset_search_map;
    in the native event table
 */
 hwi_search_t findem_r10k[] = {
-   {PAPI_L1_DCM, {0, {PAPI_NATIVE_MASK | 25, PAPI_NULL,}}},   /* L1 D-Cache misses */
-   {PAPI_L1_ICM, {0, {PAPI_NATIVE_MASK | 9, PAPI_NULL,}}},    /* L1 I-Cache misses */
-   {PAPI_L2_DCM, {0, {PAPI_NATIVE_MASK | 26, PAPI_NULL,}}},   /* L2 D-Cache misses */
-   {PAPI_L2_ICM, {0, {PAPI_NATIVE_MASK | 10, PAPI_NULL,}}},   /* L2 I-Cache misses */
-   {PAPI_L1_TCM, {DERIVED_ADD, {PAPI_NATIVE_MASK | 9, PAPI_NATIVE_MASK | 25, PAPI_NULL,}}},
+   {PAPI_L1_DCM, {0, {PAPI_NATIVE_MASK | 25, PAPI_NULL}}},   /* L1 D-Cache misses */
+   {PAPI_L1_ICM, {0, {PAPI_NATIVE_MASK | 9, PAPI_NULL}}},    /* L1 I-Cache misses */
+   {PAPI_L2_DCM, {0, {PAPI_NATIVE_MASK | 26, PAPI_NULL}}},   /* L2 D-Cache misses */
+   {PAPI_L2_ICM, {0, {PAPI_NATIVE_MASK | 10, PAPI_NULL}}},   /* L2 I-Cache misses */
+   {PAPI_L1_TCM, {DERIVED_ADD, {PAPI_NATIVE_MASK | 9, PAPI_NATIVE_MASK | 25, PAPI_NULL}}},
    /* L1 total */
-   {PAPI_L2_TCM, {DERIVED_ADD, {PAPI_NATIVE_MASK | 10, PAPI_NATIVE_MASK | 26,PAPI_NULL,}}},
+   {PAPI_L2_TCM, {DERIVED_ADD, {PAPI_NATIVE_MASK | 10, PAPI_NATIVE_MASK | 26,PAPI_NULL}}},
    /* L2 total */
-   {PAPI_CA_INV, {0, {PAPI_NATIVE_MASK | 13, PAPI_NULL,}}},   /* Cache Line Invalidation */
-   {PAPI_CA_ITV, {0, {PAPI_NATIVE_MASK | 12, PAPI_NULL,}}},   /* Cache Line Intervention */
-   {PAPI_TLB_TL, {0, {PAPI_NATIVE_MASK | 23, PAPI_NULL,}}},   /* Total TLB misses */
-   {PAPI_CSR_FAL, {0, {PAPI_NATIVE_MASK | 5, PAPI_NULL,}}},   /* Failed store conditional */
-   {PAPI_CSR_SUC, {DERIVED_SUB, {PAPI_NATIVE_MASK | 20, PAPI_NATIVE_MASK | 5, PAPI_NULL,}}},
+   {PAPI_CA_INV, {0, {PAPI_NATIVE_MASK | 13, PAPI_NULL}}},   /* Cache Line Invalidation */
+   {PAPI_CA_ITV, {0, {PAPI_NATIVE_MASK | 12, PAPI_NULL}}},   /* Cache Line Intervention */
+   {PAPI_TLB_TL, {0, {PAPI_NATIVE_MASK | 23, PAPI_NULL}}},   /* Total TLB misses */
+   {PAPI_CSR_FAL, {0, {PAPI_NATIVE_MASK | 5, PAPI_NULL}}},   /* Failed store conditional */
+   {PAPI_CSR_SUC, {DERIVED_SUB, {PAPI_NATIVE_MASK | 20, PAPI_NATIVE_MASK | 5, PAPI_NULL}}},
    /* Successful store conditional */
-   {PAPI_CSR_TOT, {0, {PAPI_NATIVE_MASK | 20, PAPI_NULL,}}},  /* Total store conditional */
-   {PAPI_BR_MSP, {0, {PAPI_NATIVE_MASK | 24, PAPI_NULL,}}},   /* Cond. branch inst. mispred */
-   {PAPI_TOT_IIS, {0, {PAPI_NATIVE_MASK | 1, PAPI_NULL,}}},   /* Total inst. issued */
-   {PAPI_TOT_INS, {0, {PAPI_NATIVE_MASK | 17, PAPI_NULL,}}},  /* Total inst. executed */
-   {PAPI_FP_INS, {0, {PAPI_NATIVE_MASK | 21, PAPI_NULL,}}},   /* Floating Pt. inst. executed */
-   {PAPI_FP_OPS, {0, {PAPI_NATIVE_MASK | 21, PAPI_NULL,}}},   /* Floating Pt. inst. executed */
-   {PAPI_LD_INS, {0, {PAPI_NATIVE_MASK | 18, PAPI_NULL,}}},    /* Loads executed */
-   {PAPI_SR_INS, {0, {PAPI_NATIVE_MASK | 19, PAPI_NULL,}}},   /* Stores executed */
-   {PAPI_BR_INS, {0, {PAPI_NATIVE_MASK | 6, PAPI_NULL,}}},    /* Branch inst. executed */
-   {PAPI_TOT_CYC, {0, {PAPI_NATIVE_MASK | 0, PAPI_NULL,}}},   /* Total cycles */
+   {PAPI_CSR_TOT, {0, {PAPI_NATIVE_MASK | 20, PAPI_NULL}}},  /* Total store conditional */
+   {PAPI_BR_MSP, {0, {PAPI_NATIVE_MASK | 24, PAPI_NULL}}},   /* Cond. branch inst. mispred */
+   {PAPI_TOT_IIS, {0, {PAPI_NATIVE_MASK | 1, PAPI_NULL}}},   /* Total inst. issued */
+   {PAPI_TOT_INS, {0, {PAPI_NATIVE_MASK | 17, PAPI_NULL}}},  /* Total inst. executed */
+   {PAPI_FP_INS, {0, {PAPI_NATIVE_MASK | 21, PAPI_NULL}}},   /* Floating Pt. inst. executed */
+   {PAPI_FP_OPS, {0, {PAPI_NATIVE_MASK | 21, PAPI_NULL}}},   /* Floating Pt. inst. executed */
+   {PAPI_LD_INS, {0, {PAPI_NATIVE_MASK | 18, PAPI_NULL}}},    /* Loads executed */
+   {PAPI_SR_INS, {0, {PAPI_NATIVE_MASK | 19, PAPI_NULL}}},   /* Stores executed */
+   {PAPI_BR_INS, {0, {PAPI_NATIVE_MASK | 6, PAPI_NULL}}},    /* Branch inst. executed */
+   {PAPI_TOT_CYC, {0, {PAPI_NATIVE_MASK | 0, PAPI_NULL}}},   /* Total cycles */
    {0, {0, {0, 0}}}             /* The END */
 };
 
 
 hwi_search_t findem_r12k[] = {  /* Shared with R14K */
-   {PAPI_L1_DCM, {0, {PAPI_NATIVE_MASK | 25, PAPI_NULL,}}},   /* L1 D-Cache misses */
-   {PAPI_L1_ICM, {0, {PAPI_NATIVE_MASK | 9, PAPI_NULL,}}},    /* L1 I-Cache misses */
-   {PAPI_L2_DCM, {0, {PAPI_NATIVE_MASK | 26, PAPI_NULL,}}},   /* L2 D-Cache misses */
-   {PAPI_L2_ICM, {0, {PAPI_NATIVE_MASK | 10, PAPI_NULL,}}},   /* L2 I-Cache misses */
-   {PAPI_L1_TCM, {DERIVED_ADD, {PAPI_NATIVE_MASK | 9, PAPI_NATIVE_MASK | 25, PAPI_NULL,}}},        /* L1 total */
-   {PAPI_L2_TCM, {DERIVED_ADD, {PAPI_NATIVE_MASK | 10, PAPI_NATIVE_MASK | 26, PAPI_NULL,}}},       /* L2 total */
-   {PAPI_CA_INV, {0, {PAPI_NATIVE_MASK | 13, PAPI_NULL,}}},   /* Cache Line Invalidation */
-   {PAPI_CA_ITV, {0, {PAPI_NATIVE_MASK | 12, PAPI_NULL,}}},   /* Cache Line Intervention */
-   {PAPI_TLB_TL, {0, {PAPI_NATIVE_MASK | 23, PAPI_NULL,}}},   /* Total TLB misses */
-   {PAPI_PRF_DM, {0, {PAPI_NATIVE_MASK | 17, PAPI_NULL,}}},   /* Prefetch miss */
-   {PAPI_CSR_FAL, {0, {PAPI_NATIVE_MASK | 5, PAPI_NULL,}}},   /* Failed store conditional */
-   {PAPI_CSR_SUC, {DERIVED_SUB, {PAPI_NATIVE_MASK | 20, PAPI_NATIVE_MASK | 5, PAPI_NULL,}}},
+   {PAPI_L1_DCM, {0, {PAPI_NATIVE_MASK | 25, PAPI_NULL}}},   /* L1 D-Cache misses */
+   {PAPI_L1_ICM, {0, {PAPI_NATIVE_MASK | 9, PAPI_NULL}}},    /* L1 I-Cache misses */
+   {PAPI_L2_DCM, {0, {PAPI_NATIVE_MASK | 26, PAPI_NULL}}},   /* L2 D-Cache misses */
+   {PAPI_L2_ICM, {0, {PAPI_NATIVE_MASK | 10, PAPI_NULL}}},   /* L2 I-Cache misses */
+   {PAPI_L1_TCM, {DERIVED_ADD, {PAPI_NATIVE_MASK | 9, PAPI_NATIVE_MASK | 25, PAPI_NULL}}},        /* L1 total */
+   {PAPI_L2_TCM, {DERIVED_ADD, {PAPI_NATIVE_MASK | 10, PAPI_NATIVE_MASK | 26, PAPI_NULL}}},       /* L2 total */
+   {PAPI_CA_INV, {0, {PAPI_NATIVE_MASK | 13, PAPI_NULL}}},   /* Cache Line Invalidation */
+   {PAPI_CA_ITV, {0, {PAPI_NATIVE_MASK | 12, PAPI_NULL}}},   /* Cache Line Intervention */
+   {PAPI_TLB_TL, {0, {PAPI_NATIVE_MASK | 23, PAPI_NULL}}},   /* Total TLB misses */
+   {PAPI_PRF_DM, {0, {PAPI_NATIVE_MASK | 17, PAPI_NULL}}},   /* Prefetch miss */
+   {PAPI_CSR_FAL, {0, {PAPI_NATIVE_MASK | 5, PAPI_NULL}}},   /* Failed store conditional */
+   {PAPI_CSR_SUC, {DERIVED_SUB, {PAPI_NATIVE_MASK | 20, PAPI_NATIVE_MASK | 5, PAPI_NULL}}},
    /* Successful store conditional */
-   {PAPI_CSR_TOT, {0, {PAPI_NATIVE_MASK | 20, PAPI_NULL,}}},  /* Total store conditional */
-   {PAPI_BR_CN, {0, {PAPI_NATIVE_MASK | 6, PAPI_NULL,}}},     /* Cond. branch inst. exe */
-   {PAPI_BR_MSP, {0, {PAPI_NATIVE_MASK | 24, PAPI_NULL,}}},   /* Cond. branch inst. mispred */
-   {PAPI_BR_PRC, {DERIVED_SUB, {PAPI_NATIVE_MASK | 6, PAPI_NATIVE_MASK | 24, PAPI_NULL,}}},
+   {PAPI_CSR_TOT, {0, {PAPI_NATIVE_MASK | 20, PAPI_NULL}}},  /* Total store conditional */
+   {PAPI_BR_CN, {0, {PAPI_NATIVE_MASK | 6, PAPI_NULL}}},     /* Cond. branch inst. exe */
+   {PAPI_BR_MSP, {0, {PAPI_NATIVE_MASK | 24, PAPI_NULL}}},   /* Cond. branch inst. mispred */
+   {PAPI_BR_PRC, {DERIVED_SUB, {PAPI_NATIVE_MASK | 6, PAPI_NATIVE_MASK | 24, PAPI_NULL}}},
    /* Cond. branch inst. correctly pred */
-   {PAPI_TOT_IIS, {0, {PAPI_NATIVE_MASK | 1, PAPI_NULL,}}},   /* Total inst. issued */
-   {PAPI_TOT_INS, {0, {PAPI_NATIVE_MASK | 15, PAPI_NULL,}}},  /* Total inst. executed */
-   {PAPI_LD_INS, {0, {PAPI_NATIVE_MASK | 18, PAPI_NULL,}}},   /* Loads executed */
-   {PAPI_SR_INS, {0, {PAPI_NATIVE_MASK | 19, PAPI_NULL,}}},   /* Stores executed */
-   {PAPI_FP_INS, {0, {PAPI_NATIVE_MASK | 21, PAPI_NULL,}}},   /* Floating Pt. inst.executed */
-   {PAPI_FP_OPS, {0, {PAPI_NATIVE_MASK | 21, PAPI_NULL,}}},   /* Floating Pt. inst.executed */
-   {PAPI_TOT_CYC, {0, {PAPI_NATIVE_MASK | 0, PAPI_NULL,}}},   /* Total cycles */
-   {PAPI_LST_INS, {DERIVED_ADD, {PAPI_NATIVE_MASK | 18, PAPI_NATIVE_MASK | 19, PAPI_NULL,}}},
+   {PAPI_TOT_IIS, {0, {PAPI_NATIVE_MASK | 1, PAPI_NULL}}},   /* Total inst. issued */
+   {PAPI_TOT_INS, {0, {PAPI_NATIVE_MASK | 15, PAPI_NULL}}},  /* Total inst. executed */
+   {PAPI_LD_INS, {0, {PAPI_NATIVE_MASK | 18, PAPI_NULL}}},   /* Loads executed */
+   {PAPI_SR_INS, {0, {PAPI_NATIVE_MASK | 19, PAPI_NULL}}},   /* Stores executed */
+   {PAPI_FP_INS, {0, {PAPI_NATIVE_MASK | 21, PAPI_NULL}}},   /* Floating Pt. inst.executed */
+   {PAPI_FP_OPS, {0, {PAPI_NATIVE_MASK | 21, PAPI_NULL}}},   /* Floating Pt. inst.executed */
+   {PAPI_TOT_CYC, {0, {PAPI_NATIVE_MASK | 0, PAPI_NULL}}},   /* Total cycles */
+   {PAPI_LST_INS, {DERIVED_ADD, {PAPI_NATIVE_MASK | 18, PAPI_NATIVE_MASK | 19, PAPI_NULL}}},
    /* Total load/store inst. exec */
    {0, {0, {0, 0}}}             /* The END */
 };
@@ -286,16 +280,13 @@ static int _internal_scan_cpu_info(inventory_t * item, void *foo)
       switch (imp) {            /* We fill a name here and then remove any \0 characters */
       case C0_IMP_R10000:
          strncpy(_papi_hwi_system_info.hw_info.model_string, "R10000", IPSTRPOS);
-          _papi_hwi_substrate_info[sidx].num_gp_cntrs = 2;
          break;
       case C0_IMP_R12000:
          strncpy(_papi_hwi_system_info.hw_info.model_string, "R12000", IPSTRPOS);
-          _papi_hwi_substrate_info[sidx].num_gp_cntrs = 2;
          break;
 #ifdef C0_IMP_R14000
       case C0_IMP_R14000:
          strncpy(_papi_hwi_system_info.hw_info.model_string, "R14000", IPSTRPOS);
-          _papi_hwi_substrate_info[sidx].num_gp_cntrs = 2;
          break;
 #endif
       default:
@@ -374,7 +365,7 @@ static int set_inherit(EventSetInfo_t *zero, pid_t pid)
 {
   int retval;
 
-  hwd_control_state_t *current_state = zero->machdep;
+  hwd_control_state_t *current_state = &zero->machdep;
   if ((pid == PAPI_INHERIT_ALL) || (pid == PAPI_INHERIT_NONE))
     return(PAPI_ESBSTR);
 
@@ -398,7 +389,7 @@ static int set_default_granularity(hwd_control_state_t * current_state, int gran
 
 static int _internal_get_system_info(void)
 {
-   int fd, retval;
+   int fd, retval, nn = 0;
    pid_t pid;
    char pidstr[PAPI_MAX_STR_LEN];
    char pname[PAPI_HUGE_STR_LEN];
@@ -458,14 +449,21 @@ static int _internal_get_system_info(void)
    _papi_hwi_system_info.hw_info.vendor = -1;
    strcpy(_papi_hwi_system_info.hw_info.vendor_string, "MIPS");
 
-   /* Generic info */
+   /* Substrate info */
 
-    _papi_hwi_substrate_info[sidx].num_cntrs = HWPERF_EVENTMAX;
-/*
-  _papi_hwi_system_info.hw_info.ncpu = get_cpu();
-*/
-    _papi_hwi_substrate_info[sidx].supports_hw_overflow = 1;
-
+   strcpy(_papi_hwi_system_info.sub_info.name, "$Id$");
+   strcpy(_papi_hwi_system_info.sub_info.version, "$Revision$");
+   _papi_hwi_system_info.sub_info.num_cntrs = 2;
+   _papi_hwi_system_info.sub_info.num_mpx_cntrs = HWPERF_EVENTMAX;
+   _papi_hwi_system_info.sub_info.fast_counter_read = 0;
+   _papi_hwi_system_info.sub_info.fast_real_timer = 1;
+   _papi_hwi_system_info.sub_info.fast_virtual_timer = 0;
+   _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
+   _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_OTHER|PAPI_DOM_SUPERVISOR;
+   _papi_hwi_system_info.sub_info.hardware_intr = 1;
+   _papi_hwi_system_info.sub_info.kernel_multiplex = 1;
+   _papi_hwi_system_info.sub_info.multiplex_timer_us = 1000000/sysconf(_SC_CLK_TCK);
+   
    retval = _papi_hwd_update_shlib_info();
    if (retval != PAPI_OK) 
    {
@@ -485,31 +483,29 @@ static int _internal_get_system_info(void)
    if ((_papi_hwi_system_info.hw_info.model & 0xff) == C0_IMP_R10000) {
       preset_search_map = findem_r10k;
       native_table = r10k_native_events_table;
+      nn = sizeof(r10k_native_events_table)/sizeof(char *)-1;
    } else if ((_papi_hwi_system_info.hw_info.model & 0xff) == C0_IMP_R12000) {
       preset_search_map = findem_r12k;
       native_table = r12k_native_events_table;
+      nn = sizeof(r12k_native_events_table)/sizeof(char *)-1;
    }
 #ifdef C0_IMP_R14000
    else if ((_papi_hwi_system_info.hw_info.model & 0xff) == C0_IMP_R14000) {
       preset_search_map = findem_r12k;
       native_table = r12k_native_events_table;
+      nn = sizeof(r12k_native_events_table)/sizeof(char *)-1;
    }
 #endif
 
-  _papi_hwi_substrate_info[sidx].context_size  = sizeof(hwd_context_t);
-  _papi_hwi_substrate_info[sidx].register_size = sizeof(hwd_register_t);
-  _papi_hwi_substrate_info[sidx].reg_alloc_size = sizeof(hwd_reg_alloc_t);  
-  _papi_hwi_substrate_info[sidx].control_state_size =sizeof(hwd_control_state_t);
-
 /* setup_all_presets is in papi_preset.c */
-   retval = _papi_hwi_setup_all_presets(preset_search_map, NULL, sidx);
+   retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
    if (retval)
       return (retval);
-
+   _papi_hwi_system_info.sub_info.num_native_events = nn;
    return (PAPI_OK);
 }
 
-static long_long _papi_hwd_get_real_usec(void)
+long_long _papi_hwd_get_real_usec(void)
 {
    timespec_t t;
    long_long retval;
@@ -521,7 +517,7 @@ static long_long _papi_hwd_get_real_usec(void)
    return (retval);
 }
 
-static long_long _papi_hwd_get_real_cycles(void)
+long_long _papi_hwd_get_real_cycles(void)
 {
    long_long retval;
 
@@ -529,7 +525,7 @@ static long_long _papi_hwd_get_real_cycles(void)
    return (retval);
 }
 
-static long_long _papi_hwd_get_virt_usec(hwd_context_t * ctx)
+long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
 {
    long_long retval;
    struct tms buffer;
@@ -541,7 +537,7 @@ static long_long _papi_hwd_get_virt_usec(hwd_context_t * ctx)
    return (retval);
 }
 
-static long_long _papi_hwd_get_virt_cycles(hwd_context_t * ctx)
+long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
 {
    return (_papi_hwd_get_virt_usec(ctx) * (long_long)_papi_hwi_system_info.hw_info.mhz);
 }
@@ -557,7 +553,8 @@ static void lock_init(void)
 
 /* this function is called by PAPI_library_init */
 #ifndef PAPI_NO_VECTOR
-static papi_svector_t _irix_mips_table[] = {
+papi_svector_t _irix_mips_table[] = {
+ {(void (*)())_papi_hwd_get_overflow_address,VEC_PAPI_HWD_GET_OVERFLOW_ADDRESS},
  {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
  {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
  {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
@@ -586,11 +583,10 @@ static papi_svector_t _irix_mips_table[] = {
 #endif
 
 
-int _papi_hwd_init_substrate(papi_vectors_t *vtable, int idx)
+int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {
    int retval;
 
-   sidx = idx;
    /* Fill in what we can of the papi_system_info. */
 
 #ifndef PAPI_NO_VECTOR
@@ -622,7 +618,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable, int idx)
    this function will generate the file descriptor for hardware counter
    control
 */
-static int _papi_hwd_init(hwd_context_t * ctx)
+int _papi_hwd_init(hwd_context_t * ctx)
 {
    char pidstr[PAPI_MAX_STR_LEN];
    hwperf_profevctrarg_t args;
@@ -655,7 +651,7 @@ static int _papi_hwd_init(hwd_context_t * ctx)
 }
 
 /* debug function */
-static void dump_cmd(hwperf_profevctrarg_t * t)
+void dump_cmd(hwperf_profevctrarg_t * t)
 {
    int i;
 
@@ -671,7 +667,7 @@ static void dump_cmd(hwperf_profevctrarg_t * t)
    }
 }
 
-static int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
+int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {
    int retval;
 
@@ -682,7 +678,7 @@ static int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
    return (PAPI_OK);
 }
 
-static int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **events, int flags)
+int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **events, int flags)
 {
    int retval, index, selector;
 
@@ -690,6 +686,14 @@ static int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_
    retval = ioctl(ctx->fd, PIOCGETEVCTRS, (void *) &ctrl->cntrs_read);
    if (retval < 0)
       return (PAPI_ESYS);
+#if defined(DEBUG)
+if (ISLEVEL(DEBUG_SUBSTRATE)) {
+	int i;
+	for (i=0;i<HWPERF_EVENTMAX;i++) {
+	SUBDBG("Kernel values index %d: Value %lld\n",i,ctrl->cntrs_read.hwp_evctr[i]);
+	}
+	}
+#endif
 
 /* generation number should be the same */
    if (retval != ctrl->generation) {
@@ -697,7 +701,8 @@ static int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_
       return (PAPI_ESBSTR);
    }
    /* adjust the read value by how many events in count 0 and count 1 */
-   if (ctrl->num_on_counter[0]>1 || ctrl->num_on_counter[1]>1) {
+   SUBDBG("(%d,%d)\n",ctrl->num_on_counter[0],ctrl->num_on_counter[1]);
+	if (ctrl->num_on_counter[0]>1 || ctrl->num_on_counter[1]>1) {
       selector = ctrl->selector;
       while ( selector ) {
          index = ffs(selector)-1;
@@ -709,38 +714,52 @@ static int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_
          selector ^= 1<<index;
       }
    }
+#if defined(DEBUG)
+if (ISLEVEL(DEBUG_SUBSTRATE)) {
+        int i;
+        for (i=0;i<HWPERF_EVENTMAX;i++) {
+        SUBDBG("Scaled values index %d: Value %lld\n",i,ctrl->cntrs_read.hwp_evctr[i]);
+        }
+        }
+#endif
+
 /* set the buffer address */
    *events = (long_long *) ctrl->cntrs_read.hwp_evctr;
 
    return (PAPI_OK);
 }
 
-static int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
+int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
    switch (code) {
+   case PAPI_DEF_MPX_USEC:
+   	return(PAPI_ESBSTR);
+   case PAPI_MULTIPLEX:
+     option->domain.ESI->machdep.multiplexed = 1;
+     return(PAPI_OK);
    case PAPI_DEFDOM:
-      return (set_default_domain(option->domain.ESI->machdep, option->domain.domain));
+      return (set_default_domain(&option->domain.ESI->machdep, option->domain.domain));
    case PAPI_DOMAIN:
-      return (set_domain(option->domain.ESI->machdep, option->domain.domain));
+      return (set_domain(&option->domain.ESI->machdep, option->domain.domain));
    case PAPI_DEFGRN:
       return (set_default_granularity
-              (option->domain.ESI->machdep, option->granularity.granularity));
+              (&option->domain.ESI->machdep, option->granularity.granularity));
    case PAPI_GRANUL:
       return (set_granularity
-              (option->granularity.ESI->machdep, option->granularity.granularity));
+              (&option->granularity.ESI->machdep, option->granularity.granularity));
    default:
       return (PAPI_EINVAL);
    }
 }
 
 /* close the file descriptor */
-static int _papi_hwd_shutdown(hwd_context_t * ctx)
+int _papi_hwd_shutdown(hwd_context_t * ctx)
 {
    close(ctx->fd);
    return (PAPI_OK);
 }
 
-static void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
+void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
 {
    _papi_hwi_context_t ctx;
    EventSetInfo_t *ESI;
@@ -749,14 +768,13 @@ static void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
    hwperf_cntr_t cnts;
    hwd_context_t *hwd_ctx;
    hwd_control_state_t *machdep;
-   caddr_t pc;
    
 
    thread = _papi_hwi_lookup_thread();
    if (thread == NULL)
      return;
 
-   ESI = (EventSetInfo_t *) thread->running_eventset[0];
+   ESI = (EventSetInfo_t *) thread->running_eventset;
    if ((ESI == NULL) || ((ESI->state & PAPI_OVERFLOWING) == 0))
      {
        OVFDBG("Either no eventset or eventset not set to overflow.\n");
@@ -769,13 +787,11 @@ static void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
        return;
      }
 
-   hwd_ctx = (hwd_context_t *) thread->context;
-   machdep = (hwd_control_state_t *) ESI->machdep;
+   hwd_ctx = &thread->context;
+   machdep = &ESI->machdep;
 
    ctx.si = si;
    ctx.ucontext = info;
-
-   pc = GET_OVERFLOW_ADDRESS(ctx);
 
    if ((generation2 = ioctl(hwd_ctx->fd, PIOCGETEVCTRS, (void *)&cnts)) < 0) {
        PAPIERROR("ioctl(PIOCGETEVCTRS) errno %d",errno);
@@ -793,12 +809,12 @@ static void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
    }
    machdep->cntrs_last_read = cnts;
 /*   if (overflow_vector)*/
-      _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, overflow_vector, 0, &thread, pc, 0);
+      _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, overflow_vector, 0, &thread);
 }
 
-static int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
+int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
-   hwd_control_state_t *this_state = (hwd_control_state_t *) ESI->machdep;
+   hwd_control_state_t *this_state = &ESI->machdep;
    hwperf_profevctrarg_t *arg = &this_state->counter_cmd;
    int hwcntr, retval = PAPI_OK, i;
 /*
@@ -818,7 +834,7 @@ static int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int thre
       _papi_hwi_lock(INTERNAL_LOCK);
       _papi_hwi_using_signal--;
       if (_papi_hwi_using_signal == 0) {
-         if (sigaction(PAPI_SIGNAL, NULL, NULL) == -1)
+         if (sigaction(_papi_hwi_system_info.sub_info.hardware_intr_sig, NULL, NULL) == -1)
             retval = PAPI_ESYS;
       }
       _papi_hwi_unlock(INTERNAL_LOCK);
@@ -826,17 +842,17 @@ static int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int thre
       struct sigaction act;
       void *tmp;
 
-      tmp = (void *) signal(PAPI_SIGNAL, SIG_IGN);
+      tmp = (void *) signal(_papi_hwi_system_info.sub_info.hardware_intr_sig, SIG_IGN);
       if ((tmp != (void *) SIG_DFL) && (tmp != (void *) _papi_hwd_dispatch_timer))
          return (PAPI_EMISC);
 
       memset(&act, 0x0, sizeof(struct sigaction));
       act.sa_handler = _papi_hwd_dispatch_timer;
       act.sa_flags = SA_RESTART;
-      if (sigaction(PAPI_SIGNAL, &act, NULL) == -1)
+      if (sigaction(_papi_hwi_system_info.sub_info.hardware_intr_sig, &act, NULL) == -1)
          return (PAPI_ESYS);
 
-      arg->hwp_ovflw_sig = PAPI_SIGNAL;
+      arg->hwp_ovflw_sig = _papi_hwi_system_info.sub_info.hardware_intr_sig;
       hwcntr = ESI->EventInfoArray[EventIndex].pos[0];
       this_state->overflow_event_count++;
       /* when the user set overflow on two or more events and these
@@ -882,8 +898,15 @@ static int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int thre
    return (retval);
 }
 
+void *_papi_hwd_get_overflow_address(void *context)
+{
+   struct sigcontext *info = (struct sigcontext *) context;
+
+   return ((void *) info->sc_pc);
+}
+
 /* start the hardware counting */
-static int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
+int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {
    int retval;
 
@@ -902,7 +925,7 @@ static int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 }
 
 /* stop the counting */
-static int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
+int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {
 
    if ((ioctl(ctx->fd, PIOCRELEVCTRS)) < 0) {
@@ -912,19 +935,36 @@ static int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
    return PAPI_OK;
 }
 
-static void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
+int _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 {
-   return;
+   return PAPI_OK;
 }
 
 /* this function will be called when adding events to the eventset and
    deleting events from the eventset
 */
-static int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
+int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
               NativeInfo_t * native, int count,  hwd_context_t * ctx)
 {
-   int index, i, selector = 0, mode = 0, threshold;
+  int index, i, selector = 0, mode = 0, threshold, num_on_cntr[2] = { 0, 0 };
    hwperf_eventctrl_t *to = &this_state->counter_cmd.hwp_evctrargs;
+
+   /* Compute conflicts if we are not kernel multiplexing */
+
+   if (this_state->multiplexed == 0)
+     {
+       for (i = 0; i < count; i++) 
+	 {
+	   index = native[i].ni_event & PAPI_NATIVE_AND_MASK;
+	   if (index > HWPERF_MAXEVENT) 
+	     num_on_cntr[1]++;
+	   else
+	     num_on_cntr[0]++;
+	 SUBDBG("Not multiplexed (%d,%d)\n",num_on_cntr[0],num_on_cntr[1]); 
+	}
+       if ((num_on_cntr[1] > 1) || (num_on_cntr[0] > 1))
+	 return(PAPI_ECNFLCT);
+     }
 
    memset(to, 0, sizeof(hwperf_eventctrl_t));
 
@@ -932,20 +972,20 @@ static int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    this_state->counter_cmd.hwp_ovflw_sig=0;
 */
 
-   if (_papi_hwi_substrate_info[sidx].default_domain & PAPI_DOM_USER) {
+   if (_papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_USER) 
       mode |= HWPERF_CNTEN_U;
-   }
-   if (_papi_hwi_substrate_info[sidx].default_domain & PAPI_DOM_KERNEL)
+   if (_papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_KERNEL)
       mode |= HWPERF_CNTEN_K;
-   if (_papi_hwi_substrate_info[sidx].default_domain & PAPI_DOM_OTHER)
-      mode |= HWPERF_CNTEN_E | HWPERF_CNTEN_S;
+   if (_papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_OTHER)
+     mode |= HWPERF_CNTEN_E;
+   if (_papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_SUPERVISOR)
+     mode |= HWPERF_CNTEN_S;
 
    this_state->num_on_counter[0]=0;
    this_state->num_on_counter[1]=0;
    for (i = 0; i < count; i++) {
       index = native[i].ni_event & PAPI_NATIVE_AND_MASK;
       selector |= 1 << index;
-      SUBDBG("update_control_state index = %d mode=0x%x\n", index, mode);
       if (index > HWPERF_MAXEVENT) {
          to->hwp_evctrl[index].hwperf_creg.hwp_ev = index - HWPERF_CNT1BASE;
          this_state->num_on_counter[1]++;
@@ -954,8 +994,8 @@ static int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
          this_state->num_on_counter[0]++;
       }
       native[i].ni_position = index;
-
       to->hwp_evctrl[index].hwperf_creg.hwp_mode = mode;
+      SUBDBG("update_control_state selector=0x%x index=%d mode=0x%x ev=%d (%d,%d)\n", selector, index, mode, to->hwp_evctrl[index].hwperf_creg.hwp_ev, this_state->num_on_counter[0],this_state->num_on_counter[1]);
    }
    this_state->selector = selector;
    if (this_state->overflow_event_count) {
@@ -984,7 +1024,7 @@ static int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    return (PAPI_OK);
 }
 
-static char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
+char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
    int nidx;
 
@@ -995,12 +1035,12 @@ static char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
       return NULL;
 }
 
-static char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
+char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
    return (_papi_hwd_ntv_code_to_name(EventCode));
 }
 
-static int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
+int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 {
    int index = *EventCode & PAPI_NATIVE_AND_MASK;
 
@@ -1011,7 +1051,7 @@ static int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
       return (PAPI_ENOEVNT);
 }
 
-static int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
+int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                unsigned int *values, int name_len, int count)
 {
   char buf[128];
@@ -1024,19 +1064,18 @@ static int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
   return(1);
 }
 
-static int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
+int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 {
   *bits = EventCode;  
   return(PAPI_OK);
 }
-
 
 void * dladdr(void *address, struct Dl_info *dl)
 {
    return( _rld_new_interface(_RLD_DLADDR,address,dl));
 }
 
-static const char * getbasename(const char *fname)
+const char * getbasename(const char *fname)
 {
     const char *temp;
 
@@ -1045,7 +1084,7 @@ static const char * getbasename(const char *fname)
        else return temp+1;
 }
 
-static int _papi_hwd_update_shlib_info(void)
+int _papi_hwd_update_shlib_info(void)
 {
    char procfile[100];
    prmap_t *p;

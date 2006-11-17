@@ -390,7 +390,7 @@ pfm_get_next_event(int i)
 {
 	if (PFMLIB_INITIALIZED() == 0) return -1;
 
-	if (i < 0 || i >= pfm_current->pme_count-1) return -1;
+	if (i < 0 || i >= pfm_current->pme_count) return -1;
 
 	return i+1;
 }

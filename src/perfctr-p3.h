@@ -1,13 +1,64 @@
 #ifndef _PAPI_PENTIUM3_H
 #define _PAPI_PENTIUM3_H
 
-#ifdef _WIN32
-#define NEED_FFSLL
-#define inline_static static __inline
-#include <errno.h>
-#include "cpuinfo.h"
-#include "pmclib.h"
+#ifndef __USE_GNU
+#define __USE_GNU
 #endif
+#ifndef __USE_UNIX98
+#define __USE_UNIX98
+#endif
+#ifndef __USE_XOPEN_EXTENDED
+#define __USE_XOPEN_EXTENDED
+#endif
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <signal.h>
+
+#ifndef __BSD__ /* #include <malloc.h> */
+#include <malloc.h>
+#endif
+
+#include <assert.h>
+#include <string.h>
+#include <math.h>
+#include <limits.h>
+#include <sys/types.h>
+
+#ifdef XML
+#include <expat.h>
+#endif
+
+#define inline_static inline static
+#include <unistd.h>
+#include <time.h>
+#include <errno.h>
+#include <ctype.h>
+
+#ifdef __BSD__
+#include <ucontext.h>
+#else
+#include <sys/ucontext.h>
+#endif
+
+#include <sys/times.h>
+#include <sys/time.h>
+
+#ifndef __BSD__ /* #include <linux/unistd.h> */
+  #ifndef __CATAMOUNT__
+    #include <linux/unistd.h>	
+  #endif
+#endif
+
+#ifndef CONFIG_SMP
+/* Assert that CONFIG_SMP is set before including asm/atomic.h to 
+ * get bus-locking atomic_* operations when building on UP kernels
+ */
+#define CONFIG_SMP
+#endif
+#include <inttypes.h>
+#include "libperfctr.h"
 
 #define PERF_MAX_COUNTERS 4
 #define MAX_COUNTERS PERF_MAX_COUNTERS
@@ -18,79 +69,46 @@
 #include "papi_preset.h"
 
 
-#ifdef _WIN32
-
-/* cpu_type values:: lifted from perfctr.h */
-#define PERFCTR_X86_GENERIC	0	/* any x86 with rdtsc */
-#define PERFCTR_X86_INTEL_P5	1	/* no rdpmc */
-#define PERFCTR_X86_INTEL_P5MMX	2
-#define PERFCTR_X86_INTEL_P6	3
-#define PERFCTR_X86_INTEL_PII	4
-#define PERFCTR_X86_INTEL_PIII	5
-#define PERFCTR_X86_CYRIX_MII	6
-#define PERFCTR_X86_WINCHIP_C6	7	/* no rdtsc */
-#define PERFCTR_X86_WINCHIP_2	8	/* no rdtsc */
-#define PERFCTR_X86_AMD_K7	9
-#define PERFCTR_X86_VIA_C3	10	/* no pmc0 */
-#define PERFCTR_X86_INTEL_P4	11	/* model 0 and 1 */
-#define PERFCTR_X86_INTEL_P4M2	12	/* model 2 and above */
-#define PERFCTR_X86_AMD_K8	13
-#define PERFCTR_X86_INTEL_PENTM	14	/* Pentium M */
-#define PERFCTR_X86_AMD_K8C	15	/* Revision C */
-#define PERFCTR_X86_INTEL_P4M3	16	/* model 3 and above */
-
-#define PERFCTR26 /* make it look like a recent Perfctr */
-
 /* Lock macros. */
-extern CRITICAL_SECTION lock[PAPI_MAX_LOCK];
+extern volatile unsigned int lock[PAPI_MAX_LOCK];
+#define MUTEX_OPEN 1
+#define MUTEX_CLOSED 0
 
-#define  _papi_hwd_lock(lck) EnterCriticalSection(&lock[lck])
-#define  _papi_hwd_unlock(lck) LeaveCriticalSection(&lock[lck])
+/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
+ * else val = MUTEX_CLOSED */
 
-typedef int hwd_siginfo_t;
-typedef CONTEXT hwd_ucontext_t;
+#define  _papi_hwd_lock(lck)                    \
+do                                              \
+{                                               \
+   unsigned int res = 0;                        \
+   do {                                         \
+      __asm__ __volatile__ ("lock ; " "cmpxchg %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");  \
+   } while(res != (unsigned int)MUTEX_OPEN);   \
+} while(0)
 
-#define GET_OVERFLOW_ADDRESS(ctx) ((caddr_t)(((ucontext_t *)ctx)->Eip))
-
-/* Windows DOES NOT support hardware overflow */
-#define HW_OVERFLOW 0
-
-#else
+#define  _papi_hwd_unlock(lck)                  \
+do                                              \
+{                                               \
+   unsigned int res = 0;                       \
+   __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");                                \
+} while(0)
 
 typedef siginfo_t hwd_siginfo_t;
 typedef ucontext_t hwd_ucontext_t;
 
-
 /* Overflow macros */
-/* old (PAPI <= 3.2.1) style overflow address:
 #ifdef __x86_64__
   #ifdef __CATAMOUNT__
-  #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->sc_rip)
+    #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->sc_rip)
   #else
-  #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->rip)
+    #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->rip)
   #endif
 #else
   #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->eip)
 #endif
-*/
-
-/* new (PAPI => 3.9.0) style overflow address: */
-#ifdef __x86_64__
-  #ifdef __CATAMOUNT__
-    #define OVERFLOW_PC sc_rip
-  #else
-    #define OVERFLOW_PC rip
-  #endif
-#else
-    #define OVERFLOW_PC eip
-#endif
-#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&((hwd_ucontext_t *)ctx.ucontext)->uc_mcontext))->OVERFLOW_PC)
 
 /* Linux DOES support hardware overflow */
 #define HW_OVERFLOW 1
-
-
-#endif /* _WIN32 */
 
 typedef struct P3_register {
    unsigned int selector;       /* Mask for which counters in use */
@@ -131,34 +149,6 @@ typedef struct native_event_entry {
 typedef P3_reg_alloc_t hwd_reg_alloc_t;
 typedef P3_register_t hwd_register_t;
 
-#ifdef _WIN32
-/* Per eventset data structure for thread level counters */
-
-typedef struct P3_WinPMC_control {
-   hwd_native_t native[MAX_COUNTERS];
-   int native_idx;
-   unsigned char master_selector;
-   P3_register_t allocated_registers;
-   /* Buffer to pass to the kernel to control the counters */
-   struct vpmc_control control;
-   struct pmc_state state;
-} P3_WinPMC_control_t;
-
-/* Per thread data structure for thread level counters */
-
-typedef struct P3_WinPMC_context {
-   /* Handle to the open kernel driver */
-   HANDLE self;
-/*   P3_WinPMC_control_t start; */
-} P3_WinPMC_context_t;
-
-/* typedefs to conform to hardware independent PAPI code. */
-typedef P3_WinPMC_control_t hwd_control_state_t;
-typedef P3_WinPMC_context_t hwd_context_t;
-#define hwd_pmc_control vpmc_control
-
-#else
-
 typedef struct P3_perfctr_control {
    hwd_native_t native[MAX_COUNTERS];
    int native_idx;
@@ -166,6 +156,8 @@ typedef struct P3_perfctr_control {
    P3_register_t allocated_registers;
    struct vperfctr_control control;
    struct perfctr_sum_ctrs state;
+   /* Allow attach to be per-eventset. */
+   struct rvperfctr * rvperfctr;
 } P3_perfctr_control_t;
 
 typedef struct P3_perfctr_context {
@@ -177,8 +169,6 @@ typedef struct P3_perfctr_context {
 typedef P3_perfctr_control_t hwd_control_state_t;
 typedef P3_perfctr_context_t hwd_context_t;
 #define hwd_pmc_control vperfctr_control
-
-#endif
 
 /* Used in resources.selector to determine on which counters an event can live. */
 #define CNTR1 0x1
@@ -211,25 +201,26 @@ typedef P3_perfctr_context_t hwd_context_t;
 #define PERF_UNIT_MASK         0x0000FF00
 #define PERF_EVNT_MASK         0x000000FF
 
+#define AI_ERROR "No support for a-mode counters after adding an i-mode counter"
+#define VOPEN_ERROR "vperfctr_open() returned NULL, please run perfex -i to verify your perfctr installation"
+#define GOPEN_ERROR "gperfctr_open() returned NULL"
+#define VINFO_ERROR "vperfctr_info() returned < 0"
+#define VCNTRL_ERROR "vperfctr_control() returned < 0"
+#define RCNTRL_ERROR "rvperfctr_control() returned < 0"
+#define GCNTRL_ERROR "gperfctr_control() returned < 0"
+#define FOPEN_ERROR "fopen(%s) returned NULL"
+#define STATE_MAL_ERROR "Error allocating perfctr structures"
 #define MODEL_ERROR "This is not a Pentium I,II,III, Athlon or Opteron"
 
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
-extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
 
-#if defined(PERFCTR26)
-#define PERFCTR_CPU_NAME(pi)    perfctr_info_cpu_name(pi)
-#define PERFCTR_CPU_NRCTRS(pi)  perfctr_info_nrctrs(pi)
-#elif defined(PERFCTR25)
-#define PERFCTR_CPU_NAME        perfctr_info_cpu_name
-#define PERFCTR_CPU_NRCTRS      perfctr_info_nrctrs
+#if __CATAMOUNT__
+  extern void _start ( );
+  extern caddr_t _etext[ ], _edata[ ];
+  extern caddr_t __stop___libc_freeres_ptrs[ ];
 #else
-#define PERFCTR_CPU_NAME        perfctr_cpu_name
-#define PERFCTR_CPU_NRCTRS      perfctr_cpu_nrctrs
+  extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
 #endif
 
-int check_p4(int);
-int mdi_init();
-int linux_vector_table_setup(papi_vectors_t *vtable);
-void lock_init();
 #endif /* _PAPI_PENTIUM3 */

@@ -284,14 +284,6 @@ int PAPI_num_counters(void)
    return (PAPI_get_opt(PAPI_MAX_HWCTRS, NULL));
 }
 
-/*
- * How many substrates have been initialized
- */
-int PAPI_num_substrates(void)
-{
-  return(papi_num_substrates);
-}
-
 /*========================================================================*/
 /* int PAPI_start_counters(int *events, int array_len)                    */
 /* from draft standard:                                                   */

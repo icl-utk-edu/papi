@@ -63,19 +63,9 @@ int main(int argc, char **argv)
    if (retval != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   if (!TESTS_QUIET) {
-      retval = PAPI_set_debug(PAPI_VERB_ECONT);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
-   }
-
    hw_info = PAPI_get_hardware_info();
    if (hw_info == NULL)
      test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
-
-   retval = PAPI_create_eventset(&EventSet);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
    /* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
       PAPI_TOT_INS, depending on the availability of the event on the
@@ -135,7 +125,17 @@ int main(int argc, char **argv)
       printf(OUT_FMT, "PAPI_TOT_CYC", (values[0])[1], (values[1])[1]);
       printf("Overflows    : %16s%16d\n", "", total);
       printf("-----------------------------------------------\n");
+   }
 
+   retval = PAPI_cleanup_eventset(EventSet);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_cleanup_eventset", retval);
+
+   retval = PAPI_destroy_eventset(&EventSet);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_destroy_eventset", retval);
+
+   if (!TESTS_QUIET) {
       printf("Verification:\n");
 #if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_CRAYT3E) || defined(_POWER4) || defined (__crayx1)
    num_flops *= 2;

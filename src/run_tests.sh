@@ -7,8 +7,7 @@
 # Mods:    Kevin London
 #          london@cs.utk.edu
 
-# The export below breaks Solaris, this needs to be fixed somehow
-#export AIXTHREAD_SCOPE=S
+export AIXTHREAD_SCOPE=S
 if [ "X$1" = "X-v" ]; then
   shift ; TESTS_QUIET=""
 else
@@ -40,9 +39,17 @@ if [ "$i" = "ctests/timer_overflow" ]; then
 else
 if [ "$i" = "ctests/shlib" ]; then
   echo -n "Running $i: ";
-  LD_LIBRARY_PATH=.
+  if [ "$LD_LIBRARY_PATH" = "" ]; then
+      LD_LIBRARY_PATH=.
+  else
+      LD_LIBRARY_PATH=.:"$LD_LIBRARY_PATH"
+  fi
   export LD_LIBRARY_PATH
-  LIBPATH=.
+  if [ "$LIBPATH" = "" ]; then
+      LIBPATH=.
+  else
+      LIBPATH=.:"$LIBPATH"
+  fi
   export LIBPATH
   ./$i $TESTS_QUIET
 else

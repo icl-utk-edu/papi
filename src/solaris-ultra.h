@@ -1,7 +1,31 @@
 #ifndef _PAPI_SOLARIS_ULTRA_H
 #define _PAPI_SOLARIS_ULTRA_H
 
-#include "solaris.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <assert.h>
+#include <string.h>
+#include <libgen.h>
+#include <limits.h>
+#include <synch.h>
+#include <procfs.h>
+#include <libcpc.h>
+#include <libgen.h>
+#include <ctype.h>
+#include <errno.h>
+#include <sys/times.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/processor.h>
+#include <sys/procset.h>
+#include <sys/ucontext.h>
+#include <syms.h>
+#include <dlfcn.h>
+#include <sys/stat.h>
+
+#define inline_static inline static
 
 #define MAX_COUNTERS 2
 #define MAX_COUNTER_TERMS MAX_COUNTERS
@@ -41,8 +65,20 @@ typedef struct _native_info {
 typedef siginfo_t hwd_siginfo_t;
 typedef ucontext_t hwd_ucontext_t;
 
-#define GET_OVERFLOW_ADDRESS(ctx)  ((caddr_t)(((ucontext_t *)ctx)->uc_mcontext.gregs[REG_PC]))
+#define GET_OVERFLOW_ADDRESS(ctx)  (void*)(ctx->ucontext->uc_mcontext.gregs[REG_PC])
 
 typedef int hwd_context_t;
+
+/* Assembler prototypes */
+
+extern void cpu_sync(void);
+extern unsigned long_long get_tick(void);
+extern caddr_t _start, _end, _etext, _edata;
+
+extern rwlock_t lock[PAPI_MAX_LOCK];
+
+#define _papi_hwd_lock(lck) rw_wrlock(&lock[lck]);
+
+#define _papi_hwd_unlock(lck)   rw_unlock(&lock[lck]);
 
 #endif

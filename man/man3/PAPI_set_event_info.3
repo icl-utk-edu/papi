@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI_set_event_info 3 "May, 2005" "PAPI Programmer's Reference" PAPI
+.TH PAPI_set_event_info 3 "October, 2006" "PAPI Programmer's Reference" PAPI
 
 .SH NAME
 PAPI_set_event_info \- set an event's name, description and definition info
@@ -12,8 +12,10 @@ PAPI_set_event_info \- set an event's name, description and definition info
 .fi
 
 .SH DESCRIPTION
+.B NOTE: This API has been deprecated in PAPI 3.5 pending a data structure redesign.
+
 This function modifies or adds an event to the PAPI preset event table based on the
-contens of an even info structure.
+contents of an even info structure.
 This function presently works only to define or modify PAPI preset events.
 
 .SH ARGUMENTS

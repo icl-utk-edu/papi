@@ -24,9 +24,6 @@ int main()
    if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
       err_exit(retval, "PAPI_library_init(PAPI_VER_CURRENT)");
 
-   if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
-      err_exit(retval, "PAPI_set_debug(PAPI_VERB_ECONT)");
-
    if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
       err_exit(retval, "PAPI_create_eventset(&EventSet)");
 

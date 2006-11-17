@@ -32,16 +32,18 @@ int main(int argc, char **argv)
    int num_buckets;
    PAPI_sprofil_t sprof[3];
    int retval;
+   const PAPI_hw_info_t *hw_info;
+   const PAPI_exe_info_t *prginfo;
+   caddr_t start, end;
 
-   prof_init(argc, argv);
+   prof_init(argc, argv, &hw_info, &prginfo);
 
    start = prginfo->address_info.text_start;
    end = prginfo->address_info.text_end;
    if (start > end)
       test_fail(__FILE__, __LINE__, "Profile length < 0!", PAPI_ESBSTR);
    length = end - start;
-   prof_print_address(start, end,
-               "Test case sprofile: POSIX compatible profiling over multiple regions.\n");
+   prof_print_address("Test case sprofile: POSIX compatible profiling over multiple regions.\n",prginfo);
    blength = prof_size(length, FULL_SCALE, PAPI_PROFIL_BUCKET_16, &num_buckets);
    prof_alloc(3, blength);
 

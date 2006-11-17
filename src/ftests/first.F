@@ -27,15 +27,6 @@
      . 'PAPI_library_init', retval)
       end if
 
-      if (tests_quiet .EQ. 0) then
-         call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
-         if ( retval.NE.PAPI_OK) then
-            call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_set_debug', 
-     *retval)
-         end if
-      end if
-      
       call PAPIf_query_event(PAPI_FP_INS, retval)
        if (retval .NE. PAPI_OK) then
         event1 = PAPI_TOT_INS 

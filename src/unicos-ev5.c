@@ -29,7 +29,7 @@ void print_control(pmctr_t *control) {
 }
 #endif
 
-void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
+int _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 {
    int kill_pal = 0;
    int kill_user = 0;
@@ -37,34 +37,13 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 
    memset(&ptr->counter_cmd, 0x0, sizeof(pmctr_t));
 
-   switch (_papi_hwi_system_info.default_domain) {
-   case PAPI_DOM_USER:
-      {
-         kill_user = 1;
-      }
-      break;
-   case PAPI_DOM_KERNEL:
-      {
-         kill_kernel = 1;
-      }
-      break;
-   case PAPI_DOM_OTHER:
-      {
-         kill_pal = 1;
-      }
-      break;
-   case PAPI_DOM_ALL:
-      {
-         kill_kernel = 1;
-         kill_pal = 1;
-         kill_user = 1;
-      }
-      break;
-   default:
-      PAPIERROR("BUG! Unknown domain %d, using PAPI_DOM_USER",_papi_hwi_system_info.default_domain);
-      kill_user = 1;
-      break;
-   }
+   if (_papi_hwi_system_info.default_domain & PAPI_DOM_USER)
+     kill_user = 1;
+   if (_papi_hwi_system_info.default_domain & PAPI_DOM_KERNEL)
+     kill_kernel = 1;
+   if (_papi_hwi_system_info.default_domain & PAPI_DOM_OTHER)
+     kill_pal = 1;
+
    ptr->counter_cmd.Kp = kill_pal;
    ptr->counter_cmd.Ku = kill_user;
    ptr->counter_cmd.Kk = kill_kernel;
@@ -74,6 +53,7 @@ void _papi_hwd_init_control_state(hwd_control_state_t * ptr)
    ptr->counter_cmd.SEL0 = 0x0;
    ptr->counter_cmd.SEL1 = 0x0;
    ptr->counter_cmd.SEL2 = 0x0;
+   return(PAPI_OK);
 }
 
 /* This function clears the current contents of the control structure and
@@ -368,6 +348,10 @@ int _papi_hwd_ctl(hwd_context_t *ctx, int code, _papi_int_option_t *option)
    case PAPI_GRANUL:
    case PAPI_DEFGRN:
       return(PAPI_ESBSTR);
+#if 0
+   case PAPI_INHERIT:
+      return (set_inherit(ctx, option->inherit.inherit));
+#endif
    default:
       return (PAPI_EINVAL);
    }

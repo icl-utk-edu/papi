@@ -25,9 +25,8 @@ Revision History:
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <intrin.h>
 #include "winpmc.h"
-
-extern int __rdpmc(int);   // this declaration may need to be tweaked
 
 // put the driver through its paces to make sure it's there and active
 static HANDLE LoadDriver(void)
@@ -76,20 +75,14 @@ static void getDriverVersion(char *version, int size)
 static void DiagRDPMC(void)
 {    
     HANDLE hDriver;
-    int i;
+    unsigned __int64 i;
 
     // Try opening a static device driver. 
     hDriver = LoadDriver();
     if (hDriver != (INVALID_HANDLE_VALUE)) {
 	printf("Ready to execute RDPMC from user space...\n");
-#ifndef _WIN64
-	__asm mov ecx, 0x00000000
-	__asm rdpmc
-	printf("We have successfully executed RDPMC from user space!\n");
-#elif defined _WIN64
-   i = __rdpmc(0);
-   printf("We have successfully executed RDPMC from user space: 0x%x!\n", i);
-#endif
+    i = __readpmc(0);
+    printf("We have successfully executed RDPMC from user space: 0x%x!\n", i);
 	CloseHandle(hDriver);
     }
 }
@@ -145,7 +138,6 @@ static void HelloNumTest(void)
 
 VOID _cdecl main( ULONG argc, PCHAR argv[] )
 {
-  unsigned int len;
   char text[512] = {"Fourscore and seven years ago..."};
 
   getDriverVersion(text, sizeof(text));

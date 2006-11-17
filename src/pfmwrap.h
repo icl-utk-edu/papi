@@ -63,7 +63,28 @@ char *retired_events[]={
       typedef pfm_ita_reg_t pfmw_arch_pmd_reg_t;
    #endif
 
+static inline int pfmw_get_num_counters(int *num) {
+  int tmp;
+  tmp = pfm_get_num_counters();
+  if (tmp <= 0)
+    return(PAPI_ESYS);
+  *num = tmp;
+  return(PAPI_OK);
+}
 
+static inline int pfmw_get_num_events(int *num) {
+  int tmp = 0;
+
+  while (1)
+    {
+      int newtmp = pfm_get_next_event(tmp);
+      if (newtmp == -1)
+	break;
+      tmp = newtmp;
+    }
+  *num = tmp;
+  return(PAPI_OK);
+}
 
    static inline void pfmw_start(hwd_context_t *ctx) {
       pfm_start();
@@ -97,23 +118,16 @@ char *retired_events[]={
 
    inline int pfmw_create_context( hwd_context_t *thr_ctx) {
       pfarg_context_t ctx[1];
-      memset(ctx, 0, sizeof(ctx));
 
-      thr_ctx->tid = mygettid();
-      ctx[0].ctx_notify_pid = thr_ctx->tid;
+      memset(ctx, 0, sizeof(ctx));
+      ctx[0].ctx_notify_pid = mygettid();
       ctx[0].ctx_flags = PFM_FL_INHERIT_NONE;
 
       SUBDBG("PFM_CREATE_CONTEXT\n");
-      if (perfmonctl(thr_ctx->tid, PFM_CREATE_CONTEXT, ctx, 1) == -1) {
-	  if (errno == EBUSY)
-	    {
-	      SUBDBG("Context is busy!\n");
-	    }
-	  else
-	    {
-	      PAPIERROR("perfmonctl(PFM_CREATE_CONTEXT) errno %d", errno);
-	      return(PAPI_ESYS);
-	    }
+      if (perfmonctl(mygettid(), PFM_CREATE_CONTEXT, ctx, 1) == -1) 
+	{
+	  PAPIERROR("perfmonctl(PFM_CREATE_CONTEXT) errno %d", errno);
+	  return(PAPI_ESYS);
 	}
 
       /*
@@ -121,7 +135,7 @@ char *retired_events[]={
        * must be done before writing to any PMC/PMD
        */
 
-      if (perfmonctl(thr_ctx->tid, PFM_ENABLE, 0, 0) == -1) {
+      if (perfmonctl(mygettid(), PFM_ENABLE, 0, 0) == -1) {
          if (errno == ENOSYS)
 	   PAPIERROR("Your kernel does not have performance monitoring support");
 	 else
@@ -129,6 +143,7 @@ char *retired_events[]={
          return(PAPI_ESYS);
       }
 
+      thr_ctx->tid = mygettid();
       return(PAPI_OK);
    }
 
@@ -197,7 +212,6 @@ char *retired_events[]={
          return NULL;
    }
 
-   // for PFM20
    inline char* pfmw_get_event_description(unsigned int idx)
    {
       char *descr;
@@ -538,9 +552,16 @@ hweight64 (unsigned long x)
             evt->pc[i].reg_num   = evt->outp.pfp_pmcs[i].reg_num;
             evt->pc[i].reg_value = evt->outp.pfp_pmcs[i].reg_value;
          }
+#if defined(HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT)
+         for (i=0; i < evt->outp.pfp_pmd_count; i++) {
+	   evt->pd[i].reg_num   = evt->outp.pfp_pmds[i].reg_num;
+	 }
+#else
+	 /* This is really broken */
          for (i=0; i < evt->inp.pfp_event_count; i++) {
-            evt->pd[i].reg_num   = evt->pc[i].reg_num;
-	     }
+	   evt->pd[i].reg_num   = evt->pc[i].reg_num;
+	 }
+#endif
          return PAPI_OK;
       }
    }
@@ -557,8 +578,9 @@ hweight64 (unsigned long x)
 
       load_args.load_pid = ctx->tid;
 
+      SUBDBG("PFM_LOAD_CONTEXT FD %d, PID %d\n",ctx->fd,ctx->tid);
       if (perfmonctl(ctx->fd, PFM_LOAD_CONTEXT, &load_args, 1) == -1) {
-         PAPIERROR("perfmonctl(PFM_WRITE_PMDS) errno %d",errno);
+         PAPIERROR("perfmonctl(PFM_LOAD_CONTEXT) errno %d",errno);
          return(PAPI_ESYS);
       }
       /*
@@ -586,6 +608,14 @@ hweight64 (unsigned long x)
         return(PAPI_ESYS);
       }
 
+      /* set close-on-exec to ensure we will be getting the PFM_END_MSG, i.e.,
+       * fd not visible to child. */
+
+      ret = fcntl(ctx->fd, F_SETFD, FD_CLOEXEC);
+      if (ret == -1) {
+	PAPIERROR("fcntl(%d,FD_CLOEXEC) errno %d", ctx->fd, errno);
+	return(PAPI_ESYS);
+      }
 
       return(PAPI_OK);
 
@@ -593,26 +623,17 @@ hweight64 (unsigned long x)
 
    inline int pfmw_create_context(hwd_context_t *thr_ctx) {
       pfarg_context_t ctx[1];
-      pfarg_load_t load_args;
-      int ctx_fd;
-
       memset(ctx, 0, sizeof(ctx));
-      memset(&load_args, 0, sizeof(load_args));
 
-      if (perfmonctl(thr_ctx->tid, PFM_CREATE_CONTEXT, ctx, 1) == -1) {
-	  if (errno == EBUSY)
-	    {
-	      SUBDBG("Context is busy!\n");
-	    }
-	  else
-	    {
-	      PAPIERROR("perfmonctl(PFM_CREATE_CONTEXT) errno %d", errno);
-	      return(PAPI_ESYS);
-	    }
+      SUBDBG("PFM_CREATE_CONTEXT on 0\n");
+      if (perfmonctl(0, PFM_CREATE_CONTEXT, ctx, 1) == -1) 
+	{
+	  PAPIERROR("perfmonctl(PFM_CREATE_CONTEXT) errno %d", errno);
+	  return(PAPI_ESYS);
       }
-      ctx_fd = ctx[0].ctx_fd;
-      thr_ctx->fd = ctx_fd;
+      thr_ctx->fd = ctx[0].ctx_fd;
       thr_ctx->tid = mygettid();
+      SUBDBG("PFM_CREATE_CONTEXT returns FD %d, TID %d\n",(int)thr_ctx->fd,(int)thr_ctx->tid);
 
       return(pfmw_create_ctx_common(thr_ctx)); 
    }
@@ -620,7 +641,7 @@ hweight64 (unsigned long x)
    inline int set_pmds_to_write(EventSetInfo_t * ESI, int index, int value)
    {
       int *pos, count, hwcntr, i;
-      hwd_control_state_t *this_state = (hwd_control_state_t *)ESI->machdep;
+      hwd_control_state_t *this_state = (hwd_control_state_t *)&ESI->machdep;
       pfmw_param_t *pevt= &(this_state->evt);
 
       pos = ESI->EventInfoArray[index].pos;
@@ -645,12 +666,12 @@ hweight64 (unsigned long x)
       pfm_uuid_t buf_fmt_id = PFM_DEFAULT_SMPL_UUID;
       int ctx_fd;
       int native_index, EventCode, pos;
-      hwd_context_t *thr_ctx = (hwd_context_t *) ESI->master->context[0];
+      hwd_context_t *thr_ctx = (hwd_context_t *) &ESI->master->context;
 
       pos= ESI->EventInfoArray[EventIndex].pos[0];
       EventCode= ESI->EventInfoArray[EventIndex].event_code;
       native_index= ESI->NativeInfoArray[pos].ni_event & PAPI_NATIVE_AND_MASK;
-
+      memset(ctx,0,sizeof(ctx[0]));
       /*
        * We initialize the format specific information.
        * The format is identified by its UUID which must be copied
@@ -666,7 +687,8 @@ hweight64 (unsigned long x)
       /*
        * now create the context for self monitoring/per-task
        */
-      if (perfmonctl(thr_ctx->fd, PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
+      SUBDBG("PFM_CREATE_CONTEXT on 0\n");
+      if (perfmonctl(0, PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
          if (errno == ENOSYS) 
 	   PAPIERROR("Your kernel does not have performance monitoring support");
 	 else
@@ -679,7 +701,9 @@ hweight64 (unsigned long x)
        */
       ctx_fd = ctx[0].ctx_arg.ctx_fd;
       /* save the fd into the thread context struct */
-      thr_ctx->fd=ctx_fd;
+      thr_ctx->fd = ctx_fd;
+      thr_ctx->tid = mygettid();
+      SUBDBG("PFM_CREATE_CONTEXT returns FD %d, TID %d\n",(int)thr_ctx->fd,(int)thr_ctx->tid);
       /* indicate which PMD to include in the sample */
 /* DEAR and BTB events */
 #ifdef ITANIUM2
@@ -995,6 +1019,22 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
    ret=PAPI_ESBSTR;
 #endif
    return(ret);
+}
+
+static inline int pfmw_get_num_counters(int *num) {
+  int tmp;
+  if (pfm_get_num_counters(&tmp) != PFMLIB_SUCCESS)
+    return(PAPI_ESYS);
+  *num = tmp;
+  return(PAPI_OK);
+}
+
+static inline int pfmw_get_num_events(int *num) {
+  int tmp;
+  if (pfm_get_num_events(&tmp) != PFMLIB_SUCCESS)
+    return(PAPI_ESYS);
+  *num = tmp;
+  return(PAPI_OK);
 }
 
 #endif

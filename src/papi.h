@@ -9,8 +9,10 @@
 *          mucci@cs.utk.edu
 * Mods:    dan terpstra
 *          terpstra@cs.utk.edu
+* Mods:    Haihang You
+*	       you@cs.utk.edu
 * Mods:    Kevin London
-*	   london@cs.utk.edu
+*	       london@cs.utk.edu
 * Mods:    Maynard Johnson
 *          maynardj@us.ibm.com
 *
@@ -34,34 +36,20 @@
 #define PAPI_VERSION_INCREMENT(x)((x)          & 0xff)
 
 /* This is the official PAPI version */
-#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,9,0,0)
+/* 1st beta version of 3.4.9
+    This will culminate in version 3.5.0 when the beta process is complete.
+*/
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,5,0,0)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
-
-/* This is the official PAPI internal version */
-#define PAPI_SUBSTRATE_VERSION		PAPI_VERSION_NUMBER(1,0,0,0)
-#define PAPI_SUBSTRATE_VER_CURRENT	(PAPI_SUBSTRATE_VERSION & 0xffff0000)
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define HWD_REGISTER            0
-#define HWD_CONTEXT             1
-#define HWD_REG_ALLOC           2
-#define HWD_CONTROL_STATE       3
-
-
 /* Include files */
-#include "config.h"
 
-#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#endif
-
-#ifdef HAVE_LIMITS_H
 #include <limits.h>
-#endif
-
 #include "papiStdEventDefs.h"
 
 /*
@@ -110,7 +98,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_DOM_MIN     PAPI_DOM_USER
 #define PAPI_DOM_KERNEL	 0x2    /* Kernel/OS context counted */
 #define PAPI_DOM_OTHER	 0x4    /* Exception/transient mode (like user TLB misses ) */
-#define PAPI_DOM_ALL	 (PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_OTHER) /* All contexts counted */
+#define PAPI_DOM_SUPERVISOR 0x8 /* Supervisor/hypervisor context counted */
+#define PAPI_DOM_ALL	 (PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_OTHER|PAPI_DOM_SUPERVISOR) /* All contexts counted */
 /* #define PAPI_DOM_DEFAULT PAPI_DOM_USER NOW DEFINED BY SUBSTRATE */
 #define PAPI_DOM_MAX     PAPI_DOM_ALL
 #define PAPI_DOM_HWSPEC  0x80000000     /* Flag that indicates we are not reading CPU like stuff.
@@ -123,27 +112,41 @@ All of the functions in the PerfAPI should use the following set of constants.
  * make sure to look at both places -KSL
  */
 
-#define PAPI_USR1_TLS		0
-#define PAPI_USR2_TLS		1
-#define PAPI_HIGH_LEVEL_TLS     2
-#define PAPI_NUM_TLS		3
-
+#define PAPI_USR1_TLS		0x0
+#define PAPI_USR2_TLS		0x1
+#define PAPI_HIGH_LEVEL_TLS     0x2
+#define PAPI_NUM_TLS		0x3
+#define PAPI_TLS_USR1		PAPI_USR1_TLS
+#define PAPI_TLS_USR2		PAPI_USR2_TLS
+#define PAPI_TLS_HIGH_LEVEL     PAPI_HIGH_LEVEL_TLS
+#define PAPI_TLS_NUM		PAPI_NUM_TLS
+#define PAPI_TLS_ALL_THREADS	0x10
 /* Locking Mechanisms defines 
  * This can never go over 31, because of the Cray T3E uses
  * _semt which has a max index of 31 
  */
 
-#define PAPI_USR1_LOCK          	0       /* User controlled locks */
-#define PAPI_USR2_LOCK          	1       /* User controlled locks */
-#define PAPI_NUM_LOCK           	2       /* Used with setting up array */
+#define PAPI_USR1_LOCK          	0x0    /* User controlled locks */
+#define PAPI_USR2_LOCK          	0x1    /* User controlled locks */
+#define PAPI_NUM_LOCK           	0x2    /* Used with setting up array */
+#define PAPI_LOCK_USR1          	PAPI_USR1_LOCK
+#define PAPI_LOCK_USR2          	PAPI_USR2_LOCK
+#define PAPI_LOCK_NUM			PAPI_NUM_LOCK
+
+/* You really shouldn't use this, use PAPI_get_opt(PAPI_MAX_MPX_CTRS) */
+#define PAPI_MPX_DEF_DEG 32     /* Maximum number of counters we can mpx */
 
 /* Vendor definitions */
 
-#define PAPI_VENDOR_UNKNOWN -1
+#define PAPI_VENDOR_UNKNOWN 0
 #define PAPI_VENDOR_INTEL   1
 #define PAPI_VENDOR_AMD     2
 #define PAPI_VENDOR_CYRIX   3
 #define PAPI_VENDOR_IBM     4
+#define PAPI_VENDOR_MIPS    5
+#define PAPI_VENDOR_CRAY    6
+#define PAPI_VENDOR_SUN     7
+#define PAPI_VENDOR_FREESCALE 8
 
 /* Granularity definitions */
 
@@ -155,10 +158,20 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_GRN_SYS_CPU 0x10   /* PAPI counters for all CPU's individually */
 #define PAPI_GRN_MAX     PAPI_GRN_SYS_CPU
 
-/* Multiplex definitions */
+#if 0
+/* #define PAPI_GRN_DEFAULT PAPI_GRN_THR NOW DEFINED BY SUBSTRATE */
 
-#define PAPI_MPX_DEF_US 10000   /*Default resolution in us. of mpx handler */
-#define PAPI_MPX_DEF_DEG 32     /* Maximum number of counters we can mpx */
+#define PAPI_PER_CPU     1      /*Counts are accumulated on a per cpu basis */
+#define PAPI_PER_NODE    2      /*Counts are accumulated on a per node or
+                                   processor basis */
+#define PAPI_SYSTEM	 3      /*Counts are accumulated for events occuring in
+                                   either the user context or the kernel context */
+#define PAPI_PER_THR     0      /*Counts are accumulated on a per kernel thread basis */
+#define PAPI_PER_PROC    1      /*Counts are accumulated on a per process basis */
+#define PAPI_ONESHOT	 1      /*Option to the overflow handler 2b called once */
+#define PAPI_RANDOMIZE	 2      /*Option to have the threshold of the overflow
+                                   handler randomized */
+#endif
 
 /* States of an EventSet */
 
@@ -169,6 +182,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_OVERFLOWING  0x10  /* EventSet has overflowing enabled */
 #define PAPI_PROFILING    0x20  /* EventSet has profiling enabled */
 #define PAPI_MULTIPLEXING 0x40  /* EventSet has multiplexing enabled */
+#define PAPI_ATTACHED	  0x80  /* EventSet is attached to another thread/process */
 
 /* Error predefines */
 
@@ -176,11 +190,6 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_QUIET       0      /* Option to turn off automatic reporting of return codes < 0 to stderr. */
 #define PAPI_VERB_ECONT  1      /* Option to automatically report any return codes < 0 to stderr and continue. */
 #define PAPI_VERB_ESTOP  2      /* Option to automatically report any return codes < 0 to stderr and exit. */
-
-/* dmem_info definitions, these should change. */
-#define PAPI_GET_SIZE        1  /* Size of process image in pages */
-#define PAPI_GET_RESSIZE     2  /* Resident set size in pages */
-#define PAPI_GET_PAGESIZE    3  /* Pagesize in bytes */
 
 /* Profile definitions */
 #define PAPI_PROFIL_POSIX     0x0        /* Default type of profiling, similar to 'man profil'. */
@@ -191,40 +200,46 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_PROFIL_BUCKET_32 0x10       /* Use 32 bit buckets to accumulate profile info */
 #define PAPI_PROFIL_BUCKET_64 0x20       /* Use 64 bit buckets to accumulate profile info */
 #define PAPI_PROFIL_FORCE_SW  0x40       /* Force Software overflow in profiling */
+#define PAPI_PROFIL_DATA_EAR  0x80       /* Use data address register profiling */
+#define PAPI_PROFIL_INST_EAR  0x100      /* Use instruction address register profiling */
 #define PAPI_PROFIL_BUCKETS   (PAPI_PROFIL_BUCKET_16 | PAPI_PROFIL_BUCKET_32 | PAPI_PROFIL_BUCKET_64)
 
 /* Overflow definitions */
 #define PAPI_OVERFLOW_FORCE_SW 0x40	/* Force using Software */
 #define PAPI_OVERFLOW_HARDWARE 0x80	/* Using Hardware */
 
+/* Multiplex flags definitions */
+#define PAPI_MULTIPLEX_DEFAULT	0x0	/* Use whatever method is available, prefer kernel of course. */
+#define PAPI_MULTIPLEX_FORCE_SW 0x1	/* Force PAPI multiplexing instead of kernel */
+
 /* Option definitions */
 
 #define PAPI_INHERIT_ALL  1     /* The flag to this to inherit all children's counters */
 #define PAPI_INHERIT_NONE 0     /* The flag to this to inherit none of the children's counters */
 
-#define PAPI_DEBUG         2       /* Option to turn on  debugging features of the PAPI library */
+
+#define PAPI_DETACH		1	/* Detach */
+#define PAPI_DEBUG              2       /* Option to turn on  debugging features of the PAPI library */
 #define PAPI_MULTIPLEX 		3       /* Turn on/off or multiplexing for an eventset */
 #define PAPI_DEFDOM  		4       /* Domain for all new eventsets. Takes non-NULL option pointer. */
-
 #define PAPI_DOMAIN  		5       /* Domain for an eventset */
 #define PAPI_DEFGRN  		6       /* Granularity for all new eventsets */
 #define PAPI_GRANUL  		7       /* Granularity for an eventset */
-#define PAPI_INHERIT 		8       /* Child threads/processes inherit counter config and progate values up upon exit. */
-
-#define PAPI_CPUS    		9       /* Return the maximum number of CPU's usable/detected */
-#define PAPI_THREADS 		10      /* Return the number of threads usable/detected by PAPI */
-#define PAPI_NUMCTRS 		11      /* The number of counters returned by reading this eventset */
-#define PAPI_PROFIL  		12      /* Option to turn on the overflow/profil reporting software */
+#define PAPI_DEF_MPX_USEC       8       /* Multiplexing interval in US */
+#define PAPI_EDGE_DETECT        9       /* Count cycles of events if supported <not implemented> */
+#define PAPI_INVERT             10	/* Invert count detect if supported <not implemented> */
+#define PAPI_MAX_MPX_CTRS	11      /* Maximum number of counters we can multiplex */
+#define PAPI_PROFIL  		12      /* Option to turn on the overflow/profil reporting software <not implemented> */
 #define PAPI_PRELOAD 		13      /* Option to find out the environment variable that can preload libraries */
 #define PAPI_CLOCKRATE  	14      /* Clock rate in MHz */
 #define PAPI_MAX_HWCTRS 	15      /* Number of physical hardware counters */
 #define PAPI_HWINFO  		16      /* Hardware information */
 #define PAPI_EXEINFO  		17      /* Executable information */
 #define PAPI_MAX_CPUS 		18      /* Number of ncpus we can talk to from here */
+#define PAPI_ATTACH		19      /* Attach to a another tid/pid instead of ourself */
 #define PAPI_SHLIBINFO          20      /* Shared Library information */
 #define PAPI_LIB_VERSION        21      /* Option to find out the complete version number of the PAPI library */
-#define PAPI_SUBSTRATE_SUPPORT  22      /* Find out what the substrate supports */
-
+#define PAPI_SUBSTRATEINFO      22      /* Find out what the substrate supports */
 /* Currently the following options are only available on Itanium; they may be supported elsewhere in the future */
 #define PAPI_DATA_ADDRESS       23      /* Option to set data address range restriction */
 #define PAPI_INSTR_ADDRESS      24      /* Option to set instruction address range restriction */
@@ -264,13 +279,20 @@ enum {
    PAPI_PWR4_ENUM_GROUPS = 0x200,	/* Enumerate groups an event belongs to */
 
    /* ITANIUM specific section */
-   PAPI_ITA_ENUM_IARR = 0x300,	/* Enumerate events that support DAR (instruction address ranging) */
-   PAPI_ITA_ENUM_DARR,         	/* Enumerate events that support IAR (data address ranging) */
+   PAPI_ITA_ENUM_IARR = 0x300,	/* Enumerate events that support IAR (instruction address ranging) */
+   PAPI_ITA_ENUM_DARR,         	/* Enumerate events that support DAR (data address ranging) */
    PAPI_ITA_ENUM_OPCM,           /* Enumerate events that support OPC (opcode matching) */
    PAPI_ITA_ENUM_IEAR,           /* Enumerate IEAR (instruction event address register) events */
    PAPI_ITA_ENUM_DEAR            /* Enumerate DEAR (data event address register) events */
 };
 
+/* These will replace the others eventually */
+
+#define PAPI_ENUM_UMASK_COMBOS PAPI_PENT4_ENUM_COMBOS
+#define PAPI_ENUM_UMASKS PAPI_PENT4_ENUM_BITS
+#define PAPI_ENUM_EVENTS PAPI_PENT4_ENUM_GROUPS
+#define PAPI_ENUM_GROUPS PAPI_PWR4_ENUM_GROUPS
+#define PAPI_ENUM_PRESET_AVAIL PAPI_PRESET_ENUM_AVAIL
 
 /* 
 The Low Level API
@@ -315,6 +337,14 @@ read the documentation carefully.  */
 #define papi_ui32  unsigned int
 #define papi_ui16  unsigned short
 
+  typedef unsigned long PAPI_thread_id_t;
+
+   typedef struct _papi_all_thr_spec {
+     int num;
+     PAPI_thread_id_t *id;
+     void **data;
+   } PAPI_all_thr_spec_t;
+
    typedef void (*PAPI_overflow_handler_t) (int EventSet, void *address,
                               long_long overflow_vector, void *context);
 
@@ -354,20 +384,42 @@ read the documentation carefully.  */
    } PAPI_preload_info_t;
 
    typedef struct _papi_substrate_option {
-      int supports_program;        /* We can use programmable events */
-      int supports_write;          /* We can write the counters */
-      int supports_hw_overflow;    /* Needs overflow to be emulated */
-      int supports_hw_profile;     /* Needs profile to be emulated */
-      int supports_multiple_threads;     /* hardware counters support
-                                            multiple threads */
-      int supports_64bit_counters; /* Only limited precision is available from hardware */
-      int supports_inheritance;    /* We can pass on and inherit child counters/values */
-      int supports_attach;         /* We can attach PAPI to another process */
-      int supports_real_usec;      /* We can use the real_usec call */
-      int supports_real_cyc;       /* We can use the real_cyc call */
-      int supports_virt_usec;      /* We can use the virt_usec call */
-      int supports_virt_cyc;       /* We can use the virt_cyc call */
-   } PAPI_substrate_option_t;
+     char name[PAPI_MAX_STR_LEN];            /* Name of the substrate we're using, usually CVS RCS Id */
+     char version[PAPI_MIN_STR_LEN];         /* Version of this substrate, usually CVS Revision */
+     char support_version[PAPI_MIN_STR_LEN]; /* Version of the support library */
+     char kernel_version[PAPI_MIN_STR_LEN];  /* Version of the kernel PMC support driver */
+     int num_cntrs;               /* Number of hardware counters the substrate supports */
+     int num_mpx_cntrs;           /* Number of hardware counters the substrate or PAPI can multiplex supports */
+     int num_preset_events;       /* Number of preset events the substrate supports */
+     int num_native_events;       /* Number of native events the substrate supports */
+     int default_domain;          /* The default domain when this substrate is used */
+     int available_domains;       /* Available domains */ 
+     int default_granularity;     /* The default granularity when this substrate is used */
+     int available_granularities; /* Available granularities */
+     int multiplex_timer_sig;     /* Signal number used by the multiplex timer, 0 if not */
+     int multiplex_timer_num;     /* Number of the itimer or POSIX 1 timer used by the multiplex timer */
+     int multiplex_timer_us;   /* uS between switching of sets */
+     int hardware_intr_sig;       /* Signal used by hardware to deliver PMC events */
+     int opcode_match_width;      /* Width of opcode matcher if exists, 0 if not */
+     int reserved_ints[4];        
+     unsigned int hardware_intr:1;         /* hw overflow intr, does not need to be emulated in software*/
+     unsigned int precise_intr:1;          /* Performance interrupts happen precisely */
+     unsigned int posix1b_timers:1;        /* Using POSIX 1b interval timers (timer_create) instead of setitimer */
+     unsigned int kernel_profile:1;        /* Has kernel profiling support (buffered interrupts or sprofil-like) */
+     unsigned int kernel_multiplex:1;      /* In kernel multiplexing */
+     unsigned int data_address_range:1;    /* Supports data address range limiting */
+     unsigned int instr_address_range:1;   /* Supports instruction address range limiting */
+     unsigned int fast_counter_read:1;     /* Supports a user level PMC read instruction */
+     unsigned int fast_real_timer:1;       /* Supports a fast real timer */
+     unsigned int fast_virtual_timer:1;    /* Supports a fast virtual timer */
+     unsigned int attach:1;		   /* Supports attach */
+     unsigned int attach_must_ptrace:1;	   /* Attach must first ptrace and stop the thread/process*/
+     unsigned int edge_detect:1;           /* Supports edge detection on events */
+     unsigned int invert:1;                /* Supports invert detection on events */
+     unsigned int profile_ear:1;      	   /* Supports data/instr/tlb miss address sampling */
+     unsigned int grouped_cntrs:1;         /* Underlying hardware uses counter groups */
+     unsigned int reserved_bits:16;
+   } PAPI_substrate_info_t;
 
    typedef int (*PAPI_debug_handler_t) (int code);
 
@@ -400,7 +452,6 @@ read the documentation carefully.  */
    /* All sizes are in BYTES */
    /* Except tlb size, which is in entries */
 
-#define PAPI_MAX_MEM_HIERARCHY_LEVELS 	  3
 #define PAPI_MH_TYPE_EMPTY    0x0
 #define PAPI_MH_TYPE_INST     0x1
 #define PAPI_MH_TYPE_DATA     0x2
@@ -414,6 +465,8 @@ read the documentation carefully.  */
 #define PAPI_MH_TYPE_LRU      0x100
 #define PAPI_MH_TYPE_PSEUDO_LRU 0x200
 #define PAPI_MH_CACHE_REPLACEMENT_POLICY(a) (a & 0xf00)
+#define PAPI_MH_MAX_LEVELS    3
+#define PAPI_MAX_MEM_HIERARCHY_LEVELS 	  PAPI_MH_MAX_LEVELS
 
    typedef struct _papi_mh_tlb_info {
       int type; /* Empty, instr, data, vector, unified */
@@ -430,13 +483,13 @@ read the documentation carefully.  */
    } PAPI_mh_cache_info_t;
 
    typedef struct _papi_mh_level_info {
-      PAPI_mh_tlb_info_t   tlb[2];
-      PAPI_mh_cache_info_t cache[2];
+      PAPI_mh_tlb_info_t   tlb[PAPI_MH_MAX_LEVELS];
+      PAPI_mh_cache_info_t cache[PAPI_MH_MAX_LEVELS];
    } PAPI_mh_level_t;
 
    typedef struct _papi_mh_info { /* mh for mem hierarchy maybe? */
       int levels;
-      PAPI_mh_level_t level[PAPI_MAX_MEM_HIERARCHY_LEVELS];
+      PAPI_mh_level_t level[PAPI_MH_MAX_LEVELS];
    } PAPI_mh_info_t;
 
    typedef struct _papi_hw_info {
@@ -448,16 +501,20 @@ read the documentation carefully.  */
       int model;                    /* Model number of CPU */
       char model_string[PAPI_MAX_STR_LEN];      /* Model string of CPU */
       float revision;               /* Revision of CPU */
-      float mhz;                    /* Cycle time of this CPU, *may* be estimated at 
-                                       init time with a quick timing routine */
-     PAPI_mh_info_t mem_hierarchy;  /* PAPI memory heirarchy description */
+      float mhz;                    /* Cycle time of this CPU */
+      PAPI_mh_info_t mem_hierarchy;  /* PAPI memory heirarchy description */
    } PAPI_hw_info_t;
 
+
+   typedef struct _papi_attach_option {
+      int eventset;
+      unsigned long tid;
+   } PAPI_attach_option_t;
 
    typedef struct _papi_multiplex_option {
       int eventset;
       int us;
-      int max_degree;
+      int flags;
    } PAPI_multiplex_option_t;
 
    /* address range specification for range restricted counting */
@@ -474,28 +531,50 @@ read the documentation carefully.  */
    typedef union {
       PAPI_preload_info_t preload;
       PAPI_debug_option_t debug;
+#if 0
+      PAPI_inherit_option_t inherit;
+#endif
       PAPI_granularity_option_t granularity;
       PAPI_granularity_option_t defgranularity;
       PAPI_domain_option_t domain;
       PAPI_domain_option_t defdomain;
+      PAPI_attach_option_t attach;
       PAPI_multiplex_option_t multiplex;
       PAPI_hw_info_t *hw_info;
       PAPI_shlib_info_t *shlib_info;
       PAPI_exe_info_t *exe_info;
-      PAPI_overflow_option_t ovf_info;
-      PAPI_substrate_option_t sub_info;
+      PAPI_substrate_info_t *sub_info;
+      PAPI_overflow_option_t ovf_info; /* not used anywhere I could find - dkt */
       PAPI_addr_range_option_t addr;
    } PAPI_option_t;
 
-#ifdef PAPI_DMEM_INFO
 /* A pointer to the following is passed to PAPI_get_dmem_info() */
-   typedef struct _dmem_t {
-      long_long total_memory;
-      long_long max_memory;
-      long_long total_swapping;
-      /* Memory Locality */
-   } PAPI_dmem_t;
-#endif
+	typedef struct _dmem_t {
+	  long_long size;
+	  long_long resident;
+	  long_long high_water_mark;
+	  long_long shared;
+	  long_long text;
+	  long_long library;
+	  long_long heap;
+	  long_long locked;
+	  long_long stack;
+	  long_long pagesize;
+	} PAPI_dmem_info_t;
+
+/* Fortran offsets into PAPI_dmem_info_t structure. */
+
+#define PAPIF_DMEM_VMSIZE     1
+#define PAPIF_DMEM_RESIDENT   2
+#define PAPIF_DMEM_HIGH_WATER 3
+#define PAPIF_DMEM_SHARED     4
+#define PAPIF_DMEM_TEXT       5
+#define PAPIF_DMEM_LIBRARY    6
+#define PAPIF_DMEM_HEAP       7
+#define PAPIF_DMEM_LOCKED     8
+#define PAPIF_DMEM_STACK      9
+#define PAPIF_DMEM_PAGESIZE   10
+#define PAPIF_DMEM_MAXVAL     10
 
 /*
    This structure is the event information that is exposed to the user through the API.
@@ -514,13 +593,14 @@ read the documentation carefully.  */
    The various fields and their usage is discussed below.
 */
 /* MAX_TERMS is the current max value of MAX_COUNTER_TERMS as defined in SUBSTRATEs */
-#define PAPI_MAX_INFO_TERMS 8
+/* This definition also is HORRIBLE and should be replaced by a dynamic value. -pjm */
+#define PAPI_MAX_INFO_TERMS 12
    typedef struct event_info {
       unsigned int event_code;               /* preset (0x8xxxxxxx) or native (0x4xxxxxxx) event code */
       unsigned int count;                    /* number of terms (usually 1) in the code and name fields
                                                 - for presets, these terms are native events
                                                 - for native events, these terms are register contents */
-      char symbol[PAPI_MAX_STR_LEN+3];       /* name of the event
+      char symbol[PAPI_MAX_STR_LEN];       /* name of the event
                                                 - for presets, something like PAPI_TOT_INS
                                                 - for native events, something related to the vendor name */
       char short_descr[PAPI_MIN_STR_LEN];    /* a description suitable for use as a label, typically only
@@ -539,7 +619,7 @@ read the documentation carefully.  */
                                                 - for presets, native event_code values
                                                 - for native events, register values for event programming */
       char name[PAPI_MAX_INFO_TERMS]         /* names of code terms: */
-               [PAPI_MAX_STR_LEN+3];           /* - for presets, native event names, as in symbol, above
+               [PAPI_MAX_STR_LEN];           /* - for presets, native event names, as in symbol, above
                                                 - for native events, descriptive strings for each register
                                                    value presented in the code array */
       char note[PAPI_HUGE_STR_LEN];          /* an optional developer note supplied with a preset event
@@ -547,36 +627,28 @@ read the documentation carefully.  */
                                                 NOTE: could also be implemented for native events. */
    } PAPI_event_info_t;
 
-typedef struct PAPI_substrate_info {
-  char name[PAPI_MAX_STR_LEN];
-  char initialized;
-  int num_cntrs;
-  float version;
-} PAPI_substrate_info_t;
 
 /* The Low Level API (Alphabetical) */
    int   PAPI_accum(int EventSet, long_long * values);
    int   PAPI_add_event(int EventSet, int Event);
    int   PAPI_add_events(int EventSet, int *Events, int number);
+   int   PAPI_attach(int EventSet, unsigned long tid);
    int   PAPI_cleanup_eventset(int EventSet);
    int   PAPI_create_eventset(int *EventSet);
-   int   PAPI_create_sbstr_eventset(int *EventSet, int substrate);
+   int   PAPI_detach(int EventSet);
    int   PAPI_destroy_eventset(int *EventSet);
    int   PAPI_enum_event(int *EventCode, int modifier);
    int   PAPI_event_code_to_name(int EventCode, char *out);
    int   PAPI_event_name_to_code(char *in, int *out);
-#if PAPI_DMEM_INFO
-   long  PAPI_get_dmem_info(int option);
-#endif
+   int  PAPI_get_dmem_info(PAPI_dmem_info_t *dest);
    int   PAPI_encode_events(char * event_file, int replace);
    int   PAPI_get_event_info(int EventCode, PAPI_event_info_t * info);
-   int   PAPI_get_sbstr_info(int idx, PAPI_substrate_info_t * info);
    int   PAPI_set_event_info(PAPI_event_info_t * info, int *EventCode, int replace);
    const PAPI_exe_info_t *PAPI_get_executable_info(void);
-   const PAPI_hw_info_t  *PAPI_get_hardware_info(void);
+   const PAPI_hw_info_t *PAPI_get_hardware_info(void);
+   const PAPI_substrate_info_t *PAPI_get_substrate_info(void);
    int   PAPI_get_multiplex(int EventSet);
    int   PAPI_get_opt(int option, PAPI_option_t * ptr);
-   int   PAPI_get_sbstr_opt(int option, PAPI_option_t * ptr,int sidx);
    long_long PAPI_get_real_cyc(void);
    long_long PAPI_get_real_usec(void);
    const PAPI_shlib_info_t *PAPI_get_shared_lib_info(void);
@@ -587,10 +659,10 @@ typedef struct PAPI_substrate_info {
    int   PAPI_is_initialized(void);
    int   PAPI_library_init(int version);
    int   PAPI_list_events(int EventSet, int *Events, int *number);
-   int  PAPI_lock(int);
+   int   PAPI_list_threads(unsigned long *tids, int *number);
+   int   PAPI_lock(int);
    int   PAPI_multiplex_init(void);
    int   PAPI_num_hwctrs(void);
-   int   PAPI_num_sbstr_hwctrs(int sidx);
    int   PAPI_num_events(int EventSet);
    int   PAPI_overflow(int EventSet, int EventCode, int threshold,
                      int flags, PAPI_overflow_handler_t handler);
@@ -615,10 +687,17 @@ typedef struct PAPI_substrate_info {
    int   PAPI_stop(int EventSet, long_long * values);
    char *PAPI_strerror(int);
    unsigned long PAPI_thread_id(void);
-   int   PAPI_thread_init(unsigned long int (*id_fn) (void));
+   int   PAPI_thread_init(unsigned long (*id_fn) (void));
    int   PAPI_unlock(int);
    int   PAPI_unregister_thread(void);
    int   PAPI_write(int EventSet, long_long * values);
+
+   /* These functions are implemented in the hwi layers, but not the hwd layers.
+      They shouldn't be exposed to the UI until they are needed somewhere.
+   int PAPI_add_pevent(int EventSet, int code, void *inout);
+   int PAPI_restore(void);
+   int PAPI_save(void);
+   */
 
    /* The High Level API
 
@@ -629,7 +708,6 @@ typedef struct PAPI_substrate_info {
 
    int PAPI_accum_counters(long_long * values, int array_len);
    int PAPI_num_counters(void);
-   int PAPI_num_substrates(void);
    int PAPI_read_counters(long_long * values, int array_len);
    int PAPI_start_counters(int *events, int array_len);
    int PAPI_stop_counters(long_long * values, int array_len);

@@ -18,26 +18,12 @@
 *          Min Zhou
 *	   min@cs.utk.edu
 */
-#include "config.h"
 
-#ifdef HAVE_ASSERT_H
-#include <assert.h>
-#endif
-
-#ifdef HAVE_STDIO_H
 #include <stdio.h>
-#endif
-
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-
-#ifdef HAVE_STRING_H
+#include <assert.h>
 #include <string.h>
-#endif
-
 #if defined ( _CRAYT3E )
-/* #include  <stdlib.h> */
+#include  <stdlib.h>
 #include  <fortran.h>
 #endif
 #include "papi.h"
@@ -56,7 +42,7 @@
 
 /* Many Unix systems passes Fortran string lengths as extra arguments */
 /* Compaq Visual Fortran on Windows also supports this convention */
-#if defined ( __crayx1 ) || defined(__i386__) || defined(_AIX) || defined(sun) || defined(mips) || defined(_WIN32) || defined(__x86_64__) || (defined(linux) && defined(__ia64__)) || ( defined(__ALPHA) && defined(__osf__)) 
+#if defined ( __crayx1 ) || defined(_AIX) || defined(sun) || defined(mips) || defined(_WIN32) || defined(linux) || ( defined(__ALPHA) && defined(__osf__)) 
 #define _FORTRAN_STRLEN_AT_END
 #endif
 /* The Low Level Wrappers */
@@ -87,14 +73,14 @@ PAPI_FCALL(papif_create_eventset, PAPIF_CREATE_EVENTSET, (int *EventSet, int *ch
    *check = PAPI_create_eventset(EventSet);
 }
 
-PAPI_FCALL(papif_allocate_eventset, PAPIF_ALLOCATE_EVENTSET, (int *EventSet, int substrate_idx,int *check))
-{
-   *check = PAPI_create_sbstr_eventset(EventSet, substrate_idx);
-}
-
 PAPI_FCALL(papif_destroy_eventset, PAPIF_DESTROY_EVENTSET, (int *EventSet, int *check))
 {
    *check = PAPI_destroy_eventset(EventSet);
+}
+
+PAPI_FCALL(papif_get_dmem_info, PAPIF_GET_DMEM_INFO, (long_long *dest, int *check))
+{
+  *check = PAPI_get_dmem_info((PAPI_dmem_info_t *)dest);
 }
 
 #if defined ( _CRAYT3E )
@@ -662,6 +648,17 @@ PAPI_FCALL(papif_get_domain, PAPIF_GET_DOMAIN,
    }
 }
 
+#if 0
+PAPI_FCALL(papif_get_inherit, PAPIF_GET_INHERIT, (int *inherit, int *check))
+{
+   PAPI_option_t i;
+
+   if ((*check = PAPI_get_opt(PAPI_INHERIT, &i)) == PAPI_OK) {
+      *inherit = i.inherit.inherit;
+   }
+}
+#endif
+
 PAPI_FCALL(papif_set_event_domain, PAPIF_SET_EVENT_DOMAIN,
            (int *es, int *domain, int *check))
 {
@@ -671,3 +668,13 @@ PAPI_FCALL(papif_set_event_domain, PAPIF_SET_EVENT_DOMAIN,
    d.domain.eventset = *es;
    *check = PAPI_set_opt(PAPI_DOMAIN, &d);
 }
+
+#if 0
+PAPI_FCALL(papif_set_inherit, PAPIF_SET_INHERIT, (int *inherit, int *check))
+{
+   PAPI_option_t i;
+
+   i.inherit.inherit = *inherit;
+   *check = PAPI_set_opt(PAPI_INHERIT, &i);
+}
+#endif

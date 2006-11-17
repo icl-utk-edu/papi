@@ -13,9 +13,29 @@
 #ifndef _LINUX_PPC64_H               /* _LINUX_PPC64_H */
 #define _LINUX_PPC64_H
 
-#include "papi_sys_headers.h"
 
+#include <signal.h>
+#include <malloc.h>
+#include <assert.h>
+#include <string.h>
+#include <math.h>
+#include <limits.h>
+#include <sys/types.h>
+#include <sys/ucontext.h>
+
+#include <stdio.h>
+#include <unistd.h>
+#include <errno.h>
+#include <assert.h>
+#include <string.h>
+#include <libgen.h>
+#include <stdlib.h>
+#include <stdarg.h>
 #include <time.h>
+#include <ctype.h>
+#include <dlfcn.h>
+#include <sys/time.h>
+#include <sys/times.h>
 #include <stddef.h>
 
 #define inline_static inline static

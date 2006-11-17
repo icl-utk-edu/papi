@@ -38,12 +38,6 @@ int main(int argc, char **argv)
    if (retval != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   if (!TESTS_QUIET) {
-      retval = PAPI_set_debug(PAPI_VERB_ECONT);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
-   }
-
    hw_info = PAPI_get_hardware_info();
    if (hw_info == NULL)
      test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
@@ -102,7 +96,7 @@ int main(int argc, char **argv)
       printf("Test case 1: Non-overlapping start, stop, read.\n");
       printf("-----------------------------------------------\n");
       tmp = PAPI_get_opt(PAPI_DEFDOM, NULL);
-      printf("Default domain is: %d (%s)\n", tmp, stringify_domain(tmp));
+      printf("Default domain is: %d (%s)\n", tmp, stringify_all_domains(tmp));
       tmp = PAPI_get_opt(PAPI_DEFGRN, NULL);
       printf("Default granularity is: %d (%s)\n", tmp, stringify_granularity(tmp));
       printf("Using %d iterations of c += a*b\n", NUM_FLOPS);
@@ -121,8 +115,8 @@ int main(int argc, char **argv)
       printf("%% difference between %s 1 & 2: %.2f\n",add_event_str,100.0*(float)(values[0])[0]/(float)(values[1])[0]);
       printf("%% difference between %s 1 & 2: %.2f\n","PAPI_TOT_CYC",100.0*(float)(values[0])[1]/(float)(values[1])[1]);
       printf("Column 1 approximately equals column 2\n");
-      printf("Column 3 approximately equals 2 * column 2\n");
-      printf("Column 4 approximately equals 3 * column 2\n");
+      printf("Column 3 approximately equals 2 + column 2\n");
+      printf("Column 4 approximately equals 3 + column 2\n");
       printf("Column 4 exactly equals column 5\n");
    }
 

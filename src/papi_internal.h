@@ -30,17 +30,18 @@
 #define FUNC "?"
 #endif
 
-
   /* Debug Levels */
 
-#define DEBUG_SUBSTRATE         0x2
-#define DEBUG_API               0x4
-#define DEBUG_INTERNAL          0x8
-#define DEBUG_THREADS           0x10
-#define DEBUG_MULTIPLEX         0x20
-#define DEBUG_OVERFLOW          0x40
-#define DEBUG_PROFILE           0x80
-#define DEBUG_ALL               (DEBUG_SUBSTRATE|DEBUG_API|DEBUG_INTERNAL|DEBUG_THREADS|DEBUG_MULTIPLEX|DEBUG_OVERFLOW|DEBUG_PROFILE)
+#define DEBUG_SUBSTRATE         0x002
+#define DEBUG_API               0x004
+#define DEBUG_INTERNAL          0x008
+#define DEBUG_THREADS           0x010
+#define DEBUG_MULTIPLEX         0x020
+#define DEBUG_OVERFLOW          0x040
+#define DEBUG_PROFILE           0x080
+#define DEBUG_MEMORY            0x100
+#define DEBUG_LEAK              0x200
+#define DEBUG_ALL               (DEBUG_SUBSTRATE|DEBUG_API|DEBUG_INTERNAL|DEBUG_THREADS|DEBUG_MULTIPLEX|DEBUG_OVERFLOW|DEBUG_PROFILE|DEBUG_MEMORY|DEBUG_LEAK)
 
   /* Please get rid of the DBG macro from your code */
 
@@ -50,7 +51,7 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 #define DEBUGLABEL(a) if (_papi_hwi_thread_id_fn) fprintf(stderr, "%s:%s:%s:%d:0x%lx ",a,__FILE__, FUNC, __LINE__,_papi_hwi_thread_id_fn()); else fprintf(stderr, "%s:%s:%s:%d: ",a,__FILE__, FUNC, __LINE__)
 #define ISLEVEL(a) (_papi_hwi_debug&a)
 
-#define DEBUGLEVEL(a) ((a&DEBUG_SUBSTRATE)?"SUBSTRATE":(a&DEBUG_API)?"API":(a&DEBUG_INTERNAL)?"INTERNAL":(a&DEBUG_THREADS)?"THREADS":(a&DEBUG_MULTIPLEX)?"MULTIPLEX":(a&DEBUG_OVERFLOW)?"OVERFLOW":(a&DEBUG_PROFILE)?"PROFILE":"UNKNOWN")
+#define DEBUGLEVEL(a) ((a&DEBUG_SUBSTRATE)?"SUBSTRATE":(a&DEBUG_API)?"API":(a&DEBUG_INTERNAL)?"INTERNAL":(a&DEBUG_THREADS)?"THREADS":(a&DEBUG_MULTIPLEX)?"MULTIPLEX":(a&DEBUG_OVERFLOW)?"OVERFLOW":(a&DEBUG_PROFILE)?"PROFILE":(a&DEBUG_MEMORY)?"MEMORY":(a&DEBUG_LEAK)?"LEAK":"UNKNOWN")
 
 #ifndef NO_VARARG_MACRO         /* Has variable arg macro support */
 #define PAPIDEBUG(level,format, args...) { if(_papi_hwi_debug&level){DEBUGLABEL(DEBUGLEVEL(level));fprintf(stderr,format, ## args);}}
@@ -64,6 +65,8 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 #define MPXDBG(format, args...) (PAPIDEBUG(DEBUG_MULTIPLEX,format, ## args))
 #define OVFDBG(format, args...) (PAPIDEBUG(DEBUG_OVERFLOW,format, ## args))
 #define PRFDBG(format, args...) (PAPIDEBUG(DEBUG_PROFILE,format, ## args))
+#define MEMDBG(format, args...) (PAPIDEBUG(DEBUG_MEMORY,format, ## args))
+#define LEAKDBG(format, args...) (PAPIDEBUG(DEBUG_LEAK,format, ## args))
 #endif
 
 #else
@@ -75,12 +78,13 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 #define MPXDBG(format, args...) { ; }
 #define OVFDBG(format, args...) { ; }
 #define PRFDBG(format, args...) { ; }
+#define MEMDBG(format, args...) { ; }
+#define LEAKDBG(format, args...) { ; }
 #define PAPIDEBUG(level, format, args...) { ; }
 #endif
 #endif
 
 #define DEADBEEF 0xdedbeef
-extern int papi_num_substrates;
 
   /********************************************************/
 /* This block provides general strings used in PAPI     */
@@ -97,14 +101,26 @@ extern int papi_num_substrates;
    necessary, but at this point, we have included anything that might 
    possibly be useful later, and will remove them as we progress */
 
-/* Signal used for soft overflow delivery and multiplexing */
-#ifdef __CATAMOUNT__ /* Catamount only defines ITIMER_REAL with a 1 sec(!) resolution */
-  #define PAPI_ITIMER ITIMER_REAL
+/* Signal used for overflow delivery */
+
+/****WIN32 We'll need to figure out how to handle this for Windows */
+#ifdef _WIN32
+  #define PAPI_SIGNAL 1
+  #define PAPI_ITIMER 1
 #else
-  #define PAPI_ITIMER ITIMER_PROF
+  #define PAPI_SIGNAL SIGPROF
+  #ifdef __CATAMOUNT__ /* Catamount only defines ITIMER_REAL with a 1 sec(!) resolution */
+    #define PAPI_ITIMER ITIMER_REAL
+  #else
+    #define PAPI_ITIMER ITIMER_PROF
+  #endif
 #endif
-#define PAPI_SIGNAL SIGPROF
+
 #define PAPI_ITIMER_MS 1
+
+/* Multiplex definitions */
+
+#define PAPI_MPX_DEF_US 10000   /*Default resolution in us. of mpx handler */
 
 /* Commands used to compute derived events */
 
@@ -139,11 +155,17 @@ extern int papi_num_substrates;
 #define NEED_CONTEXT		1
 #define DONT_NEED_CONTEXT 	0
 
-#define PAPI_MAX_COUNTER_TERMS	8
+/* Replacement for bogus supports_multiple_threads item */
+
+#define SUPPORTS_MULTIPLE_THREADS(mdi) (mdi.sub_info.available_granularities & PAPI_GRN_THR)
 
 /* DEFINES END HERE */
 
-#include OS_HEADER
+#if !(defined(_WIN32) || defined(NO_CONFIG))
+#include "config.h"
+#endif
+
+#include SUBSTRATE
 #include "papi_preset.h"
 
 typedef struct _EventSetDomainInfo {
@@ -155,23 +177,33 @@ typedef struct _EventSetGranularityInfo {
 } EventSetGranularityInfo_t;
 
 typedef struct _EventSetOverflowInfo {
-   long_long *deadline;
-   int *threshold;
-   int *EventIndex;
-   int *EventCode;
+   long_long deadline[MAX_COUNTERS];
    int count;
+   int threshold[MAX_COUNTERS];
+   int EventIndex[MAX_COUNTERS];
+   int EventCode[MAX_COUNTERS];
    int event_counter;
    int flags;
    int timer_ms;
    PAPI_overflow_handler_t handler;
 } EventSetOverflowInfo_t;
 
+typedef struct _EventSetAttachInfo {
+  unsigned long tid;
+} EventSetAttachInfo_t;
+
+#if 0
+typedef struct _EventSetInheritInfo {
+   int inherit;
+} EventSetInheritInfo_t;
+#endif
+
 typedef struct _EventSetProfileInfo {
-   PAPI_sprofil_t **prof;
-   int *count;     /* Number of buffers */
-   int *threshold;
-   int *EventIndex;
-   int *EventCode;
+   PAPI_sprofil_t *prof[MAX_COUNTERS];
+   int count[MAX_COUNTERS];     /* Number of buffers */
+   int threshold[MAX_COUNTERS];
+   int EventIndex[MAX_COUNTERS];
+   int EventCode[MAX_COUNTERS];
    int flags;
    int overflowcount;           /* number of overflows */
    int event_counter;
@@ -179,15 +211,15 @@ typedef struct _EventSetProfileInfo {
 
 /* This contains info about an individual event added to the EventSet.
    The event can be either PRESET or NATIVE, and either simple or derived.
-   If derived, it can consist of up to PAPI_MAX_COUNTER_TERMS native events.
+   If derived, it can consist of up to MAX_COUNTER_TERMS native events.
    An EventSet contains a pointer to an array of these structures to define
    each added event.
  */
 
 typedef struct _EventInfo {
    unsigned int event_code;     /* Preset or native code for this event as passed to PAPI_add_event() */
-   /* should this be PAPI_MAX_COUNTER_TERMS instead of MAX_COUNTERS ?? (dkt 10/9/03) */
-   int pos[PAPI_MAX_COUNTER_TERMS];   /* position in the counter array for this events components */
+   /* should this be MAX_COUNTER_TERMS instead of MAX_COUNTERS ?? (dkt 10/9/03) */
+   int pos[MAX_COUNTER_TERMS];   /* position in the counter array for this events components */
    char *ops;                   /* operation string of preset */
    int derived;                 /* Counter derivation command used for derived events */
 } EventInfo_t;
@@ -198,10 +230,10 @@ typedef struct _EventInfo {
  */
 
 typedef struct _NativeInfo {
-   void * ni_bits;      /* Substrate defined resources used by this native event hwd_register_t*/
-   int ni_event;        /* native event code; always non-zero unless empty */
-   int ni_position;     /* counter array position where this native event lives */
-   int ni_owners;       /* specifies how many owners share this native event */
+   int ni_event;                /* native event code; always non-zero unless empty */
+   int ni_position;             /* counter array position where this native event lives */
+   int ni_owners;               /* specifies how many owners share this native event */
+   hwd_register_t ni_bits;      /* Substrate defined resources used by this native event */
 } NativeInfo_t;
 
 
@@ -270,7 +302,11 @@ typedef struct _MPX_EventSet {
    long_long start_hc[PAPI_MPX_DEF_DEG];
 } MPX_EventSet;
 
-typedef MPX_EventSet *EventSetMultiplexInfo_t;
+typedef struct EventSetMultiplexInfo {
+  MPX_EventSet *mpx_evset;
+  int us;
+  int flags; 
+} EventSetMultiplexInfo_t;
 
 /* Opaque struct, not defined yet...due to threads.h <-> papi_internal.h */
 
@@ -280,13 +316,10 @@ typedef struct _EventSetInfo {
    unsigned long int tid;       /* Thread ID, only used if PAPI_thread_init() is called  */
 
    int EventSetIndex;           /* Index of the EventSet in the array  */
-   int SubstrateIndex;		/* Which Substrate this EventSet Belongs too */
 
    int NumberOfEvents;          /* Number of events added to EventSet */
 
-   void * machdep; /* A chunk of memory of sizeof
-                                   _papi_hwi_system_info bytes. This 
-                                   will contain the encoding necessary for the 
+   hwd_control_state_t machdep; /* This contains the encoding necessary for the 
                                    hardware to set the counters to the appropriate
                                    conditions */
 
@@ -300,7 +333,7 @@ typedef struct _EventSetInfo {
                                    PAPI_RUNNING or PAPI_STOPPED plus flags */
 
    int NativeCount;             /* How many native events in the array below. */
-   NativeInfo_t *NativeInfoArray;/*Info about each native event in the set */
+   NativeInfo_t NativeInfoArray[MAX_COUNTERS];  /* Info about each native event in the set */
 
    EventInfo_t *EventInfoArray; /* This array contains the mapping from 
                                    events added into the API into hardware 
@@ -315,6 +348,8 @@ typedef struct _EventSetInfo {
    EventSetOverflowInfo_t overflow;
 
    EventSetMultiplexInfo_t multiplex;
+
+   EventSetAttachInfo_t attach;
 
    EventSetProfileInfo_t profile;
 
@@ -331,6 +366,17 @@ typedef struct _dynamic_array {
 } DynamicArray_t;
 
 /* Substrate option types for _papi_hwd_ctl. */
+
+typedef struct _papi_int_attach {
+   unsigned long tid;
+   EventSetInfo_t *ESI;
+} _papi_int_attach_t;
+
+typedef struct _papi_int_multiplex {
+   int flags;
+   unsigned long us;
+   EventSetInfo_t *ESI;
+} _papi_int_multiplex_t;
 
 typedef struct _papi_int_defdomain {
    int defdomain;
@@ -358,6 +404,13 @@ typedef struct _papi_int_profile {
    EventSetProfileInfo_t profile;
 } _papi_int_profile_t;
 
+#if 0
+typedef struct _papi_int_inherit {
+   EventSetInfo_t *master;
+   int inherit;
+} _papi_int_inherit_t;
+#endif
+
 typedef struct _papi_int_addr_range { /* if both are zero, range is disabled */
    EventSetInfo_t *ESI;
    int domain;
@@ -372,88 +425,30 @@ typedef union _papi_int_option_t {
    _papi_int_overflow_t overflow;
    _papi_int_profile_t profile;
    _papi_int_domain_t domain;
-   _papi_int_defdomain_t defdomain;
+   _papi_int_attach_t attach;
+   _papi_int_multiplex_t multiplex;
+#if 0
+   _papi_int_inherit_t inherit;
+#endif
    _papi_int_granularity_t granularity;
    _papi_int_addr_range_t address_range;
 } _papi_int_option_t;
 
 typedef struct {
-   void * si;
-   void * ucontext;
+   hwd_siginfo_t *si;
+   hwd_ucontext_t *ucontext;
 } _papi_hwi_context_t;
 
 typedef struct _papi_mdi {
+   DynamicArray_t global_eventset_map;  /* Global structure to maintain int<->EventSet mapping */
    pid_t pid;                   /* Process identifier */
+   PAPI_substrate_info_t sub_info; /* See definition in papi.h */
    PAPI_hw_info_t hw_info;      /* See definition in papi.h */
    PAPI_exe_info_t exe_info;    /* See definition in papi.h */
    PAPI_shlib_info_t shlib_info;    /* See definition in papi.h */
    PAPI_preload_info_t preload_info; /* See definition in papi.h */ 
-
-
-   /* Begin public feature flags */
-   int supports_multiple_threads;     /* hardware counters support multiple threads */
-
-   int supports_real_usec;      /* We can use the real_usec call */
-   int supports_real_cyc;       /* We can use the real_cyc call */
-   int supports_virt_usec;      /* We can use the virt_usec call */
-   int supports_virt_cyc;       /* We can use the virt_cyc call */
-
-   /* End public feature flags */
-
-   
-
-   /* End private Info */
-   DynamicArray_t global_eventset_map;  /* Global structure to maintain int<->EventSet mapping */
 } papi_mdi_t;
 
-
-typedef struct _papi_substrate_mdi {
-   int substrate_index;
-   char substrate[81];          /* Name of the substrate we're using */
-   int version;                 /* Version of this substrate: See PAPI_SUBSTRATE_VERSION */
-
-   int default_domain;          /* The default domain when this substrate is used */
-
-   int default_granularity;     /* The default granularity when this substrate is used */
-
-   /* Begin public feature flags */
-
-   /* The following variables define the length of the arrays in the 
-      EventSetInfo_t structure. Each array is of length num_gp_cntrs + 
-      num_sp_cntrs * sizeof(long_long) */
-
-   int num_cntrs;               /* Number of counters returned by a substrate read/write */
-
-   int num_gp_cntrs;            /* Number of general purpose counters or counters
-                                   per group */
-   int grouped_counters;        /* Number of counter groups, zero for no groups */
-   int num_sp_cntrs;            /* Number of special purpose counters, like 
-                                   Time Stamp Counter on IBM or Pentium */
-
-   int supports_program;        /* We can use programmable events */
-   int supports_write;          /* We can write the counters */
-   int supports_hw_overflow;    /* Needs overflow to be emulated */
-   int supports_hw_profile;     /* Needs profile to be emulated */
-
-   int supports_64bit_counters; /* Only limited precision is available from hardware */
-   int supports_inheritance;    /* We can pass on and inherit child counters/values */
-   int supports_attach;         /* We can attach PAPI to another process */
-   /* End public feature flags */
-
-   /* Begin private feature flags */
-
-   int supports_read_reset;     /* The read call from the kernel resets the counters */
-
-   /* End private feature flags */
-
-   /* Begin private Info */
-   int context_size;
-   int register_size;
-   int reg_alloc_size;
-   int control_state_size;
-} papi_substrate_mdi_t;
-
-extern papi_substrate_mdi_t * _papi_hwi_substrate_info;
 extern papi_mdi_t _papi_hwi_system_info;
 extern int _papi_hwi_error_level;
 extern volatile int _papi_hwi_using_signal;
@@ -481,118 +476,70 @@ inline_static void PAPIDEBUG(int level, char *format, ...)
 inline_static void SUBDBG(char *format, ...)
 {
 #ifdef DEBUG
-   va_list args;
-   int level = DEBUG_SUBSTRATE;
-
-   if (ISLEVEL(level)) {
-      va_start(args, format);
-      DEBUGLABEL(DEBUGLEVEL(level));
-      vfprintf(stderr, format, args);
-      va_end(args);
-   } else
+   PAPIDEBUG(DEBUG_SUBSTRATE, format);
 #endif
-      return;
 }
 
 inline_static void APIDBG(char *format, ...)
 {
 #ifdef DEBUG
-   va_list args;
-   int level = DEBUG_API;
-
-   if (ISLEVEL(level)) {
-      va_start(args, format);
-      DEBUGLABEL(DEBUGLEVEL(level));
-      vfprintf(stderr, format, args);
-      va_end(args);
-   } else
+   PAPIDEBUG(DEBUG_API, format);
 #endif
-      return;
 }
 
 inline_static void INTDBG(char *format, ...)
 {
 #ifdef DEBUG
-   va_list args;
-   int level = DEBUG_INTERNAL;
-
-   if (ISLEVEL(level)) {
-      va_start(args, format);
-      DEBUGLABEL(DEBUGLEVEL(level));
-      vfprintf(stderr, format, args);
-      va_end(args);
-   } else
+   PAPIDEBUG(DEBUG_INTERNAL, format);
 #endif
-      return;
 }
 
 inline_static void THRDBG(char *format, ...)
 {
 #ifdef DEBUG
-   va_list args;
-   int level = DEBUG_THREADS;
-
-   if (ISLEVEL(level)) {
-      va_start(args, format);
-      DEBUGLABEL(DEBUGLEVEL(level));
-      vfprintf(stderr, format, args);
-      va_end(args);
-   } else
+   PAPIDEBUG(DEBUG_THREADS, format);
 #endif
-      return;
 }
 
 inline_static void MPXDBG(char *format, ...)
 {
 #ifdef DEBUG
-   va_list args;
-   int level = DEBUG_MULTIPLEX;
-
-   if (ISLEVEL(level)) {
-      va_start(args, format);
-      DEBUGLABEL(DEBUGLEVEL(level));
-      vfprintf(stderr, format, args);
-      va_end(args);
-   } else
+   PAPIDEBUG(DEBUG_MULTIPLEX, format);
 #endif
-      return;
 }
 
 inline_static void OVFDBG(char *format, ...)
 {
 #ifdef DEBUG
-   va_list args;
-   int level = DEBUG_OVERFLOW;
-
-   if (ISLEVEL(level)) {
-      va_start(args, format);
-      DEBUGLABEL(DEBUGLEVEL(level));
-      vfprintf(stderr, format, args);
-      va_end(args);
-   } else
+   PAPIDEBUG(DEBUG_OVERFLOW,format);
 #endif
-      return;
 }
 
 inline_static void PRFDBG(char *format, ...)
 {
 #ifdef DEBUG
-   va_list args;
-   int level = DEBUG_PROFILE;
-
-   if (ISLEVEL(level)) {
-      va_start(args, format);
-      DEBUGLABEL(DEBUGLEVEL(level));
-      vfprintf(stderr, format, args);
-      va_end(args);
-   } else
+   PAPIDEBUG(DEBUG_PROFILE, format);
 #endif
-      return;
+}
+
+inline_static void MEMDBG(char *format, ...)
+{
+#ifdef DEBUG
+   PAPIDEBUG(DEBUG_MEMORY, format);
+#endif
+}
+
+inline_static void LEAKDBG(char *format, ...)
+{
+#ifdef DEBUG
+   PAPIDEBUG(DEBUG_LEAK, format);
+#endif
 }
 #endif
 
 #include "threads.h"
 #include "papi_vector.h"
+#include "papi_protos.h"
 
 inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset)
 {
@@ -611,5 +558,21 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset)
    return (set);
 }
 
-extern char *const init_str[];
+inline_static int _papi_hwi_is_sw_multiplex(EventSetInfo_t *ESI)
+{
+  /* Are we multiplexing at all */
+  if ((ESI->state & PAPI_MULTIPLEXING) == 0)
+    return(0);
+  /* Does the substrate support kernel multiplexing */
+  if (_papi_hwi_system_info.sub_info.kernel_multiplex)
+    {
+      /* Have we forced software multiplexing */
+      if (ESI->multiplex.flags == PAPI_MULTIPLEX_FORCE_SW)
+	return(1);
+      return(0);
+    }
+  else
+    return(1);
+}
+
 #endif                          /* PAPI_INTERNAL_H */

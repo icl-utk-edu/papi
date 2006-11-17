@@ -2,7 +2,6 @@ LIBRARY   	= libpapi.a
 SHLIB     	= libpapi.so
 SUBSTR  	= any-null
 MEMSUBSTR 	= any-null
-OS		= any-null-os
 DESCR		= "Sample substrate: Any hardware platform with GNU compilers"
 LIBS		= static shared
 TARGETS 	= serial multiplex_and_pthreads

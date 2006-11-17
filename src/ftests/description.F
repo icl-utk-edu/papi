@@ -34,12 +34,6 @@
      *'PAPI_library_init', retval)
       end if
 
-      call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
-      if ( retval.NE.PAPI_OK) then
-        call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_set_debug', retval)
-      end if
-      
       call PAPIf_create_eventset(es1, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,

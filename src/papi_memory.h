@@ -2,22 +2,14 @@
 #define _PAPI_MALLOC
 #define DEBUG_FILE_LEN  20
 
-/* If you are tracing memory, then PAPI_DEBUG_MEMORY
- *  * must be set also.
- *   */
-#ifdef PAPI_NO_MEMORY_MANAGEMENT
-#undef PAPI_DEBUG_MEMORY
-#undef PAPI_DEBUG_MEMORY_TRACE
-#else
-#ifdef PAPI_DEBUG_MEMORY_TRACE
-#define PAPI_DEBUG_MEMORY
-#endif
-#endif
+/* define an alternate entry point for compatibility with papi.c for 3.1.x*/
+/* this line should be deleted for the papi 4.0 head */
+#define _papi_cleanup_all_memory _papi_mem_cleanup_all
 
 typedef struct pmem {
   void *ptr;
   int size;
-#ifdef PAPI_DEBUG_MEMORY
+#ifdef DEBUG
   char file[DEBUG_FILE_LEN];
   int  line;
 #endif
@@ -31,15 +23,13 @@ typedef struct pmem {
 #define papi_free(a)   free(a)
 #define papi_realloc(a,b) realloc(a,b)
 #define papi_calloc(a,b) calloc(a,b)
-// Returns a 0
-#define papi_valid_free(a) 0
+#define papi_valid_free(a) 1
 #define papi_strdup(a) strdup(a)
 #define papi_mem_cleanup_all() ;
 #define papi_mem_print_info(a) ;
 #define papi_mem_print_stats() ;
-// Returns the amount of memory being used by the library
-#define papi_mem_overhead(a) 0
-#define papi_mem_check_all_overflow() 0
+#define papi_mem_overhead(a) ;
+#define papi_mem_check_all_overflow() ;
 #else
 #define papi_malloc(a) _papi_malloc(__FILE__,__LINE__, a)
 #define papi_free(a) _papi_free(__FILE__,__LINE__, a)

@@ -1,24 +1,41 @@
 OMP	= zero_omp
 SMP	= zero_smp
 SHMEM	= zero_shmem
-PTHREADS= profile_pthreads overflow_pthreads zero_pthreads unregister_pthreads clockres_pthreads overflow3_pthreads locks_pthreads 
+PTHREADS= thrspecific profile_pthreads overflow_pthreads zero_pthreads unregister_pthreads clockres_pthreads overflow3_pthreads locks_pthreads 
 MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
-SERIAL  = realtime first exeinfo zero zero_fork branches dmem_info all_events derived high-level2 describe memory  \
+SERIAL  = hwinfo code2name reset subinfo realtime first exeinfo \
+	zero zero_fork branches dmem_info all_native_events all_events derived high-level2 describe memory  \
 	zero_flip low-level high-level eventname case1 case2 \
-	calibrate flops second data_range johnmay2 \
+	calibrate flops second johnmay2 \
 	overflow overflow_force_software overflow_single_event \
-    overflow_twoevents timer_overflow overflow2 \
+	overflow_twoevents timer_overflow overflow2 \
 	matrix-hl tenth encode encode2 \
-	profile sprofile profile_twoevents earprofile byte_profile\
-	ipc native overflow_index overflow_one_and_read acpi
+	profile sprofile profile_twoevents byte_profile\
+	ipc native overflow_index overflow_one_and_read
+ATTACH	= multiattach zero_attach
+P4_TEST	= p4_lst_ins
+ACPI	= acpi 
+EAR	= earprofile
+RANGE	= data_range
 BROKEN	= inherit pernode
 UTILOBJS= do_loops.o test_utils.o dummy.o
-TESTS 	= $(PTHREADS) $(SERIAL) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM) $(SHARED)
-INCLUDE = -I.. -I/usr/include 
+TESTS	= $(PTHREADS) $(SERIAL) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM)\
+	$(SHARED) $(EAR) $(RANGE) $(P4_TEST) $(ACPI) $(ATTACH)
+INCLUDE = -I..  
 PAPILIB	= ../$(LIBRARY)
+
+attach: $(ATTACH)
+
+p4: $(P4_TEST)
+
+acpi_test: $(ACPI)
+
+ear: $(EAR)
+
+range: $(RANGE)
 
 mpi: $(MPI)
 
@@ -59,6 +76,12 @@ sdsc4-mpx: sdsc4.c $(PAPILIB) $(UTILOBJS)
 calibrate: calibrate.c dummy.o $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) calibrate.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o calibrate
 
+data_range: data_range.c dummy.o $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) data_range.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o data_range
+
+p4_lst_ins: p4_lst_ins.c dummy.o $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) p4_lst_ins.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o p4_lst_ins
+
 acpi: acpi.c dummy.o $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) acpi.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o acpi
 
@@ -85,6 +108,9 @@ multiplex3_pthreads: multiplex3_pthreads.c $(UTILOBJS) $(PAPILIB)
 
 overflow3_pthreads: overflow3_pthreads.c $(UTILOBJS) $(PAPILIB)
 	$(CC_R) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) overflow3_pthreads.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ -lpthread
+
+thrspecific: thrspecific.c $(UTILOBJS) $(PAPILIB)
+	$(CC_R) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) thrspecific.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o thrspecific -lpthread
 
 profile_pthreads: profile_pthreads.c $(UTILOBJS) $(PAPILIB)
 	$(CC_R) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) profile_pthreads.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile_pthreads -lpthread
@@ -188,9 +214,6 @@ sprofile: sprofile.c $(UTILOBJS) prof_utils.o $(PAPILIB)
 profile: profile.c $(UTILOBJS) prof_utils.o $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) profile.c prof_utils.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile
 
-data_range: data_range.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) data_range.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o data_range
-
 profile_twoevents: profile_twoevents.c $(UTILOBJS) prof_utils.o $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) profile_twoevents.c prof_utils.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile_twoevents
 
@@ -208,6 +231,9 @@ dmem_info: dmem_info.c $(PAPILIB) $(UTILOBJS)
 
 all_events: all_events.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) all_events.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o all_events
+
+all_native_events: all_native_events.c $(PAPILIB) $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) all_native_events.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o all_native_events
 
 memory: memory.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) memory.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o memory
@@ -237,7 +263,7 @@ low-level: low-level.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) low-level.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o low-level
 
 matrix-hl: matrix-hl.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) matrix-hl.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o matrix-hl
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS)  matrix-hl.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o matrix-hl
 
 high-level: high-level.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) high-level.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o high-level
@@ -251,6 +277,24 @@ shlib: shlib.c $(PAPILIB) $(UTILOBJS)
 
 exeinfo: exeinfo.c $(PAPILIB) $(UTILOBJS)
 	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) exeinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o exeinfo 
+
+subinfo: subinfo.c $(PAPILIB) $(UTILOBJS)
+	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) subinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o subinfo 
+
+zero_attach: zero_attach.c $(PAPILIB) $(UTILOBJS)
+	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) zero_attach.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero_attach 
+
+hwinfo: hwinfo.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) hwinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o hwinfo
+
+code2name: code2name.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) code2name.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o code2name
+
+multiattach: multiattach.c $(PAPILIB) $(UTILOBJS)
+	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) multiattach.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o multiattach 
+
+reset: reset.c $(PAPILIB) $(UTILOBJS)
+	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) reset.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o reset 
 
 prof_utils.o: prof_utils.c papi_test.h prof_utils.h
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c prof_utils.c
@@ -268,10 +312,10 @@ clean:
 	rm -f *.o *.stderr *.stdout core *~ $(TESTS)
 
 install: $(TARGETS)
-	@if [ \"$(PREFIX)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make PREFIX=/usr/local"; exit 1; fi 
-	@echo "Root of destination directory is: \"$(PREFIX)\""; 
-	-mkdir -p $(PREFIX)/share/papi/ctests
-	-chmod go+rx $(PREFIX)/share/papi/ctests
-	-find . -perm -100 -type f -exec cp {} $(PREFIX)/share/papi/ctests \;
-	-chmod go+rx $(PREFIX)/share/papi/ctests/*
-	-find . -name "*.[ch]" -type f -exec cp {} $(PREFIX)/share/papi/ctests \;
+	@echo "C tests (DATADIR) being installed in: \"$(DATADIR)\""; 
+	-mkdir -p $(DATADIR)/ctests
+	-chmod go+rx $(DATADIR)
+	-chmod go+rx $(DATADIR)/ctests
+	-find . -perm -100 -type f -exec cp {} $(DATADIR)/ctests \;
+	-chmod go+rx $(DATADIR)/ctests/*
+	-find . -name "*.[ch]" -type f -exec cp {} $(DATADIR)/ctests \;

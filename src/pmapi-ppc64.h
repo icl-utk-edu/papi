@@ -1,13 +1,28 @@
 #ifndef _PAPI_PMAPI_PPC64              /* _PAPI_PMAPI_PPC64 */
 #define _PAPI_PMAPI_PPC64
 
+/****************************/
+/* THIS IS OPEN SOURCE CODE */
+/****************************/
+
+/* 
+* File:    pmapi-ppc64.h
+* Author:  Maynard Johnson
+*          maynardj@us.ibm.com
+* Mods:    <your name here>
+*          <your email address>
+*/
+
 #include "aix.h"
 
 #define PM_INIT_FLAGS PM_VERIFIED|PM_UNVERIFIED|PM_CAVEAT|PM_GET_GROUPS
 
-#if defined(_POWER4) || defined(_POWER5)
-typedef PMINFO_T hwd_pminfo_t;
-typedef PMEVENTS_T hwd_pmevents_t;
+#ifdef PM_INITIALIZE
+typedef pm_info2_t hwd_pminfo_t;
+typedef pm_events2_t hwd_pmevents_t;
+#else
+typedef pm_info_t hwd_pminfo_t;
+typedef pm_events_t hwd_pmevents_t;
 #endif
 
 #include "ppc64_events.h"

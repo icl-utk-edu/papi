@@ -1,4 +1,4 @@
-Release Procedure for PAPI  November 21, 2005
+Release Procedure for PAPI  November 07, 2006
 
 Below is a step-wise procedure for making a PAPI release.
 This is a living document and may not be totally current or accurate.
@@ -31,32 +31,19 @@ __ 8. Export the branch to a clean working directory:
 	> cvs export -r papi-3-2-0 papi
 __ 9. Rename the directory from papi to papi-X.Y.Z
 
-__ 10. Delete unneeded directories:
-	/src/kev
-	/tools/heartbeat
-	      /perfGUI
-	      /perfometer
-	      /vprof
-	      /machParam
-__ 11. Find a current set of f*.h headers for FORTRAN. These can come from a
-	currently built version of the sources, or from another copy of the 
-	sources on which you've done a configure / make.
-__ 12. Copy the f*.h headers into papi-X.Y.Z/src. This is necessary so that 
-	cross-compiled systems like BG/L and Catamount won't need to regenerate
-	them.
-__ 13. tar the directory:
+__ 10. tar the directory:
 	> tar -cvf papi-X.Y.Z.tar papi-X.Y.Z
-__ 14. zip the tarball:
+__ 11. zip the tarball:
 	gzip papi-X.Y.Z.tar
-__ 15. Copy the tarball to icl:/sw/www/icl/projects/papi/downloads
+__ 12. Copy the tarball to icl:/sw/www/icl/projects/papi/downloads
 
-__ 16. Check permissions on the tarball. 664 is good. 
+__ 13. Check permissions on the tarball. 664 is good. 
 
-__ 17. Create a link with supporting text on the PAPI software web page.
+__ 14. Create a link with supporting text on the PAPI software web page.
 
-__ 18. Create a News item on the PAPI Web page.
+__ 15. Create a News item on the PAPI Web page.
 
-__ 19. Email the papi developer and discussion lists with an announcement.
+__ 16. Email the papi developer and discussion lists with an announcement.
 
 
 

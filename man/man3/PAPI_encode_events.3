@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI_encode_events 3 "May, 2005" "PAPI Programmer's Reference" PAPI
+.TH PAPI_encode_events 3 "October, 2006" "PAPI Programmer's Reference" PAPI
 
 .SH NAME
 PAPI_encode_events \- read event definitions from a file and modify the existing PAPI preset table.
@@ -12,6 +12,8 @@ PAPI_encode_events \- read event definitions from a file and modify the existing
 .fi
 
 .SH DESCRIPTION
+.B NOTE: This API has been deprecated in PAPI 3.5 pending a data structure redesign.
+
 This function reads event descriptions from a file where they are stored in comma separated value format 
 and modifies or adds events to the PAPI preset event table. The file format is described below.
 This function presently works only to define or modify PAPI preset events.

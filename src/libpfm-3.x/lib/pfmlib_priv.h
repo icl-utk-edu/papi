@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2002-2003 Hewlett-Packard Co
+ * Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -33,21 +33,33 @@ typedef struct {
 	char 		*pmu_name;
 	int		pmu_type;
 	unsigned int	pme_count; /* number of events */
-	int		(*get_event_code)(unsigned int i);
-	unsigned long	(*get_event_vcode)(unsigned int i);
+ 	unsigned int	pmd_count; /* number of PMD registers */
+ 	unsigned int	pmc_count; /* number of PMC registers */
+	unsigned int 	num_cnt;   /* number of counters (counting PMD registers) */
+	unsigned int	flags;
+	int		(*get_event_code)(unsigned int i, unsigned int cnt, int *code);
+	int		(*get_event_mask_code)(unsigned int i, unsigned int mask_idx, unsigned int *code);
 	char		*(*get_event_name)(unsigned int i);
+	char		*(*get_event_mask_name)(unsigned int event_idx, unsigned int mask_idx);
 	void		(*get_event_counters)(unsigned int i, pfmlib_regmask_t *counters);
-	int		(*print_info)(unsigned int v, int (*pf)(const char *fmt,...));
+	unsigned int	(*get_num_event_masks)(unsigned int event_idx);
 	int 		(*dispatch_events)(pfmlib_input_param_t *p, void *model_in, pfmlib_output_param_t *q, void *model_out);
-	void		(*get_num_counters)(unsigned int *num);
-	void		(*get_num_pmcs)(unsigned int *num);
-	void		(*get_num_pmds)(unsigned int *num);
 	int 		(*pmu_detect)(void);
 	void		(*get_impl_pmcs)(pfmlib_regmask_t *impl_pmcs);
 	void		(*get_impl_pmds)(pfmlib_regmask_t *impl_pmds);
 	void		(*get_impl_counters)(pfmlib_regmask_t *impl_counters);
 	void		(*get_hw_counter_width)(unsigned int *width);
+	int		(*get_event_desc)(unsigned int i, char **buf);
+	int		(*get_event_mask_desc)(unsigned int event_idx, unsigned int mask_idx, char **buf);
+	int		(*get_cycle_event)(pfmlib_event_t *e);
+	int		(*get_inst_retired_event)(pfmlib_event_t *e);
 } pfm_pmu_support_t;
+
+#define PFMLIB_MULT_CODE_EVENT	0x1	/* more than one code per event (depending on counter) */
+
+#define PFMLIB_CNT_FIRST	-1	/* return code for event on first counter */
+
+#define PFMLIB_NO_EVT		(~0U)	/* no event index associated with event */
 
 typedef struct {
 	pfmlib_options_t	options;
@@ -63,6 +75,7 @@ extern pfm_config_t pfm_config;
 #define pfm_current		pfm_config.current
 
 extern void __pfm_vbprintf(const char *fmt,...);
+extern int __pfm_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen);
 
 #ifdef PFMLIB_DEBUG
 #define DPRINT(a) \
@@ -76,5 +89,17 @@ extern void __pfm_vbprintf(const char *fmt,...);
 
 #define ALIGN_DOWN(a,p)	((a) & ~((1UL<<(p))-1))
 #define ALIGN_UP(a,p)	((((a) + ((1UL<<(p))-1))) & ~((1UL<<(p))-1))
+
+extern pfm_pmu_support_t montecito_support;
+extern pfm_pmu_support_t itanium2_support;
+extern pfm_pmu_support_t itanium_support;
+extern pfm_pmu_support_t generic_ia64_support;
+extern pfm_pmu_support_t amd64_support;
+extern pfm_pmu_support_t i386_p6_support;
+extern pfm_pmu_support_t i386_pm_support;
+extern pfm_pmu_support_t gen_ia32_support;
+extern pfm_pmu_support_t generic_mips64_support;
+extern pfm_pmu_support_t pentium4_support;
+extern pfm_pmu_support_t coreduo_support;
 
 #endif /* __PFMLIB_PRIV_H__ */

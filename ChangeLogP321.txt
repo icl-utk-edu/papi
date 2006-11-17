@@ -1,3 +1,12 @@
+2006-06-02     maynardj
+        * man/man3/PAPI_set_domain.3:
+        * src/papi.h:
+        * src/perfctr-ppc64.c:
+        * src/perfctr-ppc64.h:
+        * src/ctests/second.c:
+                Add capability to count events in supervisor (aka
+                "hypervisor") context.
+
 2006-02-15	maynardj
 	* src/perfctr-ppc64.h:
 	* src/perfctr-ppc64.c:

@@ -2,11 +2,20 @@
 #define _PAPI_UNICOS_H
 
 #define UMK
-
-#include "papi_sys_headers.h"
-
+#include <stdio.h>
+#include <signal.h>
+#include <assert.h>
 #include <infoblk.h>
+#include <string.h>
+#include <limits.h>
+#include <unistd.h>
 #include <time.h>
+#include <errno.h>
+#include <ctype.h>
+#include <stdarg.h>
+#include <sys/ucontext.h>
+#include <sys/times.h>
+#include <sys/stat.h>
 #include <sys/unistd.h>
 #include <mpp/globals.h>
 

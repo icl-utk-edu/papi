@@ -18,9 +18,13 @@ int main(int argc, char **argv)
    int num_buckets, mask;
    char title[80];
    int retval;
+   const PAPI_hw_info_t *hw_info;
+   const PAPI_exe_info_t *prginfo;
+   caddr_t start, end;
 
-   prof_init(argc, argv);
-   mask = prof_events(num_tests);
+   prof_init(argc, argv, &hw_info, &prginfo);
+
+   mask = prof_events(num_tests,hw_info);
    start = prginfo->address_info.text_start;
    end = prginfo->address_info.text_end;
 
@@ -33,9 +37,8 @@ int main(int argc, char **argv)
    if (start > end)
       test_fail(__FILE__, __LINE__, "Profile length < 0!", 0);
    length = end - start;
-   prof_print_address(start, end,
-               "Test case profile: POSIX compatible profiling with two events.\n");
-   prof_print_prof_info();
+   prof_print_address("Test case profile: POSIX compatible profiling with two events.\n",prginfo);
+   prof_print_prof_info(start,end,THRESHOLD,event_name);
    prof_alloc(2, length);
 
    blength = prof_size(length, FULL_SCALE, PAPI_PROFIL_BUCKET_16, &num_buckets);
@@ -76,7 +79,7 @@ int main(int argc, char **argv)
 
    sprintf(title,"   \t\t    %s\tPAPI_TOT_CYC\naddress\t\t\tcounts\tcounts\n", event_name);
    prof_head(blength, PAPI_PROFIL_BUCKET_16, num_buckets, title);
-   prof_out(2, PAPI_PROFIL_BUCKET_16, num_buckets, FULL_SCALE);
+   prof_out(start, 2, PAPI_PROFIL_BUCKET_16, num_buckets, FULL_SCALE);
 
    remove_test_events(&EventSet, mask);
 

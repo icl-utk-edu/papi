@@ -1,12 +1,20 @@
-INCLUDE = -I.. -I../ctests
-TESTS 	= zero first  second tenth description \
+INCLUDE = -I. -I.. -I../ctests
+TESTS 	= strtest zero first  second tenth description fdmemtest\
           accum highlevel cost johnmay2 native \
 	  avail case1 case2 clockres eventname fmatrixlowpapi \
 	  fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2
-PAPILIB=../ctests/do_loops.o ../ctests/dummy.o ftests_util.o ../$(LIBRARY)
+PAPILIB	= do_loops.o dummy.o ftests_util.o ../$(LIBRARY)
 FTEST_DEPENDENCE=$(PAPILIB) fpapi_test.h ../fpapi.h ../ctests/test_utils.h
 
 default: $(TESTS)
+
+attach:
+
+p4:
+
+ear:
+
+range:
 
 mpi:
 
@@ -26,7 +34,6 @@ multiplex_and_pthreads:
 
 serial:  $(TESTS)
 
-
 clockres: clockres.F $(FTEST_DEPENDENCE) 
 	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) clockres.F $(PAPILIB) $(LDFLAGS) -o clockres
 
@@ -41,6 +48,9 @@ case1: case1.F $(FTEST_DEPENDENCE)
 
 case2: case2.F $(FTEST_DEPENDENCE)  
 	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) case2.F $(PAPILIB) $(LDFLAGS) -o case2
+
+fdmemtest: fdmemtest.F $(FTEST_DEPENDENCE)  
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fdmemtest.F $(PAPILIB) $(LDFLAGS) -o fdmemtest
 
 fmatrixlowpapi: fmatrixlowpapi.F $(FTEST_DEPENDENCE)  
 	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixlowpapi.F $(PAPILIB) $(LDFLAGS) -o fmatrixlowpapi
@@ -97,20 +107,20 @@ fmultiplex2: fmultiplex2.F $(FTEST_DEPENDENCE)
 ftests_util.o: ftests_util.F fpapi_test.h ../fpapi.h ../ctests/test_utils.h
 	$(F77) $(FTOPTFLAGS) -c $(FFLAGS) $(INCLUDE) ftests_util.F
 
-do_loops.o: do_loops.F fpapi_test.h ../fpapi.h ../ctests/test_utils.h
-	$(F77) $(FFLAGS) $(INCLUDE) $(FTOPTFLAGS) -c do_loops.F
+do_loops.o: ../ctests/do_loops.c ../ctests/papi_test.h ../ctests/test_utils.h
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c ../ctests/do_loops.c
 
-dummy.o: dummy.F
-	$(F77) $(FFLAGS) $(INCLUDE) $(FTOPTFLAGS) -c dummy.F
+dummy.o: ../ctests/dummy.c
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c ../ctests/dummy.c
 
 clean:
 	rm -f *.o *.stderr *.stdout core *~ $(TESTS)
 
 install: $(TARGETS)
-	@if [ \"$(PREFIX)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make PREFIX=/usr/local"; exit 1; fi 
-	@echo "Root of destination directory is: \"$(PREFIX)\""; 
-	-mkdir -p $(PREFIX)/share/papi/ftests
-	-chmod go+rx $(PREFIX)/share/papi/ftests
-	-find . -perm -100 -type f -exec cp {} $(PREFIX)/share/papi/ftests \;
-	-chmod go+rx $(PREFIX)/share/papi/ftests/*
-	-find . -name "*.F" -type f -exec cp {} $(PREFIX)/share/papi/ftests \;
+	@echo "Fortran tests (DATADIR) being installed in: \"$(DATADIR)\""; 
+	-mkdir -p $(DATADIR)/ftests
+	-chmod go+rx $(DATADIR)
+	-chmod go+rx $(DATADIR)/ftests
+	-find . -perm -100 -type f -exec cp {} $(DATADIR)/ftests \;
+	-chmod go+rx $(DATADIR)/ftests/*
+	-find . -name "*.F" -type f -exec cp {} $(DATADIR)/ftests \;

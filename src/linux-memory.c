@@ -13,12 +13,11 @@
 
 #include "papi.h"
 #include "papi_internal.h"
-#include "libperfctr.h"
 
 static int init_amd(PAPI_mh_info_t * mh_info);
 static short int init_amd_L2_assoc_inf(unsigned short int pattern);
 static int init_intel(PAPI_mh_info_t * mh_info);
-inline_static void cpuid(unsigned int *, unsigned int *, unsigned int *, unsigned int *);
+static void cpuid(unsigned int *, unsigned int *, unsigned int *, unsigned int *);
 
 int _papi_hwd_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type)
 {
@@ -33,29 +32,25 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type)
 
    /* Defaults to Intel which is *probably* a safe assumption -KSL */
    switch (cpu_type) {
-#ifdef _WIN32
-   case AMD:
-#else
-   case PERFCTR_X86_AMD_K7:
+	   case PERFCTR_X86_AMD_K7:
+		  retval = init_amd(&hw_info->mem_hierarchy);
+		  break;
+#ifdef PERFCTR_X86_AMD_K8 /* this is defined in perfctr 2.5.x, ff */
+	   case PERFCTR_X86_AMD_K8:
 #endif
-      retval = init_amd(&hw_info->mem_hierarchy);
-      break;
-#ifdef __x86_64__
-   case PERFCTR_X86_AMD_K8:
 #ifdef PERFCTR_X86_AMD_K8C  /* this is defined in perfctr 2.6.x */
-   case PERFCTR_X86_AMD_K8C:
+	   case PERFCTR_X86_AMD_K8C:
 #endif
-      retval = init_amd(&hw_info->mem_hierarchy);
-      break;
-#endif
-   default:
-      retval = init_intel(&hw_info->mem_hierarchy);
-      break;
+		  retval = init_amd(&hw_info->mem_hierarchy);
+		  break;
+	   default:
+		  retval = init_intel(&hw_info->mem_hierarchy);
+		  break;
    }
 
    /* Do some post-processing */
    if (retval == PAPI_OK) {
-      for (i=0; i<PAPI_MAX_MEM_HIERARCHY_LEVELS; i++) {
+      for (i=0; i<PAPI_MH_MAX_LEVELS; i++) {
          for (j=0; j<2; j++) {
             /* Compute the number of levels of hierarchy actually used */
             if (hw_info->mem_hierarchy.level[i].tlb[j].type != PAPI_MH_TYPE_EMPTY ||
@@ -90,6 +85,7 @@ static int init_amd(PAPI_mh_info_t * mh_info)
    /*
     * Layout of CPU information taken from :
     * "AMD Processor Recognition Application Note", 20734W-1 November 2002 
+	* ****Does this properly decode Opterons (K8)?
     */
 
    SUBDBG("Initializing AMD (K7) memory\n");
@@ -730,8 +726,58 @@ static int init_intel(PAPI_mh_info_t * mh_info)
  * it doesn't it is pre pentium K6 series that we don't
  * support.
  */
+#if 0
+/* This routine appears to no longer be called. */
+static int check_cpuid()
+{
+   volatile unsigned long val;
 #ifdef _WIN32
-inline_static void cpuid(unsigned int *a, unsigned int *b,
+   __asm {
+	   pushfd
+	   pop eax
+	   mov ebx, eax
+	   xor eax, 0x00200000
+	   push eax 
+	   popfd 
+	   pushfd 
+	   pop eax 
+	   cmp eax, ebx 
+	   jz NO_CPUID 
+	   mov val, 1 
+	   jmp END 
+NO_CPUID:  mov val, 0 
+END:	  }
+#elif defined(__x86_64__)
+   __asm__ __volatile__("pushf;"
+                        "pop %%eax;"
+                        "mov %%eax, %%ebx;"
+                        "xor $0x00200000,%%eax;"
+                        "push %%eax;"
+                        "popf;"
+                        "pushf;"
+                        "pop %%eax;"
+                        "cmp %%eax, %%ebx;"
+                        "jz NO_CPUID;"
+                        "mov $1, %0;"
+                        "jmp END;" "NO_CPUID:" "mov $0, %0;" "END:":"=r"(val));
+#else
+   __asm__ __volatile__("pushfl;"
+                        "pop %%eax;"
+                        "movl %%eax, %%ebx;"
+                        "xor $0x00200000,%%eax;"
+                        "push %%eax;"
+                        "popfl;"
+                        "pop %%eax;"
+                        "cmp %%eax, %%ebx;"
+                        "jz NO_CPUID;"
+                        "movl $1, %0;"
+                        "jmp END;" "NO_CPUID:" "movl $0, %0;" "END:":"=r"(val));
+#endif
+   return (int) val;
+}
+#endif
+#ifdef _WIN32
+static void cpuid(unsigned int *a, unsigned int *b,
                          unsigned int *c, unsigned int *d)
 {
    volatile unsigned long tmp, tmp2, tmp3, tmp4;
@@ -751,86 +797,163 @@ inline_static void cpuid(unsigned int *a, unsigned int *b,
    *c = tmp3;
    *d = tmp4;
 }
-#elif defined(__x86_64__)
-inline_static void cpuid(unsigned int *eax, unsigned int *ebx,
-                         unsigned int *ecx, unsigned int *edx)
-{
- __asm__("cpuid":"+a"(*eax), "=b"(*ebx), "=c"(*ecx), "=d"(*edx)
- :
-   );
-}
 #else
-inline_static void cpuid(unsigned int *eax, unsigned int *ebx,
-                         unsigned int *ecx, unsigned int *edx)
+static void cpuid(unsigned int *a, unsigned int *b,
+                         unsigned int *c, unsigned int *d)
 {
- __asm__("cpuid":"+a"(*eax), "=b"(*ebx), "=c"(*ecx), "=d"(*edx)
- :
-   );
+  unsigned int input = *a;
+  __asm__ __volatile__ (
+#if (defined(__amd64__) || defined(__x86_64__))
+	   "push %%rbx\n\t"
+#else
+	   "pushl %%ebx\n\t"
+#endif
+	   "cpuid\n\t"
+	   "movl %%ebx,%1 \n\t" 
+#if (defined(__amd64__) || defined(__x86_64__))
+	   "pop %%rbx"
+#else
+	   "popl %%ebx"
+#endif
+	   : "=a" (*a), "=D" (*b), "=c" (*c), "=d" (*d)
+	   : "a" (input)
+	   );
 }
 #endif
 
+/* A pointer to the following is passed to PAPI_get_dmem_info() 
+	typedef struct _dmem_t {
+	  long_long size;
+	  long_long resident;
+	  long_long high_water_mark;
+	  long_long shared;
+	  long_long text;
+	  long_long library;
+	  long_long heap;
+	  long_long locked;
+	  long_long stack;
+	  long_long pagesize;
+	} PAPI_dmem_info_t;
+*/
+
+
 #ifdef _WIN32
 #include <Psapi.h>
-long _papi_hwd_get_dmem_info(int option)
+int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
 {
-   int tmp;
+
    HANDLE proc = GetCurrentProcess();
    PROCESS_MEMORY_COUNTERS cntr;
+   SYSTEM_INFO SystemInfo;      // system information structure  
 
+   GetSystemInfo(&SystemInfo);
    GetProcessMemoryInfo(proc, &cntr, sizeof(cntr));
 
-   tmp = getpagesize();
-   if (tmp == 0) tmp = 1;
-
-   switch (option) {
-     case PAPI_GET_RESSIZE:
-	return ((cntr.WorkingSetSize-cntr.PagefileUsage) / tmp);
-     case PAPI_GET_SIZE:	    
-	return (cntr.WorkingSetSize / tmp);
-     default:
-	return (PAPI_EINVAL);
-   }
+   d->pagesize = SystemInfo.dwPageSize;
+   d->size = (cntr.WorkingSetSize - cntr.PagefileUsage) / SystemInfo.dwPageSize;
+   d->resident = cntr.WorkingSetSize / SystemInfo.dwPageSize;
+   d->high_water_mark = cntr.PeakWorkingSetSize / SystemInfo.dwPageSize;
+  
+   return PAPI_OK;
 }
+
 #else
 #ifdef __CATAMOUNT__
-long _papi_hwd_get_dmem_info(int option)
+int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
 {
 	return( PAPI_EINVAL );
 }
 #else
-long _papi_hwd_get_dmem_info(int option)
+//int get_dmem_info(long_long *size, long_long *resident, long_long *shared, long_long *text, long_long *library, long_long *heap, long_long *locked, long_long *stack, long_long *ps, long_long *vmhwm)
+int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
 {
-   pid_t pid = getpid();
-   char pfile[256];
-   FILE *fd;
-   int tmp;
-   unsigned int vsize, rss;
+  char fn[PATH_MAX], tmp[PATH_MAX];
+  FILE *f;
+  int ret;
+  long_long sz = 0, lck = 0, res = 0, shr = 0, stk = 0, txt = 0, dat = 0, dum = 0, lib = 0, hwm = 0;
 
-   sprintf(pfile, "/proc/%d/stat", pid);
-   if ((fd = fopen(pfile, "r")) == NULL) {
-      SUBDBG("PAPI_get_dmem_info can't open /proc/%d/stat\n", pid);
-      return (PAPI_ESYS);
-   }
-   fgets(pfile, 256, fd);
-   fclose(fd);
+  sprintf(fn,"/proc/%ld/status",(long)getpid());
+  f = fopen(fn,"r");
+  if (f == NULL)
+    {
+      PAPIERROR("fopen(%s): %s\n",fn,strerror(errno));
+      return PAPI_ESBSTR;
+    }
+  while (1)
+    {
+      if (fgets(tmp,PATH_MAX,f) == NULL)
+	break;
+      if (strspn(tmp,"VmSize:") == strlen("VmSize:"))
+	{
+	  sscanf(tmp+strlen("VmSize:"),"%lld",&sz);
+	  d->size = sz;
+	  continue;
+	}
+      if (strspn(tmp,"VmHWM:") == strlen("VmHWM:"))
+	{
+	  sscanf(tmp+strlen("VmHWM:"),"%lld",&hwm);
+	  d->high_water_mark = hwm;
+	  continue;
+	}
+      if (strspn(tmp,"VmLck:") == strlen("VmLck:"))
+	{
+	  sscanf(tmp+strlen("VmLck:"),"%lld",&lck);
+	  d->locked = lck;
+	  continue;
+	}
+      if (strspn(tmp,"VmRSS:") == strlen("VmRSS:"))
+	{
+	  sscanf(tmp+strlen("VmRSS:"),"%lld",&res);
+	  d->resident = res;
+	  continue;
+	}
+      if (strspn(tmp,"VmData:") == strlen("VmData:"))
+	{
+	  sscanf(tmp+strlen("VmData:"),"%lld",&dat);
+	  d->heap = dat;
+	  continue;
+	}
+      if (strspn(tmp,"VmStk:") == strlen("VmStk:"))
+	{
+	  sscanf(tmp+strlen("VmStk:"),"%lld",&stk);
+	  d->stack = stk;
+	  continue;
+	}
+      if (strspn(tmp,"VmExe:") == strlen("VmExe:"))
+	{
+	  sscanf(tmp+strlen("VmExe:"),"%lld",&txt);
+	  d->text = txt;
+	  continue;
+	}
+      if (strspn(tmp,"VmLib:") == strlen("VmLib:"))
+	{
+	  sscanf(tmp+strlen("VmLib:"),"%lld",&lib);
+	  d->library = lib;
+	  continue;
+	}
+    }
+  fclose(f);
 
-   /* Scan through the information */
-   sscanf(pfile,
-          "%d %s %c %d %d %d %d %d %u %u %u %u %u %d %d %d %d %d %d %d %d %d %u %u", &tmp,
-          pfile, pfile, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp,
-          &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &vsize, &rss);
-   switch (option) {
-   case PAPI_GET_RESSIZE:
-      return (rss);
-   case PAPI_GET_SIZE:
-      tmp = getpagesize();
-      if (tmp == 0)
-         tmp = 1;
-      return ((vsize / tmp));
-   default:
-      return (PAPI_EINVAL);
-   }
+  sprintf(fn,"/proc/%ld/statm",(long)getpid());
+  f = fopen(fn,"r");
+  if (f == NULL)
+    {
+      PAPIERROR("fopen(%s): %s\n",fn,strerror(errno));
+      return PAPI_ESBSTR;
+    }
+  ret = fscanf(f,"%lld %lld %lld %lld %lld %lld %lld",&dum,&dum,&shr,&dum,&dum,&dat,&dum);
+  if (ret != 7)
+    {
+      PAPIERROR("fscanf(7 items): %d\n",ret);
+      return PAPI_ESBSTR;
+    }
+  d->pagesize = getpagesize();
+  d->shared = (shr * d->pagesize)/1024;
+  fclose(f);
+
+  return PAPI_OK;
 }
+
 #endif /* __CATAMOUNT__ */
 #endif /* _WIN32 */
 

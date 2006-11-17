@@ -52,9 +52,6 @@ int main(int argc, char **argv)
    if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
-
    retval = PAPI_thread_init((unsigned long (*)(void)) (pthread_self));
    if (retval != PAPI_OK) {
       if (retval == PAPI_ESBSTR)

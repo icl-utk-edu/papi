@@ -2,7 +2,6 @@ LIBRARY = libpapi64.a
 SHLIB = libpapi64.so
 SUBSTR  = irix-mips
 MSUBSTR  = irix-mips
-OS	 = irix
 MEMSUBSTR= irix
 DESCR	= 'IRIX 6.x or greater (64bit ABI) with MIPS R10k/12k/14k'
 LIBS	= static shared 
@@ -22,13 +21,12 @@ POST_BUILD =
 SPECIAL_REMOVE =
 
 CC_SHR  = cc -shared -all -check_registry /usr/lib64/so_locations -soname $(SHLIB)
-CC_R	= cc -D_SGI_MP_SOURCE
-CC	= cc
-CPP	= cc -E $(FLAGS)
-F77	= f77
+CC_R	= $(CC) -D_SGI_MP_SOURCE -D_POSIX_C_SOURCE
+CC      = cc   
+CPP     = cc -E $(FLAGS)   
+F77     = f77 
 
 include ./Makefile.inc
-
 
 native_clean:
 

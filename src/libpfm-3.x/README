@@ -1,28 +1,39 @@
             ------------------------------------------------------
-                                    libpfm-3.1:
+                                    libpfm-3.2:
 	           a helper library to program the IA-64 PMU 
             ------------------------------------------------------
-           Copyright (c) 2001-2004 Hewlett-Packard Development Company, L.P.
-	                Stephane Eranian <eranian@hpl.hp.com>
+ 	  Copyright (c) 2001-2006 Hewlett-Packard Development Company, L.P.
+	                Contributed by Stephane Eranian <eranian@hpl.hp.com>
 	
 
 This package provides a library, called libpfm, which can be used
-to develop monitoring tools which use the IA-64 Performance Monitoring Unit (PMU). 
+to develop monitoring tools which use the Performance Monitoring Unit (PMU)
+of several modern processors. 
 
-This version of libpfm supports BOTH the Itanium (Merced) and Itanium2 (McKinley, 
-Madison, Deerfield) processors.
 
-The core library is generic and does not depend on the Linux/ia64 perfmon interface. 
-It is possible to use it on other IA-64 operating systems (some adjustments may still be needed).
+This version of libpfm supports:
+	- For IA-64 :  Itanium (Merced), Itanium 2 (McKinley, Madison, Deerfield), Itanium 2 9000 (Montecito)  and Generic
+	- For X86-64:  AMD X86-64 processors 32 and 64 bit modes (does not work for EM64T processors)
+	- For IA-32 :  Pentium M/P6 cores only, architected PMU (Core Duo/Solo or newer)
+	- For MIPS64:  5K, 20K only
+
+The core library is generic and does not depend on the perfmon interface. It is possible to use
+it on other operating systems (some adjustments may still be needed).
 
 WHAT'S THERE
 -------------
-	- the library source code including support for Itanium and Itanium2 and generic IA64 PMU
+	- the library source code including support for all processors listed above
 
-	- a set of examples showing how the library can be used on Linux/ia64 with a perfmon-2.x 
-	  interface
+	- a set of examples showing how the library can be used with the perfmon2
+	  version 2.2 or higher kernel interface.
 
-	- a set of header library files and the perfmon-2 kernel interface headers
+	- a set of older examples for IA-64 only showing the legacy perfmon2 interface.
+	  This is NOT for use on any other platforms.
+
+	- a set of library header files and the perfmon2 kernel interface headers
+
+	- libpfms: a simple library to help setup SMP system-wide monitoring sessions. It comes
+	  with a simple example. This library is not part of libpfm.
 
 	- man pages for all the library entry points
 
@@ -31,18 +42,26 @@ INSTALLATION
 	- edit config.mk to :
 		- update some of the configuration variables
 		- make your compiler options
-		- select which PMU you want to support. Multiple PMU can be supported by a single
-		  library
+		- select which PMU you want to support. Multiple PMU for the same processor architecture
+	   	  can be supported by a single library
 
 	- type make
 	- type make install
 
 REQUIREMENTS:
 -------------
-	- to run the examples, you MUST be using a linux kernel version of 2.6.0-test5 or higher.
-	  In other words, a kernel with a perfmon interface version 2.x.
-	  
+	- to run the programs in the examples subdir, you MUST be using a linux kernel version of
+	  2.6.17-rc6 or later with the corresponding perfmon new code base patch installed.
+	  The patch can be downloaded from:
+	  		http://www.sf.net/projects/perfmon2
+
+	- On IA-64, the examples in old_interface_ia64_examples work with any 2.6.x kernels.
+
 DOCUMENTATION
 -------------
 	- man pages for all entry points
 	- More information can be found on library web site: http://www.hpl.hp.com/research/linux/perfmon
+
+LIMITATIONS:
+------------
+	For Pentium M/P6, partial event tables are available at this point.

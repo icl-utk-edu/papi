@@ -7,24 +7,22 @@ DESCR	= "Solaris 5.8 or greater with UltraSPARC I, II or III"
 LIBS	= static shared 
 TARGETS	= serial multiplex_and_pthreads shared
 SHLIBDEPS = -lcpc
-OS      = solaris
-
 #
 # Sun Workshop compilers: V5.0 and V6.0 R2
 #
 TARGETS		+= smp omp
-CC			= cc 
+CC		= cc 
 CPP     	= $(CC) -E
 CC_R		= $(CC) -mt
 CC_SHR		= $(CC) -ztext -G -Kpic  
-CFLAGS  	= -DNO_VARARG_MACRO -DNEED_FFSLL  
+CFLAGS  	= -xtarget=ultra3 -xarch=v8plusa -DNO_VARARG_MACRO -D__EXTENSIONS__ -DPAPI_NO_MEMORY_MANAGEMENT
 SMPCFLGS	= -xexplicitpar
 OMPCFLGS	= -xopenmp
 F77		= f90
 FFLAGS		= $(CFLAGS)
 TOPTFLAGS	= 
 NOOPT		= -xO0 
-OPTFLAGS	= -fast -xarch=v8plus -xtarget=ultra
+OPTFLAGS	= -g -fast -xtarget=ultra3 -xarch=v8plusa 
 #
 # gcc 
 #
@@ -36,6 +34,8 @@ OPTFLAGS	= -fast -xarch=v8plus -xtarget=ultra
 #OPTFLAGS	= -O3
 #CFLAGS  	= -DNEED_FFSLL
 #FFLAGS		= $(CFLAGS)
+#TOPTFLAGS   =
+#SMPCFLGS    =
 #
 # Do not touch below here 
 #

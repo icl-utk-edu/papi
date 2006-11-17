@@ -57,8 +57,15 @@ int get_memory_info(PAPI_hw_info_t * mem_info)
    return PAPI_OK;
 }
 
-long _papi_hwd_get_dmem_info(int option)
+int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
 {
+	/* This function has been reimplemented 
+		to conform to current interface.
+		It has not been tested.
+		Nor has it been confirmed for completeness.
+		dkt 05-10-06
+	*/
+
    struct procsinfo pi;
    pid_t mypid = getpid();
    pid_t pid;
@@ -76,12 +83,16 @@ long _papi_hwd_get_dmem_info(int option)
    if (!found)
       return (PAPI_ESYS);
 
-   switch (option) {
-   case PAPI_GET_RESSIZE:
-      return (pi.pi_drss + pi.pi_trss);
-   case PAPI_GET_SIZE:
-      return (pi.pi_size);
-   default:
-      return (PAPI_EINVAL);
-   }
+   d->size = pi.pi_size;
+   d->resident = pi.pi_drss + pi.pi_trss;
+   d->high_water_mark = PAPI_EINVAL;
+   d->shared = PAPI_EINVAL;
+   d->text = pi.pi_trss; /* this is a guess */
+   d->library = PAPI_EINVAL;
+   d->heap = PAPI_EINVAL;
+   d->locked = PAPI_EINVAL;
+   d->stack = PAPI_EINVAL;
+   d->pagesize = getpagesize();
+
+   return (PAPI_OK);
 }
