@@ -16,7 +16,7 @@ MEMSUBSTR = perfmon
 #
 
 CC_R    	:= $(CC) -pthread
-CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.$(VERSION) 
+CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.$(VERSION) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
 FFLAGS		+= -ffixed-line-length-132
 CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) 
 ifeq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))

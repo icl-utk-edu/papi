@@ -13,7 +13,7 @@ TARGETS = serial multiplex_and_pthreads shared ear range
 #
 
 CC_R    	= $(CC) -pthread
-CC_SHR		= $(CC) -fPIC -DPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
+CC_SHR		= $(CC) -fPIC -DPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
 FFLAGS		+= -ffixed-line-length-132
 CFLAGS		+= -Wall 
 
@@ -31,7 +31,7 @@ F77      = ifort
 CC	 = icc
 endif
 CC_R	 = $(CC) -pthread
-CC_SHR	 = $(CC) -fPIC -DPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
+CC_SHR	 = $(CC) -fPIC -DPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
 OMPCFLGS = -openmp
 OPTFLAGS = -ip
 FFLAGS   = -132

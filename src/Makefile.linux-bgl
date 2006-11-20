@@ -31,7 +31,7 @@ DESCR   = "Linux for BlueGene/L"
 LIBS    = static
 TARGETS = serial #multiplex_and_pthreads
 
-CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
+CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
 CC_R    = $(CC) -pthread
 CFLAGS += -I. #-DDEBUG
 # Some nice flags to add to CFLAGS when debugging PAPI library itself

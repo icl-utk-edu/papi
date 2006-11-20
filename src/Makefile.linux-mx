@@ -12,7 +12,7 @@ F77		= g77
 CC		= gcc
 CC_R    	= $(CC) -pthread
 MPICC		= mpicc
-CC_SHR		= $(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
+CC_SHR		= $(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
 CFLAGS  	= -Wall -g -DDEBUG 
 FFLAGS		= -Wall -g
 
