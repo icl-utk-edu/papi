@@ -1,8 +1,8 @@
 # $Id$
 
 DESCR   = "Linux with PFM $(VERSION) kernel support and library"
-LIBRARY   = libpapi.a
-SHLIB     = libpapi.so
+LIBRARY = libpapi.a
+SHLIB   = libpapi.so.$(PAPIVER)
 SUBSTR  = linux-ia64
 MEMSUBSTR= linux-ia64
 LIBS	= static shared
@@ -13,7 +13,7 @@ TARGETS = serial multiplex_and_pthreads shared ear range
 #
 
 CC_R    	= $(CC) -pthread
-CC_SHR		= $(CC) -fPIC -DPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
+CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.$(PAPIVER) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
 FFLAGS		+= -ffixed-line-length-132
 CFLAGS		+= -Wall 
 
@@ -131,6 +131,9 @@ native_install:
 ifneq (,${PFM_ROOT})
 	$(MAKE) -C $(PFM_ROOT) DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
+	cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE)
+	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so.$(PAPIVER)
+	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so
 
 native_clobber:
 ifneq (,${PFM_ROOT})

@@ -2,10 +2,7 @@
 
 DESCR   = "Linux with PFM $(VERSION) kernel support and library"
 LIBRARY = libpapi.a
-VERSION = 3
-REVISION = 5
-AGE = 0
-SHLIB   = libpapi.so.$(VERSION)
+SHLIB   = libpapi.so.$(PAPIVER)
 LIBS	= static shared
 TARGETS = ear serial multiplex_and_pthreads shared
 SUBSTR	= perfmon
@@ -16,7 +13,7 @@ MEMSUBSTR = perfmon
 #
 
 CC_R    	:= $(CC) -pthread
-CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.$(VERSION) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
+CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.$(PAPIVER) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
 FFLAGS		+= -ffixed-line-length-132
 CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) 
 ifeq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))
@@ -85,7 +82,9 @@ native_install:
 ifneq (,${PFM_ROOT})
 	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
-	cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(VERSION).$(REVISION).$(AGE)
+	cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE)
+	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so.$(PAPIVER)
+	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so
 	-mkdir -p $(DESTDIR)$(DATADIR)
 	-chmod go+rx $(DESTDIR)$(DATADIR)
 	cp -f ./perfmon_events.csv $(DESTDIR)$(DATADIR)
