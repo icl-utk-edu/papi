@@ -85,7 +85,7 @@ native_install:
 ifneq (,${PFM_ROOT})
 	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
-	cd $(DESTDIR)/$(LIBDIR); cp -p $(SHLIB) libpapi.so.$(VERSION).$(REVISION).$(AGE)
+	cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(VERSION).$(REVISION).$(AGE)
 	-mkdir -p $(DESTDIR)$(DATADIR)
 	-chmod go+rx $(DESTDIR)$(DATADIR)
 	cp -f ./perfmon_events.csv $(DESTDIR)$(DATADIR)
