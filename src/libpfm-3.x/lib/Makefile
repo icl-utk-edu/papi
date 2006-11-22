@@ -124,6 +124,7 @@ libpfm.a:  $(OBJS)
 $(SLIBPFM):  $(SOBJS)
 	$(CC) -shared -Wl,-soname -Wl,$(VLIBPFM) -o $@ $(SOBJS)
 	$(LN) -sf $@ $(VLIBPFM)
+	$(LN) -sf $@ libpfm.so
 
 clean:
 	$(RM) -f $(OBJS) $(SOBJS) $(SUPP_OBJS)
@@ -138,7 +139,8 @@ install: $(TARGETS)
 	-mkdir -p $(DESTDIR)$(LIBDIR)
 	$(INSTALL) -m 644 $(ALIBPFM) $(DESTDIR)$(LIBDIR)
 	$(INSTALL) $(SLIBPFM) $(DESTDIR)$(LIBDIR)
-
+	cd $(DESTDIR)$(LIBDIR); ln -sf $(SLIBPFM) $(VLIBPFM) 
+	cd $(DESTDIR)$(LIBDIR); ln -sf $(SLIBPFM) libpfm.so
 
 INC_COMMON= $(PFMINCDIR)/perfmon/pfmlib.h \
   $(PFMINCDIR)/perfmon/pfmlib_comp.h \
