@@ -143,7 +143,7 @@ static itanium_preset_search_t ia2_preset_search_map[] = {
     {"L3_READS_DATA_READ_HIT", "L3_WRITES_DATA_WRITE_HIT", 0, 0}},
    {PAPI_L1_DCA, 0, {"L1D_READS_SET1", 0, 0, 0}},
    {PAPI_L2_DCA, 0, {"L2_DATA_REFERENCES_L2_ALL", 0, 0, 0}},
-   {PAPI_L3_DCA, 0, {"L3_REFERENCES", 0, 0, 0}},
+   {PAPI_L3_DCA, DERIVED_ADD, {"L3_READS_DATA_READ_ALL", "L3_WRITES_DATA_WRITE_ALL", 0, 0}},
    {PAPI_L1_DCR, 0, {"L1D_READS_SET1", 0, 0, 0}},
    {PAPI_L2_DCR, 0, {"L2_DATA_REFERENCES_L2_DATA_READS", 0, 0, 0}},
    {PAPI_L3_DCR, 0, {"L3_READS_DATA_READ_ALL", 0, 0, 0}},
