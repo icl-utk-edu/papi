@@ -111,16 +111,8 @@ inline_static ThreadInfo_t *_papi_hwi_lookup_thread(void)
   
   if (tmp)
     {
-#ifndef HAVE_MMTIMER
-      /* Conditionalize this update as this implies a barrier (and cache line traffic on SMP/NUMA systems) */
-      if (tmp != _papi_hwi_thread_head)
-	{
-	  THRDBG("Found thread 0x%lx at %p, updating to new head\n",tid,tmp);
-	  _papi_hwi_thread_head = tmp;
-	}
-#else
+      _papi_hwi_thread_head = tmp;
       THRDBG("Found thread 0x%lx at %p\n",tid,tmp);
-#endif
     }
   else
     {
