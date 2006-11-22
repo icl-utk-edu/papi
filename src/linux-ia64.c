@@ -624,6 +624,14 @@ static int get_system_info(void)
    return (PAPI_OK);
 }
 
+int sem_set;
+
+       union semun {
+               int val;                    /* value for SETVAL */
+               struct semid_ds *buf;       /* buffer for IPC_STAT, IPC_SET */
+               unsigned short int *array;  /* array for GETALL, SETALL */
+               struct seminfo *__buf;      /* buffer for IPC_INFO */
+       };
 int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {
   int retval, type, i;
@@ -634,8 +642,23 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   /* Always initialize globals dynamically to handle forks properly. */
 
   preset_search_map = NULL;
-  for (i = 0; i < PAPI_MAX_LOCK; i++)
-    _papi_hwd_lock_data[i] = MUTEX_OPEN;
+{
+   int retval, i;
+  	union semun val; 
+	val.val=1;
+   if ((retval = semget(IPC_PRIVATE,PAPI_MAX_LOCK,0666)) == -1)
+     {
+       PAPIERROR("semget errno %d",errno); return(PAPI_ESYS);
+     }
+   sem_set = retval;
+   for (i=0;i<PAPI_MAX_LOCK;i++)
+     {
+       if ((retval = semctl(sem_set,i,SETVAL,val)) == -1)
+	 {
+	   PAPIERROR("semctl errno %d",errno); return(PAPI_ESYS);
+	 }
+     }
+}
 
   /* Setup the vector entries that the OS knows about */
 #ifndef PAPI_NO_VECTOR
