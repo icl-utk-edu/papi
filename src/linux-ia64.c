@@ -363,8 +363,10 @@ inline_static unsigned long get_cycles(void)
 #else                           /* GCC */
    /* XXX: need more to adjust for Itanium itc bug */
    __asm__ __volatile__("mov %0=ar.itc":"=r"(tmp)::"memory");
+#if defined(PFMLIB_MONTECITO_PMU)
    if (_perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU)
      tmp = tmp * (unsigned long)4;
+#endif
 #endif
    return tmp;
 }
