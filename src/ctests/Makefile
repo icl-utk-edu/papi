@@ -1,4 +1,4 @@
-OMP	= zero_omp
+OMP	= zero_omp omptough
 SMP	= zero_smp
 SHMEM	= zero_shmem
 PTHREADS= thrspecific profile_pthreads overflow_pthreads zero_pthreads unregister_pthreads clockres_pthreads overflow3_pthreads locks_pthreads 
@@ -135,6 +135,9 @@ zero_shmem: zero_shmem.c $(UTILOBJS) $(PAPILIB)
 
 zero_omp: zero_omp.c $(UTILOBJS) $(PAPILIB)
 	-$(CC_R) $(OMPCFLGS) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) zero_omp.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero_omp $(OMPLIBS)
+
+omptough: omptough.c $(UTILOBJS) $(PAPILIB)
+	-$(CC_R) $(OMPCFLGS) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) omptough.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o omptough $(OMPLIBS)
 
 val_omp: val_omp.c $(UTILOBJS) $(PAPILIB)
 	-$(CC_R) $(OMPCFLGS) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) val_omp.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o val_omp $(OMPLIBS)
