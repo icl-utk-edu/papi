@@ -129,7 +129,12 @@ endif
 
 native_install:
 ifneq (,${PFM_ROOT})
+ifeq (2.x,$(VERSION))
+# This version has a very old makefile	
+	$(MAKE) -C $(PFM_ROOT) DESTDIR=$(DESTDIR)$(PREFIX) MANDIR=$(DESTDIR)$(MANDIR)/man3 install
+else
 	$(MAKE) -C $(PFM_ROOT) DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
+endif
 endif
 	cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE)
 	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so.$(PAPIVER)
