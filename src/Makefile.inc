@@ -1,7 +1,3 @@
-PAPIVER = 3
-PAPIREV = 5
-PAPIAGE = 1
-
 PAPI_SRCDIR = $(PWD)	
 SOURCES	  = $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c multiplex.c \
     papi_fwrappers.c papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c \
