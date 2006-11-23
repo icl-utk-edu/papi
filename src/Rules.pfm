@@ -12,31 +12,15 @@ TARGETS = serial multiplex_and_pthreads shared ear range
 # GNU G77/GCC section
 #
 
+ifneq (,$(shell gcc -v 2>&1 | grep version | cut -f3 -d" " | grep "^4"))
+TARGETS += omp
+OMPCFLGS = -fopenmp
+endif
+
 CC_R    	= $(CC) -pthread
 CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.$(PAPIVER) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
 FFLAGS		+= -ffixed-line-length-132
 CFLAGS		+= -Wall 
-
-#
-#  Intel compilers
-#
-
-ifeq (INTEL, $(COMPILER))
-IFCVER7  = $(shell efc -V 2>&1 | grep "Version 7")
-ifneq (,$(IFCVER7))
-F77      = efc
-CC	 = ecc 
-else
-F77      = ifort
-CC	 = icc
-endif
-CC_R	 = $(CC) -pthread
-CC_SHR	 = $(CC) -fPIC -DPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
-OMPCFLGS = -openmp
-OPTFLAGS = -ip
-FFLAGS   = -132
-TARGETS	 += omp
-endif
 
 KERNMINVER	= $(shell uname -r | cut -f2 -d.)
 POST_BUILD	=

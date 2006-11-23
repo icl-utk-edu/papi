@@ -7081,6 +7081,7 @@ _ACEOF
 
 
 
+
 if test "$cross_compiling" = "yes" ; then
    { echo "$as_me:$LINENO: Compiling genpapifdef with $nativecc because cross compiling" >&5
 echo "$as_me: Compiling genpapifdef with $nativecc because cross compiling" >&6;}

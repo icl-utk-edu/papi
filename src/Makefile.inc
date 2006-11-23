@@ -39,7 +39,7 @@ $(LIBRARY): $(OBJECTS)
 	ar $(ARG64) ruv $(LIBRARY) $(OBJECTS) 
 
 $(SHLIB): $(SOURCES) $(SHLIBOBJS) 
-	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(SHLIBDEPS)
+	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(LDFLAGS) $(SHLIBDEPS) 
 	-$(POST_BUILD)
 
 papi_fwrappers_.c: papi_fwrappers.c $(HEADERS)
