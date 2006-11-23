@@ -188,14 +188,19 @@ static int EventInfoArrayLength(const EventSetInfo_t * ESI)
 static void initialize_EventInfoArray(EventSetInfo_t * ESI)
 {
    int i, j, limit = _papi_hwi_system_info.sub_info.num_mpx_cntrs;
-   /* Always initialize the whole thing */
+   EventInfo_t tmp;
 
+   /* This is an optimization */
+
+   memset(&tmp,0x0,sizeof(tmp));
+   tmp.event_code = PAPI_NULL;
+   tmp.ops = NULL;
+   tmp.derived = NOT_DERIVED;
+   for (j = 0; j < MAX_COUNTER_TERMS; j++)
+     tmp.pos[j] = -1;
+   
    for (i = 0; i < limit; i++) {
-      ESI->EventInfoArray[i].event_code = PAPI_NULL;
-      for (j = 0; j < MAX_COUNTER_TERMS; j++)
-         ESI->EventInfoArray[i].pos[j] = -1;
-      ESI->EventInfoArray[i].ops = NULL;
-      ESI->EventInfoArray[i].derived = NOT_DERIVED;
+     memcpy(&ESI->EventInfoArray[i],&tmp,sizeof(tmp));
    }
 }
 
