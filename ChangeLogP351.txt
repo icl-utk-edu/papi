@@ -1,0 +1,8 @@
+2006-11-21	mucci
+	- Better RPATH for shared libs
+	- IA64 semaphores instead of user level locks (ugh)
+	- L3 IA64 preset update
+	- Added real shared library versioning for Linux platforms
+	  controlled by the top of Makefile.inc
+2006-11-20	mucci
+	- Added LIBDIR rpath for linux builds instead of PREFIX/lib
