@@ -1,8 +1,10 @@
-
+#include <pthread.h>
+#include <stdlib.h>
+#include <malloc.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <omp.h>
 #include <papi.h>
-#include <pthread.h>
 
 #define NITER (100000)
 
@@ -13,9 +15,6 @@ int main( int argc, char* argv[] )
   int nthreads;
   int *evtset;
   int *ctrcode;
-  pthread_t pid;
-  int global;
-  omp_lock_t lock;
 
   nthreads = omp_get_max_threads();
   evtset   = (int*) malloc( sizeof(int)*nthreads );
@@ -63,7 +62,6 @@ int main( int argc, char* argv[] )
 	int tid;
 	int pid;
 	tid = omp_get_thread_num();
-	long long ctr;
 
 	pid = pthread_self();  
 
@@ -96,4 +94,5 @@ int main( int argc, char* argv[] )
 
       }    
     }
+  exit(1);
 }
