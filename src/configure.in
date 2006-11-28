@@ -304,12 +304,11 @@ AC_MSG_RESULT($debug)
 
 # Checks for programs.
 AC_PROG_AWK
+AC_PROG_CC
+AC_PROG_F77
 if test "$OS" != "linux"; then
    AC_PROG_CC(xlc cc gcc)
    AC_PROG_F77(xlf f77 f90 f95 gfortran)
-else
-   AC_PROG_CC
-   AC_PROG_F77
 fi
 AC_PROG_CPP
 AC_PROG_LN_S
