@@ -1,3 +1,11 @@
+2006-11-25	mucci
+	- Added -Bdynamic to shared library builds
+	- Fixed configure test for alternate CC compilers that
+	  was breaking. 
+2006-11-23	mucci
+	- Added LDFLAGS support to Linux systems and configure
+	- Added pthread test case from Karl of TUM in Germany
+	- Added OpenMP support for GCC 4
 2006-11-21	mucci
 	- Better RPATH for shared libs
 	- IA64 semaphores instead of user level locks (ugh)
