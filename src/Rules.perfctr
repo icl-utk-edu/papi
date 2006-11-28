@@ -6,8 +6,7 @@
 
 DESCR   = "Linux with PerfCtr $(VERSION) patch and library"
 LIBS    = static shared
-# TARGETS = serial attach multiplex_and_pthreads shared
-TARGETS = pthreads
+TARGETS = serial attach multiplex_and_pthreads shared
 LIBRARY = libpapi.a
 SHLIB   = libpapi.so.$(PAPIVER)
 SUBSTR  = perfctr-$(CPU)
@@ -102,7 +101,7 @@ else
 OPTFLAGS	+= -O3 $(DEBUGFLAGS)
 endif
 else
-OPTFLAGS	+= -g $(DEBUGFLAGS)
+OPTFLAGS	+= -g -O $(DEBUGFLAGS)
 endif
 
 FFLAGS        	+= -Dlinux $(FARGS)
@@ -136,7 +135,7 @@ CFLAGS += $(EVENTFLAGS) -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) $(CFLAGS-$(
 
 MISCHDRS = perfctr-$(CPU).h
 MISCSRCS =  $(CPU)_events.c linux.c $(ARCH_SPEC_EVTS)
-SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
+SHLIBDEPS = -Bdynamic -L$(PERFCTR_LIB_PATH) -lperfctr
 PERFCTR_OBJS = $(shell ar t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
 ifeq (,$(PERFCTR_OBJS))
 $(PERFCTR_LIB_PATH)/libperfctr.a:
