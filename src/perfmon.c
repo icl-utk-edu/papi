@@ -1348,20 +1348,16 @@ static int mips_get_cache(char *entry, int *sizeB, int *assoc, int *lineB)
 
 static int mips_get_policy(char *s, int *cached, int *policy)
 {
-  char *entry = strtok(s," ");
-
-  do {
-    if (strcasecmp(entry,"cached") == 0)
-      *cached = 1;
-    else if (strcasecmp(entry,"write-back") == 0)
-      *policy = PAPI_MH_TYPE_WB | PAPI_MH_TYPE_LRU;
-    else if (strcasecmp(entry,"write-through") == 0)
-      *policy = PAPI_MH_TYPE_WT | PAPI_MH_TYPE_LRU;
-  } while ((entry = strtok(NULL," ")));
+  if (strstr(s,"cached"))
+    *cached = 1;
+  if (strstr(s,"write-back"))
+    *policy = PAPI_MH_TYPE_WB | PAPI_MH_TYPE_LRU;
+  if (strstr(s,"write-through"))
+    *policy = PAPI_MH_TYPE_WT | PAPI_MH_TYPE_LRU;
 
   if (*policy == 0)
-    PAPIERROR("Could not get cache policy from %s\nPlease send this line to ptools-perfapi@cs.utk.edu",entry);
-      
+    PAPIERROR("Could not get cache policy from %s\nPlease send this line to ptools-perfapi@cs.utk.edu",s);
+
   SUBDBG("Got policy 0x%x, cached 0x%x\n",*policy,*cached);
   return(PAPI_OK);
 }
@@ -2858,6 +2854,7 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
     }
 
   memcpy(&thr_ctx->ctx,&newctx,sizeof(newctx));
+  thr_ctx->ctx_fd = ctx_fd;
   load_args.load_pid = mygettid();
   memcpy(&thr_ctx->load,&load_args,sizeof(load_args));
 
@@ -4107,6 +4104,7 @@ int _papi_hwd_init_control_state(hwd_control_state_t *ctl)
   memset(setinfo,0,sizeof(ctl->setinfo));
   /* Will be filled by update now...until this gets another arg */
   ctl->ctx = NULL;
+  ctl->ctx_fd = -1;
   ctl->load = NULL;
   set_domain(ctl,_papi_hwi_system_info.sub_info.default_domain);
   return(PAPI_OK);
@@ -4193,6 +4191,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t *ctl,
   if (ctl->ctx == NULL)
     {
       ctl->ctx = &ctx->ctx;
+      ctl->ctx_fd = ctx->ctx_fd;
       ctl->load = &ctx->load;
     }
 
