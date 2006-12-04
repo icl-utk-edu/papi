@@ -8,7 +8,7 @@ DESCR   = "Linux with PerfCtr $(VERSION) patch and library"
 LIBS    = static shared
 TARGETS = serial attach multiplex_and_pthreads shared
 LIBRARY = libpapi.a
-SHLIB   = libpapi.so
+SHLIB   = libpapi.so.$(PAPIVER)
 SUBSTR  = perfctr-$(CPU)
 ARCH	= $(shell uname -m)
 
@@ -64,27 +64,15 @@ ARCH_SPEC_EVTS	:= $(ARCH_EVENTS)_map.c
 MEMSUBSTR 	= linux-ppc64
 endif
 
+ifneq (,$(shell gcc -v 2>&1 | grep version | cut -f3 -d" " | grep "^4"))
+TARGETS += omp
+OMPCFLGS = -fopenmp
+endif
+
 CC_R    	:= $(CC) -pthread
-CC_SHR		:= $(CC) -fPIC -DPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
-GCCVER3		= $(shell gcc -v 2>&1 | grep version | cut -f3 -d" " | grep "^3")
+CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.$(PAPIVER) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
 FFLAGS		+= -Wall -ffixed-line-length-132 $(BITFLAGS)
 CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(BITFLAGS)
-
-ifeq (,$(GCCVER3))
-OPTFLAGS	= 
-else
-GCCVER33	= $(shell gcc -v 2>&1 | tail -n 1 | grep version | cut -f3 -d" " | cut -f2 -d"." | grep "^3")
-ifeq (,$(GCCVER33))
-OPTFLAGS	= $(GCC3ARGS)
-else
-OPTFLAGS	= $(GCC3ARGS)
-endif
-endif
-
-ifneq (,$(XMLFLAG))
-LDFLAGS		= -lexpat
-CFLAGS		+= -DXML
-endif
 
 # 
 # Catamount section
@@ -101,45 +89,8 @@ endif
 # Portland Group section
 # 
 
-ifeq (PGROUP, $(COMPILER))
-F77       	= pgf77
-CC	  	= pgcc
-FFLAGS    	= 
-OPTFLAGS  	=
+ifeq (icc, $(CC))
 TARGETS	  	+= omp
-endif
-
-# 
-# Pathscale Group PGF77 section
-# 
-
-ifeq (PATHSCALE, $(COMPILER))
-F77       	= pathf90
-CC	  	= pathcc
-CC_R      	= pathcc
-FFLAGS    	= 
-OPTFLAGS  	=
-endif
-
-#
-#  Intel compilers
-#
-
-ifeq (INTEL, $(COMPILER))
-IFCVER7  	= $(shell ifc -V 2>&1 | grep "Version 7")
-ifneq (,$(IFCVER7))
-F77      	= ifc
-LDFLAGS  	= -Vaxlib
-else
-F77      	= ifort
-endif
-CC	 	= icc
-CC_R	 	= $(CC) -pthread
-CC_SHR	 	= $(CC) -fPIC -DPIC -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(PREFIX)/lib"
-OMPCFLGS 	= -openmp
-OPTFLAGS 	= -ip
-FFLAGS   	= -132
-TARGETS	 	+= omp
 endif
 
 ifeq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))
@@ -150,7 +101,7 @@ else
 OPTFLAGS	+= -O3 $(DEBUGFLAGS)
 endif
 else
-OPTFLAGS	+= -g $(DEBUGFLAGS)
+OPTFLAGS	+= -g -O $(DEBUGFLAGS)
 endif
 
 FFLAGS        	+= -Dlinux $(FARGS)
@@ -184,7 +135,7 @@ CFLAGS += $(EVENTFLAGS) -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) $(CFLAGS-$(
 
 MISCHDRS = perfctr-$(CPU).h
 MISCSRCS =  $(CPU)_events.c linux.c $(ARCH_SPEC_EVTS)
-SHLIBDEPS = -L$(PERFCTR_LIB_PATH) -lperfctr
+SHLIBDEPS = -Bdynamic -L$(PERFCTR_LIB_PATH) -lperfctr
 PERFCTR_OBJS = $(shell ar t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
 ifeq (,$(PERFCTR_OBJS))
 $(PERFCTR_LIB_PATH)/libperfctr.a:
@@ -272,6 +223,9 @@ else
 endif
 endif
 endif
+	cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE)
+	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so.$(PAPIVER)
+	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so
 
 native_clobber:
 ifneq (,${PERFCTR_ROOT})

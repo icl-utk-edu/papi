@@ -10,7 +10,7 @@ OBJECTS   = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o multiplex.o \
 HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h \
     papi_preset.h threads.h papi_protos.h papi_vector.h papi_vector_redefine.h \
     papi_memory.h config.h
-LIBCFLAGS = $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" 
+LIBCFLAGS = -I. $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" 
 FHEADERS  = fpapi.h f77papi.h f90papi.h
 
 all: showconf $(LIBS) utils tests
@@ -39,7 +39,7 @@ $(LIBRARY): $(OBJECTS)
 	ar $(ARG64) ruv $(LIBRARY) $(OBJECTS) 
 
 $(SHLIB): $(SOURCES) $(SHLIBOBJS) 
-	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(SHLIBDEPS)
+	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(LDFLAGS) $(SHLIBDEPS) 
 	-$(POST_BUILD)
 
 papi_fwrappers_.c: papi_fwrappers.c $(HEADERS)
@@ -140,6 +140,8 @@ clean: native_clean
 clobber distclean: clean native_clobber
 	-rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) $(SPECIAL_REMOVE) Makefile config.h
 	-cd utils;  $(MAKE) clobber
+	-rm -f config.log config.status f77papi.h f90papi.h fpapi.h
+
 null:
 
 dist: 

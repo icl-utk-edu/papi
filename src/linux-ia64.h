@@ -32,6 +32,9 @@
 #include <sys/time.h>
 #include <sys/times.h>
 #include <sys/ucontext.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
 
 #ifdef ALTIX
 #include <sys/ioctl.h>
@@ -162,12 +165,29 @@ typedef struct sigcontext hwd_ucontext_t;
 #define BTB_REGS_MASK       (M_PMD(8)|M_PMD(9)|M_PMD(10)|M_PMD(11)|M_PMD(12)|M_PMD(13)|M_PMD(14)|M_PMD(15)|M_PMD(16))
 
 extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
+extern int sem_set;
+
 #define MUTEX_OPEN (unsigned int)1
 #define MUTEX_CLOSED (unsigned int)0
 
 /* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
  * else val = MUTEX_CLOSED */
 
+#define  _papi_hwd_lock(lck)                    \
+{                                               \
+struct sembuf sem_lock = { lck, -1, 0 }; \
+if (semop(sem_set, &sem_lock, 1) == -1 ) {      \
+abort(); } }
+// PAPIERROR("semop errno %d",errno); abort(); } }
+
+#define  _papi_hwd_unlock(lck)                   \
+{                                                \
+struct sembuf sem_unlock = { lck, 1, 0 }; \
+if (semop(sem_set, &sem_unlock, 1) == -1 ) {     \
+abort(); } }
+// PAPIERROR("semop errno %d",errno); abort(); } }
+
+#if 0
 #ifdef __INTEL_COMPILER
 #define _papi_hwd_lock(lck) { while(_InterlockedCompareExchange_acq(&_papi_hwd_lock_data[lck],MUTEX_CLOSED,MUTEX_OPEN) != MUTEX_OPEN) { ; } } 
 
@@ -183,6 +203,7 @@ extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 #define _papi_hwd_unlock(lck)			 			      \
     { uint64_t res = 0;							      \
     __asm__ __volatile__ ("xchg4 %0=[%1],%2" : "=r"(res) : "r"(&_papi_hwd_lock_data[lck]), "r"(MUTEX_OPEN) : "memory"); }
+#endif
 #endif
 
 #endif

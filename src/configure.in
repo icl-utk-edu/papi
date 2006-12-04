@@ -79,6 +79,7 @@ cc ckcatamount.c 2>&1 | cat > ckcat
 if test "`cat ckcat | grep "IS_CATAMOUNT"`" != ""; then
 OS=catamount
 fi
+/bin/rm -f ckcat
 ])
 AC_MSG_RESULT($OS)
 if test "$OS" = "catamount"; then
@@ -156,11 +157,11 @@ case "$OS" in
            made=GenuineIntel
            family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
            model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
-           # family 15 is always P4; model 2 is vanilla; model 3 is em64t, 4 is Pentium D, 6 is Xeon D
+           # family 15 is always P4; model 1 is vanilla pre-HT, model 2 is vanilla; model 3 is em64t, 4 is Pentium D, 6 is Xeon D
            if test "$family" = "15"; then
              if (test "$model" = "3" || test "$model" = "4" || test "$model" = "6"); then
                CPU=em64t
-             elif test "$model" = "2"; then
+             elif (test "$model" = "1" || test "$model" = "2"); then
                CPU=p4
              fi
            elif test "$family" = "32"; then
@@ -304,12 +305,11 @@ AC_MSG_RESULT($debug)
 
 # Checks for programs.
 AC_PROG_AWK
+AC_PROG_CC
+AC_PROG_F77
 if test "$OS" != "linux"; then
    AC_PROG_CC(xlc cc gcc)
    AC_PROG_F77(xlf f77 f90 f95 gfortran)
-else
-   AC_PROG_CC
-   AC_PROG_F77
 fi
 AC_PROG_CPP
 AC_PROG_LN_S
@@ -1220,6 +1220,7 @@ AC_SUBST(PMAPI)
 AC_SUBST(F77)
 AC_SUBST(CPP)
 AC_SUBST(CC)
+AC_SUBST(LDFLAGS)
 AC_SUBST(NOTLS)
 AC_SUBST(altix)
 AC_SUBST(PMINIT)

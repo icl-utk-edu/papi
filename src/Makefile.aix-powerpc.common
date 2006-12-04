@@ -1,8 +1,6 @@
 MEMSUBSTR=aix
 LIBS   = static shared
 TARGETS        = serial multiplex_and_pthreads smp omp
-#PMAPI = /usr/pmapi
-SHLIBDEPS = -L$(PMAPI)/lib -lpmapi
 POST_BUILD =
 SPECIAL_REMOVE =
 
@@ -15,7 +13,7 @@ FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(TOPTFLAGS)
 SMPCFLGS= -qsmp
 OMPCFLGS= -qsmp=omp
-LDFLAGS = -L$(PMAPI)/lib -lpmapi
+LDFLAGS += -L$(PMAPI)/lib -lpmapi
 CC_R   = xlc_r
 CC     = xlc
 CC_SHR = xlc -G -bnoentry

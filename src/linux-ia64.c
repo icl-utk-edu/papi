@@ -143,7 +143,7 @@ static itanium_preset_search_t ia2_preset_search_map[] = {
     {"L3_READS_DATA_READ_HIT", "L3_WRITES_DATA_WRITE_HIT", 0, 0}},
    {PAPI_L1_DCA, 0, {"L1D_READS_SET1", 0, 0, 0}},
    {PAPI_L2_DCA, 0, {"L2_DATA_REFERENCES_L2_ALL", 0, 0, 0}},
-   {PAPI_L3_DCA, 0, {"L3_REFERENCES", 0, 0, 0}},
+   {PAPI_L3_DCA, DERIVED_ADD, {"L3_READS_DATA_READ_ALL", "L3_WRITES_DATA_WRITE_ALL", 0, 0}},
    {PAPI_L1_DCR, 0, {"L1D_READS_SET1", 0, 0, 0}},
    {PAPI_L2_DCR, 0, {"L2_DATA_REFERENCES_L2_DATA_READS", 0, 0, 0}},
    {PAPI_L3_DCR, 0, {"L3_READS_DATA_READ_ALL", 0, 0, 0}},
@@ -363,8 +363,10 @@ inline_static unsigned long get_cycles(void)
 #else                           /* GCC */
    /* XXX: need more to adjust for Itanium itc bug */
    __asm__ __volatile__("mov %0=ar.itc":"=r"(tmp)::"memory");
+#if defined(PFMLIB_MONTECITO_PMU)
    if (_perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU)
      tmp = tmp * (unsigned long)4;
+#endif
 #endif
    return tmp;
 }
@@ -622,6 +624,14 @@ static int get_system_info(void)
    return (PAPI_OK);
 }
 
+int sem_set;
+
+       union semun {
+               int val;                    /* value for SETVAL */
+               struct semid_ds *buf;       /* buffer for IPC_STAT, IPC_SET */
+               unsigned short int *array;  /* array for GETALL, SETALL */
+               struct seminfo *__buf;      /* buffer for IPC_INFO */
+       };
 int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {
   int retval, type, i;
@@ -632,8 +642,23 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   /* Always initialize globals dynamically to handle forks properly. */
 
   preset_search_map = NULL;
-  for (i = 0; i < PAPI_MAX_LOCK; i++)
-    _papi_hwd_lock_data[i] = MUTEX_OPEN;
+{
+   int retval, i;
+  	union semun val; 
+	val.val=1;
+   if ((retval = semget(IPC_PRIVATE,PAPI_MAX_LOCK,0666)) == -1)
+     {
+       PAPIERROR("semget errno %d",errno); return(PAPI_ESYS);
+     }
+   sem_set = retval;
+   for (i=0;i<PAPI_MAX_LOCK;i++)
+     {
+       if ((retval = semctl(sem_set,i,SETVAL,val)) == -1)
+	 {
+	   PAPIERROR("semctl errno %d",errno); return(PAPI_ESYS);
+	 }
+     }
+}
 
   /* Setup the vector entries that the OS knows about */
 #ifndef PAPI_NO_VECTOR

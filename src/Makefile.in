@@ -1,3 +1,6 @@
+PAPIVER=3
+PAPIREV=5
+PAPIAGE=1
 ARCH	  = @arch@
 MAKEVER   = @MAKEVER@
 PREFIX    = @prefix@
@@ -15,6 +18,7 @@ ALTIX	  = @altix@
 PMINIT	  = @PMINIT@
 F77	  = @F77@
 CC	  = @CC@
+LDFLAGS	  = @LDFLAGS@
 CPP	  = @CPP@
 PFM_PREFIX	= @pfm_prefix@ 
 PFM_ROOT  	= @pfm_root@

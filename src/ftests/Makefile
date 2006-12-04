@@ -1,8 +1,8 @@
 INCLUDE = -I. -I.. -I../ctests
 TESTS 	= strtest zero first  second tenth description fdmemtest\
           accum highlevel cost johnmay2 native \
-	  avail case1 case2 clockres eventname fmatrixlowpapi \
-	  fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2
+	  case1 case2 clockres eventname fmatrixlowpapi \
+	  fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2 avail 
 PAPILIB	= do_loops.o dummy.o ftests_util.o ../$(LIBRARY)
 FTEST_DEPENDENCE=$(PAPILIB) fpapi_test.h ../fpapi.h ../ctests/test_utils.h
 

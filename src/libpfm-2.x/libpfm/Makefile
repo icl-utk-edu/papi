@@ -88,6 +88,7 @@ libpfm.a:  $(OBJS)
 $(SLIBPFM):  $(SOBJS)
 	$(CC) -shared -Wl,-soname -Wl,libpfm.so.$(VERSION) -o $@ $(SOBJS)
 	ln -sf $@ libpfm.so.$(VERSION)
+	ln -sf libpfm.so.$(VERSION) libpfm.so
 
 clean:
 	$(RM) -f $(OBJS) $(SOBJS) $(SUPP_OBJS)
@@ -110,3 +111,5 @@ endif
 install: $(TARGETS)
 	-mkdir -p $(DESTDIR)/lib
 	$(INSTALL) -m 644 $(TARGETS) $(DESTDIR)/lib
+	cd $(DESTDIR)/lib; ln -sf $(SLIBPFM) libpfm.so.$(VERSION) 
+	cd $(DESTDIR)/lib; ln -sf libpfm.so.$(VERSION) libpfm.so
