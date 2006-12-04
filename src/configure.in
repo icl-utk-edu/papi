@@ -79,6 +79,7 @@ cc ckcatamount.c 2>&1 | cat > ckcat
 if test "`cat ckcat | grep "IS_CATAMOUNT"`" != ""; then
 OS=catamount
 fi
+/bin/rm -f ckcat
 ])
 AC_MSG_RESULT($OS)
 if test "$OS" = "catamount"; then

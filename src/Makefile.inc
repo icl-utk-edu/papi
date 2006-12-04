@@ -140,6 +140,8 @@ clean: native_clean
 clobber distclean: clean native_clobber
 	-rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) $(SPECIAL_REMOVE) Makefile config.h
 	-cd utils;  $(MAKE) clobber
+	-rm -f config.log config.status f77papi.h f90papi.h fpapi.h
+
 null:
 
 dist: 

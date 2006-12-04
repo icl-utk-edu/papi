@@ -1425,6 +1425,7 @@ cc ckcatamount.c 2>&1 | cat > ckcat
 if test "`cat ckcat | grep "IS_CATAMOUNT"`" != ""; then
 OS=catamount
 fi
+/bin/rm -f ckcat
 
 fi;
 echo "$as_me:$LINENO: result: $OS" >&5
@@ -2744,7 +2745,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2747:" \
+echo "$as_me:2748:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -3493,7 +3494,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:3496:" \
+echo "$as_me:3497:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
