@@ -67,6 +67,7 @@ typedef struct {
 
 typedef struct {
   /* Context structure to kernel, different for attached */
+  int ctx_fd;
   pfarg_ctx_t *ctx;
   /* Load structure to kernel, different for attached */
   pfarg_load_t *load;
@@ -97,6 +98,7 @@ typedef struct {
    int stat_fd;
 #endif
   /* Main context structure to kernel */
+  int ctx_fd;
   pfarg_ctx_t ctx;
   /* Main load structure to kernel */
   pfarg_load_t load;

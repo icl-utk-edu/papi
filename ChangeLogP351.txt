@@ -1,3 +1,6 @@
+2006-12-04 mucci
+	- Updated to latest 12-2006 release of Perfmon2 from Sourceforge.
+	- Previous perfmon2 releases are now incompatible
 2006-11-25	mucci
 	- Added -Bdynamic to shared library builds
 	- Fixed configure test for alternate CC compilers that
