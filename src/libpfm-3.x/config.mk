@@ -84,7 +84,7 @@ endif
 #
 # optimization level
 #
-OPTIM=-O2
+OPTIM=-g -O -p
 
 #
 # you shouldn't have to touch anything beyond this point

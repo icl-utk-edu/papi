@@ -307,6 +307,9 @@ AC_MSG_RESULT($debug)
 AC_PROG_AWK
 AC_PROG_CC
 AC_PROG_F77
+if test "x$AR" == "x"; then
+   AR=ar
+fi
 if test "$OS" != "linux"; then
    AC_PROG_CC(xlc cc gcc)
    AC_PROG_F77(xlf f77 f90 f95 gfortran)
@@ -1220,6 +1223,7 @@ AC_SUBST(PMAPI)
 AC_SUBST(F77)
 AC_SUBST(CPP)
 AC_SUBST(CC)
+AC_SUBST(AR)
 AC_SUBST(LDFLAGS)
 AC_SUBST(NOTLS)
 AC_SUBST(altix)

@@ -57,7 +57,7 @@ MISCSRCS =
 # .so does not exist
 SHLIBDEPS = -Bdynamic -L$(PFM_LIB_PATH) -lpfm
 
-PFM_OBJS=$(shell ar t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
+PFM_OBJS=$(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
 ifeq (,$(PFM_OBJS))
 $(PFM_LIB_PATH)/libpfm.a:
 ifneq (,${PFM_ROOT})
@@ -75,7 +75,7 @@ config.h:
 	@echo 'Please clobber your build and run ./configure."
 
 $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
-	ar xv $<
+	$(AR) xv $<
 
 native_clean:
 	-rm -f $(MISCOBJS) 
