@@ -12,7 +12,7 @@ the Pentium M processor. The interface is defined in \fBpfmlib_i386_p6.h\fR. It 
 of a set of functions and structures which describe and allow access to the
 P6 processors specific PMU features.
 .sp
-When P6 processors specific features are needed to support a measurement their descriptions must be passed
+When P6 processor specific features are needed to support a measurement, their descriptions must be passed
 as model-specific input arguments to the \fBpfm_dispatch_events\fR call. The P6 processors specific 
 input arguments are described in the \fBpfmlib_i386_p6_input_param_t\fR structure and the output
 parameters in \fBpfmlib_i386_p6_output_param_t\fR. They are defined as follows:
@@ -45,7 +45,6 @@ Inverse the results of the \fBcnt_mask\fR comparison when set
 .B PFMLIB_I386_P6_SEL_EDGE
 Enables edge detection of events. 
 .LP
-
 The \fBcnt_mask\fR field contains is used to set the event threshold.
 The value of the counter is incremented each time the number of occurrences
 per cycle of the event is greater or equal to the value of the field. When
@@ -57,7 +56,6 @@ more events than a generic P6 processor. The library autodetects the host
 processor and can distinguish generic P6 processor from a Pentium. Thus no
 special call is needed.
 .sp
-.LP
 .SH ERRORS
 Refer to the description of \fBpfm_dispatch_events()\fR for errors.
 .SH SEE ALSO

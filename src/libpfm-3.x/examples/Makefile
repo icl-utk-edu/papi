@@ -40,7 +40,7 @@ DIRS +=x86
 endif
 
 CFLAGS+= -pthread -D_GNU_SOURCE -I$(PFMINCDIR)
-LIBS += -lpfm -lm
+LIBS += -lm
 
 TARGETS=self self_view task task_attach task_attach_timeout syst \
 	notify_self notify_self2 notify_self3 \
@@ -52,14 +52,14 @@ XTRA=self_standalone notify_standalone smpl_standalone
 #
 # MIPS xcross does not have curses
 #
-ifneq ($(ARCH),mips)
+ifneq ($(ARCH),mips64)
 XTRA += rtop
 endif
 
 all: $(TARGETS) $(XTRA)
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 
-rtop: rtop.o detect_pmcs.o
+rtop: rtop.o detect_pmcs.o $(PFMLIB)
 	$(CC) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^ $(LIBS)  -lpthread -lncurses
 
 self_standalone: self_standalone.o

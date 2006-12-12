@@ -41,12 +41,14 @@ endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_X86_64),y)
 HEADERS += perfmon/pfmlib_os_x86_64.h   \
-	   perfmon/pfmlib_comp_x86_64.h
+	   perfmon/pfmlib_comp_x86_64.h \
+	   perfmon/perfmon_pebs_smpl.h
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
 HEADERS += perfmon/pfmlib_os_i386.h   \
-	   perfmon/pfmlib_comp_i386.h
+	   perfmon/pfmlib_comp_i386.h \
+	   perfmon/perfmon_pebs_smpl.h
 endif
 
 ifeq ($(CONFIG_PFMLIB_GENERIC_IA64),y)
@@ -75,6 +77,10 @@ endif
 
 ifeq ($(CONFIG_PFMLIB_I386_P6),y)
 HEADERS += perfmon/pfmlib_i386_p6.h
+endif
+
+ifeq ($(CONFIG_PFMLIB_CORE),y)
+HEADERS += perfmon/pfmlib_core.h
 endif
 
 ifeq ($(CONFIG_PFMLIB_GEN_IA32),y)

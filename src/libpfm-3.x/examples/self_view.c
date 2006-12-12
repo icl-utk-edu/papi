@@ -282,17 +282,13 @@ main(int argc, char **argv)
 	 * This just creates a new context with some initial state, it is not
 	 * active nor attached to any process.
 	 */
-	if (pfm_create_context(ctx, NULL, 0) == -1 ) {
+	ctx_fd = pfm_create_context(ctx, NULL, NULL, 0);
+	if (ctx_fd == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
 		fatal_error("Can't create PFM context %s\n", strerror(errno));
 	}
-
-	/*
-	 * extract the unique identifier for our context, a regular file descriptor
-	 */
-	ctx_fd = ctx[0].ctx_fd;
 
 	/*
 	 * build the pfp_unavail_pmcs bitmask by looking
@@ -400,6 +396,7 @@ main(int argc, char **argv)
 	/*
 	 * and destroy our context
 	 */
+	munmap(view0, getpagesize());
 	close(ctx_fd);
 
 	return 0;

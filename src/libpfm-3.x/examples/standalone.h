@@ -8,9 +8,9 @@
 #define __STANDALONE_H__ 1
 
 inline int
-pfm_create_context(pfarg_ctx_t *ctx, void *smpl_arg, size_t smpl_size)
+pfm_create_context(pfarg_ctx_t *ctx, char *smpl_name, void *smpl_arg, size_t smpl_size)
 {
-  return syscall(__NR_pfm_create_context, ctx, smpl_arg, smpl_size);
+  return syscall(__NR_pfm_create_context, ctx, smpl_name, smpl_arg, smpl_size);
 }
 
 inline int
@@ -107,10 +107,10 @@ static inline int cpu_detect(void)
 	ret = access("/sys/kernel/perfmon/pmu_desc", F_OK);
 	if (ret == -1) {
 		memset(&ctx, 0, sizeof(ctx));
-		ret = pfm_create_context(&ctx, NULL, 0);
+		ret = pfm_create_context(&ctx, NULL, NULL, 0);
 		if (ret == -1)
 			return -1;
-		close(ctx.ctx_fd);
+		close(ret);
 	}
 	fp = fopen("/sys/kernel/perfmon/pmu_desc/model", "r");
 	if (fp == NULL) return -1;

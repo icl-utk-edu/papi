@@ -34,8 +34,6 @@ extern "C" {
 #define PFM_PMD_BV      PFM_BVSIZE(PFM_MAX_PMDS)
 #define PFM_PMC_BV      PFM_BVSIZE(PFM_MAX_PMCS)
 
-typedef unsigned char pfm_uuid_t[16];	/* custom sampling buffer identifier type */
-
 #ifdef __ia64__
 #include <perfmon/perfmon_ia64.h>
 #endif
@@ -77,11 +75,9 @@ typedef unsigned char pfm_uuid_t[16];	/* custom sampling buffer identifier type 
  * argument to pfm_create_context()
  */
 typedef struct {
-	pfm_uuid_t	ctx_smpl_buf_id;	/* which buffer format to use (if needed) */
 	uint32_t	ctx_flags;	   /* noblock/block/syswide */
-	int		ctx_fd;		 	/* return arg: unique identification for context */
-	uint64_t	ctx_smpl_buf_size;	/* return arg: actual smpl buffer size */
-	uint64_t	ctx_reserved3[12];	/* for future use */
+	uint32_t	ctx_reserved1;	   /* for future use */
+	uint64_t	ctx_reserved3[7];  /* for future use */
 } pfarg_ctx_t;
 
 /*
@@ -92,7 +88,6 @@ typedef struct {
 #define PFM_FL_SYSTEM_WIDE	 0x02	/* create a system wide context */
 #define PFM_FL_OVFL_NO_MSG	 0x80   /* no overflow msgs */
 #define PFM_FL_MAP_SETS		 0x10	/* event sets are remapped */
-
 
 /*
  * argument for pfm_write_pmcs()
@@ -119,12 +114,11 @@ typedef struct {
 	uint64_t reg_ovfl_switch_cnt;	/* how many overflow before switch for next set */
 	uint64_t reg_reset_pmds[PFM_PMD_BV]; /* which other PMDS to reset on overflow */
 	uint64_t reg_smpl_pmds[PFM_PMD_BV];  /* which other PMDS to record when the associated PMD overflows */
-	uint64_t reg_smpl_eventid;  			/* opaque sampling event identifier */
+	uint64_t reg_smpl_eventid;  	/* opaque sampling event identifier */
 	uint64_t reg_random_mask; 	/* bitmask used to limit random value */
-	uint32_t reg_random_seed;   	/* seed value when randomization is used */
+	uint32_t reg_random_seed;   	/* seed for randomization (DEPRECATED) */
 	uint32_t reg_reserved2[7];	/* for future use */
 } pfarg_pmd_t;
-
 
 /*
  * optional argument to pfm_start(), pass NULL if no arg needed
@@ -153,8 +147,7 @@ typedef struct {
 	uint16_t	set_id;		  /* which set */
 	uint16_t	set_id_next;	  /* next set to go to (must use PFM_SETFL_EXPL_NEXT) */
 	uint32_t    	set_flags; 	  /* input: flags for set, output: err flag */
-	uint32_t	set_timeout;	  /* requested/effective switch timeout in usecs */
-	uint32_t	set_reserved1;	  /* for future use */
+	uint64_t	set_timeout;	  /* requested/effective switch timeout in nsecs */
 	uint64_t	set_mmap_offset;  /* cookie to pass as mmap offset to access 64-bit virtual PMD */
 	uint64_t	reserved[5];	  /* for future use */
 } pfarg_setdesc_t;
@@ -168,8 +161,7 @@ typedef struct {
         uint32_t	set_flags;          /* output:flags or error */
         uint64_t 	set_ovfl_pmds[PFM_PMD_BV]; /* output: last ovfl PMDs which triggered a switch from set */
         uint64_t	set_runs;           /* output: number of times the set was active */
-        uint32_t	set_timeout;        /* output:effective switch timeout     */
-	uint32_t	set_reserved1;	    /* for future use */
+        uint64_t	set_timeout;        /* output:effective/leftover switch timeout in nsecs */
         uint64_t	set_act_duration;   /* DO NOT USE: number of cycles set was active (syswide only) */
 	uint64_t	set_mmap_offset;    /* cookie to pass as mmap offset to access 64-bit virtual PMD */
 	uint64_t	set_avail_pmcs[PFM_PMC_BV];
@@ -208,12 +200,12 @@ typedef union {
  * perfmon version number
  */
 #define PFM_VERSION_MAJ		 2U
-#define PFM_VERSION_MIN		 2U
+#define PFM_VERSION_MIN		 3U
 #define PFM_VERSION		 (((PFM_VERSION_MAJ&0xffff)<<16)|(PFM_VERSION_MIN & 0xffff))
 #define PFM_VERSION_MAJOR(x)	 (((x)>>16) & 0xffff)
 #define PFM_VERSION_MINOR(x)	 ((x) & 0xffff)
 
-extern int pfm_create_context(pfarg_ctx_t *ctx, void *smpl_arg, size_t smpl_size);
+extern int pfm_create_context(pfarg_ctx_t *ctx, char *smpl_name, void *smpl_arg, size_t smpl_size);
 extern int pfm_write_pmcs(int fd, pfarg_pmc_t *pmcs, int count);
 extern int pfm_write_pmds(int fd, pfarg_pmd_t *pmds, int count);
 extern int pfm_read_pmds(int fd, pfarg_pmd_t *pmds, int count);
@@ -236,7 +228,7 @@ extern int pfm_unload_context(int fd);
 #endif /* __x86_64__ */
 
 #ifdef __i386__
-#define __NR_pfm_create_context		318
+#define __NR_pfm_create_context		320
 #endif
 
 #ifdef __ia64__
@@ -247,13 +239,13 @@ extern int pfm_unload_context(int fd);
 /* Add 12 */
 #if (_MIPS_SIM == _ABIN32) || (_MIPS_SIM == _MIPS_SIM_NABI32)
 #define __NR_Linux 6000
-#define __NR_pfm_create_context         __NR_Linux+272
+#define __NR_pfm_create_context         __NR_Linux+277
 #elif (_MIPS_SIM == _ABI32) || (_MIPS_SIM == _MIPS_SIM_ABI32)
 #define __NR_Linux 4000
-#define __NR_pfm_create_context         __NR_Linux+309
+#define __NR_pfm_create_context         __NR_Linux+314
 #elif (_MIPS_SIM == _ABI64) || (_MIPS_SIM == _MIPS_SIM_ABI64)
 #define __NR_Linux 5000
-#define __NR_pfm_create_context         __NR_Linux+268
+#define __NR_pfm_create_context         __NR_Linux+273
 #endif
 #endif
 
@@ -269,7 +261,6 @@ extern int pfm_unload_context(int fd);
 #define __NR_pfm_delete_evtsets		(__NR_pfm_create_context+10)
 #define __NR_pfm_unload_context		(__NR_pfm_create_context+11)
 #endif /* __NR_pfm_create_context */
-
 
 #ifdef __cplusplus
 };

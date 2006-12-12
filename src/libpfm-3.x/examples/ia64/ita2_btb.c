@@ -42,10 +42,6 @@
 typedef pfm_dfl_smpl_hdr_t	btb_hdr_t;
 typedef pfm_dfl_smpl_entry_t	btb_entry_t;
 typedef pfm_dfl_smpl_arg_t	smpl_arg_t;
-#define BTB_FMT_UUID	       	PFM_DFL_SMPL_UUID
-
-static pfm_uuid_t buf_fmt_id = BTB_FMT_UUID;
-
 
 #define NUM_PMCS PFMLIB_MAX_PMCS
 #define NUM_PMDS PFMLIB_MAX_PMDS
@@ -356,13 +352,6 @@ main(void)
 	if ((ret=pfm_dispatch_events(&inp, &ita2_inp, &outp, NULL)) != PFMLIB_SUCCESS) {
 		fatal_error("cannot configure events: %s\n", pfm_strerror(ret));
 	}
-	 /*
-	  * We initialize the format specific information.
-	  * The format is identified by its UUID which must be copied
-	  * into the ctx_buf_fmt_id field.
-	  */
-	memcpy(ctx.ctx_smpl_buf_id, buf_fmt_id, sizeof(pfm_uuid_t));
-
 	/*
 	 * the size of the buffer is indicated in bytes (not entries).
 	 *
@@ -375,7 +364,8 @@ main(void)
 	/*
 	 * now create the context for self monitoring/per-task
 	 */
-	if (pfm_create_context(&ctx, &buf_arg, sizeof(buf_arg)) == -1 ) {
+	id = pfm_create_context(&ctx, "default", &buf_arg, sizeof(buf_arg));
+	if (id == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
@@ -383,18 +373,12 @@ main(void)
 	}
 
 	/*
-	 * extract our file descriptor
-	 */
-	id = ctx.ctx_fd;
-
-	/*
 	 * retrieve the virtual address at which the sampling
 	 * buffer has been mapped
 	 */
-	smpl_vaddr = mmap(NULL, (size_t)ctx.ctx_smpl_buf_size, PROT_READ, MAP_PRIVATE, id, 0);
-	if (smpl_vaddr == MAP_FAILED) {
+	smpl_vaddr = mmap(NULL, (size_t)buf_arg.buf_size, PROT_READ, MAP_PRIVATE, id, 0);
+	if (smpl_vaddr == MAP_FAILED)
 		fatal_error("cannot mmap sampling buffer errno %d\n", errno);
-	}
 
 	printf("Sampling buffer mapped at %p\n", smpl_vaddr);
 
@@ -501,6 +485,7 @@ main(void)
 	/*
 	 * let's stop this now
 	 */
+	munmap(smpl_vaddr, (size_t)buf_arg.buf_size);
 	close(id);
 
 	return 0;

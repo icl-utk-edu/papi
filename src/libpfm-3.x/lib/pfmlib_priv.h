@@ -76,6 +76,7 @@ extern pfm_config_t pfm_config;
 
 extern void __pfm_vbprintf(const char *fmt,...);
 extern int __pfm_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen);
+extern int __pfm_check_event(pfmlib_event_t *e);
 
 #ifdef PFMLIB_DEBUG
 #define DPRINT(a) \
@@ -101,5 +102,13 @@ extern pfm_pmu_support_t gen_ia32_support;
 extern pfm_pmu_support_t generic_mips64_support;
 extern pfm_pmu_support_t pentium4_support;
 extern pfm_pmu_support_t coreduo_support;
+extern pfm_pmu_support_t core_support;
+
+static inline unsigned int pfm_num_masks(int e)
+{
+	if (pfm_current->get_num_event_masks == NULL)
+		return 0;
+	return pfm_current->get_num_event_masks(e);
+}
 
 #endif /* __PFMLIB_PRIV_H__ */

@@ -263,17 +263,13 @@ main(int argc, char **argv)
 	/*
 	 * now create the context for self monitoring/per-task
 	 */
-	if (pfm_create_context(ctx, NULL, 0) == -1) {
+	id = pfm_create_context(ctx, NULL, NULL, 0);
+	if (id == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
 		fatal_error("cannot create PFM context %s\n", strerror(errno));
 	}
-	/*
-	 * extract our file descriptor
-	 */
-	id = ctx[0].ctx_fd;
-
 	/*
 	 * Now prepare the argument to initialize the PMDs and PMCS.
 	 * We must pfp_pmc_count to determine the number of PMC to intialize.

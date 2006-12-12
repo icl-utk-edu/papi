@@ -176,18 +176,13 @@ main(int argc, char **argv)
 	 * This just creates a new context with some initial state, it is not
 	 * active nor attached to any thread.
 	 */
-	if (pfm_create_context(&ctx, NULL, 0)) {
+	fd = pfm_create_context(&ctx, NULL, NULL, 0);
+	if (fd == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
 		fatal_error("Can't create PFM context %s\n", strerror(errno));
 	}
-
-	/*
-	 * extract the unique identifier for our context, a regular file descriptor
-	 */
-	fd = ctx.ctx_fd;
-
 	program_pmu(fd, pc, &num_pmcs, pd, &num_pmds);
 
 	/*

@@ -67,10 +67,9 @@ detect_unavail_pmcs(int fd, pfmlib_regmask_t *r_pmcs)
 	 * a temporary context
 	 */
 	if (fd == -1) {
-		ret = pfm_create_context(&ctx, NULL, 0);
-		if (ret)
+		myfd = pfm_create_context(&ctx, NULL, NULL, 0);
+		if (myfd == -1)
 			return 0;
-		myfd = ctx.ctx_fd;
 	} else {
 		myfd = fd;
 	}

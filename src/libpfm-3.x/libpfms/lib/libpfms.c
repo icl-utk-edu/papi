@@ -206,10 +206,7 @@ pfms_thread_mainloop(void *arg)
 				ctx = td->data;
 				myctx = *ctx;
 
-				ret = pfm_create_context(&myctx, NULL, 0);
-				if (ret == 0)
-					fd = myctx.ctx_fd;
-
+				ret = fd = pfm_create_context(&myctx, NULL, NULL, 0);
 				dprint("CPU%u CMD_CTX ret=%d errno=%d fd=%d\n", mycpu, ret, errno, fd);
 				break;
 

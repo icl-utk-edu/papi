@@ -52,10 +52,6 @@
 typedef pfm_dfl_smpl_hdr_t		dear_hdr_t;
 typedef pfm_dfl_smpl_entry_t	dear_entry_t;
 typedef pfm_dfl_smpl_arg_t	dear_smpl_arg_t;
-#define DEAR_FMT_UUID	       	PFM_DFL_SMPL_UUID
-
-static pfm_uuid_t buf_fmt_id = DEAR_FMT_UUID;
-
 
 static void *smpl_vaddr;
 static unsigned long entry_size;
@@ -291,13 +287,6 @@ main(void)
 	 * with what is needed fot this format.
 	 */
 
-	 /*
-	  * We initialize the format specific information.
-	  * The format is identified by its UUID which must be copied
-	  * into the ctx_buf_fmt_id field.
-	  */
-	memcpy(ctx.ctx_smpl_buf_id, buf_fmt_id, sizeof(pfm_uuid_t));
-
 	/*
 	 * the size of the buffer is indicated in bytes (not entries).
 	 *
@@ -309,22 +298,18 @@ main(void)
 	/*
 	 * now create the context for self monitoring/per-task
 	 */
-	if (pfm_create_context(&ctx, &buf_arg, sizeof(buf_arg)) == -1 ) {
+	id = pfm_create_context(&ctx, "default", &buf_arg, sizeof(buf_arg));
+	if (id == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
 		fatal_error("Can't create PFM context %s\n", strerror(errno));
 	}
 	/*
-	 * extract the file descriptor we will use to
-	 * identify this newly created context
-	 */
-	id = ctx.ctx_fd;
-	/*
 	 * retrieve the virtual address at which the sampling
 	 * buffer has been mapped
 	 */
-	smpl_vaddr = mmap(NULL, (size_t)ctx.ctx_smpl_buf_size, PROT_READ, MAP_PRIVATE, id, 0);
+	smpl_vaddr = mmap(NULL, (size_t)buf_arg.buf_size, PROT_READ, MAP_PRIVATE, id, 0);
 	if (smpl_vaddr == MAP_FAILED)
 		fatal_error("cannot mmap sampling buffer errno %d\n", errno);
 
@@ -420,6 +405,7 @@ main(void)
 	/*
 	 * let's stop this now
 	 */
+	munmap(smpl_vaddr, (size_t)buf_arg.buf_size);
 	close(id);
 	return 0;
 }

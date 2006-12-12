@@ -14,23 +14,21 @@ masks
 .BI "int pfm_find_event_mask(unsigned int *"idx ", const char *"str ", unsigned int *"mask_idx ");"
 .sp
 .SH DESCRIPTION
-The PMU counters can be programmed to measure the number of occurrences
+The PMU counters can be programmed to count the number of occurrences
 of certain events. The number of events varies from one PMU model
 to the other. Each event has a name and a code which is used to program
-the actual PMU register. Furthermore, some event may need to be qualifier
-with unit masks. 
+the actual PMU register. Some event may need to be further qualified
+with unit masks.
 .sp
 The library does not directly expose the event code, nor unit mask code,
 to user applications because it is not necessary. Instead applications
 use names to query the library for particular information about events.
-Given an event name, the library returns an opaque descriptor to applications. 
+Given an event name, the library returns an opaque descriptor. 
 Each descriptor is unique and has no relationship to the event code.
-All functions require the library to be properly initialized.
 .sp
 The set of functions described here can be used to get an event descriptor
-given either the name of the event or its code. Several events can
-share the same code but have different names. An event name is a string
-structured as: event_name[:unit_mask1[:unit_mask2]].
+given either the name of the event or its code. Several events may
+share the same code. An event name is a string structured as: event_name[:unit_mask1[:unit_mask2]].
 .sp
 The \fBpfm_find_event\fR function is a general purpose search routine.
 Given an event name in \fBstr\fR, it returns the descriptor for the

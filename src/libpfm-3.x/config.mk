@@ -66,6 +66,7 @@ CONFIG_PFMLIB_ARCH_X86_64=y
 CONFIG_PFMLIB_AMD64=y
 CONFIG_PFMLIB_PENTIUM4=y
 CONFIG_PFMLIB_GEN_IA32=y
+CONFIG_PFMLIB_CORE=y
 endif
 
 ifeq ($(ARCH),ia32)
@@ -74,6 +75,7 @@ CONFIG_PFMLIB_I386_P6=y
 CONFIG_PFMLIB_GEN_IA32=y
 CONFIG_PFMLIB_AMD64=y
 CONFIG_PFMLIB_PENTIUM4=y
+CONFIG_PFMLIB_CORE=y
 endif
 
 ifeq ($(ARCH),mips64)
@@ -84,7 +86,7 @@ endif
 #
 # optimization level
 #
-OPTIM=-g -O2
+OPTIM=-O2
 
 #
 # you shouldn't have to touch anything beyond this point

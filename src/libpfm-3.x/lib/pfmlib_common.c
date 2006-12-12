@@ -62,6 +62,10 @@ static pfm_pmu_support_t *supported_pmus[]=
 	&pentium4_support,
 #endif
 
+#ifdef CONFIG_PFMLIB_CORE
+	&core_support,
+#endif
+
 #ifdef CONFIG_PFMLIB_GEN_IA32
 	&coreduo_support,
 	&gen_ia32_support,
@@ -82,13 +86,6 @@ static pfm_pmu_support_t *supported_pmus[]=
  * mostly for debug purposes.
  */
 pfm_config_t pfm_config;
-
-static inline unsigned int pfm_num_masks(int e)
-{
-	if (pfm_current->get_num_event_masks == NULL)
-		return 0;
-	return pfm_current->get_num_event_masks(e);
-}
 
 int
 pfm_initialize(void)
@@ -506,25 +503,6 @@ pfm_check_unavail_pmcs(pfmlib_regmask_t *pmcs)
 }
 #endif
 
-static int
-pfm_check_event(pfmlib_event_t *e)
-{
-	unsigned int n, j;
-
-	if (e->event >= pfm_current->pme_count)
-		return PFMLIB_ERR_INVAL;
-
-	n = pfm_num_masks(e->event);
-	if (n == 0 && e->num_masks)
-		return PFMLIB_ERR_UMASK;
-
-	for(j=0; j < e->num_masks; j++) {
-		if (e->unit_masks[j] >= n)
-			return PFMLIB_ERR_UMASK;
-	}
-	/* need to specify at least one umask */
-	return n && j == 0 ? PFMLIB_ERR_UMASK : PFMLIB_SUCCESS;
-}
 
 /*
  * we do not check if pfp_unavail_pmcs contains only implemented PMC
@@ -537,16 +515,20 @@ pfm_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_output_par
 	unsigned int i;
 	int ret;
 
-	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
+	if (PFMLIB_INITIALIZED() == 0)
+		return PFMLIB_ERR_NOINIT;
 
-	if (inp == NULL || outp == NULL) return PFMLIB_ERR_INVAL;
+	if (inp == NULL || outp == NULL)
+		return PFMLIB_ERR_INVAL;
 
 	/*
 	 * the default priv level must be set to something
 	 */
-	if (inp->pfp_dfl_plm == 0) return PFMLIB_ERR_INVAL;
+	if (inp->pfp_dfl_plm == 0)
+		return PFMLIB_ERR_INVAL;
 
-	if (inp->pfp_event_count >= PFMLIB_MAX_PMCS) return PFMLIB_ERR_INVAL;
+	if (inp->pfp_event_count >= PFMLIB_MAX_PMCS)
+		return PFMLIB_ERR_INVAL;
 
 	count = inp->pfp_event_count;
 	if (count > pfm_current->num_cnt)
@@ -556,7 +538,7 @@ pfm_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_output_par
 	 * check that event and unit masks descriptors are correct
 	 */
 	for (i=0; i < count; i++) {
-		ret = pfm_check_event(inp->pfp_events+i);
+		ret = __pfm_check_event(inp->pfp_events+i);
 		if (ret != PFMLIB_SUCCESS)
 			return ret;
 	}
@@ -657,7 +639,7 @@ static char *pfmlib_err_list[]=
 	"not supported",
 	"invalid parameters",
 	"pfmlib not initialized",
-	"object not found",
+	"event not found",
 	"cannot assign events to counters",
 	"buffer is full or too small",
 	"event used more than once",
@@ -825,7 +807,7 @@ pfm_get_full_event_name(pfmlib_event_t *e, char *name, size_t maxlen)
 	if (e == NULL || name == NULL || maxlen < 1)
 		return PFMLIB_ERR_INVAL;
 
-	ret = pfm_check_event(e);
+	ret = __pfm_check_event(e);
 	if (ret != PFMLIB_SUCCESS)
 		return ret;
 

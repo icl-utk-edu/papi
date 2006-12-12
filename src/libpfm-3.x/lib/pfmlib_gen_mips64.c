@@ -1,5 +1,5 @@
 /*
- * pfmlib_generic_mips64.c : support for the generic MIPS64 PMU family
+ * pfmlib_gen_mips64.c : support for the generic MIPS64 PMU family
  *
  * Contributed by Philip Mucci <mucci@cs.utk.edu> based on code from
  * Copyright (c) 2005-2006 Hewlett-Packard Development Company, L.P.
@@ -120,7 +120,7 @@ pfm_gen_mips64_detect(void)
 	    generic_mips64_support.pmu_type = PFMLIB_MIPS_74K_PMU;
 	  }
 #endif
-	else if (strstr(buffer,"MIPS R10000"))
+	else if (strstr(buffer,"R10000"))
 	  {
 	    gen_mips64_pe = gen_mips64_r10000_pe;
 	    strcpy(generic_mips64_support.pmu_name,"MIPSR10000"),
@@ -129,7 +129,7 @@ pfm_gen_mips64_detect(void)
 	    generic_mips64_support.pmd_count = 2;
 	    generic_mips64_support.pmu_type = PFMLIB_MIPS_R10000_PMU;
 	  }
-	else if (strstr(buffer,"MIPS R12000"))
+	else if (strstr(buffer,"R12000"))
 	  {
 	    gen_mips64_pe = gen_mips64_r12000_pe;
 	    strcpy(generic_mips64_support.pmu_name,"MIPSR12000"),
@@ -138,7 +138,7 @@ pfm_gen_mips64_detect(void)
 	    generic_mips64_support.pmd_count = 4;
 	    generic_mips64_support.pmu_type = PFMLIB_MIPS_R12000_PMU;
 	  }
-	else if (strstr(buffer,"MIPS RM7000"))
+	else if (strstr(buffer,"RM7000"))
 	  {
 	    gen_mips64_pe = gen_mips64_rm7000_pe;
 	    strcpy(generic_mips64_support.pmu_name,"MIPSRM7000"),
@@ -147,7 +147,7 @@ pfm_gen_mips64_detect(void)
 	    generic_mips64_support.pmd_count = 2;
 	    generic_mips64_support.pmu_type = PFMLIB_MIPS_RM7000_PMU;
 	  }
-	else if (strstr(buffer,"MIPS RM9000"))
+	else if (strstr(buffer,"RM9000"))
 	  {
 	    gen_mips64_pe = gen_mips64_rm9000_pe;
 	    strcpy(generic_mips64_support.pmu_name,"MIPSRM9000"),
@@ -156,7 +156,7 @@ pfm_gen_mips64_detect(void)
 	    generic_mips64_support.pmd_count = 2;
 	    generic_mips64_support.pmu_type = PFMLIB_MIPS_RM9000_PMU;
 	  }
-	else if (strstr(buffer,"MIPS SB1"))
+	else if (strstr(buffer,"SB1"))
 	  {
 	    gen_mips64_pe = gen_mips64_sb1_pe;
 	    strcpy(generic_mips64_support.pmu_name,"MIPSSB1"),
@@ -165,7 +165,7 @@ pfm_gen_mips64_detect(void)
 	    generic_mips64_support.pmd_count = 4;
 	    generic_mips64_support.pmu_type = PFMLIB_MIPS_SB1_PMU;
 	  }
-	else if (strstr(buffer,"MIPS VR5432"))
+	else if (strstr(buffer,"VR5432"))
 	  {
 	    gen_mips64_pe = gen_mips64_vr5432_pe;
 	    generic_mips64_support.pme_count = (sizeof(gen_mips64_vr5432_pe)/sizeof(pme_gen_mips64_entry_t));
@@ -202,15 +202,28 @@ static void stuff_regs(pfmlib_event_t *e, int plm, pfmlib_reg_t *pc, pfmlib_reg_
   reg.sel_exl = plm & PFM_PLM0 ? 1 : 0;
   reg.sel_int = 1; /* force int to 1 */
 
-  reg.sel_event_mask = (gen_mips64_pe[e[j].event].pme_entry_code.pme_code.pme_emask 
-			>> (cntr*8)) & 0xff;
-  DPRINT(("sel_event_mask is 0x%x\n",reg.sel_event_mask));
+  reg.sel_event_mask = (gen_mips64_pe[e[j].event].pme_code >> (cntr*8)) & 0xff;
   pc[j].reg_num     = cntr;
   pc[j].reg_value   = reg.val;
   pc[j].reg_addr    = cntr*2;
 
+  __pfm_vbprintf("[CP0_25_%u(pmc%u)=0x%"PRIx64" event_mask=0x%x usr=%d os=%d sup=%d exl=%d int=1] %s\n",
+	pc[j].reg_addr,
+	pc[j].reg_num,
+	pc[j].reg_value,
+	reg.sel_event_mask,
+	reg.sel_usr,
+	reg.sel_os,
+	reg.sel_sup,
+	reg.sel_exl,
+	gen_mips64_pe[e[j].event].pme_name);
+
   pd[j].reg_num  = cntr;
   pd[j].reg_addr = cntr*2 + 1;
+
+  __pfm_vbprintf("[CP0_25_%u(pmd%u)]\n",
+	pc[j].reg_addr,
+	pc[j].reg_num);
 }
 /*
  * Automatically dispatch events to corresponding counters following constraints.
@@ -306,7 +319,7 @@ pfm_gen_mips64_get_event_code(unsigned int i, unsigned int cnt, int *code)
 	/* Works on both 5k anf 20K */
 
 	if (gen_mips64_pe[i].pme_counters & (1<< cnt))
-	  *code = 0xf & (gen_mips64_pe[i].pme_entry_code.pme_code.pme_emask >> (cnt*4));
+	  *code = 0xf & (gen_mips64_pe[i].pme_code >> (cnt*4));
 	else
 	  return PFMLIB_ERR_INVAL;
 

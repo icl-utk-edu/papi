@@ -25,15 +25,15 @@ TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)/../..
 include $(TOPDIR)/config.mk
 include $(TOPDIR)/rules.mk
 
-LIBS += -lpfm -lm
+LIBS += -lm
 
-TARGETS=smpl_pebs
+TARGETS=smpl_p4_pebs smpl_core_pebs
 
 all: $(TARGETS)
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 
-$(TARGETS):  %:%.o $(PFMLIB)
-	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $^ $(LIBS) 
+$(TARGETS):  %:%.o $(PFMLIB) ../detect_pmcs.o
+	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $^ $(LIBS)
 
 clean:
 	$(RM) -f *.o 

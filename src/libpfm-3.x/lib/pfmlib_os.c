@@ -29,9 +29,9 @@
 #include <perfmon/perfmon.h>
 
 int
-pfm_create_context(pfarg_ctx_t *ctx, void *smpl_arg, size_t smpl_size)
+pfm_create_context(pfarg_ctx_t *ctx, char *name, void *smpl_arg, size_t smpl_size)
 {
-	return (int)syscall(__NR_pfm_create_context, ctx, smpl_arg, smpl_size);
+	return (int)syscall(__NR_pfm_create_context, ctx, name, smpl_arg, smpl_size);
 }
 
 int

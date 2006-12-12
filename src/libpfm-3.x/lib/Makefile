@@ -89,6 +89,11 @@ SRCS   += pfmlib_i386_p6.c
 CFLAGS += -DCONFIG_PFMLIB_I386_P6
 endif
 
+ifeq ($(CONFIG_PFMLIB_CORE),y)
+SRCS   += pfmlib_core.c
+CFLAGS += -DCONFIG_PFMLIB_CORE
+endif
+
 ifeq ($(CONFIG_PFMLIB_GEN_IA32),y)
 SRCS   += pfmlib_gen_ia32.c
 CFLAGS += -DCONFIG_PFMLIB_GEN_IA32
@@ -123,11 +128,11 @@ libpfm.a:  $(OBJS)
 
 $(SLIBPFM):  $(SOBJS)
 	$(CC) -shared -Wl,-soname -Wl,$(VLIBPFM) -o $@ $(SOBJS)
-	$(LN) -sf $@ $(VLIBPFM)
-	$(LN) -sf $@ libpfm.so
+	$(LN) $@ $(VLIBPFM)
+	$(LN) $@ libpfm.so
 
 clean:
-	$(RM) -f $(OBJS) $(SOBJS) $(SUPP_OBJS)
+	$(RM) -f *.o *.lo
 
 distclean: clean
 	$(RM) -f $(TARGETS) *.so* *~
@@ -139,8 +144,9 @@ install: $(TARGETS)
 	-mkdir -p $(DESTDIR)$(LIBDIR)
 	$(INSTALL) -m 644 $(ALIBPFM) $(DESTDIR)$(LIBDIR)
 	$(INSTALL) $(SLIBPFM) $(DESTDIR)$(LIBDIR)
-	cd $(DESTDIR)$(LIBDIR); ln -sf $(SLIBPFM) $(VLIBPFM) 
-	cd $(DESTDIR)$(LIBDIR); ln -sf $(SLIBPFM) libpfm.so
+	cd $(DESTDIR)$(LIBDIR); $(LN) $(SLIBPFM) $(VLIBPFM)
+	cd $(DESTDIR)$(LIBDIR); $(LN) $(SLIBPFM) libpfm.so
+
 
 INC_COMMON= $(PFMINCDIR)/perfmon/pfmlib.h \
   $(PFMINCDIR)/perfmon/pfmlib_comp.h \
