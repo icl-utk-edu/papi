@@ -206,7 +206,8 @@ case "$OS" in
              case "$CPU_info" in
                PPC970*) CPU="PPC970";;
                POWER4*) CPU="POWER4";;
-               POWER5*) CPU="POWER5";;
+               POWER5) CPU="POWER5";;
+               POWER5+) CPU="POWER5+";;
              esac
           elif test "$family" = "ppc"; then
              CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
@@ -1105,7 +1106,7 @@ case "$OS" in
                    AC_MSG_ERROR([The bitmode you specified is not supported])
                  fi
                  MAKEVER="$OS"-perfctr-"$CPU" ;;
-            POWER4|POWER5|PPC970)
+            POWER4|POWER5|POWER5+|PPC970)
                  MAKEVER="$OS"-perfctr-"$CPU""$BM" ;;
 	    mips64)
 		 MAKEVER="$OS"-perfmon2 ;;
@@ -1164,8 +1165,8 @@ case "$MAKEVER" in
     unicos-t3e);;
     unicos-x1-msp);;
     unicos-x1-ssp);;
-    linux-perfctr-POWER4|linux-perfctr-POWER5|linux-perfctr-PPC970|linux-perfctr-PPC32);;
-    linux-perfctr-POWER4-64bit|linux-perfctr-POWER5-64bit|linux-perfctr-PPC970-64bit);;
+    linux-perfctr-POWER4|linux-perfctr-POWER5|linux-perfctr-POWER5+|linux-perfctr-PPC970|linux-perfctr-PPC32);;
+    linux-perfctr-POWER4-64bit|linux-perfctr-POWER5-64bit|linux-perfctr-POWER5+-64bit|linux-perfctr-PPC970-64bit);;
     linux-perfmon2);;
     *)
     echo Platform $MAKEVER is not supported
