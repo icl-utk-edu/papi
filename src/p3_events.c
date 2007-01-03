@@ -2631,9 +2631,14 @@ const native_event_entry_t _papi_hwd_core_native_map[] = {
    {"Br_Ind_Call_Exec",
     "Indirect call branch instruction executed.",
     {CNTRS12, 0x94}},
-   {"Resource_Stall",
-    "Cycles while there is a resource related stall (renaming, buffer entries) as seen by allocator.",
-    {CNTRS12, 0xa2}},
+   // from the Intel System Programming Guide 3B March 06 (253669-019)
+   //{"Resource_Stall",
+   // "Cycles while there is a resource related stall (renaming, buffer entries) as seen by allocator.",
+   // {CNTRS12, 0xa2}},
+   // from the Intel System Programming Guide 3B Nov 06 (253669-022US)
+   {"Resource_Stalls_Any",
+    "This event counts the number of cycles while resource-related stalls occurs for any conditions.",
+    {CNTRS12, 0x1fdc}},
    {"MMX_Instr_Exec",
     "Number of MMX instruction executed (does not include MOVQ and MOVD stores).",
     {CNTRS12, 0xb0}},
