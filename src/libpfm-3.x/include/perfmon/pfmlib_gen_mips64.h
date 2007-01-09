@@ -26,6 +26,8 @@
 #ifndef __PFMLIB_GEN_MIPS64_H__
 #define __PFMLIB_GEN_MIPS64_H__
 
+#include <endian.h> /* MIPS are bi-endian */
+
 #include <perfmon/pfmlib.h>
 /*
  * privilege level mask usage for MIPS:
@@ -46,7 +48,11 @@ extern "C" {
  * This structure provides a detailed way to setup a PMC register.
  * Once value is loaded, it must be copied (via pmu_reg) to the
  * perfmon_req_t and passed to the kernel via perfmonctl().
+ *
+ * It needs to be adjusted based on endianess
  */
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+
 typedef union {
 	uint64_t	val;				/* complete register value */
 	struct {
@@ -57,8 +63,29 @@ typedef union {
 	        unsigned long sel_int:1;		/* enable intr */
 	  	unsigned long sel_event_mask:4;		/* event mask */
 		unsigned long sel_res1:23;		/* reserved */
+		unsigned long sel_res2:32;		/* reserved */
 	} perfsel;
 } pfm_gen_mips64_sel_reg_t;
+
+#elif __BYTE_ORDER == __BIG_ENDIAN
+
+typedef union {
+	uint64_t	val;				/* complete register value */
+	struct {
+		unsigned long sel_res2:32;		/* reserved */
+		unsigned long sel_res1:23;		/* reserved */
+	  	unsigned long sel_event_mask:4;		/* event mask */
+	        unsigned long sel_int:1;		/* enable intr */
+		unsigned long sel_usr:1;		/* user level */
+		unsigned long sel_sup:1;		/* supervisor level */
+		unsigned long sel_os:1;			/* system level */
+	        unsigned long sel_exl:1;		/* int level */
+	} perfsel;
+} pfm_gen_mips64_sel_reg_t;
+
+#else
+#error "cannot determine endianess"
+#endif
 
 typedef union {
 	uint64_t val;	/* counter value */

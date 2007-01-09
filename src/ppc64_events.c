@@ -200,7 +200,9 @@ static FILE * open_file(const char * fname)
 	char * cpu;
 	char * dot = ".";
 	char * dot_dot = "..";
-#if defined(_POWER4)
+#ifdef _POWER5+
+	cpu = "power5+";
+#elif defined(_POWER4)
 	cpu = "power4";
 #elif defined(_POWER5)
 	cpu = "power5";

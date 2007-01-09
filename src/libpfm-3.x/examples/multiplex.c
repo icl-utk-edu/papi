@@ -456,17 +456,14 @@ measure_one_task(char **argv)
 	/*
 	 * create the context
 	 */
-	if (pfm_create_context(ctx, NULL, 0) == -1 ) {
+
+	ctxid = pfm_create_context(ctx, NULL, NULL, 0);
+	if (ctxid == -1 ) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
 		fatal_error("Can't create PFM context %s\n", strerror(errno));
 	}
-	/*
-	 * extract context id
-	 */
-	ctxid = ctx[0].ctx_fd;
-
 	/*
 	 * set close-on-exec to ensure we will be getting the PFM_END_MSG, i.e.,
 	 * fd not visible to child.
@@ -627,16 +624,13 @@ measure_one_cpu(char **argv)
 	/*
 	 * create the context
 	 */
-	if (pfm_create_context(ctx, NULL, 0) == -1 ) {
+	ctxid = pfm_create_context(ctx, NULL, NULL, 0);
+	if (ctxid == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
 		fatal_error("Can't create PFM context %s\n", strerror(errno));
 	}
-	/*
-	 * extract context id
-	 */
-	ctxid = ctx[0].ctx_fd;
 
 	/*
 	 * set close-on-exec to ensure we will be getting the PFM_END_MSG, i.e.,

@@ -114,3 +114,23 @@ error:
 	fclose(fp);
 	return ret;
 }
+
+int
+__pfm_check_event(pfmlib_event_t *e)
+{
+	unsigned int n, j;
+
+	if (e->event >= pfm_current->pme_count)
+		return PFMLIB_ERR_INVAL;
+
+	n = pfm_num_masks(e->event);
+	if (n == 0 && e->num_masks)
+		return PFMLIB_ERR_UMASK;
+
+	for(j=0; j < e->num_masks; j++) {
+		if (e->unit_masks[j] >= n)
+			return PFMLIB_ERR_UMASK;
+	}
+	/* need to specify at least one umask */
+	return n && j == 0 ? PFMLIB_ERR_UMASK : PFMLIB_SUCCESS;
+}

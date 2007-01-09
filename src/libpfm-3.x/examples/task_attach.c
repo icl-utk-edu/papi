@@ -111,17 +111,13 @@ parent(pid_t pid)
 	/*
 	 * now create a context. we will later attach it to the task we are creating.
 	 */
-	if (pfm_create_context(ctx, NULL, 0) == -1) {
+	ctx_fd = pfm_create_context(ctx, NULL, NULL, 0);
+	if (ctx_fd == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
 		fatal_error("Can't create PFM context %s\n", strerror(errno));
 	}
-	/*
-	 * extract the identifier for our context
-	 */
-	ctx_fd = ctx[0].ctx_fd;
-
 	/*
 	 * build the pfp_unavail_pmcs bitmask by looking
 	 * at what perfmon has available. It is not always

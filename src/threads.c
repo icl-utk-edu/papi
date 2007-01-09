@@ -399,16 +399,23 @@ int _papi_hwi_gather_all_thrspec_data(int tag, PAPI_all_thr_spec_t *where)
 
   for (foo = (ThreadInfo_t *)_papi_hwi_thread_head; foo != NULL; foo = foo->next)
     {
-      /* Could be just counting */
+      /* If we want thread ID's */
       if (where->id)
 	memcpy(&where->id[didsomething],&foo->tid,sizeof(where->id[didsomething]));
-      /* Could be just listing */
+
+      /* If we want data pointers */
       if (where->data)
 	where->data[didsomething] = foo->thread_storage[tag];
+
       didsomething++;
+
+      if ((where->id) || (where->data))
+	{
+	  if (didsomething >= where->num)
+	    break;
+	}
+
       if (foo->next == _papi_hwi_thread_head)
-	break;
-      if (didsomething >= where->num)
 	break;
     }
 

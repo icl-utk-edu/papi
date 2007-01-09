@@ -330,12 +330,12 @@ main(int argc, char **argv)
 	/*
 	 * now create the context for self monitoring/per-task
 	 */
-	if (pfm_create_context(ctx, NULL, 0) == -1 ) {
+	ctx_fd = pfm_create_context(ctx, NULL, NULL, 0);
+	if (ctx_fd == -1) {
 		if (errno == ENOSYS)
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		fatal_error("Can't create PFM context %s\n", strerror(errno));
 	}
-	ctx_fd = ctx->ctx_fd;
 
 	/*
 	 * build the pfp_unavail_pmcs bitmask by looking
@@ -378,7 +378,7 @@ main(int argc, char **argv)
 
 		setdesc.set_id              = setinfo[k].set_id = k;
 		setdesc.set_flags           = PFM_SETFL_TIME_SWITCH;
-		setdesc.set_timeout	    = THE_TIMEOUT * 1000000;
+		setdesc.set_timeout	    = THE_TIMEOUT * 1000000000; /* in nsecs */
 
 		for (i=0; i < outp.pfp_pmc_count; i++)
 			pc[i].reg_set = k;

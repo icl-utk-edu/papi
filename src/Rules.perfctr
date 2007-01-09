@@ -136,7 +136,7 @@ CFLAGS += $(EVENTFLAGS) -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) $(CFLAGS-$(
 MISCHDRS = perfctr-$(CPU).h
 MISCSRCS =  $(CPU)_events.c linux.c $(ARCH_SPEC_EVTS)
 SHLIBDEPS = -Bdynamic -L$(PERFCTR_LIB_PATH) -lperfctr
-PERFCTR_OBJS = $(shell ar t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
+PERFCTR_OBJS = $(shell $(AR) t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
 ifeq (,$(PERFCTR_OBJS))
 $(PERFCTR_LIB_PATH)/libperfctr.a:
 ifneq (,${PERFCTR_ROOT})
@@ -183,7 +183,7 @@ config.h:
 	@echo 'Please clobber your build and run ./configure. Direct Makefile access has been deprecated.'
 
 $(PERFCTR_OBJS): $(PERFCTR_LIB_PATH)/libperfctr.a
-	ar xv $<
+	$(AR) xv $<
 	
 $(CPU)_events.o: $(CPU)_events.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPU)_events.c -o $@

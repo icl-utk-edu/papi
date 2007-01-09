@@ -1,6 +1,5 @@
 /*
- * Contributed by Philip Mucci <mucci@cs.utk.edu> based on code from
- * Copyright (c) 2004-2006 Hewlett-Packard Development Company, L.P.
+ * Copyright (c) 2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,14 +22,35 @@
  * This file is part of libpfm, a performance monitoring support library for
  * applications on Linux/ia64.
  */
-#ifndef __PFMLIB_GEN_MIPS64_PRIV_H__
-#define __PFMLIB_GEN_MIPS64_PRIV_H__
+#ifndef __PFMLIB_CORE_PRIV_H__
+#define __PFMLIB_CORE_PRIV_H__
+
+#define PFMLIB_CORE_MAX_UMASK 16
 
 typedef struct {
-	char			*pme_name;
-	char			*pme_desc; /* text description of the event */
-	uint32_t		pme_code;  /* event mask, holds room for four events, low 8 bits cntr0, ... high 8 bits cntr3 */
-	uint32_t		pme_counters; 
-} pme_gen_mips64_entry_t;
+	char			*pme_uname; /* unit mask name */
+	char			*pme_udesc; /* event/umask description */
+	unsigned int		pme_ucode;  /* unit mask code */
+	unsigned int		pme_flags;  /* unit mask flags */
+} pme_core_umask_t;
 
-#endif /* __PFMLIB_GEN_MIPS64_PRIV_H__ */
+typedef struct {
+	char			*pme_name;	/* event name */
+	char			*pme_desc;	/* event description */
+	unsigned int		pme_code; 	/* event code */
+	unsigned int		pme_numasks;	/* number of umasks */
+	unsigned int		pme_flags;	/* flags */
+	pme_core_umask_t	pme_umasks[PFMLIB_CORE_MAX_UMASK]; /* umask desc */
+} pme_core_entry_t;
+
+/*
+ * pme_flags value (event and unit mask)
+ */
+#define PFMLIB_CORE_UMASK_NCOMBO	0x01 /* unit mask cannot be combined (default: combination ok) */
+#define PFMLIB_CORE_FIXED0		0x02 /* event prefers FIXED_CTR0 */
+#define PFMLIB_CORE_FIXED1		0x04 /* event prefers FIXED_CTR0 */
+#define PFMLIB_CORE_FIXED2		0x08 /* event prefers FIXED_CTR0 */
+#define PFMLIB_CORE_PMC0		0x10 /* works only on IA32_PMC0  */
+#define PFMLIB_CORE_PEBS		0x20 /* support PEBS (precise event) */
+
+#endif /* __PFMLIB_CORE_PRIV_H__ */

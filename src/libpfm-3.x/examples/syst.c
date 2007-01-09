@@ -191,17 +191,13 @@ main(int argc, char **argv)
 	/*
 	 * now create the context for self monitoring/per-task
 	 */
-	if (pfm_create_context(ctx, NULL, 0) == -1 ) {
+	ctx_fd = pfm_create_context(ctx, NULL, NULL, 0);
+	if (ctx_fd == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
 		fatal_error("Can't create PFM context %s\n", strerror(errno));
 	}
-	/*
-	 * extact our file descriptor
-	 */
-	ctx_fd = ctx->ctx_fd;
-
 	/*
 	 * build the pfp_unavail_pmcs bitmask by looking
 	 * at what perfmon has available. It is not always
@@ -253,7 +249,7 @@ main(int argc, char **argv)
 	if (pfm_load_context(ctx_fd, &load_args) == -1)
 		fatal_error("pfm_load_context error errno %d\n",errno);
 
-	printf("<monitoring started on CPU%d>\n", which_cpu);
+	printf("<monitoring started on CPU%d, press CTRL-C to quit before 20s time limit>\n", which_cpu);
 
 	for(l=0; l < 10; l++) {
 		/*

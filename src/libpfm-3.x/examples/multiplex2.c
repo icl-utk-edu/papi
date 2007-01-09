@@ -254,7 +254,7 @@ dec2sep(char *str2, char *str, char sep)
 }
 
 static void
-print_results(int ctxid, uint32_t *eff_timeout)
+print_results(int ctxid, uint64_t *eff_timeout)
 {
 	unsigned int i, j, cnt, ovfl_event;
 	uint64_t value, tot_runs = 0, set_runs;
@@ -320,15 +320,15 @@ print_results(int ctxid, uint32_t *eff_timeout)
 	 *
 	 */
 	if (options.opt_no_header == 0) {
-		printf("# %u Hz period = %u usecs\n# %"PRIu64" cycles @ %lu MHz\n", 
+		printf("# %u Hz period = %u nsecs\n# %"PRIu64" cycles @ %lu MHz\n", 
 			options.smpl_freq, 
-			1000000 / options.smpl_freq, 
+			1000000000 / options.smpl_freq, 
 			options.smpl_period,
 			options.cpu_mhz);
 
 		if (options.opt_ovfl_switch == 0)
 			printf("# using time-based multiplexing\n"
-				"# %u usecs effective switch timeout\n", 
+				"# %"PRIu64" nsecs effective switch timeout\n", 
 				*eff_timeout);
 		else
 			printf("# using overflow-based multiplexing\n");
@@ -408,7 +408,7 @@ measure_one_task(char **argv)
 	pfarg_pmc_t *my_pmcs;
 	pfarg_pmd_t *my_pmds;
 	pfarg_load_t load_arg;
-	uint32_t eff_timeout;
+	uint64_t eff_timeout;
 	pfm_msg_t msg;
 	pid_t pid;
 	int status, ret;
@@ -432,17 +432,13 @@ measure_one_task(char **argv)
 	/*
 	 * create the context
 	 */
-	if (pfm_create_context(ctx, NULL, 0) == -1 ) {
+	ctxid = pfm_create_context(ctx, NULL, NULL, 0);
+	if (ctxid == -1 ) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
 		fatal_error("Can't create PFM context %s\n", strerror(errno));
 	}
-	/*
-	 * extract context id
-	 */
-	ctxid = ctx[0].ctx_fd;
-
 	/*
 	 * set close-on-exec to ensure we will be getting the PFM_END_MSG, i.e.,
 	 * fd not visible to child.
@@ -457,14 +453,14 @@ measure_one_task(char **argv)
 	 * reason. However to avoid special casing set0 for creation, a PFM_CREATE_EVTSETS
 	 * for set0 does not complain and behaves as a PFM_CHANGE_EVTSETS
 	 */
-	vbprintf("requested timeout %u usecs\n", my_sets[0].set_timeout);
+	vbprintf("requested timeout %"PRIu64" nsecs\n", my_sets[0].set_timeout);
 
 	if (pfm_create_evtsets(ctxid, my_sets, num_sets)) {
 		fatal_error("cannot create sets\n");
 	}
 	eff_timeout = my_sets[0].set_timeout;
 
-	vbprintf("effective timeout %u usecs\n", my_sets[0].set_timeout);
+	vbprintf("effective timeout %"PRIu64" nsecs\n", my_sets[0].set_timeout);
 	/*
 	 * Now program the all the registers in one call
 	 *
@@ -574,7 +570,8 @@ finish_line:
 		ptrace(PTRACE_DETACH, pid, NULL, 0);
 	}
 
-	if (time_to_quit < 2) print_results(ctxid, &eff_timeout);
+	if (time_to_quit < 2)
+		print_results(ctxid, &eff_timeout);
 
 	close(ctxid);
 
@@ -620,17 +617,13 @@ measure_one_cpu(char **argv)
 	/*
 	 * create the context
 	 */
-	if (pfm_create_context(ctx, NULL, 0) == -1 ) {
+	ctxid = pfm_create_context(ctx, NULL, NULL, 0);
+	if (ctxid == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
 		fatal_error("Can't create PFM context %s\n", strerror(errno));
 	}
-	/*
-	 * extract context id
-	 */
-	ctxid = ctx[0].ctx_fd;
-
 	/*
 	 * set close-on-exec to ensure we will be getting the PFM_END_MSG, i.e.,
 	 * fd not visible to child.
@@ -898,14 +891,14 @@ mainloop(char **argv)
 			all_pmds[num_pmds-1].reg_long_reset  = - options.smpl_period;
 		} else {
 			/*
-			 * setup the switch timeout
+			 * setup the switch timeout (in nanoseconds)
 			 * Note that the actual timeout may be bigger than requested
 			 * due to timer tick granularity. It is always advised to
 			 * check the set_timeout value upon return from set creation.
 			 * The structure will by then contain the actual timeout.
 			 */
 			all_sets[i].set_flags    = PFM_SETFL_TIME_SWITCH;
-			all_sets[i].set_timeout  = 1000000 / options.smpl_freq;
+			all_sets[i].set_timeout  = 1000000000 / options.smpl_freq;
 		}
 #ifdef __ia64__
 		if (options.opt_excl_intr && options.opt_is_system)

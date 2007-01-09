@@ -2541,11 +2541,7 @@ inline static int set_domain(hwd_control_state_t * ctl, int domain)
    }
 
    if (domain & PAPI_DOM_KERNEL) {
-      did = 1;
-      if (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_MIPS)
-	mode |= PFM_PLM2;
-      else
-	mode |= PFM_PLM0;
+     mode |= PFM_PLM0;
    }
 
    if (domain & PAPI_DOM_SUPERVISOR) {
@@ -2555,7 +2551,7 @@ inline static int set_domain(hwd_control_state_t * ctl, int domain)
 
    if (domain & PAPI_DOM_OTHER) {
       did = 1;
-      mode |= PFM_PLM0;
+      mode |= PFM_PLM2;
    }
 
    if (!did)

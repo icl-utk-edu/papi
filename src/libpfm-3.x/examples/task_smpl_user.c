@@ -361,18 +361,13 @@ mainloop(char **arg)
 	/*
 	 * now create our perfmon context.
 	 */
-	if (pfm_create_context(&ctx, NULL, 0)) {
+	fd = pfm_create_context(&ctx, NULL, NULL, 0);
+	if (fd == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
 		fatal_error("Can't create PFM context %s\n", strerror(errno));
 	}
-
-	/*
-	 * extract the file descriptor we will use to
-	 * identify this newly created context
-	 */
-	fd = ctx.ctx_fd;
 
 	/*
 	 * Now program the registers

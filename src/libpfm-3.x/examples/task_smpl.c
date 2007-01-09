@@ -56,13 +56,12 @@ typedef pfm_dfl_smpl_arg_t		smpl_fmt_arg_t;
 typedef pfm_dfl_smpl_hdr_t		smpl_hdr_t;
 typedef pfm_dfl_smpl_entry_t		smpl_entry_t;
 typedef pfm_dfl_smpl_arg_t		smpl_arg_t;
-#define FMT_UUID		 	PFM_DFL_SMPL_UUID
+#define FMT_NAME			PFM_DFL_SMPL_NAME
 
 #define NUM_PMCS PFMLIB_MAX_PMCS
 #define NUM_PMDS PFMLIB_MAX_PMDS
 
 static uint64_t collected_samples;
-static pfm_uuid_t buf_fmt_id = FMT_UUID;
 static options_t options;
 
 static struct option the_options[]={
@@ -373,7 +372,6 @@ mainloop(char **arg)
 	 * The format is identified by its UUID which must be copied
 	 * into the ctx_buf_fmt_id field.
 	 */
-	memcpy(ctx.ctx_smpl_buf_id, buf_fmt_id, sizeof(pfm_uuid_t));
 	ctx.ctx_flags = options.opt_block ? PFM_FL_NOTIFY_BLOCK : 0;
 
 	/*
@@ -382,12 +380,13 @@ mainloop(char **arg)
 	 * The kernel will record into the buffer up to a certain point.
 	 * No partial samples are ever recorded.
 	 */
-	buf_arg.buf_size = 3*getpagesize();
+	buf_arg.buf_size = 3*getpagesize()+512;
 
 	/*
 	 * now create our perfmon context.
 	 */
-	if (pfm_create_context(&ctx, &buf_arg, sizeof(buf_arg))) {
+	fd = pfm_create_context(&ctx, FMT_NAME, &buf_arg, sizeof(buf_arg));
+	if (fd == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
@@ -395,18 +394,12 @@ mainloop(char **arg)
 	}
 
 	/*
-	 * extract the file descriptor we will use to
-	 * identify this newly created context
-	 */
-	fd = ctx.ctx_fd;
-
-	/*
 	 * retrieve the virtual address at which the sampling
 	 * buffer has been mapped
 	 */
-	buf_addr = mmap(NULL, (size_t)ctx.ctx_smpl_buf_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	buf_addr = mmap(NULL, (size_t)buf_arg.buf_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if (buf_addr == MAP_FAILED)
-		fatal_error("cannot mmap sampling buffer errno %d\n", errno);
+		fatal_error("cannot mmap sampling buffer: %s\n", strerror(errno));
 
 	printf("buffer mapped @%p\n", buf_addr);
 
@@ -432,8 +425,6 @@ mainloop(char **arg)
 	 */
 	if (pfm_write_pmds(fd, pd, outp.pfp_pmd_count))
 		fatal_error("pfm_write_pmds error errno %d\n",errno);
-
-	signal(SIGCHLD, SIG_IGN);
 
 	/*
 	 * Create the child task
@@ -488,7 +479,6 @@ mainloop(char **arg)
 
 	gettimeofday(&start_time, NULL);
 
-
 	/*
 	 * core loop
 	 */
@@ -542,9 +532,27 @@ terminate_session:
 	process_smpl_buf(hdr, pd[0].reg_smpl_pmds, num_smpl_pmds, entry_size);
 
 	/*
-	 * destroy perfmon context
+	 * close file descritor. Because of mmap() the number of reference to the
+	 * "file" is 2, thus the context is only freed when the last reference is closed
+	 * either by closed or munmap() depending on the order in which those calls are
+	 * made:
+	 * 	- close() -> munmap(): context and buffer destroyed after munmap().
+	 * 			       buffer remains accessible after close().
+	 * 	- munmap() -> close(): buffer unaccessible after munmap(), context and
+	 * 			       buffer destroyed after close().
+	 *
+	 * It is important to free the resources cleanly, especially because the sampling
+	 * buffer reserves locked memory.
 	 */
 	close(fd);
+
+	/*
+	 * unmap buffer, actually free the buffer and context because placed after
+	 * the close(), i.e. is the last reference. See comments about close() above.
+	 */
+	ret = munmap(hdr, (size_t)buf_arg.buf_size);
+	if (ret)
+		fatal_error("cannot unmap buffer: %s\n", strerror(errno));
 
 	printf("%"PRIu64" samples collected in %"PRIu64" buffer overflows\n", collected_samples, ovfl_count);
 	show_task_rusage(&start_time, &end_time, &rusage);

@@ -40,7 +40,7 @@
  *        - options: --system
  *                   --no-overflow-msg
  *                   --block-on-notify
- *                   --sampler <sampler_uuid>
+ *                   --sampler <sampler_name>
  *        - <context_id>: specify an integer that you want to associate with
  *                        the new context for use in other commands.
  *
@@ -212,6 +212,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <getopt.h>
+#include <inttypes.h>
 #include <sys/wait.h>
 #include <sys/ptrace.h>
 #include <perfmon/perfmon.h>
@@ -240,6 +241,7 @@ struct command {
 
 struct context {
 	int id;
+	int fd;
 	pfarg_ctx_t ctx_arg;
 	pfm_dfl_smpl_arg_t smpl_arg;
 	struct event_set *event_sets;
@@ -403,7 +405,7 @@ static void remove_program(struct program *prog)
  * Options: --system
  *          --no-overflow-msg
  *          --block-on-notify
- *          --sampler <sampler_uuid>
+ *          --sampler <sampler_name>
  *
  * Call the pfm_create_context system-call to create a new perfmon context.
  * Add a new entry to the global 'contexts' list.
@@ -413,7 +415,7 @@ static int create_context(int argc, char **argv)
 	pfarg_ctx_t ctx_arg;
 	pfm_dfl_smpl_arg_t smpl_arg;
 	struct context *new_ctx = NULL;
-	char *sampler_uuid = NULL;
+	char *sampler_name = NULL;
 	void *smpl_p;
 	int no_overflow_msg = FALSE;
 	int block_on_notify = FALSE;
@@ -439,7 +441,7 @@ static int create_context(int argc, char **argv)
 				     long_opts, NULL)) != EOF) {
 		switch (c) {
 		case 1:
-			sampler_uuid = optarg;
+			sampler_name = optarg;
 			break;
 		case 2:
 			system_wide = TRUE;
@@ -482,27 +484,7 @@ static int create_context(int argc, char **argv)
 		goto error;
 	}
 
-	/* Set up the parameters for the system call. */
-	if (sampler_uuid) {
-		sscanf(sampler_uuid, "%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x"
-				"-%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x",
-				(unsigned int *)ctx_arg.ctx_smpl_buf_id,
-				(unsigned int *)ctx_arg.ctx_smpl_buf_id+1,
-				(unsigned int *)ctx_arg.ctx_smpl_buf_id+2,
-				(unsigned int *)ctx_arg.ctx_smpl_buf_id+3,
-				(unsigned int *)ctx_arg.ctx_smpl_buf_id+4,
-				(unsigned int *)ctx_arg.ctx_smpl_buf_id+5,
-				(unsigned int *)ctx_arg.ctx_smpl_buf_id+6,
-				(unsigned int *)ctx_arg.ctx_smpl_buf_id+7,
-				(unsigned int *)ctx_arg.ctx_smpl_buf_id+8,
-				(unsigned int *)ctx_arg.ctx_smpl_buf_id+9,
-				(unsigned int *)ctx_arg.ctx_smpl_buf_id+10,
-				(unsigned int *)ctx_arg.ctx_smpl_buf_id+11,
-				(unsigned int *)ctx_arg.ctx_smpl_buf_id+12,
-				(unsigned int *)ctx_arg.ctx_smpl_buf_id+13,
-				(unsigned int *)ctx_arg.ctx_smpl_buf_id+14,
-				(unsigned int *)ctx_arg.ctx_smpl_buf_id+15);
-
+	if (sampler_name) {
 		smpl_arg.buf_size = getpagesize();
 		smpl_p = &smpl_arg;
 		sz = sizeof(smpl_arg);
@@ -516,8 +498,8 @@ static int create_context(int argc, char **argv)
 			    (block_on_notify ? PFM_FL_NOTIFY_BLOCK : 0) |
 			    (remap_eventsets ? PFM_FL_MAP_SETS     : 0);
 
-	rc = pfm_create_context(&ctx_arg, smpl_p, sz);
-	if (rc) {
+	rc = pfm_create_context(&ctx_arg, sampler_name, smpl_p, sz);
+	if (rc == -1) {
 		rc = errno;
 		LOG_ERROR("pfm_create_context system call returned "
 			  "an error: %d.", rc);
@@ -545,25 +527,23 @@ static int create_context(int argc, char **argv)
 	}
 
 	new_ctx->id = ctx_id;
+	new_ctx->fd = rc;
 	new_ctx->ctx_arg = ctx_arg;
 	new_ctx->smpl_arg = smpl_arg;
 
 	insert_context(new_ctx);
 
 	LOG_INFO("Created context %d with file-descriptor %d.",
-		 new_ctx->id, new_ctx->ctx_arg.ctx_fd);
+		 new_ctx->id, new_ctx->fd);
 
 	return 0;
 
 error:
 	if (new_ctx) {
+		close(new_ctx->fd);
 		free(new_ctx->event_sets);
 		free(new_ctx);
 	}
-	if (ctx_arg.ctx_fd > 0) {
-		close(ctx_arg.ctx_fd);
-	}
-
 	return rc;
 }
 
@@ -618,7 +598,7 @@ static int load_context(int argc, char **argv)
 	load_arg.load_set = evt->id;
 	load_arg.load_pid = prog->pid;
 
-	rc = pfm_load_context(ctx->ctx_arg.ctx_fd, &load_arg);
+	rc = pfm_load_context(ctx->fd, &load_arg);
 	if (rc) {
 		rc = errno;
 		LOG_ERROR("pfm_load_context system call returned "
@@ -658,7 +638,7 @@ static int unload_context(int argc, char **argv)
 		return EINVAL;
 	}
 
-	rc = pfm_unload_context(ctx->ctx_arg.ctx_fd);
+	rc = pfm_unload_context(ctx->fd);
 	if (rc) {
 		rc = errno;
 		LOG_ERROR("pfm_unload_context system call returned "
@@ -700,7 +680,7 @@ static int close_context(int argc, char **argv)
 	/* There's no perfmon system-call to delete a context. We simply call
 	 * close on the file handle.
 	 */
-	close(ctx->ctx_arg.ctx_fd);
+	close(ctx->fd);
 	remove_context(ctx);
 
 	for (evt = ctx->event_sets; evt; evt = next_evt) {
@@ -776,7 +756,7 @@ static int write_pmc(int argc, char **argv)
 		pmc_args[i].reg_value = pmc_value;
 	}
 
-	rc = pfm_write_pmcs(ctx->ctx_arg.ctx_fd, pmc_args, num_pmcs);
+	rc = pfm_write_pmcs(ctx->fd, pmc_args, num_pmcs);
 	if (rc) {
 		rc = errno;
 		LOG_ERROR("pfm_write_pmcs system call returned "
@@ -872,7 +852,7 @@ static int write_pmd(int argc, char **argv)
 		pmd_args[i].reg_value = pmd_value;
 	}
 
-	rc = pfm_write_pmds(ctx->ctx_arg.ctx_fd, pmd_args, num_pmds);
+	rc = pfm_write_pmds(ctx->fd, pmd_args, num_pmds);
 	if (rc) {
 		rc = errno;
 		LOG_ERROR("pfm_write_pmds system call returned "
@@ -964,7 +944,7 @@ static int read_pmd(int argc, char **argv)
 		pmd_args[i].reg_set = evt->id;
 	}
 
-	rc = pfm_read_pmds(ctx->ctx_arg.ctx_fd, pmd_args, num_pmds);
+	rc = pfm_read_pmds(ctx->fd, pmd_args, num_pmds);
 	if (rc) {
 		rc = errno;
 		LOG_ERROR("pfm_read_pmds system call returned "
@@ -1040,7 +1020,7 @@ static int start_counting(int argc, char **argv)
 
 	start_arg.start_set = evt->id;
 
-	rc = pfm_start(ctx->ctx_arg.ctx_fd, &start_arg);
+	rc = pfm_start(ctx->fd, &start_arg);
 	if (rc) {
 		rc = errno;
 		LOG_ERROR("pfm_start system call returned an error: %d.", rc);
@@ -1080,7 +1060,7 @@ static int stop_counting(int argc, char **argv)
 		return EINVAL;
 	}
 
-	rc = pfm_stop(ctx->ctx_arg.ctx_fd);
+	rc = pfm_stop(ctx->fd);
 	if (rc) {
 		rc = errno;
 		LOG_ERROR("pfm_stop system call returned an error: %d.", rc);
@@ -1119,7 +1099,7 @@ static int restart_counting(int argc, char **argv)
 		return EINVAL;
 	}
 
-	rc = pfm_restart(ctx->ctx_arg.ctx_fd);
+	rc = pfm_restart(ctx->fd);
 	if (rc) {
 		rc = errno;
 		LOG_ERROR("pfm_restart system call returned an error: %d.", rc);
@@ -1239,12 +1219,12 @@ static int create_eventset(int argc, char **argv)
 
 	set_arg.set_id = event_set_id;
 	set_arg.set_id_next = next_set_id;
-	set_arg.set_timeout = timeout;
+	set_arg.set_timeout = timeout; /* in nanseconds */
 	set_arg.set_flags = (switch_on_overflow ? PFM_SETFL_OVFL_SWITCH : 0) |
 			    (switch_on_timeout  ? PFM_SETFL_TIME_SWITCH : 0) |
 			    (explicit_next_set  ? PFM_SETFL_EXPL_NEXT   : 0);
 
-	rc = pfm_create_evtsets(ctx->ctx_arg.ctx_fd, &set_arg, 1);
+	rc = pfm_create_evtsets(ctx->fd, &set_arg, 1);
 	if (rc) {
 		rc = errno;
 		LOG_ERROR("pfm_create_evtsets system call returned "
@@ -1300,7 +1280,7 @@ static int delete_eventset(int argc, char **argv)
 
 	set_arg.set_id = evt->id;
 
-	rc = pfm_delete_evtsets(ctx->ctx_arg.ctx_fd, &set_arg, 1);
+	rc = pfm_delete_evtsets(ctx->fd, &set_arg, 1);
 	if (rc) {
 		rc = errno;
 		LOG_ERROR("pfm_delete_evtsets system call returned "
@@ -1355,7 +1335,7 @@ static int getinfo_eventset(int argc, char **argv)
 
 	set_arg.set_id = evt->id;
 
-	rc = pfm_getinfo_evtsets(ctx->ctx_arg.ctx_fd, &set_arg, 1);
+	rc = pfm_getinfo_evtsets(ctx->fd, &set_arg, 1);
 	if (rc) {
 		rc = errno;
 		LOG_ERROR("pfm_getinfo_evtsets system call returned "
@@ -1367,7 +1347,7 @@ static int getinfo_eventset(int argc, char **argv)
 	LOG_INFO("   Next set: %u", set_arg.set_id_next);
 	LOG_INFO("   Flags: 0x%x", set_arg.set_flags);
 	LOG_INFO("   Runs: %llu", (unsigned long long)set_arg.set_runs);
-	LOG_INFO("   Timeout: %u", set_arg.set_timeout);
+	LOG_INFO("   Timeout: %"PRIu64, set_arg.set_timeout);
 	LOG_INFO("   MMAP offset: %llu", (unsigned long long)set_arg.set_mmap_offset);
 
 	return 0;
@@ -1581,7 +1561,7 @@ static struct command _commands[] = {
 
 	{ "create_context", "cc",
 	  "<context_id> [--system] [--no-overflow-msg] "
-	    "[--block-on-notify] [--sampler <sampler_uuid>]",
+	    "[--block-on-notify] [--sampler <sampler_name>]",
 	  create_context, 1 },
 
 	{ "load_context", "load",

@@ -21,6 +21,8 @@
  */
 extern int perfmonctl(int fd, int cmd, void *arg, int narg);
 
+typedef unsigned char pfm_uuid_t[16];	/* custom sampling buffer identifier type */
+
 /*
  * obsolete perfmon comamnds supported on all CPU models
  */

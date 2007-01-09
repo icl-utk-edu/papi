@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS AWK CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP arch DEBUGFLAGS MAKEVER PMAPI NOTLS altix PMINIT perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root pfm_prefix pfm_incdir pfm_libdir bitmode LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS AWK CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP arch DEBUGFLAGS MAKEVER PMAPI AR NOTLS altix PMINIT perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root pfm_prefix pfm_incdir pfm_libdir bitmode LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1564,7 +1564,8 @@ case "$OS" in
              case "$CPU_info" in
                PPC970*) CPU="PPC970";;
                POWER4*) CPU="POWER4";;
-               POWER5*) CPU="POWER5";;
+               POWER5) CPU="POWER5";;
+               POWER5+) CPU="POWER5+";;
              esac
           elif test "$family" = "ppc"; then
              CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
@@ -2889,6 +2890,9 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
+if test "x$AR" == "x"; then
+   AR=ar
+fi
 if test "$OS" != "linux"; then
    ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -3494,7 +3498,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:3497:" \
+echo "$as_me:3500:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -6945,7 +6949,7 @@ echo "$as_me: error: The bitmode you specified is not supported" >&2;}
    { (exit 1); exit 1; }; }
                  fi
                  MAKEVER="$OS"-perfctr-"$CPU" ;;
-            POWER4|POWER5|PPC970)
+            POWER4|POWER5|POWER5+|PPC970)
                  MAKEVER="$OS"-perfctr-"$CPU""$BM" ;;
 	    mips64)
 		 MAKEVER="$OS"-perfmon2 ;;
@@ -7005,8 +7009,8 @@ case "$MAKEVER" in
     unicos-t3e);;
     unicos-x1-msp);;
     unicos-x1-ssp);;
-    linux-perfctr-POWER4|linux-perfctr-POWER5|linux-perfctr-PPC970|linux-perfctr-PPC32);;
-    linux-perfctr-POWER4-64bit|linux-perfctr-POWER5-64bit|linux-perfctr-PPC970-64bit);;
+    linux-perfctr-POWER4|linux-perfctr-POWER5|linux-perfctr-POWER5+|linux-perfctr-PPC970|linux-perfctr-PPC32);;
+    linux-perfctr-POWER4-64bit|linux-perfctr-POWER5-64bit|linux-perfctr-POWER5+-64bit|linux-perfctr-PPC970-64bit);;
     linux-perfmon2);;
     *)
     echo Platform $MAKEVER is not supported
@@ -7053,6 +7057,7 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define PAPI_DATADIR "$PAPI_DATADIR"
 _ACEOF
+
 
 
 
@@ -7735,6 +7740,7 @@ s,@arch@,$arch,;t t
 s,@DEBUGFLAGS@,$DEBUGFLAGS,;t t
 s,@MAKEVER@,$MAKEVER,;t t
 s,@PMAPI@,$PMAPI,;t t
+s,@AR@,$AR,;t t
 s,@NOTLS@,$NOTLS,;t t
 s,@altix@,$altix,;t t
 s,@PMINIT@,$PMINIT,;t t

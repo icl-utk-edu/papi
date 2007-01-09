@@ -228,13 +228,13 @@ main(int argc, char **argv)
 	/*
 	 * now create the context for self monitoring/per-task
 	 */
-	if (pfm_create_context(&ctx, NULL, 0)) {
+	ctx_fd = pfm_create_context(&ctx, NULL, NULL, 0);
+	if (ctx_fd == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
 		fatal_error("Can't create PFM context %s\n", strerror(errno));
 	}
-	ctx_fd = ctx.ctx_fd;
 
 	/*
 	 * build the pfp_unavail_pmcs bitmask by looking

@@ -59,7 +59,6 @@ typedef pfm_dfl_smpl_arg_t		smpl_arg_t;
 #define FMT_UUID		 	PFM_DFL_SMPL_UUID
 
 static uint64_t collected_samples;
-static pfm_uuid_t buf_fmt_id = FMT_UUID;
 
 
 static void fatal_error(char *fmt,...) __attribute__((noreturn));
@@ -285,12 +284,11 @@ main(int argc, char **argv)
 	memset(&buf_arg, 0, sizeof(buf_arg));
 	memset(&load_args, 0, sizeof(load_args));
 
-	memcpy(ctx.ctx_smpl_buf_id, buf_fmt_id, sizeof(pfm_uuid_t));
-
 	buf_arg.buf_size = 3*getpagesize();
 	ctx.ctx_flags = PFM_FL_NOTIFY_BLOCK;
 
-	if (pfm_create_context(&ctx, &buf_arg, sizeof(buf_arg))) {
+	fd = pfm_create_context(&ctx, "default", &buf_arg, sizeof(buf_arg));
+	if (fd == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
@@ -298,20 +296,14 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * extract the unique identifier for our context, a regular file descriptor
-	 */
-	fd = ctx.ctx_fd;
-
-	/*
 	 * retrieve the virtual address at which the sampling
 	 * buffer has been mapped
 	 */
-	buf_addr = mmap(NULL, ctx.ctx_smpl_buf_size, PROT_READ, MAP_PRIVATE, fd, 0);
-
-	printf("context [%d] buffer mapped @%p\n", fd, buf_addr);
-
+	buf_addr = mmap(NULL, (size_t)buf_arg.buf_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if (buf_addr == MAP_FAILED)
 		fatal_error("cannot mmap sampling buffer errno %d\n", errno);
+
+	printf("context [%d] buffer mapped @%p\n", fd, buf_addr);
 
 	hdr = (smpl_hdr_t *)buf_addr;
 	printf("hdr_cur_offs=%llu version=%u.%u\n",
@@ -445,6 +437,8 @@ terminate_session:
 	 * check for any leftover samples
 	 */
 	process_smpl_buf(hdr, pd[0].reg_smpl_pmds, num_smpl_pmds, entry_size);
+
+	munmap(buf_addr, (size_t)buf_arg.buf_size);
 
 	close(fd);
 

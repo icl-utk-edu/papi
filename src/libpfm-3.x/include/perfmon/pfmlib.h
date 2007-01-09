@@ -223,7 +223,7 @@ extern int pfm_get_inst_retired_event(pfmlib_event_t *e);
 #define PFMLIB_ERR_NOTSUPP	 -1	/* function not supported */
 #define PFMLIB_ERR_INVAL	 -2	/* invalid parameters */
 #define PFMLIB_ERR_NOINIT	 -3	/* library was not initialized */
-#define PFMLIB_ERR_NOTFOUND	 -4	/* object not found */
+#define PFMLIB_ERR_NOTFOUND	 -4	/* event not found */
 #define PFMLIB_ERR_NOASSIGN	 -5	/* cannot assign events to counters */
 #define PFMLIB_ERR_FULL	 	 -6	/* buffer is full or too small */
 #define PFMLIB_ERR_EVTMANY	 -7	/* event used more than once */

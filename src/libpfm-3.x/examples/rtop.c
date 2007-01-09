@@ -48,7 +48,7 @@
 
 #include "detect_pmcs.h"
 
-#define SWITCH_TIMEOUT	1000000 /* in micro-seconds */
+#define SWITCH_TIMEOUT	1000000000 /* in nanoseconds */
 
 #define RTOP_VERSION "0.1"
 
@@ -145,7 +145,7 @@ typedef enum {
 typedef struct {
 	uint64_t prev_k_cycles;
 	uint64_t prev_u_cycles;
-	uint64_t prev_itc_cycles;
+	uint64_t prev_act_duration;
 } set0_data_t;
 
 static barrier_t 		barrier;
@@ -515,12 +515,14 @@ handler_set0(int fd, FILE *fp, thread_desc_t *td, setdesc_t *my_sdesc)
 	/*
 	 * actual duration monitoring was active for this set
 	 */
-	act_delta = (info.set_act_duration - sd1->prev_itc_cycles)/1000; /* in us */
+	act_delta = (info.set_act_duration - sd1->prev_act_duration);
 
 	/*
 	 * expected maximum duration with monitoring active for this set
+	 * set_timeout is in nanoseconds, we need to divide mhz by 1000
+	 * to get cycles.
 	 */
-	itc_delta =  my_sdesc->set_timeout*options.cpu_mhz;
+	itc_delta =  (my_sdesc->set_timeout*(uint64_t)options.cpu_mhz)/1000;
 
 	k_cycles   = (double)(my_sdesc->pd[0].reg_value - sd1->prev_k_cycles)*100.0/ (double)itc_delta;
 	u_cycles   = (double)(my_sdesc->pd[1].reg_value - sd1->prev_u_cycles)*100.0/ (double)itc_delta;
@@ -530,6 +532,9 @@ handler_set0(int fd, FILE *fp, thread_desc_t *td, setdesc_t *my_sdesc)
 	 * adjust for rounding errors
 	 */
 	if (i_cycles < 0.0) i_cycles = 0.0;
+	if (i_cycles > 100.0) i_cycles = 100.0;
+	if (k_cycles > 100.0) k_cycles = 100.0;
+	if (u_cycles > 100.0) u_cycles = 100.0;
 
 	printw("CPU%-2ld %6.2f%% usr %6.2f%% sys %6.2f%% idle\n",
 		mycpu,
@@ -537,9 +542,9 @@ handler_set0(int fd, FILE *fp, thread_desc_t *td, setdesc_t *my_sdesc)
 		k_cycles,
 		i_cycles);
 
-	sd1->prev_k_cycles   = my_sdesc->pd[0].reg_value;
-	sd1->prev_u_cycles   = my_sdesc->pd[1].reg_value;
-	sd1->prev_itc_cycles = info.set_act_duration;
+	sd1->prev_k_cycles      = my_sdesc->pd[0].reg_value;
+	sd1->prev_u_cycles      = my_sdesc->pd[1].reg_value;
+	sd1->prev_act_duration = info.set_act_duration;
 
 	if (fp)
 		fprintf(fp, "%"PRIu64" %6.2f %6.2f %6.2f\n",
@@ -622,15 +627,14 @@ do_measure_one_cpu(void *data)
 
 	memcpy(my_sdesc_tab, setdesc_tab, sizeof(setdesc_t)*RTOP_NUM_SDESC);
 
-	if (pfm_create_context(&ctx, NULL, 0) == -1) {
+	fd = pfm_create_context(&ctx, NULL, NULL, 0);
+	if (fd == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
 		warning("CPU%ld cannot create context: %d\n", mycpu, errno);
 		goto error;
 	}
-
-	fd = ctx.ctx_fd;
 
 	/*
 	 * WARNING: on processors where the idle loop goes into some power-saving
@@ -642,7 +646,7 @@ do_measure_one_cpu(void *data)
 
 		setd.set_id    = my_sdesc->set_id;
 		setd.set_flags = my_sdesc->set_flags;
-		setd.set_timeout =  SWITCH_TIMEOUT; /* in us */
+		setd.set_timeout =  SWITCH_TIMEOUT; /* in nsecs */
 
 		if (pfm_create_evtsets(fd, &setd, 1) == -1) {
 			warning("CPU%ld cannot create set%u: %d\n", mycpu, j, errno);
@@ -826,7 +830,8 @@ mainloop(void)
 	/*
 	 * get worker thread out of their mainloop
 	 */
-	for (i=0; i < ncpus; i++) sem_post(&thread_info[i].his_sem);
+	for (i=0; i < ncpus; i++)
+		sem_post(&thread_info[i].his_sem);
 join_all:
 	for(i=0; i< ncpus; i++) {
 		ret = pthread_join(thread_info[i].tid, &retval);

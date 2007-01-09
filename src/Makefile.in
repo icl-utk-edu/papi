@@ -20,6 +20,7 @@ F77	  = @F77@
 CC	  = @CC@
 LDFLAGS	  = @LDFLAGS@
 CPP	  = @CPP@
+AR	  = @AR@
 PFM_PREFIX	= @pfm_prefix@ 
 PFM_ROOT  	= @pfm_root@
 PFM_LIB_PATH	= @pfm_libdir@

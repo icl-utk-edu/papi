@@ -130,12 +130,16 @@ int PAPI_list_threads(PAPI_thread_id_t *id, int *num)
   PAPI_all_thr_spec_t tmp;
   int retval;
 
-  if ((num == NULL) || (*num <= 0))
+  /* If id == NULL, then just count the threads, don't gather a list. */
+  /* If id != NULL, then we need the length of the id array in num. */
+
+  if ((num == NULL) || (id && (*num <= 0)))
     papi_return(PAPI_EINVAL);
 
   memset(&tmp,0x0,sizeof(tmp));
 
-  /* If id == NULL, then just count the threads */
+  /* data == NULL, since we don't want the thread specific pointers. */
+  /* id may be NULL, if the user doesn't want the thread ID's. */
 
   tmp.num = *num;
   tmp.id = id;
