@@ -235,7 +235,24 @@ version and location. Use:
 	% ./configure --help
 to learn more about these options.
 
-Follow the general installation instructions to complete your installation.
+Follow the general installation instructions to complete your installation.PERFCT
+
+*- IF PERFCTR IS INSTALLED BUT PAPI FAILS TO INITIALIZE -*
+
+You may be running udev, which is not smart enough to know the permissions of 
+dynamically created devices. To fix this, find your udev/devices directory, 
+often /lib/udev/devices or /etc/udev/devices and perform the following actions:
+
+ mknod perfctr c 10 182
+ chmod 644 perfctr
+
+On Ubuntu 6.06 (and probably other debian distros),  add a line to 
+/etc/udev/rules.d/40-permissions.rules like this:
+
+KERNEL=="perfctr", MODE="0666"
+
+This tells udev to always create the device file with the appropriate permissions.
+Use 'perfex -i' from the perfctr distribution to test this fix.
 
 PLATFORM NOTES:
 Opteron fails the matrix-hl test because the default definition of PAPI_FP_OPS
