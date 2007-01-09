@@ -1,0 +1,35 @@
+PAPIVER=3
+PAPIREV=5
+PAPIAGE=1
+ARCH	  = @arch@
+MAKEVER   = @MAKEVER@
+PREFIX    = @prefix@
+prefix    = $(PREFIX)
+EPREFIX   = @exec_prefix@
+exec_prefix = $(EPREFIX)
+INCDIR	  = @includedir@
+LIBDIR	  = @libdir@
+BINDIR	  = @bindir@
+MANDIR	  = @mandir@
+DATADIR   = @datadir@
+PMAPI     = @PMAPI@
+NOTLS     = @NOTLS@
+ALTIX	  = @altix@
+PMINIT	  = @PMINIT@
+F77	  = @F77@
+CC	  = @CC@
+LDFLAGS	  = @LDFLAGS@
+CPP	  = @CPP@
+AR	  = @AR@
+PFM_PREFIX	= @pfm_prefix@ 
+PFM_ROOT  	= @pfm_root@
+PFM_LIB_PATH	= @pfm_libdir@
+PFM_INC_PATH	= @pfm_incdir@
+PERFCTR_PREFIX 	= @perfctr_prefix@
+PERFCTR_ROOT 	= @perfctr_root@
+PERFCTR_LIB_PATH = @perfctr_libdir@
+PERFCTR_INC_PATH = @perfctr_incdir@
+DEBUGFLAGS	= @DEBUGFLAGS@
+BITS	= @bitmode@
+
+include ./Makefile.$(MAKEVER)

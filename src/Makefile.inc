@@ -1,22 +1,33 @@
 PAPI_SRCDIR = $(PWD)	
-SOURCES	  = $(MISCSRCS) papi.c papi_hl.c extras.c multiplex.c \
+SOURCES	  = $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c multiplex.c \
     papi_fwrappers.c papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c \
-    $(MEMSUBSTR)-memory.c $(SUBSTR).c
-OBJECTS   = $(MISCOBJS) papi.o papi_hl.o extras.o multiplex.o \
+    papi_data.c threads.c $(MEMSUBSTR)-memory.c $(SUBSTR).c papi_preset.c \
+    papi_vector.c papi_memory.c
+OBJECTS   = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o PAPI_FWRAPPERS.o \
-    $(MEMSUBSTR)-memory.o $(SUBSTR).o 
-HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h
-LIBCFLAGS = $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\"  
-FHEADERS= fpapi.h f77papi.h f90papi.h
+    papi_data.o threads.o $(MEMSUBSTR)-memory.o $(SUBSTR).o papi_preset.o \
+    papi_vector.o papi_memory.o
+HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h \
+    papi_preset.h threads.h papi_protos.h papi_vector.h papi_vector_redefine.h \
+    papi_memory.h config.h
+LIBCFLAGS = -I. $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" 
+FHEADERS  = fpapi.h f77papi.h f90papi.h
 
-all: showconf $(LIBS) genpapifdef $(FHEADERS) examples
+all: showconf $(LIBS) utils tests
 
 showconf:
 		@echo; 
 		@echo "Host architecture: $(DESCR)"; 
 		@echo "Host substrate   : $(SUBSTR).c"; 
 		@echo "Host examples    : $(TARGETS)";
-		@if [ \"$(DESTDIR)\" = \"\" ]; then echo "Installation root: <unset> (You should do a make DESTDIR=/usr/local or equivalent)"; else echo "Installation root: $(DESTDIR)"; fi 
+		@echo "Installation DESTDIR: $(DESTDIR)"; 
+		@echo "Installation PREFIX : $(PREFIX)"; 
+		@echo "Installation EPREFIX: $(EPREFIX)"; 
+		@echo "Installation INCDIR : $(INCDIR)"; 
+		@echo "Installation LIBDIR : $(LIBDIR)"; 
+		@echo "Installation BINDIR : $(BINDIR)"; 
+		@echo "Installation MANDIR : $(MANDIR)"; 
+		@echo "Installation DATADIR: $(DATADIR)"; 
 		@echo
 
 static: $(LIBRARY)
@@ -25,10 +36,11 @@ shared: $(SHLIB)
 
 $(LIBRARY): $(OBJECTS) 
 	rm -f $(LIBRARY)
-	ar ruv $(LIBRARY) $(OBJECTS) 
+	$(AR) $(ARG64) ruv $(LIBRARY) $(OBJECTS) 
 
-$(SHLIB): $(SOURCES) $(SHLIBOBJS)
-	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(SHLIBDEPS)
+$(SHLIB): $(SOURCES) $(SHLIBOBJS) 
+	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(LDFLAGS) $(SHLIBDEPS) 
+	-$(POST_BUILD)
 
 papi_fwrappers_.c: papi_fwrappers.c $(HEADERS)
 	$(CPP) -DFORTRANUNDERSCORE papi_fwrappers.c > papi_fwrappers_.c 
@@ -54,6 +66,15 @@ PAPI_FWRAPPERS.o: PAPI_FWRAPPERS.c $(HEADERS)
 papi.o: papi.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi.c -o papi.o 
 
+papi_internal.o: papi_internal.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_internal.c -o papi_internal.o 
+
+papi_data.o: papi_data.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_data.c -o papi_data.o 
+
+threads.o: threads.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c threads.c -o threads.o 
+
 papi_hl.o: papi_hl.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_hl.c -o papi_hl.o 
 
@@ -63,71 +84,99 @@ $(MEMSUBSTR)-memory.o: $(MEMSUBSTR)-memory.c $(HEADERS)
 extras.o: extras.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c extras.c -o extras.o 
 
+papi_memory.o: papi_memory.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_memory.c -o papi_memory.o
+
+papi_vector.o: papi_vector.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_vector.c -o papi_vector.o
+
+papi_preset.o: papi_preset.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_preset.c -o papi_preset.o 
+
 multiplex.o: multiplex.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c multiplex.c -o multiplex.o 
 
 $(SUBSTR).o: $(SUBSTR).c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(SUBSTR).c -o $(SUBSTR).o 
+#
+# This is all done by configure now
+#
+genpapifdef: genpapifdef.c papi.h papi_preset.h papi_data.h
+	$(CC) -I. genpapifdef.c -o genpapifdef
 
-genpapifdef: genpapifdef.c $(LIBRARY)
-	$(CC) $(CFLAGS) $(OPTFLAGS) genpapifdef.c -o genpapifdef $(LIBRARY) $(LDFLAGS)
-
-fpapi.h: genpapifdef
+fpapi.h: papi.h
 	./genpapifdef -c > fpapi.h
 
-f77papi.h: genpapifdef
+f77papi.h: papi.h
 	./genpapifdef -f77 > f77papi.h
 
-f90papi.h: genpapifdef
+f90papi.h: papi.h
 	./genpapifdef -f90 > f90papi.h
 
-examples: tests ftests
+test: ctests
+	ctests/zero
 
-test: examples
-	tests/zero
-
-fulltest: examples
+fulltest: tests
 	sh run_tests.sh
 
-tests: null
-	cd tests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="$(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" $(TARGETS)
+tests: ctests ftests
+
+utils: $(LIBRARY) null
+	-cd utils; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="$(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" util
+
+ctests: $(LIBRARY) null
+	cd ctests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="$(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" $(TARGETS)
 
 # LIBCFLAGS='$(CFLAGS)'
-ftests: null
-	cd ftests; $(MAKE) CC="$(CC)" F77="$(F77)" TOPTFLAGS="$(TOPTFLAGS)" FOPTFLAGS="$(FTOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" CFLAGS="$(CFLAGS)" SUBSTR="$(SUBSTR)"
+ftests: $(LIBRARY) null
+	-cd ftests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" F77="$(F77)" CFLAGS="$(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" FTOPTFLAGS="$(FTOPTFLAGS)" FFLAGS="$(FFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" $(TARGETS)
 
 clean: native_clean
-	rm -rf $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c
-	cd tests; $(MAKE) clean
-	cd ftests; $(MAKE) clean
+	-rm -rf $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c
+	-cd ctests; $(MAKE) clean
+	-cd ftests; $(MAKE) clean
+	-cd utils;  $(MAKE) clean
 
-clobber: clean
-	rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) $(FHEADERS)
+clobber distclean: clean native_clobber
+	-rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) $(SPECIAL_REMOVE) Makefile config.h
+	-cd utils;  $(MAKE) clobber
+	-rm -f config.log config.status f77papi.h f90papi.h fpapi.h
+
 null:
 
 dist: 
-	$(MAKE) -f Makefile.$(MSUBSTR) install DESTDIR=`pwd`/papi-$(SUBSTR)
+	$(MAKE) -f Makefile.$(MSUBSTR) install-all PREFIX=`pwd`/papi-$(SUBSTR)
 	tar cfv ./papi-$(SUBSTR).tar ./papi-$(SUBSTR)
 	gzip ./papi-$(SUBSTR).tar
 	rm -rf ./papi-$(SUBSTR)
 
-install: all install_tree native_install
-	@if [ \"$(DESTDIR)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make DESTDIR=/usr/local"; exit 1; fi 
-	@echo "Root of destination directory is: \"$(DESTDIR)\""; 
-	chmod go+rx $(DESTDIR)/lib
-	chmod go+rx $(DESTDIR)/include
-	-cp $(LIBRARY) $(SHLIB) $(DESTDIR)/lib
-	chmod go+r $(DESTDIR)/lib/*
-	cp $(FHEADERS) papi.h papiStdEventDefs.h $(DESTDIR)/include
-	chmod go+r $(DESTDIR)/include/*
-	cd ../man; $(MAKE) DESTDIR=$(DESTDIR) install
-	cd tests; $(MAKE) DESTDIR=$(DESTDIR) CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install
-	cd ftests; $(MAKE) DESTDIR=$(DESTDIR) F77="$(F77)" CC="$(CC)" OPTFLAGS="$(TOPTFLAGS)" FTOPTFLAGS="$(FTOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" SUBSTR="$(SUBSTR)" CFLAGS="$(CFLAGS)" TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install
-	cp $(SUBSTR).README $(DESTDIR)
+install-all: install install-tests
 
-install_tree:
-	mkdir -p $(DESTDIR)/lib
-	mkdir -p $(DESTDIR)/include
-	mkdir -p $(DESTDIR)/man
-	mkdir -p $(DESTDIR)/ctests
-	mkdir -p $(DESTDIR)/ftests
+install: install-lib install-man install-utils
+
+install-lib: native_install
+	@echo "Headers (INCDIR) being installed in: \"$(DESTDIR)$(INCDIR)\""; 
+	-mkdir -p $(DESTDIR)$(INCDIR)
+	-chmod go+rx $(DESTDIR)$(INCDIR)
+	cp $(FHEADERS) papi.h papiStdEventDefs.h $(DESTDIR)$(INCDIR)
+	cd $(DESTDIR)$(INCDIR); chmod go+r $(FHEADERS) papi.h papiStdEventDefs.h
+	@echo "Libraries (LIBDIR) being installed in: \"$(DESTDIR)$(LIBDIR)\""; 
+	-mkdir -p $(DESTDIR)$(LIBDIR)
+	-chmod go+rx $(DESTDIR)$(LIBDIR)
+	cp $(LIBRARY) $(DESTDIR)$(LIBDIR)
+	chmod go+r $(DESTDIR)$(LIBDIR)/$(LIBRARY)
+# copy SHLIB conditionally, since it isn't always made
+	if [[ -r $(SHLIB) ]] ; then \
+		cp $(SHLIB) $(DESTDIR)$(LIBDIR); \
+		chmod go+r $(DESTDIR)$(LIBDIR)/$(SHLIB) ; \
+	fi
+
+install-man: 
+	cd ../man && $(MAKE) MANDIR=$(DESTDIR)$(MANDIR) install
+
+install-utils: 
+	cd utils; $(MAKE) BINDIR="$(DESTDIR)$(BINDIR)" CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' LIBRARY="$(LIBRARY)" install
+	
+install-tests: 
+	cd ctests; $(MAKE) DATADIR="$(DESTDIR)$(DATADIR)" CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" LIBCFLAGS='$(LIBCFLAGS)' TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install
+	cd ftests; $(MAKE) DATADIR="$(DESTDIR)$(DATADIR)" F77="$(F77)" CC="$(CC)" OPTFLAGS="$(TOPTFLAGS)" FTOPTFLAGS="$(FTOPTFLAGS)" FFLAGS="$(FFLAGS)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" SUBSTR="$(SUBSTR)" CFLAGS="$(CFLAGS)" TARGETS="$(TARGETS)" LIBRARY="$(LIBRARY)" install
