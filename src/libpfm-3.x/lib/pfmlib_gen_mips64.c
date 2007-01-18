@@ -197,9 +197,9 @@ static void stuff_regs(pfmlib_event_t *e, int plm, pfmlib_reg_t *pc, pfmlib_reg_
   /* if plm is 0, then assume not specified per-event and use default */
   plm = e[j].plm ? e[j].plm : plm;
   reg.sel_usr = plm & PFM_PLM3 ? 1 : 0;
-  reg.sel_os  = plm & PFM_PLM2 ? 1 : 0;
+  reg.sel_os  = plm & PFM_PLM0 ? 1 : 0;
   reg.sel_sup = plm & PFM_PLM1 ? 1 : 0;
-  reg.sel_exl = plm & PFM_PLM0 ? 1 : 0;
+  reg.sel_exl = plm & PFM_PLM2 ? 1 : 0;
   reg.sel_int = 1; /* force int to 1 */
 
   reg.sel_event_mask = (gen_mips64_pe[e[j].event].pme_code >> (cntr*8)) & 0xff;
@@ -319,7 +319,7 @@ pfm_gen_mips64_get_event_code(unsigned int i, unsigned int cnt, int *code)
 	/* Works on both 5k anf 20K */
 
 	if (gen_mips64_pe[i].pme_counters & (1<< cnt))
-	  *code = 0xf & (gen_mips64_pe[i].pme_code >> (cnt*4));
+	  *code = 0xff & (gen_mips64_pe[i].pme_code >> (cnt*8));
 	else
 	  return PFMLIB_ERR_INVAL;
 

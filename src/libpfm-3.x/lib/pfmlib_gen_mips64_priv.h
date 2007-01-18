@@ -29,8 +29,8 @@
 typedef struct {
 	char			*pme_name;
 	char			*pme_desc; /* text description of the event */
-	uint32_t		pme_code;  /* event mask, holds room for four events, low 8 bits cntr0, ... high 8 bits cntr3 */
-	uint32_t		pme_counters; 
+	unsigned int		pme_code;  /* event mask, holds room for four events, low 8 bits cntr0, ... high 8 bits cntr3 */
+	unsigned int		pme_counters; 
 } pme_gen_mips64_entry_t;
 
 #endif /* __PFMLIB_GEN_MIPS64_PRIV_H__ */

@@ -46,9 +46,9 @@ is programmed into counter \fBcnt\fR. The counter index must correspond to the
 index of a counting PMC register.
 .sp
 Given an opaque event descriptor \fBe\fR, the \fBpfm_get_event_counters\fR 
-function returns \fBcounters\fR a bitmask of type \fBpfmlib_regmask_t where 
-each bit set represents a PMU counter which can be used to program this 
-event. The bitmask must be accessed accessor macros defined by the library.
+function returns in \fBcounters\fR a bitmask of type \fBpfmlib_regmask_t\fR where 
+each bit set represents a PMU config register which can be used to program this 
+event. The bitmask must be accessed using accessor macros defined by the library.
 .sp
 It is possible to list all existing events for the detected host PMU
 using accessor functions as the full table of events is not accessible

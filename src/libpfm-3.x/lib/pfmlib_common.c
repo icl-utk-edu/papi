@@ -218,9 +218,6 @@ pfm_force_pmu(int type)
 	}
 	return PFMLIB_ERR_NOTSUPP;
 found:
-	/* verify that this is valid */
-	if ((*p)->pmu_detect() != PFMLIB_SUCCESS) return PFMLIB_ERR_NOTSUPP;
-
 	pfm_current = *p;
 
 	return PFMLIB_SUCCESS;

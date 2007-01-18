@@ -94,9 +94,9 @@ typedef struct {
  */
 typedef struct {
 	unsigned long long	reg_value;	/* register value */
+	unsigned long long	reg_addr;	/* hardware register addr or index */
 	unsigned int 		reg_num;	/* logical register index (perfmon2) */
 	unsigned int		reg_reserved1;	/* for future use */
-	unsigned long		reg_addr;	/* hardware register addr or index */
 	unsigned long		reg_reserved[1];/* for future use */
 } pfmlib_reg_t;
 

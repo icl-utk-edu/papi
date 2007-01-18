@@ -25,7 +25,7 @@
 #ifndef __PFMLIB_CORE_PRIV_H__
 #define __PFMLIB_CORE_PRIV_H__
 
-#define PFMLIB_CORE_MAX_UMASK 16
+#define PFMLIB_CORE_MAX_UMASK 32
 
 typedef struct {
 	char			*pme_uname; /* unit mask name */
