@@ -1,7 +1,7 @@
 /*
- * ita2_opcode.c - example of how to use the opcode matcher with the Itanium2 PMU
+ * ita_opcode.c - example of how to use the opcode matcher with the Itanium PMU
  *
- * Copyright (C) 2002-2003 Hewlett-Packard Co
+ * Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -34,7 +34,7 @@
 #include <signal.h>
 
 #include <perfmon/perfmon.h>
-#include <perfmon/pfmlib_itanium2.h>
+#include <perfmon/pfmlib_itanium.h>
 
 #define NUM_PMCS PFMLIB_MAX_PMCS
 #define NUM_PMDS PFMLIB_MAX_PMDS
@@ -71,32 +71,32 @@ fatal_error(char *fmt, ...)
 int
 main(void)
 {
-	pfmlib_input_param_t inp;
-	pfmlib_output_param_t outp;
-	pfmlib_ita2_input_param_t ita2_inp;
-	pfarg_reg_t pd[NUM_PMDS];
-	pfarg_reg_t pc[NUM_PMCS];
-	pfarg_context_t ctx[1];
-	pfarg_load_t load_args;
-	pfmlib_options_t pfmlib_options;
 	int ret;
 	int type = 0;
-	int id;
+	pfmlib_input_param_t inp;
+	pfmlib_output_param_t outp;
+	pfmlib_ita_input_param_t ita_inp;
+	pfarg_pmd_t pd[NUM_PMDS];
+	pfarg_pmc_t pc[NUM_PMCS];
+	pfarg_ctx_t ctx[1];
+	pfarg_load_t load_args;
+	pfmlib_options_t pfmlib_options;
 	unsigned int i;
+	int id;
 	char name[MAX_EVT_NAME_LEN];
 
 	/*
 	 * Initialize pfm library (required before we can use it)
 	 */
-	if (pfm_initialize() != PFMLIB_SUCCESS) {
-		fatal_error("Can't initialize library\n");
-	}
+	ret = pfm_initialize();
+	if (ret != PFMLIB_SUCCESS)
+		fatal_error("Cannot initialize library: %s\n", pfm_strerror(ret));
 
 	/*
 	 * Let's make sure we run this on the right CPU
 	 */
 	pfm_get_pmu_type(&type);
-	if (type != PFMLIB_ITANIUM2_PMU) {
+	if (type != PFMLIB_ITANIUM_PMU) {
 		char model[MAX_PMU_NAME_LEN];
 		pfm_get_pmu_name(model, MAX_PMU_NAME_LEN);
 		fatal_error("this program does not work with the %s PMU\n", model);
@@ -106,25 +106,25 @@ main(void)
 	 * pass options to library (optional)
 	 */
 	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
-	pfmlib_options.pfm_debug   = 0; /* set to 1 for debug */
+	pfmlib_options.pfm_debug = 0; /* set to 1 for debug */
 	pfmlib_options.pfm_verbose = 0; /* set to 1 for verbose */
 	pfm_set_options(&pfmlib_options);
 
-	memset(pd, 0, sizeof(pd));
-	memset(pc, 0, sizeof(pc));
-	memset(ctx, 0, sizeof(ctx));
-	memset(&load_args, 0, sizeof(load_args));
 
+
+	memset(pd, 0, sizeof(pd));
+	memset(ctx, 0, sizeof(ctx));
 	memset(&inp,0, sizeof(inp));
 	memset(&outp,0, sizeof(outp));
-	memset(&ita2_inp,0, sizeof(ita2_inp));
+	memset(&ita_inp,0, sizeof(ita_inp));
+	memset(&load_args,0, sizeof(load_args));
 
 	/*
 	 * We indicate that we are using the PMC8 opcode matcher. This is required
 	 * otherwise the library add PMC8 to the list of PMC to pogram during
 	 * pfm_dispatch_events().
 	 */
-	ita2_inp.pfp_ita2_pmc8.opcm_used = 1;
+	ita_inp.pfp_ita_pmc8.opcm_used = 1;
 
 	/*
 	 * We want to match all the br.cloop in our test function.
@@ -155,21 +155,16 @@ main(void)
 	 * Depending on the level of optimization to compile this code, it may
 	 * be that the count reported could be zero, if the compiler uses a br.cond
 	 * instead of br.cloop.
-	 *
-	 *
-	 * The 0x1 sets the ig_ad field to make sure we ignore any range restriction.
-	 * Also bit 2 must always be set
 	 */
-	ita2_inp.pfp_ita2_pmc8.pmc_val = 0x1400028003fff1fa;
+	ita_inp.pfp_ita_pmc8.pmc_val = 0x1400028003fff1f8;
 
 	/*
 	 * To count the number of occurence of this instruction, we must
 	 * program a counting monitor with the IA64_TAGGED_INST_RETIRED_PMC8
 	 * event.
 	 */
-	if (pfm_find_event_byname("IA64_TAGGED_INST_RETIRED_IBRP0_PMC8", &inp.pfp_events[0].event) != PFMLIB_SUCCESS) {
-		fatal_error("cannot find event IA64_TAGGED_INST_RETIRED_IBRP0_PMC8\n");
-	}
+	if (pfm_find_full_event("IA64_TAGGED_INST_RETIRED_PMC8", &inp.pfp_events[0]) != PFMLIB_SUCCESS)
+		fatal_error("Cannot find event IA64_TAGGED_INST_RETIRED_PMC8\n");
 
 	/*
 	 * set the privilege mode:
@@ -184,29 +179,25 @@ main(void)
 	/*
 	 * let the library figure out the values for the PMCS
 	 */
-	if ((ret=pfm_dispatch_events(&inp, &ita2_inp, &outp, NULL)) != PFMLIB_SUCCESS) {
+	if ((ret=pfm_dispatch_events(&inp, &ita_inp, &outp, NULL)) != PFMLIB_SUCCESS) {
 		fatal_error("cannot configure events: %s\n", pfm_strerror(ret));
 	}
 
 	/*
 	 * now create the context for self monitoring/per-task
 	 */
-	if (perfmonctl(0, PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
+	id = pfm_create_context(ctx, NULL, NULL, 0);
+	if (id == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
 		fatal_error("Can't create PFM context %s\n", strerror(errno));
 	}
 	/*
-	 * extract the unique identifier for our context, a regular file descriptor
-	 */
-	id = ctx[0].ctx_fd;
-
-	/*
 	 * Now prepare the argument to initialize the PMDs and PMCS.
 	 * We must pfp_pmc_count to determine the number of PMC to intialize.
 	 * We must use pfp_event_count to determine the number of PMD to initialize.
-	 * Some events causes extra PMCs to be used, so  pfp_pmc_count may be >= pfp_event_count.
+	 * Some events cause extra PMCs to be used, so  pfp_pmc_count may be >= pfp_event_count.
 	 *
 	 * This step is new compared to libpfm-2.x. It is necessary because the library no
 	 * longer knows about the kernel data structures.
@@ -218,13 +209,10 @@ main(void)
 	}
 
 	/*
-	 * the PMC controlling the event ALWAYS come first, that's why this loop
-	 * is safe even when extra PMC are needed to support a particular event.
+	 * figure out pmd mapping from output pmc
 	 */
-	for (i=0; i < inp.pfp_event_count; i++) {
-		pd[i].reg_num   = pc[i].reg_num;
-	}
-	printf("event_count=%d id=%d\n",  inp.pfp_event_count, id);
+	for (i=0; i < outp.pfp_pmd_count; i++)
+		pd[i].reg_num   = outp.pfp_pmds[i].reg_num;
 
 	/*
 	 * Now program the registers
@@ -233,21 +221,19 @@ main(void)
 	 * the kernel because, as we said earlier, pc may contain more elements than
 	 * the number of events we specified, i.e., contains more thann coutning monitors.
 	 */
-	if (perfmonctl(id, PFM_WRITE_PMCS, pc, outp.pfp_pmc_count) == -1) {
-		fatal_error("perfmonctl error PFM_WRITE_PMCS errno %d\n",errno);
-	}
-	if (perfmonctl(id, PFM_WRITE_PMDS, pd, inp.pfp_event_count) == -1) {
-		fatal_error("perfmonctl error PFM_WRITE_PMDS errno %d\n",errno);
-	}
+	if (pfm_write_pmcs(id, pc, outp.pfp_pmc_count) == -1)
+		fatal_error("pfm_write_pmcs error errno %d\n",errno);
+
+	if (pfm_write_pmds(id, pd, outp.pfp_pmd_count) == -1)
+		fatal_error("pfm_write_pmds error errno %d\n",errno);
+
 	/*
 	 * now we load (i.e., attach) the context to ourself
 	 */
 	load_args.load_pid = getpid();
 
-	if (perfmonctl(id, PFM_LOAD_CONTEXT, &load_args, 1) == -1) {
-		fatal_error("perfmonctl error PFM_LOAD_CONTEXT errno %d\n",errno);
-	}
-
+	if (pfm_load_context(id, &load_args) == -1)
+		fatal_error("pfm_load_context error errno %d\n",errno);
 	/*
 	 * Let's roll now.
 	 */
@@ -260,18 +246,17 @@ main(void)
 	/*
 	 * now read the results
 	 */
-	if (perfmonctl(id, PFM_READ_PMDS, pd, inp.pfp_event_count) == -1) {
-		fatal_error("perfmonctl error READ_PMDS errno %d\n",errno);
-	}
+	if (pfm_read_pmds(id, pd, inp.pfp_event_count) == -1)
+		fatal_error( "pfm_read_pmds error errno %d\n",errno);
 
 	/*
 	 * print the results
 	 */
-	pfm_get_event_name(inp.pfp_events[0].event, name, MAX_EVT_NAME_LEN);
-	printf("PMD%u %20lu %s\n",
-			pd[0].reg_num,
-			pd[0].reg_value,
-			name);
+	pfm_get_full_event_name(&inp.pfp_events[0], name, MAX_EVT_NAME_LEN);
+	printf("PMD%-3u %20lu %s\n",
+		pd[0].reg_num,
+		pd[0].reg_value,
+		name);
 
 	if (pd[0].reg_value != 0)
 		printf("compiler used br.cloop\n");
@@ -282,5 +267,6 @@ main(void)
 	 * let's stop this now
 	 */
 	close(id);
+
 	return 0;
 }

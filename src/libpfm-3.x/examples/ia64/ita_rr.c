@@ -1,7 +1,7 @@
 /*
- * ita2_rr.c - example of how to use data range restriction with the Itanium2 PMU
+ * ita_rr.c - example of how to use data range restriction with the Itanium PMU
  *
- * Copyright (C) 2002-2003 Hewlett-Packard Co
+ * Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -34,7 +34,9 @@
 #include <signal.h>
 
 #include <perfmon/perfmon.h>
-#include <perfmon/pfmlib_itanium2.h>
+#include <perfmon/pfmlib_itanium.h>
+
+#define N_LOOP 100000000U
 
 #if defined(__ECC) && defined(__INTEL_COMPILER)
 
@@ -54,24 +56,24 @@ clear_psr_ac(void)
 #error "You need to define clear_psr_ac() for your compiler"
 #endif
 
-
-
 #define TEST_DATA_COUNT	16
-#define N_LOOP	100000000UL
 
 #define NUM_PMCS PFMLIB_MAX_PMCS
 #define NUM_PMDS PFMLIB_MAX_PMDS
 
-#define MAX_EVT_NAME_LEN	128
 #define MAX_PMU_NAME_LEN	32
+#define MAX_EVT_NAME_LEN	128
 
-/*
- * here we capture only misaligned_loads because it cannot
- * be measured with misaligned_stores_retired at the same time
- */
-static char *event_list[]={
-	"misaligned_loads_retired",
-	NULL
+typedef struct {
+	char *event_name;
+	unsigned long expected_value;
+}  event_desc_t;
+
+
+static event_desc_t event_list[]={
+	{ "misaligned_loads_retired", N_LOOP },
+	{ "misaligned_stores_retired", N_LOOP },
+	{ NULL, 0UL}
 };
 
 
@@ -118,18 +120,18 @@ fatal_error(char *fmt, ...)
 int
 main(int argc, char **argv)
 {
-	char **p;
+	event_desc_t *p;
 	test_data_t *test_data, *test_data_fake;
 	unsigned long range_start, range_end;
 	int ret, type = 0;
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
-	pfmlib_ita2_input_param_t ita2_inp;
-	pfmlib_ita2_output_param_t ita2_outp;
-	pfarg_reg_t pd[NUM_PMDS];
-	pfarg_reg_t pc[NUM_PMCS];
-	pfarg_dbreg_t dbrs[8];
-	pfarg_context_t ctx[1];
+	pfmlib_ita_input_param_t ita_inp;
+	pfmlib_ita_output_param_t ita_outp;
+	pfarg_pmd_t pd[NUM_PMDS];
+	pfarg_pmc_t pc[NUM_PMCS];
+	pfarg_pmc_t dbrs[8];
+	pfarg_ctx_t ctx[1];
 	pfarg_load_t load_args;
 	pfmlib_options_t pfmlib_options;
 	unsigned int i;
@@ -139,15 +141,15 @@ main(int argc, char **argv)
 	/*
 	 * Initialize pfm library (required before we can use it)
 	 */
-	if (pfm_initialize() != PFMLIB_SUCCESS) {
-		fatal_error("Can't initialize library\n");
-	}
+	ret = pfm_initialize();
+	if (ret != PFMLIB_SUCCESS)
+		fatal_error("Cannot initialize library: %s\n", pfm_strerror(ret));
 
 	/*
 	 * Let's make sure we run this on the right CPU family
 	 */
 	pfm_get_pmu_type(&type);
-	if (type != PFMLIB_ITANIUM2_PMU) {
+	if (type != PFMLIB_ITANIUM_PMU) {
 		char model[MAX_PMU_NAME_LEN];
 		pfm_get_pmu_name(model, MAX_PMU_NAME_LEN);
 		fatal_error("this program does not work with %s PMU\n", model);
@@ -156,7 +158,7 @@ main(int argc, char **argv)
 	 * pass options to library (optional)
 	 */
 	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
-	pfmlib_options.pfm_debug   = 0; /* set to 1 for debug */
+	pfmlib_options.pfm_debug = 0; /* set to 1 for debug */
 	pfmlib_options.pfm_verbose = 0; /* set to 1 for debug */
 	pfm_set_options(&pfmlib_options);
 
@@ -180,7 +182,7 @@ main(int argc, char **argv)
 	memset(pd, 0, sizeof(pd));
 	memset(pc, 0, sizeof(pc));
 	memset(ctx, 0, sizeof(ctx));
-	memset(dbrs, 0, sizeof(dbrs));
+	memset(dbrs,0, sizeof(dbrs));
 	memset(&load_args, 0, sizeof(load_args));
 
 	/*
@@ -189,25 +191,26 @@ main(int argc, char **argv)
 	 */
 	memset(&inp,0, sizeof(inp));
 	memset(&outp,0, sizeof(outp));
-	memset(&ita2_inp,0, sizeof(ita2_inp));
-	memset(&ita2_outp,0, sizeof(ita2_outp));
+	memset(&ita_inp,0, sizeof(ita_inp));
+	memset(&ita_outp,0, sizeof(ita_outp));
+
 
 	/*
 	 * find requested event
 	 */
 	p = event_list;
-	for (i=0; *p ; i++, p++) {
-		if (pfm_find_event(*p, &inp.pfp_events[i].event) != PFMLIB_SUCCESS) {
-			fatal_error("Cannot find %s event\n", *p);
+	for (i=0; p->event_name ; i++, p++) {
+		if (pfm_find_event(p->event_name, &inp.pfp_events[i].event) != PFMLIB_SUCCESS) {
+			fatal_error("Cannot find %s event\n", p->event_name);
 		}
 	}
+
 
 	/*
 	 * set the privilege mode:
 	 * 	PFM_PLM3 : user level only
 	 */
 	inp.pfp_dfl_plm   = PFM_PLM3;
-
 	/*
 	 * how many counters we use
 	 */
@@ -216,28 +219,37 @@ main(int argc, char **argv)
 	/*
 	 * We use the library to figure out how to program the debug registers
 	 * to cover the data range we are interested in. The rr_end parameter
-	 * must point to the byte after the last element of the range (C-style range).
+	 * must point to the byte after the last of the range (C-style range).
 	 *
 	 * Because of the masking mechanism and therefore alignment constraints used to implement
 	 * this feature, it may not be possible to exactly cover a given range. It may be that
 	 * the coverage exceeds the desired range. So it is possible to capture noise if
-	 * the surrounding addresses are also heavily used. You can figure out by how much the
-	 * actual range is off compared to the requested range by checking the rr_soff and rr_eoff
-	 * fields in rr_infos on return from the library call.
+	 * the surrounding addresses are also heavily used. You can figure out, the actual
+	 * start and end offsets of the generated range by checking the rr_soff and rr_eoff fields
+	 * in the pfmlib_ita_output_param_t structure when coming back from the library call.
 	 *
-	 * Upon return, the rr_dbr array is programmed and the number of debug registers (not pairs)
-	 * used to cover the range is in rr_nbr_used.
+	 * Upon return, the pfmlib_ita_output_param_t.pfp_ita_drange.rr_dbr array is programmed and
+	 * the number of entries used to cover the range is in rr_nbr_used.
 	 */
 
-	ita2_inp.pfp_ita2_drange.rr_used = 1;
-	ita2_inp.pfp_ita2_drange.rr_limits[0].rr_start = range_start;
-	ita2_inp.pfp_ita2_drange.rr_limits[0].rr_end   = range_end;
+	/*
+	 * We indicate that we are using a Data Range Restriction feature.
+	 * In this particular case this will cause, pfm_dispatch_events() to
+	 * add pmc13 to the list of PMC registers to initialize and the
+	 */
+
+	ita_inp.pfp_ita_drange.rr_used = 1;
+	ita_inp.pfp_ita_drange.rr_limits[0].rr_start = range_start;
+	ita_inp.pfp_ita_drange.rr_limits[0].rr_end   = range_end;
 
 
 	/*
-	 * let the library figure out the values for the PMCS
+	 * use the library to find the monitors to use
+	 *
+	 * upon return, cnt contains the number of entries
+	 * used in pc[].
 	 */
-	if ((ret=pfm_dispatch_events(&inp, &ita2_inp, &outp, &ita2_outp)) != PFMLIB_SUCCESS) {
+	if ((ret=pfm_dispatch_events(&inp, &ita_inp, &outp, &ita_outp)) != PFMLIB_SUCCESS) {
 		fatal_error("cannot configure events: %s\n", pfm_strerror(ret));
 	}
 
@@ -245,9 +257,9 @@ main(int argc, char **argv)
 	       "start_offset:-0x%lx end_offset:+0x%lx\n",
 			range_start,
 			range_end,
-			ita2_outp.pfp_ita2_drange.rr_nbr_used >> 1,
-			ita2_outp.pfp_ita2_drange.rr_infos[0].rr_soff,
-			ita2_outp.pfp_ita2_drange.rr_infos[0].rr_eoff);
+			ita_outp.pfp_ita_drange.rr_nbr_used >> 1,
+			ita_outp.pfp_ita_drange.rr_infos[0].rr_soff,
+			ita_outp.pfp_ita_drange.rr_infos[0].rr_eoff);
 
 	printf("fake data range: [0x%016lx-0x%016lx)\n",
 			(unsigned long)test_data_fake,
@@ -256,22 +268,18 @@ main(int argc, char **argv)
 	/*
 	 * now create the context for self monitoring/per-task
 	 */
-	if (perfmonctl(0, PFM_CREATE_CONTEXT, ctx, 1) == -1) {
+	id =pfm_create_context(ctx, NULL, NULL, 0);
+	if (id == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
-		fatal_error("Can't create PFM context %s\n", strerror(errno));
+		fatal_error("cannot create PFM context %s\n", strerror(errno));
 	}
-	/*
-	 * extract the unique identifier for our context, a regular file descriptor
-	 */
-	id = ctx[0].ctx_fd;
-
 	/*
 	 * Now prepare the argument to initialize the PMDs and PMCS.
 	 * We must pfp_pmc_count to determine the number of PMC to intialize.
 	 * We must use pfp_event_count to determine the number of PMD to initialize.
-	 * Some events causes extra PMCs to be used, so  pfp_pmc_count may be >= pfp_event_count.
+	 * Some events cause extra PMCs to be used, so  pfp_pmc_count may be >= pfp_event_count.
 	 *
 	 * This step is new compared to libpfm-2.x. It is necessary because the library no
 	 * longer knows about the kernel data structures.
@@ -289,25 +297,22 @@ main(int argc, char **argv)
 	for (i=0; i < inp.pfp_event_count; i++) {
 		pd[i].reg_num   = pc[i].reg_num;
 	}
-
+	
 	/*
 	 * propagate the setup for the debug registers from the library to the arguments
-	 * to the perfmonctl() syscall. The library does not know the type of the syscall
-	 * anymore.
+	 * to the syscall. The library does not know the type of the syscall
+	 * anymore. DBRS are ampped at PMC264+PMC271
 	 */
-	for (i=0; i < ita2_outp.pfp_ita2_drange.rr_nbr_used; i++) {
-		dbrs[i].dbreg_num   = ita2_outp.pfp_ita2_drange.rr_br[i].reg_num;
-		dbrs[i].dbreg_value = ita2_outp.pfp_ita2_drange.rr_br[i].reg_value;
+	for (i=0; i < ita_outp.pfp_ita_drange.rr_nbr_used; i++) {
+		dbrs[i].reg_num   = 264+ita_outp.pfp_ita_drange.rr_br[i].reg_num;
+		dbrs[i].reg_value = ita_outp.pfp_ita_drange.rr_br[i].reg_value;
 	}
 
 	/*
 	 * Program the data debug registers.
-	 *
-	 * IMPORTANT: programming the debug register MUST always be done before the PMCs
-	 * otherwise the kernel will fail on PFM_WRITE_PMCS. This is for security reasons.
 	 */
-	if (perfmonctl(id, PFM_WRITE_DBRS, dbrs, ita2_outp.pfp_ita2_drange.rr_nbr_used) == -1) {
-		fatal_error( "child: perfmonctl error PFM_WRITE_DBRS errno %d\n",errno);
+	if (pfm_write_pmcs(id, dbrs, ita_outp.pfp_ita_drange.rr_nbr_used) == -1) {
+		fatal_error("pfm_write_pmcs error errno %d\n",errno);
 	}
 
 	/*
@@ -317,12 +322,12 @@ main(int argc, char **argv)
 	 * the kernel because, as we said earlier, pc may contain more elements than
 	 * the number of events we specified, i.e., contains more than coutning monitors.
 	 */
-	if (perfmonctl(id, PFM_WRITE_PMCS, pc, outp.pfp_pmc_count) == -1) {
-		fatal_error("child: perfmonctl error PFM_WRITE_PMCS errno %d\n",errno);
+	if (pfm_write_pmcs(id, pc, outp.pfp_pmc_count) == -1) {
+		fatal_error("pfm_write_pmcs error errno %d\n",errno);
 	}
 
-	if (perfmonctl(id, PFM_WRITE_PMDS, pd, inp.pfp_event_count) == -1) {
-		fatal_error( "child: perfmonctl error PFM_WRITE_PMDS errno %d\n",errno);
+	if (pfm_write_pmds(id, pd, inp.pfp_event_count) == -1) {
+		fatal_error("pfm_write_pmds error errno %d\n",errno);
 	}
 
 	/*
@@ -330,8 +335,8 @@ main(int argc, char **argv)
 	 */
 	load_args.load_pid = getpid();
 
-	if (perfmonctl(id, PFM_LOAD_CONTEXT, &load_args, 1) == -1) {
-		fatal_error("perfmonctl error PFM_LOAD_CONTEXT errno %d\n",errno);
+	if (pfm_load_context(id, &load_args) == -1) {
+		fatal_error("pfm_load_context error errno %d\n",errno);
 	}
 
 	/*
@@ -351,8 +356,7 @@ main(int argc, char **argv)
 	 * restrictions.
 	 */
 	pfm_self_start(id);
-
-	for(i=0; i < N_LOOP; i++) {
+	for (i=0; i < N_LOOP; i++) {
 		do_test(test_data);
 		do_test(test_data_fake);
 	}
@@ -362,8 +366,8 @@ main(int argc, char **argv)
 	/*
 	 * now read the results
 	 */
-	if (perfmonctl(id, PFM_READ_PMDS, pd, inp.pfp_event_count) == -1) {
-		fatal_error( "perfmonctl error READ_PMDS errno %d\n",errno);
+	if (pfm_read_pmds(id, pd, inp.pfp_event_count) == -1) {
+		fatal_error( "pfm_read_pmds error errno %d\n",errno);
 	}
 
 	/*
@@ -373,21 +377,21 @@ main(int argc, char **argv)
 	 * be in PMD4. Not all events can be measured by any monitor. That's why
 	 * we need to use the pc[] array to figure out where event i was allocated.
 	 *
-	 * For this example, we expect to see a value of 1 for misaligned loads.
-	 * But it can be two when the test_data and test_data_fake
-	 * are allocated very close from each other and the range created with the debug
+	 * For this example, we expect to see a value of 1 for both misaligned loads
+	 * and misaligned stores. But it can be two when the test_data and test_data_fake
+	 * are allocate very close from each other and the range created with the debug
 	 * registers is larger then test_data.
 	 *
 	 */
 	for (i=0; i < inp.pfp_event_count; i++) {
-		pfm_get_event_name(inp.pfp_events[i].event, name, MAX_EVT_NAME_LEN);
+		pfm_get_full_event_name(&inp.pfp_events[i], name, MAX_EVT_NAME_LEN);
 		printf("PMD%u %20lu %s (expected %lu)\n",
 			pd[i].reg_num,
 			pd[i].reg_value,
-			name, N_LOOP);
+			name, event_list[i].expected_value);
 
-		if (pd[i].reg_value != N_LOOP) {
-			printf("error: Result should be 1 for %s\n", name);
+		if (pd[i].reg_value != event_list[i].expected_value) {
+			printf("error: Result should be %lu for %s\n", event_list[i].expected_value, name);
 			break;
 		}
 	}
@@ -395,6 +399,7 @@ main(int argc, char **argv)
 	 * let's stop this now
 	 */
 	close(id);
+
 	free(test_data);
 	free(test_data_fake);
 

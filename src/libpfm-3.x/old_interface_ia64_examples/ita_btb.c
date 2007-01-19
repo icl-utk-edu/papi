@@ -1,7 +1,7 @@
 /*
- * ita2_btb.c - example of how use the BTB with the Itanium 2 PMU
+ * ita_btb.c - example of how use the BTB with the Itanium PMU
  *
- * Copyright (c) 2003-2004 Hewlett-Packard Development Company, L.P.
+ * Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -36,7 +36,7 @@
 
 #include <perfmon/perfmon.h>
 #include <perfmon/perfmon_default_smpl.h>
-#include <perfmon/pfmlib_itanium2.h>
+#include <perfmon/pfmlib_itanium.h>
 
 typedef pfm_default_smpl_hdr_t	btb_hdr_t;
 typedef pfm_default_smpl_entry_t	btb_entry_t;
@@ -44,7 +44,6 @@ typedef pfm_default_smpl_ctx_arg_t	btb_ctx_arg_t;
 #define BTB_FMT_UUID	        	PFM_DEFAULT_SMPL_UUID
 
 static pfm_uuid_t buf_fmt_id = BTB_FMT_UUID;
-
 
 #define NUM_PMCS PFMLIB_MAX_PMCS
 #define NUM_PMDS PFMLIB_MAX_PMDS
@@ -92,8 +91,6 @@ hweight64 (unsigned long x)
 #error "you need to provide inline assembly from your compiler"
 #endif
 
-
-
 /*
  * we don't use static to make sure the compiler does not inline the function
  */
@@ -128,17 +125,6 @@ fatal_error(char *fmt, ...)
 	exit(1);
 }
 
-static void
-warning(char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-}
-
-
 /*
  * print content of sampling buffer
  *
@@ -146,103 +132,86 @@ warning(char *fmt, ...)
  * applications
  */
 #define safe_printf	printf
-static void
-show_btb_reg(int j, pfm_ita2_pmd_reg_t reg, pfm_ita2_pmd_reg_t pmd16)
+
+static int
+show_btb_reg(int j, pfm_ita_pmd_reg_t reg)
 {
-	unsigned long bruflush, b1;
-	int is_valid = reg.pmd8_15_ita2_reg.btb_b == 0 && reg.pmd8_15_ita2_reg.btb_mp == 0 ? 0 :1;
+	int ret;
+	int is_valid = reg.pmd8_15_ita_reg.btb_b == 0 && reg.pmd8_15_ita_reg.btb_mp == 0 ? 0 :1;
 
-	b1       = (pmd16.pmd_val >> (4 + 4*(j-8))) & 0x1;
-	bruflush = (pmd16.pmd_val >> (5 + 4*(j-8))) & 0x1;
+	ret = safe_printf("\tPMD%-2d: 0x%016lx b=%d mp=%d valid=%c\n",
+			j,
+			reg.pmd_val,
+			 reg.pmd8_15_ita_reg.btb_b,
+			 reg.pmd8_15_ita_reg.btb_mp,
+			is_valid ? 'Y' : 'N');
 
-	safe_printf("\tPMD%-2d: 0x%016lx b=%d mp=%d bru=%ld b1=%ld valid=%c\n",
-		j,
-		reg.pmd_val,
-		 reg.pmd8_15_ita2_reg.btb_b,
-		 reg.pmd8_15_ita2_reg.btb_mp,
-		 bruflush, b1,
-		is_valid ? 'Y' : 'N');
+	if (!is_valid) return ret;
 
-	if (!is_valid) return;
-
-	if (reg.pmd8_15_ita2_reg.btb_b) {
+	if (reg.pmd8_15_ita_reg.btb_b) {
 		unsigned long addr;
 
-		
-		addr = (reg.pmd8_15_ita2_reg.btb_addr+b1)<<4;
+		addr = 	reg.pmd8_15_ita_reg.btb_addr<<4;
+		addr |= reg.pmd8_15_ita_reg.btb_slot < 3 ?  reg.pmd8_15_ita_reg.btb_slot : 0;
 
-		addr |= reg.pmd8_15_ita2_reg.btb_slot < 3 ?  reg.pmd8_15_ita2_reg.btb_slot : 0;
-
-		safe_printf("\t       Source Address: 0x%016lx\n"
-			    "\t       Taken=%c Prediction: %s\n\n",
+		ret = safe_printf("\t       Source Address: 0x%016lx\n"
+				  "\t       Taken=%c Prediction: %s\n\n",
 			 addr,
-			 reg.pmd8_15_ita2_reg.btb_slot < 3 ? 'Y' : 'N',
-			 reg.pmd8_15_ita2_reg.btb_mp ? "FE Failure" :
-			 bruflush ? "BE Failure" : "Success");
+			 reg.pmd8_15_ita_reg.btb_slot < 3 ? 'Y' : 'N',
+			 reg.pmd8_15_ita_reg.btb_mp ? "Failure" : "Success");
 	} else {
-		safe_printf("\t       Target Address: 0x%016lx\n\n",
-			 (reg.pmd8_15_ita2_reg.btb_addr<<4));
+		ret = safe_printf("\t       Target Address: 0x%016lx\n\n",
+			 (unsigned long)reg.pmd8_15_ita_reg.btb_addr<<4);
 	}
+	return ret;
 }
 
-
 static void
-show_btb(pfm_ita2_pmd_reg_t *btb, pfm_ita2_pmd_reg_t *pmd16)
+show_btb(pfm_ita_pmd_reg_t *btb, pfm_ita_pmd_reg_t *pmd16)
 {
 	int i, last;
 
 
-	i    = (pmd16->pmd16_ita2_reg.btbi_full) ? pmd16->pmd16_ita2_reg.btbi_bbi : 0;
-	last = pmd16->pmd16_ita2_reg.btbi_bbi;
+	i    = (pmd16->pmd16_ita_reg.btbi_full) ? pmd16->pmd16_ita_reg.btbi_bbi : 0;
+	last = pmd16->pmd16_ita_reg.btbi_bbi;
 
-	safe_printf("btb_trace: i=%d last=%d bbi=%d full=%d\n", i, last,pmd16->pmd16_ita2_reg.btbi_bbi, pmd16->pmd16_ita2_reg.btbi_full);
+	safe_printf("btb_trace: i=%d last=%d bbi=%d full=%d\n", i, last,pmd16->pmd16_ita_reg.btbi_bbi, pmd16->pmd16_ita_reg.btbi_full);
 	do {
-		show_btb_reg(i+8, btb[i], *pmd16);
+		show_btb_reg(i+8, btb[i]);
 		i = (i+1) % 8;
 	} while (i != last);
 }
 
 
-void
+static void
 process_smpl_buffer(void)
 {
-	static unsigned long last_overflow = ~0UL; /* initialize to biggest value possible */
-	static unsigned long last_count;
-	static unsigned long smpl_entry;
-
 	btb_hdr_t	*hdr;
 	btb_entry_t	*ent;
 	unsigned long pos;
-	pfm_ita2_pmd_reg_t *reg, *pmd16;
+	unsigned long smpl_entry = 0;
+	pfm_ita_pmd_reg_t *reg, *pmd16;
 	unsigned long i;
-	unsigned long count;
 	int ret;
+	static unsigned long last_ovfl = ~0UL;
 
 
 	hdr = (btb_hdr_t *)smpl_vaddr;
 
-	count = hdr->hdr_count;
 	/*
-	 * check that we are not inspecting the same set of samples twice. This can happen
-	 * the last time this function is called, i.e., to parse the last set of samples
-	 *
-	 * hdr_overflows: incremented each time the buffer becomes full
-	 * hdr_count    : number of valid samples in the buffer
+	 * check that we are not diplaying the previous set of samples again.
+	 * Required to take care of the last batch of samples.
 	 */
-	if (hdr->hdr_overflows == last_overflow && last_count == count && last_overflow != ~0) {
-		warning("skipping identical set of samples ovfl=%lu count=%lu\n",
-			last_overflow, last_count);
-		return;	
+	if (hdr->hdr_overflows <= last_ovfl && last_ovfl != ~0UL) {
+		printf("skipping identical set of samples %lu <= %lu\n", hdr->hdr_overflows, last_ovfl);
+		return;
 	}
-
-	last_overflow = hdr->hdr_overflows;
-	last_count    = count;
 
 	pos = (unsigned long)(hdr+1);
 	/*
 	 * walk through all the entries recored in the buffer
 	 */
-	for(i=0; i < count; i++) {
+	for(i=0; i < hdr->hdr_count; i++) {
 
 		ret = 0;
 
@@ -260,7 +229,7 @@ process_smpl_buffer(void)
 		/*
 		 * point to first recorded register (always contiguous with entry header)
 		 */
-		reg = (pfm_ita2_pmd_reg_t*)(ent+1);
+		reg = (pfm_ita_pmd_reg_t*)(ent+1);
 
 		/*
 		 * in this particular example, we have pmd8-pmd15 has the BTB. We have also
@@ -297,16 +266,17 @@ overflow_handler(int n, struct siginfo *info, struct sigcontext *sc)
 	}
 }
 
+
 int
 main(void)
 {
 	int ret;
 	int type = 0;
-	pfarg_reg_t pd[NUM_PMDS];
-	pfarg_reg_t pc[NUM_PMCS];
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
-	pfmlib_ita2_input_param_t ita2_inp;
+	pfmlib_ita_input_param_t ita_inp;
+	pfarg_reg_t pd[NUM_PMDS];
+	pfarg_reg_t pc[NUM_PMCS];
 	btb_ctx_arg_t  ctx[1];
 	pfarg_load_t load_args;
 	pfmlib_options_t pfmlib_options;
@@ -324,7 +294,7 @@ main(void)
 	 * Let's make sure we run this on the right CPU
 	 */
 	pfm_get_pmu_type(&type);
-	if (type != PFMLIB_ITANIUM2_PMU) {
+	if (type != PFMLIB_ITANIUM_PMU) {
 		char model[MAX_PMU_NAME_LEN];
 		pfm_get_pmu_name(model, MAX_PMU_NAME_LEN);
 		fatal_error("this program does not work with %s PMU\n", model);
@@ -350,36 +320,32 @@ main(void)
 
 	memset(pd, 0, sizeof(pd));
 	memset(ctx, 0, sizeof(ctx));
+	memset(&inp, 0, sizeof(inp));
+	memset(&outp, 0, sizeof(outp));
+	memset(&ita_inp,0, sizeof(ita_inp));
 
-	/*
-	 * prepare parameters to library. we don't use any Itanium
-	 * specific features here. so the pfp_model is NULL.
-	 */
-	memset(&inp,0, sizeof(inp));
-	memset(&outp,0, sizeof(outp));
-	memset(&ita2_inp,0, sizeof(ita2_inp));
 
 	/*
 	 * Before calling pfm_find_dispatch(), we must specify what kind
 	 * of branches we want to capture. We are interesteed in all the mispredicted branches,
 	 * therefore we program we set the various fields of the BTB config to:
 	 */
-	ita2_inp.pfp_ita2_btb.btb_used = 1;
+	ita_inp.pfp_ita_btb.btb_used = 1;
 
-	ita2_inp.pfp_ita2_btb.btb_ds  = 0;
-	ita2_inp.pfp_ita2_btb.btb_tm  = 0x3;
-	ita2_inp.pfp_ita2_btb.btb_ptm = 0x3;
-	ita2_inp.pfp_ita2_btb.btb_ppm = 0x3;
-	ita2_inp.pfp_ita2_btb.btb_brt = 0x0;
-	ita2_inp.pfp_ita2_btb.btb_plm = PFM_PLM3;
-
+	ita_inp.pfp_ita_btb.btb_tar = 0x1;
+	ita_inp.pfp_ita_btb.btb_tm  = 0x2;
+	ita_inp.pfp_ita_btb.btb_ptm = 0x3;
+	ita_inp.pfp_ita_btb.btb_tac = 0x1;
+	ita_inp.pfp_ita_btb.btb_bac = 0x1;
+	ita_inp.pfp_ita_btb.btb_ppm = 0x3;
+	ita_inp.pfp_ita_btb.btb_plm = PFM_PLM3;
 
 	/*
 	 * To count the number of occurence of this instruction, we must
 	 * program a counting monitor with the IA64_TAGGED_INST_RETIRED_PMC8
 	 * event.
 	 */
-	if (pfm_find_event_byname("BRANCH_EVENT", &inp.pfp_events[0].event) != PFMLIB_SUCCESS) {
+	if (pfm_find_full_event("BRANCH_EVENT", &inp.pfp_events[0]) != PFMLIB_SUCCESS) {
 		fatal_error("cannot find event BRANCH_EVENT\n");
 	}
 
@@ -396,7 +362,7 @@ main(void)
 	/*
 	 * let the library figure out the values for the PMCS
 	 */
-	if ((ret=pfm_dispatch_events(&inp, &ita2_inp, &outp, NULL)) != PFMLIB_SUCCESS) {
+	if ((ret=pfm_dispatch_events(&inp, &ita_inp, &outp, NULL)) != PFMLIB_SUCCESS) {
 		fatal_error("cannot configure events: %s\n", pfm_strerror(ret));
 	}
 	 /*
