@@ -123,7 +123,7 @@ int main(int argc, char **argv)
    else if(!strncmp(hwinfo->model_string, "AMD K8", 6)) {
      native_name = k8_native_name;
    }
-   else if(!strncmp(hwinfo->model_string, "Intel Core", 17)) {
+   else if(!strncmp(hwinfo->model_string, "Intel Core", 17) || !strncmp(hwinfo->model_string, "Intel Core 2", 17)) {
      native_name = core_native_name;
    }
 #endif
