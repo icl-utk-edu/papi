@@ -76,7 +76,7 @@ int PAPI_thread_init(unsigned long int (*id_fn) (void))
    * When this is updated, we can remove this if statement
    */
    if (init_level == PAPI_NOT_INITED)
-      papi_return(PAPI_EINVAL);
+      papi_return(PAPI_EINIT);
 
    if ((init_level&PAPI_THREAD_LEVEL_INITED))
       papi_return(PAPI_OK);
@@ -568,6 +568,9 @@ int PAPI_event_name_to_code(char *in, int *out)
 
    if ((in == NULL) || (out == NULL))
       papi_return(PAPI_EINVAL);
+
+   if (init_level == PAPI_NOT_INITED)
+      papi_return(PAPI_EINIT);
 
    /* With user definable events, we can no longer assume
       presets begin with "PAPI"...
