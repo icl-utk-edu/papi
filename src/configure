@@ -1516,7 +1516,11 @@ case "$OS" in
            family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
            model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
            # family 15 is always P4; model 1 is vanilla pre-HT, model 2 is vanilla; model 3 is em64t, 4 is Pentium D, 6 is Xeon D
-           if test "$family" = "15"; then
+           if test "$family" = "6"; then
+             if test "$model" = "15"; then
+               CPU=core
+             fi
+           elif test "$family" = "15"; then
              if (test "$model" = "3" || test "$model" = "4" || test "$model" = "6"); then
                CPU=em64t
              elif (test "$model" = "1" || test "$model" = "2"); then
@@ -1552,9 +1556,11 @@ case "$OS" in
            family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
            model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
            if test "$family" = "15"; then
-             if test "$model" = "5"; then
+# There are a whole bunch of model numbers, but I think all family=15 are opteron -- dkt
+# see AMD Opteron Revision Guide, pub 25759, Table 1 for details
+#             if (test "$model" = "5" || test "$model" = "65"); then
                CPU=opteron
-             fi
+#             fi
            fi
          else
            family=`uname -m`
@@ -2746,7 +2752,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2748:" \
+echo "$as_me:2755:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -3498,7 +3504,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:3500:" \
+echo "$as_me:3507:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -6901,7 +6907,7 @@ echo "$as_me: error: The bitmode you specified is not supported" >&2;}
    else
 		    MAKEVER="$OS"-pfm-"$CPU"
 		 fi ;;
-            opteron|em64t|athlon|p4|p3)
+            opteron|core|em64t|athlon|p4|p3)
 		if test "$arch" = "x86_64"; then
 			if test "$perfctr" != "no"; then
 				if test "${with_bitmode}" = "32"; then
@@ -6993,6 +6999,7 @@ case "$MAKEVER" in
     linux-acpi);;
     linux-mx);;
     linux-perfctr-athlon);;
+    linux-perfctr-core);;
     linux-perfctr-em64t);;
     linux-perfctr-em64t-32bit);;
     linux-perfctr-opteron);;
