@@ -322,6 +322,19 @@ pfm_regmask_and(pfmlib_regmask_t *dst, pfmlib_regmask_t *h1, pfmlib_regmask_t *h
 }
 
 static inline int
+pfm_regmask_andnot(pfmlib_regmask_t *dst, pfmlib_regmask_t *h1, pfmlib_regmask_t *h2)
+{
+	unsigned int pos;
+	if (dst == NULL || h1 == NULL || h2 == NULL)
+		return PFMLIB_ERR_INVAL;
+
+	for (pos = 0; pos < PFMLIB_REG_BV; pos++) {
+		dst->bits[pos] = h1->bits[pos] & ~h2->bits[pos];
+	}
+	return PFMLIB_SUCCESS;
+}
+
+static inline int
 pfm_regmask_or(pfmlib_regmask_t *dst, pfmlib_regmask_t *h1, pfmlib_regmask_t *h2)
 {
 	unsigned int pos;
@@ -343,6 +356,18 @@ pfm_regmask_copy(pfmlib_regmask_t *dst, pfmlib_regmask_t *src)
 
 	for (pos = 0; pos < PFMLIB_REG_BV; pos++) {
 		dst->bits[pos] = src->bits[pos];
+	}
+	return PFMLIB_SUCCESS;
+}
+static inline int
+pfm_regmask_not(pfmlib_regmask_t *dst)
+{
+	unsigned int pos;
+	if (dst == NULL)
+		return PFMLIB_ERR_INVAL;
+
+	for (pos = 0; pos < PFMLIB_REG_BV; pos++) {
+		dst->bits[pos] = ~dst->bits[pos];
 	}
 	return PFMLIB_SUCCESS;
 }

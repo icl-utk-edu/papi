@@ -46,5 +46,7 @@ typedef struct {
  * pme_flags values
  */
 #define PFMLIB_I386_P6_UMASK_COMBO	0x01 /* unit mask can be combined */
+#define PFMLIB_I386_P6_CTR0_ONLY	0x02 /* event can only be counted on counter 0 */
+#define PFMLIB_I386_P6_CTR1_ONLY	0x04 /* event can only be counted on counter 1 */
 
 #endif /* __PFMLIB_I386_P6_PRIV_H__ */

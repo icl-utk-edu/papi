@@ -244,179 +244,179 @@ static pme_mont_entry_t montecito_pe []={
 #define PME_MONT_BR_PATH_PRED2_RETURN_UNKNOWNPRED_TAKEN 106
 { "BR_PATH_PRED2_RETURN_UNKNOWNPRED_TAKEN", {0x9006a}, 0xfff0, 2, {0xffff0003}, "FE Branch Path Prediction Detail (Unknown pred component) -- Only return type branches, unknown predicted path and taken branch (which impacts MISPRED_TAKEN)"},
 #define PME_MONT_BUS_ALL_ANY 107
-{ "BUS_ALL_ANY", {0x31887}, 0xfff0, 1, {0xffff0000}, "Bus Transactions -- CPU or non-CPU (all transactions)."},
+{ "BUS_ALL_ANY", {0x31887}, 0x03f0, 1, {0xffff0000}, "Bus Transactions -- CPU or non-CPU (all transactions)."},
 #define PME_MONT_BUS_ALL_EITHER 108
-{ "BUS_ALL_EITHER", {0x1887}, 0xfff0, 1, {0xffff0000}, "Bus Transactions -- transactions initiated by either cpu core"},
+{ "BUS_ALL_EITHER", {0x1887}, 0x03f0, 1, {0xffff0000}, "Bus Transactions -- transactions initiated by either cpu core"},
 #define PME_MONT_BUS_ALL_IO 109
-{ "BUS_ALL_IO", {0x11887}, 0xfff0, 1, {0xffff0000}, "Bus Transactions -- transactions initiated by non-CPU priority agents"},
+{ "BUS_ALL_IO", {0x11887}, 0x03f0, 1, {0xffff0000}, "Bus Transactions -- transactions initiated by non-CPU priority agents"},
 #define PME_MONT_BUS_ALL_SELF 110
-{ "BUS_ALL_SELF", {0x21887}, 0xfff0, 1, {0xffff0000}, "Bus Transactions -- transactions initiated by 'this' cpu core"},
+{ "BUS_ALL_SELF", {0x21887}, 0x03f0, 1, {0xffff0000}, "Bus Transactions -- transactions initiated by 'this' cpu core"},
 #define PME_MONT_BUS_B2B_DATA_CYCLES_ANY 111
-{ "BUS_B2B_DATA_CYCLES_ANY", {0x31093}, 0xfff0, 1, {0xffff0000}, "Back to Back Data Cycles on the Bus -- CPU or non-CPU (all transactions)."},
+{ "BUS_B2B_DATA_CYCLES_ANY", {0x31093}, 0x03f0, 1, {0xffff0000}, "Back to Back Data Cycles on the Bus -- CPU or non-CPU (all transactions)."},
 #define PME_MONT_BUS_B2B_DATA_CYCLES_EITHER 112
-{ "BUS_B2B_DATA_CYCLES_EITHER", {0x1093}, 0xfff0, 1, {0xffff0000}, "Back to Back Data Cycles on the Bus -- transactions initiated by either cpu core"},
+{ "BUS_B2B_DATA_CYCLES_EITHER", {0x1093}, 0x03f0, 1, {0xffff0000}, "Back to Back Data Cycles on the Bus -- transactions initiated by either cpu core"},
 #define PME_MONT_BUS_B2B_DATA_CYCLES_IO 113
-{ "BUS_B2B_DATA_CYCLES_IO", {0x11093}, 0xfff0, 1, {0xffff0000}, "Back to Back Data Cycles on the Bus -- transactions initiated by non-CPU priority agents"},
+{ "BUS_B2B_DATA_CYCLES_IO", {0x11093}, 0x03f0, 1, {0xffff0000}, "Back to Back Data Cycles on the Bus -- transactions initiated by non-CPU priority agents"},
 #define PME_MONT_BUS_B2B_DATA_CYCLES_SELF 114
-{ "BUS_B2B_DATA_CYCLES_SELF", {0x21093}, 0xfff0, 1, {0xffff0000}, "Back to Back Data Cycles on the Bus -- transactions initiated by 'this' cpu core"},
+{ "BUS_B2B_DATA_CYCLES_SELF", {0x21093}, 0x03f0, 1, {0xffff0000}, "Back to Back Data Cycles on the Bus -- transactions initiated by 'this' cpu core"},
 #define PME_MONT_BUS_DATA_CYCLE_ANY 115
-{ "BUS_DATA_CYCLE_ANY", {0x31088}, 0xfff0, 1, {0xffff0000}, "Valid Data Cycle on the Bus -- CPU or non-CPU (all transactions)."},
+{ "BUS_DATA_CYCLE_ANY", {0x31088}, 0x03f0, 1, {0xffff0000}, "Valid Data Cycle on the Bus -- CPU or non-CPU (all transactions)."},
 #define PME_MONT_BUS_DATA_CYCLE_EITHER 116
-{ "BUS_DATA_CYCLE_EITHER", {0x1088}, 0xfff0, 1, {0xffff0000}, "Valid Data Cycle on the Bus -- transactions initiated by either cpu core"},
+{ "BUS_DATA_CYCLE_EITHER", {0x1088}, 0x03f0, 1, {0xffff0000}, "Valid Data Cycle on the Bus -- transactions initiated by either cpu core"},
 #define PME_MONT_BUS_DATA_CYCLE_IO 117
-{ "BUS_DATA_CYCLE_IO", {0x11088}, 0xfff0, 1, {0xffff0000}, "Valid Data Cycle on the Bus -- transactions initiated by non-CPU priority agents"},
+{ "BUS_DATA_CYCLE_IO", {0x11088}, 0x03f0, 1, {0xffff0000}, "Valid Data Cycle on the Bus -- transactions initiated by non-CPU priority agents"},
 #define PME_MONT_BUS_DATA_CYCLE_SELF 118
-{ "BUS_DATA_CYCLE_SELF", {0x21088}, 0xfff0, 1, {0xffff0000}, "Valid Data Cycle on the Bus -- transactions initiated by 'this' cpu core"},
+{ "BUS_DATA_CYCLE_SELF", {0x21088}, 0x03f0, 1, {0xffff0000}, "Valid Data Cycle on the Bus -- transactions initiated by 'this' cpu core"},
 #define PME_MONT_BUS_HITM_ANY 119
-{ "BUS_HITM_ANY", {0x31884}, 0xfff0, 1, {0xffff0000}, "Bus Hit Modified Line Transactions -- CPU or non-CPU (all transactions)."},
+{ "BUS_HITM_ANY", {0x31884}, 0x03f0, 1, {0xffff0000}, "Bus Hit Modified Line Transactions -- CPU or non-CPU (all transactions)."},
 #define PME_MONT_BUS_HITM_EITHER 120
-{ "BUS_HITM_EITHER", {0x1884}, 0xfff0, 1, {0xffff0000}, "Bus Hit Modified Line Transactions -- transactions initiated by either cpu core"},
+{ "BUS_HITM_EITHER", {0x1884}, 0x03f0, 1, {0xffff0000}, "Bus Hit Modified Line Transactions -- transactions initiated by either cpu core"},
 #define PME_MONT_BUS_HITM_IO 121
-{ "BUS_HITM_IO", {0x11884}, 0xfff0, 1, {0xffff0000}, "Bus Hit Modified Line Transactions -- transactions initiated by non-CPU priority agents"},
+{ "BUS_HITM_IO", {0x11884}, 0x03f0, 1, {0xffff0000}, "Bus Hit Modified Line Transactions -- transactions initiated by non-CPU priority agents"},
 #define PME_MONT_BUS_HITM_SELF 122
-{ "BUS_HITM_SELF", {0x21884}, 0xfff0, 1, {0xffff0000}, "Bus Hit Modified Line Transactions -- transactions initiated by 'this' cpu core"},
+{ "BUS_HITM_SELF", {0x21884}, 0x03f0, 1, {0xffff0000}, "Bus Hit Modified Line Transactions -- transactions initiated by 'this' cpu core"},
 #define PME_MONT_BUS_IO_ANY 123
-{ "BUS_IO_ANY", {0x31890}, 0xfff0, 1, {0xffff0000}, "IA-32 Compatible IO Bus Transactions -- CPU or non-CPU (all transactions)."},
+{ "BUS_IO_ANY", {0x31890}, 0x03f0, 1, {0xffff0000}, "IA-32 Compatible IO Bus Transactions -- CPU or non-CPU (all transactions)."},
 #define PME_MONT_BUS_IO_EITHER 124
-{ "BUS_IO_EITHER", {0x1890}, 0xfff0, 1, {0xffff0000}, "IA-32 Compatible IO Bus Transactions -- transactions initiated by either cpu core"},
+{ "BUS_IO_EITHER", {0x1890}, 0x03f0, 1, {0xffff0000}, "IA-32 Compatible IO Bus Transactions -- transactions initiated by either cpu core"},
 #define PME_MONT_BUS_IO_IO 125
-{ "BUS_IO_IO", {0x11890}, 0xfff0, 1, {0xffff0000}, "IA-32 Compatible IO Bus Transactions -- transactions initiated by non-CPU priority agents"},
+{ "BUS_IO_IO", {0x11890}, 0x03f0, 1, {0xffff0000}, "IA-32 Compatible IO Bus Transactions -- transactions initiated by non-CPU priority agents"},
 #define PME_MONT_BUS_IO_SELF 126
-{ "BUS_IO_SELF", {0x21890}, 0xfff0, 1, {0xffff0000}, "IA-32 Compatible IO Bus Transactions -- transactions initiated by 'this' cpu core"},
+{ "BUS_IO_SELF", {0x21890}, 0x03f0, 1, {0xffff0000}, "IA-32 Compatible IO Bus Transactions -- transactions initiated by 'this' cpu core"},
 #define PME_MONT_BUS_MEMORY_ALL_ANY 127
-{ "BUS_MEMORY_ALL_ANY", {0xf188a}, 0xfff0, 1, {0xffff0000}, "Bus Memory Transactions -- All bus transactions from CPU or non-CPU (all transactions)."},
+{ "BUS_MEMORY_ALL_ANY", {0xf188a}, 0x03f0, 1, {0xffff0000}, "Bus Memory Transactions -- All bus transactions from CPU or non-CPU (all transactions)."},
 #define PME_MONT_BUS_MEMORY_ALL_EITHER 128
-{ "BUS_MEMORY_ALL_EITHER", {0xc188a}, 0xfff0, 1, {0xffff0000}, "Bus Memory Transactions -- All bus transactions from non-CPU priority agents"},
+{ "BUS_MEMORY_ALL_EITHER", {0xc188a}, 0x03f0, 1, {0xffff0000}, "Bus Memory Transactions -- All bus transactions from non-CPU priority agents"},
 #define PME_MONT_BUS_MEMORY_ALL_IO 129
-{ "BUS_MEMORY_ALL_IO", {0xd188a}, 0xfff0, 1, {0xffff0000}, "Bus Memory Transactions -- All bus transactions from 'this' local processor"},
+{ "BUS_MEMORY_ALL_IO", {0xd188a}, 0x03f0, 1, {0xffff0000}, "Bus Memory Transactions -- All bus transactions from 'this' local processor"},
 #define PME_MONT_BUS_MEMORY_ALL_SELF 130
-{ "BUS_MEMORY_ALL_SELF", {0xe188a}, 0xfff0, 1, {0xffff0000}, "Bus Memory Transactions -- All bus transactions from CPU or non-CPU (all transactions)."},
+{ "BUS_MEMORY_ALL_SELF", {0xe188a}, 0x03f0, 1, {0xffff0000}, "Bus Memory Transactions -- All bus transactions from CPU or non-CPU (all transactions)."},
 #define PME_MONT_BUS_MEMORY_EQ_128BYTE_ANY 131
-{ "BUS_MEMORY_EQ_128BYTE_ANY", {0x7188a}, 0xfff0, 1, {0xffff0000}, "Bus Memory Transactions -- number of less than full cache line transactions (BRP, BWP, BIL) from either local processor"},
+{ "BUS_MEMORY_EQ_128BYTE_ANY", {0x7188a}, 0x03f0, 1, {0xffff0000}, "Bus Memory Transactions -- number of less than full cache line transactions (BRP, BWP, BIL) from either local processor"},
 #define PME_MONT_BUS_MEMORY_EQ_128BYTE_EITHER 132
-{ "BUS_MEMORY_EQ_128BYTE_EITHER", {0x4188a}, 0xfff0, 1, {0xffff0000}, "Bus Memory Transactions -- number of full cache line transactions (BRL, BRIL, BWL, BRC, BCR, BCCL) from non-CPU priority agents"},
+{ "BUS_MEMORY_EQ_128BYTE_EITHER", {0x4188a}, 0x03f0, 1, {0xffff0000}, "Bus Memory Transactions -- number of full cache line transactions (BRL, BRIL, BWL, BRC, BCR, BCCL) from non-CPU priority agents"},
 #define PME_MONT_BUS_MEMORY_EQ_128BYTE_IO 133
-{ "BUS_MEMORY_EQ_128BYTE_IO", {0x5188a}, 0xfff0, 1, {0xffff0000}, "Bus Memory Transactions -- number of full cache line transactions (BRL, BRIL, BWL, BRC, BCR, BCCL) from 'this' processor"},
+{ "BUS_MEMORY_EQ_128BYTE_IO", {0x5188a}, 0x03f0, 1, {0xffff0000}, "Bus Memory Transactions -- number of full cache line transactions (BRL, BRIL, BWL, BRC, BCR, BCCL) from 'this' processor"},
 #define PME_MONT_BUS_MEMORY_EQ_128BYTE_SELF 134
-{ "BUS_MEMORY_EQ_128BYTE_SELF", {0x6188a}, 0xfff0, 1, {0xffff0000}, "Bus Memory Transactions -- number of full cache line transactions (BRL, BRIL, BWL, BRC, BCR, BCCL) from CPU or non-CPU (all transactions)."},
+{ "BUS_MEMORY_EQ_128BYTE_SELF", {0x6188a}, 0x03f0, 1, {0xffff0000}, "Bus Memory Transactions -- number of full cache line transactions (BRL, BRIL, BWL, BRC, BCR, BCCL) from CPU or non-CPU (all transactions)."},
 #define PME_MONT_BUS_MEMORY_LT_128BYTE_ANY 135
-{ "BUS_MEMORY_LT_128BYTE_ANY", {0xb188a}, 0xfff0, 1, {0xffff0000}, "Bus Memory Transactions -- All bus transactions from either local processor"},
+{ "BUS_MEMORY_LT_128BYTE_ANY", {0xb188a}, 0x03f0, 1, {0xffff0000}, "Bus Memory Transactions -- All bus transactions from either local processor"},
 #define PME_MONT_BUS_MEMORY_LT_128BYTE_EITHER 136
-{ "BUS_MEMORY_LT_128BYTE_EITHER", {0x8188a}, 0xfff0, 1, {0xffff0000}, "Bus Memory Transactions -- number of less than full cache line transactions (BRP, BWP, BIL) from non-CPU priority agents"},
+{ "BUS_MEMORY_LT_128BYTE_EITHER", {0x8188a}, 0x03f0, 1, {0xffff0000}, "Bus Memory Transactions -- number of less than full cache line transactions (BRP, BWP, BIL) from non-CPU priority agents"},
 #define PME_MONT_BUS_MEMORY_LT_128BYTE_IO 137
-{ "BUS_MEMORY_LT_128BYTE_IO", {0x9188a}, 0xfff0, 1, {0xffff0000}, "Bus Memory Transactions -- number of less than full cache line transactions (BRP, BWP, BIL) from 'this' processor"},
+{ "BUS_MEMORY_LT_128BYTE_IO", {0x9188a}, 0x03f0, 1, {0xffff0000}, "Bus Memory Transactions -- number of less than full cache line transactions (BRP, BWP, BIL) from 'this' processor"},
 #define PME_MONT_BUS_MEMORY_LT_128BYTE_SELF 138
-{ "BUS_MEMORY_LT_128BYTE_SELF", {0xa188a}, 0xfff0, 1, {0xffff0000}, "Bus Memory Transactions -- number of less than full cache line transactions (BRP, BWP, BIL) CPU or non-CPU (all transactions)."},
+{ "BUS_MEMORY_LT_128BYTE_SELF", {0xa188a}, 0x03f0, 1, {0xffff0000}, "Bus Memory Transactions -- number of less than full cache line transactions (BRP, BWP, BIL) CPU or non-CPU (all transactions)."},
 #define PME_MONT_BUS_MEM_READ_ALL_ANY 139
-{ "BUS_MEM_READ_ALL_ANY", {0xf188b}, 0xfff0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- All memory read transactions from CPU or non-CPU (all transactions)."},
+{ "BUS_MEM_READ_ALL_ANY", {0xf188b}, 0x03f0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- All memory read transactions from CPU or non-CPU (all transactions)."},
 #define PME_MONT_BUS_MEM_READ_ALL_EITHER 140
-{ "BUS_MEM_READ_ALL_EITHER", {0xc188b}, 0xfff0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- All memory read transactions from either local processor"},
+{ "BUS_MEM_READ_ALL_EITHER", {0xc188b}, 0x03f0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- All memory read transactions from either local processor"},
 #define PME_MONT_BUS_MEM_READ_ALL_IO 141
-{ "BUS_MEM_READ_ALL_IO", {0xd188b}, 0xfff0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- All memory read transactions from non-CPU priority agents"},
+{ "BUS_MEM_READ_ALL_IO", {0xd188b}, 0x03f0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- All memory read transactions from non-CPU priority agents"},
 #define PME_MONT_BUS_MEM_READ_ALL_SELF 142
-{ "BUS_MEM_READ_ALL_SELF", {0xe188b}, 0xfff0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- All memory read transactions from local processor"},
+{ "BUS_MEM_READ_ALL_SELF", {0xe188b}, 0x03f0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- All memory read transactions from local processor"},
 #define PME_MONT_BUS_MEM_READ_BIL_ANY 143
-{ "BUS_MEM_READ_BIL_ANY", {0x3188b}, 0xfff0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of BIL 0-byte memory read invalidate transactions from CPU or non-CPU (all transactions)."},
+{ "BUS_MEM_READ_BIL_ANY", {0x3188b}, 0x03f0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of BIL 0-byte memory read invalidate transactions from CPU or non-CPU (all transactions)."},
 #define PME_MONT_BUS_MEM_READ_BIL_EITHER 144
-{ "BUS_MEM_READ_BIL_EITHER", {0x188b}, 0xfff0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of BIL 0-byte memory read invalidate transactions from either local processor"},
+{ "BUS_MEM_READ_BIL_EITHER", {0x188b}, 0x03f0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of BIL 0-byte memory read invalidate transactions from either local processor"},
 #define PME_MONT_BUS_MEM_READ_BIL_IO 145
-{ "BUS_MEM_READ_BIL_IO", {0x1188b}, 0xfff0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of BIL 0-byte memory read invalidate transactions from non-CPU priority agents"},
+{ "BUS_MEM_READ_BIL_IO", {0x1188b}, 0x03f0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of BIL 0-byte memory read invalidate transactions from non-CPU priority agents"},
 #define PME_MONT_BUS_MEM_READ_BIL_SELF 146
-{ "BUS_MEM_READ_BIL_SELF", {0x2188b}, 0xfff0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of BIL 0-byte memory read invalidate transactions from local processor"},
+{ "BUS_MEM_READ_BIL_SELF", {0x2188b}, 0x03f0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of BIL 0-byte memory read invalidate transactions from local processor"},
 #define PME_MONT_BUS_MEM_READ_BRIL_ANY 147
-{ "BUS_MEM_READ_BRIL_ANY", {0xb188b}, 0xfff0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of full cache line memory read invalidate transactions from CPU or non-CPU (all transactions)."},
+{ "BUS_MEM_READ_BRIL_ANY", {0xb188b}, 0x03f0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of full cache line memory read invalidate transactions from CPU or non-CPU (all transactions)."},
 #define PME_MONT_BUS_MEM_READ_BRIL_EITHER 148
-{ "BUS_MEM_READ_BRIL_EITHER", {0x8188b}, 0xfff0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of full cache line memory read invalidate transactions from either local processor"},
+{ "BUS_MEM_READ_BRIL_EITHER", {0x8188b}, 0x03f0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of full cache line memory read invalidate transactions from either local processor"},
 #define PME_MONT_BUS_MEM_READ_BRIL_IO 149
-{ "BUS_MEM_READ_BRIL_IO", {0x9188b}, 0xfff0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of full cache line memory read invalidate transactions from non-CPU priority agents"},
+{ "BUS_MEM_READ_BRIL_IO", {0x9188b}, 0x03f0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of full cache line memory read invalidate transactions from non-CPU priority agents"},
 #define PME_MONT_BUS_MEM_READ_BRIL_SELF 150
-{ "BUS_MEM_READ_BRIL_SELF", {0xa188b}, 0xfff0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of full cache line memory read invalidate transactions from local processor"},
+{ "BUS_MEM_READ_BRIL_SELF", {0xa188b}, 0x03f0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of full cache line memory read invalidate transactions from local processor"},
 #define PME_MONT_BUS_MEM_READ_BRL_ANY 151
-{ "BUS_MEM_READ_BRL_ANY", {0x7188b}, 0xfff0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of full cache line memory read transactions from CPU or non-CPU (all transactions)."},
+{ "BUS_MEM_READ_BRL_ANY", {0x7188b}, 0x03f0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of full cache line memory read transactions from CPU or non-CPU (all transactions)."},
 #define PME_MONT_BUS_MEM_READ_BRL_EITHER 152
-{ "BUS_MEM_READ_BRL_EITHER", {0x4188b}, 0xfff0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of full cache line memory read transactions from either local processor"},
+{ "BUS_MEM_READ_BRL_EITHER", {0x4188b}, 0x03f0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of full cache line memory read transactions from either local processor"},
 #define PME_MONT_BUS_MEM_READ_BRL_IO 153
-{ "BUS_MEM_READ_BRL_IO", {0x5188b}, 0xfff0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of full cache line memory read transactions from non-CPU priority agents"},
+{ "BUS_MEM_READ_BRL_IO", {0x5188b}, 0x03f0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of full cache line memory read transactions from non-CPU priority agents"},
 #define PME_MONT_BUS_MEM_READ_BRL_SELF 154
-{ "BUS_MEM_READ_BRL_SELF", {0x6188b}, 0xfff0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of full cache line memory read transactions from local processor"},
+{ "BUS_MEM_READ_BRL_SELF", {0x6188b}, 0x03f0, 1, {0xffff0000}, "Full Cache Line D/I Memory RD, RD Invalidate, and BRIL -- Number of full cache line memory read transactions from local processor"},
 #define PME_MONT_BUS_RD_DATA_ANY 155
-{ "BUS_RD_DATA_ANY", {0x3188c}, 0xfff0, 1, {0xffff0000}, "Bus Read Data Transactions -- CPU or non-CPU (all transactions)."},
+{ "BUS_RD_DATA_ANY", {0x3188c}, 0x03f0, 1, {0xffff0000}, "Bus Read Data Transactions -- CPU or non-CPU (all transactions)."},
 #define PME_MONT_BUS_RD_DATA_EITHER 156
-{ "BUS_RD_DATA_EITHER", {0x188c}, 0xfff0, 1, {0xffff0000}, "Bus Read Data Transactions -- transactions initiated by either cpu core"},
+{ "BUS_RD_DATA_EITHER", {0x188c}, 0x03f0, 1, {0xffff0000}, "Bus Read Data Transactions -- transactions initiated by either cpu core"},
 #define PME_MONT_BUS_RD_DATA_IO 157
-{ "BUS_RD_DATA_IO", {0x1188c}, 0xfff0, 1, {0xffff0000}, "Bus Read Data Transactions -- transactions initiated by non-CPU priority agents"},
+{ "BUS_RD_DATA_IO", {0x1188c}, 0x03f0, 1, {0xffff0000}, "Bus Read Data Transactions -- transactions initiated by non-CPU priority agents"},
 #define PME_MONT_BUS_RD_DATA_SELF 158
-{ "BUS_RD_DATA_SELF", {0x2188c}, 0xfff0, 1, {0xffff0000}, "Bus Read Data Transactions -- transactions initiated by 'this' cpu core"},
+{ "BUS_RD_DATA_SELF", {0x2188c}, 0x03f0, 1, {0xffff0000}, "Bus Read Data Transactions -- transactions initiated by 'this' cpu core"},
 #define PME_MONT_BUS_RD_HIT_ANY 159
-{ "BUS_RD_HIT_ANY", {0x31880}, 0xfff0, 1, {0xffff0000}, "Bus Read Hit Clean Non-local Cache Transactions -- CPU or non-CPU (all transactions)."},
+{ "BUS_RD_HIT_ANY", {0x31880}, 0x03f0, 1, {0xffff0000}, "Bus Read Hit Clean Non-local Cache Transactions -- CPU or non-CPU (all transactions)."},
 #define PME_MONT_BUS_RD_HIT_EITHER 160
-{ "BUS_RD_HIT_EITHER", {0x1880}, 0xfff0, 1, {0xffff0000}, "Bus Read Hit Clean Non-local Cache Transactions -- transactions initiated by either cpu core"},
+{ "BUS_RD_HIT_EITHER", {0x1880}, 0x03f0, 1, {0xffff0000}, "Bus Read Hit Clean Non-local Cache Transactions -- transactions initiated by either cpu core"},
 #define PME_MONT_BUS_RD_HIT_IO 161
-{ "BUS_RD_HIT_IO", {0x11880}, 0xfff0, 1, {0xffff0000}, "Bus Read Hit Clean Non-local Cache Transactions -- transactions initiated by non-CPU priority agents"},
+{ "BUS_RD_HIT_IO", {0x11880}, 0x03f0, 1, {0xffff0000}, "Bus Read Hit Clean Non-local Cache Transactions -- transactions initiated by non-CPU priority agents"},
 #define PME_MONT_BUS_RD_HIT_SELF 162
-{ "BUS_RD_HIT_SELF", {0x21880}, 0xfff0, 1, {0xffff0000}, "Bus Read Hit Clean Non-local Cache Transactions -- transactions initiated by 'this' cpu core"},
+{ "BUS_RD_HIT_SELF", {0x21880}, 0x03f0, 1, {0xffff0000}, "Bus Read Hit Clean Non-local Cache Transactions -- transactions initiated by 'this' cpu core"},
 #define PME_MONT_BUS_RD_HITM_ANY 163
-{ "BUS_RD_HITM_ANY", {0x31881}, 0xfff0, 1, {0xffff0000}, "Bus Read Hit Modified Non-local Cache Transactions -- CPU or non-CPU (all transactions)."},
+{ "BUS_RD_HITM_ANY", {0x31881}, 0x03f0, 1, {0xffff0000}, "Bus Read Hit Modified Non-local Cache Transactions -- CPU or non-CPU (all transactions)."},
 #define PME_MONT_BUS_RD_HITM_EITHER 164
-{ "BUS_RD_HITM_EITHER", {0x1881}, 0xfff0, 1, {0xffff0000}, "Bus Read Hit Modified Non-local Cache Transactions -- transactions initiated by either cpu core"},
+{ "BUS_RD_HITM_EITHER", {0x1881}, 0x03f0, 1, {0xffff0000}, "Bus Read Hit Modified Non-local Cache Transactions -- transactions initiated by either cpu core"},
 #define PME_MONT_BUS_RD_HITM_IO 165
-{ "BUS_RD_HITM_IO", {0x11881}, 0xfff0, 1, {0xffff0000}, "Bus Read Hit Modified Non-local Cache Transactions -- transactions initiated by non-CPU priority agents"},
+{ "BUS_RD_HITM_IO", {0x11881}, 0x03f0, 1, {0xffff0000}, "Bus Read Hit Modified Non-local Cache Transactions -- transactions initiated by non-CPU priority agents"},
 #define PME_MONT_BUS_RD_HITM_SELF 166
-{ "BUS_RD_HITM_SELF", {0x21881}, 0xfff0, 1, {0xffff0000}, "Bus Read Hit Modified Non-local Cache Transactions -- transactions initiated by 'this' cpu core"},
+{ "BUS_RD_HITM_SELF", {0x21881}, 0x03f0, 1, {0xffff0000}, "Bus Read Hit Modified Non-local Cache Transactions -- transactions initiated by 'this' cpu core"},
 #define PME_MONT_BUS_RD_INVAL_BST_HITM_ANY 167
-{ "BUS_RD_INVAL_BST_HITM_ANY", {0x31883}, 0xfff0, 1, {0xffff0000}, "Bus BRIL Transaction Results in HITM -- CPU or non-CPU (all transactions)."},
+{ "BUS_RD_INVAL_BST_HITM_ANY", {0x31883}, 0x03f0, 1, {0xffff0000}, "Bus BRIL Transaction Results in HITM -- CPU or non-CPU (all transactions)."},
 #define PME_MONT_BUS_RD_INVAL_BST_HITM_EITHER 168
-{ "BUS_RD_INVAL_BST_HITM_EITHER", {0x1883}, 0xfff0, 1, {0xffff0000}, "Bus BRIL Transaction Results in HITM -- transactions initiated by either cpu core"},
+{ "BUS_RD_INVAL_BST_HITM_EITHER", {0x1883}, 0x03f0, 1, {0xffff0000}, "Bus BRIL Transaction Results in HITM -- transactions initiated by either cpu core"},
 #define PME_MONT_BUS_RD_INVAL_BST_HITM_IO 169
-{ "BUS_RD_INVAL_BST_HITM_IO", {0x11883}, 0xfff0, 1, {0xffff0000}, "Bus BRIL Transaction Results in HITM -- transactions initiated by non-CPU priority agents"},
+{ "BUS_RD_INVAL_BST_HITM_IO", {0x11883}, 0x03f0, 1, {0xffff0000}, "Bus BRIL Transaction Results in HITM -- transactions initiated by non-CPU priority agents"},
 #define PME_MONT_BUS_RD_INVAL_BST_HITM_SELF 170
-{ "BUS_RD_INVAL_BST_HITM_SELF", {0x21883}, 0xfff0, 1, {0xffff0000}, "Bus BRIL Transaction Results in HITM -- transactions initiated by 'this' cpu core"},
+{ "BUS_RD_INVAL_BST_HITM_SELF", {0x21883}, 0x03f0, 1, {0xffff0000}, "Bus BRIL Transaction Results in HITM -- transactions initiated by 'this' cpu core"},
 #define PME_MONT_BUS_RD_INVAL_HITM_ANY 171
-{ "BUS_RD_INVAL_HITM_ANY", {0x31882}, 0xfff0, 1, {0xffff0000}, "Bus BIL Transaction Results in HITM -- CPU or non-CPU (all transactions)."},
+{ "BUS_RD_INVAL_HITM_ANY", {0x31882}, 0x03f0, 1, {0xffff0000}, "Bus BIL Transaction Results in HITM -- CPU or non-CPU (all transactions)."},
 #define PME_MONT_BUS_RD_INVAL_HITM_EITHER 172
-{ "BUS_RD_INVAL_HITM_EITHER", {0x1882}, 0xfff0, 1, {0xffff0000}, "Bus BIL Transaction Results in HITM -- transactions initiated by either cpu core"},
+{ "BUS_RD_INVAL_HITM_EITHER", {0x1882}, 0x03f0, 1, {0xffff0000}, "Bus BIL Transaction Results in HITM -- transactions initiated by either cpu core"},
 #define PME_MONT_BUS_RD_INVAL_HITM_IO 173
-{ "BUS_RD_INVAL_HITM_IO", {0x11882}, 0xfff0, 1, {0xffff0000}, "Bus BIL Transaction Results in HITM -- transactions initiated by non-CPU priority agents"},
+{ "BUS_RD_INVAL_HITM_IO", {0x11882}, 0x03f0, 1, {0xffff0000}, "Bus BIL Transaction Results in HITM -- transactions initiated by non-CPU priority agents"},
 #define PME_MONT_BUS_RD_INVAL_HITM_SELF 174
-{ "BUS_RD_INVAL_HITM_SELF", {0x21882}, 0xfff0, 1, {0xffff0000}, "Bus BIL Transaction Results in HITM -- transactions initiated by 'this' cpu core"},
+{ "BUS_RD_INVAL_HITM_SELF", {0x21882}, 0x03f0, 1, {0xffff0000}, "Bus BIL Transaction Results in HITM -- transactions initiated by 'this' cpu core"},
 #define PME_MONT_BUS_RD_IO_ANY 175
-{ "BUS_RD_IO_ANY", {0x31891}, 0xfff0, 1, {0xffff0000}, "IA-32 Compatible IO Read Transactions -- CPU or non-CPU (all transactions)."},
+{ "BUS_RD_IO_ANY", {0x31891}, 0x03f0, 1, {0xffff0000}, "IA-32 Compatible IO Read Transactions -- CPU or non-CPU (all transactions)."},
 #define PME_MONT_BUS_RD_IO_EITHER 176
-{ "BUS_RD_IO_EITHER", {0x1891}, 0xfff0, 1, {0xffff0000}, "IA-32 Compatible IO Read Transactions -- transactions initiated by either cpu core"},
+{ "BUS_RD_IO_EITHER", {0x1891}, 0x03f0, 1, {0xffff0000}, "IA-32 Compatible IO Read Transactions -- transactions initiated by either cpu core"},
 #define PME_MONT_BUS_RD_IO_IO 177
-{ "BUS_RD_IO_IO", {0x11891}, 0xfff0, 1, {0xffff0000}, "IA-32 Compatible IO Read Transactions -- transactions initiated by non-CPU priority agents"},
+{ "BUS_RD_IO_IO", {0x11891}, 0x03f0, 1, {0xffff0000}, "IA-32 Compatible IO Read Transactions -- transactions initiated by non-CPU priority agents"},
 #define PME_MONT_BUS_RD_IO_SELF 178
-{ "BUS_RD_IO_SELF", {0x21891}, 0xfff0, 1, {0xffff0000}, "IA-32 Compatible IO Read Transactions -- transactions initiated by 'this' cpu core"},
+{ "BUS_RD_IO_SELF", {0x21891}, 0x03f0, 1, {0xffff0000}, "IA-32 Compatible IO Read Transactions -- transactions initiated by 'this' cpu core"},
 #define PME_MONT_BUS_RD_PRTL_ANY 179
-{ "BUS_RD_PRTL_ANY", {0x3188d}, 0xfff0, 1, {0xffff0000}, "Bus Read Partial Transactions -- CPU or non-CPU (all transactions)."},
+{ "BUS_RD_PRTL_ANY", {0x3188d}, 0x03f0, 1, {0xffff0000}, "Bus Read Partial Transactions -- CPU or non-CPU (all transactions)."},
 #define PME_MONT_BUS_RD_PRTL_EITHER 180
-{ "BUS_RD_PRTL_EITHER", {0x188d}, 0xfff0, 1, {0xffff0000}, "Bus Read Partial Transactions -- transactions initiated by either cpu core"},
+{ "BUS_RD_PRTL_EITHER", {0x188d}, 0x03f0, 1, {0xffff0000}, "Bus Read Partial Transactions -- transactions initiated by either cpu core"},
 #define PME_MONT_BUS_RD_PRTL_IO 181
-{ "BUS_RD_PRTL_IO", {0x1188d}, 0xfff0, 1, {0xffff0000}, "Bus Read Partial Transactions -- transactions initiated by non-CPU priority agents"},
+{ "BUS_RD_PRTL_IO", {0x1188d}, 0x03f0, 1, {0xffff0000}, "Bus Read Partial Transactions -- transactions initiated by non-CPU priority agents"},
 #define PME_MONT_BUS_RD_PRTL_SELF 182
-{ "BUS_RD_PRTL_SELF", {0x2188d}, 0xfff0, 1, {0xffff0000}, "Bus Read Partial Transactions -- transactions initiated by 'this' cpu core"},
+{ "BUS_RD_PRTL_SELF", {0x2188d}, 0x03f0, 1, {0xffff0000}, "Bus Read Partial Transactions -- transactions initiated by 'this' cpu core"},
 #define PME_MONT_BUS_SNOOP_STALL_CYCLES_ANY 183
-{ "BUS_SNOOP_STALL_CYCLES_ANY", {0x3188f}, 0xfff0, 1, {0xffff0000}, "Bus Snoop Stall Cycles (from any agent) -- CPU or non-CPU (all transactions)."},
+{ "BUS_SNOOP_STALL_CYCLES_ANY", {0x3188f}, 0x03f0, 1, {0xffff0000}, "Bus Snoop Stall Cycles (from any agent) -- CPU or non-CPU (all transactions)."},
 #define PME_MONT_BUS_SNOOP_STALL_CYCLES_EITHER 184
-{ "BUS_SNOOP_STALL_CYCLES_EITHER", {0x188f}, 0xfff0, 1, {0xffff0000}, "Bus Snoop Stall Cycles (from any agent) -- transactions initiated by either cpu core"},
+{ "BUS_SNOOP_STALL_CYCLES_EITHER", {0x188f}, 0x03f0, 1, {0xffff0000}, "Bus Snoop Stall Cycles (from any agent) -- transactions initiated by either cpu core"},
 #define PME_MONT_BUS_SNOOP_STALL_CYCLES_SELF 185
-{ "BUS_SNOOP_STALL_CYCLES_SELF", {0x2188f}, 0xfff0, 1, {0xffff0000}, "Bus Snoop Stall Cycles (from any agent) -- local processor"},
+{ "BUS_SNOOP_STALL_CYCLES_SELF", {0x2188f}, 0x03f0, 1, {0xffff0000}, "Bus Snoop Stall Cycles (from any agent) -- local processor"},
 #define PME_MONT_BUS_WR_WB_ALL_ANY 186
-{ "BUS_WR_WB_ALL_ANY", {0xf1892}, 0xfff0, 1, {0xffff0000}, "Bus Write Back Transactions -- CPU or non-CPU (all transactions)."},
+{ "BUS_WR_WB_ALL_ANY", {0xf1892}, 0x03f0, 1, {0xffff0000}, "Bus Write Back Transactions -- CPU or non-CPU (all transactions)."},
 #define PME_MONT_BUS_WR_WB_ALL_IO 187
-{ "BUS_WR_WB_ALL_IO", {0xd1892}, 0xfff0, 1, {0xffff0000}, "Bus Write Back Transactions -- non-CPU priority agents"},
+{ "BUS_WR_WB_ALL_IO", {0xd1892}, 0x03f0, 1, {0xffff0000}, "Bus Write Back Transactions -- non-CPU priority agents"},
 #define PME_MONT_BUS_WR_WB_ALL_SELF 188
-{ "BUS_WR_WB_ALL_SELF", {0xe1892}, 0xfff0, 1, {0xffff0000}, "Bus Write Back Transactions -- this'  processor"},
+{ "BUS_WR_WB_ALL_SELF", {0xe1892}, 0x03f0, 1, {0xffff0000}, "Bus Write Back Transactions -- this'  processor"},
 #define PME_MONT_BUS_WR_WB_CCASTOUT_ANY 189
-{ "BUS_WR_WB_CCASTOUT_ANY", {0xb1892}, 0xfff0, 1, {0xffff0000}, "Bus Write Back Transactions -- CPU or non-CPU (all transactions)/Only 0-byte transactions with write back attribute (clean cast outs) will be counted"},
+{ "BUS_WR_WB_CCASTOUT_ANY", {0xb1892}, 0x03f0, 1, {0xffff0000}, "Bus Write Back Transactions -- CPU or non-CPU (all transactions)/Only 0-byte transactions with write back attribute (clean cast outs) will be counted"},
 #define PME_MONT_BUS_WR_WB_CCASTOUT_SELF 190
-{ "BUS_WR_WB_CCASTOUT_SELF", {0xa1892}, 0xfff0, 1, {0xffff0000}, "Bus Write Back Transactions -- this'  processor/Only 0-byte transactions with write back attribute (clean cast outs) will be counted"},
+{ "BUS_WR_WB_CCASTOUT_SELF", {0xa1892}, 0x03f0, 1, {0xffff0000}, "Bus Write Back Transactions -- this'  processor/Only 0-byte transactions with write back attribute (clean cast outs) will be counted"},
 #define PME_MONT_BUS_WR_WB_EQ_128BYTE_ANY 191
-{ "BUS_WR_WB_EQ_128BYTE_ANY", {0x71892}, 0xfff0, 1, {0xffff0000}, "Bus Write Back Transactions -- CPU or non-CPU (all transactions)./Only cache line transactions with write back or write coalesce attributes will be counted."},
+{ "BUS_WR_WB_EQ_128BYTE_ANY", {0x71892}, 0x03f0, 1, {0xffff0000}, "Bus Write Back Transactions -- CPU or non-CPU (all transactions)./Only cache line transactions with write back or write coalesce attributes will be counted."},
 #define PME_MONT_BUS_WR_WB_EQ_128BYTE_IO 192
-{ "BUS_WR_WB_EQ_128BYTE_IO", {0x51892}, 0xfff0, 1, {0xffff0000}, "Bus Write Back Transactions -- non-CPU priority agents/Only cache line transactions with write back or write coalesce attributes will be counted."},
+{ "BUS_WR_WB_EQ_128BYTE_IO", {0x51892}, 0x03f0, 1, {0xffff0000}, "Bus Write Back Transactions -- non-CPU priority agents/Only cache line transactions with write back or write coalesce attributes will be counted."},
 #define PME_MONT_BUS_WR_WB_EQ_128BYTE_SELF 193
-{ "BUS_WR_WB_EQ_128BYTE_SELF", {0x61892}, 0xfff0, 1, {0xffff0000}, "Bus Write Back Transactions -- this'  processor/Only cache line transactions with write back or write coalesce attributes will be counted."},
+{ "BUS_WR_WB_EQ_128BYTE_SELF", {0x61892}, 0x03f0, 1, {0xffff0000}, "Bus Write Back Transactions -- this'  processor/Only cache line transactions with write back or write coalesce attributes will be counted."},
 #define PME_MONT_CPU_CPL_CHANGES_ALL 194
 { "CPU_CPL_CHANGES_ALL", {0xf0013}, 0xfff0, 1, {0xffff0000}, "Privilege Level Changes -- All changes in cpl counted"},
 #define PME_MONT_CPU_CPL_CHANGES_LVL0 195
@@ -510,27 +510,27 @@ static pme_mont_entry_t montecito_pe []={
 #define PME_MONT_ENCBR_MISPRED_DETAIL_OVERSUB_WRONG_TARGET 239
 { "ENCBR_MISPRED_DETAIL_OVERSUB_WRONG_TARGET", {0xb0063}, 0xfff0, 3, {0xffff0003}, "Number of Encoded Branches Retired -- Only return type branches, mispredicted branches due to wrong target for taken branches"},
 #define PME_MONT_ER_BKSNP_ME_ACCEPTED 240
-{ "ER_BKSNP_ME_ACCEPTED", {0x10bb}, 0xfff0, 2, {0xffff0000}, "Backsnoop Me Accepted"},
+{ "ER_BKSNP_ME_ACCEPTED", {0x10bb}, 0x03f0, 2, {0xffff0000}, "Backsnoop Me Accepted"},
 #define PME_MONT_ER_BRQ_LIVE_REQ_HI 241
-{ "ER_BRQ_LIVE_REQ_HI", {0x10b8}, 0xfff0, 2, {0xffff0000}, "BRQ Live Requests (upper 2 bits)"},
+{ "ER_BRQ_LIVE_REQ_HI", {0x10b8}, 0x03f0, 2, {0xffff0000}, "BRQ Live Requests (upper 2 bits)"},
 #define PME_MONT_ER_BRQ_LIVE_REQ_LO 242
-{ "ER_BRQ_LIVE_REQ_LO", {0x10b9}, 0xfff0, 7, {0xffff0000}, "BRQ Live Requests (lower 3 bits)"},
+{ "ER_BRQ_LIVE_REQ_LO", {0x10b9}, 0x03f0, 7, {0xffff0000}, "BRQ Live Requests (lower 3 bits)"},
 #define PME_MONT_ER_BRQ_REQ_INSERTED 243
-{ "ER_BRQ_REQ_INSERTED", {0x8ba}, 0xfff0, 1, {0xffff0000}, "BRQ Requests Inserted"},
+{ "ER_BRQ_REQ_INSERTED", {0x8ba}, 0x03f0, 1, {0xffff0000}, "BRQ Requests Inserted"},
 #define PME_MONT_ER_MEM_READ_OUT_HI 244
-{ "ER_MEM_READ_OUT_HI", {0x8b4}, 0xfff0, 2, {0xffff0000}, "Outstanding Memory Read Transactions (upper 2 bits)"},
+{ "ER_MEM_READ_OUT_HI", {0x8b4}, 0x03f0, 2, {0xffff0000}, "Outstanding Memory Read Transactions (upper 2 bits)"},
 #define PME_MONT_ER_MEM_READ_OUT_LO 245
-{ "ER_MEM_READ_OUT_LO", {0x8b5}, 0xfff0, 7, {0xffff0000}, "Outstanding Memory Read Transactions (lower 3 bits)"},
+{ "ER_MEM_READ_OUT_LO", {0x8b5}, 0x03f0, 7, {0xffff0000}, "Outstanding Memory Read Transactions (lower 3 bits)"},
 #define PME_MONT_ER_REJECT_ALL_L1D_REQ 246
-{ "ER_REJECT_ALL_L1D_REQ", {0x10bd}, 0xfff0, 1, {0xffff0000}, "Reject All L1D Requests"},
+{ "ER_REJECT_ALL_L1D_REQ", {0x10bd}, 0x03f0, 1, {0xffff0000}, "Reject All L1D Requests"},
 #define PME_MONT_ER_REJECT_ALL_L1I_REQ 247
-{ "ER_REJECT_ALL_L1I_REQ", {0x10be}, 0xfff0, 1, {0xffff0000}, "Reject All L1I Requests"},
+{ "ER_REJECT_ALL_L1I_REQ", {0x10be}, 0x03f0, 1, {0xffff0000}, "Reject All L1I Requests"},
 #define PME_MONT_ER_REJECT_ALL_L1_REQ 248
-{ "ER_REJECT_ALL_L1_REQ", {0x10bc}, 0xfff0, 1, {0xffff0000}, "Reject All L1 Requests"},
+{ "ER_REJECT_ALL_L1_REQ", {0x10bc}, 0x03f0, 1, {0xffff0000}, "Reject All L1 Requests"},
 #define PME_MONT_ER_SNOOPQ_REQ_HI 249
-{ "ER_SNOOPQ_REQ_HI", {0x10b6}, 0xfff0, 2, {0xffff0000}, "Outstanding Snoops (upper bit)"},
+{ "ER_SNOOPQ_REQ_HI", {0x10b6}, 0x03f0, 2, {0xffff0000}, "Outstanding Snoops (upper bit)"},
 #define PME_MONT_ER_SNOOPQ_REQ_LO 250
-{ "ER_SNOOPQ_REQ_LO", {0x10b7}, 0xfff0, 7, {0xffff0000}, "Outstanding Snoops (lower 3 bits)"},
+{ "ER_SNOOPQ_REQ_LO", {0x10b7}, 0x03f0, 7, {0xffff0000}, "Outstanding Snoops (lower 3 bits)"},
 #define PME_MONT_ETB_EVENT 251
 { "ETB_EVENT", {0x111}, 0xfff0, 1, {0xffff0003}, "Execution Trace Buffer Event Captured"},
 #define PME_MONT_FE_BUBBLE_ALL 252
@@ -828,7 +828,7 @@ static pme_mont_entry_t montecito_pe []={
 #define PME_MONT_L2D_OZQ_CANCELS0_BANK_CONF 398
 { "L2D_OZQ_CANCELS0_BANK_CONF", {0x808e0}, 0xfff0, 4, {0x4020007}, "L2D OZQ Cancels (Specific Reason Set 0) -- a bypassed L2D hit operation had a bank conflict with an older sibling bypass or an older operation in the L2D pipeline."},
 #define PME_MONT_L2D_OZQ_CANCELS0_CANC_L2M_TO_L2C_ST 399
-{ "L2D_OZQ_CANCELS0_CANC_L2M_TO_L2C_ST", {0x108e0}, 0xfff0, 4, {0x4020007}, "L2D OZQ Cancels (Specific Reason Set 0) -- caused by a canceled store in L2M,L2D or L2C. This is the combination of following subevents that were available separately in Itanium2: \nCANC_L2M_ST: (caused by canceled store in L2M)\nCANC_L2D_ST: (caused by canceled store in L2D)\nCANC_L2C_ST: (caused by canceled store in L2C)"},
+{ "L2D_OZQ_CANCELS0_CANC_L2M_TO_L2C_ST", {0x108e0}, 0xfff0, 4, {0x4020007}, "L2D OZQ Cancels (Specific Reason Set 0) -- caused by a canceled store in L2M,L2D or L2C. This is the combination of following subevents that were available separately in Itanium2: CANC_L2M_ST=caused by canceled store in L2M, CANC_L2D_ST=caused by canceled store in L2D, CANC_L2C_ST=caused by canceled store in L2C"},
 #define PME_MONT_L2D_OZQ_CANCELS0_FILL_ST_CONF 400
 { "L2D_OZQ_CANCELS0_FILL_ST_CONF", {0xe08e0}, 0xfff0, 4, {0x4020007}, "L2D OZQ Cancels (Specific Reason Set 0) -- an OZQ store conflicted with a returning L2D fill"},
 #define PME_MONT_L2D_OZQ_CANCELS0_L2A_ST_MAT 401
@@ -840,21 +840,21 @@ static pme_mont_entry_t montecito_pe []={
 #define PME_MONT_L2D_OZQ_CANCELS0_L2M_ST_MAT 404
 { "L2D_OZQ_CANCELS0_L2M_ST_MAT", {0x308e0}, 0xfff0, 4, {0x4020007}, "L2D OZQ Cancels (Specific Reason Set 0) -- canceled due to an uncanceled store match in L2M"},
 #define PME_MONT_L2D_OZQ_CANCELS0_MISC_ORDER 405
-{ "L2D_OZQ_CANCELS0_MISC_ORDER", {0xd08e0}, 0xfff0, 4, {0x4020007}, "L2D OZQ Cancels (Specific Reason Set 0) -- a sync.i or mf.a . \nThis is the combination of following subevents that were available separately in Itanium2:\nSYNC: (caused by sync.i)\nMFA: (a memory fence instruction)"},
+{ "L2D_OZQ_CANCELS0_MISC_ORDER", {0xd08e0}, 0xfff0, 4, {0x4020007}, "L2D OZQ Cancels (Specific Reason Set 0) -- a sync.i or mf.a . This is the combination of following subevents that were available separately in Itanium2: SYNC=caused by sync.i, MFA=a memory fence instruction"},
 #define PME_MONT_L2D_OZQ_CANCELS0_OVER_SUB 406
-{ "L2D_OZQ_CANCELS0_OVER_SUB", {0xa08e0}, 0xfff0, 4, {0x4020007}, "L2D OZQ Cancels (Specific Reason Set 0) -- a high Ozq issue rate resulted in the L2D having to cancel due to hardware restrictions. \nThis is the combination of following subevents that were available separately in Itanium2:\nOVER_SUB: (oversubscription)\nL1DF_L2M: (L1D fill in L2M)"},
+{ "L2D_OZQ_CANCELS0_OVER_SUB", {0xa08e0}, 0xfff0, 4, {0x4020007}, "L2D OZQ Cancels (Specific Reason Set 0) -- a high Ozq issue rate resulted in the L2D having to cancel due to hardware restrictions. This is the combination of following subevents that were available separately in Itanium2: OVER_SUB=oversubscription, L1DF_L2M=L1D fill in L2M"},
 #define PME_MONT_L2D_OZQ_CANCELS0_OZDATA_CONF 407
 { "L2D_OZQ_CANCELS0_OZDATA_CONF", {0xf08e0}, 0xfff0, 4, {0x4020007}, "L2D OZQ Cancels (Specific Reason Set 0) -- an OZQ operation that needed to read the OZQ data buffer conflicted with a fill return that needed to do the same."},
 #define PME_MONT_L2D_OZQ_CANCELS0_OZQ_PREEMPT 408
 { "L2D_OZQ_CANCELS0_OZQ_PREEMPT", {0xb08e0}, 0xfff0, 4, {0x4020007}, "L2D OZQ Cancels (Specific Reason Set 0) -- an L2D fill return conflicted with, and cancelled, an ozq request for various reasons. Formerly known as L1_FILL_CONF."},
 #define PME_MONT_L2D_OZQ_CANCELS0_RECIRC 409
-{ "L2D_OZQ_CANCELS0_RECIRC", {0x8e0}, 0xfff0, 4, {0x4020007}, "L2D OZQ Cancels (Specific Reason Set 0) -- a recirculate was cancelled due h/w limitations on recirculate issue rate. This is the combination of following subevents that were available separately in Itanium2:\nRECIRC_OVER_SUB: (caused by a recirculate oversubscription)\nDIDNT_RECIRC: (caused because it did not recirculate)\nWEIRD: (counts the cancels caused by attempted 5-cycle bypasses for non-aligned accesses and bypasses blocking recirculates for too long)"},
+{ "L2D_OZQ_CANCELS0_RECIRC", {0x8e0}, 0xfff0, 4, {0x4020007}, "L2D OZQ Cancels (Specific Reason Set 0) -- a recirculate was cancelled due h/w limitations on recirculate issue rate. This is the combination of following subevents that were available separately in Itanium2: RECIRC_OVER_SUB=caused by a recirculate oversubscription, DIDNT_RECIRC=caused because it did not recirculate, WEIRD=counts the cancels caused by attempted 5-cycle bypasses for non-aligned accesses and bypasses blocking recirculates for too long"},
 #define PME_MONT_L2D_OZQ_CANCELS0_REL 410
 { "L2D_OZQ_CANCELS0_REL", {0x708e0}, 0xfff0, 4, {0x4020007}, "L2D OZQ Cancels (Specific Reason Set 0) -- a release was cancelled due to some other operation"},
 #define PME_MONT_L2D_OZQ_CANCELS0_SEMA 411
-{ "L2D_OZQ_CANCELS0_SEMA", {0x908e0}, 0xfff0, 4, {0x4020007}, "L2D OZQ Cancels (Specific Reason Set 0) -- a semaphore op was cancelled for various ordering or h/w restriction reasons. This is the combination of following subevents that were available separately in Itanium 2: \nSEM: (a semaphore)\nCCV: (a CCV)"},
+{ "L2D_OZQ_CANCELS0_SEMA", {0x908e0}, 0xfff0, 4, {0x4020007}, "L2D OZQ Cancels (Specific Reason Set 0) -- a semaphore op was cancelled for various ordering or h/w restriction reasons. This is the combination of following subevents that were available separately in Itanium 2: SEM=a semaphore, CCV=a CCV"},
 #define PME_MONT_L2D_OZQ_CANCELS0_WB_CONF 412
-{ "L2D_OZQ_CANCELS0_WB_CONF", {0xc08e0}, 0xfff0, 4, {0x4020007}, "L2D OZQ Cancels (Specific Reason Set 0) -- an OZQ request conflicted with an L2D data array read for a writeback. \nThis is the combination of following subevents that were available separately in Itanium2:\nREAD_WB_CONF: (a write back conflict)\nST_FILL_CONF: (a store fill conflict)"},
+{ "L2D_OZQ_CANCELS0_WB_CONF", {0xc08e0}, 0xfff0, 4, {0x4020007}, "L2D OZQ Cancels (Specific Reason Set 0) -- an OZQ request conflicted with an L2D data array read for a writeback. This is the combination of following subevents that were available separately in Itanium2: READ_WB_CONF=a write back conflict, ST_FILL_CONF=a store fill conflict"},
 #define PME_MONT_L2D_OZQ_CANCELS1_ANY 413
 { "L2D_OZQ_CANCELS1_ANY", {0x8e2}, 0xfff0, 4, {0x4020007}, "L2D OZQ Cancels (Late or Any) -- counts the total OZ Queue cancels"},
 #define PME_MONT_L2D_OZQ_CANCELS1_LATE_BYP_EFFRELEASE 414
@@ -862,7 +862,7 @@ static pme_mont_entry_t montecito_pe []={
 #define PME_MONT_L2D_OZQ_CANCELS1_LATE_SPEC_BYP 415
 { "L2D_OZQ_CANCELS1_LATE_SPEC_BYP", {0x108e2}, 0xfff0, 4, {0x4020007}, "L2D OZQ Cancels (Late or Any) -- counts the late cancels caused by speculative bypasses"},
 #define PME_MONT_L2D_OZQ_CANCELS1_SIBLING_ACQ_REL 416
-{ "L2D_OZQ_CANCELS1_SIBLING_ACQ_REL", {0x208e2}, 0xfff0, 4, {0x4020007}, "L2D OZQ Cancels (Late or Any) -- counts the late cancels caused by releases and acquires in the same issue group. \nThis is the combination of following subevents that were available separately in Itanium2:\nLATE_ACQUIRE: (late cancels caused by acquires)\nLATE_RELEASE: (late cancles caused by releases)"},
+{ "L2D_OZQ_CANCELS1_SIBLING_ACQ_REL", {0x208e2}, 0xfff0, 4, {0x4020007}, "L2D OZQ Cancels (Late or Any) -- counts the late cancels caused by releases and acquires in the same issue group. This is the combination of following subevents that were available separately in Itanium2: LATE_ACQUIRE=late cancels caused by acquires, LATE_RELEASE=late cancles caused by releases"},
 #define PME_MONT_L2D_OZQ_FULL_THIS 417
 { "L2D_OZQ_FULL_THIS", {0x8bc}, 0xfff0, 1, {0x4520000}, "L2D OZQ Is Full -- L2D OZQ is full"},
 #define PME_MONT_L2D_OZQ_RELEASE 418

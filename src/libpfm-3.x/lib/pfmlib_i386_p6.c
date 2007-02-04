@@ -68,6 +68,8 @@ static unsigned int i386_p6_num_events;
 #define I386_P6_SEL_BASE	0x186
 #define I386_P6_CTR_BASE	0xc1
 
+static void pfm_i386_p6_get_impl_counters(pfmlib_regmask_t *impl_counters);
+
 static int
 pfm_i386_detect_common(void)
 {
@@ -164,7 +166,7 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 	pfm_i386_p6_sel_reg_t reg;
 	pfmlib_event_t *e;
 	pfmlib_reg_t *pc, *pd;
-	pfmlib_regmask_t *r_pmcs;
+	pfmlib_regmask_t impl_cntrs, avail_cntrs;
 	unsigned long plm;
 	unsigned int i, j, cnt, k, umask;
 	unsigned int assign[PMU_I386_P6_NUM_COUNTERS];
@@ -173,7 +175,6 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 	pc     = outp->pfp_pmcs;
 	pd     = outp->pfp_pmds;
 	cnt    = inp->pfp_event_count;
-	r_pmcs = &inp->pfp_unavail_pmcs;
 	cntrs  = param ? param->pfp_i386_p6_counters : NULL;
 
 	if (PFMLIB_DEBUG()) {
@@ -182,9 +183,15 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 		}
 	}
 
-	if (cnt > PMU_I386_P6_NUM_COUNTERS) return PFMLIB_ERR_TOOMANY;
+	if (cnt > PMU_I386_P6_NUM_COUNTERS)
+		return PFMLIB_ERR_TOOMANY;
 
-	for(i=0, j=0; j < cnt; j++) {
+	pfm_i386_p6_get_impl_counters(&impl_cntrs);
+	pfm_regmask_andnot(&avail_cntrs, &impl_cntrs, &inp->pfp_unavail_pmcs);
+
+	DPRINT(("impl=0x%lx avail=0x%lx unavail=0x%lx\n", impl_cntrs.bits[0], avail_cntrs.bits[0], inp->pfp_unavail_pmcs.bits[0]));
+
+	for(j=0; j < cnt; j++) {
 		/*
 		 * P6 only supports two priv levels for perf counters
 	 	 */
@@ -205,19 +212,41 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 			DPRINT(("event does not support unit mask combination\n"));
 			return PFMLIB_ERR_FEATCOMB;
 		}
-		/*
-		 * exclude restricted registers from assignement
-		 */
-		while(i < PMU_I386_P6_NUM_COUNTERS && pfm_regmask_isset(r_pmcs, i)) i++;
-
+	}
+	/*
+	 * first pass: events for fixed counters
+	 */
+	for(j=0; j < cnt; j++) {
+		if (i386_pe[e[j].event].pme_flags & PFMLIB_I386_P6_CTR0_ONLY) {
+			if (!pfm_regmask_isset(&avail_cntrs, 0))
+				return PFMLIB_ERR_NOASSIGN;
+			assign[j] = 0;
+			pfm_regmask_clr(&avail_cntrs, 0);
+		} else if (i386_pe[e[j].event].pme_flags & PFMLIB_I386_P6_CTR1_ONLY) {
+			if (!pfm_regmask_isset(&avail_cntrs, 1))
+				return PFMLIB_ERR_NOASSIGN;
+			assign[j] = 1;
+			pfm_regmask_clr(&avail_cntrs, 1);
+		}
+	}
+	/*
+ 	 * second pass: events with no constraints
+ 	 */
+	for (j=0, i=0; j < cnt ; j++ ) {
+		if (i386_pe[e[j].event].pme_flags & (PFMLIB_I386_P6_CTR0_ONLY|PFMLIB_I386_P6_CTR1_ONLY))
+			continue;
+		
+		while (i < PMU_I386_P6_NUM_COUNTERS && !pfm_regmask_isset(&avail_cntrs, i))
+			i++;
 		if (i == PMU_I386_P6_NUM_COUNTERS)
 			return PFMLIB_ERR_NOASSIGN;
-
 		assign[j] = i++;
 	}
-
-	for (j=0; j < cnt ; j++ ) {
-		reg.val    = 0; /* assume reserved bits are zerooed */
+	/*
+	 * final pass: assign value to registers
+	 */
+	for (j=0; j < cnt ; j++) {
+		reg.val = 0; /* assume reserved bits are zeroed */
 
 		/* if plm is 0, then assume not specified per-event and use default */
 		plm = e[j].plm ? e[j].plm : inp->pfp_dfl_plm;
@@ -273,8 +302,22 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 
 		__pfm_vbprintf("[PMC%u(pmd%u)]\n", pd[j].reg_num, pd[j].reg_num);
 	}
+	/*
+	 * add perfsel0 if not used. This is required as it holds
+	 * the enable bit for all counters
+	 */
+	if (pfm_regmask_isset(&avail_cntrs, 0)) {
+		reg.val = 0;
+		reg.sel_en = 1; /* force enable bit to 1 */
+		pc[j].reg_num   = 0;
+		pc[j].reg_value =  reg.val;
+		pc[j].reg_addr  = I386_P6_SEL_BASE;
+		j++;
+
+		__pfm_vbprintf("[PERFEVTSEL0(pmc0)=0x%lx] required for enabling counters\n", reg.val);
+	}
 	/* number of evtsel registers programmed */
-	outp->pfp_pmc_count = cnt;
+	outp->pfp_pmc_count = j;
 	outp->pfp_pmd_count = cnt;
 
 	return PFMLIB_SUCCESS;
@@ -310,8 +353,14 @@ pfm_i386_p6_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 
 	memset(counters, 0, sizeof(*counters));
 
-	for(i=0; i < PMU_I386_P6_NUM_COUNTERS; i++)
+	if (i386_pe[j].pme_flags & PFMLIB_I386_P6_CTR0_ONLY) {
+		pfm_regmask_set(counters, 0);
+	} else if (i386_pe[j].pme_flags & PFMLIB_I386_P6_CTR1_ONLY) {
+		pfm_regmask_set(counters, 1);
+	} else {
+	    for(i=0; i < PMU_I386_P6_NUM_COUNTERS; i++)
 		pfm_regmask_set(counters, i);
+	}
 }
 
 static void
@@ -346,7 +395,7 @@ pfm_i386_p6_get_impl_counters(pfmlib_regmask_t *impl_counters)
 	memset(impl_counters, 0, sizeof(*impl_counters));
 
 	/* counting pmds are contiguous */
-	for(i=0; i < 4; i++)
+	for(i=0; i < PMU_I386_P6_NUM_COUNTERS; i++)
 		pfm_regmask_set(impl_counters, i);
 }
 
@@ -456,6 +505,10 @@ pfm_pmu_support_t i386_p6_support={
 	.get_impl_counters	= pfm_i386_p6_get_impl_counters,
 	.get_hw_counter_width	= pfm_i386_p6_get_hw_counter_width,
 	.get_event_desc         = pfm_i386_p6_get_event_description,
+	.get_num_event_masks	= pfm_i386_p6_get_num_event_masks,
+	.get_event_mask_name	= pfm_i386_p6_get_event_mask_name,
+	.get_event_mask_code	= pfm_i386_p6_get_event_mask_code,
+	.get_event_mask_desc	= pfm_i386_p6_get_event_mask_desc,
 	.get_cycle_event	= pfm_i386_p6_get_cycle_event,
 	.get_inst_retired_event = pfm_i386_p6_get_inst_retired
 };

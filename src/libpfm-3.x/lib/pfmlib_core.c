@@ -271,8 +271,10 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 		 * check if PMC0 is available and if only one event is dependent on it
 		 */
 		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_PMC0) {
-			if (++npmc0 > 1 || pfm_regmask_isset(r_pmcs, 4))
+			if (++npmc0) {
+				DPRINT(("two events compete for a counter\n"));
 				return PFMLIB_ERR_NOASSIGN;
+			}
 		}
 	}
 
@@ -284,6 +286,8 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 	 */
 	for(i=0; i < n; i++) {
 		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_PMC0) {
+			if (pfm_regmask_isset(r_pmcs, 4))
+				return PFMLIB_ERR_NOASSIGN;
 			assign_pc[i] = 4;
 			next_gen++;
 		}
@@ -400,6 +404,17 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 		for(k=0; k < e[i].num_masks; k++) {
 			umask |= core_pe[e[i].event].pme_umasks[e[i].unit_masks[k]].pme_ucode;
 		}
+
+		/*
+		 * for events supporting Core specificity (self, both), a value
+		 * of 0 for bits 15:14 (7:6 in our umask) is reserved, therefore we
+		 * force to SELF if user did not specify anything
+		 */
+		if ((core_pe[e[i].event].pme_flags & PFMLIB_CORE_CSPEC)
+		    && ((umask & (0x3 << 6)) == 0)) {
+				umask |= 1 << 6;
+		}
+
 		reg.sel_unit_mask  = umask;
 		reg.sel_usr        = plm & PFM_PLM3 ? 1 : 0;
 		reg.sel_os         = plm & PFM_PLM0 ? 1 : 0;

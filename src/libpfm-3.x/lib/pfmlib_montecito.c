@@ -102,6 +102,8 @@ static char * pfm_mont_get_event_name(unsigned int i);
  * values on the fly given the base.
  */
 
+static void pfm_mont_get_impl_counters(pfmlib_regmask_t *impl_counters);
+
 static int
 pfm_mont_detect(void)
 {
@@ -449,7 +451,6 @@ check_cancel_events(pfmlib_input_param_t *inp)
 
 /*
  * Automatically dispatch events to corresponding counters following constraints.
- * Upon return the pfarg_regt structure is ready to be submitted to kernel
  */
 static unsigned int l2d_set1_cnts[]={ 4, 5, 8 };
 static unsigned int l2d_set2_cnts[]={ 6, 7, 9 };
@@ -461,21 +462,20 @@ pfm_mont_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t 
 	pfm_mont_pmc_reg_t reg;
 	pfmlib_event_t *e;
 	pfmlib_reg_t *pc, *pd;
-	pfmlib_regmask_t *r_pmcs;
-	unsigned int i,j, k;
+	pfmlib_regmask_t avail_cntrs, impl_cntrs;
+	unsigned int i,j, k, max_cnt;
 	unsigned int assign[PMU_MONT_NUM_COUNTERS];
 	unsigned int m, cnt;
 	unsigned int l1d_set;
 	unsigned long l2d_set1_mask, l2d_set2_mask, evt_mask, mesi;
-	unsigned long not_assigned_events, free_counter_mask;
+	unsigned long not_assigned_events, cnt_mask;
 	int l2d_set1_p, l2d_set2_p;
-	int ret, not_found;
+	int ret;
 
 	e      = inp->pfp_events;
 	pc     = outp->pfp_pmcs;
 	pd     = outp->pfp_pmds;
 	cnt    = inp->pfp_event_count;
-	r_pmcs = &inp->pfp_unavail_pmcs;
 
 	if (PFMLIB_DEBUG())
 		for (m=0; m < cnt; m++) {
@@ -506,10 +506,11 @@ pfm_mont_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t 
 	 *
 	 * this is the strongest constraint
 	 */
-	free_counter_mask   = 0xfff0 & ~r_pmcs->bits[0];
+	pfm_mont_get_impl_counters(&impl_cntrs);
+	pfm_regmask_andnot(&avail_cntrs, &impl_cntrs, &inp->pfp_unavail_pmcs);
 	not_assigned_events = 0;
 
-	DPRINT(("free_counter_mask=0x%lx\n", free_counter_mask));
+	DPRINT(("avail_cntrs=0x%lx\n", avail_cntrs.bits[0]));
 
 	/*
 	 * we do not check ALL_THRD here because at least
@@ -517,12 +518,12 @@ pfm_mont_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t 
 	 */
 	if (l1d_set != UNEXISTING_SET) {
 
-		if (pfm_regmask_isset(r_pmcs, 5))
+		if (!pfm_regmask_isset(&avail_cntrs, 5))
 			return PFMLIB_ERR_NOASSIGN;
 
 		assign[l1d_set] = 5;
 
-		free_counter_mask &= ~(1UL << 5);
+		pfm_regmask_clr(&avail_cntrs, 5);
 	}
 
 	l2d_set1_p = l2d_set2_p = 0;
@@ -540,10 +541,10 @@ pfm_mont_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t 
 			if (l2d_set1_p < 3 && (l2d_set1_mask & evt_mask)) {
 				assign[i] = l2d_set1_cnts[l2d_set1_p];
 
-				if (pfm_regmask_isset(r_pmcs, assign[i]))
+				if (!pfm_regmask_isset(&avail_cntrs, assign[i]))
 					return PFMLIB_ERR_NOASSIGN;
 
-				free_counter_mask &= ~(1UL << assign[i]);
+				pfm_regmask_clr(&avail_cntrs, assign[i]);
 				l2d_set1_p++;
 				continue;
 			}
@@ -553,47 +554,96 @@ pfm_mont_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t 
 			if (l2d_set2_p  < 3 && (l2d_set2_mask & evt_mask)) {
 				assign[i] = l2d_set2_cnts[l2d_set2_p];
 
-				if (pfm_regmask_isset(r_pmcs, assign[i]))
+				if (!pfm_regmask_isset(&avail_cntrs, assign[i]))
 					return PFMLIB_ERR_NOASSIGN;
 
-				free_counter_mask &= ~(1UL << assign[i]);
+				pfm_regmask_clr(&avail_cntrs, assign[i]);
 				l2d_set2_p++;
 				continue;
 			}
 			/*
 			 * if not l2d nor l1d, then defer placement until final pass
 			 */
-			if (i != l1d_set) not_assigned_events |= evt_mask;
+			if (i != l1d_set)
+				not_assigned_events |= evt_mask;
 
-			DPRINT(("i=%u free_counter_mask=0x%lx l2d_set1_p=%d l2d_set2_p=%d not_assigned=0x%lx\n", 
+			DPRINT(("phase 1: i=%u avail_cntrs=0x%lx l2d_set1_p=%d l2d_set2_p=%d not_assigned=0x%lx\n", 
 				i,
-				free_counter_mask,
+				avail_cntrs.bits[0],
 				l2d_set1_p,
 				l2d_set2_p,
 				not_assigned_events));
 	}
 	/*
-	 * assign the rest of the events
+	 * assign BUS_* ER_* events (work only in PMC4-PMC9)
 	 */
-	for (i=0, j=0; not_assigned_events ; i++, not_assigned_events >>=1) {
+	evt_mask = not_assigned_events;
+	for (i=0; evt_mask ; i++, evt_mask >>=1) {
 
-		if ((not_assigned_events & 0x1) == 0)
+		if ((evt_mask & 0x1) == 0)
 			continue;
 
-		not_found = 1;
+		cnt_mask = montecito_pe[e[i].event].pme_counters;
+		/*
+		 * only interested in events with restricted set of counters
+		 */
+		if (cnt_mask == 0xfff0)
+			continue;
 
-		for(; not_found && free_counter_mask; j++, free_counter_mask >>=1) {
-			if (free_counter_mask & 0x1) {
-				assign[i] = j;
-				not_found = 0;
-			}
+		for(j=0; cnt_mask; j++, cnt_mask >>=1) {
+			if ((cnt_mask & 0x1) == 0) 
+				continue;
+
+			DPRINT(("phase 2: i=%d j=%d cnt_mask=0x%lx avail_cntrs=0x%lx not_assigned_evnts=0x%lx\n",
+				i, j, cnt_mask, avail_cntrs.bits[0], not_assigned_events));
+
+			if (!pfm_regmask_isset(&avail_cntrs, j))
+				continue;
+
+			assign[i] = j;
+			not_assigned_events &= ~(1UL << i);
+			pfm_regmask_clr(&avail_cntrs, j);
+			break;
 		}
-		if (not_found)
+		if (cnt_mask == 0)
 			return PFMLIB_ERR_NOASSIGN;
+	}
+	/*
+	 * assign the rest of the events (no constraints)
+	 */
+	evt_mask = not_assigned_events;
+	max_cnt = PMU_MONT_FIRST_COUNTER + PMU_MONT_NUM_COUNTERS;
+	for (i=0, j=0; evt_mask ; i++, evt_mask >>=1) {
+
+		DPRINT(("phase 3a: i=%d j=%d evt_mask=0x%lx avail_cntrs=0x%lx not_assigned_evnts=0x%lx\n",
+			i, j, evt_mask, avail_cntrs.bits[0], not_assigned_events));
+		if ((evt_mask & 0x1) == 0)
+			continue;
+
+		while(j < max_cnt && !pfm_regmask_isset(&avail_cntrs, j)) {
+			DPRINT(("phase 3: i=%d j=%d evt_mask=0x%lx avail_cntrs=0x%lx not_assigned_evnts=0x%lx\n",
+				i, j, evt_mask, avail_cntrs.bits[0], not_assigned_events));
+			j++;
+		}
+
+		if (j == max_cnt)
+			return PFMLIB_ERR_NOASSIGN;
+
+		assign[i] = j;
+		j++;
 	}
 
 	for (j=0; j < cnt ; j++ ) {
 		mesi = 0;
+
+		/*
+		 * XXX: we do not support .all placement just yet
+		 */
+		if (param && param->pfp_mont_counters[j].flags & PFMLIB_MONT_FL_EVT_ALL_THRD) {
+			DPRINT((".all mode is not yet supported by libpfm\n"));
+			return PFMLIB_ERR_NOTSUPP;
+		}
+
 		if (has_mesi(e[j].event)) {
 			for(k=0;k< e[j].num_masks; k++) {
 				mesi |= 1UL << e[j].unit_masks[k];
@@ -611,6 +661,7 @@ pfm_mont_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t 
 		reg.pmc_ism    = 0x2; /* force IA-64 mode */
 		reg.pmc_umask  = is_ear(e[j].event) ? 0x0 : montecito_pe[e[j].event].pme_umask;
 		reg.pmc_es     = montecito_pe[e[j].event].pme_code;
+		reg.pmc_all    = 0; /* XXX force self for now */
 		reg.pmc_m      = (mesi>>3) & 0x1;
 		reg.pmc_e      = (mesi>>2) & 0x1;
 		reg.pmc_s      = (mesi>>1) & 0x1;

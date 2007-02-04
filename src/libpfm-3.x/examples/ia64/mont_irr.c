@@ -78,6 +78,7 @@ saxpy(double *a, double *b, double *c, unsigned long size)
 	for(i=0; i < size; i++) {
 		c[i] = 2*a[i] + b[i];
 	}
+	printf("saxpy done\n");
 }
 
 void
@@ -88,6 +89,7 @@ saxpy2(double *a, double *b, double *c, unsigned long size)
 	for(i=0; i < size; i++) {
 		c[i] = 2*a[i] + b[i];
 	}
+	printf("saxpy2 done\n");
 }
 
 

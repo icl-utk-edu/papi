@@ -22,6 +22,60 @@
  * This file is part of libpfm, a performance monitoring support library for
  * applications on Linux.
  */
+
+#define INTEL_CORE_MESI_UMASKS \
+		{ .pme_uname = "MESI",\
+		  .pme_udesc = "Any cacheline access",\
+		  .pme_ucode = 0xf\
+		},\
+		{ .pme_uname = "I_STATE",\
+		  .pme_udesc = "Invalid cacheline",\
+		  .pme_ucode = 0x1\
+		},\
+		{ .pme_uname = "S_STATE",\
+		  .pme_udesc = "Shared cacheline",\
+		  .pme_ucode = 0x2\
+		},\
+		{ .pme_uname = "E_STATE",\
+		  .pme_udesc = "Exclusive cacheline",\
+		  .pme_ucode = 0x4\
+		},\
+		{ .pme_uname = "M_STATE",\
+		  .pme_udesc = "Modified cacheline",\
+		  .pme_ucode = 0x8\
+		}
+
+#define INTEL_CORE_SPECIFICITY_UMASKS \
+		{ .pme_uname = "SELF",\
+		  .pme_udesc = "This core",\
+		  .pme_ucode = 0x40\
+		},\
+		{ .pme_uname = "BOTH_CORES",\
+		  .pme_udesc = "Both cores",\
+		  .pme_ucode = 0xc0\
+		}
+
+#define INTEL_CORE_HW_PREFETCH_UMASKS \
+		{ .pme_uname = "ANY",\
+		  .pme_udesc = "All inclusive",\
+		  .pme_ucode = 0x30\
+		},\
+		{ .pme_uname = "PREFETCH",\
+		  .pme_udesc = "Hardware prefetch only",\
+		  .pme_ucode = 0x10\
+		}
+
+#define INTEL_CORE_AGENT_UMASKS \
+		{ .pme_uname = "THIS_AGENT",\
+		  .pme_udesc = "This agent",\
+		  .pme_ucode = 0x00\
+		},\
+		{ .pme_uname = "ALL_AGENTS",\
+		  .pme_udesc = "Any agent on the bus",\
+		  .pme_ucode = 0x20\
+		}
+
+
 static pme_core_entry_t core_pe[]={
 	/*
 	 * BEGIN: architected Core events
@@ -255,689 +309,130 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "L2_ADS",
 	  .pme_code = 0x21,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "Cycles L2 address bus is in use",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF",
-		  .pme_udesc = "Cycles L2 address bus is in use for this core",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "BOTH_CORES",
-		  .pme_udesc = "Cycles L2 address bus is in use for both cores",
-		  .pme_ucode = 0xc0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS
 	   },
 	   .pme_numasks = 2
 	},
 	{ .pme_name = "L2_DBUS_BUSY_RD",
 	  .pme_code = 0x23,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "Cycles the L2 transfers data to the core",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF",
-		  .pme_udesc = "Cycles the L2 transfers data to this core",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "BOTH_CORES",
-		  .pme_udesc = "Cycles the L2 transfers data to any of the two cores",
-		  .pme_ucode = 0xc0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS
 	   },
 	   .pme_numasks = 2
 	},
 	{ .pme_name = "L2_LINES_IN",
 	  .pme_code = 0x24,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "L2 cache misses",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF_ANY",
-		  .pme_udesc = "Any L2 cache misses from this core",
-		  .pme_ucode = 0x70
-		},
-		{ .pme_uname = "SELF_DEMAND",
-		  .pme_udesc = "L2 demand request cache misses from this core",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "SELF_PREFETCH",
-		  .pme_udesc = "L2 prefetch cache misses from this core",
-		  .pme_ucode = 0x50
-		},
-		{ .pme_uname = "BOTH_CORES_ANY",
-		  .pme_udesc = "Any L2 cache misses from any of the two cores",
-		  .pme_ucode = 0xf0
-		},
-		{ .pme_uname = "BOTH_CORES_DEMAND",
-		  .pme_udesc = "L2 demand request cache misses from any of the two cores",
-		  .pme_ucode = 0xc0
-		},
-		{ .pme_uname = "BOTH_CORES_PREFETCH",
-		  .pme_udesc = "L2 prefetch cache misses from any of the two cores",
-		  .pme_ucode = 0xd0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS,
+		INTEL_CORE_HW_PREFETCH_UMASKS
 	   },
-	   .pme_numasks = 6
+	   .pme_numasks = 4
 	},
 	{ .pme_name = "L2_M_LINES_IN",
 	  .pme_code = 0x25,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "L2 cache line modifications",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF",
-		  .pme_udesc = "L2 cache line modifications from this core",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "BOTH_CORES",
-		  .pme_udesc = "L2 cache line modifications from any of the two cores",
-		  .pme_ucode = 0xc0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS
 	   },
 	   .pme_numasks = 2
 	},
 	{ .pme_name = "L2_LINES_OUT",
 	  .pme_code = 0x26,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "L2 cache lines evicted",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF_ANY",
-		  .pme_udesc = "Any L2 cache lines evicted from this core",
-		  .pme_ucode = 0x70
-		},
-		{ .pme_uname = "SELF_DEMAND",
-		  .pme_udesc = "L2 cache lines evicted due to demand request from this core",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "SELF_PREFETCH",
-		  .pme_udesc = "L2 cache lines evicted due to prefetch from this core",
-		  .pme_ucode = 0x50
-		},
-		{ .pme_uname = "BOTH_CORES_ANY",
-		  .pme_udesc = "Any L2 cache lines evicted from any of the two cores",
-		  .pme_ucode = 0xf0
-		},
-		{ .pme_uname = "BOTH_CORES_DEMAND",
-		  .pme_udesc = "L2 cache lines evicted due to demand request from any of the two cores",
-		  .pme_ucode = 0xc0
-		},
-		{ .pme_uname = "BOTH_CORES_PREFETCH",
-		  .pme_udesc = "L2 cache lines evicted due to prefetch from any of the two cores",
-		  .pme_ucode = 0xd0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS,
+		INTEL_CORE_HW_PREFETCH_UMASKS
 	   },
-	   .pme_numasks = 6
+	   .pme_numasks = 4
 	},
 	{ .pme_name = "L2_M_LINES_OUT",
 	  .pme_code = 0x27,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "Modified lines evicted from the L2 cache",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF_ANY",
-		  .pme_udesc = "Any modified lines evicted from the L2 cache due to this core",
-		  .pme_ucode = 0x70
-		},
-		{ .pme_uname = "SELF_DEMAND",
-		  .pme_udesc = "Modified lines evicted from the L2 cache due to demand request from this core",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "SELF_PREFETCH",
-		  .pme_udesc = "Modified lines evicted from the L2 cache due to prefetch from this core",
-		  .pme_ucode = 0x50
-		},
-		{ .pme_uname = "BOTH_CORES_ANY",
-		  .pme_udesc = "Any modified lines evicted from the L2 cache due to any of the two cores",
-		  .pme_ucode = 0xf0
-		},
-		{ .pme_uname = "BOTH_CORES_DEMAND",
-		  .pme_udesc = "Modified lines evicted from the L2 cache due to demand request from any of the two cores",
-		  .pme_ucode = 0xc0
-		},
-		{ .pme_uname = "BOTH_CORES_PREFETCH",
-		  .pme_udesc = "Modified lines evicted from the L2 cache due to prefetch from any of the two cores",
-		  .pme_ucode = 0xd0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS,
+		INTEL_CORE_HW_PREFETCH_UMASKS
 	   },
-	   .pme_numasks = 6
+	   .pme_numasks = 4
 	},
 	{ .pme_name = "L2_IFETCH",
 	  .pme_code = 0x28,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "L2 cacheable instruction fetch requests",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF_MESI",
-		  .pme_udesc = "Any L2 cacheable instruction fetch requests from this core",
-		  .pme_ucode = 0x4f
-		},
-		{ .pme_uname = "SELF_I_STATE",
-		  .pme_udesc = "L2 cacheable instruction fetch requests on Invalid cacheline from this core",
-		  .pme_ucode = 0x41
-		},
-		{ .pme_uname = "SELF_S_STATE",
-		  .pme_udesc = "L2 cacheable instruction fetch requests on Shared cacheline from this core",
-		  .pme_ucode = 0x42
-		},
-		{ .pme_uname = "SELF_E_STATE",
-		  .pme_udesc = "L2 cacheable instruction fetch requests on Exclusive cacheline from this core",
-		  .pme_ucode = 0x44
-		},
-		{ .pme_uname = "SELF_M_STATE",
-		  .pme_udesc = "L2 cacheable instruction fetch requests on Modified cacheline from this core",
-		  .pme_ucode = 0x48
-		},
-		{ .pme_uname = "BOTH_CORES_MESI",
-		  .pme_udesc = "Any L2 cacheable instruction fetch requests from any of the two cores",
-		  .pme_ucode = 0xcf
-		},
-		{ .pme_uname = "BOTH_CORES_I_STATE",
-		  .pme_udesc = "L2 cacheable instruction fetch requests on Invalid cacheline from any of the two cores",
-		  .pme_ucode = 0xc1
-		},
-		{ .pme_uname = "BOTH_CORES_S_STATE",
-		  .pme_udesc = "L2 cacheable instruction fetch requests on Shared cacheline from any of the two cores",
-		  .pme_ucode = 0xc2
-		},
-		{ .pme_uname = "BOTH_CORES_E_STATE",
-		  .pme_udesc = "L2 cacheable instruction fetch requests on Exclusive cacheline from any of the two cores",
-		  .pme_ucode = 0xc4
-		},
-		{ .pme_uname = "BOTH_CORES_M_STATE",
-		  .pme_udesc = "L2 cacheable instruction fetch requests on Modified cacheline from any of the two cores",
-		  .pme_ucode = 0xc8
-		}
+		INTEL_CORE_MESI_UMASKS,
+		INTEL_CORE_SPECIFICITY_UMASKS
 	   },
-	   .pme_numasks = 10
+	   .pme_numasks = 7
 	},
 	{ .pme_name = "L2_LD",
 	  .pme_code = 0x29,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "L2 cache reads",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF_ANY_MESI",
-		  .pme_udesc = "Any L2 cache reads from this core",
-		  .pme_ucode = 0x7f
-		},
-		{ .pme_uname = "SELF_ANY_I_STATE",
-		  .pme_udesc = "L2 cache reads on Invalid cacheline from this core",
-		  .pme_ucode = 0x71
-		},
-		{ .pme_uname = "SELF_ANY_S_STATE",
-		  .pme_udesc = "L2 cache reads on Shared cacheline from this core",
-		  .pme_ucode = 0x72
-		},
-		{ .pme_uname = "SELF_ANY_E_STATE",
-		  .pme_udesc = "L2 cache reads on Exclusive cacheline from this core",
-		  .pme_ucode = 0x74
-		},
-		{ .pme_uname = "SELF_ANY_M_STATE",
-		  .pme_udesc = "L2 cache reads on Modified cacheline from this core",
-		  .pme_ucode = 0x78
-		},
-		{ .pme_uname = "SELF_DEMAND_MESI",
-		  .pme_udesc = "L2 cache reads due to demand request from this core",
-		  .pme_ucode = 0x4f
-		},
-		{ .pme_uname = "SELF_DEMAND_I_STATE",
-		  .pme_udesc = "L2 cache reads on Invalid cacheline due to demand request from this core",
-		  .pme_ucode = 0x41
-		},
-		{ .pme_uname = "SELF_DEMAND_S_STATE",
-		  .pme_udesc = "L2 cache reads on Shared cacheline due to demand request from this core",
-		  .pme_ucode = 0x42
-		},
-		{ .pme_uname = "SELF_DEMAND_E_STATE",
-		  .pme_udesc = "L2 cache reads on Exclusive cacheline due to demand request from this core",
-		  .pme_ucode = 0x44
-		},
-		{ .pme_uname = "SELF_DEMAND_M_STATE",
-		  .pme_udesc = "L2 cache reads on Modified cacheline due to demand request from this core",
-		  .pme_ucode = 0x48
-		},
-		{ .pme_uname = "SELF_PREFETCH_MESI",
-		  .pme_udesc = "Any L2 cache reads due to prefetch from this core",
-		  .pme_ucode = 0x5f
-		},
-		{ .pme_uname = "SELF_PREFETCH_I_STATE",
-		  .pme_udesc = "L2 cache reads on Invalid cacheline due to prefetch from this core",
-		  .pme_ucode = 0x51
-		},
-		{ .pme_uname = "SELF_PREFETCH_S_STATE",
-		  .pme_udesc = "L2 cache reads on Shared cacheline due to prefetch from this core",
-		  .pme_ucode = 0x52
-		},
-		{ .pme_uname = "SELF_PREFETCH_E_STATE",
-		  .pme_udesc = "L2 cache reads on Exclusive cacheline due to prefetch from this core",
-		  .pme_ucode = 0x54
-		},
-		{ .pme_uname = "SELF_PREFETCH_M_STATE",
-		  .pme_udesc = "L2 cache reads on Exclusive cacheline due to prefetch from this core",
-		  .pme_ucode = 0x58
-		},
-		{ .pme_uname = "BOTH_CORES_ANY_MESI",
-		  .pme_udesc = "Any L2 cache reads from any of the two cores",
-		  .pme_ucode = 0xff
-		},
-		{ .pme_uname = "BOTH_CORES_ANY_I_STATE",
-		  .pme_udesc = "Any L2 cache reads on Invalid cacheline from any of the two cores",
-		  .pme_ucode = 0xf1
-		},
-		{ .pme_uname = "BOTH_CORES_ANY_S_STATE",
-		  .pme_udesc = "Any L2 cache reads on Shared cacheline from any of the two cores",
-		  .pme_ucode = 0xf2
-		},
-		{ .pme_uname = "BOTH_CORES_ANY_E_STATE",
-		  .pme_udesc = "Any L2 cache reads on Exclusive cacheline from any of the two cores",
-		  .pme_ucode = 0xf4
-		},
-		{ .pme_uname = "BOTH_CORES_ANY_M_STATE",
-		  .pme_udesc = "Any L2 cache reads on Modified cacheline from any of the two cores",
-		  .pme_ucode = 0xf8
-		},
-		{ .pme_uname = "BOTH_CORES_DEMAND_MESI",
-		  .pme_udesc = "Any L2 cache reads due to demand request from any of the two cores",
-		  .pme_ucode = 0xcf
-		},
-		{ .pme_uname = "BOTH_CORES_DEMAND_I_STATE",
-		  .pme_udesc = "L2 cache reads on Invalid cacheline due to demand request from any of the two cores",
-		  .pme_ucode = 0xc1
-		},
-		{ .pme_uname = "BOTH_CORES_DEMAND_S_STATE",
-		  .pme_udesc = "L2 cache reads on Shared cacheline due to demand request from any of the two cores",
-		  .pme_ucode = 0xc2
-		},
-		{ .pme_uname = "BOTH_CORES_DEMAND_E_STATE",
-		  .pme_udesc = "L2 cache reads on Exclusive cacheline due to demand request from any of the two cores",
-		  .pme_ucode = 0xc4
-		},
-		{ .pme_uname = "BOTH_CORES_DEMAND_M_STATE",
-		  .pme_udesc = "L2 cache reads on Modified cacheline due to demand request from any of the two cores",
-		  .pme_ucode = 0xc8
-		},
-		{ .pme_uname = "BOTH_CORES_PREFETCH_MESI",
-		  .pme_udesc = "L2 cache reads due to prefetch from any of the two cores",
-		  .pme_ucode = 0xdf
-		},
-		{ .pme_uname = "BOTH_CORES_PREFETCH_I_STATE",
-		  .pme_udesc = "L2 cache reads on Invalid cacheline due to prefetch from any of the two cores",
-		  .pme_ucode = 0xd1
-		},
-		{ .pme_uname = "BOTH_CORES_PREFETCH_S_STATE",
-		  .pme_udesc = "L2 cache reads on Shared cacheline due to prefetch from any of the two cores",
-		  .pme_ucode = 0xd2
-		},
-		{ .pme_uname = "BOTH_CORES_PREFETCH_E_STATE",
-		  .pme_udesc = "L2 cache reads on Exclusive cacheline due to prefetch from any of the two cores",
-		  .pme_ucode = 0xd4
-		},
-		{ .pme_uname = "BOTH_CORES_PREFETCH_M_STATE",
-		  .pme_udesc = "L2 cache reads on Modified cacheline due to prefetch from any of the two cores",
-		  .pme_ucode = 0xd8
-		}
+		INTEL_CORE_MESI_UMASKS,
+		INTEL_CORE_SPECIFICITY_UMASKS,
+		INTEL_CORE_HW_PREFETCH_UMASKS
 	   },
-	   .pme_numasks = 30
+	   .pme_numasks = 9
 	},
 	{ .pme_name = "L2_ST",
 	  .pme_code = 0x2a,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "L2 store requests",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF_MESI",
-		  .pme_udesc = "Any L2 store requests from this core",
-		  .pme_ucode = 0x4f
-		},
-		{ .pme_uname = "SELF_I_STATE",
-		  .pme_udesc = "L2 store requests on Invalid cacheline from this core",
-		  .pme_ucode = 0x41
-		},
-		{ .pme_uname = "SELF_S_STATE",
-		  .pme_udesc = "L2 store requests on Shared cacheline from this core",
-		  .pme_ucode = 0x42
-		},
-		{ .pme_uname = "SELF_E_STATE",
-		  .pme_udesc = "L2 store requests on Exclusive cacheline from this core",
-		  .pme_ucode = 0x44
-		},
-		{ .pme_uname = "SELF_M_STATE",
-		  .pme_udesc = "L2 store requests on Modified cacheline from this core",
-		  .pme_ucode = 0x48
-		},
-		{ .pme_uname = "BOTH_CORES_MESI",
-		  .pme_udesc = "Any L2 store requests from any of the two cores",
-		  .pme_ucode = 0xcf
-		},
-		{ .pme_uname = "BOTH_CORES_I_STATE",
-		  .pme_udesc = "L2 store requests on Invalid cacheline from any of the two cores",
-		  .pme_ucode = 0xc1
-		},
-		{ .pme_uname = "BOTH_CORES_S_STATE",
-		  .pme_udesc = "L2 store requests on Shared cacheline from any of the two cores",
-		  .pme_ucode = 0xc2
-		},
-		{ .pme_uname = "BOTH_CORES_E_STATE",
-		  .pme_udesc = "L2 store requests on Exclusive cacheline from any of the two cores",
-		  .pme_ucode = 0xc4
-		},
-		{ .pme_uname = "BOTH_CORES_M_STATE",
-		  .pme_udesc = "L2 store requests on Modified cacheline from any of the two cores",
-		  .pme_ucode = 0xc8
-		}
+		INTEL_CORE_MESI_UMASKS,
+		INTEL_CORE_SPECIFICITY_UMASKS
 	   },
-	   .pme_numasks = 10
+	   .pme_numasks = 7
 	},
 	{ .pme_name = "L2_LOCK",
 	  .pme_code = 0x2b,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "L2 locked accesses",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF_MESI",
-		  .pme_udesc = "Any L2 locked accesses from this core",
-		  .pme_ucode = 0x4f
-		},
-		{ .pme_uname = "SELF_I_STATE",
-		  .pme_udesc = "L2 locked accesses on Invalid cacheline from this core",
-		  .pme_ucode = 0x41
-		},
-		{ .pme_uname = "SELF_S_STATE",
-		  .pme_udesc = "L2 locked accesses on Shared cacheline from this core",
-		  .pme_ucode = 0x42
-		},
-		{ .pme_uname = "SELF_E_STATE",
-		  .pme_udesc = "L2 locked accesses on Exclusive cacheline from this core",
-		  .pme_ucode = 0x44
-		},
-		{ .pme_uname = "SELF_M_STATE",
-		  .pme_udesc = "L2 locked accesses on Modified cacheline from this core",
-		  .pme_ucode = 0x48
-		},
-		{ .pme_uname = "BOTH_CORES_MESI",
-		  .pme_udesc = "Any L2 locked accesses from any of the two cores",
-		  .pme_ucode = 0xcf
-		},
-		{ .pme_uname = "BOTH_CORES_I_STATE",
-		  .pme_udesc = "L2 locked accesses on Modified cacheline from any of the two cores",
-		  .pme_ucode = 0xc1
-		},
-		{ .pme_uname = "BOTH_CORES_S_STATE",
-		  .pme_udesc = "L2 locked accesses on Shared cacheline from any of the two cores",
-		  .pme_ucode = 0xc2
-		},
-		{ .pme_uname = "BOTH_CORES_E_STATE",
-		  .pme_udesc = "L2 locked accesses on Exclusive cacheline from any of the two cores",
-		  .pme_ucode = 0xc4
-		},
-		{ .pme_uname = "BOTH_CORES_M_STATE",
-		  .pme_udesc = "L2 locked accesses on Modified cacheline from any of the two cores",
-		  .pme_ucode = 0xc8
-		}
+		INTEL_CORE_MESI_UMASKS,
+		INTEL_CORE_SPECIFICITY_UMASKS
 	   },
-	   .pme_numasks = 10
+	   .pme_numasks = 7
 	},
 	{ .pme_name = "L2_RQSTS",
 	  .pme_code = 0x2e,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "L2 cache requests",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF_ANY_MESI",
-		  .pme_udesc = "Any L2 cache requests from this core",
-		  .pme_ucode = 0x7f
-		},
-		{ .pme_uname = "SELF_ANY_I_STATE",
-		  .pme_udesc = "L2 cache requests on Invalid cacheline from this core",
-		  .pme_ucode = 0x71
-		},
-		{ .pme_uname = "SELF_ANY_S_STATE",
-		  .pme_udesc = "L2 cache requests on Shared cacheline from this core",
-		  .pme_ucode = 0x72
-		},
-		{ .pme_uname = "SELF_ANY_E_STATE",
-		  .pme_udesc = "L2 cache requests on Exclusive cacheline from this core",
-		  .pme_ucode = 0x74
-		},
-		{ .pme_uname = "SELF_ANY_M_STATE",
-		  .pme_udesc = "L2 cache requests on Modified cacheline from this core",
-		  .pme_ucode = 0x78
-		},
-		{ .pme_uname = "SELF_DEMAND_MESI",
-		  .pme_udesc = "Any L2 cache requests due to demand request from this core",
-		  .pme_ucode = 0x4f
-		},
-		{ .pme_uname = "SELF_DEMAND_I_STATE",
-		  .pme_udesc = "L2 cache requests on Invalid cacheline due to demand request from this core",
-		  .pme_ucode = 0x41
-		},
-		{ .pme_uname = "SELF_DEMAND_S_STATE",
-		  .pme_udesc = "L2 cache requests on Shared cacheline due to demand request from this core",
-		  .pme_ucode = 0x42
-		},
-		{ .pme_uname = "SELF_DEMAND_E_STATE",
-		  .pme_udesc = "L2 cache requests on Exclusive cacheline due to demand request from this core",
-		  .pme_ucode = 0x44
-		},
-		{ .pme_uname = "SELF_DEMAND_M_STATE",
-		  .pme_udesc = "L2 cache requests on Modified cacheline due to demand request from this core",
-		  .pme_ucode = 0x48
-		},
-		{ .pme_uname = "SELF_PREFETCH_MESI",
-		  .pme_udesc = "Any L2 cache requests due to prefetch request from this core",
-		  .pme_ucode = 0x5f
-		},
-		{ .pme_uname = "SELF_PREFETCH_I_STATE",
-		  .pme_udesc = "L2 cache requests on Invalid cacheline due to prefetch request from this core",
-		  .pme_ucode = 0x51
-		},
-		{ .pme_uname = "SELF_PREFETCH_S_STATE",
-		  .pme_udesc = "L2 cache requests on Shared cacheline due to prefetch request from this core",
-		  .pme_ucode = 0x52
-		},
-		{ .pme_uname = "SELF_PREFETCH_E_STATE",
-		  .pme_udesc = "L2 cache requests on Exclusive cacheline due to prefetch request from this core",
-		  .pme_ucode = 0x54
-		},
-		{ .pme_uname = "SELF_PREFETCH_M_STATE",
-		  .pme_udesc = "L2 cache requests on Modified cacheline due to prefetch request from this core",
-		  .pme_ucode = 0x58
-		},
-		{ .pme_uname = "BOTH_CORES_ANY_MESI",
-		  .pme_udesc = "Any L2 cache requests from any of the two cores",
-		  .pme_ucode = 0xff
-		},
-		{ .pme_uname = "BOTH_CORES_ANY_I_STATE",
-		  .pme_udesc = "L2 cache requests on Invalid cacheline from any of the two cores",
-		  .pme_ucode = 0xf1
-		},
-		{ .pme_uname = "BOTH_CORES_ANY_S_STATE",
-		  .pme_udesc = "L2 cache requests on Shared cacheline from any of the two cores",
-		  .pme_ucode = 0xf2
-		},
-		{ .pme_uname = "BOTH_CORES_ANY_E_STATE",
-		  .pme_udesc = "L2 cache requests on Exclusive cacheline from any of the two cores",
-		  .pme_ucode = 0xf4
-		},
-		{ .pme_uname = "BOTH_CORES_ANY_M_STATE",
-		  .pme_udesc = "L2 cache requests on Modified cacheline from any of the two cores",
-		  .pme_ucode = 0xf8
-		},
-		{ .pme_uname = "BOTH_CORES_DEMAND_MESI",
-		  .pme_udesc = "Any L2 cache requests due to demand request from any of the two cores",
-		  .pme_ucode = 0xcf
-		},
-		{ .pme_uname = "BOTH_CORES_DEMAND_I_STATE",
-		  .pme_udesc = "L2 cache requests on Invalid cacheline due to demand request from any of the two cores",
-		  .pme_ucode = 0xc1
-		},
-		{ .pme_uname = "BOTH_CORES_DEMAND_S_STATE",
-		  .pme_udesc = "L2 cache requests on Shared cacheline due to demand request from any of the two cores",
-		  .pme_ucode = 0xc2
-		},
-		{ .pme_uname = "BOTH_CORES_DEMAND_E_STATE",
-		  .pme_udesc = "L2 cache requests on Exclusive cacheline due to demand request from any of the two cores",
-		  .pme_ucode = 0xc4
-		},
-		{ .pme_uname = "BOTH_CORES_DEMAND_M_STATE",
-		  .pme_udesc = "L2 cache requests on Modified cacheline due to demand request from any of the two cores",
-		  .pme_ucode = 0xc8
-		},
-		{ .pme_uname = "BOTH_CORES_PREFETCH_MESI",
-		  .pme_udesc = "Any L2 cache requests due to prefetch request from any of the two cores",
-		  .pme_ucode = 0xdf
-		},
-		{ .pme_uname = "BOTH_CORES_PREFETCH_I_STATE",
-		  .pme_udesc = "L2 cache requests on Invalid cacheline due to prefetch request from any of the two cores",
-		  .pme_ucode = 0xd1
-		},
-		{ .pme_uname = "BOTH_CORES_PREFETCH_S_STATE",
-		  .pme_udesc = "L2 cache requests on Shared cacheline due to prefetch request from any of the two cores",
-		  .pme_ucode = 0xd2
-		},
-		{ .pme_uname = "BOTH_CORES_PREFETCH_E_STATE",
-		  .pme_udesc = "L2 cache requests on Exclusive cacheline due to prefetch request from any of the two cores",
-		  .pme_ucode = 0xd4
-		},
-		{ .pme_uname = "BOTH_CORES_PREFETCH_M_STATE",
-		  .pme_udesc = "L2 cache requests on Modified cacheline due to prefetch request from any of the two cores",
-		  .pme_ucode = 0xd8
-		}
+		INTEL_CORE_MESI_UMASKS,
+		INTEL_CORE_SPECIFICITY_UMASKS,
+		INTEL_CORE_HW_PREFETCH_UMASKS
 	   },
-	   .pme_numasks = 30
+	   .pme_numasks = 9
 	},
 	{ .pme_name = "L2_REJECT_BUSQ",
 	  .pme_code = 0x30,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "Rejected L2 cache requests",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF_ANY_MESI",
-		  .pme_udesc = "Any Rejected L2 cache requests from this core",
-		  .pme_ucode = 0x7f
-		},
-		{ .pme_uname = "SELF_ANY_I_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Invalid cacheline due to this core",
-		  .pme_ucode = 0x71
-		},
-		{ .pme_uname = "SELF_ANY_S_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Shared cacheline due to this core",
-		  .pme_ucode = 0x72
-		},
-		{ .pme_uname = "SELF_ANY_E_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Exclusive cacheline due to this core",
-		  .pme_ucode = 0x74
-		},
-		{ .pme_uname = "SELF_ANY_M_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Modified cacheline due to this core",
-		  .pme_ucode = 0x78
-		},
-		{ .pme_uname = "SELF_DEMAND_MESI",
-		  .pme_udesc = "Any Rejected L2 cache requests due to demand request from this core",
-		  .pme_ucode = 0x4f
-		},
-		{ .pme_uname = "SELF_DEMAND_I_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Invalid cacheline due to demand request from this core",
-		  .pme_ucode = 0x41
-		},
-		{ .pme_uname = "SELF_DEMAND_S_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Shared cacheline due to demand request from this core",
-		  .pme_ucode = 0x42
-		},
-		{ .pme_uname = "SELF_DEMAND_E_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Exclusive cacheline due to demand request from this core",
-		  .pme_ucode = 0x44
-		},
-		{ .pme_uname = "SELF_DEMAND_M_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Modified cacheline due to demand request from this core",
-		  .pme_ucode = 0x48
-		},
-		{ .pme_uname = "SELF_PREFETCH_MESI",
-		  .pme_udesc = "Any Rejected L2 cache requests due to prefetch request from this core",
-		  .pme_ucode = 0x5f
-		},
-		{ .pme_uname = "SELF_PREFETCH_I_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Invalid cacheline due to prefetech request from this core",
-		  .pme_ucode = 0x51
-		},
-		{ .pme_uname = "SELF_PREFETCH_S_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Shared cacheline due to prefetech request from this core",
-		  .pme_ucode = 0x52
-		},
-		{ .pme_uname = "SELF_PREFETCH_E_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Exclusive cacheline due to prefetech request from this core",
-		  .pme_ucode = 0x54
-		},
-		{ .pme_uname = "SELF_PREFETCH_M_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Modified cacheline due to prefetech request from this core",
-		  .pme_ucode = 0x58
-		},
-		{ .pme_uname = "BOTH_CORES_ANY_MESI",
-		  .pme_udesc = "Any Rejected L2 cache requests from any of the two cores",
-		  .pme_ucode = 0xff
-		},
-		{ .pme_uname = "BOTH_CORES_ANY_I_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Invalid cacheline from any of the two cores",
-		  .pme_ucode = 0xf1
-		},
-		{ .pme_uname = "BOTH_CORES_ANY_S_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Shared cacheline from any of the two cores",
-		  .pme_ucode = 0xf2
-		},
-		{ .pme_uname = "BOTH_CORES_ANY_E_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Exclusive cacheline from any of the two cores",
-		  .pme_ucode = 0xf4
-		},
-		{ .pme_uname = "BOTH_CORES_ANY_M_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Modified cacheline from any of the two cores",
-		  .pme_ucode = 0xf8
-		},
-		{ .pme_uname = "BOTH_CORES_DEMAND_MESI",
-		  .pme_udesc = "Rejected L2 cache requests due to demand request from any of the two cores",
-		  .pme_ucode = 0xcf
-		},
-		{ .pme_uname = "BOTH_CORES_DEMAND_I_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Invalid cacheline due to demand request from any of the two cores",
-		  .pme_ucode = 0xc1
-		},
-		{ .pme_uname = "BOTH_CORES_DEMAND_S_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Shared cacheline due to demand request from any of the two cores",
-		  .pme_ucode = 0xc2
-		},
-		{ .pme_uname = "BOTH_CORES_DEMAND_E_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Exclusive cacheline due to demand request from any of the two cores",
-		  .pme_ucode = 0xc4
-		},
-		{ .pme_uname = "BOTH_CORES_DEMAND_M_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Modified cacheline due to demand request from any of the two cores",
-		  .pme_ucode = 0xc8
-		},
-		{ .pme_uname = "BOTH_CORES_PREFETCH_MESI",
-		  .pme_udesc = "Rejected L2 cache requests due to prefetch request from any of the two cores",
-		  .pme_ucode = 0xdf
-		},
-		{ .pme_uname = "BOTH_CORES_PREFETCH_I_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Invalid cacheline due to prefetch request from any of the two cores",
-		  .pme_ucode = 0xd1
-		},
-		{ .pme_uname = "BOTH_CORES_PREFETCH_S_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Shared cacheline due to prefetch request from any of the two cores",
-		  .pme_ucode = 0xd2
-		},
-		{ .pme_uname = "BOTH_CORES_PREFETCH_E_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Exclusive cacheline due to prefetch request from any of the two cores",
-		  .pme_ucode = 0xd4
-		},
-		{ .pme_uname = "BOTH_CORES_PREFETCH_M_STATE",
-		  .pme_udesc = "Rejected L2 cache requests on Modified cacheline due to prefetch request from any of the two cores",
-		  .pme_ucode = 0xd8
-		}
+		INTEL_CORE_MESI_UMASKS,
+		INTEL_CORE_SPECIFICITY_UMASKS,
+		INTEL_CORE_HW_PREFETCH_UMASKS
 	   },
-	   .pme_numasks = 30
+	   .pme_numasks = 9
 	},
 	{ .pme_name = "L2_NO_REQ",
 	  .pme_code = 0x32,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "Cycles no L2 cache requests are pending",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF",
-		  .pme_udesc = "Cycles no L2 cache requests from this core are pending",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "BOTH_CORES",
-		  .pme_udesc = "Cycles no L2 cache requests from any of the two cores are pending",
-		  .pme_ucode = 0xc0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS
 	   },
 	   .pme_numasks = 2
 	},
@@ -978,26 +473,7 @@ static pme_core_entry_t core_pe[]={
 	  .pme_flags = 0,
 	  .pme_desc =  "L1 cacheable data reads",
 	  .pme_umasks = {
-		{ .pme_uname = "MESI",
-		  .pme_udesc = "Any L1 cacheable data reads",
-		  .pme_ucode = 0xf
-		},
-		{ .pme_uname = "I_STATE",
-		  .pme_udesc = "L1 cacheable data reads on Invalid cacheline",
-		  .pme_ucode = 0x1
-		},
-		{ .pme_uname = "S_STATE",
-		  .pme_udesc = "L1 cacheable data reads on Shared cacheline",
-		  .pme_ucode = 0x2
-		},
-		{ .pme_uname = "E_STATE",
-		  .pme_udesc = "L1 cacheable data reads on Exclusive cacheline",
-		  .pme_ucode = 0x4
-		},
-		{ .pme_uname = "M_STATE",
-		  .pme_udesc = "L1 cacheable data reads on Modified cacheline",
-		  .pme_ucode = 0x8
-		}
+		INTEL_CORE_MESI_UMASKS
 	   },
 	   .pme_numasks = 5
 	},
@@ -1006,26 +482,7 @@ static pme_core_entry_t core_pe[]={
 	  .pme_flags = 0,
 	  .pme_desc =  "L1 cacheable data writes",
 	  .pme_umasks = {
-		{ .pme_uname = "MESI",
-		  .pme_udesc = "Any L1 cacheable data writes",
-		  .pme_ucode = 0xf
-		},
-		{ .pme_uname = "I_STATE",
-		  .pme_udesc = "L1 cacheable data writes on Invalid cacheline",
-		  .pme_ucode = 0x1
-		},
-		{ .pme_uname = "S_STATE",
-		  .pme_udesc = "L1 cacheable data writes on Shared cacheline",
-		  .pme_ucode = 0x2
-		},
-		{ .pme_uname = "E_STATE",
-		  .pme_udesc = "L1 cacheable data writes on Exclusive cacheline",
-		  .pme_ucode = 0x4
-		},
-		{ .pme_uname = "M_STATE",
-		  .pme_udesc = "L1 cacheable data writes on Modified cacheline",
-		  .pme_ucode = 0x8
-		}
+		INTEL_CORE_MESI_UMASKS
 	   },
 	   .pme_numasks = 5
 	},
@@ -1034,26 +491,7 @@ static pme_core_entry_t core_pe[]={
 	  .pme_flags = 0,
 	  .pme_desc =  "L1 data cacheable locked reads",
 	  .pme_umasks = {
-		{ .pme_uname = "MESI",
-		  .pme_udesc = "Any L1 data cacheable locked reads",
-		  .pme_ucode = 0xf
-		},
-		{ .pme_uname = "I_STATE",
-		  .pme_udesc = "L1 data cacheable locked reads on Invalid cacheline",
-		  .pme_ucode = 0x1
-		},
-		{ .pme_uname = "S_STATE",
-		  .pme_udesc = "L1 data cacheable locked reads on Shared cacheline",
-		  .pme_ucode = 0x2
-		},
-		{ .pme_uname = "E_STATE",
-		  .pme_udesc = "L1 data cacheable locked reads on Exclusive cacheline",
-		  .pme_ucode = 0x4
-		},
-		{ .pme_uname = "M_STATE",
-		  .pme_udesc = "L1 data cacheable locked reads on Modified cacheline",
-		  .pme_ucode = 0x8
-		}
+		INTEL_CORE_MESI_UMASKS
 	   },
 	   .pme_numasks = 5
 	},
@@ -1146,37 +584,20 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "BUS_REQUEST_OUTSTANDING",
 	  .pme_code = 0x60,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "Outstanding cacheable data read bus requests duration",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF",
-		  .pme_udesc = "Outstanding cacheable data read bus requests duration from this core",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "BOTH_CORES_THIS_AGENT",
-		  .pme_udesc = "Outstanding cacheable data read bus requests duration from any of the two cores",
-		  .pme_ucode = 0xc0
-		},
-		{ .pme_uname = "ALL_AGENTS",
-		  .pme_udesc = "Outstanding cacheable data read bus requests duration from any agents on the bus",
-		  .pme_ucode = 0xe0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS,
+		INTEL_CORE_AGENT_UMASKS
 	   },
-	   .pme_numasks = 3
+	   .pme_numasks = 4
 	},
 	{ .pme_name = "BUS_BNR_DRV",
 	  .pme_code = 0x61,
 	  .pme_flags = 0,
 	  .pme_desc =  "Number of Bus Not Ready signals asserted",
 	  .pme_umasks = {
-		{ .pme_uname = "THIS_AGENT",
-		  .pme_udesc = "Number of Bus Not Ready signals asserted from this agent",
-		  .pme_ucode = 0x0
-		},
-		{ .pme_uname = "ALL_AGENTS",
-		  .pme_udesc = "Number of Bus Not Ready signals asserted from any agent on the bus",
-		  .pme_ucode = 0x20
-		}
+		INTEL_CORE_AGENT_UMASKS
 	   },
 	   .pme_numasks = 2
 	},
@@ -1185,378 +606,201 @@ static pme_core_entry_t core_pe[]={
 	  .pme_flags = 0,
 	  .pme_desc =  "Bus cycles when data is sent on the bus",
 	  .pme_umasks = {
-		{ .pme_uname = "THIS_AGENT",
-		  .pme_udesc = "Bus cycles when data is sent on the bus from this agent",
-		  .pme_ucode = 0x0
-		},
-		{ .pme_uname = "ALL_AGENTS",
-		  .pme_udesc = "Bus cycles when data is sent on the bus from any of the agents on the bus",
-		  .pme_ucode = 0x20
-		}
+		INTEL_CORE_AGENT_UMASKS
 	   },
 	   .pme_numasks = 2
 	},
 	{ .pme_name = "BUS_LOCK_CLOCKS",
 	  .pme_code = 0x63,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "Bus cycles when a LOCK signal is asserted",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF",
-		  .pme_udesc = "Bus cycles when a LOCK signal is asserted from this core",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "BOTH_CORES_THIS_AGENT",
-		  .pme_udesc = "Bus cycles when a LOCK signal is asserted from any of the two cores",
-		  .pme_ucode = 0xc0
-		},
-		{ .pme_uname = "ALL_AGENTS",
-		  .pme_udesc = "Bus cycles when a LOCK signal is asserted from any agents on the bus",
-		  .pme_ucode = 0xe0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS,
+		INTEL_CORE_AGENT_UMASKS
 	   },
-	   .pme_numasks = 3
+	   .pme_numasks = 4
 	},
 	{ .pme_name = "BUS_DATA_RCV",
 	  .pme_code = 0x64,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "Bus cycles while processor receives data",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF",
-		  .pme_udesc = "Bus cycles while processor receives data from this core",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "BOTH_CORES",
-		  .pme_udesc = "Bus cycles while processor receives data from any of the two cores",
-		  .pme_ucode = 0xc0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS
 	   },
 	   .pme_numasks = 2
 	},
 	{ .pme_name = "BUS_TRANS_BRD",
 	  .pme_code = 0x65,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "Burst read bus transactions",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF",
-		  .pme_udesc = "Burst read bus transactions from this core",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "BOTH_CORES_THIS_AGENT",
-		  .pme_udesc = "Burst read bus transactions from any of the two cores",
-		  .pme_ucode = 0xc0
-		},
-		{ .pme_uname = "ALL_AGENTS",
-		  .pme_udesc = "Burst read bus transactions from any agent on the bus",
-		  .pme_ucode = 0xe0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS,
+		INTEL_CORE_AGENT_UMASKS
 	   },
-	   .pme_numasks = 3
+	   .pme_numasks = 4
 	},
 	{ .pme_name = "BUS_TRANS_RFO",
 	  .pme_code = 0x66,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "RFO bus transactions",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF",
-		  .pme_udesc = "RFO bus transactions from this core",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "BOTH_CORES_THIS_AGENT from any of the two cores",
-		  .pme_udesc = "RFO bus transactions",
-		  .pme_ucode = 0xc0
-		},
-		{ .pme_uname = "ALL_AGENTS",
-		  .pme_udesc = "RFO bus transactions from any agent on the bus",
-		  .pme_ucode = 0xe0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS,
+		INTEL_CORE_AGENT_UMASKS
 	   },
-	   .pme_numasks = 3
+	   .pme_numasks = 4
 	},
 	{ .pme_name = "BUS_TRANS_WB",
 	  .pme_code = 0x67,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "Explicit writeback bus transactions",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF",
-		  .pme_udesc = "Explicit writeback bus transactions from this core",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "BOTH_CORES_THIS_AGENT",
-		  .pme_udesc = "Explicit writeback bus transactions from any of the two cores",
-		  .pme_ucode = 0xc0
-		},
-		{ .pme_uname = "ALL_AGENTS",
-		  .pme_udesc = "Explicit writeback bus transactions from any agent on the bus",
-		  .pme_ucode = 0xe0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS,
+		INTEL_CORE_AGENT_UMASKS
 	   },
-	   .pme_numasks = 3
+	   .pme_numasks = 4
 	},
 	{ .pme_name = "BUS_TRANS_IFETCH",
 	  .pme_code = 0x68,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "Instruction-fetch bus transactions",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF",
-		  .pme_udesc = "Instruction-fetch bus transactions from this core",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "BOTH_CORES_THIS_AGENT",
-		  .pme_udesc = "Instruction-fetch bus transactions from any of the two cores",
-		  .pme_ucode = 0xc0
-		},
-		{ .pme_uname = "ALL_AGENTS",
-		  .pme_udesc = "Instruction-fetch bus transactions from any agent on the bus",
-		  .pme_ucode = 0xe0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS,
+		INTEL_CORE_AGENT_UMASKS
 	   },
-	   .pme_numasks = 3
+	   .pme_numasks = 4
 	},
 	{ .pme_name = "BUS_TRANS_INVAL",
 	  .pme_code = 0x69,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "Invalidate bus transactions",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF",
-		  .pme_udesc = "Invalidate bus transactions from this core",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "BOTH_CORES_THIS_AGENT",
-		  .pme_udesc = "Invalidate bus transactions from any of the two cores",
-		  .pme_ucode = 0xc0
-		},
-		{ .pme_uname = "ALL_AGENTS",
-		  .pme_udesc = "Invalidate bus transactions from any agent on the bus",
-		  .pme_ucode = 0xe0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS,
+		INTEL_CORE_AGENT_UMASKS
 	   },
-	   .pme_numasks = 3
+	   .pme_numasks = 4
 	},
 	{ .pme_name = "BUS_TRANS_PWR",
 	  .pme_code = 0x6a,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "Partial write bus transaction",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF",
-		  .pme_udesc = "Partial write bus transaction from this core",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "BOTH_CORES_THIS_AGENT",
-		  .pme_udesc = "Partial write bus transaction from any of the two cores",
-		  .pme_ucode = 0xc0
-		},
-		{ .pme_uname = "ALL_AGENTS",
-		  .pme_udesc = "Partial write bus transaction from any agent on the bus",
-		  .pme_ucode = 0xe0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS,
+		INTEL_CORE_AGENT_UMASKS
 	   },
-	   .pme_numasks = 3
+	   .pme_numasks = 4
 	},
 	{ .pme_name = "BUS_TRANS_P",
 	  .pme_code = 0x6b,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "Partial bus transactions",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF",
-		  .pme_udesc = "Partial bus transactions from this core",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "BOTH_CORES_THIS_AGENT",
-		  .pme_udesc = "Partial bus transactions from any of the two cores",
-		  .pme_ucode = 0xc0
-		},
-		{ .pme_uname = "ALL_AGENTS",
-		  .pme_udesc = "Partial bus transactions from any agen on the bus",
-		  .pme_ucode = 0xe0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS,
+		INTEL_CORE_AGENT_UMASKS
 	   },
-	   .pme_numasks = 3
+	   .pme_numasks = 4
 	},
 	{ .pme_name = "BUS_TRANS_IO",
 	  .pme_code = 0x6c,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "IO bus transactions",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF",
-		  .pme_udesc = "IO bus transactions from this core",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "BOTH_CORES_THIS_AGENT",
-		  .pme_udesc = "IO bus transactions from any of the two cores",
-		  .pme_ucode = 0xc0
-		},
-		{ .pme_uname = "ALL_AGENTS",
-		  .pme_udesc = "IO bus transactions from any agent on the bus",
-		  .pme_ucode = 0xe0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS,
+		INTEL_CORE_AGENT_UMASKS
 	   },
-	   .pme_numasks = 3
+	   .pme_numasks = 4
 	},
 	{ .pme_name = "BUS_TRANS_DEF",
 	  .pme_code = 0x6d,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "Deferred bus transactions",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF",
-		  .pme_udesc = "Deferred bus transactions from this core",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "BOTH_CORES_THIS_AGENT",
-		  .pme_udesc = "Deferred bus transactions from any of the two cores",
-		  .pme_ucode = 0xc0
-		},
-		{ .pme_uname = "ALL_AGENTS",
-		  .pme_udesc = "Deferred bus transactions from any agent on the bus",
-		  .pme_ucode = 0xe0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS,
+		INTEL_CORE_AGENT_UMASKS
 	   },
-	   .pme_numasks = 3
+	   .pme_numasks = 4
 	},
 	{ .pme_name = "BUS_TRANS_BURST",
 	  .pme_code = 0x6e,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "Burst (full cache-line) bus transactions",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF",
-		  .pme_udesc = "Burst (full cache-line) bus transactions from this core",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "BOTH_CORES_THIS_AGENT",
-		  .pme_udesc = "Burst (full cache-line) bus transactions from any of the two cores",
-		  .pme_ucode = 0xc0
-		},
-		{ .pme_uname = "ALL_AGENTS",
-		  .pme_udesc = "Burst (full cache-line) bus transactions from any agent on the bus",
-		  .pme_ucode = 0xe0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS,
+		INTEL_CORE_AGENT_UMASKS
 	   },
-	   .pme_numasks = 3
+	   .pme_numasks = 4
 	},
 	{ .pme_name = "BUS_TRANS_MEM",
 	  .pme_code = 0x6f,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "Memory bus transactions",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF",
-		  .pme_udesc = "Memory bus transactions from this core",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "BOTH_CORES_THIS_AGENT",
-		  .pme_udesc = "Memory bus transactions from any of the two cores",
-		  .pme_ucode = 0xc0
-		},
-		{ .pme_uname = "ALL_AGENTS",
-		  .pme_udesc = "Memory bus transactions from any agent of the bus",
-		  .pme_ucode = 0xe0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS,
+		INTEL_CORE_AGENT_UMASKS
 	   },
-	   .pme_numasks = 3
+	   .pme_numasks = 4
 	},
 	{ .pme_name = "BUS_TRANS_ANY",
 	  .pme_code = 0x70,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "All bus transactions",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF",
-		  .pme_udesc = "All bus transactions from this core",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "BOTH_CORES_THIS_AGENT",
-		  .pme_udesc = "All bus transactions from any of the two cores",
-		  .pme_ucode = 0xc0
-		},
-		{ .pme_uname = "ALL_AGENTS",
-		  .pme_udesc = "All bus transactions from any agent on the bus",
-		  .pme_ucode = 0xe0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS,
+		INTEL_CORE_AGENT_UMASKS
 	   },
-	   .pme_numasks = 3
+	   .pme_numasks = 4
 	},
 	{ .pme_name = "EXT_SNOOP",
 	  .pme_code = 0x77,
 	  .pme_flags = 0,
 	  .pme_desc =  "External snoops responses",
 	  .pme_umasks = {
-		{ .pme_uname = "THIS_AGENT_ANY",
-		  .pme_udesc = "Any external snoop response for this processor",
+		INTEL_CORE_AGENT_UMASKS,
+		{ .pme_uname = "ANY",
+		  .pme_udesc = "Any external snoop response",
 		  .pme_ucode = 0xb
 		},
-		{ .pme_uname = "THIS_AGENT_CLEAN",
-		  .pme_udesc = "External snoop CLEAN response for this processor",
+		{ .pme_uname = "CLEAN",
+		  .pme_udesc = "External snoop CLEAN response",
 		  .pme_ucode = 0x1
 		},
-		{ .pme_uname = "THIS_AGENT_HIT",
-		  .pme_udesc = "External snoop HIT response for this processor",
+		{ .pme_uname = "HIT",
+		  .pme_udesc = "External snoop HIT response",
 		  .pme_ucode = 0x2
 		},
-		{ .pme_uname = "THIS_AGENT_HITM",
-		  .pme_udesc = "External snoop HITM response for this processor",
+		{ .pme_uname = "HITM",
+		  .pme_udesc = "External snoop HITM response",
 		  .pme_ucode = 0x8
-		},
-		{ .pme_uname = "ALL_AGENTS_ANY",
-		  .pme_udesc = "Any external snoop reponse for any agent on the bus",
-		  .pme_ucode = 0x2b
-		},
-		{ .pme_uname = "ALL_AGENTS_CLEAN",
-		  .pme_udesc = "External snoop CLEAN response for any agent on the bus",
-		  .pme_ucode = 0x21
-		},
-		{ .pme_uname = "ALL_AGENTS_HIT",
-		  .pme_udesc = "External snoop HIT responses for any agent on the bus",
-		  .pme_ucode = 0x22
-		},
-		{ .pme_uname = "ALL_AGENTS_HITM",
-		  .pme_udesc = "External snoop HITM reponse for any agent on the bus",
-		  .pme_ucode = 0x28
-		}
-	   },
-	   .pme_numasks = 8
-	},
-	{ .pme_name = "CMP_SNOOP",
-	  .pme_code = 0x78,
-	  .pme_flags = 0,
-	  .pme_desc =  "L1 data cache is snooped by other core",
-	  .pme_umasks = {
-		{ .pme_uname = "SELF_ANY",
-		  .pme_udesc = "This core L1 data cache is snooped by other core",
-		  .pme_ucode = 0x43
-		},
-		{ .pme_uname = "SELF_SHARE",
-		  .pme_udesc = "This core L1 data cache is snooped for sharing by other core",
-		  .pme_ucode = 0x41
-		},
-		{ .pme_uname = "SELF_INVALIDATE",
-		  .pme_udesc = "This L1 data cache is snooped for Invalidation by other core",
-		  .pme_ucode = 0x42
-		},
-		{ .pme_uname = "BOTH_CORES_ANY",
-		  .pme_udesc = "Any of the two cores L1 data cache is snooped by other core",
-		  .pme_ucode = 0xc3
-		},
-		{ .pme_uname = "BOTH_CORES_SHARE",
-		  .pme_udesc = "Any of the two cores L1 data cache is snooped for Sharing by other core",
-		  .pme_ucode = 0xc1
-		},
-		{ .pme_uname = "BOTH_CORES_INVALIDATE",
-		  .pme_udesc = "Any of the two cores L1 data cache is snooped for Invalidation by other core",
-		  .pme_ucode = 0xc2
 		}
 	   },
 	   .pme_numasks = 6
+	},
+	{ .pme_name = "CMP_SNOOP",
+	  .pme_code = 0x78,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
+	  .pme_desc =  "L1 data cache is snooped by other core",
+	  .pme_umasks = {
+		INTEL_CORE_SPECIFICITY_UMASKS,
+		{ .pme_uname = "ANY",
+		  .pme_udesc = "L1 data cache is snooped by other core",
+		  .pme_ucode = 0x03
+		},
+		{ .pme_uname = "SHARE",
+		  .pme_udesc = "L1 data cache is snooped for sharing by other core",
+		  .pme_ucode = 0x01
+		},
+		{ .pme_uname = "INVALIDATE",
+		  .pme_udesc = "L1 data cache is snooped for Invalidation by other core",
+		  .pme_ucode = 0x02
+		}
+	   },
+	   .pme_numasks = 5
 	},
 	{ .pme_name = "BUS_HIT_DRV",
 	  .pme_code = 0x7a,
 	  .pme_flags = 0,
 	  .pme_desc =  "HIT signal asserted",
 	  .pme_umasks = {
-		{ .pme_uname = "THIS_AGENT",
-		  .pme_udesc = "HIT signal asserted by this processor",
-		  .pme_ucode = 0x0
-		},
-		{ .pme_uname = "ALL_AGENTS",
-		  .pme_udesc = "HIT signal asserted by any agent on the bus",
-		  .pme_ucode = 0x20
-		}
+		INTEL_CORE_AGENT_UMASKS
 	   },
 	   .pme_numasks = 2
 	},
@@ -1565,14 +809,7 @@ static pme_core_entry_t core_pe[]={
 	  .pme_flags = 0,
 	  .pme_desc =  "HITM signal asserted",
 	  .pme_umasks = {
-		{ .pme_uname = "THIS_AGENT",
-		  .pme_udesc = "HITM signal asserted by this processor",
-		  .pme_ucode = 0x0
-		},
-		{ .pme_uname = "ALL_AGENTS",
-		  .pme_udesc = "HITM signal asserted by any agent on the bus",
-		  .pme_ucode = 0x20
-		}
+		INTEL_CORE_AGENT_UMASKS
 	   },
 	   .pme_numasks = 2
 	},
@@ -1581,50 +818,26 @@ static pme_core_entry_t core_pe[]={
 	  .pme_flags = 0,
 	  .pme_desc =  "Bus queue is empty",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF",
-		  .pme_udesc = "Bus queue is empty for this core",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "BOTH_CORES",
-		  .pme_udesc = "Bus queue is empty for any of the two cores",
-		  .pme_ucode = 0xc0
-		}
+		INTEL_CORE_AGENT_UMASKS
 	   },
 	   .pme_numasks = 2
 	},
 	{ .pme_name = "SNOOP_STALL_DRV",
 	  .pme_code = 0x7e,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "Bus stalled for snoops",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF",
-		  .pme_udesc = "Bus stalled by this core for snoops",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "BOTH_CORES_THIS_AGENT",
-		  .pme_udesc = "Bus stalled by any of the two cores for snoops",
-		  .pme_ucode = 0xc0
-		},
-		{ .pme_uname = "ALL_AGENTS",
-		  .pme_udesc = "Bus stalled by any agent for snoops",
-		  .pme_ucode = 0xe0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS,
+		INTEL_CORE_AGENT_UMASKS
 	   },
-	   .pme_numasks = 3
+	   .pme_numasks = 4
 	},
 	{ .pme_name = "BUS_IO_WAIT",
 	  .pme_code = 0x7f,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_CSPEC,
 	  .pme_desc =  "IO requests waiting in the bus queue",
 	  .pme_umasks = {
-		{ .pme_uname = "SELF",
-		  .pme_udesc = "IO requests waiting in the bus queue",
-		  .pme_ucode = 0x40
-		},
-		{ .pme_uname = "BOTH_CORES",
-		  .pme_udesc = "IO requests waiting in the bus queue",
-		  .pme_ucode = 0xc0
-		}
+		INTEL_CORE_SPECIFICITY_UMASKS
 	   },
 	   .pme_numasks = 2
 	},
@@ -1765,7 +978,7 @@ static pme_core_entry_t core_pe[]={
 	  .pme_desc =  "Micro-ops dispatched for execution"
 	},
 	{ .pme_name = "MACRO_INSTS",
-	  .pme_code = 0x0,
+	  .pme_code = 0xaa,
 	  .pme_flags = 0,
 	  .pme_desc =  "Instructions decoded",
 	  .pme_umasks = {
@@ -2221,7 +1434,7 @@ static pme_core_entry_t core_pe[]={
 	   .pme_numasks = 6
 	},
 	{ .pme_name = "BR_INST_DECODED",
-	  .pme_code = 0x0,
+	  .pme_code = 0xe0,
 	  .pme_flags = 0,
 	  .pme_desc =  "Branch instructions decoded"
 	},
