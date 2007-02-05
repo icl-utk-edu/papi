@@ -78,7 +78,7 @@ failure.
 #define PAPI_ENOCNTR -13        /* Hardware does not support counters */
 #define PAPI_EMISC   -14        /* No clue as to what this error code means */
 #define PAPI_EPERM   -15        /* You lack the necessary permissions */
-#define PAPI_EINIT   -16        /* PAPI hasn't been initialized yet */
+#define PAPI_ENOINIT -16        /* PAPI hasn't been initialized yet */
 
 #define PAPI_NOT_INITED		0
 #define PAPI_LOW_LEVEL_INITED 	1       /* Low level has called library init */
