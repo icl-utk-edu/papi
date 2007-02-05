@@ -12,6 +12,7 @@
 #include <linux/fs.h>
 #include <linux/file.h>
 #include <linux/perfctr.h>
+#include <linux/version.h>
 
 #include <asm/io.h>
 #include <asm/uaccess.h>
@@ -88,7 +89,7 @@ static inline void vperfctr_init_bad_cpus_allowed(struct vperfctr *perfctr) { }
  ****************************************************************/
 
 /* XXX: perhaps relax this to number of _live_ perfctrs */
-static DECLARE_MUTEX(nrctrs_mutex);
+static DEFINE_MUTEX(nrctrs_mutex);
 static int nrctrs;
 static const char this_service[] = __FILE__;
 
@@ -97,13 +98,13 @@ static int inc_nrctrs(void)
 	const char *other;
 
 	other = NULL;
-	down(&nrctrs_mutex);
+	mutex_lock(&nrctrs_mutex);
 	if (++nrctrs == 1) {
 		other = perfctr_cpu_reserve(this_service);
 		if (other)
 			nrctrs = 0;
 	}
-	up(&nrctrs_mutex);
+	mutex_unlock(&nrctrs_mutex);
 	if (other) {
 		printk(KERN_ERR __FILE__
 		       ": cannot operate, perfctr hardware taken by '%s'\n",
@@ -116,10 +117,10 @@ static int inc_nrctrs(void)
 
 static void dec_nrctrs(void)
 {
-	down(&nrctrs_mutex);
+	mutex_lock(&nrctrs_mutex);
 	if (--nrctrs == 0)
 		perfctr_cpu_release(this_service);
-	up(&nrctrs_mutex);
+	mutex_unlock(&nrctrs_mutex);
 }
 
 /* Allocate a `struct vperfctr'. Claim and reserve
@@ -916,12 +917,22 @@ static struct file_operations vperfctr_file_ops = {
    is unfortunately not the same in 2.4 and 2.6. */
 #include <linux/mount.h> /* needed for 2.6, included by fs.h in 2.4 */
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,18)
+static int
+vperfctrfs_get_sb(struct file_system_type *fs_type,
+		  int flags, const char *dev_name, void *data,
+		  struct vfsmount *mnt)
+{
+	return get_sb_pseudo(fs_type, "vperfctr:", NULL, VPERFCTRFS_MAGIC, mnt);
+}
+#else
 static struct super_block *
 vperfctrfs_get_sb(struct file_system_type *fs_type,
 		  int flags, const char *dev_name, void *data)
 {
 	return get_sb_pseudo(fs_type, "vperfctr:", NULL, VPERFCTRFS_MAGIC);
 }
+#endif
 
 static struct file_system_type vperfctrfs_type = {
 	.name		= "vperfctrfs",

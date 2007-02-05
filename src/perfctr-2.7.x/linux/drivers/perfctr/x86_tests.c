@@ -49,15 +49,6 @@
 #define apic_write(reg,vector)			do{}while(0)
 #endif
 
-#if !defined(__x86_64__)
-/* Avoid speculative execution by the CPU */
-extern inline void sync_core(void)
-{
-	int tmp;
-	asm volatile("cpuid" : "=a" (tmp) : "0" (1) : "ebx","ecx","edx","memory");
-}
-#endif
-
 static void __init do_rdpmc(unsigned pmc, unsigned unused2)
 {
 	unsigned i;

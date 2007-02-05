@@ -1,16 +1,17 @@
-/* $Id$
- * x86/x86_64 Performance-Monitoring Counters driver
+/*
+ * PPC64 Performance-Monitoring Counters driver
  *
- * Copyright (C) 1999-2005  Mikael Pettersson
+ * Copyright (C) 2004  David Gibson, IBM Corporation.
+ * Copyright (C) 2004  Mikael Pettersson
  */
-#ifndef _ASM_I386_PERFCTR_H
-#define _ASM_I386_PERFCTR_H
+#ifndef _ASM_PPC64_PERFCTR_H
+#define _ASM_PPC64_PERFCTR_H
 
 #include <asm/types.h>
 
 struct perfctr_sum_ctrs {
 	__u64 tsc;
-	__u64 pmc[18];	/* the size is not part of the user ABI */
+	__u64 pmc[8];	/* the size is not part of the user ABI */
 };
 
 struct perfctr_cpu_control_header {
@@ -30,24 +31,18 @@ struct perfctr_cpu_state_user {
 	struct {
 		__u64 start;
 		__u64 sum;
-	} pmc[18];	/* the size is not part of the user ABI */
+	} pmc[8];	/* the size is not part of the user ABI */
 };
 
 /* cstatus is a re-encoding of control.tsc_on/nractrs/nrictrs
    which should have less overhead in most cases */
-
-static inline
-unsigned int __perfctr_mk_cstatus(unsigned int tsc_on, unsigned int have_ictrs,
-				  unsigned int nrictrs, unsigned int nractrs)
-{
-	return (tsc_on<<31) | (have_ictrs<<16) | ((nractrs+nrictrs)<<8) | nractrs;
-}
+/* XXX: ppc driver internally also uses cstatus&(1<<30) */
 
 static inline
 unsigned int perfctr_mk_cstatus(unsigned int tsc_on, unsigned int nractrs,
 				unsigned int nrictrs)
 {
-	return __perfctr_mk_cstatus(tsc_on, nrictrs, nrictrs, nractrs);
+	return (tsc_on<<31) | (nrictrs<<16) | ((nractrs+nrictrs)<<8) | nractrs;
 }
 
 static inline unsigned int perfctr_cstatus_enabled(unsigned int cstatus)
@@ -81,16 +76,8 @@ static inline unsigned int perfctr_cstatus_has_ictrs(unsigned int cstatus)
  * describing which perfctrs overflowed is put in si_pmc_ovf_mask.
  * A bitmask is used since more than one perfctr can have overflowed
  * by the time the interrupt handler runs.
- *
- * glibc's <signal.h> doesn't seem to define __SI_FAULT or __SI_CODE(),
- * and including <asm/siginfo.h> as well may cause redefinition errors,
- * so the user and kernel values are different #defines here.
  */
-#ifdef __KERNEL__
-#define SI_PMC_OVF	(__SI_FAULT|'P')
-#else
-#define SI_PMC_OVF	('P')
-#endif
+#define SI_PMC_OVF	-8
 #define si_pmc_ovf_mask	_sifields._pad[0] /* XXX: use an unsigned field later */
 
 #ifdef __KERNEL__
@@ -99,14 +86,11 @@ static inline unsigned int perfctr_cstatus_has_ictrs(unsigned int cstatus)
 
 struct perfctr_cpu_control {
 	struct perfctr_cpu_control_header header;
-	unsigned int evntsel[18];	/* primary control registers, physical indices */
-	unsigned int ireset[18];	/* >= 2^31, for i-mode counters, physical indices */
-	struct {
-		unsigned int escr[0x3E2-0x3A0];	/* secondary controls, physical indices */
-		unsigned int pebs_enable;	/* for replay tagging */
-		unsigned int pebs_matrix_vert;	/* for replay tagging */
-	} p4;
-	unsigned int pmc_map[18];	/* virtual to physical (rdpmc) index map */
+	u64 mmcr0;
+	u64 mmcr1;
+	u64 mmcra;
+	unsigned int ireset[8];		/* [0,0x7fffffff], for i-mode counters, physical indices */
+	unsigned int pmc_map[8];	/* virtual to physical index map */
 };
 
 struct perfctr_cpu_state {
@@ -115,11 +99,8 @@ struct perfctr_cpu_state {
 	unsigned int id;
 	int isuspend_cpu;
 	struct perfctr_cpu_state_user user;
+	unsigned int unused_pmcs;
 	struct perfctr_cpu_control control;
-	unsigned int p4_escr_map[18];
-#ifdef CONFIG_PERFCTR_INTERRUPT_SUPPORT
-	unsigned int pending_interrupt;
-#endif
 };
 
 /* Driver init/exit. */
@@ -136,8 +117,6 @@ extern void perfctr_cpu_release(const char *service);
 /* PRE: state has no running interrupt-mode counters.
    Check that the new control data is valid.
    Update the driver's private control data.
-   is_global should be zero for per-process counters and non-zero
-   for global-mode counters. This matters for HT P4s, alas.
    Returns a negative error code if the control data is invalid. */
 extern int perfctr_cpu_update_control(struct perfctr_cpu_state *state, int is_global);
 
@@ -169,32 +148,20 @@ extern void perfctr_cpu_sample(struct perfctr_cpu_state *state);
 typedef void (*perfctr_ihandler_t)(unsigned long pc);
 
 /* Operations related to overflow interrupt handling. */
-#ifdef CONFIG_X86_LOCAL_APIC
+#ifdef CONFIG_PERFCTR_INTERRUPT_SUPPORT
 extern void perfctr_cpu_set_ihandler(perfctr_ihandler_t);
 extern void perfctr_cpu_ireload(struct perfctr_cpu_state*);
 extern unsigned int perfctr_cpu_identify_overflow(struct perfctr_cpu_state*);
-static inline int perfctr_cpu_has_pending_interrupt(const struct perfctr_cpu_state *state)
-{
-	return state->pending_interrupt;
-}
 #else
 static inline void perfctr_cpu_set_ihandler(perfctr_ihandler_t x) { }
+#endif
 static inline int perfctr_cpu_has_pending_interrupt(const struct perfctr_cpu_state *state)
 {
 	return 0;
 }
-#endif
 
 #endif	/* CONFIG_PERFCTR */
 
-#if defined(CONFIG_PERFCTR) && defined(CONFIG_X86_LOCAL_APIC)
-asmlinkage void perfctr_interrupt(struct pt_regs*);
-#define perfctr_vector_init()	\
-	set_intr_gate(LOCAL_PERFCTR_VECTOR, perfctr_interrupt)
-#else
-#define perfctr_vector_init()	do{}while(0)
-#endif
-
 #endif	/* __KERNEL__ */
 
-#endif	/* _ASM_I386_PERFCTR_H */
+#endif	/* _ASM_PPC64_PERFCTR_H */
