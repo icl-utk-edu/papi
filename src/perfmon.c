@@ -1072,12 +1072,24 @@ static int x86_get_memory_info(PAPI_hw_info_t *hw_info)
 }
 #endif
 
+/* 2.6.19 has this:
+ VmPeak:     4588 kB
+ VmSize:     4584 kB
+ VmLck:         0 kB
+ VmHWM:      1548 kB
+ VmRSS:      1548 kB
+ VmData:      312 kB
+ VmStk:        88 kB
+ VmExe:       684 kB
+ VmLib:      1360 kB
+ VmPTE:        20 kB
+*/
 int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
 {
   char fn[PATH_MAX], tmp[PATH_MAX];
   FILE *f;
   int ret;
-  long_long sz = 0, lck = 0, res = 0, shr = 0, stk = 0, txt = 0, dat = 0, dum = 0, lib = 0, hwm = 0;
+  long_long vmpk = 0, sz = 0, lck = 0, res = 0, shr = 0, stk = 0, txt = 0, dat = 0, dum = 0, lib = 0, hwm = 0, pte = 0;
 
   sprintf(fn,"/proc/%ld/status",(long)getpid());
   f = fopen(fn,"r");
@@ -1090,22 +1102,28 @@ int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
     {
       if (fgets(tmp,PATH_MAX,f) == NULL)
 	break;
+      if (strspn(tmp,"VmPeak:") == strlen("VmPeak:"))
+	{
+	  sscanf(tmp+strlen("VmPeak:"),"%lld",&vmpk);
+	  d->peak = vmpk;
+	  continue;
+	}
       if (strspn(tmp,"VmSize:") == strlen("VmSize:"))
 	{
 	  sscanf(tmp+strlen("VmSize:"),"%lld",&sz);
 	  d->size = sz;
 	  continue;
 	}
-      if (strspn(tmp,"VmHWM:") == strlen("VmHWM:"))
-	{
-	  sscanf(tmp+strlen("VmHWM:"),"%lld",&hwm);
-	  d->high_water_mark = hwm;
-	  continue;
-	}
       if (strspn(tmp,"VmLck:") == strlen("VmLck:"))
 	{
 	  sscanf(tmp+strlen("VmLck:"),"%lld",&lck);
 	  d->locked = lck;
+	  continue;
+	}
+      if (strspn(tmp,"VmHWM:") == strlen("VmHWM:"))
+	{
+	  sscanf(tmp+strlen("VmHWM:"),"%lld",&hwm);
+	  d->high_water_mark = hwm;
 	  continue;
 	}
       if (strspn(tmp,"VmRSS:") == strlen("VmRSS:"))
@@ -1138,6 +1156,12 @@ int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
 	  d->library = lib;
 	  continue;
 	}
+      if (strspn(tmp,"VmPTE:") == strlen("VmPTE:"))
+	{
+	  sscanf(tmp+strlen("VmPTE:"),"%lld",&pte);
+	  d->pte = pte;
+	  continue;
+	}
     }
   fclose(f);
 
@@ -1154,7 +1178,7 @@ int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
       PAPIERROR("fscanf(7 items): %d\n",ret);
       return PAPI_ESBSTR;
     }
-  d->pagesize = getpagesize();
++  d->pagesize = getpagesize() / 1024;
   d->shared = (shr * d->pagesize)/1024;
   fclose(f);
 

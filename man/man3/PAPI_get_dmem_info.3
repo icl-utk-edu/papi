@@ -31,6 +31,9 @@ This function is currently implemented only for the Linux operating system.
 --  Structure (C) or array (Fortran) containing the following values 
 (Fortran values can be accessed using the specified indices):
 .LP
+.B peak [PAPIF_DMEM_VMPEAK] 
+(Peak size of process image, may be 0 on older Linux systems),
+.LP
 .B size [PAPIF_DMEM_VMSIZE] 
 (Size of process image),
 .LP
@@ -60,6 +63,9 @@ This function is currently implemented only for the Linux operating system.
 .LP
 .B pagesize [PAPIF_DMEM_PAGESIZE]
 (Size of a page in bytes),
+.LP
+.B pte [PAPIF_DMEM_PTE]
+(Size of page table entries, may be 0 on older Linux systems)
 
 .SH RETURN VALUES
 On success, this function returns PAPI_OK with the data structure or array values filled in.
@@ -91,9 +97,10 @@ A system error occured.
       handle_error(retval);
 
    PAPI_get_dmem_info(&dmem);
+   printf("Peak Mem Size:\t\t%lld\n",dmem.peak);
    printf("Mem Size:\t\t%lld\n",dmem.size);
    printf("Mem Resident:\t\t%lld\n",dmem.resident);
-   printf("Mem High Water Mark:\t%lld\n",dmem.high_water_mark);
+   printf("Peak Resident:\t%lld\n",dmem.high_water_mark);
    printf("Mem Shared:\t\t%lld\n",dmem.shared);
    printf("Mem Text:\t\t%lld\n",dmem.text);
    printf("Mem Library:\t\t%lld\n",dmem.library);
@@ -101,6 +108,7 @@ A system error occured.
    printf("Mem Locked:\t\t%lld\n",dmem.locked);
    printf("Mem Stack:\t\t%lld\n",dmem.stack);
    printf("Mem Pagesize:\t\t%lld\n",dmem.pagesize);
+   printf("Mem Page Eable Entries:\t\t%lld\n",dmem.pte);
 .if t .ft P
 .fi
 

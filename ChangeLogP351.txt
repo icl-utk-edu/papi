@@ -1,3 +1,7 @@
+2006-12-20	mucci
+	- Added code for VMPeak and VMPTE from later Linux to dmem_info
+	- Zero out the dmem info structure before returning
+	- Fixed bug in pagesize of dmem info
 2006-12-04 mucci
 	- Updated to latest 12-2006 release of Perfmon2 from Sourceforge.
 	- Previous perfmon2 releases are now incompatible

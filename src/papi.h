@@ -551,6 +551,7 @@ read the documentation carefully.  */
 
 /* A pointer to the following is passed to PAPI_get_dmem_info() */
 	typedef struct _dmem_t {
+	  long_long peak;
 	  long_long size;
 	  long_long resident;
 	  long_long high_water_mark;
@@ -561,21 +562,24 @@ read the documentation carefully.  */
 	  long_long locked;
 	  long_long stack;
 	  long_long pagesize;
+	  long_long pte;
 	} PAPI_dmem_info_t;
 
 /* Fortran offsets into PAPI_dmem_info_t structure. */
 
-#define PAPIF_DMEM_VMSIZE     1
-#define PAPIF_DMEM_RESIDENT   2
-#define PAPIF_DMEM_HIGH_WATER 3
-#define PAPIF_DMEM_SHARED     4
-#define PAPIF_DMEM_TEXT       5
-#define PAPIF_DMEM_LIBRARY    6
-#define PAPIF_DMEM_HEAP       7
-#define PAPIF_DMEM_LOCKED     8
-#define PAPIF_DMEM_STACK      9
-#define PAPIF_DMEM_PAGESIZE   10
-#define PAPIF_DMEM_MAXVAL     10
+#define PAPIF_DMEM_VMPEAK     1
+#define PAPIF_DMEM_VMSIZE     2
+#define PAPIF_DMEM_RESIDENT   3
+#define PAPIF_DMEM_HIGH_WATER 4
+#define PAPIF_DMEM_SHARED     5
+#define PAPIF_DMEM_TEXT       6
+#define PAPIF_DMEM_LIBRARY    7
+#define PAPIF_DMEM_HEAP       8
+#define PAPIF_DMEM_LOCKED     9
+#define PAPIF_DMEM_STACK      10
+#define PAPIF_DMEM_PAGESIZE   11
+#define PAPIF_DMEM_PTE        12
+#define PAPIF_DMEM_MAXVAL     12
 
 /*
    This structure is the event information that is exposed to the user through the API.
