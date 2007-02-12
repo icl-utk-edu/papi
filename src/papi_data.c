@@ -219,7 +219,8 @@ const hwi_describe_t _papi_hwi_err[PAPI_NUM_ERRORS] = {
    /*12*/ {PAPI_ENOTPRESET, "PAPI_ENOTPRESET", "Event in argument is not a valid preset"},
    /*13*/ {PAPI_ENOCNTR, "PAPI_ENOCNTR", "Hardware does not support performance counters"},
    /*14*/ {PAPI_EMISC, "PAPI_EMISC", "Unknown error code"},
-   /*15*/ {PAPI_EPERM, "PAPI_EPERM", "Permission level does not permit operation"}
+   /*15*/ {PAPI_EPERM, "PAPI_EPERM", "Permission level does not permit operation"},
+   /*16*/ {PAPI_ENOINIT, "PAPI_ENOINIT", "Not initialized"}
 };
 
 #ifndef NO_LIBPAPI

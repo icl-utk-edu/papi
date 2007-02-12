@@ -187,7 +187,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 /* Error predefines */
 
-#define PAPI_NUM_ERRORS  16     /* Number of error messages specified in this API. */
+#define PAPI_NUM_ERRORS  17     /* Number of error messages specified in this API. */
 #define PAPI_QUIET       0      /* Option to turn off automatic reporting of return codes < 0 to stderr. */
 #define PAPI_VERB_ECONT  1      /* Option to automatically report any return codes < 0 to stderr and continue. */
 #define PAPI_VERB_ESTOP  2      /* Option to automatically report any return codes < 0 to stderr and exit. */
