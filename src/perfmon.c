@@ -1178,7 +1178,7 @@ int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
       PAPIERROR("fscanf(7 items): %d\n",ret);
       return PAPI_ESBSTR;
     }
-+  d->pagesize = getpagesize() / 1024;
+  d->pagesize = getpagesize() / 1024;
   d->shared = (shr * d->pagesize)/1024;
   fclose(f);
 
