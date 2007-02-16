@@ -50,8 +50,8 @@ endif
 
 CFLAGS	+= -I$(PFM_INC_PATH) 
 
-MISCHDRS = perfmon.h
-MISCSRCS = 
+MISCHDRS = perfmon.h papi_pfm_events.h
+MISCSRCS = papi_pfm_events.c
 # This is necessary to avoid text relocations. You cannot do -Lxx -lx because
 # it will attempt to use the static library if a shared library ending in
 # .so does not exist
@@ -76,6 +76,9 @@ config.h:
 
 $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
 	$(AR) xv $<
+
+papi_pfm_events.o: papi_pfm_events.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_pfm_events.c -o $@
 
 native_clean:
 	-rm -f $(MISCOBJS) 

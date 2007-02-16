@@ -130,12 +130,12 @@ void _papi_hwd_dispatch_timer(int signal, hwd_siginfo_t * info, void *tmp);
 /* The following functions implement the native event query capability
    See extras.c or substrates for details... */
 
- int _papi_hwi_query_native_event(unsigned int EventCode);
- int _papi_hwi_get_native_event_info(unsigned int EventCode,
+VECTOR_STATIC int _papi_hwi_query_native_event(unsigned int EventCode);
+VECTOR_STATIC int _papi_hwi_get_native_event_info(unsigned int EventCode,
                                            PAPI_event_info_t * info);
- int _papi_hwi_native_name_to_code(char *in, int *out);
- int _papi_hwi_native_code_to_name(unsigned int EventCode, char *hwi_name, int len);
- int _papi_hwi_native_code_to_descr(unsigned int EventCode, char *hwi_descr, int len);
+VECTOR_STATIC int _papi_hwi_native_name_to_code(char *in, int *out);
+VECTOR_STATIC int _papi_hwi_native_code_to_name(unsigned int EventCode, char *hwi_name, int len);
+VECTOR_STATIC int _papi_hwi_native_code_to_descr(unsigned int EventCode, char *hwi_descr, int len);
 
 /* The following functions implement the hardware dependent native event table access.
    The first four routines are required. The next two are optional.

@@ -566,9 +566,16 @@ int _papi_hwi_query_native_event(unsigned int EventCode)
    This allows for sparse native event arrays */
 int _papi_hwi_native_name_to_code(char *in, int *out)
 {
+   int retval = PAPI_ENOEVNT;
+
+#ifdef PERFCTR_PFM_EVENTS
+   extern unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code);
+   retval = _papi_pfm_ntv_name_to_code(in, out);
+#else
+
    char *name;
    unsigned int i = 0 | PAPI_NATIVE_MASK;
-   int retval = PAPI_ENOEVNT;
+
 /* Cray X1 doesn't loop on 0, so a code_to_name on this will fail, the
  * first call to enum_events with a 0 will give a valid code
  */
@@ -590,6 +597,7 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
       }
    } while ((_papi_hwd_ntv_enum_events(&i, 0) == PAPI_OK) && (retval == PAPI_ENOEVNT)) ;
    _papi_hwi_unlock(INTERNAL_LOCK);
+#endif /* PERFCTR_PFM_EVENTS */
    return (retval);
 }
 
@@ -603,7 +611,7 @@ int _papi_hwi_native_code_to_name(unsigned int EventCode, char *hwi_name, int le
    if (EventCode & PAPI_NATIVE_MASK) {
       _papi_hwi_lock(INTERNAL_LOCK);
       name = _papi_hwd_ntv_code_to_name(EventCode);
-      if (name) {
+      if (name && *name) {
          strncpy(hwi_name, name, len);
          retval = PAPI_OK;
       } else *hwi_name = 0;
@@ -637,10 +645,14 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
 {
    hwd_register_t bits;
    int retval;
+   char *name;
 
    if (EventCode & PAPI_NATIVE_MASK) {
       _papi_hwi_lock(INTERNAL_LOCK);
-      strncpy(info->symbol, _papi_hwd_ntv_code_to_name(EventCode), PAPI_MAX_STR_LEN);
+      name =_papi_hwd_ntv_code_to_name(EventCode);
+      if (name) 
+	strncpy(info->symbol, name, PAPI_MAX_STR_LEN);
+      else info->symbol[0] = '\0';
       _papi_hwi_unlock(INTERNAL_LOCK);
       if (strlen(info->symbol)) {
          /* Fill in the info structure */

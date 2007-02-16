@@ -209,34 +209,6 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    if (retval)
       return (retval);
 
-   /* Setup presets */
-#if (!defined(PPC64) && !defined(PPC32))
-   if ( check_p4(info.cpu_type) ){
-     retval = setup_p4_vector_table(vtable);
-     if (!retval)
-     	retval = setup_p4_presets(info.cpu_type);
-   }
-   else{
-     retval = setup_p3_vector_table(vtable);
-     if (!retval)
-     	retval = setup_p3_presets(info.cpu_type);
-   }
-#elif (defined(PPC64))
-	/* Setup native and preset events */
-	retval = ppc64_setup_vector_table(vtable);
-    if (!retval)
-    	retval = setup_ppc64_native_table();
-    if (!retval)
-    	retval = setup_ppc64_presets(info.cpu_type);
-#elif (defined(PPC32))
-	/* Setup native and preset events */
-	retval = ppc32_setup_vector_table(vtable);
-	if (!retval)
-    	retval = setup_ppc32_presets(info.cpu_type);
-#endif
-   if ( retval ) 
-     return(retval);
-
    strcpy(_papi_hwi_system_info.sub_info.name, "$Id$");
    strcpy(_papi_hwi_system_info.sub_info.version, "$Revision$");
    sprintf(abiv,"0x%08X",info.abi_version);
@@ -285,6 +257,34 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   _papi_hwi_system_info.hw_info.mhz = (float) info.cpu_khz / 1000.0; 
   SUBDBG("Detected MHZ is %f\n",_papi_hwi_system_info.hw_info.mhz);
 #endif
+
+   /* Setup presets last. Some platforms depend on earlier info */
+#if (!defined(PPC64) && !defined(PPC32))
+   if ( check_p4(info.cpu_type) ){
+     retval = setup_p4_vector_table(vtable);
+     if (!retval)
+     	retval = setup_p4_presets(info.cpu_type);
+   }
+   else{
+     retval = setup_p3_vector_table(vtable);
+     if (!retval)
+     	retval = setup_p3_presets(info.cpu_type);
+   }
+#elif (defined(PPC64))
+	/* Setup native and preset events */
+	retval = ppc64_setup_vector_table(vtable);
+    if (!retval)
+    	retval = setup_ppc64_native_table();
+    if (!retval)
+    	retval = setup_ppc64_presets(info.cpu_type);
+#elif (defined(PPC32))
+	/* Setup native and preset events */
+	retval = ppc32_setup_vector_table(vtable);
+	if (!retval)
+    	retval = setup_ppc32_presets(info.cpu_type);
+#endif
+   if ( retval ) 
+     return(retval);
 
    lock_init();
 

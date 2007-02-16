@@ -9,6 +9,9 @@
 *          <your email address>
 */
 
+// NOTE: papi_avail doesn't seem to show derived events for P4...
+// This must be because P4 only has DERIVED_CMPD and they don't show up ??
+
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
@@ -21,18 +24,30 @@
 /* BEGIN EXTERNAL DECLARATIONS */
 /*******************************/
 
-extern hwi_search_t _papi_hwd_pentium4_base_preset_map[];
-extern hwi_search_t _papi_hwd_pentium4_tot_iis_preset_map[];
-extern hwi_search_t _papi_hwd_pentium4_L3_cache_map[];
-extern hwi_dev_notes_t _papi_hwd_pentium4_base_dev_notes[];
+//extern hwi_search_t _papi_hwd_pentium4_base_preset_map[];
+//extern hwi_search_t _papi_hwd_pentium4_tot_iis_preset_map[];
+//extern hwi_search_t _papi_hwd_pentium4_L3_cache_map[];
+//extern hwi_dev_notes_t _papi_hwd_pentium4_base_dev_notes[];
+
+#ifdef PERFCTR_PFM_EVENTS
+  extern papi_svector_t _papi_pfm_event_vectors[];
+#endif
 
 /*****************************/
 /* END EXTERNAL DECLARATIONS */
 /*****************************/
+#ifdef PERFCTR_PFM_EVENTS
+extern int _papi_pfm_setup_presets(char *name, int type);
+extern int _papi_pfm_init();
+extern int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits);
+#endif
+extern int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits);
 
 /****************************/
 /* BEGIN LOCAL DECLARATIONS */
 /****************************/
+static int _papi_hwd_fixup_fp(void);
+static int _papi_hwd_fixup_vec(void);
 
 /**************************/
 /* END LOCAL DECLARATIONS */
@@ -40,34 +55,31 @@ extern hwi_dev_notes_t _papi_hwd_pentium4_base_dev_notes[];
 
 int setup_p4_presets(int cputype)
 {
-   hwi_search_t *s;
-   hwi_dev_notes_t *n;
-   extern void _papi_hwd_fixup_fp(hwi_search_t **s, hwi_dev_notes_t **n);
-   extern void _papi_hwd_fixup_vec(hwi_search_t **s, hwi_dev_notes_t **n);
+    int retval;
 
    /* load the baseline event map for all Pentium 4s */
-   _papi_hwi_setup_all_presets(_papi_hwd_pentium4_base_preset_map, _papi_hwd_pentium4_base_dev_notes);
+   retval = _papi_pfm_init();
+   _papi_pfm_setup_presets("Intel Pentium4", 0); /* base events */
 
    /* fix up the floating point and vector ops */
-   _papi_hwd_fixup_fp(&s, &n);
-   _papi_hwi_setup_all_presets(s,n);
-   _papi_hwd_fixup_vec(&s, &n);
-   _papi_hwi_setup_all_presets(s,n);
+   if((retval = _papi_hwd_fixup_fp()) != PAPI_OK) return (retval);
+   if ((retval = _papi_hwd_fixup_vec()) != PAPI_OK) return (retval);
 
    /* install L3 cache events iff 3 levels of cache exist */
    if (_papi_hwi_system_info.hw_info.mem_hierarchy.levels == 3)
-      _papi_hwi_setup_all_presets(_papi_hwd_pentium4_L3_cache_map, NULL);
+      _papi_pfm_setup_presets("Intel Pentium4 L3", 0);
 
    /* overload with any model dependent events */
    if (cputype == PERFCTR_X86_INTEL_P4) {
      /* do nothing besides the base map */
    }
+   /* for models 2 and 3 add a total instructions issued event */
    else if (cputype == PERFCTR_X86_INTEL_P4M2) {
-      _papi_hwi_setup_all_presets(_papi_hwd_pentium4_tot_iis_preset_map, NULL);
+      _papi_pfm_setup_presets("Intel Pentium4 TOT_IIS", 0);
    }
 #ifdef PERFCTR_X86_INTEL_P4M3
    else if (cputype == PERFCTR_X86_INTEL_P4M3) {
-      _papi_hwi_setup_all_presets(_papi_hwd_pentium4_tot_iis_preset_map, NULL);
+      _papi_pfm_setup_presets("Intel Pentium4 TOT_IIS", 0);
    }
 #endif
    else {
@@ -418,7 +430,11 @@ int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
       e = &event_list[i];
 
       /* retrieve the mapping information about this native event */
+#ifdef PERFCTR_PFM_EVENTS
+      _papi_pfm_ntv_code_to_bits(ESI->NativeInfoArray[i].ni_event, &event_list[i].ra_bits);
+#else
       _papi_hwd_ntv_code_to_bits(ESI->NativeInfoArray[i].ni_event, &e->ra_bits);
+#endif
 
       /* combine counter bit masks for both esc registers into selector */
       e->ra_selector = e->ra_bits.counter[0] | e->ra_bits.counter[1];
@@ -723,6 +739,61 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    return (retval);
 }
 
+
+#if defined(PAPI_PENTIUM4_FP_X87)
+   #define P4_FPU " X87"
+#elif defined(PAPI_PENTIUM4_FP_X87_SSE_SP)
+   #define P4_FPU " X87 SSE_SP"
+#elif defined(PAPI_PENTIUM4_FP_SSE_SP_DP)
+   #define P4_FPU " SSE_SP SSE_DP
+#else
+   #define P4_FPU " X87 SSE_DP"
+#endif
+
+static int _papi_hwd_fixup_fp(void)
+{
+   char table_name[PAPI_MIN_STR_LEN] = "Intel Pentium4 FPU";
+   char *str = getenv("PAPI_PENTIUM4_FP");
+
+   /* if the env variable isn't set, use the default */
+   if ((str == NULL) || (strlen(str) == 0)) {
+      strcat(table_name, P4_FPU);
+   } else {
+       if (strstr(str,"X87"))    strcat(table_name, " X87");
+       if (strstr(str,"SSE_SP")) strcat(table_name, " SSE_SP");
+       if (strstr(str,"SSE_DP")) strcat(table_name, " SSE_DP");
+   }
+   if((_papi_pfm_setup_presets(table_name, 0)) != PAPI_OK) {
+      PAPIERROR("Improper usage of PAPI_PENTIUM4_FP environment variable.\nUse one or two of X87,SSE_SP,SSE_DP");
+      return(PAPI_ESBSTR);
+   }
+   return(PAPI_OK);
+}
+
+#if defined(PAPI_PENTIUM4_VEC_MMX)
+   #define P4_VEC "MMX"
+#else
+   #define P4_VEC "SSE"
+#endif
+
+static int _papi_hwd_fixup_vec(void)
+{
+   char table_name[PAPI_MIN_STR_LEN] = "Intel Pentium4 VEC ";
+   char *str = getenv("PAPI_PENTIUM4_VEC");
+
+   /* if the env variable isn't set, use the default */
+   if ((str == NULL) || (strlen(str) == 0)) {
+      strcat(table_name, P4_VEC);
+   } else {
+      strcat(table_name, str);
+   }
+   if((_papi_pfm_setup_presets(table_name, 0)) != PAPI_OK) {
+      PAPIERROR("Improper usage of PAPI_PENTIUM4_VEC environment variable.\nUse either SSE or MMX");
+      return(PAPI_ESBSTR);
+   }
+   return(PAPI_OK);
+}
+
 #ifndef PAPI_NO_VECTOR
 papi_svector_t _p4_vector_table[] = {
   {(void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE },
@@ -741,11 +812,13 @@ papi_svector_t _p4_vector_table[] = {
   {(void (*)())_papi_hwd_set_domain, VEC_PAPI_HWD_SET_DOMAIN},
   {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
   {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
+#ifndef PERFCTR_PFM_EVENTS
   {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
   {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
   {(void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
   {(void (*)())_papi_hwd_ntv_code_to_bits, VEC_PAPI_HWD_NTV_CODE_TO_BITS},
   {(void (*)())_papi_hwd_ntv_bits_to_info, VEC_PAPI_HWD_NTV_BITS_TO_INFO},
+#endif
   {NULL, VEC_PAPI_END }
 };
 #endif
@@ -755,12 +828,16 @@ int setup_p4_vector_table(papi_vectors_t * vtable){
 
 #ifndef PAPI_NO_VECTOR
   retval = _papi_hwi_setup_vector_table( vtable, _p4_vector_table);
+#ifdef PERFCTR_PFM_EVENTS
+  if (retval == PAPI_OK)
+    retval = _papi_hwi_setup_vector_table(vtable, _papi_pfm_event_vectors);
+#endif
 #endif
   return ( retval ); 
 }
 
 /* These should be removed when p3-p4 is merged */
-                                                                                
+
 int setup_p3_vector_table(papi_vectors_t * vtable){
   int retval=PAPI_OK;
   return ( retval ); 
