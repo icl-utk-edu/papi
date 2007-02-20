@@ -1,4 +1,9 @@
 /* Redfine the calls to vector table lookups */
+#define _papi_hwd_context_size		_papi_frm_vector.context_size
+#define _papi_hwd_control_state_size	_papi_frm_vector.control_state_size
+#define _papi_hwd_register_size		_papi_frm_vector.register_size
+#define _papi_hwd_reg_alloc_size	_papi_frm_vector.reg_alloc_size
+
 #ifdef _WIN32
 #define _papi_hwd_timer_callback	_papi_frm_vector.timer_callback
 #else

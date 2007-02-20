@@ -654,6 +654,12 @@ papi_svector_t _p3_vector_table[] = {
 */
 
 papi_vectors_t _p3_vectors = {
+    /* sizes of component-private structures */
+    .context_size =		sizeof(hwd_context_t),
+    .control_state_size =	sizeof(hwd_control_state_t),
+    .register_size =		sizeof(hwd_register_t),
+    .reg_alloc_size =		sizeof(hwd_reg_alloc_t),
+    /* function pointers in this component */
     .init_control_state =	_p3_init_control_state,
     .start =			_p3_start,
     .stop =			_p3_stop,

@@ -1297,9 +1297,11 @@ void print_state(EventSetInfo_t * ESI)
 int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t * event_list, int count)
 {
    int i, j;
-   int idx_q[MAX_COUNTERS];     /* queue of indexes of lowest rank events */
-   int map_q[MAX_COUNTERS];     /* queue of mapped events (TRUE if mapped) */
+   char *ptr = (char *) event_list;
+   int idx_q[count];     /* queue of indexes of lowest rank events */
+   int map_q[count];     /* queue of mapped events (TRUE if mapped) */
    int head, tail;
+   int size = _papi_hwd_reg_alloc_size;
 
    /* build a queue of indexes to all events 
       that live on one counter only (rank == 1) */
@@ -1307,23 +1309,24 @@ int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t * event_list, int count)
    tail = 0;                    /* points to bottom of queue */
    for (i = 0; i < count; i++) {
       map_q[i] = 0;
-      if (_papi_hwd_bpt_map_exclusive(&event_list[i]))
+      if (_papi_hwd_bpt_map_exclusive((hwd_reg_alloc_t *)&ptr[size*i]))
          idx_q[tail++] = i;
    }
    /* scan the single counter queue looking for events that share counters.
       If two events can live only on one counter, return failure.
       If the second event lives on more than one counter, remove shared counter
       from its selector and reduce its rank. 
-      Mark first event as mapped to its counter. */ while (head < tail) {
+      Mark first event as mapped to its counter. */
+   while (head < tail) {
       for (i = 0; i < count; i++) {
          if (i != idx_q[head]) {
-            if (_papi_hwd_bpt_map_shared(&event_list[i], &event_list[idx_q[head]])) {
+            if (_papi_hwd_bpt_map_shared((hwd_reg_alloc_t *)&ptr[size*i], (hwd_reg_alloc_t *)&ptr[size*idx_q[head]])) {
                /* both share a counter; if second is exclusive, mapping fails */
-               if (_papi_hwd_bpt_map_exclusive(&event_list[i]))
+               if (_papi_hwd_bpt_map_exclusive((hwd_reg_alloc_t *)&ptr[size*i]))
                   return 0;
                else {
-                  _papi_hwd_bpt_map_preempt(&event_list[i], &event_list[idx_q[head]]);
-                  if (_papi_hwd_bpt_map_exclusive(&event_list[i]))
+                  _papi_hwd_bpt_map_preempt((hwd_reg_alloc_t *)&ptr[size*i], (hwd_reg_alloc_t *)&ptr[size*idx_q[head]]);
+                  if (_papi_hwd_bpt_map_exclusive((hwd_reg_alloc_t *)&ptr[size*i]))
                      idx_q[tail++] = i;
                }
             }
@@ -1335,47 +1338,56 @@ int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t * event_list, int count)
    if (tail == count) {
       return 1;                 /* idx_q includes all events; everything is successfully mapped */
    } else {
-      hwd_reg_alloc_t rest_event_list[MAX_COUNTERS];
-      hwd_reg_alloc_t copy_rest_event_list[MAX_COUNTERS];
+      char * rest_event_list;
+      char * copy_rest_event_list;
       int remainder;
+      rest_event_list = (char *) papi_malloc(size*_papi_hwi_system_info.sub_info.num_cntrs);
+      copy_rest_event_list = (char *) papi_malloc(size*_papi_hwi_system_info.sub_info.num_cntrs);
+      if ( !rest_event_list || !copy_rest_event_list ) {
+        if(rest_event_list) papi_free(rest_event_list);
+        if(copy_rest_event_list) papi_free(copy_rest_event_list);
+        return(0);
+      }
 
       /* copy all unmapped events to a second list and make a backup */
       for (i = 0, j = 0; i < count; i++) {
          if (map_q[i] == 0) {
-            memcpy(&copy_rest_event_list[j++], &event_list[i], sizeof(hwd_reg_alloc_t));
+            memcpy(&copy_rest_event_list[size*j++], &ptr[size*i], size);
          }
       }
       remainder = j;
 
-      memcpy(rest_event_list, copy_rest_event_list,
-             sizeof(hwd_reg_alloc_t) * (remainder));
+      memcpy(rest_event_list, copy_rest_event_list, size * remainder);
 
       /* try each possible mapping until you fail or find one that works */
-      for (i = 0; i < MAX_COUNTERS; i++) {
+      for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
          /* for the first unmapped event, try every possible counter */
-         if (_papi_hwd_bpt_map_avail(rest_event_list, i)) {
-            _papi_hwd_bpt_map_set(rest_event_list, i);
+         if (_papi_hwd_bpt_map_avail((hwd_reg_alloc_t *)rest_event_list, i)) {
+            _papi_hwd_bpt_map_set((hwd_reg_alloc_t *)rest_event_list, i);
             /* remove selected counter from all other unmapped events */
             for (j = 1; j < remainder; j++) {
-               if (_papi_hwd_bpt_map_shared(&rest_event_list[j], rest_event_list))
-                  _papi_hwd_bpt_map_preempt(&rest_event_list[j], rest_event_list);
+               if (_papi_hwd_bpt_map_shared((hwd_reg_alloc_t *)&rest_event_list[size*j], (hwd_reg_alloc_t *)rest_event_list))
+                  _papi_hwd_bpt_map_preempt((hwd_reg_alloc_t *)&rest_event_list[size*j], (hwd_reg_alloc_t *)rest_event_list);
             }
             /* if recursive call to allocation works, break out of the loop */
-            if (_papi_hwi_bipartite_alloc(rest_event_list, remainder))
+            if (_papi_hwi_bipartite_alloc((hwd_reg_alloc_t *)rest_event_list, remainder))
                break;
 
             /* recursive mapping failed; copy the backup list and try the next combination */
-            memcpy(rest_event_list, copy_rest_event_list,
-                   sizeof(hwd_reg_alloc_t) * (remainder));
+            memcpy(rest_event_list, copy_rest_event_list, size * remainder);
          }
       }
-      if (i == MAX_COUNTERS) {
-         return 0;              /* fail to find mapping */
+      if (i == _papi_hwi_system_info.sub_info.num_cntrs) {
+	papi_free(rest_event_list);
+	papi_free(copy_rest_event_list);
+	return 0;              /* fail to find mapping */
       }
       for (i = 0, j = 0; i < count; i++) {
          if (map_q[i] == 0)
-            _papi_hwd_bpt_map_update(&event_list[i], &rest_event_list[j++]);
+            _papi_hwd_bpt_map_update((hwd_reg_alloc_t *)&ptr[size*i], (hwd_reg_alloc_t *)&rest_event_list[size*j++]);
       }
+      papi_free(rest_event_list);
+      papi_free(copy_rest_event_list);
       return 1;
    }
 }

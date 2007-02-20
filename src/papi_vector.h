@@ -4,6 +4,13 @@
 /* Vector Table Stuff */
 
 typedef struct papi_vectors{
+/* Private structure sizes for this component */
+    int		context_size;
+    int		control_state_size;
+    int		register_size;
+    int		reg_alloc_size;
+
+/* List of exposed function pointers for this component */
 #ifdef _WIN32 /* Windows requires a different callback format */
     void	(*timer_callback)	(UINT, UINT, DWORD, DWORD, DWORD);
 #else
