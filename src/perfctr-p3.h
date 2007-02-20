@@ -110,16 +110,16 @@ typedef ucontext_t hwd_ucontext_t;
 /* Linux DOES support hardware overflow */
 #define HW_OVERFLOW 1
 
-typedef struct P3_register {
+typedef struct _p3_register {
    unsigned int selector;       /* Mask for which counters in use */
    int counter_cmd;             /* The event code */
-} P3_register_t;
+} _p3_register_t;
 
-typedef struct P3_reg_alloc {
-   P3_register_t ra_bits;       /* Info about this native event mapping */
+typedef struct _p3_reg_alloc {
+   _p3_register_t ra_bits;       /* Info about this native event mapping */
    unsigned ra_selector;        /* Bit mask showing which counters can carry this metric */
    unsigned ra_rank;            /* How many counters can carry this metric */
-} P3_reg_alloc_t;
+} _p3_reg_alloc_t;
 
 /* Per eventset data structure for thread level counters */
 
@@ -142,32 +142,32 @@ typedef struct native_event_entry {
    /* If it exists, then this is the description of this event */
    char *description;
    /* description of the resources required by this native event */
-   P3_register_t resources;
+   _p3_register_t resources;
 } native_event_entry_t;
 
 /* typedefs to conform to hardware independent PAPI code. */
-typedef P3_reg_alloc_t hwd_reg_alloc_t;
-typedef P3_register_t hwd_register_t;
+typedef _p3_reg_alloc_t hwd_reg_alloc_t;
+typedef _p3_register_t hwd_register_t;
 
-typedef struct P3_perfctr_control {
+typedef struct _p3_perfctr_control {
    hwd_native_t native[MAX_COUNTERS];
    int native_idx;
    unsigned char master_selector;
-   P3_register_t allocated_registers;
+   _p3_register_t allocated_registers;
    struct vperfctr_control control;
    struct perfctr_sum_ctrs state;
    /* Allow attach to be per-eventset. */
    struct rvperfctr * rvperfctr;
-} P3_perfctr_control_t;
+} _p3_perfctr_control_t;
 
-typedef struct P3_perfctr_context {
+typedef struct _p3_perfctr_context {
    struct vperfctr *perfctr;
-/*  P3_perfctr_control_t start; */
-} P3_perfctr_context_t;
+/*  _p3_perfctr_control_t start; */
+} _p3_perfctr_context_t;
 
 /* typedefs to conform to hardware independent PAPI code. */
-typedef P3_perfctr_control_t hwd_control_state_t;
-typedef P3_perfctr_context_t hwd_context_t;
+typedef _p3_perfctr_control_t hwd_control_state_t;
+typedef _p3_perfctr_context_t hwd_context_t;
 #define hwd_pmc_control vperfctr_control
 
 /* Used in resources.selector to determine on which counters an event can live. */
