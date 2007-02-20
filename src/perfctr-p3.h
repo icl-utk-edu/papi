@@ -178,8 +178,9 @@ typedef P3_perfctr_context_t hwd_context_t;
 #define CNTRS12 (CNTR1|CNTR2)
 #define ALLCNTRS (CNTR1|CNTR2|CNTR3|CNTR4)
 
-#define HAS_MESI  0x100 /* indicates this event supports MESI modifiers */ 
-#define HAS_MOESI 0x200 /* indicates this event supports MOESI modifiers */
+#define HAS_MESI  0x0100 /* indicates this event supports MESI modifiers */ 
+#define HAS_MOESI 0x0200 /* indicates this event supports MOESI modifiers */
+#define HAS_UMASK 0x0400 /* indicates this event supports general UMASK modifiers */
 #define MOESI_M   0x1000 /* Modified bit */
 #define MOESI_O   0x0800 /* Owner bit */
 #define MOESI_E   0x0400 /* Exclusive bit */
@@ -187,6 +188,7 @@ typedef P3_perfctr_context_t hwd_context_t;
 #define MOESI_I   0x0100 /* Invalid bit */
 #define MOESI_M_INTEL   MOESI_O /* Modified bit on Intel processors */
 #define MOESI_ALL 0x1F00 /* mask for MOESI bits in event code or counter_cmd */
+#define UNIT_MASK_ALL 0xFF00 /* indicates this event supports general UMASK modifiers */
 
 
 /* Masks to craft an eventcode to perfctr's liking */

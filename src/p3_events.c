@@ -23,149 +23,13 @@ hwi_search_t *preset_search_map;
     architecture.
 */
 
-#include "p3_ath_event_tables.c"
-#include "p3_core_event_tables.c"
-#include "p3_pfm_opt_event_tables.c"
-#include "p3_pm_event_tables.c"
-#include "p3_p2_event_tables.c"
-#include "p3_p3_event_tables.c"
+#include "p3_ath_event_tables.h"
+#include "p3_core_event_tables.h"
+#include "p3_opt_event_tables.h"
+#include "p3_pm_event_tables.h"
+#include "p3_p2_event_tables.h"
+#include "p3_p3_event_tables.h"
 
-inline_static void internal_decode_event(unsigned int EventCode, int *event, int *umask)
-{
-   /* mask off the native event flag and the unit mask bits */
-   *event = (EventCode & PAPI_NATIVE_AND_MASK) & (~UNIT_MASK_ALL);
-   /* find the unit mask bits (if any) */
-   *umask = (EventCode & UNIT_MASK_ALL);
-}
-
-/* Given a native event code, returns the short text label. */
-char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
-{
-   int event, umask;
-
-   internal_decode_event(EventCode, &event, &umask);
-   if (event > _papi_hwi_system_info.sub_info.num_native_events) {
-       return ('\0'); // return a null string for invalid events
-   }
-
-   if (!umask)
-      return (native_table[event].name);
-   else {
-      return (internal_translate_code(event, umask, name, "_"));
-   }
-}
-
-/* Given a native event code, returns the longer native event
-   description. */
-char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
-{
-   int event, umask;
-
-   internal_decode_event(EventCode, &event, &umask);
-   if (event > _papi_hwi_system_info.sub_info.num_native_events)
-       return ('\0'); // return a null string for invalid events
-
-   if (!umask)
-      return (native_table[event].description);
-   else {
-      if (native_table[event].resources.selector & HAS_UMASK)
-	 return (internal_translate_code(event, umask, description, ". Unit Mask bits: "));
-      else
-	 return (internal_translate_code(event, umask, description, ". Cache bits:"));
-   }
-}
-
-/* Given a native event code, assigns the native event's 
-   information to a given pointer.
-   NOTE: the info must be COPIED to the provided pointer,
-   not just referenced!
-*/
-int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
-{
-   int event, umask;
-
-   internal_decode_event(EventCode, &event, &umask);
-   if (event > _papi_hwi_system_info.sub_info.num_native_events)
-       return (PAPI_ENOEVNT);
-
-   if(native_table[event].resources.selector == 0) {
-      return (PAPI_ENOEVNT);
-   }
-   *bits = native_table[event].resources;
-   bits->counter_cmd |= umask; /* OR unit mask bits into command */
-   return (PAPI_OK);
-}
-
-/* Given a native event code, looks for next MOESI or umask bit if applicable.
-   If not, looks for the next event in the table if the next one exists. 
-   If not, returns the proper error code. */
-int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
-{
-   int event, umask, selector;
-
-   internal_decode_event(*EventCode, &event, &umask);
-   if (event > _papi_hwi_system_info.sub_info.num_native_events)
-       return (PAPI_ENOEVNT);
-
-   /* increment by smallest step size (same for unit mask or MOESI */
-   umask += MOESI_I;
-   selector = native_table[event].resources.selector;
-
-   /* Check for unit mask bits */
-   if (selector & HAS_UMASK) {
-       while (umask <= (selector & UNIT_MASK_ALL)) {
-	  if (umask == (umask & selector & UNIT_MASK_ALL)) {
-	     *EventCode = (event | PAPI_NATIVE_MASK) + umask;
-	     return (PAPI_OK);
-	  }
-       }
-   }
-
-    /* Check for MOESI bits */
-   /* for AMD processors, 5 bits are valid */
-   if (selector & HAS_MOESI) {
-      if (umask <= MOESI_ALL) {
-         *EventCode = (event | PAPI_NATIVE_MASK) + umask;
-         return (PAPI_OK);
-      }
-   }
-   /* for Intel processors, only 4 bits are valid */
-   else if (selector & HAS_MESI) {
-      if (!(umask & MOESI_M)) { /* never set top bit */
-         *EventCode = (event | PAPI_NATIVE_MASK) + umask;
-         return (PAPI_OK);
-      }
-   }
-   if (native_table[event + 1].resources.selector) {
-      *EventCode = (event | PAPI_NATIVE_MASK) + 1;
-      return (PAPI_OK);
-   } else {
-      return (PAPI_ENOEVNT);
-   }
-}
-
-/* Reports the elements of the hwd_register_t struct as an array of names and a matching array of values.
-   Maximum string length is name_len; Maximum number of values is count.
-*/
-static void copy_value(unsigned int val, char *nam, char *names, unsigned int *values, int len)
-{
-   *values = val;
-   strncpy(names, nam, len);
-   names[len-1] = 0;
-}
-
-int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
-                               unsigned int *values, int name_len, int count)
-{
-   int i = 0;
-   copy_value(bits->selector, "Event Mask", &names[i*name_len], &values[i], name_len);
-   if (++i == count) return(i);
-   copy_value(bits->counter_cmd, "Event Code", &names[i*name_len], &values[i], name_len);
-   return(++i);
-}
-
-
-#if 0
 
 /* Note:  MESI (Intel) and MOESI (AMD) bits are programmatically defined
           for those events that can support them. You can find those
@@ -397,4 +261,3 @@ int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
    copy_value(bits->counter_cmd, "Event Code", &names[i*name_len], &values[i], name_len);
    return(++i);
 }
-#endif // 0
