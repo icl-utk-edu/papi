@@ -3819,7 +3819,7 @@ static char *internal_translate_code(int event, int moesi, char *str, char *sepa
 
 
 /* Given a native event code, returns the short text label. */
-char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
+char *_p3_ntv_code_to_name(unsigned int EventCode)
 {
    int event, moesi;
 
@@ -3837,7 +3837,7 @@ char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 
 /* Given a native event code, returns the longer native event
    description. */
-char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
+char *_p3_ntv_code_to_descr(unsigned int EventCode)
 {
    int event, moesi;
 
@@ -3857,7 +3857,7 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
    NOTE: the info must be COPIED to the provided pointer,
    not just referenced!
 */
-int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
+int _p3_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 {
    int event, moesi;
 
@@ -3876,7 +3876,7 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 /* Given a native event code, looks for next MOESI bit if applicable.
    If not, looks for the next event in the table if the next one exists. 
    If not, returns the proper error code. */
-int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
+int _p3_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
    int event, moesi;
 
@@ -3918,7 +3918,7 @@ static void copy_value(unsigned int val, char *nam, char *names, unsigned int *v
    names[len-1] = 0;
 }
 
-int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
+int _p3_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                unsigned int *values, int name_len, int count)
 {
    int i = 0;
