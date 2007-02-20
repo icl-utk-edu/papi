@@ -208,11 +208,17 @@ static void initialize_EventInfoArray(EventSetInfo_t * ESI)
 static void initialize_NativeInfoArray(EventSetInfo_t * ESI)
 {
    int i;
+   /* xxxx should these arrays be num_mpx_cntrs or num_cntrs in size?? */
+   int max_counters = _papi_hwi_system_info.sub_info.num_mpx_cntrs;
+   int sz = _papi_hwd_register_size;
+   char *ptr = (((char *)ESI->NativeInfoArray)+(max_counters*sizeof(NativeInfo_t)));
 
-   for (i = 0; i < MAX_COUNTERS; i++) {
+   for (i = 0; i < max_counters; i++) {
       ESI->NativeInfoArray[i].ni_event = -1;
       ESI->NativeInfoArray[i].ni_position = -1;
       ESI->NativeInfoArray[i].ni_owners = 0;
+      ESI->NativeInfoArray[i].ni_bits = (hwd_register_t *)ptr;
+      ptr+=sz; 
    }
    ESI->NativeCount = 0;
 }
@@ -240,10 +246,14 @@ static int allocate_EventSet(EventSetInfo_t **here)
    ESI->sw_stop = (long_long *) papi_malloc(max_counters * sizeof(long_long));
    ESI->hw_start = (long_long *) papi_malloc(max_counters * sizeof(long_long));
    ESI->EventInfoArray = (EventInfo_t *) papi_malloc(max_counters * sizeof(EventInfo_t));
+/* allocate room for the native events and for the component-private register structures */
+/* xxxx should these arrays be num_mpx_cntrs or num_cntrs in size?? */
+   ESI->NativeInfoArray = (NativeInfo_t *) papi_malloc(max_counters * sizeof(NativeInfo_t)+max_counters*_papi_hwd_register_size);
 
    if (
 /*    (ESI->machdep        == NULL )  || */
          (ESI->sw_stop == NULL) || (ESI->hw_start == NULL)
+         || (ESI->NativeInfoArray == NULL)
          || (ESI->EventInfoArray == NULL)) {
 /*      if (ESI->machdep)        papi_free(ESI->machdep); */
       if (ESI->sw_stop)
@@ -252,6 +262,8 @@ static int allocate_EventSet(EventSetInfo_t **here)
          papi_free(ESI->hw_start);
       if (ESI->EventInfoArray)
          papi_free(ESI->EventInfoArray);
+      if ( ESI->NativeInfoArray )
+	 papi_free(ESI->NativeInfoArray);
       papi_free(ESI);
       return (PAPI_ENOMEM);
    }
@@ -504,13 +516,14 @@ static int add_native_fail_clean(EventSetInfo_t * ESI, int nevt)
    int i;
 
    /* to find the native event from the native events list */
-   for (i = 0; i < MAX_COUNTERS; i++) {
+   for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
       if (nevt == ESI->NativeInfoArray[i].ni_event) {
          ESI->NativeInfoArray[i].ni_owners--;
          /* to clean the entry in the nativeInfo array */
          if (ESI->NativeInfoArray[i].ni_owners == 0) {
             ESI->NativeInfoArray[i].ni_event = 0;
             ESI->NativeInfoArray[i].ni_position = -1;
+            memset(ESI->NativeInfoArray[i].ni_bits, 0x00, _papi_hwd_register_size);
             ESI->NativeCount--;
          }
          INTDBG("add_events fail, and remove added native events of the event: %s\n",
@@ -536,7 +549,7 @@ static int add_native_events(EventSetInfo_t * ESI, int *nevt, int size, EventInf
          out->pos[i] = ESI->NativeInfoArray[nidx].ni_position;
       } else {
          /* all counters have been used, add_native fail */
-         if (ESI->NativeCount == MAX_COUNTERS) {
+         if (ESI->NativeCount == _papi_hwi_system_info.sub_info.num_cntrs) {
             /* to clean owners for previous added native events */
             for (j = 0; j < i; j++) {
                if ((nidx = add_native_fail_clean(ESI, nevt[j])) >= 0) {
@@ -758,16 +771,24 @@ int remove_native_events(EventSetInfo_t * ESI, int *nevt, int size)
             if (native[j].ni_event == 0 || native[j].ni_owners == 0)
                continue;
             else {
-               memcpy(native + i, native + j, sizeof(NativeInfo_t));
-               memset(native + j, 0, sizeof(NativeInfo_t));
-               native[j].ni_position = -1;
-               copy++;
-               break;
+		native[i].ni_event = native[j].ni_event;
+		native[i].ni_position = native[j].ni_position;
+		native[i].ni_owners = native[j].ni_owners;
+		memcpy(native[i].ni_bits, native[j].ni_bits, _papi_hwd_register_size);
+
+		native[j].ni_event = -1;
+		native[j].ni_position = -1;
+		native[j].ni_owners = 0;
+		memset(native[j].ni_bits, 0x00, _papi_hwd_register_size);
+		copy++;
+		break;
             }
          }
          if (copy == 0) {
-            memset(native + i, 0, sizeof(NativeInfo_t));
-            native[i].ni_position = -1;
+	    native[j].ni_event = -1;
+            native[j].ni_position = -1;
+            native[j].ni_owners = 0;
+	    memset(native[j].ni_bits, 0x00,_papi_hwd_register_size);
          }
       }
    }
@@ -1259,31 +1280,31 @@ void print_state(EventSetInfo_t * ESI)
            ESI->NativeCount);
 
    APIDBG( "\nnative_event_name       ");
-   for (i = 0; i < MAX_COUNTERS; i++)
+   for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
       APIDBG( "%15s",
               _papi_hwd_ntv_code_to_name(ESI->NativeInfoArray[i].ni_event));
    APIDBG( "\n");
 
    APIDBG( "native_event_position     ");
-   for (i = 0; i < MAX_COUNTERS; i++)
+   for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
       APIDBG( "%15d", ESI->NativeInfoArray[i].ni_position);
    APIDBG( "\n");
 
 #if 0                           /* This code is specific to POWER */
    APIDBG( "native_event_selectors    ");
-   for (i = 0; i < MAX_COUNTERS; i++)
+   for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
       APIDBG( "%15d",
               native_table[ESI->NativeInfoArray[i].ni_event].resources.selector);
    APIDBG( "\n");
 
    APIDBG( "counter_cmd               ");
-   for (i = 0; i < MAX_COUNTERS; i++)
+   for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
       APIDBG( "%15d", (&(ESI->machdep))->counter_cmd.events[i]);
    APIDBG( "\n");
 #endif
 
    APIDBG( "native links              ");
-   for (i = 0; i < MAX_COUNTERS; i++)
+   for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
       APIDBG( "%15d", ESI->NativeInfoArray[i].ni_owners);
    APIDBG( "\n");
 

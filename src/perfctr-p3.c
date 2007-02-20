@@ -328,7 +328,7 @@ static int _p3_allocate_registers(EventSetInfo_t *ESI) {
    if(_papi_hwi_bipartite_alloc(event_list, natNum)) { /* successfully mapped */
       for(i = 0; i < natNum; i++) {
          /* Copy all info about this native event to the NativeInfo struct */
-         ESI->NativeInfoArray[i].ni_bits = event_list[i].ra_bits;
+         *ESI->NativeInfoArray[i].ni_bits = event_list[i].ra_bits;
          /* Array order on perfctr is event ADD order, not counter #... */
          ESI->NativeInfoArray[i].ni_position = i;
       }
@@ -370,7 +370,7 @@ static int _p3_update_control_state(hwd_control_state_t *this_state,
    /* fill the counters we're using */
    for (i = 0; i < count; i++) {
       /* Add counter control command values to eventset */
-      this_state->control.cpu_control.evntsel[i] |= native[i].ni_bits.counter_cmd;
+      this_state->control.cpu_control.evntsel[i] |= native[i].ni_bits->counter_cmd;
    }
    this_state->control.cpu_control.nractrs = count;
    return (PAPI_OK);
