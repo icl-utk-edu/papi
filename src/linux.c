@@ -296,7 +296,7 @@ static void _linux_dispatch_timer(int signal, siginfo_t * si, void *context) {
 
    /* We are done, resume interrupting counters */
    if (isHardware) {
-      errno = vperfctr_iresume(master->context.perfctr);
+      errno = vperfctr_iresume(master->context->perfctr);
       if (errno < 0) {
          PAPIERROR("vperfctr_iresume errno %d",errno);
       }

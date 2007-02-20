@@ -576,7 +576,7 @@ static int add_native_events(EventSetInfo_t * ESI, int *nevt, int size, EventInf
       if (_papi_hwd_allocate_registers(ESI)) {
          retval =
              _papi_hwd_update_control_state(&ESI->machdep, ESI->NativeInfoArray,
-                                            ESI->NativeCount,&ESI->master->context);
+                                            ESI->NativeCount,ESI->master->context);
          if (retval != PAPI_OK)
 	   {
 	   clean:
@@ -801,7 +801,7 @@ int remove_native_events(EventSetInfo_t * ESI, int *nevt, int size)
       Then send the info down to the substrate to update the hwd control structure. */
    if (zero) {
       retval = _papi_hwd_update_control_state(this_state, native, ESI->NativeCount,
-		&ESI->master->context);
+		ESI->master->context);
       if (retval != PAPI_OK)
          return (retval);
    }

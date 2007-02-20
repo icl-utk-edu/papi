@@ -269,7 +269,7 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, int *isHardware, long_
       overflow_vector = 0;
 
       if (!(ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE)) {
-         retval = _papi_hwi_read(&thread->context, ESI, ESI->sw_stop);
+         retval = _papi_hwi_read(thread->context, ESI, ESI->sw_stop);
          if (retval < PAPI_OK)
 	   return(retval);
          for (i = 0; i < event_counter; i++) {

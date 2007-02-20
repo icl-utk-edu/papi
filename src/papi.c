@@ -826,7 +826,7 @@ int PAPI_start(int EventSet)
 
    /* Merge the control bits from the new EventSet into the active counter config. */
 
-   retval = _papi_hwd_start(&thread->context, &ESI->machdep);
+   retval = _papi_hwd_start(thread->context, &ESI->machdep);
    if (retval != PAPI_OK)
       papi_return(retval);
 
@@ -899,13 +899,13 @@ int PAPI_stop(int EventSet, long_long * values)
 
    /* Read the current counter values into the EventSet */
 
-   retval = _papi_hwi_read(&thread->context, ESI, ESI->sw_stop);
+   retval = _papi_hwi_read(thread->context, ESI, ESI->sw_stop);
    if (retval != PAPI_OK)
       papi_return(retval);
 
    /* Remove the control bits from the active counter config. */
 
-   retval = _papi_hwd_stop(&thread->context, &ESI->machdep);
+   retval = _papi_hwd_stop(thread->context, &ESI->machdep);
    if (retval != PAPI_OK)
       papi_return(retval);
    if (values)
@@ -954,7 +954,7 @@ int PAPI_reset(int EventSet)
             array. This holds the starting value for counters
             that are shared. */
 
-         retval = _papi_hwd_reset(&thread->context, &ESI->machdep);
+         retval = _papi_hwd_reset(thread->context, &ESI->machdep);
 
          if ((ESI->state & PAPI_OVERFLOWING) &&
              (ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
@@ -990,7 +990,7 @@ int PAPI_read(int EventSet, long_long * values)
       if (_papi_hwi_is_sw_multiplex(ESI))
          retval = MPX_read(ESI->multiplex.mpx_evset, values);
       else
-         retval = _papi_hwi_read(&thread->context, ESI, values);
+         retval = _papi_hwi_read(thread->context, ESI, values);
       if (retval != PAPI_OK)
          papi_return(retval);
    } else {
@@ -1018,7 +1018,7 @@ int PAPI_read_fast_ts(int EventSet, long_long * values, long_long *cyc)
 
    ESI = _papi_hwi_lookup_EventSet(EventSet);
    thread = ESI->master;
-   retval = _papi_hwi_read(&thread->context, ESI, values);
+   retval = _papi_hwi_read(thread->context, ESI, values);
    *cyc = PAPI_get_real_cyc();
    return(retval);
 }
@@ -1042,7 +1042,7 @@ int PAPI_accum(int EventSet, long_long * values)
       if (_papi_hwi_is_sw_multiplex(ESI))
          retval = MPX_read(ESI->multiplex.mpx_evset, ESI->sw_stop);
       else
-         retval = _papi_hwi_read(&thread->context, ESI, ESI->sw_stop);
+         retval = _papi_hwi_read(thread->context, ESI, ESI->sw_stop);
       if (retval != PAPI_OK)
          papi_return(retval);
    }
@@ -1072,7 +1072,7 @@ int PAPI_write(int EventSet, long_long * values)
       papi_return(PAPI_EINVAL);
 
    if (ESI->state & PAPI_RUNNING) {
-      retval = _papi_hwd_write(&thread->context, &ESI->machdep, values);
+      retval = _papi_hwd_write(thread->context, &ESI->machdep, values);
       if (retval != PAPI_OK)
          return (retval);
    }
@@ -1234,7 +1234,7 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 
        internal.attach.tid = internal.attach.ESI->attach.tid;
        thread = internal.attach.ESI->master;
-       retval = _papi_hwd_ctl(&thread->context, PAPI_DETACH, &internal);
+       retval = _papi_hwd_ctl(thread->context, PAPI_DETACH, &internal);
        if (retval != PAPI_OK)
 	 papi_return(retval);
 
@@ -1259,7 +1259,7 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 
        internal.attach.tid = ptr->attach.tid;
        thread = internal.attach.ESI->master;
-       retval = _papi_hwd_ctl(&thread->context, PAPI_ATTACH, &internal);
+       retval = _papi_hwd_ctl(thread->context, PAPI_ATTACH, &internal);
        if (retval != PAPI_OK)
 	 papi_return(retval);
 
@@ -1279,7 +1279,7 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
          retval = _papi_hwi_lookup_or_create_thread(&thread);
          if (retval != PAPI_OK)
 		return(retval);
-	 retval = _papi_hwd_ctl(&thread->context, PAPI_DEF_MPX_USEC, &internal);
+	 retval = _papi_hwd_ctl(thread->context, PAPI_DEF_MPX_USEC, &internal);
 	}
        if (retval == PAPI_OK)
 	{
@@ -1304,7 +1304,7 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 	 if ((_papi_hwi_system_info.sub_info.kernel_multiplex) && ((ptr->multiplex.flags & PAPI_MULTIPLEX_FORCE_SW) == 0))
 	   {
        	    thread = internal.multiplex.ESI->master;
-            retval = _papi_hwd_ctl(&thread->context, PAPI_MULTIPLEX, &internal);
+            retval = _papi_hwd_ctl(thread->context, PAPI_MULTIPLEX, &internal);
 	}
 	    if (retval == PAPI_OK)
 	   	papi_return(_papi_hwi_convert_eventset_to_multiplex(&internal.multiplex));
@@ -1373,7 +1373,7 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 
          internal.domain.domain = dom;
          internal.domain.eventset = ptr->domain.eventset;
-         retval = _papi_hwd_ctl(&thread->context, PAPI_DOMAIN, &internal);
+         retval = _papi_hwd_ctl(thread->context, PAPI_DOMAIN, &internal);
          if (retval < PAPI_OK)
             papi_return(retval);
 
@@ -1474,7 +1474,7 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 
          internal.address_range.start = ptr->addr.start;
          internal.address_range.end = ptr->addr.end;
-         retval = _papi_hwd_ctl(&thread->context, option, &internal);
+         retval = _papi_hwd_ctl(thread->context, option, &internal);
          ptr->addr.start_off = internal.address_range.start_off;
          ptr->addr.end_off = internal.address_range.end_off;
          papi_return (retval);
@@ -2232,7 +2232,7 @@ long_long PAPI_get_virt_cyc(void)
    if ((retval = _papi_hwi_lookup_or_create_thread(&master)) != PAPI_OK)
      papi_return(retval);
 
-   return ((long_long)_papi_hwd_get_virt_cycles(&master->context));
+   return ((long_long)_papi_hwd_get_virt_cycles(master->context));
 }
 
 long_long PAPI_get_virt_usec(void)
@@ -2243,7 +2243,7 @@ long_long PAPI_get_virt_usec(void)
    if ((retval = _papi_hwi_lookup_or_create_thread(&master)) != PAPI_OK)
      papi_return(retval);
 
-   return ((long_long)_papi_hwd_get_virt_usec(&master->context));
+   return ((long_long)_papi_hwd_get_virt_usec(master->context));
 }
 
 int PAPI_restore(void)

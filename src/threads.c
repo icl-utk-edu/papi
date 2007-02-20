@@ -103,6 +103,14 @@ static ThreadInfo_t *allocate_thread(void)
       return (NULL);
    memset(thread, 0x00, sizeof(ThreadInfo_t));
 
+   thread->context = (hwd_context_t *) papi_malloc(_papi_hwd_context_size);
+   if ( !thread->context ){
+     papi_free(thread);
+     return(NULL);
+   }
+   memset(thread->context, 0x00, _papi_hwd_context_size);
+   thread->running_eventset = NULL;
+
    if (_papi_hwi_thread_id_fn)
      thread->tid = (*_papi_hwi_thread_id_fn)();
    else
@@ -116,6 +124,9 @@ static ThreadInfo_t *allocate_thread(void)
 static void free_thread(ThreadInfo_t ** thread)
 {
    THRDBG("Freeing thread 0x%lx at %p\n",(*thread)->tid,*thread);
+
+   if ( (*thread)->context )
+      papi_free((*thread)->context);
 
    memset(*thread, 0x00, sizeof(ThreadInfo_t));
    papi_free(*thread);
@@ -221,7 +232,7 @@ int _papi_hwi_initialize_thread(ThreadInfo_t ** dest)
    
    /* Call the substrate to fill in anything special. */
 
-   retval = _papi_hwd_init(&thread->context);
+   retval = _papi_hwd_init(thread->context);
    if (retval) 
      {
        free_thread(&thread);
@@ -317,7 +328,7 @@ int _papi_hwi_shutdown_thread(ThreadInfo_t *thread)
      {
        remove_thread(thread);
        THRDBG ("Shutting down thread 0x%lx at %p\n",thread->tid,thread);
-       retval = _papi_hwd_shutdown(&thread->context);
+       retval = _papi_hwd_shutdown(thread->context);
        free_thread(&thread);
        return(retval);
      }
