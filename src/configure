@@ -1625,6 +1625,11 @@ fi;
 echo "$as_me:$LINENO: result: $CPU" >&5
 echo "${ECHO_T}$CPU" >&6
 
+cat >>confdefs.h <<_ACEOF
+#define CPU $CPU
+_ACEOF
+
+
 #
 # Check for bitmode
 #
@@ -2754,7 +2759,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2757:" \
+echo "$as_me:2762:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -3506,7 +3511,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:3509:" \
+echo "$as_me:3514:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5

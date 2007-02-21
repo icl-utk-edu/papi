@@ -260,6 +260,7 @@ case "$OS" in
 esac 
 ])
 AC_MSG_RESULT($CPU)
+AC_DEFINE_UNQUOTED(CPU,$CPU,[cpu type])
 
 #
 # Check for bitmode

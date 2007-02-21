@@ -1,5 +1,8 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
 
+/* cpu type */
+#undef CPU
+
 /* system has ACPI component */
 #undef HAVE_ACPI
 
