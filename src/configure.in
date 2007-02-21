@@ -1195,6 +1195,7 @@ case "$mx" in
       compsrcs="${compsrcs} linux-mx.c" 
       comphdrs="${comphdrs} linux-mx.h" 
       compobjs="${compobjs} linux-mx.o" 
+      AC_DEFINE(HAVE_MX, 1, [system has myrinet mx component])
       ;;
 esac
 #echo $compnts
@@ -1211,6 +1212,7 @@ case "$acpi" in
       compsrcs="${compsrcs} linux-acpi.c" 
       comphdrs="${comphdrs} linux-acpi.h" 
       compobjs="${compobjs} linux-acpi.o" 
+      AC_DEFINE(HAVE_ACPI, 1, [system has ACPI component])
       ;;
    no)
       acpival="" ;;
