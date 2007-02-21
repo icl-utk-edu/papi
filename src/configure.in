@@ -1181,6 +1181,43 @@ case "$MAKEVER" in
     ;;
 esac
 
+#compnts="$MAKEVER"
+#echo $compnts
+AC_ARG_WITH(mx,
+            [  --with-mx=<no,yes>	Build a MX component in the library ],
+            [mx=$withval],
+            [mx=no]
+            )
+case "$mx" in
+   yes)
+      mxval="MX"
+      compnts="${compnts} ${mxval}" 
+      compsrcs="${compsrcs} linux-mx.c" 
+      comphdrs="${comphdrs} linux-mx.h" 
+      compobjs="${compobjs} linux-mx.o" 
+      ;;
+esac
+#echo $compnts
+
+AC_ARG_WITH(acpi,
+            [  --with-acpi=<no,yes>	Build a ACPI component in the library ],
+            [acpi=$withval],
+            [acpi=no]
+            )
+case "$acpi" in
+   yes)
+      acpival="ACPI" 
+      compnts="${compnts} ${acpival}" 
+      compsrcs="${compsrcs} linux-acpi.c" 
+      comphdrs="${comphdrs} linux-acpi.h" 
+      compobjs="${compobjs} linux-acpi.o" 
+      ;;
+   no)
+      acpival="" ;;
+esac
+
+#echo $compnts
+
 #
 # Fix up: put inside papi in share directory
 #
@@ -1245,6 +1282,10 @@ AC_SUBST(pfm_prefix)
 AC_SUBST(pfm_incdir)
 AC_SUBST(pfm_libdir)
 AC_SUBST(bitmode)
+AC_SUBST(compnts)
+AC_SUBST(compsrcs)
+AC_SUBST(comphdrs)
+AC_SUBST(compobjs)
 
 if test "$cross_compiling" = "yes" ; then
    AC_MSG_NOTICE(Compiling genpapifdef with $nativecc because cross compiling)

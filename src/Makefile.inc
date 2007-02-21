@@ -1,15 +1,15 @@
 PAPI_SRCDIR = $(PWD)	
 SOURCES	  = $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c multiplex.c \
     papi_fwrappers.c papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c \
-    papi_data.c threads.c $(MEMSUBSTR)-memory.c $(SUBSTR).c papi_preset.c \
-    papi_vector.c papi_memory.c
+    papi_data.c threads.c $(MEMSUBSTR)-memory.c papi_preset.c $(COMPSRCS)\
+    papi_vector.c papi_memory.c $(SUBSTR).c
 OBJECTS   = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o PAPI_FWRAPPERS.o \
-    papi_data.o threads.o $(MEMSUBSTR)-memory.o $(SUBSTR).o papi_preset.o \
-    papi_vector.o papi_memory.o
-HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h \
+    papi_data.o threads.o $(MEMSUBSTR)-memory.o papi_preset.o $(COMPOBJS)\
+    papi_vector.o papi_memory.o $(SUBSTR).o
+HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h \
     papi_preset.h threads.h papi_protos.h papi_vector.h papi_vector_redefine.h \
-    papi_memory.h config.h
+    papi_memory.h config.h $(SUBSTR).h $(COMPHDRS)
 LIBCFLAGS = -I. $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" 
 FHEADERS  = fpapi.h f77papi.h f90papi.h
 
@@ -98,6 +98,13 @@ multiplex.o: multiplex.c $(HEADERS)
 
 $(SUBSTR).o: $(SUBSTR).c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(SUBSTR).c -o $(SUBSTR).o 
+
+linux-mx.o: linux-mx.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-mx.c -o linux-mx.o 
+
+linux-acpi.o: linux-acpi.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-acpi.c -o linux-acpi.o 
+
 #
 # This is all done by configure now
 #

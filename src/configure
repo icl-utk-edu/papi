@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS AWK CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP arch DEBUGFLAGS MAKEVER PMAPI AR NOTLS altix PMINIT perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root pfm_prefix pfm_incdir pfm_libdir bitmode LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS AWK CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP arch DEBUGFLAGS MAKEVER PMAPI AR NOTLS altix PMINIT perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root pfm_prefix pfm_incdir pfm_libdir bitmode compnts compsrcs comphdrs compobjs LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -875,6 +875,8 @@ Optional Packages:
   --with-pfm-libdir=<path>	Specify directory of pfm library
   --with-pmapi=<path>		Specify path of pmapi on aix system
   --with-nativecc=<path>	Specify native C compiler for header generation
+  --with-mx=<no,yes>	Build a MX component in the library
+  --with-acpi=<no,yes>	Build a ACPI component in the library
 
 Some influential environment variables:
   CC          C compiler command
@@ -2752,7 +2754,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2755:" \
+echo "$as_me:2757:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -3504,7 +3506,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:3507:" \
+echo "$as_me:3509:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -7025,6 +7027,51 @@ case "$MAKEVER" in
     ;;
 esac
 
+#compnts="$MAKEVER"
+#echo $compnts
+
+# Check whether --with-mx or --without-mx was given.
+if test "${with_mx+set}" = set; then
+  withval="$with_mx"
+  mx=$withval
+else
+  mx=no
+
+fi;
+case "$mx" in
+   yes)
+      mxval="MX"
+      compnts="${compnts} ${mxval}"
+      compsrcs="${compsrcs} linux-mx.c"
+      comphdrs="${comphdrs} linux-mx.h"
+      compobjs="${compobjs} linux-mx.o"
+      ;;
+esac
+#echo $compnts
+
+
+# Check whether --with-acpi or --without-acpi was given.
+if test "${with_acpi+set}" = set; then
+  withval="$with_acpi"
+  acpi=$withval
+else
+  acpi=no
+
+fi;
+case "$acpi" in
+   yes)
+      acpival="ACPI"
+      compnts="${compnts} ${acpival}"
+      compsrcs="${compsrcs} linux-acpi.c"
+      comphdrs="${comphdrs} linux-acpi.h"
+      compobjs="${compobjs} linux-acpi.o"
+      ;;
+   no)
+      acpival="" ;;
+esac
+
+#echo $compnts
+
 #
 # Fix up: put inside papi in share directory
 #
@@ -7064,6 +7111,10 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define PAPI_DATADIR "$PAPI_DATADIR"
 _ACEOF
+
+
+
+
 
 
 
@@ -7760,6 +7811,10 @@ s,@pfm_prefix@,$pfm_prefix,;t t
 s,@pfm_incdir@,$pfm_incdir,;t t
 s,@pfm_libdir@,$pfm_libdir,;t t
 s,@bitmode@,$bitmode,;t t
+s,@compnts@,$compnts,;t t
+s,@compsrcs@,$compsrcs,;t t
+s,@comphdrs@,$comphdrs,;t t
+s,@compobjs@,$compobjs,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
