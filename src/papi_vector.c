@@ -15,6 +15,7 @@
 #include "papi_memory.h"
 
 papi_vectors_t _papi_frm_vector;
+papi_vectors_t *_PAPI_VECTOR;
 
 /* Prototypes */
 int vec_int_ok_dummy ();
@@ -30,6 +31,30 @@ long_long vec_dummy_get_virt_usec (const hwd_context_t *zero);
 long_long vec_dummy_get_real_usec (void);
 long_long vec_dummy_get_real_cycles (void);
 
+extern papi_vectors_t _CPU_vectors;
+#ifdef HAVE_ACPI
+extern papi_vectors_t _acpi_vectors;
+#endif
+#ifdef HAVE_MX
+extern papi_vectors_t _mx_vectors;
+#endif
+
+papi_vectors_t *_papi_component_table[] = {
+  &_CPU_vectors,
+#ifdef HAVE_ACPI
+  &_acpi_vectors,
+#endif
+#ifdef HAVE_MX
+  &_mx_vectors,
+#endif
+  NULL
+};
+
+void _vectors_error()
+{
+  SUBDBG("function is not implemented in the component!\n");
+  exit(PAPI_ESBSTR);
+}
 
 long_long vec_dummy_get_real_usec (void)
 {
