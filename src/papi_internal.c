@@ -227,22 +227,15 @@ static void initialize_NativeInfoArray(EventSetInfo_t * ESI)
 static int allocate_EventSet(EventSetInfo_t **here)
 {
    EventSetInfo_t *ESI;
-   int max_counters, ret;
+   int max_counters;
 
    ESI = (EventSetInfo_t *) papi_malloc(sizeof(EventSetInfo_t));
    if (ESI == NULL)
       return (PAPI_ENOMEM);
    memset(ESI, 0x00, sizeof(EventSetInfo_t));
 
-   ret = _papi_hwd_init_control_state(&ESI->machdep); /* this used to be init_config */
-   if (ret != PAPI_OK)
-     {
-       papi_free(ESI);
-       return(ret);
-     }
-
    max_counters = _papi_hwi_system_info.sub_info.num_mpx_cntrs;
-/*  ESI->machdep = (hwd_control_state_t *)papi_malloc(sizeof(hwd_control_state_t)); */
+   ESI->machdep = (hwd_control_state_t *)papi_malloc(_papi_hwd_control_state_size);
    ESI->sw_stop = (long_long *) papi_malloc(max_counters * sizeof(long_long));
    ESI->hw_start = (long_long *) papi_malloc(max_counters * sizeof(long_long));
    ESI->EventInfoArray = (EventInfo_t *) papi_malloc(max_counters * sizeof(EventInfo_t));
@@ -250,29 +243,25 @@ static int allocate_EventSet(EventSetInfo_t **here)
 /* xxxx should these arrays be num_mpx_cntrs or num_cntrs in size?? */
    ESI->NativeInfoArray = (NativeInfo_t *) papi_malloc(max_counters * sizeof(NativeInfo_t)+max_counters*_papi_hwd_register_size);
 
-   if (
-/*    (ESI->machdep        == NULL )  || */
-         (ESI->sw_stop == NULL) || (ESI->hw_start == NULL)
-         || (ESI->NativeInfoArray == NULL)
-         || (ESI->EventInfoArray == NULL)) {
-/*      if (ESI->machdep)        papi_free(ESI->machdep); */
-      if (ESI->sw_stop)
-         papi_free(ESI->sw_stop);
-      if (ESI->hw_start)
-         papi_free(ESI->hw_start);
-      if (ESI->EventInfoArray)
-         papi_free(ESI->EventInfoArray);
-      if ( ESI->NativeInfoArray )
-	 papi_free(ESI->NativeInfoArray);
-      papi_free(ESI);
-      return (PAPI_ENOMEM);
+   if ((ESI->machdep== NULL ) ||
+       (ESI->sw_stop == NULL) || (ESI->hw_start == NULL) ||
+       (ESI->NativeInfoArray == NULL) || (ESI->EventInfoArray == NULL)) {
+	if (ESI->machdep)	    papi_free(ESI->machdep);
+	if (ESI->sw_stop)	    papi_free(ESI->sw_stop);
+	if (ESI->hw_start)	    papi_free(ESI->hw_start);
+	if (ESI->EventInfoArray)    papi_free(ESI->EventInfoArray);
+	if ( ESI->NativeInfoArray)  papi_free(ESI->NativeInfoArray);
+	papi_free(ESI);
+	return (PAPI_ENOMEM);
    }
-/*  memset(ESI->machdep,       0x00,_papi_system_info.size_machdep); */
+   memset(ESI->machdep, 0x00,_papi_hwd_control_state_size);
    memset(ESI->sw_stop, 0x00, max_counters * sizeof(long_long));
    memset(ESI->hw_start, 0x00, max_counters * sizeof(long_long));
 
    initialize_EventInfoArray(ESI);
    initialize_NativeInfoArray(ESI);
+
+   _papi_hwd_init_control_state(ESI->machdep); /* this used to be init_config */
 
    ESI->state = PAPI_STOPPED;
 
@@ -294,11 +283,9 @@ static void free_EventSet(EventSetInfo_t * ESI)
 {
    if (ESI->EventInfoArray)
       papi_free(ESI->EventInfoArray);
-/*  if (ESI->machdep)        papi_free(ESI->machdep); */
-   if (ESI->sw_stop)
-      papi_free(ESI->sw_stop);
-   if (ESI->hw_start)
-      papi_free(ESI->hw_start);
+   if (ESI->machdep)	papi_free(ESI->machdep);
+   if (ESI->sw_stop)	papi_free(ESI->sw_stop);
+   if (ESI->hw_start)	papi_free(ESI->hw_start);
    if ((ESI->state & PAPI_MULTIPLEXING) && ESI->multiplex.mpx_evset)
      papi_free(ESI->multiplex.mpx_evset);
 
@@ -575,7 +562,7 @@ static int add_native_events(EventSetInfo_t * ESI, int *nevt, int size, EventInf
    if (remap) {
       if (_papi_hwd_allocate_registers(ESI)) {
          retval =
-             _papi_hwd_update_control_state(&ESI->machdep, ESI->NativeInfoArray,
+             _papi_hwd_update_control_state(ESI->machdep, ESI->NativeInfoArray,
                                             ESI->NativeCount,ESI->master->context);
          if (retval != PAPI_OK)
 	   {
@@ -721,7 +708,7 @@ int _papi_hwi_add_pevent(EventSetInfo_t * ESI, int EventCode, void *inout)
    /* Fill in machine depending info including the EventInfoArray. */
 
    retval =
-       _papi_hwd_add_prog_event(&ESI->machdep, EventCode, inout,
+       _papi_hwd_add_prog_event(ESI->machdep, EventCode, inout,
                                 &ESI->EventInfoArray[thisindex]);
    if (retval < PAPI_OK)
       return (retval);
@@ -738,7 +725,6 @@ int _papi_hwi_add_pevent(EventSetInfo_t * ESI, int EventCode, void *inout)
 
 int remove_native_events(EventSetInfo_t * ESI, int *nevt, int size)
 {
-   hwd_control_state_t *this_state = &ESI->machdep;
    NativeInfo_t *native = ESI->NativeInfoArray;
    int i, j, zero = 0, retval;
 
@@ -800,7 +786,7 @@ int remove_native_events(EventSetInfo_t * ESI, int *nevt, int size)
       clear the now empty slots, reinitialize the index, and update the count.
       Then send the info down to the substrate to update the hwd control structure. */
    if (zero) {
-      retval = _papi_hwd_update_control_state(this_state, native, ESI->NativeCount,
+      retval = _papi_hwd_update_control_state(ESI->machdep, native, ESI->NativeCount,
 		ESI->master->context);
       if (retval != PAPI_OK)
          return (retval);
@@ -880,7 +866,7 @@ int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long_long * va
    long_long *dp;
    int i, j = 0, index;
 
-   retval = _papi_hwd_read(context, &ESI->machdep, &dp, ESI->state);
+   retval = _papi_hwd_read(context, ESI->machdep, &dp, ESI->state);
    if (retval != PAPI_OK)
      return (retval);
 
@@ -1299,7 +1285,7 @@ void print_state(EventSetInfo_t * ESI)
 
    APIDBG( "counter_cmd               ");
    for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
-      APIDBG( "%15d", (&(ESI->machdep))->counter_cmd.events[i]);
+      APIDBG( "%15d", ESI->machdep->counter_cmd.events[i]);
    APIDBG( "\n");
 #endif
 

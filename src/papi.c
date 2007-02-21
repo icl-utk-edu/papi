@@ -826,7 +826,7 @@ int PAPI_start(int EventSet)
 
    /* Merge the control bits from the new EventSet into the active counter config. */
 
-   retval = _papi_hwd_start(thread->context, &ESI->machdep);
+   retval = _papi_hwd_start(thread->context, ESI->machdep);
    if (retval != PAPI_OK)
       papi_return(retval);
 
@@ -905,7 +905,7 @@ int PAPI_stop(int EventSet, long_long * values)
 
    /* Remove the control bits from the active counter config. */
 
-   retval = _papi_hwd_stop(thread->context, &ESI->machdep);
+   retval = _papi_hwd_stop(thread->context, ESI->machdep);
    if (retval != PAPI_OK)
       papi_return(retval);
    if (values)
@@ -954,7 +954,7 @@ int PAPI_reset(int EventSet)
             array. This holds the starting value for counters
             that are shared. */
 
-         retval = _papi_hwd_reset(thread->context, &ESI->machdep);
+         retval = _papi_hwd_reset(thread->context, ESI->machdep);
 
          if ((ESI->state & PAPI_OVERFLOWING) &&
              (ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
@@ -1072,7 +1072,7 @@ int PAPI_write(int EventSet, long_long * values)
       papi_return(PAPI_EINVAL);
 
    if (ESI->state & PAPI_RUNNING) {
-      retval = _papi_hwd_write(thread->context, &ESI->machdep, values);
+      retval = _papi_hwd_write(thread->context, ESI->machdep, values);
       if (retval != PAPI_OK)
          return (retval);
    }

@@ -319,7 +319,7 @@ typedef struct _EventSetInfo {
 
    int NumberOfEvents;          /* Number of events added to EventSet */
 
-   hwd_control_state_t machdep; /* This contains the encoding necessary for the 
+   hwd_control_state_t *machdep; /* This contains the encoding necessary for the 
                                    hardware to set the counters to the appropriate
                                    conditions */
 

@@ -503,8 +503,7 @@ static void swap_events(EventSetInfo_t * ESI, struct hwd_pmc_control *contr, int
 }
 
 static int _p3_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) {
-   hwd_control_state_t *this_state = &ESI->machdep;
-   struct hwd_pmc_control *contr = &this_state->control;
+   struct hwd_pmc_control *contr = &ESI->machdep->control;
    int i, ncntrs, nricntrs = 0, nracntrs = 0, retval = 0;
 
 #ifdef __CATAMOUNT__
@@ -612,46 +611,18 @@ static int _p3_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
   switch (code) {
    case PAPI_DOMAIN:
    case PAPI_DEFDOM:
-      return (_p3_set_domain(&option->domain.ESI->machdep, option->domain.domain));
+      return (_p3_set_domain(option->domain.ESI->machdep, option->domain.domain));
    case PAPI_GRANUL:
    case PAPI_DEFGRN:
       return(PAPI_ESBSTR);
    case PAPI_ATTACH:
-      return (attach(&option->attach.ESI->machdep, option->attach.tid));
+      return (attach(option->attach.ESI->machdep, option->attach.tid));
    case PAPI_DETACH:
-      return (detach(&option->attach.ESI->machdep, option->attach.tid));
+      return (detach(option->attach.ESI->machdep, option->attach.tid));
    default:
       return (PAPI_EINVAL);
   }
 }
-/**********************************************************************************************/
-
-/*
-papi_svector_t _p3_vector_table[] = {
-  {(void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE },
-  {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
-  {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
-  {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
-  {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
-  {(void (*)())_papi_hwd_bpt_map_set, VEC_PAPI_HWD_BPT_MAP_SET },
-  {(void (*)())_papi_hwd_bpt_map_avail, VEC_PAPI_HWD_BPT_MAP_AVAIL },
-  {(void (*)())_papi_hwd_bpt_map_exclusive, VEC_PAPI_HWD_BPT_MAP_EXCLUSIVE },
-  {(void (*)())_papi_hwd_bpt_map_shared, VEC_PAPI_HWD_BPT_MAP_SHARED },
-  {(void (*)())_papi_hwd_bpt_map_preempt, VEC_PAPI_HWD_BPT_MAP_PREEMPT },
-  {(void (*)())_papi_hwd_bpt_map_update, VEC_PAPI_HWD_BPT_MAP_UPDATE },
-  {(void (*)())_papi_hwd_allocate_registers, VEC_PAPI_HWD_ALLOCATE_REGISTERS },
-  {(void (*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
-  {(void (*))_papi_hwd_set_domain, VEC_PAPI_HWD_SET_DOMAIN},
-  {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
-  {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
-  {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
-  {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
-  {(void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
-  {(void (*)())_papi_hwd_ntv_code_to_bits, VEC_PAPI_HWD_NTV_CODE_TO_BITS},
-  {(void (*)())_papi_hwd_ntv_bits_to_info, VEC_PAPI_HWD_NTV_BITS_TO_INFO},
-  { NULL, VEC_PAPI_END }
-};
-*/
 
 papi_vectors_t _p3_vectors = {
     /* sizes of component-private structures */
