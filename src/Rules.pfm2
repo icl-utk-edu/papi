@@ -20,7 +20,7 @@ endif
 CC_R    	:= $(CC) -pthread
 CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.$(PAPIVER) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
 FFLAGS		+= -ffixed-line-length-132
-CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) 
+CFLAGS		+= -D_GNU_SOURCE -Wall -DCOMP_VECTOR="_$(SUBSTR)_vectors" $(NOTLS) $(ALTIX) 
 ifeq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))
 OPTFLAGS	+= -g -O3 $(DEBUGFLAGS)
 else

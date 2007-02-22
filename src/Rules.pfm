@@ -11,7 +11,6 @@ TARGETS = serial multiplex_and_pthreads shared ear range
 #
 # GNU G77/GCC section
 #
-
 ifneq (,$(shell gcc -v 2>&1 | grep version | cut -f3 -d" " | grep "^4"))
 TARGETS += omp
 OMPCFLGS = -fopenmp
@@ -76,7 +75,7 @@ endif
 
 CFLAGS-2.x := -DPFM20 -D_GNU_SOURCE
 CFLAGS-3.x := -DPFM30 -D_GNU_SOURCE  
-CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) $(NOTLS) $(ALTIX) $(CFLAGS-$(VERSION))
+CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) -DCOMP_VECTOR="_$(SUBSTR)_vectors" $(NOTLS) $(ALTIX) $(CFLAGS-$(VERSION))
 
 MISCHDRS = pfmwrap.h
 MISCSRCS = 

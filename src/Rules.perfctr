@@ -72,7 +72,7 @@ endif
 CC_R    	:= $(CC) -pthread
 CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.$(PAPIVER) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
 FFLAGS		+= -Wall -ffixed-line-length-132 $(BITFLAGS)
-CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(BITFLAGS)
+CFLAGS		+= -D_GNU_SOURCE -Wall -DCOMP_VECTOR="_$(SUBSTR)_vectors" $(NOTLS) $(BITFLAGS)
 
 # 
 # Catamount section
