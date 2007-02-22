@@ -1,6 +1,6 @@
 /* Redfine the calls to vector table lookups */
 extern void _vectors_error();
-#define VECERROR _vectors_error()
+#define VECERROR _vectors_error
 #define CHECKVEC(a) ((a)!=0?(a): VECERROR)
 #define _papi_hwd_context_size		    CHECKVEC(_PAPI_VECTOR->context_size)
 #define _papi_hwd_control_state_size	CHECKVEC(_PAPI_VECTOR->control_state_size)
