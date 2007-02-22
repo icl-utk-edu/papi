@@ -597,10 +597,8 @@ read the documentation carefully.  */
       and presenting information for each native event in turn.
    The various fields and their usage is discussed below.
 */
-/* MAX_TERMS is the current max value of MAX_COUNTER_TERMS as defined in SUBSTRATEs */
-/* This definition also is HORRIBLE and should be replaced by a dynamic value. -pjm */
-#define PAPI_MAX_INFO_TERMS 12
-   typedef struct event_info {
+#define PAPI_MAX_INFO_TERMS 8 /* should match PAPI_MAX_COUNTER_TERMS defined in papi_internal.h */
+typedef struct event_info {
       unsigned int event_code;               /* preset (0x8xxxxxxx) or native (0x4xxxxxxx) event code */
       unsigned int count;                    /* number of terms (usually 1) in the code and name fields
                                                 - for presets, these terms are native events

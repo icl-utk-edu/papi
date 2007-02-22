@@ -2,8 +2,7 @@
 #define _PAPI_VECTOR_H
 
 /* Vector Table Stuff */
-
-typedef struct papi_vectors{
+typedef struct papi_vectors {
 /* Private structure sizes for this component */
     int		context_size;
     int		control_state_size;

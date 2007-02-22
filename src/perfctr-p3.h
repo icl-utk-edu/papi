@@ -1,56 +1,6 @@
 #ifndef _PAPI_PENTIUM3_H
 #define _PAPI_PENTIUM3_H
 
-#ifndef __USE_GNU
-#define __USE_GNU
-#endif
-#ifndef __USE_UNIX98
-#define __USE_UNIX98
-#endif
-#ifndef __USE_XOPEN_EXTENDED
-#define __USE_XOPEN_EXTENDED
-#endif
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <signal.h>
-
-#ifndef __BSD__ /* #include <malloc.h> */
-#include <malloc.h>
-#endif
-
-#include <assert.h>
-#include <string.h>
-#include <math.h>
-#include <limits.h>
-#include <sys/types.h>
-
-#ifdef XML
-#include <expat.h>
-#endif
-
-#define inline_static inline static
-#include <unistd.h>
-#include <time.h>
-#include <errno.h>
-#include <ctype.h>
-
-#ifdef __BSD__
-#include <ucontext.h>
-#else
-#include <sys/ucontext.h>
-#endif
-
-#include <sys/times.h>
-#include <sys/time.h>
-
-#ifndef __BSD__ /* #include <linux/unistd.h> */
-  #ifndef __CATAMOUNT__
-    #include <linux/unistd.h>	
-  #endif
-#endif
-
 #ifndef CONFIG_SMP
 /* Assert that CONFIG_SMP is set before including asm/atomic.h to 
  * get bus-locking atomic_* operations when building on UP kernels
@@ -60,43 +10,13 @@
 #include <inttypes.h>
 #include "libperfctr.h"
 
-#define PERF_MAX_COUNTERS 4
-#define MAX_COUNTERS PERF_MAX_COUNTERS
-#define MAX_COUNTER_TERMS  MAX_COUNTERS
-#define P3_MAX_REGS_PER_EVENT 2
+#define MAX_COUNTERS 4
 
 #include "papi.h"
 #include "papi_preset.h"
 
-
-/* Lock macros. */
-extern volatile unsigned int lock[PAPI_MAX_LOCK];
-#define MUTEX_OPEN 1
-#define MUTEX_CLOSED 0
-
-/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
- * else val = MUTEX_CLOSED */
-
-#define  _papi_hwd_lock(lck)                    \
-do                                              \
-{                                               \
-   unsigned int res = 0;                        \
-   do {                                         \
-      __asm__ __volatile__ ("lock ; " "cmpxchg %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");  \
-   } while(res != (unsigned int)MUTEX_OPEN);   \
-} while(0)
-
-#define  _papi_hwd_unlock(lck)                  \
-do                                              \
-{                                               \
-   unsigned int res = 0;                       \
-   __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");                                \
-} while(0)
-
-typedef siginfo_t hwd_siginfo_t;
-typedef ucontext_t hwd_ucontext_t;
-
 /* Overflow macros */
+/* old (PAPI <= 3.5) style overflow address:
 #ifdef __x86_64__
   #ifdef __CATAMOUNT__
     #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->sc_rip)
@@ -106,6 +26,19 @@ typedef ucontext_t hwd_ucontext_t;
 #else
   #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->eip)
 #endif
+*/
+
+/* new (PAPI => 3.9.0) style overflow address: */
+#ifdef __x86_64__
+  #ifdef __CATAMOUNT__
+    #define OVERFLOW_PC sc_rip
+  #else
+    #define OVERFLOW_PC rip
+  #endif
+#else
+    #define OVERFLOW_PC eip
+#endif
+#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&((hwd_ucontext_t *)ctx.ucontext)->uc_mcontext))->OVERFLOW_PC)
 
 /* Linux DOES support hardware overflow */
 #define HW_OVERFLOW 1
@@ -145,10 +78,6 @@ typedef struct native_event_entry {
    _p3_register_t resources;
 } native_event_entry_t;
 
-/* typedefs to conform to hardware independent PAPI code. */
-typedef _p3_reg_alloc_t hwd_reg_alloc_t;
-typedef _p3_register_t hwd_register_t;
-
 typedef struct _p3_perfctr_control {
    hwd_native_t native[MAX_COUNTERS];
    int native_idx;
@@ -165,10 +94,15 @@ typedef struct _p3_perfctr_context {
 /*  _p3_perfctr_control_t start; */
 } _p3_perfctr_context_t;
 
-/* typedefs to conform to hardware independent PAPI code. */
-typedef _p3_perfctr_control_t hwd_control_state_t;
-typedef _p3_perfctr_context_t hwd_context_t;
+/* typedefs to conform to PAPI component layer code. */
+/* these are void * in the PAPI framework layer code. */
+typedef _p3_reg_alloc_t cmp_reg_alloc_t;
+typedef _p3_register_t cmp_register_t;
+typedef _p3_perfctr_control_t cmp_control_state_t;
+typedef _p3_perfctr_context_t cmp_context_t;
+
 #define hwd_pmc_control vperfctr_control
+
 
 /* Used in resources.selector to determine on which counters an event can live. */
 #define CNTR1 0x1

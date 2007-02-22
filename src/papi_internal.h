@@ -159,13 +159,27 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
 #define SUPPORTS_MULTIPLE_THREADS(mdi) (mdi.sub_info.available_granularities & PAPI_GRN_THR)
 
+/* This was defined by each substrate as = (MAX_COUNTERS < 8) ? MAX_COUNTERS : 8 
+    Now it's defined globally as 8 for everything. Mainly applies to max terms in
+    derived events.
+*/
+#define PAPI_MAX_COUNTER_TERMS	8
+
+//#ifndef IN_SUBSTRATE
+  #define hwd_context_t		void
+  #define hwd_control_state_t	void
+  #define hwd_reg_alloc_t	void
+  #define hwd_register_t	void
+//#endif
+
 /* DEFINES END HERE */
 
 #if !(defined(_WIN32) || defined(NO_CONFIG))
 #include "config.h"
 #endif
 
-#include SUBSTRATE
+//#include SUBSTRATE
+#include OS_HEADER
 #include "papi_preset.h"
 
 typedef struct _EventSetDomainInfo {
@@ -177,16 +191,27 @@ typedef struct _EventSetGranularityInfo {
 } EventSetGranularityInfo_t;
 
 typedef struct _EventSetOverflowInfo {
-   long_long deadline[MAX_COUNTERS];
+   long_long *deadline;
+   int *threshold;
+   int *EventIndex;
+   int *EventCode;
    int count;
-   int threshold[MAX_COUNTERS];
-   int EventIndex[MAX_COUNTERS];
-   int EventCode[MAX_COUNTERS];
    int event_counter;
    int flags;
    int timer_ms;
    PAPI_overflow_handler_t handler;
 } EventSetOverflowInfo_t;
+
+typedef struct _EventSetProfileInfo {
+   PAPI_sprofil_t **prof;
+   int *count;     /* Number of buffers */
+   int *threshold;
+   int *EventIndex;
+   int *EventCode;
+   int flags;
+   int overflowcount;           /* number of overflows */
+   int event_counter;
+} EventSetProfileInfo_t;
 
 typedef struct _EventSetAttachInfo {
   unsigned long tid;
@@ -198,28 +223,16 @@ typedef struct _EventSetInheritInfo {
 } EventSetInheritInfo_t;
 #endif
 
-typedef struct _EventSetProfileInfo {
-   PAPI_sprofil_t *prof[MAX_COUNTERS];
-   int count[MAX_COUNTERS];     /* Number of buffers */
-   int threshold[MAX_COUNTERS];
-   int EventIndex[MAX_COUNTERS];
-   int EventCode[MAX_COUNTERS];
-   int flags;
-   int overflowcount;           /* number of overflows */
-   int event_counter;
-} EventSetProfileInfo_t;
-
 /* This contains info about an individual event added to the EventSet.
    The event can be either PRESET or NATIVE, and either simple or derived.
-   If derived, it can consist of up to MAX_COUNTER_TERMS native events.
+   If derived, it can consist of up to PAPI_MAX_COUNTER_TERMS native events.
    An EventSet contains a pointer to an array of these structures to define
    each added event.
  */
 
 typedef struct _EventInfo {
    unsigned int event_code;     /* Preset or native code for this event as passed to PAPI_add_event() */
-   /* should this be MAX_COUNTER_TERMS instead of MAX_COUNTERS ?? (dkt 10/9/03) */
-   int pos[MAX_COUNTER_TERMS];   /* position in the counter array for this events components */
+   int pos[PAPI_MAX_COUNTER_TERMS];   /* position in the counter array for this events components */
    char *ops;                   /* operation string of preset */
    int derived;                 /* Counter derivation command used for derived events */
 } EventInfo_t;
@@ -319,7 +332,7 @@ typedef struct _EventSetInfo {
 
    int NumberOfEvents;          /* Number of events added to EventSet */
 
-   hwd_control_state_t *machdep; /* This contains the encoding necessary for the 
+   hwd_control_state_t *ctl_state; /* This contains the encoding necessary for the 
                                    hardware to set the counters to the appropriate
                                    conditions */
 

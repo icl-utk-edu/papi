@@ -159,13 +159,10 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t * prof,
    }
 }
 
-void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, void *context,
-                      long_long over, int profile_index)
+void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI,
+                      long_long over, int profile_index, caddr_t pc)
 {
-  _papi_hwi_context_t *ctx = (_papi_hwi_context_t *) context;
-
    EventSetProfileInfo_t *profile = &ESI->profile;
-   caddr_t pc = (caddr_t) GET_OVERFLOW_ADDRESS(ctx);
    PAPI_sprofil_t *sprof;
 
   caddr_t offset = (caddr_t)0;
@@ -215,14 +212,14 @@ void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, void *context,
      situation).
 */
 
-int _papi_hwi_dispatch_overflow_signal(void *papiContext, int *isHardware, long_long overflow_bit, int genOverflowBit, ThreadInfo_t **t)
+int _papi_hwi_dispatch_overflow_signal(void *papiContext, int *isHardware, long_long overflow_bit, int genOverflowBit, ThreadInfo_t **t, caddr_t pc)
 {
    int retval, event_counter, i, overflow_flag, pos;
    int papi_index, j;
    int profile_index = 0;
    long_long overflow_vector;
 
-   long_long temp[MAX_COUNTERS], over;
+   long_long temp[_papi_hwi_system_info.sub_info.num_cntrs], over;
    long_long latest = 0;
    ThreadInfo_t *thread;
    EventSetInfo_t *ESI;
@@ -314,7 +311,7 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, int *isHardware, long_
                   * events that contain more than one counter without being  *
                   * derived. You've gotta scan all terms to make sure you    *
                   * find the one to profile. */
-                  for(k = 0, pos = 0; k < MAX_COUNTER_TERMS && pos >= 0; k++) {
+                  for(k = 0, pos = 0; k < PAPI_MAX_COUNTER_TERMS && pos >= 0; k++) {
                      pos = ESI->EventInfoArray[papi_index].pos[k];
                      if (i == pos) {
                         profile_index = j;
@@ -333,13 +330,13 @@ foundit:
                   over = 0;
                else
                   over = temp[profile_index];
-               _papi_hwi_dispatch_profile(ESI, (caddr_t) papiContext, over, profile_index);
+               _papi_hwi_dispatch_profile(ESI, over, profile_index, pc);
                overflow_vector ^= (long_long )1 << i;
             }
             /* do not use overflow_vector after this place */
          } else {
             ESI->overflow.handler(ESI->EventSetIndex,
-                  GET_OVERFLOW_ADDRESS(ctx), overflow_vector,ctx->ucontext);
+                  pc, overflow_vector,ctx->ucontext);
          }
       }
        ESI->state &= ~(PAPI_PAUSED);

@@ -196,7 +196,7 @@ static void initialize_EventInfoArray(EventSetInfo_t * ESI)
    tmp.event_code = PAPI_NULL;
    tmp.ops = NULL;
    tmp.derived = NOT_DERIVED;
-   for (j = 0; j < MAX_COUNTER_TERMS; j++)
+   for (j = 0; j < PAPI_MAX_COUNTER_TERMS; j++)
      tmp.pos[j] = -1;
    
    for (i = 0; i < limit; i++) {
@@ -228,6 +228,7 @@ static int allocate_EventSet(EventSetInfo_t **here)
 {
    EventSetInfo_t *ESI;
    int max_counters;
+   char *ptr;
 
    ESI = (EventSetInfo_t *) papi_malloc(sizeof(EventSetInfo_t));
    if (ESI == NULL)
@@ -235,7 +236,7 @@ static int allocate_EventSet(EventSetInfo_t **here)
    memset(ESI, 0x00, sizeof(EventSetInfo_t));
 
    max_counters = _papi_hwi_system_info.sub_info.num_mpx_cntrs;
-   ESI->machdep = (hwd_control_state_t *)papi_malloc(_papi_hwd_control_state_size);
+   ESI->ctl_state = (hwd_control_state_t *)papi_malloc(_papi_hwd_control_state_size);
    ESI->sw_stop = (long_long *) papi_malloc(max_counters * sizeof(long_long));
    ESI->hw_start = (long_long *) papi_malloc(max_counters * sizeof(long_long));
    ESI->EventInfoArray = (EventInfo_t *) papi_malloc(max_counters * sizeof(EventInfo_t));
@@ -243,25 +244,52 @@ static int allocate_EventSet(EventSetInfo_t **here)
 /* xxxx should these arrays be num_mpx_cntrs or num_cntrs in size?? */
    ESI->NativeInfoArray = (NativeInfo_t *) papi_malloc(max_counters * sizeof(NativeInfo_t)+max_counters*_papi_hwd_register_size);
 
-   if ((ESI->machdep== NULL ) ||
+   /* NOTE: the next two malloc allocate blocks of memory that are later parcelled into overflow and profile arrays */
+   ESI->overflow.deadline = (long_long *) papi_malloc((sizeof(long_long)+sizeof(int)*3)*max_counters);
+   ESI->profile.prof = (PAPI_sprofil_t **) papi_malloc((sizeof(PAPI_sprofil_t *)*max_counters+max_counters*sizeof(int)*4));
+
+   if ((ESI->ctl_state == NULL) ||
        (ESI->sw_stop == NULL) || (ESI->hw_start == NULL) ||
-       (ESI->NativeInfoArray == NULL) || (ESI->EventInfoArray == NULL)) {
-	if (ESI->machdep)	    papi_free(ESI->machdep);
+       (ESI->NativeInfoArray == NULL) || (ESI->EventInfoArray == NULL) ||
+       (ESI->profile.prof == NULL) || (ESI->overflow.deadline == NULL)) {
 	if (ESI->sw_stop)	    papi_free(ESI->sw_stop);
 	if (ESI->hw_start)	    papi_free(ESI->hw_start);
 	if (ESI->EventInfoArray)    papi_free(ESI->EventInfoArray);
 	if ( ESI->NativeInfoArray)  papi_free(ESI->NativeInfoArray);
+	if (ESI->ctl_state)	    papi_free(ESI->ctl_state);
+	if ( ESI->overflow.deadline)  papi_free(ESI->overflow.deadline);
+	if ( ESI->profile.prof)  papi_free(ESI->profile.prof);
 	papi_free(ESI);
 	return (PAPI_ENOMEM);
    }
-   memset(ESI->machdep, 0x00,_papi_hwd_control_state_size);
    memset(ESI->sw_stop, 0x00, max_counters * sizeof(long_long));
    memset(ESI->hw_start, 0x00, max_counters * sizeof(long_long));
+   memset(ESI->ctl_state, 0x00,_papi_hwd_control_state_size);
+
+   /* Carve up the overflow block into separate arrays */
+   ptr = (char *) ESI->overflow.deadline;
+   ptr += sizeof(long_long)*max_counters;
+   ESI->overflow.threshold = (int *) ptr;
+   ptr += sizeof(int)*max_counters;
+   ESI->overflow.EventIndex = (int *) ptr;
+   ptr += sizeof(int)*max_counters;
+   ESI->overflow.EventCode = (int *) ptr;
+
+   /* Carve up the profile block into separate arrays */
+   ptr =(char *)ESI->profile.prof+(sizeof(PAPI_sprofil_t *)*max_counters);
+   ESI->profile.count = (int *) ptr;
+   ptr += sizeof(int)*max_counters;
+   ESI->profile.threshold = (int *) ptr;
+   ptr += sizeof(int)*max_counters;
+   ESI->profile.EventIndex = (int *) ptr;
+   ptr += sizeof(int)*max_counters;
+   ESI->profile.EventCode = (int *) ptr;
+  
 
    initialize_EventInfoArray(ESI);
    initialize_NativeInfoArray(ESI);
 
-   _papi_hwd_init_control_state(ESI->machdep); /* this used to be init_config */
+   _papi_hwd_init_control_state(ESI->ctl_state); /* this used to be init_config */
 
    ESI->state = PAPI_STOPPED;
 
@@ -281,11 +309,12 @@ static int allocate_EventSet(EventSetInfo_t **here)
 
 static void free_EventSet(EventSetInfo_t * ESI)
 {
-   if (ESI->EventInfoArray)
-      papi_free(ESI->EventInfoArray);
-   if (ESI->machdep)	papi_free(ESI->machdep);
-   if (ESI->sw_stop)	papi_free(ESI->sw_stop);
-   if (ESI->hw_start)	papi_free(ESI->hw_start);
+   if (ESI->EventInfoArray)	papi_free(ESI->EventInfoArray);
+   if ( ESI->NativeInfoArray)	papi_free(ESI->NativeInfoArray);
+   if ( ESI->overflow.deadline )	papi_free(ESI->overflow.deadline);
+   if ( ESI->profile.prof )	papi_free(ESI->profile.prof);    if (ESI->ctl_state)		papi_free(ESI->ctl_state);
+   if (ESI->sw_stop)		papi_free(ESI->sw_stop);
+   if (ESI->hw_start)		papi_free(ESI->hw_start);
    if ((ESI->state & PAPI_MULTIPLEXING) && ESI->multiplex.mpx_evset)
      papi_free(ESI->multiplex.mpx_evset);
 
@@ -470,7 +499,7 @@ static void remap_event_position(EventSetInfo_t * ESI, int thisindex)
       /* fill in the new information */
       if (head[j].event_code & PAPI_PRESET_MASK) {
          preset_index = head[j].event_code & PAPI_PRESET_AND_MASK;
-         for (k = 0; k < MAX_COUNTER_TERMS; k++) {
+         for (k = 0; k < PAPI_MAX_COUNTER_TERMS; k++) {
             nevt = _papi_hwi_presets.data[preset_index]->native[k];
             if (nevt == PAPI_NULL)
                break;
@@ -562,7 +591,7 @@ static int add_native_events(EventSetInfo_t * ESI, int *nevt, int size, EventInf
    if (remap) {
       if (_papi_hwd_allocate_registers(ESI)) {
          retval =
-             _papi_hwd_update_control_state(ESI->machdep, ESI->NativeInfoArray,
+             _papi_hwd_update_control_state(ESI->ctl_state, ESI->NativeInfoArray,
                                             ESI->NativeCount,ESI->master->context);
          if (retval != PAPI_OK)
 	   {
@@ -708,7 +737,7 @@ int _papi_hwi_add_pevent(EventSetInfo_t * ESI, int EventCode, void *inout)
    /* Fill in machine depending info including the EventInfoArray. */
 
    retval =
-       _papi_hwd_add_prog_event(ESI->machdep, EventCode, inout,
+       _papi_hwd_add_prog_event(ESI->ctl_state, EventCode, inout,
                                 &ESI->EventInfoArray[thisindex]);
    if (retval < PAPI_OK)
       return (retval);
@@ -786,7 +815,7 @@ int remove_native_events(EventSetInfo_t * ESI, int *nevt, int size)
       clear the now empty slots, reinitialize the index, and update the count.
       Then send the info down to the substrate to update the hwd control structure. */
    if (zero) {
-      retval = _papi_hwd_update_control_state(ESI->machdep, native, ESI->NativeCount,
+      retval = _papi_hwd_update_control_state(ESI->ctl_state, native, ESI->NativeCount,
 		ESI->master->context);
       if (retval != PAPI_OK)
          return (retval);
@@ -851,7 +880,7 @@ int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode)
          array[thisindex] = array[thisindex+1];
 
       array[thisindex].event_code = PAPI_NULL;
-      for (j = 0; j < MAX_COUNTER_TERMS; j++)
+      for (j = 0; j < PAPI_MAX_COUNTER_TERMS; j++)
          array[thisindex].pos[j] = -1;
       array[thisindex].ops = NULL;
       array[thisindex].derived = NOT_DERIVED;
@@ -866,7 +895,7 @@ int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long_long * va
    long_long *dp;
    int i, j = 0, index;
 
-   retval = _papi_hwd_read(context, ESI->machdep, &dp, ESI->state);
+   retval = _papi_hwd_read(context, ESI->ctl_state, &dp, ESI->state);
    if (retval != PAPI_OK)
      return (retval);
 
@@ -1107,7 +1136,7 @@ static long_long handle_derived_add(int *position, long_long * from)
    long_long retval = 0;
 
    i = 0;
-   while (i < MAX_COUNTER_TERMS) {
+   while (i < PAPI_MAX_COUNTER_TERMS) {
       pos = position[i++];
       if (pos == PAPI_NULL)
          break;
@@ -1123,7 +1152,7 @@ static long_long handle_derived_subtract(int *position, long_long * from)
    long_long retval = from[position[0]];
 
    i = 1;
-   while (i < MAX_COUNTER_TERMS) {
+   while (i < PAPI_MAX_COUNTER_TERMS) {
       pos = position[i++];
       if (pos == PAPI_NULL)
          break;
@@ -1159,7 +1188,7 @@ static long_long handle_derived_add_ps(int *position, long_long * from)
 */ long_long _papi_hwi_postfix_calc(EventInfo_t * evi, long_long * hw_counter)
 {
    char *point = evi->ops, operand[16];
-   double stack[MAX_COUNTER_TERMS];
+   double stack[PAPI_MAX_COUNTER_TERMS];
    int i, top = 0;
 
    while (*point != '\0') {
@@ -1285,7 +1314,7 @@ void print_state(EventSetInfo_t * ESI)
 
    APIDBG( "counter_cmd               ");
    for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
-      APIDBG( "%15d", ESI->machdep->counter_cmd.events[i]);
+      APIDBG( "%15d", ESI->ctl_state->counter_cmd.events[i]);
    APIDBG( "\n");
 #endif
 

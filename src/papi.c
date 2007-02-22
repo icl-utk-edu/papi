@@ -826,7 +826,7 @@ int PAPI_start(int EventSet)
 
    /* Merge the control bits from the new EventSet into the active counter config. */
 
-   retval = _papi_hwd_start(thread->context, ESI->machdep);
+   retval = _papi_hwd_start(thread->context, ESI->ctl_state);
    if (retval != PAPI_OK)
       papi_return(retval);
 
@@ -905,7 +905,7 @@ int PAPI_stop(int EventSet, long_long * values)
 
    /* Remove the control bits from the active counter config. */
 
-   retval = _papi_hwd_stop(thread->context, ESI->machdep);
+   retval = _papi_hwd_stop(thread->context, ESI->ctl_state);
    if (retval != PAPI_OK)
       papi_return(retval);
    if (values)
@@ -954,7 +954,7 @@ int PAPI_reset(int EventSet)
             array. This holds the starting value for counters
             that are shared. */
 
-         retval = _papi_hwd_reset(thread->context, ESI->machdep);
+         retval = _papi_hwd_reset(thread->context, ESI->ctl_state);
 
          if ((ESI->state & PAPI_OVERFLOWING) &&
              (ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
@@ -1072,7 +1072,7 @@ int PAPI_write(int EventSet, long_long * values)
       papi_return(PAPI_EINVAL);
 
    if (ESI->state & PAPI_RUNNING) {
-      retval = _papi_hwd_write(thread->context, ESI->machdep, values);
+      retval = _papi_hwd_write(thread->context, ESI->ctl_state, values);
       if (retval != PAPI_OK)
          return (retval);
    }
@@ -1774,7 +1774,7 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
       if (threshold == 0)
          papi_return(PAPI_EINVAL);
    }
-   if (threshold > 0 && ESI->overflow.event_counter >= MAX_COUNTERS)
+   if (threshold > 0 && ESI->overflow.event_counter >= _papi_hwi_system_info.sub_info.num_cntrs)
       papi_return(PAPI_ECNFLCT);
 
    if (threshold == 0) {
@@ -1914,7 +1914,7 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
       if (threshold == 0)
          papi_return(PAPI_EINVAL);
    }
-   if (threshold > 0 && ESI->profile.event_counter >= MAX_COUNTERS)
+   if (threshold > 0 && ESI->profile.event_counter >= _papi_hwi_system_info.sub_info.num_cntrs)
       papi_return(PAPI_ECNFLCT);
 
    if (threshold == 0) {
@@ -2316,7 +2316,7 @@ int PAPI_get_overflow_event_index(int EventSet, long_long overflow_vector, int *
 	   overflow_vector ^= (long_long)1 << set_bit;
 	   for(j=0; j< ESI->NumberOfEvents; j++ )
 	   {
-	      for(k = 0, pos = 0; k < MAX_COUNTER_TERMS && pos >= 0; k++) 
+	      for(k = 0, pos = 0; k < PAPI_MAX_COUNTER_TERMS && pos >= 0; k++) 
 		  {
 		     pos = ESI->EventInfoArray[j].pos[k];
 		     if ((set_bit == pos) && 

@@ -11,6 +11,9 @@
 
 #include "papi.h"
 #include "papi_internal.h"
+
+#include "perfctr-p3.h"
+
 #include "papi_vector.h"
 #include "papi_memory.h"
 
@@ -279,6 +282,7 @@ static void _linux_dispatch_timer(int signal, siginfo_t * si, void *context) {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *master = NULL;
    int isHardware = 0;
+   caddr_t pc; 
 
    ctx.si = si;
    ctx.ucontext = (ucontext_t *)context;
@@ -291,12 +295,14 @@ static void _linux_dispatch_timer(int signal, siginfo_t * si, void *context) {
 #define GEN_OVERFLOW 0
 #endif
 
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx, &isHardware, 
-                                      OVERFLOW_MASK, GEN_OVERFLOW, &master);
+   pc = GET_OVERFLOW_ADDRESS(ctx);
+
+   _papi_hwi_dispatch_overflow_signal((void *)&ctx,&isHardware,
+                                      OVERFLOW_MASK, GEN_OVERFLOW,&master,pc);
 
    /* We are done, resume interrupting counters */
    if (isHardware) {
-      errno = vperfctr_iresume(master->context->perfctr);
+      errno = vperfctr_iresume(((cmp_context_t *)master->context)->perfctr);
       if (errno < 0) {
          PAPIERROR("vperfctr_iresume errno %d",errno);
       }
@@ -308,7 +314,7 @@ int _linux_init(hwd_context_t * ctx) {
    struct vperfctr_control tmp;
 
    /* Initialize our thread/process pointer. */
-   if ((ctx->perfctr = vperfctr_open()) == NULL)
+   if ((((cmp_context_t *)ctx)->perfctr = vperfctr_open()) == NULL)
      { PAPIERROR( VOPEN_ERROR); return(PAPI_ESYS); }
    SUBDBG("_linux_init vperfctr_open() = %p\n", ctx->perfctr);
 
@@ -317,7 +323,7 @@ int _linux_init(hwd_context_t * ctx) {
    tmp.cpu_control.tsc_on = 1;
 
    /* Start the per thread/process virtualized TSC */
-   if (vperfctr_control(ctx->perfctr, &tmp) < 0)
+   if (vperfctr_control(((cmp_context_t *)ctx)->perfctr, &tmp) < 0)
      { PAPIERROR( VCNTRL_ERROR); return(PAPI_ESYS); }
 
    return (PAPI_OK);
@@ -790,31 +796,16 @@ static long_long _linux_get_real_cycles(void) {
 
 static long_long _linux_get_virt_cycles(const hwd_context_t * ctx)
 {
-   return ((long_long)vperfctr_read_tsc(ctx->perfctr) * tb_scale_factor);
+   return ((long_long)vperfctr_read_tsc(((cmp_context_t *)ctx)->perfctr) * tb_scale_factor);
 }
 
 static long_long _linux_get_virt_usec(const hwd_context_t * ctx)
 {
-   return (((long_long)vperfctr_read_tsc(ctx->perfctr) * tb_scale_factor) /
+   return (((long_long)vperfctr_read_tsc(((cmp_context_t *)ctx)->perfctr) * tb_scale_factor) /
            (long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
-/*
-papi_svector_t _linux_os_table[] = {
- #ifndef __CATAMOUNT__
-   {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
- #endif
- {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
- {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
- {(void (*)())_papi_hwd_ctl, VEC_PAPI_HWD_CTL},
- {(void (*)())_papi_hwd_get_real_usec, VEC_PAPI_HWD_GET_REAL_USEC},
- {(void (*)())_papi_hwd_get_real_cycles, VEC_PAPI_HWD_GET_REAL_CYCLES},
- {(void (*)())_papi_hwd_get_virt_cycles, VEC_PAPI_HWD_GET_VIRT_CYCLES},
- {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
- {(void (*)())_papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
- { NULL, VEC_PAPI_END}
-};
-*/
+
 static papi_vectors_t _linux_os_table = {
  #ifndef __CATAMOUNT__
     .update_shlib_info = _linux_update_shlib_info,

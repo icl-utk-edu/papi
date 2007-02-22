@@ -7,8 +7,12 @@
 *          <your email address>
 */
 
+#define IN_SUBSTRATE
+
 #include "papi.h"
 #include "papi_internal.h"
+#include "perfctr-p3.h"
+
 
 native_event_entry_t *native_table;
 hwi_search_t *preset_search_map;
@@ -189,8 +193,8 @@ int _p3_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
    if(native_table[event].resources.selector == 0) {
       return (PAPI_ENOEVNT);
    }
-   *bits = native_table[event].resources;
-   bits->counter_cmd |= umask; /* OR unit mask bits into command */
+   *(cmp_register_t *)bits = native_table[event].resources;
+   ((cmp_register_t *)bits)->counter_cmd |= umask; /* OR unit mask bits into command */
    return (PAPI_OK);
 }
 
@@ -256,8 +260,8 @@ int _p3_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                unsigned int *values, int name_len, int count)
 {
    int i = 0;
-   copy_value(bits->selector, "Event Mask", &names[i*name_len], &values[i], name_len);
+   copy_value(((cmp_register_t *)bits)->selector, "Event Mask", &names[i*name_len], &values[i], name_len);
    if (++i == count) return(i);
-   copy_value(bits->counter_cmd, "Event Code", &names[i*name_len], &values[i], name_len);
+   copy_value(((cmp_register_t *)bits)->counter_cmd, "Event Code", &names[i*name_len], &values[i], name_len);
    return(++i);
 }

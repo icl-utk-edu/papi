@@ -10,7 +10,7 @@ OBJECTS   = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o multiplex.o \
 HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h \
     papi_preset.h threads.h papi_protos.h papi_vector.h papi_vector_redefine.h \
     papi_memory.h config.h $(SUBSTR).h $(COMPHDRS)
-LIBCFLAGS = -I. $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" 
+LIBCFLAGS = -I. $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" -DOS_HEADER=\"$(OS).h\"
 FHEADERS  = fpapi.h f77papi.h f90papi.h
 
 all: showconf $(LIBS) utils tests
