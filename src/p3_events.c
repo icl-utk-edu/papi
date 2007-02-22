@@ -11,7 +11,7 @@
 
 #include "papi.h"
 #include "papi_internal.h"
-#include "perfctr-p3.h"
+#include SUBSTRATE
 
 
 native_event_entry_t *native_table;

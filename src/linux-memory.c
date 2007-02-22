@@ -14,7 +14,7 @@
 #include "papi.h"
 #include "papi_internal.h"
 
-#include "perfctr-p3.h"
+#include SUBSTRATE
 
 static int init_amd(PAPI_mh_info_t * mh_info);
 static short int init_amd_L2_assoc_inf(unsigned short int pattern);

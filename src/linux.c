@@ -12,7 +12,7 @@
 #include "papi.h"
 #include "papi_internal.h"
 
-#include "perfctr-p3.h"
+#include SUBSTRATE
 
 #include "papi_vector.h"
 #include "papi_memory.h"
