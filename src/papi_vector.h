@@ -55,9 +55,9 @@ typedef struct papi_vectors {
     int		(*user)			(int, void *, void *);
 }papi_vectors_t;
 
-extern papi_vectors_t _papi_frm_vector;
+extern papi_vectors_t _papi_frm_vectors;
 extern papi_vectors_t *_papi_component_table[];
-extern papi_vectors_t *_PAPI_VECTOR;
+extern papi_vectors_t *_PAPI_CURRENT_VECTOR;
 
 /* Prototypes */
 //int _papi_hwi_setup_vector_table(papi_vectors_t *table, papi_svector_t *stable);

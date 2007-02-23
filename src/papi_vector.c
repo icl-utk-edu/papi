@@ -14,8 +14,8 @@
 #include "papi_vector.h"
 #include "papi_memory.h"
 
-papi_vectors_t _papi_frm_vector;
-papi_vectors_t *_PAPI_VECTOR = &_papi_frm_vector;
+papi_vectors_t _papi_frm_vectors;
+papi_vectors_t *_PAPI_CURRENT_VECTOR; 
 
 /* Prototypes */
 int vec_int_ok_dummy ();
@@ -31,7 +31,7 @@ long_long vec_dummy_get_virt_usec (const hwd_context_t *zero);
 long_long vec_dummy_get_real_usec (void);
 long_long vec_dummy_get_real_cycles (void);
 
-//extern papi_vectors_t _CPU_vectors;
+extern papi_vectors_t COMP_VECTOR;
 #ifdef HAVE_ACPI
 extern papi_vectors_t _acpi_vectors;
 #endif
@@ -39,8 +39,9 @@ extern papi_vectors_t _acpi_vectors;
 extern papi_vectors_t _mx_vectors;
 #endif
 
+
 papi_vectors_t *_papi_component_table[] = {
-//  &_CPU_vectors,
+  &COMP_VECTOR,
 #ifdef HAVE_ACPI
   &_acpi_vectors,
 #endif
@@ -282,7 +283,7 @@ int _papi_hwi_initialize_vector(papi_vectors_t *frm){
 }
 
 int PAPI_user(int func_num, void * input, void * output){
-  return (_papi_frm_vector.user(func_num, input, output));
+  return (_PAPI_CURRENT_VECTOR->user(func_num, input, output));
 }
 
 char * find_dummy(void * func, char **buf){

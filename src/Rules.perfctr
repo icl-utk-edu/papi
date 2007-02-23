@@ -11,9 +11,11 @@ LIBRARY = libpapi.a
 SHLIB   = libpapi.so.$(PAPIVER)
 SUBSTR  = perfctr-$(CPU)
 ARCH	= $(shell uname -m)
+DCOMP    = -DCOMP_VECTOR=_p3_vectors
 
 ifeq (p4,$(CPU))
 TARGETS += p4
+COMP    = -DCOMP_VECTOR=_p4_vectors
 endif
 
 ifeq (i686,$(ARCH))
@@ -47,6 +49,7 @@ endif
 
 ifeq (ppc,$(ARCH))
 CFLAGS 		+= -DPPC32
+DCOMP       = -DCOMP_VECTOR=_ppc32_vectors
 MEMSUBSTR 	= linux-ppc64
 endif
 
@@ -59,7 +62,8 @@ ifeq (64,$(BITS))
 BITFLAGS	?= -m64
 endif
 endif
-CFLAGS 		+= -DPPC64
+CFLAGS 		+= -DPPC64 
+DCOMP = -DCOMP_VECTOR=_ppc64_vectors
 ARCH_SPEC_EVTS	:= $(ARCH_EVENTS)_map.c
 MEMSUBSTR 	= linux-ppc64
 endif
@@ -72,7 +76,7 @@ endif
 CC_R    	:= $(CC) -pthread
 CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.$(PAPIVER) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
 FFLAGS		+= -Wall -ffixed-line-length-132 $(BITFLAGS)
-CFLAGS		+= -D_GNU_SOURCE -Wall -DCOMP_VECTOR="_$(SUBSTR)_vectors" $(NOTLS) $(BITFLAGS)
+CFLAGS		+= -D_GNU_SOURCE -Wall $(DCOMP) $(NOTLS) $(BITFLAGS)
 
 # 
 # Catamount section

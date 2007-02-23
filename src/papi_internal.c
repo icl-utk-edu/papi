@@ -1033,9 +1033,10 @@ int _papi_hwi_init_global(void)
 {
    int retval;
 
-   retval = _papi_hwi_initialize_vector(&_papi_frm_vector);
+   _PAPI_CURRENT_VECTOR =&_papi_frm_vectors;
+   retval = _papi_hwi_initialize_vector(_PAPI_CURRENT_VECTOR);
    if (retval != PAPI_OK ) return(retval);
-   retval = _papi_hwd_init_substrate(&_papi_frm_vector);
+   retval = _papi_hwd_init_substrate(_PAPI_CURRENT_VECTOR);
    return(retval);
 }
 
