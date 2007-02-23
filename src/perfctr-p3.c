@@ -29,6 +29,15 @@
 #include "perfctr-p3.h"
 #include "papi_memory.h"
 
+extern int _linux_update_shlib_info(void);
+extern int _linux_init(hwd_context_t * ctx);
+extern void _linux_dispatch_timer(int signal, siginfo_t * si, void *context);
+extern long_long _linux_get_real_usec(void);
+extern long_long _linux_get_real_cycles(void);
+extern long_long _linux_get_virt_cycles(const hwd_context_t * ctx);
+extern long_long _linux_get_virt_usec(const hwd_context_t * ctx);
+extern int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d);
+
 /* Prototypes for entry points found in p3_events */
  int _p3_ntv_enum_events(unsigned int *EventCode, int modifer);
  char *_p3_ntv_code_to_name(unsigned int EventCode);
@@ -666,11 +675,24 @@ papi_vectors_t _p3_vectors = {
     .ntv_code_to_name =		_p3_ntv_code_to_name,
     .ntv_code_to_descr =	_p3_ntv_code_to_descr,
     .ntv_code_to_bits =		_p3_ntv_code_to_bits,
-    .ntv_bits_to_info =		_p3_ntv_bits_to_info
+    .ntv_bits_to_info =		_p3_ntv_bits_to_info,
+
+    /* from OS */
+ #ifndef __CATAMOUNT__
+    .update_shlib_info = _linux_update_shlib_info,
+ #endif
+    .init =		_linux_init,
+    .dispatch_timer =	_linux_dispatch_timer,
+    .get_real_usec =	_linux_get_real_usec,
+    .get_real_cycles =	_linux_get_real_cycles,
+    .get_virt_cycles =	_linux_get_virt_cycles,
+    .get_virt_usec =	_linux_get_virt_usec,
+    .get_dmem_info =	_papi_hwd_get_dmem_info
 };
 
 int setup_p3_vector_table(papi_vectors_t * vtable){
-  return _papi_hwi_setup_vector_table( vtable, &_p3_vectors);
+  /*return _papi_hwi_setup_vector_table( vtable, &_p3_vectors);*/
+  return ( PAPI_OK );
 }
 
 /* These should be removed when p3-p4 is merged */

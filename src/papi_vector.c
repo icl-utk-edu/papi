@@ -163,7 +163,7 @@ long vec_long_dummy(){
 }
 
 /* Copy all non-zero component values to the framework vector */
-int _papi_hwi_setup_vector_table(papi_vectors_t *frm, papi_vectors_t *cmp)
+int _papi_hwi_copy_vector_table(papi_vectors_t *frm, papi_vectors_t *cmp)
 {
   if ( !frm || !cmp ) return (PAPI_EINVAL);
 
@@ -230,55 +230,55 @@ int _papi_hwi_initialize_vector(papi_vectors_t *frm){
  if ( !frm ) return (PAPI_EINVAL);
 
  /* sizes of component-private structures */
- frm->context_size =		0;
+/* frm->context_size =		0;
  frm->control_state_size =	0;
  frm->register_size =		0;
  frm->reg_alloc_size =		0;
-
+*/
  /* component function pointers */
 #ifdef _WIN32 /* Windows requires a different callback format */
- frm->timer_callback =		(void (*) (UINT, UINT, DWORD, DWORD, DWORD)) vec_void_dummy;
+ if(!frm->timer_callback) frm->timer_callback =		(void (*) (UINT, UINT, DWORD, DWORD, DWORD)) vec_void_dummy;
 #else
- frm->dispatch_timer =		(void (*)(int, siginfo_t *, void *)) vec_void_dummy;
+ if(!frm->dispatch_timer) frm->dispatch_timer =		(void (*)(int, siginfo_t *, void *)) vec_void_dummy;
 #endif
- frm->get_overflow_address =	(void *(*) (int, char *)) vec_void_star_dummy;
- frm->start =			(int (*) (hwd_context_t *, hwd_control_state_t *)) vec_int_dummy;
- frm->stop =			(int (*) (hwd_context_t *, hwd_control_state_t *)) vec_int_dummy;
- frm->read =			(int (*)(hwd_context_t *, hwd_control_state_t *, long_long **, int)) vec_int_dummy;
- frm->reset  =			(int (*) (hwd_context_t *, hwd_control_state_t *)) vec_int_dummy;
- frm->write =			(int (*) (hwd_context_t *, hwd_control_state_t *, long_long[])) vec_int_dummy;
- frm->get_real_cycles =		(long_long (*) ()) vec_dummy_get_real_cycles;
- frm->get_real_usec =		(long_long (*) ()) vec_dummy_get_real_usec;
- frm->get_virt_cycles =		vec_dummy_get_virt_cycles;
- frm->get_virt_usec =		vec_dummy_get_virt_usec;
- frm->stop_profiling =		(int (*) (ThreadInfo_t *, EventSetInfo_t *)) vec_int_dummy;
- frm->init =			(int (*) (hwd_context_t *)) vec_int_ok_dummy;
- frm->init_control_state =	(int (*) (hwd_control_state_t * ptr)) vec_void_dummy;
- frm->update_shlib_info =	(int (*) (void)) vec_int_dummy;
- frm->get_system_info =		(int (*) ()) vec_int_dummy;
- frm->get_memory_info =		(int (*) (PAPI_hw_info_t *, int)) vec_int_dummy;
- frm->update_control_state =	(int (*) (hwd_control_state_t *, NativeInfo_t *, int, hwd_context_t *)) vec_int_dummy;
- frm->ctl =			(int (*) (hwd_context_t *, int, _papi_int_option_t *)) vec_int_dummy;
- frm->set_overflow =		(int (*) (EventSetInfo_t *, int, int)) vec_int_dummy;
- frm->set_profile =		(int (*) (EventSetInfo_t *, int, int)) vec_int_dummy;
- frm->add_prog_event =		(int (*) (hwd_control_state_t *, unsigned int, void *, EventInfo_t *)) vec_int_dummy;
- frm->set_domain =		(int (*) (hwd_control_state_t *, int)) vec_int_dummy;
- frm->ntv_enum_events =		(int (*) (unsigned int *, int)) vec_int_dummy;
- frm->ntv_code_to_name =	(char * (*) (unsigned int)) vec_char_star_dummy;
- frm->ntv_code_to_descr =	(char * (*) (unsigned int)) vec_char_star_dummy;
- frm->ntv_code_to_bits =	(int (*) (unsigned int, hwd_register_t *)) vec_int_dummy;
- frm->ntv_bits_to_info =	(int (*) (hwd_register_t *, char *, unsigned int *, int, int)) vec_int_dummy;
- frm->allocate_registers =	(int (*) (EventSetInfo_t *)) vec_int_one_dummy;
- frm->bpt_map_avail =		(int (*) (hwd_reg_alloc_t *, int)) vec_int_dummy;
- frm->bpt_map_set =		(void (*) (hwd_reg_alloc_t *, int)) vec_void_dummy;
- frm->bpt_map_exclusive =	(int (*) (hwd_reg_alloc_t *)) vec_int_dummy;
- frm->bpt_map_shared =		(int (*) (hwd_reg_alloc_t *, hwd_reg_alloc_t *)) vec_int_dummy;
- frm->bpt_map_preempt =		(void (*) (hwd_reg_alloc_t *, hwd_reg_alloc_t *)) vec_void_dummy;
- frm->bpt_map_update =		(void (*) (hwd_reg_alloc_t *, hwd_reg_alloc_t *)) vec_void_dummy;
- frm->get_dmem_info =		(int (*) (PAPI_dmem_info_t *)) vec_int_dummy;
- frm->shutdown =		(int (*) (hwd_context_t *)) vec_int_dummy;
- frm->shutdown_global =		(int (*) (void)) vec_int_ok_dummy;
- frm->user =			(int (*) (int, void *, void *)) vec_int_dummy;
+ if(!frm->get_overflow_address) frm->get_overflow_address=	(void *(*) (int, char *)) vec_void_star_dummy;
+ if(!frm->start) frm->start=			(int (*) (hwd_context_t *, hwd_control_state_t *)) vec_int_dummy;
+ if(!frm->stop) frm->stop=			(int (*) (hwd_context_t *, hwd_control_state_t *)) vec_int_dummy;
+ if(!frm->read) frm->read=			(int (*)(hwd_context_t *, hwd_control_state_t *, long_long **, int)) vec_int_dummy;
+ if(!frm->reset) frm->reset =			(int (*) (hwd_context_t *, hwd_control_state_t *)) vec_int_dummy;
+ if(!frm->write) frm->write=			(int (*) (hwd_context_t *, hwd_control_state_t *, long_long[])) vec_int_dummy;
+ if(!frm->get_real_cycles) frm->get_real_cycles=		(long_long (*) ()) vec_dummy_get_real_cycles;
+ if(!frm->get_real_usec) frm->get_real_usec=		(long_long (*) ()) vec_dummy_get_real_usec;
+ if(!frm->get_virt_cycles) frm->get_virt_cycles=		vec_dummy_get_virt_cycles;
+ if(!frm->get_virt_usec) frm->get_virt_usec=		vec_dummy_get_virt_usec;
+ if(!frm->stop_profiling) frm->stop_profiling=		(int (*) (ThreadInfo_t *, EventSetInfo_t *)) vec_int_dummy;
+ if(!frm->init) frm->init=			(int (*) (hwd_context_t *)) vec_int_ok_dummy;
+ if(!frm->init_control_state) frm->init_control_state=	(int (*) (hwd_control_state_t * ptr)) vec_void_dummy;
+ if(!frm->update_shlib_info) frm->update_shlib_info=	(int (*) (void)) vec_int_dummy;
+ if(!frm->get_system_info) frm->get_system_info=		(int (*) ()) vec_int_dummy;
+ if(!frm->get_memory_info) frm->get_memory_info=		(int (*) (PAPI_hw_info_t *, int)) vec_int_dummy;
+ if(!frm->update_control_state) frm->update_control_state=	(int (*) (hwd_control_state_t *, NativeInfo_t *, int, hwd_context_t *)) vec_int_dummy;
+ if(!frm->ctl) frm->ctl=			(int (*) (hwd_context_t *, int, _papi_int_option_t *)) vec_int_dummy;
+ if(!frm->set_overflow) frm->set_overflow=		(int (*) (EventSetInfo_t *, int, int)) vec_int_dummy;
+ if(!frm->set_profile) frm->set_profile=		(int (*) (EventSetInfo_t *, int, int)) vec_int_dummy;
+ if(!frm->add_prog_event) frm->add_prog_event=		(int (*) (hwd_control_state_t *, unsigned int, void *, EventInfo_t *)) vec_int_dummy;
+ if(!frm->set_domain) frm->set_domain=		(int (*) (hwd_control_state_t *, int)) vec_int_dummy;
+ if(!frm->ntv_enum_events) frm->ntv_enum_events=		(int (*) (unsigned int *, int)) vec_int_dummy;
+ if(!frm->ntv_code_to_name) frm->ntv_code_to_name=	(char * (*) (unsigned int)) vec_char_star_dummy;
+ if(!frm->ntv_code_to_descr) frm->ntv_code_to_descr=	(char * (*) (unsigned int)) vec_char_star_dummy;
+ if(!frm->ntv_code_to_bits) frm->ntv_code_to_bits=	(int (*) (unsigned int, hwd_register_t *)) vec_int_dummy;
+ if(!frm->ntv_bits_to_info) frm->ntv_bits_to_info=	(int (*) (hwd_register_t *, char *, unsigned int *, int, int)) vec_int_dummy;
+ if(!frm->allocate_registers) frm->allocate_registers=	(int (*) (EventSetInfo_t *)) vec_int_one_dummy;
+ if(!frm->bpt_map_avail) frm->bpt_map_avail=		(int (*) (hwd_reg_alloc_t *, int)) vec_int_dummy;
+ if(!frm->bpt_map_set) frm->bpt_map_set=		(void (*) (hwd_reg_alloc_t *, int)) vec_void_dummy;
+ if(!frm->bpt_map_exclusive) frm->bpt_map_exclusive=	(int (*) (hwd_reg_alloc_t *)) vec_int_dummy;
+ if(!frm->bpt_map_shared) frm->bpt_map_shared=		(int (*) (hwd_reg_alloc_t *, hwd_reg_alloc_t *)) vec_int_dummy;
+ if(!frm->bpt_map_preempt) frm->bpt_map_preempt=		(void (*) (hwd_reg_alloc_t *, hwd_reg_alloc_t *)) vec_void_dummy;
+ if(!frm->bpt_map_update) frm->bpt_map_update=		(void (*) (hwd_reg_alloc_t *, hwd_reg_alloc_t *)) vec_void_dummy;
+ if(!frm->get_dmem_info) frm->get_dmem_info=		(int (*) (PAPI_dmem_info_t *)) vec_int_dummy;
+ if(!frm->shutdown) frm->shutdown=		(int (*) (hwd_context_t *)) vec_int_dummy;
+ if(!frm->shutdown_global) frm->shutdown_global=		(int (*) (void)) vec_int_ok_dummy;
+ if(!frm->user) frm->user=			(int (*) (int, void *, void *)) vec_int_dummy;
   return PAPI_OK;
 }
 

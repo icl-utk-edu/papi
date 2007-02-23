@@ -27,11 +27,11 @@ extern int ppc32_setup_vector_table(papi_vectors_t *);
 extern int setup_p4_presets(int cputype);
 extern int setup_p4_vector_table(papi_vectors_t *);
 extern int setup_p3_presets(int cputype);
-extern int setup_p3_vector_table(papi_vectors_t *);
+/*extern int setup_p3_vector_table(papi_vectors_t *);*/
 #endif
 
 /* Internal prototypes */
-static int _linux_setup_vector_table(papi_vectors_t *vtable);
+/*static int _linux_setup_vector_table(papi_vectors_t *vtable);*/
 
 /* This should be in a linux.h header file maybe. */
 #define FOPEN_ERROR "fopen(%s) returned NULL"
@@ -151,9 +151,9 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 #endif
 
   /* Setup the vector entries that the OS knows about */
-  retval = _linux_setup_vector_table(vtable);
+  /*retval = _linux_setup_vector_table(vtable);
   if ( retval != PAPI_OK ) return(retval);
-
+  */
  #if defined(PERFCTR26)
   /* Get info from the kernel */
    /* Use lower level calls per Mikael to get the perfctr info
@@ -204,8 +204,8 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
      	retval = setup_p4_presets(info.cpu_type);
    }
    else{
-     retval = setup_p3_vector_table(vtable);
-     if (!retval)
+     /*retval = setup_p3_vector_table(vtable);
+     if (!retval)*/
      	retval = setup_p3_presets(info.cpu_type);
    }
 #elif (defined(PPC64))
@@ -278,7 +278,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    return (PAPI_OK);
 }
 
-static void _linux_dispatch_timer(int signal, siginfo_t * si, void *context) {
+void _linux_dispatch_timer(int signal, siginfo_t * si, void *context) {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *master = NULL;
    int isHardware = 0;
@@ -373,7 +373,7 @@ int _papi_hwd_get_system_info(void)
 
 #else
 
-static int _linux_update_shlib_info(void)
+int _linux_update_shlib_info(void)
 {
    char fname[PAPI_HUGE_STR_LEN];
    PAPI_address_map_t *tmp, *tmp2;
@@ -786,27 +786,27 @@ inline_static long_long get_cycles(void) {
 }
 #endif //PPC64
 
-static long_long _linux_get_real_usec(void) {
+long_long _linux_get_real_usec(void) {
    return((long_long)get_cycles() / (long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
-static long_long _linux_get_real_cycles(void) {
+long_long _linux_get_real_cycles(void) {
    return((long_long)get_cycles());
 }
 
-static long_long _linux_get_virt_cycles(const hwd_context_t * ctx)
+long_long _linux_get_virt_cycles(const hwd_context_t * ctx)
 {
    return ((long_long)vperfctr_read_tsc(((cmp_context_t *)ctx)->perfctr) * tb_scale_factor);
 }
 
-static long_long _linux_get_virt_usec(const hwd_context_t * ctx)
+long_long _linux_get_virt_usec(const hwd_context_t * ctx)
 {
    return (((long_long)vperfctr_read_tsc(((cmp_context_t *)ctx)->perfctr) * tb_scale_factor) /
            (long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
 
-static papi_vectors_t _linux_os_table = {
+/*static papi_vectors_t _linux_os_table = {
  #ifndef __CATAMOUNT__
     .update_shlib_info = _linux_update_shlib_info,
  #endif
@@ -818,7 +818,8 @@ static papi_vectors_t _linux_os_table = {
     .get_virt_usec =	_linux_get_virt_usec,
     .get_dmem_info =	_papi_hwd_get_dmem_info
 };
-
-static int _linux_setup_vector_table(papi_vectors_t *vtable) {
+*/
+/*static int _linux_setup_vector_table(papi_vectors_t *vtable) {
   return (_papi_hwi_setup_vector_table( vtable, &_linux_os_table));
 }
+*/
