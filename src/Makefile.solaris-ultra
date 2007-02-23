@@ -1,12 +1,11 @@
-LIBRARY   = libpapi.a
-SHLIB     = libpapi.so
+LIBRARY	=libpapi.a
+SHLIB	=libpapi.so
 SUBSTR  = solaris-ultra
 MSUBSTR  = solaris-ultra
 MEMSUBSTR= solaris
 DESCR	= "Solaris 5.8 or greater with UltraSPARC I, II or III"
 LIBS	= static shared 
-TARGETS	= multiplex_and_pthreads serial
-SHLIBDEPS = -lcpc
+TARGETS	= serial multiplex_and_pthreads shared
 #
 # Sun Workshop compilers: V5.0 and V6.0 R2
 #
@@ -14,39 +13,42 @@ TARGETS		+= smp omp
 CC		= cc 
 CPP     	= $(CC) -E
 CC_R		= $(CC) -mt
-CC_SHR		= $(CC) -ztext -G -Kpic -R $(PWD) -h libpapi.so 
-CFLAGS  	= 
+CC_SHR		= $(CC) -ztext -G -Kpic  
+CFLAGS  	= -xtarget=ultra3 -xarch=v8plusa -DNO_VARARG_MACRO -D__EXTENSIONS__ -DPAPI_NO_MEMORY_MANAGEMENT  -DCOMP_VECTOR=_solaris_vectors
 SMPCFLGS	= -xexplicitpar
 OMPCFLGS	= -xopenmp
-F77		= f77
+F77		= f90
 FFLAGS		= $(CFLAGS)
-TOPTFLAGS	= -g
-NOOPT		= -xO0 -g
-OPTFLAGS	= -fast
+TOPTFLAGS	= 
+NOOPT		= -xO0 
+OPTFLAGS	= -g -fast -xtarget=ultra3 -xarch=v8plusa 
 #
-# GNU gcc 2.95.3
+# gcc 
 #
-#CC		= gcc
+#CC			= gcc
+#F77		= g77
 #CPP		= $(CC) -E
-#CC_R		= $(CC) -pthread
+#CC_R		= $(CC) 
 #CC_SHR		= $(CC) -shared -fpic
 #OPTFLAGS	= -O3
-#CFLAGS  	= -g
+#CFLAGS  	= -DNEED_FFSLL
 #FFLAGS		= $(CFLAGS)
+#TOPTFLAGS   =
+#SMPCFLGS    =
 #
 # Do not touch below here 
 #
 FOPTFLAGS	= $(OPTFLAGS)
-LDFLAGS 	= -lcpc
-MISCSRCS	= get_tick.o
-MISCOBJS	= get_tick.o
+LDFLAGS 	+= -lcpc  
+MISCSRCS	=  
+MISCOBJS	=  
+POST_BUILD =
+SPECIAL_REMOVE =
 
 include Makefile.inc
-
-get_tick.o: solaris-ultra/get_tick.S
-	cc -c -D_ASM -xarch=v8plusa -O solaris-ultra/get_tick.S
 
 native_clean:
 
 native_install:
 
+native_clobber:

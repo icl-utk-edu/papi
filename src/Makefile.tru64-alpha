@@ -7,7 +7,7 @@ DESCR   = "Compaq Tru64 Unix with Alpha 21264EV6"
 LIBS	= static shared
 TARGETS	= serial multiplex_and_pthreads omp
 
-CFLAGS 	= -Zp8 
+CFLAGS 	=  -Zp8 -DNO_VARARG_MACRO -DNEED_FFSLL  -DCOMP_VECTOR=_tru64_alpha_vectors
 FFLAGS	= 
 OPTFLAGS= 
 TOPTFLAGS=$(OPTFLAGS)
@@ -15,6 +15,7 @@ FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(TOPTFLAGS)
 SMPCFLGS= -mp
 OMPCFLGS= -omp
+SHLIBDEPS= -lrt
 MISCLIBS= 
 LDFLAGS = -lrt
 CC_SHR	= cc -shared -all -rpath $(PWD) -lrt
@@ -27,6 +28,7 @@ F77	= f90
 MISCOBJS= cpu_version.o
 #MISCSRCS= alpha/cpu_version.s alpha/read_cycle_counter.s
 MISCSRCS= alpha/cpu_version.s
+POST_BUILD =
 
 include Makefile.inc
 
@@ -40,4 +42,4 @@ native_clean:
 
 native_install:
 
-
+native_clobber:

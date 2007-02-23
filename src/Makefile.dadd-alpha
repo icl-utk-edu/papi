@@ -5,20 +5,23 @@ MSUBSTR  = dadd-alpha
 MEMSUBSTR= alpha
 DESCR   = "Compaq Tru64 Unix with Alpha 21264EV6"
 LIBS	= static shared
-TARGETS	= serial
+TARGETS	= serial multiplex
+POST_BUILD =
+SPECIAL_REMOVE =
 
-CFLAGS 	= -Zp8 
+CFLAGS 	= -I/usr/include/dcpi -Zp8 -DNO_VARARG_MACRO -DNEED_FFSLL -DCOMP_VECTOR=_alpha_vectors
 FFLAGS	= 
-OPTFLAGS= -g 
+OPTFLAGS= -O 
 TOPTFLAGS=$(OPTFLAGS)
 FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(TOPTFLAGS)
 SMPCFLGS= -mp
 OMPCFLGS= -omp
+SHLIBDEPS= /usr/lib/dcpi/dadd.a
 MISCLIBS= 
-LDFLAGS = -lrt /usr/local/dadd/dadd.a
-CC_SHR	= cc -shared -all -rpath . -lrt
-CC_R	= cc
+LDFLAGS = -lrt -lclu /usr/lib/dcpi/dadd.a
+CC_SHR	= cc -shared -all -rpath . -lrt -lclu
+CC_R	= cc -pthread
 CC	= cc
 CPP	= cc -E
 F77	= f90 
@@ -40,4 +43,5 @@ native_clean:
 
 native_install:
 
+native_clobber:
 
