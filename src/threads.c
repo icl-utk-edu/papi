@@ -15,8 +15,6 @@
 
 #include "papi.h"
 #include "papi_internal.h"
-#include "papi_vector.h"
-#include "papi_vector_redefine.h"
 #include "papi_memory.h"
 
 /*****************/

@@ -17,6 +17,7 @@
 native_event_entry_t *native_table;
 hwi_search_t *preset_search_map;
 
+
 /*  This file serves as a collection point for architecture specific
     information and for code common to all related architectures in the
     pentium family of processors. Architecture-specific information can
@@ -146,7 +147,7 @@ char *_p3_ntv_code_to_name(unsigned int EventCode)
    int event, umask;
 
    internal_decode_event(EventCode, &event, &umask);
-   if (event > _papi_hwi_system_info.sub_info.num_native_events) {
+   if (event > MY_VECTOR.cmp_info.num_native_events) {
        return ('\0'); // return a null string for invalid events
    }
 
@@ -164,7 +165,7 @@ char *_p3_ntv_code_to_descr(unsigned int EventCode)
    int event, umask;
 
    internal_decode_event(EventCode, &event, &umask);
-   if (event > _papi_hwi_system_info.sub_info.num_native_events)
+   if (event > MY_VECTOR.cmp_info.num_native_events)
        return ('\0'); // return a null string for invalid events
 
    if (!umask)
@@ -187,7 +188,7 @@ int _p3_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
    int event, umask;
 
    internal_decode_event(EventCode, &event, &umask);
-   if (event > _papi_hwi_system_info.sub_info.num_native_events)
+   if (event > MY_VECTOR.cmp_info.num_native_events)
        return (PAPI_ENOEVNT);
 
    if(native_table[event].resources.selector == 0) {
@@ -206,7 +207,7 @@ int _p3_ntv_enum_events(unsigned int *EventCode, int modifier)
    int event, umask, selector;
 
    internal_decode_event(*EventCode, &event, &umask);
-   if (event > _papi_hwi_system_info.sub_info.num_native_events)
+   if (event > MY_VECTOR.cmp_info.num_native_events)
        return (PAPI_ENOEVNT);
 
    /* increment by smallest step size (same for unit mask or MOESI */

@@ -14,24 +14,23 @@
 
 #include SUBSTRATE
 
-#include "papi_vector.h"
 #include "papi_memory.h"
 
 #ifdef PPC64
 extern int setup_ppc64_presets(int cputype);
-extern int ppc64_setup_vector_table(papi_vectors_t *);
+extern int ppc64_setup_vector_table(papi_vector_t *);
 #elif defined(PPC32)
 extern int setup_ppc32_presets(int cputype);
-extern int ppc32_setup_vector_table(papi_vectors_t *);
+extern int ppc32_setup_vector_table(papi_vector_t *);
 #else
 extern int setup_p4_presets(int cputype);
-extern int setup_p4_vector_table(papi_vectors_t *);
+extern int setup_p4_vector_table(papi_vector_t *);
 extern int setup_p3_presets(int cputype);
-/*extern int setup_p3_vector_table(papi_vectors_t *);*/
+/*extern int setup_p3_vector_table(papi_vector_t *);*/
 #endif
 
 /* Internal prototypes */
-/*static int _linux_setup_vector_table(papi_vectors_t *vtable);*/
+/*static int _linux_setup_vector_table(papi_vector_t *vtable);*/
 
 /* This should be in a linux.h header file maybe. */
 #define FOPEN_ERROR "fopen(%s) returned NULL"
@@ -138,7 +137,7 @@ static void lock_init(void) {
 }
 #endif
 
-int _papi_hwd_init_substrate(papi_vectors_t *vtable)
+int _linux_init_substrate(void)
 {
   int retval;
   struct perfctr_info info;
@@ -196,11 +195,34 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    if (retval)
       return (retval);
 
+   strcpy(MY_VECTOR.cmp_info.name, "$Id$");
+   strcpy(MY_VECTOR.cmp_info.version, "$Revision$");
+   sprintf(abiv,"0x%08X",info.abi_version);
+   strcpy(MY_VECTOR.cmp_info.support_version, abiv);
+   strcpy(MY_VECTOR.cmp_info.kernel_version, info.driver_version);
+   SUBDBG("Number of counters before: %d\n",MY_VECTOR.cmp_info.num_cntrs);
+   MY_VECTOR.cmp_info.num_cntrs = PERFCTR_CPU_NRCTRS(&info);
+   SUBDBG("Number of counters after:  %d\n",MY_VECTOR.cmp_info.num_cntrs);
+   MY_VECTOR.cmp_info.fast_counter_read = (info.cpu_features & PERFCTR_FEATURE_RDPMC) ? 1 : 0;
+   MY_VECTOR.cmp_info.fast_real_timer = 1;
+   MY_VECTOR.cmp_info.fast_virtual_timer = 1;
+   MY_VECTOR.cmp_info.attach = 1;
+   MY_VECTOR.cmp_info.attach_must_ptrace = 1;
+   MY_VECTOR.cmp_info.default_domain = PAPI_DOM_USER;
+   MY_VECTOR.cmp_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
+   MY_VECTOR.cmp_info.default_granularity = PAPI_GRN_THR;
+   MY_VECTOR.cmp_info.available_granularities = PAPI_GRN_THR;
+   MY_VECTOR.cmp_info.hardware_intr =
+       (info.cpu_features & PERFCTR_FEATURE_PCINT) ? 1 : 0;
+
+   SUBDBG("Hardware/OS %s support counter generated interrupts\n",
+          MY_VECTOR.cmp_info.hardware_intr ? "does" : "does not");
+
    /* Setup presets */
 #if (!defined(PPC64) && !defined(PPC32))
    if ( check_p4(info.cpu_type) ){
-     retval = setup_p4_vector_table(vtable);
-     if (!retval)
+//     retval = setup_p4_vector_table(vtable);
+//     if (!retval)
      	retval = setup_p4_presets(info.cpu_type);
    }
    else{
@@ -210,40 +232,19 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    }
 #elif (defined(PPC64))
 	/* Setup native and preset events */
-	retval = ppc64_setup_vector_table(vtable);
-    if (!retval)
+//	retval = ppc64_setup_vector_table(vtable);
+//    if (!retval)
     	retval = setup_ppc64_native_table();
     if (!retval)
     	retval = setup_ppc64_presets(info.cpu_type);
 #elif (defined(PPC32))
 	/* Setup native and preset events */
-	retval = ppc32_setup_vector_table(vtable);
-	if (!retval)
+//	retval = ppc32_setup_vector_table(vtable);
+//	if (!retval)
     	retval = setup_ppc32_presets(info.cpu_type);
 #endif
    if ( retval ) 
      return(retval);
-
-   strcpy(_papi_hwi_system_info.sub_info.name, "$Id$");
-   strcpy(_papi_hwi_system_info.sub_info.version, "$Revision$");
-   sprintf(abiv,"0x%08X",info.abi_version);
-   strcpy(_papi_hwi_system_info.sub_info.support_version, abiv);
-   strcpy(_papi_hwi_system_info.sub_info.kernel_version, info.driver_version);
-   _papi_hwi_system_info.sub_info.num_cntrs = PERFCTR_CPU_NRCTRS(&info);
-   _papi_hwi_system_info.sub_info.fast_counter_read = (info.cpu_features & PERFCTR_FEATURE_RDPMC) ? 1 : 0;
-   _papi_hwi_system_info.sub_info.fast_real_timer = 1;
-   _papi_hwi_system_info.sub_info.fast_virtual_timer = 1;
-   _papi_hwi_system_info.sub_info.attach = 1;
-   _papi_hwi_system_info.sub_info.attach_must_ptrace = 1;
-   _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
-   _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
-   _papi_hwi_system_info.sub_info.default_granularity = PAPI_GRN_THR;
-   _papi_hwi_system_info.sub_info.available_granularities = PAPI_GRN_THR;
-   _papi_hwi_system_info.sub_info.hardware_intr =
-       (info.cpu_features & PERFCTR_FEATURE_PCINT) ? 1 : 0;
-
-   SUBDBG("Hardware/OS %s support counter generated interrupts\n",
-          _papi_hwi_system_info.sub_info.hardware_intr ? "does" : "does not");
 
    strcpy(_papi_hwi_system_info.hw_info.model_string, PERFCTR_CPU_NAME(&info));
    _papi_hwi_system_info.hw_info.model = info.cpu_type;
@@ -265,7 +266,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
       fprintf(stderr,"Version mismatch of perfctr: compiled 2.5 or higher vs. installed %s\n",info.driver_version);
       return(PAPI_ESBSTR);
     }
-   /* I think this was replaced by sub_info.kernel_profile
+   /* I think this was replaced by cmp_info.kernel_profile
    which is initialized to 0 in papi_internal:_papi_hwi_init_global_internal
   _papi_hwi_system_info.supports_hw_profile = 0;
   */
@@ -316,7 +317,7 @@ int _linux_init(hwd_context_t * ctx) {
    /* Initialize our thread/process pointer. */
    if ((((cmp_context_t *)ctx)->perfctr = vperfctr_open()) == NULL)
      { PAPIERROR( VOPEN_ERROR); return(PAPI_ESYS); }
-   SUBDBG("_linux_init vperfctr_open() = %p\n", ctx->perfctr);
+   SUBDBG("_linux_init vperfctr_open() = %p\n", ((cmp_context_t *)ctx)->perfctr);
 
    /* Initialize the per thread/process virtualized TSC */
    memset(&tmp, 0x0, sizeof(tmp));
@@ -592,7 +593,7 @@ static char *search_cpu_info(FILE * f, char *search_str, char *line)
  * bogomips        : 1091.17
  * */
 
-int _papi_hwd_get_system_info(void)
+int _linux_get_system_info(void)
 {
    int tmp, retval;
    char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
@@ -804,22 +805,3 @@ long_long _linux_get_virt_usec(const hwd_context_t * ctx)
    return (((long_long)vperfctr_read_tsc(((cmp_context_t *)ctx)->perfctr) * tb_scale_factor) /
            (long_long)_papi_hwi_system_info.hw_info.mhz);
 }
-
-
-/*static papi_vectors_t _linux_os_table = {
- #ifndef __CATAMOUNT__
-    .update_shlib_info = _linux_update_shlib_info,
- #endif
-    .init =		_linux_init,
-    .dispatch_timer =	_linux_dispatch_timer,
-    .get_real_usec =	_linux_get_real_usec,
-    .get_real_cycles =	_linux_get_real_cycles,
-    .get_virt_cycles =	_linux_get_virt_cycles,
-    .get_virt_usec =	_linux_get_virt_usec,
-    .get_dmem_info =	_papi_hwd_get_dmem_info
-};
-*/
-/*static int _linux_setup_vector_table(papi_vectors_t *vtable) {
-  return (_papi_hwi_setup_vector_table( vtable, &_linux_os_table));
-}
-*/

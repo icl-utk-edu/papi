@@ -151,6 +151,10 @@ typedef _p3_perfctr_context_t cmp_context_t;
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
 
+extern papi_vector_t _p3_vector;
+#define MY_VECTOR _p3_vector
+
+
 #if __CATAMOUNT__
   extern void _start ( );
   extern caddr_t _etext[ ], _edata[ ];

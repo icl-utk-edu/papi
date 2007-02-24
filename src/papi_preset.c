@@ -101,7 +101,7 @@ int _papi_hwi_setup_all_presets(hwi_search_t *findem, hwi_dev_notes_t *notes)
 	   _papi_hwi_presets.dev_note[preset_index] = papi_strdup(notes[pnum].dev_note);
 	 }
      }
-   _papi_hwi_system_info.sub_info.num_preset_events += did_something;
+   _papi_hwd_cmp_info.num_preset_events += did_something;
 
    return (did_something ? 0 : PAPI_ESBSTR);
 }
@@ -142,7 +142,7 @@ int _papi_hwi_cleanup_all_presets(void)
         _papi_hwi_presets.dev_note[preset_index] = NULL;
       }
    }
-   _papi_hwi_system_info.sub_info.num_preset_events = 0;
+   _papi_hwd_cmp_info.num_preset_events = 0;
    return (PAPI_OK);
 }
 

@@ -25,25 +25,28 @@
 /* PAPI stuff */
 #include "papi.h"
 #include "papi_internal.h"
-#include "papi_vector.h"
 #include "perfctr-p3.h"
 #include "papi_memory.h"
 
-extern int _linux_update_shlib_info(void);
-extern int _linux_init(hwd_context_t * ctx);
-extern void _linux_dispatch_timer(int signal, siginfo_t * si, void *context);
-extern long_long _linux_get_real_usec(void);
-extern long_long _linux_get_real_cycles(void);
-extern long_long _linux_get_virt_cycles(const hwd_context_t * ctx);
-extern long_long _linux_get_virt_usec(const hwd_context_t * ctx);
-extern int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d);
+/* Prototypes for entry points found in linux.c and linux-memory.c */
+int _linux_init_substrate(void);
+int _linux_update_shlib_info(void);
+int _linux_get_system_info(void);
+int _linux_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type);
+int _linux_get_dmem_info(PAPI_dmem_info_t *d);
+int _linux_init(hwd_context_t * ctx);
+void _linux_dispatch_timer(int signal, siginfo_t * si, void *context);
+long_long _linux_get_real_usec(void);
+long_long _linux_get_real_cycles(void);
+long_long _linux_get_virt_cycles(const hwd_context_t * ctx);
+long_long _linux_get_virt_usec(const hwd_context_t * ctx);
 
 /* Prototypes for entry points found in p3_events */
- int _p3_ntv_enum_events(unsigned int *EventCode, int modifer);
- char *_p3_ntv_code_to_name(unsigned int EventCode);
- char *_p3_ntv_code_to_descr(unsigned int EventCode);
- int _p3_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits);
- int _p3_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values,
+int _p3_ntv_enum_events(unsigned int *EventCode, int modifer);
+char *_p3_ntv_code_to_name(unsigned int EventCode);
+char *_p3_ntv_code_to_descr(unsigned int EventCode);
+int _p3_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits);
+int _p3_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values,
                           int name_len, int count);
 
 extern hwi_search_t _papi_hwd_p3_preset_map;
@@ -110,13 +113,13 @@ int setup_p3_presets(int cputype) {
    case PERFCTR_X86_INTEL_P5MMX:
    case PERFCTR_X86_INTEL_PII:
       native_table = &_papi_hwd_p2_native_map;
-      _papi_hwi_system_info.sub_info.num_native_events =_papi_hwd_p2_native_count;
+      MY_VECTOR.cmp_info.num_native_events =_papi_hwd_p2_native_count;
       preset_search_map = &_papi_hwd_p2_preset_map;
       break;
    case PERFCTR_X86_INTEL_P6:
    case PERFCTR_X86_INTEL_PIII:
       native_table = &_papi_hwd_p3_native_map;
-      _papi_hwi_system_info.sub_info.num_native_events = _papi_hwd_p3_native_count;
+      MY_VECTOR.cmp_info.num_native_events = _papi_hwd_p3_native_count;
 #ifdef XML
       return(_xml_papi_hwi_setup_all_presets("Pent III", NULL));
       break;
@@ -126,34 +129,34 @@ int setup_p3_presets(int cputype) {
 #ifdef PERFCTR_X86_INTEL_PENTM
    case PERFCTR_X86_INTEL_PENTM:
       native_table = &_papi_hwd_pm_native_map;
-      _papi_hwi_system_info.sub_info.num_native_events = _papi_hwd_pm_native_count;
+      MY_VECTOR.cmp_info.num_native_events = _papi_hwd_pm_native_count;
       preset_search_map = &_papi_hwd_pm_preset_map;
       break;
 #endif
 #ifdef PERFCTR_X86_INTEL_CORE
    case PERFCTR_X86_INTEL_CORE:
       native_table = &_papi_hwd_core_native_map;
-      _papi_hwi_system_info.sub_info.num_native_events = _papi_hwd_core_native_count;
+      MY_VECTOR.cmp_info.num_native_events = _papi_hwd_core_native_count;
       preset_search_map = &_papi_hwd_core_preset_map;
 	  break;
 #endif
 #ifdef PERFCTR_X86_INTEL_CORE2
    case PERFCTR_X86_INTEL_CORE2:
       native_table = &_papi_hwd_core_native_map;
-      _papi_hwi_system_info.sub_info.num_native_events = _papi_hwd_core_native_count;
+      MY_VECTOR.cmp_info.num_native_events = _papi_hwd_core_native_count;
       preset_search_map = &_papi_hwd_core_preset_map;
 	  break;
 #endif
    case PERFCTR_X86_AMD_K7:
       native_table = &_papi_hwd_k7_native_map;
-      _papi_hwi_system_info.sub_info.num_native_events = _papi_hwd_k7_native_count;
+      MY_VECTOR.cmp_info.num_native_events = _papi_hwd_k7_native_count;
       preset_search_map = &_papi_hwd_ath_preset_map;
       break;
 
 #ifdef PERFCTR_X86_AMD_K8 /* this is defined in perfctr 2.5.x */
    case PERFCTR_X86_AMD_K8:
       native_table = &_papi_hwd_k8_native_map;
-      _papi_hwi_system_info.sub_info.num_native_events = _papi_hwd_k8_native_count;
+      MY_VECTOR.cmp_info.num_native_events = _papi_hwd_k8_native_count;
       preset_search_map = &_papi_hwd_opt_preset_map;
       _papi_hwd_fixup_fp(&s, &n);
       break;
@@ -161,7 +164,7 @@ int setup_p3_presets(int cputype) {
 #ifdef PERFCTR_X86_AMD_K8C  /* this is defined in perfctr 2.6.x */
    case PERFCTR_X86_AMD_K8C:
       native_table = &_papi_hwd_k8_native_map;
-      _papi_hwi_system_info.sub_info.num_native_events = _papi_hwd_k8_native_count;
+      MY_VECTOR.cmp_info.num_native_events = _papi_hwd_k8_native_count;
       preset_search_map = &_papi_hwd_opt_preset_map;
       _papi_hwd_fixup_fp(&s, &n);
       break;
@@ -171,7 +174,7 @@ int setup_p3_presets(int cputype) {
      PAPIERROR(MODEL_ERROR);
      return(PAPI_ESBSTR);
    }
-   SUBDBG("Number of native events: %d\n",_papi_hwi_system_info.sub_info.num_native_events);
+   SUBDBG("Number of native events: %d\n",MY_VECTOR.cmp_info.num_native_events);
    retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
 
    /* fix up the floating point ops if needed for opteron */
@@ -184,9 +187,9 @@ static int _p3_init_control_state(hwd_control_state_t * cntl) {
    int i, def_mode = 0;
    cmp_control_state_t *ptr = (cmp_control_state_t *)cntl;
 
-   if (_papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_USER)
+   if (MY_VECTOR.cmp_info.default_domain & PAPI_DOM_USER)
       def_mode |= PERF_USR;
-   if (_papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_KERNEL)
+   if (MY_VECTOR.cmp_info.default_domain & PAPI_DOM_KERNEL)
      def_mode |= PERF_OS;
 
    ptr->allocated_registers.selector = 0;
@@ -208,7 +211,7 @@ static int _p3_init_control_state(hwd_control_state_t * cntl) {
    case PERFCTR_X86_INTEL_PENTM:
 #endif
       ptr->control.cpu_control.evntsel[0] |= PERF_ENABLE;
-      for(i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
+      for(i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
          ptr->control.cpu_control.evntsel[i] |= def_mode;
          ptr->control.cpu_control.pmc_map[i] = i;
       }
@@ -223,7 +226,7 @@ static int _p3_init_control_state(hwd_control_state_t * cntl) {
    case PERFCTR_X86_AMD_K8C:
 #endif
    case PERFCTR_X86_AMD_K7:
-      for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
+      for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
          ptr->control.cpu_control.evntsel[i] |= PERF_ENABLE | def_mode;
          ptr->control.cpu_control.pmc_map[i] = i;
       }
@@ -237,7 +240,7 @@ static int _p3_init_control_state(hwd_control_state_t * cntl) {
 static int _p3_set_domain(hwd_control_state_t * cntrl, int domain) {
    int i, did = 0;
    cmp_control_state_t *ptr = (cmp_control_state_t *)cntrl;
-   int num_cntrs = _papi_hwi_system_info.sub_info.num_cntrs;
+   int num_cntrs = MY_VECTOR.cmp_info.num_cntrs;
 
      /* Clear the current domain set for this event set */
      /* We don't touch the Enable bit in this code but  */
@@ -538,7 +541,7 @@ static int _p3_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    OVFDBG("EventIndex=%d\n", EventIndex);
 
    /* The correct event to overflow is EventIndex */
-   ncntrs = _papi_hwi_system_info.sub_info.num_cntrs;
+   ncntrs = MY_VECTOR.cmp_info.num_cntrs;
    i = ESI->EventInfoArray[EventIndex].pos[0];
    if (i >= ncntrs) {
        PAPIERROR("Selector id %d is larger than ncntrs %d", i, ncntrs);
@@ -551,7 +554,7 @@ static int _p3_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
          return PAPI_EINVAL;
       }
 
-      if ((retval = _papi_hwi_start_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig,NEED_CONTEXT)) != PAPI_OK)
+      if ((retval = _papi_hwi_start_signal(MY_VECTOR.cmp_info.hardware_intr_sig,NEED_CONTEXT)) != PAPI_OK)
          return(retval);
 
       /* overflow interrupt occurs on the NEXT event after overflow occurs
@@ -562,7 +565,7 @@ static int _p3_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
       contr->cpu_control.nractrs--;
       nricntrs = contr->cpu_control.nrictrs;
       nracntrs = contr->cpu_control.nractrs;
-      contr->si_signo = _papi_hwi_system_info.sub_info.hardware_intr_sig;
+      contr->si_signo = MY_VECTOR.cmp_info.hardware_intr_sig;
 
       /* move this event to the bottom part of the list if needed */
       if (i < nracntrs)
@@ -587,7 +590,7 @@ static int _p3_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
       OVFDBG("Modified event set\n");
 
-      retval = _papi_hwi_stop_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig);
+      retval = _papi_hwi_stop_signal(MY_VECTOR.cmp_info.hardware_intr_sig);
    }
    OVFDBG("End of call. Exit code: %d\n", retval);
    return (retval);
@@ -646,7 +649,7 @@ static int _p3_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
   }
 }
 
-papi_vectors_t _p3_vectors = {
+papi_vector_t _p3_vector = {
     /* sizes of component-private structures */
     .context_size =		sizeof(_p3_perfctr_context_t),
     .control_state_size =	sizeof(_p3_perfctr_control_t),
@@ -681,22 +684,25 @@ papi_vectors_t _p3_vectors = {
  #ifndef __CATAMOUNT__
     .update_shlib_info = _linux_update_shlib_info,
  #endif
+    .get_memory_info =	_linux_get_memory_info,
+    .get_system_info =	_linux_get_system_info,
     .init =		_linux_init,
+    .init_substrate =	_linux_init_substrate,
     .dispatch_timer =	_linux_dispatch_timer,
     .get_real_usec =	_linux_get_real_usec,
     .get_real_cycles =	_linux_get_real_cycles,
     .get_virt_cycles =	_linux_get_virt_cycles,
     .get_virt_usec =	_linux_get_virt_usec,
-    .get_dmem_info =	_papi_hwd_get_dmem_info
+    .get_dmem_info =	_linux_get_dmem_info
 };
 
-int setup_p3_vector_table(papi_vectors_t * vtable){
-  /*return _papi_hwi_setup_vector_table( vtable, &_p3_vectors);*/
+int setup_p3_vector_table(papi_vector_t * vtable){
+  /*return _papi_hwi_setup_vector_table( vtable, &_p3_vector);*/
   return ( PAPI_OK );
 }
 
 /* These should be removed when p3-p4 is merged */
-int setup_p4_vector_table(papi_vectors_t * vtable){
+int setup_p4_vector_table(papi_vector_t * vtable){
   return ( PAPI_OK );
 }
 

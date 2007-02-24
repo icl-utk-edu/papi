@@ -219,7 +219,7 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, int *isHardware, long_
    int profile_index = 0;
    long_long overflow_vector;
 
-   long_long temp[_papi_hwi_system_info.sub_info.num_cntrs], over;
+   long_long temp[_papi_hwd_cmp_info.num_cntrs], over;
    long_long latest = 0;
    ThreadInfo_t *thread;
    EventSetInfo_t *ESI;

@@ -9,6 +9,9 @@ typedef struct papi_vectors {
     int		register_size;
     int		reg_alloc_size;
 
+/* Substrate specific data structure */
+    PAPI_component_info_t cmp_info; /* See definition in papi.h */
+
 /* List of exposed function pointers for this component */
 #ifdef _WIN32 /* Windows requires a different callback format */
     void	(*timer_callback)	(UINT, UINT, DWORD, DWORD, DWORD);
@@ -26,6 +29,7 @@ typedef struct papi_vectors {
     long_long	(*get_virt_cycles)	(const hwd_context_t *);
     long_long	(*get_virt_usec)	(const hwd_context_t *);
     int		(*stop_profiling)	(ThreadInfo_t *, EventSetInfo_t *);
+    int		(*init_substrate)	(void);
     int		(*init)			(hwd_context_t *);
     int		(*init_control_state)	(hwd_control_state_t * ptr);
     int		(*update_shlib_info)	(void);
@@ -53,16 +57,14 @@ typedef struct papi_vectors {
     int		(*shutdown)		(hwd_context_t *);
     int		(*shutdown_global)	(void);
     int		(*user)			(int, void *, void *);
-}papi_vectors_t;
+}papi_vector_t;
 
-extern papi_vectors_t _papi_frm_vectors;
-extern papi_vectors_t *_papi_component_table[];
-extern papi_vectors_t *_PAPI_CURRENT_VECTOR;
+extern papi_vector_t *_papi_component_table[];
+extern papi_vector_t *_papi_hwi_current_vector;
 
 /* Prototypes */
-//int _papi_hwi_setup_vector_table(papi_vectors_t *table, papi_svector_t *stable);
-int _papi_hwi_setup_vector_table(papi_vectors_t *frm, papi_vectors_t *cmp);
-int _papi_hwi_initialize_vector(papi_vectors_t *frm);
-void vector_print_table(papi_vectors_t *v, int print_func);
+int _papi_hwi_setup_vector_table(papi_vector_t *frm, papi_vector_t *cmp);
+int _papi_hwi_innoculate_vector(papi_vector_t *v);
+void vector_print_table(papi_vector_t *v, int print_func);
 
 #endif /* _PAPI_VECTOR_H */

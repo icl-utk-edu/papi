@@ -21,7 +21,7 @@ static short int init_amd_L2_assoc_inf(unsigned short int pattern);
 static int init_intel(PAPI_mh_info_t * mh_info);
 static void cpuid(unsigned int *, unsigned int *, unsigned int *, unsigned int *);
 
-int _papi_hwd_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type)
+int _linux_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type)
 {
    int i,j;
    int retval = 0;
@@ -841,7 +841,7 @@ static void cpuid(unsigned int *a, unsigned int *b,
 
 #ifdef _WIN32
 #include <Psapi.h>
-int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
+int _linux_get_dmem_info(PAPI_dmem_info_t *d)
 {
 
    HANDLE proc = GetCurrentProcess();
@@ -861,13 +861,12 @@ int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
 
 #else
 #ifdef __CATAMOUNT__
-int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
+int _linux_get_dmem_info(PAPI_dmem_info_t *d)
 {
 	return( PAPI_EINVAL );
 }
 #else
-//int get_dmem_info(long_long *size, long_long *resident, long_long *shared, long_long *text, long_long *library, long_long *heap, long_long *locked, long_long *stack, long_long *ps, long_long *vmhwm)
-int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
+int _linux_get_dmem_info(PAPI_dmem_info_t *d)
 {
   char fn[PATH_MAX], tmp[PATH_MAX];
   FILE *f;

@@ -240,7 +240,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_ATTACH		19      /* Attach to a another tid/pid instead of ourself */
 #define PAPI_SHLIBINFO          20      /* Shared Library information */
 #define PAPI_LIB_VERSION        21      /* Option to find out the complete version number of the PAPI library */
-#define PAPI_SUBSTRATEINFO      22      /* Find out what the substrate supports */
+#define PAPI_COMPONENTINFO      22      /* Find out what the component substrate supports */
+#define PAPI_SUBSTRATEINFO PAPI_COMPONENTINFO /* Alias to provide backward compatibility */
 /* Currently the following options are only available on Itanium; they may be supported elsewhere in the future */
 #define PAPI_DATA_ADDRESS       23      /* Option to set data address range restriction */
 #define PAPI_INSTR_ADDRESS      24      /* Option to set instruction address range restriction */
@@ -420,7 +421,10 @@ read the documentation carefully.  */
      unsigned int profile_ear:1;      	   /* Supports data/instr/tlb miss address sampling */
      unsigned int grouped_cntrs:1;         /* Underlying hardware uses counter groups */
      unsigned int reserved_bits:16;
-   } PAPI_substrate_info_t;
+   } PAPI_component_info_t;
+
+/* for backward compatibility */
+#define PAPI_substrate_info_t PAPI_component_info_t
 
    typedef int (*PAPI_debug_handler_t) (int code);
 
@@ -544,7 +548,7 @@ read the documentation carefully.  */
       PAPI_hw_info_t *hw_info;
       PAPI_shlib_info_t *shlib_info;
       PAPI_exe_info_t *exe_info;
-      PAPI_substrate_info_t *sub_info;
+      PAPI_component_info_t *cmp_info;
       PAPI_overflow_option_t ovf_info; /* not used anywhere I could find - dkt */
       PAPI_addr_range_option_t addr;
    } PAPI_option_t;
@@ -649,7 +653,8 @@ typedef struct event_info {
    int   PAPI_set_event_info(PAPI_event_info_t * info, int *EventCode, int replace);
    const PAPI_exe_info_t *PAPI_get_executable_info(void);
    const PAPI_hw_info_t *PAPI_get_hardware_info(void);
-   const PAPI_substrate_info_t *PAPI_get_substrate_info(void);
+   const PAPI_component_info_t *PAPI_get_component_info(void);
+#define  PAPI_get_substrate_info PAPI_get_component_info /* for backward compatibility */
    int   PAPI_get_multiplex(int EventSet);
    int   PAPI_get_opt(int option, PAPI_option_t * ptr);
    long_long PAPI_get_real_cyc(void);

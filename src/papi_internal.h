@@ -157,7 +157,7 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
 /* Replacement for bogus supports_multiple_threads item */
 
-#define SUPPORTS_MULTIPLE_THREADS(mdi) (mdi.sub_info.available_granularities & PAPI_GRN_THR)
+#define SUPPORTS_MULTIPLE_THREADS(sub_info) (sub_info.available_granularities & PAPI_GRN_THR)
 
 /* This was defined by each substrate as = (MAX_COUNTERS < 8) ? MAX_COUNTERS : 8 
     Now it's defined globally as 8 for everything. Mainly applies to max terms in
@@ -455,7 +455,7 @@ typedef struct {
 typedef struct _papi_mdi {
    DynamicArray_t global_eventset_map;  /* Global structure to maintain int<->EventSet mapping */
    pid_t pid;                   /* Process identifier */
-   PAPI_substrate_info_t sub_info; /* See definition in papi.h */
+//   PAPI_substrate_info_t sub_info; /* See definition in papi.h */ Moved to papi_vector_table...
    PAPI_hw_info_t hw_info;      /* See definition in papi.h */
    PAPI_exe_info_t exe_info;    /* See definition in papi.h */
    PAPI_shlib_info_t shlib_info;    /* See definition in papi.h */
@@ -553,6 +553,7 @@ inline_static void LEAKDBG(char *format, ...)
 #include "threads.h"
 #include "papi_vector.h"
 #include "papi_protos.h"
+#include "papi_vector_redefine.h"
 
 inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset)
 {
@@ -577,7 +578,7 @@ inline_static int _papi_hwi_is_sw_multiplex(EventSetInfo_t *ESI)
   if ((ESI->state & PAPI_MULTIPLEXING) == 0)
     return(0);
   /* Does the substrate support kernel multiplexing */
-  if (_papi_hwi_system_info.sub_info.kernel_multiplex)
+  if (_papi_hwd_cmp_info.kernel_multiplex)
     {
       /* Have we forced software multiplexing */
       if (ESI->multiplex.flags == PAPI_MULTIPLEX_FORCE_SW)
