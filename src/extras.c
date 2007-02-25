@@ -655,7 +655,7 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
          /* Convert the register bits structure for this EventCode into
             arrays of names and values (substrate dependent).
          */
-	bits = papi_malloc(_papi_hwd_register_size);
+	bits = papi_malloc(_papi_hwd_cmp_size.reg_value);
 	if ( bits == NULL ){
 	    info->count = 0;
 	    return(PAPI_ENOMEM);

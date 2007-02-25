@@ -26,7 +26,6 @@ extern int ppc32_setup_vector_table(papi_vector_t *);
 extern int setup_p4_presets(int cputype);
 extern int setup_p4_vector_table(papi_vector_t *);
 extern int setup_p3_presets(int cputype);
-/*extern int setup_p3_vector_table(papi_vector_t *);*/
 #endif
 
 /* Internal prototypes */
@@ -200,18 +199,8 @@ int _linux_init_substrate(void)
    sprintf(abiv,"0x%08X",info.abi_version);
    strcpy(MY_VECTOR.cmp_info.support_version, abiv);
    strcpy(MY_VECTOR.cmp_info.kernel_version, info.driver_version);
-   SUBDBG("Number of counters before: %d\n",MY_VECTOR.cmp_info.num_cntrs);
    MY_VECTOR.cmp_info.num_cntrs = PERFCTR_CPU_NRCTRS(&info);
-   SUBDBG("Number of counters after:  %d\n",MY_VECTOR.cmp_info.num_cntrs);
    MY_VECTOR.cmp_info.fast_counter_read = (info.cpu_features & PERFCTR_FEATURE_RDPMC) ? 1 : 0;
-   MY_VECTOR.cmp_info.fast_real_timer = 1;
-   MY_VECTOR.cmp_info.fast_virtual_timer = 1;
-   MY_VECTOR.cmp_info.attach = 1;
-   MY_VECTOR.cmp_info.attach_must_ptrace = 1;
-   MY_VECTOR.cmp_info.default_domain = PAPI_DOM_USER;
-   MY_VECTOR.cmp_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
-   MY_VECTOR.cmp_info.default_granularity = PAPI_GRN_THR;
-   MY_VECTOR.cmp_info.available_granularities = PAPI_GRN_THR;
    MY_VECTOR.cmp_info.hardware_intr =
        (info.cpu_features & PERFCTR_FEATURE_PCINT) ? 1 : 0;
 
@@ -226,8 +215,6 @@ int _linux_init_substrate(void)
      	retval = setup_p4_presets(info.cpu_type);
    }
    else{
-     /*retval = setup_p3_vector_table(vtable);
-     if (!retval)*/
      	retval = setup_p3_presets(info.cpu_type);
    }
 #elif (defined(PPC64))

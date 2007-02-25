@@ -1,13 +1,10 @@
 /* Redfine the calls to vector table lookups */
 
-/* Private structure sizes for this component */
-#define _papi_hwd_context_size		_papi_hwi_current_vector->context_size
-#define _papi_hwd_control_state_size	_papi_hwi_current_vector->control_state_size
-#define _papi_hwd_register_size		_papi_hwi_current_vector->register_size
-#define _papi_hwd_reg_alloc_size	_papi_hwi_current_vector->reg_alloc_size
-
 /* Component specific data structure */
 #define _papi_hwd_cmp_info		_papi_hwi_current_vector->cmp_info /* See definition in papi.h */
+
+/* Private structure sizes for this component */
+#define _papi_hwd_cmp_size		_papi_hwi_current_vector->size
 
 /* List of exposed function pointers for this component */
 #ifdef _WIN32

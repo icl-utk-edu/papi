@@ -1,16 +1,21 @@
 #ifndef _PAPI_VECTOR_H
 #define _PAPI_VECTOR_H
 
+/* Sies of structure private to each component */
+typedef struct cmp_struct_sizes {
+    int		context;
+    int		control_state;
+    int		reg_value;
+    int		reg_alloc;
+} cmp_struct_sizes_t;
+
 /* Vector Table Stuff */
 typedef struct papi_vectors {
-/* Private structure sizes for this component */
-    int		context_size;
-    int		control_state_size;
-    int		register_size;
-    int		reg_alloc_size;
-
 /* Substrate specific data structure */
     PAPI_component_info_t cmp_info; /* See definition in papi.h */
+
+/* Substrate specific structure sizes*/
+    cmp_struct_sizes_t size;
 
 /* List of exposed function pointers for this component */
 #ifdef _WIN32 /* Windows requires a different callback format */

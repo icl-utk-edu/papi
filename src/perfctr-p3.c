@@ -650,11 +650,34 @@ static int _p3_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 }
 
 papi_vector_t _p3_vector = {
-    /* sizes of component-private structures */
-    .context_size =		sizeof(_p3_perfctr_context_t),
-    .control_state_size =	sizeof(_p3_perfctr_control_t),
-    .register_size =		sizeof(_p3_register_t),
-    .reg_alloc_size =		sizeof(_p3_reg_alloc_t),
+    .cmp_info = {
+	/* default component information (unspecified values are initialized to 0) */
+	.num_mpx_cntrs =	PAPI_MPX_DEF_DEG,
+	.default_domain =	PAPI_DOM_USER,
+	.available_domains =	PAPI_DOM_USER,
+	.default_granularity =	PAPI_GRN_THR,
+	.available_granularities = PAPI_GRN_THR,
+	.multiplex_timer_sig =	PAPI_SIGNAL,
+	.multiplex_timer_num =	PAPI_ITIMER,
+	.multiplex_timer_us =	PAPI_MPX_DEF_US,
+	.hardware_intr_sig =	PAPI_SIGNAL,
+
+	/* component specific cmp_info initializations */
+	.fast_real_timer =	1,
+	.fast_virtual_timer =	1,
+	.attach =		1,
+	.attach_must_ptrace =	1,
+	.available_domains =	PAPI_DOM_USER|PAPI_DOM_KERNEL,
+    },
+
+    /* sizes of framework-opaque component-private structures */
+    .size = {
+	.context =		sizeof(_p3_perfctr_context_t),
+	.control_state =	sizeof(_p3_perfctr_control_t),
+	.reg_value =		sizeof(_p3_register_t),
+	.reg_alloc =		sizeof(_p3_reg_alloc_t),
+    },
+
     /* function pointers in this component */
     .init_control_state =	_p3_init_control_state,
     .start =			_p3_start,
@@ -695,11 +718,6 @@ papi_vector_t _p3_vector = {
     .get_virt_usec =	_linux_get_virt_usec,
     .get_dmem_info =	_linux_get_dmem_info
 };
-
-int setup_p3_vector_table(papi_vector_t * vtable){
-  /*return _papi_hwi_setup_vector_table( vtable, &_p3_vector);*/
-  return ( PAPI_OK );
-}
 
 /* These should be removed when p3-p4 is merged */
 int setup_p4_vector_table(papi_vector_t * vtable){

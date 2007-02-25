@@ -208,7 +208,7 @@ static void initialize_NativeInfoArray(EventSetInfo_t * ESI)
    int i;
    /* xxxx should these arrays be num_mpx_cntrs or num_cntrs in size?? */
    int max_counters = _papi_hwd_cmp_info.num_mpx_cntrs;
-   int sz = _papi_hwd_register_size;
+   int sz = _papi_hwd_cmp_size.reg_value;
    char *ptr = (((char *)ESI->NativeInfoArray)+(max_counters*sizeof(NativeInfo_t)));
 
    for (i = 0; i < max_counters; i++) {
@@ -234,13 +234,13 @@ static int allocate_EventSet(EventSetInfo_t **here)
    memset(ESI, 0x00, sizeof(EventSetInfo_t));
 
    max_counters = _papi_hwd_cmp_info.num_mpx_cntrs;
-   ESI->ctl_state = (hwd_control_state_t *)papi_malloc(_papi_hwd_control_state_size);
+   ESI->ctl_state = (hwd_control_state_t *)papi_malloc(_papi_hwd_cmp_size.control_state);
    ESI->sw_stop = (long_long *) papi_malloc(max_counters * sizeof(long_long));
    ESI->hw_start = (long_long *) papi_malloc(max_counters * sizeof(long_long));
    ESI->EventInfoArray = (EventInfo_t *) papi_malloc(max_counters * sizeof(EventInfo_t));
 /* allocate room for the native events and for the component-private register structures */
 /* xxxx should these arrays be num_mpx_cntrs or num_cntrs in size?? */
-   ESI->NativeInfoArray = (NativeInfo_t *) papi_malloc(max_counters * sizeof(NativeInfo_t)+max_counters*_papi_hwd_register_size);
+   ESI->NativeInfoArray = (NativeInfo_t *) papi_malloc(max_counters * sizeof(NativeInfo_t)+max_counters*_papi_hwd_cmp_size.reg_value);
 
    /* NOTE: the next two malloc allocate blocks of memory that are later parcelled into overflow and profile arrays */
    ESI->overflow.deadline = (long_long *) papi_malloc((sizeof(long_long)+sizeof(int)*3)*max_counters);
@@ -262,7 +262,7 @@ static int allocate_EventSet(EventSetInfo_t **here)
    }
    memset(ESI->sw_stop, 0x00, max_counters * sizeof(long_long));
    memset(ESI->hw_start, 0x00, max_counters * sizeof(long_long));
-   memset(ESI->ctl_state, 0x00,_papi_hwd_control_state_size);
+   memset(ESI->ctl_state, 0x00,_papi_hwd_cmp_size.control_state);
 
    /* Carve up the overflow block into separate arrays */
    ptr = (char *) ESI->overflow.deadline;
@@ -310,7 +310,8 @@ static void free_EventSet(EventSetInfo_t * ESI)
    if (ESI->EventInfoArray)	papi_free(ESI->EventInfoArray);
    if ( ESI->NativeInfoArray)	papi_free(ESI->NativeInfoArray);
    if ( ESI->overflow.deadline )	papi_free(ESI->overflow.deadline);
-   if ( ESI->profile.prof )	papi_free(ESI->profile.prof);    if (ESI->ctl_state)		papi_free(ESI->ctl_state);
+   if ( ESI->profile.prof )	papi_free(ESI->profile.prof);
+   if (ESI->ctl_state)		papi_free(ESI->ctl_state);
    if (ESI->sw_stop)		papi_free(ESI->sw_stop);
    if (ESI->hw_start)		papi_free(ESI->hw_start);
    if ((ESI->state & PAPI_MULTIPLEXING) && ESI->multiplex.mpx_evset)
@@ -537,7 +538,7 @@ static int add_native_fail_clean(EventSetInfo_t * ESI, int nevt)
          if (ESI->NativeInfoArray[i].ni_owners == 0) {
             ESI->NativeInfoArray[i].ni_event = 0;
             ESI->NativeInfoArray[i].ni_position = -1;
-            memset(ESI->NativeInfoArray[i].ni_bits, 0x00, _papi_hwd_register_size);
+            memset(ESI->NativeInfoArray[i].ni_bits, 0x00, _papi_hwd_cmp_size.reg_value);
             ESI->NativeCount--;
          }
          INTDBG("add_events fail, and remove added native events of the event: %s\n",
@@ -787,12 +788,12 @@ int remove_native_events(EventSetInfo_t * ESI, int *nevt, int size)
 		native[i].ni_event = native[j].ni_event;
 		native[i].ni_position = native[j].ni_position;
 		native[i].ni_owners = native[j].ni_owners;
-		memcpy(native[i].ni_bits, native[j].ni_bits, _papi_hwd_register_size);
+		memcpy(native[i].ni_bits, native[j].ni_bits, _papi_hwd_cmp_size.reg_value);
 
 		native[j].ni_event = -1;
 		native[j].ni_position = -1;
 		native[j].ni_owners = 0;
-		memset(native[j].ni_bits, 0x00, _papi_hwd_register_size);
+		memset(native[j].ni_bits, 0x00, _papi_hwd_cmp_size.reg_value);
 		copy++;
 		break;
             }
@@ -801,7 +802,7 @@ int remove_native_events(EventSetInfo_t * ESI, int *nevt, int size)
 	    native[j].ni_event = -1;
             native[j].ni_position = -1;
             native[j].ni_owners = 0;
-	    memset(native[j].ni_bits, 0x00,_papi_hwd_register_size);
+	    memset(native[j].ni_bits, 0x00,_papi_hwd_cmp_size.reg_value);
          }
       }
    }
@@ -966,7 +967,7 @@ int _papi_hwi_convert_eventset_to_multiplex(_papi_int_multiplex_t *mpx)
       convert them to multiplex events */
 
    if (ESI->NumberOfEvents)
-     {											  
+     {
        mpxlist = (int *) papi_malloc(sizeof(int) * ESI->NumberOfEvents);
        if (mpxlist == NULL) 
 	   return (PAPI_ENOMEM);
@@ -1022,58 +1023,6 @@ int _papi_hwi_query(int preset_index, int *flags, char **note)
 }
 #endif
 
-/* Component info struct initialization using defaults */
-/* See _papi_mdi definition in papi_internal.h       */
-/* xxxx Actually, this structure is statically initialized to 0;
-    the non-zero fields could/ahould be set in the substrate,
-    which would eliminate the need for this routine altogether. */
-static int _papi_hwi_init_cmp_internal(void)
-{
-  memset(&_papi_hwd_cmp_info,0x0,sizeof(PAPI_component_info_t));
-
-   /* The PAPI_component_info_t struct defined in papi.h */
-
-   _papi_hwd_cmp_info.name[0] = '\0';              /* Name of the substrate we're using, usually CVS RCS Id */
-   _papi_hwd_cmp_info.version[0] = '\0';           /* Version of this substrate, usually CVS Revision */
-   _papi_hwd_cmp_info.support_version[0] = '\0';   /* Version of the support library */
-   _papi_hwd_cmp_info.kernel_version[0] = '\0';    /* Version of the kernel PMC support driver */
-   _papi_hwd_cmp_info.num_cntrs = 0;               /* Number of counters the substrate supports */
-   _papi_hwd_cmp_info.num_mpx_cntrs = PAPI_MPX_DEF_DEG; /* Number of counters the substrate (or PAPI) can multiplex */
-   _papi_hwd_cmp_info.num_preset_events = 0;       
-   _papi_hwd_cmp_info.num_native_events = 0;       
-   _papi_hwd_cmp_info.default_domain = PAPI_DOM_USER;          /* The default domain when this substrate is used */
-   _papi_hwd_cmp_info.available_domains = _papi_hwd_cmp_info.default_domain;       /* Available domains */ 
-   _papi_hwd_cmp_info.default_granularity = PAPI_GRN_THR;     /* The default granularity when this substrate is used */
-   _papi_hwd_cmp_info.available_granularities = _papi_hwd_cmp_info.default_granularity; /* Available granularities */
-   _papi_hwd_cmp_info.opcode_match_width = 0;      /* Width of opcode matcher if exists, 0 if not */
-   _papi_hwd_cmp_info.multiplex_timer_sig = PAPI_SIGNAL;
-   _papi_hwd_cmp_info.multiplex_timer_num = PAPI_ITIMER;
-   _papi_hwd_cmp_info.multiplex_timer_us = PAPI_MPX_DEF_US;
-   _papi_hwd_cmp_info.hardware_intr_sig = PAPI_SIGNAL;
-   _papi_hwd_cmp_info.reserved_ints[0] = 0;
-   _papi_hwd_cmp_info.reserved_ints[1] = 0;
-   _papi_hwd_cmp_info.reserved_ints[2] = 0;
-   _papi_hwd_cmp_info.reserved_ints[3] = 0;
-   _papi_hwd_cmp_info.hardware_intr = 0;         /* Needs hw overflow intr to be emulated in software*/
-   _papi_hwd_cmp_info.precise_intr = 0;          /* Performance interrupts happen precisely */
-   _papi_hwd_cmp_info.posix1b_timers = 0;        
-   _papi_hwd_cmp_info.kernel_profile = 0;        /* Needs kernel profile support (buffered interrupts) to be emulated */
-   _papi_hwd_cmp_info.kernel_multiplex = 0;      /* In kernel multiplexing */
-   _papi_hwd_cmp_info.data_address_range = 0;    /* Supports data address range limiting */
-   _papi_hwd_cmp_info.instr_address_range = 0;   /* Supports instruction address range limiting */
-   _papi_hwd_cmp_info.fast_real_timer = 0;       /* Has a fast real timer */
-   _papi_hwd_cmp_info.fast_virtual_timer = 0;    /* Has a fast virtual timer */
-   _papi_hwd_cmp_info.attach = 0;    	     /* Can attach */
-   _papi_hwd_cmp_info.attach_must_ptrace = 0;    /* Attaching code must first ptrace and stop the child */
-   _papi_hwd_cmp_info.edge_detect = 0;           /* Supports edge detection on events */
-   _papi_hwd_cmp_info.invert = 0;                /* Supports invert detection on events */
-   _papi_hwd_cmp_info.profile_ear = 0;           /* Supports data/instr/tlb miss address sampling */
-   _papi_hwd_cmp_info.grouped_cntrs = 0;         
-   _papi_hwd_cmp_info.reserved_bits = 0;
-
-   return (PAPI_OK);
-}
-
 /*
  * Routine that initializes the substrates
  * Currently, only one substrate is initialized, eventually
@@ -1087,10 +1036,6 @@ int _papi_hwi_init_global(void)
 
    retval = _papi_hwi_innoculate_vector(_papi_hwi_current_vector);
    if (retval != PAPI_OK ) return(retval);
-    retval = _papi_hwi_init_cmp_internal();
-   if (retval != PAPI_OK ) return(retval);
-   /* xxxx this routine really should be embedded in the vector table
-    and not be passed a reference to the table... */
    retval = _papi_hwd_init_substrate();
    return(retval);
 }
@@ -1355,7 +1300,7 @@ int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t * event_list, int count)
    int idx_q[count];     /* queue of indexes of lowest rank events */
    int map_q[count];     /* queue of mapped events (TRUE if mapped) */
    int head, tail;
-   int size = _papi_hwd_reg_alloc_size;
+   int size = _papi_hwd_cmp_size.reg_alloc;
 
    /* build a queue of indexes to all events 
       that live on one counter only (rank == 1) */

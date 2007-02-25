@@ -385,25 +385,25 @@ read the documentation carefully.  */
       char lib_dir_sep;
    } PAPI_preload_info_t;
 
-   typedef struct _papi_substrate_option {
+   typedef struct _papi_component_option {
      char name[PAPI_MAX_STR_LEN];            /* Name of the substrate we're using, usually CVS RCS Id */
      char version[PAPI_MIN_STR_LEN];         /* Version of this substrate, usually CVS Revision */
      char support_version[PAPI_MIN_STR_LEN]; /* Version of the support library */
      char kernel_version[PAPI_MIN_STR_LEN];  /* Version of the kernel PMC support driver */
      int num_cntrs;               /* Number of hardware counters the substrate supports */
-     int num_mpx_cntrs;           /* Number of hardware counters the substrate or PAPI can multiplex supports */
+     int num_mpx_cntrs;           /* Number of multiplesed hardware counters the substrate or PAPI support: PAPI_MPX_DEF_DEG */
      int num_preset_events;       /* Number of preset events the substrate supports */
      int num_native_events;       /* Number of native events the substrate supports */
-     int default_domain;          /* The default domain when this substrate is used */
-     int available_domains;       /* Available domains */ 
-     int default_granularity;     /* The default granularity when this substrate is used */
-     int available_granularities; /* Available granularities */
-     int multiplex_timer_sig;     /* Signal number used by the multiplex timer, 0 if not */
-     int multiplex_timer_num;     /* Number of the itimer or POSIX 1 timer used by the multiplex timer */
-     int multiplex_timer_us;   /* uS between switching of sets */
-     int hardware_intr_sig;       /* Signal used by hardware to deliver PMC events */
+     int default_domain;          /* The default domain when this substrate is used: PAPI_DOM_USER */
+     int available_domains;       /* Available domains; default: .default_domain */ 
+     int default_granularity;     /* The default granularity when this substrate is used: PAPI_GRN_THR */
+     int available_granularities; /* Available granularities; default:.default_granularity */
+     int multiplex_timer_sig;     /* Signal number used by the multiplex timer, 0 if not: PAPI_SIGNAL */
+     int multiplex_timer_num;     /* Number of the itimer or POSIX 1 timer used by the multiplex timer: PAPI_ITIMER */
+     int multiplex_timer_us;   /* uS between switching of sets: PAPI_MPX_DEF_US */
+     int hardware_intr_sig;       /* Signal used by hardware to deliver PMC events: PAPI_SIGNAL */
      int opcode_match_width;      /* Width of opcode matcher if exists, 0 if not */
-     int reserved_ints[4];        
+     int reserved_ints[4];
      unsigned int hardware_intr:1;         /* hw overflow intr, does not need to be emulated in software*/
      unsigned int precise_intr:1;          /* Performance interrupts happen precisely */
      unsigned int posix1b_timers:1;        /* Using POSIX 1b interval timers (timer_create) instead of setitimer */
@@ -422,6 +422,7 @@ read the documentation carefully.  */
      unsigned int grouped_cntrs:1;         /* Underlying hardware uses counter groups */
      unsigned int reserved_bits:16;
    } PAPI_component_info_t;
+
 
 /* for backward compatibility */
 #define PAPI_substrate_info_t PAPI_component_info_t
