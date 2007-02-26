@@ -101,12 +101,14 @@ static ThreadInfo_t *allocate_thread(void)
       return (NULL);
    memset(thread, 0x00, sizeof(ThreadInfo_t));
 
-   thread->context = (hwd_context_t *) papi_malloc(_papi_hwd_context_size);
+//   thread->context = (hwd_context_t *) papi_malloc(_papi_hwd_context_size);
+   thread->context = (hwd_context_t *) papi_malloc(_papi_hwd_cmp_size.context);
    if ( !thread->context ){
      papi_free(thread);
      return(NULL);
    }
-   memset(thread->context, 0x00, _papi_hwd_context_size);
+//   memset(thread->context, 0x00, _papi_hwd_context_size);
+   memset(thread->context, 0x00, _papi_hwd_cmp_size.context);
    thread->running_eventset = NULL;
 
    if (_papi_hwi_thread_id_fn)

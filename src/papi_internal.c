@@ -1030,14 +1030,29 @@ int _papi_hwi_query(int preset_index, int *flags, char **note)
  */
 int _papi_hwi_init_global(void)
 {
-   int retval;
+   int retval, i=0;
 
+   /*_PAPI_CURRENT_VECTOR =&_papi_frm_vectors;*/
+   while(_papi_component_table[i]){
+      _papi_hwi_current_vector =_papi_component_table[i];
+     retval = _papi_hwi_innoculate_vector(_papi_hwi_current_vector);
+     if (retval != PAPI_OK ) 
+       return(retval);
+     retval = _papi_hwd_init_substrate();
+     if (retval != PAPI_OK ) 
+       return(retval);
+     i++;
+   } 
+_papi_hwi_current_vector =_papi_component_table[0];
+   return(PAPI_OK);
+/*
    _papi_hwi_current_vector =_papi_component_table[0];
 
    retval = _papi_hwi_innoculate_vector(_papi_hwi_current_vector);
    if (retval != PAPI_OK ) return(retval);
    retval = _papi_hwd_init_substrate();
    return(retval);
+*/
 }
 
 /* Machine info struct initialization using defaults */

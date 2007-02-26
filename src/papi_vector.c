@@ -29,20 +29,20 @@ long_long vec_dummy_get_real_cycles (void);
 
 extern papi_vector_t COMP_VECTOR;
 #ifdef HAVE_ACPI
-extern papi_vector_t _acpi_vectors;
+extern papi_vector_t _acpi_vector;
 #endif
 #ifdef HAVE_MX
-extern papi_vector_t _mx_vectors;
+extern papi_vector_t _mx_vector;
 #endif
 
 papi_vector_t *_papi_hwi_current_vector; 
 papi_vector_t *_papi_component_table[] = {
   &COMP_VECTOR,
 #ifdef HAVE_ACPI
-  &_acpi_vectors,
+  &_acpi_vector,
 #endif
 #ifdef HAVE_MX
-  &_mx_vectors,
+  &_mx_vector,
 #endif
   NULL
 };
