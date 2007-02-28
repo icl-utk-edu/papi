@@ -568,7 +568,7 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
 {
    int retval = PAPI_ENOEVNT;
 
-#ifdef PERFCTR_PFM_EVENTS
+#if ((defined PERFCTR_PFM_EVENTS) | (defined PFM2))
    extern unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code);
    retval = _papi_pfm_ntv_name_to_code(in, out);
 #else

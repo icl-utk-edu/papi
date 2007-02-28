@@ -50,6 +50,10 @@ endif
 
 CFLAGS	+= -I$(PFM_INC_PATH) 
 
+# I hate these platform dependencies, but this id's the existence of 
+# _ntv_name_to_code in perfmon for extras optimization.
+CFLAGS	+= -DPFM2
+
 MISCHDRS = perfmon.h papi_pfm_events.h
 MISCSRCS = papi_pfm_events.c
 # This is necessary to avoid text relocations. You cannot do -Lxx -lx because
