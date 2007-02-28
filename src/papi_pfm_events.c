@@ -652,7 +652,7 @@ char *_papi_pfm_ntv_code_to_name(unsigned int EventCode)
   int ret;
   unsigned int event, umask;
   pfmlib_event_t gete;
-  char name[PAPI_MAX_STR_LEN];
+  char name[PAPI_MAX_STR_LEN*2]; /* hope the caller handles long strings! */
 
   memset(&gete,0,sizeof(gete));
   
@@ -662,13 +662,13 @@ char *_papi_pfm_ntv_code_to_name(unsigned int EventCode)
   gete.event = event;
   gete.num_masks = prepare_umask(umask,gete.unit_masks);
   
-  ret = pfm_get_full_event_name(&gete,name,PAPI_MAX_STR_LEN);
+  ret = pfm_get_full_event_name(&gete,name,PAPI_MAX_STR_LEN*2);
   if (ret != PFMLIB_SUCCESS)
     {
       char tmp[PAPI_MAX_STR_LEN];
-      pfm_get_event_name(gete.event,tmp,PAPI_MAX_STR_LEN);
+      pfm_get_event_name(gete.event,tmp,PAPI_MAX_STR_LEN*2);
       PAPIERROR("pfm_get_full_event_name(%p(event %d,%s,%d masks),%p,%d): %d -- %s",
-		&gete,gete.event,tmp,gete.num_masks,name,PAPI_MAX_STR_LEN,ret,pfm_strerror(ret));
+		&gete,gete.event,tmp,gete.num_masks,name,PAPI_MAX_STR_LEN*2,ret,pfm_strerror(ret));
       return("");
     }
 
