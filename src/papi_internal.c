@@ -1097,7 +1097,6 @@ int _papi_hwi_init_global(void)
    while(_papi_component_table[i]){
       _papi_hwi_current_vector =_papi_component_table[i];
      retval = _papi_hwi_innoculate_vector(_papi_hwi_current_vector);
-     _papi_hwd_component_index=i;
      if (retval != PAPI_OK ) 
        return(retval);
      retval = _papi_hwd_init_substrate();

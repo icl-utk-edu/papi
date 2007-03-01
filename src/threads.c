@@ -108,14 +108,14 @@ static ThreadInfo_t *allocate_thread(void)
      return(NULL);
    }
 
-   thread->running_eventset = (EventSetInfo_t **) papi_malloc(sizeof(EventSetInfo_t *)*papi_num_vectors);
+   thread->running_eventset = (EventSetInfo_t **) papi_malloc(sizeof(EventSetInfo_t *)*papi_num_components);
    if ( !thread->running_eventset ){
      papi_free(thread->context);
      papi_free(thread);
      return(NULL);
    }
 
-   for(i=0;i<papi_num_vectors;i++ ){
+   for(i=0;i<papi_num_components;i++ ){
      thread->context[i] = (void *) papi_malloc(_papi_hwd_cmp_size.context);
      thread->running_eventset[i] = NULL;
      if ( thread->context[i] == NULL ){
@@ -144,7 +144,7 @@ static void free_thread(ThreadInfo_t ** thread)
    int i;
    THRDBG("Freeing thread 0x%lx at %p\n",(*thread)->tid,*thread);
 
-   for(i=0;i<papi_num_vectors;i++) {
+   for(i=0;i<papi_num_components;i++) {
      if ( (*thread)->context[i] )
        papi_free((*thread)->context[i]);
    }
@@ -260,8 +260,8 @@ int _papi_hwi_initialize_thread(ThreadInfo_t ** dest)
    
    /* Call the substrate to fill in anything special. */
 
-   for ( i=0;i<papi_num_vectors;i++){
-     retval=_papi_vector_table[i]->init(thread->context[i]);
+   for ( i=0;i<papi_num_components;i++){
+     retval=_papi_component_table[i]->init(thread->context[i]);
      if (retval) 
        {
          free_thread(&thread);
@@ -360,8 +360,8 @@ int _papi_hwi_shutdown_thread(ThreadInfo_t *thread)
      {
        remove_thread(thread);
        THRDBG ("Shutting down thread 0x%lx at %p\n",thread->tid,thread);
-       for(i=0;i<papi_num_vectors;i++){
-          retval = _papi_vector_table[i]->shutdown(thread->context[i]);
+       for(i=0;i<papi_num_components;i++){
+          retval = _papi_component_table[i]->shutdown(thread->context[i]);
           if ( retval != PAPI_OK) failure=retval;
        }
        free_thread(&thread);
