@@ -12,7 +12,7 @@ typedef struct cmp_struct_sizes {
 /* Vector Table Stuff */
 typedef struct papi_vectors {
 /* Substrate specific data structure */
-    PAPI_component_info_t cmp_info; /* See definition in papi.h */
+    PAPI_component_info_t   cmp_info; /* See definition in papi.h */
 
 /* Substrate specific structure sizes*/
     cmp_struct_sizes_t size;

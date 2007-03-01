@@ -92,6 +92,7 @@ static int lookup_and_set_thread_symbols(void)
 static ThreadInfo_t *allocate_thread(void)
 {
    ThreadInfo_t *thread;
+   int i;
 
    /* The Thread EventSet is special. It is not in the EventSet list, but is pointed
       to by each EventSet of that particular thread. */
@@ -101,15 +102,32 @@ static ThreadInfo_t *allocate_thread(void)
       return (NULL);
    memset(thread, 0x00, sizeof(ThreadInfo_t));
 
-//   thread->context = (hwd_context_t *) papi_malloc(_papi_hwd_context_size);
    thread->context = (hwd_context_t *) papi_malloc(_papi_hwd_cmp_size.context);
    if ( !thread->context ){
      papi_free(thread);
      return(NULL);
    }
-//   memset(thread->context, 0x00, _papi_hwd_context_size);
-   memset(thread->context, 0x00, _papi_hwd_cmp_size.context);
-   thread->running_eventset = NULL;
+
+   thread->running_eventset = (EventSetInfo_t **) papi_malloc(sizeof(EventSetInfo_t *)*papi_num_vectors);
+   if ( !thread->running_eventset ){
+     papi_free(thread->context);
+     papi_free(thread);
+     return(NULL);
+   }
+
+   for(i=0;i<papi_num_vectors;i++ ){
+     thread->context[i] = (void *) papi_malloc(_papi_hwd_cmp_size.context);
+     thread->running_eventset[i] = NULL;
+     if ( thread->context[i] == NULL ){
+       for(i--;i>=0;i--)
+         papi_free(thread->context[i]);
+       papi_free(thread->context);
+       papi_free(thread);
+       return(NULL);
+     }
+     memset(thread->context[i], 0x00, _papi_hwd_cmp_size.context);
+    }
+
 
    if (_papi_hwi_thread_id_fn)
      thread->tid = (*_papi_hwi_thread_id_fn)();
@@ -123,10 +141,19 @@ static ThreadInfo_t *allocate_thread(void)
 
 static void free_thread(ThreadInfo_t ** thread)
 {
+   int i;
    THRDBG("Freeing thread 0x%lx at %p\n",(*thread)->tid,*thread);
+
+   for(i=0;i<papi_num_vectors;i++) {
+     if ( (*thread)->context[i] )
+       papi_free((*thread)->context[i]);
+   }
 
    if ( (*thread)->context )
       papi_free((*thread)->context);
+ 
+   if ( (*thread)->running_eventset )
+      papi_free((*thread)->running_eventset);
 
    memset(*thread, 0x00, sizeof(ThreadInfo_t));
    papi_free(*thread);
@@ -223,6 +250,7 @@ int _papi_hwi_initialize_thread(ThreadInfo_t ** dest)
 {
    int retval;
    ThreadInfo_t *thread;
+   int i;
 
    if ((thread = allocate_thread()) == NULL)
      {
@@ -232,13 +260,15 @@ int _papi_hwi_initialize_thread(ThreadInfo_t ** dest)
    
    /* Call the substrate to fill in anything special. */
 
-   retval = _papi_hwd_init(thread->context);
-   if (retval) 
-     {
-       free_thread(&thread);
-       *dest = NULL;
-       return (retval);
-     }
+   for ( i=0;i<papi_num_vectors;i++){
+     retval=_papi_vector_table[i]->init(thread->context[i]);
+     if (retval) 
+       {
+         free_thread(&thread);
+         *dest = NULL;
+         return (retval);
+       }
+    }
 
    insert_thread(thread);
 
@@ -263,8 +293,9 @@ int _papi_hwi_broadcast_signal(unsigned int mytid)
 
   for (foo = _papi_hwi_thread_head; foo != NULL; foo = foo->next)
     {
-      if ((foo->tid != mytid) && (foo->running_eventset) && 
-	  (foo->running_eventset->state & (PAPI_OVERFLOWING|PAPI_MULTIPLEXING)))
+	/* xxxx Should this be hardcoded to index 0 or walk the list or what? */
+      if ((foo->tid != mytid) && (foo->running_eventset[0]) && 
+	  (foo->running_eventset[0]->state & (PAPI_OVERFLOWING|PAPI_MULTIPLEXING)))
 	{
 	  THRDBG("Thread 0x%lx sending signal %d to thread 0x%lx\n",mytid,foo->tid,(foo->running_eventset->state & PAPI_OVERFLOWING ? _papi_hwi_system_info.sub_info.hardware_intr_sig : _papi_hwi_system_info.sub_info.multiplex_timer_sig));
 	  retval = (*_papi_hwi_thread_kill_fn)(foo->tid, (foo->running_eventset->state & PAPI_OVERFLOWING ? _papi_hwi_system_info.sub_info.hardware_intr_sig : _papi_hwi_system_info.sub_info.multiplex_timer_sig));
@@ -318,6 +349,7 @@ int _papi_hwi_shutdown_thread(ThreadInfo_t *thread)
 {
    int retval = PAPI_OK;
    unsigned long tid;
+   int i, failure=0;
 
    if (_papi_hwi_thread_id_fn)
      tid = (*_papi_hwi_thread_id_fn)();
@@ -328,9 +360,12 @@ int _papi_hwi_shutdown_thread(ThreadInfo_t *thread)
      {
        remove_thread(thread);
        THRDBG ("Shutting down thread 0x%lx at %p\n",thread->tid,thread);
-       retval = _papi_hwd_shutdown(thread->context);
+       for(i=0;i<papi_num_vectors;i++){
+          retval = _papi_vector_table[i]->shutdown(thread->context[i]);
+          if ( retval != PAPI_OK) failure=retval;
+       }
        free_thread(&thread);
-       return(retval);
+       return(failure);
      }
 
    THRDBG("Skipping shutdown thread 0x%lx at %p, thread 0x%lx not owner!\n",thread->tid,thread,tid);

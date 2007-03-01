@@ -48,6 +48,7 @@ papi_vector_t *_papi_component_table[] = {
 #endif
   NULL
 };
+int papi_num_components = (sizeof(_papi_vector_table)/sizeof(*_papi_vector_table)) - 1;
 
 void _vectors_error()
 {

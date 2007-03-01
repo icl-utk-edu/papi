@@ -85,6 +85,7 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 #endif
 
 #define DEADBEEF 0xdedbeef
+extern int papi_num_components;
 
   /********************************************************/
 /* This block provides general strings used in PAPI     */
@@ -332,7 +333,7 @@ typedef struct _EventSetInfo {
 
    int EventSetIndex;           /* Index of the EventSet in the array  */
 
-   int ComponentIndex;		    /* Which Component this EventSet Belongs too */
+   int ComponentIndex;		    /* Which Component this EventSet Belongs to */
 
    int NumberOfEvents;          /* Number of events added to EventSet */
 
