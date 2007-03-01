@@ -177,6 +177,8 @@ static int expand_dynamic_array(DynamicArray_t * DA)
 
 static int EventInfoArrayLength(const EventSetInfo_t * ESI)
 {
+   _papi_hwi_current_vector = _papi_component_table[ESI->ComponentIndex];
+
    if (ESI->state & PAPI_MULTIPLEXING)
       return (_papi_hwd_cmp_info.num_mpx_cntrs);
    else
@@ -185,8 +187,11 @@ static int EventInfoArrayLength(const EventSetInfo_t * ESI)
 
 static void initialize_EventInfoArray(EventSetInfo_t * ESI)
 {
-   int i, j, limit = _papi_hwd_cmp_info.num_mpx_cntrs;
+   int i, j, limit;
    EventInfo_t tmp;
+
+   _papi_hwi_current_vector = _papi_component_table[ESI->ComponentIndex];
+   limit = _papi_hwd_cmp_info.num_mpx_cntrs;
 
    /* This is an optimization */
 
@@ -207,9 +212,14 @@ static void initialize_NativeInfoArray(EventSetInfo_t * ESI)
 {
    int i;
    /* xxxx should these arrays be num_mpx_cntrs or num_cntrs in size?? */
-   int max_counters = _papi_hwd_cmp_info.num_mpx_cntrs;
-   int sz = _papi_hwd_cmp_size.reg_value;
-   char *ptr = (((char *)ESI->NativeInfoArray)+(max_counters*sizeof(NativeInfo_t)));
+   int max_counters;
+   int sz;
+   char *ptr;
+
+   _papi_hwi_current_vector = _papi_component_table[ESI->ComponentIndex];
+   max_counters = _papi_hwd_cmp_info.num_mpx_cntrs;
+   sz = _papi_hwd_cmp_size.reg_value;
+   ptr = (((char *)ESI->NativeInfoArray)+(max_counters*sizeof(NativeInfo_t)));
 
    for (i = 0; i < max_counters; i++) {
       ESI->NativeInfoArray[i].ni_event = -1;
@@ -221,19 +231,38 @@ static void initialize_NativeInfoArray(EventSetInfo_t * ESI)
    ESI->NativeCount = 0;
 }
 
-
-static int allocate_EventSet(EventSetInfo_t **here)
+int create_EventSet(EventSetInfo_t **here)
 {
    EventSetInfo_t *ESI;
-   int max_counters;
-   char *ptr;
 
    ESI = (EventSetInfo_t *) papi_malloc(sizeof(EventSetInfo_t));
    if (ESI == NULL)
       return (PAPI_ENOMEM);
    memset(ESI, 0x00, sizeof(EventSetInfo_t));
 
-   max_counters = _papi_hwd_cmp_info.num_mpx_cntrs;
+   ESI->ComponentIndex = -1; /* when eventset is created, it is not decided yet which component it belongs to, until first event is added */
+
+printf("ESI(%p)  ESI->ComponentIndex(%d)\n", ESI, ESI->ComponentIndex);
+
+   ESI->state = PAPI_STOPPED;
+
+   /* ESI->domain.domain = 0;
+      ESI->granularity.granularity = 0; */
+
+   *here = ESI;
+   return(PAPI_OK);
+}
+
+static int allocate_EventSet(EventSetInfo_t *ESI, int idx)
+{
+   int max_counters;
+   char *ptr;
+
+   _papi_hwi_current_vector = _papi_component_table[idx];
+   ESI->ComponentIndex = idx;
+
+   max_counters = _papi_hwd_cmp_info.num_mpx_cntrs; 
+printf("max_counters: %d\n", max_counters);
    ESI->ctl_state = (hwd_control_state_t *)papi_malloc(_papi_hwd_cmp_size.control_state);
    ESI->sw_stop = (long_long *) papi_malloc(max_counters * sizeof(long_long));
    ESI->hw_start = (long_long *) papi_malloc(max_counters * sizeof(long_long));
@@ -291,10 +320,6 @@ static int allocate_EventSet(EventSetInfo_t **here)
 
    ESI->state = PAPI_STOPPED;
 
-   /* ESI->domain.domain = 0;
-      ESI->granularity.granularity = 0; */
-
-   *here = ESI;
    return(PAPI_OK);
 }
 
@@ -307,6 +332,7 @@ static int allocate_EventSet(EventSetInfo_t **here)
 
 static void free_EventSet(EventSetInfo_t * ESI)
 {
+printf("ESI(%p)  ESI->ComponentIndex(%d)\n", ESI, ESI->ComponentIndex);
    if (ESI->EventInfoArray)	papi_free(ESI->EventInfoArray);
    if ( ESI->NativeInfoArray)	papi_free(ESI->NativeInfoArray);
    if ( ESI->overflow.deadline )	papi_free(ESI->overflow.deadline);
@@ -371,7 +397,7 @@ int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle)
       return (PAPI_EINVAL);
    /* Well, then allocate a new one. Use n to keep track of a NEW EventSet */
 
-   retval = allocate_EventSet(&ESI);
+   retval = create_EventSet(&ESI);
    if (retval != PAPI_OK)
       return (retval);
 
@@ -463,6 +489,10 @@ int _papi_hwi_remove_EventSet(EventSetInfo_t * ESI)
 int _papi_hwi_add_native_precheck(EventSetInfo_t * ESI, int nevt)
 {
    int i;
+   int idx = PAPI_COMPONENT_INDEX(nevt);
+
+   if ( idx < 0 || idx > papi_num_components)
+      return -1;
 
    /* to find the native event from the native events list */
    for (i = 0; i < ESI->NativeCount; i++) {
@@ -529,6 +559,10 @@ static void remap_event_position(EventSetInfo_t * ESI, int thisindex)
 static int add_native_fail_clean(EventSetInfo_t * ESI, int nevt)
 {
    int i;
+   int idx = PAPI_COMPONENT_INDEX(nevt);
+
+   if ( idx < 0 || idx > papi_num_components)
+      return -1;
 
    /* to find the native event from the native events list */
    for (i = 0; i < _papi_hwd_cmp_info.num_cntrs; i++) {
@@ -618,6 +652,16 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
 {
    int i, j, thisindex, remap, retval = PAPI_OK;
 
+   if(ESI->ComponentIndex<0){
+     if((retval=allocate_EventSet(ESI, PAPI_COMPONENT_INDEX(EventCode)))!=PAPI_OK)
+       return retval;
+   }
+   else{
+     if(ESI->ComponentIndex != PAPI_COMPONENT_INDEX(EventCode))
+       return PAPI_EINVAL;
+   }
+   _papi_hwi_current_vector = _papi_component_table[ESI->ComponentIndex];
+
    /* Make sure the event is not present and get the next
       free slot. */
    thisindex = get_free_EventCodeIndex(ESI, EventCode);
@@ -631,7 +675,7 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
 
       if (EventCode & PAPI_PRESET_MASK) {
          int count;
-         int preset_index = EventCode & PAPI_PRESET_AND_MASK;
+         int preset_index = EventCode & PAPI_PRESET_AND_MASK & PAPI_COMPONENT_AND_MASK;
 
 
          /* Check if it's within the valid range */
@@ -676,7 +720,7 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
          }
       } else if (EventCode & PAPI_NATIVE_MASK) {
          /* Check if native event exists */
-         if (_papi_hwi_query_native_event(EventCode) != PAPI_OK)
+         if (_papi_hwi_query_native_event(EventCode & PAPI_COMPONENT_AND_MASK) != PAPI_OK)
             return (PAPI_ENOEVNT);
 
          /* check if the native events have been used as overflow
@@ -726,6 +770,14 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
 int _papi_hwi_add_pevent(EventSetInfo_t * ESI, int EventCode, void *inout)
 {
    int thisindex, retval;
+
+
+   if(ESI->ComponentIndex<0){
+     if((retval=allocate_EventSet(ESI, PAPI_COMPONENT_INDEX(EventCode)))!=PAPI_OK)
+       return retval;
+   }
+
+   _papi_hwi_current_vector = _papi_component_table[ESI->ComponentIndex];
 
    /* Make sure the event is not present and get a free slot. */
 
@@ -828,6 +880,8 @@ int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode)
    int j = 0, retval, thisindex;
    EventInfo_t *array;
 
+   _papi_hwi_current_vector = _papi_component_table[ESI->ComponentIndex];
+
    thisindex = _papi_hwi_lookup_EventCodeIndex(ESI, EventCode);
    if (thisindex < PAPI_OK)
       return (thisindex);
@@ -861,7 +915,7 @@ int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode)
             return (retval);
       } else if (EventCode & PAPI_NATIVE_MASK) {
          /* Check if native event exists */
-         if (_papi_hwi_query_native_event(EventCode) != PAPI_OK)
+         if (_papi_hwi_query_native_event(EventCode & PAPI_COMPONENT_AND_MASK) != PAPI_OK)
             return (PAPI_ENOEVNT);
 
          /* Remove the native event. */
@@ -893,6 +947,8 @@ int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long_long * va
    int retval;
    long_long *dp;
    int i, j = 0, index;
+
+   _papi_hwi_current_vector = _papi_component_table[ESI->ComponentIndex];
 
    retval = _papi_hwd_read(context, ESI->ctl_state, &dp, ESI->state);
    if (retval != PAPI_OK)
@@ -943,9 +999,13 @@ int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long_long * va
 
 int _papi_hwi_cleanup_eventset(EventSetInfo_t * ESI)
 {
-   int retval, i, tmp = _papi_hwd_cmp_info.num_mpx_cntrs;
+   int retval, i, tmp;
    /* Always clean the whole thing */
 
+   _papi_hwi_current_vector = _papi_component_table[ESI->ComponentIndex];
+   
+   tmp = _papi_hwd_cmp_info.num_mpx_cntrs;
+   
    for (i = (tmp - 1); i >= 0; i--) {
       if (ESI->EventInfoArray[i].event_code != PAPI_NULL) {
          retval = _papi_hwi_remove_event(ESI, ESI->EventInfoArray[i].event_code);
@@ -962,6 +1022,8 @@ int _papi_hwi_convert_eventset_to_multiplex(_papi_int_multiplex_t *mpx)
   int retval, i, j = 0, *mpxlist = NULL;
   EventSetInfo_t * ESI = mpx->ESI;
   int flags = mpx->flags;
+
+   _papi_hwi_current_vector = _papi_component_table[ESI->ComponentIndex];
 
    /* If there are any events in the EventSet, 
       convert them to multiplex events */
@@ -1032,10 +1094,10 @@ int _papi_hwi_init_global(void)
 {
    int retval, i=0;
 
-   /*_PAPI_CURRENT_VECTOR =&_papi_frm_vectors;*/
    while(_papi_component_table[i]){
       _papi_hwi_current_vector =_papi_component_table[i];
      retval = _papi_hwi_innoculate_vector(_papi_hwi_current_vector);
+     _papi_hwd_component_index=i;
      if (retval != PAPI_OK ) 
        return(retval);
      retval = _papi_hwd_init_substrate();
@@ -1043,6 +1105,7 @@ int _papi_hwi_init_global(void)
        return(retval);
      i++;
    } 
+   papi_num_components=i;
 _papi_hwi_current_vector =_papi_component_table[0];
    return(PAPI_OK);
 /*
@@ -1267,6 +1330,8 @@ static long_long handle_derived(EventInfo_t * evi, long_long * from)
 void print_state(EventSetInfo_t * ESI)
 {
    int i;
+
+   _papi_hwi_current_vector = &_papi_component_table[ESI->ComponentIndex];
 
    APIDBG( "\n\n-----------------------------------------\n");
    APIDBG( "numEvent: %d    numNative: %d\n", ESI->NumberOfEvents,
