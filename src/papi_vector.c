@@ -35,6 +35,8 @@ extern papi_vector_t _acpi_vector;
 extern papi_vector_t _mx_vector;
 #endif
 
+int papi_num_components;
+
 papi_vector_t *_papi_hwi_current_vector; 
 papi_vector_t *_papi_component_table[] = {
   &COMP_VECTOR,
