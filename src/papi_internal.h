@@ -165,6 +165,8 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 */
 #define PAPI_MAX_COUNTER_TERMS	8
 
+extern int papi_num_components;
+
 /* these vestigial pointers are to structures defined in the components
     they are opaque to the framework and defined as void at this level
     they are remapped to real data in the component routines that use them */
@@ -329,6 +331,8 @@ typedef struct _EventSetInfo {
    unsigned long int tid;       /* Thread ID, only used if PAPI_thread_init() is called  */
 
    int EventSetIndex;           /* Index of the EventSet in the array  */
+
+   int ComponentIndex;		    /* Which Component this EventSet Belongs too */
 
    int NumberOfEvents;          /* Number of events added to EventSet */
 
