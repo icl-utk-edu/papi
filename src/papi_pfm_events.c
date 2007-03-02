@@ -662,13 +662,13 @@ char *_papi_pfm_ntv_code_to_name(unsigned int EventCode)
   gete.event = event;
   gete.num_masks = prepare_umask(umask,gete.unit_masks);
   
-  ret = pfm_get_full_event_name(&gete,name,PAPI_MAX_STR_LEN*2);
+  ret = pfm_get_full_event_name(&gete,name,sizeof(name));
   if (ret != PFMLIB_SUCCESS)
     {
       char tmp[PAPI_MAX_STR_LEN];
-      pfm_get_event_name(gete.event,tmp,PAPI_MAX_STR_LEN*2);
+      pfm_get_event_name(gete.event,tmp,sizeof(tmp));
       PAPIERROR("pfm_get_full_event_name(%p(event %d,%s,%d masks),%p,%d): %d -- %s",
-		&gete,gete.event,tmp,gete.num_masks,name,PAPI_MAX_STR_LEN*2,ret,pfm_strerror(ret));
+		&gete,gete.event,tmp,gete.num_masks,name,sizeof(name),ret,pfm_strerror(ret));
       return("");
     }
 
