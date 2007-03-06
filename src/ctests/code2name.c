@@ -75,8 +75,8 @@ int main(int argc, char **argv)
     test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
   printf("Found |%s|\n", event_name);
 
-  /* Find the last defined native event */
-  cmp_info = PAPI_get_component_info();
+  /* Find the last defined native event from the cpu component*/
+  cmp_info = PAPI_get_component_info(0);
   if (cmp_info == NULL)
     test_fail(__FILE__, __LINE__, "PAPI_get_component_info", PAPI_ESBSTR);
 #ifdef PENTIUM4

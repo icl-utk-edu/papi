@@ -127,7 +127,7 @@ void case1(int num)
    if (retval != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   cmpinfo = PAPI_get_component_info();
+   cmpinfo = PAPI_get_component_info(0); /* get info from cpu component */
    if (cmpinfo == NULL)
       test_fail(__FILE__, __LINE__, "PAPI_get_component_info", PAPI_ESBSTR);
    

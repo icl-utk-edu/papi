@@ -21,8 +21,8 @@ int main(int argc, char **argv)
    if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   if ((cmpinfo = PAPI_get_component_info()) == NULL) 
-     test_fail(__FILE__, __LINE__, "PAPI_get_substrate_info", retval);
+   if ((cmpinfo = PAPI_get_component_info(0)) == NULL) 
+     test_fail(__FILE__, __LINE__, "PAPI_get_component_info", retval);
 
    printf("name: %s\n",cmpinfo->name);
    printf("substrate_version: %s\n",cmpinfo->version);
