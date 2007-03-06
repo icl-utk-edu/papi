@@ -558,7 +558,6 @@ inline_static void LEAKDBG(char *format, ...)
 #include "threads.h"
 #include "papi_vector.h"
 #include "papi_protos.h"
-#include "papi_vector_redefine.h"
 
 inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset)
 {

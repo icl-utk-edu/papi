@@ -54,7 +54,8 @@ Return Codes
 
 All of the functions contained in the PerfAPI return standardized error codes.
 Values greater than or equal to zero indicate success, less than zero indicates
-failure. 
+failure. When adding an error message, update this table, PAPI_NUM_ERRORS, and
+the descriptor table in papi_data.c.
 */
 
 #define PAPI_OK		  0	/*No error */
@@ -367,11 +368,13 @@ read the documentation carefully.  */
    } PAPI_inherit_option_t;
 
    typedef struct _papi_domain_option {
+      int def_cidx; /* this structure requires a component index to set default domains */
       int eventset;
       int domain;
    } PAPI_domain_option_t;
 
    typedef struct _papi_granularity_option {
+      int def_cidx; /* this structure requires a component index to set default granularity */
       int eventset;
       int granularity;
    } PAPI_granularity_option_t;

@@ -67,6 +67,17 @@ extern hwi_preset_data_t _papi_hwi_preset_data[];
 /*    END LOCALS    */
 /********************/
 
+inline_static int valid_component(int cidx)
+{
+    if (cidx < 0 || cidx >= papi_num_components) return (PAPI_ENOCMP);
+    return (cidx);
+}
+
+inline_static int valid_ESI_component(EventSetInfo_t *ESI)
+{
+    return (valid_component(ESI->CmpIdx));
+}
+
 int PAPI_thread_init(unsigned long int (*id_fn) (void))
 {
   /* Thread support not implemented on Alpha/OSF because the OSF pfm
@@ -790,9 +801,8 @@ int PAPI_start(int EventSet)
    if (ESI == NULL)
      papi_return(PAPI_ENOEVST);
 
-   if ( ESI->CmpIdx < 0 ) 
-     papi_return(PAPI_ENOCMP);
-   cidx = ESI->CmpIdx;
+   cidx = valid_ESI_component(ESI);
+   if (cidx < 0) papi_return(cidx);
 
    thread = ESI->master;
 
@@ -881,9 +891,8 @@ int PAPI_stop(int EventSet, long_long * values)
    if (ESI == NULL)
       papi_return(PAPI_ENOEVST);
 
-   if ( ESI->CmpIdx < 0 ) 
-      papi_return(PAPI_ENOCMP);
-   cidx = ESI->CmpIdx;
+   cidx = valid_ESI_component(ESI);
+   if (cidx < 0) papi_return(cidx);
 
    thread = ESI->master;
 
@@ -976,9 +985,8 @@ int PAPI_reset(int EventSet)
       papi_return(PAPI_ENOEVST);
    thread = ESI->master;
 
-   if ( ESI->CmpIdx < 0 ) 
-      papi_return(PAPI_ENOCMP);
-      cidx = ESI->CmpIdx;
+   cidx = valid_ESI_component(ESI);
+   if (cidx < 0) papi_return(cidx);
 
    if (ESI->state & PAPI_RUNNING) {
       if (_papi_hwi_is_sw_multiplex(ESI))
@@ -1011,14 +1019,14 @@ int PAPI_read(int EventSet, long_long * values)
 {
    EventSetInfo_t *ESI;
    ThreadInfo_t *thread;
-   int retval = PAPI_OK;
+   int cidx, retval = PAPI_OK;
 
    ESI = _papi_hwi_lookup_EventSet(EventSet);
    if (ESI == NULL)
       papi_return(PAPI_ENOEVST);
       
-   if ( ESI->CmpIdx < 0 ) 
-      papi_return(PAPI_ENOCMP);
+   cidx = valid_ESI_component(ESI);
+   if (cidx < 0) papi_return(cidx);
 
    thread = ESI->master;
 
@@ -1029,7 +1037,7 @@ int PAPI_read(int EventSet, long_long * values)
       if (_papi_hwi_is_sw_multiplex(ESI))
          retval = MPX_read(ESI->multiplex.mpx_evset, values);
       else
-         retval = _papi_hwi_read(thread->context[ESI->CmpIdx], ESI, values);
+         retval = _papi_hwi_read(thread->context[cidx], ESI, values);
       if (retval != PAPI_OK)
          papi_return(retval);
    } else {
@@ -1066,15 +1074,15 @@ int PAPI_accum(int EventSet, long_long * values)
 {
    EventSetInfo_t *ESI;
    ThreadInfo_t *thread;
-   int i, retval;
+   int i, cidx, retval;
    long_long a, b, c;
 
    ESI = _papi_hwi_lookup_EventSet(EventSet);
    if (ESI == NULL)
       papi_return(PAPI_ENOEVST);
 
-   if ( ESI->CmpIdx < 0 ) 
-      papi_return(PAPI_ENOCMP);
+   cidx = valid_ESI_component(ESI);
+   if (cidx < 0) papi_return(cidx);
 
    thread = ESI->master;
 
@@ -1085,7 +1093,7 @@ int PAPI_accum(int EventSet, long_long * values)
       if (_papi_hwi_is_sw_multiplex(ESI))
          retval = MPX_read(ESI->multiplex.mpx_evset, ESI->sw_stop);
       else
-         retval = _papi_hwi_read(thread->context[ESI->CmpIdx], ESI, ESI->sw_stop);
+         retval = _papi_hwi_read(thread->context[cidx], ESI, ESI->sw_stop);
       if (retval != PAPI_OK)
          papi_return(retval);
    }
@@ -1102,7 +1110,7 @@ int PAPI_accum(int EventSet, long_long * values)
 
 int PAPI_write(int EventSet, long_long * values)
 {
-   int retval = PAPI_OK;
+   int cidx, retval = PAPI_OK;
    EventSetInfo_t *ESI;
    ThreadInfo_t *thread;
 
@@ -1110,8 +1118,8 @@ int PAPI_write(int EventSet, long_long * values)
    if (ESI == NULL)
       papi_return(PAPI_ENOEVST);
 
-   if ( ESI->CmpIdx < 0 ) 
-      papi_return(PAPI_ENOCMP);
+   cidx = valid_ESI_component(ESI);
+   if (cidx < 0) papi_return(cidx);
 
    thread = ESI->master;
 
@@ -1119,12 +1127,12 @@ int PAPI_write(int EventSet, long_long * values)
       papi_return(PAPI_EINVAL);
 
    if (ESI->state & PAPI_RUNNING) {
-      retval = _papi_hwd[ESI->CmpIdx]->write(thread->context[ESI->CmpIdx], ESI->ctl_state, values);
+      retval = _papi_hwd[cidx]->write(thread->context[cidx], ESI->ctl_state, values);
       if (retval != PAPI_OK)
          return (retval);
    }
 
-   memcpy(ESI->hw_start, values, _papi_hwd[ESI->CmpIdx]->cmp_info.num_cntrs * sizeof(long_long));
+   memcpy(ESI->hw_start, values, _papi_hwd[cidx]->cmp_info.num_cntrs * sizeof(long_long));
 
    return (retval);
 }
@@ -1135,7 +1143,7 @@ int PAPI_cleanup_eventset(int EventSet)
 {
    EventSetInfo_t *ESI;
    ThreadInfo_t *thread;
-   int i, total, retval;
+   int i, cidx, total, retval;
 
    /* Is the EventSet already in existence? */
 
@@ -1143,8 +1151,8 @@ int PAPI_cleanup_eventset(int EventSet)
    if (ESI == NULL)
       papi_return(PAPI_ENOEVST);
 
-   if ( ESI->CmpIdx < 0 ) 
-      papi_return(PAPI_ENOCMP);
+   cidx = valid_ESI_component(ESI);
+   if (cidx < 0) papi_return(cidx);
 
    thread = ESI->master;
 
@@ -1165,7 +1173,7 @@ int PAPI_cleanup_eventset(int EventSet)
    }
    /* clear profile flag and turn off hardware profile handler */
    if ( (ESI->state & PAPI_PROFILING) && 
-          _papi_hwd[ESI->CmpIdx]->cmp_info.hardware_intr && !(ESI->profile.flags&PAPI_PROFIL_FORCE_SW)) {
+          _papi_hwd[cidx]->cmp_info.hardware_intr && !(ESI->profile.flags&PAPI_PROFIL_FORCE_SW)) {
       total=ESI->profile.event_counter;
       for (i = 0; i < total; i++) {
          retval = PAPI_sprofil(NULL,0,EventSet,ESI->profile.EventCode[0],0,
@@ -1262,8 +1270,7 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
    _papi_int_option_t internal;
    int retval = PAPI_OK;
    ThreadInfo_t *thread = NULL;
-   /* xxxx component vector index should be passed in */
-   int cidx = 0;
+   int cidx;
 
    if (ptr == NULL)
       papi_return(PAPI_EINVAL);
@@ -1273,12 +1280,15 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
    switch (option) {
    case PAPI_DETACH:
      {
-       if (_papi_hwd[cidx]->cmp_info.attach == 0)
-	 papi_return(PAPI_ESBSTR);
-
        internal.attach.ESI = _papi_hwi_lookup_EventSet(ptr->attach.eventset);
        if (internal.attach.ESI == NULL)
 	 papi_return(PAPI_ENOEVST);
+
+       cidx = valid_ESI_component(internal.attach.ESI);
+       if (cidx < 0) papi_return(cidx);
+
+       if (_papi_hwd[cidx]->cmp_info.attach == 0)
+	 papi_return(PAPI_ESBSTR);
 
        if ((internal.attach.ESI->state & PAPI_STOPPED) == 0)
 	 papi_return(PAPI_EISRUN);
@@ -1298,12 +1308,15 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
      }
    case PAPI_ATTACH:
      {
-       if (_papi_hwd[cidx]->cmp_info.attach == 0)
-	 papi_return(PAPI_ESBSTR);
-
        internal.attach.ESI = _papi_hwi_lookup_EventSet(ptr->attach.eventset);
        if (internal.attach.ESI == NULL)
 	 papi_return(PAPI_ENOEVST);
+
+       cidx = valid_ESI_component(internal.attach.ESI);
+       if (cidx < 0) papi_return(cidx);
+
+       if (_papi_hwd[cidx]->cmp_info.attach == 0)
+	 papi_return(PAPI_ESBSTR);
 
        if ((internal.attach.ESI->state & PAPI_STOPPED) == 0)
 	 papi_return(PAPI_EISRUN);
@@ -1323,6 +1336,7 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
      }
    case PAPI_DEF_MPX_USEC:
      {
+       cidx = 0; /* xxxx for now, assume we only check against cpu component */
        if (ptr->multiplex.us <= 1)
 	 papi_return(PAPI_EINVAL);
        /* We should check the resolution here with the system, either
@@ -1352,6 +1366,10 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
             papi_return(PAPI_EISRUN);
          if (ESI->state & PAPI_MULTIPLEXING)
             papi_return(PAPI_EINVAL);
+
+	 cidx = valid_ESI_component(ESI);
+	 if (cidx < 0) papi_return(cidx);
+
 	 internal.multiplex.ESI = ESI;
 	 internal.multiplex.us = ptr->multiplex.us;
 	 internal.multiplex.flags = ptr->multiplex.flags;
@@ -1385,8 +1403,11 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
          if ((dom < PAPI_DOM_MIN) || (dom > PAPI_DOM_MAX))
             papi_return(PAPI_EINVAL);
 
-         /* Change the global structure. The _papi_hwd_init_control_state function 
-	    in the substrates gets information from the global structure instead of
+	 cidx = valid_component(ptr->defdomain.def_cidx);
+	 if (cidx < 0) papi_return(cidx);
+
+         /* Change the component structure. The _papi_hwd_init_control_state function 
+	    in the components gets information from the global structure instead of
             per-thread information. */
 
 	 /* Check what the substrate supports */
@@ -1407,6 +1428,13 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
          if ((dom < PAPI_DOM_MIN) || (dom > PAPI_DOM_MAX))
             papi_return(PAPI_EINVAL);
 
+         internal.domain.ESI = _papi_hwi_lookup_EventSet(ptr->domain.eventset);
+         if (internal.domain.ESI == NULL)
+            papi_return(PAPI_ENOEVST);
+
+	 cidx = valid_ESI_component(internal.domain.ESI);
+	 if (cidx < 0) papi_return(cidx);
+
 	 /* Check what the substrate supports */
 
 	 if (dom == PAPI_DOM_ALL)
@@ -1415,9 +1443,6 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 	 if (dom & ~_papi_hwd[cidx]->cmp_info.available_domains)
 	   papi_return(PAPI_EINVAL);
 
-         internal.domain.ESI = _papi_hwi_lookup_EventSet(ptr->domain.eventset);
-         if (internal.domain.ESI == NULL)
-            papi_return(PAPI_ENOEVST);
          thread = internal.domain.ESI->master;
 
          if (!(internal.domain.ESI->state & PAPI_STOPPED))
@@ -1443,8 +1468,11 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
          if ((grn < PAPI_GRN_MIN) || (grn > PAPI_GRN_MAX))
             papi_return(PAPI_EINVAL);
 
-         /* Change the global structure. The _papi_hwd_init_control_state function 
-	    in the substrates gets information from the global structure instead of
+	 cidx = valid_component(ptr->defgranularity.def_cidx);
+	 if (cidx < 0) papi_return(cidx);
+
+	 /* Change the component structure. The _papi_hwd_init_control_state function 
+	    in the components gets information from the global structure instead of
             per-thread information. */
 
 	 /* Check what the substrate supports */
@@ -1467,6 +1495,13 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
          if ((grn < PAPI_GRN_MIN) || (grn > PAPI_GRN_MAX))
             papi_return(PAPI_EINVAL);
 
+         internal.granularity.ESI = _papi_hwi_lookup_EventSet(ptr->granularity.eventset);
+         if (internal.granularity.ESI == NULL)
+            papi_return(PAPI_ENOEVST);
+
+	 cidx = valid_ESI_component(internal.granularity.ESI);
+	 if (cidx < 0) papi_return(cidx);
+
 	 /* Check what the substrate supports */
 
 	 if (grn & ~_papi_hwd[cidx]->cmp_info.available_granularities)
@@ -1475,10 +1510,6 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 	 /* Make sure there is only 1 set. */
 	 if (grn ^ (1 << (ffs(grn) - 1)))
 	   papi_return(PAPI_EINVAL);
-
-         internal.granularity.ESI = _papi_hwi_lookup_EventSet(ptr->granularity.eventset);
-         if (internal.granularity.ESI == NULL)
-            papi_return(PAPI_ENOEVST);
 
          internal.granularity.granularity = grn;
          internal.granularity.eventset = ptr->granularity.eventset;
@@ -1496,7 +1527,10 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
          if (tmp == NULL)
             return (PAPI_EINVAL);
 
-         internal.inherit.inherit = ptr->inherit.inherit;
+	 cidx = valid_ESI_component(tmp);
+	 if (cidx < 0) papi_return(cidx);
+
+	 internal.inherit.inherit = ptr->inherit.inherit;
          internal.inherit.master = tmp;
 
          retval = _papi_hwd[cidx]->ctl(tmp, PAPI_INHERIT, &internal);
@@ -1516,7 +1550,11 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
          ESI = _papi_hwi_lookup_EventSet(ptr->addr.eventset);
          if (ESI == NULL)
             papi_return(PAPI_ENOEVST);
-         thread = ESI->master;
+
+	 cidx = valid_ESI_component(ESI);
+	 if (cidx < 0) papi_return(cidx);
+
+	 thread = ESI->master;
 
          internal.address_range.ESI = ESI;
 
@@ -1805,7 +1843,7 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
    if (ESI == NULL)
       papi_return(PAPI_ENOEVST);
 
-   if ( ESI->CmpIdx < 0 ) 
+   if ( ESI->CmpIdx < 0 || ESI->CmpIdx >= papi_num_components ) 
       papi_return(PAPI_ENOCMP);
 
    thread = ESI->master;
@@ -1940,7 +1978,7 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
    if (ESI->state & PAPI_ATTACHED)
       papi_return(PAPI_EINVAL);
 
-   if ( ESI->CmpIdx < 0 ) 
+   if ( ESI->CmpIdx < 0 || ESI->CmpIdx >= papi_num_components ) 
       papi_return(PAPI_ENOCMP);
    cidx = ESI->CmpIdx;
 
