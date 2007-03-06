@@ -577,7 +577,7 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
    unsigned int i, j;
    int retval = PAPI_ENOEVNT;
 
-   for (j=0;j<papi_num_components; j++,i = 0 | PAPI_NATIVE_MASK) {
+   for (j=0,i = 0;j<papi_num_components; j++,i = 0,retval = PAPI_ENOEVNT) {
 /* Cray X1 doesn't loop on 0, so a code_to_name on this will fail, the
  * first call to enum_events with a 0 will give a valid code
  */
@@ -586,17 +586,17 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
 #endif
        _papi_hwi_lock(INTERNAL_LOCK);
        do {
-	  name = _papi_hwd[j]->ntv_code_to_name(i);
+         name = _papi_hwd[j]->ntv_code_to_name(i);
     /*      printf("name =|%s|\ninput=|%s|\n", name, in); */
-	  if (name != NULL) {
-	     if (strcasecmp(name, in) == 0) {
-		*out = i;
-		retval = PAPI_OK;
-	     }
-	 } else {
-	     *out = 0;
-	     retval = PAPI_OK;
-	  }
+         if (name != NULL) {
+           if (strcasecmp(name, in) == 0) {
+             *out = i | PAPI_COMPONENT_MASK(j);
+             retval = PAPI_OK;
+           }
+         } else {
+           *out = 0 | PAPI_COMPONENT_MASK(j);
+           retval = PAPI_OK;
+         }
        } while ((_papi_hwd[j]->ntv_enum_events(&i, 0) == PAPI_OK) && (retval == PAPI_ENOEVNT)) ;
        _papi_hwi_unlock(INTERNAL_LOCK);
    }
@@ -617,7 +617,9 @@ int _papi_hwi_native_code_to_name(unsigned int EventCode, char *hwi_name, int le
 
    if (EventCode & PAPI_NATIVE_MASK) {
       _papi_hwi_lock(INTERNAL_LOCK);
+//      name = _papi_hwd_ntv_code_to_name(EventCode & PAPI_COMPONENT_AND_MASK);
       name = _papi_hwd[cidx]->ntv_code_to_name(EventCode);
+
       if (name) {
          strncpy(hwi_name, name, len);
          retval = PAPI_OK;
@@ -641,7 +643,9 @@ int _papi_hwi_native_code_to_descr(unsigned int EventCode, char *hwi_descr, int 
 
    if (EventCode & PAPI_NATIVE_MASK) {
       _papi_hwi_lock(INTERNAL_LOCK);
+//      descr = _papi_hwd_ntv_code_to_descr(EventCode & PAPI_COMPONENT_AND_MASK);
       descr = _papi_hwd[cidx]->ntv_code_to_descr(EventCode);
+
       if (descr) {
          strncpy(hwi_descr, descr, len);
          retval = PAPI_OK;
