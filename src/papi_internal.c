@@ -238,7 +238,7 @@ int create_EventSet(EventSetInfo_t **here)
 
    ESI->CmpIdx = -1; /* when eventset is created, it is not decided yet which component it belongs to, until first event is added */
 
-printf("ESI(%p)  ESI->CmpIdx(%d)\n", ESI, ESI->CmpIdx);
+   /*printf("ESI(%p)  ESI->CmpIdx(%d)\n", ESI, ESI->CmpIdx);*/
 
    ESI->state = PAPI_STOPPED;
 

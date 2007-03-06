@@ -687,8 +687,7 @@ int PAPI_add_event(int EventSet, int EventCode)
    /* Check argument for validity */
 
    if ((((EventCode & PAPI_PRESET_MASK) == 0) && 
-       ((EventCode & PAPI_NATIVE_MASK) == 0)) || 
-       PAPI_COMPONENT_INDEX(EventCode) != ESI->CmpIdx)
+       ((EventCode & PAPI_NATIVE_MASK) == 0))) 
      papi_return(PAPI_EINVAL);
 
    /* Of course, it must be stopped in order to modify it. */
