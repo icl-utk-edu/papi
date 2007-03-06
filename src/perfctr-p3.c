@@ -341,7 +341,7 @@ static int _p3_allocate_registers(EventSetInfo_t *ESI) {
          }
       }
    }
-   if(_papi_hwi_bipartite_alloc(event_list, natNum)) { /* successfully mapped */
+   if(_papi_hwi_bipartite_alloc(event_list, natNum, ESI->CmpIdx)) { /* successfully mapped */
       for(i = 0; i < natNum; i++) {
          /* Copy all info about this native event to the NativeInfo struct */
          ptr = ESI->NativeInfoArray[i].ni_bits;

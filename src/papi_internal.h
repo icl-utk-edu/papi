@@ -157,8 +157,8 @@ extern int papi_num_components;
 #define DONT_NEED_CONTEXT 	0
 
 /* Replacement for bogus supports_multiple_threads item */
-
-#define SUPPORTS_MULTIPLE_THREADS(sub_info) (sub_info.available_granularities & PAPI_GRN_THR)
+/* xxxx Should this be at the component level or the hw info level? I think it's system wide... */
+#define SUPPORTS_MULTIPLE_THREADS(cmp_info) (cmp_info.available_granularities & PAPI_GRN_THR)
 
 /* This was defined by each substrate as = (MAX_COUNTERS < 8) ? MAX_COUNTERS : 8 
     Now it's defined globally as 8 for everything. Mainly applies to max terms in
@@ -333,7 +333,7 @@ typedef struct _EventSetInfo {
 
    int EventSetIndex;           /* Index of the EventSet in the array  */
 
-   int ComponentIndex;		    /* Which Component this EventSet Belongs to */
+   int CmpIdx;		    /* Which Component this EventSet Belongs to */
 
    int NumberOfEvents;          /* Number of events added to EventSet */
 
@@ -583,7 +583,7 @@ inline_static int _papi_hwi_is_sw_multiplex(EventSetInfo_t *ESI)
   if ((ESI->state & PAPI_MULTIPLEXING) == 0)
     return(0);
   /* Does the substrate support kernel multiplexing */
-  if (_papi_hwd_cmp_info.kernel_multiplex)
+  if (_papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex)
     {
       /* Have we forced software multiplexing */
       if (ESI->multiplex.flags == PAPI_MULTIPLEX_FORCE_SW)

@@ -35,10 +35,7 @@ extern papi_vector_t _acpi_vector;
 extern papi_vector_t _mx_vector;
 #endif
 
-int papi_num_components;
-
-papi_vector_t *_papi_hwi_current_vector; 
-papi_vector_t *_papi_component_table[] = {
+papi_vector_t *_papi_hwd[] = {
   &COMP_VECTOR,
 #ifdef HAVE_ACPI
   &_acpi_vector,
@@ -48,7 +45,7 @@ papi_vector_t *_papi_component_table[] = {
 #endif
   NULL
 };
-int papi_num_components = (sizeof(_papi_component_table)/sizeof(*_papi_component_table)) - 1;
+int papi_num_components = (sizeof(_papi_hwd)/sizeof(*_papi_hwd)) - 1;
 
 void _vectors_error()
 {
@@ -171,49 +168,49 @@ int _papi_hwi_innoculate_vector(papi_vector_t *v){
  if(!v->dispatch_timer) v->dispatch_timer =		(void (*)(int, siginfo_t *, void *)) vec_void_dummy;
 #endif
  if(!v->get_overflow_address) v->get_overflow_address=	(void *(*) (int, char *)) vec_void_star_dummy;
- if(!v->start) v->start=			(int (*) (hwd_context_t *, hwd_control_state_t *)) vec_int_dummy;
- if(!v->stop) v->stop=			(int (*) (hwd_context_t *, hwd_control_state_t *)) vec_int_dummy;
- if(!v->read) v->read=			(int (*)(hwd_context_t *, hwd_control_state_t *, long_long **, int)) vec_int_dummy;
- if(!v->reset) v->reset =			(int (*) (hwd_context_t *, hwd_control_state_t *)) vec_int_dummy;
- if(!v->write) v->write=			(int (*) (hwd_context_t *, hwd_control_state_t *, long_long[])) vec_int_dummy;
+ if(!v->start) v->start=				(int (*) (hwd_context_t *, hwd_control_state_t *)) vec_int_dummy;
+ if(!v->stop) v->stop=					(int (*) (hwd_context_t *, hwd_control_state_t *)) vec_int_dummy;
+ if(!v->read) v->read=					(int (*)(hwd_context_t *, hwd_control_state_t *, long_long **, int)) vec_int_dummy;
+ if(!v->reset) v->reset =				(int (*) (hwd_context_t *, hwd_control_state_t *)) vec_int_dummy;
+ if(!v->write) v->write=				(int (*) (hwd_context_t *, hwd_control_state_t *, long_long[])) vec_int_dummy;
  if(!v->get_real_cycles) v->get_real_cycles=		(long_long (*) ()) vec_dummy_get_real_cycles;
  if(!v->get_real_usec) v->get_real_usec=		(long_long (*) ()) vec_dummy_get_real_usec;
  if(!v->get_virt_cycles) v->get_virt_cycles=		vec_dummy_get_virt_cycles;
  if(!v->get_virt_usec) v->get_virt_usec=		vec_dummy_get_virt_usec;
  if(!v->stop_profiling) v->stop_profiling=		(int (*) (ThreadInfo_t *, EventSetInfo_t *)) vec_int_dummy;
- if(!v->init) v->init_substrate=		(int (*) (void)) vec_int_ok_dummy;
- if(!v->init) v->init=			(int (*) (hwd_context_t *)) vec_int_ok_dummy;
+ if(!v->init) v->init_substrate=			(int (*) (void)) vec_int_ok_dummy;
+ if(!v->init) v->init=					(int (*) (hwd_context_t *)) vec_int_ok_dummy;
  if(!v->init_control_state) v->init_control_state=	(int (*) (hwd_control_state_t * ptr)) vec_void_dummy;
  if(!v->update_shlib_info) v->update_shlib_info=	(int (*) (void)) vec_int_dummy;
  if(!v->get_system_info) v->get_system_info=		(int (*) ()) vec_int_dummy;
  if(!v->get_memory_info) v->get_memory_info=		(int (*) (PAPI_hw_info_t *, int)) vec_int_dummy;
  if(!v->update_control_state) v->update_control_state=	(int (*) (hwd_control_state_t *, NativeInfo_t *, int, hwd_context_t *)) vec_int_dummy;
- if(!v->ctl) v->ctl=			(int (*) (hwd_context_t *, int, _papi_int_option_t *)) vec_int_dummy;
- if(!v->set_overflow) v->set_overflow=		(int (*) (EventSetInfo_t *, int, int)) vec_int_dummy;
- if(!v->set_profile) v->set_profile=		(int (*) (EventSetInfo_t *, int, int)) vec_int_dummy;
+ if(!v->ctl) v->ctl=					(int (*) (hwd_context_t *, int, _papi_int_option_t *)) vec_int_dummy;
+ if(!v->set_overflow) v->set_overflow=			(int (*) (EventSetInfo_t *, int, int)) vec_int_dummy;
+ if(!v->set_profile) v->set_profile=			(int (*) (EventSetInfo_t *, int, int)) vec_int_dummy;
  if(!v->add_prog_event) v->add_prog_event=		(int (*) (hwd_control_state_t *, unsigned int, void *, EventInfo_t *)) vec_int_dummy;
- if(!v->set_domain) v->set_domain=		(int (*) (hwd_control_state_t *, int)) vec_int_dummy;
+ if(!v->set_domain) v->set_domain=			(int (*) (hwd_control_state_t *, int)) vec_int_dummy;
  if(!v->ntv_enum_events) v->ntv_enum_events=		(int (*) (unsigned int *, int)) vec_int_dummy;
- if(!v->ntv_code_to_name) v->ntv_code_to_name=	(char * (*) (unsigned int)) vec_char_star_dummy;
+ if(!v->ntv_code_to_name) v->ntv_code_to_name=		(char * (*) (unsigned int)) vec_char_star_dummy;
  if(!v->ntv_code_to_descr) v->ntv_code_to_descr=	(char * (*) (unsigned int)) vec_char_star_dummy;
- if(!v->ntv_code_to_bits) v->ntv_code_to_bits=	(int (*) (unsigned int, hwd_register_t *)) vec_int_dummy;
- if(!v->ntv_bits_to_info) v->ntv_bits_to_info=	(int (*) (hwd_register_t *, char *, unsigned int *, int, int)) vec_int_dummy;
+ if(!v->ntv_code_to_bits) v->ntv_code_to_bits=		(int (*) (unsigned int, hwd_register_t *)) vec_int_dummy;
+ if(!v->ntv_bits_to_info) v->ntv_bits_to_info=		(int (*) (hwd_register_t *, char *, unsigned int *, int, int)) vec_int_dummy;
  if(!v->allocate_registers) v->allocate_registers=	(int (*) (EventSetInfo_t *)) vec_int_one_dummy;
  if(!v->bpt_map_avail) v->bpt_map_avail=		(int (*) (hwd_reg_alloc_t *, int)) vec_int_dummy;
- if(!v->bpt_map_set) v->bpt_map_set=		(void (*) (hwd_reg_alloc_t *, int)) vec_void_dummy;
+ if(!v->bpt_map_set) v->bpt_map_set=			(void (*) (hwd_reg_alloc_t *, int)) vec_void_dummy;
  if(!v->bpt_map_exclusive) v->bpt_map_exclusive=	(int (*) (hwd_reg_alloc_t *)) vec_int_dummy;
  if(!v->bpt_map_shared) v->bpt_map_shared=		(int (*) (hwd_reg_alloc_t *, hwd_reg_alloc_t *)) vec_int_dummy;
  if(!v->bpt_map_preempt) v->bpt_map_preempt=		(void (*) (hwd_reg_alloc_t *, hwd_reg_alloc_t *)) vec_void_dummy;
  if(!v->bpt_map_update) v->bpt_map_update=		(void (*) (hwd_reg_alloc_t *, hwd_reg_alloc_t *)) vec_void_dummy;
  if(!v->get_dmem_info) v->get_dmem_info=		(int (*) (PAPI_dmem_info_t *)) vec_int_dummy;
- if(!v->shutdown) v->shutdown=		(int (*) (hwd_context_t *)) vec_int_dummy;
+ if(!v->shutdown) v->shutdown=				(int (*) (hwd_context_t *)) vec_int_dummy;
  if(!v->shutdown_global) v->shutdown_global=		(int (*) (void)) vec_int_ok_dummy;
- if(!v->user) v->user=			(int (*) (int, void *, void *)) vec_int_dummy;
+ if(!v->user) v->user=					(int (*) (int, void *, void *)) vec_int_dummy;
   return PAPI_OK;
 }
 
-int PAPI_user(int func_num, void * input, void * output){
-  return (_papi_hwi_current_vector->user(func_num, input, output));
+int PAPI_user(int func_num, void * input, void * output, int cidx){
+  return (_papi_hwd[cidx]->user(func_num, input, output));
 }
 
 char * find_dummy(void * func, char **buf){

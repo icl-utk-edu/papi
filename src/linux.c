@@ -136,7 +136,7 @@ static void lock_init(void) {
 }
 #endif
 
-int _linux_init_substrate(void)
+int _linux_init_substrate(int cidx)
 {
   int retval;
   struct perfctr_info info;
@@ -185,12 +185,12 @@ int _linux_init_substrate(void)
 #endif
 
   /* Fill in what we can of the papi_system_info. */
-  retval = _papi_hwd_get_system_info();
+  retval = MY_VECTOR.get_system_info();
   if (retval != PAPI_OK)
      return (retval);
 
    /* Setup memory info */
-   retval = _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info, (int) info.cpu_type);
+   retval = MY_VECTOR.get_memory_info(&_papi_hwi_system_info.hw_info, (int) info.cpu_type);
    if (retval)
       return (retval);
 
@@ -199,6 +199,7 @@ int _linux_init_substrate(void)
    sprintf(abiv,"0x%08X",info.abi_version);
    strcpy(MY_VECTOR.cmp_info.support_version, abiv);
    strcpy(MY_VECTOR.cmp_info.kernel_version, info.driver_version);
+   MY_VECTOR.cmp_info.CmpIdx = cidx;
    MY_VECTOR.cmp_info.num_cntrs = PERFCTR_CPU_NRCTRS(&info);
    MY_VECTOR.cmp_info.fast_counter_read = (info.cpu_features & PERFCTR_FEATURE_RDPMC) ? 1 : 0;
    MY_VECTOR.cmp_info.hardware_intr =
@@ -286,7 +287,7 @@ void _linux_dispatch_timer(int signal, siginfo_t * si, void *context) {
    pc = GET_OVERFLOW_ADDRESS(ctx);
 
    _papi_hwi_dispatch_overflow_signal((void *)&ctx,&isHardware,
-                                      OVERFLOW_MASK, GEN_OVERFLOW,&master,pc);
+                                      OVERFLOW_MASK, GEN_OVERFLOW,&master,pc, MY_VECTOR.cmp_info.CmpIdx);
 
    /* We are done, resume interrupting counters */
    if (isHardware) {

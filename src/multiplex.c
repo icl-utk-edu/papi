@@ -239,25 +239,26 @@ static void mpx_init_timers(int interval)
 
 #ifdef REGENERATE
    /* Signal handler restarts the timer every time it runs */
-   itime.it_interval.tv_sec = 0;
    itime.it_interval.tv_usec = 0;
-   itime.it_value.tv_sec = 0;
-   itime.it_value.tv_usec = interval;
 #else
    /* Timer resets itself automatically */
-   itime.it_interval.tv_sec = 0;
    itime.it_interval.tv_usec = interval;
+#endif
+   itime.it_interval.tv_sec = 0;
    itime.it_value.tv_sec = 0;
    itime.it_value.tv_usec = interval;
-#endif
 
    sigemptyset( &sigreset );
-   sigaddset( &sigreset, _papi_hwd_cmp_info.multiplex_timer_sig);
+   /* xxxx should multiplex settings be system wide?? */
+   sigaddset( &sigreset, _papi_hwd[0]->cmp_info.multiplex_timer_sig);
 }
 
 static int mpx_startup_itimer(void)
 {
    struct sigaction sigact;
+
+   /* xxxx should multiplex settings be system wide?? */
+    int cidx = 0;
 
    /* Set up the signal handler and the timer that triggers it */
 
@@ -266,15 +267,15 @@ static int mpx_startup_itimer(void)
    sigact.sa_flags = SA_RESTART;
    sigact.sa_handler = mpx_handler;
 
-   if (sigaction(_papi_hwd_cmp_info.multiplex_timer_sig, &sigact, NULL) == -1)
+   if (sigaction(_papi_hwd[cidx]->cmp_info.multiplex_timer_sig, &sigact, NULL) == -1)
      {
         PAPIERROR("sigaction start errno %d",errno);
 	return PAPI_ESYS;
      }
 
-   if (setitimer(_papi_hwd_cmp_info.multiplex_timer_num, &itime, NULL) == -1)
+   if (setitimer(_papi_hwd[cidx]->cmp_info.multiplex_timer_num, &itime, NULL) == -1)
      {
-       sigaction(_papi_hwd_cmp_info.multiplex_timer_sig, &oaction, NULL);
+       sigaction(_papi_hwd[cidx]->cmp_info.multiplex_timer_sig, &oaction, NULL);
        PAPIERROR("setitimer start errno %d",errno);
        return PAPI_ESYS;
      }
@@ -283,17 +284,22 @@ static int mpx_startup_itimer(void)
 
 static void mpx_restore_signal(void)
 {
-  MPXDBG("restore signal\n");
-  if (_papi_hwd_cmp_info.multiplex_timer_sig != PAPI_NULL) { 
-	if (signal(_papi_hwd_cmp_info.multiplex_timer_sig, SIG_IGN) == SIG_ERR)
+   /* xxxx should multiplex settings be system wide?? */
+    int cidx = 0;
+
+    if (_papi_hwd[cidx]->cmp_info.multiplex_timer_sig != PAPI_NULL) { 
+	if (signal(_papi_hwd[cidx]->cmp_info.multiplex_timer_sig, SIG_IGN) == SIG_ERR)
      	PAPIERROR("sigaction stop errno %d",errno); }
 }
 
 static void mpx_shutdown_itimer(void)
 {
+   /* xxxx should multiplex settings be system wide?? */
+    int cidx = 0;
+
   MPXDBG("setitimer off\n");
-  if (_papi_hwd_cmp_info.multiplex_timer_num != PAPI_NULL) {
- 	if (setitimer(_papi_hwd_cmp_info.multiplex_timer_num, (struct itimerval *)&itimestop, NULL) == -1)
+  if (_papi_hwd[cidx]->cmp_info.multiplex_timer_num != PAPI_NULL) {
+ 	if (setitimer(_papi_hwd[cidx]->cmp_info.multiplex_timer_num, (struct itimerval *)&itimestop, NULL) == -1)
      	PAPIERROR("setitimer stop errno %d",errno); }
 }
 #endif                          /* _WIN32 */
@@ -521,7 +527,7 @@ static void mpx_handler(int signal)
       for (t = tlist; t != NULL; t = t->next) {
          if (pthread_equal(t->thr, self) == 0) {
             ++threads_responding;
-            retval = pthread_kill(t->thr, _papi_hwd_cmp_info.multiplex_timer_sig);
+            retval = pthread_kill(t->thr, _papi_hwd[cidx]->cmp_info.multiplex_timer_sig);
             assert(retval == 0);
 #ifdef MPX_DEBUG_SIGNALS
             MPXDBG("%x signaling %x\n", self, t->thr);
@@ -638,7 +644,7 @@ static void mpx_handler(int signal)
 	if ((t->tid == _papi_hwi_thread_id_fn()) || (t->head == NULL))
 	  continue;
          MPXDBG("forwarding signal to thread %lx\n", t->tid);
-         retval = (*_papi_hwi_thread_kill_fn) (t->tid, _papi_hwd_cmp_info.multiplex_timer_sig);
+         retval = (*_papi_hwi_thread_kill_fn) (t->tid, _papi_hwd[cidx]->cmp_info.multiplex_timer_sig);
          if (retval != 0) {
             MPXDBG("forwarding signal to thread %lx returned %d\n",
                    t->tid, retval);
@@ -660,7 +666,7 @@ static void mpx_handler(int signal)
     */
    /* Reset the timer once all threads have responded */
    if (lastthread) {
-      retval = setitimer(_papi_hwd_cmp_info.multiplex_timer_num, &itime, NULL);
+      retval = setitimer(_papi_hwd[cidx]->cmp_info.multiplex_timer_num, &itime, NULL);
       assert(retval == 0);
 #ifdef MPX_DEBUG_TIMER
       MPXDBG("timer restarted by %lx\n", me->tid);

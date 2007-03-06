@@ -78,7 +78,7 @@ int _xml_papi_hwi_setup_all_presets(char *arch, hwi_dev_notes_t *notes);
  int _papi_hwi_stop_signal(int);
  int _papi_hwi_start_signal(int, int);
  int _papi_hwi_initialize(DynamicArray_t **);
- int _papi_hwi_dispatch_overflow_signal(void *context, int *, long_long, int, ThreadInfo_t **master, caddr_t pc);
+ int _papi_hwi_dispatch_overflow_signal(void *context, int *, long_long, int, ThreadInfo_t **master, caddr_t pc, int cidx);
  void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, long_long over, int profile_index, caddr_t pc);
 
  /* The following PAPI internal functions are defined by the papi_data.c file. */
@@ -161,7 +161,7 @@ void _papi_hwd_dispatch_timer(int signal, hwd_siginfo_t * info, void *tmp);
 	Mods  : Dan Terpstra terpstra@cs.utk.edu
 */
 
- int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t * event_list, int count);
+ int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t * event_list, int count, int cidx);
 
 /* The following functions are called by _papi_hwi_bipartite_alloc().
    They are hardware dependent, but don't need to be implemented

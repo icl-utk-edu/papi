@@ -36,9 +36,6 @@
 #define PAPI_VERSION_INCREMENT(x)((x)          & 0xff)
 
 /* This is the official PAPI version */
-/* 1st beta version of 3.4.9
-    This will culminate in version 3.5.0 when the beta process is complete.
-*/
 #define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,5,0,0)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
 
@@ -60,30 +57,33 @@ Values greater than or equal to zero indicate success, less than zero indicates
 failure. 
 */
 
-#define PAPI_OK        0        /*No error */
-#define PAPI_EINVAL   -1        /*Invalid argument */
-#define PAPI_ENOMEM   -2        /*Insufficient memory */
-#define PAPI_ESYS     -3        /*A System/C library call failed, please check errno */
-#define PAPI_ESBSTR   -4        /*Substrate returned an error, 
-                                   usually the result of an unimplemented feature */
-#define PAPI_ECLOST   -5        /*Access to the counters was lost or interrupted */
-#define PAPI_EBUG     -6        /*Internal error, please send mail to the developers */
-#define PAPI_ENOEVNT  -7        /*Hardware Event does not exist */
-#define PAPI_ECNFLCT  -8        /*Hardware Event exists, but cannot be counted 
-                                   due to counter resource limitations */
-#define PAPI_ENOTRUN  -9        /*No Events or EventSets are currently counting */
-#define PAPI_EISRUN  -10        /*Events or EventSets are currently counting */
-#define PAPI_ENOEVST -11        /* No EventSet Available */
-#define PAPI_ENOTPRESET -12     /* Not a Preset Event in argument */
-#define PAPI_ENOCNTR -13        /* Hardware does not support counters */
-#define PAPI_EMISC   -14        /* No clue as to what this error code means */
-#define PAPI_EPERM   -15        /* You lack the necessary permissions */
-#define PAPI_ENOINIT -16        /* PAPI hasn't been initialized yet */
+#define PAPI_OK		  0	/*No error */
+#define PAPI_EINVAL	 -1	/*Invalid argument */
+#define PAPI_ENOMEM	 -2	/*Insufficient memory */
+#define PAPI_ESYS	 -3	/*A System/C library call failed, please check errno */
+#define PAPI_ESBSTR	 -4	/*Substrate returned an error, 
+				  usually the result of an unimplemented feature */
+#define PAPI_ECLOST	 -5	/*Access to the counters was lost or interrupted */
+#define PAPI_EBUG	 -6	/*Internal error, please send mail to the developers */
+#define PAPI_ENOEVNT	 -7	/*Hardware Event does not exist */
+#define PAPI_ECNFLCT	 -8	/*Hardware Event exists, but cannot be counted 
+				  due to counter resource limitations */
+#define PAPI_ENOTRUN	 -9	/*No Events or EventSets are currently counting */
+#define PAPI_EISRUN	-10	/*Events or EventSets are currently counting */
+#define PAPI_ENOEVST	-11	/* No EventSet Available */
+#define PAPI_ENOTPRESET -12	/* Not a Preset Event in argument */
+#define PAPI_ENOCNTR	-13	/* Hardware does not support counters */
+#define PAPI_EMISC	-14	/* No clue as to what this error code means */
+#define PAPI_EPERM	-15	/* You lack the necessary permissions */
+#define PAPI_ENOINIT	-16	/* PAPI hasn't been initialized yet */
+#define PAPI_ENOCMP	-17	/* Component Index isn't set */
 
-#define PAPI_NOT_INITED		0
-#define PAPI_LOW_LEVEL_INITED 	1       /* Low level has called library init */
-#define PAPI_HIGH_LEVEL_INITED 	2       /* High level has called library init */
-#define PAPI_THREAD_LEVEL_INITED 4      /* Threads have been inited */
+#define PAPI_NUM_ERRORS	 18	/* Number of error messages specified in this API. */
+
+#define PAPI_NOT_INITED		    0
+#define PAPI_LOW_LEVEL_INITED	    1	/* Low level has called library init */
+#define PAPI_HIGH_LEVEL_INITED	    2	/* High level has called library init */
+#define PAPI_THREAD_LEVEL_INITED    4	/* Threads have been inited */
 
 /*
 Constants
@@ -187,7 +187,6 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 /* Error predefines */
 
-#define PAPI_NUM_ERRORS  17     /* Number of error messages specified in this API. */
 #define PAPI_QUIET       0      /* Option to turn off automatic reporting of return codes < 0 to stderr. */
 #define PAPI_VERB_ECONT  1      /* Option to automatically report any return codes < 0 to stderr and continue. */
 #define PAPI_VERB_ESTOP  2      /* Option to automatically report any return codes < 0 to stderr and exit. */
@@ -241,7 +240,6 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_SHLIBINFO          20      /* Shared Library information */
 #define PAPI_LIB_VERSION        21      /* Option to find out the complete version number of the PAPI library */
 #define PAPI_COMPONENTINFO      22      /* Find out what the component substrate supports */
-#define PAPI_SUBSTRATEINFO PAPI_COMPONENTINFO /* Alias to provide backward compatibility */
 /* Currently the following options are only available on Itanium; they may be supported elsewhere in the future */
 #define PAPI_DATA_ADDRESS       23      /* Option to set data address range restriction */
 #define PAPI_INSTR_ADDRESS      24      /* Option to set instruction address range restriction */
@@ -390,6 +388,7 @@ read the documentation carefully.  */
      char version[PAPI_MIN_STR_LEN];         /* Version of this substrate, usually CVS Revision */
      char support_version[PAPI_MIN_STR_LEN]; /* Version of the support library */
      char kernel_version[PAPI_MIN_STR_LEN];  /* Version of the kernel PMC support driver */
+     int CmpIdx;             /* Index into the vector array for this component; set at init time */
      int num_cntrs;               /* Number of hardware counters the substrate supports */
      int num_mpx_cntrs;           /* Number of multiplesed hardware counters the substrate or PAPI support: PAPI_MPX_DEF_DEG */
      int num_preset_events;       /* Number of preset events the substrate supports */
@@ -400,7 +399,7 @@ read the documentation carefully.  */
      int available_granularities; /* Available granularities; default:.default_granularity */
      int multiplex_timer_sig;     /* Signal number used by the multiplex timer, 0 if not: PAPI_SIGNAL */
      int multiplex_timer_num;     /* Number of the itimer or POSIX 1 timer used by the multiplex timer: PAPI_ITIMER */
-     int multiplex_timer_us;   /* uS between switching of sets: PAPI_MPX_DEF_US */
+     int multiplex_timer_us;      /* uS between switching of sets: PAPI_MPX_DEF_US */
      int hardware_intr_sig;       /* Signal used by hardware to deliver PMC events: PAPI_SIGNAL */
      int opcode_match_width;      /* Width of opcode matcher if exists, 0 if not */
      int reserved_ints[4];
@@ -654,10 +653,10 @@ typedef struct event_info {
    int   PAPI_set_event_info(PAPI_event_info_t * info, int *EventCode, int replace);
    const PAPI_exe_info_t *PAPI_get_executable_info(void);
    const PAPI_hw_info_t *PAPI_get_hardware_info(void);
-   const PAPI_component_info_t *PAPI_get_component_info(void);
-#define  PAPI_get_substrate_info PAPI_get_component_info /* for backward compatibility */
+   const PAPI_component_info_t *PAPI_get_component_info(int cidx);
    int   PAPI_get_multiplex(int EventSet);
    int   PAPI_get_opt(int option, PAPI_option_t * ptr);
+   int   PAPI_get_cmp_opt(int option, PAPI_option_t * ptr,int cidx);
    long_long PAPI_get_real_cyc(void);
    long_long PAPI_get_real_usec(void);
    const PAPI_shlib_info_t *PAPI_get_shared_lib_info(void);
@@ -672,6 +671,7 @@ typedef struct event_info {
    int   PAPI_lock(int);
    int   PAPI_multiplex_init(void);
    int   PAPI_num_hwctrs(void);
+   int   PAPI_num_cmp_hwctrs(int sidx);
    int   PAPI_num_events(int EventSet);
    int   PAPI_overflow(int EventSet, int EventCode, int threshold,
                      int flags, PAPI_overflow_handler_t handler);
@@ -717,6 +717,7 @@ typedef struct event_info {
 
    int PAPI_accum_counters(long_long * values, int array_len);
    int PAPI_num_counters(void);
+   int PAPI_num_components(void);
    int PAPI_read_counters(long_long * values, int array_len);
    int PAPI_start_counters(int *events, int array_len);
    int PAPI_stop_counters(long_long * values, int array_len);

@@ -64,11 +64,9 @@ typedef struct papi_vectors {
     int		(*user)			(int, void *, void *);
 }papi_vector_t;
 
-extern papi_vector_t *_papi_component_table[];
-extern papi_vector_t *_papi_hwi_current_vector;
+extern papi_vector_t *_papi_hwd[];
 
 /* Prototypes */
-int _papi_hwi_setup_vector_table(papi_vector_t *frm, papi_vector_t *cmp);
 int _papi_hwi_innoculate_vector(papi_vector_t *v);
 void vector_print_table(papi_vector_t *v, int print_func);
 

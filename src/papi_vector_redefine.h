@@ -1,12 +1,13 @@
 /* Redfine the calls to vector table lookups */
 
 /* Component specific data structure */
-#define _papi_hwd_cmp_info		_papi_hwi_current_vector->cmp_info /* See definition in papi.h */
+//#define _papi_hwd_cmp_info		_papi_hwi_current_vector->cmp_info /* See definition in papi.h */
 
 /* Private structure sizes for this component */
-#define _papi_hwd_cmp_size		_papi_hwi_current_vector->size
+//#define _papi_hwd_cmp_size		_papi_hwi_current_vector->size
 
 /* List of exposed function pointers for this component */
+/*
 #ifdef _WIN32
 #define _papi_hwd_timer_callback	_papi_hwi_current_vector->timer_callback
 #else
@@ -50,3 +51,4 @@
 #define _papi_hwd_get_dmem_info		_papi_hwi_current_vector->get_dmem_info
 #define _papi_hwd_shutdown		_papi_hwi_current_vector->shutdown
 #define _papi_hwd_shutdown_global	_papi_hwi_current_vector->shutdown_global
+*/
