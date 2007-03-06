@@ -443,8 +443,6 @@ int ACPI_allocate_registers(EventSetInfo_t *ESI) {
    int i, natNum;
    ACPI_reg_alloc_t event_list[ACPI_MAX_COUNTERS];
 
-   _papi_hwi_current_vector = _papi_component_table[ESI->ComponentIndex];
-
    /* Initialize the local structure needed
       for counter allocation and optimization. */
    natNum = ESI->NativeCount;
