@@ -483,9 +483,9 @@ int _papi_hwi_remove_EventSet(EventSetInfo_t * ESI)
 int _papi_hwi_add_native_precheck(EventSetInfo_t * ESI, int nevt)
 {
    int i;
-   int idx = PAPI_COMPONENT_INDEX(nevt);
+   int cidx = PAPI_COMPONENT_INDEX(nevt);
 
-   if ( idx < 0 || idx > papi_num_components)
+   if ( cidx < 0 || cidx > papi_num_components)
       return -1;
 
    /* to find the native event from the native events list */
@@ -493,7 +493,7 @@ int _papi_hwi_add_native_precheck(EventSetInfo_t * ESI, int nevt)
       if (nevt == ESI->NativeInfoArray[i].ni_event) {
          ESI->NativeInfoArray[i].ni_owners++;
          INTDBG("found native event already mapped: %s\n",
-                _papi_hwd_ntv_code_to_name(nevt));
+                _papi_hwd[cidx]->ntv_code_to_name(nevt));
          return i;
       }
    }
@@ -553,9 +553,9 @@ static void remap_event_position(EventSetInfo_t * ESI, int thisindex)
 static int add_native_fail_clean(EventSetInfo_t * ESI, int nevt)
 {
    int i;
-   int idx = PAPI_COMPONENT_INDEX(nevt);
+   int cidx = PAPI_COMPONENT_INDEX(nevt);
 
-   if ( idx < 0 || idx > papi_num_components)
+   if ( cidx < 0 || cidx > papi_num_components)
       return -1;
 
    /* to find the native event from the native events list */
@@ -570,7 +570,7 @@ static int add_native_fail_clean(EventSetInfo_t * ESI, int nevt)
             ESI->NativeCount--;
          }
          INTDBG("add_events fail, and remove added native events of the event: %s\n",
-                _papi_hwd_ntv_code_to_name(nevt));
+                _papi_hwd[cidx]->ntv_code_to_name(nevt));
          return i;
       }
    }
@@ -606,7 +606,7 @@ static int add_native_events(EventSetInfo_t * ESI, int *nevt, int size, EventInf
          }
          /* there is an empty slot for the native event;
             initialize the native index for the new added event */
-         INTDBG("Adding %s\n", _papi_hwd_ntv_code_to_name(nevt[i]));
+         INTDBG("Adding %s\n", _papi_hwd[ESI->CmpIdx]->ntv_code_to_name(nevt[i]));
          ESI->NativeInfoArray[ESI->NativeCount].ni_event = nevt[i];
          ESI->NativeInfoArray[ESI->NativeCount].ni_owners = 1;
          ESI->NativeCount++;
