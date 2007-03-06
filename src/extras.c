@@ -576,7 +576,7 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
    unsigned int i, j;
    int retval = PAPI_ENOEVNT;
 
-   for (j=0,i = 0;j<papi_num_components; j++,i = 0,retval = PAPI_ENOEVNT) {
+   for (j=0,i = 0 | PAPI_NATIVE_MASK;j<papi_num_components; j++,i = 0 | PAPI_NATIVE_MASK,retval = PAPI_ENOEVNT) {
 /* Cray X1 doesn't loop on 0, so a code_to_name on this will fail, the
  * first call to enum_events with a 0 will give a valid code
  */
