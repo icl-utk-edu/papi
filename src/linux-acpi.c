@@ -401,7 +401,7 @@ long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
 int ACPI_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
    if (modifier == PAPI_ENUM_ALL) {
-      int index = *EventCode & PAPI_NATIVE_AND_MASK;
+      int index = *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
 
       if (acpi_native_table[index + 1].resources.selector) {
          *EventCode = *EventCode + 1;
@@ -415,17 +415,17 @@ int ACPI_ntv_enum_events(unsigned int *EventCode, int modifier)
 
 char *ACPI_ntv_code_to_name(unsigned int EventCode)
 {
-   return (acpi_native_table[EventCode & PAPI_NATIVE_AND_MASK].name);
+   return (acpi_native_table[EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK].name);
 }
 
 char *ACPI_ntv_code_to_descr(unsigned int EventCode)
 {
-   return (acpi_native_table[EventCode & PAPI_NATIVE_AND_MASK].description);
+   return (acpi_native_table[EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK].description);
 }
 
 int ACPI_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 {
-   memcpy(( ACPI_register_t *) bits, &(acpi_native_table[EventCode & PAPI_NATIVE_AND_MASK].resources), sizeof(ACPI_register_t)); /* it is not right, different type */
+   memcpy(( ACPI_register_t *) bits, &(acpi_native_table[EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK].resources), sizeof(ACPI_register_t)); /* it is not right, different type */
    return (PAPI_OK);
 }
 
@@ -443,6 +443,8 @@ int ACPI_allocate_registers(EventSetInfo_t *ESI) {
    int i, natNum;
    ACPI_reg_alloc_t event_list[ACPI_MAX_COUNTERS];
 
+   _papi_hwi_current_vector = _papi_component_table[ESI->ComponentIndex];
+
    /* Initialize the local structure needed
       for counter allocation and optimization. */
    natNum = ESI->NativeCount;
@@ -451,7 +453,7 @@ int ACPI_allocate_registers(EventSetInfo_t *ESI) {
       ACPI_ntv_code_to_bits(ESI->NativeInfoArray[i].ni_event, &(event_list[i].ra_bits));
 
    }
-   if(_papi_hwi_bipartite_alloc(event_list, natNum)) { /* successfully mapped */
+   if(_papi_hwi_bipartite_alloc(event_list, natNum, ESI->CmpIdx)) { /* successfully mapped */
       for(i = 0; i < natNum; i++) {
          /* Copy all info about this native event to the NativeInfo struct */
          memcpy(&(ESI->NativeInfoArray[i].ni_bits) , &(event_list[i].ra_bits), sizeof(ACPI_register_t));
