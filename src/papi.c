@@ -1576,9 +1576,18 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
    }
 }
 
+/* This is the deprecated PAPI 3 num hwctrs interface.
+   It is preserved for backward compatibility. It calls
+   PAPI_get_component_opt() with a substrate index of 0
+*/
 int PAPI_num_hwctrs(void)
 {
-   return (PAPI_get_opt(PAPI_MAX_HWCTRS, NULL));
+   return (PAPI_num_cmp_hwctrs(0));
+}
+
+int PAPI_num_cmp_hwctrs(int cidx)
+{
+   return (PAPI_get_cmp_opt(PAPI_MAX_HWCTRS, NULL, cidx));
 }
 
 int PAPI_get_multiplex(int EventSet)
@@ -1596,8 +1605,6 @@ int PAPI_get_multiplex(int EventSet)
 int PAPI_get_opt(int option, PAPI_option_t * ptr)
 {
   EventSetInfo_t *ESI;
-  /* xxxx this value should be passed in or assumed to be 0 */
-  int cidx = 0;
 
    switch (option) {
    case PAPI_DETACH:
@@ -1619,13 +1626,6 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
 	 papi_return(PAPI_ENOEVST);
        ptr->attach.tid = ESI->attach.tid;
        return ((ESI->state & PAPI_ATTACHED) != 0);
-     }
-   case PAPI_DEF_MPX_USEC:
-     {
-       if (ptr == NULL)
-	 papi_return(PAPI_EINVAL);
-       ptr->multiplex.us = _papi_hwd[cidx]->cmp_info.multiplex_timer_us;
-       return(PAPI_OK);
      }
    case PAPI_MULTIPLEX:
       {
@@ -1653,17 +1653,6 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
       return ((int) _papi_hwi_system_info.hw_info.mhz);
    case PAPI_MAX_CPUS:
       return (_papi_hwi_system_info.hw_info.ncpu);
-  /* For now, MAX_HWCTRS and MAX CTRS are identical.
-     At some future point, they may map onto different values.
-  */
-   case PAPI_MAX_HWCTRS:
-      return (_papi_hwd[cidx]->cmp_info.num_cntrs);
-   case PAPI_MAX_MPX_CTRS:
-      return (_papi_hwd[cidx]->cmp_info.num_mpx_cntrs);
-   case PAPI_DEFDOM:
-      return (_papi_hwd[cidx]->cmp_info.default_domain);
-   case PAPI_DEFGRN:
-      return (_papi_hwd[cidx]->cmp_info.default_granularity);
 #if 0
    case PAPI_INHERIT:
       {
@@ -1682,16 +1671,6 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
       if (ESI == NULL)
 	papi_return(PAPI_ENOEVST);
       ptr->granularity.granularity = ESI->granularity.granularity;
-   case PAPI_SHLIBINFO:
-      {
-         int retval;
-
-         if (ptr == NULL)
-            papi_return(PAPI_EINVAL);
-         retval = _papi_hwd[cidx]->update_shlib_info();
-         ptr->shlib_info = &_papi_hwi_system_info.shlib_info;
-         papi_return(retval);
-      }
    case PAPI_EXEINFO:
       if (ptr == NULL)
          papi_return(PAPI_EINVAL);
@@ -1702,11 +1681,6 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
          papi_return(PAPI_EINVAL);
       ptr->hw_info = &_papi_hwi_system_info.hw_info;
       break;
-   case PAPI_COMPONENTINFO:
-      if (ptr == NULL)
-         papi_return(PAPI_EINVAL);
-      ptr->cmp_info = &(_papi_hwd[cidx]->cmp_info);
-      return(PAPI_OK);
    case PAPI_DOMAIN:
       if (ptr == NULL)
          papi_return(PAPI_EINVAL);
@@ -1717,7 +1691,62 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
       return(PAPI_OK);
    case PAPI_LIB_VERSION:
       return (PAPI_VERSION);
+
+/* The following cases all require a component index 
+    and are handled by PAPI_get_cmp_opt() with cidx == 0*/
+   case PAPI_DEF_MPX_USEC:
+   case PAPI_MAX_HWCTRS:
+   case PAPI_MAX_MPX_CTRS:
+   case PAPI_DEFDOM:
+   case PAPI_DEFGRN:
+   case PAPI_SHLIBINFO:
+   case PAPI_COMPONENTINFO:
+     return(PAPI_get_cmp_opt(option, ptr, 0));
+
    default:
+      papi_return(PAPI_EINVAL);
+   }
+   return(PAPI_OK);
+}
+
+int PAPI_get_cmp_opt(int option, PAPI_option_t * ptr, int cidx)
+{
+   switch (option) {
+    case PAPI_DEF_MPX_USEC:
+     {
+       if (ptr == NULL)
+	 papi_return(PAPI_EINVAL);
+       ptr->multiplex.us = _papi_hwd[cidx]->cmp_info.multiplex_timer_us;
+       return(PAPI_OK);
+     }
+  /* For now, MAX_HWCTRS and MAX CTRS are identical.
+     At some future point, they may map onto different values.
+  */
+    case PAPI_MAX_HWCTRS:
+      return (_papi_hwd[cidx]->cmp_info.num_cntrs);
+    case PAPI_MAX_MPX_CTRS:
+      return (_papi_hwd[cidx]->cmp_info.num_mpx_cntrs);
+    case PAPI_DEFDOM:
+      if (ptr == NULL)
+         papi_return(PAPI_EINVAL);
+      return (_papi_hwd[cidx]->cmp_info.default_domain);
+    case PAPI_DEFGRN:
+      return (_papi_hwd[cidx]->cmp_info.default_granularity);
+    case PAPI_SHLIBINFO:
+      {
+         int retval;
+         if (ptr == NULL)
+            papi_return(PAPI_EINVAL);
+         retval = _papi_hwd[cidx]->update_shlib_info();
+         ptr->shlib_info = &_papi_hwi_system_info.shlib_info;
+         papi_return(retval);
+      }
+    case PAPI_COMPONENTINFO:
+      if (ptr == NULL)
+         papi_return(PAPI_EINVAL);
+      ptr->cmp_info = &(_papi_hwd[cidx]->cmp_info);
+      return(PAPI_OK);
+    default:
       papi_return(PAPI_EINVAL);
    }
    return(PAPI_OK);
@@ -1835,16 +1864,17 @@ int PAPI_perror(int code, char *destination, int length)
 int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
                   PAPI_overflow_handler_t handler)
 {
-   int retval, index, event_counter, i;
+   int retval, cidx, index, event_counter, i;
    EventSetInfo_t *ESI;
    ThreadInfo_t *thread;
+   EventSetOverflowInfo_t *o;
 
    ESI = _papi_hwi_lookup_EventSet(EventSet);
    if (ESI == NULL)
       papi_return(PAPI_ENOEVST);
 
-   if ( ESI->CmpIdx < 0 || ESI->CmpIdx >= papi_num_components ) 
-      papi_return(PAPI_ENOCMP);
+   cidx = valid_ESI_component(ESI);
+   if (cidx < 0) papi_return(cidx);
 
    thread = ESI->master;
 
@@ -1874,88 +1904,90 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
       if (threshold == 0)
          papi_return(PAPI_EINVAL);
    }
-   if (threshold > 0 && ESI->overflow.event_counter >= _papi_hwd[ESI->CmpIdx]->cmp_info.num_cntrs)
+
+   o = &ESI->overflow; /* dereference the overflow structure */
+   if (threshold > 0 && o->event_counter >= _papi_hwd[cidx]->cmp_info.num_cntrs)
       papi_return(PAPI_ECNFLCT);
 
    if (threshold == 0) {
-      for (i = 0; i < ESI->overflow.event_counter; i++) {
-         if (ESI->overflow.EventCode[i] == EventCode)
+      for (i = 0; i < o->event_counter; i++) {
+         if (o->EventCode[i] == EventCode)
             break;
       }
       /* EventCode not found */
-      if (i == ESI->overflow.event_counter)
+      if (i == o->event_counter)
          papi_return(PAPI_EINVAL);
       /* compact these arrays */
-      while (i < ESI->overflow.event_counter - 1) {
-         ESI->overflow.deadline[i] = ESI->overflow.deadline[i + 1];
-         ESI->overflow.threshold[i] = ESI->overflow.threshold[i + 1];
-         ESI->overflow.EventIndex[i] = ESI->overflow.EventIndex[i + 1];
-         ESI->overflow.EventCode[i] = ESI->overflow.EventCode[i + 1];
+      while (i < o->event_counter - 1) {
+         o->deadline[i] = o->deadline[i + 1];
+         o->threshold[i] = o->threshold[i + 1];
+         o->EventIndex[i] = o->EventIndex[i + 1];
+         o->EventCode[i] = o->EventCode[i + 1];
          i++;
       }
-      ESI->overflow.deadline[i] = 0;
-      ESI->overflow.threshold[i] = 0;
-      ESI->overflow.EventIndex[i] = 0;
-      ESI->overflow.EventCode[i] = 0;
+      o->deadline[i] = 0;
+      o->threshold[i] = 0;
+      o->EventIndex[i] = 0;
+      o->EventCode[i] = 0;
 
-      ESI->overflow.event_counter--;
+      o->event_counter--;
    } else {
-      if ( ESI->overflow.event_counter > 0 ){
-         if ( (flags&PAPI_OVERFLOW_FORCE_SW) && (ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
+      if ( o->event_counter > 0 ){
+         if ( (flags&PAPI_OVERFLOW_FORCE_SW) && (o->flags&PAPI_OVERFLOW_HARDWARE))
             papi_return(PAPI_ECNFLCT);
-         if ( !(flags&PAPI_OVERFLOW_FORCE_SW) && (ESI->overflow.flags&PAPI_OVERFLOW_FORCE_SW))
+         if ( !(flags&PAPI_OVERFLOW_FORCE_SW) && (o->flags&PAPI_OVERFLOW_FORCE_SW))
             papi_return(PAPI_ECNFLCT);
       }
-      for (i = 0; i < ESI->overflow.event_counter; i++) {
-         if (ESI->overflow.EventCode[i] == EventCode)
+      for (i = 0; i < o->event_counter; i++) {
+         if (o->EventCode[i] == EventCode)
             break;
       }
-      if (i == ESI->overflow.event_counter){
-         ESI->overflow.event_counter++;
-         event_counter = ESI->overflow.event_counter;
-         ESI->overflow.deadline[event_counter - 1] = threshold;
-         ESI->overflow.threshold[event_counter - 1] = threshold;
-         ESI->overflow.EventIndex[event_counter - 1] = index;
-         ESI->overflow.EventCode[event_counter - 1] = EventCode;
-         ESI->overflow.flags = flags;
+      if (i == o->event_counter){
+         o->event_counter++;
+         event_counter = o->event_counter;
+         o->deadline[event_counter - 1] = threshold;
+         o->threshold[event_counter - 1] = threshold;
+         o->EventIndex[event_counter - 1] = index;
+         o->EventCode[event_counter - 1] = EventCode;
+         o->flags = flags;
       }
       else {
-         ESI->overflow.deadline[i] = threshold;
-         ESI->overflow.threshold[i] = threshold;
-         ESI->overflow.EventIndex[i] = index;
-         ESI->overflow.flags = flags;
+         o->deadline[i] = threshold;
+         o->threshold[i] = threshold;
+         o->EventIndex[i] = index;
+         o->flags = flags;
       }
    }
-   ESI->overflow.handler = handler;
-   ESI->overflow.count = 0;
+   o->handler = handler;
+   o->count = 0;
 
    /* Set up the option structure for the low level */
 
-   if (_papi_hwd[ESI->CmpIdx]->cmp_info.hardware_intr && 
-       !(ESI->overflow.flags&PAPI_OVERFLOW_FORCE_SW)) {
+   if (_papi_hwd[cidx]->cmp_info.hardware_intr && 
+       !(o->flags&PAPI_OVERFLOW_FORCE_SW)) {
       if ( threshold != 0 )
-         ESI->overflow.flags |= PAPI_OVERFLOW_HARDWARE;
-      retval = _papi_hwd[ESI->CmpIdx]->set_overflow(ESI, index, threshold);
-      if ( !(ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE) )
-         ESI->overflow.timer_ms = PAPI_ITIMER_MS;
+         o->flags |= PAPI_OVERFLOW_HARDWARE;
+      retval = _papi_hwd[cidx]->set_overflow(ESI, index, threshold);
+      if ( !(o->flags&PAPI_OVERFLOW_HARDWARE) )
+         o->timer_ms = PAPI_ITIMER_MS;
       else if (retval < PAPI_OK){
-         if ( ESI->overflow.event_counter == 0 )
-            ESI->overflow.flags = 0;
+         if ( o->event_counter == 0 )
+            o->flags = 0;
          papi_return(retval);
       }
    } else{
-      ESI->overflow.timer_ms = PAPI_ITIMER_MS;
-      ESI->overflow.flags &= ~(PAPI_OVERFLOW_HARDWARE);
+      o->timer_ms = PAPI_ITIMER_MS;
+      o->flags &= ~(PAPI_OVERFLOW_HARDWARE);
    }
 
-   APIDBG("Overflow using: %s\n", (ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE?"[Hardware]":ESI->overflow.flags&PAPI_OVERFLOW_FORCE_SW?"[Forced Software]":"[Software]"));
+   APIDBG("Overflow using: %s\n", (o->flags&PAPI_OVERFLOW_HARDWARE?"[Hardware]":o->flags&PAPI_OVERFLOW_FORCE_SW?"[Forced Software]":"[Software]"));
    /* Toggle the overflow flag */
-   if ((ESI->overflow.event_counter == 1 && threshold > 0) ||
-       (ESI->overflow.event_counter == 0 && threshold == 0))
+   if ((o->event_counter == 1 && threshold > 0) ||
+       (o->event_counter == 0 && threshold == 0))
       ESI->state ^= PAPI_OVERFLOWING;
 
-   if ( ESI->overflow.event_counter == 0 )
-      ESI->overflow.flags = 0;
+   if ( o->event_counter == 0 )
+      o->flags = 0;
 
    return(PAPI_OK);
 }
@@ -1964,6 +1996,7 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
                     int EventCode, int threshold, int flags)
 {
    EventSetInfo_t *ESI;
+   EventSetProfileInfo_t *p;
    int retval, index, i, buckets;
    int forceSW=0;
    int cidx;
@@ -1978,9 +2011,8 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
    if (ESI->state & PAPI_ATTACHED)
       papi_return(PAPI_EINVAL);
 
-   if ( ESI->CmpIdx < 0 || ESI->CmpIdx >= papi_num_components ) 
-      papi_return(PAPI_ENOCMP);
-   cidx = ESI->CmpIdx;
+   cidx = valid_ESI_component(ESI);
+   if (cidx < 0) papi_return(cidx);
 
    if ((index = _papi_hwi_lookup_EventCodeIndex(ESI, EventCode)) < 0)
       papi_return(PAPI_ENOEVNT);
@@ -2019,55 +2051,56 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
       if (threshold == 0)
          papi_return(PAPI_EINVAL);
    }
-   if (threshold > 0 && ESI->profile.event_counter >= _papi_hwd[cidx]->cmp_info.num_cntrs)
+   p = &ESI->profile; /* dereference the profile structure */
+   if (threshold > 0 && p->event_counter >= _papi_hwd[cidx]->cmp_info.num_cntrs)
       papi_return(PAPI_ECNFLCT);
 
    if (threshold == 0) {
-      for (i = 0; i < ESI->profile.event_counter; i++) {
-         if (ESI->profile.EventCode[i] == EventCode)
+      for (i = 0; i < p->event_counter; i++) {
+         if (p->EventCode[i] == EventCode)
             break;
       }
       /* EventCode not found */
-      if (i == ESI->profile.event_counter)
+      if (i == p->event_counter)
          papi_return(PAPI_EINVAL);
       /* compact these arrays */
-      while (i < ESI->profile.event_counter - 1) {
-         ESI->profile.prof[i] = ESI->profile.prof[i + 1];
-         ESI->profile.count[i] = ESI->profile.count[i + 1];
-         ESI->profile.threshold[i] = ESI->profile.threshold[i + 1];
-         ESI->profile.EventIndex[i] = ESI->profile.EventIndex[i + 1];
-         ESI->profile.EventCode[i] = ESI->profile.EventCode[i + 1];
+      while (i < p->event_counter - 1) {
+         p->prof[i] = p->prof[i + 1];
+         p->count[i] = p->count[i + 1];
+         p->threshold[i] = p->threshold[i + 1];
+         p->EventIndex[i] = p->EventIndex[i + 1];
+         p->EventCode[i] = p->EventCode[i + 1];
          i++;
       }
-      ESI->profile.prof[i] = NULL;
-      ESI->profile.count[i] = 0;
-      ESI->profile.threshold[i] = 0;
-      ESI->profile.EventIndex[i] = 0;
-      ESI->profile.EventCode[i] = 0;
+      p->prof[i] = NULL;
+      p->count[i] = 0;
+      p->threshold[i] = 0;
+      p->EventIndex[i] = 0;
+      p->EventCode[i] = 0;
 
-      ESI->profile.event_counter--;
+      p->event_counter--;
    } else {
-      if ( ESI->profile.event_counter > 0 ) {
-        if ( (flags&PAPI_PROFIL_FORCE_SW) && !(ESI->profile.flags&PAPI_PROFIL_FORCE_SW) )
+      if ( p->event_counter > 0 ) {
+        if ( (flags&PAPI_PROFIL_FORCE_SW) && !(p->flags&PAPI_PROFIL_FORCE_SW) )
           papi_return(PAPI_ECNFLCT);
-        if ( !(flags&PAPI_PROFIL_FORCE_SW) && (ESI->profile.flags&PAPI_PROFIL_FORCE_SW) )
+        if ( !(flags&PAPI_PROFIL_FORCE_SW) && (p->flags&PAPI_PROFIL_FORCE_SW) )
           papi_return(PAPI_ECNFLCT);
       }
 
-      for (i = 0; i < ESI->profile.event_counter; i++) {
-         if (ESI->profile.EventCode[i] == EventCode)
+      for (i = 0; i < p->event_counter; i++) {
+         if (p->EventCode[i] == EventCode)
             break;
       }
 
-      if (i == ESI->profile.event_counter){
-         i = ESI->profile.event_counter;
-         ESI->profile.event_counter++;
-         ESI->profile.EventCode[i] = EventCode;
+      if (i == p->event_counter){
+         i = p->event_counter;
+         p->event_counter++;
+         p->EventCode[i] = EventCode;
       }
-      ESI->profile.prof[i] = prof;
-      ESI->profile.count[i] = profcnt;
-      ESI->profile.threshold[i] = threshold;
-      ESI->profile.EventIndex[i] = index;
+      p->prof[i] = prof;
+      p->count[i] = profcnt;
+      p->threshold[i] = threshold;
+      p->EventIndex[i] = index;
    }
 
    /* make sure no invalid flags are set */
@@ -2093,7 +2126,7 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
 
    /* Set up the option structure for the low level */
 
-   ESI->profile.flags = flags;
+   p->flags = flags;
 
    if ((forceSW) || (_papi_hwd[cidx]->cmp_info.kernel_profile == 0))
      retval = PAPI_overflow(EventSet, EventCode, threshold, forceSW, _papi_hwi_dummy_handler);
@@ -2104,12 +2137,12 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
       return (retval);
 
    /* Toggle profiling flag */
-   if ((ESI->profile.event_counter == 1 && threshold > 0) ||
-       (ESI->profile.event_counter == 0 && threshold == 0))
+   if ((p->event_counter == 1 && threshold > 0) ||
+       (p->event_counter == 0 && threshold == 0))
       ESI->state ^= PAPI_PROFILING;
 
-   if ( ESI->profile.event_counter == 0 )
-     ESI->profile.flags = 0;
+   if ( p->event_counter == 0 )
+     p->flags = 0;
 
    return(PAPI_OK);
 }
@@ -2177,7 +2210,7 @@ int PAPI_set_granularity(int granularity)
    PAPI_option_t ptr;
 
    ptr.defgranularity.granularity = granularity;
-   return(PAPI_set_opt(PAPI_DEFGRN, &ptr));
+   papi_return(PAPI_set_opt(PAPI_GRANUL, &ptr));
 }
 
 /* This function sets the low level default counting domain
@@ -2188,7 +2221,7 @@ int PAPI_set_domain(int domain)
    PAPI_option_t ptr;
 
    ptr.defdomain.domain = domain;
-   return(PAPI_set_opt(PAPI_DEFDOM, &ptr));
+   papi_return(PAPI_set_opt(PAPI_DEFDOM, &ptr));
 }
 
 int PAPI_add_events(int EventSet, int *Events, int number)
