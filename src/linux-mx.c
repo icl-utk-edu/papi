@@ -3,9 +3,10 @@
 #include "papi_vector.h"
 #include "papi_memory.h"
 #include <inttypes.h>
+#include "linux-mx.h"
 
-void init_mdi();
-void init_presets();
+void mx_init_mdi();
+int mx_init_presets();
 
 enum native_name {
    PNE_LANAI_UPTIME = 0x40000000,
@@ -565,10 +566,10 @@ int MX_init_substrate()
    int retval=PAPI_OK;
 
    /* Internal function, doesn't necessarily need to be a function */
-   init_mdi();
+   mx_init_mdi();
 
    /* Internal function, doesn't necessarily need to be a function */
-   init_presets();
+   mx_init_presets();
 
    return(retval);
 }
@@ -578,12 +579,12 @@ int MX_init_substrate()
  * it can be called anything you want as long as the information
  * for the presets are setup here.
  */
-const hwi_search_t mx_preset_map[] = {
+hwi_search_t mx_preset_map[] = {
    {0, {0, {PAPI_NULL, PAPI_NULL}, {0,}}}
 };
 
 
-void init_presets(){
+int mx_init_presets(){
   return (_papi_hwi_setup_all_presets(mx_preset_map, NULL));
 }
 
@@ -595,7 +596,7 @@ void init_presets(){
  * list check out papi_mdi_t, though some of the values are setup
  * and used above the substrate level.
  */
-void init_mdi(){
+void mx_init_mdi(){
 /*   strcpy(_papi_hwi_system_info.hw_info.vendor_string,"linux-acpi");
    strcpy(_papi_hwi_system_info.hw_info.model_string,"linux-acpi");
    _papi_hwi_system_info.hw_info.mhz = 100.0;
@@ -644,7 +645,7 @@ int MX_update_control_state(hwd_control_state_t *ptr, NativeInfo_t *native, int 
 
    for (i = 0; i < count; i++) {
      index = native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
-     native[i].ni_position = acpi_native_table[index].resources.selector-1;
+     native[i].ni_position = mx_native_table[index].resources.selector-1;
    }
    return(PAPI_OK);
 }
@@ -697,7 +698,7 @@ int read_mx_counters(long_long *counters)
 }
 
 int MX_start(hwd_context_t *ctx, hwd_control_state_t *ctrl){
-   read_mx_counters(_papi_hwd_register_start);
+   read_mx_counters(_papi_hwd_mx_register_start);
    memcpy(_papi_hwd_mx_register, _papi_hwd_mx_register_start, MX_MAX_COUNTERS*sizeof(long_long));
 
    return(PAPI_OK);
@@ -709,11 +710,11 @@ int MX_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **events, i
     int i;
 
     read_mx_counters(_papi_hwd_mx_register); 
-    for(i = 0; i < MAX_COUNTERS; i++){
-       ctrl->counts[i] = _papi_hwd_mx_register[i] - _papi_hwd_mx_register_start[i];
+    for(i = 0; i < MX_MAX_COUNTERS; i++){
+       ((MX_control_state_t *)ctrl)->counts[i] = _papi_hwd_mx_register[i] - _papi_hwd_mx_register_start[i];
       /*printf("%d  %lld\n", i, ctrl->counts[i]);*/
     }
-    *events=ctrl->counts;
+    *events=((MX_control_state_t *)ctrl)->counts;
     return(PAPI_OK);
 }
 
@@ -722,8 +723,8 @@ int MX_stop(hwd_context_t *ctx, hwd_control_state_t *ctrl)
    int i;
 
    read_mx_counters(_papi_hwd_mx_register);
-   for(i = 0; i < MAX_COUNTERS; i++){
-      ctrl->counts[i] = _papi_hwd_mx_register[i] - _papi_hwd_mx_register_start[i];
+   for(i = 0; i < MX_MAX_COUNTERS; i++){
+      ((MX_control_state_t *)ctrl)->counts[i] = _papi_hwd_mx_register[i] - _papi_hwd_mx_register_start[i];
 /*      printf("%d  %lld\n", i, ctrl->counts[i]);*/
    }
 
@@ -819,7 +820,7 @@ char *MX_ntv_code_to_descr(unsigned int EventCode)
 
 int MX_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 {
-   memcpy(( MX_register_t *) bits, &(mx_native_table[EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK].resources), sizeof(ACPI_register_t)); /* it is not right, different type */
+   memcpy(( MX_register_t *) bits, &(mx_native_table[EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK].resources), sizeof(MX_register_t)); /* it is not right, different type */
    return (PAPI_OK);
 }
 
@@ -849,19 +850,19 @@ int MX_ntv_enum_events(unsigned int *EventCode, int modifier)
  *    the substrate needs smart counter allocation.
  */
 /* Register allocation */
-int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
+int MX_allocate_registers(EventSetInfo_t *ESI) {
    int index, i, j, natNum;
-   hwd_reg_alloc_t event_list[MAX_COUNTERS];
+   MX_reg_alloc_t event_list[MX_MAX_COUNTERS];
 
    /* Initialize the local structure needed
       for counter allocation and optimization. */
    natNum = ESI->NativeCount;
    for(i = 0; i < natNum; i++) {
       /* retrieve the mapping information about this native event */
-      _papi_hwd_ntv_code_to_bits(ESI->NativeInfoArray[i].ni_event, &event_list[i].ra_bits);
+      MX_ntv_code_to_bits(ESI->NativeInfoArray[i].ni_event, &event_list[i].ra_bits);
 
    }
-   if(_papi_hwi_bipartite_alloc(event_list, natNum)) { /* successfully mapped */
+   if(_papi_hwi_bipartite_alloc(event_list, natNum, ESI->CmpIdx)) { /* successfully mapped */
       for(i = 0; i < natNum; i++) {
          /* Copy all info about this native event to the NativeInfo struct */
          memcpy(&(ESI->NativeInfoArray[i].ni_bits) , &(event_list[i].ra_bits), sizeof(hwd_register_t));

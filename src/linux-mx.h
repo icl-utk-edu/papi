@@ -64,11 +64,4 @@ typedef struct MX_context {
   MX_control_state_t state; 
 } MX_context_t;
 
-/*
-#define _papi_hwd_lock_init() { ; }
-#define _papi_hwd_lock(a) { ; }
-#define _papi_hwd_unlock(a) { ; }
-#define GET_OVERFLOW_ADDRESS(ctx) (0x80000000)
-*/
-extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
 #endif /* _PAPI_MX_H */
