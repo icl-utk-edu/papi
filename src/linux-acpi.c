@@ -16,13 +16,13 @@ enum native_name {
 ACPI_native_event_entry_t acpi_native_table[] = {
     {{ 1, "/proc/stat"},
     "ACPI_STAT",
-    "kernel statistics"
+    "kernel statistics",
     },
     {{ 2, "/proc/acpi"},
     "ACPI_TEMP",
-    "ACPI temperature"
+    "ACPI temperature",
     },
-    {{0, 0}, "", ""},
+    {{0, NULL}, NULL, NULL},
 };
 
 /*
@@ -153,6 +153,12 @@ int ACPI_init_control_state(hwd_control_state_t *ptr){
 }
 
 int ACPI_update_control_state(hwd_control_state_t *ptr, NativeInfo_t *native, int count, hwd_context_t *ctx){
+   int i, index;
+
+   for (i = 0; i < count; i++) {
+     index = native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+     native[i].ni_position = acpi_native_table[index].resources.selector-1;
+   }
    return(PAPI_OK);
 }
 
@@ -519,6 +525,7 @@ papi_vector_t _acpi_vector = {
     .cmp_info = {
 	/* default component information (unspecified values are initialized to 0) */
 	.num_mpx_cntrs =	PAPI_MPX_DEF_DEG,
+	.num_cntrs =	ACPI_MAX_COUNTERS,
 	.default_domain =	PAPI_DOM_USER,
 	.available_domains =	PAPI_DOM_USER,
 	.default_granularity =	PAPI_GRN_THR,
@@ -558,7 +565,7 @@ papi_vector_t _acpi_vector = {
     .bpt_map_shared =		ACPI_bpt_map_shared,
     .bpt_map_preempt =		ACPI_bpt_map_preempt,
     .bpt_map_update =		ACPI_bpt_map_update,
-    .allocate_registers =	ACPI_allocate_registers,
+/*    .allocate_registers =	ACPI_allocate_registers,*/
     .update_control_state =	ACPI_update_control_state,
     .set_domain =		ACPI_set_domain,
     .reset =			ACPI_reset,
