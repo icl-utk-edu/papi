@@ -1191,6 +1191,14 @@ AC_ARG_WITH(mx,
             )
 case "$mx" in
    yes)
+      MXPATH=""
+      AC_PATH_PROG(MXPATH, mx_counters)
+      if test "$MXPATH" = ""; then
+        echo "PAPI needs to know the path to mx_counters"
+        exit 1
+      fi
+      AC_DEFINE_UNQUOTED(MXPATH, "$MXPATH", [The path of mx_counters])
+
       mxval="MX"
       compnts="${compnts} ${mxval}" 
       compsrcs="${compsrcs} linux-mx.c" 
