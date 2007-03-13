@@ -109,8 +109,6 @@ enum native_name {
    PNE_DMA_METADATA_RACE
 };
 
-#define MXPATH "/opt/mx/bin/mx_counters"
-
 MX_native_event_entry_t mx_native_table[] = {
    {{ 1, MXPATH},
    "LANAI_UPTIME",
@@ -851,7 +849,7 @@ int MX_ntv_enum_events(unsigned int *EventCode, int modifier)
  */
 /* Register allocation */
 int MX_allocate_registers(EventSetInfo_t *ESI) {
-   int index, i, j, natNum;
+   int i, natNum;
    MX_reg_alloc_t event_list[MX_MAX_COUNTERS];
 
    /* Initialize the local structure needed
