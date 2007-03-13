@@ -326,7 +326,6 @@ static int allocate_EventSet(EventSetInfo_t *ESI, int cidx)
 
 static void free_EventSet(EventSetInfo_t * ESI)
 {
-printf("ESI(%p)  ESI->CmpIdx(%d)\n", ESI, ESI->CmpIdx);
    if (ESI->EventInfoArray)	papi_free(ESI->EventInfoArray);
    if ( ESI->NativeInfoArray)	papi_free(ESI->NativeInfoArray);
    if ( ESI->overflow.deadline )	papi_free(ESI->overflow.deadline);
