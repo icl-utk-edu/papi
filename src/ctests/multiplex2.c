@@ -5,149 +5,121 @@
 *          mucci@cs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
-*/  
+*/
 
 /* This file tests the multiplex functionality, originally developed by 
    John May of LLNL. */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <memory.h>
-#include <malloc.h>
-#include "papi.h"
-#include "test_utils.h"
-
-#define NUM 100
-#define SUCCESS 1
-
-extern void do_flops(int);
-extern void do_reads(int);
-
-extern int TESTS_QUIET;
+#include "papi_test.h"
 
 void init_papi(void)
 {
-  int retval;
+   int retval;
 
-  /* Initialize the library */
+   /* Initialize the library */
 
-  retval = PAPI_library_init(PAPI_VER_CURRENT);
-  if (retval != PAPI_VER_CURRENT)
-    test_fail(__FILE__,__LINE__,"PAPI_library_init",retval);
-
-  /* Turn on automatic error reporting */
-
-  retval = PAPI_set_debug(PAPI_VERB_ECONT);
-  if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_set_debug",retval);
+   retval = PAPI_library_init(PAPI_VER_CURRENT);
+   if (retval != PAPI_VER_CURRENT)
+      test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 }
 
 /* Tests that we can really multiplex a lot. */
 
-int case1(void) 
+int case1(void)
 {
-  int retval, i, EventSet = PAPI_NULL, max_to_add = 6, j = 0;
-  long long *values;
-  const PAPI_preset_info_t *pset;
+   int retval, i, EventSet = PAPI_NULL, j = 0, allvalid = 1;
+   long long *values;
+   PAPI_event_info_t pset;
+   
+   init_papi();
 
-  init_papi();
+   retval = PAPI_multiplex_init();
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_multiplex_init", retval);
 
-  pset = PAPI_query_all_events_verbose();
-  if (pset == NULL)
-    test_fail(__FILE__,__LINE__,"PAPI_query_all_events_verbose",0);
+   retval = PAPI_create_eventset(&EventSet);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
-  retval = PAPI_multiplex_init();
-  if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_multiplex_init",retval);
-  
-  retval = PAPI_create_eventset(&EventSet);
-  if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_create_eventset",retval);
+   /* In Component PAPI, EventSets must be assigned a component index
+      before you can fiddle with their internals.
+      0 is always the cpu component */
+   retval = PAPI_assign_eventset_component(EventSet, 0);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_assign_eventset_component", retval);
 
-  retval = PAPI_set_multiplex(&EventSet);
-  if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_set_multiplex",retval);
+   retval = PAPI_set_multiplex(EventSet);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_set_multiplex", retval);
 
-  for (i=0;i<PAPI_MAX_PRESET_EVENTS;i++)
-    {
-      if ((pset->avail) && (pset->event_code != PAPI_TOT_CYC))
-	{
-	  if ( !TESTS_QUIET ) 
-	    printf("Adding %s\n",pset->event_name);
+    /* Fill up the event set with as many non-derived events as we can */
 
-	  retval = PAPI_add_event(&EventSet, pset->event_code);
-	  if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
-	    test_fail(__FILE__,__LINE__,"PAPI_add_event",retval);
+    i = PAPI_PRESET_MASK;
+    do {
+        if (PAPI_get_event_info(i, &pset) == PAPI_OK) 
+	  {
+	    if (pset.count && (strcmp(pset.derived,"NOT_DERIVED") == 0))
+	      {
+		retval = PAPI_add_event(EventSet, pset.event_code);
+		if (retval != PAPI_OK)
+		  test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+		else
+		  {
+		    printf("Added %s\n", pset.symbol);
+		    j++;
+		  }
+	      }
+	  }
+    } while ((PAPI_enum_event(&i, PAPI_PRESET_ENUM_AVAIL) == PAPI_OK) && (j <= MAX_TO_ADD));
 
-	  if ( !TESTS_QUIET ) 
-	    {
-	      if (retval == PAPI_OK)
-		printf("Added %s\n",pset->event_name);
-	      else
-		printf("Could not add %s\n",pset->event_name);
-	    }
+   values = (long long *) malloc(j * sizeof(long long));
+   if (values == NULL)
+      test_fail(__FILE__, __LINE__, "malloc", 0);
 
-	  if (retval == PAPI_OK)
-	    {
-	      if (++j >= max_to_add)
-		break;
-	    }
-	}
-	pset++;
-    }
+   if (PAPI_start(EventSet) != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-  values = (long long *)malloc(max_to_add*sizeof(long long));
-  if (values == NULL)
-    test_fail(__FILE__,__LINE__,"malloc",0);
+   do_both(NUM_ITERS);
+   do_misses(10, 1024*1024*4);
 
-  if (PAPI_start(EventSet) != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_start",retval);
+   retval = PAPI_stop(EventSet, values);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-  for (i=0;i<NUM;i++)
-    {
-      do_flops(1000000);
-#ifndef _CRAYT3E
-      do_reads(1000);
-#endif
-    }
+   test_print_event_header("multiplex2:\n", EventSet);
+   for (i = 0; i < j; i++) {
+     printf(ONENUM, values[i]);
+     if (values[i] == 0)
+       allvalid = 0;
+   }
+   printf("\n");
+   if (!allvalid){
+      if (!TESTS_QUIET ){
+        printf("Warning:  one or more counter[s] registered no counts\n");
+      /*test_fail(__FILE__, __LINE__, "one or more counter registered no counts",1);*/
+      }
+   }
 
-  retval = PAPI_stop(EventSet, values);
-  if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_stop",retval);
+   retval = PAPI_cleanup_eventset(EventSet);    /* JT */
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_cleanup_eventset", retval);
 
-  retval = PAPI_cleanup_eventset(&EventSet);
-  if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_cleanup_eventset",retval);
+   retval = PAPI_destroy_eventset(&EventSet);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_destroy_eventset", retval);
 
-  retval = PAPI_destroy_eventset(&EventSet);
-  if (retval != PAPI_OK)
-    test_fail(__FILE__,__LINE__,"PAPI_destroy_eventset",retval);
-  
-  return(SUCCESS);
+   return (SUCCESS);
 }
 
 int main(int argc, char **argv)
 {
 
-  if ( argc > 1 ) {
-        if ( !strcmp( argv[1], "TESTS_QUIET" ) )
-           TESTS_QUIET=1;
-  }
+   tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
-/* Skip Alpha till multiplex is fixed. -KSL */
-#if defined(__ALPHA) && defined(__osf__)
-  test_pass(__FILE__, NULL, 0);
-#endif
+   printf("%s: Does PAPI_multiplex_init() handle lots of events?\n",argv[0]);
+   printf("%s: Using %d iterations\n\n", argv[0], NUM_ITERS);
 
-  if ( !TESTS_QUIET ) {
-    printf("%s: Using %d iterations\n\n",argv[0],NUM);
-
-    printf("case1: Does PAPI_multiplex_init() handle lots of events?\n");
-  }
-  case1();
-  test_pass(__FILE__,NULL,0);
-  exit(1);
+   case1();
+   test_pass(__FILE__, NULL, 0);
+   exit(1);
 }

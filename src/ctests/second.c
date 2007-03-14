@@ -138,16 +138,22 @@ void case1(int num)
       test_skip(__FILE__, __LINE__, "PAPI_query_event", retval);
 
    retval = PAPI_create_eventset(&EventSet1);
+   if (retval == PAPI_OK)
+       retval = PAPI_create_eventset(&EventSet2);
+   if (retval == PAPI_OK)
+       retval = PAPI_create_eventset(&EventSet3);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
-   retval = PAPI_create_eventset(&EventSet2);
+   /* In Component PAPI, EventSets must be assigned a component index
+      before you can fiddle with their internals. 0 is always the cpu component */
+   retval = PAPI_assign_eventset_component(EventSet1, 0);
+   if (retval == PAPI_OK)
+       retval = PAPI_assign_eventset_component(EventSet2, 0);
+   if (retval == PAPI_OK)
+       retval = PAPI_assign_eventset_component(EventSet3, 0);
    if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
-
-   retval = PAPI_create_eventset(&EventSet3);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
+      test_fail(__FILE__, __LINE__, "PAPI_assign_eventset_component", retval);
 
    if (num == CREATE)
    {

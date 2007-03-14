@@ -37,9 +37,6 @@ int main(int argc, char **argv)
    printf("default_granularity: 0x%x (%s)\n",cmpinfo->default_granularity,stringify_granularity(cmpinfo->default_granularity));
    /* The default granularity when this substrate is used */
    printf("available_granularities: 0x%x (%s)\n",cmpinfo->available_granularities,stringify_all_granularities(cmpinfo->available_granularities)); /* Available granularities */
-   printf("multiplex_timer_sig: %d\n",cmpinfo->multiplex_timer_sig);      /* Width of opcode matcher if exists, 0 if not */
-   printf("multiplex_timer_num: %d\n",cmpinfo->multiplex_timer_num);      /* Width of opcode matcher if exists, 0 if not */
-   printf("multiplex_timer_us: %d\n",cmpinfo->multiplex_timer_us);      /* Width of opcode matcher if exists, 0 if not */
    printf("hardware_intr_sig: %d\n",cmpinfo->hardware_intr_sig);      /* Width of opcode matcher if exists, 0 if not */
    printf("opcode_match_width: %d\n",cmpinfo->opcode_match_width);      /* Width of opcode matcher if exists, 0 if not */
 /*   printf("reserved_ints[4]: %d\n",cmpinfo->reserved_ints[4]); */

@@ -95,7 +95,8 @@ int main(int argc, char **argv)
   printf("Found |%s|\n", event_name);
 
   /* Highly doubtful we have this many natives */
-  code = PAPI_NATIVE_MASK | (PAPI_NATIVE_MASK-1);
+  /* Turn on all bits *except* PRESET bit and COMPONENT bits */
+  code = PAPI_PRESET_AND_MASK & PAPI_COMPONENT_AND_MASK;
   printf("Looking for highest definable native event: 0x%x...\n", code);
   retval = PAPI_event_code_to_name(code, event_name);
   if (retval != PAPI_OK)
