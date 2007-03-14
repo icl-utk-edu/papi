@@ -18,7 +18,13 @@
  *	    london@cs.utk.edu
  *          Maynard Johnson
  *          maynardj@us.ibm.com
+ *	    Dan Terpstra
+ *	    terpstra@cs.utk.edu
  */
+
+/* xxxx Will this stuff run unmodified on multiple components?
+    What happens when several components are counting multiplexed?
+*/
 
 #define MPX_NONDECR
 /* Nils Smeds */
@@ -154,9 +160,6 @@ static void mpx_init_timers(int interval)
    /* Fill in the interval timer values now to save a
     * little time later.
     */
-#ifdef OUTSIDE_PAPI
-   interval = MPX_DEFAULT_INTERVAL;
-#endif
    /* interval is in usec & Windows needs msec resolution */
    mpx_time = interval / 1000;
 }
@@ -204,12 +207,12 @@ static void mpx_shutdown_itimer(void)
       }
 }
 
-static void mpx_release(void)
+inline_static void mpx_release(void)
 {
    mpx_startup_itimer();
 }
 
-static void mpx_hold(void)
+inline_static void mpx_hold(void)
 {
    mpx_shutdown_itimer();
 }
@@ -233,9 +236,6 @@ static void mpx_init_timers(int interval)
    /* Fill in the interval timer values now to save a
     * little time later.
     */
-#ifdef OUTSIDE_PAPI
-   interval = MPX_DEFAULT_INTERVAL;
-#endif
 
 #ifdef REGENERATE
    /* Signal handler restarts the timer every time it runs */
@@ -249,16 +249,12 @@ static void mpx_init_timers(int interval)
    itime.it_value.tv_usec = interval;
 
    sigemptyset( &sigreset );
-   /* xxxx should multiplex settings be system wide?? */
-   sigaddset( &sigreset, _papi_hwd[0]->cmp_info.multiplex_timer_sig);
+   sigaddset( &sigreset, _papi_hwi_system_info.mpx_info.timer_sig);
 }
 
 static int mpx_startup_itimer(void)
 {
    struct sigaction sigact;
-
-   /* xxxx should multiplex settings be system wide?? */
-    int cidx = 0;
 
    /* Set up the signal handler and the timer that triggers it */
 
@@ -267,15 +263,15 @@ static int mpx_startup_itimer(void)
    sigact.sa_flags = SA_RESTART;
    sigact.sa_handler = mpx_handler;
 
-   if (sigaction(_papi_hwd[cidx]->cmp_info.multiplex_timer_sig, &sigact, NULL) == -1)
+   if (sigaction(_papi_hwi_system_info.mpx_info.timer_sig, &sigact, NULL) == -1)
      {
         PAPIERROR("sigaction start errno %d",errno);
 	return PAPI_ESYS;
      }
 
-   if (setitimer(_papi_hwd[cidx]->cmp_info.multiplex_timer_num, &itime, NULL) == -1)
+   if (setitimer(_papi_hwi_system_info.mpx_info.timer_num, &itime, NULL) == -1)
      {
-       sigaction(_papi_hwd[cidx]->cmp_info.multiplex_timer_sig, &oaction, NULL);
+       sigaction(_papi_hwi_system_info.mpx_info.timer_sig, &oaction, NULL);
        PAPIERROR("setitimer start errno %d",errno);
        return PAPI_ESYS;
      }
@@ -284,22 +280,16 @@ static int mpx_startup_itimer(void)
 
 static void mpx_restore_signal(void)
 {
-   /* xxxx should multiplex settings be system wide?? */
-    int cidx = 0;
-
-    if (_papi_hwd[cidx]->cmp_info.multiplex_timer_sig != PAPI_NULL) { 
-	if (signal(_papi_hwd[cidx]->cmp_info.multiplex_timer_sig, SIG_IGN) == SIG_ERR)
+    if (_papi_hwi_system_info.mpx_info.timer_sig != PAPI_NULL) { 
+	if (signal(_papi_hwi_system_info.mpx_info.timer_sig, SIG_IGN) == SIG_ERR)
      	PAPIERROR("sigaction stop errno %d",errno); }
 }
 
 static void mpx_shutdown_itimer(void)
 {
-   /* xxxx should multiplex settings be system wide?? */
-    int cidx = 0;
-
   MPXDBG("setitimer off\n");
-  if (_papi_hwd[cidx]->cmp_info.multiplex_timer_num != PAPI_NULL) {
- 	if (setitimer(_papi_hwd[cidx]->cmp_info.multiplex_timer_num, (struct itimerval *)&itimestop, NULL) == -1)
+  if (_papi_hwi_system_info.mpx_info.timer_num != PAPI_NULL) {
+ 	if (setitimer(_papi_hwi_system_info.mpx_info.timer_num, (struct itimerval *)&itimestop, NULL) == -1)
      	PAPIERROR("setitimer stop errno %d",errno); }
 }
 #endif                          /* _WIN32 */
@@ -337,7 +327,7 @@ static MPX_EventSet *mpx_malloc(Threadlist * t)
    return (newset);
 }
 
-int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode)
+int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode, int cidx)
 {
    MPX_EventSet *newset = *mpx_events;
    int retval, def_dom, def_grn, alloced_thread = 0, alloced_newset = 0;
@@ -421,8 +411,8 @@ int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode)
 
    /* Removed newset->num_events++, moved to mpx_insert_events() */
 
-   def_dom = PAPI_get_opt(PAPI_DEFDOM, NULL);
-   def_grn = PAPI_get_opt(PAPI_DEFGRN, NULL);
+   def_dom = PAPI_get_cmp_opt(PAPI_DEFDOM, NULL, cidx);
+   def_grn = PAPI_get_cmp_opt(PAPI_DEFGRN, NULL, cidx);
 
    mpx_hold();
 
@@ -681,12 +671,12 @@ static void mpx_handler(int signal)
 #endif
 }
 
-int MPX_add_events(MPX_EventSet ** mpx_events, int *event_list, int num_events)
+int MPX_add_events(MPX_EventSet ** mpx_events, int *event_list, int num_events, int cidx)
 {
    int i, retval = PAPI_OK;
 
    for (i = 0; i < num_events; i++) {
-      retval = mpx_add_event(mpx_events, event_list[i]);
+      retval = mpx_add_event(mpx_events, event_list[i], cidx);
 
       if (retval != PAPI_OK)
          return (retval);
@@ -1083,87 +1073,6 @@ void MPX_shutdown(void)
   mpx_restore_signal();
 }
 
-
-int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
-{
-#ifdef PTHREADS
-   int retval;
-#endif
-#ifdef OLD
-   int i;
-   int granularity, domain;
-   int *event_list;
-#endif
-
-   return (PAPI_EINVAL);
-
-#ifdef OLD
-   if (ptr == NULL || mpx_events == NULL)
-      return PAPI_EINVAL;
-
-   switch (option) {
-      /* options that are not per-eventset */
-   case PAPI_INHERIT:
-      return PAPI_set_opt(option, ptr);
-      break;
-
-      /* options that are per-eventset */
-      /* Changing domain or granularity causes the events
-       * in the set to be measured differently.  Conceivably,
-       * one might want to accumulate events measured
-       * differently into the same counter, but it's easier
-       * not to allow it.  So we'll handle new options by
-       * removing the old events and adding new ones with
-       * the new options.
-       */
-   case PAPI_DOMAIN:
-   case PAPI_GRANUL:
-      /* Event set must not be running */
-      if (mpx_events->status == MPX_RUNNING)
-         return PAPI_EINVAL;
-
-      /* Determine the option values to use */
-      if (option == PAPI_DOMAIN) {
-         domain = ptr->domain.domain;
-         granularity = mpx_events->mev[0]->pi.granularity;
-      } else if (option == PAPI_GRANUL) {
-         domain = mpx_events->mev[0]->pi.domain;
-         granularity = ptr->granularity.granularity;
-      }
-
-      /* If no change needed, just return */
-      if (mpx_events->mev[0]->pi.domain == domain
-          && mpx_events->mev[0]->pi.granularity == granularity)
-         return PAPI_OK;
-
-      /* Make a list of the events in the current set */
-      event_list = (int *) papi_malloc(mpx_events->num_events * sizeof(int));
-      if (event_list == NULL)
-	return PAPI_ENOMEM;
-
-      for (i = 0; i < mpx_events->num_events; i++)
-        event_list[i] = mpx_events->mev[i]->pi.event_type;
-
-      mpx_hold();
-
-      /* Remove the events from the master list and the current set */
-      mpx_delete_events(mpx_events);
-
-      /* Put the events back in the event set with the
-       * new options.
-       */
-      mpx_insert_events(mpx_events, event_list, i, domain, granularity);
-
-      mpx_release();
-
-      papi_free(event_list);
-
-      break;
-   }
-   return PAPI_OK;
-#endif
-}
-
 int mpx_init(int interval)
 {
 #ifdef PTHREADS
@@ -1188,9 +1097,6 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
 {
    int i, retval = 0, num_events_success = 0;
    MasterEvent *mev;
-#if 0
-   PAPI_option_t options;
-#endif
    MasterEvent **head = &mpx_events->mythr->head;
 
    /* For each event, see if there is already a corresponding
@@ -1243,26 +1149,6 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
                goto bail;
             }
          }
-
-         /* Set the options for the event set */
-#if 0
-         options.domain.eventset = mev->papi_event;
-         options.domain.domain = domain;
-         retval = PAPI_set_opt(PAPI_DOMAIN, &options);
-         if (retval != PAPI_OK) {
-            MPXDBG("PAPI_set_opt(PAPI_DOMAIN) failed.\n");
-            goto bail;
-         }
-#endif
-#if 0
-         options.granularity.eventset = mev->papi_event;
-         options.granularity.granularity = granularity;
-         retval = PAPI_set_opt(PAPI_GRANUL, &options);
-         if (retval != PAPI_OK) {
-            MPXDBG("PAPI_set_opt(PAPI_GRANUL) failed.\n");
-            goto bail;
-         }
-#endif
 
          /* Chain the event set into the 
           * master list of event sets used in

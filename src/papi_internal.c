@@ -227,7 +227,7 @@ static void initialize_NativeInfoArray(EventSetInfo_t * ESI)
    ESI->NativeCount = 0;
 }
 
-int create_EventSet(EventSetInfo_t **here)
+static int create_EventSet(EventSetInfo_t **here)
 {
    EventSetInfo_t *ESI;
 
@@ -249,7 +249,7 @@ int create_EventSet(EventSetInfo_t **here)
    return(PAPI_OK);
 }
 
-static int allocate_EventSet(EventSetInfo_t *ESI, int cidx)
+int _papi_hwi_assign_eventset(EventSetInfo_t *ESI, int cidx)
 {
    int max_counters;
    char *ptr;
@@ -551,14 +551,16 @@ static void remap_event_position(EventSetInfo_t * ESI, int thisindex)
 
 static int add_native_fail_clean(EventSetInfo_t * ESI, int nevt)
 {
-   int i;
+   int i, max_counters;
    int cidx = PAPI_COMPONENT_INDEX(nevt);
 
    if ( cidx < 0 || cidx > papi_num_components)
       return -1;
 
+   max_counters = _papi_hwd[cidx]->cmp_info.num_mpx_cntrs; 
+
    /* to find the native event from the native events list */
-   for (i = 0; i < _papi_hwd[ESI->CmpIdx]->cmp_info.num_cntrs; i++) {
+   for (i = 0; i < max_counters; i++) {
       if (nevt == ESI->NativeInfoArray[i].ni_event) {
          ESI->NativeInfoArray[i].ni_owners--;
          /* to clean the entry in the nativeInfo array */
@@ -646,7 +648,7 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
    int i, j, thisindex, remap, retval = PAPI_OK;
 
    if(ESI->CmpIdx<0){
-     if((retval=allocate_EventSet(ESI, PAPI_COMPONENT_INDEX(EventCode)))!=PAPI_OK)
+     if((retval=_papi_hwi_assign_eventset(ESI, PAPI_COMPONENT_INDEX(EventCode)))!= PAPI_OK)
        return retval;
    }
    else{
@@ -744,7 +746,7 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
 
    } else {
       /* Multiplexing is special. See multiplex.c */
-     retval = mpx_add_event(&ESI->multiplex.mpx_evset, EventCode);
+     retval = mpx_add_event(&ESI->multiplex.mpx_evset, EventCode, ESI->CmpIdx);
       if (retval < PAPI_OK)
          return (retval);
       ESI->EventInfoArray[thisindex].event_code = EventCode;    /* Relevant */
@@ -765,7 +767,7 @@ int _papi_hwi_add_pevent(EventSetInfo_t * ESI, int EventCode, void *inout)
 
 
    if(ESI->CmpIdx<0){
-     if((retval=allocate_EventSet(ESI, PAPI_COMPONENT_INDEX(EventCode)))!=PAPI_OK)
+     if((retval=_papi_hwi_assign_eventset(ESI, PAPI_COMPONENT_INDEX(EventCode)))!=PAPI_OK)
        return retval;
    }
 
@@ -1031,7 +1033,7 @@ int _papi_hwi_convert_eventset_to_multiplex(_papi_int_multiplex_t *mpx)
 	   ((_papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex) && 
 	    (flags & PAPI_MULTIPLEX_FORCE_SW))) 
 	 {
-	   retval = MPX_add_events(&ESI->multiplex.mpx_evset, mpxlist, j);
+	   retval = MPX_add_events(&ESI->multiplex.mpx_evset, mpxlist, j, ESI->CmpIdx);
 	   if (retval != PAPI_OK) 
 	     {
 	       papi_free(mpxlist);
@@ -1068,9 +1070,9 @@ int _papi_hwi_query(int preset_index, int *flags, char **note)
 #endif
 
 /*
- * Routine that initializes the substrates
- * Currently, only one substrate is initialized, eventually
- * this will be many substrates
+ * Routine that initializes all available components.
+ * A component is available if a pointer to its info vector
+ * appears in the NULL terminated_papi_hwd table.
  */
 int _papi_hwi_init_global(void)
 {
@@ -1080,7 +1082,7 @@ int _papi_hwi_init_global(void)
      retval = _papi_hwi_innoculate_vector(_papi_hwd[i]);
      if (retval != PAPI_OK ) 
        return(retval);
-     retval = _papi_hwd[i]->init_substrate();
+     retval = _papi_hwd[i]->init_substrate(i);
      if (retval != PAPI_OK ) 
        return(retval);
      i++;
@@ -1295,7 +1297,7 @@ static long_long handle_derived(EventInfo_t * evi, long_long * from)
 }
 
 #if 0
-void print_state(EventSetInfo_t * ESI)
+void print_state(EventSetInfo_t * ESI, int cidx)
 {
    int i;
 
@@ -1306,7 +1308,7 @@ void print_state(EventSetInfo_t * ESI)
    APIDBG( "\nnative_event_name       ");
    for (i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++)
       APIDBG( "%15s",
-              _papi_hwd_ntv_code_to_name(ESI->NativeInfoArray[i].ni_event));
+              _papi_hwd[cidx]->ntv_code_to_name(ESI->NativeInfoArray[i].ni_event));
    APIDBG( "\n");
 
    APIDBG( "native_event_position     ");

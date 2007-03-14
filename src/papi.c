@@ -660,6 +660,17 @@ int PAPI_create_eventset(int *EventSet)
    return (_papi_hwi_create_eventset(EventSet, master));
 }
 
+int PAPI_assign_eventset_component(int EventSet, int cidx)
+{
+   EventSetInfo_t *ESI;
+
+   ESI = _papi_hwi_lookup_EventSet(EventSet);
+   if (ESI == NULL)
+      papi_return(PAPI_ENOEVST);
+
+   return (_papi_hwi_assign_eventset(ESI, cidx));
+}
+
 int PAPI_add_pevent(int EventSet, int code, void *inout)
 {
    EventSetInfo_t *ESI;
@@ -843,7 +854,7 @@ int PAPI_start(int EventSet)
        if (!(ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
 	 {
            APIDBG("Overflow using: %s with a interval of %d ms\n", (ESI->overflow.flags&PAPI_OVERFLOW_FORCE_SW)?"[Forced Software]":"Software", ESI->overflow.timer_ms);
-	   retval = _papi_hwi_start_signal(_papi_hwd[cidx]->cmp_info.hardware_intr_sig, NEED_CONTEXT);
+	   retval = _papi_hwi_start_signal(_papi_hwd[cidx]->cmp_info.hardware_intr_sig, NEED_CONTEXT, cidx);
 	   if (retval != PAPI_OK)
 	     papi_return(retval);
 	   retval = _papi_hwi_start_timer(ESI->overflow.timer_ms);
@@ -1151,8 +1162,13 @@ int PAPI_cleanup_eventset(int EventSet)
    if (ESI == NULL)
       papi_return(PAPI_ENOEVST);
 
+   /* if the eventset has no index and no events, return OK
+      otherwise return NOCMP */
    cidx = valid_ESI_component(ESI);
-   if (cidx < 0) papi_return(cidx);
+   if (cidx < 0) {
+       if (ESI->NumberOfEvents) papi_return(cidx);
+       papi_return(PAPI_OK);
+   }
 
    thread = ESI->master;
 
@@ -1197,8 +1213,8 @@ int PAPI_cleanup_eventset(int EventSet)
 int PAPI_multiplex_init(void)
 {
    int retval;
-/* xxxx this value should be promoted to hw_info, not substrate?? */
-   retval = mpx_init(_papi_hwd[0]->cmp_info.multiplex_timer_us);
+
+   retval = mpx_init(_papi_hwi_system_info.mpx_info.timer_us);
    papi_return(retval);
 }
 
@@ -1260,8 +1276,7 @@ int PAPI_set_multiplex(int EventSet)
    memset(&mpx,0x0,sizeof(mpx));
    mpx.multiplex.eventset = EventSet;
    mpx.multiplex.flags = PAPI_MULTIPLEX_DEFAULT;
-   /* xxxx this should be promoted to an OS_info structure ?? */
-   mpx.multiplex.us = _papi_hwd[0]->cmp_info.multiplex_timer_us;
+   mpx.multiplex.us = _papi_hwi_system_info.mpx_info.timer_us;
    return(PAPI_set_opt(PAPI_MULTIPLEX, &mpx));
 }
 
@@ -1351,7 +1366,7 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 	}
        if (retval == PAPI_OK)
 	{
-	_papi_hwd[cidx]->cmp_info.multiplex_timer_us = internal.multiplex.us;
+	_papi_hwi_system_info.mpx_info.timer_us = internal.multiplex.us;
 	 ptr->multiplex.us = internal.multiplex.us;
 	}
        return(PAPI_OK);
@@ -1576,13 +1591,10 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
    }
 }
 
-/* This is the deprecated PAPI 3 num hwctrs interface.
-   It is preserved for backward compatibility. It calls
-   PAPI_get_component_opt() with a substrate index of 0
-*/
+/* Preserves API compatibility with older versions */
 int PAPI_num_hwctrs(void)
 {
-   return (PAPI_num_cmp_hwctrs(0));
+    return(PAPI_num_cmp_hwctrs(0));
 }
 
 int PAPI_num_cmp_hwctrs(int cidx)
@@ -1716,7 +1728,7 @@ int PAPI_get_cmp_opt(int option, PAPI_option_t * ptr, int cidx)
      {
        if (ptr == NULL)
 	 papi_return(PAPI_EINVAL);
-       ptr->multiplex.us = _papi_hwd[cidx]->cmp_info.multiplex_timer_us;
+       ptr->multiplex.us = _papi_hwi_system_info.mpx_info.timer_us;
        return(PAPI_OK);
      }
   /* For now, MAX_HWCTRS and MAX CTRS are identical.
@@ -1727,8 +1739,6 @@ int PAPI_get_cmp_opt(int option, PAPI_option_t * ptr, int cidx)
     case PAPI_MAX_MPX_CTRS:
       return (_papi_hwd[cidx]->cmp_info.num_mpx_cntrs);
     case PAPI_DEFDOM:
-      if (ptr == NULL)
-         papi_return(PAPI_EINVAL);
       return (_papi_hwd[cidx]->cmp_info.default_domain);
     case PAPI_DEFGRN:
       return (_papi_hwd[cidx]->cmp_info.default_granularity);
@@ -2205,21 +2215,40 @@ int PAPI_profil(void *buf, unsigned bufsiz, caddr_t offset,
    papi_return(PAPI_sprofil(NULL, 0, EventSet, EventCode, 0, flags));
 }
 
+/* This function sets the low level default granularity
+   for all newly manufactured eventsets. The first function
+   preserves API compatibility and assumes component 0;
+   The second function takes a component argument. */
+
 int PAPI_set_granularity(int granularity)
+{
+    return(PAPI_set_cmp_granularity(granularity, 0));
+}
+
+int PAPI_set_cmp_granularity(int granularity, int cidx)
 {
    PAPI_option_t ptr;
 
+   ptr.defgranularity.def_cidx = cidx;
    ptr.defgranularity.granularity = granularity;
    papi_return(PAPI_set_opt(PAPI_GRANUL, &ptr));
 }
 
 /* This function sets the low level default counting domain
-   for all newly manufactured eventsets */
+   for all newly manufactured eventsets. The first function
+   preserves API compatibility and assumes component 0;
+   The second function takes a component argument. */
 
 int PAPI_set_domain(int domain)
 {
+    return(PAPI_set_cmp_domain(domain, 0));
+}
+
+int PAPI_set_cmp_domain(int domain, int cidx)
+{
    PAPI_option_t ptr;
 
+   ptr.defdomain.def_cidx = cidx;
    ptr.defdomain.domain = domain;
    papi_return(PAPI_set_opt(PAPI_DEFDOM, &ptr));
 }

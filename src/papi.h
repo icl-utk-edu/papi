@@ -387,47 +387,46 @@ read the documentation carefully.  */
    } PAPI_preload_info_t;
 
    typedef struct _papi_component_option {
-     char name[PAPI_MAX_STR_LEN];            /* Name of the substrate we're using, usually CVS RCS Id */
-     char version[PAPI_MIN_STR_LEN];         /* Version of this substrate, usually CVS Revision */
-     char support_version[PAPI_MIN_STR_LEN]; /* Version of the support library */
-     char kernel_version[PAPI_MIN_STR_LEN];  /* Version of the kernel PMC support driver */
-     int CmpIdx;             /* Index into the vector array for this component; set at init time */
-     int num_cntrs;               /* Number of hardware counters the substrate supports */
-     int num_mpx_cntrs;           /* Number of multiplesed hardware counters the substrate or PAPI support: PAPI_MPX_DEF_DEG */
-     int num_preset_events;       /* Number of preset events the substrate supports */
-     int num_native_events;       /* Number of native events the substrate supports */
-     int default_domain;          /* The default domain when this substrate is used: PAPI_DOM_USER */
-     int available_domains;       /* Available domains; default: .default_domain */ 
-     int default_granularity;     /* The default granularity when this substrate is used: PAPI_GRN_THR */
-     int available_granularities; /* Available granularities; default:.default_granularity */
-     int multiplex_timer_sig;     /* Signal number used by the multiplex timer, 0 if not: PAPI_SIGNAL */
-     int multiplex_timer_num;     /* Number of the itimer or POSIX 1 timer used by the multiplex timer: PAPI_ITIMER */
-     int multiplex_timer_us;      /* uS between switching of sets: PAPI_MPX_DEF_US */
-     int hardware_intr_sig;       /* Signal used by hardware to deliver PMC events: PAPI_SIGNAL */
-     int opcode_match_width;      /* Width of opcode matcher if exists, 0 if not */
+     char name[PAPI_MAX_STR_LEN];		/* Name of the substrate we're using, usually CVS RCS Id */
+     char version[PAPI_MIN_STR_LEN];		/* Version of this substrate, usually CVS Revision */
+     char support_version[PAPI_MIN_STR_LEN];	/* Version of the support library */
+     char kernel_version[PAPI_MIN_STR_LEN];	/* Version of the kernel PMC support driver */
+     int CmpIdx;				/* Index into the vector array for this component; set at init time */
+     int num_cntrs;				/* Number of hardware counters the substrate supports */
+     int num_mpx_cntrs;				/* Number of multiplesed hardware counters the substrate or PAPI support: PAPI_MPX_DEF_DEG */
+     int num_preset_events;			/* Number of preset events the substrate supports */
+     int num_native_events;			/* Number of native events the substrate supports */
+     int default_domain;			/* The default domain when this substrate is used: PAPI_DOM_USER */
+     int available_domains;			/* Available domains; default: .default_domain */ 
+     int default_granularity;			/* The default granularity when this substrate is used: PAPI_GRN_THR */
+     int available_granularities;		/* Available granularities; default:.default_granularity */
+     int hardware_intr_sig;			/* Signal used by hardware to deliver PMC events: PAPI_SIGNAL */
+     int opcode_match_width;			/* Width of opcode matcher if exists, 0 if not */
      int reserved_ints[4];
-     unsigned int hardware_intr:1;         /* hw overflow intr, does not need to be emulated in software*/
-     unsigned int precise_intr:1;          /* Performance interrupts happen precisely */
-     unsigned int posix1b_timers:1;        /* Using POSIX 1b interval timers (timer_create) instead of setitimer */
-     unsigned int kernel_profile:1;        /* Has kernel profiling support (buffered interrupts or sprofil-like) */
-     unsigned int kernel_multiplex:1;      /* In kernel multiplexing */
-     unsigned int data_address_range:1;    /* Supports data address range limiting */
-     unsigned int instr_address_range:1;   /* Supports instruction address range limiting */
-     unsigned int fast_counter_read:1;     /* Supports a user level PMC read instruction */
-     unsigned int fast_real_timer:1;       /* Supports a fast real timer */
-     unsigned int fast_virtual_timer:1;    /* Supports a fast virtual timer */
-     unsigned int attach:1;		   /* Supports attach */
-     unsigned int attach_must_ptrace:1;	   /* Attach must first ptrace and stop the thread/process*/
-     unsigned int edge_detect:1;           /* Supports edge detection on events */
-     unsigned int invert:1;                /* Supports invert detection on events */
-     unsigned int profile_ear:1;      	   /* Supports data/instr/tlb miss address sampling */
-     unsigned int grouped_cntrs:1;         /* Underlying hardware uses counter groups */
+     unsigned int hardware_intr:1;		/* hw overflow intr, does not need to be emulated in software*/
+     unsigned int precise_intr:1;		/* Performance interrupts happen precisely */
+     unsigned int posix1b_timers:1;		/* Using POSIX 1b interval timers (timer_create) instead of setitimer */
+     unsigned int kernel_profile:1;		/* Has kernel profiling support (buffered interrupts or sprofil-like) */
+     unsigned int kernel_multiplex:1;		/* In kernel multiplexing */
+     unsigned int data_address_range:1;		/* Supports data address range limiting */
+     unsigned int instr_address_range:1;	/* Supports instruction address range limiting */
+     unsigned int fast_counter_read:1;		/* Supports a user level PMC read instruction */
+     unsigned int fast_real_timer:1;		/* Supports a fast real timer */
+     unsigned int fast_virtual_timer:1;		/* Supports a fast virtual timer */
+     unsigned int attach:1;			/* Supports attach */
+     unsigned int attach_must_ptrace:1;		/* Attach must first ptrace and stop the thread/process*/
+     unsigned int edge_detect:1;		/* Supports edge detection on events */
+     unsigned int invert:1;			/* Supports invert detection on events */
+     unsigned int profile_ear:1;		/* Supports data/instr/tlb miss address sampling */
+     unsigned int grouped_cntrs:1;		/* Underlying hardware uses counter groups */
      unsigned int reserved_bits:16;
    } PAPI_component_info_t;
 
-
-/* for backward compatibility */
-#define PAPI_substrate_info_t PAPI_component_info_t
+   typedef struct _papi_mpx_info {
+     int timer_sig;				/* Signal number used by the multiplex timer, 0 if not: PAPI_SIGNAL */
+     int timer_num;				/* Number of the itimer or POSIX 1 timer used by the multiplex timer: PAPI_ITIMER */
+     int timer_us;				/* uS between switching of sets: PAPI_MPX_DEF_US */
+   } PAPI_mpx_info_t;
 
    typedef int (*PAPI_debug_handler_t) (int code);
 
@@ -610,7 +609,7 @@ typedef struct event_info {
       unsigned int count;                    /* number of terms (usually 1) in the code and name fields
                                                 - for presets, these terms are native events
                                                 - for native events, these terms are register contents */
-      char symbol[PAPI_MAX_STR_LEN];       /* name of the event
+      char symbol[PAPI_MAX_STR_LEN+3];       /* name of the event
                                                 - for presets, something like PAPI_TOT_INS
                                                 - for native events, something related to the vendor name */
       char short_descr[PAPI_MIN_STR_LEN];    /* a description suitable for use as a label, typically only
@@ -629,7 +628,7 @@ typedef struct event_info {
                                                 - for presets, native event_code values
                                                 - for native events, register values for event programming */
       char name[PAPI_MAX_INFO_TERMS]         /* names of code terms: */
-               [PAPI_MAX_STR_LEN];           /* - for presets, native event names, as in symbol, above
+               [PAPI_MAX_STR_LEN+3];           /* - for presets, native event names, as in symbol, above
                                                 - for native events, descriptive strings for each register
                                                    value presented in the code array */
       char note[PAPI_HUGE_STR_LEN];          /* an optional developer note supplied with a preset event
@@ -642,6 +641,7 @@ typedef struct event_info {
    int   PAPI_accum(int EventSet, long_long * values);
    int   PAPI_add_event(int EventSet, int Event);
    int   PAPI_add_events(int EventSet, int *Events, int number);
+   int   PAPI_assign_eventset_component(int EventSet, int cidx);
    int   PAPI_attach(int EventSet, unsigned long tid);
    int   PAPI_cleanup_eventset(int EventSet);
    int   PAPI_create_eventset(int *EventSet);
@@ -674,7 +674,8 @@ typedef struct event_info {
    int   PAPI_lock(int);
    int   PAPI_multiplex_init(void);
    int   PAPI_num_hwctrs(void);
-   int   PAPI_num_cmp_hwctrs(int sidx);
+   int   PAPI_num_cmp_hwctrs(int cidx);
+   int   PAPI_num_hwctrs(void); /* for backward compatibility */
    int   PAPI_num_events(int EventSet);
    int   PAPI_overflow(int EventSet, int EventCode, int threshold,
                      int flags, PAPI_overflow_handler_t handler);
@@ -687,8 +688,10 @@ typedef struct event_info {
    int   PAPI_remove_events(int EventSet, int *Events, int number);
    int   PAPI_reset(int EventSet);
    int   PAPI_set_debug(int level);
-   int   PAPI_set_domain(int domain);
-   int   PAPI_set_granularity(int granularity);
+   int   PAPI_set_cmp_domain(int domain, int cidx);
+   int   PAPI_set_domain(int domain); /* for backward compatibility */
+   int   PAPI_set_cmp_granularity(int granularity, int cidx);
+   int   PAPI_set_granularity(int granularity); /* for backward compatibility */
    int   PAPI_set_multiplex(int EventSet);
    int   PAPI_set_opt(int option, PAPI_option_t * ptr);
    int   PAPI_set_thr_specific(int tag, void *ptr);

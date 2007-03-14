@@ -463,6 +463,7 @@ typedef struct _papi_mdi {
 //   PAPI_substrate_info_t sub_info; /* See definition in papi.h */ Moved to papi_vector_table...
    PAPI_hw_info_t hw_info;      /* See definition in papi.h */
    PAPI_exe_info_t exe_info;    /* See definition in papi.h */
+   PAPI_mpx_info_t mpx_info;    /* See definition in papi.h */
    PAPI_shlib_info_t shlib_info;    /* See definition in papi.h */
    PAPI_preload_info_t preload_info; /* See definition in papi.h */ 
 } papi_mdi_t;

@@ -389,7 +389,7 @@ int _papi_hwi_start_timer(int milliseconds)
    return (retval);
 }
 
-int _papi_hwi_start_signal(int signal, int need_context)
+int _papi_hwi_start_signal(int signal, int need_context, int cidx)
 {
   return(PAPI_OK);
 }
@@ -444,11 +444,9 @@ int _papi_hwi_start_timer(int milliseconds)
    return (PAPI_OK);
 }
 
-int _papi_hwi_start_signal(int signal, int need_context)
+int _papi_hwi_start_signal(int signal, int need_context, int cidx)
 {
    struct sigaction action;
-   /* xxxx for now we assume the use of the cpu dispatch routine */
-   int cidx = 0;
 
    _papi_hwi_lock(INTERNAL_LOCK);
    _papi_hwi_using_signal++;
@@ -661,13 +659,15 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
    hwd_register_t *bits = NULL;
    int retval;
    int cidx = PAPI_COMPONENT_INDEX(EventCode);
+   char * name;
 
    if ( cidx < 0 || cidx > papi_num_components)
       return (PAPI_ENOCMP);
 
    if (EventCode & PAPI_NATIVE_MASK) {
       _papi_hwi_lock(INTERNAL_LOCK);
-      strncpy(info->symbol, _papi_hwd[cidx]->ntv_code_to_name(EventCode), PAPI_MAX_STR_LEN);
+      name =_papi_hwd[cidx]->ntv_code_to_name(EventCode);
+      strncpy(info->symbol, name, PAPI_MAX_STR_LEN);
       _papi_hwi_unlock(INTERNAL_LOCK);
       if (strlen(info->symbol)) {
          /* Fill in the info structure */

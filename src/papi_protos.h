@@ -20,13 +20,12 @@
  int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI,
                           long_long * values);
  int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle);
+ int _papi_hwi_assign_eventset(EventSetInfo_t *ESI, int cidx);
  int _papi_hwi_add_event(EventSetInfo_t * ESI, int index);
  int _papi_hwi_add_pevent(EventSetInfo_t * ESI, int EventCode, void *inout);
  int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode);
  int _papi_hwi_remove_EventSet(EventSetInfo_t * ESI);
  int _papi_hwi_cleanup_eventset(EventSetInfo_t * ESI);
- int _papi_hwi_get_domain(PAPI_domain_option_t * opt);
- int _papi_hwi_get_granularity(PAPI_granularity_option_t * opt);
  int _papi_hwi_convert_eventset_to_multiplex(_papi_int_multiplex_t *opt);
  int _papi_hwi_lookup_EventCodeIndex(const EventSetInfo_t * ESI,
                                            unsigned int EventCode);
@@ -51,9 +50,9 @@ int _xml_papi_hwi_setup_all_presets(char *arch, hwi_dev_notes_t *notes);
 /* The following PAPI internal functions are defined by the multiplex.c file. */
 
  int mpx_init(int);
- int mpx_add_event(MPX_EventSet **, int EventCode);
+ int mpx_add_event(MPX_EventSet **, int EventCode, int cidx);
  int mpx_remove_event(MPX_EventSet **, int EventCode);
- int MPX_add_events(MPX_EventSet ** mpx_events, int *event_list, int num_events);
+ int MPX_add_events(MPX_EventSet ** mpx_events, int *event_list, int num_events, int cidx);
  int MPX_stop(MPX_EventSet * mpx_events, long_long * values);
  int MPX_cleanup(MPX_EventSet ** mpx_events);
  void MPX_shutdown(void);
@@ -76,7 +75,7 @@ int _xml_papi_hwi_setup_all_presets(char *arch, hwi_dev_notes_t *notes);
  int _papi_hwi_stop_timer(void);
  int _papi_hwi_start_timer(int);
  int _papi_hwi_stop_signal(int);
- int _papi_hwi_start_signal(int, int);
+ int _papi_hwi_start_signal(int, int, int);
  int _papi_hwi_initialize(DynamicArray_t **);
  int _papi_hwi_dispatch_overflow_signal(void *context, int *, long_long, int, ThreadInfo_t **master, caddr_t pc, int cidx);
  void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, long_long over, int profile_index, caddr_t pc);
@@ -89,7 +88,7 @@ int _papi_hwi_derived_type(char *derived, int *code);
 /* The following PAPI internal functions are defined by the substrate file. */
 
  int _papi_hwd_get_system_info(void);
- int _papi_hwd_init_substrate(void);
+ int _papi_hwd_init_substrate(int cidx);
  int _papi_hwd_init(hwd_context_t *);
   int _papi_hwd_init_control_state(hwd_control_state_t * ptr);
   int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
