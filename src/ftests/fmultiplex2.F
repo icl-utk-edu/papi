@@ -1,30 +1,16 @@
-#include "fpapi.h"
-#define SUCCESS 1
-#define NUM 100
-
-#if (defined(__alpha) && defined(__osf__))
-#define MAX_TO_ADD 3
-#else
-#define MAX_TO_ADD 9
-#endif
-
-#define PAPI_MAX_PRESET_EVENTS 128
+#include "fpapi_test.h"
 
       program multiplex2
-      IMPLICIT NONE
+      IMPLICIT integer (p)
 
       integer retval
       integer tests_quiet, get_quiet
       external get_quiet
 
       tests_quiet = get_quiet()
-C Skip Alpha till multiplex is fixed. -KSL 
-#if defined(__alpha) && defined(__osf__)
-      call ftest_skip(__FILE__, __LINE__, 'Broken', PAPI_ENOEVNT)
-#endif
 
       if (tests_quiet .EQ. 0) then
-        write (*, 100) NUM
+        write (*, 100) NUM_ITERS
  100    FORMAT ("multiplex2: Using ", I3, " iterations")
         write (*,*) "case1: Does PAPI_multiplex_init() handle", 
      *       " lots of events?"
@@ -34,7 +20,7 @@ C Skip Alpha till multiplex is fixed. -KSL
       end
 
       subroutine init_papi(tests_quiet)
-      IMPLICIT NONE
+      IMPLICIT integer (p)
       integer retval
       integer tests_quiet
 
@@ -44,17 +30,10 @@ C Skip Alpha till multiplex is fixed. -KSL
         call ftest_fail(__FILE__, __LINE__,
      .       'PAPI_library_init', retval)
       end if
-      if (tests_quiet .EQ. 0) then
-        call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
-        if ( retval.NE.PAPI_OK) then
-          call ftest_fail(__FILE__, __LINE__,
-     .         'PAPIf_set_debug', retval)
-        end if
-      end if
       end
 
       subroutine case1(tests_quiet, ret)
-      IMPLICIT NONE
+      IMPLICIT integer (p)
       integer tests_quiet
       integer retval
       integer i, ret, fd
@@ -76,9 +55,16 @@ C Skip Alpha till multiplex is fixed. -KSL
 
       call PAPIf_create_eventset(EventSet, retval)
       if ( retval.NE.PAPI_OK) then
+
         call ftest_fail(__FILE__, __LINE__,
      .       'PAPIf_create_eventset',
      *       retval)
+      end if
+
+      call PAPIf_assign_eventset_component(EventSet, 0, retval)
+      if ( retval.NE.PAPI_OK) then
+        call ftest_fail(__FILE__, __LINE__,
+     &      'PAPIf_assign_eventset_component', retval)
       end if
 
       call PAPIf_set_multiplex(EventSet, retval)
@@ -99,7 +85,7 @@ C Skip Alpha till multiplex is fixed. -KSL
      *        (EventCode.LT.PAPI_MAX_PRESET_EVENTS))
               mask1 = ((PAPI_L1_DCM)+EventCode) 
           if (mask1.NE.PAPI_TOT_CYC) then
-              call papif_query_event_verbose(mask1, 
+              call papif_get_event_info(mask1, 
      *          event_name, event_descr, event_label, avail_flag, 
      *          event_note, flags, check)
           end if
@@ -117,7 +103,8 @@ C Skip Alpha till multiplex is fixed. -KSL
  200        FORMAT(A22, A12)
          end if
 
-         mask1 = (PAPI_L1_DCM+(EventCode-1))
+         mask1 = ((PAPI_L1_DCM)+EventCode) 
+         mask1 = mask1 - 1
          call PAPIf_add_event( EventSet, mask1, retval )
          if ( retval .NE. PAPI_OK .AND. retval .NE. PAPI_ECNFLCT) then
             call ftest_fail(__FILE__, __LINE__,
@@ -145,12 +132,7 @@ C Skip Alpha till multiplex is fixed. -KSL
       end if
 
       fd = 1
-      do i=0, NUM, 1
-        call do_flops(1000000)
-#ifndef _CRAYT3E
-        call do_reads(1000)
-#endif
-      end do
+      call fdo_both(NUM_ITERS)
 
       call PAPIf_stop(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
