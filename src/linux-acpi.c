@@ -530,9 +530,6 @@ papi_vector_t _acpi_vector = {
 	.available_domains =	PAPI_DOM_USER,
 	.default_granularity =	PAPI_GRN_THR,
 	.available_granularities = PAPI_GRN_THR,
-	.multiplex_timer_sig =	PAPI_SIGNAL,
-	.multiplex_timer_num =	PAPI_ITIMER,
-	.multiplex_timer_us =	PAPI_MPX_DEF_US,
 	.hardware_intr_sig =	PAPI_SIGNAL,
 
 	/* component specific cmp_info initializations */
