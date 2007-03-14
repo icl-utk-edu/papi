@@ -221,6 +221,7 @@ int _p3_ntv_enum_events(unsigned int *EventCode, int modifier)
 	     *EventCode = (event | PAPI_NATIVE_MASK) + umask;
 	     return (PAPI_OK);
 	  }
+	  else umask += MOESI_I;
        }
    }
 
