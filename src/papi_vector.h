@@ -23,7 +23,7 @@ typedef struct papi_vectors {
 #else
     void	(*dispatch_timer)	(int, siginfo_t *, void *);
 #endif
-    void *	(*get_overflow_address)	(int, char *);
+    void *	(*get_overflow_address)	(int, char *, int);
     int		(*start)		(hwd_context_t *, hwd_control_state_t *);
     int		(*stop)			(hwd_context_t *, hwd_control_state_t *);
     int		(*read)			(hwd_context_t *, hwd_control_state_t *, long_long **, int);
@@ -34,7 +34,7 @@ typedef struct papi_vectors {
     long_long	(*get_virt_cycles)	(const hwd_context_t *);
     long_long	(*get_virt_usec)	(const hwd_context_t *);
     int		(*stop_profiling)	(ThreadInfo_t *, EventSetInfo_t *);
-    int		(*init_substrate)	(void);
+    int		(*init_substrate)	(int);
     int		(*init)			(hwd_context_t *);
     int		(*init_control_state)	(hwd_control_state_t * ptr);
     int		(*update_shlib_info)	(void);
