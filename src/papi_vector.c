@@ -43,6 +43,9 @@ papi_vector_t *_papi_hwd[] = {
 #ifdef HAVE_MX
   &_mx_vector,
 #endif
+#ifdef HAVE_NET
+  &_net_vector,
+#endif
   NULL
 };
 int papi_num_components = (sizeof(_papi_hwd)/sizeof(*_papi_hwd)) - 1;
