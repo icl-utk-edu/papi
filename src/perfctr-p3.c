@@ -381,7 +381,8 @@ void _p3_dispatch_timer(int signal, siginfo_t * si, void *context) {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *master = NULL;
    int isHardware = 0;
-   caddr_t pc; 
+   caddr_t pc;
+   int cidx = MY_VECTOR.cmp_info.CmpIdx;
 
    ctx.si = si;
    ctx.ucontext = (ucontext_t *)context;
@@ -401,9 +402,9 @@ void _p3_dispatch_timer(int signal, siginfo_t * si, void *context) {
 
    /* We are done, resume interrupting counters */
    if (isHardware) {
-      errno = vperfctr_iresume(((cmp_context_t *)master->context)->perfctr);
+      errno = vperfctr_iresume(((cmp_context_t *)master->context[cidx])->perfctr);
       if (errno < 0) {
-         PAPIERROR("vperfctr_iresume errno %d",errno);
+	  PAPIERROR("vperfctr_iresume errno %d for perfctr: %p",errno, ((cmp_context_t *)master->context[cidx])->perfctr);
       }
    }
 }
