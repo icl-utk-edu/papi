@@ -757,7 +757,7 @@ char *NET_ntv_code_to_descr(unsigned int EventCode)
 
 int NET_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 {
-   memcpy(( NET_register_t *) bits, &(net_native_table[EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK].resources), sizeof(MX_register_t)); /* it is not right, different type */
+   memcpy(( NET_register_t *) bits, &(net_native_table[EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK].resources), sizeof(NET_register_t)); /* it is not right, different type */
    return (PAPI_OK);
 }
 
@@ -872,9 +872,6 @@ papi_vector_t _net_vector = {
 	.available_domains =	PAPI_DOM_USER,
 	.default_granularity =	PAPI_GRN_THR,
 	.available_granularities = PAPI_GRN_THR,
-	.multiplex_timer_sig =	PAPI_SIGNAL,
-	.multiplex_timer_num =	PAPI_ITIMER,
-	.multiplex_timer_us =	PAPI_MPX_DEF_US,
 	.hardware_intr_sig =	PAPI_SIGNAL,
 
 	/* component specific cmp_info initializations */

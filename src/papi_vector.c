@@ -34,6 +34,9 @@ extern papi_vector_t _acpi_vector;
 #ifdef HAVE_MX
 extern papi_vector_t _mx_vector;
 #endif
+#ifdef HAVE_NET
+extern papi_vector_t _net_vector;
+#endif
 
 papi_vector_t *_papi_hwd[] = {
   &COMP_VECTOR,
