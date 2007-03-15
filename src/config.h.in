@@ -33,6 +33,9 @@
 /* system has myrinet mx component */
 #undef HAVE_MX
 
+/* system has net(ifconfig) component */
+#undef HAVE_NET
+
 /* Define to 1 if you have the <perfmon/pfmlib.h> header file. */
 #undef HAVE_PERFMON_PFMLIB_H
 
@@ -80,6 +83,9 @@
 
 /* The path of mx_counters */
 #undef MXPATH
+
+/* The path of ifconfig */
+#undef NETPATH
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT

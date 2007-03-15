@@ -1207,6 +1207,30 @@ case "$mx" in
       AC_DEFINE(HAVE_MX, 1, [system has myrinet mx component])
       ;;
 esac
+
+AC_ARG_WITH(net,
+            [  --with-net=<no,yes>	Build a net(ifconfig) component in the library ],
+            [net=$withval],
+            [net=no]
+            )
+case "$net" in
+   yes)
+      NETPATH=""
+      AC_PATH_PROG(NETPATH, ifconfig)
+      if test "$NETPATH" = ""; then
+        echo "PAPI needs to know the path to ifconfig"
+        exit 1
+      fi
+      AC_DEFINE_UNQUOTED(NETPATH, "$NETPATH", [The path of ifconfig])
+
+      netval="NET"
+      compnts="${compnts} ${netval}" 
+      compsrcs="${compsrcs} linux-net.c" 
+      comphdrs="${comphdrs} linux-net.h" 
+      compobjs="${compobjs} linux-net.o" 
+      AC_DEFINE(HAVE_NET, 1, [system has net(ifconfig) component])
+      ;;
+esac
 #echo $compnts
 
 AC_ARG_WITH(acpi,
