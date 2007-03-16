@@ -88,8 +88,6 @@ extern int ppc64_setup_vector_table(papi_vector_t *);
 extern int setup_ppc32_presets(int cputype);
 extern int ppc32_setup_vector_table(papi_vector_t *);
 #else
-extern int setup_p4_presets(int cputype);
-extern int setup_p4_vector_table(papi_vector_t *);
 extern int setup_p3_presets(int cputype);
 #endif
 
@@ -134,29 +132,6 @@ void print_control(const struct perfctr_cpu_control *control) {
  * The below routines were imported from linux.c and will therefore need to be
  * duplicated in every substrate that relied on them, such as power and p4
  ******************************************************************************/
-
-#ifdef PPC64
-extern int setup_ppc64_presets(int cputype);
-extern int ppc64_setup_vector_table(papi_vector_t *);
-#elif defined(PPC32)
-extern int setup_ppc32_presets(int cputype);
-extern int ppc32_setup_vector_table(papi_vector_t *);
-#else
-extern int setup_p4_presets(int cputype);
-extern int setup_p4_vector_table(papi_vector_t *);
-extern int setup_p3_presets(int cputype);
-#endif
-
-#if defined(PERFCTR26)
-#define PERFCTR_CPU_NAME(pi)    perfctr_info_cpu_name(pi)
-#define PERFCTR_CPU_NRCTRS(pi)  perfctr_info_nrctrs(pi)
-#elif defined(PERFCTR25)
-#define PERFCTR_CPU_NAME        perfctr_info_cpu_name
-#define PERFCTR_CPU_NRCTRS      perfctr_info_nrctrs
-#else
-#define PERFCTR_CPU_NAME        perfctr_cpu_name
-#define PERFCTR_CPU_NRCTRS      perfctr_cpu_nrctrs
-#endif
 
 #if (!defined(PPC64) && !defined(PPC32))
 inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
@@ -321,9 +296,7 @@ static int _p3_init_substrate(int cidx)
    /* Setup presets */
 #if (!defined(PPC64) && !defined(PPC32))
    if ( check_p4(info.cpu_type) ){
-//     retval = setup_p4_vector_table(vtable);
-//     if (!retval)
-     	retval = setup_p4_presets(info.cpu_type);
+     	retval = PAPI_ESBSTR;
    }
    else{
      	retval = setup_p3_presets(info.cpu_type);
@@ -1020,7 +993,7 @@ papi_vector_t _p3_vector = {
 	/* default component information (unspecified values are initialized to 0) */
 	.num_mpx_cntrs =	PAPI_MPX_DEF_DEG,
 	.default_domain =	PAPI_DOM_USER,
-	.available_domains =	PAPI_DOM_USER,
+	.available_domains =	PAPI_DOM_USER|PAPI_DOM_KERNEL,
 	.default_granularity =	PAPI_GRN_THR,
 	.available_granularities = PAPI_GRN_THR,
 	.hardware_intr_sig =	PAPI_SIGNAL,
@@ -1030,7 +1003,6 @@ papi_vector_t _p3_vector = {
 	.fast_virtual_timer =	1,
 	.attach =		1,
 	.attach_must_ptrace =	1,
-	.available_domains =	PAPI_DOM_USER|PAPI_DOM_KERNEL,
     },
 
     /* sizes of framework-opaque component-private structures */
@@ -1081,13 +1053,3 @@ papi_vector_t _p3_vector = {
     .init =		_linux_init,
     .get_dmem_info =	_linux_get_dmem_info
 };
-
-/* These should be removed when p3-p4 is merged */
-int setup_p4_vector_table(papi_vector_t * vtable){
-  return ( PAPI_OK );
-}
-
-int setup_p4_presets(int cputype){
-  return ( PAPI_OK );
-}
-

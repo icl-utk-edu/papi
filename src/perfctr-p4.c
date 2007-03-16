@@ -11,6 +11,22 @@
 
 #include "papi.h"
 #include "papi_internal.h"
+#include "perfctr-p4.h"
+
+/* Prototypes for entry points found in linux.c and linux-memory.c */
+int _linux_update_shlib_info(void);
+int _linux_get_system_info(void);
+int _linux_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type);
+int _linux_get_dmem_info(PAPI_dmem_info_t *d);
+int _linux_init(hwd_context_t * ctx);
+
+/* Prototypes for entry points found in p4_events */
+int _p4_ntv_enum_events(unsigned int *EventCode, int modifer);
+char *_p4_ntv_code_to_name(unsigned int EventCode);
+char *_p4_ntv_code_to_descr(unsigned int EventCode);
+int _p4_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits);
+int _p4_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values,
+                          int name_len, int count);
 
 #if defined(PERFCTR26) || defined (PERFCTR25)
 #define evntsel_aux             p4.escr
@@ -20,10 +36,10 @@
 /* BEGIN EXTERNAL DECLARATIONS */
 /*******************************/
 
-extern hwi_search_t _papi_hwd_pentium4_base_preset_map[];
-extern hwi_search_t _papi_hwd_pentium4_tot_iis_preset_map[];
-extern hwi_search_t _papi_hwd_pentium4_L3_cache_map[];
-extern hwi_dev_notes_t _papi_hwd_pentium4_base_dev_notes[];
+extern hwi_search_t _p4_base_preset_map[];
+extern hwi_search_t _p4_tot_iis_preset_map[];
+extern hwi_search_t _p4_L3_cache_map[];
+extern hwi_dev_notes_t _p4_base_dev_notes[];
 
 /*****************************/
 /* END EXTERNAL DECLARATIONS */
@@ -37,36 +53,61 @@ extern hwi_dev_notes_t _papi_hwd_pentium4_base_dev_notes[];
 /* END LOCAL DECLARATIONS */
 /**************************/
 
+/******************************************************************************
+ * The below defines were imported from linux.c and will therefore need to be
+ * duplicated in every substrate that relied on them, such as PPC and p4
+ ******************************************************************************/
+
+long_long tb_scale_factor = (long_long)1; /* needed to scale get_cycles on PPC series */
+
+extern int setup_p4_presets(int cputype);
+
+#if defined(PERFCTR26)
+#define PERFCTR_CPU_NAME(pi)    perfctr_info_cpu_name(pi)
+#define PERFCTR_CPU_NRCTRS(pi)  perfctr_info_nrctrs(pi)
+#elif defined(PERFCTR25)
+#define PERFCTR_CPU_NAME        perfctr_info_cpu_name
+#define PERFCTR_CPU_NRCTRS      perfctr_info_nrctrs
+#else
+#define PERFCTR_CPU_NAME        perfctr_cpu_name
+#define PERFCTR_CPU_NRCTRS      perfctr_cpu_nrctrs
+#endif
+
+/******************************************************************************
+ * The above defines were imported from linux.c and will therefore need to be
+ * duplicated in every substrate that relied on them, such as power and p4
+ ******************************************************************************/
+
 int setup_p4_presets(int cputype)
 {
    hwi_search_t *s;
    hwi_dev_notes_t *n;
-   extern void _papi_hwd_fixup_fp(hwi_search_t **s, hwi_dev_notes_t **n);
-   extern void _papi_hwd_fixup_vec(hwi_search_t **s, hwi_dev_notes_t **n);
+   extern void _p4_fixup_fp(hwi_search_t **s, hwi_dev_notes_t **n);
+   extern void _p4_fixup_vec(hwi_search_t **s, hwi_dev_notes_t **n);
 
    /* load the baseline event map for all Pentium 4s */
-   _papi_hwi_setup_all_presets(_papi_hwd_pentium4_base_preset_map, _papi_hwd_pentium4_base_dev_notes);
+   _papi_hwi_setup_all_presets(_p4_base_preset_map, _p4_base_dev_notes);
 
    /* fix up the floating point and vector ops */
-   _papi_hwd_fixup_fp(&s, &n);
+   _p4_fixup_fp(&s, &n);
    _papi_hwi_setup_all_presets(s,n);
-   _papi_hwd_fixup_vec(&s, &n);
+   _p4_fixup_vec(&s, &n);
    _papi_hwi_setup_all_presets(s,n);
 
    /* install L3 cache events iff 3 levels of cache exist */
    if (_papi_hwi_system_info.hw_info.mem_hierarchy.levels == 3)
-      _papi_hwi_setup_all_presets(_papi_hwd_pentium4_L3_cache_map, NULL);
+      _papi_hwi_setup_all_presets(_p4_L3_cache_map, NULL);
 
    /* overload with any model dependent events */
    if (cputype == PERFCTR_X86_INTEL_P4) {
      /* do nothing besides the base map */
    }
    else if (cputype == PERFCTR_X86_INTEL_P4M2) {
-      _papi_hwi_setup_all_presets(_papi_hwd_pentium4_tot_iis_preset_map, NULL);
+      _papi_hwi_setup_all_presets(_p4_tot_iis_preset_map, NULL);
    }
 #ifdef PERFCTR_X86_INTEL_P4M3
    else if (cputype == PERFCTR_X86_INTEL_P4M3) {
-      _papi_hwi_setup_all_presets(_papi_hwd_pentium4_tot_iis_preset_map, NULL);
+      _papi_hwi_setup_all_presets(_p4_tot_iis_preset_map, NULL);
    }
 #endif
    else {
@@ -77,18 +118,19 @@ int setup_p4_presets(int cputype)
 }
 
 /* This used to be init_config, static to the substrate.
-   Now its exposed to the hwi layer and called when an EventSet is allocated.
+   Now its exposed through the vector table and called when an EventSet is allocated.
 */
-VECTOR_STATIC
-int _papi_hwd_init_control_state(hwd_control_state_t * ptr)
+static int _p4_init_control_state(hwd_control_state_t * cntl)
 {
    int def_mode = 0, i;
-   if (_papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_USER)
+   cmp_control_state_t *ptr = (cmp_control_state_t *)cntl;
+
+   if (MY_VECTOR.cmp_info.default_domain & PAPI_DOM_USER)
       def_mode |= ESCR_T0_USR;
-   if (_papi_hwi_system_info.sub_info.default_domain & PAPI_DOM_KERNEL)
+   if (MY_VECTOR.cmp_info.default_domain & PAPI_DOM_KERNEL)
      def_mode |= ESCR_T0_OS;
 
-   for(i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
+   for(i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
       ptr->control.cpu_control.evntsel_aux[i] |= def_mode;
    }
    ptr->control.cpu_control.tsc_on = 1;
@@ -133,10 +175,285 @@ void print_control(const struct perfctr_cpu_control *control)
 }
 #endif
 
-VECTOR_STATIC
-int _papi_hwd_start(P4_perfctr_context_t * ctx, P4_perfctr_control_t * state)
+/******************************************************************************
+ * The below routines were imported from linux.c and will therefore need to be
+ * duplicated in every substrate that relied on them, such as power and p4
+ ******************************************************************************/
+
+extern int setup_p4_presets(int cputype);
+//extern int setup_p4_vector_table(papi_vector_t *);
+extern int setup_p3_presets(int cputype);
+
+#if defined(PERFCTR26)
+#define PERFCTR_CPU_NAME(pi)    perfctr_info_cpu_name(pi)
+#define PERFCTR_CPU_NRCTRS(pi)  perfctr_info_nrctrs(pi)
+#elif defined(PERFCTR25)
+#define PERFCTR_CPU_NAME        perfctr_info_cpu_name
+#define PERFCTR_CPU_NRCTRS      perfctr_info_nrctrs
+#else
+#define PERFCTR_CPU_NAME        perfctr_cpu_name
+#define PERFCTR_CPU_NRCTRS      perfctr_cpu_nrctrs
+#endif
+
+inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
+   switch (perfctr_cpu_type) {
+   case PERFCTR_X86_INTEL_P5:
+   case PERFCTR_X86_INTEL_P5MMX:
+   case PERFCTR_X86_INTEL_P6:
+   case PERFCTR_X86_INTEL_PII:
+   case PERFCTR_X86_INTEL_PIII:
+   case PERFCTR_X86_INTEL_P4:
+   case PERFCTR_X86_INTEL_P4M2:
+#ifdef PERFCTR_X86_INTEL_P4M3
+   case PERFCTR_X86_INTEL_P4M3:
+#endif
+#ifdef PERFCTR_X86_INTEL_PENTM
+   case PERFCTR_X86_INTEL_PENTM:
+#endif
+#ifdef PERFCTR_X86_INTEL_CORE
+   case PERFCTR_X86_INTEL_CORE:
+#endif
+#ifdef PERFCTR_X86_INTEL_CORE2
+   case PERFCTR_X86_INTEL_CORE2:
+#endif
+      return (PAPI_VENDOR_INTEL);
+#ifdef PERFCTR_X86_AMD_K8
+   case PERFCTR_X86_AMD_K8:
+#endif
+#ifdef PERFCTR_X86_AMD_K8C
+   case PERFCTR_X86_AMD_K8C:
+#endif
+   case PERFCTR_X86_AMD_K7:
+      return (PAPI_VENDOR_AMD);
+   case PERFCTR_X86_CYRIX_MII:
+      return (PAPI_VENDOR_CYRIX);
+   default:
+      return (PAPI_VENDOR_UNKNOWN);
+   }
+}
+
+/* 
+ * 1 if the processor is a P4, 0 otherwise
+ */
+static int check_p4(int cputype){
+  switch(cputype) {
+     case PERFCTR_X86_INTEL_P4:
+     case PERFCTR_X86_INTEL_P4M2:
+#ifdef PERFCTR_X86_INTEL_P4M3
+     case PERFCTR_X86_INTEL_P4M3:
+#endif
+        return(1);
+     default:
+	return(0);
+  }
+  return(0);
+}
+
+/* volatile uint32_t lock; */
+
+volatile unsigned int lock[PAPI_MAX_LOCK];
+
+static void lock_init(void) {
+   int i;
+   for (i = 0; i < PAPI_MAX_LOCK; i++) {
+      lock[i] = MUTEX_OPEN;
+   }
+}
+
+static int _p4_init_substrate(int cidx)
+{
+  int retval;
+  struct perfctr_info info;
+  char abiv[PAPI_MIN_STR_LEN];
+
+#if defined(PERFCTR26)
+  int fd;
+#else
+  struct vperfctr *dev;
+#endif
+
+  /* Setup the vector entries that the OS knows about */
+  /*retval = _linux_setup_vector_table(vtable);
+  if ( retval != PAPI_OK ) return(retval);
+  */
+ #if defined(PERFCTR26)
+  /* Get info from the kernel */
+   /* Use lower level calls per Mikael to get the perfctr info
+      without actually creating a new kernel-side state.
+      Also, close the fd immediately after retrieving the info.
+      This is much lighter weight and doesn't reserve the counter
+      resources. Also compatible with perfctr 2.6.14.
+   */
+   fd = _vperfctr_open(0);
+   if (fd < 0)
+     { PAPIERROR( VOPEN_ERROR); return(PAPI_ESYS); }
+   retval = perfctr_info(fd, &info);
+ 	close(fd);
+   if(retval < 0 )
+     { PAPIERROR( VINFO_ERROR); return(PAPI_ESYS); }
+
+    /* copy tsc multiplier to local variable        */
+    /* this field appears in perfctr 2.6 and higher */
+ 	tb_scale_factor = (long_long)info.tsc_to_cpu_mult;
+#else
+   /* Opened once for all threads. */
+   if ((dev = vperfctr_open()) == NULL)
+     { PAPIERROR( VOPEN_ERROR); return(PAPI_ESYS); }
+   SUBDBG("_papi_hwd_init_substrate vperfctr_open = %p\n", dev);
+
+   /* Get info from the kernel */
+   retval = vperfctr_info(dev, &info);
+   if (retval < 0)
+     { PAPIERROR( VINFO_ERROR); return(PAPI_ESYS); }
+    vperfctr_close(dev);
+#endif
+
+  /* Fill in what we can of the papi_system_info. */
+  retval = MY_VECTOR.get_system_info();
+  if (retval != PAPI_OK)
+     return (retval);
+
+   /* Setup memory info */
+   retval = MY_VECTOR.get_memory_info(&_papi_hwi_system_info.hw_info, (int) info.cpu_type);
+   if (retval)
+      return (retval);
+
+   strcpy(MY_VECTOR.cmp_info.name, "$Id$");
+   strcpy(MY_VECTOR.cmp_info.version, "$Revision$");
+   sprintf(abiv,"0x%08X",info.abi_version);
+   strcpy(MY_VECTOR.cmp_info.support_version, abiv);
+   strcpy(MY_VECTOR.cmp_info.kernel_version, info.driver_version);
+   MY_VECTOR.cmp_info.CmpIdx = cidx;
+   MY_VECTOR.cmp_info.num_cntrs = PERFCTR_CPU_NRCTRS(&info);
+   MY_VECTOR.cmp_info.fast_counter_read = (info.cpu_features & PERFCTR_FEATURE_RDPMC) ? 1 : 0;
+   MY_VECTOR.cmp_info.hardware_intr =
+       (info.cpu_features & PERFCTR_FEATURE_PCINT) ? 1 : 0;
+
+   SUBDBG("Hardware/OS %s support counter generated interrupts\n",
+          MY_VECTOR.cmp_info.hardware_intr ? "does" : "does not");
+
+   /* Setup presets */
+   if ( check_p4(info.cpu_type) ){
+//     retval = setup_p4_vector_table(vtable);
+//     if (!retval)
+     	retval = setup_p4_presets(info.cpu_type);
+   }
+   else{
+     	retval = PAPI_ESBSTR;
+   }
+   if ( retval ) 
+     return(retval);
+
+   strcpy(_papi_hwi_system_info.hw_info.model_string, PERFCTR_CPU_NAME(&info));
+   _papi_hwi_system_info.hw_info.model = info.cpu_type;
+   _papi_hwi_system_info.hw_info.vendor = xlate_cpu_type_to_vendor(info.cpu_type);
+
+   lock_init();
+
+   return (PAPI_OK);
+}
+
+void _p4_dispatch_timer(int signal, siginfo_t * si, void *context) {
+   _papi_hwi_context_t ctx;
+   ThreadInfo_t *master = NULL;
+   int isHardware = 0;
+   caddr_t pc;
+   int cidx = MY_VECTOR.cmp_info.CmpIdx;
+
+   ctx.si = si;
+   ctx.ucontext = (ucontext_t *)context;
+
+#define OVERFLOW_MASK si->si_pmc_ovf_mask
+#define GEN_OVERFLOW 0
+
+   pc = GET_OVERFLOW_ADDRESS(ctx);
+
+   _papi_hwi_dispatch_overflow_signal((void *)&ctx,&isHardware,
+                                      OVERFLOW_MASK, GEN_OVERFLOW,&master,pc, MY_VECTOR.cmp_info.CmpIdx);
+
+   /* We are done, resume interrupting counters */
+   if (isHardware) {
+      errno = vperfctr_iresume(((cmp_context_t *)master->context[cidx])->perfctr);
+      if (errno < 0) {
+	  PAPIERROR("vperfctr_iresume errno %d for perfctr: %p",errno, ((cmp_context_t *)master->context[cidx])->perfctr);
+      }
+   }
+}
+static int attach( hwd_control_state_t * ctl, unsigned long tid ) {
+	struct vperfctr_control tmp;
+
+	((cmp_control_state_t *)ctl)->rvperfctr = rvperfctr_open( tid );
+	if(((cmp_control_state_t *)ctl)->rvperfctr == NULL ) {
+		PAPIERROR( VOPEN_ERROR ); return (PAPI_ESYS);
+		}
+	SUBDBG( "attach rvperfctr_open() = %p\n", ((cmp_control_state_t *)ctl)->rvperfctr );
+	
+	/* Initialize the per thread/process virtualized TSC */
+	memset( &tmp, 0x0, sizeof(tmp) );
+	tmp.cpu_control.tsc_on = 1;
+
+	/* Start the per thread/process virtualized TSC */
+	if( rvperfctr_control(((cmp_control_state_t *)ctl)->rvperfctr, & tmp ) < 0 ) {
+		PAPIERROR(RCNTRL_ERROR); return(PAPI_ESYS);
+		}
+
+	return (PAPI_OK);
+	} /* end attach() */
+
+static int detach( hwd_control_state_t * ctl, unsigned long tid ) {
+	rvperfctr_close(((cmp_control_state_t *)ctl)->rvperfctr );
+	return (PAPI_OK);
+	} /* end detach() */
+
+/* Low level functions, should not handle errors, just return codes. */
+
+inline_static long_long get_cycles(void) {
+   long_long ret = 0;
+#ifdef __x86_64__
+   do {
+      unsigned int a,d;
+      asm volatile("rdtsc" : "=a" (a), "=d" (d));
+      (ret) = ((long_long)a) | (((long_long)d)<<32);
+   } while(0);
+#else
+   __asm__ __volatile__("rdtsc"
+                       : "=A" (ret)
+                       : );
+#endif
+   return ret;
+}
+
+static long_long _p4_get_real_usec(void) {
+   return((long_long)get_cycles() / (long_long)_papi_hwi_system_info.hw_info.mhz);
+}
+
+static long_long _p4_get_real_cycles(void) {
+   return((long_long)get_cycles());
+}
+
+static long_long _p4_get_virt_cycles(const hwd_context_t * ctx)
+{
+   return ((long_long)vperfctr_read_tsc(((cmp_context_t *)ctx)->perfctr) * tb_scale_factor);
+}
+
+static long_long _p4_get_virt_usec(const hwd_context_t * ctx)
+{
+   return (((long_long)vperfctr_read_tsc(((cmp_context_t *)ctx)->perfctr) * tb_scale_factor) /
+           (long_long)_papi_hwi_system_info.hw_info.mhz);
+}
+
+/******************************************************************************
+ * The above routines were imported from linux.c and will therefore need to be
+ * duplicated in every substrate that relied on them, such as power and p4
+ ******************************************************************************/
+
+
+static int _p4_start(hwd_context_t * this_ctx, hwd_control_state_t * this_state)
 {
    int error;
+   cmp_context_t * ctx = (cmp_context_t *)this_ctx;
+   cmp_control_state_t *state = (cmp_control_state_t *)this_state;
+
 #ifdef DEBUG
    print_control(&state->control.cpu_control);
 #endif
@@ -163,9 +480,11 @@ int _papi_hwd_start(P4_perfctr_context_t * ctx, P4_perfctr_control_t * state)
    return (PAPI_OK);
 }
 
-VECTOR_STATIC
-int _papi_hwd_stop(P4_perfctr_context_t * ctx, P4_perfctr_control_t * state)
+static int _p4_stop(hwd_context_t * this_ctx, hwd_control_state_t * this_state)
 {
+   cmp_context_t * ctx = (cmp_context_t *)this_ctx;
+   cmp_control_state_t *state = (cmp_control_state_t *)this_state;
+
    if( state->rvperfctr != NULL ) {
      if(rvperfctr_stop((struct rvperfctr*)ctx->perfctr) < 0)
        { PAPIERROR( RCNTRL_ERROR); return(PAPI_ESYS); }
@@ -181,11 +500,12 @@ int _papi_hwd_stop(P4_perfctr_context_t * ctx, P4_perfctr_control_t * state)
    return (PAPI_OK);
 }
 
-VECTOR_STATIC
-int _papi_hwd_read(P4_perfctr_context_t * ctx, P4_perfctr_control_t * spc,
+static int _p4_read(hwd_context_t * this_ctx, hwd_control_state_t * this_state,
                    long_long ** dp, int flags)
 {
- 
+   cmp_context_t * ctx = (cmp_context_t *)this_ctx;
+   cmp_control_state_t *spc = (cmp_control_state_t *)this_state;
+
    if ( flags & PAPI_PAUSED ) {
      int i,j=0;
      for ( i=0;i<spc->control.cpu_control.nractrs+spc->control.cpu_control.nrictrs; i++) {
@@ -222,14 +542,13 @@ int _papi_hwd_read(P4_perfctr_context_t * ctx, P4_perfctr_control_t * spc,
 /* This routine is for shutting down threads, including the
    master thread. */
 
-VECTOR_STATIC
-int _papi_hwd_shutdown(P4_perfctr_context_t * ctx)
+static int _p4_shutdown(hwd_context_t * ctx)
 {
-   int retval = vperfctr_unlink(ctx->perfctr);
-   SUBDBG("_papi_hwd_shutdown vperfctr_unlink(%p) = %d\n", ctx->perfctr, retval);
-   vperfctr_close(ctx->perfctr);
-   SUBDBG("_papi_hwd_shutdown vperfctr_close(%p)\n", ctx->perfctr);
-   memset(ctx, 0x0, sizeof(P4_perfctr_context_t));
+   int retval = vperfctr_unlink(((cmp_context_t *)ctx)->perfctr);
+   SUBDBG("_p4_shutdown vperfctr_unlink(%p) = %d\n", ((cmp_context_t *)ctx)->perfctr, retval);
+   vperfctr_close(((cmp_context_t *)ctx)->perfctr);
+   SUBDBG("_p4_shutdown vperfctr_close(%p)\n", ((cmp_context_t *)ctx)->perfctr);
+   memset(ctx, 0x0, sizeof(cmp_context_t));
 
    if (retval)
       return (PAPI_ESYS);
@@ -239,7 +558,7 @@ int _papi_hwd_shutdown(P4_perfctr_context_t * ctx)
 #ifdef DEBUG
 
 #if 0
-static void print_bits(P4_register_t * b)
+static void print_bits(_p4_register_t * b)
 {
    SUBDBG("  counter[0,1]: 0x%x, 0x%x\n", b->counter[0], b->counter[1]);
    SUBDBG("  escr[0,1]: 0x%x, 0x%x\n", b->escr[0], b->escr[1]);
@@ -249,9 +568,9 @@ static void print_bits(P4_register_t * b)
 }
 #endif
 
-static void print_alloc(P4_reg_alloc_t * a)
+static void print_alloc(_p4_reg_alloc_t * a)
 {
-   SUBDBG("P4_reg_alloc:\n");
+   SUBDBG("_p4_reg_alloc:\n");
 //    print_bits(&(a->ra_bits));
    SUBDBG("  selector: 0x%x\n", a->ra_selector);
    SUBDBG("  rank: 0x%x\n", a->ra_rank);
@@ -264,38 +583,35 @@ static void print_alloc(P4_reg_alloc_t * a)
     if it can be mapped to counter ctr. 
     Returns true if it can, false if it can't.
 */
-VECTOR_STATIC
-int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t * dst, int ctr)
+static int _p4_bpt_map_avail(hwd_reg_alloc_t * dst, int ctr)
 {
-   return (dst->ra_selector & (1 << ctr));
+   return (((cmp_reg_alloc_t *)dst)->ra_selector & (1 << ctr));
 }
 
 /* This function forces the event to
     be mapped to only counter ctr. 
     Returns nothing.
 */
-VECTOR_STATIC
-void _papi_hwd_bpt_map_set(hwd_reg_alloc_t * dst, int ctr)
+static void _p4_bpt_map_set(hwd_reg_alloc_t * dst, int ctr)
 {
-   dst->ra_selector = (1 << ctr);
-   dst->ra_rank = 1;
+   ((cmp_reg_alloc_t *)dst)->ra_selector = (1 << ctr);
+   ((cmp_reg_alloc_t *)dst)->ra_rank = 1;
    /* Pentium 4 requires that both an escr and a counter are selected.
       Find which counter mask contains this counter.
       Set the opposite escr to empty (-1) */
-   if (dst->ra_bits.counter[0] & dst->ra_selector)
-      dst->ra_escr[1] = -1;
+   if (((cmp_reg_alloc_t *)dst)->ra_bits.counter[0] & ((cmp_reg_alloc_t *)dst)->ra_selector)
+      ((cmp_reg_alloc_t *)dst)->ra_escr[1] = -1;
    else
-      dst->ra_escr[0] = -1;
+      ((cmp_reg_alloc_t *)dst)->ra_escr[0] = -1;
 }
 
 /* This function examines the event to determine
     if it has a single exclusive mapping. 
     Returns true if exlusive, false if non-exclusive.
 */
-VECTOR_STATIC
-int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t * dst)
+static int _p4_bpt_map_exclusive(hwd_reg_alloc_t * dst)
 {
-   return (dst->ra_rank == 1);
+   return (((cmp_reg_alloc_t *)dst)->ra_rank == 1);
 }
 
 /* This function compares the dst and src events
@@ -303,10 +619,12 @@ int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t * dst)
     is exclusive, so this detects a conflict if true.
     Returns true if conflict, false if no conflict.
 */
-VECTOR_STATIC
-int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
+static int _p4_bpt_map_shared(hwd_reg_alloc_t * hdst, hwd_reg_alloc_t * hsrc)
 {
    int retval1, retval2;
+   cmp_reg_alloc_t * dst = (cmp_reg_alloc_t *)hdst;
+   cmp_reg_alloc_t * src = (cmp_reg_alloc_t *)hsrc;
+
    /* Pentium 4 needs to check for conflict of both counters and esc registers */
              /* selectors must share bits */
    retval1 = ((dst->ra_selector & src->ra_selector) ||
@@ -331,11 +649,13 @@ int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
     the src event will be exclusive, but the code shouldn't assume it.
     Returns nothing.
 */
-VECTOR_STATIC
-void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
+static void _p4_bpt_map_preempt(hwd_reg_alloc_t * hdst, hwd_reg_alloc_t * hsrc)
 {
    int i;
    unsigned shared;
+   cmp_reg_alloc_t * dst = (cmp_reg_alloc_t *)hdst;
+   cmp_reg_alloc_t * src = (cmp_reg_alloc_t *)hsrc;
+
 
    /* On Pentium 4, shared resources include escrs, counters, and pebs registers
       There is only one pair of pebs registers, so if two events use them differently
@@ -389,9 +709,11 @@ void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
     the dst event based on information in the src event.
     Returns nothing.
 */
-VECTOR_STATIC
-void _papi_hwd_bpt_map_update(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
+static void _p4_bpt_map_update(hwd_reg_alloc_t * hdst, hwd_reg_alloc_t * hsrc)
 {
+   cmp_reg_alloc_t * dst = (cmp_reg_alloc_t *)hdst;
+   cmp_reg_alloc_t * src = (cmp_reg_alloc_t *)hsrc;
+
    dst->ra_selector = src->ra_selector;
    dst->ra_escr[0] = src->ra_escr[0];
    dst->ra_escr[1] = src->ra_escr[1];
@@ -400,11 +722,12 @@ void _papi_hwd_bpt_map_update(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 
 /* Register allocation */
 
-VECTOR_STATIC
-int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
+static int _p4_allocate_registers(EventSetInfo_t * ESI)
 {
    int i, j, natNum;
-   P4_reg_alloc_t event_list[MAX_COUNTERS], *e;
+   cmp_reg_alloc_t event_list[MAX_COUNTERS], *e;
+   cmp_register_t *ptr;
+
 
    /* not yet successfully mapped, but have enough slots for events */
 
@@ -417,7 +740,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
       e = &event_list[i];
 
       /* retrieve the mapping information about this native event */
-      _papi_hwd_ntv_code_to_bits(ESI->NativeInfoArray[i].ni_event, &e->ra_bits);
+      _p4_ntv_code_to_bits(ESI->NativeInfoArray[i].ni_event, &e->ra_bits);
 
       /* combine counter bit masks for both esc registers into selector */
       e->ra_selector = e->ra_bits.counter[0] | e->ra_bits.counter[1];
@@ -439,19 +762,20 @@ int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
 #endif
    }
 
-   if (_papi_hwi_bipartite_alloc(event_list, natNum)) { /* successfully mapped */
+   if (_papi_hwi_bipartite_alloc(event_list, natNum, ESI->CmpIdx)) { /* successfully mapped */
       for (i = 0; i < natNum; i++) {
 #ifdef DEBUG
          SUBDBG("i: %d\n", i);
          print_alloc(&event_list[i]);
 #endif
-         /* Copy all the info about this native event to the NativeInfo struct */
-         ESI->NativeInfoArray[i].ni_bits = event_list[i].ra_bits;
+         /* Copy all info about this native event to the NativeInfo struct */
+         ptr = ESI->NativeInfoArray[i].ni_bits;
+         *ptr = event_list[i].ra_bits;
 
          /* The selector contains the counter bit position. Turn it into a number
             and store it in the first counter value, zeroing the second. */
-         ESI->NativeInfoArray[i].ni_bits.counter[0] = ffs(event_list[i].ra_selector) - 1;
-         ESI->NativeInfoArray[i].ni_bits.counter[1] = 0;
+         ptr->counter[0] = ffs(event_list[i].ra_selector) - 1;
+         ptr->counter[1] = 0;
 
          /* Array order on perfctr is event ADD order, not counter #... */
          ESI->NativeInfoArray[i].ni_position = i;
@@ -463,7 +787,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
 }
 
 
-static void clear_cs_events(hwd_control_state_t * this_state)
+static void clear_cs_events(cmp_control_state_t * this_state)
 {
    int i,j;
 
@@ -497,13 +821,13 @@ static void clear_cs_events(hwd_control_state_t * this_state)
 /* This function clears the current contents of the control structure and updates it 
    with whatever resources are allocated for all the native events 
    in the native info structure array. */
-VECTOR_STATIC
-int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
+static int _p4_update_control_state(hwd_control_state_t * state,
                                    NativeInfo_t * native, int count, hwd_context_t *ctx)
 {
    int i, retval = PAPI_OK;
 
-   P4_register_t *bits;
+   cmp_register_t *bits;
+   cmp_control_state_t *this_state = (cmp_control_state_t *)state;
    struct perfctr_cpu_control *cpu_control = &this_state->control.cpu_control;
 
    /* clear out the events from the control state */
@@ -512,7 +836,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    /* fill the counters we're using */
    for (i = 0; i < count; i++) {
       /* dereference the mapping information about this native event */
-      bits = &native[i].ni_bits;
+      bits = (cmp_register_t *)(&native[i].ni_bits);
 
       /* Add counter control command values to eventset */
 
@@ -535,7 +859,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
             cpu_control->p4.pebs_enable = bits->pebs_enable;
 	 /* if pebs_enable conflicts, flag an error */
          } else if (cpu_control->p4.pebs_enable != bits->pebs_enable) {
-            SUBDBG("WARNING: _papi_hwd_update_control_state -- pebs_enable conflict!");
+            SUBDBG("WARNING: _p4_update_control_state -- pebs_enable conflict!");
 	         retval = PAPI_ECNFLCT;
          }
 	 /* if pebs_enable == bits->pebs_enable, do nothing */
@@ -546,7 +870,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
 	         cpu_control->p4.pebs_matrix_vert = bits->pebs_matrix_vert;
 	 /* if pebs_matrix_vert conflicts, flag an error */
          } else if (cpu_control->p4.pebs_matrix_vert != bits->pebs_matrix_vert) {
-            SUBDBG("WARNING: _papi_hwd_update_control_state -- pebs_matrix_vert conflict!");
+            SUBDBG("WARNING: _p4_update_control_state -- pebs_matrix_vert conflict!");
  	         retval = PAPI_ECNFLCT;
          }
 	 /* if pebs_matrix_vert == bits->pebs_matrix_vert, do nothing */
@@ -564,25 +888,27 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
 }
 
 
-int _papi_hwd_set_domain(P4_perfctr_control_t * cntrl, int domain)
+static int _p4_set_domain(hwd_control_state_t * ctl, int domain)
 {
    int i, did = 0;
+   cmp_control_state_t *cntrl = (cmp_control_state_t *)ctl;
+
     
      /* Clear the current domain set for this event set */
      /* We don't touch the Enable bit in this code but  */
      /* leave it as it is */
-   for(i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
+   for(i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
       cntrl->control.cpu_control.evntsel_aux[i] &= ~(ESCR_T0_OS|ESCR_T0_USR);
    }
    if(domain & PAPI_DOM_USER) {
       did = 1;
-      for(i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
+      for(i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
          cntrl->control.cpu_control.evntsel_aux[i] |= ESCR_T0_USR;
       }
    }
    if(domain & PAPI_DOM_KERNEL) {
       did = 1;
-      for(i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
+      for(i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
          cntrl->control.cpu_control.evntsel_aux[i] |= ESCR_T0_OS;
       }
    }
@@ -592,11 +918,10 @@ int _papi_hwd_set_domain(P4_perfctr_control_t * cntrl, int domain)
       return(PAPI_OK);
 }
 
-VECTOR_STATIC
-int _papi_hwd_reset(P4_perfctr_context_t * ctx, P4_perfctr_control_t * cntrl)
+static int _p4_reset(hwd_context_t *ctx, hwd_control_state_t *cntrl)
 {
    /* this is what I gleaned from PAPI 2.3.4... is it right??? dkt */
-   return (_papi_hwd_start(ctx, cntrl));
+   return (_p4_start(ctx, cntrl));
 }
 
 
@@ -647,21 +972,22 @@ static void swap_events(EventSetInfo_t * ESI, struct vperfctr_control *contr, in
    contr->cpu_control.ireset[cntr2] = si;
 }
 
-VECTOR_STATIC
-int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
+//static int _p3_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) {
+//   struct hwd_pmc_control *contr = &((cmp_control_state_t *)ESI->ctl_state)->control;
+
+   static int _p4_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
-   hwd_control_state_t *this_state = &ESI->machdep;
-   struct vperfctr_control *contr = &this_state->control;
+   struct hwd_pmc_control *contr = &((cmp_control_state_t *)ESI->ctl_state)->control;
    int i, ncntrs, nricntrs = 0, nracntrs = 0, retval = 0;
 
    OVFDBG("EventIndex=%d\n", EventIndex);
 
 #ifdef DEBUG
    /* The correct event to overflow is EventIndex */
-   print_control(&this_state->control.cpu_control);
+   print_control(&(contr->cpu_control));
 #endif
 
-   ncntrs = _papi_hwi_system_info.sub_info.num_cntrs;
+   ncntrs = MY_VECTOR.cmp_info.num_cntrs;
    i = ESI->EventInfoArray[EventIndex].pos[0];
    if (i >= ncntrs) 
      {
@@ -676,7 +1002,9 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
          return PAPI_EINVAL;
       }
 
-      if ((retval = _papi_hwi_start_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig,NEED_CONTEXT)) != PAPI_OK)
+      retval = _papi_hwi_start_signal(MY_VECTOR.cmp_info.hardware_intr_sig,
+	  NEED_CONTEXT, MY_VECTOR.cmp_info.CmpIdx);
+      if (retval != PAPI_OK)
 	      return(retval);
 
       /* overflow interrupt occurs on the NEXT event after overflow occurs
@@ -687,7 +1015,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
       contr->cpu_control.nractrs--;
       nricntrs = contr->cpu_control.nrictrs;
       nracntrs = contr->cpu_control.nractrs;
-      contr->si_signo = _papi_hwi_system_info.sub_info.hardware_intr_sig;
+      contr->si_signo = MY_VECTOR.cmp_info.hardware_intr_sig;
 
       /* move this event to the bottom part of the list if needed */
       if (i < nracntrs) {
@@ -713,59 +1041,99 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
       OVFDBG("Modified event set\n");
 
-      retval = _papi_hwi_stop_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig);
+      retval = _papi_hwi_stop_signal(MY_VECTOR.cmp_info.hardware_intr_sig);
    }
 #ifdef DEBUG
-   print_control(&this_state->control.cpu_control);
+   print_control(&(contr->cpu_control));
 #endif
    OVFDBG("End of call. Exit code: %d\n", retval);
    return (retval);
 }
 
-#ifndef PAPI_NO_VECTOR
-papi_svector_t _p4_vector_table[] = {
-  {(void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE },
-  {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
-  {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
-  {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
-  {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
-  {(void (*)())_papi_hwd_bpt_map_set, VEC_PAPI_HWD_BPT_MAP_SET },
-  {(void (*)())_papi_hwd_bpt_map_avail, VEC_PAPI_HWD_BPT_MAP_AVAIL },
-  {(void (*)())_papi_hwd_bpt_map_exclusive, VEC_PAPI_HWD_BPT_MAP_EXCLUSIVE },
-  {(void (*)())_papi_hwd_bpt_map_shared, VEC_PAPI_HWD_BPT_MAP_SHARED },
-  {(void (*)())_papi_hwd_bpt_map_preempt, VEC_PAPI_HWD_BPT_MAP_PREEMPT },
-  {(void (*)())_papi_hwd_bpt_map_update, VEC_PAPI_HWD_BPT_MAP_UPDATE },
-  {(void (*)())_papi_hwd_allocate_registers, VEC_PAPI_HWD_ALLOCATE_REGISTERS },
- {(void (*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
-  {(void (*)())_papi_hwd_set_domain, VEC_PAPI_HWD_SET_DOMAIN},
-  {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
-  {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
-  {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
-  {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
-  {(void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
-  {(void (*)())_papi_hwd_ntv_code_to_bits, VEC_PAPI_HWD_NTV_CODE_TO_BITS},
-  {(void (*)())_papi_hwd_ntv_bits_to_info, VEC_PAPI_HWD_NTV_BITS_TO_INFO},
-  {NULL, VEC_PAPI_END }
+   static int _p4_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI) {
+   ESI->profile.overflowcount = 0;
+   return (PAPI_OK);
+}
+
+static int _p4_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
+{
+  switch (code) {
+   case PAPI_DOMAIN:
+   case PAPI_DEFDOM:
+      return (_p4_set_domain(option->domain.ESI->ctl_state, option->domain.domain));
+   case PAPI_GRANUL:
+   case PAPI_DEFGRN:
+      return(PAPI_ESBSTR);
+   case PAPI_ATTACH:
+      return (attach(option->attach.ESI->ctl_state, option->attach.tid));
+   case PAPI_DETACH:
+      return (detach(option->attach.ESI->ctl_state, option->attach.tid));
+   default:
+      return (PAPI_EINVAL);
+  }
+}
+
+
+papi_vector_t _p4_vector = {
+    .cmp_info = {
+	/* default component information (unspecified values are initialized to 0) */
+	.num_mpx_cntrs =	PAPI_MPX_DEF_DEG,
+	.default_domain =	PAPI_DOM_USER,
+	.available_domains =	PAPI_DOM_USER|PAPI_DOM_KERNEL,
+	.default_granularity =	PAPI_GRN_THR,
+	.available_granularities = PAPI_GRN_THR,
+	.hardware_intr_sig =	PAPI_SIGNAL,
+
+	/* component specific cmp_info initializations */
+	.fast_real_timer =	1,
+	.fast_virtual_timer =	1,
+	.attach =		1,
+	.attach_must_ptrace =	1,
+    },
+
+    /* sizes of framework-opaque component-private structures */
+    .size = {
+	.context =		sizeof(_p4_perfctr_context_t),
+	.control_state =	sizeof(_p4_perfctr_control_t),
+	.reg_value =		sizeof(_p4_register_t),
+	.reg_alloc =		sizeof(_p4_reg_alloc_t),
+    },
+
+    /* function pointers in this component */
+    .init_control_state =	_p4_init_control_state,
+    .start =			_p4_start,
+    .stop =			_p4_stop,
+    .read =			_p4_read,
+    .shutdown =			_p4_shutdown,
+    .ctl =			_p4_ctl,
+    .bpt_map_set =		_p4_bpt_map_set,
+    .bpt_map_avail =		_p4_bpt_map_avail,
+    .bpt_map_exclusive =	_p4_bpt_map_exclusive,
+    .bpt_map_shared =		_p4_bpt_map_shared,
+    .bpt_map_preempt =		_p4_bpt_map_preempt,
+    .bpt_map_update =		_p4_bpt_map_update,
+    .allocate_registers =	_p4_allocate_registers,
+    .update_control_state =	_p4_update_control_state,
+    .set_domain =		_p4_set_domain,
+    .reset =			_p4_reset,
+    .set_overflow =		_p4_set_overflow,
+    .stop_profiling =		_p4_stop_profiling,
+    .ntv_enum_events =		_p4_ntv_enum_events,
+    .ntv_code_to_name =		_p4_ntv_code_to_name,
+    .ntv_code_to_descr =	_p4_ntv_code_to_descr,
+    .ntv_code_to_bits =		_p4_ntv_code_to_bits,
+    .ntv_bits_to_info =		_p4_ntv_bits_to_info,
+    .init_substrate =		_p4_init_substrate,
+    .dispatch_timer =		_p4_dispatch_timer,
+    .get_real_usec =		_p4_get_real_usec,
+    .get_real_cycles =		_p4_get_real_cycles,
+    .get_virt_cycles =		_p4_get_virt_cycles,
+    .get_virt_usec =		_p4_get_virt_usec,
+
+    /* from OS */
+    .update_shlib_info =	_linux_update_shlib_info,
+    .get_memory_info =		_linux_get_memory_info,
+    .get_system_info =		_linux_get_system_info,
+    .init =			_linux_init,
+    .get_dmem_info =		_linux_get_dmem_info
 };
-#endif
-
-int setup_p4_vector_table(papi_vector_t * vtable){
-  int retval=PAPI_OK;
-
-#ifndef PAPI_NO_VECTOR
-  retval = _papi_hwi_setup_vector_table( vtable, _p4_vector_table);
-#endif
-  return ( retval ); 
-}
-
-/* These should be removed when p3-p4 is merged */
-                                                                                
-int setup_p3_vector_table(papi_vector_t * vtable){
-  int retval=PAPI_OK;
-  return ( retval ); 
-}
-
-int setup_p3_presets(int cputype){
-  int retval=PAPI_OK;
-  return ( retval ); 
-}
