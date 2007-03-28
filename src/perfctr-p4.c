@@ -455,6 +455,7 @@ static int _p4_start(hwd_context_t * this_ctx, hwd_control_state_t * this_state)
    cmp_control_state_t *state = (cmp_control_state_t *)this_state;
 
 #ifdef DEBUG
+   SUBDBG("From _p4_start...\n");
    print_control(&state->control.cpu_control);
 #endif
    if (state->rvperfctr != NULL) 
@@ -813,6 +814,7 @@ static void clear_cs_events(cmp_control_state_t * this_state)
    this_state->control.cpu_control.nrictrs = 0;
 
 #ifdef DEBUG
+   SUBDBG("From clear_cs_events...\n");
    print_control(&this_state->control.cpu_control);
 #endif
 }
@@ -836,7 +838,7 @@ static int _p4_update_control_state(hwd_control_state_t * state,
    /* fill the counters we're using */
    for (i = 0; i < count; i++) {
       /* dereference the mapping information about this native event */
-      bits = (cmp_register_t *)(&native[i].ni_bits);
+      bits = (cmp_register_t *)(native[i].ni_bits);
 
       /* Add counter control command values to eventset */
 
@@ -882,6 +884,7 @@ static int _p4_update_control_state(hwd_control_state_t * state,
    this_state->control.cpu_control.tsc_on = 1;
 
 #ifdef DEBUG
+   SUBDBG("From _p4_update_control_state...\n");
    print_control(&this_state->control.cpu_control);
 #endif
    return (retval);
@@ -984,6 +987,7 @@ static void swap_events(EventSetInfo_t * ESI, struct vperfctr_control *contr, in
 
 #ifdef DEBUG
    /* The correct event to overflow is EventIndex */
+   OVFDBG("From _p4_set_overflow: top...\n");
    print_control(&(contr->cpu_control));
 #endif
 
@@ -1044,6 +1048,7 @@ static void swap_events(EventSetInfo_t * ESI, struct vperfctr_control *contr, in
       retval = _papi_hwi_stop_signal(MY_VECTOR.cmp_info.hardware_intr_sig);
    }
 #ifdef DEBUG
+   OVFDBG("From _p4_set_overflow: bottom...\n");
    print_control(&(contr->cpu_control));
 #endif
    OVFDBG("End of call. Exit code: %d\n", retval);
