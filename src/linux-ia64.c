@@ -625,16 +625,20 @@ static int get_system_info(void)
 }
 
 int sem_set;
-
+#if defined(__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)
+       /* union semun is defined by including <sys/sem.h> */
+#else
        union semun {
                int val;                    /* value for SETVAL */
                struct semid_ds *buf;       /* buffer for IPC_STAT, IPC_SET */
                unsigned short int *array;  /* array for GETALL, SETALL */
                struct seminfo *__buf;      /* buffer for IPC_INFO */
        };
+#endif
+
 int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {
-  int retval, type, i;
+  int retval, type;
    unsigned int version;
    pfmlib_options_t pfmlib_options;
    itanium_preset_search_t *ia_preset_search_map = NULL;
@@ -646,9 +650,10 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    int retval, i;
   	union semun val; 
 	val.val=1;
-   if ((retval = semget(IPC_PRIVATE,PAPI_MAX_LOCK,0666)) == -1)
+   
+	if ((retval = semget(IPC_PRIVATE,PAPI_MAX_LOCK,0666)) == -1)
      {
-       PAPIERROR("semget errno %d",errno); return(PAPI_ESYS);
+       PAPIERROR("semget errno %d",errno); return(PAPI_ESYS); 
      }
    sem_set = retval;
    for (i=0;i<PAPI_MAX_LOCK;i++)
@@ -1033,9 +1038,24 @@ int _papi_hwd_ctl(hwd_context_t * zero, int code, _papi_int_option_t * option)
 
 int _papi_hwd_shutdown(hwd_context_t * ctx)
 {
+   int retval;
+   struct semid_ds semid_ds_buf;
+   union semun val;
+		 
 #if defined(USE_PROC_PTTIMER)
   close(ctx->stat_fd);
 #endif  
+   val.buf = &semid_ds_buf;
+   if ((retval = semctl(sem_set,0,GETALL, val)) == -1)
+     {
+      PAPIERROR("semctl errno %d",errno); return(PAPI_ESYS);
+     }
+
+   if ((retval = semctl(sem_set,0,IPC_RMID,val)) == -1)
+     {
+	  PAPIERROR("semctl errno %d",errno); return(PAPI_ESYS);
+	 }
+
    return (pfmw_destroy_context(ctx));
 }
 
