@@ -1,3 +1,5 @@
+#ifndef _PAPI_LINUX_IA64_H
+#define _PAPI_LINUX_IA64_H
 /* 
 * File:    linux-ia64.h
 * CVS:     $Id$
@@ -7,142 +9,212 @@
 *          Kevin London
 *	   london@cs.utk.edu
 *
-* Mods:    <your name here>
-*          <your email address>
-*/  
+* Mods:    Per Ekman
+*          pek@pdc.kth.se
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
 #include <math.h>
 #include <limits.h>
-#include <sys/types.h>
 #include <time.h>
+#include <fcntl.h>
+#include <ctype.h>
+#include <inttypes.h>
+#include <libgen.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
 #include <sys/time.h>
 #include <sys/times.h>
-#include <asm/system.h>
 #include <sys/ucontext.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
 
-#ifdef PFM06A
-#include "mysiginfo.h"
-#include "pfmlib.h"
-#else
+#ifdef ALTIX
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sn/mmtimer.h>
+#endif
+
+#ifdef __INTEL_COMPILER
+#include <ia64intrin.h>
+#include <ia64regs.h>
+#endif
+
+#include "config.h"
 #include "perfmon/pfmlib.h"
+#include "perfmon/perfmon.h"
+#ifdef PFM30
+#include "perfmon/perfmon_default_smpl.h"
+#endif
 #ifdef ITANIUM2
 #include "perfmon/pfmlib_itanium2.h"
+#if defined(PFM30) && defined(HAVE_PERFMON_PFMLIB_MONTECITO_H)
+#include "perfmon/pfmlib_montecito.h"
+#endif
 #else
 #include "perfmon/pfmlib_itanium.h"
 #endif
-#endif
-#include "papi.h"
 
-#ifndef PFM06A
-typedef struct {
-        unsigned long pme_code:8;       /* major event code */
-        unsigned long pme_ear:1;        /* is EAR event */
-        unsigned long pme_dear:1;       /* 1=Data 0=Instr */
-        unsigned long pme_tlb:1;        /* 1=TLB 0=Cache */
-        unsigned long pme_btb:1;        /* 1=BTB */
-        unsigned long pme_ig1:4;        /* ignored */
-        unsigned long pme_umask:16;     /* unit mask*/
-        unsigned long pme_ig:32;        /* ignored */
-} pme_ita_entry_code_t;
+#define inline_static inline static
 
-typedef union {
-        unsigned long        pme_vcode;
-        pme_ita_entry_code_t pme_ita_code;      /* must not be larger than vco
-de */
-} pme_ita_code_t;
-#endif
+typedef int ia64_register_t;
+typedef int ia64_register_map_t;
+typedef int ia64_reg_alloc_t;
 
-typedef union {
-		unsigned int  pme_vcode;		/* virtual code: code+umask combined */
-		struct		{
-			unsigned int pme_mcode:8;	/* major event code */
-			unsigned int pme_ear:1;		/* is EAR event */
-			unsigned int pme_dear:1;	/* 1=Data 0=Instr */
-			unsigned int pme_tlb:1;		/* 1=TLB 0=Cache */
-			unsigned int pme_ig1:5;		/* ignored */
-			unsigned int pme_umask:16;	/* unit mask*/
-		} pme_codes;				/* event code divided in 2 parts */
-	} pme_entry_code_t;				
-
-
-typedef struct hwd_control_state {
-  /* Arg to perfmonctl */
-  pid_t pid;
-  /* Which counters to use? Bits encode counters to use, may be duplicates */
-  int selector;  
-  /* Buffer to pass to kernel to control the counters */
-#ifdef PFM06A
-  perfmon_req_t pc[PMU_MAX_COUNTERS];
-  pfm_event_config_t evt;
+#ifdef PFM30
+   #define NUM_PMCS PFMLIB_MAX_PMCS
+   #define NUM_PMDS PFMLIB_MAX_PMDS
+#ifdef HAVE_PERFMON_PFMLIB_MONTECITO_H
+   #define MAX_COUNTERS PMU_MONT_NUM_COUNTERS
+#elif defined(ITANIUM2)
+   #define MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
 #else
-#ifdef ITANIUM2
-  pfarg_reg_t pc[PMU_ITA2_MAX_COUNTERS];
+   #define MAX_COUNTERS PMU_ITA_NUM_COUNTERS
+#endif
+   typedef struct param_t {
+	  pfarg_reg_t pd[NUM_PMDS];
+      pfarg_reg_t pc[NUM_PMCS];
+      pfmlib_input_param_t inp;
+      pfmlib_output_param_t outp;
+	  void	*mod_inp;	/* model specific input parameters to libpfm    */
+	  void	*mod_outp;	/* model specific output parameters from libpfm */
+   } pfmw_param_t;
+   typedef struct ita2_param_t {
+      pfmlib_ita2_input_param_t ita2_input_param;
+	  pfmlib_ita2_output_param_t  ita2_output_param;
+   }  pfmw_ita2_param_t;
+ #ifdef ITANIUM2
+   typedef pfmw_ita2_param_t pfmw_ita_param_t;
+ #else
+   typedef int pfmw_ita_param_t;
+ #endif
+   #define PMU_FIRST_COUNTER  4
 #else
-  pfarg_reg_t pc[PMU_ITA_MAX_COUNTERS];
+   #define NUM_PMCS PMU_MAX_PMCS
+   #define NUM_PMDS PMU_MAX_PMDS
+ #ifdef ITANIUM2
+      typedef pfmlib_ita2_param_t pfmw_ita_param_t;
+      #define MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
+ #else
+      typedef pfmlib_ita_param_t pfmw_ita_param_t;
+      #define MAX_COUNTERS PMU_ITA_NUM_COUNTERS
+ #endif
+   typedef pfmlib_param_t pfmw_param_t;
 #endif
-  pfmlib_param_t evt;
+
+#define MAX_COUNTER_TERMS MAX_COUNTERS
+
+typedef struct ia64_control_state {
+   /* Which counters to use? Bits encode counters to use, may be duplicates */
+   ia64_register_map_t bits;
+
+   pfmw_ita_param_t ita_lib_param;
+
+   /* Buffer to pass to kernel to control the counters */
+   pfmw_param_t evt;
+
+   long_long counters[MAX_COUNTERS];
+   pfarg_reg_t pd[NUM_PMDS];
+
+/* sampling buffer address */
+   void *smpl_vaddr;
+   /* Buffer to pass to library to control the counters */
+} ia64_control_state_t;
+
+
+typedef struct itanium_preset_search {
+   /* Preset code */
+   int preset;
+   /* Derived code */
+   int derived;
+   /* Strings to look for */
+   char *(findme[MAX_COUNTERS]);
+   char operation[MAX_COUNTERS*5];
+} itanium_preset_search_t;
+
+typedef struct Itanium_context {
+   int fd;  /* file descriptor */
+   pid_t tid;  /* thread id */
+#if defined(USE_PROC_PTTIMER)
+   int stat_fd;
 #endif
-  /* Buffer to pass to library to control the counters */
-  /* Is this event derived? */
-  int derived; 
-} hwd_control_state_t;
+} ia64_context_t;
 
-#define EVENT_CONFIG_T pfm_event_config_t
-#define MAX_COUNTERS 4
+//typedef Itanium_context_t hwd_context_t;
 
-typedef struct preset_search {
-  /* Preset code */
-  int preset;
-  /* Derived code */
-  int derived;
-  /* Strings to look for */
-#ifdef PFM06A
-  char *(findme[PMU_MAX_COUNTERS]);
+/* for _papi_hwi_context_t */
+#ifdef PFM30
+   typedef struct siginfo  hwd_siginfo_t;
 #else
-#ifdef ITANIUM2
-  char *(findme[PMU_ITA2_MAX_COUNTERS]);
-#else
-  char *(findme[PMU_ITA_MAX_COUNTERS]);
+   typedef pfm_siginfo_t hwd_siginfo_t;
+#endif
+typedef struct sigcontext hwd_ucontext_t;
+
+/* typedefs to conform to PAPI component layer code. */
+/* these are void * in the PAPI framework layer code. */
+typedef ia64_reg_alloc_t cmp_reg_alloc_t;
+typedef ia64_register_t cmp_register_t;
+typedef ia64_control_state_t cmp_control_state_t;
+typedef ia64_context_t cmp_context_t;
+
+//#define GET_OVERFLOW_ADDRESS(ctx)  (void*)ctx->ucontext->sc_ip
+#define GET_OVERFLOW_ADDRESS(ctx)  ((caddr_t)(((hwd_ucontext_t *)ctx)->sc_ip))
+
+#define SMPL_BUF_NENTRIES 64
+#define M_PMD(x)        (1UL<<(x))
+#define DEAR_REGS_MASK      (M_PMD(2)|M_PMD(3)|M_PMD(17))
+#define BTB_REGS_MASK       (M_PMD(8)|M_PMD(9)|M_PMD(10)|M_PMD(11)|M_PMD(12)|M_PMD(13)|M_PMD(14)|M_PMD(15)|M_PMD(16))
+
+extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
+extern int sem_set;
+
+#define MY_VECTOR _ia64_vector
+
+#if 0
+#define MUTEX_OPEN (unsigned int)1
+#define MUTEX_CLOSED (unsigned int)0
+
+/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
+ * else val = MUTEX_CLOSED */
+
+#define  _papi_hwd_lock(lck)                    \
+{                                               \
+struct sembuf sem_lock = { lck, -1, 0 }; \
+if (semop(sem_set, &sem_lock, 1) == -1 ) {      \
+abort(); } }
+// PAPIERROR("semop errno %d",errno); abort(); } }
+
+#define  _papi_hwd_unlock(lck)                   \
+{                                                \
+struct sembuf sem_unlock = { lck, 1, 0 }; \
+if (semop(sem_set, &sem_unlock, 1) == -1 ) {     \
+abort(); } }
+// PAPIERROR("semop errno %d",errno); abort(); } }
+
+
+#ifdef __INTEL_COMPILER
+#define _papi_hwd_lock(lck) { while(_InterlockedCompareExchange_acq(&_papi_hwd_lock_data[lck],MUTEX_CLOSED,MUTEX_OPEN) != MUTEX_OPEN) { ; } } 
+
+#define _papi_hwd_unlock(lck) { _InterlockedExchange((volatile int *)&_papi_hwd_lock_data[lck], MUTEX_OPEN); }
+#else                           /* GCC */
+#define _papi_hwd_lock(lck)			 			      \
+   { uint64_t res = 0;							      \
+    do {								      \
+      __asm__ __volatile__ ("mov ar.ccv=%0;;" :: "r"(MUTEX_OPEN));            \
+      __asm__ __volatile__ ("cmpxchg4.acq %0=[%1],%2,ar.ccv" : "=r"(res) : "r"(&_papi_hwd_lock_data[lck]), "r"(MUTEX_CLOSED) : "memory");				      \
+    } while (res != (uint64_t)MUTEX_OPEN); }
+
+#define _papi_hwd_unlock(lck)			 			      \
+    { uint64_t res = 0;							      \
+    __asm__ __volatile__ ("xchg4 %0=[%1],%2" : "=r"(res) : "r"(&_papi_hwd_lock_data[lck]), "r"(MUTEX_OPEN) : "memory"); }
 #endif
 #endif
-} preset_search_t;
 
-typedef struct hwd_preset {
-  /* Is this event here? */
-  int present;   
-  /* Is this event derived? */
-  int derived;   
-  /* If the derived event is not associative, this index is the lead operand */
-  int operand_index;
-  /* Buffer to pass to library to control the counters */
-#ifdef PFM06A
-  pfm_event_config_t evt;
-#else
-  pfmlib_param_t evt;
 #endif
-  /* If it exists, then this is the description of this event */
-  char note[PAPI_MAX_STR_LEN];
-} hwd_preset_t;
-
-#include "papi_internal.h"
-
-#ifndef PFM06A
-#ifdef ITANIUM2
-#define PMU_MAX_COUNTERS PMU_ITA2_MAX_COUNTERS
-#else
-#define PMU_MAX_COUNTERS PMU_ITA_MAX_COUNTERS
-#endif
-#endif
-
-extern char *basename(char *);
-extern caddr_t _init, _fini, _etext, _edata, __bss_start;
-
-
-
-

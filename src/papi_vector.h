@@ -21,7 +21,7 @@ typedef struct papi_vectors {
 #ifdef _WIN32 /* Windows requires a different callback format */
     void	(*timer_callback)	(UINT, UINT, DWORD, DWORD, DWORD);
 #else
-    void	(*dispatch_timer)	(int, siginfo_t *, void *);
+    void	(*dispatch_timer)	(int, hwd_siginfo_t *, void *);
 #endif
     void *	(*get_overflow_address)	(int, char *, int);
     int		(*start)		(hwd_context_t *, hwd_control_state_t *);

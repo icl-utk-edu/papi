@@ -101,6 +101,9 @@ typedef _p3_register_t cmp_register_t;
 typedef _p3_perfctr_control_t cmp_control_state_t;
 typedef _p3_perfctr_context_t cmp_context_t;
 
+typedef siginfo_t hwd_siginfo_t;
+typedef ucontext_t hwd_ucontext_t;
+
 #define hwd_pmc_control vperfctr_control
 
 
@@ -151,7 +154,7 @@ typedef _p3_perfctr_context_t cmp_context_t;
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
 
-extern papi_vector_t _p3_vector;
+//extern papi_vector_t _p3_vector;
 #define MY_VECTOR _p3_vector
 
 

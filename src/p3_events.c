@@ -35,6 +35,7 @@ hwi_search_t *preset_search_map;
 #include "p3_p2_event_tables.h"
 #include "p3_p3_event_tables.h"
 
+extern papi_vector_t _p3_vector;
 
 /* Note:  MESI (Intel) and MOESI (AMD) bits are programmatically defined
           for those events that can support them. You can find those

@@ -64,18 +64,54 @@
 #endif
 
 /* generalized definitions for signal handling */
-typedef siginfo_t hwd_siginfo_t;
-typedef ucontext_t hwd_ucontext_t;
+//typedef siginfo_t hwd_siginfo_t;
+//typedef ucontext_t hwd_ucontext_t;
 
 /* Lock macros. Non Itanium*/
 #ifdef ITANIUM2
+#include <unistd.h>
+#include <string.h>
+#include <fcntl.h>
+#include <inttypes.h>
+#include <libgen.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <sys/ucontext.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
+
+#ifdef ALTIX
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sn/mmtimer.h>
+#endif
+
+#ifdef __INTEL_COMPILER
+#include <ia64intrin.h>
+#include <ia64regs.h>
+#endif
+
 #define MUTEX_OPEN (unsigned int)1
 #define MUTEX_CLOSED (unsigned int)0
 extern volatile unsigned int lock[PAPI_MAX_LOCK];
 
 /* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
  * else val = MUTEX_CLOSED */
+#define  _papi_hwd_lock(lck)                    \
+{                                               \
+struct sembuf sem_lock = { lck, -1, 0 }; \
+if (semop(sem_set, &sem_lock, 1) == -1 ) {      \
+abort(); } }
+// PAPIERROR("semop errno %d",errno); abort(); } }
 
+#define  _papi_hwd_unlock(lck)                   \
+{                                                \
+struct sembuf sem_unlock = { lck, 1, 0 }; \
+if (semop(sem_set, &sem_unlock, 1) == -1 ) {     \
+abort(); } }
+// PAPIERROR("semop errno %d",errno); abort(); } }
+
+#if 0
 #ifdef __INTEL_COMPILER
 #define _papi_hwd_lock(lck) { while(_InterlockedCompareExchange_acq(&lock[lck],MUTEX_CLOSED,MUTEX_OPEN) != MUTEX_OPEN) { ; } }
 #define _papi_hwd_unlock(lck) { _InterlockedExchange((volatile int *)&lock[lck], MUTEX_OPEN); }
@@ -90,6 +126,7 @@ extern volatile unsigned int lock[PAPI_MAX_LOCK];
 #define _papi_hwd_unlock(lck)                                                 \
     { uint64_t res = 0;                                                       \
        __asm__ __volatile__ ("xchg4 %0=[%1],%2" : "=r"(res) : "r"(&lock[lck]), "r"(MUTEX_OPEN) : "memory"); }
+#endif
 #endif
 #else
 extern volatile unsigned int lock[PAPI_MAX_LOCK];

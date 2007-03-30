@@ -183,6 +183,7 @@ extern int papi_num_components;
 #endif
 
 #include OS_HEADER
+#include SUBSTRATE
 #include "papi_preset.h"
 
 typedef struct _EventSetDomainInfo {

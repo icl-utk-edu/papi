@@ -11,6 +11,7 @@
 #include "papi_internal.h"
 #include "perfctr-p4.h"
 
+extern papi_vector_t _p4_vector;
 
 #if defined(__i386__) || defined(__x86_64__)
 /*

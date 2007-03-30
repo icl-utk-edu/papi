@@ -171,7 +171,7 @@ int _papi_hwi_innoculate_vector(papi_vector_t *v){
 #ifdef _WIN32 /* Windows requires a different callback format */
  if(!v->timer_callback) v->timer_callback =		(void (*) (UINT, UINT, DWORD, DWORD, DWORD)) vec_void_dummy;
 #else
- if(!v->dispatch_timer) v->dispatch_timer =		(void (*)(int, siginfo_t *, void *)) vec_void_dummy;
+ if(!v->dispatch_timer) v->dispatch_timer =		(void (*)(int, hwd_siginfo_t *, void *)) vec_void_dummy;
 #endif
  if(!v->get_overflow_address) v->get_overflow_address=	(void *(*) (int, char *, int)) vec_void_star_dummy;
  if(!v->start) v->start=				(int (*) (hwd_context_t *, hwd_control_state_t *)) vec_int_dummy;

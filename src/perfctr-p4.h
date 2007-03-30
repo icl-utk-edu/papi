@@ -110,6 +110,9 @@ typedef _p4_perfctr_control_t cmp_control_state_t;
 typedef _p4_register_t cmp_register_t;
 typedef _p4_perfctr_context_t cmp_context_t;
 
+typedef siginfo_t hwd_siginfo_t;
+typedef ucontext_t hwd_ucontext_t;
+
 //typedef P4_perfctr_event_t cmp_event_t;
 
 #define hwd_pmc_control vperfctr_control
@@ -149,7 +152,7 @@ typedef _p4_perfctr_context_t cmp_context_t;
 extern int sighold(int);
 extern int sigrelse(int);
 
-extern papi_vector_t _p4_vector;
+//extern papi_vector_t _p4_vector;
 #define MY_VECTOR _p4_vector
 
 /* Undefined identifiers in executable */

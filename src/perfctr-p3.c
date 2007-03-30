@@ -107,6 +107,8 @@ extern int setup_p3_presets(int cputype);
  * duplicated in every substrate that relied on them, such as power and p4
  ******************************************************************************/
 
+extern papi_vector_t _p3_vector;
+
 #ifdef DEBUG
 void print_control(const struct perfctr_cpu_control *control) {
   unsigned int i;

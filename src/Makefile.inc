@@ -105,6 +105,9 @@ linux-mx.o: linux-mx.c $(HEADERS)
 linux-acpi.o: linux-acpi.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-acpi.c -o linux-acpi.o 
 
+linux-net.o: linux-net.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-net.c -o linux-net.o 
+
 #
 # This is all done by configure now
 #

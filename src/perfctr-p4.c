@@ -27,6 +27,7 @@ char *_p4_ntv_code_to_descr(unsigned int EventCode);
 int _p4_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits);
 int _p4_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values,
                           int name_len, int count);
+extern papi_vector_t _p4_vector;
 
 #if defined(PERFCTR26) || defined (PERFCTR25)
 #define evntsel_aux             p4.escr
