@@ -166,8 +166,6 @@ extern int papi_num_components;
 */
 #define PAPI_MAX_COUNTER_TERMS	8
 
-extern int papi_num_components;
-
 /* these vestigial pointers are to structures defined in the components
     they are opaque to the framework and defined as void at this level
     they are remapped to real data in the component routines that use them */

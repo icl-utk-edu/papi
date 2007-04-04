@@ -36,7 +36,8 @@
 #define PAPI_VERSION_INCREMENT(x)((x)          & 0xff)
 
 /* This is the official PAPI version */
-#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,5,0,0)
+/* Big increment for PAPI-C technology pre-release */
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,9,0,0)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
 
 #ifdef __cplusplus
@@ -387,7 +388,7 @@ read the documentation carefully.  */
    } PAPI_preload_info_t;
 
    typedef struct _papi_component_option {
-     char name[PAPI_MAX_STR_LEN];		/* Name of the substrate we're using, usually CVS RCS Id */
+     char name[PAPI_MAX_STR_LEN];		/* Name of the component we're using, usually CVS RCS Id */
      char version[PAPI_MIN_STR_LEN];		/* Version of this substrate, usually CVS Revision */
      char support_version[PAPI_MIN_STR_LEN];	/* Version of the support library */
      char kernel_version[PAPI_MIN_STR_LEN];	/* Version of the kernel PMC support driver */

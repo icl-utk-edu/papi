@@ -663,10 +663,15 @@ int PAPI_create_eventset(int *EventSet)
 int PAPI_assign_eventset_component(int EventSet, int cidx)
 {
    EventSetInfo_t *ESI;
+   int retval;
 
    ESI = _papi_hwi_lookup_EventSet(EventSet);
    if (ESI == NULL)
       papi_return(PAPI_ENOEVST);
+
+/* validate cidx */
+   retval = valid_component(cidx);
+   if (retval < 0) papi_return(retval);
 
    return (_papi_hwi_assign_eventset(ESI, cidx));
 }
@@ -1703,10 +1708,15 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
       return(PAPI_OK);
    case PAPI_LIB_VERSION:
       return (PAPI_VERSION);
-
+    case PAPI_DEF_MPX_USEC:
+     {
+       if (ptr == NULL)
+	 papi_return(PAPI_EINVAL);
+       ptr->multiplex.us = _papi_hwi_system_info.mpx_info.timer_us;
+       return(PAPI_OK);
+     }
 /* The following cases all require a component index 
     and are handled by PAPI_get_cmp_opt() with cidx == 0*/
-   case PAPI_DEF_MPX_USEC:
    case PAPI_MAX_HWCTRS:
    case PAPI_MAX_MPX_CTRS:
    case PAPI_DEFDOM:
@@ -1724,13 +1734,6 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
 int PAPI_get_cmp_opt(int option, PAPI_option_t * ptr, int cidx)
 {
    switch (option) {
-    case PAPI_DEF_MPX_USEC:
-     {
-       if (ptr == NULL)
-	 papi_return(PAPI_EINVAL);
-       ptr->multiplex.us = _papi_hwi_system_info.mpx_info.timer_us;
-       return(PAPI_OK);
-     }
   /* For now, MAX_HWCTRS and MAX CTRS are identical.
      At some future point, they may map onto different values.
   */
@@ -1760,6 +1763,11 @@ int PAPI_get_cmp_opt(int option, PAPI_option_t * ptr, int cidx)
       papi_return(PAPI_EINVAL);
    }
    return(PAPI_OK);
+}
+
+int PAPI_num_components(void)
+{
+    return (papi_num_components);
 }
 
 int PAPI_num_events(int EventSet)
