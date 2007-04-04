@@ -1,16 +1,21 @@
 .\" $Id$
-.TH PAPI_get_opt 3 "September, 2002" "PAPI Programmer's Reference" "PAPI"
+.TH PAPI_get_opt 3 "October, 2006" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-PAPI_get_opt, PAPI_set_opt \- get/set PAPI library or event set options
- PAPIF_get_clockrate, PAPIF_get_domain, PAPIF_get_granularity, PAPIF_get_preload
-\- Fortran implementation of some PAPI_get_opt options
+ PAPI_get_opt \- get PAPI library or event set options
+ PAPI_get_cmp_opt \- get component specific PAPI options
+ PAPI_set_opt \- set PAPI library or event set options
+ PAPIF_get_clockrate \- get the clockrate (Fortran only)
+ PAPIF_get_domain \- get the counting domain (Fortran only)
+ PAPIF_get_granularity \- get the counting granularity (Fortran only)
+ PAPIF_get_preload \- get the library preload setting (Fortran only)
 
 .SH SYNOPSIS
 .B C Interface
 .nf
 .B #include <papi.h>
 .BI "int PAPI_get_opt(int " option ", PAPI_option_t *" ptr ");"
+.BI "int PAPI_get_cmp_opt(int " option ", PAPI_option_t *" ptr ", int " cidx ");"
 .BI "int PAPI_set_opt(int " option ", PAPI_option_t *" ptr ");"
 .fi
 .B Fortran Interface
@@ -28,16 +33,25 @@ and
 .B PAPI_set_opt() 
 query or change the options of the PAPI library or a specific event set 
 created by
-.BR "PAPI_create_eventset" (3).
+.BR "PAPI_create_eventset" (3). Some options may require that the eventset be
+bound to a component before they can execute successfully. This can be done either
+by adding an event or by explicitly calling 
+.BR "PAPI_assign_eventset_component" (3).
+
 The C interface for these functions passes a pointer to the
 .I PAPI_option_t
-structure. Not all options require or return information in this structure.
+structure. Not all options require or return information in this structure,
+and not all options are implemented for both get and set. Some options require 
+a component index to be provided. These options are handled explicitly by the 
+.B PAPI_get_cmp_opt() 
+call for 'get' and implicitly through the option structure for 'set'.
+
 The Fortran interface is a series of calls implementing various subsets of
 the C interface. Not all options in C are available in Fortran.
 .LP
 .B NOTE:
-/  Some options, such as PAPI_SET_DOMAIN, are also available as separate entry points
-in both C and Fortran.
+Some options, such as PAPI_DOMAIN and PAPI_MULTIPLEX, are also 
+available as separate entry points in both C and Fortran.
 .LP
 The reader is urged to see the example code in the PAPI distribution
 for usage of PAPI_get_opt.  The file 
@@ -52,7 +66,7 @@ structure.
 -- is an input parameter describing the course of action. Possible
 values are defined in 
 .B papi.h
-and briefly described below. The Fortran calls are
+and briefly described in the table below. The Fortran calls are
 implementations of specific options.
 .LP
 .I "ptr"
@@ -60,6 +74,9 @@ implementations of specific options.
 It is defined in
 .B papi.h
 and  below.
+.LP
+.I cidx
+-- An integer identifier for a component. By convention, component 0 is always the cpu component.
 .LP
 .I EventSet 
 -- input; a reference to an EventSetInfo structure
@@ -81,6 +98,7 @@ or for the current event set
 .I preload
 --  output; environment variable string for preloading libraries
 
+.SH OPTIONS TABLE
 .LP
 .TS H
 allbox tab($);
@@ -90,76 +108,105 @@ lB lw(45).
 .TH
 Predefined name$Explanation
 General information requests
-PAPI_GET_CLOCKRATE$T{
-Return clockrate in MHz.
+PAPI_CLOCKRATE$T{
+Get clockrate in MHz.
 T}
-PAPI_GET_MAX_CPUS$T{
-Return number of CPUs.
+PAPI_MAX_CPUS$T{
+Get number of CPUs.
 T}
-PAPI_GET_MAX_HWCTRS$T{
-Return number of counters.
+PAPI_MAX_HWCTRS$T{
+Get number of counters.
+Requires a component index.
 T}
-PAPI_GET_EXEINFO$T{
-Addresses for text/data/bss.
+PAPI_EXEINFO$T{
+Get Executable addresses for text/data/bss.
 T}
-PAPI_GET_HWINFO$T{
-Info. about hardware.
+PAPI_HWINFO$T{
+Get information about the hardware.
 T}
-PAPI_GET_PRELOAD$T{
+PAPI_SHLIBINFO$T{
+Get shared library information used by the program.
+T}
+PAPI_COMPONENTINFO$T{
+Get the PAPI features the specified component supports.
+Requires a component index.
+T}
+PAPI_LIB_VERSION$T{
+Get the full PAPI version of the library
+T}
+PAPI_PRELOAD$T{
 Get ``LD_PRELOAD'' environment equivalent.
 T}
 .T&
 cI s
 lB lw(45).
 Defaults for the global library
-PAPI_GET_DEFDOM$T{
-Return default counting domain for newly created event sets.
+PAPI_DEFDOM$T{
+Get/Set default counting domain for newly created event sets.
+Requires a component index.
 T}
-PAPI_SET_DEFDOM$T{
-Set default counting domain.
+PAPI_DEFGRN$T{
+Get/Set default counting granularity.
+Requires a component index.
 T}
-PAPI_GET_DEFGRN$T{
-Return default counting granularity.
-T}
-PAPI_SET_DEFGRN$T{
-Set default counting granularity.
-T}
-PAPI_GET_DEBUG$T{
-Get the PAPI debug state. The available debug states are
-defined in
-.BR papi.h .
-The debug state is available in ptr->debug
-T}
-PAPI_SET_DEBUG$T{
-Set the PAPI debug state
+PAPI_DEBUG$T{
+Get/Set the PAPI debug state and the debug handler. The available debug states are
+defined in papi.h. The debug state is available in ptr->debug.level. The debug
+handler is available in ptr->debug.handler. For information regarding the behavior
+of the handler, please see the man page for PAPI_set_debug.
 T}
 .T&
 cI s
 lB lw(45).
 Multiplexing control
-PAPI_GET_MULTIPLEX$T{
-Get options for multiplexing. Currently not implemented.
+PAPI_MULTIPLEX$T{
+Get/Set options for multiplexing. 
 T}
-PAPI_SET_MULTIPLEX$T{
-Set options for multiplexing
+PAPI_MAX_MPX_CTRS$T{
+Get maximum number of multiplexing counters. 
+Requires a component index.
+T}
+PAPI_DEF_MPX_USEC$T{
+Get/Set the sampling time slice in microseconds for multiplexing. 
 T}
 .T&
 cI s
 lB lw(45).
 Manipulating individual event sets
-PAPI_GET_DOMAIN$T{
-Get domain for a single event set. The event set is specified 
-in ptr->domain.eventset
+PAPI_ATTACH$T{
+Get thread or process id to which event set is attached. Returns TRUE
+if currently attached.
+Set event set specified in ptr->ptr->attach.eventset 
+to be attached to thread or process id specified in
+in ptr->attach.tid
 T}
-PAPI_SET_DOMAIN$T{
-Set the domain for a single event set.
+PAPI_DETACH$T{
+Get thread or process id to which event set is attached. Returns TRUE
+if currently detached.
+Set event set specified in ptr->ptr->attach.eventset 
+to be detached from any thread or process id.
 T}
-PAPI_GET_GRANUL$T{
-Get granularity for a single event set. The event set is specified 
-in ptr->granularity.eventset
+PAPI_DOMAIN$T{
+Get/Set domain for a single event set. The event set is specified 
+in ptr->domain.eventset. Will error if eventset is not bound to a component.
 T}
-PAPI_SET_GRANUL$T{
-Set the granularity for a single event set.
+PAPI_GRANUL$T{
+Get/Set granularity for a single event set. The event set is specified 
+in ptr->granularity.eventset. Will error if eventset is not bound to a component.
+T}
+.T&
+cI s
+lB lw(45).
+Platform specific options
+PAPI_DATA_ADDRESS$T{
+Set data address range to restrict event counting for event set specified 
+in ptr->addr.eventset. Starting and ending addresses are specified in 
+ptr->addr.start and ptr->addr.end, respectively. If exact addresses cannot
+be instantiated, offsets are returned in ptr->addr.start_off and
+ptr->addr.end_off. Currently implemented on Itanium only.
+T}
+PAPI_INSTR_ADDRESS$T{
+Set instruction address range as described above. Itanium only.
 T}
 .TE
 
@@ -178,20 +225,24 @@ which is in synch with the library used.
 typedef union {
   PAPI_preload_option_t preload;
   PAPI_debug_option_t debug;
-  PAPI_inherit_option_t inherit;
   PAPI_granularity_option_t granularity; 
   PAPI_granularity_option_t defgranularity; 
   PAPI_domain_option_t domain; 
   PAPI_domain_option_t defdomain; 
+  PAPI_attach_option_t attach;
   PAPI_multiplex_option_t multiplex;
   PAPI_hw_info_t *hw_info;
-  PAPI_exe_info_t *exe_info; } PAPI_option_t;
+  PAPI_shlib_info_t *shlib_info;
+  PAPI_exe_info_t *exe_info;
+  PAPI_component_info_t *sub_info;
+  PAPI_overflow_option_t ovf_info;
+  PAPI_addr_range_option_t addr;
+} PAPI_option_t;
 .if t .ft P
 .fi
 
-
 .SH RETURN VALUES
-On success, this function returns
+On success, these functions return
 .I "PAPI_OK."
 On error, a non-zero error code is returned.
 
@@ -203,6 +254,11 @@ One or more of the arguments is invalid.
 .B "PAPI_ENOEVST"
 The event set specified does not exist.
 .TP
+.B "PAPI_ENOCMP"
+The argument
+.I cidx
+is not a valid component.
+.TP
 .B "PAPI_EISRUN"
 The event set is currently counting events.
 
@@ -210,37 +266,28 @@ The event set is currently counting events.
 .LP
 .nf
 .if t .ft CW
-int num, EventSet = PAPI_NULL;
 PAPI_option_t options;
 
-if ((num = PAPI_get_opt(PAPI_GET_MAX_HWCTRS,NULL)) <= 0)
+if ((num = PAPI_get_cmp_opt(PAPI_MAX_HWCTRS,NULL,0)) <= 0)
   handle_error();
 
-printf("This machine has %d counters.\n",num);
-
-if (PAPI_create_eventset(&EventSet) != PAPI_OK)
-  handle_error();
+printf("This component has %d counters.\n",num);
 
 /* Set the domain of this EventSet 
    to counter user and kernel modes for this
    process */
 	
 memset(&options,0x0,sizeof(options));
-
 options.domain.eventset = EventSet;
 options.domain.domain = PAPI_DOM_ALL;
-if (PAPI_set_opt(PAPI_SET_DOMAIN, &options) != PAPI_OK)
+if (PAPI_set_opt(PAPI_DOMAIN, &options) != PAPI_OK)
   handle_error();
 .if t .ft P
 .fi
 
-.SH AUTHOR
-Philip J. Mucci <mucci@cs.utk.edu>
-
 .SH BUGS
+The granularity and domain functions are only implemented on some components.
 There are no known bugs in these functions.
 
 .SH SEE ALSO
-.BR PAPI_create_eventset "(3), " PAPI_add_event "(3), " PAPI_start "(3), " 
- The PAPI Web Site: 
-http://icl.cs.utk.edu/projects/papi
+.BR PAPI_set_debug "(3)," PAPI_set_multiplex "(3)," PAPI_set_domain "(3)"

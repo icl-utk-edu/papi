@@ -1,31 +1,43 @@
 .\" $Id$
-.TH PAPI_add_event 3 "September, 2002" "PAPI Programmer's Reference" "PAPI"
+.TH PAPI_add_event 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-PAPI_add_event, PAPI_add_events, PAPI_add_pevent \- add PAPI preset or native hardware event to an event set
+ PAPI_add_event  \- add PAPI preset or native hardware event to an event set
+ PAPI_add_events \- add PAPI presets or native hardware events to an event set
 
 .SH SYNOPSIS
 .B C Interface
 .nf
 .B #include <papi.h>
-.BI "int\ PAPI_add_event(int *" EventSet ", int " EventCode ");"
-.BI "int\ PAPI_add_events(int *" EventSet ", int *" EventCode ", int " number ");"
-.BI "int\ PAPI_add_pevent(int *" EventSet ", int " code ", void * " misc ");"
+.BI "int\ PAPI_add_event(int " EventSet ", int " EventCode ");"
+.BI "int\ PAPI_add_events(int " EventSet ", int *" EventCodes ", int " number ");"
 .fi
 .B Fortran Interface
 .nf
 .B #include "fpapi.h"
-.BI PAPIF_add_event(C_INT\  EventSet,\  C_INT\  EventSet,\  C_INT\  check )
-.BI PAPIF_add_events(C_INT\  EventSet,\  C_INT(*)\  EventSet,\  C_INT\  number,\  C_INT\  check )
+.BI PAPIF_add_event(C_INT\  EventSet,\  C_INT\  EventCode,\  C_INT\  check )
+.BI PAPIF_add_events(C_INT\  EventSet,\  C_INT(*)\  EventCodes,\  C_INT\  number,\  C_INT\  check )
 .fi
 
 .SH DESCRIPTION
-.BR "PAPI_add_event() " "adds a hardware event to a PAPI Event Set."
-.BR "PAPI_add_events() " "does the same, but for an array of hardware event codes."
-.BR "PAPI_add_pevent() " "is reserved for future use."
+.nf
+PAPI_add_event()  adds one event to a PAPI Event Set.
+PAPI_add_events() does the same, but for an array of events.
+.fi
+.LP
+A hardware event can be either a PAPI preset or a native hardware event code.
+For a list of PAPI preset events, see
+.BR "PAPI_presets" "(3) or run the"
+.I avail
+test case in the PAPI distribution. PAPI presets can be passed to
+.BR "PAPI_query_event" "(3) to see if they exist on the underlying architecture."
+For a list of native events available on current platform, run
+native_avail
+test case in the PAPI distribution. For the encoding of native events, see
+.BR "PAPI_event_name_to_code" "(3) to learn how to generate native code for the supported native event on the underlying architecture."
 
 .SH ARGUMENTS
-.I *EventSet
+.I EventSet
 --  an integer handle for a PAPI Event Set as created by
 .BR "PAPI_create_eventset" (3)
 .LP
@@ -38,22 +50,21 @@ PAPI_add_event, PAPI_add_events, PAPI_add_pevent \- add PAPI preset or native ha
 .I number
 -- an integer indicating the number of events in the array
 .I *EventCode
-.LP
-A hardware event can be either a PAPI preset or a native hardware event code. 
-For a list of PAPI preset events, see
-.BR "PAPI_presets" "(3) or run the"
-.I avail
-test case in the PAPI distribution. PAPI presets can be passed to
-.BR "PAPI_query_event" "(3) to see if they exist on the underlying architecture."
-For the encoding of native events, see the <arch>.README file
-also included the distribution. 
+
+It should be noted that
+.BR "PAPI_add_events"
+can partially succeed, exactly like
+.BR "PAPI_remove_events".
 
 .SH RETURN VALUES
 On success, these functions return
-.B "PAPI_OK."
- On error, a non-zero error code is returned.
+.B "PAPI_OK." 
+ On error, a less than zero error code is returned or the the number of elements that succeeded before the error.
 
 .SH ERRORS
+.TP
+.B "Positive integer"
+The number of consecutive elements that succeeded before the error.
 .TP
 .B "PAPI_EINVAL"
 One or more of the arguments is invalid.
@@ -73,6 +84,9 @@ in the event set simultaneously.
 .TP
 .B "PAPI_ENOEVNT"
 The PAPI preset is not available on the underlying hardware. 
+.TP
+.B "PAPI_EBUG"
+Internal error, please send mail to the developers.
 
 .SH EXAMPLES
 .nf
@@ -85,32 +99,25 @@ if (PAPI_create_eventset(&EventSet) != PAPI_OK)
 
 /* Add Total Instructions Executed to our EventSet */
 
-if (PAPI_add_event(&EventSet, PAPI_TOT_INS) != PAPI_OK)
+if (PAPI_add_event(EventSet, PAPI_TOT_INS) != PAPI_OK)
   handle_error(1);
 
-/* Add native event (0xc1 on hardware counter 1) */
+/* Add native event PM_CYC to EventSet */
 
-native = (0xc1 << 8) | 1;
-if (PAPI_add_event(&EventSet, native) != PAPI_OK)
+if (PAPI_event_name_to_code("PM_CYC",&native) != PAPI_OK)
   handle_error(1);
 
-/* Start counting */
-
-if (PAPI_start(EventSet) != PAPI_OK)
+if (PAPI_add_event(EventSet, native) != PAPI_OK)
   handle_error(1);
+
 .if t .ft P
 .fi
 
-.SH AUTHOR
-Philip J. Mucci <mucci@cs.utk.edu>
-
 .SH BUGS
-These functions have no known bugs.
+The vector function should take a pointer to a length argument so a proper return value can
+be set upon partial success.
 
 .SH SEE ALSO
-.BR PAPI_presets "(3), "
-.BR PAPI_set_opt "(3), " PAPI_start "(3), " PAPI_rem_event "(3), " 
-.BR PAPI_rem_events "(3), " PAPI_query_event "(3), "
-.BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " 
- The PAPI Web Site: 
-http://icl.cs.utk.edu/projects/papi
+.BR PAPI_presets "(3), " PAPI_native "(3), " PAPI_remove_event "(3), " 
+.BR PAPI_remove_events "(3), " PAPI_query_event "(3), "
+.BR PAPI_cleanup_eventset "(3), " PAPI_destroy_eventset "(3), " PAPI_event_code_to_name "(3)" 
