@@ -1,9 +1,9 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_set_domain 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_num_components 3 "April, 2007" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
-Manual Page - PAPI_set_domain(3)</TITLE>
+Manual Page - PAPI_num_components(3)</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
 
 <STYLE TYPE="text/css">
@@ -256,9 +256,7 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
- PAPI_set_domain - set the default counting domain for new event sets bound to the cpu component
-<BR>
- PAPI_set_cmp_domain - set the default counting domain for new event sets bound to the specified component
+PAPI_num_components - return the number of components currently installed
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -268,12 +266,11 @@ PAPI HOME
 <A HREF=#2>Description</A><BR>
 <A HREF=#3>Arguments</A><BR>
 <A HREF=#4>Return Values</A><BR>
-<A HREF=#5>Errors</A><BR>
-<A HREF=#6>Examples</A><BR>
-<A HREF=#7>Bugs</A><BR>
-<A HREF=#8>See Also</A><BR>
+<A HREF=#5>Examples</A><BR>
+<A HREF=#6>Bugs</A><BR>
+<A HREF=#7>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>SYNOPSIS</H3>
 
@@ -284,21 +281,8 @@ PAPI HOME
 <PRE>
 <!-- .B #include <papi.h> -->
 <B>#include &lt;papi.h&gt;</B> 
-<!-- .BI "int PAPI_set_domain(int " domain ");" -->
-<B>int PAPI_set_domain(int </B><I>domain</I><B>);</B> 
-<!-- .BI "int PAPI_set_cmp_domain(int " domain ", int " cidx ");" -->
-<B>int PAPI_set_cmp_domain(int </B><I>domain</I><B>, int </B><I>cidx</I><B>);</B> 
-<!-- .fi -->
-</PRE>
-<!-- .B Fortran Interface -->
-<B>Fortran Interface</B> <!-- .nf -->
-<PRE>
-<!-- .B #include "fpapi.h" -->
-<B>#include fpapi.h</B> 
-<!-- .BI PAPIF_set_domain(C_INT\  domain,\  C_INT\  check ) -->
-<B>PAPIF_set_domain(C_INT </B><I>domain, </I><B>C_INT </B><I>check</I><B>)</B> 
-<!-- .BI PAPIF_set_event_domain(C_INT\  EventSet,\  C_INT\  domain,\  C_INT\  check ) -->
-<B>PAPIF_set_event_domain(C_INT </B><I>EventSet, </I><B>C_INT </B><I>domain, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI "int PAPI_num_components();" -->
+<B>int PAPI_num_components();</B> 
 <!-- .fi -->
 </PRE>
 <P>
@@ -310,28 +294,10 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-<!-- .B "PAPI_set_domain"  -->
-<B>PAPI_set_domain</B> sets the default counting domain for all new event sets created by
-<!-- .BR "PAPI_create_eventset" (3)  -->
-<A HREF="papi_create_eventset.html">PAPI_create_eventset (3)</A>
-in all threads. This call implicitly sets the domain for the cpu component
-(component 0) and is included to preserve backward compatibility.
-<!-- .LP -->
-<P>
-<!-- .B "PAPI_set_cmp_domain"  -->
-<B>PAPI_set_cmp_domain</B> sets the default counting domain for all new event sets
-in all threads, and requires an explicit component argument.
-Event sets that are already in existence are not affected.
-To change the domain of an existing event set, please see the
-<!-- .BR "PAPI_set_opt" (3) -->
-<A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>
-man page.The reader should note that the domain of an event set
-affects only the mode in which the counter continues to run. Counts are still
-aggregated for the current process, and not for any other processes in
-the system. Thus when requesting
-<!-- .BR PAPI_DOM_KERNEL ,  -->
-<B>PAPI_DOM_KERNEL</B>, the user is asking for events that occur on behalf of the process,
-inside the kernel.
+<!-- .B "PAPI_num_components()"  -->
+<B>PAPI_num_components()</B> returns the number of counting components
+<BR>
+ installed in the library.
 <P>
 <!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
@@ -341,31 +307,7 @@ inside the kernel.
 
 </A>
 <BLOCKQUOTE>
-<!-- .I cidx -->
-<I>cidx</I> -- An integer identifier for a component. By convention, component 0 is always the cpu component.
-<P>
-<!-- .I "domain" -->
-<I>domain</I> -- one of the following constants as defined in the papi.h header file:
-<P>
-<!-- .TS -->
-<P><BLOCKQUOTE><TABLE bgcolor=#E0E0E0 border=1 cellspacing=0 cellpadding=3>
-<!-- allbox tab($); -->
-<!-- lB l. -->
-<TR valign=top>
-<TD><B>PAPI_DOM_USER</B></TD><TD>User context counted</TD></TR>
-<TR valign=top>
-<TD><B>PAPI_DOM_KERNEL</B></TD><TD>Kernel/OS context counted</TD></TR>
-<TR valign=top>
-<TD><B>PAPI_DOM_OTHER</B></TD><TD>Exception/transient mode counted</TD></TR>
-<TR valign=top>
-<TD><B>PAPI_DOM_SUPERVISOR</B></TD><TD>Supervisor/hypervisor context counted</TD></TR>
-<TR valign=top>
-<TD><B>PAPI_DOM_ALL</B></TD><TD>All above contexts counted</TD></TR>
-<TR valign=top>
-<TD><B>PAPI_DOM_MIN</B></TD><TD>The smallest available context</TD></TR>
-<TR valign=top>
-<TD><B>PAPI_DOM_MAX</B></TD><TD>The largest available context</TD></TR>
-</TABLE></BLOCKQUOTE>
+This function takes no arguments.
 <P>
 <!-- .SH RETURN VALUES -->
 </BLOCKQUOTE>
@@ -375,107 +317,50 @@ inside the kernel.
 
 </A>
 <BLOCKQUOTE>
-On success, this function returns
-<!-- .B "PAPI_OK." -->
-<B>PAPI_OK.</B> <BR>
- On error, a non-zero error code is returned.
-<P>
-<!-- .SH ERRORS -->
-</BLOCKQUOTE>
-<A name=5>
-
-     <H3>ERRORS</H3>
-
-</A>
-<BLOCKQUOTE>
-<!-- .TP -->
-<TABLE cellpadding=3>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_EINVAL" -->
-<B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-One or more of the arguments is invalid.
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_ENOEVST" -->
-<B>PAPI_ENOEVST</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The event set specified does not exist.
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_ENOCMP" -->
-<B>PAPI_ENOCMP</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The argument
-<!-- .I cidx -->
-<I>cidx</I> is not a valid component.
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<!-- .B "PAPI_EISRUN" -->
-<B>PAPI_EISRUN</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The event set is currently counting events.
+This function returns a value greater than zero.
 <P>
 <!-- .SH EXAMPLES -->
-</TD></TR>
-<TR></TR></TABLE></BLOCKQUOTE>
-<A name=6>
+</BLOCKQUOTE>
+<A name=5>
 
      <H3>EXAMPLES</H3>
 
 </A>
 <BLOCKQUOTE>
+<!-- .LP -->
+<P>
 <!-- .nf -->
 <PRE>
 <!-- .if t .ft CW -->
-<TT>int retval;
-<P>
-/* Initialize the library */
-<P>
-retval = PAPI_library_init(PAPI_VER_CURRENT);
-<P>
-if (retval &gt; 0 && retval != PAPI_VER_CURRENT) {
-  fprintf(stderr,"PAPI library version mismatch!0);
-  exit(1); }
-<P>
-if (retval &lt; 0)
-  handle_error(retval);
-<P>
-/* Set the default domain for the cpu component */
-<P>
-if ((retval = PAPI_set_cmp_domain(PAPI_DOM_KERNEL,0)) != PAPI_OK)
-  handle_error(retval);
-<P>
-if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
-  handle_error(retval);
+<TT>/* Query the library for a component count. */
+printf("%d components installed.0, PAPI_num_components());
 <!-- .if t .ft P -->
 </TT><!-- .fi -->
 </PRE>
 <P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=7>
+<A name=6>
 
      <H3>BUGS</H3>
 
 </A>
 <BLOCKQUOTE>
-This function has no known bugs.
+None.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=7>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI_set_granularity "(3), " PAPI_set_opt "(3), " PAPI_get_opt "(3) " -->
-<A HREF="papi_set_granularity.html">PAPI_set_granularity (3)</A>, 
-<A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>, 
-<A HREF="papi_get_opt.html">PAPI_get_opt (3)</A> 
+<!-- .BR PAPI "(3)" -->
+<A HREF="papi.html">PAPI (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_set_domain (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_num_components (3)</TD> <TD align=right width=33%><I>April, 2007</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>
