@@ -389,7 +389,7 @@ read the documentation carefully.  */
 
    typedef struct _papi_component_option {
      char name[PAPI_MAX_STR_LEN];		/* Name of the component we're using, usually CVS RCS Id */
-     char version[PAPI_MIN_STR_LEN];		/* Version of this substrate, usually CVS Revision */
+     char version[PAPI_MIN_STR_LEN];		/* Version of this component, usually CVS Revision */
      char support_version[PAPI_MIN_STR_LEN];	/* Version of the support library */
      char kernel_version[PAPI_MIN_STR_LEN];	/* Version of the kernel PMC support driver */
      int CmpIdx;				/* Index into the vector array for this component; set at init time */
