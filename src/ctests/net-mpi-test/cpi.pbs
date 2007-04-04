@@ -40,5 +40,5 @@ cd $PBS_O_WORKDIR
 ### 'mpirun' command (there are several versions of the command 
 ### on the cluster) be used to launch the job---it is safest to use 
 ### the full pathname as is done here.
-/usr/local/mpich-mx/bin/mpirun -np $NPROCS -machinefile $PBS_NODEFILE cpi
-#/usr/local/mpich/bin/mpirun -np $NPROCS -machinefile $PBS_NODEFILE cpi
+#/usr/local/mpich-mx/bin/mpirun -np $NPROCS -machinefile $PBS_NODEFILE cpi
+/usr/local/mpich/bin/mpirun -np $NPROCS -machinefile $PBS_NODEFILE cpi

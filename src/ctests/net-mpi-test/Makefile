@@ -1,7 +1,7 @@
 CC              = gcc
 CC_R            = gcc -pthread
 CC_SHR          = gcc -shared
-MXMPIPATH       = /usr/local/mpich/mpich-gcc
+#MXMPIPATH       = /usr/local/mpich/mpich-gcc
 #MXMPIPATH       = /usr/local/mpich-mx
 #MPICC           = $(MXMPIPATH)/bin/mpicc
 #MPICC           = /usr/bin/mpicc
