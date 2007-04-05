@@ -33,6 +33,14 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
       "PM_FPU0_FMA", "PM_FPU1_FMA", "PM_INST_CMPL", "PM_CYC", NULL
    };
 
+#elif defined(_POWER5p)
+/* arbitrarily code events from group 33: pm_fpustall - Floating Point Unit stalls */
+   static char *native_name[] =
+       { "PM_FPU_FULL_CYC", "PM_CMPLU_STALL_FDIV", "PM_CMPLU_STALL_FPU",
+       "PM_RUN_INST_CMPL", "PM_RUN_CYC", NULL
+   };
+
+
 #elif defined(_POWER5)
    /* arbitrarily code events from group 78: pm_fpu1 - Floating Point events */
    static char *native_name[] =

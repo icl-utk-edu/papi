@@ -14,7 +14,7 @@
 #ifndef _PAPI_PERFCTR_PPC64            /* _PAPI_PERFCTR_PPC64 */
 #define _PAPI_PERFCTR_PPC64
 
-#ifdef _POWER5
+#if defined(_POWER5) || defined(_POWER5p)
 #define MAX_COUNTERS 6
 #define NUM_COUNTER_MASKS 4	
 /* masks for PMC1-4 should be AND'ed into MMCR1 */

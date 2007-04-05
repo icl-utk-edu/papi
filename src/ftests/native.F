@@ -20,7 +20,7 @@
       integer tests_quiet, get_quiet
       external get_quiet
 
-#if defined(POWER3) || defined (_POWER4) || defined(_POWER5)
+#if defined(POWER3) || defined (_POWER4) || defined(_POWER5) || defined(_POWER5p)
       real*4 csec
 #endif
 
@@ -66,12 +66,16 @@
       eventname(4) = 'BR_MSP'
       n = 4
 #endif
-#if defined(_POWER5)
+#if defined(_POWER5) || defined(_POWER5p)
       eventname(1) = 'PM_FPU_FDIV'
       eventname(2) = 'PM_FPU_FMA'
       eventname(3) = 'PM_FPU_FMOV_FEST'
       eventname(4) = 'PM_FPU_FEST'
+#if defined(_POWER5p)
+      eventname(5) = 'PM_RUN_INST_CMPL'
+#else
       eventname(5) = 'PM_INST_CMPL'
+#endif
       eventname(6) = 'PM_RUN_CYC'
       n = 6
 #endif
@@ -178,6 +182,7 @@
         if ( retval .NE. PAPI_OK ) then
           call ftest_fail(__FILE__, __LINE__, 'PAPIf_add_event', retval)
         end if
+      
       end do
 
       call PAPIf_get_real_usec(uso)
@@ -212,7 +217,7 @@ C     call sleep(1)
       print *, "DCache accesses                   : ",values(2)
       print *, "CPU Cycles                        : ",values(3)
 
-#elif defined(_POWER5)
+#elif defined(_POWER5) || defined(_POWER5p)
       csec = values(5)/ (mhz*1000000.0)
       print *, "CPU Elapsed Time in sec.   : ", csec
       print *, "PM_FPU_FDIV operations     : ", values(1)

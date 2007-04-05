@@ -10,7 +10,7 @@
 #define EVT2_STR        "PAPI_L2_TCA"
 #define EVT3_STR        "PAPI_L2_TCH"
 #else
-#if defined(_POWER4)
+#if defined(_POWER4) || defined(_POWER5) || defined(_POWER5p)
 #define CACHE_LEVEL "PAPI_L1_DCA"
 #define EVT1            PAPI_L1_DCA
 #define EVT2            PAPI_L1_DCW

@@ -27,7 +27,7 @@
 #endif
 
 static hwi_search_t preset_name_map_PPC64[PAPI_MAX_PRESET_EVENTS] = {
-#ifdef _POWER5
+#if defined(_POWER5) || defined(_POWER5p)
    {PAPI_L1_DCM, {DERIVED_ADD, {PNE_PM_LD_MISS_L1, PNE_PM_ST_MISS_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Level 1 data cache misses */
    {PAPI_L1_DCA, {DERIVED_ADD, {PNE_PM_LD_REF_L1, PNE_PM_ST_REF_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},        /*Level 1 data cache access */
    /* can't count level 1 data cache hits due to hardware limitations. */
@@ -140,7 +140,7 @@ static hwi_search_t preset_name_map_PPC64[PAPI_MAX_PRESET_EVENTS] = {
 };
 hwi_search_t *preset_search_map;
 
-#if defined(_POWER5)
+#if defined(_POWER5) || defined(_POWER5p)
 unsigned long long pmc_sel_mask[NUM_COUNTER_MASKS] = {
 	PMC1_SEL_MASK,
 	PMC2_SEL_MASK,
@@ -169,14 +169,14 @@ static void clear_unused_pmcsel_bits(hwd_control_state_t * cntrl) {
 	for (i = 0; i < num_used_counters; i++ ) {
 		used_counters |= 1 << cpu_ctl->pmc_map[i];
 	}
-#ifdef _POWER5
+#if defined(_POWER5) || defined(_POWER5p)
         int freeze_pmc5_pmc6 = 0; /* for Power5 use only */
 #endif
 
 	for (i = 0; i < MAX_COUNTERS; i++) {
 		unsigned int active_counter = ((1 << i) & used_counters);
 		if (!active_counter) {
-#ifdef _POWER5
+#if defined(_POWER5) || defined(_POWER5p)
 			if (i > 3) 
 				freeze_pmc5_pmc6++;
 			else
@@ -192,7 +192,7 @@ static void clear_unused_pmcsel_bits(hwd_control_state_t * cntrl) {
 #endif				
 		}
 	}
-#ifdef _POWER5
+#if defined(_POWER5) || defined(_POWER5p)
 	if (freeze_pmc5_pmc6 == 2)
 		cpu_ctl->ppc64.mmcr0 |= PMC5_PMC6_FREEZE;
 #endif	
@@ -673,11 +673,17 @@ int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain) {
 /* Routines to support an opaque native event table */
 char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
+   if ((EventCode & PAPI_NATIVE_AND_MASK) >= MAX_NATNAME_MAP_INDEX)
+       return ('\0'); // return a null string for invalid events
    return (native_name_map[EventCode & PAPI_NATIVE_AND_MASK].name);
 }
 
 int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 {
+  if ((EventCode & PAPI_NATIVE_AND_MASK) >= MAX_NATNAME_MAP_INDEX) {
+     return (PAPI_ENOEVNT);
+  }
+
   memcpy(bits,&native_table[native_name_map[EventCode & PAPI_NATIVE_AND_MASK].index].resources,sizeof(hwd_register_t)); 
   return (PAPI_OK);
 }
@@ -735,6 +741,9 @@ int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
 
 char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
+   if ((EventCode & PAPI_NATIVE_AND_MASK) >= _papi_hwi_system_info.sub_info.num_native_events) {
+	return "\0";
+   }
    return (native_table[native_name_map[EventCode & PAPI_NATIVE_AND_MASK].index].description);
 }
 

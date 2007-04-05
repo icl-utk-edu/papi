@@ -1,12 +1,11 @@
 { File: power5+/groups
-{ Date: 12/13/06
-{ Version: 1.7
-{ Copyright (c) International Business Machines, 2006.
-{ Contributed by Eric Kjeldergaard <kjelderg@linux.ibm.com>
-
+{ Date: 03/15/07
+{ Version: 1.8
+{ (C) Copyright IBM Corporation, 2006, 2007.  All Rights Reserved.
+{ Contributed by Corey Ashford <cjashfor@us.ibm.com>
 
 { Number of groups
-	183
+	188
 
 { Group descriptions
 
@@ -923,4 +922,29 @@ Misc marked instructions
 #182,303,286,281,298,0,0,pm_ep_mrk_misc10,Misc marked instructions
 ##00009,820E0,820E4,820E3,00009,00005
 00000000,00080004,12C0E8E6,00000001
+Misc marked instructions
+
+#183,303,268,264,268,0,0,pm_ep_mrk_misc11,Misc marked instructions
+##00009,00005,C70A2,C709E,00009,00005
+00000000,01030003,120A443C,00000001
+Misc marked instructions
+
+#184,303,296,290,294,0,0,pm_ep_mrk_misc12,Misc marked instructions
+##00009,810A8,81088,81088,00009,00005
+00000000,00200000,12501010,00000001
+Misc marked instructions
+
+#185,269,302,266,296,0,0,pm_ep_mrk_misc13,Misc marked instructions
+##C7087,00009,C709B,C70E6,00009,00005
+00000000,0103000B,0E1236CC,00000001
+Misc marked instructions
+
+#186,303,94,276,293,0,0,pm_ep_mrk_misc14,Misc marked instructions
+##00009,00014,00014,00014,00009,00005
+00000000,00000000,12282828,00000001
+Misc marked instructions
+
+#187,303,283,278,278,0,0,pm_ep_mrk_misc15,Misc marked instructions
+##00009,12091,00005,00013,00009,00005
+00000000,40000004,12220A26,00000001
 Misc marked instructions

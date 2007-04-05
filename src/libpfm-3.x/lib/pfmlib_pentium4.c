@@ -270,6 +270,7 @@ static int pentium4_dispatch_events(pfmlib_input_param_t *input,
 {
 	unsigned int assigned_pmcs[PENTIUM4_NUM_PMCS] = {0};
 	unsigned int event, event_mask, mask;
+	unsigned int tag_value, tag_enable;
 	unsigned int plm;
 	unsigned int i, j, k, m, n;
 	int escr, escr_pmc;
@@ -356,11 +357,18 @@ static int pentium4_dispatch_events(pfmlib_input_param_t *input,
 				 * specified by the caller are ignored.
 				 */
 				event_mask = 0;
+				tag_value = 0;
+				tag_enable = 0;
 				for (n = 0; n < input->pfp_events[i].num_masks; n++) {
 					mask = input->pfp_events[i].unit_masks[n];
 					if (mask < EVENT_MASK_BITS &&
 					    pentium4_events[event].event_masks[mask].name) {
 						event_mask |= (1 << pentium4_events[event].event_masks[mask].bit);
+					}
+					if (mask >= EVENT_MASK_BITS &&
+					    pentium4_events[event].event_masks[mask].name) {
+						tag_value |= (1 << (pentium4_events[event].event_masks[mask].bit - EVENT_MASK_BITS));
+						tag_enable = 1;
 					}
 				}
 
@@ -371,8 +379,8 @@ static int pentium4_dispatch_events(pfmlib_input_param_t *input,
 				escr_value.bits.t1_os        = 0; /* controlled by kernel */
 				escr_value.bits.t0_usr       = (plm & PFM_PLM3) ? 1 : 0;
 				escr_value.bits.t0_os        = (plm & PFM_PLM0) ? 1 : 0;
-				escr_value.bits.tag_enable   = 0; /* FIXME: What do we do with the "tag" entries? */
-				escr_value.bits.tag_value    = 0; /* FIXME: What do we do with the "tag" entries? */
+				escr_value.bits.tag_enable   = tag_enable;
+				escr_value.bits.tag_value    = tag_value;
 				escr_value.bits.event_mask   = event_mask;
 				escr_value.bits.event_select = pentium4_events[event].event_select;
 				escr_value.bits.reserved     = 0;

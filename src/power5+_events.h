@@ -2,19 +2,19 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-#ifndef _PAPI_POWER5+_EVENTS_H
-#define _PAPI_POWER5+_EVENTS_H
+#ifndef _PAPI_POWER5p_EVENTS_H
+#define _PAPI_POWER5p_EVENTS_H
 
 /*
 * File:    power5+_events.h
 * CVS:
-* Author:  Eric Kjeldergaard
-*          kjelderg@linux.ibm.com
+* Author:  Corey Ashford
+*          cjashfor@us.ibm.com
 * Mods:    <your name here>
 *          <your email address>
 *
-* Copyright (c) International Business Machines, 2006.
-* Contributed by Eric Kjeldergaard <kjelderg@linux.ibm.com>
+* (C) Copyright IBM Corporation, 2006, 2007.  All Rights Reserved.
+* Contributed by Corey Ashford <cjashfor@us.ibm.com>
 *
 * This file MUST be kept synchronised with the events file.
 *
