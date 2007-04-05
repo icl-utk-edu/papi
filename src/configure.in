@@ -314,7 +314,7 @@ AC_MSG_RESULT($debug)
 AC_PROG_AWK
 AC_PROG_CC
 AC_PROG_F77
-if test "x$AR" == "x"; then
+if test "x$AR" = "x"; then
    AR=ar
 fi
 if test "$OS" != "linux"; then
