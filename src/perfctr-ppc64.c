@@ -673,14 +673,14 @@ int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain) {
 /* Routines to support an opaque native event table */
 char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
-   if ((EventCode & PAPI_NATIVE_AND_MASK) >= MAX_NATNAME_MAP_INDEX)
+   if ((EventCode & PAPI_NATIVE_AND_MASK) >= _papi_hwi_system_info.sub_info.num_native_events)
        return ('\0'); // return a null string for invalid events
    return (native_name_map[EventCode & PAPI_NATIVE_AND_MASK].name);
 }
 
 int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 {
-  if ((EventCode & PAPI_NATIVE_AND_MASK) >= MAX_NATNAME_MAP_INDEX) {
+  if ((EventCode & PAPI_NATIVE_AND_MASK) >= _papi_hwi_system_info.sub_info.num_native_events) {
      return (PAPI_ENOEVNT);
   }
 
