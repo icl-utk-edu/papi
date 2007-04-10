@@ -100,11 +100,11 @@ if test "$OS" = "catamount"; then
 elif test "$OS" = "bgl"; then
    if test "x$CC" = "x"; then
       CC=powerpc-bgl-blrts-gnu-gcc
-      CFLAGS="-D_BGL -gdwarf-2 -Wall"
+      CFLAGS="-D_BGL -gdwarf-2 -O2 -Wall"
    fi
    if test "x$F77" = "x"; then
       F77=powerpc-bgl-blrts-gnu-g77
-      FFLAGS="-gdwarf-2 -Wall -Dlinux"
+      FFLAGS="-gdwarf-2 -O2 -Wall -Dlinux"
    fi
    walltimer=cycle
    virtualtimer=perfctr
@@ -1247,6 +1247,8 @@ AC_SUBST(pfm_prefix)
 AC_SUBST(pfm_incdir)
 AC_SUBST(pfm_libdir)
 AC_SUBST(bitmode)
+AC_SUBST(CFLAGS)
+AC_SUBST(FFLAGS)
 
 if test "$cross_compiling" = "yes" ; then
    AC_MSG_NOTICE(Compiling genpapifdef with $nativecc because cross compiling)

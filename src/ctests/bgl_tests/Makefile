@@ -10,46 +10,44 @@ BROKEN  = inherit pernode
 UTILOBJS=../do_loops.o ../test_utils.o ../dummy.o
 
 ALL     = $(SERIAL)
-INCLUDE = -I.. -I../..
+INCLUDE = -I.. -I../.. -I$(BGLSYS_ROOT)/include
 PAPILIB = ../../$(LIBRARY)
 
 .SUFFIXES: .rts.o
 .c.rts.o:
-        $(CC) $(TOPTFLAGS) $(CFLAGS) $(INCLUDE) -c $< -o $@
+	$(CC) $(TOPTFLAGS) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 bgl_test: $(ALL)
 
 clean:
-        rm -f *.o *.stderr *.stdout core *~ $(ALL)
+	rm -f *.o *.stderr *.stdout core *~ $(ALL)
 
-run:
-        sh ./run_tests.sh
 
 mpi_bcast_papi.rts: mpi_bcast_papi.rts.o $(PAPILIB)
-        $(CC) -o $@ $< $(LIBS_MPI) $(LIBS_MPI) $(LDFLAGS) $(PAPILIB) $(UTILOBJS)
+	$(CC) -o $@ $< $(LIBS_MPI) $(LIBS_MPI) $(LDFLAGS) $(PAPILIB) $(UTILOBJS)
 
 mpi_bcast_papi.rts.o: mpi_bcast_papi.c
-        $(CC) -c $(TOPTFLAGS) $(CFLAGS) $(INCLUDE) $< -o $@
+	$(CC) -c $(TOPTFLAGS) $(CFLAGS) $(INCLUDE) $< -o $@
 
 cachetest.rts: cachetest.rts.o $(PAPILIB)
-        $(CC) -o $@ $^ $(LDFLAGS) $(PAPILIB)
+	$(CC) -o $@ $^ $(LDFLAGS) $(PAPILIB)
 
 cachetest-vn.rts: cachetest-vn.rts.o $(PAPILIB)
-        $(CC) -o $@ $^ $(LDFLAGS) $(PAPILIB)
+	$(CC) -o $@ $^ $(LDFLAGS) $(PAPILIB)
 
 cachetest-vn.rts.o: cachetest.c
-        $(CC) -DVN $(TOPTFLAGS) $(CFLAGS) $(INCLUDE) -c $< -o $@
+	$(CC) -DVN $(TOPTFLAGS) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 hummermult-inf.rts: hummermult-inf.rts.o hummer-loops.rts.o $(PAPILIB)
-        $(CC) -o $@ $^ $(LDFLAGS) $(PAPILIB)
+	$(CC) -o $@ $^ $(LDFLAGS) $(PAPILIB)
 
 hummermult.rts: hummermult.rts.o hummer-loops.rts.o $(PAPILIB)
-        $(CC) -o $@ $^ $(LDFLAGS) $(PAPILIB)
+	$(CC) -o $@ $^ $(LDFLAGS) $(PAPILIB)
 
 test_bgl_perfctr.rts: test_bgl_perfctr.rts.o
-        $(CC) -o $@ $^ $(LDFLAGS) $(PAPILIB)
+	$(CC) -o $@ $^ $(LDFLAGS) $(PAPILIB)
 
 test_bgl_perfctr-overf.rts: test_bgl_perfctr-overf.rts.o
-        $(CC) -o $@ $^ $(LDFLAGS) $(PAPILIB)
+	$(CC) -o $@ $^ $(LDFLAGS) $(PAPILIB)
 
 
