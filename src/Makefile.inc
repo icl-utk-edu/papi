@@ -119,7 +119,7 @@ test: ctests
 fulltest: tests
 	sh run_tests.sh
 
-tests: ctests ftests
+tests: ctests ftests $(BGL_TESTS)
 
 utils: $(LIBRARY) null
 	-cd utils; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="$(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" util

@@ -1448,9 +1448,11 @@ if test "$OS" = "catamount"; then
 elif test "$OS" = "bgl"; then
    if test "x$CC" = "x"; then
       CC=powerpc-bgl-blrts-gnu-gcc
+      CFLAGS="-D_BGL -gdwarf-2 -Wall"
    fi
    if test "x$F77" = "x"; then
       F77=powerpc-bgl-blrts-gnu-g77
+      FFLAGS="-gdwarf-2 -Wall -Dlinux"
    fi
    walltimer=cycle
    virtualtimer=perfctr
@@ -2752,7 +2754,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2755:" \
+echo "$as_me:2757:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -3504,7 +3506,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:3507:" \
+echo "$as_me:3509:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
