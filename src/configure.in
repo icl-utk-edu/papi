@@ -1321,6 +1321,7 @@ AC_SUBST(compnts)
 AC_SUBST(compsrcs)
 AC_SUBST(comphdrs)
 AC_SUBST(compobjs)
+AC_SUBST(OS)
 
 if test "$cross_compiling" = "yes" ; then
    AC_MSG_NOTICE(Compiling genpapifdef with $nativecc because cross compiling)

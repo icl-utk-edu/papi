@@ -3,6 +3,5 @@
 # VERSION	= 2.0
 # COMPILER	?= INTEL
 CPU		= 2
-OS		= linux
 
 include Rules.pfm

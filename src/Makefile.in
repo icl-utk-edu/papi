@@ -3,6 +3,7 @@ PAPIREV=9
 PAPIAGE=0
 ARCH	  = @arch@
 MAKEVER   = @MAKEVER@
+OS        = @OS@
 PREFIX    = @prefix@
 prefix    = $(PREFIX)
 EPREFIX   = @exec_prefix@
