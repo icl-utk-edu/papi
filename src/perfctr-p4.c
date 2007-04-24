@@ -5,6 +5,9 @@
 *          mucci@cs.utk.edu
 * Mods:    Kevin London 
 *          london@cs.utk.edu
+* Mods:    Dan Terpstra 
+*          terpstra@cs.utk.edu
+*          Modified to use libpfm and papi_pfm_events.c for native event encoding
 * Mods:    <your name here>
 *          <your email address>
 */
@@ -24,24 +27,14 @@
 /* BEGIN EXTERNAL DECLARATIONS */
 /*******************************/
 
-//extern hwi_search_t _papi_hwd_pentium4_base_preset_map[];
-//extern hwi_search_t _papi_hwd_pentium4_tot_iis_preset_map[];
-//extern hwi_search_t _papi_hwd_pentium4_L3_cache_map[];
-//extern hwi_dev_notes_t _papi_hwd_pentium4_base_dev_notes[];
-
-#ifdef PERFCTR_PFM_EVENTS
-  extern papi_svector_t _papi_pfm_event_vectors[];
-#endif
+extern papi_svector_t _papi_pfm_event_vectors[];
+extern int _papi_pfm_setup_presets(char *name, int type);
+extern int _papi_pfm_init();
+extern int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits);
 
 /*****************************/
 /* END EXTERNAL DECLARATIONS */
 /*****************************/
-#ifdef PERFCTR_PFM_EVENTS
-extern int _papi_pfm_setup_presets(char *name, int type);
-extern int _papi_pfm_init();
-extern int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits);
-#endif
-extern int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits);
 
 /****************************/
 /* BEGIN LOCAL DECLARATIONS */
@@ -430,11 +423,7 @@ int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
       e = &event_list[i];
 
       /* retrieve the mapping information about this native event */
-#ifdef PERFCTR_PFM_EVENTS
-      _papi_pfm_ntv_code_to_bits(ESI->NativeInfoArray[i].ni_event, &event_list[i].ra_bits);
-#else
-      _papi_hwd_ntv_code_to_bits(ESI->NativeInfoArray[i].ni_event, &e->ra_bits);
-#endif
+      _papi_pfm_ntv_code_to_bits(ESI->NativeInfoArray[i].ni_event, &e->ra_bits);
 
       /* combine counter bit masks for both esc registers into selector */
       e->ra_selector = e->ra_bits.counter[0] | e->ra_bits.counter[1];
@@ -739,6 +728,146 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    return (retval);
 }
 
+static void copy_value(unsigned int val, char *nam, char *names, unsigned int *values, int len)
+{
+   *values = val;
+   strncpy(names, nam, len);
+   names[len-1] = 0;
+}
+
+/**************************************************************/
+    /* perfctr-p4      */
+/* these define cccr and escr register bits, and the p4 event structure */
+#include "perfmon/pfmlib_pentium4.h"
+#include "../lib/pfmlib_pentium4_priv.h"
+
+extern pentium4_escr_reg_t pentium4_escrs[];
+extern pentium4_cccr_reg_t pentium4_cccrs[];
+extern pentium4_event_t pentium4_events[];
+
+extern inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int *event, unsigned int *umask);
+extern inline unsigned int _pfm_convert_umask(unsigned int event, unsigned int umask);
+
+
+/* this maps the arbitrary pmd index in libpfm/pentium4_events.h to the intel documentation */
+static int pfm2intel[] = {0, 1, 4, 5, 8, 9, 12, 13, 16, 2, 3, 6, 7, 10, 11, 14, 15, 17 };
+
+int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
+{
+    pentium4_escr_value_t escr_value;
+    pentium4_cccr_value_t cccr_value;
+    unsigned int event, event_mask, umask;
+    unsigned int tag_value, tag_enable;
+
+    int i, j, escr, cccr, pmd;
+
+    if (_pfm_decode_native_event(EventCode,&event,&umask) != PAPI_OK)
+      return(PAPI_ENOEVNT);
+
+    /* for each allowed escr (1 or 2) find the allowed cccrs.
+       for each allowed cccr find the pmd index
+       convert to an intel counter number; or it into bits->counter
+    */
+    for (i = 0; i < MAX_ESCRS_PER_EVENT; i++) {
+	bits->counter[i] = 0;
+	escr = pentium4_events[event].allowed_escrs[i];
+	if (escr < 0) {
+	    continue;
+	}
+
+	bits->escr[i] = escr;
+	for (j = 0; j < MAX_CCCRS_PER_ESCR; j++) {
+	    cccr = pentium4_escrs[escr].allowed_cccrs[j];
+	    if (cccr < 0) {
+		continue;
+	    }
+
+	    pmd = pentium4_cccrs[cccr].pmd;
+	    bits->counter[i] |= (1 << pfm2intel[pmd]);
+	}
+    }
+    /* if there's only one valid escr, copy the values */
+    if (escr < 0) {
+	bits->escr[1] = bits->escr[0];
+	bits->counter[1] = bits->counter[0];
+    }
+
+    /* Calculate the event-mask value. Invalid masks
+     * specified by the caller are ignored.
+     */
+    tag_value = 0;
+    tag_enable = 0;
+    event_mask = _pfm_convert_umask(event, umask);
+    if (event_mask & 0xF0000) {
+	tag_enable = 1;
+	tag_value = ((event_mask & 0xF0000) >> EVENT_MASK_BITS);
+    }
+
+    /* Set up the ESCR and CCCR register values. */
+    escr_value.val = 0;
+
+    escr_value.bits.t1_usr       = 0; /* controlled by kernel */
+    escr_value.bits.t1_os        = 0; /* controlled by kernel */
+//    escr_value.bits.t0_usr       = (plm & PFM_PLM3) ? 1 : 0;
+//    escr_value.bits.t0_os        = (plm & PFM_PLM0) ? 1 : 0;
+    escr_value.bits.tag_enable   = tag_enable;
+    escr_value.bits.tag_value    = tag_value;
+    escr_value.bits.event_mask   = event_mask;
+    escr_value.bits.event_select = pentium4_events[event].event_select;
+    escr_value.bits.reserved     = 0;
+
+    bits->event = escr_value.val;
+
+    /* initialize the proper bits in the cccr register */
+    cccr_value.val = 0;
+    cccr_value.bits.reserved1     = 0;
+    cccr_value.bits.enable        = 1;
+    cccr_value.bits.escr_select   = pentium4_events[event].escr_select;
+    cccr_value.bits.active_thread = 3; /* FIXME: This is set to count when either logical
+					*        CPU is active. Need a way to distinguish
+					*        between logical CPUs when HT is enabled.
+					*        the docs say these bits should always 
+					*        be set.                                  */
+    cccr_value.bits.compare       = 0; /* FIXME: What do we do with "threshold" settings? */
+    cccr_value.bits.complement    = 0; /* FIXME: What do we do with "threshold" settings? */
+    cccr_value.bits.threshold     = 0; /* FIXME: What do we do with "threshold" settings? */
+    cccr_value.bits.force_ovf     = 0; /* FIXME: Do we want to allow "forcing" overflow
+					*        interrupts on all counter increments? */
+    cccr_value.bits.ovf_pmi_t0    = 0;
+    cccr_value.bits.ovf_pmi_t1    = 0; /* PMI taken care of by kernel typically */
+    cccr_value.bits.reserved2     = 0;
+    cccr_value.bits.cascade       = 0; /* FIXME: How do we handle "cascading" counters? */
+    cccr_value.bits.overflow      = 0;
+
+    bits->cccr = cccr_value.val;
+
+    /* these flags are always zero, from what I can tell */
+    bits->pebs_enable = 0;	// flag for PEBS counting
+    bits->pebs_matrix_vert = 0;	// flag for PEBS_MATRIX_VERT, whatever that is 
+    bits->ireset = 0;		// I don't really know what this does
+
+    SUBDBG("escr: 0x%lx; cccr:  0x%lx\n", escr_value.val, cccr_value.val);
+
+    return (PAPI_OK);
+}
+
+/* This version of bits_to_info is straight from p4_events and is appropriate 
+    only for that class of machines. */
+int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
+                               unsigned int *values, int name_len, int count)
+{
+   int i = 0;
+   copy_value(bits->cccr, "P4 CCCR", &names[i*name_len], &values[i], name_len);
+   if (++i == count) return(i);
+   copy_value(bits->event, "P4 Event", &names[i*name_len], &values[i], name_len);
+   if (++i == count) return(i);
+   copy_value(bits->pebs_enable, "P4 PEBS Enable", &names[i*name_len], &values[i], name_len);
+   if (++i == count) return(i);
+   copy_value(bits->pebs_matrix_vert, "P4 PEBS Matrix Vertical", &names[i*name_len], &values[i], name_len);
+   if (++i == count) return(i);
+   copy_value(bits->ireset, "P4 iReset", &names[i*name_len], &values[i], name_len);
+   return(++i);
+}
 
 #if defined(PAPI_PENTIUM4_FP_X87)
    #define P4_FPU " X87"
@@ -812,13 +941,6 @@ papi_svector_t _p4_vector_table[] = {
   {(void (*)())_papi_hwd_set_domain, VEC_PAPI_HWD_SET_DOMAIN},
   {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
   {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
-#ifndef PERFCTR_PFM_EVENTS
-  {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
-  {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
-  {(void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
-  {(void (*)())_papi_hwd_ntv_code_to_bits, VEC_PAPI_HWD_NTV_CODE_TO_BITS},
-  {(void (*)())_papi_hwd_ntv_bits_to_info, VEC_PAPI_HWD_NTV_BITS_TO_INFO},
-#endif
   {NULL, VEC_PAPI_END }
 };
 #endif
@@ -828,10 +950,8 @@ int setup_p4_vector_table(papi_vectors_t * vtable){
 
 #ifndef PAPI_NO_VECTOR
   retval = _papi_hwi_setup_vector_table( vtable, _p4_vector_table);
-#ifdef PERFCTR_PFM_EVENTS
   if (retval == PAPI_OK)
     retval = _papi_hwi_setup_vector_table(vtable, _papi_pfm_event_vectors);
-#endif
 #endif
   return ( retval ); 
 }

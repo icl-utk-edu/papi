@@ -4,7 +4,7 @@
 # Mods: Maynard Johnson
 #       maynardj@us.ibm.com
 
-DESCR   = "Linux with PerfCtr $(VERSION) patch and library, and perfmon2 library"
+DESCR   = "Linux with PerfCtr $(VERSION) patch and library, and perfmon2 libpfm library"
 LIBS    = static shared
 TARGETS = serial attach multiplex_and_pthreads shared
 LIBRARY = libpapi.a
@@ -15,7 +15,14 @@ ARCH	= $(shell uname -m)
 ifeq (p4,$(CPU))
 TARGETS += p4
 CFLAGS 		+= -DPENTIUM4
+else
+ifeq (p3,$(CPU))
+CPU_EVENTS	:= p3_pfm_events
+else
+CPU_EVENTS	:= $(CPU)_events
 endif
+endif
+
 
 ifeq (i686,$(ARCH))
 ARCH = i386
@@ -135,7 +142,7 @@ CFLAGS-2.7.x := $(CFLAGS-2.6.x)
 CFLAGS += $(EVENTFLAGS) -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) $(CFLAGS-$(VERSION))
 
 MISCHDRS = perfctr-$(CPU).h
-MISCSRCS =  $(CPU)_events.c linux.c $(ARCH_SPEC_EVTS)
+MISCSRCS =  $(CPU_EVENTS).c linux.c $(ARCH_SPEC_EVTS)
 SHLIBDEPS = -Bdynamic -L$(PERFCTR_LIB_PATH) -lperfctr
 PERFCTR_OBJS = $(shell ar t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
 
@@ -228,8 +235,8 @@ $(PERFCTR_OBJS): $(PERFCTR_LIB_PATH)/libperfctr.a
 $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
 	ar xv $<
 
-$(CPU)_events.o: $(CPU)_events.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPU)_events.c -o $@
+$(CPU_EVENTS).o: $(CPU_EVENTS).c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPU_EVENTS).c -o $@
 
 linux.o: linux.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
