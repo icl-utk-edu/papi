@@ -142,7 +142,11 @@ CFLAGS-2.7.x := $(CFLAGS-2.6.x)
 CFLAGS += $(EVENTFLAGS) -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) $(CFLAGS-$(VERSION))
 
 MISCHDRS = perfctr-$(CPU).h
-MISCSRCS =  $(CPU_EVENTS).c linux.c $(ARCH_SPEC_EVTS)
+MISCSRCS =  linux.c $(ARCH_SPEC_EVTS)
+# Pentium 4 no longer needs a p4_events.c file
+ifneq (,$(CPU_EVENTS))
+  MISCSRCS +=  $(CPU_EVENTS).c
+endif
 SHLIBDEPS = -Bdynamic -L$(PERFCTR_LIB_PATH) -lperfctr
 PERFCTR_OBJS = $(shell ar t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
 
