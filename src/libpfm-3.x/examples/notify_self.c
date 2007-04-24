@@ -108,9 +108,14 @@ retry:
 	 * XXX: risky to do printf() in signal handler!
 	 */
 	if (event1_name)
-		printf("Notification %lu: %"PRIu64" %s\n", notification_received, pd[1].reg_value, event1_name);
+		printf("Notification %lu: %"PRIu64" %s ip=0x%llx\n",
+			notification_received, pd[1].reg_value,
+			event1_name,
+			(unsigned long long)msg.pfm_ovfl_msg.msg_ovfl_ip);
 	else
-		printf("Notification %lu\n", notification_received);
+		printf("Notification %lu ip=0x%llx\n",
+			notification_received,
+			(unsigned long long)msg.pfm_ovfl_msg.msg_ovfl_ip);
 
 	/*
 	 * And resume monitoring

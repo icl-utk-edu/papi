@@ -42,8 +42,8 @@ given its opaque descriptor \fBe\fR.
 On some PMU models, the code associated with an event is different based
 on the counter it is programmed into. The \fBpfm_get_event_code_counter\fR
 function is used to retrieve the event code in \fBcode\fR when the event \fBe\fR
-is programmed into counter \fBcnt\fR. The counter index must correspond to the
-index of a counting PMC register.
+is programmed into counter \fBcnt\fR. The counter index \fBcnt\fR must correspond
+to of a counting PMD register.
 .sp
 Given an opaque event descriptor \fBe\fR, the \fBpfm_get_event_counters\fR 
 function returns in \fBcounters\fR a bitmask of type \fBpfmlib_regmask_t\fR where 

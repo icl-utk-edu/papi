@@ -116,19 +116,19 @@ static void
 process_smpl_buf(smpl_hdr_t *hdr, uint64_t *smpl_pmds, unsigned int num_smpl_pmds, size_t entry_size)
 {
 	static uint64_t last_overflow = ~0; /* initialize to biggest value possible */
+	static uint64_t last_count;
 	smpl_entry_t *ent;
 	size_t pos, count;
 	uint64_t entry, *reg;
 	unsigned int j, n;
 	
-	if (hdr->hdr_overflows <= last_overflow && last_overflow != ~0) {
-		warning("skipping identical set of samples %"PRIu64" <= %"PRIu64"\n",
+	if (hdr->hdr_overflows == last_overflow && last_count == hdr->hdr_count) {
+		warning("skipping identical set of samples %"PRIu64" = %"PRIu64"\n",
 			hdr->hdr_overflows, last_overflow);
 		return;
 	}
 	last_overflow = hdr->hdr_overflows;
-
-	count = hdr->hdr_count;
+	count = last_count = hdr->hdr_count;
 
 	ent   = (smpl_entry_t *)(hdr+1);
 	pos   = (unsigned long)ent;

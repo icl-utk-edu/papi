@@ -102,18 +102,21 @@ static void
 process_smpl_buf(smpl_hdr_t *hdr)
 {
 	static uint64_t last_overflow = ~0; /* initialize to biggest value possible */
+	static uint64_t last_count;
 	smpl_entry_t *ent;
 	uint64_t entry;
 	unsigned long count;
 
-	if (hdr->overflows <= last_overflow && last_overflow != ~0) {
-		warning("skipping identical set of samples %"PRIu64" <= %"PRIu64"\n",
+	count = (hdr->ds.pebs_index - hdr->ds.pebs_buf_base)/sizeof(*ent);
+
+	if (hdr->overflows == last_overflow && last_count == count) {
+		warning("skipping identical set of samples %"PRIu64" = %"PRIu64"\n",
 			hdr->overflows, last_overflow);
 		return;	
 	}
+	last_count = count;
 	last_overflow = hdr->overflows;
 
-	count = (hdr->ds.pebs_index - hdr->ds.pebs_buf_base)/sizeof(*ent);
 	/*
 	 * the beginning of the buffer does not necessarily follow the header
 	 * due to alignement.

@@ -1253,6 +1253,26 @@ pentium4_event_t pentium4_events[] = {
 			 "single-precisions operands.",
 		 .bit = 15,
 		},
+		{.name = "TAG0",
+		 .desc = "Tag this event with tag bit 0 "
+			 "for retirement counting with execution_event.",
+		 .bit = 16,
+		},
+		{.name = "TAG1",
+		 .desc = "Tag this event with tag bit 1 "
+			 "for retirement counting with execution_event.",
+		 .bit = 17,
+		},
+		{.name = "TAG2",
+		 .desc = "Tag this event with tag bit 2 "
+			 "for retirement counting with execution_event.",
+		 .bit = 18,
+		},
+		{.name = "TAG3",
+		 .desc = "Tag this event with tag bit 3 "
+			 "for retirement counting with execution_event.",
+		 .bit = 19,
+		},
 	 },
 	},
 
@@ -1267,6 +1287,26 @@ pentium4_event_t pentium4_events[] = {
 		 .desc = "Count all uops operating on packed "
 			 "double-precisions operands.",
 		 .bit = 15,
+		},
+		{.name = "TAG0",
+		 .desc = "Tag this event with tag bit 0 "
+			 "for retirement counting with execution_event.",
+		 .bit = 16,
+		},
+		{.name = "TAG1",
+		 .desc = "Tag this event with tag bit 1 "
+			 "for retirement counting with execution_event.",
+		 .bit = 17,
+		},
+		{.name = "TAG2",
+		 .desc = "Tag this event with tag bit 2 "
+			 "for retirement counting with execution_event.",
+		 .bit = 18,
+		},
+		{.name = "TAG3",
+		 .desc = "Tag this event with tag bit 3 "
+			 "for retirement counting with execution_event.",
+		 .bit = 19,
 		},
 	 },
 	},
@@ -1283,6 +1323,26 @@ pentium4_event_t pentium4_events[] = {
 			 "single-precisions operands.",
 		 .bit = 15,
 		},
+		{.name = "TAG0",
+		 .desc = "Tag this event with tag bit 0 "
+			 "for retirement counting with execution_event.",
+		 .bit = 16,
+		},
+		{.name = "TAG1",
+		 .desc = "Tag this event with tag bit 1 "
+			 "for retirement counting with execution_event.",
+		 .bit = 17,
+		},
+		{.name = "TAG2",
+		 .desc = "Tag this event with tag bit 2 "
+			 "for retirement counting with execution_event.",
+		 .bit = 18,
+		},
+		{.name = "TAG3",
+		 .desc = "Tag this event with tag bit 3 "
+			 "for retirement counting with execution_event.",
+		 .bit = 19,
+		},
 	 },
 	},
 
@@ -1297,6 +1357,26 @@ pentium4_event_t pentium4_events[] = {
 		 .desc = "Count all uops operating on scalar "
 			 "double-precisions operands.",
 		 .bit = 15,
+		},
+		{.name = "TAG0",
+		 .desc = "Tag this event with tag bit 0 "
+			 "for retirement counting with execution_event.",
+		 .bit = 16,
+		},
+		{.name = "TAG1",
+		 .desc = "Tag this event with tag bit 1 "
+			 "for retirement counting with execution_event.",
+		 .bit = 17,
+		},
+		{.name = "TAG2",
+		 .desc = "Tag this event with tag bit 2 "
+			 "for retirement counting with execution_event.",
+		 .bit = 18,
+		},
+		{.name = "TAG3",
+		 .desc = "Tag this event with tag bit 3 "
+			 "for retirement counting with execution_event.",
+		 .bit = 19,
 		},
 	 },
 	},
@@ -1314,6 +1394,26 @@ pentium4_event_t pentium4_events[] = {
 			 "operands in memory or MMX registers.",
 		 .bit = 15,
 		},
+		{.name = "TAG0",
+		 .desc = "Tag this event with tag bit 0 "
+			 "for retirement counting with execution_event.",
+		 .bit = 16,
+		},
+		{.name = "TAG1",
+		 .desc = "Tag this event with tag bit 1 "
+			 "for retirement counting with execution_event.",
+		 .bit = 17,
+		},
+		{.name = "TAG2",
+		 .desc = "Tag this event with tag bit 2 "
+			 "for retirement counting with execution_event.",
+		 .bit = 18,
+		},
+		{.name = "TAG3",
+		 .desc = "Tag this event with tag bit 3 "
+			 "for retirement counting with execution_event.",
+		 .bit = 19,
+		},
 	 },
 	},
 
@@ -1330,6 +1430,26 @@ pentium4_event_t pentium4_events[] = {
 			 "operands in memory or MMX registers.",
 		 .bit = 15,
 		},
+		{.name = "TAG0",
+		 .desc = "Tag this event with tag bit 0 "
+			 "for retirement counting with execution_event.",
+		 .bit = 16,
+		},
+		{.name = "TAG1",
+		 .desc = "Tag this event with tag bit 1 "
+			 "for retirement counting with execution_event.",
+		 .bit = 17,
+		},
+		{.name = "TAG2",
+		 .desc = "Tag this event with tag bit 2 "
+			 "for retirement counting with execution_event.",
+		 .bit = 18,
+		},
+		{.name = "TAG3",
+		 .desc = "Tag this event with tag bit 3 "
+			 "for retirement counting with execution_event.",
+		 .bit = 19,
+		},
 	 },
 	},
 
@@ -1343,6 +1463,26 @@ pentium4_event_t pentium4_events[] = {
 		{.name = "ALL",
 		 .desc = "Count all x87 FP uops.",
 		 .bit = 15,
+		},
+		{.name = "TAG0",
+		 .desc = "Tag this event with tag bit 0 "
+			 "for retirement counting with execution_event.",
+		 .bit = 16,
+		},
+		{.name = "TAG1",
+		 .desc = "Tag this event with tag bit 1 "
+			 "for retirement counting with execution_event.",
+		 .bit = 17,
+		},
+		{.name = "TAG2",
+		 .desc = "Tag this event with tag bit 2 "
+			 "for retirement counting with execution_event.",
+		 .bit = 18,
+		},
+		{.name = "TAG3",
+		 .desc = "Tag this event with tag bit 3 "
+			 "for retirement counting with execution_event.",
+		 .bit = 19,
 		},
 	 },
 	},

@@ -422,6 +422,13 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 		reg.sel_int        = 1; /* force APIC int to 1 */
 
 		if (cntrs) {
+			/*
+			 * counter mask is 8-bit wide, do not silently
+			 * wrap-around
+			 */
+			if (cntrs[i].cnt_mask > 255)
+				return PFMLIB_ERR_INVAL;
+
 			reg.sel_cnt_mask = cntrs[i].cnt_mask;
 			reg.sel_edge	 = cntrs[i].flags & PFM_CORE_SEL_EDGE ? 1 : 0;
 			reg.sel_inv	 = cntrs[i].flags & PFM_CORE_SEL_INV ? 1 : 0;

@@ -412,21 +412,19 @@ pfm_gen_ia64_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 static void
 pfm_gen_ia64_get_impl_pmcs(pfmlib_regmask_t *impl_pmcs)
 {
-	memcpy(impl_pmcs->bits, pfm_gen_ia64_impl_pmcs, sizeof(impl_pmcs->bits));
+	memcpy(impl_pmcs->bits, pfm_gen_ia64_impl_pmcs, sizeof(*impl_pmcs));
 }
 
 static void
 pfm_gen_ia64_get_impl_pmds(pfmlib_regmask_t *impl_pmds)
 {
-	memcpy(impl_pmds->bits, pfm_gen_ia64_impl_pmds, sizeof(impl_pmds->bits));
+	memcpy(impl_pmds->bits, pfm_gen_ia64_impl_pmds, sizeof(*impl_pmds));
 }
 
 static void
 pfm_gen_ia64_get_impl_counters(pfmlib_regmask_t *impl_counters)
 {
 	unsigned int i = 0;
-
-	memset(impl_counters, 0, sizeof(*impl_counters));
 
 	/* pmd4-pmd7 */
 	for(i=4; i < 8; i++)

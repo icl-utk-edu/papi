@@ -2308,8 +2308,6 @@ pfm_mont_get_impl_pmcs(pfmlib_regmask_t *impl_pmcs)
 {
 	unsigned int i = 0;
 
-	memset(impl_pmcs, 0, sizeof(*impl_pmcs));
-
 	for(i=0; i < 16; i++)
 		pfm_regmask_set(impl_pmcs, i);
 
@@ -2321,8 +2319,6 @@ static void
 pfm_mont_get_impl_pmds(pfmlib_regmask_t *impl_pmds)
 {
 	unsigned int i = 0;
-
-	memset(impl_pmds, 0, sizeof(*impl_pmds));
 
 	for(i=4; i < 16; i++)
 		pfm_regmask_set(impl_pmds, i);
@@ -2336,8 +2332,6 @@ static void
 pfm_mont_get_impl_counters(pfmlib_regmask_t *impl_counters)
 {
 	unsigned int i = 0;
-
-	memset(impl_counters, 0, sizeof(*impl_counters));
 
 	/* counter pmds are contiguous */
 	for(i=4; i < 16; i++)

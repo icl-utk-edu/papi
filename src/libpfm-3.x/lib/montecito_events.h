@@ -432,7 +432,7 @@ static pme_mont_entry_t montecito_pe []={
 #define PME_MONT_CPU_OP_CYCLES_QUAL 200
 { "CPU_OP_CYCLES_QUAL", {0x11012}, 0xfff0, 1, {0xffff0003}, "CPU Operating Cycles -- Qualified cycles only"},
 #define PME_MONT_CPU_OP_CYCLES_HALTED 201
-{ "CPU_OP_CYCLES_HALTED", {0x1018}, 0xfff0, 7, {0xffff0000}, "CPU Operating Cycles Halted"},
+{ "CPU_OP_CYCLES_HALTED", {0x1018}, 0x0400, 7, {0xffff0000}, "CPU Operating Cycles Halted"},
 #define PME_MONT_DATA_DEBUG_REGISTER_FAULT 202
 { "DATA_DEBUG_REGISTER_FAULT", {0x52}, 0xfff0, 1, {0xffff0000}, "Fault Due to Data Debug Reg. Match to Load/Store Instruction"},
 #define PME_MONT_DATA_DEBUG_REGISTER_MATCHES 203

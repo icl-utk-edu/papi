@@ -56,7 +56,7 @@ static pme_amd64_entry_t amd64_pe[]={
 		  .pme_udesc = "Add pipe load ops",
 		  .pme_ucode = 0x08
 		},
-		{ .pme_uname = "OPS_MULTIPY_PIPE_LOAD_OPS",
+		{ .pme_uname = "OPS_MULTIPLY_PIPE_LOAD_OPS",
 		  .pme_udesc = "Multiply pipe load ops",
 		  .pme_ucode = 0x10
 		},
@@ -972,7 +972,7 @@ static pme_amd64_entry_t amd64_pe[]={
 		  .pme_udesc = "Probe hit clean",
 		  .pme_ucode = 0x02,
 		},
-		{ .pme_uname = "HIT_CLEAN_NO_MEMORY_CANCEL",
+		{ .pme_uname = "HIT_DIRTY_NO_MEMORY_CANCEL",
 		  .pme_udesc = "Probe hit dirty without memory cancel (probed by Sized Write or Change2Dirty)",
 		  .pme_ucode = 0x04,
 		},

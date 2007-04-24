@@ -1,7 +1,7 @@
 /*
- * detect_pmcs.c - detect unavailable PMC registers based on perfmon2 information
+ * detect_pmu_regs.c - detect unavailable PMD/PMC registers based on perfmon2 information
  *
- * Copyright (c) 2006 Hewlett-Packard Development Company, L.P.
+ * Copyright (c) 2006-2007 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -48,20 +48,25 @@
  * context is loaded. 
  */
 int
-detect_unavail_pmcs(int fd, pfmlib_regmask_t *r_pmcs)
+detect_unavail_pmu_regs(int fd, pfmlib_regmask_t *r_pmcs, pfmlib_regmask_t *r_pmds)
 {
 	pfarg_ctx_t ctx;
 	pfarg_setinfo_t	setf;
 	int ret, i, j, myfd;
 
-	memset(r_pmcs, 0, sizeof(*r_pmcs));
+	if (r_pmcs)
+		memset(r_pmcs, 0, sizeof(*r_pmcs));
+	if (r_pmds)
+		memset(r_pmds, 0, sizeof(*r_pmds));
 
 	memset(&ctx, 0, sizeof(ctx));
 	memset(&setf, 0, sizeof(setf));
 #if  PFMLIB_REG_MAX < PFM_MAX_PMCS
 #error "PFMLIB_REG_MAX too small for PFM_MAX_PMCS"
 #endif
-
+#if  PFMLIB_REG_MAX < PFM_MAX_PMDS
+#error "PFMLIB_REG_MAX too small for PFM_MAX_PMDS"
+#endif
 	/*
 	 * if no context descriptor is passed, then create
 	 * a temporary context
@@ -79,13 +84,22 @@ detect_unavail_pmcs(int fd, pfmlib_regmask_t *r_pmcs)
 	 */
 	ret = pfm_getinfo_evtsets(myfd, &setf, 1);
 	if (ret == 0) {
-		for(i=0; i < PFM_PMC_BV; i++) {
-			for(j=0; j < 64; j++) {
-				if ((setf.set_avail_pmcs[i] & (1ULL << j)) == 0)
-					pfm_regmask_set(r_pmcs, (i<<6)+j);
+		if (r_pmcs)
+			for(i=0; i < PFM_PMC_BV; i++) {
+				for(j=0; j < 64; j++) {
+					if ((setf.set_avail_pmcs[i] & (1ULL << j)) == 0)
+						pfm_regmask_set(r_pmcs, (i<<6)+j);
+				}
 			}
-		}
+		if (r_pmds)
+			for(i=0; i < PFM_PMD_BV; i++) {
+				for(j=0; j < 64; j++) {
+					if ((setf.set_avail_pmds[i] & (1ULL << j)) == 0)
+						pfm_regmask_set(r_pmds, (i<<6)+j);
+				}
+			}
 	}
-	if (fd == -1) close(myfd);
+	if (fd == -1)
+		close(myfd);
 	return ret;
 }
