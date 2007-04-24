@@ -58,17 +58,11 @@ static inline int encode_native_event_raw(unsigned int event, unsigned int mask)
 static inline int encode_native_event(unsigned int event, unsigned int num_mask, unsigned int *mask_values)
 {
   int i;
-//  int ret;
-//  unsigned int code;
   unsigned int tmp = event << PAPI_NATIVE_EVENT_SHIFT;
   SUBDBG("Native base event is 0x%08x with %d masks\n",tmp,num_mask);
   for (i=0;i<num_mask;i++) {
-//    if ((ret = pfm_get_event_mask_code(event, mask_values[i], &code)) == PFMLIB_SUCCESS) {
       SUBDBG("Mask index is 0x%08x\n",mask_values[i]);
       tmp = tmp | ((1 << mask_values[i]) << PAPI_NATIVE_UMASK_SHIFT);
-//    } else {
-//      PAPIERROR("pfm_get_event_mask_code(0x%x,%d,%p): %s",event,i,&code,pfm_strerror(ret));
-//    }
   }
   SUBDBG("Full native encoding is 0x%08x\n",tmp|PAPI_NATIVE_MASK);
   return(tmp|PAPI_NATIVE_MASK);
@@ -206,15 +200,18 @@ static inline int find_preset_code(char *tmp, int *code)
   return(PAPI_EINVAL);
 }
 
+/* #define SHOW_LOADS */
+
 static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_entry_t *here)
 {
   char name[PATH_MAX], line[LINE_MAX], *tmpn;
   FILE *table;
   int line_no = 1, get_presets = 0, derived = 0, insert = 2, preset = 0;
-//  static pfm_preset_search_entry_t tmp[PAPI_MAX_PRESET_EVENTS];
 
+#ifdef SHOW_LOADS
   SUBDBG("%p\n",here);
-//  memset(tmp,0x0,sizeof(tmp));
+#endif
+
   here[0].preset = PAPI_TOT_CYC;
   here[0].derived = NOT_DERIVED;
   here[1].preset = PAPI_TOT_INS;
@@ -224,11 +221,15 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
     sprintf(name,"%s",tmpn);
   else
     sprintf(name,"%s/%s",PAPI_DATADIR,PERFMON_EVENT_FILE);
+#ifdef SHOW_LOADS
   SUBDBG("Opening %s\n",name);
+#endif
   table = fopen(name,"r");
   if (table == NULL)
     {
+#ifdef SHOW_LOADS
       SUBDBG("Open %s failed, trying ./%s.\n",name,PERFMON_EVENT_FILE);
+#endif
       table = fopen(PERFMON_EVENT_FILE,"r");
       if (table == NULL)
 	{
@@ -237,7 +238,9 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 	}
       strcpy(name,PERFMON_EVENT_FILE);
     }
+#ifdef SHOW_LOADS
   SUBDBG("Open %s succeeded.\n",name);
+#endif
   while (fgets(line,LINE_MAX,table))
     {
       char *t;
@@ -250,15 +253,19 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 	continue;
       if (t[0] == '#')
 	{
-//	  SUBDBG("Comment found on line %d\n",line_no);
+/*	  SUBDBG("Comment found on line %d\n",line_no); */
 	  goto nextline;
 	}
       else if (strcasecmp(t,"CPU") == 0)
 	{
+#ifdef SHOW_LOADS
 	  SUBDBG("CPU token found on line %d\n",line_no);
+#endif
 	  if (get_presets != 0)
 	    {
+#ifdef SHOW_LOADS
 	      SUBDBG("Ending preset scanning at line %d of %s.\n",line_no,name);
+#endif
 	      goto done;
 	    }
 	  t = trim_string(strtok(NULL,","));
@@ -267,30 +274,43 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 	      PAPIERROR("Expected name after CPU token at line %d of %s -- ignoring",line_no,name);
 	      goto nextline;
 	    }
+#ifdef SHOW_LOADS
 	  SUBDBG("Examining CPU (%s) vs. (%s)\n",t,pmu_name);
+#endif
 	  if (strcasecmp(t, pmu_name) == 0)
 	    {
 	      int type;
 
+#ifdef SHOW_LOADS
 	      SUBDBG("Found CPU %s at line %d of %s.\n",t,line_no,name);
+#endif
 	      t = trim_string(strtok(NULL,","));
 	      if ((t == NULL) || (strlen(t) == 0))
 		{
+#ifdef SHOW_LOADS
 		  SUBDBG("No additional qualifier found, matching on string.\n");
+#endif
 		  get_presets = 1;
 		}
 	      else if ((sscanf(t,"%d",&type) == 1) && (type == pmu_type))
 		{
+#ifdef SHOW_LOADS
 		  SUBDBG("Found CPU %s type %d at line %d of %s.\n",pmu_name,type,line_no,name);
+#endif
 		  get_presets = 1;
 		}
 	      else
-		SUBDBG("Additional qualifier match failed %d vs %d.\n",pmu_type,type);
+#ifdef SHOW_LOADS
+		SUBDBG("Additional qualifier match failed %d vs %d.\n",pmu_type,type)
+#endif
+	      ;
 	    }
 	}
       else if (strcasecmp(t,"PRESET") == 0)
 	{
+#ifdef SHOW_LOADS
 	  SUBDBG("PRESET token found on line %d\n",line_no);
+#endif
 	  if (get_presets == 0)
 	    goto nextline;
 	  t = trim_string(strtok(NULL,","));
@@ -299,28 +319,35 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 	      PAPIERROR("Expected name after PRESET token at line %d of %s -- ignoring",line_no,name);
 	      goto nextline;
 	    }
+#ifdef SHOW_LOADS
 	  SUBDBG("Examining preset %s\n",t);
+#endif
 	  if (find_preset_code(t,&preset) != PAPI_OK)
 	    {
 	      PAPIERROR("Invalid preset name %s after PRESET token at line %d of %s -- ignoring",t,line_no,name);
 	      goto nextline;
 	    }
+#ifdef SHOW_LOADS
 	  SUBDBG("Found 0x%08x for %s\n",preset,t);
+#endif
 	  t = trim_string(strtok(NULL,","));
 	  if ((t == NULL) || (strlen(t) == 0))
 	    {
 	      PAPIERROR("Expected derived type after PRESET token at line %d of %s -- ignoring",line_no,name);
 	      goto nextline;
 	    }
+#ifdef SHOW_LOADS
 	  SUBDBG("Examining derived %s\n",t);
+#endif
 	  if (_papi_hwi_derived_type(t,&derived) != PAPI_OK)
 	    {
 	      PAPIERROR("Invalid derived name %s after PRESET token at line %d of %s -- ignoring",t,line_no,name);
 	      goto nextline;
 	    }
+#ifdef SHOW_LOADS
 	  SUBDBG("Found %d for %s\n",derived,t);
-
 	  SUBDBG("Adding 0x%x,%d to preset search table.\n",preset,derived);
+#endif
 	  here[insert].preset = preset;
 	  here[insert].derived = derived;
 
@@ -332,7 +359,9 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 	      PAPIERROR("Expected Operation string after derived type DERIVED_POSTFIX at line %d of %s -- ignoring",line_no,name);
 	      goto nextline;
 	    }
+#ifdef SHOW_LOADS
 	    SUBDBG("Saving PostFix operations %s\n",t);
+#endif
 	    here[insert].operation = strdup(t);
 	  }
 	  /* All derived terms collected here */
@@ -342,7 +371,9 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 	    if ((t == NULL) || (strlen(t) == 0)) break;
 	    if (strcasecmp(t,"NOTE") == 0) break;
 	    here[insert].findme[i] = strdup(t);
+#ifdef SHOW_LOADS
 	    SUBDBG("Adding term (%d) %s to preset event 0x%x.\n",i,t,preset);
+#endif
 	  } while (++i < MAX_COUNTER_TERMS);
 	  /* End of derived support */
 
@@ -355,13 +386,17 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 
 	  /* Handle optional NOTEs */
 	  if (t && (strcasecmp(t,"NOTE") == 0)) {
+#ifdef SHOW_LOADS
 	    SUBDBG("%s found on line %d\n",t,line_no);
-	    t = trim_note(strtok(NULL,"")); // read the rest of the line
+#endif
+	    t = trim_note(strtok(NULL,"")); /* read the rest of the line */
 	    if ((t == NULL) || (strlen(t) == 0))
 	      PAPIERROR("Expected Note string at line %d of %s\n",line_no,name);
 	    else {
 	      here[insert].note = strdup(t);
+#ifdef SHOW_LOADS
 	      SUBDBG("NOTE: --%s-- found on line %d\n",t,line_no);
+#endif
 	    }
 	  }
 
@@ -379,13 +414,13 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
   fclose(table);
   if (get_presets != 0) /* It at least found the CPU */
     {
-//      *here = tmp;
       return(PAPI_OK);
     }
 
   PAPIERROR("Failed to find events for CPU %s, type %d in %s",pmu_name,pmu_type,name);
   return(PAPI_ESBSTR);
 }
+
 /* Frees memory for all the strdup'd char strings in a preset string array.
     Assumes the array is initialized to 0 and has at least one 0 entry at the end.
     free()ing a NULL pointer is a NOP. */
@@ -486,7 +521,7 @@ static int generate_preset_search_map(hwi_search_t **maploc, hwi_dev_notes_t **n
 	      }
 	  } while (strmap[i].findme[term] != NULL && term < MAX_COUNTER_TERMS);
 
-	  // terminate the native term array with PAPI_NULL
+	  /* terminate the native term array with PAPI_NULL */
 	  if (term < MAX_COUNTER_TERMS) psmap[j].data.native[term] = PAPI_NULL;
 
 	if (ret == PAPI_OK)
@@ -633,6 +668,7 @@ int _papi_pfm_init()
       PAPIERROR("pfm_get_num_events(%p): %s", &ncnt, pfm_strerror(retval));
       return(PAPI_ESBSTR);
    }
+   SUBDBG("pfm_get_num_events() returns: %d\n",ncnt);
   _papi_hwi_system_info.sub_info.num_native_events = ncnt;
   return (PAPI_OK);
 }
@@ -926,7 +962,7 @@ int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
    return(++i);
 }
 
-#endif // PERFCTR_PFM_EVENTS
+#endif /* PERFCTR_PFM_EVENTS */
 
 papi_svector_t _papi_pfm_event_vectors[] = {
   {(void (*)())_papi_pfm_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
