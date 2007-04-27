@@ -22,13 +22,14 @@
 /*
  * Itanium specific context flags
  */
-#define PFM_ITA_FL_INSECURE	0x10000		/* force psr.sp=0 for non self-monitoring */
+#define PFM_ITA_FL_INSECURE 0x10000 /* force psr.sp=0 for non self-monitoring */
 
 /*
  * Itanium specific event set flags
  */
-#define PFM_ITA_SETFL_EXCL_INTR	0x10000		/* exclude interrupt triggered execution */
-#define PFM_ITA_SETFL_INTR_ONLY	0x20000		/* include only interrupt triggered execution */
+#define PFM_ITA_SETFL_EXCL_INTR	0x10000	/* exclude interrupt triggered execution */
+#define PFM_ITA_SETFL_INTR_ONLY	0x20000	/* include only interrupt triggered execution */
+#define PFM_ITA_SETFL_IDLE_EXCL 0x40000 /* not stop monitoring in idle loop */
 
 /*
  * compatibility for previous versions of the interface

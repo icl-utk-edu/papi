@@ -215,6 +215,8 @@ extern int pfm_get_inst_retired_event(pfmlib_event_t *e);
 #define PFMLIB_MIPS_SB1_PMU		74	/* MIPS SB1/SB1A */
 #define PFMLIB_MIPS_VR5432_PMU		75	/* MIPS VR5432 */
 #define PFMLIB_MIPS_VR5500_PMU		76	/* MIPS VR5500 */
+#define PFMLIB_MIPS_ICE9A_PMU		77	/* SiCortex ICE9A */
+#define PFMLIB_MIPS_ICE9B_PMU		78	/* SiCortex ICE9B */
 
 /*
  * pfmlib error codes

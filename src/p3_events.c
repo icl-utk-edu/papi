@@ -24,12 +24,7 @@ hwi_search_t *preset_search_map;
 */
 
 #include "p3_ath_event_tables.h"
-#include "p3_core_event_tables.h"
-#include "p3_opt_event_tables.h"
-#include "p3_pm_event_tables.h"
 #include "p3_p2_event_tables.h"
-#include "p3_p3_event_tables.h"
-
 
 /* Note:  MESI (Intel) and MOESI (AMD) bits are programmatically defined
           for those events that can support them. You can find those
@@ -41,6 +36,63 @@ hwi_search_t *preset_search_map;
           using _papi_hwd_name_to_code() with the proper bit characters
           appended to the event name.
 */
+
+/*********************************************/
+/* CODE TO INITIALIZE NATIVE AND PRESET MAPS */
+/*********************************************/
+
+/* Assign the global native and preset table pointers, find the native
+   table's size in memory and then call the preset setup routine. */
+int setup_p3_presets(int cputype) {
+   int retval = PAPI_OK;
+
+   switch (cputype) {
+   case PERFCTR_X86_GENERIC:
+   case PERFCTR_X86_CYRIX_MII:
+   case PERFCTR_X86_WINCHIP_C6:
+   case PERFCTR_X86_WINCHIP_2:
+   case PERFCTR_X86_VIA_C3:
+   case PERFCTR_X86_INTEL_P5:
+   case PERFCTR_X86_INTEL_P5MMX:
+   case PERFCTR_X86_INTEL_PII:
+      native_table = &_papi_hwd_p2_native_map;
+      _papi_hwi_system_info.sub_info.num_native_events =_papi_hwd_p2_native_count;
+      preset_search_map = &_papi_hwd_p2_preset_map;
+      break;
+   case PERFCTR_X86_AMD_K7:
+      native_table = &_papi_hwd_k7_native_map;
+      _papi_hwi_system_info.sub_info.num_native_events = _papi_hwd_k7_native_count;
+      preset_search_map = &_papi_hwd_ath_preset_map;
+      break;
+   case PERFCTR_X86_INTEL_P6:
+   case PERFCTR_X86_INTEL_PIII:
+#ifdef PERFCTR_X86_INTEL_PENTM
+   case PERFCTR_X86_INTEL_PENTM:
+#endif
+#ifdef PERFCTR_X86_INTEL_CORE
+   case PERFCTR_X86_INTEL_CORE:
+#endif
+#ifdef PERFCTR_X86_INTEL_CORE2
+   case PERFCTR_X86_INTEL_CORE2:
+#endif
+#ifdef PERFCTR_X86_AMD_K8 /* this is defined in perfctr 2.5.x */
+   case PERFCTR_X86_AMD_K8:
+#endif
+#ifdef PERFCTR_X86_AMD_K8C  /* this is defined in perfctr 2.6.x */
+   case PERFCTR_X86_AMD_K8C:
+#endif
+     SUBDBG("This cpu is supported by the perfctr-pfm substrate\n");
+     PAPIERROR(MODEL_ERROR);
+     return(PAPI_ESBSTR);
+
+   default:
+     PAPIERROR(MODEL_ERROR);
+     return(PAPI_ESBSTR);
+   }
+   SUBDBG("Number of native events: %d\n",_papi_hwi_system_info.sub_info.num_native_events);
+   retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
+   return(retval);
+}
 
 /*************************************/
 /* CODE TO SUPPORT OPAQUE NATIVE MAP */
@@ -256,8 +308,18 @@ int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                unsigned int *values, int name_len, int count)
 {
    int i = 0;
-   copy_value(bits->selector, "Event Mask", &names[i*name_len], &values[i], name_len);
+   copy_value(bits->selector, "Event Selector", &names[i*name_len], &values[i], name_len);
    if (++i == count) return(i);
    copy_value(bits->counter_cmd, "Event Code", &names[i*name_len], &values[i], name_len);
    return(++i);
 }
+
+papi_svector_t _papi_p3_event_vectors[] = {
+  {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
+  {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
+  {(void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
+  {(void (*)())_papi_hwd_ntv_code_to_bits, VEC_PAPI_HWD_NTV_CODE_TO_BITS},
+  {(void (*)())_papi_hwd_ntv_bits_to_info, VEC_PAPI_HWD_NTV_BITS_TO_INFO},
+ {NULL, VEC_PAPI_END}
+};
+

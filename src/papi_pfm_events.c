@@ -20,9 +20,11 @@ xxx - bits_to_info uses native_map not pfm()
 #include "papi_memory.h"
 #include "papi_pfm_events.h"
 
-/* these define cccr and escr register bits, and the p4 event structure */
-#include "perfmon/pfmlib_pentium4.h"
-#include "../lib/pfmlib_pentium4_priv.h"
+/* These routines are defined externally for PERFCTR_PFM_EVENTS == TRUE, or
+    internally for PERFCTR_PFM_EVENTS == FALSE */
+extern int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits);
+extern int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
+                               unsigned int *values, int name_len, int count);
 
 /* Globals declared extern elsewhere */
 
@@ -56,17 +58,11 @@ static inline int encode_native_event_raw(unsigned int event, unsigned int mask)
 static inline int encode_native_event(unsigned int event, unsigned int num_mask, unsigned int *mask_values)
 {
   int i;
-//  int ret;
-//  unsigned int code;
   unsigned int tmp = event << PAPI_NATIVE_EVENT_SHIFT;
   SUBDBG("Native base event is 0x%08x with %d masks\n",tmp,num_mask);
   for (i=0;i<num_mask;i++) {
-//    if ((ret = pfm_get_event_mask_code(event, mask_values[i], &code)) == PFMLIB_SUCCESS) {
       SUBDBG("Mask index is 0x%08x\n",mask_values[i]);
       tmp = tmp | ((1 << mask_values[i]) << PAPI_NATIVE_UMASK_SHIFT);
-//    } else {
-//      PAPIERROR("pfm_get_event_mask_code(0x%x,%d,%p): %s",event,i,&code,pfm_strerror(ret));
-//    }
   }
   SUBDBG("Full native encoding is 0x%08x\n",tmp|PAPI_NATIVE_MASK);
   return(tmp|PAPI_NATIVE_MASK);
@@ -204,20 +200,32 @@ static inline int find_preset_code(char *tmp, int *code)
   return(PAPI_EINVAL);
 }
 
+/* Static version of the perfmon csv file. */
+#if defined(STATIC_PERFMON_EVENTS_TABLE)
+#include "perfmon_events_table.h"
+#endif
+
+/* #define SHOW_LOADS */
+
 static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_entry_t *here)
 {
-  char name[PATH_MAX], line[LINE_MAX], *tmpn;
+  char name[PATH_MAX], line[LINE_MAX];
+#if !defined(STATIC_PERFMON_EVENTS_TABLE)
+  char *tmpn;
   FILE *table;
+#endif
   int line_no = 1, get_presets = 0, derived = 0, insert = 2, preset = 0;
-//  static pfm_preset_search_entry_t tmp[PAPI_MAX_PRESET_EVENTS];
 
+#ifdef SHOW_LOADS
   SUBDBG("%p\n",here);
-//  memset(tmp,0x0,sizeof(tmp));
+#endif
+
   here[0].preset = PAPI_TOT_CYC;
   here[0].derived = NOT_DERIVED;
   here[1].preset = PAPI_TOT_INS;
   here[1].derived = NOT_DERIVED;
 
+#if !defined(STATIC_PERFMON_EVENTS_TABLE)
   if ((tmpn = getenv("PAPI_PERFMON_EVENT_FILE")) && (strlen(tmpn) != 0))
     sprintf(name,"%s",tmpn);
   else
@@ -243,20 +251,38 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
       i = strlen(line);
       if (line[i-1] == '\n')
 	line[i-1] = '\0';
+#else
+  SUBDBG("Reading from static perfmon_events_table.\n");
+  while (*perfmon_events_table)
+    {
+      char *t;
+      int i;
+      for (i=0; *perfmon_events_table && *perfmon_events_table != '\n'; i++) {
+        line[i] = *perfmon_events_table++;
+      }
+      if (*perfmon_events_table == '\n') {
+        perfmon_events_table++;
+      }
+      line[i] = '\0';
+#endif
       t = trim_string(strtok(line,","));
       if ((t == NULL) || (strlen(t) == 0))
 	continue;
       if (t[0] == '#')
 	{
-//	  SUBDBG("Comment found on line %d\n",line_no);
+/*	  SUBDBG("Comment found on line %d\n",line_no); */
 	  goto nextline;
 	}
       else if (strcasecmp(t,"CPU") == 0)
 	{
+#ifdef SHOW_LOADS
 	  SUBDBG("CPU token found on line %d\n",line_no);
+#endif
 	  if (get_presets != 0)
 	    {
+#ifdef SHOW_LOADS
 	      SUBDBG("Ending preset scanning at line %d of %s.\n",line_no,name);
+#endif
 	      goto done;
 	    }
 	  t = trim_string(strtok(NULL,","));
@@ -265,30 +291,43 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 	      PAPIERROR("Expected name after CPU token at line %d of %s -- ignoring",line_no,name);
 	      goto nextline;
 	    }
+#ifdef SHOW_LOADS
 	  SUBDBG("Examining CPU (%s) vs. (%s)\n",t,pmu_name);
+#endif
 	  if (strcasecmp(t, pmu_name) == 0)
 	    {
 	      int type;
 
+#ifdef SHOW_LOADS
 	      SUBDBG("Found CPU %s at line %d of %s.\n",t,line_no,name);
+#endif
 	      t = trim_string(strtok(NULL,","));
 	      if ((t == NULL) || (strlen(t) == 0))
 		{
+#ifdef SHOW_LOADS
 		  SUBDBG("No additional qualifier found, matching on string.\n");
+#endif
 		  get_presets = 1;
 		}
 	      else if ((sscanf(t,"%d",&type) == 1) && (type == pmu_type))
 		{
+#ifdef SHOW_LOADS
 		  SUBDBG("Found CPU %s type %d at line %d of %s.\n",pmu_name,type,line_no,name);
+#endif
 		  get_presets = 1;
 		}
 	      else
-		SUBDBG("Additional qualifier match failed %d vs %d.\n",pmu_type,type);
+#ifdef SHOW_LOADS
+		SUBDBG("Additional qualifier match failed %d vs %d.\n",pmu_type,type)
+#endif
+	      ;
 	    }
 	}
       else if (strcasecmp(t,"PRESET") == 0)
 	{
+#ifdef SHOW_LOADS
 	  SUBDBG("PRESET token found on line %d\n",line_no);
+#endif
 	  if (get_presets == 0)
 	    goto nextline;
 	  t = trim_string(strtok(NULL,","));
@@ -297,28 +336,35 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 	      PAPIERROR("Expected name after PRESET token at line %d of %s -- ignoring",line_no,name);
 	      goto nextline;
 	    }
+#ifdef SHOW_LOADS
 	  SUBDBG("Examining preset %s\n",t);
+#endif
 	  if (find_preset_code(t,&preset) != PAPI_OK)
 	    {
 	      PAPIERROR("Invalid preset name %s after PRESET token at line %d of %s -- ignoring",t,line_no,name);
 	      goto nextline;
 	    }
+#ifdef SHOW_LOADS
 	  SUBDBG("Found 0x%08x for %s\n",preset,t);
+#endif
 	  t = trim_string(strtok(NULL,","));
 	  if ((t == NULL) || (strlen(t) == 0))
 	    {
 	      PAPIERROR("Expected derived type after PRESET token at line %d of %s -- ignoring",line_no,name);
 	      goto nextline;
 	    }
+#ifdef SHOW_LOADS
 	  SUBDBG("Examining derived %s\n",t);
+#endif
 	  if (_papi_hwi_derived_type(t,&derived) != PAPI_OK)
 	    {
 	      PAPIERROR("Invalid derived name %s after PRESET token at line %d of %s -- ignoring",t,line_no,name);
 	      goto nextline;
 	    }
+#ifdef SHOW_LOADS
 	  SUBDBG("Found %d for %s\n",derived,t);
-
 	  SUBDBG("Adding 0x%x,%d to preset search table.\n",preset,derived);
+#endif
 	  here[insert].preset = preset;
 	  here[insert].derived = derived;
 
@@ -330,7 +376,9 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 	      PAPIERROR("Expected Operation string after derived type DERIVED_POSTFIX at line %d of %s -- ignoring",line_no,name);
 	      goto nextline;
 	    }
+#ifdef SHOW_LOADS
 	    SUBDBG("Saving PostFix operations %s\n",t);
+#endif
 	    here[insert].operation = strdup(t);
 	  }
 	  /* All derived terms collected here */
@@ -340,7 +388,9 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 	    if ((t == NULL) || (strlen(t) == 0)) break;
 	    if (strcasecmp(t,"NOTE") == 0) break;
 	    here[insert].findme[i] = strdup(t);
+#ifdef SHOW_LOADS
 	    SUBDBG("Adding term (%d) %s to preset event 0x%x.\n",i,t,preset);
+#endif
 	  } while (++i < MAX_COUNTER_TERMS);
 	  /* End of derived support */
 
@@ -353,13 +403,17 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 
 	  /* Handle optional NOTEs */
 	  if (t && (strcasecmp(t,"NOTE") == 0)) {
+#ifdef SHOW_LOADS
 	    SUBDBG("%s found on line %d\n",t,line_no);
-	    t = trim_note(strtok(NULL,"")); // read the rest of the line
+#endif
+	    t = trim_note(strtok(NULL,"")); /* read the rest of the line */
 	    if ((t == NULL) || (strlen(t) == 0))
 	      PAPIERROR("Expected Note string at line %d of %s\n",line_no,name);
 	    else {
 	      here[insert].note = strdup(t);
+#ifdef SHOW_LOADS
 	      SUBDBG("NOTE: --%s-- found on line %d\n",t,line_no);
+#endif
 	    }
 	  }
 
@@ -374,16 +428,18 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
       line_no++;
     }
  done:
+#if !defined(STATIC_PERFMON_EVENTS_TABLE)
   fclose(table);
+#endif
   if (get_presets != 0) /* It at least found the CPU */
     {
-//      *here = tmp;
       return(PAPI_OK);
     }
 
   PAPIERROR("Failed to find events for CPU %s, type %d in %s",pmu_name,pmu_type,name);
   return(PAPI_ESBSTR);
 }
+
 /* Frees memory for all the strdup'd char strings in a preset string array.
     Assumes the array is initialized to 0 and has at least one 0 entry at the end.
     free()ing a NULL pointer is a NOP. */
@@ -484,7 +540,7 @@ static int generate_preset_search_map(hwi_search_t **maploc, hwi_dev_notes_t **n
 	      }
 	  } while (strmap[i].findme[term] != NULL && term < MAX_COUNTER_TERMS);
 
-	  // terminate the native term array with PAPI_NULL
+	  /* terminate the native term array with PAPI_NULL */
 	  if (term < MAX_COUNTER_TERMS) psmap[j].data.native[term] = PAPI_NULL;
 
 	if (ret == PAPI_OK)
@@ -515,7 +571,7 @@ static int generate_preset_search_map(hwi_search_t **maploc, hwi_dev_notes_t **n
 }
 
 /* Break a PAPI native event code into its composite event code and pfm mask bits */
-static inline int decode_native_event(unsigned int EventCode, unsigned int *event, unsigned int *umask)
+inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int *event, unsigned int *umask)
 {
   unsigned int tevent, major, minor;
 
@@ -565,7 +621,7 @@ static inline unsigned int convert_pfm_masks(pfmlib_event_t *gete)
   return(tmp);
 }
 /* convert an event code and pfm unit mask into a PAPI unit mask */
-static inline unsigned int convert_umask(unsigned int event, unsigned int umask)
+inline unsigned int _pfm_convert_umask(unsigned int event, unsigned int umask)
 {
   pfmlib_event_t gete;
 
@@ -631,6 +687,7 @@ int _papi_pfm_init()
       PAPIERROR("pfm_get_num_events(%p): %s", &ncnt, pfm_strerror(retval));
       return(PAPI_ESBSTR);
    }
+   SUBDBG("pfm_get_num_events() returns: %d\n",ncnt);
   _papi_hwi_system_info.sub_info.num_native_events = ncnt;
   return (PAPI_OK);
 }
@@ -652,23 +709,25 @@ char *_papi_pfm_ntv_code_to_name(unsigned int EventCode)
   int ret;
   unsigned int event, umask;
   pfmlib_event_t gete;
-  char name[PAPI_MAX_STR_LEN];
+  char name[PAPI_2MAX_STR_LEN]; /* hope the caller handles long strings! */
 
   memset(&gete,0,sizeof(gete));
   
-  if (decode_native_event(EventCode,&event,&umask) != PAPI_OK)
+  if (_pfm_decode_native_event(EventCode,&event,&umask) != PAPI_OK)
     return("");
   
   gete.event = event;
   gete.num_masks = prepare_umask(umask,gete.unit_masks);
-  
-  ret = pfm_get_full_event_name(&gete,name,PAPI_MAX_STR_LEN);
+  if (gete.num_masks == 0)
+    ret = pfm_get_event_name(gete.event,name,sizeof(name));
+  else
+    ret = pfm_get_full_event_name(&gete,name,sizeof(name));
   if (ret != PFMLIB_SUCCESS)
     {
-      char tmp[PAPI_MAX_STR_LEN];
-      pfm_get_event_name(gete.event,tmp,PAPI_MAX_STR_LEN);
+      char tmp[PAPI_2MAX_STR_LEN];
+      pfm_get_event_name(gete.event,tmp,sizeof(tmp));
       PAPIERROR("pfm_get_full_event_name(%p(event %d,%s,%d masks),%p,%d): %d -- %s",
-		&gete,gete.event,tmp,gete.num_masks,name,PAPI_MAX_STR_LEN,ret,pfm_strerror(ret));
+		&gete,gete.event,tmp,gete.num_masks,name,sizeof(name),ret,pfm_strerror(ret));
       return("");
     }
 
@@ -684,7 +743,7 @@ char *_papi_pfm_ntv_code_to_descr(unsigned int EventCode)
 
   memset(&gete,0,sizeof(gete));
   
-  if (decode_native_event(EventCode,&event,&umask) != PAPI_OK)
+  if (_pfm_decode_native_event(EventCode,&event,&umask) != PAPI_OK)
     return(NULL);
   
   ret = pfm_get_event_description(event,&eventd);
@@ -759,7 +818,7 @@ int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
   unsigned int event, umask, num_masks;
   int ret;
 
-  if (decode_native_event(*EventCode,&event,&umask) != PAPI_OK)
+  if (_pfm_decode_native_event(*EventCode,&event,&umask) != PAPI_OK)
     return(PAPI_ENOEVNT);
 
   ret = pfm_get_num_event_masks(event,&num_masks);
@@ -831,14 +890,9 @@ int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
   
 }
 
-static void copy_value(unsigned int val, char *nam, char *names, unsigned int *values, int len)
-{
-   *values = val;
-   strncpy(names, nam, len);
-   names[len-1] = 0;
-}
+#ifndef PENTIUM4
 
-static int get_pfm_counter_info(unsigned int event, unsigned int *selector, int *code)
+int _pfm_get_counter_info(unsigned int event, unsigned int *selector, int *code)
 {
     pfmlib_regmask_t cnt, impl;
     unsigned int num;
@@ -876,247 +930,10 @@ static int get_pfm_counter_info(unsigned int event, unsigned int *selector, int 
     }
     return(PAPI_OK);
 }
-
-#ifdef PERFCTR_PFM_EVENTS
-
-#ifdef PENTIUM4
-/**************************************************************/
-/* Given a native event code, assigns the native event's 
-   information to a given pointer.
-   NOTE: the info must be COPIED to the provided pointer,
-   not just referenced!
-*/
-#if 0
-
-int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
-{
-   int event, mask, tags;
-
-   event = (EventCode & PAPI_NATIVE_AND_MASK) >> 16; // event is in the third byte
-   mask = (EventCode & 0xffff); // mask bits are in the first two bytes
-
-   *bits = _papi_hwd_pentium4_native_map[event].bits;
-
-   if ((event > sizeof(_papi_hwd_pentium4_native_map)/sizeof(hwd_p4_native_map_t))
-       && (event != P4_custom_event) && (event != P4_user_event))
-       return (PAPI_ENOEVNT);
-
-   switch (event) {
-   case P4_custom_event:
-      if (mask > _papi_hwd_pentium4_custom_count)
-         return (PAPI_ENOEVNT);
-      *bits = _papi_hwd_pentium4_custom_map[mask].bits;
-      return (PAPI_OK);
-
-   case P4_user_event:
-      if (mask > _papi_hwd_pentium4_user_count)
-         return (PAPI_ENOEVNT);
-      *bits = _papi_hwd_pentium4_user_map[mask].bits;
-      return (PAPI_OK);
-
-   case P4_packed_SP_uop:
-   case P4_packed_DP_uop:
-   case P4_scalar_SP_uop:
-   case P4_scalar_DP_uop:
-   case P4_64bit_MMX_uop:
-   case P4_128bit_MMX_uop:
-   case P4_x87_FP_uop:
-   case P4_x87_SIMD_moves_uop:
-      // these event groups can be tagged for use with execution_event.
-      // the tag bits are encoded as bits 5 - 8 of the otherwise unused mask bits
-      // if a tag bit is set, the enable bit is also set
-      tags = mask & 0x01e0;
-      if (tags) {
-         mask ^= tags;
-         tags |= ESCR_TAG_ENABLE;
-         bits->event |= tags;
-      }
-      break;
-
-      // at retirement compound events; from Table A-2
-   case P4_replay_event:
-      // add the PEBS enable and cache stuff here
-      // this stuff comes from Intel Table A-6
-      // it is encoded by shifting into unused mask bits
-      // for the replay_event mask list
-      tags = (mask >> PEBS_ENB_SHIFT) & PEBS_ENB_MASK;
-      if (tags) {
-         mask ^= (PEBS_ENB_MASK << PEBS_ENB_SHIFT);
-         bits->pebs_enable = PEBS_UOP_TAG | tags;
-      }
-      tags = (mask >> PEBS_MV_SHIFT) & PEBS_MV_MASK;
-      if (tags) {
-         mask ^= (PEBS_MV_MASK << PEBS_MV_SHIFT);
-         bits->pebs_matrix_vert = tags;
-      }
-      break;
-
-      // "These events may not be supported in all models of the processor family"
-      // We need to find out which processors and vector appropriately, returning
-      // an error if not supported on the current hardware.
-   case P4_resource_stall:
-   case P4_b2b_cycles:
-   case P4_bnr:
-   case P4_snoop:
-   case P4_response:
-      break;
-
-   default:
-      break;
-   };
-
-   // these bits are turned on for all event groups
-   bits->event |= ESCR_EVENT_MASK(mask);
-   bits->cccr |= CCCR_THR_MODE(CCCR_THR_ANY) | CCCR_ENABLE;
-
-   return (PAPI_OK);
-}
-#endif // 0
-
-/**************************************************************/
-    /* perfctr-p4 ...
-
-     */
-
-extern pentium4_event_t pentium4_events[];
-
-int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
-{
-    pentium4_escr_value_t escr_value;
-    pentium4_cccr_value_t cccr_value;
-    unsigned int event, event_mask, umask;
-    unsigned int tag_value, tag_enable;
-
-//    int ret, code;
-
-    if (decode_native_event(EventCode,&event,&umask) != PAPI_OK)
-      return(PAPI_ENOEVNT);
+#endif
 
 
-    /* Calculate the event-mask value. Invalid masks
-     * specified by the caller are ignored.
-     */
-    tag_value = 0;
-    tag_enable = 0;
-    event_mask = convert_umask(event, umask);
-    if (event_mask & 0xF0000) {
-	tag_enable = 1;
-	tag_value = ((event_mask & 0xF0000) >> EVENT_MASK_BITS);
-    }
-
-    /* Set up the ESCR and CCCR register values. */
-    escr_value.val = 0;
-
-    escr_value.bits.t1_usr       = 0; /* controlled by kernel */
-    escr_value.bits.t1_os        = 0; /* controlled by kernel */
-//    escr_value.bits.t0_usr       = (plm & PFM_PLM3) ? 1 : 0;
-//    escr_value.bits.t0_os        = (plm & PFM_PLM0) ? 1 : 0;
-    escr_value.bits.tag_enable   = tag_enable;
-    escr_value.bits.tag_value    = tag_value;
-    escr_value.bits.event_mask   = event_mask;
-    escr_value.bits.event_select = pentium4_events[event].event_select;
-    escr_value.bits.reserved     = 0;
-
-    cccr_value.val = 0;
-
-    cccr_value.bits.reserved1     = 0;
-    cccr_value.bits.enable        = 1;
-    cccr_value.bits.escr_select   = pentium4_events[event].escr_select;
-    cccr_value.bits.active_thread = 3; /* FIXME: This is set to count when either logical
-					*        CPU is active. Need a way to distinguish
-					*        between logical CPUs when HT is enabled. */
-    cccr_value.bits.compare       = 0; /* FIXME: What do we do with "threshold" settings? */
-    cccr_value.bits.complement    = 0; /* FIXME: What do we do with "threshold" settings? */
-    cccr_value.bits.threshold     = 0; /* FIXME: What do we do with "threshold" settings? */
-    cccr_value.bits.force_ovf     = 0; /* FIXME: Do we want to allow "forcing" overflow
-					*        interrupts on all counter increments? */
-    cccr_value.bits.ovf_pmi_t0    = 1;
-    cccr_value.bits.ovf_pmi_t1    = 0; /* PMI taken care of by kernel typically */
-    cccr_value.bits.reserved2     = 0;
-    cccr_value.bits.cascade       = 0; /* FIXME: How do we handle "cascading" counters? */
-    cccr_value.bits.overflow      = 0;
-
-    SUBDBG("escr: 0x%x; cccr:  0x%x\n", escr_value.val, cccr_value.val);
-
-    bits->counter[0] = 0;         // bitmap of valid counters for each escr
-    bits->counter[1] = 0;         // bitmap of valid counters for each escr
-    bits->escr[0] = 0;            // bit offset for each of 2 valid escrs
-    bits->escr[1] = 0;            // bit offset for each of 2 valid escrs
-
-    bits->cccr = cccr_value.val;
-    bits->event = escr_value.val;
-
-    bits->pebs_enable = 0;	// flag for PEBS counting
-    bits->pebs_matrix_vert = 0;	// flag for PEBS_MATRIX_VERT, whatever that is 
-    bits->ireset = 0;		// I don't really know what this does
-
-    return (PAPI_OK);
-}
-
-/* This version of bits_to_info is straight from p4_events and is appropriate 
-    only for that class of machines. */
-int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
-                               unsigned int *values, int name_len, int count)
-{
-   int i = 0;
-   copy_value(bits->cccr, "P4 CCCR", &names[i*name_len], &values[i], name_len);
-   if (++i == count) return(i);
-   copy_value(bits->event, "P4 Event", &names[i*name_len], &values[i], name_len);
-   if (++i == count) return(i);
-   copy_value(bits->pebs_enable, "P4 PEBS Enable", &names[i*name_len], &values[i], name_len);
-   if (++i == count) return(i);
-   copy_value(bits->pebs_matrix_vert, "P4 PEBS Matrix Vertical", &names[i*name_len], &values[i], name_len);
-   if (++i == count) return(i);
-   copy_value(bits->ireset, "P4 iReset", &names[i*name_len], &values[i], name_len);
-   return(++i);
-}
-
-#else // PENTIUM3
-
-/* perfctr-p3 assumes each event has only a single command code
-       libpfm assumes each counter might have a different code.
-*/
-int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
-{
-    unsigned int event, umask;
-    int ret, code;
-
-    if (decode_native_event(EventCode,&event,&umask) != PAPI_OK)
-      return(PAPI_ENOEVNT);
-
-    if ((ret = get_pfm_counter_info(event, &bits->selector, &code)) != PAPI_OK)
-      return(ret);
-
-    bits->counter_cmd = code | ((convert_umask(event, umask)) << 8);
-
-    SUBDBG("selector: 0x%x\n", bits->selector);
-  #ifdef PERFCTR_X86_INTEL_CORE
-    if (_papi_hwi_system_info.hw_info.model == PERFCTR_X86_INTEL_CORE)
-	bits->selector >>= 4;
-  #endif
-  #ifdef PERFCTR_X86_INTEL_CORE2
-    if (_papi_hwi_system_info.hw_info.model == PERFCTR_X86_INTEL_CORE2)
-	bits->selector >>= 4;
-  #endif
-    SUBDBG("selector: 0x%x\n", bits->selector);
-    SUBDBG("event: 0x%x; umask: 0x%x; code: 0x%x; cmd: 0x%x\n",event, umask, code, bits->counter_cmd);
-    return (PAPI_OK);
-}
-
-/* This version of bits_to_info is straight from p3_events and is appropriate 
-    only for that class of machines. */
-int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
-                               unsigned int *values, int name_len, int count)
-{
-   int i = 0;
-   copy_value(bits->selector, "Event Selector", &names[i*name_len], &values[i], name_len);
-   if (++i == count) return(i);
-   copy_value(bits->counter_cmd, "Event Code", &names[i*name_len], &values[i], name_len);
-   return(++i);
-}
-#endif // PENTIUM3
-
-#else // !PERFCTR_PFM_EVENTS
+#ifndef PERFCTR_PFM_EVENTS
 
 int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
 {
@@ -1124,7 +941,7 @@ int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
   pfmlib_event_t gete;
 
   /* For PFM & Perfmon, native info is just an index into the PFM event table. */
-  if (decode_native_event(EventCode,&event,&umask) != PAPI_OK)
+  if (_pfm_decode_native_event(EventCode,&event,&umask) != PAPI_OK)
     return(PAPI_ENOEVNT);
 
   memset(&gete,0x0,sizeof(gete));
@@ -1136,6 +953,12 @@ int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
   return (PAPI_OK);
 }
 
+static void copy_value(unsigned int val, char *nam, char *names, unsigned int *values, int len)
+{
+   *values = val;
+   strncpy(names, nam, len);
+   names[len-1] = 0;
+}
 
 int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                unsigned int *values, int name_len, int count)
@@ -1144,7 +967,7 @@ int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
    int mask, i = 0;
     int ret, code;
 
-    if ((ret = get_pfm_counter_info(bits->event, &selector, &code)) != PAPI_OK)
+    if ((ret = _pfm_get_counter_info(bits->event, &selector, &code)) != PAPI_OK)
       return(ret);
 
    copy_value(bits->event, "PFM Event Index", &names[i*name_len], &values[i], name_len);
@@ -1158,7 +981,7 @@ int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
    return(++i);
 }
 
-#endif // PERFCTR_PFM_EVENTS
+#endif /* PERFCTR_PFM_EVENTS */
 
 papi_svector_t _papi_pfm_event_vectors[] = {
   {(void (*)())_papi_pfm_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},

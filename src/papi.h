@@ -247,6 +247,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 #define PAPI_MIN_STR_LEN        40      /* For small strings, like names & stuff */
 #define PAPI_MAX_STR_LEN       129      /* For average run-of-the-mill strings */
+#define PAPI_2MAX_STR_LEN      257      /* For somewhat longer run-of-the-mill strings */
 #define PAPI_HUGE_STR_LEN     1024      /* This should be defined in terms of a system parameter */
 
 #define PAPI_DERIVED           0x1      /* Flag to indicate that the event is derived */
@@ -602,7 +603,7 @@ read the documentation carefully.  */
       unsigned int count;                    /* number of terms (usually 1) in the code and name fields
                                                 - for presets, these terms are native events
                                                 - for native events, these terms are register contents */
-      char symbol[PAPI_MAX_STR_LEN];       /* name of the event
+      char symbol[PAPI_2MAX_STR_LEN];       /* name of the event
                                                 - for presets, something like PAPI_TOT_INS
                                                 - for native events, something related to the vendor name */
       char short_descr[PAPI_MIN_STR_LEN];    /* a description suitable for use as a label, typically only
@@ -621,7 +622,7 @@ read the documentation carefully.  */
                                                 - for presets, native event_code values
                                                 - for native events, register values for event programming */
       char name[PAPI_MAX_INFO_TERMS]         /* names of code terms: */
-               [PAPI_MAX_STR_LEN];           /* - for presets, native event names, as in symbol, above
+               [PAPI_2MAX_STR_LEN];           /* - for presets, native event names, as in symbol, above
                                                 - for native events, descriptive strings for each register
                                                    value presented in the code array */
       char note[PAPI_HUGE_STR_LEN];          /* an optional developer note supplied with a preset event

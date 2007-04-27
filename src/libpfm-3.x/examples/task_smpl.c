@@ -61,7 +61,7 @@ typedef pfm_dfl_smpl_arg_t		smpl_arg_t;
 #define NUM_PMCS PFMLIB_MAX_PMCS
 #define NUM_PMDS PFMLIB_MAX_PMDS
 
-static uint64_t collected_samples;
+static uint64_t collected_samples, collected_partial;
 static options_t options;
 
 static struct option the_options[]={
@@ -169,17 +169,17 @@ static void
 process_smpl_buf(smpl_hdr_t *hdr, uint64_t *smpl_pmds, unsigned int num_smpl_pmds, size_t entry_size)
 {
 	static uint64_t last_overflow = ~0; /* initialize to biggest value possible */
+	static uint64_t last_count;
 	smpl_entry_t *ent;
 	size_t pos, count;
 	uint64_t entry, *reg;
 	unsigned int j, n;
 	
-	if (hdr->hdr_overflows <= last_overflow && last_overflow != ~0) {
-		warning("skipping identical set of samples %"PRIu64" <= %"PRIu64"\n",
+	if (hdr->hdr_overflows == last_overflow && hdr->hdr_count == last_count) {
+		warning("skipping identical set of samples %"PRIu64" = %"PRIu64"\n",
 			hdr->hdr_overflows, last_overflow);
 		return;	
 	}
-	last_overflow = hdr->hdr_overflows;
 
 	count = hdr->hdr_count;
 
@@ -220,6 +220,10 @@ process_smpl_buf(smpl_hdr_t *hdr, uint64_t *smpl_pmds, unsigned int num_smpl_pmd
 		entry++;
 	}
 	collected_samples = entry;
+	last_overflow = hdr->hdr_overflows;
+	if (last_count != hdr->hdr_count && (last_count || last_overflow == 0))
+		collected_partial += hdr->hdr_count;
+	last_count = hdr->hdr_count;
 }
 
 int
@@ -554,7 +558,10 @@ terminate_session:
 	if (ret)
 		fatal_error("cannot unmap buffer: %s\n", strerror(errno));
 
-	printf("%"PRIu64" samples collected in %"PRIu64" buffer overflows\n", collected_samples, ovfl_count);
+	printf("%"PRIu64" samples (%"PRIu64" in partial buffer) collected in %"PRIu64" buffer overflows\n",
+		collected_samples,
+		collected_partial,
+		ovfl_count);
 	show_task_rusage(&start_time, &end_time, &rusage);
 
 	return 0;

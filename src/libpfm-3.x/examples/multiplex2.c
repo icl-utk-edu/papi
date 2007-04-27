@@ -283,9 +283,8 @@ print_results(int ctxid, uint64_t *eff_timeout)
 	 * is usally at page size (16KB)
 	 */
 	ret = pfm_read_pmds(ctxid, all_pmds, num_pmds);
-	if (ret == -1) {
+	if (ret == -1)
 		fatal_error("cannot read pmds: %s\n", strerror(errno));
-	}
 
 	/*
 	 * extract all set information
@@ -295,9 +294,8 @@ print_results(int ctxid, uint64_t *eff_timeout)
 	 * is usually at page size (16KB)
 	 */
 	ret = pfm_getinfo_evtsets(ctxid, all_setinfos, num_sets);
-	if (ret == -1) {
+	if (ret == -1)
 		fatal_error("cannot get set info: %s\n", strerror(errno));
-	}
 
 	/*
 	 * compute average number of runs
@@ -455,9 +453,9 @@ measure_one_task(char **argv)
 	 */
 	vbprintf("requested timeout %"PRIu64" nsecs\n", my_sets[0].set_timeout);
 
-	if (pfm_create_evtsets(ctxid, my_sets, num_sets)) {
+	if (pfm_create_evtsets(ctxid, my_sets, num_sets))
 		fatal_error("cannot create sets\n");
-	}
+
 	eff_timeout = my_sets[0].set_timeout;
 
 	vbprintf("effective timeout %"PRIu64" nsecs\n", my_sets[0].set_timeout);
@@ -467,9 +465,8 @@ measure_one_task(char **argv)
 	 * Note that there is a limitation on the size of the argument vector
 	 * that can be passed. It is usually set to a page size (16KB).
 	 */
-	if (pfm_write_pmcs(ctxid, my_pmcs, num_pmcs) == -1) {
+	if (pfm_write_pmcs(ctxid, my_pmcs, num_pmcs) == -1)
 		fatal_error("pfm_write_pmcs error errno %d\n",errno);
-	}
 
 	/*
 	 * initialize the PMD registers.
@@ -477,9 +474,8 @@ measure_one_task(char **argv)
 	 * To be read, each PMD must be either written or declared
 	 * as being part of a sample (reg_smpl_pmds)
 	 */
-	if (pfm_write_pmds(ctxid, my_pmds, num_pmds) == -1) {
+	if (pfm_write_pmds(ctxid, my_pmds, num_pmds) == -1)
 		fatal_error("pfm_write_pmds error errno %d\n",errno);
-	}
 
 	/*
 	 * now launch the child code
@@ -505,16 +501,14 @@ measure_one_task(char **argv)
 	 * now attach the context
 	 */
 	load_arg.load_pid = pid;
-	if (pfm_load_context(ctxid, &load_arg) == -1) {
+	if (pfm_load_context(ctxid, &load_arg) == -1)
 		fatal_error("pfm_load_context error errno %d\n",errno);
-	}
 
 	/*
 	 * start monitoring
 	 */
-	if (pfm_start(ctxid, NULL) == -1) {
+	if (pfm_start(ctxid, NULL) == -1)
 		fatal_error("pfm_start error errno %d\n",errno);
-	}
 
 	ptrace(PTRACE_DETACH, pid, NULL, 0);
 	vbprintf("child restarted\n");
@@ -538,9 +532,9 @@ measure_one_task(char **argv)
 	 * mainloop
 	 */
 	ret = read(ctxid, &msg, sizeof(msg));
-	if (ret < sizeof(msg)) {
+	if (ret < sizeof(msg))
 		fatal_error("interrupted read\n");
-	}
+
 	switch(msg.type) {
 		case PFM_MSG_OVFL:
 			fatal_error("unexpected ovfl message\n");
@@ -638,9 +632,8 @@ measure_one_cpu(char **argv)
 	 * reason. However to avoid special casing set0 for creation, a PFM_CREATE_EVTSETS
 	 * for set0 does not complain and behaves as a PFM_CHANGE_EVTSETS
 	 */
-	if (pfm_create_evtsets(ctxid, my_sets, num_sets)) {
+	if (pfm_create_evtsets(ctxid, my_sets, num_sets))
 		fatal_error("cannot create sets\n");
-	}
 
 	/*
 	 * Now program the all the registers in one call
@@ -648,9 +641,8 @@ measure_one_cpu(char **argv)
 	 * Note that there is a limitation on the size of the argument vector
 	 * that can be passed. It is usually set to a page size (16KB).
 	 */
-	if (pfm_write_pmcs(ctxid, my_pmcs, num_pmcs) == -1) {
+	if (pfm_write_pmcs(ctxid, my_pmcs, num_pmcs) == -1)
 		fatal_error("pfm_write_pmcs error errno %d\n",errno);
-	}
 
 	/*
 	 * initialize the PMD registers.
@@ -658,9 +650,8 @@ measure_one_cpu(char **argv)
 	 * To be read, each PMD must be either written or declared
 	 * as being part of a sample (reg_smpl_pmds)
 	 */
-	if (pfm_write_pmds(ctxid, my_pmds, num_pmds) == -1) {
+	if (pfm_write_pmds(ctxid, my_pmds, num_pmds) == -1)
 		fatal_error("pfm_write_pmds error errno %d\n",errno);
-	}
 
 	/*
 	 * now launch the child code
@@ -688,16 +679,14 @@ measure_one_cpu(char **argv)
 	 * now attach the context
 	 */
 	load_arg.load_pid = options.opt_is_system ? getpid() : pid;
-	if (pfm_load_context(ctxid, &load_arg) == -1) {
+	if (pfm_load_context(ctxid, &load_arg) == -1)
 		fatal_error("pfm_load_context error errno %d\n",errno);
-	}
 
 	/*
 	 * start monitoring
 	 */
-	if (pfm_start(ctxid, NULL) == -1) {
+	if (pfm_start(ctxid, NULL) == -1)
 		fatal_error("pfm_start error errno %d\n",errno);
-	}
 
 	if (pid) ptrace(PTRACE_DETACH, pid, NULL, 0);
 
@@ -813,8 +802,9 @@ mainloop(char **argv)
 			p = strchr(str, ',');
 			if (p)
 				*p = '\0';
-			if (pfm_find_full_event(str, &inp.pfp_events[j]) != PFMLIB_SUCCESS)
-				fatal_error("Cannot find %s event for set %d event %d\n", str, i, j);
+			ret = pfm_find_full_event(str, &inp.pfp_events[j]);
+			if (ret != PFMLIB_SUCCESS)
+				fatal_error("event %s for set %d event %d: %s\n", str, i, j, pfm_strerror(ret));
 			if (p)
 				str = p + 1;
 		}
@@ -846,9 +836,8 @@ mainloop(char **argv)
 		/*
 		 * let the library do the hard work
 		 */
-		if ((ret=pfm_dispatch_events(&inp, NULL, &outp, NULL)) != PFMLIB_SUCCESS) {
+		if ((ret=pfm_dispatch_events(&inp, NULL, &outp, NULL)) != PFMLIB_SUCCESS)
 			fatal_error("cannot configure events for set %d: %s\n", i, pfm_strerror(ret));
-		}
 
 		/*
 		 * propagate from libpfm to kernel data structures
@@ -878,7 +867,7 @@ mainloop(char **argv)
 			 * the first overflow of our trigger counter does
 			 * trigger a switch.
 			 */
-			all_pmds[num_pmcs-1].reg_ovfl_switch_cnt = 1;
+			all_pmds[num_pmds-1].reg_ovfl_switch_cnt = 1;
 
 			/*
 			 * We do this even in system-wide mode to ensure
@@ -963,9 +952,9 @@ generate_default_sets(void)
 
 	for (i=0; i < 2; i++) {
 		name = malloc(len+1);
-		if (name == NULL) {
+		if (name == NULL)
 			fatal_error("cannot allocate space for event name\n");
-		}
+
 		pfm_get_full_event_name(events+i, name, len+1);
 
 		es = (event_set_t *)malloc(sizeof(event_set_t));

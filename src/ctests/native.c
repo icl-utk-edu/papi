@@ -77,9 +77,10 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
    static char *p3_native_name[] = { "DATA_MEM_REFS", "DCU_LINES_IN", NULL };
    static char *core_native_name[] = { "UnhltCore_Cycles", "Instr_Retired", NULL };
    static char *k7_native_name[] = { "TOT_CYC", "IC_MISSES", "DC_ACCESSES", "DC_MISSES", NULL };
-   static char *k8_native_name[] = { "FP_ADD_PIPE", "FP_MULT_PIPE", "FP_ST_PIPE", "FP_NONE_RET", NULL };
-   static char *p4_native_name[] = { "retired_mispred_branch_type_CONDITIONAL", "resource_stall_SBFULL", 
-       "tc_ms_xfer_CISC", "instr_retired_BOGUSNTAG_BOGUSTAG", "BSQ_cache_reference_RD_2ndL_HITS", NULL };
+//   static char *k8_native_name[] = { "FP_ADD_PIPE", "FP_MULT_PIPE", "FP_ST_PIPE", "FP_NONE_RET", NULL };
+   static char *k8_native_name[] = { "DISPATCHED_FPU:OPS_ADD", "DISPATCHED_FPU:OPS_MULTIPLY", "DISPATCHED_FPU:OPS_STORE", "CYCLES_NO_FPU_OPS_RETIRED", NULL };
+   static char *p4_native_name[] = { "retired_mispred_branch_type:CONDITIONAL", "resource_stall:SBFULL", 
+       "tc_ms_xfer:CISC", "instr_retired:BOGUSNTAG:BOGUSTAG", "BSQ_cache_reference:RD_2ndL_HITS", NULL };
    static char **native_name = p3_native_name;
 
 #elif defined(mips) && defined(sgi)

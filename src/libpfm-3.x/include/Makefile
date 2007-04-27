@@ -90,7 +90,7 @@ endif
 ifeq ($(CONFIG_PFMLIB_ARCH_MIPS64),y)
 HEADERS += perfmon/pfmlib_os_mips64.h   \
 	   perfmon/pfmlib_comp_mips64.h \
-	   pfmlib_gen_mips64.h
+	   perfmon/pfmlib_gen_mips64.h
 endif
 
 .PHONY: all clean distclean depend

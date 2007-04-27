@@ -79,15 +79,7 @@ int main(int argc, char **argv)
   sub_info = PAPI_get_substrate_info();
   if (sub_info == NULL)
     test_fail(__FILE__, __LINE__, "PAPI_get_substrate_info", PAPI_ESBSTR);
-#ifdef PENTIUM4
-  /* this is a hack to accomodate the fact that P4 events are encoded
-    in bits 16 - 23. Other x86 platforms have the events in the bottom byte.
-    Non- x86 platforms may behave differently and fail this test...
-  */
-  code = ((sub_info->num_native_events - 2)<<16) | PAPI_NATIVE_MASK;
-#else
   code = (sub_info->num_native_events - 1) | PAPI_NATIVE_MASK;
-#endif
   printf("Looking for last native event: 0x%x...\n", code);
   retval = PAPI_event_code_to_name(code, event_name);
   if (retval != PAPI_OK)

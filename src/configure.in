@@ -859,6 +859,11 @@ AC_ARG_WITH(pmapi,
             [pmapi=$withval],
             [pmapi=default]
             )
+AC_ARG_WITH(pfm_events,
+            [  --with-pfm-events=<static,file>	Specify source of events for pfmlib-based systems ],
+            [pfm_events=$withval],
+            [pfm_events="file"]
+            )
 if test "$cross_compiling" = "yes" ; then
 AC_MSG_CHECKING(for native compiler for header generation)
 AC_ARG_WITH(nativecc,
@@ -1249,6 +1254,7 @@ AC_SUBST(pfm_libdir)
 AC_SUBST(bitmode)
 AC_SUBST(CFLAGS)
 AC_SUBST(FFLAGS)
+AC_SUBST(pfm_events)
 
 if test "$cross_compiling" = "yes" ; then
    AC_MSG_NOTICE(Compiling genpapifdef with $nativecc because cross compiling)

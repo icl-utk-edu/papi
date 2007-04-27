@@ -29,6 +29,11 @@ endif
 TOPTFLAGS	+= -g -O 
 FTOPTFLAGS	= $(TOPTFLAGS)
 
+ifeq (static,$(PFM_EVENTS))
+	CFLAGS		 += -DSTATIC_PERFMON_EVENTS_TABLE
+	PFM_EVENTS_TABLE := perfmon_events_table.h
+endif
+
 #
 # DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
 #
@@ -50,8 +55,12 @@ endif
 
 CFLAGS	+= -I$(PFM_INC_PATH) 
 
-MISCHDRS = perfmon.h
-MISCSRCS = 
+# I hate these platform dependencies, but this id's the existence of 
+# _ntv_name_to_code in perfmon for extras optimization.
+CFLAGS	+= -DPFM2
+
+MISCHDRS = perfmon.h papi_pfm_events.h
+MISCSRCS = papi_pfm_events.c
 # This is necessary to avoid text relocations. You cannot do -Lxx -lx because
 # it will attempt to use the static library if a shared library ending in
 # .so does not exist
@@ -77,10 +86,19 @@ config.h:
 $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
 	$(AR) xv $<
 
+papi_pfm_events.o: papi_pfm_events.c $(HEADERS) $(PFM_EVENTS_TABLE)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_pfm_events.c -o $@
+
+perfmon_events_table.h:	perfmon_events.csv perfmon_events_table.sh
+	ksh perfmon_events_table.sh > $@
+
 native_clean:
 	-rm -f $(MISCOBJS) 
 ifneq (,${PFM_ROOT})
 	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" clean
+endif
+ifeq (static,$(PFM_EVENTS))
+	-rm -f perfmon_events_table.h
 endif
 
 native_install:

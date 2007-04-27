@@ -1,7 +1,7 @@
 /*
- * detect_pmcs.h - detect unavailable PMC registers based on perfmon2 information
+ * detect_pmcs.h - detect unavailable PMD/PMC registers based on perfmon2 information
  *
- * Copyright (c) 2006 Hewlett-Packard Development Company, L.P.
+ * Copyright (c) 2006-2007 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -31,7 +31,14 @@
 
 /*
  * if no context exists, pass -1 for fd
+ * if do not care about PMCS, pass r_pmcs as NULL
+ * if do not care about PMDs, pass r_pmds as NULL
  */
-extern int detect_unavail_pmcs(int fd, pfmlib_regmask_t *r_pmcs);
+extern int detect_unavail_pmu_regs(int fd, pfmlib_regmask_t *r_pmcs, pfmlib_regmask_t *r_pmds);
+
+static inline int detect_unavail_pmcs(int fd, pfmlib_regmask_t *r_pmcs)
+{
+	return detect_unavail_pmu_regs(fd, r_pmcs, NULL);
+}
 
 #endif /* __DETECT_PMCS_H__ */

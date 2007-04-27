@@ -262,8 +262,6 @@ pfm_amd64_get_impl_perfsel(pfmlib_regmask_t *impl_pmcs)
 {
 	unsigned int i = 0;
 
-	memset(impl_pmcs, 0, sizeof(*impl_pmcs));
-
 	/* all pmcs are contiguous */
 	for(i=0; i < PMU_AMD64_NUM_PERFSEL; i++)
 		pfm_regmask_set(impl_pmcs, i);
@@ -274,8 +272,6 @@ pfm_amd64_get_impl_perfctr(pfmlib_regmask_t *impl_pmds)
 {
 	unsigned int i = 0;
 
-	memset(impl_pmds, 0, sizeof(*impl_pmds));
-
 	/* all pmds are contiguous */
 	for(i=0; i < PMU_AMD64_NUM_PERFCTR; i++)
 		pfm_regmask_set(impl_pmds, i);
@@ -285,8 +281,6 @@ static void
 pfm_amd64_get_impl_counters(pfmlib_regmask_t *impl_counters)
 {
 	unsigned int i = 0;
-
-	memset(impl_counters, 0, sizeof(*impl_counters));
 
 	/* counting pmds are contiguous */
 	for(i=0; i < 4; i++)

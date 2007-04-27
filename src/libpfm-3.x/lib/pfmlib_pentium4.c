@@ -490,6 +490,13 @@ static int pentium4_pmu_detect(void)
 	 * we use model to detect model 2 which has one more counter IQ_ESCR1
 	 */
 	p4_model = atoi(buffer);
+	if (family != 15)
+		return PFMLIB_ERR_NOTSUPP;
+	/*
+	 * IQ_ESCR0, IQ_ESCR1 only for model 1 and 2 
+	 */
+	if (p4_model >2)
+		pentium4_support.pmc_count -= 2;
 
 	return family == 15 ? PFMLIB_SUCCESS : PFMLIB_ERR_NOTSUPP;
 }
@@ -506,10 +513,15 @@ static void pentium4_get_impl_pmcs(pfmlib_regmask_t *impl_pmcs)
 {
 	unsigned int i;
 
-	memset(impl_pmcs, 0, sizeof(*impl_pmcs));
-
 	for(i = 0; i < PENTIUM4_NUM_PMCS; i++) {
 		pfm_regmask_set(impl_pmcs, i);
+	}
+	/*
+	 * IQ_ESCR0, IQ_ESCR1 only available on model 1 and 2
+	 */
+	if (p4_model > 2) {
+		pfm_regmask_clr(impl_pmcs, 16);
+		pfm_regmask_clr(impl_pmcs, 48);
 	}
 }
 
@@ -524,8 +536,6 @@ static void pentium4_get_impl_pmcs(pfmlib_regmask_t *impl_pmcs)
 static void pentium4_get_impl_pmds(pfmlib_regmask_t *impl_pmds)
 {
 	unsigned int i;
-
-	memset(impl_pmds, 0, sizeof(*impl_pmds));
 
 	for(i = 0; i < PENTIUM4_NUM_PMDS; i++) {
 		pfm_regmask_set(impl_pmds, i);
