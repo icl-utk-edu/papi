@@ -264,8 +264,8 @@ static int allocate_EventSet(EventSetInfo_t **here)
 
    ESI->state = PAPI_STOPPED;
 
-   /* ESI->domain.domain = 0;
-      ESI->granularity.granularity = 0; */
+   ESI->domain.domain = _papi_hwi_system_info.sub_info.default_domain;
+   ESI->granularity.granularity = _papi_hwi_system_info.sub_info.default_granularity;
 
    *here = ESI;
    return(PAPI_OK);
