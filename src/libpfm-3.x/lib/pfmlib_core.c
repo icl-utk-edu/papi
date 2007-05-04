@@ -42,6 +42,7 @@
 /* private headers */
 #include "pfmlib_priv.h"
 #include "pfmlib_core_priv.h"
+
 #include "core_events.h"
 
 /* let's define some handy shortcuts! */
@@ -58,7 +59,6 @@
 
 #define is_pebs(i)	(core_pe[i].pme_flags & PFMLIB_CORE_PEBS)
 
-pfm_pmu_support_t core_support;
 
 /*
  * Description of the PMC register mappings:
@@ -170,6 +170,47 @@ pfm_core_detect(void)
 	return PFMLIB_SUCCESS;
 }
 
+static int
+pfm_core_is_fixed(pfmlib_event_t *e, unsigned int f)
+{
+	unsigned int fl, flc, i;
+	unsigned int mask = 0;
+
+	fl = core_pe[e->event].pme_flags;
+
+	/*
+	 * first pass: check if event as a whole supports fixed counters
+	 */
+	switch(f) {
+		case 0:
+			mask = PFMLIB_CORE_FIXED0;
+			break;
+		case 1:
+			mask = PFMLIB_CORE_FIXED1;
+			break;
+		case 2:
+			mask = PFMLIB_CORE_FIXED2;
+			break;
+		default:
+			return 0;
+	}
+	if (fl & mask)
+		return 1;
+	/*
+	 * second pass: check if unit mask support fixed counter
+	 *
+	 * reject if mask not found OR if not all unit masks have
+	 * same fixed counter mask
+	 */
+	flc = 0;
+	for(i=0; i < e->num_masks; i++) {
+		fl = core_pe[e->event].pme_umasks[e->unit_masks[i]].pme_flags;
+		if (fl & mask)
+			flc++;
+	}
+	return flc > 0 && flc == e->num_masks ? 1 : 0;
+}
+
 /*
  * IMPORTANT: the interface guarantees that pfp_pmds[] elements are returned in the order the events
  *	      were submitted.
@@ -177,9 +218,6 @@ pfm_core_detect(void)
 static int
 pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t *mod_in, pfmlib_output_param_t *outp)
 {
-#define IS_FIXED0(x)	(core_pe[e[x].event].pme_flags & PFMLIB_CORE_FIXED0)
-#define IS_FIXED1(x)	(core_pe[e[x].event].pme_flags & PFMLIB_CORE_FIXED1)
-#define IS_FIXED2(x)	(core_pe[e[x].event].pme_flags & PFMLIB_CORE_FIXED2)
 #define HAS_OPTIONS(x)	(cntrs && (cntrs[i].flags || cntrs[i].cnt_mask))
 
 	pfmlib_core_input_param_t *param = mod_in;
@@ -230,11 +268,13 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 			return PFMLIB_ERR_INVAL;
 
 		/*
-		 * check PMC0 is available and thet only one event is dependent on it
+		 * check if PMC0 is available and if only one event is dependent on it
 		 */
 		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_PMC0) {
-			if (++npmc0 > 1 || pfm_regmask_isset(r_pmcs, 4))
+			if (++npmc0) {
+				DPRINT(("two events compete for a counter\n"));
 				return PFMLIB_ERR_NOASSIGN;
+			}
 		}
 	}
 
@@ -246,6 +286,8 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 	 */
 	for(i=0; i < n; i++) {
 		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_PMC0) {
+			if (pfm_regmask_isset(r_pmcs, 4))
+				return PFMLIB_ERR_NOASSIGN;
 			assign_pc[i] = 4;
 			next_gen++;
 		}
@@ -256,15 +298,15 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 	fixed_ctr = 0x7;
 	if (!pfm_regmask_isset(r_pmcs, 1)) {
 		for(i=0; i < n; i++) {
-			if ((fixed_ctr & 0x1) && IS_FIXED0(i) && !HAS_OPTIONS(i)) {
+			if ((fixed_ctr & 0x1) && pfm_core_is_fixed(e+i, 0) && !HAS_OPTIONS(i)) {
 				assign_pc[i] = 0;
 				fixed_ctr &= ~1;
 			}
-			if ((fixed_ctr & 0x2) && IS_FIXED1(i) && !HAS_OPTIONS(i)) {
+			if ((fixed_ctr & 0x2) && pfm_core_is_fixed(e+i, 1) && !HAS_OPTIONS(i)) {
 				assign_pc[i] = 1;
 				fixed_ctr &= ~2;
 			}
-			if ((fixed_ctr & 0x4) && IS_FIXED2(i) && !HAS_OPTIONS(i)) {
+			if ((fixed_ctr & 0x4) && pfm_core_is_fixed(e+i, 2) && !HAS_OPTIONS(i)) {
 				assign_pc[i] = 2;
 				fixed_ctr &= ~4;
 			}
@@ -362,6 +404,17 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 		for(k=0; k < e[i].num_masks; k++) {
 			umask |= core_pe[e[i].event].pme_umasks[e[i].unit_masks[k]].pme_ucode;
 		}
+
+		/*
+		 * for events supporting Core specificity (self, both), a value
+		 * of 0 for bits 15:14 (7:6 in our umask) is reserved, therefore we
+		 * force to SELF if user did not specify anything
+		 */
+		if ((core_pe[e[i].event].pme_flags & PFMLIB_CORE_CSPEC)
+		    && ((umask & (0x3 << 6)) == 0)) {
+				umask |= 1 << 6;
+		}
+
 		reg.sel_unit_mask  = umask;
 		reg.sel_usr        = plm & PFM_PLM3 ? 1 : 0;
 		reg.sel_os         = plm & PFM_PLM0 ? 1 : 0;
@@ -369,6 +422,13 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 		reg.sel_int        = 1; /* force APIC int to 1 */
 
 		if (cntrs) {
+			/*
+			 * counter mask is 8-bit wide, do not silently
+			 * wrap-around
+			 */
+			if (cntrs[i].cnt_mask > 255)
+				return PFMLIB_ERR_INVAL;
+
 			reg.sel_cnt_mask = cntrs[i].cnt_mask;
 			reg.sel_edge	 = cntrs[i].flags & PFM_CORE_SEL_EDGE ? 1 : 0;
 			reg.sel_inv	 = cntrs[i].flags & PFM_CORE_SEL_INV ? 1 : 0;
@@ -465,6 +525,8 @@ pfm_core_dispatch_pebs(pfmlib_input_param_t *inp, pfmlib_core_input_param_t *mod
 
 	/*
 	 * check that PMC0 is available
+	 * PEBS works only on PMC0
+	 * Some PEBS at-retirement events do require PMC0 anyway
 	 */
 	if (pfm_regmask_isset(r_pmcs, 4))
 		return PFMLIB_ERR_NOASSIGN;
@@ -604,13 +666,35 @@ pfm_core_get_event_code(unsigned int i, unsigned int cnt, int *code)
 static void
 pfm_core_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 {
+	unsigned int n, i;
+	unsigned int has_f0, has_f1, has_f2;
+
 	memset(counters, 0, sizeof(*counters));
 
-	if (core_pe[j].pme_flags & PFMLIB_CORE_FIXED0)
+	n = core_pe[j].pme_numasks;
+	has_f0 = has_f1 = has_f2 = 0;
+
+	for (i=0; i < n; i++) {
+		if (core_pe[j].pme_umasks[i].pme_flags & PFMLIB_CORE_FIXED0)
+			has_f0 = 1;
+		if (core_pe[j].pme_umasks[i].pme_flags & PFMLIB_CORE_FIXED1)
+			has_f1 = 1;
+		if (core_pe[j].pme_umasks[i].pme_flags & PFMLIB_CORE_FIXED2)
+			has_f2 = 1;
+	}
+
+	if (has_f0 == 0)
+		has_f0 = core_pe[j].pme_flags & PFMLIB_CORE_FIXED0;
+	if (has_f1 == 0)
+		has_f1 = core_pe[j].pme_flags & PFMLIB_CORE_FIXED1;
+	if (has_f2 == 0)
+		has_f2 = core_pe[j].pme_flags & PFMLIB_CORE_FIXED2;
+
+	if (has_f0)
 		pfm_regmask_set(counters, 0);
-	if (core_pe[j].pme_flags & PFMLIB_CORE_FIXED1)
+	if (has_f1)
 		pfm_regmask_set(counters, 1);
-	if (core_pe[j].pme_flags & PFMLIB_CORE_FIXED2)
+	if (has_f2)
 		pfm_regmask_set(counters, 2);
 
 	pfm_regmask_set(counters, 4);
@@ -730,6 +814,7 @@ pfm_core_is_pebs(pfmlib_event_t *e)
 
 	if (e == NULL || e->event >= PME_CORE_EVENT_COUNT)
 		return 0;
+
 	if (core_pe[e->event].pme_flags & PFMLIB_CORE_PEBS)
 		return 1;
 
@@ -737,10 +822,13 @@ pfm_core_is_pebs(pfmlib_event_t *e)
 	 * ALL unit mask must support PEBS for this test to return true
 	 */
 	for(i=0; i < e->num_masks; i++) {
+		/* check for valid unit mask */
+		if (e->unit_masks[i] >= core_pe[e->event].pme_numasks)
+			return 0;
 		if (core_pe[e->event].pme_umasks[e->unit_masks[i]].pme_flags & PFMLIB_CORE_PEBS)
 			n++;
 	}
-	return n == e->num_masks;
+	return n > 0 && n == e->num_masks;
 }
 
 pfm_pmu_support_t core_support={

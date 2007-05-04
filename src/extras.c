@@ -574,7 +574,13 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
    unsigned int i, j;
    int retval = PAPI_ENOEVNT;
 
+#if ((defined PERFCTR_PFM_EVENTS) | (defined PFM2))
+   retval = _papi_hwd[0]->ntv_name_to_code(in, out);
+   if (retval == PAPI_OK) return(retval);
+#endif /* PERFCTR_PFM_EVENTS */
+
    for (j=0,i = 0 | PAPI_NATIVE_MASK;j<papi_num_components; j++,i = 0 | PAPI_NATIVE_MASK,retval = PAPI_ENOEVNT) {
+
 /* Cray X1 doesn't loop on 0, so a code_to_name on this will fail, the
  * first call to enum_events with a 0 will give a valid code
  */
@@ -616,8 +622,7 @@ int _papi_hwi_native_code_to_name(unsigned int EventCode, char *hwi_name, int le
       _papi_hwi_lock(INTERNAL_LOCK);
 //      name = _papi_hwd_ntv_code_to_name(EventCode & PAPI_COMPONENT_AND_MASK);
       name = _papi_hwd[cidx]->ntv_code_to_name(EventCode);
-
-      if (name) {
+      if (name && *name) {
          strncpy(hwi_name, name, len);
          retval = PAPI_OK;
       } else *hwi_name = 0;
@@ -667,7 +672,9 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
    if (EventCode & PAPI_NATIVE_MASK) {
       _papi_hwi_lock(INTERNAL_LOCK);
       name =_papi_hwd[cidx]->ntv_code_to_name(EventCode);
-      strncpy(info->symbol, name, PAPI_MAX_STR_LEN);
+      if (name) 
+	strncpy(info->symbol, name, sizeof(info->symbol));
+      else info->symbol[0] = '\0';
       _papi_hwi_unlock(INTERNAL_LOCK);
       if (strlen(info->symbol)) {
          /* Fill in the info structure */

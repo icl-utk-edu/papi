@@ -25,7 +25,7 @@
 #ifndef __PFMLIB_CORE_PRIV_H__
 #define __PFMLIB_CORE_PRIV_H__
 
-#define PFMLIB_CORE_MAX_UMASK 16
+#define PFMLIB_CORE_MAX_UMASK 32
 
 typedef struct {
 	char			*pme_uname; /* unit mask name */
@@ -52,5 +52,6 @@ typedef struct {
 #define PFMLIB_CORE_FIXED2		0x08 /* event prefers FIXED_CTR0 */
 #define PFMLIB_CORE_PMC0		0x10 /* works only on IA32_PMC0  */
 #define PFMLIB_CORE_PEBS		0x20 /* support PEBS (precise event) */
+#define PFMLIB_CORE_CSPEC		0x40 /* requires a core specification */
 
 #endif /* __PFMLIB_CORE_PRIV_H__ */

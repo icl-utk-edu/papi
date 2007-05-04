@@ -32,9 +32,9 @@
 /*
  * privilege level mask usage for MIPS:
  *
- * PFM_PLM0 = SUPERVISOR
- * PFM_PLM1 = INTERRUPT
- * PFM_PLM2 = KERNEL
+ * PFM_PLM0 = KERNEL
+ * PFM_PLM1 = SUPERVISOR
+ * PFM_PLM2 = INTERRUPT
  * PFM_PLM3 = USER
  */
 

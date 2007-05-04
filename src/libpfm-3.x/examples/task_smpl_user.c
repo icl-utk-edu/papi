@@ -382,6 +382,7 @@ mainloop(char **arg)
 	if (pfm_write_pmds(fd, pd, outp.pfp_pmd_count))
 		fatal_error("pfm_write_pmds error errno %d\n",errno);
 
+	num_pmds = outp.pfp_pmd_count;
 
 	signal(SIGCHLD, SIG_IGN);
 

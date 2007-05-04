@@ -633,13 +633,16 @@ int _ia64_get_system_info(void)
 }
 
 int sem_set;
-
+#if defined(__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)
+       /* union semun is defined by including <sys/sem.h> */
+#else
        union semun {
                int val;                    /* value for SETVAL */
                struct semid_ds *buf;       /* buffer for IPC_STAT, IPC_SET */
                unsigned short int *array;    /* array for GETALL, SETALL */
                struct seminfo *__buf;      /* buffer for IPC_INFO */
        };
+#endif
 
 int _ia64_init_substrate(int cidx)
 {
@@ -655,9 +658,10 @@ int _ia64_init_substrate(int cidx)
    int retval, i;
   	union semun val; 
 	val.val=1;
-   if ((retval = semget(IPC_PRIVATE,PAPI_MAX_LOCK,0666)) == -1)
+   
+	if ((retval = semget(IPC_PRIVATE,PAPI_MAX_LOCK,0666)) == -1)
      {
-       PAPIERROR("semget errno %d",errno); return(PAPI_ESYS);
+       PAPIERROR("semget errno %d",errno); return(PAPI_ESYS); 
      }
    sem_set = retval;
    for (i=0;i<PAPI_MAX_LOCK;i++)
@@ -1045,7 +1049,7 @@ int _ia64_shutdown(hwd_context_t * ctx)
    int retval;
    struct semid_ds semid_ds_buf;
    union semun val;
-
+		 
 #if defined(USE_PROC_PTTIMER)
   close(((ia64_context_t *)ctx)->stat_fd);
 #endif  
@@ -1054,12 +1058,12 @@ int _ia64_shutdown(hwd_context_t * ctx)
      {
        PAPIERROR("semctl errno %d",errno); return(PAPI_ESYS);
      }
-   
+
    if ((retval = semctl(sem_set,0,IPC_RMID,val)) == -1)
-	 {
-	   PAPIERROR("semctl errno %d",errno); return(PAPI_ESYS);
-	 }
- 
+     {
+       PAPIERROR("semctl errno %d",errno); return(PAPI_ESYS);
+     }
+
    return (pfmw_destroy_context(ctx));
 }
 

@@ -41,7 +41,16 @@ int _linux_init(hwd_context_t * ctx);
 //long_long _linux_get_virt_cycles(const hwd_context_t * ctx);
 //long_long _linux_get_virt_usec(const hwd_context_t * ctx);
 
-/* Prototypes for entry points found in p3_events */
+#ifdef PERFCTR_PFM_EVENTS
+/* Cleverly remap definitions of ntv routines from p3 to pfm */
+#define _p3_ntv_enum_events _papi_pfm_ntv_enum_events
+#define _p3_ntv_code_to_name _papi_pfm_ntv_code_to_name
+#define _p3_ntv_code_to_descr _papi_pfm_ntv_code_to_descr
+#define _p3_ntv_code_to_bits _papi_pfm_ntv_code_to_bits
+#define _p3_ntv_bits_to_info _papi_pfm_ntv_bits_to_info
+#endif
+
+/* Prototypes for entry points found in either p3_events or papi_pfm_events */
 int _p3_ntv_enum_events(unsigned int *EventCode, int modifer);
 char *_p3_ntv_code_to_name(unsigned int EventCode);
 char *_p3_ntv_code_to_descr(unsigned int EventCode);
@@ -49,6 +58,8 @@ int _p3_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits);
 int _p3_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values,
                           int name_len, int count);
 
+
+/*
 extern hwi_search_t _papi_hwd_p3_preset_map;
 extern hwi_search_t _papi_hwd_pm_preset_map;
 extern hwi_search_t _papi_hwd_core_preset_map;
@@ -69,8 +80,8 @@ extern int _papi_hwd_k7_native_count;
 extern native_event_entry_t _papi_hwd_k7_native_map;
 extern int _papi_hwd_k8_native_count;
 extern native_event_entry_t _papi_hwd_k8_native_map;
+*/
 
-extern native_event_entry_t *native_table;
 extern papi_mdi_t _papi_hwi_system_info;
 
 
@@ -107,7 +118,7 @@ extern int setup_p3_presets(int cputype);
  * duplicated in every substrate that relied on them, such as power and p4
  ******************************************************************************/
 
-extern papi_vector_t _p3_vector;
+extern papi_vector_t MY_VECTOR;
 
 #ifdef DEBUG
 void print_control(const struct perfctr_cpu_control *control) {
@@ -464,94 +475,6 @@ static long_long _p3_get_virt_usec(const hwd_context_t * ctx)
  * duplicated in every substrate that relied on them, such as power and p4
  ******************************************************************************/
 
-/* Assign the global native and preset table pointers, find the native
-   table's size in memory and then call the preset setup routine. */
-int setup_p3_presets(int cputype) {
-   int retval;
-   hwi_search_t *s = NULL;
-   hwi_dev_notes_t *n = NULL;
-   extern void _papi_hwd_fixup_fp(hwi_search_t **s, hwi_dev_notes_t **n);
-
-   switch (cputype) {
-   case PERFCTR_X86_GENERIC:
-   case PERFCTR_X86_CYRIX_MII:
-   case PERFCTR_X86_WINCHIP_C6:
-   case PERFCTR_X86_WINCHIP_2:
-   case PERFCTR_X86_VIA_C3:
-   case PERFCTR_X86_INTEL_P5:
-   case PERFCTR_X86_INTEL_P5MMX:
-   case PERFCTR_X86_INTEL_PII:
-      native_table = &_papi_hwd_p2_native_map;
-      MY_VECTOR.cmp_info.num_native_events =_papi_hwd_p2_native_count;
-      preset_search_map = &_papi_hwd_p2_preset_map;
-      break;
-   case PERFCTR_X86_INTEL_P6:
-   case PERFCTR_X86_INTEL_PIII:
-      native_table = &_papi_hwd_p3_native_map;
-      MY_VECTOR.cmp_info.num_native_events = _papi_hwd_p3_native_count;
-#ifdef XML
-      return(_xml_papi_hwi_setup_all_presets("Pent III", NULL));
-      break;
-#endif
-      preset_search_map = &_papi_hwd_p3_preset_map;
-      break;
-#ifdef PERFCTR_X86_INTEL_PENTM
-   case PERFCTR_X86_INTEL_PENTM:
-      native_table = &_papi_hwd_pm_native_map;
-      MY_VECTOR.cmp_info.num_native_events = _papi_hwd_pm_native_count;
-      preset_search_map = &_papi_hwd_pm_preset_map;
-      break;
-#endif
-#ifdef PERFCTR_X86_INTEL_CORE
-   case PERFCTR_X86_INTEL_CORE:
-      native_table = &_papi_hwd_core_native_map;
-      MY_VECTOR.cmp_info.num_native_events = _papi_hwd_core_native_count;
-      preset_search_map = &_papi_hwd_core_preset_map;
-	  break;
-#endif
-#ifdef PERFCTR_X86_INTEL_CORE2
-   case PERFCTR_X86_INTEL_CORE2:
-      native_table = &_papi_hwd_core_native_map;
-      MY_VECTOR.cmp_info.num_native_events = _papi_hwd_core_native_count;
-      preset_search_map = &_papi_hwd_core_preset_map;
-	  break;
-#endif
-   case PERFCTR_X86_AMD_K7:
-      native_table = &_papi_hwd_k7_native_map;
-      MY_VECTOR.cmp_info.num_native_events = _papi_hwd_k7_native_count;
-      preset_search_map = &_papi_hwd_ath_preset_map;
-      break;
-
-#ifdef PERFCTR_X86_AMD_K8 /* this is defined in perfctr 2.5.x */
-   case PERFCTR_X86_AMD_K8:
-      native_table = &_papi_hwd_k8_native_map;
-      MY_VECTOR.cmp_info.num_native_events = _papi_hwd_k8_native_count;
-      preset_search_map = &_papi_hwd_opt_preset_map;
-      _papi_hwd_fixup_fp(&s, &n);
-      break;
-#endif
-#ifdef PERFCTR_X86_AMD_K8C  /* this is defined in perfctr 2.6.x */
-   case PERFCTR_X86_AMD_K8C:
-      native_table = &_papi_hwd_k8_native_map;
-      MY_VECTOR.cmp_info.num_native_events = _papi_hwd_k8_native_count;
-      preset_search_map = &_papi_hwd_opt_preset_map;
-      _papi_hwd_fixup_fp(&s, &n);
-      break;
-#endif
-
-   default:
-     PAPIERROR(MODEL_ERROR);
-     return(PAPI_ESBSTR);
-   }
-   SUBDBG("Number of native events: %d\n",MY_VECTOR.cmp_info.num_native_events);
-   retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
-
-   /* fix up the floating point ops if needed for opteron */
-   if (s) retval =_papi_hwi_setup_all_presets(s,n);
-
-   return(retval);
-}
-
 static int _p3_init_control_state(hwd_control_state_t * cntl) {
    int i, def_mode = 0;
    cmp_control_state_t *ptr = (cmp_control_state_t *)cntl;
@@ -691,6 +614,14 @@ static int _p3_allocate_registers(EventSetInfo_t *ESI) {
    int i, j, natNum;
    cmp_reg_alloc_t event_list[MAX_COUNTERS];
    cmp_register_t *ptr;
+   int pfm_events=0; 
+ 
+#ifdef PERFCTR_X86_AMD_K8 /* this is defined in perfctr 2.5.x */
+    if (_papi_hwi_system_info.hw_info.model == PERFCTR_X86_AMD_K8) pfm_events = 1;
+#endif
+#ifdef PERFCTR_X86_AMD_K8C  /* this is defined in perfctr 2.6.x */
+    if (_papi_hwi_system_info.hw_info.model == PERFCTR_X86_AMD_K8C) pfm_events = 1;
+#endif
 
    /* Initialize the local structure needed
       for counter allocation and optimization. */
@@ -989,6 +920,56 @@ static int _p3_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
       return (PAPI_EINVAL);
   }
 }
+
+/*
+papi_svector_t _p3_vector_table[] = {
+  {(void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE },
+  {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
+  {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
+  {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
+  {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
+  {(void (*)())_papi_hwd_bpt_map_set, VEC_PAPI_HWD_BPT_MAP_SET },
+  {(void (*)())_papi_hwd_bpt_map_avail, VEC_PAPI_HWD_BPT_MAP_AVAIL },
+  {(void (*)())_papi_hwd_bpt_map_exclusive, VEC_PAPI_HWD_BPT_MAP_EXCLUSIVE },
+  {(void (*)())_papi_hwd_bpt_map_shared, VEC_PAPI_HWD_BPT_MAP_SHARED },
+  {(void (*)())_papi_hwd_bpt_map_preempt, VEC_PAPI_HWD_BPT_MAP_PREEMPT },
+  {(void (*)())_papi_hwd_bpt_map_update, VEC_PAPI_HWD_BPT_MAP_UPDATE },
+  {(void (*)())_papi_hwd_allocate_registers, VEC_PAPI_HWD_ALLOCATE_REGISTERS },
+  {(void(*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
+  {(void (*))_papi_hwd_set_domain, VEC_PAPI_HWD_SET_DOMAIN},
+  {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
+  {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
+  { NULL, VEC_PAPI_END }
+};
+
+
+int setup_p3_vector_table(papi_vectors_t * vtable){
+  int retval=PAPI_OK; 
+
+#ifndef PAPI_NO_VECTOR
+#ifdef PERFCTR_PFM_EVENTS
+  papi_svector_t *event_vectors = _papi_pfm_event_vectors;
+#else
+  papi_svector_t *event_vectors = _papi_p3_event_vectors;
+#endif
+
+  retval = _papi_hwi_setup_vector_table( vtable, _p3_vector_table);
+  if (retval == PAPI_OK) {
+    retval = _papi_hwi_setup_vector_table(vtable, event_vectors);
+  }
+#endif
+  return ( retval );
+}
+*/
+
+///* These should be removed when p3-p4 is merged */
+//int setup_p4_vector_table(papi_vectors_t * vtable){
+//  return ( PAPI_OK );
+//}
+//
+//int setup_p4_presets(int cputype){
+//  return ( PAPI_OK );
+//}
 
 papi_vector_t _p3_vector = {
     .cmp_info = {

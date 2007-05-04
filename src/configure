@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS AWK CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP MXPATH NETPATH arch DEBUGFLAGS MAKEVER PMAPI AR NOTLS altix PMINIT perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root pfm_prefix pfm_incdir pfm_libdir bitmode compnts compsrcs comphdrs compobjs OS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS AWK CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP MXPATH NETPATH arch DEBUGFLAGS MAKEVER PMAPI AR NOTLS altix PMINIT perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root pfm_prefix pfm_incdir pfm_libdir bitmode compnts compsrcs comphdrs compobjs OS pfm_events LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -874,6 +874,7 @@ Optional Packages:
   --with-pfm-incdir=<path>	Specify directory of perfmon header files
   --with-pfm-libdir=<path>	Specify directory of pfm library
   --with-pmapi=<path>		Specify path of pmapi on aix system
+  --with-pfm-events=<static,file>	Specify source of events for pfmlib-based systems
   --with-nativecc=<path>	Specify native C compiler for header generation
   --with-mx=<no,yes>	Build a MX component in the library
   --with-net=<no,yes>	Build a net(ifconfig) component in the library
@@ -1451,9 +1452,11 @@ if test "$OS" = "catamount"; then
 elif test "$OS" = "bgl"; then
    if test "x$CC" = "x"; then
       CC=powerpc-bgl-blrts-gnu-gcc
+      CFLAGS="-D_BGL -gdwarf-2 -O2 -Wall"
    fi
    if test "x$F77" = "x"; then
       F77=powerpc-bgl-blrts-gnu-g77
+      FFLAGS="-gdwarf-2 -O2 -Wall -Dlinux"
    fi
    walltimer=cycle
    virtualtimer=perfctr
@@ -2760,7 +2763,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2763:" \
+echo "$as_me:2766:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -3512,7 +3515,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:3515:" \
+echo "$as_me:3518:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -5306,6 +5309,15 @@ if test "${with_pmapi+set}" = set; then
   pmapi=$withval
 else
   pmapi=default
+
+fi;
+
+# Check whether --with-pfm_events or --without-pfm_events was given.
+if test "${with_pfm_events+set}" = set; then
+  withval="$with_pfm_events"
+  pfm_events=$withval
+else
+  pfm_events="file"
 
 fi;
 if test "$cross_compiling" = "yes" ; then
@@ -7286,6 +7298,9 @@ _ACEOF
 
 
 
+
+
+
 if test "$cross_compiling" = "yes" ; then
    { echo "$as_me:$LINENO: Compiling genpapifdef with $nativecc because cross compiling" >&5
 echo "$as_me: Compiling genpapifdef with $nativecc because cross compiling" >&6;}
@@ -7959,6 +7974,7 @@ s,@compsrcs@,$compsrcs,;t t
 s,@comphdrs@,$comphdrs,;t t
 s,@compobjs@,$compobjs,;t t
 s,@OS@,$OS,;t t
+s,@pfm_events@,$pfm_events,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF

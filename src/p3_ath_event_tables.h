@@ -103,7 +103,7 @@ enum {
    native event indeces as defined above.
 */
 
-const hwi_search_t _papi_hwd_ath_preset_map[] = {
+hwi_search_t _papi_hwd_ath_preset_map[] = {
    {PAPI_L1_DCM, {DERIVED_ADD, {PNE_ATH_SYS_DC_REFILLS_MOES, PNE_ATH_L2_DC_REFILLS_MOES, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_L1_ICM, {0, {PNE_ATH_IC_MISSES, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_L2_DCM, {0, {PNE_ATH_SYS_DC_REFILLS_MOES, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
@@ -159,7 +159,7 @@ const hwi_search_t _papi_hwd_ath_preset_map[] = {
 /* Please see the architecture's manual for any clarifications.         */
 
 const int _papi_hwd_k7_native_count = (PNE_ATH_LAST_NATIVE_EVENT & PAPI_NATIVE_AND_MASK);
-const native_event_entry_t _papi_hwd_k7_native_map[] = {
+native_event_entry_t _papi_hwd_k7_native_map[] = {
    {"SEG_REG_LOADS",
     "Number of segment register loads",
     {ALLCNTRS, 0x20}},

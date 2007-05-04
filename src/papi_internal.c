@@ -242,9 +242,6 @@ static int create_EventSet(EventSetInfo_t **here)
 
    ESI->state = PAPI_STOPPED;
 
-   /* ESI->domain.domain = 0;
-      ESI->granularity.granularity = 0; */
-
    *here = ESI;
    return(PAPI_OK);
 }
@@ -311,6 +308,9 @@ int _papi_hwi_assign_eventset(EventSetInfo_t *ESI, int cidx)
    initialize_NativeInfoArray(ESI);
 
    _papi_hwd[cidx]->init_control_state(ESI->ctl_state); /* this used to be init_config */
+
+   ESI->domain.domain = _papi_hwd[cidx]->cmp_info.default_domain;
+   ESI->granularity.granularity = _papi_hwd[cidx]->cmp_info.default_granularity;
 
    ESI->state = PAPI_STOPPED;
 

@@ -94,9 +94,9 @@ typedef struct {
  */
 typedef struct {
 	unsigned long long	reg_value;	/* register value */
+	unsigned long long	reg_addr;	/* hardware register addr or index */
 	unsigned int 		reg_num;	/* logical register index (perfmon2) */
 	unsigned int		reg_reserved1;	/* for future use */
-	unsigned long		reg_addr;	/* hardware register addr or index */
 	unsigned long		reg_reserved[1];/* for future use */
 } pfmlib_reg_t;
 
@@ -215,6 +215,8 @@ extern int pfm_get_inst_retired_event(pfmlib_event_t *e);
 #define PFMLIB_MIPS_SB1_PMU		74	/* MIPS SB1/SB1A */
 #define PFMLIB_MIPS_VR5432_PMU		75	/* MIPS VR5432 */
 #define PFMLIB_MIPS_VR5500_PMU		76	/* MIPS VR5500 */
+#define PFMLIB_MIPS_ICE9A_PMU		77	/* SiCortex ICE9A */
+#define PFMLIB_MIPS_ICE9B_PMU		78	/* SiCortex ICE9B */
 
 /*
  * pfmlib error codes
@@ -322,6 +324,19 @@ pfm_regmask_and(pfmlib_regmask_t *dst, pfmlib_regmask_t *h1, pfmlib_regmask_t *h
 }
 
 static inline int
+pfm_regmask_andnot(pfmlib_regmask_t *dst, pfmlib_regmask_t *h1, pfmlib_regmask_t *h2)
+{
+	unsigned int pos;
+	if (dst == NULL || h1 == NULL || h2 == NULL)
+		return PFMLIB_ERR_INVAL;
+
+	for (pos = 0; pos < PFMLIB_REG_BV; pos++) {
+		dst->bits[pos] = h1->bits[pos] & ~h2->bits[pos];
+	}
+	return PFMLIB_SUCCESS;
+}
+
+static inline int
 pfm_regmask_or(pfmlib_regmask_t *dst, pfmlib_regmask_t *h1, pfmlib_regmask_t *h2)
 {
 	unsigned int pos;
@@ -343,6 +358,18 @@ pfm_regmask_copy(pfmlib_regmask_t *dst, pfmlib_regmask_t *src)
 
 	for (pos = 0; pos < PFMLIB_REG_BV; pos++) {
 		dst->bits[pos] = src->bits[pos];
+	}
+	return PFMLIB_SUCCESS;
+}
+static inline int
+pfm_regmask_not(pfmlib_regmask_t *dst)
+{
+	unsigned int pos;
+	if (dst == NULL)
+		return PFMLIB_ERR_INVAL;
+
+	for (pos = 0; pos < PFMLIB_REG_BV; pos++) {
+		dst->bits[pos] = ~dst->bits[pos];
 	}
 	return PFMLIB_SUCCESS;
 }

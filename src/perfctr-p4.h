@@ -11,6 +11,19 @@
 #define inline_static inline static
 #endif
 
+
+/* Native events consist of a flag field, an event field, and a unit mask field.
+ * The next 4 macros define the characteristics of the event and unit mask fields.
+ */
+#define PAPI_NATIVE_EVENT_AND_MASK 0x000000ff /* 8 bits == 256 max events */
+#define PAPI_NATIVE_EVENT_SHIFT 0
+#define PAPI_NATIVE_UMASK_AND_MASK 0x0fffff00 /* 20 bits for unit masks */
+/* top 4 bits (16 - 19) encode tags for execution_event tagging */
+#define PAPI_NATIVE_UMASK_SHIFT 8
+
+#define MAX_COUNTERS	       18
+#define MAX_COUNTER_TERMS	8
+
 /* Per event data structure for each event */
 
 typedef struct _p4_perfctr_event {
@@ -21,10 +34,6 @@ typedef struct _p4_perfctr_event {
    unsigned pebs_matrix_vert;
    unsigned ireset;
 } _p4_perfctr_event_t;
-
-
-#define MAX_COUNTERS	       18
-#define MAX_COUNTER_TERMS	8
 
 /*
 The name and description fields should be self-explanatory.
@@ -152,7 +161,7 @@ typedef ucontext_t hwd_ucontext_t;
 extern int sighold(int);
 extern int sigrelse(int);
 
-//extern papi_vector_t _p4_vector;
+
 #define MY_VECTOR _p4_vector
 
 /* Undefined identifiers in executable */

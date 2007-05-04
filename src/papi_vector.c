@@ -27,7 +27,7 @@ long_long vec_dummy_get_virt_usec (const hwd_context_t *zero);
 long_long vec_dummy_get_real_usec (void);
 long_long vec_dummy_get_real_cycles (void);
 
-extern papi_vector_t COMP_VECTOR;
+extern papi_vector_t MY_VECTOR;
 #ifdef HAVE_ACPI
 extern papi_vector_t _acpi_vector;
 #endif
@@ -39,7 +39,7 @@ extern papi_vector_t _net_vector;
 #endif
 
 papi_vector_t *_papi_hwd[] = {
-  &COMP_VECTOR,
+  &MY_VECTOR,
 #ifdef HAVE_ACPI
   &_acpi_vector,
 #endif
@@ -197,6 +197,7 @@ int _papi_hwi_innoculate_vector(papi_vector_t *v){
  if(!v->add_prog_event) v->add_prog_event=		(int (*) (hwd_control_state_t *, unsigned int, void *, EventInfo_t *)) vec_int_dummy;
  if(!v->set_domain) v->set_domain=			(int (*) (hwd_control_state_t *, int)) vec_int_dummy;
  if(!v->ntv_enum_events) v->ntv_enum_events=		(int (*) (unsigned int *, int)) vec_int_dummy;
+ if(!v->ntv_name_to_code) v->ntv_name_to_code=		(int (*) (char *, unsigned int *)) vec_int_dummy;
  if(!v->ntv_code_to_name) v->ntv_code_to_name=		(char * (*) (unsigned int)) vec_char_star_dummy;
  if(!v->ntv_code_to_descr) v->ntv_code_to_descr=	(char * (*) (unsigned int)) vec_char_star_dummy;
  if(!v->ntv_code_to_bits) v->ntv_code_to_bits=		(int (*) (unsigned int, hwd_register_t *)) vec_int_dummy;
@@ -318,6 +319,7 @@ void vector_print_table(papi_vector_t *v, int print_func){
  vector_print_routine((void *)v->add_prog_event, "_papi_hwd_add_prog_event",print_func);
  vector_print_routine((void *)v->set_domain, "_papi_hwd_set_domain",print_func);
  vector_print_routine((void *)v->ntv_enum_events, "_papi_hwd_ntv_enum_events",print_func);
+ vector_print_routine((void *)v->ntv_name_to_code, "_papi_hwd_ntv_name_to_code",print_func);
  vector_print_routine((void *)v->ntv_code_to_name, "_papi_hwd_ntv_code_to_name",print_func);
  vector_print_routine((void *)v->ntv_code_to_descr, "_papi_hwd_ntv_code_to_descr",print_func);
  vector_print_routine((void *)v->ntv_code_to_bits, "_papi_hwd_ntv_code_to_bits",print_func);

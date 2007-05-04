@@ -251,7 +251,17 @@ On Ubuntu 6.06 (and probably other debian distros),  add a line to
 
 KERNEL=="perfctr", MODE="0666"
 
-This tells udev to always create the device file with the appropriate permissions.
+On SuSE, you may need to add something like the following to
+/etc/udev/rules.d/50-udev-default.rules:
+ (SuSE does not have the 40-permissions.rules file in it.]
+
+# cpu devices
+KERNEL=="cpu[0-9]*",            NAME="cpu/%n/cpuid"
+KERNEL=="msr[0-9]*",            NAME="cpu/%n/msr"
+KERNEL=="microcode",            NAME="cpu/microcode", MODE="0600"
+KERNEL=="perfctr",              NAME="perfctr", MODE="0644"
+
+These lines tell udev to always create the device file with the appropriate permissions.
 Use 'perfex -i' from the perfctr distribution to test this fix.
 
 PLATFORM NOTES:

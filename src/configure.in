@@ -100,9 +100,11 @@ if test "$OS" = "catamount"; then
 elif test "$OS" = "bgl"; then
    if test "x$CC" = "x"; then
       CC=powerpc-bgl-blrts-gnu-gcc
+      CFLAGS="-D_BGL -gdwarf-2 -O2 -Wall"
    fi
    if test "x$F77" = "x"; then
       F77=powerpc-bgl-blrts-gnu-g77
+      FFLAGS="-gdwarf-2 -O2 -Wall -Dlinux"
    fi
    walltimer=cycle
    virtualtimer=perfctr
@@ -858,6 +860,11 @@ AC_ARG_WITH(pmapi,
             [pmapi=$withval],
             [pmapi=default]
             )
+AC_ARG_WITH(pfm_events,
+            [  --with-pfm-events=<static,file>	Specify source of events for pfmlib-based systems ],
+            [pfm_events=$withval],
+            [pfm_events="file"]
+            )
 if test "$cross_compiling" = "yes" ; then
 AC_MSG_CHECKING(for native compiler for header generation)
 AC_ARG_WITH(nativecc,
@@ -1322,6 +1329,9 @@ AC_SUBST(compsrcs)
 AC_SUBST(comphdrs)
 AC_SUBST(compobjs)
 AC_SUBST(OS)
+AC_SUBST(CFLAGS)
+AC_SUBST(FFLAGS)
+AC_SUBST(pfm_events)
 
 if test "$cross_compiling" = "yes" ; then
    AC_MSG_NOTICE(Compiling genpapifdef with $nativecc because cross compiling)

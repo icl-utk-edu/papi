@@ -10,7 +10,18 @@
 #include <inttypes.h>
 #include "libperfctr.h"
 
-#define MAX_COUNTERS 4
+/* Native events consist of a flag field, an event field, and a unit mask field.
+ * The next 4 macros define the characteristics of the event and unit mask fields.
+ */
+#define PAPI_NATIVE_EVENT_AND_MASK 0x00000fff /* 12 bits == 4096 max events */
+#define PAPI_NATIVE_EVENT_SHIFT 0
+#define PAPI_NATIVE_UMASK_AND_MASK 0x0ffff000 /* 16 bits for unit masks */
+#define PAPI_NATIVE_UMASK_SHIFT 12
+
+#define PERF_MAX_COUNTERS 4
+#define MAX_COUNTERS PERF_MAX_COUNTERS
+#define MAX_COUNTER_TERMS  MAX_COUNTERS
+#define P3_MAX_REGS_PER_EVENT 2
 
 #include "papi.h"
 #include "papi_preset.h"
@@ -127,7 +138,6 @@ typedef ucontext_t hwd_ucontext_t;
 #define MOESI_ALL 0x1F00 /* mask for MOESI bits in event code or counter_cmd */
 #define UNIT_MASK_ALL 0xFF00 /* indicates this event supports general UMASK modifiers */
 
-
 /* Masks to craft an eventcode to perfctr's liking */
 #define PERF_CTR_MASK          0xFF000000
 #define PERF_INV_CTR_MASK      0x00800000
@@ -154,7 +164,6 @@ typedef ucontext_t hwd_ucontext_t;
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
 
-//extern papi_vector_t _p3_vector;
 #define MY_VECTOR _p3_vector
 
 

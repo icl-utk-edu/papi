@@ -218,9 +218,6 @@ pfm_force_pmu(int type)
 	}
 	return PFMLIB_ERR_NOTSUPP;
 found:
-	/* verify that this is valid */
-	if ((*p)->pmu_detect() != PFMLIB_SUCCESS) return PFMLIB_ERR_NOTSUPP;
-
 	pfm_current = *p;
 
 	return PFMLIB_SUCCESS;
@@ -229,7 +226,7 @@ found:
 int
 pfm_find_event_byname(const char *n, unsigned int *idx)
 {
-	char *p;
+	char *p, *e;
 	unsigned int i;
 	size_t len;
 
@@ -248,9 +245,16 @@ pfm_find_event_byname(const char *n, unsigned int *idx)
 	else
 		len = p - n;
 
-	/* we do case insensitive comparisons */
+	/*
+	 * we do case insensitive comparisons
+	 *
+	 * event names must match completely
+	 */
 	for(i=0; i < pfm_current->pme_count; i++) {
-		if (!strncasecmp(pfm_current->get_event_name(i), n, len)) goto found;
+		e = pfm_current->get_event_name(i);
+		if (!strncasecmp(e, n, len)
+		    && len == strlen(e))
+			goto found;
 	}
 	return PFMLIB_ERR_NOTFOUND;
 found:
@@ -593,6 +597,8 @@ pfm_get_impl_pmcs(pfmlib_regmask_t *impl_pmcs)
 	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
 	if (impl_pmcs == NULL) return PFMLIB_ERR_INVAL;
 
+	memset(impl_pmcs , 0, sizeof(*impl_pmcs));
+
 	pfm_current->get_impl_pmcs(impl_pmcs);
 
 	return PFMLIB_SUCCESS;
@@ -604,6 +610,8 @@ pfm_get_impl_pmds(pfmlib_regmask_t *impl_pmds)
 	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
 	if (impl_pmds == NULL) return PFMLIB_ERR_INVAL;
 
+	memset(impl_pmds, 0, sizeof(*impl_pmds));
+
 	pfm_current->get_impl_pmds(impl_pmds);
 
 	return PFMLIB_SUCCESS;
@@ -614,6 +622,8 @@ pfm_get_impl_counters(pfmlib_regmask_t *impl_counters)
 {
 	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
 	if (impl_counters == NULL) return PFMLIB_ERR_INVAL;
+
+	memset(impl_counters, 0, sizeof(*impl_counters));
 
 	pfm_current->get_impl_counters(impl_counters);
 
