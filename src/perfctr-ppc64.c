@@ -495,14 +495,7 @@ int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
 
 int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** dp, int flags) {
    if (flags & PAPI_PAUSED) {
-     int i;
-     for ( i=0;i<spc->control.cpu_control.nractrs+spc->control.cpu_control.nrictrs; i++) {
-       spc->state.pmc[i] = 0;
-       if ( (spc->control.cpu_control.ireset[i] > 0) ) {
-       	continue;
-       }
-       spc->state.pmc[i] = vperfctr_read_pmc(ctx->perfctr, i);
-     }
+     vperfctr_read_state(ctx->perfctr, &spc->state, NULL);
    } else {
       SUBDBG("vperfctr_read_ctrs\n");
       if( spc->rvperfctr != NULL ) {

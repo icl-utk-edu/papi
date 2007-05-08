@@ -193,13 +193,7 @@ int _papi_hwd_read(P4_perfctr_context_t * ctx, P4_perfctr_control_t * spc,
 {
  
    if ( flags & PAPI_PAUSED ) {
-     int i,j=0;
-     for ( i=0;i<spc->control.cpu_control.nractrs+spc->control.cpu_control.nrictrs; i++) {
-       spc->state.pmc[j] = 0;
-       if ( (spc->control.cpu_control.evntsel[i] & CCCR_OVF_PMI_T0) ) continue;
-       spc->state.pmc[j] = vperfctr_read_pmc(ctx->perfctr, i);
-       j++;
-     }
+     vperfctr_read_state(ctx->perfctr, &spc->state, NULL);
    }  
    else {
       SUBDBG("vperfctr_read_ctrs\n");
