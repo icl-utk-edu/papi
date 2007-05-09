@@ -639,6 +639,7 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
    int retval;
 
    if (EventCode & PAPI_NATIVE_MASK) {
+     memset(info,0,sizeof(*info));
       _papi_hwi_lock(INTERNAL_LOCK);
       strncpy(info->symbol, _papi_hwd_ntv_code_to_name(EventCode), PAPI_MAX_STR_LEN);
       _papi_hwi_unlock(INTERNAL_LOCK);
@@ -658,7 +659,7 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
          */
          retval = _papi_hwd_ntv_code_to_bits(EventCode, &bits);
          if (retval == PAPI_OK)
-	   retval = _papi_hwd_ntv_bits_to_info(&bits, (char *)info->name, info->code, PAPI_MAX_STR_LEN, PAPI_MAX_INFO_TERMS);
+	   retval = _papi_hwd_ntv_bits_to_info(&bits, (char *)&info->name[0][0], info->code, PAPI_MAX_STR_LEN, PAPI_MAX_INFO_TERMS);
          if (retval < 0) 
 	   info->count = 0;
          else 

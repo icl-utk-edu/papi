@@ -167,45 +167,47 @@ do                                              \
 static inline unsigned int papi_cmpxchg_u32(volatile unsigned int * m, unsigned int old,
 	unsigned int new)
 {
-	unsigned int retval;
-		__asm__ __volatile__(
-		"	.set	push					\n"
-		"	.set	noat					\n"
-		"	.set	mips3					\n"
-		"1:	ll	%0, %2			# __cmpxchg_u32	\n"
-		"	bne	%0, %z3, 2f				\n"
-		"	.set	mips0					\n"
-		"	move	$1, %z4					\n"
-		"	.set	mips3					\n"
-		"	sc	$1, %1					\n"
-		"	beqz	$1, 1b					\n"
-		"	sync						\n"
-		"2:							\n"
-		"	.set	pop					\n"
-		: "=&r" (retval), "=R" (*m)
-		: "R" (*m), "Jr" (old), "Jr" (new)
-		: "memory");
-	return retval;
+  unsigned int retval;
+  __asm__ __volatile__(
+		       "	.set	push					\n"
+		       "	.set	noat					\n"
+		       "	.set	mips3					\n"
+		       "1:	ll	%0, %2					\n"
+		       "	ll	%0, %2					\n" // Remove
+		       "	bne	%0, %z3, 2f				\n"
+		       "	.set	mips0					\n"
+		       "	move	$1, %z4					\n"
+		       "	.set	mips3					\n"
+		       "	sc	$1, %1					\n"
+		       "	beqz	$1, 1b					\n"
+		       "	sync						\n"
+		       "2:							\n"
+		       "	.set	pop					\n"
+		       : "=&r" (retval), "=R" (*m)
+		       : "R" (*m), "Jr" (old), "Jr" (new)
+		       : "memory");
+  return retval;
 }
 static inline unsigned int papi_xchg_u32(volatile unsigned int * m, unsigned int val)
 {
-	unsigned int retval;
-	unsigned int dummy;
-	
-	__asm__ __volatile__(
-		"	.set	mips3					\n"
-		"1:	ll	%0, %3			# xchg_u32	\n"
-		"	.set	mips0					\n"
-		"	move	%2, %z4					\n"
-		"	.set	mips3					\n"
-		"	sc	%2, %1					\n"
-		"	beqz	%2, 1b					\n"
-		"	sync						\n"
-		"	.set	mips0					\n"
-		: "=&r" (retval), "=m" (*m), "=&r" (dummy)
-		: "R" (*m), "Jr" (val)
-		: "memory");
-	return retval;
+  unsigned int retval;
+  unsigned int dummy;
+  
+  __asm__ __volatile__(
+		       "	.set	mips3					\n"
+		       "1:	ll	%0, %3					\n"
+		       "	ll	%0, %3					\n" // Remove 
+		       "	.set	mips0					\n"
+		       "	move	%2, %z4					\n"
+		       "	.set	mips3					\n"
+		       "	sc	%2, %1					\n"
+		       "	beqz	%2, 1b					\n"
+		       "	sync						\n"
+		       "	.set	mips0					\n"
+		       : "=&r" (retval), "=m" (*m), "=&r" (dummy)
+		       : "R" (*m), "Jr" (val)
+		       : "memory");
+  return retval;
 }
 
 #define  _papi_hwd_lock(lck)                          \

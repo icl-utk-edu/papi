@@ -39,7 +39,7 @@
 /* 1st beta version of 3.4.9
     This will culminate in version 3.5.0 when the beta process is complete.
 */
-#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,5,0,0)
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,5,1,0)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
 
 #ifdef __cplusplus
@@ -78,6 +78,7 @@ failure.
 #define PAPI_ENOCNTR -13        /* Hardware does not support counters */
 #define PAPI_EMISC   -14        /* No clue as to what this error code means */
 #define PAPI_EPERM   -15        /* You lack the necessary permissions */
+#define PAPI_ENOINIT -16        /* PAPI not initialized */
 
 #define PAPI_NOT_INITED		0
 #define PAPI_LOW_LEVEL_INITED 	1       /* Low level has called library init */
@@ -147,6 +148,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_VENDOR_CRAY    6
 #define PAPI_VENDOR_SUN     7
 #define PAPI_VENDOR_FREESCALE 8
+#define PAPI_VENDOR_SICORTEX 9
 
 /* Granularity definitions */
 
@@ -186,7 +188,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 /* Error predefines */
 
-#define PAPI_NUM_ERRORS  16     /* Number of error messages specified in this API. */
+#define PAPI_NUM_ERRORS  17     /* Number of error messages specified in this API. */
 #define PAPI_QUIET       0      /* Option to turn off automatic reporting of return codes < 0 to stderr. */
 #define PAPI_VERB_ECONT  1      /* Option to automatically report any return codes < 0 to stderr and continue. */
 #define PAPI_VERB_ESTOP  2      /* Option to automatically report any return codes < 0 to stderr and exit. */
@@ -502,9 +504,9 @@ read the documentation carefully.  */
       char model_string[PAPI_MAX_STR_LEN];      /* Model string of CPU */
       float revision;               /* Revision of CPU */
       float mhz;                    /* Cycle time of this CPU */
+      int clock_mhz;                /* Cycle time of this CPU's cycle counter */
       PAPI_mh_info_t mem_hierarchy;  /* PAPI memory heirarchy description */
    } PAPI_hw_info_t;
-
 
    typedef struct _papi_attach_option {
       int eventset;
@@ -550,6 +552,7 @@ read the documentation carefully.  */
 
 /* A pointer to the following is passed to PAPI_get_dmem_info() */
 	typedef struct _dmem_t {
+	  long_long peak;
 	  long_long size;
 	  long_long resident;
 	  long_long high_water_mark;
@@ -560,21 +563,24 @@ read the documentation carefully.  */
 	  long_long locked;
 	  long_long stack;
 	  long_long pagesize;
+	  long_long pte;
 	} PAPI_dmem_info_t;
 
 /* Fortran offsets into PAPI_dmem_info_t structure. */
 
-#define PAPIF_DMEM_VMSIZE     1
-#define PAPIF_DMEM_RESIDENT   2
-#define PAPIF_DMEM_HIGH_WATER 3
-#define PAPIF_DMEM_SHARED     4
-#define PAPIF_DMEM_TEXT       5
-#define PAPIF_DMEM_LIBRARY    6
-#define PAPIF_DMEM_HEAP       7
-#define PAPIF_DMEM_LOCKED     8
-#define PAPIF_DMEM_STACK      9
-#define PAPIF_DMEM_PAGESIZE   10
-#define PAPIF_DMEM_MAXVAL     10
+#define PAPIF_DMEM_VMPEAK     1
+#define PAPIF_DMEM_VMSIZE     2
+#define PAPIF_DMEM_RESIDENT   3
+#define PAPIF_DMEM_HIGH_WATER 4
+#define PAPIF_DMEM_SHARED     5
+#define PAPIF_DMEM_TEXT       6
+#define PAPIF_DMEM_LIBRARY    7
+#define PAPIF_DMEM_HEAP       8
+#define PAPIF_DMEM_LOCKED     9
+#define PAPIF_DMEM_STACK      10
+#define PAPIF_DMEM_PAGESIZE   11
+#define PAPIF_DMEM_PTE        12
+#define PAPIF_DMEM_MAXVAL     12
 
 /*
    This structure is the event information that is exposed to the user through the API.

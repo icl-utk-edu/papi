@@ -11,6 +11,7 @@
 static void dump_memory_info(FILE *output, PAPI_dmem_info_t *d)
 {
   fprintf(output,"\n--------\n");
+  fprintf(output,"Mem Peak Size:\t\t%lld\n",d->peak);
   fprintf(output,"Mem Size:\t\t%lld\n",d->size);
   fprintf(output,"Mem Resident:\t\t%lld\n",d->resident);
   fprintf(output,"Mem High Water Mark:\t%lld\n",d->high_water_mark);
@@ -21,6 +22,7 @@ static void dump_memory_info(FILE *output, PAPI_dmem_info_t *d)
   fprintf(output,"Mem Locked:\t\t%lld\n",d->locked);
   fprintf(output,"Mem Stack:\t\t%lld\n",d->stack);
   fprintf(output,"Mem Pagesize:\t\t%lld\n",d->pagesize);
+  fprintf(output,"Mem Page Table Entries:\t\t%lld\n",d->pte);
   fprintf(output,"--------\n\n");
 }
 

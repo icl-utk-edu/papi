@@ -58,7 +58,7 @@ static void do_std_dev(long_long *a, int *s, double std, double ave) {
 static void do_dist(long_long *a, long_long min, long_long max, int bins, int *d) {
    int i, j;
    int dmax = 0;
-   int range = (int)(max - min);
+   int range = (int)(max - min + 1); /* avoid edge conditions */
 
    /* clear the distribution array */
    for(i=0;i<bins;i++) {

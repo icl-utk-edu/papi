@@ -2,9 +2,6 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 
-void init_mdi();
-void init_presets();
-
 papi_svector_t _any_null_table[] = {
  {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
  {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
@@ -47,182 +44,81 @@ papi_svector_t _any_null_table[] = {
  * Substrate setup and shutdown
  */
 
+/*
+ * This function is an internal function and not exposed and thus
+ * it can be called anything you want as long as the information
+ * for the presets are setup here.
+ */
+hwi_search_t preset_map[] = {
+   {PAPI_TOT_CYC, {0, {0x1, PAPI_NULL}, {0,}}},
+   {PAPI_L1_DCM, {0, {0x2, PAPI_NULL}, {0,}}},
+   {PAPI_TOT_INS, {0, {0x3, PAPI_NULL}, {0,}}},
+   {PAPI_FP_OPS, {0, {0x4, PAPI_NULL}, {0,}}},
+   {0, {0, {PAPI_NULL, PAPI_NULL}, {0,}}}
+};
+
+inline_static pid_t mygettid(void)
+{
+#ifdef SYS_gettid
+  return(syscall(SYS_gettid));
+#elif defined(__NR_gettid)
+  return(syscall(__NR_gettid));
+#else
+  return(syscall(1105));  
+#endif
+}
+
 /* Initialize hardware counters, setup the function vector table
  * and get hardware information, this routine is called when the 
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {
-   int retval;
+   int retval = PAPI_OK;
 
+#ifndef PAPI_NO_VECTOR
    retval = _papi_hwi_setup_vector_table( vtable, _any_null_table);
-   
-#ifdef DEBUG
-   /* This prints out which functions are mapped to dummy routines
-    * and this should be taken out once the substrate is completed.
-    * The 0 argument will print out only dummy routines, change
-    * it to a 1 to print out all routines.
-    */
-   vector_print_table(vtable, 0);
+   if ( retval != PAPI_OK ) return(retval);   
 #endif
-   /* Internal function, doesn't necessarily need to be a function */
-   init_mdi();
 
    /* Internal function, doesn't necessarily need to be a function */
-   init_presets();
-
-   return(retval);
-}
-
-/*
- * This function is an internal function and not exposed and thus
- * it can be called anything you want as long as the information
- * for the presets are setup here.
- */
-const hwi_search_t preset_map[] = {
-   {PAPI_L1_DCM, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L1_ICM, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L2_DCM, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L2_ICM, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L3_DCM, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L3_ICM, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L2_TCM, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L3_TCM, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_CA_SNP, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_CA_SHR, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_CA_CLN, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_CA_INV, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_CA_ITV, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L3_LDM, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L3_STM, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_BRU_IDL, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_FXU_IDL, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_FPU_IDL, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_LSU_IDL, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_TLB_DM, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_TLB_IM, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_TLB_TL, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L1_LDM, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L1_STM, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L2_LDM, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L2_STM, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_BTAC_M, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_PRF_DM, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L3_DCH, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_TLB_SD, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_CSR_FAL, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_CSR_SUC, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_CSR_TOT, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_MEM_SCY, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_MEM_RCY, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_MEM_WCY, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_STL_ICY, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_FUL_ICY, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_STL_CCY, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_FUL_CCY, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_HW_INT, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_BR_UCN, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_BR_CN, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_BR_TKN, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_BR_NTK, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_BR_MSP, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_BR_PRC, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_FMA_INS, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_TOT_IIS, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_TOT_INS, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_INT_INS, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_FP_INS, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_LD_INS, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_SR_INS, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_BR_INS, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_VEC_INS, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_RES_STL, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_FP_STAL, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_TOT_CYC, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_LST_INS, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_SYC_INS, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L1_DCH, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L2_DCH, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L1_DCA, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L2_DCA, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L3_DCA, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L1_DCR, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L2_DCR, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L3_DCR, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L1_DCW, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L2_DCW, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L3_DCW, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L1_ICH, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L2_ICH, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L3_ICH, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L1_ICR, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L2_ICR, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L3_ICR, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L1_ICW, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L2_ICW, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L3_ICW, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L1_TCH, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L2_TCH, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L3_TCH, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L1_TCA, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L2_TCA, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L3_TCA, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L1_TCR, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L2_TCR, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L3_TCR, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L1_TCW, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L2_TCW, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_L3_TCW, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_FML_INS, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_FAD_INS, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_FDV_INS, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_FSQ_INS, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_FNV_INS, {0, {0x1, PAPI_NULL}, {0,}}},
-   {PAPI_FP_OPS, {0, {0x1, PAPI_NULL}, {0,}}},
-   {0, {0, {PAPI_NULL, PAPI_NULL}, {0,}}}
-};
-
-
-void init_presets(){
-  return (_papi_hwi_setup_all_presets(preset_map, NULL));
-}
-
-/*
- * This function is an internal function and not exposed and thus
- * it can be called anything you want as long as the information
- * is setup in _papi_hwd_init_substrate.  Below is some, but not
- * all of the values that will need to be setup.  For a complete
- * list check out papi_mdi_t, though some of the values are setup
- * and used above the substrate level.
- */
-void init_mdi(){
-   strcpy(_papi_hwi_system_info.hw_info.vendor_string,"any-null");
-   strcpy(_papi_hwi_system_info.hw_info.model_string,"any-null");
-   _papi_hwi_system_info.hw_info.mhz = 100.0;
+   strcpy(_papi_hwi_system_info.hw_info.vendor_string,"Vendor");
+   strcpy(_papi_hwi_system_info.hw_info.model_string,"Model");
+   _papi_hwi_system_info.hw_info.mhz = 1;
+   _papi_hwi_system_info.hw_info.clock_mhz = 1;
    _papi_hwi_system_info.hw_info.ncpu = 1;
    _papi_hwi_system_info.hw_info.nnodes = 1;
    _papi_hwi_system_info.hw_info.totalcpus = 1;
-   _papi_hwi_system_info.num_cntrs = MAX_COUNTERS;
-   _papi_hwi_system_info.supports_program = 0;
-   _papi_hwi_system_info.supports_write = 0;
-   _papi_hwi_system_info.supports_hw_overflow = 0;
-   _papi_hwi_system_info.supports_hw_profile = 0;
-   _papi_hwi_system_info.supports_multiple_threads = 0;
-   _papi_hwi_system_info.supports_64bit_counters = 0;
-   _papi_hwi_system_info.supports_attach = 0;
-   _papi_hwi_system_info.supports_real_usec = 0;
-   _papi_hwi_system_info.supports_real_cyc = 0;
-   _papi_hwi_system_info.supports_virt_usec = 0;
-   _papi_hwi_system_info.supports_virt_cyc = 0;
-   _papi_hwi_system_info.size_machdep = sizeof(hwd_control_state_t);
-}
+   strcpy(_papi_hwi_system_info.sub_info.name,"any-null");              /* Name of the substrate we're using, usually CVS RCS Id */
+   strcpy(_papi_hwi_system_info.sub_info.version,"$Revision$");           /* Version of this substrate, usually CVS Revision */
+   _papi_hwi_system_info.sub_info.num_cntrs = 4;               /* Number of counters the substrate supports */
+   _papi_hwi_system_info.sub_info.num_mpx_cntrs = PAPI_MPX_DEF_DEG; /* Number of counters the substrate (or PAPI) can multiplex */
+   _papi_hwi_system_info.sub_info.num_native_events = 0;       
 
+   retval = _papi_hwi_setup_all_presets(preset_map, NULL);
+
+   return(retval);
+}
 
 /*
  * This is called whenever a thread is initialized
  */
 int _papi_hwd_init(hwd_context_t *ctx)
 {
+#if defined(USE_PROC_PTTIMER)
+  {
+    char buf[LINE_MAX];
+    int fd;
+    sprintf(buf,"/proc/%d/task/%d/stat",getpid(),mygettid());
+    fd = open(buf,O_RDONLY);
+    if (fd == -1)
+      {
+	PAPIERROR("open(%s)",buf);
+	return(PAPI_ESYS);
+      }
+    ctx->stat_fd = fd;
+  }
+#endif
    return(PAPI_OK);
 }
 
@@ -275,7 +171,7 @@ int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long *fr
 /*
  * Overflow and profile functions 
  */
-void _papi_hwd_dispatch_timer(int signal, siginfo_t *si, void *context)
+void _papi_hwd_dispatch_timer(int signal, hwd_siginfo_t *si, void *context)
 {
   /* Real function would call the function below with the proper args
    * _papi_hwi_dispatch_overflow_signal(...);
@@ -344,22 +240,89 @@ int _papi_hwd_set_domain(hwd_control_state_t *cntrl, int domain)
  */
 long_long _papi_hwd_get_real_usec(void)
 {
-   return(1);
+  long_long retval;
+  struct timeval buffer;
+  gettimeofday(&buffer,NULL);
+  retval = (long_long)(buffer.tv_sec*1000000);
+  retval += (long_long)(buffer.tv_usec);
+  return(retval);
 }
 
 long_long _papi_hwd_get_real_cycles(void)
 {
-   return(1);
+  return(_papi_hwd_get_real_usec());
 }
 
 long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
 {
-   return(1);
+  long_long retval;
+#if defined(USE_PROC_PTTIMER)
+   {
+     char buf[LINE_MAX];
+     long_long utime, stime;
+     int rv, cnt = 0, i = 0;
+
+     rv = read(ctx->stat_fd,buf,LINE_MAX*sizeof(char));
+     if (rv == -1)
+       {
+	 PAPIERROR("read()");
+	 return(PAPI_ESYS);
+       }
+     lseek(ctx->stat_fd,0,SEEK_SET);
+
+     buf[rv] = '\0';
+     SUBDBG("Thread stat file is:%s\n",buf);
+     while ((cnt != 13) && (i < rv))
+       {
+	 if (buf[i] == ' ')
+	   { cnt++; }
+	 i++;
+       }
+     if (cnt != 13)
+       {
+	 PAPIERROR("utime and stime not in thread stat file?");
+	 return(PAPI_ESBSTR);
+       }
+     
+     if (sscanf(buf+i,"%llu %llu",&utime,&stime) != 2)
+       {
+	 PAPIERROR("Unable to scan two items from thread stat file at 13th space?");
+	 return(PAPI_ESBSTR);
+       }
+     retval = (utime+stime)*(long_long)(1000000/sysconf(_SC_CLK_TCK));
+   }
+#elif defined(HAVE_CLOCK_GETTIME_THREAD)
+   {
+     struct timespec foo;
+     syscall(__NR_clock_gettime,HAVE_CLOCK_GETTIME_THREAD,&foo);
+     retval = foo.tv_sec*1000000;
+     retval += foo.tv_nsec/1000;
+   }
+#elif defined(HAVE_PER_THREAD_TIMES)
+   {
+     struct tms buffer;
+     times(&buffer);
+     SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
+     retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*(1000000/sysconf(_SC_CLK_TCK)));
+     /* NOT CLOCKS_PER_SEC as in the headers! */
+   }
+#elif defined(HAVE_PER_THREAD_GETRUSAGE)
+   {
+     struct rusage buffer;
+     getrusage(RUSAGE_SELF,&buffer);
+     SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
+     retval = (long_long)((buffer.ru_utime.tv_sec + buffer.ru_stime.tv_sec)*1000000);
+     retval += (long_long)(buffer.ru_utime.tv_usec + buffer.ru_stime.tv_usec);
+   }
+#else
+#error "No working per thread virtual timer"
+#endif
+   return retval;
 }
 
 long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
 {
-   return(1);
+  return(_papi_hwd_get_virt_usec(ctx)*_papi_hwi_system_info.hw_info.mhz);
 }
 
 /*
