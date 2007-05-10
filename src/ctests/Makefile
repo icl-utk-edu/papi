@@ -14,7 +14,7 @@ SERIAL  = hwinfo code2name reset subinfo realtime first exeinfo \
 	overflow_twoevents timer_overflow overflow2 \
 	matrix-hl tenth encode encode2 \
 	profile sprofile profile_twoevents byte_profile\
-	ipc native overflow_index overflow_one_and_read
+	ipc native overflow_index overflow_values overflow_one_and_read
 ATTACH	= multiattach zero_attach
 P4_TEST	= p4_lst_ins
 ACPI	= acpi 
@@ -204,6 +204,9 @@ overflow_one_and_read: overflow_one_and_read.c $(UTILOBJS) $(PAPILIB)
 
 overflow_index: overflow_index.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) overflow_index.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o overflow_index
+
+overflow_values: overflow_values.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) overflow_values.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o overflow_values
 
 overflow2: overflow2.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) overflow2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o overflow2
