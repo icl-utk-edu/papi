@@ -479,6 +479,7 @@ CPU,Intel Pentium4
 # CPU, Intel Pentium4 VEC_SSE[] = {
 #   {PAPI_VEC_INS, {DERIVED_CMPD, {PNE_execution_event_nbogus2, PNE_packed_SP_uop_tag2, PNE_packed_DP_uop_tag2, PAPI_NULL, }, {0,}}},
 #######
+PRESET,PAPI_TOT_CYC, NOT_DERIVED, global_power_events:RUNNING
 PRESET,PAPI_RES_STL, NOT_DERIVED, resource_stall:SBFULL
 PRESET,PAPI_BR_INS, NOT_DERIVED, branch_retired:MMNP:MMNM:MMTP:MMTM
 PRESET,PAPI_BR_TKN, NOT_DERIVED, branch_retired:MMTP:MMTM
