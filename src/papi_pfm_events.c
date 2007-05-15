@@ -229,7 +229,11 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
   if ((tmpn = getenv("PAPI_PERFMON_EVENT_FILE")) && (strlen(tmpn) != 0))
     sprintf(name,"%s",tmpn);
   else
+#ifdef PAPI_DATADIR
     sprintf(name,"%s/%s",PAPI_DATADIR,PERFMON_EVENT_FILE);
+#else
+    sprintf(name,"%s",PERFMON_EVENT_FILE);
+#endif
   SUBDBG("Opening %s\n",name);
   table = fopen(name,"r");
   if (table == NULL)

@@ -16,21 +16,18 @@ int main(int argc, char **argv)
    if (hw_info == NULL)
      test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
-   elapsed_us = PAPI_get_real_usec();
+   elapsed_us = PAPI_get_virt_usec();
+   elapsed_cyc = PAPI_get_virt_cyc();
 
-   elapsed_cyc = PAPI_get_real_cyc();
-
-   printf("Testing real time clock. (CLOCK %d MHz, CPU %f MHz)\n",hw_info->clock_mhz,hw_info->mhz);
+   printf("Testing virt time clock. (CLOCK %d MHz, CPU %f MHz)\n",hw_info->clock_mhz,hw_info->mhz);
    printf("Sleeping for 10 seconds.\n");
 
    sleep(10);
 
-   elapsed_us = PAPI_get_real_usec() - elapsed_us;
-
-   elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
+   elapsed_us = PAPI_get_virt_usec() - elapsed_us;
+   elapsed_cyc = PAPI_get_virt_cyc() - elapsed_cyc;
 
    printf("%lld us. %lld cyc.\n",elapsed_us,elapsed_cyc);
-   printf("%f Computed MHz.\n",(float)elapsed_cyc/(float)elapsed_us);
 
 /* Elapsed microseconds and elapsed cycles are not as unambiguous as they appear.
    On Pentium III and 4, for example, cycles is a measured value, while useconds 
@@ -47,12 +44,8 @@ int main(int argc, char **argv)
 
    /* We'll accept 1.5 part per thousand error here (to allow Pentium 4 
       and Alpha to pass) */
-   if (elapsed_us < (10000000 - 15000))
-     test_fail(__FILE__, __LINE__, "Real time less than 10 seconds!", PAPI_EMISC);
-
-   if ((10.0 * hw_info->mhz * 1000000.0) > 1.05*(((float)elapsed_cyc) + ((float)elapsed_cyc)/1000)){
-     test_fail(__FILE__, __LINE__, "Real cycles less than 10*MHz*1000000.0!", PAPI_EMISC);
-   }
+   if (elapsed_us > 100000)
+     test_fail(__FILE__, __LINE__, "Virt time greater than .1 seconds!", PAPI_EMISC);
 
    test_pass(__FILE__, NULL, 0);
    exit(1);

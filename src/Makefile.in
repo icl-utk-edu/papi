@@ -10,6 +10,7 @@ exec_prefix = $(EPREFIX)
 INCDIR	  = @includedir@
 LIBDIR	  = @libdir@
 BINDIR	  = @bindir@
+datarootdir = @datarootdir@
 MANDIR	  = @mandir@
 DATADIR   = @datadir@
 PMAPI     = @PMAPI@

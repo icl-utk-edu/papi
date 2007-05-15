@@ -74,6 +74,7 @@ int main(int argc, char **argv)
       printf("Model string and code    : %s (%d)\n", hwinfo->model_string, hwinfo->model);
       printf("CPU Revision             : %f\n", hwinfo->revision);
       printf("CPU Megahertz            : %f\n", hwinfo->mhz);
+      printf("CPU Clock Megahertz      : %d\n", hwinfo->clock_mhz);
       printf("CPU's in this Node       : %d\n", hwinfo->ncpu);
       printf("Nodes in this System     : %d\n", hwinfo->nnodes);
       printf("Total CPU's              : %d\n", hwinfo->totalcpus);
@@ -103,6 +104,7 @@ int main(int argc, char **argv)
             printf("\n\n");
 #endif
          j++;
+	 memset(&info,0,sizeof(info));
          retval = PAPI_get_event_info(i, &info);
 
 	 /* This event may not exist */

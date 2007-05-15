@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS AWK CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP arch DEBUGFLAGS MAKEVER PMAPI AR NOTLS altix PMINIT perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root pfm_prefix pfm_incdir pfm_libdir bitmode pfm_events LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS AWK CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP datarootdir arch DEBUGFLAGS MAKEVER PMAPI AR NOTLS altix PMINIT perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root pfm_prefix pfm_incdir pfm_libdir bitmode pfm_events LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -860,9 +860,9 @@ Optional Packages:
   --with-bitmode=<32,64>	Specify bit mode of library
   --with-debug=<no,yes,memory>	Build a debugging version of the library
   --with-ffsll			This platform has the ffsll() function
-  --with-walltimer=<mmtimer,clock_realtime_hr,clock_realtime,cycle>     Specify realtime timer
+  --with-walltimer=<gettimeofday,mmtimer,clock_realtime_hr,clock_realtime,cycle>     Specify realtime timer
   --with-tls=<keyword>		This platform supports thread local storage with a keyword
-  --with-virtualtimer=<clock_thread_cputime_id,times,proc,perfctr>      Specify per-thread virtual timer
+  --with-virtualtimer=<clock_thread_cputime_id,times,proc,getrusage,perfctr>      Specify per-thread virtual timer
   --with-perfctr=<5,6,7>	Specify perfctr version number
   --with-perfctr-root=<path>	Specify path to prebuilt perfctr distribution
   --with-perfctr-prefix=<path>	Specify prefix to installed perfctr distribution
@@ -1627,7 +1627,7 @@ echo "$as_me:$LINENO: result: $CPU" >&5
 echo "${ECHO_T}$CPU" >&6
 
 #
-# Check for bitmode
+# Check for bitmode, this sucks and needs to be redone
 #
 echo "$as_me:$LINENO: checking for 32 or 64 bit mode" >&5
 echo $ECHO_N "checking for 32 or 64 bit mode... $ECHO_C" >&6
@@ -1638,28 +1638,25 @@ if test "${with_bitmode+set}" = set; then
   withval="$with_bitmode"
   bitmode=$withval
 else
-
-# Bit mode is default 32 on most 64 bit machines
-case "$arch" in
-     ia64|x86_64)
-     bitmode=64 ;;
-     *)
-     bitmode=32 ;;
-esac
-
+  bitmode=default
 fi;
-fi
 case "$bitmode" in
    64)
+      bitmode=64
       BM="-64bit" ;;
    32)
-      BM="" ;;
+      bitmode=32
+      BM="-32bit" ;;
+   default)
+      bitmode=default
+      BM="";;
     *)
       { { echo "$as_me:$LINENO: error: The bitmode you specified is not supported" >&5
 echo "$as_me: error: The bitmode you specified is not supported" >&2;}
    { (exit 1); exit 1; }; }
       ;;
 esac
+fi
 echo "$as_me:$LINENO: result: $bitmode" >&5
 echo "${ECHO_T}$bitmode" >&6
 
@@ -2755,7 +2752,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2758:" \
+echo "$as_me:2755:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -3507,7 +3504,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:3510:" \
+echo "$as_me:3507:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -4561,7 +4558,13 @@ fi;
          fi
 echo "$as_me:$LINENO: checking for real time clock or cycle counter" >&5
 echo $ECHO_N "checking for real time clock or cycle counter... $ECHO_C" >&6
-if test "$walltimer" = "mmtimer"; then
+if test "$walltimer" = "gettimeofday"; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_GETTIMEOFDAY 1
+_ACEOF
+
+elif test "$walltimer" = "mmtimer"; then
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_MMTIMER 1
@@ -4580,11 +4583,17 @@ cat >>confdefs.h <<\_ACEOF
 #define HAVE_CLOCK_GETTIME_REALTIME CLOCK_REALTIME
 _ACEOF
 
-elif test "$walltimer" != "cycle"; then
+elif test "$walltimer" = "cycle"; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_CYCLE 1
+_ACEOF
+
+else
    { { echo "$as_me:$LINENO: error: Unknown value for walltimer" >&5
 echo "$as_me: error: Unknown value for walltimer" >&2;}
    { (exit 1); exit 1; }; }
-       fi
+fi
 echo "$as_me:$LINENO: result: $walltimer" >&5
 echo "${ECHO_T}$walltimer" >&6
 
@@ -5001,6 +5010,13 @@ case "$virtualtimer" in
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_PER_THREAD_TIMES 1
+_ACEOF
+
+   ;;
+   getrusage)
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_PER_THREAD_GETRUSAGE 1
 _ACEOF
 
    ;;
@@ -6898,6 +6914,9 @@ echo "$as_me: error: The bitmode you specified is not supported" >&2;}
        MAKEVER="$OS"-"$CPU""$BM"
        ;;
    linux)
+	if test "$perfmon" = 2; then
+		    MAKEVER="$OS"-perfmon2
+       else
        case "$CPU" in
             alpha)
                  if test "${bitmode}" = "64"; then
@@ -6912,11 +6931,9 @@ echo "$as_me: error: The bitmode you specified is not supported" >&2;}
 echo "$as_me: error: The bitmode you specified is not supported" >&2;}
    { (exit 1); exit 1; }; }
                  fi
-		 if test "$perfmon" = 2; then
-		    MAKEVER="$OS"-perfmon2
-		 elif test "$CPU" = "montecito"; then
+		 if test "$CPU" = "montecito"; then
 		    MAKEVER="$OS"-pfm-itanium2
-   else
+		    else
 		    MAKEVER="$OS"-pfm-"$CPU"
 		 fi ;;
             opteron|core|em64t|athlon|p4|p3)
@@ -6927,8 +6944,6 @@ echo "$as_me: error: The bitmode you specified is not supported" >&2;}
 				else
 					MAKEVER="$OS"-perfctr-"$CPU"
 				fi
-			elif test "$perfmon" != "no"; then
-				MAKEVER="$OS"-perfmon2
 			else
 				MAKEVER="$OS"-perfctr-"$CPU"
 			fi
@@ -6939,8 +6954,6 @@ echo "$as_me: error: The bitmode you specified is not supported" >&2;}
    { (exit 1); exit 1; }; }
 			elif test "$perfctr" != "no"; then
 			   MAKEVER="$OS"-perfctr-"$CPU"
-			elif test "$perfmon" != "no"; then
-			   MAKEVER="$OS"-perfmon2
 			else
 			   MAKEVER="$OS"-perfctr-"$CPU"
 			fi
@@ -6954,8 +6967,6 @@ echo "$as_me: error: The bitmode you specified is not supported" >&2;}
                 fi
 		if test "$perfctr" != "no"; then
 		   MAKEVER="$OS"-perfctr-"$CPU"
-		elif test "$perfmon" != "no"; then
-		   MAKEVER="$OS"-perfmon2
 		else
 		   MAKEVER="$OS"-perfctr-"$CPU"
 		fi
@@ -6976,6 +6987,7 @@ echo "$as_me: error: The bitmode you specified is not supported" >&2;}
 	    acpi)
 		 MAKEVER="$OS"-"$CPU" ;;
        esac
+       fi
        ;;
   irix)
        MAKEVER="$OS"-"$CPU""$BM"
@@ -6987,6 +6999,8 @@ echo "$as_me: error: The bitmode you specified is not supported" >&2;}
 esac
        ;;
   unicos)
+                 MAKEVER="$OS"-"$CPU" ;;
+  *)
                  MAKEVER="$OS"-"$CPU" ;;
 esac
 fi
@@ -7002,6 +7016,7 @@ case "$MAKEVER" in
     aix-power5-64bit);;
     aix5-power3);;
     aix5-power3-64bit);;
+    any-null);;
     catamount-perfctr-opteron);;
     dadd-alpha);;
     irix-mips);;
@@ -7040,22 +7055,16 @@ esac
 #
 # Fix up: put inside papi in share directory
 #
-if test "$datadir" = '${prefix}/share'; then
-   datadir='${prefix}/share/papi'
-   if test "$prefix" = "NONE"; then
-      PAPI_DATADIR="$ac_default_prefix/share/papi"
-   else
-      PAPI_DATADIR="$prefix/share/papi"
-   fi
-else
-   PAPI_DATADIR=$datadir
+if test "$datadir" = '${datarootdir}'; then
+   datadir="${prefix}/share/papi"
+   PAPI_DATADIR="${prefix}/share/papi"
 fi
 
 #
 # Fix up: Linux man pages in /usr/share/man
 #
 if test "$OS" = "linux"; then
-   if test "$mandir" = '${prefix}/man'; then
+   if test "$mandir" = '${datarootdir}/man'; then
       mandir='${prefix}/share/man'
    fi
 fi
@@ -7076,6 +7085,7 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define PAPI_DATADIR "$PAPI_DATADIR"
 _ACEOF
+
 
 
 
@@ -7758,6 +7768,7 @@ s,@SET_MAKE@,$SET_MAKE,;t t
 s,@RANLIB@,$RANLIB,;t t
 s,@ac_ct_RANLIB@,$ac_ct_RANLIB,;t t
 s,@EGREP@,$EGREP,;t t
+s,@datarootdir@,$datarootdir,;t t
 s,@arch@,$arch,;t t
 s,@DEBUGFLAGS@,$DEBUGFLAGS,;t t
 s,@MAKEVER@,$MAKEVER,;t t

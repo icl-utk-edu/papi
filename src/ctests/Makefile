@@ -6,7 +6,7 @@ MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
-SERIAL  = hwinfo code2name reset subinfo realtime first exeinfo \
+SERIAL  = hwinfo code2name reset subinfo realtime virttime first exeinfo \
 	zero zero_fork branches dmem_info all_native_events all_events derived high-level2 describe memory  \
 	zero_flip low-level high-level eventname case1 case2 \
 	calibrate flops second johnmay2 \
@@ -14,18 +14,18 @@ SERIAL  = hwinfo code2name reset subinfo realtime first exeinfo \
 	overflow_twoevents timer_overflow overflow2 \
 	matrix-hl tenth encode encode2 \
 	profile sprofile profile_twoevents byte_profile\
-	ipc native overflow_index overflow_values overflow_one_and_read
+	ipc native overflow_index overflow_one_and_read fork exec forkexec forkexec2
 ATTACH	= multiattach zero_attach
 P4_TEST	= p4_lst_ins
 ACPI	= acpi 
 EAR	= earprofile
 RANGE	= data_range
 BROKEN	= inherit pernode
-UTILOBJS= do_loops.o test_utils.o dummy.o
 TESTS	= $(PTHREADS) $(SERIAL) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM)\
 	$(SHARED) $(EAR) $(RANGE) $(P4_TEST) $(ACPI) $(ATTACH)
-INCLUDE = -I..  
+UTILOBJS= do_loops.o test_utils.o dummy.o
 PAPILIB	= ../$(LIBRARY)
+INCLUDE = -I. -I..  
 
 attach: $(ATTACH)
 
@@ -55,46 +55,46 @@ shmem: $(SHMEM)
 
 serial: $(SERIAL)
 
-sdsc2: sdsc2.c $(PAPILIB) $(UTILOBJS)
+sdsc2: sdsc2.c $(UTILOBJS) $(PAPILIB) 
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) sdsc.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lm -o $@
 
-sdsc2-mpx: sdsc2.c $(PAPILIB) $(UTILOBJS)
+sdsc2-mpx: sdsc2.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) -DMPX $(INCLUDE) $(TOPTFLAGS) sdsc2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lm -o $@
 
-branches: branches.c $(PAPILIB) $(UTILOBJS)
+branches: branches.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) branches.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lm -o $@
 
-sdsc2-mpx-noreset: sdsc2.c $(PAPILIB) $(UTILOBJS)
+sdsc2-mpx-noreset: sdsc2.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) -DMPX -DSTARTSTOP $(INCLUDE) $(TOPTFLAGS) sdsc.c $(UTILOBJS) $(PAPILIB) -lm $(LDFLAGS) -o $@
 
-sdsc-mpx: sdsc.c $(PAPILIB) $(UTILOBJS)
+sdsc-mpx: sdsc.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) -DMPX $(INCLUDE) $(TOPTFLAGS) sdsc.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@
 
-sdsc4-mpx: sdsc4.c $(PAPILIB) $(UTILOBJS)
+sdsc4-mpx: sdsc4.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) -DMPX $(INCLUDE) $(TOPTFLAGS) sdsc4.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lm -o $@
 
-calibrate: calibrate.c dummy.o $(PAPILIB) $(UTILOBJS)
+calibrate: calibrate.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) calibrate.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o calibrate
 
-data_range: data_range.c dummy.o $(PAPILIB) $(UTILOBJS)
+data_range: data_range.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) data_range.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o data_range
 
-p4_lst_ins: p4_lst_ins.c dummy.o $(PAPILIB) $(UTILOBJS)
+p4_lst_ins: p4_lst_ins.c $(UTILOBJS) $(PAPILIB) 
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) p4_lst_ins.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o p4_lst_ins
 
-acpi: acpi.c dummy.o $(PAPILIB) $(UTILOBJS)
+acpi: acpi.c dummy.o $(UTILOBJS) $(PAPILIB) 
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) acpi.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o acpi
 
-timer_overflow: timer_overflow.c $(PAPILIB) $(UTILOBJS)
+timer_overflow: timer_overflow.c $(UTILOBJS) $(PAPILIB) 
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) timer_overflow.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ 
 
-mendes-alt: mendes-alt.c $(PAPILIB) $(UTILOBJS)
+mendes-alt: mendes-alt.c $(UTILOBJS) $(PAPILIB) 
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -DMULTIPLEX mendes-alt.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ 
 
-multiplex1: multiplex1.c $(PAPILIB) $(UTILOBJS)
+multiplex1: multiplex1.c $(UTILOBJS) $(PAPILIB) 
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) multiplex1.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ 
 
-multiplex2: multiplex2.c $(PAPILIB) $(UTILOBJS)
+multiplex2: multiplex2.c $(UTILOBJS) $(PAPILIB) 
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) multiplex2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ 
 
 multiplex1_pthreads: multiplex1_pthreads.c $(UTILOBJS) $(PAPILIB)
@@ -145,7 +145,7 @@ omptough: omptough.c $(UTILOBJS) $(PAPILIB)
 val_omp: val_omp.c $(UTILOBJS) $(PAPILIB)
 	-$(CC_R) $(OMPCFLGS) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) val_omp.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o val_omp $(OMPLIBS)
 
-clockres_pthreads: clockcore.c clockres_pthreads.c $(PAPILIB) $(UTILOBJS)
+clockres_pthreads: clockcore.c clockres_pthreads.c $(UTILOBJS) $(PAPILIB) 
 	$(CC_R) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) clockcore.c clockres_pthreads.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o clockres_pthreads -lpthread -lm
 
 inherit: inherit.c $(UTILOBJS) $(PAPILIB)
@@ -175,6 +175,9 @@ zero_flip: zero_flip.c $(UTILOBJS) $(PAPILIB)
 realtime: realtime.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) realtime.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o realtime
 
+virttime: virttime.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) virttime.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o virttime
+
 first: first.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) first.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o first
 
@@ -187,10 +190,10 @@ first-twice: first-twice.c $(UTILOBJS) $(PAPILIB)
 second: second.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) second.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o second
 
-flops: flops.c dummy.o $(PAPILIB) $(UTILOBJS)
+flops: flops.c $(UTILOBJS) $(PAPILIB) 
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) flops.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o flops
 
-ipc: ipc.c dummy.o $(PAPILIB) $(UTILOBJS)
+ipc: ipc.c $(UTILOBJS) $(PAPILIB) 
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) ipc.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o ipc
 
 overflow: overflow.c $(UTILOBJS) $(PAPILIB)
@@ -232,65 +235,65 @@ earprofile: earprofile.c $(UTILOBJS) prof_utils.o $(PAPILIB)
 byte_profile: byte_profile.c $(UTILOBJS) prof_utils.o $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) byte_profile.c prof_utils.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o byte_profile
 
-pernode: pernode.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) pernode.c $(PAPILIB) $(LDFLAGS) -o pernode
+pernode: pernode.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) pernode.c $(LDFLAGS) -o pernode
 
-dmem_info: dmem_info.c $(PAPILIB) $(UTILOBJS)
+dmem_info: dmem_info.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) dmem_info.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o dmem_info
 
-all_events: all_events.c $(PAPILIB) $(UTILOBJS)
+all_events: all_events.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) all_events.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o all_events
 
-all_native_events: all_native_events.c $(PAPILIB) $(UTILOBJS)
+all_native_events: all_native_events.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) all_native_events.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o all_native_events
 
-memory: memory.c $(PAPILIB) $(UTILOBJS)
+memory: memory.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) memory.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o memory
 
 tenth: tenth.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) tenth.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o tenth
 
-native: native.c $(UTILSOBJS) $(PAPILIB)
+native: native.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) native.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o native
 
-eventname: eventname.c $(PAPILIB) $(UTILOBJS)
+eventname: eventname.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) eventname.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o eventname
 
-encode: encode.c $(PAPILIB) $(UTILOBJS)
+encode: encode.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) encode.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o encode
 
-encode2: encode2.c $(PAPILIB) $(UTILOBJS)
+encode2: encode2.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) encode2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o encode2
 
-case1: case1.c $(PAPILIB) $(UTILOBJS)
+case1: case1.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) case1.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o case1
 
-case2: case2.c $(PAPILIB)  $(UTILOBJS)
+case2: case2.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) case2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o case2
 
-low-level: low-level.c $(PAPILIB) $(UTILOBJS)
+low-level: low-level.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) low-level.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o low-level
 
-matrix-hl: matrix-hl.c $(PAPILIB) $(UTILOBJS)
+matrix-hl: matrix-hl.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS)  matrix-hl.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o matrix-hl
 
-high-level: high-level.c $(PAPILIB) $(UTILOBJS)
+high-level: high-level.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) high-level.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o high-level
 
-high-level2: high-level2.c $(PAPILIB) $(UTILOBJS)
+high-level2: high-level2.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) high-level2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o high-level2
 
-shlib: shlib.c $(PAPILIB) $(UTILOBJS)
+shlib: shlib.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) shlib.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o shlib -ldl
 	if [ ! -x ./shlib ]; then $(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) shlib.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o shlib; fi
 
-exeinfo: exeinfo.c $(PAPILIB) $(UTILOBJS)
+exeinfo: exeinfo.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) exeinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o exeinfo 
 
-subinfo: subinfo.c $(PAPILIB) $(UTILOBJS)
+subinfo: subinfo.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) subinfo.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o subinfo 
 
-zero_attach: zero_attach.c $(PAPILIB) $(UTILOBJS)
+zero_attach: zero_attach.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) zero_attach.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero_attach 
 
 hwinfo: hwinfo.c $(UTILOBJS) $(PAPILIB)
@@ -299,11 +302,14 @@ hwinfo: hwinfo.c $(UTILOBJS) $(PAPILIB)
 code2name: code2name.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) code2name.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o code2name
 
-multiattach: multiattach.c $(PAPILIB) $(UTILOBJS)
+multiattach: multiattach.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) multiattach.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o multiattach 
 
-reset: reset.c $(PAPILIB) $(UTILOBJS)
+reset: reset.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) reset.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o reset 
+
+fork exec forkexec forkexec2: %: %.c $(UTILOBJS) $(PAPILIB)
+	-$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) $< $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ 
 
 prof_utils.o: prof_utils.c papi_test.h prof_utils.h
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c prof_utils.c

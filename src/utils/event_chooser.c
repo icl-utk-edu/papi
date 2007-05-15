@@ -27,7 +27,7 @@ void papi_init(int argc, char **argv)
 
    if (!TESTS_QUIET) {
       printf
-          ("Test case eventChooser: Available events which can be added with given events.\n");
+          ("Test case event_chooser: Available events which can be added with given events.\n");
       printf
           ("-------------------------------------------------------------------------\n");
       printf("Vendor string and code   : %s (%d)\n", hwinfo->vendor_string,
@@ -35,6 +35,7 @@ void papi_init(int argc, char **argv)
       printf("Model string and code    : %s (%d)\n", hwinfo->model_string, hwinfo->model);
       printf("CPU Revision             : %f\n", hwinfo->revision);
       printf("CPU Megahertz            : %f\n", hwinfo->mhz);
+      printf("CPU Clock Megahertz      : %d\n", hwinfo->clock_mhz);
       printf("CPU's in this Node       : %d\n", hwinfo->ncpu);
       printf("Nodes in this System     : %d\n", hwinfo->nnodes);
       printf("Total CPU's              : %d\n", hwinfo->totalcpus);
