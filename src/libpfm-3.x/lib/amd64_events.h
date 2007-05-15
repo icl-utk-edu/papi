@@ -786,115 +786,55 @@ static pme_amd64_entry_t amd64_pe[]={
 	.pme_code = 0x80E8,
 	.pme_desc = "ECC Errors: Number of correctable and Uncorrectable DRAM ECC errors (Revision E)"
 	},
-/* 79 */{.pme_name = "REQUESTS_LOCAL_I/O_TO_LOCAL_MEMORY",
-	.pme_code = 0xA2E9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local I/O to Local Memory"
+/* 79 */{.pme_name = "CPU-IO_REQUESTS_TO_MEMORY-IO",
+	.pme_code = 0xE9,
+	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E)",
+	.pme_flags   = PFMLIB_AMD64_UMASK_COMBO,
+	.pme_numasks = 10,
+	.pme_umasks  = {
+		{ .pme_uname = "LOCAL_CPU_TO_LOCAL_MEMORY",
+		  .pme_udesc = "Local CPU to local memory",
+		  .pme_ucode = 0xA8,
+		},
+		{ .pme_uname = "LOCAL_CPU_TO_LOCAL_IO",
+		  .pme_udesc = "Local CPU to local input/output",
+		  .pme_ucode = 0xA4,
+		},
+		{ .pme_uname = "LOCAL_IO_TO_LOCAL_MEMORY",
+		  .pme_udesc = "Local input/output to local memory",
+		  .pme_ucode = 0xA2,
+		},
+		{ .pme_uname = "LOCAL_IO_TO_LOCAL_IO",
+		  .pme_udesc = "Local input/output to local input/output",
+		  .pme_ucode = 0xA1,
+		},
+		{ .pme_uname = "LOCAL_CPU_TO_REMOTE_MEMORY",
+		  .pme_udesc = "Local CPU to remote memory",
+		  .pme_ucode = 0x98,
+		},
+		{ .pme_uname = "LOCAL_CPU_TO_REMOTE_IO",
+		  .pme_udesc = "Local CPU to remote input/output",
+		  .pme_ucode = 0x94,
+		},
+		{ .pme_uname = "LOCAL_IO_TO_REMOTE_MEMORY",
+		  .pme_udesc = "Local input/output to remote memory",
+		  .pme_ucode = 0x92,
+		},
+		{ .pme_uname = "LOCAL_IO_TO_REMOTE_IO",
+		  .pme_udesc = "Local input/output to remote input/output",
+		  .pme_ucode = 0x91,
+		},
+		{ .pme_uname = "REMOTE_CPU_TO_LOCAL_IO",
+		  .pme_udesc = "Remote CPU to local input/output",
+		  .pme_ucode = 0x64,
+		},
+		{ .pme_uname = "REMOTE_IO_TO_LOCAL_IO",
+		  .pme_udesc = "Remote input/output to local input/output",
+		  .pme_ucode = 0x61,
+		}
+	 }
 	},
-/* 80 */{.pme_name = "REQUESTS_LOCAL_I/O_TO_LOCAL_I/O",
-	.pme_code = 0xA1E9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local I/O to Local I/O"
-	},
-/* 81 */{.pme_name = "REQUESTS_LOCAL_I/O_TO_LOCAL_ANY",
-	.pme_code = 0xA3E9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local I/O to Local Any"
-	},
-/* 82 */{.pme_name = "REQUESTS_LOCAL_ANY_TO_LOCAL_MEMORY",
-	.pme_code = 0xAAE9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local Any to Local Memory"
-	},
-/* 83 */{.pme_name = "REQUESTS_LOCAL_ANY_TO_LOCAL_I/O",
-	.pme_code = 0xA5E9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local Any to Local I/O"
-	},
-/* 84 */{.pme_name = "REQUESTS_LOCAL_ANY_TO_LOCAL_ANY",
-	.pme_code = 0xAFE9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local Any to Local Any"
-	},
-/* 85 */{.pme_name = "REQUESTS_LOCAL_CPU_TO_REMOTE_MEMORY",
-	.pme_code = 0x98E9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local CPU to Remote Memory"
-	},
-/* 86 */{.pme_name = "REQUESTS_LOCAL_CPU_TO_REMOTE_I/O",
-	.pme_code = 0x94E9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local CPU to Remote I/O"
-	},
-/* 87 */{.pme_name = "REQUESTS_LOCAL_CPU_TO_REMOTE_ANY",
-	.pme_code = 0x9CE9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local CPU to Remote Any"
-	},
-/* 88 */{.pme_name = "REQUESTS_LOCAL_I/O_TO_REMOTE_MEMORY",
-	.pme_code = 0x92E9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local I/O to Remote Memory"
-	},
-/* 89 */{.pme_name = "REQUESTS_LOCAL_I/O_TO_REMOTE_I/O",
-	.pme_code = 0x91E9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local I/O to Remote I/O"
-	},
-/* 90 */{.pme_name = "REQUESTS_LOCAL_I/O_TO_REMOTE_ANY",
-	.pme_code = 0x93E9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local I/O to Remote Any"
-	},
-/* 91 */{.pme_name = "REQUESTS_LOCAL_ANY_TO_REMOTE_MEMORY",
-	.pme_code = 0x9AE9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local Any to Remote Memory"
-	},
-/* 92 */{.pme_name = "REQUESTS_LOCAL_ANY_TO_REMOTE_I/O",
-	.pme_code = 0x95E9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local Any to Remote I/O"
-	},
-/* 93 */{.pme_name = "REQUESTS_LOCAL_ANY_TO_REMOTE_ANY",
-	.pme_code = 0x9FE9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local Any to Remote Any"
-	},
-/* 94 */{.pme_name = "REQUESTS_LOCAL_CPU_TO_ANY_MEMORY",
-	.pme_code = 0xB8E9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local CPU to Any Memory"
-	},
-/* 95 */{.pme_name = "REQUESTS_LOCAL_CPU_TO_ANY_I/O",
-	.pme_code = 0xB4E9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local CPU to Any I/O"
-	},
-/* 96 */{.pme_name = "REQUESTS_LOCAL_CPU_TO_ANY_ANY",
-	.pme_code = 0xBCE9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local CPU to Any Any"
-	},
-/* 97 */{.pme_name = "REQUESTS_LOCAL_I/O_TO_ANY_MEMORY",
-	.pme_code = 0xB2E9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local I/O to Any Memory"
-	},
-/* 98 */{.pme_name = "REQUESTS_LOCAL_I/O_TO_ANY_I/O",
-	.pme_code = 0xB1E9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local I/O to Any I/O"
-	},
-/* 99 */{.pme_name = "REQUESTS_LOCAL_I/O_TO_ANY_ANY",
-	.pme_code = 0xB3E9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local I/O to Any Any"
-	},
-/* 100 */{.pme_name = "REQUESTS_LOCAL_ANY_TO_ANY_MEMORY",
-	.pme_code = 0xBAE9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local Any to Any Memory"
-	},
-/* 101 */{.pme_name = "REQUESTS_LOCAL_ANY_TO_ANY_I/O",
-	.pme_code = 0xB5E9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local Any to Any I/O"
-	},
-/* 102 */{.pme_name = "REQUESTS_LOCAL_ANY_TO_ANY_ANY",
-	.pme_code = 0xBFE9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Local Any to Any Any"
-	},
-/* 103 */{.pme_name = "REQUESTS_REMOTE_CPU_TO_LOCAL_I/O",
-	.pme_code = 0x64E9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Remote CPU to Local I/O"
-	},
-/* 104 */{.pme_name = "REQUESTS_REMOTE_I/O_TO_LOCAL_I/O",
-	.pme_code = 0x61E9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Remote I/O to Local I/O"
-	},
-/* 105 */{.pme_name = "REQUESTS_REMOTE_ANY_TO_LOCAL_I/O",
-	.pme_code = 0x65E9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E):  Requests Remote Any to Local I/O"
-	},
-/* 106 */{.pme_name = "CACHE_BLOCK",
+/* 80 */{.pme_name = "CACHE_BLOCK",
 	.pme_code = 0xEA,
 	.pme_desc = "Cache Block Commands (Revision E)",
 	.pme_flags   = PFMLIB_AMD64_UMASK_COMBO,
@@ -922,7 +862,7 @@ static pme_amd64_entry_t amd64_pe[]={
 		}
 	 }
 	},
-/* 107 */{.pme_name = "SIZED_COMMANDS",
+/* 81 */{.pme_name = "SIZED_COMMANDS",
 	.pme_code = 0xEB,
 	.pme_desc = "Sized Commands",
 	.pme_flags   = PFMLIB_AMD64_UMASK_COMBO,
@@ -958,7 +898,7 @@ static pme_amd64_entry_t amd64_pe[]={
 		}
 	 }
 	},
-/* 108 */{.pme_name = "PROBE",
+/* 82 */{.pme_name = "PROBE",
 	.pme_code = 0xEC,
 	.pme_desc = "Probe Responses and Upstream Requests",
 	.pme_flags   = PFMLIB_AMD64_UMASK_COMBO,
@@ -994,7 +934,7 @@ static pme_amd64_entry_t amd64_pe[]={
 		},
 	 }
 	},
-/* 109 */{.pme_name = "GART",
+/* 83 */{.pme_name = "GART",
 	.pme_code = 0xEE,
 	.pme_desc = "GART Events",
 	.pme_flags   = PFMLIB_AMD64_UMASK_COMBO,
@@ -1014,7 +954,7 @@ static pme_amd64_entry_t amd64_pe[]={
 		}
 	 }
 	},
-/* 110 */{.pme_name = "HYPERTRANSPORT_LINK0",
+/* 84 */{.pme_name = "HYPERTRANSPORT_LINK0",
 	.pme_code = 0xF6,
 	.pme_desc = "HyperTransport Link 0 Transmit Bandwidth",
 	.pme_flags   = PFMLIB_AMD64_UMASK_COMBO,
@@ -1038,7 +978,7 @@ static pme_amd64_entry_t amd64_pe[]={
 		}
 	 }
 	},
-/* 111 */{.pme_name = "HYPERTRANSPORT_LINK1",
+/* 85 */{.pme_name = "HYPERTRANSPORT_LINK1",
 	.pme_code = 0xF7,
 	.pme_desc = "HyperTransport Link 1 Transmit Bandwidth",
 	.pme_flags   = PFMLIB_AMD64_UMASK_COMBO,
@@ -1062,7 +1002,7 @@ static pme_amd64_entry_t amd64_pe[]={
 		}
 	 }
 	},
-/* 112 */{.pme_name = "HYPERTRANSPORT_LINK2",
+/* 86 */{.pme_name = "HYPERTRANSPORT_LINK2",
 	.pme_code = 0xF8,
 	.pme_desc = "HyperTransport Link 2 Transmit Bandwidth",
 	.pme_flags   = PFMLIB_AMD64_UMASK_COMBO,
