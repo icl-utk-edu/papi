@@ -84,8 +84,11 @@ static int init_amd(PAPI_mh_info_t * mh_info)
    PAPI_mh_level_t *L = mh_info->level;
    /*
     * Layout of CPU information taken from :
-    * "AMD Processor Recognition Application Note", 20734W-1 November 2002 
-	* ****Does this properly decode Opterons (K8)?
+    * "AMD Processor Recognition Application Note", 20734W-1 November 2002
+    *
+    * ****Does this properly decode Opterons (K8)? Probably not...
+    * See updated #20734 Rev 3.13, December 2005 for info on K7;
+    * See "CPUID Specification" #25481 Rev 2.18, January 2006 for info on K8.
     */
 
    SUBDBG("Initializing AMD (K7) memory\n");
@@ -307,18 +310,22 @@ static int init_intel(PAPI_mh_info_t * mh_info)
             }
             switch ((value & 0xff)) {
             case 0x01:
-               L[0].tlb[0].num_entries = 128;
+               L[0].tlb[0].num_entries = 32;
                L[0].tlb[0].associativity = 4;
                break;
             case 0x02:
-               L[0].tlb[0].num_entries = 8;
+               L[0].tlb[0].num_entries = 2;
                L[0].tlb[0].associativity = 1;
                break;
             case 0x03:
-               L[0].tlb[1].num_entries = 256;
+               L[0].tlb[1].num_entries = 8;
                L[0].tlb[1].associativity = 4;
                break;
             case 0x04:
+               L[0].tlb[1].num_entries = 8;
+               L[0].tlb[1].associativity = 4;
+               break;
+            case 0x05:
                L[0].tlb[1].num_entries = 32;
                L[0].tlb[1].associativity = 4;
                break;
@@ -412,6 +419,12 @@ static int init_intel(PAPI_mh_info_t * mh_info)
                L[1].cache[0].size = 128;
                L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
+            case 0x3A:
+               L[1].cache[0].associativity = 6;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 192;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
             case 0x3B:
                L[1].cache[0].associativity = 2;
                L[1].cache[0].line_size = 64;
@@ -422,6 +435,18 @@ static int init_intel(PAPI_mh_info_t * mh_info)
                L[1].cache[0].associativity = 4;
                L[1].cache[0].line_size = 64;
                L[1].cache[0].size = 256;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x3D:
+               L[1].cache[0].associativity = 6;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 384;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x3E:
+               L[1].cache[0].associativity = 4;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].size = 512;
                L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
             case 0x40:
@@ -463,17 +488,52 @@ static int init_intel(PAPI_mh_info_t * mh_info)
                L[1].cache[0].line_size = 32;
                L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
                break;
-               /* Events 0x50--0x5d: TLB size info */
-               /*There is no way to determine
-                * the size since the page size
-                * can be 4K,2M or 4M and there
-                * is no way to determine it
-                * Sigh -KSL
-                */
-               /* I object, the size is 64, 128, 256 entries even
-                * though the page size is unknown
-                * Smile -smeds 
-                */
+            case 0x46:
+               L[2].cache[0].size = 4096;
+               L[2].cache[0].associativity = 4;
+               L[2].cache[0].line_size = 64;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x47:
+               L[2].cache[0].size = 8192;
+               L[2].cache[0].associativity = 8;
+               L[2].cache[0].line_size = 64;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x49:
+               L[1].cache[0].size = 4096;
+               L[1].cache[0].associativity = 16;
+               L[1].cache[0].line_size = 64;
+               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               L[2].cache[0].size = 4096;
+               L[2].cache[0].associativity = 16;
+               L[2].cache[0].line_size = 64;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x4A:
+               L[2].cache[0].size = 6144;
+               L[2].cache[0].associativity = 12;
+               L[2].cache[0].line_size = 64;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x4B:
+               L[2].cache[0].size = 8192;
+               L[2].cache[0].associativity = 16;
+               L[2].cache[0].line_size = 64;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x4C:
+               L[2].cache[0].size = 12288;
+               L[2].cache[0].associativity = 12;
+               L[2].cache[0].line_size = 64;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
+            case 0x4D:
+               L[2].cache[0].size = 16384;
+               L[2].cache[0].associativity = 16;
+               L[2].cache[0].line_size = 64;
+               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+               break;
             case 0x50:
                L[0].tlb[0].num_entries = 64;
                L[0].tlb[0].associativity = 1;
@@ -485,6 +545,14 @@ static int init_intel(PAPI_mh_info_t * mh_info)
             case 0x52:
                L[0].tlb[0].num_entries = 256;
                L[0].tlb[0].associativity = 1;
+               break;
+            case 0x56:
+               L[0].tlb[1].num_entries = 16;
+               L[0].tlb[1].associativity = 4;
+               break;
+            case 0x57:
+               L[0].tlb[1].num_entries = 16;
+               L[0].tlb[1].associativity = 4;
                break;
             case 0x5B:
                L[0].tlb[1].num_entries = 64;
@@ -518,23 +586,37 @@ static int init_intel(PAPI_mh_info_t * mh_info)
                L[0].cache[1].line_size = 64;
                L[0].cache[1].size = 32;
                break;
+	       /* Looks to me like these trace cache values
+	       (0x70 - 0x73) will overwrite L1 I-cache info.
+	       Should there be another slot in the cache table
+	       for them? - dkt 05/14/07*/
             case 0x70:
                /* 12k-uops trace cache */
                L[0].cache[0].associativity = 8;
                L[0].cache[0].size = 12;
                L[0].cache[0].line_size = 0;
+               L[0].cache[0].type = PAPI_MH_TYPE_TRACE;
                break;
             case 0x71:
                /* 16k-uops trace cache */
                L[0].cache[0].associativity = 8;
                L[0].cache[0].size = 16;
                L[0].cache[0].line_size = 0;
+               L[0].cache[0].type = PAPI_MH_TYPE_TRACE;
                break;
             case 0x72:
                /* 32k-uops trace cache */
                L[0].cache[0].associativity = 8;
                L[0].cache[0].size = 32;
                L[0].cache[0].line_size = 0;
+               L[0].cache[0].type = PAPI_MH_TYPE_TRACE;
+               break;
+            case 0x73:
+               /* 64k-uops trace cache */
+               L[0].cache[0].associativity = 8;
+               L[0].cache[0].size = 64;
+               L[0].cache[0].line_size = 0;
+               L[0].cache[0].type = PAPI_MH_TYPE_TRACE;
                break;
             case 0x77:
                /* This value is not in my copy of the Intel manual */
@@ -684,13 +766,23 @@ static int init_intel(PAPI_mh_info_t * mh_info)
                L[1].tlb[1].associativity = 1;
                L[1].tlb[1].num_entries = 96;
                break;
-            case 0xb0:
+            case 0xB0:
                L[0].tlb[0].associativity = 4;
-               L[0].tlb[0].num_entries = 512;
+               L[0].tlb[0].num_entries = 128;
                break;
-            case 0xb3:
+            case 0xB1:
+		/* 4MB pages @ 4 way assoc
+		or 2MB pages @ 8 way assoc */
+               L[0].tlb[0].associativity = 4;
+               L[0].tlb[0].num_entries = 4;
+               break;
+            case 0xB3:
                L[0].tlb[1].associativity = 4;
-               L[0].tlb[1].num_entries = 512;
+               L[0].tlb[1].num_entries = 128;
+               break;
+            case 0xB4:
+               L[0].tlb[1].associativity = 4;
+               L[0].tlb[1].num_entries = 256;
                break;
                /* Note, there are still various IA64 cases not mapped yet */
                /* I think I have them all now 9/10/04 */
