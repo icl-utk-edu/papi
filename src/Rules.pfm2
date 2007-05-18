@@ -84,6 +84,7 @@ config.h:
 	@echo 'Please clobber your build and run ./configure."
 
 $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
+	$(AR) xv $<
 
 papi_pfm_events.o: papi_pfm_events.c $(HEADERS) $(PFM_EVENTS_TABLE)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_pfm_events.c -o $@
