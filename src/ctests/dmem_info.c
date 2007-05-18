@@ -11,7 +11,6 @@
 static void dump_memory_info(FILE *output, PAPI_dmem_info_t *d)
 {
   fprintf(output,"\n--------\n");
-  fprintf(output,"Mem Peak Size:\t\t%lld\n",d->peak);
   fprintf(output,"Mem Size:\t\t%lld\n",d->size);
   fprintf(output,"Mem Peak Size:\t\t%lld\n",d->peak);
   fprintf(output,"Mem Resident:\t\t%lld\n",d->resident);
