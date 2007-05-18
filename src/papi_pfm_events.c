@@ -209,10 +209,14 @@ static inline int find_preset_code(char *tmp, int *code)
 
 static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_entry_t *here)
 {
-  char name[PATH_MAX], line[LINE_MAX];
+  char line[LINE_MAX];
 #if !defined(STATIC_PERFMON_EVENTS_TABLE)
+  char name[PATH_MAX];
   char *tmpn;
   FILE *table;
+#else
+  char *name = "builtin perfmon_events_table";
+  char *tmp_perfmon_events_table = perfmon_events_table;
 #endif
   int line_no = 1, get_presets = 0, derived = 0, insert = 2, preset = 0;
 
@@ -256,16 +260,16 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
       if (line[i-1] == '\n')
 	line[i-1] = '\0';
 #else
-  SUBDBG("Reading from static perfmon_events_table.\n");
-  while (*perfmon_events_table)
+  SUBDBG("Reading from builtin perfmon_events_table.\n");
+  while (*tmp_perfmon_events_table)
     {
       char *t;
       int i;
-      for (i=0; *perfmon_events_table && *perfmon_events_table != '\n'; i++) {
-        line[i] = *perfmon_events_table++;
+      for (i=0; *tmp_perfmon_events_table && *tmp_perfmon_events_table != '\n'; i++) {
+        line[i] = *tmp_perfmon_events_table++;
       }
-      if (*perfmon_events_table == '\n') {
-        perfmon_events_table++;
+      if (*tmp_perfmon_events_table == '\n') {
+        tmp_perfmon_events_table++;
       }
       line[i] = '\0';
 #endif
