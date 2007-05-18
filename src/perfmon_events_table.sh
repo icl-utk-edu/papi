@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/sh
 #
 #	(C) COPYRIGHT CRAY INC.
 #	UNPUBLISHED PROPRIETARY INFORMATION.
@@ -7,9 +7,9 @@
 #	Transform the ASCII perfmon events file into a static table.
 
 # print "#define STATIC_PERFMON_EVENTS_TABLE 1"
-print "static char *perfmon_events_table ="
+echo "static char *perfmon_events_table ="
 cat perfmon_events.csv | \
 	tr "\"" "'" |
 	sed 's/^/"/' | \
 	sed 's/$/\\n\"/'
-print ";"
+echo ";"
