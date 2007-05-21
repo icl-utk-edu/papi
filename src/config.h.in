@@ -12,8 +12,14 @@
 /* POSIX 1b per-thread clock */
 #undef HAVE_CLOCK_GETTIME_THREAD
 
+/* Native access to a hardware cycle counter */
+#undef HAVE_CYCLE
+
 /* This platform has the ffsll() function */
 #undef HAVE_FFSLL
+
+/* Normal gettimeofday timer */
+#undef HAVE_GETTIMEOFDAY
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -41,6 +47,9 @@
 
 /* Montecito headers */
 #undef HAVE_PERFMON_PFMLIB_MONTECITO_H
+
+/* Working per thread getrusage */
+#undef HAVE_PER_THREAD_GETRUSAGE
 
 /* Working per thread timer */
 #undef HAVE_PER_THREAD_TIMES

@@ -150,6 +150,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_VENDOR_CRAY    6
 #define PAPI_VENDOR_SUN     7
 #define PAPI_VENDOR_FREESCALE 8
+#define PAPI_VENDOR_SICORTEX 9
 
 /* Granularity definitions */
 
@@ -465,6 +466,7 @@ read the documentation carefully.  */
 #define PAPI_MH_TYPE_INST     0x1
 #define PAPI_MH_TYPE_DATA     0x2
 #define PAPI_MH_TYPE_VECTOR   0x4
+#define PAPI_MH_TYPE_TRACE    0x8
 #define PAPI_MH_TYPE_UNIFIED  (PAPI_MH_TYPE_INST|PAPI_MH_TYPE_DATA)
 #define PAPI_MH_CACHE_TYPE(a) (a & 0xf)
 #define PAPI_MH_TYPE_WT       0x00  /* write-through cache */
@@ -498,7 +500,7 @@ read the documentation carefully.  */
 
    typedef struct _papi_mh_info { /* mh for mem hierarchy maybe? */
       int levels;
-      PAPI_mh_level_t level[PAPI_MH_MAX_LEVELS];
+      PAPI_mh_level_t level[PAPI_MAX_MEM_HIERARCHY_LEVELS];
    } PAPI_mh_info_t;
 
    typedef struct _papi_hw_info {
@@ -511,9 +513,9 @@ read the documentation carefully.  */
       char model_string[PAPI_MAX_STR_LEN];      /* Model string of CPU */
       float revision;               /* Revision of CPU */
       float mhz;                    /* Cycle time of this CPU */
+      int clock_mhz;                /* Cycle time of this CPU's cycle counter */
       PAPI_mh_info_t mem_hierarchy;  /* PAPI memory heirarchy description */
    } PAPI_hw_info_t;
-
 
    typedef struct _papi_attach_option {
       int eventset;

@@ -27,7 +27,7 @@ void init_papi(void)
 
 int case1(void)
 {
-   int retval, i, EventSet = PAPI_NULL, j = 0, allvalid = 1;
+   int retval, i, EventSet = PAPI_NULL, j = 0, k = 0, allvalid = 1;
    long long *values;
    PAPI_event_info_t pset;
    
@@ -94,10 +94,21 @@ int case1(void)
    }
    printf("\n");
    if (!allvalid){
-      if (!TESTS_QUIET ){
-        printf("Warning:  one or more counter[s] registered no counts\n");
-      /*test_fail(__FILE__, __LINE__, "one or more counter registered no counts",1);*/
-      }
+      printf("Warning: One or more counters had zero values\n");
+   }
+
+   for (i = 0; i < j; i++) {
+     for (k = 0; k < j; k++) {
+       if ((i != k) && (values[i] == values[k]))
+	 {
+	   allvalid = 0;
+	   break;
+	 }
+     }
+   }
+
+   if (!allvalid){
+      test_fail(__FILE__, __LINE__, "One or more counters had identical values", PAPI_OK);
    }
 
    retval = PAPI_cleanup_eventset(EventSet);    /* JT */

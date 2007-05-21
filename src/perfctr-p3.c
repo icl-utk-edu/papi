@@ -739,13 +739,10 @@ cmp_context_t * this_ctx = (cmp_context_t *)ctx;
 cmp_control_state_t *spc = (cmp_control_state_t *)state;
 
    if ( flags & PAPI_PAUSED ) {
-     int i,j=0;
+     vperfctr_read_state(this_ctx->perfctr, &spc->state, NULL);
+     int i=0;
      for ( i=0;i<spc->control.cpu_control.nractrs+spc->control.cpu_control.nrictrs; i++) {
-       spc->state.pmc[j] = 0;
-       if ( (spc->control.cpu_control.evntsel[i] & PERF_INT_ENABLE) ) continue;
-       spc->state.pmc[j] = vperfctr_read_pmc(this_ctx->perfctr, i);
-       SUBDBG("vperfctr_read_pmc[%d] =  %lld\n", i, spc->state.pmc[j]);
-       j++;
+       SUBDBG("vperfctr_read_state: counter %d =  %lld\n", i, spc->state.pmc[i]);
      }
    }
    else {

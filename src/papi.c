@@ -214,7 +214,7 @@ int PAPI_set_thr_specific(int tag, void *ptr)
 
 int PAPI_library_init(int version)
 {
-   int tmp = 0;
+   int tmp = 0, tmpel;
    /* xxxx This is a poor attempt at a lock. 
       This should be replaced with a 
       true UNIX semaphore. We cannot use PAPI
@@ -308,10 +308,16 @@ int PAPI_library_init(int version)
      }
 #endif
 
+   /* Be verbose for now */
+
+   tmpel = _papi_hwi_error_level;
+   _papi_hwi_error_level = PAPI_VERB_ECONT;
+
    /* Initialize internal globals */
    if (_papi_hwi_init_global_internal() != PAPI_OK) {
      _in_papi_library_init_cnt--;
-      papi_return(PAPI_EINVAL);
+     _papi_hwi_error_level = tmpel;
+     papi_return(PAPI_EINVAL);
    }
 
    /* Initialize substrate globals */
@@ -320,6 +326,7 @@ int PAPI_library_init(int version)
       init_retval = tmp;
       _papi_hwi_shutdown_global_internal();
       _in_papi_library_init_cnt--;
+     _papi_hwi_error_level = tmpel;
       papi_return(init_retval);
    }
 
@@ -335,11 +342,13 @@ int PAPI_library_init(int version)
 	_papi_hwd[i]->shutdown_global();
       }
       _in_papi_library_init_cnt--;
+     _papi_hwi_error_level = tmpel;
       papi_return(init_retval);
    }
 
    init_level = PAPI_LOW_LEVEL_INITED;
    _in_papi_library_init_cnt--;
+   _papi_hwi_error_level = tmpel;
    return (init_retval = PAPI_VER_CURRENT);
 }
 

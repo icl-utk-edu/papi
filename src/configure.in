@@ -265,32 +265,28 @@ AC_MSG_RESULT($CPU)
 AC_DEFINE_UNQUOTED(CPU,$CPU,[cpu type])
 
 #
-# Check for bitmode
+# Check for bitmode, this sucks and needs to be redone
 #
 AC_MSG_CHECKING(for 32 or 64 bit mode)
 if test "x$bitmode" = "x"; then
 AC_ARG_WITH(bitmode,
             [  --with-bitmode=<32,64>	Specify bit mode of library],
-            [bitmode=$withval],
-            [
-# Bit mode is default 32 on most 64 bit machines
-case "$arch" in
-     ia64|x86_64)
-     bitmode=64 ;;
-     *)
-     bitmode=32 ;;
-esac
-])
-fi
+            [bitmode=$withval],[bitmode=default])
 case "$bitmode" in
    64)
+      bitmode=64
       BM="-64bit" ;;
    32)
-      BM="" ;;
+      bitmode=32 
+      BM="-32bit" ;;
+   default)
+      bitmode=default
+      BM="";;
     *)
       AC_MSG_ERROR([The bitmode you specified is not supported])
       ;;
 esac
+fi
 AC_MSG_RESULT($bitmode)
 ])
 
@@ -372,7 +368,7 @@ fi
 #
 if test "x$walltimer" = "x"; then
 AC_ARG_WITH(walltimer,
-            [  --with-walltimer=<mmtimer,clock_realtime_hr,clock_realtime,cycle>     Specify realtime timer ],
+            [  --with-walltimer=<gettimeofday,mmtimer,clock_realtime_hr,clock_realtime,cycle>     Specify realtime timer ],
             [walltimer=$withval],
             [walltimer=""
 if test "$cross_compiling" = "yes" ; then
@@ -463,16 +459,20 @@ main()
 	AC_MSG_RESULT(no)])])])])
          fi
 AC_MSG_CHECKING(for real time clock or cycle counter)
-if test "$walltimer" = "mmtimer"; then
+if test "$walltimer" = "gettimeofday"; then
+   AC_DEFINE(HAVE_GETTIMEOFDAY, 1, [Normal gettimeofday timer])
+elif test "$walltimer" = "mmtimer"; then
    AC_DEFINE(HAVE_MMTIMER, 1, [Altix memory mapped global cycle counter])
    altix="-DALTIX"
 elif test "$walltimer" = "clock_realtime_hr"; then
    AC_DEFINE(HAVE_CLOCK_GETTIME_REALTIME, CLOCK_REALTIME_HR, [POSIX 1b realtime HR clock])
 elif test "$walltimer" = "clock_realtime"; then
    AC_DEFINE(HAVE_CLOCK_GETTIME_REALTIME, CLOCK_REALTIME, [POSIX 1b realtime clock])
-elif test "$walltimer" != "cycle"; then
+elif test "$walltimer" = "cycle"; then
+   AC_DEFINE(HAVE_CYCLE, 1, [Native access to a hardware cycle counter])
+else
    AC_MSG_ERROR([Unknown value for walltimer])
-       fi
+fi
 AC_MSG_RESULT($walltimer)
 	   
 #
@@ -571,7 +571,7 @@ AC_MSG_RESULT($tls)
 
 if test "x$virtualtimer" = "x"; then
 AC_ARG_WITH(virtualtimer,
-            [  --with-virtualtimer=<clock_thread_cputime_id,times,proc,perfctr>      Specify per-thread virtual timer ],
+            [  --with-virtualtimer=<clock_thread_cputime_id,times,proc,getrusage,perfctr>      Specify per-thread virtual timer ],
             [virtualtimer=$withval],
             [
 if test "$cross_compiling" = "yes" ; then
@@ -751,6 +751,9 @@ AC_MSG_CHECKING(for thread virtual clock or cycle counter)
 case "$virtualtimer" in
    times)
      AC_DEFINE(HAVE_PER_THREAD_TIMES, 1, [Working per thread timer])
+   ;;
+   getrusage)
+     AC_DEFINE(HAVE_PER_THREAD_GETRUSAGE, 1, [Working per thread getrusage])
    ;;
    clock_thread_cputime_id)
      AC_DEFINE(HAVE_CLOCK_GETTIME_THREAD, CLOCK_THREAD_CPUTIME_ID, [POSIX 1b per-thread clock])
@@ -1060,7 +1063,10 @@ case "$OS" in
        fi
        MAKEVER="$OS"-"$CPU""$BM"
        ;;
-   linux) 
+   linux)
+	if test "$perfmon" = 2; then
+		    MAKEVER="$OS"-perfmon2
+       else
        case "$CPU" in
             alpha)
                  if test "${bitmode}" = "64"; then
@@ -1071,11 +1077,9 @@ case "$OS" in
                  if test "${with_bitmode}" = "32"; then
                    AC_MSG_ERROR([The bitmode you specified is not supported])
                  fi
-		 if test "$perfmon" = 2; then
-		    MAKEVER="$OS"-perfmon2
-		 elif test "$CPU" = "montecito"; then
+		 if test "$CPU" = "montecito"; then
 		    MAKEVER="$OS"-pfm-itanium2
-   else
+		    else
 		    MAKEVER="$OS"-pfm-"$CPU"
 		 fi ;;
             opteron|core|em64t|athlon|p4|p3)
@@ -1086,8 +1090,6 @@ case "$OS" in
 				else
 					MAKEVER="$OS"-perfctr-"$CPU" 
 				fi
-			elif test "$perfmon" != "no"; then
-				MAKEVER="$OS"-perfmon2
 			else
 				MAKEVER="$OS"-perfctr-"$CPU"
 			fi
@@ -1096,8 +1098,6 @@ case "$OS" in
 			   AC_MSG_ERROR([The bitmode you specified is not supported])
 			elif test "$perfctr" != "no"; then
 			   MAKEVER="$OS"-perfctr-"$CPU" 
-			elif test "$perfmon" != "no"; then
-			   MAKEVER="$OS"-perfmon2
 			else
 			   MAKEVER="$OS"-perfctr-"$CPU"
 			fi
@@ -1109,8 +1109,6 @@ case "$OS" in
                 fi
 		if test "$perfctr" != "no"; then
 		   MAKEVER="$OS"-perfctr-"$CPU" 
-		elif test "$perfmon" != "no"; then
-		   MAKEVER="$OS"-perfmon2
 		else
 		   MAKEVER="$OS"-perfctr-"$CPU"
 		fi
@@ -1129,6 +1127,7 @@ case "$OS" in
 	    acpi)
 		 MAKEVER="$OS"-"$CPU" ;;
        esac
+       fi
        ;;
   irix)
        MAKEVER="$OS"-"$CPU""$BM"
@@ -1140,6 +1139,8 @@ case "$OS" in
 esac
        ;;
   unicos)
+                 MAKEVER="$OS"-"$CPU" ;;
+  *)
                  MAKEVER="$OS"-"$CPU" ;;
 esac
 fi
@@ -1154,6 +1155,7 @@ case "$MAKEVER" in
     aix-power5-64bit);;
     aix5-power3);;
     aix5-power3-64bit);;
+    any-null);;
     catamount-perfctr-opteron);;
     dadd-alpha);;
     irix-mips);;
@@ -1263,22 +1265,16 @@ esac
 #
 # Fix up: put inside papi in share directory
 #
-if test "$datadir" = '${prefix}/share'; then
-   datadir='${prefix}/share/papi'
-   if test "$prefix" = "NONE"; then
-      PAPI_DATADIR="$ac_default_prefix/share/papi"
-   else
-      PAPI_DATADIR="$prefix/share/papi"
-   fi
-else
-   PAPI_DATADIR=$datadir
+if test "$datadir" = '${datarootdir}'; then
+   datadir="${prefix}/share/papi"
+   PAPI_DATADIR="${prefix}/share/papi"
 fi
 
 #
 # Fix up: Linux man pages in /usr/share/man
 #
 if test "$OS" = "linux"; then
-   if test "$mandir" = '${prefix}/man'; then
+   if test "$mandir" = '${datarootdir}/man'; then
       mandir='${prefix}/share/man'
    fi
 fi
@@ -1303,6 +1299,7 @@ AC_SUBST(includedir)
 AC_SUBST(mandir)
 AC_SUBST(bindir)
 AC_SUBST(datadir)
+AC_SUBST(datarootdir)
 AC_SUBST(arch)
 AC_SUBST(DEBUGFLAGS)
 AC_SUBST(MAKEVER)

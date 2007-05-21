@@ -1,12 +1,12 @@
 /*
    Calibrate.c
-	A program to perform one or all of three tests to count flops.
-	Test 1. Inner Product:				2*n operations
-		for i = 1:n; a = a + x(i)*y(i); end
-	Test 2. Matrix Vector Product:		2*n^2 operations
-		for i = 1:n; for j = 1:n; x(i) = x(i) + a(i,j)*y(j); end; end;
-	Test 3. Matrix Matrix Multiply:		2*n^3 operations
-		for i = 1:n; for j = 1:n; for k = 1:n; c(i,j) = c(i,j) + a(i,k)*b(k,j); end; end; end;
+        A program to perform one or all of three tests to count flops.
+        Test 1. Inner Product:                          2*n operations
+                for i = 1:n; a = a + x(i)*y(i); end
+        Test 2. Matrix Vector Product:          2*n^2 operations
+                for i = 1:n; for j = 1:n; x(i) = x(i) + a(i,j)*y(j); end; end;
+        Test 3. Matrix Matrix Multiply:         2*n^3 operations
+                for i = 1:n; for j = 1:n; for k = 1:n; c(i,j) = c(i,j) + a(i,k)*b(k,j); end; end; end;
 
   Supply a command line argument of 1, 2, or 3 to perform each test, or
   no argument to perform all three.
@@ -18,224 +18,384 @@
 
 #include "papi_test.h"
 
-static void resultline(int i, int j, int TESTS_QUIET);
-static void headerlines(char * title, int TESTS_QUIET);
+static void resultline(int i, int j, int EventSet);
+static void headerlines(char *title, int TESTS_QUIET);
 
 #define INDEX1 100
 #define INDEX5 500
 
+/* #define DONT_FAIL */
+#if _WIN32 /* recognize that Windows has more noise */
+  #define MAX_ERROR 20
+#else
+  #define MAX_ERROR 10
+#endif
+#define MAX_DIFF  14
+
 extern int TESTS_QUIET;
 
-int main(int argc, char *argv[]) {
-  extern void dummy(void *);
-  float real_time, proc_time, mflops;
-  long_long flpins;
+static void print_help(char **argv)
+{
+   printf("Usage: %s [-ivmdh]\n",argv[0]);
+   printf("Options:\n\n");
+   printf("\t-i            Inner Product test.\n");
+   printf("\t-v            Matrix-Vector multiply test.\n");
+   printf("\t-m            Matrix-Matrix multiply test.\n");
+   printf("\t-d            Double precision data. Default is float.\n");
+   printf("\t-e event      Use <event> as PAPI event instead of PAPI_FP_OPS\n");
+   printf("\t-h            Print this help message\n");
+   printf("\n");
+   printf("This test measures floating point operations for the specified test.\n");
+   printf("Operations can be performed in single or double precision.\n");
+   printf("Default operation is all three tests in single precision.\n");
+}
 
-  float *a, *b, *c, *x, *y, *z;
-  float aa = 0.0;
-  int i,j,k,n,t;
-  int retval = PAPI_OK;
+static float inner_single(int n, float *x, float *y)
+{
+   float aa = 0.0;
+   int i;
 
-   /*
-  Check for inputs of 1, 2, or 3. If TRUE, do that test only.
-  Otherwise, do all three tests.
-  */
-  t = 0;
-  if (argc > 1) {
-	if(!strcmp(argv[1],"1")) t = 1;
-	if(!strcmp(argv[1],"2")) t = 2;
-	if(!strcmp(argv[1],"3")) t = 3;
-  }
+   for (i = 0; i <= n; i++)
+      aa = aa + x[i] * y[i];
+   return(aa);
+}
 
-  tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
+static double inner_double(int n, double *x, double *y)
+{
+   double aa = 0.0;
+   int i;
 
-  if ( !TESTS_QUIET ) 
-  	printf("Initializing...");
+   for (i = 0; i <= n; i++)
+      aa = aa + x[i] * y[i];
+   return(aa);
+}
 
-  /* Initialize PAPI */
-  retval = PAPI_library_init( PAPI_VER_CURRENT );
-  if ( retval != PAPI_VER_CURRENT) test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+static void vector_single(int n, float *a, float *x, float *y)
+{
+    int i, j;
 
-/* If this platform doesn't support floating point, skip the test */
-  if (PAPI_query_event(PAPI_FP_INS) != PAPI_OK) {
-	test_skip(__FILE__,__LINE__,"PAPI_query_event",PAPI_ENOEVNT);
-  }
+    for (i = 0; i <= n; i++)
+      for (j = 0; j <= n; j++)
+	 y[i] = y[i] + a[i * n + j] * x[i];
+}
 
-  /* Initialize memory pointers */
-  a=b=c=0;
-  x=y=z=0;
+static void vector_double(int n, double *a, double *x, double *y)
+{
+    int i, j;
 
-  /* Inner Product test */
-  if (t == 1 || t == 0) {
-	/* Allocate the linear arrays */
-	x = malloc(INDEX5*sizeof(float));
-	y = malloc(INDEX5*sizeof(float));
+    for (i = 0; i <= n; i++)
+      for (j = 0; j <= n; j++)
+	 y[i] = y[i] + a[i * n + j] * x[i];
+}
 
-	if (!(x&&y))
-		retval = PAPI_ENOMEM;
-	else {
+static void matrix_single(int n, float *c, float *a, float *b)
+{
+    int i, j, k;
 
-		headerlines("Inner Product Test", TESTS_QUIET);
+   for (i = 0; i <= n; i++)
+      for (j = 0; j <= n; j++)
+         for (k = 0; k <= n; k++)
+            c[i * n + j] = c[i * n + j] + a[i * n + k] * b[k * n + j];
+}
 
-		/* step through the different array sizes */
-		for (n=0;n<INDEX5;n++) {
-		  if (n < INDEX1 || ((n+1) % 50) == 0) {
+static void matrix_double(int n, double *c, double *a, double *b)
+{
+    int i, j, k;
 
-			/* Initialize the needed arrays at this size */
-			for ( i=0; i<=n; i++ ) {
-				x[i] = rand()*(float)1.1;
-				y[i] = rand()*(float)1.1;
-			}
+   for (i = 0; i <= n; i++)
+      for (j = 0; j <= n; j++)
+         for (k = 0; k <= n; k++)
+            c[i * n + j] = c[i * n + j] + a[i * n + k] * b[k * n + j];
+}
 
-		    /* reset PAPI flops count */
-		    flpins = -1;
-		    retval = PAPI_flops( &real_time, &proc_time, &flpins, &mflops); 
-		    if (retval != PAPI_OK)
-				test_fail(__FILE__, __LINE__, "Inner Product Test: PAPI_flops", retval);
+static void reset_flops(char *title, int EventSet) {
+    int retval;
+    char err_str[PAPI_MAX_STR_LEN];
 
-			/* do the multiplication */
-			for (i=0;i<=n;i++)
-			  aa = aa + x[i]*y[i];
-			resultline(n, 1, TESTS_QUIET);
-			dummy((void*) &aa);
-		  }
+    retval = PAPI_start(EventSet);
+    if (retval != PAPI_OK) {
+      sprintf(err_str, "%s: PAPI_start", title);
+      test_fail(__FILE__, __LINE__, err_str, retval);
+    }
+}
+
+int main(int argc, char *argv[])
+{
+   extern void dummy(void *);
+
+   float aa, *a, *b, *c, *x, *y;
+   double aad, *ad, *bd, *cd, *xd, *yd;
+   int i, j, n;
+   int inner = 0;
+   int vector = 0;
+   int matrix = 0;
+   int double_precision = 0;
+   int element_size;
+   int retval = PAPI_OK;
+   char papi_event_str[PAPI_MIN_STR_LEN] = "PAPI_FP_OPS";
+   int papi_event;
+   int EventSet = PAPI_NULL;
+
+/* Parse the input arguments */
+   for (i = 0; i < argc; i++)
+     {
+       if (strstr(argv[i], "-i"))
+	 inner = 1;
+       else if (strstr(argv[i], "-v"))
+	 vector = 1;
+       else if (strstr(argv[i], "-m"))
+	 matrix = 1;
+       else if (strstr(argv[i], "-e"))
+	 {
+	   if ((argv[i+1] == NULL) || (strlen(argv[i+1]) == 0))
+	     {
+	       print_help(argv);
+	       exit(1);
+	     }
+	   strncpy(papi_event_str,argv[i+1],sizeof(papi_event_str));
+	   i++;
+	 }
+       else if (strstr(argv[i], "-d"))
+	 double_precision = 1;
+       else if (strstr(argv[i], "-h")) {
+	 print_help(argv);
+	 exit(1);
+       }
+     }
+
+   /* if no options specified, set all tests to TRUE */
+   if (inner + vector + matrix == 0)
+       inner = vector = matrix = 1;
+
+
+   tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
+
+   if (!TESTS_QUIET)
+      printf("Initializing...");
+
+   /* Initialize PAPI */
+   retval = PAPI_library_init(PAPI_VER_CURRENT);
+   if (retval != PAPI_VER_CURRENT)
+     test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+   
+   /* Translate name */
+   retval = PAPI_event_name_to_code(papi_event_str, &papi_event);
+   if (retval != PAPI_OK)
+     test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", retval);
+   
+   if (PAPI_query_event(papi_event) != PAPI_OK) 
+     test_skip(__FILE__, __LINE__, "PAPI_query_event", PAPI_ENOEVNT);
+   
+   if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
+     test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
+   
+   if ((retval = PAPI_add_event(EventSet, papi_event)) != PAPI_OK)
+     test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+
+   if (double_precision) 
+     element_size = sizeof(double);
+   else 
+     element_size = sizeof(float);
+
+   retval = PAPI_OK;
+
+   /* Inner Product test */
+   if (inner) {
+      /* Allocate the linear arrays */
+	x = malloc(INDEX5 * element_size);
+	y = malloc(INDEX5 * element_size);
+	if (!(x && y))
+	    retval = PAPI_ENOMEM;
+	xd = (double *)x;
+	yd = (double *)y;
+
+       if (retval == PAPI_OK) {
+         headerlines("Inner Product Test", TESTS_QUIET);
+
+         /* step through the different array sizes */
+         for (n = 0; n < INDEX5; n++) {
+            if (n < INDEX1 || ((n + 1) % 50) == 0) {
+
+               /* Initialize the needed arrays at this size */
+		if (double_precision) {
+		   for (i = 0; i <= n; i++) {
+		      xd[i] = (double)rand() * (double) 1.1;
+		      yd[i] = (double)rand() * (double) 1.1;
+		   }
+		} else {
+		   for (i = 0; i <= n; i++) {
+		      x[i] = rand() * (float) 1.1;
+		      y[i] = rand() * (float) 1.1;
+		   }
 		}
-	}
-  }
 
-  /* Matrix Vector test */
-  if ((t == 2 || t == 0) && retval != PAPI_ENOMEM) {
-	/* Allocate the needed arrays */
-	a = malloc(INDEX5*INDEX5*sizeof(float));
-	if (!x) x = malloc(INDEX5*sizeof(float));
-	if (!y) y = malloc(INDEX5*sizeof(float));
-	if (!(a&&x&&y))
-		retval = PAPI_ENOMEM;
-	else {
-    
-		headerlines("Matrix Vector Test", TESTS_QUIET);
-		
-		/* step through the different array sizes */
-		for (n=0;n<INDEX5;n++) {
-		  if (n < INDEX1 || ((n+1) % 50) == 0) {
+               /* reset PAPI flops count */
+		reset_flops("Inner Product Test",EventSet);
 
-			/* Initialize the needed arrays at this size */
-			for ( i=0; i<=n; i++ ) {
-				y[i] = 0.0;
-				x[i] = rand()*(float)1.1;
-				for (j=0; j<=n; j++)
-					a[i*n+j] = rand()*(float)1.1;
-			}
+               /* do the multiplication */
+	       if (double_precision) {
+		   aad = inner_double(n, xd, yd);
+		   dummy((void *) &aad);
+	       } else {
+		   aa = inner_single(n, x, y);
+		   dummy((void *) &aa);
+	       }
+	       resultline(n, 1, EventSet);
+            }
+         }
+      }
+       free(x);
+       free(y);
+   }
 
-		    /* reset PAPI flops count */
-		    flpins = -1;
-		    retval = PAPI_flops( &real_time, &proc_time, &flpins, &mflops); 
-		    if (retval != PAPI_OK)
-				test_fail(__FILE__, __LINE__, "Matrix Vector Test: PAPI_flops", retval);
+   /* Matrix Vector test */
+   if (vector && retval != PAPI_ENOMEM) {
+      /* Allocate the needed arrays */
+      a = malloc(INDEX5 * INDEX5 * element_size);
+      x = malloc(INDEX5 * element_size);
+      y = malloc(INDEX5 * element_size);
+      if (!(a && x && y))
+         retval = PAPI_ENOMEM;
+      ad = (double *)a;
+      xd = (double *)x;
+      yd = (double *)y;
 
-			/* compute the resultant vector */
-			for(i=0;i<=n;i++)
-				for(j=0;j<=n;j++)
-					y[i] = y[i] + a[i*n+j]*x[i];
-			resultline(n, 2, TESTS_QUIET);
-			dummy((void *)y);
-		  }
+      if (retval == PAPI_OK) {
+         headerlines("Matrix Vector Test", TESTS_QUIET);
+
+         /* step through the different array sizes */
+         for (n = 0; n < INDEX5; n++) {
+            if (n < INDEX1 || ((n + 1) % 50) == 0) {
+
+               /* Initialize the needed arrays at this size */
+		if (double_precision) {
+		   for (i = 0; i <= n; i++) {
+		      yd[i] = 0.0;
+		      xd[i] = (double)rand() * (double) 1.1;
+		      for (j = 0; j <= n; j++)
+			 ad[i * n + j] = (double)rand() * (double) 1.1;
+		   }
+		} else {
+		   for (i = 0; i <= n; i++) {
+		      y[i] = 0.0;
+		      x[i] = rand() * (float) 1.1;
+		      for (j = 0; j <= n; j++)
+			 a[i * n + j] = rand() * (float) 1.1;
+		   }
 		}
-	}
-  }
 
-  /* Matrix Multiply test */
-  if ((t == 3 || t == 0) && retval != PAPI_ENOMEM) {
-	/* Allocate the needed arrays */
-	if (!a) a = malloc(INDEX5*INDEX5*sizeof(float));
-	b = malloc(INDEX5*INDEX5*sizeof(float));
-	c = malloc(INDEX5*INDEX5*sizeof(float));
-	if (!(a&&b&&c))
-		retval = PAPI_ENOMEM;
-	else {
-    
-		headerlines("Matrix Multiply Test", TESTS_QUIET);
-		
-		/* step through the different array sizes */
-		for (n=0;n<INDEX5;n++) {
-		  if (n < INDEX1 || ((n+1) % 50) == 0) {
+               /* reset PAPI flops count */
+		reset_flops("Matrix Vector Test",EventSet);
 
-			/* Initialize the needed arrays at this size */
-			for ( i=0; i<=n*n+n; i++ ) {
-				c[i] = 0.0;
-				a[i] = rand()*(float)1.1;
-				b[i] = rand()*(float)1.1;
-			}
-
-		    /* reset PAPI flops count */
-		    flpins = -1;
-		    retval = PAPI_flops( &real_time, &proc_time, &flpins, &mflops); 
-		    if (retval != PAPI_OK)
-				test_fail(__FILE__, __LINE__, "Matrix Multiply Test: PAPI_flops", retval);
-
-			/* compute the resultant matrix */
-			for(i=0;i<=n;i++)
-				for(j=0;j<=n;j++)
-					for(k=0;k<=n;k++)
-						c[i*n+j] = c[i*n+j] + a[i*n+k]*b[k*n+j];
-			resultline(n, 3, TESTS_QUIET);
-			dummy((void*) c);
-		  }
+               /* compute the resultant vector */
+		if (double_precision) {
+		    vector_double(n, ad, xd, yd);
+		    dummy((void *) yd);
+		} else {
+		    vector_single(n, a, x, y);
+		    dummy((void *) y);
 		}
-	}
-  }
+                resultline(n, 2, EventSet);
+            }
+         }
+      }
+      free(a);
+      free(x);
+      free(y);
+   }
 
-  /* Use results so they don't get optimized away */
-  dummy((void*) &aa);
-  dummy((void*) c);
-  dummy((void*) y);
+   /* Matrix Multiply test */
+   if (matrix && retval != PAPI_ENOMEM) {
+      /* Allocate the needed arrays */
+      a = malloc(INDEX5 * INDEX5 * element_size);
+      b = malloc(INDEX5 * INDEX5 * element_size);
+      c = malloc(INDEX5 * INDEX5 * element_size);
+      if (!(a && b && c))
+         retval = PAPI_ENOMEM;
+      ad = (double *)a;
+      bd = (double *)b;
+      cd = (double *)c;
 
-  /* free allocated memory */
-  if (a) free(a);
-  if (b) free(b);
-  if (c) free(c);
-  if (x) free(x);
-  if (y) free(y);
+      if (retval == PAPI_OK) {
+         headerlines("Matrix Multiply Test", TESTS_QUIET);
 
-  /* exit with status code */
-  if (retval == PAPI_ENOMEM)
-	  test_fail(__FILE__, __LINE__, "malloc", retval);
-  else test_pass(__FILE__,NULL,0);
-  exit(1);
+         /* step through the different array sizes */
+         for (n = 0; n < INDEX5; n++) {
+            if (n < INDEX1 || ((n + 1) % 50) == 0) {
+
+               /* Initialize the needed arrays at this size */
+		if (double_precision) {
+		    for (i = 0; i <= n * n + n; i++) {
+		      cd[i] = 0.0;
+		      ad[i] = (double)rand() * (double) 1.1;
+		      bd[i] = (double)rand() * (double) 1.1;
+		    }
+		} else {
+		    for (i = 0; i <= n * n + n; i++) {
+		      c[i] = 0.0;
+		      a[i] = rand() * (float) 1.1;
+		      b[i] = rand() * (float) 1.1;
+		    }
+		}
+
+               /* reset PAPI flops count */
+		reset_flops("Matrix Multiply Test",EventSet);
+
+               /* compute the resultant matrix */
+		if (double_precision) {
+		    matrix_double(n, cd, ad, bd);
+		    dummy((void *) c);
+		} else {
+		    matrix_single(n, c, a, b);
+		    dummy((void *) c);
+		}
+		resultline(n, 3, EventSet);
+            }
+         }
+      }
+      free(a);
+      free(b);
+      free(c);
+   }
+
+   /* exit with status code */
+   if (retval == PAPI_ENOMEM)
+      test_fail(__FILE__, __LINE__, "malloc", retval);
+   else
+      test_pass(__FILE__, NULL, 0);
+   exit(1);
 }
 
 /*
-	Extract and display hardware information for this processor.
-	(Re)Initialize PAPI_flops() and begin counting floating ops.
+        Extract and display hardware information for this processor.
+        (Re)Initialize PAPI_flops() and begin counting floating ops.
 */
-static void headerlines(char * title, int TESTS_QUIET)
+static void headerlines(char *title, int TESTS_QUIET)
 {
-  const PAPI_hw_info_t *hwinfo = NULL;
-  float real_time, proc_time, mflops;
-  long_long flpins;
-  int retval;
+   const PAPI_hw_info_t *hwinfo = NULL;
 
-  if (!TESTS_QUIET) {
-	if ((hwinfo = PAPI_get_hardware_info()) == NULL)
-	test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 1);
+   if (!TESTS_QUIET) {
+      if ((hwinfo = PAPI_get_hardware_info()) == NULL)
+         test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 1);
 
-	printf("\n-------------------------------------------------------------------------\n");
-	printf("Vendor string and code   : %s (%d)\n",hwinfo->vendor_string,hwinfo->vendor);
-	printf("Model string and code    : %s (%d)\n",hwinfo->model_string,hwinfo->model);
-	printf("CPU revision             : %f\n",hwinfo->revision);
-	printf("CPU Megahertz            : %f\n",hwinfo->mhz);
-	printf("CPU's in an SMP node     : %d\n",hwinfo->ncpu);
-	printf("Nodes in the system      : %d\n",hwinfo->nnodes);
-	printf("Total CPU's in the system: %d\n",hwinfo->totalcpus);
-	printf("-------------------------------------------------------------------------\n");
-	printf("\n%s:\n%8s %12s %12s %8s %8s\n", title, "i", "papi", "theory", "diff", "%error");
-	printf("-------------------------------------------------------------------------\n");
-  }
-
-  /* Setup PAPI library and begin collecting data from the counters */
-  flpins = -1;
-  retval = PAPI_flops( &real_time, &proc_time, &flpins, &mflops); 
-  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "headerlines: PAPI_flops", retval);
+      printf
+          ("\n-------------------------------------------------------------------------\n");
+      printf("Vendor string and code   : %s (%d)\n", hwinfo->vendor_string,
+             hwinfo->vendor);
+      printf("Model string and code    : %s (%d)\n", hwinfo->model_string, hwinfo->model);
+      printf("CPU revision             : %f\n", hwinfo->revision);
+      printf("CPU Megahertz            : %f\n", hwinfo->mhz);
+      printf("CPU Clock Megahertz      : %d\n", hwinfo->clock_mhz);
+      printf("CPU's in an SMP node     : %d\n", hwinfo->ncpu);
+      printf("Nodes in the system      : %d\n", hwinfo->nnodes);
+      printf("Total CPU's in the system: %d\n", hwinfo->totalcpus);
+      printf
+          ("-------------------------------------------------------------------------\n");
+      printf("\n%s:\n%8s %12s %12s %8s %8s\n", title, "i", "papi", "theory", "diff",
+             "%error");
+      printf
+          ("-------------------------------------------------------------------------\n");
+   }
 }
 
 /*
@@ -244,53 +404,38 @@ static void headerlines(char * title, int TESTS_QUIET)
   Compute error without using floating ops.
 */
 #if defined(mips)
-  #define SLOPE 9
-  #define FMA 1
+#define FMA 1
 #elif (defined(sparc) && defined(sun))
-  #define SLOPE 0
-  #define FMA 1
+#define FMA 1
 #else
-  #define SLOPE 0
-  #define FMA 0
+#define FMA 0
 #endif
 
-static void resultline(int i, int j, int TESTS_QUIET)
+static void resultline(int i, int j, int EventSet)
 {
-	float real_time, proc_time, mflops, ferror=0;
-	long_long flpins = 0;
-	int papi, theory, diff=0;
-	int retval;
-		
-	retval = PAPI_flops( &real_time, &proc_time, &flpins, &mflops);
-	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "resultline: PAPI_flops", retval);
+  float ferror = 0;
+  long_long flpins = 0;
+  long_long papi, theory;
+  int diff, retval;
+  
+  retval = PAPI_stop(EventSet, &flpins);
+  if (retval != PAPI_OK) 
+    test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+  
+  i++;                         /* convert to 1s base  */
+  theory = 2;
+  while (j--)
+    theory *= i;              /* theoretical ops   */
+  papi = flpins << FMA;
 
-	i++;						/* convert to 1s base  */
-	theory = 2;
-	while (j--) theory *= i;	/* theoretical ops   */
-	papi = (int)(flpins) << FMA;
-#if defined(_POWER4)
-/* As of now, POWER4 FLOPS counts floating point operations completed,
-  which includes floating point stores and produces a result that is 50% too high
-  for the FMA counts that this example relies on. This correction compensates...
-*/
-	papi -= (papi/3)+1;
+  diff = (int)(papi - theory);
+
+  ferror = ((float) abs(diff)) / ((float) theory) * 100;
+  
+  printf("%8d %12lld %12lld %8d %10.4f\n", i, papi, theory, diff, ferror);
+  
+#ifndef DONT_FAIL
+  if (ferror > MAX_ERROR && diff > MAX_DIFF)
+    test_fail(__FILE__, __LINE__, "Calibrate: error exceeds 10%", PAPI_EMISC);
 #endif
-	diff = papi - theory;
-
-	ferror = ((float)abs(diff)) / ((float)theory) * 100;
-
-	if (!TESTS_QUIET)
-		printf("%8d %12d %12d %8d %10.4f\n", i, papi, theory, diff, ferror);
-
-	if (ferror > 10 && diff > 8)
-#if defined(__ALPHA) && defined(__osf__)
-          if (!TESTS_QUIET)
-             fprintf(stderr, "Calibrate: error exceeds 10 percent\n");
-#else
-		test_fail(__FILE__, __LINE__, "Calibrate: error exceeds 10%", PAPI_EMISC);
-#endif
-
 }
-
-
-

@@ -570,16 +570,15 @@ int _papi_hwi_query_native_event(unsigned int EventCode)
    This allows for sparse native event arrays */
 int _papi_hwi_native_name_to_code(char *in, int *out)
 {
-   char *name;
-   unsigned int i, j;
    int retval = PAPI_ENOEVNT;
 
 #if ((defined PERFCTR_PFM_EVENTS) | (defined PFM2))
-   retval = _papi_hwd[0]->ntv_name_to_code(in, out);
-   if (retval == PAPI_OK) return(retval);
-#endif /* PERFCTR_PFM_EVENTS */
+   extern unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code);
+   retval = _papi_pfm_ntv_name_to_code(in, out);
+#else
 
-   for (j=0,i = 0 | PAPI_NATIVE_MASK;j<papi_num_components; j++,i = 0 | PAPI_NATIVE_MASK,retval = PAPI_ENOEVNT) {
+   char *name;
+   unsigned int i = 0 | PAPI_NATIVE_MASK;
 
 /* Cray X1 doesn't loop on 0, so a code_to_name on this will fail, the
  * first call to enum_events with a 0 will give a valid code
@@ -600,9 +599,13 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
            *out = 0 | PAPI_COMPONENT_MASK(j);
            retval = PAPI_OK;
          }
-       } while ((_papi_hwd[j]->ntv_enum_events(&i, 0) == PAPI_OK) && (retval == PAPI_ENOEVNT)) ;
-       _papi_hwi_unlock(INTERNAL_LOCK);
-   }
+     } else {
+         *out = 0;
+         retval = PAPI_OK;
+      }
+   } while ((_papi_hwd_ntv_enum_events(&i, 0) == PAPI_OK) && (retval == PAPI_ENOEVNT)) ;
+   _papi_hwi_unlock(INTERNAL_LOCK);
+#endif /* PERFCTR_PFM_EVENTS */
    return (retval);
 }
 
@@ -670,6 +673,7 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
       return (PAPI_ENOCMP);
 
    if (EventCode & PAPI_NATIVE_MASK) {
+     memset(info,0,sizeof(*info));
       _papi_hwi_lock(INTERNAL_LOCK);
       name =_papi_hwd[cidx]->ntv_code_to_name(EventCode);
       if (name) 

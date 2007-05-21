@@ -1,118 +1,125 @@
-INCLUDE = -I..
-TESTS 	= zero first \
-	  second third fourth fifth nineth tenth profile description \
-          accum highlevel cost johnmay johnmay2 native profile \
-	  avail case1 case2 clockres eventname fmatrixlowpapi \
-	  fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2
-
-PAPILIB=ftests_util.o ../$(LIBRARY)
-FTEST_DEPENDENCE=$(PAPILIB)
-
+TESTS 	= strtest zero first  second tenth description fdmemtest\
+          accum highlevel cost johnmay2 native \
+	  case1 case2 clockres eventname fmatrixlowpapi \
+	  fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2 avail 
+UTILOBJS = do_loops.o dummy.o ftests_util.o 
+PAPILIB	= ../$(LIBRARY)
+INCLUDE = -I. -I.. -I../ctests
+ 
 default: $(TESTS)
 
-ftests_util.o: ftests_util.F
-	@if [ $(SUBSTR) = unicos-t3e ]; then $(F77) $(FOPTFLAGS) -c $(FFLAGS) $(INCLUDE) ftests_util.F; \
-	else $(F77) -c $(FFLAGS) $(INCLUDE) ftests_util.F; fi
+attach:
 
-addAIXevents.o: addAIXevents.c
-	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) -c addAIXevents.c
+p4:
 
-do_loops.o: do_loops.c
-	$(CC) $(CFLAGS) $(INCLUDE) $(OPTFLAGS) -c do_loops.c
+ear:
 
-clockres: clockres.F $(FTEST_DEPENDENCE) 
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) clockres.F $(PAPILIB) $(LDFLAGS) -o clockres
+range:
 
-avail: avail.F $(FTEST_DEPENDENCE)  
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) avail.F  $(PAPILIB) $(LDFLAGS) -o avail
+mpi:
 
-eventname: eventname.F $(FTEST_DEPENDENCE)  
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) eventname.F $(PAPILIB) $(LDFLAGS) -o eventname
+shared:
 
-case1: case1.F $(FTEST_DEPENDENCE) 
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) case1.F $(PAPILIB) $(LDFLAGS) -o case1
+multiplex:
 
-case2: case2.F $(FTEST_DEPENDENCE)  
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) case2.F $(PAPILIB) $(LDFLAGS) -o case2
+omp:
 
-fmatrixlowpapi: fmatrixlowpapi.F $(FTEST_DEPENDENCE)  
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixlowpapi.F $(PAPILIB) $(LDFLAGS) -o fmatrixlowpapi
+smp: 
 
-fmatrixpapi: fmatrixpapi.F $(FTEST_DEPENDENCE)  
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi.F $(PAPILIB) $(LDFLAGS) -o fmatrixpapi
+pthreads:
 
-fmatrixpapi2: fmatrixpapi2.F $(FTEST_DEPENDENCE)  
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi2.F $(PAPILIB) $(LDFLAGS) -o fmatrixpapi2
+shmem:
 
-strtest: strtest.F $(FTEST_DEPENDENCE)  
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) strtest.F $(PAPILIB) $(LDFLAGS) -o strtest
+multiplex_and_pthreads: 
 
-flops: flops.F $(FTEST_DEPENDENCE)  
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) flops.F $(PAPILIB) $(LDFLAGS) -o flops
+serial:  $(TESTS)
 
-description: description.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) description.F $(PAPILIB) $(LDFLAGS) -o description
+clockres: clockres.F $(UTILOBJS) $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) clockres.F $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o clockres
 
-accum: accum.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) accum.F $(PAPILIB) -o accum $(LDFLAGS)
+avail: avail.F $(UTILOBJS)  $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) avail.F  $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o avail
 
-highlevel: highlevel.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) highlevel.F $(PAPILIB) -o highlevel $(LDFLAGS)
+eventname: eventname.F $(UTILOBJS)  $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) eventname.F $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o eventname
 
-zero: zero.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) zero.F $(PAPILIB) -o zero $(LDFLAGS)
+case1: case1.F $(UTILOBJS) $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) case1.F $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o case1
 
-first: first.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) first.F $(PAPILIB) -o first $(LDFLAGS)
+case2: case2.F $(UTILOBJS)  $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) case2.F $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o case2
 
-second: second.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) second.F $(PAPILIB) -o second $(LDFLAGS)
+fdmemtest: fdmemtest.F $(UTILOBJS)  $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fdmemtest.F $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o fdmemtest
 
-third: third.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) third.F $(PAPILIB) -o third $(LDFLAGS)
+fmatrixlowpapi: fmatrixlowpapi.F $(UTILOBJS)  $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixlowpapi.F $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o fmatrixlowpapi
 
-fourth: fourth.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fourth.F $(PAPILIB) -o fourth $(LDFLAGS)
+fmatrixpapi: fmatrixpapi.F $(UTILOBJS)  $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi.F $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o fmatrixpapi
 
-fifth: fifth.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fifth.F $(PAPILIB) -o fifth $(LDFLAGS)
+fmatrixpapi2: fmatrixpapi2.F $(UTILOBJS)  $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fmatrixpapi2.F $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o fmatrixpapi2
 
-nineth: nineth.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) nineth.F $(PAPILIB) -o nineth $(LDFLAGS)
+strtest: strtest.F $(UTILOBJS)  $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) strtest.F $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o strtest
 
-tenth: tenth.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) tenth.F $(PAPILIB) -o tenth $(LDFLAGS)
+flops: flops.F $(UTILOBJS)  $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) flops.F $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o flops
 
-cost: cost.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) cost.F $(PAPILIB) -o cost $(LDFLAGS)
+description: description.F $(UTILOBJS) $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) description.F $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o description
 
-johnmay: johnmay.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) johnmay.F $(PAPILIB) -o johnmay $(LDFLAGS)
+accum: accum.F $(UTILOBJS) $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) accum.F $(UTILOBJS) $(PAPILIB) -o accum $(LDFLAGS)
 
-johnmay2: johnmay2.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) johnmay2.F $(PAPILIB) -o johnmay2 $(LDFLAGS)
+highlevel: highlevel.F $(UTILOBJS) $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) highlevel.F $(UTILOBJS) $(PAPILIB) -o highlevel $(LDFLAGS)
 
-native: native.F $(FTEST_DEPENDENCE) addAIXevents.o
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) native.F $(PAPILIB) addAIXevents.o -o native $(LDFLAGS)
+zero: zero.F $(UTILOBJS) $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) zero.F $(UTILOBJS) $(PAPILIB) -o zero $(LDFLAGS)
 
-profile: profile.F $(FTEST_DEPENDENCE)
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) profile.F $(PAPILIB) -o profile $(LDFLAGS)
+first: first.F $(UTILOBJS) $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) first.F $(UTILOBJS) $(PAPILIB) -o first $(LDFLAGS)
 
-fmultiplex1: fmultiplex1.F $(FTEST_DEPENDENCE) do_loops.o
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex1.F $(PAPILIB) do_loops.o -o fmultiplex1 $(LDFLAGS)
+second: second.F $(UTILOBJS) $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) second.F $(UTILOBJS) $(PAPILIB) -o second $(LDFLAGS)
 
+tenth: tenth.F $(UTILOBJS) $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) tenth.F $(UTILOBJS) $(PAPILIB) -o tenth $(LDFLAGS)
 
-fmultiplex2: fmultiplex2.F $(FTEST_DEPENDENCE) do_loops.o
-	$(F77) $(FOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex2.F $(PAPILIB) do_loops.o -o fmultiplex2 $(LDFLAGS)
+cost: cost.F $(UTILOBJS) $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) cost.F $(UTILOBJS) $(PAPILIB) -o cost $(LDFLAGS)
+
+johnmay2: johnmay2.F $(UTILOBJS) $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) johnmay2.F $(UTILOBJS) $(PAPILIB) -o johnmay2 $(LDFLAGS)
+
+native: native.F $(UTILOBJS) $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) native.F $(UTILOBJS) $(PAPILIB) -o native $(LDFLAGS)
+
+fmultiplex1: fmultiplex1.F $(UTILOBJS) $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex1.F $(UTILOBJS) $(PAPILIB) -o fmultiplex1 $(LDFLAGS)
+
+fmultiplex2: fmultiplex2.F $(UTILOBJS) $(PAPILIB)
+	$(F77) $(FTOPTFLAGS) $(FFLAGS) $(INCLUDE) fmultiplex2.F $(UTILOBJS) $(PAPILIB) -o fmultiplex2 $(LDFLAGS)
+
+ftests_util.o: ftests_util.F fpapi_test.h 
+	$(F77) $(FTOPTFLAGS) -c $(FFLAGS) $(INCLUDE) ftests_util.F
+
+do_loops.o: ../ctests/do_loops.c ../ctests/papi_test.h ../ctests/test_utils.h
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c ../ctests/do_loops.c
+
+dummy.o: ../ctests/dummy.c
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c ../ctests/dummy.c
 
 clean:
 	rm -f *.o *.stderr *.stdout core *~ $(TESTS)
 
-install: default
-	@if [ \"$(DESTDIR)\" = \"\" ]; then echo "You must specify a destination directory on the make line"; echo "For example: make DESTDIR=/usr/local"; exit 1; fi 
-	@echo "Root of destination directory is: \"$(DESTDIR)\""; 
-	mkdir -p $(DESTDIR)/ftests
-	chmod go+rx $(DESTDIR)/ftests
-	find . -perm -100 -type f -exec cp {} $(DESTDIR)/ftests \;
-	chmod go+rx $(DESTDIR)/ftests/*
-	find . -name "*.F" -type f -exec cp {} $(DESTDIR)/ftests \;
+install: $(TARGETS)
+	@echo "Fortran tests (DATADIR) being installed in: \"$(DATADIR)\""; 
+	-mkdir -p $(DATADIR)/ftests
+	-chmod go+rx $(DATADIR)
+	-chmod go+rx $(DATADIR)/ftests
+	-find . -perm -100 -type f -exec cp {} $(DATADIR)/ftests \;
+	-chmod go+rx $(DATADIR)/ftests/*
+	-find . -name "*.F" -type f -exec cp {} $(DATADIR)/ftests \;

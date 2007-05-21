@@ -62,28 +62,35 @@ papi_svector_t _linux_pfm_table[] = {
 
 static int _perfmon2_pfm_pmu_type;
 static pfmlib_regmask_t _perfmon2_pfm_unavailable_pmcs;
+static pfmlib_regmask_t _perfmon2_pfm_unavailable_pmds;
 
 /* Hardware clock functions */
 
-#if defined(__ia64__)
-inline_static unsigned long get_cycles(void)
+#if defined(HAVE_MMTIMER)
+inline_static long_long get_cycles(void)
 {
-   unsigned long tmp;
-#ifdef HAVE_MMTIMER
-   tmp = mmdev_clicks_per_tick * (*mmdev_timer_addr);
-#elif defined(__INTEL_COMPILER)
-   tmp = __getReg(_IA64_REG_AR_ITC);
-   if (_perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU)
-     tmp = tmp * (unsigned long)4;
-#else                           /* GCC */
-   /* XXX: need more to adjust for Itanium itc bug */
-   __asm__ __volatile__("mov %0=ar.itc":"=r"(tmp)::"memory");
-   if (_perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU)
-     tmp = tmp * (unsigned long)4;
+  long_long tmp = 0;
+  tmp = *mmdev_timer_addr;
+#error "This needs work"
+  return(tmp);
+} 
+#elif defined(__ia64__)
+inline_static long_long get_cycles(void)
+{
+  long_long tmp = 0;
+#if defined(__INTEL_COMPILER)
+  tmp = __getReg(_IA64_REG_AR_ITC);
+#else
+  __asm__ __volatile__("mov %0=ar.itc":"=r"(tmp)::"memory");
 #endif
-   return tmp ;
+  switch (_perfmon2_pfm_pmu_type) {
+  case PFMLIB_MONTECITO_PMU:
+    tmp = tmp * 4;
+    break;
+  }
+  return tmp ;
 }
-#elif defined(__i386__)||defined(__x86_64__)
+#elif (defined(__i386__)||defined(__x86_64__))
 inline_static long_long get_cycles(void) {
    long_long ret = 0;
 #ifdef __x86_64__
@@ -100,98 +107,72 @@ inline_static long_long get_cycles(void) {
    return ret;
 }
 #elif defined(mips)
-inline_static long_long get_cycles(void) {
-  struct timespec foo;
-  double bar;
-  
-  syscall(__NR_clock_gettime,HAVE_CLOCK_GETTIME_REALTIME,&foo);
-  SUBDBG("%lld,%lld\n",(long_long)foo.tv_sec,(long_long)foo.tv_nsec);
-  bar = (double)foo.tv_nsec/1000000000.0 + (double)foo.tv_sec;
-  SUBDBG("%f\n",bar);
-  bar = bar * (double)_papi_hwi_system_info.hw_info.mhz * (double)1000000;
-  SUBDBG("%lld\n",(long_long)bar);
-  return((long_long)bar);
+inline_static long_long get_cycles(void) 
+{
+  long_long count = 0;
+  __asm__ __volatile__(".set   push    \n"
+	  ".set   mips32r2\n"
+	  "rdhwr $3, $30  \n"
+	  "move  %0, $3   \n"
+	  ".set pop" : "=r"(count) : : "$3");
+
+   switch (_perfmon2_pfm_pmu_type)
+     {
+     case PFMLIB_MIPS_5KC_PMU:
+#if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
+     case PFMLIB_MIPS_ICE9A_PMU:
+     case PFMLIB_MIPS_ICE9B_PMU:
+       count = count * 2;
+#endif
+       break;
+     }
+  return count;
 }
-#else
-#error "get_cycles undefined!"
 #endif
 
 /* The below function is stolen from libpfm from Stephane Eranian */
-static int
-detect_unavail_pmcs(pfmlib_regmask_t *r_pmcs, unsigned int *n_pmds)
+int
+detect_unavail_pmu_regs(pfmlib_regmask_t *r_pmcs, pfmlib_regmask_t *r_pmds)
 {
+  pfarg_ctx_t ctx;
   pfarg_setinfo_t	setf;
-  pfmlib_regmask_t r_pmds, ipmds, ipmcs, tpmcs, tpmds;
-  pfarg_ctx_t newctx;
-  int ret, i, j, ctx_fd;
-  unsigned int c;
-  
-  memset(r_pmcs, 0, sizeof(*r_pmcs));
-  memset(&r_pmds, 0, sizeof(r_pmds));
-  memset(&ipmds, 0, sizeof(ipmds));
-  memset(&ipmcs, 0, sizeof(ipmcs));
-  memset(&tpmds, 0, sizeof(tpmds));
-  memset(&tpmcs, 0, sizeof(tpmcs));
-  memset(&setf, 0, sizeof(setf));
-  memset(&newctx, 0, sizeof(newctx));
+  int ret, i, j, myfd;
 
-  SUBDBG("PFM_CREATE_CONTEXT(%p,%p,%p,%d)\n",&newctx,NULL,NULL,0);
-  if ((ret = pfm_create_context(&newctx, NULL, NULL, 0)) == -1)
-    {
-      PAPIERROR("pfm_create_context(): %s", pfm_strerror(ret));
-      return(PAPI_ESYS);
-    }
-  SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",ret);
-  ctx_fd = ret;
+	memset(r_pmcs, 0, sizeof(*r_pmcs));
+	memset(r_pmds, 0, sizeof(*r_pmds));
 
-  if (pfm_get_impl_pmcs(&ipmcs) != PFMLIB_SUCCESS)
-    return(PAPI_ESYS);
-
-  if (pfm_get_impl_pmds(&ipmds) != PFMLIB_SUCCESS)
-    return(PAPI_ESYS);
-  
-  if (pfm_get_num_counters(&c) != PFMLIB_SUCCESS)
-    return(PAPI_ESYS);
-  SUBDBG("pfm_get_num_counters returns: %d\n",c);
-
-  /*
-   * retrieve available register bitmasks from set0
-   * which is guaranteed to exist for every context
-   */
-  ret = pfm_getinfo_evtsets(ctx_fd, &setf, 1);
-  if (ret == PFMLIB_SUCCESS) 
-    {
-      for(i=0; i < PFM_PMC_BV; i++) 
-	{
-	  for(j=0; j < 64; j++) 
-	    {
-	      if ((setf.set_avail_pmcs[i] & (1ULL << j)) == 0)
-		{
-		  pfm_regmask_set(&tpmcs, (i<<6)+j);
-		  SUBDBG("Found unavailable PMC %d\n",(i<<6)+j);
-		}
-	    }
+	memset(&ctx, 0, sizeof(ctx));
+	memset(&setf, 0, sizeof(setf));
+	/*
+	 * if no context descriptor is passed, then create
+	 * a temporary context
+	 */
+	myfd = pfm_create_context(&ctx, NULL, NULL, 0);
+	if (myfd == -1)
+	  return -1;
+	/*
+	 * retrieve available register bitmasks from set0
+	 * which is guaranteed to exist for every context
+	 */
+	ret = pfm_getinfo_evtsets(myfd, &setf, 1);
+	if (ret == 0) {
+		if (r_pmcs)
+			for(i=0; i < PFM_PMC_BV; i++) {
+				for(j=0; j < 64; j++) {
+					if ((setf.set_avail_pmcs[i] & (1ULL << j)) == 0)
+						pfm_regmask_set(r_pmcs, (i<<6)+j);
+				}
+			}
+		if (r_pmds)
+			for(i=0; i < PFM_PMD_BV; i++) {
+				for(j=0; j < 64; j++) {
+					if ((setf.set_avail_pmds[i] & (1ULL << j)) == 0)
+						pfm_regmask_set(r_pmds, (i<<6)+j);
+				}
+			}
 	}
-      pfm_regmask_and(r_pmcs, &ipmcs, &tpmcs);
-      for(i=0; i < PFM_PMD_BV; i++) 
-	{
-	  for(j=0; (j < 64) && ((i<<6)+j < c); j++) 
-	    {
-	      if ((setf.set_avail_pmds[i] & (1ULL << j)) == 0)
-		{
-		  pfm_regmask_set(&r_pmds, (i<<6)+j);
-		  SUBDBG("Found unavailable PMD %d\n",(i<<6)+j);
-		}
-	    }
-	}
-      pfm_regmask_and(&tpmds, &ipmds, &r_pmds);
-      pfm_regmask_weight(&r_pmds, n_pmds);
-    }
-  else
-    PAPIERROR("pfm_getinfo_evtsets(%d,%p,%d): %s",ctx_fd, &setf, 1, pfm_strerror(ret));
-
-  close(ctx_fd);
-  return ret;
+	close(myfd);
+	return ret;
 }
 
 /* BEGIN COMMON CODE */
@@ -206,6 +187,8 @@ static void decode_vendor_string(char *s, int *vendor)
     *vendor = PAPI_VENDOR_IBM;
   else if (strcasecmp(s,"MIPS") == 0)
     *vendor = PAPI_VENDOR_MIPS;
+  else if (strcasecmp(s,"SiCortex") == 0)
+    *vendor = PAPI_VENDOR_SICORTEX;
   else
     *vendor = PAPI_VENDOR_UNKNOWN;
 }
@@ -261,6 +244,31 @@ static int get_cpu_info(PAPI_hw_info_t *hw_info)
 	   hw_info->mhz = mhz;
 	 }
      }       
+
+   hw_info->clock_mhz = hw_info->mhz;
+   switch (_perfmon2_pfm_pmu_type)
+     {
+     case PFMLIB_MIPS_5KC_PMU:
+       hw_info->clock_mhz /= 2;
+       break;
+#if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
+     case PFMLIB_MIPS_ICE9A_PMU:
+     case PFMLIB_MIPS_ICE9B_PMU:
+       if (500.0 - hw_info->mhz < 10.0)
+	 {
+	   hw_info->mhz = 500.0;
+	   hw_info->clock_mhz = 250;
+	 }
+       else
+	 hw_info->clock_mhz /= 2;
+       break;
+#endif
+     case PFMLIB_MONTECITO_PMU:
+       hw_info->clock_mhz /= 4;
+       break;
+     default:
+       break;
+     }
 
    /* Vendor Name and Vendor Code */
 
@@ -1076,17 +1084,18 @@ static int x86_get_memory_info(PAPI_hw_info_t *hw_info)
 #endif
 
 /* 2.6.19 has this:
- VmPeak:     4588 kB
- VmSize:     4584 kB
- VmLck:         0 kB
- VmHWM:      1548 kB
- VmRSS:      1548 kB
- VmData:      312 kB
- VmStk:        88 kB
- VmExe:       684 kB
- VmLib:      1360 kB
- VmPTE:        20 kB
+VmPeak:     4588 kB
+VmSize:     4584 kB
+VmLck:         0 kB
+VmHWM:      1548 kB
+VmRSS:      1548 kB
+VmData:      312 kB
+VmStk:        88 kB
+VmExe:       684 kB
+VmLib:      1360 kB
+VmPTE:        20 kB
 */
+
 int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
 {
   char fn[PATH_MAX], tmp[PATH_MAX];
@@ -1491,6 +1500,22 @@ static int mips_get_memory_info(PAPI_hw_info_t *hw_info)
      }
    else
      {
+#if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
+       switch (_perfmon2_pfm_pmu_type)
+	 {
+	 case PFMLIB_MIPS_ICE9A_PMU:
+	 case PFMLIB_MIPS_ICE9B_PMU:
+	   mh_info->level[1].cache[0].size = 256*1024;
+	   mh_info->level[1].cache[0].line_size = 64;
+	   mh_info->level[1].cache[0].num_lines = 256*1024/64;
+	   mh_info->level[1].cache[0].associativity = 2;
+	   mh_info->level[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
+	   maxlevel++;
+	   break;
+	 default:
+	   break;
+	 }
+#endif
        /* Hey, it's ok not to have an L2. Slow, but ok. */
      }       
 
@@ -1504,11 +1529,31 @@ static int mips_get_memory_info(PAPI_hw_info_t *hw_info)
    s = search_cpu_info(f, "tlb_entries", maxargs);
    if (s && strlen(s))
      {
+       int i = 0;
+       switch (_perfmon2_pfm_pmu_type)
+	 {
+	 case PFMLIB_MIPS_5KC_PMU:
+#if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
+	 case PFMLIB_MIPS_ICE9A_PMU:
+	 case PFMLIB_MIPS_ICE9B_PMU:
+#endif
+	   mh_info->level[i].tlb[0].num_entries = 4;
+	   mh_info->level[i].tlb[0].associativity = 4;
+	   mh_info->level[i].tlb[0].type = PAPI_MH_TYPE_INST;
+	   mh_info->level[i].tlb[1].num_entries = 4;
+	   mh_info->level[i].tlb[1].associativity = 4;
+	   mh_info->level[i].tlb[1].type = PAPI_MH_TYPE_DATA;
+	   i = 1;
+	 default:
+	   break;
+	 }
+     
        mips_get_tlb(s+2,&num,&pagesize);
-       mh_info->level[0].tlb[0].num_entries = num;
-       mh_info->level[0].tlb[0].associativity = num;
-       mh_info->level[0].tlb[0].type = PAPI_MH_TYPE_UNIFIED;
-       if (!maxlevel) maxlevel++;
+       mh_info->level[i].tlb[0].num_entries = num;
+       mh_info->level[i].tlb[0].associativity = num;
+       mh_info->level[i].tlb[0].type = PAPI_MH_TYPE_UNIFIED;
+       if (maxlevel < i+i)
+	 maxlevel = i+1;
      }
    else
      {
@@ -1827,13 +1872,14 @@ static int get_system_info(papi_mdi_t *mdi)
   if (retval)
     return(retval);
 
-   SUBDBG("Found %d %s(%d) %s(%d) CPU's at %f Mhz.\n",
+   SUBDBG("Found %d %s(%d) %s(%d) CPU's at %f Mhz, clock %d Mhz.\n",
           mdi->hw_info.totalcpus,
           mdi->hw_info.vendor_string,
           mdi->hw_info.vendor,
           mdi->hw_info.model_string,
           mdi->hw_info.model,
-	  mdi->hw_info.mhz);
+	  mdi->hw_info.mhz,
+	  mdi->hw_info.clock_mhz);
                                                                                
    return (PAPI_OK);
 }
@@ -1874,11 +1920,12 @@ inline static int compute_kernel_args(hwd_control_state_t * ctl)
 
   if ((ctl->multiplexed) && (inp->pfp_event_count > _papi_hwi_system_info.sub_info.num_cntrs))
     {
-      dispatch_count = _papi_hwi_system_info.sub_info.num_cntrs;
+	dispatch_count = _papi_hwi_system_info.sub_info.num_cntrs;
     }
 
   while (togo)
     {
+    again:
       memset(&tmpin,0x0,sizeof(tmpin));
       memset(&tmpout,0x0,sizeof(tmpout));
       
@@ -1896,6 +1943,17 @@ inline static int compute_kernel_args(hwd_control_state_t * ctl)
 
       if ((ret = pfm_dispatch_events(&tmpin, NULL, &tmpout, NULL)) != PFMLIB_SUCCESS)
 	{
+	  if (ctl->multiplexed) 
+	    {
+	      dispatch_count--;
+	      if (dispatch_count == 0)
+		{
+		  PAPIERROR("pfm_dispatch_events(): %s", pfm_strerror(ret));
+		  return(PAPI_ECNFLCT);
+		}
+	      SUBDBG("Dispatch failed because of counter conflict, trying again with %d counters.\n",dispatch_count);
+	      goto again;
+	    }
 	  PAPIERROR("pfm_dispatch_events(): %s", pfm_strerror(ret));
 	  return(PAPI_ECNFLCT);
 	}
@@ -1915,6 +1973,7 @@ inline static int compute_kernel_args(hwd_control_state_t * ctl)
 	  pc[donepc].reg_num   = tmpout.pfp_pmcs[i].reg_num;
 	  pc[donepc].reg_value = tmpout.pfp_pmcs[i].reg_value;
 	  pc[donepc].reg_set = set;
+	  SUBDBG("PC%d (i%d) is reg num %d, value %llx, set %d\n",donepc,i,pc[donepc].reg_num,(unsigned long long)pc[donepc].reg_value,pc[donepc].reg_set);
 	}
    
       /* figure out pmd mapping from output pmc */
@@ -1924,6 +1983,7 @@ inline static int compute_kernel_args(hwd_control_state_t * ctl)
 	{
 	  pd[donepd].reg_num = tmpout.pfp_pmcs[j].reg_pmd_num;
 	  pd[donepd].reg_set = set;
+	  SUBDBG("PD%d (i%d,j%d) is reg num %d, set %d\n",donepd,i,j,pd[donepd].reg_num,pd[donepd].reg_set);
 
 	  /* Skip over entries that map to the same PMD, 
 	     PIV has 2 PMCS for every PMD */
@@ -1935,6 +1995,8 @@ inline static int compute_kernel_args(hwd_control_state_t * ctl)
       for (i=0; i < tmpout.pfp_pmd_count; i++, donepd++) 
         {
           pd[donepd].reg_num = tmpout.pfp_pmds[i].reg_num;
+	  pd[donepd].reg_set = set;
+	  SUBDBG("PD%d (i%d) is reg num %d, set %d\n",donepd,i,pd[donepd].reg_num,pd[donepd].reg_set);
         }
 #endif
       
@@ -1955,6 +2017,50 @@ inline static int compute_kernel_args(hwd_control_state_t * ctl)
   *num_sets = set;
   outp->pfp_pmc_count = donepc;
 
+  return(PAPI_OK);
+}
+
+int tune_up_fd(int ctx_fd)
+{
+  int ret;
+
+  /* set close-on-exec to ensure we will be getting the PFM_END_MSG, i.e.,
+   * fd not visible to child. */
+  ret = fcntl(ctx_fd, F_SETFD, FD_CLOEXEC);
+  if (ret == -1)
+    {
+      PAPIERROR("cannot fcntl(FD_CLOEXEC) on %d: %s", ctx_fd,strerror(errno));
+      return(PAPI_ESYS);
+    }
+  /* setup asynchronous notification on the file descriptor */
+  ret = fcntl(ctx_fd, F_SETFL, fcntl(ctx_fd, F_GETFL, 0) | O_ASYNC);
+  if (ret == -1)
+    {
+      PAPIERROR("cannot fcntl(O_ASYNC) on %d: %s", ctx_fd,strerror(errno));
+      return(PAPI_ESYS);
+    }
+  /* get ownership of the descriptor */
+  ret = fcntl(ctx_fd, F_SETOWN, mygettid());
+  if (ret == -1)
+    {
+      PAPIERROR("cannot fcntl(F_SETOWN) on %d: %s", ctx_fd,strerror(errno));
+      return(PAPI_ESYS);
+    }
+  /*
+   * when you explicitely declare that you want a particular signal,
+   * even with you use the default signal, the kernel will send more
+   * information concerning the event to the signal handler.
+   *
+   * In particular, it will send the file descriptor from which the
+   * event is originating which can be quite useful when monitoring
+   * multiple tasks from a single thread.
+   */
+  ret = fcntl(ctx_fd, F_SETSIG, _papi_hwi_system_info.sub_info.hardware_intr_sig);
+  if (ret == -1)
+    {
+      PAPIERROR("cannot fcntl(F_SETSIG,%d) on %d: %s", _papi_hwi_system_info.sub_info.hardware_intr_sig, ctx_fd, strerror(errno));
+      return(PAPI_ESYS);
+    }
   return(PAPI_OK);
 }
 
@@ -1993,10 +2099,12 @@ static int attach(hwd_control_state_t *ctl, unsigned long tid)
   if ((ret = pfm_create_context(newctx, NULL, NULL, 0)) == -1)
     {
       PAPIERROR("pfm_create_context(): %s", pfm_strerror(ret));
-      free(newctx); free(load_args);
+      free(newctx); 
+      free(load_args);
       return(PAPI_ESYS);
     }
   SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",ret);
+  tune_up_fd(ret);
 
   ctl->ctx_fd = ret;
   ctl->ctx = newctx;
@@ -2038,7 +2146,7 @@ inline static int check_multiplex_timeout(hwd_context_t *ctx, unsigned long *tim
 
   memset(&set,0,sizeof(set));
   set.set_timeout = *timeout;
-  SUBDBG("Requested multiplexing interval is %llu usecs.\n",(long long unsigned int)set.set_timeout);
+  SUBDBG("Requested multiplexing interval is %llu usecs.\n",(unsigned long long)set.set_timeout);
 
   /* This may be called before we have a context, so we should build one
      if we need one. */
@@ -2054,6 +2162,7 @@ inline static int check_multiplex_timeout(hwd_context_t *ctx, unsigned long *tim
 	  return(PAPI_ESYS);
 	}
       SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",ret);
+      tune_up_fd(ret);
       ctx_fd = ret;
     }
       
@@ -2065,7 +2174,7 @@ inline static int check_multiplex_timeout(hwd_context_t *ctx, unsigned long *tim
       return(PAPI_ESYS);
     }      
 
-  SUBDBG("Multiplexing interval is now %llu usecs.\n",(long long unsigned int)set.set_timeout);
+  SUBDBG("Multiplexing interval is now %llu usecs.\n",(unsigned long long)set.set_timeout);
   *timeout = set.set_timeout;
   
   /* If we created a context, get rid of it */
@@ -2159,7 +2268,7 @@ static int get_string_from_file(char *file, char *str, int len)
 int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {
   int i, retval;
-  unsigned int ncnt,ncnt_no_avail = 0;
+  unsigned int ncnt;
   unsigned int version;
   char pmu_name[PAPI_MIN_STR_LEN];
 #ifdef DEBUG
@@ -2191,8 +2300,8 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 
   /* Find out if any PMC's/PMD's are off limits */
 
-  retval = detect_unavail_pmcs(&_perfmon2_pfm_unavailable_pmcs,
-			       &ncnt_no_avail);
+  retval = detect_unavail_pmu_regs(&_perfmon2_pfm_unavailable_pmcs,
+				   &_perfmon2_pfm_unavailable_pmds);
   if (retval != PFMLIB_SUCCESS)
     return(retval);
 
@@ -2256,7 +2365,6 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   if (retval != PAPI_OK)
     return(retval);
   pfm_get_num_counters((unsigned int *)&_papi_hwi_system_info.sub_info.num_cntrs);
-  _papi_hwi_system_info.sub_info.num_cntrs -= ncnt_no_avail;
   if (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_MIPS)
     _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR|PAPI_DOM_OTHER;
   else
@@ -2328,56 +2436,9 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
       return(PAPI_ESYS);
     }
   SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",ret);
+  tune_up_fd(ret);
   ctx_fd = ret;
-
-  /* set close-on-exec to ensure we will be getting the PFM_END_MSG, i.e.,
-   * fd not visible to child. */
-
-  ret = fcntl(ctx_fd, F_SETFD, FD_CLOEXEC);
-  if (ret == -1)
-    {
-      PAPIERROR("cannot fcntl(FD_CLOEXEC) on %d: %s", ctx_fd,strerror(errno));
-    bail:
-      pfm_unload_context(ctx_fd);
-      close(ctx_fd);
-      return(PAPI_ESYS);
-    }
-
-  /* setup asynchronous notification on the file descriptor */
-
-  ret = fcntl(ctx_fd, F_SETFL, fcntl(ctx_fd, F_GETFL, 0) | O_ASYNC);
-  if (ret == -1)
-    {
-      PAPIERROR("cannot fcntl(O_ASYNC) on %d: %s", ctx_fd,strerror(errno));
-      goto bail;
-    }
-
-  /* get ownership of the descriptor */
-
-  ret = fcntl(ctx_fd, F_SETOWN, mygettid());
-  if (ret == -1)
-    {
-      PAPIERROR("cannot fcntl(F_SETOWN) on %d: %s", ctx_fd,strerror(errno));
-      goto bail;
-    }
-
-  /*
-   * when you explicitely declare that you want a particular signal,
-   * even with you use the default signal, the kernel will send more
-   * information concerning the event to the signal handler.
-   *
-   * In particular, it will send the file descriptor from which the
-   * event is originating which can be quite useful when monitoring
-   * multiple tasks from a single thread.
-   */
-
-  ret = fcntl(ctx_fd, F_SETSIG, _papi_hwi_system_info.sub_info.hardware_intr_sig);
-  if (ret == -1)
-    {
-      PAPIERROR("cannot fcntl(F_SETSIG,%d) on %d: %s", _papi_hwi_system_info.sub_info.hardware_intr_sig, ctx_fd, strerror(errno));
-      goto bail;
-    }
-
+  
   memcpy(&thr_ctx->ctx,&newctx,sizeof(newctx));
   thr_ctx->ctx_fd = ctx_fd;
   load_args.load_pid = mygettid();
@@ -2387,11 +2448,33 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
 }
 
 long_long _papi_hwd_get_real_usec(void) {
-   return((long_long)get_cycles() / (long_long)_papi_hwi_system_info.hw_info.mhz);
+  long_long retval;
+#if defined(HAVE_CLOCK_GETTIME_REALTIME)
+   {
+     struct timespec foo;
+     syscall(__NR_clock_gettime,HAVE_CLOCK_GETTIME_REALTIME,&foo);
+     retval = (long_long)foo.tv_sec*(long_long)1000000;
+     retval += (long_long)(foo.tv_nsec/1000);
+   }
+#elif defined(HAVE_GETTIMEOFDAY)
+  struct timeval buffer;
+  gettimeofday(&buffer,NULL);
+  retval = (long_long)buffer.tv_sec*(long_long)1000000;
+  retval += (long_long)(buffer.tv_usec);
+#else
+  retval = get_cycles()/(long_long)_papi_hwi_system_info.hw_info.mhz;
+#endif
+  return(retval);
 }
                                                                                 
 long_long _papi_hwd_get_real_cycles(void) {
-   return((long_long)get_cycles());
+  long_long retval;
+#if defined(HAVE_GETTIMEOFDAY)
+  retval = _papi_hwd_get_real_usec()*(long_long)_papi_hwi_system_info.hw_info.mhz;
+#else
+  retval = get_cycles();
+#endif
+  return(retval);
 }
 
 long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
@@ -2435,11 +2518,9 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 #elif defined(HAVE_CLOCK_GETTIME_THREAD)
    {
      struct timespec foo;
-     double bar;
-     
      syscall(__NR_clock_gettime,HAVE_CLOCK_GETTIME_THREAD,&foo);
-     bar = (double)foo.tv_nsec/1000.0 + (double)foo.tv_sec*1000000.0;
-     retval = (long_long) bar;
+     retval = (long_long)foo.tv_sec*(long_long)1000000;
+     retval += (long_long)foo.tv_nsec/1000;
    }
 #elif defined(HAVE_PER_THREAD_TIMES)
    {
@@ -2449,15 +2530,23 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
      retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*(1000000/sysconf(_SC_CLK_TCK)));
      /* NOT CLOCKS_PER_SEC as in the headers! */
    }
+#elif defined(HAVE_PER_THREAD_GETRUSAGE)
+   {
+     struct rusage buffer;
+     getrusage(RUSAGE_SELF,&buffer);
+     SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
+     retval = (long_long)(buffer.ru_utime.tv_sec + buffer.ru_stime.tv_sec)*(long_long)1000000;
+     retval += (long_long)(buffer.ru_utime.tv_usec + buffer.ru_stime.tv_usec);
+   }
 #else
-#error "No working per thread timer"
+#error "No working per thread virtual timer"
 #endif
    return (retval);
 }
 
 long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 {
-   return (_papi_hwd_get_virt_usec(zero) * (long_long)_papi_hwi_system_info.hw_info.mhz);
+   return (_papi_hwd_get_virt_usec(zero)*(long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
 /* reset the hardware counters */
@@ -2538,7 +2627,13 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctl,
 	     (unsigned long long)ctl->setinfo[ctl->pd[i].reg_set].set_runs,
 	     (unsigned long long)tot_runs,
 	     ctl->counts[i]);
-      ctl->counts[i] = (ctl->counts[i]*tot_runs)/ctl->setinfo[ctl->pd[i].reg_set].set_runs;
+      if (ctl->setinfo[ctl->pd[i].reg_set].set_runs)
+	ctl->counts[i] = (ctl->counts[i]*tot_runs)/ctl->setinfo[ctl->pd[i].reg_set].set_runs;
+      else
+	{
+	  ctl->counts[i] = 0;
+	  SUBDBG("Set %lld didn't run!!!!\n",(unsigned long long)ctl->pd[i].reg_set);
+	}
       SUBDBG("Counter %d, new count %lld.\n",i,ctl->counts[i]);
     }
 
@@ -3187,20 +3282,23 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
 	  return(PAPI_ESYS);
 	}
       SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",ret);
+      tune_up_fd(ret);
       ctx_fd = ret;
 
       SUBDBG("MUNMAP(%p,%lld)\n",ctx->smpl_buf,(unsigned long long)ctx->smpl.buf_size);
       munmap(ctx->smpl_buf,ctx->smpl.buf_size);
 
-      SUBDBG("CLOSE(%d)\n",ctx->ctx_fd);
-      close(ctx->ctx_fd);
+      SUBDBG("CLOSE(%d)\n",ctl->ctx_fd);
+      close(ctl->ctx_fd);
 
-      ctx->ctx_fd = ctx_fd;
+//      ctx->ctx_fd = ctx_fd;
+      ctl->ctx_fd = ctx_fd;
       memcpy(&ctx->ctx,&newctx,sizeof(newctx));
       memset(&ctx->smpl,0,sizeof(buf_arg));
       ctx->smpl_buf = NULL;
-//      ESI->state &= ~(PAPI_OVERFLOWING);
-//      ESI->overflow.flags &= ~(PAPI_OVERFLOW_HARDWARE);
+      _papi_hwd_set_overflow(ESI,EventIndex,threshold);
+      ESI->state &= ~(PAPI_OVERFLOWING);
+      ESI->overflow.flags &= ~(PAPI_OVERFLOW_HARDWARE);
       ESI->profile.overflowcount = 0;  
       return(PAPI_OK);
     }
@@ -3218,6 +3316,7 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
     }
   ctx_fd = ret;
   SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",ctx_fd);
+  tune_up_fd(ret);
 
   SUBDBG("MMAP(NULL,%lld,%d,%d,%d,0)\n",(unsigned long long)buf_arg.buf_size,PROT_READ,MAP_PRIVATE,ctx_fd);
   buf_addr = mmap(NULL, (size_t)buf_arg.buf_size, PROT_READ, MAP_PRIVATE, ctx_fd, 0);
@@ -3265,11 +3364,12 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
   /* Now close our context it is safe */
 
-  close(ctx->ctx_fd);
+  // close(ctx->ctx_fd);
 
   /* Copy the new data to the threads context control block */
 
-  ctx->ctx_fd = ctx_fd;
+  // ctx->ctx_fd = ctx_fd;
+  ctl->ctx_fd = ctx_fd;
   memcpy(&ctx->ctx,&newctx,sizeof(newctx));
   memcpy(&ctx->smpl,&buf_arg,sizeof(buf_arg));
   ctx->smpl_buf = buf_addr;

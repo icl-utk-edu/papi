@@ -1,0 +1,78 @@
+/* This file performs the following test: valid fields in hw_info */
+
+#include "papi_test.h"
+
+int main(int argc, char **argv)
+{
+  int retval, i, j;
+  const PAPI_hw_info_t *hwinfo = NULL;
+  const PAPI_mh_info_t *mh;
+
+  tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
+
+  retval = PAPI_library_init(PAPI_VER_CURRENT);
+  if (retval != PAPI_VER_CURRENT)
+    test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+  
+  if ((hwinfo = PAPI_get_hardware_info()) == NULL)
+    test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
+  mh = &hwinfo->mem_hierarchy;
+
+  printf("Test case hwinfo.c: Check output of PAPI_get_hardware_info.\n");
+  printf("----------------------------------------------------------\n");
+  printf("Vendor string and code   : %s (%d)\n", hwinfo->vendor_string,hwinfo->vendor);
+  printf("Model string and code    : %s (%d)\n", hwinfo->model_string,hwinfo->model);
+  printf("CPU Revision             : %f\n", hwinfo->revision);
+  printf("CPU Megahertz            : %f\n", hwinfo->mhz);
+  printf("CPU Clock Megahertz      : %d\n", hwinfo->clock_mhz);
+  printf("CPU's in this Node       : %d\n", hwinfo->ncpu);
+  printf("Nodes in this System     : %d\n", hwinfo->nnodes);
+  printf("Total CPU's              : %d\n", hwinfo->totalcpus);
+  printf("Number Hardware Counters : %d\n", PAPI_get_opt(PAPI_MAX_HWCTRS, NULL));
+  printf("Max Multiplex Counters   : %d\n", PAPI_get_opt(PAPI_MAX_MPX_CTRS, NULL));
+  printf("----------------------------------------------------------\n\n");
+
+  validate_string((char *)hwinfo->vendor_string,"vendor_string");
+  validate_string((char *)hwinfo->model_string,"model_string");
+
+  if (hwinfo->vendor == PAPI_VENDOR_UNKNOWN)
+    test_fail(__FILE__,__LINE__,"Vendor unknown",0);
+
+  if (hwinfo->mhz == 0.0)
+    test_fail(__FILE__,__LINE__,"Mhz unknown",0);
+
+  if (hwinfo->ncpu < 1)
+    test_fail(__FILE__,__LINE__,"ncpu < 1",0);
+
+  if (hwinfo->nnodes < 1)
+    test_fail(__FILE__,__LINE__,"ncpu < 1",0);
+
+  if (hwinfo->totalcpus < 1)
+    test_fail(__FILE__,__LINE__,"totalcpus < 1",0);
+
+  if (PAPI_get_opt(PAPI_MAX_HWCTRS, NULL) < 1)
+    test_fail(__FILE__,__LINE__,"get_opt(MAX_HWCTRS) < 1",0);
+
+  if (PAPI_get_opt(PAPI_MAX_MPX_CTRS, NULL) < 1)
+    test_fail(__FILE__,__LINE__,"get_opt(MAX_MPX_CTRS) < 1",0);
+
+  if (mh->levels < 0)
+    test_fail(__FILE__,__LINE__,"max mh level < 0",0);
+
+  printf("Max level of TLB or Cache: %d\n",mh->levels);
+  for (i=0;i<mh->levels;i++)
+    {
+      for (j=0;j<PAPI_MH_MAX_LEVELS;j++)
+	{
+	  const PAPI_mh_cache_info_t *c = &mh->level[i].cache[j];
+	  const PAPI_mh_tlb_info_t *t = &mh->level[i].tlb[j];
+	  printf("Level %d, TLB %d: %d, %d, %d\n",i,j,t->type,t->num_entries,t->associativity);
+	  printf("Level %d, Cache %d: %d, %d, %d, %d, %d\n",i,j,c->type,c->size,c->line_size,c->num_lines,c->associativity);
+	}
+    }
+
+  test_pass(__FILE__, 0, 0);
+   
+  exit(1);
+}
+

@@ -1,58 +1,76 @@
-#include <stdlib.h>
+/****************************/
+/* THIS IS OPEN SOURCE CODE */
+/****************************/
+
+/* 
+* File:    any-null.h
+* CVS:     $Id$
+* Author:  Kevin London
+*          london@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
+*/
+
+#ifndef _PAPI_ANY_NULL_H
+#define _PAPI_ANY_NULL_H
+
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/times.h>
-#include <sys/time.h>
-#include <malloc.h>
+#include <errno.h>
 #include <assert.h>
-#include <limits.h>
-#include "papi.h"
+#include <ctype.h>
+#include <time.h>
+#if defined(linux)
+#include <signal.h>
+#include <syscall.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/resource.h>
+#include <sys/time.h>
+#include <sys/times.h>
+#endif
 
-#define CNTR1 0x1
-#define CNTR2 0x2
 #define MAX_COUNTERS 2
-#define PERF_USR       0x300
-#define PERF_OS        0x400
-#define PERF_ENABLE    0x800
-#define PERF_EVNT_MASK 0xff
+#define MAX_COUNTER_TERMS  MAX_COUNTERS
 
-typedef struct _any_command {
-  unsigned int cmd[MAX_COUNTERS];
-} any_command_t;
+#define inline_static inline static
+
+typedef struct hwd_siginfo {
+  int placeholder;
+} hwd_siginfo_t;
+
+typedef struct hwd_register {
+  int placeholder;
+} hwd_register_t;
+
+typedef struct hwd_reg_alloc {
+  int placeholder;
+} hwd_reg_alloc_t;
 
 typedef struct hwd_control_state {
-  /* Which counters to use? Bits encode counters to use, may be duplicates */
-  int selector;  
-  /* Is this event derived? */
-  int derived;   
-  /* Buffer to pass to the kernel to control the counters */
-  any_command_t counter_cmd;
+  int placeholder;
 } hwd_control_state_t;
 
-#include "papi_internal.h"
+typedef struct hwd_context {
+#if defined(USE_PROC_PTTIMER)
+  int stat_fd;
+#endif
+  int placeholder; 
+} hwd_context_t;
 
-typedef struct hwd_search {
-  /* PAPI preset code */
-  unsigned int papi_code;
-  /* Is this derived */
-  int derived_op;
-  /* If so, what is the index of the operand */
-  int operand_index;
-  /* Events to encode */
-  unsigned int findme[MAX_COUNTERS];
-} hwd_search_t;
+typedef struct hwd_ucontext {
+  int placeholder; 
+} hwd_ucontext_t;
 
-typedef struct hwd_preset {
-  /* Which counters to use? Bits encode counters to use, may be duplicates */
-  unsigned char selector;  
-  /* Is this event derived? */
-  unsigned char derived;   
-  /* If the derived event is not associative, this index is the lead operand */
-  unsigned char operand_index;
-  /* Buffer to pass to the kernel to control the counters */
-  any_command_t counter_cmd;
-  /* If it exists, then this is the description of this event */
-  char note[PAPI_MAX_STR_LEN];
-} hwd_preset_t;
+#define _papi_hwd_lock_init() { ; }
+#define _papi_hwd_lock(a) { ; }
+#define _papi_hwd_unlock(a) { ; }
+#define GET_OVERFLOW_ADDRESS(ctx) (ctx)
+
+#endif /* _PAPI_ANY_NULL_H */
+
+
+

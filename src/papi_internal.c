@@ -314,6 +314,9 @@ int _papi_hwi_assign_eventset(EventSetInfo_t *ESI, int cidx)
 
    ESI->state = PAPI_STOPPED;
 
+   ESI->domain.domain = _papi_hwd[cidx]->cmp_info.default_domain;
+   ESI->granularity.granularity = _papi_hwd[cidx]->cmp_info.default_granularity;
+
    return(PAPI_OK);
 }
 
@@ -1451,6 +1454,7 @@ int _papi_hwi_get_event_info(int EventCode, PAPI_event_info_t * info)
    int j;
 
    if (_papi_hwi_presets.info[i].symbol) { /* if the event is in the preset table */
+     memset(info,0,sizeof(*info));
       info->event_code = EventCode;
       info->count = _papi_hwi_presets.count[i];
       strcpy(info->symbol, _papi_hwi_presets.info[i].symbol);
