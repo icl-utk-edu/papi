@@ -110,6 +110,7 @@ inline_static long_long get_cycles(void) {
 inline_static long_long get_cycles(void) 
 {
   long_long count = 0;
+  /* This is a hack for SiCortex 32 bit cycle counter */
   __asm__ __volatile__(".set   push    \n"
 	  ".set   mips32r2\n"
 	  "rdhwr $3, $30  \n"
@@ -2091,7 +2092,8 @@ static int attach(hwd_control_state_t *ctl, unsigned long tid)
   if ((ret == -1) && (errno != EPERM))
     {
       PAPIERROR("Process/thread %d cannot be ptraced: %s",tid,strerror(errno));
-      free(newctx); free(load_args);
+      free(newctx);
+      free(load_args);
       return(PAPI_EINVAL);
     }
 
@@ -2456,7 +2458,7 @@ long_long _papi_hwd_get_real_usec(void) {
      retval = (long_long)foo.tv_sec*(long_long)1000000;
      retval += (long_long)(foo.tv_nsec/1000);
    }
-#elif defined(HAVE_GETTIMEOFDAY)
+#elif defined(HAVE_GETTIMEOFDAY)||defined(mips)
   struct timeval buffer;
   gettimeofday(&buffer,NULL);
   retval = (long_long)buffer.tv_sec*(long_long)1000000;
@@ -2469,7 +2471,7 @@ long_long _papi_hwd_get_real_usec(void) {
                                                                                 
 long_long _papi_hwd_get_real_cycles(void) {
   long_long retval;
-#if defined(HAVE_GETTIMEOFDAY)
+#if defined(HAVE_GETTIMEOFDAY)||defined(mips)
   retval = _papi_hwd_get_real_usec()*(long_long)_papi_hwi_system_info.hw_info.mhz;
 #else
   retval = get_cycles();

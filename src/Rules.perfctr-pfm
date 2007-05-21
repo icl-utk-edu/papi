@@ -239,10 +239,10 @@ config.h:
 	@echo 'Please clobber your build and run ./configure. Direct Makefile access has been deprecated.'
 
 $(PERFCTR_OBJS): $(PERFCTR_LIB_PATH)/libperfctr.a
-	ar xv $<
+	$(AR) xv $<
 
 $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
-	ar xv $<
+	$(AR) xv $<
 
 $(CPU_EVENTS).o: $(CPU_EVENTS).c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPU_EVENTS).c -o $@
@@ -254,7 +254,7 @@ papi_pfm_events.o: papi_pfm_events.c $(HEADERS) $(PFM_EVENTS_TABLE)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_pfm_events.c -o $@
 
 perfmon_events_table.h:	perfmon_events.csv perfmon_events_table.sh
-	ksh perfmon_events_table.sh > $@
+	sh perfmon_events_table.sh > $@
 
 $(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c  $(ARCH_EVENTS)_map.c -o $@

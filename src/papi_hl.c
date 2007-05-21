@@ -109,9 +109,9 @@ int _internal_check_state(HighLevelInfo ** outgoing)
       if (retval != PAPI_VER_CURRENT) {
          return (retval);
       } else {
-         PAPI_lock(HIGHLEVEL_LOCK);
+	 _papi_hwi_lock(HIGHLEVEL_LOCK);
          init_level = PAPI_HIGH_LEVEL_INITED;
-         PAPI_unlock(HIGHLEVEL_LOCK);
+         _papi_hwi_unlock(HIGHLEVEL_LOCK);
       }
    }
 

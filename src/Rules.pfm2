@@ -84,12 +84,13 @@ config.h:
 	@echo 'Please clobber your build and run ./configure."
 
 $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
+	$(AR) xv $<
 
 papi_pfm_events.o: papi_pfm_events.c $(HEADERS) $(PFM_EVENTS_TABLE)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_pfm_events.c -o $@
 
 perfmon_events_table.h:	perfmon_events.csv perfmon_events_table.sh
-	ksh perfmon_events_table.sh > $@
+	sh perfmon_events_table.sh > $@
 
 native_clean:
 	-rm -f $(MISCOBJS) 
