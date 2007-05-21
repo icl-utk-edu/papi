@@ -2112,7 +2112,8 @@ static int attach(hwd_control_state_t *ctl, unsigned long tid)
   if ((ret == -1) && (errno != EPERM))
     {
       PAPIERROR("Process/thread %d cannot be ptraced: %s",tid,strerror(errno));
-      free(newctx); free(load_args);
+      free(newctx);
+      free(load_args);
       return(PAPI_EINVAL);
     }
 

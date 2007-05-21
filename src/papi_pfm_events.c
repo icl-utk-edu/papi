@@ -961,6 +961,8 @@ int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
   return (PAPI_OK);
 }
 
+/* This implementation is patterned after PAPI/perfctr ...
+    It may no longer be relevant, but I didn't want to lose it -- dkt 5/21/7 
 static void copy_value(unsigned int val, char *nam, char *names, unsigned int *values, int len)
 {
    *values = val;
@@ -987,6 +989,72 @@ int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
    mask = convert_pfm_masks(bits);
    copy_value(mask, "Event Unit Mask", &names[i*name_len], &values[i], name_len);
    return(++i);
+}
+*/
+
+
+/* This implementation is from Phil's final commit to the 3.5.0 branch ...
+    It needs to be confirmed for current relevant platforms */
+static char *_pmc_name(int i)
+{
+  /* Should get this from /sys */
+#if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
+  switch (i) {
+  case 0:
+    return "Core counter 0";
+  case 1:
+    return "Core counter 1";
+  default:
+    return "SCB counter";
+  }
+#else
+  return "Event Code";
+#endif
+}
+
+int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
+                               unsigned int *values, int name_len, int count)
+{
+  int ret;
+  pfmlib_regmask_t selector = _perfmon2_pfm_native_map[bits->event].resources.selector;
+  int j, n = _papi_hwi_system_info.sub_info.num_cntrs;
+  int foo, did_something=0;
+
+#if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
+  switch (_perfmon2_pfm_pmu_type)
+    {
+      /* All the counters after the 2 CPU counters, the 4 sample counters are SCB registers. */
+    case PFMLIB_MIPS_ICE9A_PMU:
+    case PFMLIB_MIPS_ICE9B_PMU:
+      if (n > 7) n = 7;
+      break;
+    default:
+      break;
+    }
+#endif
+
+  for (j=0;n;j++)
+    {
+      if (pfm_regmask_isset(&selector,j))
+	{
+	  if ((ret = pfm_get_event_code_counter(bits->event,j,&foo)) != PFMLIB_SUCCESS)
+	    {
+	      PAPIERROR("pfm_get_event_code_counter(%d,%d,%p): %s",*bits,j,&foo,pfm_strerror(ret));
+	      return(PAPI_EBUG);
+	    }
+	  /* Overflow check */
+	  if ((did_something*name_len + strlen(_pmc_name(j)) + 1) >= count*name_len)
+	    {
+	      SUBDBG("Would overflow register name array.");
+	      return(did_something);
+	    }
+	  values[did_something] = foo;
+	  strncpy(&names[did_something*name_len],_pmc_name(j),name_len);
+	  did_something++;
+	}
+      n--;
+    }
+  return(did_something);
 }
 
 #endif /* PERFCTR_PFM_EVENTS */
