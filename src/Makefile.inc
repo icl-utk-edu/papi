@@ -101,7 +101,7 @@ $(SUBSTR).o: $(SUBSTR).c $(HEADERS)
 #
 # This is all done by configure now
 #
-genpapifdef: genpapifdef.c papi.h papi_preset.h papi_data.h
+genpapifdef: genpapifdef.c papi.h papi_preset.h papi_data.c
 	$(CC) -I. genpapifdef.c -o genpapifdef
 
 fpapi.h: papi.h
