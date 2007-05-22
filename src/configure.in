@@ -8,6 +8,46 @@ AC_INIT(PAPI, 3.5.0, ptools-perfapi@cs.utk.edu)
 AC_CONFIG_SRCDIR([papi.c])
 AC_CONFIG_HEADER([config.h])
 
+dnl AS_AC_EXPAND(VAR, CONFIGURE_VAR)
+dnl example
+dnl AS_AC_EXPAND(SYSCONFDIR, $sysconfdir)
+dnl will set SYSCONFDIR to /usr/local/etc if prefix=/usr/local
+
+AC_DEFUN([AS_AC_EXPAND],
+[
+  EXP_VAR=[$1]
+  FROM_VAR=[$2]
+
+  dnl first expand prefix and exec_prefix if necessary
+  prefix_save=$prefix
+  exec_prefix_save=$exec_prefix
+
+  dnl if no prefix given, then use /usr/local, the default prefix
+  if test "x$prefix" = "xNONE"; then
+   prefix="$ac_default_prefix"
+  fi
+  dnl if no exec_prefix given, then use prefix
+  if test "x$exec_prefix" = "xNONE"; then
+   exec_prefix=$prefix
+  fi
+
+  full_var="$FROM_VAR"
+  dnl loop until it doesn't change anymore
+  while true; do
+    new_full_var="`eval echo $full_var`"
+   if test "x$new_full_var" = "x$full_var"; then break; fi
+    full_var=$new_full_var
+  done
+
+  dnl clean up
+  full_var=$new_full_var
+  AC_DEFINE_UNQUOTED([$1], "$full_var")
+
+  dnl restore prefix and exec_prefix
+  prefix=$prefix_save
+  exec_prefix=$exec_prefix_save
+])
+
 get_bitmode()
 {
  input="bad"
@@ -1194,18 +1234,9 @@ esac
 # Fix up: put inside papi in share directory
 #
 if test "$datadir" = '${datarootdir}'; then
-   datadir="${prefix}/share/papi"
-   PAPI_DATADIR="${prefix}/share/papi"
+   datadir='${datarootdir}/${PACKAGE_TARNAME}'
 fi
-
-#
-# Fix up: Linux man pages in /usr/share/man
-#
-if test "$OS" = "linux"; then
-   if test "$mandir" = '${prefix}/man'; then
-      mandir='${prefix}/share/man'
-   fi
-fi
+papidatadir=$datadir
 
 #
 # Fix up: If we're on linux and 64 bit build, then put libs in the right place
@@ -1219,7 +1250,7 @@ if test "$OS" = "linux" -a "$bitmode" = "64"; then
    fi
 fi
 
-AC_DEFINE_UNQUOTED(PAPI_DATADIR, "$PAPI_DATADIR", [package data directory])
+AS_AC_EXPAND(PAPI_DATADIR, $papidatadir)
 AC_SUBST(prefix)
 AC_SUBST(exec_prefix)
 AC_SUBST(libdir)
@@ -1228,6 +1259,8 @@ AC_SUBST(mandir)
 AC_SUBST(bindir)
 AC_SUBST(datadir)
 AC_SUBST(datarootdir)
+AC_SUBST(docdir)
+AC_SUBST(PACKAGE_TARNAME)
 AC_SUBST(arch)
 AC_SUBST(DEBUGFLAGS)
 AC_SUBST(MAKEVER)
