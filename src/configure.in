@@ -1202,7 +1202,7 @@ fi
 # Fix up: Linux man pages in /usr/share/man
 #
 if test "$OS" = "linux"; then
-   if test "$mandir" = '${datarootdir}/man'; then
+   if test "$mandir" = '${prefix}/man'; then
       mandir='${prefix}/share/man'
    fi
 fi
