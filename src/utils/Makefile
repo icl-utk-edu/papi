@@ -6,37 +6,37 @@ PAPILIB=../$(LIBRARY)
 util: $(TARGETS)
 
 papi_event_chooser: event_chooser.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) event_chooser.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_event_chooser -lm
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) event_chooser.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_event_chooser -lm
 
 papi_clockres: ../ctests/clockcore.c clockres.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) ../ctests/clockcore.c clockres.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_clockres -lm
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) ../ctests/clockcore.c clockres.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_clockres -lm
 
 papi_cost: cost.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) cost.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_cost -lm
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) cost.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_cost -lm
 
 papi_command_line: command_line.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) command_line.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_command_line
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) command_line.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_command_line
 
 papi_mem_info: mem_info.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) mem_info.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_mem_info
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) mem_info.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_mem_info
 
 papi_avail: avail.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) avail.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_avail
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) avail.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_avail
 
 papi_decode: decode.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) decode.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_decode
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) decode.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_decode
 
 papi_native_avail: native_avail.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) native_avail.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_native_avail
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) native_avail.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_native_avail
 
 test_utils.o: ../ctests/test_utils.c ../ctests/papi_test.h ../ctests/test_utils.h
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c ../ctests/test_utils.c
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/test_utils.c
 
 do_loops.o: ../ctests/do_loops.c ../ctests/papi_test.h ../ctests/test_utils.h
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c ../ctests/do_loops.c
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/do_loops.c
 
 dummy.o: ../ctests/dummy.c
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) -c ../ctests/dummy.c
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/dummy.c
 
 clean:
 	rm -f *.o *.stderr *.stdout core *~
