@@ -18,7 +18,7 @@ install-doc:
 	@echo "Docs (DOCDIR) being installed in: \"$(DOCDIR)\""; 
 	-mkdir -p $(DOCDIR)/html
 	-chmod go+rx $(DOCDIR)
-	-cp ../*.txt ../doc/PAPI_*.doc ../doc/PAPI_*.pdf ../*.html $(DOCDIR)
+	-cp ../*.txt ../doc/PAPI_*.doc ../doc/PAPI_*.pdf ../*.html ../*.gif $(DOCDIR)
 	-chmod go+r $(DOCDIR)/*
 	-cp ./html/*.html $(DOCDIR)/html
 	-chmod go+r $(DOCDIR)/html/*
