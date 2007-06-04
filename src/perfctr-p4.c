@@ -868,7 +868,7 @@ int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
 #elif defined(PAPI_PENTIUM4_FP_X87_SSE_SP)
    #define P4_FPU " X87 SSE_SP"
 #elif defined(PAPI_PENTIUM4_FP_SSE_SP_DP)
-   #define P4_FPU " SSE_SP SSE_DP
+   #define P4_FPU " SSE_SP SSE_DP"
 #else
    #define P4_FPU " X87 SSE_DP"
 #endif
