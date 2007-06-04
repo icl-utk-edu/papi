@@ -221,7 +221,11 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    _papi_hwi_system_info.sub_info.attach = 1;
    _papi_hwi_system_info.sub_info.attach_must_ptrace = 1;
    _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
+#if defined(PPC64)
+   _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR;
+#else
    _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
+#endif
    _papi_hwi_system_info.sub_info.default_granularity = PAPI_GRN_THR;
    _papi_hwi_system_info.sub_info.available_granularities = PAPI_GRN_THR;
    _papi_hwi_system_info.sub_info.hardware_intr =
@@ -319,11 +323,19 @@ static int detach( hwd_control_state_t * ctl, unsigned long tid ) {
 
 int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
+#if defined(PPC64)
+   extern int _papi_hwd_set_domain(EventSetInfo_t * ESI, int domain);
+#else
    extern int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain);
+#endif
    switch (code) {
    case PAPI_DOMAIN:
    case PAPI_DEFDOM:
+#if defined(PPC64)
+      return (_papi_hwd_set_domain(option->domain.ESI, option->domain.domain));
+#else
       return (_papi_hwd_set_domain(&option->domain.ESI->machdep, option->domain.domain));
+#endif
    case PAPI_GRANUL:
    case PAPI_DEFGRN:
       return(PAPI_ESBSTR);

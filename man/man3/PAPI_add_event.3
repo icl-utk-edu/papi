@@ -115,6 +115,35 @@ if (PAPI_add_event(EventSet, native) != PAPI_OK)
 .if t .ft P
 .fi
 
+.SH IBM POWER6 NOTES
+
+Event counters 5 and 6 in the IBM POWER6 are restricted:
+.br
+\(bu Each can count just a single, fixed event. 
+.br
+\(bu They are free-running and so can count only in the combined domain - PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR.
+.br
+\(bu They cannot interrupt on overflow.
+.P
+Although counter 6 counts processor cycles gated by the run latch
+(PM_RUN_CYC), the current implementation maps the PAPI preset event
+PAPI_TOT_CYC to PM_CYC because of the domain and overflow limitations of
+counter 6.  PM_CYC can be counted with relatively few other
+events, so it's likely that you will receive PAPI_ECNFLCT if you try to add
+PAPI_TOT_CYC to an event set that already contains other events.  If you
+can use the above mentioned combined domain and do not need the overflow
+capability, you should consider adding the native event PM_RUN_CYC instead
+of PAPI_TOT_CYC.
+.P
+Counter 5 counts the native event PM_RUN_INST_CMPL, which is instructions
+completed gated by the run latch.  For the same reasons given for counter
+6, PAPI_TOT_INS is mapped to PM_INST_CMPL instead of PM_RUN_INST_CMPL.  And
+as above, if you try to add PAPI_TOT_INS to an event group with other
+events already in it, you are likely to receive PAPI_ECNFLCT.  If you can
+use the above combined domain and do not need the overflow capability, you
+should consider adding the native event PM_RUN_INST_CMPL instead of
+PAPI_TOT_INS.
+
 .SH BUGS
 The vector function should take a pointer to a length argument so a proper return value can
 be set upon partial success.

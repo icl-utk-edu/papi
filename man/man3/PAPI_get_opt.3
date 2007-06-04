@@ -263,6 +263,17 @@ if (PAPI_set_opt(PAPI_DOMAIN, &options) != PAPI_OK)
 .if t .ft P
 .fi
 
+.SH IBM POWER6 NOTES
+
+.P
+If you call PAPI_set_opt(PAPI_DOMAIN, ...) on an event set containing 
+either of the events PM_RUN_CYC or PM_RUN_INST_CMPL with a domain
+anything other than PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR,
+you may receive PAPI_ECNFLCT because of restrictions to event counters 5 &
+6.  For more details, see the IBM POWER6 NOTES in the
+.BR PAPI_add_event "(3)"
+documentation.
+
 .SH BUGS
 The granularity functions are not yet implemented.
 The domain functions are only implemented on some platforms.

@@ -37,7 +37,11 @@ int main(int argc, char **argv)
    prof_init(argc, argv, &hw_info, &prginfo);
 
 #if defined(__powerpc__) && defined(__perfctr__ )
+#ifdef _POWER6
+   mask = MASK_TOT_CYC | MASK_FP_INS;
+#else
    mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_INS;
+#endif
 #else
    mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_OPS | MASK_L2_TCM;
 #endif
@@ -83,8 +87,13 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
    int num_buckets;
 
 #if defined(__powerpc__) && defined(__perfctr__ )
+#ifdef _POWER6
+   unsigned int events[] = {PAPI_TOT_CYC, PAPI_FP_INS };
+   int num_events = 2;
+#else
    unsigned int events[] = {PAPI_TOT_CYC, PAPI_TOT_INS, PAPI_FP_INS };
    int num_events = 3;
+#endif
    char * header =  "address\t\t\tcyc\tins\tfp_ins\n";
 #else
    unsigned int events[] = {PAPI_TOT_CYC, PAPI_TOT_INS, PAPI_FP_OPS, PAPI_L2_TCM };
@@ -117,7 +126,9 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
 
    if (!TESTS_QUIET) {
       printf(TAB1, "PAPI_TOT_CYC:", (values[0])[--event]);
+#ifndef _POWER6
       printf(TAB1, "PAPI_TOT_INS:", (values[0])[--event]);
+#endif
 #if defined(__powerpc__) && defined(__perfctr__ )
       printf(TAB1, "PAPI_FP_INS", (values[0])[--event]);
 #else

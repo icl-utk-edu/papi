@@ -20,7 +20,7 @@
       integer tests_quiet, get_quiet
       external get_quiet
 
-#if defined(POWER3) || defined (_POWER4) || defined(_POWER5) || defined(_POWER5p)
+#if defined(POWER3) || defined (_POWER4) || defined(_POWER5) || defined(_POWER5p) || defined(_POWER6)
       real*4 csec
 #endif
 
@@ -65,6 +65,15 @@
       eventname(3) = 'TOT_INS'
       eventname(4) = 'BR_MSP'
       n = 4
+#endif
+#if defined(_POWER6)
+      eventname(1) = 'PM_FPU_FMA'
+      eventname(2) = 'PM_FPU_1FLOP'
+      eventname(3) = 'PM_FPU_FSQRT_FDIV'
+      eventname(4) = 'PM_FPU_FLOP'
+      eventname(5) = 'PM_RUN_INST_CMPL'
+      eventname(6) = 'PM_RUN_CYC'
+      n = 6
 #endif
 #if defined(_POWER5) || defined(_POWER5p)
       eventname(1) = 'PM_FPU_FDIV'
@@ -217,6 +226,20 @@ C     call sleep(1)
       print *, "DCache accesses                   : ",values(2)
       print *, "CPU Cycles                        : ",values(3)
 
+#elif defined(_POWER6)
+      csec = values(5)/ (mhz*1000000.0)
+      print *, "CPU Elapsed Time in sec.     : ", csec
+      print *, "FPU FMA Instructions         : ", values(1)
+      print *, "FPU 1FLOP Instructions       : ", values(2)
+      print *, "FPU FSQRT+FDIV Instructions  : ", values(3)
+      print *, "FPU FLOPs                    : ", values(4)
+      print *, "Instructions Completed       : ", values(5)
+      print *, "CPU Cycles                   : ", values(6)
+      print *, "------------------------------------------"
+      print *, "CPU MFLOPS                   : ",
+     *((values(4))/1000000.0)/csec
+      print *, "%% FMA Instructions           : ",
+     *100.0*(values(1))/values(5)
 #elif defined(_POWER5) || defined(_POWER5p)
       csec = values(5)/ (mhz*1000000.0)
       print *, "CPU Elapsed Time in sec.   : ", csec

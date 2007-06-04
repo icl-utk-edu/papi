@@ -14,8 +14,13 @@
 
 /* Event to use in all cases; initialized in init_papi() */
 
+#ifdef _POWER6
+const unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
+   PAPI_FP_INS, PAPI_TOT_CYC, PAPI_L1_DCM, PAPI_L1_ICM, 0 };
+#else
 const unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
    PAPI_FP_INS, PAPI_TOT_INS, PAPI_L1_DCM, PAPI_L1_ICM, 0 };
+#endif
 static unsigned int PAPI_events[PAPI_MPX_DEF_DEG] = { 0, };
 static int PAPI_events_len = 0;
 
@@ -35,6 +40,13 @@ void init_papi(unsigned int *out_events, int *len)
    retval = PAPI_multiplex_init();
    if (retval != PAPI_OK)
       CPP_TEST_FAIL("PAPI_multiplex_init", retval);
+
+#ifdef _POWER6
+   retval = PAPI_set_domain(PAPI_DOM_ALL);
+   if (retval != PAPI_OK)
+      CPP_TEST_FAIL("PAPI_set_domain", retval);
+#endif
+
 
    for (i = 0; in_events[i] != 0; i++) {
       char out[PAPI_MAX_STR_LEN];

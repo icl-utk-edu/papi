@@ -456,6 +456,17 @@ int mpx_remove_event(MPX_EventSet ** mpx_events, int EventCode)
 static long_long lastcall;
 #endif
 
+
+#ifdef _POWER6
+/* POWER6 can always count PM_RUN_CYC on counter 6 in domain
+   PAPI_DOM_ALL, and can count it on other domains on counters
+   1 and 2 along with a very limited number of other native
+   events */
+#define SCALE_EVENT PNE_PM_RUN_CYC
+#else
+#define SCALE_EVENT PAPI_TOT_CYC
+#endif
+
 static void mpx_handler(int signal)
 {
    int retval;
@@ -570,7 +581,7 @@ static void mpx_handler(int signal)
          MPXDBG("counts[0] = %lld counts[1] = %lld\n", counts[0], counts[1]);
 
          cur_event->count += counts[0];
-         cycles = (cur_event->pi.event_type == PAPI_TOT_CYC)
+         cycles = (cur_event->pi.event_type == SCALE_EVENT)
              ? counts[0] : counts[1];
 
          me->total_c += cycles;
@@ -708,8 +719,8 @@ int MPX_start(MPX_EventSet * mpx_events)
       assert(retval == PAPI_OK);
       if (retval == PAPI_OK)
 	{
-	  cycles_this_slice = ((t->cur_event->pi.event_type == PAPI_TOT_CYC)
-			       ? values[0] : values[1]);
+	  cycles_this_slice = (t->cur_event->pi.event_type == SCALE_EVENT)
+			       ? values[0] : values[1];
 	}
       else
 	{
@@ -841,7 +852,7 @@ int MPX_read(MPX_EventSet * mpx_events, long_long * values)
       if (retval != PAPI_OK)
          return retval;
 
-      cycles_this_slice = (cur_event->pi.event_type == PAPI_TOT_CYC)
+      cycles_this_slice = (cur_event->pi.event_type == SCALE_EVENT)
           ? last_value[0] : last_value[1];
 
       /* Save the current counter values and get
@@ -1232,10 +1243,10 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
          /* Always count total cycles so we can scale results.
           * If user just requested cycles, don't add that event again. */
 
-         if (event_list[i] != PAPI_TOT_CYC) {
-            retval = PAPI_add_event(mev->papi_event, PAPI_TOT_CYC);
+         if (event_list[i] != SCALE_EVENT) {
+            retval = PAPI_add_event(mev->papi_event, SCALE_EVENT);
             if (retval != PAPI_OK) {
-               MPXDBG("PAPI_TOT_CYC could not be counted at the same time.\n");
+               MPXDBG("Scale event could not be counted at the same time.\n");
                goto bail;
             }
          }

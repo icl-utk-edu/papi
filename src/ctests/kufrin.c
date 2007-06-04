@@ -97,6 +97,13 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", ret);
     }
 
+#ifdef _POWER6
+    ret = PAPI_set_domain(PAPI_DOM_ALL);
+    if ( ret != PAPI_OK ) {
+      test_fail(__FILE__, __LINE__, "PAPI_set_domain", ret);
+    }
+#endif
+
     ret = PAPI_thread_init((unsigned long (*)(void)) pthread_self);
     if ( ret != PAPI_OK ) {
       test_fail(__FILE__, __LINE__, "PAPI_thread_init", ret);
