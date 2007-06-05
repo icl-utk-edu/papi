@@ -76,7 +76,8 @@ static int setup_preset_term(int *native, pfmlib_event_t *event)
 	Am I wrong?
     */
   pfmlib_regmask_t impl_cnt, evnt_cnt;
-  int n, j, ret;
+  unsigned int n;
+  int j, ret;
 
   /* find out which counters it lives on */
   if ((ret = pfm_get_event_counters(event->event,&evnt_cnt)) != PFMLIB_SUCCESS)
@@ -900,6 +901,11 @@ int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
 
 #ifndef PENTIUM4
 
+/* This call is broken. Selector can be much bigger than 32 bits. It should be a pfmlib_regmask_t - pjm */
+/* Also, libpfm assumes events can live on different counters with different codes. This call only returns
+    the first occurence found. */
+/* Right now its only called by ntv_code_to_bits in p3_pfm_events, so we're ok. But for it to be
+    generally useful it should be fixed. - dkt */
 int _pfm_get_counter_info(unsigned int event, unsigned int *selector, int *code)
 {
     pfmlib_regmask_t cnt, impl;
@@ -961,66 +967,47 @@ int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
   return (PAPI_OK);
 }
 
-/* This implementation is patterned after PAPI/perfctr ...
-    It may no longer be relevant, but I didn't want to lose it -- dkt 5/21/7 
-static void copy_value(unsigned int val, char *nam, char *names, unsigned int *values, int len)
+static char *_pmc_name(int i)
 {
-   *values = val;
-   strncpy(names, nam, len);
-   names[len-1] = 0;
+  /* Should get this from /sys */
+  extern int _perfmon2_pfm_pmu_type;
+  switch (_perfmon2_pfm_pmu_type)
+    {
+#if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
+      /* All the counters after the 2 CPU counters, the 4 sample counters are SCB registers. */
+    case PFMLIB_MIPS_ICE9A_PMU:
+    case PFMLIB_MIPS_ICE9B_PMU:
+      switch (i) {
+      case 0:
+	return "Core counter 0";
+      case 1:
+	return "Core counter 1";
+      default:
+	return "SCB counter";
+      }
+      break;
+#endif
+    default:
+      return "Event Code";
+    }
 }
 
 int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                unsigned int *values, int name_len, int count)
 {
-    unsigned int selector;
-   int mask, i = 0;
-    int ret, code;
-
-    if ((ret = _pfm_get_counter_info(bits->event, &selector, &code)) != PAPI_OK)
-      return(ret);
-
-   copy_value(bits->event, "PFM Event Index", &names[i*name_len], &values[i], name_len);
-   if (++i == count) return(i);
-   copy_value(code, "Event Code", &names[i*name_len], &values[i], name_len);
-   if (++i == count) return(i);
-   copy_value(selector, "Counters", &names[i*name_len], &values[i], name_len);
-   if (++i == count) return(i);
-   mask = convert_pfm_masks(bits);
-   copy_value(mask, "Event Unit Mask", &names[i*name_len], &values[i], name_len);
-   return(++i);
-}
-*/
-
-
-/* This implementation is from Phil's final commit to the 3.5.0 branch ...
-    It needs to be confirmed for current relevant platforms */
-static char *_pmc_name(int i)
-{
-  /* Should get this from /sys */
-#if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
-  switch (i) {
-  case 0:
-    return "Core counter 0";
-  case 1:
-    return "Core counter 1";
-  default:
-    return "SCB counter";
-  }
-#else
-  return "Event Code";
-#endif
-}
-
-int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
-                               unsigned int *values, int name_len, int count)
-{
   int ret;
-  pfmlib_regmask_t selector = _perfmon2_pfm_native_map[bits->event].resources.selector;
+  pfmlib_regmask_t selector;
   int j, n = _papi_hwi_system_info.sub_info.num_cntrs;
   int foo, did_something=0;
+  unsigned int umask;
+
+  if ((ret = pfm_get_event_counters(bits->event,&selector)) != PFMLIB_SUCCESS) {
+    PAPIERROR("pfm_get_event_counters(%d,%p): %s",bits->event,&selector,pfm_strerror(ret));
+    return(PAPI_ESBSTR);
+  }
 
 #if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
+  extern int _perfmon2_pfm_pmu_type;
   switch (_perfmon2_pfm_pmu_type)
     {
       /* All the counters after the 2 CPU counters, the 4 sample counters are SCB registers. */
@@ -1036,24 +1023,32 @@ int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
   for (j=0;n;j++)
     {
       if (pfm_regmask_isset(&selector,j))
-	{
-	  if ((ret = pfm_get_event_code_counter(bits->event,j,&foo)) != PFMLIB_SUCCESS)
-	    {
-	      PAPIERROR("pfm_get_event_code_counter(%d,%d,%p): %s",*bits,j,&foo,pfm_strerror(ret));
-	      return(PAPI_EBUG);
-	    }
-	  /* Overflow check */
-	  if ((did_something*name_len + strlen(_pmc_name(j)) + 1) >= count*name_len)
-	    {
-	      SUBDBG("Would overflow register name array.");
-	      return(did_something);
-	    }
-	  values[did_something] = foo;
-	  strncpy(&names[did_something*name_len],_pmc_name(j),name_len);
-	  did_something++;
-	}
+       {
+         if ((ret = pfm_get_event_code_counter(bits->event,j,&foo)) != PFMLIB_SUCCESS)
+           {
+             PAPIERROR("pfm_get_event_code_counter(%d,%d,%p): %s",*bits,j,&foo,pfm_strerror(ret));
+             return(PAPI_EBUG);
+           }
+         /* Overflow check */
+         if ((did_something*name_len + strlen(_pmc_name(j)) + 1) >= count*name_len)
+           {
+            SUBDBG("Would overflow register name array.");
+             return(did_something);
+           }
+         values[did_something] = foo;
+         strncpy(&names[did_something*name_len],_pmc_name(j),name_len);
+         did_something++;
+	 if (did_something == count) break;
+       }
       n--;
     }
+  /* assumes umask is unchanged, even if event code changes */
+  umask = convert_pfm_masks(bits);
+  if (umask && (did_something < count)) {
+    values[did_something] = umask;
+    strncpy(&names[did_something*name_len]," Unit Mask",name_len);
+    did_something++;
+  }
   return(did_something);
 }
 

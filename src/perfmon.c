@@ -65,7 +65,7 @@ papi_svector_t _linux_pfm_table[] = {
 
 /* Static locals */
 
-static int _perfmon2_pfm_pmu_type;
+int _perfmon2_pfm_pmu_type;
 static pfmlib_regmask_t _perfmon2_pfm_unavailable_pmcs;
 static pfmlib_regmask_t _perfmon2_pfm_unavailable_pmds;
 
