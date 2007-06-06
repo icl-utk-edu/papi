@@ -333,10 +333,10 @@ static MPX_EventSet *mpx_malloc(Threadlist * t)
    return (newset);
 }
 
-int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode)
+int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode, int domain, int granularity)
 {
    MPX_EventSet *newset = *mpx_events;
-   int retval, def_dom, def_grn, alloced_thread = 0, alloced_newset = 0;
+   int retval, alloced_thread = 0, alloced_newset = 0;
    Threadlist *t;
 
    /* Get the global list of threads */
@@ -417,16 +417,13 @@ int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode)
 
    /* Removed newset->num_events++, moved to mpx_insert_events() */
 
-   def_dom = PAPI_get_opt(PAPI_DEFDOM, NULL);
-   def_grn = PAPI_get_opt(PAPI_DEFGRN, NULL);
-
    mpx_hold();
 
    /* Create PAPI events (if they don't already exist) and link
     * the new event set to them, add them to the master list for
     the thread, reset master event list for this thread */
 
-   retval = mpx_insert_events(newset, &EventCode, 1, def_dom, def_grn);
+   retval = mpx_insert_events(newset, &EventCode, 1, domain, granularity);
    if (retval != PAPI_OK) {
       if (alloced_newset) {
          papi_free(newset);
@@ -688,12 +685,12 @@ static void mpx_handler(int signal)
 #endif
 }
 
-int MPX_add_events(MPX_EventSet ** mpx_events, int *event_list, int num_events)
+int MPX_add_events(MPX_EventSet ** mpx_events, int *event_list, int num_events, int domain, int granularity)
 {
    int i, retval = PAPI_OK;
 
    for (i = 0; i < num_events; i++) {
-      retval = mpx_add_event(mpx_events, event_list[i]);
+      retval = mpx_add_event(mpx_events, event_list[i], domain, granularity);
 
       if (retval != PAPI_OK)
          return (retval);
@@ -1195,9 +1192,7 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
 {
    int i, retval = 0, num_events_success = 0;
    MasterEvent *mev;
-#if 0
    PAPI_option_t options;
-#endif
    MasterEvent **head = &mpx_events->mythr->head;
 
    /* For each event, see if there is already a corresponding
@@ -1233,6 +1228,30 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
             MPXDBG("Event %d could not be counted.\n", event_list[i]);
             goto bail;
          }
+         
+         /* Set the options for the event set */
+
+         memset(&options, 0x0, sizeof(options));
+         options.domain.eventset = mev->papi_event;
+         options.domain.domain = domain;
+         retval = PAPI_set_opt(PAPI_DOMAIN, &options);
+         if (retval != PAPI_OK) {
+            MPXDBG("PAPI_set_opt(PAPI_DOMAIN, ...) = %d\n", retval);
+            goto bail;
+         }
+         
+         memset(&options, 0x0, sizeof(options));
+         options.granularity.eventset = mev->papi_event;
+         options.granularity.granularity = granularity;
+         retval = PAPI_set_opt(PAPI_GRANUL, &options);
+         if (retval != PAPI_OK) {
+            if (retval != PAPI_ESBSTR) {
+               /* ignore substrate errors because they typically mean
+                  "not supported by the substrate" */
+               MPXDBG("PAPI_set_opt(PAPI_GRANUL, ...) = %d\n", retval);
+               goto bail;
+            }
+         }
 
          retval = PAPI_add_event(mev->papi_event, event_list[i]);
          if (retval != PAPI_OK) {
@@ -1250,26 +1269,6 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
                goto bail;
             }
          }
-
-         /* Set the options for the event set */
-#if 0
-         options.domain.eventset = mev->papi_event;
-         options.domain.domain = domain;
-         retval = PAPI_set_opt(PAPI_DOMAIN, &options);
-         if (retval != PAPI_OK) {
-            MPXDBG("PAPI_set_opt(PAPI_DOMAIN) failed.\n");
-            goto bail;
-         }
-#endif
-#if 0
-         options.granularity.eventset = mev->papi_event;
-         options.granularity.granularity = granularity;
-         retval = PAPI_set_opt(PAPI_GRANUL, &options);
-         if (retval != PAPI_OK) {
-            MPXDBG("PAPI_set_opt(PAPI_GRANUL) failed.\n");
-            goto bail;
-         }
-#endif
 
          /* Chain the event set into the 
           * master list of event sets used in

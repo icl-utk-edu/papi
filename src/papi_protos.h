@@ -51,9 +51,9 @@ int _xml_papi_hwi_setup_all_presets(char *arch, hwi_dev_notes_t *notes);
 /* The following PAPI internal functions are defined by the multiplex.c file. */
 
  int mpx_init(int);
- int mpx_add_event(MPX_EventSet **, int EventCode);
+ int mpx_add_event(MPX_EventSet **, int EventCode, int domain, int granularity);
  int mpx_remove_event(MPX_EventSet **, int EventCode);
- int MPX_add_events(MPX_EventSet ** mpx_events, int *event_list, int num_events);
+ int MPX_add_events(MPX_EventSet ** mpx_events, int *event_list, int num_events, int domain, int granularity);
  int MPX_stop(MPX_EventSet * mpx_events, long_long * values);
  int MPX_cleanup(MPX_EventSet ** mpx_events);
  void MPX_shutdown(void);
