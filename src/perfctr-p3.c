@@ -44,10 +44,16 @@ int _linux_init(hwd_context_t * ctx);
 #ifdef PERFCTR_PFM_EVENTS
 /* Cleverly remap definitions of ntv routines from p3 to pfm */
 #define _p3_ntv_enum_events _papi_pfm_ntv_enum_events
+#define _p3_ntv_name_to_code _papi_pfm_ntv_name_to_code
 #define _p3_ntv_code_to_name _papi_pfm_ntv_code_to_name
 #define _p3_ntv_code_to_descr _papi_pfm_ntv_code_to_descr
 #define _p3_ntv_code_to_bits _papi_pfm_ntv_code_to_bits
 #define _p3_ntv_bits_to_info _papi_pfm_ntv_bits_to_info
+/* Cleverly add an entry that doesn't exist for non-pfm */
+int _p3_ntv_name_to_code(char *name, unsigned int *event_code);
+#else
+/* this routine doesn't exist if not pfm */
+#define _p3_ntv_name_to_code NULL
 #endif
 
 /* Prototypes for entry points found in either p3_events or papi_pfm_events */
@@ -1013,6 +1019,7 @@ papi_vector_t _p3_vector = {
     .set_overflow =		_p3_set_overflow,
     .stop_profiling =		_p3_stop_profiling,
     .ntv_enum_events =		_p3_ntv_enum_events,
+    .ntv_name_to_code =		_p3_ntv_name_to_code,
     .ntv_code_to_name =		_p3_ntv_code_to_name,
     .ntv_code_to_descr =	_p3_ntv_code_to_descr,
     .ntv_code_to_bits =		_p3_ntv_code_to_bits,

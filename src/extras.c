@@ -570,43 +570,40 @@ int _papi_hwi_query_native_event(unsigned int EventCode)
    This allows for sparse native event arrays */
 int _papi_hwi_native_name_to_code(char *in, int *out)
 {
-   int retval = PAPI_ENOEVNT;
+    int retval = PAPI_ENOEVNT;
+    char *name;
+    unsigned int i, j;
 
-#if ((defined PERFCTR_PFM_EVENTS) | (defined PFM2))
-   extern unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code);
-   retval = _papi_pfm_ntv_name_to_code(in, out);
-#else
-
-   char *name;
-   unsigned int i = 0 | PAPI_NATIVE_MASK;
+    for (j=0,i = 0 | PAPI_NATIVE_MASK;j<papi_num_components; j++,i = 0 | PAPI_NATIVE_MASK,retval = PAPI_ENOEVNT) {
 
 /* Cray X1 doesn't loop on 0, so a code_to_name on this will fail, the
  * first call to enum_events with a 0 will give a valid code
  */
 #if defined(__crayx1)
-       _papi_hwd[j]->ntv_enum_events(&i, 0);
+	_papi_hwd[j]->ntv_enum_events(&i, 0);
 #endif
-       _papi_hwi_lock(INTERNAL_LOCK);
-       do {
-         name = _papi_hwd[j]->ntv_code_to_name(i);
-    /*      printf("name =|%s|\ninput=|%s|\n", name, in); */
-         if (name != NULL) {
-           if (strcasecmp(name, in) == 0) {
-             *out = i | PAPI_COMPONENT_MASK(j);
-             retval = PAPI_OK;
-           }
-         } else {
-           *out = 0 | PAPI_COMPONENT_MASK(j);
-           retval = PAPI_OK;
-         }
-     } else {
-         *out = 0;
-         retval = PAPI_OK;
-      }
-   } while ((_papi_hwd_ntv_enum_events(&i, 0) == PAPI_OK) && (retval == PAPI_ENOEVNT)) ;
-   _papi_hwi_unlock(INTERNAL_LOCK);
-#endif /* PERFCTR_PFM_EVENTS */
-   return (retval);
+	_papi_hwi_lock(INTERNAL_LOCK);
+	/* first check each component for name_to_code
+	   this will error if not implemented or name not found */
+	retval = _papi_hwd[j]->ntv_name_to_code(in, out);
+	if (retval != PAPI_OK) { /* if error, proceed with reverse search */
+	    do {
+		name = _papi_hwd[j]->ntv_code_to_name(i);
+/* printf("name =|%s|\ninput=|%s|\n", name, in); */
+		if (name != NULL) {
+		    if (strcasecmp(name, in) == 0) {
+			*out = i | PAPI_COMPONENT_MASK(j);
+			retval = PAPI_OK;
+		    }
+		} else {
+		    *out = 0;
+		    retval = PAPI_OK;
+		}
+	    } while ((_papi_hwd[j]->ntv_enum_events(&i, 0) == PAPI_OK) && (retval != PAPI_OK));
+	}
+    }
+    _papi_hwi_unlock(INTERNAL_LOCK);
+    return (retval);
 }
 
 
