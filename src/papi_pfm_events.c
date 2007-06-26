@@ -718,7 +718,7 @@ char *_papi_pfm_ntv_code_to_name(unsigned int EventCode)
   int ret;
   unsigned int event, umask;
   pfmlib_event_t gete;
-  char name[PAPI_2MAX_STR_LEN]; /* hope the caller handles long strings! */
+  char long_name[PAPI_HUGE_STR_LEN]; /* 1024 for those really verbose names! */
 
   memset(&gete,0,sizeof(gete));
   
@@ -728,19 +728,18 @@ char *_papi_pfm_ntv_code_to_name(unsigned int EventCode)
   gete.event = event;
   gete.num_masks = prepare_umask(umask,gete.unit_masks);
   if (gete.num_masks == 0)
-    ret = pfm_get_event_name(gete.event,name,sizeof(name));
+    ret = pfm_get_event_name(gete.event,long_name,sizeof(long_name));
   else
-    ret = pfm_get_full_event_name(&gete,name,sizeof(name));
+    ret = pfm_get_full_event_name(&gete,long_name,sizeof(long_name));
   if (ret != PFMLIB_SUCCESS)
     {
       char tmp[PAPI_2MAX_STR_LEN];
       pfm_get_event_name(gete.event,tmp,sizeof(tmp));
       PAPIERROR("pfm_get_full_event_name(%p(event %d,%s,%d masks),%p,%d): %d -- %s",
-		&gete,gete.event,tmp,gete.num_masks,name,sizeof(name),ret,pfm_strerror(ret));
+		&gete,gete.event,tmp,gete.num_masks,long_name,sizeof(long_name),ret,pfm_strerror(ret));
       return("");
     }
-
-  return(strdup(name));
+  return(strdup(long_name));
 }
 
 char *_papi_pfm_ntv_code_to_descr(unsigned int EventCode)
@@ -971,6 +970,7 @@ static char *_pmc_name(int i)
 {
   /* Should get this from /sys */
   extern int _perfmon2_pfm_pmu_type;
+
   switch (_perfmon2_pfm_pmu_type)
     {
 #if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
