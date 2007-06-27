@@ -570,11 +570,13 @@ int _papi_hwi_query_native_event(unsigned int EventCode)
    This allows for sparse native event arrays */
 int _papi_hwi_native_name_to_code(char *in, int *out)
 {
-    int retval = PAPI_ENOEVNT;
+    int retval;
     char *name;
     unsigned int i, j;
 
-    for (j=0,i = 0 | PAPI_NATIVE_MASK;j<papi_num_components; j++,i = 0 | PAPI_NATIVE_MASK,retval = PAPI_ENOEVNT) {
+    extern int vec_int_dummy ();
+
+    for (j=0,i = 0 | PAPI_NATIVE_MASK;j<papi_num_components; j++,i = 0 | PAPI_NATIVE_MASK) {
 
 /* Cray X1 doesn't loop on 0, so a code_to_name on this will fail, the
  * first call to enum_events with a 0 will give a valid code
@@ -582,14 +584,16 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
 #if defined(__crayx1)
 	_papi_hwd[j]->ntv_enum_events(&i, 0);
 #endif
-	_papi_hwi_lock(INTERNAL_LOCK);
-	/* first check each component for name_to_code
-	   this will error if not implemented or name not found */
-	retval = _papi_hwd[j]->ntv_name_to_code(in, out);
-	if (retval != PAPI_OK) { /* if error, proceed with reverse search */
+	/* first check each component for name_to_code */
+	if (_papi_hwd[j]->ntv_name_to_code != vec_int_dummy) {
+	    retval = _papi_hwd[j]->ntv_name_to_code(in, out);
+/*    printf("name_to_code: in=|%s|\nout=|0x%x|\nret=|0x%x|\n", in, *out, retval); */
+	} else { /* if no name_to_code, spin on code_to_name */
+	    retval = PAPI_ENOEVNT;
+	    _papi_hwi_lock(INTERNAL_LOCK);
 	    do {
 		name = _papi_hwd[j]->ntv_code_to_name(i);
-/* printf("name =|%s|\ninput=|%s|\n", name, in); */
+/*     printf("1. name =|%s|\ninput=|%s|\n", name, in); */
 		if (name != NULL) {
 		    if (strcasecmp(name, in) == 0) {
 			*out = i | PAPI_COMPONENT_MASK(j);
@@ -600,9 +604,9 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
 		    retval = PAPI_OK;
 		}
 	    } while ((_papi_hwd[j]->ntv_enum_events(&i, 0) == PAPI_OK) && (retval != PAPI_OK));
+	    _papi_hwi_unlock(INTERNAL_LOCK);
 	}
     }
-    _papi_hwi_unlock(INTERNAL_LOCK);
     return (retval);
 }
 
