@@ -337,14 +337,16 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
   return(PAPI_OK);
 }
 
-char *  _papi_hwd_ntv_code_to_name(unsigned int EventCode)
+int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 {
-  return("PAPI_ANY_NULL");
+   strncpy(ntv_name, "PAPI_ANY_NULL", len);
+   return (PAPI_OK);
 }
 
-char * _papi_hwd_ntv_code_to_descr(unsigned int EventCode)
+int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len)
 {
-  return("Event doesn't exist, is an example for a skeleton substrate");
+   strncpy(ntv_name, "Event doesn't exist, is an example for a skeleton substrate", len);
+   return (PAPI_OK);
 }
 
 int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)

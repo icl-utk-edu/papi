@@ -546,19 +546,11 @@ int _papi_hwi_stop_timer(void)
 */
 
 /* Returns PAPI_OK if native EventCode found, or PAPI_ENOEVNT if not;
-   NOTE: This function uses the NON-THREAD-SAFE _papi_hwd_ntv_code_to_name call
-         because it doesn't actually use the returned string pointer.
    Used to enumerate the entire array, e.g. for native_avail.c */
 int _papi_hwi_query_native_event(unsigned int EventCode)
 {
-   char *name;
-
-   if (EventCode & PAPI_NATIVE_MASK) {
-      name = _papi_hwd_ntv_code_to_name(EventCode);
-      if (name)
-         return (PAPI_OK);
-   }
-   return (PAPI_ENOEVNT);
+   char name[PAPI_HUGE_STR_LEN]; /* probably overkill, but should always be big enough */
+   return(_papi_hwd_ntv_code_to_name(EventCode, name, sizeof(name)));
 }
 
 /* Converts an ASCII name into a native event code usable by other routines
@@ -573,7 +565,7 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
    retval = _papi_pfm_ntv_name_to_code(in, out);
 #else
 
-   char *name;
+   char name[PAPI_HUGE_STR_LEN]; /* make sure it's big enough */
    unsigned int i = 0 | PAPI_NATIVE_MASK;
 
 /* Cray X1 doesn't loop on 0, so a code_to_name on this will fail, the
@@ -584,12 +576,13 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
 #endif
     _papi_hwi_lock(INTERNAL_LOCK);
    do {
-      name = _papi_hwd_ntv_code_to_name(i);
+      retval = _papi_hwd_ntv_code_to_name(i, name, sizeof(name));
 /*      printf("name =|%s|\ninput=|%s|\n", name, in); */
-      if (name != NULL) {
+      if (retval == PAPI_OK) {
          if (strcasecmp(name, in) == 0) {
             *out = i;
-            retval = PAPI_OK;
+	 } else {
+            retval = PAPI_ENOEVNT;
          }
      } else {
          *out = 0;
@@ -606,18 +599,10 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
    Returns NULL if name not found */
 int _papi_hwi_native_code_to_name(unsigned int EventCode, char *hwi_name, int len)
 {
-   char *name;
-   int retval = PAPI_ENOEVNT;
    if (EventCode & PAPI_NATIVE_MASK) {
-      _papi_hwi_lock(INTERNAL_LOCK);
-      name = _papi_hwd_ntv_code_to_name(EventCode);
-      if (name && *name) {
-         strncpy(hwi_name, name, len);
-         retval = PAPI_OK;
-      } else *hwi_name = 0;
-      _papi_hwi_unlock(INTERNAL_LOCK);
+      return(_papi_hwd_ntv_code_to_name(EventCode, hwi_name, len));
    }
-   return (retval);
+   return (PAPI_ENOEVNT);
 }
 
 
@@ -625,15 +610,10 @@ int _papi_hwi_native_code_to_name(unsigned int EventCode, char *hwi_name, int le
    Returns NULL if description not found */
 int _papi_hwi_native_code_to_descr(unsigned int EventCode, char *hwi_descr, int len)
 {
-   char *descr;
    int retval = PAPI_ENOEVNT;
    if (EventCode & PAPI_NATIVE_MASK) {
       _papi_hwi_lock(INTERNAL_LOCK);
-      descr = _papi_hwd_ntv_code_to_descr(EventCode);
-      if (descr) {
-         strncpy(hwi_descr, descr, len);
-         retval = PAPI_OK;
-      } else *hwi_descr = 0;
+      retval = _papi_hwd_ntv_code_to_descr(EventCode, hwi_descr, len);
       _papi_hwi_unlock(INTERNAL_LOCK);
    }
    return (retval);
@@ -645,38 +625,31 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
 {
    hwd_register_t bits;
    int retval;
-   char *name;
 
    if (EventCode & PAPI_NATIVE_MASK) {
      memset(info,0,sizeof(*info));
-      _papi_hwi_lock(INTERNAL_LOCK);
-      name =_papi_hwd_ntv_code_to_name(EventCode);
-      if (name) 
-	strncpy(info->symbol, name, sizeof(info->symbol));
-      else info->symbol[0] = '\0';
-      _papi_hwi_unlock(INTERNAL_LOCK);
-      if (strlen(info->symbol)) {
+      retval =_papi_hwd_ntv_code_to_name(EventCode, info->symbol, sizeof(info->symbol));
+      if (retval == PAPI_OK || retval == PAPI_EBUF) {
          /* Fill in the info structure */
          info->event_code = EventCode;
-         _papi_hwi_lock(INTERNAL_LOCK);
-         strncpy(info->long_descr, _papi_hwd_ntv_code_to_descr(EventCode),
-                 PAPI_HUGE_STR_LEN);
-         _papi_hwi_unlock(INTERNAL_LOCK);
-         info->short_descr[0] = '\0';
-         info->derived[0] = '\0';
-         info->postfix[0] = '\0';
+         retval = _papi_hwd_ntv_code_to_descr(EventCode, info->long_descr, sizeof(info->long_descr));
+         if (retval == PAPI_OK || retval == PAPI_EBUF) {
+	     info->short_descr[0] = '\0';
+	     info->derived[0] = '\0';
+	     info->postfix[0] = '\0';
 
-         /* Convert the register bits structure for this EventCode into
-            arrays of names and values (substrate dependent).
-         */
-         retval = _papi_hwd_ntv_code_to_bits(EventCode, &bits);
-         if (retval == PAPI_OK)
-	   retval = _papi_hwd_ntv_bits_to_info(&bits, (char *)&info->name[0][0], info->code, PAPI_2MAX_STR_LEN, PAPI_MAX_INFO_TERMS);
-         if (retval < 0) 
-	   info->count = 0;
-         else 
-	   info->count = retval;
-         return (PAPI_OK);
+	     /* Convert the register bits structure for this EventCode into
+		arrays of names and values (substrate dependent).
+	     */
+	     retval = _papi_hwd_ntv_code_to_bits(EventCode, &bits);
+	     if (retval == PAPI_OK)
+	       retval = _papi_hwd_ntv_bits_to_info(&bits, (char *)&info->name[0][0], info->code, PAPI_MAX_STR_LEN, PAPI_MAX_INFO_TERMS);
+	     if (retval < 0) 
+	       info->count = 0;
+	     else 
+	       info->count = retval;
+	     return (PAPI_OK);
+	 }
       }
    }
    return (PAPI_ENOEVNT);

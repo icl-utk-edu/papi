@@ -1659,20 +1659,19 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    }
    return (retval);
 }
-
-char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
+int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 {
-   return(pfmw_get_event_name(EventCode^PAPI_NATIVE_MASK));
+   strncpy(ntv_name, pfmw_get_event_name(EventCode^PAPI_NATIVE_MASK), len);
+   return (PAPI_OK);
 }
 
-char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
+int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len)
 {
 #if defined(HAVE_PFM_GET_EVENT_DESCRIPTION)
-  char *tmp = "";
-  pfm_get_event_description(EventCode^PAPI_NATIVE_MASK, &tmp);
-  return(tmp);
+  pfm_get_event_description(EventCode^PAPI_NATIVE_MASK, ntv_descr);
+  return(PAPI_OK);
 #else
-   return (_papi_hwd_ntv_code_to_name(EventCode));
+   return (_papi_hwd_ntv_code_to_name(EventCode, ntv_descr,len));
 #endif
 }
 

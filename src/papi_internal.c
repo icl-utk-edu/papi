@@ -440,8 +440,7 @@ int _papi_hwi_add_native_precheck(EventSetInfo_t * ESI, int nevt)
    for (i = 0; i < ESI->NativeCount; i++) {
       if (nevt == ESI->NativeInfoArray[i].ni_event) {
          ESI->NativeInfoArray[i].ni_owners++;
-         INTDBG("found native event already mapped: %s\n",
-                _papi_hwd_ntv_code_to_name(nevt));
+         INTDBG("found native event already mapped: 0x%x\n", nevt);
          return i;
       }
    }
@@ -512,8 +511,7 @@ static int add_native_fail_clean(EventSetInfo_t * ESI, int nevt)
             ESI->NativeInfoArray[i].ni_position = -1;
             ESI->NativeCount--;
          }
-         INTDBG("add_events fail, and remove added native events of the event: %s\n",
-                _papi_hwd_ntv_code_to_name(nevt));
+         INTDBG("add_events fail, and remove added native events of the event: 0x%x\n", nevt);
          return i;
       }
    }
@@ -549,7 +547,7 @@ static int add_native_events(EventSetInfo_t * ESI, int *nevt, int size, EventInf
          }
          /* there is an empty slot for the native event;
             initialize the native index for the new added event */
-         INTDBG("Adding %s\n", _papi_hwd_ntv_code_to_name(nevt[i]));
+         INTDBG("Adding 0x%x\n", nevt[i]);
          ESI->NativeInfoArray[ESI->NativeCount].ni_event = nevt[i];
          ESI->NativeInfoArray[ESI->NativeCount].ni_owners = 1;
          ESI->NativeCount++;
@@ -1261,10 +1259,9 @@ void print_state(EventSetInfo_t * ESI)
    APIDBG( "numEvent: %d    numNative: %d\n", ESI->NumberOfEvents,
            ESI->NativeCount);
 
-   APIDBG( "\nnative_event_name       ");
+   APIDBG( "\nnative_event code       ");
    for (i = 0; i < MAX_COUNTERS; i++)
-      APIDBG( "%15s",
-              _papi_hwd_ntv_code_to_name(ESI->NativeInfoArray[i].ni_event));
+      APIDBG( "0x%15x", ESI->NativeInfoArray[i].ni_event);
    APIDBG( "\n");
 
    APIDBG( "native_event_position     ");

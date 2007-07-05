@@ -98,18 +98,6 @@ int setup_p3_presets(int cputype) {
 /* CODE TO SUPPORT OPAQUE NATIVE MAP */
 /*************************************/
 
-/* **NOT THREAD SAFE STATIC!!**
-   The name and description strings below are both declared static. 
-   This is NOT thread-safe, because these values are returned 
-     for use by the calling program, and could be trashed by another thread
-     before they are used. To prevent this, any call to routines using these
-     variables (_papi_hwd_code_to_{name,descr}) should be wrapped in 
-     _papi_hwi_{lock,unlock} calls.
-   They are declared static to reserve non-volatile space for constructed strings.
-*/
-static char name[128];
-static char description[1024];
-
 static void mask2hex(int umask, char *hex)
 {
     char digits[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
@@ -131,98 +119,105 @@ inline_static void internal_decode_event(unsigned int EventCode, int *event, int
 /* Called by _papi_hwd_ntv_code_to_{name,descr}() to build the return strings.
    See above for discussion of name and description strings.
 */
-static char *internal_translate_code(int event, int umask, char *str, char *separator)
+static int internal_translate_code(int event, int umask, char *str, char *separator, int len)
 {
     int selector = native_table[event].resources.selector;
     char hex[8];
 
    if (*separator == '_') /* implied flag for name */
-      strcpy(str, native_table[event].name);
+      strncpy(str, native_table[event].name, len);
    else
-      strcpy(str, native_table[event].description);
+      strncpy(str, native_table[event].description, len);
 
    // if no mask bits, we're done
    if (!umask)
-      return (str);
+      return (PAPI_OK);
 
    // go here if the event supports unit mask bits
    if (selector & HAS_UMASK) {
       if ((umask & selector & UNIT_MASK_ALL) != umask)
-	 return (NULL);
+	 return (PAPI_EINVAL);
 
        if (*separator == '_') strcat(str, ":");
        else strcat(str, separator);
        mask2hex(umask, hex);
-       strcat(str, hex);
+       strncat(str, hex, len);
    }
 
    // end up here if it's a MOESI event
    else if ((selector & HAS_MESI) || (selector & HAS_MOESI)) {
       // do a sanity check for valid mask bits
       if ((umask & MOESI_ALL) != umask)
-	 return (NULL);
+	 return (PAPI_EINVAL);
 
-       strcat(str, separator);
+       strncat(str, separator, len);
        if (*separator == '_') { /* implied flag for name */
-	  if (umask & MOESI_M) strcat(str, "M");
+	  if (umask & MOESI_M) strncat(str, "M", len);
 	  if (umask & MOESI_O) {
-	     if (native_table[event].resources.selector & HAS_MOESI) strcat(str, "O");
-	     else strcat(str, "M");
+	     if (native_table[event].resources.selector & HAS_MOESI) strncat(str, "O", len);
+	     else strncat(str, "M", len);
 	  }
-	  if (umask & MOESI_E) strcat(str, "E");
-	  if (umask & MOESI_S) strcat(str, "S");
-	  if (umask & MOESI_I) strcat(str, "I");
+	  if (umask & MOESI_E) strncat(str, "E", len);
+	  if (umask & MOESI_S) strncat(str, "S", len);
+	  if (umask & MOESI_I) strncat(str, "I", len);
        }
        else {
-	  if (umask & MOESI_M) strcat(str, " Modified");
+	  if (umask & MOESI_M) strncat(str, " Modified", len);
 	  if (umask & MOESI_O) {
-	     if (native_table[event].resources.selector & HAS_MOESI) strcat(str, " Owner");
-	     else strcat(str, " Modified");
+	     if (native_table[event].resources.selector & HAS_MOESI) strncat(str, " Owner", len);
+	     else strncat(str, " Modified", len);
 	  }
-	  if (umask & MOESI_E) strcat(str, " Exclusive");
-	  if (umask & MOESI_S) strcat(str, " Shared");
-	  if (umask & MOESI_I) strcat(str, " Invalid");
+	  if (umask & MOESI_E) strncat(str, " Exclusive", len);
+	  if (umask & MOESI_S) strncat(str, " Shared", len);
+	  if (umask & MOESI_I) strncat(str, " Invalid", len);
        }
    }
-   return (str);
+   if (strlen(str) == len) return(PAPI_EBUF);
+   return (PAPI_OK);
 }
 
 
 /* Given a native event code, returns the short text label. */
-char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
+int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 {
    int event, umask;
 
    internal_decode_event(EventCode, &event, &umask);
    if (event > _papi_hwi_system_info.sub_info.num_native_events) {
-       return ('\0'); // return a null string for invalid events
+       return (PAPI_ENOEVNT);
    }
 
-   if (!umask)
-      return (native_table[event].name);
-   else {
-      return (internal_translate_code(event, umask, name, "_"));
+   if (!umask) {
+      strncpy(ntv_name, native_table[event].name, len);
+      if (strlen(native_table[event].name) > len -1) return(PAPI_EBUF);
    }
+   else {
+      return(internal_translate_code(event, umask, ntv_name, "_", len));
+   }
+   return(PAPI_OK);
 }
 
 /* Given a native event code, returns the longer native event
    description. */
-char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
+int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len)
 {
    int event, umask;
 
    internal_decode_event(EventCode, &event, &umask);
    if (event > _papi_hwi_system_info.sub_info.num_native_events)
-       return ('\0'); // return a null string for invalid events
+       return (PAPI_ENOEVNT);
 
-   if (!umask)
-      return (native_table[event].description);
+   if (!umask) {
+      strncpy(ntv_descr, native_table[event].description);
+      if (strlen(native_table[event].description) > len -1) return(PAPI_EBUF);
+   }
    else {
       if (native_table[event].resources.selector & HAS_UMASK)
-	 return (internal_translate_code(event, umask, description, ". Unit Mask bits: "));
+	return (internal_translate_code(event, umask, ntv_descr, ". Unit Mask bits: ", len));
       else
-	 return (internal_translate_code(event, umask, description, ". Cache bits:"));
+	return (internal_translate_code(event, umask, ntv_descr, ". Cache bits:", len));
    }
+   return (PAPI_OK);
 }
 
 /* Given a native event code, assigns the native event's 

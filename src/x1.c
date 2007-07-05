@@ -595,28 +595,32 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
    }
 }
 
-char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
+int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 {
   int i;
   for(i=0; ;i++ ){
     if ( native_map[i].resources.event == -1 )
 	break;
-    if ( native_map[i].resources.event == (EventCode) )
-       return(native_map[i].event_name);
+    if ( native_map[i].resources.event == (EventCode ^ PAPI_NATIVE_MASK) ) {
+       strncpy(ntv_name, native_map[i].event_name, len);
+       return(PAPI_OK_);
+    }
   }
-  return(NULL);
+  return(PAPI_ENOEVNT);
 }
 
-char * _papi_hwd_ntv_code_to_descr(unsigned int EventCode)
+int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len)
 {
   int i;
   for(i=0; ;i++ ){
     if ( native_map[i].resources.event == -1 )
 	break;
-    if ( native_map[i].resources.event == (EventCode) )
-       return(native_map[i].event_descr);
+    if ( native_map[i].resources.event == (EventCode ^ PAPI_NATIVE_MASK) ) {
+       strncpy(ntv_descr, native_map[i].event_descr, len);
+       return(PAPI_OK_);
+    }
   }
-  return(NULL);
+  return(PAPI_ENOEVNT);
 }
 
 /*

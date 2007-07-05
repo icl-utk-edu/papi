@@ -76,6 +76,7 @@ failure.
 #define PAPI_EMISC   -14        /* No clue as to what this error code means */
 #define PAPI_EPERM   -15        /* You lack the necessary permissions */
 #define PAPI_ENOINIT -16        /* PAPI hasn't been initialized yet */
+#define PAPI_EBUF    -17        /* Buffer size exceeded (usually strings) */
 
 #define PAPI_NOT_INITED		0
 #define PAPI_LOW_LEVEL_INITED 	1       /* Low level has called library init */
@@ -185,7 +186,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 /* Error predefines */
 
-#define PAPI_NUM_ERRORS  17     /* Number of error messages specified in this API. */
+#define PAPI_NUM_ERRORS  18     /* Number of error messages specified in this API. */
 #define PAPI_QUIET       0      /* Option to turn off automatic reporting of return codes < 0 to stderr. */
 #define PAPI_VERB_ECONT  1      /* Option to automatically report any return codes < 0 to stderr and continue. */
 #define PAPI_VERB_ESTOP  2      /* Option to automatically report any return codes < 0 to stderr and exit. */

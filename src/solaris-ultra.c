@@ -992,19 +992,20 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
    return (PAPI_ENOEVNT);
 }
 
-char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
+int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 {
    int nidx;
 
    nidx = EventCode ^ PAPI_NATIVE_MASK;
-   if (nidx >= 0 && nidx < PAPI_MAX_NATIVE_EVENTS)
-      return (native_table[nidx].name);
-   return NULL;
+   if (nidx >= _papi_hwi_system_info.sub_info.num_native_events) return (PAPI_EINVAL);
+   strncpy(ntv_name, native_table[nidx].name, len);
+   if (strlen(native_table[nidx].name) > len-1) return (PAPI_EBUF);
+   return (PAPI_OK);
 }
 
-char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
+char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len)
 {
-   return (_papi_hwd_ntv_code_to_name(EventCode));
+   return (_papi_hwd_ntv_code_to_name(EventCode, ntv_descr, len));
 }
 
 static void copy_value(unsigned int val, char *nam, char *names, unsigned int *values, int len)

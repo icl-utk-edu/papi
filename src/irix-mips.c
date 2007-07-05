@@ -1024,20 +1024,20 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    return (PAPI_OK);
 }
 
-char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
+char *_papi_hwd_ntv_code_to_name(unsigned int EventCode, ntv_name, len)
 {
    int nidx;
 
    nidx = EventCode ^ PAPI_NATIVE_MASK;
-   if (nidx >= 0 && nidx < PAPI_MAX_NATIVE_EVENTS)
-      return (native_table[nidx]);
-   else
-      return NULL;
+   if (nidx >= _papi_hwi_system_info.sub_info.num_native_events) return (PAPI_EINVAL);
+   strncpy(ntv_name, native_table[nidx], len);
+   if (strlen(native_table[nidx]) > len-1) return (PAPI_EBUF);
+   return (PAPI_OK);
 }
 
-char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
+char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode, ntv_descr, len)
 {
-   return (_papi_hwd_ntv_code_to_name(EventCode));
+   return (_papi_hwd_ntv_code_to_name(EventCode, ntv_descr, len));
 }
 
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)

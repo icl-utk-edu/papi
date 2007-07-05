@@ -713,36 +713,36 @@ unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code)
     return(PAPI_ENOEVNT);
 }
 
-char *_papi_pfm_ntv_code_to_name(unsigned int EventCode)
+int _papi_pfm_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 {
   int ret;
   unsigned int event, umask;
   pfmlib_event_t gete;
-  char long_name[PAPI_HUGE_STR_LEN]; /* 1024 for those really verbose names! */
 
   memset(&gete,0,sizeof(gete));
   
   if (_pfm_decode_native_event(EventCode,&event,&umask) != PAPI_OK)
-    return("");
+    return(PAPI_ENOEVNT);
   
   gete.event = event;
   gete.num_masks = prepare_umask(umask,gete.unit_masks);
   if (gete.num_masks == 0)
-    ret = pfm_get_event_name(gete.event,long_name,sizeof(long_name));
+    ret = pfm_get_event_name(gete.event, ntv_name, len);
   else
-    ret = pfm_get_full_event_name(&gete,long_name,sizeof(long_name));
+    ret = pfm_get_full_event_name(&gete, ntv_name, len);
   if (ret != PFMLIB_SUCCESS)
     {
       char tmp[PAPI_2MAX_STR_LEN];
       pfm_get_event_name(gete.event,tmp,sizeof(tmp));
       PAPIERROR("pfm_get_full_event_name(%p(event %d,%s,%d masks),%p,%d): %d -- %s",
-		&gete,gete.event,tmp,gete.num_masks,long_name,sizeof(long_name),ret,pfm_strerror(ret));
-      return("");
+		&gete,gete.event,tmp,gete.num_masks,ntv_name,len,ret,pfm_strerror(ret));
+      if (ret == PFMLIB_ERR_FULL) return(PAPI_EBUF);
+      return(PAPI_ESBSTR);
     }
-  return(strdup(long_name));
+  return(PAPI_OK);
 }
 
-char *_papi_pfm_ntv_code_to_descr(unsigned int EventCode)
+int _papi_pfm_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len)
 {
   unsigned int event, umask;
   char *eventd, **maskd, *tmp;
@@ -752,14 +752,14 @@ char *_papi_pfm_ntv_code_to_descr(unsigned int EventCode)
   memset(&gete,0,sizeof(gete));
   
   if (_pfm_decode_native_event(EventCode,&event,&umask) != PAPI_OK)
-    return(NULL);
+    return(PAPI_ENOEVNT);
   
   ret = pfm_get_event_description(event,&eventd);
   if (ret != PFMLIB_SUCCESS)
     {
       PAPIERROR("pfm_get_event_description(%d,%p): %s",
 		event,&eventd,pfm_strerror(ret));
-      return(NULL);
+      return(PAPI_ENOEVNT);
     }
 
   if ((gete.num_masks = prepare_umask(umask,gete.unit_masks)))
@@ -768,7 +768,7 @@ char *_papi_pfm_ntv_code_to_descr(unsigned int EventCode)
       if (maskd == NULL)
 	{
 	  free(eventd);
-	  return(NULL);
+	  return(PAPI_ENOMEM);
 	}
       for (i=0;i<gete.num_masks;i++)
 	{
@@ -781,7 +781,7 @@ char *_papi_pfm_ntv_code_to_descr(unsigned int EventCode)
 	      for (;i>=0;i--)
 		free(maskd[i]);
 	      free(maskd);
-	      return(NULL);
+	      return(PAPI_EINVAL);
 	    }
 	  total_len += strlen(maskd[i]);
 	}
@@ -811,14 +811,17 @@ char *_papi_pfm_ntv_code_to_descr(unsigned int EventCode)
       if (tmp == NULL)
 	{
 	  free(eventd);
-	  return(NULL);
+	  return(PAPI_ENOMEM);
 	}
       tmp[0] = '\0';
       strcat(tmp,eventd);
       free(eventd);
     }
-
-  return(tmp);
+  strncpy(ntv_descr, tmp, len);
+  if (strlen(tmp) > len-1) ret = PAPI_EBUF;
+  else ret = PAPI_OK;
+  free(tmp);
+  return(ret);
 }
 
 int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)

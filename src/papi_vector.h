@@ -96,8 +96,8 @@ typedef struct papi_vectors{
   int (*_vec_papi_hwd_add_prog_event) (void *, unsigned int, void *, EventInfo_t *);
   int (*_vec_papi_hwd_set_domain) (void *, int);
   int (*_vec_papi_hwd_ntv_enum_events) (unsigned int *, int);
-  char * (*_vec_papi_hwd_ntv_code_to_name) (unsigned int);
-  char * (*_vec_papi_hwd_ntv_code_to_descr) (unsigned int);
+  int (*_vec_papi_hwd_ntv_code_to_name) (unsigned int, char *, int);
+  int (*_vec_papi_hwd_ntv_code_to_descr) (unsigned int, char *, int);
   int (*_vec_papi_hwd_ntv_code_to_bits) (unsigned int, void *);
   int (*_vec_papi_hwd_ntv_bits_to_info) (void *, char *, unsigned int *, int, int);
   int (*_vec_papi_hwd_allocate_registers) (EventSetInfo_t *);

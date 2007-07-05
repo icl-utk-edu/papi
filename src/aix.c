@@ -37,13 +37,22 @@ struct utsname AixVer;
         /* The following is for any POWER hardware */
 
 /* Routines to support an opaque native event table */
-char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
+int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 {
-   return (native_name_map[EventCode & PAPI_NATIVE_AND_MASK].name);
+   if ((EventCode & PAPI_NATIVE_AND_MASK) >= _papi_hwi_system_info.sub_info.num_native_events)
+       return (PAPI_EINVAL);
+   strncpy(ntv_name, native_name_map[EventCode & PAPI_NATIVE_AND_MASK].name, len);
+   if (strlen(native_name_map[EventCode & PAPI_NATIVE_AND_MASK].name) > len-1) return (PAPI_EBUF);
+   return (PAPI_OK);
 }
 
-char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
+int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len)
 {
+   if ((EventCode & PAPI_NATIVE_AND_MASK) >= _papi_hwi_system_info.sub_info.num_native_events)
+       return (PAPI_EINVAL);
+   strncpy(ntv_descr, native_table[native_name_map[EventCode & PAPI_NATIVE_AND_MASK].index].description, len);
+   if (strlen(native_table[native_name_map[EventCode & PAPI_NATIVE_AND_MASK].index].description) > len-1) return (PAPI_EBUF);
+   return (PAPI_OK);
    return (native_table[native_name_map[EventCode & PAPI_NATIVE_AND_MASK].index].description);
 }
 

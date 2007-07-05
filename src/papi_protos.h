@@ -143,8 +143,16 @@ VECTOR_STATIC int _papi_hwi_native_code_to_descr(unsigned int EventCode, char *h
 */
 
  int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer);
+/* The following were the only two calls in the substrate API that return
+    pointers to strings. They were initially intended to always reference
+    const strings, but this is no longer universally true. Hence, they are
+    not always thread-safe, and have been redefined and recoded to match 
+    the calling sequence of the equivalent _hwi_ functions.
  char *_papi_hwd_ntv_code_to_name(unsigned int EventCode);
  char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode);
+ */
+ int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *hwd_name, int len);
+ int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *hwd_descr, int len);
  int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits);
  int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values,
                                       int name_len, int count);

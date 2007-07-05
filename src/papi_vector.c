@@ -221,10 +221,10 @@ int _papi_hwi_setup_vector_table(papi_vectors_t *table, papi_svector_t *stable)
         table->_vec_papi_hwd_ntv_enum_events = (int (*) (unsigned int *, int)) stable[i].func;
          break;
        case VEC_PAPI_HWD_NTV_CODE_TO_NAME:
-        table->_vec_papi_hwd_ntv_code_to_name = (char * (*) (unsigned int)) stable[i].func;
+        table->_vec_papi_hwd_ntv_code_to_name = (int (*) (unsigned int, char *, int)) stable[i].func;
          break;
        case VEC_PAPI_HWD_NTV_CODE_TO_DESCR:
-        table->_vec_papi_hwd_ntv_code_to_descr = (char * (*) (unsigned int)) stable[i].func;
+        table->_vec_papi_hwd_ntv_code_to_descr = (int (*) (unsigned int, char *, int)) stable[i].func;
          break;
        case VEC_PAPI_HWD_NTV_CODE_TO_BITS:
         table->_vec_papi_hwd_ntv_code_to_bits = (int (*) (unsigned int, void *)) stable[i].func;
@@ -303,8 +303,8 @@ int _papi_hwi_initialize_vector_table(papi_vectors_t *table){
  table->_vec_papi_hwd_add_prog_event = (int (*) (void *, unsigned int, void *, EventInfo_t *)) vec_int_dummy;
  table->_vec_papi_hwd_set_domain = (int (*) (void *, int)) vec_int_dummy;
  table->_vec_papi_hwd_ntv_enum_events = (int (*) (unsigned int *, int)) vec_int_dummy;
- table->_vec_papi_hwd_ntv_code_to_name = (char * (*) (unsigned int)) vec_char_star_dummy;
- table->_vec_papi_hwd_ntv_code_to_descr = (char * (*) (unsigned int)) vec_char_star_dummy;
+ table->_vec_papi_hwd_ntv_code_to_name = (int (*) (unsigned int, char *, int)) vec_char_star_dummy;
+ table->_vec_papi_hwd_ntv_code_to_descr = (int (*) (unsigned int, char *, int)) vec_char_star_dummy;
  table->_vec_papi_hwd_ntv_code_to_bits = (int (*) (unsigned int, void *)) vec_int_dummy;
  table->_vec_papi_hwd_ntv_bits_to_info = (int (*) (void *, char *, unsigned int *, int, int)) vec_int_dummy;
  table->_vec_papi_hwd_allocate_registers = (int (*) (EventSetInfo_t *)) vec_int_one_dummy;

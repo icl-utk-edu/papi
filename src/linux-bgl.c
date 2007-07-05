@@ -985,27 +985,14 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 /* CODE TO SUPPORT OPAQUE NATIVE MAP */
 /*************************************/
 
-/* **NOT THREAD SAFE STATIC!!**
-   The name and description strings below are both declared static. 
-   This is NOT thread-safe, because these values are returned 
-     for use by the calling program, and could be trashed by another thread
-     before they are used. To prevent this, any call to routines using these
-     variables (_papi_hwd_code_to_{name,descr}) should be wrapped in 
-     _papi_hwi_{lock,unlock} calls.
-   They are declared static to reserve non-volatile space for constructed strings.
-*/
-static char name[128];
-static char description[1024];
-
 static inline void internal_decode_event(unsigned int EventCode, int *event)
 {
    /* mask off the native event flag and the MOESI bits */
    *event = (EventCode & PAPI_NATIVE_AND_MASK);
 }
 
-
 /* Given a native event code, returns the short text label. */
-char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
+int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 {
    BGL_PERFCTR_event_t event;
 
@@ -1013,20 +1000,21 @@ char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 
    if(event.num == -1) {
       SUBDBG(stderr, "invalid native event\n");
-      /*return PAPI_ECNFLCT;*/
+      return (PAPI_ENOEVNT);
    }
 
-   if(event.num != BGL_PAPI_TIMEBASE)
-      return (char *)(native_table[event.num].event_name);
-   else {
-      strcpy(name, "BGL_PAPI_TIMEBASE");
-      return (name);
+   if(event.num != BGL_PAPI_TIMEBASE) {
+      strncpy(ntv_name, (char *)(native_table[event.num].event_name), len);
+      if (strlen((char *)(native_table[event.num].event_name)) > len-1) return (PAPI_EBUF);
+   } else {
+      strncpy(ntv_name, "BGL_PAPI_TIMEBASE", len);
    }
+   return (PAPI_OK);
 }
 
 /* Given a native event code, returns the longer native event
    description. */
-char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
+int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len)
 {
    BGL_PERFCTR_event_t event;
 
@@ -1034,15 +1022,16 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 
    if(event.num == -1) {
       SUBDBG(stderr, "invalid native event\n");
-      /*return PAPI_ECNFLCT;*/
+      return PAPI_ENOEVNT;
    }
 
-   if(event.num != BGL_PAPI_TIMEBASE)
-      return (char *)(native_table[event.num].event_descr);
-   else {
-      strcpy(description, "special event for getting the timebase reg");
-      return (description);
+   if(event.num != BGL_PAPI_TIMEBASE) {
+      strncpy(ntv_descr, (char *)(native_table[event.num].event_descr), len);
+      if (strlen((char *)(native_table[event.num].event_descr)) > len-1) return (PAPI_EBUF);
+   } else {
+      strncpy(ntv_descr, "special event for getting the timebase reg", len);
    }
+   return (PAPI_OK);
 }
 
 /* Given a native event code, assigns the native event's 
