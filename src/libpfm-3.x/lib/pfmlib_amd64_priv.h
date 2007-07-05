@@ -30,7 +30,8 @@
 typedef struct {
 	char			*pme_uname; /* unit mask name */
 	char			*pme_udesc; /* event/umask description */
-	unsigned int		pme_ucode;	 /* unit mask code */
+	unsigned int		pme_ucode;  /* unit mask code */
+	unsigned int		pme_uflags; /* unit mask flags */
 } pme_amd64_umask_t;
 
 typedef struct {
@@ -46,5 +47,8 @@ typedef struct {
  * pme_flags values
  */
 #define PFMLIB_AMD64_UMASK_COMBO	0x1 /* unit mask can be combined */
+#define PFMLIB_AMD64_REV_D		0x2 /* event requires at least rev D */
+#define PFMLIB_AMD64_REV_E		0x4 /* event requires at least rev E */
+#define PFMLIB_AMD64_REV_F		0x8 /* event requires at least rev F */
 
 #endif /* __PFMLIB_AMD64_PRIV_H__ */

@@ -57,18 +57,53 @@ static char * pfm_amd64_get_event_name(unsigned int i);
  * pfp_pmcs[].reg_num:
  * 	0 -> PMC0 -> PERFEVTSEL0 -> MSR @ 0xc0010000
  * 	1 -> PMC1 -> PERFEVTSEL1 -> MSR @ 0xc0010001
- * 
+ * 	...
  * pfp_pmds[].reg_num:
  * 	0 -> PMD0 -> PERCTR0 -> MSR @ 0xc0010004
  * 	1 -> PMD1 -> PERCTR1 -> MSR @ 0xc0010005
+ * 	...
  */
 #define AMD64_SEL_BASE	0xc0010000
 #define AMD64_CTR_BASE	0xc0010004
 
+typedef enum {
+	AMD64_REV_UN, 
+	AMD64_REV_B,
+	AMD64_REV_C,
+	AMD64_REV_D,
+	AMD64_REV_E,
+	AMD64_REV_F
+} amd64_rev_t;
+
+static const char *amd64_rev_strs[]= { "?", "B", "C", "D", "E", "F" };
+
+static amd64_rev_t amd64_revision;
+
+static amd64_rev_t amd64_get_revision(int model, int stepping)
+{
+/*    printf("model: %d; stepping: %d\n", model, stepping); */
+	if ((model >> 4) == 0) {
+		if (model == 5 && stepping < 2)
+			return AMD64_REV_B;
+		if (model == 4 && stepping == 0)
+			return AMD64_REV_B;
+		return AMD64_REV_C;
+	}
+	
+	if ((model >> 4) == 1)
+		return AMD64_REV_D;
+	if ((model >> 4) == 2)
+		return AMD64_REV_E;
+	if ((model >> 4) == 4)
+		return AMD64_REV_F;
+
+	return AMD64_REV_UN;
+}
+
 static int
 pfm_amd64_detect(void)
 {
-	int ret, family;
+	int ret, family, model, stepping;
 	char buffer[128];
 
 	ret = __pfm_getcpuinfo_attr("vendor_id", buffer, sizeof(buffer));
@@ -83,8 +118,47 @@ pfm_amd64_detect(void)
 		return PFMLIB_ERR_NOTSUPP;
 
 	family = atoi(buffer);
+	if (family != 15)
+		return PFMLIB_ERR_NOTSUPP;
 
-	return family != 15 ? PFMLIB_ERR_NOTSUPP : PFMLIB_SUCCESS;
+	ret = __pfm_getcpuinfo_attr("model", buffer, sizeof(buffer));
+	if (ret == -1)
+		return PFMLIB_ERR_NOTSUPP;
+
+	model = atoi(buffer);
+	ret = __pfm_getcpuinfo_attr("stepping", buffer, sizeof(buffer));
+	if (ret == -1)
+		return PFMLIB_ERR_NOTSUPP;
+
+	stepping = atoi(buffer);
+
+	amd64_revision = amd64_get_revision(model, stepping);
+
+	__pfm_vbprintf("AMD model=0x%x stepping=0x%x rev=%s\n",
+			model,
+			stepping,
+			amd64_rev_strs[amd64_revision]);
+
+	return PFMLIB_SUCCESS;
+}
+
+static int
+is_valid_rev(int flags)
+{
+	if (flags & PFMLIB_AMD64_REV_D
+	   && amd64_revision < AMD64_REV_D)
+	   	return 0;
+
+	if (flags & PFMLIB_AMD64_REV_E
+	   && amd64_revision < AMD64_REV_E)
+	   	return 0;
+
+	if (flags & PFMLIB_AMD64_REV_F
+	   && amd64_revision < AMD64_REV_F)
+	   	return 0;
+
+	/* no restrictions or matches restrictions */
+	return 1;
 }
 
 /*
@@ -134,6 +208,15 @@ pfm_amd64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_amd64_input_param_
 			return PFMLIB_ERR_FEATCOMB;
 		}
 
+		/*
+		 * check revision restrictions at the event level
+		 * (check at the umask level later)
+		 */
+		if (!is_valid_rev(amd64_pe[e[i].event].pme_flags)) {
+			DPRINT(("CPU does not have correct revision level\n"));
+			return PFMLIB_ERR_BADHOST;
+		}
+
 		if (cntrs && (cntrs[j].cnt_mask >= PMU_AMD64_CNT_MASK_MAX)) {
 			DPRINT(("event=%d invalid cnt_mask=%d: must be < %u\n",
 				e[j].event,
@@ -169,6 +252,10 @@ pfm_amd64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_amd64_input_param_
 		umask = amd64_pe[e[j].event].pme_code >> 8 ;
 
 		for(k=0; k < e[j].num_masks; k++) {
+			/* check unit mask revision restrictions */
+			if (!is_valid_rev(amd64_pe[e[j].event].pme_umasks[e[j].unit_masks[k]].pme_uflags))
+				return PFMLIB_ERR_BADHOST;
+
 			umask |= amd64_pe[e[j].event].pme_umasks[e[j].unit_masks[k]].pme_ucode;
 		}
 		reg.sel_unit_mask  = umask;
