@@ -304,7 +304,7 @@ void case1(int num)
 		if (retval != PAPI_OK)
 			test_fail(__FILE__, __LINE__, "PAPI_set_domain", retval);
 		
-		option.domain.domain = PAPI_DOM_ALL ^ PAPI_DOM_SUPERVISOR;	
+		option.domain.domain = subinfo->available_domains ^ PAPI_DOM_SUPERVISOR;	
 		option.domain.eventset = EventSet2;
 		retval = PAPI_set_opt(PAPI_DOMAIN, &option);
 		if (retval != PAPI_OK)
