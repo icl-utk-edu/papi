@@ -72,7 +72,7 @@ static hwi_search_t preset_name_map_PPC64[PAPI_MAX_PRESET_EVENTS] = {
    {PAPI_FP_INS, {0, {PNE_PM_FPU_FIN, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Floating point instructions executed */
 #if defined (_POWER6)
    /* Can't count FDIV and FSQRT instructions individually on POWER6 */
-   {PAPI_TOT_CYC, {0, {PNE_PM_RUN_CYC, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},   /*Processor cycles */
+   {PAPI_TOT_CYC, {0, {PNE_PM_CYC, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},   /*Processor cycles */
 #else
    {PAPI_TOT_CYC, {0, {PNE_PM_RUN_CYC, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},   /*Processor cycles gated by the run latch */
    {PAPI_FDV_INS, {0, {PNE_PM_FPU_FDIV, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*FD ins */
@@ -878,7 +878,7 @@ int _papi_hwd_set_domain(EventSetInfo_t * ESI, int domain) {
 int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 {
    if ((EventCode & PAPI_NATIVE_AND_MASK) >= _papi_hwi_system_info.sub_info.num_native_events)
-       return (PAPI_EINVAL);
+       return (PAPI_ENOEVNT);
    strncpy(ntv_name, native_name_map[EventCode & PAPI_NATIVE_AND_MASK].name, len);
    if (strlen(native_name_map[EventCode & PAPI_NATIVE_AND_MASK].name) > len-1) return (PAPI_EBUF);
    return (PAPI_OK);
