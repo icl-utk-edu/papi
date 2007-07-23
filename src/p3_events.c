@@ -55,14 +55,14 @@ int setup_p3_presets(int cputype) {
    case PERFCTR_X86_INTEL_P5:
    case PERFCTR_X86_INTEL_P5MMX:
    case PERFCTR_X86_INTEL_PII:
-      native_table = &_papi_hwd_p2_native_map;
+      native_table = _papi_hwd_p2_native_map;
       _papi_hwi_system_info.sub_info.num_native_events =_papi_hwd_p2_native_count;
-      preset_search_map = &_papi_hwd_p2_preset_map;
+      preset_search_map = _papi_hwd_p2_preset_map;
       break;
    case PERFCTR_X86_AMD_K7:
-      native_table = &_papi_hwd_k7_native_map;
+      native_table = _papi_hwd_k7_native_map;
       _papi_hwi_system_info.sub_info.num_native_events = _papi_hwd_k7_native_count;
-      preset_search_map = &_papi_hwd_ath_preset_map;
+      preset_search_map = _papi_hwd_ath_preset_map;
       break;
    case PERFCTR_X86_INTEL_P6:
    case PERFCTR_X86_INTEL_PIII:
@@ -208,7 +208,7 @@ int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len
        return (PAPI_ENOEVNT);
 
    if (!umask) {
-      strncpy(ntv_descr, native_table[event].description);
+      strncpy(ntv_descr, native_table[event].description, len);
       if (strlen(native_table[event].description) > len -1) return(PAPI_EBUF);
    }
    else {
