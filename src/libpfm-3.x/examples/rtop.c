@@ -145,7 +145,6 @@ typedef enum {
 typedef struct {
 	uint64_t prev_k_cycles;
 	uint64_t prev_u_cycles;
-	uint64_t prev_act_duration;
 } set0_data_t;
 
 static barrier_t 		barrier;
@@ -481,8 +480,7 @@ handler_set0(int fd, FILE *fp, thread_desc_t *td, setdesc_t *my_sdesc)
 {
 	double k_cycles, u_cycles, i_cycles;
 	set0_data_t *sd1;
-	pfarg_setinfo_t info;
-	uint64_t itc_delta, act_delta;
+	uint64_t itc_delta;
 	long mycpu;
 
 	mycpu = td->cpuid;
@@ -502,20 +500,6 @@ handler_set0(int fd, FILE *fp, thread_desc_t *td, setdesc_t *my_sdesc)
 		warning( "CPU%ld pfm_read_pmds error errno %d\n", mycpu, errno);
 		return -1;
 	}
-
-	/*
-	 * get elapsed cycles
-	 */
-	info.set_id = my_sdesc->set_id;
-	if (pfm_getinfo_evtsets(fd, &info, 1) == -1) {
-		warning( "CPU%ld pfm_getinfo_evtsets error errno %d\n", mycpu, errno);
-		return -1;
-	}
-
-	/*
-	 * actual duration monitoring was active for this set
-	 */
-	act_delta = (info.set_act_duration - sd1->prev_act_duration);
 
 	/*
 	 * expected maximum duration with monitoring active for this set
@@ -544,7 +528,6 @@ handler_set0(int fd, FILE *fp, thread_desc_t *td, setdesc_t *my_sdesc)
 
 	sd1->prev_k_cycles      = my_sdesc->pd[0].reg_value;
 	sd1->prev_u_cycles      = my_sdesc->pd[1].reg_value;
-	sd1->prev_act_duration = info.set_act_duration;
 
 	if (fp)
 		fprintf(fp, "%"PRIu64" %6.2f %6.2f %6.2f\n",
@@ -861,19 +844,19 @@ setup_measurement(void)
 	int ret;
 
 	/*
+	 * pass options to library (optional)
+	 */
+	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
+	pfmlib_options.pfm_debug = 0;
+	pfmlib_options.pfm_verbose = 0;
+	pfm_set_options(&pfmlib_options);
+
+	/*
 	 * Initialize pfm library (required before we can use it)
 	 */
 	ret = pfm_initialize();
 	if (ret != PFMLIB_SUCCESS)
 		fatal_error("Cannot initialize library: %s\n", pfm_strerror(ret));
-
-	/*
-	 * pass options to library (optional)
-	 */
-	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
-	pfmlib_options.pfm_debug = 0;
-	pfmlib_options.pfm_verbose = options.opt_verbose;
-	pfm_set_options(&pfmlib_options);
 
 	/*
 	 * In system wide mode, the perfmon context cannot be inherited.

@@ -1191,16 +1191,24 @@ assign_zero:
 				reg.pmc39_mont_reg.etbc_ppm,
 				reg.pmc39_mont_reg.etbc_brt);
 
-	pd[pos2].reg_num = 38;
-	pd[pos2++].reg_addr = 38;
-	pd[pos2].reg_num = 39;
-	pd[pos2++].reg_addr = 39;
-	__pfm_vbprintf("[PMD38(pmd38)]\n[PMD39(pmd39)\n");
+	/*
+	 * only add ETB PMDs when actually using BTB.
+	 * Not needed when dealing with D-EAR TLB and DEAR-ALAT
+	 * PMC39 restriction
+	 */
+	if (found_etb || has_etb_param) {
+		pd[pos2].reg_num = 38;
+		pd[pos2++].reg_addr = 38;
+		pd[pos2].reg_num = 39;
+		pd[pos2++].reg_addr = 39;
+		__pfm_vbprintf("[PMD38(pmd38)]\n[PMD39(pmd39)\n");
 
-	for(i=48; i < 64; i++, pos2++) {
-		pd[pos2].reg_num = i;
-		pd[pos2].reg_addr = i;
-		__pfm_vbprintf("[PMD%u(pmd%u)]\n", pd[pos2].reg_num, pd[pos2].reg_num);
+
+		for(i=48; i < 64; i++, pos2++) {
+			pd[pos2].reg_num = i;
+			pd[pos2].reg_addr = i;
+			__pfm_vbprintf("[PMD%u(pmd%u)]\n", pd[pos2].reg_num, pd[pos2].reg_num);
+		}
 	}
 
 	/* update final number of entries used */

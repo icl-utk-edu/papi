@@ -82,7 +82,7 @@ extern int __pfm_check_event(pfmlib_event_t *e);
 #define DPRINT(a) \
 	do { \
 		if (pfm_config.options.pfm_debug) { \
-			printf("%s (%s.%d): ", __FILE__, __FUNCTION__, __LINE__); printf a; } \
+			fprintf(stderr, "%s (%s.%d): ", __FILE__, __func__, __LINE__); printf a; } \
 	} while (0)
 #else
 #define DPRINT(a)
@@ -91,6 +91,7 @@ extern int __pfm_check_event(pfmlib_event_t *e);
 #define ALIGN_DOWN(a,p)	((a) & ~((1UL<<(p))-1))
 #define ALIGN_UP(a,p)	((((a) + ((1UL<<(p))-1))) & ~((1UL<<(p))-1))
 
+extern pfm_pmu_support_t crayx2_support;
 extern pfm_pmu_support_t montecito_support;
 extern pfm_pmu_support_t itanium2_support;
 extern pfm_pmu_support_t itanium_support;
@@ -103,6 +104,7 @@ extern pfm_pmu_support_t generic_mips64_support;
 extern pfm_pmu_support_t pentium4_support;
 extern pfm_pmu_support_t coreduo_support;
 extern pfm_pmu_support_t core_support;
+extern pfm_pmu_support_t generic_powerpc_support;
 
 static inline unsigned int pfm_num_masks(int e)
 {

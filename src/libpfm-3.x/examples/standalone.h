@@ -10,7 +10,12 @@
 inline int
 pfm_create_context(pfarg_ctx_t *ctx, char *smpl_name, void *smpl_arg, size_t smpl_size)
 {
-  return syscall(__NR_pfm_create_context, ctx, smpl_name, smpl_arg, smpl_size);
+#ifdef PFMLIB_VERSION_22
+	int r = syscall (__NR_pfm_create_context, ctx, smpl_arg, smpl_size);
+	return (r < 0 ? r : ctx->ctx_fd);
+#else
+	return (int)syscall(__NR_pfm_create_context, ctx, smpl_name, smpl_arg, smpl_size);
+#endif
 }
 
 inline int

@@ -39,7 +39,9 @@ AGE=0
 
 SRCS=libpfms.c
 
+ifneq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
 SLIBPFM=libpfms.so.$(VERSION).$(REVISION).$(AGE)
+endif
 TARGETS=libpfms.a $(SLIBPFM)
 OBJS=$(SRCS:.c=.o)
 SOBJS=$(OBJS:.o=.lo)

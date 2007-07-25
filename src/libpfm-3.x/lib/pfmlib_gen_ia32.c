@@ -1,8 +1,14 @@
 /*
- * pfmlib_gen_ia32.c : IA-32 architectural PMU 
+ * pfmlib_gen_ia32.c : Intel architectural PMU v1
  *
- * Copyright (c) 2005-2006 Hewlett-Packard Development Company, L.P.
+ * The file provides support for the Intel architectural PMU v1.
+ *
+ * It also provides support for Core Duo/Core Solo processors which
+ * implement the architectural PMU with more than architected events.
+ *
+ * Copyright (c) 2005-2007 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
+ *
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,10 +31,7 @@
  * This file implements supports for the IA-32 architectural PMU as specified
  * in the following document:
  * 	"IA-32 Intel Architecture Software Developer's Manual - Volume 3B: System
- * 	Programming Guide, Part 2"
- * 	Order Number: 253669-019
- * 	Date: March 2006
- * 	Section  18.11.1
+ * 	Programming Guide"
  */
 #include <sys/types.h>
 #include <ctype.h>
@@ -42,8 +45,9 @@
 /* private headers */
 #include "pfmlib_priv.h"			/* library private */
 #include "pfmlib_gen_ia32_priv.h"		/* architecture private */
-#include "gen_ia32_events.h"
-#include "coreduo_events.h"
+
+#include "gen_ia32_events.h"			/* architected event table */
+#include "coreduo_events.h"			/* Core Duo/Core Solo event table */
 
 /* let's define some handy shortcuts! */
 #define sel_event_select perfevtsel.sel_event_select
@@ -68,8 +72,10 @@ pfm_pmu_support_t *gen_support;
  * 0 -> PMC0 -> PERFEVTSEL0 -> MSR @ 0x186
  * 1 -> PMC1 -> PERFEVTSEL1 -> MSR @ 0x187
  * n -> PMCn -> PERFEVTSELn -> MSR @ 0x186+n
- * We do not use a mapping table, instead we make up the
- * values on the fly given the base.
+ *
+ * 0 -> PMD0 -> IA32_PMC0   -> MSR @ 0xc1
+ * 1 -> PMD1 -> IA32_PMC1   -> MSR @ 0xc2
+ * 2 -> PMDn -> IA32_PMCn   -> MSR @ 0xc1+n
  */
 #define GEN_IA32_SEL_BASE 0x186
 #define GEN_IA32_CTR_BASE 0xc1
@@ -303,7 +309,8 @@ pfm_gen_ia32_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_ia32_input_
 		}
 	}
 
-	if (cnt > gen_support->pmc_count) return PFMLIB_ERR_TOOMANY;
+	if (cnt > gen_support->pmc_count)
+		return PFMLIB_ERR_TOOMANY;
 
 	for(i=0, j=0; j < cnt; j++) {
 		/*
@@ -320,12 +327,12 @@ pfm_gen_ia32_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_ia32_input_
 		}
 
 		/*
-		 * exclude restricted registers from assignement
+		 * exclude restricted registers from assignment
 		 */
 		while(i < gen_support->pmc_count && pfm_regmask_isset(r_pmcs, i)) i++;
 
 		if (i == gen_support->pmc_count)
-			return PFMLIB_ERR_NOASSIGN;
+			return PFMLIB_ERR_TOOMANY;
 
 		/*
 		 * events can be assigned to any counter
@@ -392,7 +399,7 @@ pfm_gen_ia32_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_ia32_input_
 static int
 pfm_gen_ia32_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_output_param_t *outp, void *model_out)
 {
-	pfmlib_gen_ia32_input_param_t *mod_in  = (pfmlib_gen_ia32_input_param_t *)model_in;
+	pfmlib_gen_ia32_input_param_t *mod_in  = model_in;
 
 	if (inp->pfp_dfl_plm & (PFM_PLM1|PFM_PLM2)) {
 		DPRINT(("invalid plm=%x\n", inp->pfp_dfl_plm));
@@ -538,9 +545,9 @@ pfm_gen_ia32_get_inst_retired(pfmlib_event_t *e)
 	return PFMLIB_SUCCESS;
 }
 
-/* architected IA-32 PMU */
+/* architected PMU */
 pfm_pmu_support_t gen_ia32_support={
-	.pmu_name		= "Intel architectural PMU",
+	.pmu_name		= "Intel architectural PMU v1",
 	.pmu_type		= PFMLIB_GEN_IA32_PMU,
 	.pme_count		= 0,
 	.pmc_count		= 0,

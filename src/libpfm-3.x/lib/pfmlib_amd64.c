@@ -81,7 +81,6 @@ static amd64_rev_t amd64_revision;
 
 static amd64_rev_t amd64_get_revision(int model, int stepping)
 {
-/*    printf("model: %d; stepping: %d\n", model, stepping); */
 	if ((model >> 4) == 0) {
 		if (model == 5 && stepping < 2)
 			return AMD64_REV_B;

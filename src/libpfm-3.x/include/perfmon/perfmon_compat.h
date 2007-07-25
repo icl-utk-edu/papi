@@ -52,7 +52,6 @@ typedef unsigned char pfm_uuid_t[16];	/* custom sampling buffer identifier type 
 
 /*
  * argument to PFM_CREATE_CONTEXT
- * Obsolete: use PFM_CREATE_CONTEXT2 with pfarg_ctx_t argument
  */
 typedef struct {
 	pfm_uuid_t     ctx_smpl_buf_id;	 /* which buffer format to use (if needed) */
@@ -66,9 +65,6 @@ typedef struct {
 
 /*
  * argument structure for PFM_WRITE_PMCS/PFM_WRITE_PMDS/PFM_WRITE_PMDS
- *
- * This data structure and associated commands are NOW OBOSOLTE, use
- * pfarg_pmd_t and pfarg_pmc_t instead.
  */
 typedef struct {
 	unsigned int	reg_num;	   /* which register */
@@ -95,7 +91,6 @@ typedef struct {
 
 /*
  * argument to PFM_WRITE_IBRS/PFM_WRITE_DBRS
- * OBSOLETE: use PFM_WRITE_PMCS instead
  */
 typedef struct {
 	unsigned int	dbreg_num;		/* which debug register */
@@ -107,8 +102,6 @@ typedef struct {
 } pfarg_dbreg_t;
 
 /*
- * OBSOLETE: use PFM_GET_CONFIG
- *
  * argument to PFM_GET_FEATURES
  */
 typedef struct {
@@ -116,5 +109,35 @@ typedef struct {
 	unsigned int	ft_reserved;	/* reserved for future use */
 	unsigned long	reserved[4];	/* for future use */
 } pfarg_features_t;
+
+typedef struct {
+	int		msg_type;		/* generic message header */
+	int		msg_ctx_fd;		/* generic message header */
+	unsigned long	msg_ovfl_pmds[4];	/* which PMDs overflowed */
+	unsigned short  msg_active_set;		/* active set at the time of overflow */
+	unsigned short  msg_reserved1;		/* for future use */
+	unsigned int    msg_reserved2;		/* for future use */
+	unsigned long	msg_tstamp;		/* for perf tuning/debug */
+} pfm_ovfl_msg_t;
+
+typedef struct {
+	int		msg_type;		/* generic message header */
+	int		msg_ctx_fd;		/* generic message header */
+	unsigned long	msg_tstamp;		/* for perf tuning */
+} pfm_end_msg_t;
+
+typedef struct {
+	int		msg_type;		/* type of the message */
+	int		msg_ctx_fd;		/* unique identifier for the context */
+	unsigned long	msg_tstamp;		/* for perf tuning */
+} pfm_gen_msg_t;
+
+typedef union {
+	int type;
+	pfm_ovfl_msg_t	pfm_ovfl_msg;
+	pfm_end_msg_t	pfm_end_msg;
+	pfm_gen_msg_t	pfm_gen_msg;
+} pfm_msg_t;
+
 
 #endif /* _PERFMON_COMPAT_H_ */

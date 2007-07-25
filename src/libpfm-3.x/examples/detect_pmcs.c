@@ -36,37 +36,35 @@
 
 /*
  * The goal of this function is to help pfm_dispatch_events()
- * in situations where not all PMC registers are available.
+ * in situations where not all PMC/PMD registers are available.
  *
- * It builds a bitmask of unavailable PMC registers using either
- * an existing perfmon or none. In the latter case, it will create
- * a temporary context to retrieve the information. When a context
- * is passed, it can either be attached or detached.
+ * It builds bitmasks of *unavailable* PMC/PMD registers.
+ * It can use an existing perfmon context file descriptor or if
+ * non is passed, it will create a temporary context to retrieve
+ * the information.
  *
  * Note that there is no guarantee that the registers marked
  * as available will actually be available by the time the perfmon
  * context is loaded. 
+ *
+ * arguments:
+ * 	fd : a perfmon context file descriptor, or -1
+ * 	r_pmcs: a bitmask for PMC availability, NULL if not needed
+ * 	r_pmcs: a bitmask for PMD availability, NULL if not needed
+ *
+ * return:
+ * 	-1: invalid file descriptor passed or cannot retrieve information
+ * 	 0: success
  */
 int
 detect_unavail_pmu_regs(int fd, pfmlib_regmask_t *r_pmcs, pfmlib_regmask_t *r_pmds)
 {
 	pfarg_ctx_t ctx;
 	pfarg_setinfo_t	setf;
-	int ret, i, j, myfd;
-
-	if (r_pmcs)
-		memset(r_pmcs, 0, sizeof(*r_pmcs));
-	if (r_pmds)
-		memset(r_pmds, 0, sizeof(*r_pmds));
+	int ret, i, j, myfd, max;
 
 	memset(&ctx, 0, sizeof(ctx));
 	memset(&setf, 0, sizeof(setf));
-#if  PFMLIB_REG_MAX < PFM_MAX_PMCS
-#error "PFMLIB_REG_MAX too small for PFM_MAX_PMCS"
-#endif
-#if  PFMLIB_REG_MAX < PFM_MAX_PMDS
-#error "PFMLIB_REG_MAX too small for PFM_MAX_PMDS"
-#endif
 	/*
 	 * if no context descriptor is passed, then create
 	 * a temporary context
@@ -74,30 +72,39 @@ detect_unavail_pmu_regs(int fd, pfmlib_regmask_t *r_pmcs, pfmlib_regmask_t *r_pm
 	if (fd == -1) {
 		myfd = pfm_create_context(&ctx, NULL, NULL, 0);
 		if (myfd == -1)
-			return 0;
+			return -1;
 	} else {
 		myfd = fd;
 	}
 	/*
 	 * retrieve available register bitmasks from set0
 	 * which is guaranteed to exist for every context
+	 *
+	 * if myfd is bogus (passed by user) then we return
+	 * an error.
 	 */
 	ret = pfm_getinfo_evtsets(myfd, &setf, 1);
 	if (ret == 0) {
-		if (r_pmcs)
-			for(i=0; i < PFM_PMC_BV; i++) {
+		if (r_pmcs) {
+			memset(r_pmcs, 0, sizeof(*r_pmcs));
+			max = PFMLIB_REG_BV < PFM_PMC_BV ? PFMLIB_REG_BV : PFM_PMC_BV;
+			for(i=0; i < max; i++) {
 				for(j=0; j < 64; j++) {
 					if ((setf.set_avail_pmcs[i] & (1ULL << j)) == 0)
 						pfm_regmask_set(r_pmcs, (i<<6)+j);
 				}
 			}
-		if (r_pmds)
-			for(i=0; i < PFM_PMD_BV; i++) {
+		}
+		if (r_pmds) {
+			memset(r_pmds, 0, sizeof(*r_pmds));
+			max = PFMLIB_REG_BV < PFM_PMD_BV ? PFMLIB_REG_BV : PFM_PMD_BV;
+			for(i=0; i < max; i++) {
 				for(j=0; j < 64; j++) {
 					if ((setf.set_avail_pmds[i] & (1ULL << j)) == 0)
 						pfm_regmask_set(r_pmds, (i<<6)+j);
 				}
 			}
+		}
 	}
 	if (fd == -1)
 		close(myfd);

@@ -1,7 +1,7 @@
 /*
- * Intel IA-32 architectural PMU
+ * Intel architectural PMU v1
  *
- * Copyright (c) 2006 Hewlett-Packard Development Company, L.P.
+ * Copyright (c) 2006-2007 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -26,7 +26,7 @@
 
 #include <perfmon/pfmlib.h>
 /*
- * privilege level mask usage for architected IA-32 PMU:
+ * privilege level mask usage for architected PMU:
  *
  * PFM_PLM0 = OS (kernel, hypervisor, ..)
  * PFM_PLM1 = unused (ignored)
@@ -93,4 +93,4 @@ typedef struct {
 }
 #endif
 
-#endif /* __PFMLIB_GEN_IA32__H__ */
+#endif /* __PFMLIB_GEN_IA32_H__ */

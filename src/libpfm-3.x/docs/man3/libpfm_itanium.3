@@ -210,7 +210,7 @@ range restrictions and by default the library will refuse to program it if range
 requested. Using the flag will override the check and the call to \fBpfm_dispatch_events\fR will succeed. 
 In this case, CPU_CYCLES will be measured for the entire program and not just for the code range requested. 
 For certain measurements this is perfectly acceptable as the range restriction will only be applied relevant
-to events which support it. Make sure you understand which events do not support certains qualifiers before
+to events which support it. Make sure you understand which events do not support certain qualifiers before
 using this flag.
 .LP
 
@@ -345,7 +345,7 @@ The \fBpfmlib_ita2_input_rr_desc_t\fR structure is defined as follows:
 .B rr_plm
 The privilege level at which the range is active. It can be any combinations of \fBPFM_PLM0\fR, \fBPFM_PLM1\fR, \fBPFM_PLM2\fR, \fBPFM_PLM3\fR. 
 If \fBrr_plm\fR is 0 then the default privilege level mask in \fBpfp_dfl_plm\fR is used.The privilege level is only relevant
-for code ranges, data ranges ingores the setting.
+for code ranges, data ranges ignores the setting.
 .TP
 .B rr_start
 This is the start address of the range. Any address is supported but for code range it
@@ -378,7 +378,7 @@ between the requested and actual ranges expressed as offsets:
 .B rr_soff
 Contains the start offset of the actual range described by the debug registers. If zero, it means
 the library was able to match exactly the beginning of the range. Otherwise it represents the number
-of byte by which the actual range preceeds the requested range.
+of byte by which the actual range precedes the requested range.
 .TP
 .B rr_eoff
 Contains the end offset of the actual range described by the debug registers. If zero, it means

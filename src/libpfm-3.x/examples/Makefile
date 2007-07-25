@@ -42,19 +42,13 @@ endif
 CFLAGS+= -pthread -D_GNU_SOURCE -I$(PFMINCDIR)
 LIBS += -lm
 
-TARGETS=self self_view task task_attach task_attach_timeout syst \
+TARGETS=self task task_attach task_attach_timeout syst \
 	notify_self notify_self2 notify_self3 \
 	whichpmu multiplex multiplex2 set_notify \
 	showreginfo task_smpl task_smpl_user showevtinfo \
 	pfmsetup
 
-XTRA=self_standalone notify_standalone smpl_standalone
-#
-# MIPS xcross does not have curses
-#
-ifneq ($(ARCH),mips64)
-XTRA += rtop
-endif
+XTRA=self_standalone notify_standalone smpl_standalone rtop
 
 all: $(TARGETS) $(XTRA)
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done

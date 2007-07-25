@@ -38,4 +38,12 @@
 #include <perfmon/pfmlib_os_mips64.h>
 #endif
 
+#ifdef __powerpc__
+#include <perfmon/pfmlib_os_powerpc.h>
+#endif
+
+#ifdef __crayx2
+#include <perfmon/pfmlib_os_crayx2.h>
+#endif
+
 #endif /* __PFMLIB_OS_H__ */

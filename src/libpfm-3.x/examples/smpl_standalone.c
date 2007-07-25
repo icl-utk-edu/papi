@@ -264,7 +264,7 @@ main(int argc, char **argv)
 	pfarg_ctx_t ctx;
 	smpl_arg_t buf_arg;
 	pfarg_load_t load_args;
-	pfm_msg_t msg;
+	pfarg_msg_t msg;
 	smpl_hdr_t *hdr;
 	void *buf_addr;
 	size_t entry_size;

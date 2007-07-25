@@ -43,76 +43,54 @@ CFLAGS+=-D_REENTRANT
 #
 INCDEP=$(INC_COMMON)
 
-ifeq ($(ARCH),ia64)
+ifeq ($(CONFIG_PFMLIB_ARCH_IA64),y)
 INCDEP := $(INCDEP) $(INC_IA64)
+SRCS   += pfmlib_gen_ia64.c pfmlib_itanium.c pfmlib_itanium2.c pfmlib_montecito.c
+CFLAGS += -DCONFIG_PFMLIB_ARCH_IA64
 endif
 
-ifeq ($(ARCH),ia32)
+ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
 INCDEP := $(INCDEP) $(INC_IA32)
+SRCS   += pfmlib_i386_p6.c pfmlib_pentium4.c pfmlib_amd64.c pfmlib_core.c pfmlib_gen_ia32.c
+CFLAGS += -DCONFIG_PFMLIB_ARCH_I386
 endif
 
-ifeq ($(ARCH),x86_64)
+ifeq ($(CONFIG_PFMLIB_ARCH_X86_64),y)
 INCDEP := $(INCDEP) $(INC_X86_64)
+SRCS   += pfmlib_pentium4.c pfmlib_amd64.c pfmlib_core.c pfmlib_gen_ia32.c
+CFLAGS += -DCONFIG_PFMLIB_ARCH_X86_64
 endif
 
-ifeq ($(ARCH),mips64)
+ifeq ($(CONFIG_PFMLIB_ARCH_MIPS64),y)
 INCDEP := $(INCDEP) $(INC_MIPS64)
-endif
-
-ifeq ($(CONFIG_PFMLIB_GEN_IA64),y)
-SRCS   += pfmlib_gen_ia64.c
-CFLAGS += -DCONFIG_PFMLIB_GEN_IA64
-endif
-
-ifeq ($(CONFIG_PFMLIB_ITANIUM),y)
-SRCS   += pfmlib_itanium.c
-CFLAGS += -DCONFIG_PFMLIB_ITANIUM
-endif
-
-ifeq ($(CONFIG_PFMLIB_ITANIUM2),y)
-SRCS   += pfmlib_itanium2.c
-CFLAGS += -DCONFIG_PFMLIB_ITANIUM2
-endif
-
-ifeq ($(CONFIG_PFMLIB_MONTECITO),y)
-SRCS   += pfmlib_montecito.c
-CFLAGS += -DCONFIG_PFMLIB_MONTECITO
-endif
-
-ifeq ($(CONFIG_PFMLIB_AMD64),y)
-SRCS   += pfmlib_amd64.c
-CFLAGS += -DCONFIG_PFMLIB_AMD64
-endif
-
-ifeq ($(CONFIG_PFMLIB_I386_P6),y)
-SRCS   += pfmlib_i386_p6.c
-CFLAGS += -DCONFIG_PFMLIB_I386_P6
-endif
-
-ifeq ($(CONFIG_PFMLIB_CORE),y)
-SRCS   += pfmlib_core.c
-CFLAGS += -DCONFIG_PFMLIB_CORE
-endif
-
-ifeq ($(CONFIG_PFMLIB_GEN_IA32),y)
-SRCS   += pfmlib_gen_ia32.c
-CFLAGS += -DCONFIG_PFMLIB_GEN_IA32
-endif
-
-ifeq ($(CONFIG_PFMLIB_PENTIUM4),y)
-SRCS   += pfmlib_pentium4.c
-CFLAGS += -DCONFIG_PFMLIB_PENTIUM4
-endif
-
-ifeq ($(CONFIG_PFMLIB_GEN_MIPS64),y)
 SRCS   += pfmlib_gen_mips64.c
-CFLAGS += -DCONFIG_PFMLIB_GEN_MIPS64
+CFLAGS += -DCONFIG_PFMLIB_ARCH_MIPS64
+endif
+
+ifeq ($(CONFIG_PFMLIB_ARCH_POWERPC),y)
+INCDEP := $(INCDEP) $(INC_POWERPC)
+SRCS   += pfmlib_powerpc.c
+CFLAGS += -DCONFIG_PFMLIB_ARCH_POWERPC
+endif
+
+ifeq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
+INCDEP := $(INCDEP) $(INC_CRAYX2)
+SRCS   += pfmlib_crayx2.c
+CFLAGS += -DCONFIG_PFMLIB_ARCH_CRAYX2
+endif
+
+ifeq ($(CONFIG_PFMLIB_ARCH_CRAYXT),y)
+CFLAGS += -DCONFIG_PFMLIB_ARCH_CRAYXT
 endif
 
 CFLAGS+=-I.
 ALIBPFM=libpfm.a
+
+ifneq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
 SLIBPFM=libpfm.so.$(VERSION).$(REVISION).$(AGE)
 VLIBPFM=libpfm.so.$(VERSION)
+endif
+
 TARGETS=$(ALIBPFM) $(SLIBPFM)
 
 OBJS=$(SRCS:.c=.o)
@@ -143,10 +121,11 @@ depend:
 install: $(TARGETS)
 	-mkdir -p $(DESTDIR)$(LIBDIR)
 	$(INSTALL) -m 644 $(ALIBPFM) $(DESTDIR)$(LIBDIR)
+ifneq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
 	$(INSTALL) $(SLIBPFM) $(DESTDIR)$(LIBDIR)
 	cd $(DESTDIR)$(LIBDIR); $(LN) $(SLIBPFM) $(VLIBPFM)
 	cd $(DESTDIR)$(LIBDIR); $(LN) $(SLIBPFM) libpfm.so
-
+endif
 
 INC_COMMON= $(PFMINCDIR)/perfmon/pfmlib.h \
   $(PFMINCDIR)/perfmon/pfmlib_comp.h \
@@ -166,19 +145,23 @@ INC_IA64= $(PFMINCDIR)/perfmon/pfmlib_itanium.h \
   $(PFMINCDIR)/perfmon/pfmlib_os_ia64.h \
   itanium_events.h  itanium2_events.h montecito_events.h
 
-INC_X86_64= $(PFMINCDIR)/perfmon/perfmon_p4_pebs_smpl.h \
+INC_X86_64= $(PFMINCDIR)/perfmon/perfmon_pebs_smpl.h \
   $(PFMINCDIR)/perfmon/pfmlib_amd64.h \
+  $(PFMINCDIR)/perfmon/pfmlib_core.h \
   $(PFMINCDIR)/perfmon/pfmlib_gen_ia32.h \
   $(PFMINCDIR)/perfmon/pfmlib_pentium4.h \
   $(PFMINCDIR)/perfmon/pfmlib_comp_x86_64.h \
   $(PFMINCDIR)/perfmon/pfmlib_os_x86_64.h \
   amd64_events.h  pentium4_events.h gen_ia32_events.h core_events.h
 
-INC_IA32= $(PFMINCDIR)/perfmon/pfmlib_pentium4.h \
-  $(PFMINCDIR)/perfmon/pfmlib_comp_i386.h \
+INC_IA32=$(PFMINCDIR)/perfmon/perfmon_pebs_smpl.h \
+  $(PFMINCDIR)/perfmon/pfmlib_pentium4.h \
+  $(PFMINCDIR)/perfmon/pfmlib_amd64.h \
+  $(PFMINCDIR)/perfmon/pfmlib_core.h \
   $(PFMINCDIR)/perfmon/pfmlib_i386_p6.h \
-  $(PFMINCDIR)/perfmon/pfmlib_os_i386.h \
   $(PFMINCDIR)/perfmon/pfmlib_gen_ia32.h \
+  $(PFMINCDIR)/perfmon/pfmlib_comp_i386.h \
+  $(PFMINCDIR)/perfmon/pfmlib_os_i386.h \
   amd64_events.h  i386_p6_events.h \
   pentium4_events.h gen_ia32_events.h coreduo_events.h core_events.h
 
@@ -186,3 +169,11 @@ INC_MIPS64= $(PFMINCDIR)/perfmon/pfmlib_gen_mips64.h \
   $(PFMINCDIR)/perfmon/pfmlib_comp_mips64.h \
   $(PFMINCDIR)/perfmon/pfmlib_os_mips64.h \
   gen_mips64_events.h
+
+INC_POWERPC= $(PFMINCDIR)/perfmon/pfmlib_powerpc.h \
+  $(PFMINCDIR)/perfmon/pfmlib_comp_powerpc.h \
+  $(PFMINCDIR)/perfmon/pfmlib_os_powerpc.h \
+  power_events.h
+
+INC_CRAYX2= $(PFMINCIDR)/perfmon/pfmlib_crayx2.h \
+  crayx2_events.h pfmlib_crayx2_priv.h

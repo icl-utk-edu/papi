@@ -99,7 +99,7 @@ The \fBpfp_unavail_pmcs\fR bitmask can be used by applications to communicate
 to the library the list of PMC registers which are not available on the system.
 Some kernels may allocate certain PMC registers (and associated data registers)
 for other purposes. Those registers must not be used by the library
-otherwise the assignement of events to PMC registers may be rejected by the
+otherwise the assignment of events to PMC registers may be rejected by the
 kernel. Applications must figure out which registers are available using 
 a kernel interface at their disposal, the library does not provide this
 service. The library expect the restrictions to be expressed using the Linux
@@ -234,7 +234,7 @@ Here is a typical sequence using the perfmon2 interface:
 
 .SH RETURN
 The function returns whether or not the call was successful.
-A return value of \fBPFMLIB_SUCCESS\fR indicates sucess, 
+A return value of \fBPFMLIB_SUCCESS\fR indicates success, 
 otherwise the value is the error code.
 .SH ERRORS
 .B PFMLIB_ERR_NOINIT

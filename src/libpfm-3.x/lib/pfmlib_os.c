@@ -31,7 +31,16 @@
 int
 pfm_create_context(pfarg_ctx_t *ctx, char *name, void *smpl_arg, size_t smpl_size)
 {
+#ifdef PFMLIB_VERSION_22
+	/*
+ 	 * In perfmon v2.2, the pfm_create_context() call had a different return value.
+ 	 * It used to return errno, now it returns the file descriptor.
+ 	 */
+	int r = syscall (__NR_pfm_create_context, ctx, smpl_arg, smpl_size);
+	return (r < 0 ? r : ctx->ctx_fd);
+#else
 	return (int)syscall(__NR_pfm_create_context, ctx, name, smpl_arg, smpl_size);
+#endif
 }
 
 int

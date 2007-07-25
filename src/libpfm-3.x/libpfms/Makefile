@@ -34,18 +34,18 @@ TARGETS=syst_smp
 
 all: $(TARGETS)
 
-syst_smp: subdirs syst_smp.o
+syst_smp: ./lib/libpfms.a syst_smp.o
 	$(CC) $(LDFLAGS) -o $@ syst_smp.o $(LIBS) -lpthread
 
 clean:
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
-	$(RM) -f *.o 
+	$(RM) -f *.o
 
 distclean: clean
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 	$(RM) -f $(TARGETS) *~
 
-subdirs:
+./lib/libpfms.a subdirs: 
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d all ; done
 
 .PHONY: install depend

@@ -239,7 +239,7 @@ mainloop(char **arg)
 	pfarg_load_t load_args;
 	struct timeval start_time, end_time;
 	struct rusage rusage;
-	pfm_msg_t msg;
+	pfarg_msg_t msg;
 	uint64_t ovfl_count = 0;
 	size_t entry_size;
 	void *buf_addr;
@@ -595,13 +595,7 @@ main(int argc, char **argv)
 	if (argv[optind] == NULL) {
 		fatal_error("You must specify a command to execute\n");
 	}
-	/*
-	 * Initialize pfm library (required before we can use it)
-	 */
-	ret = pfm_initialize();
-	if (ret != PFMLIB_SUCCESS)
-		fatal_error("Cannot initialize library: %s\n", pfm_strerror(ret));
-
+	
 	/*
 	 * pass options to library (optional)
 	 */
@@ -609,6 +603,13 @@ main(int argc, char **argv)
 	pfmlib_options.pfm_debug   = 0; /* set to 1 for debug */
 	pfmlib_options.pfm_verbose = 1; /* set to 1 for verbose */
 	pfm_set_options(&pfmlib_options);
+
+	/*
+	 * Initialize pfm library (required before we can use it)
+	 */
+	ret = pfm_initialize();
+	if (ret != PFMLIB_SUCCESS)
+		fatal_error("Cannot initialize library: %s\n", pfm_strerror(ret));
 
 	return mainloop(argv+optind);
 }

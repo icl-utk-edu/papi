@@ -1,5 +1,5 @@
 /*
- * pfmlib_core.c : Intel Core microarchitecture PMU
+ * pfmlib_core.c : Intel Core PMU
  *
  * Copyright (c) 2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
@@ -25,10 +25,7 @@
  * This file implements supports for the IA-32 architectural PMU as specified
  * in the following document:
  * 	"IA-32 Intel Architecture Software Developer's Manual - Volume 3B: System
- * 	Programming Guide, Part 2"
- * 	Order Number: 253669-021
- * 	Date: October 2006
- * 	Section  18.14
+ * 	Programming Guide"
  */
 #include <sys/types.h>
 #include <ctype.h>
@@ -63,65 +60,29 @@
 /*
  * Description of the PMC register mappings:
  *
- * 0 -> PMC0 -> PERF_GLOBAL_CTRL
- * 1 -> PMC2 -> PEBS_ENABLED
- * 2 -> PMC3 -> not used
- * 3 -> PMC1 -> FIXED_CTR_CTRL
- * 4 -> PMC4 -> PERFEVTSEL0
- * 5 -> PMC5 -> PERFEVTSEL1 
+ * 0 -> PMC0 -> PERFEVTSEL0
+ * 1 -> PMC1 -> PERFEVTSEL1 
+ * 2 -> PMC2 -> FIXED_CTR_CTRL
+ * 3 -> PMC3 -> PEBS_ENABLED
  *
  * Description of the PMD register mapping:
  *
- * 0 -> PMD0 -> FIXED_CTR0
- * 1 -> PMD1 -> FIXED_CTR1
- * 2 -> PMD2 -> FIXED_CTR2
- * 3 -> not used
- * 4 -> PMD4 -> PMC0
- * 5 -> PMD5 -> PMC1
+ * 0 -> PMD0 -> PMC0
+ * 1 -> PMD1 -> PMC1
+ * 2 -> PMD2 -> FIXED_CTR0
+ * 3 -> PMD3 -> FIXED_CTR1
+ * 4 -> PMD4 -> FIXED_CTR2
  */
 #define CORE_SEL_BASE		0x186
 #define CORE_CTR_BASE		0xc1
 #define FIXED_CTR_BASE		0x309
 
-#define MAX_COUNTERS	5 /* highest implemented counter */
+#define MAX_COUNTERS	4 /* highest implemented counter */
 
 #define PFMLIB_CORE_ALL_FLAGS \
 	(PFM_CORE_SEL_INV|PFM_CORE_SEL_EDGE)
 
 static pfmlib_regmask_t core_impl_pmcs, core_impl_pmds;
-
-#ifdef __i386__
-static inline void cpuid(unsigned int op, unsigned int *eax, unsigned int *ebx,
-			 unsigned int *ecx, unsigned int *edx)
-{
-	/*
-	 * because ebx is used in Pic mode, we need to save/restore because
-	 * cpuid clobbers it. I could not figure out a way to get ebx out in
-	 * one cpuid instruction. To extract ebx, we need to  move it to another
-	 * register (here eax)
-	 */
-	__asm__("pushl %%ebx;cpuid; popl %%ebx"
-			:"=a" (*eax)
-			: "a" (op)
-			: "ecx", "edx");
-
-	__asm__("pushl %%ebx;cpuid; movl %%ebx, %%eax;popl %%ebx"
-			:"=a" (*ebx)
-			: "a" (op)
-			: "ecx", "edx");
-}
-#else
-static inline void cpuid(unsigned int op, unsigned int *eax, unsigned int *ebx,
-			 unsigned int *ecx, unsigned int *edx)
-{
-        __asm__("cpuid"
-                        : "=a" (*eax),
-                        "=b" (*ebx),
-                        "=c" (*ecx),
-                        "=d" (*edx)
-                        : "0" (op), "c"(0));
-}
-#endif
 
 static int
 pfm_core_detect(void)
@@ -158,14 +119,13 @@ pfm_core_detect(void)
 	pfm_regmask_set(&core_impl_pmcs, 0);
 	pfm_regmask_set(&core_impl_pmcs, 1);
 	pfm_regmask_set(&core_impl_pmcs, 2);
-	pfm_regmask_set(&core_impl_pmcs, 4);
-	pfm_regmask_set(&core_impl_pmcs, 5);
+	pfm_regmask_set(&core_impl_pmcs, 3);
 
 	pfm_regmask_set(&core_impl_pmds, 0);
 	pfm_regmask_set(&core_impl_pmds, 1);
 	pfm_regmask_set(&core_impl_pmds, 2);
+	pfm_regmask_set(&core_impl_pmds, 3);
 	pfm_regmask_set(&core_impl_pmds, 4);
-	pfm_regmask_set(&core_impl_pmds, 5);
 
 	return PFMLIB_SUCCESS;
 }
@@ -219,10 +179,11 @@ static int
 pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t *mod_in, pfmlib_output_param_t *outp)
 {
 #define HAS_OPTIONS(x)	(cntrs && (cntrs[i].flags || cntrs[i].cnt_mask))
+#define is_fixed_pmc(a) (a == 2 || a == 3 || a ==4)
 
 	pfmlib_core_input_param_t *param = mod_in;
 	pfmlib_core_counter_t *cntrs;
-	pfm_core_sel_reg_t reg_ctrl, reg;
+	pfm_core_sel_reg_t reg;
 	pfmlib_event_t *e;
 	pfmlib_reg_t *pc, *pd;
 	pfmlib_regmask_t *r_pmcs;
@@ -278,36 +239,36 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 		}
 	}
 
-	next_gen = 4; /* first generic counter */
-	last_gen = 5; /* last generic counter */
+	next_gen = 0; /* first generic counter */
+	last_gen = 1; /* last generic counter */
 
 	/*
 	 * strongest constraint first: works only in IA32_PMC0
 	 */
 	for(i=0; i < n; i++) {
 		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_PMC0) {
-			if (pfm_regmask_isset(r_pmcs, 4))
+			if (pfm_regmask_isset(r_pmcs, 0))
 				return PFMLIB_ERR_NOASSIGN;
-			assign_pc[i] = 4;
+			assign_pc[i] = 0;
 			next_gen++;
 		}
 	}
 	/*
 	 * next constraint: fixed counters
 	 */
-	fixed_ctr = 0x7;
+	fixed_ctr = pfm_regmask_isset(r_pmcs, 2) ? 0 : 0x7;
 	if (!pfm_regmask_isset(r_pmcs, 1)) {
 		for(i=0; i < n; i++) {
 			if ((fixed_ctr & 0x1) && pfm_core_is_fixed(e+i, 0) && !HAS_OPTIONS(i)) {
-				assign_pc[i] = 0;
+				assign_pc[i] = 2;
 				fixed_ctr &= ~1;
 			}
 			if ((fixed_ctr & 0x2) && pfm_core_is_fixed(e+i, 1) && !HAS_OPTIONS(i)) {
-				assign_pc[i] = 1;
+				assign_pc[i] = 3;
 				fixed_ctr &= ~2;
 			}
 			if ((fixed_ctr & 0x4) && pfm_core_is_fixed(e+i, 2) && !HAS_OPTIONS(i)) {
-				assign_pc[i] = 2;
+				assign_pc[i] = 4;
 				fixed_ctr &= ~4;
 			}
 		}
@@ -330,10 +291,10 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 	j = 0;
 
 	/* setup fixed counters */
-	reg.val = reg_ctrl.val = 0;
+	reg.val = 0;
 	k = 0;
 	for (i=0; i < n ; i++ ) {
-		if (assign_pc[i] == -1 || assign_pc[i] >= PMU_CORE_NUM_FIXED_COUNTERS)
+		if (!is_fixed_pmc(assign_pc[i]))
 			continue;
 		val = 0;
 		/* if plm is 0, then assume not specified per-event and use default */
@@ -344,8 +305,7 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 			val |= 2ULL;
 		val |= 1ULL << 3;	 /* force APIC int (kernel may force it anyway) */
 
-		reg.val |= val << (assign_pc[i]<<2);
-		reg_ctrl.val |= 1ULL << (32+assign_pc[i]);
+		reg.val |= val << ((assign_pc[i]-2)<<2);
 
 		/* setup pd array */
 		pd[i].reg_num = assign_pc[i];
@@ -353,12 +313,6 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 	}
 
 	if (reg.val) {
-		/*
-		 * check FIXED_CTRL is available, otherwise there is no point
-		 */
-		if (pfm_regmask_isset(r_pmcs, 1))
-			return PFMLIB_ERR_NOASSIGN;
-
 		pc[npc].reg_num   = 2;
 		pc[npc].reg_value = reg.val;
 		pc[npc].reg_addr  = 0x38D;
@@ -381,7 +335,7 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 		npc++;
 
 		for (i=0; i < n ; i++ ) {
-			if (assign_pc[i] == -1 || assign_pc[i] >= PMU_CORE_NUM_FIXED_COUNTERS)
+			if (!is_fixed_pmc(assign_pc[i]))
 				continue;
 			__pfm_vbprintf("[FIXED_CTR%u(pmd%u)]\n", pd[i].reg_num, pd[i].reg_num);
 		}
@@ -389,7 +343,7 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 
 	for (i=0; i < n ; i++ ) {
 		/* skip fixed counters */
-		if (assign_pc[i] < PMU_CORE_NUM_FIXED_COUNTERS)
+		if (is_fixed_pmc(assign_pc[i]))
 			continue;
 
 		reg.val = 0; /* assume reserved bits are zerooed */
@@ -433,7 +387,6 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 			reg.sel_edge	 = cntrs[i].flags & PFM_CORE_SEL_EDGE ? 1 : 0;
 			reg.sel_inv	 = cntrs[i].flags & PFM_CORE_SEL_INV ? 1 : 0;
 		}
-		reg_ctrl.val |= 1ULL << (assign_pc[i]-4);
 
 		pc[npc].reg_num     = assign_pc[i];
 		pc[npc].reg_value   = reg.val;
@@ -442,7 +395,7 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 		pd[i].reg_addr = CORE_CTR_BASE+assign_pc[i];
 
 		__pfm_vbprintf("[PERFEVTSEL%u(pmc%u)=0x%"PRIx64" event_sel=0x%x umask=0x%x os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d] %s\n",
-				pc[npc].reg_num - 4,
+				pc[npc].reg_num,
 				pc[npc].reg_num,
 				reg.val,
 				reg.sel_event_select,
@@ -457,30 +410,11 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 				core_pe[e[i].event].pme_name);
 
 		__pfm_vbprintf("[PMC%u(pmd%u)]\n",
-				pd[i].reg_num - 4,
+				pd[i].reg_num,
 				pd[i].reg_num);
 
 		npc++;
 	}
-
-	if (!pfm_regmask_isset(r_pmcs, 0)) {
-		/* setup GLOBAL_CTR, complete at the end */
-		pc[npc].reg_num     = 0;
-		pc[npc].reg_value   = reg_ctrl.val;
-		pc[npc].reg_addr    = 0x38F;
-
-		__pfm_vbprintf("[GLOBAL_CTRL(pmc%u)=0x%"PRIx64" en0=%"PRIu64" en1=%"PRIu64" fen0=%"PRIu64" fen1=%"PRIu64" fen2=%"PRIu64"]\n",
-				pc[npc].reg_num,
-				reg_ctrl.val,
-				reg_ctrl.val & 0x1ULL,
-				(reg_ctrl.val >> 1) & 0x1ULL,
-				(reg_ctrl.val >> 32) & 0x1ULL,
-				(reg_ctrl.val >> 33) & 0x1ULL,
-				(reg_ctrl.val >> 34) & 0x1ULL);
-
-		npc++;
-	}
-
 	/* number of evtsel/ctr registers programmed */
 	outp->pfp_pmc_count = npc;
 	outp->pfp_pmd_count = n;
@@ -528,13 +462,13 @@ pfm_core_dispatch_pebs(pfmlib_input_param_t *inp, pfmlib_core_input_param_t *mod
 	 * PEBS works only on PMC0
 	 * Some PEBS at-retirement events do require PMC0 anyway
 	 */
-	if (pfm_regmask_isset(r_pmcs, 4))
+	if (pfm_regmask_isset(r_pmcs, 0))
 		return PFMLIB_ERR_NOASSIGN;
 
 	/*
 	 * check that PEBS_ENABLE is available
 	 */
-	if (pfm_regmask_isset(r_pmcs, 1))
+	if (pfm_regmask_isset(r_pmcs, 3))
 		return PFMLIB_ERR_NOASSIGN;
 
 	reg.val = 0; /* assume reserved bits are zerooed */
@@ -561,15 +495,15 @@ pfm_core_dispatch_pebs(pfmlib_input_param_t *inp, pfmlib_core_input_param_t *mod
 	reg.sel_edge	 = mod_in->pfp_core_counters[0].flags & PFM_CORE_SEL_EDGE ? 1 : 0;
 	reg.sel_inv	 = mod_in->pfp_core_counters[0].flags & PFM_CORE_SEL_INV ? 1 : 0;
 
-	pc[npc].reg_num     = 4;
+	pc[npc].reg_num     = 0;
 	pc[npc].reg_value   = reg.val;
 	pc[npc].reg_addr    = CORE_SEL_BASE;
 
-	pd[npd].reg_num  = 4;
+	pd[npd].reg_num  = 0;
 	pd[npd].reg_addr = CORE_CTR_BASE;
 
 	__pfm_vbprintf("[PERFEVTSEL%u(pmc%u)=0x%"PRIx64" event_sel=0x%x umask=0x%x os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d] %s\n",
-		pc[npc].reg_num - 4,
+		pc[npc].reg_num,
 		pc[npc].reg_num,
 		reg.val,
 		reg.sel_event_select,
@@ -584,42 +518,25 @@ pfm_core_dispatch_pebs(pfmlib_input_param_t *inp, pfmlib_core_input_param_t *mod
 		core_pe[e[0].event].pme_name);
 
 	__pfm_vbprintf("[PMC%u(pmd%u)]\n",
-			pd[npd].reg_num - 4,
+			pd[npd].reg_num,
 			pd[npd].reg_num);
 
 	npc++;
 	npd++;
-
-	/*
-	 * if GLOBAL_CTRL is available, then assign
-	 */
-	if (pfm_regmask_isset(r_pmcs, 0) == 0) {
-		/* setup GLOBAL_CTR */
-		pc[npc].reg_num   = 0;
-		pc[npc].reg_value = 1ULL;
-		pc[npc].reg_addr  = 0x38F;
-
-		__pfm_vbprintf("[GLOBAL_CTRL(pmc%u)=0x%"PRIx64" en0=1 en1=0 fen0=0 fen1=0 fen2=0]\n",
-				pc[npc].reg_num,
-				pc[npc].reg_value);
-
-		npc++;
-	}
-
 	/*
 	 * setup PEBS_ENABLE
 	 * 
 	 * Intel documentation, section 18.14.4.1 is wrong about PEBS_ENABLE.
 	 * Bit 24 is not used on Intel Core, bit 0 implements the enable capability
 	 */
-	pc[npc].reg_num   = 1;
+	pc[npc].reg_num   = 3;
 	pc[npc].reg_value = 1ULL;
 	pc[npc].reg_addr  = 0x3f1; /* IA32_PEBS_ENABLE */
 
 	__pfm_vbprintf("[PEBS_ENABLE(pmc%u)=0x%"PRIx64" ena=%d]\n",
 			pc[npc].reg_num,
 			pc[npc].reg_value,
-			pc[npc].reg_value & (1ull<<24) ? (int)1 : (int)0);
+			pc[npc].reg_value & 0x1ull);
 
 	npc++;
 

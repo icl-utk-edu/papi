@@ -1,7 +1,7 @@
 /*
  * self.c - example of a simple self monitoring task
  *
- * Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
+ * Copyright (c) 2002-2007 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -43,19 +43,19 @@
 #define NUM_PMCS PFMLIB_MAX_PMCS
 #define NUM_PMDS PFMLIB_MAX_PMDS
 
-#define TABSIZE 1024
-static int a[TABSIZE], b[TABSIZE];
+static volatile int quit;
+void sig_handler(int n)
+{
+	quit = 1;
+}
 
 /*
  * our test code (function cannot be made static otherwise it is optimized away)
  */
-uint64_t
-noploop(uint64_t loop)
+void
+noploop(void)
 {
-	unsigned int j = 0;
-
-	while (loop--) { a[j] += a[j]*loop + b[j];j = (j+1)%TABSIZE; }
-	return a[0];
+	for(;quit == 0;);
 }
 
 static void fatal_error(char *fmt,...) __attribute__((noreturn));
@@ -90,6 +90,14 @@ main(int argc, char **argv)
 	char *name;
 
 	/*
+	 * pass options to library (optional)
+	 */
+	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
+	pfmlib_options.pfm_debug   = 0; /* set to 1 for debug */
+	pfmlib_options.pfm_verbose = 1; /* set to 1 for verbose */
+	pfm_set_options(&pfmlib_options);
+
+	/*
 	 * Initialize pfm library (required before we can use it)
 	 */
 	ret = pfm_initialize();
@@ -102,14 +110,6 @@ main(int argc, char **argv)
 		fatal_error("cannot allocate event name buffer\n");
 
 	pfm_get_num_counters(&num_counters);
-
-	/*
-	 * pass options to library (optional)
-	 */
-	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
-	pfmlib_options.pfm_debug   = 0; /* set to 1 for debug */
-	pfmlib_options.pfm_verbose = 1; /* set to 1 for verbose */
-	pfm_set_options(&pfmlib_options);
 
 	memset(pd, 0, sizeof(pd));
 	memset(pc, 0, sizeof(pc));
@@ -168,6 +168,7 @@ main(int argc, char **argv)
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		fatal_error("Can't create PFM context %s\n", strerror(errno));
 	}
+
 	/*
 	 * build the pfp_unavail_pmcs bitmask by looking
 	 * at what perfmon has available. It is not always
@@ -177,7 +178,7 @@ main(int argc, char **argv)
 	 *
 	 * With this bitmap, the library knows which registers NOT to
 	 * use. Of source, it is possible that no valid assignement may
-	 * be possible if certina PMU registers  are not available.
+	 * be possible if certain PMU registers  are not available.
 	 */
 	detect_unavail_pmcs(ctx_fd, &inp.pfp_unavail_pmcs);
 
@@ -226,7 +227,9 @@ main(int argc, char **argv)
 	if (pfm_start(ctx_fd, NULL))
 		fatal_error("pfm_start error errno %d\n",errno);
 
-	noploop(1000000000ULL);
+	signal(SIGALRM, sig_handler);
+	alarm(10);
+	noploop();
 
 	if (pfm_stop(ctx_fd))
 		fatal_error("pfm_stop error errno %d\n",errno);

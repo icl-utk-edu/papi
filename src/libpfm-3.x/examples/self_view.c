@@ -93,7 +93,7 @@ get_pmd(unsigned int n)
 	tmp = (uint64_t)high <<32 | low;
 	return tmp;
 }
-#elif defined(__mips__)
+#elif defined(__mips__) || defined(__powerpc__)
 /*
  * XXX: MIPS does not have an instruction to read a counter at the user level
  */
@@ -205,6 +205,13 @@ main(int argc, char **argv)
 #ifdef __mips__
 	printf("<<WARNING: MIPS does not have an instruction to read a counter at the user level. Results are wrong>>\n");
 #endif
+	/*
+	 * pass options to library (optional)
+	 */
+	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
+	pfmlib_options.pfm_debug   = 0; /* set to 1 for debug */
+	pfmlib_options.pfm_verbose = 1; /* set to 1 for debug */
+	pfm_set_options(&pfmlib_options);
 
 	/*
 	 * Initialize pfm library (required before we can use it)
@@ -219,14 +226,6 @@ main(int argc, char **argv)
 
 	ovfl_mask = (1ULL << width)-1;
 	printf("width=%u ovfl_mask=0x%"PRIx64"\n", width, ovfl_mask);	
-
-	/*
-	 * pass options to library (optional)
-	 */
-	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
-	pfmlib_options.pfm_debug   = 0; /* set to 1 for debug */
-	pfmlib_options.pfm_verbose = 1; /* set to 1 for debug */
-	pfm_set_options(&pfmlib_options);
 
 	memset(pd, 0, sizeof(pd));
 	memset(pc, 0, sizeof(pc));

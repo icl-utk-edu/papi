@@ -180,7 +180,7 @@ pfms_thread_mainloop(void *arg)
 	int ret = 0;
 
 	memset(&load_args, 0, sizeof(load_args));
-
+	load_args.load_pid = mycpu;
 	td = tds+mycpu;
 
 	ret = pin_cpu(mycpu);
@@ -206,7 +206,8 @@ pfms_thread_mainloop(void *arg)
 				ctx = td->data;
 				myctx = *ctx;
 
-				ret = fd = pfm_create_context(&myctx, NULL, NULL, 0);
+				fd = pfm_create_context(&myctx, NULL, NULL, 0);
+				ret = fd < 0 ? -1 : 0;
 				dprint("CPU%u CMD_CTX ret=%d errno=%d fd=%d\n", mycpu, ret, errno, fd);
 				break;
 

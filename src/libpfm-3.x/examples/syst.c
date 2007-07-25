@@ -97,6 +97,13 @@ main(int argc, char **argv)
 	char name[MAX_EVT_NAME_LEN];
 
 	/*
+	 * pass options to library (optional)
+	 */
+	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
+	pfmlib_options.pfm_debug = 0; /* set to 1 for debug */
+	pfm_set_options(&pfmlib_options);
+
+	/*
 	 * Initialize pfm library (required before we can use it)
 	 */
 	ret = pfm_initialize();
@@ -104,13 +111,6 @@ main(int argc, char **argv)
 		fatal_error("Cannot initialize library: %s\n", pfm_strerror(ret));
 
 	pfm_get_num_counters(&num_counters);
-
-	/*
-	 * pass options to library (optional)
-	 */
-	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
-	pfmlib_options.pfm_debug = 0; /* set to 1 for debug */
-	pfm_set_options(&pfmlib_options);
 
 
 	memset(pc, 0, sizeof(pc));

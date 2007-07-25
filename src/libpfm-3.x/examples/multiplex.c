@@ -607,7 +607,7 @@ measure_one_cpu(char **argv)
 	int ctxid, status;
 	pfarg_ctx_t ctx[1];
 	pfarg_load_t load_arg;
-	pfm_msg_t msg;
+	pfarg_msg_t msg;
 	pid_t pid = 0;
 	int ret;
 
@@ -1090,6 +1090,14 @@ main(int argc, char **argv)
 	if (optind == argc && options.opt_is_system == 0 && options.attach_pid == 0) 
 		fatal_error("you need to specify a command to measure\n");
 
+	/*
+	 * pass options to library (optional)
+	 */
+	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
+	pfmlib_options.pfm_debug = 0; /* set to 1 for debug */
+	pfmlib_options.pfm_verbose = options.opt_verbose; /* set to 1 for verbose */
+	pfm_set_options(&pfmlib_options);
+
 
 	/*
 	 * Initialize pfm library (required before we can use it)
@@ -1109,14 +1117,6 @@ main(int argc, char **argv)
 
 	if (num_sets == 0)
 		generate_default_sets();
-
-	/*
-	 * pass options to library (optional)
-	 */
-	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
-	pfmlib_options.pfm_debug = 0; /* set to 1 for debug */
-	pfmlib_options.pfm_verbose = options.opt_verbose; /* set to 1 for verbose */
-	pfm_set_options(&pfmlib_options);
 
 	return mainloop(argv+optind);
 }

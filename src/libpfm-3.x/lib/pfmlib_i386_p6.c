@@ -113,6 +113,7 @@ pfm_i386_p6_detect(void)
 
 	switch(model) {
                 case 3: /* Pentium II */
+                case 5: /* Pentium II Deschutes */
 		case 7: /* Pentium III Katmai */
 		case 8: /* Pentium III Coppermine */
 		case 9: /* Mobile Pentium III */

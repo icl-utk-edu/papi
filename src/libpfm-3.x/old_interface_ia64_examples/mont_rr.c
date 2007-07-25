@@ -47,7 +47,7 @@
 static inline void
 clear_psr_ac(void)
 {
-	__asm__ __volatile__("rum psr.up;;" ::: "memory" );
+	__asm__ __volatile__("rum psr.ac;;" ::: "memory" );
 }
 #else
 #error "You need to define clear_psr_ac() for your compiler"
@@ -282,6 +282,7 @@ main(int argc, char **argv)
 	 * propagate the setup for the data debug registers. DBRS are mapped
 	 * at PMC264-PMC271
 	 */
+	memset(dbrs, 0, sizeof(dbrs));
 	for (i=0; i < mont_outp.pfp_mont_drange.rr_nbr_used; i++) {
 		dbrs[i].dbreg_num   = mont_outp.pfp_mont_drange.rr_br[i].reg_num;
 		dbrs[i].dbreg_value = mont_outp.pfp_mont_drange.rr_br[i].reg_value;

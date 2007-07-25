@@ -99,7 +99,7 @@ In any other cases, the value of \fBgrp\fR will be \fBPFMLIB_ITA2_EVT_NO_GRP\fR.
 The \fBpfm_ita2_get_event_set()\fR function returns in \fBset\fR the set to which the
 event designated by \fBi\fR belongs. A set is a subdivision of a group and is therefore
 only relevant for L1 and L2 cache events. An event can only belong to one group and
-one set. This partioning of the cache events is due to some hardware limitations which
+one set. This partitioning of the cache events is due to some hardware limitations which
 impose some restrictions on events. For a given group, events from different sets 
 cannot be measured at the same time. If the event does not belong to a group
 then the value of \fBset\fR is \fBPFMLIB_MONT_EVT_NO_SET\fR.
@@ -253,7 +253,7 @@ range restrictions and by default the library will refuse to program it if range
 requested. Using the flag will override the check and the call to \fBpfm_dispatch_events\fR will succeed. 
 In this case, CPU_CYCLES will be measured for the entire program and not just for the code range requested. 
 For certain measurements this is perfectly acceptable as the range restriction will only be applied relevant
-to events which support it. Make sure you understand which events do not support certains qualifiers before
+to events which support it. Make sure you understand which events do not support certain qualifiers before
 using this flag.
 .LP
 
@@ -295,7 +295,7 @@ depending on the type of EAR.
 There is an EAR event in the list of events to monitor and \fBear_used\fR is set. In this
 case the EAR will be programmed (PMC10 or PMC11) using the information in the \fBpfp_ita2_iear\fR or
 \fBpfp_ita2_dear\fR structure because it contains more detailed information, such as privilege level and
-isntruction set.  A counting monitor (PMC4/PMD4-PMC7/PMD7) will be programmed to count DATA_EAR_EVENT or 
+instruction set.  A counting monitor (PMC4/PMD4-PMC7/PMD7) will be programmed to count DATA_EAR_EVENT or 
 L1I_EAR_EVENTS depending on the type of EAR.
 .TP
 .B Method 3 
@@ -404,7 +404,7 @@ The \fBpfmlib_ita2_input_rr_desc_t\fR structure is defined as follows:
 The privilege level at which the range is active. It can be any combinations of 
 \fBPFM_PLM0\fR, \fBPFM_PLM1\fR, \fBPFM_PLM2\fR, \fBPFM_PLM3\fR.  If \fBbtb_plm\fR is 0 then the 
 default privilege level mask in \fBpfp_dfl_plm\fR is used. The privilege level is only relevant
-for code ranges, data ranges ingores the setting.
+for code ranges, data ranges ignores the setting.
 .TP
 .B rr_start
 This is the start address of the range. Any address is supported but for code range it
@@ -438,7 +438,7 @@ between the requested and actual ranges expressed as offsets:
 .B rr_soff
 Contains the start offset of the actual range described by the debug registers. If zero, it means
 the library was able to match exactly the beginning of the range. Otherwise it represents the number
-of byte by which the actual range preceeds the requested range.
+of byte by which the actual range precedes the requested range.
 .TP
 .B rr_eoff
 Contains the end offset of the actual range described by the debug registers. If zero, it means
