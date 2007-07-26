@@ -280,7 +280,7 @@ ifeq (static,$(PFM_EVENTS))
 endif
 
 native_install: 
--cp -f ./perfmon_events.csv $(DATADIR)
+	-cp -f ./perfmon_events.csv $(DATADIR)
 ifeq ($(ARCH),ppc64)
 	-mkdir -p $(DATADIR)
 	-chmod go+rx $(DATADIR)
