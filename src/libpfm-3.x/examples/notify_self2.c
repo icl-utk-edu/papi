@@ -79,7 +79,7 @@ warning(char *fmt, ...)
 static void
 sigio_handler(int n, struct siginfo *info, void *data)
 {
-	pfm_msg_t msg;
+	pfarg_msg_t msg;
 	int fd;
 	int r =0;
 
@@ -160,6 +160,14 @@ main(int argc, char **argv)
 	int ret;
 
 	/*
+	 * pass options to library (optional)
+	 */
+	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
+	pfmlib_options.pfm_debug = 0; /* set to 1 for debug */
+	pfmlib_options.pfm_verbose = 1; /* set to 1 for verbose */
+	pfm_set_options(&pfmlib_options);
+
+	/*
 	 * Initialize pfm library (required before we can use it)
 	 */
 	ret = pfm_initialize();
@@ -176,14 +184,6 @@ main(int argc, char **argv)
 	act.sa_handler = (sig_t)sigio_handler;
 	act.sa_flags   = SA_SIGINFO;
 	sigaction (SIGIO, &act, 0);
-
-	/*
-	 * pass options to library (optional)
-	 */
-	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
-	pfmlib_options.pfm_debug = 0; /* set to 1 for debug */
-	pfmlib_options.pfm_verbose = 1; /* set to 1 for verbose */
-	pfm_set_options(&pfmlib_options);
 
 	memset(pc, 0, sizeof(pc));
 	memset(&ctx, 0, sizeof(ctx));

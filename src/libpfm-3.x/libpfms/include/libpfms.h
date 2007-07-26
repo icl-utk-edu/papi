@@ -28,7 +28,7 @@
 extern "C" {
 #endif
 
-typedef int (*pfms_ovfl_t)(pfm_msg_t *msg);
+typedef int (*pfms_ovfl_t)(pfarg_msg_t *msg);
 
 int pfms_initialize(void);
 int pfms_create(uint64_t *cpu_list, size_t n, pfarg_ctx_t *ctx, pfms_ovfl_t *ovfl, void **desc);

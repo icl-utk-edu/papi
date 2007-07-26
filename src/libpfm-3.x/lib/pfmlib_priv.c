@@ -46,10 +46,11 @@ __pfm_vbprintf(const char *fmt, ...)
 {
 	va_list ap;
 
-	if (pfm_config.options.pfm_verbose == 0) return;
+	if (pfm_config.options.pfm_verbose == 0)
+		return;
 
 	va_start(ap, fmt);
-	vprintf(fmt, ap);
+	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 }
 

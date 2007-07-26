@@ -36,61 +36,58 @@ HEADERS += perfmon/pfmlib_os_ia64.h       \
 	   perfmon/pfmlib_comp_ia64.h     \
 	   perfmon/perfmon_ia64.h         \
 	   perfmon/perfmon_compat.h       \
-	   perfmon/perfmon_default_smpl.h
+	   perfmon/perfmon_default_smpl.h \
+	   perfmon/pfmlib_itanium.h	  \
+	   perfmon/pfmlib_itanium2.h	  \
+	   perfmon/pfmlib_montecito.h	  \
+	   perfmon/pfmlib_gen_ia64.h
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_X86_64),y)
 HEADERS += perfmon/pfmlib_os_x86_64.h   \
 	   perfmon/pfmlib_comp_x86_64.h \
-	   perfmon/perfmon_pebs_smpl.h
+	   perfmon/perfmon_x86_64.h     \
+	   perfmon/perfmon_i386.h       \
+	   perfmon/perfmon_pebs_smpl.h  \
+	   perfmon/pfmlib_amd64.h	\
+	   perfmon/pfmlib_pentium4.h	\
+	   perfmon/pfmlib_core.h	\
+	   perfmon/pfmlib_gen_ia32.h
+
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
-HEADERS += perfmon/pfmlib_os_i386.h   \
-	   perfmon/pfmlib_comp_i386.h \
-	   perfmon/perfmon_pebs_smpl.h
+HEADERS += perfmon/pfmlib_os_i386.h   	\
+	   perfmon/pfmlib_comp_i386.h 	\
+	   perfmon/perfmon_i386.h     	\
+	   perfmon/perfmon_pebs_smpl.h	\
+	   perfmon/pfmlib_amd64.h       \
+	   perfmon/pfmlib_pentium4.h    \
+	   perfmon/pfmlib_core.h        \
+	   perfmon/pfmlib_i386_p6.h	\
+	   perfmon/pfmlib_gen_ia32.h
+
 endif
 
-ifeq ($(CONFIG_PFMLIB_GENERIC_IA64),y)
-HEADERS += perfmon/pfmlib_gen_ia64.h
-endif
-
-ifeq ($(CONFIG_PFMLIB_ITANIUM),y)
-HEADERS += perfmon/pfmlib_itanium.h
-endif
-
-ifeq ($(CONFIG_PFMLIB_ITANIUM2),y)
-HEADERS += perfmon/pfmlib_itanium2.h
-endif
-
-ifeq ($(CONFIG_PFMLIB_MONTECITO),y)
-HEADERS += perfmon/pfmlib_montecito.h
-endif
-
-ifeq ($(CONFIG_PFMLIB_AMD64),y)
-HEADERS += perfmon/pfmlib_amd64.h
-endif
-
-ifeq ($(CONFIG_PFMLIB_PENTIUM4),y)
-HEADERS += perfmon/pfmlib_pentium4.h
-endif
-
-ifeq ($(CONFIG_PFMLIB_I386_P6),y)
-HEADERS += perfmon/pfmlib_i386_p6.h
-endif
-
-ifeq ($(CONFIG_PFMLIB_CORE),y)
-HEADERS += perfmon/pfmlib_core.h
-endif
-
-ifeq ($(CONFIG_PFMLIB_GEN_IA32),y)
-HEADERS += perfmon/pfmlib_gen_ia32.h
+ifeq ($(CONFIG_PFMLIB_ARCH_POWERPC),y)
+HEADERS += perfmon/pfmlib_os_powerpc.h   \
+	   perfmon/pfmlib_comp_powerpc.h \
+	   perfmon/perfmon_powerpc.h     \
+	   perfmon/pfmlib_powerpc.h
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_MIPS64),y)
 HEADERS += perfmon/pfmlib_os_mips64.h   \
 	   perfmon/pfmlib_comp_mips64.h \
+	   perfmon/perfmon_mips64.h     \
 	   perfmon/pfmlib_gen_mips64.h
+endif
+
+ifeq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
+HEADERS += perfmon/pfmlib_os_crayx2.h   \
+	   perfmon/pfmlib_comp_crayx2.h \
+	   perfmon/perfmon_crayx2.h     \
+	   perfmon/pfmlib_crayx2.h
 endif
 
 .PHONY: all clean distclean depend

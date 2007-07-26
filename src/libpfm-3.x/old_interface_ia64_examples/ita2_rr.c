@@ -48,7 +48,7 @@
 static inline void
 clear_psr_ac(void)
 {
-	__asm__ __volatile__("rum psr.up;;" ::: "memory" );
+	__asm__ __volatile__("rum psr.ac;;" ::: "memory" );
 }
 #else
 #error "You need to define clear_psr_ac() for your compiler"

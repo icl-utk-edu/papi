@@ -12,10 +12,11 @@ of several modern processors.
 
 
 This version of libpfm supports:
-	- For IA-64 :  Itanium (Merced), Itanium 2 (McKinley, Madison, Deerfield), Itanium 2 9000 (Montecito)  and Generic
+	- For IA-64 :  Itanium (Merced), Itanium 2 (McKinley, Madison, Deerfield), Itanium 2 9000 (Montecito) and Generic
 	- For X86-64:  AMD Opteron, Xeon, Intel Core 2 Duo
 	- For IA-32 :  Pentium M/P6, Core Duo/Core Solo, Intel Pentium 4, AMD Opteron (32 bit mode), Intel Core 2 Duo (32 bit mode)
 	- For MIPS:  5K, 20K, 25KF, 34K, 5KC, 74K, R10000, R12000, RM7000, RM9000, SB1, VR5432, VR5500
+	- For Cray: X2
 
 The core library is generic and does not depend on the perfmon interface. It is possible to use
 it on other operating systems (some adjustments may still be needed).
@@ -25,11 +26,11 @@ WHAT'S THERE
 	- the library source code including support for all processors listed above
 
 	- a set of examples showing how the library can be used with the perfmon2
-	  version 2.3 or higher kernel interface.
+	  version 2.6 or higher kernel interface.
 
 	- a set of older examples for IA-64 only using the legacy perfmon2 interface (v2.0).
 
-	- a set of library header files and the perfmon2 v2.3 kernel interface headers
+	- a set of library header files and the perfmon2 v2.6 kernel interface headers
 
 	- libpfms: a simple library to help setup SMP system-wide monitoring sessions. It comes
 	  with a simple example. This library is not part of libpfm.
@@ -50,7 +51,7 @@ INSTALLATION
 REQUIREMENTS:
 -------------
 	- to run the programs in the examples subdir, you MUST be using a linux kernel version of
-	  2.6.19 or later with the corresponding perfmon new code base patch installed.
+	  2.6.21 or later with the corresponding perfmon new code base patch installed.
 	  The patch can be downloaded from:
 	  		http://www.sf.net/projects/perfmon2
 
@@ -59,8 +60,4 @@ REQUIREMENTS:
 DOCUMENTATION
 -------------
 	- man pages for all entry points
-	- More information can be found on library web site: http://www.hpl.hp.com/research/linux/perfmon
-
-LIMITATIONS:
-------------
-	For some procesors, the PMU event table may not be complete.
+	- More information can be found on library web site: http://perfmon2.sf.net

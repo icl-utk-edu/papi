@@ -30,7 +30,6 @@ LIBS += -lm
 TARGETS=smpl_p4_pebs smpl_core_pebs
 
 all: $(TARGETS)
-	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 
 $(TARGETS):  %:%.o $(PFMLIB) ../detect_pmcs.o
 	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $^ $(LIBS)

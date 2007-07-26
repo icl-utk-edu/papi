@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2006 Hewlett-Packard Development Company, L.P.
+ * Copyright (c) 2001-2007 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -196,12 +196,13 @@ extern int pfm_get_inst_retired_event(pfmlib_event_t *e);
 #define PFMLIB_ITANIUM2_PMU 	 	3	/* Intel Itanium 2 */
 #define PFMLIB_MONTECITO_PMU 	 	4	/* Intel Dual-Core Itanium 2 9000 */
 #define PFMLIB_AMD64_PMU		16	/* AMD AMD64 */
-#define PFMLIB_GEN_IA32_PMU		63	/* Intel IA-32 architectural PMU */
+#define PFMLIB_GEN_IA32_PMU		63	/* Intel architectural PMU for X86 */
 #define PFMLIB_I386_P6_PMU		32	/* Intel P6 (excl. Pentium M) */
 #define PFMLIB_PENTIUM4_PMU		33	/* Intel Pentium4/Xeon/EM64T */
 #define PFMLIB_COREDUO_PMU		34	/* Intel Core Duo/Core Solo */
 #define PFMLIB_I386_PM_PMU		35	/* Intel Pentium M */
-#define PFMLIB_CORE_PMU			36	/* Intel Core */
+#define PFMLIB_CORE_PMU			36	/* obsolete, use PFMLIB_INTEL_CORE_PMU */
+#define PFMLIB_INTEL_CORE_PMU		36	/* Intel Core */
 #define PFMLIB_MIPS_20KC_PMU		64	/* MIPS 20KC */
 #define PFMLIB_MIPS_24K_PMU		65	/* MIPS 24K */
 #define PFMLIB_MIPS_25KF_PMU		66	/* MIPS 25KF */
@@ -217,6 +218,10 @@ extern int pfm_get_inst_retired_event(pfmlib_event_t *e);
 #define PFMLIB_MIPS_VR5500_PMU		76	/* MIPS VR5500 */
 #define PFMLIB_MIPS_ICE9A_PMU		77	/* SiCortex ICE9A */
 #define PFMLIB_MIPS_ICE9B_PMU		78	/* SiCortex ICE9B */
+
+#define PFMLIB_POWERPC_PMU		90	/* POWERPC */
+
+#define PFMLIB_CRAYX2_PMU		96	/* Cray X2 */
 
 /*
  * pfmlib error codes

@@ -153,7 +153,7 @@ main(int argc, char **argv)
 	pfarg_ctx_t ctx;
 	smpl_arg_t buf_arg;
 	pfarg_load_t load_args;
-	pfm_msg_t msg;
+	pfarg_msg_t msg;
 	smpl_hdr_t *hdr;
 	void *buf_addr;
 	pid_t pid;
@@ -170,7 +170,7 @@ main(int argc, char **argv)
 	 * check we are on an Intel Core PMU
 	 */
 	pfm_get_pmu_type(&type);
-	if (type != PFMLIB_CORE_PMU)
+	if (type != PFMLIB_INTEL_CORE_PMU)
 		fatal_error("This program only works with an Intel Core processor\n");
 
 	/*

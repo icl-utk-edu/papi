@@ -476,9 +476,9 @@ main(int argc, char **argv)
 {
 	pfmlib_options_t pfmlib_options;
 
-	if (argc < 2) {
+	if (argc < 2)
 		fatal_error("You must specify a command to execute\n");
-	}
+
 	/*
 	 * Initialize pfm library (required before we can use it)
 	 */

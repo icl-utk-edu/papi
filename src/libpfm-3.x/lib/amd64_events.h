@@ -760,36 +760,37 @@ static pme_amd64_entry_t amd64_pe[]={
 	},
 /* 77 */{.pme_name = "SIZED_BLOCKS",
 	.pme_code = 0xE5,
-	.pme_desc = "Sized Blocks Sized Read/Write activity",
-	.pme_flags   = PFMLIB_AMD64_UMASK_COMBO,
+	.pme_desc = "Sized Blocks Sized Read/Write activity (Revision D and later)",
+	.pme_flags   = PFMLIB_AMD64_UMASK_COMBO|PFMLIB_AMD64_REV_D,
 	.pme_numasks = 4,
 	.pme_umasks  = {
 		{ .pme_uname = "32_BYTE_WRITES",
-		  .pme_udesc = "32-byte Sized Writes (Revision D and later revisions)",
-		  .pme_ucode = 0x04,
+		  .pme_udesc = "32-byte Sized Writes",
+		  .pme_ucode = 0x04
 		},
 		{ .pme_uname = "64_BYTE_WRITES",
-		  .pme_udesc = "64-byte Sized Writes (Revision D and later revisions)",
-		  .pme_ucode = 0x08,
+		  .pme_udesc = "64-byte Sized Writes",
+		  .pme_ucode = 0x08
 		},
 		{ .pme_uname = "32_BYTE_READS",
-		  .pme_udesc = "32-byte Sized Reads (Revision D and later revisions)",
-		  .pme_ucode = 0x10,
+		  .pme_udesc = "32-byte Sized Reads",
+		  .pme_ucode = 0x10
 		},
 		{ .pme_uname = "64_BYTE_READS",
-		  .pme_udesc = "64-byte Sized Reads (Revision D and later revisions)",
-		  .pme_ucode = 0x20,
+		  .pme_udesc = "64-byte Sized Reads",
+		  .pme_ucode = 0x20
 		}
 	 }
 	},
 /* 78 */{.pme_name = "DRAM_ECC_ERRORS",
 	.pme_code = 0x80E8,
-	.pme_desc = "ECC Errors: Number of correctable and Uncorrectable DRAM ECC errors (Revision E)"
+	.pme_flags = PFMLIB_AMD64_REV_E,
+	.pme_desc = "ECC Errors: Number of correctable and Uncorrectable DRAM ECC errors (Revision E and later)"
 	},
 /* 79 */{.pme_name = "CPU_IO_REQUESTS_TO_MEMORY_IO",
 	.pme_code = 0xE9,
-	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E)",
-	.pme_flags   = PFMLIB_AMD64_UMASK_COMBO,
+	.pme_desc = "CPU/IO Requests to Memory/IO (Revision E and later)",
+	.pme_flags   = PFMLIB_AMD64_UMASK_COMBO|PFMLIB_AMD64_REV_E,
 	.pme_numasks = 10,
 	.pme_umasks  = {
 		{ .pme_uname = "LOCAL_CPU_TO_LOCAL_MEMORY",
@@ -836,8 +837,8 @@ static pme_amd64_entry_t amd64_pe[]={
 	},
 /* 80 */{.pme_name = "CACHE_BLOCK",
 	.pme_code = 0xEA,
-	.pme_desc = "Cache Block Commands (Revision E)",
-	.pme_flags   = PFMLIB_AMD64_UMASK_COMBO,
+	.pme_desc = "Cache Block Commands (Revision E and later)",
+	.pme_flags   = PFMLIB_AMD64_UMASK_COMBO | PFMLIB_AMD64_REV_E,
 	.pme_numasks = 5,
 	.pme_umasks  = {
 		{ .pme_uname = "VICTIM_WRITEBACK",
@@ -929,8 +930,9 @@ static pme_amd64_entry_t amd64_pe[]={
 		  .pme_ucode = 0x20,
 		},
 		{ .pme_uname = "UPSTREAM_WRITES",
-		  .pme_udesc = "Upstream writes (Revision D and later revisions)",
+		  .pme_udesc = "Upstream writes (revision D and later)",
 		  .pme_ucode = 0x40,
+		  .pme_uflags= PFMLIB_AMD64_REV_D
 		},
 	 }
 	},

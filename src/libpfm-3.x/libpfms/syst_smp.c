@@ -92,9 +92,17 @@ main(int argc, char **argv)
 	memset(&ctx, 0, sizeof(ctx));
 	memset(pc, 0, sizeof(pc));
 
-	cpu_list = argc > 1 ? strtoul(argv[1], NULL, 0) : 0x3;
+	ncpus = (uint32_t)sysconf(_SC_NPROCESSORS_ONLN);
+	if (ncpus == -1)
+		fatal_error("cannot retrieve number of online processors\n");
 
-	ncpus = popcount(cpu_list);
+	if (argc > 1) {
+		cpu_list = strtoul(argv[1],NULL,0);
+		if (popcount(cpu_list) > ncpus)
+			fatal_error("too many processors specified\n");
+	} else {
+		cpu_list = ((1<<ncpus)-1);
+	}
 
 	/*
 	 * use libpfm to prepare some decent PMC/PMD setup
@@ -227,7 +235,7 @@ main(int argc, char **argv)
 	ret = pfms_stop(desc);
 	if (ret == -1)
 		fatal_error("stop error %d\n", ret);
-	
+
 	/*
 	 * read the PMD registers on all CPUs of interest.
 	 * The pd[] array must be organized such that to
@@ -248,10 +256,10 @@ main(int argc, char **argv)
 		for (i=0; i < inp.pfp_event_count; i++, k++) {
 			pfm_get_full_event_name(&inp.pfp_events[i], name, len);
 			printf("CPU%-3d PMD%u %20"PRIu64" %s\n",
-			j,
-			pd[k].reg_num,
-			pd[k].reg_value,
-			name);
+					j,
+					pd[k].reg_num,
+					pd[k].reg_value,
+					name);
 		}
 	}
 

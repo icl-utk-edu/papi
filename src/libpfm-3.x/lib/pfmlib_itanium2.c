@@ -1029,12 +1029,19 @@ assign_zero:
 				reg.pmc12_ita2_reg.btbc_ppm,
 				reg.pmc12_ita2_reg.btbc_brt);
 	/*
-	 * PMD16 is included in list of used PMD
+	 * only add BTB PMD when actually using BTB.
+	 * Not needed when dealing with D-EAR TLB and DEAR-ALAT
+	 * PMC12 restriction
 	 */
-	for(i=8; i < 17; i++, pos2++) {
-		pd[pos2].reg_num = i;
-		pd[pos2].reg_addr = i;
-		__pfm_vbprintf("[PMD%u(pmd%u)]\n", pd[pos2].reg_num, pd[pos2].reg_num);
+	if (found_btb || has_btb_param) {
+		/*
+		 * PMD16 is included in list of used PMD
+		 */
+		for(i=8; i < 17; i++, pos2++) {
+			pd[pos2].reg_num = i;
+			pd[pos2].reg_addr = i;
+			__pfm_vbprintf("[PMD%u(pmd%u)]\n", pd[pos2].reg_num, pd[pos2].reg_num);
+		}
 	}
 
 

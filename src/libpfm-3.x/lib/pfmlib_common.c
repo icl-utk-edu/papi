@@ -36,47 +36,41 @@
 
 static pfm_pmu_support_t *supported_pmus[]=
 {
-#ifdef CONFIG_PFMLIB_MONTECITO
+
+#ifdef CONFIG_PFMLIB_ARCH_IA64
 	&montecito_support,
-#endif
-
-#ifdef CONFIG_PFMLIB_ITANIUM2
 	&itanium2_support,
-#endif
-
-#ifdef CONFIG_PFMLIB_ITANIUM
 	&itanium_support,
+	&generic_ia64_support,	/* must always be last for IA-64 */
 #endif
 
-#ifdef CONFIG_PFMLIB_AMD64
+#ifdef CONFIG_PFMLIB_ARCH_X86_64
 	&amd64_support,
+	&pentium4_support,
+	&core_support,
+	&gen_ia32_support, /* must always be last for x86-64 */
 #endif
 
-
-#ifdef CONFIG_PFMLIB_I386_P6
+#ifdef CONFIG_PFMLIB_ARCH_I386
 	&i386_p6_support,
 	&i386_pm_support,
-#endif
-
-#ifdef CONFIG_PFMLIB_PENTIUM4
-	&pentium4_support,
-#endif
-
-#ifdef CONFIG_PFMLIB_CORE
-	&core_support,
-#endif
-
-#ifdef CONFIG_PFMLIB_GEN_IA32
 	&coreduo_support,
-	&gen_ia32_support,
+	&amd64_support,
+	&pentium4_support,
+	&core_support,
+	&gen_ia32_support, /* must always be last for i386 */
 #endif
 
-#ifdef CONFIG_PFMLIB_GEN_MIPS64
+#ifdef CONFIG_PFMLIB_ARCH_MIPS64
 	&generic_mips64_support,
 #endif
 
-#ifdef CONFIG_PFMLIB_GEN_IA64
-	&generic_ia64_support,	/* must always be last (matches any IA-64 PMU) */
+#ifdef CONFIG_PFMLIB_ARCH_POWERPC
+	&generic_powerpc_support,
+#endif
+
+#ifdef CONFIG_PFMLIB_ARCH_CRAYX2
+	&crayx2_support,
 #endif
 	NULL
 };

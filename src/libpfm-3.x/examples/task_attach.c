@@ -66,7 +66,7 @@ parent(pid_t pid)
 	pfarg_pmc_t pc[NUM_PMCS];
 	pfarg_pmd_t pd[NUM_PMDS];
 	pfarg_load_t load_args;
-	pfm_msg_t msg;
+	pfarg_msg_t msg;
 	unsigned int i, num_counters;
 	int status, ret;
 	int ctx_fd;
@@ -291,18 +291,18 @@ main(int argc, char **argv)
 	pid = atoi(argv[1]);
 
 	/*
-	 * Initialize pfm library (required before we can use it)
-	 */
-	ret = pfm_initialize();
-	if (ret != PFMLIB_SUCCESS)
-		fatal_error("Cannot initialize library: %s\n", pfm_strerror(ret));
-
-	/*
 	 * pass options to library (optional)
 	 */
 	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
 	pfmlib_options.pfm_debug = 0; /* set to 1 for debug */
 	pfm_set_options(&pfmlib_options);
+
+	/*
+	 * Initialize pfm library (required before we can use it)
+	 */
+	ret = pfm_initialize();
+	if (ret != PFMLIB_SUCCESS)
+		fatal_error("Cannot initialize library: %s\n", pfm_strerror(ret));
 
 	return parent(pid);
 }

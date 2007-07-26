@@ -41,6 +41,26 @@ endif
 ifeq (i386,$(findstring i386,$(ARCH)))
 override ARCH=ia32
 endif
+ifeq (ppc,$(findstring ppc,$(ARCH)))
+override ARCH=powerpc
+endif
+
+#
+# Cray-X2 is cross-compiled. Check the programming environment
+#
+PE := $(shell echo $${CRAY_PE_TARGET})
+ifeq (cray-x2,$(PE))
+override ARCH=crayx2
+endif
+
+#
+# Cray-XT needs the V2.2 version for compatability
+#
+MACHINE := $(shell test -d /proc/cray_xt && echo cray-xt)
+ifeq (cray-xt,$(MACHINE))
+CONFIG_PFMLIB_ARCH_CRAYXT=y
+endif
+
 #
 # Where should things (lib, headers, man) go in the end.
 #
@@ -55,32 +75,26 @@ MANDIR=$(PREFIX)/share/man
 #
 ifeq ($(ARCH),ia64)
 CONFIG_PFMLIB_ARCH_IA64=y
-CONFIG_PFMLIB_GEN_IA64=y
-CONFIG_PFMLIB_ITANIUM=y
-CONFIG_PFMLIB_ITANIUM2=y
-CONFIG_PFMLIB_MONTECITO=y
 endif
 
 ifeq ($(ARCH),x86_64)
 CONFIG_PFMLIB_ARCH_X86_64=y
-CONFIG_PFMLIB_AMD64=y
-CONFIG_PFMLIB_PENTIUM4=y
-CONFIG_PFMLIB_GEN_IA32=y
-CONFIG_PFMLIB_CORE=y
 endif
 
 ifeq ($(ARCH),ia32)
 CONFIG_PFMLIB_ARCH_I386=y
-CONFIG_PFMLIB_I386_P6=y
-CONFIG_PFMLIB_GEN_IA32=y
-CONFIG_PFMLIB_AMD64=y
-CONFIG_PFMLIB_PENTIUM4=y
-CONFIG_PFMLIB_CORE=y
 endif
 
 ifeq ($(ARCH),mips64)
-CONFIG_PFMLIB_GEN_MIPS64=y
 CONFIG_PFMLIB_ARCH_MIPS64=y
+endif
+
+ifeq ($(ARCH),powerpc)
+CONFIG_PFMLIB_ARCH_POWERPC=y
+endif
+
+ifeq ($(ARCH),crayx2)
+CONFIG_PFMLIB_ARCH_CRAYX2=y
 endif
 
 #
@@ -108,3 +122,18 @@ CFLAGS=$(OPTIM) $(DBG) -I$(PFMINCDIR)
 LDFLAGS=-L$(PFMLIBDIR)
 MKDEP=makedepend
 PFMLIB=$(PFMLIBDIR)/libpfm.a
+
+
+# Reset options for Cray XT
+ifeq ($(CONFIG_PFMLIB_ARCH_CRAYXT),y)
+CFLAGS=$(OPTIM) $(DBG) -I$(PFMINCDIR) -DPFMLIB_VERSION_22
+LDFLAGS=-L$(PFMLIBDIR) -static
+endif
+
+# Reset the compiler for Cray-X2 (load x2-gcc module)
+ifeq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
+CC=craynv-cray-linux-gnu-gcc
+CFLAGS=$(OPTIM) $(DBG) -I$(PFMINCDIR) -DPFMLIB_VERSION_22
+LDFLAGS=-L$(PFMLIBDIR) -static
+endif
+
