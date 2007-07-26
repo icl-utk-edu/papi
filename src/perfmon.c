@@ -134,6 +134,12 @@ inline_static long_long get_cycles(void)
      }
   return count;
 }
+#elif defined(__crayx2)						/* CRAY X2 */
+inline_static long_long get_cycles (void)
+{
+	return _rtc ( );
+}
+/* #define get_cycles _rtc ?? */
 #endif
 
 /* The below function is stolen from libpfm from Stephane Eranian */
@@ -195,6 +201,10 @@ static void decode_vendor_string(char *s, int *vendor)
     *vendor = PAPI_VENDOR_MIPS;
   else if (strcasecmp(s,"SiCortex") == 0)
     *vendor = PAPI_VENDOR_SICORTEX;
+#if defined(__crayx2)						/* CRAY X2 */
+  else if (strcasecmp(s,"Cray") == 0)
+    *vendor = PAPI_VENDOR_CRAY;
+#endif
   else
     *vendor = PAPI_VENDOR_UNKNOWN;
 }
@@ -1588,6 +1598,13 @@ static int mips_get_memory_info(PAPI_hw_info_t *hw_info)
 }
 #endif
 
+#if defined(__crayx2)						/* CRAY X2 */
+static int crayx2_get_memory_info(PAPI_hw_info_t *hw_info)
+{
+	return 0;
+}
+#endif
+
 int _papi_hwd_get_memory_info(PAPI_hw_info_t * hwinfo, int unused)
 {
   int retval = PAPI_OK;
@@ -1598,6 +1615,8 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * hwinfo, int unused)
   x86_get_memory_info(hwinfo);
 #elif defined(__ia64__)
   ia64_get_memory_info(hwinfo);
+#elif defined(__crayx2)						/* CRAY X2 */
+  crayx2_get_memory_info(hwinfo);
 #else
 #error "No support for this architecture. Please modify perfmon.c"
 #endif
@@ -1620,10 +1639,10 @@ void dump_sets(pfarg_setdesc_t *set, int num_sets)
     {
       SUBDBG("SET[%d]\n",i);
       SUBDBG("SET[%d].set_id = %d\n",i,set[i].set_id);
-      SUBDBG("SET[%d].set_id_next = %d\n",i,set[i].set_id_next);
+     // SUBDBG("SET[%d].set_id_next = %d\n",i,set[i].set_id_next);
       SUBDBG("SET[%d].set_flags = %d\n",i,set[i].set_flags);
       SUBDBG("SET[%d].set_timeout = %llu\n",i,(unsigned long long)set[i].set_timeout);
-      SUBDBG("SET[%d].set_mmap_offset = 0x%016llx\n",i,(unsigned long long)set[i].set_mmap_offset);
+     //  SUBDBG("SET[%d].set_mmap_offset = 0x%016llx\n",i,(unsigned long long)set[i].set_mmap_offset);
     }
 }
 
@@ -1636,13 +1655,13 @@ void dump_setinfo(hwd_control_state_t * ctl)
     {
       SUBDBG("SETINFO[%d]\n",i);
       SUBDBG("SETINFO[%d].set_id = %d\n",i,setinfo[i].set_id);
-      SUBDBG("SETINFO[%d].set_id_next = %d\n",i,setinfo[i].set_id_next);
+      // SUBDBG("SETINFO[%d].set_id_next = %d\n",i,setinfo[i].set_id_next);
       SUBDBG("SETINFO[%d].set_flags = %d\n",i,setinfo[i].set_flags);
       SUBDBG("SETINFO[%d].set_ovfl_pmds[0] = 0x%016llx\n",i,(unsigned long long)setinfo[i].set_ovfl_pmds[0]);
       SUBDBG("SETINFO[%d].set_runs = %llu\n",i,(unsigned long long)setinfo[i].set_runs);
       SUBDBG("SETINFO[%d].set_timeout = %llu\n",i,(unsigned long long)setinfo[i].set_timeout);
       SUBDBG("SETINFO[%d].set_act_duration = %llu\n",i,(unsigned long long)setinfo[i].set_act_duration);
-      SUBDBG("SETINFO[%d].set_mmap_offset = 0x%016llx\n",i,(unsigned long long)setinfo[i].set_mmap_offset);
+      // SUBDBG("SETINFO[%d].set_mmap_offset = 0x%016llx\n",i,(unsigned long long)setinfo[i].set_mmap_offset);
       SUBDBG("SETINFO[%d].set_avail_pmcs[0] = 0x%016llx\n",i,(unsigned long long)setinfo[i].set_avail_pmcs[0]);
       SUBDBG("SETINFO[%d].set_avail_pmds[0] = 0x%016llx\n",i,(unsigned long long)setinfo[i].set_avail_pmds[0]);
     }
@@ -2421,6 +2440,9 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    if (retval)
      return(retval);
 
+#if defined(__crayx2)						/* CRAY X2 */
+  _papi_hwd_lock_init ( );
+#endif
    for (i = 0; i < PAPI_MAX_LOCK; i++)
       _papi_hwd_lock_data[i] = MUTEX_OPEN;
    
@@ -3241,7 +3263,7 @@ void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
      }
    else if (ret != sizeof(msg)) 
      {
-       PAPIERROR("read(%d): short %d vs. %d bytes", ret, sizeof(msg)); 
+       PAPIERROR("read(%d): short %d vs. %d bytes", fd, ret, sizeof(msg)); 
        ret = -1;
      }
    

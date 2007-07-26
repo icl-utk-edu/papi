@@ -1,5 +1,5 @@
 /* 
-* File:    zero_fork.c
+* File:    exec.c
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -23,12 +23,13 @@ int main(int argc, char **argv)
    if (retval != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   if (strcmp(argv[0],"xxx") == 0)
+   if (strcmp(argv[0],"xxx") == 0) {
+     test_pass(__FILE__, NULL, 0);
      exit(0);
+   }
 
-   if (execvp(argv[0],"xxx") == -1)
-     test_fail(__FILE__, __LINE__, "execvp", PAPI_ESYS);
+   if (execlp(argv[0],"xxx",NULL) == -1)
+     test_fail(__FILE__, __LINE__, "execlp", PAPI_ESYS);
 
-   test_pass(__FILE__, NULL, 0);
    exit(1);
 }

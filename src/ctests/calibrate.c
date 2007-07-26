@@ -36,7 +36,7 @@ extern int TESTS_QUIET;
 
 static void print_help(char **argv)
 {
-   printf("Usage: %s [-ivmdh]\n",argv[0]);
+   printf("Usage: %s [-ivmdh] [-e event]\n",argv[0]);
    printf("Options:\n\n");
    printf("\t-i            Inner Product test.\n");
    printf("\t-v            Matrix-Vector multiply test.\n");

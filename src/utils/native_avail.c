@@ -94,6 +94,17 @@ int main(int argc, char **argv)
    PAPI_enum_event(&i, 0);
 #endif
    do {
+#if defined(__crayx2)						/* CRAY X2 */
+	/*	M chips on the Cray X2 must be qualified as to the
+	 *	M chip ID upon which the event is being counted.
+	 *	Therefore a chip ID must always be present. To get
+	 *	the ball rolling set the bit for chip ID 0 when
+	 *	the first M chip event is encountered.
+	 */
+      if ((i & 0x00000FFF) >= (32*4 + 16*4) && ((i & 0x0FFFF000) == 0)) {
+	i |= 0x00001000;
+      }
+#endif
 #ifdef _POWER4
       group = (i & 0x00FF0000) >> 16;
       if (group) {
@@ -161,6 +172,8 @@ int main(int argc, char **argv)
      PAPI_ENOEVNT  fail, next event is invalid
 */
    } while (PAPI_enum_event(&i, PAPI_PWR4_ENUM_GROUPS) == PAPI_OK);
+#elif defined(__crayx2)					/* CRAY X2 */
+   } while (PAPI_enum_event(&i, PAPI_ENUM_UMASKS_CRAYX2) == PAPI_OK);
 #else
    } while (PAPI_enum_event(&i, PAPI_ENUM_ALL) == PAPI_OK);
 #endif

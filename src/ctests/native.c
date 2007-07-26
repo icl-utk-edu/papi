@@ -105,6 +105,9 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 #elif defined(_BGL)
    static char *native_name[] = { "BGL_UPC_PU0_PREF_STREAM_HIT", "BGL_PAPI_TIMEBASE", "BGL_UPC_PU1_PREF_STREAM_HIT", NULL };
 
+#elif defined(__crayx2)					/* CRAY X2 */
+  static char *native_name[] = { "CYCLES", "INST_GRAD", "INST_DISPATCH", NULL };
+
 #else
 #error "Architecture not supported in test file."
 #endif

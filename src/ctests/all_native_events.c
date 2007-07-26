@@ -78,6 +78,11 @@ int main(int argc, char **argv)
    PAPI_enum_event(&i, 0);
 #endif
    do {
+#if defined(__crayx2)					/* CRAY X2 */
+	if ((i & 0x00000FFF) >= (32*4 + 16*4) && ((i & 0x0FFFF000) == 0)) {
+		i |= 0x00001000;
+	}
+#endif
         retval = PAPI_get_event_info(i, &info);
 
 	printf("\n%s\t0x%x  \n%s\n",
@@ -99,6 +104,12 @@ int main(int argc, char **argv)
 	if (!TESTS_QUIET && retval == PAPI_OK)
 	    printf("\n");
     } while (PAPI_enum_event(&i, PAPI_PENT4_ENUM_GROUPS) == PAPI_OK);
+#elif defined(__crayx2)					/* CRAY X2 */
+	  event_code = info.event_code;
+	  if (add_remove_event(EventSet, event_code, info.symbol))
+	      add_count++;
+	  else err_count++;
+    } while (PAPI_enum_event(&i, PAPI_ENUM_UMASKS_CRAYX2) == PAPI_OK);
 #else
 #ifdef _POWER4
 	  event_code = info.event_code & 0xff00ffff;

@@ -8,6 +8,10 @@ TARGETS = ear serial multiplex_and_pthreads shared
 SUBSTR	= perfmon
 MEMSUBSTR = perfmon
 
+ifeq ($(COMPILER),CRAYX2)
+LIBS	= static
+endif
+
 #
 # GNU G77/GCC section
 #

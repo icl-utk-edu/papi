@@ -232,6 +232,26 @@ do {                                                    \
   unsigned int retval;                                 \
   retval = papi_xchg_u32(&_papi_hwd_lock_data[lck],MUTEX_OPEN); \
 } while(0)
+#elif defined(__crayx2)					/* CRAY X2 */
+#include <pthread.h>
+static pthread_spinlock_t crayx2_mutex[PAPI_MAX_LOCK];
+inline static void _papi_hwd_lock_init (void)
+{
+	int i;
+	for (i=0; i<PAPI_MAX_LOCK; i++) {
+		pthread_spin_init (&crayx2_mutex[i], PTHREAD_PROCESS_PRIVATE);
+	}
+}
+inline static void _papi_hwd_lock (int lck)
+{
+	pthread_spin_lock (&crayx2_mutex[lck]);
+	_papi_hwd_lock_data[lck] = MUTEX_CLOSED;
+}
+inline static void _papi_hwd_unlock (int lck)
+{
+	pthread_spin_unlock (&crayx2_mutex[lck]);
+	_papi_hwd_lock_data[lck] = MUTEX_OPEN;
+}
 #else
 #error "_papi_hwd_lock/unlock undefined!"
 #endif
@@ -249,6 +269,8 @@ typedef ucontext_t hwd_ucontext_t;
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.gregs[REG_RIP]
 #elif defined(mips)
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.pc
+#elif defined(__crayx2)					/* CRAY X2 */
+#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.regs.pc
 #else
 #error "OVERFLOW_ADDRESS() undefined!"
 #endif

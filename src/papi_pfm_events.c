@@ -644,7 +644,7 @@ inline unsigned int _pfm_convert_umask(unsigned int event, unsigned int umask)
 int _papi_pfm_setup_presets(char *pmu_name, int pmu_type)
 {
   int retval;
-  hwi_search_t *preset_search_map;
+  hwi_search_t *preset_search_map = NULL;
   hwi_dev_notes_t *notemap = NULL;
   pfm_preset_search_entry_t *_perfmon2_pfm_preset_search_map;
 
@@ -896,6 +896,53 @@ int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
 	}
       return(PAPI_ENOEVNT);
     }
+#if defined(__crayx2)						/* CRAY X2 */
+  else if (modifier == PAPI_ENUM_UMASKS_CRAYX2)
+    {
+      if (num_masks == 0)
+	{
+	/*	No "mask" so just get the next event if not at the end.
+	 */
+	  if (event < _papi_hwi_system_info.sub_info.num_native_events - 1)
+	    {
+	      *EventCode += 1;
+	      return (PAPI_OK);
+	    }
+	  return (PAPI_ENOEVNT);
+	}
+      else if (umask == 0 || _pop (umask) > 1)
+	{
+	/*	There are masks but zero is not allowed, and the masks
+	 *	is really a single bit, positioned to indicate what chip
+	 *	is activated.
+	 */
+	  return (PAPI_ENOEVNT);
+	}
+      else
+	{
+	/*	A single bit is set for the umask indicating which chip
+	 *	of the multiple ones available is activated. If the last
+	 *	chip id, go ahead to 1st chip id for the next event.
+	 */
+	  int thisbit = ffs(umask);
+
+	  if (thisbit < num_masks)
+	    {
+	      *EventCode = encode_native_event_raw(event,(1 << thisbit));
+	      return (PAPI_OK);
+	    }
+	  else if (event < _papi_hwi_system_info.sub_info.num_native_events - 1)
+	    {
+	      *EventCode = encode_native_event_raw(event+1,1);
+	      return (PAPI_OK);
+	    }
+	  else
+	    {
+	      return (PAPI_ENOEVNT);
+	    }
+	}
+    }
+#endif
   else
     return(PAPI_EINVAL);
   
