@@ -1095,6 +1095,10 @@ case "$OS" in
 	   MAKEVER="$OS"-perfctr-opteron
 	   ;;
 	   
+   CNL)
+	   MAKEVER="$OS"-perfmon2-"$CPU"
+	   ;;
+	   
    solaris)
        if test "${bitmode}" = "64"; then
           if test "`isainfo -v | grep "64"`" = ""; then
@@ -1197,6 +1201,7 @@ case "$MAKEVER" in
     aix5-power3-64bit);;
     any-null);;
     catamount-perfctr-opteron);;
+    CNL-perfmon2-crayx2);;
     dadd-alpha);;
     irix-mips);;
     irix-mips-64bit);;
