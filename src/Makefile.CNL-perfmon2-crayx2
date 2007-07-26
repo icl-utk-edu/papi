@@ -1,0 +1,8 @@
+COMPILER	= CRAYX2
+
+CC		= craynv-cray-linux-gnu-gcc
+LDFLAGS		= -static -lpthread
+
+PFM_EVENTS	= static
+PFM_ROOT	= ./libpfm-x2
+include Rules.pfm2
