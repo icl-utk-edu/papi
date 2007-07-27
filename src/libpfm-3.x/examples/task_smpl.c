@@ -514,7 +514,7 @@ mainloop(char **arg)
 					if (errno != EBUSY)
 						fatal_error("pfm_restart error errno %d\n",errno);
 					else
-						warning("pfm_restart: task has probably terminated \n");
+						warning("pfm_restart: task probably terminated \n");
 				}
 				break;
 			case PFM_MSG_END: /* monitored task terminated */

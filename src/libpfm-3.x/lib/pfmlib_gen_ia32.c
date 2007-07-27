@@ -1,10 +1,10 @@
 /*
- * pfmlib_gen_ia32.c : Intel architectural PMU v1
+ * pfmlib_gen_ia32.c : Intel architectural PMU v1 and v2
  *
- * The file provides support for the Intel architectural PMU v1.
+ * The file provides support for the Intel architectural PMU v1 and v2.
  *
  * It also provides support for Core Duo/Core Solo processors which
- * implement the architectural PMU with more than architected events.
+ * implement the architectural PMU v1 with more than architected events.
  *
  * Copyright (c) 2005-2007 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
@@ -66,19 +66,45 @@ pfm_pmu_support_t gen_ia32_support;
 pfm_pmu_support_t *gen_support;
 
 /*
- * Description of the PMC register mappings use by
- * this module (as reported in pfmlib_reg_t.reg_num):
+ * Description of the PMC/PMD register mappings use by
+ * this module (as reported in pfmlib_reg_t.reg_num)
  *
- * 0 -> PMC0 -> PERFEVTSEL0 -> MSR @ 0x186
- * 1 -> PMC1 -> PERFEVTSEL1 -> MSR @ 0x187
- * n -> PMCn -> PERFEVTSELn -> MSR @ 0x186+n
+ * For V1 (up to 16 generic counters 0-15):
  *
- * 0 -> PMD0 -> IA32_PMC0   -> MSR @ 0xc1
- * 1 -> PMD1 -> IA32_PMC1   -> MSR @ 0xc2
- * 2 -> PMDn -> IA32_PMCn   -> MSR @ 0xc1+n
+ * 	0 -> PMC0 -> PERFEVTSEL0 -> MSR @ 0x186
+ * 	1 -> PMC1 -> PERFEVTSEL1 -> MSR @ 0x187
+ * 	...
+ * 	n -> PMCn -> PERFEVTSELn -> MSR @ 0x186+n
+ *
+ * 	0 -> PMD0 -> IA32_PMC0   -> MSR @ 0xc1
+ * 	1 -> PMD1 -> IA32_PMC1   -> MSR @ 0xc2
+ * 	...
+ * 	n -> PMDn -> IA32_PMCn   -> MSR @ 0xc1+n
+ *
+ * For V2 (up to 16 generic and 16 fixed counters):
+ *
+ * 	0 -> PMC0 -> PERFEVTSEL0 -> MSR @ 0x186
+ * 	1 -> PMC1 -> PERFEVTSEL1 -> MSR @ 0x187
+ * 	...
+ * 	15 -> PMC15 -> PERFEVTSEL15 -> MSR @ 0x186+15
+ *
+ * 	16 -> PMC16 -> IA32_FIXED_CTR_CTRL -> MSR @ 0x38d
+ *
+ * 	0 -> PMD0 -> IA32_PMC0   -> MSR @ 0xc1
+ * 	1 -> PMD1 -> IA32_PMC1   -> MSR @ 0xc2
+ * 	...
+ * 	15 -> PMD15 -> IA32_PMC15   -> MSR @ 0xc1+15
+ *
+ * 	16 -> PMD16 -> IA32_FIXED_CTR0 -> MSR @ 0x309
+ * 	17 -> PMD17 -> IA32_FIXED_CTR1 -> MSR @ 0x30a
+ * 	...
+ * 	n -> PMDn -> IA32_FIXED_CTRn -> MSR @ 0x309+n
  */
-#define GEN_IA32_SEL_BASE 0x186
-#define GEN_IA32_CTR_BASE 0xc1
+#define GEN_IA32_SEL_BASE	  0x186
+#define GEN_IA32_CTR_BASE	  0xc1
+#define GEN_IA32_FIXED_CTR_BASE	  0x309
+
+#define FIXED_PMD_BASE		16
 
 #define PFMLIB_GEN_IA32_ALL_FLAGS \
 	(PFM_GEN_IA32_SEL_INV|PFM_GEN_IA32_SEL_EDGE)
@@ -88,6 +114,7 @@ static char * pfm_gen_ia32_get_event_name(unsigned int i);
 static pme_gen_ia32_entry_t *gen_ia32_pe;
 
 static int gen_ia32_cycle_event, gen_ia32_inst_retired_event;
+static unsigned int num_fixed_cnt, num_gen_cnt, pmu_version;
 
 #ifdef __i386__
 static inline void cpuid(unsigned int op, unsigned int *eax, unsigned int *ebx,
@@ -121,6 +148,8 @@ static inline void cpuid(unsigned int op, unsigned int *eax, unsigned int *ebx,
                         : "0" (op), "c"(0));
 }
 #endif
+
+static pfmlib_regmask_t gen_ia32_impl_pmcs, gen_ia32_impl_pmds;
 
 /*
  * create architected event table
@@ -173,7 +202,9 @@ check_arch_pmu(int family)
 	union {
 		unsigned int val;
 		pmu_eax_t eax;
+		pmu_edx_t edx;
 	} eax, ecx, edx, ebx;
+	unsigned int num_cnt, i;
 	int ret;
 
 	/*
@@ -198,21 +229,60 @@ check_arch_pmu(int family)
 	 */
 	cpuid(0xa, &eax.val, &ebx.val, &ecx.val, &edx.val);
 
+	num_cnt = eax.eax.num_cnt;
+	pmu_version = eax.eax.version;
+
 	/*
 	 * check version. must be greater than zero
 	 */
-	if (eax.eax.version < 1)
+	if (pmu_version < 1)
 		return PFMLIB_ERR_NOTSUPP;
 
 	/*
 	 * sanity check number of counters
 	 */
-	if (eax.eax.num_cnt == 0)
+	if (num_cnt == 0)
 		return PFMLIB_ERR_NOTSUPP;
 
-	gen_ia32_support.pmc_count = eax.eax.num_cnt;
-	gen_ia32_support.pmd_count = eax.eax.num_cnt;
-	gen_ia32_support.num_cnt   = eax.eax.num_cnt;
+	/* 
+	 * populate impl_pm* bitmasks for generic counters
+	 */
+	for(i=0; i < num_cnt; i++) {
+		pfm_regmask_set(&gen_ia32_impl_pmcs, i);
+		pfm_regmask_set(&gen_ia32_impl_pmds, i);
+	}
+
+	/* check for fixed counters */
+	if (pmu_version == 2) {
+		/*
+		 * As described in IA-32 Developer's manual vol 3b
+		 * in section 18.12.2.1, early processors supporting
+		 * V2 may report invalid information concerning the fixed
+		 * counters. So we compensate for this here by forcing
+		 * num_cnt to 3.
+		 */
+		if (edx.edx.num_cnt == 0)
+			edx.edx.num_cnt = 3;
+
+		for(i=0; i < edx.edx.num_cnt; i++)
+			pfm_regmask_set(&gen_ia32_impl_pmds, FIXED_PMD_BASE+i);
+		if (i)
+			pfm_regmask_set(&gen_ia32_impl_pmcs, 16);
+
+	}
+
+	num_gen_cnt = eax.eax.num_cnt;
+	num_fixed_cnt = edx.edx.num_cnt;
+
+	gen_ia32_support.pmc_count = num_gen_cnt + (num_fixed_cnt > 0);
+	gen_ia32_support.pmd_count = num_gen_cnt + num_fixed_cnt;
+	gen_ia32_support.num_cnt   = num_gen_cnt + num_fixed_cnt;
+
+	__pfm_vbprintf("Intel architected PMU: version=%d num_gen=%u num_fixed=%u pmc=%u pmd=%d\n",
+		pmu_version,
+		num_gen_cnt,num_fixed_cnt,
+		gen_ia32_support.pmc_count,
+		gen_ia32_support.pmd_count);
 
 	ret = create_arch_event_table(ebx.val);
 	if (ret != PFMLIB_SUCCESS)
@@ -274,17 +344,22 @@ pfm_coreduo_detect(void)
 	 * check for core solo/core duo
 	 */
 	if (family == 6 && model == 14) {
+		unsigned int i;
 		gen_ia32_pe = coreduo_pe;
 		gen_support = &coreduo_support;
 		gen_ia32_cycle_event = PME_COREDUO_UNHALTED_CORE_CYCLES;
 		gen_ia32_inst_retired_event = PME_COREDUO_INSTRUCTIONS_RETIRED;
+		for(i=0; i < 2; i++) {
+			pfm_regmask_set(&gen_ia32_impl_pmcs, i);
+			pfm_regmask_set(&gen_ia32_impl_pmds, i);
+		}
 		return PFMLIB_SUCCESS;
 	}
 	return PFMLIB_ERR_NOTSUPP;
 }
 
 static int
-pfm_gen_ia32_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_ia32_input_param_t *mod_in, pfmlib_output_param_t *outp)
+pfm_gen_ia32_dispatch_counters_v1(pfmlib_input_param_t *inp, pfmlib_gen_ia32_input_param_t *mod_in, pfmlib_output_param_t *outp)
 {
 	pfmlib_gen_ia32_input_param_t *param = mod_in;
 	pfmlib_gen_ia32_counter_t *cntrs;
@@ -309,13 +384,10 @@ pfm_gen_ia32_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_ia32_input_
 		}
 	}
 
-	if (cnt > gen_support->pmc_count)
+	if (cnt > gen_support->pmd_count)
 		return PFMLIB_ERR_TOOMANY;
 
 	for(i=0, j=0; j < cnt; j++) {
-		/*
-		 * P6 only supports two priv levels for perf counters
-	 	 */
 		if (e[j].plm & (PFM_PLM1|PFM_PLM2)) {
 			DPRINT(("event=%d invalid plm=%d\n", e[j].event, e[j].plm));
 			return PFMLIB_ERR_INVAL;
@@ -397,6 +469,220 @@ pfm_gen_ia32_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_ia32_input_
 }
 
 static int
+pfm_gen_ia32_dispatch_counters_v2(pfmlib_input_param_t *inp, pfmlib_gen_ia32_input_param_t *param, pfmlib_output_param_t *outp)
+{
+#define HAS_OPTIONS(x)	(cntrs && (cntrs[i].flags || cntrs[i].cnt_mask))
+#define is_fixed_pmc(a) (a > 15)
+
+	pfmlib_gen_ia32_counter_t *cntrs;
+	pfm_gen_ia32_sel_reg_t reg;
+	pfmlib_event_t *e;
+	pfmlib_reg_t *pc, *pd;
+	pfmlib_regmask_t *r_pmcs;
+	uint64_t val;
+	unsigned long plm;
+	unsigned int fixed_ctr_mask;
+	unsigned int npc = 0;
+	unsigned int i, j, n, k, umask;
+	unsigned int assign[PMU_GEN_IA32_MAX_COUNTERS];
+	unsigned int next_gen, last_gen;
+
+	e      = inp->pfp_events;
+	pc     = outp->pfp_pmcs;
+	pd     = outp->pfp_pmds;
+	n      = inp->pfp_event_count;
+	r_pmcs = &inp->pfp_unavail_pmcs;
+	cntrs  = param ? param->pfp_gen_ia32_counters : NULL;
+
+	if (n > gen_support->pmd_count)
+		return PFMLIB_ERR_TOOMANY;
+
+	/*
+	 * initilize to empty
+	 */
+	for(i=0; i < n; i++)
+		assign[i] = -1;
+
+	/*
+	 * error checking
+	 */
+	for(j=0; j < n; j++) {
+		/*
+		 * only supports two priv levels for perf counters
+		 */
+		if (e[j].plm & (PFM_PLM1|PFM_PLM2))
+			return PFMLIB_ERR_INVAL;
+
+		/*
+		 * check for valid flags
+		 */
+		if (e[j].flags & ~PFMLIB_GEN_IA32_ALL_FLAGS)
+			return PFMLIB_ERR_INVAL;
+	}
+
+	next_gen = 0; /* first generic counter */
+	last_gen = num_gen_cnt - 1; /* last generic counter */
+
+	fixed_ctr_mask = (1 << num_fixed_cnt) - 1;
+	/*
+	 * first constraint: fixed counters (try using them first)
+	 */
+	if (fixed_ctr_mask) {
+		for(i=0; i < n; i++) {
+			/* fixed counters do not support event options (filters) */
+			if (HAS_OPTIONS(i))
+				continue;
+			for(j=0; j < num_fixed_cnt; j++) {
+				if ((fixed_ctr_mask & (1<<j)) && gen_ia32_pe[e[i].event].pme_fixed == (FIXED_PMD_BASE+j)) {
+					assign[i] = FIXED_PMD_BASE+j;
+					fixed_ctr_mask &= ~(1<<j);
+					break;
+				}
+			}
+		}
+	}
+	/*
+	 * assign what is left
+	 */
+	for(i=0; i < n; i++) {
+		if (assign[i] == -1) {
+			for(; next_gen <= last_gen; next_gen++) {
+				if (!pfm_regmask_isset(r_pmcs, next_gen))
+					break;
+			}
+			if (next_gen <= last_gen)
+				assign[i] = next_gen++;
+			else
+				return PFMLIB_ERR_NOASSIGN;
+		}
+	}
+	j = 0;
+
+	/* setup fixed counters */
+	reg.val = 0;
+	k = 0;
+	for (i=0; i < n ; i++ ) {
+		if (!is_fixed_pmc(assign[i]))
+			continue;
+		val = 0;
+		/* if plm is 0, then assume not specified per-event and use default */
+		plm = e[i].plm ? e[i].plm : inp->pfp_dfl_plm;
+		if (plm & PFM_PLM0)
+			val |= 1ULL;
+		if (plm & PFM_PLM3)
+			val |= 2ULL;
+		val |= 1ULL << 3;	 /* force APIC int (kernel may force it anyway) */
+
+		reg.val |= val << ((assign[i]-FIXED_PMD_BASE)<<2);
+
+		/* setup pd array */
+		pd[i].reg_num = assign[i];
+		pd[i].reg_addr = GEN_IA32_FIXED_CTR_BASE+assign[i]-FIXED_PMD_BASE;
+	}
+
+	if (reg.val) {
+		pc[npc].reg_num   = 16;
+		pc[npc].reg_value = reg.val;
+		pc[npc].reg_addr  = 0x38D;
+
+		__pfm_vbprintf("[FIXED_CTRL(pmc%u)=0x%"PRIx64,
+				pc[npc].reg_num,
+				reg.val);
+
+		for(i=0; i < num_fixed_cnt; i++) {
+			__pfm_vbprintf(" pmi%d=1 en%d=0x%"PRIx64,
+				i, i,
+				(reg.val >> (i*4)) & 0x3ULL);
+		}
+		__pfm_vbprintf("] ");
+		if ((fixed_ctr_mask & 0x1) == 0)
+			__pfm_vbprintf("INSTRUCTIONS_RETIRED ");
+		if ((fixed_ctr_mask & 0x2) == 0)
+			__pfm_vbprintf("UNHALTED_CORE_CYCLES ");
+		if ((fixed_ctr_mask & 0x4) == 0)
+			__pfm_vbprintf("UNHALTED_REFERENCE_CYCLES ");
+		__pfm_vbprintf("\n");
+
+		npc++;
+
+		for (i=0; i < n ; i++ ) {
+			if (!is_fixed_pmc(assign[i]))
+				continue;
+			__pfm_vbprintf("[FIXED_CTR%u(pmd%u)]\n", pd[i].reg_num, pd[i].reg_num);
+		}
+	}
+
+	for (i=0; i < n ; i++ ) {
+		/* skip fixed counters */
+		if (is_fixed_pmc(assign[i]))
+			continue;
+
+		reg.val = 0; /* assume reserved bits are zerooed */
+
+		/* if plm is 0, then assume not specified per-event and use default */
+		plm = e[i].plm ? e[i].plm : inp->pfp_dfl_plm;
+
+		reg.sel_event_select = gen_ia32_pe[e[i].event].pme_code & 0xff;
+
+		umask = (gen_ia32_pe[e[i].event].pme_code >> 8) & 0xff;
+
+		for(k=0; k < e[i].num_masks; k++) {
+			umask |= gen_ia32_pe[e[i].event].pme_umasks[e[i].unit_masks[k]].pme_ucode;
+		}
+
+		reg.sel_unit_mask  = umask;
+		reg.sel_usr        = plm & PFM_PLM3 ? 1 : 0;
+		reg.sel_os         = plm & PFM_PLM0 ? 1 : 0;
+		reg.sel_en         = 1; /* force enable bit to 1 */
+		reg.sel_int        = 1; /* force APIC int to 1 */
+
+		if (cntrs) {
+			/*
+			 * counter mask is 8-bit wide, do not silently
+			 * wrap-around
+			 */
+			if (cntrs[i].cnt_mask > 255)
+				return PFMLIB_ERR_INVAL;
+
+			reg.sel_cnt_mask = cntrs[i].cnt_mask;
+			reg.sel_edge	 = cntrs[i].flags & PFM_GEN_IA32_SEL_EDGE ? 1 : 0;
+			reg.sel_inv	 = cntrs[i].flags & PFM_GEN_IA32_SEL_INV ? 1 : 0;
+		}
+
+		pc[npc].reg_num     = assign[i];
+		pc[npc].reg_value   = reg.val;
+		pc[npc].reg_addr    = GEN_IA32_SEL_BASE+assign[i];
+		pd[i].reg_num  = assign[i];
+		pd[i].reg_addr = GEN_IA32_CTR_BASE+assign[i];
+
+		__pfm_vbprintf("[PERFEVTSEL%u(pmc%u)=0x%"PRIx64" event_sel=0x%x umask=0x%x os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d] %s\n",
+				pc[npc].reg_num,
+				pc[npc].reg_num,
+				reg.val,
+				reg.sel_event_select,
+				reg.sel_unit_mask,
+				reg.sel_os,
+				reg.sel_usr,
+				reg.sel_en,
+				reg.sel_int,
+				reg.sel_inv,
+				reg.sel_edge,
+				reg.sel_cnt_mask,
+				gen_ia32_pe[e[i].event].pme_name);
+
+		__pfm_vbprintf("[PMC%u(pmd%u)]\n",
+				pd[i].reg_num,
+				pd[i].reg_num);
+
+		npc++;
+	}
+	/* number of evtsel/ctr registers programmed */
+	outp->pfp_pmc_count = npc;
+	outp->pfp_pmd_count = n;
+	return PFMLIB_SUCCESS;
+}
+
+static int
 pfm_gen_ia32_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_output_param_t *outp, void *model_out)
 {
 	pfmlib_gen_ia32_input_param_t *mod_in  = model_in;
@@ -405,7 +691,14 @@ pfm_gen_ia32_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_o
 		DPRINT(("invalid plm=%x\n", inp->pfp_dfl_plm));
 		return PFMLIB_ERR_INVAL;
 	}
-	return pfm_gen_ia32_dispatch_counters(inp, mod_in, outp);
+	switch(pmu_version) {
+		case 1:
+			return pfm_gen_ia32_dispatch_counters_v1(inp, mod_in, outp);
+		case 2:
+			return pfm_gen_ia32_dispatch_counters_v2(inp, mod_in, outp);
+		default:
+			return PFMLIB_ERR_INVAL;
+	}
 }
 
 static int
@@ -433,31 +726,20 @@ pfm_gen_ia32_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 static void
 pfm_gen_ia32_get_impl_pmcs(pfmlib_regmask_t *impl_pmcs)
 {
-	unsigned int i = 0;
-
-	/* all pmcs are contiguous */
-	for(i=0; i < gen_support->pmc_count; i++)
-		pfm_regmask_set(impl_pmcs, i);
+	*impl_pmcs = gen_ia32_impl_pmcs;
 }
 
 static void
 pfm_gen_ia32_get_impl_pmds(pfmlib_regmask_t *impl_pmds)
 {
-	unsigned int i = 0;
-
-	/* all pmds are contiguous */
-	for(i=0; i < gen_support->pmc_count; i++)
-		pfm_regmask_set(impl_pmds, i);
+	*impl_pmds = gen_ia32_impl_pmds;
 }
 
 static void
 pfm_gen_ia32_get_impl_counters(pfmlib_regmask_t *impl_counters)
 {
-	unsigned int i = 0;
-
-	/* counting pmds are contiguous */
-	for(i=0; i < 4; i++)
-		pfm_regmask_set(impl_counters, i);
+	/* all pmds are counters */
+	*impl_counters = gen_ia32_impl_pmds;
 }
 
 static void
@@ -466,7 +748,7 @@ pfm_gen_ia32_get_hw_counter_width(unsigned int *width)
 	/*
 	 * Even though, CPUID 0xa returns in eax the actual counter
 	 * width, the architecture specifies that writes are limited
-	 * to lower 32-bits. As such, only the lower 32-bit have full
+	 * to lower 32-bits. As such, only the lower 31 bits have full
 	 * degree of freedom. That is the "useable" counter width.
 	 */
 	*width = PMU_GEN_IA32_COUNTER_WIDTH;
@@ -547,7 +829,7 @@ pfm_gen_ia32_get_inst_retired(pfmlib_event_t *e)
 
 /* architected PMU */
 pfm_pmu_support_t gen_ia32_support={
-	.pmu_name		= "Intel architectural PMU v1",
+	.pmu_name		= "Intel architectural PMU",
 	.pmu_type		= PFMLIB_GEN_IA32_PMU,
 	.pme_count		= 0,
 	.pmc_count		= 0,
