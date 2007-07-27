@@ -22,10 +22,11 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  *
- * This file implements supports for the IA-32 architectural PMU as specified
- * in the following document:
+ * This file implements support for Intel Core PMU as specified in the following document:
  * 	"IA-32 Intel Architecture Software Developer's Manual - Volume 3B: System
  * 	Programming Guide"
+ *
+ * Core PMU = architectural perfmon v2 + PEBS
  */
 #include <sys/types.h>
 #include <ctype.h>
@@ -60,18 +61,18 @@
 /*
  * Description of the PMC register mappings:
  *
- * 0 -> PMC0 -> PERFEVTSEL0
- * 1 -> PMC1 -> PERFEVTSEL1 
- * 2 -> PMC2 -> FIXED_CTR_CTRL
- * 3 -> PMC3 -> PEBS_ENABLED
+ * 0  -> PMC0  -> PERFEVTSEL0
+ * 1  -> PMC1  -> PERFEVTSEL1 
+ * 16 -> PMC16 -> FIXED_CTR_CTRL
+ * 17 -> PMC17 -> PEBS_ENABLED
  *
  * Description of the PMD register mapping:
  *
- * 0 -> PMD0 -> PMC0
- * 1 -> PMD1 -> PMC1
- * 2 -> PMD2 -> FIXED_CTR0
- * 3 -> PMD3 -> FIXED_CTR1
- * 4 -> PMD4 -> FIXED_CTR2
+ * 0  -> PMD0 -> PMC0
+ * 1  -> PMD1 -> PMC1
+ * 16 -> PMD2 -> FIXED_CTR0
+ * 17 -> PMD3 -> FIXED_CTR1
+ * 18 -> PMD4 -> FIXED_CTR2
  */
 #define CORE_SEL_BASE		0x186
 #define CORE_CTR_BASE		0xc1
@@ -118,14 +119,14 @@ pfm_core_detect(void)
 
 	pfm_regmask_set(&core_impl_pmcs, 0);
 	pfm_regmask_set(&core_impl_pmcs, 1);
-	pfm_regmask_set(&core_impl_pmcs, 2);
-	pfm_regmask_set(&core_impl_pmcs, 3);
+	pfm_regmask_set(&core_impl_pmcs, 16);
+	pfm_regmask_set(&core_impl_pmcs, 17);
 
 	pfm_regmask_set(&core_impl_pmds, 0);
 	pfm_regmask_set(&core_impl_pmds, 1);
-	pfm_regmask_set(&core_impl_pmds, 2);
-	pfm_regmask_set(&core_impl_pmds, 3);
-	pfm_regmask_set(&core_impl_pmds, 4);
+	pfm_regmask_set(&core_impl_pmds, 16);
+	pfm_regmask_set(&core_impl_pmds, 17);
+	pfm_regmask_set(&core_impl_pmds, 18);
 
 	return PFMLIB_SUCCESS;
 }
@@ -176,12 +177,11 @@ pfm_core_is_fixed(pfmlib_event_t *e, unsigned int f)
  *	      were submitted.
  */
 static int
-pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t *mod_in, pfmlib_output_param_t *outp)
+pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t *param, pfmlib_output_param_t *outp)
 {
 #define HAS_OPTIONS(x)	(cntrs && (cntrs[i].flags || cntrs[i].cnt_mask))
-#define is_fixed_pmc(a) (a == 2 || a == 3 || a ==4)
+#define is_fixed_pmc(a) (a == 16 || a == 17 || a == 18)
 
-	pfmlib_core_input_param_t *param = mod_in;
 	pfmlib_core_counter_t *cntrs;
 	pfm_core_sel_reg_t reg;
 	pfmlib_event_t *e;
@@ -204,7 +204,6 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 
 	if (n > PMU_CORE_NUM_COUNTERS)
 		return PFMLIB_ERR_TOOMANY;
-
 
 	/*
 	 * initilize to empty
@@ -256,19 +255,23 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 	/*
 	 * next constraint: fixed counters
 	 */
-	fixed_ctr = pfm_regmask_isset(r_pmcs, 2) ? 0 : 0x7;
-	if (!pfm_regmask_isset(r_pmcs, 1)) {
+	fixed_ctr = pfm_regmask_isset(r_pmcs, 16) ? 0 : 0x7;
+	if (fixed_ctr) {
 		for(i=0; i < n; i++) {
-			if ((fixed_ctr & 0x1) && pfm_core_is_fixed(e+i, 0) && !HAS_OPTIONS(i)) {
-				assign_pc[i] = 2;
+			/* fixed counters do not support event options (filters) */
+			if (HAS_OPTIONS(i))
+				continue;
+
+			if ((fixed_ctr & 0x1) && pfm_core_is_fixed(e+i, 0)) {
+				assign_pc[i] = 16;
 				fixed_ctr &= ~1;
 			}
-			if ((fixed_ctr & 0x2) && pfm_core_is_fixed(e+i, 1) && !HAS_OPTIONS(i)) {
-				assign_pc[i] = 3;
+			if ((fixed_ctr & 0x2) && pfm_core_is_fixed(e+i, 1)) {
+				assign_pc[i] = 17;
 				fixed_ctr &= ~2;
 			}
-			if ((fixed_ctr & 0x4) && pfm_core_is_fixed(e+i, 2) && !HAS_OPTIONS(i)) {
-				assign_pc[i] = 4;
+			if ((fixed_ctr & 0x4) && pfm_core_is_fixed(e+i, 2)) {
+				assign_pc[i] = 18;
 				fixed_ctr &= ~4;
 			}
 		}
@@ -305,15 +308,15 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 			val |= 2ULL;
 		val |= 1ULL << 3;	 /* force APIC int (kernel may force it anyway) */
 
-		reg.val |= val << ((assign_pc[i]-2)<<2);
+		reg.val |= val << ((assign_pc[i]-16)<<2);
 
 		/* setup pd array */
 		pd[i].reg_num = assign_pc[i];
-		pd[i].reg_addr = FIXED_CTR_BASE+assign_pc[i];
+		pd[i].reg_addr = FIXED_CTR_BASE+assign_pc[i]-16;
 	}
 
 	if (reg.val) {
-		pc[npc].reg_num   = 2;
+		pc[npc].reg_num   = 16;
 		pc[npc].reg_value = reg.val;
 		pc[npc].reg_addr  = 0x38D;
 
@@ -468,7 +471,7 @@ pfm_core_dispatch_pebs(pfmlib_input_param_t *inp, pfmlib_core_input_param_t *mod
 	/*
 	 * check that PEBS_ENABLE is available
 	 */
-	if (pfm_regmask_isset(r_pmcs, 3))
+	if (pfm_regmask_isset(r_pmcs, 17))
 		return PFMLIB_ERR_NOASSIGN;
 
 	reg.val = 0; /* assume reserved bits are zerooed */
@@ -525,11 +528,8 @@ pfm_core_dispatch_pebs(pfmlib_input_param_t *inp, pfmlib_core_input_param_t *mod
 	npd++;
 	/*
 	 * setup PEBS_ENABLE
-	 * 
-	 * Intel documentation, section 18.14.4.1 is wrong about PEBS_ENABLE.
-	 * Bit 24 is not used on Intel Core, bit 0 implements the enable capability
 	 */
-	pc[npc].reg_num   = 3;
+	pc[npc].reg_num   = 17;
 	pc[npc].reg_value = 1ULL;
 	pc[npc].reg_addr  = 0x3f1; /* IA32_PEBS_ENABLE */
 
@@ -608,15 +608,15 @@ pfm_core_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 		has_f2 = core_pe[j].pme_flags & PFMLIB_CORE_FIXED2;
 
 	if (has_f0)
-		pfm_regmask_set(counters, 0);
+		pfm_regmask_set(counters, 16);
 	if (has_f1)
-		pfm_regmask_set(counters, 1);
+		pfm_regmask_set(counters, 17);
 	if (has_f2)
-		pfm_regmask_set(counters, 2);
+		pfm_regmask_set(counters, 18);
 
-	pfm_regmask_set(counters, 4);
+	pfm_regmask_set(counters, 0);
 	if ((core_pe[j].pme_flags & PFMLIB_CORE_PMC0) == 0)
-		pfm_regmask_set(counters, 5);
+		pfm_regmask_set(counters, 1);
 }
 
 static void
@@ -652,7 +652,7 @@ pfm_core_get_hw_counter_width(unsigned int *width)
 	/*
 	 * Even though, CPUID 0xa returns in eax the actual counter
 	 * width, the architecture specifies that writes are limited
-	 * to lower 32-bits. As such, only the lower 32-bit have full
+	 * to lower 32-bits. As such, only the lower 31 bits have full
 	 * degree of freedom. That is the "useable" counter width.
 	 */
 	*width = PMU_CORE_COUNTER_WIDTH;

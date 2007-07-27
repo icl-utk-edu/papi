@@ -39,6 +39,7 @@ typedef struct {
 	unsigned int		pme_code; 	/* event code */
 	unsigned int		pme_numasks;	/* number of umasks */
 	unsigned int		pme_flags;	/* flags */
+	unsigned int		pme_fixed;	/* fixed counter index, < FIXED_CTR0 if unsupported */
 	pme_gen_ia32_umask_t	pme_umasks[PFMLIB_GEN_IA32_MAX_UMASK]; /* umask desc */
 } pme_gen_ia32_entry_t;
 
@@ -47,12 +48,22 @@ typedef struct {
  */
 #define PFMLIB_GEN_IA32_UMASK_COMBO	0x01 /* unit mask can be combined (default exclusive) */
 
+#define PFM_GEN_IA32_FIXED_CTR0	16	/* fixed counter 0 */
+#define PFM_GEN_IA32_FIXED_CTR1	17	/* fixed counter 1 */
+#define PFM_GEN_IA32_FIXED_CTR2	18	/* fixed counter 2 */
+
 typedef struct {
 	unsigned int version:8;
 	unsigned int num_cnt:8;
 	unsigned int cnt_width:8;
 	unsigned int ebx_length:8;
 } pmu_eax_t;
+
+typedef struct {
+	unsigned int num_cnt:6;
+	unsigned int cnt_width:6;
+	unsigned int reserved:20;
+} pmu_edx_t;
 
 typedef struct {
 	unsigned int no_core_cycle:1;

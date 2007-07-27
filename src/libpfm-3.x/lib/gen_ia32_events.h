@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Hewlett-Packard Development Company, L.P.
+ * Copyright (c) 2006-2007 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,17 +22,26 @@
  * This file is part of libpfm, a performance monitoring support library for
  * applications on Linux.
  */
+
+
+/*
+ * architected events for architectural perfmon v1 and v2 as defined by the IA-32 developer's manual
+ * Vol 3B, table 18-6 (May 2007)
+ */
 static pme_gen_ia32_entry_t gen_ia32_all_pe[]={
 	{.pme_name = "UNHALTED_CORE_CYCLES",
 	 .pme_code = 0x003c,
+	 .pme_fixed = PFM_GEN_IA32_FIXED_CTR1,
 	 .pme_desc =  "count core clock cycles whenever the clock signal on the specific core is running (not halted)"
 	},
 	{.pme_name = "INSTRUCTIONS_RETIRED",
 	 .pme_code = 0x00c0,
+	 .pme_fixed = PFM_GEN_IA32_FIXED_CTR0,
 	 .pme_desc =  "count the number of instructions at retirement. For instructions that consists of multiple micro-ops, this event counts the retirement of the last micro-op of the instruction",
 	},
 	{.pme_name = "UNHALTED_REFERENCE_CYCLES",
 	 .pme_code = 0x013c,
+	 .pme_fixed = PFM_GEN_IA32_FIXED_CTR2,
 	 .pme_desc =  "count reference clock cycles while the clock signal on the specific core is running. The reference clock operates at a fixed frequency, irrespective of core freqeuncy changes due to performance state transitions",
 	},
 	{.pme_name = "LAST_LEVEL_CACHE_REFERENCES",
