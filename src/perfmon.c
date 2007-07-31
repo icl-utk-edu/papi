@@ -3232,7 +3232,7 @@ process_smpl_buf(int num_smpl_pmds, int entry_size, _papi_hwi_context_t *ctx, Th
 void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
 {
    _papi_hwi_context_t ctx;
-   pfm_msg_t msg;
+   pfarg_msg_t msg;
    int ret, fd = info->si_fd;
    ThreadInfo_t *thread = _papi_hwi_lookup_thread();
 
