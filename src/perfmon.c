@@ -1748,7 +1748,8 @@ int _papi_hwd_update_shlib_info(void)
                                                                                 
  again:
    while (!feof(f)) {
-      char buf[PAPI_HUGE_STR_LEN+PAPI_HUGE_STR_LEN], perm[5], dev[6], mapname[PATH_MAX], lastmapname[PAPI_HUGE_STR_LEN];
+      char buf[PAPI_HUGE_STR_LEN+PAPI_HUGE_STR_LEN], perm[5], dev[6];
+      char mapname[PAPI_HUGE_STR_LEN], lastmapname[PAPI_HUGE_STR_LEN];
       unsigned long begin, end, size, inode, foo;
                                                                                 
       if (fgets(buf, sizeof(buf), f) == 0)
@@ -1801,7 +1802,7 @@ int _papi_hwd_update_shlib_info(void)
               t_index++;
                   tmp[t_index-1 ].text_start = (caddr_t) begin;
                   tmp[t_index-1 ].text_end = (caddr_t) (begin + size);
-                  strncpy(tmp[t_index-1 ].name, mapname, PAPI_MAX_STR_LEN);
+                  strncpy(tmp[t_index-1 ].name, mapname, sizeof(tmp[0].name)-1);
                 }
             }
           else if ((perm[0] == 'r') && (perm[1] == 'w') && (inode != 0))
@@ -1823,12 +1824,12 @@ int _papi_hwd_update_shlib_info(void)
             }
         }
    }
-                                                                                
+
    if (counting) {
       /* When we get here, we have counted the number of entries in the map
          for us to allocate */
                                                                                 
-      tmp = (PAPI_address_map_t *) papi_calloc(t_index-1, sizeof(PAPI_address_map_t));
+      tmp = (PAPI_address_map_t *) papi_calloc(t_index, sizeof(PAPI_address_map_t));
       if (tmp == NULL)
         { PAPIERROR("Error allocating shared library address map"); return(PAPI_ENOMEM); }
       t_index = 0;
