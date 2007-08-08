@@ -24,7 +24,7 @@
       real*4 csec
 #endif
 
-#if defined(_CRAYT3E) || defined(__crayx1)
+#if defined(_CRAYT3E) || defined(__crayx1) || defined(__crayx2)
       integer ilen, ierror
 #endif
 
@@ -62,6 +62,13 @@
       eventname(1) = 'X1_P_EV_INST_S_FP'
       eventname(2) = 'X1_E_EV_REQUESTS'
       eventname(3) = 'X1_M_EV_REQUESTS'
+      n = 3
+#endif
+
+#if defined(__crayx2)
+      eventname(1) = 'CYCLES'
+      eventname(2) = 'INST_GRAD'
+      eventname(3) = 'DCACHE_HIT'
       n = 3
 #endif
 

@@ -178,25 +178,21 @@ pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 
 		/*	Check out the code masks, which for M chips
 		 *	are actually the chip number to activate for
-		 *	the event. If no code masks are given, assume
-		 *	chip 0.
+		 *	the event. It is required for the M chip, but
+		 *	invalid for the P and C chips.
 		 */
-		if (chip != PME_CRAYX2_CHIP_MEMORY) {
+		if (chip == PME_CRAYX2_CHIP_MEMORY) {
+			if (inp->pfp_events[i].num_masks != 1) {
+				DPRINT (("too many masks for M event\n"));
+				return PFMLIB_ERR_TOOMANY;
+			}
+			chipno = inp->pfp_events[i].unit_masks[0];
+		} else {
 			if (inp->pfp_events[i].num_masks > 0) {
 				DPRINT (("too many masks for P/C event\n"));
 				return PFMLIB_ERR_TOOMANY;
 			}
 			chipno = 0;
-
-		} else if (inp->pfp_events[i].num_masks == 0) {
-			chipno = 0;
-
-		} else {
-			if (inp->pfp_events[i].num_masks > 1) {
-				DPRINT (("too many masks for M event\n"));
-				return PFMLIB_ERR_TOOMANY;
-			}
-			chipno = inp->pfp_events[i].unit_masks[0];
 		}
 		DPRINT (("%3d: chip number %d\n", i, chipno));
 
@@ -206,7 +202,6 @@ pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 		 */
 		if (chip == PME_CRAYX2_CHIP_CPU) {
 			ret = pfm_crayx2_counter_use (ctr, ev, &Pused[chipno], &Pevents);
-
 		} else if (chip == PME_CRAYX2_CHIP_CACHE) {
 			ret = pfm_crayx2_counter_use (ctr, ev, &Cused[chipno], &Cevents);
 		} else if (chip == PME_CRAYX2_CHIP_MEMORY) {
