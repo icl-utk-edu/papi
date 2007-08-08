@@ -1736,7 +1736,8 @@ int _papi_hwd_update_shlib_info(void)
    unsigned long t_index = 0, d_index = 0, b_index = 0, counting = 1;
    PAPI_address_map_t *tmp = NULL;
    FILE *f;
-                                                                                
+   char mapname[PAPI_HUGE_STR_LEN], lastmapname[PAPI_HUGE_STR_LEN];
+                                                                               
    sprintf(fname, "/proc/%ld/maps", (long) _papi_hwi_system_info.pid);
    f = fopen(fname, "r");
                                                                                 
@@ -1745,11 +1746,12 @@ int _papi_hwd_update_shlib_info(void)
          PAPIERROR("fopen(%s) returned < 0", fname);
          return(PAPI_OK);
      }
-                                                                                
+
+   memset (mapname, 0, sizeof(mapname));
+   memset (lastmapname, 0, sizeof(lastmapname));
  again:
    while (!feof(f)) {
       char buf[PAPI_HUGE_STR_LEN+PAPI_HUGE_STR_LEN], perm[5], dev[6];
-      char mapname[PAPI_HUGE_STR_LEN], lastmapname[PAPI_HUGE_STR_LEN];
       unsigned long begin, end, size, inode, foo;
                                                                                 
       if (fgets(buf, sizeof(buf), f) == 0)
