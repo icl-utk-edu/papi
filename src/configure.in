@@ -1259,6 +1259,8 @@ if test "$datadir" = '${datarootdir}'; then
    datadir='${datarootdir}/${PACKAGE_TARNAME}'
 fi
 papidatadir=$datadir
+docdir='${prefix}/doc'
+#AC_DEFINE_UNQUOTED(HAVE_THREAD_LOCAL_STORAGE,"$docdir")
 
 #
 # Fix up: If we're on linux and 64 bit build, then put libs in the right place
