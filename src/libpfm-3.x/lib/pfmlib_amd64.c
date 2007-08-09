@@ -99,37 +99,63 @@ static amd64_rev_t amd64_get_revision(int model, int stepping)
 	return AMD64_REV_UN;
 }
 
+#ifdef __i386__
+static inline void cpuid(unsigned int op, unsigned int *eax, unsigned int *ebx,
+			 unsigned int *ecx, unsigned int *edx)
+{
+	/*
+	 * because ebx is used in Pic mode, we need to save/restore because
+	 * cpuid clobbers it. I could not figure out a way to get ebx out in
+	 * one cpuid instruction. To extract ebx, we need to  move it to another
+	 * register (here eax)
+	 */
+	__asm__("pushl %%ebx;cpuid; popl %%ebx"
+			:"=a" (*eax),
+			 "=c" (*ecx),
+			 "=d" (*edx)
+			:"a"  (op));
+
+	__asm__("pushl %%ebx;cpuid; movl %%ebx, %%eax;popl %%ebx"
+			:"=a" (*ebx)
+			:"a"  (op)
+			:"ecx", "edx");
+}
+#else
+static inline void cpuid(unsigned int op, unsigned int *eax, unsigned int *ebx,
+			 unsigned int *ecx, unsigned int *edx)
+{
+	__asm__("cpuid"
+			:"=a" (*eax),
+			 "=b" (*ebx),
+			 "=c" (*ecx),
+			 "=d" (*edx)
+			:"a"  (op));
+}
+#endif
+
 static int
 pfm_amd64_detect(void)
 {
-	int ret, family, model, stepping;
+	unsigned int a, b, c, d;
+	int family, model, stepping;
 	char buffer[128];
 
-	ret = __pfm_getcpuinfo_attr("vendor_id", buffer, sizeof(buffer));
-	if (ret == -1)
-		return PFMLIB_ERR_NOTSUPP;
+	cpuid(0, &a, &b, &c, &d);
+	strncpy(&buffer[0], (char *)(&b), 4);
+	strncpy(&buffer[4], (char *)(&d), 4);
+	strncpy(&buffer[8], (char *)(&c), 4);
+	buffer[12] = '\0';
 
 	if (strcmp(buffer, "AuthenticAMD"))
 		return PFMLIB_ERR_NOTSUPP;
 
-	ret = __pfm_getcpuinfo_attr("cpu family", buffer, sizeof(buffer));
-	if (ret == -1)
-		return PFMLIB_ERR_NOTSUPP;
+	cpuid(1, &a, &b, &c, &d);
+	family = (a >> 8) & 0x0000000F;  // bits 11 - 8
+	model  = (a >> 4) & 0x0000000F;  // Bits  7 - 4
+	stepping=(a)      & 0x0000000F;  // bits  3 - 0
 
-	family = atoi(buffer);
 	if (family != 15)
 		return PFMLIB_ERR_NOTSUPP;
-
-	ret = __pfm_getcpuinfo_attr("model", buffer, sizeof(buffer));
-	if (ret == -1)
-		return PFMLIB_ERR_NOTSUPP;
-
-	model = atoi(buffer);
-	ret = __pfm_getcpuinfo_attr("stepping", buffer, sizeof(buffer));
-	if (ret == -1)
-		return PFMLIB_ERR_NOTSUPP;
-
-	stepping = atoi(buffer);
 
 	amd64_revision = amd64_get_revision(model, stepping);
 
