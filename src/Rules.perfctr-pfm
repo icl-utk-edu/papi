@@ -208,10 +208,10 @@ endif
 
 ####################################################################
 # This section builds libpfm to get at its support for native events
+# We only need to build the library, not the examples, etc.
 ifeq (,$(PFM_OBJS))
-#    $(PFM_LIB_PATH)/libpfm.a:
   ifneq (,${PFM_ROOT})
-	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)"
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)" DIRS=lib
   else
     @echo '$@ not installed!'; exit 1
   endif
@@ -280,14 +280,14 @@ ifeq (static,$(PFM_EVENTS))
 endif
 
 native_install: 
-	-cp -f ./perfmon_events.csv $(DATADIR)
-ifeq ($(ARCH),ppc64)
 	-mkdir -p $(DATADIR)
 	-chmod go+rx $(DATADIR)
+	-cp -f ./perfmon_events.csv $(DATADIR)
+ifeq ($(ARCH),ppc64)
 	cp -Rf ./event_data $(DATADIR)
 endif
 ifneq (,${PFM_ROOT})
-	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
+	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC=$(CC) DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
 ifneq (,${PERFCTR_ROOT})
 ifeq (${VERSION},2.4.x)
@@ -306,9 +306,11 @@ else
 endif
 endif
 endif
+  ifneq (CATAMOUNT, $(COMPILER))
 	cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE)
 	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so.$(PAPIVER)
 	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so
+  endif
 
 native_clobber:
 ifneq (,${PERFCTR_ROOT})
