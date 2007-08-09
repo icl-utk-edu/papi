@@ -129,6 +129,7 @@ if test "$OS" = "catamount"; then
    if test "x$F77" = "x"; then
       F77=ftn
    fi
+   pfm_events=static
    walltimer=cycle
    virtualtimer=perfctr
    bitmode=64
@@ -304,6 +305,18 @@ esac
 ])
 AC_MSG_RESULT($CPU)
 
+if test "$OS" = "CNL"; then
+     if test "$CPU" = "crayx2"; then 
+           virtualtimer=times
+           tls=__thread
+           walltimer=cycle
+           ffsll=yes
+           pfm_events=static
+           cross_compiling=yes
+           perfmon=2
+     fi
+fi
+         
 #
 # Check for bitmode, this sucks and needs to be redone
 #
@@ -850,7 +863,7 @@ AC_ARG_WITH(perfctr_prefix,
             [perfctr_prefix=""]
             )
 AC_ARG_WITH(perfctr_incdir,
-           [  --with-perfctr-incdir=<path>	Specify directory of perfmon header files ],
+           [  --with-perfctr-incdir=<path>	Specify directory of perfctr header files ],
            [perfctr_incdir=$withval],
            [perfctr_incdir=""]
             )
@@ -859,7 +872,7 @@ AC_ARG_WITH(perfctr_libdir,
            [perfctr_libdir=$withval],
            [perfctr_libdir=""]
             )
-
+if test "x$perfmon" = "x"; then
 AC_ARG_WITH(perfmon,
             [  --with-perfmon=<1,2>		Specify perfmon version number ],
             [perfmon=$withval],
@@ -868,6 +881,7 @@ if test "$cross_compiling" = "no" ; then
 	    AC_CHECK_FILE(/sys/kernel/perfmon/version,[perfmon=2],[AC_CHECK_FILE(/proc/perfmon,[perfmon=1])])
 fi
 ])
+fi
 case "$perfmon" in
    yes)
       AC_CHECK_FILE(/sys/kernel/perfmon/version,[perfmon=2],[AC_CHECK_FILE(/proc/perfmon,[perfmon=1])]) ;;
@@ -903,11 +917,13 @@ AC_ARG_WITH(pmapi,
             [pmapi=$withval],
             [pmapi=default]
             )
+if test "x$pfm_events" = "x"; then
 AC_ARG_WITH(pfm_events,
             [  --with-pfm-events=<static,file>	Specify source of events for pfmlib-based systems ],
             [pfm_events=$withval],
             [pfm_events="file"]
             )
+fi
 if test "$cross_compiling" = "yes" ; then
 AC_MSG_CHECKING(for native compiler for header generation)
 AC_ARG_WITH(nativecc,

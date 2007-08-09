@@ -866,7 +866,7 @@ Optional Packages:
   --with-perfctr=<5,6,7>	Specify perfctr version number
   --with-perfctr-root=<path>	Specify path to prebuilt perfctr distribution
   --with-perfctr-prefix=<path>	Specify prefix to installed perfctr distribution
-  --with-perfctr-incdir=<path>	Specify directory of perfmon header files
+  --with-perfctr-incdir=<path>	Specify directory of perfctr header files
   --with-perfctr-libdir=<path>	Specify directory of perfctr library
   --with-perfmon=<1,2>		Specify perfmon version number
   --with-pfm-root=<path>	Specify path to prebuilt pfm distribution
@@ -1441,6 +1441,7 @@ if test "$OS" = "catamount"; then
    if test "x$F77" = "x"; then
       F77=ftn
    fi
+   pfm_events=static
    walltimer=cycle
    virtualtimer=perfctr
    bitmode=64
@@ -1629,6 +1630,18 @@ esac
 fi;
 echo "$as_me:$LINENO: result: $CPU" >&5
 echo "${ECHO_T}$CPU" >&6
+
+if test "$OS" = "CNL"; then
+     if test "$CPU" = "crayx2"; then
+           virtualtimer=times
+           tls=__thread
+           walltimer=cycle
+           ffsll=yes
+           pfm_events=static
+           cross_compiling=yes
+           perfmon=2
+     fi
+fi
 
 #
 # Check for bitmode, this sucks and needs to be redone
@@ -2756,7 +2769,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2759:" \
+echo "$as_me:2772:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -3508,7 +3521,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:3511:" \
+echo "$as_me:3524:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -5169,7 +5182,7 @@ else
   perfctr_libdir=""
 
 fi;
-
+if test "x$perfmon" = "x"; then
 
 # Check whether --with-perfmon or --without-perfmon was given.
 if test "${with_perfmon+set}" = set; then
@@ -5224,6 +5237,7 @@ fi
 fi
 
 fi;
+fi
 case "$perfmon" in
    yes)
       echo "$as_me:$LINENO: checking for /sys/kernel/perfmon/version" >&5
@@ -5323,6 +5337,7 @@ else
   pmapi=default
 
 fi;
+if test "x$pfm_events" = "x"; then
 
 # Check whether --with-pfm_events or --without-pfm_events was given.
 if test "${with_pfm_events+set}" = set; then
@@ -5332,6 +5347,7 @@ else
   pfm_events="file"
 
 fi;
+fi
 if test "$cross_compiling" = "yes" ; then
 echo "$as_me:$LINENO: checking for native compiler for header generation" >&5
 echo $ECHO_N "checking for native compiler for header generation... $ECHO_C" >&6
