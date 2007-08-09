@@ -87,8 +87,10 @@ CFLAGS+=-I.
 ALIBPFM=libpfm.a
 
 ifneq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
-SLIBPFM=libpfm.so.$(VERSION).$(REVISION).$(AGE)
-VLIBPFM=libpfm.so.$(VERSION)
+  ifneq ($(CC), qk-gcc)
+    SLIBPFM=libpfm.so.$(VERSION).$(REVISION).$(AGE)
+    VLIBPFM=libpfm.so.$(VERSION)
+  endif
 endif
 
 TARGETS=$(ALIBPFM) $(SLIBPFM)
@@ -122,9 +124,11 @@ install: $(TARGETS)
 	-mkdir -p $(DESTDIR)$(LIBDIR)
 	$(INSTALL) -m 644 $(ALIBPFM) $(DESTDIR)$(LIBDIR)
 ifneq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
+  ifneq ($(CC), qk-gcc)
 	$(INSTALL) $(SLIBPFM) $(DESTDIR)$(LIBDIR)
 	cd $(DESTDIR)$(LIBDIR); $(LN) $(SLIBPFM) $(VLIBPFM)
 	cd $(DESTDIR)$(LIBDIR); $(LN) $(SLIBPFM) libpfm.so
+  endif
 endif
 
 INC_COMMON= $(PFMINCDIR)/perfmon/pfmlib.h \
