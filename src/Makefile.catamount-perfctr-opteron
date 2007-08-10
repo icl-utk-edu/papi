@@ -1,9 +1,10 @@
+COMPILER	= CATAMOUNT
+
 VERSION 	= 2.5.4
 CPU	        = p3
 NOTLS       = -DNO_TLS
-CFLAGS	    = -D__CATAMOUNT__
+CFLAGS	    = -D__CATAMOUNT__ -DPFMLIB_VERSION_22
 TOPTFLAGS	= -D__x86_64__
-COMPILER	= CATAMOUNT
 
 #include Rules.perfctr
 include Rules.perfctr-pfm

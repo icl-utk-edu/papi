@@ -110,9 +110,13 @@ ifneq (,${PFM_ROOT})
 	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
 	-install -d $(DESTDIR)$(LIBDIR)
+ifneq ($(COMPILER),CRAYX2)
+  ifneq ($(COMPILER),CATAMOUNT)
 	cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE)
 	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so.$(PAPIVER)
 	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so
+  endif
+endif
 	-install -d $(DESTDIR)$(DATADIR)
 	cp -f ./perfmon_events.csv $(DESTDIR)$(DATADIR)
 
