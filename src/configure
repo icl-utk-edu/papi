@@ -1439,7 +1439,7 @@ if test "$OS" = "catamount"; then
       CC=qk-gcc
    fi
    if test "x$F77" = "x"; then
-      F77=ftn
+      F77=qk-g77
    fi
    pfm_events=static
    walltimer=cycle
@@ -1632,15 +1632,13 @@ echo "$as_me:$LINENO: result: $CPU" >&5
 echo "${ECHO_T}$CPU" >&6
 
 if test "$OS" = "CNL"; then
-     if test "$CPU" = "crayx2"; then
-           virtualtimer=times
-           tls=__thread
-           walltimer=cycle
-           ffsll=yes
-           pfm_events=static
-           cross_compiling=yes
-           perfmon=2
-     fi
+   virtualtimer=times
+   tls=__thread
+   walltimer=cycle
+   ffsll=yes
+   pfm_events=static
+   cross_compiling=yes
+   perfmon=2
 fi
 
 #
@@ -2769,7 +2767,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2772:" \
+echo "$as_me:2770:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -3521,7 +3519,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:3524:" \
+echo "$as_me:3522:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -6924,7 +6922,7 @@ echo "$as_me: error: The bitmode you specified is not supported" >&2;}
 	   ;;
 
    CNL)
-	   MAKEVER="$OS"-perfmon2-"$CPU"
+	   MAKEVER="$OS"-perfmon2
 	   ;;
 
    solaris)
@@ -7042,7 +7040,7 @@ case "$MAKEVER" in
     aix5-power3-64bit);;
     any-null);;
     catamount-perfctr-opteron);;
-    CNL-perfmon2-crayx2);;
+    CNL-perfmon2);;
     dadd-alpha);;
     irix-mips);;
     irix-mips-64bit);;
