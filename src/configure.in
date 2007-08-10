@@ -306,15 +306,6 @@ esac
 AC_MSG_RESULT($CPU)
 
 if test "$OS" = "CNL"; then
-   if test "x$CC" = "x"; then
-      CC=craynv-cray-linux-gnu-gcc
-   fi
-   if test "x$F77" = "x"; then
-      F77=craynv-cray-linux-gnu-gfortran
-   fi
-   if test "x$LDFLAGS" = "x"; then
-      LDFLAGS = "-static -lpthread"
-   fi
    virtualtimer=times
    tls=__thread
    walltimer=cycle
@@ -902,7 +893,7 @@ esac
 AC_ARG_WITH(pfm_root,
            [  --with-pfm-root=<path>	Specify path to prebuilt pfm distribution ],
            [pfm_root=$withval],
-           [pfm_root="./libpfm-3.x"]
+           [pfm_root=""]
             )
 AC_ARG_WITH(pfm_prefix,
            [  --with-pfm-prefix=<path>	Specify prefix to installed pfm distribution ],
