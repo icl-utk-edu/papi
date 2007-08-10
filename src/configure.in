@@ -127,7 +127,7 @@ if test "$OS" = "catamount"; then
       CC=qk-gcc
    fi
    if test "x$F77" = "x"; then
-      F77=ftn
+      F77=qk-g77
    fi
    pfm_events=static
    walltimer=cycle
@@ -306,15 +306,22 @@ esac
 AC_MSG_RESULT($CPU)
 
 if test "$OS" = "CNL"; then
-     if test "$CPU" = "crayx2"; then 
-           virtualtimer=times
-           tls=__thread
-           walltimer=cycle
-           ffsll=yes
-           pfm_events=static
-           cross_compiling=yes
-           perfmon=2
-     fi
+   if test "x$CC" = "x"; then
+      CC=craynv-cray-linux-gnu-gcc
+   fi
+   if test "x$F77" = "x"; then
+      F77=craynv-cray-linux-gnu-gfortran
+   fi
+   if test "x$LDFLAGS" = "x"; then
+      LDFLAGS = "-static -lpthread"
+   fi
+   virtualtimer=times
+   tls=__thread
+   walltimer=cycle
+   ffsll=yes
+   pfm_events=static
+   cross_compiling=yes
+   perfmon=2
 fi
          
 #
@@ -895,7 +902,7 @@ esac
 AC_ARG_WITH(pfm_root,
            [  --with-pfm-root=<path>	Specify path to prebuilt pfm distribution ],
            [pfm_root=$withval],
-           [pfm_root=""]
+           [pfm_root="./libpfm-3.x"]
             )
 AC_ARG_WITH(pfm_prefix,
            [  --with-pfm-prefix=<path>	Specify prefix to installed pfm distribution ],
@@ -1112,7 +1119,7 @@ case "$OS" in
 	   ;;
 	   
    CNL)
-	   MAKEVER="$OS"-perfmon2-"$CPU"
+	   MAKEVER="$OS"-perfmon2
 	   ;;
 	   
    solaris)
@@ -1217,7 +1224,7 @@ case "$MAKEVER" in
     aix5-power3-64bit);;
     any-null);;
     catamount-perfctr-opteron);;
-    CNL-perfmon2-crayx2);;
+    CNL-perfmon2);;
     dadd-alpha);;
     irix-mips);;
     irix-mips-64bit);;
