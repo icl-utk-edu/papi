@@ -867,7 +867,7 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 	 PAPIERROR("Unable to scan two items from thread stat file at 13th space?");
 	 return(PAPI_ESBSTR);
        }
-     retval = (utime+stime)*(long_long)(1000000/sysconf(_SC_CLK_TCK));
+     retval = (long_long)(utime+stime)*1000000/sysconf(_SC_CLK_TCK);
    }
 #elif defined(HAVE_CLOCK_GETTIME_THREAD)
    {
@@ -883,7 +883,7 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
      struct tms buffer;
      times(&buffer);
      /* SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime); */
-     retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*(1000000/sysconf(_SC_CLK_TCK)));
+     retval = (long_long)(buffer.tms_utime+buffer.tms_stime)*1000000/sysconf(_SC_CLK_TCK);
      /* NOT CLOCKS_PER_SEC as in the headers! */
    }
 #else
