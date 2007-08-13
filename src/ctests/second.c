@@ -261,7 +261,7 @@ void case1(int num)
 		PAPI_start(EventSet1);
 		PAPI_stop(EventSet1, values[0]);
 		
-		// change EventSet1 domain from All  to User
+		/* change EventSet1 domain from All to User */
 		option.domain.domain = PAPI_DOM_USER;
 		option.domain.eventset = EventSet1;
 		retval = PAPI_set_opt(PAPI_DOMAIN, &option);
@@ -271,7 +271,7 @@ void case1(int num)
 		PAPI_start(EventSet2);
 		PAPI_stop(EventSet2, values[1]);
 		
-		// change EventSet2 domain from Kernel to All
+		/* change EventSet2 domain from Kernel to All */
 		option.domain.domain = PAPI_DOM_ALL;
 		option.domain.eventset = EventSet2;
 		retval = PAPI_set_opt(PAPI_DOMAIN, &option);
@@ -281,7 +281,7 @@ void case1(int num)
 		PAPI_start(EventSet3);
 		PAPI_stop(EventSet3, values[2]);
 		
-		// change EventSet3 domain from User  to Kernel
+		/* change EventSet3 domain from User  to Kernel */
 		option.domain.domain = PAPI_DOM_KERNEL;
 		option.domain.eventset = EventSet3;
 		retval = PAPI_set_opt(PAPI_DOMAIN, &option);
