@@ -13,7 +13,7 @@ HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h \
 LIBCFLAGS = -I. $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" 
 FHEADERS  = fpapi.h f77papi.h f90papi.h
 
-all: showconf $(LIBS) utils tests
+all: showconf $(LIBS) utils $(tests)
 
 showconf:
 		@echo; 
@@ -116,14 +116,8 @@ f90papi.h: papi.h
 test: ctests
 	ctests/zero
 
-fulltest: tests
+fulltest: $(tests)
 	sh run_tests.sh
-
-ifeq ($(COMPILER),CRAYX2)
-tests: ctests
-else
-tests: ctests ftests $(BGL_TESTS)
-endif
 
 utils: $(LIBRARY) null
 	-cd utils; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="$(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" util
@@ -142,11 +136,7 @@ clean: native_clean
 	-cd utils;  $(MAKE) clean
 
 clobber distclean: clean native_clobber
-ifeq ($(COMPILER),CRAYX2)
-	-rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) $(SPECIAL_REMOVE)
-else
 	-rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) $(SPECIAL_REMOVE) Makefile config.h
-endif
 	-cd utils;  $(MAKE) clobber
 	-rm -f config.log config.status f77papi.h f90papi.h fpapi.h
 
@@ -166,12 +156,8 @@ install-lib: native_install
 	@echo "Headers (INCDIR) being installed in: \"$(DESTDIR)$(INCDIR)\""; 
 	-mkdir -p $(DESTDIR)$(INCDIR)
 	-chmod go+rx $(DESTDIR)$(INCDIR)
-ifeq ($(COMPILER),CRAYX2)
-	cp papi.h papiStdEventDefs.h $(DESTDIR)$(INCDIR)
-else
 	cp $(FHEADERS) papi.h papiStdEventDefs.h $(DESTDIR)$(INCDIR)
 	cd $(DESTDIR)$(INCDIR); chmod go+r $(FHEADERS) papi.h papiStdEventDefs.h
-endif
 	@echo "Libraries (LIBDIR) being installed in: \"$(DESTDIR)$(LIBDIR)\""; 
 	-mkdir -p $(DESTDIR)$(LIBDIR)
 	-chmod go+rx $(DESTDIR)$(LIBDIR)

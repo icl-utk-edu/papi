@@ -1081,6 +1081,8 @@ else
       esac
 fi
 
+tests="ctests ftests"
+
 AC_MSG_CHECKING(for Makefile to use)
 if test "x$MAKEVER" = "x"; then
 case "$OS" in
@@ -1104,6 +1106,7 @@ case "$OS" in
    ;;
    bgl)
 	   MAKEVER=linux-bgl
+       tests=bgl_tests
    ;;
    catamount)
 	   MAKEVER="$OS"-perfctr-opteron
@@ -1111,6 +1114,7 @@ case "$OS" in
 	   
    CNL)
 	   MAKEVER="$OS"-perfmon2
+       tests=ctests
 	   ;;
 	   
    solaris)
@@ -1307,6 +1311,7 @@ AC_SUBST(bitmode)
 AC_SUBST(CFLAGS)
 AC_SUBST(FFLAGS)
 AC_SUBST(pfm_events)
+AC_SUBST(tests)
 
 if test "$cross_compiling" = "yes" ; then
    AC_MSG_NOTICE(Compiling genpapifdef with $nativecc because cross compiling)

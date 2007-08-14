@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS AWK CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP datarootdir docdir arch DEBUGFLAGS MAKEVER PMAPI AR NOTLS altix PMINIT perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root pfm_prefix pfm_incdir pfm_libdir bitmode pfm_events LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS AWK CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP datarootdir docdir arch DEBUGFLAGS MAKEVER PMAPI AR NOTLS altix PMINIT perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root pfm_prefix pfm_incdir pfm_libdir bitmode pfm_events tests LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -6890,6 +6890,8 @@ echo "$as_me: error: pmapi is not needed on this platform" >&2;}
       esac
 fi
 
+tests="ctests ftests"
+
 echo "$as_me:$LINENO: checking for Makefile to use" >&5
 echo $ECHO_N "checking for Makefile to use... $ECHO_C" >&6
 if test "x$MAKEVER" = "x"; then
@@ -6916,6 +6918,7 @@ echo "$as_me: error: The bitmode you specified is not supported" >&2;}
    ;;
    bgl)
 	   MAKEVER=linux-bgl
+       tests=bgl_tests
    ;;
    catamount)
 	   MAKEVER="$OS"-perfctr-opteron
@@ -6923,6 +6926,7 @@ echo "$as_me: error: The bitmode you specified is not supported" >&2;}
 
    CNL)
 	   MAKEVER="$OS"-perfmon2
+       tests=ctests
 	   ;;
 
    solaris)
@@ -7126,6 +7130,7 @@ _ACEOF
 
     prefix=$prefix_save
   exec_prefix=$exec_prefix_save
+
 
 
 
@@ -7831,6 +7836,7 @@ s,@pfm_incdir@,$pfm_incdir,;t t
 s,@pfm_libdir@,$pfm_libdir,;t t
 s,@bitmode@,$bitmode,;t t
 s,@pfm_events@,$pfm_events,;t t
+s,@tests@,$tests,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF

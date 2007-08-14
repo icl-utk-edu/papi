@@ -40,7 +40,7 @@ MISCSRCS = linux-bgl-events.c
 MISCOBJS = $(MISCSRCS:.c=.o)
 SHLIBDEPS =
 
-BGL_TESTS=bgl_tests
+#BGL_TESTS=bgl_tests
 
 include Makefile.inc
 
