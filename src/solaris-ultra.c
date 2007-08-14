@@ -1003,7 +1003,7 @@ int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
    return (PAPI_OK);
 }
 
-char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len)
+int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len)
 {
    return (_papi_hwd_ntv_code_to_name(EventCode, ntv_descr, len));
 }
