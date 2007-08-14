@@ -308,8 +308,17 @@ multiattach: multiattach.c $(UTILOBJS) $(PAPILIB)
 reset: reset.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) reset.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o reset 
 
-fork exec forkexec forkexec2: $(UTILOBJS) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) $< $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ 
+fork: fork.c $(UTILOBJS) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) fork.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o fork 
+
+exec: exec.c $(UTILOBJS) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) exec.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o exec 
+
+forkexec: forkexec.c $(UTILOBJS) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) forkexec.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o forkexec 
+
+forkexec2: forkexec2.c $(UTILOBJS) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) forkexec2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o forkexec2 
 
 prof_utils.o: prof_utils.c papi_test.h prof_utils.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c prof_utils.c
