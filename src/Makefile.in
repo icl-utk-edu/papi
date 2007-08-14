@@ -37,6 +37,6 @@ PERFCTR_LIB_PATH = @perfctr_libdir@
 PERFCTR_INC_PATH = @perfctr_incdir@
 DEBUGFLAGS	= @DEBUGFLAGS@
 BITS	= @bitmode@
-tests = @tests@
+TESTS = @tests@
 
 include ./Makefile.$(MAKEVER)

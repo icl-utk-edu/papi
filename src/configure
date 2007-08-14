@@ -875,6 +875,7 @@ Optional Packages:
   --with-pfm-libdir=<path>	Specify directory of pfm library
   --with-pmapi=<path>		Specify path of pmapi on aix system
   --with-pfm-events=<static,file>	Specify source of events for pfmlib-based systems
+  --with-tests=<ctests,ftests,"ctests ftests">	Specify which tests to run on install
   --with-nativecc=<path>	Specify native C compiler for header generation
 
 Some influential environment variables:
@@ -2767,7 +2768,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2770:" \
+echo "$as_me:2771:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -3519,7 +3520,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:3522:" \
+echo "$as_me:3523:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -5346,6 +5347,18 @@ else
 
 fi;
 fi
+# check for which tests to run on install
+if test "x$tests" = "x"; then
+
+# Check whether --with-tests or --without-tests was given.
+if test "${with_tests+set}" = set; then
+  withval="$with_tests"
+  tests=$withval
+else
+  tests="ctests ftests"
+
+fi;
+fi
 if test "$cross_compiling" = "yes" ; then
 echo "$as_me:$LINENO: checking for native compiler for header generation" >&5
 echo $ECHO_N "checking for native compiler for header generation... $ECHO_C" >&6
@@ -6890,8 +6903,6 @@ echo "$as_me: error: pmapi is not needed on this platform" >&2;}
       esac
 fi
 
-tests="ctests ftests"
-
 echo "$as_me:$LINENO: checking for Makefile to use" >&5
 echo $ECHO_N "checking for Makefile to use... $ECHO_C" >&6
 if test "x$MAKEVER" = "x"; then
@@ -6926,7 +6937,6 @@ echo "$as_me: error: The bitmode you specified is not supported" >&2;}
 
    CNL)
 	   MAKEVER="$OS"-perfmon2
-       tests=ctests
 	   ;;
 
    solaris)
