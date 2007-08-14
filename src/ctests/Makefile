@@ -308,7 +308,7 @@ multiattach: multiattach.c $(UTILOBJS) $(PAPILIB)
 reset: reset.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) reset.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o reset 
 
-fork exec forkexec forkexec2: %: %.c $(UTILOBJS) $(PAPILIB)
+fork exec forkexec forkexec2: $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) $< $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ 
 
 prof_utils.o: prof_utils.c papi_test.h prof_utils.h
