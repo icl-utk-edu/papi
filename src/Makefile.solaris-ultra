@@ -23,19 +23,6 @@ TOPTFLAGS	=
 NOOPT		= -xO0 
 OPTFLAGS	= -g -fast -xtarget=ultra3 -xarch=v8plusa 
 #
-# gcc 
-#
-#CC			= gcc
-#F77		= g77
-#CPP		= $(CC) -E
-#CC_R		= $(CC) 
-#CC_SHR		= $(CC) -shared -fpic
-#OPTFLAGS	= -O3
-#CFLAGS  	= -DNEED_FFSLL
-#FFLAGS		= $(CFLAGS)
-#TOPTFLAGS   =
-#SMPCFLGS    =
-#
 # Do not touch below here 
 #
 FOPTFLAGS	= $(OPTFLAGS)
