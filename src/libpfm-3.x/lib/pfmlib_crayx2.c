@@ -140,11 +140,14 @@ pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 		}
 	}
 
-	/*	Better have at least one event specified.
+	/*	Better have at least one event specified and not exceed limit.
 	 */
 	if (inp->pfp_event_count == 0) {
 		DPRINT (("return: event count is 0\n"));
 		return PFMLIB_ERR_INVAL;
+	} else if (inp->pfp_event_count > PMU_CRAYX2_NUM_COUNTERS) {
+		DPRINT (("return: event count exceeds max %d\n", PMU_CRAYX2_NUM_COUNTERS));
+		return PFMLIB_ERR_TOOMANY;
 	}
 
 	memset (Pused, 0, sizeof(Pused));
