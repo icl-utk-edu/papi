@@ -610,9 +610,10 @@ read the documentation carefully.  */
       unsigned int count;                    /* number of terms (usually 1) in the code and name fields
                                                 - for presets, these terms are native events
                                                 - for native events, these terms are register contents */
-      char symbol[PAPI_2MAX_STR_LEN];       /* name of the event
+      char symbol[PAPI_HUGE_STR_LEN];       /* name of the event
                                                 - for presets, something like PAPI_TOT_INS
-                                                - for native events, something related to the vendor name */
+                                                - for native events, something related to the vendor name
+												- for perfmon2:opteron, these can get *very* long! */
       char short_descr[PAPI_MIN_STR_LEN];    /* a description suitable for use as a label, typically only
                                                 implemented for preset events */
       char long_descr[PAPI_HUGE_STR_LEN];    /* a longer description of the event
