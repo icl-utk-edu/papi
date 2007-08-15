@@ -12,7 +12,7 @@ static void test_continue(char *file, int line, char *call, int retval)
 int main(int argc, char **argv)
 {
   int retval;
-  int code = PAPI_TOT_CYC;
+  unsigned int code = PAPI_TOT_CYC;
   char event_name[PAPI_MAX_STR_LEN];
    const PAPI_hw_info_t *hwinfo = NULL;
   const PAPI_substrate_info_t *sub_info;
