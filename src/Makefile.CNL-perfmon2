@@ -16,6 +16,5 @@ COMPILER	= CRAYXT
 endif
 
 CFLAGS		+= -DPFMLIB_VERSION_22
-PFM_ROOT	= ./libpfm-3.x
 
 include Rules.pfm2

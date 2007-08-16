@@ -44,7 +44,7 @@ endif
 
 ifeq (,$(PFM_LIB_PATH))
 ifeq (,$(PFM_ROOT))
-        PFM_ROOT := $(PWD)/libpfm-3.x
+        PFM_ROOT := ./libpfm-3.x
 endif
         PFM_LIB_PATH := $(PFM_ROOT)/lib
 	CC_SHR += -Wl,-rpath-link -Wl,$(PFM_LIB_PATH)
