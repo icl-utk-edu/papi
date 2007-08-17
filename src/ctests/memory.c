@@ -95,7 +95,7 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
    /* Extract and report the cache information */
-   L = (PAPI_mh_level_t *) &(hwinfo->mem_hierarchy.level[0]);
+   L = (PAPI_mh_level_t *) (hwinfo->mem_hierarchy.level);
    for (i=0; i<hwinfo->mem_hierarchy.levels; i++) {
       for (j=0; j<2; j++) {
 	  int tmp;
@@ -107,6 +107,10 @@ int main(int argc, char **argv)
 	  { 	      printf("L%d Data ",i+1);}
 	  else if (tmp == PAPI_MH_TYPE_INST)
 	  { printf("L%d Instruction ",i+1); } 
+	  else if (tmp == PAPI_MH_TYPE_VECTOR)
+	  { printf("L%d Vector ",i+1); } 
+	  else if (tmp == PAPI_MH_TYPE_TRACE)
+	  { printf("L%d Trace ",i+1); } 
 	  else if (tmp == PAPI_MH_TYPE_EMPTY)
 	  { break; }
 	  else
