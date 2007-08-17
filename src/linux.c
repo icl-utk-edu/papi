@@ -741,6 +741,7 @@ int _papi_hwd_get_system_info(void)
    if (s)
       sscanf(s + 1, "%f", &mhz);
    _papi_hwi_system_info.hw_info.mhz = mhz;
+   _papi_hwi_system_info.hw_info.clock_mhz = mhz;
 
    /* Vendor Name */
 
