@@ -319,6 +319,22 @@ int PAPI_library_init(int version)
       papi_return(init_retval);
    }
 
+#ifdef __CATAMOUNT__
+	/*	Set default for signal to ignore to prevent stray
+	 *	interrupts from coming in at the end or profiling
+	 *	or multiplexing. Allows multiplexing, overflow, and
+	 *	profile tests to execute (although some do FAIL).
+	 */
+	do {
+		struct sigaction sigi;
+		sigi.sa_sigaction = (void *) SIG_IGN;
+		sigi.sa_flags = SA_RESTART;
+		sigemptyset (&sigi.sa_mask);
+		(void) sigaction (SIGPROF, &sigi, NULL);
+		(void) sigaction (SIGALRM, &sigi, NULL);
+	} while (0);
+#endif
+
    /* Initialize thread globals, including the main threads
       substrate */
 
@@ -2001,6 +2017,7 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
      retval = PAPI_overflow(EventSet, EventCode, threshold, forceSW, _papi_hwi_dummy_handler);
    else 
       retval = _papi_hwd_set_profile(ESI, index, threshold);
+
 
    if (retval < PAPI_OK)
       return (retval);
