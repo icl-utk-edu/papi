@@ -113,7 +113,7 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
     #define PAPI_SIGNAL SIGPROF
     #define PAPI_ITIMER ITIMER_REAL
   #else
-    #define PAPI_MTX_SIGNAL SIGPROG
+    #define PAPI_MTX_SIGNAL SIGPROF
     #define PAPI_SIGNAL SIGPROF
     #define PAPI_ITIMER ITIMER_PROF
   #endif
