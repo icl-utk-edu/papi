@@ -1,9 +1,11 @@
 COMPILER	= CATAMOUNT
 
 VERSION 	= 2.5.4
-CPU	        = p3
-NOTLS       = -DNO_TLS
-CFLAGS	    = -D__CATAMOUNT__ -DPFMLIB_VERSION_22
+CPU		= p3
+NOTLS		= -DNO_TLS
+CC		= qk-gcc
+F77		= qk-g77
+CFLAGS		= -D__CATAMOUNT__ -DPFMLIB_VERSION_22
 TOPTFLAGS	= -D__x86_64__
 
 #include Rules.perfctr

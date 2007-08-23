@@ -123,12 +123,6 @@ fi
 ])
 AC_MSG_RESULT($OS)
 if test "$OS" = "catamount"; then
-   if test "x$CC" = "x"; then
-      CC=qk-gcc
-   fi
-   if test "x$F77" = "x"; then
-      F77=qk-g77
-   fi
    pfm_events=static
    walltimer=cycle
    virtualtimer=perfctr
