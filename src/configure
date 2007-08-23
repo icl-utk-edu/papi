@@ -1436,12 +1436,6 @@ fi;
 echo "$as_me:$LINENO: result: $OS" >&5
 echo "${ECHO_T}$OS" >&6
 if test "$OS" = "catamount"; then
-   if test "x$CC" = "x"; then
-      CC=qk-gcc
-   fi
-   if test "x$F77" = "x"; then
-      F77=qk-g77
-   fi
    pfm_events=static
    walltimer=cycle
    virtualtimer=perfctr
@@ -2768,7 +2762,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2771:" \
+echo "$as_me:2765:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -3520,7 +3514,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:3523:" \
+echo "$as_me:3517:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
