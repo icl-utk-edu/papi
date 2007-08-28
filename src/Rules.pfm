@@ -12,7 +12,7 @@ TARGETS = serial multiplex_and_pthreads shared ear range
 # GNU G77/GCC section
 #
 
-ifneq (,$(shell gcc -v 2>&1 | grep version | cut -f3 -d" " | grep "^4"))
+ifneq (,$(shell $(CC) -v 2>&1 | grep version | cut -f3 -d" " | grep "^4.2"))
 TARGETS += omp
 OMPCFLGS = -fopenmp
 endif
