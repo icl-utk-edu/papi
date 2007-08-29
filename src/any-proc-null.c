@@ -137,7 +137,7 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 
    times(&buffer);
    SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
-   retval = (long_long)(buffer.tms_utime+buffer.tms_stime)*1000000/sysconf(_SC_CLK_TCK);
+   retval = (long_long)(buffer.tms_utime+buffer.tms_stime)*1000000/_papi_hwi_system_info.hw_info.clock_ticks;
    return (retval);
 }
 

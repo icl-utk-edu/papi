@@ -462,7 +462,7 @@ static int _internal_get_system_info(void)
    _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_OTHER|PAPI_DOM_SUPERVISOR;
    _papi_hwi_system_info.sub_info.hardware_intr = 1;
    _papi_hwi_system_info.sub_info.kernel_multiplex = 1;
-   _papi_hwi_system_info.sub_info.multiplex_timer_us = 1000000/sysconf(_SC_CLK_TCK);
+   _papi_hwi_system_info.sub_info.multiplex_timer_us = 1000000/_papi_hwi_system_info.hw_info.clock_ticks;
    
    retval = _papi_hwd_update_shlib_info();
    if (retval != PAPI_OK) 

@@ -386,6 +386,7 @@ static void headerlines(char *title, int TESTS_QUIET)
       printf("CPU revision             : %f\n", hwinfo->revision);
       printf("CPU Megahertz            : %f\n", hwinfo->mhz);
       printf("CPU Clock Megahertz      : %d\n", hwinfo->clock_mhz);
+      printf("CPU Clock Ticks / sec    : %d\n", hwinfo->clock_ticks);
       printf("CPU's in an SMP node     : %d\n", hwinfo->ncpu);
       printf("Nodes in the system      : %d\n", hwinfo->nnodes);
       printf("Total CPU's in the system: %d\n", hwinfo->totalcpus);

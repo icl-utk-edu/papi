@@ -509,6 +509,7 @@ read the documentation carefully.  */
       float revision;               /* Revision of CPU */
       float mhz;                    /* Cycle time of this CPU */
       int clock_mhz;                /* Cycle time of this CPU's cycle counter */
+      int clock_ticks;              /* clock ticks per second */
       PAPI_mh_info_t mem_hierarchy;  /* PAPI memory heirarchy description */
    } PAPI_hw_info_t;
 

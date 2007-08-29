@@ -1075,6 +1075,7 @@ int _papi_hwi_init_global_internal(void)
    _papi_hwi_system_info.hw_info.model_string[0] = '\0';        /* model_string */
    _papi_hwi_system_info.hw_info.revision = 0.0;        /* revision */
    _papi_hwi_system_info.hw_info.mhz = 0.0;     /* mhz */
+   _papi_hwi_system_info.hw_info.clock_ticks = sysconf(_SC_CLK_TCK);
  
    return (PAPI_OK);
 }
