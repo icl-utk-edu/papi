@@ -417,36 +417,18 @@ static short int init_amd_L2_assoc_inf(unsigned short int pattern)
    return assoc;
 }
 
-/* For some reason, gcc now generates the right stuff
-    even if you don't protect ebx... */
 static void cpuid(unsigned int *a, unsigned int *b,
-                         unsigned int *c, unsigned int *d)
-{
-  unsigned int input = *a;
-__asm__ __volatile__ (
-       "cpuid"
-       : "=a" (*a),
-	 "=b" (*b),
-	 "=c" (*c),
-	 "=d" (*d)
-       : "a" (input)
-    );
-}
-
-/*
-static void cpuid(unsigned int *a, unsigned int *b,
-                         unsigned int *c, unsigned int *d)
+                  unsigned int *c, unsigned int *d)
 {
   unsigned int op = *a;
-  asm volatile ("movl %%ebx, %%edi\n\tcpuid\n\tmovl %%ebx, %%esi\n\tmovl %%edi, %%ebx"
+  __asm__ __volatile__ ("movl %%ebx, %%edi\n\tcpuid\n\tmovl %%ebx, %%esi\n\tmovl %%edi, %%ebx"
        : "=a" (*a),
-	 "=S" (*b),
-	 "=c" (*c),
-	 "=d" (*d)
+	     "=S" (*b),
+		 "=c" (*c),
+		 "=d" (*d)
        : "a" (op)
        : "%edi" );
 }
-*/
 
 static int init_intel(PAPI_mh_info_t * mh_info)
 {

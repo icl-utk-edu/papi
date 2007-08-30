@@ -891,25 +891,16 @@ static void cpuid(unsigned int *a, unsigned int *b,
 }
 #else
 static void cpuid(unsigned int *a, unsigned int *b,
-                         unsigned int *c, unsigned int *d)
+                  unsigned int *c, unsigned int *d)
 {
-  unsigned int input = *a;
-  __asm__ __volatile__ (
-#if (defined(__amd64__) || defined(__x86_64__))
-	   "push %%rbx\n\t"
-#else
-	   "pushl %%ebx\n\t"
-#endif
-	   "cpuid\n\t"
-	   "movl %%ebx,%1 \n\t" 
-#if (defined(__amd64__) || defined(__x86_64__))
-	   "pop %%rbx"
-#else
-	   "popl %%ebx"
-#endif
-	   : "=a" (*a), "=D" (*b), "=c" (*c), "=d" (*d)
-	   : "a" (input)
-	   );
+  unsigned int op = *a;
+  __asm__ __volatile__ ("movl %%ebx, %%edi\n\tcpuid\n\tmovl %%ebx, %%esi\n\tmovl %%edi, %%ebx"
+       : "=a" (*a),
+	     "=S" (*b),
+		 "=c" (*c),
+		 "=d" (*d)
+       : "a" (op)
+       : "%edi" );
 }
 #endif
 
