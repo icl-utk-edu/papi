@@ -31,11 +31,13 @@ int main(int argc, char **argv)
      {
        char *ptr[2] = { NULL, NULL };
        ptr[0] = "xxx";
-       retval = PAPI_library_init(PAPI_VER_CURRENT);
-       if (retval != PAPI_VER_CURRENT)
-	 test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+       if (strcmp(argv[0],"xxx") == 0) {
+         retval = PAPI_library_init(PAPI_VER_CURRENT);
+         if (retval != PAPI_VER_CURRENT)
+	       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+       }
        if (execvp(argv[0],ptr) == -1)
-	 test_fail(__FILE__, __LINE__, "execvp", PAPI_ESYS);
+	     test_fail(__FILE__, __LINE__, "execvp", PAPI_ESYS);
        exit(0);
      }
    else
