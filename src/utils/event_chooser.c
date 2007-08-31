@@ -36,7 +36,7 @@ void papi_init(int argc, char **argv)
       printf("CPU Revision             : %f\n", hwinfo->revision);
       printf("CPU Megahertz            : %f\n", hwinfo->mhz);
       printf("CPU Clock Megahertz      : %d\n", hwinfo->clock_mhz);
-      printf("CPU Clock Ticks          : %d\n", hwinfo->clock_ticks);
+      printf("CPU Clock Ticks / sec    : %d\n", hwinfo->clock_ticks);
       printf("CPU's in this Node       : %d\n", hwinfo->ncpu);
       printf("Nodes in this System     : %d\n", hwinfo->nnodes);
       printf("Total CPU's              : %d\n", hwinfo->totalcpus);
