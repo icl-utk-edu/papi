@@ -99,39 +99,17 @@ static amd64_rev_t amd64_get_revision(int model, int stepping)
 	return AMD64_REV_UN;
 }
 
-#ifdef __i386__
-static inline void cpuid(unsigned int op, unsigned int *eax, unsigned int *ebx,
-			 unsigned int *ecx, unsigned int *edx)
+static inline void cpuid(unsigned int op, unsigned int *a, unsigned int *b,
+                  unsigned int *c, unsigned int *d)
 {
-	/*
-	 * because ebx is used in Pic mode, we need to save/restore because
-	 * cpuid clobbers it. I could not figure out a way to get ebx out in
-	 * one cpuid instruction. To extract ebx, we need to  move it to another
-	 * register (here eax)
-	 */
-	__asm__("pushl %%ebx;cpuid; popl %%ebx"
-			:"=a" (*eax),
-			 "=c" (*ecx),
-			 "=d" (*edx)
-			:"a"  (op));
-
-	__asm__("pushl %%ebx;cpuid; movl %%ebx, %%eax;popl %%ebx"
-			:"=a" (*ebx)
-			:"a"  (op)
-			:"ecx", "edx");
+  __asm__ __volatile__ ("movl %%ebx, %%edi\n\tcpuid\n\tmovl %%ebx, %%esi\n\tmovl %%edi, %%ebx"
+       : "=a" (*a),
+	     "=S" (*b),
+		 "=c" (*c),
+		 "=d" (*d)
+       : "a" (op)
+       : "%edi" );
 }
-#else
-static inline void cpuid(unsigned int op, unsigned int *eax, unsigned int *ebx,
-			 unsigned int *ecx, unsigned int *edx)
-{
-	__asm__("cpuid"
-			:"=a" (*eax),
-			 "=b" (*ebx),
-			 "=c" (*ecx),
-			 "=d" (*edx)
-			:"a"  (op));
-}
-#endif
 
 static int
 pfm_amd64_detect(void)
