@@ -39,6 +39,7 @@ $(LIBRARY): $(OBJECTS)
 	$(AR) $(ARG64) ruv $(LIBRARY) $(OBJECTS) 
 
 $(SHLIB): $(SOURCES) $(SHLIBOBJS) 
+	rm -f $(SHLIB)
 	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(LDFLAGS) $(SHLIBDEPS) 
 	-$(POST_BUILD)
 	rm -rf libpapi.so; ln -s $(SHLIB) libpapi.so
