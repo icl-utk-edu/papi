@@ -17,7 +17,7 @@
 static int init_amd(PAPI_mh_info_t * mh_info);
 static short int init_amd_L2_assoc_inf(unsigned short int pattern);
 static int init_intel(PAPI_mh_info_t * mh_info);
-static void cpuid(unsigned int *, unsigned int *, unsigned int *, unsigned int *);
+inline_static void cpuid(unsigned int *, unsigned int *, unsigned int *, unsigned int *);
 
 int _papi_hwd_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type)
 {
@@ -890,7 +890,7 @@ static void cpuid(unsigned int *a, unsigned int *b,
    *d = tmp4;
 }
 #else
-static void cpuid(unsigned int *a, unsigned int *b,
+inline_static void cpuid(unsigned int *a, unsigned int *b,
                   unsigned int *c, unsigned int *d)
 {
   unsigned int op = *a;
