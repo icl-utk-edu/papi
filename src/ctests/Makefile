@@ -1,7 +1,7 @@
 OMP	= zero_omp omptough
 SMP	= zero_smp
 SHMEM	= zero_shmem
-PTHREADS= pthrtough thrspecific profile_pthreads overflow_pthreads zero_pthreads unregister_pthreads clockres_pthreads overflow3_pthreads locks_pthreads 
+PTHREADS= pthrtough pthrtough2 thrspecific profile_pthreads overflow_pthreads zero_pthreads unregister_pthreads clockres_pthreads overflow3_pthreads locks_pthreads 
 MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
@@ -114,6 +114,9 @@ thrspecific: thrspecific.c $(UTILOBJS) $(PAPILIB)
 
 pthrtough: pthrtough.c $(UTILOBJS) $(PAPILIB)
 	$(CC_R) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) pthrtough.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o pthrtough -lpthread
+
+pthrtough2: pthrtough2.c $(UTILOBJS) $(PAPILIB)
+	$(CC_R) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) pthrtough2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o pthrtough2 -lpthread
 
 profile_pthreads: profile_pthreads.c $(UTILOBJS) $(PAPILIB)
 	$(CC_R) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) profile_pthreads.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile_pthreads -lpthread
