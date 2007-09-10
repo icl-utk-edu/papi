@@ -247,9 +247,9 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_INIT_SLOTS    64     /*Number of initialized slots in
                                    DynamicArray of EventSets */
 
-#define PAPI_MIN_STR_LEN        40      /* For small strings, like names & stuff */
-#define PAPI_MAX_STR_LEN       129      /* For average run-of-the-mill strings */
-#define PAPI_2MAX_STR_LEN      257      /* For somewhat longer run-of-the-mill strings */
+#define PAPI_MIN_STR_LEN        64      /* For small strings, like names & stuff */
+#define PAPI_MAX_STR_LEN       128      /* For average run-of-the-mill strings */
+#define PAPI_2MAX_STR_LEN      256      /* For somewhat longer run-of-the-mill strings */
 #define PAPI_HUGE_STR_LEN     1024      /* This should be defined in terms of a system parameter */
 
 #define PAPI_DERIVED           0x1      /* Flag to indicate that the event is derived */
