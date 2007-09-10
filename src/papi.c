@@ -635,9 +635,9 @@ int PAPI_enum_event(int *EventCode, int modifier)
    else if (i & PAPI_NATIVE_MASK) 
      {
        /* Should check against num native events here */
-       return (_papi_hwd_ntv_enum_events((unsigned int *) EventCode, modifier));
+       papi_return (_papi_hwd_ntv_enum_events((unsigned int *) EventCode, modifier));
      }
-   return (PAPI_ENOEVNT);
+   papi_return (PAPI_ENOEVNT);
 }
 
 int PAPI_create_eventset(int *EventSet)
@@ -647,9 +647,9 @@ int PAPI_create_eventset(int *EventSet)
 
    retval = _papi_hwi_lookup_or_create_thread(&master);
    if (retval)
-     return(retval);
+     papi_return(retval);
 
-   return (_papi_hwi_create_eventset(EventSet, master));
+   papi_return (_papi_hwi_create_eventset(EventSet, master));
 }
 
 int PAPI_add_pevent(int EventSet, int code, void *inout)
@@ -674,7 +674,7 @@ int PAPI_add_pevent(int EventSet, int code, void *inout)
 
    /* Now do the magic. */
 
-   return (_papi_hwi_add_pevent(ESI, code, inout));
+   papi_return (_papi_hwi_add_pevent(ESI, code, inout));
 }
 
 int PAPI_add_event(int EventSet, int EventCode)

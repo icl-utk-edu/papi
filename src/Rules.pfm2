@@ -24,13 +24,8 @@ endif
 CC_R    	:= $(CC) -pthread
 CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.$(PAPIVER) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
 FFLAGS		+= -ffixed-line-length-132
-CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) 
-ifeq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))
-OPTFLAGS	+= -g -O3 $(DEBUGFLAGS)
-else
-OPTFLAGS	+= -g -O $(DEBUGFLAGS)
-endif
-TOPTFLAGS	+= -g -O 
+CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) $(DEBUGFLAGS) -DPAPI_NO_MEMORY_MANAGEMENT -D_REENTRANT
+TOPTFLAGS	+= $(CFLAGS)
 FTOPTFLAGS	= $(TOPTFLAGS)
 
 ifeq (static,$(PFM_EVENTS))
