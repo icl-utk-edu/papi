@@ -65,7 +65,7 @@ papi_svector_t _linux_pfm_table[] = {
 
 /* Static locals */
 
-int _perfmon2_pfm_pmu_type;
+int _perfmon2_pfm_pmu_type = -1;
 static pfmlib_regmask_t _perfmon2_pfm_unavailable_pmcs;
 static pfmlib_regmask_t _perfmon2_pfm_unavailable_pmds;
 
@@ -159,32 +159,41 @@ detect_unavail_pmu_regs(pfmlib_regmask_t *r_pmcs, pfmlib_regmask_t *r_pmds)
 	 * if no context descriptor is passed, then create
 	 * a temporary context
 	 */
+	SUBDBG("PFM_CREATE_CONTEXT(%p,%p,%p,%d)\n",&ctx,NULL,NULL,0);
 	myfd = pfm_create_context(&ctx, NULL, NULL, 0);
 	if (myfd == -1)
-	  return -1;
+	  {
+	    PAPIERROR("pfm_create_context(): %s", strerror(errno));
+	    return(PAPI_ESYS);
+	  }
+	SUBDBG("PFM_CREATE_CONTEXT returned fd %d\n",myfd);
 	/*
 	 * retrieve available register bitmasks from set0
 	 * which is guaranteed to exist for every context
 	 */
 	ret = pfm_getinfo_evtsets(myfd, &setf, 1);
-	if (ret == 0) {
-		if (r_pmcs)
-			for(i=0; i < PFM_PMC_BV; i++) {
-				for(j=0; j < 64; j++) {
-					if ((setf.set_avail_pmcs[i] & (1ULL << j)) == 0)
-						pfm_regmask_set(r_pmcs, (i<<6)+j);
-				}
+	if (ret != PFMLIB_SUCCESS) 
+	  {
+	    PAPIERROR("pfm_getinfo_evtsets(): %s", pfm_strerror(ret));
+	    return(PAPI_ESYS);
+	  }
+    if (r_pmcs)
+		for(i=0; i < PFM_PMC_BV; i++) {
+			for(j=0; j < 64; j++) {
+				if ((setf.set_avail_pmcs[i] & (1ULL << j)) == 0)
+					pfm_regmask_set(r_pmcs, (i<<6)+j);
 			}
-		if (r_pmds)
-			for(i=0; i < PFM_PMD_BV; i++) {
-				for(j=0; j < 64; j++) {
-					if ((setf.set_avail_pmds[i] & (1ULL << j)) == 0)
-						pfm_regmask_set(r_pmds, (i<<6)+j);
-				}
+		}
+	if (r_pmds)
+		for(i=0; i < PFM_PMD_BV; i++) {
+			for(j=0; j < 64; j++) {
+				if ((setf.set_avail_pmds[i] & (1ULL << j)) == 0)
+					pfm_regmask_set(r_pmds, (i<<6)+j);
 			}
-	}
-	close(myfd);
-	return ret;
+		}
+	i = close(myfd);
+	SUBDBG("CLOSE fd %d returned %d\n",myfd,i);
+	return PAPI_OK;
 }
 
 /* BEGIN COMMON CODE */
@@ -2124,12 +2133,12 @@ static int attach(hwd_control_state_t *ctl, unsigned long tid)
   SUBDBG("PFM_CREATE_CONTEXT(%p,%p,%p,%d)\n",newctx,NULL,NULL,0);
   if ((ret = pfm_create_context(newctx, NULL, NULL, 0)) == -1)
     {
-      PAPIERROR("pfm_create_context(): %s", pfm_strerror(ret));
+      PAPIERROR("pfm_create_context(): %s", strerror(errno));
       free(newctx); 
       free(load_args);
       return(PAPI_ESYS);
     }
-  SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",ret);
+  SUBDBG("PFM_CREATE_CONTEXT returned fd %d\n",ret);
   tune_up_fd(ret);
 
   ctl->ctx_fd = ret;
@@ -2142,7 +2151,10 @@ static int attach(hwd_control_state_t *ctl, unsigned long tid)
 
 static int detach(hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
-  close(ctl->ctx_fd);
+  int i;
+
+  i = close(ctl->ctx_fd);
+  SUBDBG("CLOSE fd %d returned %d\n",ctl->ctx_fd,i);
 
   /* Restore to main threads context */
   free(ctl->ctx);
@@ -2184,10 +2196,10 @@ inline static int check_multiplex_timeout(hwd_context_t *ctx, unsigned long *tim
       SUBDBG("PFM_CREATE_CONTEXT(%p,%p,%p,%d)\n",&newctx,NULL,NULL,0);
       if ((ret = pfm_create_context(&newctx, NULL, NULL, 0)) == -1)
 	{
-	  PAPIERROR("pfm_create_context(): %s", pfm_strerror(ret));
+	  PAPIERROR("pfm_create_context(): %s", strerror(errno));
 	  return(PAPI_ESYS);
 	}
-      SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",ret);
+      SUBDBG("PFM_CREATE_CONTEXT returned fd %d\n",ret);
       tune_up_fd(ret);
       ctx_fd = ret;
     }
@@ -2207,8 +2219,10 @@ inline static int check_multiplex_timeout(hwd_context_t *ctx, unsigned long *tim
   if (ctx_fd) 
     {
       pfm_delete_evtsets(ctx_fd,&set,1);
+      SUBDBG("PFM_UNLOAD_CONTEXT(%d)\n",ctx_fd);
       pfm_unload_context(ctx_fd);
-      close(ctx_fd);
+      ret = close(ctx_fd);
+      SUBDBG("CLOSE fd %d returned %d\n",ctx_fd,ret);
     }
 
   return(PAPI_OK);
@@ -2458,13 +2472,12 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
   memset(&newctx, 0, sizeof(newctx));
   memset(&load_args, 0, sizeof(load_args));
 
-  SUBDBG("PFM_CREATE_CONTEXT(%p,%p,%p,%d)\n",&newctx, NULL, NULL, 0);
   if ((ret = pfm_create_context(&newctx, NULL, NULL, 0)) == -1)
     {
-      PAPIERROR("pfm_create_context(%p,%p,%d): %s",&newctx,NULL,0,pfm_strerror(errno));
+      PAPIERROR("pfm_create_context(): %s", strerror(errno));
       return(PAPI_ESYS);
     }
-  SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",ret);
+  SUBDBG("PFM_CREATE_CONTEXT returned fd %d\n",ret);
   tune_up_fd(ret);
   ctx_fd = ret;
   
@@ -2807,10 +2820,12 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 
 int _papi_hwd_shutdown(hwd_context_t * ctx)
 {
-#if defined(USR_PROC_PTTIMER)
+  int ret;
+#if defined(USE_PROC_PTTIMER)
   close(ctx->stat_fd);
 #endif  
-  close(ctx->ctx_fd);
+  ret = close(ctx->ctx_fd);
+  SUBDBG("CLOSE fd %d returned %d\n",ctx->ctx_fd,ret);
   return (PAPI_OK);
 }
 
@@ -2953,9 +2968,9 @@ static inline int setup_ear_event(unsigned int native_index, pfarg_pmd_t *pd, in
   return(0);
 }
 
-static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, pfm_dfl_smpl_entry_t **ent, _papi_hwi_context_t *ctx)
+static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, pfm_dfl_smpl_entry_t **ent, caddr_t *pc)
 {
-  SUBDBG("process_smpl_entry(%d,%d,%p,%p)\n",native_pfm_index,flags,ent,ctx);
+  SUBDBG("process_smpl_entry(%d,%d,%p,%p)\n",native_pfm_index,flags,ent,pc);
 
 #ifdef __ia64__
   /* Fixup EAR stuff here */      
@@ -2995,11 +3010,11 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
 	}
 
       if (flags & PAPI_PROFIL_DATA_EAR)
-	OVERFLOW_ADDRESS((*ctx)) = data_addr.pmd_val;
+	*pc = data_addr.pmd_val;
       else if (flags & PAPI_PROFIL_INST_EAR)
 	{
 	  unsigned long tmp = ((load_addr.pmd36_mont_reg.dear_iaddr + (unsigned long)load_addr.pmd36_mont_reg.dear_bn) << 4) | (unsigned long)load_addr.pmd36_mont_reg.dear_slot;
-	  OVERFLOW_ADDRESS((*ctx)) = tmp;
+	  *pc = tmp;
 	}
       else
 	{
@@ -3045,7 +3060,7 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
       if (flags & PAPI_PROFIL_INST_EAR)
 	{
 	  unsigned long tmp = icache_line_addr.pmd34_mont_reg.iear_iaddr << 5;
-	  OVERFLOW_ADDRESS((*ctx)) = tmp;
+	  *pc = tmp;
 	}
       else 
       	{
@@ -3093,11 +3108,11 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
 	}
 
       if (flags & PAPI_PROFIL_DATA_EAR)
-	OVERFLOW_ADDRESS((*ctx)) = data_addr.pmd_val;
+	    *pc = data_addr.pmd_val;
       else if (flags & PAPI_PROFIL_INST_EAR)
 	{
 	  unsigned long tmp = ((load_addr.pmd17_ita2_reg.dear_iaddr + (unsigned long)load_addr.pmd17_ita2_reg.dear_bn) << 4) | (unsigned long)load_addr.pmd17_ita2_reg.dear_slot;
-	  OVERFLOW_ADDRESS((*ctx)) = tmp;
+	  *pc = tmp;
 	}
       else
 	{
@@ -3143,7 +3158,7 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
       if (flags & PAPI_PROFIL_INST_EAR)
 	{
 	  unsigned long tmp = icache_line_addr.pmd0_ita2_reg.iear_iaddr << 5;
-	  OVERFLOW_ADDRESS((*ctx)) = tmp;
+	  *pc = tmp;
 	}
       else 
 	{
@@ -3167,14 +3182,14 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
     safety:
 #endif
     {
-      OVERFLOW_ADDRESS((*ctx)) = (*ent)->ip;
+      *pc = (caddr_t)(*ent)->ip;
       ++(*ent);
-      return(1);
+      return(0);
     }
 }
 
 static inline int
-process_smpl_buf(int num_smpl_pmds, int entry_size, _papi_hwi_context_t *ctx, ThreadInfo_t **thr)
+process_smpl_buf(int num_smpl_pmds, int entry_size, ThreadInfo_t **thr)
 {
   pfm_dfl_smpl_entry_t *ent;
   size_t pos;
@@ -3182,6 +3197,8 @@ process_smpl_buf(int num_smpl_pmds, int entry_size, _papi_hwi_context_t *ctx, Th
   pfm_dfl_smpl_hdr_t *hdr = (*thr)->context.smpl_buf;
   int ret, profile_index, flags;
   unsigned int native_pfm_index;
+  caddr_t pc;
+  long_long weight;
 
   DEBUGCALL(DEBUG_SUBSTRATE,dump_smpl_hdr(hdr));
   count = hdr->hdr_count;
@@ -3203,9 +3220,10 @@ process_smpl_buf(int num_smpl_pmds, int entry_size, _papi_hwi_context_t *ctx, Th
 
       (*thr)->running_eventset->profile.overflowcount++;
 
-      process_smpl_entry(native_pfm_index,flags,&ent,ctx);
+      weight = process_smpl_entry(native_pfm_index,flags,&ent,&pc);
 
-      _papi_hwi_dispatch_profile((*thr)->running_eventset, ctx, (long_long)0,profile_index);
+      _papi_hwi_dispatch_profile((*thr)->running_eventset, pc,
+				 weight, profile_index);
  
       entry++;
     }
@@ -3261,12 +3279,14 @@ void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
    if (ret != -1)
      {
        if (thread->running_eventset->state & PAPI_PROFILING)
-	 process_smpl_buf(0, sizeof(pfm_dfl_smpl_entry_t), &ctx, &thread);
+	 process_smpl_buf(0, sizeof(pfm_dfl_smpl_entry_t), &thread);
        else
 	 {
-	   OVERFLOW_ADDRESS(ctx) = msg.pfm_ovfl_msg.msg_ovfl_ip;
-	   _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, 
-					      msg.pfm_ovfl_msg.msg_ovfl_pmds[0], 0, &thread);
+	   _papi_hwi_dispatch_overflow_signal((void *) &ctx, 
+					      msg.pfm_ovfl_msg.msg_ovfl_ip,
+					      NULL, 
+					      msg.pfm_ovfl_msg.msg_ovfl_pmds[0], 
+					      0, &thread);
 	 }
      }
 
@@ -3278,16 +3298,8 @@ void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
 
 int _papi_hwd_stop_profiling(ThreadInfo_t * thread, EventSetInfo_t * ESI)
 {
-  _papi_hwi_context_t bogus;
-  hwd_ucontext_t uc;
-  hwd_siginfo_t si;
-  
-  memset(&bogus,0,sizeof(bogus));
-  memset(&si,0,sizeof(si));
-  memset(&uc,0,sizeof(uc));
-  bogus.ucontext = &uc;
-  bogus.si = &si;
-  return(process_smpl_buf(0, sizeof(pfm_dfl_smpl_entry_t), &bogus, &thread));
+  /* Process any remaining samples in the sample buffer */
+  return(process_smpl_buf(0, sizeof(pfm_dfl_smpl_entry_t), &thread));
 }
 
 int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
@@ -3298,37 +3310,29 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
   void *buf_addr = NULL;
   pfm_dfl_smpl_arg_t buf_arg;
   pfm_dfl_smpl_hdr_t *hdr;
-  int ret, ctx_fd;
+  int i, ret, ctx_fd;
 
   memset(&newctx, 0, sizeof(newctx));
   
   if (threshold == 0)
     {
-      SUBDBG("PFM_CREATE_CONTEXT(%p,%p,%p,%d)\n",&newctx, NULL, NULL, 0);
-      if ((ret = pfm_create_context(&newctx, NULL, NULL, 0)) == -1)
-	{
-	  PAPIERROR("pfm_create_context(%p,%p,%p,%d): %s",&newctx,NULL,NULL,0,pfm_strerror(ret));
-	  return(PAPI_ESYS);
-	}
-      SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",ret);
-      tune_up_fd(ret);
-      ctx_fd = ret;
-
       SUBDBG("MUNMAP(%p,%lld)\n",ctx->smpl_buf,(unsigned long long)ctx->smpl.buf_size);
       munmap(ctx->smpl_buf,ctx->smpl.buf_size);
 
-      SUBDBG("CLOSE(%d)\n",ctl->ctx_fd);
-      close(ctl->ctx_fd);
+      i = close(ctl->ctx_fd);
+      SUBDBG("CLOSE fd %d returned %d\n",ctl->ctx_fd,i);
 
-//      ctx->ctx_fd = ctx_fd;
-      ctl->ctx_fd = ctx_fd;
-      memcpy(&ctx->ctx,&newctx,sizeof(newctx));
+      ctl->ctx_fd = ctx->ctx_fd;
+      ctl->ctx = &ctx->ctx;
       memset(&ctx->smpl,0,sizeof(buf_arg));
       ctx->smpl_buf = NULL;
+
       _papi_hwd_set_overflow(ESI,EventIndex,threshold);
+
       ESI->state &= ~(PAPI_OVERFLOWING);
       ESI->overflow.flags &= ~(PAPI_OVERFLOW_HARDWARE);
-      ESI->profile.overflowcount = 0;  
+      ESI->profile.overflowcount = 0;
+
       return(PAPI_OK);
     }
 
@@ -3340,11 +3344,11 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
   if ((ret = pfm_create_context(&newctx, PFM_DFL_SMPL_NAME, &buf_arg, sizeof(buf_arg))) == -1)
     {
       DEBUGCALL(DEBUG_SUBSTRATE,dump_smpl_arg(&buf_arg));
-      PAPIERROR("pfm_create_context(%p,%p,%p,%d): %s",&newctx,PFM_DFL_SMPL_NAME,&buf_arg,sizeof(buf_arg),pfm_strerror(ret));
+      PAPIERROR("pfm_create_context(): %s", strerror(errno));
       return(PAPI_ESYS);
     }
   ctx_fd = ret;
-  SUBDBG("PFM_CREATE_CONTEXT returns fd %d\n",ctx_fd);
+  SUBDBG("PFM_CREATE_CONTEXT returned fd %d\n",ctx_fd);
   tune_up_fd(ret);
 
   SUBDBG("MMAP(NULL,%lld,%d,%d,%d,0)\n",(unsigned long long)buf_arg.buf_size,PROT_READ,MAP_PRIVATE,ctx_fd);
@@ -3397,9 +3401,7 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
   /* Copy the new data to the threads context control block */
 
-  // ctx->ctx_fd = ctx_fd;
   ctl->ctx_fd = ctx_fd;
-  memcpy(&ctx->ctx,&newctx,sizeof(newctx));
   memcpy(&ctx->smpl,&buf_arg,sizeof(buf_arg));
   ctx->smpl_buf = buf_addr;
 
