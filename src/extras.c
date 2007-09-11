@@ -157,13 +157,10 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t * prof,
    }
 }
 
-void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, void *context,
+void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, caddr_t pc,
                       long_long over, int profile_index)
 {
-  _papi_hwi_context_t *ctx = (_papi_hwi_context_t *) context;
-
    EventSetProfileInfo_t *profile = &ESI->profile;
-   caddr_t pc = (caddr_t) GET_OVERFLOW_ADDRESS(ctx);
    PAPI_sprofil_t *sprof;
 
   caddr_t offset = (caddr_t)0;
@@ -213,7 +210,7 @@ void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, void *context,
      situation).
 */
 
-int _papi_hwi_dispatch_overflow_signal(void *papiContext, int *isHardware, long_long overflow_bit, int genOverflowBit, ThreadInfo_t **t)
+int _papi_hwi_dispatch_overflow_signal(void *papiContext, unsigned long address, int *isHardware, long_long overflow_bit, int genOverflowBit, ThreadInfo_t **t)
 {
    int retval, event_counter, i, overflow_flag, pos;
    int papi_index, j;
@@ -336,8 +333,7 @@ foundit:
             }
             /* do not use overflow_vector after this place */
          } else {
-            ESI->overflow.handler(ESI->EventSetIndex,
-                  GET_OVERFLOW_ADDRESS(ctx), overflow_vector,ctx->ucontext);
+            ESI->overflow.handler(ESI->EventSetIndex, (void *)address, overflow_vector,ctx->ucontext);
          }
       }
        ESI->state &= ~(PAPI_PAUSED);
