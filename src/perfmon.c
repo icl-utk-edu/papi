@@ -1822,7 +1822,7 @@ int _papi_hwd_update_shlib_info(void)
       /* When we get here, we have counted the number of entries in the map
          for us to allocate */
                                                                                 
-      tmp = (PAPI_address_map_t *) papi_calloc(t_index, sizeof(PAPI_address_map_t));
+      tmp = (PAPI_address_map_t *) papi_calloc(t_index-1, sizeof(PAPI_address_map_t));
       if (tmp == NULL)
         { PAPIERROR("Error allocating shared library address map"); return(PAPI_ENOMEM); }
       t_index = 0;
@@ -2555,7 +2555,8 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 	 PAPIERROR("Unable to scan two items from thread stat file at 13th space?");
 	 return(PAPI_ESBSTR);
        }
-     retval = (long_long)(utime+stime)*1000000/_papi_hwi_system_info.hw_info.clock_ticks;
+     //retval = (long_long)(utime+stime)*1000000/_papi_hwi_system_info.hw_info.clock_ticks;
+     retval = (utime+stime)*(long_long)(1000000/sysconf(_SC_CLK_TCK));
    }
 #elif defined(HAVE_CLOCK_GETTIME_THREAD)
    {
@@ -2569,7 +2570,8 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
      struct tms buffer;
      times(&buffer);
      SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
-     retval = (long_long)(buffer.tms_utime+buffer.tms_stime)*1000000/_papi_hwi_system_info.hw_info.clock_ticks;
+     //retval = (long_long)(buffer.tms_utime+buffer.tms_stime)*1000000/_papi_hwi_system_info.hw_info.clock_ticks;
+     retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*(1000000/sysconf(_SC_CLK_TCK)));
      /* NOT CLOCKS_PER_SEC as in the headers! */
    }
 #elif defined(HAVE_PER_THREAD_GETRUSAGE)

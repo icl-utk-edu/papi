@@ -352,6 +352,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context) {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *master = NULL;
    int isHardware = 0;
+   unsigned long address;
 
    ctx.si = si;
    ctx.ucontext = (ucontext_t *)context;
@@ -364,7 +365,8 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context) {
 #define GEN_OVERFLOW 0
 #endif
 
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx, &isHardware, 
+   address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, &isHardware, 
                                       OVERFLOW_MASK, GEN_OVERFLOW, &master);
 
    /* We are done, resume interrupting counters */
