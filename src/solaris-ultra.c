@@ -123,6 +123,7 @@ static void dispatch_emt(int signal, siginfo_t * sip, void *arg)
 {
    int event_counter;
    _papi_hwi_context_t ctx;
+   unsigned long address;
 
    ctx.si = sip;
    ctx.ucontext = arg;
@@ -210,8 +211,10 @@ static void dispatch_emt(int signal, siginfo_t * sip, void *arg)
 	   }
       }
 
+      address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
+
       /* Call the regular overflow function in extras.c */
-      _papi_hwi_dispatch_overflow_signal(&ctx, NULL, overflow_vector, 0, &thread);
+      _papi_hwi_dispatch_overflow_signal(&ctx, address, NULL, overflow_vector, 0, &thread);
 
 #if DEBUG
       dump_cmd(sample);
@@ -878,10 +881,12 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
 {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *t = NULL;
+   unsigned long address;
 
    ctx.si = si;
    ctx.ucontext = info;
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, 0, 0, &t);
+   address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 0, 0, &t);
 }
 
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)

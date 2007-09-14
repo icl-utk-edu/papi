@@ -1387,11 +1387,13 @@ void _papi_hwd_dispatch_timer(int signal, hwd_siginfo_t * info, void *context)
  {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *t = NULL;
+   unsigned long address;
  
    ctx.si = (hwd_siginfo_t *) info;
    ctx.ucontext = (hwd_ucontext_t *) context;
 
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long_long) 0, 0, &t);
+   address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, (long_long) 0, 0, &t);
    return;
  }
 
@@ -1418,16 +1420,18 @@ static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
 {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *master = NULL;
+   unsigned long address;
 
    ctx.si = info;
    ctx.ucontext = context;
+   address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
 
    SUBDBG("pid=%d @0x%lx bv=0x%lx\n", info->sy_pid, context->sc_ip, info->sy_pfm_ovfl[0]);
    if (info->sy_code != PROF_OVFL) {
       PAPIERROR("received spurious SIGPROF, si_code = %d", info->sy_code);
       return;
    }
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, 
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 
                      info->sy_pfm_ovfl[0]>>PMU_FIRST_COUNTER, 0, &master);
 
    if (pfmw_perfmonctl(info->sy_pid, 0, PFM_RESTART, 0, 0) == -1) {
@@ -1458,11 +1462,13 @@ static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
    pfm_msg_t msg;
    int ret, fd;
    ThreadInfo_t *master = NULL;
+   unsigned long address;
 
    ctx.si = info;
    ctx.ucontext = sc;
    fd = info->si_fd;
    ret = read(fd, &msg, sizeof(msg));
+   address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
 
    if (ret != sizeof(msg)) {
       PAPIERROR("read(overflow message): errno %d", errno);
@@ -1483,7 +1489,7 @@ static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
    }
 #endif
 
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, 
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 
           msg.pfm_ovfl_msg.msg_ovfl_pmds[0]>>PMU_FIRST_COUNTER, 0, &master);
  
   if (pfmw_perfmonctl(0, fd, PFM_RESTART, 0, 0) == -1) {
