@@ -39,6 +39,7 @@ int main(int argc, char **argv)
    long length;
    int mask;
    int retval;
+   int mythreshold;
    const PAPI_hw_info_t *hw_info;
    const PAPI_exe_info_t *prginfo;
    caddr_t start, end;
@@ -63,17 +64,32 @@ int main(int argc, char **argv)
 #endif
 #endif
 
+#if defined(linux)
+     {
+       char *tmp2 = getenv("NUM_ITERS");
+       char *tmp = getenv("THRESHOLD");
+       if (tmp) 
+	     mythreshold = atoi(tmp);
+       else if (tmp2)
+	     mythreshold = atoi(tmp2)/1000;
+       else
+	     mythreshold = NUM_ITERS/1000;
+     }
+#else
+   mythreshold = THRESHOLD;
+#endif
+
    length = end - start;
    if (length < 0)
       test_fail(__FILE__, __LINE__, "Profile length < 0!", length);
 
    prof_print_address("Test case profile: POSIX compatible profiling with hardware counters.\n",prginfo);
-   prof_print_prof_info(start,end,THRESHOLD,event_name);
-   retval = do_profile(start, length, FULL_SCALE, THRESHOLD, PAPI_PROFIL_BUCKET_16);
+   prof_print_prof_info(start,end,mythreshold,event_name);
+   retval = do_profile(start, length, FULL_SCALE, mythreshold, PAPI_PROFIL_BUCKET_16);
    if (retval)
-      retval = do_profile(start, length, FULL_SCALE, THRESHOLD, PAPI_PROFIL_BUCKET_32);
+      retval = do_profile(start, length, FULL_SCALE, mythreshold, PAPI_PROFIL_BUCKET_32);
    if (retval)
-      retval = do_profile(start, length, FULL_SCALE, THRESHOLD, PAPI_PROFIL_BUCKET_64);
+      retval = do_profile(start, length, FULL_SCALE, mythreshold, PAPI_PROFIL_BUCKET_64);
 
    remove_test_events(&EventSet, mask);
 
@@ -118,14 +134,14 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
       if ((retval = PAPI_start(EventSet)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-      do_both(NUM_ITERS);
+      do_flops(getenv("NUM_ITERS") ? atoi(getenv("NUM_ITERS")) : NUM_ITERS);
 
       if ((retval = PAPI_stop(EventSet, values[1])) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
       if (!TESTS_QUIET) {
          printf(TAB1, event_name, (values[1])[0]);
-         printf(TAB1, "PAPI_TOT_CYC:", (values[1])[1]);
+         printf(TAB1, "PAPI_TOT_CYC", (values[1])[1]);
       }
       if ((retval = PAPI_profil(profbuf[i], blength, start, scale,
                               EventSet, PAPI_event, 0, profflags[i])) != PAPI_OK)

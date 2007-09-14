@@ -72,13 +72,25 @@ int main(int argc, char **argv)
       platform */
    EventSet = add_two_events(&num_events, &PAPI_event, hw_info, &mask);
 
-   if ( PAPI_event == PAPI_FP_INS || PAPI_event == PAPI_FP_OPS ) 
+/*   if ( PAPI_event == PAPI_FP_INS || PAPI_event == PAPI_FP_OPS ) 
       mythreshold = THRESHOLD;
    else
 #if defined(linux)
       mythreshold = hw_info->mhz*10000*2;
 #else
       mythreshold = THRESHOLD*2;
+#endif
+*/
+#if defined(linux)
+     {
+       char *tmp = getenv("THRESHOLD");
+       if (tmp) 
+	     mythreshold = atoi(tmp);
+       else
+	     mythreshold = hw_info->mhz*10000*2;
+     }
+#else
+      mythreshold = THRESHOLD;
 #endif
 
    num_flops = NUM_FLOPS*2;

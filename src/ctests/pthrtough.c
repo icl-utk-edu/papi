@@ -3,13 +3,13 @@
 #include <unistd.h>
 #include "papi_test.h"
 
-#define NITER (10000)
+#define NITER 1000
 
 void *Thread(void *data)
 {
   int i, ret, evtset;
 
-  for( i=0; i<NITER/NUM_THREADS; i++ )
+  for( i=0; i<NITER; i++ )
     {
       if ((ret=PAPI_register_thread()) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_thread_init", ret);
@@ -30,9 +30,10 @@ void *Thread(void *data)
 int main( int argc, char* argv[] )
 {
   int j;
-  pthread_t th[NUM_THREADS];
+  pthread_t *th = NULL;
   pthread_attr_t attr;
   int ret;
+  long nthr;
 
   ret=PAPI_library_init(PAPI_VER_CURRENT);
   if (ret != PAPI_VER_CURRENT)
@@ -41,26 +42,40 @@ int main( int argc, char* argv[] )
   if ((ret=PAPI_thread_init(pthread_self)!=PAPI_OK))
     test_fail(__FILE__,__LINE__,"PAPI_thread_init",ret);
 
-   pthread_attr_init(&attr);
+  pthread_attr_init(&attr);
 #ifdef PTHREAD_CREATE_UNDETACHED
-   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_UNDETACHED);
+  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_UNDETACHED);
 #endif
 #ifdef PTHREAD_SCOPE_SYSTEM
-   pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+  pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
 #endif
 
-  for (j=0;j<NUM_THREADS;j++)
+  nthr = sysconf(_SC_NPROCESSORS_ONLN);
+  if (nthr == -1) 
+    test_fail(__FILE__,__LINE__,"sysconf(SC_NPROCESSORS_ONLN)",PAPI_ESYS);
+
+  printf("Creating %ld threads for %d iterations each of:\n",nthr,NITER);
+  printf("\tregister\n");
+  printf("\tcreate_eventset\n");
+  printf("\tdestroy_eventset\n");
+  printf("\tunregister\n");
+
+  th = (pthread_t *)malloc(nthr*sizeof(pthread_t *));
+  if (th == NULL)
+    test_fail(__FILE__,__LINE__,"malloc",PAPI_ESYS);
+
+  for (j=0;j<nthr;j++)
     {
       ret = pthread_create(&th[j], &attr, &Thread, NULL);
       if (ret) 
 	test_fail(__FILE__, __LINE__, "pthread_create", PAPI_ESYS);
     }
 
-  for (j=0;j<NUM_THREADS;j++)
+  for (j=0;j<nthr;j++)
     {
       pthread_join(th[j], NULL);
     }
 
-   test_pass(__FILE__, NULL, 0);
-   exit(1);
+  test_pass(__FILE__, NULL, 0);
+  exit(1);
 }
