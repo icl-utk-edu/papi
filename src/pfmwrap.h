@@ -727,8 +727,12 @@ hweight64 (unsigned long x)
 
    inline char* pfmw_get_event_name(unsigned int idx)
    {
-      static char name[PAPI_MAX_STR_LEN];
+      char name[PAPI_MAX_STR_LEN];
+      int total;
 
+      pfm_get_num_events(&total);
+      if(idx >= total)
+         return NULL;
       if (pfm_get_event_name(idx, name, PAPI_MAX_STR_LEN) == PFMLIB_SUCCESS)
          return name;
       else
