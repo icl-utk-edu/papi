@@ -48,7 +48,7 @@ static void ppc64_setup_gps(int total)
 }
 
 /* to setup native_table values, and return number of entries */
-void ppc64_setup_native_table()
+int ppc64_setup_native_table()
 {
    hwd_pmevents_t *wevp;
    hwd_pminfo_t * info;
@@ -82,4 +82,6 @@ void ppc64_setup_native_table()
       }
    }
    ppc64_setup_gps(index);
+
+   return index;
 }

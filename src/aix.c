@@ -434,10 +434,10 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
  * power 4 when we merge substrates.
  */
 #if !defined(_POWER4) && !defined(_POWER5)
-   power3_setup_native_table(vtable);
+   _papi_hwi_system_info.sub_info.num_native_events = power3_setup_native_table(vtable);
    if ((retval = power3_setup_vector_table(vtable))!= 0 )  return retval;
 #else
-   ppc64_setup_native_table(vtable);
+   _papi_hwi_system_info.sub_info.num_native_events = ppc64_setup_native_table(vtable);
    if ((retval = ppc64_setup_vector_table(vtable))!= 0 )  return retval;
 #endif
 
