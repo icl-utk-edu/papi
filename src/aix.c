@@ -583,10 +583,13 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *i)
 {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *t = NULL;
+   unsigned long address;
 
    ctx.si = si;
    ctx.ucontext = (hwd_ucontext_t *) i;
-   _papi_hwi_dispatch_overflow_signal(&ctx, NULL, 0, 0, &t);
+
+   address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
+   _papi_hwi_dispatch_overflow_signal(&ctx, address, NULL, 0, 0, &t);
 }
 
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
