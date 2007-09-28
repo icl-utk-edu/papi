@@ -402,8 +402,14 @@ papi_svector_t _aix_table[] = {
  { (void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
  { (void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
  { (void (*)())_papi_hwd_ntv_code_to_bits, VEC_PAPI_HWD_NTV_CODE_TO_BITS},
+ { (void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
  { NULL, VEC_PAPI_END}
 };
+
+int _papi_hwd_shutdown(hwd_context_t * ctx)
+{
+   return (PAPI_OK);
+}
 
 int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {
