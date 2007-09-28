@@ -784,6 +784,7 @@ papi_svector_t _solaris_ultra_table[] = {
  {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
  {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
  {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
+ {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
  {(void (*)())_papi_hwd_shutdown_global, VEC_PAPI_HWD_SHUTDOWN_GLOBAL},
  {(void (*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
  {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
@@ -869,6 +870,11 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
    default:
       return (PAPI_EINVAL);
    }
+}
+
+int _papi_hwd_shutdown(hwd_context_t * ctx)
+{
+   return (PAPI_OK);
 }
 
 int _papi_hwd_shutdown_global(void)

@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <omp.h>
-#include <papi.h>
+#include "papi_test.h"
 
 #define NITER (100000)
 
@@ -19,6 +19,8 @@ int main( int argc, char* argv[] )
   nthreads = omp_get_max_threads();
   evtset   = (int*) malloc( sizeof(int)*nthreads );
   ctrcode  = (int*) malloc( sizeof(int)*nthreads );
+
+  tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
   ret=PAPI_library_init( PAPI_VER_CURRENT );
   if( ret!=PAPI_VER_CURRENT && ret>0 )
@@ -55,44 +57,51 @@ int main( int argc, char* argv[] )
 	
     }
 
-  for( i=0; i<NITER; i++ )
-    {
+  for( i=0; i<NITER; i++ ){
 #pragma omp parallel
-      {
+   {
 	int tid;
 	int pid;
 	tid = omp_get_thread_num();
 
 	pid = pthread_self();  
 
-	if( (ret=PAPI_register_thread()) != PAPI_OK )
-	  {
+	if( (ret=PAPI_register_thread()) != PAPI_OK ){
+      if (!TESTS_QUIET) {
 	    fprintf(stderr, "[%5d] Error in register thread (tid=%d pid=%d) '%s'\n", 
 		    i, tid, pid, PAPI_strerror(ret) );
-	  }
+        test_fail(__FILE__, __LINE__, "omptough", 1);
+      }
+	}
 	  
 	evtset[tid]=PAPI_NULL;
-	if( (ret=PAPI_create_eventset(&(evtset[tid]))) != PAPI_OK )
-	  {
+	if( (ret=PAPI_create_eventset(&(evtset[tid]))) != PAPI_OK ){
+      if (!TESTS_QUIET) {
 	    fprintf(stderr, "[%5d] Error creating eventset (tid=%d pid=%d) '%s'\n", 
 		    i, tid, pid, PAPI_strerror(ret) );
+        test_fail(__FILE__, __LINE__, "omptough", 1);
 	  }
+    }
 
   
-	if( (ret=PAPI_destroy_eventset(&(evtset[tid]))) != PAPI_OK )
-	  {
+	if( (ret=PAPI_destroy_eventset(&(evtset[tid]))) != PAPI_OK ){
+      if (!TESTS_QUIET) {
 	    fprintf(stderr, "[%5d] Error destroying eventset (tid=%d pid=%d) '%s'\n", 
 		    i, tid, pid, PAPI_strerror(ret) );
 	    evtset[tid]=PAPI_NULL;
+        test_fail(__FILE__, __LINE__, "omptough", 1);
 	  }
+    }
 
-	if( (ret=PAPI_unregister_thread()) != PAPI_OK )
-	  {
+	if( (ret=PAPI_unregister_thread()) != PAPI_OK ){
+      if (!TESTS_QUIET) {
 	    fprintf(stderr, "[%5d] Error in unregister thread (tid=%d pid=%d) ret='%s'\n", 
 		    i, tid, pid, PAPI_strerror(ret) );
+        test_fail(__FILE__, __LINE__, "omptough", 1);
 	  }
-
-      }    
-    }
-  exit(1);
+    }    
+   }
+  }
+   test_pass(__FILE__, NULL, 0);
+   exit(1);
 }
