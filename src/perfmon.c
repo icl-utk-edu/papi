@@ -3230,70 +3230,70 @@ process_smpl_buf(int num_smpl_pmds, int entry_size, ThreadInfo_t **thr)
   return(PAPI_OK);
 }
 
-/* This function only used when hardware overflows ARE working */
+/* This function  used when hardware overflows ARE working 
+    or when software overflows are forced					*/
 
 void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
 {
-   _papi_hwi_context_t ctx;
-   pfarg_msg_t msg;
-   int ret, fd = info->si_fd;
-   ThreadInfo_t *thread = _papi_hwi_lookup_thread();
+    _papi_hwi_context_t ctx;
+    pfarg_msg_t msg;
+    int ret, fd = info->si_fd;
+    unsigned long address;
+    ThreadInfo_t *thread = _papi_hwi_lookup_thread();
 
 #if defined(DEBUG)
-   if (thread == NULL)
-     {
-       PAPIERROR("thread == NULL in _papi_hwd_dispatch_timer!");
-       abort();
-     }
+    if (thread == NULL) {
+        PAPIERROR("thread == NULL in _papi_hwd_dispatch_timer!");
+        abort();
+    }
 #endif
 
-   ctx.si = info;
-   ctx.ucontext = (hwd_ucontext_t *)uc;
+    ctx.si = info;
+    ctx.ucontext = (hwd_ucontext_t *)uc;
 
+    if (thread->running_eventset->overflow.flags & PAPI_OVERFLOW_FORCE_SW) {
+        address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
+        _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 
+            0, 0, &thread);
+    }
+    else {
  retry:
-   ret = read(fd, &msg, sizeof(msg));
-   if (ret == -1)
-     {
-       if (errno == EINTR) 
-	 {
-	   SUBDBG("read(%d) interrupted, retrying\n", fd);
-	   goto retry;
-	 }
-       else
-	 {
-	   PAPIERROR("read(%d): errno %d", fd, errno); 
-	 }
-     }
-   else if (ret != sizeof(msg)) 
-     {
-       PAPIERROR("read(%d): short %d vs. %d bytes", fd, ret, sizeof(msg)); 
-       ret = -1;
-     }
+        ret = read(fd, &msg, sizeof(msg));
+        if (ret == -1) {
+            if (errno == EINTR) {
+                SUBDBG("read(%d) interrupted, retrying\n", fd);
+                goto retry;
+            }
+            else {
+                PAPIERROR("read(%d): errno %d", fd, errno); 
+            }
+        }
+        else if (ret != sizeof(msg)) {
+            PAPIERROR("read(%d): short %d vs. %d bytes", fd, ret, sizeof(msg)); 
+            ret = -1;
+        }
    
-   if (msg.type != PFM_MSG_OVFL) 
-     {
-       PAPIERROR("unexpected msg type %d",msg.type);
-       ret = -1;
-     }
+        if (msg.type != PFM_MSG_OVFL) {
+            PAPIERROR("unexpected msg type %d",msg.type);
+            ret = -1;
+        }
 
-   if (ret != -1)
-     {
-       if (thread->running_eventset->state & PAPI_PROFILING)
-	 process_smpl_buf(0, sizeof(pfm_dfl_smpl_entry_t), &thread);
-       else
-	 {
-	   _papi_hwi_dispatch_overflow_signal((void *) &ctx, 
-					      msg.pfm_ovfl_msg.msg_ovfl_ip,
-					      NULL, 
-					      msg.pfm_ovfl_msg.msg_ovfl_pmds[0], 
-					      0, &thread);
-	 }
-     }
+        if (ret != -1) {
+            if (thread->running_eventset->state & PAPI_PROFILING)
+                process_smpl_buf(0, sizeof(pfm_dfl_smpl_entry_t), &thread);
+            else {
+                _papi_hwi_dispatch_overflow_signal((void *) &ctx, 
+                              msg.pfm_ovfl_msg.msg_ovfl_ip,
+                              NULL, 
+                              msg.pfm_ovfl_msg.msg_ovfl_pmds[0], 
+                              0, &thread);
+            }
+        }
 
-   if ((ret = pfm_restart(info->si_fd)))
-     {
-       PAPIERROR("pfm_restart(%d): %s", info->si_fd, pfm_strerror(ret));
-     }
+        if ((ret = pfm_restart(info->si_fd))) {
+            PAPIERROR("pfm_restart(%d): %s", info->si_fd, pfm_strerror(ret));
+        }
+    }
 }
 
 int _papi_hwd_stop_profiling(ThreadInfo_t * thread, EventSetInfo_t * ESI)
