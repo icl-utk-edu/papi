@@ -41,6 +41,9 @@
 #define OUT_FMT		"%-12s : %16lld%16d%16lld\n"
 #endif
 
+#define HARD_TOLERANCE 0.25
+#define SOFT_TOLERANCE 0.90
+
 extern int _papi_hwi_error_level;
 static int total[2] = {0,0};                  /* total overflows */
 static int use_total=0;
@@ -61,7 +64,7 @@ int main(int argc, char **argv)
 {
    int EventSet=PAPI_NULL;
    long_long values[3] = { 0, 0, 0 };
-   long_long min, max;
+   long_long hard_min, hard_max, soft_min, soft_max;
    int save_debug_setting;
    int num_flops, retval;
    int PAPI_event=0, mythreshold;
@@ -210,15 +213,18 @@ int main(int argc, char **argv)
 
       printf("Verification:\n");
      
-      printf("Overflow in Column 2 approximately equals overflows in column 3\n");
+      printf("Overflow in Column 2 greater than or equal to overflows in column 3\n");
+      printf("Overflow in Column 3 greater than 0\n");
    }
 
-   min = (long_long) ((values[0] * (1.0 - OVR_TOLERANCE)) / (long_long) mythreshold);
-   max = (long_long) ((values[0] * (1.0 + OVR_TOLERANCE)) / (long_long) mythreshold);
-   if (total[0] > max || total[0] < min)
+   hard_min = (long_long) ((values[0] * (1.0 - HARD_TOLERANCE)) / (long_long) mythreshold);
+   hard_max = (long_long) ((values[0] * (1.0 + HARD_TOLERANCE)) / (long_long) mythreshold);
+   soft_min = (long_long) ((values[0] * (1.0 - SOFT_TOLERANCE)) / (long_long) mythreshold);
+   soft_max = (long_long) ((values[0] * (1.0)) / (long_long) mythreshold);
+   if (total[0] > hard_max || total[0] < hard_min)
       test_fail(__FILE__, __LINE__, "Hardware Overflows", 1);
 
-   if (total[1] > max || total[1] < min)
+   if (total[1] > soft_max || total[1] < soft_min)
       test_fail(__FILE__, __LINE__, "Software Overflows", 1);
 
    test_pass(__FILE__, NULL, 0);
