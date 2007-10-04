@@ -307,6 +307,7 @@ if test "$OS" = "CNL"; then
    pfm_events=static
    cross_compiling=yes
    perfmon=2
+   linkstatic=yes
 fi
          
 #
@@ -924,6 +925,14 @@ AC_ARG_WITH(tests,
             [tests="ctests ftests"]
             )
 fi
+# check for static linking
+if test "x$linkstatic" = "x"; then
+AC_ARG_WITH(linkstatic,
+            [  --with-linkstatic=<yes,no>	Specify whether to link statically or not ],
+            [linkstatic=$withval],
+            [linkstatic=no]
+            )
+fi
 if test "$cross_compiling" = "yes" ; then
 AC_MSG_CHECKING(for native compiler for header generation)
 AC_ARG_WITH(nativecc,
@@ -1253,6 +1262,12 @@ case "$MAKEVER" in
     ;;
 esac
 
+#
+# Fix up: modify LDPATH for static linking if specified
+#
+if test "$linkstatic" = "yes"; then
+   LDFLAGS="$LDFLAGS -static"
+fi
 #
 # Fix up: put inside papi in share directory
 #

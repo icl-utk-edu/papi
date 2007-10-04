@@ -876,6 +876,7 @@ Optional Packages:
   --with-pmapi=<path>		Specify path of pmapi on aix system
   --with-pfm-events=<static,file>	Specify source of events for pfmlib-based systems
   --with-tests=<ctests,ftests,"ctests ftests">	Specify which tests to run on install
+  --with-linkstatic=<yes,no>	Specify whether to link statically or not
   --with-nativecc=<path>	Specify native C compiler for header generation
 
 Some influential environment variables:
@@ -1634,6 +1635,7 @@ if test "$OS" = "CNL"; then
    pfm_events=static
    cross_compiling=yes
    perfmon=2
+   linkstatic=yes
 fi
 
 #
@@ -2762,7 +2764,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2765:" \
+echo "$as_me:2767:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -3514,7 +3516,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:3517:" \
+echo "$as_me:3519:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -5353,6 +5355,18 @@ else
 
 fi;
 fi
+# check for static linking
+if test "x$linkstatic" = "x"; then
+
+# Check whether --with-linkstatic or --without-linkstatic was given.
+if test "${with_linkstatic+set}" = set; then
+  withval="$with_linkstatic"
+  linkstatic=$withval
+else
+  linkstatic=no
+
+fi;
+fi
 if test "$cross_compiling" = "yes" ; then
 echo "$as_me:$LINENO: checking for native compiler for header generation" >&5
 echo $ECHO_N "checking for native compiler for header generation... $ECHO_C" >&6
@@ -7083,6 +7097,12 @@ case "$MAKEVER" in
     ;;
 esac
 
+#
+# Fix up: modify LDPATH for static linking if specified
+#
+if test "$linkstatic" = "yes"; then
+   LDFLAGS="$LDFLAGS -static"
+fi
 #
 # Fix up: put inside papi in share directory
 #
