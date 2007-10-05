@@ -1007,6 +1007,13 @@ if test "$perfctr" = 7 -a "$arch" != "ppc64"; then
    AC_MSG_ERROR([Perfctr 2.7.x only works on PPC64 machines. Please repatch your kernel with 2.6.x.])
 fi
 
+AC_MSG_CHECKING(for perfmon version)
+if test "$perfmon" = "no"; then
+   AC_MSG_RESULT(none)
+   else
+   AC_MSG_RESULT($perfmon)
+fi
+
 if test "$perfmon" != "no"; then
    dotest=0
 if test "$pfm_root" != ""; then
@@ -1043,19 +1050,14 @@ AC_CHECK_LIB([pfm], [pfm_initialize], [
 	AC_MSG_ERROR([libpfm.a could not be found, please examine config.log and rerun configure with different flags])
       ])
 else
-# included snapshots have this function
+# included 3.x (perfmon2) snapshots have these functions
+if test "$perfmon" = "2"; then
 AC_DEFINE(HAVE_PERFMON_PFMLIB_MONTECITO_H,1,[Montecito headers])
 AC_DEFINE(HAVE_PFM_GET_EVENT_DESCRIPTION,1,[event description function])
 AC_DEFINE(HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT,1,[new pfmlib_output_param_t])
 AC_DEFINE(HAVE_PFM_MSG_TYPE,1,[new pfm_msg_t])
 fi
 fi
-
-AC_MSG_CHECKING(for perfmon version)
-if test "$perfmon" = "no"; then
-   AC_MSG_RESULT(none)
-   else
-   AC_MSG_RESULT($perfmon)
 fi
 
 if test "$OS" = "aix"; then
