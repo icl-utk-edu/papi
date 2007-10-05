@@ -7,7 +7,8 @@
 # Mods:    Kevin London
 #          london@cs.utk.edu
 
-export AIXTHREAD_SCOPE=S
+AIXTHREAD_SCOPE=S
+export AIXTHREAD_SCOPE
 if [ "X$1" = "X-v" ]; then
   shift ; TESTS_QUIET=""
 else
