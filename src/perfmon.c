@@ -2600,7 +2600,7 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctl)
   for (i=0; i < ctl->in.pfp_event_count; i++) 
     {
       if (ctl->pd[i].reg_flags & PFM_REGFL_OVFL_NOTIFY)
-	ctl->pd[j].reg_value = ctl->pd[j].reg_long_reset;
+	ctl->pd[i].reg_value = ctl->pd[i].reg_long_reset;
       else
 	ctl->pd[i].reg_value = 0ULL;
     }
