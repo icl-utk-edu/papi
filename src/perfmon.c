@@ -2592,12 +2592,18 @@ long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 }
 
 /* reset the hardware counters */
-int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t *ctl)
+int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
   int i, ret;
 
+  /* Read could have clobbered the values */
   for (i=0; i < ctl->in.pfp_event_count; i++) 
-    ctl->pd[i].reg_value = 0ULL;
+    {
+      if (ctl->pd[i].reg_flags & PFM_REGFL_OVFL_NOTIFY)
+	ctl->pd[j].reg_value = ctl->pd[j].reg_long_reset;
+      else
+	ctl->pd[i].reg_value = 0ULL;
+    }
 
   SUBDBG("PFM_WRITE_PMDS(%d,%p,%d)\n",ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count);
   if ((ret = pfm_write_pmds(ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count)))
@@ -2629,11 +2635,11 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctl,
 
   for (i=0; i < ctl->in.pfp_event_count; i++) 
     {
-      SUBDBG("PMD[%d] = %lld (LLD),%llu (LLU)\n",i,(unsigned long long)ctl->counts[i],(unsigned long long)ctl->pd[i].reg_value);
       if (ctl->pd[i].reg_flags & PFM_REGFL_OVFL_NOTIFY)
 	ctl->counts[i] = ctl->pd[i].reg_value - ctl->pd[i].reg_long_reset;
       else
 	ctl->counts[i] = ctl->pd[i].reg_value;
+      SUBDBG("PMD[%d] = %lld (LLD),%llu (LLU)\n",i,(unsigned long long)ctl->counts[i],(unsigned long long)ctl->pd[i].reg_value);
     }
   *events = ctl->counts;
 
