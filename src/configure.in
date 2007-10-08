@@ -307,7 +307,6 @@ if test "$OS" = "CNL"; then
    pfm_events=static
    cross_compiling=yes
    perfmon=2
-   linkstatic=yes
 fi
          
 #
