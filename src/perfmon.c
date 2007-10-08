@@ -2675,6 +2675,7 @@ inline static int set_domain(hwd_control_state_t * ctl, int domain)
    }
 
    if (domain & PAPI_DOM_KERNEL) {
+     did = 1;
      mode |= PFM_PLM0;
    }
 
@@ -2839,6 +2840,9 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   if (retval != PAPI_OK)
     return(retval);
   pfm_get_num_counters((unsigned int *)&_papi_hwi_system_info.sub_info.num_cntrs);
+   retval = get_system_info(&_papi_hwi_system_info);
+   if (retval)
+      return (retval);
   if (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_MIPS)
     _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR|PAPI_DOM_OTHER;
   else
@@ -2863,9 +2867,6 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   /* FIX: For now, use the pmu_type from Perfmon */
 
   _papi_hwi_system_info.hw_info.model = _perfmon2_pfm_pmu_type;
-   retval = get_system_info(&_papi_hwi_system_info);
-   if (retval)
-      return (retval);
 
    /* Setup presets */
 
