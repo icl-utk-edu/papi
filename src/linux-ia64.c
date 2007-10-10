@@ -1156,6 +1156,7 @@ static int ia64_process_profile_entry(void *papiContext)
    struct sigcontext *info = (struct sigcontext *) ctx->ucontext;
    hwd_control_state_t *this_state;
    pfmw_arch_pmd_reg_t *reg;
+   caddr_t pc = (caddr_t) GET_OVERFLOW_ADDRESS(ctx);
 
    thread = _papi_hwi_lookup_thread();
    if (thread == NULL)
@@ -1245,7 +1246,7 @@ static int ia64_process_profile_entry(void *papiContext)
             info->sc_ip = check_btb(reg, reg + 8);
          }
 
-         _papi_hwi_dispatch_profile(ESI, papiContext, (long_long) 0, count);
+         _papi_hwi_dispatch_profile(ESI, pc, (long_long) 0, count);
          overflow_vector ^= (1 << reg_num);
       }
 
@@ -1283,6 +1284,7 @@ static int ia64_process_profile_entry(void *papiContext)
    struct sigcontext *info = (struct sigcontext *) ctx->ucontext;
    hwd_control_state_t *this_state;
    pfmw_arch_pmd_reg_t *reg;
+   caddr_t pc = (caddr_t) GET_OVERFLOW_ADDRESS(ctx);
 
    thread = _papi_hwi_lookup_thread();
    if (thread == NULL)
@@ -1368,7 +1370,7 @@ static int ia64_process_profile_entry(void *papiContext)
             buf_pos += (hweight64(DEAR_REGS_MASK)<<3);
          };
 
-         _papi_hwi_dispatch_profile(ESI, papiContext, (long_long) 0, count);
+         _papi_hwi_dispatch_profile(ESI, pc, (long_long) 0, count);
       }
 
       /*  move to next entry */

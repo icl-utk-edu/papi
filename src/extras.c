@@ -328,7 +328,7 @@ foundit:
                   over = 0;
                else
                   over = temp[profile_index];
-               _papi_hwi_dispatch_profile(ESI, (caddr_t) papiContext, over, profile_index);
+               _papi_hwi_dispatch_profile(ESI, (caddr_t)address, over, profile_index);
                overflow_vector ^= (long_long )1 << i;
             }
             /* do not use overflow_vector after this place */
