@@ -22,7 +22,31 @@ static inline void perfctr_release_pmc_hardware(void) { release_pmc_hardware(); 
 #define CONFIG_PPC_OF 1
 #endif
 
+#undef MMCR0_FC
+#undef MMCR0_FCECE
+#undef MMCR0_FCM0
+#undef MMCR0_FCM1
+#undef MMCR0_FCP
+#undef MMCR0_FCS
+#undef MMCR0_PMC1CE
+#undef MMCR0_PMC1SEL
+#undef MMCR0_PMC2SEL
 #undef MMCR0_PMXE
+#undef MMCR0_TBEE
+#undef MMCR0_TRIGGER
+#undef MMCR1_PMC3SEL
+#undef MMCR1_PMC4SEL
+#undef MMCR1_PMC5SEL
+#undef MMCR1_PMC6SEL
+#undef SPRN_MMCR0
+#undef SPRN_MMCR1
+#undef SPRN_MMCR2
+#undef SPRN_PMC1
+#undef SPRN_PMC2
+#undef SPRN_PMC3
+#undef SPRN_PMC4
+#undef SPRN_PMC5
+#undef SPRN_PMC6
 
 #define SPRN_MMCR0	0x3B8	/* 604 and up */
 #define SPRN_PMC1	0x3B9	/* 604 and up */

@@ -28,6 +28,9 @@ driver-objs-$(CONFIG_PPC32) := ppc.o
 tests-objs-$(CONFIG_PPC32) := ppc_tests.o
 kernel-objs-$(CONFIG_PPC32) := ppc_setup.o
 
+driver-objs-$(CONFIG_ARM) := arm.o
+kernel-objs-$(CONFIG_ARM) := arm_setup.o
+
 driver-objs-y += init.o marshal.o
 driver-objs-$(CONFIG_PERFCTR_INIT_TESTS) += $(tests-objs-y)
 driver-objs-$(CONFIG_PERFCTR_VIRTUAL) += virtual.o

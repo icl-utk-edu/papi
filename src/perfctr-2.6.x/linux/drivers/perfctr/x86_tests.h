@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * Optional x86/x86_64-specific init-time tests.
  *
- * Copyright (C) 1999-2004  Mikael Pettersson
+ * Copyright (C) 1999-2004, 2007  Mikael Pettersson
  */
 
 /* 'enum perfctr_x86_tests_type' classifies CPUs according
@@ -12,6 +12,7 @@ enum perfctr_x86_tests_type {
 	PTT_GENERIC,
 	PTT_P5,
 	PTT_P6,
+	PTT_CORE2,
 	PTT_P4,
 	PTT_AMD,
 	PTT_WINCHIP,

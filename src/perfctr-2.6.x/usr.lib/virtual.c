@@ -1,7 +1,7 @@
 /* $Id$
  * Library interface to virtual per-process performance counters.
  *
- * Copyright (C) 1999-2004  Mikael Pettersson
+ * Copyright (C) 1999-2007  Mikael Pettersson
  */
 
 #include <stdio.h>
@@ -169,6 +169,7 @@ struct perfctr_cpus_info *vperfctr_cpus_info(const struct vperfctr *vperfctr)
 
 unsigned long long vperfctr_read_tsc(const struct vperfctr *self)
 {
+#if defined(rdtscl)
     unsigned long long sum;
     unsigned int tsc0, tsc1, now;
     volatile const struct vperfctr_state *kstate;
@@ -186,16 +187,23 @@ unsigned long long vperfctr_read_tsc(const struct vperfctr *self)
 	goto retry; /* better gcc code than with a do{}while() loop */
     }
     return kstate->cpu_state.tsc_sum;
+#else
+    struct perfctr_sum_ctrs sum_ctrs;
+    if (_vperfctr_read_sum(self->fd, &sum_ctrs) < 0)
+	perror(__FUNCTION__);
+    return sum_ctrs.tsc;
+#endif
 }
 
 unsigned long long vperfctr_read_pmc(const struct vperfctr *self, unsigned i)
 {
+    struct perfctr_sum_ctrs sum_ctrs;
+#if defined(rdpmcl)
     unsigned long long sum;
     unsigned int start, now;
     unsigned int tsc0, tsc1;
     volatile const struct vperfctr_state *kstate;
     unsigned int cstatus;
-    struct perfctr_sum_ctrs sum_ctrs;
 
     kstate = self->kstate;
     cstatus = kstate->cpu_state.cstatus;
@@ -213,6 +221,7 @@ unsigned long long vperfctr_read_pmc(const struct vperfctr *self, unsigned i)
 	 tsc0 = tsc1;
 	 goto retry;
     }
+#endif
     if( _vperfctr_read_sum(self->fd, &sum_ctrs) < 0 )
 	perror(__FUNCTION__);
     return sum_ctrs.pmc[i];
@@ -227,6 +236,7 @@ static int vperfctr_read_ctrs_slow(const struct vperfctr *vperfctr,
 int vperfctr_read_ctrs(const struct vperfctr *self,
 		       struct perfctr_sum_ctrs *sum)
 {
+#if defined(rdtscl) && defined(rdpmcl)
     unsigned int tsc0, now;
     unsigned int cstatus, nrctrs;
     volatile const struct vperfctr_state *kstate;
@@ -251,6 +261,7 @@ int vperfctr_read_ctrs(const struct vperfctr *self,
 	    return 0;
 	goto retry;
     }
+#endif
     return vperfctr_read_ctrs_slow(self, sum);
 }
 

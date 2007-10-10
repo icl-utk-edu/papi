@@ -1,7 +1,7 @@
 /* $Id$
  * Virtual per-process performance counters.
  *
- * Copyright (C) 1999-2006  Mikael Pettersson
+ * Copyright (C) 1999-2007  Mikael Pettersson
  */
 #include <linux/version.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
@@ -663,6 +663,9 @@ static int vperfctr_mmap(struct file *filp, struct vm_area_struct *vma)
 {
 	struct vperfctr *perfctr;
 
+#ifdef CONFIG_ARM
+#define _PAGE_RW	L_PTE_WRITE
+#endif
 	/* Only allow read-only mapping of first page. */
 	if ((vma->vm_end - vma->vm_start) != PAGE_SIZE ||
 	    vma->vm_pgoff != 0 ||
@@ -752,7 +755,11 @@ static int vperfctr_ioctl_oldstyle(struct inode *inode, struct file *filp,
 }
 #endif
 
-static struct file_operations vperfctr_file_ops = {
+static
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,20)
+const
+#endif
+struct file_operations vperfctr_file_ops = {
 	.owner = THIS_MODULE,
 	.mmap = vperfctr_mmap,
 	.release = vperfctr_release,
@@ -942,7 +949,7 @@ static struct inode *vperfctr_get_inode(void)
 	inode->i_uid = current->fsuid;
 	inode->i_gid = current->fsgid;
 	inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19) && !DONT_HAVE_i_blksize
 	inode->i_blksize = 0;
 #endif
 	return inode;
@@ -950,7 +957,18 @@ static struct inode *vperfctr_get_inode(void)
 
 static int vperfctrfs_delete_dentry(struct dentry *dentry)
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,20)
+	/*
+	 * At creation time, we pretended this dentry was hashed
+	 * (by clearing DCACHE_UNHASHED bit in d_flags)
+	 * At delete time, we restore the truth : not hashed.
+	 * (so that dput() can proceed correctly)
+	 */
+	dentry->d_flags |= DCACHE_UNHASHED;
+	return 0;
+#else
 	return 1;
+#endif
 }
 
 static struct dentry_operations vperfctrfs_dentry_operations = {
@@ -966,11 +984,25 @@ static struct dentry *vperfctr_d_alloc_root(struct inode *inode)
 	sprintf(name, "[%lu]", inode->i_ino);
 	this.name = name;
 	this.len = strlen(name);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,20)
+	this.hash = 0;
+#else
 	this.hash = inode->i_ino; /* will go */
+#endif
 	dentry = d_alloc(vperfctr_mnt->mnt_sb->s_root, &this);
 	if (dentry) {
 		dentry->d_op = &vperfctrfs_dentry_operations;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,20)
+		/*
+		 * We dont want to publish this dentry into global dentry hash table.
+		 * We pretend dentry is already hashed, by unsetting DCACHE_UNHASHED
+		 * This permits a working /proc/$pid/fd/XXX on vperfctrs
+		 */
+		dentry->d_flags &= ~DCACHE_UNHASHED;
+		d_instantiate(dentry, inode);
+#else
 		d_add(dentry, inode);
+#endif
 	}
 	return dentry;
 }
@@ -998,8 +1030,8 @@ static struct file *vperfctr_get_filp(void)
 	if (!filp)
 		goto out_dentry;
 
-	filp->f_vfsmnt = mntget(vperfctr_mnt);
-	filp->f_dentry = dentry;
+	filp_vfsmnt(filp) = mntget(vperfctr_mnt);
+	filp_dentry(filp) = dentry;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,2)
 	filp->f_mapping = dentry->d_inode->i_mapping;
 #endif

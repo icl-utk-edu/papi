@@ -807,17 +807,39 @@ static unsigned int __init pll_tb_to_core(enum pll_type pll_type)
 /* Extract core and timebase frequencies from Open Firmware. */
 
 #ifdef CONFIG_PPC_OF
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
+static inline struct device_node *perfctr_of_find_node_by_type(struct device_node *from, const char *type)
+{
+	return of_find_node_by_type(from, type);
+}
+
+static inline void perfctr_of_node_put(struct device_node *node)
+{
+	of_node_put(node);
+}
+#else
+static inline struct device_node *perfctr_of_find_node_by_type(struct device_node *from, const char *type)
+{
+	return find_type_devices(type);
+}
+
+static inline void perfctr_of_node_put(struct device_node *node) { }
+#endif
+
 static unsigned int __init of_core_khz(void)
 {
 	struct device_node *cpu;
 	unsigned int *fp, core;
 
-	cpu = find_type_devices("cpu");
+	cpu = perfctr_of_find_node_by_type(NULL, "cpu");
 	if (!cpu)
 		return 0;
 	fp = (unsigned int*)get_property(cpu, "clock-frequency", NULL);
-	if (!fp || !(core = *fp))
-		return 0;
+	core = 0;
+	if (fp)
+		core = *fp;
+	perfctr_of_node_put(cpu);
 	return core / 1000;
 }
 
@@ -826,15 +848,17 @@ static unsigned int __init of_bus_khz(void)
 	struct device_node *cpu;
 	unsigned int *fp, bus;
 
-	cpu = find_type_devices("cpu");
+	cpu = perfctr_of_find_node_by_type(NULL, "cpu");
 	if (!cpu)
 		return 0;
 	fp = (unsigned int*)get_property(cpu, "bus-frequency", NULL);
+	bus = 0;
 	if (!fp || !(bus = *fp)) {
 		fp = (unsigned int*)get_property(cpu, "config-bus-frequency", NULL);
-		if (!fp || !(bus = *fp))
-			return 0;
+		if (fp)
+			bus = *fp;
 	}
+	perfctr_of_node_put(cpu);
 	return bus / 1000;
 }
 
@@ -843,12 +867,14 @@ static unsigned int __init of_bus_to_core_x2(void)
 	struct device_node *cpu;
 	unsigned int *fp, ratio;
 
-	cpu = find_type_devices("cpu");
+	cpu = perfctr_of_find_node_by_type(NULL, "cpu");
 	if (!cpu)
 		return 0;
 	fp = (unsigned int*)get_property(cpu, "processor-to-bus-ratio*2", NULL);
-	if (!fp || !(ratio = *fp))
-		return 0;
+	ratio = 0;
+	if (fp)
+		ratio = *fp;
+	perfctr_of_node_put(cpu);
 	return ratio;
 }
 #else

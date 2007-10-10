@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * Optional PPC32-specific init-time tests.
  *
- * Copyright (C) 2004-2006  Mikael Pettersson
+ * Copyright (C) 2004-2007  Mikael Pettersson
  */
 #include <linux/version.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
@@ -127,7 +127,7 @@ static void __init init_tests_message(void)
 {
 	unsigned int pvr = mfspr(SPRN_PVR);
 	printk(KERN_INFO "Please email the following PERFCTR INIT lines "
-	       "to mikpe@csd.uu.se\n"
+	       "to mikpe@it.uu.se\n"
 	       KERN_INFO "To remove this message, rebuild the driver "
 	       "with CONFIG_PERFCTR_INIT_TESTS=n\n");
 	printk(KERN_INFO "PERFCTR INIT: PVR 0x%08x, CPU clock %u kHz, TB clock %u kHz\n",
@@ -180,7 +180,7 @@ static void __init check_fcece(unsigned int pmc1ce)
 		do_empty_loop(0);
 	} while (!(mfspr(SPRN_PMC1) & 0x80000000));
 	do_empty_loop(0);
-	printk(KERN_INFO "PERFCTR INIT: %s(%u): MMCR0[FC] is %u, PMC1 is %#x\n",
+	printk(KERN_INFO "PERFCTR INIT: %s(%u): MMCR0[FC] is %u, PMC1 is %#lx\n",
 	       __FUNCTION__, pmc1ce,
 	       !!(mfspr(SPRN_MMCR0) & (1<<(31-0))), mfspr(SPRN_PMC1));
 	mtspr(SPRN_MMCR0, 0);
@@ -218,7 +218,7 @@ static void __init check_trigger(unsigned int pmc1ce)
 		do_empty_loop(0);
 	} while (!(mfspr(SPRN_PMC1) & 0x80000000));
 	do_empty_loop(0);
-	printk(KERN_INFO "PERFCTR INIT: %s(%u): MMCR0[TRIGGER] is %u, PMC1 is %#x, PMC2 is %#x\n",
+	printk(KERN_INFO "PERFCTR INIT: %s(%u): MMCR0[TRIGGER] is %u, PMC1 is %#lx, PMC2 is %#lx\n",
 	       __FUNCTION__, pmc1ce,
 	       !!(mfspr(SPRN_MMCR0) & (1<<(31-18))), mfspr(SPRN_PMC1), mfspr(SPRN_PMC2));
 	mtspr(SPRN_MMCR0, 0);

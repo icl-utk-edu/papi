@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * Optional x86/x86_64-specific init-time tests.
  *
- * Copyright (C) 1999-2006  Mikael Pettersson
+ * Copyright (C) 1999-2007  Mikael Pettersson
  */
 #include <linux/version.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
@@ -16,6 +16,10 @@
 #include <linux/perfctr.h>
 #include <asm/msr.h>
 #undef MSR_P6_PERFCTR0
+#undef MSR_P6_EVNTSEL0
+#undef MSR_K7_PERFCTR0
+#undef MSR_K7_EVNTSEL0
+#undef MSR_CORE_PERF_FIXED_CTR_CTRL
 #undef MSR_P4_IQ_CCCR0
 #undef MSR_P4_CRU_ESCR0
 #include <asm/fixmap.h>
@@ -33,6 +37,8 @@
 #define MSR_K7_PERFCTR0		0xC0010004
 #define K7_EVNTSEL0_VAL		(0xC0 | (3<<16) | (1<<22))
 #define VC3_EVNTSEL1_VAL	0xC0
+#define MSR_CORE_PERF_FIXED_CTR_CTRL	0x38D
+#define CORE2_PMC_FIXED_CTR0	((1<<30) | 0)
 #define MSR_P4_IQ_COUNTER0	0x30C
 #define MSR_P4_IQ_CCCR0		0x36C
 #define MSR_P4_CRU_ESCR0	0x3B8
@@ -53,6 +59,9 @@
 #undef apic_write
 #define apic_write(reg,vector)			do{}while(0)
 #endif
+
+#define rdtsc_low(low) \
+	__asm__ __volatile__("rdtsc" : "=a"(low) : : "edx")
 
 static void __init do_rdpmc(unsigned pmc, unsigned unused2)
 {
@@ -137,19 +146,19 @@ static void __init do_empty_loop(unsigned unused1, unsigned unused2)
 static unsigned __init run(void (*doit)(unsigned, unsigned),
 			   unsigned arg1, unsigned arg2)
 {
-	unsigned start, dummy, stop;
+	unsigned start, stop;
 	sync_core();
-	rdtsc(start, dummy);
+	rdtsc_low(start);
 	(*doit)(arg1, arg2);	/* should take < 2^32 cycles to complete */
 	sync_core();
-	rdtsc(stop, dummy);
+	rdtsc_low(stop);
 	return stop - start;
 }
 
 static void __init init_tests_message(void)
 {
 	printk(KERN_INFO "Please email the following PERFCTR INIT lines "
-	       "to mikpe@csd.uu.se\n"
+	       "to mikpe@it.uu.se\n"
 	       KERN_INFO "To remove this message, rebuild the driver "
 	       "with CONFIG_PERFCTR_INIT_TESTS=n\n");
 	printk(KERN_INFO "PERFCTR INIT: vendor %u, family %u, model %u, stepping %u, clock %u kHz\n",
@@ -162,11 +171,11 @@ static void __init init_tests_message(void)
 
 static void __init
 measure_overheads(unsigned msr_evntsel0, unsigned evntsel0, unsigned msr_perfctr0,
-		  unsigned msr_cccr, unsigned cccr_val)
+		  unsigned msr_cccr, unsigned cccr_val, unsigned is_core2)
 {
 	int i;
-	unsigned int loop, ticks[13];
-	const char *name[13];
+	unsigned int loop, ticks[15];
+	const char *name[15];
 
 	if (msr_evntsel0)
 		wrmsr(msr_evntsel0, 0, 0);
@@ -201,6 +210,10 @@ measure_overheads(unsigned msr_evntsel0, unsigned evntsel0, unsigned msr_perfctr
 		? run(do_wrlvtpc, APIC_DM_NMI|APIC_LVT_MASKED, 0) : 0;
 	name[12] = "sync_core";
 	ticks[12] = run(do_sync_core, 0, 0);
+	name[13] = "read fixed_ctr0";
+	ticks[13] = is_core2 ? run(do_rdpmc, CORE2_PMC_FIXED_CTR0, 0) : 0;
+	name[14] = "wrmsr fixed_ctr_ctrl";
+	ticks[14] = is_core2 ? run(do_wrmsr, MSR_CORE_PERF_FIXED_CTR_CTRL, 0) : 0;
 
 	loop = run(do_empty_loop, 0, 0);
 
@@ -225,7 +238,7 @@ measure_overheads(unsigned msr_evntsel0, unsigned evntsel0, unsigned msr_perfctr
 #ifndef __x86_64__
 static inline void perfctr_p5_init_tests(void)
 {
-	measure_overheads(MSR_P5_CESR, P5_CESR_VAL, MSR_P5_CTR0, 0, 0);
+	measure_overheads(MSR_P5_CESR, P5_CESR_VAL, MSR_P5_CTR0, 0, 0, 0);
 }
 
 #if !defined(CONFIG_X86_TSC)
@@ -241,29 +254,34 @@ static inline void perfctr_c6_init_tests(void)
 
 static inline void perfctr_vc3_init_tests(void)
 {
-	measure_overheads(MSR_P6_EVNTSEL0+1, VC3_EVNTSEL1_VAL, MSR_P6_PERFCTR0+1, 0, 0);
+	measure_overheads(MSR_P6_EVNTSEL0+1, VC3_EVNTSEL1_VAL, MSR_P6_PERFCTR0+1, 0, 0, 0);
 }
 #endif /* !__x86_64__ */
 
 static inline void perfctr_p6_init_tests(void)
 {
-	measure_overheads(MSR_P6_EVNTSEL0, P6_EVNTSEL0_VAL, MSR_P6_PERFCTR0, 0, 0);
+	measure_overheads(MSR_P6_EVNTSEL0, P6_EVNTSEL0_VAL, MSR_P6_PERFCTR0, 0, 0, 0);
+}
+
+static inline void perfctr_core2_init_tests(void)
+{
+	measure_overheads(MSR_P6_EVNTSEL0, P6_EVNTSEL0_VAL, MSR_P6_PERFCTR0, 0, 0, 1);
 }
 
 static inline void perfctr_p4_init_tests(void)
 {
 	measure_overheads(MSR_P4_CRU_ESCR0, P4_CRU_ESCR0_VAL, MSR_P4_IQ_COUNTER0,
-			  MSR_P4_IQ_CCCR0, P4_IQ_CCCR0_VAL);
+			  MSR_P4_IQ_CCCR0, P4_IQ_CCCR0_VAL, 0);
 }
 
 static inline void perfctr_k7_init_tests(void)
 {
-	measure_overheads(MSR_K7_EVNTSEL0, K7_EVNTSEL0_VAL, MSR_K7_PERFCTR0, 0, 0);
+	measure_overheads(MSR_K7_EVNTSEL0, K7_EVNTSEL0_VAL, MSR_K7_PERFCTR0, 0, 0, 0);
 }
 
 static inline void perfctr_generic_init_tests(void)
 {
-	measure_overheads(0, 0, 0, 0, 0);
+	measure_overheads(0, 0, 0, 0, 0, 0);
 }
 
 enum perfctr_x86_tests_type perfctr_x86_tests_type __initdata = PTT_UNKNOWN;
@@ -286,6 +304,9 @@ void __init perfctr_x86_init_tests(void)
 #endif /* !__x86_64__ */
 	case PTT_P6: /* Intel PPro, PII, PIII, PENTM, CORE */
 		perfctr_p6_init_tests();
+		break;
+	case PTT_CORE2: /* Intel Core 2 */
+		perfctr_core2_init_tests();
 		break;
 	case PTT_P4: /* Intel P4 */
 		perfctr_p4_init_tests();

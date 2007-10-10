@@ -2,7 +2,7 @@
  *
  * Generate symbolic constants for performance counter events.
  *
- * Copyright (C) 2003-2004  Mikael Pettersson
+ * Copyright (C) 2003-2007  Mikael Pettersson
  */
 #include <stdio.h>
 #include <stdlib.h>	/* for exit() */
@@ -74,6 +74,9 @@ int main(void)
     print_cpu_type(PERFCTR_PPC_604);
     print_cpu_type(PERFCTR_PPC_604e);
     print_cpu_type(PERFCTR_PPC_750);
+#endif
+#if defined(__arm__)
+    print_cpu_type(PERFCTR_ARM_XSC1);
 #endif
     return 0;
 }

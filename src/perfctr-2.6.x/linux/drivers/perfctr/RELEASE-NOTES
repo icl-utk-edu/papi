@@ -3,6 +3,61 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.29, 2007-10-07
+- Add new cpu_type for AMD Family 10h, to reduce confusion.
+- Very preliminary support for AMD Family 10h processors.
+  They will need a new cpu_type and support for 64-bit evntsels.
+  For now pretend they are K8C processors.
+- Silence compilation warnings on ppc32.
+- Intel has finally documented how to read the Core 2's
+  fixed-function performance counters in user-space:
+  rdpmc 0x4000000N for N=0,1,2. Support them from user-space
+  by pretending they have P6-like evntsels, and extract the
+  useful controls (CPL+INT) into the fixed-function counters
+  control register. Update the P6 driver methods to handle the
+  fact that a fixed-function counter has no private evntsel MSR.
+  Update x86_tests to measure the cost of reading these counters
+  and writing their shared control register.
+- More Intel CPU detection cleanup: separate detection needed
+  by the driver from that done to supply cpu_type to user-space.
+- Clean up Intel CPU detection by moving family 5, 6, and 15
+  detection code to separate procedures.
+- Use #undef to silence macro redefinition warnings on x86.
+- Kernel 2.6.22 removed the rdtsc() macro from i386. Unbreak
+  and clean up x86_tests.c by using our own rdtsc_low() macro.
+
+Version 2.6.28, 2007-07-18
+- x86: The kernel's perfctr/nmi management system changed again
+  in 2.6.22-rc5. Call {disable,enable}_lapic_nmi_watchdog() not
+  {stop,setup}_apic_nmi_watchdog() in kernels >= 2.6.22.
+- ppc.c: kernel 2.6.22-rc1 removed find_type_devices(),
+  use of_find_node_by_type() and of_node_put() instead
+- compat.h: fix warnings in CONFIG_UTRACE check
+
+Version 2.6.27, 2007-04-09
+- Bumped copyright years on recently updated files.
+- RHEL5 2.6.18-8.1.1.el5 added export of __put_task_struct.
+  Patched <linux/config.h> to signal this.
+- RHEL5 2.6.18-8.1.1.el5 removed i_blksize. Patched
+  <linux/config.h> to signal this. Check this in virtual.c.
+- RHEL5 2.6.18-8.1.1.el5 replaced ptrace with utrace, breaking
+  the remote control API which needs ptrace_check_attach().
+  For now, stub ptrace_check_attach() so that things build.
+- The {reserve,release}_{perfctr,evntsel}_nmi() API changed
+  in kernel 2.6.21-rc6, from being CPU-local to being global.
+  Updated x86.c to handle this change.
+
+Version 2.6.26, 2007-02-11
+- Updates to show my @it.uu.se email address in some messages,
+  as the old @csd.uu.se address now is /dev/null.
+- Added driver support for ARM/XScale processors. Overflow
+  interrupts are not yet supported, in part due to conflicts
+  with Intel's ixp400_eth driver. Plain event counting works.
+- Kernel 2.6.20-rc1 moved filp->f_dentry and filp->f_vfsmnt into
+  the filp->fpath substructure. Added compat macros to handle this.
+- Kernel 2.6.20-rc1 changed how pipefs handles its dentries.
+  Adapted those changes to vperfctrfs.
+
 Version 2.6.25, 2006-10-15
 - x86.c: Intel Core 2 is substantially different from Intel Core.
   Add new cpu_type for Core 2, map family 6 model 15 to Core 2,

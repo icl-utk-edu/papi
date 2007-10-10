@@ -14,16 +14,19 @@ i386_ESOBJS=event_set_x86.o event_set_amd.o event_set_centaur.o\
 	event_set_p4.o event_set_p5.o event_set_p6.o
 x86_64_ESOBJS=event_set_x86.o event_set_amd.o event_set_p4.o
 ppc_ESOBJS=event_set_ppc.o
+arm_ESOBJS=event_set_arm.o
 EVENT_SET_OBJS=$($(ARCH)_ESOBJS)
 
 i386_OBJS=x86.o
 x86_64_OBJS=x86.o
 ppc_OBJS=ppc.o
+arm_OBJS=arm.o
 ARCH_OBJS=$($(ARCH)_OBJS)
 
 i386_H=x86.h
 x86_64_H=x86.h
 ppc_H=ppc.h
+arm_H=arm.h
 ARCH_H=$($(ARCH)_H)
 
 AR_OBJS=global.o misc.o virtual.o marshal.o $(EVENT_SET_OBJS) $(ARCH_OBJS)
@@ -34,9 +37,10 @@ SO_OBJS=$(AR_OBJS:.o=.os)
 i386_ABIVER=5
 x86_64_ABIVER=6
 ppc_ABIVER=5
+arm_ABIVER=0
 SO_ABIVER=$($(ARCH)_ABIVER)
 
-SO_LIBVER=2.6.25
+SO_LIBVER=2.6.29
 SO_NAME=libperfctr.so.$(SO_ABIVER)
 SO_LIB=libperfctr.so.$(SO_ABIVER).$(SO_LIBVER)
 
@@ -45,6 +49,7 @@ HDEP=libperfctr.h $(BUILD_INCLDIR)/linux/perfctr.h $(BUILD_INCLDIR)/asm/perfctr.
 i386_ASM_DIR=i386
 x86_64_ASM_DIR=i386
 ppc_ASM_DIR=ppc
+arm_ASM_DIR=arm
 ARCH_ASM_DIR=asm-$($(ARCH)_ASM_DIR)
 
 INSTALL_FILES=$(BUILD_INCLDIR)/$(ARCH_ASM_DIR)/perfctr.h $(BUILD_INCLDIR)/linux/perfctr.h\

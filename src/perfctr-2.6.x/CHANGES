@@ -6,6 +6,47 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.29, 2007-10-07
+- Added support for the fixed-function counters in Intel Core 2
+  processors. To user-space they look like ordinary P6 counters,
+  except their PMC numbers are 0x40000000..0x40000002, and their
+  evntsels only need Enable, INT, and CPL fields set.
+- Preliminary support for AMD Family 10h processors.
+  Currently only events that do not need to use the high 32 bits
+  of the event select control registers are expected to work.
+- Fixed driver compilation warnings caused by perfctr needing
+  its own definitions of macros/constants that may or may not
+  be defined in the specific kernel version used.
+- Updated kernel support: 2.6.23-rc9, 2.6.5-7.276 (SuSE).
+
+Version 2.6.28, 2007-07-18
+- Fixed path to udev rules file (/etc/udev.d/ -> /etc/udev/).
+- Updated to handle changes in the 2.6.22 kernel on ppc32.
+- Updated to handle changes in the 2.6.22 kernel on x86.
+- Updated kernel support: 2.6.22, 2.6.21, 2.6.18-8.1.8.el5 (RHEL5),
+  2.6.9-55.0.2.EL (RHEL4), and 2.6.9-55.EL (RHEL4).
+
+Version 2.6.27, 2007-04-09
+- Updated INSTALL with instructions for making /dev/perfctr
+  creation and perfctr module autoloading work with udev.
+  These instructions are known to work on Fedora Core 4.
+  Also updated the rpm package accordingly.
+- Updated for the RHEL5 2.6.18-8.1.1.el5 kernel. This kernel
+  removed a ptrace-related function that is used for perfctr's
+  remote-control API. For now, remote-control is disabled in
+  the RHEL5 kernel, but everything else should work.
+- Updated kernel support: 2.6.21-rc6, 2.6.18.2-34 (SuSE),
+  2.6.9-42.0.10.EL (RHEL4).
+
+Version 2.6.26, 2007-02-11
+- My old @csd.uu.se email address no longer works. Updated
+  documentation and kernel messages to show my @it.uu.se address.
+- Added driver support for ARM/XScale processors. Overflow
+  interrupts are not yet supported, in part due to conflicts
+  with Intel's ixp400_eth driver. Plain event counting works.
+- Updated kernel support: 2.6.20, 2.6.19, 2.6.9-42.0.8.EL (RHEL4),
+  2.4.34, 2.4.21-47.0.1.EL (RHEL3), 2.6.16.21 (SLES10).
+
 Version 2.6.25, 2006-10-15
 - The Intel Core 2 processors are substantially different from
   the old Core processors. Core 2 processors are now mapped to a

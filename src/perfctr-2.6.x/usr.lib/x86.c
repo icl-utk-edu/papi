@@ -1,7 +1,7 @@
 /* $Id$
  * x86-specific perfctr library procedures.
  *
- * Copyright (C) 1999-2006  Mikael Pettersson
+ * Copyright (C) 1999-2007  Mikael Pettersson
  */
 #include <stdio.h>
 #include "libperfctr.h"
@@ -33,9 +33,10 @@ unsigned int perfctr_info_nrctrs(const struct perfctr_info *info)
 	return 18;
       case PERFCTR_X86_AMD_K8:
       case PERFCTR_X86_AMD_K8C:
+      case PERFCTR_X86_AMD_FAM10:
 	return 4;
       case PERFCTR_X86_INTEL_CORE2:
-	return 2;
+	return 5;
       case PERFCTR_X86_GENERIC:
       default:
 	return 0;
@@ -85,6 +86,8 @@ const char *perfctr_info_cpu_name(const struct perfctr_info *info)
 	return "AMD K8";
       case PERFCTR_X86_AMD_K8C:
 	return "AMD K8 Revision C";
+      case PERFCTR_X86_AMD_FAM10:
+	return "AMD Family 10h";
       default:
         return "?";
     }
@@ -103,7 +106,7 @@ void perfctr_cpu_control_print(const struct perfctr_cpu_control *control)
     if( nrictrs )
 	printf("nrictrs\t\t\t%u\n", nrictrs);
     for(i = 0; i < nrctrs; ++i) {
-        if( control->pmc_map[i] >= 18 ) /* for P4 'fast rdpmc' cases */
+        if( control->pmc_map[i] >= 18 ) /* for Core2 fixed counters or P4 fast rdpmc */
             printf("pmc_map[%u]\t\t0x%08X\n", i, control->pmc_map[i]);
         else
             printf("pmc_map[%u]\t\t%u\n", i, control->pmc_map[i]);
