@@ -79,7 +79,8 @@ struct perfctr_cpu_control {
 #define PERFCTR_PPC64_POWER4p	2
 #define PERFCTR_PPC64_970 	3
 #define PERFCTR_PPC64_POWER5	4
-#define PERFCTR_PPC64_970MP	5
+#define PERFCTR_PPC64_POWER6	5
+#define PERFCTR_PPC64_970MP	6
 
 struct perfctr_cpu_control {
 	unsigned int tsc_on;

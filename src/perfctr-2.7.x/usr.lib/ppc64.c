@@ -323,6 +323,7 @@ int _sys_vperfctr_read_control(int fd, unsigned int cpu_type, struct vperfctr_co
 #define PV_POWER5	0x003A
 #define PV_POWER5p	0x003B
 #define PV_970FX	0x003C
+#define PV_POWER6	0x003E
 #define PV_630        	0x0040
 #define PV_630p	        0x0041
 #define PV_970MP	0x0044
@@ -359,7 +360,9 @@ void perfctr_info_cpu_init(struct perfctr_info *info)
       case PV_POWER5p: 
 	cpu_type = PERFCTR_PPC64_POWER5;
 	break;
-
+      case PV_POWER6:
+        cpu_type = PERFCTR_PPC64_POWER6;
+        break;
       default:
 	cpu_type = PERFCTR_PPC64_GENERIC;
 	break;
@@ -378,6 +381,7 @@ unsigned int perfctr_info_nrctrs(const struct perfctr_info *info)
       case PERFCTR_PPC64_970MP:
       	return 8;
       case PERFCTR_PPC64_POWER5:
+      case PERFCTR_PPC64_POWER6:
       	return 6;
       default:
 	return 0;
@@ -399,6 +403,8 @@ const char *perfctr_info_cpu_name(const struct perfctr_info *info)
 	return "PowerPC 970MP";
       case PERFCTR_PPC64_POWER5:
 	return "POWER5";
+      case PERFCTR_PPC64_POWER6:
+	return "POWER6";
       default:
 	return "?";
     }
