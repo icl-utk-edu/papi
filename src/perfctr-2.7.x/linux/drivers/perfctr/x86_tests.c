@@ -2,9 +2,12 @@
  * Performance-monitoring counters driver.
  * Optional x86/x86_64-specific init-time tests.
  *
- * Copyright (C) 1999-2004  Mikael Pettersson
+ * Copyright (C) 1999-2007  Mikael Pettersson
  */
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 #include <linux/config.h>
+#endif
 #include <linux/init.h>
 #include <linux/sched.h>
 #include <linux/fs.h>
@@ -144,7 +147,7 @@ static unsigned __init run(void (*doit)(unsigned, unsigned),
 static void __init init_tests_message(void)
 {
 	printk(KERN_INFO "Please email the following PERFCTR INIT lines "
-	       "to mikpe@csd.uu.se\n"
+	       "to mikpe@it.uu.se\n"
 	       KERN_INFO "To remove this message, rebuild the driver "
 	       "with CONFIG_PERFCTR_INIT_TESTS=n\n");
 	printk(KERN_INFO "PERFCTR INIT: vendor %u, family %u, model %u, stepping %u, clock %u kHz\n",
@@ -223,11 +226,6 @@ static inline void perfctr_p5_init_tests(void)
 	measure_overheads(MSR_P5_CESR, P5_CESR_VAL, MSR_P5_CTR0, 0, 0);
 }
 
-static inline void perfctr_p6_init_tests(void)
-{
-	measure_overheads(MSR_P6_EVNTSEL0, P6_EVNTSEL0_VAL, MSR_P6_PERFCTR0, 0, 0);
-}
-
 #if !defined(CONFIG_X86_TSC)
 static inline void perfctr_c6_init_tests(void)
 {
@@ -244,6 +242,11 @@ static inline void perfctr_vc3_init_tests(void)
 	measure_overheads(MSR_P6_EVNTSEL0+1, VC3_EVNTSEL1_VAL, MSR_P6_PERFCTR0+1, 0, 0);
 }
 #endif /* !__x86_64__ */
+
+static inline void perfctr_p6_init_tests(void)
+{
+	measure_overheads(MSR_P6_EVNTSEL0, P6_EVNTSEL0_VAL, MSR_P6_PERFCTR0, 0, 0);
+}
 
 static inline void perfctr_p4_init_tests(void)
 {
@@ -270,9 +273,6 @@ void __init perfctr_x86_init_tests(void)
 	case PTT_P5: /* Intel P5, P5MMX; Cyrix 6x86MX, MII, III */
 		perfctr_p5_init_tests();
 		break;
-	case PTT_P6: /* Intel PPro, PII, PIII, PENTM */
-		perfctr_p6_init_tests();
-		break;
 #if !defined(CONFIG_X86_TSC)
 	case PTT_WINCHIP: /* WinChip C6, 2, 3 */
 		perfctr_c6_init_tests();
@@ -282,6 +282,9 @@ void __init perfctr_x86_init_tests(void)
 		perfctr_vc3_init_tests();
 		break;
 #endif /* !__x86_64__ */
+	case PTT_P6: /* Intel PPro, PII, PIII, PENTM, CORE */
+		perfctr_p6_init_tests();
+		break;
 	case PTT_P4: /* Intel P4 */
 		perfctr_p4_init_tests();
 		break;

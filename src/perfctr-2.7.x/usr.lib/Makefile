@@ -37,7 +37,7 @@ AR_OBJS=misc.o virtual.o $(EVENT_SET_OBJS) $(ARCH_OBJS)
 
 SO_OBJS=$(AR_OBJS:.o=.os)
 SO_ABIVER=6
-SO_LIBVER=2.7.20.2
+SO_LIBVER=2.7.21.1
 SO_NAME=libperfctr.so.$(SO_ABIVER)
 SO_LIB=libperfctr.so.$(SO_ABIVER).$(SO_LIBVER)
 

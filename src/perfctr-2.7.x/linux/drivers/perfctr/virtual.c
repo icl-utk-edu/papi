@@ -1,9 +1,12 @@
 /* $Id$
  * Virtual per-process performance counters.
  *
- * Copyright (C) 1999-2005  Mikael Pettersson
+ * Copyright (C) 1999-2007  Mikael Pettersson
  */
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 #include <linux/config.h>
+#endif
 #include <linux/init.h>
 #include <linux/compiler.h>	/* for unlikely() in 2.4.18 and older */
 #include <linux/kernel.h>
@@ -12,7 +15,6 @@
 #include <linux/fs.h>
 #include <linux/file.h>
 #include <linux/perfctr.h>
-#include <linux/version.h>
 
 #include <asm/io.h>
 #include <asm/uaccess.h>
@@ -165,16 +167,28 @@ static void put_vperfctr(struct vperfctr *perfctr)
 		vperfctr_free(perfctr);
 }
 
-static void scheduled_vperfctr_free(void *perfctr)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,20)
+static void scheduled_vperfctr_free(struct work_struct *work)
 {
-	vperfctr_free((struct vperfctr*)perfctr);
+	struct vperfctr *perfctr = container_of(work, struct vperfctr, work);
+	vperfctr_free(perfctr);
 }
+#else
+static void scheduled_vperfctr_free(void *data)
+{
+	vperfctr_free((struct vperfctr*)data);
+}
+#endif
 
 static void schedule_put_vperfctr(struct vperfctr *perfctr)
 {
 	if (!atomic_dec_and_test(&perfctr->count))
 		return;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,20)
+	INIT_WORK(&perfctr->work, scheduled_vperfctr_free);
+#else
 	INIT_WORK(&perfctr->work, scheduled_vperfctr_free, perfctr);
+#endif
 	schedule_work(&perfctr->work);
 }
 
@@ -444,9 +458,8 @@ static void do_vperfctr_release(struct vperfctr *child_perfctr, struct task_stru
 	schedule_put_vperfctr(child_perfctr);
 }
 
-static void scheduled_release(void *data)
+static void do_scheduled_release(struct vperfctr *child_perfctr)
 {
-	struct vperfctr *child_perfctr = data;
 	struct task_struct *parent_tsk = child_perfctr->parent_tsk;
 
 	task_lock(parent_tsk);
@@ -454,6 +467,19 @@ static void scheduled_release(void *data)
 	task_unlock(parent_tsk);
 	put_task_struct(parent_tsk);
 }
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,20)
+static void scheduled_release(struct work_struct *work)
+{
+	struct vperfctr *perfctr = container_of(work, struct vperfctr, work);
+	do_scheduled_release(perfctr);
+}
+#else
+static void scheduled_release(void *data)
+{
+	do_scheduled_release((struct vperfctr*)data);
+}
+#endif
 
 void __vperfctr_release(struct task_struct *child_tsk)
 {
@@ -465,7 +491,11 @@ void __vperfctr_release(struct task_struct *child_tsk)
 		do_vperfctr_release(child_perfctr, parent_tsk);
 	else {
 		get_task_struct(parent_tsk);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,20)
+		INIT_WORK(&child_perfctr->work, scheduled_release);
+#else
 		INIT_WORK(&child_perfctr->work, scheduled_release, child_perfctr);
+#endif
 		child_perfctr->parent_tsk = parent_tsk;
 		schedule_work(&child_perfctr->work);
 	}
@@ -977,7 +1007,9 @@ static struct inode *vperfctr_get_inode(void)
 	inode->i_uid = current->fsuid;
 	inode->i_gid = current->fsgid;
 	inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19) && !DONT_HAVE_i_blksize
 	inode->i_blksize = 0;
+#endif
 	return inode;
 }
 

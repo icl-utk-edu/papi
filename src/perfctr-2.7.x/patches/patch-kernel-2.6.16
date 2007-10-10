@@ -18,8 +18,8 @@ diff -rupN linux-2.6.16/MAINTAINERS linux-2.6.16.perfctr27/MAINTAINERS
  
 +PERFORMANCE-MONITORING COUNTERS DRIVER
 +P:	Mikael Pettersson
-+M:	mikpe@csd.uu.se
-+W:	http://www.csd.uu.se/~mikpe/linux/perfctr/
++M:	mikpe@it.uu.se
++W:	http://user.it.uu.se/~mikpe/linux/perfctr/
 +S:	Maintained
 +
  PHRAM MTD DRIVER

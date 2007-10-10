@@ -1,6 +1,13 @@
 # $Id$
 # Makefile for the Performance-monitoring counters driver.
 
+my_check_gcc = $(shell if $(CC) $(CFLAGS) $(1) -S -o /dev/null -xc /dev/null > /dev/null 2>&1; then echo "$(1)"; else echo "$(2)"; fi ;)
+EXTRA_CFLAGS_$(CONFIG_X86) := $(call my_check_gcc,-fno-unit-at-a-time,)
+EXTRA_CFLAGS_$(CONFIG_X86_64) :=
+EXTRA_CFLAGS_$(CONFIG_PPC32) :=
+EXTRA_CFLAGS_$(CONFIG_PPC64) :=
+EXTRA_CFLAGS := $(EXTRA_CFLAGS_y)
+
 # This also covers x86_64.
 perfctr-objs-$(CONFIG_X86) := x86.o
 tests-objs-$(CONFIG_X86) := x86_tests.o

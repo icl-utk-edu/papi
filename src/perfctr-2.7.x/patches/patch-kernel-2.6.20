@@ -1,19 +1,24 @@
-diff -rupN linux-2.6.17/CREDITS linux-2.6.17.perfctr27/CREDITS
---- linux-2.6.17/CREDITS	2006-06-18 12:13:01.000000000 +0200
-+++ linux-2.6.17.perfctr27/CREDITS	2006-08-11 02:40:43.000000000 +0200
-@@ -2631,6 +2631,7 @@ N: Mikael Pettersson
- E: mikpe@csd.uu.se
- W: http://www.csd.uu.se/~mikpe/
+diff -rupN linux-2.6.20/CREDITS linux-2.6.20.perfctr27/CREDITS
+--- linux-2.6.20/CREDITS	2007-09-28 09:30:15.000000000 +0200
++++ linux-2.6.20.perfctr27/CREDITS	2007-09-28 09:33:35.000000000 +0200
+@@ -2668,9 +2668,10 @@ S: Ottawa, Ontario
+ S: Canada K2P 0X8
+ 
+ N: Mikael Pettersson
+-E: mikpe@csd.uu.se
+-W: http://www.csd.uu.se/~mikpe/
++E: mikpe@it.uu.se
++W: http://user.it.uu.se/~mikpe/
  D: Miscellaneous fixes
 +D: Performance-monitoring counters driver
  
  N: Reed H. Petty
  E: rhp@draper.net
-diff -rupN linux-2.6.17/MAINTAINERS linux-2.6.17.perfctr27/MAINTAINERS
---- linux-2.6.17/MAINTAINERS	2006-06-18 12:13:01.000000000 +0200
-+++ linux-2.6.17.perfctr27/MAINTAINERS	2006-08-11 02:40:43.000000000 +0200
-@@ -2185,6 +2185,12 @@ M:	tsbogend@alpha.franken.de
- L:	netdev@vger.kernel.org
+diff -rupN linux-2.6.20/MAINTAINERS linux-2.6.20.perfctr27/MAINTAINERS
+--- linux-2.6.20/MAINTAINERS	2007-09-28 09:30:15.000000000 +0200
++++ linux-2.6.20.perfctr27/MAINTAINERS	2007-09-28 09:33:35.000000000 +0200
+@@ -2577,6 +2577,12 @@ M:	nagar@watson.ibm.com
+ L:	linux-kernel@vger.kernel.org
  S:	Maintained
  
 +PERFORMANCE-MONITORING COUNTERS DRIVER
@@ -25,10 +30,10 @@ diff -rupN linux-2.6.17/MAINTAINERS linux-2.6.17.perfctr27/MAINTAINERS
  PERSONALITY HANDLING
  P:	Christoph Hellwig
  M:	hch@infradead.org
-diff -rupN linux-2.6.17/arch/i386/Kconfig linux-2.6.17.perfctr27/arch/i386/Kconfig
---- linux-2.6.17/arch/i386/Kconfig	2006-06-18 12:13:01.000000000 +0200
-+++ linux-2.6.17.perfctr27/arch/i386/Kconfig	2006-08-11 02:40:43.000000000 +0200
-@@ -708,6 +708,8 @@ config SECCOMP
+diff -rupN linux-2.6.20/arch/i386/Kconfig linux-2.6.20.perfctr27/arch/i386/Kconfig
+--- linux-2.6.20/arch/i386/Kconfig	2007-09-28 09:30:15.000000000 +0200
++++ linux-2.6.20.perfctr27/arch/i386/Kconfig	2007-09-28 09:33:35.000000000 +0200
+@@ -745,6 +745,8 @@ config SECCOMP
  
  	  If unsure, say Y. Only embedded should say N here.
  
@@ -37,30 +42,36 @@ diff -rupN linux-2.6.17/arch/i386/Kconfig linux-2.6.17.perfctr27/arch/i386/Kconf
  source kernel/Kconfig.hz
  
  config KEXEC
-diff -rupN linux-2.6.17/arch/i386/kernel/entry.S linux-2.6.17.perfctr27/arch/i386/kernel/entry.S
---- linux-2.6.17/arch/i386/kernel/entry.S	2006-06-18 12:13:01.000000000 +0200
-+++ linux-2.6.17.perfctr27/arch/i386/kernel/entry.S	2006-08-11 02:40:43.000000000 +0200
-@@ -436,6 +436,16 @@ ENTRY(name)				\
+diff -rupN linux-2.6.20/arch/i386/kernel/entry.S linux-2.6.20.perfctr27/arch/i386/kernel/entry.S
+--- linux-2.6.20/arch/i386/kernel/entry.S	2007-09-28 09:30:15.000000000 +0200
++++ linux-2.6.20.perfctr27/arch/i386/kernel/entry.S	2007-09-28 09:33:35.000000000 +0200
+@@ -626,6 +626,22 @@ ENTRY(name)				\
  /* The include is where all of the SMP etc. interrupts come from */
  #include "entry_arch.h"
  
 +#if defined(CONFIG_X86_LOCAL_APIC) && defined(CONFIG_PERFCTR)
 +ENTRY(perfctr_interrupt)
-+	pushl $LOCAL_PERFCTR_VECTOR-256
++	RING0_INT_FRAME
++	pushl $~(LOCAL_PERFCTR_VECTOR)
++	CFI_ADJUST_CFA_OFFSET 4
 +	SAVE_ALL
++	TRACE_IRQS_OFF
 +	pushl %esp
++	CFI_ADJUST_CFA_OFFSET 4
 +	call smp_perfctr_interrupt
 +	addl $4, %esp
++	CFI_ADJUST_CFA_OFFSET -4
 +	jmp ret_from_intr
++	CFI_ENDPROC
 +#endif
 +
- ENTRY(divide_error)
- 	pushl $0			# no error code
- 	pushl $do_divide_error
-diff -rupN linux-2.6.17/arch/i386/kernel/i8259.c linux-2.6.17.perfctr27/arch/i386/kernel/i8259.c
---- linux-2.6.17/arch/i386/kernel/i8259.c	2005-10-28 11:24:06.000000000 +0200
-+++ linux-2.6.17.perfctr27/arch/i386/kernel/i8259.c	2006-08-11 02:40:43.000000000 +0200
-@@ -23,6 +23,7 @@
+ KPROBE_ENTRY(page_fault)
+ 	RING0_EC_FRAME
+ 	pushl $do_page_fault
+diff -rupN linux-2.6.20/arch/i386/kernel/i8259.c linux-2.6.20.perfctr27/arch/i386/kernel/i8259.c
+--- linux-2.6.20/arch/i386/kernel/i8259.c	2007-09-28 09:30:15.000000000 +0200
++++ linux-2.6.20.perfctr27/arch/i386/kernel/i8259.c	2007-09-28 09:33:35.000000000 +0200
+@@ -22,6 +22,7 @@
  #include <asm/apic.h>
  #include <asm/arch_hooks.h>
  #include <asm/i8259.h>
@@ -68,7 +79,7 @@ diff -rupN linux-2.6.17/arch/i386/kernel/i8259.c linux-2.6.17.perfctr27/arch/i38
  
  #include <io_ports.h>
  
-@@ -421,6 +422,8 @@ void __init init_IRQ(void)
+@@ -409,6 +410,8 @@ void __init native_init_IRQ(void)
  	 */
  	intr_init_hook();
  
@@ -77,10 +88,10 @@ diff -rupN linux-2.6.17/arch/i386/kernel/i8259.c linux-2.6.17.perfctr27/arch/i38
  	/*
  	 * Set the clock to HZ Hz, we already have a valid
  	 * vector now:
-diff -rupN linux-2.6.17/arch/i386/kernel/process.c linux-2.6.17.perfctr27/arch/i386/kernel/process.c
---- linux-2.6.17/arch/i386/kernel/process.c	2006-06-18 12:13:01.000000000 +0200
-+++ linux-2.6.17.perfctr27/arch/i386/kernel/process.c	2006-08-11 02:40:43.000000000 +0200
-@@ -33,6 +33,7 @@
+diff -rupN linux-2.6.20/arch/i386/kernel/process.c linux-2.6.20.perfctr27/arch/i386/kernel/process.c
+--- linux-2.6.20/arch/i386/kernel/process.c	2007-09-28 09:30:15.000000000 +0200
++++ linux-2.6.20.perfctr27/arch/i386/kernel/process.c	2007-09-28 09:33:35.000000000 +0200
+@@ -32,6 +32,7 @@
  #include <linux/delay.h>
  #include <linux/reboot.h>
  #include <linux/init.h>
@@ -88,48 +99,52 @@ diff -rupN linux-2.6.17/arch/i386/kernel/process.c linux-2.6.17.perfctr27/arch/i
  #include <linux/mc146818rtc.h>
  #include <linux/module.h>
  #include <linux/kallsyms.h>
-@@ -380,6 +381,7 @@ void exit_thread(void)
+@@ -376,6 +377,7 @@ void exit_thread(void)
  		tss->io_bitmap_base = INVALID_IO_BITMAP_OFFSET;
  		put_cpu();
  	}
-+	perfctr_exit_thread(&tsk->thread);
++	perfctr_exit_thread(&current->thread);
  }
  
  void flush_thread(void)
-@@ -431,6 +433,8 @@ int copy_thread(int nr, unsigned long cl
+@@ -427,6 +429,8 @@ int copy_thread(int nr, unsigned long cl
+ 
  	savesegment(fs,p->thread.fs);
- 	savesegment(gs,p->thread.gs);
  
 +	perfctr_copy_task(p, regs);
 +
  	tsk = current;
- 	if (unlikely(NULL != tsk->thread.io_bitmap_ptr)) {
- 		p->thread.io_bitmap_ptr = kmalloc(IO_BITMAP_BYTES, GFP_KERNEL);
-@@ -689,6 +693,8 @@ struct task_struct fastcall * __switch_t
- 
- 	disable_tsc(prev_p, next_p);
+ 	if (unlikely(test_tsk_thread_flag(tsk, TIF_IO_BITMAP))) {
+ 		p->thread.io_bitmap_ptr = kmemdup(tsk->thread.io_bitmap_ptr,
+@@ -695,6 +699,8 @@ struct task_struct fastcall * __switch_t
+ 	if (next_p->fpu_counter > 5)
+ 		math_state_restore();
  
 +	perfctr_resume_thread(next);
 +
  	return prev_p;
  }
  
-diff -rupN linux-2.6.17/arch/i386/kernel/syscall_table.S linux-2.6.17.perfctr27/arch/i386/kernel/syscall_table.S
---- linux-2.6.17/arch/i386/kernel/syscall_table.S	2006-06-18 12:13:01.000000000 +0200
-+++ linux-2.6.17.perfctr27/arch/i386/kernel/syscall_table.S	2006-08-11 02:40:46.000000000 +0200
-@@ -316,3 +316,8 @@ ENTRY(sys_call_table)
- 	.long sys_sync_file_range
- 	.long sys_tee			/* 315 */
- 	.long sys_vmsplice
+diff -rupN linux-2.6.20/arch/i386/kernel/syscall_table.S linux-2.6.20.perfctr27/arch/i386/kernel/syscall_table.S
+--- linux-2.6.20/arch/i386/kernel/syscall_table.S	2007-09-28 09:07:25.000000000 +0200
++++ linux-2.6.20.perfctr27/arch/i386/kernel/syscall_table.S	2007-09-28 09:33:35.000000000 +0200
+@@ -319,3 +319,12 @@ ENTRY(sys_call_table)
+ 	.long sys_move_pages
+ 	.long sys_getcpu
+ 	.long sys_epoll_pwait
++	.long sys_ni_syscall		/* 320 */
 +	.long sys_ni_syscall
-+	.long sys_vperfctr_open
++	.long sys_ni_syscall
++	.long sys_ni_syscall
++	.long sys_ni_syscall
++	.long sys_vperfctr_open		/* 325 */
 +	.long sys_vperfctr_control
-+	.long sys_vperfctr_write	/* 320 */
++	.long sys_vperfctr_write
 +	.long sys_vperfctr_read
-diff -rupN linux-2.6.17/arch/powerpc/Kconfig linux-2.6.17.perfctr27/arch/powerpc/Kconfig
---- linux-2.6.17/arch/powerpc/Kconfig	2006-06-18 12:13:01.000000000 +0200
-+++ linux-2.6.17.perfctr27/arch/powerpc/Kconfig	2006-08-11 02:40:43.000000000 +0200
-@@ -299,6 +299,9 @@ config NOT_COHERENT_CACHE
+diff -rupN linux-2.6.20/arch/powerpc/Kconfig linux-2.6.20.perfctr27/arch/powerpc/Kconfig
+--- linux-2.6.20/arch/powerpc/Kconfig	2007-09-28 09:30:15.000000000 +0200
++++ linux-2.6.20.perfctr27/arch/powerpc/Kconfig	2007-09-28 09:33:35.000000000 +0200
+@@ -356,6 +356,9 @@ config NOT_COHERENT_CACHE
  	bool
  	depends on 4xx || 8xx || E200
  	default y
@@ -139,10 +154,10 @@ diff -rupN linux-2.6.17/arch/powerpc/Kconfig linux-2.6.17.perfctr27/arch/powerpc
  endmenu
  
  source "init/Kconfig"
-diff -rupN linux-2.6.17/arch/powerpc/kernel/process.c linux-2.6.17.perfctr27/arch/powerpc/kernel/process.c
---- linux-2.6.17/arch/powerpc/kernel/process.c	2006-06-18 12:13:01.000000000 +0200
-+++ linux-2.6.17.perfctr27/arch/powerpc/kernel/process.c	2006-08-11 02:40:43.000000000 +0200
-@@ -32,6 +32,7 @@
+diff -rupN linux-2.6.20/arch/powerpc/kernel/process.c linux-2.6.20.perfctr27/arch/powerpc/kernel/process.c
+--- linux-2.6.20/arch/powerpc/kernel/process.c	2007-09-28 09:08:22.000000000 +0200
++++ linux-2.6.20.perfctr27/arch/powerpc/kernel/process.c	2007-09-28 09:33:35.000000000 +0200
+@@ -31,6 +31,7 @@
  #include <linux/init_task.h>
  #include <linux/module.h>
  #include <linux/kallsyms.h>
@@ -150,7 +165,7 @@ diff -rupN linux-2.6.17/arch/powerpc/kernel/process.c linux-2.6.17.perfctr27/arc
  #include <linux/mqueue.h>
  #include <linux/hardirq.h>
  #include <linux/utsname.h>
-@@ -333,7 +334,9 @@ struct task_struct *__switch_to(struct t
+@@ -332,7 +333,9 @@ struct task_struct *__switch_to(struct t
  	account_process_vtime(current);
  	calculate_steal_time();
  
@@ -160,7 +175,7 @@ diff -rupN linux-2.6.17/arch/powerpc/kernel/process.c linux-2.6.17.perfctr27/arc
  
  	local_irq_restore(flags);
  
-@@ -465,6 +468,7 @@ void show_regs(struct pt_regs * regs)
+@@ -458,6 +461,7 @@ void show_regs(struct pt_regs * regs)
  void exit_thread(void)
  {
  	discard_lazy_cpu_state();
@@ -168,7 +183,7 @@ diff -rupN linux-2.6.17/arch/powerpc/kernel/process.c linux-2.6.17.perfctr27/arc
  }
  
  void flush_thread(void)
-@@ -577,6 +581,8 @@ int copy_thread(int nr, unsigned long cl
+@@ -570,6 +574,8 @@ int copy_thread(int nr, unsigned long cl
  	p->thread.last_syscall = -1;
  #endif
  
@@ -177,67 +192,56 @@ diff -rupN linux-2.6.17/arch/powerpc/kernel/process.c linux-2.6.17.perfctr27/arc
  	return 0;
  }
  
-diff -rupN linux-2.6.17/arch/powerpc/kernel/systbl.S linux-2.6.17.perfctr27/arch/powerpc/kernel/systbl.S
---- linux-2.6.17/arch/powerpc/kernel/systbl.S	2006-06-18 12:13:01.000000000 +0200
-+++ linux-2.6.17.perfctr27/arch/powerpc/kernel/systbl.S	2006-08-11 02:40:43.000000000 +0200
-@@ -340,6 +340,10 @@ SYSCALL(fchmodat)
- SYSCALL(faccessat)
- COMPAT_SYS(get_robust_list)
- COMPAT_SYS(set_robust_list)
-+SYSCALL(vperfctr_open)
-+SYSCALL(vperfctr_control)
-+SYSCALL(vperfctr_write)
-+SYSCALL(vperfctr_read)
- 
- /*
-  * please add new calls to arch/powerpc/platforms/cell/spu_callbacks.c
-diff -rupN linux-2.6.17/arch/x86_64/Kconfig linux-2.6.17.perfctr27/arch/x86_64/Kconfig
---- linux-2.6.17/arch/x86_64/Kconfig	2006-06-18 12:13:02.000000000 +0200
-+++ linux-2.6.17.perfctr27/arch/x86_64/Kconfig	2006-08-11 02:40:43.000000000 +0200
-@@ -491,6 +491,8 @@ config SECCOMP
- 
- 	  If unsure, say Y. Only embedded should say N here.
+diff -rupN linux-2.6.20/arch/x86_64/Kconfig linux-2.6.20.perfctr27/arch/x86_64/Kconfig
+--- linux-2.6.20/arch/x86_64/Kconfig	2007-09-28 09:30:15.000000000 +0200
++++ linux-2.6.20.perfctr27/arch/x86_64/Kconfig	2007-09-28 09:33:35.000000000 +0200
+@@ -607,6 +607,8 @@ config CC_STACKPROTECTOR_ALL
+ 	  functions that use large-ish on-stack buffers. By enabling
+ 	  this option, GCC will be asked to do this for ALL functions.
  
 +source "drivers/perfctr/Kconfig"
 +
  source kernel/Kconfig.hz
  
  config REORDER
-diff -rupN linux-2.6.17/arch/x86_64/ia32/ia32entry.S linux-2.6.17.perfctr27/arch/x86_64/ia32/ia32entry.S
---- linux-2.6.17/arch/x86_64/ia32/ia32entry.S	2006-06-18 12:13:02.000000000 +0200
-+++ linux-2.6.17.perfctr27/arch/x86_64/ia32/ia32entry.S	2006-08-11 02:40:46.000000000 +0200
-@@ -694,6 +694,11 @@ ia32_sys_call_table:
- 	.quad compat_sys_get_robust_list
- 	.quad sys_splice
- 	.quad sys_sync_file_range
--	.quad sys_tee
-+	.quad sys_tee			/* 315 */
+diff -rupN linux-2.6.20/arch/x86_64/ia32/ia32entry.S linux-2.6.20.perfctr27/arch/x86_64/ia32/ia32entry.S
+--- linux-2.6.20/arch/x86_64/ia32/ia32entry.S	2007-09-28 09:08:23.000000000 +0200
++++ linux-2.6.20.perfctr27/arch/x86_64/ia32/ia32entry.S	2007-09-28 09:33:35.000000000 +0200
+@@ -718,4 +718,14 @@ ia32_sys_call_table:
  	.quad compat_sys_vmsplice
+ 	.quad compat_sys_move_pages
+ 	.quad sys_getcpu
 +	.quad quiet_ni_syscall
-+	.quad sys_vperfctr_open
++	.quad quiet_ni_syscall		/* 320 */
++	.quad quiet_ni_syscall
++	.quad quiet_ni_syscall
++	.quad quiet_ni_syscall
++	.quad quiet_ni_syscall
++	.quad sys_vperfctr_open		/* 325 */
 +	.quad sys_vperfctr_control
-+	.quad sys_vperfctr_write	/* 320 */
++	.quad sys_vperfctr_write
 +	.quad sys_vperfctr_read
  ia32_syscall_end:		
-diff -rupN linux-2.6.17/arch/x86_64/kernel/entry.S linux-2.6.17.perfctr27/arch/x86_64/kernel/entry.S
---- linux-2.6.17/arch/x86_64/kernel/entry.S	2006-06-18 12:13:02.000000000 +0200
-+++ linux-2.6.17.perfctr27/arch/x86_64/kernel/entry.S	2006-08-11 02:40:43.000000000 +0200
-@@ -642,6 +642,11 @@ ENTRY(spurious_interrupt)
+diff -rupN linux-2.6.20/arch/x86_64/kernel/entry.S linux-2.6.20.perfctr27/arch/x86_64/kernel/entry.S
+--- linux-2.6.20/arch/x86_64/kernel/entry.S	2007-09-28 09:30:15.000000000 +0200
++++ linux-2.6.20.perfctr27/arch/x86_64/kernel/entry.S	2007-09-28 09:33:35.000000000 +0200
+@@ -689,6 +689,12 @@ ENTRY(spurious_interrupt)
  	apicinterrupt SPURIOUS_APIC_VECTOR,smp_spurious_interrupt
- #endif
+ END(spurious_interrupt)
  				
 +#if defined(CONFIG_X86_LOCAL_APIC) && defined(CONFIG_PERFCTR)
 +ENTRY(perfctr_interrupt)
 +	apicinterrupt LOCAL_PERFCTR_VECTOR,smp_perfctr_interrupt
++END(perfctr_interrupt)
 +#endif
 +
  /*
   * Exception entry points.
   */ 		
-diff -rupN linux-2.6.17/arch/x86_64/kernel/i8259.c linux-2.6.17.perfctr27/arch/x86_64/kernel/i8259.c
---- linux-2.6.17/arch/x86_64/kernel/i8259.c	2006-03-20 10:40:03.000000000 +0100
-+++ linux-2.6.17.perfctr27/arch/x86_64/kernel/i8259.c	2006-08-11 02:40:43.000000000 +0200
-@@ -23,6 +23,7 @@
+diff -rupN linux-2.6.20/arch/x86_64/kernel/i8259.c linux-2.6.20.perfctr27/arch/x86_64/kernel/i8259.c
+--- linux-2.6.20/arch/x86_64/kernel/i8259.c	2007-09-28 09:30:15.000000000 +0200
++++ linux-2.6.20.perfctr27/arch/x86_64/kernel/i8259.c	2007-09-28 09:33:35.000000000 +0200
+@@ -22,6 +22,7 @@
  #include <asm/delay.h>
  #include <asm/desc.h>
  #include <asm/apic.h>
@@ -245,19 +249,19 @@ diff -rupN linux-2.6.17/arch/x86_64/kernel/i8259.c linux-2.6.17.perfctr27/arch/x
  
  /*
   * Common place to define all x86 IRQ vectors
-@@ -591,6 +592,8 @@ void __init init_IRQ(void)
+@@ -553,6 +554,8 @@ void __init init_IRQ(void)
+ 	set_intr_gate(SPURIOUS_APIC_VECTOR, spurious_interrupt);
  	set_intr_gate(ERROR_APIC_VECTOR, error_interrupt);
- #endif
  
 +	perfctr_vector_init();
 +
  	/*
  	 * Set the clock to HZ Hz, we already have a valid
  	 * vector now:
-diff -rupN linux-2.6.17/arch/x86_64/kernel/process.c linux-2.6.17.perfctr27/arch/x86_64/kernel/process.c
---- linux-2.6.17/arch/x86_64/kernel/process.c	2006-06-18 12:13:02.000000000 +0200
-+++ linux-2.6.17.perfctr27/arch/x86_64/kernel/process.c	2006-08-11 02:40:43.000000000 +0200
-@@ -33,6 +33,7 @@
+diff -rupN linux-2.6.20/arch/x86_64/kernel/process.c linux-2.6.20.perfctr27/arch/x86_64/kernel/process.c
+--- linux-2.6.20/arch/x86_64/kernel/process.c	2007-09-28 09:30:15.000000000 +0200
++++ linux-2.6.20.perfctr27/arch/x86_64/kernel/process.c	2007-09-28 09:33:35.000000000 +0200
+@@ -32,6 +32,7 @@
  #include <linux/interrupt.h>
  #include <linux/delay.h>
  #include <linux/ptrace.h>
@@ -265,36 +269,37 @@ diff -rupN linux-2.6.17/arch/x86_64/kernel/process.c linux-2.6.17.perfctr27/arch
  #include <linux/utsname.h>
  #include <linux/random.h>
  #include <linux/notifier.h>
-@@ -358,6 +359,7 @@ void exit_thread(void)
+@@ -377,6 +378,7 @@ void exit_thread(void)
  		t->io_bitmap_max = 0;
  		put_cpu();
  	}
-+	perfctr_exit_thread(&me->thread);
++	perfctr_exit_thread(t);
  }
  
  void flush_thread(void)
-@@ -459,6 +461,8 @@ int copy_thread(int nr, unsigned long cl
+@@ -482,6 +484,8 @@ int copy_thread(int nr, unsigned long cl
  	asm("mov %%es,%0" : "=m" (p->thread.es));
  	asm("mov %%ds,%0" : "=m" (p->thread.ds));
  
 +	perfctr_copy_task(p, regs);
 +
- 	if (unlikely(me->thread.io_bitmap_ptr != NULL)) { 
+ 	if (unlikely(test_tsk_thread_flag(me, TIF_IO_BITMAP))) {
  		p->thread.io_bitmap_ptr = kmalloc(IO_BITMAP_BYTES, GFP_KERNEL);
  		if (!p->thread.io_bitmap_ptr) {
-@@ -616,6 +620,8 @@ __switch_to(struct task_struct *prev_p, 
- 		}
- 	}
- 
+@@ -665,6 +669,9 @@ __switch_to(struct task_struct *prev_p, 
+ 	 */
+ 	if (next_p->fpu_counter>5)
+ 		math_state_restore();
++
 +	perfctr_resume_thread(next);
 +
  	return prev_p;
  }
  
-diff -rupN linux-2.6.17/drivers/Makefile linux-2.6.17.perfctr27/drivers/Makefile
---- linux-2.6.17/drivers/Makefile	2006-06-18 12:13:02.000000000 +0200
-+++ linux-2.6.17.perfctr27/drivers/Makefile	2006-08-11 02:40:43.000000000 +0200
-@@ -71,6 +71,7 @@ obj-$(CONFIG_NEW_LEDS)		+= leds/
+diff -rupN linux-2.6.20/drivers/Makefile linux-2.6.20.perfctr27/drivers/Makefile
+--- linux-2.6.20/drivers/Makefile	2007-09-28 09:30:15.000000000 +0200
++++ linux-2.6.20.perfctr27/drivers/Makefile	2007-09-28 09:33:35.000000000 +0200
+@@ -73,6 +73,7 @@ obj-$(CONFIG_NEW_LEDS)		+= leds/
  obj-$(CONFIG_INFINIBAND)	+= infiniband/
  obj-$(CONFIG_IPATH_CORE)	+= infiniband/
  obj-$(CONFIG_SGI_SN)		+= sn/
@@ -302,9 +307,9 @@ diff -rupN linux-2.6.17/drivers/Makefile linux-2.6.17.perfctr27/drivers/Makefile
  obj-y				+= firmware/
  obj-$(CONFIG_CRYPTO)		+= crypto/
  obj-$(CONFIG_SUPERH)		+= sh/
-diff -rupN linux-2.6.17/include/asm-i386/mach-default/irq_vectors.h linux-2.6.17.perfctr27/include/asm-i386/mach-default/irq_vectors.h
---- linux-2.6.17/include/asm-i386/mach-default/irq_vectors.h	2004-05-10 11:14:37.000000000 +0200
-+++ linux-2.6.17.perfctr27/include/asm-i386/mach-default/irq_vectors.h	2006-08-11 02:40:43.000000000 +0200
+diff -rupN linux-2.6.20/include/asm-i386/mach-default/irq_vectors.h linux-2.6.20.perfctr27/include/asm-i386/mach-default/irq_vectors.h
+--- linux-2.6.20/include/asm-i386/mach-default/irq_vectors.h	2007-02-04 19:44:54.000000000 +0100
++++ linux-2.6.20.perfctr27/include/asm-i386/mach-default/irq_vectors.h	2007-09-28 09:33:35.000000000 +0200
 @@ -56,14 +56,15 @@
   * sources per level' errata.
   */
@@ -323,9 +328,9 @@ diff -rupN linux-2.6.17/include/asm-i386/mach-default/irq_vectors.h linux-2.6.17
  
  #define TIMER_IRQ 0
  
-diff -rupN linux-2.6.17/include/asm-i386/mach-visws/irq_vectors.h linux-2.6.17.perfctr27/include/asm-i386/mach-visws/irq_vectors.h
---- linux-2.6.17/include/asm-i386/mach-visws/irq_vectors.h	2004-01-09 13:19:11.000000000 +0100
-+++ linux-2.6.17.perfctr27/include/asm-i386/mach-visws/irq_vectors.h	2006-08-11 02:40:43.000000000 +0200
+diff -rupN linux-2.6.20/include/asm-i386/mach-visws/irq_vectors.h linux-2.6.20.perfctr27/include/asm-i386/mach-visws/irq_vectors.h
+--- linux-2.6.20/include/asm-i386/mach-visws/irq_vectors.h	2007-02-04 19:44:54.000000000 +0100
++++ linux-2.6.20.perfctr27/include/asm-i386/mach-visws/irq_vectors.h	2007-09-28 09:33:35.000000000 +0200
 @@ -35,14 +35,15 @@
   * sources per level' errata.
   */
@@ -344,10 +349,10 @@ diff -rupN linux-2.6.17/include/asm-i386/mach-visws/irq_vectors.h linux-2.6.17.p
  
  #define TIMER_IRQ 0
  
-diff -rupN linux-2.6.17/include/asm-i386/processor.h linux-2.6.17.perfctr27/include/asm-i386/processor.h
---- linux-2.6.17/include/asm-i386/processor.h	2006-06-18 12:13:11.000000000 +0200
-+++ linux-2.6.17.perfctr27/include/asm-i386/processor.h	2006-08-11 02:40:43.000000000 +0200
-@@ -469,6 +469,8 @@ struct thread_struct {
+diff -rupN linux-2.6.20/include/asm-i386/processor.h linux-2.6.20.perfctr27/include/asm-i386/processor.h
+--- linux-2.6.20/include/asm-i386/processor.h	2007-09-28 09:30:24.000000000 +0200
++++ linux-2.6.20.perfctr27/include/asm-i386/processor.h	2007-09-28 09:33:35.000000000 +0200
+@@ -418,6 +418,8 @@ struct thread_struct {
   	unsigned long	iopl;
  /* max allowed port in the bitmap, in bytes: */
  	unsigned long	io_bitmap_max;
@@ -356,38 +361,40 @@ diff -rupN linux-2.6.17/include/asm-i386/processor.h linux-2.6.17.perfctr27/incl
  };
  
  #define INIT_THREAD  {							\
-diff -rupN linux-2.6.17/include/asm-i386/system.h linux-2.6.17.perfctr27/include/asm-i386/system.h
---- linux-2.6.17/include/asm-i386/system.h	2006-06-18 12:13:11.000000000 +0200
-+++ linux-2.6.17.perfctr27/include/asm-i386/system.h	2006-08-11 02:40:43.000000000 +0200
-@@ -14,6 +14,7 @@ extern struct task_struct * FASTCALL(__s
- 
+diff -rupN linux-2.6.20/include/asm-i386/system.h linux-2.6.20.perfctr27/include/asm-i386/system.h
+--- linux-2.6.20/include/asm-i386/system.h	2007-09-28 09:30:24.000000000 +0200
++++ linux-2.6.20.perfctr27/include/asm-i386/system.h	2007-09-28 09:33:35.000000000 +0200
+@@ -17,6 +17,7 @@ extern struct task_struct * FASTCALL(__s
+  */
  #define switch_to(prev,next,last) do {					\
  	unsigned long esi,edi;						\
 +	perfctr_suspend_thread(&(prev)->thread);			\
- 	asm volatile("pushl %%ebp\n\t"					\
+ 	asm volatile("pushfl\n\t"		/* Save flags */	\
+ 		     "pushl %%ebp\n\t"					\
  		     "movl %%esp,%0\n\t"	/* save ESP */		\
- 		     "movl %5,%%esp\n\t"	/* restore ESP */	\
-diff -rupN linux-2.6.17/include/asm-i386/unistd.h linux-2.6.17.perfctr27/include/asm-i386/unistd.h
---- linux-2.6.17/include/asm-i386/unistd.h	2006-06-18 12:13:11.000000000 +0200
-+++ linux-2.6.17.perfctr27/include/asm-i386/unistd.h	2006-08-11 02:40:46.000000000 +0200
-@@ -322,8 +322,12 @@
- #define __NR_sync_file_range	314
- #define __NR_tee		315
- #define __NR_vmsplice		316
-+#define __NR_vperfctr_open	318
+diff -rupN linux-2.6.20/include/asm-i386/unistd.h linux-2.6.20.perfctr27/include/asm-i386/unistd.h
+--- linux-2.6.20/include/asm-i386/unistd.h	2007-09-28 09:30:24.000000000 +0200
++++ linux-2.6.20.perfctr27/include/asm-i386/unistd.h	2007-09-28 09:36:03.000000000 +0200
+@@ -325,10 +325,14 @@
+ #define __NR_move_pages		317
+ #define __NR_getcpu		318
+ #define __NR_epoll_pwait	319
++#define __NR_vperfctr_open	325
 +#define __NR_vperfctr_control	(__NR_vperfctr_open+1)
 +#define __NR_vperfctr_write	(__NR_vperfctr_open+2)
 +#define __NR_vperfctr_read	(__NR_vperfctr_open+3)
  
--#define NR_syscalls 317
-+#define NR_syscalls 322
+ #ifdef __KERNEL__
  
- /*
-  * user-visible error numbers are in the range -1 - -128: see
-diff -rupN linux-2.6.17/include/asm-powerpc/processor.h linux-2.6.17.perfctr27/include/asm-powerpc/processor.h
---- linux-2.6.17/include/asm-powerpc/processor.h	2006-06-18 12:13:11.000000000 +0200
-+++ linux-2.6.17.perfctr27/include/asm-powerpc/processor.h	2006-08-11 02:40:43.000000000 +0200
-@@ -169,6 +169,9 @@ struct thread_struct {
+-#define NR_syscalls 320
++#define NR_syscalls 329
+ 
+ #define __ARCH_WANT_IPC_PARSE_VERSION
+ #define __ARCH_WANT_OLD_READDIR
+diff -rupN linux-2.6.20/include/asm-powerpc/processor.h linux-2.6.20.perfctr27/include/asm-powerpc/processor.h
+--- linux-2.6.20/include/asm-powerpc/processor.h	2007-09-28 09:30:24.000000000 +0200
++++ linux-2.6.20.perfctr27/include/asm-powerpc/processor.h	2007-09-28 09:33:35.000000000 +0200
+@@ -166,6 +166,9 @@ struct thread_struct {
  	unsigned long	spefscr;	/* SPE & eFP status */
  	int		used_spe;	/* set if process has used spe */
  #endif /* CONFIG_SPE */
@@ -397,11 +404,11 @@ diff -rupN linux-2.6.17/include/asm-powerpc/processor.h linux-2.6.17.perfctr27/i
  };
  
  #define ARCH_MIN_TASKALIGN 16
-diff -rupN linux-2.6.17/include/asm-powerpc/reg.h linux-2.6.17.perfctr27/include/asm-powerpc/reg.h
---- linux-2.6.17/include/asm-powerpc/reg.h	2006-06-18 12:13:11.000000000 +0200
-+++ linux-2.6.17.perfctr27/include/asm-powerpc/reg.h	2006-08-11 02:40:43.000000000 +0200
-@@ -365,10 +365,8 @@
- #define	SPRN_PURR	0x135	/* Processor Utilization of Resources Reg */
+diff -rupN linux-2.6.20/include/asm-powerpc/reg.h linux-2.6.20.perfctr27/include/asm-powerpc/reg.h
+--- linux-2.6.20/include/asm-powerpc/reg.h	2007-09-28 09:30:24.000000000 +0200
++++ linux-2.6.20.perfctr27/include/asm-powerpc/reg.h	2007-09-28 09:33:35.000000000 +0200
+@@ -367,10 +367,8 @@
+ #define SPRN_PURR	0x135	/* Processor Utilization of Resources Reg */
  #define SPRN_PVR	0x11F	/* Processor Version Register */
  #define SPRN_RPA	0x3D6	/* Required Physical Address Register */
 -#define SPRN_SDA	0x3BF	/* Sampled Data Address Register */
@@ -411,7 +418,7 @@ diff -rupN linux-2.6.17/include/asm-powerpc/reg.h linux-2.6.17.perfctr27/include
  #define SPRN_SPRG0	0x110	/* Special Purpose Register General 0 */
  #define SPRN_SPRG1	0x111	/* Special Purpose Register General 1 */
  #define SPRN_SPRG2	0x112	/* Special Purpose Register General 2 */
-@@ -403,13 +401,6 @@
+@@ -407,13 +405,6 @@
  #define SPRN_THRM3	0x3FE		/* Thermal Management Register 3 */
  #define THRM3_E		(1<<0)
  #define SPRN_TLBMISS	0x3D4		/* 980 7450 TLB Miss Register */
@@ -425,7 +432,7 @@ diff -rupN linux-2.6.17/include/asm-powerpc/reg.h linux-2.6.17.perfctr27/include
  #define SPRN_VRSAVE	0x100	/* Vector Register Save Register */
  #define SPRN_XER	0x001	/* Fixed Point Exception Register */
  
-@@ -455,33 +446,7 @@
+@@ -463,33 +454,7 @@
  #define SPRN_SDAR	781
  
  #else /* 32-bit */
@@ -459,7 +466,7 @@ diff -rupN linux-2.6.17/include/asm-powerpc/reg.h linux-2.6.17.perfctr27/include
  
  #define SPRN_SIAR	955	/* Sampled Instruction Address Register */
  
-@@ -493,6 +458,77 @@
+@@ -501,6 +466,77 @@
  #define MMCR0_PMC2_CYCLES	0x1
  #define MMCR0_PMC2_ITLB		0x7
  #define MMCR0_PMC2_LOADMISSTIME	0x5
@@ -536,28 +543,51 @@ diff -rupN linux-2.6.17/include/asm-powerpc/reg.h linux-2.6.17.perfctr27/include
 +
  #endif
  
- /* Processor Version Register (PVR) field extraction */
-diff -rupN linux-2.6.17/include/asm-powerpc/unistd.h linux-2.6.17.perfctr27/include/asm-powerpc/unistd.h
---- linux-2.6.17/include/asm-powerpc/unistd.h	2006-06-18 12:13:11.000000000 +0200
-+++ linux-2.6.17.perfctr27/include/asm-powerpc/unistd.h	2006-08-11 02:40:43.000000000 +0200
-@@ -323,8 +323,12 @@
- #define __NR_faccessat		298
+ /*
+diff -rupN linux-2.6.20/include/asm-powerpc/systbl.h linux-2.6.20.perfctr27/include/asm-powerpc/systbl.h
+--- linux-2.6.20/include/asm-powerpc/systbl.h	2007-09-28 09:08:36.000000000 +0200
++++ linux-2.6.20.perfctr27/include/asm-powerpc/systbl.h	2007-09-28 09:33:35.000000000 +0200
+@@ -304,4 +304,16 @@ SYSCALL_SPU(fchmodat)
+ SYSCALL_SPU(faccessat)
+ COMPAT_SYS_SPU(get_robust_list)
+ COMPAT_SYS_SPU(set_robust_list)
+-COMPAT_SYS(move_pages)
++COMPAT_SYS(move_pages)		/* 301 */
++SYSCALL(ni_syscall)		/* 302 */
++SYSCALL(ni_syscall)		/* 303 */
++SYSCALL(ni_syscall)		/* 304 */
++SYSCALL(ni_syscall)		/* 305 */
++SYSCALL(ni_syscall)		/* 306 */
++SYSCALL(ni_syscall)		/* 307 */
++SYSCALL(ni_syscall)		/* 308 */
++SYSCALL(ni_syscall)		/* 309 */
++SYSCALL(vperfctr_open)		/* 310 */
++SYSCALL(vperfctr_control)
++SYSCALL(vperfctr_write)
++SYSCALL(vperfctr_read)
+diff -rupN linux-2.6.20/include/asm-powerpc/unistd.h linux-2.6.20.perfctr27/include/asm-powerpc/unistd.h
+--- linux-2.6.20/include/asm-powerpc/unistd.h	2007-09-28 09:30:24.000000000 +0200
++++ linux-2.6.20.perfctr27/include/asm-powerpc/unistd.h	2007-09-28 09:33:35.000000000 +0200
+@@ -324,10 +324,14 @@
  #define __NR_get_robust_list	299
  #define __NR_set_robust_list	300
-+#define __NR_vperfctr_open	301
+ #define __NR_move_pages		301
++#define __NR_vperfctr_open	310
 +#define __NR_vperfctr_control	(__NR_vperfctr_open+1)
 +#define __NR_vperfctr_write	(__NR_vperfctr_open+2)
 +#define __NR_vperfctr_read	(__NR_vperfctr_open+3)
  
--#define __NR_syscalls		301
-+#define __NR_syscalls		305
- 
  #ifdef __KERNEL__
+ 
+-#define __NR_syscalls		302
++#define __NR_syscalls		314
+ 
  #define __NR__exit __NR_exit
-diff -rupN linux-2.6.17/include/asm-x86_64/hw_irq.h linux-2.6.17.perfctr27/include/asm-x86_64/hw_irq.h
---- linux-2.6.17/include/asm-x86_64/hw_irq.h	2006-03-20 10:40:11.000000000 +0100
-+++ linux-2.6.17.perfctr27/include/asm-x86_64/hw_irq.h	2006-08-11 02:40:43.000000000 +0200
-@@ -67,14 +67,15 @@ struct hw_interrupt_type;
+ #define NR_syscalls	__NR_syscalls
+diff -rupN linux-2.6.20/include/asm-x86_64/hw_irq.h linux-2.6.20.perfctr27/include/asm-x86_64/hw_irq.h
+--- linux-2.6.20/include/asm-x86_64/hw_irq.h	2007-09-28 09:08:36.000000000 +0200
++++ linux-2.6.20.perfctr27/include/asm-x86_64/hw_irq.h	2007-09-28 09:33:35.000000000 +0200
+@@ -63,14 +63,15 @@
   * sources per level' errata.
   */
  #define LOCAL_TIMER_VECTOR	0xef
@@ -575,22 +605,9 @@ diff -rupN linux-2.6.17/include/asm-x86_64/hw_irq.h linux-2.6.17.perfctr27/inclu
  
  
  #ifndef __ASSEMBLY__
-diff -rupN linux-2.6.17/include/asm-x86_64/ia32_unistd.h linux-2.6.17.perfctr27/include/asm-x86_64/ia32_unistd.h
---- linux-2.6.17/include/asm-x86_64/ia32_unistd.h	2006-06-18 12:13:11.000000000 +0200
-+++ linux-2.6.17.perfctr27/include/asm-x86_64/ia32_unistd.h	2006-08-11 02:40:46.000000000 +0200
-@@ -316,5 +316,9 @@
- #define __NR_ia32_pselect6		308
- #define __NR_ia32_ppoll			309
- #define __NR_ia32_unshare		310
-+#define __NR_ia32_vperfctr_open		318
-+#define __NR_ia32_vperfctr_control	(__NR_ia32_vperfctr_open+1)
-+#define __NR_ia32_vperfctr_write	(__NR_ia32_vperfctr_open+2)
-+#define __NR_ia32_vperfctr_read		(__NR_ia32_vperfctr_open+3)
- 
- #endif /* _ASM_X86_64_IA32_UNISTD_H_ */
-diff -rupN linux-2.6.17/include/asm-x86_64/irq.h linux-2.6.17.perfctr27/include/asm-x86_64/irq.h
---- linux-2.6.17/include/asm-x86_64/irq.h	2006-03-20 10:40:11.000000000 +0100
-+++ linux-2.6.17.perfctr27/include/asm-x86_64/irq.h	2006-08-11 02:40:43.000000000 +0200
+diff -rupN linux-2.6.20/include/asm-x86_64/irq.h linux-2.6.20.perfctr27/include/asm-x86_64/irq.h
+--- linux-2.6.20/include/asm-x86_64/irq.h	2007-02-04 19:44:54.000000000 +0100
++++ linux-2.6.20.perfctr27/include/asm-x86_64/irq.h	2007-09-28 09:33:35.000000000 +0200
 @@ -29,7 +29,7 @@
   */
  #define NR_VECTORS 256
@@ -598,12 +615,12 @@ diff -rupN linux-2.6.17/include/asm-x86_64/irq.h linux-2.6.17.perfctr27/include/
 -#define FIRST_SYSTEM_VECTOR	0xef   /* duplicated in hw_irq.h */
 +#define FIRST_SYSTEM_VECTOR	0xee   /* duplicated in hw_irq.h */
  
- #ifdef CONFIG_PCI_MSI
- #define NR_IRQS FIRST_SYSTEM_VECTOR
-diff -rupN linux-2.6.17/include/asm-x86_64/processor.h linux-2.6.17.perfctr27/include/asm-x86_64/processor.h
---- linux-2.6.17/include/asm-x86_64/processor.h	2006-06-18 12:13:11.000000000 +0200
-+++ linux-2.6.17.perfctr27/include/asm-x86_64/processor.h	2006-08-11 02:40:43.000000000 +0200
-@@ -264,6 +264,8 @@ struct thread_struct {
+ #define NR_IRQS (NR_VECTORS + (32 *NR_CPUS))
+ #define NR_IRQ_VECTORS NR_IRQS
+diff -rupN linux-2.6.20/include/asm-x86_64/processor.h linux-2.6.20.perfctr27/include/asm-x86_64/processor.h
+--- linux-2.6.20/include/asm-x86_64/processor.h	2007-09-28 09:30:24.000000000 +0200
++++ linux-2.6.20.perfctr27/include/asm-x86_64/processor.h	2007-09-28 09:33:35.000000000 +0200
+@@ -274,6 +274,8 @@ struct thread_struct {
  	unsigned io_bitmap_max;
  /* cached TLS descriptors. */
  	u64 tls_array[GDT_ENTRY_TLS_ENTRIES];
@@ -612,20 +629,20 @@ diff -rupN linux-2.6.17/include/asm-x86_64/processor.h linux-2.6.17.perfctr27/in
  } __attribute__((aligned(16)));
  
  #define INIT_THREAD  { \
-diff -rupN linux-2.6.17/include/asm-x86_64/system.h linux-2.6.17.perfctr27/include/asm-x86_64/system.h
---- linux-2.6.17/include/asm-x86_64/system.h	2006-06-18 12:13:11.000000000 +0200
-+++ linux-2.6.17.perfctr27/include/asm-x86_64/system.h	2006-08-11 02:40:43.000000000 +0200
-@@ -26,7 +26,8 @@
- #define __EXTRA_CLOBBER  \
+diff -rupN linux-2.6.20/include/asm-x86_64/system.h linux-2.6.20.perfctr27/include/asm-x86_64/system.h
+--- linux-2.6.20/include/asm-x86_64/system.h	2007-09-28 09:07:41.000000000 +0200
++++ linux-2.6.20.perfctr27/include/asm-x86_64/system.h	2007-09-28 09:33:35.000000000 +0200
+@@ -21,7 +21,8 @@
  	,"rcx","rbx","rdx","r8","r9","r10","r11","r12","r13","r14","r15"
  
+ /* Save restore flags to clear handle leaking NT */
 -#define switch_to(prev,next,last) \
 +#define switch_to(prev,next,last) do { \
 +	perfctr_suspend_thread(&(prev)->thread); \
  	asm volatile(SAVE_CONTEXT						    \
  		     "movq %%rsp,%P[threadrsp](%[prev])\n\t" /* save RSP */	  \
  		     "movq %P[threadrsp](%[next]),%%rsp\n\t" /* restore RSP */	  \
-@@ -46,7 +47,8 @@
+@@ -41,7 +42,8 @@
  		       [tif_fork] "i" (TIF_FORK),			  \
  		       [thread_info] "i" (offsetof(struct task_struct, thread_info)), \
  		       [pda_pcurrent] "i" (offsetof(struct x8664_pda, pcurrent))   \
@@ -635,16 +652,20 @@ diff -rupN linux-2.6.17/include/asm-x86_64/system.h linux-2.6.17.perfctr27/inclu
      
  extern void load_gs_index(unsigned); 
  
-diff -rupN linux-2.6.17/include/asm-x86_64/unistd.h linux-2.6.17.perfctr27/include/asm-x86_64/unistd.h
---- linux-2.6.17/include/asm-x86_64/unistd.h	2006-06-18 12:13:11.000000000 +0200
-+++ linux-2.6.17.perfctr27/include/asm-x86_64/unistd.h	2006-08-11 02:40:46.000000000 +0200
-@@ -617,8 +617,18 @@ __SYSCALL(__NR_tee, sys_tee)
- __SYSCALL(__NR_sync_file_range, sys_sync_file_range)
- #define __NR_vmsplice		278
+diff -rupN linux-2.6.20/include/asm-x86_64/unistd.h linux-2.6.20.perfctr27/include/asm-x86_64/unistd.h
+--- linux-2.6.20/include/asm-x86_64/unistd.h	2007-09-28 09:30:24.000000000 +0200
++++ linux-2.6.20.perfctr27/include/asm-x86_64/unistd.h	2007-09-28 09:33:35.000000000 +0200
+@@ -619,8 +619,22 @@ __SYSCALL(__NR_sync_file_range, sys_sync
  __SYSCALL(__NR_vmsplice, sys_vmsplice)
-+#define __NR_move_pages		279
-+__SYSCALL(__NR_move_pages, sys_ni_syscall)
-+#define __NR_vperfctr_open	280
+ #define __NR_move_pages		279
+ __SYSCALL(__NR_move_pages, sys_move_pages)
++__SYSCALL(280, sys_ni_syscall)	/* utimensat */
++__SYSCALL(281, sys_ni_syscall)	/* epoll_wait */
++__SYSCALL(282, sys_ni_syscall)	/* signalfd */
++__SYSCALL(283, sys_ni_syscall)	/* timerfd */
++__SYSCALL(284, sys_ni_syscall)	/* eventfd */
++__SYSCALL(285, sys_ni_syscall)	/* fallocate */
++#define __NR_vperfctr_open	286
 +__SYSCALL(__NR_vperfctr_open, sys_vperfctr_open)
 +#define __NR_vperfctr_control	(__NR_vperfctr_open+1)
 +__SYSCALL(__NR_vperfctr_control, sys_vperfctr_control)
@@ -653,15 +674,15 @@ diff -rupN linux-2.6.17/include/asm-x86_64/unistd.h linux-2.6.17.perfctr27/inclu
 +#define __NR_vperfctr_read	(__NR_vperfctr_open+3)
 +__SYSCALL(__NR_vperfctr_read, sys_vperfctr_read)
  
--#define __NR_syscall_max __NR_vmsplice
+-#define __NR_syscall_max __NR_move_pages
 +#define __NR_syscall_max __NR_vperfctr_read
  
  #ifndef __NO_STUBS
- 
-diff -rupN linux-2.6.17/include/linux/sched.h linux-2.6.17.perfctr27/include/linux/sched.h
---- linux-2.6.17/include/linux/sched.h	2006-06-18 12:13:11.000000000 +0200
-+++ linux-2.6.17.perfctr27/include/linux/sched.h	2006-08-11 02:40:43.000000000 +0200
-@@ -1229,6 +1229,9 @@ static inline int thread_group_empty(tas
+ #define __ARCH_WANT_OLD_READDIR
+diff -rupN linux-2.6.20/include/linux/sched.h linux-2.6.20.perfctr27/include/linux/sched.h
+--- linux-2.6.20/include/linux/sched.h	2007-09-28 09:30:24.000000000 +0200
++++ linux-2.6.20.perfctr27/include/linux/sched.h	2007-09-28 09:33:35.000000000 +0200
+@@ -1470,6 +1470,9 @@ static inline int thread_group_empty(str
   * subscriptions and synchronises with wait4().  Also used in procfs.  Also
   * pins the final release of task.io_context.  Also protects ->cpuset.
   *
@@ -671,17 +692,17 @@ diff -rupN linux-2.6.17/include/linux/sched.h linux-2.6.17.perfctr27/include/lin
   * Nests both inside and outside of read_lock(&tasklist_lock).
   * It must not be nested with write_lock_irq(&tasklist_lock),
   * neither inside nor outside.
-diff -rupN linux-2.6.17/kernel/exit.c linux-2.6.17.perfctr27/kernel/exit.c
---- linux-2.6.17/kernel/exit.c	2006-06-18 12:13:11.000000000 +0200
-+++ linux-2.6.17.perfctr27/kernel/exit.c	2006-08-11 02:40:43.000000000 +0200
-@@ -26,6 +26,7 @@
+diff -rupN linux-2.6.20/kernel/exit.c linux-2.6.20.perfctr27/kernel/exit.c
+--- linux-2.6.20/kernel/exit.c	2007-09-28 09:30:24.000000000 +0200
++++ linux-2.6.20.perfctr27/kernel/exit.c	2007-09-28 09:33:35.000000000 +0200
+@@ -28,6 +28,7 @@
  #include <linux/mount.h>
  #include <linux/proc_fs.h>
  #include <linux/mempolicy.h>
 +#include <linux/perfctr.h>
+ #include <linux/taskstats_kern.h>
+ #include <linux/delayacct.h>
  #include <linux/cpuset.h>
- #include <linux/syscalls.h>
- #include <linux/signal.h>
 @@ -170,6 +171,7 @@ repeat:
  		zap_leader = (leader->exit_signal == -1);
  	}
@@ -689,11 +710,11 @@ diff -rupN linux-2.6.17/kernel/exit.c linux-2.6.17.perfctr27/kernel/exit.c
 +	perfctr_release_task(p);
  	sched_exit(p);
  	write_unlock_irq(&tasklist_lock);
- 	spin_unlock(&p->proc_lock);
-diff -rupN linux-2.6.17/kernel/sched.c linux-2.6.17.perfctr27/kernel/sched.c
---- linux-2.6.17/kernel/sched.c	2006-06-18 12:13:11.000000000 +0200
-+++ linux-2.6.17.perfctr27/kernel/sched.c	2006-08-11 02:40:43.000000000 +0200
-@@ -44,6 +44,7 @@
+ 	proc_flush_task(p);
+diff -rupN linux-2.6.20/kernel/sched.c linux-2.6.20.perfctr27/kernel/sched.c
+--- linux-2.6.20/kernel/sched.c	2007-09-28 09:30:24.000000000 +0200
++++ linux-2.6.20.perfctr27/kernel/sched.c	2007-09-28 09:33:35.000000000 +0200
+@@ -45,6 +45,7 @@
  #include <linux/cpu.h>
  #include <linux/cpuset.h>
  #include <linux/percpu.h>
@@ -701,19 +722,19 @@ diff -rupN linux-2.6.17/kernel/sched.c linux-2.6.17.perfctr27/kernel/sched.c
  #include <linux/kthread.h>
  #include <linux/seq_file.h>
  #include <linux/syscalls.h>
-@@ -4425,6 +4426,8 @@ int set_cpus_allowed(task_t *p, cpumask_
- 	migration_req_t req;
- 	runqueue_t *rq;
+@@ -5005,6 +5006,8 @@ int set_cpus_allowed(struct task_struct 
+ 	struct rq *rq;
+ 	int ret = 0;
  
 +	perfctr_set_cpus_allowed(p, new_mask);
 +
  	rq = task_rq_lock(p, &flags);
  	if (!cpus_intersects(new_mask, cpu_online_map)) {
  		ret = -EINVAL;
-diff -rupN linux-2.6.17/kernel/sys_ni.c linux-2.6.17.perfctr27/kernel/sys_ni.c
---- linux-2.6.17/kernel/sys_ni.c	2006-06-18 12:13:11.000000000 +0200
-+++ linux-2.6.17.perfctr27/kernel/sys_ni.c	2006-08-11 02:40:43.000000000 +0200
-@@ -72,6 +72,10 @@ cond_syscall(compat_sys_mq_timedsend);
+diff -rupN linux-2.6.20/kernel/sys_ni.c linux-2.6.20.perfctr27/kernel/sys_ni.c
+--- linux-2.6.20/kernel/sys_ni.c	2007-09-28 09:07:41.000000000 +0200
++++ linux-2.6.20.perfctr27/kernel/sys_ni.c	2007-09-28 09:33:35.000000000 +0200
+@@ -73,6 +73,10 @@ cond_syscall(compat_sys_mq_timedsend);
  cond_syscall(compat_sys_mq_timedreceive);
  cond_syscall(compat_sys_mq_notify);
  cond_syscall(compat_sys_mq_getsetattr);
@@ -724,9 +745,9 @@ diff -rupN linux-2.6.17/kernel/sys_ni.c linux-2.6.17.perfctr27/kernel/sys_ni.c
  cond_syscall(sys_mbind);
  cond_syscall(sys_get_mempolicy);
  cond_syscall(sys_set_mempolicy);
-diff -rupN linux-2.6.17/kernel/timer.c linux-2.6.17.perfctr27/kernel/timer.c
---- linux-2.6.17/kernel/timer.c	2006-06-18 12:13:11.000000000 +0200
-+++ linux-2.6.17.perfctr27/kernel/timer.c	2006-08-11 02:40:43.000000000 +0200
+diff -rupN linux-2.6.20/kernel/timer.c linux-2.6.20.perfctr27/kernel/timer.c
+--- linux-2.6.20/kernel/timer.c	2007-09-28 09:30:24.000000000 +0200
++++ linux-2.6.20.perfctr27/kernel/timer.c	2007-09-28 09:33:35.000000000 +0200
 @@ -32,6 +32,7 @@
  #include <linux/jiffies.h>
  #include <linux/posix-timers.h>
@@ -735,7 +756,7 @@ diff -rupN linux-2.6.17/kernel/timer.c linux-2.6.17.perfctr27/kernel/timer.c
  #include <linux/syscalls.h>
  #include <linux/delay.h>
  
-@@ -830,6 +831,7 @@ void update_process_times(int user_tick)
+@@ -1110,6 +1111,7 @@ void update_process_times(int user_tick)
  		account_user_time(p, jiffies_to_cputime(1));
  	else
  		account_system_time(p, HARDIRQ_OFFSET, jiffies_to_cputime(1));

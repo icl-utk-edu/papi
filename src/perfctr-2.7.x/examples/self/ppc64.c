@@ -27,7 +27,8 @@ void do_setup(const struct perfctr_info *info,
 	cpu_control->ppc64.mmcr0 = 0x00000000ULL;
 	cpu_control->ppc64.mmcr1 = 0x8103000602CACE8EULL;
 	cpu_control->ppc64.mmcra = 0x00000001ULL;
-    } else if  (info->cpu_type == PERFCTR_PPC64_970) {
+    } else if (info->cpu_type == PERFCTR_PPC64_970 ||
+	       info->cpu_type == PERFCTR_PPC64_970MP) {
 	cpu_control->ppc64.mmcr0 = 0x0000091EULL;
 	cpu_control->ppc64.mmcr1 = 0x4003001005F09000ULL;
 	cpu_control->ppc64.mmcra = 0x00002000ULL;

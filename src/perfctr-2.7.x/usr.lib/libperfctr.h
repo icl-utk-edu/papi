@@ -1,7 +1,7 @@
 /* $Id$
  * Library interface to Linux Performance-Monitoring Counters.
  *
- * Copyright (C) 1999-2005  Mikael Pettersson
+ * Copyright (C) 1999-2007  Mikael Pettersson
  */
 
 #ifndef __LIB_PERFCTR_H
@@ -79,6 +79,7 @@ struct perfctr_cpu_control {
 #define PERFCTR_PPC64_POWER4p	2
 #define PERFCTR_PPC64_970 	3
 #define PERFCTR_PPC64_POWER5	4
+#define PERFCTR_PPC64_970MP	5
 
 struct perfctr_cpu_control {
 	unsigned int tsc_on;

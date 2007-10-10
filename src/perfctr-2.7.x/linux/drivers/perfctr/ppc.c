@@ -1,9 +1,12 @@
 /* $Id$
  * PPC32 performance-monitoring counters driver.
  *
- * Copyright (C) 2004-2005  Mikael Pettersson
+ * Copyright (C) 2004-2007  Mikael Pettersson
  */
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 #include <linux/config.h>
+#endif
 #include <linux/init.h>
 #include <linux/sched.h>
 #include <linux/fs.h>

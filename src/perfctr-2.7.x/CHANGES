@@ -6,6 +6,24 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.7.21.1, 2007-10-06
+- ppc64: recognise the PowerPC 970MP.
+- Perfex: On ppc64, do not truncate the MMCR1 value to 32 bits.
+  Bug fix from Philip Mucci.
+
+Version 2.7.21, 2007-10-03
+- Updated to support kernels 2.6.18 to 2.6.22. The system
+  call numbers used in these kernels differs from those used
+  in older kernels. The user-space library has been updated
+  and will support both these newer kernels as well as the
+  older kernels supported by perfctr-2.7.19/2.7.20/2.7.20.2.
+- Corrected kernel driver Makefile to unbreak call-site
+  backpatching in the x86 driver.
+- Updated x86 driver to match the one in perfctr-2.6.28 in
+  terms of fixes, CPU support, and kernel version support.
+- Updated references to my email address and perfctrs' web URL
+  to match current reality.
+
 Version 2.7.20.2, 2006-08-27
 - Changed library to adjust its system call numbers based
   on the running kernel's version. Provides compatibility

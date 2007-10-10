@@ -3,10 +3,12 @@
  *
  * based on Mikael Pettersson's 32 bit ppc code
  * Copyright (C) 2004  David Gibson, IBM Corporation.
- * Copyright (C) 2004  Mikael Pettersson
+ * Copyright (C) 2004, 2007  Mikael Pettersson
  */
-
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 #include <linux/config.h>
+#endif
 #include <linux/init.h>
 #include <linux/sched.h>
 #include <linux/fs.h>

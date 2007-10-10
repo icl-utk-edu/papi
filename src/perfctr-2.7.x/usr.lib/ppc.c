@@ -1,7 +1,7 @@
 /* $Id$
  * PPC32-specific perfctr library procedures.
  *
- * Copyright (C) 2004-2005  Mikael Pettersson
+ * Copyright (C) 2004-2007  Mikael Pettersson
  */
 #include <errno.h>
 #include <asm/unistd.h>
@@ -19,10 +19,18 @@ static unsigned int __NR_vperfctr_open;
 
 static void init_sys_vperfctr(void)
 {
-    if (!__NR_vperfctr_open)
-	__NR_vperfctr_open =
-	    (perfctr_linux_version_code() >= PERFCTR_KERNEL_VERSION(2,6,16))
-	    ? 301 : 280;
+    if (!__NR_vperfctr_open) {
+	unsigned int nr;
+	unsigned int kver = perfctr_linux_version_code();
+
+	if (kver >= PERFCTR_KERNEL_VERSION(2,6,18))
+	    nr = 310;
+	else if (kver >= PERFCTR_KERNEL_VERSION(2,6,16))
+	    nr = 301;
+	else
+	    nr = 280;
+	__NR_vperfctr_open = nr;
+    }
 }
 
 /*

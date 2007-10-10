@@ -3,6 +3,22 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.7.21.1, 2007-10-06
+- Bumped copyright dates.
+
+Version 2.7.21, 2007-10-03
+- Updated many files for <linux/config.h> deprecation change
+  in kernel 2.6.19.
+- Updated log messages containing my email address to use
+  my current @it.uu.se address, as @csd.uu.se == /dev/null.
+- Updated virtual.c for workqueue changes in kernel 2.6.20.
+- Updated virtual.c for i_blksize change in kernel 2.6.19.
+- Updated x86.c to match perfctr-2.6.28, including updates
+  for Intel Core and Core2, a P4 HT detection bug fix, and
+  updates for nmi watchdog changes in kernels 2.6.19, 2.6.21,
+  and 2.6.22.
+- Updated Makefile to unbreak call-site backpatching in x86.c.
+
 Version 2.7.20, 2006-08-20
 - Moved ppc64 perfctr.h from asm-ppc64/ to asm-powerpc/.
 - Updated ppc.c to use {reserve,release}_pmc_hardware()

@@ -3,9 +3,12 @@
  * Optional PPC64-specific init-time tests.
  *
  * Copyright (C) 2004  David Gibson, IBM Corporation.
- * Copyright (C) 2004  Mikael Pettersson
+ * Copyright (C) 2004, 2007  Mikael Pettersson
  */
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 #include <linux/config.h>
+#endif
 #include <linux/init.h>
 #include <linux/sched.h>
 #include <linux/fs.h>
@@ -122,7 +125,7 @@ static void __init init_tests_message(void)
 {
 #if 0
 	printk(KERN_INFO "Please email the following PERFCTR INIT lines "
-	       "to mikpe@csd.uu.se\n"
+	       "to mikpe@it.uu.se\n"
 	       KERN_INFO "To remove this message, rebuild the driver "
 	       "with CONFIG_PERFCTR_INIT_TESTS=n\n");
 	printk(KERN_INFO "PERFCTR INIT: PVR 0x%08x, CPU clock %u kHz, TB clock %lu kHz\n",
