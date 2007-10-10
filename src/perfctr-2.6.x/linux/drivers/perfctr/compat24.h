@@ -135,3 +135,7 @@ remap_pfn_range(struct vm_area_struct *vma, unsigned long uvaddr,
 #define DEFINE_MUTEX(mutex)	DECLARE_MUTEX(mutex)
 #define mutex_lock(mutexp)	down(mutexp)
 #define mutex_unlock(mutexp)	up(mutexp)
+
+/* 2.6.20-rc1 moved filp->f_dentry and filp->f_vfsmnt into filp->fpath */
+#define filp_dentry(filp)	((filp)->f_dentry)
+#define filp_vfsmnt(filp)	((filp)->f_vfsmnt)

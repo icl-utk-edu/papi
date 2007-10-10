@@ -109,7 +109,32 @@ The recommended kernel build and installation procedure is as follows:
 DEVICE FILE
 -----------
 The kernel-side of this package is implemented as a character device
-driver, which has been assigned major number 10 and minor number 182.
+driver, which has been assigned /dev/perfctr with major number 10 and
+minor number 182. This device file must exist in order for user-space
+to be able to access the perfctr extensions. How the device file is
+created depends on whether /dev/ is static or dynamic.
+
+Dynamic /dev (udev)
+-------------------
+These instructions are known to work on Fedora Core 4, but may need
+adjustments for other Linux distributions. As root, execute:
+
+	cp etc/perfctr.rules /etc/udev/rules.d/99-perfctr.rules
+	cp etc/perfctr.rc /etc/rc.d/init.d/perfctr
+	chmod 755 /etc/rc.d/init.d/perfctr
+	/sbin/chkconfig --add perfctr
+
+The first step adds a udev rule so that when the perfctr driver is
+loaded into the kernel, udev will create /dev/perfctr with permissions
+that allows all users to access it.
+
+The following steps add a startup script which creates /dev/perfctr
+if the driver module is not yet loaded into the kernel. This enables
+the kernel to automatically load the perfctr module the first time the
+device file is opened.
+
+Static /dev (no udev)
+---------------------
 The first time you install the package, a special file representing
 this device must be created. As root, execute:
 

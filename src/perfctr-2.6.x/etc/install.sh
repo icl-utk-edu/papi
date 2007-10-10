@@ -1,14 +1,15 @@
 #!/bin/sh
 # $Id$
-# usage: etc/install.sh PREFIX BINDIR LIBDIR INCLDIR ARCH
+# usage: etc/install.sh PREFIX BINDIR LIBDIR INCLDIR ETCDIR ARCH
 # If unset, {BIN,LIB,INCL}DIR are given default values from PREFIX.
-# Then make install2 is invoked with the final {BIN,LIB,INCL}DIR.
+# Then make install2 is invoked with the final {BIN,LIB,INCL,ETC}DIR.
 
 PREFIX=$1
 BINDIR=$2
 LIBDIR=$3
 INCLDIR=$4
-ARCH=$5
+ETCDIR=$5
+ARCH=$6
 
 case "$ARCH" in
   x86_64)
@@ -33,4 +34,4 @@ fix_var "$BINDIR" BINDIR bin
 fix_var "$LIBDIR" LIBDIR $LIBSUFFIX
 fix_var "$INCLDIR" INCLDIR include
 
-exec make "BINDIR=$BINDIR" "LIBDIR=$LIBDIR" "INCLDIR=$INCLDIR" install2
+exec make "BINDIR=$BINDIR" "LIBDIR=$LIBDIR" "INCLDIR=$INCLDIR" "ETCDIR=$ETCDIR" install2

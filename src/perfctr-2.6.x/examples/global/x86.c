@@ -1,7 +1,7 @@
 /* $Id$
  * x86-specific code.
  *
- * Copyright (C) 2000-2006  Mikael Pettersson
+ * Copyright (C) 2000-2007  Mikael Pettersson
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,11 +42,14 @@ void setup_control(const struct perfctr_info *info,
       case PERFCTR_X86_INTEL_PIII:
       case PERFCTR_X86_INTEL_PENTM:
       case PERFCTR_X86_INTEL_CORE:
-#endif
-      case PERFCTR_X86_INTEL_CORE2:
 	/* note: FLOPS is only available in PERFCTR0 */
 	/* event 0xC1 (FLOPS), any CPL, Enable */
 	evntsel0 = 0xC1 | (3 << 16) | (1 << 22);
+	break;
+#endif
+      case PERFCTR_X86_INTEL_CORE2:
+	/* event 0xC1 umask 0xFE (X87_OPS_RETIRED_ANY), any CPL, Enable */
+	evntsel0 = 0xC1 | (0xFE << 8) | (3 << 16) | (1 << 22);
 	break;
 #if !defined(__x86_64__)
       case PERFCTR_X86_AMD_K7:

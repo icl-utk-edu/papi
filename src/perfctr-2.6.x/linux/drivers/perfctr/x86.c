@@ -1,7 +1,7 @@
 /* $Id$
  * x86/x86_64 performance-monitoring counters driver.
  *
- * Copyright (C) 1999-2006  Mikael Pettersson
+ * Copyright (C) 1999-2007  Mikael Pettersson
  */
 #include <linux/version.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
@@ -16,6 +16,11 @@
 
 #include <asm/msr.h>
 #undef MSR_P6_PERFCTR0
+#undef MSR_P6_EVNTSEL0
+#undef MSR_K7_PERFCTR0
+#undef MSR_K7_EVNTSEL0
+#undef MSR_CORE_PERF_FIXED_CTR0
+#undef MSR_CORE_PERF_FIXED_CTR_CTRL
 #undef MSR_IA32_MISC_ENABLE
 #include <asm/fixmap.h>
 #include <asm/apic.h>
@@ -42,6 +47,7 @@ struct per_cpu_cache {	/* roughly a subset of perfctr_cpu_state */
 		unsigned int pebs_enable;
 		unsigned int pebs_matrix_vert;
 	} control;
+	unsigned int core2_fixed_ctr_ctrl;
 } ____cacheline_aligned;
 static struct per_cpu_cache per_cpu_cache[NR_CPUS] __cacheline_aligned;
 #define __get_cpu_cache(cpu) (&per_cpu_cache[cpu])
@@ -81,6 +87,13 @@ struct perfctr_pmu_msrs {
 #define P6_EVNTSEL_CPL		0x00030000
 #define P6_EVNTSEL_RESERVED	0x00280000
 #define VC3_EVNTSEL1_RESERVED	(~0x1FF)
+
+/* Intel Core */
+#define MSR_CORE_PERF_FIXED_CTR0	0x309	/* .. 0x30B */
+#define MSR_CORE_PERF_FIXED_CTR_CTRL	0x38D
+#define MSR_CORE_PERF_FIXED_CTR_CTRL_PMIANY	0x00000888
+#define CORE2_PMC_FIXED_FLAG		(1<<30)
+#define CORE2_PMC_FIXED_MASK		0x3
 
 /* AMD K7 */
 #define MSR_K7_EVNTSEL0		0xC0010000	/* .. 0xC0010003 */
@@ -385,18 +398,21 @@ static void c6_write_control(const struct perfctr_cpu_state *state)
 #endif	/* !CONFIG_X86_TSC */
 
 /*
- * Intel P6 family (Pentium Pro, Pentium II, Pentium III, Pentium M, and
- * Intel Core, including Xeon and Celeron versions of Pentium II and III).
+ * Intel P6 family (Pentium Pro, Pentium II, Pentium III, Pentium M,
+ * Intel Core, and Intel Core 2, including Xeon and Celeron versions.
  * - One TSC and two 40-bit PMCs.
  * - One 32-bit EVNTSEL MSR for each PMC.
  * - EVNTSEL0 contains a global enable/disable bit.
  *   That bit is reserved in EVNTSEL1.
+ *   On Core 2 each EVNTSEL has its own enable/disable bit.
  * - Each EVNTSEL contains a CPL field.
  * - Overflow interrupts are possible, but requires that the
  *   local APIC is available. Some Mobile P6s have no local APIC.
  * - The PMCs cannot be initialised with arbitrary values, since
  *   wrmsr fills the high bits by sign-extending from bit 31.
  * - Most events are symmetric, but a few are not.
+ * - Core 2 adds three fixed-function counters. A single shared control
+ *   register has the control bits (CPL:2 + PMI:1) for these counters.
  */
 
 static int k8_is_multicore;	/* affects northbridge events */
@@ -406,17 +422,25 @@ static int p6_is_core2;		/* affects P6_EVNTSEL_ENABLE usage */
 static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, int is_global)
 {
 	unsigned int evntsel, i, nractrs, nrctrs, pmc_mask, pmc;
+	unsigned int core2_fixed_ctr_ctrl;
 
 	nractrs = state->control.nractrs;
 	nrctrs = nractrs + state->control.nrictrs;
-	if (nrctrs < nractrs || nrctrs > (is_k7 ? 4 : 2))
+	if (nrctrs < nractrs || nrctrs > (is_k7 ? 4 : p6_is_core2 ? 5 : 2))
 		return -EINVAL;
 
 	pmc_mask = 0;
+	core2_fixed_ctr_ctrl = 0;	/* must be zero on CPUs != Core 2 */
 	for(i = 0; i < nrctrs; ++i) {
 		pmc = state->control.pmc_map[i];
 		state->pmc[i].map = pmc;
-		if (pmc >= (is_k7 ? 4 : 2) || (pmc_mask & (1<<pmc)))
+		/* pmc_map[i] is what we pass to RDPMC
+		 * to check that pmc_map[] is well-defined on Core 2,
+		 * we map FIXED_CTR 0x40000000+N to PMC 2+N
+		 */
+		if (!is_k7 && p6_is_core2 && (pmc & CORE2_PMC_FIXED_FLAG))
+			pmc = 2 + (pmc & ~CORE2_PMC_FIXED_FLAG);
+		if (pmc >= (is_k7 ? 4 : p6_is_core2 ? 5 : 2) || (pmc_mask & (1<<pmc)))
 			return -EINVAL;
 		pmc_mask |= (1<<pmc);
 		evntsel = state->control.evntsel[i];
@@ -452,7 +476,18 @@ static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, int
 			if (i >= nractrs)
 				return -EINVAL;
 		}
+		if (!is_k7 && p6_is_core2) {
+			pmc = state->control.pmc_map[i];
+			if (pmc & CORE2_PMC_FIXED_FLAG) {
+				unsigned int ctl = 0;
+				ctl |= ((evntsel >> 17) & 1) << 0;	/* CPL.OS */
+				ctl |= ((evntsel >> 16) & 1) << 1;	/* CPL.USR */
+				ctl |= ((evntsel >> 20) & 1) << 3;	/* INT/PMI */
+				core2_fixed_ctr_ctrl |= ctl << (pmc & CORE2_PMC_FIXED_MASK) * 4;
+			}
+		}
 	}
+	state->core2_fixed_ctr_ctrl = core2_fixed_ctr_ctrl;
 	state->k1.id = new_id();
 	return 0;
 }
@@ -479,15 +514,21 @@ static void p6_like_isuspend(struct perfctr_cpu_state *state,
 	perfctr_cpu_mask_interrupts(cache);
 	cstatus = state->cstatus;
 	nrctrs = perfctr_cstatus_nrctrs(cstatus);
+	if (state->core2_fixed_ctr_ctrl & MSR_CORE_PERF_FIXED_CTR_CTRL_PMIANY) {
+		cache->core2_fixed_ctr_ctrl = 0;
+		wrmsr(MSR_CORE_PERF_FIXED_CTR_CTRL, 0, 0);
+	}
 	for(i = perfctr_cstatus_nractrs(cstatus); i < nrctrs; ++i) {
 		unsigned int pmc_raw, pmc_idx, now;
 		pmc_raw = state->pmc[i].map;
-		/* Note: P4_MASK_FAST_RDPMC is a no-op for P6 and K7.
-		   We don't need to make it into a parameter. */
-		pmc_idx = pmc_raw & P4_MASK_FAST_RDPMC;
-		cache->control.evntsel[pmc_idx] = 0;
-		/* On P4 this intensionally also clears the CCCR.OVF flag. */
-		wrmsr(msr_evntsel0+pmc_idx, 0, 0);
+		if (!(pmc_raw & CORE2_PMC_FIXED_FLAG)) {
+			/* Note: P4_MASK_FAST_RDPMC is a no-op for P6 and K7.
+			   We don't need to make it into a parameter. */
+			pmc_idx = pmc_raw & P4_MASK_FAST_RDPMC;
+			cache->control.evntsel[pmc_idx] = 0;
+			/* On P4 this intensionally also clears the CCCR.OVF flag. */
+			wrmsr(msr_evntsel0+pmc_idx, 0, 0);
+		}
 		/* P4 erratum N17 does not apply since we read only low 32 bits. */
 		rdpmc_low(pmc_raw, now);
 		state->pmc[i].sum += now - state->pmc[i].start;
@@ -519,19 +560,33 @@ static void p6_like_iresume(const struct perfctr_cpu_state *state,
 	}
 	cstatus = state->cstatus;
 	nrctrs = perfctr_cstatus_nrctrs(cstatus);
+	/* If the control wasn't ours we must disable the
+	   counters before reinitialising them. */
+	if ((state->core2_fixed_ctr_ctrl & MSR_CORE_PERF_FIXED_CTR_CTRL_PMIANY) &&
+	    cache->core2_fixed_ctr_ctrl != 0) {
+		cache->core2_fixed_ctr_ctrl = 0;
+		wrmsr(MSR_CORE_PERF_FIXED_CTR_CTRL, 0, 0);
+	}
 	for(i = perfctr_cstatus_nractrs(cstatus); i < nrctrs; ++i) {
-		/* Note: P4_MASK_FAST_RDPMC is a no-op for P6 and K7.
-		   We don't need to make it into a parameter. */
-		unsigned int pmc = state->pmc[i].map & P4_MASK_FAST_RDPMC;
-		/* If the control wasn't ours we must disable the evntsels
-		   before reinitialising the counters, to prevent unexpected
-		   counter increments and missed overflow interrupts. */
-		if (cache->control.evntsel[pmc]) {
-			cache->control.evntsel[pmc] = 0;
-			wrmsr(msr_evntsel0+pmc, 0, 0);
+		unsigned int pmc_raw = state->pmc[i].map;
+		unsigned int msr_perfctr;
+		if (pmc_raw & CORE2_PMC_FIXED_FLAG) {
+			msr_perfctr = MSR_CORE_PERF_FIXED_CTR0 + (pmc_raw & CORE2_PMC_FIXED_MASK);
+		} else {
+			/* Note: P4_MASK_FAST_RDPMC is a no-op for P6 and K7.
+			   We don't need to make it into a parameter. */
+			unsigned int pmc_idx = pmc_raw & P4_MASK_FAST_RDPMC;
+			/* If the control wasn't ours we must disable the evntsels
+			   before reinitialising the counters, to prevent unexpected
+			   counter increments and missed overflow interrupts. */
+			if (cache->control.evntsel[pmc_idx]) {
+				cache->control.evntsel[pmc_idx] = 0;
+				wrmsr(msr_evntsel0+pmc_idx, 0, 0);
+			}
+			msr_perfctr = msr_perfctr0 + pmc_idx;
 		}
 		/* P4 erratum N15 does not apply since the CCCR is disabled. */
-		wrmsr(msr_perfctr0+pmc, state->pmc[i].start, -1);
+		wrmsr(msr_perfctr, state->pmc[i].start, -1);
 	}
 	/* cache->k1.id remains != state->k1.id */
 }
@@ -561,10 +616,17 @@ static void p6_like_write_control(const struct perfctr_cpu_state *state,
 	for(i = 0; i < nrctrs; ++i) {
 		unsigned int evntsel = state->control.evntsel[i];
 		unsigned int pmc = state->pmc[i].map;
+		if (pmc & CORE2_PMC_FIXED_FLAG)
+			continue;
 		if (evntsel != cache->control.evntsel[pmc]) {
 			cache->control.evntsel[pmc] = evntsel;
 			wrmsr(msr_evntsel0+pmc, evntsel, 0);
 		}
+	}
+	if (state->core2_fixed_ctr_ctrl != 0 &&
+	    state->core2_fixed_ctr_ctrl != cache->core2_fixed_ctr_ctrl) {
+		cache->core2_fixed_ctr_ctrl = state->core2_fixed_ctr_ctrl;
+		wrmsr(MSR_CORE_PERF_FIXED_CTR_CTRL, state->core2_fixed_ctr_ctrl, 0);
 	}
 	cache->k1.id = state->k1.id;
 }
@@ -588,6 +650,18 @@ static const struct perfctr_msr_range p6_evntsels[] = {
 static const struct perfctr_pmu_msrs p6_pmu_msrs = {
 	.perfctrs = p6_perfctrs,
 	.evntsels = p6_evntsels,
+};
+
+static const struct perfctr_msr_range core2_extras[] = {
+	{ MSR_CORE_PERF_FIXED_CTR0, 3 },
+	{ MSR_CORE_PERF_FIXED_CTR_CTRL, 1 },
+	{ 0, 0 },
+};
+
+static const struct perfctr_pmu_msrs core2_pmu_msrs = {
+	.perfctrs = p6_perfctrs,
+	.evntsels = p6_evntsels,
+	.extras = core2_extras,
 };
 
 /*
@@ -1402,128 +1476,157 @@ static int __init p4_ht_init(void)
 	return p4_ht_smp_init();
 }
 
-static int __init intel_init(void)
+static int __init intel_p4_init(void)
 {
-	static char p5_name[] __initdata = "Intel P5";
-	static char p6_name[] __initdata = "Intel P6";
 	static char p4_name[] __initdata = "Intel P4";
 	unsigned int misc_enable;
 
+	/* Detect things that matter to the driver. */
+	rdmsr_low(MSR_IA32_MISC_ENABLE, misc_enable);
+	if (!(misc_enable & MSR_IA32_MISC_ENABLE_PERF_AVAIL))
+		return -ENODEV;
+	if (p4_ht_init() != 0)
+		return -ENODEV;
+	if (current_cpu_data.x86_model <= 2)
+		p4_IQ_ESCR_ok = 1;
+	if (current_cpu_data.x86_model >= 2)
+		p4_extended_cascade_ok = 1;
+	/* Detect and set up legacy cpu_type for user-space. */
+	if (current_cpu_data.x86_model >= 3) {
+		/* Model 3 removes IQ_ESCR{0,1} and adds one event. */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_P4M3;
+	} else if (current_cpu_data.x86_model >= 2) {
+		/* Model 2 changed the ESCR Event Mask programming
+		   details for several events. */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_P4M2;
+	} else {
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_P4;
+	}
+	perfctr_set_tests_type(PTT_P4);
+	perfctr_cpu_name = p4_name;
+	read_counters = rdpmc_read_counters;
+	write_control = p4_write_control;
+	check_control = p4_check_control;
+	if (current_cpu_data.x86_model <= 2)
+		pmu_msrs = &p4_pmu_msrs_models_0to2;
+	else
+		pmu_msrs = &p4_pmu_msrs_models_3up;
+#ifdef CONFIG_X86_LOCAL_APIC
+	if (cpu_has_apic) {
+		perfctr_info.cpu_features |= PERFCTR_FEATURE_PCINT;
+		cpu_isuspend = p4_isuspend;
+		cpu_iresume = p4_iresume;
+		lvtpc_reinit_needed = 1;
+	}
+#endif
+	return 0;
+}
+
+static int __init intel_p5_init(void)
+{
+	static char p5_name[] __initdata = "Intel P5";
+
+	/* Detect things that matter to the driver. */
+	if (cpu_has_mmx) {
+		read_counters = rdpmc_read_counters;
+
+		/* Avoid Pentium Erratum 74. */
+		if (current_cpu_data.x86_model == 4 &&
+		    (current_cpu_data.x86_mask == 4 ||
+		     (current_cpu_data.x86_mask == 3 &&
+		      ((cpuid_eax(1) >> 12) & 0x3) == 1)))
+			perfctr_info.cpu_features &= ~PERFCTR_FEATURE_RDPMC;
+	} else {
+		perfctr_info.cpu_features &= ~PERFCTR_FEATURE_RDPMC;
+		read_counters = p5_read_counters;
+	}
+	/* Detect and set up legacy cpu_type for user-space. */
+	if (cpu_has_mmx) {
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_P5MMX;
+	} else {
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_P5;
+	}
+	perfctr_set_tests_type(PTT_P5);
+	perfctr_cpu_name = p5_name;
+	write_control = p5_write_control;
+	check_control = p5_check_control;
+	pmu_msrs = &p5_pmu_msrs;
+	return 0;
+}
+
+static int __init intel_p6_init(void)
+{
+	static char p6_name[] __initdata = "Intel P6";
+	static char core2_name[] __initdata = "Intel Core 2";
+	unsigned int misc_enable;
+
+	/* Detect things that matter to the driver. */
+	if (current_cpu_data.x86_model == 9 ||		/* Pentium M */
+	    current_cpu_data.x86_model == 13 || 	/* Pentium M */
+	    current_cpu_data.x86_model == 14 || 	/* Intel Core */
+	    current_cpu_data.x86_model == 15) { 	/* Intel Core 2 */
+		rdmsr_low(MSR_IA32_MISC_ENABLE, misc_enable);
+		if (!(misc_enable & MSR_IA32_MISC_ENABLE_PERF_AVAIL))
+			return -ENODEV;
+	}
+	if (current_cpu_data.x86_model == 15) {		/* Intel Core 2 */
+		p6_is_core2 = 1;
+	} else if (current_cpu_data.x86_model < 3) {	/* Pentium Pro */
+		/* Avoid Pentium Pro Erratum 26. */
+		if (current_cpu_data.x86_mask < 9)
+			perfctr_info.cpu_features &= ~PERFCTR_FEATURE_RDPMC;
+	}
+	/* Detect and set up legacy cpu_type for user-space. */
+	if (current_cpu_data.x86_model == 15) {		/* Intel Core 2 */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_CORE2;
+	} else if (current_cpu_data.x86_model == 14) {	/* Intel Core */
+		/* XXX: what about erratum AE19? */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_CORE;
+	} else if (current_cpu_data.x86_model == 9 ||	/* Pentium M */
+		   current_cpu_data.x86_model == 13) {	/* Pentium M */
+		/* Erratum Y3 probably does not apply since we
+		   read only the low 32 bits. */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_PENTM;
+	} else if (current_cpu_data.x86_model >= 7) {	/* PIII */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_PIII;
+	} else if (current_cpu_data.x86_model >= 3) {	/* PII or Celeron */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_PII;
+	} else {					/* Pentium Pro */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_P6;
+	}
+	perfctr_set_tests_type(p6_is_core2 ? PTT_CORE2 : PTT_P6);
+	perfctr_cpu_name = p6_is_core2 ? core2_name : p6_name;
+	read_counters = rdpmc_read_counters;
+	write_control = p6_write_control;
+	check_control = p6_check_control;
+	pmu_msrs = p6_is_core2 ? &core2_pmu_msrs : &p6_pmu_msrs;
+#ifdef CONFIG_X86_LOCAL_APIC
+	if (cpu_has_apic) {
+		perfctr_info.cpu_features |= PERFCTR_FEATURE_PCINT;
+		cpu_isuspend = p6_isuspend;
+		cpu_iresume = p6_iresume;
+		/* P-M apparently inherited P4's LVTPC auto-masking :-( */
+		if (current_cpu_data.x86_model == 9 ||
+		    current_cpu_data.x86_model == 13 ||
+		    current_cpu_data.x86_model == 14 ||
+		    current_cpu_data.x86_model == 15)
+			lvtpc_reinit_needed = 1;
+	}
+#endif
+	return 0;
+}
+
+static int __init intel_init(void)
+{
 	if (!cpu_has_tsc)
 		return -ENODEV;
 	switch (current_cpu_data.x86) {
 	case 5:
-		if (cpu_has_mmx) {
-			perfctr_info.cpu_type = PERFCTR_X86_INTEL_P5MMX;
-			read_counters = rdpmc_read_counters;
-
-			/* Avoid Pentium Erratum 74. */
-			if (current_cpu_data.x86_model == 4 &&
-			    (current_cpu_data.x86_mask == 4 ||
-			     (current_cpu_data.x86_mask == 3 &&
-			      ((cpuid_eax(1) >> 12) & 0x3) == 1)))
-				perfctr_info.cpu_features &= ~PERFCTR_FEATURE_RDPMC;
-		} else {
-			perfctr_info.cpu_type = PERFCTR_X86_INTEL_P5;
-			perfctr_info.cpu_features &= ~PERFCTR_FEATURE_RDPMC;
-			read_counters = p5_read_counters;
-		}
-		perfctr_set_tests_type(PTT_P5);
-		perfctr_cpu_name = p5_name;
-		write_control = p5_write_control;
-		check_control = p5_check_control;
-		pmu_msrs = &p5_pmu_msrs;
-		return 0;
+		return intel_p5_init();
 	case 6:
-		/* Check MSR_IA32_MISC_ENABLE_PERF_AVAIL on relevant models. */
-		if (current_cpu_data.x86_model == 9 ||	/* Pentium M */
-		    current_cpu_data.x86_model == 13 || /* Pentium M */
-		    current_cpu_data.x86_model == 14 || /* Intel Core */
-		    current_cpu_data.x86_model == 15) { /* Intel Core 2 */
-			rdmsr_low(MSR_IA32_MISC_ENABLE, misc_enable);
-			if (!(misc_enable & MSR_IA32_MISC_ENABLE_PERF_AVAIL))
-				break;
-		}
-		if (current_cpu_data.x86_model == 15) {	/* Intel Core 2 */
-			perfctr_info.cpu_type = PERFCTR_X86_INTEL_CORE2;
-			p6_is_core2 = 1;
-		} else if (current_cpu_data.x86_model == 14) {	/* Intel Core */
-			/* XXX: what about erratum AE19? */
-			perfctr_info.cpu_type = PERFCTR_X86_INTEL_CORE;
-		} else if (current_cpu_data.x86_model == 9 ||	/* Pentium M */
-			   current_cpu_data.x86_model == 13) {	/* Pentium M */
-			/* Erratum Y3 probably does not apply since we
-			   read only the low 32 bits. */
-			perfctr_info.cpu_type = PERFCTR_X86_INTEL_PENTM;
-		} else if (current_cpu_data.x86_model >= 7) {	/* PIII */
-			perfctr_info.cpu_type = PERFCTR_X86_INTEL_PIII;
-		} else if (current_cpu_data.x86_model >= 3) {	/* PII or Celeron */
-			perfctr_info.cpu_type = PERFCTR_X86_INTEL_PII;
-		} else {
-			perfctr_info.cpu_type = PERFCTR_X86_INTEL_P6;
-
-			/* Avoid Pentium Pro Erratum 26. */
-			if (current_cpu_data.x86_mask < 9)
-				perfctr_info.cpu_features &= ~PERFCTR_FEATURE_RDPMC;
-		}
-		perfctr_set_tests_type(PTT_P6);
-		perfctr_cpu_name = p6_name;
-		read_counters = rdpmc_read_counters;
-		write_control = p6_write_control;
-		check_control = p6_check_control;
-		pmu_msrs = &p6_pmu_msrs;
-#ifdef CONFIG_X86_LOCAL_APIC
-		if (cpu_has_apic) {
-			perfctr_info.cpu_features |= PERFCTR_FEATURE_PCINT;
-			cpu_isuspend = p6_isuspend;
-			cpu_iresume = p6_iresume;
-			/* P-M apparently inherited P4's LVTPC auto-masking :-( */
-			if (current_cpu_data.x86_model == 9 ||
-			    current_cpu_data.x86_model == 13 ||
-			    current_cpu_data.x86_model == 14 ||
-			    current_cpu_data.x86_model == 15)
-				lvtpc_reinit_needed = 1;
-		}
-#endif
-		return 0;
-	case 15:	/* Pentium 4 */
-		rdmsr_low(MSR_IA32_MISC_ENABLE, misc_enable);
-		if (!(misc_enable & MSR_IA32_MISC_ENABLE_PERF_AVAIL))
-			break;
-		if (p4_ht_init() != 0)
-			break;
-		if (current_cpu_data.x86_model <= 2)
-			p4_IQ_ESCR_ok = 1;
-		if (current_cpu_data.x86_model >= 2)
-			p4_extended_cascade_ok = 1;
-		if (current_cpu_data.x86_model >= 3) {
-			/* Model 3 removes IQ_ESCR{0,1} and adds one event. */
-			perfctr_info.cpu_type = PERFCTR_X86_INTEL_P4M3;
-		} else if (current_cpu_data.x86_model >= 2) {
-			/* Model 2 changed the ESCR Event Mask programming
-			   details for several events. */
-			perfctr_info.cpu_type = PERFCTR_X86_INTEL_P4M2;
-		} else {
-			perfctr_info.cpu_type = PERFCTR_X86_INTEL_P4;
-		}
-		perfctr_set_tests_type(PTT_P4);
-		perfctr_cpu_name = p4_name;
-		read_counters = rdpmc_read_counters;
-		write_control = p4_write_control;
-		check_control = p4_check_control;
-		if (current_cpu_data.x86_model <= 2)
-			pmu_msrs = &p4_pmu_msrs_models_0to2;
-		else
-			pmu_msrs = &p4_pmu_msrs_models_3up;
-#ifdef CONFIG_X86_LOCAL_APIC
-		if (cpu_has_apic) {
-			perfctr_info.cpu_features |= PERFCTR_FEATURE_PCINT;
-			cpu_isuspend = p4_isuspend;
-			cpu_iresume = p4_iresume;
-			lvtpc_reinit_needed = 1;
-		}
-#endif
-		return 0;
+		return intel_p6_init();
+	case 15:
+		return intel_p4_init();
 	}
 	return -ENODEV;
 }
@@ -1574,7 +1677,7 @@ static void __init k8_multicore_init(void)
 
 static int __init amd_init(void)
 {
-	static char amd_name[] __initdata = "AMD K7/K8";
+	static char amd_name[] __initdata = "AMD K7/K8/Fam10h";
 
 	if (!cpu_has_tsc)
 		return -ENODEV;
@@ -1589,6 +1692,10 @@ static int __init amd_init(void)
 		} else {
 			perfctr_info.cpu_type = PERFCTR_X86_AMD_K8;
 		}
+		k8_multicore_init();
+		break;
+	case 16: /* XXX: preliminary, needs 64-bit evntsels */
+		perfctr_info.cpu_type = PERFCTR_X86_AMD_FAM10;
 		k8_multicore_init();
 		break;
 	default:
@@ -1706,6 +1813,8 @@ static int __init generic_init(void)
 
 static void perfctr_cpu_invalidate_cache(void)
 {
+	struct per_cpu_cache *cache = get_cpu_cache();
+
 	/*
 	 * per_cpu_cache[] is initialised to contain "impossible"
 	 * evntsel values guaranteed to differ from anything accepted
@@ -1713,7 +1822,14 @@ static void perfctr_cpu_invalidate_cache(void)
 	 * All-bits-one works for all currently supported processors.
 	 * The memset also sets the ids to -1, which is intentional.
 	 */
-	memset(get_cpu_cache(), ~0, sizeof(struct per_cpu_cache));
+	memset(cache, ~0, sizeof(struct per_cpu_cache));
+
+	/*
+	 * To ensure that MSR_CORE_PERF_FIXED_CTR_CTRL is not written
+	 * to on processors that do not have it, each CPU cache must
+	 * indicate that it has an all-bits-zero value.
+	 */
+	cache->core2_fixed_ctr_ctrl = 0;
 }
 
 static void perfctr_cpu_init_one(void *ignore)
@@ -1935,7 +2051,11 @@ static void perfctr_release_counters_cpu(void *ignore)
 
 static void perfctr_release_counters(void)
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,21)
+	perfctr_release_counters_cpu(NULL);
+#else
 	on_each_cpu(perfctr_release_counters_cpu, NULL, 1, 1);
+#endif
 }
 
 static void perfctr_reserve_counters_cpu(void *error)
@@ -1981,7 +2101,11 @@ static int perfctr_reserve_counters(void)
 {
 	atomic_t error = ATOMIC_INIT(0);
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,21)
+	perfctr_reserve_counters_cpu(&error);
+#else
 	on_each_cpu(perfctr_reserve_counters_cpu, &error, 1, 1);
+#endif
 	return atomic_read(&error);
 }
 
@@ -1991,7 +2115,11 @@ static int reserve_lapic_nmi(void)
 		return 0;
 	if (atomic_read(&nmi_active) <= 0)
 		return 0;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
+	disable_lapic_nmi_watchdog();
+#else
 	on_each_cpu(stop_apic_nmi_watchdog, NULL, 1, 1);
+#endif
 	return perfctr_reserve_counters();
 }
 
@@ -2002,7 +2130,11 @@ static void release_lapic_nmi(void)
 		return;
 	if (atomic_read(&nmi_active) != 0)
 		return;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
+	enable_lapic_nmi_watchdog();
+#else
 	on_each_cpu(setup_apic_nmi_watchdog, NULL, 1, 1);
+#endif
 }
 #endif
 

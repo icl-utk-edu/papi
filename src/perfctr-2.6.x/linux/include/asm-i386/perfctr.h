@@ -1,7 +1,7 @@
 /* $Id$
  * x86/x86_64 Performance-Monitoring Counters driver
  *
- * Copyright (C) 1999-2006  Mikael Pettersson
+ * Copyright (C) 1999-2007  Mikael Pettersson
  */
 #ifndef _ASM_I386_PERFCTR_H
 #define _ASM_I386_PERFCTR_H
@@ -26,6 +26,7 @@
 #define PERFCTR_X86_INTEL_P4M3	16	/* model 3 and above */
 #define PERFCTR_X86_INTEL_CORE	17	/* family 6 model 14 */
 #define PERFCTR_X86_INTEL_CORE2	18	/* family 6 model 15 */
+#define PERFCTR_X86_AMD_FAM10	19	/* family 10h */
 
 struct perfctr_sum_ctrs {
 	unsigned long long tsc;
@@ -67,6 +68,7 @@ struct perfctr_cpu_state {
 	} pmc[18];	/* the size is not part of the user ABI */
 #ifdef __KERNEL__
 	struct perfctr_cpu_control control;
+	unsigned int core2_fixed_ctr_ctrl;
 	unsigned int p4_escr_map[18];
 #ifdef CONFIG_PERFCTR_INTERRUPT_SUPPORT
 	unsigned int pending_interrupt;

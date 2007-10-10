@@ -231,6 +231,8 @@ install_files_by_symlinks() {
     ln -sf ${perfctr}/linux/include/asm-x86_64/perfctr.h include/asm-x86_64/
     echo ln -sf ${perfctr}/linux/include/asm-ppc/perfctr.h include/asm-ppc/
     ln -sf ${perfctr}/linux/include/asm-ppc/perfctr.h include/asm-ppc/
+    echo ln -sf ${perfctr}/linux/include/asm-arm/perfctr.h include/asm-arm/
+    ln -sf ${perfctr}/linux/include/asm-arm/perfctr.h include/asm-arm/
     echo ln -sf ${perfctr}/linux/include/linux/perfctr.h include/linux/
     ln -sf ${perfctr}/linux/include/linux/perfctr.h include/linux/
     echo ln -sf ${perfctr}/linux/drivers/perfctr drivers/

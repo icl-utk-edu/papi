@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * Structure marshalling support.
  *
- * Copyright (C) 2003-2006  Mikael Pettersson
+ * Copyright (C) 2003-2007  Mikael Pettersson
  */
 #ifdef __KERNEL__
 #include <linux/version.h>
@@ -201,10 +201,11 @@ int perfctr_decode_struct(void *address,
  *								*
  ****************************************************************/
 
+#undef ARRAY_SIZE
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #define STRUCT_ARRAY_SIZE(TYPE, MEMBER) ARRAY_SIZE(((TYPE*)0)->MEMBER)
 
-#if defined(__i386__) || defined(__x86_64__) || defined(__powerpc__)
+#if defined(__i386__) || defined(__x86_64__) || defined(__powerpc__) || defined(__arm__)
 
 #define PERFCTR_TAG_CPU_CONTROL_TSC_ON	32
 #define PERFCTR_TAG_CPU_CONTROL_NRACTRS	33
@@ -232,6 +233,10 @@ int perfctr_decode_struct(void *address,
 /* 40: unused */
 #define PERFCTR_CPU_CONTROL_NRFIELDS_1	2
 #endif	/* __powerpc__ */
+
+#if defined(__arm__)
+#define PERFCTR_CPU_CONTROL_NRFIELDS_1	0
+#endif
 
 #define PERFCTR_CPU_CONTROL_NRFIELDS	(PERFCTR_CPU_CONTROL_NRFIELDS_0 + PERFCTR_CPU_CONTROL_NRFIELDS_1)
 

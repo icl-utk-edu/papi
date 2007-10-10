@@ -1,7 +1,7 @@
 /* $Id$
  * Architecture-specific support code.
  *
- * Copyright (C) 2004  Mikael Pettersson
+ * Copyright (C) 2004-2007  Mikael Pettersson
  */
 
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof((x)[0]))
@@ -27,4 +27,6 @@ extern int do_arch_option(int ch,
 #include "x86.h"
 #elif defined(__powerpc__)
 #include "ppc.h"
+#elif defined(__arm__)
+#include "arm.h"
 #endif

@@ -17,24 +17,25 @@
  *		Multiple event specifiers may be given, limited by the
  *		number of available performance counters in the processor.
  *
- *		The full syntax of an event specifier is "evntsel/escr@pmc".
+ *		The full syntax of an event specifier is "evntsel/evntsel2@pmc".
  *		All three components are 32-bit processor-specific numbers,
  *		written in decimal or hexadecimal notation.
  *
  *		"evntsel" is the primary processor-specific event selection
  *		code to use for this event. This field is mandatory.
  *
- *		"/escr" is used to specify additional event selection data
- *		for Pentium 4 processors. "evntsel" is put in the counter's
- *		CCCR register, and "escr" is put in the associated ESCR
- *		register.
+ *		"/evntsel2" provides auxiliary event selection data for this
+ *		event. On a Pentium 4, "evntsel" is put in the counter's
+ *		CCCR register, and "evntsel2" is put in the associated ESCR
+ *		register. On other processors "/evntsel2" should be omitted.
  *
  *		"@pmc" describes which CPU counter number to assign this
  *		event to. When omitted, the events are assigned in the
  *		order listed, starting from 0. Either all or none of the
  *		event specifiers should use the "@pmc" notation.
  *		Explicit counter assignment via "@pmc" is required on
- *		Pentium 4 and VIA C3 processors.
+ *		Pentium 4 and VIA C3 processors. It is also required for the
+ *		fixed-function counters on Core 2 processors.
  *
  *		The counts, together with an event description are written
  *		to the result file (default is stderr).
@@ -92,13 +93,13 @@
  * DEPENDENCIES
  *	perfex only works on Linux systems which have been modified
  *	to include the perfctr kernel extension. Perfctr is available at
- *	http://www.csd.uu.se/~mikpe/linux/perfctr/.
+ *	http://user.it.uu.se/~mikpe/linux/perfctr/.
  *
  * NOTES
  *	perfex is superficially similar to IRIX' perfex(1).
  *	The -a, -mp, -s, and -x options are not yet implemented.
  *
- * Copyright (C) 1999-2006  Mikael Pettersson
+ * Copyright (C) 1999-2007  Mikael Pettersson
  */
 
 /*

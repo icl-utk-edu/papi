@@ -1,7 +1,7 @@
 $Id$
 
 	   Linux Performance-Monitoring Counters Driver
-		Mikael Pettersson <mikpe@csd.uu.se>
+		Mikael Pettersson <mikpe@it.uu.se>
 ========================================================================
 
 
@@ -10,14 +10,15 @@ Overview
 This package adds support to the Linux kernel (2.4.16 or newer)
 for using the Performance-Monitoring Counters (PMCs) found in
 many modern processors. Supported processors are:
-- All Intel Pentium processors, i.e., Pentium, Pentium MMX,
-  Pentium Pro, Pentium II, Pentium III, Pentium M and Pentium 4,
-  including Celeron and Xeon versions.
+- All Intel x86 family 5, 6, and 15 processors, i.e., Pentium,
+  Pentium MMX, Pentium Pro, Pentium II, Pentium III, Pentium M,
+  Pentium 4, Core, and Core 2, including Celeron and Xeon versions.
 - The AMD K7 and K8 processor families.
 - Cyrix 6x86MX, MII, and III.
 - VIA C3 (Cyrix III).
 - Centaur WinChip C6/2/3.
 - PowerPC 604, 7xx, and 74xx processors.
+- Intel XScale 1 and 2 processors (ARM).
 
 PMCs are "event counters" capable of recording any of a large
 number of performance-related events during execution.
@@ -62,7 +63,7 @@ The user-space library is accompanied by several example programs
 that illustrate how the driver and the library can be used.
 
 Support for performance-counter overflow interrupts is provided
-for Intel P4 and P6, and AMD K7 and K8 processors.
+where such support exists in the processors.
 
 
 Limitations
@@ -101,7 +102,7 @@ Limitations
 Availability
 ------------
 This and future versions of this package can be downloaded from
-<http://www.csd.uu.se/~mikpe/linux/perfctr/>.
+<http://user.it.uu.se/~mikpe/linux/perfctr/>.
 
 The perfctr-devel mailing list is an open forum for driver update
 announcements and general discussions about the perfctr driver
@@ -111,7 +112,7 @@ and its usage. To subscribe to perfctr-devel, visit
 
 Licensing
 ---------
-Copyright (C) 1999-2004  Mikael Pettersson <mikpe@csd.uu.se>
+Copyright (C) 1999-2007  Mikael Pettersson <mikpe@it.uu.se>
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public

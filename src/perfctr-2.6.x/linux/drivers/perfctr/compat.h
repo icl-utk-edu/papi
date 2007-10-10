@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * Compatibility definitions for 2.6 kernels.
  *
- * Copyright (C) 1999-2006  Mikael Pettersson
+ * Copyright (C) 1999-2007  Mikael Pettersson
  */
 #include <linux/version.h>
 
@@ -53,6 +53,20 @@ remap_pfn_range(struct vm_area_struct *vma, unsigned long uvaddr,
 #define DEFINE_MUTEX(mutex)	DECLARE_MUTEX(mutex)
 #define mutex_lock(mutexp)	down(mutexp)
 #define mutex_unlock(mutexp)	up(mutexp)
+#endif
+
+/* 2.6.18-8.1.1.el5 replaced ptrace with utrace */
+#if defined(CONFIG_UTRACE)
+int ptrace_check_attach(struct task_struct *task, int kill);
+#endif
+
+/* 2.6.20-rc1 moved filp->f_dentry and filp->f_vfsmnt into filp->fpath */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,20)
+#define filp_dentry(filp)	((filp)->f_path.dentry)
+#define filp_vfsmnt(filp)	((filp)->f_path.mnt)
+#else
+#define filp_dentry(filp)	((filp)->f_dentry)
+#define filp_vfsmnt(filp)	((filp)->f_vfsmnt)
 #endif
 
 #endif

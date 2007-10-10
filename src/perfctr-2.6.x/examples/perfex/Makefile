@@ -10,6 +10,7 @@ TARGET=perfex
 i386_OBJS=x86.o
 x86_64_OBJS=x86.o
 ppc_OBJS=ppc.o
+arm_OBJS=arm.o
 ARCH_OBJS=$($(ARCH)_OBJS)
 OBJS=perfex.o $(ARCH_OBJS)
 

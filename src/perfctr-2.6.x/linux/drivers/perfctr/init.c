@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * Top-level initialisation code.
  *
- * Copyright (C) 1999-2006  Mikael Pettersson
+ * Copyright (C) 1999-2007  Mikael Pettersson
  */
 #include <linux/version.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
@@ -23,7 +23,7 @@
 #include "version.h"
 #include "marshal.h"
 
-MODULE_AUTHOR("Mikael Pettersson <mikpe@csd.uu.se>");
+MODULE_AUTHOR("Mikael Pettersson <mikpe@it.uu.se>");
 MODULE_DESCRIPTION("Performance-monitoring counters driver");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("char-major-10-182");
