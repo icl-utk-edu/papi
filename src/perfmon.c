@@ -1952,6 +1952,7 @@ inline static int compute_kernel_args(hwd_control_state_t * ctl)
      when we have higher level code call set_profile,set_overflow etc when there
      is hardware (substrate) support, but this change won't happen for PAPI 3.5 */
 
+  SUBDBG("entry multiplexed %d, pfp_event_count %d, num_cntrs %d, num_sets %d\n",ctl->multiplexed, inp->pfp_event_count, _papi_hwi_system_info.sub_info.num_cntrs,*num_sets);
   if ((ctl->multiplexed) && (inp->pfp_event_count > _papi_hwi_system_info.sub_info.num_cntrs))
     {
 	dispatch_count = _papi_hwi_system_info.sub_info.num_cntrs;
@@ -1963,7 +1964,7 @@ inline static int compute_kernel_args(hwd_control_state_t * ctl)
       memset(&tmpin,0x0,sizeof(tmpin));
       memset(&tmpout,0x0,sizeof(tmpout));
       
-      SUBDBG("togo %d, done %d, dispatch_count %d\n",togo,done,dispatch_count);
+      SUBDBG("togo %d, done %d, dispatch_count %d, num_cntrs %d\n",togo,done,dispatch_count,_papi_hwi_system_info.sub_info.num_cntrs);
       tmpin.pfp_event_count = dispatch_count;
       tmpin.pfp_dfl_plm = inp->pfp_dfl_plm;
 
@@ -2043,14 +2044,20 @@ inline static int compute_kernel_args(hwd_control_state_t * ctl)
 
       setinfos[set].set_id = set;
       sets[set].set_id = set;
-      sets[set].set_flags = PFM_SETFL_TIME_SWITCH;
-      sets[set].set_timeout = _papi_hwi_system_info.sub_info.multiplex_timer_us;
       set++;
     }
 
   *num_sets = set;
   outp->pfp_pmc_count = donepc;
 
+  if (ctl->multiplexed && (set > 1))
+    {
+      for (i=0;i<set;i++) {
+	sets[i].set_flags = PFM_SETFL_TIME_SWITCH;
+	sets[i].set_timeout = _papi_hwi_system_info.sub_info.multiplex_timer_us;
+      }
+    }
+  SUBDBG("exit multiplexed %d, pfp_pmc_count %d, num_sets %d\n",ctl->multiplexed, outp->pfp_pmc_count, *num_sets);
   return(PAPI_OK);
 }
 

@@ -19,6 +19,118 @@
 
 static double dummy3(double x, int iters);
 
+void check_values(int eventset, int *events, int nevents, long_long *values, long_long *refvalues)
+{
+  double spread[MAXEVENTS];
+  int i = nevents, j = 0;
+
+   if (!TESTS_QUIET) {
+      printf("\nRelative accuracy:\n");
+      for (j = 0; j < nevents; j++)
+         printf("   Event %.2d", j+1);
+      printf("\n");
+   }
+
+   for (j = 0; j < nevents; j++) {
+      spread[j] = abs((int)(refvalues[j] - values[j]));
+      if (values[j])
+         spread[j] /= (double) values[j];
+      if (!TESTS_QUIET)
+         printf("%10.3g ", spread[j]);
+      /* Make sure that NaN get counted as errors */
+      if (spread[j] < MPX_TOLERANCE)
+         i--;
+      else if (refvalues[j] < MINCOUNTS)        /* Neglect inprecise results with low counts */
+         i--;
+   }
+      printf("\n\n");
+#if 0
+   if (!TESTS_QUIET) {
+      for (j = 0; j < nevents; j++) {
+         PAPI_get_event_info(events[j], &info);
+         printf("Event %.2d: ref=", j);
+         printf(LLDFMT10, refvalues[j]);
+         printf(", diff/ref=%7.2g  -- %s\n", spread[j], info.short_descr);
+         printf("\n");
+      }
+      printf("\n");
+   }
+#endif
+
+   if (i)
+      test_fail(__FILE__, __LINE__, "Values outside threshold", i);
+}
+
+void ref_measurements(int iters, int *eventset, int *events, int nevents, long_long *refvalues)
+{
+   PAPI_event_info_t info;
+   int i, retval;
+   double x = 1.1, y;
+   long_long t1, t2;
+
+   printf("PAPI reference measurements:\n");
+
+   if ((retval = PAPI_create_eventset(eventset)))
+      test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
+
+   for (i = 0; i < nevents; i++) {
+      if ((retval = PAPI_add_event(*eventset, events[i])))
+         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+
+      x = 1.0;
+
+      t1 = PAPI_get_real_usec();
+      if ((retval = PAPI_start(*eventset)))
+         test_fail(__FILE__, __LINE__, "PAPI_start", retval);
+      y = dummy3(x, iters);
+      if ((retval = PAPI_stop(*eventset, &refvalues[i])))
+         test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+      t2 = PAPI_get_real_usec();
+
+#if 0
+      printf("\tOperations= %.1f Mflop", y * 1e-6);
+      printf("\t(%g Mflop/s)\n\n", ((float) y / (t2 - t1)));
+#endif
+      
+      PAPI_get_event_info(events[i], &info);
+      printf("%20s = ", info.short_descr);
+      printf(LLDFMT, refvalues[i]);
+      printf("\n");
+      
+      if ((retval = PAPI_cleanup_eventset(*eventset)))
+	test_fail(__FILE__, __LINE__, "PAPI_cleanup_eventset", retval);
+   }
+   if ((retval = PAPI_destroy_eventset(eventset)))
+      test_fail(__FILE__, __LINE__, "PAPI_destroy_eventset", retval);
+   *eventset = PAPI_NULL;
+}
+
+void decide_which_events(int *events, int *nevents)
+{
+  int i, j = 0;
+  PAPI_event_info_t info;
+  int newevents[MAXEVENTS];
+
+  for (i = 0; i < MAXEVENTS; i++) 
+    {
+      if (PAPI_get_event_info(events[i], &info) == PAPI_OK) 
+	{
+	  if (info.count && (strcmp(info.derived,"NOT_DERIVED") == 0)) 
+	    {
+	      printf("Added %s\n", info.symbol);
+	      newevents[j++] = events[i];
+	    }
+	}
+    }
+
+  if (j < 2)
+    test_skip(__FILE__, __LINE__, "Not enough events to multiplex...", 0);
+  *nevents = j;
+  memcpy(events,newevents,sizeof(newevents));
+
+  printf("Using %d events\n\n",*nevents);
+}
+
 int main(int argc, char **argv)
 {
    PAPI_event_info_t info;
@@ -30,7 +142,6 @@ int main(int argc, char **argv)
    int sleep_time = SLEEPTIME;
    double valsqsum[MAXEVENTS];
    double valsum[MAXEVENTS];
-   double spread[MAXEVENTS];
    int nevents = MAXEVENTS;
    int eventset = PAPI_NULL;
    int events[MAXEVENTS];
@@ -69,28 +180,33 @@ int main(int argc, char **argv)
    if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   if ((retval = PAPI_create_eventset(&eventset)))
-      test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
-#ifdef MPX
+   decide_which_events(events, &nevents);
+
+#if 0
+   retval = PAPI_set_debug(PAPI_VERB_ECONT);
+   if (retval != PAPI_OK)
+     test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
+#endif
+
    if ((retval = PAPI_multiplex_init()))
       test_fail(__FILE__, __LINE__, "PAPI_multiplex_init", retval);
 
+   /* Now loop through the items one at a time */
+
+   ref_measurements(iters, &eventset, events, nevents, refvalues); 
+
+   /* Now check multiplexed */
+
+   if ((retval = PAPI_create_eventset(&eventset)))
+      test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
+
    if ((retval = PAPI_set_multiplex(eventset)))
-      test_fail(__FILE__, __LINE__, "PAPI_set_multiplex", retval);
-#endif
+     test_fail(__FILE__, __LINE__, "PAPI_set_multiplex", retval);
 
-   nevents = MAXEVENTS;
-   for (i = 0; i < nevents; i++) {
-      if ((retval = PAPI_add_event(eventset, events[i]))) {
-         for (j = i; j < (MAXEVENTS - 1); j++)
-            events[j] = events[j + 1];
-         nevents--;
-         i--;
-      }
-   }
-   if (nevents < 2)
-      test_skip(__FILE__, __LINE__, "Not enough events left...", 0);
+   if ((retval = PAPI_add_events(eventset, events, nevents)))
+     test_fail(__FILE__, __LINE__, "PAPI_add_events", retval);
 
+#if 0
    /* Find a reasonable number of iterations (each 
     * event active 20 times) during the measurement
     */
@@ -98,21 +214,21 @@ int main(int argc, char **argv)
    if (t2 > 30e6)
       test_skip(__FILE__, __LINE__, "This test takes too much time", retval);
 
+   printf("Testing iteration count:\n");
    /* Measure one run */
    t1 = PAPI_get_real_usec();
    y = dummy3(x, iters);
    t1 = PAPI_get_real_usec() - t1;
 
    if (t2 > t1)                 /* Scale up execution time to match t2 */
-      iters = iters * ((int)(t2 / t1));
+     iters = iters * ((int)(t2 / t1));
    else if (t1 > 30e6)          /* Make sure execution time is < 30s per repeated test */
       test_skip(__FILE__, __LINE__, "This test takes too much time", retval);
+   printf("Using %d iterations.\n\n",iters);
+#endif      
 
+   printf("\nPAPI multiplexed measurements:\n");
    x = 1.0;
-
-   if (!TESTS_QUIET)
-      printf("\nFirst run: Multiplexed.\n");
-
    t1 = PAPI_get_real_usec();
    if ((retval = PAPI_start(eventset)))
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
@@ -121,11 +237,10 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
    t2 = PAPI_get_real_usec();
 
-   if (!TESTS_QUIET) {
+#if 0
       printf("\tOperations= %.1f Mflop", y * 1e-6);
       printf("\t(%g Mflop/s)\n\n", ((float) y / (t2 - t1)));
-      printf("PAPI multiplexed measurement:\n");
-   }
+#endif
    for (j = 0; j < nevents; j++) {
       PAPI_get_event_info(events[j], &info);
       if (!TESTS_QUIET) {
@@ -134,88 +249,24 @@ int main(int argc, char **argv)
          printf("\n");
       }
    }
-   if (!TESTS_QUIET)
-      printf("\n");
 
+   check_values(eventset, events, nevents, values, refvalues);
 
    if ((retval = PAPI_remove_events(eventset, events, nevents)))
       test_fail(__FILE__, __LINE__, "PAPI_remove_events", retval);
+   if ((retval = PAPI_cleanup_eventset(eventset)))
+     test_fail(__FILE__, __LINE__, "PAPI_cleanup_eventset", retval);
    if ((retval = PAPI_destroy_eventset(&eventset)))
       test_fail(__FILE__, __LINE__, "PAPI_destroy_eventset", retval);
    eventset = PAPI_NULL;
-   if ((retval = PAPI_create_eventset(&eventset)))
-      test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
-   for (i = 0; i < nevents; i++) {
+   /* Now loop through the items one at a time */
 
-      if ((retval = PAPI_cleanup_eventset(eventset)))
-         test_fail(__FILE__, __LINE__, "PAPI_cleanup_eventset", retval);
-      if ((retval = PAPI_add_event(eventset, events[i])))
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+   ref_measurements(iters, &eventset, events, nevents, refvalues);
 
-      x = 1.0;
+   check_values(eventset, events, nevents, values, refvalues);
 
-      if (!TESTS_QUIET)
-         printf("\nReference measurement %d (of %d):\n", i + 1, nevents);
-
-      t1 = PAPI_get_real_usec();
-      if ((retval = PAPI_start(eventset)))
-         test_fail(__FILE__, __LINE__, "PAPI_start", retval);
-      y = dummy3(x, iters);
-      if ((retval = PAPI_stop(eventset, &refvalues[i])))
-         test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
-      t2 = PAPI_get_real_usec();
-
-      if (!TESTS_QUIET) {
-         printf("\tOperations= %.1f Mflop", y * 1e-6);
-         printf("\t(%g Mflop/s)\n\n", ((float) y / (t2 - t1)));
-      }
-      PAPI_get_event_info(events[i], &info);
-      if (!TESTS_QUIET) {
-         printf("PAPI results:\n%20s = ", info.short_descr);
-         printf(LLDFMT, refvalues[i]);
-         printf("\n");
-      }
-   }
-   if (!TESTS_QUIET)
-      printf("\n");
-
-
-   if (!TESTS_QUIET) {
-      printf("\n\nRelative accuracy:\n");
-      for (j = 0; j < nevents; j++)
-         printf("   Event %.2d", j);
-      printf("\n");
-   }
-
-   for (j = 0; j < nevents; j++) {
-      spread[j] = abs((int)(refvalues[j] - values[j]));
-      if (values[j])
-         spread[j] /= (double) values[j];
-      if (!TESTS_QUIET)
-         printf("%10.3g ", spread[j]);
-      /* Make sure that NaN get counted as errors */
-      if (spread[j] < MPX_TOLERANCE)
-         i--;
-      else if (refvalues[j] < MINCOUNTS)        /* Neglect inprecise results with low counts */
-         i--;
-   }
-   if (!TESTS_QUIET) {
-      printf("\n\n");
-      for (j = 0; j < nevents; j++) {
-         PAPI_get_event_info(events[j], &info);
-         printf("Event %.2d: ref=", j);
-         printf(LLDFMT10, refvalues[j]);
-         printf(", diff/ref=%7.2g  -- %s\n", spread[j], info.short_descr);
-         printf("\n");
-      }
-      printf("\n");
-   }
-
-   if (i)
-      test_fail(__FILE__, __LINE__, "Values outside threshold", i);
-   else
-      test_pass(__FILE__, NULL, 0);
+   test_pass(__FILE__, NULL, 0);
 
    return 0;
 }
