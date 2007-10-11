@@ -321,7 +321,9 @@ PRESET,PAPI_FP_OPS,NOT_DERIVED,FLOPS
 PRESET,PAPI_FML_INS,NOT_DERIVED,MUL
 PRESET,PAPI_FDV_INS,NOT_DERIVED,DIV
 #
+# This is an example of multiple processor names matching the same table
 CPU,Intel Pentium4
+CPU,Pentium4/Xeon/EM64T
 #
 PRESET,PAPI_RES_STL, NOT_DERIVED, resource_stall:SBFULL
 PRESET,PAPI_BR_INS, NOT_DERIVED, branch_retired:MMNP:MMNM:MMTP:MMTM

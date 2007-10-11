@@ -219,7 +219,10 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
   char *name = "builtin perfmon_events_table";
   char *tmp_perfmon_events_table = perfmon_events_table;
 #endif
-  int line_no = 1, get_presets = 0, derived = 0, insert = 2, preset = 0;
+  int line_no = 1, derived = 0, insert = 2, preset = 0;
+  int get_presets = 0;   /* only get PRESETS after CPU is identified */
+  int found_presets = 0; /* only terminate search after PRESETS are found */
+						 /* this allows support for synonyms for CPU names */
 
 #ifdef SHOW_LOADS
   SUBDBG("%p\n",here);
@@ -287,7 +290,7 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 #ifdef SHOW_LOADS
 	  SUBDBG("CPU token found on line %d\n",line_no);
 #endif
-	  if (get_presets != 0)
+	  if (get_presets != 0 && found_presets != 0)
 	    {
 #ifdef SHOW_LOADS
 	      SUBDBG("Ending preset scanning at line %d of %s.\n",line_no,name);
@@ -339,6 +342,7 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 #endif
 	  if (get_presets == 0)
 	    goto nextline;
+	  found_presets = 1;
 	  t = trim_string(strtok(NULL,","));
 	  if ((t == NULL) || (strlen(t) == 0))
 	    {
