@@ -63,7 +63,7 @@ int prof_events(int num_tests, const PAPI_hw_info_t *hw_info) {
   /* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
       PAPI_TOT_INS, depends on the availability of the event on the
       platform */
-   EventSet = add_two_events(&num_events, &PAPI_event, hw_info, &mask);
+   EventSet = add_two_nonderived_events(&num_events, &PAPI_event, hw_info, &mask);
 
    values = allocate_test_space(num_tests, num_events);
 
