@@ -210,10 +210,8 @@ static void decode_vendor_string(char *s, int *vendor)
     *vendor = PAPI_VENDOR_MIPS;
   else if (strcasecmp(s,"SiCortex") == 0)
     *vendor = PAPI_VENDOR_SICORTEX;
-#if defined(__crayx2)						/* CRAY X2 */
   else if (strcasecmp(s,"Cray") == 0)
     *vendor = PAPI_VENDOR_CRAY;
-#endif
   else
     *vendor = PAPI_VENDOR_UNKNOWN;
 }
@@ -2789,6 +2787,32 @@ int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctl)
     {
       PAPIERROR("pfm_unload_context(%d): %s", ctl->ctx_fd, pfm_strerror(ret));
       return PAPI_ESYS;
+    }
+
+  if (ctl->num_sets > 1)
+    {
+      static pfarg_setdesc_t set = { 0, 0, 0, 0 };
+#if 0
+      // Not necessary
+      /* Delete the high sets */
+      SUBDBG("PFM_DELETE_EVTSETS(%d,%p,%d)\n",ctl->ctx_fd,&ctl->set[1],ctl->num_sets-1);
+      if ((ret = pfm_delete_evtsets(ctl->ctx_fd,&ctl->set[1],ctl->num_sets-1)) != PFMLIB_SUCCESS)
+	{
+	  DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(&ctl->set[1],ctl->num_sets-1));
+	  PAPIERROR("pfm_delete_evtsets(%d,%p,%d): %s", ctl->ctx_fd,&ctl->set[1],ctl->num_sets-1, pfm_strerror(ret));
+	  return(PAPI_ESYS);
+	}
+      DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(&ctl->set[1],ctl->num_sets-1));
+#endif
+      /* Reprogram the 0 set */
+      SUBDBG("PFM_CREATE_EVTSETS(%d,%p,%d)\n",ctl->ctx_fd,&set,1);
+      if ((ret = pfm_create_evtsets(ctl->ctx_fd,&set,1)) != PFMLIB_SUCCESS)
+	{
+	  DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(&set,1));
+	  PAPIERROR("pfm_create_evtsets(%d,%p,%d): %s", ctl->ctx_fd,&set,ctl->num_sets, pfm_strerror(ret));
+	  return(PAPI_ESYS);
+	}
+      DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(&set,1));
     }
 
    return PAPI_OK;

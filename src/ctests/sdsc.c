@@ -13,7 +13,7 @@
 #include <math.h>
 
 #define REPEATS 5
-#define MAXEVENTS 9
+#define MAXEVENTS 14
 #define SLEEPTIME 100
 #define MINCOUNTS 100000
 
@@ -155,6 +155,11 @@ int main(int argc, char **argv)
    events[6] = PAPI_SR_INS;
    events[7] = PAPI_LD_INS;
    events[8] = PAPI_TOT_IIS;
+   events[9] = PAPI_FAD_INS;
+   events[10] = PAPI_BR_TKN;
+   events[11] = PAPI_BR_MSP;
+   events[12] = PAPI_L1_ICA;
+   events[13] = PAPI_L1_DCA;
 
    for (i = 0; i < MAXEVENTS; i++) {
       values[i] = 0;
@@ -191,6 +196,33 @@ int main(int argc, char **argv)
    if ((retval = PAPI_multiplex_init()))
       test_fail(__FILE__, __LINE__, "PAPI_multiplex_init", retval);
 
+#if 0
+   /* Find a reasonable number of iterations (each 
+    * event active 20 times) during the measurement
+    */
+   t2 = 10000 * 20 * nevents;   /* Target: 10000 usec/multiplex, 20 repeats */
+   if (t2 > 30e6)
+      test_skip(__FILE__, __LINE__, "This test takes too much time", retval);
+#endif
+
+   y = dummy3(x, iters);
+   /* Measure one run */
+   t1 = PAPI_get_real_usec();
+   y = dummy3(x, iters);
+   t1 = PAPI_get_real_usec() - t1;
+   printf("%lld\n",t1);
+   if (t1 < 1000000)                 /* Scale up execution time to match t2 */
+     {
+       iters = iters * (1000000/t1);
+       printf("Modified iteration count to %d\n\n",iters);
+     }
+
+#if 0
+   else if (t1 > 30e6)          /* Make sure execution time is < 30s per repeated test */
+      test_skip(__FILE__, __LINE__, "This test takes too much time", retval);
+   printf("Using %d iterations.\n\n",iters);
+#endif      
+
    /* Now loop through the items one at a time */
 
    ref_measurements(iters, &eventset, events, nevents, refvalues); 
@@ -205,27 +237,6 @@ int main(int argc, char **argv)
 
    if ((retval = PAPI_add_events(eventset, events, nevents)))
      test_fail(__FILE__, __LINE__, "PAPI_add_events", retval);
-
-#if 0
-   /* Find a reasonable number of iterations (each 
-    * event active 20 times) during the measurement
-    */
-   t2 = 10000 * 20 * nevents;   /* Target: 10000 usec/multiplex, 20 repeats */
-   if (t2 > 30e6)
-      test_skip(__FILE__, __LINE__, "This test takes too much time", retval);
-
-   printf("Testing iteration count:\n");
-   /* Measure one run */
-   t1 = PAPI_get_real_usec();
-   y = dummy3(x, iters);
-   t1 = PAPI_get_real_usec() - t1;
-
-   if (t2 > t1)                 /* Scale up execution time to match t2 */
-     iters = iters * ((int)(t2 / t1));
-   else if (t1 > 30e6)          /* Make sure execution time is < 30s per repeated test */
-      test_skip(__FILE__, __LINE__, "This test takes too much time", retval);
-   printf("Using %d iterations.\n\n",iters);
-#endif      
 
    printf("\nPAPI multiplexed measurements:\n");
    x = 1.0;
