@@ -202,14 +202,13 @@ static inline int pfmw_get_num_events(int *num) {
       return(PAPI_OK);
    }
    
-   inline char* pfmw_get_event_name(unsigned int idx)
+   inline char* pfmw_get_event_name(char *name, unsigned int idx)
    {
-      char *name;
 
       if (pfm_get_event_name(idx, &name) == PFMLIB_SUCCESS)
-         return name;
+         return PAPI_OK;
       else
-         return NULL;
+         return PAPI_ENOEVNT;
    }
 
    inline char* pfmw_get_event_description(unsigned int idx)
@@ -725,18 +724,17 @@ hweight64 (unsigned long x)
       return(pfmw_create_ctx_common(thr_ctx)); 
    }
 
-   inline char* pfmw_get_event_name(unsigned int idx)
+   inline int pfmw_get_event_name(char *name, unsigned int idx)
    {
-      char name[PAPI_MAX_STR_LEN];
       int total;
 
       pfm_get_num_events(&total);
       if(idx >= total)
-         return NULL;
+         return PAPI_ENOEVNT;
       if (pfm_get_event_name(idx, name, PAPI_MAX_STR_LEN) == PFMLIB_SUCCESS)
-         return name;
+         return PAPI_OK;
       else
-         return NULL;
+         return PAPI_ENOEVNT;
    }
 
    /* for PFM30:

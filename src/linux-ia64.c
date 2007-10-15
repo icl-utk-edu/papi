@@ -1670,9 +1670,12 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 }
 int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 {
-   char *name=pfmw_get_event_name(EventCode^PAPI_NATIVE_MASK);
+   char name[PAPI_MAX_STR_LEN];
+   int ret=0;
+   
+   pfmw_get_event_name(name, EventCode^PAPI_NATIVE_MASK);
 
-   if(!name)
+   if(ret!=PAPI_OK)
      return (PAPI_ENOEVNT);
 
    strncpy(ntv_name, name, len);
