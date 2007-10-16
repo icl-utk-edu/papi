@@ -916,6 +916,13 @@ AC_ARG_WITH(pfm_events,
             [pfm_events="file"]
             )
 fi
+
+# Old IA64 substrate can use semaphores
+AC_ARG_WITH(with-semaphores,
+            [  --with-semaphores Use semaphores instead of atomic locks (IA64) ],
+	    [with_semaphores=$withval],
+	    [with_semaphores="no"])
+
 # check for which tests to run on install
 if test "x$tests" = "x"; then
 AC_ARG_WITH(tests,
@@ -1048,6 +1055,10 @@ AC_DEFINE(HAVE_PFM_GET_EVENT_DESCRIPTION,1,[event description function])
 AC_DEFINE(HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT,1,[new pfmlib_output_param_t])
 AC_DEFINE(HAVE_PFM_MSG_TYPE,1,[new pfm_msg_t])
 fi
+fi
+
+if test "$with_semaphores" != "no"; then
+   AC_DEFINE(USE_SEMAPHORES, 1, [Use semaphores for locking])
 fi
 
 AC_MSG_CHECKING(for perfmon version)
@@ -1275,6 +1286,8 @@ if test "$datadir" = '${datarootdir}'; then
 fi
 papidatadir=$datadir
 docdir='${prefix}/doc'
+AS_AC_EXPAND(PAPI_DATADIR, $papidatadir)
+AC_DEFINE(PAPI_DATADIR, $papidatadir, [Location for the event files])
 #AC_DEFINE_UNQUOTED(HAVE_THREAD_LOCAL_STORAGE,"$docdir")
 
 #
@@ -1289,7 +1302,6 @@ if test "$OS" = "linux" -a "$bitmode" = "64"; then
    fi
 fi
 
-AS_AC_EXPAND(PAPI_DATADIR, $papidatadir)
 AC_SUBST(prefix)
 AC_SUBST(exec_prefix)
 AC_SUBST(libdir)

@@ -875,6 +875,7 @@ Optional Packages:
   --with-pfm-libdir=<path>	Specify directory of pfm library
   --with-pmapi=<path>		Specify path of pmapi on aix system
   --with-pfm-events=<static,file>	Specify source of events for pfmlib-based systems
+  --with-semaphores Use semaphores instead of atomic locks (IA64)
   --with-tests=<ctests,ftests,"ctests ftests">	Specify which tests to run on install
   --with-linkstatic=<yes,no>	Specify whether to link statically or not
   --with-nativecc=<path>	Specify native C compiler for header generation
@@ -1635,7 +1636,6 @@ if test "$OS" = "CNL"; then
    pfm_events=static
    cross_compiling=yes
    perfmon=2
-   linkstatic=yes
 fi
 
 #
@@ -5343,6 +5343,17 @@ else
 
 fi;
 fi
+
+# Old IA64 substrate can use semaphores
+
+# Check whether --with-with-semaphores or --without-with-semaphores was given.
+if test "${with_with_semaphores+set}" = set; then
+  withval="$with_with_semaphores"
+  with_semaphores=$withval
+else
+  with_semaphores="no"
+fi;
+
 # check for which tests to run on install
 if test "x$tests" = "x"; then
 
@@ -6725,6 +6736,14 @@ _ACEOF
 fi
 fi
 
+if test "$with_semaphores" != "no"; then
+
+cat >>confdefs.h <<\_ACEOF
+#define USE_SEMAPHORES 1
+_ACEOF
+
+fi
+
 echo "$as_me:$LINENO: checking for perfmon version" >&5
 echo $ECHO_N "checking for perfmon version... $ECHO_C" >&6
 if test "$perfmon" = "no"; then
@@ -7111,20 +7130,6 @@ if test "$datadir" = '${datarootdir}'; then
 fi
 papidatadir=$datadir
 docdir='${prefix}/doc'
-#AC_DEFINE_UNQUOTED(HAVE_THREAD_LOCAL_STORAGE,"$docdir")
-
-#
-# Fix up: If we're on linux and 64 bit build, then put libs in the right place
-# may apply for cross compiling
-#
-if test "$OS" = "linux" -a "$bitmode" = "64"; then
-   if test "$arch" = "mips64" -o "$arch" = "ppc64" -o "$arch" = "x86_64"; then
-      if test "$libdir" = '${exec_prefix}/lib'; then
-        libdir='${exec_prefix}/lib64'
-      fi
-   fi
-fi
-
 
   EXP_VAR=PAPI_DATADIR
   FROM_VAR=$papidatadir
@@ -7154,6 +7159,25 @@ _ACEOF
 
     prefix=$prefix_save
   exec_prefix=$exec_prefix_save
+
+
+cat >>confdefs.h <<\_ACEOF
+#define PAPI_DATADIR $papidatadir
+_ACEOF
+
+#AC_DEFINE_UNQUOTED(HAVE_THREAD_LOCAL_STORAGE,"$docdir")
+
+#
+# Fix up: If we're on linux and 64 bit build, then put libs in the right place
+# may apply for cross compiling
+#
+if test "$OS" = "linux" -a "$bitmode" = "64"; then
+   if test "$arch" = "mips64" -o "$arch" = "ppc64" -o "$arch" = "x86_64"; then
+      if test "$libdir" = '${exec_prefix}/lib'; then
+        libdir='${exec_prefix}/lib64'
+      fi
+   fi
+fi
 
 
 

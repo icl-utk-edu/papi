@@ -36,10 +36,8 @@ VERSION ?= 3.x
 endif
 endif
 	
-ifeq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))
-OPTFLAGS	+= -O3 -g $(DEBUGFLAGS)
-else
-OPTFLAGS	+= -g -O $(DEBUGFLAGS)
+ifneq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))
+OPTFLAGS	+= -g $(DEBUGFLAGS)
 endif
 FFLAGS        	+= -Dlinux -DITANIUM$(CPU)
 TOPTFLAGS	+= -O  
@@ -74,6 +72,7 @@ endif
         PFM_INC_PATH := $(PFM_ROOT)/include
 endif
 
+OPTIM := $(CFLAGS)
 CFLAGS-2.x := -DPFM20 -D_GNU_SOURCE
 CFLAGS-3.x := -DPFM30 -D_GNU_SOURCE  
 CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) $(NOTLS) $(ALTIX) $(CFLAGS-$(VERSION))
@@ -89,7 +88,7 @@ PFM_OBJS = $(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
 ifeq (,$(PFM_OBJS))
 $(PFM_LIB_PATH)/libpfm.a:
 ifneq (,${PFM_ROOT})
-	$(MAKE) -C $(PFM_ROOT) CC="$(CC)" 
+	$(MAKE) -C $(PFM_ROOT) CC="$(CC)" OPTIM="$(OPTIM)" 
 else
 	@echo '$@ not installed!'; exit 1
 endif

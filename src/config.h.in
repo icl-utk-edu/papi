@@ -93,7 +93,7 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* package data directory */
+/* Location for the event files */
 #undef PAPI_DATADIR
 
 /* Define to 1 if you have the ANSI C header files. */
@@ -104,6 +104,9 @@
 
 /* Use /proc for per-thread times */
 #undef USE_PROC_PTTIMER
+
+/* Use semaphores for locking */
+#undef USE_SEMAPHORES
 
 /* Enable GNU extensions on systems that have them.  */
 #ifndef _GNU_SOURCE
