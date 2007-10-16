@@ -635,9 +635,9 @@ int PAPI_enum_event(int *EventCode, int modifier)
    else if (i & PAPI_NATIVE_MASK) 
      {
        /* Should check against num native events here */
-       papi_return (_papi_hwd_ntv_enum_events((unsigned int *) EventCode, modifier));
+       return (_papi_hwd_ntv_enum_events((unsigned int *) EventCode, modifier));
      }
-   papi_return (PAPI_ENOEVNT);
+   papi_return (PAPI_EINVAL);
 }
 
 int PAPI_create_eventset(int *EventSet)
