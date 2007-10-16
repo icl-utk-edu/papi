@@ -1,5 +1,6 @@
 #define SUCCESS 1
 #define FAILURE 0
+#define MAX_THREADS 256
 #define NUM_THREADS 4
 #define NUM_ITERS  1000000
 #define NUM_FLOPS  20000000
