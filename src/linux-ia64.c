@@ -22,7 +22,9 @@
 /* Globals declared extern elsewhere */
 
 hwi_search_t *preset_search_map;
+#ifndef USE_SEMAPHORES
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
+#endif
 
 /* Static locals */
 
@@ -625,6 +627,7 @@ static int get_system_info(void)
    return (PAPI_OK);
 }
 
+#if defined(USE_SEMAPHORES)
 int sem_set;
 #if defined(__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)
        /* union semun is defined by including <sys/sem.h> */
@@ -636,35 +639,41 @@ int sem_set;
                struct seminfo *__buf;      /* buffer for IPC_INFO */
        };
 #endif
+#endif
 
 int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {
-  int retval, type;
-   unsigned int version;
-   pfmlib_options_t pfmlib_options;
-   itanium_preset_search_t *ia_preset_search_map = NULL;
-
+  int i, retval, type;
+  unsigned int version;
+  pfmlib_options_t pfmlib_options;
+  itanium_preset_search_t *ia_preset_search_map = NULL;
+  
   /* Always initialize globals dynamically to handle forks properly. */
 
   preset_search_map = NULL;
-{
-   int retval, i;
-  	union semun val; 
-	val.val=1;
-   
-	if ((retval = semget(IPC_PRIVATE,PAPI_MAX_LOCK,0666)) == -1)
-     {
-       PAPIERROR("semget errno %d",errno); return(PAPI_ESYS); 
-     }
-   sem_set = retval;
-   for (i=0;i<PAPI_MAX_LOCK;i++)
-     {
-       if ((retval = semctl(sem_set,i,SETVAL,val)) == -1)
-	 {
-	   PAPIERROR("semctl errno %d",errno); return(PAPI_ESYS);
-	 }
-     }
-}
+#ifdef USE_SEMAPHORES
+  {
+    int retval;
+    union semun val; 
+    val.val=1;
+    
+    if ((retval = semget(IPC_PRIVATE,PAPI_MAX_LOCK,0666)) == -1)
+      {
+	PAPIERROR("semget errno %d",errno); return(PAPI_ESYS); 
+      }
+    sem_set = retval;
+    for (i=0;i<PAPI_MAX_LOCK;i++)
+      {
+	if ((retval = semctl(sem_set,i,SETVAL,val)) == -1)
+	  {
+	    PAPIERROR("semctl errno %d",errno); return(PAPI_ESYS);
+	  }
+      }
+  }
+#else
+  for (i=0;i<PAPI_MAX_LOCK;i++)
+    _papi_hwd_lock_data[PAPI_MAX_LOCK] = MUTEX_OPEN;
+#endif
 
   /* Setup the vector entries that the OS knows about */
 #ifndef PAPI_NO_VECTOR
@@ -1039,26 +1048,34 @@ int _papi_hwd_ctl(hwd_context_t * zero, int code, _papi_int_option_t * option)
 
 int _papi_hwd_shutdown(hwd_context_t * ctx)
 {
-   int retval;
-   struct semid_ds semid_ds_buf;
-   union semun val;
-		 
 #if defined(USE_PROC_PTTIMER)
   close(ctx->stat_fd);
 #endif  
+
+   return (pfmw_destroy_context(ctx));
+}
+
+#if defined(USE_SEMAPHORES)
+/* Runs when the process exits */
+static void cleanup_semaphores(void) __attribute__((destructor));
+static void cleanup_semaphores(void)
+{
+   struct semid_ds semid_ds_buf;
+   union semun val;
+   int retval;
+
    val.buf = &semid_ds_buf;
    if ((retval = semctl(sem_set,0,GETALL, val)) == -1)
      {
-      PAPIERROR("semctl errno %d",errno); return(PAPI_ESYS);
+       PAPIERROR("semctl errno %d",errno);
      }
 
    if ((retval = semctl(sem_set,0,IPC_RMID,val)) == -1)
      {
-	  PAPIERROR("semctl errno %d",errno); return(PAPI_ESYS);
-	 }
-
-   return (pfmw_destroy_context(ctx));
+       PAPIERROR("semctl errno %d",errno);
+     }
 }
+#endif
 
 #ifdef PFM20
 /* This function set the parameters which needed by DATA EAR */
@@ -1685,10 +1702,10 @@ int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len)
 {
 #if defined(HAVE_PFM_GET_EVENT_DESCRIPTION)
-  pfm_get_event_description(EventCode^PAPI_NATIVE_MASK, ntv_descr);
+  pfmw_get_event_description(EventCode^PAPI_NATIVE_MASK, ntv_descr, len);
   return(PAPI_OK);
 #else
-   return (_papi_hwd_ntv_code_to_name(EventCode, ntv_descr,len));
+   return (_papi_hwd_ntv_code_to_name(EventCode, ntv_descr, len));
 #endif
 }
 

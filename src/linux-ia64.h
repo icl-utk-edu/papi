@@ -34,7 +34,9 @@
 #include <sys/ucontext.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
+#ifdef USE_SEMAPHORES
 #include <sys/sem.h>
+#endif
 
 #ifdef ALTIX
 #include <sys/ioctl.h>
@@ -164,11 +166,8 @@ typedef struct sigcontext hwd_ucontext_t;
 #define DEAR_REGS_MASK      (M_PMD(2)|M_PMD(3)|M_PMD(17))
 #define BTB_REGS_MASK       (M_PMD(8)|M_PMD(9)|M_PMD(10)|M_PMD(11)|M_PMD(12)|M_PMD(13)|M_PMD(14)|M_PMD(15)|M_PMD(16))
 
-extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
+#ifdef USE_SEMAPHORES
 extern int sem_set;
-
-#define MUTEX_OPEN (unsigned int)1
-#define MUTEX_CLOSED (unsigned int)0
 
 /* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
  * else val = MUTEX_CLOSED */
@@ -187,23 +186,24 @@ if (semop(sem_set, &sem_unlock, 1) == -1 ) {     \
 abort(); } }
 // PAPIERROR("semop errno %d",errno); abort(); } }
 
-#if 0
+#else
+extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
+#define MUTEX_OPEN 0
+#define MUTEX_CLOSED 1
+
 #ifdef __INTEL_COMPILER
 #define _papi_hwd_lock(lck) { while(_InterlockedCompareExchange_acq(&_papi_hwd_lock_data[lck],MUTEX_CLOSED,MUTEX_OPEN) != MUTEX_OPEN) { ; } } 
 
 #define _papi_hwd_unlock(lck) { _InterlockedExchange((volatile int *)&_papi_hwd_lock_data[lck], MUTEX_OPEN); }
 #else                           /* GCC */
 #define _papi_hwd_lock(lck)			 			      \
-   { uint64_t res = 0;							      \
+   { int res = 0;							      \
     do {								      \
       __asm__ __volatile__ ("mov ar.ccv=%0;;" :: "r"(MUTEX_OPEN));            \
       __asm__ __volatile__ ("cmpxchg4.acq %0=[%1],%2,ar.ccv" : "=r"(res) : "r"(&_papi_hwd_lock_data[lck]), "r"(MUTEX_CLOSED) : "memory");				      \
-    } while (res != (uint64_t)MUTEX_OPEN); }
+    } while (res != MUTEX_OPEN); }
 
-#define _papi_hwd_unlock(lck)			 			      \
-    { uint64_t res = 0;							      \
-    __asm__ __volatile__ ("xchg4 %0=[%1],%2" : "=r"(res) : "r"(&_papi_hwd_lock_data[lck]), "r"(MUTEX_OPEN) : "memory"); }
-#endif
-#endif
-
-#endif
+#define _papi_hwd_unlock(lck) {  __asm__ __volatile__ ("st4.rel [%0]=%1" : : "r"(&_papi_hwd_lock_data[lck]), "r"(MUTEX_OPEN) : "memory"); }
+#endif /* __INTEL_COMPILER */
+#endif /* USE_SEMAPHORES */
+#endif /* _PAPI_LINUX_IA64_H */
