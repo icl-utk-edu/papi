@@ -202,23 +202,26 @@ static inline int pfmw_get_num_events(int *num) {
       return(PAPI_OK);
    }
    
-   inline char* pfmw_get_event_name(char *name, unsigned int idx)
+   inline int pfmw_get_event_name(char *name, unsigned int idx)
    {
-
-      if (pfm_get_event_name(idx, &name) == PFMLIB_SUCCESS)
-         return PAPI_OK;
-      else
-         return PAPI_ENOEVNT;
+     char *tmp;
+     if (pfm_get_event_name(idx, &tmp) == PFMLIB_SUCCESS)
+       {
+	 strcpy(name,tmp);
+	 return PAPI_OK;
+       }
+     else
+       return PAPI_ENOEVNT;
    }
 
-   inline char* pfmw_get_event_description(unsigned int idx)
+   inline void pfmw_get_event_description(unsigned int idx, char *dest, int len)
    {
       char *descr;
 
       if (pfm_get_event_description(idx, &descr) == PFMLIB_SUCCESS)
-         return descr;
+	strncpy(dest,descr,len);
       else
-         return NULL;
+	*dest = '\0';
    }
 
    inline int pfmw_is_dear(unsigned int i)
@@ -737,13 +740,18 @@ hweight64 (unsigned long x)
          return PAPI_ENOEVNT;
    }
 
-   /* for PFM30:
-      Unfortunately, libpfm3 deprecated the interface to pfm_get_event_description
-      Even though the data is still available in the event structure
-      Therefore this function only works for libpfm2/Itanium2
-   */
+   inline void pfmw_get_event_description(unsigned int idx, char *dest, int len)
+   {
+      char *descr;
 
-   #define pfmw_get_event_description pfmw_get_event_name
+      if (pfm_get_event_description(idx, &descr) == PFMLIB_SUCCESS)
+	{
+	  strncpy(dest,descr,len);
+	  free(descr);
+	}
+      else
+	*dest = '\0';
+   }
 
    inline int pfmw_is_dear(unsigned int i)
    {
