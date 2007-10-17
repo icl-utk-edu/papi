@@ -4387,7 +4387,10 @@ cat >>conftest.$ac_ext <<_ACEOF
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
-#include <sn/mmtimer.h>
+#include <linux/mmtimer.h>
+#ifndef MMTIMER_FULLNAME
+#define MMTIMER_FULLNAME "/dev/mmtimer"
+#endif
 
 int main()
 {

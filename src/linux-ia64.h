@@ -38,10 +38,13 @@
 #include <sys/sem.h>
 #endif
 
-#ifdef ALTIX
+#if defined(HAVE_MMTIMER)
 #include <sys/ioctl.h>
 #include <sys/mman.h>
-#include <sn/mmtimer.h>
+#include <linux/mmtimer.h>
+#ifndef MMTIMER_FULLNAME
+#define MMTIMER_FULLNAME "/dev/mmtimer"
+#endif
 #endif
 
 #ifdef __INTEL_COMPILER
