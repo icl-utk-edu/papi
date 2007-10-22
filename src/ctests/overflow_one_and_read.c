@@ -77,7 +77,7 @@ int main(int argc, char **argv)
       PAPI_TOT_INS, depends on the availability of the event on the
       platform */ 
 /* NOTE: Only adding one overflow on PAPI_event -- no overflow for PAPI_TOT_CYC*/
-   EventSet = add_two_events(&num_events1, &PAPI_event, hw_info, &mask1);
+   EventSet = add_two_nonderived_events(&num_events1, &PAPI_event, hw_info, &mask1);
 
    values = allocate_test_space(2, num_events1);
 

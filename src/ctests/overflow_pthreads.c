@@ -51,7 +51,7 @@ void *Thread(void *arg)
    /* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
       PAPI_TOT_INS, depends on the availability of the event on the 
       platform */
-   EventSet1 = add_two_events(&num_events1, &papi_event, hw_info, &mask1);
+   EventSet1 = add_two_nonderived_events(&num_events1, &papi_event, hw_info, &mask1);
 
    values = allocate_test_space(num_tests, num_events1);
 
