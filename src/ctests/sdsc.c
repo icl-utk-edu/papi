@@ -210,7 +210,7 @@ int main(int argc, char **argv)
    t1 = PAPI_get_real_usec();
    y = dummy3(x, iters);
    t1 = PAPI_get_real_usec() - t1;
-   printf("%lld\n",t1);
+
    if (t1 < 1000000)                 /* Scale up execution time to match t2 */
      {
        iters = iters * (1000000/t1);

@@ -18,21 +18,20 @@
 #include <pthread.h>
 #include "papi_test.h"
 
-static int total = 0;
 static const PAPI_hw_info_t *hw_info = NULL;
+static int total[NUM_THREADS];
+static int expected[NUM_THREADS];
+static pthread_t myid[NUM_THREADS];
 
 void handler(int EventSet, void *address, long_long overflow_vector, void * context)
 {
-   if (!TESTS_QUIET) {
-#ifdef _CRAYT3E
-      fprintf(stderr, "handler(%d ) Overflow at %x, thread 0x%x!\n",
-              EventSet, address, PAPI_thread_id());
-#else
-      fprintf(stderr, "handler(%d) Overflow at %p, thread 0x%lx!\n",
-              EventSet, address, PAPI_thread_id());
+#if 0
+    printf("handler(%d,0x%lx,%llx) Overflow %d in thread %lx\n",
+	   EventSet,(unsigned long)address,overflow_vector,
+	   total[EventSet],PAPI_thread_id());
+    printf("%lx vs %lx\n",myid[EventSet],PAPI_thread_id());
 #endif
-   }
-   total++;
+    total[EventSet]++;
 }
 
 void *Thread(void *arg)
@@ -45,13 +44,13 @@ void *Thread(void *arg)
    long long elapsed_us, elapsed_cyc;
    char event_name[PAPI_MAX_STR_LEN];
 
-   if (!TESTS_QUIET) 
-      printf("Thread 0x%x \n", (int) pthread_self());
-
    /* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
       PAPI_TOT_INS, depends on the availability of the event on the 
       platform */
    EventSet1 = add_two_nonderived_events(&num_events1, &papi_event, hw_info, &mask1);
+
+   expected[EventSet1] = *(int *)arg / THRESHOLD;
+   myid[EventSet1] = PAPI_thread_id();
 
    values = allocate_test_space(num_tests, num_events1);
 
@@ -102,8 +101,11 @@ int main(int argc, char **argv)
    int flops[NUM_THREADS];
    int i, rc, retval;
    pthread_attr_t attr;
-   long long elapsed_us, elapsed_cyc;
+   float ratio;
 
+   memset(total,0x0,NUM_THREADS*sizeof(*total));
+   memset(expected,0x0,NUM_THREADS*sizeof(*expected));
+   memset(myid,0x0,NUM_THREADS*sizeof(*myid));
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
    if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
@@ -120,10 +122,6 @@ int main(int argc, char **argv)
       else
          test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
    }
-
-   elapsed_us = PAPI_get_real_usec();
-
-   elapsed_cyc = PAPI_get_real_cyc();
 
    pthread_attr_init(&attr);
 #ifdef PTHREAD_CREATE_UNDETACHED
@@ -146,15 +144,31 @@ int main(int argc, char **argv)
 
    pthread_attr_destroy(&attr);
 
-   elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
-
-   elapsed_us = PAPI_get_real_usec() - elapsed_us;
-
-   if (!TESTS_QUIET) {
-      printf("Master real usec   : \t%lld\n", elapsed_us);
-      printf("Master real cycles : \t%lld\n", elapsed_cyc);
+   {
+       long long t = 0, r = 0;
+       for (i=0;i<NUM_THREADS;i++) {
+	   t += (NUM_FLOPS * (i+1))/THRESHOLD;
+	   r += total[i];
+       }
+       printf("Expected total overflows: %lld\n",t);
+       printf("Received total overflows: %lld\n",r);
    }
 
+//   ratio = (float)total[0] / (float)expected[0];
+//   printf("Ratio of total to expected: %f\n",ratio);
+   ratio = 1.0;
+   for (i=0;i<NUM_THREADS;i++)
+   {
+       printf("Overflows thread %d: %d, expected %d\n",
+	      i,total[i],(int)(ratio*(float)expected[i]));
+   }
+
+   for (i=0;i<NUM_THREADS;i++)
+   {
+     if (total[i] <= (int)((ratio*(float)expected[i])/2.0)) 
+       test_fail(__FILE__,__LINE__,"not enough overflows",PAPI_EMISC);
+   }
+     
    test_pass(__FILE__, NULL, 0);
    pthread_exit(NULL);
    exit(1);
