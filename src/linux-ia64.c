@@ -623,6 +623,11 @@ static int get_system_info(void)
   _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
   _papi_hwi_system_info.sub_info.default_granularity = PAPI_GRN_THR;
   _papi_hwi_system_info.sub_info.available_granularities = PAPI_GRN_THR;
+   _papi_hwi_system_info.sub_info.hardware_intr_sig = OVFL_SIGNAL;
+
+#ifdef ALTIX
+   _papi_hwi_start_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig, 1);
+#endif
 
    return (PAPI_OK);
 }
@@ -772,7 +777,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 // don't know for sure, but I think this ratio is inverted
 //     mmdev_ratio = (freq/1000000) / (unsigned long)_papi_hwi_system_info.hw_info.mhz;
      mmdev_ratio = (unsigned long)_papi_hwi_system_info.hw_info.mhz / (freq/1000000);
-     SUBDBG("MMTIMER has a ratio of %d to the CPU's clock, getting resolution\n",mmdev_ratio);
+     SUBDBG("MMTIMER has a ratio of %ld to the CPU's clock, getting resolution\n",mmdev_ratio);
      if (ioctl(mmdev_fd, MMTIMER_GETRES, &femtosecs_per_tick) == -1) {
        PAPIERROR("Failed to get femtoseconds per tick");
        return(PAPI_ESYS);
@@ -910,6 +915,7 @@ long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 /* reset the hardware counters */
 int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * machdep)
 {
+   pfmw_param_t *pevt = &(machdep->evt);
    pfarg_reg_t writeem[MAX_COUNTERS];
    int i;
 
@@ -918,6 +924,8 @@ int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * machdep)
    for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
       /* Writing doesn't matter, we're just zeroing the counter. */
       writeem[i].reg_num = PMU_FIRST_COUNTER + i;
+      if (PFMW_PEVT_PFPPC_REG_FLG(pevt,i) & PFM_REGFL_OVFL_NOTIFY)
+	writeem[i].reg_value = machdep->pd[i].reg_long_reset;
    }
    if (pfmw_perfmonctl(ctx->tid, ctx->fd, PFM_WRITE_PMDS, writeem, _papi_hwi_system_info.sub_info.num_cntrs) == -1) {
       PAPIERROR("perfmonctl(PFM_WRITE_PMDS) errno %d", errno);
@@ -933,6 +941,7 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * machdep,
    int i;
    pfarg_reg_t readem[MAX_COUNTERS];
 
+   pfmw_stop(ctx);
    memset(readem, 0x0, sizeof readem);
 
 /* read the 4 counters, the high level function will process the 
@@ -944,6 +953,7 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * machdep,
 
    if (pfmw_perfmonctl(ctx->tid, ctx->fd, PFM_READ_PMDS, readem, _papi_hwi_system_info.sub_info.num_cntrs) == -1) {
       SUBDBG("perfmonctl error READ_PMDS errno %d\n", errno);
+      pfmw_start(ctx);
       return PAPI_ESYS;
    }
 
@@ -965,6 +975,7 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * machdep,
 #endif
 
    *events = machdep->counters;
+   pfmw_start(ctx);
    return PAPI_OK;
 }
 
@@ -1400,22 +1411,6 @@ static int ia64_process_profile_entry(void *papiContext)
 #endif
 
 
-/* This function only used when hardware overflows ARE working */
-
-void _papi_hwd_dispatch_timer(int signal, hwd_siginfo_t * info, void *context)
- {
-   _papi_hwi_context_t ctx;
-   ThreadInfo_t *t = NULL;
-   unsigned long address;
- 
-   ctx.si = (hwd_siginfo_t *) info;
-   ctx.ucontext = (hwd_ucontext_t *) context;
-
-   address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, (long_long) 0, 0, &t);
-   return;
- }
-
 #ifdef PFM20
 static void ia64_process_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
                                  *context)
@@ -1434,7 +1429,25 @@ static void ia64_process_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
      PAPIERROR("perfmonctl(PFM_RESTART) errno %d", errno);
    }
 }
+#else  /* PFM30 */
+static void ia64_process_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
+                                 *context)
+{
+   _papi_hwi_context_t ctx;
 
+   ctx.si = info;
+   ctx.ucontext = context;
+
+   ia64_process_profile_entry(&ctx);
+
+   if (pfmw_perfmonctl(0, info->si_fd, PFM_RESTART, NULL, 0) == -1) {
+     PAPIERROR("perfmonctl(PFM_RESTART) errno %d", errno);
+     return;
+   }
+}
+#endif
+
+#if 0
 static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext *context)
 {
    _papi_hwi_context_t ctx;
@@ -1458,66 +1471,100 @@ static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
       return;
    }
 }
-#else  /* PFM30 */
-static void ia64_process_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
-                                 *context)
-{
-   _papi_hwi_context_t ctx;
-
-   ctx.si = info;
-   ctx.ucontext = context;
-
-   ia64_process_profile_entry(&ctx);
-
-   if (pfmw_perfmonctl(0, info->si_fd, PFM_RESTART, NULL, 0) == -1) {
-     PAPIERROR("perfmonctl(PFM_RESTART) errno %d", errno);
-     return;
-   }
-}
-
+#endif
 static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext *sc)
 {
-   _papi_hwi_context_t ctx;
-   pfm_msg_t msg;
-   int ret, fd;
-   ThreadInfo_t *master = NULL;
-   unsigned long address;
+  _papi_hwi_context_t ctx;
+  ThreadInfo_t *thread = _papi_hwi_lookup_thread();
+  unsigned long address;
+  
+  ctx.si = info;
+  ctx.ucontext = sc;
+  address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
+  
+  if (thread->running_eventset->overflow.flags & PAPI_OVERFLOW_FORCE_SW) {
+    _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 
+				       0, 0, &thread);
+    return;
+  }
 
-   ctx.si = info;
-   ctx.ucontext = sc;
-   fd = info->si_fd;
-   ret = read(fd, &msg, sizeof(msg));
-   address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
-
-   if (ret != sizeof(msg)) {
-      PAPIERROR("read(overflow message): errno %d", errno);
-      return;
-   }
-
+#if !defined(PFM20)
+{
+  pfm_msg_t msg;
+  int ret, fd;
+  fd = info->si_fd;
+ retry:
+    ret = read(fd, &msg, sizeof(msg));
+    if (ret == -1) {
+      if (errno == EINTR) {
+	SUBDBG("read(%d) interrupted, retrying\n", fd);
+                goto retry;
+            }
+            else {
+                PAPIERROR("read(%d): errno %d", fd, errno); 
+            }
+        }
+        else if (ret != sizeof(msg)) {
+            PAPIERROR("read(%d): short %d vs. %d bytes", fd, ret, sizeof(msg)); 
+            ret = -1;
+        }
 #if defined(HAVE_PFM_MSG_TYPE)
-   if (msg.type != PFM_MSG_OVFL) 
-{
-      PAPIERROR("unexpected msg type %d",msg.type);
-      return;
-   }
+#if defined(ALTIX)
+    if (msg.type == PFM_MSG_END)
+      {
+	SUBDBG("PFM_MSG_END\n");
+	return;
+      }
+#endif
+    if (msg.type != PFM_MSG_OVFL) 
+      {
+	PAPIERROR("unexpected msg type %d",msg.type);
+	return;
+      }
 #else
+#if defined(ALTIX)
+   if (msg.pfm_gen_msg.msg_type == PFM_MSG_END)
+     {
+       SUBDBG("PFM_MSG_END\n");
+       return;
+     }
+#endif
    if (msg.pfm_gen_msg.msg_type != PFM_MSG_OVFL)
-{
-      PAPIERROR("unexpected msg type %d",msg.pfm_gen_msg.msg_type);
-      return;
-   }
+     {
+       PAPIERROR("unexpected msg type %d",msg.pfm_gen_msg.msg_type);
+       return;
+     }
 #endif
-
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 
-          msg.pfm_ovfl_msg.msg_ovfl_pmds[0]>>PMU_FIRST_COUNTER, 0, &master);
- 
-  if (pfmw_perfmonctl(0, fd, PFM_RESTART, 0, 0) == -1) {
-      PAPIERROR("perfmonctl(PFM_RESTART) errno %d", errno);
-      return;
+   if (ret != -1) {
+     _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 
+					msg.pfm_ovfl_msg.msg_ovfl_pmds[0]>>PMU_FIRST_COUNTER, 0, &thread);
    }
-
+   if (pfmw_perfmonctl(0, fd, PFM_RESTART, 0, 0) == -1) {
+#ifdef ALTIX
+    if (errno == EBUSY)
+      {
+	fprintf(stderr,"PAPI: warning, perfmonctl(%d,PFM_RESTART) returned errno %d, %s\n",fd,errno,strerror(errno));
+	return;
+      }
+#endif
+    PAPIERROR("perfmonctl(PFM_RESTART) errno %d", errno);
+    return;
+   }
 }
+#else
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 
+				      info->sy_pfm_ovfl[0]>>PMU_FIRST_COUNTER, 0, &thread);
+   if (pfmw_perfmonctl(info->sy_pid, 0, PFM_RESTART, 0, 0) == -1) {
+    PAPIERROR("perfmonctl(PFM_RESTART) errno %d", errno);
+    return;
+   }
 #endif
+}
+
+void _papi_hwd_dispatch_timer(int signal, hwd_siginfo_t * info, void *context)
+{
+  ia64_dispatch_sigprof(signal, info, context);
+}
 
 static int set_notify(EventSetInfo_t * ESI, int index, int value)
 {
@@ -1630,59 +1677,41 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    hwd_control_state_t *this_state = &ESI->machdep;
    int j, retval = PAPI_OK, *pos;
 
-   if (threshold == 0) {
-      /* Remove the overflow notifier on the proper event. 
-       */
+   pos = ESI->EventInfoArray[EventIndex].pos;
+   j = pos[0];
+   SUBDBG("Hardware counter %d used in overflow, threshold %d\n", j, threshold);
+
+   if (threshold == 0) 
+     {
+      /* Remove the signal handler */
+
+       retval = _papi_hwi_stop_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig);
+       if (retval != PAPI_OK)
+	 return(retval);
+
+      /* Remove the overflow notifier on the proper event. */
+
       set_notify(ESI, EventIndex, 0);
 
-      pos = ESI->EventInfoArray[EventIndex].pos;
-      j = pos[0];
-      SUBDBG("counter %d used in overflow, threshold %d\n",
-             j + PMU_FIRST_COUNTER, threshold);
       this_state->pd[j].reg_value = 0;
       this_state->pd[j].reg_long_reset = 0;
       this_state->pd[j].reg_short_reset = 0;
+     } 
+   else 
+     {
+       retval = _papi_hwi_start_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig, 1);
+       if (retval != PAPI_OK)
+	 return(retval);
 
-      /* Remove the signal handler */
+      /* Set the overflow notifier on the proper event. Remember that selector */
 
-      _papi_hwi_lock(INTERNAL_LOCK);
-      _papi_hwi_using_signal--;
-      SUBDBG("_papi_hwi_using_signal=%d\n", _papi_hwi_using_signal);
-      if (_papi_hwi_using_signal == 0) {
-
-         if (sigaction(OVFL_SIGNAL, NULL, NULL) == -1)
-            retval = PAPI_ESYS;
-      }
-      _papi_hwi_unlock(INTERNAL_LOCK);
-   } else {
-      struct sigaction act;
-
-      /* Set up the signal handler */
-
-      memset(&act, 0x0, sizeof(struct sigaction));
-      act.sa_handler = (sig_t) ia64_dispatch_sigprof;
-      act.sa_flags = SA_RESTART|SA_SIGINFO;
-      if (sigaction(OVFL_SIGNAL, &act, NULL) == -1)
-         return (PAPI_ESYS);
-
-      /*Set the overflow notifier on the proper event. Remember that selector
-       */
       set_notify(ESI, EventIndex, PFM_REGFL_OVFL_NOTIFY);
 
-/* set initial value in pd array */
+      this_state->pd[j].reg_value = (~0UL)-(unsigned long) threshold + 1;
+      this_state->pd[j].reg_short_reset = (~0UL)-(unsigned long) threshold + 1;
+      this_state->pd[j].reg_long_reset = (~0UL)-(unsigned long) threshold + 1;
 
-      pos = ESI->EventInfoArray[EventIndex].pos;
-      j = pos[0];
-      SUBDBG("counter %d used in overflow, threshold %d\n",
-             j + PMU_FIRST_COUNTER, threshold);
-      this_state->pd[j].reg_value = (~0UL) - (unsigned long) threshold + 1;
-      this_state->pd[j].reg_short_reset = (~0UL)-(unsigned long) threshold+1;
-      this_state->pd[j].reg_long_reset = (~0UL) - (unsigned long) threshold + 1;
-
-      _papi_hwi_lock(INTERNAL_LOCK);
-      _papi_hwi_using_signal++;
-      _papi_hwi_unlock(INTERNAL_LOCK);
-   }
+     }
    return (retval);
 }
 int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)

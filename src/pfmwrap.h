@@ -488,7 +488,7 @@ hweight64 (unsigned long x)
 #error "you need to provide inline assembly from your compiler"
 #endif
 
-   #define OVFL_SIGNAL SIGIO
+   #define OVFL_SIGNAL SIGPROF
    #define PFMW_PEVT_EVTCOUNT(evt)          (evt->inp.pfp_event_count)
    #define PFMW_PEVT_EVENT(evt,idx)         (evt->inp.pfp_events[idx].event)
    #define PFMW_PEVT_PLM(evt,idx)           (evt->inp.pfp_events[idx].plm)
@@ -604,7 +604,7 @@ hweight64 (unsigned long x)
          return(PAPI_ESYS);
       }
 
-      ret = fcntl(ctx->fd, F_SETSIG, SIGIO);
+      ret = fcntl(ctx->fd, F_SETSIG, _papi_hwi_system_info.sub_info.hardware_intr_sig);
       if (ret == -1) {
          PAPIERROR("fcntl(%d,F_SETSIG) errno %d", ctx->fd, errno);
         return(PAPI_ESYS);
