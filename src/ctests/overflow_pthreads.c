@@ -154,8 +154,8 @@ int main(int argc, char **argv)
        printf("Received total overflows: %lld\n",r);
    }
 
-//   ratio = (float)total[0] / (float)expected[0];
-//   printf("Ratio of total to expected: %f\n",ratio);
+/*   ratio = (float)total[0] / (float)expected[0]; */
+/*   printf("Ratio of total to expected: %f\n",ratio); */
    ratio = 1.0;
    for (i=0;i<NUM_THREADS;i++)
    {
