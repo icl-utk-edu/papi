@@ -1482,6 +1482,9 @@ static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
   ctx.ucontext = sc;
   address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
   
+#ifdef ALTIX
+  if (thread && (thread->running_eventset != NULL))
+#endif
   if (thread->running_eventset->overflow.flags & PAPI_OVERFLOW_FORCE_SW) {
     _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 
 				       0, 0, &thread);
