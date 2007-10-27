@@ -39,6 +39,10 @@ ifeq ($(ARCH),x86_64)
 DIRS +=x86
 endif
 
+ifeq ($(CONFIG_PFMLIB_ARCH_CRAYXT),y)
+CFLAGS += -DCONFIG_PFMLIB_ARCH_CRAYXT
+endif
+
 CFLAGS+= -pthread -D_GNU_SOURCE -I$(PFMINCDIR)
 LIBS += -lm
 
