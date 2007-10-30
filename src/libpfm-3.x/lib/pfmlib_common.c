@@ -345,7 +345,8 @@ found:
 int
 pfm_find_event_mask(unsigned int ev, const char *str, unsigned int *mask_idx)
 {
-	unsigned int i, num_masks = 0;
+	unsigned int i, c, num_masks = 0;
+	unsigned long mask_val = -1;
 
 	if (PFMLIB_INITIALIZED() == 0)
 		return PFMLIB_ERR_NOINIT;
@@ -358,6 +359,17 @@ pfm_find_event_mask(unsigned int ev, const char *str, unsigned int *mask_idx)
 		if (!strcasecmp(pfm_current->get_event_mask_name(ev, i), str)) {
 			*mask_idx = i;
 			return PFMLIB_SUCCESS;
+		}
+	}
+	/* don't give up yet; check for a valid hex value */
+	mask_val = strtoul(str, NULL, 16);
+	if (mask_val >= 0) {
+		for (i = 0; i < num_masks; i++) {
+			pfm_current->get_event_mask_code(ev, i, &c);
+			if (mask_val == c) {
+				*mask_idx = i;
+				return PFMLIB_SUCCESS;
+			}
 		}
 	}
 	return PFMLIB_ERR_UMASK;
