@@ -3256,6 +3256,7 @@ process_smpl_buf(int num_smpl_pmds, int entry_size, ThreadInfo_t **thr)
       if (ret != PAPI_OK)
 	return(ret);
 
+#warning "This should be handled in the high level layers"
       (*thr)->running_eventset->profile.overflowcount++;
 
       weight = process_smpl_entry(native_pfm_index,flags,&ent,&pc);
@@ -3360,18 +3361,20 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
       i = close(ctl->ctx_fd);
       SUBDBG("CLOSE fd %d returned %d\n",ctl->ctx_fd,i);
 
+      /* Thread has master context */
+
       ctl->ctx_fd = ctx->ctx_fd;
       ctl->ctx = &ctx->ctx;
       memset(&ctx->smpl,0,sizeof(buf_arg));
       ctx->smpl_buf = NULL;
 
-      _papi_hwd_set_overflow(ESI,EventIndex,threshold);
+      ret = _papi_hwd_set_overflow(ESI,EventIndex,threshold);
 
       ESI->state &= ~(PAPI_OVERFLOWING);
       ESI->overflow.flags &= ~(PAPI_OVERFLOW_HARDWARE);
       ESI->profile.overflowcount = 0;
 
-      return(PAPI_OK);
+      return(ret);
     }
 
   memset(&buf_arg, 0, sizeof(buf_arg));
@@ -3433,10 +3436,6 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
       setup_ear_event(native_index,&pd[pos],ESI->profile.flags);
     }
 
-  /* Now close our context it is safe */
-
-  // close(ctx->ctx_fd);
-
   /* Copy the new data to the threads context control block */
 
   ctl->ctx_fd = ctx_fd;
@@ -3444,9 +3443,12 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
   ctx->smpl_buf = buf_addr;
 
   /* We need overflowing because we use the overflow dispatch handler */
-  
+
+#warning "This should be handled in the high level layers"
+
   ESI->state |= PAPI_OVERFLOWING;
   ESI->overflow.flags |= PAPI_OVERFLOW_HARDWARE;
+  ESI->profile.overflowcount = 0;
 
   return(PAPI_OK);
 }
@@ -3516,9 +3518,9 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
        
        /* Set the overflow period */
 
-       this_state->pd[j].reg_value = - (unsigned long long) threshold;
-       this_state->pd[j].reg_short_reset = - (unsigned long long) threshold;
-       this_state->pd[j].reg_long_reset = - (unsigned long long) threshold;
+       this_state->pd[j].reg_value = - (unsigned long long) threshold + 1;
+       this_state->pd[j].reg_short_reset = - (unsigned long long) threshold + 1;
+       this_state->pd[j].reg_long_reset = - (unsigned long long) threshold + 1;
      }
    return (retval);
 }
