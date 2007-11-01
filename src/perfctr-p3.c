@@ -43,19 +43,19 @@ extern papi_mdi_t _papi_hwi_system_info;
 void print_control(const struct perfctr_cpu_control *control) {
   unsigned int i;
 
-   SUBDBG("Control used:\n");
-   SUBDBG("tsc_on\t\t\t%u\n", control->tsc_on);
-   SUBDBG("nractrs\t\t\t%u\n", control->nractrs);
-   SUBDBG("nrictrs\t\t\t%u\n", control->nrictrs);
+   printf("Control used:\n");
+   printf("tsc_on\t\t\t%u\n", control->tsc_on);
+   printf("nractrs\t\t\t%u\n", control->nractrs);
+   printf("nrictrs\t\t\t%u\n", control->nrictrs);
    for (i = 0; i < (control->nractrs + control->nrictrs); ++i) {
       if (control->pmc_map[i] >= 18) {
-         SUBDBG("pmc_map[%u]\t\t0x%08X\n", i, control->pmc_map[i]);
+         printf("pmc_map[%u]\t\t0x%08X\n", i, control->pmc_map[i]);
       } else {
-         SUBDBG("pmc_map[%u]\t\t%u\n", i, control->pmc_map[i]);
+         printf("pmc_map[%u]\t\t%u\n", i, control->pmc_map[i]);
       }
-      SUBDBG("evntsel[%u]\t\t0x%08X\n", i, control->evntsel[i]);
+      printf("evntsel[%u]\t\t0x%08X\n", i, control->evntsel[i]);
       if (control->ireset[i])
-         SUBDBG("ireset[%u]\t%d\n", i, control->ireset[i]);
+         printf("ireset[%u]\t%d\n", i, control->ireset[i]);
    }
 }
 #endif
@@ -217,6 +217,10 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
 
       /* make sure register allocator only looks at legal registers */
       event_list[i].ra_selector = event_list[i].ra_bits.selector & ALLCNTRS;
+#ifdef PERFCTR_X86_INTEL_CORE2
+      event_list[i].ra_selector |= ((event_list[i].ra_bits.selector>>16)<<2) & ALLCNTRS;
+#endif
+
 
       /* calculate native event rank, which is no. of counters it can live on */
       event_list[i].ra_rank = 0;
@@ -228,6 +232,9 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
    }
    if(_papi_hwi_bipartite_alloc(event_list, natNum)) { /* successfully mapped */
       for(i = 0; i < natNum; i++) {
+#ifdef PERFCTR_X86_INTEL_CORE2
+         event_list[i].ra_bits.selector = event_list[i].ra_selector;
+#endif
          /* Copy all info about this native event to the NativeInfo struct */
          ESI->NativeInfoArray[i].ni_bits = event_list[i].ra_bits;
          /* Array order on perfctr is event ADD order, not counter #... */
@@ -263,13 +270,24 @@ static void clear_cs_events(hwd_control_state_t *this_state) {
    in the native info structure array. */
 int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
                                    NativeInfo_t *native, int count, hwd_context_t * ctx) {
-   int i;
+   int i, k;
 
    /* clear out the events from the control state */
    clear_cs_events(this_state);
 
    /* fill the counters we're using */
    for (i = 0; i < count; i++) {
+      for(k=0;k<MAX_COUNTERS;k++)
+         if(native[i].ni_bits.selector & (1 << k)) {
+            break;
+         }
+#ifdef PERFCTR_X86_INTEL_CORE2
+      if(k>1)
+        this_state->control.cpu_control.pmc_map[i] = (k-2) | 0x40000000;
+      else
+#endif
+        this_state->control.cpu_control.pmc_map[i] = k;
+
       /* Add counter control command values to eventset */
       this_state->control.cpu_control.evntsel[i] |= native[i].ni_bits.counter_cmd;
    }
@@ -283,6 +301,7 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * state) {
 #ifdef DEBUG
    print_control(&state->control.cpu_control);
 #endif
+
    if (state->rvperfctr != NULL) 
      {
        if((error = rvperfctr_control(state->rvperfctr, &state->control)) < 0) 

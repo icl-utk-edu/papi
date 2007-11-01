@@ -68,7 +68,7 @@
 #define PAPI_NATIVE_UMASK_AND_MASK 0x0ffff000 /* 16 bits for unit masks */
 #define PAPI_NATIVE_UMASK_SHIFT 12
 
-#define PERF_MAX_COUNTERS 4
+#define PERF_MAX_COUNTERS 5
 #define MAX_COUNTERS PERF_MAX_COUNTERS
 #define MAX_COUNTER_TERMS  MAX_COUNTERS
 #define P3_MAX_REGS_PER_EVENT 2
@@ -183,8 +183,9 @@ typedef P3_perfctr_context_t hwd_context_t;
 #define CNTR2 0x2
 #define CNTR3 0x4
 #define CNTR4 0x8
+#define CNTR5 0x10
 #define CNTRS12 (CNTR1|CNTR2)
-#define ALLCNTRS (CNTR1|CNTR2|CNTR3|CNTR4)
+#define ALLCNTRS (CNTR1|CNTR2|CNTR3|CNTR4|CNTR5)
 
 #define HAS_MESI	  0x0100 /* indicates this event supports MESI modifiers */ 
 #define HAS_MOESI	  0x0200 /* indicates this event supports MOESI modifiers */
