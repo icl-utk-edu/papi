@@ -14,7 +14,9 @@ SERIAL  = hwinfo code2name reset subinfo realtime virttime first exeinfo \
 	overflow_twoevents timer_overflow overflow2 \
 	matrix-hl tenth encode encode2 \
 	profile profile_force_software sprofile profile_twoevents byte_profile\
-	ipc native overflow_index overflow_one_and_read fork exec forkexec forkexec2
+	ipc native overflow_index overflow_one_and_read fork exec forkexec forkexec2\
+        overflow_allcounters
+
 ATTACH	= multiattach zero_attach
 P4_TEST	= p4_lst_ins
 ACPI	= acpi 
@@ -201,6 +203,9 @@ ipc: ipc.c $(UTILOBJS) $(PAPILIB)
 
 overflow: overflow.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) overflow.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o overflow
+
+overflow_allcounters: overflow_allcounters.c $(UTILOBJS) $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) overflow_allcounters.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o overflow_allcounters
 
 overflow_twoevents: overflow_twoevents.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) overflow_twoevents.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o overflow_twoevents

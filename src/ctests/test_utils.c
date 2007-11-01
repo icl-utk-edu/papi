@@ -642,3 +642,37 @@ int add_two_nonderived_events(int *num_events, int *papi_event,
   }
    return(EventSet);
 }
+
+/* add native events to use all counters */
+int add_full_native_events(int *num_events, int **evtcodes)
+{
+  /* query and set up the right event to monitor */
+  int EventSet = PAPI_NULL;
+  int i = 0, evtcode, retval;
+  unsigned int counters, event_found = 0;
+  
+  counters = (unsigned int)PAPI_num_hwctrs();
+  (*evtcodes) = (int *)calloc(counters, sizeof(int));
+
+  retval = PAPI_create_eventset(&EventSet);
+  if (retval != PAPI_OK)
+    test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
+
+  while (event_found<counters) {
+    evtcode = i | PAPI_NATIVE_MASK;
+    retval = PAPI_add_event(EventSet, evtcode);
+    if (retval == PAPI_OK){
+      (*evtcodes)[event_found] = evtcode;
+printf("%p %p\n", evtcodes, (*evtcodes)[event_found]);
+      event_found ++;
+    }
+    else {
+      if (!TESTS_QUIET)
+        fprintf(stdout, "%p is not available.\n", evtcode);
+    }
+    i++;
+  }
+
+  *num_events = event_found;
+  return(EventSet);
+}
