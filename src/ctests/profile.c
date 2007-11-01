@@ -126,11 +126,19 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
       if (!TESTS_QUIET)
          printf("Test type   : \t%s\n", profstr[i]);
 
+#ifndef SWPROFILE
       if ((retval = PAPI_profil(profbuf[i], blength, start, scale,
                               EventSet, PAPI_event, thresh,
                               profflags[i] | bucket)) != PAPI_OK) {
          test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
       }
+#else
+      if ((retval = PAPI_profil(profbuf[i], blength, start, scale,
+                              EventSet, PAPI_event, thresh,
+                              profflags[i] | bucket | PAPI_PROFIL_FORCE_SW)) != PAPI_OK) {
+         test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
+      }
+#endif
       if ((retval = PAPI_start(EventSet)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 

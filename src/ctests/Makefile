@@ -13,7 +13,7 @@ SERIAL  = hwinfo code2name reset subinfo realtime virttime first exeinfo \
 	overflow overflow_force_software overflow_single_event \
 	overflow_twoevents timer_overflow overflow2 \
 	matrix-hl tenth encode encode2 \
-	profile sprofile profile_twoevents byte_profile\
+	profile profile_force_software sprofile profile_twoevents byte_profile\
 	ipc native overflow_index overflow_one_and_read fork exec forkexec forkexec2
 ATTACH	= multiattach zero_attach
 P4_TEST	= p4_lst_ins
@@ -228,6 +228,9 @@ sprofile: sprofile.c $(UTILOBJS) prof_utils.o $(PAPILIB)
 
 profile: profile.c $(UTILOBJS) prof_utils.o $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) profile.c prof_utils.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile
+
+profile_force_software: profile.c $(UTILOBJS) prof_utils.o $(PAPILIB)
+	$(CC) -DSWPROFILE $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) profile.c prof_utils.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile_force_software
 
 profile_twoevents: profile_twoevents.c $(UTILOBJS) prof_utils.o $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) profile_twoevents.c prof_utils.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile_twoevents
