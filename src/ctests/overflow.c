@@ -173,6 +173,7 @@ int main(int argc, char **argv)
 
    min = (long_long) (((values[0])[0] * (1.0 - OVR_TOLERANCE)) / (long_long) mythreshold);
    max = (long_long) (((values[0])[0] * (1.0 + OVR_TOLERANCE)) / (long_long) mythreshold);
+   printf("Overflows: total(%d) > max(%lld) || total(%d) < min(%lld) ", total, max, total, min);
    if (total > max || total < min)
       test_fail(__FILE__, __LINE__, "Overflows", 1);
 
