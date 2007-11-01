@@ -663,7 +663,6 @@ int add_full_native_events(int *num_events, int **evtcodes)
     retval = PAPI_add_event(EventSet, evtcode);
     if (retval == PAPI_OK){
       (*evtcodes)[event_found] = evtcode;
-printf("%p %p\n", evtcodes, (*evtcodes)[event_found]);
       event_found ++;
     }
     else {
