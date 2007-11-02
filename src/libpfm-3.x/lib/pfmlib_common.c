@@ -362,7 +362,7 @@ pfm_find_event_mask(unsigned int ev, const char *str, unsigned int *mask_idx)
 		}
 	}
 	/* don't give up yet; check for a valid hex value */
-	mask_val = strtoul(str, NULL, 16);
+	mask_val = strtoul(str, NULL, 0);
 	if (mask_val >= 0) {
 		for (i = 0; i < num_masks; i++) {
 			pfm_current->get_event_mask_code(ev, i, &c);
@@ -372,6 +372,38 @@ pfm_find_event_mask(unsigned int ev, const char *str, unsigned int *mask_idx)
 			}
 		}
 	}
+	return PFMLIB_ERR_UMASK;
+}
+
+static int
+pfm_decode_hex_mask(pfmlib_event_t *e, const char *str)
+{
+	unsigned int i, j, c, m, num_masks = 0;
+	unsigned long mask_val = -1;
+
+	if (PFMLIB_INITIALIZED() == 0)
+		return PFMLIB_ERR_NOINIT;
+
+	if (str == NULL || e == NULL)
+		return PFMLIB_ERR_INVAL;
+
+	num_masks = pfm_num_masks(e->event);
+	mask_val = strtoul(str, NULL, 0);
+	if (mask_val >= 0) {
+		for (i = 0, j = 0, m = 0; i < num_masks; i++) {
+			pfm_current->get_event_mask_code(e->event, i, &c);
+			if ((mask_val & c) == c) {
+				e->unit_masks[j++] = i;
+				e->num_masks++;
+				m |= c;
+			}
+		}
+	}
+	if (mask_val == m) return PFMLIB_SUCCESS; /* all bits accounted for */
+	/* extra bits left over; reset and flag error */
+	for (i = 0; i < e->num_masks; i++)
+		e->unit_masks[j++] = 0;
+	e->num_masks = 0;
 	return PFMLIB_ERR_UMASK;
 }
 
@@ -926,6 +958,12 @@ pfm_find_full_event(const char *v, pfmlib_event_t *e)
 			*q++ = '\0';
 
 		ret = pfm_find_event_mask(e->event, p, &mask);
+		/* if no match and first unit mask, check for hex code */
+		if (ret == PFMLIB_ERR_UMASK && e->num_masks == 0)
+		{
+			ret = pfm_decode_hex_mask(e, p);
+			break;
+		}
 		if (ret != PFMLIB_SUCCESS)
 			break;
 
