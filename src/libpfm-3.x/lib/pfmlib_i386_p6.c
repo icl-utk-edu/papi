@@ -112,6 +112,7 @@ pfm_i386_p6_detect(void)
 	model = atoi(buffer);
 
 	switch(model) {
+		case 1: /* Pentium Pro */
                 case 3: /* Pentium II */
                 case 5: /* Pentium II Deschutes */
 		case 7: /* Pentium III Katmai */

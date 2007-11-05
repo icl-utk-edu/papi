@@ -24,6 +24,13 @@
 
 #include <perfmon/pfmlib.h>
 
-/* Nothing to see here ... move along. */
+/*
+   This privilege level mapping derives from from PAPI's perfmon.c's set_domain
+   function:
+   PFM_PLM0 = Kernel -> POWER supervisor state
+   PFM_PLM1 = Supervisor -> POWER hypervisor state
+   PFM_PLM2 = Other -> not supported
+   PFM_PLM3 = User -> POWER problem state
+*/ 
 
 #endif /* __PFMLIB_POWERPC_H__ */

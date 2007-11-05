@@ -97,6 +97,10 @@ ifeq ($(ARCH),crayx2)
 CONFIG_PFMLIB_ARCH_CRAYX2=y
 endif
 
+ifeq ($(ARCH),cell)
+CONFIG_PFMLIB_CELL=y
+endif
+
 #
 # optimization level
 #

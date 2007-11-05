@@ -69,7 +69,7 @@ endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_POWERPC),y)
 INCDEP := $(INCDEP) $(INC_POWERPC)
-SRCS   += pfmlib_powerpc.c
+SRCS   += pfmlib_gen_powerpc.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_POWERPC
 endif
 
@@ -83,14 +83,20 @@ ifeq ($(CONFIG_PFMLIB_ARCH_CRAYXT),y)
 CFLAGS += -DCONFIG_PFMLIB_ARCH_CRAYXT
 endif
 
+ifeq ($(CONFIG_PFMLIB_CELL),y)
+INCDEP := $(INCDEP) $(INC_CELL)
+SRCS   += pfmlib_cell.c
+CFLAGS += -DCONFIG_PFMLIB_CELL
+endif
+
 CFLAGS+=-I.
 ALIBPFM=libpfm.a
 
 ifneq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
-  ifneq ($(CC), qk-gcc)
-    SLIBPFM=libpfm.so.$(VERSION).$(REVISION).$(AGE)
-    VLIBPFM=libpfm.so.$(VERSION)
-  endif
+ifneq ($(CC),qk-gcc)
+SLIBPFM=libpfm.so.$(VERSION).$(REVISION).$(AGE)
+VLIBPFM=libpfm.so.$(VERSION)
+endif
 endif
 
 TARGETS=$(ALIBPFM) $(SLIBPFM)
@@ -124,11 +130,11 @@ install: $(TARGETS)
 	-mkdir -p $(DESTDIR)$(LIBDIR)
 	$(INSTALL) -m 644 $(ALIBPFM) $(DESTDIR)$(LIBDIR)
 ifneq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
-  ifneq ($(CC), qk-gcc)
+ifneq ($(CC),qk-gcc)
 	$(INSTALL) $(SLIBPFM) $(DESTDIR)$(LIBDIR)
 	cd $(DESTDIR)$(LIBDIR); $(LN) $(SLIBPFM) $(VLIBPFM)
 	cd $(DESTDIR)$(LIBDIR); $(LN) $(SLIBPFM) libpfm.so
-  endif
+endif
 endif
 
 INC_COMMON= $(PFMINCDIR)/perfmon/pfmlib.h \
@@ -174,10 +180,14 @@ INC_MIPS64= $(PFMINCDIR)/perfmon/pfmlib_gen_mips64.h \
   $(PFMINCDIR)/perfmon/pfmlib_os_mips64.h \
   gen_mips64_events.h
 
-INC_POWERPC= $(PFMINCDIR)/perfmon/pfmlib_powerpc.h \
+INC_POWERPC= $(PFMINCDIR)/perfmon/pfmlib_gen_powerpc.h \
   $(PFMINCDIR)/perfmon/pfmlib_comp_powerpc.h \
   $(PFMINCDIR)/perfmon/pfmlib_os_powerpc.h \
-  power_events.h
+  ppc970_events.h ppc970mp_events.h power4_events.h power4+_events.h \
+  power5_events.h power5+_events.h power6_events.h
 
 INC_CRAYX2= $(PFMINCIDR)/perfmon/pfmlib_crayx2.h \
   crayx2_events.h pfmlib_crayx2_priv.h
+
+INC_CELL= $(PFMINCDIR)/perfmon/pfmlib_cell.h \
+  cell_event.h

@@ -39,30 +39,15 @@
 #define PME_CRAYX2_CACHE_CHIPS 1
 #define PME_CRAYX2_MEMORY_CHIPS 16
 
-/*	Number of events per physical counter.
- */
-#define PME_CRAYX2_EVENTS_PER_COUNTER 4
-
 /*	Number of counters per chip (CPU, L2 Cache, Memory)
  */
 #define PME_CRAYX2_CPU_CTRS_PER_CHIP PFM_CPU_PMD_COUNT
 #define PME_CRAYX2_CACHE_CTRS_PER_CHIP PFM_CACHE_PMD_PER_CHIP
 #define PME_CRAYX2_MEMORY_CTRS_PER_CHIP PFM_MEM_PMD_PER_CHIP
 
-/*	Number of events per chip (CPU, L2 Cache, Memory)
-*/
-#define PME_CRAYX2_CPU_EVENTS \
-	(PME_CRAYX2_CPU_CTRS_PER_CHIP*PME_CRAYX2_EVENTS_PER_COUNTER)
-#define PME_CRAYX2_CACHE_EVENTS \
-	(PME_CRAYX2_CACHE_CTRS_PER_CHIP*PME_CRAYX2_EVENTS_PER_COUNTER)
-#define PME_CRAYX2_MEMORY_EVENTS \
-	(PME_CRAYX2_MEMORY_CTRS_PER_CHIP*PME_CRAYX2_EVENTS_PER_COUNTER)
-
-/*	Total number of events available by name.
+/*	Maximum number of unit masks. Use to identify the M chip
+ *	upon which the event resides.
  */
-#define PME_CRAYX2_EVENT_COUNT \
-	(PME_CRAYX2_CPU_EVENTS + PME_CRAYX2_CACHE_EVENTS + PME_CRAYX2_MEMORY_EVENTS)
-
 #define PFMLIB_CRAYX2_MAX_UMASK 16
 
 /*	This unit masks are actually the chip number for which the

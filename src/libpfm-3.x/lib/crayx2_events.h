@@ -5849,4 +5849,6 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 
 #define PME_CRAYX2_INSTR_GRADUATED 4
 
+#define PME_CRAYX2_EVENT_COUNT (sizeof(crayx2_pe)/sizeof(pme_crayx2_entry_t))
+
 #endif /* __CRAYX2_EVENTS_H__ */

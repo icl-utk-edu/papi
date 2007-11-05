@@ -431,11 +431,11 @@ main(int argc, char **argv)
 	 * Let's roll now
 	 */
 
-	pfm_self_start(ctx_fd);
+	pfm_start(ctx_fd, NULL);
 
 	busyloop();
 
-	pfm_self_stop(ctx_fd);
+	pfm_stop(ctx_fd);
 
 	close(ctx_fd);
 

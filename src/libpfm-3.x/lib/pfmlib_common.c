@@ -66,11 +66,15 @@ static pfm_pmu_support_t *supported_pmus[]=
 #endif
 
 #ifdef CONFIG_PFMLIB_ARCH_POWERPC
-	&generic_powerpc_support,
+	&gen_powerpc_support,
 #endif
 
 #ifdef CONFIG_PFMLIB_ARCH_CRAYX2
 	&crayx2_support,
+#endif
+
+#ifdef CONFIG_PFMLIB_CELL
+	&cell_support,
 #endif
 	NULL
 };
@@ -342,17 +346,12 @@ found:
 	return PFMLIB_SUCCESS;
 }
 
-int
-pfm_find_event_mask(unsigned int ev, const char *str, unsigned int *mask_idx)
+static int
+pfm_do_find_event_mask(unsigned int ev, const char *str, unsigned int *mask_idx)
 {
 	unsigned int i, c, num_masks = 0;
 	unsigned long mask_val = -1;
-
-	if (PFMLIB_INITIALIZED() == 0)
-		return PFMLIB_ERR_NOINIT;
-
-	if (str == NULL || mask_idx == NULL || ev >= pfm_current->pme_count)
-		return PFMLIB_ERR_INVAL;
+	char *endptr = NULL;
 
 	num_masks = pfm_num_masks(ev);
 	for (i = 0; i < num_masks; i++) {
@@ -361,9 +360,9 @@ pfm_find_event_mask(unsigned int ev, const char *str, unsigned int *mask_idx)
 			return PFMLIB_SUCCESS;
 		}
 	}
-	/* don't give up yet; check for a valid hex value */
-	mask_val = strtoul(str, NULL, 0);
-	if (mask_val >= 0) {
+	/* don't give up yet; check for a exact numerical value */
+	mask_val = strtoul(str, &endptr, 0);
+	if (mask_val != ULONG_MAX && endptr && *endptr == '\0') {
 		for (i = 0; i < num_masks; i++) {
 			pfm_current->get_event_mask_code(ev, i, &c);
 			if (mask_val == c) {
@@ -375,36 +374,91 @@ pfm_find_event_mask(unsigned int ev, const char *str, unsigned int *mask_idx)
 	return PFMLIB_ERR_UMASK;
 }
 
-static int
-pfm_decode_hex_mask(pfmlib_event_t *e, const char *str)
+int
+pfm_find_event_mask(unsigned int ev, const char *str, unsigned int *mask_idx)
 {
-	unsigned int i, j, c, m, num_masks = 0;
-	unsigned long mask_val = -1;
-
 	if (PFMLIB_INITIALIZED() == 0)
 		return PFMLIB_ERR_NOINIT;
 
-	if (str == NULL || e == NULL)
+	if (str == NULL || mask_idx == NULL || ev >= pfm_current->pme_count)
 		return PFMLIB_ERR_INVAL;
 
+	return pfm_do_find_event_mask(ev, str, mask_idx);
+}
+
+/*
+ * check if unit mask is not already present
+ */
+static inline int
+pfm_check_duplicates(pfmlib_event_t *e, unsigned int u)
+{
+	unsigned int j;
+
+	for(j=0; j < e->num_masks; j++) {
+		if (e->unit_masks[j] == u)
+			return PFMLIB_ERR_UMASK;
+	}
+	return PFMLIB_SUCCESS;
+}
+
+static int
+pfm_add_numeric_masks(pfmlib_event_t *e, const char *str)
+{
+	unsigned int i, j, c;
+	unsigned int num_masks = 0;
+	unsigned long mask_val = -1, m = 0;
+	char *endptr = NULL;
+	int ret = PFMLIB_ERR_UMASK;
+
 	num_masks = pfm_num_masks(e->event);
-	mask_val = strtoul(str, NULL, 0);
-	if (mask_val >= 0) {
-		for (i = 0, j = 0, m = 0; i < num_masks; i++) {
-			pfm_current->get_event_mask_code(e->event, i, &c);
-			if ((mask_val & c) == c) {
+
+	/*
+	 * add to the existing list of unit masks
+	 */
+	j = e->num_masks;
+
+	/*
+	 * use unsigned long to benefit from radix wildcard
+	 * and error checking of strtoul()
+	 */
+	mask_val = strtoul(str, &endptr, 0);
+	if (endptr && *endptr != '\0')
+		return PFMLIB_ERR_UMASK;
+
+	/*
+	 * look for a numerical match
+	 */
+	for (i = 0; i < num_masks; i++) {
+		pfm_current->get_event_mask_code(e->event, i, &c);
+		if ((mask_val & c) == (unsigned long)c) {
+			/* ignore duplicates */
+			if (pfm_check_duplicates(e, i) == PFMLIB_SUCCESS) {
+				if (j == PFMLIB_MAX_MASKS_PER_EVENT) {
+					ret = PFMLIB_ERR_TOOMANY;
+					break;
+				}
 				e->unit_masks[j++] = i;
-				e->num_masks++;
-				m |= c;
 			}
+			m |= c;
 		}
 	}
-	if (mask_val == m) return PFMLIB_SUCCESS; /* all bits accounted for */
-	/* extra bits left over; reset and flag error */
-	for (i = 0; i < e->num_masks; i++)
-		e->unit_masks[j++] = 0;
-	e->num_masks = 0;
-	return PFMLIB_ERR_UMASK;
+
+	/*
+	 * all bits accounted for
+	 */
+	if (mask_val == m) {
+		e->num_masks = j;
+		return PFMLIB_SUCCESS;
+	}
+
+	/*
+	 * extra bits left over;
+	 * reset and flag error
+	 */
+	for (i = e->num_masks; i < j; i++)
+		e->unit_masks[i] = 0;
+
+	return ret;
 }
 
 int
@@ -889,7 +943,7 @@ pfm_get_full_event_name(pfmlib_event_t *e, char *name, size_t maxlen)
 	l = strlen(name);
 	for(j=0; j < l; j++)
 		if (islower(name[j]))
-				name[j] = (char)toupper(name[j]);
+			name[j] = (char)toupper(name[j]);
 	return PFMLIB_SUCCESS;
 }
 	
@@ -934,7 +988,7 @@ pfm_find_full_event(const char *v, pfmlib_event_t *e)
 
 	/*
 	 * error if:
-	 * 	- event has unit masks and non is passed
+	 * 	- event has unit masks and none is passed
 	 * 	- event has no unit mask and at least one is passed
 	 */
 	if ((!p && j) || (p && !j)) {
@@ -950,29 +1004,34 @@ pfm_find_full_event(const char *v, pfmlib_event_t *e)
 		return PFMLIB_SUCCESS;
 	}
 
+	/* skip : */
 	p++;
 
+	/* parse unit masks */
 	for( q = p; q ; p = q) {
+
 		q = strchr(p,':');
 		if (q)
 			*q++ = '\0';
 
-		ret = pfm_find_event_mask(e->event, p, &mask);
-		/* if no match and first unit mask, check for hex code */
-		if (ret == PFMLIB_ERR_UMASK && e->num_masks == 0)
-		{
-			ret = pfm_decode_hex_mask(e, p);
-			break;
-		}
-		if (ret != PFMLIB_SUCCESS)
-			break;
-
-		/* avoid duplicates */
-		for(j=0; j < e->num_masks; j++)
-			if (e->unit_masks[j] == mask)
+		/*
+		 * text or exact unit mask value match
+		 */
+		ret = pfm_do_find_event_mask(e->event, p, &mask);
+		if (ret == PFMLIB_ERR_UMASK) {
+			ret = pfm_add_numeric_masks(e, p);
+			if (ret != PFMLIB_SUCCESS)
 				break;
+		} else if (ret == PFMLIB_SUCCESS) {
+			/*
+			 * ignore duplicates
+			 */
+			ret = pfm_check_duplicates(e, mask);
+			if (ret != PFMLIB_SUCCESS) {
+				ret = PFMLIB_SUCCESS;
+				continue;
+			}
 
-		if (j == e->num_masks) {
 			if (e->num_masks == PFMLIB_MAX_MASKS_PER_EVENT) {
 				ret = PFMLIB_ERR_TOOMANY;
 				break;

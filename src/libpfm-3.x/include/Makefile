@@ -48,7 +48,8 @@ HEADERS += perfmon/pfmlib_os_x86_64.h   \
 	   perfmon/pfmlib_comp_x86_64.h \
 	   perfmon/perfmon_x86_64.h     \
 	   perfmon/perfmon_i386.h       \
-	   perfmon/perfmon_pebs_smpl.h  \
+	   perfmon/perfmon_pebs_p4_smpl.h  \
+	   perfmon/perfmon_pebs_core_smpl.h  \
 	   perfmon/pfmlib_amd64.h	\
 	   perfmon/pfmlib_pentium4.h	\
 	   perfmon/pfmlib_core.h	\
@@ -60,7 +61,8 @@ ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
 HEADERS += perfmon/pfmlib_os_i386.h   	\
 	   perfmon/pfmlib_comp_i386.h 	\
 	   perfmon/perfmon_i386.h     	\
-	   perfmon/perfmon_pebs_smpl.h	\
+	   perfmon/perfmon_pebs_p4_smpl.h	\
+	   perfmon/perfmon_pebs_core_smpl.h	\
 	   perfmon/pfmlib_amd64.h       \
 	   perfmon/pfmlib_pentium4.h    \
 	   perfmon/pfmlib_core.h        \
@@ -88,6 +90,13 @@ HEADERS += perfmon/pfmlib_os_crayx2.h   \
 	   perfmon/pfmlib_comp_crayx2.h \
 	   perfmon/perfmon_crayx2.h     \
 	   perfmon/pfmlib_crayx2.h
+endif
+
+ifeq ($(CONFIG_PFMLIB_CELL),y)
+HEADERS += perfmon/pfmlib_cell.h	 \
+	   perfmon/pfmlib_comp_powerpc.h \
+	   perfmon/pfmlib_os_powerpc.h \
+	   perfmon/perfmon_powerpc.h
 endif
 
 .PHONY: all clean distclean depend

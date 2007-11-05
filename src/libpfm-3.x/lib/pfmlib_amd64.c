@@ -128,15 +128,15 @@ pfm_amd64_detect(void)
 		return PFMLIB_ERR_NOTSUPP;
 
 	cpuid(1, &a, &b, &c, &d);
-	family = (a >> 8) & 0x0000000F;  // bits 11 - 8
-	model  = (a >> 4) & 0x0000000F;  // Bits  7 - 4
+	family = (a >> 8) & 0x0000000f;  // bits 11 - 8
+	model  = (a >> 4) & 0x0000000f;  // Bits  7 - 4
 	if (family == 0xf) {
-		family += (a >> 20) & 0x000000FF; // Extended family
-		model  |= (a >> 12) & 0x000000F0; // Extended model
+		family += (a >> 20) & 0x000000ff; // Extended family
+		model  |= (a >> 12) & 0x000000f0; // Extended model
 	}
-	stepping=(a)      & 0x0000000F;  // bits  3 - 0
+	stepping= a & 0x0000000f;  // bits  3 - 0
 
-	if (family != 15)
+	if (family != 15 && family != 16)
 		return PFMLIB_ERR_NOTSUPP;
 
 	amd64_revision = amd64_get_revision(model, stepping);

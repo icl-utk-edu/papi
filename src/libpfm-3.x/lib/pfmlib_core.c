@@ -190,8 +190,8 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 	uint64_t val;
 	unsigned long plm;
 	unsigned long long fixed_ctr;
-	unsigned int npc = 0, npmc0 = 0;
-	unsigned int i, j, n, k, umask;
+	unsigned int npc = 0, npmc0 = 0, npmc1 = 0;
+	unsigned int i, j, n, k, umask, use_pebs = 0, done_pebs;
 	unsigned int assign_pc[PMU_CORE_NUM_COUNTERS];
 	unsigned int next_gen, last_gen;
 
@@ -201,6 +201,7 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 	n      = inp->pfp_event_count;
 	r_pmcs = &inp->pfp_unavail_pmcs;
 	cntrs  = param ? param->pfp_core_counters : NULL;
+	use_pebs = param ? param->pfp_core_pebs.pebs_used : 0;
 
 	if (n > PMU_CORE_NUM_COUNTERS)
 		return PFMLIB_ERR_TOOMANY;
@@ -230,9 +231,18 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 		/*
 		 * check if PMC0 is available and if only one event is dependent on it
 		 */
-		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_PMC0) {
-			if (++npmc0) {
-				DPRINT(("two events compete for a counter\n"));
+		if (core_pe[e[j].event].pme_flags & PFMLIB_CORE_PMC0) {
+			if (++npmc0 > 1) {
+				DPRINT(("two events compete for a PMC0\n"));
+				return PFMLIB_ERR_NOASSIGN;
+			}
+		}
+		/*
+		 * check if PMC1 is available and if only one event is dependent on it
+		 */
+		if (core_pe[e[j].event].pme_flags & PFMLIB_CORE_PMC1) {
+			if (++npmc1 > 1) {
+				DPRINT(("two events compete for a PMC1\n"));
 				return PFMLIB_ERR_NOASSIGN;
 			}
 		}
@@ -242,24 +252,44 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 	last_gen = 1; /* last generic counter */
 
 	/*
-	 * strongest constraint first: works only in IA32_PMC0
+	 * strongest constraint first: works only in IA32_PMC0 or IA32_PMC1
+	 *
+	 * When PEBS is used, we pick the first PEBS event and
+	 * place it into PMC0. Subsequent PEBS events, will go
+	 * in the other counters.
 	 */
+	done_pebs = 0;
 	for(i=0; i < n; i++) {
-		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_PMC0) {
+		if ((core_pe[e[i].event].pme_flags & PFMLIB_CORE_PMC0)
+		    || (use_pebs && pfm_core_is_pebs(e+i) && done_pebs == 0)) {
 			if (pfm_regmask_isset(r_pmcs, 0))
 				return PFMLIB_ERR_NOASSIGN;
 			assign_pc[i] = 0;
+			next_gen++;
+			done_pebs = 1;
+		}
+		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_PMC1) {
+			if (pfm_regmask_isset(r_pmcs, 1))
+				return PFMLIB_ERR_NOASSIGN;
+			assign_pc[i] = 1;
 			next_gen++;
 		}
 	}
 	/*
 	 * next constraint: fixed counters
+	 *
+	 * We abuse the mapping here fore assign_pc to make it easier
+	 * to provide the correct values for pd[].
+	 * We use:
+	 * 	- 16 : fixed counter 0 (pmc16, pmd16)
+	 * 	- 17 : fixed counter 1 (pmc16, pmd17)
+	 * 	- 18 : fixed counter 1 (pmc16, pmd18)
 	 */
 	fixed_ctr = pfm_regmask_isset(r_pmcs, 16) ? 0 : 0x7;
 	if (fixed_ctr) {
 		for(i=0; i < n; i++) {
 			/* fixed counters do not support event options (filters) */
-			if (HAS_OPTIONS(i))
+			if (HAS_OPTIONS(i) || (use_pebs && pfm_core_is_pebs(e+i)))
 				continue;
 
 			if ((fixed_ctr & 0x1) && pfm_core_is_fixed(e+i, 0)) {
@@ -418,6 +448,29 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 
 		npc++;
 	}
+
+	/*
+	 * setup PEBS_ENABLE
+	 */
+	if (use_pebs && done_pebs) {
+		/*
+		 * check that PEBS_ENABLE is available
+		 */
+		if (pfm_regmask_isset(r_pmcs, 17))
+			return PFMLIB_ERR_NOASSIGN;
+		pc[npc].reg_num   = 17;
+		pc[npc].reg_value = 1ULL;
+		pc[npc].reg_addr  = 0x3f1; /* IA32_PEBS_ENABLE */
+
+		__pfm_vbprintf("[PEBS_ENABLE(pmc%u)=0x%"PRIx64" ena=%d]\n",
+				pc[npc].reg_num,
+				pc[npc].reg_value,
+				pc[npc].reg_value & 0x1ull);
+
+		npc++;
+
+	}
+
 	/* number of evtsel/ctr registers programmed */
 	outp->pfp_pmc_count = npc;
 	outp->pfp_pmd_count = n;
@@ -425,6 +478,7 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 	return PFMLIB_SUCCESS;
 }
 
+#if 0
 static int
 pfm_core_dispatch_pebs(pfmlib_input_param_t *inp, pfmlib_core_input_param_t *mod_in, pfmlib_output_param_t *outp)
 {
@@ -442,12 +496,6 @@ pfm_core_dispatch_pebs(pfmlib_input_param_t *inp, pfmlib_core_input_param_t *mod
 	r_pmcs = &inp->pfp_unavail_pmcs;
 
 	e = inp->pfp_events;
-	/*
-	 * sampling on only one event is required for PEBS
-	 */
-	if (inp->pfp_event_count != 1)
-		return PFMLIB_ERR_INVAL;
-
 	/*
 	 * check for valid flags
 	 */
@@ -546,6 +594,7 @@ pfm_core_dispatch_pebs(pfmlib_input_param_t *inp, pfmlib_core_input_param_t *mod
 
 	return PFMLIB_SUCCESS;
 }
+#endif
 
 static int
 pfm_core_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_output_param_t *outp, void *model_out)
@@ -556,14 +605,6 @@ pfm_core_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_outpu
 		DPRINT(("invalid plm=%x\n", inp->pfp_dfl_plm));
 		return PFMLIB_ERR_INVAL;
 	}
-
-	/*
-	 * with PEBS, only one event is supported so we can use a
-	 * vastly simplified assignment routine. 
-	 */
-	if (mod_in && mod_in->pfp_core_pebs.pebs_used)
-		return pfm_core_dispatch_pebs(inp, mod_in, outp);
-
 	return pfm_core_dispatch_counters(inp, mod_in, outp);
 }
 

@@ -104,7 +104,8 @@ extern pfm_pmu_support_t generic_mips64_support;
 extern pfm_pmu_support_t pentium4_support;
 extern pfm_pmu_support_t coreduo_support;
 extern pfm_pmu_support_t core_support;
-extern pfm_pmu_support_t generic_powerpc_support;
+extern pfm_pmu_support_t gen_powerpc_support;
+extern pfm_pmu_support_t cell_support;
 
 static inline unsigned int pfm_num_masks(int e)
 {
