@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2002-2003 Hewlett-Packard Co
+# Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
 # Contributed by Stephane Eranian <eranian@hpl.hp.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy 
@@ -18,9 +18,6 @@
 # HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
 # CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
 # OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-# 
-# This file is part of libpfm, a performance monitoring support library for
-# applications on Linux/ia64.
 #
 
 #
@@ -28,11 +25,16 @@
 #
 TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)
 
-DIRS=lib examples include docs
-
 include config.mk
 
+DIRS=lib examples include docs libpfms
+
+ifeq ($(ARCH),ia64)
+DIRS +=old_interface_ia64_examples
+endif
+
 all: 
+	@echo Compiling for \'$(ARCH)\' target
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 
 clean: 
@@ -44,5 +46,11 @@ distclean:
 depend: 
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 
+tar: distclean
+	a=`basename $$PWD`; cd ..; tar zcf $$a.tar.gz $$a; echo generated ../$$a.tar.gz;
+
+tarcvs: distclean
+	a=`basename $$PWD`; cd ..; tar --exclude=CVS -zcf $$a.tar.gz $$a; echo generated ../$$a.tar.gz;
 install: 
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
+# DO NOT DELETE

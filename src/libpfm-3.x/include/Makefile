@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2002-2003 Hewlett-Packard Co
+# Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
 # Contributed by Stephane Eranian <eranian@hpl.hp.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy 
@@ -18,9 +18,6 @@
 # HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
 # CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
 # OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-# 
-# This file is part of libpfm, a performance monitoring support library for
-# applications on Linux/ia64.
 #
 
 TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)/..
@@ -28,19 +25,82 @@ TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)/..
 include $(TOPDIR)/config.mk
 include $(TOPDIR)/rules.mk
 
-HEADERS=perfmon/perfmon.h              \
-	perfmon/perfmon_default_smpl.h \
-	perfmon/pfmlib.h               \
-	perfmon/pfmlib_comp.h          \
-	perfmon/pfmlib_comp_ia64.h     \
-	perfmon/pfmlib_os.h            \
-	perfmon/pfmlib_os_ia64.h       \
-        perfmon/pfmlib_generic_ia64.h  \
-        perfmon/pfmlib_itanium.h       \
-        perfmon/pfmlib_itanium2.h 
+HEADERS=perfmon/perfmon.h          \
+	perfmon/perfmon_dfl_smpl.h \
+	perfmon/pfmlib.h           \
+	perfmon/pfmlib_comp.h      \
+	perfmon/pfmlib_os.h
+
+ifeq ($(CONFIG_PFMLIB_ARCH_IA64),y)
+HEADERS += perfmon/pfmlib_os_ia64.h       \
+	   perfmon/pfmlib_comp_ia64.h     \
+	   perfmon/perfmon_ia64.h         \
+	   perfmon/perfmon_compat.h       \
+	   perfmon/perfmon_default_smpl.h \
+	   perfmon/pfmlib_itanium.h	  \
+	   perfmon/pfmlib_itanium2.h	  \
+	   perfmon/pfmlib_montecito.h	  \
+	   perfmon/pfmlib_gen_ia64.h
+endif
+
+ifeq ($(CONFIG_PFMLIB_ARCH_X86_64),y)
+HEADERS += perfmon/pfmlib_os_x86_64.h   \
+	   perfmon/pfmlib_comp_x86_64.h \
+	   perfmon/perfmon_x86_64.h     \
+	   perfmon/perfmon_i386.h       \
+	   perfmon/perfmon_pebs_p4_smpl.h  \
+	   perfmon/perfmon_pebs_core_smpl.h  \
+	   perfmon/pfmlib_amd64.h	\
+	   perfmon/pfmlib_pentium4.h	\
+	   perfmon/pfmlib_core.h	\
+	   perfmon/pfmlib_gen_ia32.h
+
+endif
+
+ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
+HEADERS += perfmon/pfmlib_os_i386.h   	\
+	   perfmon/pfmlib_comp_i386.h 	\
+	   perfmon/perfmon_i386.h     	\
+	   perfmon/perfmon_pebs_p4_smpl.h	\
+	   perfmon/perfmon_pebs_core_smpl.h	\
+	   perfmon/pfmlib_amd64.h       \
+	   perfmon/pfmlib_pentium4.h    \
+	   perfmon/pfmlib_core.h        \
+	   perfmon/pfmlib_i386_p6.h	\
+	   perfmon/pfmlib_gen_ia32.h
+
+endif
+
+ifeq ($(CONFIG_PFMLIB_ARCH_POWERPC),y)
+HEADERS += perfmon/pfmlib_os_powerpc.h   \
+	   perfmon/pfmlib_comp_powerpc.h \
+	   perfmon/perfmon_powerpc.h     \
+	   perfmon/pfmlib_powerpc.h
+endif
+
+ifeq ($(CONFIG_PFMLIB_ARCH_MIPS64),y)
+HEADERS += perfmon/pfmlib_os_mips64.h   \
+	   perfmon/pfmlib_comp_mips64.h \
+	   perfmon/perfmon_mips64.h     \
+	   perfmon/pfmlib_gen_mips64.h
+endif
+
+ifeq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
+HEADERS += perfmon/pfmlib_os_crayx2.h   \
+	   perfmon/pfmlib_comp_crayx2.h \
+	   perfmon/perfmon_crayx2.h     \
+	   perfmon/pfmlib_crayx2.h
+endif
+
+ifeq ($(CONFIG_PFMLIB_CELL),y)
+HEADERS += perfmon/pfmlib_cell.h	 \
+	   perfmon/pfmlib_comp_powerpc.h \
+	   perfmon/pfmlib_os_powerpc.h \
+	   perfmon/perfmon_powerpc.h
+endif
 
 .PHONY: all clean distclean depend
 
 install:
-	-mkdir -p $(DESTDIR)/include/perfmon
-	$(INSTALL) -m 644 $(HEADERS) $(DESTDIR)/include/perfmon
+	-mkdir -p $(DESTDIR)$(INCDIR)/perfmon
+	$(INSTALL) -m 644 $(HEADERS) $(DESTDIR)$(INCDIR)/perfmon

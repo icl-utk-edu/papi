@@ -24,7 +24,7 @@ libpfm_itanium - support for Itanium specific PMU features
 The libpfm library provides full support for all the Itanium specific features
 of the PMU. The interface is defined in \fBpfmlib_itanium.h\fR. It consists
 of a set of functions and structures which describe and allow access to the 
-Itanium 2 specific PMU features.
+Itanium specific PMU features.
 .sp
 The Itanium specific functions presented here are mostly used to retrieve
 the characteristics of an event. Given a opaque event descriptor, obtained
@@ -210,7 +210,7 @@ range restrictions and by default the library will refuse to program it if range
 requested. Using the flag will override the check and the call to \fBpfm_dispatch_events\fR will succeed. 
 In this case, CPU_CYCLES will be measured for the entire program and not just for the code range requested. 
 For certain measurements this is perfectly acceptable as the range restriction will only be applied relevant
-to events which support it. Make sure you understand which events do not support certains qualifiers before
+to events which support it. Make sure you understand which events do not support certain qualifiers before
 using this flag.
 .LP
 
@@ -337,15 +337,15 @@ get a more precise range if necessary. Hence, up to the 4 pairs can be used to d
 returns the start and end offsets of the actual range compared to the requested range. 
 
 If range restriction is to be used, the \fBrr_used\fR field must be set to one, otherwise settings will be ignored. 
-The ranges are described by the \fBpfmlib_ita2_input_rr_t\fR structure. Up to 4 ranges can be defined. Each
+The ranges are described by the \fBpfmlib_ita_input_rr_t\fR structure. Up to 4 ranges can be defined. Each
 range is described in by a entry in \fBrr_limits\fR. 
 
-The \fBpfmlib_ita2_input_rr_desc_t\fR structure is defined as follows:
+The \fBpfmlib_ita_input_rr_desc_t\fR structure is defined as follows:
 .TP
 .B rr_plm
 The privilege level at which the range is active. It can be any combinations of \fBPFM_PLM0\fR, \fBPFM_PLM1\fR, \fBPFM_PLM2\fR, \fBPFM_PLM3\fR. 
 If \fBrr_plm\fR is 0 then the default privilege level mask in \fBpfp_dfl_plm\fR is used.The privilege level is only relevant
-for code ranges, data ranges ingores the setting.
+for code ranges, data ranges ignores the setting.
 .TP
 .B rr_start
 This is the start address of the range. Any address is supported but for code range it
@@ -357,7 +357,7 @@ must be bundle aligned, i.e., 16-byte aligned.
 .LP
 .sp
 The library will provide the values for the debug registers as well as some information
-about the actual ranges in the output parameters and more precisely in the \fBpfmlib_ita2_output_rr_t\fR
+about the actual ranges in the output parameters and more precisely in the \fBpfmlib_ita_output_rr_t\fR
 structure for each range. The structure is defined as follows:
 .TP
 .B rr_nbr_used
@@ -378,7 +378,7 @@ between the requested and actual ranges expressed as offsets:
 .B rr_soff
 Contains the start offset of the actual range described by the debug registers. If zero, it means
 the library was able to match exactly the beginning of the range. Otherwise it represents the number
-of byte by which the actual range preceeds the requested range.
+of byte by which the actual range precedes the requested range.
 .TP
 .B rr_eoff
 Contains the end offset of the actual range described by the debug registers. If zero, it means

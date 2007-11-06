@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2002-2003 Hewlett-Packard Co
+# Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
 # Contributed by Stephane Eranian <eranian@hpl.hp.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy 
@@ -20,7 +20,7 @@
 # OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # 
 # This file is part of libpfm, a performance monitoring support library for
-# applications on Linux/ia64.
+# applications on Linux.
 #
 
 #
@@ -28,21 +28,78 @@
 # It is included by every Makefile
 #
 #
+ARCH := $(shell uname -m)
+ifeq (i686,$(findstring i686,$(ARCH)))
+override ARCH=ia32
+endif
+ifeq (i586,$(findstring i586,$(ARCH)))
+override ARCH=ia32
+endif
+ifeq (i486,$(findstring i486,$(ARCH)))
+override ARCH=ia32
+endif
+ifeq (i386,$(findstring i386,$(ARCH)))
+override ARCH=ia32
+endif
+ifeq (ppc,$(findstring ppc,$(ARCH)))
+override ARCH=powerpc
+endif
 
 #
-# Where should things go in the end. the package will put things in lib and
-# bin under this base.
+# Cray-X2 is cross-compiled. Check the programming environment
 #
-DESTDIR=/usr/local
+PE := $(shell echo $${CRAY_PE_TARGET})
+ifeq (cray-x2,$(PE))
+override ARCH=crayx2
+endif
 
 #
-# XXX: should split library and pfmon packages
+# Cray-XT needs the V2.2 version for compatability
 #
+MACHINE := $(shell test -d /proc/cray_xt && echo cray-xt)
+ifeq (cray-xt,$(MACHINE))
+CONFIG_PFMLIB_ARCH_CRAYXT=y
+endif
 
+#
+# Where should things (lib, headers, man) go in the end.
+#
+install_prefix=/usr/local
+PREFIX=$(install_prefix)
+LIBDIR=$(PREFIX)/lib
+INCDIR=$(PREFIX)/include
+MANDIR=$(PREFIX)/share/man
+
+#
 # Configuration Paramaters for libpfm library
-CONFIG_PFMLIB_GENERIC_IA64=y
-CONFIG_PFMLIB_ITANIUM=y
-CONFIG_PFMLIB_ITANIUM2=y
+#
+ifeq ($(ARCH),ia64)
+CONFIG_PFMLIB_ARCH_IA64=y
+endif
+
+ifeq ($(ARCH),x86_64)
+CONFIG_PFMLIB_ARCH_X86_64=y
+endif
+
+ifeq ($(ARCH),ia32)
+CONFIG_PFMLIB_ARCH_I386=y
+endif
+
+ifeq ($(ARCH),mips64)
+CONFIG_PFMLIB_ARCH_MIPS64=y
+endif
+
+ifeq ($(ARCH),powerpc)
+CONFIG_PFMLIB_ARCH_POWERPC=y
+endif
+
+ifeq ($(ARCH),crayx2)
+CONFIG_PFMLIB_ARCH_CRAYX2=y
+endif
+
+ifeq ($(ARCH),cell)
+CONFIG_PFMLIB_CELL=y
+endif
 
 #
 # optimization level
@@ -55,19 +112,32 @@ OPTIM=-O2
 
 #
 # The entire package can be compiled using 
-# ecc the Intel Itanium Compiler (7.x or 8.x)
-# gcc-3.2, 3.4, 3.1
-#
+# icc the Intel Itanium Compiler (7.x,8.x, 9.x)
+# or GNU C
 #CC=icc
-CC=gcc -Wall
-
-CFLAGS=$(OPTIM) -g $(CONFIG_FLAGS)
-LDFLAGS=-L$(TOPDIR)/libpfm
-MKDEP=makedepend
-
-
+CC=gcc
 LIBS=
 INSTALL=install
 LN=ln -sf
 PFMINCDIR=$(TOPDIR)/include
 PFMLIBDIR=$(TOPDIR)/lib
+DBG=-g -Wall -Werror
+CFLAGS=$(OPTIM) $(DBG) -I$(PFMINCDIR)
+LDFLAGS=-L$(PFMLIBDIR)
+MKDEP=makedepend
+PFMLIB=$(PFMLIBDIR)/libpfm.a
+
+
+# Reset options for Cray XT
+ifeq ($(CONFIG_PFMLIB_ARCH_CRAYXT),y)
+CFLAGS=$(OPTIM) $(DBG) -I$(PFMINCDIR) -DPFMLIB_VERSION_22
+LDFLAGS=-L$(PFMLIBDIR) -static
+endif
+
+# Reset the compiler for Cray-X2 (load x2-gcc module)
+ifeq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
+CC=craynv-cray-linux-gnu-gcc
+CFLAGS=$(OPTIM) $(DBG) -I$(PFMINCDIR) -DPFMLIB_VERSION_22
+LDFLAGS=-L$(PFMLIBDIR) -static
+endif
+

@@ -10,7 +10,7 @@ the IA-64 Performance Monitoring Unit (PMU). While it is being developed on Linu
 in conjunction with the Linux/ia64 subsystem. It is generic enough to be used on
 other IA-64 operating systems. It is important to realize that the library does
 not make the actual kernel calls to program the PMU, it simply helps you  figure
-out which PMU registers to use to measure certains events. On Linux/ia64, for 
+out which PMU registers to use to measure certain events. On Linux/ia64, for 
 instance, it does not make any \fBperfmonctl\fR call.
 
 There are two categories of PMU registers. The performance monitoring data registers (PMD) 
@@ -30,24 +30,19 @@ the complexity behind simple interfaces. The library does this without limiting
 accessibility to model specific features by using a layered design.
 
 The library is structured in two layers. The common layer provides an interface
-that is shared by all implementations. For instance, getting an event descriptor using
-the event name is the same operation on all IA-64 implementation, even though the returned
-descriptor and the event name can vary.  This layer is good enough to setup simple monitoring
-sessions which count occurrences of simple events. Then there is a model specific layer which 
+that is shared across all PMU models.This layer is good enough to setup simple monitoring
+sessions which count occurrences of events. Then, there is a model-specific layer which 
 gives access to the model-specific features. For instance, on Itanium, you can use the library
-to figure out how to initialize PMC12 which controls the Branch Trace Buffer. Model 
-specific interfaces have the abbreviated PMU model name in their names. For instance, 
+to setup the registers for the the Branch Trace Buffer. Model-specific interfaces have the
+abbreviated PMU model name in their names. For instance, 
 \fBpfm_ita2_get_event_umask()\fR is an Itanium2 (ita2) specific function. 
 
 When the library is initialized, it automatically probes the host CPU and enables the right 
-set of interfaces. The layered design uses a modular implementation, where support for each
-CPU is well separated and can be compiled in or out of the library.
+set of interfaces. 
 
-The common interface is defined in the \fBpfmlib.h\fR header file. The Itanium specific interface is
-in \fBpfmlib_itanium.h\fR. The \fBpfmlib_itanium2.h\fR provides the Itanium2 interface.
-
-The common interface is described in individual man pages. There is one man page
-for each model specific set of interfaces.
+The common interface is defined in the \fBpfmlib.h\fR header file. Model-specific interfaces
+are defined in model-specific header files. For instance, \fBpfmlib_itanium2.h\fR provides
+the Itanium2 interface.
 
 .SH AUTHOR
 Stephane Eranian <eranian@hpl.hp.com>

@@ -1,7 +1,7 @@
 /*
  * task_attach_timeout.c - attach to another task for monitoring for a short while
  *
- * Copyright (C) 2002-2003 Hewlett-Packard Co
+ * Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,9 +20,6 @@
  * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * This file is part of libpfm, a performance monitoring support library for
- * applications on Linux/ia64.
  */
 #include <sys/types.h>
 #include <inttypes.h>
@@ -40,18 +37,12 @@
 #include <perfmon/pfmlib.h>
 #include <perfmon/perfmon.h>
 
+#include "detect_pmcs.h"
 
 #define NUM_PMCS PFMLIB_MAX_PMCS
 #define NUM_PMDS PFMLIB_MAX_PMDS
 
 #define MAX_EVT_NAME_LEN	128
-
-static char *event_list[]={
-	"cpu_cycles",
-	"IA64_INST_RETIRED",
-	NULL
-};
-
 
 static void fatal_error(char *fmt,...) __attribute__((noreturn));
 
@@ -70,34 +61,36 @@ fatal_error(char *fmt, ...)
 int
 parent(pid_t pid, unsigned long delay)
 {
-	char **p;
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
-	pfarg_context_t ctx[1];
-	pfarg_reg_t pc[NUM_PMCS];
-	pfarg_reg_t pd[NUM_PMDS];
+	pfarg_ctx_t ctx[1];
+	pfarg_pmc_t pc[NUM_PMCS];
+	pfarg_pmd_t pd[NUM_PMDS];
 	pfarg_load_t load_args;
 	struct pollfd pollfd;
-	pfm_msg_t msg;
-	unsigned int i;
+	pfarg_msg_t msg;
+	unsigned int i, num_counters;
 	int status, ret;
 	int ctx_fd;
 	char name[MAX_EVT_NAME_LEN];
 
-
-	memset(pc, 0, sizeof(ctx));
-	memset(pd, 0, sizeof(ctx));
+	memset(pc, 0, sizeof(pc));
+	memset(pd, 0, sizeof(pd));
 	memset(ctx, 0, sizeof(ctx));
 	memset(&inp,0, sizeof(inp));
 	memset(&outp,0, sizeof(outp));
 	memset(&load_args,0, sizeof(load_args));
 
-	p = event_list;
-	for (i=0; *p; i++, p++) {
-		if (pfm_find_event(*p, &inp.pfp_events[i].event) != PFMLIB_SUCCESS) {
-			fatal_error("Cannot find %s event\n", *p);
-		}
+	pfm_get_num_counters(&num_counters);
+
+	if (pfm_get_cycle_event(&inp.pfp_events[0]) != PFMLIB_SUCCESS) {
+		fatal_error("cannot find cycle event\n");
 	}
+
+	if (pfm_get_inst_retired_event(&inp.pfp_events[1]) != PFMLIB_SUCCESS) {
+		fatal_error("cannot find inst retired event\n");
+	}
+	i = 2;
 
 	/*
 	 * set the privilege mode:
@@ -106,10 +99,37 @@ parent(pid_t pid, unsigned long delay)
 	 */
 	inp.pfp_dfl_plm   = PFM_PLM3;
 
+	if (i > num_counters) {
+		i = num_counters;
+		printf("too many events provided (max=%d events), using first %d event(s)\n", num_counters, i);
+	}
 	/*
 	 * how many counters we use
 	 */
 	inp.pfp_event_count = i;
+
+	/*
+	 * now create a context. we will later attach it to the task we are creating.
+	 */
+	ctx_fd = pfm_create_context(ctx, NULL, NULL, 0);
+	if (ctx_fd == -1) {
+		if (errno == ENOSYS) {
+			fatal_error("Your kernel does not have performance monitoring support!\n");
+		}
+		fatal_error("Can't create PFM context %s\n", strerror(errno));
+	}
+	/*
+	 * build the pfp_unavail_pmcs bitmask by looking
+	 * at what perfmon has available. It is not always
+	 * the case that all PMU registers are actually available
+	 * to applications. For instance, on IA-32 platforms, some
+	 * registers may be reserved for the NMI watchdog timer.
+	 *
+	 * With this bitmap, the library knows which registers NOT to
+	 * use. Of source, it is possible that no valid assignement may
+	 * be possible if certina PMU registers  are not available.
+	 */
+	detect_unavail_pmcs(ctx_fd, &inp.pfp_unavail_pmcs);
 
 	/*
 	 * let the library figure out the values for the PMCS
@@ -118,26 +138,11 @@ parent(pid_t pid, unsigned long delay)
 		fatal_error("cannot configure events: %s\n", pfm_strerror(ret));
 	}
 	/*
-	 * now create a context. we will later attach it to the task we are creating.
-	 */
-	if (perfmonctl(0, PFM_CREATE_CONTEXT, ctx, 1) == -1) {
-		if (errno == ENOSYS) {
-			fatal_error("Your kernel does not have performance monitoring support!\n");
-		}
-		fatal_error("Can't create PFM context %s\n", strerror(errno));
-	}
-	/*
-	 * extract the identifier for our context
-	 */
-	ctx_fd = ctx[0].ctx_fd;
-
-	/*
 	 * use our file descriptor for the poll.
 	 * we are interested in read events only.
 	 */
 	pollfd.fd     = ctx_fd;
 	pollfd.events = POLLIN;
-
 
 	/*
 	 * Now prepare the argument to initialize the PMDs and PMCS.
@@ -152,15 +157,8 @@ parent(pid_t pid, unsigned long delay)
 		pc[i].reg_num   = outp.pfp_pmcs[i].reg_num;
 		pc[i].reg_value = outp.pfp_pmcs[i].reg_value;
 	}
-
-	/*
-	 * the PMC controlling the event ALWAYS come first, that's why this loop
-	 * is safe even when extra PMC are needed to support a particular event.
-	 */
-	for (i=0; i < inp.pfp_event_count; i++) {
-		pd[i].reg_num   = pc[i].reg_num;
-	}
-
+	for (i=0; i < outp.pfp_pmd_count; i++)
+		pd[i].reg_num = outp.pfp_pmds[i].reg_num;
 	/*
 	 * Now program the registers
 	 *
@@ -169,13 +167,15 @@ parent(pid_t pid, unsigned long delay)
 	 * the number of events we specified, i.e., contains more thann counting monitors.
 	 */
 
-	if (perfmonctl(ctx_fd, PFM_WRITE_PMCS, pc, outp.pfp_pmc_count) == -1) {
-		fatal_error("perfmonctl error PFM_WRITE_PMCS errno %d\n",errno);
-	}
+	if (pfm_write_pmcs(ctx_fd, pc, outp.pfp_pmc_count) == -1)
+		fatal_error("pfm_write_pmcs error errno %d\n",errno);
 
-	if (perfmonctl(ctx_fd, PFM_WRITE_PMDS, pd, inp.pfp_event_count) == -1) {
-		fatal_error("perfmonctl error PFM_WRITE_PMDS errno %d\n",errno);
-	}
+	/*
+	 * To be read, each PMD must be either written or declared
+	 * as being part of a sample (reg_smpl_pmds)
+	 */
+	if (pfm_write_pmds(ctx_fd, pd, outp.pfp_pmd_count) == -1)
+		fatal_error("pfm_write_pmds error errno %d\n",errno);
 
 	ret = ptrace(PTRACE_ATTACH, pid, NULL, 0);
 	if (ret == -1) {
@@ -203,16 +203,16 @@ parent(pid_t pid, unsigned long delay)
 	 */
 	load_args.load_pid = pid;
 
-	if (perfmonctl(ctx_fd, PFM_LOAD_CONTEXT, &load_args, 1) == -1) {
-		fatal_error("perfmonctl error PFM_LOAD_CONTEXT errno %d\n",errno);
+	if (pfm_load_context(ctx_fd, &load_args) == -1) {
+		fatal_error("pfm_load_context error errno %d\n",errno);
 	}
 
 	/*
 	 * activate monitoring. The task is still STOPPED at this point. Monitoring
 	 * will not take effect until the execution of the task is resumed.
 	 */
-	if (perfmonctl(ctx_fd, PFM_START, NULL, 0) == -1) {
-		fatal_error("perfmonctl error PFM_START errno %d\n",errno);
+	if (pfm_start(ctx_fd, NULL) == -1) {
+		fatal_error("pfm_start error errno %d\n",errno);
 	}
 
 	/*
@@ -256,8 +256,8 @@ parent(pid_t pid, unsigned long delay)
 		 		*/
 				ret = read(ctx_fd, &msg, sizeof(msg));
 
-				if (msg.pfm_gen_msg.msg_type != PFM_MSG_END) {
-					fatal_error("unexpected msg type : %d\n", msg.pfm_gen_msg.msg_type);
+				if (msg.type != PFM_MSG_END) {
+					fatal_error("unexpected msg type : %d\n", msg.type);
 				}
 			}
 			break;
@@ -279,8 +279,8 @@ parent(pid_t pid, unsigned long delay)
 	 		 */
 			if (WIFEXITED(status)) goto read_results;
 
-			if (perfmonctl(ctx_fd, PFM_UNLOAD_CONTEXT, NULL, 0) == -1) {
-				fatal_error("perfmonctl error PFM_UNLOAD_CONTEXT errno %d\n",errno);
+			if (pfm_unload_context(ctx_fd) == -1) {
+				fatal_error("pfm_unload_context error errno %d\n",errno);
 			}
 
 			/*
@@ -296,8 +296,8 @@ read_results:
 	/*
 	 * now simply read the results.
 	 */
-	if (perfmonctl(ctx_fd, PFM_READ_PMDS, pd, inp.pfp_event_count) == -1) {
-		fatal_error("perfmonctl error READ_PMDS errno %d\n",errno);
+	if (pfm_read_pmds(ctx_fd, pd, inp.pfp_event_count) == -1) {
+		fatal_error("pfm_read_pmds error errno %d\n",errno);
 		return -1;
 	}
 
@@ -310,8 +310,8 @@ read_results:
 	 *
 	 */
 	for (i=0; i < inp.pfp_event_count; i++) {
-		pfm_get_event_name(inp.pfp_events[i].event, name, MAX_EVT_NAME_LEN);
-		printf("PMD%u %20"PRIu64" %s\n",
+		pfm_get_full_event_name(&inp.pfp_events[i], name, MAX_EVT_NAME_LEN);
+		printf("PMD%-3u %20"PRIu64" %s\n",
 			pd[i].reg_num,
 			pd[i].reg_value,
 			name);
@@ -330,21 +330,13 @@ main(int argc, char **argv)
 	pfmlib_options_t pfmlib_options;
 	unsigned long delay;
 	pid_t pid;
+	int ret;
 
-	if (argc < 2) {
+	if (argc < 2)
 		fatal_error("usage: %s pid [timeout]\n", argv[0]);
-	}
 
 	pid   = atoi(argv[1]);
 	delay = argc > 2 ? strtoul(argv[2], NULL, 10) : 10;
-
-	/*
-	 * Initialize pfm library (required before we can use it)
-	 */
-	if (pfm_initialize() != PFMLIB_SUCCESS) {
-		printf("Can't initialize library\n");
-		exit(1);
-	}
 
 	/*
 	 * pass options to library (optional)
@@ -352,6 +344,13 @@ main(int argc, char **argv)
 	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
 	pfmlib_options.pfm_debug = 0; /* set to 1 for debug */
 	pfm_set_options(&pfmlib_options);
+
+	/*
+	 * Initialize pfm library (required before we can use it)
+	 */
+	ret = pfm_initialize();
+	if (ret != PFMLIB_SUCCESS)
+		fatal_error("Cannot initialize library: %s\n", pfm_strerror(ret));
 
 	return parent(pid, delay);
 }

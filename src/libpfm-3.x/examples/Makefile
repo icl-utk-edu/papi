@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2002-2003 Hewlett-Packard Co
+# Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
 # Contributed by Stephane Eranian <eranian@hpl.hp.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy 
@@ -18,57 +18,71 @@
 # HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
 # CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
 # OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-# 
-# This file is part of libpfm, a performance monitoring support library for
-# applications on Linux/ia64.
 #
 
 TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)/..
 
-include ../config.mk
-include ../rules.mk
+include $(TOPDIR)/config.mk
+include $(TOPDIR)/rules.mk
 
-#LDFLAGS+=-static 
+DIRS=
 
+ifeq ($(ARCH),ia64)
+DIRS +=ia64
+endif
+
+ifeq ($(ARCH),ia32)
+DIRS +=x86
+endif
+
+ifeq ($(ARCH),x86_64)
+DIRS +=x86
+endif
+
+ifeq ($(CONFIG_PFMLIB_ARCH_CRAYXT),y)
+CFLAGS += -DCONFIG_PFMLIB_ARCH_CRAYXT
+endif
+
+CFLAGS+= -pthread -D_GNU_SOURCE -I$(PFMINCDIR)
 LIBS += -lm
-
-INCDIR=-I$(PFMINCDIR) 
 
 TARGETS=self task task_attach task_attach_timeout syst \
 	notify_self notify_self2 notify_self3 \
-	whichpmu showreset multiplex \
-	task_smpl
+	whichpmu multiplex multiplex2 set_notify \
+	showreginfo task_smpl task_smpl_user showevtinfo \
+	pfmsetup
 
-ifeq ($(CONFIG_PFMLIB_ITANIUM),y)
-SRCS +=ita_rr.c ita_irr.c ita_opcode.c ita_btb.c ita_dear.c
-TARGETS +=ita_rr ita_irr ita_opcode ita_btb ita_dear
-endif
+XTRA=self_standalone notify_standalone smpl_standalone rtop
 
-ifeq ($(CONFIG_PFMLIB_ITANIUM2),y)
-SRCS +=ita2_opcode.c ita2_rr.c ita2_irr.c ita2_dear.c
-TARGETS +=ita2_dear ita2_btb ita2_opcode ita2_rr ita2_irr 
-endif
+all: $(TARGETS) $(XTRA)
+	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 
-PFMLIB=$(PFMLIBDIR)/libpfm.a
+rtop: rtop.o detect_pmcs.o $(PFMLIB)
+	$(CC) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^ $(LIBS)  -lpthread -lncurses
 
-all: $(TARGETS)
+self_standalone: self_standalone.o
+	$(CC) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^
 
-$(TARGETS):  %:%.o $(PFMLIB)
-	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $^ $(LIBS) 
+notify_standalone: notify_standalone.o
+	$(CC) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^
 
-notify_self2.o: notify_self2.c
-	$(CC) $(INCDIR) $(CFLAGS) -D_GNU_SOURCE -c $*.c
+smpl_standalone: smpl_standalone.o
+	$(CC) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^
+
+$(TARGETS):  %:%.o  detect_pmcs.o $(PFMLIB)
+	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS) 
 
 clean:
+	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 	$(RM) -f *.o 
 
-distclean: clean
-	$(RM) -f $(TARGETS)
+smpl_standalone.o self_standalone.o notify_standalone.o : standalone.h
 
-depend:
-	$(MKDEP) $(INCDIR) $(CFLAGS) $(SRCS)
+distclean: clean
+	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
+	$(RM) -f $(TARGETS) $(XTRA) *~
 
 #
 # examples are installed as part of the RPM install, typically in /usr/share/doc/libpfm-X.Y/
 #
-.PHONY: install
+.PHONY: install depend

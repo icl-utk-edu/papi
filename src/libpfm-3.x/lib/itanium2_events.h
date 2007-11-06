@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2002-2003 Hewlett-Packard Co
+ * Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,7 +20,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * This file is part of libpfm, a performance monitoring support library for
- * applications on Linux/ia64.
+ * applications on Linux.
  */
 
 /*
@@ -732,31 +732,31 @@ static pme_ita2_entry_t itanium2_pe []={
 #define PME_ITA2_L2_FILLB_FULL_THIS 350
 { "L2_FILLB_FULL_THIS", {0xbf}, 0xf0, 1, {0x4520000}, "L2D Fill Buffer Is Full -- L2 Fill buffer is full"},
 #define PME_ITA2_L2_FORCE_RECIRC_ANY 351
-{ "L2_FORCE_RECIRC_ANY", {0xb4}, 0xf0, 4, {0x4220007}, "Forced Recirculates -- count forced recirculates regardless of cause. SMC_HIT, TRAN_PREF & SNP_OR_L3 will not be included here."},
+{ "L2_FORCE_RECIRC_ANY", {0xb4}, 0x10, 4, {0x4220007}, "Forced Recirculates -- count forced recirculates regardless of cause. SMC_HIT, TRAN_PREF & SNP_OR_L3 will not be included here."},
 #define PME_ITA2_L2_FORCE_RECIRC_FILL_HIT 352
-{ "L2_FORCE_RECIRC_FILL_HIT", {0x900b4}, 0xf0, 4, {0x4220007}, "Forced Recirculates -- count only those caused by an L2 miss which hit in the fill buffer."},
+{ "L2_FORCE_RECIRC_FILL_HIT", {0x900b4}, 0x10, 4, {0x4220007}, "Forced Recirculates -- count only those caused by an L2 miss which hit in the fill buffer."},
 #define PME_ITA2_L2_FORCE_RECIRC_FRC_RECIRC 353
-{ "L2_FORCE_RECIRC_FRC_RECIRC", {0xe00b4}, 0xf0, 4, {0x4220007}, "Forced Recirculates -- caused by an L2 miss when a force recirculate already existed"},
+{ "L2_FORCE_RECIRC_FRC_RECIRC", {0xe00b4}, 0x10, 4, {0x4220007}, "Forced Recirculates -- caused by an L2 miss when a force recirculate already existed"},
 #define PME_ITA2_L2_FORCE_RECIRC_IPF_MISS 354
-{ "L2_FORCE_RECIRC_IPF_MISS", {0xa00b4}, 0xf0, 4, {0x4220007}, "Forced Recirculates -- caused by L2 miss when instruction prefetch buffer miss already existed"},
+{ "L2_FORCE_RECIRC_IPF_MISS", {0xa00b4}, 0x10, 4, {0x4220007}, "Forced Recirculates -- caused by L2 miss when instruction prefetch buffer miss already existed"},
 #define PME_ITA2_L2_FORCE_RECIRC_L1W 355
-{ "L2_FORCE_RECIRC_L1W", {0x200b4}, 0xf0, 4, {0x4220007}, "Forced Recirculates -- count only those caused by forced limbo"},
+{ "L2_FORCE_RECIRC_L1W", {0x200b4}, 0x10, 4, {0x4220007}, "Forced Recirculates -- count only those caused by forced limbo"},
 #define PME_ITA2_L2_FORCE_RECIRC_OZQ_MISS 356
-{ "L2_FORCE_RECIRC_OZQ_MISS", {0xc00b4}, 0xf0, 4, {0x4220007}, "Forced Recirculates -- caused by an L2 miss when an OZQ miss already existed"},
+{ "L2_FORCE_RECIRC_OZQ_MISS", {0xc00b4}, 0x10, 4, {0x4220007}, "Forced Recirculates -- caused by an L2 miss when an OZQ miss already existed"},
 #define PME_ITA2_L2_FORCE_RECIRC_SAME_INDEX 357
-{ "L2_FORCE_RECIRC_SAME_INDEX", {0xd00b4}, 0xf0, 4, {0x4220007}, "Forced Recirculates -- caused by an L2 miss when a miss to the same index already existed"},
+{ "L2_FORCE_RECIRC_SAME_INDEX", {0xd00b4}, 0x10, 4, {0x4220007}, "Forced Recirculates -- caused by an L2 miss when a miss to the same index already existed"},
 #define PME_ITA2_L2_FORCE_RECIRC_SMC_HIT 358
-{ "L2_FORCE_RECIRC_SMC_HIT", {0x100b4}, 0xf0, 4, {0x4220007}, "Forced Recirculates -- count only those caused by SMC hits due to an ifetch and load to same cache line or a pending WT store"},
+{ "L2_FORCE_RECIRC_SMC_HIT", {0x100b4}, 0x10, 4, {0x4220007}, "Forced Recirculates -- count only those caused by SMC hits due to an ifetch and load to same cache line or a pending WT store"},
 #define PME_ITA2_L2_FORCE_RECIRC_SNP_OR_L3 359
-{ "L2_FORCE_RECIRC_SNP_OR_L3", {0x600b4}, 0xf0, 4, {0x4220007}, "Forced Recirculates -- count only those caused by a snoop or L3 issue"},
+{ "L2_FORCE_RECIRC_SNP_OR_L3", {0x600b4}, 0x10, 4, {0x4220007}, "Forced Recirculates -- count only those caused by a snoop or L3 issue"},
 #define PME_ITA2_L2_FORCE_RECIRC_TAG_NOTOK 360
-{ "L2_FORCE_RECIRC_TAG_NOTOK", {0x400b4}, 0xf0, 4, {0x4220007}, "Forced Recirculates -- count only those caused by L2 hits caused by in flight snoops, stores with a sibling miss to the same index, sibling probe to the same line or pending sync.ia instructions."},
+{ "L2_FORCE_RECIRC_TAG_NOTOK", {0x400b4}, 0x10, 4, {0x4220007}, "Forced Recirculates -- count only those caused by L2 hits caused by in flight snoops, stores with a sibling miss to the same index, sibling probe to the same line or pending sync.ia instructions."},
 #define PME_ITA2_L2_FORCE_RECIRC_TRAN_PREF 361
-{ "L2_FORCE_RECIRC_TRAN_PREF", {0x500b4}, 0xf0, 4, {0x4220007}, "Forced Recirculates -- count only those caused by transforms to prefetches"},
+{ "L2_FORCE_RECIRC_TRAN_PREF", {0x500b4}, 0x10, 4, {0x4220007}, "Forced Recirculates -- count only those caused by transforms to prefetches"},
 #define PME_ITA2_L2_FORCE_RECIRC_VIC_BUF_FULL 362
-{ "L2_FORCE_RECIRC_VIC_BUF_FULL", {0xb00b4}, 0xf0, 4, {0x4220007}, "Forced Recirculates -- count only those caused by an L2 miss with victim buffer full"},
+{ "L2_FORCE_RECIRC_VIC_BUF_FULL", {0xb00b4}, 0x10, 4, {0x4220007}, "Forced Recirculates -- count only those caused by an L2 miss with victim buffer full"},
 #define PME_ITA2_L2_FORCE_RECIRC_VIC_PEND 363
-{ "L2_FORCE_RECIRC_VIC_PEND", {0x800b4}, 0xf0, 4, {0x4220007}, "Forced Recirculates -- count only those caused by an L2 miss with pending victim"},
+{ "L2_FORCE_RECIRC_VIC_PEND", {0x800b4}, 0x10, 4, {0x4220007}, "Forced Recirculates -- count only those caused by an L2 miss with pending victim"},
 #define PME_ITA2_L2_GOT_RECIRC_IFETCH_ANY 364
 { "L2_GOT_RECIRC_IFETCH_ANY", {0x800ba}, 0xf0, 1, {0x4420007}, "Instruction Fetch Recirculates Received by L2D -- Instruction fetch recirculates received by L2"},
 #define PME_ITA2_L2_GOT_RECIRC_OZQ_ACC 365
@@ -788,21 +788,21 @@ static pme_ita2_entry_t itanium2_pe []={
 #define PME_ITA2_L2_ISSUED_RECIRC_OZQ_ACC 378
 { "L2_ISSUED_RECIRC_OZQ_ACC", {0xb5}, 0xf0, 1, {0x4220007}, "Count Number of Times a Recirculate Issue Was Attempted and Not Preempted"},
 #define PME_ITA2_L2_L3ACCESS_CANCEL_ANY 379
-{ "L2_L3ACCESS_CANCEL_ANY", {0x900b0}, 0xf0, 1, {0x4120007}, "Canceled L3 Accesses -- count cancels due to any reason. This umask will count more than the sum of all the other umasks. It will count things that weren't committed accesses when they reached L1w, but the L2 attempted to bypass them to the L3 anyway (speculatively). This will include accesses made repeatedly while the main pipeline is stalled and the L1d is attempting to recirculate an access down the L1d pipeline. Thus, an access could get counted many times before it really does get bypassed to the L3. It is a measure of how many times we asserted a request to the L3 but didn't confirm it."},
+{ "L2_L3ACCESS_CANCEL_ANY", {0x900b0}, 0x10, 1, {0x4120007}, "Canceled L3 Accesses -- count cancels due to any reason. This umask will count more than the sum of all the other umasks. It will count things that weren't committed accesses when they reached L1w, but the L2 attempted to bypass them to the L3 anyway (speculatively). This will include accesses made repeatedly while the main pipeline is stalled and the L1d is attempting to recirculate an access down the L1d pipeline. Thus, an access could get counted many times before it really does get bypassed to the L3. It is a measure of how many times we asserted a request to the L3 but didn't confirm it."},
 #define PME_ITA2_L2_L3ACCESS_CANCEL_DFETCH 380
-{ "L2_L3ACCESS_CANCEL_DFETCH", {0xa00b0}, 0xf0, 1, {0x4120007}, "Canceled L3 Accesses -- data fetches"},
+{ "L2_L3ACCESS_CANCEL_DFETCH", {0xa00b0}, 0x10, 1, {0x4120007}, "Canceled L3 Accesses -- data fetches"},
 #define PME_ITA2_L2_L3ACCESS_CANCEL_EBL_REJECT 381
-{ "L2_L3ACCESS_CANCEL_EBL_REJECT", {0x800b0}, 0xf0, 1, {0x4120007}, "Canceled L3 Accesses -- ebl rejects"},
+{ "L2_L3ACCESS_CANCEL_EBL_REJECT", {0x800b0}, 0x10, 1, {0x4120007}, "Canceled L3 Accesses -- ebl rejects"},
 #define PME_ITA2_L2_L3ACCESS_CANCEL_FILLD_FULL 382
-{ "L2_L3ACCESS_CANCEL_FILLD_FULL", {0x200b0}, 0xf0, 1, {0x4120007}, "Canceled L3 Accesses -- filld being full"},
+{ "L2_L3ACCESS_CANCEL_FILLD_FULL", {0x200b0}, 0x10, 1, {0x4120007}, "Canceled L3 Accesses -- filld being full"},
 #define PME_ITA2_L2_L3ACCESS_CANCEL_IFETCH 383
 { "L2_L3ACCESS_CANCEL_IFETCH", {0xb00b0}, 0xf0, 1, {0x4120007}, "Canceled L3 Accesses -- instruction fetches"},
 #define PME_ITA2_L2_L3ACCESS_CANCEL_INV_L3_BYP 384
-{ "L2_L3ACCESS_CANCEL_INV_L3_BYP", {0x600b0}, 0xf0, 1, {0x4120007}, "Canceled L3 Accesses -- invalid L3 bypasses"},
+{ "L2_L3ACCESS_CANCEL_INV_L3_BYP", {0x600b0}, 0x10, 1, {0x4120007}, "Canceled L3 Accesses -- invalid L3 bypasses"},
 #define PME_ITA2_L2_L3ACCESS_CANCEL_SPEC_L3_BYP 385
-{ "L2_L3ACCESS_CANCEL_SPEC_L3_BYP", {0x100b0}, 0xf0, 1, {0x4120007}, "Canceled L3 Accesses -- speculative L3 bypasses"},
+{ "L2_L3ACCESS_CANCEL_SPEC_L3_BYP", {0x100b0}, 0x10, 1, {0x4120007}, "Canceled L3 Accesses -- speculative L3 bypasses"},
 #define PME_ITA2_L2_L3ACCESS_CANCEL_UC_BLOCKED 386
-{ "L2_L3ACCESS_CANCEL_UC_BLOCKED", {0x500b0}, 0xf0, 1, {0x4120007}, "Canceled L3 Accesses -- Uncacheable blocked L3 Accesses"},
+{ "L2_L3ACCESS_CANCEL_UC_BLOCKED", {0x500b0}, 0x10, 1, {0x4120007}, "Canceled L3 Accesses -- Uncacheable blocked L3 Accesses"},
 #define PME_ITA2_L2_MISSES 387
 { "L2_MISSES", {0xcb}, 0xf0, 1, {0xf00007}, "L2 Misses"},
 #define PME_ITA2_L2_OPS_ISSUED_FP_LOAD 388

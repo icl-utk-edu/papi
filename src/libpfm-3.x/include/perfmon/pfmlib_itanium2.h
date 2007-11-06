@@ -1,7 +1,7 @@
 /*
  * Itanium 2 PMU specific types and definitions
  *
- * Copyright (C) 2002-2003 Hewlett-Packard Co
+ * Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,9 +20,6 @@
  * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * This file is part of libpfm, a performance monitoring support library for
- * applications on Linux/ia64.
  */
 
 #ifndef __PFMLIB_ITANIUM2_H__
@@ -459,11 +456,16 @@ extern int pfm_ita2_get_event_group(unsigned int i, int *grp);
 extern int pfm_ita2_get_event_set(unsigned int i, int *set);
 
 /*
- * values of group (grp) returned by pfm_ita2_get_event_group(int i, int *grp)
+ * values of group (grp) returned by pfm_ita2_get_event_group()
  */
 #define PFMLIB_ITA2_EVT_NO_GRP		 0 /* event does not belong to a group */
 #define PFMLIB_ITA2_EVT_L1_CACHE_GRP	 1 /* event belongs to L1 Cache group */
 #define PFMLIB_ITA2_EVT_L2_CACHE_GRP	 2 /* event belongs to L2 Cache group */
+
+/*
+ * possible values returned in set by pfm_ita2_get_event_set()
+ */
+#define PFMLIB_ITA2_EVT_NO_SET		-1 /* event does not belong to a set */
 
 #ifdef __cplusplus /* extern C */
 }

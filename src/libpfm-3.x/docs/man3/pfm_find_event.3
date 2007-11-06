@@ -1,47 +1,55 @@
-.TH LIBPFM 3  "November, 2003" "" "Linux Programmer's Manual"
+.TH LIBPFM 3  "August, 2006" "" "Linux Programmer's Manual"
 .SH NAME
-pfm_find_event, pfm_find_event_byname, pfm_find_event_bycode, pfm_find_event_bycode_next \- search for events
+pfm_find_event, pfm_find_full_event, pfm_find_event_bycode,
+pfm_find_event_bycode_next, pfm_find_event_mask \- search for events and unit
+masks
 .SH SYNOPSIS
 .nf
 .B #include <perfmon/pfmlib.h>
 .sp
-.BI "int pfm_find_event(const char *"str ", unsigned int *"desc);
-.BI "int pfm_find_event_byname(const char *"v ", unsigned int *"desc);
-.BI "int pfm_find_event_bycode(int "code ", unsigned int *"desc);
-.BI "int pfm_find_event_bycode_next(unsigned int "desc1 ", int "code ", unsigned int *"desc);
+.BI "int pfm_find_event(const char *"str ", unsigned int *"desc ");"
+.BI "int pfm_find_full_event(const char *"str ", pfmlib_event_t *"e ");"
+.BI "int pfm_find_event_bycode(int "code ", unsigned int *"desc ");"
+.BI "int pfm_find_event_bycode_next(unsigned int "desc1 ", int "code ", unsigned int *"desc ");"
+.BI "int pfm_find_event_mask(unsigned int *"idx ", const char *"str ", unsigned int *"mask_idx ");"
 .sp
 .SH DESCRIPTION
-The PMU counters can be programmed to measure the number of occurrences
-of certain events. The number of events varies from one implementation
+The PMU counters can be programmed to count the number of occurrences
+of certain events. The number of events varies from one PMU model
 to the other. Each event has a name and a code which is used to program
-the actual PMU register. Not all event can necessarily be programmed on
-any of the available counters due to hardware constraints.
+the actual PMU register. Some event may need to be further qualified
+with unit masks.
 .sp
-The library does not directly expose the event code to user applications
-because it is not necessary. Instead applications used names to
-query the library for particular information about events. Given
-a name, the library returns an opaque descriptor to the applications. 
+The library does not directly expose the event code, nor unit mask code,
+to user applications because it is not necessary. Instead applications
+use names to query the library for particular information about events.
+Given an event name, the library returns an opaque descriptor. 
 Each descriptor is unique and has no relationship to the event code.
-All functions requires the library to be properly initialized.
 .sp
-The set of functions described here allows to get an event descriptor
-given either the name of the event or its code. Several events can
-share the same code but have different names. In the current
-implementation of the PMU, an event code is composed of a base
-code (called event select) and a umask. The combination of the two
-is guaranteed unique. The umask is not an architected feature and
-as such is not part of the generic interface of this library.
+The set of functions described here can be used to get an event descriptor
+given either the name of the event or its code. Several events may
+share the same code. An event name is a string structured as: event_name[:unit_mask1[:unit_mask2]].
 .sp
 The \fBpfm_find_event\fR function is a general purpose search routine.
-Given a string it returns the descriptor of the corresponding event.
-The string can represent an event name or an event code in ASCII form.
-Note that the code can be represented in decimal or hexadecimal.
+Given an event name in \fBstr\fR, it returns the descriptor for the
+corresponding event.  If unit masks are provided, they are not taken
+into account. This function is being \fBdeprecated\fR in favor of
+\fBpfm_find_full_event_name\fR.
 .sp
-In contrast \fBpfm_find_event_byname\fR searches for an event
-by interpreting the \fBname\fR argument as the name event only.
+The \fBpfm_find_full_event\fR function is the general purpose search routine.
+Given an event name in \fBstr\fR, it returns in \fBev\fR, the full event descriptor that
+includes the event descriptor in \fBev->event\fR and the unit mask descriptors
+in \fBev->unit_masks\fR. The number of unit masks descriptors returned is
+indicated in \fBev->num_masks\fR. Unit masks are specified as a colon
+separated list of unit mask names, exact values or value combinations.
+For instance, if event A supports unit masks M1 (0x1) and M2 (0x40), and
+both unit masks are to be measured, then the following values for
+\fBstr\fR are valid: "A:M1:M2", "A:M1:0x40", "A:M2:0x1", "A:0x1:0x40", "A:0x41".
 .sp 
-Similarly, \fBpfm_find_event_bycode\fR searches for an event given
-its \fBcode\fR represented as an integer. 
+The \fBpfm_find_event_bycode\fR function searches for an event given
+its \fBcode\fR represented as an integer. It returns in \fBdesc\fR,
+the event code. Unit masks are ignored.
+
 .sp
 Because there can be several events with the same code, the library
 provides the \fBpfm_find_event_bycode_next\fR to search for other
@@ -51,6 +59,12 @@ such an event exists, its descriptor will be stored into \fBdesc\fR.
 It is not necessary to have called \fBpfm_find_event_bycode\fR prior
 to calling this function. This function is fully threadsafe as it does
 not maintain any state between calls.
+.sp
+The \fBpfm_find_event_mask\fR function is used to find the unit mask descriptor
+based on its name or numerical value passed in \fBstr\fR for the event specified
+in \fBidx\fR. The numeric value must be an exact match of an existing unit mask value,
+i.e., all bits must match. Some events do not have unit masks, in which case this function
+returns an error.
 .SH RETURN
 All functions return whether or not the call was successful.
 A return value of \fBPFMLIB_SUCCESS\fR indicates success, 
@@ -63,7 +77,7 @@ the library has not been initialized properly.
 the event descriptor is invalid, or the pointer argument is NULL.
 .TP
 .B PFMLIB_ERR_NOTFOUND
-no matching event was found.
+no matching event or unit mask was found.
 .SH AUTHOR
 Stephane Eranian <eranian@hpl.hp.com>
 .PP

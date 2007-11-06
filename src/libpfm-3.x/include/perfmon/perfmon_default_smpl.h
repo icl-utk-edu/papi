@@ -1,12 +1,21 @@
 /*
- * Copyright (C) 2002-2003 Hewlett-Packard Co
- *               Stephane Eranian <eranian@hpl.hp.com>
+ * Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
+ *               Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
- * This file implements the default sampling buffer format
- * for Linux/ia64 perfmon subsystem.
+ * This file implements the old default sampling buffer format
+ * for the perfmon2 subsystem. It works ONLY with perfmon v2.0
+ * on IA-64 systems.
  */
 #ifndef __PERFMON_DEFAULT_SMPL_H__
 #define __PERFMON_DEFAULT_SMPL_H__ 1
+
+#ifndef __ia64__
+#error "you should not be using this file on a non IA-64 platform"
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define PFM_DEFAULT_SMPL_UUID { \
 		0x4d, 0x72, 0xbe, 0xc0, 0x06, 0x64, 0x41, 0x43, 0x82, 0xb4, 0xd3, 0xfd, 0x27, 0x24, 0x3c, 0x97}
@@ -35,41 +44,39 @@ typedef struct {
  * It is directly followed by the first record.
  */
 typedef struct {
-	unsigned long	hdr_count;		/* how many valid entries */
-	unsigned long	hdr_cur_offs;		/* current offset from top of buffer */
-	unsigned long	hdr_reserved2;		/* reserved for future use */
+	uint64_t	hdr_count;		/* how many valid entries */
+	uint64_t	hdr_cur_offs;		/* current offset from top of buffer */
+	uint64_t	dr_reserved2;		/* reserved for future use */
 
-	unsigned long	hdr_overflows;		/* how many times the buffer overflowed */
-	unsigned long   hdr_buf_size;		/* how many bytes in the buffer */
-	unsigned int	hdr_version;		/* contains perfmon version (smpl format diffs) */
-	unsigned int	hdr_reserved1;		/* for future use */
-	unsigned long	hdr_reserved[10];	/* for future use */
+	uint64_t	hdr_overflows;		/* how many times the buffer overflowed */
+	uint64_t	hdr_buf_size;		/* how many bytes in the buffer */
+
+	uint32_t	hdr_version;		/* contains perfmon version (smpl format diffs) */
+	uint32_t	hdr_reserved1;		/* for future use */
+	uint64_t	hdr_reserved[10];	/* for future use */
 } pfm_default_smpl_hdr_t;
 
 /*
  * Entry header in the sampling buffer.  The header is directly followed
- * with the values of the PMD registers of interest saved in increasing
- * index order: PMD4, PMD5, and so on. How many PMDs are present depends
+ * with the values of the PMD registers of interest saved in increasing 
+ * index order: PMD4, PMD5, and so on. How many PMDs are present depends 
  * on how the session was programmed.
  *
  * In the case where multiple counters overflow at the same time, multiple
  * entries are written consecutively.
  *
- * last_reset_value member indicates the initial value of the
- * overflowed PMD.
+ * last_reset_value member indicates the initial value of the overflowed PMD. 
  */
 typedef struct {
-        int             pid;                    /* active process at PMU interrupt point */
-        unsigned char   reserved1[3];           /* reserved for future use */
-        unsigned char   ovfl_pmd;               /* index of overflowed PMD */
-
-        unsigned long   last_reset_val;         /* initial value of overflowed PMD */
+        pid_t		pid;                    /* thread id (for NPTL, this is gettid()) */
+	uint8_t		reserved1[3];		/* for future use */
+	uint8_t		ovfl_pmd;		/* index of pmd that overflowed for this sample */
+        uint64_t	last_reset_val;         /* initial value of overflowed PMD */
         unsigned long   ip;                     /* where did the overflow interrupt happened  */
-        unsigned long   tstamp;                 /* ar.itc when entering perfmon intr. handler */
-
-        unsigned short  cpu;                    /* cpu on which the overfow occured */
-        unsigned short  set;                    /* event set active when overflow ocurred   */
-        unsigned int    reserved2;              /* for future use */
+        uint64_t	tstamp;                 /* overflow timetamp */
+        uint16_t	cpu;                    /* cpu on which the overfow occured */
+        uint16_t	set;                    /* event set active when overflow ocurred   */
+        pid_t		tgid;              	/* thread group id (for NPTL, this is getpid()) */
 } pfm_default_smpl_entry_t;
 
 #define PFM_DEFAULT_MAX_PMDS		64 /* how many pmds supported by data structures (sizeof(unsigned long) */
@@ -79,5 +86,9 @@ typedef struct {
 #define PFM_DEFAULT_SMPL_VERSION_MAJ	2U
 #define PFM_DEFAULT_SMPL_VERSION_MIN	0U
 #define PFM_DEFAULT_SMPL_VERSION	(((PFM_DEFAULT_SMPL_VERSION_MAJ&0xffff)<<16)|(PFM_DEFAULT_SMPL_VERSION_MIN & 0xffff))
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif /* __PERFMON_DEFAULT_SMPL_H__ */
