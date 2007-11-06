@@ -51,7 +51,7 @@ int main(int argc, char **argv)
    int EventSet=PAPI_NULL;
    long_long values[2] = { 0, 0 };
    long_long min, max;
-   int num_flops, retval;
+   int num_flops=NUM_FLOPS, retval;
    int PAPI_event=0, mythreshold=THRESHOLD;
    char event_name[PAPI_MAX_STR_LEN];
    const PAPI_hw_info_t *hw_info = NULL;
@@ -89,8 +89,6 @@ int main(int argc, char **argv)
       }
    }
 
-   mythreshold = THRESHOLD;
-
    retval = PAPI_create_eventset(&EventSet);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
@@ -123,8 +121,7 @@ int main(int argc, char **argv)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-   num_flops = NUM_FLOPS;
-#if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_CRAYT3E) || defined(_POWER4)
+#if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_CRAYT3E) || defined(_POWER4) || defined (__crayx1)
    num_flops *= 2;
 #endif
 

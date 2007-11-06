@@ -39,7 +39,7 @@ int main(int argc, char **argv)
    long length;
    int mask;
    int retval;
-   int mythreshold;
+   int mythreshold=THRESHOLD;
    const PAPI_hw_info_t *hw_info;
    const PAPI_exe_info_t *prginfo;
    caddr_t start, end;
@@ -66,17 +66,10 @@ int main(int argc, char **argv)
 
 #if defined(linux)
      {
-       char *tmp2 = getenv("NUM_ITERS");
        char *tmp = getenv("THRESHOLD");
        if (tmp) 
 	     mythreshold = atoi(tmp);
-       else if (tmp2)
-	     mythreshold = atoi(tmp2)/1000;
-       else
-	     mythreshold = NUM_ITERS/1000;
      }
-#else
-   mythreshold = THRESHOLD;
 #endif
 
    length = end - start;
@@ -142,7 +135,7 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
       if ((retval = PAPI_start(EventSet)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-      do_flops(getenv("NUM_ITERS") ? atoi(getenv("NUM_ITERS")) : NUM_ITERS);
+      do_flops(getenv("NUM_FLOPS") ? atoi(getenv("NUM_FLOPS")) : NUM_FLOPS);
 
       if ((retval = PAPI_stop(EventSet, values[1])) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_stop", retval);

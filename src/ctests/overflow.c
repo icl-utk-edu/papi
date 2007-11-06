@@ -51,8 +51,8 @@ int main(int argc, char **argv)
    int EventSet=PAPI_NULL;
    long_long(values[2])[2];
    long_long min, max;
-   int num_flops, retval;
-   int PAPI_event, mythreshold;
+   int num_flops = NUM_FLOPS, retval;
+   int PAPI_event, mythreshold=THRESHOLD;
    char event_name[PAPI_MAX_STR_LEN];
    const PAPI_hw_info_t *hw_info = NULL;
    int num_events, mask; 
@@ -72,34 +72,11 @@ int main(int argc, char **argv)
       platform */
    EventSet = add_two_nonderived_events(&num_events, &PAPI_event, hw_info, &mask);
 
-/*   if ( PAPI_event == PAPI_FP_INS || PAPI_event == PAPI_FP_OPS ) 
-      mythreshold = THRESHOLD;
-   else
-#if defined(linux)
-      mythreshold = hw_info->mhz*10000*2;
-#else
-      mythreshold = THRESHOLD*2;
-#endif
-*/
-#if defined(linux)
-     {
-       char *tmp = getenv("THRESHOLD");
-       if (tmp) 
-	     mythreshold = atoi(tmp);
-       else
-	     mythreshold = hw_info->mhz*10000*2;
-     }
-#else
-      mythreshold = THRESHOLD;
-#endif
-
-   num_flops = NUM_FLOPS*2;
-
    retval = PAPI_start(EventSet);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   do_flops(num_flops);
+   do_flops(NUM_FLOPS);
 
    retval = PAPI_stop(EventSet, values[0]);
    if (retval != PAPI_OK)
