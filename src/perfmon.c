@@ -2792,8 +2792,6 @@ int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctl)
   if (ctl->num_sets > 1)
     {
       static pfarg_setdesc_t set = { 0, 0, 0, 0 };
-#if 0
-      // Not necessary
       /* Delete the high sets */
       SUBDBG("PFM_DELETE_EVTSETS(%d,%p,%d)\n",ctl->ctx_fd,&ctl->set[1],ctl->num_sets-1);
       if ((ret = pfm_delete_evtsets(ctl->ctx_fd,&ctl->set[1],ctl->num_sets-1)) != PFMLIB_SUCCESS)
@@ -2803,7 +2801,6 @@ int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctl)
 	  return(PAPI_ESYS);
 	}
       DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(&ctl->set[1],ctl->num_sets-1));
-#endif
       /* Reprogram the 0 set */
       SUBDBG("PFM_CREATE_EVTSETS(%d,%p,%d)\n",ctl->ctx_fd,&set,1);
       if ((ret = pfm_create_evtsets(ctl->ctx_fd,&set,1)) != PFMLIB_SUCCESS)
@@ -3283,7 +3280,7 @@ void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
 #if defined(DEBUG)
     if (thread == NULL) {
         PAPIERROR("thread == NULL in _papi_hwd_dispatch_timer!");
-        abort();
+        return;
     }
 #endif
 
@@ -3318,15 +3315,15 @@ void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
         }
 
         if (ret != -1) {
-            if (thread->running_eventset->state & PAPI_PROFILING)
-                process_smpl_buf(0, sizeof(pfm_dfl_smpl_entry_t), &thread);
-            else {
+	  if ((thread->running_eventset->state & PAPI_PROFILING) && !(thread->running_eventset->profile.flags & PAPI_PROFIL_FORCE_SW))
+	    process_smpl_buf(0, sizeof(pfm_dfl_smpl_entry_t), &thread);
+	  else 
                 _papi_hwi_dispatch_overflow_signal((void *) &ctx, 
                               msg.pfm_ovfl_msg.msg_ovfl_ip,
                               NULL, 
                               msg.pfm_ovfl_msg.msg_ovfl_pmds[0], 
                               0, &thread);
-            }
+            
         }
 
         if ((ret = pfm_restart(info->si_fd))) {
