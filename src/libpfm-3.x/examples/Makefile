@@ -74,13 +74,11 @@ $(TARGETS):  %:%.o  detect_pmcs.o $(PFMLIB)
 
 clean:
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
-	$(RM) -f *.o 
+	$(RM) -f *.o $(TARGETS) $(XTRA) *~
 
 smpl_standalone.o self_standalone.o notify_standalone.o : standalone.h
 
 distclean: clean
-	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
-	$(RM) -f $(TARGETS) $(XTRA) *~
 
 #
 # examples are installed as part of the RPM install, typically in /usr/share/doc/libpfm-X.Y/

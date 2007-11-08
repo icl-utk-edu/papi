@@ -118,10 +118,9 @@ $(SLIBPFM):  $(SOBJS)
 	$(LN) $@ libpfm.so
 
 clean:
-	$(RM) -f *.o *.lo
+	$(RM) -f *.o *.lo *.a *.so* *~
 
 distclean: clean
-	$(RM) -f $(TARGETS) *.so* *~
 
 depend:
 	$(MKDEP) $(CFLAGS) $(SRCS)
