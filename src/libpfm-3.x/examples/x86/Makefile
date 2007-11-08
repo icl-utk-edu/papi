@@ -35,10 +35,9 @@ $(TARGETS):  %:%.o $(PFMLIB) ../detect_pmcs.o
 	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $^ $(LIBS)
 
 clean:
-	$(RM) -f *.o 
+	$(RM) -f *.o $(TARGETS) *~
 
 distclean: clean
-	$(RM) -f $(TARGETS) *~
 
 #
 # examples are installed as part of the RPM install, typically in /usr/share/doc/libpfm-X.Y/

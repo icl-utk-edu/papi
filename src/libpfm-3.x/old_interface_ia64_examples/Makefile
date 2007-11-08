@@ -71,10 +71,9 @@ notify_self2.o: notify_self2.c
 $(TARGETS):  %:%.o $(PFMLIB)
 	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $^ $(LIBS) 
 clean:
-	$(RM) -f *.o 
+	$(RM) -f *.o $(TARGETS) *~
 
 distclean: clean
-	$(RM) -f $(TARGETS) *~
 
 depend:
 	$(MKDEP) $(INCDIR) $(CFLAGS) $(SRCS)

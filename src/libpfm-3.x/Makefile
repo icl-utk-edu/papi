@@ -40,16 +40,15 @@ all:
 clean: 
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 
-distclean: 
-	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
+distclean:  clean
 
 depend: 
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 
-tar: distclean
+tar: clean
 	a=`basename $$PWD`; cd ..; tar zcf $$a.tar.gz $$a; echo generated ../$$a.tar.gz;
 
-tarcvs: distclean
+tarcvs: clean
 	a=`basename $$PWD`; cd ..; tar --exclude=CVS -zcf $$a.tar.gz $$a; echo generated ../$$a.tar.gz;
 install: 
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
