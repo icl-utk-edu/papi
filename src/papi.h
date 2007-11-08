@@ -295,10 +295,6 @@ enum {
 #define PAPI_ENUM_GROUPS PAPI_PWR4_ENUM_GROUPS
 #define PAPI_ENUM_PRESET_AVAIL PAPI_PRESET_ENUM_AVAIL
 
-#if defined(__crayx2)						/* CRAY X2 */
-#define PAPI_ENUM_UMASKS_CRAYX2 32
-#endif
-
 /* 
 The Low Level API
 
