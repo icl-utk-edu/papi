@@ -27,7 +27,7 @@ include $(TOPDIR)/rules.mk
 
 LIBS += -lm
 
-TARGETS=smpl_p4_pebs smpl_core_pebs
+TARGETS=smpl_p4_pebs smpl_core_pebs smpl_amd64_ibs
 
 all: $(TARGETS)
 
