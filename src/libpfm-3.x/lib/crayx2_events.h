@@ -33,13 +33,13 @@
  ******* MODIFICATIONS REQUIRED FOR THE EVENT NAMES
  ******* OR EVENT DESCRIPTIONS SHOULD BE MADE TO
  ******* THE TEXT FILE AND THE TABLE REGENERATED
- ******* Wed Nov  7 10:01:28 CST 2007
+ ******* Sat Nov 10 14:40:30 CST 2007
  *****************************************************************
  */
 
 static pme_crayx2_entry_t crayx2_pe[ ] =
 {
-	/* P Counter 0 */
+	/* P Counter 0 Event 0 */
 	{
 		.pme_name = "CYCLES",
 		.pme_desc = "Cycles.",
@@ -54,6 +54,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 0 Event 1 */
 	{
 		.pme_name = "CYCLES",
 		.pme_desc = "Cycles.",
@@ -68,6 +69,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 0 Event 2 */
 	{
 		.pme_name = "CYCLES",
 		.pme_desc = "Cycles.",
@@ -82,6 +84,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 0 Event 3 */
 	{
 		.pme_name = "CYCLES",
 		.pme_desc = "Cycles.",
@@ -96,7 +99,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 1 */
+	/* P Counter 1 Event 0 */
 	{
 		.pme_name = "INST_GRAD",
 		.pme_desc = "Number of instructions graduated.",
@@ -111,6 +114,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 1 Event 1 */
 	{
 		.pme_name = "INST_GRAD",
 		.pme_desc = "Number of instructions graduated.",
@@ -125,6 +129,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 1 Event 2 */
 	{
 		.pme_name = "INST_GRAD",
 		.pme_desc = "Number of instructions graduated.",
@@ -139,6 +144,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 1 Event 3 */
 	{
 		.pme_name = "INST_GRAD",
 		.pme_desc = "Number of instructions graduated.",
@@ -153,7 +159,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 2 */
+	/* P Counter 2 Event 0 */
 	{
 		.pme_name = "INST_DISPATCH",
 		.pme_desc = "Number of instructions dispatched.",
@@ -168,6 +174,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 2 Event 1 */
 	{
 		.pme_name = "ITLB_MISS",
 		.pme_desc = "Number of Instruction TLB misses.",
@@ -182,6 +189,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 2 Event 2 */
 	{
 		.pme_name = "JB_CORRECT",
 		.pme_desc = "Number of jumps and branches predicted correctly.",
@@ -196,6 +204,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 2 Event 3 */
 	{
 		.pme_name = "STALL_VU_FUG1",
 		.pme_desc = "CPs VU stalled waiting for FUG 1.",
@@ -210,7 +219,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 3 */
+	/* P Counter 3 Event 0 */
 	{
 		.pme_name = "INST_SYNCS",
 		.pme_desc = "Number of synchronization instructions graduated g=02.",
@@ -225,6 +234,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 3 Event 1 */
 	{
 		.pme_name = "INST_GSYNCS",
 		.pme_desc = "Number of Gsync instructions graduated g=02 & f=0-3.",
@@ -239,6 +249,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 3 Event 2 */
 	{
 		.pme_name = "STALL_DU_ICACHE",
 		.pme_desc = "CPs dispatch stalled waiting for instruction from Icache.",
@@ -253,6 +264,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 3 Event 3 */
 	{
 		.pme_name = "STALL_VU_FUG2",
 		.pme_desc = "CPs VU stalled waiting for FUG.",
@@ -267,7 +279,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 4 */
+	/* P Counter 4 Event 0 */
 	{
 		.pme_name = "INST_AMO",
 		.pme_desc = "Number of AMO instructions graduated g=04.",
@@ -282,6 +294,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 4 Event 1 */
 	{
 		.pme_name = "ICACHE_FETCH",
 		.pme_desc = "Number of instruction fetch requests to memory.",
@@ -296,6 +309,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 4 Event 2 */
 	{
 		.pme_name = "STALL_DU_BRANCH_PRED",
 		.pme_desc = "CPs Dispatch stalled waiting for branch prediction register.",
@@ -310,6 +324,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 4 Event 3 */
 	{
 		.pme_name = "STALL_VU_FUG3",
 		.pme_desc = "CPs VU stalled waiting for FUG 3.",
@@ -324,7 +339,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 5 */
+	/* P Counter 5 Event 0 */
 	{
 		.pme_name = "INST_A",
 		.pme_desc = "Number of A register instructions graduated g=05,40,42,43.",
@@ -339,6 +354,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 5 Event 1 */
 	{
 		.pme_name = "ICACHE_HIT",
 		.pme_desc = "Number of Icache hits.",
@@ -353,6 +369,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 5 Event 2 */
 	{
 		.pme_name = "STALL_DU_AREG",
 		.pme_desc = "CPs instruction dispatch stalled waiting for free A register.",
@@ -367,6 +384,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 5 Event 3 */
 	{
 		.pme_name = "STALL_VU",
 		.pme_desc = "CPs VU is stalled with a valid instruction.",
@@ -381,7 +399,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 6 */
+	/* P Counter 6 Event 0 */
 	{
 		.pme_name = "INST_S_INT",
 		.pme_desc = "Number of S register integer instructions graduated g=60,62 & t1=1,63.",
@@ -396,6 +414,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 6 Event 1 */
 	{
 		.pme_name = "INST_MSYNCS",
 		.pme_desc = "Number of Msync instructions graduated g=02 & f=20-22.",
@@ -410,6 +429,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 6 Event 2 */
 	{
 		.pme_name = "STALL_DU_ACT_LIST_FULL",
 		.pme_desc = "CPs dispatch stalled waiting for active list entry.",
@@ -424,6 +444,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 6 Event 3 */
 	{
 		.pme_name = "STALL_VU_NO_INST",
 		.pme_desc = "CPs VU has no valid instruction.",
@@ -438,7 +459,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 7 */
+	/* P Counter 7 Event 0 */
 	{
 		.pme_name = "INST_S_FP",
 		.pme_desc = "Number of S register FP instructions graduated g=62 & t1=0.",
@@ -453,6 +474,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 7 Event 1 */
 	{
 		.pme_name = "STLB_MISS",
 		.pme_desc = "Number of Scalar TLB misses.",
@@ -467,6 +489,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 7 Event 2 */
 	{
 		.pme_name = "STALL_DU_SREG",
 		.pme_desc = "CPs instruction dispatch stalled waiting for free S register.",
@@ -481,6 +504,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 7 Event 3 */
 	{
 		.pme_name = "STALL_VU_VR",
 		.pme_desc = "CPs VU is stalled waiting for busy V Reg.",
@@ -495,7 +519,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 8 */
+	/* P Counter 8 Event 0 */
 	{
 		.pme_name = "INST_MISC",
 		.pme_desc = "Number of Misc. scalar instructions graduated g=00, 01, 03, 06, 34.",
@@ -510,6 +534,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 8 Event 1 */
 	{
 		.pme_name = "VTLB_MISS",
 		.pme_desc = "Number of Vector TLB misses.",
@@ -524,6 +549,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 8 Event 2 */
 	{
 		.pme_name = "STALL_DU_INST",
 		.pme_desc = "CPs dispatch stalled due to an instruction such as a Gsync or Lsync FP that stops dispatch until it executes.",
@@ -538,6 +564,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 8 Event 3 */
 	{
 		.pme_name = "STALL_VLSU_NO_INST",
 		.pme_desc = "CPs VLSU has no valid instruction.",
@@ -552,7 +579,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 9 */
+	/* P Counter 9 Event 0 */
 	{
 		.pme_name = "INST_JB",
 		.pme_desc = "Number of Jump and Branch instructions graduated g=50-57, 70-76.",
@@ -567,6 +594,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 9 Event 1 */
 	{
 		.pme_name = "ICACHE_MISS",
 		.pme_desc = "Number of Icache misses.",
@@ -581,6 +609,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 9 Event 2 */
 	{
 		.pme_name = "STALL_GRAD",
 		.pme_desc = "CPs no instructions graduate for any reason.",
@@ -595,6 +624,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 9 Event 3 */
 	{
 		.pme_name = "STALL_VLSU_LB",
 		.pme_desc = "CPs VLSU stalled waiting for load buffers (LB).",
@@ -609,7 +639,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 10 */
+	/* P Counter 10 Event 0 */
 	{
 		.pme_name = "INST_MEM",
 		.pme_desc = "Number of A and S register load and store instructions graduated g=41, 44-47, 61, 64-67.",
@@ -624,6 +654,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 10 Event 1 */
 	{
 		.pme_name = "ICACHE_HIT_PEND",
 		.pme_desc = "Number of Icache hits to blocks with allocations pending.",
@@ -638,6 +669,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 10 Event 2 */
 	{
 		.pme_name = "STALL_GRAD_NO_INST",
 		.pme_desc = "CPs no instructions graduated due to empty active list.",
@@ -652,6 +684,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 10 Event 3 */
 	{
 		.pme_name = "STALL_VLSU_SB",
 		.pme_desc = "CPs VLSU stalled waiting for store buffer (SB).",
@@ -666,7 +699,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 11 */
+	/* P Counter 11 Event 0 */
 	{
 		.pme_name = "INST_VFUG1",
 		.pme_desc = "Number of vector FUG 1 instructions graduated g=20-27, f=0-7,60-77 Add, sub, compare.",
@@ -681,6 +714,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 11 Event 1 */
 	{
 		.pme_name = "TLB_MISS",
 		.pme_desc = "Total number of TLB misses including ITLB, STLB, and VTLB.",
@@ -695,6 +729,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 11 Event 2 */
 	{
 		.pme_name = "STALL_GRAD_AX_INST",
 		.pme_desc = "CPs no instructions graduate and an A FUG instruction is at the head of the active list g=5, 40, 42, 43.",
@@ -709,6 +744,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 11 Event 3 */
 	{
 		.pme_name = "STALL_VLSU_RB",
 		.pme_desc = "CPs VLSU stalled waiting for request buffer (RB).",
@@ -723,7 +759,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 12 */
+	/* P Counter 12 Event 0 */
 	{
 		.pme_name = "INST_VFUG2",
 		.pme_desc = "Number of vector FUG 2 instructions graduated g=20-27, f=30-37 (multiply, shift).",
@@ -738,6 +774,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 12 Event 1 */
 	{
 		.pme_name = "DCACHE_HIT",
 		.pme_desc = "Number of A or S loads that hit in the Dcache.",
@@ -752,6 +789,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 12 Event 2 */
 	{
 		.pme_name = "STALL_GRAD_SX_INST",
 		.pme_desc = "CPs no instructions graduate and an S FUG instruction is at the head of the active list g=60, 62, 63.",
@@ -766,6 +804,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 12 Event 3 */
 	{
 		.pme_name = "STALL_VLSU_VM",
 		.pme_desc = "CPs VLSU stalled waiting for VU vector mask (VM).",
@@ -780,7 +819,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 13 */
+	/* P Counter 13 Event 0 */
 	{
 		.pme_name = "INST_VFUG3",
 		.pme_desc = "Number of vector FUG 3 instructions graduated g=20-27, f=10-27, 40-57, 77 div, sqrt, abs, cpsign, compress, merge, logical, bmm.",
@@ -795,6 +834,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 13 Event 1 */
 	{
 		.pme_name = "DCACHE_MISS",
 		.pme_desc = "Number of A or S loads that miss in the Dcache.",
@@ -809,6 +849,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 13 Event 2 */
 	{
 		.pme_name = "STALL_GRAD_FP_INST",
 		.pme_desc = "CPs no instructions graduate and an S FP instruction is at the head of the active list g=62, t1=0.",
@@ -823,6 +864,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 13 Event 3 */
 	{
 		.pme_name = "STALL_VLSU_SREF",
 		.pme_desc = "CPs VLSU stalled waiting for prior scalar instruction reference sent.",
@@ -837,7 +879,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 14 */
+	/* P Counter 14 Event 0 */
 	{
 		.pme_name = "VOPS_EXT_FUG3",
 		.pme_desc = "Number of V FUG 3 external operations g=20-27 f=25,57,77 compress, merge, bmm.",
@@ -852,6 +894,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 14 Event 1 */
 	{
 		.pme_name = "DCACHE_HIT_PEND",
 		.pme_desc = "Number of scalar loads that hit in the Dcache and in the FOQ and the load is merged with a pending allocation.",
@@ -866,6 +909,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 14 Event 2 */
 	{
 		.pme_name = "STALL_GRAD_LOAD_INST",
 		.pme_desc = "CPs no instructions graduate and a scalar load is at the head of the active list.",
@@ -880,6 +924,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 14 Event 3 */
 	{
 		.pme_name = "STALL_VLSU_INDEX",
 		.pme_desc = "CPS VLSU stalled waiting for busy scatter or gather index register.",
@@ -894,7 +939,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 15 */
+	/* P Counter 15 Event 0 */
 	{
 		.pme_name = "VOPS_LOG_FUG3",
 		.pme_desc = "Number of vector FUG 3 logical operations.",
@@ -909,6 +954,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 15 Event 1 */
 	{
 		.pme_name = "DCACHE_HIT_WORD",
 		.pme_desc = "Number of scalar loads that hit in the Dcache and hit in the FOQ and were not merged with a pending allocation.",
@@ -923,6 +969,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 15 Event 2 */
 	{
 		.pme_name = "STALL_GRAD_STORE_INST",
 		.pme_desc = "CPs no instructions graduate and a scalar store is at the head of the active list.",
@@ -937,6 +984,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 15 Event 3 */
 	{
 		.pme_name = "STALL_VLSU_FOM",
 		.pme_desc = "CPs VLSU stalled in forced order mode.",
@@ -951,7 +999,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 16 */
+	/* P Counter 16 Event 0 */
 	{
 		.pme_name = "INST_V",
 		.pme_desc = "Number of elemental vector instructions graduated g=20-27, 30-33.",
@@ -966,6 +1014,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 16 Event 1 */
 	{
 		.pme_name = "INST_V_INT",
 		.pme_desc = "Number of elemental vector integer instructions graduated g=20-27 & t1=",
@@ -980,6 +1029,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 16 Event 2 */
 	{
 		.pme_name = "INST_V_FP",
 		.pme_desc = "Number of elemental vector FP instructions graduated g=20-27 & t1=0.",
@@ -994,6 +1044,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 16 Event 3 */
 	{
 		.pme_name = "INST_V_MEM",
 		.pme_desc = "Number of elemental vector memory instructions graduated g=30-33.",
@@ -1008,7 +1059,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 17 */
+	/* P Counter 17 Event 0 */
 	{
 		.pme_name = "VOPS_VL",
 		.pme_desc = "Inst_V * Current VL.",
@@ -1023,6 +1074,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 17 Event 1 */
 	{
 		.pme_name = "DCACHE_INVAL_V",
 		.pme_desc = "Number of Dcache invalidates due to vector stores.",
@@ -1037,6 +1089,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 17 Event 2 */
 	{
 		.pme_name = "VOPS_VL_32-BIT",
 		.pme_desc = "Inst_V * Current VL for 32-bit operations only.",
@@ -1051,6 +1104,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 17 Event 3 */
 	{
 		.pme_name = "STALL_VLSU",
 		.pme_desc = "Stall vector load store for any reason.",
@@ -1065,7 +1119,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 18 */
+	/* P Counter 18 Event 0 */
 	{
 		.pme_name = "VOPS_INT_ADD",
 		.pme_desc = "Number of selected vector integer add operations g=20-27 & f=0-3 & t1=",
@@ -1080,6 +1134,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 18 Event 1 */
 	{
 		.pme_name = "DCACHE_INVAL_L2",
 		.pme_desc = "Number of Dcache invalidates from L2 cache.",
@@ -1094,6 +1149,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 18 Event 2 */
 	{
 		.pme_name = "STALL_GRAD_XFER_INST",
 		.pme_desc = "Number of CPs no instruction graduates and an A to S or S to A move is at the head of the active list.",
@@ -1108,6 +1164,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 18 Event 3 */
 	{
 		.pme_name = "STALL_VU_VM",
 		.pme_desc = "CPs VU stalled waiting for vector mask.",
@@ -1122,7 +1179,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 19 */
+	/* P Counter 19 Event 0 */
 	{
 		.pme_name = "VOPS_FP_ADD",
 		.pme_desc = "Number of selected vector FP add operations g=20-27 & f=0-3 & t1=0.",
@@ -1137,6 +1194,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 19 Event 1 */
 	{
 		.pme_name = "DCACHE_INVALIDATE",
 		.pme_desc = "Total Number of Dcache invalidates.",
@@ -1151,6 +1209,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 19 Event 2 */
 	{
 		.pme_name = "STALL_GRAD_VXFER_INST",
 		.pme_desc = "CPs no instruction graduates and a V to A or V to S move is at the head of the active list.",
@@ -1165,6 +1224,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 19 Event 3 */
 	{
 		.pme_name = "STALL_VU_VR_MEM",
 		.pme_desc = "CPs VU is stalled waiting on a busy vector register being loaded from memory.",
@@ -1179,7 +1239,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 20 */
+	/* P Counter 20 Event 0 */
 	{
 		.pme_name = "VOPS_INT_LOG",
 		.pme_desc = "Number of selected vector integer logical operations g=20-27 & f=10-27 & t1=1.",
@@ -1194,6 +1254,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 20 Event 1 */
 	{
 		.pme_name = "BRANCH_PRED",
 		.pme_desc = "Number of branches predicted.",
@@ -1208,6 +1269,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 20 Event 2 */
 	{
 		.pme_name = "STALL_GRAD_VLSU_INST",
 		.pme_desc = "Number of CPs no instruction graduates and a vector load, store, or AMO instruction is at the head of the active list.",
@@ -1222,6 +1284,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 20 Event 3 */
 	{
 		.pme_name = "STALL_VU_TLB",
 		.pme_desc = "CPs VU stalled waiting for a memory translation.",
@@ -1236,7 +1299,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 21 */
+	/* P Counter 21 Event 0 */
 	{
 		.pme_name = "VOPS_FP_DIV",
 		.pme_desc = "Number of selected vector FP divide and sqrt operations g=20-27 & f=10-11 & t1=0.",
@@ -1251,6 +1314,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 21 Event 1 */
 	{
 		.pme_name = "BRANCH_CORRECT",
 		.pme_desc = "Number of branches predicted correctly.",
@@ -1265,6 +1329,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 21 Event 2 */
 	{
 		.pme_name = "STALL_SLSQ_DEST",
 		.pme_desc = "SLS issue stall for FOQ, PARB, ORB full or Lsync vs active.",
@@ -1279,6 +1344,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 21 Event 3 */
 	{
 		.pme_name = "STALL_VLSU_VK_PORT",
 		.pme_desc = "CPs VLSU stalled waiting for scatter or gather index register read port.",
@@ -1293,7 +1359,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 22 */
+	/* P Counter 22 Event 0 */
 	{
 		.pme_name = "VOPS_INT_SHIFT",
 		.pme_desc = "Number of selected vector integer shift operations g=20-27 & f=30-37 & t1=",
@@ -1308,6 +1374,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 22 Event 1 */
 	{
 		.pme_name = "JTB_PRED",
 		.pme_desc = "Number of jumps predicted g=57 & f=0,20.",
@@ -1322,6 +1389,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 22 Event 2 */
 	{
 		.pme_name = "STALL_GRAD_ARQ_DEST",
 		.pme_desc = "Stall arq issue due to vdispatch, control unit, or A to S full.",
@@ -1336,6 +1404,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 22 Event 3 */
 	{
 		.pme_name = "STALL_VLSU_ADR_PORT",
 		.pme_desc = "CPs VLSU stalled waiting for address read port.",
@@ -1350,7 +1419,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 23 */
+	/* P Counter 23 Event 0 */
 	{
 		.pme_name = "VOPS_FP_MULT",
 		.pme_desc = "Number of selected vector FP multiply operations g=20-27 & f=30-37 & t1=0.",
@@ -1365,6 +1434,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 23 Event 1 */
 	{
 		.pme_name = "JTB_CORRECT",
 		.pme_desc = "Number of jumps predicted correctly g=57 & f=0,20.",
@@ -1379,6 +1449,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 23 Event 2 */
 	{
 		.pme_name = "STALL_SRQ_DEST",
 		.pme_desc = "Stall srq issue due to vdispatch or S to A full.",
@@ -1393,6 +1464,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 23 Event 3 */
 	{
 		.pme_name = "STALL_VLSU_MISC",
 		.pme_desc = "CPs VLSU stalled due to miscellaneous instructions.",
@@ -1407,7 +1479,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 24 */
+	/* P Counter 24 Event 0 */
 	{
 		.pme_name = "VOPS_LOAD_INDEX",
 		.pme_desc = "Number of selected vector load indexed references g=30-33 & f2=1 & f0=0.",
@@ -1422,6 +1494,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 24 Event 1 */
 	{
 		.pme_name = "VOPS_INT_MISC",
 		.pme_desc = "Number of selected vector integer misc. operations g=20-27 & f=40-77 & t1=",
@@ -1436,6 +1509,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 24 Event 2 */
 	{
 		.pme_name = "INST_LSYNCVS",
 		.pme_desc = "Number of LsyncVS instructions graduated.",
@@ -1450,6 +1524,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 24 Event 3 */
 	{
 		.pme_name = "VOPS_VL_64-BIT",
 		.pme_desc = "Inst_V * Current VL for 64-bit operations only.",
@@ -1464,7 +1539,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 25 */
+	/* P Counter 25 Event 0 */
 	{
 		.pme_name = "VOPS_STORE_INDEX",
 		.pme_desc = "Number of selected vector store indexed references g=30-33 & f2=1 & f0=1",
@@ -1479,6 +1554,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 25 Event 1 */
 	{
 		.pme_name = "JRS_PRED",
 		.pme_desc = "Number of return jumps predicted g=57, f=40.",
@@ -1493,6 +1569,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 25 Event 2 */
 	{
 		.pme_name = "STALL_SLSQ_PARB",
 		.pme_desc = "Number of CPs SLS issue stalled due to PARB full.",
@@ -1507,6 +1584,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 25 Event 3 */
 	{
 		.pme_name = "<P:25:3>",
 		.pme_desc = "<NA>",
@@ -1521,7 +1599,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 26 */
+	/* P Counter 26 Event 0 */
 	{
 		.pme_name = "VOPS_LOADS",
 		.pme_desc = "Number of selected vector load references g=30-33 & f0=0.",
@@ -1536,6 +1614,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 26 Event 1 */
 	{
 		.pme_name = "JRS_CORRECT",
 		.pme_desc = "Number of return jumps predicted correctly g=57, f=40.",
@@ -1550,6 +1629,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 26 Event 2 */
 	{
 		.pme_name = "STALL_SLSQ_ORB",
 		.pme_desc = "Number of CPs SLS issue stalled due to all ORB entries in use.",
@@ -1564,6 +1644,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 26 Event 3 */
 	{
 		.pme_name = "STALL_VU_MISC",
 		.pme_desc = "CPs VU stalled due to miscellaneous instructions.",
@@ -1578,7 +1659,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 27 */
+	/* P Counter 27 Event 0 */
 	{
 		.pme_name = "VOPS_STORE",
 		.pme_desc = "Number of selected vector store references g=30-33 & f0=",
@@ -1593,6 +1674,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 27 Event 1 */
 	{
 		.pme_name = "INST_MEM_ALLOC",
 		.pme_desc = "Number of A and S register memory instructions that allocate.",
@@ -1607,6 +1689,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 27 Event 2 */
 	{
 		.pme_name = "STALL_SLSQ_FOQ",
 		.pme_desc = "Number of CPs SLS issue stalled due to full FOQ.",
@@ -1621,6 +1704,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 27 Event 3 */
 	{
 		.pme_name = "STALL_VDU_NO_INST_VU",
 		.pme_desc = "CPs VDU and VU have no valid instructions.",
@@ -1635,7 +1719,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 28 */
+	/* P Counter 28 Event 0 */
 	{
 		.pme_name = "VOPS_LOAD_STRIDE",
 		.pme_desc = "Number of selected vector load references that were stride >2 or <-2.",
@@ -1650,6 +1734,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 28 Event 1 */
 	{
 		.pme_name = "INST_SYSCALL",
 		.pme_desc = "Number of syscall instructions graduated g=01.",
@@ -1664,6 +1749,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 28 Event 2 */
 	{
 		.pme_name = "STALL_SLSQ_LSYNC_VS",
 		.pme_desc = "Number of CPs SLS issue is stalled due to active Lsync vs instruction.",
@@ -1678,6 +1764,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 28 Event 3 */
 	{
 		.pme_name = "STALL_VDU_SOP_VU",
 		.pme_desc = "Number of CPs vector issue has no instructions and the next instruction is waiting on an S reg operand.",
@@ -1692,7 +1779,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 29 */
+	/* P Counter 29 Event 0 */
 	{
 		.pme_name = "VOPS_STORE_STRIDE",
 		.pme_desc = "Number of selected vector store references that were stride >2 or <-2.",
@@ -1707,6 +1794,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 29 Event 1 */
 	{
 		.pme_name = "<P:29:1>",
 		.pme_desc = "<NA>",
@@ -1721,6 +1809,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 29 Event 2 */
 	{
 		.pme_name = "<P:29:2>",
 		.pme_desc = "<NA>",
@@ -1735,6 +1824,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 29 Event 3 */
 	{
 		.pme_name = "STALL_VDU_NO_INST_VLSU",
 		.pme_desc = "CPs VDU and VLSU have no valid instructions.",
@@ -1749,7 +1839,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 30 */
+	/* P Counter 30 Event 0 */
 	{
 		.pme_name = "VOPS_LOAD_ALLOC",
 		.pme_desc = "Number of selected vector load references that were marked allocate (cache line requests count as 1).",
@@ -1764,6 +1854,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 30 Event 1 */
 	{
 		.pme_name = "INST_LOAD",
 		.pme_desc = "Number of A or S memory loads g=44, 45, 41 & f0=0, 64, 65, 61 & f0=0.",
@@ -1778,6 +1869,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 30 Event 2 */
 	{
 		.pme_name = "EXCEPTIONS_TAKEN",
 		.pme_desc = "Taken exception count.",
@@ -1792,6 +1884,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 30 Event 3 */
 	{
 		.pme_name = "STALL_VDU_SCM_VLSU",
 		.pme_desc = "CPs VDU stalled waiting for scalar commit and VLSU has no valid instruction.",
@@ -1806,7 +1899,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* P Counter 31 */
+	/* P Counter 31 Event 0 */
 	{
 		.pme_name = "VOPS_STORE_ALLOC",
 		.pme_desc = "Number of selected vector stores references that were marked allocate (cache line requests count as 1).",
@@ -1821,6 +1914,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 31 Event 1 */
 	{
 		.pme_name = "BRANCH_TAKEN",
 		.pme_desc = "Number of taken branches.",
@@ -1835,6 +1929,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 31 Event 2 */
 	{
 		.pme_name = "INST_LSYNCSV",
 		.pme_desc = "Number of graduated Lsync SV instructions.",
@@ -1849,6 +1944,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
+	/* P Counter 31 Event 3 */
 	{
 		.pme_name = "STALL_VDU_SCM_VU",
 		.pme_desc = "CPs VDU stalled waiting for scalar commit and VU has no valid instruction.",
@@ -1863,7 +1959,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CPU_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CPU_CHIPS
 	},
-	/* C Counter 0 */
+	/* C Counter 0 Event 0 */
 	{
 		.pme_name = "REQUESTS",
 		.pme_desc = "Processor requests processed.",
@@ -1878,6 +1974,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 0 Event 1 */
 	{
 		.pme_name = "L2_MISSES",
 		.pme_desc = "Cache line allocations.",
@@ -1892,6 +1989,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 0 Event 2 */
 	{
 		.pme_name = "M_OUT_BUSY",
 		.pme_desc = "Cycles W chip output port busy.",
@@ -1906,6 +2004,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 0 Event 3 */
 	{
 		.pme_name = "REPLAYED",
 		.pme_desc = "Requests sent to replay queue.",
@@ -1920,7 +2019,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
-	/* C Counter 1 */
+	/* C Counter 1 Event 0 */
 	{
 		.pme_name = "ALLOC_REQUESTS",
 		.pme_desc = "Allocating requests (Read, ReadUC, ReadShared, ReadUCShared, ReadMod, SWrite, VWrite).",
@@ -1935,6 +2034,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 1 Event 1 */
 	{
 		.pme_name = "<C:1:1>",
 		.pme_desc = "<NA>",
@@ -1949,6 +2049,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 1 Event 2 */
 	{
 		.pme_name = "M_OUT_BLOCK",
 		.pme_desc = "CyclesWchip output port blocked (something to send but no flow control credits).",
@@ -1963,6 +2064,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 1 Event 3 */
 	{
 		.pme_name = "LS/VS",
 		.pme_desc = "Replayed Ls or Vs Requests sent to the replay queue.",
@@ -1977,7 +2079,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
-	/* C Counter 2 */
+	/* C Counter 2 Event 0 */
 	{
 		.pme_name = "DWORDS_ALLOCATED",
 		.pme_desc = "Dwords written into L2 from L3 (excluding updates).",
@@ -1992,6 +2094,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 2 Event 1 */
 	{
 		.pme_name = "<C:2:1>",
 		.pme_desc = "<NA>",
@@ -2006,6 +2109,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 2 Event 2 */
 	{
 		.pme_name = "NW_OUT_BUSY",
 		.pme_desc = "Cycles NIF output port busy.",
@@ -2020,6 +2124,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 2 Event 3 */
 	{
 		.pme_name = "REPLAY_PENDING",
 		.pme_desc = "Requests sent to replay queue because the line was in PendingReq state.",
@@ -2034,7 +2139,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
-	/* C Counter 3 */
+	/* C Counter 3 Event 0 */
 	{
 		.pme_name = "DWORDS_EVICTED",
 		.pme_desc = "Dwords written back to L3.",
@@ -2049,6 +2154,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 3 Event 1 */
 	{
 		.pme_name = "CACHE_LINE_EVICTIONS",
 		.pme_desc = "Cache lines evicted due to new allocations.",
@@ -2063,6 +2169,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 3 Event 2 */
 	{
 		.pme_name = "NW_OUT_BLOCK",
 		.pme_desc = "Cycles NIF output port blocked (something to send but no flow control credits).",
@@ -2077,6 +2184,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 3 Event 3 */
 	{
 		.pme_name = "REPLAY_ALLOC",
 		.pme_desc = "Requests sent to replay queue because a line could not be allocated due to all ways pending.",
@@ -2091,7 +2199,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
-	/* C Counter 4 */
+	/* C Counter 4 Event 0 */
 	{
 		.pme_name = "ALLOC_WRITE_TO_L2",
 		.pme_desc = "Dwords written to L2 by local allocating write requests.",
@@ -2106,6 +2214,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 4 Event 1 */
 	{
 		.pme_name = "DROPS",
 		.pme_desc = "Drops sent to directory.",
@@ -2120,6 +2229,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 4 Event 2 */
 	{
 		.pme_name = "<C:4:2>",
 		.pme_desc = "<NA>",
@@ -2134,6 +2244,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 4 Event 3 */
 	{
 		.pme_name = "REPLAY_WAKEUPS",
 		.pme_desc = "Replay queue wakeups.",
@@ -2148,7 +2259,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
-	/* C Counter 5 */
+	/* C Counter 5 Event 0 */
 	{
 		.pme_name = "NON_ALLOC_WRITE_TO_L2",
 		.pme_desc = "Dwords written to L2 by local non-allocating write requests.",
@@ -2163,6 +2274,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 5 Event 1 */
 	{
 		.pme_name = "WRITE_BACKS",
 		.pme_desc = "WriteBacks sent to directory.",
@@ -2177,6 +2289,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 5 Event 2 */
 	{
 		.pme_name = "<C:5:2>",
 		.pme_desc = "<NA>",
@@ -2191,6 +2304,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 5 Event 3 */
 	{
 		.pme_name = "REPLAY_MATCHES",
 		.pme_desc = "Requests matched during replay wakeups (Replay_Matches/Replay_Wakeups=avg. number of matches per wakeup).",
@@ -2205,7 +2319,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
-	/* C Counter 6 */
+	/* C Counter 6 Event 0 */
 	{
 		.pme_name = "NON_ALLOC_WRITE_TO_L3",
 		.pme_desc = "Dwords written to L3 by local non-allocating write requests.",
@@ -2220,6 +2334,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 6 Event 1 */
 	{
 		.pme_name = "FWD_REQ",
 		.pme_desc = "Forwarded requests received (FlushReq, FwdRead, FwdReadShared, FwdGet).",
@@ -2234,6 +2349,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 6 Event 2 */
 	{
 		.pme_name = "<C:6:2>",
 		.pme_desc = "<NA>",
@@ -2248,6 +2364,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 6 Event 3 */
 	{
 		.pme_name = "<C:6:3>",
 		.pme_desc = "<NA>",
@@ -2262,7 +2379,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
-	/* C Counter 7 */
+	/* C Counter 7 Event 0 */
 	{
 		.pme_name = "ALLOC_READ_FROM_L2",
 		.pme_desc = "Dwords read from L2 by local allocating read requests.",
@@ -2277,6 +2394,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 7 Event 1 */
 	{
 		.pme_name = "FWD_READ_ALL",
 		.pme_desc = "FwdReads and FwdReadShared received.",
@@ -2291,6 +2409,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 7 Event 2 */
 	{
 		.pme_name = "STALL_RP_FULL_NW",
 		.pme_desc = "Cycles NW request queue stalled due to replay queue full.",
@@ -2305,6 +2424,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 7 Event 3 */
 	{
 		.pme_name = "ALLOC_NO_FILL",
 		.pme_desc = "ReadMods sent to directory when the entire line is dirty.",
@@ -2319,7 +2439,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
-	/* C Counter 8 */
+	/* C Counter 8 Event 0 */
 	{
 		.pme_name = "NON_ALLOC_READ_FROM_L2",
 		.pme_desc = "Dwords read from L2 by local non-allocating read requests.",
@@ -2334,6 +2454,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 8 Event 1 */
 	{
 		.pme_name = "FWD_READ_SHARED_RECV",
 		.pme_desc = "FwdReadShareds received.",
@@ -2348,6 +2469,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 8 Event 2 */
 	{
 		.pme_name = "STALL_RP_FULL_PROC",
 		.pme_desc = "Cycles Ls/Vs request queue stalled due to replay queue full.",
@@ -2362,6 +2484,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 8 Event 3 */
 	{
 		.pme_name = "UPGRADES",
 		.pme_desc = "ReadMods sent to directory when the line was currently in ShClean state.",
@@ -2376,7 +2499,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
-	/* C Counter 9 */
+	/* C Counter 9 Event 0 */
 	{
 		.pme_name = "NON_ALLOC_READ_FROM_L3",
 		.pme_desc = "Dwords read from L3 by local non-allocating read requests.",
@@ -2391,6 +2514,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 9 Event 1 */
 	{
 		.pme_name = "FWD_GET_RECV",
 		.pme_desc = "FwdGets received.",
@@ -2405,6 +2529,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 9 Event 2 */
 	{
 		.pme_name = "STALL_TB_FULL",
 		.pme_desc = "Cycles bank request queue stalled due to transient buffer full.",
@@ -2419,6 +2544,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 9 Event 3 */
 	{
 		.pme_name = "<C:9:3>",
 		.pme_desc = "<NA>",
@@ -2433,7 +2559,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
-	/* C Counter 10 */
+	/* C Counter 10 Event 0 */
 	{
 		.pme_name = "NETWORK_WRITE_TO_L2",
 		.pme_desc = "Dwords written to L2 by remote write requests.",
@@ -2448,6 +2574,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 10 Event 1 */
 	{
 		.pme_name = "FLUSH_REQ",
 		.pme_desc = "FlushReqs received.",
@@ -2462,6 +2589,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 10 Event 2 */
 	{
 		.pme_name = "STALL_VWRITENA",
 		.pme_desc = "Cycles bank request queue stalled due to VWriteNA bit being set.",
@@ -2476,6 +2604,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 10 Event 3 */
 	{
 		.pme_name = "<C:10:3>",
 		.pme_desc = "<NA>",
@@ -2490,7 +2619,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
-	/* C Counter 11 */
+	/* C Counter 11 Event 0 */
 	{
 		.pme_name = "NETWORK_WRITE_TO_L3",
 		.pme_desc = "Dwords written to L3 by remote write requests.",
@@ -2505,6 +2634,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 11 Event 1 */
 	{
 		.pme_name = "UPDATES_RECV",
 		.pme_desc = "Updates received.",
@@ -2519,6 +2649,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 11 Event 2 */
 	{
 		.pme_name = "PROT_ENGINE_IDLE_NO_REQUEST",
 		.pme_desc = "Cycles protocol engine idle due to no new requests to process.",
@@ -2533,6 +2664,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 11 Event 3 */
 	{
 		.pme_name = "READ_DATA_TO_VECTOR_UNIT_PIPE_0_3",
 		.pme_desc = "Swords delivered to vector unit via pipes 0 - 3.",
@@ -2547,7 +2679,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
-	/* C Counter 12 */
+	/* C Counter 12 Event 0 */
 	{
 		.pme_name = "NETWORK_READ_FROM_L2",
 		.pme_desc = "Dwords read from L2 by remote read requests.",
@@ -2562,6 +2694,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 12 Event 1 */
 	{
 		.pme_name = "<C:12:1>",
 		.pme_desc = "<NA>",
@@ -2576,6 +2709,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 12 Event 2 */
 	{
 		.pme_name = "UPDATE_NACK_SENT",
 		.pme_desc = "UpdateNacks sent.",
@@ -2590,6 +2724,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 12 Event 3 */
 	{
 		.pme_name = "READ_DATA_TO_VECTOR_UNIT_PIPE_4_7",
 		.pme_desc = "Swords delivered to vector unit via pipes 4 - 7.",
@@ -2604,7 +2739,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
-	/* C Counter 13 */
+	/* C Counter 13 Event 0 */
 	{
 		.pme_name = "NETWORK_READ_FROM_L3",
 		.pme_desc = "Dwords read from L3 by remote read requests.",
@@ -2619,6 +2754,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 13 Event 1 */
 	{
 		.pme_name = "NACKS_SENT",
 		.pme_desc = "FlushAcks and UpdateNacks sent (these happen when there's a race b/w a forwarded request and an eviction by the current owner).",
@@ -2633,6 +2769,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 13 Event 2 */
 	{
 		.pme_name = "INVAL_RECV",
 		.pme_desc = "Inval packets received from the directory.",
@@ -2647,6 +2784,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 13 Event 3 */
 	{
 		.pme_name = "READ_DATA_TO_SCALAR_UNIT",
 		.pme_desc = "Dwords delivered to scalar unit.",
@@ -2661,7 +2799,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
-	/* C Counter 14 */
+	/* C Counter 14 Event 0 */
 	{
 		.pme_name = "REMOTE_READS",
 		.pme_desc = "Dwords read from remote nodes.",
@@ -2676,6 +2814,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 14 Event 1 */
 	{
 		.pme_name = "LOCAL_INVAL",
 		.pme_desc = "Local writes that cause invals of other Dcaches.",
@@ -2690,6 +2829,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 14 Event 2 */
 	{
 		.pme_name = "MARKED_REQS",
 		.pme_desc = "Memory requests sent with TID 0.",
@@ -2704,6 +2844,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 14 Event 3 */
 	{
 		.pme_name = "READ_DATA_TO_ICACHE",
 		.pme_desc = "Dwords delivered to Icache.",
@@ -2718,7 +2859,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
-	/* C Counter 15 */
+	/* C Counter 15 Event 0 */
 	{
 		.pme_name = "REMOTE_WRITES",
 		.pme_desc = "Dwords written to remote nodes.",
@@ -2733,6 +2874,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 15 Event 1 */
 	{
 		.pme_name = "DCACHE_INVAL_EVENTS",
 		.pme_desc = "State transitions (evictions, directory Invals or forwards, processor writes) requiring Dcache invals.",
@@ -2747,6 +2889,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 15 Event 2 */
 	{
 		.pme_name = "MARKED_CYCLES",
 		.pme_desc = "Cycles with a TID 0 request outstanding.",
@@ -2761,6 +2904,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
+	/* C Counter 15 Event 3 */
 	{
 		.pme_name = "READ_DATA_TO_NIF",
 		.pme_desc = "Dwords delivered to NIF.",
@@ -2775,7 +2919,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_CACHE_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_CACHE_CHIPS
 	},
-	/* M Counter 0 */
+	/* M Counter 0 Event 0 */
 	{
 		.pme_name = "W_IN_IDLE_01@0",
 		.pme_desc = "Wclk cycles BW2MD input port 0 is idle (no flits in either VC0 or VC2). (M chip 0)",
@@ -3000,6 +3144,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 0 Event 1 */
 	{
 		.pme_name = "STALL_REPLAY_FULL@0",
 		.pme_desc = "Wclk cycles protocol engine request queue stalled due to replay queue full (sum of 4 engines). (M chip 0)",
@@ -3224,6 +3369,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 0 Event 2 */
 	{
 		.pme_name = "W_OUT_IDLE_03@0",
 		.pme_desc = "Wclk cycles MD2BW output port 0 is idle (no flits flowing). (M chip 0)",
@@ -3448,8 +3594,9 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 0 Event 3 */
 	{
-		.pme_name = "<M:0:3@0>",
+		.pme_name = "<M:0:3>@0",
 		.pme_desc = "<NA>",
 		.pme_code = 240,
 		.pme_flags = 0x0,
@@ -3463,7 +3610,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:0:3@1>",
+		.pme_name = "<M:0:3>@1",
 		.pme_desc = "<NA>",
 		.pme_code = 241,
 		.pme_flags = 0x0,
@@ -3477,7 +3624,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:0:3@2>",
+		.pme_name = "<M:0:3>@2",
 		.pme_desc = "<NA>",
 		.pme_code = 242,
 		.pme_flags = 0x0,
@@ -3491,7 +3638,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:0:3@3>",
+		.pme_name = "<M:0:3>@3",
 		.pme_desc = "<NA>",
 		.pme_code = 243,
 		.pme_flags = 0x0,
@@ -3505,7 +3652,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:0:3@4>",
+		.pme_name = "<M:0:3>@4",
 		.pme_desc = "<NA>",
 		.pme_code = 244,
 		.pme_flags = 0x0,
@@ -3519,7 +3666,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:0:3@5>",
+		.pme_name = "<M:0:3>@5",
 		.pme_desc = "<NA>",
 		.pme_code = 245,
 		.pme_flags = 0x0,
@@ -3533,7 +3680,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:0:3@6>",
+		.pme_name = "<M:0:3>@6",
 		.pme_desc = "<NA>",
 		.pme_code = 246,
 		.pme_flags = 0x0,
@@ -3547,7 +3694,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:0:3@7>",
+		.pme_name = "<M:0:3>@7",
 		.pme_desc = "<NA>",
 		.pme_code = 247,
 		.pme_flags = 0x0,
@@ -3561,7 +3708,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:0:3@8>",
+		.pme_name = "<M:0:3>@8",
 		.pme_desc = "<NA>",
 		.pme_code = 248,
 		.pme_flags = 0x0,
@@ -3575,7 +3722,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:0:3@9>",
+		.pme_name = "<M:0:3>@9",
 		.pme_desc = "<NA>",
 		.pme_code = 249,
 		.pme_flags = 0x0,
@@ -3589,7 +3736,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:0:3@10>",
+		.pme_name = "<M:0:3>@10",
 		.pme_desc = "<NA>",
 		.pme_code = 250,
 		.pme_flags = 0x0,
@@ -3603,7 +3750,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:0:3@11>",
+		.pme_name = "<M:0:3>@11",
 		.pme_desc = "<NA>",
 		.pme_code = 251,
 		.pme_flags = 0x0,
@@ -3617,7 +3764,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:0:3@12>",
+		.pme_name = "<M:0:3>@12",
 		.pme_desc = "<NA>",
 		.pme_code = 252,
 		.pme_flags = 0x0,
@@ -3631,7 +3778,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:0:3@13>",
+		.pme_name = "<M:0:3>@13",
 		.pme_desc = "<NA>",
 		.pme_code = 253,
 		.pme_flags = 0x0,
@@ -3645,7 +3792,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:0:3@14>",
+		.pme_name = "<M:0:3>@14",
 		.pme_desc = "<NA>",
 		.pme_code = 254,
 		.pme_flags = 0x0,
@@ -3659,7 +3806,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:0:3@15>",
+		.pme_name = "<M:0:3>@15",
 		.pme_desc = "<NA>",
 		.pme_code = 255,
 		.pme_flags = 0x0,
@@ -3672,7 +3819,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 1 */
+	/* M Counter 1 Event 0 */
 	{
 		.pme_name = "W_IN_IDLE_1@0",
 		.pme_desc = "Wclk cycles BW2MD input port 1 is idle (no flits in either VC0 or VC2). (M chip 0)",
@@ -3897,6 +4044,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 1 Event 1 */
 	{
 		.pme_name = "STALL_TDB_FULL@0",
 		.pme_desc = "Wclk cycles protocol engine request queue stalled due to transient directory buffer full (sum of 4 engines). (M chip 0)",
@@ -4121,6 +4269,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 1 Event 2 */
 	{
 		.pme_name = "W_OUT_IDLE_1@0",
 		.pme_desc = "Wclk cycles MD2BW output port 1 is idle (no flits flowing). (M chip 0)",
@@ -4345,6 +4494,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 1 Event 3 */
 	{
 		.pme_name = "FWD_READ_SHARED_SENT@0",
 		.pme_desc = "FwdReadShared packets sent (Exclusive -> PendFwd transition). (M chip 0)",
@@ -4569,7 +4719,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 2 */
+	/* M Counter 2 Event 0 */
 	{
 		.pme_name = "UPDATES_SENT@0",
 		.pme_desc = "Puts that cause an Update to be sent to owner. (M chip 0)",
@@ -4794,6 +4944,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 2 Event 1 */
 	{
 		.pme_name = "STALL_MM_RESPQ@0",
 		.pme_desc = "Wclk cycles protocol engine request queue stalled due to MM VN1 response queue full (sum of 4 engines). (M chip 0)",
@@ -5018,6 +5169,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 2 Event 2 */
 	{
 		.pme_name = "W_OUT_IDLE_2@0",
 		.pme_desc = "Wclk cycles MD2BW output port 2 is idle (no flits flowing). (M chip 0)",
@@ -5242,6 +5394,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 2 Event 3 */
 	{
 		.pme_name = "W_IN_IDLE_2@0",
 		.pme_desc = "Wclk cycles BW2MD input port 2 is idle (no flits in either VC0 or VC2). (M chip 0)",
@@ -5466,7 +5619,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 3 */
+	/* M Counter 3 Event 0 */
 	{
 		.pme_name = "NON_CACHED@0",
 		.pme_desc = "Read requests satisfied from non-cached state. (M chip 0)",
@@ -5691,6 +5844,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 3 Event 1 */
 	{
 		.pme_name = "STALL_ASSOC@0",
 		.pme_desc = "Wclk cycles protocol engine request queue stalled due to temporary over-subscription of directory ways. (M chip 0)",
@@ -5915,6 +6069,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 3 Event 2 */
 	{
 		.pme_name = "W_OUT_IDLE_3@0",
 		.pme_desc = "Wclk cycles MD2BW output port 3 is idle (no flits flowing). (M chip 0)",
@@ -6139,6 +6294,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 3 Event 3 */
 	{
 		.pme_name = "W_IN_IDLE_3@0",
 		.pme_desc = "Wclk cycles BW2MD input port 3 is idle (no flits in either VC0 or VC2). (M chip 0)",
@@ -6363,7 +6519,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 4 */
+	/* M Counter 4 Event 0 */
 	{
 		.pme_name = "READ_REQ_SHARED@0",
 		.pme_desc = "Read requests satisfied from the Shared state. (M chip 0)",
@@ -6588,6 +6744,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 4 Event 1 */
 	{
 		.pme_name = "STALL_VN1_BLOCKED@0",
 		.pme_desc = "Wclk cycles protocol engine request queue stalled due to virtual network 1 output blocked. (M chip 0)",
@@ -6812,6 +6969,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 4 Event 2 */
 	{
 		.pme_name = "W_IN_FLOWING_0@0",
 		.pme_desc = "Wclk cycles BW2MD input port 0 has a flit flowing (on either VC0 or VC2). (M chip 0)",
@@ -7036,6 +7194,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 4 Event 3 */
 	{
 		.pme_name = "W_OUT_FLOWING_0@0",
 		.pme_desc = "Wclk cycles MD2BW output port 0 has a flit flowing. (M chip 0)",
@@ -7260,7 +7419,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 5 */
+	/* M Counter 5 Event 0 */
 	{
 		.pme_name = "FWD_REQ_TO_OWNER@0",
 		.pme_desc = "Requests forwarded to current owner (FwdRead, FwdReadShared, FlushReq, FwdGet, Update). (M chip 0)",
@@ -7485,6 +7644,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 5 Event 1 */
 	{
 		.pme_name = "PROT_ENGINE_IDLE_NO_PACKETS@0",
 		.pme_desc = "Wclk cycles protocol engine idle due to no new packets to process. Note: The maximum packet acceptance rate into the MD is 1 packet every 2 Wclk periods. (M chip 0)",
@@ -7709,6 +7869,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 5 Event 2 */
 	{
 		.pme_name = "W_IN_FLOWING_1@0",
 		.pme_desc = "Wclk cycles BW2MD input port 1 has a flit flowing (on either VC0 or VC2). (M chip 0)",
@@ -7933,6 +8094,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 5 Event 3 */
 	{
 		.pme_name = "FWD_READ@0",
 		.pme_desc = "FwdRead packets sent (Exclusive -> PendFwd transition). (M chip 0)",
@@ -8157,7 +8319,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 6 */
+	/* M Counter 6 Event 0 */
 	{
 		.pme_name = "SUPPLY_INV@0",
 		.pme_desc = "SupplyInv packets received. (M chip 0)",
@@ -8382,6 +8544,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 6 Event 1 */
 	{
 		.pme_name = "NUM_REPLAY@0",
 		.pme_desc = "Requests sent through replay queue. (M chip 0)",
@@ -8606,6 +8769,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 6 Event 2 */
 	{
 		.pme_name = "W_IN_FLOWING_2@0",
 		.pme_desc = "Wclk cycles BW2MD input port 2 has a flit flowing (on either VC0 or VC2). (M chip 0)",
@@ -8830,6 +8994,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 6 Event 3 */
 	{
 		.pme_name = "INVAL_1@0",
 		.pme_desc = "Invalidations sent to a single BW. (M chip 0)",
@@ -9054,7 +9219,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 7 */
+	/* M Counter 7 Event 0 */
 	{
 		.pme_name = "REQUEST_GETS_4DWORDS_L3_HIT@0",
 		.pme_desc = "NGet or Get Full cache line requests to MDs - L3 hit. (M chip 0)",
@@ -9279,8 +9444,9 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 7 Event 1 */
 	{
-		.pme_name = "<M:7:1@0>",
+		.pme_name = "<M:7:1>@0",
 		.pme_desc = "<NA>",
 		.pme_code = 656,
 		.pme_flags = 0x0,
@@ -9294,7 +9460,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:7:1@1>",
+		.pme_name = "<M:7:1>@1",
 		.pme_desc = "<NA>",
 		.pme_code = 657,
 		.pme_flags = 0x0,
@@ -9308,7 +9474,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:7:1@2>",
+		.pme_name = "<M:7:1>@2",
 		.pme_desc = "<NA>",
 		.pme_code = 658,
 		.pme_flags = 0x0,
@@ -9322,7 +9488,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:7:1@3>",
+		.pme_name = "<M:7:1>@3",
 		.pme_desc = "<NA>",
 		.pme_code = 659,
 		.pme_flags = 0x0,
@@ -9336,7 +9502,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:7:1@4>",
+		.pme_name = "<M:7:1>@4",
 		.pme_desc = "<NA>",
 		.pme_code = 660,
 		.pme_flags = 0x0,
@@ -9350,7 +9516,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:7:1@5>",
+		.pme_name = "<M:7:1>@5",
 		.pme_desc = "<NA>",
 		.pme_code = 661,
 		.pme_flags = 0x0,
@@ -9364,7 +9530,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:7:1@6>",
+		.pme_name = "<M:7:1>@6",
 		.pme_desc = "<NA>",
 		.pme_code = 662,
 		.pme_flags = 0x0,
@@ -9378,7 +9544,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:7:1@7>",
+		.pme_name = "<M:7:1>@7",
 		.pme_desc = "<NA>",
 		.pme_code = 663,
 		.pme_flags = 0x0,
@@ -9392,7 +9558,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:7:1@8>",
+		.pme_name = "<M:7:1>@8",
 		.pme_desc = "<NA>",
 		.pme_code = 664,
 		.pme_flags = 0x0,
@@ -9406,7 +9572,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:7:1@9>",
+		.pme_name = "<M:7:1>@9",
 		.pme_desc = "<NA>",
 		.pme_code = 665,
 		.pme_flags = 0x0,
@@ -9420,7 +9586,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:7:1@10>",
+		.pme_name = "<M:7:1>@10",
 		.pme_desc = "<NA>",
 		.pme_code = 666,
 		.pme_flags = 0x0,
@@ -9434,7 +9600,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:7:1@11>",
+		.pme_name = "<M:7:1>@11",
 		.pme_desc = "<NA>",
 		.pme_code = 667,
 		.pme_flags = 0x0,
@@ -9448,7 +9614,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:7:1@12>",
+		.pme_name = "<M:7:1>@12",
 		.pme_desc = "<NA>",
 		.pme_code = 668,
 		.pme_flags = 0x0,
@@ -9462,7 +9628,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:7:1@13>",
+		.pme_name = "<M:7:1>@13",
 		.pme_desc = "<NA>",
 		.pme_code = 669,
 		.pme_flags = 0x0,
@@ -9476,7 +9642,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:7:1@14>",
+		.pme_name = "<M:7:1>@14",
 		.pme_desc = "<NA>",
 		.pme_code = 670,
 		.pme_flags = 0x0,
@@ -9490,7 +9656,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:7:1@15>",
+		.pme_name = "<M:7:1>@15",
 		.pme_desc = "<NA>",
 		.pme_code = 671,
 		.pme_flags = 0x0,
@@ -9503,6 +9669,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 7 Event 2 */
 	{
 		.pme_name = "W_IN_FLOWING_3@0",
 		.pme_desc = "Wclk cycles BW2MD input port 3 has a flit flowing (on either VC0 or VC2). (M chip 0)",
@@ -9727,6 +9894,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 7 Event 3 */
 	{
 		.pme_name = "INVAL_2@0",
 		.pme_desc = "Invalidations sent to two BWs. (M chip 0)",
@@ -9951,7 +10119,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 8 */
+	/* M Counter 8 Event 0 */
 	{
 		.pme_name = "SUPPLY_SH@0",
 		.pme_desc = "SupplySh packets received. (M chip 0)",
@@ -10176,6 +10344,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 8 Event 1 */
 	{
 		.pme_name = "STALL_MM@0",
 		.pme_desc = "Wclk cycles protocol engine request queue stalled due to back-pressure from memory manager. (M chip 0)",
@@ -10400,6 +10569,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 8 Event 2 */
 	{
 		.pme_name = "W_IN_WAITING_0@0",
 		.pme_desc = "Wclk cycles BW2MD input port 0 has a packet waiting that failed to win arbitration (on either VC0 or VC2). (M chip 0)",
@@ -10624,6 +10794,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 8 Event 3 */
 	{
 		.pme_name = "W_OUT_FLOWING_1@0",
 		.pme_desc = "Wclk cycles MD2BW output port 1 has a flit flowing. (M chip 0)",
@@ -10848,7 +11019,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 9 */
+	/* M Counter 9 Event 0 */
 	{
 		.pme_name = "REQUEST_GETS_4DWORDS_L3_MISS@0",
 		.pme_desc = "NGet or Get Full cache line requests to MDs - L3 miss. (M chip 0)",
@@ -11073,6 +11244,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 9 Event 1 */
 	{
 		.pme_name = "SECTION_BUSY@0",
 		.pme_desc = "Wclk cycles MD pipeline busy. (M chip 0)",
@@ -11297,6 +11469,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 9 Event 2 */
 	{
 		.pme_name = "W_IN_WAITING_1@0",
 		.pme_desc = "Wclk cycles BW2MD input port 1 has a packet waiting that failed to win arbitration (on either VC0 or VC2). (M chip 0)",
@@ -11521,6 +11694,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 9 Event 3 */
 	{
 		.pme_name = "W_OUT_FLOWING_2@0",
 		.pme_desc = "Wclk cycles MD2BW output port 2 has a flit flowing. (M chip 0)",
@@ -11745,7 +11919,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 10 */
+	/* M Counter 10 Event 0 */
 	{
 		.pme_name = "SUPPLY_EXCL@0",
 		.pme_desc = "SupplyExcl packets received. (M chip 0)",
@@ -11970,6 +12144,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 10 Event 1 */
 	{
 		.pme_name = "W_OUT_FLOWING_3@0",
 		.pme_desc = "Wclk cycles MD2BW output port 3 has a flit flowing. (M chip 0)",
@@ -12194,6 +12369,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 10 Event 2 */
 	{
 		.pme_name = "W_IN_WAITING_2@0",
 		.pme_desc = "Wclk cycles BW2MD input port 2 has a packet waiting that failed to win arbitration (on either VC0 or VC2). (M chip 0)",
@@ -12418,6 +12594,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 10 Event 3 */
 	{
 		.pme_name = "INVAL_3@0",
 		.pme_desc = "Invalidations sent to three BWs. (M chip 0)",
@@ -12642,7 +12819,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 11 */
+	/* M Counter 11 Event 0 */
 	{
 		.pme_name = "NACKS_RECV@0",
 		.pme_desc = "FlushAck and Update Nack packets received (race between forwarded request and eviction by owner). (M chip 0)",
@@ -12867,6 +13044,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 11 Event 1 */
 	{
 		.pme_name = "W_OUT_BLOCK_CRED_0@0",
 		.pme_desc = "Wclk cycles MD2BW output port 0 is blocked due to lack of credits. (M chip 0)",
@@ -13091,6 +13269,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 11 Event 2 */
 	{
 		.pme_name = "W_IN_WAITING_3@0",
 		.pme_desc = "Wclk cycles BW2MD input port 3 has a packet waiting that failed to win arbitration (on either VC0 or VC2). (M chip 0)",
@@ -13315,6 +13494,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 11 Event 3 */
 	{
 		.pme_name = "INVAL_4@0",
 		.pme_desc = "Invalidations sent to four BWs. (M chip 0)",
@@ -13539,7 +13719,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 12 */
+	/* M Counter 12 Event 0 */
 	{
 		.pme_name = "UPDATE_NACK_RECV@0",
 		.pme_desc = "UpdateNacks received. (M chip 0)",
@@ -13764,6 +13944,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 12 Event 1 */
 	{
 		.pme_name = "W_OUT_BLOCK_CRED_1@0",
 		.pme_desc = "Wclk cycles MD2BW output port 1 is blocked due to lack of credits. (M chip 0)",
@@ -13988,6 +14169,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 12 Event 2 */
 	{
 		.pme_name = "W_IN_BLOCKED_0@0",
 		.pme_desc = "Wclk cycles BW2MD input port 0 has a packet waiting that is blocked due to MD full. (M chip 0)",
@@ -14212,6 +14394,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 12 Event 3 */
 	{
 		.pme_name = "FWD_GET_SENT@0",
 		.pme_desc = "FwdGet packets sent (Exclusive -> PendFwd transition). (M chip 0)",
@@ -14436,7 +14619,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 13 */
+	/* M Counter 13 Event 0 */
 	{
 		.pme_name = "PEND_DROP@0",
 		.pme_desc = "Times entering PendDrop state (from Shared). (M chip 0)",
@@ -14661,6 +14844,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 13 Event 1 */
 	{
 		.pme_name = "LINE_EVICTIONS@0",
 		.pme_desc = "Counts lines that are evicted. Note: doesn't count AMO forced evictions. Also note that the counter will increment if the line is not dirty and it is evicted. (M chip 0)",
@@ -14885,6 +15069,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 13 Event 2 */
 	{
 		.pme_name = "W_IN_BLOCKED_1@0",
 		.pme_desc = "Wclk cycles BW2MD input port 1 has a packet waiting that is blocked due to MD full. (M chip 0)",
@@ -15109,6 +15294,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 13 Event 3 */
 	{
 		.pme_name = "FLUSH_REQ_PACKETS@0",
 		.pme_desc = "FlushReq packets sent (Exclusive -> PendFwd transition). (M chip 0)",
@@ -15333,7 +15519,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 14 */
+	/* M Counter 14 Event 0 */
 	{
 		.pme_name = "INVAL_EVENTS@0",
 		.pme_desc = "Invalidation events (any number of sharers). (M chip 0)",
@@ -15558,6 +15744,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 14 Event 1 */
 	{
 		.pme_name = "L3_LINE_HIT_GLOBAL@0",
 		.pme_desc = "Allocating read requests that hit out of L3 cached data and state was global. (M chip 0)",
@@ -15782,6 +15969,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 14 Event 2 */
 	{
 		.pme_name = "W_IN_BLOCKED_2@0",
 		.pme_desc = "Wclk cycles BW2MD input port 2 has a packet waiting that is blocked due to MD full. (M chip 0)",
@@ -16006,6 +16194,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 14 Event 3 */
 	{
 		.pme_name = "W_OUT_BLOCK_CRED_2@0",
 		.pme_desc = "Wclk cycles MD2BW output port 2 is blocked due to lack of credits. (M chip 0)",
@@ -16230,7 +16419,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 15 */
+	/* M Counter 15 Event 0 */
 	{
 		.pme_name = "REQUEST_ALLOC_NO_FILL@0",
 		.pme_desc = "Allocating no fill requests. (M chip 0)",
@@ -16455,6 +16644,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 15 Event 1 */
 	{
 		.pme_name = "L3_LINE_HIT_SHARED@0",
 		.pme_desc = "Allocating read requests that hit out of L3 cached data and state was shared. (M chip 0)",
@@ -16679,6 +16869,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 15 Event 2 */
 	{
 		.pme_name = "W_IN_BLOCKED_3@0",
 		.pme_desc = "Wclk cycles BW2MD input port 3 has a packet waiting that is blocked due to MD full. (M chip 0)",
@@ -16903,6 +17094,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 15 Event 3 */
 	{
 		.pme_name = "W_OUT_BLOCK_CRED_3@0",
 		.pme_desc = "Wclk cycles MD2BW output port 3 is blocked due to lack of credits. (M chip 0)",
@@ -17127,7 +17319,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 16 */
+	/* M Counter 16 Event 0 */
 	{
 		.pme_name = "REQUEST_1DWORD_L3_HIT@0",
 		.pme_desc = "Single DWord Get and NGet requests to MDs - L3 hit. (M chip 0)",
@@ -17352,6 +17544,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 16 Event 1 */
 	{
 		.pme_name = "AMOS@0",
 		.pme_desc = "AMOs to local memory (memory manager). (M chip 0)",
@@ -17576,6 +17769,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 16 Event 2 */
 	{
 		.pme_name = "MM0_ANY_BANK_BUSY@0",
 		.pme_desc = "Wclk cycles that any back is busy in MM0. (M chip 0)",
@@ -17800,6 +17994,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 16 Event 3 */
 	{
 		.pme_name = "W_OUT_BLOCK_CHN_0@0",
 		.pme_desc = "Wclk cycles MD2BW output port 0 is blocked due to channel back-pressure. (M chip 0)",
@@ -18024,7 +18219,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 17 */
+	/* M Counter 17 Event 0 */
 	{
 		.pme_name = "REQUEST_4DWORDS_L3_HIT@0",
 		.pme_desc = "Allocating read requests to MDs - L3 hit. (M chip 0)",
@@ -18249,6 +18444,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 17 Event 1 */
 	{
 		.pme_name = "AMO_MISSES@0",
 		.pme_desc = "Misses in AMO cache (memory manager). (M chip 0)",
@@ -18473,6 +18669,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 17 Event 2 */
 	{
 		.pme_name = "MM0_ACCUM_BANK_BUSY@0",
 		.pme_desc = "Accumulation of the MM0 memory banks are busy in Mclks. There are 8 banks per MM and this counter will be +1 every Mclk that 1 bank is busy, +2 every Mclk that 2 banks are busy, etc. (M chip 0)",
@@ -18697,6 +18894,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 17 Event 3 */
 	{
 		.pme_name = "W_OUT_BLOCK_CHN_1@0",
 		.pme_desc = "Wclk cycles MD2BW output port 1 is blocked due to channel back-pressure. (M chip 0)",
@@ -18921,7 +19119,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 18 */
+	/* M Counter 18 Event 0 */
 	{
 		.pme_name = "REQUEST_1DWORD@0",
 		.pme_desc = "Single DWord Get and NGet requests to MDs. (M chip 0)",
@@ -19146,6 +19344,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 18 Event 1 */
 	{
 		.pme_name = "RETRIES_MM@0",
 		.pme_desc = "Memory Manager retries. (M chip 0)",
@@ -19370,6 +19569,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 18 Event 2 */
 	{
 		.pme_name = "MM1_ANY_BANK_BUSY@0",
 		.pme_desc = "Wclk cycles that any bank is busy in MM1. (M chip 0)",
@@ -19594,6 +19794,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 18 Event 3 */
 	{
 		.pme_name = "W_OUT_BLOCK_CHN_2@0",
 		.pme_desc = "Wclk cycles MD2BW output port 2 is blocked due to channel back-pressure. (M chip 0)",
@@ -19818,7 +20019,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 19 */
+	/* M Counter 19 Event 0 */
 	{
 		.pme_name = "REQUEST_4DWORDS@0",
 		.pme_desc = "Allocating read, Get and NGet full cache line requests to MDs. (M chip 0)",
@@ -20043,8 +20244,9 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 19 Event 1 */
 	{
-		.pme_name = "<M:19:1@0>",
+		.pme_name = "<M:19:1>@0",
 		.pme_desc = "<NA>",
 		.pme_code = 1424,
 		.pme_flags = 0x0,
@@ -20058,7 +20260,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:19:1@1>",
+		.pme_name = "<M:19:1>@1",
 		.pme_desc = "<NA>",
 		.pme_code = 1425,
 		.pme_flags = 0x0,
@@ -20072,7 +20274,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:19:1@2>",
+		.pme_name = "<M:19:1>@2",
 		.pme_desc = "<NA>",
 		.pme_code = 1426,
 		.pme_flags = 0x0,
@@ -20086,7 +20288,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:19:1@3>",
+		.pme_name = "<M:19:1>@3",
 		.pme_desc = "<NA>",
 		.pme_code = 1427,
 		.pme_flags = 0x0,
@@ -20100,7 +20302,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:19:1@4>",
+		.pme_name = "<M:19:1>@4",
 		.pme_desc = "<NA>",
 		.pme_code = 1428,
 		.pme_flags = 0x0,
@@ -20114,7 +20316,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:19:1@5>",
+		.pme_name = "<M:19:1>@5",
 		.pme_desc = "<NA>",
 		.pme_code = 1429,
 		.pme_flags = 0x0,
@@ -20128,7 +20330,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:19:1@6>",
+		.pme_name = "<M:19:1>@6",
 		.pme_desc = "<NA>",
 		.pme_code = 1430,
 		.pme_flags = 0x0,
@@ -20142,7 +20344,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:19:1@7>",
+		.pme_name = "<M:19:1>@7",
 		.pme_desc = "<NA>",
 		.pme_code = 1431,
 		.pme_flags = 0x0,
@@ -20156,7 +20358,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:19:1@8>",
+		.pme_name = "<M:19:1>@8",
 		.pme_desc = "<NA>",
 		.pme_code = 1432,
 		.pme_flags = 0x0,
@@ -20170,7 +20372,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:19:1@9>",
+		.pme_name = "<M:19:1>@9",
 		.pme_desc = "<NA>",
 		.pme_code = 1433,
 		.pme_flags = 0x0,
@@ -20184,7 +20386,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:19:1@10>",
+		.pme_name = "<M:19:1>@10",
 		.pme_desc = "<NA>",
 		.pme_code = 1434,
 		.pme_flags = 0x0,
@@ -20198,7 +20400,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:19:1@11>",
+		.pme_name = "<M:19:1>@11",
 		.pme_desc = "<NA>",
 		.pme_code = 1435,
 		.pme_flags = 0x0,
@@ -20212,7 +20414,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:19:1@12>",
+		.pme_name = "<M:19:1>@12",
 		.pme_desc = "<NA>",
 		.pme_code = 1436,
 		.pme_flags = 0x0,
@@ -20226,7 +20428,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:19:1@13>",
+		.pme_name = "<M:19:1>@13",
 		.pme_desc = "<NA>",
 		.pme_code = 1437,
 		.pme_flags = 0x0,
@@ -20240,7 +20442,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:19:1@14>",
+		.pme_name = "<M:19:1>@14",
 		.pme_desc = "<NA>",
 		.pme_code = 1438,
 		.pme_flags = 0x0,
@@ -20254,7 +20456,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:19:1@15>",
+		.pme_name = "<M:19:1>@15",
 		.pme_desc = "<NA>",
 		.pme_code = 1439,
 		.pme_flags = 0x0,
@@ -20267,6 +20469,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 19 Event 2 */
 	{
 		.pme_name = "MM1_ACCUM_BANK_BUSY@0",
 		.pme_desc = "Accumulation of the MM1 memory banks are busy in Mclks. There are 8 banks per MM and this counter will be +1 every Mclk that 1 bank is busy, +2 every Mclk that 2 banks are busy, etc. (M chip 0)",
@@ -20491,6 +20694,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 19 Event 3 */
 	{
 		.pme_name = "W_OUT_BLOCK_CHN_3@0",
 		.pme_desc = "Wclk cycles MD2BW output port 3 is blocked due to channel back-pressure. (M chip 0)",
@@ -20715,7 +20919,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 20 */
+	/* M Counter 20 Event 0 */
 	{
 		.pme_name = "REQUESTS_0@0",
 		.pme_desc = "Read or write requests from port 0 to MDs. (M chip 0)",
@@ -20940,6 +21144,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 20 Event 1 */
 	{
 		.pme_name = "REQUEST_1DWORD_L3_MISS@0",
 		.pme_desc = "Single DWord get requests to MDs - L3 miss. (M chip 0)",
@@ -21164,6 +21369,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 20 Event 2 */
 	{
 		.pme_name = "MM2_ANY_BANK_BUSY@0",
 		.pme_desc = "Wclk cycles that any bank is busy in MM2. (M chip 0)",
@@ -21388,6 +21594,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 20 Event 3 */
 	{
 		.pme_name = "W_OUT_QUEUE_BP_0@0",
 		.pme_desc = "One of the input FIFOs that is destined for MD2BW output port 0 is full and asserting back-pressure to the MD (Wclk cycles). (M chip 0)",
@@ -21612,7 +21819,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 21 */
+	/* M Counter 21 Event 0 */
 	{
 		.pme_name = "REQUESTS_1@0",
 		.pme_desc = "Read or write requests from port 1 to MDs. (M chip 0)",
@@ -21837,6 +22044,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 21 Event 1 */
 	{
 		.pme_name = "REQUEST_4DWORDS_L3_MISS@0",
 		.pme_desc = "Allocating read requests to MDs - L3 miss. (M chip 0)",
@@ -22061,6 +22269,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 21 Event 2 */
 	{
 		.pme_name = "MM2_ACCUM_BANK_BUSY@0",
 		.pme_desc = "Accumulation of the MM2 memory banks are busy in Mclks. There are 8 banks per MM and this counter will be +1 every Mclk that 1 bank is busy, +2 every Mclk that 2 banks are busy, etc. (M chip 0)",
@@ -22285,6 +22494,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 21 Event 3 */
 	{
 		.pme_name = "W_OUT_QUEUE_BP_1@0",
 		.pme_desc = "One of the input FIFOs that is destined for MD2BW output port 1 is full and asserting back-pressure to the MD (Wclk cycles). (M chip 0)",
@@ -22509,7 +22719,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 22 */
+	/* M Counter 22 Event 0 */
 	{
 		.pme_name = "REQUESTS_2@0",
 		.pme_desc = "Read or write requests from port 2 to MDs. (M chip 0)",
@@ -22734,6 +22944,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 22 Event 1 */
 	{
 		.pme_name = "REQUEST_1SWORD@0",
 		.pme_desc = "Single SWord requests to MDs. (M chip 0)",
@@ -22958,6 +23169,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 22 Event 2 */
 	{
 		.pme_name = "MM3_ANY_BANK_BUSY@0",
 		.pme_desc = "Wclk cycles that any bank is busy in MM3. (M chip 0)",
@@ -23182,6 +23394,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 22 Event 3 */
 	{
 		.pme_name = "W_OUT_QUEUE_BP_2@0",
 		.pme_desc = "One of the input FIFOs that is destined for MD2BW output port 2 is full and asserting back-pressure to the MD (Wclk cycles). (M chip 0)",
@@ -23406,7 +23619,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 23 */
+	/* M Counter 23 Event 0 */
 	{
 		.pme_name = "REQUESTS_3@0",
 		.pme_desc = "Read or write requests from port 3 to MDs. (M chip 0)",
@@ -23631,8 +23844,9 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 23 Event 1 */
 	{
-		.pme_name = "<M:23:1@0>",
+		.pme_name = "<M:23:1>@0",
 		.pme_desc = "<NA>",
 		.pme_code = 1680,
 		.pme_flags = 0x0,
@@ -23646,7 +23860,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:23:1@1>",
+		.pme_name = "<M:23:1>@1",
 		.pme_desc = "<NA>",
 		.pme_code = 1681,
 		.pme_flags = 0x0,
@@ -23660,7 +23874,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:23:1@2>",
+		.pme_name = "<M:23:1>@2",
 		.pme_desc = "<NA>",
 		.pme_code = 1682,
 		.pme_flags = 0x0,
@@ -23674,7 +23888,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:23:1@3>",
+		.pme_name = "<M:23:1>@3",
 		.pme_desc = "<NA>",
 		.pme_code = 1683,
 		.pme_flags = 0x0,
@@ -23688,7 +23902,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:23:1@4>",
+		.pme_name = "<M:23:1>@4",
 		.pme_desc = "<NA>",
 		.pme_code = 1684,
 		.pme_flags = 0x0,
@@ -23702,7 +23916,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:23:1@5>",
+		.pme_name = "<M:23:1>@5",
 		.pme_desc = "<NA>",
 		.pme_code = 1685,
 		.pme_flags = 0x0,
@@ -23716,7 +23930,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:23:1@6>",
+		.pme_name = "<M:23:1>@6",
 		.pme_desc = "<NA>",
 		.pme_code = 1686,
 		.pme_flags = 0x0,
@@ -23730,7 +23944,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:23:1@7>",
+		.pme_name = "<M:23:1>@7",
 		.pme_desc = "<NA>",
 		.pme_code = 1687,
 		.pme_flags = 0x0,
@@ -23744,7 +23958,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:23:1@8>",
+		.pme_name = "<M:23:1>@8",
 		.pme_desc = "<NA>",
 		.pme_code = 1688,
 		.pme_flags = 0x0,
@@ -23758,7 +23972,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:23:1@9>",
+		.pme_name = "<M:23:1>@9",
 		.pme_desc = "<NA>",
 		.pme_code = 1689,
 		.pme_flags = 0x0,
@@ -23772,7 +23986,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:23:1@10>",
+		.pme_name = "<M:23:1>@10",
 		.pme_desc = "<NA>",
 		.pme_code = 1690,
 		.pme_flags = 0x0,
@@ -23786,7 +24000,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:23:1@11>",
+		.pme_name = "<M:23:1>@11",
 		.pme_desc = "<NA>",
 		.pme_code = 1691,
 		.pme_flags = 0x0,
@@ -23800,7 +24014,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:23:1@12>",
+		.pme_name = "<M:23:1>@12",
 		.pme_desc = "<NA>",
 		.pme_code = 1692,
 		.pme_flags = 0x0,
@@ -23814,7 +24028,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:23:1@13>",
+		.pme_name = "<M:23:1>@13",
 		.pme_desc = "<NA>",
 		.pme_code = 1693,
 		.pme_flags = 0x0,
@@ -23828,7 +24042,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:23:1@14>",
+		.pme_name = "<M:23:1>@14",
 		.pme_desc = "<NA>",
 		.pme_code = 1694,
 		.pme_flags = 0x0,
@@ -23842,7 +24056,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:23:1@15>",
+		.pme_name = "<M:23:1>@15",
 		.pme_desc = "<NA>",
 		.pme_code = 1695,
 		.pme_flags = 0x0,
@@ -23855,6 +24069,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 23 Event 2 */
 	{
 		.pme_name = "MM3_ACCUM_BANK_BUSY@0",
 		.pme_desc = "Accumulation of the MM3 memory banks are busy in Mclks. There are 8 banks per MM and this counter will be +1 every Mclk that 1 bank is busy, +2 every Mclk that 2 banks are busy, etc. (M chip 0)",
@@ -24079,6 +24294,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 23 Event 3 */
 	{
 		.pme_name = "W_OUT_QUEUE_BP_3@0",
 		.pme_desc = "One of the input FIFOs that is destined for MD2BW output port 3 is full and asserting back-pressure to the MD (Wclk cycles). (M chip 0)",
@@ -24303,7 +24519,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 24 */
+	/* M Counter 24 Event 0 */
 	{
 		.pme_name = "W_SWORD_PUTS@0",
 		.pme_desc = "Count of the total number of SWords that are written to memory or the L3 cache with Put commands. Counts up to 2 SWords per memory directory per clock period. (M chip 0)",
@@ -24528,8 +24744,9 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 24 Event 1 */
 	{
-		.pme_name = "<M:24:1@0>",
+		.pme_name = "<M:24:1>@0",
 		.pme_desc = "<NA>",
 		.pme_code = 1744,
 		.pme_flags = 0x0,
@@ -24543,7 +24760,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:1@1>",
+		.pme_name = "<M:24:1>@1",
 		.pme_desc = "<NA>",
 		.pme_code = 1745,
 		.pme_flags = 0x0,
@@ -24557,7 +24774,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:1@2>",
+		.pme_name = "<M:24:1>@2",
 		.pme_desc = "<NA>",
 		.pme_code = 1746,
 		.pme_flags = 0x0,
@@ -24571,7 +24788,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:1@3>",
+		.pme_name = "<M:24:1>@3",
 		.pme_desc = "<NA>",
 		.pme_code = 1747,
 		.pme_flags = 0x0,
@@ -24585,7 +24802,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:1@4>",
+		.pme_name = "<M:24:1>@4",
 		.pme_desc = "<NA>",
 		.pme_code = 1748,
 		.pme_flags = 0x0,
@@ -24599,7 +24816,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:1@5>",
+		.pme_name = "<M:24:1>@5",
 		.pme_desc = "<NA>",
 		.pme_code = 1749,
 		.pme_flags = 0x0,
@@ -24613,7 +24830,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:1@6>",
+		.pme_name = "<M:24:1>@6",
 		.pme_desc = "<NA>",
 		.pme_code = 1750,
 		.pme_flags = 0x0,
@@ -24627,7 +24844,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:1@7>",
+		.pme_name = "<M:24:1>@7",
 		.pme_desc = "<NA>",
 		.pme_code = 1751,
 		.pme_flags = 0x0,
@@ -24641,7 +24858,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:1@8>",
+		.pme_name = "<M:24:1>@8",
 		.pme_desc = "<NA>",
 		.pme_code = 1752,
 		.pme_flags = 0x0,
@@ -24655,7 +24872,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:1@9>",
+		.pme_name = "<M:24:1>@9",
 		.pme_desc = "<NA>",
 		.pme_code = 1753,
 		.pme_flags = 0x0,
@@ -24669,7 +24886,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:1@10>",
+		.pme_name = "<M:24:1>@10",
 		.pme_desc = "<NA>",
 		.pme_code = 1754,
 		.pme_flags = 0x0,
@@ -24683,7 +24900,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:1@11>",
+		.pme_name = "<M:24:1>@11",
 		.pme_desc = "<NA>",
 		.pme_code = 1755,
 		.pme_flags = 0x0,
@@ -24697,7 +24914,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:1@12>",
+		.pme_name = "<M:24:1>@12",
 		.pme_desc = "<NA>",
 		.pme_code = 1756,
 		.pme_flags = 0x0,
@@ -24711,7 +24928,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:1@13>",
+		.pme_name = "<M:24:1>@13",
 		.pme_desc = "<NA>",
 		.pme_code = 1757,
 		.pme_flags = 0x0,
@@ -24725,7 +24942,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:1@14>",
+		.pme_name = "<M:24:1>@14",
 		.pme_desc = "<NA>",
 		.pme_code = 1758,
 		.pme_flags = 0x0,
@@ -24739,7 +24956,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:1@15>",
+		.pme_name = "<M:24:1>@15",
 		.pme_desc = "<NA>",
 		.pme_code = 1759,
 		.pme_flags = 0x0,
@@ -24752,8 +24969,9 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 24 Event 2 */
 	{
-		.pme_name = "<M:24:2@0>",
+		.pme_name = "<M:24:2>@0",
 		.pme_desc = "<NA>",
 		.pme_code = 1760,
 		.pme_flags = 0x0,
@@ -24767,7 +24985,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:2@1>",
+		.pme_name = "<M:24:2>@1",
 		.pme_desc = "<NA>",
 		.pme_code = 1761,
 		.pme_flags = 0x0,
@@ -24781,7 +24999,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:2@2>",
+		.pme_name = "<M:24:2>@2",
 		.pme_desc = "<NA>",
 		.pme_code = 1762,
 		.pme_flags = 0x0,
@@ -24795,7 +25013,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:2@3>",
+		.pme_name = "<M:24:2>@3",
 		.pme_desc = "<NA>",
 		.pme_code = 1763,
 		.pme_flags = 0x0,
@@ -24809,7 +25027,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:2@4>",
+		.pme_name = "<M:24:2>@4",
 		.pme_desc = "<NA>",
 		.pme_code = 1764,
 		.pme_flags = 0x0,
@@ -24823,7 +25041,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:2@5>",
+		.pme_name = "<M:24:2>@5",
 		.pme_desc = "<NA>",
 		.pme_code = 1765,
 		.pme_flags = 0x0,
@@ -24837,7 +25055,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:2@6>",
+		.pme_name = "<M:24:2>@6",
 		.pme_desc = "<NA>",
 		.pme_code = 1766,
 		.pme_flags = 0x0,
@@ -24851,7 +25069,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:2@7>",
+		.pme_name = "<M:24:2>@7",
 		.pme_desc = "<NA>",
 		.pme_code = 1767,
 		.pme_flags = 0x0,
@@ -24865,7 +25083,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:2@8>",
+		.pme_name = "<M:24:2>@8",
 		.pme_desc = "<NA>",
 		.pme_code = 1768,
 		.pme_flags = 0x0,
@@ -24879,7 +25097,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:2@9>",
+		.pme_name = "<M:24:2>@9",
 		.pme_desc = "<NA>",
 		.pme_code = 1769,
 		.pme_flags = 0x0,
@@ -24893,7 +25111,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:2@10>",
+		.pme_name = "<M:24:2>@10",
 		.pme_desc = "<NA>",
 		.pme_code = 1770,
 		.pme_flags = 0x0,
@@ -24907,7 +25125,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:2@11>",
+		.pme_name = "<M:24:2>@11",
 		.pme_desc = "<NA>",
 		.pme_code = 1771,
 		.pme_flags = 0x0,
@@ -24921,7 +25139,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:2@12>",
+		.pme_name = "<M:24:2>@12",
 		.pme_desc = "<NA>",
 		.pme_code = 1772,
 		.pme_flags = 0x0,
@@ -24935,7 +25153,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:2@13>",
+		.pme_name = "<M:24:2>@13",
 		.pme_desc = "<NA>",
 		.pme_code = 1773,
 		.pme_flags = 0x0,
@@ -24949,7 +25167,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:2@14>",
+		.pme_name = "<M:24:2>@14",
 		.pme_desc = "<NA>",
 		.pme_code = 1774,
 		.pme_flags = 0x0,
@@ -24963,7 +25181,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:2@15>",
+		.pme_name = "<M:24:2>@15",
 		.pme_desc = "<NA>",
 		.pme_code = 1775,
 		.pme_flags = 0x0,
@@ -24976,8 +25194,9 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 24 Event 3 */
 	{
-		.pme_name = "<M:24:3@0>",
+		.pme_name = "<M:24:3>@0",
 		.pme_desc = "<NA>",
 		.pme_code = 1776,
 		.pme_flags = 0x0,
@@ -24991,7 +25210,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:3@1>",
+		.pme_name = "<M:24:3>@1",
 		.pme_desc = "<NA>",
 		.pme_code = 1777,
 		.pme_flags = 0x0,
@@ -25005,7 +25224,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:3@2>",
+		.pme_name = "<M:24:3>@2",
 		.pme_desc = "<NA>",
 		.pme_code = 1778,
 		.pme_flags = 0x0,
@@ -25019,7 +25238,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:3@3>",
+		.pme_name = "<M:24:3>@3",
 		.pme_desc = "<NA>",
 		.pme_code = 1779,
 		.pme_flags = 0x0,
@@ -25033,7 +25252,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:3@4>",
+		.pme_name = "<M:24:3>@4",
 		.pme_desc = "<NA>",
 		.pme_code = 1780,
 		.pme_flags = 0x0,
@@ -25047,7 +25266,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:3@5>",
+		.pme_name = "<M:24:3>@5",
 		.pme_desc = "<NA>",
 		.pme_code = 1781,
 		.pme_flags = 0x0,
@@ -25061,7 +25280,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:3@6>",
+		.pme_name = "<M:24:3>@6",
 		.pme_desc = "<NA>",
 		.pme_code = 1782,
 		.pme_flags = 0x0,
@@ -25075,7 +25294,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:3@7>",
+		.pme_name = "<M:24:3>@7",
 		.pme_desc = "<NA>",
 		.pme_code = 1783,
 		.pme_flags = 0x0,
@@ -25089,7 +25308,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:3@8>",
+		.pme_name = "<M:24:3>@8",
 		.pme_desc = "<NA>",
 		.pme_code = 1784,
 		.pme_flags = 0x0,
@@ -25103,7 +25322,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:3@9>",
+		.pme_name = "<M:24:3>@9",
 		.pme_desc = "<NA>",
 		.pme_code = 1785,
 		.pme_flags = 0x0,
@@ -25117,7 +25336,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:3@10>",
+		.pme_name = "<M:24:3>@10",
 		.pme_desc = "<NA>",
 		.pme_code = 1786,
 		.pme_flags = 0x0,
@@ -25131,7 +25350,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:3@11>",
+		.pme_name = "<M:24:3>@11",
 		.pme_desc = "<NA>",
 		.pme_code = 1787,
 		.pme_flags = 0x0,
@@ -25145,7 +25364,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:3@12>",
+		.pme_name = "<M:24:3>@12",
 		.pme_desc = "<NA>",
 		.pme_code = 1788,
 		.pme_flags = 0x0,
@@ -25159,7 +25378,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:3@13>",
+		.pme_name = "<M:24:3>@13",
 		.pme_desc = "<NA>",
 		.pme_code = 1789,
 		.pme_flags = 0x0,
@@ -25173,7 +25392,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:3@14>",
+		.pme_name = "<M:24:3>@14",
 		.pme_desc = "<NA>",
 		.pme_code = 1790,
 		.pme_flags = 0x0,
@@ -25187,7 +25406,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:24:3@15>",
+		.pme_name = "<M:24:3>@15",
 		.pme_desc = "<NA>",
 		.pme_code = 1791,
 		.pme_flags = 0x0,
@@ -25200,7 +25419,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 25 */
+	/* M Counter 25 Event 0 */
 	{
 		.pme_name = "W_SWORD_NPUTS@0",
 		.pme_desc = "Count of the total number of SWords that are written to memory or the L3 cache with NPut commands. Counts up to 2 SWords per memory directory per clock period. (M chip 0)",
@@ -25425,8 +25644,9 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 25 Event 1 */
 	{
-		.pme_name = "<M:25:1@0>",
+		.pme_name = "<M:25:1>@0",
 		.pme_desc = "<NA>",
 		.pme_code = 1808,
 		.pme_flags = 0x0,
@@ -25440,7 +25660,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:1@1>",
+		.pme_name = "<M:25:1>@1",
 		.pme_desc = "<NA>",
 		.pme_code = 1809,
 		.pme_flags = 0x0,
@@ -25454,7 +25674,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:1@2>",
+		.pme_name = "<M:25:1>@2",
 		.pme_desc = "<NA>",
 		.pme_code = 1810,
 		.pme_flags = 0x0,
@@ -25468,7 +25688,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:1@3>",
+		.pme_name = "<M:25:1>@3",
 		.pme_desc = "<NA>",
 		.pme_code = 1811,
 		.pme_flags = 0x0,
@@ -25482,7 +25702,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:1@4>",
+		.pme_name = "<M:25:1>@4",
 		.pme_desc = "<NA>",
 		.pme_code = 1812,
 		.pme_flags = 0x0,
@@ -25496,7 +25716,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:1@5>",
+		.pme_name = "<M:25:1>@5",
 		.pme_desc = "<NA>",
 		.pme_code = 1813,
 		.pme_flags = 0x0,
@@ -25510,7 +25730,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:1@6>",
+		.pme_name = "<M:25:1>@6",
 		.pme_desc = "<NA>",
 		.pme_code = 1814,
 		.pme_flags = 0x0,
@@ -25524,7 +25744,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:1@7>",
+		.pme_name = "<M:25:1>@7",
 		.pme_desc = "<NA>",
 		.pme_code = 1815,
 		.pme_flags = 0x0,
@@ -25538,7 +25758,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:1@8>",
+		.pme_name = "<M:25:1>@8",
 		.pme_desc = "<NA>",
 		.pme_code = 1816,
 		.pme_flags = 0x0,
@@ -25552,7 +25772,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:1@9>",
+		.pme_name = "<M:25:1>@9",
 		.pme_desc = "<NA>",
 		.pme_code = 1817,
 		.pme_flags = 0x0,
@@ -25566,7 +25786,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:1@10>",
+		.pme_name = "<M:25:1>@10",
 		.pme_desc = "<NA>",
 		.pme_code = 1818,
 		.pme_flags = 0x0,
@@ -25580,7 +25800,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:1@11>",
+		.pme_name = "<M:25:1>@11",
 		.pme_desc = "<NA>",
 		.pme_code = 1819,
 		.pme_flags = 0x0,
@@ -25594,7 +25814,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:1@12>",
+		.pme_name = "<M:25:1>@12",
 		.pme_desc = "<NA>",
 		.pme_code = 1820,
 		.pme_flags = 0x0,
@@ -25608,7 +25828,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:1@13>",
+		.pme_name = "<M:25:1>@13",
 		.pme_desc = "<NA>",
 		.pme_code = 1821,
 		.pme_flags = 0x0,
@@ -25622,7 +25842,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:1@14>",
+		.pme_name = "<M:25:1>@14",
 		.pme_desc = "<NA>",
 		.pme_code = 1822,
 		.pme_flags = 0x0,
@@ -25636,7 +25856,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:1@15>",
+		.pme_name = "<M:25:1>@15",
 		.pme_desc = "<NA>",
 		.pme_code = 1823,
 		.pme_flags = 0x0,
@@ -25649,8 +25869,9 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 25 Event 2 */
 	{
-		.pme_name = "<M:25:2@0>",
+		.pme_name = "<M:25:2>@0",
 		.pme_desc = "<NA>",
 		.pme_code = 1824,
 		.pme_flags = 0x0,
@@ -25664,7 +25885,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:2@1>",
+		.pme_name = "<M:25:2>@1",
 		.pme_desc = "<NA>",
 		.pme_code = 1825,
 		.pme_flags = 0x0,
@@ -25678,7 +25899,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:2@2>",
+		.pme_name = "<M:25:2>@2",
 		.pme_desc = "<NA>",
 		.pme_code = 1826,
 		.pme_flags = 0x0,
@@ -25692,7 +25913,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:2@3>",
+		.pme_name = "<M:25:2>@3",
 		.pme_desc = "<NA>",
 		.pme_code = 1827,
 		.pme_flags = 0x0,
@@ -25706,7 +25927,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:2@4>",
+		.pme_name = "<M:25:2>@4",
 		.pme_desc = "<NA>",
 		.pme_code = 1828,
 		.pme_flags = 0x0,
@@ -25720,7 +25941,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:2@5>",
+		.pme_name = "<M:25:2>@5",
 		.pme_desc = "<NA>",
 		.pme_code = 1829,
 		.pme_flags = 0x0,
@@ -25734,7 +25955,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:2@6>",
+		.pme_name = "<M:25:2>@6",
 		.pme_desc = "<NA>",
 		.pme_code = 1830,
 		.pme_flags = 0x0,
@@ -25748,7 +25969,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:2@7>",
+		.pme_name = "<M:25:2>@7",
 		.pme_desc = "<NA>",
 		.pme_code = 1831,
 		.pme_flags = 0x0,
@@ -25762,7 +25983,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:2@8>",
+		.pme_name = "<M:25:2>@8",
 		.pme_desc = "<NA>",
 		.pme_code = 1832,
 		.pme_flags = 0x0,
@@ -25776,7 +25997,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:2@9>",
+		.pme_name = "<M:25:2>@9",
 		.pme_desc = "<NA>",
 		.pme_code = 1833,
 		.pme_flags = 0x0,
@@ -25790,7 +26011,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:2@10>",
+		.pme_name = "<M:25:2>@10",
 		.pme_desc = "<NA>",
 		.pme_code = 1834,
 		.pme_flags = 0x0,
@@ -25804,7 +26025,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:2@11>",
+		.pme_name = "<M:25:2>@11",
 		.pme_desc = "<NA>",
 		.pme_code = 1835,
 		.pme_flags = 0x0,
@@ -25818,7 +26039,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:2@12>",
+		.pme_name = "<M:25:2>@12",
 		.pme_desc = "<NA>",
 		.pme_code = 1836,
 		.pme_flags = 0x0,
@@ -25832,7 +26053,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:2@13>",
+		.pme_name = "<M:25:2>@13",
 		.pme_desc = "<NA>",
 		.pme_code = 1837,
 		.pme_flags = 0x0,
@@ -25846,7 +26067,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:2@14>",
+		.pme_name = "<M:25:2>@14",
 		.pme_desc = "<NA>",
 		.pme_code = 1838,
 		.pme_flags = 0x0,
@@ -25860,7 +26081,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:2@15>",
+		.pme_name = "<M:25:2>@15",
 		.pme_desc = "<NA>",
 		.pme_code = 1839,
 		.pme_flags = 0x0,
@@ -25873,8 +26094,9 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 25 Event 3 */
 	{
-		.pme_name = "<M:25:3@0>",
+		.pme_name = "<M:25:3>@0",
 		.pme_desc = "<NA>",
 		.pme_code = 1840,
 		.pme_flags = 0x0,
@@ -25888,7 +26110,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:3@1>",
+		.pme_name = "<M:25:3>@1",
 		.pme_desc = "<NA>",
 		.pme_code = 1841,
 		.pme_flags = 0x0,
@@ -25902,7 +26124,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:3@2>",
+		.pme_name = "<M:25:3>@2",
 		.pme_desc = "<NA>",
 		.pme_code = 1842,
 		.pme_flags = 0x0,
@@ -25916,7 +26138,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:3@3>",
+		.pme_name = "<M:25:3>@3",
 		.pme_desc = "<NA>",
 		.pme_code = 1843,
 		.pme_flags = 0x0,
@@ -25930,7 +26152,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:3@4>",
+		.pme_name = "<M:25:3>@4",
 		.pme_desc = "<NA>",
 		.pme_code = 1844,
 		.pme_flags = 0x0,
@@ -25944,7 +26166,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:3@5>",
+		.pme_name = "<M:25:3>@5",
 		.pme_desc = "<NA>",
 		.pme_code = 1845,
 		.pme_flags = 0x0,
@@ -25958,7 +26180,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:3@6>",
+		.pme_name = "<M:25:3>@6",
 		.pme_desc = "<NA>",
 		.pme_code = 1846,
 		.pme_flags = 0x0,
@@ -25972,7 +26194,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:3@7>",
+		.pme_name = "<M:25:3>@7",
 		.pme_desc = "<NA>",
 		.pme_code = 1847,
 		.pme_flags = 0x0,
@@ -25986,7 +26208,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:3@8>",
+		.pme_name = "<M:25:3>@8",
 		.pme_desc = "<NA>",
 		.pme_code = 1848,
 		.pme_flags = 0x0,
@@ -26000,7 +26222,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:3@9>",
+		.pme_name = "<M:25:3>@9",
 		.pme_desc = "<NA>",
 		.pme_code = 1849,
 		.pme_flags = 0x0,
@@ -26014,7 +26236,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:3@10>",
+		.pme_name = "<M:25:3>@10",
 		.pme_desc = "<NA>",
 		.pme_code = 1850,
 		.pme_flags = 0x0,
@@ -26028,7 +26250,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:3@11>",
+		.pme_name = "<M:25:3>@11",
 		.pme_desc = "<NA>",
 		.pme_code = 1851,
 		.pme_flags = 0x0,
@@ -26042,7 +26264,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:3@12>",
+		.pme_name = "<M:25:3>@12",
 		.pme_desc = "<NA>",
 		.pme_code = 1852,
 		.pme_flags = 0x0,
@@ -26056,7 +26278,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:3@13>",
+		.pme_name = "<M:25:3>@13",
 		.pme_desc = "<NA>",
 		.pme_code = 1853,
 		.pme_flags = 0x0,
@@ -26070,7 +26292,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:3@14>",
+		.pme_name = "<M:25:3>@14",
 		.pme_desc = "<NA>",
 		.pme_code = 1854,
 		.pme_flags = 0x0,
@@ -26084,7 +26306,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:25:3@15>",
+		.pme_name = "<M:25:3>@15",
 		.pme_desc = "<NA>",
 		.pme_code = 1855,
 		.pme_flags = 0x0,
@@ -26097,7 +26319,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 26 */
+	/* M Counter 26 Event 0 */
 	{
 		.pme_name = "W_SWORD_GETS@0",
 		.pme_desc = "Count of the total number of SWords that are read from memory or the L3 cache with Get commands. Counts up to 2 SWords per memory directory per clock period. (M chip 0)",
@@ -26322,8 +26544,9 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 26 Event 1 */
 	{
-		.pme_name = "<M:26:1@0>",
+		.pme_name = "<M:26:1>@0",
 		.pme_desc = "<NA>",
 		.pme_code = 1872,
 		.pme_flags = 0x0,
@@ -26337,7 +26560,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:1@1>",
+		.pme_name = "<M:26:1>@1",
 		.pme_desc = "<NA>",
 		.pme_code = 1873,
 		.pme_flags = 0x0,
@@ -26351,7 +26574,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:1@2>",
+		.pme_name = "<M:26:1>@2",
 		.pme_desc = "<NA>",
 		.pme_code = 1874,
 		.pme_flags = 0x0,
@@ -26365,7 +26588,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:1@3>",
+		.pme_name = "<M:26:1>@3",
 		.pme_desc = "<NA>",
 		.pme_code = 1875,
 		.pme_flags = 0x0,
@@ -26379,7 +26602,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:1@4>",
+		.pme_name = "<M:26:1>@4",
 		.pme_desc = "<NA>",
 		.pme_code = 1876,
 		.pme_flags = 0x0,
@@ -26393,7 +26616,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:1@5>",
+		.pme_name = "<M:26:1>@5",
 		.pme_desc = "<NA>",
 		.pme_code = 1877,
 		.pme_flags = 0x0,
@@ -26407,7 +26630,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:1@6>",
+		.pme_name = "<M:26:1>@6",
 		.pme_desc = "<NA>",
 		.pme_code = 1878,
 		.pme_flags = 0x0,
@@ -26421,7 +26644,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:1@7>",
+		.pme_name = "<M:26:1>@7",
 		.pme_desc = "<NA>",
 		.pme_code = 1879,
 		.pme_flags = 0x0,
@@ -26435,7 +26658,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:1@8>",
+		.pme_name = "<M:26:1>@8",
 		.pme_desc = "<NA>",
 		.pme_code = 1880,
 		.pme_flags = 0x0,
@@ -26449,7 +26672,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:1@9>",
+		.pme_name = "<M:26:1>@9",
 		.pme_desc = "<NA>",
 		.pme_code = 1881,
 		.pme_flags = 0x0,
@@ -26463,7 +26686,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:1@10>",
+		.pme_name = "<M:26:1>@10",
 		.pme_desc = "<NA>",
 		.pme_code = 1882,
 		.pme_flags = 0x0,
@@ -26477,7 +26700,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:1@11>",
+		.pme_name = "<M:26:1>@11",
 		.pme_desc = "<NA>",
 		.pme_code = 1883,
 		.pme_flags = 0x0,
@@ -26491,7 +26714,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:1@12>",
+		.pme_name = "<M:26:1>@12",
 		.pme_desc = "<NA>",
 		.pme_code = 1884,
 		.pme_flags = 0x0,
@@ -26505,7 +26728,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:1@13>",
+		.pme_name = "<M:26:1>@13",
 		.pme_desc = "<NA>",
 		.pme_code = 1885,
 		.pme_flags = 0x0,
@@ -26519,7 +26742,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:1@14>",
+		.pme_name = "<M:26:1>@14",
 		.pme_desc = "<NA>",
 		.pme_code = 1886,
 		.pme_flags = 0x0,
@@ -26533,7 +26756,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:1@15>",
+		.pme_name = "<M:26:1>@15",
 		.pme_desc = "<NA>",
 		.pme_code = 1887,
 		.pme_flags = 0x0,
@@ -26546,8 +26769,9 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 26 Event 2 */
 	{
-		.pme_name = "<M:26:2@0>",
+		.pme_name = "<M:26:2>@0",
 		.pme_desc = "<NA>",
 		.pme_code = 1888,
 		.pme_flags = 0x0,
@@ -26561,7 +26785,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:2@1>",
+		.pme_name = "<M:26:2>@1",
 		.pme_desc = "<NA>",
 		.pme_code = 1889,
 		.pme_flags = 0x0,
@@ -26575,7 +26799,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:2@2>",
+		.pme_name = "<M:26:2>@2",
 		.pme_desc = "<NA>",
 		.pme_code = 1890,
 		.pme_flags = 0x0,
@@ -26589,7 +26813,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:2@3>",
+		.pme_name = "<M:26:2>@3",
 		.pme_desc = "<NA>",
 		.pme_code = 1891,
 		.pme_flags = 0x0,
@@ -26603,7 +26827,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:2@4>",
+		.pme_name = "<M:26:2>@4",
 		.pme_desc = "<NA>",
 		.pme_code = 1892,
 		.pme_flags = 0x0,
@@ -26617,7 +26841,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:2@5>",
+		.pme_name = "<M:26:2>@5",
 		.pme_desc = "<NA>",
 		.pme_code = 1893,
 		.pme_flags = 0x0,
@@ -26631,7 +26855,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:2@6>",
+		.pme_name = "<M:26:2>@6",
 		.pme_desc = "<NA>",
 		.pme_code = 1894,
 		.pme_flags = 0x0,
@@ -26645,7 +26869,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:2@7>",
+		.pme_name = "<M:26:2>@7",
 		.pme_desc = "<NA>",
 		.pme_code = 1895,
 		.pme_flags = 0x0,
@@ -26659,7 +26883,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:2@8>",
+		.pme_name = "<M:26:2>@8",
 		.pme_desc = "<NA>",
 		.pme_code = 1896,
 		.pme_flags = 0x0,
@@ -26673,7 +26897,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:2@9>",
+		.pme_name = "<M:26:2>@9",
 		.pme_desc = "<NA>",
 		.pme_code = 1897,
 		.pme_flags = 0x0,
@@ -26687,7 +26911,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:2@10>",
+		.pme_name = "<M:26:2>@10",
 		.pme_desc = "<NA>",
 		.pme_code = 1898,
 		.pme_flags = 0x0,
@@ -26701,7 +26925,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:2@11>",
+		.pme_name = "<M:26:2>@11",
 		.pme_desc = "<NA>",
 		.pme_code = 1899,
 		.pme_flags = 0x0,
@@ -26715,7 +26939,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:2@12>",
+		.pme_name = "<M:26:2>@12",
 		.pme_desc = "<NA>",
 		.pme_code = 1900,
 		.pme_flags = 0x0,
@@ -26729,7 +26953,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:2@13>",
+		.pme_name = "<M:26:2>@13",
 		.pme_desc = "<NA>",
 		.pme_code = 1901,
 		.pme_flags = 0x0,
@@ -26743,7 +26967,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:2@14>",
+		.pme_name = "<M:26:2>@14",
 		.pme_desc = "<NA>",
 		.pme_code = 1902,
 		.pme_flags = 0x0,
@@ -26757,7 +26981,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:2@15>",
+		.pme_name = "<M:26:2>@15",
 		.pme_desc = "<NA>",
 		.pme_code = 1903,
 		.pme_flags = 0x0,
@@ -26770,8 +26994,9 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 26 Event 3 */
 	{
-		.pme_name = "<M:26:3@0>",
+		.pme_name = "<M:26:3>@0",
 		.pme_desc = "<NA>",
 		.pme_code = 1904,
 		.pme_flags = 0x0,
@@ -26785,7 +27010,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:3@1>",
+		.pme_name = "<M:26:3>@1",
 		.pme_desc = "<NA>",
 		.pme_code = 1905,
 		.pme_flags = 0x0,
@@ -26799,7 +27024,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:3@2>",
+		.pme_name = "<M:26:3>@2",
 		.pme_desc = "<NA>",
 		.pme_code = 1906,
 		.pme_flags = 0x0,
@@ -26813,7 +27038,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:3@3>",
+		.pme_name = "<M:26:3>@3",
 		.pme_desc = "<NA>",
 		.pme_code = 1907,
 		.pme_flags = 0x0,
@@ -26827,7 +27052,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:3@4>",
+		.pme_name = "<M:26:3>@4",
 		.pme_desc = "<NA>",
 		.pme_code = 1908,
 		.pme_flags = 0x0,
@@ -26841,7 +27066,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:3@5>",
+		.pme_name = "<M:26:3>@5",
 		.pme_desc = "<NA>",
 		.pme_code = 1909,
 		.pme_flags = 0x0,
@@ -26855,7 +27080,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:3@6>",
+		.pme_name = "<M:26:3>@6",
 		.pme_desc = "<NA>",
 		.pme_code = 1910,
 		.pme_flags = 0x0,
@@ -26869,7 +27094,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:3@7>",
+		.pme_name = "<M:26:3>@7",
 		.pme_desc = "<NA>",
 		.pme_code = 1911,
 		.pme_flags = 0x0,
@@ -26883,7 +27108,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:3@8>",
+		.pme_name = "<M:26:3>@8",
 		.pme_desc = "<NA>",
 		.pme_code = 1912,
 		.pme_flags = 0x0,
@@ -26897,7 +27122,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:3@9>",
+		.pme_name = "<M:26:3>@9",
 		.pme_desc = "<NA>",
 		.pme_code = 1913,
 		.pme_flags = 0x0,
@@ -26911,7 +27136,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:3@10>",
+		.pme_name = "<M:26:3>@10",
 		.pme_desc = "<NA>",
 		.pme_code = 1914,
 		.pme_flags = 0x0,
@@ -26925,7 +27150,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:3@11>",
+		.pme_name = "<M:26:3>@11",
 		.pme_desc = "<NA>",
 		.pme_code = 1915,
 		.pme_flags = 0x0,
@@ -26939,7 +27164,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:3@12>",
+		.pme_name = "<M:26:3>@12",
 		.pme_desc = "<NA>",
 		.pme_code = 1916,
 		.pme_flags = 0x0,
@@ -26953,7 +27178,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:3@13>",
+		.pme_name = "<M:26:3>@13",
 		.pme_desc = "<NA>",
 		.pme_code = 1917,
 		.pme_flags = 0x0,
@@ -26967,7 +27192,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:3@14>",
+		.pme_name = "<M:26:3>@14",
 		.pme_desc = "<NA>",
 		.pme_code = 1918,
 		.pme_flags = 0x0,
@@ -26981,7 +27206,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:26:3@15>",
+		.pme_name = "<M:26:3>@15",
 		.pme_desc = "<NA>",
 		.pme_code = 1919,
 		.pme_flags = 0x0,
@@ -26994,7 +27219,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
-	/* M Counter 27 */
+	/* M Counter 27 Event 0 */
 	{
 		.pme_name = "W_SWORD_NGETS@0",
 		.pme_desc = "Count of the total number of SWords that are read from memory or the L3 cache with NGet commands. Counts up to 2 SWords per memory directory per clock period. (M chip 0)",
@@ -27219,8 +27444,9 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 27 Event 1 */
 	{
-		.pme_name = "<M:27:1@0>",
+		.pme_name = "<M:27:1>@0",
 		.pme_desc = "<NA>",
 		.pme_code = 1936,
 		.pme_flags = 0x0,
@@ -27234,7 +27460,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:1@1>",
+		.pme_name = "<M:27:1>@1",
 		.pme_desc = "<NA>",
 		.pme_code = 1937,
 		.pme_flags = 0x0,
@@ -27248,7 +27474,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:1@2>",
+		.pme_name = "<M:27:1>@2",
 		.pme_desc = "<NA>",
 		.pme_code = 1938,
 		.pme_flags = 0x0,
@@ -27262,7 +27488,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:1@3>",
+		.pme_name = "<M:27:1>@3",
 		.pme_desc = "<NA>",
 		.pme_code = 1939,
 		.pme_flags = 0x0,
@@ -27276,7 +27502,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:1@4>",
+		.pme_name = "<M:27:1>@4",
 		.pme_desc = "<NA>",
 		.pme_code = 1940,
 		.pme_flags = 0x0,
@@ -27290,7 +27516,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:1@5>",
+		.pme_name = "<M:27:1>@5",
 		.pme_desc = "<NA>",
 		.pme_code = 1941,
 		.pme_flags = 0x0,
@@ -27304,7 +27530,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:1@6>",
+		.pme_name = "<M:27:1>@6",
 		.pme_desc = "<NA>",
 		.pme_code = 1942,
 		.pme_flags = 0x0,
@@ -27318,7 +27544,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:1@7>",
+		.pme_name = "<M:27:1>@7",
 		.pme_desc = "<NA>",
 		.pme_code = 1943,
 		.pme_flags = 0x0,
@@ -27332,7 +27558,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:1@8>",
+		.pme_name = "<M:27:1>@8",
 		.pme_desc = "<NA>",
 		.pme_code = 1944,
 		.pme_flags = 0x0,
@@ -27346,7 +27572,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:1@9>",
+		.pme_name = "<M:27:1>@9",
 		.pme_desc = "<NA>",
 		.pme_code = 1945,
 		.pme_flags = 0x0,
@@ -27360,7 +27586,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:1@10>",
+		.pme_name = "<M:27:1>@10",
 		.pme_desc = "<NA>",
 		.pme_code = 1946,
 		.pme_flags = 0x0,
@@ -27374,7 +27600,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:1@11>",
+		.pme_name = "<M:27:1>@11",
 		.pme_desc = "<NA>",
 		.pme_code = 1947,
 		.pme_flags = 0x0,
@@ -27388,7 +27614,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:1@12>",
+		.pme_name = "<M:27:1>@12",
 		.pme_desc = "<NA>",
 		.pme_code = 1948,
 		.pme_flags = 0x0,
@@ -27402,7 +27628,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:1@13>",
+		.pme_name = "<M:27:1>@13",
 		.pme_desc = "<NA>",
 		.pme_code = 1949,
 		.pme_flags = 0x0,
@@ -27416,7 +27642,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:1@14>",
+		.pme_name = "<M:27:1>@14",
 		.pme_desc = "<NA>",
 		.pme_code = 1950,
 		.pme_flags = 0x0,
@@ -27430,7 +27656,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:1@15>",
+		.pme_name = "<M:27:1>@15",
 		.pme_desc = "<NA>",
 		.pme_code = 1951,
 		.pme_flags = 0x0,
@@ -27443,8 +27669,9 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 27 Event 2 */
 	{
-		.pme_name = "<M:27:2@0>",
+		.pme_name = "<M:27:2>@0",
 		.pme_desc = "<NA>",
 		.pme_code = 1952,
 		.pme_flags = 0x0,
@@ -27458,7 +27685,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:2@1>",
+		.pme_name = "<M:27:2>@1",
 		.pme_desc = "<NA>",
 		.pme_code = 1953,
 		.pme_flags = 0x0,
@@ -27472,7 +27699,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:2@2>",
+		.pme_name = "<M:27:2>@2",
 		.pme_desc = "<NA>",
 		.pme_code = 1954,
 		.pme_flags = 0x0,
@@ -27486,7 +27713,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:2@3>",
+		.pme_name = "<M:27:2>@3",
 		.pme_desc = "<NA>",
 		.pme_code = 1955,
 		.pme_flags = 0x0,
@@ -27500,7 +27727,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:2@4>",
+		.pme_name = "<M:27:2>@4",
 		.pme_desc = "<NA>",
 		.pme_code = 1956,
 		.pme_flags = 0x0,
@@ -27514,7 +27741,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:2@5>",
+		.pme_name = "<M:27:2>@5",
 		.pme_desc = "<NA>",
 		.pme_code = 1957,
 		.pme_flags = 0x0,
@@ -27528,7 +27755,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:2@6>",
+		.pme_name = "<M:27:2>@6",
 		.pme_desc = "<NA>",
 		.pme_code = 1958,
 		.pme_flags = 0x0,
@@ -27542,7 +27769,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:2@7>",
+		.pme_name = "<M:27:2>@7",
 		.pme_desc = "<NA>",
 		.pme_code = 1959,
 		.pme_flags = 0x0,
@@ -27556,7 +27783,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:2@8>",
+		.pme_name = "<M:27:2>@8",
 		.pme_desc = "<NA>",
 		.pme_code = 1960,
 		.pme_flags = 0x0,
@@ -27570,7 +27797,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:2@9>",
+		.pme_name = "<M:27:2>@9",
 		.pme_desc = "<NA>",
 		.pme_code = 1961,
 		.pme_flags = 0x0,
@@ -27584,7 +27811,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:2@10>",
+		.pme_name = "<M:27:2>@10",
 		.pme_desc = "<NA>",
 		.pme_code = 1962,
 		.pme_flags = 0x0,
@@ -27598,7 +27825,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:2@11>",
+		.pme_name = "<M:27:2>@11",
 		.pme_desc = "<NA>",
 		.pme_code = 1963,
 		.pme_flags = 0x0,
@@ -27612,7 +27839,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:2@12>",
+		.pme_name = "<M:27:2>@12",
 		.pme_desc = "<NA>",
 		.pme_code = 1964,
 		.pme_flags = 0x0,
@@ -27626,7 +27853,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:2@13>",
+		.pme_name = "<M:27:2>@13",
 		.pme_desc = "<NA>",
 		.pme_code = 1965,
 		.pme_flags = 0x0,
@@ -27640,7 +27867,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:2@14>",
+		.pme_name = "<M:27:2>@14",
 		.pme_desc = "<NA>",
 		.pme_code = 1966,
 		.pme_flags = 0x0,
@@ -27654,7 +27881,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:2@15>",
+		.pme_name = "<M:27:2>@15",
 		.pme_desc = "<NA>",
 		.pme_code = 1967,
 		.pme_flags = 0x0,
@@ -27667,8 +27894,9 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nctrs = PME_CRAYX2_MEMORY_CTRS_PER_CHIP,
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
+	/* M Counter 27 Event 3 */
 	{
-		.pme_name = "<M:27:3@0>",
+		.pme_name = "<M:27:3>@0",
 		.pme_desc = "<NA>",
 		.pme_code = 1968,
 		.pme_flags = 0x0,
@@ -27682,7 +27910,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:3@1>",
+		.pme_name = "<M:27:3>@1",
 		.pme_desc = "<NA>",
 		.pme_code = 1969,
 		.pme_flags = 0x0,
@@ -27696,7 +27924,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:3@2>",
+		.pme_name = "<M:27:3>@2",
 		.pme_desc = "<NA>",
 		.pme_code = 1970,
 		.pme_flags = 0x0,
@@ -27710,7 +27938,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:3@3>",
+		.pme_name = "<M:27:3>@3",
 		.pme_desc = "<NA>",
 		.pme_code = 1971,
 		.pme_flags = 0x0,
@@ -27724,7 +27952,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:3@4>",
+		.pme_name = "<M:27:3>@4",
 		.pme_desc = "<NA>",
 		.pme_code = 1972,
 		.pme_flags = 0x0,
@@ -27738,7 +27966,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:3@5>",
+		.pme_name = "<M:27:3>@5",
 		.pme_desc = "<NA>",
 		.pme_code = 1973,
 		.pme_flags = 0x0,
@@ -27752,7 +27980,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:3@6>",
+		.pme_name = "<M:27:3>@6",
 		.pme_desc = "<NA>",
 		.pme_code = 1974,
 		.pme_flags = 0x0,
@@ -27766,7 +27994,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:3@7>",
+		.pme_name = "<M:27:3>@7",
 		.pme_desc = "<NA>",
 		.pme_code = 1975,
 		.pme_flags = 0x0,
@@ -27780,7 +28008,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:3@8>",
+		.pme_name = "<M:27:3>@8",
 		.pme_desc = "<NA>",
 		.pme_code = 1976,
 		.pme_flags = 0x0,
@@ -27794,7 +28022,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:3@9>",
+		.pme_name = "<M:27:3>@9",
 		.pme_desc = "<NA>",
 		.pme_code = 1977,
 		.pme_flags = 0x0,
@@ -27808,7 +28036,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:3@10>",
+		.pme_name = "<M:27:3>@10",
 		.pme_desc = "<NA>",
 		.pme_code = 1978,
 		.pme_flags = 0x0,
@@ -27822,7 +28050,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:3@11>",
+		.pme_name = "<M:27:3>@11",
 		.pme_desc = "<NA>",
 		.pme_code = 1979,
 		.pme_flags = 0x0,
@@ -27836,7 +28064,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:3@12>",
+		.pme_name = "<M:27:3>@12",
 		.pme_desc = "<NA>",
 		.pme_code = 1980,
 		.pme_flags = 0x0,
@@ -27850,7 +28078,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:3@13>",
+		.pme_name = "<M:27:3>@13",
 		.pme_desc = "<NA>",
 		.pme_code = 1981,
 		.pme_flags = 0x0,
@@ -27864,7 +28092,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:3@14>",
+		.pme_name = "<M:27:3>@14",
 		.pme_desc = "<NA>",
 		.pme_code = 1982,
 		.pme_flags = 0x0,
@@ -27878,7 +28106,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 		.pme_nchips = PME_CRAYX2_MEMORY_CHIPS
 	},
 	{
-		.pme_name = "<M:27:3@15>",
+		.pme_name = "<M:27:3>@15",
 		.pme_desc = "<NA>",
 		.pme_code = 1983,
 		.pme_flags = 0x0,
