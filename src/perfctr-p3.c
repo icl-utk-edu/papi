@@ -43,19 +43,19 @@ extern papi_mdi_t _papi_hwi_system_info;
 void print_control(const struct perfctr_cpu_control *control) {
   unsigned int i;
 
-   printf("Control used:\n");
-   printf("tsc_on\t\t\t%u\n", control->tsc_on);
-   printf("nractrs\t\t\t%u\n", control->nractrs);
-   printf("nrictrs\t\t\t%u\n", control->nrictrs);
+   SUBDBG("Control used:\n");
+   SUBDBG("tsc_on\t\t\t%u\n", control->tsc_on);
+   SUBDBG("nractrs\t\t\t%u\n", control->nractrs);
+   SUBDBG("nrictrs\t\t\t%u\n", control->nrictrs);
    for (i = 0; i < (control->nractrs + control->nrictrs); ++i) {
       if (control->pmc_map[i] >= 18) {
-         printf("pmc_map[%u]\t\t0x%08X\n", i, control->pmc_map[i]);
+         SUBDBG("pmc_map[%u]\t\t0x%08X\n", i, control->pmc_map[i]);
       } else {
-         printf("pmc_map[%u]\t\t%u\n", i, control->pmc_map[i]);
+         SUBDBG("pmc_map[%u]\t\t%u\n", i, control->pmc_map[i]);
       }
-      printf("evntsel[%u]\t\t0x%08X\n", i, control->evntsel[i]);
+      SUBDBG("evntsel[%u]\t\t0x%08X\n", i, control->evntsel[i]);
       if (control->ireset[i])
-         printf("ireset[%u]\t%d\n", i, control->ireset[i]);
+         SUBDBG("ireset[%u]\t%d\n", i, control->ireset[i]);
    }
 }
 #endif
@@ -270,6 +270,7 @@ static void clear_cs_events(hwd_control_state_t *this_state) {
    in the native info structure array. */
 int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
                                    NativeInfo_t *native, int count, hwd_context_t * ctx) {
+#ifdef PERFCTR_X86_INTEL_CORE2
    int i, k;
 
    /* clear out the events from the control state */
@@ -281,12 +282,19 @@ int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
          if(native[i].ni_bits.selector & (1 << k)) {
             break;
          }
-#ifdef PERFCTR_X86_INTEL_CORE2
       if(k>1)
         this_state->control.cpu_control.pmc_map[i] = (k-2) | 0x40000000;
       else
-#endif
         this_state->control.cpu_control.pmc_map[i] = k;
+#else
+   int i;
+
+   /* clear out the events from the control state */
+   clear_cs_events(this_state);
+
+   /* fill the counters we're using */
+   for (i = 0; i < count; i++) {
+#endif
 
       /* Add counter control command values to eventset */
       this_state->control.cpu_control.evntsel[i] |= native[i].ni_bits.counter_cmd;
