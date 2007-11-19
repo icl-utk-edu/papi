@@ -607,6 +607,8 @@ build_tables(void)
 		preset_table[i].data.native[1]);
     } }
 #endif
+    _papi_hwi_system_info.sub_info.num_native_events = nctrs;
+    _papi_hwi_system_info.sub_info.num_preset_events = n;
     return PAPI_OK;
 }
 
@@ -1008,7 +1010,7 @@ int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
    int nidx;
 
    nidx = EventCode ^ PAPI_NATIVE_MASK;
-   if (nidx >= _papi_hwi_system_info.sub_info.num_native_events) return (PAPI_EINVAL);
+   if (nidx >= _papi_hwi_system_info.sub_info.num_native_events) return (PAPI_ENOEVNT);
    strncpy(ntv_name, native_table[nidx].name, len);
    if (strlen(native_table[nidx].name) > len-1) return (PAPI_EBUF);
    return (PAPI_OK);
