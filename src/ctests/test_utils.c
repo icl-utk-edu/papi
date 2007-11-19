@@ -664,11 +664,6 @@ int enum_add_native_events(int *num_events, int **evtcodes)
    PAPI_enum_event(&i, 0);
 #endif
    do {
-#if defined(__crayx2)					/* CRAY X2 */
-	if ((i & 0x00000FFF) >= (32*4 + 16*4) && ((i & 0x0FFFF000) == 0)) {
-		i |= 0x00001000;
-	}
-#endif
         retval = PAPI_get_event_info(i, &info);
 
 /*	printf("\n%s\t0x%x  \n%s\n",
@@ -699,21 +694,6 @@ int enum_add_native_events(int *num_events, int **evtcodes)
 	if (!TESTS_QUIET && retval == PAPI_OK)
 	    printf("\n");
     } while (PAPI_enum_event(&i, PAPI_PENT4_ENUM_GROUPS) == PAPI_OK && event_found<counters);
-#elif defined(__crayx2)					/* CRAY X2 */
-	  event_code = info.event_code;
-      retval = PAPI_add_event(EventSet, evtcode);
-      if (retval == PAPI_OK){
-        (*evtcodes)[event_found] = evtcode;
-        event_found ++;
-      }
-      else {
-        if (!TESTS_QUIET)
-        fprintf(stdout, "%p is not available.\n", evtcode);
-      }
-	  /*if (add_remove_event(EventSet, event_code, info.symbol))
-	      add_count++;
-	  else err_count++;*/
-    } while (PAPI_enum_event(&i, PAPI_ENUM_UMASKS_CRAYX2) == PAPI_OK && event_found<counters);
 #else
 #ifdef _POWER4
 	  event_code = info.event_code & 0xff00ffff;
@@ -727,7 +707,7 @@ int enum_add_native_events(int *num_events, int **evtcodes)
       }
       else {
         if (!TESTS_QUIET)
-          fprintf(stdout, "%p is not available.\n", event_code);
+          fprintf(stdout, "%d is not available.\n", event_code);
       }
 
 	  /*if (add_remove_event(EventSet, event_code, info.symbol))
