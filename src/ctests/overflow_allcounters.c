@@ -67,7 +67,7 @@ int main(int argc, char **argv)
    /* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
       PAPI_TOT_INS, depending on the availability of the event on the
       platform */
-   EventSet = add_full_native_events(&num_events, &events);
+   EventSet = enum_add_native_events(&num_events, &events);
    names = (char **)calloc(num_events, sizeof(char *));
    for(i=0;i<num_events;i++){
      if (PAPI_event_code_to_name(events[i], name) != PAPI_OK) 
