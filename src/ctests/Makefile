@@ -14,7 +14,7 @@ SERIAL  = hwinfo code2name reset subinfo realtime virttime first exeinfo \
 	overflow_twoevents timer_overflow overflow2 \
 	matrix-hl tenth encode encode2 \
 	profile profile_force_software sprofile profile_twoevents byte_profile\
-	ipc native overflow_index overflow_one_and_read fork exec forkexec forkexec2\
+	ipc overflow_index overflow_one_and_read fork exec forkexec forkexec2\
         overflow_allcounters
 
 ATTACH	= multiattach zero_attach
@@ -263,9 +263,6 @@ memory: memory.c $(UTILOBJS) $(PAPILIB)
 
 tenth: tenth.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) tenth.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o tenth
-
-native: native.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) native.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o native
 
 eventname: eventname.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) eventname.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o eventname
