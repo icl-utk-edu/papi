@@ -651,7 +651,10 @@ int enum_add_native_events(int *num_events, int **evtcodes)
   int i = 0, event_code, retval;
   unsigned int counters, event_found = 0;
   PAPI_event_info_t info;
-  
+#ifdef PENTIUM4
+  int k;
+#endif
+
   counters = (unsigned int)PAPI_num_hwctrs();
   (*evtcodes) = (int *)calloc(counters, sizeof(int));
 
@@ -677,14 +680,14 @@ int enum_add_native_events(int *num_events, int **evtcodes)
 	  do {
 		retval = PAPI_get_event_info(k, &info);
 		event_code = info.event_code;
-        retval = PAPI_add_event(EventSet, evtcode);
+        retval = PAPI_add_event(EventSet, event_code);
         if (retval == PAPI_OK){
-           (*evtcodes)[event_found] = evtcode;
+           (*evtcodes)[event_found] = event_code;
            event_found ++;
         }
         else {
            if (!TESTS_QUIET)
-             fprintf(stdout, "%p is not available.\n", evtcode);
+             fprintf(stdout, "%d is not available.\n", event_code);
         }
 		/*if (add_remove_event(EventSet, event_code, info.symbol))
 		    add_count++;
@@ -715,21 +718,7 @@ int enum_add_native_events(int *num_events, int **evtcodes)
 	  else err_count++;*/
    } while (PAPI_enum_event(&i, PAPI_ENUM_ALL) == PAPI_OK && event_found<counters);
 #endif
-/*
-  while (event_found<counters) {
-    evtcode = i | PAPI_NATIVE_MASK;
-    retval = PAPI_add_event(EventSet, evtcode);
-    if (retval == PAPI_OK){
-      (*evtcodes)[event_found] = evtcode;
-      event_found ++;
-    }
-    else {
-      if (!TESTS_QUIET)
-        fprintf(stdout, "%p is not available.\n", evtcode);
-    }
-    i++;
-  }
-*/
+
   *num_events = event_found;
   return(EventSet);
 }
