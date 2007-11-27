@@ -238,6 +238,49 @@ static inline void __raw_spin_unlock(volatile unsigned int *lock)
 }
 #define  _papi_hwd_lock(lck) __raw_spin_lock(&_papi_hwd_lock_data[lck]);
 #define  _papi_hwd_unlock(lck) __raw_spin_unlock(&_papi_hwd_lock_data[lck])
+#elif defined(__powerpc__)
+
+/*
+ * These functions are slight modifications of the functions in
+ * /usr/include/asm-ppc/system.h.
+ *
+ *  We can't use the ones in system.h directly because they are defined
+ *  only when __KERNEL__ is defined.
+ */
+
+static __inline__ unsigned long
+papi_xchg_u32(volatile void *p, unsigned long val)
+{
+        unsigned long prev;
+
+        __asm__ __volatile__ ("\n\
+1:      lwarx   %0,0,%2 \n\
+        stwcx.  %3,0,%2 \n\
+        bne-    1b"
+        : "=&r" (prev), "=m" (*(volatile unsigned long *)p)
+        : "r" (p), "r" (val), "m" (*(volatile unsigned long *)p)
+        : "cc", "memory");
+
+        return prev;
+}
+
+
+/*
+ * The two defines below are taken directly from the MIPS implementation.
+ */
+#define  _papi_hwd_lock(lck)                          \
+do {                                                    \
+  unsigned int retval;                                 \
+  do {                                                  \
+  retval = papi_xchg_u32(&_papi_hwd_lock_data[lck],MUTEX_CLOSED);  \
+  } while(retval != (unsigned int)MUTEX_OPEN);	        \
+} while(0)
+#define  _papi_hwd_unlock(lck)                          \
+do {                                                    \
+  unsigned int retval;                                 \
+  retval = papi_xchg_u32(&_papi_hwd_lock_data[lck],MUTEX_OPEN); \
+} while(0)
+
 #elif defined(__crayx2)					/* CRAY X2 */
 #include <pthread.h>
 static pthread_spinlock_t crayx2_mutex[PAPI_MAX_LOCK];
@@ -275,6 +318,13 @@ typedef ucontext_t hwd_ucontext_t;
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.gregs[REG_RIP]
 #elif defined(mips)
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.pc
+#elif defined(__powerpc__)
+/*
+ * The index of the Next IP (REG_NIP) was obtained by looking at kernel
+ * source code.  It wasn't documented anywhere else that I could find.
+ */
+#define REG_NIP 32
+#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.uc_regs->gregs[REG_NIP]
 #elif defined(__crayx2)					/* CRAY X2 */
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.regs.pc
 #else

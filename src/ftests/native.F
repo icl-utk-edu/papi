@@ -20,7 +20,7 @@
       integer tests_quiet, get_quiet
       external get_quiet
 
-#if defined(POWER3) || defined (_POWER4) || defined(_POWER5) || defined(_POWER5p) || defined(_POWER6)
+#if defined(__powerpc__)
       real*4 csec
 #endif
 
@@ -39,12 +39,6 @@
         call ftest_fail(__FILE__, __LINE__, 'PAPI_library_init', retval)
       end if
 
-#if defined(_POWER6)
-      call PAPIf_set_domain(PAPI_DOM_ALL, retval);
-      if (retval .NE. PAPI_OK) then
-        call ftest_fail(__FILE__, __LINE__, 'PAPIf_set_domain', retval)
-      end if
-#endif
       call PAPIf_create_eventset(es, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_create_eventset', 
@@ -78,49 +72,6 @@
       eventname(3) = 'TOT_INS'
       eventname(4) = 'BR_MSP'
       n = 4
-#endif
-#if defined(_POWER6)
-      eventname(1) = 'PM_FPU_FMA'
-      eventname(2) = 'PM_FPU_1FLOP'
-      eventname(3) = 'PM_FPU_FSQRT_FDIV'
-      eventname(4) = 'PM_FPU_FLOP'
-      eventname(5) = 'PM_RUN_INST_CMPL'
-      eventname(6) = 'PM_RUN_CYC'
-      n = 6
-#endif
-#if defined(_POWER5) || defined(_POWER5p)
-      eventname(1) = 'PM_FPU_FDIV'
-      eventname(2) = 'PM_FPU_FMA'
-      eventname(3) = 'PM_FPU_FMOV_FEST'
-      eventname(4) = 'PM_FPU_FEST'
-#if defined(_POWER5p)
-      eventname(5) = 'PM_RUN_INST_CMPL'
-#else
-      eventname(5) = 'PM_INST_CMPL'
-#endif
-      eventname(6) = 'PM_RUN_CYC'
-      n = 6
-#endif
-#if defined(_POWER4) || defined(_PPC970)
-      eventname(1) = 'PM_FPU0_FDIV'
-      eventname(2) = 'PM_FPU1_FDIV'
-      eventname(3) = 'PM_FPU0_FRSP_FCONV'
-      eventname(4) = 'PM_FPU1_FRSP_FCONV'
-      eventname(5) = 'PM_FPU0_FMA'
-      eventname(6) = 'PM_FPU1_FMA'
-      eventname(7) = 'PM_INST_CMPL'
-      eventname(8) = 'PM_CYC'
-      n = 8
-#endif
-#if defined(POWER3)
-      eventname(1) = 'PM_IC_MISS'
-      eventname(2) = 'PM_FPU1_CMPL'
-      eventname(3) = 'PM_LD_MISS_L1'
-      eventname(4) = 'PM_LD_CMPL'
-      eventname(5) = 'PM_FPU0_CMPL'
-      eventname(6) = 'PM_CYC'
-      eventname(7) = 'PM_TLB_MISS'
-      n = 7
 #endif
 
 #if ((defined(linux) && (defined(__i386__) || (defined __x86_64__))) || defined(_WIN32))
@@ -193,6 +144,55 @@
          n = 2
       end if
 
+      if(model_string(1:6).eq.'POWER3')then 
+         eventname(1) = 'PM_IC_MISS'
+         eventname(2) = 'PM_FPU1_CMPL'
+         eventname(3) = 'PM_LD_MISS_L1'
+         eventname(4) = 'PM_LD_CMPL'
+         eventname(5) = 'PM_FPU0_CMPL'
+         eventname(6) = 'PM_CYC'
+         eventname(7) = 'PM_TLB_MISS'
+         n = 7
+      end if
+
+      if((model_string(1:6).eq.'POWER4').or.(model_string(1:6).eq.'PPC970'))then
+C        The above if statement also includes PPC970MP
+         eventname(1) = 'PM_FPU0_FDIV'
+         eventname(2) = 'PM_FPU1_FDIV'
+         eventname(3) = 'PM_FPU0_FRSP_FCONV'
+         eventname(4) = 'PM_FPU1_FRSP_FCONV'
+         eventname(5) = 'PM_FPU0_FMA'
+         eventname(6) = 'PM_FPU1_FMA'
+         eventname(7) = 'PM_INST_CMPL'
+         eventname(8) = 'PM_CYC'
+         n = 8
+      end if
+
+      if(model_string(1:6).eq.'POWER5')then 
+C        The above if statement also includes POWER5p
+         eventname(1) = 'PM_FPU_FDIV'
+         eventname(2) = 'PM_FPU_FMA'
+         eventname(3) = 'PM_FPU_FMOV_FEST'
+         eventname(4) = 'PM_FPU_FEST'
+         if(model_string(1:7).eq.'POWER5p')then
+            eventname(5) = 'PM_RUN_INST_CMPL'
+         else
+            eventname(5) = 'PM_INST_CMPL'
+         end if
+         eventname(6) = 'PM_RUN_CYC'
+         n = 6
+      end if
+
+      if(model_string(1:6).eq.'POWER6')then
+         eventname(1) = 'PM_FPU_FMA'
+         eventname(2) = 'PM_FPU_1FLOP'
+         eventname(3) = 'PM_FPU_FSQRT_FDIV'
+         eventname(4) = 'PM_FPU_FLOP'
+         eventname(5) = 'PM_RUN_INST_CMPL'
+         eventname(6) = 'PM_RUN_CYC'
+         n = 6
+      end if
+
       do i = 1, n
       call PAPIf_event_name_to_code(eventname(i), nativees, retval )
       if ( retval .NE. PAPI_OK ) then
@@ -239,60 +239,67 @@ C     call sleep(1)
       print *, "DCache accesses                   : ",values(2)
       print *, "CPU Cycles                        : ",values(3)
 
-#elif defined(_POWER6)
-      csec = values(5)/ (mhz*1000000.0)
-      print *, "CPU Elapsed Time in sec.     : ", csec
-      print *, "FPU FMA Instructions         : ", values(1)
-      print *, "FPU 1FLOP Instructions       : ", values(2)
-      print *, "FPU FSQRT+FDIV Instructions  : ", values(3)
-      print *, "FPU FLOPs                    : ", values(4)
-      print *, "Instructions Completed       : ", values(5)
-      print *, "CPU Cycles                   : ", values(6)
-      print *, "------------------------------------------"
-      print *, "CPU MFLOPS                   : ",
+#elif defined(__powerpc__)
+      if(model_string(1:6).eq.'POWER6')then
+         csec = values(5)/ (mhz*1000000.0)
+         print *, "CPU Elapsed Time in sec.     : ", csec
+         print *, "FPU FMA Instructions         : ", values(1)
+         print *, "FPU 1FLOP Instructions       : ", values(2)
+         print *, "FPU FSQRT+FDIV Instructions  : ", values(3)
+         print *, "FPU FLOPs                    : ", values(4)
+         print *, "Instructions Completed       : ", values(5)
+         print *, "CPU Cycles                   : ", values(6)
+         print *, "------------------------------------------"
+         print *, "CPU MFLOPS                   : ",
      *((values(4))/1000000.0)/csec
-      print *, "%% FMA Instructions           : ",
+         print *, "%% FMA Instructions           : ",
      *100.0*(values(1))/values(5)
-#elif defined(_POWER5) || defined(_POWER5p)
-      csec = values(5)/ (mhz*1000000.0)
-      print *, "CPU Elapsed Time in sec.   : ", csec
-      print *, "PM_FPU_FDIV operations     : ", values(1)
-      print *, "FPU FMA Instructions       : ", values(2)
-      print *, "Instructions Completed     : ", values(5)
-      print *, "CPU Cycles                 : ", values(6)
-      print *, "------------------------------------------"
-      print *, "CPU MFLOPS                 : ",
+      end if
+
+      if((model_string(1:6).eq.'POWER5').or.(model_string(1:7).eq.'POWER5p'))then
+         csec = values(5)/ (mhz*1000000.0)
+         print *, "CPU Elapsed Time in sec.   : ", csec
+         print *, "PM_FPU_FDIV operations     : ", values(1)
+         print *, "FPU FMA Instructions       : ", values(2)
+         print *, "Instructions Completed     : ", values(5)
+         print *, "CPU Cycles                 : ", values(6)
+         print *, "------------------------------------------"
+         print *, "CPU MFLOPS                 : ",
      *((values(2))/500000.0)/csec
       print *, "%% FMA Instructions         : ",
      *100.0*(values(2))/values(5)
-#elif defined(_POWER4)
-      csec = values(8)/ (mhz*1000000.0)
-      print *, "CPU Elapsed Time in sec.   : ", csec
-      print *, "FPU0 DIV Instructions      : ", values(1)
-      print *, "FPU1 DIV Instructions      : ", values(2)
-      print *, "FPU0 FRSP & FCONV Instr.   : ", values(3)
-      print *, "FPU1 FRSP & FCONV Instr.   : ", values(4)
-      print *, "FPU0 FMA Instructions      : ", values(5)
-      print *, "FPU1 FMA Instructions      : ", values(6)
-      print *, "Instructions Completed     : ", values(7)
-      print *, "CPU Cycles                 : ", values(8)
-      print *, "------------------------------------------"
-      print *, "CPU MFLOPS                 : ",
+      end if
+
+      if((model_string(1:6).eq.'POWER4').or.(model_string(1:6).eq.'PPC970'))then
+         csec = values(8)/ (mhz*1000000.0)
+         print *, "CPU Elapsed Time in sec.   : ", csec
+         print *, "FPU0 DIV Instructions      : ", values(1)
+         print *, "FPU1 DIV Instructions      : ", values(2)
+         print *, "FPU0 FRSP & FCONV Instr.   : ", values(3)
+         print *, "FPU1 FRSP & FCONV Instr.   : ", values(4)
+         print *, "FPU0 FMA Instructions      : ", values(5)
+         print *, "FPU1 FMA Instructions      : ", values(6)
+         print *, "Instructions Completed     : ", values(7)
+         print *, "CPU Cycles                 : ", values(8)
+         print *, "------------------------------------------"
+         print *, "CPU MFLOPS                 : ",
      *((values(5)+values(6))/1000000.0)/csec
       print *, "%% FMA Instructions         : ",
      *100.0*(values(5) + values(6))/values(7)
-#elif defined(POWER3)
-      csec = values(5)/ (mhz*1000000.0)
-      print *, "CPU Elapsed Time in sec.   : ", csec
-      print *, "L1 Instruction Cache Misses: ", values(1)
-      print *, "FPU1 Instructions          : ", values(2)
-      print *, "L1 Data Cache Load Misses  : ", values(3)
-      print *, "Load Instructions          : ", values(4)
-      print *, "FPU0 Instructions          : ", values(5)
-      print *, "CPU Cycles                 : ", values(6)
-      print *, "TLB Misses                 : ", values(7)
-      print *, "------------------------------------------"
-      print *, "CPU MFLOPS                 : ",
+      end if
+
+      if(model_string(1:6).eq.'POWER3')then
+         csec = values(5)/ (mhz*1000000.0)
+         print *, "CPU Elapsed Time in sec.   : ", csec
+         print *, "L1 Instruction Cache Misses: ", values(1)
+         print *, "FPU1 Instructions          : ", values(2)
+         print *, "L1 Data Cache Load Misses  : ", values(3)
+         print *, "Load Instructions          : ", values(4)
+         print *, "FPU0 Instructions          : ", values(5)
+         print *, "CPU Cycles                 : ", values(6)
+         print *, "TLB Misses                 : ", values(7)
+         print *, "------------------------------------------"
+         print *, "CPU MFLOPS                 : ",
      *((values(5)+values(2))/1000000.0)/csec
       print *, "Real MFLOPS                : ",
      *((values(5)+values(2))/1000000.0)/rsec
@@ -300,6 +307,7 @@ C     call sleep(1)
      *100.0*(1.0 - (values(3)/values(4)))
       print *, "%% FMA Instructions         : ",
      *100.0*values(7)/(values(2)+values(5))
+      end if
 #else
       do i = 1, n
         print *, eventname(i)," : ", values(i)

@@ -22,12 +22,6 @@ void init_papi(void)
    if (retval != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-#ifdef _POWER6
-   retval = PAPI_set_domain(PAPI_DOM_ALL);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_set_domain", retval);
-#endif
-
 }
 
 /* Tests that we can really multiplex a lot. */

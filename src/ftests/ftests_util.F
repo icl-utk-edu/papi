@@ -189,19 +189,36 @@ C     And also to make the test code read cleaner
       implicit integer (p)      
       integer domain
       character*(PAPI_MAX_STR_LEN) str
-
-      if (domain .EQ. PAPI_DOM_USER) then
-        str = "PAPI_DOM_USER"
-      else if (domain .EQ. PAPI_DOM_KERNEL) then
-        str = "PAPI_DOM_KERNEL"
-      else if (domain .EQ. PAPI_DOM_OTHER) then
-        str = "PAPI_DOM_OTHER"
-      else if (domain .EQ. PAPI_DOM_ALL) then
+      
+      if (domain .EQ. PAPI_DOM_ALL) then
         str = "PAPI_DOM_ALL"
       else
-        print *, 'error in stringify_domain'
-        call pause()
-        stop
+        idx = 1;
+C       Is there a better way to write this?
+        if (IAND(domain, PAPI_DOM_USER) .NE. 0) then
+          str(idx:idx+13) = "+PAPI_DOM_USER"
+          idx = idx + 14
+        end if
+        if (IAND(domain, PAPI_DOM_KERNEL) .NE. 0) then
+          str(idx:idx+15) = "+PAPI_DOM_KERNEL"
+          idx = idx + 16
+        end if
+        if (IAND(domain, PAPI_DOM_SUPERVISOR) .NE. 0) then
+          str(idx:idx+19) = "+PAPI_DOM_SUPERVISOR"
+          idx = idx + 20
+        end if
+        if (IAND(domain, PAPI_DOM_OTHER) .NE. 0) then
+          str(idx:idx+14) = "+PAPI_DOM_OTHER"
+          idx = idx + 15
+        end if
+        if (idx .NE. 1) then
+C         Eliminate the first + character
+          str = str(2:LEN(str))
+        else
+          print *, 'error in stringify_domain'
+          call pause()
+          stop
+        end if
       end if
       end
 

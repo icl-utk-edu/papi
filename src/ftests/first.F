@@ -120,7 +120,7 @@
       call stringify_domain(domain, domainstr)
       if (tests_quiet .EQ. 0) then
       write (*,900) 'Default domain is:', domain, domainstr
- 900  format(a20, i3, ' ', a20)
+ 900  format(a20, i3, ' ', a70)
       end if
  
       call PAPIf_get_granularity(eventset, granularity, PAPI_DEFGRN, 

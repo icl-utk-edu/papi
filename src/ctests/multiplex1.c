@@ -41,13 +41,6 @@ void init_papi(unsigned int *out_events, int *len)
    if (retval != PAPI_OK)
       CPP_TEST_FAIL("PAPI_multiplex_init", retval);
 
-#ifdef _POWER6
-   retval = PAPI_set_domain(PAPI_DOM_ALL);
-   if (retval != PAPI_OK)
-      CPP_TEST_FAIL("PAPI_set_domain", retval);
-#endif
-
-
    for (i = 0; in_events[i] != 0; i++) {
       char out[PAPI_MAX_STR_LEN];
       /* query and set up the right instruction to monitor */

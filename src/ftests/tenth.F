@@ -10,7 +10,7 @@
 #define EVT2_STR        "PAPI_L2_TCA"
 #define EVT3_STR        "PAPI_L2_TCH"
 #else
-#if defined(_POWER4) || defined(_POWER5) || defined(_POWER5p) || defined(_POWER6)
+#if defined(_POWER4) || defined(_POWER5) || defined(_POWER5p) || defined(_POWER6) || defined(__powerpc__)
 #define CACHE_LEVEL "PAPI_L1_DCA"
 #define EVT1            PAPI_L1_DCA
 #define EVT2            PAPI_L1_DCW
@@ -197,7 +197,7 @@
       call stringify_domain(domain, domainstr)
       if (tests_quiet .EQ. 0) then
       write (*,900) "Default domain is:", domain, domainstr
- 900  format(a20, i3, " ", a20)
+ 900  format(a20, i3, " ", a70)
       end if
 
       call PAPIf_get_granularity(es1, granularity, PAPI_DEFGRN, 

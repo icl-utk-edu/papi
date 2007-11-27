@@ -105,7 +105,7 @@
         end if
         n=len_trim(name)
         write (*,800) "Default granularity is:", granularity, grnstr
- 800    format(a25, i3, " (", a13, ")")
+ 800    format(a25, i3, " ", a70)
         write (*,810) "Using", NUM_FLOPS,
      $       " iterations of c = c + a * b"
  810    format(a7, i9, a)

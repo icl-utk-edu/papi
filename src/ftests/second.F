@@ -203,7 +203,7 @@
       if (tests_quiet .EQ. 0) then
       write (*,900) 'Default domain is:', domain, domainstr
       end if
- 900  format(a20, i3, ' ', a20)
+ 900  format(a20, i3, ' ', a70)
 
       call PAPIf_get_granularity(es1, granularity, PAPI_DEFGRN, 
      *retval)

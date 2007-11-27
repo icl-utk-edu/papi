@@ -266,6 +266,16 @@ static int get_cpu_info(PAPI_hw_info_t *hw_info)
 	   sscanf(s + 1, "%f", &mhz);
 	   hw_info->mhz = mhz;
 	 }
+       else
+	 {
+	   rewind(f);
+	   s = search_cpu_info(f, "clock", maxargs);
+           if (s)
+	     {
+	       sscanf(s + 1, "%f", &mhz);
+	       hw_info->mhz = mhz;
+	     }
+	 }
      }       
 
    hw_info->clock_mhz = hw_info->mhz;
@@ -320,6 +330,32 @@ static int get_cpu_info(PAPI_hw_info_t *hw_info)
 	       *t = '\0';
 	       s = strtok(s+2," ");
 	       strcpy(hw_info->vendor_string, s);
+	     }
+	 
+       else
+	     {
+	       rewind(f);
+	       s = search_cpu_info(f, "system type", maxargs);
+	       if (s && (t = strchr(s + 2, '\n'))) 
+	         {
+	           *t = '\0';
+	           s = strtok(s+2," ");
+	           strcpy(hw_info->vendor_string, s);
+	         }
+	       else
+	         {
+	           rewind(f);
+	           s = search_cpu_info(f, "platform", maxargs);
+	           if (s && (t = strchr(s + 2, '\n'))) 
+	             {
+	               *t = '\0';
+	               s = strtok(s+2," ");
+	               if (strcasecmp(s, "pSeries") == 0)
+	                 {
+	                   strcpy(hw_info->vendor_string, "IBM");
+	                 }
+	             }
+	         }
 	     }
 	 }
      }
@@ -376,6 +412,18 @@ static int get_cpu_info(PAPI_hw_info_t *hw_info)
 	       s = strtok(NULL," ");
 	       strcpy(hw_info->model_string, s);
 	     }
+       else
+         {
+           rewind(f);
+           s = search_cpu_info(f, "cpu", maxargs);
+           if (s && (t = strchr(s + 2, '\n')))
+             {
+               *t = '\0';
+               /* get just the first token */
+               s = strtok(s + 2," ");
+               strcpy(hw_info->model_string, s);
+             }
+         }
 	 }
      }
 
@@ -1587,6 +1635,225 @@ static int mips_get_memory_info(PAPI_hw_info_t *hw_info)
 }
 #endif
 
+#if defined(__powerpc__)
+
+PAPI_mh_info_t sys_mem_info[4] = {
+  {3,
+    {	 
+      { // level 1 begins
+        { // tlb's begin
+          {PAPI_MH_TYPE_UNIFIED, 1024, 4}, 
+          {PAPI_MH_TYPE_EMPTY, -1, -1}
+        },
+        { // caches begin
+          {PAPI_MH_TYPE_INST, 65536, 128, 512, 1}, 
+          {PAPI_MH_TYPE_DATA, 32768, 128, 256, 2}
+        }
+      }, 
+      {	// level 2 begins
+        { // tlb's begin
+          {PAPI_MH_TYPE_EMPTY, -1, -1},
+          {PAPI_MH_TYPE_EMPTY, -1, -1}
+        },
+        { // caches begin
+          {PAPI_MH_TYPE_UNIFIED, 1474560, 128, 11520, 8}, 
+          {PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
+        }
+      },	
+      {	// level 3 begins
+        { // tlb's begin
+          {PAPI_MH_TYPE_EMPTY, -1, -1},
+          {PAPI_MH_TYPE_EMPTY, -1, -1}
+        },
+        { // caches begin
+          {PAPI_MH_TYPE_UNIFIED, 33554432, 512, 65536, 8}, 
+          {PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
+        }
+      },	
+    }
+  }, // POWER4 end
+  {2, // 970 begin
+    {	 
+      { // level 1 begins
+        { // tlb's begin
+          {PAPI_MH_TYPE_UNIFIED, 1024, 4}, 
+          {PAPI_MH_TYPE_EMPTY, -1, -1}
+        },
+        { // caches begin
+          {PAPI_MH_TYPE_INST, 65536, 128, 512, 1}, 
+          {PAPI_MH_TYPE_DATA, 32768, 128, 256, 2}
+        }
+      }, 
+      {	// level 2 begins
+        { // tlb's begin
+          {PAPI_MH_TYPE_EMPTY, -1, -1},
+          {PAPI_MH_TYPE_EMPTY, -1, -1}
+        },
+        { // caches begin
+          {PAPI_MH_TYPE_UNIFIED, 524288, 128, 4096, 8}, 
+          {PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
+        }
+      },	
+    }
+  }, // 970 end
+  {3,
+    {	 
+      { // level 1 begins
+        { // tlb's begin
+          {PAPI_MH_TYPE_UNIFIED, 1024, 4}, 
+          {PAPI_MH_TYPE_EMPTY, -1, -1}
+        },
+        { // caches begin
+          {PAPI_MH_TYPE_INST, 65536, 128, 512, 2}, 
+          {PAPI_MH_TYPE_DATA, 32768, 128, 256, 4}
+        }
+      }, 
+      {	// level 2 begins
+        { // tlb's begin
+          {PAPI_MH_TYPE_EMPTY, -1, -1},
+          {PAPI_MH_TYPE_EMPTY, -1, -1}
+        },
+        { // caches begin
+          {PAPI_MH_TYPE_UNIFIED, 1966080, 128, 15360, 10}, 
+          {PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
+        }
+      },	
+      {	// level 3 begins
+        { // tlb's begin
+          {PAPI_MH_TYPE_EMPTY, -1, -1},
+          {PAPI_MH_TYPE_EMPTY, -1, -1}
+        },
+        { // caches begin
+          {PAPI_MH_TYPE_UNIFIED, 37748736, 256, 147456, 12}, 
+          {PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
+        }
+      },	
+    }
+  }, // POWER5 end
+  {3,
+    {	 
+      {	// level 1 begins
+        { // tlb's begin
+          /// POWER6 has an ERAT (Effective to Real Address
+          /// Translation) instead of a TLB.  For the purposes of this
+          /// data, we will treat it like a TLB.
+          {PAPI_MH_TYPE_INST, 128, 2}, 
+          {PAPI_MH_TYPE_DATA, 128, 128}
+        },
+        {	// caches begin
+          {PAPI_MH_TYPE_INST, 65536, 128, 512, 4}, 
+          {PAPI_MH_TYPE_DATA, 65536, 128, 512, 8}
+        }
+      }, 
+      { // level 2 begins
+        { // tlb's begin
+          {PAPI_MH_TYPE_EMPTY, -1, -1},
+          {PAPI_MH_TYPE_EMPTY, -1, -1}
+        },
+        { // caches begin
+          {PAPI_MH_TYPE_UNIFIED, 4194304, 128, 16384, 8}, 
+          {PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
+        }
+      },	
+      {	// level 3 begins
+        { // tlb's begin
+          {PAPI_MH_TYPE_EMPTY, -1, -1},
+          {PAPI_MH_TYPE_EMPTY, -1, -1}
+        },
+        { // caches begin
+          /// POWER6 has a 2 slice L3 cache.  Each slice is 16MB, so
+          /// combined they are 32MB and usable by each core.  For
+          /// this reason, we will treat it as a single 32MB cache.
+          {PAPI_MH_TYPE_UNIFIED, 33554432, 128, 262144, 16}, 
+          {PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
+        }
+      },	
+    }
+  }	// POWER6 end
+};
+
+#define SPRN_PVR 0x11F /* Processor Version Register */
+static unsigned int mfpvr(void)
+{
+    unsigned long pvr;
+
+    asm("mfspr          %0,%1" : "=r"(pvr) : "i"(SPRN_PVR));
+    return pvr;
+
+}
+
+int ppc64_get_memory_info(PAPI_hw_info_t * hw_info)
+{
+  unsigned int pvr = mfpvr();
+
+  int index;
+  switch (pvr) {
+  case 0x35: /* POWER4 */
+  case 0x38: /* POWER4p */
+    index = 0;
+    break;
+  case 0x39: /* PPC970 */
+  case 0x3C: /* PPC970FX */
+  case 0x44: /* PPC970MP */
+  case 0x45: /* PPC970GX */
+    index = 1;
+    break;
+  case 0x3A: /* POWER5 */
+  case 0x3B: /* POWER5+ */
+    index = 2;
+    break;
+  case 0x3E: /* POWER6 */
+    index = 3;
+    break;
+  default:
+    index = -1;
+    break;
+  }
+   
+  if (index != -1)
+    {
+      int cache_level;
+      PAPI_mh_info_t sys_mh_inf = sys_mem_info[index];
+      PAPI_mh_info_t * mh_inf = &hw_info->mem_hierarchy;
+      mh_inf->levels = sys_mh_inf.levels;
+      PAPI_mh_level_t * level = mh_inf->level;
+      PAPI_mh_level_t sys_mh_level;
+      for (cache_level = 0; cache_level < sys_mh_inf.levels; cache_level++)
+        {
+          sys_mh_level = sys_mh_inf.level[cache_level];
+          int cache_idx;
+          for (cache_idx = 0; cache_idx < 2; cache_idx++)
+            {
+              // process TLB info
+              PAPI_mh_tlb_info_t curr_tlb = sys_mh_level.tlb[cache_idx];
+              int type = curr_tlb.type;
+              if (type != PAPI_MH_TYPE_EMPTY)
+                {
+                  level[cache_level].tlb[cache_idx].type = type;
+                  level[cache_level].tlb[cache_idx].associativity = curr_tlb.associativity;
+                  level[cache_level].tlb[cache_idx].num_entries = curr_tlb.num_entries;
+                }
+            }
+          for (cache_idx = 0; cache_idx < 2; cache_idx++)
+            {
+              // process cache info
+              PAPI_mh_cache_info_t curr_cache = sys_mh_level.cache[cache_idx];
+              int type = curr_cache.type;
+              if (type != PAPI_MH_TYPE_EMPTY)
+                {
+                  level[cache_level].cache [cache_idx].type = type;
+                  level[cache_level].cache[cache_idx].associativity = curr_cache.associativity;
+                  level[cache_level].cache[cache_idx].size = curr_cache.size;
+                  level[cache_level].cache[cache_idx].line_size = curr_cache.line_size;
+                  level[cache_level].cache[cache_idx].num_lines = curr_cache.num_lines;
+                }
+            }
+        }
+    }
+  return 0;
+}
+#endif
+
 #if defined(__crayx2)						/* CRAY X2 */
 static int crayx2_get_memory_info(PAPI_hw_info_t *hw_info)
 {
@@ -1604,6 +1871,8 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * hwinfo, int unused)
   x86_get_memory_info(hwinfo);
 #elif defined(__ia64__)
   ia64_get_memory_info(hwinfo);
+#elif defined(__powerpc__)
+  ppc64_get_memory_info(hwinfo);
 #elif defined(__crayx2)						/* CRAY X2 */
   crayx2_get_memory_info(hwinfo);
 #else
@@ -2417,7 +2686,19 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   if (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_MIPS)
     _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR|PAPI_DOM_OTHER;
   else
-    _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL;    
+    if (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM)
+      {
+        /* powerpc */
+        _papi_hwi_system_info.sub_info.available_domains |=
+          PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR;
+        if (strcmp(_papi_hwi_system_info.hw_info.model_string, "POWER6") == 0)
+          {
+            _papi_hwi_system_info.sub_info.default_domain =
+              PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR;
+          }
+      }
+    else
+      _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL;    
 
   if ((_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL) ||
       (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_AMD))
@@ -2517,7 +2798,7 @@ long_long _papi_hwd_get_real_usec(void) {
                                                                                 
 long_long _papi_hwd_get_real_cycles(void) {
   long_long retval;
-#if defined(HAVE_GETTIMEOFDAY)||defined(mips)
+#if defined(HAVE_GETTIMEOFDAY)||defined(mips)||defined(__powerpc__)
   retval = _papi_hwd_get_real_usec()*(long_long)_papi_hwi_system_info.hw_info.mhz;
 #else
   retval = get_cycles();
