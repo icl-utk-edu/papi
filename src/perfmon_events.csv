@@ -338,6 +338,7 @@ PRESET,PAPI_LD_INS, DERIVED_CMPD, front_end_event:NBOGUS, uops_type:TAGLOADS
 PRESET,PAPI_SR_INS, DERIVED_CMPD, front_end_event:NBOGUS, uops_type:TAGSTORES
 PRESET,PAPI_LST_INS, DERIVED_CMPD, front_end_event:NBOGUS, uops_type:TAGLOADS:TAGSTORES
 PRESET,PAPI_FP_INS, DERIVED_CMPD, execution_event:NBOGUS0, x87_FP_uop:ALL:TAG0,NOTE,"PAPI_FP_INS counts only retired x87 uops tagged with 0. If you add other native events tagged with 0, their counts will be included in PAPI_FP_INS"
+PRESET,PAPI_TOT_INS, NOT_DERIVED, instr_completed:NBOGUS
 PRESET,PAPI_L1_ICM, NOT_DERIVED, BPU_fetch_request:TCMISS
 PRESET,PAPI_L1_ICA, NOT_DERIVED, uop_queue_writes:FROM_TC_BUILD:FROM_TC_DELIVER
 PRESET,PAPI_L2_TCH, NOT_DERIVED, BSQ_cache_reference:RD_2ndL_HITS:RD_2ndL_HITE:RD_2ndL_HITM
