@@ -155,7 +155,20 @@
          n = 7
       end if
 
-      if((model_string(1:6).eq.'POWER4').or.(model_string(1:6).eq.'PPC970'))then
+      if(model_string(1:6).eq.'POWER4')then
+C        The above if statement also includes PPC970MP
+         eventname(1) = 'PM_FPU0_FDIV'
+         eventname(2) = 'PM_FPU1_FDIV'
+         eventname(3) = 'PM_FPU0_FRSP_FCONV'
+         eventname(4) = 'PM_FPU1_FRSP_FCONV'
+         eventname(5) = 'PM_FPU0_FMA'
+         eventname(6) = 'PM_FPU1_FMA'
+         eventname(7) = 'PM_INST_CMPL'
+         eventname(8) = 'PM_CYC'
+         n = 8
+      end if
+
+      if(model_string(1:6).eq.'PPC970')then
 C        The above if statement also includes PPC970MP
          eventname(1) = 'PM_FPU0_FDIV'
          eventname(2) = 'PM_FPU1_FDIV'
