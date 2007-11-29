@@ -234,7 +234,8 @@ case "$OS" in
            fi
            family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
            model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
-           if test "$family" = "15"; then
+# Add Barcelona (family=16) to this test -- dkt
+           if (test "$family" = "15" || test "$family" = "16"); then
 # There are a whole bunch of model numbers, but I think all family=15 are opteron -- dkt
 # see AMD Opteron Revision Guide, pub 25759, Table 1 for details
 #             if (test "$model" = "5" || test "$model" = "65"); then
