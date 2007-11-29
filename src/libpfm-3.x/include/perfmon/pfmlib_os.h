@@ -42,6 +42,10 @@
 #include <perfmon/pfmlib_os_powerpc.h>
 #endif
 
+#ifdef __sparc__
+#include <perfmon/pfmlib_os_sparc.h>
+#endif
+
 #ifdef __cell__
 #include <perfmon/pfmlib_os_powerpc.h>
 #endif

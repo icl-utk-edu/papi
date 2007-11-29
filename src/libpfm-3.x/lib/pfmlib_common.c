@@ -52,6 +52,8 @@ static pfm_pmu_support_t *supported_pmus[]=
 #endif
 
 #ifdef CONFIG_PFMLIB_ARCH_I386
+	&i386_pii_support,
+	&i386_ppro_support,
 	&i386_p6_support,
 	&i386_pm_support,
 	&coreduo_support,
@@ -67,6 +69,10 @@ static pfm_pmu_support_t *supported_pmus[]=
 
 #ifdef CONFIG_PFMLIB_ARCH_POWERPC
 	&gen_powerpc_support,
+#endif
+
+#ifdef CONFIG_PFMLIB_ARCH_SPARC
+	&sparc_support,
 #endif
 
 #ifdef CONFIG_PFMLIB_ARCH_CRAYX2

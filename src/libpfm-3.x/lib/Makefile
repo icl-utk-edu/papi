@@ -73,6 +73,12 @@ SRCS   += pfmlib_gen_powerpc.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_POWERPC
 endif
 
+ifeq ($(CONFIG_PFMLIB_ARCH_SPARC),y)
+INCDEP := $(INCDEP) $(INC_SPARC)
+SRCS   += pfmlib_sparc.c
+CFLAGS += -DCONFIG_PFMLIB_ARCH_SPARC
+endif
+
 ifeq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
 INCDEP := $(INCDEP) $(INC_CRAYX2)
 SRCS   += pfmlib_crayx2.c
@@ -184,6 +190,12 @@ INC_POWERPC= $(PFMINCDIR)/perfmon/pfmlib_gen_powerpc.h \
   $(PFMINCDIR)/perfmon/pfmlib_os_powerpc.h \
   ppc970_events.h ppc970mp_events.h power4_events.h power4+_events.h \
   power5_events.h power5+_events.h power6_events.h
+
+INC_SPARC= $(PFMINCDIR)/perfmon/pfmlib_sparc.h \
+  $(PFMINCDIR)/perfmon/pfmlib_comp_sparc.h \
+  $(PFMINCDIR)/perfmon/pfmlib_os_sparc.h \
+  ultra12_events.h ultra3_events.h ultra3plus_events.h ultra3i_events.h \
+  ultra4plus_events.h niagara1_events.h niagara2_events.h
 
 INC_CRAYX2= $(PFMINCIDR)/perfmon/pfmlib_crayx2.h \
   crayx2_events.h pfmlib_crayx2_priv.h

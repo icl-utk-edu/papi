@@ -621,7 +621,7 @@ pentium4_get_cycle_event(pfmlib_event_t *e)
 static int
 pentium4_get_inst_retired(pfmlib_event_t *e)
 {
-	e->event = PENTIUM4_INST_RETIRED;
+	e->event = PME_INSTR_COMPLETED;
 	e->num_masks = 1;
 	e->unit_masks[0] = 0;
 	return PFMLIB_SUCCESS;
