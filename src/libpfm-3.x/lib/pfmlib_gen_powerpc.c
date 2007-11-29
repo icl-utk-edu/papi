@@ -296,7 +296,7 @@ static unsigned int pfm_gen_powerpc_get_num_event_masks(unsigned int event)
 
 static void remove_group(unsigned long long *group_vec, int group)
 {
-        group_vec[group / 64] &= ~(1 << (group % 64));
+        group_vec[group / 64] &= ~(1ULL << (group % 64));
 }
 
 static void intersect_groups(unsigned long long *result, unsigned long long *operand)

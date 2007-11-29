@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2006 Hewlett-Packard Development Company, L.P.
+ * Copyright (c) 2005-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,39 +19,39 @@
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef __PFMLIB_COMP_H__
-#define __PFMLIB_COMP_H__
+#ifndef __PFMLIB_OS_SPARC_H__
+#define __PFMLIB_OS_SPARC_H__
 
-#ifdef __ia64__
-#include <perfmon/pfmlib_comp_ia64.h>
+#ifndef __PFMLIB_OS_H__
+#error "you should never include this file directly, use pfmlib_os.h"
 #endif
 
-#ifdef __x86_64__
-#include <perfmon/pfmlib_comp_x86_64.h>
+#include <perfmon/pfmlib_comp.h>
+
+#ifndef __sparc__
+#error "you should not be including this file"
 #endif
 
-#ifdef __i386__
-#include <perfmon/pfmlib_comp_i386.h>
-#endif
+#ifndef __PFMLIB_OS_COMPILE
+#include <perfmon/perfmon.h>
+/*
+ * macros version of pfm_self_start/pfm_self_stop to be used in per-process self-monitoring sessions.
+ * they are also defined as real functions.
+ *
+ * DO NOT USE on system-wide sessions.
+ */
+static inline int
+pfm_self_start(int fd)
+{
+	return pfm_start(fd, NULL);
+}
 
-#ifdef __mips__
-#include <perfmon/pfmlib_comp_mips64.h>
-#endif
+static inline int
+pfm_self_stop(int fd)
+{
+	return pfm_stop(fd);
+}
+#endif /* __PFMLIB_OS_COMPILE */
 
-#ifdef __powerpc__
-#include <perfmon/pfmlib_comp_powerpc.h>
-#endif
 
-#ifdef __sparc__
-#include <perfmon/pfmlib_comp_sparc.h>
-#endif
-
-#ifdef __cell__
-#include <perfmon/pfmlib_comp_powerpc.h>
-#endif
-
-#ifdef __crayx2
-#include <perfmon/pfmlib_comp_crayx2.h>
-#endif
-
-#endif /* __PFMLIB_COMP_H__ */
+#endif /* __PFMLIB_OS_SPARC_H__ */

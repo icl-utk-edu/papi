@@ -169,8 +169,9 @@ pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 		chip = crayx2_pe[code].pme_chip;
 		ctr = crayx2_pe[code].pme_ctr;
 		ev = crayx2_pe[code].pme_event;
+		chipno = crayx2_pe[code].pme_chipno;
 
-		DPRINT (("%3d: code %3d chip %1d ctr %2d ev %1d\n", code, i, chip, ctr, ev));
+		DPRINT (("%3d: code %3d chip %1d ctr %2d ev %1d chipno %2d\n", code, i, chip, ctr, ev, chipno));
 
 		/*	These priviledge levels are not recognized.
 		 */
@@ -179,25 +180,12 @@ pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 			return PFMLIB_ERR_INVAL;
 		}
 
-		/*	Check out the code masks, which for M chips
-		 *	are actually the chip number to activate for
-		 *	the event. It is required for the M chip, but
-		 *	invalid for the P and C chips.
+		/*	No masks exist.
 		 */
-		if (chip == PME_CRAYX2_CHIP_MEMORY) {
-			if (inp->pfp_events[i].num_masks != 1) {
-				DPRINT (("too many masks for M event\n"));
-				return PFMLIB_ERR_TOOMANY;
-			}
-			chipno = inp->pfp_events[i].unit_masks[0];
-		} else {
-			if (inp->pfp_events[i].num_masks > 0) {
-				DPRINT (("too many masks for P/C event\n"));
-				return PFMLIB_ERR_TOOMANY;
-			}
-			chipno = 0;
+		if (inp->pfp_events[i].num_masks > 0) {
+			DPRINT (("too many masks for event\n"));
+			return PFMLIB_ERR_TOOMANY;
 		}
-		DPRINT (("%3d: chip number %d\n", i, chipno));
 
 		/*	The event code. Set-up the event selection mask for
 		 *	the PMC of the respective chip. Check if more than

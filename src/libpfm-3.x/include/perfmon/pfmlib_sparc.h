@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2004-2006 Hewlett-Packard Development Company, L.P.
- * Contributed by Stephane Eranian <eranian@hpl.hp.com>
+ * Sparc PMU specific types and definitions.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,39 +18,16 @@
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef __PFMLIB_COMP_H__
-#define __PFMLIB_COMP_H__
 
-#ifdef __ia64__
-#include <perfmon/pfmlib_comp_ia64.h>
-#endif
+#ifndef __PFMLIB_SPARC_H_
+#define __PFMLIB_SPARC_H__
 
-#ifdef __x86_64__
-#include <perfmon/pfmlib_comp_x86_64.h>
-#endif
+#include <perfmon/pfmlib.h>
 
-#ifdef __i386__
-#include <perfmon/pfmlib_comp_i386.h>
-#endif
+/* PFM_PLM0 = OS (supervisor)
+ * PFM_PLM1 = Hypervisor
+ * PFM_PLM2 = unused (ignored)
+ * PFM_PLM3 = User level
+ */ 
 
-#ifdef __mips__
-#include <perfmon/pfmlib_comp_mips64.h>
-#endif
-
-#ifdef __powerpc__
-#include <perfmon/pfmlib_comp_powerpc.h>
-#endif
-
-#ifdef __sparc__
-#include <perfmon/pfmlib_comp_sparc.h>
-#endif
-
-#ifdef __cell__
-#include <perfmon/pfmlib_comp_powerpc.h>
-#endif
-
-#ifdef __crayx2
-#include <perfmon/pfmlib_comp_crayx2.h>
-#endif
-
-#endif /* __PFMLIB_COMP_H__ */
+#endif /* __PFMLIB_SPARC_H__ */

@@ -39,21 +39,29 @@
 #define PME_CRAYX2_CACHE_CHIPS 1
 #define PME_CRAYX2_MEMORY_CHIPS 16
 
+/*	Number of events per physical counter.
+ */
+#define PME_CRAYX2_EVENTS_PER_COUNTER 4
+
 /*	Number of counters per chip (CPU, L2 Cache, Memory)
  */
 #define PME_CRAYX2_CPU_CTRS_PER_CHIP PFM_CPU_PMD_COUNT
 #define PME_CRAYX2_CACHE_CTRS_PER_CHIP PFM_CACHE_PMD_PER_CHIP
 #define PME_CRAYX2_MEMORY_CTRS_PER_CHIP PFM_MEM_PMD_PER_CHIP
 
-/*	Maximum number of unit masks. Use to identify the M chip
- *	upon which the event resides.
- */
-#define PFMLIB_CRAYX2_MAX_UMASK 16
+/*	Number of events per chip (CPU, L2 Cache, Memory)
+*/
+#define PME_CRAYX2_CPU_EVENTS \
+	(PME_CRAYX2_CPU_CHIPS*PME_CRAYX2_CPU_CTRS_PER_CHIP*PME_CRAYX2_EVENTS_PER_COUNTER)
+#define PME_CRAYX2_CACHE_EVENTS \
+	(PME_CRAYX2_CACHE_CHIPS*PME_CRAYX2_CACHE_CTRS_PER_CHIP*PME_CRAYX2_EVENTS_PER_COUNTER)
+#define PME_CRAYX2_MEMORY_EVENTS \
+	(PME_CRAYX2_MEMORY_CHIPS*PME_CRAYX2_MEMORY_CTRS_PER_CHIP*PME_CRAYX2_EVENTS_PER_COUNTER)
 
-/*	This unit masks are actually the chip number for which the
- *	event is activated when more then one chip is accessible by
- *	a single process.
+/*	No unit masks are (currently) used.
  */
+#define PFMLIB_CRAYX2_MAX_UMASK 1
+
 typedef struct {
 	const char	*pme_uname;	/* unit mask name */
 	const char	*pme_udesc;	/* event/umask description */
@@ -74,6 +82,7 @@ typedef struct {
 	unsigned int	pme_chip;	/* substrate/chip containing counter */
 	unsigned int	pme_ctr;	/* counter on chip */
 	unsigned int	pme_event;	/* event number on counter */
+	unsigned int	pme_chipno;	/* chip# upon which the event lies */
 	unsigned int	pme_base;	/* PMD base reg_num for this chip */
 	unsigned int	pme_nctrs;	/* PMDs/counters per chip */
 	unsigned int	pme_nchips;	/* number of chips per process */

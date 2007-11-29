@@ -78,6 +78,13 @@ HEADERS += perfmon/pfmlib_os_powerpc.h   \
 	   perfmon/pfmlib_powerpc.h
 endif
 
+ifeq ($(CONFIG_PFMLIB_ARCH_SPARC),y)
+HEADERS += perfmon/pfmlib_os_sparc.h   \
+	   perfmon/pfmlib_comp_sparc.h \
+	   perfmon/perfmon_sparc.h     \
+	   perfmon/pfmlib_sparc.h
+endif
+
 ifeq ($(CONFIG_PFMLIB_ARCH_MIPS64),y)
 HEADERS += perfmon/pfmlib_os_mips64.h   \
 	   perfmon/pfmlib_comp_mips64.h \

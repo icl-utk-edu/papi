@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2004-2006 Hewlett-Packard Development Company, L.P.
+ * Sparc compiler specific macros
+ *
+ * Copyright (c) 2005-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,39 +21,34 @@
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+#ifndef __PFMLIB_COMP_SPARC_H__
+#define __PFMLIB_COMP_SPARC_H__
+
 #ifndef __PFMLIB_COMP_H__
-#define __PFMLIB_COMP_H__
-
-#ifdef __ia64__
-#include <perfmon/pfmlib_comp_ia64.h>
+#error "you should never include this file directly, use pfmlib_comp.h"
 #endif
 
-#ifdef __x86_64__
-#include <perfmon/pfmlib_comp_x86_64.h>
+#ifndef __sparc__
+#error "you should not be including this file"
 #endif
 
-#ifdef __i386__
-#include <perfmon/pfmlib_comp_i386.h>
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#ifdef __mips__
-#include <perfmon/pfmlib_comp_mips64.h>
+static inline unsigned long
+pfmlib_popcnt(unsigned long v)
+{
+	unsigned long sum = 0;
+
+	for(; v ; v >>=1) {
+		if (v & 0x1) sum++;
+	}
+	return sum;
+}
+
+#ifdef __cplusplus /* extern C */
+}
 #endif
 
-#ifdef __powerpc__
-#include <perfmon/pfmlib_comp_powerpc.h>
-#endif
-
-#ifdef __sparc__
-#include <perfmon/pfmlib_comp_sparc.h>
-#endif
-
-#ifdef __cell__
-#include <perfmon/pfmlib_comp_powerpc.h>
-#endif
-
-#ifdef __crayx2
-#include <perfmon/pfmlib_comp_crayx2.h>
-#endif
-
-#endif /* __PFMLIB_COMP_H__ */
+#endif /* __PFMLIB_COMP_SPARC_H__ */

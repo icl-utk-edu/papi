@@ -114,8 +114,16 @@ pfm_core_detect(void)
 	 * XXX: is there a way to identify a Core-based processor?
 	 * So for now, look for Core 2 only
 	 */
-	if (family != 6 || model != 15)
+	if (family != 6)
 		return PFMLIB_ERR_NOTSUPP;
+
+	switch(model) {
+		case 15: /* Merom */
+		case 23: /* Penryn */
+			  break;
+		default:
+			return PFMLIB_ERR_NOTSUPP;
+	}
 
 	pfm_regmask_set(&core_impl_pmcs, 0);
 	pfm_regmask_set(&core_impl_pmcs, 1);

@@ -35,6 +35,10 @@ extern "C" {
 #include <perfmon/perfmon_powerpc.h>
 #endif
 
+#ifdef __sparc__
+#include <perfmon/perfmon_sparc.h>
+#endif
+
 #ifdef __mips__
 #include <perfmon/perfmon_mips64.h>
 #endif
@@ -309,6 +313,10 @@ extern int pfm_unload_context(int fd);
 
 #ifdef __powerpc__
 #define __NR_pfm_create_context		310
+#endif
+
+#ifdef __sparc__
+#define __NR_pfm_create_context		315
 #endif
 
 #ifdef __cell__
