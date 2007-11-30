@@ -33,6 +33,8 @@ int main( int argc, char* argv[] )
   int ret;
   long nthr;
 
+tests_quiet(argc, argv);     /*Set TESTS_QUIET variable */
+  
   ret=PAPI_library_init(PAPI_VER_CURRENT);
   if (ret != PAPI_VER_CURRENT)
     test_fail(__FILE__,__LINE__,"PAPI_library_init",ret);
@@ -50,12 +52,13 @@ int main( int argc, char* argv[] )
   
   nthr = NITER;
   
+   if (!TESTS_QUIET){
   printf("Creating %d threads for %d iterations each of:\n",NITER,1);
   printf("\tregister\n");
   printf("\tcreate_eventset\n");
   printf("\tdestroy_eventset\n");
   printf("\tunregister\n");
-
+   }
   th = (pthread_t *)malloc(nthr*sizeof(pthread_t *));
   if (th == NULL)
     test_fail(__FILE__,__LINE__,"malloc",PAPI_ESYS);
