@@ -101,6 +101,9 @@ int _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
 #ifdef PERFCTR_X86_AMD_K8C
    case PERFCTR_X86_AMD_K8C:
 #endif
+#ifdef PERFCTR_X86_AMD_FAM10  /* this is defined in perfctr 2.6.29 */
+   case PERFCTR_X86_AMD_FAM10:
+#endif
    case PERFCTR_X86_AMD_K7:
       for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
          ptr->control.cpu_control.evntsel[i] |= PERF_ENABLE | def_mode;
@@ -202,6 +205,9 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
 #endif
 #ifdef PERFCTR_X86_AMD_K8C  /* this is defined in perfctr 2.6.x */
     if (_papi_hwi_system_info.hw_info.model == PERFCTR_X86_AMD_K8C) pfm_events = 1;
+#endif
+#ifdef PERFCTR_X86_AMD_FAM10  /* this is defined in perfctr 2.6.29 */
+    if (_papi_hwi_system_info.hw_info.model == PERFCTR_X86_AMD_FAM10) pfm_events = 1;
 #endif
 
    /* Initialize the local structure needed

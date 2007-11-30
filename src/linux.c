@@ -70,6 +70,9 @@ inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
 #ifdef PERFCTR_X86_AMD_K8C
    case PERFCTR_X86_AMD_K8C:
 #endif
+#ifdef PERFCTR_X86_AMD_FAM10  /* this is defined in perfctr 2.6.29 */
+   case PERFCTR_X86_AMD_FAM10:
+#endif
    case PERFCTR_X86_AMD_K7:
       return (PAPI_VENDOR_AMD);
    case PERFCTR_X86_CYRIX_MII:

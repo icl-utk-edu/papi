@@ -81,6 +81,9 @@ int setup_p3_presets(int cputype) {
 #ifdef PERFCTR_X86_AMD_K8C  /* this is defined in perfctr 2.6.x */
    case PERFCTR_X86_AMD_K8C:
 #endif
+#ifdef PERFCTR_X86_AMD_FAM10  /* this is defined in perfctr 2.6.29 */
+   case PERFCTR_X86_AMD_FAM10:
+#endif
      SUBDBG("This cpu is supported by the perfctr-pfm substrate\n");
      PAPIERROR(MODEL_ERROR);
      return(PAPI_ESBSTR);

@@ -41,6 +41,10 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type)
 #ifdef PERFCTR_X86_AMD_K8C  /* this is defined in perfctr 2.6.x */
 	   case PERFCTR_X86_AMD_K8C:
 #endif
+#ifdef PERFCTR_X86_AMD_FAM10  /* this is defined in perfctr 2.6.29 */
+	   case PERFCTR_X86_AMD_FAM10:
+#endif
+	   /* TODO: this may need to be rewritten to support Barcelona */
 		  retval = init_amd(&hw_info->mem_hierarchy);
 		  break;
 	   default:
