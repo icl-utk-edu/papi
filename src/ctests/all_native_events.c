@@ -16,15 +16,40 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
 static int add_remove_event(int EventSet, int event_code, char *name) {
     int retval;
+    char errstring[PAPI_MAX_STR_LEN];
+    long_long values;
 
     retval = PAPI_add_event(EventSet, event_code);
     if (retval != PAPI_OK) {
-	printf("Error adding %s\n", name);
-	return(0);
-    } else printf("Added %s successfully.\n", name);
+	  printf("Error adding %s\n", name);
+	  return(0);
+    } 
+    else 
+      printf("Added %s successfully.\n", name);
+
+    retval = PAPI_start(EventSet);
+    if (retval != PAPI_OK) {
+      PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN);
+      fprintf(stdout,"Error Starting: %s\n", errstring);
+	  return(0);
+    } 
+    else { 
+      retval = PAPI_stop(EventSet, &values);
+      if (retval != PAPI_OK) {
+        PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN);
+		fprintf(stdout,"Error Stopping: %s\n", errstring);
+	    return(0);
+      }
+      else {
+        printf("Stoped successful\n");
+      }
+	}
+
     retval = PAPI_remove_event(EventSet, event_code);
-    if (retval != PAPI_OK)
-	test_fail(__FILE__, __LINE__, "PAPI_remove_event", retval);
+    if (retval != PAPI_OK){
+	  printf("Error removing %s\n", name);
+	  return(0);
+    }
     else printf("Removed %s successfully.\n", name);
     return(1);
 }
@@ -81,11 +106,11 @@ int main(int argc, char **argv)
    do {
         retval = PAPI_get_event_info(i, &info);
 
-	printf("\n%s\t0x%x  \n%s\n",
+/*	printf("\n%s\t0x%x  \n%s\n",
 		info.symbol,
 		info.event_code,
 		info.long_descr);
-
+*/
 #ifdef PENTIUM4
 	k = i;
 	if (PAPI_enum_event(&k, PAPI_PENT4_ENUM_BITS) == PAPI_OK) {
