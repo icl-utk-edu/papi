@@ -224,7 +224,8 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
       /* make sure register allocator only looks at legal registers */
       event_list[i].ra_selector = event_list[i].ra_bits.selector & ALLCNTRS;
 #ifdef PERFCTR_X86_INTEL_CORE2
-      event_list[i].ra_selector |= ((event_list[i].ra_bits.selector>>16)<<2) & ALLCNTRS;
+      if(_papi_hwi_system_info.hw_info.model == PERFCTR_X86_INTEL_CORE2)
+        event_list[i].ra_selector |= ((event_list[i].ra_bits.selector>>16)<<2) & ALLCNTRS;
 #endif
 
 
@@ -239,7 +240,8 @@ int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
    if(_papi_hwi_bipartite_alloc(event_list, natNum)) { /* successfully mapped */
       for(i = 0; i < natNum; i++) {
 #ifdef PERFCTR_X86_INTEL_CORE2
-         event_list[i].ra_bits.selector = event_list[i].ra_selector;
+         if(_papi_hwi_system_info.hw_info.model == PERFCTR_X86_INTEL_CORE2)
+           event_list[i].ra_bits.selector = event_list[i].ra_selector;
 #endif
          /* Copy all info about this native event to the NativeInfo struct */
          ESI->NativeInfoArray[i].ni_bits = event_list[i].ra_bits;
@@ -276,34 +278,36 @@ static void clear_cs_events(hwd_control_state_t *this_state) {
    in the native info structure array. */
 int _papi_hwd_update_control_state(hwd_control_state_t *this_state,
                                    NativeInfo_t *native, int count, hwd_context_t * ctx) {
-#ifdef PERFCTR_X86_INTEL_CORE2
    int i, k;
 
    /* clear out the events from the control state */
    clear_cs_events(this_state);
 
-   /* fill the counters we're using */
-   for (i = 0; i < count; i++) {
-      for(k=0;k<MAX_COUNTERS;k++)
-         if(native[i].ni_bits.selector & (1 << k)) {
-            break;
-         }
-      if(k>1)
-        this_state->control.cpu_control.pmc_map[i] = (k-2) | 0x40000000;
-      else
-        this_state->control.cpu_control.pmc_map[i] = k;
-#else
-   int i;
+   switch (_papi_hwi_system_info.hw_info.model) {
+     #ifdef PERFCTR_X86_INTEL_CORE2
+     case PERFCTR_X86_INTEL_CORE2:
+       /* fill the counters we're using */
+       for (i = 0; i < count; i++) {
+         for(k=0;k<MAX_COUNTERS;k++)
+           if(native[i].ni_bits.selector & (1 << k)) {
+             break;
+           }
+         if(k>1)
+           this_state->control.cpu_control.pmc_map[i] = (k-2) | 0x40000000;
+         else
+           this_state->control.cpu_control.pmc_map[i] = k;
 
-   /* clear out the events from the control state */
-   clear_cs_events(this_state);
-
-   /* fill the counters we're using */
-   for (i = 0; i < count; i++) {
-#endif
-
-      /* Add counter control command values to eventset */
-      this_state->control.cpu_control.evntsel[i] |= native[i].ni_bits.counter_cmd;
+         /* Add counter control command values to eventset */
+         this_state->control.cpu_control.evntsel[i] |= native[i].ni_bits.counter_cmd;
+       }
+       break;
+     #endif
+     default:
+       /* fill the counters we're using */
+       for (i = 0; i < count; i++) {
+         /* Add counter control command values to eventset */
+         this_state->control.cpu_control.evntsel[i] |= native[i].ni_bits.counter_cmd;
+       }
    }
    this_state->control.cpu_control.nractrs = count;
    return (PAPI_OK);
