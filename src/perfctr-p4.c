@@ -73,6 +73,7 @@ int setup_p4_presets(int cputype)
 #ifdef PERFCTR_X86_INTEL_P4M3
    else if (cputype == PERFCTR_X86_INTEL_P4M3) {
       _papi_pfm_setup_presets("Intel Pentium4 TOT_IIS", 0);
+      _papi_pfm_setup_presets("Intel Pentium4 TOT_INS", 0);
    }
 #endif
    else {
