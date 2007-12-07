@@ -66,16 +66,6 @@ int setup_p4_presets(int cputype)
    if (cputype == PERFCTR_X86_INTEL_P4) {
      /* do nothing besides the base map */
    }
-   /* for models 2 and 3 add a total instructions issued event */
-   else if (cputype == PERFCTR_X86_INTEL_P4M2) {
-      _papi_pfm_setup_presets("Intel Pentium4 TOT_IIS", 0);
-   }
-#ifdef PERFCTR_X86_INTEL_P4M3
-   else if (cputype == PERFCTR_X86_INTEL_P4M3) {
-      _papi_pfm_setup_presets("Intel Pentium4 TOT_IIS", 0);
-      _papi_pfm_setup_presets("Intel Pentium4 TOT_INS", 0);
-   }
-#endif
    else {
       PAPIERROR(MODEL_ERROR);
       return(PAPI_ESBSTR);
