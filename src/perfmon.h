@@ -301,6 +301,32 @@ inline static void _papi_hwd_unlock (int lck)
 	pthread_spin_unlock (&crayx2_mutex[lck]);
 	_papi_hwd_lock_data[lck] = MUTEX_OPEN;
 }
+#elif defined(__sparc__)
+static inline void __raw_spin_lock(volatile unsigned int *lock)
+{
+	__asm__ __volatile__(
+	"\n1:\n\t"
+	"ldstub	[%0], %%g2\n\t"
+	"orcc	%%g2, 0x0, %%g0\n\t"
+	"bne,a	2f\n\t"
+	" ldub	[%0], %%g2\n\t"
+	".subsection	2\n"
+	"2:\n\t"
+	"orcc	%%g2, 0x0, %%g0\n\t"
+	"bne,a	2b\n\t"
+	" ldub	[%0], %%g2\n\t"
+	"b,a	1b\n\t"
+	".previous\n"
+	: /* no outputs */
+	: "r" (lock)
+	: "g2", "memory", "cc");
+}
+static inline void __raw_spin_unlock(volatile unsigned int *lock)
+{
+	__asm__ __volatile__("stb %%g0, [%0]" : : "r" (lock) : "memory");
+}
+#define  _papi_hwd_lock(lck) __raw_spin_lock(&_papi_hwd_lock_data[lck]);
+#define  _papi_hwd_unlock(lck) __raw_spin_unlock(&_papi_hwd_lock_data[lck])
 #else
 #error "_papi_hwd_lock/unlock undefined!"
 #endif
@@ -327,6 +353,8 @@ typedef ucontext_t hwd_ucontext_t;
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.uc_regs->gregs[REG_NIP]
 #elif defined(__crayx2)					/* CRAY X2 */
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.regs.pc
+#elif defined(__sparc__)
+#define OVERFLOW_ADDRESS(ctx) ((struct sigcontext *)ctx.ucontext)->si_regs.pc
 #else
 #error "OVERFLOW_ADDRESS() undefined!"
 #endif

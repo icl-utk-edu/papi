@@ -23,6 +23,8 @@
 #include "papi_vector.h"
 #include "papi_memory.h"
 
+#include <dirent.h>
+
 /* Globals declared extern elsewhere */
 
 hwi_search_t *preset_search_map;
@@ -140,6 +142,17 @@ inline_static long_long get_cycles (void)
 	return _rtc ( );
 }
 /* #define get_cycles _rtc ?? */
+#elif defined(__sparc__)
+inline_static long_long get_cycles(void)
+{
+	register unsigned long ret asm("g1");
+
+	__asm__ __volatile__(".word 0x83410000" /* rd %tick, %g1 */
+			     : "=r" (ret));
+	return ret;
+}
+#else
+#error "No support for this architecture. Please modify perfmon.c"
 #endif
 
 /* The below function is stolen from libpfm from Stephane Eranian */
@@ -1865,6 +1878,197 @@ static int crayx2_get_memory_info(PAPI_hw_info_t *hw_info)
 }
 #endif
 
+#if defined(__sparc__)
+static int sparc_sysfs_cpu_attr(char *name, char **result)
+{
+	const char *path_base = "/sys/devices/system/cpu/";
+	char path_buf[PATH_MAX];
+	char val_buf[32];
+	DIR *sys_cpu;
+
+	sys_cpu = opendir(path_base);
+	if (sys_cpu) {
+		struct dirent *cpu;
+
+		while ((cpu = readdir(sys_cpu)) != NULL) {
+			int fd;
+
+			if (strncmp("cpu", cpu->d_name, 3))
+				continue;
+			strcpy(path_buf, path_base);
+			strcat(path_buf, cpu->d_name);
+			strcat(path_buf, "/");
+			strcat(path_buf, name);
+
+			fd = open(path_buf, O_RDONLY);
+			if (fd < 0)
+				continue;
+
+			if (read(fd, val_buf, 32) < 0)
+				continue;
+			close(fd);
+
+			*result = strdup(val_buf);
+			return 0;
+		}
+	}
+	return -1;
+}
+
+static int sparc_cpu_attr(char *name, unsigned long long *val)
+{
+	char *buf;
+	int r;
+
+	r = sparc_sysfs_cpu_attr(name, &buf);
+	if (r == -1)
+		return -1;
+
+	sscanf(buf, "%llu", val);
+
+	free(buf);
+
+	return 0;
+}
+
+static int sparc_get_memory_info(PAPI_hw_info_t *hw_info)
+{
+	unsigned long long cache_size, cache_line_size;
+	unsigned long long cycles_per_second;
+	char maxargs[PAPI_HUGE_STR_LEN];
+	PAPI_mh_tlb_info_t *tlb;
+	PAPI_mh_level_t *level;
+	char *s, *t;
+	FILE *f;
+
+	/* First, fix up the cpu vendor/model/etc. values */
+	strcpy(hw_info->vendor_string, "Sun");
+	hw_info->vendor = PAPI_VENDOR_SUN;
+
+	f = fopen("/proc/cpuinfo", "r");
+	if (!f)
+		return PAPI_ESYS;
+
+	rewind(f);
+	s = search_cpu_info(f, "cpu", maxargs);
+	if (!s) {
+		fclose(f);
+		return PAPI_ESYS;
+	}
+	
+	t = strchr(s + 2, '\n');
+	if (!t) {
+		fclose(f);
+		return PAPI_ESYS;
+	}
+
+	*t = '\0';
+	strcpy(hw_info->model_string, s + 2);
+	
+	fclose(f);
+
+	if (sparc_sysfs_cpu_attr("clock_tick", &s) == -1)
+		return PAPI_ESYS;
+
+	sscanf(s, "%llu", &cycles_per_second);
+	free(s);
+
+	hw_info->mhz = cycles_per_second / 1000000;
+	hw_info->clock_mhz = hw_info->mhz;
+
+	/* Now fetch the cache info */
+	hw_info->mem_hierarchy.levels = 3;
+
+	level = &hw_info->mem_hierarchy.level[0];
+
+	sparc_cpu_attr("l1_icache_size", &cache_size);
+	sparc_cpu_attr("l1_icache_line_size", &cache_line_size);
+	level[0].cache[0].type = PAPI_MH_TYPE_INST;
+	level[0].cache[0].size = cache_size;
+	level[0].cache[0].line_size = cache_line_size;
+	level[0].cache[0].num_lines = cache_size / cache_line_size;
+	level[0].cache[0].associativity = 1;
+
+	sparc_cpu_attr("l1_dcache_size", &cache_size);
+	sparc_cpu_attr("l1_dcache_line_size", &cache_line_size);
+	level[0].cache[1].type = PAPI_MH_TYPE_DATA | PAPI_MH_TYPE_WT;
+	level[0].cache[1].size = cache_size;
+	level[0].cache[1].line_size = cache_line_size;
+	level[0].cache[1].num_lines = cache_size / cache_line_size;
+	level[0].cache[1].associativity = 1;
+
+	sparc_cpu_attr("l2_cache_size", &cache_size);
+	sparc_cpu_attr("l2_cache_line_size", &cache_line_size);
+	level[1].cache[0].type = PAPI_MH_TYPE_DATA | PAPI_MH_TYPE_WB;
+	level[1].cache[0].size = cache_size;
+	level[1].cache[0].line_size = cache_line_size;
+	level[1].cache[0].num_lines = cache_size / cache_line_size;
+	level[1].cache[0].associativity = 1;
+
+	tlb = &hw_info->mem_hierarchy.level[0].tlb[0];
+	switch (_perfmon2_pfm_pmu_type) {
+	case PFMLIB_SPARC_ULTRA12_PMU:
+		tlb[0].type = PAPI_MH_TYPE_INST | PAPI_MH_TYPE_PSEUDO_LRU;
+		tlb[0].num_entries = 64;
+		tlb[0].associativity = SHRT_MAX;
+		tlb[1].type = PAPI_MH_TYPE_DATA | PAPI_MH_TYPE_PSEUDO_LRU;
+		tlb[1].num_entries = 64;
+		tlb[1].associativity = SHRT_MAX;
+		break;
+
+	case PFMLIB_SPARC_ULTRA3_PMU:
+	case PFMLIB_SPARC_ULTRA3I_PMU:
+	case PFMLIB_SPARC_ULTRA3PLUS_PMU:
+	case PFMLIB_SPARC_ULTRA4PLUS_PMU:
+	  level[0].cache[0].associativity = 4;
+	  level[0].cache[1].associativity = 4;
+	  level[1].cache[0].associativity = 4;
+	  
+	  tlb[0].type = PAPI_MH_TYPE_DATA | PAPI_MH_TYPE_PSEUDO_LRU;
+	  tlb[0].num_entries = 16;
+	  tlb[0].associativity = SHRT_MAX;
+	  tlb[1].type = PAPI_MH_TYPE_INST | PAPI_MH_TYPE_PSEUDO_LRU;
+	  tlb[1].num_entries = 16;
+	  tlb[1].associativity = SHRT_MAX;
+	  tlb[2].type = PAPI_MH_TYPE_DATA;
+	  tlb[2].num_entries = 1024;
+	  tlb[2].associativity = 2;
+	  tlb[3].type = PAPI_MH_TYPE_INST;
+	  tlb[3].num_entries = 128;
+	  tlb[3].associativity = 2;
+	  break;
+
+	case PFMLIB_SPARC_NIAGARA1:
+		level[0].cache[0].associativity = 4;
+		level[0].cache[1].associativity = 4;
+		level[1].cache[0].associativity = 12;
+
+		tlb[0].type = PAPI_MH_TYPE_INST | PAPI_MH_TYPE_PSEUDO_LRU;
+		tlb[0].num_entries = 64;
+		tlb[0].associativity = SHRT_MAX;
+		tlb[1].type = PAPI_MH_TYPE_DATA | PAPI_MH_TYPE_PSEUDO_LRU;
+		tlb[1].num_entries = 64;
+		tlb[1].associativity = SHRT_MAX;
+		break;
+
+	case PFMLIB_SPARC_NIAGARA2:
+		level[0].cache[0].associativity = 8;
+		level[0].cache[1].associativity = 4;
+		level[1].cache[0].associativity = 16;
+
+		tlb[0].type = PAPI_MH_TYPE_INST | PAPI_MH_TYPE_PSEUDO_LRU;
+		tlb[0].num_entries = 64;
+		tlb[0].associativity = SHRT_MAX;
+		tlb[1].type = PAPI_MH_TYPE_DATA | PAPI_MH_TYPE_PSEUDO_LRU;
+		tlb[1].num_entries = 128;
+		tlb[1].associativity = SHRT_MAX;
+		break;
+	}
+
+	return 0;
+}
+#endif
+
 int _papi_hwd_get_memory_info(PAPI_hw_info_t * hwinfo, int unused)
 {
   int retval = PAPI_OK;
@@ -1879,6 +2083,8 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * hwinfo, int unused)
   ppc64_get_memory_info(hwinfo);
 #elif defined(__crayx2)						/* CRAY X2 */
   crayx2_get_memory_info(hwinfo);
+#elif defined(__sparc__)
+  sparc_get_memory_info(hwinfo);
 #else
 #error "No support for this architecture. Please modify perfmon.c"
 #endif
@@ -2703,6 +2909,23 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
       }
     else
       _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL;    
+
+  if (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_SUN)
+    {
+      switch (_perfmon2_pfm_pmu_type) {
+      case PFMLIB_SPARC_ULTRA12_PMU:
+      case PFMLIB_SPARC_ULTRA3_PMU:
+      case PFMLIB_SPARC_ULTRA3I_PMU:
+      case PFMLIB_SPARC_ULTRA3PLUS_PMU:
+      case PFMLIB_SPARC_ULTRA4PLUS_PMU:
+	break;
+
+      default:
+	_papi_hwi_system_info.sub_info.available_domains |=
+	  PAPI_DOM_SUPERVISOR;
+	break;
+      }
+    }
 
   if ((_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL) ||
       (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_AMD))

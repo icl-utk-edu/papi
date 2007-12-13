@@ -25,8 +25,8 @@ CC_R    	:= $(CC) -pthread
 CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.$(PAPIVER) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
 FFLAGS		+= -ffixed-line-length-132
 CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) $(DEBUGFLAGS) -DPAPI_NO_MEMORY_MANAGEMENT -D_REENTRANT
-TOPTFLAGS	+= $(CFLAGS)
-FTOPTFLAGS	= $(TOPTFLAGS)
+TOPTFLAGS	:= -g -O
+FTOPTFLAGS	:= $(FTOPTFLAGS)
 
 ifeq (static,$(PFM_EVENTS))
 	CFLAGS		 += -DSTATIC_PERFMON_EVENTS_TABLE
@@ -39,7 +39,7 @@ endif
 
 ifeq (,$(PFM_LIB_PATH))
 ifeq (,$(PFM_ROOT))
-        PFM_ROOT := ./libpfm-3.x
+        PFM_ROOT := $(PWD)/libpfm-3.x
 endif
         PFM_LIB_PATH := $(PFM_ROOT)/lib
 	CC_SHR += -Wl,-rpath-link -Wl,$(PFM_LIB_PATH)
