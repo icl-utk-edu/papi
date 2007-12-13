@@ -107,7 +107,7 @@ ftests_util.o: ftests_util.F fpapi_test.h
 	$(F77) $(INCLUDE) $(FTOPTFLAGS) -c $(FFLAGS) ftests_util.F
 
 do_loops.o: ../ctests/do_loops.c ../ctests/papi_test.h ../ctests/test_utils.h
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/do_loops.c
+	$(CC) $(INCLUDE) $(TOPTFLAGS) -c ../ctests/do_loops.c
 
 dummy.o: ../ctests/dummy.c
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/dummy.c
