@@ -29,8 +29,8 @@ int main(int argc, char **argv)
       L = (PAPI_mh_level_t *)&(meminfo->mem_hierarchy.level[0]);
       /* Scan the TLB structures */
      for (i=0; i<meminfo->mem_hierarchy.levels; i++) {
-         for (j=0; j<2; j++) {
-            switch (L[i].tlb[j].type) {
+         for (j=0; j<PAPI_MH_MAX_LEVELS; j++) {
+            switch (PAPI_MH_CACHE_TYPE(L[i].tlb[j].type)) {
                case PAPI_MH_TYPE_UNIFIED:
                   printf("L%d Unified TLB:", i+1);
                   break;
@@ -50,7 +50,7 @@ int main(int argc, char **argv)
       /* Scan the Cache structures */
       for (i=0; i<meminfo->mem_hierarchy.levels; i++) {
          for (j=0; j<2; j++) {
-            switch (L[i].cache[j].type) {
+            switch (PAPI_MH_CACHE_TYPE(L[i].cache[j].type)) {
                case PAPI_MH_TYPE_UNIFIED:
                   printf("L%d Unified Cache:\n", i+1);
                   break;

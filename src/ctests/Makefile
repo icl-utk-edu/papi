@@ -335,7 +335,7 @@ test_utils.o: test_utils.c papi_test.h test_utils.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c test_utils.c
 
 do_loops.o: do_loops.c papi_test.h test_utils.h
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c do_loops.c
+	$(CC) $(INCLUDE) $(TOPTFLAGS) -c do_loops.c
 
 dummy.o: dummy.c
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c dummy.c
