@@ -349,6 +349,12 @@ read the documentation carefully.  */
    typedef void (*PAPI_overflow_handler_t) (int EventSet, void *address,
                               long_long overflow_vector, void *context);
 
+  /* All caddr_t's should become unsigned long's eventually. */
+
+#ifdef C99
+  typedef char * caddr_t;
+#endif
+
    typedef struct _papi_sprofil {
       void *pr_base;          /* buffer base */
       unsigned pr_size;       /* buffer size */

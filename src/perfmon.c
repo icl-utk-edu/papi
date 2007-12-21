@@ -3899,7 +3899,7 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
   memset(&buf_arg, 0, sizeof(buf_arg));
 //  newctx.ctx_flags = PFM_FL_NOTIFY_BLOCK;
-  buf_arg.buf_size = 4*getpagesize();
+  buf_arg.buf_size = 2*getpagesize();
 
   SUBDBG("PFM_CREATE_CONTEXT(%p,%s,%p,%d)\n",&newctx, PFM_DFL_SMPL_NAME, &buf_arg, (int)sizeof(buf_arg));
   if ((ret = pfm_create_context(&newctx, PFM_DFL_SMPL_NAME, &buf_arg, sizeof(buf_arg))) == -1)
