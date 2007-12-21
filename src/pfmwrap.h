@@ -10,7 +10,24 @@
 *          min@cs.utk.edu
 */
 
-inline pid_t mygettid(void)
+#if defined(__INTEL_COMPILER)
+
+#define hweight64(x)    _m64_popcnt(x)
+
+#elif defined(__GNUC__)
+
+static inline int hweight64 (unsigned long x)
+{
+    unsigned long result;
+    __asm__ ("popcnt %0=%1" : "=r" (result) : "r" (x));
+    return (int)result;
+}
+
+#else
+#error "you need to provide inline assembly from your compiler"
+#endif
+
+static inline pid_t mygettid(void)
 {
 #ifdef SYS_gettid
   return(syscall(SYS_gettid));
@@ -468,24 +485,6 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
 #else
 #ifndef PFM30
 #warning Maybe you should set -DPFM30 in your Makefile?
-#endif
-
-#if defined(__INTEL_COMPILER)
-
-#define hweight64(x)    _m64_popcnt(x)
-
-#elif defined(__GNUC__)
-
-static __inline__ int
-hweight64 (unsigned long x)
-{
-    unsigned long result;
-    __asm__ ("popcnt %0=%1" : "=r" (result) : "r" (x));
-    return (int)result;
-}
-
-#else
-#error "you need to provide inline assembly from your compiler"
 #endif
 
    #define OVFL_SIGNAL SIGPROF

@@ -467,7 +467,7 @@ read the documentation carefully.  */
 #define PAPI_MH_TYPE_LRU      0x100
 #define PAPI_MH_TYPE_PSEUDO_LRU 0x200
 #define PAPI_MH_CACHE_REPLACEMENT_POLICY(a) (a & 0xf00)
-#define PAPI_MH_MAX_LEVELS    3
+#define PAPI_MH_MAX_LEVELS    4
 #define PAPI_MAX_MEM_HIERARCHY_LEVELS 	  PAPI_MH_MAX_LEVELS
 
    typedef struct _papi_mh_tlb_info {

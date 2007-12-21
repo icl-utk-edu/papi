@@ -859,6 +859,9 @@ int PAPI_start(int EventSet)
    ESI->state |= PAPI_RUNNING;
 
    /* Update the running event set for this thread */
+
+   /* #warning "I don't know why this is here" */
+
    if (!(ESI->state & PAPI_ATTACHED))
      thread->running_eventset = ESI;
 
@@ -882,28 +885,6 @@ int PAPI_stop(int EventSet, long_long * values)
 
    if (!(ESI->state & PAPI_RUNNING))
       papi_return(PAPI_ENOTRUN);
-
-   if (ESI->state & PAPI_PROFILING) {
-     if (_papi_hwi_system_info.sub_info.kernel_profile && !(ESI->profile.flags&PAPI_PROFIL_FORCE_SW)) {
-         retval = _papi_hwd_stop_profiling(thread, ESI);
-         if (retval < PAPI_OK)
-            papi_return(retval);
-      }
-   }
-
-   /* If overflowing is enabled, turn it off */
-
-   if (ESI->state & PAPI_OVERFLOWING) 
-     {
-       ESI->overflow.count = 0;
-       if (!(ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
-	 {
-	   retval = _papi_hwi_stop_timer();
-	   if (retval != PAPI_OK)
-	     papi_return(retval);
-	   _papi_hwi_stop_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig);
-	 }
-     }
 
    /* If multiplexing is enabled for this eventset, turn if off */
 
@@ -934,12 +915,39 @@ int PAPI_stop(int EventSet, long_long * values)
    if (values)
       memcpy(values, ESI->sw_stop, ESI->NumberOfEvents * sizeof(long_long));
 
+   /* If kernel profiling is in use, flush and process the kernel buffer */
+
+   if (ESI->state & PAPI_PROFILING) {
+     if (_papi_hwi_system_info.sub_info.kernel_profile && !(ESI->profile.flags&PAPI_PROFIL_FORCE_SW)) {
+         retval = _papi_hwd_stop_profiling(thread, ESI);
+         if (retval < PAPI_OK)
+            papi_return(retval);
+      }
+   }
+
+   /* If overflowing is enabled, turn it off */
+
+   if (ESI->state & PAPI_OVERFLOWING) 
+     {
+       ESI->overflow.count = 0;
+       if (!(ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
+	 {
+	   retval = _papi_hwi_stop_timer();
+	   if (retval != PAPI_OK)
+	     papi_return(retval);
+	   _papi_hwi_stop_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig);
+	 }
+     }
+
    /* Update the state of this EventSet */
 
    ESI->state ^= PAPI_RUNNING;
    ESI->state |= PAPI_STOPPED;
 
    /* Update the running event set for this thread */
+
+   /* #warning "I don't know why this is here" */
+
    if (!(ESI->state & PAPI_ATTACHED))
      thread->running_eventset = NULL ;
 
@@ -952,9 +960,7 @@ int PAPI_stop(int EventSet, long_long * values)
        }
 #endif
 
-   APIDBG("PAPI_stop returns %d\n", retval);
-
-   return (retval);
+   return (PAPI_OK);
 }
 
 int PAPI_reset(int EventSet)
@@ -1962,7 +1968,6 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
       ESI->profile.threshold[i] = 0;
       ESI->profile.EventIndex[i] = 0;
       ESI->profile.EventCode[i] = 0;
-
       ESI->profile.event_counter--;
    } else {
       if ( ESI->profile.event_counter > 0 ) {
@@ -1996,9 +2001,6 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
    if ((flags & (PAPI_PROFIL_INST_EAR | PAPI_PROFIL_DATA_EAR)) && (_papi_hwi_system_info.sub_info.profile_ear == 0))
      papi_return(PAPI_ESBSTR);
 
-   if ((flags & PAPI_PROFIL_FORCE_SW)) 
-      forceSW = PAPI_OVERFLOW_FORCE_SW;
-
    /* make sure one and only one bucket size is set */
    buckets = flags & PAPI_PROFIL_BUCKETS;
    if (!buckets) flags |= PAPI_PROFIL_BUCKET_16; /* default to 16 bit if nothing set */
@@ -2013,21 +2015,25 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
 
    ESI->profile.flags = flags;
 
-   if ((forceSW) || (_papi_hwi_system_info.sub_info.kernel_profile == 0))
+   if ((flags & PAPI_PROFIL_FORCE_SW) || (_papi_hwi_system_info.sub_info.kernel_profile == 0))
      retval = PAPI_overflow(EventSet, EventCode, threshold, forceSW, _papi_hwi_dummy_handler);
    else 
-      retval = _papi_hwd_set_profile(ESI, index, threshold);
-
+     retval = _papi_hwd_set_profile(ESI, index, threshold);
 
    if (retval < PAPI_OK)
       return (retval);
 
-   /* Toggle profiling flag */
+   APIDBG("Profile event counter is %d\n",ESI->profile.event_counter);
+
+   /* Toggle profiling flag if we are the first or the last event to be profiled on */
+
    if ((ESI->profile.event_counter == 1 && threshold > 0) ||
        (ESI->profile.event_counter == 0 && threshold == 0))
-      ESI->state ^= PAPI_PROFILING;
+     ESI->state ^= PAPI_PROFILING;
+   
+   /* Set flags to 0 if we are clearing the last event */
 
-   if ( ESI->profile.event_counter == 0 )
+   if (ESI->profile.event_counter == 0 && threshold == 0)
      ESI->profile.flags = 0;
 
    return(PAPI_OK);
@@ -2054,7 +2060,7 @@ int PAPI_profil(void *buf, unsigned bufsiz, caddr_t offset,
             break;
       }
 
-      if (i == ESI->profile.event_counter){
+      if (i == ESI->profile.event_counter) {
         prof = (PAPI_sprofil_t *) papi_malloc(sizeof(PAPI_sprofil_t));
         memset(prof, 0x0, sizeof(PAPI_sprofil_t));
         prof->pr_base = buf;

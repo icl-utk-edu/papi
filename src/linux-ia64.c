@@ -626,8 +626,10 @@ static int get_system_info(void)
   _papi_hwi_system_info.sub_info.default_granularity = PAPI_GRN_THR;
   _papi_hwi_system_info.sub_info.available_granularities = PAPI_GRN_THR;
   _papi_hwi_system_info.sub_info.hardware_intr_sig = OVFL_SIGNAL;
-  /* Put the signal handler in use to consume PFM_END_MSG's */
+  _papi_hwi_system_info.sub_info.kernel_profile = 1;
+
 #ifndef PFM20
+  /* Put the signal handler in use to consume PFM_END_MSG's */
   _papi_hwi_start_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig, 1);
 #endif
 
@@ -1145,7 +1147,6 @@ static unsigned long check_btb_reg(pfmw_arch_pmd_reg_t reg)
       return 0;
 #endif
 }
-
 static unsigned long check_btb(pfmw_arch_pmd_reg_t * btb, pfmw_arch_pmd_reg_t * pmd16)
 {
    int i, last;
@@ -1171,36 +1172,30 @@ static unsigned long check_btb(pfmw_arch_pmd_reg_t * btb, pfmw_arch_pmd_reg_t * 
    else
       return PAPI_ESYS;
 }
+#endif
 
-static int ia64_process_profile_entry(void *papiContext)
+static int ia64_process_profile_buffer(ThreadInfo_t *thread, EventSetInfo_t *ESI)
 {
-   ThreadInfo_t *thread;
-   EventSetInfo_t *ESI;
    pfmw_smpl_hdr_t *hdr;
    pfmw_smpl_entry_t *ent;
    unsigned long buf_pos;
    unsigned long entry_size;
-   int i, ret, reg_num, overflow_vector, count, pos;
-   int EventCode=0, eventindex=0, native_index=0;
-   _papi_hwi_context_t *ctx = (_papi_hwi_context_t *) papiContext;
-   struct sigcontext *info = (struct sigcontext *) ctx->ucontext;
+   int i, ret, reg_num, count, pos;
+   int EventCode=0, eventindex, native_index=0;
    hwd_control_state_t *this_state;
    pfmw_arch_pmd_reg_t *reg;
-   caddr_t pc = (caddr_t) GET_OVERFLOW_ADDRESS(ctx);
-
-   thread = _papi_hwi_lookup_thread();
-   if (thread == NULL)
-     return(PAPI_EBUG);
-
-   if ((ESI = thread->running_eventset) == NULL)
-     return(PAPI_EBUG);
+   unsigned long overflow_vector, pc;
 
    if ((ESI->state & PAPI_PROFILING) == 0)
      return(PAPI_EBUG);
 
    this_state = &ESI->machdep;
-
    hdr = (pfmw_smpl_hdr_t *) this_state->smpl_vaddr;
+
+#ifdef PFM30
+   entry_size = sizeof(pfmw_smpl_entry_t);
+#else
+   entry_size = hdr->hdr_entry_size;
    /*
     * Make sure the kernel uses the format we understand
     */
@@ -1208,7 +1203,7 @@ static int ia64_process_profile_entry(void *papiContext)
       PAPIERROR("Perfmon v%u.%u sampling format is not supported",
               PFM_VERSION_MAJOR(hdr->hdr_version), PFM_VERSION_MINOR(hdr->hdr_version));
    }
-   entry_size = hdr->hdr_entry_size;
+#endif
 
    /*
     * walk through all the entries recorded in the buffer
@@ -1217,154 +1212,34 @@ static int ia64_process_profile_entry(void *papiContext)
    for (i = 0; i < hdr->hdr_count; i++) {
       ret = 0;
       ent = (pfmw_smpl_entry_t *) buf_pos;
-      if (ent->regs == 0) {
-         buf_pos += entry_size;
-         continue;
-      }
-
-      /* record  each register's overflow times  */
-      ESI->profile.overflowcount++;
-
+#ifdef PFM30
+      /* PFM30 only one PMD overflows in each sample */
+      overflow_vector = 1 << ent->ovfl_pmd;
+#else
       overflow_vector = ent->regs;
-      while (overflow_vector) {
-         reg_num = ffs(overflow_vector) - 1;
-         /* find the event code */
-         for (count = 0; count < ESI->profile.event_counter; count++) {
-            eventindex = ESI->profile.EventIndex[count];
-            pos= ESI->EventInfoArray[eventindex].pos[0];
-            if (pos + PMU_FIRST_COUNTER == reg_num) {
-               EventCode = ESI->profile.EventCode[count];
-               native_index= ESI->NativeInfoArray[pos].ni_event 
-                                 & PAPI_NATIVE_AND_MASK;
-               break;
-            }
-         }
-         /* something is wrong */
-         if (count == ESI->profile.event_counter) {
-	    PAPIERROR("wrong count: %d vs. ESI->profile.event_counter %d", count, ESI->profile.event_counter);
-            return(PAPI_EBUG);
-          }
-
-         /* * print entry header */
-         info->sc_ip = ent->ip;
-#ifdef ITANIUM2
-         if (pfm_ita2_is_dear(native_index)) {
-#else
-         if (pfm_ita_is_dear(native_index)) {
 #endif
-            reg = (pfmw_arch_pmd_reg_t *) (ent + 1);
-            reg++;
-            reg++;
-#ifdef ITANIUM2
-            info->sc_ip = ((reg->pmd17_ita2_reg.dear_iaddr +
-                            reg->pmd17_ita2_reg.dear_bn) << 4)
-                | reg->pmd17_ita2_reg.dear_slot;
 
-#else
-            info->sc_ip = (reg->pmd17_ita_reg.dear_iaddr << 4)
-                | (reg->pmd17_ita_reg.dear_slot);
-#endif
-         };
-#ifdef ITANIUM2
-         if (pfm_ita2_is_btb(native_index)
-             || EventCode == PAPI_BR_INS) {
-#else
-         if (pfm_ita_is_btb(native_index)
-             || EventCode == PAPI_BR_INS) {
-#endif
-            reg = (pfmw_arch_pmd_reg_t *) (ent + 1);
-            info->sc_ip = check_btb(reg, reg + 8);
-         }
+      SUBDBG("Entry %d PID:%d CPU:%d ovfl_vector:0x%lx IIP:0x%016lx\n",
+	     i,
+	     ent->pid,
+	     ent->cpu,
+	     overflow_vector,
+	     ent->ip);
 
-         _papi_hwi_dispatch_profile(ESI, pc, (long_long) 0, count);
-         overflow_vector ^= (1 << reg_num);
-      }
-
-
-
-/*
-        printf("Entry %d PID:%d CPU:%d regs:0x%lx IIP:0x%016lx\n",
-            smpl_entry++,
-            ent->pid,
-            ent->cpu,
-            ent->regs,
-            info->sc_ip);
-*/
-
-
-      /*  move to next entry */
-      buf_pos += entry_size;
-
-   }                            /* end of for loop */
-   return (PAPI_OK);
-}
-
-#else   /* PFM30 */
-static int ia64_process_profile_entry(void *papiContext)
-{
-   ThreadInfo_t *thread;
-   EventSetInfo_t *ESI;
-   pfmw_smpl_hdr_t *hdr;
-   pfmw_smpl_entry_t *ent;
-   unsigned long buf_pos;
-   unsigned long entry_size;
-   int i, ret, reg_num, count, pos;
-   int EventCode=0, eventindex, native_index=0;
-   _papi_hwi_context_t *ctx = (_papi_hwi_context_t *) papiContext;
-   struct sigcontext *info = (struct sigcontext *) ctx->ucontext;
-   hwd_control_state_t *this_state;
-   pfmw_arch_pmd_reg_t *reg;
-   caddr_t pc = (caddr_t) GET_OVERFLOW_ADDRESS(ctx);
-
-   thread = _papi_hwi_lookup_thread();
-   if (thread == NULL)
-     return (PAPI_EBUG);
-
-   if ((ESI = thread->running_eventset) == NULL)
-     return(PAPI_EBUG);
-
-   if ((ESI->state & PAPI_PROFILING) == 0)
-     return(PAPI_EBUG);
-
-   this_state = &ESI->machdep;
-
-   hdr = (pfmw_smpl_hdr_t *) this_state->smpl_vaddr;
-   entry_size = sizeof(pfmw_smpl_entry_t);
-
-   /*
-    * walk through all the entries recorded in the buffer
-    */
-   buf_pos = (unsigned long) (hdr + 1);
-   for (i = 0; i < hdr->hdr_count; i++) {
-      ret = 0;
-      ent = (pfmw_smpl_entry_t *) buf_pos;
-      if (ent->ovfl_pmd == 0) {
-         buf_pos += entry_size;
-         continue;
-      }
-/*
-        printf("Entry %d PID:%d CPU:%d ovfl_pmd:0x%x IIP:0x%016lx\n",
-            smpl_entry++,
-            ent->pid,
-            ent->cpu,
-            ent->ovfl_pmd,
-            ent->ip);
-*/
-
-      /* record  each register's overflow times  */
+      /* record each register's overflow times  */
+#warning "This should be handled in the high level layers"
       ESI->profile.overflowcount++;
 
-      if (ent->ovfl_pmd) 
-      {
-         reg_num = ent->ovfl_pmd;
+      while (overflow_vector) {
+	reg_num = ffs(overflow_vector) - 1;
          /* find the event code */
          for (count = 0; count < ESI->profile.event_counter; count++) {
             eventindex = ESI->profile.EventIndex[count];
-            pos= ESI->EventInfoArray[eventindex].pos[0];
+            pos = ESI->EventInfoArray[eventindex].pos[0];
             if (pos + PMU_FIRST_COUNTER == reg_num) {
                EventCode = ESI->profile.EventCode[count];
-               native_index= ESI->NativeInfoArray[pos].ni_event 
-                                 & PAPI_NATIVE_AND_MASK;
+               native_index = ESI->NativeInfoArray[pos].ni_event 
+		 & PAPI_NATIVE_AND_MASK;
                break;
             }
          }
@@ -1375,111 +1250,53 @@ static int ia64_process_profile_entry(void *papiContext)
 	     return(PAPI_EBUG);
 	   }
 
-         /* * print entry header */
-         info->sc_ip = ent->ip;
-         printf("ent->ip = 0x%lx \n", ent->ip);
+         /* print entry header */
+         pc = ent->ip;
+      //   printf("ent->ip = 0x%lx \n", ent->ip);
 #ifdef ITANIUM2
-         if (pfm_ita2_is_dear(native_index)) {
+         if (pfm_ita2_is_dear(native_index)) 
 #else
-         if (pfm_ita_is_dear(native_index)) {
+	 if (pfm_ita_is_dear(native_index)) 
 #endif
-            reg = (pfmw_arch_pmd_reg_t *) (ent + 1);
-            reg++;
-            reg++;
+	 {
+	   reg = (pfmw_arch_pmd_reg_t *) (ent + 1);
+	   reg++;
+	   reg++;
 #ifdef ITANIUM2
-            info->sc_ip = ((reg->pmd17_ita2_reg.dear_iaddr +
-                            reg->pmd17_ita2_reg.dear_bn) << 4)
-                | reg->pmd17_ita2_reg.dear_slot;
-
+	   pc = ((reg->pmd17_ita2_reg.dear_iaddr +
+			   reg->pmd17_ita2_reg.dear_bn) << 4)
+	     | reg->pmd17_ita2_reg.dear_slot;
+	   
 #else
-            info->sc_ip = (reg->pmd17_ita_reg.dear_iaddr << 4)
-                | (reg->pmd17_ita_reg.dear_slot);
+	   pc = (reg->pmd17_ita_reg.dear_iaddr << 4)
+	     | (reg->pmd17_ita_reg.dear_slot);
 #endif
-            printf("info->sc_ip = 0x%lx \n", info->sc_ip);
-            /* adjust pointer position */
-            buf_pos += (hweight64(DEAR_REGS_MASK)<<3);
-         };
+	   /* adjust pointer position */
+	   buf_pos += (hweight64(DEAR_REGS_MASK)<<3);
+         }
 
-         _papi_hwi_dispatch_profile(ESI, pc, (long_long) 0, count);
+         _papi_hwi_dispatch_profile(ESI, (caddr_t)pc, (long_long) 0, count);
+	 overflow_vector ^= (unsigned long)1 << reg_num;
       }
-
       /*  move to next entry */
       buf_pos += entry_size;
-
    }                            /* end of if */
    return (PAPI_OK);
 }
 
-#endif
-
-
-#ifdef PFM20
-static void ia64_process_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
-                                 *context)
-{
-   _papi_hwi_context_t ctx;
-
-   ctx.si = info;
-   ctx.ucontext = context;
-
-   if (info->sy_code != PROF_OVFL) {
-      PAPIERROR("received spurious SIGPROF, si_code = %d", info->sy_code);
-      return;
-   }
-   ia64_process_profile_entry(&ctx);
-   if (pfmw_perfmonctl(info->sy_pid, 0, PFM_RESTART, NULL, 0) == -1) {
-     PAPIERROR("perfmonctl(PFM_RESTART) errno %d", errno);
-   }
-}
-#else  /* PFM30 */
-static void ia64_process_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
-                                 *context)
-{
-   _papi_hwi_context_t ctx;
-
-   ctx.si = info;
-   ctx.ucontext = context;
-
-   ia64_process_profile_entry(&ctx);
-
-   if (pfmw_perfmonctl(0, info->si_fd, PFM_RESTART, NULL, 0) == -1) {
-     PAPIERROR("perfmonctl(PFM_RESTART) errno %d", errno);
-     return;
-   }
-}
-#endif
-
-#if 0
-static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext *context)
-{
-   _papi_hwi_context_t ctx;
-   ThreadInfo_t *master = NULL;
-   unsigned long address;
-
-   ctx.si = info;
-   ctx.ucontext = context;
-   address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
-
-   SUBDBG("pid=%d @0x%lx bv=0x%lx\n", info->sy_pid, context->sc_ip, info->sy_pfm_ovfl[0]);
-   if (info->sy_code != PROF_OVFL) {
-      PAPIERROR("received spurious SIGPROF, si_code = %d", info->sy_code);
-      return;
-   }
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 
-                     info->sy_pfm_ovfl[0]>>PMU_FIRST_COUNTER, 0, &master);
-
-   if (pfmw_perfmonctl(info->sy_pid, 0, PFM_RESTART, 0, 0) == -1) {
-     PAPIERROR("perfmonctl(PFM_RESTART) errno %d", errno);
-      return;
-   }
-}
-#endif
-static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext *sc)
+static inline void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext *sc)
 {
   _papi_hwi_context_t ctx;
   ThreadInfo_t *thread = _papi_hwi_lookup_thread();
   unsigned long address;
   
+#if defined(DEBUG)
+  if (thread == NULL) {
+    PAPIERROR("thread == NULL in _papi_hwd_dispatch_timer!");
+    return;
+  }
+#endif
+
   ctx.si = info;
   ctx.ucontext = sc;
   address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
@@ -1539,8 +1356,11 @@ static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
      }
 #endif
    if (ret != -1) {
-     _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 
-					msg.pfm_ovfl_msg.msg_ovfl_pmds[0]>>PMU_FIRST_COUNTER, 0, &thread);
+     if ((thread->running_eventset->state & PAPI_PROFILING) && !(thread->running_eventset->profile.flags & PAPI_PROFIL_FORCE_SW))
+       ia64_process_profile_buffer(thread, thread->running_eventset);
+     else
+       _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 
+					  msg.pfm_ovfl_msg.msg_ovfl_pmds[0]>>PMU_FIRST_COUNTER, 0, &thread);
    }
    if (pfmw_perfmonctl(0, fd, PFM_RESTART, 0, 0) == -1) {
      PAPIERROR("perfmonctl(PFM_RESTART) errno %d, %s", errno,strerror(errno));
@@ -1548,7 +1368,10 @@ static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
    }
 }
 #else
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 
+  if ((thread->running_eventset->state & PAPI_PROFILING) && !(thread->running_eventset->profile.flags & PAPI_PROFIL_FORCE_SW))
+       ia64_process_profile_buffer(thread, thread->running_eventset);
+  else
+    _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 
 				      info->sy_pfm_ovfl[0]>>PMU_FIRST_COUNTER, 0, &thread);
    if (pfmw_perfmonctl(info->sy_pid, 0, PFM_RESTART, 0, 0) == -1) {
     PAPIERROR("perfmonctl(PFM_RESTART) errno %d", errno);
@@ -1591,81 +1414,36 @@ static int set_notify(EventSetInfo_t * ESI, int index, int value)
    return (PAPI_OK);
 }
 
-int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI)
+int _papi_hwd_stop_profiling(ThreadInfo_t *thread, EventSetInfo_t *ESI)
 {
-   _papi_hwi_context_t ctx;
-   struct sigcontext info;
-   int retval=PAPI_OK;
-   
-   ctx.ucontext = &info;
-   pfmw_stop(&master->context);
-   ESI->profile.overflowcount = 0;
-   ia64_process_profile_entry(&ctx);
-   return (retval);
+   pfmw_stop(&thread->context);
+   return (ia64_process_profile_buffer(thread, ESI));
 }
 
 
 int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
-   struct sigaction act;
-   void *tmp;
-   int i;
    hwd_control_state_t *this_state = &ESI->machdep;
    hwd_context_t *ctx = &ESI->master->context;
+   int ret;
 
-   if (threshold == 0) {
-/* unset notify */
-      set_notify(ESI, EventIndex, 0);
-/* reset the initial value */
-      i = ESI->EventInfoArray[EventIndex].pos[0];
-      SUBDBG("counter %d used in overflow, threshold %d\n",
-             i + PMU_FIRST_COUNTER, threshold);
-      this_state->pd[i].reg_value = 0;
-      this_state->pd[i].reg_long_reset = 0;
-      this_state->pd[i].reg_short_reset = 0;
+  ret = _papi_hwd_set_overflow(ESI,EventIndex,threshold);
+  if (ret != PAPI_OK)
+    return ret;
+  ret = pfmw_destroy_context(ctx);
+  if (ret != PAPI_OK)
+    return ret;
+  if (threshold == 0)
+    ret = pfmw_create_context(ctx);
+  else
+    ret = pfmw_recreate_context(ESI,&this_state->smpl_vaddr, EventIndex);
 
-/* remove the signal handler */
-      if (ESI->profile.event_counter == 0)
-         if (sigaction(OVFL_SIGNAL, NULL, NULL) == -1)
-            return (PAPI_ESYS);
-   } else {
-      tmp = (void *) signal(OVFL_SIGNAL, SIG_IGN);
-      if ((tmp != (void *) SIG_DFL) && (tmp != (void *) ia64_process_sigprof))
-         return (PAPI_ESYS);
+#warning "This should be handled in the high level layers"
+  ESI->state ^= PAPI_OVERFLOWING;
+  ESI->overflow.flags ^= PAPI_OVERFLOW_HARDWARE;
+  ESI->profile.overflowcount = 0;
 
-      /* Set up the signal handler */
-
-      memset(&act, 0x0, sizeof(struct sigaction));
-      act.sa_handler = (sig_t) ia64_process_sigprof;
-      act.sa_flags = SA_RESTART;
-      if (sigaction(OVFL_SIGNAL, &act, NULL) == -1)
-         return (PAPI_ESYS);
-
-/* set initial value in pd array */
-      i = ESI->EventInfoArray[EventIndex].pos[0];
-      SUBDBG("counter %d used in overflow, threshold %d\n",
-             i + PMU_FIRST_COUNTER, threshold);
-      this_state->pd[i].reg_value = (~0UL) - (unsigned long) threshold + 1;
-      this_state->pd[i].reg_long_reset = (~0UL) - (unsigned long) threshold + 1;
-      this_state->pd[i].reg_short_reset = (~0UL)-(unsigned long) threshold + 1;
-
-      /* clear the overflow counters */
-      ESI->profile.overflowcount = 0;
-
-      /* in order to rebuild the context, we must destroy the old context */
-      if (pfmw_destroy_context(ctx) == PAPI_ESYS) {
-         return (PAPI_ESYS);
-      }
-      /* need to rebuild the context */
-      if( pfmw_recreate_context(ESI,&this_state->smpl_vaddr, EventIndex)
-                ==PAPI_ESYS)
-         return(PAPI_ESYS);
-
-      /* Set up the overflow notifier on the proper event.  */
-
-      set_notify(ESI, EventIndex, PFM_REGFL_OVFL_NOTIFY);
-   }
-   return (PAPI_OK);
+  return (ret);
 }
 
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
