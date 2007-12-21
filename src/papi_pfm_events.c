@@ -444,13 +444,7 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 #if !defined(STATIC_PERFMON_EVENTS_TABLE)
   fclose(table);
 #endif
-  if (get_presets != 0) /* It at least found the CPU */
-    {
-      return(PAPI_OK);
-    }
-
-  PAPIERROR("Failed to find events for CPU %s, type %d in %s",pmu_name,pmu_type,name);
-  return(PAPI_ESBSTR);
+  return(PAPI_OK);
 }
 
 /* Frees memory for all the strdup'd char strings in a preset string array.
