@@ -613,6 +613,8 @@ static int get_system_info(void)
   /* Name of the substrate we're using */
   strcpy(_papi_hwi_system_info.sub_info.name, "$Id$");          
   strcpy(_papi_hwi_system_info.sub_info.version, "$Revision$");  
+  sprintf(_papi_hwi_system_info.sub_info.support_version,"%08x",PFMLIB_VERSION);
+  sprintf(_papi_hwi_system_info.sub_info.kernel_version,"%08x",2<<16); /* 2.0 */
   _papi_hwi_system_info.sub_info.num_native_events = nnev;  
   _papi_hwi_system_info.sub_info.num_cntrs = ncnt;
   _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_INTEL;
@@ -623,10 +625,10 @@ static int get_system_info(void)
   _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
   _papi_hwi_system_info.sub_info.default_granularity = PAPI_GRN_THR;
   _papi_hwi_system_info.sub_info.available_granularities = PAPI_GRN_THR;
-   _papi_hwi_system_info.sub_info.hardware_intr_sig = OVFL_SIGNAL;
-
-#ifdef ALTIX
-   _papi_hwi_start_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig, 1);
+  _papi_hwi_system_info.sub_info.hardware_intr_sig = OVFL_SIGNAL;
+  /* Put the signal handler in use to consume PFM_END_MSG's */
+#ifndef PFM20
+  _papi_hwi_start_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig, 1);
 #endif
 
    return (PAPI_OK);
@@ -1482,9 +1484,11 @@ static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
   ctx.ucontext = sc;
   address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
   
-#ifdef ALTIX
-  if (thread && (thread->running_eventset != NULL))
-#endif
+  if ((thread == NULL) || (thread->running_eventset == NULL)) {
+    SUBDBG("%p, %p\n",thread,thread->running_eventset);
+    return;
+  }
+
   if (thread->running_eventset->overflow.flags & PAPI_OVERFLOW_FORCE_SW) {
     _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 
 				       0, 0, &thread);
@@ -1512,26 +1516,22 @@ static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
             ret = -1;
         }
 #if defined(HAVE_PFM_MSG_TYPE)
-#if defined(ALTIX)
     if (msg.type == PFM_MSG_END)
       {
 	SUBDBG("PFM_MSG_END\n");
 	return;
       }
-#endif
     if (msg.type != PFM_MSG_OVFL) 
       {
 	PAPIERROR("unexpected msg type %d",msg.type);
 	return;
       }
 #else
-#if defined(ALTIX)
    if (msg.pfm_gen_msg.msg_type == PFM_MSG_END)
      {
        SUBDBG("PFM_MSG_END\n");
        return;
      }
-#endif
    if (msg.pfm_gen_msg.msg_type != PFM_MSG_OVFL)
      {
        PAPIERROR("unexpected msg type %d",msg.pfm_gen_msg.msg_type);
@@ -1543,14 +1543,7 @@ static void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext
 					msg.pfm_ovfl_msg.msg_ovfl_pmds[0]>>PMU_FIRST_COUNTER, 0, &thread);
    }
    if (pfmw_perfmonctl(0, fd, PFM_RESTART, 0, 0) == -1) {
-#ifdef ALTIX
-    if (errno == EBUSY)
-      {
-	fprintf(stderr,"PAPI: warning, perfmonctl(%d,PFM_RESTART) returned errno %d, %s\n",fd,errno,strerror(errno));
-	return;
-      }
-#endif
-    PAPIERROR("perfmonctl(PFM_RESTART) errno %d", errno);
+     PAPIERROR("perfmonctl(PFM_RESTART) errno %d, %s", errno,strerror(errno));
     return;
    }
 }
