@@ -1993,6 +1993,10 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
       ESI->profile.EventIndex[i] = index;
    }
 
+   /* Clear out old flags */
+   if (threshold == 0) 
+     flags |= ESI->profile.flags;
+
    /* make sure no invalid flags are set */
    if (flags & ~(PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM | PAPI_PROFIL_WEIGHTED
                | PAPI_PROFIL_COMPRESS | PAPI_PROFIL_BUCKETS | PAPI_PROFIL_FORCE_SW | PAPI_PROFIL_INST_EAR | PAPI_PROFIL_DATA_EAR))
@@ -2000,6 +2004,11 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
 
    if ((flags & (PAPI_PROFIL_INST_EAR | PAPI_PROFIL_DATA_EAR)) && (_papi_hwi_system_info.sub_info.profile_ear == 0))
      papi_return(PAPI_ESBSTR);
+
+   /* if we have kernel-based profiling, then we're just asking for signals on interrupt. */
+   /* if we don't have kernel-based profiling, then we're asking for emulated PMU interrupt */
+   if ((flags & PAPI_PROFIL_FORCE_SW) && (_papi_hwi_system_info.sub_info.kernel_profile == 0)) 
+     forceSW = PAPI_OVERFLOW_FORCE_SW;
 
    /* make sure one and only one bucket size is set */
    buckets = flags & PAPI_PROFIL_BUCKETS;
@@ -2012,10 +2021,9 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
    }
 
    /* Set up the option structure for the low level */
-
    ESI->profile.flags = flags;
 
-   if ((flags & PAPI_PROFIL_FORCE_SW) || (_papi_hwi_system_info.sub_info.kernel_profile == 0))
+   if (flags & PAPI_PROFIL_FORCE_SW)
      retval = PAPI_overflow(EventSet, EventCode, threshold, forceSW, _papi_hwi_dummy_handler);
    else 
      retval = _papi_hwd_set_profile(ESI, index, threshold);

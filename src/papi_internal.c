@@ -69,7 +69,7 @@ PAPI_debug_handler_t _papi_hwi_debug_handler = default_debug_handler;
 void PAPIERROR(char *format, ...)
 {
   va_list args;
-   if (_papi_hwi_error_level != PAPI_QUIET)
+  if ((_papi_hwi_error_level != PAPI_QUIET) || (getenv("PAPI_VERBOSE")))
      {
        va_start(args, format); 
        fprintf(stderr, "PAPI Error: ");
@@ -1044,6 +1044,7 @@ int _papi_hwi_init_global_internal(void)
    _papi_hwi_system_info.sub_info.multiplex_timer_num = PAPI_ITIMER;
    _papi_hwi_system_info.sub_info.multiplex_timer_us = PAPI_MPX_DEF_US;
    _papi_hwi_system_info.sub_info.hardware_intr_sig = PAPI_SIGNAL;
+   _papi_hwi_system_info.hw_info.clock_ticks = sysconf(_SC_CLK_TCK);
    _papi_hwi_system_info.sub_info.reserved_ints[0] = 0;
    _papi_hwi_system_info.sub_info.reserved_ints[1] = 0;
    _papi_hwi_system_info.sub_info.reserved_ints[2] = 0;

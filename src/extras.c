@@ -157,26 +157,25 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t * prof,
    }
 }
 
-void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, caddr_t pc,
+void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, unsigned long pc,
                       long_long over, int profile_index)
 {
-   EventSetProfileInfo_t *profile = &ESI->profile;
-   PAPI_sprofil_t *sprof;
-
-  caddr_t offset = (caddr_t)0;
-  caddr_t best_offset = (caddr_t)0;
+  EventSetProfileInfo_t *profile = &ESI->profile;
+  PAPI_sprofil_t *sprof;
+  unsigned long offset = 0;
+  unsigned long best_offset = 0;
   int count;
   int best_index = -1;
   int i;
 
-  PRFDBG("handled at %p\n",pc);
+  PRFDBG("handled IP 0x%lx\n",pc);
 
   sprof = profile->prof[profile_index];
   count = profile->count[profile_index];
     
   for (i = 0; i < count; i++)
   {
-      offset = (caddr_t)sprof[i].pr_off;
+      offset = sprof[i].pr_off;
       if ((offset < pc) && (offset > best_offset))
       {
          best_index = i;
@@ -223,7 +222,7 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, unsigned long address,
    EventSetInfo_t *ESI;
    _papi_hwi_context_t *ctx = (_papi_hwi_context_t *) papiContext;
 
-   OVFDBG("enter\n");
+   OVFDBG("handled context 0x%lx, IP 0x%lx\n",(unsigned long)papiContext,(unsigned long)address);
 
    if (*t) 
      thread = *t;
@@ -328,12 +327,12 @@ foundit:
                   over = 0;
                else
                   over = temp[profile_index];
-               _papi_hwi_dispatch_profile(ESI, (caddr_t)address, over, profile_index);
+               _papi_hwi_dispatch_profile(ESI, address, over, profile_index);
                overflow_vector ^= (long_long )1 << i;
             }
             /* do not use overflow_vector after this place */
          } else {
-            ESI->overflow.handler(ESI->EventSetIndex, (void *)address, overflow_vector,ctx->ucontext);
+            ESI->overflow.handler(ESI->EventSetIndex, (void *)address, overflow_vector, ctx->ucontext);
          }
       }
        ESI->state &= ~(PAPI_PAUSED);
@@ -347,9 +346,9 @@ foundit:
    return(PAPI_OK);
 }
 
-volatile int _papi_hwi_using_signal = 0;
-
 #ifdef _WIN32
+
+volatile int _papi_hwi_using_signal = 0;
 
 static MMRESULT wTimerID;       // unique ID for referencing this timer
 static UINT wTimerRes;          // resolution for this timer
@@ -409,6 +408,7 @@ int _papi_hwi_stop_timer(void)
 
 static struct sigaction oaction;
 static struct itimerval ovalue;
+static int _papi_hwi_using_signal[_NSIG] = { 0, };
 
 int _papi_hwi_start_timer(int milliseconds)
 {
@@ -416,7 +416,7 @@ int _papi_hwi_start_timer(int milliseconds)
 
 #ifdef ANY_THREAD_GETS_SIGNAL
    _papi_hwi_lock(INTERNAL_LOCK);
-   if ((_papi_hwi_using_signal-1))
+   if ((_papi_hwi_using_signal[_papi_hwi_system_info.sub_info.multiplex_timer_sig]-1))
      {
        INTDBG("itimer already installed\n");
        _papi_hwi_unlock(INTERNAL_LOCK);
@@ -431,7 +431,7 @@ int _papi_hwi_start_timer(int milliseconds)
    value.it_value.tv_usec = milliseconds * 1000;
 
    INTDBG("installing itimer %d ms\n",milliseconds);
-   if (setitimer(PAPI_ITIMER, &value, &ovalue) < 0)
+   if (setitimer(_papi_hwi_system_info.sub_info.multiplex_timer_num, &value, &ovalue) < 0)
      {
        PAPIERROR("setitimer errno %d",errno);
        return (PAPI_ESYS);
@@ -445,10 +445,10 @@ int _papi_hwi_start_signal(int signal, int need_context)
    struct sigaction action;
 
    _papi_hwi_lock(INTERNAL_LOCK);
-   _papi_hwi_using_signal++;
-   if (_papi_hwi_using_signal - 1)
+   _papi_hwi_using_signal[signal]++;
+   if (_papi_hwi_using_signal[signal] - 1)
      {
-       INTDBG("_papi_hwi_using_signal is now %d\n",_papi_hwi_using_signal);
+       INTDBG("_papi_hwi_using_signal is now %d\n",_papi_hwi_using_signal[signal]);
        _papi_hwi_unlock(INTERNAL_LOCK);
        return(PAPI_OK);
      }
@@ -475,7 +475,7 @@ int _papi_hwi_start_signal(int signal, int need_context)
        return (PAPI_ESYS);
      }
 
-   INTDBG("_papi_hwi_using_signal is now %d.\n",_papi_hwi_using_signal);
+   INTDBG("_papi_hwi_using_signal is now %d.\n",_papi_hwi_using_signal[signal]);
    _papi_hwi_unlock(INTERNAL_LOCK);
 
    return (PAPI_OK);
@@ -484,7 +484,7 @@ int _papi_hwi_start_signal(int signal, int need_context)
 int _papi_hwi_stop_signal(int signal)
 {
   _papi_hwi_lock(INTERNAL_LOCK);
-  if (--_papi_hwi_using_signal == 0) 
+  if (--_papi_hwi_using_signal[signal] == 0) 
     {
       INTDBG("removing signal handler\n");
       if (sigaction(signal, &oaction, NULL) == -1)
@@ -495,7 +495,7 @@ int _papi_hwi_stop_signal(int signal)
 	}
     }
   
-  INTDBG("_papi_hwi_using_signal is now %d\n", _papi_hwi_using_signal);
+  INTDBG("_papi_hwi_using_signal is now %d\n", _papi_hwi_using_signal[signal]);
   _papi_hwi_unlock(INTERNAL_LOCK);
 
   return(PAPI_OK);
@@ -505,7 +505,7 @@ int _papi_hwi_stop_timer(void)
 {
 #ifdef ANY_THREAD_GETS_SIGNAL
    _papi_hwi_lock(INTERNAL_LOCK);
-   if (_papi_hwi_using_signal > 1)
+   if (_papi_hwi_using_signal[_papi_hwi_system_info.sub_info.multiplex_timer_sig] > 1)
      {
        INTDBG("itimer in use by another thread\n");
        _papi_hwi_unlock(INTERNAL_LOCK);
@@ -515,7 +515,7 @@ int _papi_hwi_stop_timer(void)
 #endif
 
    INTDBG("turning off timer\n");
-   if (setitimer(PAPI_ITIMER, &ovalue, NULL) == -1)
+   if (setitimer(_papi_hwi_system_info.sub_info.multiplex_timer_num, &ovalue, NULL) == -1)
      {
        PAPIERROR("setitimer errno %d",errno);
        return(PAPI_ESYS);

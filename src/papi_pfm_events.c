@@ -1007,6 +1007,11 @@ int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
     return(PAPI_ESBSTR);
   }
 
+  if ((ret = pfm_get_event_counters(bits->event,&selector)) != PFMLIB_SUCCESS) {
+    PAPIERROR("pfm_get_event_counters(%d,%p): %s",bits->event,&selector,pfm_strerror(ret));
+    return(PAPI_ESBSTR);
+  }
+
 #if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
   extern int _perfmon2_pfm_pmu_type;
   switch (_perfmon2_pfm_pmu_type)
