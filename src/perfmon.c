@@ -3084,7 +3084,7 @@ again:
 	 PAPIERROR("Unable to scan two items from thread stat file at 13th space?");
 	 return(PAPI_ESBSTR);
        }
-     retval = (utime+stime)*(long_long)(1000000/_papi_hwi_system_info.hw_info.clock_ticks);
+     retval = (utime+stime)*(long_long)1000000/_papi_hwi_system_info.hw_info.clock_ticks;
    }
 #elif defined(HAVE_CLOCK_GETTIME_THREAD)
    {
@@ -3098,7 +3098,7 @@ again:
      struct tms buffer;
      times(&buffer);
      SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
-     retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*(1000000/_papi_hwi_system_info.hw_info.clock_ticks));
+     retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*1000000/_papi_hwi_system_info.hw_info.clock_ticks);
      /* NOT CLOCKS_PER_SEC as in the headers! */
    }
 #elif defined(HAVE_PER_THREAD_GETRUSAGE)
