@@ -120,6 +120,11 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 #endif
 
 #define PAPI_ITIMER_MS 1
+#if defined(linux)
+#define PAPI_NSIG _NSIG
+#else
+#define PAPI_NSIG 128
+#endif
 
 /* Multiplex definitions */
 
@@ -455,6 +460,7 @@ typedef struct _papi_mdi {
 extern papi_mdi_t _papi_hwi_system_info;
 extern int _papi_hwi_error_level;
 extern const hwi_describe_t _papi_hwi_err[PAPI_NUM_ERRORS];
+extern int _papi_hwi_using_signal[PAPI_NSIG];
 
 /*
  * Debug functions for platforms without vararg macro support

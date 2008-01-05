@@ -349,7 +349,6 @@ foundit:
 #ifdef _WIN32
 
 volatile int _papi_hwi_using_signal = 0;
-
 static MMRESULT wTimerID;       // unique ID for referencing this timer
 static UINT wTimerRes;          // resolution for this timer
 
@@ -408,7 +407,7 @@ int _papi_hwi_stop_timer(void)
 
 static struct sigaction oaction;
 static struct itimerval ovalue;
-static int _papi_hwi_using_signal[_NSIG] = { 0, };
+int _papi_hwi_using_signal[PAPI_NSIG];
 
 int _papi_hwi_start_timer(int milliseconds)
 {

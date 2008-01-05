@@ -1017,6 +1017,9 @@ int _papi_hwi_init_global_internal(void)
   _papi_hwi_presets.info = _papi_hwi_preset_info;
 
   memset(&_papi_hwi_system_info,0x0,sizeof(_papi_hwi_system_info));
+#ifndef _WIN32
+  memset(_papi_hwi_using_signal,0x0,sizeof(_papi_hwi_using_signal));
+#endif
 
    /* Global struct to maintain EventSet mapping */
    retval = allocate_eventset_map(&_papi_hwi_system_info.global_eventset_map);
