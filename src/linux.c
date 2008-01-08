@@ -224,6 +224,10 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    _papi_hwi_system_info.sub_info.attach = 1;
    _papi_hwi_system_info.sub_info.attach_must_ptrace = 1;
    _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
+#if (!defined(PPC64) && !defined(PPC32))
+   /* AMD and Intel ia386 processors all support unit mask bits */
+   _papi_hwi_system_info.sub_info.cntr_umasks = 1;
+#endif
 #if defined(PPC64)
    _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR;
 #else

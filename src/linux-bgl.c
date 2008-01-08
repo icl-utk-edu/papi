@@ -1064,12 +1064,16 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t* bits)
    return (PAPI_OK);
 }
 
-/* Given a native event code, looks for next MOESI bit if applicable.
-   If not, looks for the next event in the table if the next one exists. 
+/* Given a native event code, for the next event in the table if the next one exists. 
    If not, returns the proper error code. */
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
    BGL_PERFCTR_event_t event;
+
+   if (modifier == PAPI_ENUM_FIRST) {
+         *EventCode = PAPI_NATIVE_MASK;
+         return (PAPI_OK);
+   }
 
    get_bgl_native_event(*EventCode+1, &event);
 

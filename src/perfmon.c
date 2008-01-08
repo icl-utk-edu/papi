@@ -2929,6 +2929,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
     {
       _papi_hwi_system_info.sub_info.fast_counter_read = 1;
       _papi_hwi_system_info.sub_info.fast_real_timer = 1;
+      _papi_hwi_system_info.sub_info.cntr_umasks = 1;
     }
 
   _papi_hwi_system_info.sub_info.hardware_intr = 1;

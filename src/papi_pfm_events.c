@@ -827,76 +827,49 @@ int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
   unsigned int event, umask, num_masks;
   int ret;
 
+  if (modifier == PAPI_ENUM_FIRST) {
+    *EventCode = PAPI_NATIVE_MASK; /* assumes first native event is always 0x4000000 */
+    return (PAPI_OK);
+  }
+
   if (_pfm_decode_native_event(*EventCode,&event,&umask) != PAPI_OK)
     return(PAPI_ENOEVNT);
 
   ret = pfm_get_num_event_masks(event,&num_masks);
-  if (ret != PFMLIB_SUCCESS)
-    {
-      PAPIERROR("pfm_get_num_event_masks(%d,%p): %s",event,&num_masks,pfm_strerror(ret));
-      return(PAPI_ENOEVNT);
-    }
+  if (ret != PFMLIB_SUCCESS) {
+    PAPIERROR("pfm_get_num_event_masks(%d,%p): %s",event,&num_masks,pfm_strerror(ret));
+    return(PAPI_ENOEVNT);
+  }
   SUBDBG("This is umask %d of %d\n",umask,num_masks);
 
-  if (modifier == PAPI_ENUM_EVENTS)
-    {
-      if (event < _papi_hwi_system_info.sub_info.num_native_events - 1) 
-	{
-	  *EventCode += 1;
+  if (modifier == PAPI_ENUM_EVENTS) {
+    if (event < _papi_hwi_system_info.sub_info.num_native_events - 1) {
+	  *EventCode = encode_native_event_raw(event+1,0);
 	  return (PAPI_OK);
 	}
-      return (PAPI_ENOEVNT);
-    }
-  else if (modifier == PAPI_ENUM_ALL)
-    {
-      if (umask+1 < (1<<num_masks))
-	{
+    return (PAPI_ENOEVNT);
+  }
+  else if (modifier == PAPI_NTV_ENUM_UMASK_COMBOS){
+    if (umask+1 < (1<<num_masks)) {
 	  *EventCode = encode_native_event_raw(event,umask+1);
 	  return (PAPI_OK);
 	}
-      else if (event < _papi_hwi_system_info.sub_info.num_native_events - 1) 
-	{
-	  /* Lookup event + 1 and return first umask of group */
-	  ret = pfm_get_num_event_masks(event+1,&num_masks);
-	  if (ret != PFMLIB_SUCCESS)
-	    {
-	      PAPIERROR("pfm_get_num_event_masks(%d,%p): %s",event,&num_masks,pfm_strerror(ret));
-	      return(PAPI_ENOEVNT);
-	    }
-	  if (num_masks)
-	    *EventCode = encode_native_event_raw(event+1,1);
-	  else
-	    *EventCode = encode_native_event_raw(event+1,0);
-	  return(PAPI_OK);
-	}
-      return (PAPI_ENOEVNT);
-    }
-  else if (modifier == PAPI_ENUM_UMASK_COMBOS)
-    {
-      if (umask+1 < (1<<num_masks))
-	{
-	  *EventCode = encode_native_event_raw(event,umask+1);
-	  return (PAPI_OK);
-	}
-      return(PAPI_ENOEVNT);
-    }
-  else if (modifier == PAPI_ENUM_UMASKS)
-    {
-      int thisbit = ffs(umask);
-      
-      SUBDBG("First bit is %d in %08x\b",thisbit-1,umask);
-      thisbit = 1 << thisbit;
+    return(PAPI_ENOEVNT);
+  }
+  else if (modifier == PAPI_NTV_ENUM_UMASKS) {
+    int thisbit = ffs(umask);
 
-      if (thisbit & ((1<<num_masks)-1))
-	{
+    SUBDBG("First bit is %d in %08x\b",thisbit-1,umask);
+    thisbit = 1 << thisbit;
+
+    if (thisbit & ((1<<num_masks)-1)) {
 	  *EventCode = encode_native_event_raw(event,thisbit);
 	  return (PAPI_OK);
 	}
-      return(PAPI_ENOEVNT);
-    }
+    return(PAPI_ENOEVNT);
+  }
   else
     return(PAPI_EINVAL);
-  
 }
 
 #ifndef PENTIUM4

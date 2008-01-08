@@ -985,9 +985,14 @@ int _papi_hwd_encode_native(char *name, int *code)
    return (PAPI_OK);
 }
 
-int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
+int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
    int index = *EventCode & PAPI_NATIVE_AND_MASK;
+
+   if (modifier == PAPI_ENUM_FIRST) {
+         *EventCode = PAPI_NATIVE_MASK;
+         return (PAPI_OK);
+   }
 
    if (cpuver <= CPC_ULTRA2) {
       if (index < MAX_NATIVE_EVENT_USII - 1) {

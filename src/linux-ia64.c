@@ -627,6 +627,11 @@ static int get_system_info(void)
   _papi_hwi_system_info.sub_info.available_granularities = PAPI_GRN_THR;
   _papi_hwi_system_info.sub_info.hardware_intr_sig = OVFL_SIGNAL;
   _papi_hwi_system_info.sub_info.kernel_profile = 1;
+  _papi_hwi_system_info.sub_info.data_address_range = 1;    /* Supports data address range limiting */
+  _papi_hwi_system_info.sub_info.instr_address_range = 1;   /* Supports instruction address range limiting */
+  _papi_hwi_system_info.sub_info.cntr_IEAR_events = 1;      /* counters support instr event addr register */
+  _papi_hwi_system_info.sub_info.cntr_DEAR_events = 1;      /* counters support data event addr register */
+  _papi_hwi_system_info.sub_info.cntr_OPCM_events = 1;      /* counter events support opcode matching */
 
 #ifndef PFM20
   /* Put the signal handler in use to consume PFM_END_MSG's */
@@ -1512,16 +1517,38 @@ int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len
 #endif
 }
 
-int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
+static inline int _hwd_modify_event(unsigned int event, int modifier)
+{
+   switch (modifier) {
+      case PAPI_NTV_ENUM_IARR:
+         return(pfmw_support_iarr(event));
+      case PAPI_NTV_ENUM_DARR:
+         return(pfmw_support_darr(event));
+      case PAPI_NTV_ENUM_OPCM:
+         return(pfmw_support_opcm(event));
+      case PAPI_NTV_ENUM_DEAR:
+         return(pfmw_is_dear(event));
+      case PAPI_NTV_ENUM_IEAR:
+         return(pfmw_is_iear(event));
+      default:
+         return (1);
+   }
+}
+
+int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
    int index = *EventCode & PAPI_NATIVE_AND_MASK;
 
-  if (index < _papi_hwi_system_info.sub_info.num_native_events - 1) {
-    *EventCode += 1;
-    return (PAPI_OK);
-  } else {
-    return (PAPI_ENOEVNT);
-  }
+   if (modifier == PAPI_ENUM_FIRST) {
+         *EventCode = PAPI_NATIVE_MASK;
+         return (PAPI_OK);
+   }
+   while (index++ < _papi_hwi_system_info.sub_info.num_native_events - 1) {
+      *EventCode = *EventCode + 1;
+      if(_hwd_modify_event((*EventCode ^ PAPI_NATIVE_MASK), modifier))
+         return(PAPI_OK);
+   }
+   return (PAPI_ENOEVNT);
 }
 
 int _papi_hwd_init_control_state(hwd_control_state_t * ptr)

@@ -629,7 +629,14 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
   int i;
   
+  /* This handles the newly defined 'FIRST' modifier */
+  if ( modifier == PAPI_ENUM_FIRST) {
+	*EventCode = native_map[0].resources.event;
+	return(PAPI_OK);
+  }
+
   if ( modifier == 0 ) {
+    /* This provides support for deprecated '0' event initialization */
     if ( (*EventCode&~PAPI_NATIVE_MASK) == 0 ){
 	*EventCode = native_map[0].resources.event;
 	return(PAPI_OK);

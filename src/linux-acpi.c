@@ -866,6 +866,10 @@ int _papi_hwd_add_prog_event(hwd_control_state_t * ctrl, unsigned int EventCode,
 
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
+   if (modifier == PAPI_ENUM_FIRST) {
+         *EventCode = PAPI_NATIVE_MASK;
+         return (PAPI_OK);
+   }
    if (modifier == PAPI_ENUM_ALL) {
       int index = *EventCode & PAPI_NATIVE_AND_MASK;
 

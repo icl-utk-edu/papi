@@ -62,9 +62,9 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 }
 
 /* this function would return the next native event code.
-    modifer = PAPI_ENUM_ALL
+    modifier = PAPI_ENUM_EVENTS
 		 it simply returns next native event code
-    modifer = PAPI_PWR4_ENUM_GROUPS
+    modifier = PAPI_NTV_ENUM_GROUPS
 		 it would return information of groups this native event lives
                  0x400000ed is the native code of PM_FXLS_FULL_CYC,
 		 before it returns 0x400000ee which is the next native event's
@@ -74,9 +74,13 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
      PAPI_OK successful, next event is valid
      PAPI_ENOEVNT  fail, next event is invalid
 */
-int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
+int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
-   if (modifer == PAPI_ENUM_ALL) {
+   if (modifier == PAPI_ENUM_FIRST) {
+         *EventCode = PAPI_NATIVE_MASK;
+         return (PAPI_OK);
+   }
+   if (modifier == PAPI_ENUM_EVENTS) {
       int index = *EventCode & PAPI_NATIVE_AND_MASK;
 
       if (native_table[index + 1].resources.selector) {
@@ -84,7 +88,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
          return (PAPI_OK);
       } else
          return (PAPI_ENOEVNT);
-   } else if (modifer == PAPI_PWR4_ENUM_GROUPS) {
+   } else if (modifier == PAPI_NTV_ENUM_GROUPS) {
 #if defined(_POWER4) || defined(_POWER5)
       unsigned int group = (*EventCode & 0x00FF0000) >> 16;
       int index = *EventCode & 0x000000FF;
@@ -328,7 +332,7 @@ static int get_system_info(void)
    _papi_hwi_system_info.hw_info.mhz = (float) (pm_cycles() / 1000000.0);
 /*   _papi_hwi_system_info.num_gp_cntrs = pminfo.maxpmcs;*/
    _papi_hwi_system_info.sub_info.num_cntrs = pminfo.maxpmcs;
-   _papi_hwi_system_info.sub_info.grouped_cntrs = 1;
+   _papi_hwi_system_info.sub_info.cntr_groups = 1;
    _papi_hwi_system_info.sub_info.available_granularities = PAPI_GRN_THR;
 /* This field doesn't appear to exist in the PAPI 3.0 structure 
   _papi_hwi_system_info.cpunum = mycpu(); 

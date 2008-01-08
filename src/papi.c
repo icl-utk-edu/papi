@@ -610,20 +610,23 @@ int PAPI_event_name_to_code(char *in, int *out)
 }
 
 /* Updates EventCode to next valid value, or returns error; 
-  modifer can specify {all / available} for presets, or other values for native tables 
+  modifier can specify {all / available} for presets, or other values for native tables 
   and may be platform specific (Major groups / all mask bits; P / M / E chip, etc) */
 int PAPI_enum_event(int *EventCode, int modifier)
 {
    int i = *EventCode;
 
-   if (i & PAPI_PRESET_MASK) 
-     {
+   if (i & PAPI_PRESET_MASK) {
+	   if (modifier == PAPI_ENUM_FIRST) {
+			 *EventCode = PAPI_PRESET_MASK;
+			 return (PAPI_OK);
+	   }
        i &= PAPI_PRESET_AND_MASK;
        while (++i < PAPI_MAX_PRESET_EVENTS) 
 	 {
 	   if (_papi_hwi_presets.info[i].symbol == NULL)
 	     return (PAPI_ENOEVNT); /* NULL pointer terminates list */
-	   if (modifier & PAPI_ENUM_PRESET_AVAIL)
+	   if (modifier & PAPI_PRESET_ENUM_AVAIL)
 	     {
 	       if (_papi_hwi_presets.count[i] == 0)
 		 continue;
@@ -631,12 +634,11 @@ int PAPI_enum_event(int *EventCode, int modifier)
 	   *EventCode = i | PAPI_PRESET_MASK;
 	   return (PAPI_OK);
          }
-     }
-   else if (i & PAPI_NATIVE_MASK) 
-     {
+   }
+   else if (i & PAPI_NATIVE_MASK) {
        /* Should check against num native events here */
        return (_papi_hwd_ntv_enum_events((unsigned int *) EventCode, modifier));
-     }
+   }
    papi_return (PAPI_EINVAL);
 }
 

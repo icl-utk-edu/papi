@@ -255,45 +255,37 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_DERIVED           0x1      /* Flag to indicate that the event is derived */
 
 /* Possible values for the 'modifier' parameter of the PAPI_enum_event call.
-   A value of 0 (PAPI_ENUM_ALL) is always assumed to enumerate ALL events on every platform.
+   A value of 0 (PAPI_ENUM_EVENTS) is always assumed to enumerate ALL events on every platform.
    PAPI PRESET events are broken into related event categories.
    Each supported substrate can have optional values to determine how native events on that
    substrate are enumerated.
 */
 enum {
-   PAPI_ENUM_ALL = 0,			/* Always enumerate all events */
-   PAPI_PRESET_ENUM_AVAIL, 		/* Enumerate events that exist here */
+   PAPI_ENUM_EVENTS = 0,		/* Always enumerate all events */	/* IN USE */
+   PAPI_ENUM_FIRST,				/* Enumerate first event (preset or native) */
+   PAPI_PRESET_ENUM_AVAIL, 		/* Enumerate events that exist here */	/* IN USE */
 
-   /* PAPI PRESET section */
+   /* PAPI PRESET section ; these are currently unsupported */
    PAPI_PRESET_ENUM_INS,		/* Instruction related preset events */
    PAPI_PRESET_ENUM_BR,			/* branch related preset events */
    PAPI_PRESET_ENUM_MEM,		/* memory related preset events */
+   PAPI_PRESET_ENUM_CACH,		/* cache related preset events */
    PAPI_PRESET_ENUM_TLB,		/* Translation Lookaside Buffer events */
    PAPI_PRESET_ENUM_FP,			/* Floating Point related preset events */
 
-   /* Pentium 4 specific section */
-   PAPI_PENT4_ENUM_GROUPS = 0x100,      /* 45 groups + custom + user */
-   PAPI_PENT4_ENUM_COMBOS,		/* all combinations of mask bits for given group */
-   PAPI_PENT4_ENUM_BITS,		/* all individual bits for given group */
+   /* PAPI native event related section */
+   PAPI_NTV_ENUM_UMASKS,		/* all individual bits for given group */
+   PAPI_NTV_ENUM_UMASK_COMBOS,	/* all combinations of mask bits for given group */
+   PAPI_NTV_ENUM_IARR,			/* Enumerate events that support IAR (instruction address ranging) */
+   PAPI_NTV_ENUM_DARR,			/* Enumerate events that support DAR (data address ranging) */
+   PAPI_NTV_ENUM_OPCM,			/* Enumerate events that support OPC (opcode matching) */
+   PAPI_NTV_ENUM_IEAR,			/* Enumerate IEAR (instruction event address register) events */
+   PAPI_NTV_ENUM_DEAR,			/* Enumerate DEAR (data event address register) events */
 
    /* POWER 4 specific section */
-   PAPI_PWR4_ENUM_GROUPS = 0x200,	/* Enumerate groups an event belongs to */
-
-   /* ITANIUM specific section */
-   PAPI_ITA_ENUM_IARR = 0x300,	/* Enumerate events that support IAR (instruction address ranging) */
-   PAPI_ITA_ENUM_DARR,         	/* Enumerate events that support DAR (data address ranging) */
-   PAPI_ITA_ENUM_OPCM,           /* Enumerate events that support OPC (opcode matching) */
-   PAPI_ITA_ENUM_IEAR,           /* Enumerate IEAR (instruction event address register) events */
-   PAPI_ITA_ENUM_DEAR            /* Enumerate DEAR (data event address register) events */
+   PAPI_NTV_ENUM_GROUPS		/* Enumerate groups an event belongs to */
 };
 
-/* These will replace the others eventually */
-
-#define PAPI_ENUM_UMASK_COMBOS PAPI_PENT4_ENUM_COMBOS
-#define PAPI_ENUM_UMASKS PAPI_PENT4_ENUM_BITS
-#define PAPI_ENUM_EVENTS PAPI_PENT4_ENUM_GROUPS
-#define PAPI_ENUM_GROUPS PAPI_PWR4_ENUM_GROUPS
-#define PAPI_ENUM_PRESET_AVAIL PAPI_PRESET_ENUM_AVAIL
 
 /* 
 The Low Level API
@@ -419,13 +411,17 @@ read the documentation carefully.  */
      unsigned int fast_counter_read:1;     /* Supports a user level PMC read instruction */
      unsigned int fast_real_timer:1;       /* Supports a fast real timer */
      unsigned int fast_virtual_timer:1;    /* Supports a fast virtual timer */
-     unsigned int attach:1;		   /* Supports attach */
+     unsigned int attach:1;                /* Supports attach */
      unsigned int attach_must_ptrace:1;	   /* Attach must first ptrace and stop the thread/process*/
      unsigned int edge_detect:1;           /* Supports edge detection on events */
      unsigned int invert:1;                /* Supports invert detection on events */
      unsigned int profile_ear:1;      	   /* Supports data/instr/tlb miss address sampling */
-     unsigned int grouped_cntrs:1;         /* Underlying hardware uses counter groups */
-     unsigned int reserved_bits:16;
+     unsigned int cntr_groups:1;           /* Underlying hardware uses counter groups */
+     unsigned int cntr_umasks:1;           /* counters have unit masks */
+     unsigned int cntr_IEAR_events:1;      /* counters support instr event addr register */
+     unsigned int cntr_DEAR_events:1;      /* counters support data event addr register */
+     unsigned int cntr_OPCM_events:1;      /* counter events support opcode matching */
+     unsigned int reserved_bits:12;
    } PAPI_substrate_info_t;
 
    typedef int (*PAPI_debug_handler_t) (int code);

@@ -16,62 +16,56 @@ void papi_init(int argc, char **argv)
    if (retval != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   if (!TESTS_QUIET) {
-      retval = PAPI_set_debug(PAPI_VERB_ECONT);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
-   }
+   retval = PAPI_set_debug(PAPI_VERB_ECONT);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
 
    if ((hwinfo = PAPI_get_hardware_info()) == NULL)
       test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
-   if (!TESTS_QUIET) {
-      printf
-          ("Test case event_chooser: Available events which can be added with given events.\n");
-      printf
-          ("-------------------------------------------------------------------------\n");
-      printf("Vendor string and code   : %s (%d)\n", hwinfo->vendor_string,
-             hwinfo->vendor);
-      printf("Model string and code    : %s (%d)\n", hwinfo->model_string, hwinfo->model);
-      printf("CPU Revision             : %f\n", hwinfo->revision);
-      printf("CPU Megahertz            : %f\n", hwinfo->mhz);
-      printf("CPU Clock Megahertz      : %d\n", hwinfo->clock_mhz);
-      printf("CPU Clock Ticks / sec    : %d\n", hwinfo->clock_ticks);
-      printf("CPU's in this Node       : %d\n", hwinfo->ncpu);
-      printf("Nodes in this System     : %d\n", hwinfo->nnodes);
-      printf("Total CPU's              : %d\n", hwinfo->totalcpus);
-      printf("Number Hardware Counters : %d\n", PAPI_get_opt(PAPI_MAX_HWCTRS, NULL));
-      printf("Max Multiplex Counters   : %d\n", PAPI_get_opt(PAPI_MAX_MPX_CTRS, NULL));
-      printf
-          ("-------------------------------------------------------------------------\n");
+   printf
+      ("Test case event_chooser: Available events which can be added with given events.\n");
+   printf
+      ("-------------------------------------------------------------------------\n");
+   printf("Vendor string and code   : %s (%d)\n", hwinfo->vendor_string, hwinfo->vendor);
+   printf("Model string and code    : %s (%d)\n", hwinfo->model_string, hwinfo->model);
+   printf("CPU Revision             : %f\n", hwinfo->revision);
+   printf("CPU Megahertz            : %f\n", hwinfo->mhz);
+   printf("CPU Clock Megahertz      : %d\n", hwinfo->clock_mhz);
+   printf("CPU Clock Ticks / sec    : %d\n", hwinfo->clock_ticks);
+   printf("CPU's in this Node       : %d\n", hwinfo->ncpu);
+   printf("Nodes in this System     : %d\n", hwinfo->nnodes);
+   printf("Total CPU's              : %d\n", hwinfo->totalcpus);
+   printf("Number Hardware Counters : %d\n", PAPI_get_opt(PAPI_MAX_HWCTRS, NULL));
+   printf("Max Multiplex Counters   : %d\n", PAPI_get_opt(PAPI_MAX_MPX_CTRS, NULL));
+   printf
+      ("-------------------------------------------------------------------------\n");
 
-   }
-
-  retval=PAPI_create_eventset(&EventSet);
-  if(retval != PAPI_OK){
-    fprintf(stderr, "PAPI_create_eventset error\n");
-    exit(1);
+   retval=PAPI_create_eventset(&EventSet);
+   if(retval != PAPI_OK){
+      fprintf(stderr, "PAPI_create_eventset error\n");
+      exit(1);
   }
-	
 }
 
 int native()
 {
    int i, j, k, evt;
    int retval;
+   const PAPI_substrate_info_t *s = NULL;
    PAPI_event_info_t info;
 #ifdef _POWER4
    int group = 0;
 #endif
-#ifdef PENTIUM4
-   int l;
-#endif
 
-   i = 0 | PAPI_NATIVE_MASK;
    j = 0;
-#ifdef __crayx1
-   PAPI_enum_event(&i, 0);
-#endif
+   s = PAPI_get_substrate_info();
+
+   /* For platform independence, always ASK FOR the first event */
+   /* Don't just assume it'll be the first numeric value */
+   i = 0 | PAPI_NATIVE_MASK;
+   PAPI_enum_event(&i, PAPI_ENUM_FIRST);
+
    do {
     evt=i;
 #ifdef _POWER4
@@ -82,11 +76,9 @@ int native()
 #ifdef _POWER4
       group = (i & 0x00FF0000) >> 16;
       if (group) {
-         if (!TESTS_QUIET)
-            printf("%10d", group - 1);
+         printf("%10d", group - 1);
       } else {
-         if (!TESTS_QUIET)
-            printf("\n\n");
+         printf("\n\n");
 #endif
          j++;
          retval = PAPI_get_event_info(i, &info);
@@ -97,38 +89,16 @@ int native()
 		info.long_descr);
 
    for (k=0;k<(int)info.count;k++)
-      printf(" |Register Value[%d]: 0x%-10x  %s|\n",k,info.code[k], info.name[k]);
-   printf("\n");
+	 if (strlen(info.name[k]))
+		 printf(" |Register Value[%d]: 0x%-10x  %s|\n",k,info.code[k], info.name[k]);
 
 #ifdef _POWER4
-         if (!TESTS_QUIET)
-            printf("Groups: ");
+         printf("\nGroups: ");
       }
-#endif
-#ifdef PENTIUM4
-      k = i;
-      if (PAPI_enum_event(&k, PAPI_PENT4_ENUM_BITS) == PAPI_OK) {
-         l = strlen(info.long_descr);
-         do {
-            j++;
-            retval = PAPI_get_event_info(k, &info);
-            if (!TESTS_QUIET && retval == PAPI_OK) {
-               printf("    %-26s 0x%-10x    %s\n",
-                      info.symbol, info.event_code, info.long_descr + l);
-            }
-         } while (PAPI_enum_event(&k, PAPI_PENT4_ENUM_BITS) == PAPI_OK);
-      }
-      if (!TESTS_QUIET && retval == PAPI_OK)
-         printf("\n");
-   if((retval=PAPI_remove_event(EventSet,evt))!=PAPI_OK)
-       printf("Error in PAPI_remove_event\n");
-   }
-   } while (PAPI_enum_event(&i, PAPI_PENT4_ENUM_GROUPS) == PAPI_OK);
-#elif defined(_POWER4)
 /* this function would return the next native event code.
-    modifer = PAPI_ENUM_ALL
+    modifier = PAPI_ENUM_EVENTS
 		 it simply returns next native event code
-    modifer = PAPI_PWR4_ENUM_GROUPS
+    modifier = PAPI_NTV_ENUM_GROUPS
 		 it would return information of groups this native event lives
                  0x400000ed is the native code of PM_FXLS_FULL_CYC,
 		 before it returns 0x400000ee which is the next native event's
@@ -141,19 +111,29 @@ int native()
    if((retval=PAPI_remove_event(EventSet,evt))!=PAPI_OK)
        printf("Error in PAPI_remove_event\n");
    }
-   } while (PAPI_enum_event(&i, PAPI_PWR4_ENUM_GROUPS) == PAPI_OK);
+   } while (PAPI_enum_event(&i, PAPI_NTV_ENUM_GROUPS) == PAPI_OK);
 #else
+	if (s->cntr_umasks) {
+		k = i;
+		if (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
+			do {
+				retval = PAPI_get_event_info(k, &info);
+				if (retval == PAPI_OK) {
+					printf("    0x%-10x%s  |%s|\n", info.event_code,
+						strchr(info.symbol, ':'), strchr(info.long_descr, ':')+1);
+				}
+			} while (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK);
+		}
+	}
+   printf ("-------------------------------------------------------------------------\n");
    if((retval=PAPI_remove_event(EventSet,evt))!=PAPI_OK)
        printf("Error in PAPI_remove_event\n");
    }
-   } while (PAPI_enum_event(&i, PAPI_ENUM_ALL) == PAPI_OK);
+   } while (PAPI_enum_event(&i, PAPI_ENUM_EVENTS) == PAPI_OK);
 #endif
 
-   if (!TESTS_QUIET) {
-      printf
-          ("-------------------------------------------------------------------------\n");
-      printf("Total events reported: %d\n", j);
-   }
+   printf ("-------------------------------------------------------------------------\n");
+   printf("Total events reported: %d\n", j);
    test_pass(__FILE__, NULL, 0);
    exit(1);
 }
@@ -217,11 +197,8 @@ int preset()
 
          } while (PAPI_enum_event(&i, print_avail_only) == PAPI_OK);
       
-   if (!TESTS_QUIET) {
-      printf
-          ("-------------------------------------------------------------------------\n");
-      printf("Total events reported: %d\n", j);
-   }
+   printf ("-------------------------------------------------------------------------\n");
+   printf("Total events reported: %d\n", j);
    test_pass(__FILE__, NULL, 0);
    exit(1);
 }
@@ -231,10 +208,8 @@ int main(int argc, char **argv)
   int i;
   int pevent;
 
-  if(argc<3){
-    fprintf(stderr, "Usage: eventChooser NATIVE|PRESET evt1 evet2 ... \n");
-    exit(1);
-  }
+  if(argc<3) goto use_exit;
+
   papi_init(argc, argv);
 
   for(i=2; i<argc; i++){
@@ -250,9 +225,9 @@ int main(int argc, char **argv)
     native();
   else if(!strcmp("PRESET", argv[1]))
     preset();
-  else{
-    fprintf(stderr, "Usage: eventChooser NATIVE|PRESET evt1 evet2 ... \n");
-    exit(1);
-  }
+  else goto use_exit;
   exit(0);
+use_exit:
+  fprintf(stderr, "Usage: papi_event_chooser NATIVE|PRESET evt1 evt2 ... \n");
+  exit(1);
 }

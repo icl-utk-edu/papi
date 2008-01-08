@@ -58,7 +58,11 @@ int main(int argc, char **argv)
    printf("edge_detect: %d\n",subinfo->edge_detect);    /* Has a fast virtual timer */
    printf("invert: %d\n",subinfo->invert);    /* Has a fast virtual timer */
    printf("profile_ear: %d\n",subinfo->profile_ear);     /* Supports data/instr/tlb miss address sampling */
-   printf("grouped_cntrs: %d\n",subinfo->grouped_cntrs);           /* Number of counters the substrate supports */
+   printf("cntr_groups: %d\n",subinfo->cntr_groups);           /* Underlying hardware uses counter groups */
+   printf("cntr_umasks: %d\n",subinfo->cntr_umasks);           /* counters have unit masks */
+   printf("cntr_IEAR_events: %d\n",subinfo->cntr_IEAR_events);      /* counters support instr event addr register */
+   printf("cntr_DEAR_events: %d\n",subinfo->cntr_DEAR_events);      /* counters support data event addr register */
+   printf("cntr_OPCM_events: %d\n",subinfo->cntr_OPCM_events);      /* counter events support opcode matching */
 
    test_pass(__FILE__, NULL, 0);
    exit(0);

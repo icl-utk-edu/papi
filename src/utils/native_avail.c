@@ -3,14 +3,134 @@
 #include "papi_test.h"
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
-static void print_help(char **argv)
+#define EVT_LINE 80
+
+typedef struct command_flags {
+   int help;
+   int details;
+   int darr;
+   int dear;
+   int iarr;
+   int iear;
+   int opcm;
+   int umask;
+} command_flags_t;
+
+static void print_help(char **argv, const PAPI_substrate_info_t *s)
 {
-   printf("Usage: %s [-dh]\n",argv[0]);
+   printf("This is the PAPI native avail program.\n");
+   printf("It provides availability and detail information for PAPI native events.\n");
+   printf("Usage: %s [options]\n",argv[0]);
    printf("Options:\n\n");
-   printf("\t-d            Display detailed information about all native events\n");
-   printf("\t-h            Print this help message\n");
-   printf("\n");
-   printf("This program provides information about PAPI native events.\n");
+   printf("  --help, -h    print this help message\n");
+   printf("   -d           display detailed information about native events\n");
+
+   if (s->data_address_range)
+      printf("  --darr        display events supporting Data Address Range Restriction\n"); 
+   if (s->cntr_DEAR_events)
+      printf("  --dear        display Data Event Address Register events only\n"); 
+   if (s->instr_address_range)
+      printf("  --iarr        display events supporting Instruction Address Range Restriction\n"); 
+   if (s->cntr_IEAR_events)
+      printf("  --iear        display Instruction Event Address Register events only\n"); 
+   if (s->cntr_OPCM_events)
+      printf("  --opcm        display events supporting OpCode Matching\n"); 
+   if (s->cntr_umasks)
+      printf("  --nomasks    suppress display of Unit Mask information\n"); 
+printf("\n");
+}
+
+static void parse_args(int argc, char **argv, command_flags_t *f) {
+   const PAPI_substrate_info_t *s = NULL;
+   int i;
+
+   s = PAPI_get_substrate_info();
+
+   /* Look for all currently defined commands */
+   memset(f, 0, sizeof(command_flags_t));
+   if (s->cntr_umasks) f->umask = 1;
+   for (i = 1; i < argc; i++) {
+      if (!strcmp(argv[i], "--darr"))
+	     f->darr = 1;
+      else if (!strcmp(argv[i], "--dear"))
+	     f->dear = 1;
+      else if (!strcmp(argv[i], "--iarr"))
+	     f->iarr = 1;
+      else if (!strcmp(argv[i], "--iear"))
+	     f->iear = 1;
+      else if (!strcmp(argv[i], "--opcm"))
+	     f->opcm = 1;
+      else if (!strcmp(argv[i], "--noumasks"))
+	     f->umask = 0;
+      else if (!strcmp(argv[i], "-d"))
+	     f->details = 1;
+      else if (strstr(argv[i], "-h"))
+	     f->help = 1;
+	  else printf("%s is not supported\n", argv[i]);
+   }
+
+   /* if help requested, print and bail */
+   if (f->help) {
+	  print_help(argv, s);
+	  exit(1);
+   }
+
+   /* Look for flags unsupported by this component */
+   if (f->darr & !(s->data_address_range)) {
+      f->darr = 0;
+      printf("-darr not supported\n");
+   }
+   if (f->dear & !(s->cntr_DEAR_events)) {
+      f->dear = 0;
+      printf("-dear not supported\n");
+   }
+   if (f->iarr & !(s->instr_address_range)) {
+      f->iarr = 0;
+      printf("-iarr not supported\n");
+   }
+   if (f->iear & !(s->cntr_IEAR_events)) {
+      f->iear = 0;
+      printf("-iear not supported\n");
+   }
+   if (f->opcm & !(s->cntr_OPCM_events)) {
+      f->opcm = 0;
+      printf("-opcm not supported\n");
+   }
+
+   /* Look for mutual exclusivity */
+   if (f->darr + f->dear + f->iarr + f->iear + f->opcm > 1) {
+	   printf("-darr, -dear, -iarr, -iear, and -opcm are mutually exclusve\n");
+	   exit(1);
+   }
+}
+
+static void space_pad(char *str, int spaces) {
+	while (spaces--) strcat(str, " ");
+}
+
+static void print_event(PAPI_event_info_t *info, int offset) {
+	int i, j = 0;
+	char str[EVT_LINE + 5];
+
+	// indent by offset
+	if (offset) sprintf(str, "  ");
+	else sprintf(str, "0x");
+
+	// copy the code and symbol
+	sprintf(&str[strlen(str)], "%-11x%s  | ", info->event_code, info->symbol);
+
+	while (j < strlen(info->long_descr)) {
+		i = EVT_LINE - strlen(str) - 2;
+		strncat(str, &info->long_descr[j], i);
+		j +=i;
+		i = strlen(str);
+		space_pad(str, EVT_LINE - i - 1);
+		strcat(str, "|\n");
+		printf("%s",str);
+		str[0] = 0;
+		space_pad(str, 11);
+		strcat(str, "| ");
+	}
 }
 
 int main(int argc, char **argv)
@@ -19,41 +139,29 @@ int main(int argc, char **argv)
    int retval;
    PAPI_event_info_t info;
    const PAPI_hw_info_t *hwinfo = NULL;
+   command_flags_t flags;
+   int enum_modifier;
+
 #ifdef _POWER4
    int group = 0;
 #endif
-#ifdef PENTIUM4
-   int l;
-#endif
-   int print_event_info = 0;
-   char *name = NULL;
-   int print_tabular = 0;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
-   for (i = 0; i < argc; i++)
-     {
-       if (strstr(argv[i], "-e")) 
-	 {
-	   print_event_info = 1;
-	   name = argv[i+1];
-	   if ((name == NULL) || (strlen(name) == 0))
-	     {
-	       print_help(argv);
-	       exit(1);
-	     }
-	 }
-       else if (strstr(argv[i], "-d"))
-	 print_tabular = 1;
-       else if (strstr(argv[i], "-h")) {
-	 print_help(argv);
-	 exit(1);
-       }
-     }
-
-   retval = PAPI_library_init(PAPI_VER_CURRENT);
+   /* Initialize before parsing the input arguments */
+      retval = PAPI_library_init(PAPI_VER_CURRENT);
    if (retval != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+
+   parse_args(argc, argv, &flags);
+
+   /* Set any needed modifier flags */
+   if (flags.dear) enum_modifier = PAPI_NTV_ENUM_DEAR;
+   else if (flags.darr) enum_modifier = PAPI_NTV_ENUM_DARR;
+   else if (flags.iear) enum_modifier = PAPI_NTV_ENUM_IEAR;
+   else if (flags.iarr) enum_modifier = PAPI_NTV_ENUM_IARR;
+   else if (flags.opcm) enum_modifier = PAPI_NTV_ENUM_OPCM;
+   else enum_modifier = PAPI_ENUM_EVENTS;
 
    if (!TESTS_QUIET) {
       retval = PAPI_set_debug(PAPI_VERB_ECONT);
@@ -68,7 +176,7 @@ int main(int argc, char **argv)
       printf
           ("Available native events and hardware information.\n");
       printf
-          ("-------------------------------------------------------------------------\n");
+          ("--------------------------------------------------------------------------------\n");
       printf("Vendor string and code   : %s (%d)\n", hwinfo->vendor_string,
              hwinfo->vendor);
       printf("Model string and code    : %s (%d)\n", hwinfo->model_string, hwinfo->model);
@@ -82,18 +190,21 @@ int main(int argc, char **argv)
       printf("Number Hardware Counters : %d\n", PAPI_get_opt(PAPI_MAX_HWCTRS, NULL));
       printf("Max Multiplex Counters   : %d\n", PAPI_get_opt(PAPI_MAX_MPX_CTRS, NULL));
       printf
-          ("-------------------------------------------------------------------------\n");
+          ("--------------------------------------------------------------------------------\n");
 
       printf("The following correspond to fields in the PAPI_event_info_t structure.\n\n");
       
-      printf("%-32s %-12s %s\n Register Name[n]\n Register Value[n]\n\n","Symbol","Event Code","Long Description");
+      printf("%-12s %s  | %s |\n","Event Code","Symbol","Long Description");
+          ("--------------------------------------------------------------------------------\n");
 
    }
-   i = 0 | PAPI_NATIVE_MASK;
    j = 0;
-#ifdef __crayx1
-   PAPI_enum_event(&i, 0);
-#endif
+
+   /* For platform independence, always ASK FOR the first event */
+   /* Don't just assume it'll be the first numeric value */
+   i = 0 | PAPI_NATIVE_MASK;
+   PAPI_enum_event(&i, PAPI_ENUM_FIRST);
+
    do {
 #ifdef _POWER4
       group = (i & 0x00FF0000) >> 16;
@@ -112,46 +223,22 @@ int main(int argc, char **argv)
 	 if (retval == PAPI_ENOEVNT)
 	   continue;
 
-	 printf("%-32s 0x%-10x %s\n",
-		info.symbol,
-		info.event_code,
-		info.long_descr);
+	 print_event(&info, 0);
 
-     if (print_tabular)
-       {
-	 for (k=0;k<(int)info.count;k++)
-	   {
-	     printf(" Register Name[%d]: %s\n",k,info.name[k]);
-	     printf(" Register Value[%d]: 0x%-10x\n",k,info.code[k]);
-	   }
-	 if (k) printf("\n");
-       }
+	 if (flags.details) {
+		 for (k=0;k<(int)info.count;k++) {
+			if (strlen(info.name[k])){
+				printf("  Register[%d] Name: %-20s  Value: 0x%-28x|\n",k,info.name[k],info.code[k]);
+			}
+		 }
+	 }
 #ifdef _POWER4
-         if (!TESTS_QUIET)
-            printf("Groups: ");
-      }
-#endif
-#ifdef PENTIUM4
-      k = i;
-      if (PAPI_enum_event(&k, PAPI_PENT4_ENUM_BITS) == PAPI_OK) {
-         l = strlen(info.long_descr);
-         do {
-            j++;
-            retval = PAPI_get_event_info(k, &info);
-            if (!TESTS_QUIET && retval == PAPI_OK) {
-               printf("%-26s 0x%-10x %s\n",
-                      info.symbol, info.event_code, info.long_descr + l);
-            }
-         } while (PAPI_enum_event(&k, PAPI_PENT4_ENUM_BITS) == PAPI_OK);
-      }
-      if (!TESTS_QUIET && retval == PAPI_OK)
-         printf("\n");
-   } while (PAPI_enum_event(&i, PAPI_PENT4_ENUM_GROUPS) == PAPI_OK);
-#elif defined(_POWER4)
+		printf("Groups: ");
+	 }
 /* this function would return the next native event code.
-    modifer = PAPI_ENUM_ALL
+    modifier = PAPI_ENUM_EVENTS
 		 it simply returns next native event code
-    modifer = PAPI_PWR4_ENUM_GROUPS
+    modifier = PAPI_NTV_ENUM_GROUPS
 		 it would return information of groups this native event lives
                  0x400000ed is the native code of PM_FXLS_FULL_CYC,
 		 before it returns 0x400000ee which is the next native event's
@@ -161,14 +248,29 @@ int main(int argc, char **argv)
      PAPI_OK successful, next event is valid
      PAPI_ENOEVNT  fail, next event is invalid
 */
-   } while (PAPI_enum_event(&i, PAPI_PWR4_ENUM_GROUPS) == PAPI_OK);
+   } while (PAPI_enum_event(&i, PAPI_NTV_ENUM_GROUPS) == PAPI_OK);
 #else
-   } while (PAPI_enum_event(&i, PAPI_ENUM_ALL) == PAPI_OK);
+	if (flags.umask) {
+		k = i;
+		if (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
+			do {
+				retval = PAPI_get_event_info(k, &info);
+				if (retval == PAPI_OK) {
+					strcpy(info.symbol, strchr(info.symbol, ':'));
+					strcpy(info.long_descr, strchr(info.long_descr, ':')+1);
+					print_event(&info, 2);
+				}
+			} while (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK);
+		}
+	}
+      printf
+          ("--------------------------------------------------------------------------------\n");
+   } while (PAPI_enum_event(&i, enum_modifier) == PAPI_OK);
 #endif
 
    if (!TESTS_QUIET) {
       printf
-          ("\n-------------------------------------------------------------------------\n");
+          ("--------------------------------------------------------------------------------\n");
       printf("Total events reported: %d\n", j);
    }
    test_pass(__FILE__, NULL, 0);

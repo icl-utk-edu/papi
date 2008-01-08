@@ -142,7 +142,7 @@ VECTOR_STATIC int _papi_hwi_native_code_to_descr(unsigned int EventCode, char *h
    All six must at least be stubbed in the substrate file. 
 */
 
- int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer);
+ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier);
 /* The following were the only two calls in the substrate API that return
     pointers to strings. They were initially intended to always reference
     const strings, but this is no longer universally true. Hence, they are

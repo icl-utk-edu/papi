@@ -55,14 +55,18 @@ int setup_p3_presets(int cputype) {
    case PERFCTR_X86_INTEL_P5:
    case PERFCTR_X86_INTEL_P5MMX:
    case PERFCTR_X86_INTEL_PII:
-      native_table = _papi_hwd_p2_native_map;
+      native_table = (native_event_entry_t *)_papi_hwd_p2_native_map;
       _papi_hwi_system_info.sub_info.num_native_events =_papi_hwd_p2_native_count;
-      preset_search_map = _papi_hwd_p2_preset_map;
+      preset_search_map = (hwi_search_t *)_papi_hwd_p2_preset_map;
+      /* this outdated implementation doesn't support unit masks */
+     _papi_hwi_system_info.sub_info.cntr_umasks = 0;
       break;
    case PERFCTR_X86_AMD_K7:
-      native_table = _papi_hwd_k7_native_map;
+      native_table = (native_event_entry_t *)_papi_hwd_k7_native_map;
       _papi_hwi_system_info.sub_info.num_native_events = _papi_hwd_k7_native_count;
-      preset_search_map = _papi_hwd_ath_preset_map;
+      preset_search_map = (hwi_search_t *)_papi_hwd_ath_preset_map;
+      /* this outdated implementation doesn't support unit masks */
+     _papi_hwi_system_info.sub_info.cntr_umasks = 0;
       break;
    case PERFCTR_X86_INTEL_P6:
    case PERFCTR_X86_INTEL_PIII:
@@ -250,6 +254,11 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
    int event, umask, selector;
+
+   if (modifier == PAPI_ENUM_FIRST) {
+         *EventCode = PAPI_NATIVE_MASK;
+         return (PAPI_OK);
+   }
 
    internal_decode_event(*EventCode, &event, &umask);
    if (event > _papi_hwi_system_info.sub_info.num_native_events)

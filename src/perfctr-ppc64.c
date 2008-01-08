@@ -954,9 +954,14 @@ int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len
    return (PAPI_OK);
 }
 
-int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
+int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
-   if (modifer == PAPI_ENUM_ALL) {
+   if (modifier == PAPI_ENUM_FIRST) {
+         *EventCode = PAPI_NATIVE_MASK;
+         return (PAPI_OK);
+   }
+
+   if (modifier == PAPI_ENUM_ALL) {
       int index = *EventCode & PAPI_NATIVE_AND_MASK;
 	if (index+1 == MAX_NATNAME_MAP_INDEX) {
 	    return (PAPI_ENOEVNT);
@@ -964,7 +969,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 	    *EventCode = *EventCode + 1;
 	    return (PAPI_OK);
 	}
-   } else if (modifer == PAPI_PWR4_ENUM_GROUPS) {
+   } else if (modifier == PAPI_NTV_ENUM_GROUPS) {
 /* Use this modifier for all supported PPC64 processors. */
       unsigned int group = (*EventCode & 0x00FF0000) >> 16;
       int index = *EventCode & 0x000001FF;

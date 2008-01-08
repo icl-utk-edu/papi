@@ -668,6 +668,11 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
    if the next one exists.  If not, returns the proper error code. */
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
+   if (modifier == PAPI_ENUM_FIRST) {
+         *EventCode = PAPI_NATIVE_MASK;
+         return (PAPI_OK);
+   }
+
    if (native_table[(*EventCode & PAPI_NATIVE_AND_MASK) + 1].resources.selector) {
       *EventCode = *EventCode + 1;
       return (PAPI_OK);

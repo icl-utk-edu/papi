@@ -1066,7 +1066,11 @@ int _papi_hwi_init_global_internal(void)
    _papi_hwi_system_info.sub_info.edge_detect = 0;           /* Supports edge detection on events */
    _papi_hwi_system_info.sub_info.invert = 0;                /* Supports invert detection on events */
    _papi_hwi_system_info.sub_info.profile_ear = 0;           /* Supports data/instr/tlb miss address sampling */
-   _papi_hwi_system_info.sub_info.grouped_cntrs = 0;         
+   _papi_hwi_system_info.sub_info.cntr_groups = 0;           /* Underlying hardware uses counter groups */
+   _papi_hwi_system_info.sub_info.cntr_umasks = 0;           /* counters have unit masks */
+   _papi_hwi_system_info.sub_info.cntr_IEAR_events = 0;      /* counters support instr event addr register */
+   _papi_hwi_system_info.sub_info.cntr_DEAR_events = 0;      /* counters support data event addr register */
+   _papi_hwi_system_info.sub_info.cntr_OPCM_events = 0;      /* counter events support opcode matching */
    _papi_hwi_system_info.sub_info.reserved_bits = 0;
 
    /* The PAPI_hw_info_t struct defined in papi.h */

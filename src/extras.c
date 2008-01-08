@@ -563,13 +563,8 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
    char name[PAPI_HUGE_STR_LEN]; /* make sure it's big enough */
    unsigned int i = 0 | PAPI_NATIVE_MASK;
 
-/* Cray X1 doesn't loop on 0, so a code_to_name on this will fail, the
- * first call to enum_events with a 0 will give a valid code
- */
-#if defined(__crayx1)
- _papi_hwd_ntv_enum_events(&i, 0);
-#endif
-    _papi_hwi_lock(INTERNAL_LOCK);
+   _papi_hwd_ntv_enum_events(&i, PAPI_ENUM_FIRST);
+   _papi_hwi_lock(INTERNAL_LOCK);
    do {
       retval = _papi_hwd_ntv_code_to_name(i, name, sizeof(name));
 /*      printf("name =|%s|\ninput=|%s|\n", name, in); */
@@ -583,7 +578,7 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
          *out = 0;
          retval = PAPI_OK;
       }
-   } while ((_papi_hwd_ntv_enum_events(&i, 0) == PAPI_OK) && (retval == PAPI_ENOEVNT)) ;
+   } while ((_papi_hwd_ntv_enum_events(&i, PAPI_ENUM_EVENTS) == PAPI_OK) && (retval == PAPI_ENOEVNT)) ;
    _papi_hwi_unlock(INTERNAL_LOCK);
 #endif /* PERFCTR_PFM_EVENTS */
    return (retval);
