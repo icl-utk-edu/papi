@@ -112,11 +112,11 @@ static void print_event(PAPI_event_info_t *info, int offset) {
 	int i, j = 0;
 	char str[EVT_LINE + 5];
 
-	// indent by offset
+	/* indent by offset */
 	if (offset) sprintf(str, "  ");
 	else sprintf(str, "0x");
 
-	// copy the code and symbol
+	/* copy the code and symbol */
 	sprintf(&str[strlen(str)], "%-11x%s  | ", info->event_code, info->symbol);
 
 	while (j < strlen(info->long_descr)) {
