@@ -418,6 +418,7 @@ static void resultline(int i, int j, int EventSet)
   long_long flpins = 0;
   long_long papi, theory;
   int diff, retval;
+  const PAPI_hw_info_t *hwinfo = NULL;
   
   retval = PAPI_stop(EventSet, &flpins);
   if (retval != PAPI_OK) 
@@ -436,7 +437,9 @@ static void resultline(int i, int j, int EventSet)
   printf("%8d %12lld %12lld %8d %10.4f\n", i, papi, theory, diff, ferror);
   
 #ifndef DONT_FAIL
-  if (ferror > MAX_ERROR && diff > MAX_DIFF)
+  if ((hwinfo = PAPI_get_hardware_info()) == NULL)
+    test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 1);
+  if (hwinfo->vendor != PAPI_VENDOR_AMD && ferror > MAX_ERROR && diff > MAX_DIFF)
     test_fail(__FILE__, __LINE__, "Calibrate: error exceeds 10%", PAPI_EMISC);
 #endif
 }
