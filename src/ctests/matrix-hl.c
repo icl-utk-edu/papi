@@ -42,10 +42,12 @@ int main(int argc, char **argv)
    if (!TESTS_QUIET)
       printf("Number of hardware counters supported: %d\n", num_events);
 
-   if (PAPI_query_event(PAPI_FP_INS) != PAPI_OK)
-      event[0] = PAPI_TOT_INS;
-   else
+   if (PAPI_query_event(PAPI_FP_OPS) == PAPI_OK)
+      event[0] = PAPI_FP_OPS;
+   else if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK)
       event[0] = PAPI_FP_INS;
+   else
+      event[0] = PAPI_TOT_INS;
 
    /*     Time used */
    event[1] = PAPI_TOT_CYC;
