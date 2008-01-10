@@ -195,6 +195,7 @@ int main(int argc, char **argv)
       printf("The following correspond to fields in the PAPI_event_info_t structure.\n\n");
       
       printf("%-12s %s  | %s |\n","Event Code","Symbol","Long Description");
+      printf
           ("--------------------------------------------------------------------------------\n");
 
    }
