@@ -41,15 +41,15 @@ else
 if [ "$i" = "ctests/shlib" ]; then
   echo -n "Running $i: ";
   if [ "$LD_LIBRARY_PATH" = "" ]; then
-      LD_LIBRARY_PATH=.:./libpfm-3.x/lib:./libpfm-2.x/libpfm
+      LD_LIBRARY_PATH=.:./libpfm-3.y/lib:./libpfm-2.x/libpfm
   else
-      LD_LIBRARY_PATH=.:./libpfm-3.x/lib:./libpfm-2.x/libpfm:"$LD_LIBRARY_PATH"
+      LD_LIBRARY_PATH=.:./libpfm-3.y/lib:./libpfm-2.x/libpfm:"$LD_LIBRARY_PATH"
   fi
   export LD_LIBRARY_PATH
   if [ "$LIBPATH" = "" ]; then
-      LIBPATH=.:./libpfm-3.x/lib:./libpfm-2.x/libpfm
+      LIBPATH=.:./libpfm-3.y/lib:./libpfm-2.x/libpfm
   else
-      LIBPATH=.:./libpfm-3.x/lib:./libpfm-2.x/libpfm:"$LIBPATH"
+      LIBPATH=.:./libpfm-3.y/lib:./libpfm-2.x/libpfm:"$LIBPATH"
   fi
   export LIBPATH
   ./$i $TESTS_QUIET

@@ -159,7 +159,7 @@ PERFCTR_OBJS = $(shell $(AR) t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
 # This section builds libpfm to get at its support for native events
 ifeq (,$(PFM_LIB_PATH))
   ifeq (,$(PFM_ROOT))
-	PFM_ROOT := ./libpfm-3.x
+	PFM_ROOT := ./libpfm-3.y
   endif
   PFM_LIB_PATH := $(PFM_ROOT)/lib
   CC_SHR += -Wl,-rpath-link -Wl,$(PFM_LIB_PATH)
@@ -167,7 +167,7 @@ endif
 
 ifeq (,$(PFM_INC_PATH))
   ifeq (,$(PFM_ROOT))
-	PFM_ROOT := ./libpfm-3.x
+	PFM_ROOT := ./libpfm-3.y
   endif
   PFM_INC_PATH := $(PFM_ROOT)/include
 endif

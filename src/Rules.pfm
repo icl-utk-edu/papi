@@ -32,7 +32,7 @@ else
 ifeq (2,$(KERNMINVER))
 VERSION	?= 2.x
 else
-VERSION ?= 3.x
+VERSION ?= 3.y
 endif
 endif
 	
@@ -74,7 +74,7 @@ endif
 
 OPTIM := $(CFLAGS)
 CFLAGS-2.x := -DPFM20 -D_GNU_SOURCE
-CFLAGS-3.x := -DPFM30 -D_GNU_SOURCE  
+CFLAGS-3.y := -DPFM30 -D_GNU_SOURCE  
 CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) $(NOTLS) $(ALTIX) $(CFLAGS-$(VERSION))
 
 MISCHDRS = pfmwrap.h
