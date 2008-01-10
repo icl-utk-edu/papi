@@ -102,7 +102,7 @@ inline_static int profil_increment(long_long value,
 }
 
 
-static void posix_profil(caddr_t address, PAPI_sprofil_t * prof,
+static void posix_profil(unsigned long address, PAPI_sprofil_t * prof,
                          int flags, long_long excess, long_long threshold)
 {
    unsigned short *buf16;
@@ -124,12 +124,12 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t * prof,
          - dividing by implicit 2 (2^^1 for a total of 2^^17), for even addresses
          NOTE: 131072 is a valid scale value. It produces byte resolution of addresses
       */
-      lloffset = ((u_long_long)(address - prof->pr_off)) * prof->pr_scale;
+      lloffset = ((u_long_long)(address - (unsigned long)prof->pr_off)) * prof->pr_scale;
       indx = (unsigned long)(lloffset >> 17);
    }
 
    /* confirm addresses within specified range */
-   if (address >= prof->pr_off) {
+   if (address >= (unsigned long)prof->pr_off) {
       /* test first for 16-bit buckets; this should be the fast case */
       if (flags & PAPI_PROFIL_BUCKET_16) {
          if ((indx * sizeof(short)) < prof->pr_size) {
@@ -175,7 +175,7 @@ void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, unsigned long pc,
     
   for (i = 0; i < count; i++)
   {
-      offset = sprof[i].pr_off;
+      offset = (unsigned long)sprof[i].pr_off;
       if ((offset < pc) && (offset > best_offset))
       {
          best_index = i;
