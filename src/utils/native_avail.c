@@ -3,7 +3,7 @@
 #include "papi_test.h"
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
-#define EVT_LINE 80
+#define EVT_LINE 120
 
 typedef struct command_flags {
    int help;
