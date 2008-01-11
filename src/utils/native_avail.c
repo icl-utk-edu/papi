@@ -3,7 +3,7 @@
 #include "papi_test.h"
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
-#define EVT_LINE 120
+#define EVT_LINE 80
 
 typedef struct command_flags {
    int help;
@@ -105,12 +105,12 @@ static void parse_args(int argc, char **argv, command_flags_t *f) {
 }
 
 static void space_pad(char *str, int spaces) {
-	while (spaces--) strcat(str, " ");
+	while (spaces-- > 0) strcat(str, " ");
 }
 
 static void print_event(PAPI_event_info_t *info, int offset) {
 	int i, j = 0;
-	char str[EVT_LINE + 5];
+	char str[EVT_LINE + EVT_LINE];
 
 	/* indent by offset */
 	if (offset) sprintf(str, "  ");
@@ -121,12 +121,14 @@ static void print_event(PAPI_event_info_t *info, int offset) {
 
 	while (j < strlen(info->long_descr)) {
 		i = EVT_LINE - strlen(str) - 2;
-		strncat(str, &info->long_descr[j], i);
-		j +=i;
-		i = strlen(str);
-		space_pad(str, EVT_LINE - i - 1);
-		strcat(str, "|\n");
-		printf("%s",str);
+		if (i > 0) {
+			strncat(str, &info->long_descr[j], i);
+			j +=i;
+			i = strlen(str);
+			space_pad(str, EVT_LINE - i - 1);
+			strcat(str, "|");
+		}
+		printf("%s\n",str);
 		str[0] = 0;
 		space_pad(str, 11);
 		strcat(str, "| ");
