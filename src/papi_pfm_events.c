@@ -30,8 +30,8 @@ extern int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
 
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 
-/* NOTE: PAPI stores umask info in a variable sized bitfield.
-    Perfmon2 stores umask info in a 16 element array of values.
+/* NOTE: PAPI stores umask info in a variable sized (16 bit?) bitfield.
+    Perfmon2 stores umask info in a large (48 element?) array of values.
     Native event encodings for perfmon2 contain array indices
     encoded as bits in this bitfield. These indices must be converted
     into a umask value before programming the counters. For Perfmon,
@@ -701,14 +701,29 @@ int _papi_pfm_init()
 
 unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code)
 {
-    pfmlib_event_t event;
+  pfmlib_event_t event;
+  int i;
 
-    SUBDBG("pfm_find_full_event(%s,%p)\n",name,&event);
-    if (pfm_find_full_event(name,&event) == PFMLIB_SUCCESS) {
-	*event_code = encode_native_event(event.event, event.num_masks, event.unit_masks);
-	return(PAPI_OK);
-    }
-    return(PAPI_ENOEVNT);
+  SUBDBG("pfm_find_full_event(%s,%p)\n",name,&event);
+  if (pfm_find_full_event(name,&event) == PFMLIB_SUCCESS) {
+	/* we can only capture PAPI_NATIVE_UMASK_MAX or fewer masks */
+	if (event.num_masks > PAPI_NATIVE_UMASK_MAX) {
+	  SUBDBG("num_masks (%d) > max masks (%d)\n",event.num_masks, PAPI_NATIVE_UMASK_MAX);
+	  return(PAPI_ENOEVNT);
+	}
+	else {
+	/* no mask index can exceed PAPI_NATIVE_UMASK_MAX */
+	  for (i=0; i<event.unit_masks; i++) {
+		if (event.unit_masks[i] > PAPI_NATIVE_UMASK_MAX) {
+		  SUBDBG("mask index (%d) > max masks (%d)\n",event.unit_masks[i], PAPI_NATIVE_UMASK_MAX);
+		  return(PAPI_ENOEVNT);
+		}
+	  }
+	  *event_code = encode_native_event(event.event, event.num_masks, event.unit_masks);
+	  return(PAPI_OK);
+	}
+  }
+  return(PAPI_ENOEVNT);
 }
 
 int _papi_pfm_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
@@ -840,6 +855,7 @@ int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
     PAPIERROR("pfm_get_num_event_masks(%d,%p): %s",event,&num_masks,pfm_strerror(ret));
     return(PAPI_ENOEVNT);
   }
+  if (num_masks > PAPI_NATIVE_UMASK_MAX) num_masks = PAPI_NATIVE_UMASK_MAX;
   SUBDBG("This is umask %d of %d\n",umask,num_masks);
 
   if (modifier == PAPI_ENUM_EVENTS) {
@@ -859,7 +875,7 @@ int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
   else if (modifier == PAPI_NTV_ENUM_UMASKS) {
     int thisbit = ffs(umask);
 
-    SUBDBG("First bit is %d in %08x\b",thisbit-1,umask);
+    SUBDBG("First bit is %d in %08x\b\n",thisbit-1,umask);
     thisbit = 1 << thisbit;
 
     if (thisbit & ((1<<num_masks)-1)) {

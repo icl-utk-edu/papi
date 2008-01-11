@@ -53,9 +53,10 @@ typedef int hwd_reg_alloc_t;
 /* Native events consist of a flag field, an event field, and a unit mask field.
  * The next 4 macros define the characteristics of the event and unit mask fields.
  */
-#define PAPI_NATIVE_EVENT_AND_MASK 0x00000fff /* 12 bits == 4096 max events */
+#define PAPI_NATIVE_EVENT_AND_MASK 0x00000fff	/* 12 bits == 4096 max events */
 #define PAPI_NATIVE_EVENT_SHIFT 0
-#define PAPI_NATIVE_UMASK_AND_MASK 0x0ffff000 /* 16 bits for unit masks */
+#define PAPI_NATIVE_UMASK_AND_MASK 0x0ffff000	/* 16 bits for unit masks */
+#define PAPI_NATIVE_UMASK_MAX 16				/* 16 possible unit masks */
 #define PAPI_NATIVE_UMASK_SHIFT 12
 
 #define MAX_COUNTERS PFMLIB_MAX_PMCS
