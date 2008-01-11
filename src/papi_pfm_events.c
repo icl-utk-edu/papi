@@ -310,9 +310,9 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 	    {
 	      int type;
 
-#ifdef SHOW_LOADS
+//#ifdef SHOW_LOADS
 	      SUBDBG("Found CPU %s at line %d of %s.\n",t,line_no,name);
-#endif
+//#endif
 	      t = trim_string(strtok(NULL,","));
 	      if ((t == NULL) || (strlen(t) == 0))
 		{
@@ -713,7 +713,7 @@ unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code)
 	}
 	else {
 	/* no mask index can exceed PAPI_NATIVE_UMASK_MAX */
-	  for (i=0; i<event.unit_masks; i++) {
+	  for (i=0; i<event.num_masks; i++) {
 		if (event.unit_masks[i] > PAPI_NATIVE_UMASK_MAX) {
 		  SUBDBG("mask index (%d) > max masks (%d)\n",event.unit_masks[i], PAPI_NATIVE_UMASK_MAX);
 		  return(PAPI_ENOEVNT);
