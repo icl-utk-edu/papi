@@ -14,6 +14,7 @@ typedef struct command_flags {
    int iear;
    int opcm;
    int umask;
+   int groups;
 } command_flags_t;
 
 static void print_help(char **argv, const PAPI_substrate_info_t *s)
@@ -37,6 +38,8 @@ static void print_help(char **argv, const PAPI_substrate_info_t *s)
       printf("  --opcm        display events supporting OpCode Matching\n"); 
    if (s->cntr_umasks)
       printf("  --nomasks    suppress display of Unit Mask information\n"); 
+   if (s->cntr_groups)
+      printf("  --nogroups    suppress display of Event grouping information\n"); 
 printf("\n");
 }
 
@@ -49,6 +52,7 @@ static void parse_args(int argc, char **argv, command_flags_t *f) {
    /* Look for all currently defined commands */
    memset(f, 0, sizeof(command_flags_t));
    if (s->cntr_umasks) f->umask = 1;
+   if (s->cntr_groups) f->groups = 1;
    for (i = 1; i < argc; i++) {
       if (!strcmp(argv[i], "--darr"))
 	     f->darr = 1;
@@ -62,6 +66,8 @@ static void parse_args(int argc, char **argv, command_flags_t *f) {
 	     f->opcm = 1;
       else if (!strcmp(argv[i], "--noumasks"))
 	     f->umask = 0;
+      else if (!strcmp(argv[i], "--nogroups"))
+	     f->groups = 0;
       else if (!strcmp(argv[i], "-d"))
 	     f->details = 1;
       else if (strstr(argv[i], "-h"))
@@ -144,10 +150,6 @@ int main(int argc, char **argv)
    command_flags_t flags;
    int enum_modifier;
 
-#ifdef _POWER4
-   int group = 0;
-#endif
-
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
    /* Initialize before parsing the input arguments */
@@ -208,74 +210,64 @@ int main(int argc, char **argv)
    i = 0 | PAPI_NATIVE_MASK;
    PAPI_enum_event(&i, PAPI_ENUM_FIRST);
 
-   do {
-#ifdef _POWER4
-      group = (i & 0x00FF0000) >> 16;
-      if (group) {
-         if (!TESTS_QUIET)
-            printf("%4d", group - 1);
-      } else {
-         if (!TESTS_QUIET)
-            printf("\n\n");
-#endif
-         j++;
-	 memset(&info,0,sizeof(info));
-         retval = PAPI_get_event_info(i, &info);
+	do {
+		j++;
+		memset(&info,0,sizeof(info));
+		retval = PAPI_get_event_info(i, &info);
 
-	 /* This event may not exist */
-	 if (retval == PAPI_ENOEVNT)
-	   continue;
+		/* This event may not exist */
+		if (retval == PAPI_ENOEVNT)
+			continue;
 
-	 print_event(&info, 0);
+		print_event(&info, 0);
 
-	 if (flags.details) {
-		 for (k=0;k<(int)info.count;k++) {
-			if (strlen(info.name[k])){
-				printf("  Register[%d] Name: %-20s  Value: 0x%-28x|\n",k,info.name[k],info.code[k]);
-			}
-		 }
-	 }
-#ifdef _POWER4
-		printf("Groups: ");
-	 }
-/* this function would return the next native event code.
-    modifier = PAPI_ENUM_EVENTS
-		 it simply returns next native event code
-    modifier = PAPI_NTV_ENUM_GROUPS
-		 it would return information of groups this native event lives
-                 0x400000ed is the native code of PM_FXLS_FULL_CYC,
-		 before it returns 0x400000ee which is the next native event's
-		 code, it would return *EventCode=0x400400ed, the digits 16-23
-		 indicate group number
-   function return value:
-     PAPI_OK successful, next event is valid
-     PAPI_ENOEVNT  fail, next event is invalid
-*/
-   } while (PAPI_enum_event(&i, PAPI_NTV_ENUM_GROUPS) == PAPI_OK);
-#else
-	if (flags.umask) {
-		k = i;
-		if (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
-			do {
-				retval = PAPI_get_event_info(k, &info);
-				if (retval == PAPI_OK) {
-					strcpy(info.symbol, strchr(info.symbol, ':'));
-					strcpy(info.long_descr, strchr(info.long_descr, ':')+1);
-					print_event(&info, 2);
+		if (flags.details) {
+			for (k=0;k<(int)info.count;k++) {
+				if (strlen(info.name[k])){
+					printf("  Register[%d] Name: %-20s  Value: 0x%-28x|\n",k,info.name[k],info.code[k]);
 				}
-			} while (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK);
+			}
 		}
-	}
-      printf
-          ("--------------------------------------------------------------------------------\n");
-   } while (PAPI_enum_event(&i, enum_modifier) == PAPI_OK);
-#endif
 
-   if (!TESTS_QUIET) {
-      printf
-          ("--------------------------------------------------------------------------------\n");
-      printf("Total events reported: %d\n", j);
-   }
+/*		modifier = PAPI_NTV_ENUM_GROUPS returns event codes with a
+			groups id for each group in which this
+			native event lives, in bits 16 - 23 of event code
+			terminating with PAPI_ENOEVNT at the end of the list.
+*/
+		if (flags.groups) {
+			k = i;
+			if (PAPI_enum_event(&k, PAPI_NTV_ENUM_GROUPS) == PAPI_OK) {
+				printf("Groups: ");
+				do {
+					printf("%4d", ((k & PAPI_NTV_GROUP_AND_MASK) >> PAPI_NTV_GROUP_SHIFT) - 1);
+				} while (PAPI_enum_event(&k, PAPI_NTV_ENUM_GROUPS) == PAPI_OK);
+				printf("\n");
+			}
+		}
+
+/*		modifier = PAPI_NTV_ENUM_UMASKS returns an event code for each
+			unit mask bit defined for this native event. This can be used
+			to get event info for that mask bit. It terminates
+			with PAPI_ENOEVNT at the end of the list.
+*/
+		if (flags.umask) {
+			k = i;
+			if (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
+				do {
+					retval = PAPI_get_event_info(k, &info);
+					if (retval == PAPI_OK) {
+						strcpy(info.symbol, strchr(info.symbol, ':'));
+						strcpy(info.long_descr, strchr(info.long_descr, ':')+1);
+						print_event(&info, 2);
+					}
+				} while (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK);
+			}
+		}
+		printf ("--------------------------------------------------------------------------------\n");
+	} while (PAPI_enum_event(&i, enum_modifier) == PAPI_OK);
+
+   printf ("--------------------------------------------------------------------------------\n");
+   printf("Total events reported: %d\n", j);
    test_pass(__FILE__, NULL, 0);
    exit(1);
 }
