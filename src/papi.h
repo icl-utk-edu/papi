@@ -281,11 +281,10 @@ enum {
    PAPI_NTV_ENUM_OPCM,			/* Enumerate events that support OPC (opcode matching) */
    PAPI_NTV_ENUM_IEAR,			/* Enumerate IEAR (instruction event address register) events */
    PAPI_NTV_ENUM_DEAR,			/* Enumerate DEAR (data event address register) events */
-
-   /* POWER 4 specific section */
-   PAPI_NTV_ENUM_GROUPS		/* Enumerate groups an event belongs to */
+   PAPI_NTV_ENUM_GROUPS			/* Enumerate groups an event belongs to a la POWER4/5 */
 };
-
+#define PAPI_NTV_GROUP_AND_MASK		0x00FF0000	/* bits occupied by group number */
+#define PAPI_NTV_GROUP_SHIFT		16			/* bit shift to encode group number */
 
 /* 
 The Low Level API
@@ -416,7 +415,7 @@ read the documentation carefully.  */
      unsigned int edge_detect:1;           /* Supports edge detection on events */
      unsigned int invert:1;                /* Supports invert detection on events */
      unsigned int profile_ear:1;      	   /* Supports data/instr/tlb miss address sampling */
-     unsigned int cntr_groups:1;           /* Underlying hardware uses counter groups */
+     unsigned int cntr_groups:1;           /* Underlying hardware uses counter groups (e.g. POWER4/5)*/
      unsigned int cntr_umasks:1;           /* counters have unit masks */
      unsigned int cntr_IEAR_events:1;      /* counters support instr event addr register */
      unsigned int cntr_DEAR_events:1;      /* counters support data event addr register */

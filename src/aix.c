@@ -61,18 +61,16 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
    return (PAPI_OK);
 }
 
-/* this function would return the next native event code.
-    modifier = PAPI_ENUM_EVENTS
-		 it simply returns next native event code
-    modifier = PAPI_NTV_ENUM_GROUPS
-		 it would return information of groups this native event lives
-                 0x400000ed is the native code of PM_FXLS_FULL_CYC,
-		 before it returns 0x400000ee which is the next native event's
-		 code, it would return *EventCode=0x400400ed, the digits 16-23
-		 indicate group number
+/* this function return the next native event code.
+    modifier = PAPI_ENUM_FIRST returns first native event code
+    modifier = PAPI_ENUM_EVENTS returns next native event code
+    modifier = PAPI_NTV_ENUM_GROUPS return groups in which this
+				native event lives, in bits 16 - 23 of event code
+				terminating with PAPI_ENOEVNT at the end of the list.
    function return value:
-     PAPI_OK successful, next event is valid
-     PAPI_ENOEVNT  fail, next event is invalid
+     PAPI_OK successful, event code is valid
+	 PAPI_EINVAL bad modifier
+     PAPI_ENOEVNT end of list or fail, event code is invalid
 */
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
@@ -90,12 +88,12 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
          return (PAPI_ENOEVNT);
    } else if (modifier == PAPI_NTV_ENUM_GROUPS) {
 #if defined(_POWER4) || defined(_POWER5)
-      unsigned int group = (*EventCode & 0x00FF0000) >> 16;
+      unsigned int group = (*EventCode & PAPI_NTV_GROUP_AND_MASK) >> PAPI_NTV_GROUP_SHIFT;
       int index = *EventCode & 0x000000FF;
       int i;
       unsigned int tmpg;
 
-      *EventCode = *EventCode & 0xFF00FFFF;
+      *EventCode = *EventCode & (~PAPI_NTV_GROUP_SHIFT);
       for (i = 0; i < GROUP_INTS; i++) {
          tmpg = native_table[index].resources.group[i];
          if (group != 0) {
@@ -104,17 +102,12 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
          }
          if (tmpg != 0) {
             group = ffs(tmpg) + i * 32;
-            *EventCode = *EventCode | (group << 16);
+            *EventCode = *EventCode | (group << PAPI_NTV_GROUP_SHIFT);
             return (PAPI_OK);
          }
       }
-      if (native_table[index + 1].resources.selector == 0)
-         return (PAPI_ENOEVNT);
-      *EventCode = *EventCode + 1;
-      return (PAPI_OK);
-#else
-      return (PAPI_EINVAL);
 #endif
+      return (PAPI_ENOEVNT);
    }
    else
       return (PAPI_EINVAL);

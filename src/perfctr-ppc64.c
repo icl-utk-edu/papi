@@ -961,7 +961,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
          return (PAPI_OK);
    }
 
-   if (modifier == PAPI_ENUM_ALL) {
+   if (modifier == PAPI_ENUM_EVENTS) {
       int index = *EventCode & PAPI_NATIVE_AND_MASK;
 	if (index+1 == MAX_NATNAME_MAP_INDEX) {
 	    return (PAPI_ENOEVNT);
@@ -971,12 +971,12 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 	}
    } else if (modifier == PAPI_NTV_ENUM_GROUPS) {
 /* Use this modifier for all supported PPC64 processors. */
-      unsigned int group = (*EventCode & 0x00FF0000) >> 16;
+      unsigned int group = (*EventCode & PAPI_NTV_GROUP_AND_MASK) >> PAPI_NTV_GROUP_SHIFT;
       int index = *EventCode & 0x000001FF;
       int i;
       unsigned int tmpg;
 
-      *EventCode = *EventCode & 0xFF00FFFF;
+      *EventCode = *EventCode & (~PAPI_NTV_GROUP_SHIFT);
       for (i = 0; i < GROUP_INTS; i++) {
          tmpg = native_table[index].resources.group[i];
          if (group != 0) {
@@ -985,15 +985,11 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
          }
          if (tmpg != 0) {
             group = ffs(tmpg) + i * 32;
-            *EventCode = *EventCode | (group << 16);
+            *EventCode = *EventCode | (group << PAPI_NTV_GROUP_SHIFT);
             return (PAPI_OK);
          }
       }
-	if (index+1 == MAX_NATNAME_MAP_INDEX) {
-	    return (PAPI_ENOEVNT);
-	}
-      *EventCode = *EventCode + 1;
-      return (PAPI_OK);
+	  return (PAPI_ENOEVNT);
    }
    else
       return (PAPI_EINVAL);
