@@ -691,9 +691,6 @@ int enum_add_native_events(int *num_events, int **evtcodes)
 				printf("\n");
 		} else {
 			event_code = info.event_code;
-#ifdef _POWER4
-			event_code &= 0xff00ffff;
-#endif
 			retval = PAPI_add_event(EventSet, event_code);
 			if (retval == PAPI_OK){
 				(*evtcodes)[event_found] = event_code;

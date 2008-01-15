@@ -50,92 +50,76 @@ void papi_init(int argc, char **argv)
 
 int native()
 {
-   int i, j, k, evt;
-   int retval;
-   const PAPI_substrate_info_t *s = NULL;
-   PAPI_event_info_t info;
-#ifdef _POWER4
-   int group = 0;
-#endif
+	int i, j, k;
+	int retval;
+	const PAPI_substrate_info_t *s = NULL;
+	PAPI_event_info_t info;
 
-   j = 0;
-   s = PAPI_get_substrate_info();
+	j = 0;
+	s = PAPI_get_substrate_info();
 
-   /* For platform independence, always ASK FOR the first event */
-   /* Don't just assume it'll be the first numeric value */
-   i = 0 | PAPI_NATIVE_MASK;
-   PAPI_enum_event(&i, PAPI_ENUM_FIRST);
+	/* For platform independence, always ASK FOR the first event */
+	/* Don't just assume it'll be the first numeric value */
+	i = 0 | PAPI_NATIVE_MASK;
+	PAPI_enum_event(&i, PAPI_ENUM_FIRST);
 
-   do {
-    evt=i;
-#ifdef _POWER4
-      evt=i & 0xFF00FFFF;
-#endif
-    retval=PAPI_add_event(EventSet,evt);
-    if(retval == PAPI_OK){
-#ifdef _POWER4
-      group = (i & 0x00FF0000) >> 16;
-      if (group) {
-         printf("%10d", group - 1);
-      } else {
-         printf("\n\n");
-#endif
-         j++;
-         retval = PAPI_get_event_info(i, &info);
+	do {
+		retval=PAPI_add_event(EventSet,i);
+		if(retval != PAPI_OK) continue;
+		j++;
+		retval = PAPI_get_event_info(i, &info);
 
-	 printf("%s\t0x%x\n |%s|\n",
-		info.symbol,
-		info.event_code,
-		info.long_descr);
+		printf("%s\t0x%x\n |%s|\n",
+			info.symbol,
+			info.event_code,
+			info.long_descr);
 
-   for (k=0;k<(int)info.count;k++)
-	 if (strlen(info.name[k]))
-		 printf(" |Register Value[%d]: 0x%-10x  %s|\n",k,info.code[k], info.name[k]);
+		for (k=0;k<(int)info.count;k++)
+			if (strlen(info.name[k]))
+				printf(" |Register Value[%d]: 0x%-10x  %s|\n",k,info.code[k], info.name[k]);
 
-#ifdef _POWER4
-         printf("\nGroups: ");
-      }
-/* this function would return the next native event code.
-    modifier = PAPI_ENUM_EVENTS
-		 it simply returns next native event code
-    modifier = PAPI_NTV_ENUM_GROUPS
-		 it would return information of groups this native event lives
-                 0x400000ed is the native code of PM_FXLS_FULL_CYC,
-		 before it returns 0x400000ee which is the next native event's
-		 code, it would return *EventCode=0x400400ed, the digits 16-23
-		 indicate group number
-   function return value:
-     PAPI_OK successful, next event is valid
-     PAPI_ENOEVNT  fail, next event is invalid
+/*		modifier = PAPI_NTV_ENUM_GROUPS returns event codes with a
+			groups id for each group in which this
+			native event lives, in bits 16 - 23 of event code
+			terminating with PAPI_ENOEVNT at the end of the list.
 */
-   if((retval=PAPI_remove_event(EventSet,evt))!=PAPI_OK)
-       printf("Error in PAPI_remove_event\n");
-   }
-   } while (PAPI_enum_event(&i, PAPI_NTV_ENUM_GROUPS) == PAPI_OK);
-#else
-	if (s->cntr_umasks) {
-		k = i;
-		if (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
-			do {
-				retval = PAPI_get_event_info(k, &info);
-				if (retval == PAPI_OK) {
-					printf("    0x%-10x%s  |%s|\n", info.event_code,
-						strchr(info.symbol, ':'), strchr(info.long_descr, ':')+1);
-				}
-			} while (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK);
+		if (s->groups) {
+			k = i;
+			if (PAPI_enum_event(&k, PAPI_NTV_ENUM_GROUPS) == PAPI_OK) {
+				printf("Groups: ");
+				do {
+					printf("%4d", ((k & PAPI_NTV_GROUP_AND_MASK) >> PAPI_NTV_GROUP_SHIFT) - 1);
+				} while (PAPI_enum_event(&k, PAPI_NTV_ENUM_GROUPS) == PAPI_OK);
+				printf("\n");
+			}
 		}
-	}
-   printf ("-------------------------------------------------------------------------\n");
-   if((retval=PAPI_remove_event(EventSet,evt))!=PAPI_OK)
-       printf("Error in PAPI_remove_event\n");
-   }
-   } while (PAPI_enum_event(&i, PAPI_ENUM_EVENTS) == PAPI_OK);
-#endif
 
-   printf ("-------------------------------------------------------------------------\n");
-   printf("Total events reported: %d\n", j);
-   test_pass(__FILE__, NULL, 0);
-   exit(1);
+/*		modifier = PAPI_NTV_ENUM_UMASKS returns an event code for each
+			unit mask bit defined for this native event. This can be used
+			to get event info for that mask bit. It terminates
+			with PAPI_ENOEVNT at the end of the list.
+*/
+		if (s->cntr_umasks) {
+			k = i;
+			if (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
+				do {
+					retval = PAPI_get_event_info(k, &info);
+					if (retval == PAPI_OK) {
+						printf("    0x%-10x%s  |%s|\n", info.event_code,
+							strchr(info.symbol, ':'), strchr(info.long_descr, ':')+1);
+					}
+				} while (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK);
+			}
+		}
+		printf ("-------------------------------------------------------------------------\n");
+		if((retval=PAPI_remove_event(EventSet,i))!=PAPI_OK)
+			printf("Error in PAPI_remove_event\n");
+	} while (PAPI_enum_event(&i, PAPI_ENUM_EVENTS) == PAPI_OK);
+
+	printf ("-------------------------------------------------------------------------\n");
+	printf("Total events reported: %d\n", j);
+	test_pass(__FILE__, NULL, 0);
+	exit(1);
 }
 
 int preset()
