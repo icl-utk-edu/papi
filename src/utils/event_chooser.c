@@ -83,7 +83,7 @@ int native()
 			native event lives, in bits 16 - 23 of event code
 			terminating with PAPI_ENOEVNT at the end of the list.
 */
-		if (s->groups) {
+		if (s->cntr_groups) {
 			k = i;
 			if (PAPI_enum_event(&k, PAPI_NTV_ENUM_GROUPS) == PAPI_OK) {
 				printf("Groups: ");
