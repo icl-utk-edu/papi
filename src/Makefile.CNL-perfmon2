@@ -15,4 +15,6 @@ COMPILER	= CRAYXT
 
 endif
 
+CFLAGS		+= -DPFMLIB_VERSION_22
+
 include Rules.pfm2
