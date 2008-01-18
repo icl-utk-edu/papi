@@ -37,10 +37,11 @@ typedef struct hwi_dev_notes {
 } hwi_dev_notes_t;
 
 typedef struct hwi_presets {  /* collected text and data info for all preset events */
-   unsigned int count[PAPI_MAX_PRESET_EVENTS];       /* array of number of terms in this event. 0 = no event */
-   const hwi_preset_info_t *info;   /* array of descriptive text for all events */
-   hwi_preset_data_t *data[PAPI_MAX_PRESET_EVENTS];  /* sparse array of pointers to event data including native terms, etc. */
-   char *dev_note[PAPI_MAX_PRESET_EVENTS];           /* sparse array of pointers to optional developer note strings */
+   unsigned int count[PAPI_MAX_PRESET_EVENTS];		/* array of number of terms in this event. 0 = no event */
+   const hwi_preset_info_t *info;					/* array of descriptive text for all events */
+   const unsigned int *type;						/* array of event types for all events */
+   hwi_preset_data_t *data[PAPI_MAX_PRESET_EVENTS];	/* sparse array of pointers to event data including native terms, etc. */
+   char *dev_note[PAPI_MAX_PRESET_EVENTS];			/* sparse array of pointers to optional developer note strings */
 } hwi_presets_t;
 
 /* This is a general description structure definition for various parameter lists */   

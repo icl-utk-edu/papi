@@ -1011,10 +1011,12 @@ int _papi_hwi_init_global_internal(void)
 {
   int retval;
   extern const hwi_preset_info_t _papi_hwi_preset_info[PAPI_MAX_PRESET_EVENTS];
+  extern const unsigned int _papi_hwi_preset_type[PAPI_MAX_PRESET_EVENTS];
 
   memset(&_papi_hwi_presets,0x0,sizeof(_papi_hwi_presets));
   /* This member is static */
   _papi_hwi_presets.info = _papi_hwi_preset_info;
+  _papi_hwi_presets.type = _papi_hwi_preset_type;
 
   memset(&_papi_hwi_system_info,0x0,sizeof(_papi_hwi_system_info));
 #ifndef _WIN32
@@ -1403,6 +1405,7 @@ int _papi_hwi_get_event_info(int EventCode, PAPI_event_info_t * info)
    if (_papi_hwi_presets.info[i].symbol) { /* if the event is in the preset table */
      memset(info,0,sizeof(*info));
       info->event_code = EventCode;
+      info->event_type = _papi_hwi_presets.type[i];
       info->count = _papi_hwi_presets.count[i];
       strcpy(info->symbol, _papi_hwi_presets.info[i].symbol);
       if(_papi_hwi_presets.info[i].short_descr != NULL)
@@ -1457,6 +1460,7 @@ int _papi_hwi_set_event_info(PAPI_event_info_t * info, int *EventCode)
    */
 
    *EventCode = i | PAPI_PRESET_MASK; /* set new EventCode (may not have changed) */
+   _papi_hwi_presets.type[i] = info->event_type;
    _papi_hwi_presets.count[i] = info->count;
 
    /* There's currently a debate over the use of papi_xxx memory functions.

@@ -261,15 +261,21 @@ All of the functions in the PerfAPI should use the following set of constants.
    substrate are enumerated.
 */
 enum {
-   PAPI_ENUM_EVENTS = 0,		/* Always enumerate all events */	/* IN USE */
+   PAPI_ENUM_EVENTS = 0,		/* Always enumerate all events */
    PAPI_ENUM_FIRST,				/* Enumerate first event (preset or native) */
-   PAPI_PRESET_ENUM_AVAIL, 		/* Enumerate events that exist here */	/* IN USE */
+   PAPI_PRESET_ENUM_AVAIL, 		/* Enumerate events that exist here */
 
    /* PAPI PRESET section ; these are currently unsupported */
+   PAPI_PRESET_ENUM_MSC,		/* Miscellaneous preset events */
    PAPI_PRESET_ENUM_INS,		/* Instruction related preset events */
-   PAPI_PRESET_ENUM_BR,			/* branch related preset events */
-   PAPI_PRESET_ENUM_MEM,		/* memory related preset events */
-   PAPI_PRESET_ENUM_CACH,		/* cache related preset events */
+   PAPI_PRESET_ENUM_IDL,		/* Stalled or Idle preset events */
+   PAPI_PRESET_ENUM_BR,			/* Branch related preset events */
+   PAPI_PRESET_ENUM_CND,		/* Conditional preset events */
+   PAPI_PRESET_ENUM_MEM,		/* Memory related preset events */
+   PAPI_PRESET_ENUM_CACH,		/* Cache related preset events */
+   PAPI_PRESET_ENUM_L1,			/* L1 cache related preset events */
+   PAPI_PRESET_ENUM_L2,			/* L2 cache related preset events */
+   PAPI_PRESET_ENUM_L3,			/* L3 cache related preset events */
    PAPI_PRESET_ENUM_TLB,		/* Translation Lookaside Buffer events */
    PAPI_PRESET_ENUM_FP,			/* Floating Point related preset events */
 
@@ -283,6 +289,21 @@ enum {
    PAPI_NTV_ENUM_DEAR,			/* Enumerate DEAR (data event address register) events */
    PAPI_NTV_ENUM_GROUPS			/* Enumerate groups an event belongs to a la POWER4/5 */
 };
+
+
+#define PAPI_PRESET_BIT_MSC		(1 << PAPI_PRESET_ENUM_MSC)		/* Miscellaneous preset event bit */
+#define PAPI_PRESET_BIT_INS		(1 << PAPI_PRESET_ENUM_INS)		/* Instruction related preset event bit */
+#define PAPI_PRESET_BIT_IDL		(1 << PAPI_PRESET_ENUM_IDL)		/* Stalled or Idle preset event bit */
+#define PAPI_PRESET_BIT_BR		(1 << PAPI_PRESET_ENUM_BR)		/* branch related preset events */
+#define PAPI_PRESET_BIT_CND		(1 << PAPI_PRESET_ENUM_CND)		/* conditional preset events */
+#define PAPI_PRESET_BIT_MEM		(1 << PAPI_PRESET_ENUM_MEM)		/* memory related preset events */
+#define PAPI_PRESET_BIT_CACH	(1 << PAPI_PRESET_ENUM_CACH)	/* cache related preset events */
+#define PAPI_PRESET_BIT_L1		(1 << PAPI_PRESET_ENUM_L1)		/* L1 cache related preset events */
+#define PAPI_PRESET_BIT_L2		(1 << PAPI_PRESET_ENUM_L2)		/* L2 cache related preset events */
+#define PAPI_PRESET_BIT_L3		(1 << PAPI_PRESET_ENUM_L3)		/* L3 cache related preset events */
+#define PAPI_PRESET_BIT_TLB		(1 << PAPI_PRESET_ENUM_TLB)		/* Translation Lookaside Buffer events */
+#define PAPI_PRESET_BIT_FP		(1 << PAPI_PRESET_ENUM_FP)		/* Floating Point related preset events */
+
 #define PAPI_NTV_GROUP_AND_MASK		0x00FF0000	/* bits occupied by group number */
 #define PAPI_NTV_GROUP_SHIFT		16			/* bit shift to encode group number */
 
@@ -605,6 +626,7 @@ read the documentation carefully.  */
 #define PAPI_MAX_INFO_TERMS 12
    typedef struct event_info {
       unsigned int event_code;               /* preset (0x8xxxxxxx) or native (0x4xxxxxxx) event code */
+      unsigned int event_type;               /* event type or category for preset events only */
       unsigned int count;                    /* number of terms (usually 1) in the code and name fields
                                                 - for presets, these terms are native events
                                                 - for native events, these terms are register contents */
