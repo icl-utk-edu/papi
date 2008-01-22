@@ -70,7 +70,7 @@ PFM_OBJS=$(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
 ifeq (,$(PFM_OBJS))
 $(PFM_LIB_PATH)/libpfm.a:
 ifneq (,${PFM_ROOT})
-	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)"
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)" PFM_VERSION_FLAG="$(PFM_VERSION)"
 else
 	@echo '$@ not installed!'; exit 1
 endif

@@ -307,7 +307,6 @@ if test "$OS" = "CNL"; then
    ffsll=yes
    pfm_events=static
    cross_compiling=yes
-   perfmon=2
 fi
          
 #
@@ -870,7 +869,7 @@ AC_ARG_WITH(perfctr_libdir,
             )
 if test "x$perfmon" = "x"; then
 AC_ARG_WITH(perfmon,
-            [  --with-perfmon=<1,2>		Specify perfmon version number ],
+            [  --with-perfmon=<1,2,22,23>	Specify perfmon version number ],
             [perfmon=$withval],
             [perfmon="no"
 if test "$cross_compiling" = "no" ; then
@@ -882,6 +881,15 @@ case "$perfmon" in
    yes)
       AC_CHECK_FILE(/sys/kernel/perfmon/version,[perfmon=2],[AC_CHECK_FILE(/proc/perfmon,[perfmon=1])]) ;;
    1|2|no)
+      perfmon_rev=no
+      ;;
+   22)
+      perfmon=2
+      perfmon_rev=2
+      ;;
+   23)
+      perfmon=2
+      perfmon_rev=3
       ;;
    *)					     
       AC_MSG_ERROR([The perfmon option you specified is not supported])
@@ -1018,47 +1026,50 @@ if test "$perfctr" = 7 -a "$arch" != "ppc64"; then
 fi
 
 if test "$perfmon" != "no"; then
-   dotest=0
-if test "$pfm_root" != ""; then
-   LIBS="-L$pfm_root/lib -lpfm"
-   CPPFLAGS="-I$pfm_root/include"
-   dotest=1
-elif test "$pfm_prefix" != ""; then
-   LIBS="-L$pfm_prefix/lib -lpfm"
-   CPPFLAGS="-I$pfm_prefix/include"
-   pfm_libdir="$pfm_prefix/lib"
-   pfm_incdir="$pfm_prefix/include"
-   dotest=1
-else
-   if test "$pfm_libdir" != ""; then
-      LIBS="-L$pfm_libdir -lpfm"
+      dotest=0
+   if test "$pfm_root" != ""; then
+      LIBS="-L$pfm_root/lib -lpfm"
+      CPPFLAGS="-I$pfm_root/include"
       dotest=1
-   fi
-   if test "$pfm_incdir" != ""; then
-      CPPFLAGS="-I$pfm_incdir"
+   elif test "$pfm_prefix" != ""; then
+      LIBS="-L$pfm_prefix/lib -lpfm"
+      CPPFLAGS="-I$pfm_prefix/include"
+      pfm_libdir="$pfm_prefix/lib"
+      pfm_incdir="$pfm_prefix/include"
       dotest=1
+   else
+      if test "$pfm_libdir" != ""; then
+         LIBS="-L$pfm_libdir -lpfm"
+         dotest=1
+      fi
+      if test "$pfm_incdir" != ""; then
+         CPPFLAGS="-I$pfm_incdir"
+         dotest=1
+      fi
    fi
-fi
-if test "$dotest" = 1; then
-AC_CHECK_LIB([pfm], [pfm_initialize], [
-	AC_CHECK_HEADERS([perfmon/pfmlib.h],[
-	if test "$arch" = "ia64"; then
-		AC_CHECK_HEADERS([perfmon/pfmlib_montecito.h])
-        fi
-	AC_CHECK_FUNC(pfm_get_event_description, [AC_DEFINE(HAVE_PFM_GET_EVENT_DESCRIPTION,1,[event description function])],[])
-	AC_CHECK_MEMBER(pfmlib_reg_t.reg_evt_idx, [AC_DEFINE(HAVE_PFM_REG_EVT_IDX,1,[old reg_evt_idx])],[],[#include "perfmon/pfmlib.h"])
-	AC_CHECK_MEMBER(pfmlib_output_param_t.pfp_pmd_count, [AC_DEFINE(HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT,1,[new pfmlib_output_param_t])],[],[#include "perfmon/pfmlib.h"])
-	AC_CHECK_MEMBER(pfm_msg_t.type, [AC_DEFINE(HAVE_PFM_MSG_TYPE,1,[new pfm_msg_t])],[],[#include "perfmon/perfmon.h"])
-      ], [AC_MSG_ERROR([perfmon/pfmlib.h could not be found, please examine config.log and rerun configure with different flags])])], [
-	AC_MSG_ERROR([libpfm.a could not be found, please examine config.log and rerun configure with different flags])
-      ])
-else
-# included snapshots have this function
-AC_DEFINE(HAVE_PERFMON_PFMLIB_MONTECITO_H,1,[Montecito headers])
-AC_DEFINE(HAVE_PFM_GET_EVENT_DESCRIPTION,1,[event description function])
-AC_DEFINE(HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT,1,[new pfmlib_output_param_t])
-AC_DEFINE(HAVE_PFM_MSG_TYPE,1,[new pfm_msg_t])
-fi
+   if test "$perfmon_rev" != "no" ; then
+      pfm_version="-DPFMLIB_VERSION_${perfmon}${perfmon_rev}"
+   fi
+   if test "$dotest" = 1; then
+   AC_CHECK_LIB([pfm], [pfm_initialize], [
+   	AC_CHECK_HEADERS([perfmon/pfmlib.h],[
+   	if test "$arch" = "ia64"; then
+   		AC_CHECK_HEADERS([perfmon/pfmlib_montecito.h])
+           fi
+   	AC_CHECK_FUNC(pfm_get_event_description, [AC_DEFINE(HAVE_PFM_GET_EVENT_DESCRIPTION,1,[event description function])],[])
+   	AC_CHECK_MEMBER(pfmlib_reg_t.reg_evt_idx, [AC_DEFINE(HAVE_PFM_REG_EVT_IDX,1,[old reg_evt_idx])],[],[#include "perfmon/pfmlib.h"])
+   	AC_CHECK_MEMBER(pfmlib_output_param_t.pfp_pmd_count, [AC_DEFINE(HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT,1,[new pfmlib_output_param_t])],[],[#include "perfmon/pfmlib.h"])
+   	AC_CHECK_MEMBER(pfm_msg_t.type, [AC_DEFINE(HAVE_PFM_MSG_TYPE,1,[new pfm_msg_t])],[],[#include "perfmon/perfmon.h"])
+         ], [AC_MSG_ERROR([perfmon/pfmlib.h could not be found, please examine config.log and rerun configure with different flags])])], [
+   	AC_MSG_ERROR([libpfm.a could not be found, please examine config.log and rerun configure with different flags])
+         ])
+   else
+   # included snapshots have this function
+      AC_DEFINE(HAVE_PERFMON_PFMLIB_MONTECITO_H,1,[Montecito headers])
+      AC_DEFINE(HAVE_PFM_GET_EVENT_DESCRIPTION,1,[event description function])
+      AC_DEFINE(HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT,1,[new pfmlib_output_param_t])
+      AC_DEFINE(HAVE_PFM_MSG_TYPE,1,[new pfm_msg_t])
+   fi
 fi
 
 if test "$with_semaphores" != "no"; then
@@ -1333,6 +1344,7 @@ AC_SUBST(perfctr_prefix)
 AC_SUBST(perfctr_incdir)
 AC_SUBST(perfctr_libdir)
 AC_SUBST(pfm_root)
+AC_SUBST(pfm_version)
 AC_SUBST(pfm_prefix)
 AC_SUBST(pfm_incdir)
 AC_SUBST(pfm_libdir)
