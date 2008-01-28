@@ -137,32 +137,31 @@ int main(int argc, char **argv)
 			  if (PAPI_get_event_info(i, &info) == PAPI_OK) {
 				  PAPI_event_info_t n_info;
 				  if (i & PAPI_PRESET_MASK) {
-					  printf("Event name:\t\t\t%s\nEvent Code:\t\t\t0x%-10x\nNumber of Native Events:\t%d\n",
-						  info.symbol, info.event_code, info.count);
-					  printf("Short Description:\t\t|%s|\nLong Description:\t\t|%s|\nDeveloper's Notes:\t\t|%s|\n",
-						  info.short_descr, info.long_descr, info.note);
-					  printf("Derived Type:\t\t\t|%s|\nPostfix Processing String:\t|%s|\n",
-						  info.derived, info.postfix);
+					  printf("%-30s%s\n%-30s0x%-10x\n%-30s%d\n",
+						"Event name:", info.symbol, "Event Code:", info.event_code, "Number of Native Events:", info.count);
+					  printf("%-29s|%s|\n%-29s|%s|\n%-29s|%s|\n",
+						"Short Description:", info.short_descr, "Long Description:", info.long_descr, "Developer's Notes:", info.note);
+					  printf("%-29s|%s|\n%-29s|%s|\n",
+						"Derived Type:", info.derived, "Postfix Processing String:", info.postfix);
 					  for (j=0;j<(int)info.count;j++) {
-						  printf(" Native Code[%d]: 0x%x |%s|\n",j,info.code[j], info.name[j]);
+						  printf(" Native Code[%d]: 0x%x  |%s|\n",j,info.code[j], info.name[j]);
 						  PAPI_get_event_info(info.code[j], &n_info);
-						  printf(" Number of Register Values: %d\n", n_info.count);
+						  printf(" Number of Register Values:   %d\n", n_info.count);
 						  for (k=0;k<(int)n_info.count;k++)
-							  printf(" Register[%2d]: 0x%-10x |%s|\n",k, n_info.code[k], n_info.name[k]);
-						  printf(" Native Event Description: |%s|\n\n", n_info.long_descr);
+							  printf(" Register[%2d]:   0x%08x  |%s|\n",k, n_info.code[k], n_info.name[k]);
+						  printf(" Native Event Description:   |%s|\n\n", n_info.long_descr);
 					  }
 				  }
 				  else { /* must be a native event code */
-					  printf("%s\t0x%x\n |%s|\n",
-						  info.symbol,
-						  info.event_code,
-						  info.long_descr);
+					  printf("%-30s%s\n%-30s0x%-10x\n%-30s%d\n",
+						"Event name:", info.symbol, "Event Code:", info.event_code, "Number of Register Values:", info.count);
+					  printf("%-29s|%s|\n", "Description:", info.long_descr);
 					  for (k=0;k<(int)info.count;k++)
-						  printf(" Register Value[%2d]: 0x%-10x %s|\n",k,info.code[k], info.name[k]);
+							  printf(" Register[%2d]:   0x%08x  |%s|\n",k, info.code[k], info.name[k]);
 				  }
 			  }
 		  }
-		  else printf("Sorry, an event by the name '%s' could not be found. Is it typed correctly?\n\n",name);
+		  else printf("Sorry, an event by the name '%s' could not be found.\n Is it typed correctly?\n\n",name);
 	  }
 	  else {
 		  /* For consistency, always ASK FOR the first event */
@@ -170,14 +169,12 @@ int main(int argc, char **argv)
 		  PAPI_enum_event(&i, PAPI_ENUM_FIRST);
 
 		  if (print_tabular) {
-			  if (print_avail_only) {
-				  printf("Name\t\tDerived\tDescription (Mgr. Note)\n");
-			  } else {
-				  printf("Name\t\tCode\t\tAvail\tDeriv\tDescription (Note)\n");
-			  }
+			  printf("    Name        Code    ");
+			  if (!print_avail_only) printf("Avail ");
+			  printf("Deriv Description (Note)\n");
 		  }
 		  else {
-			  printf("%-16s%-16s%-8s%-16s\n |Long Description|\n |Developer's Notes|\n |Derived|\n |PostFix|\n Native Code[n]: <hex> |name|\n","Symbol","Event Code","Count","|Short Description|");
+			  printf("%-13s%-11s%-8s%-16s\n |Long Description|\n |Developer's Notes|\n |Derived|\n |PostFix|\n Native Code[n]: <hex> |name|\n","Symbol","Event Code","Count","|Short Description|");
 		  }
 		  do {
 			  if (PAPI_get_event_info(i, &info) == PAPI_OK) {
@@ -185,14 +182,15 @@ int main(int argc, char **argv)
 					  if (filter & info.event_type) {
 						  if (print_avail_only) {
 							  if (info.count)
-								  printf("%s\t%s\t%s",
+								  printf("%-13s0x%x  %-5s%s",
 								  info.symbol,
+								  info.event_code,
 								  is_derived(&info),
 								  info.long_descr);
 							  if (info.note[0]) printf(" (%s)", info.note);
 							  printf("\n");
 						  } else {
-							  printf("%s\t0x%x\t%s\t%s\t%s",
+							  printf("%-13s0x%x  %-6s%-4s %s",
 								  info.symbol,
 								  info.event_code,
 								  (info.count ? "Yes" : "No"),
