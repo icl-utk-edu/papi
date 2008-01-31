@@ -158,7 +158,7 @@ pfm_core_is_fixed(pfmlib_event_t *e, unsigned int f)
 			mask = PFMLIB_CORE_FIXED1;
 			break;
 		case 2:
-			mask = PFMLIB_CORE_FIXED2;
+			mask = PFMLIB_CORE_FIXED2_ONLY;
 			break;
 		default:
 			return 0;
@@ -187,7 +187,7 @@ pfm_core_is_fixed(pfmlib_event_t *e, unsigned int f)
 static int
 pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t *param, pfmlib_output_param_t *outp)
 {
-#define HAS_OPTIONS(x)	(cntrs && (cntrs[i].flags || cntrs[i].cnt_mask))
+#define HAS_OPTIONS(x)	(cntrs && (cntrs[x].flags || cntrs[x].cnt_mask))
 #define is_fixed_pmc(a) (a == 16 || a == 17 || a == 18)
 
 	pfmlib_core_counter_t *cntrs;
@@ -198,12 +198,12 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 	uint64_t val;
 	unsigned long plm;
 	unsigned long long fixed_ctr;
-	unsigned int npc, npmc0, npmc1;
+	unsigned int npc, npmc0, npmc1, nf2;
 	unsigned int i, j, n, k, umask, use_pebs = 0, done_pebs;
 	unsigned int assign_pc[PMU_CORE_NUM_COUNTERS];
 	unsigned int next_gen, last_gen;
 
-	npc = npmc0 = npmc1 = 0;
+	npc = npmc0 = npmc1 = nf2 = 0;
 
 	e      = inp->pfp_events;
 	pc     = outp->pfp_pmcs;
@@ -225,29 +225,30 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 	/*
 	 * error checking
 	 */
-	for(j=0; j < n; j++) {
+	for(i=0; i < n; i++) {
 		/*
 		 * only supports two priv levels for perf counters
 		 */
-		if (e[j].plm & (PFM_PLM1|PFM_PLM2))
+		if (e[i].plm & (PFM_PLM1|PFM_PLM2))
 			return PFMLIB_ERR_INVAL;
 
 		/*
 		 * check for valid flags
 		 */
-		if (e[j].flags & ~PFMLIB_CORE_ALL_FLAGS)
+		if (e[i].flags & ~PFMLIB_CORE_ALL_FLAGS)
 			return PFMLIB_ERR_INVAL;
 
-		if (core_pe[e[j].event].pme_flags & PFMLIB_CORE_UMASK_NCOMBO
-		    && e[j].num_masks > 1) {
+		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_UMASK_NCOMBO
+		    && e[i].num_masks > 1) {
 			DPRINT(("events does not support unit mask combination\n"));
 				return PFMLIB_ERR_NOASSIGN;
 		}
 
 		/*
-		 * check if PMC0 is available and if only one event is dependent on it
+		 * check event-level single register constraint (PMC0, PMC1, FIXED_CTR2)
+		 * fail if more than two events requested for the same counter
 		 */
-		if (core_pe[e[j].event].pme_flags & PFMLIB_CORE_PMC0) {
+		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_PMC0) {
 			if (++npmc0 > 1) {
 				DPRINT(("two events compete for a PMC0\n"));
 				return PFMLIB_ERR_NOASSIGN;
@@ -256,19 +257,51 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 		/*
 		 * check if PMC1 is available and if only one event is dependent on it
 		 */
-		if (core_pe[e[j].event].pme_flags & PFMLIB_CORE_PMC1) {
+		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_PMC1) {
 			if (++npmc1 > 1) {
 				DPRINT(("two events compete for a PMC1\n"));
 				return PFMLIB_ERR_NOASSIGN;
 			}
 		}
+		/*
+ 		 * UNHALTED_REFERENCE_CYCLES can only be measured on FIXED_CTR2
+ 		 */
+		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_FIXED2_ONLY) {
+			if (++nf2 > 1) {
+				DPRINT(("two events compete for FIXED_CTR2\n"));
+				return PFMLIB_ERR_NOASSIGN;
+			}
+			if (HAS_OPTIONS(i)) {
+				DPRINT(("fixed counters do not support inversion/counter-mask\n"));
+				return PFMLIB_ERR_NOASSIGN;
+			}
+		}
+		/*
+ 		 * unit-mask level constraint checking (PMC0, PMC1, FIXED_CTR2)
+ 		 */	
+		for(j=0; j < e[i].num_masks; j++) {
+			unsigned int flags;
+
+			flags = core_pe[e[i].event].pme_umasks[e[i].unit_masks[j]].pme_flags;
+
+			if (flags & PFMLIB_CORE_FIXED2_ONLY) {
+				if (++nf2 > 1) {
+					DPRINT(("two events compete for FIXED_CTR2\n"));
+					return PFMLIB_ERR_NOASSIGN;
+				}
+				if (HAS_OPTIONS(i)) {
+					DPRINT(("fixed counters do not support inversion/counter-mask\n"));
+					return PFMLIB_ERR_NOASSIGN;
+				}
+			}
+                }
 	}
 
 	next_gen = 0; /* first generic counter */
 	last_gen = 1; /* last generic counter */
 
 	/*
-	 * strongest constraint first: works only in IA32_PMC0 or IA32_PMC1
+	 * strongest constraint first: works only in IA32_PMC0, IA32_PMC1, FIXED_CTR2
 	 *
 	 * When PEBS is used, we pick the first PEBS event and
 	 * place it into PMC0. Subsequent PEBS events, will go
@@ -294,7 +327,7 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 	/*
 	 * next constraint: fixed counters
 	 *
-	 * We abuse the mapping here fore assign_pc to make it easier
+	 * We abuse the mapping here for assign_pc to make it easier
 	 * to provide the correct values for pd[].
 	 * We use:
 	 * 	- 16 : fixed counter 0 (pmc16, pmd16)
@@ -668,7 +701,7 @@ pfm_core_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 			has_f0 = 1;
 		if (core_pe[j].pme_umasks[i].pme_flags & PFMLIB_CORE_FIXED1)
 			has_f1 = 1;
-		if (core_pe[j].pme_umasks[i].pme_flags & PFMLIB_CORE_FIXED2)
+		if (core_pe[j].pme_umasks[i].pme_flags & PFMLIB_CORE_FIXED2_ONLY)
 			has_f2 = 1;
 	}
 
@@ -677,7 +710,7 @@ pfm_core_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 	if (has_f1 == 0)
 		has_f1 = core_pe[j].pme_flags & PFMLIB_CORE_FIXED1;
 	if (has_f2 == 0)
-		has_f2 = core_pe[j].pme_flags & PFMLIB_CORE_FIXED2;
+		has_f2 = core_pe[j].pme_flags & PFMLIB_CORE_FIXED2_ONLY;
 
 	if (has_f0)
 		pfm_regmask_set(counters, 16);
@@ -686,9 +719,16 @@ pfm_core_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 	if (has_f2)
 		pfm_regmask_set(counters, 18);
 
-	pfm_regmask_set(counters, 0);
-	if ((core_pe[j].pme_flags & PFMLIB_CORE_PMC0) == 0)
+	/* the event on FIXED_CTR2 is exclusive CPU_CLK_UNHALTED:REF */
+	if (!has_f2) {
+		pfm_regmask_set(counters, 0);
 		pfm_regmask_set(counters, 1);
+
+		if (core_pe[j].pme_flags & PFMLIB_CORE_PMC0)
+			pfm_regmask_clr(counters, 1);
+		if (core_pe[j].pme_flags & PFMLIB_CORE_PMC1)
+			pfm_regmask_clr(counters, 0);
+	}
 }
 
 static void

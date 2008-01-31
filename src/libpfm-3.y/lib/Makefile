@@ -41,46 +41,49 @@ CFLAGS+=-D_REENTRANT
 #
 # list all library support modules
 #
-INCDEP=$(INC_COMMON)
-
 ifeq ($(CONFIG_PFMLIB_ARCH_IA64),y)
-INCDEP := $(INCDEP) $(INC_IA64)
+INCARCH = $(INC_IA64)
 SRCS   += pfmlib_gen_ia64.c pfmlib_itanium.c pfmlib_itanium2.c pfmlib_montecito.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_IA64
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
-INCDEP := $(INCDEP) $(INC_IA32)
+INCARCH = $(INC_IA32)
 SRCS   += pfmlib_i386_p6.c pfmlib_pentium4.c pfmlib_amd64.c pfmlib_core.c pfmlib_gen_ia32.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_I386
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_X86_64),y)
-INCDEP := $(INCDEP) $(INC_X86_64)
+INCARCH = $(INC_X86_64)
 SRCS   += pfmlib_pentium4.c pfmlib_amd64.c pfmlib_core.c pfmlib_gen_ia32.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_X86_64
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_MIPS64),y)
-INCDEP := $(INCDEP) $(INC_MIPS64)
+INCARCH = $(INC_MIPS64)
 SRCS   += pfmlib_gen_mips64.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_MIPS64
+
+ifeq ($(CONFIG_PFMLIB_ARCH_SICORTEX),y)
+  CFLAGS += -DCONFIG_PFMLIB_ARCH_SICORTEX
+endif
+
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_POWERPC),y)
-INCDEP := $(INCDEP) $(INC_POWERPC)
+INCARCH = $(INC_POWERPC)
 SRCS   += pfmlib_gen_powerpc.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_POWERPC
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_SPARC),y)
-INCDEP := $(INCDEP) $(INC_SPARC)
+INCARCH = $(INC_SPARC)
 SRCS   += pfmlib_sparc.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_SPARC
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
-INCDEP := $(INCDEP) $(INC_CRAYX2)
+INCARCH = $(INC_CRAYX2)
 SRCS   += pfmlib_crayx2.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_CRAYX2
 endif
@@ -90,7 +93,7 @@ CFLAGS += -DCONFIG_PFMLIB_ARCH_CRAYXT
 endif
 
 ifeq ($(CONFIG_PFMLIB_CELL),y)
-INCDEP := $(INCDEP) $(INC_CELL)
+INCARCH = $(INC_CELL)
 SRCS   += pfmlib_cell.c
 CFLAGS += -DCONFIG_PFMLIB_CELL
 endif
@@ -110,7 +113,74 @@ TARGETS=$(ALIBPFM) $(SLIBPFM)
 OBJS=$(SRCS:.c=.o)
 SOBJS=$(OBJS:.o=.lo)
 
+INC_COMMON= $(PFMINCDIR)/perfmon/pfmlib.h \
+  $(PFMINCDIR)/perfmon/pfmlib_comp.h \
+  $(PFMINCDIR)/perfmon/pfmlib_os.h \
+  $(PFMINCDIR)/perfmon/perfmon.h \
+  $(PFMINCDIR)/perfmon/perfmon_dfl_smpl.h \
+  pfmlib_priv.h pfmlib_priv_comp.h \
+
+INC_IA64= $(PFMINCDIR)/perfmon/pfmlib_itanium.h \
+  $(PFMINCDIR)/perfmon/pfmlib_itanium2.h \
+  $(PFMINCDIR)/perfmon/pfmlib_montecito.h \
+  $(PFMINCDIR)/perfmon/perfmon_compat.h \
+  $(PFMINCDIR)/perfmon/perfmon_default_smpl.h \
+  $(PFMINCDIR)/perfmon/perfmon_ia64.h \
+  $(PFMINCDIR)/perfmon/pfmlib_comp_ia64.h \
+  $(PFMINCDIR)/perfmon/pfmlib_gen_ia64.h \
+  $(PFMINCDIR)/perfmon/pfmlib_os_ia64.h \
+  itanium_events.h  itanium2_events.h montecito_events.h
+
+INC_IA32=$(PFMINCDIR)/perfmon/perfmon_pebs_core_smpl.h \
+  $(PFMINCDIR)/perfmon/perfmon_pebs_p4_smpl.h \
+  $(PFMINCDIR)/perfmon/pfmlib_pentium4.h \
+  $(PFMINCDIR)/perfmon/pfmlib_amd64.h \
+  $(PFMINCDIR)/perfmon/pfmlib_core.h \
+  $(PFMINCDIR)/perfmon/pfmlib_i386_p6.h \
+  $(PFMINCDIR)/perfmon/pfmlib_gen_ia32.h \
+  $(PFMINCDIR)/perfmon/pfmlib_comp_i386.h \
+  $(PFMINCDIR)/perfmon/pfmlib_os_i386.h \
+  amd64_events.h  i386_p6_events.h \
+  pentium4_events.h gen_ia32_events.h coreduo_events.h core_events.h
+
+INC_X86_64= $(PFMINCDIR)/perfmon/perfmon_pebs_core_smpl.h \
+  $(PFMINCDIR)/perfmon/perfmon_pebs_p4_smpl.h \
+  $(PFMINCDIR)/perfmon/pfmlib_amd64.h \
+  $(PFMINCDIR)/perfmon/pfmlib_core.h \
+  $(PFMINCDIR)/perfmon/pfmlib_gen_ia32.h \
+  $(PFMINCDIR)/perfmon/pfmlib_pentium4.h \
+  $(PFMINCDIR)/perfmon/pfmlib_comp_x86_64.h \
+  $(PFMINCDIR)/perfmon/pfmlib_os_x86_64.h \
+  amd64_events.h pentium4_events.h gen_ia32_events.h core_events.h
+
+
+INC_MIPS64= $(PFMINCDIR)/perfmon/pfmlib_gen_mips64.h \
+  $(PFMINCDIR)/perfmon/pfmlib_comp_mips64.h \
+  $(PFMINCDIR)/perfmon/pfmlib_os_mips64.h \
+  gen_mips64_events.h
+
+INC_POWERPC= $(PFMINCDIR)/perfmon/pfmlib_powerpc.h \
+  $(PFMINCDIR)/perfmon/pfmlib_comp_powerpc.h \
+  $(PFMINCDIR)/perfmon/pfmlib_os_powerpc.h \
+  ppc970_events.h ppc970mp_events.h power4_events.h \
+  power5_events.h power5+_events.h power6_events.h powerpc_reg.h
+
+INC_SPARC= $(PFMINCDIR)/perfmon/pfmlib_sparc.h \
+  $(PFMINCDIR)/perfmon/pfmlib_comp_sparc.h \
+  $(PFMINCDIR)/perfmon/pfmlib_os_sparc.h \
+  ultra12_events.h ultra3_events.h ultra3plus_events.h ultra3i_events.h \
+  ultra4plus_events.h niagara1_events.h niagara2_events.h
+
+INC_CRAYX2= $(PFMINCDIR)/perfmon/pfmlib_crayx2.h \
+  crayx2_events.h pfmlib_crayx2_priv.h
+
+INC_CELL= $(PFMINCDIR)/perfmon/pfmlib_cell.h \
+  cell_events.h
+
+INCDEP=$(INC_COMMON) $(INCARCH)
+
 all: $(TARGETS)
+	echo INCDED=$(INCDEP)
 
 $(OBJS) $(SOBJS): $(TOPDIR)/config.mk $(TOPDIR)/rules.mk Makefile $(INCDEP)
 
@@ -142,63 +212,4 @@ ifneq ($(CC),qk-gcc)
 endif
 endif
 
-INC_COMMON= $(PFMINCDIR)/perfmon/pfmlib.h \
-  $(PFMINCDIR)/perfmon/pfmlib_comp.h \
-  $(PFMINCDIR)/perfmon/pfmlib_os.h \
-  $(PFMINCDIR)/perfmon/perfmon.h \
-  $(PFMINCDIR)/perfmon/perfmon_dfl_smpl.h \
-  pfmlib_priv.h pfmlib_priv_comp.h \
 
-INC_IA64= $(PFMINCDIR)/perfmon/pfmlib_itanium.h \
-  $(PFMINCDIR)/perfmon/pfmlib_itanium2.h \
-  $(PFMINCDIR)/perfmon/pfmlib_montecito.h \
-  $(PFMINCDIR)/perfmon/perfmon_compat.h \
-  $(PFMINCDIR)/perfmon/perfmon_default_smpl.h \
-  $(PFMINCDIR)/perfmon/perfmon_ia64.h \
-  $(PFMINCDIR)/perfmon/pfmlib_comp_ia64.h \
-  $(PFMINCDIR)/perfmon/pfmlib_gen_ia64.h \
-  $(PFMINCDIR)/perfmon/pfmlib_os_ia64.h \
-  itanium_events.h  itanium2_events.h montecito_events.h
-
-INC_X86_64= $(PFMINCDIR)/perfmon/perfmon_pebs_smpl.h \
-  $(PFMINCDIR)/perfmon/pfmlib_amd64.h \
-  $(PFMINCDIR)/perfmon/pfmlib_core.h \
-  $(PFMINCDIR)/perfmon/pfmlib_gen_ia32.h \
-  $(PFMINCDIR)/perfmon/pfmlib_pentium4.h \
-  $(PFMINCDIR)/perfmon/pfmlib_comp_x86_64.h \
-  $(PFMINCDIR)/perfmon/pfmlib_os_x86_64.h \
-  amd64_events.h  pentium4_events.h gen_ia32_events.h core_events.h
-
-INC_IA32=$(PFMINCDIR)/perfmon/perfmon_pebs_smpl.h \
-  $(PFMINCDIR)/perfmon/pfmlib_pentium4.h \
-  $(PFMINCDIR)/perfmon/pfmlib_amd64.h \
-  $(PFMINCDIR)/perfmon/pfmlib_core.h \
-  $(PFMINCDIR)/perfmon/pfmlib_i386_p6.h \
-  $(PFMINCDIR)/perfmon/pfmlib_gen_ia32.h \
-  $(PFMINCDIR)/perfmon/pfmlib_comp_i386.h \
-  $(PFMINCDIR)/perfmon/pfmlib_os_i386.h \
-  amd64_events.h  i386_p6_events.h \
-  pentium4_events.h gen_ia32_events.h coreduo_events.h core_events.h
-
-INC_MIPS64= $(PFMINCDIR)/perfmon/pfmlib_gen_mips64.h \
-  $(PFMINCDIR)/perfmon/pfmlib_comp_mips64.h \
-  $(PFMINCDIR)/perfmon/pfmlib_os_mips64.h \
-  gen_mips64_events.h
-
-INC_POWERPC= $(PFMINCDIR)/perfmon/pfmlib_gen_powerpc.h \
-  $(PFMINCDIR)/perfmon/pfmlib_comp_powerpc.h \
-  $(PFMINCDIR)/perfmon/pfmlib_os_powerpc.h \
-  ppc970_events.h ppc970mp_events.h power4_events.h power4+_events.h \
-  power5_events.h power5+_events.h power6_events.h powerpc_reg.h
-
-INC_SPARC= $(PFMINCDIR)/perfmon/pfmlib_sparc.h \
-  $(PFMINCDIR)/perfmon/pfmlib_comp_sparc.h \
-  $(PFMINCDIR)/perfmon/pfmlib_os_sparc.h \
-  ultra12_events.h ultra3_events.h ultra3plus_events.h ultra3i_events.h \
-  ultra4plus_events.h niagara1_events.h niagara2_events.h
-
-INC_CRAYX2= $(PFMINCIDR)/perfmon/pfmlib_crayx2.h \
-  crayx2_events.h pfmlib_crayx2_priv.h
-
-INC_CELL= $(PFMINCDIR)/perfmon/pfmlib_cell.h \
-  cell_event.h

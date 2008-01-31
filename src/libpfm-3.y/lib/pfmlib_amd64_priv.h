@@ -25,7 +25,7 @@
 #ifndef __PFMLIB_AMD64_PRIV_H__
 #define __PFMLIB_AMD64_PRIV_H__
 
-#define PFMLIB_AMD64_MAX_UMASK	19
+#define PFMLIB_AMD64_MAX_UMASK	9
 
 typedef struct {
 	char			*pme_uname; /* unit mask name */

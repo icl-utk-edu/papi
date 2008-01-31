@@ -88,12 +88,12 @@ static pme_core_entry_t core_pe[]={
 	{.pme_name = "INSTRUCTIONS_RETIRED",
 	 .pme_code = 0x00c0,
 	 .pme_flags = PFMLIB_CORE_FIXED0|PFMLIB_CORE_PEBS,
-	 .pme_desc =  "count the number of instructions at retirement. For instructions that consists of multiple micro-ops, this event counts the retirement of the last micro-op of the instruction. Alias to event INST_RETIRED:ANY_P",
+	 .pme_desc =  "count the number of instructions at retirement. Alias to event INST_RETIRED:ANY_P",
 	},
 	{.pme_name = "UNHALTED_REFERENCE_CYCLES",
 	 .pme_code = 0x013c,
-	 .pme_flags = PFMLIB_CORE_FIXED2,
-	 .pme_desc =  "Unhalted reference cycles. Measures bus cycles. Alias to event CPU_CLK_UNHALTED:BUS",
+	 .pme_flags = PFMLIB_CORE_FIXED2_ONLY,
+	 .pme_desc =  "Unhalted reference cycles. Alias to event CPU_CLK_UNHALTED:REF",
 	},
 	{.pme_name = "LAST_LEVEL_CACHE_REFERENCES",
 	 .pme_code = 0x4f2e,
@@ -483,7 +483,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "CPU_CLK_UNHALTED",
 	  .pme_code = 0x3c,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_UMASK_NCOMBO,
 	  .pme_desc =  "Core cycles when core is not halted",
 	  .pme_umasks = {
 		{ .pme_uname = "CORE_P",
@@ -491,17 +491,21 @@ static pme_core_entry_t core_pe[]={
 		  .pme_ucode = 0x0,
 	  	  .pme_flags = PFMLIB_CORE_FIXED1
 		},
-		{ .pme_uname = "BUS",
-		  .pme_udesc = "Bus cycles when core is not halted",
+		{ .pme_uname = "REF",
+		  .pme_udesc = "Reference cycles. This event is not affected by core changes such as P-states or TM2 transitions but counts at the same frequency as the time stamp counter. This event can approximate elapsed time. This event has a constant ratio with the CPU_CLK_UNHALTED:BUS event",
 		  .pme_ucode = 0x1,
-	  	  .pme_flags = PFMLIB_CORE_FIXED2
+	  	  .pme_flags = PFMLIB_CORE_FIXED2_ONLY /* Can only be measured on FIXED_CTR2 */
+		},
+		{ .pme_uname = "BUS",
+		  .pme_udesc = "Bus cycles when core is not halted. This event can give a measurement of the elapsed time. This events has a constant ratio with CPU_CLK_UNHALTED:REF event, which is the maximum bus to processor frequency ratio",
+		  .pme_ucode = 0x1,
 		},
 		{ .pme_uname = "NO_OTHER",
 		  .pme_udesc = "Bus cycles when core is active and the other is halted",
 		  .pme_ucode = 0x2
 		}
 	   },
-	   .pme_numasks = 3
+	   .pme_numasks = 4
 	},
 	{ .pme_name = "L1D_CACHE_LD",
 	  .pme_code = 0x40,
@@ -1266,7 +1270,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "ITLB_MISS_RETIRED",
 	  .pme_code = 0xc9,
-	  .pme_flags = PFMLIB_CORE_PMC0,
+	  .pme_flags = 0,
 	  .pme_desc =  "Retired instructions that missed the ITLB"
 	},
 	{ .pme_name = "SIMD_COMP_INST_RETIRED",

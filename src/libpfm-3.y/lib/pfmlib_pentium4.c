@@ -113,6 +113,9 @@ static p4_regmap_t p4_pmc_regmap[]={
 /* 64 */ P4_REGMAP(0x3f1, "PEBS_ENABLE"),
 };
 
+#define PMC_PEBS_MATRIX_VERT 63
+#define PMC_PEBS_ENABLE		 64
+
 static p4_regmap_t p4_pmd_regmap[]={
 /* 0 */ P4_REGMAP(0x300, "BPU_CTR0"),
 /* 1 */ P4_REGMAP(0x301, "BPU_CTR1"),
@@ -132,6 +135,52 @@ static p4_regmap_t p4_pmd_regmap[]={
 /* 15 */ P4_REGMAP(0x30d, "IQ_CTR2"),
 /* 16 */ P4_REGMAP(0x30f, "IQ_CTR3"),
 /* 17 */ P4_REGMAP(0x311, "IQ_CTR5"),
+};
+
+/* This array provides values for the PEBS_ENABLE and PEBS_MATRIX_VERT
+	registers to support a series of metric for replay_event.
+	The first two entries are dummies; the remaining 9 correspond to 
+	virtual bit masks in the replay_event definition and map onto Intel
+	documentation.
+*/
+
+#define P4_REPLAY_REAL_MASK 0x00000003
+#define P4_REPLAY_VIRT_MASK 0x00000FFC
+
+static pentium4_replay_regs_t p4_replay_regs[]={
+/* 0 */ {.enb		= 0,			/* dummy */
+		 .mat_vert	= 0,
+		},
+/* 1 */ {.enb		= 0,			/* dummy */
+		 .mat_vert	= 0,
+		},
+/* 2 */ {.enb		= 0x03000001,	/* 1stL_cache_load_miss_retired */
+		 .mat_vert	= 0x00000001,
+		},
+/* 3 */ {.enb		= 0x03000002,	/* 2ndL_cache_load_miss_retired */
+		 .mat_vert	= 0x00000001,
+		},
+/* 4 */ {.enb		= 0x03000004,	/* DTLB_load_miss_retired */
+		 .mat_vert	= 0x00000001,
+		},
+/* 5 */ {.enb		= 0x03000004,	/* DTLB_store_miss_retired */
+		 .mat_vert	= 0x00000002,
+		},
+/* 6 */ {.enb		= 0x03000004,	/* DTLB_all_miss_retired */
+		 .mat_vert	= 0x00000003,
+		},
+/* 7 */ {.enb		= 0x03018001,	/* Tagged_mispred_branch */
+		 .mat_vert	= 0x00000010,
+		},
+/* 8 */ {.enb		= 0x03000200,	/* MOB_load_replay_retired */
+		 .mat_vert	= 0x00000001,
+		},
+/* 9 */ {.enb		= 0x03000400,	/* split_load_retired */
+		 .mat_vert	= 0x00000001,
+		},
+/* 10 */ {.enb		= 0x03000400,	/* split_store_retired */
+		 .mat_vert	= 0x00000002,
+		},
 };
 
 static int p4_model;
@@ -404,7 +453,32 @@ static int pentium4_dispatch_events(pfmlib_input_param_t *input,
 				cccr_value.bits.cascade       = 0; /* FIXME: How do we handle "cascading" counters? */
 				cccr_value.bits.overflow      = 0;
 
-				/* Set up the PMCs in the
+				/* Special processing for the replay event:
+					Remove virtual mask bits from actual mask;
+					scan mask bit list and OR bit values for each virtual mask
+					into the PEBS ENABLE and PEBS MATRIX VERT registers */
+				if (event == PME_REPLAY_EVENT) {
+					escr_value.bits.event_mask &= P4_REPLAY_REAL_MASK;	 /* remove virtual mask bits */
+					if (event_mask & P4_REPLAY_VIRT_MASK) {				 /* find a valid virtual mask */
+						output->pfp_pmcs[j].reg_value = 0;
+						output->pfp_pmcs[j].reg_num = PMC_PEBS_ENABLE;
+						output->pfp_pmcs[j].reg_addr = p4_pmc_regmap[PMC_PEBS_ENABLE].addr;
+						output->pfp_pmcs[j+1].reg_value = 0;
+						output->pfp_pmcs[j+1].reg_num = PMC_PEBS_MATRIX_VERT;
+						output->pfp_pmcs[j+1].reg_addr = p4_pmc_regmap[PMC_PEBS_MATRIX_VERT].addr;
+						for (n = 0; n < input->pfp_events[i].num_masks; n++) {
+							mask = input->pfp_events[i].unit_masks[n];
+							if (mask > 1 && mask < 11) { /* process each valid mask we find */
+								output->pfp_pmcs[j].reg_value |= p4_replay_regs[mask].enb;
+								output->pfp_pmcs[j+1].reg_value |= p4_replay_regs[mask].mat_vert;
+							}
+						}
+						j += 2;
+						output->pfp_pmc_count += 2;
+					}
+				}
+
+				 /* Set up the PMCs in the
 				 * output->pfp_pmcs array.
 				 */
 				output->pfp_pmcs[j].reg_num = escr_pmc;

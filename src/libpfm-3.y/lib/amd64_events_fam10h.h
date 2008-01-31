@@ -2147,5 +2147,5 @@ static pme_amd64_entry_t amd64_fam10h_pe[]={
 };
 
 #define PME_AMD64_FAM10H_EVENT_COUNT		(sizeof(amd64_fam10h_pe)/sizeof(pme_amd64_entry_t))
-#define PME_AMD64_FAM10H_CPU_CLK_UNHALTED	40
-#define PME_AMD64_FAM10H_RETIRED_INSTRUCTIONS	41
+#define PME_AMD64_FAM10H_CPU_CLK_UNHALTED	36
+#define PME_AMD64_FAM10H_RETIRED_INSTRUCTIONS	54

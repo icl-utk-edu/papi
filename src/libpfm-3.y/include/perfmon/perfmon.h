@@ -76,16 +76,6 @@ extern "C" {
 #define PFM_SETFL_OVFL_SWITCH	0x01 /* enable switch on overflow (subject to individual switch_cnt */
 #define PFM_SETFL_TIME_SWITCH	0x02 /* switch set on timeout */
 
-/*
- * argument to pfm_create_context()
- */
-#ifndef PFMLIB_VERSION_22
-typedef struct {
-	uint32_t	ctx_flags;	   /* noblock/block/syswide */
-	uint32_t	ctx_reserved1;	   /* for future use */
-	uint64_t	ctx_reserved3[7];  /* for future use */
-} pfarg_ctx_t;
-#endif
 
 /*
  * context flags (ctx_flags)
@@ -94,6 +84,25 @@ typedef struct {
 #define PFM_FL_NOTIFY_BLOCK    	 0x01	/* block task on user notifications */
 #define PFM_FL_SYSTEM_WIDE	 0x02	/* create a system wide context */
 #define PFM_FL_OVFL_NO_MSG	 0x80   /* no overflow msgs */
+
+/*
+ * argument to pfm_create_context()
+ */
+#if defined(PFMLIB_VERSION_22)
+typedef struct {
+	unsigned char	ctx_smpl_buf_id[16];	/* which buffer format to use */
+	uint32_t	ctx_flags;		/* noblock/block/syswide */
+	int32_t		ctx_fd;			/* ret arg: fd for context */
+	uint64_t	ctx_smpl_buf_size;	/* ret arg: actual buffer sz */
+	uint64_t	ctx_reserved3[12];	/* for future use */
+} pfarg_ctx_t;
+#else
+typedef struct {
+	uint32_t	ctx_flags;	   /* noblock/block/syswide */
+	uint32_t	ctx_reserved1;	   /* for future use */
+	uint64_t	ctx_reserved3[7];  /* for future use */
+} pfarg_ctx_t;
+#endif
 
 /*
  * argument for pfm_write_pmcs()
@@ -149,7 +158,16 @@ typedef struct {
 /*
  * argument to pfm_create_evtsets()/pfm_delete_evtsets()
  */
-#ifndef PFMLIB_VERSION_22
+#if defined(PFMLIB_VERSION_22) || defined(PFMLIB_VERSION_23)
+typedef struct {
+ 	uint16_t	set_id;		  /* which set */
+	uint16_t	set_id_next;	  /* next set to go to (must use PFM_SETFL_EXPL_NEXT) */
+ 	uint32_t    	set_flags; 	  /* SETFL flags */
+ 	uint64_t	set_timeout;	  /* requested/effective switch timeout in nsecs */
+	uint64_t	set_mmap_offset;  /* cookie to pass as mmap offset to access 64-bit virtual PMD */
+	uint64_t	reserved[5];	  /* for future use */
+} pfarg_setdesc_t;
+#else
 typedef struct {
 	uint16_t	set_id;		  /* which set */
 	uint16_t	set_reserved1;	  /* for future use */
@@ -162,69 +180,7 @@ typedef struct {
 /*
  * argument to pfm_getinfo_evtsets()
  */
-#ifndef PFMLIB_VERSION_22
-typedef struct {
-        uint16_t	set_id;             /* which set */
-        uint16_t	set_reserved1;      /* for future use */
-        uint32_t	set_flags;          /* output: SETFL flags */
-        uint64_t 	set_ovfl_pmds[PFM_PMD_BV]; /* output: last ovfl PMDs which triggered a switch from set */
-        uint64_t	set_runs;           /* output: number of times the set was active */
-        uint64_t	set_timeout;        /* output:effective/leftover switch timeout in nsecs */
-	uint64_t	set_act_duration;   /* output: time set was active in nsecs */
-	uint64_t	set_avail_pmcs[PFM_PMC_BV];
-	uint64_t	set_avail_pmds[PFM_PMD_BV];
-        uint64_t	set_reserved3[6];   /* for future use */
-} pfarg_setinfo_t;
-
-typedef struct {
-	uint32_t 	msg_type;		/* PFM_MSG_OVFL */
-	uint32_t 	msg_ovfl_pid;		/* process id */
-	uint16_t 	msg_active_set;		/* active set at the time of overflow */
-	uint16_t 	msg_ovfl_cpu;		/* cpu on which the overflow occurred */
-	uint32_t	msg_ovfl_tid;		/* thread id */
-	uint64_t	msg_ovfl_ip;		/* instruction pointer where overflow interrupt happened */
-	uint64_t	msg_ovfl_pmds[PFM_PMD_BV];/* which PMDs overflowed */
-} pfarg_ovfl_msg_t;
-
-#endif
-
-#define PFM_MSG_OVFL	1	/* an overflow happened */
-#define PFM_MSG_END	2	/* task to which context was attached ended */
-
-/*
- * perfmon version number
- */
-#define PFM_VERSION_MAJ		 2U
-
-#ifndef PFMLIB_VERSION_22
-#define PFM_VERSION_MIN		 7U
-#endif
-
-#define PFM_VERSION		 (((PFM_VERSION_MAJ&0xffff)<<16)|(PFM_VERSION_MIN & 0xffff))
-#define PFM_VERSION_MAJOR(x)	 (((x)>>16) & 0xffff)
-#define PFM_VERSION_MINOR(x)	 ((x) & 0xffff)
-
-/*
- * for backward compatibility with old code (to go away)
- */
-#ifdef PFMLIB_VERSION_22
-typedef struct {
- 	uint16_t	set_id;		  /* which set */
-	uint16_t	set_id_next;	  /* next set to go to (must use PFM_SETFL_EXPL_NEXT) */
- 	uint32_t    	set_flags; 	  /* SETFL flags */
- 	uint64_t	set_timeout;	  /* requested/effective switch timeout in nsecs */
-	uint64_t	set_mmap_offset;  /* cookie to pass as mmap offset to access 64-bit virtual PMD */
-	uint64_t	reserved[5];	  /* for future use */
- } pfarg_setdesc_t;
-
-typedef struct {
-	unsigned char	ctx_smpl_buf_id[16];	/* which buffer format to use */
-	uint32_t	ctx_flags;		/* noblock/block/syswide */
-	int32_t		ctx_fd;			/* ret arg: fd for context */
-	uint64_t	ctx_smpl_buf_size;	/* ret arg: actual buffer sz */
-	uint64_t	ctx_reserved3[12];	/* for future use */
-} pfarg_ctx_t;
-
+#if defined(PFMLIB_VERSION_22) || defined(PFMLIB_VERSION_23)
 typedef struct {
 	uint16_t	set_id;             /* which set */
 	uint16_t	set_id_next;        /* output: next set to go to (must use PFM_SETFL_EXPL_NEXT) */
@@ -238,7 +194,22 @@ typedef struct {
 	uint64_t	set_avail_pmds[PFM_PMD_BV];
 	uint64_t	reserved[4];        /* for future use */
 } pfarg_setinfo_t;
+#else
+typedef struct {
+        uint16_t	set_id;             /* which set */
+        uint16_t	set_reserved1;      /* for future use */
+        uint32_t	set_flags;          /* output: SETFL flags */
+        uint64_t 	set_ovfl_pmds[PFM_PMD_BV]; /* output: last ovfl PMDs which triggered a switch from set */
+        uint64_t	set_runs;           /* output: number of times the set was active */
+        uint64_t	set_timeout;        /* output:effective/leftover switch timeout in nsecs */
+	uint64_t	set_act_duration;   /* output: time set was active in nsecs */
+	uint64_t	set_avail_pmcs[PFM_PMC_BV];
+	uint64_t	set_avail_pmds[PFM_PMD_BV];
+        uint64_t	set_reserved3[6];   /* for future use */
+} pfarg_setinfo_t;
+#endif
 
+#if defined(PFMLIB_VERSION_22) || defined(PFMLIB_VERSION_23)
 #ifdef __crayx2
 #define PFM_MAX_HW_PMDS 512
 #else
@@ -255,14 +226,42 @@ typedef struct {
 	uint32_t	msg_ovfl_tid;		/* thread id */
 	uint64_t	msg_ovfl_ip;		/* instruction pointer where overflow interrupt happened */
 } pfarg_ovfl_msg_t;
-
-#define PFM_VERSION_MIN		 2U	/* minior version number */
+#else
+typedef struct {
+	uint32_t 	msg_type;		/* PFM_MSG_OVFL */
+	uint32_t 	msg_ovfl_pid;		/* process id */
+	uint16_t 	msg_active_set;		/* active set at the time of overflow */
+	uint16_t 	msg_ovfl_cpu;		/* cpu on which the overflow occurred */
+	uint32_t	msg_ovfl_tid;		/* thread id */
+	uint64_t	msg_ovfl_ip;		/* instruction pointer where overflow interrupt happened */
+	uint64_t	msg_ovfl_pmds[PFM_PMD_BV];/* which PMDs overflowed */
+} pfarg_ovfl_msg_t;
 #endif
+
+#define PFM_MSG_OVFL	1	/* an overflow happened */
+#define PFM_MSG_END	2	/* task to which context was attached ended */
 
 typedef union {
 	uint32_t		type;
-	pfarg_ovfl_msg_t	pfm_ovfl_msg;
+        pfarg_ovfl_msg_t	pfm_ovfl_msg;
 } pfarg_msg_t;
+
+/*
+ * perfmon version number
+ */
+#define PFM_VERSION_MAJ		2U
+
+#if defined(PFMLIB_VERSION_22)
+#define PFM_VERSION_MIN		2U
+#elif defined(PFMLIB_VERSION_23)
+#define PFM_VERSION_MIN		3U
+#else
+#define PFM_VERSION_MIN		7U
+#endif
+
+#define PFM_VERSION		 (((PFM_VERSION_MAJ&0xffff)<<16)|(PFM_VERSION_MIN & 0xffff))
+#define PFM_VERSION_MAJOR(x)	 (((x)>>16) & 0xffff)
+#define PFM_VERSION_MINOR(x)	 ((x) & 0xffff)
 
 extern int pfm_create_context(pfarg_ctx_t *ctx, char *smpl_name, void *smpl_arg, size_t smpl_size);
 extern int pfm_write_pmcs(int fd, pfarg_pmc_t *pmcs, int count);
@@ -301,13 +300,25 @@ extern int pfm_unload_context(int fd);
 #if defined(__mips__)
 #if (_MIPS_SIM == _ABIN32) || (_MIPS_SIM == _MIPS_SIM_NABI32)
 #define __NR_Linux 6000
+#ifdef CONFIG_PFMLIB_ARCH_SICORTEX
+#define __NR_pfm_create_context         __NR_Linux+279
+#else
 #define __NR_pfm_create_context         __NR_Linux+280
+#endif
 #elif (_MIPS_SIM == _ABI32) || (_MIPS_SIM == _MIPS_SIM_ABI32)
 #define __NR_Linux 4000
+#ifdef CONFIG_PFMLIB_ARCH_SICORTEX
+#define __NR_pfm_create_context         __NR_Linux+316
+#else
 #define __NR_pfm_create_context         __NR_Linux+321
+#endif
 #elif (_MIPS_SIM == _ABI64) || (_MIPS_SIM == _MIPS_SIM_ABI64)
 #define __NR_Linux 5000
+#ifdef CONFIG_PFMLIB_ARCH_SICORTEX
+#define __NR_pfm_create_context         __NR_Linux+275
+#else
 #define __NR_pfm_create_context         __NR_Linux+284
+#endif
 #endif
 #endif
 

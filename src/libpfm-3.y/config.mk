@@ -98,6 +98,13 @@ endif
 
 ifeq ($(ARCH),mips64)
 CONFIG_PFMLIB_ARCH_MIPS64=y
+#
+# SiCortex/Linux
+#
+MACHINE := $(shell test -f /etc/sicortex-release && echo sicortex)
+ifeq (sicortex,$(MACHINE))
+CONFIG_PFMLIB_ARCH_SICORTEX=y
+endif
 endif
 
 ifeq ($(ARCH),powerpc)
@@ -145,14 +152,14 @@ PFMLIB=$(PFMLIBDIR)/libpfm.a
 
 # Reset options for Cray XT
 ifeq ($(CONFIG_PFMLIB_ARCH_CRAYXT),y)
-CFLAGS=$(OPTIM) $(DBG) -I$(PFMINCDIR) -DPFMLIB_VERSION_22
-LDFLAGS=-L$(PFMLIBDIR) -static
+CFLAGS+=$(PFM_VERSION_FLAG)
+LDFLAGS+=-static
 endif
 
 # Reset the compiler for Cray-X2 (load x2-gcc module)
 ifeq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
 CC=craynv-cray-linux-gnu-gcc
-CFLAGS=$(OPTIM) $(DBG) -I$(PFMINCDIR) -DPFMLIB_VERSION_22
-LDFLAGS=-L$(PFMLIBDIR) -static
+CFLAGS+=$(PFM_VERSION_FLAG)
+LDFLAGS+=-static
 endif
 

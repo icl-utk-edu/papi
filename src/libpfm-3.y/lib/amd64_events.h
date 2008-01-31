@@ -37,8 +37,8 @@ struct pme_amd64_table {
 static struct pme_amd64_table amd64_k8_table = {
 	.num	  = PME_AMD64_K8_EVENT_COUNT,
 	.events	  = amd64_k8_pe,
-	.cpu_clks = PME_AMD64_FAM10H_CPU_CLK_UNHALTED,
-	.ret_inst = PME_AMD64_FAM10H_RETIRED_INSTRUCTIONS,
+	.cpu_clks = PME_AMD64_K8_CPU_CLK_UNHALTED,
+	.ret_inst = PME_AMD64_K8_RETIRED_INSTRUCTIONS,
 };
 
 static struct pme_amd64_table amd64_fam10h_table = {

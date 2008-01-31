@@ -112,6 +112,119 @@ typedef struct {
 	uint64_t	reserved[8];		/* for future use */
 } pfmlib_gen_mips64_output_param_t;
 
+/*
+ * SiCortex specific
+ */
+
+typedef union {
+	uint64_t	val;				/* complete register value */
+	struct {
+	        unsigned long sel_exl:1;		/* int level */
+		unsigned long sel_os:1;			/* system level */
+		unsigned long sel_sup:1;		/* supervisor level */
+		unsigned long sel_usr:1;		/* user level */
+	        unsigned long sel_int:1;		/* enable intr */
+	  	unsigned long sel_event_mask:6;		/* event mask */
+		unsigned long sel_res1:23;		/* reserved */
+		unsigned long sel_res2:32;		/* reserved */
+	} perfsel;
+} pfm_gen_ice9_sel_reg_t;
+
+#define PMU_ICE9_SCB_NUM_COUNTERS 256
+
+typedef union {
+	uint64_t val;
+	struct {
+		unsigned long Interval:4;
+		unsigned long IntBit:5;
+		unsigned long NoInc:1;
+		unsigned long AddrAssert:1;
+		unsigned long MagicEvent:2;
+		unsigned long Reserved:19;
+	} ice9_ScbPerfCtl_reg; 
+	struct {
+		unsigned long HistGte:20;
+		unsigned long Reserved:12;
+	} ice9_ScbPerfHist_reg; 
+	struct {
+		unsigned long Bucket:8;
+		unsigned long Reserved:24;
+	} ice9_ScbPerfBuckNum_reg;
+	struct {
+		unsigned long ena:1;
+		unsigned long Reserved:31;
+	} ice9_ScbPerfEna_reg; 
+	struct {
+		unsigned long event:15;
+		unsigned long hist:1;
+		unsigned long ifOther:2;
+		unsigned long Reserved:15;
+	} ice9_ScbPerfBucket_reg; 
+} pmc_ice9_scb_reg_t;
+
+typedef union {
+	uint64_t val;
+	struct {
+		unsigned long Reserved:2;
+		uint64_t VPCL:38;
+		unsigned long VPCH:2;
+	} ice9_CpuPerfVPC_reg; 
+	struct {
+		unsigned long Reserved:5;
+		unsigned long PEA:31;
+		unsigned long Reserved2:12;
+		unsigned long ASID:8;
+		unsigned long L2STOP:4;
+		unsigned long L2STATE:3;
+		unsigned long L2HIT:1;
+	} ice9_CpuPerfPEA_reg; 
+} pmd_ice9_cpu_reg_t;
+  
+typedef struct {
+	unsigned long NoInc:1;
+	unsigned long Interval:4;
+	unsigned long HistGte:20;
+	unsigned long Bucket:8;
+} pfmlib_ice9_scb_t;
+
+typedef struct {
+	unsigned long ifOther:2;
+	unsigned long hist:1;
+} pfmlib_ice9_scb_counter_t;
+  
+#define PFMLIB_INPUT_SCB_NONE (unsigned long)0x0
+#define PFMLIB_INPUT_SCB_INTERVAL (unsigned long)0x1
+#define PFMLIB_INPUT_SCB_NOINC (unsigned long)0x2
+#define PFMLIB_INPUT_SCB_HISTGTE (unsigned long)0x4
+#define PFMLIB_INPUT_SCB_BUCKET (unsigned long)0x8
+#define PFMLIB_INPUT_SCB_COUNTER (unsigned long)0x10
+
+typedef struct {
+	unsigned long flags; 
+	pfmlib_ice9_scb_counter_t pfp_ice9_scb_counters[PMU_ICE9_SCB_NUM_COUNTERS];
+	pfmlib_ice9_scb_t pfp_ice9_scb_global;
+} pfmlib_ice9_input_param_t;
+
+typedef struct {
+	unsigned long reserved;
+} pfmlib_ice9_output_param_t;
+
+/*
+ * function exported to applications
+ */
+
+/* CPU counter */
+int pfm_ice9_is_cpu(unsigned int i);
+
+/* SCB counter */
+int pfm_ice9_is_scb(unsigned int i);
+
+/* Reg 25 domain support */
+int pfm_ice9_support_domain(unsigned int i);
+
+/* VPC/PEA sampling support */
+int pfm_ice9_support_vpc_pea(unsigned int i);
+
 #ifdef __cplusplus /* extern C */
 }
 #endif

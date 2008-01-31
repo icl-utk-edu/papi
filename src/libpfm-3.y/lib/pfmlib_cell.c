@@ -71,16 +71,12 @@ struct pfm_cell_signal_group_desc {
 	num2 = tmp;			\
 } while(0)
 
-static int pmx_ctrl_bits;
-
 static int
 pfm_cell_detect(void)
 {
 	int ret;
 	char buffer[128];
 	
-	pmx_ctrl_bits = 0;
-
 	ret = __pfm_getcpuinfo_attr("cpu", buffer, sizeof(buffer));
 	if (ret == -1) {
 		return PFMLIB_ERR_NOTSUPP;
@@ -93,7 +89,7 @@ pfm_cell_detect(void)
 }
 
 static int
-get_pmx_offset(int pmx_num)
+get_pmx_offset(int pmx_num, unsigned int *pmx_ctrl_bits)
 {
 	/* pmx_num==0 -> not specified
 	 * pmx_num==1 -> pm0
@@ -107,8 +103,8 @@ get_pmx_offset(int pmx_num)
 		/* offset is specified */
 		offset = (pmx_num - 1);
 		
-		if ((~pmx_ctrl_bits >> offset) & 0x1) {
-			pmx_ctrl_bits |= (0x1 << offset);
+		if ((~*pmx_ctrl_bits >> offset) & 0x1) {
+			*pmx_ctrl_bits |= (0x1 << offset);
 			return offset;
 		} else {
 			/* offset is used */
@@ -116,10 +112,10 @@ get_pmx_offset(int pmx_num)
 		}
 	} else if (pmx_num == 0){
 		/* offset is not specified */
-		while (((pmx_ctrl_bits >> i) & 0x1) && (i < PMX_MAX_NUM)) {
+		while (((*pmx_ctrl_bits >> i) & 0x1) && (i < PMX_MAX_NUM)) {
 			i++;
 		}
-		pmx_ctrl_bits |= (0x1 << i);
+		*pmx_ctrl_bits |= (0x1 << i);
 		return i;
 	}
 	/* pmx_num is invalid */
@@ -224,6 +220,7 @@ pfm_cell_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_cell_input_param_t 
 	int input_control, polarity, count_cycle, count_enable;
 	unsigned long long subunit;
 	int shift0, shift1;
+	unsigned int pmx_ctrl_bits;
 	
 	count_enable = 1;
 	
@@ -299,11 +296,13 @@ pfm_cell_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_cell_input_param_t 
 	pc[7].reg_value	= mod_in->triggers;
 	
 	pmcs_cnt = COMMON_REG_NUMS;
+	pmx_ctrl_bits = 0;
 	
 	/* pmX register setting */
 	for(i = 0; i < event_cnt; i++) {
 		/* PMX_CONTROL */
-		pmx_offset = get_pmx_offset(mod_in->pfp_cell_counters[i].pmX_control_num);
+		pmx_offset = get_pmx_offset(mod_in->pfp_cell_counters[i].pmX_control_num,
+					    &pmx_ctrl_bits);
 		if (pmx_offset == PFMLIB_ERR_INVAL) {
 			DPRINT(("pmX already used\n"));
 			return PFMLIB_ERR_INVAL;
