@@ -733,6 +733,69 @@ extern pentium4_event_t pentium4_events[];
 extern inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int *event, unsigned int *umask);
 extern inline unsigned int _pfm_convert_umask(unsigned int event, unsigned int umask);
 
+/* convert a collection of pfm mask bits into an array of pfm mask indices */
+/* lifted wholesale from papi_pfm_events because I didn't want to publish it */
+static inline int prepare_umask(unsigned int foo,unsigned int *values)
+{
+  unsigned int tmp = foo, i, j = 0;
+
+  SUBDBG("umask 0x%x\n",tmp);
+  while ((i = ffs(tmp)))
+    {
+      tmp = tmp ^ (1 << (i-1));
+      values[j] = i - 1;
+      SUBDBG("umask %d is %d\n",j,values[j]);
+      j++;
+    }
+  return(j);
+}
+
+
+/* This array provides values for the PEBS_ENABLE and PEBS_MATRIX_VERT
+	registers to support a series of metric for replay_event.
+	The first two entries are dummies; the remaining 9 correspond to 
+	virtual bit masks in the replay_event definition and map onto Intel
+	documentation.
+*/
+
+#define P4_REPLAY_REAL_MASK 0x00000003
+#define P4_REPLAY_VIRT_MASK 0x00000FFC
+
+static pentium4_replay_regs_t p4_replay_regs[]={
+/* 0 */ {.enb		= 0,			/* dummy */
+		 .mat_vert	= 0,
+		},
+/* 1 */ {.enb		= 0,			/* dummy */
+		 .mat_vert	= 0,
+		},
+/* 2 */ {.enb		= 0x03000001,	/* 1stL_cache_load_miss_retired */
+		 .mat_vert	= 0x00000001,
+		},
+/* 3 */ {.enb		= 0x03000002,	/* 2ndL_cache_load_miss_retired */
+		 .mat_vert	= 0x00000001,
+		},
+/* 4 */ {.enb		= 0x03000004,	/* DTLB_load_miss_retired */
+		 .mat_vert	= 0x00000001,
+		},
+/* 5 */ {.enb		= 0x03000004,	/* DTLB_store_miss_retired */
+		 .mat_vert	= 0x00000002,
+		},
+/* 6 */ {.enb		= 0x03000004,	/* DTLB_all_miss_retired */
+		 .mat_vert	= 0x00000003,
+		},
+/* 7 */ {.enb		= 0x03018001,	/* Tagged_mispred_branch */
+		 .mat_vert	= 0x00000010,
+		},
+/* 8 */ {.enb		= 0x03000200,	/* MOB_load_replay_retired */
+		 .mat_vert	= 0x00000001,
+		},
+/* 9 */ {.enb		= 0x03000400,	/* split_load_retired */
+		 .mat_vert	= 0x00000001,
+		},
+/* 10 */ {.enb		= 0x03000400,	/* split_store_retired */
+		 .mat_vert	= 0x00000002,
+		},
+};
 
 /* this maps the arbitrary pmd index in libpfm/pentium4_events.h to the intel documentation */
 static int pfm2intel[] = {0, 1, 4, 5, 8, 9, 12, 13, 16, 2, 3, 6, 7, 10, 11, 14, 15, 17 };
@@ -741,7 +804,8 @@ int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
 {
     pentium4_escr_value_t escr_value;
     pentium4_cccr_value_t cccr_value;
-    unsigned int event, event_mask, umask;
+    unsigned int umask, num_masks, replay_mask, unit_masks[12];
+    unsigned int event, event_mask;
     unsigned int tag_value, tag_enable;
 
     int i, j, escr, cccr, pmd;
@@ -753,23 +817,23 @@ int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
        for each allowed cccr find the pmd index
        convert to an intel counter number; or it into bits->counter
     */
-    for (i = 0; i < MAX_ESCRS_PER_EVENT; i++) {
-	bits->counter[i] = 0;
-	escr = pentium4_events[event].allowed_escrs[i];
-	if (escr < 0) {
-	    continue;
-	}
+	for (i = 0; i < MAX_ESCRS_PER_EVENT; i++) {
+		bits->counter[i] = 0;
+		escr = pentium4_events[event].allowed_escrs[i];
+		if (escr < 0) {
+			continue;
+		}
 
-	bits->escr[i] = escr;
-	for (j = 0; j < MAX_CCCRS_PER_ESCR; j++) {
-	    cccr = pentium4_escrs[escr].allowed_cccrs[j];
-	    if (cccr < 0) {
-		continue;
-	    }
+		bits->escr[i] = escr;
+		for (j = 0; j < MAX_CCCRS_PER_ESCR; j++) {
+			cccr = pentium4_escrs[escr].allowed_cccrs[j];
+			if (cccr < 0) {
+				continue;
+			}
 
-	    pmd = pentium4_cccrs[cccr].pmd;
-	    bits->counter[i] |= (1 << pfm2intel[pmd]);
-	}
+			pmd = pentium4_cccrs[cccr].pmd;
+			bits->counter[i] |= (1 << pfm2intel[pmd]);
+		}
     }
     /* if there's only one valid escr, copy the values */
     if (escr < 0) {
@@ -780,13 +844,13 @@ int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
     /* Calculate the event-mask value. Invalid masks
      * specified by the caller are ignored.
      */
-    tag_value = 0;
-    tag_enable = 0;
-    event_mask = _pfm_convert_umask(event, umask);
-    if (event_mask & 0xF0000) {
-	tag_enable = 1;
-	tag_value = ((event_mask & 0xF0000) >> EVENT_MASK_BITS);
-    }
+	tag_value = 0;
+	tag_enable = 0;
+	event_mask = _pfm_convert_umask(event, umask);
+	if (event_mask & 0xF0000) {
+		tag_enable = 1;
+		tag_value = ((event_mask & 0xF0000) >> EVENT_MASK_BITS);
+	}
 
     /* Set up the ESCR and CCCR register values. */
     escr_value.val = 0;
@@ -800,8 +864,6 @@ int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
     escr_value.bits.event_mask   = event_mask;
     escr_value.bits.event_select = pentium4_events[event].event_select;
     escr_value.bits.reserved     = 0;
-
-    bits->event = escr_value.val;
 
     /* initialize the proper bits in the cccr register */
     cccr_value.val = 0;
@@ -824,16 +886,31 @@ int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
     cccr_value.bits.cascade       = 0; /* FIXME: How do we handle "cascading" counters? */
     cccr_value.bits.overflow      = 0;
 
-    bits->cccr = cccr_value.val;
+	/* these flags are always zero, from what I can tell... */
+	bits->pebs_enable = 0;	/* flag for PEBS counting */
+	bits->pebs_matrix_vert = 0;	/* flag for PEBS_MATRIX_VERT, whatever that is */
 
-    /* these flags are always zero, from what I can tell */
-    bits->pebs_enable = 0;	// flag for PEBS counting
-    bits->pebs_matrix_vert = 0;	// flag for PEBS_MATRIX_VERT, whatever that is 
-    bits->ireset = 0;		// I don't really know what this does
+	/* ...unless the event is replay_event */
+	if (!strcmp(pentium4_events[event].name, "replay_event")) {
+		escr_value.bits.event_mask   = event_mask & P4_REPLAY_REAL_MASK;
+		num_masks = prepare_umask(umask, unit_masks);
+		for (i = 0; i < num_masks; i++) {
+			replay_mask = unit_masks[i];
+			if (replay_mask > 1 && replay_mask < 11) { /* process each valid mask we find */
+				bits->pebs_enable |= p4_replay_regs[replay_mask].enb;
+				bits->pebs_matrix_vert |= p4_replay_regs[replay_mask].mat_vert;
+			}
+		}
+	}
+	/* store the escr and cccr values */
+	bits->event = escr_value.val;
+	bits->cccr = cccr_value.val;
 
-    SUBDBG("escr: 0x%lx; cccr:  0x%lx\n", escr_value.val, cccr_value.val);
+	bits->ireset = 0;		/* I don't really know what this does */
 
-    return (PAPI_OK);
+	SUBDBG("escr: 0x%lx; cccr:  0x%lx\n", escr_value.val, cccr_value.val);
+
+	return (PAPI_OK);
 }
 
 /* This version of bits_to_info is straight from p4_events and is appropriate 
