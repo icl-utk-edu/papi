@@ -2842,6 +2842,8 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
      }
    SUBDBG("PMU is a %s, type %d\n",pmu_name,_perfmon2_pfm_pmu_type);
 
+   /* The following checks the version of the PFM library 
+	  against the version PAPI linked to... */
    SUBDBG("pfm_get_version(%p)\n",&version);
    if (pfm_get_version(&version) != PFMLIB_SUCCESS)
      {
@@ -2850,10 +2852,25 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
      }
 
    if (PFM_VERSION_MAJOR(version) != PFM_VERSION_MAJOR(PFMLIB_VERSION)) {
-      PAPIERROR("Version mismatch of libpfm: compiled %x vs. installed %x",
+      PAPIERROR("Version mismatch of libpfm: compiled %x vs. installed %x\n",
               PFM_VERSION_MAJOR(PFMLIB_VERSION), PFM_VERSION_MAJOR(version));
       return (PAPI_ESBSTR);
    }
+
+      /* The following checks the PFMLIB version 
+	  against the perfmon2 kernel version... */
+   strncpy(_papi_hwi_system_info.sub_info.support_version,buf,sizeof(_papi_hwi_system_info.sub_info.support_version));
+   retval = get_string_from_file("/sys/kernel/perfmon/version",_papi_hwi_system_info.sub_info.kernel_version,sizeof(_papi_hwi_system_info.sub_info.kernel_version));
+   if (retval != PAPI_OK)
+      return(retval);
+   sprintf(buf, "%d.%d", PFM_VERSION_MAJOR(PFM_VERSION), PFM_VERSION_MINOR(PFM_VERSION));
+   SUBDBG("Perfmon2 library versions...\n  kernel: %s\n  library: %s\n", _papi_hwi_system_info.sub_info.kernel_version, buf);
+   if (strcmp (_papi_hwi_system_info.sub_info.kernel_version, buf) != 0) {
+      PAPIERROR("Version mismatch of libpfm: compiled %s vs. installed %s\n",
+              buf, _papi_hwi_system_info.sub_info.kernel_version);
+       return (PAPI_ESBSTR);
+   }
+
 
 #ifdef DEBUG
    memset(&pfmlib_options, 0, sizeof(pfmlib_options));
@@ -2882,10 +2899,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   strcpy(_papi_hwi_system_info.sub_info.name, "$Id$");          
   strcpy(_papi_hwi_system_info.sub_info.version, "$Revision$");  
   sprintf(buf,"%08x",version);
-  strncpy(_papi_hwi_system_info.sub_info.support_version,buf,sizeof(_papi_hwi_system_info.sub_info.support_version));
-  retval = get_string_from_file("/sys/kernel/perfmon/version",_papi_hwi_system_info.sub_info.kernel_version,sizeof(_papi_hwi_system_info.sub_info.kernel_version));
-  if (retval != PAPI_OK)
-    return(retval);
+
   pfm_get_num_counters((unsigned int *)&_papi_hwi_system_info.sub_info.num_cntrs);
   retval = get_system_info(&_papi_hwi_system_info);
   if (retval)
