@@ -95,9 +95,7 @@ int setup_p3_presets(int cputype) {
 #ifdef PERFCTR_X86_AMD_FAM10  /* this is defined in perfctr 2.6.29 */
    case PERFCTR_X86_AMD_FAM10:
       retval = _papi_pfm_init();
-	  /* TODO: create and target a table for Barcelona */
       _papi_pfm_setup_presets("AMD64 (Barcelona)", 0);
-      _papi_hwd_fixup_fp("AMD64 (Barcelona)");
       break;
 #endif
 
