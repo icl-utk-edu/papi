@@ -471,17 +471,30 @@ int
 pfm_get_event_name(unsigned int i, char *name, size_t maxlen)
 {
 	size_t l, j;
+	char *str;
 
-	if (PFMLIB_INITIALIZED() == 0) return PFMLIB_ERR_NOINIT;
+	if (PFMLIB_INITIALIZED() == 0)
+		return PFMLIB_ERR_NOINIT;
 
-	if (i >= pfm_current->pme_count || name == NULL || maxlen < 1) return PFMLIB_ERR_INVAL;
+	if (i >= pfm_current->pme_count || name == NULL || maxlen < 1)
+		return PFMLIB_ERR_INVAL;
 
-	strncpy(name, pfm_current->get_event_name(i), maxlen-1);
+	str = pfm_current->get_event_name(i);
+	l = strlen(str);
 
-	name[maxlen-1] = '\0';
-	l = strlen(name);
+	/*
+	 * we fail if buffer is too small, simply because otherwise we
+	 * get partial names which are useless for subsequent calls
+	 * users mus invoke pfm_get_event_name_max_len() to correctly size
+	 * the buffer for this call
+	 */
+	if ((maxlen-1) < l)
+		return PFMLIB_ERR_INVAL;
+
 	for(j=0; j < l; j++)
-		name[j] = (char)toupper(name[j]);
+		name[j] = (char)toupper(str[j]);
+
+	name[l] = '\0';
 
 	return PFMLIB_SUCCESS;
 }

@@ -319,7 +319,7 @@ static int pentium4_dispatch_events(pfmlib_input_param_t *input,
 {
 	unsigned int assigned_pmcs[PENTIUM4_NUM_PMCS] = {0};
 	unsigned int event, event_mask, mask;
-	unsigned int tag_value, tag_enable;
+	unsigned int bit, tag_value, tag_enable;
 	unsigned int plm;
 	unsigned int i, j, k, m, n;
 	int escr, escr_pmc;
@@ -410,13 +410,14 @@ static int pentium4_dispatch_events(pfmlib_input_param_t *input,
 				tag_enable = 0;
 				for (n = 0; n < input->pfp_events[i].num_masks; n++) {
 					mask = input->pfp_events[i].unit_masks[n];
-					if (mask < EVENT_MASK_BITS &&
-					    pentium4_events[event].event_masks[mask].name) {
-						event_mask |= (1 << pentium4_events[event].event_masks[mask].bit);
+					bit = pentium4_events[event].event_masks[mask].bit;
+					if (bit < EVENT_MASK_BITS &&
+						pentium4_events[event].event_masks[mask].name) {
+						event_mask |= (1 << bit);
 					}
-					if (mask >= EVENT_MASK_BITS &&
-					    pentium4_events[event].event_masks[mask].name) {
-						tag_value |= (1 << (pentium4_events[event].event_masks[mask].bit - EVENT_MASK_BITS));
+					if (bit >= EVENT_MASK_BITS &&
+						pentium4_events[event].event_masks[mask].name) {
+						tag_value |= (1 << (bit - EVENT_MASK_BITS));
 						tag_enable = 1;
 					}
 				}

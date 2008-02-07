@@ -22,16 +22,22 @@ pfm_get_event_description, pfm_get_event_mask_description \- get event informati
 .SH DESCRIPTION
 The \fBpfm_get_event_name\fR function returns in \fBname\fR the event 
 name given its opaque descriptor in \fBe\fR. The \fBmaxlen\fR argument 
-indicates the maximum length of the buffer provided for \fBname\fR.
-Up to \fBmaxlen-1\fR characters will be returned, not including the
-termination character. Event names are returned in all upper case.
+indicates the maximum length of the buffer provided for \fBname\fR. Up
+to \fBmaxlen\fR-1 characters are stored in the buffer.
+The buffer size must be large enough to store the event name, otherwise
+an error is returned. This behavior is required to avoid returning partial
+names with no way for the caller to verify this is not the full name, except
+by failing other calls. The buffer can be appropriately sized using the
+\fBpfm_get_max_event_name_len()\fR function. The name is returned has a
+null terminated string with all upper-case characters and no spaces.
 .sp
 The \fBpfm_get_full_event_name\fR function returns in \fBname\fR the event 
 name given the full event description in \fBev\fR. The description contains
 the event code in \fBev->event\fR and optional unit masks descriptors in
 \fBev->unit_masks\fR. The \fBmaxlen\fR argument indicates the maximum length
-of the buffer provided for \fBname\fR.  If more than \fBmaxlen-1\fR characters
-are needed to represent the event, an error is returned.
+of the buffer provided for \fBname\fR.  If more than \fBmaxlen\fR-1 characters
+are needed to represent the event, an error is returned. Applications may use
+the \fBpfm_get_max_event_name_len()\fR function to size the buffer correctly.
 In case unit masks are provided, the final event name string is structured as:
 event_name:unit_masks1[:unit_masks2]. Event names and unit masks names are
 returned in all upper case.
@@ -120,7 +126,7 @@ the string buffer provided is too small
 .B PFMLIB_ERR_INVAL
 the event or unit mask descriptor, or the \fBcnt\fR argument is invalid, or a pointer argument is NULL.
 .SH SEE ALSO
-pfm_get_impl_counters(3), free(3)
+pfm_get_impl_counters(3), pfm_get_max_event_name_len(3), free(3)
 .SH AUTHOR
 Stephane Eranian <eranian@hpl.hp.com>
 .PP

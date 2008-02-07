@@ -101,14 +101,14 @@ endif
 CFLAGS+=-I.
 ALIBPFM=libpfm.a
 
-ifneq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
-ifneq ($(CC),qk-gcc)
 SLIBPFM=libpfm.so.$(VERSION).$(REVISION).$(AGE)
 VLIBPFM=libpfm.so.$(VERSION)
-endif
-endif
 
-TARGETS=$(ALIBPFM) $(SLIBPFM)
+TARGETS=$(ALIBPFM)
+
+ifeq ($(CONFIG_PFMLIB_SHARED),y)
+TARGETS += $(SLIBPFM)
+endif
 
 OBJS=$(SRCS:.c=.o)
 SOBJS=$(OBJS:.o=.lo)
@@ -180,7 +180,6 @@ INC_CELL= $(PFMINCDIR)/perfmon/pfmlib_cell.h \
 INCDEP=$(INC_COMMON) $(INCARCH)
 
 all: $(TARGETS)
-	echo INCDED=$(INCDEP)
 
 $(OBJS) $(SOBJS): $(TOPDIR)/config.mk $(TOPDIR)/rules.mk Makefile $(INCDEP)
 
@@ -202,14 +201,11 @@ depend:
 	$(MKDEP) $(CFLAGS) $(SRCS)
 
 install: $(TARGETS)
+	@echo building: $(TARGETS)
 	-mkdir -p $(DESTDIR)$(LIBDIR)
 	$(INSTALL) -m 644 $(ALIBPFM) $(DESTDIR)$(LIBDIR)
-ifneq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
-ifneq ($(CC),qk-gcc)
+ifeq ($(CONFIG_PFMLIB_SHARED),y)
 	$(INSTALL) $(SLIBPFM) $(DESTDIR)$(LIBDIR)
 	cd $(DESTDIR)$(LIBDIR); $(LN) $(SLIBPFM) $(VLIBPFM)
 	cd $(DESTDIR)$(LIBDIR); $(LN) $(SLIBPFM) libpfm.so
 endif
-endif
-
-

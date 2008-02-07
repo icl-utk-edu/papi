@@ -1035,7 +1035,6 @@ main(int argc, char **argv)
 				  options.opt_us_format = 1;
 				  break;
 			case   2:
-			case 'V':
 				if (options.smpl_freq) fatal_error("sampling frequency set twice\n");
 				options.smpl_freq = strtoul(optarg, &endptr, 10);
 				if (*endptr != '\0')
@@ -1049,6 +1048,7 @@ main(int argc, char **argv)
 			case 'u':
 				options.opt_plm |= PFM_PLM3;
 				break;
+			case 'V':
 			case   5:
 				printf("multiplex version " MULTIPLEX_VERSION " Date: " __DATE__ "\n"
 					"Copyright (C) 2004 Hewlett-Packard Company\n");

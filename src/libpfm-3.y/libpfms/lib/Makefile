@@ -42,10 +42,20 @@ SRCS=libpfms.c
 ifneq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
 SLIBPFM=libpfms.so.$(VERSION).$(REVISION).$(AGE)
 endif
-TARGETS=libpfms.a $(SLIBPFM)
+
 OBJS=$(SRCS:.c=.o)
 SOBJS=$(OBJS:.o=.lo)
 
+TARGETS=libpfms.a
+
+#
+# assume that if llibpfm built static, libpfms should
+# also be static, i.e., likely platform does not support
+# shared libraries.
+#
+ifeq ($(CONFIG_PFMLIB_SHARED),y)
+TARGETS += $(SLIBPFM)
+endif
 
 CFLAGS+=-I$(PFMSINCDIR)
 

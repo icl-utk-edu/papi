@@ -49,19 +49,16 @@ override ARCH=sparc
 endif
 
 #
+# CONFIG_PFMLIB_SHARED: y=compile static and shared versions, n=static only
+#
+CONFIG_PFMLIB_SHARED=y
+
+#
 # Cray-X2 is cross-compiled. Check the programming environment
 #
 PE := $(shell echo $${CRAY_PE_TARGET})
 ifeq (cray-x2,$(PE))
 override ARCH=crayx2
-endif
-
-#
-# Cray-XT needs the V2.2 version for compatability
-#
-MACHINE := $(shell test -d /proc/cray_xt && echo cray-xt)
-ifeq (cray-xt,$(MACHINE))
-CONFIG_PFMLIB_ARCH_CRAYXT=y
 endif
 
 #
@@ -115,8 +112,16 @@ ifeq ($(ARCH),sparc)
 CONFIG_PFMLIB_ARCH_SPARC=y
 endif
 
+ifeq ($(XTPE_COMPILE_TARGET),linux)
+CONFIG_PFMLIB_ARCH_CRAYXT=y
+else
+CONFIG_PFMLIB_ARCH_CRAYXT=y
+CONFIG_PFMLIB_SHARED=n
+endif
+
 ifeq ($(ARCH),crayx2)
 CONFIG_PFMLIB_ARCH_CRAYX2=y
+CONFIG_PFMLIB_SHARED=n
 endif
 
 ifeq ($(ARCH),cell)

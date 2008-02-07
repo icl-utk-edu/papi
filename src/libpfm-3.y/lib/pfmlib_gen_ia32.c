@@ -253,7 +253,7 @@ check_arch_pmu(int family)
 	}
 
 	/* check for fixed counters */
-	if (pmu_version == 2) {
+	if (pmu_version >= 2) {
 		/*
 		 * As described in IA-32 Developer's manual vol 3b
 		 * in section 18.12.2.1, early processors supporting
@@ -691,14 +691,12 @@ pfm_gen_ia32_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_o
 		DPRINT(("invalid plm=%x\n", inp->pfp_dfl_plm));
 		return PFMLIB_ERR_INVAL;
 	}
-	switch(pmu_version) {
-		case 1:
-			return pfm_gen_ia32_dispatch_counters_v1(inp, mod_in, outp);
-		case 2:
-			return pfm_gen_ia32_dispatch_counters_v2(inp, mod_in, outp);
-		default:
-			return PFMLIB_ERR_INVAL;
-	}
+
+	/* simplfied v1 (no fixed counters */
+	if (pmu_version == 1)
+		return pfm_gen_ia32_dispatch_counters_v1(inp, mod_in, outp);
+	/* v2 or above */
+	return pfm_gen_ia32_dispatch_counters_v2(inp, mod_in, outp);
 }
 
 static int
