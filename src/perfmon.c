@@ -151,6 +151,15 @@ inline_static long_long get_cycles(void)
 			     : "=r" (ret));
 	return ret;
 }
+#elif defined(__powerpc__)
+/*
+ * It's not possible to read the cycles from user space on ppc970 and
+ * POWER4/4+.  There is a 64-bit time-base register (TBU|TBL), but its
+ * update rate is implementation-specific and cannot easily be translated
+ * into a cycle count.  So don't implement get_cycles for POWER for now,
+ * but instead, rely on the definition of HAVE_CLOCK_GETTIME_REALTIME in
+ * _papi_hwd_get_real_usec() for the needed functionality.
+*/
 #else
 #error "No support for this architecture. Please modify perfmon.c"
 #endif

@@ -255,16 +255,17 @@ papi_xchg_u32(volatile void *p, unsigned long val)
         unsigned long prev;
 
         __asm__ __volatile__ ("\n\
+        sync \n\
 1:      lwarx   %0,0,%2 \n\
         stwcx.  %3,0,%2 \n\
-        bne-    1b"
+        bne-    1b \n\
+        isync"
         : "=&r" (prev), "=m" (*(volatile unsigned long *)p)
         : "r" (p), "r" (val), "m" (*(volatile unsigned long *)p)
         : "cc", "memory");
 
         return prev;
 }
-
 
 /*
  * The two defines below are taken directly from the MIPS implementation.
