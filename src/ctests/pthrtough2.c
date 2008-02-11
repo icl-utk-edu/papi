@@ -53,7 +53,7 @@ tests_quiet(argc, argv);     /*Set TESTS_QUIET variable */
   nthr = NITER;
   
    if (!TESTS_QUIET){
-  printf("Creating %d threads for %d iterations each of:\n",NITER,1);
+  printf("Creating %d threads for %d iterations each of:\n",(int)nthr,1);
   printf("\tregister\n");
   printf("\tcreate_eventset\n");
   printf("\tdestroy_eventset\n");
@@ -66,8 +66,15 @@ tests_quiet(argc, argv);     /*Set TESTS_QUIET variable */
   for (j=0;j<nthr;j++)
     {
       ret = pthread_create(&th[j], &attr, &Thread, NULL);
-      if (ret) 
-	test_fail(__FILE__, __LINE__, "pthread_create", PAPI_ESYS);
+	  if (ret) {
+		printf("Failed on thread: %d\n",j);
+		if (j < 10)
+			test_fail(__FILE__, __LINE__, "pthread_create", PAPI_ESYS);
+		printf("Continuing test with %d threads\n",j-1);
+		nthr = j-1;
+		th = (pthread_t *)realloc(th, nthr*sizeof(pthread_t *));
+		break;
+	  }
     }
 
   for (j=0;j<nthr;j++)
