@@ -76,41 +76,51 @@ typedef int hwd_reg_alloc_t;
 #ifdef PFM30
    #define NUM_PMCS PFMLIB_MAX_PMCS
    #define NUM_PMDS PFMLIB_MAX_PMDS
-#ifdef HAVE_PERFMON_PFMLIB_MONTECITO_H
-   #define MAX_COUNTERS PMU_MONT_NUM_COUNTERS
-#elif defined(ITANIUM2)
-   #define MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
-#else
-   #define MAX_COUNTERS PMU_ITA_NUM_COUNTERS
-#endif
+   
+   #ifdef HAVE_PERFMON_PFMLIB_MONTECITO_H
+     #define MAX_COUNTERS PMU_MONT_NUM_COUNTERS
+   #elif defined(ITANIUM2)
+     #define MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
+   #else
+     #define MAX_COUNTERS PMU_ITA_NUM_COUNTERS
+   #endif
+   
    typedef struct param_t {
-	  pfarg_reg_t pd[NUM_PMDS];
+      pfarg_reg_t pd[NUM_PMDS];
       pfarg_reg_t pc[NUM_PMCS];
       pfmlib_input_param_t inp;
       pfmlib_output_param_t outp;
-	  void	*mod_inp;	/* model specific input parameters to libpfm    */
-	  void	*mod_outp;	/* model specific output parameters from libpfm */
+      void *mod_inp;	/* model specific input parameters to libpfm    */
+      void *mod_outp;	/* model specific output parameters from libpfm */
    } pfmw_param_t;
    typedef struct ita2_param_t {
       pfmlib_ita2_input_param_t ita2_input_param;
-	  pfmlib_ita2_output_param_t  ita2_output_param;
-   }  pfmw_ita2_param_t;
- #ifdef ITANIUM2
-   typedef pfmw_ita2_param_t pfmw_ita_param_t;
- #else
-   typedef int pfmw_ita_param_t;
- #endif
+      pfmlib_ita2_output_param_t  ita2_output_param;
+   } pfmw_ita2_param_t;
+   typedef struct mont_param_t {
+      pfmlib_mont_input_param_t mont_input_param;
+      pfmlib_mont_output_param_t  mont_output_param;
+   } pfmw_mont_param_t;
+   #ifdef HAVE_PERFMON_PFMLIB_MONTECITO_H
+     typedef pfmw_mont_param_t pfmw_ita_param_t;
+   #elif defined(ITANIUM2)
+     typedef pfmw_ita2_param_t pfmw_ita_param_t;
+   #else
+     typedef int pfmw_ita_param_t;
+   #endif
+
    #define PMU_FIRST_COUNTER  4
 #else
    #define NUM_PMCS PMU_MAX_PMCS
    #define NUM_PMDS PMU_MAX_PMDS
- #ifdef ITANIUM2
+   
+   #ifdef ITANIUM2
       typedef pfmlib_ita2_param_t pfmw_ita_param_t;
       #define MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
- #else
+   #else
       typedef pfmlib_ita_param_t pfmw_ita_param_t;
       #define MAX_COUNTERS PMU_ITA_NUM_COUNTERS
- #endif
+   #endif
    typedef pfmlib_param_t pfmw_param_t;
 #endif
 
@@ -166,8 +176,16 @@ typedef struct sigcontext hwd_ucontext_t;
 
 #define SMPL_BUF_NENTRIES 64
 #define M_PMD(x)        (1UL<<(x))
+/*#ifdef HAVE_PERFMON_PFMLIB_MONTECITO_H*/
+#if defined(PFMLIB_MONTECITO_PMU)
+#define DEAR_REGS_MASK	    (M_PMD(32)|M_PMD(33)|M_PMD(36))
+#define ETB_REGS_MASK		(M_PMD(38)| M_PMD(39)| \
+		                 M_PMD(48)|M_PMD(49)|M_PMD(50)|M_PMD(51)|M_PMD(52)|M_PMD(53)|M_PMD(54)|M_PMD(55)|\
+				 M_PMD(56)|M_PMD(57)|M_PMD(58)|M_PMD(59)|M_PMD(60)|M_PMD(61)|M_PMD(62)|M_PMD(63))
+#else
 #define DEAR_REGS_MASK      (M_PMD(2)|M_PMD(3)|M_PMD(17))
 #define BTB_REGS_MASK       (M_PMD(8)|M_PMD(9)|M_PMD(10)|M_PMD(11)|M_PMD(12)|M_PMD(13)|M_PMD(14)|M_PMD(15)|M_PMD(16))
+#endif
 
 #ifdef USE_SEMAPHORES
 extern int sem_set;

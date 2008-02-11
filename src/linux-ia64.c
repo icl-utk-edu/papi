@@ -63,7 +63,7 @@ static unsigned long mmdev_ratio;
 static volatile unsigned long *mmdev_timer_addr;
 #endif
 
-#ifndef ITANIUM2
+#ifndef PFMLIB_ITANIUM2_PMU
 static itanium_preset_search_t ia1_preset_search_map[] = {
    {PAPI_L1_TCM, DERIVED_ADD, {"L1D_READ_MISSES_RETIRED", "L2_INST_DEMAND_READS", 0, 0}},
    {PAPI_L1_ICM, 0, {"L2_INST_DEMAND_READS", 0, 0, 0}},
@@ -1258,8 +1258,10 @@ static int ia64_process_profile_buffer(ThreadInfo_t *thread, EventSetInfo_t *ESI
          /* print entry header */
          pc = ent->ip;
       //   printf("ent->ip = 0x%lx \n", ent->ip);
-#ifdef ITANIUM2
+#ifdef PFMLIB_ITANIUM2_PMU
          if (pfm_ita2_is_dear(native_index)) 
+#elif defined(PFMLIB_MONTECITO_PMU)
+         if (pfm_mont_is_dear(native_index)) 
 #else
 	 if (pfm_ita_is_dear(native_index)) 
 #endif
@@ -1267,7 +1269,11 @@ static int ia64_process_profile_buffer(ThreadInfo_t *thread, EventSetInfo_t *ESI
 	   reg = (pfmw_arch_pmd_reg_t *) (ent + 1);
 	   reg++;
 	   reg++;
-#ifdef ITANIUM2
+#if defined(PFMLIB_MONTECITO_PMU)
+	   pc = ((reg->pmd36_mont_reg.dear_iaddr +
+			   reg->pmd36_mont_reg.dear_bn) << 4)
+	     | reg->pmd36_mont_reg.dear_slot;
+#elif defined(PFMLIB_ITANIUM2_PMU)
 	   pc = ((reg->pmd17_ita2_reg.dear_iaddr +
 			   reg->pmd17_ita2_reg.dear_bn) << 4)
 	     | reg->pmd17_ita2_reg.dear_slot;
@@ -1280,7 +1286,7 @@ static int ia64_process_profile_buffer(ThreadInfo_t *thread, EventSetInfo_t *ESI
 	   buf_pos += (hweight64(DEAR_REGS_MASK)<<3);
          }
 
-         _papi_hwi_dispatch_profile(ESI, (caddr_t)pc, (long_long) 0, count);
+         _papi_hwi_dispatch_profile(ESI, (unsigned long)pc, (long_long) 0, count);
 	 overflow_vector ^= (unsigned long)1 << reg_num;
       }
       /*  move to next entry */
@@ -1564,18 +1570,21 @@ int _papi_hwd_init_control_state(hwd_control_state_t * ptr)
    set_domain(ptr, _papi_hwi_system_info.sub_info.default_domain);
 /* set library parameter pointer */
 #ifdef PFM20
-#ifdef ITANIUM2
+ #ifdef ITANIUM2
    ptr->ita_lib_param.pfp_magic = PFMLIB_ITA2_PARAM_MAGIC;
-#else
+ #else
    ptr->ita_lib_param.pfp_magic = PFMLIB_ITA_PARAM_MAGIC;
-#endif
+ #endif
    ptr->evt.pfp_model = &ptr->ita_lib_param;
 #elif PFM30
-#ifdef ITANIUM2
-	/* connect model specific library parameters */
-	evt->mod_inp  = &(ptr->ita_lib_param.ita2_input_param);
-	evt->mod_outp = &(ptr->ita_lib_param.ita2_output_param);
-#endif
+ #if defined(PFMLIB_MONTECITO_PMU)
+   evt->mod_inp  = &(ptr->ita_lib_param.mont_input_param);
+   evt->mod_outp = &(ptr->ita_lib_param.mont_output_param);
+ #elif defined(PFMLIB_ITANIUM2_PMU)
+  /* connect model specific library parameters */
+   evt->mod_inp  = &(ptr->ita_lib_param.ita2_input_param);
+   evt->mod_outp = &(ptr->ita_lib_param.ita2_output_param);
+ #endif
 #endif
 	return(PAPI_OK);
 }
@@ -1617,11 +1626,11 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    for (i = 0; i < count; i++) {
       index = native[i].ni_event & PAPI_NATIVE_AND_MASK;
 #ifdef PFM20
-#ifdef ITANIUM2
+  #ifdef ITANIUM2
       if (pfm_ita2_is_dear(index))
-#else
+  #else
       if (pfm_ita_is_dear(index))
-#endif
+  #endif
          set_dear_ita_param(&this_state->ita_lib_param, index);
 #endif
       PFMW_PEVT_EVENT(evt,i) = index;
