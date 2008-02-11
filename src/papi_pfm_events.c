@@ -245,16 +245,22 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
   SUBDBG("Opening %s\n",name);
   table = fopen(name,"r");
   if (table == NULL)
-    {
-      SUBDBG("Open %s failed, trying ./%s.\n",name,PERFMON_EVENT_FILE);
-      table = fopen(PERFMON_EVENT_FILE,"r");
-      if (table == NULL)
-	{
-	  PAPIERROR("fopen(%s): %s, please set the PAPI_PERFMON_EVENT_FILE env. variable",name,strerror(errno));
-	  return(PAPI_ESYS);
-	}
-      strcpy(name,PERFMON_EVENT_FILE);
-    }
+  {
+    SUBDBG("Open %s failed, trying ./%s.\n",name,PERFMON_EVENT_FILE);
+    sprintf(name,"%s",PERFMON_EVENT_FILE);
+    table = fopen(name,"r");
+  }
+  if (table == NULL)
+  {
+    SUBDBG("Open ./%s failed, trying ../%s.\n",name,PERFMON_EVENT_FILE);
+    sprintf(name,"../%s",PERFMON_EVENT_FILE);
+    table = fopen(name,"r");
+  }
+  if (table == NULL)
+  {
+    PAPIERROR("fopen(%s): %s, please set the PAPI_PERFMON_EVENT_FILE env. variable",name,strerror(errno));
+    return(PAPI_ESYS);
+  }
   SUBDBG("Open %s succeeded.\n",name);
   while (fgets(line,LINE_MAX,table))
     {
