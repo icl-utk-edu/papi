@@ -631,7 +631,10 @@ do_measure_one_cpu(void *data)
 		setd.set_flags = my_sdesc->set_flags;
 		setd.set_timeout =  SWITCH_TIMEOUT; /* in nsecs */
 
-		if (pfm_create_evtsets(fd, &setd, 1) == -1) {
+		/*
+ 		 * do not bother if we have only one set
+ 		 */
+		if (RTOP_NUM_SDESC > 1 && pfm_create_evtsets(fd, &setd, 1) == -1) {
 			warning("CPU%ld cannot create set%u: %d\n", mycpu, j, errno);
 			goto error;
 		}

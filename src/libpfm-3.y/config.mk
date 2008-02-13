@@ -114,7 +114,9 @@ endif
 
 ifeq ($(XTPE_COMPILE_TARGET),linux)
 CONFIG_PFMLIB_ARCH_CRAYXT=y
-else
+endif
+
+ifeq ($(XTPE_COMPILE_TARGET),catamount)
 CONFIG_PFMLIB_ARCH_CRAYXT=y
 CONFIG_PFMLIB_SHARED=n
 endif
