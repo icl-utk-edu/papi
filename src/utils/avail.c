@@ -42,6 +42,7 @@ static void print_help(char **argv)
    printf("PAPI preset event filters can be combined in a logical OR.\n");
 }
 
+
 int main(int argc, char **argv)
 {
    int i,j, k;
@@ -110,98 +111,79 @@ int main(int argc, char **argv)
          test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
    }
 
-   if ((hwinfo = PAPI_get_hardware_info()) == NULL)
-      test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
+   retval = papi_print_header ("Available events and hardware information.\n", 1, hwinfo);
+   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
-   if (!TESTS_QUIET) {
-      printf("Available events and hardware information.\n");
-      printf
-          ("-------------------------------------------------------------------------\n");
-      printf("Vendor string and code   : %s (%d)\n", hwinfo->vendor_string,
-             hwinfo->vendor);
-      printf("Model string and code    : %s (%d)\n", hwinfo->model_string, hwinfo->model);
-      printf("CPU Revision             : %f\n", hwinfo->revision);
-      printf("CPU Megahertz            : %f\n", hwinfo->mhz);
-      printf("CPU Clock Megahertz      : %d\n", hwinfo->clock_mhz);
-      printf("CPU Clock Ticks / sec    : %d\n", hwinfo->clock_ticks);
-      printf("CPU's in this Node       : %d\n", hwinfo->ncpu);
-      printf("Nodes in this System     : %d\n", hwinfo->nnodes);
-      printf("Total CPU's              : %d\n", hwinfo->totalcpus);
-      printf("Number Hardware Counters : %d\n", PAPI_get_opt(PAPI_MAX_HWCTRS, NULL));
-      printf("Max Multiplex Counters   : %d\n", PAPI_get_opt(PAPI_MAX_MPX_CTRS, NULL));
-      printf ("-------------------------------------------------------------------------\n");
-
-	  printf("The following correspond to fields in the PAPI_event_info_t structure.\n\n");
-	  if (print_event_info) {
-		  if (PAPI_event_name_to_code(name, &i) == PAPI_OK) {
-			  if (PAPI_get_event_info(i, &info) == PAPI_OK) {
-				  PAPI_event_info_t n_info;
-				  if (i & PAPI_PRESET_MASK) {
-					  printf("%-30s%s\n%-30s0x%-10x\n%-30s%d\n",
-						"Event name:", info.symbol, "Event Code:", info.event_code, "Number of Native Events:", info.count);
-					  printf("%-29s|%s|\n%-29s|%s|\n%-29s|%s|\n",
-						"Short Description:", info.short_descr, "Long Description:", info.long_descr, "Developer's Notes:", info.note);
-					  printf("%-29s|%s|\n%-29s|%s|\n",
-						"Derived Type:", info.derived, "Postfix Processing String:", info.postfix);
-					  for (j=0;j<(int)info.count;j++) {
-						  printf(" Native Code[%d]: 0x%x  |%s|\n",j,info.code[j], info.name[j]);
-						  PAPI_get_event_info(info.code[j], &n_info);
-						  printf(" Number of Register Values:   %d\n", n_info.count);
-						  for (k=0;k<(int)n_info.count;k++)
-							  printf(" Register[%2d]:   0x%08x  |%s|\n",k, n_info.code[k], n_info.name[k]);
-						  printf(" Native Event Description:   |%s|\n\n", n_info.long_descr);
+   if (print_event_info) {
+	   if (PAPI_event_name_to_code(name, &i) == PAPI_OK) {
+		   if (PAPI_get_event_info(i, &info) == PAPI_OK) {
+			   PAPI_event_info_t n_info;
+			   if (i & PAPI_PRESET_MASK) {
+				   printf("%-30s%s\n%-30s0x%-10x\n%-30s%d\n",
+					   "Event name:", info.symbol, "Event Code:", info.event_code, "Number of Native Events:", info.count);
+				   printf("%-29s|%s|\n%-29s|%s|\n%-29s|%s|\n",
+					   "Short Description:", info.short_descr, "Long Description:", info.long_descr, "Developer's Notes:", info.note);
+				   printf("%-29s|%s|\n%-29s|%s|\n",
+					   "Derived Type:", info.derived, "Postfix Processing String:", info.postfix);
+				   for (j=0;j<(int)info.count;j++) {
+					   printf(" Native Code[%d]: 0x%x  |%s|\n",j,info.code[j], info.name[j]);
+					   PAPI_get_event_info(info.code[j], &n_info);
+					   printf(" Number of Register Values:   %d\n", n_info.count);
+					   for (k=0;k<(int)n_info.count;k++)
+						   printf(" Register[%2d]:   0x%08x  |%s|\n",k, n_info.code[k], n_info.name[k]);
+					   printf(" Native Event Description:   |%s|\n\n", n_info.long_descr);
 					  }
-				  }
-				  else { /* must be a native event code */
-					  printf("%-30s%s\n%-30s0x%-10x\n%-30s%d\n",
-						"Event name:", info.symbol, "Event Code:", info.event_code, "Number of Register Values:", info.count);
-					  printf("%-29s|%s|\n", "Description:", info.long_descr);
-					  for (k=0;k<(int)info.count;k++)
-							  printf(" Register[%2d]:   0x%08x  |%s|\n",k, info.code[k], info.name[k]);
-				  }
-			  }
-		  }
-		  else printf("Sorry, an event by the name '%s' could not be found.\n Is it typed correctly?\n\n",name);
-	  }
-	  else {
-		  /* For consistency, always ASK FOR the first event */
-		  i = 0 | PAPI_PRESET_MASK;
-		  PAPI_enum_event(&i, PAPI_ENUM_FIRST);
+			   }
+			   else { /* must be a native event code */
+				   printf("%-30s%s\n%-30s0x%-10x\n%-30s%d\n",
+					   "Event name:", info.symbol, "Event Code:", info.event_code, "Number of Register Values:", info.count);
+				   printf("%-29s|%s|\n", "Description:", info.long_descr);
+				   for (k=0;k<(int)info.count;k++)
+					   printf(" Register[%2d]:   0x%08x  |%s|\n",k, info.code[k], info.name[k]);
+			   }
+		   }
+	   }
+	   else printf("Sorry, an event by the name '%s' could not be found.\n Is it typed correctly?\n\n",name);
+   }
+   else {
+	   /* For consistency, always ASK FOR the first event */
+	   i = 0 | PAPI_PRESET_MASK;
+	   PAPI_enum_event(&i, PAPI_ENUM_FIRST);
 
-		  if (print_tabular) {
-			  printf("    Name        Code    ");
-			  if (!print_avail_only) printf("Avail ");
-			  printf("Deriv Description (Note)\n");
-		  }
-		  else {
-			  printf("%-13s%-11s%-8s%-16s\n |Long Description|\n |Developer's Notes|\n |Derived|\n |PostFix|\n Native Code[n]: <hex> |name|\n","Symbol","Event Code","Count","|Short Description|");
-		  }
-		  do {
-			  if (PAPI_get_event_info(i, &info) == PAPI_OK) {
-				  if (print_tabular) {
-					  if (filter & info.event_type) {
-						  if (print_avail_only) {
-							  if (info.count)
-								  printf("%-13s0x%x  %-5s%s",
-								  info.symbol,
-								  info.event_code,
-								  is_derived(&info),
-								  info.long_descr);
-							  if (info.note[0]) printf(" (%s)", info.note);
-							  printf("\n");
-						  } else {
-							  printf("%-13s0x%x  %-6s%-4s %s",
-								  info.symbol,
-								  info.event_code,
-								  (info.count ? "Yes" : "No"),
-								  is_derived(&info),
-								  info.long_descr);
-							  if (info.note[0]) printf(" (%s)", info.note);
-							  printf("\n");
+	   if (print_tabular) {
+		   printf("    Name        Code    ");
+		   if (!print_avail_only) printf("Avail ");
+		   printf("Deriv Description (Note)\n");
+	   }
+	   else {
+		   printf("%-13s%-11s%-8s%-16s\n |Long Description|\n |Developer's Notes|\n |Derived|\n |PostFix|\n Native Code[n]: <hex> |name|\n","Symbol","Event Code","Count","|Short Description|");
+	   }
+	   do {
+		   if (PAPI_get_event_info(i, &info) == PAPI_OK) {
+			   if (print_tabular) {
+				   if (filter & info.event_type) {
+					   if (print_avail_only) {
+						   if (info.count)
+							   printf("%-13s0x%x  %-5s%s",
+							   info.symbol,
+							   info.event_code,
+							   is_derived(&info),
+							   info.long_descr);
+						   if (info.note[0]) printf(" (%s)", info.note);
+						   printf("\n");
+					   } else {
+						   printf("%-13s0x%x  %-6s%-4s %s",
+							   info.symbol,
+							   info.event_code,
+							   (info.count ? "Yes" : "No"),
+							   is_derived(&info),
+							   info.long_descr);
+						   if (info.note[0]) printf(" (%s)", info.note);
+						   printf("\n");
 						  }
 					  }
-				  } else {
-					  if ((print_avail_only && info.count) || (print_avail_only == 0))
+			   } else {
+				   if ((print_avail_only && info.count) || (print_avail_only == 0))
 					  {
 						  printf("%s\t0x%x\t%d\t|%s|\n |%s|\n |%s|\n |%s|\n |%s|\n",
 							  info.symbol,
@@ -215,12 +197,11 @@ int main(int argc, char **argv)
 						  for (j=0;j<(int)info.count;j++) 
 							  printf(" Native Code[%d]: 0x%x |%s|\n",j,info.code[j], info.name[j]);
 					  }
-				  }
-			  }
-		  } while (PAPI_enum_event(&i, print_avail_only) == PAPI_OK);
-	  }
-	  printf ("-------------------------------------------------------------------------\n");
+			   }
+		   }
+	   } while (PAPI_enum_event(&i, print_avail_only) == PAPI_OK);
    }
+   printf ("-------------------------------------------------------------------------\n");
 
    test_pass(__FILE__, NULL, 0);
    exit(1);

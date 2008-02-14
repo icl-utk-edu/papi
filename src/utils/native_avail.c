@@ -182,29 +182,8 @@ int main(int argc, char **argv)
 			test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
 	}
 
-	if ((hwinfo = PAPI_get_hardware_info()) == NULL)
-		test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
-
-	printf
-		("Available native events and hardware information.\n");
-	printf
-		("--------------------------------------------------------------------------------\n");
-	printf("Vendor string and code   : %s (%d)\n", hwinfo->vendor_string,
-		hwinfo->vendor);
-	printf("Model string and code    : %s (%d)\n", hwinfo->model_string, hwinfo->model);
-	printf("CPU Revision             : %f\n", hwinfo->revision);
-	printf("CPU Megahertz            : %f\n", hwinfo->mhz);
-	printf("CPU Clock Megahertz      : %d\n", hwinfo->clock_mhz);
-	printf("CPU Clock Ticks  / sec   : %d\n", hwinfo->clock_ticks);
-	printf("CPU's in this Node       : %d\n", hwinfo->ncpu);
-	printf("Nodes in this System     : %d\n", hwinfo->nnodes);
-	printf("Total CPU's              : %d\n", hwinfo->totalcpus);
-	printf("Number Hardware Counters : %d\n", PAPI_get_opt(PAPI_MAX_HWCTRS, NULL));
-	printf("Max Multiplex Counters   : %d\n", PAPI_get_opt(PAPI_MAX_MPX_CTRS, NULL));
-	printf
-		("--------------------------------------------------------------------------------\n");
-
-	printf("The following correspond to fields in the PAPI_event_info_t structure.\n\n");
+	retval = papi_print_header ("Available native events and hardware information.\n", 1, hwinfo);
+	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
 	if (flags.named) {
 		if (PAPI_event_name_to_code(flags.name, &i) == PAPI_OK) {
