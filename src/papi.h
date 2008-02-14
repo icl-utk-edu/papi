@@ -701,6 +701,7 @@ read the documentation carefully.  */
    int   PAPI_profil(void *buf, unsigned bufsiz, caddr_t offset, unsigned scale, int EventSet, int EventCode, int threshold, int flags);
    int   PAPI_query_event(int EventCode);
    int   PAPI_read(int EventSet, long_long * values);
+   int   PAPI_read_fast_ts(int EventSet, long_long * values, long_long *cyc);
    int   PAPI_register_thread(void);
    int   PAPI_remove_event(int EventSet, int EventCode);
    int   PAPI_remove_events(int EventSet, int *Events, int number);
