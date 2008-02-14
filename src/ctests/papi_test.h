@@ -52,6 +52,7 @@
 #define MASK_TOT_INS 0x00002
 #define MASK_TOT_CYC 0x00001
 
+int papi_print_header (char *prompt, int event_flag, const PAPI_hw_info_t *hwinfo);
 void validate_string(char *name, char *s);
 void *get_overflow_address(void *context);
 void free_test_space(long_long ** values, int num_tests);

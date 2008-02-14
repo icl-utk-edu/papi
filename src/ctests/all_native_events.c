@@ -41,7 +41,7 @@ static int add_remove_event(int EventSet, int event_code, char *name) {
 	    return(0);
       }
       else {
-        printf("Stoped successful\n");
+        printf("Stopped successfully.\n");
       }
 	}
 
@@ -74,32 +74,12 @@ int main(int argc, char **argv)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
-   if ((hwinfo = PAPI_get_hardware_info()) == NULL)
-      test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
+   retval = papi_print_header
+	  ("Test case ALL_NATIVE_EVENTS: Available native events and hardware information.\n", 0, hwinfo);
+   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
    if ((s = PAPI_get_substrate_info()) == NULL)
       test_fail(__FILE__, __LINE__, "PAPI_get_substrate_info", 2);
-
-   if (!TESTS_QUIET) {
-      printf
-          ("Test case ALL_NATIVE_EVENTS: Available native events and hardware information.\n");
-      printf
-          ("-------------------------------------------------------------------------\n");
-      printf("Vendor string and code   : %s (%d)\n", hwinfo->vendor_string,
-             hwinfo->vendor);
-      printf("Model string and code    : %s (%d)\n", hwinfo->model_string, hwinfo->model);
-      printf("CPU Revision             : %f\n", hwinfo->revision);
-      printf("CPU Megahertz            : %f\n", hwinfo->mhz);
-      printf("CPU Clock Megahertz      : %d\n", hwinfo->clock_mhz);
-      printf("CPU Clock Ticks / sec    : %d\n", hwinfo->clock_ticks);
-      printf("CPU's in this Node       : %d\n", hwinfo->ncpu);
-      printf("Nodes in this System     : %d\n", hwinfo->nnodes);
-      printf("Total CPU's              : %d\n", hwinfo->totalcpus);
-      printf("Number Hardware Counters : %d\n", PAPI_get_opt(PAPI_MAX_HWCTRS, NULL));
-      printf("Max Multiplex Counters   : %d\n", PAPI_get_opt(PAPI_MAX_MPX_CTRS, NULL));
-      printf
-          ("-------------------------------------------------------------------------\n");
-   }
 
    /* For platform independence, always ASK FOR the first event */
    /* Don't just assume it'll be the first numeric value */

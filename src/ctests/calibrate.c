@@ -197,6 +197,8 @@ int main(int argc, char *argv[])
    else 
      element_size = sizeof(float);
 
+   printf("\n");
+
    retval = PAPI_OK;
 
    /* Inner Product test */
@@ -375,23 +377,9 @@ static void headerlines(char *title, int TESTS_QUIET)
    const PAPI_hw_info_t *hwinfo = NULL;
 
    if (!TESTS_QUIET) {
-      if ((hwinfo = PAPI_get_hardware_info()) == NULL)
-         test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 1);
+      if (papi_print_header ("", 0, hwinfo) != PAPI_OK)
+         test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
-      printf
-          ("\n-------------------------------------------------------------------------\n");
-      printf("Vendor string and code   : %s (%d)\n", hwinfo->vendor_string,
-             hwinfo->vendor);
-      printf("Model string and code    : %s (%d)\n", hwinfo->model_string, hwinfo->model);
-      printf("CPU revision             : %f\n", hwinfo->revision);
-      printf("CPU Megahertz            : %f\n", hwinfo->mhz);
-      printf("CPU Clock Megahertz      : %d\n", hwinfo->clock_mhz);
-      printf("CPU Clock Ticks / sec    : %d\n", hwinfo->clock_ticks);
-      printf("CPU's in an SMP node     : %d\n", hwinfo->ncpu);
-      printf("Nodes in the system      : %d\n", hwinfo->nnodes);
-      printf("Total CPU's in the system: %d\n", hwinfo->totalcpus);
-      printf
-          ("-------------------------------------------------------------------------\n");
       printf("\n%s:\n%8s %12s %12s %8s %8s\n", title, "i", "papi", "theory", "diff",
              "%error");
       printf
