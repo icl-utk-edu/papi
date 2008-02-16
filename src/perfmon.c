@@ -185,7 +185,7 @@ detect_unavail_pmu_regs(pfmlib_regmask_t *r_pmcs, pfmlib_regmask_t *r_pmds)
 	myfd = pfm_create_context(&ctx, NULL, NULL, 0);
 	if (myfd == -1)
 	  {
-	    PAPIERROR("pfm_create_context(): %s", strerror(errno));
+		  PAPIERROR("detect_unavail_pmu_regs:pfm_create_context(): %s", strerror(errno));
 	    return(PAPI_ESYS);
 	  }
 	SUBDBG("PFM_CREATE_CONTEXT returned fd %d\n",myfd);
@@ -2624,7 +2624,7 @@ static int attach(hwd_control_state_t *ctl, unsigned long tid)
   SUBDBG("PFM_CREATE_CONTEXT(%p,%p,%p,%d)\n",newctx,NULL,NULL,0);
   if ((ret = pfm_create_context(newctx, NULL, NULL, 0)) == -1)
     {
-      PAPIERROR("pfm_create_context(): %s", strerror(errno));
+		PAPIERROR("attach:pfm_create_context(): %s", strerror(errno));
       free(newctx); 
       free(load_args);
       return(PAPI_ESYS);
@@ -2687,7 +2687,7 @@ inline static int check_multiplex_timeout(hwd_context_t *ctx, unsigned long *tim
       SUBDBG("PFM_CREATE_CONTEXT(%p,%p,%p,%d)\n",&newctx,NULL,NULL,0);
       if ((ret = pfm_create_context(&newctx, NULL, NULL, 0)) == -1)
 	{
-	  PAPIERROR("pfm_create_context(): %s", strerror(errno));
+		PAPIERROR("check_multiplex_timeout:pfm_create_context(): %s", strerror(errno));
 	  return(PAPI_ESYS);
 	}
       SUBDBG("PFM_CREATE_CONTEXT returned fd %d\n",ret);
@@ -3017,7 +3017,7 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
 
   if ((ret = pfm_create_context(&newctx, NULL, NULL, 0)) == -1)
     {
-      PAPIERROR("pfm_create_context(): %s", strerror(errno));
+		PAPIERROR("_papi_hwd_init:pfm_create_context(): %s", strerror(errno));
       return(PAPI_ESYS);
     }
   SUBDBG("PFM_CREATE_CONTEXT returned fd %d\n",ret);
@@ -3805,7 +3805,7 @@ process_smpl_buf(int num_smpl_pmds, int entry_size, ThreadInfo_t **thr)
 
       weight = process_smpl_entry(native_pfm_index,flags,&ent,&pc);
 
-      _papi_hwi_dispatch_profile((*thr)->running_eventset, pc,
+      _papi_hwi_dispatch_profile((*thr)->running_eventset, (unsigned long)pc,
 				 weight, profile_index);
  
       entry++;
@@ -3929,7 +3929,7 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
   if ((ret = pfm_create_context(&newctx, PFM_DFL_SMPL_NAME, &buf_arg, sizeof(buf_arg))) == -1)
     {
       DEBUGCALL(DEBUG_SUBSTRATE,dump_smpl_arg(&buf_arg));
-      PAPIERROR("pfm_create_context(): %s", strerror(errno));
+	  PAPIERROR("_papi_hwd_set_profile:pfm_create_context(): %s", strerror(errno));
       return(PAPI_ESYS);
     }
   ctx_fd = ret;
