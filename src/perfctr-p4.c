@@ -242,7 +242,7 @@ static void print_bits(P4_register_t * b)
 
 static void print_alloc(P4_reg_alloc_t * a)
 {
-   SUBDBG("P4_reg_alloc:\n");
+	SUBDBG("P4_reg_alloc:\n");
 //    print_bits(&(a->ra_bits));
    SUBDBG("  selector: 0x%x\n", a->ra_selector);
    SUBDBG("  rank: 0x%x\n", a->ra_rank);
@@ -768,31 +768,31 @@ static pentium4_replay_regs_t p4_replay_regs[]={
 /* 1 */ {.enb		= 0,			/* dummy */
 		 .mat_vert	= 0,
 		},
-/* 2 */ {.enb		= 0x03000001,	/* 1stL_cache_load_miss_retired */
+/* 2 */ {.enb		= 0x01000001,	/* 1stL_cache_load_miss_retired */
 		 .mat_vert	= 0x00000001,
 		},
-/* 3 */ {.enb		= 0x03000002,	/* 2ndL_cache_load_miss_retired */
+/* 3 */ {.enb		= 0x01000002,	/* 2ndL_cache_load_miss_retired */
 		 .mat_vert	= 0x00000001,
 		},
-/* 4 */ {.enb		= 0x03000004,	/* DTLB_load_miss_retired */
+/* 4 */ {.enb		= 0x01000004,	/* DTLB_load_miss_retired */
 		 .mat_vert	= 0x00000001,
 		},
-/* 5 */ {.enb		= 0x03000004,	/* DTLB_store_miss_retired */
+/* 5 */ {.enb		= 0x01000004,	/* DTLB_store_miss_retired */
 		 .mat_vert	= 0x00000002,
 		},
-/* 6 */ {.enb		= 0x03000004,	/* DTLB_all_miss_retired */
+/* 6 */ {.enb		= 0x01000004,	/* DTLB_all_miss_retired */
 		 .mat_vert	= 0x00000003,
 		},
-/* 7 */ {.enb		= 0x03018001,	/* Tagged_mispred_branch */
+/* 7 */ {.enb		= 0x01018001,	/* Tagged_mispred_branch */
 		 .mat_vert	= 0x00000010,
 		},
-/* 8 */ {.enb		= 0x03000200,	/* MOB_load_replay_retired */
+/* 8 */ {.enb		= 0x01000200,	/* MOB_load_replay_retired */
 		 .mat_vert	= 0x00000001,
 		},
-/* 9 */ {.enb		= 0x03000400,	/* split_load_retired */
+/* 9 */ {.enb		= 0x01000400,	/* split_load_retired */
 		 .mat_vert	= 0x00000001,
 		},
-/* 10 */ {.enb		= 0x03000400,	/* split_store_retired */
+/* 10 */ {.enb		= 0x01000400,	/* split_store_retired */
 		 .mat_vert	= 0x00000002,
 		},
 };
@@ -851,6 +851,7 @@ int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
 		tag_enable = 1;
 		tag_value = ((event_mask & 0xF0000) >> EVENT_MASK_BITS);
 	}
+	event_mask &=0x0FFFF; /* mask off possible tag bits */
 
     /* Set up the ESCR and CCCR register values. */
     escr_value.val = 0;
