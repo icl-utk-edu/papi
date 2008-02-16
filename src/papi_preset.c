@@ -78,6 +78,7 @@ int _papi_hwi_setup_all_presets(hwi_search_t *findem, hwi_dev_notes_t *notes)
 	      *actually* be duplicated unless it is modified */
 	   else 
 	     {
+		   if (_papi_hwi_presets.data[preset_index] != NULL) papi_free(_papi_hwi_presets.data[preset_index]);
 	       _papi_hwi_presets.data[preset_index] = papi_malloc(sizeof(hwi_preset_data_t));
 	       memcpy(_papi_hwi_presets.data[preset_index],&findem[pnum].data,sizeof(hwi_preset_data_t));
 	     }
