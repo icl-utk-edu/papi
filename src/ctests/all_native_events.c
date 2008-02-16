@@ -30,24 +30,24 @@ static int add_remove_event(int EventSet, int event_code, char *name) {
     retval = PAPI_start(EventSet);
     if (retval != PAPI_OK) {
       PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN);
-      fprintf(stdout,"Error Starting: %s\n", errstring);
-	  return(0);
+      fprintf(stdout,"Error Starting %s : %s\n", name, errstring);
     } 
     else { 
       retval = PAPI_stop(EventSet, &values);
       if (retval != PAPI_OK) {
         PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN);
-		fprintf(stdout,"Error Stopping: %s\n", errstring);
+		fprintf(stdout,"Error Stopping %s: %s\n", name, errstring);
 	    return(0);
       }
       else {
-        printf("Stopped successfully.\n");
+        printf("Stopped %s successfully.\n", name);
       }
 	}
 
     retval = PAPI_remove_event(EventSet, event_code);
     if (retval != PAPI_OK){
-	  printf("Error removing %s\n", name);
+      PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN);
+	  printf("Error removing %s: %s\n", name, errstring);
 	  return(0);
     }
     else printf("Removed %s successfully.\n", name);
