@@ -14,7 +14,7 @@ int main(int argc, char **argv)
   int retval;
   unsigned int code = PAPI_TOT_CYC;
   char event_name[PAPI_MAX_STR_LEN];
-   const PAPI_hw_info_t *hwinfo = NULL;
+  const PAPI_hw_info_t *hwinfo = NULL;
   const PAPI_substrate_info_t *sub_info;
 
   tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
@@ -23,7 +23,7 @@ int main(int argc, char **argv)
   if (retval != PAPI_VER_CURRENT)
     test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
   
-  retval = papi_print_header ("Test case code2name.c: Check limits and indexing of event tables.\n", 0, hwinfo);
+  retval = papi_print_header ("Test case code2name.c: Check limits and indexing of event tables.\n", 0, &hwinfo);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
   printf("Looking for PAPI_TOT_CYC...\n");

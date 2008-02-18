@@ -32,7 +32,7 @@ void papi_init(int argc, char **argv)
 	if (retval != PAPI_OK)
 		test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
 
-	retval = papi_print_header ("Event Chooser: Available events which can be added with given events.\n", 0, hwinfo);
+	retval = papi_print_header ("Event Chooser: Available events which can be added with given events.\n", 0, &hwinfo);
 	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
 	retval=PAPI_create_eventset(&EventSet);

@@ -13,22 +13,22 @@ int TESTS_QUIET = 0;
 	in a number of tests and utilities. Seems to make sense to refactor.
 	This may not be the best place for it to live, but it works for now.
  */
-int papi_print_header (char *prompt, int event_flag, const PAPI_hw_info_t *hwinfo)
+int papi_print_header (char *prompt, int event_flag, const PAPI_hw_info_t **hwinfo)
 {
-	if ((hwinfo = PAPI_get_hardware_info()) == NULL)
+	if ((*hwinfo = PAPI_get_hardware_info()) == NULL)
 		return(PAPI_ESBSTR);
 
 	printf ("%s", prompt);
 	printf("--------------------------------------------------------------------------------\n");
-	printf("Vendor string and code   : %s (%d)\n", hwinfo->vendor_string, hwinfo->vendor);
-	printf("Model string and code    : %s (%d)\n", hwinfo->model_string, hwinfo->model);
-	printf("CPU Revision             : %f\n", hwinfo->revision);
-	printf("CPU Megahertz            : %f\n", hwinfo->mhz);
-	printf("CPU Clock Megahertz      : %d\n", hwinfo->clock_mhz);
-	printf("CPU Clock Ticks  / sec   : %d\n", hwinfo->clock_ticks);
-	printf("CPU's in this Node       : %d\n", hwinfo->ncpu);
-	printf("Nodes in this System     : %d\n", hwinfo->nnodes);
-	printf("Total CPU's              : %d\n", hwinfo->totalcpus);
+	printf("Vendor string and code   : %s (%d)\n", (*hwinfo)->vendor_string, (*hwinfo)->vendor);
+	printf("Model string and code    : %s (%d)\n", (*hwinfo)->model_string, (*hwinfo)->model);
+	printf("CPU Revision             : %f\n", (*hwinfo)->revision);
+	printf("CPU Megahertz            : %f\n", (*hwinfo)->mhz);
+	printf("CPU Clock Megahertz      : %d\n", (*hwinfo)->clock_mhz);
+	printf("CPU Clock Ticks  / sec   : %d\n", (*hwinfo)->clock_ticks);
+	printf("CPU's in this Node       : %d\n", (*hwinfo)->ncpu);
+	printf("Nodes in this System     : %d\n", (*hwinfo)->nnodes);
+	printf("Total CPU's              : %d\n", (*hwinfo)->totalcpus);
 	printf("Number Hardware Counters : %d\n", PAPI_get_opt(PAPI_MAX_HWCTRS, NULL));
 	printf("Max Multiplex Counters   : %d\n", PAPI_get_opt(PAPI_MAX_MPX_CTRS, NULL));
 	printf("--------------------------------------------------------------------------------\n");

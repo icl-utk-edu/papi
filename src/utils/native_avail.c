@@ -182,7 +182,7 @@ int main(int argc, char **argv)
 			test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
 	}
 
-	retval = papi_print_header ("Available native events and hardware information.\n", 1, hwinfo);
+	retval = papi_print_header ("Available native events and hardware information.\n", 1, &hwinfo);
 	if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
 	if (flags.named) {

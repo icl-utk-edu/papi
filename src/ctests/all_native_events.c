@@ -75,7 +75,7 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
    retval = papi_print_header
-	  ("Test case ALL_NATIVE_EVENTS: Available native events and hardware information.\n", 0, hwinfo);
+	  ("Test case ALL_NATIVE_EVENTS: Available native events and hardware information.\n", 0, &hwinfo);
    if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
    if ((s = PAPI_get_substrate_info()) == NULL)

@@ -14,7 +14,7 @@ int main(int argc, char **argv)
   if (retval != PAPI_VER_CURRENT)
     test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
   
-  retval = papi_print_header ("Test case hwinfo.c: Check output of PAPI_get_hardware_info.\n", 0, hwinfo);
+  retval = papi_print_header ("Test case hwinfo.c: Check output of PAPI_get_hardware_info.\n", 0, &hwinfo);
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
   mh = &hwinfo->mem_hierarchy;
