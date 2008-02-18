@@ -3824,12 +3824,19 @@ void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
     unsigned long address;
     ThreadInfo_t *thread = _papi_hwi_lookup_thread();
 
-#if defined(DEBUG)
     if (thread == NULL) {
+#if defined(DEBUG)
         PAPIERROR("thread == NULL in _papi_hwd_dispatch_timer!");
+#endif
         return;
     }
+
+    if (thread->running_eventset == NULL) {
+#if defined(DEBUG)
+        PAPIERROR("thread->running_eventset == NULL in _papi_hwd_dispatch_timer!");
 #endif
+	return;
+    }
 
     ctx.si = info;
     ctx.ucontext = (hwd_ucontext_t *)uc;
