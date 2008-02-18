@@ -114,6 +114,9 @@ int main(int argc, char **argv)
        (strncasecmp(hw_info->model_string,"32",strlen("32")) != 0))
      test_skip(__FILE__, __LINE__, "Test unsupported", PAPI_ESBSTR);
 
+   if (TESTS_QUIET)
+	   test_skip(__FILE__, __LINE__, "Test deprecated in quite mode for PAPI 3.6", PAPI_ESBSTR);
+
    sprintf(event_name, "DATA_EAR_CACHE_LAT4");
    if ((retval = PAPI_event_name_to_code(event_name, &PAPI_event)) != PAPI_OK)
      test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", retval);
