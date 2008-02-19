@@ -3820,33 +3820,40 @@ void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
 {
     _papi_hwi_context_t ctx;
     pfarg_msg_t msg;
-    int ret, fd = info->si_fd;
+    int ret, wanted_fd, fd = info->si_fd;
     unsigned long address;
     ThreadInfo_t *thread = _papi_hwi_lookup_thread();
 
     if (thread == NULL) {
-#if defined(DEBUG)
         PAPIERROR("thread == NULL in _papi_hwd_dispatch_timer!");
-#endif
         return;
     }
 
     if (thread->running_eventset == NULL) {
-#if defined(DEBUG)
         PAPIERROR("thread->running_eventset == NULL in _papi_hwd_dispatch_timer!");
-#endif
 	return;
     }
 
-    ctx.si = info;
-    ctx.ucontext = (hwd_ucontext_t *)uc;
-
+    if (thread->running_eventset->overflow.flags == 0) {
+        PAPIERROR("thread->running_eventset->overflow.flags == 0 in _papi_hwd_dispatch_timer!");
+	return;
+    }
+      
     if (thread->running_eventset->overflow.flags & PAPI_OVERFLOW_FORCE_SW) {
         address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
         _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 
             0, 0, &thread);
     }
     else {
+      if (thread->running_eventset->overflow.flags == PAPI_OVERFLOW_HARDWARE) {
+	wanted_fd = thread->running_eventset->machdep.ctx_fd;
+      } else {
+	wanted_fd = thread->context.ctx_fd;
+      }
+      if (wanted_fd != fd) {
+	PAPIERROR("expected fd %d, got %d in _papi_hwi_dispatch_timer!");
+	return;
+      }
  retry:
         ret = read(fd, &msg, sizeof(msg));
         if (ret == -1) {
