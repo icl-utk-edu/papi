@@ -361,13 +361,16 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 	for(i=0; i < n; i++) {
 		if (assign_pc[i] == -1) {
 			for(; next_gen <= last_gen; next_gen++) {
+DPRINT(("i=%d next_gen=%d last=%d isset=%d\n", i, next_gen, last_gen, pfm_regmask_isset(r_pmcs, next_gen)));
 				if (!pfm_regmask_isset(r_pmcs, next_gen))
 					break;
 			}
 			if (next_gen <= last_gen)
 				assign_pc[i] = next_gen++;
-			else
+			else {
+				DPRINT(("cannot assign generic counters\n"));
 				return PFMLIB_ERR_NOASSIGN;
+			}
 		}
 	}
 	j = 0;

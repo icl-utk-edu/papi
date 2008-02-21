@@ -154,31 +154,31 @@ static pentium4_replay_regs_t p4_replay_regs[]={
 /* 1 */ {.enb		= 0,			/* dummy */
 		 .mat_vert	= 0,
 		},
-/* 2 */ {.enb		= 0x03000001,	/* 1stL_cache_load_miss_retired */
+/* 2 */ {.enb		= 0x01000001,	/* 1stL_cache_load_miss_retired */
 		 .mat_vert	= 0x00000001,
 		},
-/* 3 */ {.enb		= 0x03000002,	/* 2ndL_cache_load_miss_retired */
+/* 3 */ {.enb		= 0x01000002,	/* 2ndL_cache_load_miss_retired */
 		 .mat_vert	= 0x00000001,
 		},
-/* 4 */ {.enb		= 0x03000004,	/* DTLB_load_miss_retired */
+/* 4 */ {.enb		= 0x01000004,	/* DTLB_load_miss_retired */
 		 .mat_vert	= 0x00000001,
 		},
-/* 5 */ {.enb		= 0x03000004,	/* DTLB_store_miss_retired */
+/* 5 */ {.enb		= 0x01000004,	/* DTLB_store_miss_retired */
 		 .mat_vert	= 0x00000002,
 		},
-/* 6 */ {.enb		= 0x03000004,	/* DTLB_all_miss_retired */
+/* 6 */ {.enb		= 0x01000004,	/* DTLB_all_miss_retired */
 		 .mat_vert	= 0x00000003,
 		},
-/* 7 */ {.enb		= 0x03018001,	/* Tagged_mispred_branch */
+/* 7 */ {.enb		= 0x01018001,	/* Tagged_mispred_branch */
 		 .mat_vert	= 0x00000010,
 		},
-/* 8 */ {.enb		= 0x03000200,	/* MOB_load_replay_retired */
+/* 8 */ {.enb		= 0x01000200,	/* MOB_load_replay_retired */
 		 .mat_vert	= 0x00000001,
 		},
-/* 9 */ {.enb		= 0x03000400,	/* split_load_retired */
+/* 9 */ {.enb		= 0x01000400,	/* split_load_retired */
 		 .mat_vert	= 0x00000001,
 		},
-/* 10 */ {.enb		= 0x03000400,	/* split_store_retired */
+/* 10 */ {.enb		= 0x01000400,	/* split_store_retired */
 		 .mat_vert	= 0x00000002,
 		},
 };
