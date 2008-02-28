@@ -1,5 +1,5 @@
 /* 
-* File:    exec.c
+* File:    zero_fork.c
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -16,6 +16,7 @@ functionality for a parent and a forked child. */
 int main(int argc, char **argv)
 {
    int retval;
+   int status;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
@@ -24,19 +25,30 @@ int main(int argc, char **argv)
        retval = PAPI_library_init(PAPI_VER_CURRENT);
        if (retval != PAPI_VER_CURRENT)
 	 test_fail(__FILE__, __LINE__, "execed PAPI_library_init", retval);
-     } 
+     }
    else 
      {
        retval = PAPI_library_init(PAPI_VER_CURRENT);
        if (retval != PAPI_VER_CURRENT)
 	 test_fail(__FILE__, __LINE__, "main PAPI_library_init", retval);
-       
-       PAPI_shutdown();
 
-       if (execlp(argv[0],argv[0],"xxx",NULL) == -1)
-	 test_fail(__FILE__, __LINE__, "execlp", PAPI_ESYS);
-   }
+       if (fork() == 0)
+	 {
+	   retval = PAPI_library_init(PAPI_VER_CURRENT);
+	   if (retval != PAPI_VER_CURRENT)
+	     test_fail(__FILE__, __LINE__, "forked PAPI_library_init", retval);
 
+	   if (execlp(argv[0],argv[0],"xxx",NULL) == -1)
+	     test_fail(__FILE__, __LINE__, "execlp", PAPI_ESYS);
+	 }
+       else
+	 {
+	   wait(&status);
+	   if (WEXITSTATUS(status) != 0)
+	     test_fail(__FILE__, __LINE__, "fork", WEXITSTATUS(status));
+	 }
+     }
+   
    test_pass(__FILE__, NULL, 0);
    exit(1);
 }

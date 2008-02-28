@@ -6,7 +6,8 @@ MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
-SERIAL  = hwinfo code2name reset subinfo realtime virttime first exeinfo \
+SERIAL  = fork exec exec2 forkexec forkexec2 forkexec3 forkexec4 \
+	hwinfo code2name reset subinfo realtime virttime first exeinfo \
 	zero zero_fork branches dmem_info all_native_events all_events derived high-level2 describe memory  \
 	zero_flip low-level high-level eventname case1 case2 \
 	calibrate flops second johnmay2 \
@@ -14,7 +15,7 @@ SERIAL  = hwinfo code2name reset subinfo realtime virttime first exeinfo \
 	overflow_twoevents timer_overflow overflow2 \
 	matrix-hl tenth encode encode2 \
 	profile profile_force_software sprofile profile_twoevents byte_profile\
-	ipc overflow_index overflow_one_and_read fork exec forkexec forkexec2\
+	ipc overflow_index overflow_one_and_read \
         overflow_allcounters
 
 ATTACH	= multiattach zero_attach
@@ -322,11 +323,20 @@ fork: fork.c $(UTILOBJS) $(PAPILIB)
 exec: exec.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) exec.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o exec 
 
+exec2: exec2.c $(UTILOBJS) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) exec2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o exec2 
+
 forkexec: forkexec.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) forkexec.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o forkexec 
 
 forkexec2: forkexec2.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) forkexec2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o forkexec2 
+
+forkexec3: forkexec3.c $(UTILOBJS) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) forkexec3.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o forkexec3 
+
+forkexec4: forkexec4.c $(UTILOBJS) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) forkexec4.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o forkexec4 
 
 prof_utils.o: prof_utils.c papi_test.h prof_utils.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c prof_utils.c
