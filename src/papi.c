@@ -105,6 +105,8 @@ int PAPI_register_thread(void)
 {
    ThreadInfo_t *thread;
 
+   if (init_level == PAPI_NOT_INITED)
+      papi_return(PAPI_ENOINIT);
    papi_return(_papi_hwi_lookup_or_create_thread(&thread));
 }
 
@@ -158,6 +160,8 @@ int PAPI_get_thr_specific(int tag, void **ptr)
    ThreadInfo_t *thread;
    int doall = 0, retval = PAPI_OK;
 
+   if (init_level == PAPI_NOT_INITED)
+      papi_return(PAPI_ENOINIT);
    if (tag & PAPI_TLS_ALL_THREADS)
      {
        tag = tag ^ PAPI_TLS_ALL_THREADS;
@@ -186,6 +190,8 @@ int PAPI_set_thr_specific(int tag, void *ptr)
    ThreadInfo_t *thread;
    int retval = PAPI_OK;
 
+   if (init_level == PAPI_NOT_INITED)
+      papi_return(PAPI_ENOINIT);
    if ((tag < 0) || (tag > PAPI_NUM_TLS))
       papi_return(PAPI_EINVAL);
 
@@ -647,6 +653,8 @@ int PAPI_create_eventset(int *EventSet)
    ThreadInfo_t *master;
    int retval;
 
+   if (init_level == PAPI_NOT_INITED)
+      papi_return(PAPI_ENOINIT);
    retval = _papi_hwi_lookup_or_create_thread(&master);
    if (retval)
      papi_return(retval);
@@ -1242,6 +1250,8 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
    int retval = PAPI_OK;
    ThreadInfo_t *thread = NULL;
 
+   if ((option != PAPI_DEBUG) && (init_level == PAPI_NOT_INITED))
+      papi_return(PAPI_ENOINIT);
    if (ptr == NULL)
       papi_return(PAPI_EINVAL);
 
@@ -1536,6 +1546,9 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
 {
   EventSetInfo_t *ESI;
 	 
+   if ((option != PAPI_DEBUG) && (init_level == PAPI_NOT_INITED))
+      papi_return(PAPI_ENOINIT);
+
    switch (option) {
    case PAPI_DETACH:
      {
@@ -2269,6 +2282,8 @@ long_long PAPI_get_virt_cyc(void)
    ThreadInfo_t *master;
    int retval;
    
+   if (init_level == PAPI_NOT_INITED)
+      papi_return(PAPI_ENOINIT);
    if ((retval = _papi_hwi_lookup_or_create_thread(&master)) != PAPI_OK)
      papi_return(retval);
 
@@ -2280,6 +2295,8 @@ long_long PAPI_get_virt_usec(void)
    ThreadInfo_t *master;
    int retval;
 
+   if (init_level == PAPI_NOT_INITED)
+      papi_return(PAPI_ENOINIT);
    if ((retval = _papi_hwi_lookup_or_create_thread(&master)) != PAPI_OK)
      papi_return(retval);
 
