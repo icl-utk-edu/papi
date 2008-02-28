@@ -467,6 +467,11 @@ PAPI_FCALL(papif_read, PAPIF_READ, (int *EventSet, long_long * values, int *chec
    *check = PAPI_read(*EventSet, values);
 }
 
+PAPI_FCALL(papif_read_ts, PAPIF_READ_TS, (int *EventSet, long_long * values, long_long *cyc, int *check))
+{
+   *check = PAPI_read_ts(*EventSet, values, cyc);
+}
+
 PAPI_FCALL(papif_remove_event, PAPIF_REMOVE_EVENT,
            (int *EventSet, int *Event, int *check))
 {
