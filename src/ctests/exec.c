@@ -19,16 +19,22 @@ int main(int argc, char **argv)
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
-   if (strcmp(argv[0],"xxx") == 0) {
-     retval = PAPI_library_init(PAPI_VER_CURRENT);
-     if (retval != PAPI_VER_CURRENT)
-       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
-     test_pass(__FILE__, NULL, 0);
-     exit(0);
+   if (strcmp(argv[0],"xxx") == 0) 
+     {
+       retval = PAPI_library_init(PAPI_VER_CURRENT);
+       if (retval != PAPI_VER_CURRENT)
+	 test_fail(__FILE__, __LINE__, "execed PAPI_library_init", retval);
+     } 
+   else 
+     {
+       retval = PAPI_library_init(PAPI_VER_CURRENT);
+       if (retval != PAPI_VER_CURRENT)
+	 test_fail(__FILE__, __LINE__, "main PAPI_library_init", retval);
+       
+       if (execlp(argv[0],"xxx",NULL) == -1)
+	 test_fail(__FILE__, __LINE__, "execlp", PAPI_ESYS);
    }
 
-   if (execlp(argv[0],"xxx",NULL) == -1)
-     test_fail(__FILE__, __LINE__, "execlp", PAPI_ESYS);
-
+   test_pass(__FILE__, NULL, 0);
    exit(1);
 }
