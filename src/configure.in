@@ -1300,7 +1300,7 @@ if test "$datadir" = '${datarootdir}'; then
    datadir='${datarootdir}/${PACKAGE_TARNAME}'
 fi
 papidatadir=$datadir
-docdir='${prefix}/doc'
+docdir='${prefix}/share/doc'
 AS_AC_EXPAND(PAPI_DATADIR, $papidatadir)
 AC_DEFINE(PAPI_DATADIR, $papidatadir, [Location for the event files])
 #AC_DEFINE_UNQUOTED(HAVE_THREAD_LOCAL_STORAGE,"$docdir")

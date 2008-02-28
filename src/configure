@@ -7144,7 +7144,7 @@ if test "$datadir" = '${datarootdir}'; then
    datadir='${datarootdir}/${PACKAGE_TARNAME}'
 fi
 papidatadir=$datadir
-docdir='${prefix}/doc'
+docdir='${prefix}/share/doc'
 
   EXP_VAR=PAPI_DATADIR
   FROM_VAR=$papidatadir
