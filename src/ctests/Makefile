@@ -6,7 +6,7 @@ MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
-SERIAL  = fork exec forkexec forkexec2 forkexec3 forkexec4 \
+SERIAL  = fork fork2 exec exec2 forkexec forkexec2 forkexec3 forkexec4 \
 	hwinfo code2name reset subinfo realtime virttime first exeinfo \
 	zero zero_fork branches dmem_info all_native_events all_events derived high-level2 describe memory  \
 	zero_flip low-level high-level eventname case1 case2 \
@@ -325,6 +325,9 @@ exec: exec.c $(UTILOBJS) $(PAPILIB)
 
 exec2: exec2.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) exec2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o exec2 
+
+fork2: fork2.c $(UTILOBJS) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) fork2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o fork2 
 
 forkexec: forkexec.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) forkexec.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o forkexec 

@@ -26,6 +26,8 @@ int main(int argc, char **argv)
 
    if (fork() == 0)
      {
+       PAPI_shutdown();
+
        retval = PAPI_library_init(PAPI_VER_CURRENT);
        if (retval != PAPI_VER_CURRENT)
 	 test_fail(__FILE__, __LINE__, "forked PAPI_library_init", retval);
