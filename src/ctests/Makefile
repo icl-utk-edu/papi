@@ -6,7 +6,7 @@ MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
-SERIAL  = fork exec exec2 forkexec forkexec2 forkexec3 forkexec4 \
+SERIAL  = fork exec forkexec forkexec2 forkexec3 forkexec4 \
 	hwinfo code2name reset subinfo realtime virttime first exeinfo \
 	zero zero_fork branches dmem_info all_native_events all_events derived high-level2 describe memory  \
 	zero_flip low-level high-level eventname case1 case2 \
