@@ -9,7 +9,7 @@
     - Events for all platforms
 xxx - Derived events for all platforms
 xxx - hwd_ntv_name_to_code
-    - Make native map carry major events, not umasks
+xxx - Make native map carry major events, not umasks
 xxx - Enum event uses native_map not pfm()
 xxx - bits_to_info uses native_map not pfm()
 */

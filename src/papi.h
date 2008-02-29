@@ -265,7 +265,7 @@ enum {
    PAPI_ENUM_FIRST,				/* Enumerate first event (preset or native) */
    PAPI_PRESET_ENUM_AVAIL, 		/* Enumerate events that exist here */
 
-   /* PAPI PRESET section ; these are currently unsupported */
+   /* PAPI PRESET section */
    PAPI_PRESET_ENUM_MSC,		/* Miscellaneous preset events */
    PAPI_PRESET_ENUM_INS,		/* Instruction related preset events */
    PAPI_PRESET_ENUM_IDL,		/* Stalled or Idle preset events */
