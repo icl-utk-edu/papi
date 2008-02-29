@@ -37,7 +37,7 @@
 
 /* This is the official PAPI version */
 /* Big increment for PAPI-C technology pre-release */
-#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,9,0,0)
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,9,1,0)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
 
 #ifdef __cplusplus
@@ -55,8 +55,7 @@ Return Codes
 
 All of the functions contained in the PerfAPI return standardized error codes.
 Values greater than or equal to zero indicate success, less than zero indicates
-failure. When adding an error message, update this table, PAPI_NUM_ERRORS, and
-the descriptor table in papi_data.c.
+failure. 
 */
 
 #define PAPI_OK		  0	/*No error */
@@ -78,9 +77,10 @@ the descriptor table in papi_data.c.
 #define PAPI_EMISC	-14	/* No clue as to what this error code means */
 #define PAPI_EPERM	-15	/* You lack the necessary permissions */
 #define PAPI_ENOINIT	-16	/* PAPI hasn't been initialized yet */
-#define PAPI_ENOCMP	-17	/* Component Index isn't set */
+#define PAPI_EBUF	-17	/* Buffer size exceeded (usually strings) */
+#define PAPI_ENOCMP	-18	/* Component Index isn't set */
 
-#define PAPI_NUM_ERRORS	 18	/* Number of error messages specified in this API. */
+#define PAPI_NUM_ERRORS	 19	/* Number of error messages specified in this API. */
 
 #define PAPI_NOT_INITED		    0
 #define PAPI_LOW_LEVEL_INITED	    1	/* Low level has called library init */
@@ -258,45 +258,57 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_DERIVED           0x1      /* Flag to indicate that the event is derived */
 
 /* Possible values for the 'modifier' parameter of the PAPI_enum_event call.
-   A value of 0 (PAPI_ENUM_ALL) is always assumed to enumerate ALL events on every platform.
+   A value of 0 (PAPI_ENUM_EVENTS) is always assumed to enumerate ALL events on every platform.
    PAPI PRESET events are broken into related event categories.
    Each supported substrate can have optional values to determine how native events on that
    substrate are enumerated.
 */
 enum {
-   PAPI_ENUM_ALL = 0,			/* Always enumerate all events */
+   PAPI_ENUM_EVENTS = 0,		/* Always enumerate all events */
+   PAPI_ENUM_FIRST,				/* Enumerate first event (preset or native) */
    PAPI_PRESET_ENUM_AVAIL, 		/* Enumerate events that exist here */
 
    /* PAPI PRESET section */
+   PAPI_PRESET_ENUM_MSC,		/* Miscellaneous preset events */
    PAPI_PRESET_ENUM_INS,		/* Instruction related preset events */
-   PAPI_PRESET_ENUM_BR,			/* branch related preset events */
-   PAPI_PRESET_ENUM_MEM,		/* memory related preset events */
+   PAPI_PRESET_ENUM_IDL,		/* Stalled or Idle preset events */
+   PAPI_PRESET_ENUM_BR,			/* Branch related preset events */
+   PAPI_PRESET_ENUM_CND,		/* Conditional preset events */
+   PAPI_PRESET_ENUM_MEM,		/* Memory related preset events */
+   PAPI_PRESET_ENUM_CACH,		/* Cache related preset events */
+   PAPI_PRESET_ENUM_L1,			/* L1 cache related preset events */
+   PAPI_PRESET_ENUM_L2,			/* L2 cache related preset events */
+   PAPI_PRESET_ENUM_L3,			/* L3 cache related preset events */
    PAPI_PRESET_ENUM_TLB,		/* Translation Lookaside Buffer events */
    PAPI_PRESET_ENUM_FP,			/* Floating Point related preset events */
 
-   /* Pentium 4 specific section */
-   PAPI_PENT4_ENUM_GROUPS = 0x100,      /* 45 groups + custom + user */
-   PAPI_PENT4_ENUM_COMBOS,		/* all combinations of mask bits for given group */
-   PAPI_PENT4_ENUM_BITS,		/* all individual bits for given group */
-
-   /* POWER 4 specific section */
-   PAPI_PWR4_ENUM_GROUPS = 0x200,	/* Enumerate groups an event belongs to */
-
-   /* ITANIUM specific section */
-   PAPI_ITA_ENUM_IARR = 0x300,	/* Enumerate events that support IAR (instruction address ranging) */
-   PAPI_ITA_ENUM_DARR,         	/* Enumerate events that support DAR (data address ranging) */
-   PAPI_ITA_ENUM_OPCM,           /* Enumerate events that support OPC (opcode matching) */
-   PAPI_ITA_ENUM_IEAR,           /* Enumerate IEAR (instruction event address register) events */
-   PAPI_ITA_ENUM_DEAR            /* Enumerate DEAR (data event address register) events */
+   /* PAPI native event related section */
+   PAPI_NTV_ENUM_UMASKS,		/* all individual bits for given group */
+   PAPI_NTV_ENUM_UMASK_COMBOS,	/* all combinations of mask bits for given group */
+   PAPI_NTV_ENUM_IARR,			/* Enumerate events that support IAR (instruction address ranging) */
+   PAPI_NTV_ENUM_DARR,			/* Enumerate events that support DAR (data address ranging) */
+   PAPI_NTV_ENUM_OPCM,			/* Enumerate events that support OPC (opcode matching) */
+   PAPI_NTV_ENUM_IEAR,			/* Enumerate IEAR (instruction event address register) events */
+   PAPI_NTV_ENUM_DEAR,			/* Enumerate DEAR (data event address register) events */
+   PAPI_NTV_ENUM_GROUPS			/* Enumerate groups an event belongs to a la POWER4/5 */
 };
 
-/* These will replace the others eventually */
 
-#define PAPI_ENUM_UMASK_COMBOS PAPI_PENT4_ENUM_COMBOS
-#define PAPI_ENUM_UMASKS PAPI_PENT4_ENUM_BITS
-#define PAPI_ENUM_EVENTS PAPI_PENT4_ENUM_GROUPS
-#define PAPI_ENUM_GROUPS PAPI_PWR4_ENUM_GROUPS
-#define PAPI_ENUM_PRESET_AVAIL PAPI_PRESET_ENUM_AVAIL
+#define PAPI_PRESET_BIT_MSC		(1 << PAPI_PRESET_ENUM_MSC)		/* Miscellaneous preset event bit */
+#define PAPI_PRESET_BIT_INS		(1 << PAPI_PRESET_ENUM_INS)		/* Instruction related preset event bit */
+#define PAPI_PRESET_BIT_IDL		(1 << PAPI_PRESET_ENUM_IDL)		/* Stalled or Idle preset event bit */
+#define PAPI_PRESET_BIT_BR		(1 << PAPI_PRESET_ENUM_BR)		/* branch related preset events */
+#define PAPI_PRESET_BIT_CND		(1 << PAPI_PRESET_ENUM_CND)		/* conditional preset events */
+#define PAPI_PRESET_BIT_MEM		(1 << PAPI_PRESET_ENUM_MEM)		/* memory related preset events */
+#define PAPI_PRESET_BIT_CACH	(1 << PAPI_PRESET_ENUM_CACH)	/* cache related preset events */
+#define PAPI_PRESET_BIT_L1		(1 << PAPI_PRESET_ENUM_L1)		/* L1 cache related preset events */
+#define PAPI_PRESET_BIT_L2		(1 << PAPI_PRESET_ENUM_L2)		/* L2 cache related preset events */
+#define PAPI_PRESET_BIT_L3		(1 << PAPI_PRESET_ENUM_L3)		/* L3 cache related preset events */
+#define PAPI_PRESET_BIT_TLB		(1 << PAPI_PRESET_ENUM_TLB)		/* Translation Lookaside Buffer events */
+#define PAPI_PRESET_BIT_FP		(1 << PAPI_PRESET_ENUM_FP)		/* Floating Point related preset events */
+
+#define PAPI_NTV_GROUP_AND_MASK		0x00FF0000	/* bits occupied by group number */
+#define PAPI_NTV_GROUP_SHIFT		16			/* bit shift to encode group number */
 
 /* 
 The Low Level API
@@ -421,8 +433,12 @@ read the documentation carefully.  */
      unsigned int edge_detect:1;		/* Supports edge detection on events */
      unsigned int invert:1;			/* Supports invert detection on events */
      unsigned int profile_ear:1;		/* Supports data/instr/tlb miss address sampling */
-     unsigned int grouped_cntrs:1;		/* Underlying hardware uses counter groups */
-     unsigned int reserved_bits:16;
+     unsigned int cntr_groups:1;           /* Underlying hardware uses counter groups (e.g. POWER4/5)*/
+     unsigned int cntr_umasks:1;           /* counters have unit masks */
+     unsigned int cntr_IEAR_events:1;      /* counters support instr event addr register */
+     unsigned int cntr_DEAR_events:1;      /* counters support data event addr register */
+     unsigned int cntr_OPCM_events:1;      /* counter events support opcode matching */
+     unsigned int reserved_bits:12;
    } PAPI_component_info_t;
 
    typedef struct _papi_mpx_info {
@@ -514,6 +530,7 @@ read the documentation carefully.  */
       float revision;               /* Revision of CPU */
       float mhz;                    /* Cycle time of this CPU */
       int clock_mhz;                /* Cycle time of this CPU's cycle counter */
+      int clock_ticks;              /* clock ticks per second */
       PAPI_mh_info_t mem_hierarchy;  /* PAPI memory heirarchy description */
    } PAPI_hw_info_t;
 
@@ -610,6 +627,7 @@ read the documentation carefully.  */
 #define PAPI_MAX_INFO_TERMS 8 /* should match PAPI_MAX_COUNTER_TERMS defined in papi_internal.h */
 typedef struct event_info {
       unsigned int event_code;               /* preset (0x8xxxxxxx) or native (0x4xxxxxxx) event code */
+      unsigned int event_type;               /* event type or category for preset events only */
       unsigned int count;                    /* number of terms (usually 1) in the code and name fields
                                                 - for presets, these terms are native events
                                                 - for native events, these terms are register contents */

@@ -16,29 +16,52 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
 static int add_remove_event(int EventSet, int event_code, char *name) {
     int retval;
+    char errstring[PAPI_MAX_STR_LEN];
+    long_long values;
 
     retval = PAPI_add_event(EventSet, event_code);
     if (retval != PAPI_OK) {
-	printf("Error adding %s\n", name);
-	return(0);
-    } else printf("Added %s successfully.\n", name);
+	  printf("Error adding %s\n", name);
+	  return(0);
+    } 
+    else 
+      printf("Added %s successfully.\n", name);
+
+    retval = PAPI_start(EventSet);
+    if (retval != PAPI_OK) {
+      PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN);
+      fprintf(stdout,"Error Starting %s : %s\n", name, errstring);
+    } 
+    else { 
+      retval = PAPI_stop(EventSet, &values);
+      if (retval != PAPI_OK) {
+        PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN);
+		fprintf(stdout,"Error Stopping %s: %s\n", name, errstring);
+	    return(0);
+      }
+      else {
+        printf("Stopped %s successfully.\n", name);
+      }
+	}
+
     retval = PAPI_remove_event(EventSet, event_code);
-    if (retval != PAPI_OK)
-	test_fail(__FILE__, __LINE__, "PAPI_remove_event", retval);
+    if (retval != PAPI_OK){
+      PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN);
+	  printf("Error removing %s: %s\n", name, errstring);
+	  return(0);
+    }
     else printf("Removed %s successfully.\n", name);
     return(1);
 }
 
 int main(int argc, char **argv)
 {
-   int i, EventSet=PAPI_NULL, add_count=0, err_count=0;
+   int i, k, EventSet=PAPI_NULL, add_count=0, err_count=0;
    int retval;
    PAPI_event_info_t info;
    const PAPI_hw_info_t *hwinfo = NULL;
    int event_code;
-#ifdef PENTIUM4
-   int k;
-#endif
+   const PAPI_component_info_t *c = NULL;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
    /*for(i=0;i<argc;i++) */
@@ -51,65 +74,44 @@ int main(int argc, char **argv)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
-   if ((hwinfo = PAPI_get_hardware_info()) == NULL)
-      test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
+   retval = papi_print_header
+	  ("Test case ALL_NATIVE_EVENTS: Available native events and hardware information.\n", 0, &hwinfo);
+   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
-   if (!TESTS_QUIET) {
-      printf
-          ("Test case ALL_NATIVE_EVENTS: Available native events and hardware information.\n");
-      printf
-          ("-------------------------------------------------------------------------\n");
-      printf("Vendor string and code   : %s (%d)\n", hwinfo->vendor_string,
-             hwinfo->vendor);
-      printf("Model string and code    : %s (%d)\n", hwinfo->model_string, hwinfo->model);
-      printf("CPU Revision             : %f\n", hwinfo->revision);
-      printf("CPU Megahertz            : %f\n", hwinfo->mhz);
-      printf("CPU Clock Megahertz      : %d\n", hwinfo->clock_mhz);
-      printf("CPU's in this Node       : %d\n", hwinfo->ncpu);
-      printf("Nodes in this System     : %d\n", hwinfo->nnodes);
-      printf("Total CPU's              : %d\n", hwinfo->totalcpus);
-      printf("Number Hardware Counters : %d\n", PAPI_get_opt(PAPI_MAX_HWCTRS, NULL));
-      printf("Max Multiplex Counters   : %d\n", PAPI_get_opt(PAPI_MAX_MPX_CTRS, NULL));
-      printf
-          ("-------------------------------------------------------------------------\n");
-   }
+   if ((c = PAPI_get_component_info(0)) == NULL)
+      test_fail(__FILE__, __LINE__, "PAPI_get_substrate_info", 2);
+
+   /* For platform independence, always ASK FOR the first event */
+   /* Don't just assume it'll be the first numeric value */
    i = 0 | PAPI_NATIVE_MASK;
-#ifdef __crayx1
-   PAPI_enum_event(&i, 0);
-#endif
+   PAPI_enum_event(&i, PAPI_ENUM_FIRST);
+
    do {
-        retval = PAPI_get_event_info(i, &info);
-
-	printf("\n%s\t0x%x  \n%s\n",
-		info.symbol,
-		info.event_code,
-		info.long_descr);
-
-#ifdef PENTIUM4
-	k = i;
-	if (PAPI_enum_event(&k, PAPI_PENT4_ENUM_BITS) == PAPI_OK) {
-	    do {
-		retval = PAPI_get_event_info(k, &info);
-		event_code = info.event_code;
-		if (add_remove_event(EventSet, event_code, info.symbol))
-		    add_count++;
-		else err_count++;
-	    } while (PAPI_enum_event(&k, PAPI_PENT4_ENUM_BITS) == PAPI_OK);
+	retval = PAPI_get_event_info(i, &info);
+	if (c->cntr_umasks) {
+		k = i;
+		if (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
+			do {
+				retval = PAPI_get_event_info(k, &info);
+				event_code = info.event_code;
+				if (add_remove_event(EventSet, event_code, info.symbol))
+					add_count++;
+				else err_count++;
+			} while (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK);
+		}
+		if (retval == PAPI_OK)
+			printf("\n");
 	}
-	if (!TESTS_QUIET && retval == PAPI_OK)
-	    printf("\n");
-    } while (PAPI_enum_event(&i, PAPI_PENT4_ENUM_GROUPS) == PAPI_OK);
-#else
+	else {
+		event_code = info.event_code;
 #ifdef _POWER4
-	  event_code = info.event_code & 0xff00ffff;
-#else
-	  event_code = info.event_code;
+		event_code &= 0xff00ffff;
 #endif
-	  if (add_remove_event(EventSet, event_code, info.symbol))
-	      add_count++;
-	  else err_count++;
-   } while (PAPI_enum_event(&i, PAPI_ENUM_ALL) == PAPI_OK);
-#endif
+		if (add_remove_event(EventSet, event_code, info.symbol))
+			add_count++;
+		else err_count++;
+	}
+   } while (PAPI_enum_event(&i, PAPI_ENUM_EVENTS) == PAPI_OK);
 
     printf("\n\nSuccessfully found, added, and removed %d events.\n", add_count);
     if (err_count)

@@ -8,11 +8,15 @@ TARGETS = ear serial multiplex_and_pthreads shared
 SUBSTR	= perfmon
 MEMSUBSTR = perfmon
 
+ifeq ($(COMPILER),CRAYX2)
+LIBS	= static
+endif
+
 #
 # GNU G77/GCC section
 #
 
-ifneq (,$(shell gcc -v 2>&1 | grep version | cut -f3 -d" " | grep "^4"))
+ifneq (,$(shell $(CC) -v 2>&1 | grep version | cut -f3 -d" " | grep "^4.2"))
 TARGETS += omp
 OMPCFLGS = -fopenmp
 endif
@@ -20,14 +24,9 @@ endif
 CC_R    	:= $(CC) -pthread
 CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.$(PAPIVER) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
 FFLAGS		+= -ffixed-line-length-132
-CFLAGS		+= -D_GNU_SOURCE -Wall -DCOMP_VECTOR=_ia64_vector $(NOTLS) $(ALTIX) 
-ifeq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))
-OPTFLAGS	+= -g -O3 $(DEBUGFLAGS)
-else
-OPTFLAGS	+= -g -O $(DEBUGFLAGS)
-endif
-TOPTFLAGS	+= -g -O 
-FTOPTFLAGS	= $(TOPTFLAGS)
+CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) $(DEBUGFLAGS) -D_REENTRANT
+TOPTFLAGS	:= -g -O
+FTOPTFLAGS	:= $(FTOPTFLAGS)
 
 ifeq (static,$(PFM_EVENTS))
 	CFLAGS		 += -DSTATIC_PERFMON_EVENTS_TABLE
@@ -40,7 +39,8 @@ endif
 
 ifeq (,$(PFM_LIB_PATH))
 ifeq (,$(PFM_ROOT))
-        PFM_ROOT := $(PWD)/libpfm-3.x
+	PWD = $(shell pwd)
+        PFM_ROOT := $(PWD)/libpfm-3.y
 endif
         PFM_LIB_PATH := $(PFM_ROOT)/lib
 	CC_SHR += -Wl,-rpath-link -Wl,$(PFM_LIB_PATH)
@@ -48,7 +48,7 @@ endif
 
 ifeq (,$(PFM_INC_PATH))
 ifeq (,$(PFM_ROOT))
-        PFM_ROOT := ./libpfm-3.x
+        PFM_ROOT := ./libpfm-3.y
 endif
         PFM_INC_PATH := $(PFM_ROOT)/include
 endif
@@ -70,7 +70,7 @@ PFM_OBJS=$(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
 ifeq (,$(PFM_OBJS))
 $(PFM_LIB_PATH)/libpfm.a:
 ifneq (,${PFM_ROOT})
-	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)"
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)" PFM_VERSION_FLAG="$(PFM_VERSION)"
 else
 	@echo '$@ not installed!'; exit 1
 endif
@@ -106,9 +106,13 @@ ifneq (,${PFM_ROOT})
 	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
 	-install -d $(DESTDIR)$(LIBDIR)
+ifneq ($(COMPILER),CRAYX2)
+  ifneq ($(COMPILER),CATAMOUNT)
 	cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE)
 	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so.$(PAPIVER)
 	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so
+  endif
+endif
 	-install -d $(DESTDIR)$(DATADIR)
 	cp -f ./perfmon_events.csv $(DESTDIR)$(DATADIR)
 

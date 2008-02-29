@@ -330,6 +330,22 @@ int PAPI_library_init(int version)
       papi_return(init_retval);
    }
 
+#ifdef __CATAMOUNT__
+	/*	Set default for signal to ignore to prevent stray
+	 *	interrupts from coming in at the end or profiling
+	 *	or multiplexing. Allows multiplexing, overflow, and
+	 *	profile tests to execute (although some do FAIL).
+	 */
+	do {
+		struct sigaction sigi;
+		sigi.sa_sigaction = (void *) SIG_IGN;
+		sigi.sa_flags = SA_RESTART;
+		sigemptyset (&sigi.sa_mask);
+		(void) sigaction (SIGPROF, &sigi, NULL);
+		(void) sigaction (SIGALRM, &sigi, NULL);
+	} while (0);
+#endif
+
    /* Initialize thread globals, including the main threads
       substrate */
 
@@ -621,7 +637,7 @@ int PAPI_event_name_to_code(char *in, int *out)
 }
 
 /* Updates EventCode to next valid value, or returns error; 
-  modifer can specify {all / available} for presets, or other values for native tables 
+  modifier can specify {all / available} for presets, or other values for native tables 
   and may be platform specific (Major groups / all mask bits; P / M / E chip, etc) */
 int PAPI_enum_event(int *EventCode, int modifier)
 {
@@ -632,11 +648,15 @@ int PAPI_enum_event(int *EventCode, int modifier)
        return (PAPI_ENOCMP);
 
    if (i & PAPI_PRESET_MASK) {
+	   if (modifier == PAPI_ENUM_FIRST) {
+			 *EventCode = PAPI_PRESET_MASK;
+			 return (PAPI_OK);
+	   }
        i &= PAPI_PRESET_AND_MASK;
        while (++i < PAPI_MAX_PRESET_EVENTS) {
 	   if (_papi_hwi_presets.info[i].symbol == NULL)
 	     return (PAPI_ENOEVNT); /* NULL pointer terminates list */
-	   if (modifier & PAPI_ENUM_PRESET_AVAIL) {
+	   if (modifier & PAPI_PRESET_ENUM_AVAIL) {
 	       if (_papi_hwi_presets.count[i] == 0)
 		 continue;
 	   }
@@ -646,9 +666,10 @@ int PAPI_enum_event(int *EventCode, int modifier)
    }
    else if (i & PAPI_NATIVE_MASK) {
        /* Should check against num native events here */
+  SUBDBG("Modifier: %d\n",modifier);
        return (_papi_hwd[cidx]->ntv_enum_events((unsigned int *) EventCode, modifier));
    }
-   return (PAPI_ENOEVNT);
+   return (PAPI_EINVAL);
 }
 
 /* Kevin's model required eventset to be specified with a component index.
@@ -664,9 +685,9 @@ int PAPI_create_eventset(int *EventSet)
 
    retval = _papi_hwi_lookup_or_create_thread(&master);
    if (retval)
-     return(retval);
+     papi_return(retval);
 
-   return (_papi_hwi_create_eventset(EventSet, master));
+   papi_return (_papi_hwi_create_eventset(EventSet, master));
 }
 
 int PAPI_assign_eventset_component(int EventSet, int cidx)
@@ -707,7 +728,7 @@ int PAPI_add_pevent(int EventSet, int code, void *inout)
 
    /* Now do the magic. */
 
-   return (_papi_hwi_add_pevent(ESI, code, inout));
+   papi_return (_papi_hwi_add_pevent(ESI, code, inout));
 }
 
 int PAPI_add_event(int EventSet, int EventCode)
@@ -896,7 +917,9 @@ int PAPI_start(int EventSet)
    ESI->state |= PAPI_RUNNING;
 
    /* Update the running event set for this thread */
-   if (!(ESI->state & PAPI_ATTACHED))
+
+   /* #warning "I don't know why this is here" */
+
      thread->running_eventset[cidx] = ESI;
 
    APIDBG("PAPI_start returns %d\n", retval);
@@ -923,28 +946,6 @@ int PAPI_stop(int EventSet, long_long * values)
 
    if (!(ESI->state & PAPI_RUNNING))
       papi_return(PAPI_ENOTRUN);
-
-   if (ESI->state & PAPI_PROFILING) {
-     if (_papi_hwd[cidx]->cmp_info.kernel_profile && !(ESI->profile.flags&PAPI_PROFIL_FORCE_SW)) {
-         retval = _papi_hwd[cidx]->stop_profiling(thread, ESI);
-         if (retval < PAPI_OK)
-            papi_return(retval);
-      }
-   }
-
-   /* If overflowing is enabled, turn it off */
-
-   if (ESI->state & PAPI_OVERFLOWING) 
-     {
-       ESI->overflow.count = 0;
-       if (!(ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
-	 {
-	   retval = _papi_hwi_stop_timer();
-	   if (retval != PAPI_OK)
-	     papi_return(retval);
-	   _papi_hwi_stop_signal(_papi_hwd[cidx]->cmp_info.hardware_intr_sig);
-	 }
-     }
 
    /* If multiplexing is enabled for this eventset, turn if off */
 
@@ -975,13 +976,40 @@ int PAPI_stop(int EventSet, long_long * values)
    if (values)
       memcpy(values, ESI->sw_stop, ESI->NumberOfEvents * sizeof(long_long));
 
+   /* If kernel profiling is in use, flush and process the kernel buffer */
+
+   if (ESI->state & PAPI_PROFILING) {
+     if (_papi_hwd[cidx]->cmp_info.kernel_profile && !(ESI->profile.flags&PAPI_PROFIL_FORCE_SW)) {
+         retval = _papi_hwd[cidx]->stop_profiling(thread, ESI);
+         if (retval < PAPI_OK)
+            papi_return(retval);
+      }
+   }
+
+   /* If overflowing is enabled, turn it off */
+
+   if (ESI->state & PAPI_OVERFLOWING) 
+     {
+       ESI->overflow.count = 0;
+       if (!(ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
+	 {
+	   retval = _papi_hwi_stop_timer();
+	   if (retval != PAPI_OK)
+	     papi_return(retval);
+	   _papi_hwi_stop_signal(_papi_hwd[cidx]->cmp_info.hardware_intr_sig);
+	 }
+     }
+
    /* Update the state of this EventSet */
 
    ESI->state ^= PAPI_RUNNING;
    ESI->state |= PAPI_STOPPED;
 
    /* Update the running event set for this thread */
-   if (!(ESI->state & PAPI_ATTACHED))
+ 
+   /* #warning "I don't know why this is here" */
+
+  if (!(ESI->state & PAPI_ATTACHED))
      thread->running_eventset[cidx] = NULL ;
 
 #if defined(DEBUG)
@@ -993,9 +1021,7 @@ int PAPI_stop(int EventSet, long_long * values)
        }
 #endif
 
-   APIDBG("PAPI_stop returns %d\n", retval);
-
-   return (retval);
+   return (PAPI_OK);
 }
 
 int PAPI_reset(int EventSet)
@@ -2104,7 +2130,6 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
       p->threshold[i] = 0;
       p->EventIndex[i] = 0;
       p->EventCode[i] = 0;
-
       p->event_counter--;
    } else {
       if ( p->event_counter > 0 ) {
@@ -2130,6 +2155,10 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
       p->EventIndex[i] = index;
    }
 
+   /* Clear out old flags */
+   if (threshold == 0) 
+     flags |= p->flags;
+
    /* make sure no invalid flags are set */
    if (flags & ~(PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM | PAPI_PROFIL_WEIGHTED
                | PAPI_PROFIL_COMPRESS | PAPI_PROFIL_BUCKETS | PAPI_PROFIL_FORCE_SW | PAPI_PROFIL_INST_EAR | PAPI_PROFIL_DATA_EAR))
@@ -2138,7 +2167,9 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
    if ((flags & (PAPI_PROFIL_INST_EAR | PAPI_PROFIL_DATA_EAR)) && (_papi_hwd[cidx]->cmp_info.profile_ear == 0))
      papi_return(PAPI_ESBSTR);
 
-   if ((flags & PAPI_PROFIL_FORCE_SW)) 
+   /* if we have kernel-based profiling, then we're just asking for signals on interrupt. */
+   /* if we don't have kernel-based profiling, then we're asking for emulated PMU interrupt */
+   if ((flags & PAPI_PROFIL_FORCE_SW) && (_papi_hwd[cidx]->cmp_info.kernel_profile == 0)) 
       forceSW = PAPI_OVERFLOW_FORCE_SW;
 
    /* make sure one and only one bucket size is set */
@@ -2152,10 +2183,9 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
    }
 
    /* Set up the option structure for the low level */
-
    p->flags = flags;
 
-   if ((forceSW) || (_papi_hwd[cidx]->cmp_info.kernel_profile == 0))
+   if (flags & PAPI_PROFIL_FORCE_SW)
      retval = PAPI_overflow(EventSet, EventCode, threshold, forceSW, _papi_hwi_dummy_handler);
    else 
       retval = _papi_hwd[cidx]->set_profile(ESI, index, threshold);
@@ -2163,12 +2193,17 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
    if (retval < PAPI_OK)
       return (retval);
 
-   /* Toggle profiling flag */
+   APIDBG("Profile event counter is %d\n",ESI->profile.event_counter);
+
+   /* Toggle profiling flag if we are the first or the last event to be profiled on */
+
    if ((p->event_counter == 1 && threshold > 0) ||
        (p->event_counter == 0 && threshold == 0))
       ESI->state ^= PAPI_PROFILING;
 
-   if ( p->event_counter == 0 )
+   /* Set flags to 0 if we are clearing the last event */
+
+   if (p->event_counter == 0 && threshold == 0)
      p->flags = 0;
 
    return(PAPI_OK);

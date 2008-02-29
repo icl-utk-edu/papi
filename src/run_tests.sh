@@ -7,40 +7,68 @@
 # Mods:    Kevin London
 #          london@cs.utk.edu
 
-if [ "$1" = "-v" ]; then
+AIXTHREAD_SCOPE=S
+export AIXTHREAD_SCOPE
+if [ "X$1" = "X-v" ]; then
   shift ; TESTS_QUIET=""
 else
   TESTS_QUIET="TESTS_QUIET"
 fi
 
-CTESTS=`find tests -perm -u+x -type f`;
+CTESTS=`find ctests -perm -u+x -type f`;
 FTESTS=`find ftests -perm -u+x -type f`;
-ALLTESTS="$FTESTS $CTESTS";
+ALLTESTS="$CTESTS $FTESTS";
 x=0;
 CWD=`pwd`
 
-echo "The following test cases will be run";
-echo $ALLTESTS;
-echo "\n";
+echo "Platform:"
+uname -a
 
-echo "Running C Tests\n";
+echo ""
+echo "The following test cases will be run:";
+echo $ALLTESTS;
+
+echo "";
+echo "Running C Tests";
+echo ""
+
 for i in $CTESTS;
 do
 if [ -x $i ]; then
-if [ "$i" = "tests/timer_overflow" ]; then
+if [ "$i" = "ctests/timer_overflow" ]; then
   echo Skipping test $i, it takes too long...
 else
+if [ "$i" = "ctests/shlib" ]; then
+  echo -n "Running $i: ";
+  if [ "$LD_LIBRARY_PATH" = "" ]; then
+      LD_LIBRARY_PATH=.:./libpfm-3.y/lib:./libpfm-2.x/libpfm
+  else
+      LD_LIBRARY_PATH=.:./libpfm-3.y/lib:./libpfm-2.x/libpfm:"$LD_LIBRARY_PATH"
+  fi
+  export LD_LIBRARY_PATH
+  if [ "$LIBPATH" = "" ]; then
+      LIBPATH=.:./libpfm-3.y/lib:./libpfm-2.x/libpfm
+  else
+      LIBPATH=.:./libpfm-3.y/lib:./libpfm-2.x/libpfm:"$LIBPATH"
+  fi
+  export LIBPATH
+  ./$i $TESTS_QUIET
+else
 echo -n "Running $i: ";
-$CWD/$i TESTS_QUIET
+./$i $TESTS_QUIET
+fi;
 fi;
 fi;
 done
 
-echo "\n\nRunning Fortran Tests\n";
+echo ""
+echo "Running Fortran Tests";
+echo ""
+
 for i in $FTESTS;
 do
 if [ -x $i ]; then
 echo -n "Running $i: ";
-$CWD/$i TESTS_QUIET
+./$i $TESTS_QUIET
 fi;
 done

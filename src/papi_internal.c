@@ -67,7 +67,7 @@ PAPI_debug_handler_t _papi_hwi_debug_handler = default_debug_handler;
 void PAPIERROR(char *format, ...)
 {
   va_list args;
-   if (_papi_hwi_error_level != PAPI_QUIET)
+   if ((_papi_hwi_error_level != PAPI_QUIET) || (getenv("PAPI_VERBOSE")))
      {
        va_start(args, format); 
        fprintf(stderr, "PAPI Error: ");
@@ -494,8 +494,7 @@ int _papi_hwi_add_native_precheck(EventSetInfo_t * ESI, int nevt)
    for (i = 0; i < ESI->NativeCount; i++) {
       if (nevt == ESI->NativeInfoArray[i].ni_event) {
          ESI->NativeInfoArray[i].ni_owners++;
-         INTDBG("found native event already mapped: %s\n",
-                _papi_hwd[cidx]->ntv_code_to_name(nevt));
+         INTDBG("found native event already mapped: 0x%x\n", nevt);
          return i;
       }
    }
@@ -573,8 +572,7 @@ static int add_native_fail_clean(EventSetInfo_t * ESI, int nevt)
             memset(ESI->NativeInfoArray[i].ni_bits, 0x00, _papi_hwd[ESI->CmpIdx]->size.reg_value);
             ESI->NativeCount--;
          }
-         INTDBG("add_events fail, and remove added native events of the event: %s\n",
-                _papi_hwd[cidx]->ntv_code_to_name(nevt));
+         INTDBG("add_events fail, and remove added native events of the event:0x%x\n", nevt);
          return i;
       }
    }
@@ -610,7 +608,7 @@ static int add_native_events(EventSetInfo_t * ESI, int *nevt, int size, EventInf
          }
          /* there is an empty slot for the native event;
             initialize the native index for the new added event */
-         INTDBG("Adding %s\n", _papi_hwd[ESI->CmpIdx]->ntv_code_to_name(nevt[i]));
+         INTDBG("Adding 0x%x\n", nevt[i]);
          ESI->NativeInfoArray[ESI->NativeCount].ni_event = nevt[i];
          ESI->NativeInfoArray[ESI->NativeCount].ni_owners = 1;
          ESI->NativeCount++;
@@ -1099,10 +1097,12 @@ int _papi_hwi_init_global_internal(void)
 {
   int retval;
   extern const hwi_preset_info_t _papi_hwi_preset_info[PAPI_MAX_PRESET_EVENTS];
+  extern const unsigned int _papi_hwi_preset_type[PAPI_MAX_PRESET_EVENTS];
 
   memset(&_papi_hwi_presets,0x0,sizeof(_papi_hwi_presets));
   /* This member is static */
   _papi_hwi_presets.info = _papi_hwi_preset_info;
+  _papi_hwi_presets.type = _papi_hwi_preset_type;
 
   memset(&_papi_hwi_system_info,0x0,sizeof(_papi_hwi_system_info));
 
@@ -1123,7 +1123,9 @@ int _papi_hwi_init_global_internal(void)
    _papi_hwi_system_info.hw_info.model_string[0] = '\0';        /* model_string */
    _papi_hwi_system_info.hw_info.revision = 0.0;        /* revision */
    _papi_hwi_system_info.hw_info.mhz = 0.0;     /* mhz */
- 
+   _papi_hwi_system_info.hw_info.clock_mhz = 0;
+   _papi_hwi_system_info.hw_info.clock_ticks = sysconf(_SC_CLK_TCK);
+
    return (PAPI_OK);
 }
 
@@ -1308,10 +1310,9 @@ void print_state(EventSetInfo_t * ESI, int cidx)
    APIDBG( "numEvent: %d    numNative: %d\n", ESI->NumberOfEvents,
            ESI->NativeCount);
 
-   APIDBG( "\nnative_event_name       ");
+   APIDBG( "\nnative_event code       ");
    for (i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++)
-      APIDBG( "%15s",
-              _papi_hwd[cidx]->ntv_code_to_name(ESI->NativeInfoArray[i].ni_event));
+      APIDBG( "0x%15x", ESI->NativeInfoArray[i].ni_event);
    APIDBG( "\n");
 
    APIDBG( "native_event_position     ");
@@ -1456,6 +1457,7 @@ int _papi_hwi_get_event_info(int EventCode, PAPI_event_info_t * info)
    if (_papi_hwi_presets.info[i].symbol) { /* if the event is in the preset table */
      memset(info,0,sizeof(*info));
       info->event_code = EventCode;
+      info->event_type = _papi_hwi_presets.type[i];
       info->count = _papi_hwi_presets.count[i];
       strcpy(info->symbol, _papi_hwi_presets.info[i].symbol);
       if(_papi_hwi_presets.info[i].short_descr != NULL)
@@ -1510,6 +1512,7 @@ int _papi_hwi_set_event_info(PAPI_event_info_t * info, int *EventCode)
    */
 
    *EventCode = i | PAPI_PRESET_MASK; /* set new EventCode (may not have changed) */
+   _papi_hwi_presets.type[i] = info->event_type;
    _papi_hwi_presets.count[i] = info->count;
 
    /* There's currently a debate over the use of papi_xxx memory functions.

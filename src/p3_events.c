@@ -196,40 +196,42 @@ static char *internal_translate_code(int event, int umask, char *str, char *sepa
 
 
 /* Given a native event code, returns the short text label. */
-char *_p3_ntv_code_to_name(unsigned int EventCode)
+int _p3_ntv_code_to_name(unsigned int EventCode, char *name, int len)
 {
    int event, umask;
 
    internal_decode_event(EventCode, &event, &umask);
    if (event > MY_VECTOR.cmp_info.num_native_events) {
-       return ('\0'); // return a null string for invalid events
+       return (PAPI_ENOEVNT); // return a null string for invalid events
    }
 
    if (!umask)
-      return (native_table[event].name);
+      strncpy(name, native_table[event].name, len);
    else {
-      return (internal_translate_code(event, umask, name, "_"));
+      strncpy(name, internal_translate_code(event, umask, name, "_"), len);
    }
+   return(PAPI_OK);
 }
 
 /* Given a native event code, returns the longer native event
    description. */
-char *_p3_ntv_code_to_descr(unsigned int EventCode)
+int _p3_ntv_code_to_descr(unsigned int EventCode, char *name, int len)
 {
    int event, umask;
 
    internal_decode_event(EventCode, &event, &umask);
    if (event > MY_VECTOR.cmp_info.num_native_events)
-       return ('\0'); // return a null string for invalid events
+       return (PAPI_ENOEVNT); // return a null string for invalid events
 
    if (!umask)
-      return (native_table[event].description);
+      strncpy(name, native_table[event].description, len);
    else {
       if (native_table[event].resources.selector & HAS_UMASK)
-	 return (internal_translate_code(event, umask, description, ". Unit Mask bits: "));
+	 strncpy(name, internal_translate_code(event, umask, description, ". Unit Mask bits: "), len);
       else
-	 return (internal_translate_code(event, umask, description, ". Cache bits:"));
+	 strncpy(name, internal_translate_code(event, umask, description, ". Cache bits:"), len);
    }
+   return(PAPI_OK);
 }
 
 /* Given a native event code, assigns the native event's 

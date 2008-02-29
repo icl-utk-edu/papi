@@ -32,8 +32,8 @@ extern int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
 
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 
-/* NOTE: PAPI stores umask info in a variable sized bitfield.
-    Perfmon2 stores umask info in a 16 element array of values.
+/* NOTE: PAPI stores umask info in a variable sized (16 bit?) bitfield.
+    Perfmon2 stores umask info in a large (48 element?) array of values.
     Native event encodings for perfmon2 contain array indices
     encoded as bits in this bitfield. These indices must be converted
     into a umask value before programming the counters. For Perfmon,
@@ -78,7 +78,8 @@ static int setup_preset_term(int *native, pfmlib_event_t *event)
 	Am I wrong?
     */
   pfmlib_regmask_t impl_cnt, evnt_cnt;
-  int n, j, ret;
+  unsigned int n;
+  int j, ret;
 
   /* find out which counters it lives on */
   if ((ret = pfm_get_event_counters(event->event,&evnt_cnt)) != PFMLIB_SUCCESS)
@@ -220,7 +221,10 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
   char *name = "builtin perfmon_events_table";
   char *tmp_perfmon_events_table = perfmon_events_table;
 #endif
-  int line_no = 1, get_presets = 0, derived = 0, insert = 2, preset = 0;
+  int line_no = 1, derived = 0, insert = 2, preset = 0;
+  int get_presets = 0;   /* only get PRESETS after CPU is identified */
+  int found_presets = 0; /* only terminate search after PRESETS are found */
+						 /* this allows support for synonyms for CPU names */
 
 #ifdef SHOW_LOADS
   SUBDBG("%p\n",here);
@@ -245,14 +249,20 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
   if (table == NULL)
     {
       SUBDBG("Open %s failed, trying ./%s.\n",name,PERFMON_EVENT_FILE);
-      table = fopen(PERFMON_EVENT_FILE,"r");
+    sprintf(name,"%s",PERFMON_EVENT_FILE);
+    table = fopen(name,"r");
+  }
+  if (table == NULL)
+  {
+    SUBDBG("Open ./%s failed, trying ../%s.\n",name,PERFMON_EVENT_FILE);
+    sprintf(name,"../%s",PERFMON_EVENT_FILE);
+    table = fopen(name,"r");
+  }
       if (table == NULL)
 	{
 	  PAPIERROR("fopen(%s): %s, please set the PAPI_PERFMON_EVENT_FILE env. variable",name,strerror(errno));
 	  return(PAPI_ESYS);
 	}
-      strcpy(name,PERFMON_EVENT_FILE);
-    }
   SUBDBG("Open %s succeeded.\n",name);
   while (fgets(line,LINE_MAX,table))
     {
@@ -288,7 +298,7 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 #ifdef SHOW_LOADS
 	  SUBDBG("CPU token found on line %d\n",line_no);
 #endif
-	  if (get_presets != 0)
+	  if (get_presets != 0 && found_presets != 0)
 	    {
 #ifdef SHOW_LOADS
 	      SUBDBG("Ending preset scanning at line %d of %s.\n",line_no,name);
@@ -301,16 +311,16 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 	      PAPIERROR("Expected name after CPU token at line %d of %s -- ignoring",line_no,name);
 	      goto nextline;
 	    }
-#ifdef SHOW_LOADS
+//#ifdef SHOW_LOADS
 	  SUBDBG("Examining CPU (%s) vs. (%s)\n",t,pmu_name);
-#endif
+//#endif
 	  if (strcasecmp(t, pmu_name) == 0)
 	    {
 	      int type;
 
-#ifdef SHOW_LOADS
+//#ifdef SHOW_LOADS
 	      SUBDBG("Found CPU %s at line %d of %s.\n",t,line_no,name);
-#endif
+//#endif
 	      t = trim_string(strtok(NULL,","));
 	      if ((t == NULL) || (strlen(t) == 0))
 		{
@@ -340,6 +350,7 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 #endif
 	  if (get_presets == 0)
 	    goto nextline;
+	  found_presets = 1;
 	  t = trim_string(strtok(NULL,","));
 	  if ((t == NULL) || (strlen(t) == 0))
 	    {
@@ -441,14 +452,8 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 #if !defined(STATIC_PERFMON_EVENTS_TABLE)
   fclose(table);
 #endif
-  if (get_presets != 0) /* It at least found the CPU */
-    {
       return(PAPI_OK);
     }
-
-  PAPIERROR("Failed to find events for CPU %s, type %d in %s",pmu_name,pmu_type,name);
-  return(PAPI_ESBSTR);
-}
 
 /* Frees memory for all the strdup'd char strings in a preset string array.
     Assumes the array is initialized to 0 and has at least one 0 entry at the end.
@@ -645,7 +650,7 @@ inline unsigned int _pfm_convert_umask(unsigned int event, unsigned int umask)
 int _papi_pfm_setup_presets(char *pmu_name, int pmu_type)
 {
   int retval;
-  hwi_search_t *preset_search_map;
+  hwi_search_t *preset_search_map = NULL;
   hwi_dev_notes_t *notemap = NULL;
   pfm_preset_search_entry_t *_perfmon2_pfm_preset_search_map;
 
@@ -702,48 +707,63 @@ int _papi_pfm_init()
   return (PAPI_OK);
 }
 
-int _papi_pfm_ntv_name_to_code(char *name, unsigned int *EventCode)
+unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code)
 {
     pfmlib_event_t event;
+  int i;
 
     SUBDBG("pfm_find_full_event(%s,%p)\n",name,&event);
     if (pfm_find_full_event(name,&event) == PFMLIB_SUCCESS) {
-	*EventCode = encode_native_event(event.event, event.num_masks, event.unit_masks);
+	/* we can only capture PAPI_NATIVE_UMASK_MAX or fewer masks */
+	if (event.num_masks > PAPI_NATIVE_UMASK_MAX) {
+	  SUBDBG("num_masks (%d) > max masks (%d)\n",event.num_masks, PAPI_NATIVE_UMASK_MAX);
+	  return(PAPI_ENOEVNT);
+	}
+	else {
+	/* no mask index can exceed PAPI_NATIVE_UMASK_MAX */
+	  for (i=0; i<event.num_masks; i++) {
+		if (event.unit_masks[i] > PAPI_NATIVE_UMASK_MAX) {
+		  SUBDBG("mask index (%d) > max masks (%d)\n",event.unit_masks[i], PAPI_NATIVE_UMASK_MAX);
+		  return(PAPI_ENOEVNT);
+		}
+	  }
+	  *event_code = encode_native_event(event.event, event.num_masks, event.unit_masks);
 	return(PAPI_OK);
     }
+  }
     return(PAPI_ENOEVNT);
 }
 
-char *_papi_pfm_ntv_code_to_name(unsigned int EventCode)
+int _papi_pfm_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 {
   int ret;
   unsigned int event, umask;
   pfmlib_event_t gete;
-  char long_name[PAPI_HUGE_STR_LEN]; /* 1024 for those really verbose names! */
 
   memset(&gete,0,sizeof(gete));
   
   if (_pfm_decode_native_event(EventCode,&event,&umask) != PAPI_OK)
-    return("");
+    return(PAPI_ENOEVNT);
   
   gete.event = event;
   gete.num_masks = prepare_umask(umask,gete.unit_masks);
   if (gete.num_masks == 0)
-    ret = pfm_get_event_name(gete.event,long_name,sizeof(long_name));
+    ret = pfm_get_event_name(gete.event, ntv_name, len);
   else
-    ret = pfm_get_full_event_name(&gete,long_name,sizeof(long_name));
+    ret = pfm_get_full_event_name(&gete, ntv_name, len);
   if (ret != PFMLIB_SUCCESS)
     {
       char tmp[PAPI_2MAX_STR_LEN];
       pfm_get_event_name(gete.event,tmp,sizeof(tmp));
       PAPIERROR("pfm_get_full_event_name(%p(event %d,%s,%d masks),%p,%d): %d -- %s",
-		&gete,gete.event,tmp,gete.num_masks,long_name,sizeof(long_name),ret,pfm_strerror(ret));
-      return("");
+		&gete,gete.event,tmp,gete.num_masks,ntv_name,len,ret,pfm_strerror(ret));
+      if (ret == PFMLIB_ERR_FULL) return(PAPI_EBUF);
+      return(PAPI_ESBSTR);
     }
-  return(strdup(long_name));
+  return(PAPI_OK);
 }
 
-char *_papi_pfm_ntv_code_to_descr(unsigned int EventCode)
+int _papi_pfm_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len)
 {
   unsigned int event, umask;
   char *eventd, **maskd, *tmp;
@@ -753,14 +773,14 @@ char *_papi_pfm_ntv_code_to_descr(unsigned int EventCode)
   memset(&gete,0,sizeof(gete));
   
   if (_pfm_decode_native_event(EventCode,&event,&umask) != PAPI_OK)
-    return(NULL);
+    return(PAPI_ENOEVNT);
   
   ret = pfm_get_event_description(event,&eventd);
   if (ret != PFMLIB_SUCCESS)
     {
       PAPIERROR("pfm_get_event_description(%d,%p): %s",
 		event,&eventd,pfm_strerror(ret));
-      return(NULL);
+      return(PAPI_ENOEVNT);
     }
 
   if ((gete.num_masks = prepare_umask(umask,gete.unit_masks)))
@@ -769,7 +789,7 @@ char *_papi_pfm_ntv_code_to_descr(unsigned int EventCode)
       if (maskd == NULL)
 	{
 	  free(eventd);
-	  return(NULL);
+	  return(PAPI_ENOMEM);
 	}
       for (i=0;i<gete.num_masks;i++)
 	{
@@ -782,7 +802,7 @@ char *_papi_pfm_ntv_code_to_descr(unsigned int EventCode)
 	      for (;i>=0;i--)
 		free(maskd[i]);
 	      free(maskd);
-	      return(NULL);
+	      return(PAPI_EINVAL);
 	    }
 	  total_len += strlen(maskd[i]);
 	}
@@ -812,14 +832,17 @@ char *_papi_pfm_ntv_code_to_descr(unsigned int EventCode)
       if (tmp == NULL)
 	{
 	  free(eventd);
-	  return(NULL);
+	  return(PAPI_ENOMEM);
 	}
       tmp[0] = '\0';
       strcat(tmp,eventd);
       free(eventd);
     }
-
-  return(tmp);
+  strncpy(ntv_descr, tmp, len);
+  if (strlen(tmp) > len-1) ret = PAPI_EBUF;
+  else ret = PAPI_OK;
+  free(tmp);
+  return(ret);
 }
 
 int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
@@ -827,68 +850,44 @@ int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
   unsigned int event, umask, num_masks;
   int ret;
 
+  if (modifier == PAPI_ENUM_FIRST) {
+    *EventCode = PAPI_NATIVE_MASK; /* assumes first native event is always 0x4000000 */
+    return (PAPI_OK);
+  }
+
   if (_pfm_decode_native_event(*EventCode,&event,&umask) != PAPI_OK)
     return(PAPI_ENOEVNT);
 
   ret = pfm_get_num_event_masks(event,&num_masks);
-  if (ret != PFMLIB_SUCCESS)
-    {
+  if (ret != PFMLIB_SUCCESS) {
       PAPIERROR("pfm_get_num_event_masks(%d,%p): %s",event,&num_masks,pfm_strerror(ret));
       return(PAPI_ENOEVNT);
     }
+  if (num_masks > PAPI_NATIVE_UMASK_MAX) num_masks = PAPI_NATIVE_UMASK_MAX;
   SUBDBG("This is umask %d of %d\n",umask,num_masks);
+  SUBDBG("Modifier: %d\n",modifier);
 
-  if (modifier == PAPI_ENUM_EVENTS)
-    {
-      if (event < MY_VECTOR.cmp_info.num_native_events - 1) 
-	{
-	  *EventCode += 1;
-	  return (PAPI_OK);
-	}
-      return (PAPI_ENOEVNT);
-    }
-  else if (modifier == PAPI_ENUM_ALL)
-    {
-      if (umask+1 < (1<<num_masks))
-	{
-	  *EventCode = encode_native_event_raw(event,umask+1);
-	  return (PAPI_OK);
-	}
-      else if (event < MY_VECTOR.cmp_info.num_native_events - 1) 
-	{
-	  /* Lookup event + 1 and return first umask of group */
-	  ret = pfm_get_num_event_masks(event+1,&num_masks);
-	  if (ret != PFMLIB_SUCCESS)
-	    {
-	      PAPIERROR("pfm_get_num_event_masks(%d,%p): %s",event,&num_masks,pfm_strerror(ret));
-	      return(PAPI_ENOEVNT);
-	    }
-	  if (num_masks)
-	    *EventCode = encode_native_event_raw(event+1,1);
-	  else
+  if (modifier == PAPI_ENUM_EVENTS) {
+    if (event < MY_VECTOR.cmp_info.num_native_events - 1) {
 	    *EventCode = encode_native_event_raw(event+1,0);
 	  return(PAPI_OK);
 	}
       return (PAPI_ENOEVNT);
     }
-  else if (modifier == PAPI_ENUM_UMASK_COMBOS)
-    {
-      if (umask+1 < (1<<num_masks))
-	{
+  else if (modifier == PAPI_NTV_ENUM_UMASK_COMBOS){
+    if (umask+1 < (1<<num_masks)) {
 	  *EventCode = encode_native_event_raw(event,umask+1);
 	  return (PAPI_OK);
 	}
       return(PAPI_ENOEVNT);
     }
-  else if (modifier == PAPI_ENUM_UMASKS)
-    {
+  else if (modifier == PAPI_NTV_ENUM_UMASKS) {
       int thisbit = ffs(umask);
       
-      SUBDBG("First bit is %d in %08x\b",thisbit-1,umask);
+    SUBDBG("First bit is %d in %08x\b\n",thisbit-1,umask);
       thisbit = 1 << thisbit;
 
-      if (thisbit & ((1<<num_masks)-1))
-	{
+    if (thisbit & ((1<<num_masks)-1)) {
 	  *EventCode = encode_native_event_raw(event,thisbit);
 	  return (PAPI_OK);
 	}
@@ -896,7 +895,6 @@ int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
     }
   else
     return(PAPI_EINVAL);
-  
 }
 
 #ifndef PENTIUM4

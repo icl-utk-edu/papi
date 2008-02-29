@@ -142,8 +142,8 @@ void _papi_hwd_dispatch_timer(int signal, hwd_siginfo_t * info, void *tmp);
 */
 
  int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer);
- char *_papi_hwd_ntv_code_to_name(unsigned int EventCode);
- char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode);
+ int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char * name, int len);
+ int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char * name, int len);
  int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits);
  int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values,
                                       int name_len, int count);

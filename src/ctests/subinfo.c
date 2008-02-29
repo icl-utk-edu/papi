@@ -28,6 +28,7 @@ int main(int argc, char **argv)
    printf("substrate_version: %s\n",cmpinfo->version);
    printf("support_version: %s\n",cmpinfo->support_version);
    printf("kernel_version: %s\n",cmpinfo->kernel_version);
+   printf("CmpIdx: %d\n",cmpinfo->CmpIdx);
    printf("num_cntrs: %d\n",cmpinfo->num_cntrs);
    printf("num_mpx_cntrs: %d\n",cmpinfo->num_mpx_cntrs);
    printf("num_preset_events: %d\n",cmpinfo->num_preset_events);           /* Number of counters the substrate supports */
@@ -55,7 +56,11 @@ int main(int argc, char **argv)
    printf("edge_detect: %d\n",cmpinfo->edge_detect);    /* Has a fast virtual timer */
    printf("invert: %d\n",cmpinfo->invert);    /* Has a fast virtual timer */
    printf("profile_ear: %d\n",cmpinfo->profile_ear);     /* Supports data/instr/tlb miss address sampling */
-   printf("grouped_cntrs: %d\n",cmpinfo->grouped_cntrs);           /* Number of counters the substrate supports */
+   printf("cntr_groups: %d\n",cmpinfo->cntr_groups);           /* counters are arranged by group like POWER4,5,6 */
+   printf("cntr_umasks: %d\n",cmpinfo->cntr_umasks);           /* counters have unit masks */
+   printf("cntr_IEAR_events: %d\n",cmpinfo->cntr_IEAR_events);      /* counters support instr event addr register */
+   printf("cntr_DEAR_events: %d\n",cmpinfo->cntr_DEAR_events);      /* counters support data event addr register */
+   printf("cntr_OPCM_events: %d\n",cmpinfo->cntr_OPCM_events);      /* counter events support opcode matching */
 
    test_pass(__FILE__, NULL, 0);
    exit(0);

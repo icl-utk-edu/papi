@@ -79,7 +79,7 @@ int main(int argc, char **argv)
   /* Find the last defined native event */
   cmp_info = PAPI_get_component_info(0);
   if (cmp_info == NULL)
-    test_fail(__FILE__, __LINE__, "PAPI_get_substrate_info", PAPI_ESBSTR);
+    test_fail(__FILE__, __LINE__, "PAPI_get_component_info", PAPI_ESBSTR);
   code = (cmp_info->num_native_events - 1) | PAPI_NATIVE_MASK;
   printf("Looking for last native event: 0x%x...\n", code);
   retval = PAPI_event_code_to_name(code, event_name);

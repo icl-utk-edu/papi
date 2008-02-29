@@ -19,6 +19,7 @@
 #define PAPI_NATIVE_EVENT_SHIFT 0
 #define PAPI_NATIVE_UMASK_AND_MASK 0x0fffff00 /* 20 bits for unit masks */
 /* top 4 bits (16 - 19) encode tags for execution_event tagging */
+#define PAPI_NATIVE_UMASK_MAX 16				/* 16 possible unit masks */
 #define PAPI_NATIVE_UMASK_SHIFT 8
 
 #define MAX_COUNTERS	       18

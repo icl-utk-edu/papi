@@ -58,8 +58,8 @@ int _p3_ntv_name_to_code(char *name, unsigned int *event_code);
 
 /* Prototypes for entry points found in either p3_events or papi_pfm_events */
 int _p3_ntv_enum_events(unsigned int *EventCode, int modifer);
-char *_p3_ntv_code_to_name(unsigned int EventCode);
-char *_p3_ntv_code_to_descr(unsigned int EventCode);
+int _p3_ntv_code_to_name(unsigned int EventCode, char * name, int len);
+int _p3_ntv_code_to_descr(unsigned int EventCode, char * name, int len);
 int _p3_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits);
 int _p3_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values,
                           int name_len, int count);
@@ -362,6 +362,7 @@ static int _p3_init_substrate(int cidx)
   */
   _papi_hwi_system_info.hw_info.mhz = (float) info.cpu_khz / 1000.0; 
   SUBDBG("Detected MHZ is %f\n",_papi_hwi_system_info.hw_info.mhz);
+  _papi_hwi_system_info.hw_info.clock_mhz = mhz;
 #endif
 
    lock_init();
@@ -989,6 +990,7 @@ papi_vector_t _p3_vector = {
 	.fast_virtual_timer =	1,
 	.attach =		1,
 	.attach_must_ptrace =	1,
+	.cntr_umasks = 1,
     },
 
     /* sizes of framework-opaque component-private structures */

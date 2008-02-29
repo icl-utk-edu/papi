@@ -419,14 +419,16 @@ int ACPI_ntv_enum_events(unsigned int *EventCode, int modifier)
       return (PAPI_EINVAL);
 }
 
-char *ACPI_ntv_code_to_name(unsigned int EventCode)
+int ACPI_ntv_code_to_name(unsigned int EventCode, char *name, int len)
 {
-   return (acpi_native_table[EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK].name);
+   strncpy(name, acpi_native_table[EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK].name, len);
+   return(PAPI_OK);
 }
 
-char *ACPI_ntv_code_to_descr(unsigned int EventCode)
+int ACPI_ntv_code_to_descr(unsigned int EventCode, char *name, int len)
 {
-   return (acpi_native_table[EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK].description);
+   strncpy(name, acpi_native_table[EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK].description, len);
+   return(PAPI_OK);
 }
 
 int ACPI_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
