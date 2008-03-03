@@ -2947,6 +2947,11 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
       }
     }
 
+  if (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_CRAY)
+    {
+	_papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_OTHER;
+    }
+
   if ((_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL) ||
       (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_AMD))
     {
