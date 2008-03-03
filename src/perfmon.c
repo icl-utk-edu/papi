@@ -3859,7 +3859,7 @@ void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
 	wanted_fd = thread->context.ctx_fd;
       }
       if (wanted_fd != fd) {
-	PAPIERROR("expected fd %d, got %d in _papi_hwi_dispatch_timer!");
+	PAPIERROR("expected fd %d, got %d in _papi_hwi_dispatch_timer!",wanted_fd,fd);
 	if (n == _papi_hwi_system_info.sub_info.hardware_intr_sig) { read(fd, &msg, sizeof(msg)); pfm_restart(fd); }
 	return;
       }
@@ -3883,6 +3883,13 @@ void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
             PAPIERROR("unexpected msg type %d",msg.type);
             ret = -1;
         }
+
+#if 0
+	if (msg.pfm_ovfl_msg.msg_ovfl_tid != mygettid()) {
+	  PAPIERROR("unmatched thread id %lx vs. %lx",msg.pfm_ovfl_msg.msg_ovfl_tid,mygettid());
+	  ret = -1;
+	}
+#endif
 
         if (ret != -1) {
 	  if ((thread->running_eventset->state & PAPI_PROFILING) && !(thread->running_eventset->profile.flags & PAPI_PROFIL_FORCE_SW))
