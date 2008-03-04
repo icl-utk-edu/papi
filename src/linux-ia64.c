@@ -267,6 +267,222 @@ static itanium_preset_search_t ia3_preset_search_map[] = {
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
 
+
+/*****************************************************************************
+ * Code to support unit masks; only needed by Montecito and above            *
+ *****************************************************************************/
+#if defined(PFMLIB_MONTECITO_PMU)
+/* Break a PAPI native event code into its composite event code and pfm mask bits */
+inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int *event, unsigned int *umask)
+{
+  unsigned int tevent, major, minor;
+
+  tevent = EventCode & PAPI_NATIVE_AND_MASK;
+  major = (tevent & PAPI_NATIVE_EVENT_AND_MASK) >> PAPI_NATIVE_EVENT_SHIFT;
+  if (major >= _papi_hwi_system_info.sub_info.num_native_events)
+    return(PAPI_ENOEVNT);
+
+  minor = (tevent & PAPI_NATIVE_UMASK_AND_MASK) >> PAPI_NATIVE_UMASK_SHIFT;
+  *event = major;
+  *umask = minor;
+  SUBDBG("EventCode 0x%08x is event %d, umask 0x%x\n",EventCode,major,minor);
+  return(PAPI_OK);
+}
+
+/* This routine is used to step through all possible combinations of umask
+    values. It assumes that mask contains a valid combination of array indices
+    for this event. */
+static inline int encode_native_event_raw(unsigned int event, unsigned int mask)
+{
+  unsigned int tmp = event << PAPI_NATIVE_EVENT_SHIFT;
+  SUBDBG("Old native index was 0x%08x with 0x%08x mask\n",tmp,mask);
+  tmp = tmp | (mask << PAPI_NATIVE_UMASK_SHIFT);
+  SUBDBG("New encoding is 0x%08x\n",tmp|PAPI_NATIVE_MASK);
+  return(tmp|PAPI_NATIVE_MASK);
+}
+
+/* convert a collection of pfm mask bits into an array of pfm mask indices */
+static inline int prepare_umask(unsigned int foo,unsigned int *values)
+{
+  unsigned int tmp = foo, i, j = 0;
+
+  SUBDBG("umask 0x%x\n",tmp);
+  while ((i = ffs(tmp)))
+    {
+      tmp = tmp ^ (1 << (i-1));
+      values[j] = i - 1;
+      SUBDBG("umask %d is %d\n",j,values[j]);
+      j++;
+    }
+  return(j);
+}
+
+int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
+{
+  unsigned int event, umask, num_masks;
+  int ret;
+
+  if (modifier == PAPI_ENUM_FIRST) {
+    *EventCode = PAPI_NATIVE_MASK; /* assumes first native event is always 0x4000000 */
+    return (PAPI_OK);
+  }
+
+  if (_pfm_decode_native_event(*EventCode,&event,&umask) != PAPI_OK)
+    return(PAPI_ENOEVNT);
+
+  ret = pfm_get_num_event_masks(event,&num_masks);
+  if (ret != PFMLIB_SUCCESS) {
+    PAPIERROR("pfm_get_num_event_masks(%d,%p): %s",event,&num_masks,pfm_strerror(ret));
+    return(PAPI_ENOEVNT);
+  }
+  if (num_masks > PAPI_NATIVE_UMASK_MAX) num_masks = PAPI_NATIVE_UMASK_MAX;
+  SUBDBG("This is umask %d of %d\n",umask,num_masks);
+
+  if (modifier == PAPI_ENUM_EVENTS) {
+    if (event < _papi_hwi_system_info.sub_info.num_native_events - 1) {
+	  *EventCode = encode_native_event_raw(event+1,0);
+      if(_hwd_modify_event(event+1, modifier))
+         return(PAPI_OK);
+	}
+    return (PAPI_ENOEVNT);
+  }
+  else if (modifier == PAPI_NTV_ENUM_UMASK_COMBOS){
+    if (umask+1 < (1<<num_masks)) {
+	  *EventCode = encode_native_event_raw(event,umask+1);
+	  return (PAPI_OK);
+	}
+    return(PAPI_ENOEVNT);
+  }
+  else if (modifier == PAPI_NTV_ENUM_UMASKS) {
+    int thisbit = ffs(umask);
+
+    SUBDBG("First bit is %d in %08x\b\n",thisbit-1,umask);
+    thisbit = 1 << thisbit;
+
+    if (thisbit & ((1<<num_masks)-1)) {
+	  *EventCode = encode_native_event_raw(event,thisbit);
+	  return (PAPI_OK);
+	}
+    return(PAPI_ENOEVNT);
+  }
+  else
+    return(PAPI_EINVAL);
+}
+
+int _papi_pfm_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
+{
+  int ret;
+  unsigned int event, umask;
+  pfmlib_event_t gete;
+
+  memset(&gete,0,sizeof(gete));
+  
+  if (_pfm_decode_native_event(EventCode,&event,&umask) != PAPI_OK)
+    return(PAPI_ENOEVNT);
+  
+  gete.event = event;
+  gete.num_masks = prepare_umask(umask,gete.unit_masks);
+  if (gete.num_masks == 0)
+    ret = pfm_get_event_name(gete.event, ntv_name, len);
+  else
+    ret = pfm_get_full_event_name(&gete, ntv_name, len);
+  if (ret != PFMLIB_SUCCESS)
+    {
+      char tmp[PAPI_2MAX_STR_LEN];
+      pfm_get_event_name(gete.event,tmp,sizeof(tmp));
+      PAPIERROR("pfm_get_full_event_name(%p(event %d,%s,%d masks),%p,%d): %d -- %s",
+		&gete,gete.event,tmp,gete.num_masks,ntv_name,len,ret,pfm_strerror(ret));
+      if (ret == PFMLIB_ERR_FULL) return(PAPI_EBUF);
+      return(PAPI_ESBSTR);
+    }
+  return(PAPI_OK);
+}
+
+int _papi_pfm_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len)
+{
+  unsigned int event, umask;
+  char *eventd, **maskd, *tmp;
+  int i, ret, total_len = 0;
+  pfmlib_event_t gete;
+
+  memset(&gete,0,sizeof(gete));
+  
+  if (_pfm_decode_native_event(EventCode,&event,&umask) != PAPI_OK)
+    return(PAPI_ENOEVNT);
+  
+  ret = pfm_get_event_description(event,&eventd);
+  if (ret != PFMLIB_SUCCESS)
+    {
+      PAPIERROR("pfm_get_event_description(%d,%p): %s",
+		event,&eventd,pfm_strerror(ret));
+      return(PAPI_ENOEVNT);
+    }
+
+  if ((gete.num_masks = prepare_umask(umask,gete.unit_masks)))
+    {
+      maskd = (char **)malloc(gete.num_masks*sizeof(char *));
+      if (maskd == NULL)
+	{
+	  free(eventd);
+	  return(PAPI_ENOMEM);
+	}
+      for (i=0;i<gete.num_masks;i++)
+	{
+	  ret = pfm_get_event_mask_description(event,gete.unit_masks[i],&maskd[i]);
+	  if (ret != PFMLIB_SUCCESS)
+	    {
+	      PAPIERROR("pfm_get_event_mask_description(%d,%d,%p): %s",
+			event,umask,&maskd,pfm_strerror(ret));
+	      free(eventd);
+	      for (;i>=0;i--)
+		free(maskd[i]);
+	      free(maskd);
+	      return(PAPI_EINVAL);
+	    }
+	  total_len += strlen(maskd[i]);
+	}
+      tmp = (char *)malloc(strlen(eventd)+strlen(", masks:")+total_len+gete.num_masks+1);
+      if (tmp == NULL)
+	{
+	  for (i=gete.num_masks-1;i>=0;i--)
+	    free(maskd[i]);
+	  free(maskd);
+	  free(eventd);
+	}
+      tmp[0] = '\0';
+      strcat(tmp,eventd);
+      strcat(tmp,", masks:");
+      for (i=0;i<gete.num_masks;i++)
+	{
+	  if (i!=0)
+	    strcat(tmp,",");
+	  strcat(tmp,maskd[i]);
+	  free(maskd[i]);
+	}
+      free(maskd);
+    }
+  else
+    {
+      tmp = (char *)malloc(strlen(eventd)+1); 
+      if (tmp == NULL)
+	{
+	  free(eventd);
+	  return(PAPI_ENOMEM);
+	}
+      tmp[0] = '\0';
+      strcat(tmp,eventd);
+      free(eventd);
+    }
+  strncpy(ntv_descr, tmp, len);
+  if (strlen(tmp) > len-1) ret = PAPI_EBUF;
+  else ret = PAPI_OK;
+  free(tmp);
+  return(ret);
+}
+#endif
+/*****************************************************************************
+ *****************************************************************************/
+
 /* The values defined in this file may be X86-specific (2 general 
    purpose counters, 1 special purpose counter, etc.*/
 
@@ -629,6 +845,9 @@ static int get_system_info(void)
   _papi_hwi_system_info.sub_info.kernel_profile = 1;
   _papi_hwi_system_info.sub_info.data_address_range = 1;    /* Supports data address range limiting */
   _papi_hwi_system_info.sub_info.instr_address_range = 1;   /* Supports instruction address range limiting */
+#if defined(PFMLIB_MONTECITO_PMU)
+  _papi_hwi_system_info.sub_info.cntr_umasks = 1;           /* counters have unit masks */
+#endif
   _papi_hwi_system_info.sub_info.cntr_IEAR_events = 1;      /* counters support instr event addr register */
   _papi_hwi_system_info.sub_info.cntr_DEAR_events = 1;      /* counters support data event addr register */
   _papi_hwi_system_info.sub_info.cntr_OPCM_events = 1;      /* counter events support opcode matching */
@@ -1501,6 +1720,9 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 }
 int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 {
+#if defined(PFMLIB_MONTECITO_PMU)
+	return(_papi_pfm_ntv_code_to_name(EventCode, ntv_name, len));
+#else
    char name[PAPI_MAX_STR_LEN];
    int ret=0;
    
@@ -1511,15 +1733,20 @@ int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 
    strncpy(ntv_name, name, len);
    return (PAPI_OK);
+#endif
 }
 
 int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len)
 {
+#if defined(PFMLIB_MONTECITO_PMU)
+	return(_papi_pfm_ntv_code_to_descr(EventCode, ntv_descr, len));
+#else
 #if defined(HAVE_PFM_GET_EVENT_DESCRIPTION)
   pfmw_get_event_description(EventCode^PAPI_NATIVE_MASK, ntv_descr, len);
   return(PAPI_OK);
 #else
    return (_papi_hwd_ntv_code_to_name(EventCode, ntv_descr, len));
+#endif
 #endif
 }
 
@@ -1543,18 +1770,23 @@ static inline int _hwd_modify_event(unsigned int event, int modifier)
 
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
+#if defined(PFMLIB_MONTECITO_PMU)
+	return(_papi_pfm_ntv_enum_events(EventCode, modifier));
+#else
    int index = *EventCode & PAPI_NATIVE_AND_MASK;
 
    if (modifier == PAPI_ENUM_FIRST) {
          *EventCode = PAPI_NATIVE_MASK;
          return (PAPI_OK);
    }
+
    while (index++ < _papi_hwi_system_info.sub_info.num_native_events - 1) {
       *EventCode = *EventCode + 1;
       if(_hwd_modify_event((*EventCode ^ PAPI_NATIVE_MASK), modifier))
          return(PAPI_OK);
    }
    return (PAPI_ENOEVNT);
+#endif
 }
 
 int _papi_hwd_init_control_state(hwd_control_state_t * ptr)
@@ -1662,21 +1894,21 @@ int _papi_hwd_update_shlib_info(void)
    unsigned long t_index = 0, d_index = 0, b_index = 0, counting = 1;
    PAPI_address_map_t *tmp = NULL;
    FILE *f;
-                                                                                
+
    sprintf(fname, "/proc/%ld/maps", (long) _papi_hwi_system_info.pid);
    f = fopen(fname, "r");
-                                                                                
+
    if (!f)
      {
          PAPIERROR("fopen(%s) returned < 0", fname);
          return(PAPI_OK);
      }
-                                                                                
+
  again:
    while (!feof(f)) {
       char buf[PAPI_HUGE_STR_LEN+PAPI_HUGE_STR_LEN], perm[5], dev[6], mapname[PATH_MAX], lastmapname[PAPI_HUGE_STR_LEN];
       unsigned long begin, end, size, inode, foo;
-                                                                                
+
       if (fgets(buf, sizeof(buf), f) == 0)
          break;
       if (strlen(mapname))
@@ -1691,7 +1923,7 @@ int _papi_hwd_update_shlib_info(void)
       /* the permission string looks like "rwxp", where each character can
        * be either the letter, or a hyphen.  The final character is either
        * p for private or s for shared. */
-                                                                                
+
       if (counting)
         {
           if ((perm[2] == 'x') && (perm[0] == 'r')  && (perm[1] != 'w') && (inode != 0))
@@ -1747,11 +1979,11 @@ int _papi_hwd_update_shlib_info(void)
             }
         }
    }
-                                                                                
+
    if (counting) {
       /* When we get here, we have counted the number of entries in the map
          for us to allocate */
-                                                                                
+
       tmp = (PAPI_address_map_t *) papi_calloc(t_index-1, sizeof(PAPI_address_map_t));
       if (tmp == NULL)
         { PAPIERROR("Error allocating shared library address map"); return(PAPI_ENOMEM); }
@@ -1764,11 +1996,10 @@ int _papi_hwd_update_shlib_info(void)
          papi_free(_papi_hwi_system_info.shlib_info.map);
       _papi_hwi_system_info.shlib_info.map = tmp;
       _papi_hwi_system_info.shlib_info.count = t_index;
-                                                                                
+
       fclose(f);
    }
    return (PAPI_OK);
 }
-                                                                            
 
 
