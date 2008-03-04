@@ -2967,6 +2967,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   _papi_hwi_system_info.sub_info.kernel_profile = 1;
   _papi_hwi_system_info.sub_info.profile_ear = 1;  
   _papi_hwi_system_info.sub_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
+  _papi_hwi_system_info.sub_info.hardware_intr_sig = SIGRTMIN+2;
   //  check_multiplex_timeout(NULL, (unsigned long *)&_papi_hwi_system_info.sub_info.multiplex_timer_us);
 
   /* FIX: For now, use the pmu_type from Perfmon */
@@ -3848,9 +3849,11 @@ void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
     }
       
     if (thread->running_eventset->overflow.flags & PAPI_OVERFLOW_FORCE_SW) {
-        address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
-        _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 
-            0, 0, &thread);
+      ctx.si = info;
+      ctx.ucontext = (hwd_ucontext_t *)uc;
+      address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
+      _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 
+					 0, 0, &thread);
     }
     else {
       if (thread->running_eventset->overflow.flags == PAPI_OVERFLOW_HARDWARE) {

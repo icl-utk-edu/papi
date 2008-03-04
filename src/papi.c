@@ -841,14 +841,14 @@ int PAPI_start(int EventSet)
        if (!(ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
 	 {
            APIDBG("Overflow using: %s with a interval of %d ms\n", (ESI->overflow.flags&PAPI_OVERFLOW_FORCE_SW)?"[Forced Software]":"Software", ESI->overflow.timer_ms);
-	   retval = _papi_hwi_start_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig, NEED_CONTEXT);
+	   retval = _papi_hwi_start_signal(_papi_hwi_system_info.sub_info.multiplex_timer_sig, NEED_CONTEXT);
 	   if (retval != PAPI_OK)
 	     papi_return(retval);
 	   retval = _papi_hwi_start_timer(ESI->overflow.timer_ms);
 	   if (retval != PAPI_OK)
 	     {
                APIDBG("Error starting _papi_hwi_start_timer: %d\n", retval);
-	       _papi_hwi_stop_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig);
+	       _papi_hwi_stop_signal(_papi_hwi_system_info.sub_info.multiplex_timer_sig);
 	       papi_return(retval);
 	     }
 	 }
@@ -945,7 +945,7 @@ int PAPI_stop(int EventSet, long_long * values)
 	   retval = _papi_hwi_stop_timer();
 	   if (retval != PAPI_OK)
 	     papi_return(retval);
-	   _papi_hwi_stop_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig);
+	   _papi_hwi_stop_signal(_papi_hwi_system_info.sub_info.multiplex_timer_sig);
 	 }
      }
 
