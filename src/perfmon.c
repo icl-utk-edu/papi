@@ -3848,9 +3848,10 @@ void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
 	return;
     }
       
+    ctx.si = info;
+    ctx.ucontext = (hwd_ucontext_t *)uc;
+
     if (thread->running_eventset->overflow.flags & PAPI_OVERFLOW_FORCE_SW) {
-      ctx.si = info;
-      ctx.ucontext = (hwd_ucontext_t *)uc;
       address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
       _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 
 					 0, 0, &thread);
