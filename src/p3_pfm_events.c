@@ -75,7 +75,7 @@ int setup_p3_presets(int cputype) {
 #ifdef PERFCTR_X86_INTEL_CORE2
    case PERFCTR_X86_INTEL_CORE2:
       retval = _papi_pfm_init();
-      _papi_pfm_setup_presets("Intel Core", 0);
+      _papi_pfm_setup_presets("Intel Core2", 0);
 	  break;
 #endif
 #ifdef PERFCTR_X86_AMD_K8 /* this is defined in perfctr 2.5.x */
