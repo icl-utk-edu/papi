@@ -272,6 +272,9 @@ static itanium_preset_search_t ia3_preset_search_map[] = {
  * Code to support unit masks; only needed by Montecito and above            *
  *****************************************************************************/
 #if defined(PFMLIB_MONTECITO_PMU)
+
+static inline int _hwd_modify_event(unsigned int event, int modifier);
+
 /* Break a PAPI native event code into its composite event code and pfm mask bits */
 inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int *event, unsigned int *umask)
 {
@@ -341,8 +344,7 @@ int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
   if (modifier == PAPI_ENUM_EVENTS) {
     if (event < _papi_hwi_system_info.sub_info.num_native_events - 1) {
 	  *EventCode = encode_native_event_raw(event+1,0);
-      if(_hwd_modify_event(event+1, modifier))
-         return(PAPI_OK);
+       return(PAPI_OK);
 	}
     return (PAPI_ENOEVNT);
   }
@@ -365,8 +367,14 @@ int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
 	}
     return(PAPI_ENOEVNT);
   }
-  else
-    return(PAPI_EINVAL);
+  else {
+	   while (event++ < _papi_hwi_system_info.sub_info.num_native_events - 1) {
+		  *EventCode = encode_native_event_raw(event+1,0);
+		  if(_hwd_modify_event(event+1, modifier))
+			 return(PAPI_OK);
+	   }
+	   return (PAPI_ENOEVNT);
+  }
 }
 
 int _papi_pfm_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
