@@ -7010,7 +7010,7 @@ echo "$as_me: error: The bitmode you specified is not supported" >&2;}
    { (exit 1); exit 1; }; }
                  fi
 		 if test "$CPU" = "montecito"; then
-		    MAKEVER="$OS"-pfm-itanium2
+		    MAKEVER="$OS"-pfm-itanium3
 		    else
 		    MAKEVER="$OS"-pfm-"$CPU"
 		 fi ;;
@@ -7116,6 +7116,7 @@ case "$MAKEVER" in
     linux-perfctr-p4);;
     linux-pfm-itanium);;
     linux-pfm-itanium2);;
+    linux-pfm-itanium3);;
     solaris-ultra);;
     solaris-ultra-64bit);;
     tru64-alpha);;

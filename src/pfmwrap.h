@@ -38,7 +38,7 @@ static inline pid_t mygettid(void)
 #endif
 }
 
-#ifdef PFMLIB_ITANIUM2_PMU
+#if defined(ITANIUM2) || defined(ITANIUM3)
 char *retired_events[]={
 	"IA64_TAGGED_INST_RETIRED_IBRP0_PMC8",
 	"IA64_TAGGED_INST_RETIRED_IBRP1_PMC9",
@@ -500,12 +500,12 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
    #define PFMW_PEVT_PFPPC_REG_FLG(evt,idx) (evt->pc[idx].reg_flags)
    #define PFMW_ARCH_REG_PMCVAL(reg) (reg.pmc_val)
    #define PFMW_ARCH_REG_PMDVAL(reg) (reg.pmd_val)
-   #if defined(PFMLIB_MONTECITO_PMU)
+   #if defined(ITANIUM3)
       #define PFMW_ARCH_REG_PMCPLM(reg) (reg.pmc_mont_counter_reg.pmc_plm)
       #define PFMW_ARCH_REG_PMCES(reg)  (reg.pmc_mont_counter_reg.pmc_es)
       #define PFMON_MONT_MAX_IBRS	8
       #define PFMON_MONT_MAX_DBRS	8
-   #elif defined(PFMLIB_ITANIUM2_PMU)
+   #elif defined(ITANIUM2)
       #define PFMW_ARCH_REG_PMCPLM(reg) (reg.pmc_ita2_counter_reg.pmc_plm)
       #define PFMW_ARCH_REG_PMCES(reg)  (reg.pmc_ita2_counter_reg.pmc_es)
       #define PFMON_ITA2_MAX_IBRS	8
@@ -518,10 +518,10 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
    typedef pfm_default_smpl_hdr_t    pfmw_smpl_hdr_t;
    typedef pfm_default_smpl_entry_t  pfmw_smpl_entry_t;
 
-   #if defined(PFMLIB_MONTECITO_PMU)
+   #if defined(ITANIUM3)
       typedef pfm_mont_pmc_reg_t pfmw_arch_pmc_reg_t;
       typedef pfm_mont_pmd_reg_t pfmw_arch_pmd_reg_t;
-   #elif defined(PFMLIB_ITANIUM2_PMU)
+   #elif defined(ITANIUM2)
       typedef pfm_ita2_pmc_reg_t pfmw_arch_pmc_reg_t;
       typedef pfm_ita2_pmd_reg_t pfmw_arch_pmd_reg_t;
    #else /* Itanium */
@@ -553,7 +553,7 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
 /*
       PFMW_PEVT_DFLPLM(evt) = PFM_PLM3;
 */
-   #if defined(PFMLIB_MONTECITO_PMU)
+   #if defined(ITANIUM3)
       ret=pfm_dispatch_events(&evt->inp, (pfmlib_mont_input_param_t *)evt->mod_inp, &evt->outp, (pfmlib_mont_output_param_t *)evt->mod_outp);   
    #else
       ret=pfm_dispatch_events(&evt->inp, (pfmlib_ita2_input_param_t *)evt->mod_inp, &evt->outp, (pfmlib_ita2_output_param_t *)evt->mod_outp);   
@@ -680,10 +680,18 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
       int ctx_fd;
       int native_index, EventCode, pos;
       hwd_context_t *thr_ctx = (hwd_context_t *) &ESI->master->context;
+#if defined(ITANIUM3)
+      unsigned int umask;
+#endif
 
       pos= ESI->EventInfoArray[EventIndex].pos[0];
       EventCode= ESI->EventInfoArray[EventIndex].event_code;
+#if defined(ITANIUM3)
+      if (_pfm_decode_native_event(ESI->NativeInfoArray[pos].ni_event,&native_index,&umask) != PAPI_OK)
+         return(PAPI_ENOEVNT);
+#else
       native_index= ESI->NativeInfoArray[pos].ni_event & PAPI_NATIVE_AND_MASK;
+#endif
       memset(ctx,0,sizeof(ctx[0]));
       /*
        * We initialize the format specific information.
@@ -719,13 +727,13 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
       SUBDBG("PFM_CREATE_CONTEXT returns FD %d, TID %d\n",(int)thr_ctx->fd,(int)thr_ctx->tid);
       /* indicate which PMD to include in the sample */
 /* DEAR and BTB events */
-#if defined(PFMLIB_MONTECITO_PMU)
+#if defined(ITANIUM3)
       if (pfm_mont_is_dear(native_index))
          set_pmds_to_write(ESI, EventIndex, DEAR_REGS_MASK);
       else if (pfm_mont_is_etb(native_index)
                || EventCode == PAPI_BR_INS)
          set_pmds_to_write(ESI, EventIndex, ETB_REGS_MASK);
-#elif defined(PFMLIB_ITANIUM2_PMU)
+#elif defined(ITANIUM2)
       if (pfm_ita2_is_dear(native_index))
          set_pmds_to_write(ESI, EventIndex, DEAR_REGS_MASK);
       else if (pfm_ita2_is_btb(native_index)
@@ -746,7 +754,7 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
 
    inline int pfmw_get_event_name(char *name, unsigned int idx)
    {
-      int total;
+      unsigned int total;
 
       pfm_get_num_events(&total);
       if(idx >= total)
@@ -772,9 +780,9 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
 
    inline int pfmw_is_dear(unsigned int i)
    {
-   #if defined(PFMLIB_MONTECITO_PMU)
+   #if defined(ITANIUM3)
       return(pfm_mont_is_dear(i));
-   #elif defined(PFMLIB_ITANIUM2_PMU)
+   #elif defined(ITANIUM2)
       return(pfm_ita2_is_dear(i));
    #else
       return(pfm_ita_is_dear(i));
@@ -783,9 +791,9 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
 
    inline int pfmw_is_iear(unsigned int i)
    {
-   #if defined(PFMLIB_MONTECITO_PMU)
+   #if defined(ITANIUM3)
       return(pfm_mont_is_iear(i));
-   #elif defined(PFMLIB_ITANIUM2_PMU)
+   #elif defined(ITANIUM2)
       return(pfm_ita2_is_iear(i));
    #else
       return(pfm_ita_is_iear(i));
@@ -794,9 +802,9 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
 
    inline int pfmw_support_darr(unsigned int i)
    {
-   #if defined(PFMLIB_MONTECITO_PMU)
+   #if defined(ITANIUM3)
       return(pfm_mont_support_darr(i));
-   #elif defined(PFMLIB_ITANIUM2_PMU)
+   #elif defined(ITANIUM2)
       return(pfm_ita2_support_darr(i));
    #else
       return(pfm_ita_support_darr(i));
@@ -805,9 +813,9 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
 
    inline int pfmw_support_iarr(unsigned int i)
    {
-   #if defined(PFMLIB_MONTECITO_PMU)
+   #if defined(ITANIUM3)
       return(pfm_mont_support_iarr(i));
-   #elif defined(PFMLIB_ITANIUM2_PMU)
+   #elif defined(ITANIUM2)
       return(pfm_ita2_support_iarr(i));
    #else
       return(pfm_ita_support_iarr(i));
@@ -816,9 +824,9 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
 
    inline int pfmw_support_opcm(unsigned int i)
    {
-   #if defined(PFMLIB_MONTECITO_PMU)
+   #if defined(ITANIUM3)
       return(pfm_mont_support_opcm(i));
-   #elif defined(PFMLIB_ITANIUM2_PMU)
+   #elif defined(ITANIUM2)
       return(pfm_ita2_support_opcm(i));
    #else
       return(pfm_ita_support_opcm(i));
@@ -827,7 +835,7 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
 
 static void check_ibrp_events(hwd_control_state_t *current_state)
 {
-#if defined(PFMLIB_MONTECITO_PMU)
+#if defined(ITANIUM3)
     pfmw_param_t *evt = &(current_state->evt);
 	pfmlib_mont_output_param_t *param = &(current_state->ita_lib_param.mont_output_param);
 	unsigned long umasks_retired[4];
@@ -871,7 +879,7 @@ static void check_ibrp_events(hwd_control_state_t *current_state)
 		if (seen_retired && j == evt->inp.pfp_event_count)
 			printf("warning: code range uses IBR pair %d which is not monitored using %s\n", ibrp, retired_events[ibrp]);
 	}
-#elif defined(PFMLIB_ITANIUM2_PMU)
+#elif defined(ITANIUM2)
     pfmw_param_t *evt = &(current_state->evt);
 	pfmlib_ita2_output_param_t *param = &(current_state->ita_lib_param.ita2_output_param);
 	unsigned long umasks_retired[4];
@@ -920,7 +928,7 @@ static void check_ibrp_events(hwd_control_state_t *current_state)
 
 inline int install_irange(hwd_context_t *pctx, hwd_control_state_t *current_state)
 {
-#if defined(PFMLIB_MONTECITO_PMU)
+#if defined(ITANIUM3)
 	pfmlib_mont_output_param_t *param = (pfmlib_mont_output_param_t	*)&(current_state->ita_lib_param.mont_output_param);
 	pfarg_dbreg_t dbreg[PFMON_MONT_MAX_IBRS];
 	unsigned int i, used_dbr;
@@ -943,7 +951,7 @@ inline int install_irange(hwd_context_t *pctx, hwd_control_state_t *current_stat
        return (PAPI_ESYS);
 	}
 	return (PAPI_OK);
-#elif defined(PFMLIB_ITANIUM2_PMU)
+#elif defined(ITANIUM2)
 	pfmlib_ita2_output_param_t *param = (pfmlib_ita2_output_param_t *)&(current_state->ita_lib_param.ita2_output_param);
 	pfarg_dbreg_t dbreg[PFMON_ITA2_MAX_IBRS];
 	unsigned int i, used_dbr;
@@ -973,7 +981,7 @@ inline int install_irange(hwd_context_t *pctx, hwd_control_state_t *current_stat
 
 inline int install_drange(hwd_context_t *pctx, hwd_control_state_t *current_state)
 {
-#if defined(PFMLIB_MONTECITO_PMU)
+#if defined(ITANIUM3)
 	pfmlib_mont_output_param_t *param = (pfmlib_mont_output_param_t	*)&(current_state->ita_lib_param.mont_output_param);
 	pfarg_dbreg_t dbreg[PFMON_MONT_MAX_DBRS];
 	unsigned int i, used_dbr;
@@ -994,7 +1002,7 @@ inline int install_drange(hwd_context_t *pctx, hwd_control_state_t *current_stat
        return (PAPI_ESYS);
 	}
 	return (PAPI_OK);
-#elif defined(PFMLIB_ITANIUM2_PMU)
+#elif defined(ITANIUM2)
 	pfmlib_ita2_output_param_t *param = (pfmlib_ita2_output_param_t *)&(current_state->ita_lib_param.ita2_output_param);
 	pfarg_dbreg_t dbreg[PFMON_ITA2_MAX_DBRS];
 	unsigned int i, used_dbr;
@@ -1030,7 +1038,7 @@ inline int install_drange(hwd_context_t *pctx, hwd_control_state_t *current_stat
 inline int set_drange(hwd_context_t *ctx, hwd_control_state_t *current_state, _papi_int_option_t *option)
 {
    int ret=PAPI_OK;
-#if defined(PFMLIB_MONTECITO_PMU)
+#if defined(ITANIUM3)
    pfmw_ita_param_t *param = &(current_state->ita_lib_param);
    pfmw_param_t *evt = &(current_state->evt);
    pfmlib_mont_input_param_t *mont_inp = &(param->mont_input_param);
@@ -1085,7 +1093,7 @@ inline int set_drange(hwd_context_t *ctx, hwd_control_state_t *current_state, _p
 	  option->address_range.end_off=mont_outp->pfp_mont_drange.rr_infos[0].rr_eoff;
    }
    return(ret);
-#elif defined(PFMLIB_ITANIUM2_PMU)
+#elif defined(ITANIUM2)
    pfmw_ita_param_t *param = &(current_state->ita_lib_param);
    pfmw_param_t *evt = &(current_state->evt);
    pfmlib_ita2_input_param_t *ita2_inp = &(param->ita2_input_param);
@@ -1146,7 +1154,7 @@ inline int set_drange(hwd_context_t *ctx, hwd_control_state_t *current_state, _p
 inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, _papi_int_option_t *option)
 {
    int ret=PAPI_OK;
-#if defined(PFMLIB_MONTECITO_PMU)
+#if defined(ITANIUM3)
    pfmw_ita_param_t *param = &(current_state->ita_lib_param);
    pfmw_param_t *evt = &(current_state->evt);
    pfmlib_mont_input_param_t *mont_inp = &(param->mont_input_param);
@@ -1197,7 +1205,7 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
 	  option->address_range.start_off=mont_outp->pfp_mont_irange.rr_infos[0].rr_soff;
 	  option->address_range.end_off=mont_outp->pfp_mont_irange.rr_infos[0].rr_eoff;
    }
-#elif defined(PFMLIB_ITANIUM2_PMU)
+#elif defined(ITANIUM2)
    pfmw_ita_param_t *param = &(current_state->ita_lib_param);
    pfmw_param_t *evt = &(current_state->evt);
    pfmlib_ita2_input_param_t *ita2_inp = &(param->ita2_input_param);
@@ -1263,7 +1271,7 @@ static inline int pfmw_get_num_counters(int *num) {
 }
 
 static inline int pfmw_get_num_events(int *num) {
-  int tmp;
+  unsigned int tmp;
   if (pfm_get_num_events(&tmp) != PFMLIB_SUCCESS)
     return(PAPI_ESYS);
   *num = tmp;

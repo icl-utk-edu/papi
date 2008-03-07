@@ -1173,7 +1173,7 @@ case "$OS" in
                    AC_MSG_ERROR([The bitmode you specified is not supported])
                  fi
 		 if test "$CPU" = "montecito"; then
-		    MAKEVER="$OS"-pfm-itanium2
+		    MAKEVER="$OS"-pfm-itanium3
 		    else
 		    MAKEVER="$OS"-pfm-"$CPU"
 		 fi ;;
@@ -1272,6 +1272,7 @@ case "$MAKEVER" in
     linux-perfctr-p4);;
     linux-pfm-itanium);;
     linux-pfm-itanium2);;
+    linux-pfm-itanium3);;
     solaris-ultra);;
     solaris-ultra-64bit);;
     tru64-alpha);;

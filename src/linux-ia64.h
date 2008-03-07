@@ -60,9 +60,8 @@
 #endif
 #ifdef ITANIUM2
 #include "perfmon/pfmlib_itanium2.h"
-#if defined(PFM30) && defined(HAVE_PERFMON_PFMLIB_MONTECITO_H)
+#elif defined(ITANIUM3)
 #include "perfmon/pfmlib_montecito.h"
-#endif
 #else
 #include "perfmon/pfmlib_itanium.h"
 #endif
@@ -77,7 +76,7 @@ typedef int hwd_reg_alloc_t;
    #define NUM_PMCS PFMLIB_MAX_PMCS
    #define NUM_PMDS PFMLIB_MAX_PMDS
    
-   #ifdef HAVE_PERFMON_PFMLIB_MONTECITO_H
+   #ifdef ITANIUM3
      #define MAX_COUNTERS PMU_MONT_NUM_COUNTERS
    #elif defined(ITANIUM2)
      #define MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
@@ -85,17 +84,17 @@ typedef int hwd_reg_alloc_t;
      #define MAX_COUNTERS PMU_ITA_NUM_COUNTERS
    #endif
    
-#if defined(PFMLIB_MONTECITO_PMU)
-/* Native events consist of a flag field, an event field, and a unit mask field.
- * The next 4 macros define the characteristics of the event and unit mask fields.
- * Unit Masks are only supported on Montecito and above.
- */
-#define PAPI_NATIVE_EVENT_AND_MASK 0x00000fff	/* 12 bits == 4096 max events */
-#define PAPI_NATIVE_EVENT_SHIFT 0
-#define PAPI_NATIVE_UMASK_AND_MASK 0x0ffff000	/* 16 bits for unit masks */
-#define PAPI_NATIVE_UMASK_MAX 16				/* 16 possible unit masks */
-#define PAPI_NATIVE_UMASK_SHIFT 12
-#endif
+   #if defined(ITANIUM3)
+   /* Native events consist of a flag field, an event field, and a unit mask field.
+    * The next 4 macros define the characteristics of the event and unit mask fields.
+    * Unit Masks are only supported on Montecito and above.
+    */
+   #define PAPI_NATIVE_EVENT_AND_MASK 0x00000fff	/* 12 bits == 4096 max events */
+   #define PAPI_NATIVE_EVENT_SHIFT 0
+   #define PAPI_NATIVE_UMASK_AND_MASK 0x0ffff000	/* 16 bits for unit masks */
+   #define PAPI_NATIVE_UMASK_MAX 16				/* 16 possible unit masks */
+   #define PAPI_NATIVE_UMASK_SHIFT 12
+   #endif
 
    typedef struct param_t {
       pfarg_reg_t pd[NUM_PMDS];
@@ -105,20 +104,20 @@ typedef int hwd_reg_alloc_t;
       void *mod_inp;	/* model specific input parameters to libpfm    */
       void *mod_outp;	/* model specific output parameters from libpfm */
    } pfmw_param_t;
-   typedef struct ita2_param_t {
-      pfmlib_ita2_input_param_t ita2_input_param;
-      pfmlib_ita2_output_param_t  ita2_output_param;
-   } pfmw_ita2_param_t;
+   #ifdef ITANIUM3
    typedef struct mont_param_t {
       pfmlib_mont_input_param_t mont_input_param;
       pfmlib_mont_output_param_t  mont_output_param;
    } pfmw_mont_param_t;
-   #ifdef HAVE_PERFMON_PFMLIB_MONTECITO_H
-     typedef pfmw_mont_param_t pfmw_ita_param_t;
+   typedef pfmw_mont_param_t pfmw_ita_param_t;
    #elif defined(ITANIUM2)
-     typedef pfmw_ita2_param_t pfmw_ita_param_t;
+   typedef struct ita2_param_t {
+      pfmlib_ita2_input_param_t ita2_input_param;
+      pfmlib_ita2_output_param_t  ita2_output_param;
+   } pfmw_ita2_param_t;
+   typedef pfmw_ita2_param_t pfmw_ita_param_t;
    #else
-     typedef int pfmw_ita_param_t;
+   typedef int pfmw_ita_param_t;
    #endif
 
    #define PMU_FIRST_COUNTER  4
@@ -189,7 +188,7 @@ typedef struct sigcontext hwd_ucontext_t;
 #define SMPL_BUF_NENTRIES 64
 #define M_PMD(x)        (1UL<<(x))
 /*#ifdef HAVE_PERFMON_PFMLIB_MONTECITO_H*/
-#if defined(PFMLIB_MONTECITO_PMU)
+#if defined(ITANIUM3)
 #define DEAR_REGS_MASK	    (M_PMD(32)|M_PMD(33)|M_PMD(36))
 #define ETB_REGS_MASK		(M_PMD(38)| M_PMD(39)| \
 		                 M_PMD(48)|M_PMD(49)|M_PMD(50)|M_PMD(51)|M_PMD(52)|M_PMD(53)|M_PMD(54)|M_PMD(55)|\

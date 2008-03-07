@@ -271,7 +271,7 @@ static itanium_preset_search_t ia3_preset_search_map[] = {
 /*****************************************************************************
  * Code to support unit masks; only needed by Montecito and above            *
  *****************************************************************************/
-#if defined(PFMLIB_MONTECITO_PMU)
+#if defined(ITANIUM3)
 
 static inline int _hwd_modify_event(unsigned int event, int modifier);
 
@@ -853,7 +853,7 @@ static int get_system_info(void)
   _papi_hwi_system_info.sub_info.kernel_profile = 1;
   _papi_hwi_system_info.sub_info.data_address_range = 1;    /* Supports data address range limiting */
   _papi_hwi_system_info.sub_info.instr_address_range = 1;   /* Supports instruction address range limiting */
-#if defined(PFMLIB_MONTECITO_PMU)
+#if defined(ITANIUM3)
   _papi_hwi_system_info.sub_info.cntr_umasks = 1;           /* counters have unit masks */
 #endif
   _papi_hwi_system_info.sub_info.cntr_IEAR_events = 1;      /* counters support instr event addr register */
@@ -954,15 +954,18 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    /* Setup presets */
    
    switch (type) {
-#if !defined(ITANIUM2)
+#ifndef PFMLIB_ITANIUM2_PMU
    case PFMLIB_ITANIUM_PMU:
      ia_preset_search_map = ia1_preset_search_map;
      break;
 #endif
+#ifdef PFMLIB_ITANIUM2_PMU
    case PFMLIB_ITANIUM2_PMU:
      ia_preset_search_map = ia2_preset_search_map;
      break;
-#if defined(PFMLIB_MONTECITO_PMU)
+#endif
+
+#ifdef PFMLIB_MONTECITO_PMU
    case PFMLIB_MONTECITO_PMU:
      ia_preset_search_map = ia3_preset_search_map;
      break;
@@ -1417,6 +1420,10 @@ static int ia64_process_profile_buffer(ThreadInfo_t *thread, EventSetInfo_t *ESI
    hwd_control_state_t *this_state;
    pfmw_arch_pmd_reg_t *reg;
    unsigned long overflow_vector, pc;
+#if defined(ITANIUM3)
+   unsigned int umask;
+#endif
+
 
    if ((ESI->state & PAPI_PROFILING) == 0)
      return(PAPI_EBUG);
@@ -1470,8 +1477,13 @@ static int ia64_process_profile_buffer(ThreadInfo_t *thread, EventSetInfo_t *ESI
             pos = ESI->EventInfoArray[eventindex].pos[0];
             if (pos + PMU_FIRST_COUNTER == reg_num) {
                EventCode = ESI->profile.EventCode[count];
+#if defined(ITANIUM3)
+               if (_pfm_decode_native_event(ESI->NativeInfoArray[pos].ni_event,&native_index,&umask) != PAPI_OK)
+                  return(PAPI_ENOEVNT);
+#else
                native_index = ESI->NativeInfoArray[pos].ni_event 
 		 & PAPI_NATIVE_AND_MASK;
+#endif
                break;
             }
          }
@@ -1485,9 +1497,9 @@ static int ia64_process_profile_buffer(ThreadInfo_t *thread, EventSetInfo_t *ESI
          /* print entry header */
          pc = ent->ip;
       //   printf("ent->ip = 0x%lx \n", ent->ip);
-#ifdef PFMLIB_ITANIUM2_PMU
+#ifdef ITANIUM2
          if (pfm_ita2_is_dear(native_index)) 
-#elif defined(PFMLIB_MONTECITO_PMU)
+#elif defined(ITANIUM3)
          if (pfm_mont_is_dear(native_index)) 
 #else
 	 if (pfm_ita_is_dear(native_index)) 
@@ -1496,11 +1508,11 @@ static int ia64_process_profile_buffer(ThreadInfo_t *thread, EventSetInfo_t *ESI
 	   reg = (pfmw_arch_pmd_reg_t *) (ent + 1);
 	   reg++;
 	   reg++;
-#if defined(PFMLIB_MONTECITO_PMU)
+#if defined(ITANIUM3)
 	   pc = ((reg->pmd36_mont_reg.dear_iaddr +
 			   reg->pmd36_mont_reg.dear_bn) << 4)
 	     | reg->pmd36_mont_reg.dear_slot;
-#elif defined(PFMLIB_ITANIUM2_PMU)
+#elif defined(ITANIUM2)
 	   pc = ((reg->pmd17_ita2_reg.dear_iaddr +
 			   reg->pmd17_ita2_reg.dear_bn) << 4)
 	     | reg->pmd17_ita2_reg.dear_slot;
@@ -1728,7 +1740,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 }
 int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 {
-#if defined(PFMLIB_MONTECITO_PMU)
+#if defined(ITANIUM3)
 	return(_papi_pfm_ntv_code_to_name(EventCode, ntv_name, len));
 #else
    char name[PAPI_MAX_STR_LEN];
@@ -1746,7 +1758,7 @@ int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 
 int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len)
 {
-#if defined(PFMLIB_MONTECITO_PMU)
+#if defined(ITANIUM3)
 	return(_papi_pfm_ntv_code_to_descr(EventCode, ntv_descr, len));
 #else
 #if defined(HAVE_PFM_GET_EVENT_DESCRIPTION)
@@ -1778,7 +1790,7 @@ static inline int _hwd_modify_event(unsigned int event, int modifier)
 
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
-#if defined(PFMLIB_MONTECITO_PMU)
+#if defined(ITANIUM3)
 	return(_papi_pfm_ntv_enum_events(EventCode, modifier));
 #else
    int index = *EventCode & PAPI_NATIVE_AND_MASK;
@@ -1817,10 +1829,10 @@ int _papi_hwd_init_control_state(hwd_control_state_t * ptr)
  #endif
    ptr->evt.pfp_model = &ptr->ita_lib_param;
 #elif PFM30
- #if defined(PFMLIB_MONTECITO_PMU)
+ #if defined(ITANIUM3)
    evt->mod_inp  = &(ptr->ita_lib_param.mont_input_param);
    evt->mod_outp = &(ptr->ita_lib_param.mont_output_param);
- #elif defined(PFMLIB_ITANIUM2_PMU)
+ #elif defined(ITANIUM2)
   /* connect model specific library parameters */
    evt->mod_inp  = &(ptr->ita_lib_param.ita2_input_param);
    evt->mod_outp = &(ptr->ita_lib_param.ita2_output_param);
@@ -1839,8 +1851,15 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
 {
    int i, org_cnt;
    pfmw_param_t *evt = &this_state->evt;
+   pfmw_param_t copy_evt;
    int events[MAX_COUNTERS];
    int index;
+#if defined(ITANIUM3)
+      unsigned int event, umask, EventCode;
+      int j;
+      pfmlib_event_t gete;
+      char name[128];
+#endif
 
    if (count == 0) {
       for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
@@ -1852,9 +1871,12 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
 
 /* save the old data */
    org_cnt = PFMW_PEVT_EVTCOUNT(evt);
-   for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
+   
+   memcpy(&copy_evt, evt, sizeof(pfmw_param_t));
+   
+   /*for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
       events[i] = PFMW_PEVT_EVENT(evt,i);
-
+   */
    for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
          PFMW_PEVT_EVENT(evt,i) = 0;
    PFMW_PEVT_EVTCOUNT(evt) = 0;
@@ -1864,6 +1886,24 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
 
 /* add new native events to the evt structure */
    for (i = 0; i < count; i++) {
+#if defined(ITANIUM3)
+      memset(&gete,0,sizeof(gete));
+      EventCode = native[i].ni_event;
+      _papi_pfm_ntv_code_to_name(EventCode, name, 128);
+      if (_pfm_decode_native_event(EventCode,&event,&umask) != PAPI_OK)
+        return(PAPI_ENOEVNT);
+
+      SUBDBG(" evtcode=0x%x evtindex=%d name: %s\n", EventCode, event, name);
+	
+      PFMW_PEVT_EVENT(evt,i) = event;
+      gete.event = event;
+      gete.num_masks = prepare_umask(umask,gete.unit_masks);
+      if(gete.num_masks){
+        evt->inp.pfp_events[i].num_masks = gete.num_masks;
+        for(j=0; j< gete.num_masks; j++)
+	  evt->inp.pfp_events[i].unit_masks[j] = gete.unit_masks[j];
+      }
+#else
       index = native[i].ni_event & PAPI_NATIVE_AND_MASK;
 #ifdef PFM20
   #ifdef ITANIUM2
@@ -1874,14 +1914,17 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
          set_dear_ita_param(&this_state->ita_lib_param, index);
 #endif
       PFMW_PEVT_EVENT(evt,i) = index;
+#endif
    }
    PFMW_PEVT_EVTCOUNT(evt) = count;
    /* Recalcuate the pfmlib_param_t structure, may also signal conflict */
    if (pfmw_dispatch_events(evt)) {
       /* recover the old data */
       PFMW_PEVT_EVTCOUNT(evt) = org_cnt;
-      for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
+      /*for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
          PFMW_PEVT_EVENT(evt,i) = events[i];
+      */
+      memcpy(evt, &copy_evt, sizeof(pfmw_param_t));
       return (PAPI_ECNFLCT);
    }
    SUBDBG("event_count=%d\n", PFMW_PEVT_EVTCOUNT(evt));
