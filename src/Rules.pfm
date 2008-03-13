@@ -3,10 +3,9 @@
 DESCR   = "Linux with PFM $(VERSION) kernel support and library"
 LIBRARY = libpapi.a
 SHLIB   = libpapi.so.$(PAPIVER)
+TARGETS = serial multiplex_and_pthreads shared ear range
 SUBSTR  = linux-ia64
 MEMSUBSTR= linux-ia64
-LIBS	= static shared
-TARGETS = serial multiplex_and_pthreads shared ear range
 
 #
 # GNU G77/GCC section

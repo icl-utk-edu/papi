@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS AWK CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP datarootdir docdir arch DEBUGFLAGS MAKEVER PMAPI AR NOTLS altix PMINIT perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root pfm_version pfm_prefix pfm_incdir pfm_libdir bitmode pfm_events tests LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS AWK CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT F77 FFLAGS ac_ct_F77 CPP LN_S SET_MAKE RANLIB ac_ct_RANLIB EGREP datarootdir docdir arch DEBUGFLAGS MAKEVER PMAPI AR papiLIBS STATIC NOTLS altix PMINIT perfctr_root perfctr_prefix perfctr_incdir perfctr_libdir pfm_root pfm_version pfm_prefix pfm_incdir pfm_libdir bitmode pfm_events tests LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -849,6 +849,13 @@ if test -n "$ac_init_help"; then
    esac
   cat <<\_ACEOF
 
+Optional Features:
+  --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
+  --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-static-tests   Enable tests built static
+  --disable-shared        Disable the use of shared library
+  --disable-static        Disable the use of static library
+
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
@@ -877,7 +884,6 @@ Optional Packages:
   --with-pfm-events=<static,file>	Specify source of events for pfmlib-based systems
   --with-semaphores Use semaphores instead of atomic locks (IA64)
   --with-tests=<ctests,ftests,"ctests ftests">	Specify which tests to run on install
-  --with-linkstatic=<yes,no>	Specify whether to link statically or not
   --with-nativecc=<path>	Specify native C compiler for header generation
 
 Some influential environment variables:
@@ -1379,6 +1385,9 @@ get_bitmode()
 # checking for Makefile argument, if not specified, check CPU, OS, OSVER and bitmode
 #
 
+use_shared=yes
+use_static=yes
+use_static_tests=no
 echo "$as_me:$LINENO: checking for architecture" >&5
 echo $ECHO_N "checking for architecture... $ECHO_C" >&6
 
@@ -1447,6 +1456,9 @@ if test "$OS" = "catamount"; then
    ffsll=yes
    cross_compiling=yes
    perfctr=5
+   use_shared=no
+   use_static=yes
+   use_static_tests=yes
 elif test "$OS" = "bgl"; then
    if test "x$CC" = "x"; then
       CC=powerpc-bgl-blrts-gnu-gcc
@@ -1464,6 +1476,9 @@ elif test "$OS" = "bgl"; then
    ffsll=yes
    cross_compiling=yes
    perfctr=6
+   use_shared=no
+   use_static=yes
+   use_static_tests=yes
 fi
 
 #
@@ -1636,6 +1651,9 @@ if test "$OS" = "CNL"; then
    ffsll=yes
    pfm_events=static
    cross_compiling=yes
+   use_shared=no
+   use_static=yes
+   use_static_tests=yes
 fi
 
 #
@@ -2764,7 +2782,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:2767:" \
+echo "$as_me:2785:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -3516,7 +3534,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:3519:" \
+echo "$as_me:3537:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -5378,18 +5396,54 @@ else
 
 fi;
 fi
-# check for static linking
-if test "x$linkstatic" = "x"; then
-
-# Check whether --with-linkstatic or --without-linkstatic was given.
-if test "${with_linkstatic+set}" = set; then
-  withval="$with_linkstatic"
-  linkstatic=$withval
-else
-  linkstatic=no
-
+#
+# Static tests
+#
+echo "$as_me:$LINENO: checking for building tests static" >&5
+echo $ECHO_N "checking for building tests static... $ECHO_C" >&6
+# Check whether --enable-static-tests or --disable-static-tests was given.
+if test "${enable_static_tests+set}" = set; then
+  enableval="$enable_static_tests"
+  use_static_tests=$enableval
 fi;
+echo "$as_me:$LINENO: result: $use_static_tests" >&5
+echo "${ECHO_T}$use_static_tests" >&6
+#
+# Fix up: modify LDPATH for static linking if specified
+#
+if test "$use_static_tests" = "yes"; then
+   STATIC="-static"
+else
+   STATIC=""
 fi
+#
+# Shared and Static Lib options
+#
+echo "$as_me:$LINENO: checking for which libraries to build" >&5
+echo $ECHO_N "checking for which libraries to build... $ECHO_C" >&6
+# Check whether --enable-shared or --disable-shared was given.
+if test "${enable_shared+set}" = set; then
+  enableval="$enable_shared"
+  use_shared=$enableval
+fi;
+# Check whether --enable-static or --disable-static was given.
+if test "${enable_static+set}" = set; then
+  enableval="$enable_static"
+  use_static=$enableval
+fi;
+papiLIBS=""
+if test "$use_shared" = "yes"; then
+   papiLIBS="shared"
+fi
+if test "$use_static" = "yes"; then
+   papiLIBS="$papiLIBS static"
+fi
+# Override architectural defaults
+echo "$as_me:$LINENO: result: $papiLIBS" >&5
+echo "${ECHO_T}$papiLIBS" >&6
+#
+#
+#
 if test "$cross_compiling" = "yes" ; then
 echo "$as_me:$LINENO: checking for native compiler for header generation" >&5
 echo $ECHO_N "checking for native compiler for header generation... $ECHO_C" >&6
@@ -7133,12 +7187,6 @@ case "$MAKEVER" in
 esac
 
 #
-# Fix up: modify LDPATH for static linking if specified
-#
-if test "$linkstatic" = "yes"; then
-   LDFLAGS="$LDFLAGS -static"
-fi
-#
 # Fix up: put inside papi in share directory
 #
 if test "$datadir" = '${datarootdir}'; then
@@ -7194,6 +7242,8 @@ if test "$OS" = "linux" -a "$bitmode" = "64"; then
       fi
    fi
 fi
+
+
 
 
 
@@ -7888,6 +7938,8 @@ s,@DEBUGFLAGS@,$DEBUGFLAGS,;t t
 s,@MAKEVER@,$MAKEVER,;t t
 s,@PMAPI@,$PMAPI,;t t
 s,@AR@,$AR,;t t
+s,@papiLIBS@,$papiLIBS,;t t
+s,@STATIC@,$STATIC,;t t
 s,@NOTLS@,$NOTLS,;t t
 s,@altix@,$altix,;t t
 s,@PMINIT@,$PMINIT,;t t

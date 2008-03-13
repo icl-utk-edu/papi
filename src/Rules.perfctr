@@ -5,7 +5,6 @@
 #       maynardj@us.ibm.com
 
 DESCR   = "Linux with PerfCtr $(VERSION) patch and library"
-LIBS    = static shared
 TARGETS = serial attach multiplex_and_pthreads shared
 LIBRARY = libpapi.a
 SHLIB   = libpapi.so.$(PAPIVER)

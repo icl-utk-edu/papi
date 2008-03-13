@@ -6,7 +6,7 @@ COMPILER	= CRAYX2
 CC		= craynv-cray-linux-gnu-gcc
 F77		= craynv-cray-linux-gnu-gfortran
 CPP		= $(CC) -E
-LDFLAGS		= -lpthread -static
+LDFLAGS		= -lpthread
 TESTS		= ctests
 
 else
