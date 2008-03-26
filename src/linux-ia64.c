@@ -381,7 +381,7 @@ int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
   }
 }
 
-unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code)
+unsigned int _papi_pfm_ntv_name_to_code(char *name, unsigned int *event_code)
 {
   pfmlib_event_t event;
   int i;
@@ -1894,13 +1894,13 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    int i, org_cnt;
    pfmw_param_t *evt = &this_state->evt;
    pfmw_param_t copy_evt;
-   int events[MAX_COUNTERS];
-   int index;
 #if defined(ITANIUM3)
-      unsigned int event, umask, EventCode;
-      int j;
-      pfmlib_event_t gete;
-      char name[128];
+   unsigned int event, umask, EventCode;
+   int j;
+   pfmlib_event_t gete;
+   char name[128];
+#else
+   int index;
 #endif
 
    if (count == 0) {
