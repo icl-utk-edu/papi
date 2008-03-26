@@ -32,7 +32,7 @@ int main(int argc, char **argv)
    const PAPI_exe_info_t *prginfo = NULL;
    const PAPI_hw_info_t *hw_info;
 
-#ifndef ITANIUM2
+#if !defined(ITANIUM2) && !defined(ITANIUM3) 
    test_skip(__FILE__, __LINE__, "Currently only works on itanium2", 0);
    exit(1);
 #endif

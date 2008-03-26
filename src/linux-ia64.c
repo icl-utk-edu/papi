@@ -310,6 +310,8 @@ static inline int prepare_umask(unsigned int foo,unsigned int *values)
   unsigned int tmp = foo, i, j = 0;
 
   SUBDBG("umask 0x%x\n",tmp);
+  if(foo==0)
+    return 0;
   while ((i = ffs(tmp)))
     {
       tmp = tmp ^ (1 << (i-1));
@@ -334,11 +336,13 @@ int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
     return(PAPI_ENOEVNT);
 
   ret = pfm_get_num_event_masks(event,&num_masks);
+  SUBDBG("pfm_get_num_event_masks: event=%d  num_masks=%d\n",event, num_masks);
   if (ret != PFMLIB_SUCCESS) {
     PAPIERROR("pfm_get_num_event_masks(%d,%p): %s",event,&num_masks,pfm_strerror(ret));
     return(PAPI_ENOEVNT);
   }
-  if (num_masks > PAPI_NATIVE_UMASK_MAX) num_masks = PAPI_NATIVE_UMASK_MAX;
+  if (num_masks > PAPI_NATIVE_UMASK_MAX)
+    num_masks = PAPI_NATIVE_UMASK_MAX;
   SUBDBG("This is umask %d of %d\n",umask,num_masks);
 
   if (modifier == PAPI_ENUM_EVENTS) {
@@ -375,6 +379,36 @@ int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
 	   }
 	   return (PAPI_ENOEVNT);
   }
+}
+
+unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code)
+{
+  pfmlib_event_t event;
+  int i;
+  unsigned int mask=0;
+
+  SUBDBG("pfm_find_full_event(%s,%p)\n",name,&event);
+  if (pfm_find_full_event(name,&event) == PFMLIB_SUCCESS) {
+	/* we can only capture PAPI_NATIVE_UMASK_MAX or fewer masks */
+	if (event.num_masks > PAPI_NATIVE_UMASK_MAX) {
+	  SUBDBG("num_masks (%d) > max masks (%d)\n",event.num_masks, PAPI_NATIVE_UMASK_MAX);
+	  return(PAPI_ENOEVNT);
+	}
+	else {
+	/* no mask index can exceed PAPI_NATIVE_UMASK_MAX */
+	  for (i=0; i<event.num_masks; i++) {
+		if (event.unit_masks[i] > PAPI_NATIVE_UMASK_MAX) {
+		  SUBDBG("mask index (%d) > max masks (%d)\n",event.unit_masks[i], PAPI_NATIVE_UMASK_MAX);
+		  return(PAPI_ENOEVNT);
+		}
+		mask |= 1 << event.unit_masks[i];
+	  }
+	  *event_code = encode_native_event_raw(event.event, mask);
+  SUBDBG("event_code: 0x%x  event: %d  num_masks: %d\n",*event_code,event.event,event.num_masks);
+	  return(PAPI_OK);
+	}
+  }
+  return(PAPI_ENOEVNT);
 }
 
 int _papi_pfm_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
@@ -536,12 +570,20 @@ int generate_preset_search_map(hwi_search_t **maploc, itanium_preset_search_t *o
 	    PAPIERROR("Count (%d) == MAX_COUNTER_TERMS (%d)\n",cnt,MAX_COUNTER_TERMS);
             return(PAPI_EBUG);
          }
+#if defined(ITANIUM3)
+         if (_papi_pfm_ntv_name_to_code(*findme, (unsigned int *)&psmap[i].data.native[cnt]) != PAPI_OK)
+         {
+            PAPIERROR("_papi_pfm_ntv_name_to_code(%s) failed\n", *findme);
+            return (PAPI_EBUG);
+         }
+#else
          if (pfm_find_event_byname(*findme, (unsigned int *)&psmap[i].data.native[cnt]) !=
              PFMLIB_SUCCESS)
          {
             PAPIERROR("pfm_find_event_byname(%s) failed\n", *findme);
             return (PAPI_EBUG);
          }
+#endif
          else
             psmap[i].data.native[cnt] ^= PAPI_NATIVE_MASK;
          findme++;
@@ -1416,7 +1458,7 @@ static int ia64_process_profile_buffer(ThreadInfo_t *thread, EventSetInfo_t *ESI
    unsigned long buf_pos;
    unsigned long entry_size;
    int i, ret, reg_num, count, pos;
-   int EventCode=0, eventindex, native_index=0;
+   unsigned int EventCode=0, eventindex, native_index=0;
    hwd_control_state_t *this_state;
    pfmw_arch_pmd_reg_t *reg;
    unsigned long overflow_vector, pc;
@@ -1862,10 +1904,18 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
 #endif
 
    if (count == 0) {
+#if defined(PFM30)
       for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
          PFMW_PEVT_EVENT(evt,i) = 0;
       PFMW_PEVT_EVTCOUNT(evt) = 0;
       memset(PFMW_PEVT_PFPPC(evt), 0, sizeof(PFMW_PEVT_PFPPC(evt)));
+      memset(&evt->inp.pfp_unavail_pmcs, 0, sizeof(pfmlib_regmask_t));
+#else
+      for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
+         PFMW_PEVT_EVENT(evt,i) = 0;
+      PFMW_PEVT_EVTCOUNT(evt) = 0;
+      memset(PFMW_PEVT_PFPPC(evt), 0, sizeof(PFMW_PEVT_PFPPC(evt)));
+#endif
       return (PAPI_OK);
    }
 
@@ -1877,10 +1927,18 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    /*for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
       events[i] = PFMW_PEVT_EVENT(evt,i);
    */
+#if defined(PFM30)
+   for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
+      PFMW_PEVT_EVENT(evt,i) = 0;
+   PFMW_PEVT_EVTCOUNT(evt) = 0;
+   memset(PFMW_PEVT_PFPPC(evt), 0, sizeof(PFMW_PEVT_PFPPC(evt)));
+   memset(&evt->inp.pfp_unavail_pmcs, 0, sizeof(pfmlib_regmask_t));
+#else
    for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
          PFMW_PEVT_EVENT(evt,i) = 0;
    PFMW_PEVT_EVTCOUNT(evt) = 0;
    memset(PFMW_PEVT_PFPPC(evt), 0, sizeof(PFMW_PEVT_PFPPC(evt)));
+#endif
 
    SUBDBG(" original count is %d\n", org_cnt);
 
@@ -1896,6 +1954,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
       SUBDBG(" evtcode=0x%x evtindex=%d name: %s\n", EventCode, event, name);
 	
       PFMW_PEVT_EVENT(evt,i) = event;
+      evt->inp.pfp_events[i].num_masks = 0;
       gete.event = event;
       gete.num_masks = prepare_umask(umask,gete.unit_masks);
       if(gete.num_masks){
@@ -1919,6 +1978,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    PFMW_PEVT_EVTCOUNT(evt) = count;
    /* Recalcuate the pfmlib_param_t structure, may also signal conflict */
    if (pfmw_dispatch_events(evt)) {
+      SUBDBG("pfmw_dispatch_events fail\n");
       /* recover the old data */
       PFMW_PEVT_EVTCOUNT(evt) = org_cnt;
       /*for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)

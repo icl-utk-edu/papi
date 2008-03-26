@@ -671,6 +671,8 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
       }
       return (PAPI_OK);
    }
+   
+extern inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int *event, unsigned int *umask);
 
    inline int pfmw_recreate_context(EventSetInfo_t * ESI, void **smpl_vaddr, 
                                int EventIndex) 
@@ -678,7 +680,8 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
       pfm_default_smpl_ctx_arg_t ctx[1];
       pfm_uuid_t buf_fmt_id = PFM_DEFAULT_SMPL_UUID;
       int ctx_fd;
-      int native_index, EventCode, pos;
+      unsigned int native_index, EventCode; 
+      int pos;
       hwd_context_t *thr_ctx = (hwd_context_t *) &ESI->master->context;
 #if defined(ITANIUM3)
       unsigned int umask;
@@ -873,7 +876,7 @@ static void check_ibrp_events(hwd_control_state_t *current_state)
 			pfm_get_event_code(evt->inp.pfp_events[j].event, &code);
 			if (code != retired_code) continue;
 			seen_retired = 1;
-			pfm_ita2_get_event_umask(evt->inp.pfp_events[j].event, &umask);
+			pfm_mont_get_event_umask(evt->inp.pfp_events[j].event, &umask);
 			if (umask == umasks_retired[ibrp]) break;
 		}
 		if (seen_retired && j == evt->inp.pfp_event_count)
@@ -1263,7 +1266,7 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
 }
 
 static inline int pfmw_get_num_counters(int *num) {
-  int tmp;
+  unsigned int tmp;
   if (pfm_get_num_counters(&tmp) != PFMLIB_SUCCESS)
     return(PAPI_ESYS);
   *num = tmp;
