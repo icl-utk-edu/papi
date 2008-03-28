@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 {
    int i, k, EventSet=PAPI_NULL, add_count=0, err_count=0;
    int retval;
-   PAPI_event_info_t info;
+   PAPI_event_info_t info, info1;
    const PAPI_hw_info_t *hwinfo = NULL;
    int event_code;
    const PAPI_substrate_info_t *s = NULL;
@@ -92,15 +92,19 @@ int main(int argc, char **argv)
 		k = i;
 		if (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
 			do {
-				retval = PAPI_get_event_info(k, &info);
-				event_code = info.event_code;
-				if (add_remove_event(EventSet, event_code, info.symbol))
+				retval = PAPI_get_event_info(k, &info1);
+				event_code = info1.event_code;
+				if (add_remove_event(EventSet, event_code, info1.symbol))
 					add_count++;
 				else err_count++;
 			} while (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK);
 		}
-		if (retval == PAPI_OK)
-			printf("\n");
+		else{
+		  event_code = info.event_code;
+  		  if (add_remove_event(EventSet, event_code, info.symbol))
+			add_count++;
+		  else err_count++;
+	       }
 	}
 	else {
 		event_code = info.event_code;
