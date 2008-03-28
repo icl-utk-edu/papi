@@ -91,7 +91,7 @@ unsigned long PAPI_thread_id(void)
    if (_papi_hwi_thread_id_fn != NULL)
      return ((*_papi_hwi_thread_id_fn) ());
    else
-     papi_return (PAPI_EMISC);
+     papi_return ((unsigned long)PAPI_EMISC);
 }
 
 /* Thread Functions */
@@ -2124,6 +2124,7 @@ int PAPI_set_granularity(int granularity)
 {
    PAPI_option_t ptr;
 
+   memset (&ptr, 0, sizeof(ptr));
    ptr.defgranularity.granularity = granularity;
    return(PAPI_set_opt(PAPI_DEFGRN, &ptr));
 }
@@ -2135,6 +2136,7 @@ int PAPI_set_domain(int domain)
 {
    PAPI_option_t ptr;
 
+   memset (&ptr, 0, sizeof(ptr));
    ptr.defdomain.domain = domain;
    return(PAPI_set_opt(PAPI_DEFDOM, &ptr));
 }
@@ -2224,6 +2226,7 @@ const PAPI_exe_info_t *PAPI_get_executable_info(void)
    PAPI_option_t ptr;
    int retval;
 
+   memset (&ptr, 0, sizeof(ptr));
    retval = PAPI_get_opt(PAPI_EXEINFO, &ptr);
    if (retval == PAPI_OK)
       return (ptr.exe_info);
@@ -2236,6 +2239,7 @@ const PAPI_shlib_info_t *PAPI_get_shared_lib_info(void)
    PAPI_option_t ptr;
    int retval;
 
+   memset (&ptr, 0, sizeof(ptr));
    retval = PAPI_get_opt(PAPI_SHLIBINFO, &ptr);
    if (retval == PAPI_OK)
       return (ptr.shlib_info);
@@ -2248,6 +2252,7 @@ const PAPI_hw_info_t *PAPI_get_hardware_info(void)
    PAPI_option_t ptr;
    int retval;
 
+   memset (&ptr, 0, sizeof(ptr));
    retval = PAPI_get_opt(PAPI_HWINFO, &ptr);
    if (retval == PAPI_OK)
       return (ptr.hw_info);
@@ -2260,6 +2265,7 @@ const PAPI_substrate_info_t *PAPI_get_substrate_info(void)
    PAPI_option_t ptr;
    int retval;
 
+   memset (&ptr, 0, sizeof(ptr));
    retval = PAPI_get_opt(PAPI_SUBSTRATEINFO, &ptr);
    if (retval == PAPI_OK)
       return (ptr.sub_info);
