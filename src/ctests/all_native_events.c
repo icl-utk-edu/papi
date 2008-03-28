@@ -108,9 +108,7 @@ int main(int argc, char **argv)
 	}
 	else {
 		event_code = info.event_code;
-#ifdef _POWER4
-		event_code &= 0xff00ffff;
-#endif
+		if (s->cntr_groups) event_code &= ~PAPI_NTV_GROUP_AND_MASK;
 		if (add_remove_event(EventSet, event_code, info.symbol))
 			add_count++;
 		else err_count++;
