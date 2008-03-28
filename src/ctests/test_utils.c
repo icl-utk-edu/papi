@@ -717,6 +717,13 @@ int enum_add_native_events(int *num_events, int **evtcodes)
 							fprintf(stdout, "%d is not available.\n", event_code);
 					}
 				} while (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK && event_found<counters);
+			} else {
+				event_code = info.event_code;
+				retval = PAPI_add_event(EventSet, event_code);
+				if (retval == PAPI_OK){
+					(*evtcodes)[event_found] = event_code;
+					event_found ++;
+				}
 			}
 			if (!TESTS_QUIET && retval == PAPI_OK)
 				printf("\n");
