@@ -6,6 +6,37 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.31, 2008-01-26
+- x86: Barcelona (AMD Family 10h) updates:
+  * Correct CPU type constant to read FAM10H with trailing H.
+    The old spelling also remains, for now.
+  * Barcelona event selectors are 64-bit, not 32-bit as in K8.
+    Add evntsel_high[] array to struct perfctr_cpu_control to
+    allow passing high 32 bits of evntsels to the driver.
+    This array overlaps the p4 control sub-struct. (Uses a GCC
+    anonymous union, to avoid source-incompatible changes.)
+    Currently only some Northbridge events need the high bits.
+  * Update driver to accept and check high evntsel bits on
+    Barcelona, and to maintain all 64 evntsel bits in PMU
+    context switches.
+  * Update examples/perfex/ to indicate how to also set up
+    the high 32 evntsel bits for Barcelona (run perfex -h).
+- Minor coding style (mostly obsolete whitespace style) fixes.
+- Updated kernel support: 2.6.24, 2.6.18-53.1.6.el5 (RHEL5),
+  2.6.9-67.0.1.EL (RHEL4).
+
+Version 2.6.30, 2007-10-28
+- Kernel 2.6.24-rc1 replaced the previously separate i386
+  and x86_64 source code directories with new shared x86
+  directories. Updated the linux/include/ hierarchy and the
+  update-kernel script to handle new and old source layouts.
+- Several driver updates to handle kernel 2.6.24-rc1 changes
+  on both x86 and ppc32.
+- Fixed a problem which could break RHEL5 kernel builds in
+  some configurations.
+- Updated kernel support: 2.6.24-rc1, 2.6.23, 2.6.18-8.1.14.el5
+  (RHEL5), and 2.6.9-55.0.6.EL (RHEL4).
+
 Version 2.6.29, 2007-10-07
 - Added support for the fixed-function counters in Intel Core 2
   processors. To user-space they look like ordinary P6 counters,

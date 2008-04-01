@@ -1,14 +1,14 @@
 /* $Id$
  * x86-specific perfctr library procedures.
  *
- * Copyright (C) 1999-2007  Mikael Pettersson
+ * Copyright (C) 1999-2008  Mikael Pettersson
  */
 #include <stdio.h>
 #include "libperfctr.h"
 
 unsigned int perfctr_info_nrctrs(const struct perfctr_info *info)
 {
-    switch( info->cpu_type ) {
+    switch (info->cpu_type) {
 #if !defined(__x86_64__)
       case PERFCTR_X86_INTEL_P5:
       case PERFCTR_X86_INTEL_P5MMX:
@@ -33,7 +33,7 @@ unsigned int perfctr_info_nrctrs(const struct perfctr_info *info)
 	return 18;
       case PERFCTR_X86_AMD_K8:
       case PERFCTR_X86_AMD_K8C:
-      case PERFCTR_X86_AMD_FAM10:
+      case PERFCTR_X86_AMD_FAM10H:
 	return 4;
       case PERFCTR_X86_INTEL_CORE2:
 	return 5;
@@ -45,7 +45,7 @@ unsigned int perfctr_info_nrctrs(const struct perfctr_info *info)
 
 const char *perfctr_info_cpu_name(const struct perfctr_info *info)
 {
-    switch( info->cpu_type ) {
+    switch (info->cpu_type) {
       case PERFCTR_X86_GENERIC:
 	return "Generic x86 with TSC";
 #if !defined(__x86_64__)
@@ -86,7 +86,7 @@ const char *perfctr_info_cpu_name(const struct perfctr_info *info)
 	return "AMD K8";
       case PERFCTR_X86_AMD_K8C:
 	return "AMD K8 Revision C";
-      case PERFCTR_X86_AMD_FAM10:
+      case PERFCTR_X86_AMD_FAM10H:
 	return "AMD Family 10h";
       default:
         return "?";
@@ -103,21 +103,21 @@ void perfctr_cpu_control_print(const struct perfctr_cpu_control *control)
 
     printf("tsc_on\t\t\t%u\n", control->tsc_on);
     printf("nractrs\t\t\t%u\n", nractrs);
-    if( nrictrs )
+    if (nrictrs)
 	printf("nrictrs\t\t\t%u\n", nrictrs);
     for(i = 0; i < nrctrs; ++i) {
-        if( control->pmc_map[i] >= 18 ) /* for Core2 fixed counters or P4 fast rdpmc */
+        if (control->pmc_map[i] >= 18) /* for Core2 fixed counters or P4 fast rdpmc */
             printf("pmc_map[%u]\t\t0x%08X\n", i, control->pmc_map[i]);
         else
             printf("pmc_map[%u]\t\t%u\n", i, control->pmc_map[i]);
         printf("evntsel[%u]\t\t0x%08X\n", i, control->evntsel[i]);
-        if( control->p4.escr[i] )
+        if (control->p4.escr[i])
             printf("escr[%u]\t\t\t0x%08X\n", i, control->p4.escr[i]);
-	if( i >= nractrs )
+	if (i >= nractrs)
 	    printf("ireset[%u]\t\t%d\n", i, control->ireset[i]);
     }
-    if( control->p4.pebs_enable )
+    if (control->p4.pebs_enable)
 	printf("pebs_enable\t\t0x%08X\n", control->p4.pebs_enable);
-    if( control->p4.pebs_matrix_vert )
+    if (control->p4.pebs_matrix_vert)
 	printf("pebs_matrix_vert\t0x%08X\n", control->p4.pebs_matrix_vert);
 }

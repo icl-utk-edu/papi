@@ -1,7 +1,7 @@
 /* $Id$
  * x86-specific code.
  *
- * Copyright (C) 1999-2004, 2007  Mikael Pettersson
+ * Copyright (C) 1999-2008  Mikael Pettersson
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,13 +14,13 @@ void do_print(FILE *resfile,
 {
     unsigned int nrctrs, i;
 
-    if( cpu_control->tsc_on )
+    if (cpu_control->tsc_on)
 	fprintf(resfile, "tsc\t\t\t\t%19lld\n", sum->tsc);
     nrctrs = cpu_control->nractrs;
     for(i = 0; i < nrctrs; ++i) {
 	fprintf(resfile, "event 0x%08X",
 		cpu_control->evntsel[i]);
-	if( cpu_control->p4.escr[i] )
+	if (cpu_control->p4.escr[i])
 	    fprintf(resfile, "/0x%08X",
 		    cpu_control->p4.escr[i]);
 	if (cpu_control->pmc_map[i] >= 18)
@@ -29,10 +29,10 @@ void do_print(FILE *resfile,
 	    fprintf(resfile, "@%u\t\t", cpu_control->pmc_map[i]);
 	fprintf(resfile, "%19lld\n", sum->pmc[i]);
     }
-    if( cpu_control->p4.pebs_enable )
+    if (cpu_control->p4.pebs_enable)
 	fprintf(resfile, "PEBS_ENABLE 0x%08X\n",
 		cpu_control->p4.pebs_enable);
-    if( cpu_control->p4.pebs_matrix_vert )
+    if (cpu_control->p4.pebs_matrix_vert)
 	fprintf(resfile, "PEBS_MATRIX_VERT 0x%08X\n",
 		cpu_control->p4.pebs_matrix_vert);
 }
@@ -54,8 +54,8 @@ void do_arch_usage(void)
     fprintf(stderr, "\tto use for this counter. This field is mandatory.\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "\tevntsel2 provides auxiliary event selection code to use for this\n");
-    fprintf(stderr, "\tcounter. Currently only used for P4, on other processors this\n");
-    fprintf(stderr, "\tfield should be omitted.\n");
+    fprintf(stderr, "\tcounter. Currently only used for P4 and AMD Family 10h, on other\n");
+    fprintf(stderr, "\tprocessors this field should be omitted.\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "\tpmc describes which CPU counter to use for this event.\n");
     fprintf(stderr, "\tBy default the events use counters 0 and up in the order listed.\n");
@@ -68,6 +68,10 @@ void do_arch_usage(void)
     fprintf(stderr, "\tCPL (bits 16 and 17) and Enable (bit 22) fields are relevant.\n");
     fprintf(stderr, "\t(The INT field (bit 20) is also honoured, but perfex cannot set\n");
     fprintf(stderr, "\tup interrupt-mode counting, so it should not be specified.)\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "\tOn AMD Family 10h, evntsel is written to the low 32 bits of the\n");
+    fprintf(stderr, "\tcounter's EVNTSEL register, and evntsel2 is written to the high\n");
+    fprintf(stderr, "\t32 bits of that register. Only a few events require evntsel2.\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "\tOn a P4, evntsel is written to the counter's CCCR register.\n");
     fprintf(stderr, "\tOn a P4, evntsel2 is written to the counter's ESCR register.\n");
@@ -84,13 +88,13 @@ static int parse_event_spec(const char *arg, unsigned int *evntsel,
     char *endp;
 
     *evntsel = my_strtoul(arg, &endp);
-    if( endp[0] != '/' ) {
+    if (endp[0] != '/') {
 	*escr = 0;
     } else {
 	arg = endp + 1;
 	*escr = my_strtoul(arg, &endp);
     }
-    if( endp[0] != '@' ) {
+    if (endp[0] != '@') {
 	*pmc = (unsigned int)-1;
     } else {
 	arg = endp + 1;
@@ -105,15 +109,15 @@ unsigned int do_event_spec(unsigned int n,
 {
     unsigned int spec_evntsel, spec_escr, spec_pmc;
 
-    if( parse_event_spec(arg, &spec_evntsel, &spec_escr, &spec_pmc) ) {
+    if (parse_event_spec(arg, &spec_evntsel, &spec_escr, &spec_pmc)) {
 	fprintf(stderr, "perfex: invalid event specifier: '%s'\n", arg);
 	exit(1);
     }
-    if( n >= ARRAY_SIZE(cpu_control->evntsel) ) {
+    if (n >= ARRAY_SIZE(cpu_control->evntsel)) {
 	fprintf(stderr, "perfex: too many event specifiers\n");
 	exit(1);
     }
-    if( spec_pmc == (unsigned int)-1 )
+    if (spec_pmc == (unsigned int)-1)
 	spec_pmc = n;
     cpu_control->evntsel[n] = spec_evntsel;
     cpu_control->p4.escr[n] = spec_escr;
@@ -136,16 +140,16 @@ int do_arch_option(int ch,
 {
     unsigned int spec_value;
 
-    switch( ch ) {
+    switch (ch) {
       case 1:
-	if( parse_value(arg, &spec_value) ) {
+	if (parse_value(arg, &spec_value)) {
 	    fprintf(stderr, "perfex: invalid value: '%s'\n", arg);
 	    exit(1);
 	}
 	cpu_control->p4.pebs_enable = spec_value;
 	return 0;
       case 2:
-	if( parse_value(arg, &spec_value) ) {
+	if (parse_value(arg, &spec_value)) {
 	    fprintf(stderr, "perfex: invalid value: '%s'\n", arg);
 	    exit(1);
 	}

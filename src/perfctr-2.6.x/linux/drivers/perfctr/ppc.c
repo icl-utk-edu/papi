@@ -819,6 +819,7 @@ static inline void perfctr_of_node_put(struct device_node *node)
 	of_node_put(node);
 }
 #else
+#define of_get_property(a, b, c)	get_property((a), (b), (c))
 static inline struct device_node *perfctr_of_find_node_by_type(struct device_node *from, const char *type)
 {
 	return find_type_devices(type);
@@ -835,7 +836,7 @@ static unsigned int __init of_core_khz(void)
 	cpu = perfctr_of_find_node_by_type(NULL, "cpu");
 	if (!cpu)
 		return 0;
-	fp = (unsigned int*)get_property(cpu, "clock-frequency", NULL);
+	fp = (unsigned int*)of_get_property(cpu, "clock-frequency", NULL);
 	core = 0;
 	if (fp)
 		core = *fp;
@@ -851,10 +852,10 @@ static unsigned int __init of_bus_khz(void)
 	cpu = perfctr_of_find_node_by_type(NULL, "cpu");
 	if (!cpu)
 		return 0;
-	fp = (unsigned int*)get_property(cpu, "bus-frequency", NULL);
+	fp = (unsigned int*)of_get_property(cpu, "bus-frequency", NULL);
 	bus = 0;
 	if (!fp || !(bus = *fp)) {
-		fp = (unsigned int*)get_property(cpu, "config-bus-frequency", NULL);
+		fp = (unsigned int*)of_get_property(cpu, "config-bus-frequency", NULL);
 		if (fp)
 			bus = *fp;
 	}
@@ -870,7 +871,7 @@ static unsigned int __init of_bus_to_core_x2(void)
 	cpu = perfctr_of_find_node_by_type(NULL, "cpu");
 	if (!cpu)
 		return 0;
-	fp = (unsigned int*)get_property(cpu, "processor-to-bus-ratio*2", NULL);
+	fp = (unsigned int*)of_get_property(cpu, "processor-to-bus-ratio*2", NULL);
 	ratio = 0;
 	if (fp)
 		ratio = *fp;

@@ -1,7 +1,7 @@
 /* $Id$
  * x86/x86_64 performance-monitoring counters driver.
  *
- * Copyright (C) 1999-2007  Mikael Pettersson
+ * Copyright (C) 1999-2008  Mikael Pettersson
  */
 #include <linux/version.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
@@ -43,7 +43,10 @@ struct per_cpu_cache {	/* roughly a subset of perfctr_cpu_state */
 	struct {
 		/* NOTE: these caches have physical indices, not virtual */
 		unsigned int evntsel[18];
-		unsigned int escr[0x3E2-0x3A0];
+		union {
+			unsigned int escr[0x3E2-0x3A0];
+			unsigned int evntsel_high[18];
+		};
 		unsigned int pebs_enable;
 		unsigned int pebs_matrix_vert;
 	} control;
@@ -101,6 +104,9 @@ struct perfctr_pmu_msrs {
 
 /* AMD K8 */
 #define IS_K8_NB_EVENT(EVNTSEL)	((((EVNTSEL) >> 5) & 0x7) == 0x7)
+
+/* AMD Family 10h */
+#define FAM10H_EVNTSEL_HIGH_RESERVED	(~0x30F)
 
 /* Intel P4, Intel Pentium M, Intel Core */
 #define MSR_IA32_MISC_ENABLE	0x1A0
@@ -415,6 +421,7 @@ static void c6_write_control(const struct perfctr_cpu_state *state)
  *   register has the control bits (CPL:2 + PMI:1) for these counters.
  */
 
+static int is_fam10h;
 static int k8_is_multicore;	/* affects northbridge events */
 static int p6_is_core2;		/* affects P6_EVNTSEL_ENABLE usage */
 
@@ -443,6 +450,18 @@ static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, int
 		if (pmc >= (is_k7 ? 4 : p6_is_core2 ? 5 : 2) || (pmc_mask & (1<<pmc)))
 			return -EINVAL;
 		pmc_mask |= (1<<pmc);
+		/*
+		 * check evntsel_high on AMD Fam10h
+		 * on others we force it to zero (should return -EINVAL but
+		 * having zeroes there has not been a requirement before)
+		 */
+		if (is_fam10h) {
+			unsigned int evntsel_high = state->control.evntsel_high[i];
+			if (evntsel_high & FAM10H_EVNTSEL_HIGH_RESERVED)
+				return -EINVAL;
+		} else
+			state->control.evntsel_high[i] = 0;
+		/* check evntsel */
 		evntsel = state->control.evntsel[i];
 		/* prevent the K8 multicore NB event clobber erratum */
 		if (!is_global && k8_is_multicore && IS_K8_NB_EVENT(evntsel))
@@ -526,6 +545,7 @@ static void p6_like_isuspend(struct perfctr_cpu_state *state,
 			   We don't need to make it into a parameter. */
 			pmc_idx = pmc_raw & P4_MASK_FAST_RDPMC;
 			cache->control.evntsel[pmc_idx] = 0;
+			cache->control.evntsel_high[pmc_idx] = 0;
 			/* On P4 this intensionally also clears the CCCR.OVF flag. */
 			wrmsr(msr_evntsel0+pmc_idx, 0, 0);
 		}
@@ -581,6 +601,7 @@ static void p6_like_iresume(const struct perfctr_cpu_state *state,
 			   counter increments and missed overflow interrupts. */
 			if (cache->control.evntsel[pmc_idx]) {
 				cache->control.evntsel[pmc_idx] = 0;
+				cache->control.evntsel_high[pmc_idx] = 0;
 				wrmsr(msr_evntsel0+pmc_idx, 0, 0);
 			}
 			msr_perfctr = msr_perfctr0 + pmc_idx;
@@ -614,13 +635,18 @@ static void p6_like_write_control(const struct perfctr_cpu_state *state,
 		return;
 	nrctrs = perfctr_cstatus_nrctrs(state->cstatus);
 	for(i = 0; i < nrctrs; ++i) {
-		unsigned int evntsel = state->control.evntsel[i];
-		unsigned int pmc = state->pmc[i].map;
+		unsigned int pmc, evntsel, evntsel_high;
+
+		pmc = state->pmc[i].map;
 		if (pmc & CORE2_PMC_FIXED_FLAG)
 			continue;
-		if (evntsel != cache->control.evntsel[pmc]) {
+		evntsel = state->control.evntsel[i];
+		evntsel_high = state->control.evntsel_high[i];
+		if (evntsel != cache->control.evntsel[pmc] ||
+		    evntsel_high != cache->control.evntsel_high[pmc]) {
 			cache->control.evntsel[pmc] = evntsel;
-			wrmsr(msr_evntsel0+pmc, evntsel, 0);
+			cache->control.evntsel_high[pmc] = evntsel_high;
+			wrmsr(msr_evntsel0+pmc, evntsel, evntsel_high);
 		}
 	}
 	if (state->core2_fixed_ctr_ctrl != 0 &&
@@ -679,6 +705,9 @@ static const struct perfctr_pmu_msrs core2_pmu_msrs = {
  *
  * The K8 has the same hardware layout as the K7. It also has
  * better documentation and a different set of available events.
+ *
+ * AMD Family 10h is similar to the K7, but the EVNTSEL MSRs
+ * have been widened to 64 bits.
  */
 
 static int k7_check_control(struct perfctr_cpu_state *state, int is_global)
@@ -1380,7 +1409,7 @@ static void __init p4_ht_mask_setup_cpu(void *forbidden)
 	 */
 
 	/* Ensure that CPUID reports all levels. */
-	if (cpu_data[cpu].x86_model == 3) { /* >= 3? */
+	if (cpu_data(cpu).x86_model == 3) { /* >= 3? */
 		unsigned int low, high;
 		rdmsr(MSR_IA32_MISC_ENABLE, low, high);
 		if (low & (1<<22)) { /* LIMIT_CPUID_MAXVAL */
@@ -1564,12 +1593,14 @@ static int __init intel_p6_init(void)
 	if (current_cpu_data.x86_model == 9 ||		/* Pentium M */
 	    current_cpu_data.x86_model == 13 || 	/* Pentium M */
 	    current_cpu_data.x86_model == 14 || 	/* Intel Core */
-	    current_cpu_data.x86_model == 15) { 	/* Intel Core 2 */
+	    current_cpu_data.x86_model == 15 || 	/* Intel Core 2 */
+	    current_cpu_data.x86_model == 23) { 	/* Intel Core 2 */
 		rdmsr_low(MSR_IA32_MISC_ENABLE, misc_enable);
 		if (!(misc_enable & MSR_IA32_MISC_ENABLE_PERF_AVAIL))
 			return -ENODEV;
 	}
-	if (current_cpu_data.x86_model == 15) {		/* Intel Core 2 */
+	if (current_cpu_data.x86_model == 15 ||
+	    current_cpu_data.x86_model == 23) {		/* Intel Core 2 */
 		p6_is_core2 = 1;
 	} else if (current_cpu_data.x86_model < 3) {	/* Pentium Pro */
 		/* Avoid Pentium Pro Erratum 26. */
@@ -1577,7 +1608,8 @@ static int __init intel_p6_init(void)
 			perfctr_info.cpu_features &= ~PERFCTR_FEATURE_RDPMC;
 	}
 	/* Detect and set up legacy cpu_type for user-space. */
-	if (current_cpu_data.x86_model == 15) {		/* Intel Core 2 */
+	if (current_cpu_data.x86_model == 15 ||
+	    current_cpu_data.x86_model == 23) {		/* Intel Core 2 */
 		perfctr_info.cpu_type = PERFCTR_X86_INTEL_CORE2;
 	} else if (current_cpu_data.x86_model == 14) {	/* Intel Core */
 		/* XXX: what about erratum AE19? */
@@ -1694,8 +1726,9 @@ static int __init amd_init(void)
 		}
 		k8_multicore_init();
 		break;
-	case 16: /* XXX: preliminary, needs 64-bit evntsels */
-		perfctr_info.cpu_type = PERFCTR_X86_AMD_FAM10;
+	case 16:
+		is_fam10h = 1;
+		perfctr_info.cpu_type = PERFCTR_X86_AMD_FAM10H;
 		k8_multicore_init();
 		break;
 	default:
@@ -1894,7 +1927,11 @@ static int perfctr_device_resume(struct sys_device *dev)
 }
 
 static struct sysdev_class perfctr_sysclass = {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,25)
+	.name		= "perfctr",
+#else
 	set_kset_name("perfctr"),
+#endif
 	.resume		= perfctr_device_resume,
 	.suspend	= perfctr_device_suspend,
 };

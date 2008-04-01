@@ -40,6 +40,18 @@
 #define irq_exit()	do{}while(0)
 #endif
 
+/* 2.6.24-rc1 changed cpu_data from behaving like an array indexed
+   by cpu to being a macro with a cpu parameter. This emulates the
+   macro-with-parameter form in older kernels. */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24)
+static inline struct cpuinfo_x86 *perfctr_cpu_data(int cpu)
+{
+	return &cpu_data[cpu];
+}
+#undef cpu_data
+#define cpu_data(cpu)	(*perfctr_cpu_data((cpu)))
+#endif
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16) && !defined(CONFIG_X86_64)
 /* Stop speculative execution */
 static inline void sync_core(void)

@@ -38,7 +38,8 @@ get_perfctr_srcdir() {
 
 get_arch() {
     if [ -z "$ARCH" ]; then
-	ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
+	OLDARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
+	ARCH=`echo $OLDARCH | sed -e s/i386/x86/ -e s/x86_64/x86/ -e s/ppc.*/powerpc/`
     fi
 }
 
@@ -80,7 +81,7 @@ get_options() {
 }
 
 check_pwd_is_kernel_srcdir() {
-    if [ ! -f drivers/Makefile -o ! -f "arch/$ARCH/kernel/Makefile" ]; then
+    if [ ! -f drivers/Makefile -o \( ! -f "arch/$ARCH/kernel/Makefile" -a ! -f "arch/$OLDARCH/kernel/Makefile" \) ]; then
 	echo "Error: `pwd` does not appear to be the top-level kernel source directory"
 	usage
     fi
@@ -225,12 +226,22 @@ apply_patch() {
 }
 
 install_files_by_symlinks() {
-    echo ln -sf ${perfctr}/linux/include/asm-i386/perfctr.h include/asm-i386/
-    ln -sf ${perfctr}/linux/include/asm-i386/perfctr.h include/asm-i386/
-    echo ln -sf ${perfctr}/linux/include/asm-x86_64/perfctr.h include/asm-x86_64/
-    ln -sf ${perfctr}/linux/include/asm-x86_64/perfctr.h include/asm-x86_64/
-    echo ln -sf ${perfctr}/linux/include/asm-ppc/perfctr.h include/asm-ppc/
-    ln -sf ${perfctr}/linux/include/asm-ppc/perfctr.h include/asm-ppc/
+    if [ -d include/asm-x86 ] ; then
+	echo ln -sf ${perfctr}/linux/include/asm-x86/perfctr.h include/asm-x86/
+	ln -sf ${perfctr}/linux/include/asm-x86/perfctr.h include/asm-x86/
+    else
+	echo ln -sf ${perfctr}/linux/include/asm-x86/perfctr.h include/asm-i386/
+	ln -sf ${perfctr}/linux/include/asm-x86/perfctr.h include/asm-i386/
+	echo ln -sf ${perfctr}/linux/include/asm-x86/perfctr.h include/asm-x86_64/
+	ln -sf ${perfctr}/linux/include/asm-x86/perfctr.h include/asm-x86_64/
+    fi
+    if [ -d include/asm-powerpc ] ; then
+	echo ln -sf ${perfctr}/linux/include/asm-powerpc/perfctr.h include/asm-powerpc/
+	ln -sf ${perfctr}/linux/include/asm-powerpc/perfctr.h include/asm-powerpc/
+    else
+	echo ln -sf ${perfctr}/linux/include/asm-powerpc/perfctr.h include/asm-ppc/
+	ln -sf ${perfctr}/linux/include/asm-powerpc/perfctr.h include/asm-ppc/
+    fi
     echo ln -sf ${perfctr}/linux/include/asm-arm/perfctr.h include/asm-arm/
     ln -sf ${perfctr}/linux/include/asm-arm/perfctr.h include/asm-arm/
     echo ln -sf ${perfctr}/linux/include/linux/perfctr.h include/linux/

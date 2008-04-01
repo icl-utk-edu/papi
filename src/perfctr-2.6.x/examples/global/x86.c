@@ -1,7 +1,7 @@
 /* $Id$
  * x86-specific code.
  *
- * Copyright (C) 2000-2007  Mikael Pettersson
+ * Copyright (C) 2000-2008  Mikael Pettersson
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,12 +21,13 @@ void setup_control(const struct perfctr_info *info,
 
     /* Attempt to set up control to count clocks via the TSC
        and FLOPS via PMC0. */
-    switch( info->cpu_type ) {
+    switch (info->cpu_type) {
       case PERFCTR_X86_GENERIC:
 	nractrs = 0;		/* no PMCs available */
 	break;
       case PERFCTR_X86_AMD_K8:
       case PERFCTR_X86_AMD_K8C:
+      case PERFCTR_X86_AMD_FAM10H:
 	/* RETIRED_FPU_INSTRS, Unit Mask "x87 instrs", any CPL, Enable */
 	evntsel0 = 0xCB | (0x01 << 8) | (3 << 16) | (1 << 22);
 	break;

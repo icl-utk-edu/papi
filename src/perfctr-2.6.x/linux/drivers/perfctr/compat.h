@@ -57,7 +57,8 @@ remap_pfn_range(struct vm_area_struct *vma, unsigned long uvaddr,
 
 /* 2.6.18-8.1.1.el5 replaced ptrace with utrace */
 #if defined(CONFIG_UTRACE)
-int ptrace_check_attach(struct task_struct *task, int kill);
+/* alas, I don't yet know how to convert this to utrace */
+static inline int ptrace_check_attach(struct task_struct *task, int kill) { return -ESRCH; }
 #endif
 
 /* 2.6.20-rc1 moved filp->f_dentry and filp->f_vfsmnt into filp->fpath */

@@ -66,11 +66,8 @@ void _vperfctr_exit(struct vperfctr *perfctr)
 EXPORT_SYMBOL(vperfctr_stub);
 EXPORT_SYMBOL___put_task_struct;
 
-#if defined(CONFIG_UTRACE)
-/* alas, I don't yet know how to convert this to utrace */
-int ptrace_check_attach(struct task_struct *task, int kill) { return -ESRCH; }
-#else
+#if !defined(CONFIG_UTRACE)
 #include <linux/mm.h> /* for 2.4.15 and up, except 2.4.20-8-redhat */
 #include <linux/ptrace.h> /* for 2.5.32 and up, and 2.4.20-8-redhat */
-#endif
 EXPORT_SYMBOL(ptrace_check_attach);
+#endif

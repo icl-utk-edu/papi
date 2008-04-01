@@ -1,7 +1,7 @@
 /* $Id$
  * Library interface to virtual per-process performance counters.
  *
- * Copyright (C) 1999-2007  Mikael Pettersson
+ * Copyright (C) 1999-2008  Mikael Pettersson
  */
 
 #include <stdio.h>
@@ -30,7 +30,7 @@ static int _vperfctr_open_pid_old(int pid, int try_creat, int try_rdonly, int *i
     char namebuf[64];
     int fd;
 
-    if( !pid )
+    if (!pid)
 	filename = "/proc/self/perfctr";
     else {
 	snprintf(namebuf, sizeof namebuf, "/proc/%d/perfctr", pid);
@@ -38,9 +38,9 @@ static int _vperfctr_open_pid_old(int pid, int try_creat, int try_rdonly, int *i
     }
     *isnew = 1;
     fd = -1;
-    if( try_creat )
+    if (try_creat)
 	fd = open(filename, O_RDONLY|O_CREAT);
-    if( fd < 0 && (try_creat ? errno == EEXIST : 1) && try_rdonly ) {
+    if (fd < 0 && (try_creat ? errno == EEXIST : 1) && try_rdonly) {
 	*isnew = 0;
 	fd = open(filename, O_RDONLY);
     }
@@ -52,13 +52,13 @@ static int _vperfctr_open_pid_new(int pid, int try_creat, int try_rdonly, int *i
     int dev_perfctr_fd, fd;
 
     dev_perfctr_fd = open("/dev/perfctr", O_RDONLY);
-    if( dev_perfctr_fd < 0 )
+    if (dev_perfctr_fd < 0)
 	return -1;
     *isnew = 1;
     fd = -1;
-    if( try_creat )
+    if (try_creat)
 	fd = ioctl(dev_perfctr_fd, VPERFCTR_CREAT, pid);
-    if( fd < 0 && (try_creat ? errno == EEXIST : 1) && try_rdonly ) {
+    if (fd < 0 && (try_creat ? errno == EEXIST : 1) && try_rdonly) {
 	*isnew = 0;
 	fd = ioctl(dev_perfctr_fd, VPERFCTR_OPEN, pid);
     }
@@ -75,7 +75,7 @@ int _vperfctr_open(int creat)
     int dummy, fd;
 
     fd = _vperfctr_open_pid_new(0, creat, !creat, &dummy);
-    if( fd < 0 )
+    if (fd < 0)
 	fd = _vperfctr_open_pid_old(0, creat, !creat, &dummy);
     return fd;
 }
@@ -112,25 +112,25 @@ static int vperfctr_open_pid(int pid, struct vperfctr *perfctr)
     struct perfctr_info info;
 
     fd = _vperfctr_open_pid_new(pid, 1, 0, &isnew);
-    if( fd < 0 ) {
+    if (fd < 0) {
 	if (errno != EEXIST)
 	    fd = _vperfctr_open_pid_old(pid, 1, 0, &isnew);
-	if( fd < 0 )
+	if (fd < 0)
 	    goto out_perfctr;
     }
     perfctr->fd = fd;
-    if( perfctr_abi_check_fd(perfctr->fd) < 0 )
+    if (perfctr_abi_check_fd(perfctr->fd) < 0)
 	goto out_fd;
-    if( perfctr_info(perfctr->fd, &info) < 0 )
+    if (perfctr_info(perfctr->fd, &info) < 0)
 	goto out_fd;
     perfctr->have_rdpmc = (info.cpu_features & PERFCTR_FEATURE_RDPMC) != 0;
     perfctr->kstate = mmap(NULL, PAGE_SIZE, PROT_READ,
 			   MAP_SHARED, perfctr->fd, 0);
-    if( perfctr->kstate != MAP_FAILED )
+    if (perfctr->kstate != MAP_FAILED)
 	return 0;
     munmap((void*)perfctr->kstate, PAGE_SIZE);
  out_fd:
-    if( isnew )
+    if (isnew)
 	vperfctr_unlink(perfctr);
     close(perfctr->fd);
  out_perfctr:
@@ -142,8 +142,8 @@ struct vperfctr *vperfctr_open(void)
     struct vperfctr *perfctr;
 
     perfctr = malloc(sizeof(*perfctr));
-    if( perfctr ) {
-	if( vperfctr_open_pid(0, perfctr) == 0 )
+    if (perfctr) {
+	if (vperfctr_open_pid(0, perfctr) == 0)
 	    return perfctr;
 	free(perfctr);
     }
@@ -175,13 +175,13 @@ unsigned long long vperfctr_read_tsc(const struct vperfctr *self)
     volatile const struct vperfctr_state *kstate;
 
     kstate = self->kstate;
-    if( likely(kstate->cpu_state.cstatus != 0) ) {
+    if (likely(kstate->cpu_state.cstatus != 0)) {
 	tsc0 = kstate->cpu_state.tsc_start;
     retry:
 	rdtscl(now);
 	sum = kstate->cpu_state.tsc_sum;
 	tsc1 = kstate->cpu_state.tsc_start;
-	if( likely(tsc1 == tsc0) )
+	if (likely(tsc1 == tsc0))
 	    return sum += (now - tsc0);
 	tsc0 = tsc1;
 	goto retry; /* better gcc code than with a do{}while() loop */
@@ -208,21 +208,21 @@ unsigned long long vperfctr_read_pmc(const struct vperfctr *self, unsigned i)
     kstate = self->kstate;
     cstatus = kstate->cpu_state.cstatus;
     /* gcc 3.0 generates crap code for likely(E1 && E2) :-( */
-    if( perfctr_cstatus_has_tsc(cstatus) && vperfctr_has_rdpmc(self) ) {
+    if (perfctr_cstatus_has_tsc(cstatus) && vperfctr_has_rdpmc(self)) {
 	 tsc0 = kstate->cpu_state.tsc_start;
     retry:
 	 rdpmcl(kstate->cpu_state.pmc[i].map, now);
 	 start = kstate->cpu_state.pmc[i].start;
 	 sum = kstate->cpu_state.pmc[i].sum;
 	 tsc1 = kstate->cpu_state.tsc_start;
-	 if( likely(tsc1 == tsc0) ) {
+	 if (likely(tsc1 == tsc0)) {
 	      return sum += (now - start);
 	 }
 	 tsc0 = tsc1;
 	 goto retry;
     }
 #endif
-    if( _vperfctr_read_sum(self->fd, &sum_ctrs) < 0 )
+    if (_vperfctr_read_sum(self->fd, &sum_ctrs) < 0)
 	perror(__FUNCTION__);
     return sum_ctrs.pmc[i];
 }
@@ -248,7 +248,7 @@ int vperfctr_read_ctrs(const struct vperfctr *self,
     kstate = self->kstate;
     cstatus = kstate->cpu_state.cstatus;
     nrctrs = perfctr_cstatus_nrctrs(cstatus);
-    if( perfctr_cstatus_has_tsc(cstatus) && (!nrctrs || vperfctr_has_rdpmc(self)) ) {
+    if (perfctr_cstatus_has_tsc(cstatus) && (!nrctrs || vperfctr_has_rdpmc(self))) {
     retry:
 	tsc0 = kstate->cpu_state.tsc_start;
 	rdtscl(now);
@@ -257,7 +257,7 @@ int vperfctr_read_ctrs(const struct vperfctr *self,
 	    rdpmcl(kstate->cpu_state.pmc[i].map, now);
 	    sum->pmc[i] = kstate->cpu_state.pmc[i].sum + (now - kstate->cpu_state.pmc[i].start);
 	}
-	if( likely(tsc0 == kstate->cpu_state.tsc_start) )
+	if (likely(tsc0 == kstate->cpu_state.tsc_start))
 	    return 0;
 	goto retry;
     }
@@ -268,10 +268,10 @@ int vperfctr_read_ctrs(const struct vperfctr *self,
 int vperfctr_read_state(const struct vperfctr *self, struct perfctr_sum_ctrs *sum,
 			struct vperfctr_control *control)
 {
-    if( _vperfctr_read_sum(self->fd, sum) < 0 )
+    if (_vperfctr_read_sum(self->fd, sum) < 0)
 	return -1;
     /* For historical reasons, control may be NULL. */
-    if( control && _vperfctr_read_control(self->fd, control) < 0 )
+    if (control && _vperfctr_read_control(self->fd, control) < 0)
 	return -1;
     return 0;
 }
@@ -325,8 +325,8 @@ struct rvperfctr *rvperfctr_open(int pid)
     struct rvperfctr *rvperfctr;
 
     rvperfctr = malloc(sizeof(*rvperfctr));
-    if( rvperfctr ) {
-	if( vperfctr_open_pid(pid, &rvperfctr->vperfctr) == 0 ) {
+    if (rvperfctr) {
+	if (vperfctr_open_pid(pid, &rvperfctr->vperfctr) == 0) {
 	    rvperfctr->pid = pid;
 	    return rvperfctr;
 	}

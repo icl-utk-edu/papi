@@ -3,6 +3,24 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.31, 2008-01-26
+- x86: Correct Barcelona CPU type to read FAM10H not FAM10
+  w/o the trailing H. In struct perfctr_cpu_control, place
+  p4 struct in a union and alias p4.escr[] with envtsel_high[]:
+  this allows passing high 32 evntsel bits for Barcelona.
+  Update driver to also manage high 32 evntsel bits on Barcelona,
+  on other processors those bits are forced to zero.
+
+Version 2.6.30, 2007-10-28
+- x86: Kernel 2.6.24-rc1 changed the calling convention for
+  the cpu_data macro. Updated accordingly, and added compat
+  code providing the new behaviour in older kernels.
+- ppc32: Kernel 2.6.24-rc1 removed the get_property() compat
+  macro. Use of_get_property() with kernels >= 2.6.22.
+- The workaround for RHEL5 removing ptrace_check_attach()
+  only works when perfctr is built as a module. Fix it to
+  also work in the non-modular case.
+
 Version 2.6.29, 2007-10-07
 - Add new cpu_type for AMD Family 10h, to reduce confusion.
 - Very preliminary support for AMD Family 10h processors.

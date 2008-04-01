@@ -1,7 +1,7 @@
 /* $Id$
  * x86-specific code.
  *
- * Copyright (C) 2001-2007  Mikael Pettersson
+ * Copyright (C) 2001-2008  Mikael Pettersson
  */
 #define __USE_GNU /* enable symbolic names for gregset_t[] indices */
 #include <sys/ucontext.h>
@@ -88,6 +88,7 @@ void do_setup(const struct perfctr_info *info,
 	break;
       case PERFCTR_X86_AMD_K8:
       case PERFCTR_X86_AMD_K8C:
+      case PERFCTR_X86_AMD_FAM10H:
 	/* RETIRED_FPU_INSTRS, Unit Mask "x87 instrs", any CPL, Enable, INT */
 	evntsel0 = 0xCB | (0x01 << 8) | (3 << 16) | (1 << 22) | (1 << 20);
 	/* RETIRED_TAKEN_BRANCHES, USR, Enable, INT */
