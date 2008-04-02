@@ -91,7 +91,7 @@ ifneq (,${PFM_ROOT})
 else
 	@echo '$@ not installed!'; exit 1
 endif
-	$(MAKE) $(MAKEFLAGS)
+	$(MAKE)
 endif
 MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
 

@@ -158,7 +158,7 @@ ifneq (,${PERFCTR_ROOT})
 else
 	@echo '$@ not installed!'; exit 1
 endif
-	$(MAKE) $(MAKEFLAGS)
+	$(MAKE)
 endif
 MISCOBJS = $(PERFCTR_OBJS) $(MISCSRCS:.c=.o) 
 
