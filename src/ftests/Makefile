@@ -37,8 +37,9 @@ serial:  $(TESTS)
 clockres: clockres.F $(UTILOBJS) $(PAPILIB)
 	$(F77) $(INCLUDE) $(FTOPTFLAGS) $(FFLAGS) clockres.F $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o clockres
 
+# Ignore error code here due to broken F95 compiler
 avail: avail.F $(UTILOBJS)  $(PAPILIB)
-	$(F77) $(INCLUDE) $(FTOPTFLAGS) $(FFLAGS) avail.F  $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o avail
+	-$(F77) $(INCLUDE) $(FTOPTFLAGS) $(FFLAGS) avail.F  $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o avail
 
 eventname: eventname.F $(UTILOBJS)  $(PAPILIB)
 	$(F77) $(INCLUDE) $(FTOPTFLAGS) $(FFLAGS) eventname.F $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o eventname
