@@ -6,17 +6,39 @@
 #include <pthread.h>
 #include "papi_test.h"
 
-int count;
+volatile long long count = 0;
+volatile long long tmpcount = 0;
+volatile int num_iters = 0;
+
+void lockloop(int iters, volatile long long *mycount)
+{
+  int i;
+  for (i = 0; i < iters; i++) {
+    PAPI_lock(PAPI_USR1_LOCK);
+    *mycount = *mycount + 1;
+    PAPI_unlock(PAPI_USR1_LOCK);
+  }
+}
 
 void *Slave(void *arg)
 {
-   int i;
+   long long duration;
 
-   for (i = 0; i < NUM_ITERS; i++) {
-     PAPI_lock(PAPI_USR1_LOCK);
-     count++;
-     PAPI_unlock(PAPI_USR1_LOCK);
+   sleep(1);
+   duration = PAPI_get_real_usec();
+   lockloop(10000,&tmpcount);
+   duration = PAPI_get_real_usec() - duration;
+
+   /* First one here set's the number */
+   PAPI_lock(PAPI_USR2_LOCK);
+   if (num_iters == 0) {
+     printf("10000 iterations took %lld us.\n",duration);
+     num_iters = 1000*(TIME_LIMIT_IN_US/duration);
+     printf("Running %d iterations\n",num_iters,TIME_LIMIT_IN_US);
    }
+   PAPI_unlock(PAPI_USR2_LOCK);
+
+   lockloop(num_iters,&count);
    pthread_exit(NULL);
 }
 
@@ -69,8 +91,8 @@ int main(int argc, char **argv)
        pthread_join(slaves[i], NULL);
      }
 
-   printf("Expected: %d Received: %d\n", nthr*NUM_ITERS, count);
-   if (nthr*NUM_ITERS != count)
+   printf("Expected: %lld Received: %lld\n", nthr*num_iters, count);
+   if (nthr*num_iters != count)
       test_fail(__FILE__, __LINE__, "Thread Locks", 1);
 
    test_pass(__FILE__, NULL, 0);
