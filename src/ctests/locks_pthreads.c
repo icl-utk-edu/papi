@@ -34,7 +34,7 @@ void *Slave(void *arg)
    if (num_iters == 0) {
      printf("10000 iterations took %lld us.\n",duration);
      num_iters = 1000*(TIME_LIMIT_IN_US/duration);
-     printf("Running %d iterations\n",num_iters,TIME_LIMIT_IN_US);
+     printf("Running %d iterations\n",num_iters);
    }
    PAPI_unlock(PAPI_USR2_LOCK);
 
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
        pthread_join(slaves[i], NULL);
      }
 
-   printf("Expected: %lld Received: %lld\n", nthr*num_iters, count);
+   printf("Expected: %lld Received: %lld\n", (long long)nthr*num_iters, count);
    if (nthr*num_iters != count)
       test_fail(__FILE__, __LINE__, "Thread Locks", 1);
 
