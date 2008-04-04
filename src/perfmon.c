@@ -2833,6 +2833,13 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 
    /* The following checks the version of the PFM library 
 	  against the version PAPI linked to... */
+   SUBDBG("pfm_initialize()\n");
+   if (pfm_initialize() != PFMLIB_SUCCESS)
+     {
+       PAPIERROR("pfm_initialize(): %s", pfm_strerror(retval));
+       return (PAPI_ESBSTR);
+     }
+
    SUBDBG("pfm_get_version(%p)\n",&version);
    if (pfm_get_version(&version) != PFMLIB_SUCCESS) {
        PAPIERROR("pfm_get_version(%p): %s", version, pfm_strerror(retval));
@@ -2857,13 +2864,6 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   _perfmon2_pfm_pmu_type = -1;
 
    /* Opened once for all threads. */
-   SUBDBG("pfm_initialize()\n");
-   if (pfm_initialize() != PFMLIB_SUCCESS)
-     {
-       PAPIERROR("pfm_initialize(): %s", pfm_strerror(retval));
-       return (PAPI_ESBSTR);
-     }
-
    SUBDBG("pfm_get_pmu_type(%p)\n",&_perfmon2_pfm_pmu_type);
    if (pfm_get_pmu_type(&_perfmon2_pfm_pmu_type) != PFMLIB_SUCCESS)
      {
