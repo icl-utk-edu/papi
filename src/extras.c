@@ -178,7 +178,7 @@ void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI,
   for (i = 0; i < count; i++)
   {
       offset = (unsigned long)sprof[i].pr_off;
-      if ((offset < pc) && (offset > best_offset))
+      if ((offset < (unsigned long)pc) && (offset > best_offset))
       {
          best_index = i;
          best_offset = offset;
@@ -188,7 +188,7 @@ void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI,
    if (best_index == -1)
       best_index = 0;
 
-   posix_profil(pc, &sprof[best_index], profile->flags, over,
+   posix_profil((unsigned long)pc, &sprof[best_index], profile->flags, over,
                 profile->threshold[profile_index]);
 }
 

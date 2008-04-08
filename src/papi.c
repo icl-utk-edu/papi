@@ -39,7 +39,7 @@ extern int (*_papi_hwi_thread_kill_fn) (int, int);
 
 extern unsigned long int (*_papi_hwi_thread_id_fn) (void);
 extern int _papi_hwi_error_level;
-extern hwi_describe_t _papi_hwi_err[];
+//extern hwi_describe_t _papi_hwi_err[];
 extern PAPI_debug_handler_t _papi_hwi_debug_handler;
 extern papi_mdi_t _papi_hwi_system_info;
 extern void _papi_hwi_dummy_handler(int,void*,long_long,void*);

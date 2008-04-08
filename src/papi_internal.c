@@ -79,7 +79,7 @@ void PAPIERROR(char *format, ...)
 
 static int default_debug_handler(int errorCode)
 {
-   extern hwi_describe_t _papi_hwi_err[];
+//   extern hwi_describe_t _papi_hwi_err[];
    char str[PAPI_HUGE_STR_LEN];
 
    if (errorCode == PAPI_OK)
