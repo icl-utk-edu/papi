@@ -406,7 +406,12 @@ long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
  */
 int ACPI_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
-   if (modifier == PAPI_ENUM_ALL) {
+  if (modifier == PAPI_ENUM_FIRST) {
+    *EventCode = PAPI_NATIVE_MASK; /* assumes first native event is always 0x4000000 */
+    return (PAPI_OK);
+  }
+
+   if (modifier == PAPI_ENUM_EVENTS) {
       int index = *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
 
       if (acpi_native_table[index + 1].resources.selector) {
