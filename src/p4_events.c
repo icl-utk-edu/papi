@@ -1195,7 +1195,7 @@ int _p4_ntv_enum_events(unsigned int *EventCode, int modifier)
 
    if (event <= P4_machine_clear) {
       switch (modifier) {
-      case PAPI_ENUM_ALL:
+      case PAPI_ENUM_EVENTS:
          this_mask = _p4_native_map[event].mask; // valid bits for this mask
          while (((++mask) & this_mask) != mask) {
             if (mask > this_mask) {

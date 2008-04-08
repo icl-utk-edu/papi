@@ -68,7 +68,7 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
 */
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 {
-   if (modifer == PAPI_ENUM_ALL) {
+   if (modifer == PAPI_ENUM_EVENTS) {
       int index = *EventCode & PAPI_NATIVE_AND_MASK;
 
       if (native_table[index + 1].resources.selector) {

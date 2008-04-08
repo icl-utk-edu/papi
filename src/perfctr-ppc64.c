@@ -742,7 +742,7 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 {
-   if (modifer == PAPI_ENUM_ALL) {
+   if (modifer == PAPI_ENUM_EVENTS) {
       int index = *EventCode & PAPI_NATIVE_AND_MASK;
 	if (index+1 == MAX_NATNAME_MAP_INDEX) {
 	    return (PAPI_ENOEVNT);
