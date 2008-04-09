@@ -571,14 +571,16 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
       if (retval == PAPI_OK) {
          if (strcasecmp(name, in) == 0) {
             *out = i;
-	 } else {
+            break;
+	     } else {
             retval = PAPI_ENOEVNT;
          }
-     } else {
+      } else {
          *out = 0;
-         retval = PAPI_OK;
+         retval = PAPI_ENOEVNT;
+         break;
       }
-   } while ((_papi_hwd_ntv_enum_events(&i, PAPI_ENUM_EVENTS) == PAPI_OK) && (retval == PAPI_ENOEVNT)) ;
+   } while (_papi_hwd_ntv_enum_events(&i, PAPI_ENUM_EVENTS) == PAPI_OK) ;
    _papi_hwi_unlock(INTERNAL_LOCK);
 #endif /* PERFCTR_PFM_EVENTS */
    return (retval);
