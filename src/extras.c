@@ -577,22 +577,22 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
 	/* first check each component for name_to_code */
 	if (_papi_hwd[j]->ntv_name_to_code != vec_int_dummy) {
 	    retval = _papi_hwd[j]->ntv_name_to_code(in, out);
-/*    printf("name_to_code: in=|%s|\nout=|0x%x|\nret=|0x%x|\n", in, *out, retval); */
+    /*printf("name_to_code: in=|%s|\nout=|0x%x|\nret=|0x%x|\n", in, *out, retval); */
 	} else { /* if no name_to_code, spin on code_to_name */
 	    retval = PAPI_ENOEVNT;
 	    _papi_hwi_lock(INTERNAL_LOCK);
 	    do {
-		retval = _papi_hwd[j]->ntv_code_to_name(i, name, sizeof(name));
-/*     printf("1. name =|%s|\ninput=|%s|\n", name, in); */
-		if (retval == PAPI_OK) {
+		  retval = _papi_hwd[j]->ntv_code_to_name(i, name, sizeof(name));
+		  if (retval == PAPI_OK) {
 		    if (strcasecmp(name, in) == 0) {
-			*out = i | PAPI_COMPONENT_MASK(j);
+			  *out = i | PAPI_COMPONENT_MASK(j);
+              break;
 		    }
-		} else {
+		  } else {
 		    *out = 0;
-		    retval = PAPI_OK;
-		}
-	    } while ((_papi_hwd[j]->ntv_enum_events(&i, PAPI_ENUM_EVENTS) == PAPI_OK) && (retval != PAPI_OK));
+            break;
+		  }
+	    } while ((_papi_hwd[j]->ntv_enum_events(&i, PAPI_ENUM_EVENTS) == PAPI_OK));
 	    _papi_hwi_unlock(INTERNAL_LOCK);
 	}
     }
