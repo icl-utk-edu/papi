@@ -538,28 +538,19 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
          SUBDBG("Error resetting overflow to 0 for event on counter %d. Error: %d\n",counter,oserror());
          return(PAPI_ESYS);
       }
-      _papi_hwi_lock(INTERNAL_LOCK);
-      _papi_hwi_using_signal--;
-      if (_papi_hwi_using_signal == 0) {
-         if (sigaction(_papi_hwi_system_info.sub_info.hardware_intr_sig, NULL, NULL) == -1)
-            retval = PAPI_ESYS;
-      }
-      _papi_hwi_unlock(INTERNAL_LOCK);
+	  retval =_papi_hwi_stop_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig);
   }
   else {
-      struct sigaction act;
       void *tmp;
 
       tmp = (void *) signal(_papi_hwi_system_info.sub_info.hardware_intr_sig, SIG_IGN);
       if ((tmp != (void *) SIG_DFL) && (tmp != (void *) _papi_hwd_dispatch_timer))
          return (PAPI_EMISC);
 
-      memset(&act, 0x0, sizeof(struct sigaction));
-      act.sa_handler = _papi_hwd_dispatch_timer;
-      act.sa_flags = SA_RESTART|SA_SIGINFO;
-      if (sigaction(_papi_hwi_system_info.sub_info.hardware_intr_sig, &act, NULL) == -1)
-         return (PAPI_ESYS);
-      /* Setup Overflow */
+      retval = _papi_hwi_start_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig, 1);
+	  if (retval != PAPI_OK) return (retval);
+
+	  /* Setup Overflow */
       for(i=0;i<NUM_SSP;i++){
         this_state->p_evtctr[i].hwp_overflow_freq[counter] = threshold;
         this_state->p_evtctr[i].hwp_overflow_sig = _papi_hwi_system_info.sub_info.hardware_intr_sig;
@@ -569,9 +560,6 @@ int _papi_hwd_set_overflow(EventSetInfo_t *ESI, int EventIndex, int threshold)
          return(PAPI_ESYS);
       }
 
-      _papi_hwi_lock(INTERNAL_LOCK);
-      _papi_hwi_using_signal++;
-      _papi_hwi_unlock(INTERNAL_LOCK);
       ESI->overflow.flags |= PAPI_OVERFLOW_HARDWARE;
   }
   return(retval);
@@ -581,16 +569,18 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
 {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *t = NULL;
+   unsigned long address;
 
    SUBDBG("si: %x\n", si);
    ctx.si = si;
    ctx.ucontext = info;
+   address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
    if ( si ) {
       SUBDBG("Dispatching overflow signal for counter mask: 0x%x\n", si->si_overflow);
-      _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long_long) si->si_overflow, 0, &t);
+      _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, si->si_overflow, 0, &t);
    }
    else { /* Software overflow */
-      _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long_long) 0, 0, &t);
+      _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 0, 0, &t);
    }
 }
 
@@ -602,7 +592,7 @@ int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 	break;
     if ( native_map[i].resources.event == (EventCode ^ PAPI_NATIVE_MASK) ) {
        strncpy(ntv_name, native_map[i].event_name, len);
-       return(PAPI_OK_);
+       return(PAPI_OK);
     }
   }
   return(PAPI_ENOEVNT);
@@ -616,7 +606,7 @@ int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len
 	break;
     if ( native_map[i].resources.event == (EventCode ^ PAPI_NATIVE_MASK) ) {
        strncpy(ntv_descr, native_map[i].event_descr, len);
-       return(PAPI_OK_);
+       return(PAPI_OK);
     }
   }
   return(PAPI_ENOEVNT);
