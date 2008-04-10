@@ -33,7 +33,7 @@ test_utils.o: ../ctests/test_utils.c ../ctests/papi_test.h ../ctests/test_utils.
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/test_utils.c
 
 do_loops.o: ../ctests/do_loops.c ../ctests/papi_test.h ../ctests/test_utils.h
-	$(CC) $(INCLUDE) $(TOPTFLAGS) -c ../ctests/do_loops.c
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/do_loops.c
 
 dummy.o: ../ctests/dummy.c
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/dummy.c
