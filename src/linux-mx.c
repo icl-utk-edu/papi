@@ -832,17 +832,23 @@ int MX_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values,
 
 int MX_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
-   if (modifier == PAPI_ENUM_EVENTS) {
-      int index = *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+  if (modifier == PAPI_ENUM_FIRST) {
+    /* assumes first native event is always 0x4000000 */
+    *EventCode = PAPI_NATIVE_MASK|PAPI_COMPONENT_MASK(cidx); 
+    return (PAPI_OK);
+  }
 
-      if (mx_native_table[index + 1].resources.selector) {
-         *EventCode = *EventCode + 1;
-         return (PAPI_OK);
-      } else
-         return (PAPI_ENOEVNT);
-   } 
-   else
-      return (PAPI_EINVAL);
+  if (modifier == PAPI_ENUM_EVENTS) {
+    int index = *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+    
+    if (mx_native_table[index + 1].resources.selector) {
+      *EventCode = *EventCode + 1;
+      return (PAPI_OK);
+    } else
+      return (PAPI_ENOEVNT);
+  } 
+  else
+    return (PAPI_EINVAL);
 }
 
 /* 

@@ -772,7 +772,8 @@ int NET_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values
 int NET_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
   if (modifier == PAPI_ENUM_FIRST) {
-    *EventCode = PAPI_NATIVE_MASK; /* assumes first native event is always 0x4000000 */
+    /* assumes first native event is always 0x4000000 */
+    *EventCode = PAPI_NATIVE_MASK|PAPI_COMPONENT_MASK(cidx); 
     return (PAPI_OK);
   }
 
