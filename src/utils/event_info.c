@@ -89,6 +89,19 @@ int test_event( int cidx, int evt )
   return 1;
 }
 
+char* component_type(char *id)
+{
+  char *str=strdup(id);
+  char *s=str+5;
+  
+  while( *s && *s!='.' )
+    s++;
+  
+  *s=0;
+  return str+5;
+}
+
+
 void enum_events(FILE *f, int cidx, int modifier)
 {
   int i, k;
@@ -99,8 +112,10 @@ void enum_events(FILE *f, int cidx, int modifier)
   comp = PAPI_get_component_info(cidx);
   i = PAPI_COMPONENT_MASK(cidx)|modifier;
 
-  fprintf(f, "<component index=\"%d\" id=\"%s\">\n", cidx, comp->name);
-  fprintf(f, "  <eventset type=\"%s\">\n", modifier&PAPI_PRESET_MASK?"PRESET":"NATIVE" );
+  fprintf(f, "<component index=\"%d\" type=\"%s\" id=\"%s\">\n", 
+	  cidx, cidx?component_type(comp->name):"CPU", comp->name );
+  fprintf(f, "  <eventset type=\"%s\">\n", 
+	  modifier&PAPI_PRESET_MASK?"PRESET":"NATIVE" );
   
   retval=PAPI_enum_event(&i, PAPI_ENUM_FIRST);
   while( retval==PAPI_OK )
