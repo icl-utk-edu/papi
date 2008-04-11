@@ -832,6 +832,8 @@ int MX_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values,
 
 int MX_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
+  int cidx = PAPI_COMPONENT_INDEX(*EventCode);
+
   if (modifier == PAPI_ENUM_FIRST) {
     /* assumes first native event is always 0x4000000 */
     *EventCode = PAPI_NATIVE_MASK|PAPI_COMPONENT_MASK(cidx); 
