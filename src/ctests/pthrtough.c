@@ -34,14 +34,15 @@ int main( int argc, char* argv[] )
   pthread_attr_t attr;
   int ret;
   long nthr;
+  const PAPI_hw_info_t *hwinfo;
 
-tests_quiet(argc, argv);     /*Set TESTS_QUIET variable */
+  tests_quiet(argc, argv);     /*Set TESTS_QUIET variable */
   
   ret=PAPI_library_init(PAPI_VER_CURRENT);
   if (ret != PAPI_VER_CURRENT)
     test_fail(__FILE__,__LINE__,"PAPI_library_init",ret);
 
-  if ((ret=PAPI_thread_init(pthread_self)!=PAPI_OK))
+if (ret = PAPI_thread_init((unsigned long (*)(void)) (pthread_self))!=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_thread_init",ret);
 
   pthread_attr_init(&attr);
@@ -52,9 +53,10 @@ tests_quiet(argc, argv);     /*Set TESTS_QUIET variable */
   pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
 #endif
 
-  nthr = sysconf(_SC_NPROCESSORS_ONLN);
-  if (nthr == -1) 
-    test_fail(__FILE__,__LINE__,"sysconf(SC_NPROCESSORS_ONLN)",PAPI_ESYS);
+  if ((hwinfo = PAPI_get_hardware_info()) == NULL)
+    test_fail(__FILE__,__LINE__,"PAPI_get_hardware_info",0);
+
+  nthr = hwinfo->ncpu;
 
    if (!TESTS_QUIET){
   printf("Creating %ld threads for %d iterations each of:\n",nthr,NITER);

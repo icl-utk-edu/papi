@@ -39,7 +39,7 @@ tests_quiet(argc, argv);     /*Set TESTS_QUIET variable */
   if (ret != PAPI_VER_CURRENT)
     test_fail(__FILE__,__LINE__,"PAPI_library_init",ret);
 
-  if ((ret=PAPI_thread_init(pthread_self)!=PAPI_OK))
+  if (ret = PAPI_thread_init((unsigned long (*)(void)) (pthread_self))!=PAPI_OK)
     test_fail(__FILE__,__LINE__,"PAPI_thread_init",ret);
 
   pthread_attr_init(&attr);
