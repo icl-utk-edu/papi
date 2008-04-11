@@ -99,7 +99,7 @@ void enum_events(FILE *f, int cidx, int modifier)
   comp = PAPI_get_component_info(cidx);
   i = PAPI_COMPONENT_MASK(cidx)|modifier;
 
-  fprintf(f, "<component id=\"%d\" name=\"%s\">\n", cidx, comp->name);
+  fprintf(f, "<component index=\"%d\" id=\"%s\">\n", cidx, comp->name);
   fprintf(f, "  <eventset type=\"%s\">\n", modifier&PAPI_PRESET_MASK?"PRESET":"NATIVE" );
   
   retval=PAPI_enum_event(&i, PAPI_ENUM_FIRST);
@@ -164,11 +164,11 @@ void enum_events(FILE *f, int cidx, int modifier)
 
 void usage( int argc, char *argv[] )
 {
-  fprintf(stderr, "Usage: %s [options] [[event1] event2] ...\n", argv[0]);
+  fprintf(stderr, "Usage: %s [options] [[event1] event2 ...]\n", argv[0]);
   fprintf(stderr, "     options: -h     print help message\n");
   fprintf(stderr, "              -p     print only preset events\n");
   fprintf(stderr, "              -n     print only native events\n");
-  fprintf(stderr, "              -c n   print only events for component ID n\n");
+  fprintf(stderr, "              -c n   print only events for component index n\n");
 }
 
 

@@ -937,13 +937,15 @@ void MX_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
 papi_vector_t _mx_vector = {
     .cmp_info = {
 	/* default component information (unspecified values are initialized to 0) */
-	.num_mpx_cntrs =	PAPI_MPX_DEF_DEG,
-	.num_cntrs =	MX_MAX_COUNTERS,
-	.default_domain =	PAPI_DOM_USER,
-	.available_domains =	PAPI_DOM_USER,
-	.default_granularity =	PAPI_GRN_THR,
-	.available_granularities = PAPI_GRN_THR,
-	.hardware_intr_sig =	PAPI_SIGNAL,
+      .name = "$Id$",
+      .version = "$Revision$",
+      .num_mpx_cntrs =	PAPI_MPX_DEF_DEG,
+      .num_cntrs =	MX_MAX_COUNTERS,
+      .default_domain =	PAPI_DOM_USER,
+      .available_domains =	PAPI_DOM_USER,
+      .default_granularity =	PAPI_GRN_THR,
+      .available_granularities = PAPI_GRN_THR,
+      .hardware_intr_sig =	PAPI_SIGNAL,
 
 	/* component specific cmp_info initializations */
 	.fast_real_timer =	0,

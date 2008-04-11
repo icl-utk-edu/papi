@@ -534,8 +534,8 @@ void ACPI_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
 papi_vector_t _acpi_vector = {
     .cmp_info = {
 	/* default component information (unspecified values are initialized to 0) */
-	.name = "$Id$";
-	.version = "$Revision$";
+      .name = "$Id$",
+      .version = "$Revision$",
 	.num_mpx_cntrs =	PAPI_MPX_DEF_DEG,
 	.num_cntrs =	ACPI_MAX_COUNTERS,
 	.default_domain =	PAPI_DOM_USER,
