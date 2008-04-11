@@ -10,6 +10,33 @@
 int EventSet[MAX_COMPONENTS];
 int NumEvents[MAX_COMPONENTS];
 
+
+int papi_xml_hwinfo(FILE *f)
+{
+  const PAPI_hw_info_t *hwinfo;
+  if ((hwinfo = PAPI_get_hardware_info()) == NULL)
+    return(PAPI_ESBSTR);
+  
+  fprintf(f, "<hardware>\n");
+  fprintf(f, "  <vendor string=\"%s\" code=\"%d\"/>\n", 
+	  hwinfo->vendor_string, hwinfo->vendor);
+  fprintf(f, "  <model string=\"%s\" code=\"%d\"/>\n",
+	  hwinfo->model_string, hwinfo->model);
+  fprintf(f, "  <system nodes=\"%d\" totalCPUs=\"%d\"/>\n",
+	  hwinfo->nnodes, hwinfo->totalcpus);
+  fprintf(f, "  <node CPUs=\"%d\"/>\n",
+	  hwinfo->ncpu);
+  fprintf(f, "  <CPU revision=\"%f\" clockrate=\"%f\" />\n",
+	  hwinfo->revision, hwinfo->mhz);
+  fprintf(f, "  <clock rate=\"%d\" tickspersec=\"%d\" />\n",
+	  hwinfo->clock_mhz, hwinfo->clock_ticks );
+
+  fprintf(f, "</hardware>\n");
+
+  return (PAPI_OK);
+}
+
+
 void papi_init(int argc, char **argv)
 {
   int i;
@@ -72,7 +99,7 @@ void enum_events(FILE *f, int cidx, int modifier)
   comp = PAPI_get_component_info(cidx);
   i = PAPI_COMPONENT_MASK(cidx)|modifier;
 
-  fprintf(f, "<component id=\"%d\" name=\"\">\n", cidx);
+  fprintf(f, "<component id=\"%d\" name=\"%s\">\n", cidx, comp->name);
   fprintf(f, "  <eventset type=\"%s\">\n", modifier&PAPI_PRESET_MASK?"PRESET":"NATIVE" );
   
   retval=PAPI_enum_event(&i, PAPI_ENUM_FIRST);
@@ -90,8 +117,10 @@ void enum_events(FILE *f, int cidx, int modifier)
 	  continue;
 	}
 
-      fprintf(f, "    <event name=\"%s\" description=\"%s\">\n",
-      info.symbol, info.long_descr);
+      fprintf(f, "    <event name=\"%s\" desc=\"%s\" code=\"0x%x\">\n",
+	      info.symbol, info.long_descr, info.event_code);
+
+      
 
       if( modifier&PAPI_NATIVE_MASK )
 	{
@@ -108,7 +137,7 @@ void enum_events(FILE *f, int cidx, int modifier)
 		      continue;
 		    }
 
-		  fprintf(f, "        <modifier name=\"%s\" desc=\"%s\" val=\"0x%x\"> </modifier>\n",
+		  fprintf(f, "        <modifier name=\"%s\" desc=\"%s\" code=\"0x%x\"> </modifier>\n",
 			  strchr(info.symbol, ':'),
 			  strchr(info.long_descr, ':')+1, 
 			  info.event_code );
@@ -137,9 +166,9 @@ void usage( int argc, char *argv[] )
 {
   fprintf(stderr, "Usage: %s [options] [[event1] event2] ...\n", argv[0]);
   fprintf(stderr, "     options: -h     print help message\n");
-  fprintf(stderr, "     options: -p     print only preset events\n");
-  fprintf(stderr, "     options: -n     print only native events\n");
-  fprintf(stderr, "     options: -c n   print only events for component ID n\n");
+  fprintf(stderr, "              -p     print only preset events\n");
+  fprintf(stderr, "              -n     print only native events\n");
+  fprintf(stderr, "              -c n   print only events for component ID n\n");
 }
 
 
@@ -227,6 +256,10 @@ int main( int argc, char *argv[] )
     native=preset=1;
   
   fprintf(stdout, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+  fprintf(stdout, "<eventinfo>\n");
+  
+  papi_xml_hwinfo(stdout);
+  
   if( comp>=0 )
     {
       if( native )
@@ -249,7 +282,7 @@ int main( int argc, char *argv[] )
 	  //fprintf(stderr, "nc=%d %d\n", i, info->num_native_events );
 	}
     }
-
+  fprintf(stdout, "</eventinfo>\n");
 
   return 0;
 }

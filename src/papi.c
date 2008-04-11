@@ -644,25 +644,26 @@ int PAPI_enum_event(int *EventCode, int modifier)
    int i = *EventCode;
    int cidx = PAPI_COMPONENT_INDEX(*EventCode);
 
-   if ( cidx < 0 || cidx > papi_num_components ) 
-       return (PAPI_ENOCMP);
-
+   if ( cidx < 0 || cidx > papi_num_components ||
+	((i & PAPI_PRESET_MASK)&&cidx>0 ) )
+     return (PAPI_ENOCMP);
+   
    if (i & PAPI_PRESET_MASK) {
-	   if (modifier == PAPI_ENUM_FIRST) {
-			 *EventCode = PAPI_PRESET_MASK;
-			 return (PAPI_OK);
-	   }
-       i &= PAPI_PRESET_AND_MASK;
-       while (++i < PAPI_MAX_PRESET_EVENTS) {
-	   if (_papi_hwi_presets.info[i].symbol == NULL)
-	     return (PAPI_ENOEVNT); /* NULL pointer terminates list */
-	   if (modifier & PAPI_PRESET_ENUM_AVAIL) {
-	       if (_papi_hwi_presets.count[i] == 0)
-		 continue;
-	   }
-	   *EventCode = i | PAPI_PRESET_MASK;
-	   return (PAPI_OK);
+     if (modifier == PAPI_ENUM_FIRST) {
+       *EventCode = PAPI_PRESET_MASK;
+       return (PAPI_OK);
+     }
+     i &= PAPI_PRESET_AND_MASK;
+     while (++i < PAPI_MAX_PRESET_EVENTS) {
+       if (_papi_hwi_presets.info[i].symbol == NULL)
+	 return (PAPI_ENOEVNT); /* NULL pointer terminates list */
+       if (modifier & PAPI_PRESET_ENUM_AVAIL) {
+	 if (_papi_hwi_presets.count[i] == 0)
+	   continue;
        }
+       *EventCode = i | PAPI_PRESET_MASK;
+       return (PAPI_OK);
+     }
    }
    else if (i & PAPI_NATIVE_MASK) {
        /* Should check against num native events here */
