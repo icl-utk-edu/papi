@@ -458,8 +458,8 @@ int net_init_presets(){
  * and used above the substrate level.
  */
 void net_init_mdi(){
-/*   strcpy(_papi_hwi_system_info.hw_info.vendor_string,"linux-acpi");
-   strcpy(_papi_hwi_system_info.hw_info.model_string,"linux-acpi");
+/*   strcpy(_papi_hwi_system_info.hw_info.vendor_string,"linux-net");
+   strcpy(_papi_hwi_system_info.hw_info.model_string,"linux-net");
    _papi_hwi_system_info.hw_info.mhz = 100.0;
    _papi_hwi_system_info.hw_info.ncpu = 1;
    _papi_hwi_system_info.hw_info.nnodes = 1;
@@ -876,6 +876,8 @@ void NET_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
 papi_vector_t _net_vector = {
     .cmp_info = {
 	/* default component information (unspecified values are initialized to 0) */
+	.name = "$Id$";
+	.version = "$Revision$";
 	.num_mpx_cntrs =	PAPI_MPX_DEF_DEG,
 	.num_cntrs =	NET_MAX_COUNTERS,
 	.default_domain =	PAPI_DOM_USER,
