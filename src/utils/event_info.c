@@ -106,7 +106,7 @@ void enum_events(FILE *f, int cidx,
 		 const PAPI_component_info_t *comp, 
 		 int modifier)
 {
-  int i, k;
+  int i, k, num;
   int retval;
   PAPI_event_info_t info;
 
@@ -115,9 +115,11 @@ void enum_events(FILE *f, int cidx,
   fprintf(f, "  <eventset type=\"%s\">\n", 
 	  modifier&PAPI_PRESET_MASK?"PRESET":"NATIVE" );
   
+  num=-1;
   retval=PAPI_enum_event(&i, PAPI_ENUM_FIRST);
   while( retval==PAPI_OK )
     {
+      num++;
       retval = PAPI_get_event_info(i, &info);
       if( retval!=PAPI_OK ) {
 	retval = PAPI_enum_event(&i, PAPI_ENUM_EVENTS);
@@ -130,8 +132,8 @@ void enum_events(FILE *f, int cidx,
 	  continue;
 	}
 
-      fprintf(f, "    <event name=\"%s\" desc=\"%s\" code=\"0x%x\">\n",
-	      info.symbol, info.long_descr, info.event_code);
+      fprintf(f, "    <event index=\"%d\" name=\"%s\" desc=\"%s\" code=\"0x%x\">\n",
+	      num, info.symbol, info.long_descr, info.event_code);
 
       
 
