@@ -102,18 +102,16 @@ char* component_type(char *id)
 }
 
 
-void enum_events(FILE *f, int cidx, int modifier)
+void enum_events(FILE *f, int cidx, 
+		 const PAPI_component_info_t *comp, 
+		 int modifier)
 {
   int i, k;
   int retval;
   PAPI_event_info_t info;
-  const PAPI_component_info_t *comp;
 
-  comp = PAPI_get_component_info(cidx);
   i = PAPI_COMPONENT_MASK(cidx)|modifier;
 
-  fprintf(f, "<component index=\"%d\" type=\"%s\" id=\"%s\">\n", 
-	  cidx, cidx?component_type(comp->name):"CPU", comp->name );
   fprintf(f, "  <eventset type=\"%s\">\n", 
 	  modifier&PAPI_PRESET_MASK?"PRESET":"NATIVE" );
   
@@ -170,7 +168,7 @@ void enum_events(FILE *f, int cidx, int modifier)
     }
 
   fprintf(f, "  </eventset>\n");
-  fprintf(f, "</component>\n");
+
 
   
 }
@@ -191,8 +189,9 @@ int main( int argc, char *argv[] )
 {
   int i;
   int retval;
+  const PAPI_component_info_t *comp;
 
-  int comp=-1;
+  int cidx=-1;
   int numc=0;
 
   int preset=-1;
@@ -209,11 +208,11 @@ int main( int argc, char *argv[] )
 	  switch( argv[i][1] )
 	    {
 	    case 'c':
-	      comp=(i+1)<argc?atoi(argv[(i++)+1]):-1;
-	      if( comp<0 || comp>=numc )
+	      cidx=(i+1)<argc?atoi(argv[(i++)+1]):-1;
+	      if( cidx<0 || cidx>=numc )
 		{
 		  fprintf(stderr, "Error: component index %d out of bounds (0..%d)\n",
-			  comp, numc-1);
+			  cidx, numc-1);
 		  usage(argc, argv);
 		  return 1;
 		}
@@ -275,26 +274,36 @@ int main( int argc, char *argv[] )
   
   papi_xml_hwinfo(stdout);
   
-  if( comp>=0 )
+  if( cidx>=0 )
     {
+      comp = PAPI_get_component_info(cidx);
+
+      fprintf(stdout, "<component index=\"%d\" type=\"%s\" id=\"%s\">\n", 
+	      cidx, cidx?component_type(comp->name):"CPU", comp->name );
+
       if( native )
-	enum_events(stdout, comp, PAPI_NATIVE_MASK);
+	enum_events(stdout, cidx, comp, PAPI_NATIVE_MASK);
       if( preset )
-	enum_events(stdout, comp, PAPI_PRESET_MASK);
+	enum_events(stdout, cidx, comp, PAPI_PRESET_MASK);
+
+      fprintf(stdout, "</component>\n");
     }
   else
     {
-      for( i=0; i<numc; i++ )
+      for( cidx=0; cidx<numc; cidx++ )
 	{
-	  if( native )
-	    enum_events(stdout, i, PAPI_NATIVE_MASK);
-	  if( preset )
-	    enum_events(stdout, i, PAPI_PRESET_MASK);
+	  comp = PAPI_get_component_info(cidx);
 
-	  //fprintf(stderr, "nc=%d %s\n", i, info->name);
-	  //fprintf(stderr, "nc=%d %s\n", i, info->version);
-	  //fprintf(stderr, "nc=%d %d\n", i, info->num_preset_events );
-	  //fprintf(stderr, "nc=%d %d\n", i, info->num_native_events );
+	  fprintf(stdout, "<component index=\"%d\" type=\"%s\" id=\"%s\">\n", 
+		  cidx, cidx?component_type(comp->name):"CPU", comp->name );
+	  
+	  if( native )
+	    enum_events(stdout, cidx, comp, PAPI_NATIVE_MASK);
+	  if( preset )
+	    enum_events(stdout, cidx, comp, PAPI_PRESET_MASK);
+
+	  fprintf(stdout, "</component>\n");
+
 	}
     }
   fprintf(stdout, "</eventinfo>\n");
