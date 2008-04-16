@@ -82,7 +82,7 @@ pfm_crayx2_get_event_counters (unsigned int j, pfmlib_regmask_t *counters)
 }
 
 static int
-pfm_crayx2_chip_use (uint64_t used[ ], unsigned int n)
+pfm_crayx2_chip_use (uint32_t used[ ], unsigned int n)
 {
 	int i, u = 0;
 
@@ -95,12 +95,12 @@ pfm_crayx2_chip_use (uint64_t used[ ], unsigned int n)
 }
 
 static counter_use_t
-pfm_crayx2_counter_use (unsigned int ctr, unsigned int event, uint64_t *used, uint64_t *evmsk)
+pfm_crayx2_counter_use (unsigned int ctr, unsigned int event, uint32_t *used, uint64_t *evmsk)
 {
 	counter_use_t ret = CTR_OK;
 
 	if (*used & (1 << ctr)) {
-		if (event == PFM_EVENT_GET (*evmsk, event)) {
+		if (event == PFM_EVENT_GET (*evmsk, ctr)) {
 			ret = CTR_REDUNDANT;
 		} else {
 			ret = CTR_CONFLICT;
@@ -116,9 +116,9 @@ static int
 pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_output_param_t *outp, void *model_out)
 {
 	unsigned int i, npmcs = 0, npmds = 0, base_pmc = 0;
-	uint64_t Pused[PME_CRAYX2_CPU_CHIPS];
-	uint64_t Cused[PME_CRAYX2_CACHE_CHIPS];
-	uint64_t Mused[PME_CRAYX2_MEMORY_CHIPS];
+	uint32_t Pused[PME_CRAYX2_CPU_CHIPS];
+	uint32_t Cused[PME_CRAYX2_CACHE_CHIPS];
+	uint32_t Mused[PME_CRAYX2_MEMORY_CHIPS];
 	uint64_t Pevents = 0, Cevents = 0, Mevents = 0;
 
 	DPRINT (("dispatching event info to the PMCs and PMDs\n"));

@@ -10,7 +10,6 @@
 
 #include <sys/types.h>
 #include <stdint.h>
-#include <syscall.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,11 +26,7 @@ extern "C" {
 #include <perfmon/perfmon_i386.h>
 #endif
 
-#ifdef __powerpc__
-#include <perfmon/perfmon_powerpc.h>
-#endif
-
-#ifdef __cell__
+#if defined(__powerpc__) || defined(__cell__)
 #include <perfmon/perfmon_powerpc.h>
 #endif
 
@@ -50,6 +45,7 @@ extern "C" {
 #define PFM_MAX_PMCS	PFM_ARCH_MAX_PMCS
 #define PFM_MAX_PMDS	PFM_ARCH_MAX_PMDS
 
+#ifndef SWIG
 /*
  * number of element for each type of bitvector
  */
@@ -57,6 +53,7 @@ extern "C" {
 #define PFM_BVSIZE(x)   (((x)+PFM_BPL-1) / PFM_BPL)
 #define PFM_PMD_BV      PFM_BVSIZE(PFM_MAX_PMDS)
 #define PFM_PMC_BV      PFM_BVSIZE(PFM_MAX_PMCS)
+#endif
 
 /*
  * PMC/PMD flags to use with pfm_write_pmds() or pfm_write_pmcs()
@@ -163,7 +160,7 @@ typedef struct {
  	uint16_t	set_id;		  /* which set */
 	uint16_t	set_id_next;	  /* next set to go to (must use PFM_SETFL_EXPL_NEXT) */
  	uint32_t    	set_flags; 	  /* SETFL flags */
- 	uint64_t	set_timeout;	  /* requested/effective switch timeout in nsecs */
+ 	uint64_t	set_timeout;	  /* requested switch timeout in nsecs */
 	uint64_t	set_mmap_offset;  /* cookie to pass as mmap offset to access 64-bit virtual PMD */
 	uint64_t	reserved[5];	  /* for future use */
 } pfarg_setdesc_t;
@@ -201,7 +198,7 @@ typedef struct {
         uint32_t	set_flags;          /* output: SETFL flags */
         uint64_t 	set_ovfl_pmds[PFM_PMD_BV]; /* output: last ovfl PMDs which triggered a switch from set */
         uint64_t	set_runs;           /* output: number of times the set was active */
-        uint64_t	set_timeout;        /* output:effective/leftover switch timeout in nsecs */
+        uint64_t	set_timeout;        /* output: leftover switch timeout in nsecs */
 	uint64_t	set_act_duration;   /* output: time set was active in nsecs */
 	uint64_t	set_avail_pmcs[PFM_PMC_BV];
 	uint64_t	set_avail_pmds[PFM_PMD_BV];
@@ -239,12 +236,22 @@ typedef struct {
 #endif
 
 #define PFM_MSG_OVFL	1	/* an overflow happened */
-#define PFM_MSG_END	2	/* task to which context was attached ended */
+#define PFM_MSG_END	2	/* thread to which context was attached ended */
 
 typedef union {
 	uint32_t		type;
         pfarg_ovfl_msg_t	pfm_ovfl_msg;
 } pfarg_msg_t;
+
+/*
+ * special data type for syscall error value used to help
+ * with Python support and in particular for SWIG. By using
+ * a specific type we can detect syscalls and trap errors
+ * in one SWIG statement as opposed to having to keep track of
+ * each syscall individually. Programs can use 'int' safely for
+ * the return value.
+ */
+typedef int os_err_t;			/* error if -1 */
 
 /*
  * perfmon version number
@@ -256,100 +263,26 @@ typedef union {
 #elif defined(PFMLIB_VERSION_23)
 #define PFM_VERSION_MIN		3U
 #else
-#define PFM_VERSION_MIN		7U
+#define PFM_VERSION_MIN		8U
 #endif
 
 #define PFM_VERSION		 (((PFM_VERSION_MAJ&0xffff)<<16)|(PFM_VERSION_MIN & 0xffff))
 #define PFM_VERSION_MAJOR(x)	 (((x)>>16) & 0xffff)
 #define PFM_VERSION_MINOR(x)	 ((x) & 0xffff)
 
-extern int pfm_create_context(pfarg_ctx_t *ctx, char *smpl_name, void *smpl_arg, size_t smpl_size);
-extern int pfm_write_pmcs(int fd, pfarg_pmc_t *pmcs, int count);
-extern int pfm_write_pmds(int fd, pfarg_pmd_t *pmds, int count);
-extern int pfm_read_pmds(int fd, pfarg_pmd_t *pmds, int count);
-extern int pfm_load_context(int fd, pfarg_load_t *load);
-extern int pfm_start(int fd, pfarg_start_t *start);
-extern int pfm_stop(int fd);
-extern int pfm_restart(int fd);
-extern int pfm_create_evtsets(int fd, pfarg_setdesc_t *setd, int count);
-extern int pfm_getinfo_evtsets(int fd, pfarg_setinfo_t *info, int count);
-extern int pfm_delete_evtsets(int fd, pfarg_setdesc_t *setd, int count);
-extern int pfm_unload_context(int fd);
-
-/*
- * until the syscall stubs are implemented by glibc
- * we define them here
- */
-#ifndef __NR_pfm_create_context
-#ifdef __x86_64__
-#ifdef CONFIG_PFMLIB_ARCH_CRAYXT
-#define __NR_pfm_create_context		273
-#else
-#define __NR_pfm_create_context		286
-#endif
-#endif /* __x86_64__ */
-
-#ifdef __i386__
-#define __NR_pfm_create_context		325
-#endif
-
-#ifdef __ia64__
-#define __NR_pfm_create_context		1310
-#endif
-
-#if defined(__mips__)
-#if (_MIPS_SIM == _ABIN32) || (_MIPS_SIM == _MIPS_SIM_NABI32)
-#define __NR_Linux 6000
-#ifdef CONFIG_PFMLIB_ARCH_SICORTEX
-#define __NR_pfm_create_context         __NR_Linux+279
-#else
-#define __NR_pfm_create_context         __NR_Linux+280
-#endif
-#elif (_MIPS_SIM == _ABI32) || (_MIPS_SIM == _MIPS_SIM_ABI32)
-#define __NR_Linux 4000
-#ifdef CONFIG_PFMLIB_ARCH_SICORTEX
-#define __NR_pfm_create_context         __NR_Linux+316
-#else
-#define __NR_pfm_create_context         __NR_Linux+321
-#endif
-#elif (_MIPS_SIM == _ABI64) || (_MIPS_SIM == _MIPS_SIM_ABI64)
-#define __NR_Linux 5000
-#ifdef CONFIG_PFMLIB_ARCH_SICORTEX
-#define __NR_pfm_create_context         __NR_Linux+275
-#else
-#define __NR_pfm_create_context         __NR_Linux+284
-#endif
-#endif
-#endif
-
-#ifdef __powerpc__
-#define __NR_pfm_create_context		310
-#endif
-
-#ifdef __sparc__
-#define __NR_pfm_create_context		315
-#endif
-
-#ifdef __cell__
-#define __NR_pfm_create_context		309
-#endif
-
-#ifdef __crayx2
-#define __NR_pfm_create_context		294
-#endif
-
-#define __NR_pfm_write_pmcs		(__NR_pfm_create_context+1)
-#define __NR_pfm_write_pmds		(__NR_pfm_create_context+2)
-#define __NR_pfm_read_pmds		(__NR_pfm_create_context+3)
-#define __NR_pfm_load_context		(__NR_pfm_create_context+4)
-#define __NR_pfm_start			(__NR_pfm_create_context+5)
-#define __NR_pfm_stop			(__NR_pfm_create_context+6)
-#define __NR_pfm_restart		(__NR_pfm_create_context+7)
-#define __NR_pfm_create_evtsets		(__NR_pfm_create_context+8)
-#define __NR_pfm_getinfo_evtsets	(__NR_pfm_create_context+9)
-#define __NR_pfm_delete_evtsets		(__NR_pfm_create_context+10)
-#define __NR_pfm_unload_context		(__NR_pfm_create_context+11)
-#endif /* __NR_pfm_create_context */
+extern os_err_t pfm_create_context(pfarg_ctx_t *ctx, char *smpl_name,
+                                    void *smpl_arg, size_t smpl_size);
+extern os_err_t pfm_write_pmcs(int fd, pfarg_pmc_t *pmcs, int count);
+extern os_err_t pfm_write_pmds(int fd, pfarg_pmd_t *pmds, int count);
+extern os_err_t pfm_read_pmds(int fd, pfarg_pmd_t *pmds, int count);
+extern os_err_t pfm_load_context(int fd, pfarg_load_t *load);
+extern os_err_t pfm_start(int fd, pfarg_start_t *start);
+extern os_err_t pfm_stop(int fd);
+extern os_err_t pfm_restart(int fd);
+extern os_err_t pfm_create_evtsets(int fd, pfarg_setdesc_t *setd, int count);
+extern os_err_t pfm_getinfo_evtsets(int fd, pfarg_setinfo_t *info, int count);
+extern os_err_t pfm_delete_evtsets(int fd, pfarg_setdesc_t *setd, int count);
+extern os_err_t pfm_unload_context(int fd);
 
 #ifdef __cplusplus
 };

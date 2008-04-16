@@ -128,7 +128,7 @@ IBM POWER5+ processors
 .B PFMLIB_POWER6_PMU
  IBM POWER6 processors
 .LP
-The \fBpfm_get_pmu_name\fR function returns the name of the detected 
+The \fBpfm_get_pmu_name()\fR function returns the name of the detected 
 host PMU. The library must have been initialized properly before making this
 call. The name is returned in the \fBname\fR argument. The \fBmaxlen\fR argument 
 indicates the maximum length of the buffer provided for \fBname\fR.
@@ -136,27 +136,27 @@ Up to \fBmaxlen-1\fR characters will be returned, not including the
 termination character.
 
 .sp
-The \fBpfm_get_pmu_type\fR function returns the type of the detected host
+The \fBpfm_get_pmu_type()\fR function returns the type of the detected host
 PMU. The library must have been initialized properly before making this
 call. The type returned in  \fBtype\fR can be any one of the three listed above. 
 .sp
-The \fBpfm_get_pmu_name_bytype\fR function returns the name of a PMU model in
+The \fBpfm_get_pmu_name_bytype()\fR function returns the name of a PMU model in
 \fBname\fR given a type in the \fBtype\fR argument. The \fBmaxlen\fR argument 
 indicates the maximum length of the buffer provided for \fBname\fR.
 Up to \fBmaxlen-1\fR characters will be returned, not including the
 termination character.
 
 .sp
-The \fBpfm_pmu_is_supported\fR function returns \fBPFMLIB_SUCCESS\fR if the given
+The \fBpfm_pmu_is_supported()\fR function returns \fBPFMLIB_SUCCESS\fR if the given
 PMU type is supported by the library independently of what the host PMU model is.
 .sp
-The \fBpfm_force_pmu\fR function is used to forced the library to use a particular
+The \fBpfm_force_pmu()\fR function is used to forced the library to use a particular
 PMU model compared to what it has detected. The library checks that the selected 
 type can be supported by the host PMU. This is mostly useful to force the
 library to the use generic PMU model \fBPFMLIB_GENERIC_PMU\fR.  This function can
 be called at any time and upon return the library is considered initialized.
 .sp
-The \fBpfm_list_supported_pmu\fR function is used to print the list PMU types
+The \fBpfm_list_supported_pmu()\fR function is used to print the list PMU types
 that the library supports. The results is printed using the function provided
 in the \fBpf\fR argument, which must be a printf-style function.
 .SH RETURN

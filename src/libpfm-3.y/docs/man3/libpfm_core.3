@@ -13,7 +13,7 @@ of a set of functions and structures which describe and allow access to the
 Intel Core processors specific PMU features.
 .sp
 When Intel Core processor specific features are needed to support a measurement, their descriptions
-must be passed as model-specific input arguments to the \fBpfm_dispatch_events\fR call. The Intel Core
+must be passed as model-specific input arguments to the \fBpfm_dispatch_events()\fR function. The Intel Core
  processors specific input arguments are described in the \fBpfmlib_core_input_param_t\fR structure and
 the output parameters in \fBpfmlib_core_output_param_t\fR. They are defined as follows:
 .sp
@@ -67,7 +67,7 @@ The library auto-detects the processor and provides access to Core 2 events when
 possible.
 .LP
 .SH ERRORS
-Refer to the description of \fBpfm_dispatch_events()\fR for errors.
+Refer to the description of the \fBpfm_dispatch_events()\fR function for errors.
 .SH SEE ALSO
 pfm_dispatch_events(3) and set of examples shipped with the library
 .SH AUTHOR

@@ -4,6 +4,9 @@
  * Copyright (c) 2007 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
+ * Copyright (c) 2008 Advanced Mirco Devices Inc.
+ * Contributed by Robert Richter <robert.richter@amd.com>
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -21,23 +24,17 @@
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <sys/types.h>
-#include <stdio.h>
+
 #include <stdlib.h>
 #include <stdarg.h>
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
-#include <signal.h>
-#include <stdarg.h>
-#include <stdint.h>
 #include <getopt.h>
-#include <time.h>
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
 #include <sys/time.h>
-#include <sys/resource.h>
 
 #include <perfmon/pfmlib.h>
 #include <perfmon/pfmlib_amd64.h>
@@ -48,7 +45,14 @@
 typedef struct {
 	int opt_no_show;
 	int opt_block;
+	int opt_setup;
 } options_t;
+
+enum {
+	OPT_IBSOP,		/* 0: default */
+	OPT_IBSFETCH,
+	OPT_IBSOP_NATIVE,
+};
 
 typedef pfm_dfl_smpl_arg_t		smpl_fmt_arg_t;
 typedef pfm_dfl_smpl_hdr_t		smpl_hdr_t;
@@ -59,6 +63,9 @@ typedef pfm_dfl_smpl_arg_t		smpl_arg_t;
 #define NUM_PMCS PFMLIB_MAX_PMCS
 #define NUM_PMDS PFMLIB_MAX_PMDS
 
+#define PMD_IBSOP_NUM		7
+#define PMD_IBSFETCH_NUM	3
+
 static uint64_t collected_samples, collected_partial;
 static options_t options;
 
@@ -66,57 +73,11 @@ static struct option the_options[]={
 	{ "help", 0, 0,  1},
 	{ "ovfl-block", 0, &options.opt_block, 1},
 	{ "no-show", 0, &options.opt_no_show, 1},
+	{ "ibsop", 0, &options.opt_setup, OPT_IBSOP},
+	{ "ibsfetch", 0, &options.opt_setup, OPT_IBSFETCH},
+	{ "ibsop-native", 0, &options.opt_setup, OPT_IBSOP_NATIVE},
 	{ 0, 0, 0, 0}
 };
-
-/*
- * This kind of register layout will eventually be available
- * from libpfm.
- */
-typedef struct {
-	unsigned long ibscomptoretctr:16;
-	unsigned long ibstagtoretctr:16;
-	unsigned long ibsopbrnresync:1;
-	unsigned long ibsopmispreturn:1;
-	unsigned long ibsopreturn:1;
-	unsigned long ibsopbrntaken:1;
-	unsigned long ibsopbrnmisp:1;
-	unsigned long ibsopbrnret:1;
-	unsigned long res:26;
-} ibsopdata_t; /* MSR 0xc0011035 */
-
-typedef struct {
-	unsigned long long nbibsreqsrc:3;
-	unsigned long long res1:1;
-	unsigned long long nbibsreqdstproc:1;
-	unsigned long long nbibsreqcachehitst:1;
-	unsigned long long res2:58;
-} ibsopdata2_t; /* MSR 0xc0011036 */
-
-typedef struct {
-	unsigned long ibsldop:1;
-	unsigned long ibsstop:1;
-	unsigned long ibsdcl1tlbmiss:1;
-	unsigned long ibsdcl2tlbmiss:1;
-	unsigned long ibsdcl1tlbhit2m:1;
-	unsigned long ibsdcl1tlbhit1g:1;
-	unsigned long ibsdcl2tlbhit2m:1;
-	unsigned long ibsdcmiss:1;
-	unsigned long ibsdcmissacc:1;
-	unsigned long ibsdcldbnkcon:1;
-	unsigned long ibsdcstbnkcon:1;
-	unsigned long ibsdcsttoldfwd:1;
-	unsigned long ibsdcsttoldcan:1;
-	unsigned long ibsdcucmemacc:1;
-	unsigned long ibsdcwcmemacc:1;
-	unsigned long ibsdclockedop:1;
-	unsigned long ibsdcmabhit:1;
-	unsigned long ibsdclinaddrvalid:1;
-	unsigned long ibsdcphyaddrvalid:1;
-	unsigned long res:13;
-	unsigned long ibsdcmisslat:16;
-	unsigned long res2:16;
-} ibsopdata3_t; /* MSR 0xc0011037 */
 
 static void fatal_error(char *fmt,...) __attribute__((noreturn));
 
@@ -241,49 +202,49 @@ process_smpl_buf(smpl_hdr_t *hdr, uint64_t *smpl_pmds, unsigned int num_smpl_pmd
 						printf("PMD%-3d:0x%016"PRIx64" : comptoret=%u tagtoretctr=%u opbrnresync=%u opmispret=%u opret=%u brntk=%u brnmips=%u bnrret=%u\n",
 							j,
 							*reg,
-							opdata->ibscomptoretctr,
-							opdata->ibstagtoretctr,
-							opdata->ibsopbrnresync,
-							opdata->ibsopmispreturn,
-							opdata->ibsopreturn,
-							opdata->ibsopbrntaken,
-							opdata->ibsopbrnmisp,
-							opdata->ibsopbrnret);
+							opdata->reg.ibscomptoretctr,
+							opdata->reg.ibstagtoretctr,
+							opdata->reg.ibsopbrnresync,
+							opdata->reg.ibsopmispreturn,
+							opdata->reg.ibsopreturn,
+							opdata->reg.ibsopbrntaken,
+							opdata->reg.ibsopbrnmisp,
+							opdata->reg.ibsopbrnret);
 						break;
 					case 10:
 						opdata2 = (ibsopdata2_t *)reg;
 						printf("PMD%-3d:0x%016"PRIx64" : reqsrc=%u reqdstproc=%s reqcachehitst=%u\n",
 							j,
 							*reg,
-							opdata2->nbibsreqsrc,
-							opdata2->nbibsreqdstproc ? "local" : "remote",
-							opdata2->nbibsreqcachehitst);
+							opdata2->reg.nbibsreqsrc,
+							opdata2->reg.nbibsreqdstproc ? "local" : "remote",
+							opdata2->reg.nbibsreqcachehitst);
 						break;
 					case 11:
 						opdata3 = (ibsopdata3_t *)reg;
 						printf("PMD%-3d:0x%016"PRIx64" : ld=%u st=%u L1TLBmiss=%u L2TLBmiss=%u L1TLBhit2M=%u L1TLBhit1G=%u L2TLBhit2M=%u miss=%u misalign=%u ld_bankconf=%u  st_bankconf=%u st_to_ld_conf=%u st_to_ld_canc=%u UCaccess=%u WCaccess=%u lock=%u MAB=%u linevalid=%u physvalid=%u miss_lat=%u\n",
 							j,
 							*reg,
-							opdata3->ibsldop,
-							opdata3->ibsstop,
-							opdata3->ibsdcl1tlbmiss,
-							opdata3->ibsdcl2tlbmiss,
-							opdata3->ibsdcl1tlbhit2m,
-							opdata3->ibsdcl1tlbhit1g,
-							opdata3->ibsdcl2tlbhit2m,
-							opdata3->ibsdcmiss,
-							opdata3->ibsdcmissacc,
-							opdata3->ibsdcldbnkcon,
-							opdata3->ibsdcstbnkcon,
-							opdata3->ibsdcsttoldfwd,
-							opdata3->ibsdcsttoldcan,
-							opdata3->ibsdcucmemacc,
-							opdata3->ibsdcwcmemacc,
-							opdata3->ibsdclockedop,
-							opdata3->ibsdcmabhit,
-							opdata3->ibsdclinaddrvalid,
-							opdata3->ibsdcphyaddrvalid,
-							opdata3->ibsdcmisslat);
+							opdata3->reg.ibsldop,
+							opdata3->reg.ibsstop,
+							opdata3->reg.ibsdcl1tlbmiss,
+							opdata3->reg.ibsdcl2tlbmiss,
+							opdata3->reg.ibsdcl1tlbhit2m,
+							opdata3->reg.ibsdcl1tlbhit1g,
+							opdata3->reg.ibsdcl2tlbhit2m,
+							opdata3->reg.ibsdcmiss,
+							opdata3->reg.ibsdcmissacc,
+							opdata3->reg.ibsdcldbnkcon,
+							opdata3->reg.ibsdcstbnkcon,
+							opdata3->reg.ibsdcsttoldfwd,
+							opdata3->reg.ibsdcsttoldcan,
+							opdata3->reg.ibsdcucmemacc,
+							opdata3->reg.ibsdcwcmemacc,
+							opdata3->reg.ibsdclockedop,
+							opdata3->reg.ibsdcmabhit,
+							opdata3->reg.ibsdclinaddrvalid,
+							opdata3->reg.ibsdcphyaddrvalid,
+							opdata3->reg.ibsdcmisslat);
 						break;
 
 					default:
@@ -305,34 +266,10 @@ skip:
 	last_count = hdr->hdr_count;
 }
 
-
-int
-mainloop(char **arg)
+static int
+setup_pmu_ibsop_native(pfarg_pmc_t *pc, pfarg_pmd_t *pd)
 {
-	smpl_hdr_t *hdr;
-	pfarg_ctx_t ctx;
-	smpl_arg_t buf_arg;
-	pfarg_pmd_t pd[NUM_PMDS];
-	pfarg_pmc_t pc[NUM_PMCS];
-	pfarg_load_t load_args;
-	struct timeval start_time, end_time;
-	pfarg_msg_t msg;
-	uint64_t ovfl_count = 0, ibs_ops_smpl;
-	size_t entry_size;
-	void *buf_addr;
-	pid_t pid;
-	int status, ret, fd;
-	int pmc_count, pmd_count;
-	unsigned int num_smpl_pmds = 0;
-
-	/*
-	 * intialize all locals
-	 */
-	memset(&ctx, 0, sizeof(ctx));
-	memset(&buf_arg, 0, sizeof(buf_arg));
-	memset(pd, 0, sizeof(pd));
-	memset(pc, 0, sizeof(pc));
-	memset(&load_args, 0, sizeof(load_args));
+	uint64_t ibs_ops_smpl;
 
 	/*
 	 * OBSCTL sampling period (20 bits)
@@ -378,8 +315,175 @@ mainloop(char **arg)
 	pfm_bv_set(pd[0].reg_smpl_pmds, 11);
 	pfm_bv_set(pd[0].reg_smpl_pmds, 12);
 	pfm_bv_set(pd[0].reg_smpl_pmds, 13);
+
+	return PFMLIB_SUCCESS;
+}
+
+static int
+setup_pmu_ibsop(pfarg_pmc_t *pc, pfarg_pmd_t *pd)
+{
+	pfmlib_amd64_input_param_t inp_mod;
+	pfmlib_output_param_t outp;
+	pfmlib_amd64_output_param_t outp_mod;
+	int ret;
+	
+	memset(&inp_mod,0, sizeof(inp_mod));
+	memset(&outp,0, sizeof(outp));
+	memset(&outp_mod,0, sizeof(outp_mod));
+
+	/* setup ibsopctl register */
+	inp_mod.ibsop.maxcnt = 0xFFFF0;
+	inp_mod.flags |= PFMLIB_AMD64_USE_IBSOP;
+
+	/* setup Perfmon2 registers */
+	ret = pfm_dispatch_events(NULL, &inp_mod, &outp, &outp_mod);
+	if (ret != PFMLIB_SUCCESS) {
+		fprintf(stderr, "cannot dispatch events: %s\n", pfm_strerror(ret));
+		return ret;
+	}
+	if (outp.pfp_pmc_count != 1) {
+		fprintf(stderr, "Unexpected PMC register count: %d\n",
+			outp.pfp_pmc_count);
+		return PFMLIB_ERR_INVAL;
+	}
+	if (outp.pfp_pmd_count != 1) {
+		fprintf(stderr, "Unexpected PMD register count: %d\n",
+			outp.pfp_pmd_count);
+		return PFMLIB_ERR_INVAL;
+	}
+	if (outp_mod.ibsop_base != 0) {
+		fprintf(stderr, "Unexpected IBSOP base register: %d\n",
+			outp_mod.ibsop_base);
+		return PFMLIB_ERR_INVAL;
+	}
+
+	/* PMC_IBSOPCTL */
+	pc[0].reg_num   = outp.pfp_pmcs[0].reg_num;
+	pc[0].reg_value = outp.pfp_pmcs[0].reg_value;
+	/* PMD_IBSOPCTL */
+	pd[0].reg_num   = outp.pfp_pmds[0].reg_num;
+	pd[0].reg_value = 0;
+
+	/* setup all IBSOP registers for sampling */
+	pd[0].reg_flags = PFM_REGFL_OVFL_NOTIFY;
+	if (pd[0].reg_num > 64 - PMD_IBSOP_NUM) {
+		fprintf(stderr, "Unexpected IBSOP base: %d\n",
+			(int)pd[0].reg_num);
+		return PFMLIB_ERR_INVAL;
+	}
+	pd[0].reg_smpl_pmds[0] =
+		((1UL << PMD_IBSOP_NUM) - 1) << outp.pfp_pmds[0].reg_num;
+
+	return PFMLIB_SUCCESS;
+}
+
+static int
+setup_pmu_ibsfetch(pfarg_pmc_t *pc, pfarg_pmd_t *pd)
+{
+	pfmlib_amd64_input_param_t inp_mod;
+	pfmlib_output_param_t outp;
+	pfmlib_amd64_output_param_t outp_mod;
+	int ret;
+
+	memset(&inp_mod,0, sizeof(inp_mod));
+	memset(&outp,0, sizeof(outp));
+	memset(&outp_mod,0, sizeof(outp_mod));
+
+	/* setup ibsfetchctl register */
+	inp_mod.ibsfetch.maxcnt = 0xFFFF0;
+	inp_mod.flags |= PFMLIB_AMD64_USE_IBSFETCH;
+
+	/* setup Perfmon2 registers */
+	ret = pfm_dispatch_events(NULL, &inp_mod, &outp, &outp_mod);
+	if (ret != PFMLIB_SUCCESS) {
+		fprintf(stderr, "cannot dispatch events: %s\n", pfm_strerror(ret));
+		return ret;
+	}
+	if (outp.pfp_pmc_count != 1) {
+		fprintf(stderr, "Unexpected PMC register count: %d\n",
+			outp.pfp_pmc_count);
+		return PFMLIB_ERR_INVAL;
+	}
+	if (outp.pfp_pmd_count != 1) {
+		fprintf(stderr, "Unexpected PMD register count: %d\n",
+			outp.pfp_pmd_count);
+		return PFMLIB_ERR_INVAL;
+	}
+	if (outp_mod.ibsfetch_base != 0) {
+		fprintf(stderr, "Unexpected IBSFETCH base register: %d\n",
+			outp_mod.ibsfetch_base);
+		return PFMLIB_ERR_INVAL;
+	}
+
+	/* PMC_IBSFETCHCTL */
+	pc[0].reg_num   = outp.pfp_pmcs[0].reg_num;
+	pc[0].reg_value = outp.pfp_pmcs[0].reg_value;
+	/* PMD_IBSFETCHCTL */
+	pd[0].reg_num   = outp.pfp_pmds[0].reg_num;
+	pd[0].reg_value = 0;
+
+	/* setup all IBSFETCH registers for sampling */
+	pd[0].reg_flags = PFM_REGFL_OVFL_NOTIFY;
+	if (pd[0].reg_num > 64 - PMD_IBSFETCH_NUM) {
+		fprintf(stderr, "Unexpected IBSFETCH base: %d\n",
+			(int)pd[0].reg_num);
+		return PFMLIB_ERR_INVAL;
+	}
+	pd[0].reg_smpl_pmds[0] =
+		((1UL << PMD_IBSFETCH_NUM) - 1) << outp.pfp_pmds[0].reg_num;
+
+	return PFMLIB_SUCCESS;
+}
+
+int
+mainloop(char **arg)
+{
+	pfarg_pmc_t pc[1];
+	pfarg_pmd_t pd[1];
+
+	smpl_hdr_t *hdr;
+	pfarg_ctx_t ctx;
+	smpl_arg_t buf_arg;
+	pfarg_load_t load_arg;
+	struct timeval start_time, end_time;
+	pfarg_msg_t msg;
+	uint64_t ovfl_count = 0;
+	size_t entry_size;
+	void *buf_addr;
+	pid_t pid;
+	int status, ret, fd;
+	int pmc_count, pmd_count;
+	unsigned int num_smpl_pmds = 0;
+
+	memset(&ctx,0, sizeof(ctx));
+	memset(pd, 0, sizeof(pd));
+	memset(pc, 0, sizeof(pc));
+	memset(&load_arg, 0, sizeof(load_arg));
+
+	/* defaults */
 	num_smpl_pmds = 7;
 	pmc_count = pmd_count = 1;
+
+	switch (options.opt_setup) {
+	case OPT_IBSOP:
+		ret = setup_pmu_ibsop(pc, pd);
+		break;
+	case OPT_IBSOP_NATIVE:
+		ret = setup_pmu_ibsop_native(pc, pd);
+		break;
+	case OPT_IBSFETCH:
+		num_smpl_pmds = 3;
+		ret = setup_pmu_ibsfetch(pc, pd);
+		break;
+	default:
+		ret = PFMLIB_ERR_NOTSUPP;
+		break;
+	}
+
+	if (ret != PFMLIB_SUCCESS) {
+		fatal_error("Can't setup #%d\n", options.opt_setup);
+		exit(1);
+	}
 
 	/*
 	 * in this example program, we use fixed-size entries, therefore we
@@ -486,8 +590,8 @@ mainloop(char **arg)
 	/*
 	 * attach context to stopped task
 	 */
-	load_args.load_pid = pid;
-	if (pfm_load_context (fd, &load_args))
+	load_arg.load_pid = pid;
+	if (pfm_load_context (fd, &load_arg))
 		fatal_error("pfm_load_context error errno %d\n",errno);
 
 	/*
@@ -577,7 +681,8 @@ terminate_session:
 static void
 usage(void)
 {
-	printf("usage: task_smpl [-h] [--help] [--no-show] [--ovfl-block] cmd\n");
+	printf("usage: task_smpl [-h] [--help] [--no-show] [--ovfl-block] "
+	       "[--ibsop] [--ibsfetch] [--ibsop-native] cmd\n");
 }
 
 int

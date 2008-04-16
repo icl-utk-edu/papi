@@ -1,5 +1,5 @@
             ------------------------------------------------------
-                                    libpfm-3.2:
+                                    libpfm-3.3:
       a helper library to program the Performance Monitoring Unit (PMU)
             ------------------------------------------------------
  	  Copyright (c) 2001-2007 Hewlett-Packard Development Company, L.P.
@@ -14,7 +14,7 @@ of several modern processors.
 This version of libpfm supports:
 	- For Intel IA-64 :  Itanium (Merced), Itanium 2 (McKinley, Madison, Deerfield), Itanium 2 9000/9100 (Montecito,Montvale) and Generic
 	- For AMD/Intel IA-32 (64 bit mode,X86-64): AMD Opteron (K8, fam 10h), Xeon, Intel Core 2 Duo, Intel Core 2
-	- For AMD/Intel IA-32 (32 bit mode)       : Pentium II, Pentium Pro, Pentium III, Pentium M/P6, Core Duo/Core Solo, Intel Pentium 4, AMD Opteron (K8,fam 10h)), Intel Core 2
+	- For AMD/Intel IA-32 (32 bit mode, i386) : Pentium II, Pentium Pro, Pentium III, Pentium M/P6, Core Duo/Core Solo, Intel Pentium 4, AMD Opteron (K8,fam 10h)), Intel Core 2
 	- For MIPS:  5K, 20K, 25KF, 34K, 5KC, 74K, R10000, R12000, RM7000, RM9000, SB1, VR5432, VR5500, SiCortex ICA9A/ICE9B
 	- For Cray: BlackWidow
 	- IBM Cell processor
@@ -40,6 +40,8 @@ WHAT'S THERE
 
 	- man pages for all the library entry points
 
+	- Python bindings for libpfm and the perfmon interface (experimental).
+
 INSTALLATION
 ------------
 	- edit config.mk to :
@@ -51,14 +53,20 @@ INSTALLATION
 	- type make
 	- type make install
 
+ 	- To compile and install the Python bindings, you need to go to the python sub-directory and type
+	  make. Python is not systematically built
+
 REQUIREMENTS:
 -------------
 	- to run the programs in the examples subdir, you MUST be using a linux kernel version of
-	  2.6.22 or later with the corresponding perfmon new code base patch installed.
+	  2.6.24 or later with the corresponding perfmon new code base patch installed.
 	  The patch can be downloaded from:
 	  		http://perfmon2.sf.net/
 
 	- On IA-64, the examples in old_interface_ia64_examples work with any 2.6.x kernels.
+
+	- to compile the Python bindings, you need to have SWIG and the python development
+	  packages installed
 
 DOCUMENTATION
 -------------

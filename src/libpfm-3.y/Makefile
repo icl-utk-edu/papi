@@ -27,10 +27,14 @@ TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)
 
 include config.mk
 
-DIRS=lib examples include docs libpfms
+DIRS=lib examples include docs
 
 ifeq ($(ARCH),ia64)
 DIRS +=old_interface_ia64_examples
+endif
+
+ifeq ($(SYS),Linux)
+DIRS +=libpfms
 endif
 
 all: 
@@ -52,4 +56,10 @@ tarcvs: clean
 	a=`basename $$PWD`; cd ..; tar --exclude=CVS -zcf $$a.tar.gz $$a; echo generated ../$$a.tar.gz;
 install: 
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
+
+install_examples:
+	$(MAKE) -C examples $@
+
+.PHONY: all clean distclean depend tar tarcvs install install_examples
+
 # DO NOT DELETE

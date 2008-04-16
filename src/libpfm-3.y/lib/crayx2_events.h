@@ -267,7 +267,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 	/* P Counter 3 Event 3 */
 	{
 		.pme_name = "STALL_VU_FUG2",
-		.pme_desc = "CPs VU stalled waiting for FUG.",
+		.pme_desc = "CPs VU stalled waiting for FUG 2.",
 		.pme_code = 15,
 		.pme_flags = 0x0,
 		.pme_numasks = 0,
@@ -537,7 +537,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 	/* P Counter 8 Event 1 */
 	{
 		.pme_name = "VTLB_MISS",
-		.pme_desc = "Number of Vector TLB misses.",
+		.pme_desc = "Number of vector TLB misses.",
 		.pme_code = 33,
 		.pme_flags = 0x0,
 		.pme_numasks = 0,
@@ -882,7 +882,7 @@ static pme_crayx2_entry_t crayx2_pe[ ] =
 	/* P Counter 14 Event 0 */
 	{
 		.pme_name = "VOPS_EXT_FUG3",
-		.pme_desc = "Number of V FUG 3 external operations g=20-27 f=25,57,77 compress, merge, bmm.",
+		.pme_desc = "Number of vector FUG 3 external operations g=20-27 f=25,57,77 compress, merge, bmm.",
 		.pme_code = 56,
 		.pme_flags = 0x0,
 		.pme_numasks = 0,

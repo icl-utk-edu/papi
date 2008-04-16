@@ -25,16 +25,13 @@ include $(TOPDIR)/config.mk
 include $(TOPDIR)/rules.mk
 
 #
-# Library version
-#
-VERSION=3
-REVISION=2
-AGE=0
-
-#
 # Common files
 #
-SRCS=pfmlib_common.c pfmlib_os.c pfmlib_priv.c
+SRCS=pfmlib_common.c pfmlib_priv.c
+
+ifeq ($(SYS),Linux)
+SRCS += pfmlib_os_linux.c
+endif
 
 CFLAGS+=-D_REENTRANT
 
@@ -98,11 +95,15 @@ SRCS   += pfmlib_cell.c
 CFLAGS += -DCONFIG_PFMLIB_CELL
 endif
 
-CFLAGS+=-I.
-ALIBPFM=libpfm.a
-
+ifeq ($(SYS),Linux)
+SLDFLAGS=-shared -Wl,-soname -Wl,$(VLIBPFM)
 SLIBPFM=libpfm.so.$(VERSION).$(REVISION).$(AGE)
 VLIBPFM=libpfm.so.$(VERSION)
+SOLIBEXT=so
+endif
+
+CFLAGS+=-I.
+ALIBPFM=libpfm.a
 
 TARGETS=$(ALIBPFM)
 
@@ -188,12 +189,12 @@ libpfm.a:  $(OBJS)
 	$(AR) cru $@ $(OBJS)
 
 $(SLIBPFM):  $(SOBJS)
-	$(CC) -shared -Wl,-soname -Wl,$(VLIBPFM) -o $@ $(SOBJS)
+	$(CC) $(SLDFLAGS)  -o $@ $(SOBJS)
 	$(LN) $@ $(VLIBPFM)
-	$(LN) $@ libpfm.so
+	$(LN) $@ libpfm.$(SOLIBEXT)
 
 clean:
-	$(RM) -f *.o *.lo *.a *.so* *~
+	$(RM) -f *.o *.lo *.a *.so* *~ *.$(SOLIBEXT)
 
 distclean: clean
 
@@ -207,5 +208,5 @@ install: $(TARGETS)
 ifeq ($(CONFIG_PFMLIB_SHARED),y)
 	$(INSTALL) $(SLIBPFM) $(DESTDIR)$(LIBDIR)
 	cd $(DESTDIR)$(LIBDIR); $(LN) $(SLIBPFM) $(VLIBPFM)
-	cd $(DESTDIR)$(LIBDIR); $(LN) $(SLIBPFM) libpfm.so
+	cd $(DESTDIR)$(LIBDIR); $(LN) $(SLIBPFM) libpfm.$(SOLIBEXT)
 endif

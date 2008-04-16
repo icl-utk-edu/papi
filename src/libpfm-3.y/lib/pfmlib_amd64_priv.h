@@ -25,6 +25,17 @@
 #ifndef __PFMLIB_AMD64_PRIV_H__
 #define __PFMLIB_AMD64_PRIV_H__
 
+/* PERFSEL/PERFCTR include IBS registers of family 10h */
+#define PMU_AMD64_NUM_PERFSEL	6	/* total number of PMCs defined */
+#define PMU_AMD64_NUM_PERFCTR	14	/* total number of PMDs defined */
+#define PMU_AMD64_NUM_COUNTERS	4	/* total numbers of EvtSel/EvtCtr */
+#define PMU_AMD64_COUNTER_WIDTH	48	/* hardware counter bit width */
+#define PMU_AMD64_CNT_MASK_MAX	4 	/* max cnt_mask value */
+#define PMU_AMD64_IBSFETCHCTL_PMC 4	/* IBS: fetch PMC base */
+#define PMU_AMD64_IBSFETCHCTL_PMD 4	/* IBS: fetch PMD base */
+#define PMU_AMD64_IBSOPCTL_PMC 5	/* IBS: op PMC base */
+#define PMU_AMD64_IBSOPCTL_PMD 7	/* IBS: op PMD base */
+
 #define PFMLIB_AMD64_MAX_UMASK	9
 
 typedef struct {

@@ -56,11 +56,6 @@ typedef pfm_dfl_smpl_arg_t	smpl_arg_t;
  */
 #define SMPL_PERIOD	(4UL*256)
 
-/*
- * We use a small buffer size to exercise the overflow handler
- */
-#define SMPL_BUF_NENTRIES	64
-
 static void *smpl_vaddr;
 static unsigned int entry_size;
 static int id;
@@ -320,16 +315,17 @@ main(void)
 
 	/*
 	 * Before calling pfm_find_dispatch(), we must specify what kind
-	 * of branches we want to capture. We are interesteed in all the mispredicted branches,
-	 * therefore we program we set the various fields of the BTB config to:
+	 * of branches we want to capture. We are interested in all the
+	 * mispredicted (target, taken/not taken) branches, therefore we
+	 * program the various fields of the BTB config to:
 	 */
 	ita2_inp.pfp_ita2_btb.btb_used = 1;
 
-	ita2_inp.pfp_ita2_btb.btb_ds  = 0;
-	ita2_inp.pfp_ita2_btb.btb_tm  = 0x3;
-	ita2_inp.pfp_ita2_btb.btb_ptm = 0x3;
-	ita2_inp.pfp_ita2_btb.btb_ppm = 0x3;
-	ita2_inp.pfp_ita2_btb.btb_brt = 0x0;
+	ita2_inp.pfp_ita2_btb.btb_ds  = 0;   /* capture target */
+	ita2_inp.pfp_ita2_btb.btb_tm  = 0x3; /* all branches */
+	ita2_inp.pfp_ita2_btb.btb_ptm = 0x1; /* target mispredicted */
+	ita2_inp.pfp_ita2_btb.btb_ppm = 0x1; /* mispredicted path */
+	ita2_inp.pfp_ita2_btb.btb_brt = 0x0; /* all types captured */
 	ita2_inp.pfp_ita2_btb.btb_plm = PFM_PLM3;
 
 	if (pfm_find_full_event("BRANCH_EVENT", &inp.pfp_events[0]) != PFMLIB_SUCCESS) {

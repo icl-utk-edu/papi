@@ -33,9 +33,9 @@
 #include <signal.h>
 #include <math.h>
 #include <limits.h>
-#include <fcntl.h>
 #include <setjmp.h>
-#include <sys/ioctl.h>
+#include <fcntl.h>
+#include <time.h>
 #include <sys/wait.h>
 #include <sys/ptrace.h>
 
@@ -48,7 +48,7 @@
 
 #define MULTIPLEX_VERSION	"0.2"
 
-#define SMPL_FREQ_IN_HZ	300
+#define SMPL_FREQ_IN_HZ	100
 
 #define NUM_PMCS 256
 
@@ -68,9 +68,11 @@ typedef struct {
 	} program_opt_flags;
 
 	unsigned long	max_counters;	/* maximum number of counter for the platform */
-	uint32_t smpl_freq;
+	uint64_t	smpl_freq_hz;
+	uint64_t	smpl_freq_ns;
 	unsigned long	session_timeout;
 	uint64_t	smpl_period;
+	uint64_t	clock_res;
 
 	unsigned long	cpu_mhz;
 
@@ -319,9 +321,9 @@ print_results(int ctxid, uint64_t *eff_timeout)
 	 *
 	 */
 	if (options.opt_no_header == 0) {
-		printf("# %u Hz period = %u nsecs\n# %"PRIu64" cycles @ %lu MHz\n", 
-			options.smpl_freq, 
-			1000000000 / options.smpl_freq, 
+		printf("# %.2fHz period = %"PRIu64"nsecs\n# %"PRIu64" cycles @ %lu MHz\n", 
+			1000000000.0 / options.smpl_freq_ns, 
+			options.smpl_freq_ns, 
 			options.smpl_period,
 			options.cpu_mhz);
 
@@ -745,9 +747,9 @@ mainloop(char **argv)
 
 	pfm_get_impl_counters(&impl_counters);
 
-	options.smpl_period = (options.cpu_mhz*1000000)/options.smpl_freq;
+	options.smpl_period = (options.cpu_mhz*1000000)/options.smpl_freq_hz;
 
-	vbprintf("%lu Hz period = %"PRIu64" cycles @ %lu Mhz\n", options.smpl_freq, options.smpl_period, options.cpu_mhz);
+	vbprintf("%"PRIu64"Hz period = %"PRIu64" cycles @ %luMhz\n", options.smpl_freq_hz, options.smpl_period, options.cpu_mhz);
 
 	for (e = all_events; e; e = e->next) {
 		for (p = str = e->event_str; p ; ) {
@@ -894,7 +896,7 @@ mainloop(char **argv)
 			 * The structure will by then contain the actual timeout.
 			 */
 			all_sets[i].set_flags    = PFM_SETFL_TIME_SWITCH;
-			all_sets[i].set_timeout  = 1000000000 / options.smpl_freq;
+			all_sets[i].set_timeout  = options.smpl_freq_ns;
 		}
 #ifdef __ia64__
 		if (options.opt_excl_intr && options.opt_is_system)
@@ -1016,6 +1018,7 @@ main(int argc, char **argv)
 	pfmlib_options_t pfmlib_options;
 	event_set_t *tail = NULL, *es;
 	unsigned long long_val;
+	struct timespec ts;
 	int c, ret;
 
 	options.pin_cmd_cpu = options.pin_cpu = -1;
@@ -1035,10 +1038,10 @@ main(int argc, char **argv)
 				  options.opt_us_format = 1;
 				  break;
 			case   2:
-				if (options.smpl_freq) fatal_error("sampling frequency set twice\n");
-				options.smpl_freq = strtoul(optarg, &endptr, 10);
+				if (options.smpl_freq_hz) fatal_error("sampling frequency set twice\n");
+				options.smpl_freq_hz = strtoull(optarg, &endptr, 10);
 				if (*endptr != '\0')
-					fatal_error("invalid freqyency: %s\n", optarg);
+					fatal_error("invalid frequency: %s\n", optarg);
 				break;
 			case   3:
 			case 'k':
@@ -1122,7 +1125,49 @@ main(int argc, char **argv)
 	if ((options.cpu_mhz = get_cpu_speed()) == 0)
 		fatal_error("can't get CPU speed\n");
 
-	if (options.smpl_freq == 0UL) options.smpl_freq = SMPL_FREQ_IN_HZ;
+
+	/*
+ 	 * extract kernel clock resolution
+ 	 */
+        clock_getres(CLOCK_MONOTONIC, &ts);
+       	options.clock_res  = ts.tv_sec * 1000000000 + ts.tv_nsec;
+
+	/*
+ 	 * adjust frequency to be a multiple of clock resolution
+ 	 * otherwise kernel will fail pfm_create_evtsets()
+ 	 */
+	if (!options.opt_ovfl_switch) {
+		uint64_t f_ns, d, f_final;
+
+		/*
+ 		 * f_ns = run period in ns (1s/hz)
+ 		 * default switch period is clock resolution
+ 		 */
+		if (options.smpl_freq_hz == 0)
+			f_ns = options.clock_res;
+		else
+			f_ns = 1000000000 / options.smpl_freq_hz;
+
+		/* round up period in nanoseconds */
+		d = (f_ns+options.clock_res-1) / options.clock_res;
+
+		/* final period (multilple of clock_res */
+		f_final = d * options.clock_res;
+
+		printf("clock_res=%"PRIu64"ns(%.2fHz) ask period=%"PRIu64"ns(%.2fHz) get period=%"PRIu64"ns(%.2fHz)\n",
+			options.clock_res,
+			1000000000.0 / options.clock_res,
+			f_ns,
+			1000000000.0 / f_ns,
+			f_final,
+			1000000000.0 / f_final);
+
+		/* adjust period */
+		options.smpl_freq_ns = f_final;
+
+		/* not used */
+		options.smpl_freq_hz = 1000000000 / f_final;
+	}
 
 	if (options.opt_plm == 0) options.opt_plm = PFM_PLM3;
 

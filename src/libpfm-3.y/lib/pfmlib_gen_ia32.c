@@ -61,8 +61,6 @@
 #define sel_inv		 perfevtsel.sel_inv
 #define sel_cnt_mask	 perfevtsel.sel_cnt_mask
 
-pfm_pmu_support_t coreduo_support;
-pfm_pmu_support_t gen_ia32_support;
 pfm_pmu_support_t *gen_support;
 
 /*
@@ -349,6 +347,8 @@ pfm_coreduo_detect(void)
 		gen_support = &coreduo_support;
 		gen_ia32_cycle_event = PME_COREDUO_UNHALTED_CORE_CYCLES;
 		gen_ia32_inst_retired_event = PME_COREDUO_INSTRUCTIONS_RETIRED;
+		num_gen_cnt = 2;
+		num_fixed_cnt = 0;
 		for(i=0; i < 2; i++) {
 			pfm_regmask_set(&gen_ia32_impl_pmcs, i);
 			pfm_regmask_set(&gen_ia32_impl_pmds, i);

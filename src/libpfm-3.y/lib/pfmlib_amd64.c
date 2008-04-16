@@ -120,6 +120,7 @@ pfm_pmu_support_t amd64_support;
 #define amd64_events      amd64_pmu.events
 
 #define IS_FAMILY_10H() (amd64_pmu.revision >= AMD64_FAM10H)
+#define HAS_IBS() IS_FAMILY_10H()
 
 static amd64_rev_t
 amd64_get_revision(int family, int model, int stepping)
@@ -182,22 +183,27 @@ pfm_amd64_setup(int revision)
 	amd64_pmu.revision = revision;
 	snprintf(amd64_pmu.name, NAME_SIZE, "AMD64 (%s)",
 		 amd64_cpu_strs[revision]);
+	amd64_support.pmu_name	= amd64_pmu.name;
+
+	/* defaults (K8) */
+	amd64_pmu.events	= amd64_k8_table.events;
+	amd64_support.pme_count	= amd64_k8_table.num;
+	amd64_pmu.cpu_clks	= amd64_k8_table.cpu_clks;
+	amd64_pmu.ret_inst	= amd64_k8_table.ret_inst;
+	amd64_support.pmu_type	= PFMLIB_AMD64_PMU;
+	amd64_support.num_cnt	= PMU_AMD64_NUM_COUNTERS;
+	amd64_support.pmc_count	= PMU_AMD64_NUM_COUNTERS;
+	amd64_support.pmd_count	= PMU_AMD64_NUM_COUNTERS;
+
+	/* additional features */
 	if (IS_FAMILY_10H()) {
 		amd64_pmu.events = amd64_fam10h_table.events;
 		amd64_support.pme_count = amd64_fam10h_table.num;
 		amd64_pmu.cpu_clks = amd64_fam10h_table.cpu_clks;
 		amd64_pmu.ret_inst = amd64_fam10h_table.ret_inst;
-	} else {
-		amd64_pmu.events = amd64_k8_table.events;
-		amd64_support.pme_count = amd64_k8_table.num;
-		amd64_pmu.cpu_clks = amd64_k8_table.cpu_clks;
-		amd64_pmu.ret_inst = amd64_k8_table.ret_inst;
+		amd64_support.pmc_count	= PMU_AMD64_NUM_PERFSEL;
+		amd64_support.pmd_count	= PMU_AMD64_NUM_PERFCTR;
 	}
-	amd64_support.pmu_name		= amd64_pmu.name;
-	amd64_support.pmu_type		= PFMLIB_AMD64_PMU;
-	amd64_support.pmc_count		= PMU_AMD64_NUM_PERFSEL;
-	amd64_support.pmd_count		= PMU_AMD64_NUM_PERFCTR;
-	amd64_support.num_cnt		= PMU_AMD64_NUM_COUNTERS;
 }
 
 static int
@@ -286,7 +292,7 @@ pfm_amd64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_amd64_input_param_
 	pfmlib_regmask_t *r_pmcs;
 	unsigned long plm;
 	unsigned int i, j, k, cnt, umask;
-	unsigned int assign[PMU_AMD64_NUM_COUNTERS];
+	unsigned int assign[PMU_AMD64_MAX_COUNTERS];
 
 	e      = inp->pfp_events;
 	pc     = outp->pfp_pmcs;
@@ -295,13 +301,19 @@ pfm_amd64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_amd64_input_param_
 	r_pmcs = &inp->pfp_unavail_pmcs;
 	cntrs  = param ? param->pfp_amd64_counters : NULL;
 
+	/* priviledge level 1 and 2 are not supported */
+	if (inp->pfp_dfl_plm & (PFM_PLM1|PFM_PLM2)) {
+		DPRINT(("invalid plm=%x\n", inp->pfp_dfl_plm));
+		return PFMLIB_ERR_INVAL;
+	}
+
 	if (PFMLIB_DEBUG()) {
 		for (j=0; j < cnt; j++) {
 			DPRINT(("ev[%d]=%s\n", j, pfm_amd64_get_event_entry(e[j].event)->pme_name));
 		}
 	}
 
-	if (cnt > PMU_AMD64_NUM_COUNTERS) return PFMLIB_ERR_TOOMANY;
+	if (cnt > amd64_support.num_cnt) return PFMLIB_ERR_TOOMANY;
 
 	for(i=0, j=0; j < cnt; j++, i++) {
 		/*
@@ -339,10 +351,10 @@ pfm_amd64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_amd64_input_param_
 		/*
 		 * exclude unavailable registers from assignment
 		 */
-		while(i < PMU_AMD64_NUM_COUNTERS && pfm_regmask_isset(r_pmcs, i))
+		while(i < amd64_support.num_cnt && pfm_regmask_isset(r_pmcs, i))
 			i++;
 
-		if (i == PMU_AMD64_NUM_COUNTERS)
+		if (i == amd64_support.num_cnt)
 			return PFMLIB_ERR_NOASSIGN;
 
 		assign[j] = i;
@@ -356,6 +368,7 @@ pfm_amd64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_amd64_input_param_
 
 		if (!is_valid_rev(pfm_amd64_get_event_entry(e[j].event)->pme_flags))
 			return PFMLIB_ERR_BADHOST;
+
 		reg.sel_event_mask  = pfm_amd64_get_event_entry(e[j].event)->pme_code;
 		reg.sel_event_mask2 = pfm_amd64_get_event_entry(e[j].event)->pme_code >> 8;
 
@@ -416,16 +429,106 @@ pfm_amd64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_amd64_input_param_
 	return PFMLIB_SUCCESS;
 }
 
-static int
-pfm_amd64_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_output_param_t *outp, void *model_out)
+static int pfm_amd64_dispatch_ibs(pfmlib_input_param_t *inp,
+				  pfmlib_amd64_input_param_t *inp_mod,
+				  pfmlib_output_param_t *outp,
+				  pfmlib_amd64_output_param_t *outp_mod)
 {
-	pfmlib_amd64_input_param_t *mod_in  = (pfmlib_amd64_input_param_t *)model_in;
+	unsigned int pmc_base, pmd_base;
+	ibsfetchctl_t ibsfetchctl;
+	ibsopctl_t ibsopctl;
 
-	if (inp->pfp_dfl_plm & (PFM_PLM1|PFM_PLM2)) {
-		DPRINT(("invalid plm=%x\n", inp->pfp_dfl_plm));
+	if (!inp_mod || !outp || !outp_mod)
 		return PFMLIB_ERR_INVAL;
+
+	if (!HAS_IBS())
+		return PFMLIB_ERR_BADHOST;
+
+	/* IBS fetch profiling */
+	if (inp_mod->flags & PFMLIB_AMD64_USE_IBSFETCH) {
+
+		/* check availability of a PMC and PMD */
+		if (outp->pfp_pmc_count >= PFMLIB_MAX_PMCS)
+			return PFMLIB_ERR_NOASSIGN;
+
+		if (outp->pfp_pmd_count >= PFMLIB_MAX_PMDS)
+			return PFMLIB_ERR_NOASSIGN;
+
+		pmc_base = outp->pfp_pmc_count;
+		pmd_base = outp->pfp_pmd_count;
+
+		outp->pfp_pmcs[pmc_base].reg_num = PMU_AMD64_IBSFETCHCTL_PMC;
+
+		ibsfetchctl.val = 0;
+		ibsfetchctl.reg.ibsfetchen = 1;
+		ibsfetchctl.reg.ibsfetchmaxcnt = inp_mod->ibsfetch.maxcnt >> 4;
+
+		if (inp_mod->ibsfetch.options & IBS_OPTIONS_RANDEN)
+			ibsfetchctl.reg.ibsranden = 1;
+
+		outp->pfp_pmcs[pmc_base].reg_value = ibsfetchctl.val;
+		outp->pfp_pmds[pmd_base].reg_num = PMU_AMD64_IBSFETCHCTL_PMD;
+		outp_mod->ibsfetch_base = pmd_base;
+
+		++outp->pfp_pmc_count;
+		++outp->pfp_pmd_count;
 	}
-	return pfm_amd64_dispatch_counters(inp, mod_in, outp);
+
+	/* IBS execution profiling */
+	if (inp_mod->flags & PFMLIB_AMD64_USE_IBSOP) {
+
+		/* check availability of a PMC and PMD */
+		if (outp->pfp_pmc_count >= PFMLIB_MAX_PMCS)
+			return PFMLIB_ERR_NOASSIGN;
+
+		if (outp->pfp_pmd_count >= PFMLIB_MAX_PMDS)
+			return PFMLIB_ERR_NOASSIGN;
+
+		pmc_base = outp->pfp_pmc_count;
+		pmd_base = outp->pfp_pmd_count;
+
+		outp->pfp_pmcs[pmc_base].reg_num = PMU_AMD64_IBSOPCTL_PMC;
+
+		ibsopctl.val = 0;
+		ibsopctl.reg.ibsopen = 1;
+		ibsopctl.reg.ibsopmaxcnt = inp_mod->ibsop.maxcnt >> 4;
+		outp->pfp_pmcs[pmc_base].reg_value = ibsopctl.val;
+		outp->pfp_pmds[pmd_base].reg_num = PMU_AMD64_IBSOPCTL_PMD;
+
+		outp_mod->ibsop_base = pmd_base;
+		++outp->pfp_pmc_count;
+		++outp->pfp_pmd_count;
+	}
+
+	return PFMLIB_SUCCESS;
+}
+
+static int
+pfm_amd64_dispatch_events(
+	pfmlib_input_param_t *inp, void *_inp_mod,
+	pfmlib_output_param_t *outp, void *outp_mod)
+{
+	pfmlib_amd64_input_param_t *inp_mod = _inp_mod;
+	int ret = PFMLIB_ERR_INVAL;
+
+	if (!outp)
+		return PFMLIB_ERR_INVAL;
+
+	/*
+	 * At least one of the dispatch function calls must return
+	 * PFMLIB_SUCCESS
+	 */
+
+	if (inp && inp->pfp_event_count) {
+		ret = pfm_amd64_dispatch_counters(inp, inp_mod, outp);
+		if (ret != PFMLIB_SUCCESS)
+			return ret;
+	}
+
+	if (inp_mod && inp_mod->flags & (PFMLIB_AMD64_USE_IBSOP | PFMLIB_AMD64_USE_IBSFETCH))
+		ret = pfm_amd64_dispatch_ibs(inp, inp_mod, outp, outp_mod);
+
+	return ret;
 }
 
 static int
@@ -457,7 +560,7 @@ pfm_amd64_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 
 	memset(counters, 0, sizeof(*counters));
 
-	for(i=0; i < PMU_AMD64_NUM_COUNTERS; i++)
+	for(i=0; i < amd64_support.num_cnt; i++)
 		pfm_regmask_set(counters, i);
 }
 
@@ -467,7 +570,7 @@ pfm_amd64_get_impl_perfsel(pfmlib_regmask_t *impl_pmcs)
 	unsigned int i = 0;
 
 	/* all pmcs are contiguous */
-	for(i=0; i < PMU_AMD64_NUM_PERFSEL; i++)
+	for(i=0; i < amd64_support.pmc_count; i++)
 		pfm_regmask_set(impl_pmcs, i);
 }
 
@@ -477,7 +580,7 @@ pfm_amd64_get_impl_perfctr(pfmlib_regmask_t *impl_pmds)
 	unsigned int i = 0;
 
 	/* all pmds are contiguous */
-	for(i=0; i < PMU_AMD64_NUM_PERFCTR; i++)
+	for(i=0; i < amd64_support.pmd_count; i++)
 		pfm_regmask_set(impl_pmds, i);
 }
 
@@ -568,8 +671,8 @@ pfm_pmu_support_t amd64_support = {
 	.pmu_name		= "AMD64",
 	.pmu_type		= PFMLIB_AMD64_PMU,
 	.pme_count		= 0,
-	.pmc_count		= PMU_AMD64_NUM_PERFSEL,
-	.pmd_count		= PMU_AMD64_NUM_PERFCTR,
+	.pmc_count		= PMU_AMD64_NUM_COUNTERS,
+	.pmd_count		= PMU_AMD64_NUM_COUNTERS,
 	.num_cnt		= PMU_AMD64_NUM_COUNTERS,
 	.get_event_code		= pfm_amd64_get_event_code,
 	.get_event_name		= pfm_amd64_get_event_name,

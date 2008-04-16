@@ -13,7 +13,7 @@ of a set of functions and structures which describe and allow access to the
 AMD64 specific PMU features. Note that it does not support Intel EM64T processors.
 .sp
 When AMD64 processor-specific features are needed to support a measurement their descriptions must be passed
-as model-specific input arguments to the \fBpfm_dispatch_events\fR call. The AMD64 processor-specific 
+as model-specific input arguments to the \fBpfm_dispatch_events()\fR function. The AMD64 processor-specific 
 input arguments are described in the \fBpfmlib_amd64_input_param_t\fR structure and the output
 parameters in \fBpfmlib_amd64_output_param_t\fR. They are defined as follows:
 .sp
@@ -44,6 +44,12 @@ Inverse the results of the \fBcnt_mask\fR comparison when set
 .TP
 .B PFMLIB_AMD64_SEL_EDGE
 Enables edge detection of events. 
+.TP
+.B PFMLIB_AMD64_SEL_GUEST
+On AMD64 Family 10h processors only. Event is only measured when processor is in guest mode.
+.TP
+.B PFMLIB_AMD64_SEL_HOST
+On AMD64 Family 10h processors only. Event is only measured when processor is in host mode.
 .LP
 
 The \fBcnt_mask\fR field contains is used to set the event threshold.
@@ -53,7 +59,7 @@ zero all occurrences are counted.
 .sp
 .LP
 .SH ERRORS
-Refer to the description of \fBpfm_dispatch_events()\fR for errors.
+Refer to the description of the \fBpfm_dispatch_events()\fR function for errors.
 .SH SEE ALSO
 pfm_dispatch_events(3) and set of examples shipped with the library
 .SH AUTHOR

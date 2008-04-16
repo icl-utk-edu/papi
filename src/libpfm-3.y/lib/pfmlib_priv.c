@@ -21,7 +21,6 @@
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#define _GNU_SOURCE /* for getline */
 #include <sys/types.h>
 #include <ctype.h>
 #include <string.h>
@@ -52,68 +51,6 @@ __pfm_vbprintf(const char *fmt, ...)
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
-}
-
-/*
- * helper function to retrieve one value from /proc/cpuinfo
- * for internal libpfm use only
- * attr: the attribute (line) to look for
- * ret_buf: a buffer to store the value of the attribute (as a string)
- * maxlen : number of bytes of capacity in ret_buf
- *
- * ret_buf is null terminated.
- *
- * Return:
- * 	0 : attribute found, ret_buf populated
- * 	-1: attribute not found
- */
-int
-__pfm_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen)
-{
-	FILE *fp = NULL;
-	int ret = -1;
-	size_t attr_len, buf_len = 0;
-	char *p, *value = NULL;
-	char *buffer = NULL;
-
-	if (attr == NULL || ret_buf == NULL || maxlen < 1)
-		return -1;
-
-	attr_len = strlen(attr);
-
-	fp = fopen("/proc/cpuinfo", "r");
-	if (fp == NULL)
-		return -1;
-
-	while(getline(&buffer, &buf_len, fp) != -1){
-
-		/* skip  blank lines */
-		if (*buffer == '\n')
-			continue;
-
-		p = strchr(buffer, ':');
-		if (p == NULL)
-			goto error;
-
-		/*
-		 * p+2: +1 = space, +2= firt character
-		 * strlen()-1 gets rid of \n
-		 */
-		*p = '\0';
-		value = p+2;
-
-		value[strlen(value)-1] = '\0';
-
-		if (!strncmp(attr, buffer, attr_len))
-			break;
-	}
-	strncpy(ret_buf, value, maxlen-1);
-	ret_buf[maxlen-1] = '\0';
-	ret = 0;
-error:
-	free(buffer);
-	fclose(fp);
-	return ret;
 }
 
 int

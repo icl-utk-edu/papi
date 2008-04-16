@@ -89,12 +89,19 @@ static pfm_pmu_support_t *supported_pmus[]=
  * contains runtime configuration options for the library.
  * mostly for debug purposes.
  */
-pfm_config_t pfm_config;
+pfm_config_t pfm_config = {
+       .current = NULL
+};
 
 int
 pfm_initialize(void)
 {
 	pfm_pmu_support_t **p = supported_pmus;
+
+	/*
+ 	 * syscall mapping, no failure on error
+ 	 */	
+	pfm_init_syscalls();
 
 	while(*p) {
 		if ((*p)->pmu_detect() == PFMLIB_SUCCESS)
@@ -112,6 +119,8 @@ found:
 		return PFMLIB_ERR_NOTSUPP;
 
 	pfm_current = *p;
+
+
 	return PFMLIB_SUCCESS;
 }
 
@@ -624,7 +633,9 @@ pfm_check_unavail_pmcs(pfmlib_regmask_t *pmcs)
  * registers. In other words, invalid registers are ignored
  */
 int
-pfm_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_output_param_t *outp, void *model_out)
+pfm_dispatch_events(
+	pfmlib_input_param_t *inp, void *model_in,
+	pfmlib_output_param_t *outp, void *model_out)
 {
 	unsigned count;
 	unsigned int i;
@@ -633,21 +644,23 @@ pfm_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_output_par
 	if (PFMLIB_INITIALIZED() == 0)
 		return PFMLIB_ERR_NOINIT;
 
-	if (inp == NULL || outp == NULL)
+	/* at least one input and one output set must exist */
+	if (!inp && !model_in)
+		return PFMLIB_ERR_INVAL;
+	if (!outp && !model_out)
 		return PFMLIB_ERR_INVAL;
 
-	/*
-	 * the default priv level must be set to something
-	 */
-	if (inp->pfp_dfl_plm == 0)
+	if (!inp)
+		count = 0;
+	else if (inp->pfp_dfl_plm == 0)
+		/* the default priv level must be set to something */
 		return PFMLIB_ERR_INVAL;
-
-	if (inp->pfp_event_count >= PFMLIB_MAX_PMCS)
+	else if (inp->pfp_event_count >= PFMLIB_MAX_PMCS)
 		return PFMLIB_ERR_INVAL;
-
-	count = inp->pfp_event_count;
-	if (count > pfm_current->num_cnt)
+	else if (inp->pfp_event_count > pfm_current->num_cnt)
 		return PFMLIB_ERR_NOASSIGN;
+	else
+		count = inp->pfp_event_count;
 
 	/*
 	 * check that event and unit masks descriptors are correct
@@ -657,8 +670,10 @@ pfm_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_output_par
 		if (ret != PFMLIB_SUCCESS)
 			return ret;
 	}
+
 	/* reset output data structure */
-	memset(outp, 0, sizeof(*outp));
+	if (outp)
+		memset(outp, 0, sizeof(*outp));
 
 	return pfm_current->dispatch_events(inp, model_in, outp, model_out);
 }

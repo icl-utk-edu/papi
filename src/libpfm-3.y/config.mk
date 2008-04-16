@@ -28,6 +28,7 @@
 # It is included by every Makefile
 #
 #
+SYS  := $(shell uname -s)
 ARCH := $(shell uname -m)
 ifeq (i686,$(findstring i686,$(ARCH)))
 override ARCH=ia32
@@ -64,10 +65,19 @@ endif
 #
 # Cell Broadband Engine is reported as PPC but needs special handling.
 #
+ifeq ($(SYS),Linux)
 MACHINE := $(shell grep -q 'Cell Broadband Engine' /proc/cpuinfo && echo cell)
 ifeq (cell,$(MACHINE))
 override ARCH=cell
 endif
+endif
+
+#
+# Library version
+#
+VERSION=3
+REVISION=3
+AGE=0
 
 #
 # Where should things (lib, headers, man) go in the end.
@@ -77,6 +87,7 @@ PREFIX=$(install_prefix)
 LIBDIR=$(PREFIX)/lib
 INCDIR=$(PREFIX)/include
 MANDIR=$(PREFIX)/share/man
+EXAMPLESDIR=$(PREFIX)/share/doc/libpfm-$(VERSION).$(REVISION).$(AGE)/examples
 
 #
 # Configuration Paramaters for libpfm library
@@ -114,6 +125,7 @@ endif
 
 ifeq ($(XTPE_COMPILE_TARGET),linux)
 CONFIG_PFMLIB_ARCH_CRAYXT=y
+CONFIG_PFMLIB_SHARED=n
 endif
 
 ifeq ($(XTPE_COMPILE_TARGET),catamount)
@@ -169,4 +181,3 @@ CC=craynv-cray-linux-gnu-gcc
 CFLAGS+=$(PFM_VERSION_FLAG)
 LDFLAGS+=-static
 endif
-

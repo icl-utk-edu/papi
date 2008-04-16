@@ -28,6 +28,14 @@
 #include <asm/perfmon.h>
 #include <sys/types.h>
 
+/*	Priviledge level mask for Cray-X2:
+ *
+ *	PFM_PLM0 = Kernel
+ *	PFM_PLM1 = Kernel
+ *	PFM_PLM2 = Exception
+ *	PFM_PLM3 = User 
+ */
+
 /*	The performance control (PMC) registers appear as follows:
  *	PMC0	control for CPU chip
  *	PMC1	events on CPU chip

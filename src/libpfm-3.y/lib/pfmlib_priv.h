@@ -75,8 +75,13 @@ extern pfm_config_t pfm_config;
 #define pfm_current		pfm_config.current
 
 extern void __pfm_vbprintf(const char *fmt,...);
-extern int __pfm_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen);
 extern int __pfm_check_event(pfmlib_event_t *e);
+
+/*
+ * provided by OS-specific module
+ */
+extern int __pfm_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen);
+extern void pfm_init_syscalls(void);
 
 #ifdef PFMLIB_DEBUG
 #define DPRINT(a) \

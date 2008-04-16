@@ -55,4 +55,6 @@ typedef struct {
 	uint64_t	reserved[8];	/* for future use */
 } pfmlib_cell_output_param_t;
 
+int pfm_cell_spe_event(unsigned int event_index);
+
 #endif /* __PFMLIB_CELL_H__ */

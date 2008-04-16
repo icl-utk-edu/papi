@@ -13,7 +13,7 @@ of a set of functions and structures which describe and allow access to the
 P6 processors specific PMU features.
 .sp
 When P6 processor specific features are needed to support a measurement, their descriptions must be passed
-as model-specific input arguments to the \fBpfm_dispatch_events\fR call. The P6 processors specific 
+as model-specific input arguments to the \fBpfm_dispatch_events()\fR function. The P6 processors specific 
 input arguments are described in the \fBpfmlib_i386_p6_input_param_t\fR structure and the output
 parameters in \fBpfmlib_i386_p6_output_param_t\fR. They are defined as follows:
 .sp
@@ -57,7 +57,7 @@ processor and can distinguish generic P6 processor from a Pentium. Thus no
 special call is needed.
 .sp
 .SH ERRORS
-Refer to the description of \fBpfm_dispatch_events()\fR for errors.
+Refer to the description of the \fBpfm_dispatch_events()\fR function for errors.
 .SH SEE ALSO
 pfm_dispatch_events(3) and set of examples shipped with the library
 .SH AUTHOR
