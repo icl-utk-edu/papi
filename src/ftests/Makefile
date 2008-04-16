@@ -1,5 +1,5 @@
 TESTS 	= strtest zero first  second tenth description fdmemtest\
-          accum highlevel cost johnmay2 native \
+          accum highlevel cost johnmay2 \
 	  case1 case2 clockres eventname fmatrixlowpapi \
 	  fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2 avail 
 UTILOBJS = do_loops.o dummy.o ftests_util.o 
@@ -94,9 +94,6 @@ cost: cost.F $(UTILOBJS) $(PAPILIB)
 
 johnmay2: johnmay2.F $(UTILOBJS) $(PAPILIB)
 	$(F77) $(INCLUDE) $(FTOPTFLAGS) $(FFLAGS) johnmay2.F $(UTILOBJS) $(PAPILIB) -o johnmay2 $(LDFLAGS)
-
-native: native.F $(UTILOBJS) $(PAPILIB)
-	$(F77) $(INCLUDE) $(FTOPTFLAGS) $(FFLAGS) native.F $(UTILOBJS) $(PAPILIB) -o native $(LDFLAGS)
 
 fmultiplex1: fmultiplex1.F $(UTILOBJS) $(PAPILIB)
 	$(F77) $(INCLUDE) $(FTOPTFLAGS) $(FFLAGS) fmultiplex1.F $(UTILOBJS) $(PAPILIB) -o fmultiplex1 $(LDFLAGS)
