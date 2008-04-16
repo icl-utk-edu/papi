@@ -9,7 +9,7 @@ papi_event_chooser: event_chooser.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) event_chooser.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_event_chooser -lm
 
 papi_event_info: event_info.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) event_info.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_event_info -lm
+	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) event_info.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_xml_event_info -lm
 
 
 papi_clockres: ../ctests/clockcore.c clockres.c $(PAPILIB) $(UTILOBJS)
