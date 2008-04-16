@@ -127,6 +127,8 @@ main(int argc, char **argv)
     pthread_t td;
     long n;
 
+    tests_quiet(argc, argv);     /*Set TESTS_QUIET variable */
+
     if (argc < 2 || sscanf(argv[1], "%d", &program_time) < 1)
 	program_time = 6;
     if (argc < 3 || sscanf(argv[2], "%d", &threshold) < 1)
