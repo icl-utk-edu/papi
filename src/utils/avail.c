@@ -17,7 +17,7 @@ static char *is_derived(PAPI_event_info_t *info)
 
 static void print_help(char **argv)
 {
-   printf("Usage: %s [-adht] [-e event name]\n",argv[0]);
+   printf("Usage: %s [options]\n",argv[0]);
    printf("Options:\n\n");
    printf("General command options:\n");
    printf("\t-a, --avail   Display only available preset events\n");
