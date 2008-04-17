@@ -1,9 +1,9 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_NATIVE_AVAIL 1 "April, 2008" -->
+<!-- .TH PAPI_read 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
-Manual Page - papi_native_avail(1)</TITLE>
+Manual Page - PAPI_read(3)</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
 
 <STYLE TYPE="text/css">
@@ -248,6 +248,7 @@ PAPI HOME
 
 <TD CLASS="STYLE">
 
+<P>
 <!-- .SH NAME -->
 <A name=0>
 
@@ -255,7 +256,10 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-papi_native_avail - provides detailed information for PAPI native events.
+PAPI_read - read hardware counters from an event set
+<!-- .LP -->
+<P>
+PAPI_accum - accumulate and reset counters in an event set
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -263,19 +267,45 @@ papi_native_avail - provides detailed information for PAPI native events.
 <BLOCKQUOTE>
 <A HREF=#1>Synopsis</A><BR>
 <A HREF=#2>Description</A><BR>
-<A HREF=#3>Options</A><BR>
-<A HREF=#4>Bugs</A><BR>
-<A HREF=#5>See Also</A><BR>
+<A HREF=#3>Arguments</A><BR>
+<A HREF=#4>Return Values</A><BR>
+<A HREF=#5>Errors</A><BR>
+<A HREF=#6>Examples</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=6>
+<A name=9>
 
      <H3>SYNOPSIS</H3>
 
 </A>
 <BLOCKQUOTE>
-<P>
-<B>papi_native_avail</B> [<I>options</I>]
-<P>
+<!-- .B C Interface -->
+<B>C Interface</B> <!-- .nf -->
+<PRE>
+<!-- .B #include <papi.h> -->
+<B>#include &lt;papi.h&gt;</B> 
+<!-- .BI "int\ PAPI_read(int " EventSet ", long_long *" values ");" -->
+<B>int PAPI_read(int </B><I>EventSet</I><B>, long_long *</B><I>values</I><B>);</B> 
+<!-- .BI "int\ PAPI_read_ts(int " EventSet ", long_long *" values ", long_long *" cyc ");" -->
+<B>int PAPI_read_ts(int </B><I>EventSet</I><B>, long_long *</B><I>values</I><B>, long_long *</B><I>cyc</I><B>);</B> 
+<!-- .BI "int\ PAPI_accum(int " EventSet ", long_long *" values ");" -->
+<B>int PAPI_accum(int </B><I>EventSet</I><B>, long_long *</B><I>values</I><B>);</B> 
+<!-- .fi -->
+</PRE>
+<!-- .B Fortran Interface -->
+<B>Fortran Interface</B> <!-- .nf -->
+<PRE>
+<!-- .B #include "fpapi.h" -->
+<B>#include fpapi.h</B> 
+<!-- .BI PAPIF_read(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check ) -->
+<B>PAPIF_read(C_INT </B><I>EventSet, </I><B>C_LONG_LONG(*) </B><I>values, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .BI PAPIF_read_ts(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_LONG_LONG(*)\  cyc,\  C_INT\  check) -->
+<B>PAPIF_read_ts(C_INT </B><I>EventSet, </I><B>C_LONG_LONG(*) </B><I>values, </I><B>C_LONG_LONG(*) </B><I>cyc, </I><B>C_INT </B><I>check)</I> 
+<!-- .BI PAPIF_accum(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check ) -->
+<B>PAPIF_accum(C_INT </B><I>EventSet, </I><B>C_LONG_LONG(*) </B><I>values, </I><B>C_INT </B><I>check</I><B>)</B> 
+<!-- .fi -->
+</PRE>
 <P>
 <!-- .SH DESCRIPTION -->
 </BLOCKQUOTE>
@@ -285,141 +315,152 @@ papi_native_avail - provides detailed information for PAPI native events.
 
 </A>
 <BLOCKQUOTE>
-<B>papi_native_avail</B> is a PAPI utility program that reports information about the native events available on the current platform.
-A native event is an event specific to a given hardware platform. Some platforms support special features for certain events.
-Those events can be determined by applying filters to the list. On many platforms, native events may have optional settings,
-or unit masks. In such cases, the native event and each unit mask is presented. For each native event, a name, a description,
-and the PAPI event code are provided.
+<P>
+These calls assume an initialized PAPI library and a properly added
+event set.
+<P>
+<!-- .B PAPI_read() -->
+<B>PAPI_read()</B> copies the counters of the indicated event set into
+the array
+<!-- .IR values . -->
+<I>values</I>. The counters continue counting after the read.
+<!-- .LP -->
+<P>
+<!-- .B PAPI_read_ts() -->
+<B>PAPI_read_ts()</B> copies the counters of the indicated event set into
+the array
+<!-- .IR values . -->
+<I>values</I>. It also places a real-time cycle timestamp into
+<!-- .IR cyc . -->
+<I>cyc</I>. The counters continue counting after the read.
+<!-- .LP -->
+<P>
+<!-- .B PAPI_accum() -->
+<B>PAPI_accum()</B> adds the counters of the indicated event set into the array
+<!-- .IR values . -->
+<I>values</I>. The counters are zeroed and continue counting after the operation.
+<!-- .LP -->
+<P>
+Note the differences between PAPI_read() and PAPI_accum(),
+specifically that PAPI_accum() resets the values array to zero.
 <P>
 <P>
-<!-- .SH OPTIONS -->
+<!-- .SH ARGUMENTS -->
 </BLOCKQUOTE>
 <A name=3>
 
-     <H3>OPTIONS</H3>
+     <H3>ARGUMENTS</H3>
 
 </A>
 <BLOCKQUOTE>
+<!-- .I EventSet -->
+<I>EventSet</I> --  an integer handle for a PAPI Event Set as created by
+<!-- .BR "PAPI_create_eventset" (3) -->
+<A HREF="papi_create_eventset.html">PAPI_create_eventset (3)</A>
+<!-- .LP -->
 <P>
-<B>General command options:</B>
+<!-- .I *values -->
+<I>*values</I> -- an array to hold the counter values of the counting events
 <P>
+<!-- .SH RETURN VALUES -->
+</BLOCKQUOTE>
+<A name=4>
+
+     <H3>RETURN VALUES</H3>
+
+</A>
+<BLOCKQUOTE>
+On success, these functions return
+<!-- .B "PAPI_OK." -->
+<B>PAPI_OK.</B> <BR>
+ On error, a non-zero error code is returned.
+<P>
+<!-- .SH ERRORS -->
+</BLOCKQUOTE>
+<A name=5>
+
+     <H3>ERRORS</H3>
+
+</A>
+<BLOCKQUOTE>
 <!-- .TP -->
 <TABLE cellpadding=3>
 <TR valign=top><TD colspan=2>
-<I>-d, --detail</I>
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-Display detailed information about native events.
-<P>
+<!-- .B "PAPI_EINVAL" -->
+<B>PAPI_EINVAL</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+One or more of the arguments is invalid.
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
-<I>-e &lt;event&gt;</I>
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-Display detailed event information for the named native event.
-<P>
+<!-- .B "PAPI_ESYS" -->
+<B>PAPI_ESYS</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+A system or C library call failed inside PAPI, see the
+<!-- .I "errno" -->
+<I>errno</I> variable.
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
-<I>-h, --help</I>
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-Display help information about this utility.
+<!-- .B "PAPI_ENOEVST" -->
+<B>PAPI_ENOEVST</B> </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The event set specified does not exist.
 <P>
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<B>Event filtering and display options:
-<!-- Consumed .TP -->
-<BR>
-(These options may not be present, depending on the architecture. Use </B><I>--help</I><B> to confirm availability.)</B>
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-<P>
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD width=6% nowrap>
-<I>--darr</I>
-</TD><TD valign=bottom>
-Display events supporting Data Address Range Restriction.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD width=6% nowrap>
-<I>--dear</I>
-</TD><TD valign=bottom>
-Display Data Event Address Register events only.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD width=6% nowrap>
-<I>--iarr</I>
-</TD><TD valign=bottom>
-Display events supporting Instruction Address Range Restriction.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD width=6% nowrap>
-<I>--iear</I>
-</TD><TD valign=bottom>
-Display Instruction Event Address Register events only.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD width=6% nowrap>
-<I>--opcm</I>
-</TD><TD valign=bottom>
-Display events supporting OpCode Matching.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<I>--nomasks</I>
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-Suppress display of Unit Mask information.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<I>--nogroups</I>
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-Suppress display of Event grouping information.
-<P>
-<P>
-<!-- .SH BUGS  -->
+<!-- .SH EXAMPLES -->
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
-<A name=4>
+<A name=6>
+
+     <H3>EXAMPLES</H3>
+
+</A>
+<BLOCKQUOTE>
+<!-- .nf -->
+<PRE>
+<!-- .if t .ft CW -->
+<TT>  do_100events();
+  if (PAPI_read(EventSet, values) != PAPI_OK)
+    handle_error(1);
+  /* values[0] now equals 100 */
+  do_100events();
+  if (PAPI_accum(EventSet, values) != PAPI_OK)
+    handle_error(1);
+  /* values[0] now equals 200 */
+  values[0] = -100;
+  do_100events();
+  if (PAPI_accum(EventSet, values) != PAPI_OK)
+    handle_error(1);
+  /* values[0] now equals 0 */
+<!-- .if t .ft P -->
+</TT><!-- .fi -->
+</PRE>
+<P>
+<!-- .SH BUGS -->
+</BLOCKQUOTE>
+<A name=7>
 
      <H3>BUGS</H3>
 
 </A>
 <BLOCKQUOTE>
-There are no known bugs in this utility.
-<!-- .LP -->
-<P>
-If you find a bug, it should be reported to the PAPI Mailing List at &lt;<A HREF="mailto:ptools-perfapi@ptools.org">ptools-perfapi@ptools.org</A>&gt;.
+These functions have no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=5>
+<A name=8>
 
      <H3>SEE ALSO</H3>
 
 </A>
 <BLOCKQUOTE>
-<!-- .BR PAPI "(3), " papi_avail "(1), " papi_clockres "(1), " papi_command_line "(1), " papi_cost "(1), " -->
+<!-- .BR PAPI_set_opt "(3), " PAPI_reset "(3), "  -->
+<A HREF="papi_set_opt.html">PAPI_set_opt (3)</A>, 
+<A HREF="papi_reset.html">PAPI_reset (3)</A>, 
+<!-- .BR PAPI_start "(3), " PAPI "(3), " PAPIF "(3)" -->
+<A HREF="papi_start.html">PAPI_start (3)</A>, 
 <A HREF="papi.html">PAPI (3)</A>, 
-<A HREF="papi_avail.html">papi_avail (1)</A>, 
-<A HREF="papi_clockres.html">papi_clockres (1)</A>, 
-<A HREF="papi_command_line.html">papi_command_line (1)</A>, 
-<A HREF="papi_cost.html">papi_cost (1)</A>, 
-<!-- .BR papi_decode "(1), " papi_event_chooser "(1), " papi_mem_info "(1)" -->
-<A HREF="papi_decode.html">papi_decode (1)</A>, 
-<A HREF="papi_event_chooser.html">papi_event_chooser (1)</A>, 
-<A HREF="papi_mem_info.html">papi_mem_info (1)</A>
+<A HREF="papif.html">PAPIF (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I></I></TD> <TD width=33% align=center>PAPI_NATIVE_AVAIL (1)</TD> <TD align=right width=33%><I>April, 2008</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_read (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>
