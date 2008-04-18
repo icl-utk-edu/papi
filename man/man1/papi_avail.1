@@ -1,39 +1,90 @@
 .\" $Id$
-.TH PAPI_AVAIL 1 "May, 2005"
+.TH PAPI_AVAIL 1 "April, 2008"
 .SH NAME
 papi_avail \- provides availability and detail information for PAPI preset events.
 
 .SH SYNOPSIS
 
-\fBpapi_avail\fP [\fI-adht\fP] [\fI-e event\fP]
+\fBpapi_avail\fP [\fIoptions\fP]
 
 
 .SH DESCRIPTION
 \fBpapi_avail\fP is a PAPI utility program that reports information about the current PAPI installation and supported preset events.
-Using the -e option, it will also display information about specific native events.
+Using the -e option, it will also display detailed information about specific preset or native events.
 
 
 .SH OPTIONS
 
+\fBGeneral command options:\fP
 .TP
-\fI-a\fP
-Display only the available PAPI preset events.
+\fI-a, --avail\fP
+Display only the available (implemented) PAPI preset events.
 
 .TP
-\fI-d\fP
+\fI-d, --detail\fP
 Display PAPI preset event information in a more detailed format.
 
 .TP
-\fI-h\fP
+\fI-h, --help\fP
 Display help information about this utility.
-
-.TP
-\fI-t\fP 
-Display the PAPI preset event information in a tabular format. This is the default.
 
 .TP
 \fI-e <event>\fP 
 Display detailed event information for the named event. This event can be either a preset or a native event.
+
+
+.TP
+\fBEvent filtering options:
+.TP
+(These PAPI preset event filters can be combined in a logical OR)\fP
+
+.TP
+\fI--br\fP 
+Display branch related PAPI preset events.
+
+.TP
+\fI--cache\fP 
+Display cache related PAPI preset events.
+
+.TP
+\fI--cnd\fP 
+Display conditional PAPI preset events.
+
+.TP
+\fI--fp\fP 
+Display Floating Point related PAPI preset events.
+
+.TP
+\fI--ins\fP 
+Display instruction related PAPI preset events.
+
+.TP
+\fI--idl\fP 
+Display Stalled or Idle PAPI preset events.
+
+.TP
+\fI--l1\fP 
+Display level 1 cache related PAPI preset events.
+
+.TP
+\fI--l2\fP 
+Display level 2 cache related PAPI preset events.
+
+.TP
+\fI--l3\fP 
+Display level 3 cache related PAPI preset events.
+
+.TP
+\fI--mem\fP 
+Display memory related PAPI preset events.
+
+.TP
+\fI--msc\fP 
+Display miscellaneous PAPI preset events.
+
+.TP
+\fI--tlb\fP 
+Display Translation Lookaside Buffer PAPI preset events.
 
 .SH BUGS 
 There are no known bugs in this utility. 
