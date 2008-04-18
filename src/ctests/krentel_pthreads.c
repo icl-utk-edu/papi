@@ -142,7 +142,7 @@ main(int argc, char **argv)
     if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
         test_fail(__FILE__,__LINE__,"PAPI_library_init failed",1);
 
-    if (PAPI_thread_init(pthread_self) != PAPI_OK)
+    if (PAPI_thread_init((unsigned long (*)(void)) (pthread_self)) != PAPI_OK)
         test_fail(__FILE__,__LINE__,"PAPI_thread_init failed",1);
 
     if (pthread_key_create(&key, NULL) != 0)
