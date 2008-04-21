@@ -6,6 +6,35 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.32, 2008-04-20
+- Library: add experimental vperfctr_open_mode(mode) procedure.
+  The plain vperfctr_open() always opens the perfctr state in
+  O_CREAT|O_EXCL mode, which means that it will fail if the
+  invoking thread already has a perfctr state. The mode parameter
+  to vperfctr_open_mode() can be used to avoid this behaviour:
+  with mode == 0 no state will be created and a handle to the
+  thread's existing state (if any) is returned; to select the
+  current behaviour pass mode == VPERFCTR_OPEN_CREAT_EXCL to
+  vperfctr_open_mode(). For example:
+
+  the_state_is_shared = 0;
+  vperfctr = vperfctr_open_mode(VPERFCTR_OPEN_CREAT_EXCL);
+  if (vperfctr == NULL && errno == EEXIST) {
+     // error out due to the resource conflict, or:
+     vperfctr = vperfctr_open_mode(0);
+     the_state_is_shared = 1;
+  }
+  ...
+
+  The purpose of this API extension is to hopefully allow PAPI
+  to handle some use cases that currently cause it to error out.
+- Fix 'make install' to select the correct file to install
+  as <asm/perfctr.h>. Fixes regression caused by i386/x86_64
+  arch unification in perfctr-2.6.30. ppc32 also needed fixing.
+- x86: Recognize Intel Family 6 Model 23 as Core2.
+- Updated kernel support: 2.6.25, 2.6.18-53.1.14.el5 (RHEL5),
+  2.6.9-67.0.7.EL (RHEL4).
+
 Version 2.6.31, 2008-01-26
 - x86: Barcelona (AMD Family 10h) updates:
   * Correct CPU type constant to read FAM10H with trailing H.

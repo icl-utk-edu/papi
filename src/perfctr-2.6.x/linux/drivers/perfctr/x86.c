@@ -1593,8 +1593,8 @@ static int __init intel_p6_init(void)
 	if (current_cpu_data.x86_model == 9 ||		/* Pentium M */
 	    current_cpu_data.x86_model == 13 || 	/* Pentium M */
 	    current_cpu_data.x86_model == 14 || 	/* Intel Core */
-	    current_cpu_data.x86_model == 15 || 	/* Intel Core 2 */
-	    current_cpu_data.x86_model == 23) { 	/* Intel Core 2 */
+	    current_cpu_data.x86_model == 15 ||		/* Intel Core 2 */
+	    current_cpu_data.x86_model == 23) {		/* Intel Core 2 */
 		rdmsr_low(MSR_IA32_MISC_ENABLE, misc_enable);
 		if (!(misc_enable & MSR_IA32_MISC_ENABLE_PERF_AVAIL))
 			return -ENODEV;

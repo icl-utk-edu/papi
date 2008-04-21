@@ -3,6 +3,10 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.32, 2008-04-20
+- x86: Recognize Intel Family 6 Model 23 as Core2.
+- x86: Update perfctr_sysclass definition for kernel 2.6.25.
+
 Version 2.6.31, 2008-01-26
 - x86: Correct Barcelona CPU type to read FAM10H not FAM10
   w/o the trailing H. In struct perfctr_cpu_control, place

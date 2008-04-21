@@ -1,7 +1,7 @@
 /* $Id$
  * Library interface to Linux x86 Performance-Monitoring Counters.
  *
- * Copyright (C) 1999-2003  Mikael Pettersson
+ * Copyright (C) 1999-2008  Mikael Pettersson
  */
 
 #ifndef __LIB_PERFCTR_H
@@ -25,6 +25,9 @@ int _vperfctr_read_control(int fd, struct vperfctr_control*);
 int _vperfctr_read_sum(int fd, struct perfctr_sum_ctrs*);
 
 struct vperfctr;	/* opaque */
+
+struct vperfctr *vperfctr_open_mode(unsigned int mode);
+#define VPERFCTR_OPEN_CREAT_EXCL	3
 
 struct vperfctr *vperfctr_open(void);
 int vperfctr_info(const struct vperfctr*, struct perfctr_info*);

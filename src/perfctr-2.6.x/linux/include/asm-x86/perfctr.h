@@ -25,7 +25,7 @@
 #define PERFCTR_X86_AMD_K8C	15	/* Revision C */
 #define PERFCTR_X86_INTEL_P4M3	16	/* model 3 and above */
 #define PERFCTR_X86_INTEL_CORE	17	/* family 6 model 14 */
-#define PERFCTR_X86_INTEL_CORE2	18	/* family 6 models 15 and 23 */
+#define PERFCTR_X86_INTEL_CORE2	18	/* family 6, models 15 and 23 */
 #define PERFCTR_X86_AMD_FAM10H	19	/* family 10h */
 #define PERFCTR_X86_AMD_FAM10	PERFCTR_X86_AMD_FAM10H /* XXX: compat crap, delete soon */
 

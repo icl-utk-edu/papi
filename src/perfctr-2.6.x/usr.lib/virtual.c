@@ -24,7 +24,7 @@
  * future ioctl(dev_perfctr_fd, VPERFCTR_{CREAT,OPEN}, pid) APIs.
  */
 
-static int _vperfctr_open_pid_old(int pid, int try_creat, int try_rdonly, int *isnew)
+static int _vperfctr_open_pid_old(int pid, int try_creat)
 {
     const char *filename;
     char namebuf[64];
@@ -36,32 +36,24 @@ static int _vperfctr_open_pid_old(int pid, int try_creat, int try_rdonly, int *i
 	snprintf(namebuf, sizeof namebuf, "/proc/%d/perfctr", pid);
 	filename = namebuf;
     }
-    *isnew = 1;
-    fd = -1;
     if (try_creat)
 	fd = open(filename, O_RDONLY|O_CREAT);
-    if (fd < 0 && (try_creat ? errno == EEXIST : 1) && try_rdonly) {
-	*isnew = 0;
+    else
 	fd = open(filename, O_RDONLY);
-    }
     return fd;
 }
 
-static int _vperfctr_open_pid_new(int pid, int try_creat, int try_rdonly, int *isnew)
+static int _vperfctr_open_pid_new(int pid, int try_creat)
 {
     int dev_perfctr_fd, fd;
 
     dev_perfctr_fd = open("/dev/perfctr", O_RDONLY);
     if (dev_perfctr_fd < 0)
 	return -1;
-    *isnew = 1;
-    fd = -1;
     if (try_creat)
 	fd = ioctl(dev_perfctr_fd, VPERFCTR_CREAT, pid);
-    if (fd < 0 && (try_creat ? errno == EEXIST : 1) && try_rdonly) {
-	*isnew = 0;
+    else
 	fd = ioctl(dev_perfctr_fd, VPERFCTR_OPEN, pid);
-    }
     close(dev_perfctr_fd);
     return fd;
 }
@@ -72,11 +64,11 @@ static int _vperfctr_open_pid_new(int pid, int try_creat, int try_rdonly, int *i
 
 int _vperfctr_open(int creat)
 {
-    int dummy, fd;
+    int fd;
 
-    fd = _vperfctr_open_pid_new(0, creat, !creat, &dummy);
+    fd = _vperfctr_open_pid_new(0, creat);
     if (fd < 0)
-	fd = _vperfctr_open_pid_old(0, creat, !creat, &dummy);
+	fd = _vperfctr_open_pid_old(0, creat);
     return fd;
 }
 
@@ -106,15 +98,23 @@ struct vperfctr {
     unsigned char have_rdpmc;
 };
 
-static int vperfctr_open_pid(int pid, struct vperfctr *perfctr)
+static int vperfctr_open_pid(int pid, struct vperfctr *perfctr, unsigned int mode)
 {
-    int fd, isnew;
+    int fd, creat;
     struct perfctr_info info;
 
-    fd = _vperfctr_open_pid_new(pid, 1, 0, &isnew);
+    if (mode == 0)
+	creat = 0;
+    else if (mode == VPERFCTR_OPEN_CREAT_EXCL)
+	creat = 1;
+    else {
+	errno = EINVAL;
+	return -1;
+    }
+    fd = _vperfctr_open_pid_new(pid, creat);
     if (fd < 0) {
 	if (errno != EEXIST)
-	    fd = _vperfctr_open_pid_old(pid, 1, 0, &isnew);
+	    fd = _vperfctr_open_pid_old(pid, creat);
 	if (fd < 0)
 	    goto out_perfctr;
     }
@@ -130,24 +130,29 @@ static int vperfctr_open_pid(int pid, struct vperfctr *perfctr)
 	return 0;
     munmap((void*)perfctr->kstate, PAGE_SIZE);
  out_fd:
-    if (isnew)
+    if (creat)
 	vperfctr_unlink(perfctr);
     close(perfctr->fd);
  out_perfctr:
     return -1;
 }
 
-struct vperfctr *vperfctr_open(void)
+struct vperfctr *vperfctr_open_mode(unsigned int mode)
 {
     struct vperfctr *perfctr;
 
     perfctr = malloc(sizeof(*perfctr));
     if (perfctr) {
-	if (vperfctr_open_pid(0, perfctr) == 0)
+	if (vperfctr_open_pid(0, perfctr, mode) == 0)
 	    return perfctr;
 	free(perfctr);
     }
     return NULL;
+}
+
+struct vperfctr *vperfctr_open(void)
+{
+    return vperfctr_open_mode(VPERFCTR_OPEN_CREAT_EXCL);
 }
 
 int vperfctr_info(const struct vperfctr *vperfctr, struct perfctr_info *info)
@@ -326,7 +331,7 @@ struct rvperfctr *rvperfctr_open(int pid)
 
     rvperfctr = malloc(sizeof(*rvperfctr));
     if (rvperfctr) {
-	if (vperfctr_open_pid(pid, &rvperfctr->vperfctr) == 0) {
+	if (vperfctr_open_pid(pid, &rvperfctr->vperfctr, VPERFCTR_OPEN_CREAT_EXCL) == 0) {
 	    rvperfctr->pid = pid;
 	    return rvperfctr;
 	}
