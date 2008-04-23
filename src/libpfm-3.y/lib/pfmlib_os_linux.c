@@ -35,20 +35,30 @@
 #include <perfmon/pfmlib.h>
 #include "pfmlib_priv.h"
 
-#define PFM_pfm_create_context		(sys_base+0)
-#define PFM_pfm_write_pmcs		(sys_base+1)
-#define PFM_pfm_write_pmds		(sys_base+2)
-#define PFM_pfm_read_pmds		(sys_base+3)
-#define PFM_pfm_load_context		(sys_base+4)
-#define PFM_pfm_start			(sys_base+5)
-#define PFM_pfm_stop			(sys_base+6)
-#define PFM_pfm_restart			(sys_base+7)
-#define PFM_pfm_create_evtsets		(sys_base+8)
-#define PFM_pfm_getinfo_evtsets		(sys_base+9)
-#define PFM_pfm_delete_evtsets		(sys_base+10)
-#define PFM_pfm_unload_context		(sys_base+11)
+#define PFM_pfm_create_context		(_sys_base()+0)
+#define PFM_pfm_write_pmcs		(_sys_base()+1)
+#define PFM_pfm_write_pmds		(_sys_base()+2)
+#define PFM_pfm_read_pmds		(_sys_base()+3)
+#define PFM_pfm_load_context		(_sys_base()+4)
+#define PFM_pfm_start			(_sys_base()+5)
+#define PFM_pfm_stop			(_sys_base()+6)
+#define PFM_pfm_restart			(_sys_base()+7)
+#define PFM_pfm_create_evtsets		(_sys_base()+8)
+#define PFM_pfm_getinfo_evtsets		(_sys_base()+9)
+#define PFM_pfm_delete_evtsets		(_sys_base()+10)
+#define PFM_pfm_unload_context		(_sys_base()+11)
 
 static int sys_base; /* syscall base */
+
+void pfm_init_syscalls(void);
+
+static int
+_sys_base()
+{
+	if (!sys_base)
+		pfm_init_syscalls();
+	return sys_base;
+}
 
 /*
  * helper function to retrieve one value from /proc/cpuinfo
@@ -218,7 +228,7 @@ static void adjust_sys_base(int version)
 			break;
 		case 24:
 		default: /* 2.6.24 as default */
-			sys_base = 327;
+			sys_base = 325;
 	}
 }
 #elif defined(__mips__)

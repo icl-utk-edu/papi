@@ -53,8 +53,22 @@ enables the right set of interfaces.
 The common interface is defined in the \fBpfmlib.h\fR header file.
 Model-specific interfaces are defined in model-specific header files.
 For instance, \fBpfmlib_amd64.h\fR provides the AMD64 interface.
-
-.SS SUPPORTED HARDWARE
+.SH ENVIRONMENT VARIABLES
+It is possible to enable certain debug output of the library using environment
+variables. The following variables are defined:
+.TP
+.B LIBPFM_VERBOSE
+Enable verbose output. Value must be 0 or 1. When not set, verbosity level
+can be controlled with this function.
+.TP
+.B LIBPFM_DEBUG
+Enable debug  output. Value must be 0 or 1. When not set, debug level
+can be controlled with this function.
+.sp
+Alternatively, it is possible to control verbosity and debug output using
+the \fBpfm_set_options\fR function.
+.LP
+.SH SUPPORTED HARDWARE
 .nf
 libpfm_amd64(3)     AMD64 processors K8 and Barcelona (families 0Fh and 10h)
 libpfm_core(3)      Intel Core processor family
@@ -73,17 +87,14 @@ Robert Richter <robert.richter@amd.com>
 .if
 .PP
 .SH SEE ALSO
-.nf
-.PP
 libpfm(3), libpfm_amd64(3), libpfm_core(3), libpfm_itanium2(3),
 libpfm_itanium(3), libpfm_montecito(3), libpfm_p6(3),
 libpfm_powerpc(3).
-.PP
-pfm_dispatch_events(3), pfm_find_event(3),
+.nf
+pfm_dispatch_events(3), pfm_find_event(3), pfm_set_options(3),
 pfm_get_cycle_event(3), pfm_get_event_name(3), pfm_get_impl_pmcs(3),
 pfm_get_pmu_name(3), pfm_get_version(3), pfm_initialize(3),
 pfm_regmask_set(3), pfm_set_options(3), pfm_strerror(3).
-.PP
+.fi
+.sp
 Examples shipped with the library
-.if
-.PP

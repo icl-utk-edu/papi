@@ -93,11 +93,35 @@ pfm_config_t pfm_config = {
        .current = NULL
 };
 
+/*
+ * check environment variables for:
+ *  LIBPFM_VERBOSE : enable verbose output (must be 1)
+ *  LIBPFM_DEBUG   : enable debug output (must be 1)
+ */
+static void
+pfm_check_debug_env(void)
+{
+	char *str;
+
+	str = getenv("LIBPFM_VERBOSE");
+	if (str && *str >= '0' && *str <= '9') {
+		pfm_config.options.pfm_verbose = *str - '0';
+		pfm_config.options_env_set = 1;
+	}
+
+	str = getenv("LIBPFM_DEBUG");
+	if (str && *str >= '0' && *str <= '9') {
+		pfm_config.options.pfm_debug = *str - '0';
+		pfm_config.options_env_set = 1;
+	}
+}
+
 int
 pfm_initialize(void)
 {
 	pfm_pmu_support_t **p = supported_pmus;
 
+	pfm_check_debug_env();
 	/*
  	 * syscall mapping, no failure on error
  	 */	
@@ -127,9 +151,13 @@ found:
 int
 pfm_set_options(pfmlib_options_t *opt)
 {
-	if (opt == NULL) return PFMLIB_ERR_INVAL;
-
-	pfm_config.options = *opt;
+	if (opt == NULL)
+		return PFMLIB_ERR_INVAL;
+	/*
+	 * environment variables override program presets
+	 */
+	if (pfm_config.options_env_set == 0)
+		pfm_config.options = *opt;
 
 	return PFMLIB_SUCCESS;
 }

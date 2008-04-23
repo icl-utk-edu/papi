@@ -51,37 +51,39 @@ CFLAGS+= -pthread
 LIBS += -lrt
 endif
 
-TARGETS=whichpmu showevtinfo
+TARGET_GEN=showevtinfo
 
 ifeq ($(SYS),Linux)
-TARGETS +=self task task_attach task_attach_timeout syst \
+TARGET_LINUX +=self task task_attach task_attach_timeout syst \
 	  notify_self notify_self2 notify_self3 \
-	  multiplex multiplex2 set_notify \
+	  multiplex multiplex2 set_notify whichpmu \
 	  showreginfo task_smpl task_smpl_user \
 	  pfmsetup self_smpl_multi self_pipe
 
 XTRA += rtop
 endif
 
-all: $(TARGETS) $(XTRA)
+all: $(TARGET_GEN) $(TARGET_LINUX) $(XTRA)
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 
 rtop: rtop.o detect_pmcs.o $(PFMLIB)
 	$(CC) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^ $(LIBS)  -lpthread -lncurses
 
-$(TARGETS):  %:%.o  detect_pmcs.o $(PFMLIB)
+$(TARGET_LINUX):  %:%.o detect_pmcs.o $(PFMLIB)
 	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS) 
 
+$(TARGET_GEN):  %:%.o $(PFMLIB)
+	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS) 
 clean:
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
-	$(RM) -f *.o $(TARGETS) $(XTRA) *~
+	$(RM) -f *.o $(TARGET_LINUX) $(TARGET_GEN) $(XTRA) *~
 
 distclean: clean
 
-install_examples: $(TARGETS)
-	@echo installing: $(TARGETS)
+install_examples: $(TARGET_LINUX) $(TARGET_GEN)
+	@echo installing: $(TARGET_LINUX) $(TARGET_GEN)
 	-mkdir -p $(DESTDIR)$(EXAMPLESDIR)
-	$(INSTALL) -m 755 $(TARGETS) $(DESTDIR)$(EXAMPLESDIR)
+	$(INSTALL) -m 755 $(TARGET_LINUX) $(TARGET_GEN) $(DESTDIR)$(EXAMPLESDIR)
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 #
 # examples are installed as part of the RPM install, typically in /usr/share/doc/libpfm-X.Y/

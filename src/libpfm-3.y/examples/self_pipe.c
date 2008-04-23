@@ -85,15 +85,6 @@ void sig_handler(int n)
 	quit = 1;
 }
 
-/*
- * our test code (function cannot be made static otherwise it is optimized away)
- */
-void
-noploop(void)
-{
-	for(;quit == 0;);
-}
-
 static void
 do_child(int fr, int fw)
 {
@@ -176,7 +167,7 @@ main(int argc, char **argv)
 	if (ret)
 		fatal_error("cannot pin to CPU%d: %s\n", which_cpu, strerror(errno));
 
-	printf("Both processed pinned to CPU%d\n", which_cpu);
+	printf("Both processes pinned to CPU%d\n", which_cpu);
 
 	pfm_get_num_counters(&num_counters);
 

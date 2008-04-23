@@ -64,6 +64,7 @@ typedef struct {
 typedef struct {
 	pfmlib_options_t	options;
 	pfm_pmu_support_t	*current;
+	int			options_env_set; /* 1 if options set by env variables */
 } pfm_config_t;	
 
 #define PFMLIB_INITIALIZED()	(pfm_config.current != NULL)

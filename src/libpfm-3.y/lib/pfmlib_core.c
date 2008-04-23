@@ -314,14 +314,17 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 			if (pfm_regmask_isset(r_pmcs, 0))
 				return PFMLIB_ERR_NOASSIGN;
 			assign_pc[i] = 0;
-			next_gen++;
+			next_gen = 1;
 			done_pebs = 1;
 		}
 		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_PMC1) {
 			if (pfm_regmask_isset(r_pmcs, 1))
 				return PFMLIB_ERR_NOASSIGN;
 			assign_pc[i] = 1;
-			next_gen++;
+			if (next_gen == 1)
+				next_gen = 2;
+			else
+				next_gen = 0;
 		}
 	}
 	/*
