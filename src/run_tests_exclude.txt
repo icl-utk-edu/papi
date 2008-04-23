@@ -1,0 +1,3 @@
+ctests/exec2
+ctests/forkexec3
+ctests/forkexec4

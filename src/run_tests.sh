@@ -17,6 +17,7 @@ fi
 
 CTESTS=`find ctests -perm -u+x -type f`;
 FTESTS=`find ftests -perm -u+x -type f`;
+EXCLUDE=`cat run_tests_exclude.txt`
 ALLTESTS="$CTESTS $FTESTS";
 x=0;
 CWD=`pwd`
@@ -26,7 +27,28 @@ uname -a
 
 echo ""
 echo "The following test cases will be run:";
-echo $ALLTESTS;
+echo ""
+
+MATCH=0
+for i in $ALLTESTS;
+do
+  for xtest in $EXCLUDE;
+  do
+    if [ "$i" = "$xtest" ]; then
+      MATCH=1
+      break
+    fi;
+  done
+  if [ $MATCH -ne 1 ]; then
+    echo -n "$i "
+  fi;
+  MATCH=0
+done
+echo ""
+
+echo ""
+echo "The following test cases will NOT be run:";
+echo $EXCLUDE;
 
 echo "";
 echo "Running C Tests";
@@ -34,6 +56,14 @@ echo ""
 
 for i in $CTESTS;
 do
+  for xtest in $EXCLUDE;
+  do
+    if [ "$i" = "$xtest" ]; then
+      MATCH=1
+      break
+    fi;
+  done
+  if [ $MATCH -ne 1 ]; then
 if [ -x $i ]; then
 if [ "$i" = "ctests/timer_overflow" ]; then
   echo Skipping test $i, it takes too long...
@@ -59,7 +89,10 @@ echo -n "Running $i: ";
 fi;
 fi;
 fi;
+  fi;
+  MATCH=0
 done
+echo ""
 
 echo ""
 echo "Running Fortran Tests";
@@ -67,8 +100,18 @@ echo ""
 
 for i in $FTESTS;
 do
+  for xtest in $EXCLUDE;
+  do
+    if [ "$i" = "$xtest" ]; then
+      MATCH=1
+      break
+    fi;
+  done
+  if [ $MATCH -ne 1 ]; then
 if [ -x $i ]; then
 echo -n "Running $i: ";
 ./$i $TESTS_QUIET
 fi;
+  fi;
+  MATCH=0
 done
