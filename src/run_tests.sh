@@ -92,7 +92,6 @@ do
   fi;
   MATCH=0
 done
-echo ""
 
 echo ""
 echo "Running Fortran Tests";
