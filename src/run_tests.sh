@@ -17,7 +17,7 @@ fi
 
 CTESTS=`find ctests -perm -u+x -type f`;
 FTESTS=`find ftests -perm -u+x -type f`;
-EXCLUDE=`grep --regexp=# --invert-match run_tests_exclude.txt`
+EXCLUDE=`grep --regexp=^# --invert-match run_tests_exclude.txt`
 ALLTESTS="$CTESTS $FTESTS";
 x=0;
 CWD=`pwd`
@@ -82,10 +82,10 @@ do
           LIBPATH=.:./libpfm-3.y/lib:./libpfm-2.x/libpfm:"$LIBPATH"
       fi
       export LIBPATH
-  ./$i $TESTS_QUIET
+    #  ./$i $TESTS_QUIET
     else
     echo -n "Running $i: ";
-./$i $TESTS_QUIET
+    #./$i $TESTS_QUIET
     fi;
     fi;
     fi;
@@ -110,7 +110,7 @@ do
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
     echo -n "Running $i: ";
-./$i $TESTS_QUIET
+    #./$i $TESTS_QUIET
     fi;
   fi;
   MATCH=0
