@@ -52,6 +52,7 @@ papi_svector_t _linux_pfm_table[] = {
   {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
   {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
   {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
+  {(void (*)())_papi_hwd_write, VEC_PAPI_HWD_WRITE},
   {(void (*)())_papi_hwd_set_profile, VEC_PAPI_HWD_SET_PROFILE},
   {(void (*)())_papi_hwd_stop_profiling, VEC_PAPI_HWD_STOP_PROFILING},
   {(void (*)())_papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
@@ -3160,6 +3161,30 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctl)
 	ctl->pd[i].reg_value = ctl->pd[i].reg_long_reset;
       else
 	ctl->pd[i].reg_value = 0ULL;
+    }
+
+  SUBDBG("PFM_WRITE_PMDS(%d,%p,%d)\n",ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count);
+  if ((ret = pfm_write_pmds(ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count)))
+    {
+      PAPIERROR("pfm_write_pmds(%d,%p,%d): %s",ctl->ctx_fd,ctl->pd,ctl->in.pfp_event_count, pfm_strerror(ret));
+      return(PAPI_ESYS);
+    }
+
+  return (PAPI_OK);
+}
+
+/* write(set) the hardware counters */
+int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctl, long long *from)
+{
+  int i, ret;
+
+  /* Read could have clobbered the values */
+  for (i=0; i < ctl->in.pfp_event_count; i++) 
+    {
+      if (ctl->pd[i].reg_flags & PFM_REGFL_OVFL_NOTIFY)
+	ctl->pd[i].reg_value = ctl->pd[i].reg_long_reset;
+      else
+	ctl->pd[i].reg_value = from[i];
     }
 
   SUBDBG("PFM_WRITE_PMDS(%d,%p,%d)\n",ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count);
