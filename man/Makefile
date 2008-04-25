@@ -1,7 +1,4 @@
-clean:
-	rm -f *~ core man3/*~
-
-install: install-man install-doc
+install: clean install-man install-doc
 
 install-man:
 	@echo "Man pages (MANDIR) being installed in: \"$(MANDIR)\""; 
@@ -23,3 +20,6 @@ install-doc:
 	-cp ./html/*.html $(DOCDIR)/html
 	-chmod go+r $(DOCDIR)/html/*
 
+clean:
+	rm -f *~ core man3/*~
+	rm -f *~ core man1/*~
