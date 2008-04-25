@@ -3174,7 +3174,7 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctl)
 }
 
 /* write(set) the hardware counters */
-int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctl, long long *from)
+int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctl, long_long *from)
 {
   int i, ret;
 
