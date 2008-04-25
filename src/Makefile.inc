@@ -27,6 +27,7 @@ showconf:
 		@echo "Installation LIBDIR : $(LIBDIR)"; 
 		@echo "Installation BINDIR : $(BINDIR)"; 
 		@echo "Installation MANDIR : $(MANDIR)"; 
+		@echo "Installation DOCDIR : $(DOCDIR)"; 
 		@echo "Installation DATADIR: $(DATADIR)"; 
 		@echo
 
