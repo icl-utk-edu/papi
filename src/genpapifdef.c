@@ -27,7 +27,8 @@
 #include <sys/types.h>
 #include <memory.h>
 
-#ifndef __BSD__ /* for Cray Red Storm */ 
+/* Cray Red Storm & FreeBSD OS */
+#if !defined(__BSD__) && !defined(__FreeBSD__)
 #include <malloc.h>
 #endif
 

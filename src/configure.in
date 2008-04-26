@@ -1162,6 +1162,59 @@ fi
 AC_MSG_CHECKING(for Makefile to use)
 if test "x$MAKEVER" = "x"; then
 case "$OS" in
+   freebsd)
+       MAKEVER="freebsd"
+       LDFLAGS="-lpmc"
+
+       # HWPMC driver is available for FreeBSD >= 6
+       FREEBSD_VERSION=`uname -r | cut -c 1`
+       if test "${FREEBSD_VERSION}" -lt 6 ; then
+          AC_MSG_ERROR([PAPI requires at least FreeBSD 6 to work])
+       fi
+
+       # Determine if HWPMC module is on the kernel
+       dmesg | grep hwpmc 2> /dev/null > /dev/null
+       if test "$?" != "0" ; then
+          AC_MSG_WARN([Warning! HWPMC module seems not to be on the kernel. Have you compiled the kernel with HWPMC? (see hwpmc(4))])
+       fi
+
+       # Determine the number of counters
+       echo "/* Automatically generated file by configure */" > freebsd-config.h
+       echo "#ifndef _FREEBSD_CONFIG_H_" >> freebsd-config.h
+       echo "#define _FREEBSD_CONFIG_H_" >> freebsd-config.h
+       echo "" >> freebsd-config.h
+
+       AC_TRY_LINK(
+       [#include <unistd.h>
+        #include <pmc.h>],
+       [int i = pmc_init();],
+       [pmc_pmc_init_linked="yes"], [pmc_pmc_init_linked="no"])
+
+       if test "${pmc_init_linked}" = "no" ; then
+          AC_MSG_ERROR([Failed to link hwpmc example])
+       fi
+
+       AC_TRY_RUN(
+       [ #include <unistd.h>
+         #include <pmc.h>
+         int main()
+         { 
+           const struct pmc_cpuinfo *info;
+           if (pmc_init() < 0) return 0;
+           if (pmc_cpuinfo (&info) < 0) return 0;
+           return info->pm_npmc-1;
+         }
+       ],
+       [ num_counters="0" ], [ num_counters="$?"])
+
+       if test "${num_counters}" = "0" ; then
+          AC_MSG_ERROR([pmc_npmc info returned 0. Please check you have HWPMC module loaded into the kernel (see hwpmc(4))])
+       fi
+
+       echo "#define HWPMC_NUM_COUNTERS ${num_counters}" >> freebsd-config.h
+       echo "" >> freebsd-config.h
+       echo "#endif" >> freebsd-config.h
+   ;;
    aix)
       if test "${OSVER}" = "5"; then
          if test "${CPU}" = "power3"; then 
@@ -1324,6 +1377,7 @@ case "$MAKEVER" in
     linux-perfctr-POWER4|linux-perfctr-POWER5|linux-perfctr-POWER5+|linux-perfctr-POWER6|linux-perfctr-PPC970|linux-perfctr-PPC32);;
     linux-perfctr-POWER4-64bit|linux-perfctr-POWER5-64bit|linux-perfctr-POWER5+-64bit|linux-perfctr-POWER6-64bit|linux-perfctr-PPC970-64bit);;
     linux-perfmon2);;
+    freebsd);;
     *)
     echo Platform $MAKEVER is not supported
     exit -1

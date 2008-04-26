@@ -7,6 +7,8 @@
 *          terpstra@cs.utk.edu
 * Mods:    Philip Mucci
 *          mucci@cs.utk.edu
+* Mods:    Harald Servat
+*          harald.servat@gmail.com
 * Mods:    <your name here>
 *          <your email address>
 */
@@ -138,6 +140,23 @@ PLATFORM NOTES:
 PAPI on Catamount currently supports single event overflow. It does not 
 support multiple event overflow or profiling. Many of the overflow and
 profile tests in the PAPI distribution WILL SEGFAULT in this release.
+
+FreeBSD - i386 & amd64
+*****************************************************************************
+PAPI requires FreeBSD 6 or higher to work.
+
+Kernel needs some modifications to provide PAPI access to the performance 
+monitoring counters. Simply, add "options HWPMC_HOOKS" and "device hwpmc" in
+the kernel configuration file. For i386 systems, add also "device apic".
+(You can obtain more information in hwpmc(4))
+
+After this step, just recompile the kernel, boot it and you are ready to
+follow the "General Installation" steps.
+
+NOTE: 
+HWPMC driver supports the following processors: Intel Pentium 2,
+Intel Pentium Pro, Intel Pentium 3, Intel Pentium M, Intel Celeron,
+Intel Pentium 4, AMD K7 (AMD Athlon) and AMD K8 (AMD Athlon64 / Opteron).
 
 Linux - Itanium I & II
 *****************************************************************************

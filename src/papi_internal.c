@@ -28,6 +28,9 @@
 #include "papi_vector.h"
 #include "papi_vector_redefine.h"
 #include "papi_memory.h"
+#if defined(__FreeBSD__)
+# include <ctype.h>  /* isdigit */
+#endif
 
 /********************/
 /* BEGIN PROTOTYPES */

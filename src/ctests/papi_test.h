@@ -16,7 +16,9 @@
 
 #include <errno.h>
 #include <memory.h>
+#if !defined(__FreeBSD__)
 #include <malloc.h>
+#endif
 #include <assert.h>
 #include <string.h>
 #include <fcntl.h>
