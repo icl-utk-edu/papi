@@ -148,15 +148,27 @@ PAPI requires FreeBSD 6 or higher to work.
 Kernel needs some modifications to provide PAPI access to the performance 
 monitoring counters. Simply, add "options HWPMC_HOOKS" and "device hwpmc" in
 the kernel configuration file. For i386 systems, add also "device apic".
-(You can obtain more information in hwpmc(4))
+(You can obtain more information in hwpmc(4), see NOTE 1 to check the
+supported HW)
 
-After this step, just recompile the kernel, boot it and you are ready to
-follow the "General Installation" steps.
+After this step, just recompile the kernel and boot it.
 
-NOTE: 
+FreeBSD 7 does not ship with a fortran compiler. To compile fortan tests
+you will need to install a fortran compiler first (e.g. installing it from
+/usr/ports/lang/gcc42), and setup the F77 environment variable with the 
+compiler you want to use (e.g. gfortran42). 
+
+Now, see NOTE 2, and follow the "General Installation" steps.
+
+NOTE 1: 
 HWPMC driver supports the following processors: Intel Pentium 2,
 Intel Pentium Pro, Intel Pentium 3, Intel Pentium M, Intel Celeron,
 Intel Pentium 4, AMD K7 (AMD Athlon) and AMD K8 (AMD Athlon64 / Opteron).
+
+NOTE 2:
+Fortran compilers may issue errors due to "Integer too big for its kind *".
+Add to FFLAGS environment variable a compiler option to use int*8 by default
+(in gfortran42 it is -fdefault-integer-8).
 
 Linux - Itanium I & II
 *****************************************************************************
