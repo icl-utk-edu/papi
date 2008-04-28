@@ -7003,6 +7003,142 @@ echo "$as_me:$LINENO: checking for Makefile to use" >&5
 echo $ECHO_N "checking for Makefile to use... $ECHO_C" >&6
 if test "x$MAKEVER" = "x"; then
 case "$OS" in
+   freebsd)
+       MAKEVER="freebsd"
+       LDFLAGS="-lpmc"
+
+       # HWPMC driver is available for FreeBSD >= 6
+       FREEBSD_VERSION=`uname -r | cut -c 1`
+       if test "${FREEBSD_VERSION}" -lt 6 ; then
+          { { echo "$as_me:$LINENO: error: PAPI requires at least FreeBSD 6 to work" >&5
+echo "$as_me: error: PAPI requires at least FreeBSD 6 to work" >&2;}
+   { (exit 1); exit 1; }; }
+       fi
+
+       # Determine if HWPMC module is on the kernel
+       dmesg | grep hwpmc 2> /dev/null > /dev/null
+       if test "$?" != "0" ; then
+          { echo "$as_me:$LINENO: WARNING: Warning! HWPMC module seems not to be on the kernel. Have you compiled the kernel with HWPMC? (see hwpmc(4))" >&5
+echo "$as_me: WARNING: Warning! HWPMC module seems not to be on the kernel. Have you compiled the kernel with HWPMC? (see hwpmc(4))" >&2;}
+       fi
+
+       # Determine the number of counters
+       echo "/* Automatically generated file by configure */" > freebsd-config.h
+       echo "#ifndef _FREEBSD_CONFIG_H_" >> freebsd-config.h
+       echo "#define _FREEBSD_CONFIG_H_" >> freebsd-config.h
+       echo "" >> freebsd-config.h
+
+       cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <unistd.h>
+        #include <pmc.h>
+int
+main ()
+{
+int i = pmc_init();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  pmc_pmc_init_linked="yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+pmc_pmc_init_linked="no"
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+
+       if test "${pmc_init_linked}" = "no" ; then
+          { { echo "$as_me:$LINENO: error: Failed to link hwpmc example" >&5
+echo "$as_me: error: Failed to link hwpmc example" >&2;}
+   { (exit 1); exit 1; }; }
+       fi
+
+       if test "$cross_compiling" = yes; then
+  { { echo "$as_me:$LINENO: error: cannot run test program while cross compiling
+See \`config.log' for more details." >&5
+echo "$as_me: error: cannot run test program while cross compiling
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+ #include <unistd.h>
+         #include <pmc.h>
+         int main()
+         {
+           const struct pmc_cpuinfo *info;
+           if (pmc_init() < 0) return 0;
+           if (pmc_cpuinfo (&info) < 0) return 0;
+           return info->pm_npmc-1;
+         }
+
+_ACEOF
+rm -f conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+   num_counters="0"
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+( exit $ac_status )
+ num_counters="$?"
+fi
+rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+
+       if test "${num_counters}" = "0" ; then
+          { { echo "$as_me:$LINENO: error: pmc_npmc info returned 0. Please check you have HWPMC module loaded into the kernel (see hwpmc(4))" >&5
+echo "$as_me: error: pmc_npmc info returned 0. Please check you have HWPMC module loaded into the kernel (see hwpmc(4))" >&2;}
+   { (exit 1); exit 1; }; }
+       fi
+
+       echo "#define HWPMC_NUM_COUNTERS ${num_counters}" >> freebsd-config.h
+       echo "" >> freebsd-config.h
+       echo "#endif" >> freebsd-config.h
+   ;;
    aix)
       if test "${OSVER}" = "5"; then
          if test "${CPU}" = "power3"; then
@@ -7180,6 +7316,7 @@ case "$MAKEVER" in
     linux-perfctr-POWER4|linux-perfctr-POWER5|linux-perfctr-POWER5+|linux-perfctr-POWER6|linux-perfctr-PPC970|linux-perfctr-PPC32);;
     linux-perfctr-POWER4-64bit|linux-perfctr-POWER5-64bit|linux-perfctr-POWER5+-64bit|linux-perfctr-POWER6-64bit|linux-perfctr-PPC970-64bit);;
     linux-perfmon2);;
+    freebsd);;
     *)
     echo Platform $MAKEVER is not supported
     exit -1
