@@ -5,7 +5,25 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#if PAPI_VERSION_MAJOR(PAPI_VERSION)>=3 && \
+    PAPI_VERSION_MINOR(PAPI_VERSION)>=9
+
 #define MAX_COMPONENTS 8
+
+#else
+
+#define MAX_COMPONENTS 1
+
+typedef PAPI_substrate_info_t PAPI_component_info_t;
+
+#define PAPI_COMPONENT_INDEX
+#define PAPI_COMPONENT_MASK 
+
+#define PAPI_num_components()  1
+#define PAPI_get_component_info(a__) PAPI_get_substrate_info()
+
+#endif
+
 
 int EventSet[MAX_COMPONENTS];
 int NumEvents[MAX_COMPONENTS];
@@ -281,7 +299,7 @@ int main( int argc, char *argv[] )
       comp = PAPI_get_component_info(cidx);
 
       fprintf(stdout, "<component index=\"%d\" type=\"%s\" id=\"%s\">\n", 
-	      cidx, cidx?component_type(comp->name):"CPU", comp->name );
+	      cidx, cidx?component_type((char*)(comp->name)):"CPU", comp->name );
 
       if( native )
 	enum_events(stdout, cidx, comp, PAPI_NATIVE_MASK);
@@ -297,7 +315,7 @@ int main( int argc, char *argv[] )
 	  comp = PAPI_get_component_info(cidx);
 
 	  fprintf(stdout, "<component index=\"%d\" type=\"%s\" id=\"%s\">\n", 
-		  cidx, cidx?component_type(comp->name):"CPU", comp->name );
+		  cidx, cidx?component_type((char*)(comp->name)):"CPU", comp->name );
 	  
 	  if( native )
 	    enum_events(stdout, cidx, comp, PAPI_NATIVE_MASK);
