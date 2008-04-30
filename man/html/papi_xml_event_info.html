@@ -1,9 +1,9 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_NATIVE_AVAIL 1 "April, 2008" -->
+<!-- .TH PAPI_XML_EVENT_INFO 1 "April, 2008" -->
 <HTML>
 <HEAD>
 <TITLE>
-Manual Page - papi_native_avail(1)</TITLE>
+Manual Page - papi_xml_event_info(1)</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
 
 <STYLE TYPE="text/css">
@@ -255,7 +255,7 @@ PAPI HOME
 
 </A>
 <BLOCKQUOTE>
-papi_native_avail - provides detailed information for PAPI native events.
+papi_xml_event_info - provides event information for PAPI preset and native events in xml format.
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -274,7 +274,7 @@ papi_native_avail - provides detailed information for PAPI native events.
 </A>
 <BLOCKQUOTE>
 <P>
-<B>papi_native_avail</B> [<I>options</I>]
+<B>papi_xml_event_info</B> [<I>options</I>]
 <P>
 <P>
 <!-- .SH DESCRIPTION -->
@@ -285,11 +285,15 @@ papi_native_avail - provides detailed information for PAPI native events.
 
 </A>
 <BLOCKQUOTE>
-<B>papi_native_avail</B> is a PAPI utility program that reports information about the native events available on the current platform.
-A native event is an event specific to a given hardware platform. Some platforms support special features for certain events.
-Those events can be determined by applying filters to the list. On many platforms, native events may have optional settings,
-or unit masks. In such cases, the native event and each unit mask is presented. For each native event, a name, a description,
-and the PAPI event code are provided.
+<B>papi_xml_event_info</B> is a PAPI utility program that reports information about the preset and
+native events available on the current platform. A preset event is a PAPI defined platform independent
+event composed of one or more native events. A native event is an event specific to a given hardware
+platform. Similar information to that presented with <B>papi_avail</B> or <B>papi_native_avail</B> is
+presented, but in an xml format that is suitable for parsing by higher level performance tools.
+<BR>
+ For each event, an index, a name, a description, and a PAPI event code are provided. In addition,
+<BR>
+ extra information, like available unit masks, may also be provided for native events.
 <P>
 <P>
 <!-- .SH OPTIONS -->
@@ -301,88 +305,34 @@ and the PAPI event code are provided.
 </A>
 <BLOCKQUOTE>
 <P>
-<B>General command options:</B>
-<P>
 <!-- .TP -->
 <TABLE cellpadding=3>
-<TR valign=top><TD colspan=2>
-<I>-d, --detail</I>
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-Display detailed information about native events.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<I>-e &lt;event&gt;</I>
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-Display detailed event information for the named native event.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<I>-h, --help</I>
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+<TR valign=top><TD width=6% nowrap>
+<I>-h</I>
+</TD><TD valign=bottom>
 Display help information about this utility.
 <P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD width=6% nowrap>
+<I>-p</I>
+</TD><TD valign=bottom>
+Output information on only preset events.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD width=6% nowrap>
+<I>-n</I>
+</TD><TD valign=bottom>
+Output information on only native events.
 <P>
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
-<B>Event filtering and display options:
-<!-- Consumed .TP -->
-<BR>
-(These options may not be present, depending on the architecture. Use </B><I>--help</I><B> to confirm availability.)</B>
+<I>-c &lt;index&gt;</I>
 </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-<P>
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD width=6% nowrap>
-<I>--darr</I>
-</TD><TD valign=bottom>
-Display events supporting Data Address Range Restriction.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD width=6% nowrap>
-<I>--dear</I>
-</TD><TD valign=bottom>
-Display Data Event Address Register events only.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD width=6% nowrap>
-<I>--iarr</I>
-</TD><TD valign=bottom>
-Display events supporting Instruction Address Range Restriction.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD width=6% nowrap>
-<I>--iear</I>
-</TD><TD valign=bottom>
-Display Instruction Event Address Register events only.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD width=6% nowrap>
-<I>--opcm</I>
-</TD><TD valign=bottom>
-Display events supporting OpCode Matching.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<I>--nomasks</I>
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-Suppress display of Unit Mask information.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<I>--nogroups</I>
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-Suppress display of Event grouping information.
+Output event information for component &lt;index&gt;. This option applies specifically to the
+PAPI-C version of this utility.
 <P>
 <P>
 <!-- .SH BUGS  -->
@@ -413,14 +363,13 @@ If you find a bug, it should be reported to the PAPI Mailing List at &lt;<A HREF
 <A HREF="papi_clockres.html">papi_clockres (1)</A>, 
 <A HREF="papi_command_line.html">papi_command_line (1)</A>, 
 <A HREF="papi_cost.html">papi_cost (1)</A>, 
-<!-- .BR papi_event_chooser "(1), " papi_mem_info "(1), " papi_native_avail "(1), " papi_xml_event_info "(1)" -->
+<!-- .BR papi_event_chooser "(1), " papi_mem_info "(1), " papi_native_avail "(1)" -->
 <A HREF="papi_event_chooser.html">papi_event_chooser (1)</A>, 
 <A HREF="papi_mem_info.html">papi_mem_info (1)</A>, 
-<A HREF="papi_native_avail.html">papi_native_avail (1)</A>, 
-<A HREF="papi_xml_event_info.html">papi_xml_event_info (1)</A>
+<A HREF="papi_native_avail.html">papi_native_avail (1)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I></I></TD> <TD width=33% align=center>PAPI_NATIVE_AVAIL (1)</TD> <TD align=right width=33%><I>April, 2008</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I></I></TD> <TD width=33% align=center>PAPI_XML_EVENT_INFO (1)</TD> <TD align=right width=33%><I>April, 2008</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>
