@@ -59,7 +59,6 @@ void papi_init(int argc, char **argv)
 {
   int i;
   int retval;
-  const PAPI_hw_info_t *hwinfo = NULL;
   
   tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
   
