@@ -43,7 +43,6 @@ $(SHLIB): $(SOURCES) $(SHLIBOBJS)
 	rm -f $(SHLIB)
 	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(LDFLAGS) $(SHLIBDEPS) 
 	-$(POST_BUILD)
-	rm -rf libpapi.so; ln -s $(SHLIB) libpapi.so
 
 papi_fwrappers_.c: papi_fwrappers.c $(HEADERS)
 	$(CPP) -DFORTRANUNDERSCORE papi_fwrappers.c > papi_fwrappers_.c 
