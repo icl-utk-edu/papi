@@ -83,9 +83,9 @@ For complete details on the command-line options:
 Operating System Specific Installation Steps (In Alphabetical Order by OS)
 *****************************************************************************
 
-AIX - IBM POWER3, POWER4, POWER5
+AIX - IBM POWER3, POWER4, POWER5, POWER6
 *****************************************************************************
-PAPI is supported on AIX 5.x for POWER3, POWER4 and POWER5.
+PAPI is supported on AIX 5.x for POWER3,4,5 and 6.
 Use ./configure to select the desired make options for your system, 
 specifying the --with_bitmode=32 or --with-bitmode=64 to select wordlength.
 32 bits is the default.
@@ -117,13 +117,27 @@ WARNING: ./configure might fail if the cross compiler is not in your path.
 	 In that is the case, just add it to your path 
 	 and everything should work.
 
-Catamount - Cray XT3 Opteron
+Catamount - Cray XT3/XT4 Opteron
 *****************************************************************************
-The Cray XT3 is also a cross-compiled environment. In this case, configure
-can automatically detect that fact and make appropriate default assignments.
+The Cray XT3/4 is a cross-compiled environment. In this case, configure
+can automatically detect the catamount operating system and make appropriate
+default assignments. Alternatively, you can specify the OS to configure.
 Please note that although Catamount contains the necessary PerfCtr patches
-to access the hardware counters, a customzed copy of the Perfctr 2.5.4 source
+to access the hardware counters, a customized copy of the Perfctr 2.5.4 source
 is necessary to compile and link PAPI. Contact Cray for a copy of these sources.
+
+Before running configure to create the make file that supports a Catamount
+build of PAPI and perfctr-2.5.4, execute the following module commands:
+
+% module purge
+% module load Base-opts PrgEnv-gnu
+% module load xtpe-target-catamount
+% module swap xt-mpt xt-mpt/2.x
+% module swap gcc gcc/3.2.3
+
+Execute configure
+
+% configure --prefix=<install-dir> --with-OS=catamount
 
 The testing targets in the make file will not work in the Catamount 
 environment. It is necessary to log into an interactive session and run the 
@@ -140,6 +154,69 @@ PLATFORM NOTES:
 PAPI on Catamount currently supports single event overflow. It does not 
 support multiple event overflow or profiling. Many of the overflow and
 profile tests in the PAPI distribution WILL SEGFAULT in this release.
+
+CNL - Cray XT3/XT4 Opteron
+*****************************************************************************
+The Cray XT3/4 is  a cross-compiled environment. You must specify the OS and
+perfmon version to configure as shown below.
+
+Before running configure to create the make file that supports a Cray XT CNL
+build of PAPI, execute the following module commands:
+
+% module purge
+% module load xtpe-target-cnl
+% module load PrgEnv-gnu
+
+Check CNL compute nodes for the version of perfmon2 that it supports:
+
+% aprun -b -a xt cat /sys/kernel/perfmon/version
+
+and use this version when configuring PAPI:
+
+% configure --with-perfmon=23 --prefix=<install-dir> --with-OS=CNL
+
+The testing targets in the make file will not work in the XT CNL environment.
+It is necessary to log into an interactive session and run the tests
+manually through the job submission system. For example, instead of:
+	% make test
+use:
+	% aprun -n1 ctests/zero
+and instead of:
+	% make fulltest
+use:
+	% ./run_cat_tests.sh
+after substituting "aprun -n1" for "yod -sz 1" in run_cat_tests.sh.
+
+CNL - Cray X2
+*****************************************************************************
+The Cray X2 is a cross-compiled environment. You must specify the OS and
+perfmon version to configure as shown below.
+
+Before running configure to create the make file that supports a Cray X2 CNL
+build of PAPI, execute the following module commands:
+
+% module purge
+% module load PrgEnv-x2
+
+Check CNL compute nodes for the version of perfmon2 that it supports:
+
+% aprun -b -a x2 cat /sys/kernel/perfmon/version
+
+and use this version when configuring PAPI:
+
+% configure --with-perfmon=23 --prefix=<install-dir> --with-OS=CNL
+
+The testing targets in the make file will not work in the X2 CNL environment.
+It is necessary to log into an interactive session and run the tests
+manually through the job submission system. For example, instead of:
+	% make test
+use:
+	% aprun -n1 ctests/zero
+and instead of:
+	% make fulltest
+use:
+	% ./run_cat_tests.sh
+after substituting "aprun -n1" for "yod -sz 1" in run_cat_tests.sh.
 
 FreeBSD - i386 & amd64
 *****************************************************************************
@@ -170,7 +247,7 @@ Fortran compilers may issue errors due to "Integer too big for its kind *".
 Add to FFLAGS environment variable a compiler option to use int*8 by default
 (in gfortran42 it is -fdefault-integer-8).
 
-Linux - Itanium I & II
+Linux - Itanium I, II, Montecito, Montvale
 *****************************************************************************
 PAPI on Itanium Linux links to the perfmon library. The library version and 
 the Itanium version are automatically determined by configure.
@@ -181,19 +258,18 @@ to learn more about these options.
 
 Follow the general installation instructions to complete your installation.
 
+PERFMON2:
+The Itanium Linux kernel comes preconfigured with the perfmon driver. If you
+choose, you can patch your kernel with the newer perfmon2 driver, found at
+http://sourceforge.net/projects/perfmon2. The standard installation procdeure
+applies in this case; configure and make will recognize the proper driver.
+Since this software is still evolving, not all features are guaranteed to work.
+
 PLATFORM NOTES:
 The earprofile test fails under perfmon for Itanium I and II. It has been
-reconfigured to work on the upcoming perfmon2 interface.
+reconfigured to work on the perfmon2 interface.
 
-Linux - Itanium Montecito
-*****************************************************************************
-A preliminary implementation of PAPI for Montecito is available in this
-release. It can be configured using either libpfm or the beta perfmon2
-implementation. Your operating system will require a kernel patch to use
-perfmon2. Contact the PAPI team if you are interested in experimenting
-with this implementation. CAVEAT EMPTOR.
-
-Linux - PPC64 (POWER5, POWER4, and PowerPC970)
+Linux - PPC64 (POWER4,5,6 and PowerPC970)
 ****************************************************************************
 Linux/PPC64 requires that the kernel be patched and recompiled with the
 PerfCtr patch.   The required patches and complete installation instructions
@@ -219,9 +295,22 @@ Follow the general installation instructions to complete your installation.
 
 Linux/x86 - Intel Pentium, Core and AMD Athlon, Opteron
 *****************************************************************************
-Linux/x86 requires that the kernel be patched and recompiled with the PerfCtr
-patch. The required patches and complete installation instructions are 
-provided in the papi/src/perfctr-x.y directory. Please see the INSTALL file
+Linux/x86 requires that the kernel be patched and recompiled to enable access
+to the performance counters.
+
+Historically, PAPI has used the PerfCtr patch.
+This version of PAPI also supports the perfmon2 patch found at
+http://sourceforge.net/projects/perfmon2. Installation details for perfmon2
+can also be found at this website. Since this software is still evolving, 
+not all features are guaranteed to work on all platforms.
+
+No matter which driver is installed, this version of PAPI still builds the 
+libpfm library to provide information on native events.
+
+Detailed instructions on installing the perfctr patch are provided below.
+
+The required perfctr patches and complete installation instructions are 
+provided in the papi/src/perfctr-2.6.x directory. Please see the INSTALL file
 in that directory.
 
 Do not forget, you also need to build your kernel with APIC support in order
@@ -304,12 +393,16 @@ MIPS - IRIX 6.5
 No additional steps are required to install PAPI on IRIX. Follow the 
 general installation guide, and everything should work.
 
-
 Solaris 8 - Ultrasparc
 *****************************************************************************
 The only requirement for Solaris is that you must be running version 2.8 or 
 newer.  As long as that requirement is met, no additional steps are required 
 to install PAPI and you can follow the general installation guide.
+
+Solaris 10 - Ultrasparc
+*****************************************************************************
+PAPI is not yet implemented on Solaris 10, but work is underway. Check the 
+PAPI website for current information.
 
 Unicos - Cray X1
 *****************************************************************************
@@ -317,25 +410,17 @@ No additional steps are required to get PAPI working on Unicos.
 Follow the general installation guide, and everything should work.
 
 PLATFORM NOTES:
-Cray X1 currently fails on ctests/overflow_force_software.
+Cray X1 is not actively supported. PAPI 3.6 currently compiles and links and
+successfully completes many tests, but has not been fulled debugged on all tests.
+If you have a need for a specific unimplemented feature on this platform, either 
+use PAPI 3.5 or contact the PAPI team for support.
 
 
 Windows XP/2000/Server 2003 - Intel Pentium III or AMD Athlon / Opteron
 *****************************************************************************
+PAPI 3.6 has not been ported to or tested on Windows. This is left as an
+exercise for the student.
 PAPI 3.5 for Windows runs on Pentium III, Athlon and Opteron, for 
-Windows 2000, Windows XP and Windows Server 2003.
-
-Earlier versions of PAPI for Windows provided a self-installing executable.
-That is not the case with the current release.
-
-The Windows source tree comes with Microsoft Visual Studio Version 8 projects
-to build a graphical shell application, the PAPI library as a DLL, a kernel 
-driver to provide access to the counters, and a collection of C test programs.
-
-The WinPMC driver must be installed with administrator privileges. See the 
-winpmc.html file in the papi/win2k/winpmc directory for details on building 
-and installing this driver.
-
-The general installation instructions are irrelevant for Windows.
-
+Windows 2000, Windows XP and Windows Server 2003. If you must run PAPI on a
+Windows platform, please use PAPI 3.5.
 

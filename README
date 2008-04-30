@@ -14,10 +14,11 @@ LICENSE.txt	The text of the PAPI license.
 INSTALL.txt	Instructions for installing on all supported platforms.
 HISTORY.txt	A brief history of features and platforms added to PAPI.
 doc/ 		User documentation and support files.
-		See doc/README for details.
-man/ 		Stuff related to PAPI man pages. See man/README for details.
+			See doc/README for details.
+man/ 		Stuff related to PAPI man pages.
+			See man/README for details.
 src/ 		The PAPI library source files and support files.
-		See src/README for more details.
+			See src/README for details.
 
 
 Getting Started

@@ -1,5 +1,5 @@
 ===============================================================================
-PAPI 3.5.0 RELEASE NOTES                                            07 Nov 2006
+PAPI 3.6.0 RELEASE NOTES                                            25 Apr 2008
 ===============================================================================
 
 This file documents changes in recent PAPI releases in inverse chronological
@@ -9,18 +9,18 @@ For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 
 For specific and detailed information on changes made in this release, grep
-the ChangeLogP350.txt file for keywords of interest or go directly to the PAPI
+the ChangeLogP360.txt file for keywords of interest or go directly to the PAPI
 cvs tree.
 
 
 GENERAL NOTES
 ===============================================================================
-This release is a major upgrade to PAPI 3.2.1. It introduces support for  
+This release is a major upgrade to PAPI 3.5.0. It introduces support for  
 several new platforms, introduces a few new features, and contains a myriad 
 number of bug fixes, consolidations, and enhancements. These changes are
 summarized below.
 
-If you are currently using PAPI 3.2.1 or earlier,
+If you are currently using PAPI 3.5.0 or earlier,
 it is recommended that you upgrade to this version.
 
 As always, if you identify strange behavior or demonstrable bugs, please
@@ -28,6 +28,28 @@ contact the PAPI team or one of the PAPI development lists.
 
 And visit the PAPI website for the latest updates:
 http://icl.cs.utk.edu/papi/
+
+
+CHANGES IN PAPI 3.6.0 SINCE PAPI 3.5.0
+===============================================================================
+Bug Fixes:
+----------
+- too numerous to enumerate...
+
+Enhancements:
+-------------
+
+New Platforms:
+-------------
+
+Major Issues:
+-------------
+
+Experimental:
+-------------
+
+Known Bugs:
+-----------
 
 
 CHANGES IN PAPI 3.5.0 SINCE PAPI 3.2.1
