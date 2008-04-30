@@ -7,6 +7,7 @@ perl manServer_papi.pl -o html man1/papi_decode.1
 perl manServer_papi.pl -o html man1/papi_event_chooser.1
 perl manServer_papi.pl -o html man1/papi_mem_info.1
 perl manServer_papi.pl -o html man1/papi_native_avail.1
+perl manServer_papi.pl -o html man1/papi_xml_event_info.1
 
 REM PAPI Miscellaneous Pages
 perl manServer_papi.pl -o html man3/PAPI.3
