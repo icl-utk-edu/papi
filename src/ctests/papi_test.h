@@ -9,6 +9,9 @@
 #ifndef _WIN32
 #include <unistd.h>
 #include <sys/wait.h>
+#if (!defined(NO_DLFCN) && !defined(_BGL)) 
+#include <dlfcn.h>
+#endif
 #endif
 
 #include <errno.h>
