@@ -1162,6 +1162,9 @@ main(int argc, char **argv)
 			f_final,
 			1000000000.0 / f_final);
 
+		if (f_ns != f_final)
+			printf("Not getting the expected frequency due to kernel/hw limitation\n");
+
 		/* adjust period */
 		options.smpl_freq_ns = f_final;
 
