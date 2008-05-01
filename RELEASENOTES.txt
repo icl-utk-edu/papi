@@ -34,22 +34,48 @@ CHANGES IN PAPI 3.6.0 SINCE PAPI 3.5.0
 ===============================================================================
 Bug Fixes:
 ----------
-- too numerous to enumerate...
+- myriad; see ChangeLog360.txt for details
 
 Enhancements:
 -------------
+- native events for Linux/Intel/AMD systems now all follow the perfmon2
+  naming scheme: EVENT_NAME:UMASK1:UMASK2:...
+- encoding of preset event definitions in a text file: perfmon_events.csv
+- enhancements to papi_avail; see "papi_avail -h" for details
+- enhancements to papi_native_avail; see "papi_native_avail -h" for details
+- new papi_xml_event_info to present preset and native event info in xml format
+  for easier consumption by higher level tools
+- PAPI_write supported on perfmon2-based systems;
+  useful for checkpoint/restart applications
+- PAPI_read_ts implemented for fast read with timestamp; see man page
 
 New Platforms:
 -------------
+- AMD Opteron Barcelona Quad Core
+- Cray XT3/4 running CNL and perfmon2
+- Cray X2 prerelease running CNL and perfmon2
+- Itanium Montecito and Montvale with perfmon and perfmon2
+- FreeBSD with the HWPMC kernel driver for Intel and AMD
+- POWER6 with Linux
 
 Major Issues:
 -------------
+- issues have been identified when using PAPI_overflow with fork and exec
+  - perfmon2 requires a PAPI_shutdown before a fork
+  - perfctr requires a PAPI_shutdown before an exec
+  - this likely does not affect simple counting
 
 Experimental:
 -------------
+- perfmon2 is not yet mainstream and undergoing rapid development;
+  systems using this kernel mod should be considered experimental
 
 Known Bugs:
 -----------
+- TBD
+- all_native_events fails on REPLAY_EVENT for Pentium4
+- all_native_events fails on a subset of 39 events for Itanium Montecito/Montvale
+- overflow/profile behavior is indeterminate for Cray X1
 
 
 CHANGES IN PAPI 3.5.0 SINCE PAPI 3.2.1
