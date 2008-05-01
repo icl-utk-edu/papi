@@ -94,7 +94,7 @@ int test_event( int cidx, int evt )
 
   retval = PAPI_add_event(EventSet[cidx], evt);
   if ( retval != PAPI_OK ) {
-    // fprintf(stdout, "*** Cannot add %d\n", evt);
+    /* fprintf(stdout, "*** Cannot add %d\n", evt);*/
     return 0;
   }
   
