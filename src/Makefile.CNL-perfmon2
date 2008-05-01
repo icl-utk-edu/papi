@@ -12,6 +12,7 @@ TESTS		= ctests
 else
 
 COMPILER	= CRAYXT
+CFLAGS		+= -D __crayxt
 
 endif
 

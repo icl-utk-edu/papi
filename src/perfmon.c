@@ -3270,10 +3270,28 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctl,
    return PAPI_OK;
 }
 
+#if defined(__crayxt) || defined(__crayx2)
+int _papi_hwd_start_create_context = 0;	/* CrayPat checkpoint support */
+#endif /* XT/X2 */
 
 int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctl)
 {
   int i, ret; 
+
+#if defined(__crayxt) || defined(__crayx2)
+  if (_papi_hwd_start_create_context) {
+    pfarg_ctx_t tmp;
+
+    memset (&tmp, 0, sizeof(tmp));
+    if ((ret = pfm_create_context(&tmp, NULL, NULL, 0)) == -1)
+    {
+      PAPIERROR("_papi_hwd_init:pfm_create_context(): %s", strerror(errno));
+      return(PAPI_ESYS);
+    }
+    tune_up_fd(ret);
+    ctl->ctx_fd = ctx->ctx_fd = ret;
+  }
+#endif /* XT/X2 */
 
   if (ctl->num_sets > 1)
     {
