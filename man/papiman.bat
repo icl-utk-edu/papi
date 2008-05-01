@@ -55,6 +55,7 @@ perl manServer_papi.pl -o html man3/PAPI_perror.3
 perl manServer_papi.pl -o html man3/PAPI_profil.3
 perl manServer_papi.pl -o html man3/PAPI_query_event.3
 perl manServer_papi.pl -o html man3/PAPI_read.3
+perl manServer_papi.pl -o html man3/PAPI_read_ts.3
 perl manServer_papi.pl -o html man3/PAPI_register_thread.3
 perl manServer_papi.pl -o html man3/PAPI_remove_event.3
 perl manServer_papi.pl -o html man3/PAPI_remove_events.3
