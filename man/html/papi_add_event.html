@@ -273,10 +273,11 @@ PAPI_add_events - add PAPI presets or native hardware events to an event set
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Bugs</A><BR>
-<A HREF=#8>See Also</A><BR>
+<A HREF=#7>Ibm Power6 Notes</A><BR>
+<A HREF=#8>Bugs</A><BR>
+<A HREF=#9>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=9>
+<A name=10>
 
      <H3>SYNOPSIS</H3>
 
@@ -472,9 +473,50 @@ if (PAPI_add_event(EventSet, native) != PAPI_OK)
 </TT><!-- .fi -->
 </PRE>
 <P>
-<!-- .SH BUGS -->
+<!-- .SH IBM POWER6 NOTES -->
 </BLOCKQUOTE>
 <A name=7>
+
+     <H3>IBM POWER6 NOTES</H3>
+
+</A>
+<BLOCKQUOTE>
+<P>
+Event counters 5 and 6 in the IBM POWER6 are restricted:
+<!-- .br -->
+<!-- Need break --><BR>
+o Each can count just a single, fixed event.
+<!-- .br -->
+<!-- Need break --><BR>
+o They are free-running and so can count only in the combined domain - PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR.
+<!-- .br -->
+<!-- Need break --><BR>
+o They cannot interrupt on overflow.
+<!-- .P -->
+<P>
+Although counter 6 counts processor cycles gated by the run latch
+(PM_RUN_CYC), the current implementation maps the PAPI preset event
+PAPI_TOT_CYC to PM_CYC because of the domain and overflow limitations of
+counter 6.  PM_CYC can be counted with relatively few other
+events, so it&#146;s likely that you will receive PAPI_ECNFLCT if you try to add
+PAPI_TOT_CYC to an event set that already contains other events.  If you
+can use the above mentioned combined domain and do not need the overflow
+capability, you should consider adding the native event PM_RUN_CYC instead
+of PAPI_TOT_CYC.
+<!-- .P -->
+<P>
+Counter 5 counts the native event PM_RUN_INST_CMPL, which is instructions
+completed gated by the run latch.  For the same reasons given for counter
+6, PAPI_TOT_INS is mapped to PM_INST_CMPL instead of PM_RUN_INST_CMPL.  And
+as above, if you try to add PAPI_TOT_INS to an event group with other
+events already in it, you are likely to receive PAPI_ECNFLCT.  If you can
+use the above combined domain and do not need the overflow capability, you
+should consider adding the native event PM_RUN_INST_CMPL instead of
+PAPI_TOT_INS.
+<P>
+<!-- .SH BUGS -->
+</BLOCKQUOTE>
+<A name=8>
 
      <H3>BUGS</H3>
 
@@ -485,7 +527,7 @@ be set upon partial success.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=9>
 
      <H3>SEE ALSO</H3>
 
@@ -588,17 +630,6 @@ be set upon partial success.
 <TR VALIGN="top">
 
 <TD ALIGN="center" HEIGHT="22" ROWSPAN="2" VALIGN="TOP">
-
-<SPAN CLASS="FOOTERNOTE">
-
-Contact PAPI: 
-
-<A HREF="mailto:papi@cs.utk.edu">
-
-papi@cs.utk.edu</A>
-
-</SPAN>
-
 </TD>
 
 <TD ALIGN="center" HEIGHT="11" WIDTH="200">

@@ -259,6 +259,9 @@ PAPI HOME
 PAPI_read - read hardware counters from an event set
 <!-- .LP -->
 <P>
+PAPI_read_ts - read hardware counters with a timestamp
+<!-- .LP -->
+<P>
 PAPI_accum - accumulate and reset counters in an event set
 <P>
 <!-- .SH SYNOPSIS -->
@@ -316,19 +319,16 @@ PAPI_accum - accumulate and reset counters in an event set
 </A>
 <BLOCKQUOTE>
 <P>
-These calls assume an initialized PAPI library and a properly added
-event set.
+These calls assume an initialized PAPI library and a properly added event set.
 <P>
 <!-- .B PAPI_read() -->
-<B>PAPI_read()</B> copies the counters of the indicated event set into
-the array
+<B>PAPI_read()</B> copies the counters of the indicated event set into the array
 <!-- .IR values . -->
 <I>values</I>. The counters continue counting after the read.
 <!-- .LP -->
 <P>
 <!-- .B PAPI_read_ts() -->
-<B>PAPI_read_ts()</B> copies the counters of the indicated event set into
-the array
+<B>PAPI_read_ts()</B> copies the counters of the indicated event set into the array
 <!-- .IR values . -->
 <I>values</I>. It also places a real-time cycle timestamp into
 <!-- .IR cyc . -->
@@ -544,17 +544,6 @@ These functions have no known bugs.
 <TR VALIGN="top">
 
 <TD ALIGN="center" HEIGHT="22" ROWSPAN="2" VALIGN="TOP">
-
-<SPAN CLASS="FOOTERNOTE">
-
-Contact PAPI: 
-
-<A HREF="mailto:papi@cs.utk.edu">
-
-papi@cs.utk.edu</A>
-
-</SPAN>
-
 </TD>
 
 <TD ALIGN="center" HEIGHT="11" WIDTH="200">

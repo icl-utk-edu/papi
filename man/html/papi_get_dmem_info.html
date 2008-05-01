@@ -335,6 +335,10 @@ This function is currently implemented only for the Linux operating system.
 (Fortran values can be accessed using the specified indices):
 <!-- .LP -->
 <P>
+<!-- .B peak [PAPIF_DMEM_VMPEAK]  -->
+<B>peak [PAPIF_DMEM_VMPEAK]</B> (Peak size of process image, may be 0 on older Linux systems),
+<!-- .LP -->
+<P>
 <!-- .B size [PAPIF_DMEM_VMSIZE]  -->
 <B>size [PAPIF_DMEM_VMSIZE]</B> (Size of process image),
 <!-- .LP -->
@@ -373,6 +377,10 @@ This function is currently implemented only for the Linux operating system.
 <P>
 <!-- .B pagesize [PAPIF_DMEM_PAGESIZE] -->
 <B>pagesize [PAPIF_DMEM_PAGESIZE]</B> (Size of a page in bytes),
+<!-- .LP -->
+<P>
+<!-- .B pte [PAPIF_DMEM_PTE] -->
+<B>pte [PAPIF_DMEM_PTE]</B> (Size of page table entries, may be 0 on older Linux systems)
 <P>
 <!-- .SH RETURN VALUES -->
 </BLOCKQUOTE>
@@ -437,9 +445,10 @@ A system error occured.
       handle_error(retval);
 <P>
    PAPI_get_dmem_info(&dmem);
+   printf("Peak Mem Size:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%lld0,dmem.peak);
    printf("Mem Size:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%lld0,dmem.size);
    printf("Mem Resident:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%lld0,dmem.resident);
-   printf("Mem High Water Mark:&nbsp;%lld0,dmem.high_water_mark);
+   printf("Peak Resident:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%lld0,dmem.high_water_mark);
    printf("Mem Shared:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%lld0,dmem.shared);
    printf("Mem Text:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%lld0,dmem.text);
    printf("Mem Library:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%lld0,dmem.library);
@@ -447,6 +456,7 @@ A system error occured.
    printf("Mem Locked:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%lld0,dmem.locked);
    printf("Mem Stack:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%lld0,dmem.stack);
    printf("Mem Pagesize:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%lld0,dmem.pagesize);
+   printf("Mem Page Eable Entries:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%lld0,dmem.pte);
 <!-- .if t .ft P -->
 </TT><!-- .fi -->
 </PRE>
@@ -565,17 +575,6 @@ If called before
 <TR VALIGN="top">
 
 <TD ALIGN="center" HEIGHT="22" ROWSPAN="2" VALIGN="TOP">
-
-<SPAN CLASS="FOOTERNOTE">
-
-Contact PAPI: 
-
-<A HREF="mailto:papi@cs.utk.edu">
-
-papi@cs.utk.edu</A>
-
-</SPAN>
-
 </TD>
 
 <TD ALIGN="center" HEIGHT="11" WIDTH="200">
