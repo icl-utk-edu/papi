@@ -1,5 +1,5 @@
 ===============================================================================
-PAPI 3.6.0 RELEASE NOTES                                            25 Apr 2008
+PAPI 3.6.0 RELEASE NOTES                                            30 Apr 2008
 ===============================================================================
 
 This file documents changes in recent PAPI releases in inverse chronological
@@ -45,7 +45,6 @@ Enhancements:
 - enhancements to papi_native_avail; see "papi_native_avail -h" for details
 - new papi_xml_event_info to present preset and native event info in xml format
   for easier consumption by higher level tools
-- PAPI_write supported on perfmon2-based systems;
   useful for checkpoint/restart applications
 - PAPI_read_ts implemented for fast read with timestamp; see man page
 
