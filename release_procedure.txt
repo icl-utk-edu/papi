@@ -25,6 +25,8 @@ __ 4. Modfy RELEASENOTES.txt to summarize the major changes listed in the log.
 __ 5. Check/Change the version number in: papi.h, configure.in, Makefile.in;
 	and commit to cvs if needed.
 
+__ 5a. If configure.in changed, run autoconf and commit the resulting configure.
+
 __ 6. Add ChangeLogXYZ.txt to cvs and commit both ChangeLogXYZ.txt and 
 	RELEASENOTES.txt.
 
