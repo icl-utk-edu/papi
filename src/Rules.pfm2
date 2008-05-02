@@ -32,23 +32,27 @@ endif
 # DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
 #
 
+# The next section avoids setting BAD things like -I/usr/include -L/usr/lib. 
+
+ifneq (/usr,$(PFM_PREFIX))
+PWD = $(shell pwd)
 ifeq (,$(PFM_LIB_PATH))
 ifeq (,$(PFM_ROOT))
-	PWD = $(shell pwd)
         PFM_ROOT := $(PWD)/libpfm-3.y
 endif
         PFM_LIB_PATH := $(PFM_ROOT)/lib
 	CC_SHR += -Wl,-rpath-link -Wl,$(PFM_LIB_PATH)
 endif
-
 ifeq (,$(PFM_INC_PATH))
 ifeq (,$(PFM_ROOT))
-        PFM_ROOT := ./libpfm-3.y
+        PFM_ROOT := $(PWD)/libpfm-3.y
 endif
         PFM_INC_PATH := $(PFM_ROOT)/include
 endif
-
+ifneq (/usr/include,$(PFM_INC_PATH))
 CFLAGS	+= -I$(PFM_INC_PATH) 
+endif
+endif
 
 # I hate these platform dependencies, but this id's the existence of 
 # _ntv_name_to_code in perfmon for extras optimization.

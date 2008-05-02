@@ -111,26 +111,38 @@ FTOPTFLAGS	= $(TOPTFLAGS)
 # DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
 #
 
+# The next section avoids setting BAD things like -I/usr/include -L/usr/lib. 
+
+ifneq (/usr,$(PERFCTR_PREFIX))
+PWD = $(shell pwd)
 ifeq (,$(PERFCTR_LIB_PATH))
 ifeq (,$(PERFCTR_ROOT))
-	PERFCTR_ROOT := ./perfctr-$(VERSION)
+	PERFCTR_ROOT := $(PWD)/perfctr-$(VERSION)
 endif
 	PERFCTR_LIB_PATH := $(PERFCTR_ROOT)/usr.lib
+	CC_SHR += -Wl,-rpath-link -Wl,$(PERFCTR_LIB_PATH)
 endif
 ifeq (,$(PERFCTR_INC_PATH))
 ifeq (,$(PERFCTR_ROOT))
-	PERFCTR_ROOT := ./perfctr-$(VERSION)
+	PERFCTR_ROOT := $(PWD)/perfctr-$(VERSION)
 endif
 	PERFCTR_INC_PATH := $(PERFCTR_ROOT)/usr.lib
 	PERFCTR_KINC_PATH := $(PERFCTR_ROOT)/linux/include
 else
 	PERFCTR_KINC_PATH := $(PERFCTR_INC_PATH)
 endif
+ifneq (/usr/include,$(PERFCTR_INC_PATH))
+CFLAGS += -I$(PERFCTR_INC_PATH) 
+endif
+ifneq (/usr/include/linux/include,$(PERFCTR_KINC_PATH))
+CFLAGS += -I$(PERFCTR_KINC_PATH) 
+endif
+endif
 
 CFLAGS-2.5.4 := -DPERFCTR25
 CFLAGS-2.6.x := -DPERFCTR26
 CFLAGS-2.7.x := $(CFLAGS-2.6.x)
-CFLAGS += $(EVENTFLAGS) -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) $(CFLAGS-$(VERSION))
+CFLAGS += $(EVENTFLAGS) $(CFLAGS-$(VERSION))
 
 MISCHDRS = perfctr-$(CPU).h
 MISCSRCS =  $(CPU)_events.c linux.c $(ARCH_SPEC_EVTS)

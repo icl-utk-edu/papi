@@ -126,26 +126,36 @@ endif
 # DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
 #
 
+ifneq (/usr,$(PERFCTR_PREFIX))
+PWD = $(shell pwd)
 ifeq (,$(PERFCTR_LIB_PATH))
 ifeq (,$(PERFCTR_ROOT))
-	PERFCTR_ROOT := ./perfctr-$(VERSION)
+	PERFCTR_ROOT := $(PWD)/perfctr-$(VERSION)
 endif
 	PERFCTR_LIB_PATH := $(PERFCTR_ROOT)/usr.lib
+	CC_SHR += -Wl,-rpath-link -Wl,$(PERFCTR_LIB_PATH)
 endif
 ifeq (,$(PERFCTR_INC_PATH))
 ifeq (,$(PERFCTR_ROOT))
-	PERFCTR_ROOT := ./perfctr-$(VERSION)
+	PERFCTR_ROOT := $(PWD)/perfctr-$(VERSION)
 endif
 	PERFCTR_INC_PATH := $(PERFCTR_ROOT)/usr.lib
 	PERFCTR_KINC_PATH := $(PERFCTR_ROOT)/linux/include
 else
 	PERFCTR_KINC_PATH := $(PERFCTR_INC_PATH)
 endif
+ifneq (/usr/include,$(PERFCTR_INC_PATH))
+CFLAGS += -I$(PERFCTR_INC_PATH) 
+endif
+ifneq (/usr/include/linux/include,$(PERFCTR_KINC_PATH))
+CFLAGS += -I$(PERFCTR_KINC_PATH) 
+endif
+endif
 
 CFLAGS-2.5.4 := -DPERFCTR25
 CFLAGS-2.6.x := -DPERFCTR26
 CFLAGS-2.7.x := $(CFLAGS-2.6.x)
-CFLAGS += $(EVENTFLAGS) -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) $(CFLAGS-$(VERSION))
+CFLAGS += $(EVENTFLAGS) $(CFLAGS-$(VERSION))
 
 MISCHDRS = perfctr-$(CPU).h
 MISCSRCS =  linux.c $(ARCH_SPEC_EVTS)
@@ -197,20 +207,27 @@ SPECIAL_REMOVE = rm -f libperfctr.so*
 ####################################################################
 # This section builds libpfm to get at its support for native events
 # We only need to build the library, not the examples, etc.
-ifeq (,$(PFM_ROOT))
-	PFM_ROOT := ./libpfm-3.y
-endif
-
+ifneq (/usr,$(PFM_PREFIX))
+PWD = $(shell pwd)
 ifeq (,$(PFM_LIB_PATH))
+ifeq (,$(PFM_ROOT))
+	PFM_ROOT := $(PWD)/libpfm-3.y
+endif
 	PFM_LIB_PATH := $(PFM_ROOT)/lib
 	CC_SHR += -Wl,-rpath-link -Wl,$(PFM_LIB_PATH)
 endif
-
 ifeq (,$(PFM_INC_PATH))
-	PFM_INC_PATH := $(PFM_ROOT)/include
+ifeq (,$(PFM_ROOT))
+        PFM_ROOT := $(PWD)/libpfm-3.y
+endif
+        PFM_INC_PATH := $(PFM_ROOT)/include
+endif
+ifneq (/usr/include,$(PFM_INC_PATH))
+CFLAGS	+= -I$(PFM_INC_PATH) 
+endif
 endif
 
-CFLAGS	+= -I$(PFM_INC_PATH) -DPERFCTR_PFM_EVENTS
+CFLAGS	+= -DPERFCTR_PFM_EVENTS
 
 PFM_OBJS=$(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
 ifeq (,$(PFM_OBJS))
