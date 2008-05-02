@@ -155,34 +155,6 @@ ifneq (,$(CPU_EVENTS))
 endif
 PERFCTR_OBJS = $(shell $(AR) t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
 
-####################################################################
-# This section builds libpfm to get at its support for native events
-ifeq (,$(PFM_LIB_PATH))
-  ifeq (,$(PFM_ROOT))
-	PFM_ROOT := ./libpfm-3.y
-  endif
-  PFM_LIB_PATH := $(PFM_ROOT)/lib
-  CC_SHR += -Wl,-rpath-link -Wl,$(PFM_LIB_PATH)
-endif
-
-ifeq (,$(PFM_INC_PATH))
-  ifeq (,$(PFM_ROOT))
-	PFM_ROOT := ./libpfm-3.y
-  endif
-  PFM_INC_PATH := $(PFM_ROOT)/include
-endif
-CFLAGS	+= -I$(PFM_INC_PATH) -DPERFCTR_PFM_EVENTS
-PFM_OBJS=$(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
-####################################################################
-
-# This sets up the shared lib deps *after* pfm is built, since we need the pfm
-# Event table even if we're using perfctr.
-ifneq (,$(PFM_LIB_PATH))
-  PFM_LIBS=-L$(PFM_LIB_PATH) -lpfm
-endif
-SHLIBDEPS = -Bdynamic -L$(PERFCTR_LIB_PATH) -lperfctr $(PFM_LIBS)
-
-
 ifeq (,$(PERFCTR_OBJS))
 $(PERFCTR_LIB_PATH)/libperfctr.a:
 ifneq (,${PERFCTR_ROOT})
@@ -205,27 +177,8 @@ ifneq (,${PERFCTR_ROOT})
 else
 	@echo '$@ not installed!'; exit 1
 endif
-
-####################################################################
-# This section builds libpfm to get at its support for native events
-# We only need to build the library, not the examples, etc.
-ifeq (,$(PFM_OBJS))
-  ifneq (,${PFM_ROOT})
-	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)" DIRS=lib
-  else
-    @echo '$@ not installed!'; exit 1
-  endif
-endif
-####################################################################
-
 	$(MAKE)
 endif
-#MISCOBJS = $(PERFCTR_OBJS) $(MISCSRCS:.c=.o) 
-####################################################################
-MISCSRCS += papi_pfm_events.c
-MISCOBJS += $(PERFCTR_OBJS) $(PFM_OBJS) $(MISCSRCS:.c=.o)
-MISCHDRS += papi_pfm_events.h
-####################################################################
 
 #Dynamic linking loader needs correct version of libperfctr
 ifeq ($(VERSION),2.7.x)
@@ -240,6 +193,41 @@ endif
 endif
 POST_BUILD = cp $(PERFCTR_LIB_PATH)/libperfctr.so .;ln -fs libperfctr.so libperfctr.so.$(SO_ABIVER)
 SPECIAL_REMOVE = rm -f libperfctr.so*
+
+####################################################################
+# This section builds libpfm to get at its support for native events
+# We only need to build the library, not the examples, etc.
+ifeq (,$(PFM_ROOT))
+	PFM_ROOT := ./libpfm-3.y
+endif
+
+ifeq (,$(PFM_LIB_PATH))
+	PFM_LIB_PATH := $(PFM_ROOT)/lib
+	CC_SHR += -Wl,-rpath-link -Wl,$(PFM_LIB_PATH)
+endif
+
+ifeq (,$(PFM_INC_PATH))
+	PFM_INC_PATH := $(PFM_ROOT)/include
+endif
+
+CFLAGS	+= -I$(PFM_INC_PATH) -DPERFCTR_PFM_EVENTS
+
+PFM_OBJS=$(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
+ifeq (,$(PFM_OBJS))
+  $(PFM_LIB_PATH)/libpfm.a:
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)" DIRS=lib
+	$(MAKE)
+endif
+
+# This sets up the shared lib deps *after* pfm is built, since we need the pfm
+# Event table even if we're using perfctr.
+PFM_LIBS=-L$(PFM_LIB_PATH) -lpfm
+
+MISCSRCS += papi_pfm_events.c
+MISCOBJS += $(PERFCTR_OBJS) $(PFM_OBJS) $(MISCSRCS:.c=.o)
+MISCHDRS += papi_pfm_events.h
+SHLIBDEPS = -Bdynamic -L$(PERFCTR_LIB_PATH) -lperfctr $(PFM_LIBS)
+####################################################################
 
 include Makefile.inc
 
