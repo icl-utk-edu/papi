@@ -1175,7 +1175,7 @@ case "$OS" in
        # Determine if HWPMC module is on the kernel
        dmesg | grep hwpmc 2> /dev/null > /dev/null
        if test "$?" != "0" ; then
-          AC_MSG_WARN([Warning! HWPMC module seems not to be on the kernel. Have you compiled the kernel with HWPMC? (see hwpmc(4))])
+          AC_MSG_ERROR([Error! HWPMC module seems not to be on the kernel. Have you compiled the kernel with HWPMC? (see INSTALL.TXT])
        fi
 
        # Determine the number of counters
