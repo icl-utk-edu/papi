@@ -22,7 +22,8 @@ __ 3. Scan the ChangeLog to remove extraneous fluff, like perfctr imports.
 
 __ 4. Modfy RELEASENOTES.txt to summarize the major changes listed in the log.
 
-__ 5. Check/Change the version number in papi.h, and commit to cvs if needed.
+__ 5. Check/Change the version number in: papi.h, configure.in, Makefile.in;
+	and commit to cvs if needed.
 
 __ 6. Add ChangeLogXYZ.txt to cvs and commit both ChangeLogXYZ.txt and 
 	RELEASENOTES.txt.
