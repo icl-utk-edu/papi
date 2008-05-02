@@ -2932,11 +2932,13 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   if (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_SUN)
     {
       switch (_perfmon2_pfm_pmu_type) {
+#ifdef PFMLIB_SPARC_ULTRA12_PMU
       case PFMLIB_SPARC_ULTRA12_PMU:
       case PFMLIB_SPARC_ULTRA3_PMU:
       case PFMLIB_SPARC_ULTRA3I_PMU:
       case PFMLIB_SPARC_ULTRA3PLUS_PMU:
       case PFMLIB_SPARC_ULTRA4PLUS_PMU:
+#endif
 	break;
 
       default:
@@ -3866,7 +3868,11 @@ process_smpl_buf(int num_smpl_pmds, int entry_size, ThreadInfo_t **thr)
 void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
 {
     _papi_hwi_context_t ctx;
+#ifdef HAVE_PFM_MSG_TYPE
+    pfm_msg_t msg;
+#else
     pfarg_msg_t msg;
+#endif
     int ret, wanted_fd, fd = info->si_fd;
     unsigned long address;
     ThreadInfo_t *thread = _papi_hwi_lookup_thread();
