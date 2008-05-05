@@ -180,7 +180,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    */
    fd = _vperfctr_open(0);
    if (fd < 0)
-     { PAPIERROR( VOPEN_ERROR); return(PAPI_ESYS); }
+     { PAPIERROR(VOPEN_ERROR); return(PAPI_ESYS); }
    retval = perfctr_info(fd, &info);
  	close(fd);
    if(retval < 0 )
@@ -390,8 +390,22 @@ int _papi_hwd_init(hwd_context_t * ctx) {
    struct vperfctr_control tmp;
 
    /* Initialize our thread/process pointer. */
-   if ((ctx->perfctr = vperfctr_open()) == NULL)
-     { PAPIERROR( VOPEN_ERROR); return(PAPI_ESYS); }
+   if ((ctx->perfctr = vperfctr_open()) == NULL) { 
+#ifdef VPERFCTR_OPEN_CREAT_EXCL
+     /* New versions of perfctr have this, which allows us to
+	get a previously created context, i.e. one created after
+	a fork and now we're inside a new process that has been exec'd */
+     if (errno == EEXIST) {
+       if ((ctx->perfctr = vperfctr_open_mode(0)) == NULL) {
+	 PAPIERROR(VOPEN_ERROR); return(PAPI_ESYS); 
+       } 
+     } else {
+       PAPIERROR(VOPEN_ERROR); return(PAPI_ESYS); 
+     }
+#else
+     PAPIERROR(VOPEN_ERROR); return(PAPI_ESYS); 
+#endif
+   }
    SUBDBG("_papi_hwd_init vperfctr_open() = %p\n", ctx->perfctr);
 
    /* Initialize the per thread/process virtualized TSC */
@@ -880,4 +894,17 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
 {
    return (((long_long)vperfctr_read_tsc(ctx->perfctr) * tb_scale_factor) /
            (long_long)_papi_hwi_system_info.hw_info.mhz);
+}
+
+/* This routine is for shutting down threads, including the
+   master thread. */
+
+int _papi_hwd_shutdown(hwd_context_t * ctx)
+{
+   int retval = vperfctr_unlink(ctx->perfctr);
+   SUBDBG("_papi_hwd_shutdown vperfctr_unlink(%p) = %d\n", ctx->perfctr, retval);
+   vperfctr_close(ctx->perfctr);
+   SUBDBG("_papi_hwd_shutdown vperfctr_close(%p)\n", ctx->perfctr);
+   memset(ctx, 0x0, sizeof(hwd_context_t));
+   return (PAPI_OK);
 }

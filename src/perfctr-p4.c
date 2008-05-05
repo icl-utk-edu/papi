@@ -209,24 +209,6 @@ int _papi_hwd_read(P4_perfctr_context_t * ctx, P4_perfctr_control_t * spc,
    return (PAPI_OK);
 }
 
-
-/* This routine is for shutting down threads, including the
-   master thread. */
-
-VECTOR_STATIC
-int _papi_hwd_shutdown(P4_perfctr_context_t * ctx)
-{
-   int retval = vperfctr_unlink(ctx->perfctr);
-   SUBDBG("_papi_hwd_shutdown vperfctr_unlink(%p) = %d\n", ctx->perfctr, retval);
-   vperfctr_close(ctx->perfctr);
-   SUBDBG("_papi_hwd_shutdown vperfctr_close(%p)\n", ctx->perfctr);
-   memset(ctx, 0x0, sizeof(P4_perfctr_context_t));
-
-   if (retval)
-      return (PAPI_ESYS);
-   return (PAPI_OK);
-}
-
 #ifdef DEBUG
 
 #if 0
