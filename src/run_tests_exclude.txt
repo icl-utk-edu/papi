@@ -4,6 +4,7 @@
 # lines beginning with # will be ignored
 # this file must have UNIX line endings
 
-ctests/exec2
-ctests/forkexec3
-ctests/forkexec4
+# now these tests pass -pjm
+#ctests/exec2
+#ctests/forkexec3
+#ctests/forkexec4
