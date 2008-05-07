@@ -9,8 +9,7 @@ papi_event_chooser: event_chooser.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) event_chooser.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_event_chooser -lm
 
 papi_event_info: event_info.c $(PAPILIB) $(UTILOBJS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(TOPTFLAGS) event_info.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_xml_event_info -lm
-
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) event_info.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_xml_event_info -lm
 
 papi_clockres: ../ctests/clockcore.c clockres.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) ../ctests/clockcore.c clockres.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_clockres -lm
@@ -37,10 +36,10 @@ test_utils.o: ../ctests/test_utils.c ../ctests/papi_test.h ../ctests/test_utils.
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/test_utils.c
 
 do_loops.o: ../ctests/do_loops.c ../ctests/papi_test.h ../ctests/test_utils.h
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/do_loops.c
+	$(CC) $(INCLUDE) $(TOPTFLAGS) -c ../ctests/do_loops.c
 
 dummy.o: ../ctests/dummy.c
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/dummy.c
+	$(CC) $(INCLUDE) $(TOPTFLAGS) -c ../ctests/dummy.c
 
 clean:
 	rm -f *.o *.stderr *.stdout core *~
