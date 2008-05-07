@@ -66,6 +66,12 @@ int setup_p4_presets(int cputype)
    if (cputype == PERFCTR_X86_INTEL_P4) {
      /* do nothing besides the base map */
    }
+   else if (cputype == PERFCTR_X86_INTEL_P4M2) {
+   }
+#ifdef PERFCTR_X86_INTEL_P4M3
+   else if (cputype == PERFCTR_X86_INTEL_P4M3) {
+   }
+#endif
    else {
       PAPIERROR(MODEL_ERROR);
       return(PAPI_ESBSTR);
