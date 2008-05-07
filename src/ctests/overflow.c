@@ -72,6 +72,14 @@ int main(int argc, char **argv)
       platform */
    EventSet = add_two_nonderived_events(&num_events, &PAPI_event, hw_info, &mask);
 
+#if defined(linux)
+     {
+       char *tmp = getenv("THRESHOLD");
+       if (tmp) 
+	     mythreshold = atoi(tmp);
+     }
+#endif
+
    retval = PAPI_start(EventSet);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
