@@ -90,9 +90,7 @@ int main(int argc, char **argv)
    /*  Make sure the compiler does not optimize away the multiplication
     *  with dummy(r);
     */
-#if ((defined(__ALPHA) && defined(__osf__)) || defined(PPC64))
    dummy(r);
-#endif
 
    if (!TESTS_QUIET) {
       if (event[0] == PAPI_TOT_INS) {
