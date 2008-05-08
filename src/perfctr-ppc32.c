@@ -335,20 +335,6 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *cntrl) {
    return(_papi_hwd_start(ctx, cntrl));
 }
 
-/* This routine is for shutting down threads, including the
-   master thread. */
-int _papi_hwd_shutdown(hwd_context_t * ctx) {
-   int retval = vperfctr_unlink(ctx->perfctr);
-   SUBDBG("_papi_hwd_shutdown vperfctr_unlink(%p) = %d\n", ctx->perfctr, retval);
-   vperfctr_close(ctx->perfctr);
-   SUBDBG("_papi_hwd_shutdown vperfctr_close(%p)\n", ctx->perfctr);
-   memset(ctx, 0x0, sizeof(hwd_context_t));
-
-   if(retval)
-      return(PAPI_ESYS);
-   return(PAPI_OK);
-}
-
 /* Perfctr requires that interrupting counters appear at the end of the pmc list
    In the case a user wants to interrupt on a counter in an evntset that is not
    among the last events, we need to move the perfctr virtual events around to
