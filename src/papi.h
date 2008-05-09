@@ -290,6 +290,7 @@ enum {
    PAPI_NTV_ENUM_GROUPS			/* Enumerate groups an event belongs to a la POWER4/5 */
 };
 
+#define PAPI_ENUM_ALL PAPI_ENUM_EVENTS
 
 #define PAPI_PRESET_BIT_MSC		(1 << PAPI_PRESET_ENUM_MSC)		/* Miscellaneous preset event bit */
 #define PAPI_PRESET_BIT_INS		(1 << PAPI_PRESET_ENUM_INS)		/* Instruction related preset event bit */
