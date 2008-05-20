@@ -7953,11 +7953,6 @@ _ACEOF
     prefix=$prefix_save
   exec_prefix=$exec_prefix_save
 
-
-cat >>confdefs.h <<\_ACEOF
-#define PAPI_DATADIR $papidatadir
-_ACEOF
-
 #AC_DEFINE_UNQUOTED(HAVE_THREAD_LOCAL_STORAGE,"$docdir")
 
 #
