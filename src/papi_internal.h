@@ -48,7 +48,7 @@
 extern int _papi_hwi_debug; 
 extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
-#define DEBUGLABEL(a) if (_papi_hwi_thread_id_fn) fprintf(stderr, "%s:%s:%s:%d:0x%lx ",a,__FILE__, FUNC, __LINE__,_papi_hwi_thread_id_fn()); else fprintf(stderr, "%s:%s:%s:%d: ",a,__FILE__, FUNC, __LINE__)
+#define DEBUGLABEL(a) if (_papi_hwi_thread_id_fn) fprintf(stderr, "%s:%s:%s:%d:%d:0x%lx ",a,__FILE__, FUNC, __LINE__,(int)getpid(),_papi_hwi_thread_id_fn()); else fprintf(stderr, "%s:%s:%s:%d:%d ",a,__FILE__, FUNC, __LINE__, (int)getpid())
 #define ISLEVEL(a) (_papi_hwi_debug&a)
 
 #define DEBUGLEVEL(a) ((a&DEBUG_SUBSTRATE)?"SUBSTRATE":(a&DEBUG_API)?"API":(a&DEBUG_INTERNAL)?"INTERNAL":(a&DEBUG_THREADS)?"THREADS":(a&DEBUG_MULTIPLEX)?"MULTIPLEX":(a&DEBUG_OVERFLOW)?"OVERFLOW":(a&DEBUG_PROFILE)?"PROFILE":(a&DEBUG_MEMORY)?"MEMORY":(a&DEBUG_LEAK)?"LEAK":"UNKNOWN")
@@ -109,11 +109,11 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
   #define PAPI_ITIMER 1
 #else
   #ifdef __CATAMOUNT__ /* Catamount only defines ITIMER_REAL with a 1 sec(!) resolution */
-    #define PAPI_MTX_SIGNAL SIGALRM
+    #define PAPI_MPX_SIGNAL SIGALRM
     #define PAPI_SIGNAL SIGPROF
     #define PAPI_ITIMER ITIMER_REAL
   #else
-    #define PAPI_MTX_SIGNAL SIGPROF
+    #define PAPI_MPX_SIGNAL SIGPROF
     #define PAPI_SIGNAL SIGPROF
     #define PAPI_ITIMER ITIMER_PROF
   #endif

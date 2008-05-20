@@ -1048,7 +1048,7 @@ int _papi_hwi_init_global_internal(void)
    _papi_hwi_system_info.sub_info.default_granularity = PAPI_GRN_THR;     /* The default granularity when this substrate is used */
    _papi_hwi_system_info.sub_info.available_granularities = _papi_hwi_system_info.sub_info.default_granularity; /* Available granularities */
    _papi_hwi_system_info.sub_info.opcode_match_width = 0;      /* Width of opcode matcher if exists, 0 if not */
-   _papi_hwi_system_info.sub_info.multiplex_timer_sig = PAPI_MTX_SIGNAL;
+   _papi_hwi_system_info.sub_info.multiplex_timer_sig = PAPI_MPX_SIGNAL;
    _papi_hwi_system_info.sub_info.multiplex_timer_num = PAPI_ITIMER;
    _papi_hwi_system_info.sub_info.multiplex_timer_us = PAPI_MPX_DEF_US;
    _papi_hwi_system_info.sub_info.hardware_intr_sig = PAPI_SIGNAL;
