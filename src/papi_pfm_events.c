@@ -258,7 +258,7 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
   }
   if (table == NULL)
   {
-    PAPIERROR("fopen(%s): %s, please set the PAPI_PERFMON_EVENT_FILE env. variable",name,strerror(errno));
+    PAPIERROR("fopen(%s): %s, please set the PAPI_PERFMON_EVENT_FILE env. variable",PERFMON_EVENT_FILE,strerror(errno));
     return(PAPI_ESYS);
   }
   SUBDBG("Open %s succeeded.\n",name);
