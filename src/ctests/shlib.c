@@ -11,10 +11,7 @@
 int main(int argc, char **argv)
 {
    int retval;
-   int i, index;
-   char fullname[PAPI_HUGE_STR_LEN+4];
-   const char *temp;
-   FILE *f;
+   int i;
 
    const PAPI_shlib_info_t *shinfo;
    PAPI_address_map_t *map;
@@ -85,27 +82,7 @@ RETRY:
         _libname = libname2;
      }
 
-     /* get current directory */
-     if ( getcwd(fullname, PAPI_HUGE_STR_LEN) == NULL ) 
-          test_skip(__FILE__, __LINE__, "getcwd", 1);
-     if ( (f = fopen(_libname, "r")) == NULL ) 
-     {  /* assume you are in ctests directory */
-        temp = strrchr(fullname, '/');
-        if( temp == NULL) 
-           test_skip(__FILE__, __LINE__, "getcwd", 1);
-        else {
-           index=(int)(temp-fullname);
-           fullname[index+1]='\0'; /* get the absolute path of libpapi.so */
-           strcat(fullname, _libname);  
-        }
-     } else {  /* assume you are in the src directory */
-        strcat(fullname, "/");  
-        strcat(fullname, _libname);  
-        fclose(f);
-     }
-     printf("fullname = %s \n", fullname);
-
-     handle = dlopen (fullname, RTLD_NOW);
+     handle = dlopen (_libname, RTLD_NOW);
      if (!handle) {
 	 printf("dlopen: %s\n",dlerror());
           if ( !my_dlerror ){
