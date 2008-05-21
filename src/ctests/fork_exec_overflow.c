@@ -70,7 +70,7 @@ print_rate(char *str)
 	   getpid(), str, st_secs, total, count, ((double)count)/last_secs);
 
     if (last_count != -1) {
-	if (count < .9*last_count) {
+	if (count < .1*last_count) {
 		test_fail(name,__LINE__,"Interrupt rate changed!",1);
 		exit(1);
 	}
@@ -206,7 +206,7 @@ main(int argc, char **argv)
     my_papi_stop();
     { int status; wait(&status); 
     HERE("end");
-    if (WEXITSTATUS(&status) != 0)
+    if (WEXITSTATUS(status) != 0)
       test_fail(name,__LINE__,"child failed",1);
     else
       test_pass(name,NULL,0);
