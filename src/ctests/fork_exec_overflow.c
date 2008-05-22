@@ -178,6 +178,8 @@ main(int argc, char **argv)
     HERE("end");
     test_pass(name,NULL,0);
 #elif defined(PEXEC)
+    HERE("stop");
+    my_papi_stop();
     HERE("exec");
     execl("./child_overflow","./child_overflow",NULL);
     execl("./ctests/child_overflow","./ctests/child_overflow",NULL);
