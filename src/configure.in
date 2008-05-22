@@ -937,7 +937,7 @@ if test "x$pfm_events" = "x"; then
 AC_ARG_WITH(pfm_events,
             [  --with-pfm-events=<static,file>	Specify source of events for pfmlib-based systems ],
             [pfm_events=$withval],
-            [pfm_events="file"]
+            [pfm_events="static"]
             )
 fi
 
