@@ -61,19 +61,6 @@ typedef int hwd_reg_alloc_t;
 
 #define MAX_COUNTERS PFMLIB_MAX_PMCS
 #define MAX_COUNTER_TERMS PFMLIB_MAX_PMCS
-#define PERFMON_EVENT_FILE "perfmon_events.csv"
-
-// ...now defined in papi_pfm_events.h
-//typedef struct {
-//   /* Preset code */
-//   int preset;
-//   /* Derived code */
-//   int derived;
-//   /* Strings to look for, more than 1 means derived */
-//   char *(findme[MAX_COUNTERS]);
-//   /* Operations between entities */
-//   char operation[MAX_COUNTERS];
-//} pfm_preset_search_entry_t;
 
 typedef struct {
   /* Context structure to kernel, different for attached */
@@ -117,25 +104,6 @@ typedef struct {
   /* Address of mmap()'ed sample buffer */
   void *smpl_buf;
 } hwd_context_t;
-
-// ...now defined in papi_pfm_events.h
-//typedef struct hwd_native_register {
-//  pfmlib_regmask_t selector;
-//  int pfmlib_event_index;
-//} hwd_native_register_t;
-//
-//typedef struct hwd_native_event_entry {
-//   /* If it exists, then this is the name of this event */
-//   char name[PAPI_MAX_STR_LEN];
-//   /* If it exists, then this is the description of this event */
-//   char description[PAPI_HUGE_STR_LEN];
-//  /* description of the resources required by this native event */
-//  hwd_native_register_t resources;
-//} hwd_native_event_entry_t;
-
-/* Lock macros. */
-/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
- * else val = MUTEX_CLOSED */
 
 extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 #define MUTEX_OPEN 0
