@@ -180,10 +180,26 @@ main(int argc, char **argv)
 #elif defined(PEXEC)
     HERE("stop");
     my_papi_stop();
-    HERE("exec");
-    execl("./child_overflow","./child_overflow",NULL);
-    execl("./ctests/child_overflow","./ctests/child_overflow",NULL);
+    HERE("exec(./child_overflow)");
+    if (access("./child_overflow",X_OK) == 0)
+      execl("./child_overflow","./child_overflow",NULL);
+    else if (access("./ctests/child_overflow",X_OK) == 0)
+      execl("./ctests/child_overflow","./ctests/child_overflow",NULL);
     test_fail(name,__LINE__,"exec failed",1);
+#elif defined(SYSTEM)
+    HERE("system(./child_overflow)");
+    if (access("./child_overflow",X_OK) == 0)
+      system("./child_overflow");
+    else if (access("./ctests/child_overflow",X_OK) == 0)
+      system("./ctests/child_overflow");
+    test_pass(name,NULL,0);
+#elif defined(SYSTEM2)
+    HERE("system(./burn)");
+    if (access("./burn",X_OK) == 0)
+      system("./burn");
+    else if (access("./ctests/burn",X_OK) == 0)
+      system("./ctests/burn");
+    test_pass(name,NULL,0);
 #else
     HERE("fork");
     ret = fork();

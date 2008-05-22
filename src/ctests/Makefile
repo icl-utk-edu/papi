@@ -6,7 +6,7 @@ MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
-SERIAL  = fork fork2 exec exec2 forkexec forkexec2 forkexec3 forkexec4 fork_overflow exec_overflow child_overflow\
+SERIAL  = fork fork2 exec exec2 forkexec forkexec2 forkexec3 forkexec4 fork_overflow exec_overflow child_overflow system_child_overflow system_overflow burn\
 	hwinfo code2name reset subinfo realtime virttime first exeinfo \
 	zero zero_fork branches dmem_info all_native_events all_events derived high-level2 describe memory  \
 	zero_flip low-level high-level eventname case1 case2 \
@@ -322,10 +322,21 @@ reset: reset.c $(UTILOBJS) $(PAPILIB)
 
 fork_overflow: fork_exec_overflow.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) fork_exec_overflow.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o fork_overflow
+
 exec_overflow: fork_exec_overflow.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DPEXEC fork_exec_overflow.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o exec_overflow
+
 child_overflow: fork_exec_overflow.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DPCHILD fork_exec_overflow.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o child_overflow
+
+system_child_overflow: fork_exec_overflow.c $(UTILOBJS) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DSYSTEM fork_exec_overflow.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o system_child_overflow
+
+system_overflow: fork_exec_overflow.c $(UTILOBJS) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DSYSTEM2 fork_exec_overflow.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o system_overflow
+
+burn: burn.c $(UTILOBJS) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) burn.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o burn
 
 fork: fork.c $(UTILOBJS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) fork.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o fork 
