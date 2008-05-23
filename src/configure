@@ -5965,7 +5965,7 @@ if test "$perfmon" != "no"; then
       fi
    fi
    if test "$perfmon_rev" != "no" ; then
-      pfm_version="-DPFMLIB_VERSION_${perfmon}${perfmon_rev}"
+      pfm_version="PFMLIB_VERSION_${perfmon}${perfmon_rev}"
    fi
    if test "$dotest" = 1; then
    echo "$as_me:$LINENO: checking for pfm_initialize in -lpfm" >&5

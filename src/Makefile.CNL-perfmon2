@@ -16,6 +16,6 @@ CFLAGS		+= -D __crayxt
 
 endif
 
-CFLAGS		+= $(PFM_VERSION)
+CFLAGS		+= -D $(PFM_VERSION)
 
 include Rules.pfm2

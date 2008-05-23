@@ -5,7 +5,7 @@ CPU		= p3
 NOTLS		= -DNO_TLS
 CC		= cc
 F77		= f77
-CFLAGS		= -D__CATAMOUNT__ $(PFM_VERSION)
+CFLAGS		= -D__CATAMOUNT__ -D$(PFM_VERSION)
 TOPTFLAGS	= -D__x86_64__
 
 #include Rules.perfctr
