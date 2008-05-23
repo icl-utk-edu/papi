@@ -223,7 +223,7 @@ extern pfm_err_t pfm_get_inst_retired_event(pfmlib_event_t *e);
 #define PFMLIB_ITANIUM_PMU	 	2	/* Intel Itanium   */
 #define PFMLIB_ITANIUM2_PMU 	 	3	/* Intel Itanium 2 */
 #define PFMLIB_MONTECITO_PMU 	 	4	/* Intel Dual-Core Itanium 2 9000 */
-#define PFMLIB_AMD64_PMU		16	/* AMD AMD64 */
+#define PFMLIB_AMD64_PMU		16	/* AMD AMD64 (K7, K8, Fam 10h) */
 #define PFMLIB_GEN_IA32_PMU		63	/* Intel architectural PMU for X86 */
 #define PFMLIB_I386_P6_PMU		32	/* Intel PIII (P6 core) */
 #define PFMLIB_PENTIUM4_PMU		33	/* Intel Pentium4/Xeon/EM64T */

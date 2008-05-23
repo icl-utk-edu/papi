@@ -161,7 +161,7 @@ typedef union {
 } ibsopdata3_t; /* MSR 0xc0011037 */
 
 /*
- * AMD64 specific parameters for the library
+ * AMD64 specific input parameters for the library
  */
 
 typedef struct {
@@ -175,17 +175,13 @@ typedef struct {
 #define PFM_AMD64_SEL_HOST	0x8	/* host only */
 
 /*
- * AMD-specific input parameters
- */
-
-/*
  * IBS input parameters
  *
  * Maxcnt specifies the maximum count value of the periodic counter,
  * 20 bits, bits 3:0 are always set to zero.
  */
 typedef struct {
-	unsigned int maxcnt;		/* 20 bits,  */
+	unsigned int maxcnt;
 	unsigned int options;
 } ibs_param_t;
 
@@ -208,7 +204,7 @@ typedef struct {
 #define PFMLIB_AMD64_USE_IBSOP		2
 
 /*
- * AMD-specific output parameters
+ * AMD64 specific output parameters for the library
  *
  * The values ibsfetch_base and ibsop_base pass back the index of the
  * ibsopctl and ibsfetchctl register in pfp_pmds[].

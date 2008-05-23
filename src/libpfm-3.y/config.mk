@@ -168,16 +168,17 @@ LDFLAGS=-L$(PFMLIBDIR)
 MKDEP=makedepend
 PFMLIB=$(PFMLIBDIR)/libpfm.a
 
-
 # Reset options for Cray XT
 ifeq ($(CONFIG_PFMLIB_ARCH_CRAYXT),y)
-CFLAGS+=$(PFM_VERSION_FLAG)
 LDFLAGS+=-static
 endif
 
 # Reset the compiler for Cray-X2 (load x2-gcc module)
 ifeq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
 CC=craynv-cray-linux-gnu-gcc
-CFLAGS+=$(PFM_VERSION_FLAG)
 LDFLAGS+=-static
+endif
+
+ifneq ($(PFM_VERSION_FLAG),)
+CFLAGS+=-D$(PFM_VERSION_FLAG)
 endif

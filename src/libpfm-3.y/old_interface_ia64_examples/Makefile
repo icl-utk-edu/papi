@@ -40,7 +40,7 @@ INCDIR=-I$(PFMINCDIR)
 TARGETS=self task task_attach task_attach_timeout syst \
 	notify_self notify_self2 notify_self3 \
 	whichpmu showreset multiplex\
-	task_smpl
+	task_smpl notify_self_fork
 
 ifeq ($(CONFIG_PFMLIB_ITANIUM),y)
 SRCS +=ita_rr.c ita_irr.c ita_opcode.c ita_btb.c ita_dear.c

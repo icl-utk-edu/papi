@@ -123,6 +123,7 @@ main(int argc, char **argv)
 	int which_cpu;
 	pid_t pid;
 	size_t len;
+	ssize_t nbytes;
 	char *name;
 	char c = '0';
 
@@ -312,8 +313,8 @@ main(int argc, char **argv)
 	 * ping pong loop
 	 */
 	while(!quit) {
-		write(pr[1], "c", 1);
-		read(pw[0], &c, 1);	
+		nbytes = write(pr[1], "c", 1);
+		nbytes = read(pw[0], &c, 1);	
 	}
 
 	if (pfm_stop(ctx_fd))

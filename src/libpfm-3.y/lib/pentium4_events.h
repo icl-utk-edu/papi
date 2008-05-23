@@ -1987,7 +1987,7 @@ pentium4_event_t pentium4_events[] = {
 		 "retired during a clock cycle. Supported on models 3, 4, 6 only",
 	 .event_select = 0x7,
 	 .escr_select = 0x5,
-	 .allowed_escrs = { 20, 42 },
+	 .allowed_escrs = { 21, 42 },
 	 .event_masks = {
 		{.name = "NBOGUS",
 		 .desc = "Non-bogus instructions.",

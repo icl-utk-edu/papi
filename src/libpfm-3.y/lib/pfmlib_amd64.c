@@ -75,7 +75,8 @@
 #define AMD64_FAM10H AMD64_FAM10H_REV_B
 
 typedef enum {
-	AMD64_CPU_UN, 
+	AMD64_CPU_UN,
+	AMD64_K7,
 	AMD64_K8_REV_B,
 	AMD64_K8_REV_C,
 	AMD64_K8_REV_D,
@@ -92,6 +93,7 @@ static const char *amd64_rev_strs[]= {
 
 static const char *amd64_cpu_strs[]= {
 	"unknown model",
+	"K7",
 	"K8 RevB",
 	"K8 RevC",
 	"K8 RevD",
@@ -125,6 +127,9 @@ pfm_pmu_support_t amd64_support;
 static amd64_rev_t
 amd64_get_revision(int family, int model, int stepping)
 {
+	if (family == 6)
+		return AMD64_K7;
+
 	if (family == 15) {
 		switch (model >> 4) {
 		case 0:
@@ -185,7 +190,7 @@ pfm_amd64_setup(int revision)
 		 amd64_cpu_strs[revision]);
 	amd64_support.pmu_name	= amd64_pmu.name;
 
-	/* defaults (K8) */
+	/* K8 (default) */
 	amd64_pmu.events	= amd64_k8_table.events;
 	amd64_support.pme_count	= amd64_k8_table.num;
 	amd64_pmu.cpu_clks	= amd64_k8_table.cpu_clks;
@@ -195,14 +200,24 @@ pfm_amd64_setup(int revision)
 	amd64_support.pmc_count	= PMU_AMD64_NUM_COUNTERS;
 	amd64_support.pmd_count	= PMU_AMD64_NUM_COUNTERS;
 
-	/* additional features */
+	/* K7 */
+        if (amd64_pmu.revision == AMD64_K7) {
+		amd64_pmu.events	= amd64_k7_table.events;
+		amd64_support.pme_count	= amd64_k7_table.num;
+		amd64_pmu.cpu_clks	= amd64_k7_table.cpu_clks;
+		amd64_pmu.ret_inst	= amd64_k7_table.ret_inst;
+		return;
+	}
+
+	/* Barcelona */
 	if (IS_FAMILY_10H()) {
-		amd64_pmu.events = amd64_fam10h_table.events;
-		amd64_support.pme_count = amd64_fam10h_table.num;
-		amd64_pmu.cpu_clks = amd64_fam10h_table.cpu_clks;
-		amd64_pmu.ret_inst = amd64_fam10h_table.ret_inst;
+		amd64_pmu.events	= amd64_fam10h_table.events;
+		amd64_support.pme_count	= amd64_fam10h_table.num;
+		amd64_pmu.cpu_clks	= amd64_fam10h_table.cpu_clks;
+		amd64_pmu.ret_inst	= amd64_fam10h_table.ret_inst;
 		amd64_support.pmc_count	= PMU_AMD64_NUM_PERFSEL;
 		amd64_support.pmd_count	= PMU_AMD64_NUM_PERFCTR;
+		return;
 	}
 }
 

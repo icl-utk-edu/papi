@@ -597,12 +597,8 @@ static pme_core_entry_t core_pe[]={
 		  .pme_udesc = "Streaming SIMD Extensions (SSE) PrefetchT1 and PrefetchT2 instructions missing all cache levels",
 		  .pme_ucode = 0x2
 		},
-		{ .pme_uname = "STORES",
-		  .pme_udesc = "Streaming SIMD Extensions (SSE) Weakly-ordered store instructions missing all cache levels",
-		  .pme_ucode = 0x3
-		}
 	   },
-	   .pme_numasks = 4
+	   .pme_numasks = 3
 	},
 	{ .pme_name = "LOAD_HIT_PRE",
 	  .pme_code = 0x4c,
@@ -1138,7 +1134,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "UOPS_RETIRED",
 	  .pme_code = 0xc2,
-	  .pme_flags = PFMLIB_CORE_PEBS,
+	  .pme_flags = 0,
 	  .pme_desc =  "Fused load+op or load+indirect branch retired",
 	  .pme_umasks = {
 		{ .pme_uname = "LD_IND_BR",

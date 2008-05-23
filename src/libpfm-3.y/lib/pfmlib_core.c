@@ -78,12 +78,11 @@
 #define CORE_CTR_BASE		0xc1
 #define FIXED_CTR_BASE		0x309
 
-#define MAX_COUNTERS	4 /* highest implemented counter */
-
 #define PFMLIB_CORE_ALL_FLAGS \
 	(PFM_CORE_SEL_INV|PFM_CORE_SEL_EDGE)
 
 static pfmlib_regmask_t core_impl_pmcs, core_impl_pmds;
+static int highest_counter;
 
 static int
 pfm_core_detect(void)
@@ -135,6 +134,8 @@ pfm_core_detect(void)
 	pfm_regmask_set(&core_impl_pmds, 16);
 	pfm_regmask_set(&core_impl_pmds, 17);
 	pfm_regmask_set(&core_impl_pmds, 18);
+
+	highest_counter = 18;
 
 	return PFMLIB_SUCCESS;
 }
@@ -682,7 +683,7 @@ static int
 pfm_core_get_event_code(unsigned int i, unsigned int cnt, int *code)
 {
 	if (cnt != PFMLIB_CNT_FIRST
-	    && (cnt > MAX_COUNTERS ||
+	    && (cnt > highest_counter ||
 		!pfm_regmask_isset(&core_impl_pmds, cnt)))
 		return PFMLIB_ERR_INVAL;
 

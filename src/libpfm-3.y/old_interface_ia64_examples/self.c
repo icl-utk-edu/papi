@@ -43,15 +43,19 @@
 
 #define MAX_EVT_NAME_LEN	128
 
+static volatile int quit;
+void sig_handler(int n)
+{
+	quit = 1;
+}
+
 /*
  * our test code (function cannot be made static otherwise it is optimized away)
  */
-unsigned long
-noploop(unsigned long loop)
+void
+noploop(void)
 {
-
-	while (loop--) {}
-	return loop;
+	for(;quit == 0;);
 }
 
 static void fatal_error(char *fmt,...) __attribute__((noreturn));
@@ -84,7 +88,7 @@ main(int argc, char **argv)
 	pfmlib_options_t pfmlib_options;
 	unsigned int num_counters;
 	char name[MAX_EVT_NAME_LEN];
-printf("pfarg_reg_t=%zu\n", sizeof(pfarg_reg_t));
+
 	/*
 	 * Initialize pfm library (required before we can use it)
 	 */
@@ -230,10 +234,10 @@ printf("pfarg_reg_t=%zu\n", sizeof(pfarg_reg_t));
 	/*
 	 * Let's roll now
 	 */
+	signal(SIGALRM, sig_handler);
 	pfm_self_start(ctx_fd);
-
-	noploop(10000000);
-
+	alarm(10);
+	noploop();
 	pfm_self_stop(ctx_fd);
 
 	/*

@@ -58,7 +58,8 @@ TARGET_LINUX +=self task task_attach task_attach_timeout syst \
 	  notify_self notify_self2 notify_self3 \
 	  multiplex multiplex2 set_notify whichpmu \
 	  showreginfo task_smpl task_smpl_user \
-	  pfmsetup self_smpl_multi self_pipe
+	  pfmsetup self_smpl_multi self_pipe \
+	  notify_self_fork
 
 XTRA += rtop
 endif

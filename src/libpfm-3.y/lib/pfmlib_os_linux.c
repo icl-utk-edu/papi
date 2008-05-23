@@ -210,6 +210,7 @@ static void adjust_sys_base(int version)
 	sys_base = 273;
 #else
 	switch(version) {
+		case 26:
 		case 25:
 			sys_base = 288;
 			break;
@@ -223,6 +224,7 @@ static void adjust_sys_base(int version)
 static void adjust_sys_base(int version)
 {
 	switch(version) {
+		case 26:
 		case 25:
 			sys_base = 327;
 			break;
@@ -240,6 +242,7 @@ static void adjust_sys_base(int version)
 	sys_base += 279;
 #else
 	switch(version) {
+		case 26:
 		case 25:
 			sys_base += 287;
 			break;
@@ -257,6 +260,7 @@ static void adjust_sys_base(int version)
 	sys_base += 316;
 #else
 	switch(version) {
+		case 26:
 		case 25:
 			sys_base += 324;
 			break;
@@ -274,6 +278,7 @@ static void adjust_sys_base(int version)
 	sys_base += 275;
 #else
 	switch(version) {
+		case 26:
 		case 25:
 			sys_base += 283;
 			break;
@@ -288,6 +293,7 @@ static void adjust_sys_base(int version)
 static void adjust_sys_base(int version)
 {
 	switch(version) {
+		case 26:
 		case 25:
 			sys_base = 1313;
 			break;
@@ -300,6 +306,7 @@ static void adjust_sys_base(int version)
 static void adjust_sys_base(int version)
 {
 	switch(version) {
+		case 26:
 		case 25:
 			sys_base = 313;
 			break;
@@ -312,6 +319,7 @@ static void adjust_sys_base(int version)
 static void adjust_sys_base(int version)
 {
 	switch(version) {
+		case 26:
 		case 25:
 			sys_base = 317;
 			break;
@@ -330,8 +338,8 @@ static inline void adjust_sys_base(int version)
 {}
 #endif
 
-void
-pfm_init_syscalls(void)
+static void
+pfm_init_syscalls_hardcoded(void)
 {
 	struct utsname b;
 	char *p, *s;
@@ -376,6 +384,39 @@ pfm_init_syscalls(void)
 	v = atoi(s);
 
 	adjust_sys_base(v);
+}
+
+static int
+pfm_init_syscalls_sysfs(void)
+{
+	FILE *fp;
+
+	fp = fopen("/sys/kernel/perfmon/syscall", "r");
+	if (!fp)
+		return -1;
+
+	fscanf(fp, "%d", &sys_base);
+
+	fclose(fp);
+
+	return 0;
+}
+
+void
+pfm_init_syscalls(void)
+{
+	int ret;
+
+	/*
+	 * first try via sysfs
+	 */
+	ret = pfm_init_syscalls_sysfs();
+	/*
+	 * otherwise, use hardcoded values
+	 */
+	if (ret)
+		pfm_init_syscalls_hardcoded();
+
 	__pfm_vbprintf("sycall base %d\n", sys_base);
 }
 

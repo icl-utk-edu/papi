@@ -25,8 +25,8 @@ TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)/..
 include $(TOPDIR)/config.mk
 include $(TOPDIR)/rules.mk
 
-HEADERS=perfmon/perfmon.h          \
-	perfmon/perfmon_dfl_smpl.h \
+# perfmon/perfmon.h is installed below
+HEADERS=perfmon/perfmon_dfl_smpl.h \
 	perfmon/pfmlib.h           \
 	perfmon/pfmlib_comp.h      \
 	perfmon/pfmlib_os.h
@@ -106,8 +106,21 @@ HEADERS += perfmon/pfmlib_cell.h	 \
 	   perfmon/perfmon_powerpc.h
 endif
 
-.PHONY: all clean distclean depend
+.PHONY: all clean distclean depend perfmon.h dir
 
-install:
+perfmon.h:
+ifneq (,$(PFM_VERSION_FLAG))
+	echo "#ifndef $(PFM_VERSION_FLAG)" > $(DESTDIR)$(INCDIR)/perfmon/perfmon.h
+	echo "#define $(PFM_VERSION_FLAG)" >> $(DESTDIR)$(INCDIR)/perfmon/perfmon.h
+	echo "#endif" >> $(DESTDIR)$(INCDIR)/perfmon/perfmon.h
+	cat perfmon/perfmon.h >> $(DESTDIR)$(INCDIR)/perfmon/perfmon.h
+	chmod 644 $(DESTDIR)$(INCDIR)/perfmon/perfmon.h
+else
+	$(INSTALL) -m 644 perfmon/perfmon.h $(DESTDIR)$(INCDIR)/perfmon
+endif
+
+dir:
 	-mkdir -p $(DESTDIR)$(INCDIR)/perfmon
+
+install: dir perfmon.h
 	$(INSTALL) -m 644 $(HEADERS) $(DESTDIR)$(INCDIR)/perfmon
