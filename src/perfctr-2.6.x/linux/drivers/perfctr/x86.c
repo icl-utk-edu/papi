@@ -1641,7 +1641,8 @@ static int __init intel_p6_init(void)
 		if (current_cpu_data.x86_model == 9 ||
 		    current_cpu_data.x86_model == 13 ||
 		    current_cpu_data.x86_model == 14 ||
-		    current_cpu_data.x86_model == 15)
+		    current_cpu_data.x86_model == 15 ||
+		    current_cpu_data.x86_model == 23)
 			lvtpc_reinit_needed = 1;
 	}
 #endif

@@ -6,6 +6,14 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.33, 2008-05-18
+- x86: The support for Intel Family 6 Model 23 processors added in
+  perfctr-2.6.32 was incomplete, causing overflow interrupts to not
+  work properly on those processors. This has been fixed. (Thanks
+  to Mark Krentel for reporting the issue and testing patches.)
+- Updated kernel support: 2.6.26-rc2, 2.6.18-53.1.19.el5 (RHEL5),
+  2.6.9-67.0.15.EL (RHEL4).
+
 Version 2.6.32, 2008-04-20
 - Library: add experimental vperfctr_open_mode(mode) procedure.
   The plain vperfctr_open() always opens the perfctr state in

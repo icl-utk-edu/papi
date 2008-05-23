@@ -3,6 +3,10 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.33, 2008-05-18
+- x86: Intel Family 6 Model 23 support missed that it needs
+  to trigger LVTPC reinit. Fix that.
+
 Version 2.6.32, 2008-04-20
 - x86: Recognize Intel Family 6 Model 23 as Core2.
 - x86: Update perfctr_sysclass definition for kernel 2.6.25.
