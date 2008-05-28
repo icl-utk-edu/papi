@@ -58,7 +58,7 @@ endif
 # _ntv_name_to_code in perfmon for extras optimization.
 CFLAGS	+= -DPFM2
 
-MISCHDRS = perfmon.h papi_pfm_events.h
+MISCHDRS = perfmon.h papi_pfm_events.h $(PFM_EVENTS_TABLE)
 MISCSRCS = papi_pfm_events.c
 # This is necessary to avoid text relocations. You cannot do -Lxx -lx because
 # it will attempt to use the static library if a shared library ending in

@@ -6,7 +6,6 @@
 #       maynardj@us.ibm.com
 
 DESCR   = "Linux with PerfCtr $(VERSION) patch and library, and perfmon2 libpfm library"
-LIBS    = static shared
 TARGETS = serial attach multiplex_and_pthreads shared
 LIBRARY = libpapi.a
 SHLIB   = libpapi.so.$(PAPIVER)
@@ -157,7 +156,7 @@ CFLAGS-2.6.x := -DPERFCTR26
 CFLAGS-2.7.x := $(CFLAGS-2.6.x)
 CFLAGS += $(EVENTFLAGS) $(CFLAGS-$(VERSION))
 
-MISCHDRS = perfctr-$(CPU).h
+MISCHDRS = perfctr-$(CPU).h $(PFM_EVENTS_TABLE)
 MISCSRCS =  linux.c $(ARCH_SPEC_EVTS)
 # Pentium 4 no longer needs a p4_events.c file
 ifneq (,$(CPU_EVENTS))
@@ -267,7 +266,7 @@ papi_pfm_events.o: papi_pfm_events.c $(HEADERS) $(PFM_EVENTS_TABLE)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_pfm_events.c -o $@
 
 perfmon_events_table.h:	perfmon_events.csv perfmon_events_table.sh
-	ksh perfmon_events_table.sh > $@
+	sh perfmon_events_table.sh > $@
 
 $(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c  $(ARCH_EVENTS)_map.c -o $@
