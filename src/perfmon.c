@@ -470,7 +470,8 @@ static int get_cpu_info(PAPI_hw_info_t *hw_info)
 #if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
      case PFMLIB_MIPS_ICE9A_PMU:
      case PFMLIB_MIPS_ICE9B_PMU:
-       hw_info->clock_mhz /= 2.0;
+       hw_info->clock_mhz = (hw_info->clock_mhz + 1.0) / 2.0;
+       hw_info->mhz = (float)2.0*hw_info->clock_mhz;
        break;
 #endif
      case PFMLIB_MONTECITO_PMU:
