@@ -1114,7 +1114,6 @@ if test "$perfmon" != "no"; then
       AC_DEFINE(HAVE_PERFMON_PFMLIB_MONTECITO_H,1,[Montecito headers])
       AC_DEFINE(HAVE_PFM_GET_EVENT_DESCRIPTION,1,[event description function])
       AC_DEFINE(HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT,1,[new pfmlib_output_param_t])
-      AC_DEFINE(HAVE_PFM_MSG_TYPE,1,[new pfm_msg_t])
    fi
 fi
 

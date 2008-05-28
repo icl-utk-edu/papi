@@ -3862,7 +3862,11 @@ process_smpl_buf(int num_smpl_pmds, int entry_size, ThreadInfo_t **thr)
 void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
 {
     _papi_hwi_context_t ctx;
+#ifdef HAVE_PFM_MSG_TYPE
+    pfm_msg_t msg;
+#else
     pfarg_msg_t msg;
+#endif
     int ret, wanted_fd, fd = info->si_fd;
     unsigned long address;
     ThreadInfo_t *thread = _papi_hwi_lookup_thread();
