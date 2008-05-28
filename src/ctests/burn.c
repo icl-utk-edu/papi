@@ -1,5 +1,6 @@
 #include "papi_test.h"
-main()
+int main()
 {
   do_flops(1000000000);
+  return(0);
 }

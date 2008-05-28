@@ -156,7 +156,10 @@ int
 main(int argc, char **argv)
 {
     char buf[100];
+
+#if !(defined(PCHILD) | defined(PEXEC) | defined(PEXEC) | defined(SYSTEM) | defined(SYSTEM2))
     int ret;
+#endif
 
     if (argc < 2 || sscanf(argv[1], "%d", &num_events) < 1)
 	num_events = 1;
