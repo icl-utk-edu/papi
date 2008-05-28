@@ -421,7 +421,7 @@ read the documentation carefully.  */
      int multiplex_timer_us;   /* uS between switching of sets */
      int hardware_intr_sig;       /* Signal used by hardware to deliver PMC events */
      int opcode_match_width;      /* Width of opcode matcher if exists, 0 if not */
-     int reserved_ints[4];        
+     int reserved_ints[4];        /* [0] is used by perfmon.c for minimal timer resolution in us */
      unsigned int hardware_intr:1;         /* hw overflow intr, does not need to be emulated in software*/
      unsigned int precise_intr:1;          /* Performance interrupts happen precisely */
      unsigned int posix1b_timers:1;        /* Using POSIX 1b interval timers (timer_create) instead of setitimer */

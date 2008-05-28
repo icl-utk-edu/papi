@@ -74,7 +74,7 @@ typedef struct {
   pfmlib_input_param_t in;
   /* Buffer to pass from the library to control the counters */
   pfmlib_output_param_t out;
-  /* Is this eventset multiplexed? */
+  /* Is this eventset multiplexed? Actually it holds the microseconds of the switching interval, 0 if not mpx. */
   int multiplexed;
   /* Arguments to kernel for multiplexing, first number of sets */
   int num_sets;

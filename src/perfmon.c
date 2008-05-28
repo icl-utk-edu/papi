@@ -72,6 +72,113 @@ int _perfmon2_pfm_pmu_type = -1;
 static pfmlib_regmask_t _perfmon2_pfm_unavailable_pmcs;
 static pfmlib_regmask_t _perfmon2_pfm_unavailable_pmds;
 
+/* Debug functions */
+
+#ifdef DEBUG
+static void dump_smpl_arg(pfm_dfl_smpl_arg_t *arg)
+{
+  SUBDBG("SMPL_ARG.buf_size = %llu\n",(unsigned long long)arg->buf_size);
+  SUBDBG("SMPL_ARG.buf_flags = %d\n",arg->buf_flags);
+}
+
+static void dump_sets(pfarg_setdesc_t *set, int num_sets)
+{
+  int i;
+
+  for (i=0;i<num_sets;i++)
+    {
+      SUBDBG("SET[%d]\n",i);
+      SUBDBG("SET[%d].set_id = %d\n",i,set[i].set_id);
+     // SUBDBG("SET[%d].set_id_next = %d\n",i,set[i].set_id_next);
+      SUBDBG("SET[%d].set_flags = %d\n",i,set[i].set_flags);
+      SUBDBG("SET[%d].set_timeout = %llu\n",i,(unsigned long long)set[i].set_timeout);
+     //  SUBDBG("SET[%d].set_mmap_offset = 0x%016llx\n",i,(unsigned long long)set[i].set_mmap_offset);
+    }
+}
+
+static void dump_setinfo(pfarg_setinfo_t *setinfo, int num_sets)
+{
+  int i;
+
+  for (i=0;i<num_sets;i++)
+    {
+      SUBDBG("SETINFO[%d]\n",i);
+      SUBDBG("SETINFO[%d].set_id = %d\n",i,setinfo[i].set_id);
+      // SUBDBG("SETINFO[%d].set_id_next = %d\n",i,setinfo[i].set_id_next);
+      SUBDBG("SETINFO[%d].set_flags = %d\n",i,setinfo[i].set_flags);
+      SUBDBG("SETINFO[%d].set_ovfl_pmds[0] = 0x%016llx\n",i,(unsigned long long)setinfo[i].set_ovfl_pmds[0]);
+      SUBDBG("SETINFO[%d].set_runs = %llu\n",i,(unsigned long long)setinfo[i].set_runs);
+      SUBDBG("SETINFO[%d].set_timeout = %llu\n",i,(unsigned long long)setinfo[i].set_timeout);
+      SUBDBG("SETINFO[%d].set_act_duration = %llu\n",i,(unsigned long long)setinfo[i].set_act_duration);
+      // SUBDBG("SETINFO[%d].set_mmap_offset = 0x%016llx\n",i,(unsigned long long)setinfo[i].set_mmap_offset);
+      SUBDBG("SETINFO[%d].set_avail_pmcs[0] = 0x%016llx\n",i,(unsigned long long)setinfo[i].set_avail_pmcs[0]);
+      SUBDBG("SETINFO[%d].set_avail_pmds[0] = 0x%016llx\n",i,(unsigned long long)setinfo[i].set_avail_pmds[0]);
+    }
+}
+
+static void dump_pmc(hwd_control_state_t * ctl)
+{
+  int i;
+  pfarg_pmc_t *pc = ctl->pc;
+
+  for (i=0;i<ctl->out.pfp_pmc_count;i++)
+    {
+      SUBDBG("PC[%d]\n",i);
+      SUBDBG("PC[%d].reg_num = %d\n",i,pc[i].reg_num);
+      SUBDBG("PC[%d].reg_set = %d\n",i,pc[i].reg_set);
+      SUBDBG("PC[%d].reg_flags = 0x%08x\n",i,pc[i].reg_flags);
+      SUBDBG("PC[%d].reg_value = 0x%016llx\n",i,(unsigned long long)pc[i].reg_value);
+    }
+}
+
+static void dump_pmd(hwd_control_state_t * ctl)
+{
+  int i;
+  pfarg_pmd_t *pd = ctl->pd;
+
+  for (i=0;i<ctl->in.pfp_event_count;i++)
+    {
+      SUBDBG("PD[%d]\n",i);
+      SUBDBG("PD[%d].reg_num = %d\n",i,pd[i].reg_num);
+      SUBDBG("PD[%d].reg_set = %d\n",i,pd[i].reg_set);
+      SUBDBG("PD[%d].reg_flags = 0x%08x\n",i,pd[i].reg_flags);
+      SUBDBG("PD[%d].reg_value = 0x%016llx\n",i,(unsigned long long)pd[i].reg_value);
+      SUBDBG("PD[%d].reg_long_reset = %llu\n",i,(unsigned long long)pd[i].reg_long_reset);
+      SUBDBG("PD[%d].reg_short_reset = %llu\n",i,(unsigned long long)pd[i].reg_short_reset);
+      SUBDBG("PD[%d].reg_last_reset_val = %llu\n",i,(unsigned long long)pd[i].reg_last_reset_val);
+      SUBDBG("PD[%d].reg_ovfl_switch_cnt = %llu\n",i,(unsigned long long)pd[i].reg_ovfl_switch_cnt);
+      SUBDBG("PD[%d].reg_reset_pmds[0] = 0x%016llx\n",i,(unsigned long long)pd[i].reg_reset_pmds[0]);
+      SUBDBG("PD[%d].reg_smpl_pmds[0] = 0x%016llx\n",i,(unsigned long long)pd[i].reg_smpl_pmds[0]);
+      SUBDBG("PD[%d].reg_smpl_eventid = %llu\n",i,(unsigned long long)pd[i].reg_smpl_eventid);
+      SUBDBG("PD[%d].reg_random_mask = %llu\n",i,(unsigned long long)pd[i].reg_random_mask);
+      SUBDBG("PD[%d].reg_random_seed = %d\n",i,pd[i].reg_random_seed);
+    }
+}
+
+static void dump_smpl_hdr(pfm_dfl_smpl_hdr_t *hdr)
+{
+  SUBDBG("SMPL_HDR.hdr_count = %llu\n",(unsigned long long)hdr->hdr_count);
+  SUBDBG("SMPL_HDR.hdr_cur_offs = %llu\n",(unsigned long long)hdr->hdr_cur_offs);
+  SUBDBG("SMPL_HDR.hdr_overflows = %llu\n",(unsigned long long)hdr->hdr_overflows);
+  SUBDBG("SMPL_HDR.hdr_buf_size = %llu\n",(unsigned long long)hdr->hdr_buf_size);
+  SUBDBG("SMPL_HDR.hdr_min_buf_space = %llu\n",(unsigned long long)hdr->hdr_min_buf_space);
+  SUBDBG("SMPL_HDR.hdr_version = %d\n",hdr->hdr_version);
+  SUBDBG("SMPL_HDR.hdr_buf_flags = %d\n",hdr->hdr_buf_flags);
+}
+
+static void dump_smpl(pfm_dfl_smpl_entry_t *entry)
+{
+  SUBDBG("SMPL.pid = %d\n",entry->pid);
+  SUBDBG("SMPL.ovfl_pmd = %d\n",entry->ovfl_pmd);
+  SUBDBG("SMPL.last_reset_val = %llu\n",(unsigned long long)entry->last_reset_val);
+  SUBDBG("SMPL.ip = 0x%llx\n",(unsigned long long)entry->ip);
+  SUBDBG("SMPL.tstamp = %llu\n",(unsigned long long)entry->tstamp);
+  SUBDBG("SMPL.cpu = %d\n",entry->cpu);
+  SUBDBG("SMPL.set = %d\n",entry->set);
+  SUBDBG("SMPL.tgid = %d\n",entry->tgid);
+}
+#endif
+
 /* Hardware clock functions */
 
 #if defined(HAVE_MMTIMER)
@@ -114,27 +221,50 @@ inline_static long_long get_cycles(void) {
 #endif
    return ret;
 }
-#elif defined(mips)
-inline_static long_long get_cycles(void) 
+#elif defined(__crayx2)						/* CRAY X2 */
+inline_static long_long get_cycles (void)
 {
-  long_long count = 0;
-  /* This is a hack for SiCortex 32 bit cycle counter */
-  __asm__ __volatile__(".set   push    \n"
-	  ".set   mips32r2\n"
-	  "rdhwr $3, $30  \n"
-	  "move  %0, $3   \n"
-	  ".set pop" : "=r"(count) : : "$3");
-
-   switch (_perfmon2_pfm_pmu_type)
-     {
-     case PFMLIB_MIPS_5KC_PMU:
-#if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
-     case PFMLIB_MIPS_ICE9A_PMU:
-     case PFMLIB_MIPS_ICE9B_PMU:
-       count = count * 2;
+	return _rtc ( );
+}
+/* #define get_cycles _rtc ?? */
 #endif
-       break;
-     }
+
+#if defined(HAVE_CYCLE) && defined(mips)
+/* This is a special hack for SiCortex 64 bit cycle counter */
+#define likely(x)       __builtin_expect(!!(x), 1)
+#define unlikely(x)     __builtin_expect(!!(x), 0)
+static long long get_cycles(void) 
+{
+  static long long old_count = 0;
+  long long count = 0;
+
+  if (unlikely(old_count == 0))
+    {
+      /* Use the locked fast trap to get a good value */
+      __asm__ __volatile__(
+			   ".set  push      \n"
+			   ".set  mips32r2  \n"
+			   "rdhwr $3, $31   \n"
+			   ".set  pop       \n"
+			   "move  %0, $3    \n"
+			   : "=r"(old_count) : : "$2", "$3");
+      old_count = old_count * 2;
+      return old_count;
+    }
+
+  /* The unlocked fast trap which can fail */
+ again:
+  __asm__ __volatile__(
+		       ".set  push      \n"
+		       ".set  mips32r2  \n"
+		       "rdhwr $3, $30   \n"
+		       ".set  pop       \n"
+		       "move  %0, $3    \n"
+		       : "=r"(count) : : "$3");
+  count = count * 2;
+  if (unlikely(count <= old_count))
+    goto again;
+  old_count = count;
   return count;
 }
 #elif defined(__crayx2)						/* CRAY X2 */
@@ -165,9 +295,37 @@ inline_static long_long get_cycles(void)
 #error "No support for this architecture. Please modify perfmon.c"
 #endif
 
+/* This routine effectively does argument checking as the real magic will happen
+   in compute_kernel_args. This just gets the value back from the kernel. */
+
+static int check_multiplex_timeout(int ctx_fd, unsigned long *timeout_us)
+{
+  int ret;
+  pfarg_setdesc_t set[2];
+
+  memset(set,0,sizeof(pfarg_setdesc_t)*2);
+  set[1].set_timeout = *timeout_us * 1000;
+  SUBDBG("Multiplexing interval requested is %llu ns.\n",(unsigned long long)set[1].set_timeout);
+      
+  SUBDBG("PFM_CREATE_EVTSETS(%d,%p,2)\n",ctx_fd,set);
+  if ((ret = pfm_create_evtsets(ctx_fd, set, 2)) != PFMLIB_SUCCESS)
+    {
+      DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(set,2));
+      PAPIERROR("pfm_create_evtsets(%d,%p,%d): %s", ctx_fd, set, 2, pfm_strerror(ret));
+      return(PAPI_ESYS);
+    }      
+
+  SUBDBG("Multiplexing interval returned is %llu ns.\n",(unsigned long long)set[1].set_timeout);
+  *timeout_us = set[1].set_timeout / 1000;
+  
+  pfm_delete_evtsets(ctx_fd,set,2);
+
+  return(PAPI_OK);
+}
+
 /* The below function is stolen from libpfm from Stephane Eranian */
-int
-detect_unavail_pmu_regs(pfmlib_regmask_t *r_pmcs, pfmlib_regmask_t *r_pmds)
+static int
+detect_timeout_and_unavail_pmu_regs(pfmlib_regmask_t *r_pmcs, pfmlib_regmask_t *r_pmds, unsigned long *timeout_us)
 {
   pfarg_ctx_t ctx;
   pfarg_setinfo_t	setf;
@@ -186,7 +344,7 @@ detect_unavail_pmu_regs(pfmlib_regmask_t *r_pmcs, pfmlib_regmask_t *r_pmds)
 	myfd = pfm_create_context(&ctx, NULL, NULL, 0);
 	if (myfd == -1)
 	  {
-		  PAPIERROR("detect_unavail_pmu_regs:pfm_create_context(): %s", strerror(errno));
+	    PAPIERROR("detect_unavail_pmu_regs:pfm_create_context(): %s", strerror(errno));
 	    return(PAPI_ESYS);
 	  }
 	SUBDBG("PFM_CREATE_CONTEXT returned fd %d\n",myfd);
@@ -200,7 +358,8 @@ detect_unavail_pmu_regs(pfmlib_regmask_t *r_pmcs, pfmlib_regmask_t *r_pmds)
 	    PAPIERROR("pfm_getinfo_evtsets(): %s", pfm_strerror(ret));
 	    return(PAPI_ESYS);
 	  }
-    if (r_pmcs)
+      DEBUGCALL(DEBUG_SUBSTRATE,dump_setinfo(&setf,1));
+      if (r_pmcs)
 		for(i=0; i < PFM_PMC_BV; i++) {
 			for(j=0; j < 64; j++) {
 				if ((setf.set_avail_pmcs[i] & (1ULL << j)) == 0)
@@ -214,6 +373,7 @@ detect_unavail_pmu_regs(pfmlib_regmask_t *r_pmcs, pfmlib_regmask_t *r_pmds)
 					pfm_regmask_set(r_pmds, (i<<6)+j);
 			}
 		}
+	check_multiplex_timeout(myfd,timeout_us);
 	i = close(myfd);
 	SUBDBG("CLOSE fd %d returned %d\n",myfd,i);
 	return PAPI_OK;
@@ -2102,112 +2262,6 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * hwinfo, int unused)
   return(retval);
 }
 
-#ifdef DEBUG
-void dump_smpl_arg(pfm_dfl_smpl_arg_t *arg)
-{
-  SUBDBG("SMPL_ARG.buf_size = %llu\n",(unsigned long long)arg->buf_size);
-  SUBDBG("SMPL_ARG.buf_flags = %d\n",arg->buf_flags);
-}
-
-void dump_sets(pfarg_setdesc_t *set, int num_sets)
-{
-  int i;
-
-  for (i=0;i<num_sets;i++)
-    {
-      SUBDBG("SET[%d]\n",i);
-      SUBDBG("SET[%d].set_id = %d\n",i,set[i].set_id);
-     // SUBDBG("SET[%d].set_id_next = %d\n",i,set[i].set_id_next);
-      SUBDBG("SET[%d].set_flags = %d\n",i,set[i].set_flags);
-      SUBDBG("SET[%d].set_timeout = %llu\n",i,(unsigned long long)set[i].set_timeout);
-     //  SUBDBG("SET[%d].set_mmap_offset = 0x%016llx\n",i,(unsigned long long)set[i].set_mmap_offset);
-    }
-}
-
-void dump_setinfo(hwd_control_state_t * ctl)
-{
-  int i;
-  pfarg_setinfo_t *setinfo = ctl->setinfo;
-
-  for (i=0;i<ctl->num_sets;i++)
-    {
-      SUBDBG("SETINFO[%d]\n",i);
-      SUBDBG("SETINFO[%d].set_id = %d\n",i,setinfo[i].set_id);
-      // SUBDBG("SETINFO[%d].set_id_next = %d\n",i,setinfo[i].set_id_next);
-      SUBDBG("SETINFO[%d].set_flags = %d\n",i,setinfo[i].set_flags);
-      SUBDBG("SETINFO[%d].set_ovfl_pmds[0] = 0x%016llx\n",i,(unsigned long long)setinfo[i].set_ovfl_pmds[0]);
-      SUBDBG("SETINFO[%d].set_runs = %llu\n",i,(unsigned long long)setinfo[i].set_runs);
-      SUBDBG("SETINFO[%d].set_timeout = %llu\n",i,(unsigned long long)setinfo[i].set_timeout);
-      SUBDBG("SETINFO[%d].set_act_duration = %llu\n",i,(unsigned long long)setinfo[i].set_act_duration);
-      // SUBDBG("SETINFO[%d].set_mmap_offset = 0x%016llx\n",i,(unsigned long long)setinfo[i].set_mmap_offset);
-      SUBDBG("SETINFO[%d].set_avail_pmcs[0] = 0x%016llx\n",i,(unsigned long long)setinfo[i].set_avail_pmcs[0]);
-      SUBDBG("SETINFO[%d].set_avail_pmds[0] = 0x%016llx\n",i,(unsigned long long)setinfo[i].set_avail_pmds[0]);
-    }
-}
-
-void dump_pmc(hwd_control_state_t * ctl)
-{
-  int i;
-  pfarg_pmc_t *pc = ctl->pc;
-
-  for (i=0;i<ctl->out.pfp_pmc_count;i++)
-    {
-      SUBDBG("PC[%d]\n",i);
-      SUBDBG("PC[%d].reg_num = %d\n",i,pc[i].reg_num);
-      SUBDBG("PC[%d].reg_set = %d\n",i,pc[i].reg_set);
-      SUBDBG("PC[%d].reg_flags = 0x%08x\n",i,pc[i].reg_flags);
-      SUBDBG("PC[%d].reg_value = 0x%016llx\n",i,(unsigned long long)pc[i].reg_value);
-    }
-}
-
-void dump_pmd(hwd_control_state_t * ctl)
-{
-  int i;
-  pfarg_pmd_t *pd = ctl->pd;
-
-  for (i=0;i<ctl->in.pfp_event_count;i++)
-    {
-      SUBDBG("PD[%d]\n",i);
-      SUBDBG("PD[%d].reg_num = %d\n",i,pd[i].reg_num);
-      SUBDBG("PD[%d].reg_set = %d\n",i,pd[i].reg_set);
-      SUBDBG("PD[%d].reg_flags = 0x%08x\n",i,pd[i].reg_flags);
-      SUBDBG("PD[%d].reg_value = 0x%016llx\n",i,(unsigned long long)pd[i].reg_value);
-      SUBDBG("PD[%d].reg_long_reset = %llu\n",i,(unsigned long long)pd[i].reg_long_reset);
-      SUBDBG("PD[%d].reg_short_reset = %llu\n",i,(unsigned long long)pd[i].reg_short_reset);
-      SUBDBG("PD[%d].reg_last_reset_val = %llu\n",i,(unsigned long long)pd[i].reg_last_reset_val);
-      SUBDBG("PD[%d].reg_ovfl_switch_cnt = %llu\n",i,(unsigned long long)pd[i].reg_ovfl_switch_cnt);
-      SUBDBG("PD[%d].reg_reset_pmds[0] = 0x%016llx\n",i,(unsigned long long)pd[i].reg_reset_pmds[0]);
-      SUBDBG("PD[%d].reg_smpl_pmds[0] = 0x%016llx\n",i,(unsigned long long)pd[i].reg_smpl_pmds[0]);
-      SUBDBG("PD[%d].reg_smpl_eventid = %llu\n",i,(unsigned long long)pd[i].reg_smpl_eventid);
-      SUBDBG("PD[%d].reg_random_mask = %llu\n",i,(unsigned long long)pd[i].reg_random_mask);
-      SUBDBG("PD[%d].reg_random_seed = %d\n",i,pd[i].reg_random_seed);
-    }
-}
-
-void dump_smpl_hdr(pfm_dfl_smpl_hdr_t *hdr)
-{
-  SUBDBG("SMPL_HDR.hdr_count = %llu\n",(unsigned long long)hdr->hdr_count);
-  SUBDBG("SMPL_HDR.hdr_cur_offs = %llu\n",(unsigned long long)hdr->hdr_cur_offs);
-  SUBDBG("SMPL_HDR.hdr_overflows = %llu\n",(unsigned long long)hdr->hdr_overflows);
-  SUBDBG("SMPL_HDR.hdr_buf_size = %llu\n",(unsigned long long)hdr->hdr_buf_size);
-  SUBDBG("SMPL_HDR.hdr_min_buf_space = %llu\n",(unsigned long long)hdr->hdr_min_buf_space);
-  SUBDBG("SMPL_HDR.hdr_version = %d\n",hdr->hdr_version);
-  SUBDBG("SMPL_HDR.hdr_buf_flags = %d\n",hdr->hdr_buf_flags);
-}
-
-void dump_smpl(pfm_dfl_smpl_entry_t *entry)
-{
-  SUBDBG("SMPL.pid = %d\n",entry->pid);
-  SUBDBG("SMPL.ovfl_pmd = %d\n",entry->ovfl_pmd);
-  SUBDBG("SMPL.last_reset_val = %llu\n",(unsigned long long)entry->last_reset_val);
-  SUBDBG("SMPL.ip = 0x%llx\n",(unsigned long long)entry->ip);
-  SUBDBG("SMPL.tstamp = %llu\n",(unsigned long long)entry->tstamp);
-  SUBDBG("SMPL.cpu = %d\n",entry->cpu);
-  SUBDBG("SMPL.set = %d\n",entry->set);
-  SUBDBG("SMPL.tgid = %d\n",entry->tgid);
-}
-#endif
-
 int _papi_hwd_update_shlib_info(void)
 {
    char fname[PAPI_HUGE_STR_LEN];
@@ -2539,7 +2593,7 @@ inline static int compute_kernel_args(hwd_control_state_t * ctl)
     {
       for (i=0;i<set;i++) {
 	sets[i].set_flags = PFM_SETFL_TIME_SWITCH;
-	sets[i].set_timeout = _papi_hwi_system_info.sub_info.multiplex_timer_us;
+	sets[i].set_timeout = ctl->multiplexed * 1000;
       }
     }
   SUBDBG("exit multiplexed %d, pfp_pmc_count %d, num_sets %d\n",ctl->multiplexed, outp->pfp_pmc_count, *num_sets);
@@ -2625,7 +2679,7 @@ static int attach(hwd_control_state_t *ctl, unsigned long tid)
   SUBDBG("PFM_CREATE_CONTEXT(%p,%p,%p,%d)\n",newctx,NULL,NULL,0);
   if ((ret = pfm_create_context(newctx, NULL, NULL, 0)) == -1)
     {
-		PAPIERROR("attach:pfm_create_context(): %s", strerror(errno));
+      PAPIERROR("attach:pfm_create_context(): %s", strerror(errno));
       free(newctx); 
       free(load_args);
       return(PAPI_ESYS);
@@ -2654,68 +2708,6 @@ static int detach(hwd_context_t *ctx, hwd_control_state_t *ctl)
   ctl->ctx_fd = ctx->ctx_fd;
   free(ctl->load);
   ctl->load = &ctx->load;
-
-  return(PAPI_OK);
-}
-
-/* This routine effectively does argument checking as the real magic will happen
-   in compute_kernel_args. This just gets the value back from the kernel. */
-
-inline static int check_multiplex_timeout(hwd_context_t *ctx, unsigned long *timeout)
-{
-  int ret, ctx_fd;
-  pfarg_setdesc_t set;
-  pfarg_ctx_t newctx;
-
-  return(PAPI_OK);
-
-  if (ctx == NULL)
-    ctx_fd = 0; /* This happens from inside init_substrate_global, where no context yet exists. */
-  else
-    ctx_fd = ctx->ctx_fd;
-
-  memset(&set,0,sizeof(set));
-  set.set_timeout = *timeout;
-  SUBDBG("Requested multiplexing interval is %llu usecs.\n",(unsigned long long)set.set_timeout);
-
-  /* This may be called before we have a context, so we should build one
-     if we need one. */
-
-  if (ctx_fd == 0)
-    {
-      memset(&newctx, 0, sizeof(newctx));
-
-      SUBDBG("PFM_CREATE_CONTEXT(%p,%p,%p,%d)\n",&newctx,NULL,NULL,0);
-      if ((ret = pfm_create_context(&newctx, NULL, NULL, 0)) == -1)
-	{
-		PAPIERROR("check_multiplex_timeout:pfm_create_context(): %s", strerror(errno));
-	  return(PAPI_ESYS);
-	}
-      SUBDBG("PFM_CREATE_CONTEXT returned fd %d\n",ret);
-      tune_up_fd(ret);
-      ctx_fd = ret;
-    }
-      
-  SUBDBG("PFM_CREATE_EVTSETS(%d,%p,1)\n",ctx_fd,&set);
-  if ((ret = pfm_create_evtsets(ctx_fd, &set, 1)) != PFMLIB_SUCCESS)
-    {
-      DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(&set,1));
-      PAPIERROR("pfm_create_evtsets(%d,%p,1): %s", ctx_fd, &set, pfm_strerror(ret));
-      return(PAPI_ESYS);
-    }      
-
-  SUBDBG("Multiplexing interval is now %llu usecs.\n",(unsigned long long)set.set_timeout);
-  *timeout = set.set_timeout;
-  
-  /* If we created a context, get rid of it */
-  if (ctx_fd) 
-    {
-      pfm_delete_evtsets(ctx_fd,&set,1);
-      SUBDBG("PFM_UNLOAD_CONTEXT(%d)\n",ctx_fd);
-      pfm_unload_context(ctx_fd);
-      ret = close(ctx_fd);
-      SUBDBG("CLOSE fd %d returned %d\n",ctx_fd,ret);
-    }
 
   return(PAPI_OK);
 }
@@ -2817,7 +2809,6 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   retval = _papi_hwi_setup_vector_table( vtable, _papi_pfm_event_vectors);
   if ( retval != PAPI_OK ) return(retval);
 #endif
-
       /* The following checks the PFMLIB version 
 	  against the perfmon2 kernel version... */
    strncpy(_papi_hwi_system_info.sub_info.support_version,buf,sizeof(_papi_hwi_system_info.sub_info.support_version));
@@ -2825,7 +2816,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    if (retval != PAPI_OK)
       return(retval);
    sprintf(buf, "%d.%d", PFM_VERSION_MAJOR(PFM_VERSION), PFM_VERSION_MINOR(PFM_VERSION));
-   SUBDBG("Perfmon2 library versions...\n  kernel: %s\n  library: %s\n", _papi_hwi_system_info.sub_info.kernel_version, buf);
+   SUBDBG("Perfmon2 library versions...kernel: %s library: %s\n", _papi_hwi_system_info.sub_info.kernel_version, buf);
    if (strcmp (_papi_hwi_system_info.sub_info.kernel_version, buf) != 0) {
       PAPIERROR("Version mismatch of libpfm: compiled %s vs. installed %s\n",
               buf, _papi_hwi_system_info.sub_info.kernel_version);
@@ -2855,8 +2846,15 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 
   /* Load the module, find out if any PMC's/PMD's are off limits */
 
-  retval = detect_unavail_pmu_regs(&_perfmon2_pfm_unavailable_pmcs,
-				   &_perfmon2_pfm_unavailable_pmds);
+   {
+     unsigned long min_timeout = 1;
+     retval = detect_timeout_and_unavail_pmu_regs(&_perfmon2_pfm_unavailable_pmcs,
+						  &_perfmon2_pfm_unavailable_pmds,
+						  &min_timeout);
+     _papi_hwi_system_info.sub_info.multiplex_timer_us = min_timeout;
+     _papi_hwi_system_info.sub_info.reserved_ints[0] = min_timeout;
+   }
+
   if (retval != PAPI_OK)
     return(retval);
 
@@ -2969,12 +2967,10 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   _papi_hwi_system_info.sub_info.profile_ear = 1;  
   _papi_hwi_system_info.sub_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
   _papi_hwi_system_info.sub_info.hardware_intr_sig = SIGRTMIN+2;
-  //  check_multiplex_timeout(NULL, (unsigned long *)&_papi_hwi_system_info.sub_info.multiplex_timer_us);
 
   /* FIX: For now, use the pmu_type from Perfmon */
 
   _papi_hwi_system_info.hw_info.model = _perfmon2_pfm_pmu_type;
-
 
    /* Setup presets */
    retval = _papi_pfm_setup_presets(pmu_name, _perfmon2_pfm_pmu_type);
@@ -3024,7 +3020,7 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
 
   if ((ret = pfm_create_context(&newctx, NULL, NULL, 0)) == -1)
     {
-		PAPIERROR("_papi_hwd_init:pfm_create_context(): %s", strerror(errno));
+      PAPIERROR("_papi_hwd_init:pfm_create_context(): %s", strerror(errno));
       return(PAPI_ESYS);
     }
   SUBDBG("PFM_CREATE_CONTEXT returned fd %d\n",ret);
@@ -3063,7 +3059,7 @@ long_long _papi_hwd_get_real_usec(void) {
                                                                                 
 long_long _papi_hwd_get_real_cycles(void) {
   long_long retval;
-#if defined(HAVE_GETTIMEOFDAY)||defined(mips)||defined(__powerpc__)
+#if defined(HAVE_GETTIMEOFDAY)||defined(__powerpc__)||(defined(mips)&&!defined(HAVE_CYCLE))
   retval = _papi_hwd_get_real_usec()*(long_long)_papi_hwi_system_info.hw_info.mhz;
 #else
   retval = get_cycles();
@@ -3237,12 +3233,12 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctl,
   SUBDBG("PFM_GETINFO_EVTSETS(%d,%p,%d)\n",ctl->ctx_fd, ctl->setinfo, ctl->num_sets);
   if ((ret = pfm_getinfo_evtsets(ctl->ctx_fd, ctl->setinfo, ctl->num_sets)))
     {
-      DEBUGCALL(DEBUG_SUBSTRATE,dump_setinfo(ctl));
+      DEBUGCALL(DEBUG_SUBSTRATE,dump_setinfo(ctl->setinfo,ctl->num_sets));
       PAPIERROR("pfm_getinfo_evtsets(%d,%p,%d): %s",ctl->ctx_fd, ctl->setinfo, ctl->num_sets, pfm_strerror(ret));
       *events = NULL;
       return(PAPI_ESYS);
     }
-  DEBUGCALL(DEBUG_SUBSTRATE,dump_setinfo(ctl));
+  DEBUGCALL(DEBUG_SUBSTRATE,dump_setinfo(ctl->setinfo,ctl->num_sets));
 
   /* Add up the number of total runs */
   
@@ -3305,7 +3301,7 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctl)
 	  return(PAPI_ESYS);
 	}
       DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(ctl->set,ctl->num_sets));
-    }      
+    }
 
   /*
    * Now program the registers
@@ -3417,12 +3413,20 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 
   switch (code) {
   case PAPI_DEF_MPX_USEC:
-    return(check_multiplex_timeout(ctx,&option->multiplex.us));
+    { 
+      int leftover = option->multiplex.us % _papi_hwi_system_info.sub_info.reserved_ints[0]; /* min timeout */
+      _papi_hwi_system_info.sub_info.multiplex_timer_us = option->multiplex.us + leftover;
+      option->multiplex.us += leftover;
+      return(PAPI_OK);
+    }
   case PAPI_MULTIPLEX:
-    ret = check_multiplex_timeout(ctx,&option->multiplex.us);
-    if (ret == PAPI_OK)
-      option->multiplex.ESI->machdep.multiplexed = 1;
-    return(ret);
+    {
+      int leftover = option->multiplex.us % _papi_hwi_system_info.sub_info.reserved_ints[0]; /* min timeout */
+      option->multiplex.us += leftover;
+      /* Cheat and store us resolution in this boolean */
+      option->multiplex.ESI->machdep.multiplexed = option->multiplex.us;
+      return(PAPI_OK);
+    }
   case PAPI_ATTACH:
     return(attach(&option->attach.ESI->machdep, option->attach.tid));
   case PAPI_DETACH:
@@ -3739,7 +3743,7 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
 	}
 
       if (flags & PAPI_PROFIL_DATA_EAR)
-	    *pc = data_addr.pmd_val;
+	*pc = data_addr.pmd_val;
       else if (flags & PAPI_PROFIL_INST_EAR)
 	{
 	  unsigned long tmp = ((load_addr.pmd17_ita2_reg.dear_iaddr + (unsigned long)load_addr.pmd17_ita2_reg.dear_bn) << 4) | (unsigned long)load_addr.pmd17_ita2_reg.dear_slot;
@@ -3868,13 +3872,7 @@ process_smpl_buf(int num_smpl_pmds, int entry_size, ThreadInfo_t **thr)
 void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
 {
     _papi_hwi_context_t ctx;
-/*#ifdef HAVE_PFM_MSG_TYPE
     pfm_msg_t msg;
-#else
-    pfarg_msg_t msg;
-#endif
-*/
-    pfarg_msg_t msg;
     int ret, wanted_fd, fd = info->si_fd;
     unsigned long address;
     ThreadInfo_t *thread = _papi_hwi_lookup_thread();
@@ -3994,9 +3992,7 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
       ctl->ctx = &ctx->ctx;
       memset(&ctx->smpl,0,sizeof(buf_arg));
       ctx->smpl_buf = NULL;
-
       ret = _papi_hwd_set_overflow(ESI,EventIndex,threshold);
-
       ESI->state &= ~(PAPI_OVERFLOWING);
       ESI->overflow.flags &= ~(PAPI_OVERFLOW_HARDWARE);
       ESI->profile.overflowcount = 0;
@@ -4012,7 +4008,7 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
   if ((ret = pfm_create_context(&newctx, PFM_DFL_SMPL_NAME, &buf_arg, sizeof(buf_arg))) == -1)
     {
       DEBUGCALL(DEBUG_SUBSTRATE,dump_smpl_arg(&buf_arg));
-	  PAPIERROR("_papi_hwd_set_profile:pfm_create_context(): %s", strerror(errno));
+      PAPIERROR("_papi_hwd_set_profile:pfm_create_context(): %s", strerror(errno));
       return(PAPI_ESYS);
     }
   ctx_fd = ret;
