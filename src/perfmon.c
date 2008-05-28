@@ -3397,7 +3397,9 @@ int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctl)
 
 int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
+#if 0
   int ret;
+#endif
 
   switch (code) {
   case PAPI_DEF_MPX_USEC:
