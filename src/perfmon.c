@@ -227,9 +227,7 @@ inline_static long_long get_cycles (void)
 	return _rtc ( );
 }
 /* #define get_cycles _rtc ?? */
-#endif
-
-#if defined(HAVE_CYCLE) && defined(mips)
+#elif defined(HAVE_CYCLE) && defined(mips)
 /* This is a special hack for SiCortex 64 bit cycle counter */
 #define likely(x)       __builtin_expect(!!(x), 1)
 #define unlikely(x)     __builtin_expect(!!(x), 0)
@@ -267,11 +265,6 @@ static long long get_cycles(void)
   old_count = count;
   return count;
 }
-#elif defined(__crayx2)						/* CRAY X2 */
-inline_static long_long get_cycles (void)
-{
-	return _rtc ( );
-}
 /* #define get_cycles _rtc ?? */
 #elif defined(__sparc__)
 inline_static long_long get_cycles(void)
@@ -292,7 +285,7 @@ inline_static long_long get_cycles(void)
  * _papi_hwd_get_real_usec() for the needed functionality.
 */
 #else
-#error "No support for this architecture. Please modify perfmon.c"
+#error "No get_cycles support for this architecture. Please modify perfmon.c or compile with a differen timer"
 #endif
 
 /* This routine effectively does argument checking as the real magic will happen
