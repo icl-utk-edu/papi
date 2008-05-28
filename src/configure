@@ -2005,9 +2005,7 @@ case "$OS" in
 	       745*) CPU="PPC32";;
                750) CPU="PPC32";;
              esac
-          elif test "$family" = "mips"; then
-	       CPU=mips
-	  elif test "$family" = "mips64"; then
+          elif test "$family" = "mips" -o "$family" = "mips64"; then
 	       CPU=mips
 	  fi
          fi
@@ -2048,7 +2046,33 @@ fi
 
 { echo "$as_me:$LINENO: result: $CPU" >&5
 echo "${ECHO_T}$CPU" >&6; }
+if test "$cross_compiling" = "no" -a "$OS" = "linux" -a "$CPU" = "mips"; then
+	  { echo "$as_me:$LINENO: checking for /etc/sicortex-release" >&5
+echo $ECHO_N "checking for /etc/sicortex-release... $ECHO_C" >&6; }
+if test "${ac_cv_file__etc_sicortex_release+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "/etc/sicortex-release"; then
+  ac_cv_file__etc_sicortex_release=yes
+else
+  ac_cv_file__etc_sicortex_release=no
+fi
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_file__etc_sicortex_release" >&5
+echo "${ECHO_T}$ac_cv_file__etc_sicortex_release" >&6; }
+if test $ac_cv_file__etc_sicortex_release = yes; then
+  CPU=sicortex
+fi
 
+	  if test "$CPU" = "sicortex"; then
+	     walltimer=cycle
+	     F77=pathf95
+	  fi
+fi
 if test "$OS" = "CNL"; then
    virtualtimer=times
    tls=__thread

@@ -270,9 +270,7 @@ case "$OS" in
 	       745*) CPU="PPC32";;
                750) CPU="PPC32";;
              esac
-          elif test "$family" = "mips"; then
-	       CPU=mips
-	  elif test "$family" = "mips64"; then
+          elif test "$family" = "mips" -o "$family" = "mips64"; then
 	       CPU=mips
 	  fi
          fi
@@ -308,7 +306,13 @@ case "$OS" in
 esac 
 ])
 AC_MSG_RESULT($CPU)
-
+if test "$cross_compiling" = "no" -a "$OS" = "linux" -a "$CPU" = "mips"; then
+	  AC_CHECK_FILE(/etc/sicortex-release,[CPU=sicortex])
+	  if test "$CPU" = "sicortex"; then
+	     walltimer=cycle
+	     F77=pathf95
+	  fi
+fi	    
 if test "$OS" = "CNL"; then
    virtualtimer=times
    tls=__thread
