@@ -7410,11 +7410,6 @@ cat >>confdefs.h <<\_ACEOF
 #define HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT 1
 _ACEOF
 
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_PFM_MSG_TYPE 1
-_ACEOF
-
    fi
 fi
 
