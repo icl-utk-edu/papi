@@ -12,7 +12,9 @@ export AIXTHREAD_SCOPE
 if [ "X$1" = "X-v" ]; then
   shift ; TESTS_QUIET=""
 else
+# This should never have been an argument, but an environment variable!
   TESTS_QUIET="TESTS_QUIET"
+  export TESTS_QUIET
 fi
 
 CTESTS=`find ctests -perm -u+x -type f`;
