@@ -2946,6 +2946,10 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
       _papi_hwi_system_info.sub_info.fast_real_timer = 1;
       _papi_hwi_system_info.sub_info.cntr_umasks = 1;
     }
+  if (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_SICORTEX) {
+      _papi_hwi_system_info.sub_info.fast_real_timer = 1;
+      _papi_hwi_system_info.sub_info.cntr_umasks = 1;
+  }    
 
   _papi_hwi_system_info.sub_info.hardware_intr = 1;
   _papi_hwi_system_info.sub_info.attach = 1;
