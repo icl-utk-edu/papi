@@ -901,8 +901,12 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
 
 int _papi_hwd_shutdown(hwd_context_t * ctx)
 {
+#ifdef DEBUG 
    int retval = vperfctr_unlink(ctx->perfctr);
    SUBDBG("_papi_hwd_shutdown vperfctr_unlink(%p) = %d\n", ctx->perfctr, retval);
+#else
+   vperfctr_unlink(ctx->perfctr);
+#endif
    vperfctr_close(ctx->perfctr);
    SUBDBG("_papi_hwd_shutdown vperfctr_close(%p)\n", ctx->perfctr);
    memset(ctx, 0x0, sizeof(hwd_context_t));
