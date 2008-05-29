@@ -883,34 +883,33 @@ AC_ARG_WITH(perfctr_libdir,
            [perfctr_libdir=$withval],
            [perfctr_libdir=""]
             )
-if test "x$perfmon" = "x"; then
 AC_ARG_WITH(perfmon,
-            [  --with-perfmon=<1,2,22,23>	Specify perfmon version number ],
+            [  --with-perfmon=<x.y>		Specify perfmon version number ],
             [perfmon=$withval],
-            [perfmon="no"
-if test "$cross_compiling" = "no" ; then
-	    AC_CHECK_FILE(/sys/kernel/perfmon/version,[perfmon=2],[AC_CHECK_FILE(/proc/perfmon,[perfmon=1])])
+            [perfmon=0
+	    if test "$cross_compiling" = "no" ; then
+	       AC_CHECK_FILE(/sys/kernel/perfmon/version,[
+	       perfmon=`cat /sys/kernel/perfmon/version`
+	       ],[AC_CHECK_FILE(/proc/perfmon,[
+	       perfmon=`cat /proc/perfmon | grep version | cut -d: -f2`
+	       ],[perfmon=0])])
+	    fi]
+)
+
+if test "$perfmon" != 0; then
+   AC_MSG_CHECKING(for perfmon version)
+#   AC_MSG_RESULT("x${perfmon}x")
+   perfmon=`echo ${perfmon} | sed 's/^[ \t]*//;s/[ \t]*$//'`
+#   AC_MSG_RESULT($perfmon)
+   perfmon=`echo ${perfmon} | grep -e '[[1-9]]\.[[0-9]][[0-9]]*'`
+#   AC_MSG_RESULT($perfmon)
+   if test "x$perfmon" = "x"; then
+      AC_MSG_ERROR("Badly formed perfmon version string")
+      perfmon=0
+   fi
+   AC_MSG_RESULT($perfmon)
+   perfmon=`echo ${perfmon} | sed 's/\.//'`
 fi
-])
-fi
-case "$perfmon" in
-   yes)
-      AC_CHECK_FILE(/sys/kernel/perfmon/version,[perfmon=2],[AC_CHECK_FILE(/proc/perfmon,[perfmon=1])]) ;;
-   1|2|no)
-      perfmon_rev=no
-      ;;
-   22)
-      perfmon=2
-      perfmon_rev=2
-      ;;
-   23)
-      perfmon=2
-      perfmon_rev=3
-      ;;
-   *)					     
-      AC_MSG_ERROR([The perfmon option you specified is not supported])
-      ;;
-esac
 
 AC_ARG_WITH(pfm_root,
            [  --with-pfm-root=<path>	Specify path to prebuilt pfm distribution ],
@@ -1071,7 +1070,7 @@ if test "$perfctr" = 7 -a "$arch" != "ppc64"; then
    AC_MSG_ERROR([Perfctr 2.7.x only works on PPC64 machines. Please repatch your kernel with 2.6.x.])
 fi
 
-if test "$perfmon" != "no"; then
+if test $perfmon != 0; then
       dotest=0
    if test "$pfm_root" != ""; then
       LIBS="-L$pfm_root/lib -lpfm"
@@ -1093,8 +1092,8 @@ if test "$perfmon" != "no"; then
          dotest=1
       fi
    fi
-   if test "$perfmon_rev" != "no" ; then
-      pfm_version="PFMLIB_VERSION_${perfmon}${perfmon_rev}"
+   if test $perfmon -gt 20; then
+      pfm_version="PFMLIB_VERSION_${perfmon}"
    fi
    if test "$dotest" = 1; then
    AC_CHECK_LIB([pfm], [pfm_initialize], [
@@ -1119,13 +1118,6 @@ fi
 
 if test "$with_semaphores" != "no"; then
    AC_DEFINE(USE_SEMAPHORES, 1, [Use semaphores for locking])
-fi
-
-AC_MSG_CHECKING(for perfmon version)
-if test "$perfmon" = "no"; then
-   AC_MSG_RESULT(none)
-   else
-   AC_MSG_RESULT($perfmon)
 fi
 
 if test "$OS" = "aix"; then
@@ -1257,7 +1249,7 @@ case "$OS" in
        MAKEVER="$OS"-"$CPU""$BM"
        ;;
    linux)
-	if test "$perfmon" = 2; then
+	if test $perfmon -gt 20 ; then
 		    MAKEVER="$OS"-perfmon2
        else
        case "$CPU" in
