@@ -2038,7 +2038,8 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
    /* Set up the option structure for the low level */
    ESI->profile.flags = flags;
 
-   if (flags & PAPI_PROFIL_FORCE_SW)
+/*   if (flags & PAPI_PROFIL_FORCE_SW)*/
+   if ((flags & PAPI_PROFIL_FORCE_SW) || (_papi_hwi_system_info.sub_info.kernel_profile == 0))
      retval = PAPI_overflow(EventSet, EventCode, threshold, forceSW, _papi_hwi_dummy_handler);
    else 
      retval = _papi_hwd_set_profile(ESI, index, threshold);
