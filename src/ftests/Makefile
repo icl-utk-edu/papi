@@ -101,13 +101,13 @@ fmultiplex2: fmultiplex2.F $(UTILOBJS) $(PAPILIB)
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) fmultiplex2.F $(UTILOBJS) $(PAPILIB) -o fmultiplex2 $(LDFLAGS)
 
 ftests_util.o: ftests_util.F fpapi_test.h 
-	$(F77) $(INCLUDE) $(FTOPTFLAGS) -c $(FFLAGS) ftests_util.F
+	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) -c $(FFLAGS) ftests_util.F
 
 do_loops.o: ../ctests/do_loops.c ../ctests/papi_test.h ../ctests/test_utils.h
-	$(CC) $(INCLUDE) $(TOPTFLAGS) -c ../ctests/do_loops.c
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/do_loops.c
 
 dummy.o: ../ctests/dummy.c
-	$(CC) $(INCLUDE) $(TOPTFLAGS) -c ../ctests/dummy.c
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/dummy.c
 
 clean:
 	rm -f *.o *.stderr *.stdout core *~ $(TESTS)
