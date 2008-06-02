@@ -949,7 +949,7 @@ static struct inode *vperfctr_get_inode(void)
 	inode->i_uid = current->fsuid;
 	inode->i_gid = current->fsgid;
 	inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19) && !DONT_HAVE_i_blksize
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19) && !defined(DONT_HAVE_i_blksize)
 	inode->i_blksize = 0;
 #endif
 	return inode;

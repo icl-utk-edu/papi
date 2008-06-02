@@ -6,6 +6,12 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.34, 2008-05-29
+- Updated kernel support: 2.6.26-rc4, 2.6.18-92.el5 (RHEL5U2),
+  2.6.18-53.1.21.el5 (RHEL5), 2.6.16.42-0.12 (SuSE).
+- Corrected the kernel driver's version number: perfctr-2.6.33
+  forgot to increment it.
+
 Version 2.6.33, 2008-05-18
 - x86: The support for Intel Family 6 Model 23 processors added in
   perfctr-2.6.32 was incomplete, causing overflow interrupts to not

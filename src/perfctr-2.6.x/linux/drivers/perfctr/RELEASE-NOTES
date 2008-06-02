@@ -3,6 +3,13 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.34, 2008-05-29
+- Reorder kernel version and HAVE_EXPORT___put_task_struct
+  tests in compat.h to handle the SuSE 2.6.16.42-0.12 kernel
+  exporting __put_task_struct_cb().
+- Fix warning about DONT_HAVE_i_blksize being undefined in
+  the SuSE 2.6.16.42-0.12 kernel.
+
 Version 2.6.33, 2008-05-18
 - x86: Intel Family 6 Model 23 support missed that it needs
   to trigger LVTPC reinit. Fix that.
