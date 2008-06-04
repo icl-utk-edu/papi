@@ -75,7 +75,7 @@ static void parse_args(int argc, char **argv, command_flags_t *f) {
 			f->details = 1;
 		else if (!strcmp(argv[i], "-e")) {
 			f->named = 1;
-			f->name = argv[i+1];
+			f->name = argv[++i];
 			if ((f->name == NULL) || (strlen(f->name) == 0) || (f->name[0] == '-'))
 				f->help = 1;
 		}
