@@ -384,11 +384,12 @@ int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
 unsigned int _papi_pfm_ntv_name_to_code(char *name, unsigned int *event_code)
 {
   pfmlib_event_t event;
-  int i;
-  unsigned int mask=0;
+  unsigned int mask = 0;
+  int i, ret;
 
   SUBDBG("pfm_find_full_event(%s,%p)\n",name,&event);
-  if (pfm_find_full_event(name,&event) == PFMLIB_SUCCESS) {
+  ret = pfm_find_full_event(name,&event);
+  if (ret == PFMLIB_SUCCESS) {
 	/* we can only capture PAPI_NATIVE_UMASK_MAX or fewer masks */
 	if (event.num_masks > PAPI_NATIVE_UMASK_MAX) {
 	  SUBDBG("num_masks (%d) > max masks (%d)\n",event.num_masks, PAPI_NATIVE_UMASK_MAX);
@@ -404,7 +405,13 @@ unsigned int _papi_pfm_ntv_name_to_code(char *name, unsigned int *event_code)
 		mask |= 1 << event.unit_masks[i];
 	  }
 	  *event_code = encode_native_event_raw(event.event, mask);
-  SUBDBG("event_code: 0x%x  event: %d  num_masks: %d\n",*event_code,event.event,event.num_masks);
+	  SUBDBG("event_code: 0x%x  event: %d  num_masks: %d\n",*event_code,event.event,event.num_masks);
+	  return(PAPI_OK);
+	}
+  } else if (ret == PFMLIB_ERR_UMASK) {
+	ret = pfm_find_event(name, &event.event);
+	if (ret == PFMLIB_SUCCESS) {
+	  *event_code = encode_native_event_raw(event.event, 0);
 	  return(PAPI_OK);
 	}
   }

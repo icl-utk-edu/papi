@@ -736,10 +736,11 @@ int _papi_pfm_init()
 unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code)
 {
   pfmlib_event_t event;
-  int i;
+  int i, ret;
 
   SUBDBG("pfm_find_full_event(%s,%p)\n",name,&event);
-  if (pfm_find_full_event(name,&event) == PFMLIB_SUCCESS) {
+  ret = pfm_find_full_event(name,&event);
+  if (ret == PFMLIB_SUCCESS) {
 	/* we can only capture PAPI_NATIVE_UMASK_MAX or fewer masks */
 	if (event.num_masks > PAPI_NATIVE_UMASK_MAX) {
 	  SUBDBG("num_masks (%d) > max masks (%d)\n",event.num_masks, PAPI_NATIVE_UMASK_MAX);
@@ -754,6 +755,12 @@ unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code)
 		}
 	  }
 	  *event_code = encode_native_event(event.event, event.num_masks, event.unit_masks);
+	  return(PAPI_OK);
+	}
+  } else if (ret == PFMLIB_ERR_UMASK) {
+	ret = pfm_find_event(name, &event.event);
+	if (ret == PFMLIB_SUCCESS) {
+	  *event_code = encode_native_event(event.event, 0, 0);
 	  return(PAPI_OK);
 	}
   }
@@ -949,23 +956,22 @@ int _pfm_get_counter_info(unsigned int event, unsigned int *selector, int *code)
       return(PAPI_ESBSTR);
     }
 
-    *selector = 0;
-    for (i=0; num; i++) {
-	if (pfm_regmask_isset(&impl, i))
-		num--;
-	if (pfm_regmask_isset(&cnt, i)) {
-	    if (first) {
-	      if ((ret = pfm_get_event_code_counter(event,i,code)) != PFMLIB_SUCCESS)
-	      {
-		PAPIERROR("pfm_get_event_code_counter(%d, %d, %p): %s", event, i, code, pfm_strerror(ret));
-		return(PAPI_ESBSTR);
-	      }
-	      first = 0;
-	    }
-	    *selector |= 1 << i;
+	*selector = 0;
+	for (i=0; num; i++) {
+		if (pfm_regmask_isset(&impl, i))
+			num--;
+		if (pfm_regmask_isset(&cnt, i)) {
+			if (first) {
+				if ((ret = pfm_get_event_code_counter(event,i,code)) != PFMLIB_SUCCESS) {
+					PAPIERROR("pfm_get_event_code_counter(%d, %d, %p): %s", event, i, code, pfm_strerror(ret));
+					return(PAPI_ESBSTR);
+				}
+				first = 0;
+			}
+			*selector |= 1 << i;
+		}
 	}
-    }
-    return(PAPI_OK);
+	return(PAPI_OK);
 }
 #endif
 
@@ -1017,66 +1023,59 @@ static char *_pmc_name(int i)
 }
 
 int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
-                               unsigned int *values, int name_len, int count)
+								unsigned int *values, int name_len, int count)
 {
-  int ret;
-  pfmlib_regmask_t selector;
-  int j, n = _papi_hwi_system_info.sub_info.num_cntrs;
-  int foo, did_something=0;
-  unsigned int umask;
+	int ret;
+	pfmlib_regmask_t selector;
+	int j, n = _papi_hwi_system_info.sub_info.num_cntrs;
+	int foo, did_something=0;
+	unsigned int umask;
 
-  if ((ret = pfm_get_event_counters(bits->event,&selector)) != PFMLIB_SUCCESS) {
-    PAPIERROR("pfm_get_event_counters(%d,%p): %s",bits->event,&selector,pfm_strerror(ret));
-    return(PAPI_ESBSTR);
-  }
+	if ((ret = pfm_get_event_counters(bits->event,&selector)) != PFMLIB_SUCCESS) {
+		PAPIERROR("pfm_get_event_counters(%d,%p): %s",bits->event,&selector,pfm_strerror(ret));
+		return(PAPI_ESBSTR);
+	}
 
 #if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
-  extern int _perfmon2_pfm_pmu_type;
-  switch (_perfmon2_pfm_pmu_type)
-    {
-      /* All the counters after the 2 CPU counters, the 4 sample counters are SCB registers. */
-    case PFMLIB_MIPS_ICE9A_PMU:
-    case PFMLIB_MIPS_ICE9B_PMU:
-      if (n > 7) n = 7;
-      break;
-    default:
-      break;
-    }
+	extern int _perfmon2_pfm_pmu_type;
+	switch (_perfmon2_pfm_pmu_type) {
+		/* All the counters after the 2 CPU counters, the 4 sample counters are SCB registers. */
+		case PFMLIB_MIPS_ICE9A_PMU:
+		case PFMLIB_MIPS_ICE9B_PMU:
+			if (n > 7) n = 7;
+				break;
+		default:
+			break;
+	}
 #endif
 
-  for (j=0;n;j++)
-    {
-      if (pfm_regmask_isset(&selector,j))
-       {
-         if ((ret = pfm_get_event_code_counter(bits->event,j,&foo)) != PFMLIB_SUCCESS)
-           {
-             PAPIERROR("pfm_get_event_code_counter(%d,%d,%p): %s",*bits,j,&foo,pfm_strerror(ret));
-             return(PAPI_EBUG);
-           }
-         /* Overflow check */
-         if ((did_something*name_len + strlen(_pmc_name(j)) + 1) >= count*name_len)
-           {
-            SUBDBG("Would overflow register name array.");
-             return(did_something);
-           }
-         values[did_something] = foo;
-         strncpy(&names[did_something*name_len],_pmc_name(j),name_len);
-         did_something++;
-	 if (did_something == count) break;
-       }
-      n--;
-    }
-  /* assumes umask is unchanged, even if event code changes */
-  umask = convert_pfm_masks(bits);
-  if (umask && (did_something < count)) {
-    values[did_something] = umask;
-    if (strlen(&names[did_something*name_len]))
-      strncpy(&names[did_something*name_len]," Unit Mask",name_len);
-    else
-      strncpy(&names[did_something*name_len],"Unit Mask",name_len);
-    did_something++;
-  }
-  return(did_something);
+<<<<<<< papi_pfm_events.c
+	for (j=0;n;j++) {
+		if (pfm_regmask_isset(&selector,j)) {
+			if ((ret = pfm_get_event_code_counter(bits->event,j,&foo)) != PFMLIB_SUCCESS) {
+				PAPIERROR("pfm_get_event_code_counter(%d,%d,%p): %s",*bits,j,&foo,pfm_strerror(ret));
+				return(PAPI_EBUG);
+			}
+			/* Overflow check */
+			if ((did_something*name_len + strlen(_pmc_name(j)) + 1) >= count*name_len) {
+				SUBDBG("Would overflow register name array.");
+				return(did_something);
+			}
+			values[did_something] = foo;
+			strncpy(&names[did_something*name_len],_pmc_name(j),name_len);
+			did_something++;
+			if (did_something == count) break;
+		}
+		n--;
+	}
+	/* assumes umask is unchanged, even if event code changes */
+	umask = convert_pfm_masks(bits);
+	if (umask && (did_something < count)) {
+		values[did_something] = umask;
+		strncpy(&names[did_something*name_len]," Unit Mask",name_len);
+		did_something++;
+	}
+	return(did_something);
 }
 
 #endif /* PERFCTR_PFM_EVENTS */
