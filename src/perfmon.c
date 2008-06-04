@@ -2895,6 +2895,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   sprintf(buf,"%08x",version);
 
   pfm_get_num_counters((unsigned int *)&_papi_hwi_system_info.sub_info.num_cntrs);
+  SUBDBG("pfm_get_num_counters: %d", _papi_hwi_system_info.sub_info.num_cntrs);
   retval = get_system_info(&_papi_hwi_system_info);
   if (retval)
     return (retval);
