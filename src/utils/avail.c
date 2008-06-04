@@ -140,6 +140,26 @@ int main(int argc, char **argv)
 				   printf("%-29s|%s|\n", "Description:", info.long_descr);
 				   for (k=0;k<(int)info.count;k++)
 					   printf(" Register[%2d]:   0x%08x  |%s|\n",k, info.code[k], info.name[k]);
+
+					/* if unit masks exist but none are specified, process all */
+					if (!strchr(name, ':')) {
+						const PAPI_substrate_info_t *s = PAPI_get_substrate_info();
+						if (s->cntr_umasks) {
+							if (PAPI_enum_event(&i, PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
+								printf ("\nUnit Masks:\n");
+								do {
+									retval = PAPI_get_event_info(i, &info);
+									if (retval == PAPI_OK) {
+										strcpy(info.symbol, strchr(info.symbol, ':'));
+										strcpy(info.long_descr, strchr(info.long_descr, ':')+1);
+										printf("%-29s|%s|%s|\n", " Mask Info:", info.symbol, info.long_descr);
+										for (k=0;k<(int)info.count;k++)
+											printf("  Register[%2d]:  0x%08x  |%s|\n",k, info.code[k], info.name[k]);
+									}
+								} while (PAPI_enum_event(&i, PAPI_NTV_ENUM_UMASKS) == PAPI_OK);
+							}
+						}
+					}
 			   }
 		   }
 	   }
