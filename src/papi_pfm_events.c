@@ -1070,7 +1070,10 @@ int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
   umask = convert_pfm_masks(bits);
   if (umask && (did_something < count)) {
     values[did_something] = umask;
-    strncpy(&names[did_something*name_len]," Unit Mask",name_len);
+    if (strlen(&names[did_something*name_len]))
+      strncpy(&names[did_something*name_len]," Unit Mask",name_len);
+    else
+      strncpy(&names[did_something*name_len],"Unit Mask",name_len);
     did_something++;
   }
   return(did_something);
