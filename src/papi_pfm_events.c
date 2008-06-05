@@ -1049,7 +1049,6 @@ int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
 	}
 #endif
 
-<<<<<<< papi_pfm_events.c
 	for (j=0;n;j++) {
 		if (pfm_regmask_isset(&selector,j)) {
 			if ((ret = pfm_get_event_code_counter(bits->event,j,&foo)) != PFMLIB_SUCCESS) {
