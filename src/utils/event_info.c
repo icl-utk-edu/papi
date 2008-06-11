@@ -28,18 +28,67 @@ typedef PAPI_substrate_info_t PAPI_component_info_t;
 int EventSet[MAX_COMPONENTS];
 int NumEvents[MAX_COMPONENTS];
 
+char *xmlize(const char *msg)
+{
+   char *xmlized_msg, *xp;
+   const char *op;
+
+   if(!msg) return NULL;
+
+   /* in the worst case, the string will be 5 times longer, so
+    * rather than constantly checking whether we need to realloc,
+    * just alloc 5 * strlen(msg) here.
+    */
+
+   xmlized_msg = (char *)malloc(5 * strlen(msg));
+   if(!xmlized_msg)
+     return NULL;
+
+   for(op = msg, xp = xmlized_msg; *op != '\0'; op++) {
+       switch(*op) {
+         case '&':
+           strcpy(xp, "&amp;");
+           xp += strlen("&amp;");
+           break;
+         case '<':
+           strcpy(xp, "&lt;");
+           xp += strlen("&lt;");
+           break;
+         case '>':
+           strcpy(xp, "&gt;");
+           xp += strlen("&gt;");
+           break;
+         default:
+           *xp++ = *op;
+       }
+   }
+
+   *xp = '\0';
+
+   return xmlized_msg;
+}
+
+
+
+
 
 int papi_xml_hwinfo(FILE *f)
 {
   const PAPI_hw_info_t *hwinfo;
+  char *xml_string;
+
   if ((hwinfo = PAPI_get_hardware_info()) == NULL)
     return(PAPI_ESBSTR);
   
   fprintf(f, "<hardware>\n");
+  xml_string = xmlize(hwinfo->vendor_string);
   fprintf(f, "  <vendor string=\"%s\" code=\"%d\"/>\n", 
-	  hwinfo->vendor_string, hwinfo->vendor);
+	  xml_string, hwinfo->vendor);
+  free (xml_string);
+  xml_string = xmlize(hwinfo->model_string);
   fprintf(f, "  <model string=\"%s\" code=\"%d\"/>\n",
 	  hwinfo->model_string, hwinfo->model);
+  free (xml_string);
   fprintf(f, "  <system nodes=\"%d\" totalCPUs=\"%d\"/>\n",
 	  hwinfo->nnodes, hwinfo->totalcpus);
   fprintf(f, "  <node CPUs=\"%d\"/>\n",
@@ -126,6 +175,7 @@ void enum_events(FILE *f, int cidx,
   int i, k, num;
   int retval;
   PAPI_event_info_t info;
+  char *xml_symbol, *xml_desc;
 
   i = PAPI_COMPONENT_MASK(cidx)|modifier;
 
@@ -148,9 +198,12 @@ void enum_events(FILE *f, int cidx,
 	  retval = PAPI_enum_event(&i, PAPI_ENUM_EVENTS);
 	  continue;
 	}
-
+	  xml_symbol = xmlize(info.symbol);
+	  xml_desc = xmlize(info.long_descr);
       fprintf(f, "    <event index=\"%d\" name=\"%s\" desc=\"%s\" code=\"0x%x\">\n",
-	      num, info.symbol, info.long_descr, info.event_code);
+	      num, xml_symbol, xml_desc, info.event_code);
+	  free(xml_symbol);
+	  free(xml_desc);
 
       
 
@@ -169,12 +222,13 @@ void enum_events(FILE *f, int cidx,
 		      continue;
 		    }
 
+		  xml_symbol = xmlize(strchr(info.symbol, ':'));
+		  xml_desc = xmlize(strchr(info.long_descr, ':')+1);
 		  fprintf(f, "        <modifier name=\"%s\" desc=\"%s\" code=\"0x%x\"> </modifier>\n",
-			  strchr(info.symbol, ':'),
-			  strchr(info.long_descr, ':')+1, 
-			  info.event_code );
+			  xml_symbol, xml_desc, info.event_code );
+		  free(xml_symbol);
+		  free(xml_desc);
 
-		  
 		}
 	      } while (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK);
 	    }
@@ -191,8 +245,6 @@ void enum_events(FILE *f, int cidx,
 
   
 }
-
-
 
 void usage( int argc, char *argv[] )
 {
