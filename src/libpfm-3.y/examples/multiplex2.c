@@ -1019,6 +1019,7 @@ main(int argc, char **argv)
 	event_set_t *tail = NULL, *es;
 	unsigned long long_val;
 	struct timespec ts;
+	uint64_t f_ns, d, f_final;
 	int c, ret;
 
 	options.pin_cmd_cpu = options.pin_cpu = -1;
@@ -1136,24 +1137,23 @@ main(int argc, char **argv)
  	 * adjust frequency to be a multiple of clock resolution
  	 * otherwise kernel will fail pfm_create_evtsets()
  	 */
-	if (!options.opt_ovfl_switch) {
-		uint64_t f_ns, d, f_final;
 
-		/*
- 		 * f_ns = run period in ns (1s/hz)
- 		 * default switch period is clock resolution
- 		 */
-		if (options.smpl_freq_hz == 0)
-			f_ns = options.clock_res;
-		else
-			f_ns = 1000000000 / options.smpl_freq_hz;
+	/*
+ 	 * f_ns = run period in ns (1s/hz)
+ 	 * default switch period is clock resolution
+ 	 */
+	if (options.smpl_freq_hz == 0)
+		f_ns = options.clock_res;
+	else
+		f_ns = 1000000000 / options.smpl_freq_hz;
 
-		/* round up period in nanoseconds */
-		d = (f_ns+options.clock_res-1) / options.clock_res;
+	/* round up period in nanoseconds */
+	d = (f_ns+options.clock_res-1) / options.clock_res;
 
-		/* final period (multilple of clock_res */
-		f_final = d * options.clock_res;
+	/* final period (multilple of clock_res */
+	f_final = d * options.clock_res;
 
+	if (options.opt_ovfl_switch)
 		printf("clock_res=%"PRIu64"ns(%.2fHz) ask period=%"PRIu64"ns(%.2fHz) get period=%"PRIu64"ns(%.2fHz)\n",
 			options.clock_res,
 			1000000000.0 / options.clock_res,
@@ -1162,15 +1162,14 @@ main(int argc, char **argv)
 			f_final,
 			1000000000.0 / f_final);
 
-		if (f_ns != f_final)
-			printf("Not getting the expected frequency due to kernel/hw limitation\n");
+	if (f_ns != f_final)
+		printf("Not getting the expected frequency due to kernel/hw limitation\n");
 
-		/* adjust period */
-		options.smpl_freq_ns = f_final;
+	/* adjust period */
+	options.smpl_freq_ns = f_final;
 
-		/* not used */
-		options.smpl_freq_hz = 1000000000 / f_final;
-	}
+	/* not used */
+	options.smpl_freq_hz = 1000000000 / f_final;
 
 	if (options.opt_plm == 0) options.opt_plm = PFM_PLM3;
 

@@ -67,6 +67,10 @@ static pfm_pmu_support_t *supported_pmus[]=
 	&generic_mips64_support,
 #endif
 
+#ifdef CONFIG_PFMLIB_ARCH_SICORTEX
+	&sicortex_support,
+#endif
+
 #ifdef CONFIG_PFMLIB_ARCH_POWERPC
 	&gen_powerpc_support,
 #endif
@@ -1048,22 +1052,34 @@ pfm_find_full_event(const char *v, pfmlib_event_t *e)
 	 */
 	p = strchr(str, ':');
 
+	/* If no unit masks available and none specified, we're done */
+
+	if ((j == 0) && (p == NULL)) {
+		  free(str);
+		  return PFMLIB_SUCCESS;
+	}
+	
 	/*
 	 * error if:
-	 * 	- event has unit masks and none is passed
 	 * 	- event has no unit mask and at least one is passed
 	 */
-	if ((!p && j) || (p && !j)) {
+ 	if (p && !j) {
 		ret = PFMLIB_ERR_UMASK;
 		goto error;
 	}
 
 	/*
-	 * if no unit mask, then we are done
+	 * error if:
+	 * 	- event has unit masks, no default unit mask, and none is passed
 	 */
-	if (!j) {
+	if (j && !p) {
+		if (pfm_current->has_umask_default
+		    && pfm_current->has_umask_default(e->event)) {
 		free(str);
 		return PFMLIB_SUCCESS;
+	}
+		ret = PFMLIB_ERR_UMASK;
+		goto error;
 	}
 
 	/* skip : */

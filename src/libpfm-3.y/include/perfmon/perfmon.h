@@ -155,7 +155,7 @@ typedef struct {
 /*
  * argument to pfm_create_evtsets()/pfm_delete_evtsets()
  */
-#if defined(PFMLIB_VERSION_22) || defined(PFMLIB_VERSION_23)
+#if defined(PFMLIB_VERSION_22) || defined(PFMLIB_VERSION_23) || defined(PFMLIB_VERSION_24)
 typedef struct {
  	uint16_t	set_id;		  /* which set */
 	uint16_t	set_id_next;	  /* next set to go to (must use PFM_SETFL_EXPL_NEXT) */
@@ -177,7 +177,7 @@ typedef struct {
 /*
  * argument to pfm_getinfo_evtsets()
  */
-#if defined(PFMLIB_VERSION_22) || defined(PFMLIB_VERSION_23)
+#if defined(PFMLIB_VERSION_22) || defined(PFMLIB_VERSION_23) || defined(PFMLIB_VERSION_24)
 typedef struct {
 	uint16_t	set_id;             /* which set */
 	uint16_t	set_id_next;        /* output: next set to go to (must use PFM_SETFL_EXPL_NEXT) */
@@ -206,7 +206,7 @@ typedef struct {
 } pfarg_setinfo_t;
 #endif
 
-#if defined(PFMLIB_VERSION_22) || defined(PFMLIB_VERSION_23)
+#if defined(PFMLIB_VERSION_22) || defined(PFMLIB_VERSION_23) || defined(PFMLIB_VERSION_24)
 #ifdef __crayx2
 #define PFM_MAX_HW_PMDS 512
 #else
@@ -262,6 +262,8 @@ typedef int os_err_t;			/* error if -1 */
 #define PFM_VERSION_MIN		2U
 #elif defined(PFMLIB_VERSION_23)
 #define PFM_VERSION_MIN		3U
+#elif defined(PFMLIB_VERSION_24)
+#define PFM_VERSION_MIN		4U
 #else
 #define PFM_VERSION_MIN		8U
 #endif

@@ -90,6 +90,9 @@ HEADERS += perfmon/pfmlib_os_mips64.h   \
 	   perfmon/pfmlib_comp_mips64.h \
 	   perfmon/perfmon_mips64.h     \
 	   perfmon/pfmlib_gen_mips64.h
+ifeq ($(CONFIG_PFMLIB_ARCH_SICORTEX),y)
+HEADERS += perfmon/pfmlib_sicortex.h
+endif
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
@@ -108,7 +111,7 @@ endif
 
 .PHONY: all clean distclean depend perfmon.h dir
 
-perfmon.h:
+perfmon.h: dir
 ifneq (,$(PFM_VERSION_FLAG))
 	echo "#ifndef $(PFM_VERSION_FLAG)" > $(DESTDIR)$(INCDIR)/perfmon/perfmon.h
 	echo "#define $(PFM_VERSION_FLAG)" >> $(DESTDIR)$(INCDIR)/perfmon/perfmon.h

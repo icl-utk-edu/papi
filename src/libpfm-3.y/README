@@ -56,6 +56,10 @@ INSTALLATION
  	- To compile and install the Python bindings, you need to go to the python sub-directory and type
 	  make. Python is not systematically built
 
+	- to compile the library for another ABI (e.g. 32-bit x86 on a 64-bit x86) system, you can pass
+	  the ABI flag to the compiler as follows (assuming you have the multilib version of gcc):
+		$ make OPTION="-m32 -O2"
+
 REQUIREMENTS:
 -------------
 	- to run the programs in the examples subdir, you MUST be using a linux kernel version of

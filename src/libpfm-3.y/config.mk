@@ -143,11 +143,6 @@ CONFIG_PFMLIB_CELL=y
 endif
 
 #
-# optimization level
-#
-OPTIM=-O2
-
-#
 # you shouldn't have to touch anything beyond this point
 #
 
@@ -162,9 +157,14 @@ INSTALL=install
 LN=ln -sf
 PFMINCDIR=$(TOPDIR)/include
 PFMLIBDIR=$(TOPDIR)/lib
-DBG=-g -Wall -Werror
-CFLAGS=$(OPTIM) $(DBG) -I$(PFMINCDIR)
-LDFLAGS=-L$(PFMLIBDIR)
+DBG?=-g -Wall -Werror
+# gcc/mips64 bug
+ifeq ($(CONFIG_PFMLIB_ARCH_SICORTEX),y)
+OPTIM?=-O
+else
+OPTIM?=-O2
+endif
+CFLAGS+=$(OPTIM) $(DBG) -I$(PFMINCDIR)
 MKDEP=makedepend
 PFMLIB=$(PFMLIBDIR)/libpfm.a
 
@@ -177,6 +177,10 @@ endif
 ifeq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
 CC=craynv-cray-linux-gnu-gcc
 LDFLAGS+=-static
+endif
+
+ifeq ($(CONFIG_PFMLIB_ARCH_SICORTEX),y)
+PFM_VERSION_FLAG=PFMLIB_VERSION_24
 endif
 
 ifneq ($(PFM_VERSION_FLAG),)

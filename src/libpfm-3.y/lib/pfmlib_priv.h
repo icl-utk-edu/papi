@@ -53,6 +53,7 @@ typedef struct {
 	int		(*get_event_mask_desc)(unsigned int event_idx, unsigned int mask_idx, char **buf);
 	int		(*get_cycle_event)(pfmlib_event_t *e);
 	int		(*get_inst_retired_event)(pfmlib_event_t *e);
+	int		(*has_umask_default)(unsigned int i); /* optional */
 } pfm_pmu_support_t;
 
 #define PFMLIB_MULT_CODE_EVENT	0x1	/* more than one code per event (depending on counter) */
@@ -109,6 +110,7 @@ extern pfm_pmu_support_t i386_pii_support;
 extern pfm_pmu_support_t i386_pm_support;
 extern pfm_pmu_support_t gen_ia32_support;
 extern pfm_pmu_support_t generic_mips64_support;
+extern pfm_pmu_support_t sicortex_support;
 extern pfm_pmu_support_t pentium4_support;
 extern pfm_pmu_support_t coreduo_support;
 extern pfm_pmu_support_t core_support;

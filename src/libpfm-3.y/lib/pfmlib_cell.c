@@ -574,7 +574,8 @@ pfm_cell_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_outpu
 static int
 pfm_cell_get_event_code(unsigned int i, unsigned int cnt, int *code)
 {
-	if (cnt != PFMLIB_CNT_FIRST && cnt > 2) {
+//	if (cnt != PFMLIB_CNT_FIRST && cnt > 2) {
+	if (cnt != PFMLIB_CNT_FIRST && cnt > cell_support.num_cnt) {
 		return PFMLIB_ERR_INVAL;
 	}
 

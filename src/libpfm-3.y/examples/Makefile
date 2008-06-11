@@ -43,7 +43,7 @@ ifeq ($(CONFIG_PFMLIB_ARCH_CRAYXT),y)
 CFLAGS += -DCONFIG_PFMLIB_ARCH_CRAYXT
 endif
 
-CFLAGS+= -D_GNU_SOURCE -I$(PFMINCDIR)
+CFLAGS+= -I. -D_GNU_SOURCE
 LIBS += -lm
 
 ifeq ($(SYS),Linux)
@@ -66,9 +66,9 @@ endif
 
 all: $(TARGET_GEN) $(TARGET_LINUX) $(XTRA)
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
-
+# Many systems don't have ncurses installed
 rtop: rtop.o detect_pmcs.o $(PFMLIB)
-	$(CC) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^ $(LIBS)  -lpthread -lncurses
+	-$(CC) $(CFLAGS) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^ $(LIBS)  -lpthread -lncurses
 
 $(TARGET_LINUX):  %:%.o detect_pmcs.o $(PFMLIB)
 	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS) 

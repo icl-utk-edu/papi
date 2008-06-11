@@ -49,369 +49,7 @@
 
 static pme_gen_mips64_entry_t *gen_mips64_pe = NULL;
 
-#ifdef CONFIG_PFMLIB_ARCH_SICORTEX
-#include <sicortex/ice9/ice9a_all_spec_pme.h>
-#include <sicortex/ice9/ice9b_all_spec_pme.h>
-#include <sicortex/ice9/ice9_scb_spec_sw.h>
-
-#define MAX_ICE9_PMCS (2+4+256)
-#define MAX_ICE9_PMDS (2+4+256)
-
 pfm_pmu_support_t generic_mips64_support;
-
-static void compute_ice9_counters(int type)
-{
-	int i, bound = 0;
-	unsigned int t;
-	char tmp[1024];
-
-	generic_mips64_support.pmd_count = 0;
-	generic_mips64_support.pmc_count = 0;
-	for (i=0;i<MAX_ICE9_PMDS;i++) {
-		sprintf(tmp,"/sys/kernel/perfmon/pmu_desc/pmd%d",i);
-		if (access(tmp,F_OK) == 0)
-			generic_mips64_support.pmd_count++;
-	}
-	for (i=0;i<MAX_ICE9_PMCS;i++) {
-		sprintf(tmp,"/sys/kernel/perfmon/pmu_desc/pmc%d",i);
-		if (access(tmp,F_OK) == 0)
-			generic_mips64_support.pmc_count++;
-	}
-
-	/* Compute the max */
-
-	if (type == PFMLIB_MIPS_ICE9A_PMU)
-		bound = (sizeof(gen_mips64_ice9a_pe)/sizeof(pme_gen_mips64_entry_t));
-	else if (type == PFMLIB_MIPS_ICE9B_PMU)
-		bound = (sizeof(gen_mips64_ice9b_pe)/sizeof(pme_gen_mips64_entry_t));
-
-	/* If we find we have SCB support */
-
-	if (generic_mips64_support.pmd_count > 2) {
-		/* Account for 4 sampling PMD registers */
-		generic_mips64_support.num_cnt = generic_mips64_support.pmd_count - 4;
-		generic_mips64_support.pme_count = bound;
-	} else {
-		generic_mips64_support.pme_count = 0;
-		/* Count up CPU only events */
-		for (i=0;i<bound;i++) {
-			t = gen_mips64_pe[i].pme_counters;
-			if (!(t & (1<<2)))
-				generic_mips64_support.pme_count++;
-		}
-	}
-}
-
-static void stuff_ice9_regs(pfmlib_event_t *e, int plm, pfmlib_reg_t *pc, pfmlib_reg_t *pd, int cntr, int j, pfmlib_ice9_input_param_t *mod_in)
-{
-	pfm_gen_ice9_sel_reg_t reg;
-	reg.val    = 0; /* assume reserved bits are zerooed */
-	/* if plm is 0, then assume not specified per-event and use default */
-	plm = e[j].plm ? e[j].plm : plm;
-	reg.sel_usr = plm & PFM_PLM3 ? 1 : 0;
-	reg.sel_os  = plm & PFM_PLM0 ? 1 : 0;
-	reg.sel_sup = plm & PFM_PLM1 ? 1 : 0;
-	reg.sel_exl = plm & PFM_PLM2 ? 1 : 0;
-	reg.sel_int = 1; /* force int to 1 */
-
-	/* CPU event */
-	if (gen_mips64_pe[e[j].event].pme_counters & 0x3) {
-		reg.sel_event_mask = (gen_mips64_pe[e[j].event].pme_code >(cntr*8)) & 0xff;
-		pc[j].reg_addr    = cntr*2;
-		pc[j].reg_value   = reg.val;
-		pc[j].reg_num     = cntr;
-
-		__pfm_vbprintf("[CP0_25_%u(pmc%u)=0x%"PRIx64" event_mask=0x%x usr=%d os=%d sup=%d exl=%d int=1] %s\n",
-				pc[j].reg_addr,
-				pc[j].reg_num,
-				pc[j].reg_value,
-				reg.sel_event_mask,
-				reg.sel_usr,
-				reg.sel_os,
-				reg.sel_sup,
-				reg.sel_exl,
-				gen_mips64_pe[e[j].event].pme_name);
-
-		pd[j].reg_num  = cntr;
-		pd[j].reg_addr = cntr*2 + 1;
-
-		__pfm_vbprintf("[CP0_25_%u(pmd%u)]\n",
-				pc[j].reg_addr,
-				pc[j].reg_num);
-
-	} else { /* SCB event */
-		pmc_ice9_scb_reg_t scbreg;
-		scbreg.val = 0;
-
-		reg.val = scbreg.ice9_ScbPerfBucket_reg.event = gen_mips64_pe[e[j].event].pme_code >16;
-		if (mod_in && (mod_in->flags & PFMLIB_INPUT_SCB_COUNTER)) {
-			scbreg.ice9_ScbPerfBucket_reg.hist = mod_in->pfp_ice9_scb_counters[cntr].hist;
-			scbreg.ice9_ScbPerfBucket_reg.ifOther = mod_in->pfp_ice9_scb_counters[cntr].ifOther;;
-		} else {
-			scbreg.ice9_ScbPerfBucket_reg.hist = 0;
-			scbreg.ice9_ScbPerfBucket_reg.ifOther = 0;
-		}
-		__pfm_vbprintf("[ScbPerfBucket[%u](pmc%u)=0x%"PRIx64" event=0x%x hist=%d ifOther=0x%x]\n",
-				cntr,cntr+6,scbreg.val,
-				scbreg.ice9_ScbPerfBucket_reg.event,
-				scbreg.ice9_ScbPerfBucket_reg.hist,
-				scbreg.ice9_ScbPerfBucket_reg.ifOther);
-
-		pc[j].reg_addr    = cntr;
-		pc[j].reg_value   = scbreg.val;
-		pc[j].reg_num     = cntr + 6;
-
-		pd[j].reg_addr = cntr;
-		pd[j].reg_num  = cntr + 6;
-
-		__pfm_vbprintf("[ScbPerfCount[%u](pmd%u)]\n",
-				pc[j].reg_addr,
-				pc[j].reg_num);
-
-	}
-}
-
-static int stuff_ice9_scb_control_regs(pfmlib_reg_t *pc, pfmlib_reg_t *pd, int num, pfmlib_ice9_input_param_t *mod_in)
-{
-	pmc_ice9_scb_reg_t two;
-	pmc_ice9_scb_reg_t three;
-	pmc_ice9_scb_reg_t four;
-	pmc_ice9_scb_reg_t five;
-
-	// __pfm_vbprintf("num = %d\n",num);
-
-	/* The kernel will enforce most of these, see perfmon_ice9.c in the kernel */
-
-	/* ScbPerfCtl */
-
-	pc[num].reg_num = 2; 
-	pc[num].reg_addr = 2; 
-	two.val = 0;
-	if (mod_in && (mod_in->flags & PFMLIB_INPUT_SCB_INTERVAL))
-		two.ice9_ScbPerfCtl_reg.Interval = mod_in->pfp_ice9_scb_global.Interval;
-	else
-		two.ice9_ScbPerfCtl_reg.Interval = 6;  /* 2048 cycles */
-
-	if (mod_in && (mod_in->flags & PFMLIB_INPUT_SCB_NOINC))
-		two.ice9_ScbPerfCtl_reg.NoInc = mod_in->pfp_ice9_scb_global.NoInc;  
-	else
-		two.ice9_ScbPerfCtl_reg.NoInc = 0;
-
-	two.ice9_ScbPerfCtl_reg.IntBit = 31;   /* Interrupt on last bit */
-	two.ice9_ScbPerfCtl_reg.MagicEvent = 0;
-	two.ice9_ScbPerfCtl_reg.AddrAssert = 1;
-
-	__pfm_vbprintf("[Scb%s(pmc%u)=0x%"PRIx64" Interval=0x%x IntBit=0x%x NoInc=%d AddrAssert=%d MagicEvent=0x%x]\n","PerfCtl",
-			pc[num].reg_num,
-			two.val,
-			two.ice9_ScbPerfCtl_reg.Interval,
-			two.ice9_ScbPerfCtl_reg.IntBit,
-			two.ice9_ScbPerfCtl_reg.NoInc,
-			two.ice9_ScbPerfCtl_reg.AddrAssert,
-			two.ice9_ScbPerfCtl_reg.MagicEvent);
-	pc[num].reg_value = two.val;
-
-	/*ScbPerfHist */
-
-	pc[++num].reg_num = 3; 
-	pc[num].reg_addr = 3;
-	three.val = 0;
-	if (mod_in && (mod_in->flags & PFMLIB_INPUT_SCB_HISTGTE))
-		three.ice9_ScbPerfHist_reg.HistGte = mod_in->pfp_ice9_scb_global.HistGte;
-	else
-		three.ice9_ScbPerfHist_reg.HistGte = 1;
-
-	__pfm_vbprintf("[Scb%s(pmc%u)=0x%"PRIx64" HistGte=0x%x]\n","PerfHist",
-			pc[num].reg_num,
-			three.val,
-			three.ice9_ScbPerfHist_reg.HistGte);
-	pc[num].reg_value = three.val;
-
-	/*ScbPerfBuckNum */
-
-	pc[++num].reg_num = 4; 
-	pc[num].reg_addr = 4;
-	four.val = 0;
-	if (mod_in && (mod_in->flags & PFMLIB_INPUT_SCB_BUCKET))
-		four.ice9_ScbPerfBuckNum_reg.Bucket = mod_in->pfp_ice9_scb_global.Bucket;
-	else
-		four.ice9_ScbPerfBuckNum_reg.Bucket = 0;
-
-	__pfm_vbprintf("[Scb%s(pmc%u)=0x%"PRIx64" Bucket=0x%x]\n","PerfBuckNum",
-			pc[num].reg_num,
-			four.val,
-			four.ice9_ScbPerfBuckNum_reg.Bucket);
-
-	pc[num].reg_value = four.val;
-
-	/*ScbPerfEna */
-
-	pc[++num].reg_num = 5; 
-	pc[num].reg_addr = 5;
-	five.val = 0;
-	five.ice9_ScbPerfEna_reg.ena = 1;
-
-	__pfm_vbprintf("[Scb%s(pmc%u)=0x%"PRIx64" ena=%d]\n","PerfEna",
-			pc[num].reg_num,
-			five.val,
-			five.ice9_ScbPerfEna_reg.ena);
-	pc[num].reg_value = five.val;
-	++num;
-	return(num);
-}
-
-static int
-pfm_ice9_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_ice9_input_param_t *mod_in, pfmlib_output_param_t *outp)
-{
-	pfmlib_event_t *e = inp->pfp_events;
-	pfmlib_reg_t *pc, *pd;
-	unsigned int i, j, cnt = inp->pfp_event_count;
-	unsigned int used = 0;
-	extern pfm_pmu_support_t generic_mips64_support;
-	unsigned int cntr, avail;
-
-	pc = outp->pfp_pmcs;
-	pd = outp->pfp_pmds;
-
-	/* Degree 2 rank based allocation */
-	if (cnt > generic_mips64_support.pmc_count)
-		return PFMLIB_ERR_TOOMANY;
-
-	if (PFMLIB_DEBUG()) {
-		for (j=0; j < cnt; j++) {
-			DPRINT(("ev[%d]=%s, counters=0x%x\n", j, gen_mips64_pe[e[j].event].pme_name,gen_mips64_pe[e[j].event].pme_counters));
-		}
-	}
-
-	/* Do rank based allocation, counters that live on 1 reg 
-	   before counters that live on 2 regs etc. */
-
-	/* CPU counters first */
-	for (i=1;i<=PMU_GEN_MIPS64_NUM_COUNTERS;i++) {
-		for (j=0; j < cnt;j++) {
-			/* CPU counters first */
-			if ((gen_mips64_pe[e[j].event].pme_counters & 0x3) && (pfmlib_popcnt(gen_mips64_pe[e[j].event].pme_counters) == i)) {
-				/* These counters can be used for this event */
-				avail = ~used & gen_mips64_pe[e[j].event].pme_counters;
-				DPRINT(("Rank %d: Counters available 0x%x\n",i,avail));
-				if (avail == 0x0)
-					return PFMLIB_ERR_NOASSIGN;
-
-				/* Pick one, mark as used*/
-				cntr = ffs(avail) - 1;
-				DPRINT(("Rank %d: Chose counter %d\n",i,cntr));
-
-				/* Update registers */
-				stuff_ice9_regs(e,inp->pfp_dfl_plm,pc,pd,cntr,j,mod_in);
-
-				used |= (1 << cntr);
-				DPRINT(("Rank %d: Used counters 0x%x\n",i, used));
-			}
-		}
-	}
-
-	/* SCB counters can live anywhere */
-
-	used = 0;
-	for (j=0; j < cnt;j++) {
-		/* CPU counters first */
-		if (gen_mips64_pe[e[j].event].pme_counters & 0x4) {
-			/* These counters can be used for this event */
-			avail = generic_mips64_support.num_cnt - 2 - used;
-			DPRINT(("SCB(%d): Counters available %d\n",j,avail));
-
-			cntr = (generic_mips64_support.num_cnt - 2) - avail;
-			DPRINT(("SCB(%d): Chose SCB counter %d\n",j,cntr));
-
-			/* Update registers */
-			stuff_ice9_regs(e,inp->pfp_dfl_plm,pc,pd,cntr,j,mod_in);
-			used++;
-			DPRINT(("SCB(%d): Used counters %d\n",j,used));
-		}
-	}
-	if (used) {
-		outp->pfp_pmc_count = stuff_ice9_scb_control_regs(pc,pd,cnt,mod_in);
-		outp->pfp_pmd_count = cnt;
-		return PFMLIB_SUCCESS;
-	}
-
-	/* number of evtsel registers programmed */
-	outp->pfp_pmc_count = cnt;
-	outp->pfp_pmd_count = cnt;
-
-	return PFMLIB_SUCCESS;
-}
-#endif
-
-/* SiCortex specific functions */
-
-static inline int is_ice9(void)
-{
-	return ((generic_mips64_support.pmu_type == PFMLIB_MIPS_ICE9A_PMU) ||
-		(generic_mips64_support.pmu_type == PFMLIB_MIPS_ICE9B_PMU));
-}
-
-/* 
- * CPU counter
- * function exported to applications
- */
-int pfm_ice9_is_cpu(unsigned int i)
-{
-	if (is_ice9() && (i < generic_mips64_support.pme_count)) {
-		unsigned int tmp = gen_mips64_pe[i].pme_counters;
-		return !(tmp & (1<<2));
-	}
-	return 0;
-}
-
-/*
- * SCB counter
- * function exported to applications
- */
-int pfm_ice9_is_scb(unsigned int i)
-{
-	unsigned int tmp;
-
-	if (is_ice9() && (i < generic_mips64_support.pme_count)) {
-		tmp = gen_mips64_pe[i].pme_counters;
-		return (tmp & (1<<2));
-	}
-	return 0;
-}
-
-/*
- * Reg 25 domain support
- * function exported to applications
- */
-int pfm_ice9_support_domain(unsigned int i)
-{
-	unsigned int tmp;
-
-	if (is_ice9() && (i < generic_mips64_support.pme_count))
-	{
-		tmp = gen_mips64_pe[i].pme_counters;
-		return (tmp & (1<<3));
-	}
-	return 0;
-}
-
-/*
- * VPC/PEA sampling support
- * function exported to applications
- */
-int pfm_ice9_support_vpc_pea(unsigned int i)
-{
-	unsigned int tmp;
-
-	if (is_ice9() && (i < generic_mips64_support.pme_count))
-	{
-		tmp = gen_mips64_pe[i].pme_counters;
-		return (tmp & (1<<4));  
-	}
-	return 0;
-}
-
-static char * pfm_gen_mips64_get_event_name(unsigned int i);
 
 static int
 pfm_gen_mips64_detect(void)
@@ -419,42 +57,51 @@ pfm_gen_mips64_detect(void)
 	static char mips_name[64] = "";
 	int ret;
 	char buffer[128];
-	extern pfm_pmu_support_t generic_mips64_support;
 
 	ret = __pfm_getcpuinfo_attr("cpu model", buffer, sizeof(buffer));
 	if (ret == -1)
 		return PFMLIB_ERR_NOTSUPP;
 
 	generic_mips64_support.pmu_name = mips_name;
-	if (strstr(buffer,"MIPS 20Kc")) {
+	generic_mips64_support.num_cnt = 0;
+	if (strstr(buffer,"MIPS 20Kc"))
+	  {
 		gen_mips64_pe = gen_mips64_20K_pe;
 		strcpy(generic_mips64_support.pmu_name,"MIPS20KC"),
 			generic_mips64_support.pme_count = (sizeof(gen_mips64_20K_pe)/sizeof(pme_gen_mips64_entry_t));
 		generic_mips64_support.pmc_count = 1;
 		generic_mips64_support.pmd_count = 1;
 		generic_mips64_support.pmu_type = PFMLIB_MIPS_20KC_PMU;
-	} else if (strstr(buffer,"MIPS 24K")) {
+	  }
+	else if (strstr(buffer,"MIPS 24K"))
+	  {
 		gen_mips64_pe = gen_mips64_24K_pe;
 		strcpy(generic_mips64_support.pmu_name,"MIPS24K"),
 			generic_mips64_support.pme_count = (sizeof(gen_mips64_24K_pe)/sizeof(pme_gen_mips64_entry_t));
 		generic_mips64_support.pmc_count = 2;
 		generic_mips64_support.pmd_count = 2;
 		generic_mips64_support.pmu_type = PFMLIB_MIPS_24K_PMU;
-	} else if (strstr(buffer,"MIPS 25Kf")) {
+	  }
+	else if (strstr(buffer,"MIPS 25Kf"))
+	  {
 		gen_mips64_pe = gen_mips64_25K_pe;
 		strcpy(generic_mips64_support.pmu_name,"MIPS25KF"),
 			generic_mips64_support.pme_count = (sizeof(gen_mips64_25K_pe)/sizeof(pme_gen_mips64_entry_t));
 		generic_mips64_support.pmc_count = 2;
 		generic_mips64_support.pmd_count = 2;
 		generic_mips64_support.pmu_type = PFMLIB_MIPS_25KF_PMU;
-	} else if (strstr(buffer,"MIPS 34K")) {
+	  }
+	else if (strstr(buffer,"MIPS 34K"))
+	  {
 		gen_mips64_pe = gen_mips64_34K_pe;
 		strcpy(generic_mips64_support.pmu_name,"MIPS34K"),
 			generic_mips64_support.pme_count = (sizeof(gen_mips64_34K_pe)/sizeof(pme_gen_mips64_entry_t));
 		generic_mips64_support.pmc_count = 4;
 		generic_mips64_support.pmd_count = 4;
 		generic_mips64_support.pmu_type = PFMLIB_MIPS_34K_PMU;
-	} else if (strstr(buffer,"MIPS 5Kc")) {
+	  }
+	else if (strstr(buffer,"MIPS 5Kc"))
+	  {
 		gen_mips64_pe = gen_mips64_5K_pe;
 		strcpy(generic_mips64_support.pmu_name,"MIPS5KC"),
 			generic_mips64_support.pme_count = (sizeof(gen_mips64_5K_pe)/sizeof(pme_gen_mips64_entry_t));
@@ -463,7 +110,8 @@ pfm_gen_mips64_detect(void)
 		generic_mips64_support.pmu_type = PFMLIB_MIPS_5KC_PMU;
 	}
 #if 0
-	else if (strstr(buffer,"MIPS 74K")) {
+	else if (strstr(buffer,"MIPS 74K"))
+	  {
 		gen_mips64_pe = gen_mips64_74K_pe;
 		strcpy(generic_mips64_support.pmu_name,"MIPS74K"),
 			generic_mips64_support.pme_count = (sizeof(gen_mips64_74K_pe)/sizeof(pme_gen_mips64_entry_t));
@@ -472,49 +120,62 @@ pfm_gen_mips64_detect(void)
 		generic_mips64_support.pmu_type = PFMLIB_MIPS_74K_PMU;
 	}
 #endif
-	else if (strstr(buffer,"R10000")) {
+	else if (strstr(buffer,"R10000"))
+	  {
 		gen_mips64_pe = gen_mips64_r10000_pe;
 		strcpy(generic_mips64_support.pmu_name,"MIPSR10000"),
 			generic_mips64_support.pme_count = (sizeof(gen_mips64_r10000_pe)/sizeof(pme_gen_mips64_entry_t));
 		generic_mips64_support.pmc_count = 2;
 		generic_mips64_support.pmd_count = 2;
 		generic_mips64_support.pmu_type = PFMLIB_MIPS_R10000_PMU;
-	} else if (strstr(buffer,"R12000")) {
+	  }
+	else if (strstr(buffer,"R12000"))
+	  {
 		gen_mips64_pe = gen_mips64_r12000_pe;
 		strcpy(generic_mips64_support.pmu_name,"MIPSR12000"),
 			generic_mips64_support.pme_count = (sizeof(gen_mips64_r12000_pe)/sizeof(pme_gen_mips64_entry_t));
 		generic_mips64_support.pmc_count = 4;
 		generic_mips64_support.pmd_count = 4;
 		generic_mips64_support.pmu_type = PFMLIB_MIPS_R12000_PMU;
-	} else if (strstr(buffer,"RM7000")) {
+	  }
+	else if (strstr(buffer,"RM7000"))
+	  {
 		gen_mips64_pe = gen_mips64_rm7000_pe;
 		strcpy(generic_mips64_support.pmu_name,"MIPSRM7000"),
 			generic_mips64_support.pme_count = (sizeof(gen_mips64_rm7000_pe)/sizeof(pme_gen_mips64_entry_t));
 		generic_mips64_support.pmc_count = 2;
 		generic_mips64_support.pmd_count = 2;
 		generic_mips64_support.pmu_type = PFMLIB_MIPS_RM7000_PMU;
-	} else if (strstr(buffer,"RM9000")) {
+	  }
+	else if (strstr(buffer,"RM9000"))
+	  {
 		gen_mips64_pe = gen_mips64_rm9000_pe;
 		strcpy(generic_mips64_support.pmu_name,"MIPSRM9000"),
 			generic_mips64_support.pme_count = (sizeof(gen_mips64_rm9000_pe)/sizeof(pme_gen_mips64_entry_t));
 		generic_mips64_support.pmc_count = 2;
 		generic_mips64_support.pmd_count = 2;
 		generic_mips64_support.pmu_type = PFMLIB_MIPS_RM9000_PMU;
-	} else if (strstr(buffer,"SB1")) {
+	  }
+	else if (strstr(buffer,"SB1"))
+	  {
 		gen_mips64_pe = gen_mips64_sb1_pe;
 		strcpy(generic_mips64_support.pmu_name,"MIPSSB1"),
 			generic_mips64_support.pme_count = (sizeof(gen_mips64_sb1_pe)/sizeof(pme_gen_mips64_entry_t));
 		generic_mips64_support.pmc_count = 4;
 		generic_mips64_support.pmd_count = 4;
 		generic_mips64_support.pmu_type = PFMLIB_MIPS_SB1_PMU;
-	} else if (strstr(buffer,"VR5432")) {
+	  }
+	else if (strstr(buffer,"VR5432"))
+	  {
 		gen_mips64_pe = gen_mips64_vr5432_pe;
 		generic_mips64_support.pme_count = (sizeof(gen_mips64_vr5432_pe)/sizeof(pme_gen_mips64_entry_t));
 		strcpy(generic_mips64_support.pmu_name,"MIPSVR5432"),
 			generic_mips64_support.pmc_count = 2;
 		generic_mips64_support.pmd_count = 2;
 		generic_mips64_support.pmu_type = PFMLIB_MIPS_VR5432_PMU;
-	} else if (strstr(buffer,"VR5500")) {
+	  }
+	else if (strstr(buffer,"VR5500"))
+	  {
 		gen_mips64_pe = gen_mips64_vr5500_pe;
 		generic_mips64_support.pme_count = (sizeof(gen_mips64_vr5500_pe)/sizeof(pme_gen_mips64_entry_t));
 		strcpy(generic_mips64_support.pmu_name,"MIPSVR5500"),
@@ -522,25 +183,12 @@ pfm_gen_mips64_detect(void)
 		generic_mips64_support.pmd_count = 2;
 		generic_mips64_support.pmu_type = PFMLIB_MIPS_VR5500_PMU;
 	}
-#ifdef CONFIG_PFMLIB_ARCH_SICORTEX
-	else if (strstr(buffer,"SiCortex ICE9A")) {
-		gen_mips64_pe = gen_mips64_ice9a_pe;
-		strcpy(generic_mips64_support.pmu_name,"MIPSICE9A"),
-			generic_mips64_support.pmu_type = PFMLIB_MIPS_ICE9A_PMU;
-		compute_ice9_counters(generic_mips64_support.pmu_type);
-		return PFMLIB_SUCCESS;
-	} else if (strstr(buffer,"SiCortex ICE9B")) {
-		gen_mips64_pe = gen_mips64_ice9b_pe;
-		strcpy(generic_mips64_support.pmu_name,"MIPSICE9B"),
-			generic_mips64_support.pmu_type = PFMLIB_MIPS_ICE9B_PMU;
-		compute_ice9_counters(generic_mips64_support.pmu_type);
-		return PFMLIB_SUCCESS;
-	}
-#endif
 	else
 		return PFMLIB_ERR_NOTSUPP;
 
+	if (generic_mips64_support.num_cnt == 0)
 	generic_mips64_support.num_cnt = generic_mips64_support.pmd_count;
+
 	return PFMLIB_SUCCESS;
 }
 
@@ -559,9 +207,9 @@ static void stuff_regs(pfmlib_event_t *e, int plm, pfmlib_reg_t *pc, pfmlib_reg_
 	reg.sel_int = 1; /* force int to 1 */
 
 	reg.sel_event_mask = (gen_mips64_pe[e[j].event].pme_code >> (cntr*8)) & 0xff;
-	pc[j].reg_num     = cntr;
 	pc[j].reg_value   = reg.val;
 	pc[j].reg_addr    = cntr*2;
+  pc[j].reg_num     = cntr;
 
 	__pfm_vbprintf("[CP0_25_%u(pmc%u)=0x%"PRIx64" event_mask=0x%x usr=%d os=%d sup=%d exl=%d int=1] %s\n",
 			pc[j].reg_addr,
@@ -586,28 +234,20 @@ static void stuff_regs(pfmlib_event_t *e, int plm, pfmlib_reg_t *pc, pfmlib_reg_
  * Upon return the pfarg_regt structure is ready to be submitted to kernel
  */
 static int
-pfm_gen_mips64_dispatch_events(pfmlib_input_param_t *inp, void *mod_in, pfmlib_output_param_t *outp, void *model_out)
+pfm_gen_mips64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_mips64_input_param_t *mod_in, pfmlib_output_param_t *outp)
 {
-	pfmlib_event_t *e;
+        /* pfmlib_gen_mips64_input_param_t *param = mod_in; */
+	pfmlib_event_t *e = inp->pfp_events;
 	pfmlib_reg_t *pc, *pd;
-	unsigned int i, j, cnt;
+	unsigned int i, j, cnt = inp->pfp_event_count;
 	unsigned int used = 0;
-	unsigned int cntr, avail;
-
-#ifdef CONFIG_PFMLIB_ARCH_SICORTEX
-	if (is_ice9()) {
-		return pfm_ice9_dispatch_counters(inp, mod_in, outp);
-	}
-#endif
-	e = inp->pfp_events;
-	cnt = inp->pfp_event_count;
+	extern pfm_pmu_support_t generic_mips64_support;
 
 	pc = outp->pfp_pmcs;
 	pd = outp->pfp_pmds;
 
 	/* Degree 2 rank based allocation */
-	if (cnt > generic_mips64_support.pmc_count)
-		return PFMLIB_ERR_TOOMANY;
+	if (cnt > generic_mips64_support.pmc_count) return PFMLIB_ERR_TOOMANY;
 
 	if (PFMLIB_DEBUG()) {
 		for (j=0; j < cnt; j++) {
@@ -617,24 +257,28 @@ pfm_gen_mips64_dispatch_events(pfmlib_input_param_t *inp, void *mod_in, pfmlib_o
 
 	/* Do rank based allocation, counters that live on 1 reg 
 	   before counters that live on 2 regs etc. */
-	for (i=1;i<=PMU_GEN_MIPS64_NUM_COUNTERS;i++) {
-		for (j=0; j < cnt;j++) {
-			if (pfmlib_popcnt(gen_mips64_pe[e[j].event].pme_counters) == i) {
+	for (i=1;i<=PMU_GEN_MIPS64_NUM_COUNTERS;i++)
+	  {
+	    for (j=0; j < cnt;j++) 
+	      {
+		unsigned int cntr, avail;
+		if (pfmlib_popcnt(gen_mips64_pe[e[j].event].pme_counters) == i)
+		  {
 				/* These counters can be used for this event */
 				avail = ~used & gen_mips64_pe[e[j].event].pme_counters;
-				DPRINT(("%d: Counters available %x\n",i,avail));
+		    DPRINT(("Rank %d: Counters available 0x%x\n",i,avail));
 				if (avail == 0x0)
 					return PFMLIB_ERR_NOASSIGN;
 
 				/* Pick one, mark as used*/
 				cntr = ffs(avail) - 1;
-				DPRINT(("%d: Chose counter %d\n",i,cntr));
+		    DPRINT(("Rank %d: Chose counter %d\n",i,cntr));
 
 				/* Update registers */
 				stuff_regs(e,inp->pfp_dfl_plm,pc,pd,cntr,j,mod_in);
 
 				used |= (1 << cntr);
-				DPRINT(("%d: Used counters %x\n",i, used));
+		    DPRINT(("%d: Used counters 0x%x\n",i, used));
 			}
 		}
 	}
@@ -647,15 +291,23 @@ pfm_gen_mips64_dispatch_events(pfmlib_input_param_t *inp, void *mod_in, pfmlib_o
 }
 
 static int
+pfm_gen_mips64_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_output_param_t *outp, void *model_out)
+{
+	pfmlib_gen_mips64_input_param_t *mod_in  = (pfmlib_gen_mips64_input_param_t *)model_in;
+
+	return pfm_gen_mips64_dispatch_counters(inp, mod_in, outp);
+}
+
+static int
 pfm_gen_mips64_get_event_code(unsigned int i, unsigned int cnt, int *code)
 {
-	unsigned int tmp;
+	extern pfm_pmu_support_t generic_mips64_support;
 
 	/* check validity of counter index */
 	if (cnt != PFMLIB_CNT_FIRST) {
 		if (cnt < 0 || cnt >= generic_mips64_support.pmc_count)
-			return PFMLIB_ERR_INVAL;
-	} else {
+	    return PFMLIB_ERR_INVAL; }
+	else 	  {
 		cnt = ffs(gen_mips64_pe[i].pme_counters)-1;
 		if (cnt == -1)
 			return(PFMLIB_ERR_INVAL);
@@ -664,108 +316,59 @@ pfm_gen_mips64_get_event_code(unsigned int i, unsigned int cnt, int *code)
 	/* if cnt == 1, shift right by 0, if cnt == 2, shift right by 8 */
 	/* Works on both 5k anf 20K */
 
-	if (is_ice9()) {
-		tmp = gen_mips64_pe[i].pme_counters;
-		/* CPU event */
-		if (tmp & 0x3) {
-			if (tmp & (1<< cnt))
-				*code = 0xff & (gen_mips64_pe[i].pme_code >> (cnt*8));
-			else
-				return PFMLIB_ERR_INVAL;
-		} else  { /* SCB event */
-			if ((cnt < 6) || (cnt >= generic_mips64_support.pmc_count))
-				return PFMLIB_ERR_INVAL;
-			*code = 0xffff & (gen_mips64_pe[i].pme_code >> 16);
-		}
-	} else {
-		if (gen_mips64_pe[i].pme_counters & (1<< cnt))
-			*code = 0xff & (gen_mips64_pe[i].pme_code >> (cnt*8));
-		else
-			return PFMLIB_ERR_INVAL;
-	}
+	if (gen_mips64_pe[i].pme_counters & (1<< cnt))
+		*code = 0xff & (gen_mips64_pe[i].pme_code >> (cnt*8));
+	else
+		return PFMLIB_ERR_INVAL;
+
 	return PFMLIB_SUCCESS;
 }
 
-/*
- * This function is accessible directly to the user
- */
-int
-pfm_gen_mips64_get_event_umask(unsigned int i, unsigned long *umask)
-{
-	if (i >= generic_mips64_support.pme_count || umask == NULL)
-		return PFMLIB_ERR_INVAL;
-	*umask = 0; //evt_umask(i);
-	return PFMLIB_SUCCESS;
-}
-	
 static void
 pfm_gen_mips64_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 {
-	unsigned int tmp = gen_mips64_pe[j].pme_counters;
-	int t, i;
+	extern pfm_pmu_support_t generic_mips64_support;
+	unsigned int tmp;
 
 	memset(counters, 0, sizeof(*counters));
+	tmp = gen_mips64_pe[j].pme_counters;
 
-	if (is_ice9()) {
-		/* CPU counter */
-		if (tmp & 0x3) {
-			while (tmp) {
-				t = ffs(tmp) - 1;
-				pfm_regmask_set(counters, t);
-				tmp = tmp ^ (1 << t);
-			}
-		} else if (tmp & 0x4) {
-			/* SCB counter, requires first 4, then 1 of the remaining */
-			for (i=6;i<generic_mips64_support.pmc_count;i++)
-				pfm_regmask_set(counters, i);
-		}
-	} else {
-		while (tmp) {
-			t = ffs(tmp) - 1;
+	while (tmp)
+	       {
+		int t = ffs(tmp) - 1;
 			pfm_regmask_set(counters, t);
 			tmp = tmp ^ (1 << t);
 		}
 	}
-}
 
 static void
 pfm_gen_mips64_get_impl_perfsel(pfmlib_regmask_t *impl_pmcs)
 {
 	unsigned int i = 0;
+	extern pfm_pmu_support_t generic_mips64_support;
 
 	/* all pmcs are contiguous */
-	for(i=0; i < generic_mips64_support.pmc_count; i++)
-		pfm_regmask_set(impl_pmcs, i);
+	for(i=0; i < generic_mips64_support.pmc_count; i++) pfm_regmask_set(impl_pmcs, i);
 }
 
 static void
 pfm_gen_mips64_get_impl_perfctr(pfmlib_regmask_t *impl_pmds)
 {
 	unsigned int i = 0;
+	extern pfm_pmu_support_t generic_mips64_support;
 
 	/* all pmds are contiguous */
-	for(i=0; i < generic_mips64_support.pmd_count; i++)
-		pfm_regmask_set(impl_pmds, i);
+	for(i=0; i < generic_mips64_support.pmd_count; i++) pfm_regmask_set(impl_pmds, i);
 }
 
 static void
 pfm_gen_mips64_get_impl_counters(pfmlib_regmask_t *impl_counters)
 {
 	unsigned int i = 0;
+	extern pfm_pmu_support_t generic_mips64_support;
 
-	/* counting pmds are not contiguous on ICE9 */
-	if (is_ice9()) {
-		pfm_regmask_set(impl_counters, 0);
-		pfm_regmask_set(impl_counters, 1);
-
-		/* If we have the SCB turned on */
-		if (generic_mips64_support.pmd_count > 2) {
-			for(i=6; i < generic_mips64_support.pmd_count; i++) 
-				pfm_regmask_set(impl_counters, i);
-		}
-	} else /* counting pmds are contiguous */
-		for(i=0; i < generic_mips64_support.pmc_count; i++)
-			pfm_regmask_set(impl_counters, i);
+	for(i=0; i < generic_mips64_support.pmc_count; i++)
+		pfm_regmask_set(impl_counters, i);
 }
 
 static void
@@ -784,20 +387,19 @@ static int
 pfm_gen_mips64_get_event_description(unsigned int ev, char **str)
 {
 	char *s;
-
 	s = gen_mips64_pe[ev].pme_desc;
-	*str = s ? strdup(s) : NULL;
-
+	if (s) {
+		*str = strdup(s);
+	} else {
+		*str = NULL;
+	}
 	return PFMLIB_SUCCESS;
 }
 
 static int
 pfm_gen_mips64_get_cycle_event(pfmlib_event_t *e)
 {
-	if (is_ice9())
-		return pfm_find_full_event("CPU_CYCLES",e);
-	else
-		return pfm_find_full_event("CYCLES",e);
+	return pfm_find_full_event("CYCLES",e);
 }
 
 static int
@@ -806,7 +408,8 @@ pfm_gen_mips64_get_inst_retired(pfmlib_event_t *e)
 	if (pfm_current == NULL)
 		return(PFMLIB_ERR_NOINIT);
 
-	switch (pfm_current->pmu_type) {
+  switch (pfm_current->pmu_type)
+    {
 		case PFMLIB_MIPS_20KC_PMU:
 			return pfm_find_full_event("INSNS_COMPLETED",e);
 		case PFMLIB_MIPS_24K_PMU:
@@ -817,12 +420,9 @@ pfm_gen_mips64_get_inst_retired(pfmlib_event_t *e)
 			return pfm_find_full_event("INSTRUCTIONS",e); 
 		case PFMLIB_MIPS_5KC_PMU:
 			return pfm_find_full_event("INSNS_EXECD",e); 
-		case PFMLIB_MIPS_ICE9A_PMU:
-		case PFMLIB_MIPS_ICE9B_PMU:
-			return pfm_find_full_event("CPU_INSEXEC",e); 
 		case PFMLIB_MIPS_R10000_PMU:
 		case PFMLIB_MIPS_R12000_PMU:
-			return pfm_find_full_event("INSTRUCTIONS_GRADUATED",e); 
+			return pfm_find_full_event("INSTRUCTIONS_GRADUATED",e);
 		case PFMLIB_MIPS_RM7000_PMU:
 		case PFMLIB_MIPS_RM9000_PMU:
 			return pfm_find_full_event("INSTRUCTIONS_ISSUED",e); 
@@ -831,11 +431,12 @@ pfm_gen_mips64_get_inst_retired(pfmlib_event_t *e)
 			return pfm_find_full_event("INSTRUCTIONS_EXECUTED",e); 
 		case PFMLIB_MIPS_SB1_PMU:
 			return pfm_find_full_event("INSN_SURVIVED_STAGE7",e); 
-		case PFMLIB_MIPS_74K_PMU:
 		default:
 			return(PFMLIB_ERR_NOTFOUND);
 	}
 }
+
+/* SiCortex specific functions */
 
 pfm_pmu_support_t generic_mips64_support = {
 	.pmu_name		= NULL,

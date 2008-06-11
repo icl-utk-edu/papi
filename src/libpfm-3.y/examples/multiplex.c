@@ -422,7 +422,7 @@ switch_sets(int ctxid)
 
 	full_periods++;
 
-	if (pfm_restart(ctxid) == -1) {
+	if (options.opt_ovfl_switch && pfm_restart(ctxid) == -1) {
 		if (errno != EBUSY)
 			fatal_error("error pfm_restart: %s\n", strerror(errno));
 		/*
@@ -430,6 +430,7 @@ switch_sets(int ctxid)
 		 */
 	}
 }
+
 static void
 sigintr_handler(int sig)
 {
@@ -548,8 +549,10 @@ measure_one_task(char **argv)
 		switch(ret) {
 			case  0:
 				ret = ptrace(PTRACE_ATTACH, pid, NULL, 0);
-				if (ret)
-					fatal_error("cannot attach to %d: 5s\n", pid, strerror(errno));
+				if (ret) {
+					time_to_quit = 1;
+					break;
+				}
 
 				ret = waitpid(pid, &status, WUNTRACED);
 				/*

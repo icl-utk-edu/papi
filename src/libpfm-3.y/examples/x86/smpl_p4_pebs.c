@@ -25,8 +25,7 @@
  * This file is part of libpfm, a performance monitoring support library for
  * applications on Linux.
  */
-
-#define _GNU_SOURCE /* for getline */
+#define _GNU_SOURCE 1
 #include <sys/types.h>
 #include <inttypes.h>
 #include <stdio.h>

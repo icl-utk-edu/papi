@@ -69,6 +69,17 @@ __pfm_check_event(pfmlib_event_t *e)
 		if (e->unit_masks[j] >= n)
 			return PFMLIB_ERR_UMASK;
 	}
-	/* need to specify at least one umask */
-	return n && j == 0 ? PFMLIB_ERR_UMASK : PFMLIB_SUCCESS;
+	/*
+	 * if event has umask, but non specified by user, then
+	 * return:
+	 *   - error if no default umask is defined
+	 *   - success if default umask exists for event
+	 */
+	if (n && j == 0) {
+		if (pfm_current->has_umask_default
+		    && pfm_current->has_umask_default(e->event))
+			return PFMLIB_SUCCESS;
+		return PFMLIB_ERR_UMASK;
+	}
+	return PFMLIB_SUCCESS;
 }

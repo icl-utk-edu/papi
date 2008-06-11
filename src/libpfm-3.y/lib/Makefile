@@ -66,9 +66,13 @@ SRCS   += pfmlib_gen_mips64.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_MIPS64
 
 ifeq ($(CONFIG_PFMLIB_ARCH_SICORTEX),y)
+  INCARCH = $(INC_SICORTEX)
   CFLAGS += -DCONFIG_PFMLIB_ARCH_SICORTEX
+ifneq ($(SCINCDIR),)
+  CFLAGS += -I$(SCINCDIR)
 endif
-
+  SRCS   += pfmlib_sicortex.c
+endif
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_POWERPC),y)
@@ -164,6 +168,8 @@ INC_MIPS64= $(PFMINCDIR)/perfmon/pfmlib_gen_mips64.h \
   $(PFMINCDIR)/perfmon/pfmlib_os_mips64.h \
   gen_mips64_events.h
 
+INC_SICORTEX= $(INC_MIPS64) $(PFMINCDIR)/perfmon/pfmlib_sicortex.h 
+
 INC_POWERPC= $(PFMINCDIR)/perfmon/pfmlib_powerpc.h \
   $(PFMINCDIR)/perfmon/pfmlib_comp_powerpc.h \
   $(PFMINCDIR)/perfmon/pfmlib_os_powerpc.h \
@@ -193,7 +199,7 @@ libpfm.a:  $(OBJS)
 	$(AR) cru $@ $(OBJS)
 
 $(SLIBPFM):  $(SOBJS)
-	$(CC) $(SLDFLAGS)  -o $@ $(SOBJS)
+	$(CC) $(CFLAGS) $(SLDFLAGS)  -o $@ $(SOBJS)
 	$(LN) $@ $(VLIBPFM)
 	$(LN) $@ libpfm.$(SOLIBEXT)
 
