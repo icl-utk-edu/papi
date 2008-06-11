@@ -2885,17 +2885,17 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   SUBDBG("pfm_get_num_events(%p)\n",&ncnt);
   if ((retval = pfm_get_num_events(&ncnt)) != PFMLIB_SUCCESS)
     {
-      PAPIERROR("pfm_get_num_events(%p): %s", &ncnt, pfm_strerror(retval));
+      PAPIERROR("pfm_get_num_events(%p): %s\n", &ncnt, pfm_strerror(retval));
       return(PAPI_ESBSTR);
     }
-  SUBDBG("pfm_get_num_events: %d", ncnt);
+  SUBDBG("pfm_get_num_events: %d\n", ncnt);
   _papi_hwi_system_info.sub_info.num_native_events = ncnt;
   strcpy(_papi_hwi_system_info.sub_info.name, "$Id$");          
   strcpy(_papi_hwi_system_info.sub_info.version, "$Revision$");  
   sprintf(buf,"%08x",version);
 
   pfm_get_num_counters((unsigned int *)&_papi_hwi_system_info.sub_info.num_cntrs);
-  SUBDBG("pfm_get_num_counters: %d", _papi_hwi_system_info.sub_info.num_cntrs);
+  SUBDBG("pfm_get_num_counters: %d\n", _papi_hwi_system_info.sub_info.num_cntrs);
   retval = get_system_info(&_papi_hwi_system_info);
   if (retval)
     return (retval);
