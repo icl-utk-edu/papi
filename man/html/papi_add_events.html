@@ -326,13 +326,13 @@ A hardware event can be either a PAPI preset or a native hardware event code.
 For a list of PAPI preset events, see
 <!-- .BR "PAPI_presets" "(3) or run the" -->
 <A HREF="papi_presets.html">PAPI_presets (3)</A> or run the
-<!-- .I avail -->
-<I>avail</I> test case in the PAPI distribution. PAPI presets can be passed to
+<!-- .I utils/papi_avail -->
+<I>utils/papi_avail</I> utility in the PAPI distribution. PAPI presets can be passed to
 <!-- .BR "PAPI_query_event" "(3) to see if they exist on the underlying architecture." -->
 <A HREF="papi_query_event.html">PAPI_query_event (3)</A> to see if they exist on the underlying architecture.
-For a list of native events available on current platform, run
-native_avail
-test case in the PAPI distribution. For the encoding of native events, see
+For a list of native events available on current platform, run the
+<!-- .I utils/papi_native_avail -->
+<I>utils/papi_native_avail</I> utility in the PAPI distribution. For the encoding of native events, see
 <!-- .BR "PAPI_event_name_to_code" "(3) to learn how to generate native code for the supported native event on the underlying architecture." -->
 <A HREF="papi_event_name_to_code.html">PAPI_event_name_to_code (3)</A> to learn how to generate native code for the supported native event on the underlying architecture.
 <P>
@@ -378,7 +378,7 @@ It should be noted that
 On success, these functions return
 <!-- .B "PAPI_OK."  -->
 <B>PAPI_OK.</B> <BR>
- On error, a less than zero error code is returned or the the number of elements that succeeded before the error.
+ On error a negative error code, or a positive number of elements that succeeded before the error, is returned.
 <P>
 <!-- .SH ERRORS -->
 </BLOCKQUOTE>

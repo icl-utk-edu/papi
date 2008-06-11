@@ -30,12 +30,12 @@ PAPI_add_events() does the same, but for an array of events.
 A hardware event can be either a PAPI preset or a native hardware event code.
 For a list of PAPI preset events, see
 .BR "PAPI_presets" "(3) or run the"
-.I avail
-test case in the PAPI distribution. PAPI presets can be passed to
+.I utils/papi_avail
+utility in the PAPI distribution. PAPI presets can be passed to
 .BR "PAPI_query_event" "(3) to see if they exist on the underlying architecture."
-For a list of native events available on current platform, run
-native_avail
-test case in the PAPI distribution. For the encoding of native events, see
+For a list of native events available on current platform, run the
+.I utils/papi_native_avail
+utility in the PAPI distribution. For the encoding of native events, see
 .BR "PAPI_event_name_to_code" "(3) to learn how to generate native code for the supported native event on the underlying architecture."
 
 .SH ARGUMENTS
@@ -61,7 +61,7 @@ can partially succeed, exactly like
 .SH RETURN VALUES
 On success, these functions return
 .B "PAPI_OK." 
- On error, a less than zero error code is returned or the the number of elements that succeeded before the error.
+ On error a negative error code, or a positive number of elements that succeeded before the error, is returned.
 
 .SH ERRORS
 .TP
