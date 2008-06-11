@@ -15,6 +15,14 @@
    Now it relies only on a small collection of papi header files.
 */
 
+/* Modified to always generate a symbolic representation for the
+   maximum negative number. This is a work-around for a compiler
+   limitation that first showed up on Cray X1 and then spread to
+   GNU Fortran 4.3.2. Thanks to Jim Rosinski (ORNL) for
+   identification and testing on this issue.
+   Date: 06/03/08
+*/
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -162,51 +170,33 @@ const hwi_describe_t _papi_def[] = {
 
 };
 
-
 enum deftype_t { CDEFINE, F77DEFINE, F90DEFINE };
 static char comment_char = 'C';
 
-#ifdef __crayx1
-static void define_max_cray_val(const char *val_string, enum deftype_t deftype)
-{
-   /* Cray FORTRAN cannot properly assign the maximum negative value of -2147483648
-      even though it *can* properly represent it. That value happens to be used for
-      the PAPI preset PAPI_L1_DCM. This hack works around that Cray limitation.
-   */
-   switch (deftype) {
-      case CDEFINE:
-         printf("#define %-18s ", val_string);
-         break;
-      case F77DEFINE:
-         printf("      INTEGER %-18s\n      PARAMETER (%s=", val_string, val_string);
-         break;
-      case F90DEFINE:
-         printf("      INTEGER, PARAMETER :: %-18s = (", val_string);
-         break;
-   }
-   printf("(-2)*(2**30)\n");
-}
-#endif
-
 static void define_val(const char *val_string, int val, enum deftype_t deftype)
 {
-#ifdef __crayx1
-   /* special case for Cray Fortran */
+   char value[20];
+   /* Several FORTRAN compilers (Cray Unicos, GNU Fortran (GCC) 4.2.3, others?)
+      cannot properly assign the maximum negative value of -2147483648
+      even though they *can* properly represent it. That value happens 
+      to be used for the PAPI preset PAPI_L1_DCM, and PAPI_DOM_HWSPEC. 
+      This hack works around that limitation.
+   */
    if (((unsigned)val) == 0x80000000) {
-      define_max_cray_val(val_string, deftype);
-      return;
+      sprintf(value, "((-2)*(2**30))");
+   } else {
+      sprintf(value, "%d", val);
    }
-#endif
 
    switch (deftype) {
       case CDEFINE:
-         printf("#define %-18s %d\n", val_string, val);
+         printf("#define %-18s %s\n", val_string, value);
          break;
       case F77DEFINE:
-         printf("      INTEGER %-18s\n      PARAMETER (%s=%d)\n", val_string, val_string, val);
+         printf("      INTEGER %-18s\n      PARAMETER (%s=%s)\n", val_string, val_string, value);
          break;
       case F90DEFINE:
-         printf("      INTEGER, PARAMETER :: %-18s = %d\n", val_string, val);
+         printf("      INTEGER, PARAMETER :: %-18s = %s\n", val_string, value);
          break;
    }
 }
