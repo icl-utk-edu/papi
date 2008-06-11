@@ -264,12 +264,13 @@ static int get_event_line(char *line, FILE *table, char **tmp_perfmon_events_tab
 
 static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_entry_t *here)
 {
+  pfmlib_event_t event;
   char line[LINE_MAX];
   char name[PATH_MAX] = "builtin perfmon_events_table";
   char *tmp_perfmon_events_table = NULL;
   char *tmpn;
   FILE *table;
-  int line_no = 1, derived = 0, insert = 2, preset = 0;
+  int i = 0, line_no = 1, derived = 0, insert = 2, preset = 0;
   int get_presets = 0;   /* only get PRESETS after CPU is identified */
   int found_presets = 0; /* only terminate search after PRESETS are found */
 						 /* this allows support for synonyms for CPU names */
@@ -278,10 +279,15 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
   SUBDBG("%p\n",here);
 #endif
 
-  here[0].preset = PAPI_TOT_CYC;
-  here[0].derived = NOT_DERIVED;
-  here[1].preset = PAPI_TOT_INS;
-  here[1].derived = NOT_DERIVED;
+  /* make sure these events are supported before adding them */
+  if (pfm_get_cycle_event(&event) != PFMLIB_ERR_NOTSUPP) {
+    here[i].preset = PAPI_TOT_CYC;
+    here[i++].derived = NOT_DERIVED;
+  }
+  if (pfm_get_inst_retired_event(&event) != PFMLIB_ERR_NOTSUPP) {
+    here[i].preset = PAPI_TOT_INS;
+    here[i].derived = NOT_DERIVED;
+  }
 
   /* try the environment variable first */
   if ((tmpn = getenv("PAPI_PERFMON_EVENT_FILE")) && (strlen(tmpn) != 0)) {
@@ -543,7 +549,7 @@ static int generate_preset_search_map(hwi_search_t **maploc, hwi_dev_notes_t **n
 	      }
 	  }
 	  else
-	    PAPIERROR("pfm_get_cycle_event(%p): %s",&event, pfm_strerror(ret));
+	    SUBDBG("pfm_get_cycle_event(%p): %s",&event, pfm_strerror(ret));
       }
       else if (strmap[i].preset == PAPI_TOT_INS) 
       {
@@ -559,7 +565,7 @@ static int generate_preset_search_map(hwi_search_t **maploc, hwi_dev_notes_t **n
 	      }
 	  }
 	  else
-	    PAPIERROR("pfm_get_inst_retired_event(%p): %s",&event, pfm_strerror(ret));	    
+	    SUBDBG("pfm_get_inst_retired_event(%p): %s",&event, pfm_strerror(ret));
       }
       else
       {
@@ -963,7 +969,7 @@ int _pfm_get_counter_info(unsigned int event, unsigned int *selector, int *code)
 		if (pfm_regmask_isset(&cnt, i)) {
 			if (first) {
 				if ((ret = pfm_get_event_code_counter(event,i,code)) != PFMLIB_SUCCESS) {
-					PAPIERROR("pfm_get_event_code_counter(%d, %d, %p): %s", event, i, code, pfm_strerror(ret));
+					PAPIERROR("pfm_get_event_code_counter(%p, %d, %p): %s", event, i, code, pfm_strerror(ret));
 					return(PAPI_ESBSTR);
 				}
 				first = 0;
@@ -1052,7 +1058,7 @@ int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
 	for (j=0;n;j++) {
 		if (pfm_regmask_isset(&selector,j)) {
 			if ((ret = pfm_get_event_code_counter(bits->event,j,&foo)) != PFMLIB_SUCCESS) {
-				PAPIERROR("pfm_get_event_code_counter(%d,%d,%p): %s",*bits,j,&foo,pfm_strerror(ret));
+				PAPIERROR("pfm_get_event_code_counter(%p,%d,%d,%p): %s",*bits,bits->event,j,&foo,pfm_strerror(ret));
 				return(PAPI_EBUG);
 			}
 			/* Overflow check */
