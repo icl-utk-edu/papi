@@ -46,9 +46,17 @@ char *xmlize(const char *msg)
 
    for(op = msg, xp = xmlized_msg; *op != '\0'; op++) {
        switch(*op) {
+         case '"':
+           strcpy(xp, "&quot;");
+           xp += strlen("&quot;");
+           break;
          case '&':
            strcpy(xp, "&amp;");
            xp += strlen("&amp;");
+           break;
+         case '\'':
+           strcpy(xp, "&apos;");
+           xp += strlen("&apos;");
            break;
          case '<':
            strcpy(xp, "&lt;");
@@ -67,9 +75,6 @@ char *xmlize(const char *msg)
 
    return xmlized_msg;
 }
-
-
-
 
 
 int papi_xml_hwinfo(FILE *f)
