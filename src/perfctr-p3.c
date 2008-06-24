@@ -111,6 +111,12 @@ int _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
       }
       break;
    }
+
+#ifdef VPERFCTR_CONTROL_CLOEXEC
+	ptr->control.flags = VPERFCTR_CONTROL_CLOEXEC;
+	SUBDBG("close on exec\t\t\t%u\n", ptr->control.flags);
+#endif
+
    /* Make sure the TSC is always on */
    ptr->control.cpu_control.tsc_on = 1;
    return(PAPI_OK);

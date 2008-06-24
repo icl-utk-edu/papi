@@ -305,6 +305,10 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 static int attach( hwd_control_state_t * ctl, unsigned long tid ) {
 	struct vperfctr_control tmp;
 
+#ifdef VPERFCTR_CONTROL_CLOEXEC
+	tmp.flags = VPERFCTR_CONTROL_CLOEXEC;
+#endif
+
 	ctl->rvperfctr = rvperfctr_open( tid );
 	if( ctl->rvperfctr == NULL ) {
 		PAPIERROR( VOPEN_ERROR ); return (PAPI_ESYS);
@@ -411,6 +415,11 @@ int _papi_hwd_init(hwd_context_t * ctx) {
    /* Initialize the per thread/process virtualized TSC */
    memset(&tmp, 0x0, sizeof(tmp));
    tmp.cpu_control.tsc_on = 1;
+
+#ifdef VPERFCTR_CONTROL_CLOEXEC
+	tmp.flags = VPERFCTR_CONTROL_CLOEXEC;
+	SUBDBG("close on exec\t\t\t%u\n", tmp.flags);
+#endif
 
    /* Start the per thread/process virtualized TSC */
    if (vperfctr_control(ctx->perfctr, &tmp) < 0)

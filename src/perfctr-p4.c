@@ -97,6 +97,12 @@ int _papi_hwd_init_control_state(hwd_control_state_t * ptr)
    ptr->control.cpu_control.tsc_on = 1;
    ptr->control.cpu_control.nractrs = 0;
    ptr->control.cpu_control.nrictrs = 0;
+
+#ifdef VPERFCTR_CONTROL_CLOEXEC
+	ptr->control.flags = VPERFCTR_CONTROL_CLOEXEC;
+	SUBDBG("close on exec\t\t\t%u\n", ptr->control.flags);
+#endif
+
 #if 0
    ptr->interval_usec = sampling_interval;
    ptr->nrcpus = all_cpus;
