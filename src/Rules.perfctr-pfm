@@ -284,33 +284,36 @@ ifeq (static,$(PFM_EVENTS))
 endif
 
 native_install: 
-	-mkdir -p $(DATADIR)
-	-chmod go+rx $(DATADIR)
-	-cp -f ./perfmon_events.csv $(DATADIR)
+	-mkdir -p $(DESTDIR)$(DATADIR)
+	-chmod go+rx $(DESTDIR)$(DATADIR)
+	-cp -f ./perfmon_events.csv $(DESTDIR)$(DATADIR)
 ifeq ($(ARCH),ppc64)
-	cp -Rf ./event_data $(DATADIR)
+	cp -Rf ./event_data $(DESTDIR)$(DATADIR)
 endif
 ifneq (,${PFM_ROOT})
 	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC=$(CC) PFM_VERSION_FLAG="$(PFM_VERSION)" DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
 ifneq (,${PERFCTR_ROOT})
 ifeq (${VERSION},2.4.x)
-	cp -p $(PERFCTR_ROOT)/usr.lib/libperfctr.so $(PREFIX)/lib$(LIB_SUFFIX)
-	cp -p $(PERFCTR_ROOT)/usr.lib/event_codes.h $(PREFIX)/include
-	cp -p $(PERFCTR_ROOT)/usr.lib/libperfctr.h  $(PREFIX)/include
+	mkdir -p $(DESTDIR)$(PREFIX)/lib$(LIB_SUFFIX)
+	cp -p $(PERFCTR_ROOT)/usr.lib/libperfctr.so $(DESTDIR)$(PREFIX)/lib$(LIB_SUFFIX)
+	mkdir -p $(DESTDIR)$(PREFIX)/include
+	cp -p $(PERFCTR_ROOT)/usr.lib/event_codes.h $(DESTDIR)$(PREFIX)/include
+	cp -p $(PERFCTR_ROOT)/usr.lib/libperfctr.h  $(DESTDIR)$(PREFIX)/include
 else
 ifeq (x86_64,${ARCH})
 ifeq (32,${BITS})
-	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(PREFIX) BINDIR=$(BINDIR) LIBDIR=$(LIBDIR) INCLDIR=$(INCDIR) ARCH="i386" install
+	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(DESTDIR)$(PREFIX) BINDIR=$(DESTDIR)$(BINDIR) LIBDIR=$(DESTDIR)$(LIBDIR) INCLDIR=$(DESTDIR)$(INCDIR) ARCH="i386" install
 else
-	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(PREFIX) BINDIR=$(BINDIR) LIBDIR=$(LIBDIR) INCLDIR=$(INCDIR) install
+	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(DESTDIR)$(PREFIX) BINDIR=$(DESTDIR)$(BINDIR) LIBDIR=$(DESTDIR)$(LIBDIR) INCLDIR=$(DESTDIR)$(INCDIR) install
 endif
 else
-	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(PREFIX) BINDIR=$(BINDIR) LIBDIR=$(LIBDIR) INCLDIR=$(INCDIR) install
+	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(DESTDIR)$(PREFIX) BINDIR=$(DESTDIR)$(BINDIR) LIBDIR=$(DESTDIR)$(LIBDIR) INCLDIR=$(DESTDIR)$(INCDIR) install
 endif
 endif
 endif
   ifneq (CATAMOUNT, $(COMPILER))
+	mkdir -p $(DESTDIR)$(LIBDIR)
 	cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE)
 	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so.$(PAPIVER)
 	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so

@@ -213,27 +213,30 @@ endif
 
 native_install: 
 ifeq ($(ARCH),ppc64)
-	-mkdir -p $(DATADIR)
-	-chmod go+rx $(DATADIR)
-	cp -Rf ./event_data $(DATADIR)
+	-mkdir -p $(DESTDIR)$(DATADIR)
+	-chmod go+rx $(DESTDIR)$(DATADIR)
+	cp -Rf ./event_data $(DESTDIR)$(DATADIR)
 endif
 ifneq (,${PERFCTR_ROOT})
 ifeq (${VERSION},2.4.x)
-	cp -p $(PERFCTR_ROOT)/usr.lib/libperfctr.so $(PREFIX)/lib$(LIB_SUFFIX)
-	cp -p $(PERFCTR_ROOT)/usr.lib/event_codes.h $(PREFIX)/include
-	cp -p $(PERFCTR_ROOT)/usr.lib/libperfctr.h  $(PREFIX)/include
+	mkdir -p $(DESTDIR)$(PREFIX)/lib$(LIB_SUFFIX)
+	cp -p $(PERFCTR_ROOT)/usr.lib/libperfctr.so $(DESTDIR)$(PREFIX)/lib$(LIB_SUFFIX)
+	mkdir -p $(DESTDIR)$(PREFIX)/include
+	cp -p $(PERFCTR_ROOT)/usr.lib/event_codes.h $(DESTDIR)$(PREFIX)/include
+	cp -p $(PERFCTR_ROOT)/usr.lib/libperfctr.h  $(DESTDIR)$(PREFIX)/include
 else
 ifeq (x86_64,${ARCH})
 ifeq (32,${BITS})
-	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(PREFIX) BINDIR=$(BINDIR) LIBDIR=$(LIBDIR) INCLDIR=$(INCDIR) ARCH="i386" install
+	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(DESTDIR)$(PREFIX) DESTDIR=$(DESTDIR) BINDIR=$(DESTDIR)$(BINDIR) LIBDIR=$(DESTDIR)$(LIBDIR) INCLDIR=$(DESTDIR)$(INCDIR) ARCH="i386" install
 else
-	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(PREFIX) BINDIR=$(BINDIR) LIBDIR=$(LIBDIR) INCLDIR=$(INCDIR) install
+	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(DESTDIR)$(PREFIX) DESTDIR=$(DESTDIR) BINDIR=$(DESTDIR)$(BINDIR) LIBDIR=$(DESTDIR)$(LIBDIR) INCLDIR=$(DESTDIR)$(INCDIR) install
 endif
 else
-	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(PREFIX) BINDIR=$(BINDIR) LIBDIR=$(LIBDIR) INCLDIR=$(INCDIR) install
+	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(DESTDIR)$(PREFIX) DESTDIR=$(DESTDIR) BINDIR=$(DESTDIR)$(BINDIR) LIBDIR=$(DESTDIR)$(LIBDIR) INCLDIR=$(DESTDIR)$(INCDIR) install
 endif
 endif
 endif
+	mkdir -p $(DESTDIR)$(LIBDIR)
 	cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE)
 	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so.$(PAPIVER)
 	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so
