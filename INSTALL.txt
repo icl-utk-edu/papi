@@ -269,6 +269,11 @@ PLATFORM NOTES:
 The earprofile test fails under perfmon for Itanium I and II. It has been
 reconfigured to work on the perfmon2 interface.
 
+Linux - MIPS/MIPS64
+****************************************************************************
+
+If the kernel is patched with Perfmon2, you're all set to go. 
+
 Linux - PPC64 (POWER4,5,6 and PowerPC970)
 ****************************************************************************
 Linux/PPC64 requires that the kernel be patched and recompiled with the
@@ -392,6 +397,34 @@ MIPS - IRIX 6.5
 *****************************************************************************
 No additional steps are required to install PAPI on IRIX. Follow the 
 general installation guide, and everything should work.
+
+SiCortex
+*****************************************************************************
+
+Assuming the default 64 bit build:
+
+When compiling on the nodes:
+
+     ./configure \
+     --with-pfm-libdir=/usr/lib64 \
+     --with-pfm-incdir=/usr/include \
+
+When cross-compiling on the front end:
+
+     If /etc/sicortex-release is < V2.3 and r81:
+
+     ./configure \
+     --with-pfm-libdir=/opt/sicortex/rootfs/default/usr/lib64 \
+     --with-pfm-incdir=/opt/sicortex/rootfs/default/usr/include \
+     --with-arch=mips64 --host=x86_64 --build=mips64 \
+     --with-perfmon=2.4 --with-virtualtimer=clock_thread_cputime_id \
+     --with-tls --with-ffsll --with-pfm-events=static \
+     --with-walltimer=gettimeofday 
+
+     If you have a machine that is more recent that V2.3 and R80, then change
+     the last line to:
+
+     --with-walltimer=cycle
 
 Solaris 8 - Ultrasparc
 *****************************************************************************
