@@ -28,12 +28,11 @@
 /* Globals declared extern elsewhere */
 
 hwi_search_t *preset_search_map;
+volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 
 extern int _papi_pfm_setup_presets(char *name, int type);
 extern int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits);
 extern papi_svector_t _papi_pfm_event_vectors[];
-
-volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 
 papi_svector_t _linux_pfm_table[] = {
   {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
@@ -181,6 +180,14 @@ static void dump_smpl(pfm_dfl_smpl_entry_t *entry)
 
 /* Hardware clock functions */
 
+/* All architectures should set HAVE_CYCLES in configure if they have these. Not all do
+   so for now, we have to guard at the end of the statement, instead of the top. When
+   all archs set this, this region will be guarded with:
+   #if defined(HAVE_CYCLE) 
+   which is equivalent to
+   #if !defined(HAVE_GETTIMEOFDAY) && !defined(HAVE_CLOCK_GETTIME_REALTIME)
+*/
+
 #if defined(HAVE_MMTIMER)
 inline_static long_long get_cycles(void)
 {
@@ -226,32 +233,13 @@ inline_static long_long get_cycles (void)
 {
 	return _rtc ( );
 }
-/* #define get_cycles _rtc ?? */
+/* SiCortex only code, which works on V2.3 R81 or above
+   anything below, must use gettimeofday() */
 #elif defined(HAVE_CYCLE) && defined(mips)
-/* This is a special hack for SiCortex 64 bit cycle counter */
-#define likely(x)       __builtin_expect(!!(x), 1)
-#define unlikely(x)     __builtin_expect(!!(x), 0)
-static long long get_cycles(void) 
+inline_static long_long get_cycles(void)
 {
-  static long long old_count = 0;
-  long long count = 0;
-
-  if (unlikely(old_count == 0))
-    {
-      /* Use the locked fast trap to get a good value */
-      __asm__ __volatile__(
-			   ".set  push      \n"
-			   ".set  mips32r2  \n"
-			   "rdhwr $3, $31   \n"
-			   ".set  pop       \n"
-			   "move  %0, $3    \n"
-			   : "=r"(old_count) : : "$2", "$3");
-      old_count = old_count * 2;
-      return old_count;
-    }
-
-  /* The unlocked fast trap which can fail */
- again:
+  long long count;
+  
   __asm__ __volatile__(
 		       ".set  push      \n"
 		       ".set  mips32r2  \n"
@@ -259,11 +247,7 @@ static long long get_cycles(void)
 		       ".set  pop       \n"
 		       "move  %0, $3    \n"
 		       : "=r"(count) : : "$3");
-  count = count * 2;
-  if (unlikely(count <= old_count))
-    goto again;
-  old_count = count;
-  return count;
+  return count*2;
 }
 /* #define get_cycles _rtc ?? */
 #elif defined(__sparc__)
@@ -284,8 +268,8 @@ inline_static long_long get_cycles(void)
  * but instead, rely on the definition of HAVE_CLOCK_GETTIME_REALTIME in
  * _papi_hwd_get_real_usec() for the needed functionality.
 */
-#else
-#error "No get_cycles support for this architecture. Please modify perfmon.c or compile with a differen timer"
+#elif !defined(HAVE_GETTIMEOFDAY) && !defined(HAVE_CLOCK_GETTIME_REALTIME)
+#error "No get_cycles support for this architecture. Please modify perfmon.c or compile with a different timer"
 #endif
 
 /* This routine effectively does argument checking as the real magic will happen

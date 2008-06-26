@@ -1275,6 +1275,7 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --disable-papi-vector	Disable indirect substrate functions
   --enable-static-tests   Enable tests built static
   --disable-shared        Disable the use of shared library
   --disable-static        Disable the use of static library
@@ -2069,8 +2070,19 @@ if test $ac_cv_file__etc_sicortex_release = yes; then
 fi
 
 	  if test "$CPU" = "sicortex"; then
-	     walltimer=cycle
-	     F77=pathf95
+   	     F77=pathf95
+# V2.3 R81 has a good cycle timer, everything else is broken
+             { echo "$as_me:$LINENO: checking for working cycle fast trap" >&5
+echo $ECHO_N "checking for working cycle fast trap... $ECHO_C" >&6; }
+	     hasgoodtimer=`cat /etc/sicortex-release | grep "\-r81 .*V2\.3.*"`
+	     if test "x$hasgoodcycletimer" != "x"; then
+		walltimer=cycle
+		{ echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
+	     else
+		{ echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+	     fi
 	  fi
 fi
 if test "$OS" = "CNL"; then
@@ -5416,6 +5428,19 @@ _ACEOF
 fi
 { echo "$as_me:$LINENO: result: $tls" >&5
 echo "${ECHO_T}$tls" >&6; }
+
+# Check whether --enable-papi-vector was given.
+if test "${enable_papi_vector+set}" = set; then
+  enableval=$enable_papi_vector;
+	if test "$enableval" != "yes" ; then
+
+cat >>confdefs.h <<\_ACEOF
+#define PAPI_NO_VECTOR 1
+_ACEOF
+
+	fi
+fi
+
 
 if test "x$virtualtimer" = "x"; then
 

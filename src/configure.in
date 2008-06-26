@@ -309,8 +309,16 @@ AC_MSG_RESULT($CPU)
 if test "$cross_compiling" = "no" -a "$OS" = "linux" -a "$CPU" = "mips"; then
 	  AC_CHECK_FILE(/etc/sicortex-release,[CPU=sicortex])
 	  if test "$CPU" = "sicortex"; then
-	     walltimer=cycle
-	     F77=pathf95
+   	     F77=pathf95
+# V2.3 R81 has a good cycle timer, everything else is broken
+             AC_MSG_CHECKING(for working cycle fast trap)
+	     hasgoodtimer=`cat /etc/sicortex-release | grep "\-r81 .*V2\.3.*"`
+	     if test "x$hasgoodcycletimer" != "x"; then	     
+		walltimer=cycle
+		AC_MSG_RESULT(yes)
+	     else
+		AC_MSG_RESULT(no)
+	     fi
 	  fi
 fi	    
 if test "$OS" = "CNL"; then
@@ -632,6 +640,13 @@ elif test "x$tls" != "x"; then
    AC_DEFINE_UNQUOTED(HAVE_THREAD_LOCAL_STORAGE,$tls,[Keyword for per-thread variables])
 fi
 AC_MSG_RESULT($tls)
+
+AC_ARG_ENABLE(papi-vector,
+	[  --disable-papi-vector	Disable indirect substrate functions ],
+	[ 
+	if test "$enableval" != "yes" ; then
+	AC_DEFINE(PAPI_NO_VECTOR, 1, [Do not use indirect substrate functions])
+	fi ])
 
 if test "x$virtualtimer" = "x"; then
 AC_ARG_WITH(virtualtimer,
