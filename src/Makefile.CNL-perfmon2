@@ -12,6 +12,7 @@ TESTS		= ctests
 else
 
 COMPILER	= CRAYXT
+F77		= gfortran
 CFLAGS		+= -D __crayxt
 
 endif
