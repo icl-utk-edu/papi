@@ -1094,8 +1094,12 @@ if test $perfmon != 0; then
    elif test "$pfm_prefix" != ""; then
       LIBS="-L$pfm_prefix/lib -lpfm"
       CPPFLAGS="-I$pfm_prefix/include"
-      pfm_libdir="$pfm_prefix/lib"
-      pfm_incdir="$pfm_prefix/include"
+      if test "$pfm_libdir" = ""; then
+         pfm_libdir="$pfm_prefix/lib"
+      fi
+      if test "$pfm_prefix" = ""; then
+         pfm_incdir="$pfm_prefix/include"
+      fi
       dotest=1
    else
       if test "$pfm_libdir" != ""; then
