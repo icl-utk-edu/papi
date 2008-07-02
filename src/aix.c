@@ -50,6 +50,7 @@ int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len
 {
    if ((EventCode & PAPI_NATIVE_AND_MASK) >= _papi_hwi_system_info.sub_info.num_native_events)
        return (PAPI_ENOEVNT);
+printf("EventCode=%p EventCode & PAPI_NATIVE_AND_MASK=%d\n",  EventCode, EventCode & PAPI_NATIVE_AND_MASK);
    strncpy(ntv_descr, native_table[native_name_map[EventCode & PAPI_NATIVE_AND_MASK].index].description, len);
    if (strlen(native_table[native_name_map[EventCode & PAPI_NATIVE_AND_MASK].index].description) > len-1) return (PAPI_EBUF);
    return (PAPI_OK);
@@ -444,11 +445,16 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    if ((retval = ppc64_setup_vector_table(vtable))!= 0 )  return retval;
 #endif
 
+#if !defined(_POWER4) && !defined(_POWER5)
    if (!_papi_hwd_init_preset_search_map(&pminfo)){ 
       return (PAPI_ESBSTR);}
 
    retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
-
+#elif defined(_POWER4)
+   _papi_pmapi_setup_presets("POWER4", 0);
+#elif defined(_POWER5)
+   _papi_pmapi_setup_presets("POWER5", 0);
+#endif
    _papi_lock_init();
 
    return (retval);
