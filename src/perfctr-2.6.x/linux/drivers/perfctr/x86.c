@@ -405,12 +405,12 @@ static void c6_write_control(const struct perfctr_cpu_state *state)
 
 /*
  * Intel P6 family (Pentium Pro, Pentium II, Pentium III, Pentium M,
- * Intel Core, and Intel Core 2, including Xeon and Celeron versions.
+ * Intel Core, Intel Core 2, and Atom, including Xeon and Celeron versions.
  * - One TSC and two 40-bit PMCs.
  * - One 32-bit EVNTSEL MSR for each PMC.
  * - EVNTSEL0 contains a global enable/disable bit.
  *   That bit is reserved in EVNTSEL1.
- *   On Core 2 each EVNTSEL has its own enable/disable bit.
+ *   On Core 2 and Atom each EVNTSEL has its own enable/disable bit.
  * - Each EVNTSEL contains a CPL field.
  * - Overflow interrupts are possible, but requires that the
  *   local APIC is available. Some Mobile P6s have no local APIC.
@@ -419,21 +419,26 @@ static void c6_write_control(const struct perfctr_cpu_state *state)
  * - Most events are symmetric, but a few are not.
  * - Core 2 adds three fixed-function counters. A single shared control
  *   register has the control bits (CPL:2 + PMI:1) for these counters.
+ * - Initial Atoms appear to have one fixed-function counter.
  */
 
 static int is_fam10h;
 static int k8_is_multicore;	/* affects northbridge events */
-static int p6_is_core2;		/* affects P6_EVNTSEL_ENABLE usage */
+static int p6_has_separate_enables;	/* affects EVNTSEL.ENable rules */
+static unsigned int p6_nr_ffcs;	/* number of fixed-function counters */
 
 /* shared with K7 */
 static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, int is_global)
 {
 	unsigned int evntsel, i, nractrs, nrctrs, pmc_mask, pmc;
 	unsigned int core2_fixed_ctr_ctrl;
+	unsigned int max_nrctrs;
+
+	max_nrctrs = is_k7 ? 4 : 2 + p6_nr_ffcs;
 
 	nractrs = state->control.nractrs;
 	nrctrs = nractrs + state->control.nrictrs;
-	if (nrctrs < nractrs || nrctrs > (is_k7 ? 4 : p6_is_core2 ? 5 : 2))
+	if (nrctrs < nractrs || nrctrs > max_nrctrs)
 		return -EINVAL;
 
 	pmc_mask = 0;
@@ -445,9 +450,13 @@ static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, int
 		 * to check that pmc_map[] is well-defined on Core 2,
 		 * we map FIXED_CTR 0x40000000+N to PMC 2+N
 		 */
-		if (!is_k7 && p6_is_core2 && (pmc & CORE2_PMC_FIXED_FLAG))
-			pmc = 2 + (pmc & ~CORE2_PMC_FIXED_FLAG);
-		if (pmc >= (is_k7 ? 4 : p6_is_core2 ? 5 : 2) || (pmc_mask & (1<<pmc)))
+		if (!is_k7 && p6_nr_ffcs != 0) {
+			if (pmc & CORE2_PMC_FIXED_FLAG)
+				pmc = 2 + (pmc & ~CORE2_PMC_FIXED_FLAG);
+			else if (pmc >= 2)
+				return -EINVAL;
+		}
+		if (pmc >= max_nrctrs || (pmc_mask & (1<<pmc)))
 			return -EINVAL;
 		pmc_mask |= (1<<pmc);
 		/*
@@ -470,7 +479,7 @@ static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, int
 		if (evntsel & P6_EVNTSEL_RESERVED)
 			return -EPERM;
 		/* check ENable bit */
-		if (is_k7 || p6_is_core2) {
+		if (is_k7 || p6_has_separate_enables) {
 			/* ENable bit must be set in each evntsel */
 			if (!(evntsel & P6_EVNTSEL_ENABLE))
 				return -EINVAL;
@@ -495,7 +504,7 @@ static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, int
 			if (i >= nractrs)
 				return -EINVAL;
 		}
-		if (!is_k7 && p6_is_core2) {
+		if (!is_k7 && p6_nr_ffcs != 0) {
 			pmc = state->control.pmc_map[i];
 			if (pmc & CORE2_PMC_FIXED_FLAG) {
 				unsigned int ctl = 0;
@@ -678,8 +687,8 @@ static const struct perfctr_pmu_msrs p6_pmu_msrs = {
 	.evntsels = p6_evntsels,
 };
 
-static const struct perfctr_msr_range core2_extras[] = {
-	{ MSR_CORE_PERF_FIXED_CTR0, 3 },
+static struct perfctr_msr_range core2_extras[] = {
+	{ MSR_CORE_PERF_FIXED_CTR0, 3 }, /* on Atom we'll update this count */
 	{ MSR_CORE_PERF_FIXED_CTR_CTRL, 1 },
 	{ 0, 0 },
 };
@@ -1587,65 +1596,159 @@ static int __init intel_p6_init(void)
 {
 	static char p6_name[] __initdata = "Intel P6";
 	static char core2_name[] __initdata = "Intel Core 2";
+	static char atom_name[] __initdata = "Intel Atom";
 	unsigned int misc_enable;
 
-	/* Detect things that matter to the driver. */
-	if (current_cpu_data.x86_model == 9 ||		/* Pentium M */
-	    current_cpu_data.x86_model == 13 || 	/* Pentium M */
-	    current_cpu_data.x86_model == 14 || 	/* Intel Core */
-	    current_cpu_data.x86_model == 15 ||		/* Intel Core 2 */
-	    current_cpu_data.x86_model == 23) {		/* Intel Core 2 */
+	/*
+	 * Post P4 family 6 models (Pentium M, Core, Core 2, Atom)
+	 * have MISC_ENABLE.PERF_AVAIL like the P4.
+	 */
+	switch (current_cpu_data.x86_model) {
+	case 9:		/* Pentium M */
+	case 13:	/* Pentium M */
+	case 14:	/* Core */
+	case 15:	/* Core 2 */
+	case 22:	/* Core 2 based Celeron model 16h */
+	case 23:	/* Core 2 */
+	case 28:	/* Atom */
 		rdmsr_low(MSR_IA32_MISC_ENABLE, misc_enable);
 		if (!(misc_enable & MSR_IA32_MISC_ENABLE_PERF_AVAIL))
 			return -ENODEV;
 	}
-	if (current_cpu_data.x86_model == 15 ||
-	    current_cpu_data.x86_model == 23) {		/* Intel Core 2 */
-		p6_is_core2 = 1;
-	} else if (current_cpu_data.x86_model < 3) {	/* Pentium Pro */
-		/* Avoid Pentium Pro Erratum 26. */
+
+	/*
+	 * Core 2 made each EVNTSEL have its own ENable bit,
+	 * and added three fixed-function counters.
+	 * On Atom cpuid tells us the number of fixed-function counters.
+	 */
+	switch (current_cpu_data.x86_model) {
+	case 15:	/* Core 2 */
+	case 22:	/* Core 2 based Celeron model 16h */
+	case 23:	/* Core 2 */
+		perfctr_cpu_name = core2_name;
+		p6_has_separate_enables = 1;
+		p6_nr_ffcs = 3;
+		break;
+	case 28: {	/* Atom */
+		unsigned int maxlev, eax, ebx, dummy, edx;
+
+		perfctr_cpu_name = atom_name;
+		p6_has_separate_enables = 1;
+
+		maxlev = cpuid_eax(0);
+		if (maxlev < 0xA) {
+			printk(KERN_WARNING "%s: cpuid[0].eax == %u, unable to query 0xA leaf\n",
+			       __FUNCTION__, maxlev);
+			return -EINVAL;
+		}
+		cpuid(0xA, &eax, &ebx, &dummy, &edx);
+		/* ensure we have at least APM V2 with 2 40-bit general-purpose counters */
+		if ((eax & 0xff) < 2 ||
+		    ((eax >> 8) & 0xff) != 2 ||
+		    ((eax >> 16) & 0xff) < 40) {
+			printk(KERN_WARNING "%s: cpuid[0xA].eax == 0x%08x appears bogus\n",
+			       __FUNCTION__, eax);
+			return -EINVAL;
+		}
+		/* extract the number of fixed-function counters: Core2 has 3,
+		   and initial Atoms appear to have 1; play it safe and reject
+		   excessive values */
+		p6_nr_ffcs = edx & 0x1f;
+		if (p6_nr_ffcs > 3) {
+			printk(KERN_WARNING "%s: cpuid[0xA] == { edx == 0x%08x, "
+			       "eax == 0x%08x } appears bogus\n",
+			       __FUNCTION__, edx, eax);
+			p6_nr_ffcs = 0;
+		}
+		break;
+	}
+	default:
+		perfctr_cpu_name = p6_name;
+		break;
+	}
+
+	/*
+	 * Avoid Pentium Pro Erratum 26.
+	 */
+	if (current_cpu_data.x86_model < 3) {	/* Pentium Pro */
 		if (current_cpu_data.x86_mask < 9)
 			perfctr_info.cpu_features &= ~PERFCTR_FEATURE_RDPMC;
 	}
-	/* Detect and set up legacy cpu_type for user-space. */
-	if (current_cpu_data.x86_model == 15 ||
-	    current_cpu_data.x86_model == 23) {		/* Intel Core 2 */
-		perfctr_info.cpu_type = PERFCTR_X86_INTEL_CORE2;
-	} else if (current_cpu_data.x86_model == 14) {	/* Intel Core */
-		/* XXX: what about erratum AE19? */
-		perfctr_info.cpu_type = PERFCTR_X86_INTEL_CORE;
-	} else if (current_cpu_data.x86_model == 9 ||	/* Pentium M */
-		   current_cpu_data.x86_model == 13) {	/* Pentium M */
+
+	/*
+	 * Detect and set up legacy cpu_type for user-space.
+	 */
+	switch (current_cpu_data.x86_model) {
+	default:
+		printk(KERN_WARNING __FILE__ "%s: unknown model %u processor, "
+		       "please report this to perfctr-devel or mikpe@it.uu.se\n",
+		       __FUNCTION__, current_cpu_data.x86_model);
+		/*FALLTHROUGH*/
+	case 0:		/* Pentium Pro A-step */
+	case 1:		/* Pentium Pro */
+	case 4:		/* Pentium Pro based P55CT overdrive for P54 */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_P6;
+		break;
+	case 3:		/* Pentium II or PII-based overdrive for PPro */
+	case 5:		/* Pentium II */
+	case 6:		/* Pentium II */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_PII;
+		break;
+	case 7:		/* Pentium III */
+	case 8:		/* Pentium III */
+	case 10:	/* Pentium III Xeon model A */
+	case 11:	/* Pentium III */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_PIII;
+		break;
+	case 9:		/* Pentium M */
+	case 13:	/* Pentium M */
 		/* Erratum Y3 probably does not apply since we
 		   read only the low 32 bits. */
 		perfctr_info.cpu_type = PERFCTR_X86_INTEL_PENTM;
-	} else if (current_cpu_data.x86_model >= 7) {	/* PIII */
-		perfctr_info.cpu_type = PERFCTR_X86_INTEL_PIII;
-	} else if (current_cpu_data.x86_model >= 3) {	/* PII or Celeron */
-		perfctr_info.cpu_type = PERFCTR_X86_INTEL_PII;
-	} else {					/* Pentium Pro */
-		perfctr_info.cpu_type = PERFCTR_X86_INTEL_P6;
+		break;
+	case 14:	/* Core */
+		/* XXX: what about erratum AE19? */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_CORE;
+		break;
+	case 15:	/* Core 2 */
+	case 22:	/* Core 2 based Celeron model 16h */
+	case 23:	/* Core 2 */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_CORE2;
+		break;
+	case 28:	/* Atom */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_ATOM;
+		break;
 	}
-	perfctr_set_tests_type(p6_is_core2 ? PTT_CORE2 : PTT_P6);
-	perfctr_cpu_name = p6_is_core2 ? core2_name : p6_name;
+
+	perfctr_set_tests_type(p6_nr_ffcs != 0 ? PTT_CORE2 : PTT_P6);
 	read_counters = rdpmc_read_counters;
 	write_control = p6_write_control;
 	check_control = p6_check_control;
-	pmu_msrs = p6_is_core2 ? &core2_pmu_msrs : &p6_pmu_msrs;
+	core2_extras[0].nr_msrs = p6_nr_ffcs;
+	pmu_msrs = p6_nr_ffcs != 0 ? &core2_pmu_msrs : &p6_pmu_msrs;
+
 #ifdef CONFIG_X86_LOCAL_APIC
 	if (cpu_has_apic) {
 		perfctr_info.cpu_features |= PERFCTR_FEATURE_PCINT;
 		cpu_isuspend = p6_isuspend;
 		cpu_iresume = p6_iresume;
-		/* P-M apparently inherited P4's LVTPC auto-masking :-( */
-		if (current_cpu_data.x86_model == 9 ||
-		    current_cpu_data.x86_model == 13 ||
-		    current_cpu_data.x86_model == 14 ||
-		    current_cpu_data.x86_model == 15 ||
-		    current_cpu_data.x86_model == 23)
+		/*
+		 * Post P4 family 6 models (Pentium M, Core, Core 2, Atom)
+		 * have LVTPC auto-masking like the P4.
+		 */
+		switch (current_cpu_data.x86_model) {
+		case 9:		/* Pentium M */
+		case 13:	/* Pentium M */
+		case 14:	/* Core */
+		case 15:	/* Core 2 */
+		case 22:	/* Core 2 based Celeron model 16h */
+		case 23:	/* Core 2 */
+		case 28:	/* Atom */
 			lvtpc_reinit_needed = 1;
+		}
 	}
 #endif
+
 	return 0;
 }
 

@@ -3,6 +3,38 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.35, 2008-06-30
+- x86: Preliminary Intel Atom support:
+  * add Atom CPU type, it differs from all previous models
+  * Atom is poorly documented, so query cpuid leaf 0xA for
+    its architectural PMU capabilities; initial Atoms appear
+    to have APM V3, 2 40-bit general-purpose counters, 7
+    architectural events, and 1 40-bit fixed-function counter
+- x86: Replace the p6_is_core2 flag with separate variables
+  indicating (a) having per-evntsel enable bits, and (b) the
+  number of fixed-function counters available.
+- x86: intel_p6_init(): recognise Celeron model 16h and
+  treat it as a Core 2.
+- x86: Clean up intel_p6_init(): replace complex if conditions
+  with explicit switches on x86_model, explicitly enumerate
+  accepted model numbers.
+- x86: Correct p6_like_check_control() to reject regular
+  pmcs >= 2 on Core2 before mapping fixed-function counters
+  0x40000000+N to pmcs 2+N for duplicate counter checking.
+  The failure to reject those invalid pmcs made it possible
+  for users to cause the driver to perform invalid wrmsr and
+  rdpmc accesses with kernel hangs as the result.
+
+Version 2.6.35-pre1, 2008-06-23
+- Add optional close-on-exec feature for per-process perfctrs:
+  * reassign _reserved1 as flags in vperfctr_control
+  * add VPERFCTR_CONTROL_CLOEXEC flag
+  * add perfctr_flush_thread() hook to exec() path
+  * map perfctr_flush_thread() to __vperfctr_flush() via
+    inline functions and virtual_stub.c
+  * in __virtual_flush(), if CLOEXEC is set then unlink the state
+  * bump API version to 5.2
+
 Version 2.6.34, 2008-05-29
 - Reorder kernel version and HAVE_EXPORT___put_task_struct
   tests in compat.h to handle the SuSE 2.6.16.42-0.12 kernel

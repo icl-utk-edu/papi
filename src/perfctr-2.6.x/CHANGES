@@ -6,6 +6,42 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.35, 2008-06-30
+- Preliminary support for Intel Atom processors added.
+  These processors are very poorly documented, but they are
+  known to be family 6 model 28, and to support Intel's
+  "architectural performance monitor". Current models seem
+  to have two general-purpose counters, one fixed-function
+  counter, and to support the seven architectural events.
+  Thanks to Steve Blackburn for running tests on his Atom.
+- Updated x86 driver to recognise the Celeron model 16h
+  as a member of the Core2 family.
+- Corrected an error in the x86 driver's control validation
+  procedure. The error was introduced in perfctr-2.6.29 when
+  support for the Core2's fixed-function counters was added.
+  The error made the driver accept some invalid controls
+  (on Core2 processors only), which could result in kernel
+  hangs due to exceptions from invalid register accesses.
+  Thanks to Anton Ertl for reporting the initial problem.
+- Updated README to add Atom and AMD Family 10h to list of
+  supported processors.
+- Updated kernel support: 2.6.26-rc8, 2.6.18-92.1.6.el5 (RHEL5),
+  2.6.18-92.1.1.el5 (RHEL5), 2.6.9-67.0.20.EL (RHEL4).
+
+Version 2.6.35-pre1, 2008-06-23
+- Added optional close-on-exec feature for per-process perfctrs.
+  To enable it, set control.flags |= VPERFCTR_CONTROL_CLOEXEC
+  in a struct vperfctr_control object before passing it to
+  vperfctr_control(). If the flag is set when a thread executes
+  an execve() system call, then its perfctr state is detached
+  from the thread as if a call to vperfctr_unlink() had occurred.
+  If the flag is clear then the state survives execve() just like
+  it always did before.
+- The vperfctr_open() library function now sets close-on-exec
+  on the file descriptor embedded in the returned vperfctr handle.
+- Removed library support for the ancient /proc/<pid>/perfctr
+  kernel interface which hasn't worked since perfctr-2.6.0.
+
 Version 2.6.34, 2008-05-29
 - Updated kernel support: 2.6.26-rc4, 2.6.18-92.el5 (RHEL5U2),
   2.6.18-53.1.21.el5 (RHEL5), 2.6.16.42-0.12 (SuSE).

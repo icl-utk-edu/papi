@@ -20,30 +20,10 @@
 
 /*
  * Code to open (with or without creation) per-process perfctrs,
- * for both the current open("/proc/pid/perfctr", mode) and the
- * future ioctl(dev_perfctr_fd, VPERFCTR_{CREAT,OPEN}, pid) APIs.
+ * using the ioctl(dev_perfctr_fd, VPERFCTR_{CREAT,OPEN}, pid) API.
  */
 
-static int _vperfctr_open_pid_old(int pid, int try_creat)
-{
-    const char *filename;
-    char namebuf[64];
-    int fd;
-
-    if (!pid)
-	filename = "/proc/self/perfctr";
-    else {
-	snprintf(namebuf, sizeof namebuf, "/proc/%d/perfctr", pid);
-	filename = namebuf;
-    }
-    if (try_creat)
-	fd = open(filename, O_RDONLY|O_CREAT);
-    else
-	fd = open(filename, O_RDONLY);
-    return fd;
-}
-
-static int _vperfctr_open_pid_new(int pid, int try_creat)
+static int _vperfctr_open_pid(int pid, int try_creat)
 {
     int dev_perfctr_fd, fd;
 
@@ -55,6 +35,8 @@ static int _vperfctr_open_pid_new(int pid, int try_creat)
     else
 	fd = ioctl(dev_perfctr_fd, VPERFCTR_OPEN, pid);
     close(dev_perfctr_fd);
+    if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0)
+	perror("fcntl");
     return fd;
 }
 
@@ -64,12 +46,7 @@ static int _vperfctr_open_pid_new(int pid, int try_creat)
 
 int _vperfctr_open(int creat)
 {
-    int fd;
-
-    fd = _vperfctr_open_pid_new(0, creat);
-    if (fd < 0)
-	fd = _vperfctr_open_pid_old(0, creat);
-    return fd;
+    return _vperfctr_open_pid(0, creat);
 }
 
 int _vperfctr_control(int fd, const struct vperfctr_control *control)
@@ -111,13 +88,9 @@ static int vperfctr_open_pid(int pid, struct vperfctr *perfctr, unsigned int mod
 	errno = EINVAL;
 	return -1;
     }
-    fd = _vperfctr_open_pid_new(pid, creat);
-    if (fd < 0) {
-	if (errno != EEXIST)
-	    fd = _vperfctr_open_pid_old(pid, creat);
-	if (fd < 0)
-	    goto out_perfctr;
-    }
+    fd = _vperfctr_open_pid(pid, creat);
+    if (fd < 0)
+	goto out_perfctr;
     perfctr->fd = fd;
     if (perfctr_abi_check_fd(perfctr->fd) < 0)
 	goto out_fd;

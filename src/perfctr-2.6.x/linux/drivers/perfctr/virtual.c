@@ -1,7 +1,7 @@
 /* $Id$
  * Virtual per-process performance counters.
  *
- * Copyright (C) 1999-2007  Mikael Pettersson
+ * Copyright (C) 1999-2008  Mikael Pettersson
  */
 #include <linux/version.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
@@ -52,6 +52,7 @@ struct vperfctr {
 #ifdef CONFIG_PERFCTR_INTERRUPT_SUPPORT
 	unsigned int iresume_cstatus;
 #endif
+	unsigned int flags;
 };
 #define IS_RUNNING(perfctr)	perfctr_cstatus_enabled((perfctr)->cpu_state.cstatus)
 
@@ -425,6 +426,16 @@ void __vperfctr_exit(struct vperfctr *perfctr)
 	vperfctr_unlink(current, perfctr);
 }
 
+/* sys_execve() -> .. -> flush_old_exec() -> .. -> __vperfctr_flush().
+ * Unlink the thread's perfctr state, if the CLOEXEC control flag is set.
+ * PREEMPT note: flush_old_exec() does not run with preemption disabled.
+ */
+void __vperfctr_flush(struct vperfctr *perfctr)
+{
+	if (perfctr->flags & VPERFCTR_CONTROL_CLOEXEC)
+		__vperfctr_exit(perfctr);
+}
+
 /* schedule() --> switch_to() --> .. --> __vperfctr_suspend().
  * If the counters are running, suspend them.
  * PREEMPT note: switch_to() runs with preemption disabled.
@@ -559,6 +570,8 @@ static int sys_vperfctr_control(struct vperfctr *perfctr,
 		if (!(control.preserve & (1<<i)))
 			perfctr->cpu_state.pmc[i].sum = 0;
 
+	perfctr->flags = control.flags;
+
 	if (tsk == current)
 		vperfctr_resume(perfctr);
 
@@ -647,6 +660,7 @@ static int sys_vperfctr_read_control(struct vperfctr *perfctr,
 		preempt_disable();
 	control.si_signo = perfctr->si_signo;
 	control.cpu_control = perfctr->cpu_state.control;
+	control.flags = perfctr->flags;
 	if (tsk == current)
 		preempt_enable();
 	control.preserve = 0;
@@ -1142,6 +1156,7 @@ static void vperfctr_stub_init(void)
 	off = vperfctr_stub;
 	vperfctr_stub.owner = THIS_MODULE;
 	vperfctr_stub.exit = __vperfctr_exit;
+	vperfctr_stub.flush = __vperfctr_flush;
 	vperfctr_stub.suspend = __vperfctr_suspend;
 	vperfctr_stub.resume = __vperfctr_resume;
 	vperfctr_stub.sample = __vperfctr_sample;

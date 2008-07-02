@@ -69,6 +69,9 @@ void do_arch_usage(void)
     fprintf(stderr, "\t(The INT field (bit 20) is also honoured, but perfex cannot set\n");
     fprintf(stderr, "\tup interrupt-mode counting, so it should not be specified.)\n");
     fprintf(stderr, "\n");
+    fprintf(stderr, "\tAtom is similar to Core2, but appears to only support a single\n");
+    fprintf(stderr, "\t(the first) fixed-function counter.\n");
+    fprintf(stderr, "\n");
     fprintf(stderr, "\tOn AMD Family 10h, evntsel is written to the low 32 bits of the\n");
     fprintf(stderr, "\tcounter's EVNTSEL register, and evntsel2 is written to the high\n");
     fprintf(stderr, "\t32 bits of that register. Only a few events require evntsel2.\n");

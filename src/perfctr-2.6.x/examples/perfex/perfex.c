@@ -37,7 +37,7 @@
  *		event specifiers should use the "@pmc" notation.
  *		Explicit counter assignment via "@pmc" is required on
  *		Pentium 4 and VIA C3 processors. It is also required for the
- *		fixed-function counters on Core 2 processors.
+ *		fixed-function counters on Core 2 and Atom processors.
  *
  *		The counts, together with an event description are written
  *		to the result file (default is stderr).
@@ -487,6 +487,7 @@ int main(int argc, char **argv)
     if (get_info(&info))
 	return 1;
 
+    /* this deliberately also clears CLOEXEC in control.flags */
     memset(&control, 0, sizeof control);
     if (info.cpu_features & PERFCTR_FEATURE_RDTSC)
 	control.cpu_control.tsc_on = 1;

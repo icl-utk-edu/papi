@@ -52,6 +52,12 @@ void setup_control(const struct perfctr_info *info,
 	/* event 0xC1 umask 0xFE (X87_OPS_RETIRED_ANY), any CPL, Enable */
 	evntsel0 = 0xC1 | (0xFE << 8) | (3 << 16) | (1 << 22);
 	break;
+      case PERFCTR_X86_INTEL_ATOM:
+	/* Atom's architectural events don't include FLOPS */
+	counting_mips = 1;
+	/* event 0xC0 (RETIRED_INSTRUCTIONS), any CPL, Enable */
+	evntsel0 = 0xC0 | (3 << 16) | (1 << 22);
+	break;
 #if !defined(__x86_64__)
       case PERFCTR_X86_AMD_K7:
 	/* K7 apparently can't count FLOPS. */

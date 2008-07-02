@@ -61,6 +61,13 @@ void do_setup(const struct perfctr_info *info,
 	/* BR_INST_RETIRED_TAKEN, USR, Enable, INT */
 	evntsel1 = 0xC4 | (0x0C << 8) | (1 << 16) | (1 << 22) | (1 << 20);
 	break;
+      case PERFCTR_X86_INTEL_ATOM:
+	/* Atom's architectural events don't include FLOPS */
+	/* INST_RETIRED_ANY, USR, Enable, INT */
+	evntsel0 = 0xC0 | (1 << 16) | (1 << 22) | (1 << 20);
+	/* BR_INST_RETIRED_ANY, USR, Enable, INT */
+	evntsel1 = 0xC4 | (1 << 16) | (1 << 22) | (1 << 20);
+	break;
 #if !defined(__x86_64__)
       case PERFCTR_X86_AMD_K7:
 	/* K7 can't count FLOPS. Count RETIRED_INSTRUCTIONS instead. */

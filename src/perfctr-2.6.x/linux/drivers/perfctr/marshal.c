@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * Structure marshalling support.
  *
- * Copyright (C) 2003-2007  Mikael Pettersson
+ * Copyright (C) 2003-2008  Mikael Pettersson
  */
 #ifdef __KERNEL__
 #include <linux/version.h>
@@ -339,7 +339,7 @@ const struct perfctr_struct_desc perfctr_cpu_control_sdesc = {
 
 #define VPERFCTR_TAG_CONTROL_SIGNO		9
 #define VPERFCTR_TAG_CONTROL_PRESERVE		10
-#define VPERFCTR_TAG_CONTROL_RSVD1		11
+#define VPERFCTR_TAG_CONTROL_FLAGS		11
 #define VPERFCTR_TAG_CONTROL_RSVD2		12
 #define VPERFCTR_TAG_CONTROL_RSVD3		13
 #define VPERFCTR_TAG_CONTROL_RSVD4		14
@@ -405,8 +405,8 @@ static const struct perfctr_field_desc vperfctr_control_fields[] = {
 	{ .offset = offsetof(struct vperfctr_control, preserve),
 	  .tag = VPERFCTR_TAG_CONTROL_PRESERVE,
 	  .type = PERFCTR_TYPE_BYTES4 },
-	{ .offset = offsetof(struct vperfctr_control, _reserved1),
-	  .tag = VPERFCTR_TAG_CONTROL_RSVD1,
+	{ .offset = offsetof(struct vperfctr_control, flags),
+	  .tag = VPERFCTR_TAG_CONTROL_FLAGS,
 	  .type = PERFCTR_TYPE_BYTES4 },
 	{ .offset = offsetof(struct vperfctr_control, _reserved2),
 	  .tag = VPERFCTR_TAG_CONTROL_RSVD2,

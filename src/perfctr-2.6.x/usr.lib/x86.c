@@ -6,6 +6,47 @@
 #include <stdio.h>
 #include "libperfctr.h"
 
+struct cpuid {	/* The field order must not be changed. */
+    unsigned int eax;
+    unsigned int ebx;	/* When eax was 1, &ebx should be the start */
+    unsigned int edx;	/* of the 12-byte vendor identification string. */
+    unsigned int ecx;
+};
+
+static void get_cpuid(unsigned int op, struct cpuid *cpuid)
+{
+    unsigned int save_ebx;
+    unsigned int tmp_ebx;
+
+    __asm__(
+	"movl %%ebx, %0\n\t"
+	"cpuid\n\t"
+	"movl %%ebx, %1\n\t"
+	"movl %0, %%ebx"
+	: "=m"(save_ebx), "=m"(tmp_ebx), "=a"(cpuid->eax), "=d"(cpuid->edx), "=c"(cpuid->ecx)
+	: "a"(op));
+    cpuid->ebx = tmp_ebx;
+}
+
+static unsigned int atom_nrctrs(void)
+{
+    struct cpuid cpuid;
+
+    get_cpuid(0, &cpuid);
+    if (cpuid.eax < 0xA) {
+	printf("%s: cpuid[0].eax == %u, unable to query 0xA leaf\n",
+	       __FUNCTION__, cpuid.eax);
+	return 0;
+    }
+    get_cpuid(0xA, &cpuid);
+    if ((cpuid.eax & 0xff) < 2) {
+	printf("%s: cpuid[0xA].eax == 0x%08x appears bogus\n",
+	       __FUNCTION__, cpuid.eax);
+	return 0;
+    }
+    return ((cpuid.eax >> 8) & 0xff) + (cpuid.edx & 0x1f);
+}
+
 unsigned int perfctr_info_nrctrs(const struct perfctr_info *info)
 {
     switch (info->cpu_type) {
@@ -37,6 +78,8 @@ unsigned int perfctr_info_nrctrs(const struct perfctr_info *info)
 	return 4;
       case PERFCTR_X86_INTEL_CORE2:
 	return 5;
+      case PERFCTR_X86_INTEL_ATOM:
+	return atom_nrctrs();
       case PERFCTR_X86_GENERIC:
       default:
 	return 0;
@@ -88,6 +131,8 @@ const char *perfctr_info_cpu_name(const struct perfctr_info *info)
 	return "AMD K8 Revision C";
       case PERFCTR_X86_AMD_FAM10H:
 	return "AMD Family 10h";
+      case PERFCTR_X86_INTEL_ATOM:
+	return "Intel Atom";
       default:
         return "?";
     }
