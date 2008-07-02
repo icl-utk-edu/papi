@@ -2102,7 +2102,7 @@ int _papi_hwd_update_shlib_info(void)
       /* When we get here, we have counted the number of entries in the map
          for us to allocate */
 
-      tmp = (PAPI_address_map_t *) papi_calloc(t_index-1, sizeof(PAPI_address_map_t));
+      tmp = (PAPI_address_map_t *) papi_calloc(t_index, sizeof(PAPI_address_map_t));
       if (tmp == NULL)
         { PAPIERROR("Error allocating shared library address map"); return(PAPI_ENOMEM); }
       t_index = 0;
