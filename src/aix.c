@@ -292,11 +292,12 @@ static int get_system_info(void)
 #ifdef _AIXVERSION_510
 #ifdef PM_INITIALIZE
     SUBDBG("Calling AIX 5 version of pm_initialize...\n");
-#ifdef _POWER4
+/*#ifdef _POWER4
     retval = pm_initialize(PM_INIT_FLAGS, &pminfo, &pmgroups,PM_CURRENT);
 #elif defined(_POWER5)
     retval = pm_initialize(PM_INIT_FLAGS, &pminfo, &pmgroups, PM_POWER5);
-#endif
+#endif*/
+    retval = pm_initialize(PM_INIT_FLAGS, &pminfo, &pmgroups, PM_CURRENT);
 #else
     SUBDBG("Calling AIX 5 version of pm_init...\n");
     retval = pm_init(PM_INIT_FLAGS, &pminfo, &pmgroups);
@@ -411,7 +412,7 @@ int _papi_hwd_shutdown(hwd_context_t * ctx)
 
 int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 {
-   int retval=PAPI_OK;
+   int retval=PAPI_OK, procidx;
 
 
   /* Setup the vector entries that the OS knows about */
@@ -445,7 +446,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    if ((retval = ppc64_setup_vector_table(vtable))!= 0 )  return retval;
 #endif
 
-#if !defined(_POWER4) && !defined(_POWER5)
+/*#if !defined(_POWER4) && !defined(_POWER5)
    if (!_papi_hwd_init_preset_search_map(&pminfo)){ 
       return (PAPI_ESBSTR);}
 
@@ -454,7 +455,31 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    _papi_pmapi_setup_presets("POWER4", 0);
 #elif defined(_POWER5)
    _papi_pmapi_setup_presets("POWER5", 0);
+#endif*/
+#if defined(POWER3)
+   _papi_hwi_system_info.sub_info.num_native_events = power3_setup_native_table(vtable);
+   if ((retval = power3_setup_vector_table(vtable))!= 0 )  return retval;
+#else
+   procidx = pm_get_procindex();
+   switch(procidx){
+     case PM_POWER5:
+       _papi_pmapi_setup_presets("POWER5", 0);
+       break;
+     case PM_POWER4:
+       _papi_pmapi_setup_presets("POWER4", 0);
+       break;
+     case PM_POWER5_II:
+       _papi_pmapi_setup_presets("POWER5+", 0);
+       break;
+     case PM_POWER6:
+       _papi_pmapi_setup_presets("POWER6", 0);
+       break;
+     default:
+       fprintf(stderr,"%s is not supported!\n", pminfo.proc_name);
+       return(PAPI_ESBSTR);
+   }
 #endif
+
    _papi_lock_init();
 
    return (retval);
