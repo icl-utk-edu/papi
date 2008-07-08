@@ -142,6 +142,13 @@ ifeq ($(ARCH),cell)
 CONFIG_PFMLIB_CELL=y
 endif
 
+# handle special cases for 64-bit builds
+ifeq ($(BITMODE),64)
+ifeq ($(ARCH),powerpc)
+CONFIG_PFMLIB_ARCH_POWERPC64=y
+endif
+endif
+
 #
 # you shouldn't have to touch anything beyond this point
 #
@@ -185,4 +192,10 @@ endif
 
 ifneq ($(PFM_VERSION_FLAG),)
 CFLAGS+=-D$(PFM_VERSION_FLAG)
+endif
+
+ifeq ($(CONFIG_PFMLIB_ARCH_POWERPC64),y)
+CFLAGS+= -m64
+LDFLAGS+= -m64
+LIBDIR=$(PREFIX)/lib64
 endif

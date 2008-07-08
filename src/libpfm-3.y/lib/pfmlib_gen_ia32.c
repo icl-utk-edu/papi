@@ -468,6 +468,9 @@ pfm_gen_ia32_dispatch_counters_v1(pfmlib_input_param_t *inp, pfmlib_gen_ia32_inp
 	return PFMLIB_SUCCESS;
 }
 
+static const char *fixed_event_names[]={ "INSTRUCTIONS_RETIRED", "UNHALTED_CORE_CYCLES ", "UNHALTED_REFERENCE_CYCLES " };
+#define MAX_EVENT_NAMES (sizeof(fixed_event_names)/sizeof(char *))
+
 static int
 pfm_gen_ia32_dispatch_counters_v2(pfmlib_input_param_t *inp, pfmlib_gen_ia32_input_param_t *param, pfmlib_output_param_t *outp)
 {
@@ -594,13 +597,16 @@ pfm_gen_ia32_dispatch_counters_v2(pfmlib_input_param_t *inp, pfmlib_gen_ia32_inp
 				i, i,
 				(reg.val >> (i*4)) & 0x3ULL);
 		}
+
 		__pfm_vbprintf("] ");
-		if ((fixed_ctr_mask & 0x1) == 0)
-			__pfm_vbprintf("INSTRUCTIONS_RETIRED ");
-		if ((fixed_ctr_mask & 0x2) == 0)
-			__pfm_vbprintf("UNHALTED_CORE_CYCLES ");
-		if ((fixed_ctr_mask & 0x4) == 0)
-			__pfm_vbprintf("UNHALTED_REFERENCE_CYCLES ");
+		for(i=0; i < num_fixed_cnt; i++) {
+			if ((fixed_ctr_mask & (0x1 << i)) == 0) {
+				if (i < MAX_EVENT_NAMES)
+					__pfm_vbprintf("%s ", fixed_event_names[i]);
+				else
+					__pfm_vbprintf("??? ");
+			}
+		}
 		__pfm_vbprintf("\n");
 
 		npc++;

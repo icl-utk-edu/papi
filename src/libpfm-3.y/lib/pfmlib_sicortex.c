@@ -85,7 +85,7 @@ static int compute_ice9_counters(int type)
   /* Compute the max */
 
   if (type == PFMLIB_MIPS_ICE9A_PMU) {
-    gen_mips64_pe = gen_mips64_ice9b_pe;
+    gen_mips64_pe = gen_mips64_ice9a_pe;
 //    core_counters = 2;
     bound = (sizeof(gen_mips64_ice9a_pe)/sizeof(pme_gen_mips64_entry_t));
   } else if (type == PFMLIB_MIPS_ICE9B_PMU) {
