@@ -247,6 +247,15 @@ Fortran compilers may issue errors due to "Integer too big for its kind *".
 Add to FFLAGS environment variable a compiler option to use int*8 by default
 (in gfortran42 it is -fdefault-integer-8).
 
+Linux - IBM Cell
+*****************************************************************************
+PAPI on Cell requires the perfmon2 patch and libpfm library available from
+sourceforge <http://sourceforge.net/projects/perfmon2>. If the kernel is
+properly patched, PAPI should configure and build as described under General
+Installation, above. Support for Cell is currently experimental and limited
+to basic counting and native event support, with a limited number of PRESET
+events. 
+
 Linux - Itanium I, II, Montecito, Montvale
 *****************************************************************************
 PAPI on Itanium Linux links to the perfmon library. The library version and 
@@ -276,6 +285,7 @@ If the kernel is patched with Perfmon2, you're all set to go.
 
 Linux - PPC64 (POWER4,5,6 and PowerPC970)
 ****************************************************************************
+PERFCTR:
 Linux/PPC64 requires that the kernel be patched and recompiled with the
 PerfCtr patch.   The required patches and complete installation instructions
 are provided in the papi/src/perfctr-2.7.x directory. PPC64 is the ONLY 
@@ -297,6 +307,44 @@ version and location. Use:
 to learn more about these options.
 
 Follow the general installation instructions to complete your installation.
+
+PERFMON2:
+Make sure that your Linux/PPC64 kernel is patched with the newest perfmon2
+driver found at http://sourceforge.net/projects/perfmon2. The standard 
+installation procedure applies here.
+
+For 32-bit builds using the internal libpfm-3.y library:
+Follow the standard configure and make procedure in this documentation.
+
+For 64-bit builds using the internal libpfm-3.y library:
+First, configure with the following command:
+
+	CFLAGS="-m64" FFLAGS="-m64" LDFLAGS="-m64" \
+	./configure \
+	--libdir=/usr/local/lib64
+
+Next, build papi using the following command, and then follow the normal
+installation procedure.
+
+	make BITMODE=64
+
+For 64-bit builds using an externally built 64-bit libpfm library:
+First, build a 64-bit libpfm by issuing the following from the latest libpfm
+project code available at: http://sourceforge.net/projects/perfmon2.
+
+	make BITMODE=64 install
+
+Next, configure with the following command, and then follow the normal
+build and installation procedure.
+
+	CFLAGS="-m64" FFLAGS="-m64" LDFLAGS="-m64" \
+	./configure \
+	--libdir=/usr/local/lib64 \
+	--with-pfm-prefix=/usr/local \
+	--with-pfm-libdir=/usr/local/lib64
+
+Note: BITMODE is ignored by PAPI's Makefile, and is only used by
+libpfm's Makefile.
 
 Linux/x86 - Intel Pentium, Core and AMD Athlon, Opteron
 *****************************************************************************
@@ -392,6 +440,12 @@ Use 'perfex -i' from the perfctr distribution to test this fix.
 PLATFORM NOTES:
 Opteron fails the matrix-hl test because the default definition of PAPI_FP_OPS
 overcounts speculative floating point operations.
+
+Linux - SiCortex
+*****************************************************************************
+PAPI on SiCortex relies on the pre-installed perfmon2 patch and libpfm library.
+PAPI should configure and build as described under General Installation, above,
+automatically.detecting the proper perfmon version to link to.
 
 MIPS - IRIX 6.5
 *****************************************************************************
