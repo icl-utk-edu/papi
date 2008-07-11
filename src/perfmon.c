@@ -275,34 +275,40 @@ inline_static long_long get_cycles(void)
 /* This routine effectively does argument checking as the real magic will happen
    in compute_kernel_args. This just gets the value back from the kernel. */
 
-static int check_multiplex_timeout(int ctx_fd, unsigned long *timeout_us)
+static int check_multiplex_timeout(int ctx_fd, unsigned long *timeout_ns)
 {
   int ret;
   pfarg_setdesc_t set[2];
 
   memset(set,0,sizeof(pfarg_setdesc_t)*2);
-  set[1].set_timeout = *timeout_us * 1000;
+  set[1].set_id = 1;
+  set[1].set_flags = PFM_SETFL_TIME_SWITCH;
+  set[1].set_timeout = *timeout_ns;
   SUBDBG("Multiplexing interval requested is %llu ns.\n",(unsigned long long)set[1].set_timeout);
       
-  SUBDBG("PFM_CREATE_EVTSETS(%d,%p,2)\n",ctx_fd,set);
-  if ((ret = pfm_create_evtsets(ctx_fd, set, 2)) != PFMLIB_SUCCESS)
+  /* Create a test eventset */
+
+  SUBDBG("PFM_CREATE_EVTSETS(%d,%p,1)\n",ctx_fd,&set[1]);
+  if ((ret = pfm_create_evtsets(ctx_fd, &set[1], 1)) != PFMLIB_SUCCESS)
     {
-      DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(set,2));
-      PAPIERROR("pfm_create_evtsets(%d,%p,%d): %s", ctx_fd, set, 2, pfm_strerror(ret));
+      DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(&set[1],1));
+      PAPIERROR("pfm_create_evtsets(%d,%p,%d): %s", ctx_fd, &set[1], 1, pfm_strerror(ret));
       return(PAPI_ESYS);
     }      
 
   SUBDBG("Multiplexing interval returned is %llu ns.\n",(unsigned long long)set[1].set_timeout);
-  *timeout_us = set[1].set_timeout / 1000;
+  *timeout_ns = set[1].set_timeout;
   
-  pfm_delete_evtsets(ctx_fd,set,2);
+  /* Delete the second eventset */
+
+  pfm_delete_evtsets(ctx_fd,&set[1],1);
 
   return(PAPI_OK);
 }
 
 /* The below function is stolen from libpfm from Stephane Eranian */
 static int
-detect_timeout_and_unavail_pmu_regs(pfmlib_regmask_t *r_pmcs, pfmlib_regmask_t *r_pmds, unsigned long *timeout_us)
+detect_timeout_and_unavail_pmu_regs(pfmlib_regmask_t *r_pmcs, pfmlib_regmask_t *r_pmds, unsigned long *timeout_ns)
 {
   pfarg_ctx_t ctx;
   pfarg_setinfo_t	setf;
@@ -350,7 +356,7 @@ detect_timeout_and_unavail_pmu_regs(pfmlib_regmask_t *r_pmcs, pfmlib_regmask_t *
 					pfm_regmask_set(r_pmds, (i<<6)+j);
 			}
 		}
-	check_multiplex_timeout(myfd,timeout_us);
+	check_multiplex_timeout(myfd,timeout_ns);
 	i = close(myfd);
 	SUBDBG("CLOSE fd %d returned %d\n",myfd,i);
 	return PAPI_OK;
@@ -2405,7 +2411,6 @@ static int get_system_info(papi_mdi_t *mdi)
    /* Hardware info */
 
   mdi->hw_info.ncpu = sysconf(_SC_NPROCESSORS_ONLN);
-  mdi->hw_info.clock_ticks = sysconf(_SC_CLK_TCK);
   mdi->hw_info.nnodes = 1;
   mdi->hw_info.totalcpus = sysconf(_SC_NPROCESSORS_CONF);
 
@@ -2565,10 +2570,10 @@ inline static int compute_kernel_args(hwd_control_state_t * ctl)
     {
       for (i=0;i<set;i++) {
 	sets[i].set_flags = PFM_SETFL_TIME_SWITCH;
-	sets[i].set_timeout = ctl->multiplexed * 1000;
+	sets[i].set_timeout = ctl->multiplexed;
       }
     }
-  SUBDBG("exit multiplexed %d, pfp_pmc_count %d, num_sets %d\n",ctl->multiplexed, outp->pfp_pmc_count, *num_sets);
+  SUBDBG("exit multiplexed %d (ns switch time), pfp_pmc_count %d, num_sets %d\n",ctl->multiplexed, outp->pfp_pmc_count, *num_sets);
   return(PAPI_OK);
 }
 
@@ -2819,16 +2824,29 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   /* Load the module, find out if any PMC's/PMD's are off limits */
 
    {
-     unsigned long min_timeout = 1;
+
+     /* Perfmon2 timeouts are based on the clock tick, we need to check
+	them otherwise it will complain at us when we multiplex */
+     struct timespec ts;
+     unsigned long min_timeout_ns;
+     if (syscall(__NR_clock_getres,CLOCK_REALTIME,&ts) == -1) { 
+       PAPIERROR("Could not detect proper HZ rate, multiplexing may fail\n");
+       min_timeout_ns = 10000000;
+     } else {
+       min_timeout_ns = ts.tv_nsec;
+     }
+     /* This will fail if we've done timeout detection wrong */
      retval = detect_timeout_and_unavail_pmu_regs(&_perfmon2_pfm_unavailable_pmcs,
 						  &_perfmon2_pfm_unavailable_pmds,
-						  &min_timeout);
-     _papi_hwi_system_info.sub_info.multiplex_timer_us = min_timeout;
-     _papi_hwi_system_info.sub_info.reserved_ints[0] = min_timeout;
-   }
+						  &min_timeout_ns);
+     _papi_hwi_system_info.sub_info.itimer_ns = min_timeout_ns;
+     /* This field represents the minimum timer resolution. Anything lower
+	is not possible. Anything higher and it must be a multiple of this */
+     _papi_hwi_system_info.sub_info.itimer_res_ns = min_timeout_ns;
 
-  if (retval != PAPI_OK)
-    return(retval);
+     if (retval != PAPI_OK)
+       return(retval);
+   }
 
   /* Always initialize globals dynamically to handle forks properly. */
 
@@ -3088,7 +3106,7 @@ again:
 	 PAPIERROR("Unable to scan two items from thread stat file at 13th space?");
 	 return(PAPI_ESBSTR);
        }
-     retval = (utime+stime)*(long_long)1000000/_papi_hwi_system_info.hw_info.clock_ticks;
+     retval = (utime+stime)*(long_long)1000000/_papi_hwi_system_info.sub_info.clock_ticks;
    }
 #elif defined(HAVE_CLOCK_GETTIME_THREAD)
    {
@@ -3102,7 +3120,7 @@ again:
      struct tms buffer;
      times(&buffer);
      SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
-     retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*1000000/_papi_hwi_system_info.hw_info.clock_ticks);
+     retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*1000000/_papi_hwi_system_info.sub_info.clock_ticks);
      /* NOT CLOCKS_PER_SEC as in the headers! */
    }
 #elif defined(HAVE_PER_THREAD_GETRUSAGE)
@@ -3384,26 +3402,23 @@ int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctl)
    return PAPI_OK;
 }
 
+inline_static int round_requested_ns(int ns)
+{
+  if (ns < _papi_hwi_system_info.sub_info.itimer_res_ns) {
+    return _papi_hwi_system_info.sub_info.itimer_res_ns;
+  } else {
+    int leftover_ns = ns % _papi_hwi_system_info.sub_info.itimer_res_ns;
+    return ns + leftover_ns;
+  }
+}
+
 int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
-#if 0
-  int ret;
-#endif
-
   switch (code) {
-  case PAPI_DEF_MPX_USEC:
-    { 
-      int leftover = option->multiplex.us % _papi_hwi_system_info.sub_info.reserved_ints[0]; /* min timeout */
-      _papi_hwi_system_info.sub_info.multiplex_timer_us = option->multiplex.us + leftover;
-      option->multiplex.us += leftover;
-      return(PAPI_OK);
-    }
   case PAPI_MULTIPLEX:
     {
-      int leftover = option->multiplex.us % _papi_hwi_system_info.sub_info.reserved_ints[0]; /* min timeout */
-      option->multiplex.us += leftover;
-      /* Cheat and store us resolution in this boolean */
-      option->multiplex.ESI->machdep.multiplexed = option->multiplex.us;
+      option->multiplex.ns = round_requested_ns(option->multiplex.ns);
+      option->multiplex.ESI->machdep.multiplexed = option->multiplex.ns;
       return(PAPI_OK);
     }
   case PAPI_ATTACH:
@@ -3427,8 +3442,37 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
     set_irange(ctx, &option->address_range.ESI->machdep, option);
     return (PAPI_OK);
 #endif
+  case PAPI_DEF_ITIMER:
+    {
+      /* flags are currently ignored, eventually the flags will be able
+	 to specify whether or not we use POSIX itimers (clock_gettimer) */
+      if ((option->itimer.itimer_num == ITIMER_REAL) &&
+	  (option->itimer.itimer_sig != SIGALRM))
+	return PAPI_EINVAL;
+      if ((option->itimer.itimer_num == ITIMER_VIRTUAL) &&
+	  (option->itimer.itimer_sig != SIGVTALRM))
+	return PAPI_EINVAL;
+      if ((option->itimer.itimer_num == ITIMER_PROF) &&
+	  (option->itimer.itimer_sig != SIGPROF))
+	return PAPI_EINVAL;
+      if (option->itimer.ns > 0)
+	option->itimer.ns = round_requested_ns(option->itimer.ns);
+      /* At this point, we assume the user knows what he or
+	 she is doing, they maybe doing something arch specific */
+      return PAPI_OK;
+    }
+  case PAPI_DEF_MPX_NS:
+    { 
+      option->multiplex.ns = round_requested_ns(option->multiplex.ns);
+      return(PAPI_OK);
+    }
+  case PAPI_DEF_ITIMER_NS:
+    { 
+      option->itimer.ns = round_requested_ns(option->itimer.ns);
+      return(PAPI_OK);
+    }
   default:
-    return (PAPI_EINVAL);
+    return (PAPI_ENOSUPP);
   }
 }
 
@@ -3832,9 +3876,6 @@ process_smpl_buf(int num_smpl_pmds, int entry_size, ThreadInfo_t **thr)
       if (ret != PAPI_OK)
 	return(ret);
 
-#warning "This should be handled in the high level layers"
-      (*thr)->running_eventset->profile.overflowcount++;
-
       weight = process_smpl_entry(native_pfm_index,flags,&ent,&pc);
 
       _papi_hwi_dispatch_profile((*thr)->running_eventset, (unsigned long)pc,
@@ -3976,15 +4017,14 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
       memset(&ctx->smpl,0,sizeof(buf_arg));
       ctx->smpl_buf = NULL;
       ret = _papi_hwd_set_overflow(ESI,EventIndex,threshold);
+#warning "This should be handled somewhere else"
       ESI->state &= ~(PAPI_OVERFLOWING);
       ESI->overflow.flags &= ~(PAPI_OVERFLOW_HARDWARE);
-      ESI->profile.overflowcount = 0;
 
       return(ret);
     }
 
   memset(&buf_arg, 0, sizeof(buf_arg));
-//  newctx.ctx_flags = PFM_FL_NOTIFY_BLOCK;
   buf_arg.buf_size = 2*getpagesize();
 
   SUBDBG("PFM_CREATE_CONTEXT(%p,%s,%p,%d)\n",&newctx, PFM_DFL_SMPL_NAME, &buf_arg, (int)sizeof(buf_arg));
@@ -4062,14 +4102,6 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
   memcpy(&ctx->smpl,&buf_arg,sizeof(buf_arg));
   ctx->smpl_buf = buf_addr;
 
-  /* We need overflowing because we use the overflow dispatch handler */
-
-#warning "This should be handled in the high level layers"
-
-  ESI->state |= PAPI_OVERFLOWING;
-  ESI->overflow.flags |= PAPI_OVERFLOW_HARDWARE;
-  ESI->profile.overflowcount = 0;
-
   return(PAPI_OK);
 }
 
@@ -4089,8 +4121,13 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
    if (threshold == 0) 
      {
-      /* Remove the signal handler */
-
+       /* If this counter isn't set to overflow */
+       
+       if (this_state->pd[j].reg_flags & PFM_REGFL_OVFL_NOTIFY == 0)
+	 return(PAPI_EINVAL);
+       
+       /* Remove the signal handler */
+       
        retval = _papi_hwi_stop_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig);
        if (retval != PAPI_OK)
 	 return(retval);

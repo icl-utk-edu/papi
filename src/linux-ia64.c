@@ -1170,7 +1170,7 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 	 PAPIERROR("Unable to scan two items from thread stat file at 13th space?");
 	 return(PAPI_ESBSTR);
        }
-     retval = (long_long)(utime+stime)*1000000/_papi_hwi_system_info.hw_info.clock_ticks;
+     retval = (long_long)(utime+stime)*1000000/_papi_hwi_system_info.sub_info.clock_ticks;
    }
 #elif defined(HAVE_CLOCK_GETTIME_THREAD)
    {
@@ -1312,6 +1312,16 @@ int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * zero)
    return PAPI_OK;
 }
 
+inline_static int round_requested_ns(int ns)
+{
+  if (ns < _papi_hwi_system_info.sub_info.itimer_res_ns) {
+    return _papi_hwi_system_info.sub_info.itimer_res_ns;
+  } else {
+    int leftover_ns = ns % _papi_hwi_system_info.sub_info.itimer_res_ns;
+    return ns + leftover_ns;
+  }
+}
+
 int _papi_hwd_ctl(hwd_context_t * zero, int code, _papi_int_option_t * option)
 {
    int ret;
@@ -1340,8 +1350,37 @@ int _papi_hwd_ctl(hwd_context_t * zero, int code, _papi_int_option_t * option)
 	  if(ret != PAPI_OK) return(ret);
 	  set_irange(zero, &option->address_range.ESI->machdep, option);
       return (PAPI_OK);
+  case PAPI_DEF_ITIMER:
+    {
+      /* flags are currently ignored, eventually the flags will be able
+	 to specify whether or not we use POSIX itimers (clock_gettimer) */
+      if ((option->itimer.itimer_num == ITIMER_REAL) &&
+	  (option->itimer.itimer_sig != SIGALRM))
+	return PAPI_EINVAL;
+      if ((option->itimer.itimer_num == ITIMER_VIRTUAL) &&
+	  (option->itimer.itimer_sig != SIGVTALRM))
+	return PAPI_EINVAL;
+      if ((option->itimer.itimer_num == ITIMER_PROF) &&
+	  (option->itimer.itimer_sig != SIGPROF))
+	return PAPI_EINVAL;
+      if (option->itimer.ns > 0)
+	option->itimer.ns = round_requested_ns(option->itimer.ns);
+      /* At this point, we assume the user knows what he or
+	 she is doing, they maybe doing something arch specific */
+      return PAPI_OK;
+    }
+  case PAPI_DEF_MPX_NS:
+    { 
+      option->multiplex.ns = round_requested_ns(option->multiplex.ns);
+      return(PAPI_OK);
+    }
+  case PAPI_DEF_ITIMER_NS:
+    { 
+      option->itimer.ns = round_requested_ns(option->itimer.ns);
+      return(PAPI_OK);
+    }
    default:
-      return (PAPI_EINVAL);
+      return (PAPI_ENOSUPP);
    }
 }
 
@@ -1513,10 +1552,6 @@ static int ia64_process_profile_buffer(ThreadInfo_t *thread, EventSetInfo_t *ESI
 	     ent->cpu,
 	     overflow_vector,
 	     ent->ip);
-
-      /* record each register's overflow times  */
-#warning "This should be handled in the high level layers"
-      ESI->profile.overflowcount++;
 
       while (overflow_vector) {
 	reg_num = ffs(overflow_vector) - 1;
@@ -1740,7 +1775,6 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
 #warning "This should be handled in the high level layers"
   ESI->state ^= PAPI_OVERFLOWING;
   ESI->overflow.flags ^= PAPI_OVERFLOW_HARDWARE;
-  ESI->profile.overflowcount = 0;
 
   return (ret);
 }

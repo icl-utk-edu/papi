@@ -878,7 +878,6 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
 int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI) 
 {
-   ESI->profile.overflowcount = 0;
    return (PAPI_OK);
 }
 
@@ -893,7 +892,7 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
    case PAPI_DEFGRN:
       return(PAPI_ESBSTR);
    default:
-      return (PAPI_EINVAL);
+      return (PAPI_ENOSUPP);
    }
 }
 

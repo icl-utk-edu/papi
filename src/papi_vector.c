@@ -91,7 +91,7 @@ u_long_long vec_dummy_get_virt_usec (const hwd_context_t *zero)
   retval = 0;
 #else
   times(&buffer);
-  retval = (long long)buffer.tms_utime*1000000/_papi_hwi_system_info.hw_info.clock_ticks;
+  retval = (long long)buffer.tms_utime*1000000/_papi_hwi_system_info.sub_info.clock_ticks;
 #endif
 #endif
   return(retval);

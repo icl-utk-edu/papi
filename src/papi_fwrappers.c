@@ -221,6 +221,11 @@ PAPI_FCALL(papif_get_real_usec, PAPIF_GET_REAL_USEC, (long_long * time))
    *time = PAPI_get_real_usec();
 }
 
+PAPI_FCALL(papif_get_real_nsec, PAPIF_GET_REAL_NSEC, (long_long * time))
+{
+   *time = PAPI_get_real_nsec();
+}
+
 PAPI_FCALL(papif_get_virt_cyc, PAPIF_GET_VIRT_CYC, (long_long * virt_cyc))
 {
    *virt_cyc = PAPI_get_virt_cyc();
@@ -229,6 +234,11 @@ PAPI_FCALL(papif_get_virt_cyc, PAPIF_GET_VIRT_CYC, (long_long * virt_cyc))
 PAPI_FCALL(papif_get_virt_usec, PAPIF_GET_VIRT_USEC, (long_long * time))
 {
    *time = PAPI_get_virt_usec();
+}
+
+PAPI_FCALL(papif_get_virt_nsec, PAPIF_GET_VIRT_NSEC, (long_long * time))
+{
+   *time = PAPI_get_virt_nsec();
 }
 
 PAPI_FCALL(papif_is_initialized, PAPIF_IS_INITIALIZED, (int *level))

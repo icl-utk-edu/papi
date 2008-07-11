@@ -382,19 +382,12 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    OVFDBG("EventIndex=%d\n", EventIndex);
    /* The correct event to overflow is EventIndex */
 
-   /* Set an overflow threshold */
-   if (ESI->EventInfoArray[EventIndex].derived) 
-     {
-       OVFDBG("Can't overflow on a derived event.\n");
-       return PAPI_EINVAL;
-     }
-
    ncntrs = _papi_hwi_system_info.sub_info.num_cntrs;
    i = ESI->EventInfoArray[EventIndex].pos[0];
    if (i >= ncntrs) 
      {
        PAPIERROR("Selector id %d is larger than ncntrs %d", i, ncntrs);
-       return PAPI_EBUG;
+       return PAPI_EINVAL;
      }
 
    if (threshold != 0) 
@@ -487,7 +480,6 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold) {
 }
 
 int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI) {
-   ESI->profile.overflowcount = 0;
    return (PAPI_OK);
 }
 

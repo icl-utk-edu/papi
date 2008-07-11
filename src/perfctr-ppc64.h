@@ -153,9 +153,6 @@ typedef struct ppc64_perfctr_control {
 // the members below are from power4.h	
    /* Buffer to pass to the kernel to control the counters */
    int group_id;
-   /* Interrupt interval */
-   int timer_ms;
-
 	
 // the members below are from perfctr-p3.h	
    hwd_native_t native[MAX_COUNTERS];

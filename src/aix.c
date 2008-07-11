@@ -588,6 +588,16 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t *spc, long_long **va
    return (PAPI_OK);
 }
 
+inline_static int round_requested_ns(int ns)
+{
+  if (ns < _papi_hwi_system_info.sub_info.itimer_res_ns) {
+    return _papi_hwi_system_info.sub_info.itimer_res_ns;
+  } else {
+    int leftover_ns = ns % _papi_hwi_system_info.sub_info.itimer_res_ns;
+    return ns + leftover_ns;
+  }
+}
+
 int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
    switch (code) {
@@ -608,8 +618,37 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
    case PAPI_INHERIT:
       return (set_inherit(option->inherit.inherit));
 #endif
+  case PAPI_DEF_ITIMER:
+    {
+      /* flags are currently ignored, eventually the flags will be able
+	 to specify whether or not we use POSIX itimers (clock_gettimer) */
+      if ((option->itimer.itimer_num == ITIMER_REAL) &&
+	  (option->itimer.itimer_sig != SIGALRM))
+	return PAPI_EINVAL;
+      if ((option->itimer.itimer_num == ITIMER_VIRTUAL) &&
+	  (option->itimer.itimer_sig != SIGVTALRM))
+	return PAPI_EINVAL;
+      if ((option->itimer.itimer_num == ITIMER_PROF) &&
+	  (option->itimer.itimer_sig != SIGPROF))
+	return PAPI_EINVAL;
+      if (option->itimer.ns > 0)
+	option->itimer.ns = round_requested_ns(option->itimer.ns);
+      /* At this point, we assume the user knows what he or
+	 she is doing, they maybe doing something arch specific */
+      return PAPI_OK;
+    }
+  case PAPI_DEF_MPX_NS:
+    { 
+      option->multiplex.ns = round_requested_ns(option->multiplex.ns);
+      return(PAPI_OK);
+    }
+  case PAPI_DEF_ITIMER_NS:
+    { 
+      option->itimer.ns = round_requested_ns(option->itimer.ns);
+      return(PAPI_OK);
+    }
    default:
-      return (PAPI_EINVAL);
+      return (PAPI_ENOSUPP);
    }
 }
 
@@ -629,12 +668,6 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *i)
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
    hwd_control_state_t *this_state = &ESI->machdep;
-
-   if (threshold == 0) {
-      ESI->overflow.timer_ms = 0;
-   } else {
-      ESI->overflow.timer_ms = 1;
-   }
 
    return (PAPI_OK);
 }

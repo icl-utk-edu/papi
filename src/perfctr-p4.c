@@ -651,15 +651,10 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    if (i >= ncntrs) 
      {
        PAPIERROR("Selector id %d is larger than ncntrs %d", i, ncntrs);
-       return PAPI_EBUG;
+       return PAPI_EINVAL;
      }
 
    if (threshold != 0) {        /* Set an overflow threshold */
-      if ((ESI->EventInfoArray[EventIndex].derived) &&
-          (ESI->EventInfoArray[EventIndex].derived != DERIVED_CMPD)){
-         OVFDBG("Can't overflow on a derived event.\n");
-         return PAPI_EINVAL;
-      }
 
       if ((retval = _papi_hwi_start_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig,NEED_CONTEXT)) != PAPI_OK)
 	      return(retval);

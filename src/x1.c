@@ -132,6 +132,16 @@ static int set_inherit(hwd_context_t *ptr)
 }
 #endif
 
+inline_static int round_requested_ns(int ns)
+{
+  if (ns < _papi_hwi_system_info.sub_info.itimer_res_ns) {
+    return _papi_hwi_system_info.sub_info.itimer_res_ns;
+  } else {
+    int leftover_ns = ns % _papi_hwi_system_info.sub_info.itimer_res_ns;
+    return ns + leftover_ns;
+  }
+}
+
 /*
  * This function takes care of setting various features
  */
@@ -150,8 +160,37 @@ int _papi_hwd_ctl(hwd_context_t * ptr, int code, _papi_int_option_t * option)
    case PAPI_INHERIT:
       return (set_inherit(ptr));
 #endif
+  case PAPI_DEF_ITIMER:
+    {
+      /* flags are currently ignored, eventually the flags will be able
+	 to specify whether or not we use POSIX itimers (clock_gettimer) */
+      if ((option->itimer.itimer_num == ITIMER_REAL) &&
+	  (option->itimer.itimer_sig != SIGALRM))
+	return PAPI_EINVAL;
+      if ((option->itimer.itimer_num == ITIMER_VIRTUAL) &&
+	  (option->itimer.itimer_sig != SIGVTALRM))
+	return PAPI_EINVAL;
+      if ((option->itimer.itimer_num == ITIMER_PROF) &&
+	  (option->itimer.itimer_sig != SIGPROF))
+	return PAPI_EINVAL;
+      if (option->itimer.ns > 0)
+	option->itimer.ns = round_requested_ns(option->itimer.ns);
+      /* At this point, we assume the user knows what he or
+	 she is doing, they maybe doing something arch specific */
+      return PAPI_OK;
+    }
+  case PAPI_DEF_MPX_NS:
+    { 
+      option->multiplex.ns = round_requested_ns(option->multiplex.ns);
+      return(PAPI_OK);
+    }
+  case PAPI_DEF_ITIMER_NS:
+    { 
+      option->itimer.ns = round_requested_ns(option->itimer.ns);
+      return(PAPI_OK);
+    }
    default:
-      return (PAPI_EINVAL);
+      return (PAPI_ENOSUPP);
    }
 }
 
@@ -189,7 +228,7 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 
    times(&buffer);
    SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
-   retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*1000000/_papi_hwi_system_info.hw_info.clock_ticks);
+   retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*1000000/_papi_hwi_system_info.sub_info.clock_ticks);
    return (retval);
 }
 

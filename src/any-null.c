@@ -204,7 +204,7 @@ int _papi_hwd_set_profile(EventSetInfo_t *ESI, int EventIndex, int threashold)
  */
 int _papi_hwd_ctl(hwd_context_t *ctx, int code, _papi_int_option_t *option)
 {
-  return(PAPI_OK);
+  return(PAPI_ENOSUPP);
 }
 
 /*
@@ -289,7 +289,7 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
 	 PAPIERROR("Unable to scan two items from thread stat file at 13th space?");
 	 return(PAPI_ESBSTR);
        }
-     retval = (long_long)(utime+stime)*1000000/_papi_hwi_system_info.hw_info.clock_ticks;
+     retval = (long_long)(utime+stime)*1000000/_papi_hwi_system_info.sub_info.clock_ticks;
    }
 #elif defined(HAVE_CLOCK_GETTIME_THREAD)
    {
@@ -303,7 +303,7 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
      struct tms buffer;
      times(&buffer);
      SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
-     retval = (long_long)(buffer.tms_utime+buffer.tms_stime)*1000000/_papi_hwi_system_info.hw_info.clock_ticks;
+     retval = (long_long)(buffer.tms_utime+buffer.tms_stime)*1000000/_papi_hwi_system_info.sub_info.clock_ticks;
      /* NOT CLOCKS_PER_SEC as in the headers! */
    }
 #elif defined(HAVE_PER_THREAD_GETRUSAGE)

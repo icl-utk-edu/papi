@@ -786,10 +786,6 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
       return PAPI_EINVAL;
    }
    if (threshold != 0) {        /* Set an overflow threshold */
-      if (ESI->EventInfoArray[EventIndex].derived) {
-         OVFDBG("Can't overflow on a derived event.\n");
-         return PAPI_EINVAL;
-      }
 
       if (! pmc_interrupt_is_supported(contr->cpu_control.pmc_map[EventIndex])) {
          /* Make an attempt to reallocate to PMC registers that do support
@@ -851,7 +847,6 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold) {
 
 
 int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI) {
-   ESI->profile.overflowcount = 0;
    return (PAPI_OK);
 }
 

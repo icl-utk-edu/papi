@@ -332,6 +332,16 @@ static int detach( hwd_control_state_t * ctl, unsigned long tid ) {
 	return (PAPI_OK);
 	} /* end detach() */
 
+inline_static int round_requested_ns(int ns)
+{
+  if (ns < _papi_hwi_system_info.sub_info.itimer_res_ns) {
+    return _papi_hwi_system_info.sub_info.itimer_res_ns;
+  } else {
+    int leftover_ns = ns % _papi_hwi_system_info.sub_info.itimer_res_ns;
+    return ns + leftover_ns;
+  }
+}
+
 int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
 #if defined(PPC64)
@@ -354,8 +364,37 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
       return (attach(&option->attach.ESI->machdep, option->attach.tid));
    case PAPI_DETACH:
       return (detach(&option->attach.ESI->machdep, option->attach.tid));
+  case PAPI_DEF_ITIMER:
+    {
+      /* flags are currently ignored, eventually the flags will be able
+	 to specify whether or not we use POSIX itimers (clock_gettimer) */
+      if ((option->itimer.itimer_num == ITIMER_REAL) &&
+	  (option->itimer.itimer_sig != SIGALRM))
+	return PAPI_EINVAL;
+      if ((option->itimer.itimer_num == ITIMER_VIRTUAL) &&
+	  (option->itimer.itimer_sig != SIGVTALRM))
+	return PAPI_EINVAL;
+      if ((option->itimer.itimer_num == ITIMER_PROF) &&
+	  (option->itimer.itimer_sig != SIGPROF))
+	return PAPI_EINVAL;
+      if (option->itimer.ns > 0)
+	option->itimer.ns = round_requested_ns(option->itimer.ns);
+      /* At this point, we assume the user knows what he or
+	 she is doing, they maybe doing something arch specific */
+      return PAPI_OK;
+    }
+  case PAPI_DEF_MPX_NS:
+    { 
+      option->multiplex.ns = round_requested_ns(option->multiplex.ns);
+      return(PAPI_OK);
+    }
+  case PAPI_DEF_ITIMER_NS:
+    { 
+      option->itimer.ns = round_requested_ns(option->itimer.ns);
+      return(PAPI_OK);
+    }
    default:
-      return (PAPI_EINVAL);
+      return (PAPI_ENOSUPP);
    }
 }
 
