@@ -254,7 +254,7 @@ static void mpx_init_timers(int interval)
 #endif
 
    sigemptyset( &sigreset );
-   sigaddset( &sigreset, _papi_hwi_system_info.sub_info.multiplex_timer_sig);
+   sigaddset( &sigreset, _papi_hwi_system_info.sub_info.itimer_sig);
 }
 
 static int mpx_startup_itimer(void)
@@ -268,15 +268,15 @@ static int mpx_startup_itimer(void)
    sigact.sa_flags = SA_RESTART;
    sigact.sa_handler = mpx_handler;
 
-   if (sigaction(_papi_hwi_system_info.sub_info.multiplex_timer_sig, &sigact, NULL) == -1)
+   if (sigaction(_papi_hwi_system_info.sub_info.itimer_sig, &sigact, NULL) == -1)
      {
         PAPIERROR("sigaction start errno %d",errno);
 	return PAPI_ESYS;
      }
 
-   if (setitimer(_papi_hwi_system_info.sub_info.multiplex_timer_num, &itime, NULL) == -1)
+   if (setitimer(_papi_hwi_system_info.sub_info.itimer_num, &itime, NULL) == -1)
      {
-       sigaction(_papi_hwi_system_info.sub_info.multiplex_timer_sig, &oaction, NULL);
+       sigaction(_papi_hwi_system_info.sub_info.itimer_sig, &oaction, NULL);
        PAPIERROR("setitimer start errno %d",errno);
        return PAPI_ESYS;
      }
@@ -286,16 +286,16 @@ static int mpx_startup_itimer(void)
 static void mpx_restore_signal(void)
 {
   MPXDBG("restore signal\n");
-  if (_papi_hwi_system_info.sub_info.multiplex_timer_sig != PAPI_NULL) { 
-	if (signal(_papi_hwi_system_info.sub_info.multiplex_timer_sig, SIG_IGN) == SIG_ERR)
+  if (_papi_hwi_system_info.sub_info.itimer_sig != PAPI_NULL) { 
+	if (signal(_papi_hwi_system_info.sub_info.itimer_sig, SIG_IGN) == SIG_ERR)
      	PAPIERROR("sigaction stop errno %d",errno); }
 }
 
 static void mpx_shutdown_itimer(void)
 {
   MPXDBG("setitimer off\n");
-  if (_papi_hwi_system_info.sub_info.multiplex_timer_num != PAPI_NULL) {
- 	if (setitimer(_papi_hwi_system_info.sub_info.multiplex_timer_num, (struct itimerval *)&itimestop, NULL) == -1)
+  if (_papi_hwi_system_info.sub_info.itimer_num != PAPI_NULL) {
+ 	if (setitimer(_papi_hwi_system_info.sub_info.itimer_num, (struct itimerval *)&itimestop, NULL) == -1)
      	PAPIERROR("setitimer stop errno %d",errno); }
 }
 #endif                          /* _WIN32 */
@@ -531,7 +531,7 @@ static void mpx_handler(int signal)
       for (t = tlist; t != NULL; t = t->next) {
          if (pthread_equal(t->thr, self) == 0) {
             ++threads_responding;
-            retval = pthread_kill(t->thr, _papi_hwi_system_info.sub_info.multiplex_timer_sig);
+            retval = pthread_kill(t->thr, _papi_hwi_system_info.sub_info.itimer_sig);
             assert(retval == 0);
 #ifdef MPX_DEBUG_SIGNALS
             MPXDBG("%x signaling %x\n", self, t->thr);
@@ -584,7 +584,6 @@ static void mpx_handler(int signal)
          me->total_c += cycles;
          total_cycles = me->total_c - cur_event->prev_total_c;
          cur_event->prev_total_c = me->total_c;
-         cur_event->handler_count++;
 
             /* If it's a rate, count occurrences & average later */
             if (!cur_event->is_a_rate) {
@@ -648,7 +647,7 @@ static void mpx_handler(int signal)
 	if ((t->tid == _papi_hwi_thread_id_fn()) || (t->head == NULL))
 	  continue;
          MPXDBG("forwarding signal to thread %lx\n", t->tid);
-         retval = (*_papi_hwi_thread_kill_fn) (t->tid, _papi_hwi_system_info.sub_info.multiplex_timer_sig);
+         retval = (*_papi_hwi_thread_kill_fn) (t->tid, _papi_hwi_system_info.sub_info.itimer_sig);
          if (retval != 0) {
             MPXDBG("forwarding signal to thread %lx returned %d\n",
                    t->tid, retval);
@@ -670,7 +669,7 @@ static void mpx_handler(int signal)
     */
    /* Reset the timer once all threads have responded */
    if (lastthread) {
-      retval = setitimer(_papi_hwi_system_info.sub_info.multiplex_timer_num, &itime, NULL);
+      retval = setitimer(_papi_hwi_system_info.sub_info.itimer_num, &itime, NULL);
       assert(retval == 0);
 #ifdef MPX_DEBUG_TIMER
       MPXDBG("timer restarted by %lx\n", me->tid);
@@ -780,7 +779,6 @@ int MPX_start(MPX_EventSet * mpx_events)
          mev->rate_estimate = 0.0;
          mev->prev_total_c = current_thread_mpx_c;
          mev->count = 0;
-         mev->handler_count = 0;
       }
       /* Adjust start value to include events and cycles
        * counted previously for this event set.
@@ -1168,7 +1166,7 @@ int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
 #endif
 }
 
-int mpx_init(int interval)
+int mpx_init(int interval_ns)
 {
 #ifdef PTHREADS
    int retval;
@@ -1177,7 +1175,7 @@ int mpx_init(int interval)
    tlist = NULL;
    mpx_hold();
    mpx_shutdown_itimer();
-   mpx_init_timers(interval);
+   mpx_init_timers(interval_ns / 1000);
    
    return (PAPI_OK);
 }
@@ -1218,7 +1216,6 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
          mev->pi.granularity = granularity;
          mev->uses = mev->active = 0;
          mev->prev_total_c = mev->count = mev->cycles = 0;
-         mev->handler_count = 0;
          mev->rate_estimate = 0.0;
          mev->count_estimate = 0;
          mev->is_a_rate = 0;

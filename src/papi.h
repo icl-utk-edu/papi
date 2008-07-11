@@ -63,6 +63,7 @@ failure.
 #define PAPI_ESYS     -3        /*A System/C library call failed, please check errno */
 #define PAPI_ESBSTR   -4        /*Substrate returned an error, 
                                    usually the result of an unimplemented feature */
+#define PAPI_ENOSUPP  -4
 #define PAPI_ECLOST   -5        /*Access to the counters was lost or interrupted */
 #define PAPI_EBUG     -6        /*Internal error, please send mail to the developers */
 #define PAPI_ENOEVNT  -7        /*Hardware Event does not exist */
@@ -225,7 +226,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_DOMAIN  		5       /* Domain for an eventset */
 #define PAPI_DEFGRN  		6       /* Granularity for all new eventsets */
 #define PAPI_GRANUL  		7       /* Granularity for an eventset */
-#define PAPI_DEF_MPX_USEC       8       /* Multiplexing interval in US */
+#define PAPI_DEF_MPX_NS         8       /* Multiplexing/overflowing interval in ns, same as PAPI_DEF_ITIMER_NS */
 #define PAPI_EDGE_DETECT        9       /* Count cycles of events if supported <not implemented> */
 #define PAPI_INVERT             10	/* Invert count detect if supported <not implemented> */
 #define PAPI_MAX_MPX_CTRS	11      /* Maximum number of counters we can multiplex */
@@ -243,6 +244,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 /* Currently the following options are only available on Itanium; they may be supported elsewhere in the future */
 #define PAPI_DATA_ADDRESS       23      /* Option to set data address range restriction */
 #define PAPI_INSTR_ADDRESS      24      /* Option to set instruction address range restriction */
+#define PAPI_DEF_ITIMER		25	/* Option to set the type of itimer used in both software multiplexing, overflowing and profiling */
+#define PAPI_DEF_ITIMER_NS	26	/* Multiplexing/overflowing interval in ns, same as PAPI_DEF_MPX_NS */
 
 #define PAPI_INIT_SLOTS    64     /*Number of initialized slots in
                                    DynamicArray of EventSets */
@@ -378,9 +381,12 @@ read the documentation carefully.  */
                                  also, two extensions 0x1000 == 1, 0x2000 == 2 */
    } PAPI_sprofil_t;
 
-   typedef struct _papi_overflow_option {
-      int type;
-   } PAPI_overflow_option_t;
+   typedef struct _papi_itimer_option {
+     int itimer_num;
+     int itimer_sig;
+     int ns;
+     int flags;
+   } PAPI_itimer_option_t;
 
    typedef struct _papi_inherit_option {
       int inherit;
@@ -403,6 +409,14 @@ read the documentation carefully.  */
       char lib_dir_sep;
    } PAPI_preload_info_t;
 
+  /* Fields for compatability */
+
+#if 0
+#define multiplex_timer_num itimer_num
+#define multiplex_timer_sig itimer_sig
+#define multiplex_timer_us  multiplex_ns*1000
+#endif
+
    typedef struct _papi_substrate_option {
      char name[PAPI_MAX_STR_LEN];            /* Name of the substrate we're using, usually CVS RCS Id */
      char version[PAPI_MIN_STR_LEN];         /* Version of this substrate, usually CVS Revision */
@@ -416,12 +430,14 @@ read the documentation carefully.  */
      int available_domains;       /* Available domains */ 
      int default_granularity;     /* The default granularity when this substrate is used */
      int available_granularities; /* Available granularities */
-     int multiplex_timer_sig;     /* Signal number used by the multiplex timer, 0 if not */
-     int multiplex_timer_num;     /* Number of the itimer or POSIX 1 timer used by the multiplex timer */
-     int multiplex_timer_us;   /* uS between switching of sets */
+     int itimer_sig;              /* Signal number used by the multiplex timer, 0 if not */
+     int itimer_num;              /* Number of the itimer used by mpx and overflow/profile emulation */
+     int itimer_ns;               /* ns between mpx switching and overflow/profile emulation */
+     int itimer_res_ns;           /* ns of resolution of itimer */
      int hardware_intr_sig;       /* Signal used by hardware to deliver PMC events */
+     int clock_ticks;             /* clock ticks per second */
      int opcode_match_width;      /* Width of opcode matcher if exists, 0 if not */
-     int reserved_ints[4];        /* [0] is used by perfmon.c for minimal timer resolution in us */
+     int reserved[2];             /* */
      unsigned int hardware_intr:1;         /* hw overflow intr, does not need to be emulated in software*/
      unsigned int precise_intr:1;          /* Performance interrupts happen precisely */
      unsigned int posix1b_timers:1;        /* Using POSIX 1b interval timers (timer_create) instead of setitimer */
@@ -528,7 +544,6 @@ read the documentation carefully.  */
       float revision;               /* Revision of CPU */
       float mhz;                    /* Cycle time of this CPU */
       int clock_mhz;                /* Cycle time of this CPU's cycle counter */
-      int clock_ticks;              /* clock ticks per second */
       PAPI_mh_info_t mem_hierarchy;  /* PAPI memory heirarchy description */
    } PAPI_hw_info_t;
 
@@ -539,7 +554,7 @@ read the documentation carefully.  */
 
    typedef struct _papi_multiplex_option {
       int eventset;
-      int us;
+      int ns;
       int flags;
    } PAPI_multiplex_option_t;
 
@@ -566,11 +581,11 @@ read the documentation carefully.  */
       PAPI_domain_option_t defdomain;
       PAPI_attach_option_t attach;
       PAPI_multiplex_option_t multiplex;
+      PAPI_itimer_option_t itimer; 
       PAPI_hw_info_t *hw_info;
       PAPI_shlib_info_t *shlib_info;
       PAPI_exe_info_t *exe_info;
       PAPI_substrate_info_t *sub_info;
-      PAPI_overflow_option_t ovf_info; /* not used anywhere I could find - dkt */
       PAPI_addr_range_option_t addr;
    } PAPI_option_t;
 
@@ -682,11 +697,13 @@ read the documentation carefully.  */
    int   PAPI_get_multiplex(int EventSet);
    int   PAPI_get_opt(int option, PAPI_option_t * ptr);
    long_long PAPI_get_real_cyc(void);
+   long_long PAPI_get_real_nsec(void);
    long_long PAPI_get_real_usec(void);
    const PAPI_shlib_info_t *PAPI_get_shared_lib_info(void);
    int   PAPI_get_thr_specific(int tag, void **ptr);
    int PAPI_get_overflow_event_index(int Eventset, long_long overflow_vector, int *array, int *number);
    long_long PAPI_get_virt_cyc(void);
+   long_long PAPI_get_virt_nsec(void);
    long_long PAPI_get_virt_usec(void);
    int   PAPI_is_initialized(void);
    int   PAPI_library_init(int version);

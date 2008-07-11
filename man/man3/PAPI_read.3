@@ -38,7 +38,7 @@ copies the counters of the indicated event set into the array
 .IR values .
 It also places a real-time cycle timestamp into
 .IR cyc .
-The counters continue counting after the read.
+The counters continue counting after the read. This call DOES NO ERROR CHECKING for performance sakes. The user should call a PAPI_read() before to make sure that this call will succeed. Invalid arguments to this call will likely result in dumping core.
 .LP
 .B PAPI_accum()
 adds the counters of the indicated event set into the array

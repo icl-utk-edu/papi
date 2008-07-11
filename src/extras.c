@@ -297,7 +297,6 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, unsigned long address,
          overflow_vector = overflow_bit;
 
       if ((ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE) || overflow_flag) {
-         ESI->overflow.count++;
          if (ESI->state & PAPI_PROFILING) {
             int k = 0;
             while (overflow_vector) {
@@ -352,10 +351,10 @@ volatile int _papi_hwi_using_signal = 0;
 static MMRESULT wTimerID;       // unique ID for referencing this timer
 static UINT wTimerRes;          // resolution for this timer
 
-int _papi_hwi_start_timer(int milliseconds)
+int _papi_hwi_start_timer(int ns)
 {
    int retval = PAPI_OK;
-
+   int milliseconds = ns / 1000000;
    TIMECAPS tc;
    DWORD threadID;
 
@@ -405,17 +404,16 @@ int _papi_hwi_stop_timer(void)
 
 #else
 
-static struct sigaction oaction;
-static struct itimerval ovalue;
 int _papi_hwi_using_signal[PAPI_NSIG];
 
-int _papi_hwi_start_timer(int milliseconds)
+int _papi_hwi_start_timer(int timer, int signal, int ns)
 {
    struct itimerval value;
+   int us = ns / 1000;
 
 #ifdef ANY_THREAD_GETS_SIGNAL
    _papi_hwi_lock(INTERNAL_LOCK);
-   if ((_papi_hwi_using_signal[_papi_hwi_system_info.sub_info.multiplex_timer_sig]-1))
+   if ((_papi_hwi_using_signal[signal]-1))
      {
        INTDBG("itimer already installed\n");
        _papi_hwi_unlock(INTERNAL_LOCK);
@@ -425,12 +423,12 @@ int _papi_hwi_start_timer(int milliseconds)
 #endif
 
    value.it_interval.tv_sec = 0;
-   value.it_interval.tv_usec = milliseconds * 1000;
+   value.it_interval.tv_usec = ns / 1000;
    value.it_value.tv_sec = 0;
-   value.it_value.tv_usec = milliseconds * 1000;
+   value.it_value.tv_usec = ns / 1000;
 
-   INTDBG("installing itimer %d ms\n",milliseconds);
-   if (setitimer(_papi_hwi_system_info.sub_info.multiplex_timer_num, &value, &ovalue) < 0)
+   INTDBG("Installing itimer %d, with %d us interval\n",timer,us);
+   if (setitimer(timer, &value, NULL) < 0)
      {
        PAPIERROR("setitimer errno %d",errno);
        return (PAPI_ESYS);
@@ -471,14 +469,14 @@ int _papi_hwi_start_signal(int signal, int need_context)
 #endif
 
    INTDBG("installing signal handler\n");
-   if (sigaction(signal, &action, &oaction) < 0)
+   if (sigaction(signal, &action, NULL) < 0)
      {
        PAPIERROR("sigaction errno %d",errno);
        _papi_hwi_unlock(INTERNAL_LOCK);
        return (PAPI_ESYS);
      }
 
-   INTDBG("_papi_hwi_using_signal is now %d.\n",_papi_hwi_using_signal[signal]);
+   INTDBG("_papi_hwi_using_signal[%d] is now %d.\n",signal,_papi_hwi_using_signal[signal]);
    _papi_hwi_unlock(INTERNAL_LOCK);
 
    return (PAPI_OK);
@@ -490,7 +488,7 @@ int _papi_hwi_stop_signal(int signal)
   if (--_papi_hwi_using_signal[signal] == 0) 
     {
       INTDBG("removing signal handler\n");
-      if (sigaction(signal, &oaction, NULL) == -1)
+      if (sigaction(signal, NULL, NULL) == -1)
 	{
 	  PAPIERROR("sigaction errno %d",errno);
 	  _papi_hwi_unlock(INTERNAL_LOCK);
@@ -498,17 +496,17 @@ int _papi_hwi_stop_signal(int signal)
 	}
     }
   
-  INTDBG("_papi_hwi_using_signal is now %d\n", _papi_hwi_using_signal[signal]);
+  INTDBG("_papi_hwi_using_signal[%d] is now %d\n",signal,_papi_hwi_using_signal[signal]);
   _papi_hwi_unlock(INTERNAL_LOCK);
 
   return(PAPI_OK);
 }
 
-int _papi_hwi_stop_timer(void)
+int _papi_hwi_stop_timer(int timer, int signal)
 {
 #ifdef ANY_THREAD_GETS_SIGNAL
    _papi_hwi_lock(INTERNAL_LOCK);
-   if (_papi_hwi_using_signal[_papi_hwi_system_info.sub_info.multiplex_timer_sig] > 1)
+   if (_papi_hwi_using_signal[signal] > 1)
      {
        INTDBG("itimer in use by another thread\n");
        _papi_hwi_unlock(INTERNAL_LOCK);
@@ -518,7 +516,7 @@ int _papi_hwi_stop_timer(void)
 #endif
 
    INTDBG("turning off timer\n");
-   if (setitimer(_papi_hwi_system_info.sub_info.multiplex_timer_num, &ovalue, NULL) == -1)
+   if (setitimer(timer, NULL, NULL) == -1)
      {
        PAPIERROR("setitimer errno %d",errno);
        return(PAPI_ESYS);

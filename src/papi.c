@@ -836,46 +836,66 @@ int PAPI_start(int EventSet)
 
    /* If overflowing is enabled, turn it on */
 
-   if (ESI->state & PAPI_OVERFLOWING) 
+   if ((ESI->state & PAPI_OVERFLOWING) && !(ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE))
      {
-       if (!(ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
-	 {
-           APIDBG("Overflow using: %s with a interval of %d ms\n", (ESI->overflow.flags&PAPI_OVERFLOW_FORCE_SW)?"[Forced Software]":"Software", ESI->overflow.timer_ms);
-	   retval = _papi_hwi_start_signal(_papi_hwi_system_info.sub_info.multiplex_timer_sig, NEED_CONTEXT);
-	   if (retval != PAPI_OK)
-	     papi_return(retval);
-	   retval = _papi_hwi_start_timer(ESI->overflow.timer_ms);
-	   if (retval != PAPI_OK)
-	     {
-               APIDBG("Error starting _papi_hwi_start_timer: %d\n", retval);
-	       _papi_hwi_stop_signal(_papi_hwi_system_info.sub_info.multiplex_timer_sig);
-	       papi_return(retval);
-	     }
-	 }
-        else {
-           APIDBG("Overflow using: [Hardware]\n");
-        }
+       APIDBG("Overflow using %s with timer %d, signal %d, ns %d\n", 
+	      (ESI->overflow.flags&PAPI_OVERFLOW_FORCE_SW)?"[Forced Software]":"Software",
+	      _papi_hwi_system_info.sub_info.itimer_num, 
+	      _papi_hwi_system_info.sub_info.itimer_sig,
+	      _papi_hwi_system_info.sub_info.itimer_ns);
+
+       retval = _papi_hwi_start_signal(_papi_hwi_system_info.sub_info.itimer_sig, NEED_CONTEXT);
+       if (retval != PAPI_OK)
+	 papi_return(retval);
+
+       /* Update the state of this EventSet and thread before to avoid races */
+       ESI->state ^= PAPI_STOPPED;
+       ESI->state |= PAPI_RUNNING;
+       if (!(ESI->state & PAPI_ATTACHED))
+	 thread->running_eventset = ESI;
+
+       retval = _papi_hwd_start(&thread->context, &ESI->machdep);
+       if (retval != PAPI_OK) {
+	 _papi_hwi_stop_signal(_papi_hwi_system_info.sub_info.itimer_sig);
+	 ESI->state ^= PAPI_RUNNING;
+	 ESI->state |= PAPI_STOPPED;
+	 if (!(ESI->state & PAPI_ATTACHED))
+	   thread->running_eventset = NULL;
+	 papi_return(retval);
+       }
+
+       retval = _papi_hwi_start_timer(_papi_hwi_system_info.sub_info.itimer_num, 
+				      _papi_hwi_system_info.sub_info.itimer_sig,
+				      _papi_hwi_system_info.sub_info.itimer_ns);
+       if (retval != PAPI_OK) {
+	 _papi_hwi_stop_signal(_papi_hwi_system_info.sub_info.itimer_sig);
+	 _papi_hwd_stop(&thread->context, &ESI->machdep);
+	 ESI->state ^= PAPI_RUNNING;
+	 ESI->state |= PAPI_STOPPED;
+	 if (!(ESI->state & PAPI_ATTACHED))
+	   thread->running_eventset = NULL;
+	 papi_return(retval);
+       }
+     }
+   else
+     {
+       /* Update the state of this EventSet and thread before to avoid races */
+       ESI->state ^= PAPI_STOPPED;
+       ESI->state |= PAPI_RUNNING;
+       if (!(ESI->state & PAPI_ATTACHED))
+	 thread->running_eventset = ESI;
+
+       retval = _papi_hwd_start(&thread->context, &ESI->machdep);
+       if (retval != PAPI_OK) {
+	 _papi_hwd_stop(&thread->context, &ESI->machdep);
+	 ESI->state ^= PAPI_RUNNING;
+	 ESI->state |= PAPI_STOPPED;
+	 if (!(ESI->state & PAPI_ATTACHED))
+	   thread->running_eventset = NULL;
+	 papi_return(retval);
+       }
      }
 
-   /* Merge the control bits from the new EventSet into the active counter config. */
-
-   retval = _papi_hwd_start(&thread->context, &ESI->machdep);
-   if (retval != PAPI_OK)
-      papi_return(retval);
-
-   /* Update the state of this EventSet */
-
-   ESI->state ^= PAPI_STOPPED;
-   ESI->state |= PAPI_RUNNING;
-
-   /* Update the running event set for this thread */
-
-   /* #warning "I don't know why this is here" */
-
-   if (!(ESI->state & PAPI_ATTACHED))
-     thread->running_eventset = ESI;
-
-   APIDBG("PAPI_start returns %d\n", retval);
    return (retval);
 }
 
@@ -939,13 +959,12 @@ int PAPI_stop(int EventSet, long_long * values)
 
    if (ESI->state & PAPI_OVERFLOWING) 
      {
-       ESI->overflow.count = 0;
        if (!(ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
 	 {
-	   retval = _papi_hwi_stop_timer();
+	   retval = _papi_hwi_stop_timer(_papi_hwi_system_info.sub_info.itimer_num, _papi_hwi_system_info.sub_info.itimer_sig);
 	   if (retval != PAPI_OK)
 	     papi_return(retval);
-	   _papi_hwi_stop_signal(_papi_hwi_system_info.sub_info.multiplex_timer_sig);
+	   _papi_hwi_stop_signal(_papi_hwi_system_info.sub_info.itimer_sig);
 	 }
      }
 
@@ -995,13 +1014,6 @@ int PAPI_reset(int EventSet)
 
          retval = _papi_hwd_reset(&thread->context, &ESI->machdep);
 
-         if ((ESI->state & PAPI_OVERFLOWING) &&
-             (ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
-            ESI->overflow.count = 0;
-
-         if ((ESI->state & PAPI_PROFILING) && (_papi_hwi_system_info.sub_info.hardware_intr) &&
-             !(ESI->profile.flags&PAPI_PROFIL_FORCE_SW))
-            ESI->profile.overflowcount = 0;
       }
    } else {
       memset(ESI->sw_stop, 0x00, ESI->NumberOfEvents * sizeof(long_long));
@@ -1021,7 +1033,6 @@ int PAPI_read(int EventSet, long_long * values)
    if (ESI == NULL)
       papi_return(PAPI_ENOEVST);
    thread = ESI->master;
-
    if (values == NULL)
       papi_return(PAPI_EINVAL);
 
@@ -1046,7 +1057,7 @@ int PAPI_read(int EventSet, long_long * values)
 #endif
 
    APIDBG("PAPI_read returns %d\n", retval);
-   return (retval);
+   return (PAPI_OK);
 }
 
 int PAPI_read_ts(int EventSet, long_long * values, long_long *cyc)
@@ -1059,7 +1070,7 @@ int PAPI_read_ts(int EventSet, long_long * values, long_long *cyc)
    thread = ESI->master;
    retval = _papi_hwi_read(&thread->context, ESI, values);
    *cyc = _papi_hwd_get_real_cycles();
-   return(retval);
+   papi_return(retval);
 }
 
 int PAPI_accum(int EventSet, long_long * values)
@@ -1178,7 +1189,7 @@ int PAPI_multiplex_init(void)
 {
    int retval;
 
-   retval = mpx_init(_papi_hwi_system_info.sub_info.multiplex_timer_us);
+   retval = mpx_init(_papi_hwi_system_info.sub_info.itimer_ns);
    papi_return(retval);
 }
 
@@ -1240,7 +1251,7 @@ int PAPI_set_multiplex(int EventSet)
    memset(&mpx,0x0,sizeof(mpx));
    mpx.multiplex.eventset = EventSet;
    mpx.multiplex.flags = PAPI_MULTIPLEX_DEFAULT;
-   mpx.multiplex.us = _papi_hwi_system_info.sub_info.multiplex_timer_us;
+   mpx.multiplex.ns = _papi_hwi_system_info.sub_info.itimer_ns;
    return(PAPI_set_opt(PAPI_MULTIPLEX, &mpx));
 }
 
@@ -1308,26 +1319,50 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
        internal.attach.ESI->attach.tid = ptr->attach.tid;
        return(PAPI_OK);
      }
-   case PAPI_DEF_MPX_USEC:
+   case PAPI_DEF_MPX_NS:
      {
-       if (ptr->multiplex.us <= 1)
+       if (ptr->multiplex.ns < 0)
 	 papi_return(PAPI_EINVAL);
-       /* We should check the resolution here with the system, either
-	  substrate if kernel multiplexing or PAPI if SW multiplexing. */
-       internal.multiplex.us = ptr->multiplex.us;
-       if (_papi_hwi_system_info.sub_info.kernel_multiplex)
-	{
-         retval = _papi_hwi_lookup_or_create_thread(&thread);
-         if (retval != PAPI_OK)
-		return(retval);
-	 retval = _papi_hwd_ctl(&thread->context, PAPI_DEF_MPX_USEC, &internal);
-	}
+       internal.multiplex.ns = ptr->multiplex.ns;
+       /* Low level just checks/adjusts the args for this substrate */
+       retval = _papi_hwd_ctl(&thread->context, PAPI_DEF_MPX_NS, &internal);
        if (retval == PAPI_OK)
-	{
-	_papi_hwi_system_info.sub_info.multiplex_timer_us = internal.multiplex.us;
-	 ptr->multiplex.us = internal.multiplex.us;
-	}
-       return(PAPI_OK);
+	 {
+	   _papi_hwi_system_info.sub_info.itimer_ns = internal.multiplex.ns;
+	   ptr->multiplex.ns = internal.multiplex.ns;
+	 }
+       papi_return(retval);
+     }
+   case PAPI_DEF_ITIMER_NS:
+     {
+       if (ptr->itimer.ns < 0)
+	 papi_return(PAPI_EINVAL);
+       internal.itimer.ns = ptr->itimer.ns;
+       /* Low level just checks/adjusts the args for this substrate */
+       retval = _papi_hwd_ctl(NULL, PAPI_DEF_ITIMER_NS, &internal);
+       if (retval == PAPI_OK)
+	 {
+	   _papi_hwi_system_info.sub_info.itimer_ns = internal.itimer.ns;
+	   ptr->itimer.ns = internal.itimer.ns;
+	 }
+       papi_return(retval);
+     }
+   case PAPI_DEF_ITIMER:
+     {
+       if (ptr->itimer.ns < 0)
+	 papi_return(PAPI_EINVAL);
+       memcpy(&internal.itimer,&ptr->itimer,sizeof(PAPI_itimer_option_t));
+       /* Low level just checks/adjusts the args for this substrate */
+       retval = _papi_hwd_ctl(NULL, PAPI_DEF_ITIMER, &internal);
+       if (retval == PAPI_OK) {
+	 _papi_hwi_system_info.sub_info.itimer_num = ptr->itimer.itimer_num;
+	 _papi_hwi_system_info.sub_info.itimer_sig = ptr->itimer.itimer_sig;
+	 if (ptr->itimer.ns > 0)
+	   _papi_hwi_system_info.sub_info.itimer_ns = ptr->itimer.ns;
+	 /* flags are currently ignored, eventually the flags will be able
+	    to specify whether or not we use POSIX itimers (clock_gettimer) */
+       }
+       papi_return(retval);
      }
    case PAPI_MULTIPLEX:
       {
@@ -1339,8 +1374,10 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
             papi_return(PAPI_EISRUN);
          if (ESI->state & PAPI_MULTIPLEXING)
             papi_return(PAPI_EINVAL);
+	 if (ptr->multiplex.ns < 0)
+	   papi_return(PAPI_EINVAL);
 	 internal.multiplex.ESI = ESI;
-	 internal.multiplex.us = ptr->multiplex.us;
+	 internal.multiplex.ns = ptr->multiplex.ns;
 	 internal.multiplex.flags = ptr->multiplex.flags;
 	 if ((_papi_hwi_system_info.sub_info.kernel_multiplex) && ((ptr->multiplex.flags & PAPI_MULTIPLEX_FORCE_SW) == 0))
 	   {
@@ -1350,7 +1387,7 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 	    if (retval == PAPI_OK)
 	   	papi_return(_papi_hwi_convert_eventset_to_multiplex(&internal.multiplex));
 	 /* Kernel or PAPI may have changed this value so send it back out to the user */
-	 ptr->multiplex.us = internal.multiplex.us;
+	 ptr->multiplex.ns = internal.multiplex.ns;
       }
    case PAPI_DEBUG: 
       {
@@ -1570,11 +1607,28 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
        ptr->attach.tid = ESI->attach.tid;
        return ((ESI->state & PAPI_ATTACHED) != 0);
      }
-   case PAPI_DEF_MPX_USEC:
+   case PAPI_DEF_MPX_NS:
      {
        if (ptr == NULL)
 	 papi_return(PAPI_EINVAL);
-       ptr->multiplex.us = _papi_hwi_system_info.sub_info.multiplex_timer_us;
+       ptr->multiplex.ns = _papi_hwi_system_info.sub_info.itimer_ns;
+       return(PAPI_OK);
+     }
+   case PAPI_DEF_ITIMER_NS:
+     {
+       if (ptr == NULL)
+	 papi_return(PAPI_EINVAL);
+       ptr->itimer.ns = _papi_hwi_system_info.sub_info.itimer_ns;
+       return(PAPI_OK);
+     }
+   case PAPI_DEF_ITIMER:
+     {
+       if (ptr == NULL)
+	 papi_return(PAPI_EINVAL);
+       ptr->itimer.itimer_num = _papi_hwi_system_info.sub_info.itimer_num;
+       ptr->itimer.itimer_sig = _papi_hwi_system_info.sub_info.itimer_sig;
+       ptr->itimer.ns = _papi_hwi_system_info.sub_info.itimer_ns;
+       ptr->itimer.flags = 0;
        return(PAPI_OK);
      }
    case PAPI_MULTIPLEX:
@@ -1584,7 +1638,7 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
          ESI = _papi_hwi_lookup_EventSet(ptr->multiplex.eventset);
          if (ESI == NULL)
             papi_return(PAPI_ENOEVST);
-	 ptr->multiplex.us = ESI->multiplex.us;
+	 ptr->multiplex.ns = ESI->multiplex.ns;
 	 ptr->multiplex.flags = ESI->multiplex.flags;
          return (ESI->state & PAPI_MULTIPLEXING) != 0;
       }
@@ -1714,15 +1768,13 @@ void PAPI_shutdown(void)
  again:
 #endif
    for (i = 0; i < map->totalSlots; i++) {
-     ESI = map->dataSlotArray[i];
-     if (ESI) {
-       if (ESI->master == master) {
-	 if (ESI->state & PAPI_RUNNING) 
-	   PAPI_stop(i, NULL);
-	 PAPI_cleanup_eventset(i);
-       } else if (ESI->state & PAPI_RUNNING) 
-	 j++;
-     }
+     ESI = &map->dataSlotArray[i];
+     if (ESI->master && (ESI->master == master)) {
+       if (ESI->state & PAPI_RUNNING) 
+	 PAPI_stop(i, NULL);
+       PAPI_cleanup_eventset(i);
+     } else if (ESI->state & PAPI_RUNNING) 
+       j++;
    }
 
    /* No locking required, we're just waiting for the others
@@ -1806,12 +1858,14 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
 
    /* We do not support derived events in overflow */
    /* Unless it's DERIVED_CMPD in which no calculations are done */
+
    if ( !(flags&PAPI_OVERFLOW_FORCE_SW)&& threshold != 0 &&
        (ESI->EventInfoArray[index].derived) && 
        (ESI->EventInfoArray[index].derived != DERIVED_CMPD))
       papi_return(PAPI_EINVAL);
 
-/* the first time to call PAPI_overflow function */
+   /* the first time to call PAPI_overflow function */
+
    if (!(ESI->state & PAPI_OVERFLOWING)) {
       if (handler == NULL)
          papi_return(PAPI_EINVAL);
@@ -1841,7 +1895,6 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
       ESI->overflow.threshold[i] = 0;
       ESI->overflow.EventIndex[i] = 0;
       ESI->overflow.EventCode[i] = 0;
-
       ESI->overflow.event_counter--;
    } else {
       if ( ESI->overflow.event_counter > 0 ){
@@ -1854,52 +1907,52 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
          if (ESI->overflow.EventCode[i] == EventCode)
             break;
       }
-      if (i == ESI->overflow.event_counter){
+      /* A new entry */
+      if (i == ESI->overflow.event_counter) {
+         ESI->overflow.EventCode[i] = EventCode;
          ESI->overflow.event_counter++;
-         event_counter = ESI->overflow.event_counter;
-         ESI->overflow.deadline[event_counter - 1] = threshold;
-         ESI->overflow.threshold[event_counter - 1] = threshold;
-         ESI->overflow.EventIndex[event_counter - 1] = index;
-         ESI->overflow.EventCode[event_counter - 1] = EventCode;
-         ESI->overflow.flags = flags;
       }
-      else {
-         ESI->overflow.deadline[i] = threshold;
-         ESI->overflow.threshold[i] = threshold;
-         ESI->overflow.EventIndex[i] = index;
-         ESI->overflow.flags = flags;
-      }
+      /* New or existing entry */
+      ESI->overflow.deadline[i] = threshold;
+      ESI->overflow.threshold[i] = threshold;
+      ESI->overflow.EventIndex[i] = index;
+      ESI->overflow.flags = flags;
    }
-   ESI->overflow.handler = handler;
-   ESI->overflow.count = 0;
 
-   /* Set up the option structure for the low level */
+   /* If overflowing is already active, we should check to
+      make sure that we don't specify a different handler
+      or different flags here. You can't mix them. */
+
+   ESI->overflow.handler = handler;
+
+   /* Set up the option structure for the low level.
+      If we have hardware interrupts and we are not using
+      forced software emulated interrupts */
 
    if (_papi_hwi_system_info.sub_info.hardware_intr && 
-       !(ESI->overflow.flags&PAPI_OVERFLOW_FORCE_SW)) {
-      if ( threshold != 0 )
-         ESI->overflow.flags |= PAPI_OVERFLOW_HARDWARE;
-      retval = _papi_hwd_set_overflow(ESI, index, threshold);
-      if ( !(ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE) )
-         ESI->overflow.timer_ms = PAPI_ITIMER_MS;
-      else if (retval < PAPI_OK){
-         if ( ESI->overflow.event_counter == 0 )
-            ESI->overflow.flags = 0;
-         papi_return(retval);
-      }
-   } else{
-      ESI->overflow.timer_ms = PAPI_ITIMER_MS;
-      ESI->overflow.flags &= ~(PAPI_OVERFLOW_HARDWARE);
+       !(ESI->overflow.flags & PAPI_OVERFLOW_FORCE_SW)) {
+     retval = _papi_hwd_set_overflow(ESI, index, threshold);
+     if (retval == PAPI_OK) 
+       ESI->overflow.flags |= PAPI_OVERFLOW_HARDWARE;
+     else {
+       papi_return (retval); /* We should undo stuff here */
+     }
+   } else {
+     /* Make sure hardware overflow is not set */
+     ESI->overflow.flags &= ~(PAPI_OVERFLOW_HARDWARE);
    }
 
    APIDBG("Overflow using: %s\n", (ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE?"[Hardware]":ESI->overflow.flags&PAPI_OVERFLOW_FORCE_SW?"[Forced Software]":"[Software]"));
-   /* Toggle the overflow flag */
-   if ((ESI->overflow.event_counter == 1 && threshold > 0) ||
-       (ESI->overflow.event_counter == 0 && threshold == 0))
-      ESI->state ^= PAPI_OVERFLOWING;
 
-   if ( ESI->overflow.event_counter == 0 )
+   /* Toggle the overflow flags and ESI state */
+
+   if (ESI->overflow.event_counter >= 1)
+      ESI->state |= PAPI_OVERFLOWING;
+   else {
+      ESI->state ^= PAPI_OVERFLOWING;
       ESI->overflow.flags = 0;
+      ESI->overflow.handler = NULL;
+   }
 
    return(PAPI_OK);
 }
@@ -2008,6 +2061,8 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
       ESI->profile.EventIndex[i] = index;
    }
 
+   APIDBG("Profile event counter is %d\n",ESI->profile.event_counter);
+
    /* Clear out old flags */
    if (threshold == 0) 
      flags |= ESI->profile.flags;
@@ -2038,27 +2093,28 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
    /* Set up the option structure for the low level */
    ESI->profile.flags = flags;
 
-/*   if (flags & PAPI_PROFIL_FORCE_SW)*/
-   if ((flags & PAPI_PROFIL_FORCE_SW) || (_papi_hwi_system_info.sub_info.kernel_profile == 0))
-     retval = PAPI_overflow(EventSet, EventCode, threshold, forceSW, _papi_hwi_dummy_handler);
-   else 
+   if (_papi_hwi_system_info.sub_info.kernel_profile &&
+       !(ESI->profile.flags & PAPI_PROFIL_FORCE_SW)) {
      retval = _papi_hwd_set_profile(ESI, index, threshold);
-
+     if ((retval == PAPI_OK) && (threshold > 0)) {
+       /* We need overflowing because we use the overflow dispatch handler */
+       ESI->state |= PAPI_OVERFLOWING;
+       ESI->overflow.flags |= PAPI_OVERFLOW_HARDWARE;
+     }
+   } else {
+       retval = PAPI_overflow(EventSet, EventCode, threshold, forceSW, _papi_hwi_dummy_handler);
+   }
    if (retval < PAPI_OK)
-      return (retval);
+       papi_return (retval); /* We should undo stuff here */
 
-   APIDBG("Profile event counter is %d\n",ESI->profile.event_counter);
+   /* Toggle the profiling flags and ESI state */
 
-   /* Toggle profiling flag if we are the first or the last event to be profiled on */
-
-   if ((ESI->profile.event_counter == 1 && threshold > 0) ||
-       (ESI->profile.event_counter == 0 && threshold == 0))
+   if (ESI->profile.event_counter >= 1)
+     ESI->state |= PAPI_PROFILING;
+   else {
      ESI->state ^= PAPI_PROFILING;
-   
-   /* Set flags to 0 if we are clearing the last event */
-
-   if (ESI->profile.event_counter == 0 && threshold == 0)
      ESI->profile.flags = 0;
+   }
 
    return(PAPI_OK);
 }
@@ -2279,6 +2335,11 @@ long_long PAPI_get_real_cyc(void)
    return (_papi_hwd_get_real_cycles());
 }
 
+long_long PAPI_get_real_nsec(void)
+{
+  return ((_papi_hwd_get_real_cycles()*1000LL)/(long_long)_papi_hwi_system_info.hw_info.mhz);
+}
+
 long_long PAPI_get_real_usec(void)
 {
    return (_papi_hwd_get_real_usec());
@@ -2294,7 +2355,20 @@ long_long PAPI_get_virt_cyc(void)
    if ((retval = _papi_hwi_lookup_or_create_thread(&master)) != PAPI_OK)
      papi_return(retval);
 
-   return ((long_long)_papi_hwd_get_virt_cycles(&master->context));
+   return (_papi_hwd_get_virt_cycles(&master->context));
+}
+
+long_long PAPI_get_virt_nsec(void)
+{
+   ThreadInfo_t *master;
+   int retval;
+
+   if (init_level == PAPI_NOT_INITED)
+      papi_return(PAPI_ENOINIT);
+   if ((retval = _papi_hwi_lookup_or_create_thread(&master)) != PAPI_OK)
+     papi_return(retval);
+
+   return ((_papi_hwd_get_virt_cycles(&master->context)*1000LL)/(long_long)_papi_hwi_system_info.hw_info.mhz);
 }
 
 long_long PAPI_get_virt_usec(void)
@@ -2307,7 +2381,7 @@ long_long PAPI_get_virt_usec(void)
    if ((retval = _papi_hwi_lookup_or_create_thread(&master)) != PAPI_OK)
      papi_return(retval);
 
-   return ((long_long)_papi_hwd_get_virt_usec(&master->context));
+   return (_papi_hwd_get_virt_usec(&master->context));
 }
 
 int PAPI_restore(void)
