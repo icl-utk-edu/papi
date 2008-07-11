@@ -175,28 +175,26 @@ int main(int argc, char **argv)
       if ((retval = PAPI_add_event(EventSet, PAPI_TOT_IIS)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
+   /* Make sure no errors and warm up */
 
-   /* Make sure no errors */
-
+   totcyc = PAPI_get_real_cyc();
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
    if ((retval = PAPI_stop(EventSet, NULL)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
    array = (long_long *)malloc(num_iters*sizeof(long_long));
-
-   /* Start the start/stop eval */
-
-   printf("Performing start/stop test...\n");
    if (array == NULL ) 
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
+   /* Determine clock latency */
+
+   printf("Performing start/stop test...\n");
+
    for (i = 0; i < num_iters; i++) {
       totcyc = PAPI_get_real_cyc();
-      PAPI_start(EventSet);
-      PAPI_stop(EventSet, values);
       totcyc = PAPI_get_real_cyc() - totcyc;
-      array[i]=totcyc;
+      array[i] = totcyc;
    }
 
    std = do_stats(array, &min, &max, &average);
@@ -216,18 +214,49 @@ int main(int argc, char **argv)
       free(d);
    }
 
+   /* Start the start/stop eval */
+
+   printf("Performing start/stop test...\n");
+
+#if 0
+   for (i = 0; i < num_iters; i++) {
+      totcyc = PAPI_get_real_cyc();
+      PAPI_start(EventSet);
+      PAPI_stop(EventSet, values);
+      totcyc = PAPI_get_real_cyc() - totcyc;
+      array[i] = totcyc;
+   }
+
+   std = do_stats(array, &min, &max, &average);
+
+   print_stats(0, min, max, average, std);
+
+   if (show_std_dev) {
+      do_std_dev(array, s, std, average);
+      print_std_dev(s);
+   }
+
+   if (show_dist) {
+      int *d;
+      d = malloc(bins*sizeof(int));
+      do_dist(array, min, max, bins, d);
+      print_dist(min, max, bins, d);
+      free(d);
+   }
+#endif
 
    /* Start the read eval */
    printf("\n\nPerforming read test...\n");
 
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
+   PAPI_read(EventSet, values);
 
    for (i = 0; i < num_iters; i++) {
       totcyc = PAPI_get_real_cyc();
       PAPI_read(EventSet, values);
       totcyc = PAPI_get_real_cyc() - totcyc;
-      array[i]=totcyc;
+      array[i] = totcyc;
    }
 
    std = do_stats(array, &min, &max, &average);

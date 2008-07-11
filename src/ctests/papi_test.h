@@ -23,6 +23,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <math.h>
 
 #if defined ( _CRAYT3E )
@@ -73,6 +74,7 @@ void fdo_flops(int *n);
 void do_reads(int n);
 void do_both(int n);
 void do_l1misses(int n);
+void do_stuff(void);
 void dummy(void *);
 char *stringify_domain(int domain);
 char *stringify_all_domains(int domains);

@@ -25,7 +25,6 @@ int papi_print_header (char *prompt, int event_flag, const PAPI_hw_info_t **hwin
 	printf("CPU Revision             : %f\n", (*hwinfo)->revision);
 	printf("CPU Megahertz            : %f\n", (*hwinfo)->mhz);
 	printf("CPU Clock Megahertz      : %d\n", (*hwinfo)->clock_mhz);
-	printf("CPU Clock Ticks  / sec   : %d\n", (*hwinfo)->clock_ticks);
 	printf("CPU's in this Node       : %d\n", (*hwinfo)->ncpu);
 	printf("Nodes in this System     : %d\n", (*hwinfo)->nnodes);
 	printf("Total CPU's              : %d\n", (*hwinfo)->totalcpus);
@@ -497,17 +496,8 @@ void test_fail(char *file, int line, char *call, int retval)
 {
    char buf[128];
 
-   if (retval == PAPI_ESBSTR || retval == PAPI_ENOEVNT || retval == PAPI_ECNFLCT || 
-       retval == PAPI_EPERM)
-      test_skip(file, line, call, retval);
    memset(buf, '\0', sizeof(buf));
-   if (retval != 0)
-      fprintf(stdout,"%-40s FAILED\nLine # %d\n", file, line);
-   else {
-      fprintf(stdout,"%-40s SKIPPED\n", file);
-      if (!TESTS_QUIET)
-         fprintf(stdout,"Line # %d\n", line);
-   }
+   fprintf(stdout,"%-40s FAILED\nLine # %d\n", file, line);
    if (retval == PAPI_ESYS) {
       sprintf(buf, "System error in %s", call);
       perror(buf);

@@ -20,8 +20,9 @@ int total = 0;
 void *thread_fn(void *dummy)
 {
    while (1){
-      do_both(NUM_ITERS);
+     do_stuff();
    }
+   return(NULL);
 }
 
 void handler(int EventSet, void *address, long_long overflow_vector, void *context)
@@ -66,10 +67,12 @@ void mainloop(int arg)
    if ((retval = PAPI_overflow(EventSet1, PAPI_event, THRESHOLD, 0, handler)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
+   do_stuff();
+
    if ((retval = PAPI_start(EventSet1)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   do_both(arg);
+   do_stuff();
 
    if ((retval = PAPI_stop(EventSet1, values[0])) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);

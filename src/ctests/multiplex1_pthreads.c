@@ -123,10 +123,12 @@ void *case1_pthreads(void *arg)
          printf("Added %s\n", out);
    }
 
+   do_stuff();
+
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   do_both(NUM_ITERS);
+   do_stuff();
 
    if ((retval = PAPI_stop(EventSet, values)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
@@ -168,10 +170,12 @@ void *case2_pthreads(void *arg)
          printf("Added %s\n", out);
    }
 
+   do_stuff();
+
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   do_both(NUM_ITERS);
+   do_stuff();
 
    if ((retval = PAPI_stop(EventSet, values)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
@@ -213,10 +217,12 @@ void *case3_pthreads(void *arg)
    if ((retval = PAPI_set_multiplex(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_set_multiplex", retval);
 
+   do_stuff();
+
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   do_both(NUM_ITERS);
+   do_stuff();
 
    if ((retval = PAPI_stop(EventSet, values)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
@@ -262,10 +268,12 @@ void *case4_pthreads(void *arg)
    PAPI_event_code_to_name(PAPI_events[i], out);
    printf("Added %s\n", out);
 
+   do_stuff();
+
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   do_both(NUM_ITERS);
+   do_stuff();
 
    if ((retval = PAPI_stop(EventSet, values)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);

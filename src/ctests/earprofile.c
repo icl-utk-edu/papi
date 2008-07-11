@@ -54,6 +54,8 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
    int profflags[2] = {PAPI_PROFIL_POSIX, PAPI_PROFIL_POSIX|PAPI_PROFIL_INST_EAR};
    int num_profs;
 
+   do_stuff();
+
    num_profs = sizeof(profflags)/sizeof(int);
    ear_no_profile();
    blength = prof_size(plength, scale, bucket, &num_buckets);
@@ -71,7 +73,7 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
       if ((retval = PAPI_start(EventSet)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-      do_both(NUM_ITERS);
+      do_stuff();
 
       if ((retval = PAPI_stop(EventSet, values[1])) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_stop", retval);

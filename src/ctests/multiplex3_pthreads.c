@@ -21,8 +21,9 @@
 void *thread_fn(void *dummy)
 {
    while (1){
-      do_both(NUM_ITERS);
+     do_stuff();
    }
+   return(NULL);
 }
 
 /* Runs a bunch of multiplexed events */
@@ -100,13 +101,14 @@ void mainloop(int arg)
 	      printf("Could not add %s\n", pset.symbol);
         }
 
+	do_stuff();
+
         if (retval == PAPI_OK) {
           retval = PAPI_start(EventSet);
           if (retval != PAPI_OK)
             test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-          do_both(arg);
-          do_misses(1, 1024*1024*4);
+	  do_stuff();
 
           retval = PAPI_stop(EventSet, values);
           if (retval != PAPI_OK)
@@ -129,8 +131,7 @@ void mainloop(int arg)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   do_both(arg);
-   do_misses(1, 1024*1024*4);
+   do_stuff();
 
    retval = PAPI_stop(EventSet, values);
    if (retval != PAPI_OK)

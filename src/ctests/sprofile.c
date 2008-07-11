@@ -79,10 +79,12 @@ int main(int argc, char **argv)
                               PAPI_PROFIL_POSIX | PAPI_PROFIL_BUCKET_16)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_sprofil", retval);
 
+   do_stuff();
+
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   do_both(NUM_ITERS);
+   do_stuff();
 
    if ((retval = PAPI_stop(EventSet, values[1])) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);

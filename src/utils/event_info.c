@@ -100,9 +100,6 @@ int papi_xml_hwinfo(FILE *f)
 	  hwinfo->ncpu);
   fprintf(f, "  <CPU revision=\"%f\" clockrate=\"%f\" />\n",
 	  hwinfo->revision, hwinfo->mhz);
-  fprintf(f, "  <clock rate=\"%d\" tickspersec=\"%d\" />\n",
-	  hwinfo->clock_mhz, hwinfo->clock_ticks );
-
   fprintf(f, "</hardware>\n");
 
   return (PAPI_OK);

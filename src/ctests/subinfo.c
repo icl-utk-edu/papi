@@ -37,10 +37,12 @@ int main(int argc, char **argv)
    printf("default_granularity: 0x%x (%s)\n",subinfo->default_granularity,stringify_granularity(subinfo->default_granularity));
    /* The default granularity when this substrate is used */
    printf("available_granularities: 0x%x (%s)\n",subinfo->available_granularities,stringify_all_granularities(subinfo->available_granularities)); /* Available granularities */
-   printf("multiplex_timer_sig: %d\n",subinfo->multiplex_timer_sig);      /* Width of opcode matcher if exists, 0 if not */
-   printf("multiplex_timer_num: %d\n",subinfo->multiplex_timer_num);      /* Width of opcode matcher if exists, 0 if not */
-   printf("multiplex_timer_us: %d\n",subinfo->multiplex_timer_us);      /* Width of opcode matcher if exists, 0 if not */
+   printf("itimer_sig: %d\n",subinfo->itimer_sig);     
+   printf("itimer_num: %d\n",subinfo->itimer_num);     
+   printf("itimer_ns: %d\n",subinfo->itimer_ns);      
+   printf("itimer_res_ns: %d\n",subinfo->itimer_res_ns); 
    printf("hardware_intr_sig: %d\n",subinfo->hardware_intr_sig);      /* Width of opcode matcher if exists, 0 if not */
+   printf("clock_ticks: %d\n",subinfo->clock_ticks);      
    printf("opcode_match_width: %d\n",subinfo->opcode_match_width);      /* Width of opcode matcher if exists, 0 if not */
 /*   printf("reserved_ints[4]: %d\n",subinfo->reserved_ints[4]); */
    printf("hardware_intr: %d\n",subinfo->hardware_intr);         /* Needs hw overflow intr to be emulated in software*/

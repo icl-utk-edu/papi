@@ -86,10 +86,12 @@ int case1()
          printf("Added %s\n", out);
    }
 
+   do_stuff();
+
    if (PAPI_start(EventSet) != PAPI_OK)
       CPP_TEST_FAIL("PAPI_start", retval);
 
-   do_both(NUM_ITERS);
+   do_stuff();
 
    retval = PAPI_stop(EventSet, values);
    if (retval != PAPI_OK)
@@ -136,10 +138,12 @@ int case2()
          printf("Added %s\n", out);
    }
 
+   do_stuff();
+
    if (PAPI_start(EventSet) != PAPI_OK)
       CPP_TEST_FAIL("PAPI_start", retval);
 
-   do_both(NUM_ITERS);
+   do_stuff();
 
    retval = PAPI_stop(EventSet, values);
    if (retval != PAPI_OK)
@@ -187,10 +191,12 @@ int case3()
    if (retval != PAPI_OK)
       CPP_TEST_FAIL("PAPI_set_multiplex", retval);
 
+   do_stuff();
+
    if (PAPI_start(EventSet) != PAPI_OK)
       CPP_TEST_FAIL("PAPI_start", retval);
 
-   do_both(NUM_ITERS);
+   do_stuff();
 
    retval = PAPI_stop(EventSet, values);
    if (retval != PAPI_OK)
@@ -245,10 +251,12 @@ int case4()
    PAPI_event_code_to_name(PAPI_events[i], out);
    printf("Added %s\n", out);
 
+   do_stuff();
+
    if (PAPI_start(EventSet) != PAPI_OK)
       CPP_TEST_FAIL("PAPI_start", retval);
 
-   do_both(NUM_ITERS);
+   do_stuff();
 
    retval = PAPI_stop(EventSet, values);
    if (retval != PAPI_OK)

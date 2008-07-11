@@ -157,10 +157,6 @@ main(int argc, char **argv)
 {
     char buf[100];
 
-#if !(defined(PCHILD) | defined(PEXEC) | defined(PEXEC) | defined(SYSTEM) | defined(SYSTEM2))
-    int ret;
-#endif
-
     if (argc < 2 || sscanf(argv[1], "%d", &num_events) < 1)
 	num_events = 1;
     if (num_events < 0 || num_events > MAX_EVENTS)
@@ -205,7 +201,7 @@ main(int argc, char **argv)
     test_pass(name,NULL,0);
 #else
     HERE("fork");
-    ret = fork();
+    { int ret = fork();
     if (ret < 0)
       test_fail(name,__LINE__,"fork failed",1);
     if (ret == 0) {
@@ -231,7 +227,7 @@ main(int argc, char **argv)
       test_fail(name,__LINE__,"child failed",1);
     else
       test_pass(name,NULL,0);
-    }
+    } }
 #endif
     exit(0);
 }

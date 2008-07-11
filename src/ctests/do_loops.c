@@ -2,8 +2,8 @@
 
 #include "papi_test.h"
 
-int buf[CACHE_FLUSH_BUFFER_SIZE_INTS];
-int buf_dummy = 0;
+volatile int buf[CACHE_FLUSH_BUFFER_SIZE_INTS];
+volatile int buf_dummy = 0;
 volatile int *flush = NULL;
 volatile int flush_dummy = 0;
 volatile double a = 0.5, b = 2.2;
@@ -86,10 +86,8 @@ void do_flops(int n)
 
    for (i = 0; i < n; i++) {
       c += a * b;
-#ifndef _CRAYT3E
-      dummy((void *) &c);
-#endif
    }
+   dummy((void *) &c);
 }
 
 void fdo_flops(int *n)
@@ -117,10 +115,13 @@ void _FDO_FLOPS(int *n)
   do_flops(*n);
 }
 
-void do_misses(int n, int size)
+void do_misses(int n, int bytes)
 {
-  register int i, j, tmp = buf_dummy, len = size / sizeof(int);
-  dummy(buf);
+  register int i, j, tmp = buf_dummy, len = bytes / sizeof(int);
+  dummy((void *)buf);
+  dummy((void *)&buf_dummy);
+  assert (len <= CACHE_FLUSH_BUFFER_SIZE_INTS);
+  n = n / 2;
   for (j = 0; j < n; j++)
     {
       for (i = 0; i < len; i++)
@@ -128,12 +129,14 @@ void do_misses(int n, int size)
 	  /* We need to read, modify, write here to look
 	     out for the write allocate policies. */
 	  buf[i] += tmp;
+	  /* Fake out some naive prefetchers */
+	  buf[len-1-i] -= tmp;
 	}
       tmp += len;
     }
   buf_dummy = tmp;
-  dummy(buf);
-  dummy(&buf_dummy);
+  dummy((void *)buf);
+  dummy((void *)&buf_dummy);
 }
 
 void fdo_misses(int *n, int *size)
@@ -159,43 +162,6 @@ void FDO_MISSES(int *n, int *size)
 void _FDO_MISSES(int *n, int *size)
 {
   do_misses(*n,*size);
-}
-
-void do_both(int n)
-{
-   int i;
-   const int flops = NUM_FLOPS / n;
-   const int reads = NUM_READS / n;
-
-   for (i = 0; i < n; i++) {
-      do_flops(flops);
-      do_reads(reads);
-   }
-}
-
-void fdo_both(int *n)
-{
-  do_both(*n);
-}
-
-void fdo_both_(int *n)
-{
-  do_both(*n);
-}
-
-void fdo_both__(int *n)
-{
-  do_both(*n);
-}
-
-void FDO_BOTH(int *n)
-{
-  do_both(*n);
-}
-
-void _FDO_BOTH(int *n)
-{
-  do_both(*n);
 }
 
 void do_flush(void)
@@ -268,4 +234,49 @@ void FDO_L1MISSES(int *n)
 void _FDO_L1MISSES(int *n)
 {
   do_l1misses(*n);
+}
+
+void do_stuff(void)
+{
+  static int loops = 0;
+
+  if (loops == 0)
+    {
+      struct timeval now, then;
+      gettimeofday(&then,NULL);
+      do {
+	do_flops(NUM_FLOPS);
+	do_reads(NUM_READS);
+	do_misses(1,1024*1024);
+	gettimeofday(&now,NULL);
+	loops++;
+      } while (now.tv_sec - then.tv_sec < NUM_WORK_SECONDS);
+    }
+  else
+    {
+      int i = 0;
+      do {
+	do_flops(NUM_FLOPS);
+	do_reads(NUM_READS);
+	do_misses(1,1024*1024);
+	i++;
+      } while (i < loops);
+    }
+}
+
+void do_stuff_(void)
+{
+  do_stuff();
+}
+void do_stuff__(void)
+{
+  do_stuff();
+}
+void DO_STUFF(void)
+{
+  do_stuff();
+}
+void _DO_STUFF(void)
+{
+  do_stuff();
 }

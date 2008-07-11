@@ -54,7 +54,7 @@ void *thread(void *arg)
       test_fail(__FILE__, __LINE__, "PAPI_start", ret);
     }
 
-    do_both(NUM_ITERS);
+    do_stuff();
 
     ret = PAPI_stop(eventset, values);
     if ( ret != PAPI_OK ) {
@@ -131,6 +131,8 @@ int main(int argc, char **argv)
               && (numevents < PAPI_MPX_DEF_DEG) );
 
     printf("Found %d events\n", numevents);
+
+    do_stuff();
 
     printf("Creating %d threads:\n", nthreads);
 
