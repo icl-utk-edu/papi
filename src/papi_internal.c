@@ -1054,7 +1054,6 @@ int _papi_hwi_init_global_internal(void)
    _papi_hwi_system_info.sub_info.cntr_DEAR_events = 0;      /* counters support data event addr register */
    _papi_hwi_system_info.sub_info.cntr_OPCM_events = 0;      /* counter events support opcode matching */
    _papi_hwi_system_info.sub_info.reserved_bits = 0;
-   _papi_hwi_system_info.sub_info.clock_ticks = sysconf(_SC_CLK_TCK);
 
    /* The PAPI_hw_info_t struct defined in papi.h */
    _papi_hwi_system_info.hw_info.ncpu = 0;     /* ncpu */
