@@ -1,3 +1,10 @@
+INCLUDE = -I.
+LIBRARY = -lpapi
+PAPILIB = $(LIBRARY)
+CC	= gcc
+CC_R	= $(CC) -pthread
+CFLAGS	= -g -O -Wall
+
 OMP	= zero_omp omptough
 SMP	= zero_smp
 SHMEM	= zero_shmem
@@ -27,8 +34,8 @@ BROKEN	= inherit pernode
 TESTS	= $(PTHREADS) $(SERIAL) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM)\
 	$(SHARED) $(EAR) $(RANGE) $(P4_TEST) $(ACPI) $(ATTACH)
 UTILOBJS= do_loops.o test_utils.o dummy.o
-PAPILIB	= ../$(LIBRARY)
-INCLUDE = -I. -I..  
+
+default all ctests ctest: serial multiplex_and_pthreads shared 
 
 attach: $(ATTACH)
 
@@ -239,7 +246,7 @@ profile: profile.c $(UTILOBJS) prof_utils.o $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) profile.c prof_utils.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile
 
 profile_force_software: profile.c $(UTILOBJS) prof_utils.o $(PAPILIB)
-	$(CC) -DSWPROFILE $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) profile.c prof_utils.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile_force_software
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DSWPROFILE profile.c prof_utils.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile_force_software
 
 profile_twoevents: profile_twoevents.c $(UTILOBJS) prof_utils.o $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) profile_twoevents.c prof_utils.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o profile_twoevents

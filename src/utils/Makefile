@@ -1,9 +1,14 @@
+INCLUDE = -I../ctests -I. 
+LIBRARY = -lpapi
+PAPILIB = $(LIBRARY)
+CC	= gcc
+CC_R	= $(CC) -pthread
+CFLAGS	= -g -O -Wall
+
 TARGETS = papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail papi_command_line papi_event_chooser papi_decode papi_xml_event_info
 UTILOBJS= do_loops.o dummy.o test_utils.o
-INCLUDE = -I.. -I../ctests
-PAPILIB=../$(LIBRARY)
 
-util: $(TARGETS)
+default all utils util: $(TARGETS)
 
 papi_event_chooser: event_chooser.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) event_chooser.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_event_chooser -lm

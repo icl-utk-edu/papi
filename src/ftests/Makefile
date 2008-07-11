@@ -1,12 +1,18 @@
+INCLUDE = -I../ctests -I.
+LIBRARY = -lpapi
+PAPILIB = $(LIBRARY)
+CC	= gcc
+F77	= gfortran
+CFLAGS	= -g -O 
+FFLAGS	= -g -O -ffixed-line-length-132
+
 TESTS 	= strtest zero first  second tenth description fdmemtest\
           accum highlevel cost johnmay2 \
 	  case1 case2 clockres eventname fmatrixlowpapi \
 	  fmatrixpapi fmatrixpapi2 flops fmultiplex1 fmultiplex2 avail 
 UTILOBJS = do_loops.o dummy.o ftests_util.o 
-PAPILIB	= ../$(LIBRARY)
-INCLUDE = -I. -I.. -I../ctests
  
-default: $(TESTS)
+default all ftests ftest: $(TESTS)
 
 attach:
 
@@ -101,7 +107,7 @@ fmultiplex2: fmultiplex2.F $(UTILOBJS) $(PAPILIB)
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) fmultiplex2.F $(UTILOBJS) $(PAPILIB) -o fmultiplex2 $(LDFLAGS)
 
 ftests_util.o: ftests_util.F fpapi_test.h 
-	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) -c $(FFLAGS) ftests_util.F
+	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) -c ftests_util.F
 
 do_loops.o: ../ctests/do_loops.c ../ctests/papi_test.h ../ctests/test_utils.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c ../ctests/do_loops.c
