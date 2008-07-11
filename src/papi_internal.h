@@ -105,21 +105,21 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
 /****WIN32 We'll need to figure out how to handle this for Windows */
 #ifdef _WIN32
-  #define PAPI_SIGNAL 1
-  #define PAPI_ITIMER 1
+  #define PAPI_INT_SIGNAL 1
+  #define PAPI_INT_ITIMER 1
 #else
   #ifdef __CATAMOUNT__ /* Catamount only defines ITIMER_REAL with a 1 sec(!) resolution */
-    #define PAPI_MPX_SIGNAL SIGALRM
-    #define PAPI_SIGNAL SIGPROF
-    #define PAPI_ITIMER ITIMER_REAL
+    #define PAPI_INT_MPX_SIGNAL SIGALRM
+    #define PAPI_INT_SIGNAL SIGPROF
+    #define PAPI_INT_ITIMER ITIMER_REAL
   #else
-    #define PAPI_MPX_SIGNAL SIGPROF
-    #define PAPI_SIGNAL SIGPROF
-    #define PAPI_ITIMER ITIMER_PROF
+    #define PAPI_INT_MPX_SIGNAL SIGPROF
+    #define PAPI_INT_SIGNAL SIGPROF
+    #define PAPI_INT_ITIMER ITIMER_PROF
   #endif
 #endif
 
-#define PAPI_ITIMER_MS 1
+#define PAPI_INT_ITIMER_MS 1
 #if defined(linux)
 #define PAPI_NSIG _NSIG
 #else
@@ -128,7 +128,7 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 
 /* Multiplex definitions */
 
-#define PAPI_MPX_DEF_US 10000   /*Default resolution in us. of mpx handler */
+#define PAPI_INT_MPX_DEF_US 10000   /*Default resolution in us. of mpx handler */
 
 /* Commands used to compute derived events */
 
@@ -185,15 +185,13 @@ typedef struct _EventSetGranularityInfo {
 } EventSetGranularityInfo_t;
 
 typedef struct _EventSetOverflowInfo {
+   int flags;
+   int event_counter;
+   PAPI_overflow_handler_t handler;
    long_long deadline[MAX_COUNTERS];
-   int count;
    int threshold[MAX_COUNTERS];
    int EventIndex[MAX_COUNTERS];
    int EventCode[MAX_COUNTERS];
-   int event_counter;
-   int flags;
-   int timer_ms;
-   PAPI_overflow_handler_t handler;
 } EventSetOverflowInfo_t;
 
 typedef struct _EventSetAttachInfo {
@@ -213,7 +211,6 @@ typedef struct _EventSetProfileInfo {
    int EventIndex[MAX_COUNTERS];
    int EventCode[MAX_COUNTERS];
    int flags;
-   int overflowcount;           /* number of overflows */
    int event_counter;
 } EventSetProfileInfo_t;
 
@@ -312,7 +309,7 @@ typedef struct _MPX_EventSet {
 
 typedef struct EventSetMultiplexInfo {
   MPX_EventSet *mpx_evset;
-  int us;
+  int ns;
   int flags; 
 } EventSetMultiplexInfo_t;
 
@@ -320,53 +317,50 @@ typedef struct EventSetMultiplexInfo {
 
 struct _ThreadInfo;
 
+/* Fields below are ordered by access in PAPI_read for performance */
+
 typedef struct _EventSetInfo {
-   unsigned long int tid;       /* Thread ID, only used if PAPI_thread_init() is called  */
-
-   int EventSetIndex;           /* Index of the EventSet in the array  */
-
-   int NumberOfEvents;          /* Number of events added to EventSet */
-
-   hwd_control_state_t machdep; /* This contains the encoding necessary for the 
-                                   hardware to set the counters to the appropriate
-                                   conditions */
-
-   long_long *hw_start;         /* Array of length _papi_hwi_system_info.num_cntrs that contains
-                                   unprocessed, out of order, long_long counter registers */
-
-   long_long *sw_stop;          /* Array of length ESI->NumberOfCounters that contains
-                                   processed, in order, PAPI counter values when used or stopped */
-
-   int state;                   /* The state of this entire EventSet; can be
-                                   PAPI_RUNNING or PAPI_STOPPED plus flags */
-
-   int NativeCount;             /* How many native events in the array below. */
-   NativeInfo_t NativeInfoArray[MAX_COUNTERS];  /* Info about each native event in the set */
-
-   EventInfo_t *EventInfoArray; /* This array contains the mapping from 
-                                   events added into the API into hardware 
-                                   specific encoding as returned by the 
-                                   kernel or the code that directly 
-                                   accesses the counters. */
-
-   EventSetDomainInfo_t domain;
-
-   EventSetGranularityInfo_t granularity;
-
-   EventSetOverflowInfo_t overflow;
-
-   EventSetMultiplexInfo_t multiplex;
-
-   EventSetAttachInfo_t attach;
-
-   EventSetProfileInfo_t profile;
-
-   struct _ThreadInfo *master;
-
+  struct _ThreadInfo *master;  /* Pointer to the thread that owns this EventSet */
+  
+  int state;                   /* The state of this entire EventSet; can be
+				  PAPI_RUNNING or PAPI_STOPPED plus flags */
+  
+  EventInfo_t *EventInfoArray; /* This array contains the mapping from 
+				  events added into the API into hardware 
+				  specific encoding as returned by the 
+				  kernel or the code that directly 
+				  accesses the counters. */
+  
+  hwd_control_state_t machdep; /* This contains the encoding necessary for the 
+				  hardware to set the counters to the appropriate
+                                  conditions */
+  
+  unsigned long int tid;       /* Thread ID, only used if PAPI_thread_init() is called  */
+  
+  int EventSetIndex;           /* Index of the EventSet in the array  */
+  
+  int NumberOfEvents;          /* Number of events added to EventSet */
+  
+  long_long *hw_start;         /* Array of length _papi_hwi_system_info.num_cntrs that contains
+				  unprocessed, out of order, long_long counter registers */
+  
+  long_long *sw_stop;          /* Array of length ESI->NumberOfCounters that contains
+				  processed, in order, PAPI counter values when used or stopped */
+  
+  int NativeCount;             /* How many native events in the array below. */
+  
+  NativeInfo_t NativeInfoArray[MAX_COUNTERS];  /* Info about each native event in the set */
+  
+  EventSetDomainInfo_t domain;
+  EventSetGranularityInfo_t granularity;
+  EventSetOverflowInfo_t overflow;
+  EventSetMultiplexInfo_t multiplex;
+  EventSetAttachInfo_t attach;
+  EventSetProfileInfo_t profile;
 } EventSetInfo_t;
 
 typedef struct _dynamic_array {
-   EventSetInfo_t **dataSlotArray;      /* array of ptrs to EventSets */
+   EventSetInfo_t *dataSlotArray;      /* array of EventSets */
    int totalSlots;              /* number of slots in dataSlotArrays      */
    int availSlots;              /* number of open slots in dataSlotArrays */
    int fullSlots;               /* number of full slots in dataSlotArray    */
@@ -382,7 +376,7 @@ typedef struct _papi_int_attach {
 
 typedef struct _papi_int_multiplex {
    int flags;
-   unsigned long us;
+   unsigned long ns;
    EventSetInfo_t *ESI;
 } _papi_int_multiplex_t;
 
@@ -412,6 +406,12 @@ typedef struct _papi_int_profile {
    EventSetProfileInfo_t profile;
 } _papi_int_profile_t;
 
+typedef PAPI_itimer_option_t _papi_int_itimer_t; 
+/* These shortcuts are only for use code */
+#undef multiplex_itimer_sig
+#undef multiplex_itimer_num
+#undef multiplex_itimer_us 
+
 #if 0
 typedef struct _papi_int_inherit {
    EventSetInfo_t *master;
@@ -435,6 +435,7 @@ typedef union _papi_int_option_t {
    _papi_int_domain_t domain;
    _papi_int_attach_t attach;
    _papi_int_multiplex_t multiplex;
+   _papi_int_itimer_t itimer;
 #if 0
    _papi_int_inherit_t inherit;
 #endif
@@ -558,7 +559,7 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset)
    if ((eventset < 0) || (eventset > map->totalSlots))
       return (NULL);
    
-   set = map->dataSlotArray[eventset];
+   set = &map->dataSlotArray[eventset];
 #ifdef DEBUG
    if ((ISLEVEL(DEBUG_THREADS)) && (_papi_hwi_thread_id_fn) && (set->master->tid != _papi_hwi_thread_id_fn()))
      return(NULL);

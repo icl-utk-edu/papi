@@ -128,11 +128,11 @@ static int allocate_eventset_map(DynamicArray_t *map)
    /* Allocate space for the EventSetInfo_t pointers */
 
    map->dataSlotArray =
-       (EventSetInfo_t **) papi_malloc(PAPI_INIT_SLOTS * sizeof(EventSetInfo_t *));
+       (EventSetInfo_t *) papi_malloc(PAPI_INIT_SLOTS * sizeof(EventSetInfo_t));
    if (map->dataSlotArray == NULL) {
       return (PAPI_ENOMEM);
    }
-   memset(map->dataSlotArray, 0x00, PAPI_INIT_SLOTS * sizeof(EventSetInfo_t *));
+   memset(map->dataSlotArray, 0x00, PAPI_INIT_SLOTS * sizeof(EventSetInfo_t));
    map->totalSlots = PAPI_INIT_SLOTS;
    map->availSlots = PAPI_INIT_SLOTS;
    map->fullSlots = 0;
@@ -149,12 +149,12 @@ static void free_eventset_map(DynamicArray_t *map)
 static int expand_dynamic_array(DynamicArray_t * DA)
 {
    int number;
-   EventSetInfo_t **n;
+   EventSetInfo_t *n;
 
    /*realloc existing PAPI_EVENTSET_MAP.dataSlotArray */
 
    number = DA->totalSlots * 2;
-   n = (EventSetInfo_t **) papi_realloc(DA->dataSlotArray, number * sizeof(EventSetInfo_t *));
+   n = (EventSetInfo_t *) papi_realloc(DA->dataSlotArray, number * sizeof(EventSetInfo_t));
    if (n == NULL)
       return(PAPI_ENOMEM);
 
@@ -163,7 +163,7 @@ static int expand_dynamic_array(DynamicArray_t * DA)
    DA->dataSlotArray = n;
 
    memset(DA->dataSlotArray + DA->totalSlots, 0x00,
-          DA->totalSlots * sizeof(EventSetInfo_t *));
+          DA->totalSlots * sizeof(EventSetInfo_t));
 
    DA->totalSlots = number;
    DA->availSlots = number - DA->fullSlots;
@@ -220,34 +220,23 @@ static void initialize_NativeInfoArray(EventSetInfo_t * ESI)
 }
 
 
-static int allocate_EventSet(EventSetInfo_t **here)
+static int allocate_EventSet(EventSetInfo_t *ESI)
 {
-   EventSetInfo_t *ESI;
    int max_counters, ret;
 
-   ESI = (EventSetInfo_t *) papi_malloc(sizeof(EventSetInfo_t));
-   if (ESI == NULL)
-      return (PAPI_ENOMEM);
    memset(ESI, 0x00, sizeof(EventSetInfo_t));
-
-   ret = _papi_hwd_init_control_state(&ESI->machdep); /* this used to be init_config */
+   ret = _papi_hwd_init_control_state(&ESI->machdep);
    if (ret != PAPI_OK)
-     {
-       papi_free(ESI);
-       return(ret);
-     }
+     return(ret);
 
    max_counters = _papi_hwi_system_info.sub_info.num_mpx_cntrs;
-/*  ESI->machdep = (hwd_control_state_t *)papi_malloc(sizeof(hwd_control_state_t)); */
    ESI->sw_stop = (long_long *) papi_malloc(max_counters * sizeof(long_long));
    ESI->hw_start = (long_long *) papi_malloc(max_counters * sizeof(long_long));
    ESI->EventInfoArray = (EventInfo_t *) papi_malloc(max_counters * sizeof(EventInfo_t));
 
    if (
-/*    (ESI->machdep        == NULL )  || */
          (ESI->sw_stop == NULL) || (ESI->hw_start == NULL)
          || (ESI->EventInfoArray == NULL)) {
-/*      if (ESI->machdep)        papi_free(ESI->machdep); */
       if (ESI->sw_stop)
          papi_free(ESI->sw_stop);
       if (ESI->hw_start)
@@ -257,7 +246,6 @@ static int allocate_EventSet(EventSetInfo_t **here)
       papi_free(ESI);
       return (PAPI_ENOMEM);
    }
-/*  memset(ESI->machdep,       0x00,_papi_system_info.size_machdep); */
    memset(ESI->sw_stop, 0x00, max_counters * sizeof(long_long));
    memset(ESI->hw_start, 0x00, max_counters * sizeof(long_long));
 
@@ -269,7 +257,6 @@ static int allocate_EventSet(EventSetInfo_t **here)
    ESI->domain.domain = _papi_hwi_system_info.sub_info.default_domain;
    ESI->granularity.granularity = _papi_hwi_system_info.sub_info.default_granularity;
 
-   *here = ESI;
    return(PAPI_OK);
 }
 
@@ -282,20 +269,15 @@ static int allocate_EventSet(EventSetInfo_t **here)
 
 static void free_EventSet(EventSetInfo_t * ESI)
 {
-   if (ESI->EventInfoArray)
-      papi_free(ESI->EventInfoArray);
-/*  if (ESI->machdep)        papi_free(ESI->machdep); */
-   if (ESI->sw_stop)
-      papi_free(ESI->sw_stop);
-   if (ESI->hw_start)
-      papi_free(ESI->hw_start);
-   if ((ESI->state & PAPI_MULTIPLEXING) && ESI->multiplex.mpx_evset)
-     papi_free(ESI->multiplex.mpx_evset);
-
-#ifdef DEBUG
-   memset(ESI, 0x00, sizeof(EventSetInfo_t));
-#endif
-   papi_free(ESI);
+  if (ESI->EventInfoArray)
+    papi_free(ESI->EventInfoArray);
+  if (ESI->sw_stop)
+    papi_free(ESI->sw_stop);
+  if (ESI->hw_start)
+    papi_free(ESI->hw_start);
+  if ((ESI->state & PAPI_MULTIPLEXING) && ESI->multiplex.mpx_evset)
+    papi_free(ESI->multiplex.mpx_evset);
+  memset(ESI, 0x00, sizeof(EventSetInfo_t));
 }
 
 static int add_EventSet(EventSetInfo_t * ESI, ThreadInfo_t * master)
@@ -316,13 +298,13 @@ static int add_EventSet(EventSetInfo_t * ESI, ThreadInfo_t * master)
    i = 0;
    for (i=0;i<map->totalSlots;i++)
      {
-       if (map->dataSlotArray[i] == NULL)
+       if (map->dataSlotArray[i].master == NULL)
 	 {
 	   ESI->master = master;
 	   ESI->EventSetIndex = i;
 	   map->fullSlots++;
 	   map->availSlots--;
-	   map->dataSlotArray[i] = ESI;
+	   memcpy(&map->dataSlotArray[i],ESI,sizeof(EventSetInfo_t));
 	   _papi_hwi_unlock(INTERNAL_LOCK);
 	   return(PAPI_OK);
 	 }
@@ -334,7 +316,7 @@ static int add_EventSet(EventSetInfo_t * ESI, ThreadInfo_t * master)
 
 int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle)
 {
-   EventSetInfo_t *ESI;
+   EventSetInfo_t ESI;
    int retval;
 
    /* Is the EventSet already in existence? */
@@ -342,23 +324,25 @@ int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle)
    if ((EventSet == NULL) || (handle == NULL))
       return (PAPI_EINVAL);
 
-   if ( *EventSet != PAPI_NULL )
+   if (*EventSet != PAPI_NULL)
       return (PAPI_EINVAL);
-   /* Well, then allocate a new one. Use n to keep track of a NEW EventSet */
+
+   /* Well, then fill in a new one. */
 
    retval = allocate_EventSet(&ESI);
    if (retval != PAPI_OK)
       return (retval);
 
-   /* Add it to the global table */
+   /* Add it to the global table, it will get
+      copied and linked in here. */
 
-   retval = add_EventSet(ESI, handle);
+   retval = add_EventSet(&ESI, handle);
    if (retval < PAPI_OK) {
-      free_EventSet(ESI);
+      free_EventSet(&ESI);
       return (retval);
    }
 
-   *EventSet = ESI->EventSetIndex;
+   *EventSet = ESI.EventSetIndex;
    INTDBG("(%p,%p): new EventSet in slot %d\n",
           (void *) EventSet, handle, *EventSet);
 
@@ -415,13 +399,11 @@ int _papi_hwi_remove_EventSet(EventSetInfo_t * ESI)
 
    i = ESI->EventSetIndex;
 
-   free_EventSet(ESI);
-
    /* do bookkeeping for PAPI_EVENTSET_MAP */
 
    _papi_hwi_lock(INTERNAL_LOCK);
 
-   map->dataSlotArray[i] = NULL;
+   free_EventSet(ESI);
    map->availSlots++;
    map->fullSlots--;
 
@@ -856,13 +838,12 @@ int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode)
 int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long_long * values)
 {
    int retval;
-   long_long *dp;
+   long_long *dp = NULL;
    int i, j = 0, index;
 
    retval = _papi_hwd_read(context, &ESI->machdep, &dp, ESI->state);
    if (retval != PAPI_OK)
      return (retval);
-
 
    /* This routine distributes hardware counters to software counters in the
       order that they were added. Note that the higher level
@@ -872,35 +853,31 @@ int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long_long * va
       changed.  
     */
 
-   for (i = 0; i < _papi_hwi_system_info.sub_info.num_mpx_cntrs; i++) 
+   for (i = 0; j != ESI->NumberOfEvents; i++, j++) 
      {
        index = ESI->EventInfoArray[i].pos[0];
-      if (index == -1)
+       if (index == -1)
          continue;
-
-      INTDBG("Event index %d, position is 0x%x\n", j, index);
-
-      /* If this is not a derived event */
-
-      if (ESI->EventInfoArray[i].derived == NOT_DERIVED) 
-	{
-	  INTDBG("counter index is %d\n", index);
-	  values[j] = dp[index];
-	} 
-      else /* If this is a derived event */ 
-	{ 
-	  values[j] = handle_derived(&ESI->EventInfoArray[i], dp);
+       
+       INTDBG("Event index %d, position is 0x%x\n", j, index);
+       
+       /* If this is not a derived event */
+       
+       if (ESI->EventInfoArray[i].derived == NOT_DERIVED) 
+	 {
+	   INTDBG("counter index is %d\n", index);
+	   values[j] = dp[index];
+	 } 
+       else /* If this is a derived event */ 
+	 { 
+	   values[j] = handle_derived(&ESI->EventInfoArray[i], dp);
 #ifdef DEBUG
-	  if (values[j] < (long_long)0) {
+	   if (values[j] < (long_long)0) {
             INTDBG("Derived Event is negative!!: %lld\n", values[j]);
-	  }
-      INTDBG("read value is =%lld \n", values[j]);
+	   }
+	   INTDBG("read value is =%lld \n", values[j]);
 #endif
-	}
-
-      /* Early exit! */
-      if (++j == ESI->NumberOfEvents)
-         break;
+	 }
      }
 
    return (PAPI_OK);
@@ -967,7 +944,7 @@ int _papi_hwi_convert_eventset_to_multiplex(_papi_int_multiplex_t *mpx)
    ESI->state |= PAPI_MULTIPLEXING;
    if (_papi_hwi_system_info.sub_info.kernel_multiplex && (flags & PAPI_MULTIPLEX_FORCE_SW))
      ESI->multiplex.flags = PAPI_MULTIPLEX_FORCE_SW;
-   ESI->multiplex.us = mpx->us;
+   ESI->multiplex.ns = mpx->ns;
  
    return (PAPI_OK);
 }
@@ -1048,15 +1025,15 @@ int _papi_hwi_init_global_internal(void)
    _papi_hwi_system_info.sub_info.default_granularity = PAPI_GRN_THR;     /* The default granularity when this substrate is used */
    _papi_hwi_system_info.sub_info.available_granularities = _papi_hwi_system_info.sub_info.default_granularity; /* Available granularities */
    _papi_hwi_system_info.sub_info.opcode_match_width = 0;      /* Width of opcode matcher if exists, 0 if not */
-   _papi_hwi_system_info.sub_info.multiplex_timer_sig = PAPI_MPX_SIGNAL;
-   _papi_hwi_system_info.sub_info.multiplex_timer_num = PAPI_ITIMER;
-   _papi_hwi_system_info.sub_info.multiplex_timer_us = PAPI_MPX_DEF_US;
-   _papi_hwi_system_info.sub_info.hardware_intr_sig = PAPI_SIGNAL;
-   _papi_hwi_system_info.hw_info.clock_ticks = sysconf(_SC_CLK_TCK);
-   _papi_hwi_system_info.sub_info.reserved_ints[0] = 0;
-   _papi_hwi_system_info.sub_info.reserved_ints[1] = 0;
-   _papi_hwi_system_info.sub_info.reserved_ints[2] = 0;
-   _papi_hwi_system_info.sub_info.reserved_ints[3] = 0;
+   _papi_hwi_system_info.sub_info.itimer_sig = PAPI_INT_MPX_SIGNAL;
+   _papi_hwi_system_info.sub_info.itimer_num = PAPI_INT_ITIMER;
+   _papi_hwi_system_info.sub_info.itimer_ns = PAPI_INT_MPX_DEF_US * 1000;
+   _papi_hwi_system_info.sub_info.itimer_res_ns = 1;
+   _papi_hwi_system_info.sub_info.hardware_intr_sig = PAPI_INT_SIGNAL;
+   _papi_hwi_system_info.sub_info.clock_ticks = sysconf(_SC_CLK_TCK);
+   _papi_hwi_system_info.sub_info.reserved[0] = 0;
+   _papi_hwi_system_info.sub_info.reserved[1] = 0;
+   _papi_hwi_system_info.sub_info.reserved[2] = 0;
    _papi_hwi_system_info.sub_info.hardware_intr = 0;         /* Needs hw overflow intr to be emulated in software*/
    _papi_hwi_system_info.sub_info.precise_intr = 0;          /* Performance interrupts happen precisely */
    _papi_hwi_system_info.sub_info.posix1b_timers = 0;        
@@ -1077,6 +1054,7 @@ int _papi_hwi_init_global_internal(void)
    _papi_hwi_system_info.sub_info.cntr_DEAR_events = 0;      /* counters support data event addr register */
    _papi_hwi_system_info.sub_info.cntr_OPCM_events = 0;      /* counter events support opcode matching */
    _papi_hwi_system_info.sub_info.reserved_bits = 0;
+   _papi_hwi_system_info.sub_info.clock_ticks = sysconf(_SC_CLK_TCK);
 
    /* The PAPI_hw_info_t struct defined in papi.h */
    _papi_hwi_system_info.hw_info.ncpu = 0;     /* ncpu */
@@ -1088,7 +1066,6 @@ int _papi_hwi_init_global_internal(void)
    _papi_hwi_system_info.hw_info.model_string[0] = '\0';        /* model_string */
    _papi_hwi_system_info.hw_info.revision = 0.0;        /* revision */
    _papi_hwi_system_info.hw_info.mhz = 0.0;     /* mhz */
-   _papi_hwi_system_info.hw_info.clock_ticks = sysconf(_SC_CLK_TCK);
  
    return (PAPI_OK);
 }
