@@ -2258,8 +2258,9 @@ int _papi_hwd_update_shlib_info(void)
                                                                                 
  again:
    while (!feof(f)) {
-      char buf[PAPI_HUGE_STR_LEN+PAPI_HUGE_STR_LEN], perm[5], dev[6], mapname[PATH_MAX], lastmapname[PAPI_HUGE_STR_LEN];
-      unsigned long begin, end, size, inode, foo;
+      char buf[PAPI_HUGE_STR_LEN+PAPI_HUGE_STR_LEN], perm[5], dev[16];
+      char mapname[PAPI_HUGE_STR_LEN], lastmapname[PAPI_HUGE_STR_LEN];
+      unsigned long begin = 0, end = 0, size = 0, inode = 0, foo = 0;
                                                                                 
       if (fgets(buf, sizeof(buf), f) == 0)
          break;
@@ -2268,7 +2269,7 @@ int _papi_hwd_update_shlib_info(void)
       else
         lastmapname[0] = '\0';
       mapname[0] = '\0';
-      sscanf(buf, "%lx-%lx %4s %lx %5s %ld %s", &begin, &end, perm,
+      sscanf(buf, "%lx-%lx %4s %lx %s %ld %s", &begin, &end, perm,
              &foo, dev, &inode, mapname);
       size = end - begin;
                                                                                 
@@ -4123,7 +4124,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
      {
        /* If this counter isn't set to overflow */
        
-       if (this_state->pd[j].reg_flags & PFM_REGFL_OVFL_NOTIFY == 0)
+       if ((this_state->pd[j].reg_flags & PFM_REGFL_OVFL_NOTIFY) == 0)
 	 return(PAPI_EINVAL);
        
        /* Remove the signal handler */
