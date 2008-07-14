@@ -12,12 +12,14 @@ PAPI_get_virt_usec \- get virtual time counter values in microseconds
 .B #include <papi.h>
 .BI "long_long PAPI_get_virt_cyc(void);"
 .BI "long_long PAPI_get_virt_usec(void);"
+.BI "long_long PAPI_get_virt_ns(void);"
 .fi
 .B Fortran Interface
 .nf
 .B #include "fpapi.h"
-.BI PAPIF_get_virt_usec(C_LONG_LONG\  time)
-.BI PAPIF_get_virt_cyc(C_LONG_LONG\  virt_cyc)
+.BI PAPIF_get_virt_usec(C_LONG_LONG\  us)
+.BI PAPIF_get_virt_cyc(C_LONG_LONG\  cyc)
+.BI PAPIF_get_virt_ns(C_LONG_LONG\  ns)
 .fi
 
 .SH DESCRIPTION

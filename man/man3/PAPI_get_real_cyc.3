@@ -12,12 +12,14 @@ PAPI_get_real_usec \- get real time counter value in microseconds
 .B #include <papi.h>
 .BI "long_long PAPI_get_real_cyc(void);"
 .BI "long_long PAPI_get_real_usec(void);"
+.BI "long_long PAPI_get_real_ns(void);"
 .fi
 .B Fortran Interface
 .nf
 .B #include "fpapi.h"
-.BI PAPIF_get_real_usec(C_LONG_LONG\  time)
-.BI PAPIF_get_real_cyc(C_LONG_LONG\  real_cyc)
+.BI PAPIF_get_real_usec(C_LONG_LONG\  us)
+.BI PAPIF_get_real_cyc(C_LONG_LONG\  cyc)
+.BI PAPIF_get_real_ns(C_LONG_LONG\  ns)
 .fi
 
 .SH DESCRIPTION
