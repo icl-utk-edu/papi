@@ -1835,7 +1835,7 @@ int PAPI_perror(int code, char *destination, int length)
 int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
                   PAPI_overflow_handler_t handler)
 {
-   int retval, index, event_counter, i;
+   int retval, index, i;
    EventSetInfo_t *ESI;
    ThreadInfo_t *thread;
 
