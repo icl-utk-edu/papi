@@ -255,8 +255,8 @@ int _papi_hwi_broadcast_signal(unsigned int mytid)
       if ((foo->tid != mytid) && (foo->running_eventset) && 
 	  (foo->running_eventset->state & (PAPI_OVERFLOWING|PAPI_MULTIPLEXING)))
 	{
-	  THRDBG("Thread 0x%lx sending signal %d to thread 0x%lx\n",mytid,foo->tid,(foo->running_eventset->state & PAPI_OVERFLOWING ? _papi_hwi_system_info.sub_info.hardware_intr_sig : _papi_hwi_system_info.sub_info.multiplex_timer_sig));
-	  retval = (*_papi_hwi_thread_kill_fn)(foo->tid, (foo->running_eventset->state & PAPI_OVERFLOWING ? _papi_hwi_system_info.sub_info.hardware_intr_sig : _papi_hwi_system_info.sub_info.multiplex_timer_sig));
+	  THRDBG("Thread 0x%lx sending signal %d to thread 0x%lx\n",mytid,foo->tid,(foo->running_eventset->state & PAPI_OVERFLOWING ? _papi_hwi_system_info.sub_info.hardware_intr_sig : _papi_hwi_system_info.sub_info.itimer_sig));
+	  retval = (*_papi_hwi_thread_kill_fn)(foo->tid, (foo->running_eventset->state & PAPI_OVERFLOWING ? _papi_hwi_system_info.sub_info.hardware_intr_sig : _papi_hwi_system_info.sub_info.itimer_sig));
 	  if (retval != 0)
 	    return(PAPI_EMISC);
 	}
