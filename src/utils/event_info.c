@@ -16,7 +16,7 @@
 
 typedef PAPI_substrate_info_t PAPI_component_info_t;
 
-#define PAPI_COMPONENT_INDEX
+#define PAPI_COMPONENT_INDEX(a__) 0
 #define PAPI_COMPONENT_MASK 
 
 #define PAPI_num_components()  1
