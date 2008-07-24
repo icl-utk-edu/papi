@@ -1233,7 +1233,7 @@ case "$OS" in
       if test "${OSVER}" = "5"; then
          if test "${CPU}" = "power3"; then 
                MAKEVER="$OS""$OSVER"-"$CPU""$BM"
-   else
+         else
                MAKEVER="$OS"-"$CPU""$BM"
          fi
       else
@@ -1357,6 +1357,7 @@ case "$MAKEVER" in
     aix-power4-64bit);;
     aix-power5);;
     aix-power5-64bit);;
+    aix-power6);;
     aix5-power3);;
     aix5-power3-64bit);;
     any-null);;
