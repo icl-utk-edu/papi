@@ -61,7 +61,7 @@ typedef union {
 		unsigned long sel_edge:1;		/* edge detec */
 		unsigned long sel_pc:1;			/* pin control */
 		unsigned long sel_int:1;		/* enable APIC intr */
-		unsigned long sel_res1:1;		/* reserved */
+		unsigned long sel_any:1;		/* any thread (v3) */
 		unsigned long sel_en:1;			/* enable */
 		unsigned long sel_inv:1;		/* invert counter mask */
 		unsigned long sel_cnt_mask:8;		/* counter mask */
@@ -76,6 +76,7 @@ typedef struct {
 
 #define PFM_GEN_IA32_SEL_INV	0x1	/* inverse */
 #define PFM_GEN_IA32_SEL_EDGE	0x2	/* edge detect */
+#define PFM_GEN_IA32_ANYTHREAD	0x4	/* measure on any thread */
 
 /*
  * model-specific parameters for the library

@@ -441,6 +441,12 @@ sigintr_handler(int sig)
 	longjmp(jbuf, 1);
 }
 
+static void
+sigchld_handler(int sig)
+{
+	time_to_quit = 1;
+}
+
 static int
 measure_one_task(char **argv)
 {
@@ -530,8 +536,6 @@ measure_one_task(char **argv)
 		goto finish_line;
 	}
 
-	signal(SIGALRM, sigintr_handler);
-	signal(SIGINT, sigintr_handler);
 
 	if (options.session_timeout) {
 		printf("<monitoring for %lu seconds>\n", options.session_timeout);
@@ -600,19 +604,15 @@ finish_line:
 	return 0;
 }
 
-
-
-
-	
 static int
 measure_one_cpu(char **argv)
 {
 	int ctxid, status;
 	pfarg_ctx_t ctx[1];
 	pfarg_load_t load_arg;
-	pfarg_msg_t msg;
+	struct pollfd pollfd;
 	pid_t pid = 0;
-	int ret;
+	int ret, timeout;
 
 	memset(ctx, 0, sizeof(ctx));
 	memset(&load_arg, 0, sizeof(load_arg));
@@ -648,9 +648,8 @@ measure_one_cpu(char **argv)
 	 * Note that there is a limitation on the size of the argument vector
 	 * that can be passed. It is usually set to a page size (16KB).
 	 */
-	if (pfm_write_pmcs(ctxid, all_pmcs+current_set->pmcs_base, current_set->npmcs) == -1) {
+	if (pfm_write_pmcs(ctxid, all_pmcs+current_set->pmcs_base, current_set->npmcs) == -1)
 		fatal_error("error: pfm_write_pmcs errno: %s\n", strerror(errno));
-	}
 
 	/*
 	 * initialize the PMD registers.
@@ -658,9 +657,8 @@ measure_one_cpu(char **argv)
 	 * To be read, each PMD must be either written or declared
 	 * as being part of a sample (reg_smpl_pmds)
 	 */
-	if (pfm_write_pmds(ctxid, all_pmds+current_set->pmds_base, current_set->npmds) == -1) {
+	if (pfm_write_pmds(ctxid, all_pmds+current_set->pmds_base, current_set->npmds) == -1)
 		fatal_error("pfm_write_pmds error errno %d\n", strerror(errno));
-	}
 
 	/*
 	 * now launch the child code
@@ -687,39 +685,56 @@ measure_one_cpu(char **argv)
 	/*
 	 * now attach the context
 	 */
-	load_arg.load_pid = options.opt_is_system ? getpid() : pid;
-	if (pfm_load_context(ctxid, &load_arg) == -1) {
+	load_arg.load_pid = options.pin_cpu;
+	if (pfm_load_context(ctxid, &load_arg) == -1)
 		fatal_error("pfm_load_context error errno %d\n",errno);
-	}
 
 	/*
 	 * start monitoring
 	 */
-	if (pfm_start(ctxid, NULL) == -1) {
+	if (pfm_start(ctxid, NULL) == -1)
 		fatal_error("pfm_start error errno %d\n",errno);
+
+	if (pid) {
+		signal(SIGCHLD, sigchld_handler);
+		ptrace(PTRACE_DETACH, pid, NULL, 0);
 	}
 
-	if (pid) ptrace(PTRACE_DETACH, pid, NULL, 0);
 	/*
 	 * mainloop
 	 */
-	for(;;) {
-		ret = read(ctxid, &msg, sizeof(msg));
-		if (ret < 0) break;
-		switch(msg.type) {
-			case PFM_MSG_OVFL:
+	pollfd.fd = ctxid;
+	pollfd.events = POLLIN;
+	pollfd.revents = 0;
+
+	timeout = options.opt_ovfl_switch ?  -1 : (1000 / options.smpl_freq);
+
+	while (time_to_quit == 0) {
+		ret = poll(&pollfd, 1, timeout);
+		switch(ret) {
+			case 1:
+			case 0:
+				/*
+ 				 *we are consuming the message.
+				 * to avoid this phase we could use PFM_FL_OVFL_NO_MSG
+				 * and use signal based notification
+				 */
+				if (options.opt_ovfl_switch) {
+					pfarg_msg_t msg;
+					read(ctxid, &msg, sizeof(msg));
+				}
 				switch_sets(ctxid);
 				break;
-			case PFM_MSG_END:
-				goto finish_line;
-			default: printf("unknown message type %d\n", msg.type);
+			default: 
+				if (errno != EINTR)
+					fatal_error("poll fails\n");
 		}
 	}
-finish_line:
 	if (full_periods < MIN_FULL_PERIODS)
 		fatal_error("Not enough periods (%lu) to print results\n", full_periods);
 
-	waitpid(pid, &status, 0);
+	if (pid)
+		waitpid(pid, &status, 0);
 
 	print_results();
 
@@ -727,7 +742,6 @@ finish_line:
 
 	return 0;
 }
-
 
 
 int
@@ -889,6 +903,7 @@ mainloop(char **argv)
 			all_pmds[num_pmds-1].reg_value       = - options.smpl_period;
 			all_pmds[num_pmds-1].reg_short_reset = - options.smpl_period;
 			all_pmds[num_pmds-1].reg_long_reset  = - options.smpl_period;
+			all_pmds[num_pmds-1].reg_flags = PFM_REGFL_OVFL_NOTIFY;
 		}
 		vbprintf("set%d pmc_base=%d pmd_base=%d npmcs=%d npmds=%d\n",
 			e->id,
@@ -899,6 +914,9 @@ mainloop(char **argv)
 	}
 
 	current_set = all_sets;
+
+	signal(SIGALRM, sigintr_handler);
+	signal(SIGINT, sigintr_handler);
 
 	if (options.opt_is_system)
 		return measure_one_cpu(argv);
