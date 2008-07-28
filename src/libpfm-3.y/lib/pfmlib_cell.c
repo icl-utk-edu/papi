@@ -290,13 +290,13 @@ check_signal_type(pfmlib_input_param_t *inp,
 			case 2:
 				if ((group0->signal_type != signal_type)
 				  && (group1->signal_type != signal_type)) {
-					DPRINT(("signal count is invalid\n"));
+					DPRINT("signal count is invalid\n");
 					return PFMLIB_ERR_INVAL;
 				}
 				break;
 				
 			default:
-				DPRINT(("signal count is invalid\n"));
+				DPRINT("signal count is invalid\n");
 				return PFMLIB_ERR_INVAL;
 		}
 	}
@@ -461,7 +461,7 @@ pfm_cell_dispatch_counters(pfmlib_input_param_t *inp,
 		pmx_offset = get_pmx_offset(mod_in->pfp_cell_counters[i].pmX_control_num,
 					    &pmx_ctrl_bits);
 		if (pmx_offset == PFMLIB_ERR_INVAL) {
-			DPRINT(("pmX already used\n"));
+			DPRINT("pmX already used\n");
 			return PFMLIB_ERR_INVAL;
 		}
 

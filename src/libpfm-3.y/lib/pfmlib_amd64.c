@@ -318,13 +318,13 @@ pfm_amd64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_amd64_input_param_
 
 	/* priviledge level 1 and 2 are not supported */
 	if (inp->pfp_dfl_plm & (PFM_PLM1|PFM_PLM2)) {
-		DPRINT(("invalid plm=%x\n", inp->pfp_dfl_plm));
+		DPRINT("invalid plm=%x\n", inp->pfp_dfl_plm);
 		return PFMLIB_ERR_INVAL;
 	}
 
 	if (PFMLIB_DEBUG()) {
 		for (j=0; j < cnt; j++) {
-			DPRINT(("ev[%d]=%s\n", j, pfm_amd64_get_event_entry(e[j].event)->pme_name));
+			DPRINT("ev[%d]=%s\n", j, pfm_amd64_get_event_entry(e[j].event)->pme_name);
 		}
 	}
 
@@ -335,14 +335,14 @@ pfm_amd64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_amd64_input_param_
 		 * AMD64 only supports two priv levels for perf counters
 	 	 */
 		if (e[j].plm & (PFM_PLM1|PFM_PLM2)) {
-			DPRINT(("event=%d invalid plm=%d\n", e[j].event, e[j].plm));
+			DPRINT("event=%d invalid plm=%d\n", e[j].event, e[j].plm);
 			return PFMLIB_ERR_INVAL;
 		}
 		/*
 		 * check illegal unit masks combination
 		 */
 		if (e[j].num_masks > 1 && PFMLIB_AMD64_HAS_COMBO(e[j].event) == 0) {
-			DPRINT(("event does not supports unit mask combination\n"));
+			DPRINT("event does not supports unit mask combination\n");
 			return PFMLIB_ERR_FEATCOMB;
 		}
 
@@ -351,15 +351,15 @@ pfm_amd64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_amd64_input_param_
 		 * (check at the umask level later)
 		 */
 		if (!is_valid_rev(pfm_amd64_get_event_entry(e[i].event)->pme_flags)) {
-			DPRINT(("CPU does not have correct revision level\n"));
+			DPRINT("CPU does not have correct revision level\n");
 			return PFMLIB_ERR_BADHOST;
 		}
 
 		if (cntrs && (cntrs[j].cnt_mask >= PMU_AMD64_CNT_MASK_MAX)) {
-			DPRINT(("event=%d invalid cnt_mask=%d: must be < %u\n",
+			DPRINT("event=%d invalid cnt_mask=%d: must be < %u\n",
 				e[j].event,
 				cntrs[j].cnt_mask,
-				PMU_AMD64_CNT_MASK_MAX));
+				PMU_AMD64_CNT_MASK_MAX);
 			return PFMLIB_ERR_INVAL;
 		}
 

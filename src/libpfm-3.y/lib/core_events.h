@@ -132,7 +132,7 @@ static pme_core_entry_t core_pe[]={
 		  .pme_ucode = 0x4
 		},
 		{ .pme_uname = "PORT_3",
-		  .pme_udesc = "on port 0",
+		  .pme_udesc = "on port 3",
 		  .pme_ucode = 0x8
 		},
 		{ .pme_uname = "PORT_4",

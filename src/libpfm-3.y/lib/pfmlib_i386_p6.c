@@ -240,7 +240,7 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 
 	if (PFMLIB_DEBUG()) {
 		for (j=0; j < cnt; j++) {
-			DPRINT(("ev[%d]=%s\n", j, i386_pe[e[j].event].pme_name));
+			DPRINT("ev[%d]=%s\n", j, i386_pe[e[j].event].pme_name);
 		}
 	}
 
@@ -250,19 +250,19 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 	pfm_i386_p6_get_impl_counters(&impl_cntrs);
 	pfm_regmask_andnot(&avail_cntrs, &impl_cntrs, &inp->pfp_unavail_pmcs);
 
-	DPRINT(("impl=0x%lx avail=0x%lx unavail=0x%lx\n", impl_cntrs.bits[0], avail_cntrs.bits[0], inp->pfp_unavail_pmcs.bits[0]));
+	DPRINT("impl=0x%lx avail=0x%lx unavail=0x%lx\n", impl_cntrs.bits[0], avail_cntrs.bits[0], inp->pfp_unavail_pmcs.bits[0]);
 
 	for(j=0; j < cnt; j++) {
 		/*
 		 * P6 only supports two priv levels for perf counters
 	 	 */
 		if (e[j].plm & (PFM_PLM1|PFM_PLM2)) {
-			DPRINT(("event=%d invalid plm=%d\n", e[j].event, e[j].plm));
+			DPRINT("event=%d invalid plm=%d\n", e[j].event, e[j].plm);
 			return PFMLIB_ERR_INVAL;
 		}
 
 		if (e[j].flags & ~PFMLIB_I386_P6_ALL_FLAGS) {
-			DPRINT(("event=%d invalid flags=0x%lx\n", e[j].event, e[j].flags));
+			DPRINT("event=%d invalid flags=0x%lx\n", e[j].event, e[j].flags);
 			return PFMLIB_ERR_INVAL;
 		}
 
@@ -270,7 +270,7 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 		 * check illegal unit masks combination
 		 */
 		if (e[j].num_masks > 1 && PFMLIB_I386_P6_HAS_COMBO(e[j].event) == 0) {
-			DPRINT(("event does not support unit mask combination\n"));
+			DPRINT("event does not support unit mask combination\n");
 			return PFMLIB_ERR_FEATCOMB;
 		}
 	}
@@ -396,7 +396,7 @@ pfm_i386_p6_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 	pfmlib_i386_p6_input_param_t *mod_in  = (pfmlib_i386_p6_input_param_t *)model_in;
 
 	if (inp->pfp_dfl_plm & (PFM_PLM1|PFM_PLM2)) {
-		DPRINT(("invalid plm=%x\n", inp->pfp_dfl_plm));
+		DPRINT("invalid plm=%x\n", inp->pfp_dfl_plm);
 		return PFMLIB_ERR_INVAL;
 	}
 	return pfm_i386_p6_dispatch_counters(inp, mod_in, outp);

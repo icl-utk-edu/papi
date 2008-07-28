@@ -97,6 +97,8 @@ pfm_config_t pfm_config = {
        .current = NULL
 };
 
+static int forced_pmu;
+
 /*
  * check environment variables for:
  *  LIBPFM_VERBOSE : enable verbose output (must be 1)
@@ -106,6 +108,8 @@ static void
 pfm_check_debug_env(void)
 {
 	char *str;
+
+	libpfm_fp = stderr;
 
 	str = getenv("LIBPFM_VERBOSE");
 	if (str && *str >= '0' && *str <= '9') {
@@ -118,12 +122,21 @@ pfm_check_debug_env(void)
 		pfm_config.options.pfm_debug = *str - '0';
 		pfm_config.options_env_set = 1;
 	}
+
+	str = getenv("LIBPFM_DEBUG_STDOUT");
+	if (str)
+		libpfm_fp = stdout;
+
+	str = getenv("LIBPFM_FORCE_PMU");
+	if (str)
+		forced_pmu = atoi(str);
 }
 
 int
 pfm_initialize(void)
 {
 	pfm_pmu_support_t **p = supported_pmus;
+	int ret;
 
 	pfm_check_debug_env();
 	/*
@@ -132,6 +145,15 @@ pfm_initialize(void)
 	pfm_init_syscalls();
 
 	while(*p) {
+		/*
+		 * check for forced_pmu
+		 * pmu_type can never be zero
+		 */
+		if ((*p)->pmu_type == forced_pmu) {
+			__pfm_vbprintf("PMU forced to %s\n", (*p)->pmu_name);
+			goto found;
+		}
+
 		if ((*p)->pmu_detect() == PFMLIB_SUCCESS)
 			goto found;
 		p++;
@@ -143,11 +165,17 @@ found:
 	 */
 	if ((*p)->pmc_count >= PFMLIB_MAX_PMCS)
 		return PFMLIB_ERR_NOTSUPP;
+
 	if ((*p)->pmd_count >= PFMLIB_MAX_PMDS)
 		return PFMLIB_ERR_NOTSUPP;
 
-	pfm_current = *p;
+	if ((*p)->pmu_init) {
+		ret = (*p)->pmu_init();
+		if (ret != PFMLIB_SUCCESS)
+			return ret;
+	}
 
+	pfm_current = *p;
 
 	return PFMLIB_SUCCESS;
 }

@@ -251,7 +251,7 @@ pfm_gen_mips64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_mips64_in
 
 	if (PFMLIB_DEBUG()) {
 		for (j=0; j < cnt; j++) {
-			DPRINT(("ev[%d]=%s, counters=0x%x\n", j, gen_mips64_pe[e[j].event].pme_name,gen_mips64_pe[e[j].event].pme_counters));
+			DPRINT("ev[%d]=%s, counters=0x%x\n", j, gen_mips64_pe[e[j].event].pme_name,gen_mips64_pe[e[j].event].pme_counters);
 		}
 	}
 
@@ -266,19 +266,19 @@ pfm_gen_mips64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_gen_mips64_in
 		  {
 				/* These counters can be used for this event */
 				avail = ~used & gen_mips64_pe[e[j].event].pme_counters;
-		    DPRINT(("Rank %d: Counters available 0x%x\n",i,avail));
+		    DPRINT("Rank %d: Counters available 0x%x\n",i,avail);
 				if (avail == 0x0)
 					return PFMLIB_ERR_NOASSIGN;
 
 				/* Pick one, mark as used*/
 				cntr = ffs(avail) - 1;
-		    DPRINT(("Rank %d: Chose counter %d\n",i,cntr));
+		    DPRINT("Rank %d: Chose counter %d\n",i,cntr);
 
 				/* Update registers */
 				stuff_regs(e,inp->pfp_dfl_plm,pc,pd,cntr,j,mod_in);
 
 				used |= (1 << cntr);
-		    DPRINT(("%d: Used counters 0x%x\n",i, used));
+		    DPRINT("%d: Used counters 0x%x\n",i, used);
 			}
 		}
 	}

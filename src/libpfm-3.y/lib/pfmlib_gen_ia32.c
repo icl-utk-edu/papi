@@ -57,6 +57,7 @@
 #define sel_edge	 perfevtsel.sel_edge
 #define sel_pc		 perfevtsel.sel_pc
 #define sel_int		 perfevtsel.sel_int
+#define sel_any		 perfevtsel.sel_any
 #define sel_en		 perfevtsel.sel_en
 #define sel_inv		 perfevtsel.sel_inv
 #define sel_cnt_mask	 perfevtsel.sel_cnt_mask
@@ -229,7 +230,6 @@ check_arch_pmu(int family)
 
 	num_cnt = eax.eax.num_cnt;
 	pmu_version = eax.eax.version;
-
 	/*
 	 * check version. must be greater than zero
 	 */
@@ -341,21 +341,27 @@ pfm_coreduo_detect(void)
 	/*
 	 * check for core solo/core duo
 	 */
-	if (family == 6 && model == 14) {
-		unsigned int i;
-		gen_ia32_pe = coreduo_pe;
-		gen_support = &coreduo_support;
-		gen_ia32_cycle_event = PME_COREDUO_UNHALTED_CORE_CYCLES;
-		gen_ia32_inst_retired_event = PME_COREDUO_INSTRUCTIONS_RETIRED;
-		num_gen_cnt = 2;
-		num_fixed_cnt = 0;
-		for(i=0; i < 2; i++) {
-			pfm_regmask_set(&gen_ia32_impl_pmcs, i);
-			pfm_regmask_set(&gen_ia32_impl_pmds, i);
-		}
-		return PFMLIB_SUCCESS;
+	return family == 6 && model == 14 ? PFMLIB_SUCCESS : PFMLIB_ERR_NOTSUPP;
+}
+
+static int
+pfm_coreduo_init(void)
+{
+	unsigned int i;
+
+	gen_ia32_pe = coreduo_pe;
+	gen_support = &coreduo_support;
+	gen_ia32_cycle_event = PME_COREDUO_UNHALTED_CORE_CYCLES;
+	gen_ia32_inst_retired_event = PME_COREDUO_INSTRUCTIONS_RETIRED;
+
+	num_gen_cnt = 2;
+	num_fixed_cnt = 0;
+
+	for(i=0; i < 2; i++) {
+		pfm_regmask_set(&gen_ia32_impl_pmcs, i);
+		pfm_regmask_set(&gen_ia32_impl_pmds, i);
 	}
-	return PFMLIB_ERR_NOTSUPP;
+	return PFMLIB_SUCCESS;;
 }
 
 static int
@@ -368,7 +374,7 @@ pfm_gen_ia32_dispatch_counters_v1(pfmlib_input_param_t *inp, pfmlib_gen_ia32_inp
 	pfmlib_reg_t *pc, *pd;
 	pfmlib_regmask_t *r_pmcs;
 	unsigned long plm;
-	unsigned int i, j, cnt, k, umask;
+	unsigned int i, j, cnt, k, ucode, val;
 	unsigned int assign[PMU_GEN_IA32_MAX_COUNTERS];
 
 	e      = inp->pfp_events;
@@ -380,7 +386,7 @@ pfm_gen_ia32_dispatch_counters_v1(pfmlib_input_param_t *inp, pfmlib_gen_ia32_inp
 
 	if (PFMLIB_DEBUG()) {
 		for (j=0; j < cnt; j++) {
-			DPRINT(("ev[%d]=%s\n", j, gen_ia32_pe[e[j].event].pme_name));
+			DPRINT("ev[%d]=%s\n", j, gen_ia32_pe[e[j].event].pme_name);
 		}
 	}
 
@@ -389,15 +395,19 @@ pfm_gen_ia32_dispatch_counters_v1(pfmlib_input_param_t *inp, pfmlib_gen_ia32_inp
 
 	for(i=0, j=0; j < cnt; j++) {
 		if (e[j].plm & (PFM_PLM1|PFM_PLM2)) {
-			DPRINT(("event=%d invalid plm=%d\n", e[j].event, e[j].plm));
+			DPRINT("event=%d invalid plm=%d\n", e[j].event, e[j].plm);
 			return PFMLIB_ERR_INVAL;
 		}
 
 		if (e[j].flags & ~PFMLIB_GEN_IA32_ALL_FLAGS) {
-			DPRINT(("event=%d invalid flags=0x%lx\n", e[j].event, e[j].flags));
+			DPRINT("event=%d invalid flags=0x%lx\n", e[j].event, e[j].flags);
 			return PFMLIB_ERR_INVAL;
 		}
 
+		if (cntrs && pmu_version != 3 && (cntrs[j].flags & PFM_GEN_IA32_ANYTHREAD)) {
+			DPRINT("event=%d anythread requires architectural perfmon v3", e[j].event);
+			return PFMLIB_ERR_INVAL;
+		}
 		/*
 		 * exclude restricted registers from assignment
 		 */
@@ -418,23 +428,43 @@ pfm_gen_ia32_dispatch_counters_v1(pfmlib_input_param_t *inp, pfmlib_gen_ia32_inp
 		/* if plm is 0, then assume not specified per-event and use default */
 		plm = e[j].plm ? e[j].plm : inp->pfp_dfl_plm;
 
-		reg.sel_event_select = gen_ia32_pe[e[j].event].pme_code & 0xff;
+		val = gen_ia32_pe[e[j].event].pme_code;
 
-		umask = (gen_ia32_pe[e[j].event].pme_code >> 8) & 0xff;
+		reg.sel_event_select = val & 0xff;
 
-		for(k=0; k < e[j].num_masks; k++) {
-			umask |= gen_ia32_pe[e[j].event].pme_umasks[e[j].unit_masks[k]].pme_ucode;
-		}
-		reg.sel_unit_mask  = umask;
+		ucode = (val >> 8) & 0xff;
+
+		for(k=0; k < e[j].num_masks; k++)
+			ucode |= gen_ia32_pe[e[j].event].pme_umasks[e[j].unit_masks[k]].pme_ucode;
+
+		val |= ucode << 8;
+
+		reg.sel_unit_mask  = ucode; /* use 8 least significant bits */
 		reg.sel_usr        = plm & PFM_PLM3 ? 1 : 0;
 		reg.sel_os         = plm & PFM_PLM0 ? 1 : 0;
 		reg.sel_en         = 1; /* force enable bit to 1 */
 		reg.sel_int        = 1; /* force APIC int to 1 */
 
+		reg.sel_cnt_mask = val >>24;
+		reg.sel_inv = val >> 23;
+		reg.sel_any = val >> 21;;
+		reg.sel_edge = val >> 18;
+
 		if (cntrs) {
-			reg.sel_cnt_mask = cntrs[j].cnt_mask;
-			reg.sel_edge	 = cntrs[j].flags & PFM_GEN_IA32_SEL_EDGE ? 1 : 0;
-			reg.sel_inv	 = cntrs[j].flags & PFM_GEN_IA32_SEL_INV ? 1 : 0;
+			if (!reg.sel_cnt_mask) {
+				/*
+			 	 * counter mask is 8-bit wide, do not silently
+			 	 * wrap-around
+			 	 */
+				if (cntrs[i].cnt_mask > 255)
+					return PFMLIB_ERR_INVAL;
+				reg.sel_cnt_mask = cntrs[j].cnt_mask;
+			}
+
+			if (!reg.sel_edge)
+				reg.sel_edge = cntrs[j].flags & PFM_GEN_IA32_SEL_EDGE ? 1 : 0;
+			if (!reg.sel_inv)
+				reg.sel_inv = cntrs[j].flags & PFM_GEN_IA32_SEL_INV ? 1 : 0;
 		}
 
 		pc[j].reg_num     = assign[j];
@@ -472,7 +502,7 @@ static const char *fixed_event_names[]={ "INSTRUCTIONS_RETIRED", "UNHALTED_CORE_
 #define MAX_EVENT_NAMES (sizeof(fixed_event_names)/sizeof(char *))
 
 static int
-pfm_gen_ia32_dispatch_counters_v2(pfmlib_input_param_t *inp, pfmlib_gen_ia32_input_param_t *param, pfmlib_output_param_t *outp)
+pfm_gen_ia32_dispatch_counters_v23(pfmlib_input_param_t *inp, pfmlib_gen_ia32_input_param_t *param, pfmlib_output_param_t *outp)
 {
 #define HAS_OPTIONS(x)	(cntrs && (cntrs[i].flags || cntrs[i].cnt_mask))
 #define is_fixed_pmc(a) (a > 15)
@@ -486,7 +516,7 @@ pfm_gen_ia32_dispatch_counters_v2(pfmlib_input_param_t *inp, pfmlib_gen_ia32_inp
 	unsigned long plm;
 	unsigned int fixed_ctr_mask;
 	unsigned int npc = 0;
-	unsigned int i, j, n, k, umask;
+	unsigned int i, j, n, k, ucode;
 	unsigned int assign[PMU_GEN_IA32_MAX_COUNTERS];
 	unsigned int next_gen, last_gen;
 
@@ -521,6 +551,11 @@ pfm_gen_ia32_dispatch_counters_v2(pfmlib_input_param_t *inp, pfmlib_gen_ia32_inp
 		 */
 		if (e[j].flags & ~PFMLIB_GEN_IA32_ALL_FLAGS)
 			return PFMLIB_ERR_INVAL;
+
+		if (cntrs && pmu_version != 3 && (cntrs[j].flags & PFM_GEN_IA32_ANYTHREAD)) {
+			DPRINT("event=%d anythread requires architectural perfmon v3", e[j].event);
+			return PFMLIB_ERR_INVAL;
+		}
 	}
 
 	next_gen = 0; /* first generic counter */
@@ -628,31 +663,44 @@ pfm_gen_ia32_dispatch_counters_v2(pfmlib_input_param_t *inp, pfmlib_gen_ia32_inp
 		/* if plm is 0, then assume not specified per-event and use default */
 		plm = e[i].plm ? e[i].plm : inp->pfp_dfl_plm;
 
-		reg.sel_event_select = gen_ia32_pe[e[i].event].pme_code & 0xff;
+		val = gen_ia32_pe[e[j].event].pme_code;
 
-		umask = (gen_ia32_pe[e[i].event].pme_code >> 8) & 0xff;
+		reg.sel_event_select = val & 0xff;
 
-		for(k=0; k < e[i].num_masks; k++) {
-			umask |= gen_ia32_pe[e[i].event].pme_umasks[e[i].unit_masks[k]].pme_ucode;
-		}
+		ucode = (val >> 8) & 0xff;
 
-		reg.sel_unit_mask  = umask;
+		for(k=0; k < e[i].num_masks; k++)
+			ucode |= gen_ia32_pe[e[j].event].pme_umasks[e[j].unit_masks[k]].pme_ucode;
+
+		val |= ucode << 8;
+
+		reg.sel_unit_mask  = ucode;
 		reg.sel_usr        = plm & PFM_PLM3 ? 1 : 0;
 		reg.sel_os         = plm & PFM_PLM0 ? 1 : 0;
 		reg.sel_en         = 1; /* force enable bit to 1 */
 		reg.sel_int        = 1; /* force APIC int to 1 */
 
-		if (cntrs) {
-			/*
-			 * counter mask is 8-bit wide, do not silently
-			 * wrap-around
-			 */
-			if (cntrs[i].cnt_mask > 255)
-				return PFMLIB_ERR_INVAL;
+		reg.sel_cnt_mask = val >>24;
+		reg.sel_inv = val >> 23;
+		reg.sel_any = val >> 21;;
+		reg.sel_edge = val >> 18;
 
-			reg.sel_cnt_mask = cntrs[i].cnt_mask;
-			reg.sel_edge	 = cntrs[i].flags & PFM_GEN_IA32_SEL_EDGE ? 1 : 0;
-			reg.sel_inv	 = cntrs[i].flags & PFM_GEN_IA32_SEL_INV ? 1 : 0;
+		if (cntrs) {
+			if (!reg.sel_cnt_mask) {
+				/*
+			 	 * counter mask is 8-bit wide, do not silently
+			 	 * wrap-around
+			 	 */
+				if (cntrs[i].cnt_mask > 255)
+					return PFMLIB_ERR_INVAL;
+				reg.sel_cnt_mask = cntrs[i].cnt_mask;
+			}
+			if (!reg.sel_edge)
+				reg.sel_edge = cntrs[i].flags & PFM_GEN_IA32_SEL_EDGE ? 1 : 0;
+			if (!reg.sel_inv)
+				reg.sel_inv = cntrs[i].flags & PFM_GEN_IA32_SEL_INV ? 1 : 0;
+			if (!reg.sel_any)
+				reg.sel_any = cntrs[j].flags & PFM_GEN_IA32_ANYTHREAD? 1 : 0;
 		}
 
 		pc[npc].reg_num     = assign[i];
@@ -694,7 +742,7 @@ pfm_gen_ia32_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_o
 	pfmlib_gen_ia32_input_param_t *mod_in  = model_in;
 
 	if (inp->pfp_dfl_plm & (PFM_PLM1|PFM_PLM2)) {
-		DPRINT(("invalid plm=%x\n", inp->pfp_dfl_plm));
+		DPRINT("invalid plm=%x\n", inp->pfp_dfl_plm);
 		return PFMLIB_ERR_INVAL;
 	}
 
@@ -702,7 +750,7 @@ pfm_gen_ia32_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_o
 	if (pmu_version == 1)
 		return pfm_gen_ia32_dispatch_counters_v1(inp, mod_in, outp);
 	/* v2 or above */
-	return pfm_gen_ia32_dispatch_counters_v2(inp, mod_in, outp);
+	return pfm_gen_ia32_dispatch_counters_v23(inp, mod_in, outp);
 }
 
 static int
@@ -873,6 +921,7 @@ pfm_pmu_support_t coreduo_support={
 	.get_event_counters	= pfm_gen_ia32_get_event_counters,
 	.dispatch_events	= pfm_gen_ia32_dispatch_events,
 	.pmu_detect		= pfm_coreduo_detect,
+	.pmu_init		= pfm_coreduo_init,
 	.get_impl_pmcs		= pfm_gen_ia32_get_impl_pmcs,
 	.get_impl_pmds		= pfm_gen_ia32_get_impl_pmds,
 	.get_impl_counters	= pfm_gen_ia32_get_impl_counters,

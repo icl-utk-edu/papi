@@ -45,6 +45,7 @@ typedef struct {
 	unsigned int	(*get_num_event_masks)(unsigned int event_idx);
 	int 		(*dispatch_events)(pfmlib_input_param_t *p, void *model_in, pfmlib_output_param_t *q, void *model_out);
 	int 		(*pmu_detect)(void);
+	int 		(*pmu_init)(void);
 	void		(*get_impl_pmcs)(pfmlib_regmask_t *impl_pmcs);
 	void		(*get_impl_pmds)(pfmlib_regmask_t *impl_pmds);
 	void		(*get_impl_counters)(pfmlib_regmask_t *impl_counters);
@@ -86,10 +87,10 @@ extern int __pfm_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen)
 extern void pfm_init_syscalls(void);
 
 #ifdef PFMLIB_DEBUG
-#define DPRINT(a) \
+#define DPRINT(fmt, a...) \
 	do { \
 		if (pfm_config.options.pfm_debug) { \
-			fprintf(stderr, "%s (%s.%d): ", __FILE__, __func__, __LINE__); printf a; } \
+			fprintf(libpfm_fp, "%s (%s.%d): " fmt, __FILE__, __func__, __LINE__, ## a); } \
 	} while (0)
 #else
 #define DPRINT(a)
@@ -124,5 +125,7 @@ static inline unsigned int pfm_num_masks(int e)
 		return 0;
 	return pfm_current->get_num_event_masks(e);
 }
+
+extern FILE *libpfm_fp;
 
 #endif /* __PFMLIB_PRIV_H__ */

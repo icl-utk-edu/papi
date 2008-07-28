@@ -241,7 +241,7 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 
 		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_UMASK_NCOMBO
 		    && e[i].num_masks > 1) {
-			DPRINT(("events does not support unit mask combination\n"));
+			DPRINT("events does not support unit mask combination\n");
 				return PFMLIB_ERR_NOASSIGN;
 		}
 
@@ -251,7 +251,7 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 		 */
 		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_PMC0) {
 			if (++npmc0 > 1) {
-				DPRINT(("two events compete for a PMC0\n"));
+				DPRINT("two events compete for a PMC0\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
 		}
@@ -260,7 +260,7 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 		 */
 		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_PMC1) {
 			if (++npmc1 > 1) {
-				DPRINT(("two events compete for a PMC1\n"));
+				DPRINT("two events compete for a PMC1\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
 		}
@@ -269,11 +269,11 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
  		 */
 		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_FIXED2_ONLY) {
 			if (++nf2 > 1) {
-				DPRINT(("two events compete for FIXED_CTR2\n"));
+				DPRINT("two events compete for FIXED_CTR2\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
 			if (HAS_OPTIONS(i)) {
-				DPRINT(("fixed counters do not support inversion/counter-mask\n"));
+				DPRINT("fixed counters do not support inversion/counter-mask\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
 		}
@@ -287,11 +287,11 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 
 			if (flags & PFMLIB_CORE_FIXED2_ONLY) {
 				if (++nf2 > 1) {
-					DPRINT(("two events compete for FIXED_CTR2\n"));
+					DPRINT("two events compete for FIXED_CTR2\n");
 					return PFMLIB_ERR_NOASSIGN;
 				}
 				if (HAS_OPTIONS(i)) {
-					DPRINT(("fixed counters do not support inversion/counter-mask\n"));
+					DPRINT("fixed counters do not support inversion/counter-mask\n");
 					return PFMLIB_ERR_NOASSIGN;
 				}
 			}
@@ -365,14 +365,14 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 	for(i=0; i < n; i++) {
 		if (assign_pc[i] == -1) {
 			for(; next_gen <= last_gen; next_gen++) {
-DPRINT(("i=%d next_gen=%d last=%d isset=%d\n", i, next_gen, last_gen, pfm_regmask_isset(r_pmcs, next_gen)));
+DPRINT("i=%d next_gen=%d last=%d isset=%d\n", i, next_gen, last_gen, pfm_regmask_isset(r_pmcs, next_gen));
 				if (!pfm_regmask_isset(r_pmcs, next_gen))
 					break;
 			}
 			if (next_gen <= last_gen)
 				assign_pc[i] = next_gen++;
 			else {
-				DPRINT(("cannot assign generic counters\n"));
+				DPRINT("cannot assign generic counters\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
 		}
@@ -673,7 +673,7 @@ pfm_core_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_outpu
 	pfmlib_core_input_param_t *mod_in  = (pfmlib_core_input_param_t *)model_in;
 
 	if (inp->pfp_dfl_plm & (PFM_PLM1|PFM_PLM2)) {
-		DPRINT(("invalid plm=%x\n", inp->pfp_dfl_plm));
+		DPRINT("invalid plm=%x\n", inp->pfp_dfl_plm);
 		return PFMLIB_ERR_INVAL;
 	}
 	return pfm_core_dispatch_counters(inp, mod_in, outp);

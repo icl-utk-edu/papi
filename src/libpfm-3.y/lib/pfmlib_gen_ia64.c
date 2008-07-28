@@ -279,10 +279,10 @@ pfm_gen_ia64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_output_param_t 
 
 	if (PFMLIB_DEBUG()) {
 		for (i=0; i < cnt; i++) {
-			DPRINT(("ev[%d]=%s counters=0x%lx\n",
+			DPRINT("ev[%d]=%s counters=0x%lx\n",
 				i,
 				generic_pe[e[i].event].pme_name,
-				generic_pe[e[i].event].pme_counters[0]));
+				generic_pe[e[i].event].pme_counters[0]);
 		}
 	}
 
@@ -294,7 +294,7 @@ pfm_gen_ia64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_output_param_t 
 	max_l3 = PMU_GEN_IA64_FIRST_COUNTER + PMU_GEN_IA64_MAX_COUNTERS*(cnt>3);
 
 	if (PFMLIB_DEBUG()) {
-		DPRINT(("max_l0=%u max_l1=%u max_l2=%u max_l3=%u\n", max_l0, max_l1, max_l2, max_l3));
+		DPRINT("max_l0=%u max_l1=%u max_l2=%u max_l3=%u\n", max_l0, max_l1, max_l2, max_l3);
 	}
 	/*
 	 *  This code needs fixing. It is not very pretty and

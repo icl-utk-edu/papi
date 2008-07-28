@@ -34,6 +34,14 @@
 #include "pfmlib_priv.h"
 
 /*
+ * file for all libpfm verbose and debug output
+ *
+ * By default, it is set to stderr, unless the
+ * PFMLIB_DEBUG_STDOUT environment variable is set
+ */
+FILE *libpfm_fp;
+
+/*
  * by convention all internal utility function must be prefixed by __
  */
 
@@ -49,7 +57,7 @@ __pfm_vbprintf(const char *fmt, ...)
 		return;
 
 	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
+	vfprintf(libpfm_fp, fmt, ap);
 	va_end(ap);
 }
 

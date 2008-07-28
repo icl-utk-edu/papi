@@ -372,7 +372,7 @@ pfm_sicortex_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_sicortex_input_
 
 	if (PFMLIB_DEBUG()) {
 	  for (j=0; j < cnt; j++) {
-	    DPRINT(("ev[%d]=%s, counters=0x%x\n", j, sicortex_pe[e[j].event].pme_name,sicortex_pe[e[j].event].pme_counters));
+	    DPRINT("ev[%d]=%s, counters=0x%x\n", j, sicortex_pe[e[j].event].pme_name,sicortex_pe[e[j].event].pme_counters);
 	  }
 	}
 
@@ -389,19 +389,19 @@ pfm_sicortex_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_sicortex_input_
 		  {
 		    /* These counters can be used for this event */
 		    avail = ~used & sicortex_pe[e[j].event].pme_counters;
-		    DPRINT(("Rank %d: Counters available 0x%x\n",i,avail));
+		    DPRINT("Rank %d: Counters available 0x%x\n",i,avail);
 		    if (avail == 0x0)
 		      return PFMLIB_ERR_NOASSIGN;
 
 		    /* Pick one, mark as used*/
 		    cntr = ffs(avail) - 1;
-		    DPRINT(("Rank %d: Chose counter %d\n",i,cntr));
+		    DPRINT("Rank %d: Chose counter %d\n",i,cntr);
 	    
 		    /* Update registers */
 		    stuff_sicortex_regs(e,inp->pfp_dfl_plm,pc,pd,cntr,j,mod_in);
 		    
 		    used |= (1 << cntr);
-		    DPRINT(("Rank %d: Used counters 0x%x\n",i, used));
+		    DPRINT("Rank %d: Used counters 0x%x\n",i, used);
 		  }
 	      }
 	  }
@@ -432,15 +432,15 @@ pfm_sicortex_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_sicortex_input_
 		  }
 		/* These counters can be used for this event */
 		avail = sicortex_support.num_cnt - core_counters - used;
-		DPRINT(("SCB(%d): Counters available %d\n",j,avail));
+		DPRINT("SCB(%d): Counters available %d\n",j,avail);
 	    
 		cntr = (sicortex_support.num_cnt - core_counters) - avail;
-		DPRINT(("SCB(%d): Chose SCB counter %d\n",j,cntr));
+		DPRINT("SCB(%d): Chose SCB counter %d\n",j,cntr);
 
 		/* Update registers */
 		stuff_sicortex_regs(e,inp->pfp_dfl_plm,pc,pd,cntr,j,mod_in);
 		used++;
-		DPRINT(("SCB(%d): Used counters %d\n",j,used));
+		DPRINT("SCB(%d): Used counters %d\n",j,used);
 	      }
 	  }
 	if (used)

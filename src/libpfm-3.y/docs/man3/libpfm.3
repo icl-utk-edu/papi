@@ -64,6 +64,10 @@ can be controlled with this function.
 .B LIBPFM_DEBUG
 Enable debug  output. Value must be 0 or 1. When not set, debug level
 can be controlled with this function.
+.TP
+.B LIBPFM_DEBUG_STDOUT
+Redirect verbose and debug output to the standard ouput file descriptor (stdout).
+By default, the output is directed to the standard error file descriptor (stderr).
 .sp
 Alternatively, it is possible to control verbosity and debug output using
 the \fBpfm_set_options\fR function.
