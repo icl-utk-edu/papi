@@ -1151,6 +1151,7 @@ if test "$OS" = "aix"; then
 	;;
       power4) PMAPI="/usr/pmapi" ;;
       power5) PMAPI="/usr/pmapi" ;;
+      power6) PMAPI="/usr/pmapi" ;;
       esac
       PMINIT=""
       LIBS="-L$PMAPI/lib -lpmapi"
