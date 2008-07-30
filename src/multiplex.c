@@ -1170,7 +1170,7 @@ int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
 
 int mpx_init(int interval_ns)
 {
-#ifdef PTHREADS
+#if defined(PTHREADS) || defined(_POWER6)
    int retval;
 #endif
 
