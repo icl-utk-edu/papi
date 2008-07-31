@@ -97,7 +97,7 @@ pfm_config_t pfm_config = {
        .current = NULL
 };
 
-static int forced_pmu;
+int forced_pmu = PFMLIB_NO_PMU;
 
 /*
  * check environment variables for:
@@ -154,7 +154,7 @@ pfm_initialize(void)
 			goto found;
 		}
 
-		if ((*p)->pmu_detect() == PFMLIB_SUCCESS)
+		if (!forced_pmu && (*p)->pmu_detect() == PFMLIB_SUCCESS)
 			goto found;
 		p++;
 	}

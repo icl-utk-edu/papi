@@ -203,8 +203,6 @@ check_arch_pmu(int family)
 		pmu_eax_t eax;
 		pmu_edx_t edx;
 	} eax, ecx, edx, ebx;
-	unsigned int num_cnt, i;
-	int ret;
 
 	/*
 	 * check family number to reject for processors
@@ -228,19 +226,65 @@ check_arch_pmu(int family)
 	 */
 	cpuid(0xa, &eax.val, &ebx.val, &ecx.val, &edx.val);
 
-	num_cnt = eax.eax.num_cnt;
-	pmu_version = eax.eax.version;
 	/*
-	 * check version. must be greater than zero
+	 * version must be greater than zero
 	 */
-	if (pmu_version < 1)
+	return eax.eax.version < 1 ? PFMLIB_ERR_NOTSUPP : PFMLIB_SUCCESS;
+}
+
+static int
+pfm_gen_ia32_detect(void)
+{
+	int ret, family;
+	char buffer[128];
+
+	ret = __pfm_getcpuinfo_attr("vendor_id", buffer, sizeof(buffer));
+	if (ret == -1)
 		return PFMLIB_ERR_NOTSUPP;
 
-	/*
-	 * sanity check number of counters
-	 */
-	if (num_cnt == 0)
+	if (strcmp(buffer, "GenuineIntel"))
 		return PFMLIB_ERR_NOTSUPP;
+
+	ret = __pfm_getcpuinfo_attr("cpu family", buffer, sizeof(buffer));
+	if (ret == -1)
+		return PFMLIB_ERR_NOTSUPP;
+
+	family = atoi(buffer);
+
+	return check_arch_pmu(family);
+}
+
+static int
+pfm_gen_ia32_init(void)
+{
+	union {
+		unsigned int val;
+		pmu_eax_t eax;
+		pmu_edx_t edx;
+	} eax, ecx, edx, ebx;
+	unsigned int num_cnt, i;
+	int ret;
+
+	/*
+	 * extract architected PMU information
+	 */
+	if (forced_pmu == 0) {
+		cpuid(0xa, &eax.val, &ebx.val, &ecx.val, &edx.val);
+	} else {
+		/*
+		 * when forced, simulate v2
+		 * with 2 generic and 3 fixed counters
+		 */
+		eax.eax.version = 2;
+		eax.eax.num_cnt = 2;
+		eax.eax.cnt_width = 40;
+		eax.eax.ebx_length = 0; /* unused */
+		edx.edx.num_cnt = 3;
+		edx.edx.cnt_width = 40;
+	}
+
+	num_cnt = eax.eax.num_cnt;
+	pmu_version = eax.eax.version;
 
 	/* 
 	 * populate impl_pm* bitmasks for generic counters
@@ -289,28 +333,6 @@ check_arch_pmu(int family)
 	gen_support = &gen_ia32_support;
 
 	return PFMLIB_SUCCESS;
-}
-
-static int
-pfm_gen_ia32_detect(void)
-{
-	int ret, family;
-	char buffer[128];
-
-	ret = __pfm_getcpuinfo_attr("vendor_id", buffer, sizeof(buffer));
-	if (ret == -1)
-		return PFMLIB_ERR_NOTSUPP;
-
-	if (strcmp(buffer, "GenuineIntel"))
-		return PFMLIB_ERR_NOTSUPP;
-
-	ret = __pfm_getcpuinfo_attr("cpu family", buffer, sizeof(buffer));
-	if (ret == -1)
-		return PFMLIB_ERR_NOTSUPP;
-
-	family = atoi(buffer);
-
-	return check_arch_pmu(family);
 }
 
 static int
@@ -896,6 +918,7 @@ pfm_pmu_support_t gen_ia32_support={
 	.get_event_counters	= pfm_gen_ia32_get_event_counters,
 	.dispatch_events	= pfm_gen_ia32_dispatch_events,
 	.pmu_detect		= pfm_gen_ia32_detect,
+	.pmu_init		= pfm_gen_ia32_init,
 	.get_impl_pmcs		= pfm_gen_ia32_get_impl_pmcs,
 	.get_impl_pmds		= pfm_gen_ia32_get_impl_pmds,
 	.get_impl_counters	= pfm_gen_ia32_get_impl_counters,

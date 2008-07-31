@@ -1,5 +1,5 @@
             ------------------------------------------------------
-                                    libpfm-3.4:
+                                    libpfm-3.5:
       a helper library to program the Performance Monitoring Unit (PMU)
             ------------------------------------------------------
  	  Copyright (c) 2001-2007 Hewlett-Packard Development Company, L.P.
@@ -17,7 +17,7 @@ This version of libpfm supports:
 	- For AMD/Intel IA-32 (32 bit mode, i386) : Pentium II, Pentium Pro, Pentium III, Pentium M/P6, Core Duo/Core Solo, Intel Pentium 4, AMD Opteron (K8,fam 10h)), Intel Core 2
 	- For Intel IA-32: architectural perfmon v1, v2, v3
 	- For MIPS:  5K, 20K, 25KF, 34K, 5KC, 74K, R10000, R12000, RM7000, RM9000, SB1, VR5432, VR5500, SiCortex ICA9A/ICE9B
-	- For Cray: BlackWidow
+	- For Cray: XT3, XT4, XT5, XT5h, X2
 	- IBM Cell processor
         - For IBM POWER: PPC970, PPC970MP, POWER4+, POWER5, POWER5+, POWER6
 	- For Sun Sparc: Ultra12, Ultra3, Ultra3i, Ultra3Plus, Ultra4Plus, Niagara1, Niagara2

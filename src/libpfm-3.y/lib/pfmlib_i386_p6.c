@@ -113,9 +113,16 @@ pfm_i386_p6_detect_ppro(void)
 	if (model != 1)
 		return PFMLIB_ERR_NOTSUPP;
 
+	return PFMLIB_SUCCESS;
+}
+
+static int
+pfm_i386_p6_init_ppro(void)
+{
  	i386_pe = i386_ppro_pe;
 	i386_p6_cycle_event = PME_I386_PPRO_CPU_CLK_UNHALTED; 
 	i386_p6_inst_retired_event = PME_I386_PPRO_INST_RETIRED;
+
 	return PFMLIB_SUCCESS;
 }
 
@@ -142,13 +149,20 @@ pfm_i386_p6_detect_pii(void)
                 case 3: /* Pentium II */
                 case 5: /* Pentium II Deschutes */
  		case 6: /* Pentium II Mendocino */
- 			i386_pe = i386_pII_pe;
-			i386_p6_cycle_event = PME_I386_PII_CPU_CLK_UNHALTED; 
-			i386_p6_inst_retired_event = PME_I386_PII_INST_RETIRED;
  			break;
 		default:
 			return PFMLIB_ERR_NOTSUPP;
 	}
+	return PFMLIB_SUCCESS;
+}
+
+static int
+pfm_i386_p6_init_pii(void)
+{
+
+ 	i386_pe = i386_pII_pe;
+	i386_p6_cycle_event = PME_I386_PII_CPU_CLK_UNHALTED; 
+	i386_p6_inst_retired_event = PME_I386_PII_INST_RETIRED;
 	return PFMLIB_SUCCESS;
 }
 
@@ -177,13 +191,20 @@ pfm_i386_p6_detect_piii(void)
 		case 9: /* Mobile Pentium III */
 		case 10:/* Pentium III Cascades */
 		case 11:/* Pentium III Tualatin */
- 			i386_pe = i386_pIII_pe;
-			i386_p6_cycle_event = PME_I386_PIII_CPU_CLK_UNHALTED; 
-			i386_p6_inst_retired_event = PME_I386_PIII_INST_RETIRED;
 			break;
 		default:
 			return PFMLIB_ERR_NOTSUPP;
 	}
+	return PFMLIB_SUCCESS;
+}
+
+static int
+pfm_i386_p6_init_piii(void)
+{
+ 	i386_pe = i386_pIII_pe;
+	i386_p6_cycle_event = PME_I386_PIII_CPU_CLK_UNHALTED; 
+	i386_p6_inst_retired_event = PME_I386_PIII_INST_RETIRED;
+
 	return PFMLIB_SUCCESS;
 }
 
@@ -208,6 +229,12 @@ pfm_i386_p6_detect_pm(void)
 	if (model != 13)
 		return PFMLIB_ERR_NOTSUPP;
 
+	return PFMLIB_SUCCESS;
+}
+
+static int
+pfm_i386_p6_init_pm(void)
+{
 	i386_pe = i386_pm_pe;
 	i386_p6_cycle_event = PME_I386_PM_CPU_CLK_UNHALTED; 
 	i386_p6_inst_retired_event = PME_I386_PM_INST_RETIRED;
@@ -545,6 +572,8 @@ pfm_pmu_support_t i386_pii_support={
 	.get_event_counters	= pfm_i386_p6_get_event_counters,
 	.dispatch_events	= pfm_i386_p6_dispatch_events,
 	.pmu_detect		= pfm_i386_p6_detect_pii,
+	.pmu_detect		= pfm_i386_p6_init_pii,
+	.pmu_init		= pfm_i386_p6_init_ppro,
 	.get_impl_pmcs		= pfm_i386_p6_get_impl_perfsel,
 	.get_impl_pmds		= pfm_i386_p6_get_impl_perfctr,
 	.get_impl_counters	= pfm_i386_p6_get_impl_counters,
@@ -571,6 +600,7 @@ pfm_pmu_support_t i386_p6_support={
 	.get_event_counters	= pfm_i386_p6_get_event_counters,
 	.dispatch_events	= pfm_i386_p6_dispatch_events,
 	.pmu_detect		= pfm_i386_p6_detect_piii,
+	.pmu_init		= pfm_i386_p6_init_piii,
 	.get_impl_pmcs		= pfm_i386_p6_get_impl_perfsel,
 	.get_impl_pmds		= pfm_i386_p6_get_impl_perfctr,
 	.get_impl_counters	= pfm_i386_p6_get_impl_counters,
@@ -596,6 +626,7 @@ pfm_pmu_support_t i386_ppro_support={
 	.get_event_counters	= pfm_i386_p6_get_event_counters,
 	.dispatch_events	= pfm_i386_p6_dispatch_events,
 	.pmu_detect		= pfm_i386_p6_detect_ppro,
+	.pmu_init		= pfm_i386_p6_init_ppro,
 	.get_impl_pmcs		= pfm_i386_p6_get_impl_perfsel,
 	.get_impl_pmds		= pfm_i386_p6_get_impl_perfctr,
 	.get_impl_counters	= pfm_i386_p6_get_impl_counters,
@@ -623,6 +654,7 @@ pfm_pmu_support_t i386_pm_support={
 	.get_event_counters	= pfm_i386_p6_get_event_counters,
 	.dispatch_events	= pfm_i386_p6_dispatch_events,
 	.pmu_detect		= pfm_i386_p6_detect_pm,
+	.pmu_init		= pfm_i386_p6_init_pm,
 	.get_impl_pmcs		= pfm_i386_p6_get_impl_perfsel,
 	.get_impl_pmds		= pfm_i386_p6_get_impl_perfctr,
 	.get_impl_counters	= pfm_i386_p6_get_impl_counters,

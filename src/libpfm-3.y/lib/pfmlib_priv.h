@@ -127,5 +127,6 @@ static inline unsigned int pfm_num_masks(int e)
 }
 
 extern FILE *libpfm_fp;
+extern int forced_pmu;
 
 #endif /* __PFMLIB_PRIV_H__ */

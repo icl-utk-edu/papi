@@ -110,6 +110,9 @@ static struct {
 	char		name[NAME_SIZE];
 	unsigned int	cpu_clks;
 	unsigned int	ret_inst;
+	int		family;
+	int		model;
+	int		stepping;
 	pme_amd64_entry_t *events;
 } amd64_pmu;
 
@@ -120,6 +123,9 @@ pfm_pmu_support_t amd64_support;
 #define amd64_cpu_clks    amd64_pmu.cpu_clks
 #define amd64_ret_inst    amd64_pmu.ret_inst
 #define amd64_events      amd64_pmu.events
+#define amd64_family	  amd64_pmu.family
+#define amd64_model	  amd64_pmu.model
+#define amd64_stepping	  amd64_pmu.stepping
 
 #define IS_FAMILY_10H() (amd64_pmu.revision >= AMD64_FAM10H)
 #define HAS_IBS() IS_FAMILY_10H()
@@ -225,7 +231,6 @@ static int
 pfm_amd64_detect(void)
 {
 	unsigned int a, b, c, d;
-	int family, model, stepping;
 	char buffer[128];
 
 	cpuid(0, &a, &b, &c, &d);
@@ -238,23 +243,38 @@ pfm_amd64_detect(void)
 		return PFMLIB_ERR_NOTSUPP;
 
 	cpuid(1, &a, &b, &c, &d);
-	family = (a >> 8) & 0x0000000f;  // bits 11 - 8
-	model  = (a >> 4) & 0x0000000f;  // Bits  7 - 4
-	if (family == 0xf) {
-		family += (a >> 20) & 0x000000ff; // Extended family
-		model  |= (a >> 12) & 0x000000f0; // Extended model
+	amd64_family = (a >> 8) & 0x0000000f;  // bits 11 - 8
+	amd64_model  = (a >> 4) & 0x0000000f;  // Bits  7 - 4
+	if (amd64_family == 0xf) {
+		amd64_family += (a >> 20) & 0x000000ff; // Extended family
+		amd64_model  |= (a >> 12) & 0x000000f0; // Extended model
 	}
-	stepping= a & 0x0000000f;  // bits  3 - 0
+	amd64_stepping= a & 0x0000000f;  // bits  3 - 0
 
-	amd64_revision = amd64_get_revision(family, model, stepping);
+	amd64_revision = amd64_get_revision(amd64_family, amd64_model, amd64_stepping);
 
 	if (amd64_revision == AMD64_CPU_UN)
 		return PFMLIB_ERR_NOTSUPP;
 
+	return PFMLIB_SUCCESS;
+}
+
+static int
+pfm_amd64_init(void)
+{
+	/*
+	 * force AMD64 =  force to Barcelona
+	 */
+	if (forced_pmu) {
+		amd64_family = 16;
+		amd64_model  = 2;
+		amd64_stepping = 2;
+		amd64_revision = amd64_get_revision(amd64_family, amd64_model, amd64_stepping);
+	}
 	__pfm_vbprintf("AMD family=%d model=0x%x stepping=0x%x rev=%s (%s)\n",
-		       family,
-		       model,
-		       stepping,
+		       amd64_family,
+		       amd64_model,
+		       amd64_stepping,
 		       amd64_rev_strs[amd64_revision],
 		       amd64_cpu_strs[amd64_revision]);
 
@@ -694,6 +714,7 @@ pfm_pmu_support_t amd64_support = {
 	.get_event_counters	= pfm_amd64_get_event_counters,
 	.dispatch_events	= pfm_amd64_dispatch_events,
 	.pmu_detect		= pfm_amd64_detect,
+	.pmu_init		= pfm_amd64_init,
 	.get_impl_pmcs		= pfm_amd64_get_impl_perfsel,
 	.get_impl_pmds		= pfm_amd64_get_impl_perfctr,
 	.get_impl_counters	= pfm_amd64_get_impl_counters,
