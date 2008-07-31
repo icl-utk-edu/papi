@@ -469,14 +469,34 @@ of the handler, please see the man page for PAPI_set_debug.
 <TR valign=top>
 <TD align=center colspan=2><I>Multiplexing control</I></TD></TR>
 <TR valign=top>
-<TD><B>PAPI_MULTIPLEX</B></TD><TD>Get/Set options for multiplexing.
+<TD><B>PAPI_MULTIPLEX</B></TD><TD>Get/Set options for multiplexing of the eventset.
 </TD></TR>
 <TR valign=top>
 <TD><B>PAPI_MAX_MPX_CTRS</B></TD><TD>Get maximum number of multiplexing counters.
 </TD></TR>
 <TR valign=top>
-<TD><B>PAPI_DEF_MPX_USEC</B></TD><TD>Get/Set the sampling time slice in microseconds for multiplexing.
+<TD><B>PAPI_DEF_MPX_NS</B></TD><TD>Get/Set the sampling time slice in nanoseconds for multiplexing, currently the same as PAPI_DEF_ITIMER_NS. The substrate is free to change the requested value according to the resolution of the underlying implementation.
 </TD></TR>
+<TR valign=top>
+</TR>
+<!-- cI s -->
+<!-- 1B 1w(45). -->
+<TR valign=top>
+<TD align=center colspan=2><I>Control of interrupt timers</I></TD></TR>
+<TR valign=top>
+</TR>
+<TR valign=top>
+</TR>
+<TR valign=top>
+</TR>
+<TR valign=top>
+</TR>
+<TR valign=top>
+</TR>
+<TR valign=top>
+</TR>
+<TR valign=top>
+</TR>
 <!-- cI s -->
 <!-- lB lw(45). -->
 <TR valign=top>
@@ -542,11 +562,11 @@ Users should use the definition in
   PAPI_domain_option_t defdomain;
   PAPI_attach_option_t attach;
   PAPI_multiplex_option_t multiplex;
+  PAPI_itimer_option_t itimer;
   PAPI_hw_info_t *hw_info;
   PAPI_shlib_info_t *shlib_info;
   PAPI_exe_info_t *exe_info;
   PAPI_substrate_info_t *sub_info;
-  PAPI_overflow_option_t ovf_info;
   PAPI_addr_range_option_t addr;
 } PAPI_option_t;
 <!-- .if t .ft P -->
