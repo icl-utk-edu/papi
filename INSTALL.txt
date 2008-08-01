@@ -441,18 +441,12 @@ PLATFORM NOTES:
 Opteron fails the matrix-hl test because the default definition of PAPI_FP_OPS
 overcounts speculative floating point operations.
 
-Linux - SiCortex
-*****************************************************************************
-PAPI on SiCortex relies on the pre-installed perfmon2 patch and libpfm library.
-PAPI should configure and build as described under General Installation, above,
-automatically.detecting the proper perfmon version to link to.
-
-MIPS - IRIX 6.5
+IRIX - MIPS
 *****************************************************************************
 No additional steps are required to install PAPI on IRIX. Follow the 
 general installation guide, and everything should work.
 
-SiCortex
+Linux - SiCortex
 *****************************************************************************
 
 Assuming the default 64 bit build:
