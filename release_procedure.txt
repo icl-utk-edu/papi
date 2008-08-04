@@ -11,21 +11,22 @@ the lines as they are completed to avoid confusion.
 __ 1. Notify developers that a release is imminent and the repository should be
 	considered frozen.
 
-__ 2. Create a ChangeLog for the current release. 
+__ 2. Check/Change the version number in: papi.h, configure.in, Makefile.in;
+	and commit to cvs if needed.
+
+__ 2a. If configure.is changed, run autoconf (2.61) 
+	and commit the resulting configure.
+
+__ 3. Create a ChangeLog for the current release. 
 	- One handy way to do this is to use the python script that comes with
 	WinCVS:
 	  Macros->CVS->Build ChangeLog (advanced).
 	Use the -r<branch>: command to log commit messages from the previous 
 	branch point to the present.
 
-__ 3. Scan the ChangeLog to remove extraneous fluff, like perfctr imports.
+__ 4. Scan the ChangeLog to remove extraneous fluff, like perfctr or perfmon imports.
 
-__ 4. Modfy RELEASENOTES.txt to summarize the major changes listed in the log.
-
-__ 5. Check/Change the version number in: papi.h, configure.in, Makefile.in;
-	and commit to cvs if needed.
-
-__ 5a. If configure.in changed, run autoconf and commit the resulting configure.
+__ 5. Modify RELEASENOTES.txt to summarize the major changes listed in the log.
 
 __ 6. Add ChangeLogXYZ.txt to cvs and commit both ChangeLogXYZ.txt and 
 	RELEASENOTES.txt.
@@ -43,6 +44,7 @@ __ 11. Export the branch to a clean working directory:
 	> cvs export -r papi-3-2-0 papi
 
 __ 12. Delete any unneccessary files or directories
+		particularly .doc and .pdf files in the /doc directory
 
 __ 13. Rename the directory from papi to papi-X.Y.Z
 

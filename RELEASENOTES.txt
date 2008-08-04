@@ -1,5 +1,5 @@
 ===============================================================================
-PAPI 3.6.0 RELEASE NOTES                                            30 Apr 2008
+PAPI 3.6.1 RELEASE NOTES                                            01 Aug 2008
 ===============================================================================
 
 This file documents changes in recent PAPI releases in inverse chronological
@@ -9,18 +9,17 @@ For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 
 For specific and detailed information on changes made in this release, grep
-the ChangeLogP360.txt file for keywords of interest or go directly to the PAPI
+the ChangeLogP361.txt file for keywords of interest or go directly to the PAPI
 cvs tree.
 
 
 GENERAL NOTES
 ===============================================================================
-This release is a major upgrade to PAPI 3.5.0. It introduces support for  
-several new platforms, introduces a few new features, and contains a myriad 
-number of bug fixes, consolidations, and enhancements. These changes are
-summarized below.
+This release is a minor upgrade to PAPI 3.6.0. It introduces support for  
+two new platforms, and contains a few critical bug fixes and enhancements
+identified from the PAPI 3.6.0 release. These changes are summarized below.
 
-If you are currently using PAPI 3.5.0 or earlier,
+If you are currently using PAPI 3.6.0 or earlier,
 it is recommended that you upgrade to this version.
 
 As always, if you identify strange behavior or demonstrable bugs, please
@@ -28,6 +27,56 @@ contact the PAPI team or one of the PAPI development lists.
 
 And visit the PAPI website for the latest updates:
 http://icl.cs.utk.edu/papi/
+
+
+CHANGES IN PAPI 3.6.1 SINCE PAPI 3.6.0
+===============================================================================
+Bug Fixes:
+----------
+- aliased PAPI_ENUM_ALL to PAPI_ENUM_EVENTS to avoid breaking existing 
+	pre-3.6.0 code that called PAPI_enum_events.
+- Pentium 4 Models 2 and 3 are now properly recognized
+- better support across fork/exec for perfctr, perfmon2
+- overflow/profile now works properly on Intel Core
+- fix for max negative values in genpapifdef.c for latest gcc Fortran
+- fix for some meta-characters in papi_xml_event_info output
+- clarified return values for papi_add_events man pages
+
+Enhancements:
+-------------
+- perfmon_events.csv now defaults to STATIC inclusions so
+	event definitions are less likely to get lost. See
+	--with-pfm-events flag in configure for details
+- proper identification of POWER5+ and POWER5++ with AIX
+- increased resolution of PAPI timers to nanoseconds and added two new APIs
+	to support this: PAPI_get_real_ns() and PAPI_get_virt_ns()
+
+New Platforms:
+-------------
+- SiCortex running perfmon2 (preinstalled). See INSTALL.txt for installation
+	details
+- preliminary Cell support; basic counting & native events
+
+Major Issues:
+-------------
+- issues have been identified when using PAPI_overflow with fork and exec
+  - perfmon2 requires a PAPI_shutdown before a fork
+  - perfctr requires a PAPI_shutdown before an exec
+  - this likely does not affect simple counting
+
+Experimental:
+-------------
+- Cell support using perfmon2 patch
+	- 32-bit counters only
+	- unclear separation of virtual threads
+	- limited preset events
+	- no support for overflow, profile
+
+Known Bugs:
+-----------
+- see PAPI 3.6.0
+- SiCortex is overly restrictive on assigning events to counters
+	it occasionally reports conflicts when none exist. 
 
 
 CHANGES IN PAPI 3.6.0 SINCE PAPI 3.5.0
