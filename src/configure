@@ -2074,7 +2074,7 @@ fi
 # V2.3 R81 has a good cycle timer, everything else is broken
              { echo "$as_me:$LINENO: checking for working cycle fast trap" >&5
 echo $ECHO_N "checking for working cycle fast trap... $ECHO_C" >&6; }
-	     hasgoodtimer=`cat /etc/sicortex-release | grep "\-r81 .*V2\.3.*"`
+	     hasgoodcycletimer=`cat /etc/sicortex-release | grep "V2.[23]"`
 	     if test "x$hasgoodcycletimer" != "x"; then
 		walltimer=cycle
 		{ echo "$as_me:$LINENO: result: yes" >&5

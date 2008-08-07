@@ -312,7 +312,7 @@ if test "$cross_compiling" = "no" -a "$OS" = "linux" -a "$CPU" = "mips"; then
    	     F77=pathf95
 # V2.3 R81 has a good cycle timer, everything else is broken
              AC_MSG_CHECKING(for working cycle fast trap)
-	     hasgoodtimer=`cat /etc/sicortex-release | grep "\-r81 .*V2\.3.*"`
+	     hasgoodcycletimer=`cat /etc/sicortex-release | grep "V2.[[23]]"`
 	     if test "x$hasgoodcycletimer" != "x"; then	     
 		walltimer=cycle
 		AC_MSG_RESULT(yes)
