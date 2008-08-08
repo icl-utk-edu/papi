@@ -265,7 +265,7 @@ typedef int os_err_t;			/* error if -1 */
 #elif defined(PFMLIB_VERSION_24)
 #define PFM_VERSION_MIN		4U
 #else
-#define PFM_VERSION_MIN		8U
+#define PFM_VERSION_MIN		81U
 #endif
 
 #define PFM_VERSION		 (((PFM_VERSION_MAJ&0xffff)<<16)|(PFM_VERSION_MIN & 0xffff))

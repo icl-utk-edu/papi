@@ -31,7 +31,7 @@
 
 typedef struct {
 	char 		*pmu_name;
-	int		pmu_type;
+	int		pmu_type; /* must remain int, using -1 */
 	unsigned int	pme_count; /* number of events */
  	unsigned int	pmd_count; /* number of PMD registers */
  	unsigned int	pmc_count; /* number of PMC registers */

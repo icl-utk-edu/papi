@@ -1,5 +1,5 @@
 /*
- * pfmlib_gen_ia32.c : Intel architectural PMU v1 and v2
+ * pfmlib_gen_ia32.c : Intel architectural PMU v1, v2, v3
  *
  * The file provides support for the Intel architectural PMU v1 and v2.
  *
@@ -268,7 +268,7 @@ pfm_gen_ia32_init(void)
 	/*
 	 * extract architected PMU information
 	 */
-	if (forced_pmu == 0) {
+	if (forced_pmu == PFMLIB_NO_PMU) {
 		cpuid(0xa, &eax.val, &ebx.val, &ecx.val, &edx.val);
 	} else {
 		/*
@@ -376,6 +376,9 @@ pfm_coreduo_init(void)
 	gen_ia32_cycle_event = PME_COREDUO_UNHALTED_CORE_CYCLES;
 	gen_ia32_inst_retired_event = PME_COREDUO_INSTRUCTIONS_RETIRED;
 
+	/* architecrtural perfmon v1 */
+	pmu_version = 1;
+
 	num_gen_cnt = 2;
 	num_fixed_cnt = 0;
 
@@ -426,7 +429,7 @@ pfm_gen_ia32_dispatch_counters_v1(pfmlib_input_param_t *inp, pfmlib_gen_ia32_inp
 			return PFMLIB_ERR_INVAL;
 		}
 
-		if (cntrs && pmu_version != 3 && (cntrs[j].flags & PFM_GEN_IA32_ANYTHREAD)) {
+		if (cntrs && pmu_version != 3 && (cntrs[j].flags & PFM_GEN_IA32_SEL_ANYTHR)) {
 			DPRINT("event=%d anythread requires architectural perfmon v3", e[j].event);
 			return PFMLIB_ERR_INVAL;
 		}
@@ -574,7 +577,7 @@ pfm_gen_ia32_dispatch_counters_v23(pfmlib_input_param_t *inp, pfmlib_gen_ia32_in
 		if (e[j].flags & ~PFMLIB_GEN_IA32_ALL_FLAGS)
 			return PFMLIB_ERR_INVAL;
 
-		if (cntrs && pmu_version != 3 && (cntrs[j].flags & PFM_GEN_IA32_ANYTHREAD)) {
+		if (cntrs && pmu_version != 3 && (cntrs[j].flags & PFM_GEN_IA32_SEL_ANYTHR)) {
 			DPRINT("event=%d anythread requires architectural perfmon v3", e[j].event);
 			return PFMLIB_ERR_INVAL;
 		}
@@ -685,14 +688,14 @@ pfm_gen_ia32_dispatch_counters_v23(pfmlib_input_param_t *inp, pfmlib_gen_ia32_in
 		/* if plm is 0, then assume not specified per-event and use default */
 		plm = e[i].plm ? e[i].plm : inp->pfp_dfl_plm;
 
-		val = gen_ia32_pe[e[j].event].pme_code;
+		val = gen_ia32_pe[e[i].event].pme_code;
 
 		reg.sel_event_select = val & 0xff;
 
 		ucode = (val >> 8) & 0xff;
 
 		for(k=0; k < e[i].num_masks; k++)
-			ucode |= gen_ia32_pe[e[j].event].pme_umasks[e[j].unit_masks[k]].pme_ucode;
+			ucode |= gen_ia32_pe[e[i].event].pme_umasks[e[i].unit_masks[k]].pme_ucode;
 
 		val |= ucode << 8;
 
@@ -722,7 +725,7 @@ pfm_gen_ia32_dispatch_counters_v23(pfmlib_input_param_t *inp, pfmlib_gen_ia32_in
 			if (!reg.sel_inv)
 				reg.sel_inv = cntrs[i].flags & PFM_GEN_IA32_SEL_INV ? 1 : 0;
 			if (!reg.sel_any)
-				reg.sel_any = cntrs[j].flags & PFM_GEN_IA32_ANYTHREAD? 1 : 0;
+				reg.sel_any = cntrs[i].flags & PFM_GEN_IA32_SEL_ANYTHR? 1 : 0;
 		}
 
 		pc[npc].reg_num     = assign[i];
@@ -731,20 +734,37 @@ pfm_gen_ia32_dispatch_counters_v23(pfmlib_input_param_t *inp, pfmlib_gen_ia32_in
 		pd[i].reg_num  = assign[i];
 		pd[i].reg_addr = GEN_IA32_CTR_BASE+assign[i];
 
-		__pfm_vbprintf("[PERFEVTSEL%u(pmc%u)=0x%"PRIx64" event_sel=0x%x umask=0x%x os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d] %s\n",
-				pc[npc].reg_num,
-				pc[npc].reg_num,
-				reg.val,
-				reg.sel_event_select,
-				reg.sel_unit_mask,
-				reg.sel_os,
-				reg.sel_usr,
-				reg.sel_en,
-				reg.sel_int,
-				reg.sel_inv,
-				reg.sel_edge,
-				reg.sel_cnt_mask,
-				gen_ia32_pe[e[i].event].pme_name);
+		if (pmu_version < 3)
+			__pfm_vbprintf("[PERFEVTSEL%u(pmc%u)=0x%"PRIx64" event_sel=0x%x umask=0x%x os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d] %s\n",
+					pc[npc].reg_num,
+					pc[npc].reg_num,
+					reg.val,
+					reg.sel_event_select,
+					reg.sel_unit_mask,
+					reg.sel_os,
+					reg.sel_usr,
+					reg.sel_en,
+					reg.sel_int,
+					reg.sel_inv,
+					reg.sel_edge,
+					reg.sel_cnt_mask,
+					gen_ia32_pe[e[i].event].pme_name);
+		else
+			__pfm_vbprintf("[PERFEVTSEL%u(pmc%u)=0x%"PRIx64" event_sel=0x%x umask=0x%x os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d anythr=%d] %s\n",
+					pc[npc].reg_num,
+					pc[npc].reg_num,
+					reg.val,
+					reg.sel_event_select,
+					reg.sel_unit_mask,
+					reg.sel_os,
+					reg.sel_usr,
+					reg.sel_en,
+					reg.sel_int,
+					reg.sel_inv,
+					reg.sel_edge,
+					reg.sel_cnt_mask,
+					reg.sel_any,
+					gen_ia32_pe[e[i].event].pme_name);
 
 		__pfm_vbprintf("[PMC%u(pmd%u)]\n",
 				pd[i].reg_num,

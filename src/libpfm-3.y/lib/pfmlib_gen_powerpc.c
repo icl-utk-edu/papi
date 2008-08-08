@@ -800,7 +800,7 @@ pfm_gen_powerpc_get_inst_retired(pfmlib_event_t *e)
 pfm_pmu_support_t gen_powerpc_support = {
 	/* the next 6 fields are initialized in pfm_gen_powerpc_pmu_detect */
 	.pmu_name		= NULL,
-	.pmu_type		= 0,
+	.pmu_type		= PFMLIB_UNKNOWN_PMU,
 	.pme_count		= 0,
 	.pmd_count		= 0,
 	.pmc_count		= 0,

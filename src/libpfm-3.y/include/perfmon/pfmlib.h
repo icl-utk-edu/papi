@@ -218,7 +218,8 @@ extern pfm_err_t pfm_get_inst_retired_event(pfmlib_event_t *e);
 /*
  * Supported PMU family
  */
-#define PFMLIB_NO_PMU	 	 	0	/* unsupported */
+#define PFMLIB_NO_PMU	 	 	-1	/* PMU unused (forced) */
+#define PFMLIB_UNKNOWN_PMU	 	0	/* type not yet known (dynamic) */
 #define PFMLIB_GEN_IA64_PMU	 	1	/* Intel IA-64 architected PMU */
 #define PFMLIB_ITANIUM_PMU	 	2	/* Intel Itanium   */
 #define PFMLIB_ITANIUM2_PMU 	 	3	/* Intel Itanium 2 */

@@ -517,7 +517,7 @@ pfm_sparc_get_inst_retired(pfmlib_event_t *e)
 pfm_pmu_support_t sparc_support = {
 	/* the next 3 fields are initialized in pfm_sparc_pmu_detect */
 	.pmu_name		= NULL,
-	.pmu_type		= 0,
+	.pmu_type		= PFMLIB_UNKNOWN_PMU,
 	.pme_count		= 0,
 
 	.pmd_count		= 2,

@@ -440,7 +440,7 @@ pfm_gen_mips64_get_inst_retired(pfmlib_event_t *e)
 
 pfm_pmu_support_t generic_mips64_support = {
 	.pmu_name		= NULL,
-	.pmu_type		= 0,
+	.pmu_type		= PFMLIB_UNKNOWN_PMU,
 	.pme_count		= 0,
 	.pmc_count		= 0,
 	.pmd_count		= 0,

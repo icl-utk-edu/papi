@@ -154,7 +154,7 @@ pfm_initialize(void)
 			goto found;
 		}
 
-		if (!forced_pmu && (*p)->pmu_detect() == PFMLIB_SUCCESS)
+		if (forced_pmu == PFMLIB_NO_PMU && (*p)->pmu_detect() == PFMLIB_SUCCESS)
 			goto found;
 		p++;
 	}

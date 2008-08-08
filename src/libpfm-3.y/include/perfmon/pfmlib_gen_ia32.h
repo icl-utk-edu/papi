@@ -1,5 +1,5 @@
 /*
- * Intel architectural PMU v1
+ * Intel architectural PMU v1, v2, v3
  *
  * Copyright (c) 2006-2007 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
@@ -76,7 +76,7 @@ typedef struct {
 
 #define PFM_GEN_IA32_SEL_INV	0x1	/* inverse */
 #define PFM_GEN_IA32_SEL_EDGE	0x2	/* edge detect */
-#define PFM_GEN_IA32_ANYTHREAD	0x4	/* measure on any thread */
+#define PFM_GEN_IA32_SEL_ANYTHR 0x4	/* measure on any thread (v3 and up) */
 
 /*
  * model-specific parameters for the library

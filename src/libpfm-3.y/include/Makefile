@@ -72,7 +72,8 @@ HEADERS += perfmon/pfmlib_os_i386.h   	\
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_POWERPC),y)
-HEADERS += perfmon/pfmlib_os_powerpc.h   \
+HEADERS += perfmon/pfmlib_cell.h	 \
+	   perfmon/pfmlib_os_powerpc.h   \
 	   perfmon/pfmlib_comp_powerpc.h \
 	   perfmon/perfmon_powerpc.h     \
 	   perfmon/pfmlib_powerpc.h
@@ -89,10 +90,8 @@ ifeq ($(CONFIG_PFMLIB_ARCH_MIPS64),y)
 HEADERS += perfmon/pfmlib_os_mips64.h   \
 	   perfmon/pfmlib_comp_mips64.h \
 	   perfmon/perfmon_mips64.h     \
-	   perfmon/pfmlib_gen_mips64.h
-ifeq ($(CONFIG_PFMLIB_ARCH_SICORTEX),y)
-HEADERS += perfmon/pfmlib_sicortex.h
-endif
+	   perfmon/pfmlib_gen_mips64.h  \
+	   perfmon/pfmlib_sicortex.h
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
@@ -100,13 +99,6 @@ HEADERS += perfmon/pfmlib_os_crayx2.h   \
 	   perfmon/pfmlib_comp_crayx2.h \
 	   perfmon/perfmon_crayx2.h     \
 	   perfmon/pfmlib_crayx2.h
-endif
-
-ifeq ($(CONFIG_PFMLIB_CELL),y)
-HEADERS += perfmon/pfmlib_cell.h	 \
-	   perfmon/pfmlib_comp_powerpc.h \
-	   perfmon/pfmlib_os_powerpc.h \
-	   perfmon/perfmon_powerpc.h
 endif
 
 .PHONY: all clean distclean depend perfmon.h dir

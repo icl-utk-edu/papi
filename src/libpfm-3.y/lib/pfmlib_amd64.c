@@ -265,7 +265,7 @@ pfm_amd64_init(void)
 	/*
 	 * force AMD64 =  force to Barcelona
 	 */
-	if (forced_pmu) {
+	if (forced_pmu != PFMLIB_NO_PMU) {
 		amd64_family = 16;
 		amd64_model  = 2;
 		amd64_stepping = 2;

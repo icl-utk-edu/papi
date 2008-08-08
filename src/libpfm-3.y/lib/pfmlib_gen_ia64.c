@@ -261,7 +261,7 @@ pfm_gen_ia64_detect(void)
 static int
 pfm_gen_ia64_init(void)
 {
-	if (forced_pmu) {
+	if (forced_pmu != PFMLIB_NO_PMU) {
 		pfm_gen_ia64_forced_initialize();
 	} else if (pfm_gen_ia64_initialize() == -1)
 		return PFMLIB_ERR_NOTSUPP;
