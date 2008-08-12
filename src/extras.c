@@ -423,9 +423,9 @@ int _papi_hwi_start_timer(int timer, int signal, int ns)
 #endif
 
    value.it_interval.tv_sec = 0;
-   value.it_interval.tv_usec = ns / 1000;
+   value.it_interval.tv_usec = us;
    value.it_value.tv_sec = 0;
-   value.it_value.tv_usec = ns / 1000;
+   value.it_value.tv_usec = us;
 
    INTDBG("Installing itimer %d, with %d us interval\n",timer,us);
    if (setitimer(timer, &value, NULL) < 0)
