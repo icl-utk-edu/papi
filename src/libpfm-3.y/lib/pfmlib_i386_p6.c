@@ -144,7 +144,6 @@ pfm_i386_p6_detect_pii(void)
 		return PFMLIB_ERR_NOTSUPP;
 
 	model = atoi(buffer);
-
 	switch(model) {
                 case 3: /* Pentium II */
                 case 5: /* Pentium II Deschutes */
@@ -188,7 +187,6 @@ pfm_i386_p6_detect_piii(void)
 	switch(model) {
 		case 7: /* Pentium III Katmai */
 		case 8: /* Pentium III Coppermine */
-		case 9: /* Mobile Pentium III */
 		case 10:/* Pentium III Cascades */
 		case 11:/* Pentium III Tualatin */
 			break;
@@ -226,8 +224,13 @@ pfm_i386_p6_detect_pm(void)
 		return PFMLIB_ERR_NOTSUPP;
 
 	model = atoi(buffer);
-	if (model != 13)
-		return PFMLIB_ERR_NOTSUPP;
+	switch (model) {
+		case 9:
+		case 13:
+			break;
+		default:
+			return PFMLIB_ERR_NOTSUPP;
+	}
 
 	return PFMLIB_SUCCESS;
 }
@@ -572,8 +575,7 @@ pfm_pmu_support_t i386_pii_support={
 	.get_event_counters	= pfm_i386_p6_get_event_counters,
 	.dispatch_events	= pfm_i386_p6_dispatch_events,
 	.pmu_detect		= pfm_i386_p6_detect_pii,
-	.pmu_detect		= pfm_i386_p6_init_pii,
-	.pmu_init		= pfm_i386_p6_init_ppro,
+	.pmu_init		= pfm_i386_p6_init_pii,
 	.get_impl_pmcs		= pfm_i386_p6_get_impl_perfsel,
 	.get_impl_pmds		= pfm_i386_p6_get_impl_perfctr,
 	.get_impl_counters	= pfm_i386_p6_get_impl_counters,

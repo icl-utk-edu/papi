@@ -114,6 +114,9 @@ static pme_core_entry_t core_pe[]={
 	/*
 	 * END: architected events
 	 */
+	/*
+	 * BEGIN: Core 2 Duo events
+	 */
 	{ .pme_name = "RS_UOPS_DISPATCHED_CYCLES",
 	  .pme_code = 0xa1,
 	  .pme_flags = PFMLIB_CORE_PMC0,
@@ -155,9 +158,10 @@ static pme_core_entry_t core_pe[]={
 	  .pme_code = 0xa0,
 	  .pme_desc =  "Number of micro-ops dispatched for execution",
 	},
-	/*
-	 * BEGIN: Core 2 Duo events
-	 */
+	{ .pme_name = "RS_UOPS_DISPATCHED_NONE",
+	  .pme_code = 0xa0 | (1 << 23 | 1 << 24),
+	  .pme_desc =  "Number of of cycles in which no micro-ops is dispatched for execution",
+	},
 	{ .pme_name = "LOAD_BLOCK",
 	  .pme_code = 0x3,
 	  .pme_flags = 0,
@@ -1098,7 +1102,7 @@ static pme_core_entry_t core_pe[]={
 		{ .pme_uname = "ANY_P",
 		  .pme_udesc = "Instructions retired (precise event)",
 		  .pme_ucode = 0x0,
-	  	  .pme_flags = PFMLIB_CORE_PEBS|PFMLIB_CORE_FIXED0
+	  	  .pme_flags = PFMLIB_CORE_PEBS
 		},
 		{ .pme_uname = "LOADS",
 		  .pme_udesc = "Instructions retired, which contain a load",

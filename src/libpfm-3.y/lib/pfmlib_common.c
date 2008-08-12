@@ -145,6 +145,7 @@ pfm_initialize(void)
 	pfm_init_syscalls();
 
 	while(*p) {
+		DPRINT("trying %s\n", (*p)->pmu_name);
 		/*
 		 * check for forced_pmu
 		 * pmu_type can never be zero
@@ -160,6 +161,7 @@ pfm_initialize(void)
 	}
 	return PFMLIB_ERR_NOTSUPP;
 found:
+	DPRINT("found %s\n", (*p)->pmu_name);
 	/*
 	 * run a few sanity checks
 	 */

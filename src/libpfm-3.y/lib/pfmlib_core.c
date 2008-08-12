@@ -200,7 +200,7 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 	unsigned long plm;
 	unsigned long long fixed_ctr;
 	unsigned int npc, npmc0, npmc1, nf2;
-	unsigned int i, j, n, k, umask, use_pebs = 0, done_pebs;
+	unsigned int i, j, n, k, ucode, use_pebs = 0, done_pebs;
 	unsigned int assign_pc[PMU_CORE_NUM_COUNTERS];
 	unsigned int next_gen, last_gen;
 
@@ -438,13 +438,16 @@ DPRINT("i=%d next_gen=%d last=%d isset=%d\n", i, next_gen, last_gen, pfm_regmask
 		/* if plm is 0, then assume not specified per-event and use default */
 		plm = e[i].plm ? e[i].plm : inp->pfp_dfl_plm;
 
-		reg.sel_event_select = core_pe[e[i].event].pme_code & 0xff;
+		val = core_pe[e[i].event].pme_code;
 
-		umask = (core_pe[e[i].event].pme_code >> 8) & 0xff;
+		reg.sel_event_select = val  & 0xff;
+
+		ucode = (val >> 8) & 0xff;
 
 		for(k=0; k < e[i].num_masks; k++) {
-			umask |= core_pe[e[i].event].pme_umasks[e[i].unit_masks[k]].pme_ucode;
+			ucode |= core_pe[e[i].event].pme_umasks[e[i].unit_masks[k]].pme_ucode;
 		}
+
 
 		/*
 		 * for events supporting Core specificity (self, both), a value
@@ -452,27 +455,37 @@ DPRINT("i=%d next_gen=%d last=%d isset=%d\n", i, next_gen, last_gen, pfm_regmask
 		 * force to SELF if user did not specify anything
 		 */
 		if ((core_pe[e[i].event].pme_flags & PFMLIB_CORE_CSPEC)
-		    && ((umask & (0x3 << 6)) == 0)) {
-				umask |= 1 << 6;
+		    && ((ucode & (0x3 << 6)) == 0)) {
+				ucode |= 1 << 6;
 		}
 
-		reg.sel_unit_mask  = umask;
+		val |= ucode << 8;
+
+		reg.sel_unit_mask  = ucode;
 		reg.sel_usr        = plm & PFM_PLM3 ? 1 : 0;
 		reg.sel_os         = plm & PFM_PLM0 ? 1 : 0;
 		reg.sel_en         = 1; /* force enable bit to 1 */
 		reg.sel_int        = 1; /* force APIC int to 1 */
 
-		if (cntrs) {
-			/*
-			 * counter mask is 8-bit wide, do not silently
-			 * wrap-around
-			 */
-			if (cntrs[i].cnt_mask > 255)
-				return PFMLIB_ERR_INVAL;
+		reg.sel_cnt_mask = val >>24;
+		reg.sel_inv = val >> 23;
+		reg.sel_edge = val >> 18;
 
-			reg.sel_cnt_mask = cntrs[i].cnt_mask;
-			reg.sel_edge	 = cntrs[i].flags & PFM_CORE_SEL_EDGE ? 1 : 0;
-			reg.sel_inv	 = cntrs[i].flags & PFM_CORE_SEL_INV ? 1 : 0;
+		if (cntrs) {
+			if (!reg.sel_cnt_mask) {
+				/*
+			 	 * counter mask is 8-bit wide, do not silently
+			 	 * wrap-around
+			 	 */
+				if (cntrs[i].cnt_mask > 255)
+					return PFMLIB_ERR_INVAL;
+				reg.sel_cnt_mask = cntrs[i].cnt_mask;
+			}
+
+			if (!reg.sel_edge)
+				reg.sel_edge = cntrs[i].flags & PFM_CORE_SEL_EDGE ? 1 : 0;
+			if (!reg.sel_inv)
+				reg.sel_inv = cntrs[i].flags & PFM_CORE_SEL_INV ? 1 : 0;
 		}
 
 		pc[npc].reg_num     = assign_pc[i];
