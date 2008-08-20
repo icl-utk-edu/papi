@@ -473,6 +473,9 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
      case PM_POWER6:
        _papi_pmapi_setup_presets("POWER6", 0);
        break;
+     case PM_PowerPC970:
+       _papi_pmapi_setup_presets("PPC970", 0);
+       break;
      default:
        fprintf(stderr,"%s is not supported!\n", pminfo.proc_name);
        return(PAPI_ESBSTR);
