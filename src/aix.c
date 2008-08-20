@@ -437,7 +437,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 /* This ifndef should be removed and switched to a cpu check for Power 3 or
  * power 4 when we merge substrates.
  */
-#if !defined(_POWER4) && !defined(_POWER5)
+#if !defined(_POWER4) && !defined(_POWER5) && !defined(_POWER6)
    _papi_hwi_system_info.sub_info.num_native_events = power3_setup_native_table(vtable);
    if ((retval = power3_setup_vector_table(vtable))!= 0 )  return retval;
 #else
