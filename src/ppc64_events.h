@@ -12,7 +12,15 @@
 
 /*#include ARCH_EVTS*/
 #define GROUP_INTS 8
+#ifdef _POWER4
+#define PAPI_MAX_NATIVE_EVENTS 256
+#elif defined(_POWER5)
 #define PAPI_MAX_NATIVE_EVENTS 512
+#elif defined(_POWER6)
+#define PAPI_MAX_NATIVE_EVENTS 1024
+#else
+#define PAPI_MAX_NATIVE_EVENTS 1024
+#endif
 #define MAX_GROUPS (GROUP_INTS * 32)
 
 typedef struct PPC64_register {
