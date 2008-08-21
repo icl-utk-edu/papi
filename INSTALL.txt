@@ -131,13 +131,14 @@ build of PAPI and perfctr-2.5.4, execute the following module commands:
 
 % module purge
 % module load Base-opts PrgEnv-gnu
+% module swap gcc gcc-catamount/3.3
+% module swap xt-mpt xt-mpt/$XTOS_VERSION
+% module unload xtpe-target-cnl
 % module load xtpe-target-catamount
-% module swap xt-mpt xt-mpt/2.x
-% module swap gcc gcc/3.2.3
 
 Execute configure
 
-% configure --prefix=<install-dir> --with-OS=catamount
+% configure --with-perfmon=2.2 --prefix=<install-dir> --with-OS=catamount
 
 The testing targets in the make file will not work in the Catamount 
 environment. It is necessary to log into an interactive session and run the 
@@ -147,7 +148,7 @@ use:
 	% yod -sz 1 ctests/zero
 and instead of:
 	% make fulltest
-use:
+useg
 	% ./run_cat_tests.sh
 
 PLATFORM NOTES:
@@ -164,8 +165,7 @@ Before running configure to create the make file that supports a Cray XT CNL
 build of PAPI, execute the following module commands:
 
 % module purge
-% module load xtpe-target-cnl
-% module load PrgEnv-gnu
+% module load Base-opts PrgEnv-gnu
 
 Check CNL compute nodes for the version of perfmon2 that it supports:
 
@@ -173,7 +173,7 @@ Check CNL compute nodes for the version of perfmon2 that it supports:
 
 and use this version when configuring PAPI:
 
-% configure --with-perfmon=23 --prefix=<install-dir> --with-OS=CNL
+% configure --with-perfmon=2.3 --prefix=<install-dir> --with-OS=CNL
 
 The testing targets in the make file will not work in the XT CNL environment.
 It is necessary to log into an interactive session and run the tests
@@ -204,7 +204,7 @@ Check CNL compute nodes for the version of perfmon2 that it supports:
 
 and use this version when configuring PAPI:
 
-% configure --with-perfmon=23 --prefix=<install-dir> --with-OS=CNL
+% configure --with-perfmon=2.3 --prefix=<install-dir> --with-OS=CNL
 
 The testing targets in the make file will not work in the X2 CNL environment.
 It is necessary to log into an interactive session and run the tests
