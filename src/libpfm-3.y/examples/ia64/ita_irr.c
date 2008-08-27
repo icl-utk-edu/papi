@@ -187,7 +187,17 @@ main(int argc, char **argv)
 
 	fd = (struct fd *)saxpy2;
 	range_end   =  fd->addr;
-	
+
+	/*
+	 * linker may reorder saxpy() and saxpy2()
+	 */
+	if (range_end < range_start) {
+		unsigned long tmp;
+		tmp = range_start;
+		range_start = range_end;
+		range_end = tmp;
+	}
+
 	memset(pd, 0, sizeof(pd));
 	memset(ctx, 0, sizeof(ctx));
 	memset(ibrs,0, sizeof(ibrs));

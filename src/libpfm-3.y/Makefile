@@ -41,6 +41,9 @@ all:
 	@echo Compiling for \'$(ARCH)\' target
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 
+lib:
+	$(MAKE) -C lib
+
 clean: 
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 
@@ -60,6 +63,6 @@ install:
 install_examples:
 	$(MAKE) -C examples $@
 
-.PHONY: all clean distclean depend tar tarcvs install install_examples
+.PHONY: all clean distclean depend tar tarcvs install install_examples lib
 
 # DO NOT DELETE

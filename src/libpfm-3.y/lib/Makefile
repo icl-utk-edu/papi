@@ -33,6 +33,10 @@ ifeq ($(SYS),Linux)
 SRCS += pfmlib_os_linux.c
 endif
 
+ifeq ($(SYS),Catamount)
+SRCS += pfmlib_os_linux.c
+endif
+
 ifeq ($(SYS),Darwin)
 SRCS += pfmlib_os_macos.c
 endif

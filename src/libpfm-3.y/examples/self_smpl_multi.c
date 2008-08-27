@@ -141,7 +141,7 @@ do_cycles(void)
 	} while (now.tv_sec < start.tv_sec + program_time);
 }
 
-#define DEBUG(str)   \
+#define DPRINT(str)   \
 printf("(%s) ser = %ld, fd = %d, tid = %d, self = %p\n",   \
        str, ser_no, fd, tid, (void *)self)
 
@@ -177,7 +177,7 @@ sigio_handler(int sig, siginfo_t *info, void *context)
  	 */
 	if (tid != ov->tid || !pthread_equal(self, ov->self)) {
 		mismatch[fd]++;
-		DEBUG("bad thread");
+		DPRINT("bad thread");
 	}
 
 	/*
@@ -191,10 +191,10 @@ sigio_handler(int sig, siginfo_t *info, void *context)
  	 * cannot be PFM_END_MSG starting with perfmon v2.8
  	 */
 	if (msg.type == PFM_MSG_END) {
-		DEBUG("pfm_msg_end");
+		DPRINT("pfm_msg_end");
 	} else if (msg.type != PFM_MSG_OVFL) {
 		bad_msg[fd]++;
-		DEBUG("bad msg type");
+		DPRINT("bad msg type");
 	}
 
 	user_callback(fd);
@@ -206,7 +206,7 @@ sigio_handler(int sig, siginfo_t *info, void *context)
  	 */
 	if (pfm_restart(fd) != 0) {
 		bad_restart[fd]++;
-		DEBUG("bad restart");
+		DPRINT("bad restart");
 	}
 }
 

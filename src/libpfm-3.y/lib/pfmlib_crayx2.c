@@ -240,7 +240,7 @@ pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 	 *	some counting.
 	 */
 	if (pfm_crayx2_chip_use (Pused, PME_CRAYX2_CPU_CHIPS) > 0) {
-		uint64_t Pctrl = (PFM_CPU_START | PFM_CPU_CLEAR_ALL);
+		uint64_t Pctrl = PFM_CPU_START;
 		uint64_t Pen = PFM_ENABLE_RW;
 
 		if (inp->pfp_dfl_plm & (PFM_PLM0 | PFM_PLM1)) {
@@ -276,7 +276,7 @@ pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 		npmcs++;
 	}
 	if (pfm_crayx2_chip_use (Cused, PME_CRAYX2_CACHE_CHIPS) > 0) {
-		uint64_t Cctrl = (PFM_CACHE_START | PFM_CACHE_CLEAR_ALL);
+		uint64_t Cctrl = PFM_CACHE_START;
 		uint64_t Cen = PFM_ENABLE_RW;		/* domains N/A */
 
 		/*	Second of three Cache PMC registers.
@@ -302,7 +302,7 @@ pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 		npmcs++;
 	}
 	if (pfm_crayx2_chip_use (Mused, PME_CRAYX2_MEMORY_CHIPS) > 0) {
-		uint64_t Mctrl = (PFM_MEM_START | PFM_MEM_CLEAR_ALL);
+		uint64_t Mctrl = PFM_MEM_START;
 		uint64_t Men = PFM_ENABLE_RW;		/* domains N/A */
 
 		/*	Third of three Memory PMC registers.

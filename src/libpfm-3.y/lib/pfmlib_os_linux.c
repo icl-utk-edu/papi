@@ -21,7 +21,9 @@
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE /* for getline */
+#endif
 #include <sys/types.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -210,6 +212,9 @@ static void adjust_sys_base(int version)
 	sys_base = 273;
 #else
 	switch(version) {
+		case 27:
+			sys_base = 295;
+			break;
 		case 26:
 		case 25:
 			sys_base = 288;
@@ -224,6 +229,9 @@ static void adjust_sys_base(int version)
 static void adjust_sys_base(int version)
 {
 	switch(version) {
+		case 27:	
+			sys_base = 333;
+			break;
 		case 26:
 		case 25:
 			sys_base = 327;
@@ -242,6 +250,7 @@ static void adjust_sys_base(int version)
 	sys_base += 279;
 #else
 	switch(version) {
+		case 27:
 		case 26:
 		case 25:
 			sys_base += 287;
@@ -260,6 +269,7 @@ static void adjust_sys_base(int version)
 	sys_base += 316;
 #else
 	switch(version) {
+		case 27:
 		case 26:
 		case 25:
 			sys_base += 324;
@@ -278,6 +288,7 @@ static void adjust_sys_base(int version)
 	sys_base += 275;
 #else
 	switch(version) {
+		case 27:
 		case 26:
 		case 25:
 			sys_base += 283;
@@ -293,6 +304,9 @@ static void adjust_sys_base(int version)
 static void adjust_sys_base(int version)
 {
 	switch(version) {
+		case 27:
+			sys_base = 1319;
+			break;
 		case 26:
 		case 25:
 			sys_base = 1313;
@@ -306,6 +320,9 @@ static void adjust_sys_base(int version)
 static void adjust_sys_base(int version)
 {
 	switch(version) {
+		case 27:
+			sys_base = 323;
+			break;
 		case 26:
 		case 25:
 			sys_base = 313;
