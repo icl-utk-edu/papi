@@ -7,6 +7,7 @@ cpu_option     = pwr6
 MSUBSTR = power6
 DESCR	= "AIX 5.1.0 or greater with POWER6"
 BITS    =
-ARG64	= 
+ARG64	=
+CPPFLAGS = -qlanglvl=extended
 
 include Makefile.aix-powerpc.common
