@@ -36,12 +36,39 @@ struct utsname AixVer;
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
         /* The following is for any POWER hardware */
 
+/*  Trims trailing blank space and line endings from a string (in place).
+    Returns pointer to start address */
+static char *trim_string(char *in)
+{
+  int len, i = 0;
+  char *start = in;
+
+  if (in == NULL)
+    return(in);
+  len = strlen(in);
+  if (len == 0)
+    return(in);
+  /* Trim right */
+  i = strlen(start) - 1;
+  while (i >= 0)
+    {
+      if (isblank(start[i]) || (start[i] == '\r') || (start[i] == '\n'))
+        start[i] = '\0';
+      else
+        break;
+      i--;
+    }
+  return(start);
+}
+
+
 /* Routines to support an opaque native event table */
 int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 {
    if ((EventCode & PAPI_NATIVE_AND_MASK) >= _papi_hwi_system_info.sub_info.num_native_events)
        return (PAPI_ENOEVNT);
    strncpy(ntv_name, native_name_map[EventCode & PAPI_NATIVE_AND_MASK].name, len);
+   trim_string(ntv_name);
    if (strlen(native_name_map[EventCode & PAPI_NATIVE_AND_MASK].name) > len-1) return (PAPI_EBUF);
    return (PAPI_OK);
 }
@@ -51,6 +78,7 @@ int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len
    if ((EventCode & PAPI_NATIVE_AND_MASK) >= _papi_hwi_system_info.sub_info.num_native_events)
        return (PAPI_ENOEVNT);
    strncpy(ntv_descr, native_table[native_name_map[EventCode & PAPI_NATIVE_AND_MASK].index].description, len);
+   trim_string(ntv_descr);
    if (strlen(native_table[native_name_map[EventCode & PAPI_NATIVE_AND_MASK].index].description) > len-1) return (PAPI_EBUF);
    return (PAPI_OK);
 }
@@ -87,7 +115,7 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
       } else
          return (PAPI_ENOEVNT);
    } else if (modifier == PAPI_NTV_ENUM_GROUPS) {
-#if defined(_POWER4) || defined(_POWER5)
+#if defined(_POWER4) || defined(_POWER5) || defined(_POWER6)
       unsigned int group = (*EventCode & PAPI_NTV_GROUP_AND_MASK) >> PAPI_NTV_GROUP_SHIFT;
       int index = *EventCode & 0x000000FF;
       int i;
@@ -266,7 +294,7 @@ static int get_system_info(void)
    char maxargs[PAPI_HUGE_STR_LEN];
    char pname[PAPI_HUGE_STR_LEN];
 
-#if !defined(_POWER4) && !defined(_POWER5) 
+#if !(defined(_POWER4) || defined(_POWER5) || defined(_POWER6)) 
 #ifdef _AIXVERSION_510
    pm_groups_info_t pmgroups;
 #endif
@@ -437,7 +465,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 /* This ifndef should be removed and switched to a cpu check for Power 3 or
  * power 4 when we merge substrates.
  */
-#if !defined(_POWER4) && !defined(_POWER5) && !defined(_POWER6)
+#if !(defined(_POWER4) || defined(_POWER5) || defined(_POWER6))
    _papi_hwi_system_info.sub_info.num_native_events = power3_setup_native_table(vtable);
    if ((retval = power3_setup_vector_table(vtable))!= 0 )  return retval;
 #else
