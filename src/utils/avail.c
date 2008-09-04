@@ -54,6 +54,9 @@ int main(int argc, char **argv)
    int print_tabular = 1;
    PAPI_event_info_t info;
    const PAPI_hw_info_t *hwinfo = NULL;
+   int tot_count = 0;
+   int avail_count = 0;
+   int deriv_count = 0;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
@@ -201,27 +204,42 @@ int main(int argc, char **argv)
 						   if (info.note[0]) printf(" (%s)", info.note);
 						   printf("\n");
 						  }
+						  tot_count++;
+						  if (info.count) avail_count++;
+						  if (!strcmp(is_derived(&info), "Yes")) deriv_count++;
 					  }
 			   } else {
 				   if ((print_avail_only && info.count) || (print_avail_only == 0))
-					  {
-						  printf("%s\t0x%x\t%d\t|%s|\n |%s|\n |%s|\n |%s|\n |%s|\n",
-							  info.symbol,
-							  info.event_code,
-							  info.count,
-							  info.short_descr,
-							  info.long_descr,
-							  info.note,
-							  info.derived,
-							  info.postfix);
-						  for (j=0;j<(int)info.count;j++) 
-							  printf(" Native Code[%d]: 0x%x |%s|\n",j,info.code[j], info.name[j]);
-					  }
+				   {
+					  printf("%s\t0x%x\t%d\t|%s|\n |%s|\n |%s|\n |%s|\n |%s|\n",
+						  info.symbol,
+						  info.event_code,
+						  info.count,
+						  info.short_descr,
+						  info.long_descr,
+						  info.note,
+						  info.derived,
+						  info.postfix);
+					  for (j=0;j<(int)info.count;j++) 
+						  printf(" Native Code[%d]: 0x%x |%s|\n",j,info.code[j], info.name[j]);
+				   }
+				   tot_count++;
+				   if (info.count) avail_count++;
+				   if (!strcmp(is_derived(&info), "Yes")) deriv_count++;
 			   }
 		   }
 	   } while (PAPI_enum_event(&i, print_avail_only) == PAPI_OK);
    }
    printf ("-------------------------------------------------------------------------\n");
+   if (!print_event_info) {
+	   if (print_avail_only) {
+		  printf("Of %d available events, %d ", avail_count, deriv_count);
+	   } else {
+		  printf("Of %d possible events, %d are available, of which %d ", tot_count, avail_count, deriv_count);
+	   }
+	   if (deriv_count == 1) { printf("is derived.\n\n"); }
+		  else { printf ("are derived.\n\n"); }
+   }
 
    test_pass(__FILE__, NULL, 0);
    exit(1);
