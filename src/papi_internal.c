@@ -1033,7 +1033,6 @@ int _papi_hwi_init_global_internal(void)
    _papi_hwi_system_info.sub_info.clock_ticks = sysconf(_SC_CLK_TCK);
    _papi_hwi_system_info.sub_info.reserved[0] = 0;
    _papi_hwi_system_info.sub_info.reserved[1] = 0;
-   _papi_hwi_system_info.sub_info.reserved[2] = 0;
    _papi_hwi_system_info.sub_info.hardware_intr = 0;         /* Needs hw overflow intr to be emulated in software*/
    _papi_hwi_system_info.sub_info.precise_intr = 0;          /* Performance interrupts happen precisely */
    _papi_hwi_system_info.sub_info.posix1b_timers = 0;        
