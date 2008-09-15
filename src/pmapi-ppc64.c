@@ -226,7 +226,7 @@ static int do_counter_allocation(ppc64_reg_alloc_t * event_list, int size)
                 && event_list[i].ra_counter_cmd[j] == group_map[group].counter_cmd[j])
                event_list[i].ra_position = j;
          }
-      }
+      } 
       return group;
    }
 }

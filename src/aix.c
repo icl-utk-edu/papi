@@ -14,6 +14,8 @@
 
 /* Machine dependent info structure */
 extern papi_mdi_t _papi_hwi_system_info;
+extern pm_groups_info_t pmgroups;
+
 
 /* Locking variables */
 volatile int lock_var[PAPI_MAX_LOCK] = { 0 };
@@ -294,12 +296,6 @@ static int get_system_info(void)
    char maxargs[PAPI_HUGE_STR_LEN];
    char pname[PAPI_HUGE_STR_LEN];
 
-#if !(defined(_POWER4) || defined(_POWER5) || defined(_POWER6)) 
-#ifdef _AIXVERSION_510
-   pm_groups_info_t pmgroups;
-#endif
-#endif
-
    pid = getpid();
    if (pid == -1)
       return (PAPI_ESYS);
@@ -316,6 +312,9 @@ static int get_system_info(void)
 
    strcpy(_papi_hwi_system_info.exe_info.address_info.name,basename(maxargs));
 
+#ifdef _POWER6
+    retval = pm_initialize(PM_INIT_FLAGS, &pminfo, &pmgroups, PM_CURRENT);
+#else
 #ifdef _AIXVERSION_510
 #ifdef PM_INITIALIZE
     SUBDBG("Calling AIX 5 version of pm_initialize...\n");
@@ -333,6 +332,7 @@ static int get_system_info(void)
 #else
    SUBDBG("Calling AIX 4 version of pm_init...\n");
    retval = pm_init(PM_INIT_FLAGS, &pminfo);
+#endif
 #endif
    SUBDBG("...Back from pm_init\n");
 

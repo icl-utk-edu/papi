@@ -32,13 +32,10 @@ static void ppc64_setup_gps(int total)
          /*      native_table[i].resources.rgg[j]=-1; */
          if (native_table[i].resources.selector & (1 << j)) {
             for (gnum = 0; gnum < pmgroups.maxgroups; gnum++) {
-               if (native_table[i].resources.counter_cmd[j] ==
-                   pmgroups.event_groups[gnum].events[j]) {
+               if (native_table[i].resources.counter_cmd[j] == pmgroups.event_groups[gnum].events[j]) {
                   /* could use gnum instead of pmgroups.event_groups[gnum].group_id */
-                  native_table[i].resources.group[pmgroups.event_groups[gnum].group_id /
-                                                  32] |=
+                  native_table[i].resources.group[pmgroups.event_groups[gnum].group_id / 32] |= \
                       1 << (pmgroups.event_groups[gnum].group_id % 32);
-                  /*native_table[i].resources.rgg[j]=gnum; */
                }
             }
          }
@@ -46,8 +43,10 @@ static void ppc64_setup_gps(int total)
    }
 
    for (gnum = 0; gnum < pmgroups.maxgroups; gnum++) {
-      for (i = 0; i < MAX_COUNTERS; i++)
-         group_map[gnum].counter_cmd[i] = pmgroups.event_groups[gnum].events[i];
+      for (i = 0; i < MAX_COUNTERS; i++){
+         /*group_map[gnum].counter_cmd[i] = pmgroups.event_groups[gnum].events[i];*/
+         group_map[pmgroups.event_groups[gnum].group_id].counter_cmd[i] = pmgroups.event_groups[gnum].events[i];
+      }
    }
 }
 
@@ -83,9 +82,7 @@ int ppc64_setup_native_table()
          }
       }
    }
-   /*printf("index=%d\n", index);*/
    ppc64_setup_gps(index);
-   /*printf("index=%d\n", index);*/
 
    return index;
 }

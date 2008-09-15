@@ -43,7 +43,7 @@ typedef struct PPC64_groups {
   unsigned int counter_cmd[MAX_COUNTERS];
   #else
 /* Buffer containing counter cmds for this group */
-   unsigned char counter_cmd[MAX_COUNTERS];
+   unsigned int counter_cmd[MAX_COUNTERS];
 #endif
 } PPC64_groups_t;
 
