@@ -43,6 +43,7 @@
 
 #include <perfmon/pfmlib.h>
 #include <perfmon/pfmlib_core.h>
+#include <perfmon/pfmlib_intel_atom.h>
 
 #include "../detect_pmcs.h"
 
@@ -170,7 +171,7 @@ main(int argc, char **argv)
 	 * check we are on an Intel Core PMU
 	 */
 	pfm_get_pmu_type(&type);
-	if (type != PFMLIB_INTEL_CORE_PMU)
+	if (type != PFMLIB_INTEL_CORE_PMU && type != PFMLIB_INTEL_ATOM_PMU)
 		fatal_error("This program only works with an Intel Core processor\n");
 
 	/*

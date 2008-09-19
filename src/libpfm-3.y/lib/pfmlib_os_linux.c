@@ -251,6 +251,8 @@ static void adjust_sys_base(int version)
 #else
 	switch(version) {
 		case 27:
+			sys_base += 293;
+			break;
 		case 26:
 		case 25:
 			sys_base += 287;
@@ -270,6 +272,8 @@ static void adjust_sys_base(int version)
 #else
 	switch(version) {
 		case 27:
+			sys_base += 330;
+			break;
 		case 26:
 		case 25:
 			sys_base += 324;
@@ -289,6 +293,8 @@ static void adjust_sys_base(int version)
 #else
 	switch(version) {
 		case 27:
+			sys_base += 289;
+			break;
 		case 26:
 		case 25:
 			sys_base += 283;

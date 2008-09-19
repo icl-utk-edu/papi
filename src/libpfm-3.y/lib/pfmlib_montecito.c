@@ -102,8 +102,6 @@ static char * pfm_mont_get_event_name(unsigned int i);
  * values on the fly given the base.
  */
 
-static void pfm_mont_get_impl_counters(pfmlib_regmask_t *impl_counters);
-
 static int
 pfm_mont_detect(void)
 {
@@ -506,7 +504,7 @@ pfm_mont_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t 
 	 *
 	 * this is the strongest constraint
 	 */
-	pfm_mont_get_impl_counters(&impl_cntrs);
+	pfm_get_impl_counters(&impl_cntrs);
 	pfm_regmask_andnot(&avail_cntrs, &impl_cntrs, &inp->pfp_unavail_pmcs);
 	not_assigned_events = 0;
 

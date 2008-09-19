@@ -53,6 +53,7 @@ HEADERS += perfmon/pfmlib_os_x86_64.h   \
 	   perfmon/pfmlib_amd64.h	\
 	   perfmon/pfmlib_pentium4.h	\
 	   perfmon/pfmlib_core.h	\
+	   perfmon/pfmlib_intel_atom.h	\
 	   perfmon/pfmlib_gen_ia32.h
 
 endif
@@ -66,6 +67,7 @@ HEADERS += perfmon/pfmlib_os_i386.h   	\
 	   perfmon/pfmlib_amd64.h       \
 	   perfmon/pfmlib_pentium4.h    \
 	   perfmon/pfmlib_core.h        \
+	   perfmon/pfmlib_intel_atom.h	\
 	   perfmon/pfmlib_i386_p6.h	\
 	   perfmon/pfmlib_gen_ia32.h
 

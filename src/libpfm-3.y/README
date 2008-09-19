@@ -13,8 +13,8 @@ of several modern processors.
 
 This version of libpfm supports:
 	- For Intel IA-64 :  Itanium (Merced), Itanium 2 (McKinley, Madison, Deerfield), Itanium 2 9000/9100 (Montecito,Montvale) and Generic
-	- For AMD/Intel IA-32 (64 bit mode,X86-64): AMD Opteron (K8, fam 10h), Xeon, Intel Core 2 Duo, Intel Core 2
-	- For AMD/Intel IA-32 (32 bit mode, i386) : Pentium II, Pentium Pro, Pentium III, Pentium M/P6, Core Duo/Core Solo, Intel Pentium 4, AMD Opteron (K8,fam 10h)), Intel Core 2
+	- For AMD/Intel IA-32 (64 bit mode,X86-64): AMD Opteron (K8, fam 10h), Xeon, Intel Core 2 Duo, Intel Core 2, Atom
+	- For AMD/Intel IA-32 (32 bit mode, i386) : Pentium II, Pentium Pro, Pentium III, Pentium M/P6, Core Duo/Core Solo, Intel Pentium 4, AMD Opteron (K8,fam 10h)), Intel Core 2, Atom
 	- For Intel IA-32: architectural perfmon v1, v2, v3
 	- For MIPS:  5K, 20K, 25KF, 34K, 5KC, 74K, R10000, R12000, RM7000, RM9000, SB1, VR5432, VR5500, SiCortex ICA9A/ICE9B
 	- For Cray: XT3, XT4, XT5, XT5h, X2

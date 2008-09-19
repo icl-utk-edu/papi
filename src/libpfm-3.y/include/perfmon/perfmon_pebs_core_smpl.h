@@ -4,7 +4,7 @@
  *
  * This file implements the sampling format to support Intel
  * Precise Event Based Sampling (PEBS) feature of Intel
- * Core-based processors.
+ * Core and Atom processors.
  *
  * What is PEBS?
  * ------------

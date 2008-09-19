@@ -33,10 +33,6 @@ ifeq ($(SYS),Linux)
 SRCS += pfmlib_os_linux.c
 endif
 
-ifeq ($(SYS),Catamount)
-SRCS += pfmlib_os_linux.c
-endif
-
 ifeq ($(SYS),Darwin)
 SRCS += pfmlib_os_macos.c
 endif
@@ -54,13 +50,14 @@ endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
 INCARCH = $(INC_IA32)
-SRCS   += pfmlib_i386_p6.c pfmlib_pentium4.c pfmlib_amd64.c pfmlib_core.c pfmlib_gen_ia32.c
+SRCS   += pfmlib_i386_p6.c pfmlib_pentium4.c pfmlib_amd64.c pfmlib_core.c pfmlib_gen_ia32.c \
+	  pfmlib_intel_atom.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_I386
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_X86_64),y)
 INCARCH = $(INC_X86_64)
-SRCS   += pfmlib_pentium4.c pfmlib_amd64.c pfmlib_core.c pfmlib_gen_ia32.c
+SRCS   += pfmlib_pentium4.c pfmlib_amd64.c pfmlib_core.c pfmlib_gen_ia32.c pfmlib_intel_atom.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_X86_64
 endif
 
