@@ -2796,9 +2796,13 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    sprintf(buf, "%d.%d", PFM_VERSION_MAJOR(PFM_VERSION), PFM_VERSION_MINOR(PFM_VERSION));
    SUBDBG("Perfmon2 library versions...kernel: %s library: %s\n", _papi_hwi_system_info.sub_info.kernel_version, buf);
    if (strcmp (_papi_hwi_system_info.sub_info.kernel_version, buf) != 0) {
-      PAPIERROR("Version mismatch of libpfm: compiled %s vs. installed %s\n",
-              buf, _papi_hwi_system_info.sub_info.kernel_version);
-       return (PAPI_ESBSTR);
+	   /* do a little exception processing; 81 is compatible with 80 */
+	   if (!((PFM_VERSION_MINOR(PFM_VERSION) == 81)
+		   && (strncmp (_papi_hwi_system_info.sub_info.kernel_version, "2.8", 3) == 0))) {
+		  PAPIERROR("Version mismatch of libpfm: compiled %s vs. installed %s\n",
+				  buf, _papi_hwi_system_info.sub_info.kernel_version);
+		   return (PAPI_ESBSTR);
+	   }
    }
 
    /* The following checks the version of the PFM library 
