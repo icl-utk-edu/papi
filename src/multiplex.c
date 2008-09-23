@@ -1177,7 +1177,7 @@ int mpx_init(int interval_ns)
 #ifdef _POWER6
    retval = PAPI_event_name_to_code("PM_RUN_CYC", &PNE_PM_RUN_CYC);
    if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", retval);
+      return (retval);
 #endif
    tlist = NULL;
    mpx_hold();
