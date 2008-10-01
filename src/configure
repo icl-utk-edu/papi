@@ -690,6 +690,7 @@ pfm_incdir
 pfm_libdir
 bitmode
 pfm_events
+pfm_events_table
 tests
 LIBOBJS
 LTLIBOBJS'
@@ -6044,6 +6045,15 @@ else
 fi
 
 fi
+
+if test "$pfm_events" = "static"; then
+   pfm_events_table="perfmon_events_table.h"
+   CFLAGS="$CFLAGS -DSTATIC_PERFMON_EVENTS_TABLE"
+{ echo "$as_me:$LINENO: Generating perfmon_events_table.h" >&5
+echo "$as_me: Generating perfmon_events_table.h" >&6;}
+sh perfmon_events_table.sh > perfmon_events_table.h
+fi
+
 #
 # Static tests
 #
@@ -7978,6 +7988,7 @@ fi
 
 
 
+
 if test "$cross_compiling" = "yes" ; then
    { echo "$as_me:$LINENO: Compiling genpapifdef with $nativecc because cross compiling" >&5
 echo "$as_me: Compiling genpapifdef with $nativecc because cross compiling" >&6;}
@@ -8690,12 +8701,13 @@ pfm_incdir!$pfm_incdir$ac_delim
 pfm_libdir!$pfm_libdir$ac_delim
 bitmode!$bitmode$ac_delim
 pfm_events!$pfm_events$ac_delim
+pfm_events_table!$pfm_events_table$ac_delim
 tests!$tests$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 78; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 79; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

@@ -973,6 +973,14 @@ AC_ARG_WITH(tests,
             [tests="ctests ftests"]
             )
 fi
+
+if test "$pfm_events" = "static"; then
+   pfm_events_table="perfmon_events_table.h"
+   CFLAGS="$CFLAGS -DSTATIC_PERFMON_EVENTS_TABLE"
+AC_MSG_NOTICE(Generating perfmon_events_table.h)
+sh perfmon_events_table.sh > perfmon_events_table.h
+fi
+
 #
 # Static tests
 #
@@ -1460,6 +1468,7 @@ AC_SUBST(bitmode)
 AC_SUBST(CFLAGS)
 AC_SUBST(FFLAGS)
 AC_SUBST(pfm_events)
+AC_SUBST(pfm_events_table)
 AC_SUBST(tests)
 
 if test "$cross_compiling" = "yes" ; then

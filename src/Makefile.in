@@ -34,6 +34,7 @@ PFM_ROOT  	= @pfm_root@
 PFM_LIB_PATH	= @pfm_libdir@
 PFM_INC_PATH	= @pfm_incdir@
 PFM_EVENTS	= @pfm_events@
+PFM_EVENTS_TABLE= @pfm_events_table@
 PERFCTR_PREFIX 	= @perfctr_prefix@
 PERFCTR_ROOT 	= @perfctr_root@
 PERFCTR_LIB_PATH = @perfctr_libdir@
