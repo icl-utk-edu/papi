@@ -246,7 +246,7 @@ int _papi_hwi_initialize_thread(ThreadInfo_t ** dest)
 int _papi_hwi_broadcast_signal(unsigned int mytid)
 {
   int retval, didsomething = 0;
-  ThreadInfo_t *foo = NULL;
+  volatile ThreadInfo_t *foo = NULL;
 
   _papi_hwi_lock(THREADS_LOCK);
 
