@@ -1367,6 +1367,7 @@ case "$MAKEVER" in
     aix-power5);;
     aix-power5-64bit);;
     aix-power6);;
+    aix-power6-64bit);;
     aix5-power3);;
     aix5-power3-64bit);;
     any-null);;
