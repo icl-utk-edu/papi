@@ -559,7 +559,7 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset)
    if ((eventset < 0) || (eventset > map->totalSlots))
       return (NULL);
    
-   set = &map->dataSlotArray[eventset];
+   set = map->dataSlotArray[eventset];
 #ifdef DEBUG
    if ((ISLEVEL(DEBUG_THREADS)) && (_papi_hwi_thread_id_fn) && (set->master->tid != _papi_hwi_thread_id_fn()))
      return(NULL);
