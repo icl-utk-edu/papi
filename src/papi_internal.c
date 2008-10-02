@@ -128,11 +128,11 @@ static int allocate_eventset_map(DynamicArray_t *map)
    /* Allocate space for the EventSetInfo_t pointers */
 
    map->dataSlotArray =
-       (EventSetInfo_t *) papi_malloc(PAPI_INIT_SLOTS * sizeof(EventSetInfo_t));
+       (EventSetInfo_t **) papi_malloc(PAPI_INIT_SLOTS * sizeof(EventSetInfo_t *));
    if (map->dataSlotArray == NULL) {
       return (PAPI_ENOMEM);
    }
-   memset(map->dataSlotArray, 0x00, PAPI_INIT_SLOTS * sizeof(EventSetInfo_t));
+   memset(map->dataSlotArray, 0x00, PAPI_INIT_SLOTS * sizeof(EventSetInfo_t *));
    map->totalSlots = PAPI_INIT_SLOTS;
    map->availSlots = PAPI_INIT_SLOTS;
    map->fullSlots = 0;
@@ -149,12 +149,12 @@ static void free_eventset_map(DynamicArray_t *map)
 static int expand_dynamic_array(DynamicArray_t * DA)
 {
    int number;
-   EventSetInfo_t *n;
+   EventSetInfo_t **n;
 
    /*realloc existing PAPI_EVENTSET_MAP.dataSlotArray */
 
    number = DA->totalSlots * 2;
-   n = (EventSetInfo_t *) papi_realloc(DA->dataSlotArray, number * sizeof(EventSetInfo_t));
+   n = (EventSetInfo_t **) papi_realloc(DA->dataSlotArray, number * sizeof(EventSetInfo_t *));
    if (n == NULL)
       return(PAPI_ENOMEM);
 
@@ -163,7 +163,7 @@ static int expand_dynamic_array(DynamicArray_t * DA)
    DA->dataSlotArray = n;
 
    memset(DA->dataSlotArray + DA->totalSlots, 0x00,
-          DA->totalSlots * sizeof(EventSetInfo_t));
+          DA->totalSlots * sizeof(EventSetInfo_t *));
 
    DA->totalSlots = number;
    DA->availSlots = number - DA->fullSlots;
@@ -220,14 +220,22 @@ static void initialize_NativeInfoArray(EventSetInfo_t * ESI)
 }
 
 
-static int allocate_EventSet(EventSetInfo_t *ESI)
+static int allocate_EventSet(EventSetInfo_t **here)
 {
+   EventSetInfo_t *ESI;
    int max_counters, ret;
 
+   ESI = (EventSetInfo_t *) papi_malloc(sizeof(EventSetInfo_t));
+   if (ESI == NULL)
+      return (PAPI_ENOMEM);
    memset(ESI, 0x00, sizeof(EventSetInfo_t));
-   ret = _papi_hwd_init_control_state(&ESI->machdep);
+
+   ret = _papi_hwd_init_control_state(&ESI->machdep); /* this used to be init_config */
    if (ret != PAPI_OK)
+     {
+       papi_free(ESI);
      return(ret);
+     }
 
    max_counters = _papi_hwi_system_info.sub_info.num_mpx_cntrs;
    ESI->sw_stop = (long_long *) papi_malloc(max_counters * sizeof(long_long));
@@ -257,6 +265,7 @@ static int allocate_EventSet(EventSetInfo_t *ESI)
    ESI->domain.domain = _papi_hwi_system_info.sub_info.default_domain;
    ESI->granularity.granularity = _papi_hwi_system_info.sub_info.default_granularity;
 
+   *here = ESI;
    return(PAPI_OK);
 }
 
@@ -278,6 +287,7 @@ static void free_EventSet(EventSetInfo_t * ESI)
   if ((ESI->state & PAPI_MULTIPLEXING) && ESI->multiplex.mpx_evset)
     papi_free(ESI->multiplex.mpx_evset);
   memset(ESI, 0x00, sizeof(EventSetInfo_t));
+   papi_free(ESI);
 }
 
 static int add_EventSet(EventSetInfo_t * ESI, ThreadInfo_t * master)
@@ -298,13 +308,13 @@ static int add_EventSet(EventSetInfo_t * ESI, ThreadInfo_t * master)
    i = 0;
    for (i=0;i<map->totalSlots;i++)
      {
-       if (map->dataSlotArray[i].master == NULL)
+       if (map->dataSlotArray[i] == NULL)
 	 {
 	   ESI->master = master;
 	   ESI->EventSetIndex = i;
 	   map->fullSlots++;
 	   map->availSlots--;
-	   memcpy(&map->dataSlotArray[i],ESI,sizeof(EventSetInfo_t));
+	   map->dataSlotArray[i] = ESI;
 	   _papi_hwi_unlock(INTERNAL_LOCK);
 	   return(PAPI_OK);
 	 }
@@ -316,7 +326,7 @@ static int add_EventSet(EventSetInfo_t * ESI, ThreadInfo_t * master)
 
 int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle)
 {
-   EventSetInfo_t ESI;
+   EventSetInfo_t *ESI;
    int retval;
 
    /* Is the EventSet already in existence? */
@@ -326,23 +336,21 @@ int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle)
 
    if (*EventSet != PAPI_NULL)
       return (PAPI_EINVAL);
-
-   /* Well, then fill in a new one. */
+   /* Well, then allocate a new one. Use n to keep track of a NEW EventSet */
 
    retval = allocate_EventSet(&ESI);
    if (retval != PAPI_OK)
       return (retval);
 
-   /* Add it to the global table, it will get
-      copied and linked in here. */
+   /* Add it to the global table */
 
-   retval = add_EventSet(&ESI, handle);
+   retval = add_EventSet(ESI, handle);
    if (retval < PAPI_OK) {
-      free_EventSet(&ESI);
+      free_EventSet(ESI);
       return (retval);
    }
 
-   *EventSet = ESI.EventSetIndex;
+   *EventSet = ESI->EventSetIndex;
    INTDBG("(%p,%p): new EventSet in slot %d\n",
           (void *) EventSet, handle, *EventSet);
 
@@ -399,11 +407,13 @@ int _papi_hwi_remove_EventSet(EventSetInfo_t * ESI)
 
    i = ESI->EventSetIndex;
 
+   free_EventSet(ESI);
+
    /* do bookkeeping for PAPI_EVENTSET_MAP */
 
    _papi_hwi_lock(INTERNAL_LOCK);
 
-   free_EventSet(ESI);
+   map->dataSlotArray[i] = NULL;
    map->availSlots++;
    map->fullSlots--;
 

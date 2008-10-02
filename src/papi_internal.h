@@ -360,7 +360,7 @@ typedef struct _EventSetInfo {
 } EventSetInfo_t;
 
 typedef struct _dynamic_array {
-   EventSetInfo_t *dataSlotArray;      /* array of EventSets */
+   EventSetInfo_t **dataSlotArray;      /* array of ptrs to EventSets */
    int totalSlots;              /* number of slots in dataSlotArrays      */
    int availSlots;              /* number of open slots in dataSlotArrays */
    int fullSlots;               /* number of full slots in dataSlotArray    */
