@@ -1,4 +1,82 @@
 ===============================================================================
+PAPI 3.6.1 RELEASE NOTES                                            03 Oct 2008
+===============================================================================
+
+This file documents changes in recent PAPI releases in inverse chronological
+order.
+
+For details on installing PAPI on your machine, consult the INSTALL.txt file
+in this directory.
+
+For specific and detailed information on changes made in this release, grep
+the ChangeLogP362.txt file for keywords of interest or go directly to the PAPI
+cvs tree.
+
+
+GENERAL NOTES
+===============================================================================
+This release is a recommended upgrade to PAPI 3.6.1. It introduces support for
+the IBM POWER6/AIX, and contains a few critical bug fixes and enhancements
+identified from the PAPI 3.6.1 release. These changes are summarized below.
+
+If you are currently using PAPI 3.6.1 or earlier,
+it is recommended that you upgrade to this version.
+
+As always, if you identify strange behavior or demonstrable bugs, please
+contact the PAPI team or one of the PAPI development lists.
+
+And visit the PAPI website for the latest updates:
+http://icl.cs.utk.edu/papi/
+
+
+CHANGES IN PAPI 3.6.2 SINCE PAPI 3.6.1
+===============================================================================
+Bug Fixes:
+----------
+- actually now support POWER6/AIX as we earlier claimed.
+- libpfm now properly identifies perfmon2 v2.8 and 2.81 kernel patches
+- fixed a subtle bug in EventSetInfo handling that was introduced in 3.6.1
+	and resulted in possible event set pointer trashing in situations with
+	multiple threads and many event sets. Most visible in sefaults in the 
+	kufrin.c test case.
+
+Enhancements:
+-------------
+- perfmon_events.csv now has better definitions for PAPI_FP_OPS for
+	POWER5, POWER5+ and POWER6 processors
+- papi_avail now prints a summary count of the event table at the bottom
+	cosmetic, but nice.
+
+New Platforms:
+-------------
+- IBM POWER6 is now *really* supported, validating earlier claims that it was.
+
+Major Issues:
+-------------
+- the global array that maintains pointers to EventSetInfo descriptors can
+	cause false cache-line sharing on some platforms. This can negatively
+	impact PAPI_read performance. A future solution is to add compile-time
+	padding to this array to minimize false sharing.
+- POWER6 cycle counts are available through two events. One (PM_CYC) behaves
+	like most other events but is available in only a limited number of groups.
+	The other (PM_RUN_CYC) is on a dedicated counter and always available, but
+	it does not generate overflows or distinguish between kernel and user space.
+	PAPI currently uses the second counter. This causes failures in second.c and
+	in most overflow/profile tests.
+- POWER6 also appears to have other overflow issues that need further exploration.
+
+Experimental:
+-------------
+- preliminary support is available in perfmon2 for Intel Atom and Dunnington cpus
+	This has not been tested at the PAPI level, due to lack of access to these
+	systems. If you have one, let us know.
+	
+Known Bugs:
+-----------
+- see PAPI 3.6.1 and earlier
+
+
+===============================================================================
 PAPI 3.6.1 RELEASE NOTES                                            01 Aug 2008
 ===============================================================================
 
