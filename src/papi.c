@@ -1769,12 +1769,14 @@ void PAPI_shutdown(void)
 #endif
    for (i = 0; i < map->totalSlots; i++) {
      ESI = map->dataSlotArray[i];
-     if (ESI->master && (ESI->master == master)) {
-       if (ESI->state & PAPI_RUNNING) 
-	 PAPI_stop(i, NULL);
-       PAPI_cleanup_eventset(i);
-     } else if (ESI->state & PAPI_RUNNING) 
+     if (ESI) {
+       if (ESI->master == master) {
+         if (ESI->state & PAPI_RUNNING) 
+           PAPI_stop(i, NULL);
+         PAPI_cleanup_eventset(i);
+       } else if (ESI->state & PAPI_RUNNING) 
        j++;
+     }
    }
 
    /* No locking required, we're just waiting for the others
