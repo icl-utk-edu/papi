@@ -113,6 +113,7 @@ main(void)
 
 
 	memset(pd, 0, sizeof(pd));
+	memset(pc, 0, sizeof(pc));
 	memset(ctx, 0, sizeof(ctx));
 	memset(&inp,0, sizeof(inp));
 	memset(&outp,0, sizeof(outp));

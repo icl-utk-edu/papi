@@ -302,6 +302,8 @@ main(void)
 	pfm_set_options(&pfmlib_options);
 
 	memset(pd, 0, sizeof(pd));
+	memset(pc, 0, sizeof(pc));
+	memset(&load_args, 0, sizeof(load_args));
 	memset(&ctx, 0, sizeof(ctx));
 	memset(&buf_arg, 0, sizeof(buf_arg));
 

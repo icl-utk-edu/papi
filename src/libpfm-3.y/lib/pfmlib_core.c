@@ -108,17 +108,14 @@ pfm_core_detect(void)
 	if (ret == -1)
 		return PFMLIB_ERR_NOTSUPP;
 
-	model = atoi(buffer);
-	/*
-	 * XXX: is there a way to identify a Core-based processor?
-	 * So for now, look for Core 2 only
-	 */
 	if (family != 6)
 		return PFMLIB_ERR_NOTSUPP;
 
+	model = atoi(buffer);
 	switch(model) {
 		case 15: /* Merom */
 		case 23: /* Penryn */
+		case 29: /* Dunnington */
 			  break;
 		default:
 			return PFMLIB_ERR_NOTSUPP;

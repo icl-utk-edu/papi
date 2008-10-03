@@ -199,6 +199,7 @@ main(int argc, char **argv)
 	}
 
 	memset(pd, 0, sizeof(pd));
+	memset(pc, 0, sizeof(pc));
 	memset(ctx, 0, sizeof(ctx));
 	memset(ibrs,0, sizeof(ibrs));
 	memset(&load_args,0, sizeof(load_args));

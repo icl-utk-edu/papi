@@ -245,7 +245,6 @@ main(void)
 
 	memset(pd, 0, sizeof(pd));
 	memset(pc, 0, sizeof(pc));
-	memset(pc, 0, sizeof(pc));
 	memset(&ctx, 0, sizeof(ctx));
 	memset(&buf_arg, 0, sizeof(buf_arg));
 	memset(&load_args, 0, sizeof(load_args));
