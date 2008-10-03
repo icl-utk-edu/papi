@@ -1768,7 +1768,7 @@ void PAPI_shutdown(void)
  again:
 #endif
    for (i = 0; i < map->totalSlots; i++) {
-     ESI = &map->dataSlotArray[i];
+     ESI = map->dataSlotArray[i];
      if (ESI->master && (ESI->master == master)) {
        if (ESI->state & PAPI_RUNNING) 
 	 PAPI_stop(i, NULL);
