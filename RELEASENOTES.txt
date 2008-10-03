@@ -1,5 +1,5 @@
 ===============================================================================
-PAPI 3.6.1 RELEASE NOTES                                            03 Oct 2008
+PAPI 3.6.2 RELEASE NOTES                                            03 Oct 2008
 ===============================================================================
 
 This file documents changes in recent PAPI releases in inverse chronological
