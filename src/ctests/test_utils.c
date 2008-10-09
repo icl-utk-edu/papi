@@ -20,6 +20,9 @@ int papi_print_header (char *prompt, int event_flag, const PAPI_hw_info_t **hwin
 
 	printf ("%s", prompt);
 	printf("--------------------------------------------------------------------------------\n");
+	printf("PAPI Version             : %d.%d.%d.%d\n", PAPI_VERSION_MAJOR(PAPI_VERSION),
+		PAPI_VERSION_MINOR(PAPI_VERSION), PAPI_VERSION_REVISION(PAPI_VERSION),
+		PAPI_VERSION_INCREMENT(PAPI_VERSION));
 	printf("Vendor string and code   : %s (%d)\n", (*hwinfo)->vendor_string, (*hwinfo)->vendor);
 	printf("Model string and code    : %s (%d)\n", (*hwinfo)->model_string, (*hwinfo)->model);
 	printf("CPU Revision             : %f\n", (*hwinfo)->revision);
