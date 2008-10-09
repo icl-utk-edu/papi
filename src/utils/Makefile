@@ -5,7 +5,8 @@ CC	= gcc
 CC_R	= $(CC) -pthread
 CFLAGS	= -g -O -Wall
 
-TARGETS = papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail papi_command_line papi_event_chooser papi_decode papi_xml_event_info
+TARGETS = papi_avail papi_mem_info papi_cost papi_clockres papi_native_avail papi_command_line \
+	papi_event_chooser papi_decode papi_xml_event_info papi_version
 UTILOBJS= do_loops.o dummy.o test_utils.o
 
 default all utils util: $(TARGETS)
@@ -27,6 +28,9 @@ papi_command_line: command_line.c $(UTILOBJS) $(PAPILIB)
 
 papi_mem_info: mem_info.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) mem_info.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_mem_info
+
+papi_version: version.c $(PAPILIB)
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) version.c $(PAPILIB) $(LDFLAGS) -o papi_version
 
 papi_avail: avail.c $(PAPILIB) $(UTILOBJS)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) avail.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o papi_avail
