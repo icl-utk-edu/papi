@@ -66,7 +66,7 @@ int main(int argc, char **argv)
 			name = argv[i+1];
 			if ((name == NULL) || (strlen(name) == 0)) {
 				print_help(argv);
-				exit(1);
+				exit(0);
 			}
 		}
 		else if (strstr(argv[i], "-a"))
@@ -75,7 +75,7 @@ int main(int argc, char **argv)
 			print_tabular = 0;
 		else if (strstr(argv[i], "-h")) {
 			print_help(argv);
-			exit(1);
+			exit(0);
 		}
 		else if (strstr(argv[i], "--br"))
 			filter |= PAPI_PRESET_BIT_BR;
@@ -242,5 +242,5 @@ int main(int argc, char **argv)
    }
 
    test_pass(__FILE__, NULL, 0);
-   exit(1);
+   exit(0);
 }

@@ -87,7 +87,7 @@ static void parse_args(int argc, char **argv, command_flags_t *f) {
 	/* if help requested, print and bail */
 	if (f->help) {
 		print_help(argv, s);
-		exit(1);
+		exit(0);
 	}
 
 	/* Look for flags unsupported by this component */
@@ -213,7 +213,7 @@ int main(int argc, char **argv)
 			}
 		}
 		else printf("Sorry, an event by the name '%s' could not be found.\n Is it typed correctly?\n\n",flags.name);
-		exit(0);
+		exit(1);
 	}
 
 	printf("%-12s %s  | %s |\n","Event Code","Symbol","Long Description");
@@ -286,5 +286,5 @@ int main(int argc, char **argv)
 	printf ("--------------------------------------------------------------------------------\n");
 	printf("Total events reported: %d\n", j);
 	test_pass(__FILE__, NULL, 0);
-	exit(1);
+	exit(0);
 }

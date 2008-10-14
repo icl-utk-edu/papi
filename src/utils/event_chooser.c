@@ -113,7 +113,7 @@ int native()
 	printf ("-------------------------------------------------------------------------\n");
 	printf("Total events reported: %d\n", j);
 	test_pass(__FILE__, NULL, 0);
-	exit(1);
+	exit(0);
 }
 
 int preset()
@@ -150,7 +150,7 @@ int preset()
 	printf ("-------------------------------------------------------------------------\n");
 	printf("Total events reported: %d\n", j);
 	test_pass(__FILE__, NULL, 0);
-	exit(1);
+	exit(0);
 }
 
 int main(int argc, char **argv)

@@ -9,5 +9,5 @@ int main(int argc, char **argv)
 	printf("PAPI Version: %d.%d.%d.%d\n", PAPI_VERSION_MAJOR(PAPI_VERSION),
 		PAPI_VERSION_MINOR(PAPI_VERSION), PAPI_VERSION_REVISION(PAPI_VERSION),
 		PAPI_VERSION_INCREMENT(PAPI_VERSION));
-	exit(1);
+	exit(0);
 }

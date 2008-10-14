@@ -132,14 +132,14 @@ int main(int argc, char **argv)
             if (bins) i++;
             else {
                printf ("-b requires a bin count!\n");
-               exit(0);
+               exit(1);
             }
          }
          if (strstr(argv[i], "-d"))
             show_dist = 1;
          if (strstr(argv[i], "-h")) {
             print_help();
-            exit(1);
+            exit(0);
          }
          if (strstr(argv[i], "-s"))
             show_std_dev = 1;
@@ -148,7 +148,7 @@ int main(int argc, char **argv)
             if (num_iters) i++;
             else {
                printf ("-t requires a threshold value!\n");
-               exit(0);
+               exit(1);
             }
          }
       }
