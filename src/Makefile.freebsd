@@ -1,5 +1,5 @@
 LIBRARY   	= libpapi.a
-SHLIB     	= libpapi.so.3
+SHLIB     	= libpapi.so
 SUBSTR      = freebsd
 MEMSUBSTR 	= any-null
 DESCR       = "FreeBSD -over libpmc- substrate"

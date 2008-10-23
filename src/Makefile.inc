@@ -168,8 +168,10 @@ install-lib: native_install
 	chmod go+r $(DESTDIR)$(LIBDIR)/$(LIBRARY)
 # copy SHLIB conditionally, since it isn't always made
 	if [[ -r $(SHLIB) ]] ; then \
-		cp $(SHLIB) $(DESTDIR)$(LIBDIR); \
-		chmod go+r $(DESTDIR)$(LIBDIR)/$(SHLIB) ; \
+		cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE); \
+		chmod go+r $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) ; \
+		cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so.$(PAPIVER); \
+		cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so; \
 	fi
 
 install-man: 
