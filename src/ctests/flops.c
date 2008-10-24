@@ -25,7 +25,6 @@ int main(int argc, char **argv)
    long_long flpins;
    int retval;
    int i, j, k, fip=0;
-   PAPI_event_info_t info;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
@@ -33,10 +32,14 @@ int main(int argc, char **argv)
    if (retval != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   if (PAPI_get_event_info(PAPI_FP_INS, &info) == PAPI_OK && info.count)
+   if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK)
      fip = 1;
-   else if(PAPI_get_event_info(PAPI_FP_OPS, &info) == PAPI_OK && info.count)
+   else if(PAPI_query_event(PAPI_FP_OPS) == PAPI_OK)
      fip = 2;
+   else{
+     if (!TESTS_QUIET)
+         printf("PAPI_FP_INS and PAPI_FP_OPS are not defined for this platform.\n");
+   }
 
    PAPI_shutdown();
 
@@ -81,10 +84,6 @@ int main(int argc, char **argv)
        printf(LLDFMT, flpins);
        printf(" MFLOPS: %f\n", mflops);
      }
-   }
-   else{
-     if (!TESTS_QUIET)
-         printf("PAPI_FP_INS and PAPI_FP_OPS are not defined for this platform.\n");
    }
    test_pass(__FILE__, NULL, 0);
    exit(1);
