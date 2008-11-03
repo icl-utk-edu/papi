@@ -1432,6 +1432,20 @@ if test "$OS" = "linux" -a "$bitmode" = "64"; then
    fi
 fi
 
+AC_MSG_CHECKING(for library to link)
+AC_ARG_WITH(shlib,
+	[  --with-shlib=<yes,no>	Specify static[no] or dynamic[yes] papi library to link with test cases and utilities],
+	[shlib=dynamic],
+	[shlib=static]
+	)
+AC_MSG_RESULT($shlib)
+if test "$shlib" = "dynamic"; then
+	SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib:$(PWD)/libpfm-2.x/libpfm;export LIBPATH=.:./libpfm-3.y/lib:./libpfm-2.x/libpfm;'   
+    LINKLIB='../$(SHLIB)'
+else
+    LINKLIB='../$(LIBRARY)'
+fi
+
 AC_SUBST(prefix)
 AC_SUBST(exec_prefix)
 AC_SUBST(libdir)
@@ -1471,6 +1485,8 @@ AC_SUBST(FFLAGS)
 AC_SUBST(pfm_events)
 AC_SUBST(pfm_events_table)
 AC_SUBST(tests)
+AC_SUBST(SETPATH)
+AC_SUBST(LINKLIB)
 
 if test "$cross_compiling" = "yes" ; then
    AC_MSG_NOTICE(Compiling genpapifdef with $nativecc because cross compiling)

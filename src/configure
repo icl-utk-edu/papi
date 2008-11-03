@@ -692,6 +692,8 @@ bitmode
 pfm_events
 pfm_events_table
 tests
+SETPATH
+LINKLIB
 LIBOBJS
 LTLIBOBJS'
 ac_subst_files=''
@@ -1310,6 +1312,7 @@ Optional Packages:
   --with-semaphores Use semaphores instead of atomic locks (IA64)
   --with-tests=<ctests,ftests,"ctests ftests">	Specify which tests to run on install
   --with-nativecc=<path>	Specify native C compiler for header generation
+  --with-shlib=<yes,no>	Specify staticno or dynamicyes papi library to link with test cases and utilities
 
 Some influential environment variables:
   CC          C compiler command
@@ -7950,6 +7953,28 @@ if test "$OS" = "linux" -a "$bitmode" = "64"; then
    fi
 fi
 
+{ echo "$as_me:$LINENO: checking for library to link" >&5
+echo $ECHO_N "checking for library to link... $ECHO_C" >&6; }
+
+# Check whether --with-shlib was given.
+if test "${with_shlib+set}" = set; then
+  withval=$with_shlib; shlib=dynamic
+else
+  shlib=static
+
+fi
+
+{ echo "$as_me:$LINENO: result: $shlib" >&5
+echo "${ECHO_T}$shlib" >&6; }
+if test "$shlib" = "dynamic"; then
+	SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib:$(PWD)/libpfm-2.x/libpfm;export LIBPATH=.:./libpfm-3.y/lib:./libpfm-2.x/libpfm;'
+    LINKLIB='../$(SHLIB)'
+else
+    LINKLIB='../$(LIBRARY)'
+fi
+
+
+
 
 
 
@@ -8704,11 +8729,13 @@ bitmode!$bitmode$ac_delim
 pfm_events!$pfm_events$ac_delim
 pfm_events_table!$pfm_events_table$ac_delim
 tests!$tests$ac_delim
+SETPATH!$SETPATH$ac_delim
+LINKLIB!$LINKLIB$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 79; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 81; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

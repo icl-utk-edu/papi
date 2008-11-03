@@ -42,5 +42,7 @@ PERFCTR_INC_PATH = @perfctr_incdir@
 DEBUGFLAGS	= @DEBUGFLAGS@
 BITS	= @bitmode@
 TESTS = @tests@
+SETPATH = @SETPATH@
+LINKLIB = @LINKLIB@
 
 include ./Makefile.$(MAKEVER)
