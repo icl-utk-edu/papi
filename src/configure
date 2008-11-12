@@ -2089,7 +2089,7 @@ echo "${ECHO_T}no" >&6; }
 	     fi
 	  fi
 fi
-if test "$OS" = "CNL"; then
+if test "$OS" = "CLE"; then
    virtualtimer=times
    tls=__thread
    walltimer=cycle
@@ -7772,7 +7772,7 @@ echo "$as_me: error: The bitmode you specified is not supported" >&2;}
 	   MAKEVER="$OS"-perfctr-opteron
 	   ;;
 
-   CNL)
+   CLE)
 	   MAKEVER="$OS"-perfmon2
 	   ;;
 
@@ -7893,7 +7893,7 @@ case "$MAKEVER" in
     aix5-power3-64bit);;
     any-null);;
     catamount-perfctr-opteron);;
-    CNL-perfmon2);;
+    CLE-perfmon2);;
     dadd-alpha);;
     irix-mips);;
     irix-mips-64bit);;
