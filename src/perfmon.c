@@ -511,7 +511,7 @@ static int get_cpu_info(PAPI_hw_info_t *hw_info)
 	             {
 	               *t = '\0';
 	               s = strtok(s+2," ");
-	               if (strcasecmp(s, "pSeries") == 0)
+	               if ( (strcasecmp(s, "pSeries") == 0) || (strcasecmp(s, "PowerMac") == 0))
 	                 {
 	                   strcpy(hw_info->vendor_string, "IBM");
 	                 }
