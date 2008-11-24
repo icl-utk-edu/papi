@@ -23,7 +23,7 @@ int main(int argc, char **argv)
 {
    int retval, i,j;
    int EventSet=PAPI_NULL;
-   long_long values[2];
+   long long values[2];
    const PAPI_hw_info_t *hwinfo = NULL;
    char descr[PAPI_MAX_STR_LEN];
    PAPI_event_info_t evinfo;

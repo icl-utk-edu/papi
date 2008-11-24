@@ -19,7 +19,7 @@
 
 static double dummy3(double x, int iters);
 
-void check_values(int eventset, int *events, int nevents, long_long *values, long_long *refvalues)
+void check_values(int eventset, int *events, int nevents, long long *values, long long *refvalues)
 {
   double spread[MAXEVENTS];
   int i = nevents, j = 0;
@@ -61,12 +61,12 @@ void check_values(int eventset, int *events, int nevents, long_long *values, lon
       test_fail(__FILE__, __LINE__, "Values outside threshold", i);
 }
 
-void ref_measurements(int iters, int *eventset, int *events, int nevents, long_long *refvalues)
+void ref_measurements(int iters, int *eventset, int *events, int nevents, long long *refvalues)
 {
    PAPI_event_info_t info;
    int i, retval;
    double x = 1.1, y;
-   long_long t1, t2;
+   long long t1, t2;
 
    printf("PAPI reference measurements:\n");
 
@@ -137,8 +137,8 @@ int main(int argc, char **argv)
    int i, j, retval;
    int iters = NUM_FLOPS;
    double x = 1.1, y;
-   long_long t1, t2;
-   long_long values[MAXEVENTS], refvalues[MAXEVENTS];
+   long long t1, t2;
+   long long values[MAXEVENTS], refvalues[MAXEVENTS];
    int sleep_time = SLEEPTIME;
    double valsqsum[MAXEVENTS];
    double valsum[MAXEVENTS];

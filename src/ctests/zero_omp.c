@@ -55,8 +55,8 @@ void Thread(int n)
    int EventSet1=PAPI_NULL;
    int PAPI_event, mask1;
    int num_events1;
-   long_long **values;
-   long_long elapsed_us, elapsed_cyc;
+   long long **values;
+   long long elapsed_us, elapsed_cyc;
    char event_name[PAPI_MAX_STR_LEN];
 
    printf("Thread 0x%x started\n", omp_get_thread_num());
@@ -112,7 +112,7 @@ void Thread(int n)
 int main(int argc, char **argv)
 {
    int maxthr, retval;
-   long_long elapsed_us, elapsed_cyc;
+   long long elapsed_us, elapsed_cyc;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 

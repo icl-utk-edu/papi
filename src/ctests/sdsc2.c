@@ -26,11 +26,11 @@ int main(int argc, char **argv)
    int i, j, retval;
    int iters = NUM_FLOPS;
    double x = 1.1, y, dtmp;
-   long_long t1, t2;
-   long_long values[MAXEVENTS];
+   long long t1, t2;
+   long long values[MAXEVENTS];
    int sleep_time = SLEEPTIME;
 #ifdef STARTSTOP
-   long_long dummies[MAXEVENTS];
+   long long dummies[MAXEVENTS];
 #endif
    double valsqsum[MAXEVENTS];
    double valsum[MAXEVENTS];

@@ -335,35 +335,35 @@ int _papi_hwd_get_system_info(void)
 
 /* Low level functions, should not handle errors, just return codes. */
 
-inline_static long_long get_cycles(void) {
-   long_long ret = __rdtsc();
+inline_static long long get_cycles(void) {
+   long long ret = __rdtsc();
    return ret;
 }
 
-long_long _papi_hwd_get_real_usec(void) {
-   return((long_long)get_cycles() / (long_long)_papi_hwi_system_info.hw_info.mhz);
+long long _papi_hwd_get_real_usec(void) {
+   return((long long)get_cycles() / (long long)_papi_hwi_system_info.hw_info.mhz);
 }
 
-long_long _papi_hwd_get_real_cycles(void) {
-   return((long_long)get_cycles());
+long long _papi_hwd_get_real_cycles(void) {
+   return((long long)get_cycles());
 }
 
-//long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
+//long long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
 //{
 //   return(PAPI_ESBSTR); // Windows can't read virtual cycles...
 //}
 
-long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
+long long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
 {
     HANDLE p;
     BOOL ret;
     FILETIME Creation, Exit, Kernel, User;
-    long_long virt;
+    long long virt;
 
     p = GetCurrentProcess();
     ret = GetProcessTimes(p, &Creation, &Exit, &Kernel, &User);
     if (ret) {
-	virt = (((long_long)(Kernel.dwHighDateTime + User.dwHighDateTime))<<32)
+	virt = (((long long)(Kernel.dwHighDateTime + User.dwHighDateTime))<<32)
 	     + Kernel.dwLowDateTime + User.dwLowDateTime;
 	return(virt/1000);
     }

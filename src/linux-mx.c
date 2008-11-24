@@ -510,8 +510,8 @@ native_event_entry_t native_table[] = {
    {{0, 0}, "", ""}
 };
 
-long_long _papi_hwd_mx_register_start[MAX_COUNTERS];
-long_long _papi_hwd_mx_register[MAX_COUNTERS];
+long long _papi_hwd_mx_register_start[MAX_COUNTERS];
+long long _papi_hwd_mx_register[MAX_COUNTERS];
 
 papi_svector_t _any_null_table[] = {
  {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
@@ -943,8 +943,8 @@ int _papi_hwd_get_system_info(void)
 
 /* Low level functions, should not handle errors, just return codes. */
 
-inline_static long_long get_cycles(void) {
-   long_long ret;
+inline_static long long get_cycles(void) {
+   long long ret;
 #ifdef __x86_64__
    do {
       unsigned int a,d;
@@ -959,19 +959,19 @@ inline_static long_long get_cycles(void) {
    return ret;
 }
 
-long_long _papi_hwd_get_real_usec(void) {
-   return((long_long)get_cycles() / (long_long)_papi_hwi_system_info.hw_info.mhz);
+long long _papi_hwd_get_real_usec(void) {
+   return((long long)get_cycles() / (long long)_papi_hwi_system_info.hw_info.mhz);
 }
 
-long_long _papi_hwd_get_real_cycles(void) {
-   return((long_long)get_cycles());
+long long _papi_hwd_get_real_cycles(void) {
+   return((long long)get_cycles());
 }
 
-long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
+long long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
 {
 }
 
-long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
+long long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
 {
 }
 
@@ -1080,7 +1080,7 @@ int _papi_hwd_init_control_state(hwd_control_state_t *ptr){
 int _papi_hwd_update_control_state(hwd_control_state_t *ptr, NativeInfo_t *native, int count, hwd_context_t *ctx){
    return(PAPI_OK);
 }
-int read_mx_counters(long_long *counters)
+int read_mx_counters(long long *counters)
 {
    FILE *fp;
    char line[LINELEN], lastchar;
@@ -1129,13 +1129,13 @@ int read_mx_counters(long_long *counters)
 
 int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *ctrl){
    read_mx_counters(_papi_hwd_mx_register_start);
-   memcpy(_papi_hwd_mx_register, _papi_hwd_mx_register_start, MAX_COUNTERS*sizeof(long_long));
+   memcpy(_papi_hwd_mx_register, _papi_hwd_mx_register_start, MAX_COUNTERS*sizeof(long long));
 
    return(PAPI_OK);
 }
 
 
-int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **events, int flags)
+int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long **events, int flags)
 {
     int i;
 
@@ -1168,7 +1168,7 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctrl)
    return(PAPI_OK);
 }
 
-int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long *from)
+int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long *from)
 {
    return(PAPI_OK);
 }
@@ -1243,22 +1243,22 @@ int _papi_hwd_set_domain(hwd_control_state_t *cntrl, int domain)
  * Timing Routines
  * These functions should return the highest resolution timers available.
  */
-/*long_long _papi_hwd_get_real_usec(void)
+/*long long _papi_hwd_get_real_usec(void)
 {
    return(1);
 }
 
-long_long _papi_hwd_get_real_cycles(void)
+long long _papi_hwd_get_real_cycles(void)
 {
    return(1);
 }
 
-long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
+long long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
 {
    return(1);
 }
 
-long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
+long long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
 {
    return(1);
 }

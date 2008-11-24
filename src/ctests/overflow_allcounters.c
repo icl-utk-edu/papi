@@ -35,7 +35,7 @@
 static int total = 0;                  /* total overflows */
 
 
-void handler(int EventSet, void *address, long_long overflow_vector, void *context)
+void handler(int EventSet, void *address, long long overflow_vector, void *context)
 {
    if (!TESTS_QUIET) {
       fprintf(stderr, OVER_FMT, EventSet, address, overflow_vector);
@@ -46,7 +46,7 @@ void handler(int EventSet, void *address, long_long overflow_vector, void *conte
 int main(int argc, char **argv)
 {
    int EventSet=PAPI_NULL;
-   long_long *values;
+   long long *values;
    int num_flops, retval, i, j;
    int *events, mythreshold;
    char **names;
@@ -75,7 +75,7 @@ int main(int argc, char **argv)
      else
        names[i] = strdup(name);
    }
-   values = (long_long *)calloc(num_events*(num_events+1), sizeof(long_long));
+   values = (long long *)calloc(num_events*(num_events+1), sizeof(long long));
    ovt = (int *)calloc(num_events, sizeof(int));
 
 #if defined(linux)

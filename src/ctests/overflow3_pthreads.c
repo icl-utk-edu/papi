@@ -25,7 +25,7 @@ void *thread_fn(void *dummy)
    return(NULL);
 }
 
-void handler(int EventSet, void *address, long_long overflow_vector, void *context)
+void handler(int EventSet, void *address, long long overflow_vector, void *context)
 {
    if (!TESTS_QUIET) {
 #ifdef _CRAYT3E

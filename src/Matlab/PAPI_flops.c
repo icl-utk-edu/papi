@@ -2,8 +2,8 @@
 #include "matrix.h"
 #include "papi.h"
 
-static long_long accum_error = 0;
-static long_long start_time = 0;
+static long long accum_error = 0;
+static long long start_time = 0;
 
 void mexFunction(int nlhs, mxArray *plhs[],
                  int nrhs, const mxArray *prhs[]) {
@@ -12,8 +12,8 @@ void mexFunction(int nlhs, mxArray *plhs[],
   unsigned int mrows, ncols;
   int result;
   unsigned int flop_events[2];
-  long_long ins = 0, flop_values[2];
-  long_long elapsed_time;
+  long long ins = 0, flop_values[2];
+  long long elapsed_time;
 
   /* Check for proper number of arguments. */
     if(nrhs > 1) {

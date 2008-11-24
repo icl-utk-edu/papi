@@ -27,7 +27,7 @@ extern hwi_search_t *_papi_hwd_bgl_preset_map;
 hwi_search_t *preset_search_map;
 volatile unsigned int lock[PAPI_MAX_LOCK];
 
-long_long vdata[MAX_COUNTERS];
+long long vdata[MAX_COUNTERS];
 
 void _papi_hwd_lock_init(void)
 {
@@ -760,7 +760,7 @@ int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *state)
   return PAPI_OK;
 }
 
-int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *this_state, long_long **dp, int flags) 
+int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *this_state, long long **dp, int flags) 
 {
   int i;
 
@@ -790,7 +790,7 @@ int _papi_hwd_shutdown(hwd_context_t * ctx)
   return(PAPI_OK);
 }
 
-int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long * from) 
+int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * cntrl, long long * from) 
 {
   return(PAPI_ESBSTR);
 }

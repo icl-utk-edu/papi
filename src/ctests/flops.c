@@ -22,7 +22,7 @@ float matrixa[INDEX][INDEX], matrixb[INDEX][INDEX], mresult[INDEX][INDEX];
 int main(int argc, char **argv)
 {
    float real_time, proc_time, mflops;
-   long_long flpins;
+   long long flpins;
    int retval;
    int i, j, k, fip=0;
 

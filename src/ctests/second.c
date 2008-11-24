@@ -30,9 +30,9 @@
 #define CHANGE 4
 #define SUPERVISOR 5
 
-void dump_and_verify(int test_case, long_long **values)
+void dump_and_verify(int test_case, long long **values)
 {
-  long_long min, max, min2, max2;
+  long long min, max, min2, max2;
 
       printf("-----------------------------------------------------------------\n");
       printf("Using %d iterations of c += a*b\n", NUM_FLOPS);
@@ -48,13 +48,13 @@ void dump_and_verify(int test_case, long_long **values)
 	      printf("Both rows equal 'n  N  N' where n << N\n");
 	      return;
       } else if (test_case == CHANGE) {
-		      min = (long_long) (values[0][0] * (1.0 - TOLERANCE));
-		      max = (long_long) (values[0][0] * (1.0 + TOLERANCE));
+		      min = (long long) (values[0][0] * (1.0 - TOLERANCE));
+		      max = (long long) (values[0][0] * (1.0 + TOLERANCE));
 		      if (values[1][0] > max || values[1][0] < min)
 		         test_fail(__FILE__, __LINE__, "PAPI_TOT_INS", 1);
 		
-		      min = (long_long) (values[1][1] * (1.0 - TOLERANCE));
-		      max = (long_long) (values[1][1] * (1.0 + TOLERANCE));
+		      min = (long long) (values[1][1] * (1.0 - TOLERANCE));
+		      max = (long long) (values[1][1] * (1.0 + TOLERANCE));
 		      if ((values[2][1] + values[0][1]) > max || (values[2][1] + values[0][1]) < min)
 		         test_fail(__FILE__, __LINE__, "PAPI_TOT_CYC", 1);		
 		
@@ -77,11 +77,11 @@ void dump_and_verify(int test_case, long_long **values)
       printf("Column 1 approximately equals column 2 plus column 3\n");
       } 
       else {	  
-		      min = (long_long) (values[2][0] * (1.0 - TOLERANCE));
-		      max = (long_long) (values[2][0] * (1.0 + TOLERANCE));
+		      min = (long long) (values[2][0] * (1.0 - TOLERANCE));
+		      max = (long long) (values[2][0] * (1.0 + TOLERANCE));
 		
-		      min2 = (long_long) (values[0][1] * (1.0 - TOLERANCE));
-		      max2 = (long_long) (values[0][1] * (1.0 + TOLERANCE));
+		      min2 = (long long) (values[0][1] * (1.0 - TOLERANCE));
+		      max2 = (long long) (values[0][1] * (1.0 + TOLERANCE));
 		
       		printf("Test type   :   PAPI_DOM_ALL  PAPI_DOM_KERNEL  PAPI_DOM_USER\n");
 		      printf(TAB_DOM, "PAPI_TOT_INS: ", (values[0])[0], (values[1])[0], (values[2])[0]);
@@ -116,7 +116,7 @@ void dump_and_verify(int test_case, long_long **values)
 void case1(int num)
 {
    int retval, num_tests = 3;
-   long_long **values;
+   long long **values;
    int EventSet1=PAPI_NULL, EventSet2=PAPI_NULL, EventSet3=PAPI_NULL;
    PAPI_option_t options;
    const PAPI_substrate_info_t *subinfo;
@@ -386,7 +386,7 @@ void case1(int num)
    PAPI_shutdown();
 }
 
-void case2(int num, int domain, long_long *values)
+void case2(int num, int domain, long long *values)
 {
    int retval;
    int EventSet1=PAPI_NULL;
@@ -476,7 +476,7 @@ void case2(int num, int domain, long_long *values)
 
 void case2_driver(void)
 {
-   long_long **values;
+   long long **values;
 
    /* 3 tests, 2 events */
 

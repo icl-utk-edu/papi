@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
   int i, rank;
   int ev_set = PAPI_NULL, ev_set2 = PAPI_NULL, ev_set3 = PAPI_NULL, ev_set4 = PAPI_NULL;
   int nev,nev2;
-  long_long counts[NCOUNTS], counts2[NCOUNTS];
+  long long counts[NCOUNTS], counts2[NCOUNTS];
   int EventCode, retval, perr;
   
   if(PAPI_VER_CURRENT!=(retval=PAPI_library_init(PAPI_VER_CURRENT)))

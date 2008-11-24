@@ -124,7 +124,7 @@ typedef struct hwd_control_state {
    /* Buffer to pass to the PAL code to control the counters */
    pmctr_t counter_cmd;
    /* Counter values */
-   long_long values[3];
+   long long values[3];
 } hwd_control_state_t;
 
 typedef struct hwd_register { /* The entries != -1 imply which mask to use. */

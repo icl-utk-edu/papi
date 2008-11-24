@@ -21,7 +21,7 @@ int main(int argc, char **argv)
    int EventSet=PAPI_NULL;
    int retval;
    int j = 0, i;
-   long_long g1[3];
+   long long g1[3];
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 

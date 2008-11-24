@@ -49,9 +49,9 @@
 
 static int total[MY_NUM_TESTS] = {0,};                  /* total overflows */
 static int use_total=0;                                 /* which total field to bump */
-static long_long values[MY_NUM_TESTS] = { 0,};
+static long long values[MY_NUM_TESTS] = { 0,};
    
-void handler(int EventSet, void *address, long_long overflow_vector, void *context)
+void handler(int EventSet, void *address, long long overflow_vector, void *context)
 {
    if (!TESTS_QUIET) {
       fprintf(stderr, OVER_FMT, EventSet, address, overflow_vector);
@@ -63,7 +63,7 @@ void handler(int EventSet, void *address, long_long overflow_vector, void *conte
 int main(int argc, char **argv)
 {
    int EventSet=PAPI_NULL;
-   long_long hard_min, hard_max, soft_min, soft_max;
+   long long hard_min, hard_max, soft_min, soft_max;
    int retval;
    int PAPI_event=0, mythreshold=THRESHOLD;
    char event_name[PAPI_MAX_STR_LEN];
@@ -247,10 +247,10 @@ int main(int argc, char **argv)
       printf("Overflow in Column 3 greater than 0\n");
    }
 
-   hard_min = (long_long) ((values[0] * (1.0 - HARD_TOLERANCE)) / (long_long) mythreshold);
-   hard_max = (long_long) ((values[0] * (1.0 + HARD_TOLERANCE)) / (long_long) mythreshold);
-   soft_min = (long_long) ((values[0] * (1.0 - SOFT_TOLERANCE)) / (long_long) mythreshold);
-   soft_max = (long_long) ((values[0] * (1.0)) / (long_long) mythreshold);
+   hard_min = (long long) ((values[0] * (1.0 - HARD_TOLERANCE)) / (long long) mythreshold);
+   hard_max = (long long) ((values[0] * (1.0 + HARD_TOLERANCE)) / (long long) mythreshold);
+   soft_min = (long long) ((values[0] * (1.0 - SOFT_TOLERANCE)) / (long long) mythreshold);
+   soft_max = (long long) ((values[0] * (1.0)) / (long long) mythreshold);
    if (total[1] > hard_max || total[1] < hard_min)
       test_fail(__FILE__, __LINE__, "Hardware Overflows", 1);
 

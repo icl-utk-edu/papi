@@ -22,9 +22,9 @@
 main()
 { 
   float real_time, proc_time,mflips;
-  long_long flpins;
+  long long flpins;
   float ireal_time, iproc_time, imflips;
-  long_long iflpins;
+  long long iflpins;
   int retval;
 
   /***********************************************************************

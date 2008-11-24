@@ -23,7 +23,7 @@ static int total[NUM_THREADS];
 static int expected[NUM_THREADS];
 static pthread_t myid[NUM_THREADS];
 
-void handler(int EventSet, void *address, long_long overflow_vector, void * context)
+void handler(int EventSet, void *address, long long overflow_vector, void * context)
 {
 #if 0
     printf("handler(%d,0x%lx,%llx) Overflow %d in thread %lx\n",

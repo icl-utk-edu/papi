@@ -22,8 +22,8 @@ int main(int argc, char **argv)
    int retval, num_tests = 2, eventcnt, events[2], i, tmp;
    int EventSet1 = PAPI_NULL, EventSet2 = PAPI_NULL;
    int PAPI_event;
-   long_long values1[2], values2[2];
-   long_long elapsed_us, elapsed_cyc;
+   long long values1[2], values2[2];
+   long long elapsed_us, elapsed_cyc;
    char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */

@@ -9,30 +9,30 @@ static char *func_name[]={
 
 void clock_res_check(int flag)
 {
-   long_long  *elapsed_cyc,
+   long long  *elapsed_cyc,
        total_cyc = 0, uniq_cyc = 0, diff_cyc = 0;
    int i;
    double min, max, average, std, tmp;
 
-   elapsed_cyc = (long_long *) malloc(NUM_ITERS * sizeof(long_long));
+   elapsed_cyc = (long long *) malloc(NUM_ITERS * sizeof(long long));
 
    /* Real */
    switch(flag) {
       case 0:
          for (i = 0; i < NUM_ITERS; i++)
-            elapsed_cyc[i] = (long_long) PAPI_get_real_cyc();
+            elapsed_cyc[i] = (long long) PAPI_get_real_cyc();
          break;
       case 1:
          for (i = 0; i < NUM_ITERS; i++)
-            elapsed_cyc[i] = (long_long) PAPI_get_real_usec();
+            elapsed_cyc[i] = (long long) PAPI_get_real_usec();
          break;
       case 2:
          for (i = 0; i < NUM_ITERS; i++)
-            elapsed_cyc[i] = (long_long) PAPI_get_virt_cyc();
+            elapsed_cyc[i] = (long long) PAPI_get_virt_cyc();
          break;
       case 3:
          for (i = 0; i < NUM_ITERS; i++)
-            elapsed_cyc[i] = (long_long) PAPI_get_virt_usec();
+            elapsed_cyc[i] = (long long) PAPI_get_virt_usec();
          break;
       default:
          test_fail(__FILE__, __LINE__, "clock_res_check", -1);

@@ -62,26 +62,26 @@ int approx_equals(double a, double b)
     }
 }
 
-long_long **allocate_test_space(int num_tests, int num_events)
+long long **allocate_test_space(int num_tests, int num_events)
 {
-   long_long **values;
+   long long **values;
    int i;
 
-   values = (long_long **) malloc(num_tests * sizeof(long_long *));
+   values = (long long **) malloc(num_tests * sizeof(long long *));
    if (values == NULL)
       exit(1);
-   memset(values, 0x0, num_tests * sizeof(long_long *));
+   memset(values, 0x0, num_tests * sizeof(long long *));
 
    for (i = 0; i < num_tests; i++) {
-      values[i] = (long_long *) malloc(num_events * sizeof(long_long));
+      values[i] = (long long *) malloc(num_events * sizeof(long long));
       if (values[i] == NULL)
          exit(1);
-      memset(values[i], 0x00, num_events * sizeof(long_long));
+      memset(values[i], 0x00, num_events * sizeof(long long));
    }
    return (values);
 }
 
-void free_test_space(long_long ** values, int num_tests)
+void free_test_space(long long ** values, int num_tests)
 {
    int i;
 
@@ -486,7 +486,7 @@ void tests_quiet(int argc, char **argv)
     }
 }
 
-void test_pass(char *file, long_long ** values, int num_tests)
+void test_pass(char *file, long long ** values, int num_tests)
 {
    fprintf(stdout,"%-40s PASSED\n", file);
    if (values)

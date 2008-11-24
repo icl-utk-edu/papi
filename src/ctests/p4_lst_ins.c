@@ -11,7 +11,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 int main(int argc, char **argv)
 {
    int retval, num_tests = 6, tmp;
-   long_long **values;
+   long long **values;
    int EventSet=PAPI_NULL;
    const PAPI_hw_info_t *hw_info;
 

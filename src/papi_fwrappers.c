@@ -47,7 +47,7 @@
 #endif
 /* The Low Level Wrappers */
 
-PAPI_FCALL(papif_accum, PAPIF_ACCUM, (int *EventSet, long_long * values, int *check))
+PAPI_FCALL(papif_accum, PAPIF_ACCUM, (int *EventSet, long long * values, int *check))
 {
    *check = PAPI_accum(*EventSet, values);
 }
@@ -78,28 +78,28 @@ PAPI_FCALL(papif_destroy_eventset, PAPIF_DESTROY_EVENTSET, (int *EventSet, int *
    *check = PAPI_destroy_eventset(EventSet);
 }
 
-PAPI_FCALL(papif_get_dmem_info, PAPIF_GET_DMEM_INFO, (long_long *dest, int *check))
+PAPI_FCALL(papif_get_dmem_info, PAPIF_GET_DMEM_INFO, (long long *dest, int *check))
 {
   *check = PAPI_get_dmem_info((PAPI_dmem_info_t *)dest);
 }
 
 #if defined ( _CRAYT3E )
 PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO,
-           (_fcd fullname_fcd, _fcd name_fcd, long_long * text_start,
-            long_long * text_end, long_long * data_start, long_long * data_end,
-            long_long * bss_start, long_long * bss_end, _fcd lib_preload_env_fcd,
+           (_fcd fullname_fcd, _fcd name_fcd, long long * text_start,
+            long long * text_end, long long * data_start, long long * data_end,
+            long long * bss_start, long long * bss_end, _fcd lib_preload_env_fcd,
             int *check))
 #elif defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO,
-           (char *fullname, char *name, long_long * text_start, long_long * text_end,
-            long_long * data_start, long_long * data_end, long_long * bss_start,
-            long_long * bss_end, char *lib_preload_env, int *check, int fullname_len,
+           (char *fullname, char *name, long long * text_start, long long * text_end,
+            long long * data_start, long long * data_end, long long * bss_start,
+            long long * bss_end, char *lib_preload_env, int *check, int fullname_len,
             int name_len, int lib_preload_env_len))
 #else
 PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO,
-           (char *fullname, char *name, long_long * text_start, long_long * text_end,
-            long_long * data_start, long_long * data_end, long_long * bss_start,
-            long_long * bss_end, int *check))
+           (char *fullname, char *name, long long * text_start, long long * text_end,
+            long long * data_start, long long * data_end, long long * bss_start,
+            long long * bss_end, int *check))
 #endif
 {
    PAPI_option_t e;
@@ -211,32 +211,32 @@ PAPI_FCALL(papif_num_hwctrs, PAPIF_num_hwctrs, (int *num))
    *num = PAPI_num_hwctrs();
 }
 
-PAPI_FCALL(papif_get_real_cyc, PAPIF_GET_REAL_CYC, (long_long * real_cyc))
+PAPI_FCALL(papif_get_real_cyc, PAPIF_GET_REAL_CYC, (long long * real_cyc))
 {
    *real_cyc = PAPI_get_real_cyc();
 }
 
-PAPI_FCALL(papif_get_real_usec, PAPIF_GET_REAL_USEC, (long_long * time))
+PAPI_FCALL(papif_get_real_usec, PAPIF_GET_REAL_USEC, (long long * time))
 {
    *time = PAPI_get_real_usec();
 }
 
-PAPI_FCALL(papif_get_real_nsec, PAPIF_GET_REAL_NSEC, (long_long * time))
+PAPI_FCALL(papif_get_real_nsec, PAPIF_GET_REAL_NSEC, (long long * time))
 {
    *time = PAPI_get_real_nsec();
 }
 
-PAPI_FCALL(papif_get_virt_cyc, PAPIF_GET_VIRT_CYC, (long_long * virt_cyc))
+PAPI_FCALL(papif_get_virt_cyc, PAPIF_GET_VIRT_CYC, (long long * virt_cyc))
 {
    *virt_cyc = PAPI_get_virt_cyc();
 }
 
-PAPI_FCALL(papif_get_virt_usec, PAPIF_GET_VIRT_USEC, (long_long * time))
+PAPI_FCALL(papif_get_virt_usec, PAPIF_GET_VIRT_USEC, (long long * time))
 {
    *time = PAPI_get_virt_usec();
 }
 
-PAPI_FCALL(papif_get_virt_nsec, PAPIF_GET_VIRT_NSEC, (long_long * time))
+PAPI_FCALL(papif_get_virt_nsec, PAPIF_GET_VIRT_NSEC, (long long * time))
 {
    *time = PAPI_get_virt_nsec();
 }
@@ -472,12 +472,12 @@ PAPI_FCALL(papif_enum_event, PAPIF_ENUM_EVENT, (int *EventCode, int *modifier, i
    *check = PAPI_enum_event(EventCode, *modifier);
 }
 
-PAPI_FCALL(papif_read, PAPIF_READ, (int *EventSet, long_long * values, int *check))
+PAPI_FCALL(papif_read, PAPIF_READ, (int *EventSet, long long * values, int *check))
 {
    *check = PAPI_read(*EventSet, values);
 }
 
-PAPI_FCALL(papif_read_ts, PAPIF_READ_TS, (int *EventSet, long_long * values, long_long *cyc, int *check))
+PAPI_FCALL(papif_read_ts, PAPIF_READ_TS, (int *EventSet, long long * values, long long *cyc, int *check))
 {
    *check = PAPI_read_ts(*EventSet, values, cyc);
 }
@@ -529,12 +529,12 @@ PAPI_FCALL(papif_state, PAPIF_STATE, (int *EventSet, int *status, int *check))
    *check = PAPI_state(*EventSet, status);
 }
 
-PAPI_FCALL(papif_stop, PAPIF_STOP, (int *EventSet, long_long * values, int *check))
+PAPI_FCALL(papif_stop, PAPIF_STOP, (int *EventSet, long long * values, int *check))
 {
    *check = PAPI_stop(*EventSet, values);
 }
 
-PAPI_FCALL(papif_write, PAPIF_WRITE, (int *EventSet, long_long * values, int *check))
+PAPI_FCALL(papif_write, PAPIF_WRITE, (int *EventSet, long long * values, int *check))
 {
    *check = PAPI_write(*EventSet, values);
 }
@@ -548,19 +548,19 @@ PAPI_FCALL(papif_start_counters, PAPIF_START_COUNTERS,
 }
 
 PAPI_FCALL(papif_read_counters, PAPIF_READ_COUNTERS,
-           (long_long * values, int *array_len, int *check))
+           (long long * values, int *array_len, int *check))
 {
    *check = PAPI_read_counters(values, *array_len);
 }
 
 PAPI_FCALL(papif_stop_counters, PAPIF_STOP_COUNTERS,
-           (long_long * values, int *array_len, int *check))
+           (long long * values, int *array_len, int *check))
 {
    *check = PAPI_stop_counters(values, *array_len);
 }
 
 PAPI_FCALL(papif_accum_counters, PAPIF_ACCUM_COUNTERS,
-           (long_long * values, int *array_len, int *check))
+           (long long * values, int *array_len, int *check))
 {
    *check = PAPI_accum_counters(values, *array_len);
 }
@@ -571,20 +571,20 @@ PAPI_FCALL(papif_num_counters, PAPIF_NUM_COUNTERS, (int *numevents))
 }
 
 PAPI_FCALL(papif_ipc, PAPIF_IPC,
-           (float *rtime, float *ptime, long_long * ins, float *ipc, int *check))
+           (float *rtime, float *ptime, long long * ins, float *ipc, int *check))
 {
    *check = PAPI_ipc(rtime, ptime, ins, ipc);
 }
 
 PAPI_FCALL(papif_flips, PAPIF_FLIPS,
-           (float *real_time, float *proc_time, long_long * flpins, float *mflips,
+           (float *real_time, float *proc_time, long long * flpins, float *mflips,
             int *check))
 {
    *check = PAPI_flips(real_time, proc_time, flpins, mflips);
 }
 
 PAPI_FCALL(papif_flops, PAPIF_FLOPS,
-           (float *real_time, float *proc_time, long_long * flpops, float *mflops,
+           (float *real_time, float *proc_time, long long * flpops, float *mflops,
             int *check))
 {
    *check = PAPI_flops(real_time, proc_time, flpops, mflops);

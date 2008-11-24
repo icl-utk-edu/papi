@@ -25,7 +25,7 @@ int main(int argc, char **argv)
    int EventSet=PAPI_NULL;
    int i;
    PAPI_event_info_t info;
-   long_long values;
+   long long values;
    char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
 
 /*#if !defined(i386) || !defined(linux)

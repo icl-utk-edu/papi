@@ -38,7 +38,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_flops
   jfloat real,proc,mflop;
   jlong ins;
 
-  int ret, (*flops)(float *, float *, long_long *, float *);
+  int ret, (*flops)(float *, float *, long long *, float *);
 
   if( ! (flops = getPapiFunction("PAPI_flops")) )
     return -1;
@@ -102,7 +102,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_stop_1counters
 {
   jsize len;
   jlong *events;
-  int ret, (*stop_counters)(long_long *, int);
+  int ret, (*stop_counters)(long long *, int);
 
   if( ! (stop_counters = getPapiFunction("PAPI_stop_counters")) )
     return -1;
@@ -122,7 +122,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_read_1counters
 {
   jsize len;
   jlong *events;
-  int ret, (*read_counters)(long_long *, int);
+  int ret, (*read_counters)(long long *, int);
 
   if( ! (read_counters = getPapiFunction("PAPI_read_counters")) )
     return -1;
@@ -142,7 +142,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_accum_1counters
 {
   jsize len;
   jlong *events;
-  int ret, (*accum_counters)(long_long *, int);
+  int ret, (*accum_counters)(long long *, int);
 
   if( ! (accum_counters = getPapiFunction("PAPI_accum_counters")) )
     return -1;
@@ -161,7 +161,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_accum
   (JNIEnv *env, jobject obj, jobject set, jlongArray values)
 {
   jlong *v_arr;
-  int ret, (*accum)(int, long_long *), eventSet;
+  int ret, (*accum)(int, long long *), eventSet;
   jfieldID fid;
   jclass class;
 
@@ -498,7 +498,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_library_1init
 JNIEXPORT jlong JNICALL Java_PapiJ_get_1real_1cyc
   (JNIEnv *env, jobject obj)
 {
-  long_long (*get_real_cyc)(void);
+  long long (*get_real_cyc)(void);
 
   if( ! (get_real_cyc = getPapiFunction("PAPI_get_real_cyc")) )
     return -1;
@@ -509,7 +509,7 @@ JNIEXPORT jlong JNICALL Java_PapiJ_get_1real_1cyc
 JNIEXPORT jlong JNICALL Java_PapiJ_get_1real_1usec
   (JNIEnv *env, jobject obj)
 {
-  long_long (*get_real_usec)(void);
+  long long (*get_real_usec)(void);
 
   if( ! (get_real_usec = getPapiFunction("PAPI_get_real_usec")) )
     return -1;
@@ -520,7 +520,7 @@ JNIEXPORT jlong JNICALL Java_PapiJ_get_1real_1usec
 JNIEXPORT jlong JNICALL Java_PapiJ_get_1virt_1cyc
   (JNIEnv *env, jobject obj)
 {
-  u_long_long (*get_virt_cyc)(void);    /* JT */
+  unsigned long long (*get_virt_cyc)(void);    /* JT */
 
   if( ! (get_virt_cyc = getPapiFunction("PAPI_get_virt_cyc")) )
     return -1;
@@ -531,7 +531,7 @@ JNIEXPORT jlong JNICALL Java_PapiJ_get_1virt_1cyc
 JNIEXPORT jlong JNICALL Java_PapiJ_get_1virt_1usec
   (JNIEnv *env, jobject obj)
 {
-  u_long_long (*get_virt_usec)(void);     /* JT */
+  unsigned long long (*get_virt_usec)(void);     /* JT */
 
   if( ! (get_virt_usec = getPapiFunction("PAPI_get_virt_usec")) )
     return -1;
@@ -633,7 +633,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_read
   (JNIEnv *env, jobject obj, jobject set, jlongArray values)
 {
   jlong *v_arr;
-  int ret, eventSet, (*papi_read)(int, long_long *);
+  int ret, eventSet, (*papi_read)(int, long long *);
   jfieldID fid;
   jclass class;
 
@@ -765,7 +765,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_stop
   (JNIEnv *env, jobject obj, jobject set, jlongArray values)
 {
   jlong *v_arr;
-  int ret, eventSet, (*papi_stop)(int, long_long *);
+  int ret, eventSet, (*papi_stop)(int, long long *);
   jfieldID fid;
   jclass class;
 
@@ -804,7 +804,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_write
  (JNIEnv *env, jobject obj, jobject set, jlongArray values)
 {
   jlong *v_arr;
-  int ret, eventSet, (*papi_write)(int, long_long *);
+  int ret, eventSet, (*papi_write)(int, long long *);
   jfieldID fid;
   jclass class;
 

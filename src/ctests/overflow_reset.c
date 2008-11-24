@@ -1,7 +1,7 @@
 /* Contributed by harald@cepba.upc.edu, modified by Philip Mucci */
 #include "papi_test.h"
 
-void handler (int EventSet, void *address, long_long overflow_vector, void *context)
+void handler (int EventSet, void *address, long long overflow_vector, void *context)
 {
 	unsigned long long vals[8];
 	int ret;
@@ -53,9 +53,9 @@ int main (int argc, char *argv[])
 	{
 		if (i%1000 == 0)
 		{
-			long_long merda[8];
+			long long merda[8];
 			int i;
-			long_long vals[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+			long long vals[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 			PAPI_read (EventSet, vals);
 #if 1

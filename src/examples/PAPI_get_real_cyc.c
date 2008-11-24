@@ -20,7 +20,7 @@ int your_slow_code()
 
 int main()
 {
-   long_long s,s1, e, e1;
+   long long s,s1, e, e1;
    int retval;
 
 

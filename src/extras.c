@@ -66,9 +66,9 @@ inline_static unsigned short random_ushort(void)
    this routine is used by all three profiling cases
    it is inlined for speed
 */
-inline_static int profil_increment(long_long value,
-                            int flags, long_long excess,
-                            long_long threshold)
+inline_static int profil_increment(long long value,
+                            int flags, long long excess,
+                            long long threshold)
 {
    int increment = 1;
 
@@ -89,12 +89,12 @@ inline_static int profil_increment(long_long value,
    }
 
    if (flags & PAPI_PROFIL_WEIGHTED) {  /* Increment is between 1 and 255 */
-      if (excess <= (long_long) 1)
+      if (excess <= (long long) 1)
          increment = 1;
       else if (excess > threshold)
          increment = 255;
       else {
-         threshold = threshold / (long_long) 255;
+         threshold = threshold / (long long) 255;
          increment = (int) (excess / threshold);
       }
    }
@@ -103,13 +103,13 @@ inline_static int profil_increment(long_long value,
 
 
 static void posix_profil(unsigned long address, PAPI_sprofil_t * prof,
-                         int flags, long_long excess, long_long threshold)
+                         int flags, long long excess, long long threshold)
 {
    unsigned short *buf16;
    unsigned int *buf32;
-   u_long_long *buf64;
+   unsigned long long *buf64;
    unsigned long indx;
-   u_long_long lloffset;
+   unsigned long long lloffset;
 
    /* SPECIAL CASE: if starting address is 0 and scale factor is 2
                     then all counts go into first bin.
@@ -124,7 +124,7 @@ static void posix_profil(unsigned long address, PAPI_sprofil_t * prof,
          - dividing by implicit 2 (2^^1 for a total of 2^^17), for even addresses
          NOTE: 131072 is a valid scale value. It produces byte resolution of addresses
       */
-      lloffset = ((u_long_long)(address - (unsigned long)prof->pr_off)) * prof->pr_scale;
+      lloffset = ((unsigned long long)(address - (unsigned long)prof->pr_off)) * prof->pr_scale;
       indx = (unsigned long)(lloffset >> 17);
    }
 
@@ -148,7 +148,7 @@ static void posix_profil(unsigned long address, PAPI_sprofil_t * prof,
       }
       /* finally, fall through to the 64-bit case */
       else {
-         if ((indx * sizeof(long_long)) < prof->pr_size) {
+         if ((indx * sizeof(long long)) < prof->pr_size) {
             buf64 = prof->pr_base;
             buf64[indx] += profil_increment(buf64[indx], flags, excess, threshold);
             PRFDBG("posix_profil_64() bucket %lu = %lld\n", indx, buf64[indx]);
@@ -158,7 +158,7 @@ static void posix_profil(unsigned long address, PAPI_sprofil_t * prof,
 }
 
 void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, unsigned long pc,
-                      long_long over, int profile_index)
+                      long long over, int profile_index)
 {
   EventSetProfileInfo_t *profile = &ESI->profile;
   PAPI_sprofil_t *sprof;
@@ -209,15 +209,15 @@ void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, unsigned long pc,
      situation).
 */
 
-int _papi_hwi_dispatch_overflow_signal(void *papiContext, unsigned long address, int *isHardware, long_long overflow_bit, int genOverflowBit, ThreadInfo_t **t)
+int _papi_hwi_dispatch_overflow_signal(void *papiContext, unsigned long address, int *isHardware, long long overflow_bit, int genOverflowBit, ThreadInfo_t **t)
 {
    int retval, event_counter, i, overflow_flag, pos;
    int papi_index, j;
    int profile_index = 0;
-   long_long overflow_vector;
+   long long overflow_vector;
 
-   long_long temp[MAX_COUNTERS], over;
-   long_long latest = 0;
+   long long temp[MAX_COUNTERS], over;
+   long long latest = 0;
    ThreadInfo_t *thread;
    EventSetInfo_t *ESI;
    _papi_hwi_context_t *ctx = (_papi_hwi_context_t *) papiContext;
@@ -271,11 +271,11 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, unsigned long address,
             latest = ESI->sw_stop[papi_index];
             temp[i] = -1;
 
-            if (latest >= (long_long)ESI->overflow.deadline[i]) {
+            if (latest >= (long long)ESI->overflow.deadline[i]) {
                OVFDBG("dispatch_overflow() latest %lld, deadline %lld, threshold %d\n",
                     latest, ESI->overflow.deadline[i], ESI->overflow.threshold[i]);
                pos = ESI->EventInfoArray[papi_index].pos[0];
-               overflow_vector ^= (long_long )1 << pos;
+               overflow_vector ^= (long long )1 << pos;
                temp[i] = latest - ESI->overflow.deadline[i];
                overflow_flag = 1;
                /* adjust the deadline */
@@ -292,7 +292,7 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, unsigned long address,
           * need us to generate the overflow bit
           */
          pos = ESI->EventInfoArray[papi_index].pos[0];
-         overflow_vector = (long_long )1 << pos;
+         overflow_vector = (long long )1 << pos;
       } else 
          overflow_vector = overflow_bit;
 
@@ -327,7 +327,7 @@ foundit:
                else
                   over = temp[profile_index];
                _papi_hwi_dispatch_profile(ESI, address, over, profile_index);
-               overflow_vector ^= (long_long )1 << i;
+               overflow_vector ^= (long long )1 << i;
             }
             /* do not use overflow_vector after this place */
          } else {
@@ -650,13 +650,13 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
 }
 
 #if !defined(HAVE_FFSLL)
-/* find the first set bit in long_long */
+/* find the first set bit in long long */
 
-int ffsll(long_long lli)
+int ffsll(long long lli)
 {
    int i, num, t, tmpint, len;
 
-   num = sizeof(long_long)/sizeof(int);
+   num = sizeof(long long)/sizeof(int);
    if(num == 1) return(ffs((int)lli));
    len = sizeof(int)*CHAR_BIT;
 

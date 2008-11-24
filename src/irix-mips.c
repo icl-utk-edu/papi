@@ -505,41 +505,41 @@ static int _internal_get_system_info(void)
    return (PAPI_OK);
 }
 
-long_long _papi_hwd_get_real_usec(void)
+long long _papi_hwd_get_real_usec(void)
 {
    timespec_t t;
-   long_long retval;
+   long long retval;
 
    if (clock_gettime(CLOCK_SGI_CYCLE, &t) == -1)
       return (PAPI_ESYS);
 
-   retval = ((long_long) t.tv_sec * (long_long) 1000000) + (long_long) (t.tv_nsec / 1000);
+   retval = ((long long) t.tv_sec * (long long) 1000000) + (long long) (t.tv_nsec / 1000);
    return (retval);
 }
 
-long_long _papi_hwd_get_real_cycles(void)
+long long _papi_hwd_get_real_cycles(void)
 {
-   long_long retval;
+   long long retval;
 
-   retval = _papi_hwd_get_real_usec() * (long_long) _papi_hwi_system_info.hw_info.mhz;
+   retval = _papi_hwd_get_real_usec() * (long long) _papi_hwi_system_info.hw_info.mhz;
    return (retval);
 }
 
-long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
+long long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
 {
-   long_long retval;
+   long long retval;
    struct tms buffer;
 
    times(&buffer);
    SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
-   retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*
+   retval = (long long)((buffer.tms_utime+buffer.tms_stime)*
      (1000000/CLK_TCK));
    return (retval);
 }
 
-long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
+long long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
 {
-   return (_papi_hwd_get_virt_usec(ctx) * (long_long)_papi_hwi_system_info.hw_info.mhz);
+   return (_papi_hwd_get_virt_usec(ctx) * (long long)_papi_hwi_system_info.hw_info.mhz);
 }
 
 volatile int lock[PAPI_MAX_LOCK] = { 0, };
@@ -678,7 +678,7 @@ int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
    return (PAPI_OK);
 }
 
-int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **events, int flags)
+int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long **events, int flags)
 {
    int retval, index, selector;
 
@@ -724,7 +724,7 @@ if (ISLEVEL(DEBUG_SUBSTRATE)) {
 #endif
 
 /* set the buffer address */
-   *events = (long_long *) ctrl->cntrs_read.hwp_evctr;
+   *events = (long long *) ctrl->cntrs_read.hwp_evctr;
 
    return (PAPI_OK);
 }

@@ -27,13 +27,13 @@
 #define LOWERFLOW (OVRFLOW - (OVRFLOW/100))
 #define UPPERFLOW (OVRFLOW/100)
 #define ERRORFLOW (UPPERFLOW/5)
-static long_long ovrflow = 0;
+static long long ovrflow = 0;
 
-void handler (int EventSet, void *address, long_long overflow_vector, void *context)
+void handler (int EventSet, void *address, long long overflow_vector, void *context)
 {
 	int ret;
 	int i;
-	long_long vals[8] =  {0, 0, 0, 0, 0, 0, 0, 0};
+	long long vals[8] =  {0, 0, 0, 0, 0, 0, 0, 0};
 
 	printf ("\nOverflow at %p! bit=0x%llx \n", address,overflow_vector);
 	ret = PAPI_read (EventSet, vals);
@@ -51,8 +51,8 @@ int main (int argc, char *argv[])
 	PAPI_option_t options;
 	PAPI_option_t options2;
 	const PAPI_hw_info_t *hwinfo;
-	long_long lwrflow=0, error, max_error=0;
-	long_long vals[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	long long lwrflow=0, error, max_error=0;
+	long long vals[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 

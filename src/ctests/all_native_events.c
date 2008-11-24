@@ -17,7 +17,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 static int add_remove_event(int EventSet, int event_code, char *name) {
     int retval;
     char errstring[PAPI_MAX_STR_LEN];
-    long_long values;
+    long long values;
 
     retval = PAPI_add_event(EventSet, event_code);
     if (retval != PAPI_OK) {

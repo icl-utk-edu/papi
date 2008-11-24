@@ -28,11 +28,11 @@ int main(int argc, char **argv)
    int i, j, retval, idx, repeats;
    int iters = NUM_FLOPS;
    double x = 1.1, y, dtmp;
-   long_long t1, t2;
-   long_long values[MAXEVENTS], refvals[MAXEVENTS];
+   long long t1, t2;
+   long long values[MAXEVENTS], refvals[MAXEVENTS];
    int nsamples[MAXEVENTS], truelist[MAXEVENTS], ntrue;
 #ifdef STARTSTOP
-   long_long dummies[MAXEVENTS];
+   long long dummies[MAXEVENTS];
 #endif
    int sleep_time = SLEEPTIME;
    double valsqsum[MAXEVENTS];
@@ -266,7 +266,7 @@ int main(int argc, char **argv)
       spread[j] = sqrt(spread[j] / (nsamples[j] - 1));
       if (valsum[j] > 0.9)
          spread[j] = nsamples[j] * spread[j] / valsum[j];
-      values[j] = (long_long)(valsum[j] / nsamples[j]);
+      values[j] = (long long)(valsum[j] / nsamples[j]);
       if (!TESTS_QUIET)
          printf("%9.2g  ", spread[j]);
       /* Make sure that NaN get counted as errors */

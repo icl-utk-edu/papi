@@ -2,8 +2,8 @@
 #include "matrix.h"
 #include "papi.h"
 
-static long_long accum_error = 0;
-static long_long start_time = 0;
+static long long accum_error = 0;
+static long long start_time = 0;
 
 void mexFunction(int nlhs, mxArray *plhs[],
                  int nrhs, const mxArray *prhs[]) {
@@ -12,8 +12,8 @@ void mexFunction(int nlhs, mxArray *plhs[],
   unsigned int mrows, nchars;
   unsigned int *events;
   unsigned int flop_events[2];
-  long_long ins = 0, *values, flop_values[2];
-  long_long elapsed_time;
+  long long ins = 0, *values, flop_values[2];
+  long long elapsed_time;
   int result;
   char *input, *temp;
   char one_output[]	= "This function produces one output per running counter.";
@@ -144,7 +144,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
       mexErrMsgTxt(one_output);
     }
     if (nlhs == 0) values = NULL;
-    else values = (long_long *)mxCalloc(nlhs, sizeof(long_long) + 1);
+    else values = (long long *)mxCalloc(nlhs, sizeof(long long) + 1);
     if (start_time == 0) {
       result = PAPI_stop_counters(values, nlhs);
     } else {
@@ -171,7 +171,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     if(nlhs > PAPI_num_counters()) {
       mexErrMsgTxt(one_output);
     }
-    values = (long_long *)mxCalloc(nlhs, sizeof(long_long) + 1);
+    values = (long long *)mxCalloc(nlhs, sizeof(long long) + 1);
     if((result = PAPI_read_counters(values, nlhs)) < PAPI_OK) {
       mexPrintf("%d\n", result);
       mexErrMsgTxt(error_reading);
@@ -189,9 +189,9 @@ void mexFunction(int nlhs, mxArray *plhs[],
     if(nlhs > PAPI_num_counters()) {
       mexErrMsgTxt(one_output);
     }
-    values = (long_long *)mxCalloc(nlhs, sizeof(long_long) + 1);
+    values = (long long *)mxCalloc(nlhs, sizeof(long long) + 1);
     for(i = 0; i < nrhs - 1; i++) {
-      values[i] = (long_long)(*(mxGetPr(prhs[i + 1])));
+      values[i] = (long long)(*(mxGetPr(prhs[i + 1])));
     }
     if(result = PAPI_accum_counters(values, nlhs) < PAPI_OK) {
       mexPrintf("Error code: %d\n", result);

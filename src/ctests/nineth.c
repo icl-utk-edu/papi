@@ -28,7 +28,7 @@ int main(int argc, char **argv)
    int mask2 = 0x8;             /* FLOPS */
    int num_events1;
    int num_events2;
-   long_long **values;
+   long long **values;
    int clockrate;
    double test_flops;
 
@@ -95,9 +95,9 @@ int main(int argc, char **argv)
           ("-------------------------------------------------------------------------\n");
 
       printf("Test type   : %12s%12s\n", "1", "2");
-      printf(TAB2, "PAPI_FP_OPS : ", (values[0])[0], (long_long) 0);
-      printf(TAB2, "PAPI_TOT_CYC: ", (values[0])[1], (long_long) 0);
-      printf(TAB2, "PAPI_FLOPS  : ", (long_long) 0, (values[1])[0]);
+      printf(TAB2, "PAPI_FP_OPS : ", (values[0])[0], (long long) 0);
+      printf(TAB2, "PAPI_TOT_CYC: ", (values[0])[1], (long long) 0);
+      printf(TAB2, "PAPI_FLOPS  : ", (long long) 0, (values[1])[0]);
       printf
           ("-------------------------------------------------------------------------\n");
 

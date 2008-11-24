@@ -21,7 +21,7 @@
 #include "prof_utils.h"
 
 /* variables global to profiling tests */
-long_long **values;
+long long **values;
 char event_name[PAPI_MAX_STR_LEN];
 int PAPI_event;
 int EventSet = PAPI_NULL;
@@ -157,7 +157,7 @@ int prof_buckets(int bucket) {
          bucket_size = sizeof(int);
          break;
       case PAPI_PROFIL_BUCKET_64:
-         bucket_size = sizeof(u_long_long);
+         bucket_size = sizeof(unsigned long long);
          break;
       default:
          bucket_size = 0;
@@ -186,10 +186,10 @@ void prof_out(caddr_t start, int n, int bucket, int num_buckets, int scale) {
    int i,j;
    unsigned short buf_16;
    unsigned int   buf_32;
-   u_long_long  buf_64;
+   unsigned long long  buf_64;
    unsigned short **buf16 = (unsigned short **)profbuf;
    unsigned int   **buf32 = (unsigned int **)profbuf;
-   u_long_long    **buf64 = (u_long_long **)profbuf;
+   unsigned long long    **buf64 = (unsigned long long **)profbuf;
 
    if (!TESTS_QUIET) {
       /* printf("0x%lx\n",(unsigned long) start + (unsigned long) (2 * i)); */
@@ -199,7 +199,7 @@ void prof_out(caddr_t start, int n, int bucket, int num_buckets, int scale) {
             for (i = 0; i < num_buckets; i++) {
                for(j=0,buf_16=0;j<n;j++) buf_16 |= (buf16[j])[i];
                if (buf_16) {
-                  printf("%-16p", start + (int)(((long_long)i * scale)>>15)); 
+                  printf("%-16p", start + (int)(((long long)i * scale)>>15)); 
                   for(j=0,buf_16=0;j<n;j++)
                      printf("\t%d", (buf16[j])[i]);
                   printf("\n");
@@ -210,7 +210,7 @@ void prof_out(caddr_t start, int n, int bucket, int num_buckets, int scale) {
             for (i = 0; i < num_buckets; i++) {
                for(j=0,buf_32=0;j<n;j++) buf_32 |= (buf32[j])[i];
                if (buf_32) {
-                  printf("%-16p", start + (int)(((long_long)i * scale)>>15));
+                  printf("%-16p", start + (int)(((long long)i * scale)>>15));
                   for(j=0,buf_32=0;j<n;j++)
                      printf("\t%d", (buf32[j])[i]);
                   printf("\n");
@@ -221,7 +221,7 @@ void prof_out(caddr_t start, int n, int bucket, int num_buckets, int scale) {
             for (i = 0; i < num_buckets; i++) {
                for(j=0,buf_64=0;j<n;j++) buf_64 |= (buf64[j])[i];
                if (buf_64) {
-                  printf("%-16p", start + (int)(((long_long)i * scale)>>15));
+                  printf("%-16p", start + (int)(((long long)i * scale)>>15));
                   for(j=0,buf_64=0;j<n;j++)
                      printf("\t%lld", (buf64[j])[i]);
                   printf("\n");
@@ -241,7 +241,7 @@ int prof_check(int n, int bucket, int num_buckets) {
    int retval = 0;
    unsigned short **buf16 = (unsigned short **)profbuf;
    unsigned int   **buf32 = (unsigned int **)profbuf;
-   u_long_long    **buf64 = (u_long_long **)profbuf;
+   unsigned long long    **buf64 = (unsigned long long **)profbuf;
 
    switch (bucket) {
       case PAPI_PROFIL_BUCKET_16:
@@ -274,7 +274,7 @@ int prof_check(int n, int bucket, int num_buckets) {
    */
 unsigned long prof_size(unsigned long plength, unsigned scale, int bucket, int *num_buckets) {
    unsigned long blength;
-   long_long llength = ((long_long)plength * scale);
+   long long llength = ((long long)plength * scale);
    int bucket_size = prof_buckets(bucket);
    *num_buckets = (llength / 65536) / 2;
    blength = (unsigned long)(*num_buckets) * bucket_size;

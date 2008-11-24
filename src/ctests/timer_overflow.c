@@ -17,7 +17,7 @@ int main(int argc, char **argv)
 {
    int sleep_time = TIMER_THRESHOLD;
    int retval, i;
-   long_long timer;
+   long long timer;
 
    if (argc > 1) {
       if (!strcmp(argv[1], "TESTS_QUIET"))

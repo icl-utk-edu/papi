@@ -31,8 +31,8 @@ int main(int argc, char **argv)
    int EventSet1=PAPI_NULL;
    int PAPI_event, mask1;
    int num_events1;
-   long_long **values;
-   long_long elapsed_us, elapsed_cyc, elapsed_virt_us, elapsed_virt_cyc;
+   long long **values;
+   long long elapsed_us, elapsed_cyc, elapsed_virt_us, elapsed_virt_cyc;
    char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
    const PAPI_hw_info_t *hw_info;
    const PAPI_substrate_info_t *subinfo;

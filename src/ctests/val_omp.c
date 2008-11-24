@@ -41,15 +41,15 @@ const int MAX_FLOPS = NUM_FLOPS;
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 const PAPI_hw_info_t *hw_info = NULL;
 
-long_long Thread(int n)
+long long Thread(int n)
 {
    int retval, num_tests = 1;
    int EventSet1=PAPI_NULL;
    int PAPI_event, mask1;
    int num_events1;
-   long_long flops;
-   long_long **values;
-   long_long elapsed_us, elapsed_cyc;
+   long long flops;
+   long long **values;
+   long long elapsed_us, elapsed_cyc;
    char event_name[PAPI_MAX_STR_LEN];
 
    /* printf("Thread(n=%d) 0x%x started\n", n, omp_get_thread_num()); */
@@ -114,8 +114,8 @@ int main(int argc, char **argv)
    int tid, retval;
    int maxthr = omp_get_max_threads();
    int flopper = 0;
-   long_long *flops = calloc(maxthr, sizeof(long_long));
-   long_long *flopi = calloc(maxthr, sizeof(long_long));
+   long long *flops = calloc(maxthr, sizeof(long long));
+   long long *flopi = calloc(maxthr, sizeof(long long));
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 

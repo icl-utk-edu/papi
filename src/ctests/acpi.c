@@ -24,7 +24,7 @@ int main(int argc, char **argv)
    int evtcode;
    int retval;
    int j = 0, i;
-   long_long g1[2];
+   long long g1[2];
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 

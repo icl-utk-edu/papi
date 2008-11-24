@@ -202,7 +202,7 @@ static int get_system_info(void)
 extern u_int read_cycle_counter(void);
 extern u_int read_virt_cycle_counter(void);
 
-long_long _papi_hwd_get_real_usec(void)
+long long _papi_hwd_get_real_usec(void)
 {
    struct timespec res;
    long k;
@@ -213,13 +213,13 @@ long_long _papi_hwd_get_real_usec(void)
    return (((res.tv_sec-1086000000) * 1000000) + (res.tv_nsec / 1000));
 }
 
-long_long _papi_hwd_get_real_cycles(void)
+long long _papi_hwd_get_real_cycles(void)
 {
-   return ((long_long) _papi_hwd_get_real_usec() *
+   return ((long long) _papi_hwd_get_real_usec() *
            _papi_hwi_system_info.hw_info.mhz);
 }
 
-long_long _papi_hwd_get_virt_usec(const hwd_context_t *zero)
+long long _papi_hwd_get_virt_usec(const hwd_context_t *zero)
 {
    struct rusage res;
 
@@ -228,9 +228,9 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t *zero)
    return ((res.ru_utime.tv_sec * 1000000) + res.ru_utime.tv_usec);
 }
 
-long_long _papi_hwd_get_virt_cycles(const hwd_context_t *zero)
+long long _papi_hwd_get_virt_cycles(const hwd_context_t *zero)
 {
-   return ((long_long) _papi_hwd_get_virt_usec(zero) *
+   return ((long long) _papi_hwd_get_virt_usec(zero) *
            _papi_hwi_system_info.hw_info.mhz);
 }
 
@@ -396,7 +396,7 @@ int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 }
 
 int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl,
-                   long_long ** events, int flags)
+                   long long ** events, int flags)
 {
    int retval;
    struct pfcntrs_ev6 cntrs[EV_MAX_CPUS];
@@ -417,7 +417,7 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl,
 
    ctrl->cntrs[0] += cntrs[0].pf_cntr0;
    ctrl->cntrs[1] += cntrs[0].pf_cntr1;
-   *events = (long_long *)ctrl->cntrs;
+   *events = (long long *)ctrl->cntrs;
 
    /* clear drivers counts */
    retval = ioctl(ctx->fd, PCNTCLEARCNT);

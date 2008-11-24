@@ -87,7 +87,7 @@ static void wait(char *prompt)
 
 /* Low level functions, should not handle errors, just return codes. */
 
-static __inline u_long_long get_cycles (void)
+static __inline unsigned long long get_cycles (void)
 {
 	__asm rdtsc		// Read Time Stamp Counter
 // This assembly instruction places the 64-bit value in edx:eax
@@ -99,9 +99,9 @@ static __inline u_long_long get_cycles (void)
 
 static float calc_mhz(void)
 {
-  u_long_long ostamp;
-  u_long_long stamp;
-  long_long sstamp;
+  unsigned long long ostamp;
+  unsigned long long stamp;
+  long long sstamp;
   float correction = 4000.0, mhz;
 
   // Warm the cache
@@ -374,7 +374,7 @@ inline_static int update_global_hwcounters(EventSetInfo_t *global)
   return(PAPI_OK);
 }
 
-inline_static int correct_local_hwcounters(EventSetInfo_t *global, EventSetInfo_t *local, long_long *correct)
+inline_static int correct_local_hwcounters(EventSetInfo_t *global, EventSetInfo_t *local, long long *correct)
 {
   int i;
 
@@ -499,17 +499,17 @@ int _papi_hwd_init(hwd_context_t *context)
 }
 
 
-u_long_long _papi_hwd_get_real_usec (void)
+unsigned long long _papi_hwd_get_real_usec (void)
 {
-  long_long cyc;
+  long long cyc;
 
-  cyc = (long_long)get_cycles();
+  cyc = (long long)get_cycles();
   cyc *= 1000;
-  cyc = (long_long)(cyc / _papi_hwi_system_info.hw_info.mhz);
-  return((u_long_long)(cyc / 1000));
+  cyc = (long long)(cyc / _papi_hwi_system_info.hw_info.mhz);
+  return((unsigned long long)(cyc / 1000));
 }
 
-u_long_long _papi_hwd_get_virt_usec (const hwd_context_t *context)
+unsigned long long _papi_hwd_get_virt_usec (const hwd_context_t *context)
 {
 	/* This routine needs to be carefully debugged 
 		It currently doesn't seem to work.
@@ -548,19 +548,19 @@ u_long_long _papi_hwd_get_virt_usec (const hwd_context_t *context)
 }
 
 
-u_long_long _papi_hwd_get_virt_cycles (const hwd_context_t *context)
+unsigned long long _papi_hwd_get_virt_cycles (const hwd_context_t *context)
 {
 	/* virt_usec doesn't work yet...
   float usec, cyc;
 
   usec = (float)_papi_hwd_get_virt_usec(context);
   cyc = usec * _papi_hwi_system_info.hw_info.mhz;
-  return((u_long_long)cyc);
+  return((unsigned long long)cyc);
   */
   return(get_cycles());
 }
 
-u_long_long _papi_hwd_get_real_cycles (void)
+unsigned long long _papi_hwd_get_real_cycles (void)
 {
   return(get_cycles());
 }
@@ -887,10 +887,10 @@ int _papi_hwd_reset(hwd_context_t *context, hwd_control_state_t *control)
   return(PAPI_OK);
 }
 
-static long_long handle_derived_add(int selector, long_long *from)
+static long long handle_derived_add(int selector, long long *from)
 {
   int pos;
-  long_long retval = 0;
+  long long retval = 0;
 
   while ((pos = ffs(selector)))
     {
@@ -901,10 +901,10 @@ static long_long handle_derived_add(int selector, long_long *from)
   return(retval);
 }
 
-static long_long handle_derived_subtract(int operand_index, int selector, long_long *from)
+static long long handle_derived_subtract(int operand_index, int selector, long long *from)
 {
   int pos;
-  long_long retval = from[operand_index];
+  long long retval = from[operand_index];
 
   selector = selector ^ (1 << operand_index);
   while ((pos = ffs(selector)))
@@ -916,16 +916,16 @@ static long_long handle_derived_subtract(int operand_index, int selector, long_l
   return(retval);
 }
 
-static long_long units_per_second(long_long units, long_long cycles)
+static long long units_per_second(long long units, long long cycles)
 {
   float tmp;
 
   tmp = (float)units * _papi_hwi_system_info.hw_info.mhz * (float)1000000.0;
   tmp = tmp / (float) cycles;
-  return((long_long)tmp);
+  return((long long)tmp);
 }
 
-static long_long handle_derived_ps(int operand_index, int selector, long_long *from)
+static long long handle_derived_ps(int operand_index, int selector, long long *from)
 {
   int pos;
 
@@ -935,14 +935,14 @@ static long_long handle_derived_ps(int operand_index, int selector, long_long *f
   return(units_per_second(from[pos],from[operand_index]));
 }
 
-static long_long handle_derived_add_ps(int operand_index, int selector, long_long *from)
+static long long handle_derived_add_ps(int operand_index, int selector, long long *from)
 {
   int add_selector = selector ^ (1 << operand_index);
-  long_long tmp = handle_derived_add(add_selector, from);
+  long long tmp = handle_derived_add(add_selector, from);
   return(units_per_second(tmp, from[operand_index]));
 }
 
-static long_long handle_derived(EventInfo_t *cmd, long_long *from)
+static long long handle_derived(EventInfo_t *cmd, long long *from)
 {
   switch (cmd->command)
     {
@@ -959,13 +959,13 @@ static long_long handle_derived(EventInfo_t *cmd, long_long *from)
     }
 }
 
-//int _papi_hwd_read(EventSetInfo_t *ESI, EventSetInfo_t *zero, long_long events[])
-int _papi_hwd_read(hwd_context_t *context, hwd_control_state_t *control, u_long_long **events)
+//int _papi_hwd_read(EventSetInfo_t *ESI, EventSetInfo_t *zero, long long events[])
+int _papi_hwd_read(hwd_context_t *context, hwd_control_state_t *control, unsigned long long **events)
 {
 #if 0
   int shift_cnt = 0;
   int retval, selector, j = 0, i;
-  u_long_long correct[PERF_MAX_COUNTERS];
+  unsigned long long correct[PERF_MAX_COUNTERS];
 
   retval = update_global_hwcounters(zero);
   if (retval)
@@ -1036,8 +1036,8 @@ int _papi_hwd_ctl(hwd_context_t *context, int code, _papi_int_option_t *option)
     }
 }
 
-//int _papi_hwd_write(EventSetInfo_t *master, EventSetInfo_t *ESI, long_long events[])
-int _papi_hwd_write(hwd_context_t *context, hwd_control_state_t *control, long_long events[])
+//int _papi_hwd_write(EventSetInfo_t *master, EventSetInfo_t *ESI, long long events[])
+int _papi_hwd_write(hwd_context_t *context, hwd_control_state_t *control, long long events[])
 { 
   return(PAPI_ESBSTR);
 }

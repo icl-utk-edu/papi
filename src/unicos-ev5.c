@@ -313,27 +313,27 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *cntrl) {
    return(_papi_hwd_start(ctx, cntrl));
 }
 
-int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **events, int flags)
+int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long **events, int flags)
 {
    pmctr_t *pmctr;
-   long_long pc_data[4];
+   long long pc_data[4];
 
    if(_rdperf(pc_data))
       return(PAPI_ESBSTR);
 
    pmctr = (pmctr_t *) & pc_data[0];
-   ctrl->values[0] = (pc_data[1] << 16) + (long_long)pmctr->CTR0;
-   ctrl->values[1] = (pc_data[2] << 16) + (long_long)pmctr->CTR1;
-   ctrl->values[2] = (pc_data[3] << 14) + (long_long)pmctr->CTR2;
+   ctrl->values[0] = (pc_data[1] << 16) + (long long)pmctr->CTR0;
+   ctrl->values[1] = (pc_data[2] << 16) + (long long)pmctr->CTR1;
+   ctrl->values[2] = (pc_data[3] << 14) + (long long)pmctr->CTR2;
    *events = ctrl->values;
 #ifdef DEBUG
    if (ISLEVEL(DEBUG_SUBSTRATE)) {
       SUBDBG("raw val hardware index 0 is %lld\n",
-            (long_long) ctrl->values[0]);
+            (long long) ctrl->values[0]);
       SUBDBG("raw val hardware index 1 is %lld\n",
-            (long_long) ctrl->values[1]);
+            (long long) ctrl->values[1]);
       SUBDBG("raw val hardware index 2 is %lld\n",
-            (long_long) ctrl->values[2]);
+            (long long) ctrl->values[2]);
    }
 #endif
    return(PAPI_OK);
@@ -434,29 +434,29 @@ extern int _papi_hwd_mdi_init()
 
 /* 75 Mhz sys. clock */
 
-long_long _papi_hwd_get_real_cycles(void)
+long long _papi_hwd_get_real_cycles(void)
 {
-   return (((long_long)_rtc() * (long_long)_papi_hwi_system_info.hw_info.mhz) / (long_long)75);
+   return (((long long)_rtc() * (long long)_papi_hwi_system_info.hw_info.mhz) / (long long)75);
 }
 
-long_long _papi_hwd_get_real_usec(void)
+long long _papi_hwd_get_real_usec(void)
 {
-   return ((long_long)_rtc() / (long_long)75);
+   return ((long long)_rtc() / (long long)75);
 }
 
-long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
+long long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
 {
    struct tms buffer;
-   long_long retval;
+   long long retval;
 
    times(&buffer);
    SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
-   retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*
+   retval = (long long)((buffer.tms_utime+buffer.tms_stime)*
      (1000000/CLK_TCK));
    return retval;
 }
 
-long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
+long long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 {
-   return (_papi_hwd_get_virt_usec(zero) * (long_long)_papi_hwi_system_info.hw_info.mhz);
+   return (_papi_hwd_get_virt_usec(zero) * (long long)_papi_hwi_system_info.hw_info.mhz);
 }

@@ -9,7 +9,7 @@ int main(int argc, char **argv)
 {
    int retval;
    int num_events;
-   long_long *values;
+   long long *values;
    char *success;
    int EventSet = PAPI_NULL;
    int i, j, event;
@@ -35,7 +35,7 @@ int main(int argc, char **argv)
    if ( num_events == 0 ) 
      test_pass(__FILE__, NULL, 0);
 
-   values = (long_long *) malloc(sizeof(long_long)*num_events);
+   values = (long long *) malloc(sizeof(long long)*num_events);
    success = (char *) malloc(argc);
 
    if ( success == NULL || values == NULL ) 

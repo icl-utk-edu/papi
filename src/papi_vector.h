@@ -68,7 +68,7 @@ enum {
    VEC_MAX_ENTRIES
 };
 typedef struct papi_vectors{
-  int (*_vec_papi_hwd_read) (void *, void *, long_long **, int);
+  int (*_vec_papi_hwd_read) (void *, void *, long long **, int);
 #ifdef _WIN32 /* Windows requires a different callback format */
   void (*_vec_papi_hwd_timer_callback) (UINT, UINT, DWORD, DWORD, DWORD);
 #else
@@ -77,12 +77,12 @@ typedef struct papi_vectors{
   void *(*_vec_papi_hwd_get_overflow_address) (int, char *);
   int (*_vec_papi_hwd_start) (void *, void *);
   int (*_vec_papi_hwd_stop) (void *, void *);
-  long_long (*_vec_papi_hwd_get_real_cycles) ();
-  long_long (*_vec_papi_hwd_get_real_usec) ();
-  long_long (*_vec_papi_hwd_get_virt_cycles) (void *);
-  long_long (*_vec_papi_hwd_get_virt_usec) (void *);
+  long long (*_vec_papi_hwd_get_real_cycles) ();
+  long long (*_vec_papi_hwd_get_real_usec) ();
+  long long (*_vec_papi_hwd_get_virt_cycles) (void *);
+  long long (*_vec_papi_hwd_get_virt_usec) (void *);
   int (*_vec_papi_hwd_reset) (void *, void *);
-  int (*_vec_papi_hwd_write) (void *, void *, long_long[]);
+  int (*_vec_papi_hwd_write) (void *, void *, long long[]);
   int (*_vec_papi_hwd_stop_profiling) (ThreadInfo_t *, EventSetInfo_t *);
   int (*_vec_papi_hwd_init) (void *);
   int (*_vec_papi_hwd_init_control_state) (void *);

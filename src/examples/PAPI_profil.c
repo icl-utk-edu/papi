@@ -36,7 +36,7 @@ int main()
     char event_name[PAPI_MAX_STR_LEN];
     /*These are going to be used as buffers */
     unsigned short *profbuf;
-    long_long values[2];
+    long long values[2];
     const PAPI_exe_info_t *prginfo = NULL;
 
 

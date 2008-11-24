@@ -27,8 +27,6 @@
 #include <mmsystem.h>
 
 // Defines to map Windows types onto Unix types
-#define long_long LONGLONG
-#define u_long_long ULONGLONG
 #define caddr_t char *
 
 // defines for process id

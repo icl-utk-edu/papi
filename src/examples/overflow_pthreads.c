@@ -40,7 +40,7 @@ void do_flops(int n)
 
 /* overflow handler */
 void 
-handler(int EventSet, void *address, long_long overflow_vector, void *context)
+handler(int EventSet, void *address, long long overflow_vector, void *context)
 {
    fprintf(stderr, OVER_FMT, EventSet, address, overflow_vector);
    total++;

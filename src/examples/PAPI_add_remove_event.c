@@ -16,7 +16,7 @@ int main()
    int tmp, i;
    /*must be initialized to PAPI_NULL before calling PAPI_create_event*/
 
-   long_long values[NUM_EVENTS];
+   long long values[NUM_EVENTS];
    /*This is where we store the values we read from the eventset */
     
    int retval,number=NUM_EVENTS,Events[NUM_EVENTS];

@@ -24,7 +24,7 @@
 #endif
 
 typedef struct {
-  long_long mask;
+  long long mask;
   int count;
 } ocount_t;
 
@@ -34,9 +34,9 @@ typedef struct {
 /*not used*/ int total_unknown = 0;
 
 static const PAPI_hw_info_t *hw_info = NULL;
-/*added*/ long_long dummyvalues[2];
+/*added*/ long long dummyvalues[2];
 
-void handler(int EventSet, void *address, long_long overflow_vector, void *context)
+void handler(int EventSet, void *address, long long overflow_vector, void *context)
 {
   int retval;
 
@@ -57,7 +57,7 @@ void handler(int EventSet, void *address, long_long overflow_vector, void *conte
 int main(int argc, char **argv)
 {
    int EventSet;
-   long_long **values = NULL;
+   long long **values = NULL;
    int retval;
    int PAPI_event;
    char event_name[PAPI_MAX_STR_LEN];

@@ -19,9 +19,9 @@
 main()
 { 
   float real_time, proc_time,ipc;
-  long_long ins;
+  long long ins;
   float real_time_i, proc_time_i, ipc_i;
-  long_long ins_i;
+  long long ins_i;
   int retval;
 
   if((retval=PAPI_ipc(&real_time_i,&proc_time_i,&ins_i,&ipc_i)) < PAPI_OK)

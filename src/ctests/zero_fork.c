@@ -16,8 +16,8 @@ functionality for a parent and a forked child. */
 int EventSet1=PAPI_NULL;
 int PAPI_event, mask1;
 int num_events1 = 2;
-long_long elapsed_us, elapsed_cyc;
-long_long **values;
+long long elapsed_us, elapsed_cyc;
+long long **values;
 char event_name[PAPI_MAX_STR_LEN];
 int retval, num_tests = 1;
 const PAPI_hw_info_t *hw_info = NULL;

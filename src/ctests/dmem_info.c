@@ -29,7 +29,7 @@ static void dump_memory_info(FILE *output, PAPI_dmem_info_t *d)
 int main(int argc, char **argv)
 {
    PAPI_dmem_info_t dmem;
-   long_long value[7];
+   long long value[7];
    int retval, i = 0, j = 0;
    double *m[7];
  

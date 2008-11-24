@@ -109,7 +109,7 @@ int _papi_hwd_ctl(EventSetInfo_t * zero, int code, _papi_int_option_t * option)
  * This function should return the highest resolution wallclock timer available
  * in usecs.
  */
-long_long _papi_hwd_get_real_usec(void)
+long long _papi_hwd_get_real_usec(void)
 {
    struct timeval tv;
 
@@ -121,23 +121,23 @@ long_long _papi_hwd_get_real_usec(void)
  * This function should return the highest resolution wallclock timer available
  * in cycles
  */
-long_long _papi_hwd_get_real_cycles(void)
+long long _papi_hwd_get_real_cycles(void)
 {
-   return (_papi_hwd_get_real_usec() * (long_long) _papi_system_info.hw_info.mhz);
+   return (_papi_hwd_get_real_usec() * (long long) _papi_system_info.hw_info.mhz);
 }
 
 /*
  * This function should return the highest resolution processor timer available
  * in usecs.
  */
-long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
+long long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 {
-   long_long retval;
+   long long retval;
    struct tms buffer;
 
    times(&buffer);
    SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
-   retval = (long_long)(buffer.tms_utime+buffer.tms_stime)*1000000/_papi_hwi_system_info.sub_info.clock_ticks;
+   retval = (long long)(buffer.tms_utime+buffer.tms_stime)*1000000/_papi_hwi_system_info.sub_info.clock_ticks;
    return (retval);
 }
 
@@ -145,9 +145,9 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
  * This function should return the highest resolution processor timer available
  * in cycles.
  */
-long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
+long long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 {
-   return (_papi_hwd_get_virt_usec(zero) * (long_long)_papi_system_info.hw_info.mhz);
+   return (_papi_hwd_get_virt_usec(zero) * (long long)_papi_system_info.hw_info.mhz);
 }
 
 

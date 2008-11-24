@@ -67,11 +67,11 @@
 typedef struct dadd_alpha_control_state {
    virtual_counters *ptr_vc;
    /* counter numbers when started */
-   long_long start_value[MAX_COUNTERS];
+   long long start_value[MAX_COUNTERS];
    /* latest counter numbers */
-   long_long latest[MAX_COUNTERS];
+   long long latest[MAX_COUNTERS];
    /* latest value for cycles */
-   long_long latestcycles;
+   long long latestcycles;
 } dadd_alpha_control_state_t;
 
 typedef struct dadd_alpha_context {

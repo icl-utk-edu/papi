@@ -87,7 +87,7 @@ typedef struct {
   /* Arguments to the kernel */
   pfarg_pmd_t pd[PFMLIB_MAX_PMDS];
   /* Buffer to gather counters */
-  long_long counts[PFMLIB_MAX_PMDS];
+  long long counts[PFMLIB_MAX_PMDS];
 } hwd_control_state_t;
 
 typedef struct {

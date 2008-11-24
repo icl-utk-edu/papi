@@ -50,7 +50,7 @@ int main()
    int retval;
    char errstring[PAPI_MAX_STR_LEN];
    /*This is going to store our list of results*/
-   long_long values[NUM_EVENTS];
+   long long values[NUM_EVENTS];
 
 
    /***************************************************************************

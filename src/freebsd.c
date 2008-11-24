@@ -316,7 +316,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t *ptr, NativeInfo_t *nativ
 	ptr->n_counters = count;
 	ptr->pmcs = (pmc_id_t*) malloc (sizeof(pmc_id_t)*count);
 	ptr->caps = (uint32_t*) malloc (sizeof(uint32_t)*count);
-	ptr->values = (long_long*) malloc (sizeof(long_long)*count);
+	ptr->values = (long long*) malloc (sizeof(long long)*count);
 	ptr->counters = (char **) malloc (sizeof(char*)*count);
 	for (i = 0; i < count; i++)
 		ptr->counters[i] = NULL;
@@ -405,7 +405,7 @@ int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 	return PAPI_OK;
 }
 
-int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **events, int flags)
+int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long **events, int flags)
 {
 	int i, ret;
 
@@ -510,7 +510,7 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 	return PAPI_OK;
 }
 
-int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long *from)
+int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long *from)
 {
 	int i, ret;
 
@@ -636,7 +636,7 @@ int _papi_hwd_set_domain(hwd_control_state_t *cntrl, int domain)
  * Timing Routines
  * These functions should return the highest resolution timers available.
  */
-long_long _papi_hwd_get_real_usec(void)
+long long _papi_hwd_get_real_usec(void)
 {
 	/* Hey, I've seen somewhere a define called __x86_64__! Should I support it? */
 #if !defined(__i386__) && !defined(__amd64__)
@@ -663,29 +663,29 @@ long_long _papi_hwd_get_real_usec(void)
 #endif
 }
 
-long_long _papi_hwd_get_real_cycles(void)
+long long _papi_hwd_get_real_cycles(void)
 {
 	/* Hey, I've seen somewhere a define called __x86_64__! Should I support it? */
 #if !defined(__i386__) && !defined(__amd64__)
 	SHOW_WHERE_I_AM;
 	/* This will surely work, but with low precision and high overhead */
-   return ((long_long) _papi_hwd_get_real_usec() * _papi_hwi_system_info.hw_info.mhz);
+   return ((long long) _papi_hwd_get_real_usec() * _papi_hwi_system_info.hw_info.mhz);
 #else
 	SHOW_WHERE_I_AM;
 	if (Context.use_rdtsc)
 	{
-		long_long cycles;
+		long long cycles;
 		__asm __volatile(".byte 0x0f, 0x31" : "=A" (cycles));
 	  return cycles;
 	}
 	else
 	{
-		return ((long_long) _papi_hwd_get_real_usec() * _papi_hwi_system_info.hw_info.mhz);
+		return ((long long) _papi_hwd_get_real_usec() * _papi_hwi_system_info.hw_info.mhz);
 	}
 #endif
 }
 
-long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
+long long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
 {
 	struct rusage res;
 
@@ -696,10 +696,10 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
 	return (res.ru_utime.tv_sec * 1000000) + res.ru_utime.tv_usec;
 }
 
-long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
+long long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
 {
 	SHOW_WHERE_I_AM;
-	return ((long_long) _papi_hwd_get_virt_usec(ctx) * _papi_hwi_system_info.hw_info.mhz);
+	return ((long long) _papi_hwd_get_virt_usec(ctx) * _papi_hwi_system_info.hw_info.mhz);
 }
 
 /*

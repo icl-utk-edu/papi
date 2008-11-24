@@ -15,7 +15,7 @@ int total = 0;	/* we use total to track the amount of overflows that occured */
 
 /* THis is the handler called by PAPI_overflow*/
 void
-handler(int EventSet, void *address, long_long overflow_vector, void *context)
+handler(int EventSet, void *address, long long overflow_vector, void *context)
 {
    fprintf(stderr, OVER_FMT, EventSet, address, overflow_vector);
    total++;
@@ -28,7 +28,7 @@ int main ()
    /* must be set to null before calling PAPI_create_eventset */
 
    char errstring[PAPI_MAX_STR_LEN];
-   long_long (values[2])[2];
+   long long (values[2])[2];
    int retval, i;
    double tmp = 0;
    int PAPI_event;		/* a place holder for an event preset */

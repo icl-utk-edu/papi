@@ -24,16 +24,16 @@ int vec_int_one_dummy();
 int vec_int_dummy ();
 void vec_void_dummy();
 void * vec_void_star_dummy();
-long_long vec_long_long_dummy();
+long long vec_long_long_dummy();
 char * vec_char_star_dummy();
 long vec_long_dummy();
-u_long_long vec_dummy_get_virt_cycles (const hwd_context_t *zero);
-u_long_long vec_dummy_get_virt_usec (const hwd_context_t *zero);
-u_long_long vec_dummy_get_real_usec (void);
-u_long_long vec_dummy_get_real_cycles (void);
+unsigned long long vec_dummy_get_virt_cycles (const hwd_context_t *zero);
+unsigned long long vec_dummy_get_virt_usec (const hwd_context_t *zero);
+unsigned long long vec_dummy_get_real_usec (void);
+unsigned long long vec_dummy_get_real_cycles (void);
 
 
-u_long_long vec_dummy_get_real_usec (void)
+unsigned long long vec_dummy_get_real_usec (void)
 {
 #ifdef _WIN32
 	LARGE_INTEGER PerformanceCount, Frequency;
@@ -46,13 +46,13 @@ u_long_long vec_dummy_get_real_usec (void)
 #endif
 } 
         
-u_long_long vec_dummy_get_real_cycles (void)
+unsigned long long vec_dummy_get_real_cycles (void)
 {
   float usec, cyc;
 
   usec = (float)vec_dummy_get_real_usec();
   cyc = usec * _papi_hwi_system_info.hw_info.mhz;
-  return((long_long)cyc);
+  return((long long)cyc);
 }
 
 #ifdef _BGL
@@ -61,9 +61,9 @@ u_long_long vec_dummy_get_real_cycles (void)
    #include <sys/resource.h>
 #endif
 
-u_long_long vec_dummy_get_virt_usec (const hwd_context_t *zero)
+unsigned long long vec_dummy_get_virt_usec (const hwd_context_t *zero)
 {
-  long_long retval;
+  long long retval;
 #ifdef _BGL
       struct rusage ruse;
       getrusage(RUSAGE_SELF, &ruse);
@@ -73,12 +73,12 @@ u_long_long vec_dummy_get_virt_usec (const hwd_context_t *zero)
     HANDLE p;
     BOOL ret;
     FILETIME Creation, Exit, Kernel, User;
-    long_long virt;
+    long long virt;
 
     p = GetCurrentProcess();
     ret = GetProcessTimes(p, &Creation, &Exit, &Kernel, &User);
     if (ret) {
-	virt = (((long_long)(Kernel.dwHighDateTime + User.dwHighDateTime))<<32)
+	virt = (((long long)(Kernel.dwHighDateTime + User.dwHighDateTime))<<32)
 	     + Kernel.dwLowDateTime + User.dwLowDateTime;
 	retval = virt/1000;
     }
@@ -97,13 +97,13 @@ u_long_long vec_dummy_get_virt_usec (const hwd_context_t *zero)
   return(retval);
 }
 
-u_long_long vec_dummy_get_virt_cycles (const hwd_context_t *zero)
+unsigned long long vec_dummy_get_virt_cycles (const hwd_context_t *zero)
 {
   float usec, cyc;
 
   usec = (float)vec_dummy_get_virt_usec(zero);
   cyc = usec * _papi_hwi_system_info.hw_info.mhz;
-  return((long_long)cyc);
+  return((long long)cyc);
 }
 
 int vec_int_ok_dummy (){
@@ -126,7 +126,7 @@ void vec_void_dummy(){
   return;
 }
 
-long_long vec_long_long_dummy(){
+long long vec_long_long_dummy(){
   return PAPI_ESBSTR;
 }
 
@@ -148,7 +148,7 @@ int _papi_hwi_setup_vector_table(papi_vectors_t *table, papi_svector_t *stable)
      if ( !stable[i].func ) continue;
      switch( stable[i].func_type ){
        case VEC_PAPI_HWD_READ:
-        table->_vec_papi_hwd_read = (int (*) (void *, void *, long_long **, int)) stable[i].func;
+        table->_vec_papi_hwd_read = (int (*) (void *, void *, long long **, int)) stable[i].func;
          break;
        case VEC_PAPI_HWD_DISPATCH_TIMER:
 #ifdef _WIN32 /* Windows requires a different callback format */
@@ -167,22 +167,22 @@ int _papi_hwi_setup_vector_table(papi_vectors_t *table, papi_svector_t *stable)
         table->_vec_papi_hwd_stop = (int (*) (void *, void *)) stable[i].func;
          break;
        case VEC_PAPI_HWD_GET_REAL_CYCLES:
-        table->_vec_papi_hwd_get_real_cycles = (long_long (*) ()) stable[i].func;
+        table->_vec_papi_hwd_get_real_cycles = (long long (*) ()) stable[i].func;
          break;
        case VEC_PAPI_HWD_GET_REAL_USEC:
-        table->_vec_papi_hwd_get_real_usec = (long_long (*) ()) stable[i].func;
+        table->_vec_papi_hwd_get_real_usec = (long long (*) ()) stable[i].func;
          break;
        case VEC_PAPI_HWD_GET_VIRT_CYCLES:
-        table->_vec_papi_hwd_get_virt_cycles = (long_long (*) (void *)) stable[i].func;
+        table->_vec_papi_hwd_get_virt_cycles = (long long (*) (void *)) stable[i].func;
          break;
        case VEC_PAPI_HWD_GET_VIRT_USEC:
-        table->_vec_papi_hwd_get_virt_usec = (long_long (*) (void *)) stable[i].func;
+        table->_vec_papi_hwd_get_virt_usec = (long long (*) (void *)) stable[i].func;
          break;
        case VEC_PAPI_HWD_RESET:
         table->_vec_papi_hwd_reset = (int (*) (void *, void *)) stable[i].func;
          break;
        case VEC_PAPI_HWD_WRITE:
-        table->_vec_papi_hwd_write = (int (*) (void *, void *, long_long[])) stable[i].func;
+        table->_vec_papi_hwd_write = (int (*) (void *, void *, long long[])) stable[i].func;
          break;
        case VEC_PAPI_HWD_STOP_PROFILING:
         table->_vec_papi_hwd_stop_profiling = (int (*) (ThreadInfo_t *, EventSetInfo_t *)) stable[i].func;
@@ -275,7 +275,7 @@ int _papi_hwi_setup_vector_table(papi_vectors_t *table, papi_svector_t *stable)
 
 int _papi_hwi_initialize_vector_table(papi_vectors_t *table){
  if ( !table ) return (PAPI_EINVAL);
- table->_vec_papi_hwd_read = (int (*)(void *,void *, long_long **, int)) vec_int_dummy;
+ table->_vec_papi_hwd_read = (int (*)(void *,void *, long long **, int)) vec_int_dummy;
 #ifdef _WIN32 /* Windows requires a different callback format */
  table->_vec_papi_hwd_timer_callback = (void (*) (UINT, UINT, DWORD, DWORD, DWORD)) vec_void_dummy;
 #else
@@ -284,12 +284,12 @@ int _papi_hwi_initialize_vector_table(papi_vectors_t *table){
  table->_vec_papi_hwd_get_overflow_address = (void *(*) (int, char *)) vec_void_star_dummy;
  table->_vec_papi_hwd_start = (int (*) (void *, void *)) vec_int_dummy;
  table->_vec_papi_hwd_stop = (int (*) (void *, void *)) vec_int_dummy;
- table->_vec_papi_hwd_get_real_cycles = (long_long (*) ()) vec_dummy_get_real_cycles;
- table->_vec_papi_hwd_get_real_usec = (long_long (*) ()) vec_dummy_get_real_usec;
- table->_vec_papi_hwd_get_virt_cycles = (long_long (*) (void *)) vec_dummy_get_virt_cycles;
- table->_vec_papi_hwd_get_virt_usec = (long_long (*) (void *)) vec_dummy_get_virt_usec;
+ table->_vec_papi_hwd_get_real_cycles = (long long (*) ()) vec_dummy_get_real_cycles;
+ table->_vec_papi_hwd_get_real_usec = (long long (*) ()) vec_dummy_get_real_usec;
+ table->_vec_papi_hwd_get_virt_cycles = (long long (*) (void *)) vec_dummy_get_virt_cycles;
+ table->_vec_papi_hwd_get_virt_usec = (long long (*) (void *)) vec_dummy_get_virt_usec;
  table->_vec_papi_hwd_reset  = (int (*) (void *, void *)) vec_int_dummy;
- table->_vec_papi_hwd_write = (int (*) (void *, void *, long_long[])) vec_int_dummy;
+ table->_vec_papi_hwd_write = (int (*) (void *, void *, long long[])) vec_int_dummy;
  table->_vec_papi_hwd_stop_profiling = (int (*) (ThreadInfo_t *, EventSetInfo_t *)) vec_int_dummy;
  table->_vec_papi_hwd_init = (int (*) (void *)) vec_int_ok_dummy;
  table->_vec_papi_hwd_init_control_state = (int (*) (void *)) vec_void_dummy;
@@ -348,7 +348,7 @@ char * find_dummy(void * func, char **buf){
     ptr = (void *)vec_void_star_dummy;
     *buf = papi_strdup("vec_void_star_dummy");
   }
-  else if ( vec_long_long_dummy == (long_long (*)())func ){
+  else if ( vec_long_long_dummy == (long long (*)())func ){
     ptr = (void *)vec_long_long_dummy;
     *buf = papi_strdup("vec_long_long_dummy");
   }
@@ -360,19 +360,19 @@ char * find_dummy(void * func, char **buf){
     ptr = (void *)vec_long_dummy;  
     *buf = papi_strdup("vec_long_dummy");
   }
-  else if ( vec_dummy_get_real_usec == (u_long_long(*)(void))func ) {
+  else if ( vec_dummy_get_real_usec == (unsigned long long(*)(void))func ) {
     ptr = (void *)vec_dummy_get_real_usec;
     *buf = papi_strdup("vec_dummy_get_real_usec");
   }
-  else if ( vec_dummy_get_real_cycles == (u_long_long(*)(void))func ) {
+  else if ( vec_dummy_get_real_cycles == (unsigned long long(*)(void))func ) {
     ptr = (void *)vec_dummy_get_real_cycles;
     *buf = papi_strdup("vec_dummy_get_real_cycles");
   }
-  else if ( vec_dummy_get_virt_usec == (u_long_long(*)(const hwd_context_t *))func ) {
+  else if ( vec_dummy_get_virt_usec == (unsigned long long(*)(const hwd_context_t *))func ) {
     ptr = (void *)vec_dummy_get_virt_usec;
     *buf = papi_strdup("vec_dummy_get_virt_usec");
   }
-  else if ( vec_dummy_get_virt_cycles == (u_long_long(*)(const hwd_context_t *))func ) {
+  else if ( vec_dummy_get_virt_cycles == (unsigned long long(*)(const hwd_context_t *))func ) {
     ptr = (void *)vec_dummy_get_virt_cycles;
     *buf = papi_strdup("vec_dummy_get_virt_cycles");
   }

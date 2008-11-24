@@ -24,8 +24,8 @@ int main(int argc, char **argv)
    int i, j, retval;
    int iters = 10000000;
    double x = 1.1, y;
-   long_long t1, t2;
-   long_long values[MAXEVENTS], refvalues[MAXEVENTS];
+   long long t1, t2;
+   long long values[MAXEVENTS], refvalues[MAXEVENTS];
    int sleep_time = SLEEPTIME;
    double valsqsum[MAXEVENTS];
    double valsum[MAXEVENTS];

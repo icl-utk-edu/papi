@@ -326,33 +326,14 @@ available and defined in the header file.  The user is encouraged to
 read the documentation carefully.  */
 
 
-/*  ANSI doesn't define a 'long long' data type as is used in gcc.
-	The Microsoft compiler doesn't support 'long long' syntax.
-	Thus, we define an os-agnostic long_long and u_long_long type
-	that can map onto the platform of choice. Windows also needs
-	a few other headers, and doesn't understand signals. - dkt
+/*  Windows needs a few extra headers,
+	and doesn't understand signals. - dkt
 */
 #ifdef _WIN32                   /* Windows specific definitions are included below */
 #include "win_extras.h"
 #else                           /* This stuff is specific to Linux/Unix */
 #include <signal.h>
-#define long_long long long
-#define u_long_long unsigned long long
 #endif
-
-/*  In some cases such as the X1, the definition of a size can change
- *  depending on compile flags, to combat this, and the fact that
- *  a long long is not always 64 bits and on some platforms it is 128
- *  bits we need to define our own sizes, to guarantee things like
- *  the size of a bucket in profiling.
- */
-
-#define papi_i64  long_long
-#define papi_i32  int
-#define papi_i16  short
-#define papi_ui64  u_long_long
-#define papi_ui32  unsigned int
-#define papi_ui16  unsigned short
 
   typedef unsigned long PAPI_thread_id_t;
 
@@ -363,7 +344,7 @@ read the documentation carefully.  */
    } PAPI_all_thr_spec_t;
 
    typedef void (*PAPI_overflow_handler_t) (int EventSet, void *address,
-                              long_long overflow_vector, void *context);
+                              long long overflow_vector, void *context);
 
   /* All caddr_t's should become unsigned long's eventually. */
 
@@ -591,18 +572,18 @@ read the documentation carefully.  */
 
 /* A pointer to the following is passed to PAPI_get_dmem_info() */
 	typedef struct _dmem_t {
-	  long_long peak;
-	  long_long size;
-	  long_long resident;
-	  long_long high_water_mark;
-	  long_long shared;
-	  long_long text;
-	  long_long library;
-	  long_long heap;
-	  long_long locked;
-	  long_long stack;
-	  long_long pagesize;
-	  long_long pte;
+	  long long peak;
+	  long long size;
+	  long long resident;
+	  long long high_water_mark;
+	  long long shared;
+	  long long text;
+	  long long library;
+	  long long heap;
+	  long long locked;
+	  long long stack;
+	  long long pagesize;
+	  long long pte;
 	} PAPI_dmem_info_t;
 
 /* Fortran offsets into PAPI_dmem_info_t structure. */
@@ -676,7 +657,7 @@ read the documentation carefully.  */
 
 
 /* The Low Level API (Alphabetical) */
-   int   PAPI_accum(int EventSet, long_long * values);
+   int   PAPI_accum(int EventSet, long long * values);
    int   PAPI_add_event(int EventSet, int Event);
    int   PAPI_add_events(int EventSet, int *Events, int number);
    int   PAPI_attach(int EventSet, unsigned long tid);
@@ -696,15 +677,15 @@ read the documentation carefully.  */
    const PAPI_substrate_info_t *PAPI_get_substrate_info(void);
    int   PAPI_get_multiplex(int EventSet);
    int   PAPI_get_opt(int option, PAPI_option_t * ptr);
-   long_long PAPI_get_real_cyc(void);
-   long_long PAPI_get_real_nsec(void);
-   long_long PAPI_get_real_usec(void);
+   long long PAPI_get_real_cyc(void);
+   long long PAPI_get_real_nsec(void);
+   long long PAPI_get_real_usec(void);
    const PAPI_shlib_info_t *PAPI_get_shared_lib_info(void);
    int   PAPI_get_thr_specific(int tag, void **ptr);
-   int PAPI_get_overflow_event_index(int Eventset, long_long overflow_vector, int *array, int *number);
-   long_long PAPI_get_virt_cyc(void);
-   long_long PAPI_get_virt_nsec(void);
-   long_long PAPI_get_virt_usec(void);
+   int PAPI_get_overflow_event_index(int Eventset, long long overflow_vector, int *array, int *number);
+   long long PAPI_get_virt_cyc(void);
+   long long PAPI_get_virt_nsec(void);
+   long long PAPI_get_virt_usec(void);
    int   PAPI_is_initialized(void);
    int   PAPI_library_init(int version);
    int   PAPI_list_events(int EventSet, int *Events, int *number);
@@ -718,8 +699,8 @@ read the documentation carefully.  */
    int   PAPI_perror(int code, char *destination, int length);
    int   PAPI_profil(void *buf, unsigned bufsiz, caddr_t offset, unsigned scale, int EventSet, int EventCode, int threshold, int flags);
    int   PAPI_query_event(int EventCode);
-   int   PAPI_read(int EventSet, long_long * values);
-   int   PAPI_read_ts(int EventSet, long_long * values, long_long *cyc);
+   int   PAPI_read(int EventSet, long long * values);
+   int   PAPI_read_ts(int EventSet, long long * values, long long *cyc);
    int   PAPI_register_thread(void);
    int   PAPI_remove_event(int EventSet, int EventCode);
    int   PAPI_remove_events(int EventSet, int *Events, int number);
@@ -734,13 +715,13 @@ read the documentation carefully.  */
    int   PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet, int EventCode, int threshold, int flags);
    int   PAPI_start(int EventSet);
    int   PAPI_state(int EventSet, int *status);
-   int   PAPI_stop(int EventSet, long_long * values);
+   int   PAPI_stop(int EventSet, long long * values);
    char *PAPI_strerror(int);
    unsigned long PAPI_thread_id(void);
    int   PAPI_thread_init(unsigned long (*id_fn) (void));
    int   PAPI_unlock(int);
    int   PAPI_unregister_thread(void);
-   int   PAPI_write(int EventSet, long_long * values);
+   int   PAPI_write(int EventSet, long long * values);
 
    /* These functions are implemented in the hwi layers, but not the hwd layers.
       They shouldn't be exposed to the UI until they are needed somewhere.
@@ -756,14 +737,14 @@ read the documentation carefully.  */
    both C and Fortran. It should be noted that this API can be used in
    conjunction with the low level API. */
 
-   int PAPI_accum_counters(long_long * values, int array_len);
+   int PAPI_accum_counters(long long * values, int array_len);
    int PAPI_num_counters(void);
-   int PAPI_read_counters(long_long * values, int array_len);
+   int PAPI_read_counters(long long * values, int array_len);
    int PAPI_start_counters(int *events, int array_len);
-   int PAPI_stop_counters(long_long * values, int array_len);
-   int PAPI_flips(float *rtime, float *ptime, long_long * flpins, float *mflips);
-   int PAPI_flops(float *rtime, float *ptime, long_long * flpops, float *mflops);
-   int PAPI_ipc(float *rtime, float *ptime, long_long * ins, float *ipc);
+   int PAPI_stop_counters(long long * values, int array_len);
+   int PAPI_flips(float *rtime, float *ptime, long long * flpins, float *mflips);
+   int PAPI_flops(float *rtime, float *ptime, long long * flpops, float *mflops);
+   int PAPI_ipc(float *rtime, float *ptime, long long * ins, float *ipc);
 
 #ifdef __cplusplus
 }

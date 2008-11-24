@@ -38,7 +38,7 @@ typedef struct X1_control {
    unsigned int selector[3];
 
    /* Is this event derived? */
-   u_long_long event_mask[3];
+   unsigned long long event_mask[3];
 
    /* P-Chip Hardware control Information to pass to the ioctl call */
    hwperf_x1_t p_evtctr[NUM_SSP];
@@ -52,7 +52,7 @@ typedef struct X1_control {
    mperf_x1_t m_evtctr;
    short has_m;
 
-   long_long values[64];
+   long long values[64];
 } X1_control_t;
 
 typedef struct X1_reg_alloc {

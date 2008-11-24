@@ -38,7 +38,7 @@ int prof_buckets(int bucket);
 void do_no_profile(void);
 
 /* variables global to profiling tests */
-extern long_long **values;
+extern long long **values;
 extern char event_name[PAPI_MAX_STR_LEN];
 extern int PAPI_event;
 extern int EventSet;

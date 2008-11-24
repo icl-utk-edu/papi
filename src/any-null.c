@@ -148,7 +148,7 @@ int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *ctrl){
    return(PAPI_OK);
 }
 
-int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **events, int flags)
+int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long **events, int flags)
 {
    return(PAPI_OK);
 }
@@ -163,7 +163,7 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctrl)
    return(PAPI_OK);
 }
 
-int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long *from)
+int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long *from)
 {
    return(PAPI_OK);
 }
@@ -238,28 +238,28 @@ int _papi_hwd_set_domain(hwd_control_state_t *cntrl, int domain)
  * Timing Routines
  * These functions should return the highest resolution timers available.
  */
-long_long _papi_hwd_get_real_usec(void)
+long long _papi_hwd_get_real_usec(void)
 {
-  long_long retval;
+  long long retval;
   struct timeval buffer;
   gettimeofday(&buffer,NULL);
-  retval = (long_long)(buffer.tv_sec*1000000);
-  retval += (long_long)(buffer.tv_usec);
+  retval = (long long)(buffer.tv_sec*1000000);
+  retval += (long long)(buffer.tv_usec);
   return(retval);
 }
 
-long_long _papi_hwd_get_real_cycles(void)
+long long _papi_hwd_get_real_cycles(void)
 {
   return(_papi_hwd_get_real_usec());
 }
 
-long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
+long long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
 {
-  long_long retval;
+  long long retval;
 #if defined(USE_PROC_PTTIMER)
    {
      char buf[LINE_MAX];
-     long_long utime, stime;
+     long long utime, stime;
      int rv, cnt = 0, i = 0;
 
      rv = read(ctx->stat_fd,buf,LINE_MAX*sizeof(char));
@@ -289,7 +289,7 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
 	 PAPIERROR("Unable to scan two items from thread stat file at 13th space?");
 	 return(PAPI_ESBSTR);
        }
-     retval = (long_long)(utime+stime)*1000000/_papi_hwi_system_info.sub_info.clock_ticks;
+     retval = (long long)(utime+stime)*1000000/_papi_hwi_system_info.sub_info.clock_ticks;
    }
 #elif defined(HAVE_CLOCK_GETTIME_THREAD)
    {
@@ -303,7 +303,7 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
      struct tms buffer;
      times(&buffer);
      SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
-     retval = (long_long)(buffer.tms_utime+buffer.tms_stime)*1000000/_papi_hwi_system_info.sub_info.clock_ticks;
+     retval = (long long)(buffer.tms_utime+buffer.tms_stime)*1000000/_papi_hwi_system_info.sub_info.clock_ticks;
      /* NOT CLOCKS_PER_SEC as in the headers! */
    }
 #elif defined(HAVE_PER_THREAD_GETRUSAGE)
@@ -311,8 +311,8 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
      struct rusage buffer;
      getrusage(RUSAGE_SELF,&buffer);
      SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
-     retval = (long_long)((buffer.ru_utime.tv_sec + buffer.ru_stime.tv_sec)*1000000);
-     retval += (long_long)(buffer.ru_utime.tv_usec + buffer.ru_stime.tv_usec);
+     retval = (long long)((buffer.ru_utime.tv_sec + buffer.ru_stime.tv_sec)*1000000);
+     retval += (long long)(buffer.ru_utime.tv_usec + buffer.ru_stime.tv_usec);
    }
 #else
 #error "No working per thread virtual timer"
@@ -320,7 +320,7 @@ long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
    return retval;
 }
 
-long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
+long long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
 {
   return(_papi_hwd_get_virt_usec(ctx)*_papi_hwi_system_info.hw_info.mhz);
 }

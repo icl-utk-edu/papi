@@ -24,7 +24,7 @@
 int main(int argc, char **argv)
 {
   int retval, num_tests = 6, num_events, tmp, i;
-   long_long **values;
+   long long **values;
    int EventSet=PAPI_NULL;
    int PAPI_event, mask;
    char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];

@@ -10,7 +10,7 @@ int main(int argc, char **argv)
 {
    int retval;
    int Events, fip=0;
-   long_long values, flpins;
+   long long values, flpins;
    float real_time, proc_time, mflops;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */

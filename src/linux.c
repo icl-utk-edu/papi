@@ -104,7 +104,7 @@ int check_p4(int cputype){
 
 volatile unsigned int lock[PAPI_MAX_LOCK];
 
-long_long tb_scale_factor = (long_long)1; /* needed to scale get_cycles on PPC series */
+long long tb_scale_factor = (long long)1; /* needed to scale get_cycles on PPC series */
 
 #if (defined(PPC32))
 static int lock_init(void) 
@@ -188,7 +188,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 
     /* copy tsc multiplier to local variable        */
     /* this field appears in perfctr 2.6 and higher */
- 	tb_scale_factor = (long_long)info.tsc_to_cpu_mult;
+ 	tb_scale_factor = (long long)info.tsc_to_cpu_mult;
 #else
    /* Opened once for all threads. */
    if ((dev = vperfctr_open()) == NULL)
@@ -897,13 +897,13 @@ int _papi_hwd_get_system_info(void)
 /* Low level functions, should not handle errors, just return codes. */
 
 #if (!defined(PPC64) && !defined(PPC32))
-inline_static long_long get_cycles(void) {
-   long_long ret = 0;
+inline_static long long get_cycles(void) {
+   long long ret = 0;
 #ifdef __x86_64__
    do {
       unsigned int a,d;
       asm volatile("rdtsc" : "=a" (a), "=d" (d));
-      (ret) = ((long_long)a) | (((long_long)d)<<32);
+      (ret) = ((long long)a) | (((long long)d)<<32);
    } while(0);
 #else
    __asm__ __volatile__("rdtsc"
@@ -913,7 +913,7 @@ inline_static long_long get_cycles(void) {
    return ret;
 }
 #elif defined(PPC32) || defined(PPC64)
-inline_static long_long get_cycles(void) {
+inline_static long long get_cycles(void) {
 	unsigned long tbl=0;
 	unsigned long tbu=0;
 	unsigned long long res=0;
@@ -925,23 +925,23 @@ inline_static long_long get_cycles(void) {
 }
 #endif //PPC64
 
-long_long _papi_hwd_get_real_usec(void) {
-   return((long_long)get_cycles() / (long_long)_papi_hwi_system_info.hw_info.mhz);
+long long _papi_hwd_get_real_usec(void) {
+   return((long long)get_cycles() / (long long)_papi_hwi_system_info.hw_info.mhz);
 }
 
-long_long _papi_hwd_get_real_cycles(void) {
-   return((long_long)get_cycles());
+long long _papi_hwd_get_real_cycles(void) {
+   return((long long)get_cycles());
 }
 
-long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
+long long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
 {
-   return ((long_long)vperfctr_read_tsc(ctx->perfctr) * tb_scale_factor);
+   return ((long long)vperfctr_read_tsc(ctx->perfctr) * tb_scale_factor);
 }
 
-long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
+long long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
 {
-   return (((long_long)vperfctr_read_tsc(ctx->perfctr) * tb_scale_factor) /
-           (long_long)_papi_hwi_system_info.hw_info.mhz);
+   return (((long long)vperfctr_read_tsc(ctx->perfctr) * tb_scale_factor) /
+           (long long)_papi_hwi_system_info.hw_info.mhz);
 }
 
 /* This routine is for shutting down threads, including the

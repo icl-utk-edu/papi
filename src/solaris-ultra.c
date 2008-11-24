@@ -842,7 +842,7 @@ int _papi_hwd_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 }
 
 
-int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long ** events, int flags)
+int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long ** events, int flags)
 {
    int retval;
 
@@ -850,7 +850,7 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long **
    if (retval == -1)
       return (PAPI_ESYS);
 
-   *events = (long_long *)ctrl->counter_cmd.cmd.ce_pic;
+   *events = (long long *)ctrl->counter_cmd.cmd.ce_pic;
 
    return PAPI_OK;
 }
@@ -1203,24 +1203,24 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    return (PAPI_OK);
 }
 
-long_long _papi_hwd_get_real_usec(void)
+long long _papi_hwd_get_real_usec(void)
 {
-   return ((long_long) gethrtime() / (long_long) 1000);
+   return ((long long) gethrtime() / (long long) 1000);
 }
 
-long_long _papi_hwd_get_real_cycles(void)
+long long _papi_hwd_get_real_cycles(void)
 {
-   return(_papi_hwd_get_real_usec() * (long_long) _papi_hwi_system_info.hw_info.mhz);
+   return(_papi_hwd_get_real_usec() * (long long) _papi_hwi_system_info.hw_info.mhz);
 }
 
-long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
+long long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 {
-   return ((long_long) gethrvtime() / (long_long) 1000);
+   return ((long long) gethrvtime() / (long long) 1000);
 }
 
-long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
+long long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 {
-   return (((long_long) gethrvtime() / (long_long) 1000) * (long_long) _papi_hwi_system_info.hw_info.mhz);
+   return (((long long) gethrvtime() / (long long) 1000) * (long long) _papi_hwi_system_info.hw_info.mhz);
 }
 
 int _papi_hwd_update_shlib_info(void)

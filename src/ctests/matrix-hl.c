@@ -22,7 +22,7 @@ int main(int argc, char **argv)
    /*     PAPI standardized event to be monitored */
    int event[2];
    /*     PAPI values of the counters */
-   long_long values[2], tmp;
+   long long values[2], tmp;
    extern int TESTS_QUIET;
 
    tests_quiet(argc, argv);
@@ -108,7 +108,7 @@ int main(int argc, char **argv)
 
    if (event[0] == PAPI_FP_INS) {
       /*     Compare measured FLOPS to expected value */
-      tmp = 2 * (long_long) (NROWS1) * (long_long) (NCOLS2) * (long_long) (NCOLS1);
+      tmp = 2 * (long long) (NROWS1) * (long long) (NCOLS2) * (long long) (NCOLS1);
       if (abs((int)values[0] - (int)tmp) > tmp * 0.05) {
          /*     Maybe we are counting FMAs? */
          tmp = tmp / 2;

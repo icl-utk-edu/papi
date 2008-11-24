@@ -38,7 +38,7 @@
 int total = 0;                  /* total overflows */
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
-void handler(int EventSet, void *address, long_long overflow_vector, void *context)
+void handler(int EventSet, void *address, long long overflow_vector, void *context)
 {
    if (!TESTS_QUIET) {
       fprintf(stderr, OVER_FMT, EventSet, address, overflow_vector);
@@ -49,8 +49,8 @@ void handler(int EventSet, void *address, long_long overflow_vector, void *conte
 int main(int argc, char **argv)
 {
    int EventSet=PAPI_NULL;
-   long_long(values[2])[2];
-   long_long min, max;
+   long long(values[2])[2];
+   long long min, max;
    int num_flops, retval;
    int PAPI_event, mythreshold;
    char event_name[PAPI_MAX_STR_LEN];
@@ -160,18 +160,18 @@ int main(int argc, char **argv)
        * printf("Column 1 approximately equals column 2\n"); 
        */
       printf("Row 3 approximately equals %u +- %u %%\n",
-             (unsigned) ((values[0])[0] / (long_long) mythreshold),
+             (unsigned) ((values[0])[0] / (long long) mythreshold),
              (unsigned) (OVR_TOLERANCE * 100.0));
    }
 /*
-  min = (long_long)((values[0])[0]*(1.0-TOLERANCE));
-  max = (long_long)((values[0])[0]*(1.0+TOLERANCE));
+  min = (long long)((values[0])[0]*(1.0-TOLERANCE));
+  max = (long long)((values[0])[0]*(1.0+TOLERANCE));
   if ( (values[1])[0] > max || (values[1])[0] < min )
   	test_fail(__FILE__, __LINE__, event_name, 1);
 */
 
-   min = (long_long) (((values[0])[0] * (1.0 - OVR_TOLERANCE)) / (long_long) mythreshold);
-   max = (long_long) (((values[0])[0] * (1.0 + OVR_TOLERANCE)) / (long_long) mythreshold);
+   min = (long long) (((values[0])[0] * (1.0 - OVR_TOLERANCE)) / (long long) mythreshold);
+   max = (long long) (((values[0])[0] * (1.0 + OVR_TOLERANCE)) / (long long) mythreshold);
    if (total > max || total < min)
       test_fail(__FILE__, __LINE__, "Overflows", 1);
 

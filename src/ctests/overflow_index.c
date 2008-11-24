@@ -24,7 +24,7 @@
 #endif
 
 typedef struct {
-  long_long mask;
+  long long mask;
   int count;
 } ocount_t;
 
@@ -35,7 +35,7 @@ int total_unknown = 0;
 
 static const PAPI_hw_info_t *hw_info = NULL;
 
-void handler(int EventSet, void *address, long_long overflow_vector, void *context)
+void handler(int EventSet, void *address, long long overflow_vector, void *context)
 {
   int i;
 
@@ -58,7 +58,7 @@ void handler(int EventSet, void *address, long_long overflow_vector, void *conte
 
    for (i=0;i<3;i++)
      {
-       if (overflow_counts[i].mask == (long_long)0)
+       if (overflow_counts[i].mask == (long long)0)
 	 {
 	   overflow_counts[i].mask = overflow_vector;
 	   overflow_counts[i].count = 1;
@@ -74,7 +74,7 @@ void handler(int EventSet, void *address, long_long overflow_vector, void *conte
 int main(int argc, char **argv)
 {
    int EventSet=PAPI_NULL;
-   long_long(values[3])[2];
+   long long(values[3])[2];
    int retval;
    int PAPI_event,k ,i;
    char event_name[PAPI_MAX_STR_LEN];
@@ -149,7 +149,7 @@ int main(int argc, char **argv)
          if (retval != PAPI_OK)
             test_fail(__FILE__, __LINE__, 
                    "PAPI_get_overflow_event_index", retval);
-         printf(INDEX_FMT, (long_long)overflow_counts[k].mask);
+         printf(INDEX_FMT, (long long)overflow_counts[k].mask);
          printf(" counts: %d ", overflow_counts[k].count);
          for(i=0; i<number; i++)
             printf(" Event Index %d ", index_array[i]);

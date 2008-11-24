@@ -184,7 +184,7 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * spc) {
    struct pmc_control *ctl = (struct pmc_control *)(spc->control.cpu_control.evntsel);
 
    /* clear the accumulating counter values */
-   memset((void *)spc->state.sum.pmc, 0, _papi_hwi_system_info.num_cntrs * sizeof(long_long) );
+   memset((void *)spc->state.sum.pmc, 0, _papi_hwi_system_info.num_cntrs * sizeof(long long) );
    if((error = pmc_set_control(ctx->self, ctl)) < 0) {
       SUBDBG("pmc_set_control returns: %d\n", error);
       { PAPIERROR( "pmc_set_control() returned < 0"); return(PAPI_ESYS); }
@@ -203,16 +203,16 @@ int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
    return(PAPI_OK);
 }
 
-int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** dp, int flags) {
+int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long long ** dp, int flags) {
    pmc_read_state(_papi_hwi_system_info.num_cntrs, &spc->state);
-   *dp = (long_long *) spc->state.sum.pmc;
+   *dp = (long long *) spc->state.sum.pmc;
 #ifdef DEBUG
    {
       if (ISLEVEL(DEBUG_SUBSTRATE)) {
          unsigned int i;
          for(i = 0; i < spc->control.cpu_control.nractrs; i++) {
             SUBDBG("raw val hardware index %d is %lld\n", i,
-                   (long_long) spc->state.sum.pmc[i]);
+                   (long long) spc->state.sum.pmc[i]);
          }
       }
    }
@@ -221,7 +221,7 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** 
 }
 
 
-inline_static long_long get_cycles (void)
+inline_static long long get_cycles (void)
 {
    __asm rdtsc          // Read Time Stamp Counter
    // This assembly instruction places the 64-bit value in edx:eax
@@ -230,12 +230,12 @@ inline_static long_long get_cycles (void)
 
 /* Low level functions, should not handle errors, just return codes. */
 
-long_long _papi_hwd_get_real_usec(void) {
-   return((long_long)get_cycles() / (long_long)_papi_hwi_system_info.hw_info.mhz);
+long long _papi_hwd_get_real_usec(void) {
+   return((long long)get_cycles() / (long long)_papi_hwi_system_info.hw_info.mhz);
 }
 
-long_long _papi_hwd_get_real_cycles(void) {
-   return((long_long)get_cycles());
+long long _papi_hwd_get_real_cycles(void) {
+   return((long long)get_cycles());
 }
 
 #ifdef DEBUG

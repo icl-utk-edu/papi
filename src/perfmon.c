@@ -189,17 +189,17 @@ static void dump_smpl(pfm_dfl_smpl_entry_t *entry)
 */
 
 #if defined(HAVE_MMTIMER)
-inline_static long_long get_cycles(void)
+inline_static long long get_cycles(void)
 {
-  long_long tmp = 0;
+  long long tmp = 0;
   tmp = *mmdev_timer_addr;
 #error "This needs work"
   return(tmp);
 } 
 #elif defined(__ia64__)
-inline_static long_long get_cycles(void)
+inline_static long long get_cycles(void)
 {
-  long_long tmp = 0;
+  long long tmp = 0;
 #if defined(__INTEL_COMPILER)
   tmp = __getReg(_IA64_REG_AR_ITC);
 #else
@@ -213,13 +213,13 @@ inline_static long_long get_cycles(void)
   return tmp ;
 }
 #elif (defined(__i386__)||defined(__x86_64__))
-inline_static long_long get_cycles(void) {
-   long_long ret = 0;
+inline_static long long get_cycles(void) {
+   long long ret = 0;
 #ifdef __x86_64__
    do {
       unsigned int a,d;
       asm volatile("rdtsc" : "=a" (a), "=d" (d));
-      (ret) = ((long_long)a) | (((long_long)d)<<32);
+      (ret) = ((long long)a) | (((long long)d)<<32);
    } while(0);
 #else
    __asm__ __volatile__("rdtsc"
@@ -229,14 +229,14 @@ inline_static long_long get_cycles(void) {
    return ret;
 }
 #elif defined(__crayx2)						/* CRAY X2 */
-inline_static long_long get_cycles (void)
+inline_static long long get_cycles (void)
 {
 	return _rtc ( );
 }
 /* SiCortex only code, which works on V2.3 R81 or above
    anything below, must use gettimeofday() */
 #elif defined(HAVE_CYCLE) && defined(mips)
-inline_static long_long get_cycles(void)
+inline_static long long get_cycles(void)
 {
   long long count;
   
@@ -251,7 +251,7 @@ inline_static long_long get_cycles(void)
 }
 /* #define get_cycles _rtc ?? */
 #elif defined(__sparc__)
-inline_static long_long get_cycles(void)
+inline_static long long get_cycles(void)
 {
 	register unsigned long ret asm("g1");
 
@@ -1334,7 +1334,7 @@ int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
   char fn[PATH_MAX], tmp[PATH_MAX];
   FILE *f;
   int ret;
-  long_long vmpk = 0, sz = 0, lck = 0, res = 0, shr = 0, stk = 0, txt = 0, dat = 0, dum = 0, lib = 0, hwm = 0, pte = 0;
+  long long vmpk = 0, sz = 0, lck = 0, res = 0, shr = 0, stk = 0, txt = 0, dat = 0, dum = 0, lib = 0, hwm = 0, pte = 0;
 
   sprintf(fn,"/proc/%ld/status",(long)getpid());
   f = fopen(fn,"r");
@@ -3035,45 +3035,45 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
   return(PAPI_OK);
 }
 
-long_long _papi_hwd_get_real_usec(void) {
-  long_long retval;
+long long _papi_hwd_get_real_usec(void) {
+  long long retval;
 #if defined(HAVE_CLOCK_GETTIME_REALTIME)
    {
      struct timespec foo;
      syscall(__NR_clock_gettime,HAVE_CLOCK_GETTIME_REALTIME,&foo);
-     retval = (long_long)foo.tv_sec*(long_long)1000000;
-     retval += (long_long)(foo.tv_nsec/1000);
+     retval = (long long)foo.tv_sec*(long long)1000000;
+     retval += (long long)(foo.tv_nsec/1000);
    }
 #elif defined(HAVE_GETTIMEOFDAY)
    {
      struct timeval buffer;
      gettimeofday(&buffer,NULL);
-     retval = (long_long)buffer.tv_sec*(long_long)1000000;
-     retval += (long_long)(buffer.tv_usec);
+     retval = (long long)buffer.tv_sec*(long long)1000000;
+     retval += (long long)(buffer.tv_usec);
    }
 #else
-  retval = get_cycles()/(long_long)_papi_hwi_system_info.hw_info.mhz;
+  retval = get_cycles()/(long long)_papi_hwi_system_info.hw_info.mhz;
 #endif
   return(retval);
 }
                                                                                 
-long_long _papi_hwd_get_real_cycles(void) {
-  long_long retval;
+long long _papi_hwd_get_real_cycles(void) {
+  long long retval;
 #if defined(HAVE_GETTIMEOFDAY)||defined(__powerpc__)||(defined(mips)&&!defined(HAVE_CYCLE))
-  retval = _papi_hwd_get_real_usec()*(long_long)_papi_hwi_system_info.hw_info.mhz;
+  retval = _papi_hwd_get_real_usec()*(long long)_papi_hwi_system_info.hw_info.mhz;
 #else
   retval = get_cycles();
 #endif
   return(retval);
 }
 
-long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
+long long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 {
-   long_long retval;
+   long long retval;
 #if defined(USE_PROC_PTTIMER)
    {
      char buf[LINE_MAX];
-     long_long utime, stime;
+     long long utime, stime;
      int rv, cnt = 0, i = 0;
 
 again:
@@ -3111,21 +3111,21 @@ again:
 	 PAPIERROR("Unable to scan two items from thread stat file at 13th space?");
 	 return(PAPI_ESBSTR);
        }
-     retval = (utime+stime)*(long_long)1000000/_papi_hwi_system_info.sub_info.clock_ticks;
+     retval = (utime+stime)*(long long)1000000/_papi_hwi_system_info.sub_info.clock_ticks;
    }
 #elif defined(HAVE_CLOCK_GETTIME_THREAD)
    {
      struct timespec foo;
      syscall(__NR_clock_gettime,HAVE_CLOCK_GETTIME_THREAD,&foo);
-     retval = (long_long)foo.tv_sec*(long_long)1000000;
-     retval += (long_long)foo.tv_nsec/1000;
+     retval = (long long)foo.tv_sec*(long long)1000000;
+     retval += (long long)foo.tv_nsec/1000;
    }
 #elif defined(HAVE_PER_THREAD_TIMES)
    {
      struct tms buffer;
      times(&buffer);
      SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
-     retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*1000000/_papi_hwi_system_info.sub_info.clock_ticks);
+     retval = (long long)((buffer.tms_utime+buffer.tms_stime)*1000000/_papi_hwi_system_info.sub_info.clock_ticks);
      /* NOT CLOCKS_PER_SEC as in the headers! */
    }
 #elif defined(HAVE_PER_THREAD_GETRUSAGE)
@@ -3133,8 +3133,8 @@ again:
      struct rusage buffer;
      getrusage(RUSAGE_SELF,&buffer);
      SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
-     retval = (long_long)(buffer.ru_utime.tv_sec + buffer.ru_stime.tv_sec)*(long_long)1000000;
-     retval += (long_long)(buffer.ru_utime.tv_usec + buffer.ru_stime.tv_usec);
+     retval = (long long)(buffer.ru_utime.tv_sec + buffer.ru_stime.tv_sec)*(long long)1000000;
+     retval += (long long)(buffer.ru_utime.tv_usec + buffer.ru_stime.tv_usec);
    }
 #else
 #error "No working per thread virtual timer"
@@ -3142,9 +3142,9 @@ again:
    return (retval);
 }
 
-long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
+long long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 {
-   return (_papi_hwd_get_virt_usec(zero)*(long_long)_papi_hwi_system_info.hw_info.mhz);
+   return (_papi_hwd_get_virt_usec(zero)*(long long)_papi_hwi_system_info.hw_info.mhz);
 }
 
 /* reset the hardware counters */
@@ -3172,7 +3172,7 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctl)
 }
 
 /* write(set) the hardware counters */
-int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctl, long_long *from)
+int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctl, long long *from)
 {
   int i, ret;
 
@@ -3196,10 +3196,10 @@ int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctl, long_long *fro
 }
 
 int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctl,
-                   long_long ** events, int flags)
+                   long long ** events, int flags)
 {
   int i, ret;
-  long_long tot_runs = 0LL;
+  long long tot_runs = 0LL;
 
   SUBDBG("PFM_READ_PMDS(%d,%p,%d)\n",ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count);
   if ((ret = pfm_read_pmds(ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count)))
@@ -3861,7 +3861,7 @@ process_smpl_buf(int num_smpl_pmds, int entry_size, ThreadInfo_t **thr)
   int ret, profile_index, flags;
   unsigned int native_pfm_index;
   caddr_t pc;
-  long_long weight;
+  long long weight;
 
   DEBUGCALL(DEBUG_SUBSTRATE,dump_smpl_hdr(hdr));
   count = hdr->hdr_count;

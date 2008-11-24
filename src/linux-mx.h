@@ -184,7 +184,7 @@ typedef struct hwd_reg_alloc {
 } hwd_reg_alloc_t;
 
 typedef struct hwd_control_state {
-  long_long counts[MAX_COUNTERS];
+  long long counts[MAX_COUNTERS];
 } hwd_control_state_t;
 
 typedef struct hwd_context {

@@ -35,7 +35,7 @@ static int set_domain(hwd_context_t * this_state, int domain)
 {
    hwperf_x1_t p_evtctr[NUM_SSP];
    int i,found=0,ret;
-   u_long_long enablebits = HWPERF_ENABLE_RW;
+   unsigned long long enablebits = HWPERF_ENABLE_RW;
 
    if (PAPI_DOM_USER & domain) {
      enablebits |= HWPERF_ENABLE_USER;
@@ -198,7 +198,7 @@ int _papi_hwd_ctl(hwd_context_t * ptr, int code, _papi_int_option_t * option)
  * This function should return the highest resolution wallclock timer available
  * in usecs. 
  */
-long_long _papi_hwd_get_real_usec(void)
+long long _papi_hwd_get_real_usec(void)
 {
    return ((_rtc()/IRTC_RATE())*1000000);
 }
@@ -208,33 +208,33 @@ long_long _papi_hwd_get_real_usec(void)
  * in cycles. Since the Cray X1 does not have a high resolution we have to
  * use gettimeofday.
  */
-long_long _papi_hwd_get_real_cycles(void)
+long long _papi_hwd_get_real_cycles(void)
 {
-   long_long usec, cyc;
+   long long usec, cyc;
 
-   usec = (long_long) _papi_hwd_get_real_usec();
-   cyc = usec *  (long_long) _papi_hwi_system_info.hw_info.mhz;
-   return ((long_long) cyc);
+   usec = (long long) _papi_hwd_get_real_usec();
+   cyc = usec *  (long long) _papi_hwi_system_info.hw_info.mhz;
+   return ((long long) cyc);
 }
 
 /*
  * This function should return the highest resolution processor timer available
  * in usecs.
  */
-long_long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
+long long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
 {
-   long_long retval;
+   long long retval;
    struct tms buffer;
 
    times(&buffer);
    SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
-   retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*1000000/_papi_hwi_system_info.sub_info.clock_ticks);
+   retval = (long long)((buffer.tms_utime+buffer.tms_stime)*1000000/_papi_hwi_system_info.sub_info.clock_ticks);
    return (retval);
 }
 
-long_long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
+long long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
 {
-   return (_papi_hwd_get_virt_usec(zero) * (long_long)_papi_hwi_system_info.hw_info.mhz);
+   return (_papi_hwd_get_virt_usec(zero) * (long long)_papi_hwi_system_info.hw_info.mhz);
 }
 
 /*
@@ -283,7 +283,7 @@ int _papi_hwd_start(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 /*
  * Read the hardware counters
  */
-int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **events, int flags)
+int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long **events, int flags)
 {
    int i,j;
    if ( ctrl->has_p ){
@@ -291,7 +291,7 @@ int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **ev
   	SUBDBG("Error reading the counters, error returned: %d\n", oserror());
         return(PAPI_ESYS);
       }
-      memcpy(ctrl->values,&ctrl->p_evtctr[0].hwp_countval[0],sizeof(long_long)*HWPERF_COUNTMAX);
+      memcpy(ctrl->values,&ctrl->p_evtctr[0].hwp_countval[0],sizeof(long long)*HWPERF_COUNTMAX);
       for (i=1;i<NUM_SSP;i++){
         /* P:0:0 (cycles) counts whether the SSP is idle or not.
 	   It's the only event on counter 0.
@@ -320,7 +320,7 @@ int _papi_hwd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **ev
       for(i=0,j=HWPERF_COUNTMAX+EPERF_COUNTMAX;i<MPERF_COUNTMAX;i++,j++)
 	ctrl->values[j] = ctrl->m_evtctr.mp_countval[i];
    }
-   *events = (long_long *) &ctrl->values[0];
+   *events = (long long *) &ctrl->values[0];
 #ifdef DEBUG
    if (ISLEVEL(DEBUG_SUBSTRATE) )
    {
@@ -459,7 +459,7 @@ int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *ctrl)
 /*
  * Write a value into the hardware counters
  */
-int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long *from)
+int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long *from)
 {
   int i,j;
   if ( ctrl->has_p )

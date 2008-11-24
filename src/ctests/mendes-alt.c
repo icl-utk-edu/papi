@@ -11,9 +11,9 @@
 #define TIMES 1000
 
 #define PAPI_MAX_EVENTS 2
-long_long PAPI_values1[PAPI_MAX_EVENTS];
-long_long PAPI_values2[PAPI_MAX_EVENTS];
-long_long PAPI_values3[PAPI_MAX_EVENTS];
+long long PAPI_values1[PAPI_MAX_EVENTS];
+long long PAPI_values2[PAPI_MAX_EVENTS];
+long long PAPI_values3[PAPI_MAX_EVENTS];
 static int EventSet = PAPI_NULL;
 
 #include "papi_test.h"

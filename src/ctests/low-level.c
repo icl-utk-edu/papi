@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 {
    int retval;
 #define NUM_EVENTS 2
-   long_long values[NUM_EVENTS], dummyvalues[NUM_EVENTS];
+   long long values[NUM_EVENTS], dummyvalues[NUM_EVENTS];
    unsigned int Events[NUM_EVENTS];
    int EventSet = PAPI_NULL;
 

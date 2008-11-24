@@ -51,8 +51,8 @@ void Thread(int t, int n)
    int EventSet1=PAPI_NULL;
    int PAPI_event, mask1;
    int num_events1;
-   long_long **values;
-   long_long elapsed_us, elapsed_cyc;
+   long long **values;
+   long long elapsed_us, elapsed_cyc;
    char event_name[PAPI_MAX_STR_LEN];
 
    /* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
