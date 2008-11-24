@@ -1945,7 +1945,8 @@ case "$OS" in
            model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
            # family 15 is always P4; model 1 is vanilla pre-HT, model 2 is vanilla; model 3 is em64t, 4 is Pentium D, 6 is Xeon D
            if test "$family" = "6"; then
-             if test "$model" = "15"; then
+             # model 14 is an ancient Core; the others are Core2, but 28 is Atom; it may not work with the Core substrate
+             if (test "$model" = "14" || test "$model" = "15" || test "$model" = "22" || test "$model" = "23" || test "$model" = "28"; then
                CPU=core
              fi
            elif test "$family" = "15"; then
