@@ -79,7 +79,7 @@ static int _papi_hwd_fixup_vec(void);
  * duplicated in every substrate that relied on them, such as PPC and p4
  ******************************************************************************/
 
-long_long tb_scale_factor = (long_long)1; /* needed to scale get_cycles on PPC series */
+long long tb_scale_factor = (long long)1; /* needed to scale get_cycles on PPC series */
 
 extern int setup_p4_presets(int cputype);
 
@@ -312,7 +312,7 @@ static int _p4_init_substrate(int cidx)
 
     /* copy tsc multiplier to local variable        */
     /* this field appears in perfctr 2.6 and higher */
- 	tb_scale_factor = (long_long)info.tsc_to_cpu_mult;
+ 	tb_scale_factor = (long long)info.tsc_to_cpu_mult;
 #else
    /* Opened once for all threads. */
    if ((dev = vperfctr_open()) == NULL)
@@ -425,13 +425,13 @@ static int detach( hwd_control_state_t * ctl, unsigned long tid ) {
 
 /* Low level functions, should not handle errors, just return codes. */
 
-inline_static long_long get_cycles(void) {
-   long_long ret = 0;
+inline_static long long get_cycles(void) {
+   long long ret = 0;
 #ifdef __x86_64__
    do {
       unsigned int a,d;
       asm volatile("rdtsc" : "=a" (a), "=d" (d));
-      (ret) = ((long_long)a) | (((long_long)d)<<32);
+      (ret) = ((long long)a) | (((long long)d)<<32);
    } while(0);
 #else
    __asm__ __volatile__("rdtsc"
@@ -441,23 +441,23 @@ inline_static long_long get_cycles(void) {
    return ret;
 }
 
-static long_long _p4_get_real_usec(void) {
-   return((long_long)get_cycles() / (long_long)_papi_hwi_system_info.hw_info.mhz);
+static long long _p4_get_real_usec(void) {
+   return((long long)get_cycles() / (long long)_papi_hwi_system_info.hw_info.mhz);
 }
 
-static long_long _p4_get_real_cycles(void) {
-   return((long_long)get_cycles());
+static long long _p4_get_real_cycles(void) {
+   return((long long)get_cycles());
 }
 
-static long_long _p4_get_virt_cycles(const hwd_context_t * ctx)
+static long long _p4_get_virt_cycles(const hwd_context_t * ctx)
 {
-   return ((long_long)vperfctr_read_tsc(((cmp_context_t *)ctx)->perfctr) * tb_scale_factor);
+   return ((long long)vperfctr_read_tsc(((cmp_context_t *)ctx)->perfctr) * tb_scale_factor);
 }
 
-static long_long _p4_get_virt_usec(const hwd_context_t * ctx)
+static long long _p4_get_virt_usec(const hwd_context_t * ctx)
 {
-   return (((long_long)vperfctr_read_tsc(((cmp_context_t *)ctx)->perfctr) * tb_scale_factor) /
-           (long_long)_papi_hwi_system_info.hw_info.mhz);
+   return (((long long)vperfctr_read_tsc(((cmp_context_t *)ctx)->perfctr) * tb_scale_factor) /
+           (long long)_papi_hwi_system_info.hw_info.mhz);
 }
 
 /******************************************************************************
@@ -520,7 +520,7 @@ static int _p4_stop(hwd_context_t * this_ctx, hwd_control_state_t * this_state)
 }
 
 static int _p4_read(hwd_context_t * this_ctx, hwd_control_state_t * this_state,
-                   long_long ** dp, int flags)
+                   long long ** dp, int flags)
 {
    cmp_context_t * ctx = (cmp_context_t *)this_ctx;
    cmp_control_state_t *spc = (cmp_control_state_t *)this_state;
@@ -536,14 +536,14 @@ static int _p4_read(hwd_context_t * this_ctx, hwd_control_state_t * this_state,
         vperfctr_read_ctrs(ctx->perfctr, &spc->state);
         }
    }
-      *dp = (long_long *) spc->state.pmc;
+      *dp = (long long *) spc->state.pmc;
 #ifdef DEBUG
    {
       if (ISLEVEL(DEBUG_SUBSTRATE)) {
          int i;
          for (i = 0; i < spc->control.cpu_control.nractrs; i++) {
             SUBDBG("raw val hardware index %d is %lld\n", i,
-                   (long_long) spc->state.pmc[i]);
+                   (long long) spc->state.pmc[i]);
          }
       }
    }

@@ -304,7 +304,7 @@ int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
    return(PAPI_OK);
 }
 
-int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** dp,  int flags) {
+int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long long ** dp,  int flags) {
    if ( flags & PAPI_PAUSED ) {
      vperfctr_read_state(ctx->perfctr, &spc->state, NULL);
    }
@@ -316,14 +316,14 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * spc, long_long ** 
         vperfctr_read_ctrs(ctx->perfctr, &spc->state);
         }
    }
-      *dp = (long_long *) spc->state.pmc;
+      *dp = (long long *) spc->state.pmc;
 #ifdef DEBUG
    {
       if (ISLEVEL(DEBUG_SUBSTRATE)) {
          int i;
          for(i = 0; i < spc->control.cpu_control.nractrs; i++) {
             SUBDBG("raw val hardware index %d is %lld\n", i,
-                   (long_long) spc->state.pmc[i]);
+                   (long long) spc->state.pmc[i]);
          }
       }
    }

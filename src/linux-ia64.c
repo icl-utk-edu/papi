@@ -832,21 +832,21 @@ int _ia64_init(hwd_context_t * zero)
   return(pfmw_create_context(zero));
 }
 
-long_long _ia64_get_real_usec(void) {
-   return((long_long)get_cycles() / (long_long)_papi_hwi_system_info.hw_info.mhz);
+long long _ia64_get_real_usec(void) {
+   return((long long)get_cycles() / (long long)_papi_hwi_system_info.hw_info.mhz);
 }
                                                                                 
-long_long _ia64_get_real_cycles(void) {
-   return((long_long)get_cycles());
+long long _ia64_get_real_cycles(void) {
+   return((long long)get_cycles());
 }
 
-long_long _ia64_get_virt_usec(const hwd_context_t * zero)
+long long _ia64_get_virt_usec(const hwd_context_t * zero)
 {
-   long_long retval = 0;
+   long long retval = 0;
 #if defined(USE_PROC_PTTIMER)
    {
      char buf[LINE_MAX];
-     long_long utime, stime;
+     long long utime, stime;
      int rv, cnt = 0, i = 0;
 
      rv = read(((ia64_context_t *)zero)->stat_fd,buf,LINE_MAX*sizeof(char));
@@ -876,7 +876,7 @@ long_long _ia64_get_virt_usec(const hwd_context_t * zero)
 	 PAPIERROR("Unable to scan two items from thread stat file at 13th space?");
 	 return(PAPI_ESBSTR);
        }
-     retval = (utime+stime)*(long_long)(1000000/sysconf(_SC_CLK_TCK));
+     retval = (utime+stime)*(long long)(1000000/sysconf(_SC_CLK_TCK));
    }
 #elif defined(HAVE_CLOCK_GETTIME_THREAD)
    {
@@ -885,14 +885,14 @@ long_long _ia64_get_virt_usec(const hwd_context_t * zero)
      
      syscall(__NR_clock_gettime,HAVE_CLOCK_GETTIME_THREAD,&foo);
      bar = (double)foo.tv_nsec/1000.0 + (double)foo.tv_sec*1000000.0;
-     retval = (long_long) bar;
+     retval = (long long) bar;
    }
 #elif defined(HAVE_PER_THREAD_TIMES)
    {
      struct tms buffer;
      times(&buffer);
      /* SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime); */
-     retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*(1000000/sysconf(_SC_CLK_TCK)));
+     retval = (long long)((buffer.tms_utime+buffer.tms_stime)*(1000000/sysconf(_SC_CLK_TCK)));
      /* NOT CLOCKS_PER_SEC as in the headers! */
    }
 #else
@@ -901,9 +901,9 @@ long_long _ia64_get_virt_usec(const hwd_context_t * zero)
    return (retval);
 }
 
-long_long _ia64_get_virt_cycles(const hwd_context_t * zero)
+long long _ia64_get_virt_cycles(const hwd_context_t * zero)
 {
-   return (_ia64_get_virt_usec(zero) * (long_long)_papi_hwi_system_info.hw_info.mhz);
+   return (_ia64_get_virt_usec(zero) * (long long)_papi_hwi_system_info.hw_info.mhz);
 }
 
 /* reset the hardware counters */
@@ -927,7 +927,7 @@ int _ia64_reset(hwd_context_t * ctx, hwd_control_state_t * machdep)
 }
 
 int _ia64_read(hwd_context_t * ctx, hwd_control_state_t * machdep,
-                   long_long ** events, int flags)
+                   long long ** events, int flags)
 {
    int i;
    pfarg_reg_t readem[MAX_COUNTERS];
@@ -1256,8 +1256,8 @@ static int ia64_process_profile_entry(void *papiContext)
          }
 
          pc = (caddr_t) GET_OVERFLOW_ADDRESS(info);
-         _papi_hwi_dispatch_profile(ESI, (long_long) 0, count, pc);
-         //_papi_hwi_dispatch_profile(ESI, papiContext, (long_long) 0, count);
+         _papi_hwi_dispatch_profile(ESI, (long long) 0, count, pc);
+         //_papi_hwi_dispatch_profile(ESI, papiContext, (long long) 0, count);
          overflow_vector ^= (1 << reg_num);
       }
 
@@ -1383,7 +1383,7 @@ static int ia64_process_profile_entry(void *papiContext)
          };
 
         pc = (caddr_t) GET_OVERFLOW_ADDRESS(info);
-        _papi_hwi_dispatch_profile(ESI, (long_long) 0, count, pc);
+        _papi_hwi_dispatch_profile(ESI, (long long) 0, count, pc);
       }
 
       /*  move to next entry */
@@ -1409,8 +1409,8 @@ void _ia64_dispatch_timer(int signal, hwd_siginfo_t * info, void *context)
    ctx.ucontext = (hwd_ucontext_t *) context;
 
    pc = (caddr_t) GET_OVERFLOW_ADDRESS(context);
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long_long) 0, 0, &t, pc, cidx);
-   // _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long_long) 0, 0, &t);
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long long) 0, 0, &t, pc, cidx);
+   // _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, (long long) 0, 0, &t);
    return;
  }
 

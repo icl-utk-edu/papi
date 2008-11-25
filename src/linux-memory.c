@@ -917,16 +917,16 @@ static void cpuid(unsigned int *a, unsigned int *b,
 
 /* A pointer to the following is passed to PAPI_get_dmem_info() 
 	typedef struct _dmem_t {
-	  long_long size;
-	  long_long resident;
-	  long_long high_water_mark;
-	  long_long shared;
-	  long_long text;
-	  long_long library;
-	  long_long heap;
-	  long_long locked;
-	  long_long stack;
-	  long_long pagesize;
+	  long long size;
+	  long long resident;
+	  long long high_water_mark;
+	  long long shared;
+	  long long text;
+	  long long library;
+	  long long heap;
+	  long long locked;
+	  long long stack;
+	  long long pagesize;
 	} PAPI_dmem_info_t;
 */
 
@@ -963,7 +963,7 @@ int _linux_get_dmem_info(PAPI_dmem_info_t *d)
   char fn[PATH_MAX], tmp[PATH_MAX];
   FILE *f;
   int ret;
-  long_long sz = 0, lck = 0, res = 0, shr = 0, stk = 0, txt = 0, dat = 0, dum = 0, lib = 0, hwm = 0;
+  long long sz = 0, lck = 0, res = 0, shr = 0, stk = 0, txt = 0, dat = 0, dum = 0, lib = 0, hwm = 0;
 
   sprintf(fn,"/proc/%ld/status",(long)getpid());
   f = fopen(fn,"r");

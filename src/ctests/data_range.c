@@ -134,7 +134,7 @@ static void measure_load_store(caddr_t start, caddr_t end) {
 static void measure_event(int index, PAPI_option_t *option)
 {
    int retval;
-   long_long value;
+   long long value;
    
    if ((retval = PAPI_add_event(EventSet, PAPI_event[index])) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);

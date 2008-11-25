@@ -1,15 +1,21 @@
+#ifndef _DADD_ALPHA_H
+#define _DADD_ALPHA_H
+
 #include <stdio.h>
 #include <fcntl.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/timers.h>
 #include <stropts.h>
 #include <unistd.h>
+#include <stdarg.h>
 #include <sys/processor.h>
 #include <sys/times.h>
 #include <sys/sysinfo.h>
 #include <sys/procfs.h>
+#include <sys/clu.h>
 #include <machine/hal_sysinfo.h>
 #include <machine/cpuconf.h>
 #include <assert.h>
@@ -17,9 +23,10 @@
 /* Below can be removed when we stop using rusuage for PAPI_get_virt_usec -KSL*/
 #include <sys/resource.h>
 
-#include "papi.h"
 #include "dadd.h"
 #include "virtual_counters.h"
+
+#define inline_static static
 
 #define VC_TOTAL_CYCLES 0
 #define VC_BCACHE_MISSES 1
@@ -48,41 +55,47 @@
 #define VC_COND_BR_NOT_TAKEN 24
 #define VC_COND_BR_MISPREDICTED 25
 #define VC_COND_BR_PREDICTED 26
+#define VC_ITBMISS_TRAPS 38
 
-typedef struct hwd_control_state {
-  /* Which counters to use? Bits encode counters to use, may be duplicates */
-  int selector;
-  /* Is this event derived? */
-  int derived;
-  /* Pointer to the DADD virtual counter structure */
-  virtual_counters *ptr_vc;
-  /* Interrupt interval */
-  int timer_ms;
-  /* latest value for cycles */
-  long_long latestcycles;
-} hwd_control_state_t;
 
-typedef struct hwd_preset {
-  /* Which counters to use? Bits encode counters to use, may be duplicates */
-  unsigned char selector;
-  /* Is this event derived? */
-  unsigned char derived;
-  /* If the derived event is not associative, this index is the lead operand */
-  unsigned char operand_index;
-  /* Buffer to pass to the kernel to control the counters */
-  long counter_cmd;
-  /* Footnote to append to the description of this event */
-  char note[PAPI_MAX_STR_LEN];
-} hwd_preset_t;
+#define MAX_COUNTERS	       47
+#define MAX_COUNTER_TERMS	2
+#define MAX_NATIVE_EVENT 28
+#define PAPI_MAX_NATIVE_EVENTS MAX_NATIVE_EVENT
 
-typedef struct hwd_search {
-  /* PAPI preset code */
-  unsigned int papi_code;
-  /* DADD event code */
-  long dadd_code;
-} hwd_search_t;
 
-#include "papi_internal.h"
+typedef struct dadd_alpha_control_state {
+   virtual_counters *ptr_vc;
+   /* counter numbers when started */
+   long long start_value[MAX_COUNTERS];
+   /* latest counter numbers */
+   long long latest[MAX_COUNTERS];
+   /* latest value for cycles */
+   long long latestcycles;
+} dadd_alpha_control_state_t;
 
-extern unsigned long _etext, _ftext;
+typedef struct dadd_alpha_context {
+   virtual_counters *ptr_vc;
+} dadd_alpha_context_t;
 
+typedef dadd_alpha_control_state_t hwd_control_state_t;
+
+typedef int hwd_register_t;     /* don't need this on dadd-alpha */
+
+typedef dadd_alpha_context_t hwd_context_t;
+
+typedef int hwd_reg_alloc_t;    /* don't need this structure on dadd-alpha */
+typedef siginfo_t hwd_siginfo_t;
+typedef struct sigcontext hwd_ucontext_t;
+
+#define GET_OVERFLOW_ADDRESS(ctx)  (void*)(ctx->ucontext->sc_pc)
+
+typedef struct native_info_t {
+   char name[40];               /* native name */
+   int encode;
+} native_info_t;
+
+
+extern unsigned long _etext, _ftext, _fdata, _edata;
+
+#endif

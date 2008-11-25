@@ -32,7 +32,7 @@
 /********************/
 
 static int default_debug_handler(int errorCode);
-static long_long handle_derived(EventInfo_t * evi, long_long * from);
+static long long handle_derived(EventInfo_t * evi, long long * from);
 
 extern unsigned long int (*_papi_hwi_thread_id_fn) (void);
 
@@ -255,15 +255,15 @@ int _papi_hwi_assign_eventset(EventSetInfo_t *ESI, int cidx)
 
    max_counters = _papi_hwd[cidx]->cmp_info.num_mpx_cntrs; 
    ESI->ctl_state = (hwd_control_state_t *)papi_malloc(_papi_hwd[cidx]->size.control_state);
-   ESI->sw_stop = (long_long *) papi_malloc(max_counters * sizeof(long_long));
-   ESI->hw_start = (long_long *) papi_malloc(max_counters * sizeof(long_long));
+   ESI->sw_stop = (long long *) papi_malloc(max_counters * sizeof(long long));
+   ESI->hw_start = (long long *) papi_malloc(max_counters * sizeof(long long));
    ESI->EventInfoArray = (EventInfo_t *) papi_malloc(max_counters * sizeof(EventInfo_t));
 /* allocate room for the native events and for the component-private register structures */
 /* xxxx should these arrays be num_mpx_cntrs or num_cntrs in size?? */
    ESI->NativeInfoArray = (NativeInfo_t *) papi_malloc(max_counters * sizeof(NativeInfo_t)+max_counters*_papi_hwd[cidx]->size.reg_value);
 
    /* NOTE: the next two malloc allocate blocks of memory that are later parcelled into overflow and profile arrays */
-   ESI->overflow.deadline = (long_long *) papi_malloc((sizeof(long_long)+sizeof(int)*3)*max_counters);
+   ESI->overflow.deadline = (long long *) papi_malloc((sizeof(long long)+sizeof(int)*3)*max_counters);
    ESI->profile.prof = (PAPI_sprofil_t **) papi_malloc((sizeof(PAPI_sprofil_t *)*max_counters+max_counters*sizeof(int)*4));
 
    if ((ESI->ctl_state == NULL) ||
@@ -280,13 +280,13 @@ int _papi_hwi_assign_eventset(EventSetInfo_t *ESI, int cidx)
 	papi_free(ESI);
 	return (PAPI_ENOMEM);
    }
-   memset(ESI->sw_stop, 0x00, max_counters * sizeof(long_long));
-   memset(ESI->hw_start, 0x00, max_counters * sizeof(long_long));
+   memset(ESI->sw_stop, 0x00, max_counters * sizeof(long long));
+   memset(ESI->hw_start, 0x00, max_counters * sizeof(long long));
    memset(ESI->ctl_state, 0x00,_papi_hwd[cidx]->size.control_state);
 
    /* Carve up the overflow block into separate arrays */
    ptr = (char *) ESI->overflow.deadline;
-   ptr += sizeof(long_long)*max_counters;
+   ptr += sizeof(long long)*max_counters;
    ESI->overflow.threshold = (int *) ptr;
    ptr += sizeof(int)*max_counters;
    ESI->overflow.EventIndex = (int *) ptr;
@@ -933,10 +933,10 @@ int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode)
    return (PAPI_OK);
 }
 
-int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long_long * values)
+int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long long * values)
 {
    int retval;
-   long_long *dp;
+   long long *dp;
    int i, j = 0, index;
 
    retval = _papi_hwd[ESI->CmpIdx]->read(context, ESI->ctl_state, &dp, ESI->state);
@@ -971,7 +971,7 @@ int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long_long * va
 	{ 
 	  values[j] = handle_derived(&ESI->EventInfoArray[i], dp);
 #ifdef DEBUG
-	  if (values[j] < (long_long)0) {
+	  if (values[j] < (long long)0) {
             INTDBG("Derived Event is negative!!: %lld\n", values[j]);
 	  }
       INTDBG("read value is =%lld \n", values[j]);
@@ -1140,16 +1140,16 @@ void _papi_hwi_shutdown_global_internal(void)
   memset(&_papi_hwi_system_info,0x0,sizeof(_papi_hwi_system_info));
 }
 
-void _papi_hwi_dummy_handler(int EventSet, void *address, long_long  overflow_vector, void * context)
+void _papi_hwi_dummy_handler(int EventSet, void *address, long long  overflow_vector, void * context)
 {
    /* This function is not used and shouldn't be called. */
    return;
 }
 
-static long_long handle_derived_add(int *position, long_long * from)
+static long long handle_derived_add(int *position, long long * from)
 {
    int pos, i;
-   long_long retval = 0;
+   long long retval = 0;
 
    i = 0;
    while (i < PAPI_MAX_COUNTER_TERMS) {
@@ -1162,10 +1162,10 @@ static long_long handle_derived_add(int *position, long_long * from)
    return (retval);
 }
 
-static long_long handle_derived_subtract(int *position, long_long * from)
+static long long handle_derived_subtract(int *position, long long * from)
 {
    int pos, i;
-   long_long retval = from[position[0]];
+   long long retval = from[position[0]];
 
    i = 1;
    while (i < PAPI_MAX_COUNTER_TERMS) {
@@ -1179,18 +1179,18 @@ static long_long handle_derived_subtract(int *position, long_long * from)
    return (retval);
 }
 
-static long_long units_per_second(long_long units, long_long cycles)
+static long long units_per_second(long long units, long long cycles)
 {
-   return((units * (long_long)_papi_hwi_system_info.hw_info.mhz * (long_long)1000000)/cycles);
+   return((units * (long long)_papi_hwi_system_info.hw_info.mhz * (long long)1000000)/cycles);
 }
 
-static long_long handle_derived_ps(int *position, long_long * from)
+static long long handle_derived_ps(int *position, long long * from)
 {
    return (units_per_second(from[position[1]], from[position[0]]));
 }
-static long_long handle_derived_add_ps(int *position, long_long * from)
+static long long handle_derived_add_ps(int *position, long long * from)
 {
-   long_long tmp = handle_derived_add(position + 1, from);
+   long long tmp = handle_derived_add(position + 1, from);
    return (units_per_second(tmp, from[position[0]]));
 }
 
@@ -1201,7 +1201,7 @@ static long_long handle_derived_add_ps(int *position, long_long * from)
       #      as MHZ(million hz) got from  _papi_hwi_system_info.hw_info.mhz*1000000.0
 
   Haihang (you@cs.utk.edu)
-*/ long_long _papi_hwi_postfix_calc(EventInfo_t * evi, long_long * hw_counter)
+*/ long long _papi_hwi_postfix_calc(EventInfo_t * evi, long long * hw_counter)
 {
    char *point = evi->ops, operand[16];
    double stack[PAPI_MAX_COUNTER_TERMS];
@@ -1274,10 +1274,10 @@ static long_long handle_derived_add_ps(int *position, long_long * from)
          point++;
       }
    }
-   return (long_long) stack[0];
+   return (long long) stack[0];
 }
 
-static long_long handle_derived(EventInfo_t * evi, long_long * from)
+static long long handle_derived(EventInfo_t * evi, long long * from)
 {
    switch (evi->derived) {
    case DERIVED_ADD:
@@ -1297,7 +1297,7 @@ static long_long handle_derived(EventInfo_t * evi, long_long * from)
       return (from[evi->pos[0]]);
    default:
       PAPIERROR("BUG! Unknown derived command %d, returning 0",evi->derived);
-      return((long_long)0);
+      return((long long)0);
    }
 }
 

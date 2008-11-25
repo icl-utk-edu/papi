@@ -148,7 +148,7 @@ int _ia64_get_dmem_info(PAPI_dmem_info_t *d)
   char fn[PATH_MAX], tmp[PATH_MAX];
   FILE *f;
   int ret;
-  long_long sz = 0, lck = 0, res = 0, shr = 0, stk = 0, txt = 0, dat = 0, dum = 0, lib = 0, hwm = 0;
+  long long sz = 0, lck = 0, res = 0, shr = 0, stk = 0, txt = 0, dat = 0, dum = 0, lib = 0, hwm = 0;
 
   sprintf(fn,"/proc/%ld/status",(long)getpid());
   f = fopen(fn,"r");

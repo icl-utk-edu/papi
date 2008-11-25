@@ -193,7 +193,7 @@ typedef struct _EventSetGranularityInfo {
 } EventSetGranularityInfo_t;
 
 typedef struct _EventSetOverflowInfo {
-   long_long *deadline;
+   long long *deadline;
    int *threshold;
    int *EventIndex;
    int *EventCode;
@@ -271,11 +271,11 @@ typedef struct _masterevent {
    int is_a_rate;
    int papi_event;
    PapiInfo pi;
-   long_long count;
-   long_long cycles;
-   long_long handler_count;
-   long_long prev_total_c;
-   long_long count_estimate;
+   long long count;
+   long long cycles;
+   long long handler_count;
+   long long prev_total_c;
+   long long count_estimate;
    double rate_estimate;
    struct _threadlist *mythr;
    struct _masterevent *next;
@@ -288,7 +288,7 @@ typedef struct _threadlist {
    unsigned long int tid;
 #endif
    /* Total cycles for this thread */
-   long_long total_c;
+   long long total_c;
    /* Pointer to event in use */
    MasterEvent *cur_event;
    /* List of multiplexing events for this thread */
@@ -311,10 +311,10 @@ typedef struct _MPX_EventSet {
    /* Number of entries in above list */
    int num_events;
    /* Not sure... */
-   long_long start_c, stop_c;
-   long_long start_values[PAPI_MPX_DEF_DEG];
-   long_long stop_values[PAPI_MPX_DEF_DEG];
-   long_long start_hc[PAPI_MPX_DEF_DEG];
+   long long start_c, stop_c;
+   long long start_values[PAPI_MPX_DEF_DEG];
+   long long stop_values[PAPI_MPX_DEF_DEG];
+   long long start_hc[PAPI_MPX_DEF_DEG];
 } MPX_EventSet;
 
 typedef struct EventSetMultiplexInfo {
@@ -340,10 +340,10 @@ typedef struct _EventSetInfo {
                                    hardware to set the counters to the appropriate
                                    conditions */
 
-   long_long *hw_start;         /* Array of length _papi_hwi_system_info.num_cntrs that contains
-                                   unprocessed, out of order, long_long counter registers */
+   long long *hw_start;         /* Array of length _papi_hwi_system_info.num_cntrs that contains
+                                   unprocessed, out of order, long long counter registers */
 
-   long_long *sw_stop;          /* Array of length ESI->NumberOfCounters that contains
+   long long *sw_stop;          /* Array of length ESI->NumberOfCounters that contains
                                    processed, in order, PAPI counter values when used or stopped */
 
    int state;                   /* The state of this entire EventSet; can be

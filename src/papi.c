@@ -42,7 +42,7 @@ extern int _papi_hwi_error_level;
 //extern hwi_describe_t _papi_hwi_err[];
 extern PAPI_debug_handler_t _papi_hwi_debug_handler;
 extern papi_mdi_t _papi_hwi_system_info;
-extern void _papi_hwi_dummy_handler(int,void*,long_long,void*);
+extern void _papi_hwi_dummy_handler(int,void*,long long,void*);
 
 /* papi_data.c */
 
@@ -929,7 +929,7 @@ int PAPI_start(int EventSet)
 
 /* checks for valid EventSet, calls substrate stop() fxn. */
 
-int PAPI_stop(int EventSet, long_long * values)
+int PAPI_stop(int EventSet, long long * values)
 {
    EventSetInfo_t *ESI;
    ThreadInfo_t *thread;
@@ -975,7 +975,7 @@ int PAPI_stop(int EventSet, long_long * values)
    if (retval != PAPI_OK)
       papi_return(retval);
    if (values)
-      memcpy(values, ESI->sw_stop, ESI->NumberOfEvents * sizeof(long_long));
+      memcpy(values, ESI->sw_stop, ESI->NumberOfEvents * sizeof(long long));
 
    /* If kernel profiling is in use, flush and process the kernel buffer */
 
@@ -1060,14 +1060,14 @@ int PAPI_reset(int EventSet)
             ESI->profile.overflowcount = 0;
       }
    } else {
-      memset(ESI->sw_stop, 0x00, ESI->NumberOfEvents * sizeof(long_long));
+      memset(ESI->sw_stop, 0x00, ESI->NumberOfEvents * sizeof(long long));
    }
 
    APIDBG("PAPI_reset returns %d\n", retval);
    papi_return(retval);
 }
 
-int PAPI_read(int EventSet, long_long * values)
+int PAPI_read(int EventSet, long long * values)
 {
    EventSetInfo_t *ESI;
    ThreadInfo_t *thread;
@@ -1093,7 +1093,7 @@ int PAPI_read(int EventSet, long_long * values)
       if (retval != PAPI_OK)
          papi_return(retval);
    } else {
-      memcpy(values, ESI->sw_stop, ESI->NumberOfEvents * sizeof(long_long));
+      memcpy(values, ESI->sw_stop, ESI->NumberOfEvents * sizeof(long long));
    }
 
 #if defined(DEBUG)
@@ -1109,7 +1109,7 @@ int PAPI_read(int EventSet, long_long * values)
    return (retval);
 }
 
-int PAPI_read_fast_ts(int EventSet, long_long * values, long_long *cyc)
+int PAPI_read_fast_ts(int EventSet, long long * values, long long *cyc)
 {
    EventSetInfo_t *ESI;
    ThreadInfo_t *thread;
@@ -1122,12 +1122,12 @@ int PAPI_read_fast_ts(int EventSet, long_long * values, long_long *cyc)
    return(retval);
 }
 
-int PAPI_accum(int EventSet, long_long * values)
+int PAPI_accum(int EventSet, long long * values)
 {
    EventSetInfo_t *ESI;
    ThreadInfo_t *thread;
    int i, cidx, retval;
-   long_long a, b, c;
+   long long a, b, c;
 
    ESI = _papi_hwi_lookup_EventSet(EventSet);
    if (ESI == NULL)
@@ -1160,7 +1160,7 @@ int PAPI_accum(int EventSet, long_long * values)
    papi_return(PAPI_reset(EventSet));
 }
 
-int PAPI_write(int EventSet, long_long * values)
+int PAPI_write(int EventSet, long long * values)
 {
    int cidx, retval = PAPI_OK;
    EventSetInfo_t *ESI;
@@ -1184,7 +1184,7 @@ int PAPI_write(int EventSet, long_long * values)
          return (retval);
    }
 
-   memcpy(ESI->hw_start, values, _papi_hwd[cidx]->cmp_info.num_cntrs * sizeof(long_long));
+   memcpy(ESI->hw_start, values, _papi_hwd[cidx]->cmp_info.num_cntrs * sizeof(long long));
 
    return (retval);
 }
@@ -2426,17 +2426,17 @@ const PAPI_hw_info_t *PAPI_get_hardware_info(void)
 
 /* The next 4 timing functions always use component 0 */
 
-long_long PAPI_get_real_cyc(void)
+long long PAPI_get_real_cyc(void)
 {
    return (_papi_hwd[0]->get_real_cycles());
 }
 
-long_long PAPI_get_real_usec(void)
+long long PAPI_get_real_usec(void)
 {
    return (_papi_hwd[0]->get_real_usec());
 }
 
-long_long PAPI_get_virt_cyc(void)
+long long PAPI_get_virt_cyc(void)
 {
    ThreadInfo_t *master;
    int retval;
@@ -2444,10 +2444,10 @@ long_long PAPI_get_virt_cyc(void)
    if ((retval = _papi_hwi_lookup_or_create_thread(&master)) != PAPI_OK)
      papi_return(retval);
 
-   return ((long_long)_papi_hwd[0]->get_virt_cycles(master->context[0]));
+   return ((long long)_papi_hwd[0]->get_virt_cycles(master->context[0]));
 }
 
-long_long PAPI_get_virt_usec(void)
+long long PAPI_get_virt_usec(void)
 {
    ThreadInfo_t *master;
    int retval;
@@ -2455,7 +2455,7 @@ long_long PAPI_get_virt_usec(void)
    if ((retval = _papi_hwi_lookup_or_create_thread(&master)) != PAPI_OK)
      papi_return(retval);
 
-   return ((long_long)_papi_hwd[0]->get_virt_usec(master->context[0]));
+   return ((long long)_papi_hwd[0]->get_virt_usec(master->context[0]));
 }
 
 int PAPI_restore(void)
@@ -2499,13 +2499,13 @@ int PAPI_is_initialized(void)
                   is executed, the number of indexes in *array is written
                   to this parameter
 */
-int PAPI_get_overflow_event_index(int EventSet, long_long overflow_vector, int *array, int *number)
+int PAPI_get_overflow_event_index(int EventSet, long long overflow_vector, int *array, int *number)
 {
    EventSetInfo_t *ESI;
    int set_bit, j, pos;
    int count = 0, k;
 
-   if (overflow_vector == (long_long)0)
+   if (overflow_vector == (long long)0)
       papi_return(PAPI_EINVAL);
 
    if ((array == NULL) || (number == NULL))
@@ -2525,7 +2525,7 @@ int PAPI_get_overflow_event_index(int EventSet, long_long overflow_vector, int *
    while ((set_bit = ffsll(overflow_vector)))
    {
 	   set_bit -= 1;
-	   overflow_vector ^= (long_long)1 << set_bit;
+	   overflow_vector ^= (long long)1 << set_bit;
 	   for(j=0; j< ESI->NumberOfEvents; j++ )
 	   {
 	      for(k = 0, pos = 0; k < PAPI_MAX_COUNTER_TERMS && pos >= 0; k++) 

@@ -120,7 +120,7 @@ typedef struct ia64_control_state {
    /* Buffer to pass to kernel to control the counters */
    pfmw_param_t evt;
 
-   long_long counters[MAX_COUNTERS];
+   long long counters[MAX_COUNTERS];
    pfarg_reg_t pd[NUM_PMDS];
 
 /* sampling buffer address */

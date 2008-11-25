@@ -45,7 +45,7 @@ extern int _papi_hwi_error_level;
 static int total[2] = {0,0};                  /* total overflows */
 static int use_total=0;
 
-void handler(int EventSet, void *address, long_long overflow_vector, void *context)
+void handler(int EventSet, void *address, long long overflow_vector, void *context)
 {
    if (!TESTS_QUIET) {
       fprintf(stderr, OVER_FMT, EventSet, address, overflow_vector);
@@ -60,8 +60,8 @@ void handler(int EventSet, void *address, long_long overflow_vector, void *conte
 int main(int argc, char **argv)
 {
    int EventSet=PAPI_NULL;
-   long_long values[3] = { 0, 0, 0 };
-   long_long min, max;
+   long long values[3] = { 0, 0, 0 };
+   long long min, max;
    int save_debug_setting;
    int num_flops, retval;
    int PAPI_event=0, mythreshold;
@@ -213,8 +213,8 @@ int main(int argc, char **argv)
       printf("Overflow in Column 2 approximately equals overflows in column 3\n");
    }
 
-   min = (long_long) ((values[0] * (1.0 - OVR_TOLERANCE)) / (long_long) mythreshold);
-   max = (long_long) ((values[0] * (1.0 + OVR_TOLERANCE)) / (long_long) mythreshold);
+   min = (long long) ((values[0] * (1.0 - OVR_TOLERANCE)) / (long long) mythreshold);
+   max = (long long) ((values[0] * (1.0 + OVR_TOLERANCE)) / (long long) mythreshold);
    if (total[0] > max || total[0] < min)
       test_fail(__FILE__, __LINE__, "Hardware Overflows", 1);
 

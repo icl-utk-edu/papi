@@ -29,9 +29,9 @@ static __inline ULONGLONG get_cycles (void)
 
 int test_get_cycles(void) 
 {
-  u_long_long ostamp;
-  u_long_long stamp;
-  long_long sstamp;
+  unsigned long long ostamp;
+  unsigned long long stamp;
+  long long sstamp;
   float correction = 4000.0, mhz;
   LARGE_INTEGER query, query1, query2;
 

@@ -414,8 +414,8 @@ static void headerlines(char *title, int TESTS_QUIET)
 static void resultline(int i, int j, int EventSet)
 {
   float ferror = 0;
-  long_long flpins = 0;
-  long_long papi, theory;
+  long long flpins = 0;
+  long long papi, theory;
   int diff, retval;
   
   retval = PAPI_stop(EventSet, &flpins);

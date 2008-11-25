@@ -3,7 +3,7 @@
 int main(int argc, char **argv)
 {
    int retval;
-   long_long elapsed_us, elapsed_cyc;
+   long long elapsed_us, elapsed_cyc;
    const PAPI_hw_info_t *hw_info;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */

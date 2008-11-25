@@ -56,7 +56,7 @@ typedef struct ACPI_reg_alloc {
 } ACPI_reg_alloc_t;
 
 typedef struct ACPI_control_state {
-  long_long counts[ACPI_MAX_COUNTERS];
+  long long counts[ACPI_MAX_COUNTERS];
 } ACPI_control_state_t;
 
 

@@ -305,13 +305,13 @@ fail:
     return -1;
 }
 
-int ACPI_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **events, int flags)
+int ACPI_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long **events, int flags)
 {
     static int failed = 0;
 
     if (failed ||
-        (((ACPI_control_state_t *)ctrl)->counts[0] = (long_long)get_load_value()) < 0 ||
-        (((ACPI_control_state_t *)ctrl)->counts[1] = (long_long)get_temperature_value()) < 0)
+        (((ACPI_control_state_t *)ctrl)->counts[0] = (long long)get_load_value()) < 0 ||
+        (((ACPI_control_state_t *)ctrl)->counts[1] = (long long)get_temperature_value()) < 0)
         goto fail;
     
     *events=((ACPI_control_state_t *)ctrl)->counts;
@@ -332,7 +332,7 @@ int ACPI_reset(hwd_context_t *ctx, hwd_control_state_t *ctrl)
    return(PAPI_OK);
 }
 
-int ACPI_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long *from)
+int ACPI_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long *from)
 {
    return(PAPI_OK);
 }
@@ -381,22 +381,22 @@ int ACPI_set_domain(hwd_control_state_t *cntrl, int domain)
  * Timing Routines
  * These functions should return the highest resolution timers available.
  */
-/*long_long _papi_hwd_get_real_usec(void)
+/*long long _papi_hwd_get_real_usec(void)
 {
    return(1);
 }
 
-long_long _papi_hwd_get_real_cycles(void)
+long long _papi_hwd_get_real_cycles(void)
 {
    return(1);
 }
 
-long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
+long long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
 {
    return(1);
 }
 
-long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
+long long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
 {
    return(1);
 }

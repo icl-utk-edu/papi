@@ -18,7 +18,7 @@
 
 /* The following PAPI internal functions are defined by the papi_internal.c file. */
  int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI,
-                          long_long * values);
+                          long long * values);
  int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle);
  int _papi_hwi_assign_eventset(EventSetInfo_t *ESI, int cidx);
  int _papi_hwi_add_event(EventSetInfo_t * ESI, int index);
@@ -53,11 +53,11 @@ int _xml_papi_hwi_setup_all_presets(char *arch, hwi_dev_notes_t *notes);
  int mpx_add_event(MPX_EventSet **, int EventCode, int cidx);
  int mpx_remove_event(MPX_EventSet **, int EventCode);
  int MPX_add_events(MPX_EventSet ** mpx_events, int *event_list, int num_events, int cidx);
- int MPX_stop(MPX_EventSet * mpx_events, long_long * values);
+ int MPX_stop(MPX_EventSet * mpx_events, long long * values);
  int MPX_cleanup(MPX_EventSet ** mpx_events);
  void MPX_shutdown(void);
  int MPX_reset(MPX_EventSet * mpx_events);
- int MPX_read(MPX_EventSet * mpx_events, long_long * values);
+ int MPX_read(MPX_EventSet * mpx_events, long long * values);
  int MPX_start(MPX_EventSet * mpx_events);
 
 /* The following PAPI internal functions are defined by the threads.c file. */
@@ -77,8 +77,8 @@ int _xml_papi_hwi_setup_all_presets(char *arch, hwi_dev_notes_t *notes);
  int _papi_hwi_stop_signal(int);
  int _papi_hwi_start_signal(int, int, int);
  int _papi_hwi_initialize(DynamicArray_t **);
- int _papi_hwi_dispatch_overflow_signal(void *context, int *, long_long, int, ThreadInfo_t **master, caddr_t pc, int cidx);
- void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, long_long over, int profile_index, caddr_t pc);
+ int _papi_hwi_dispatch_overflow_signal(void *context, int *, long long, int, ThreadInfo_t **master, caddr_t pc, int cidx);
+ void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, long long over, int profile_index, caddr_t pc);
 
  /* The following PAPI internal functions are defined by the papi_data.c file. */
 
@@ -96,18 +96,18 @@ int _papi_hwi_derived_type(char *derived, int *code);
  int _papi_hwd_add_prog_event(hwd_control_state_t *, unsigned int, void *,
                                     EventInfo_t *);
   int _papi_hwd_allocate_registers(EventSetInfo_t * ESI);
-  int _papi_hwd_read(hwd_context_t *, hwd_control_state_t *, long_long **, int);
+  int _papi_hwd_read(hwd_context_t *, hwd_control_state_t *, long long **, int);
   int _papi_hwd_shutdown(hwd_context_t *);
 /* The following functions are now defined in the substrate header files to be inline_static */
- long_long _papi_hwd_get_real_cycles(void);
- long_long _papi_hwd_get_real_usec(void);
- long_long _papi_hwd_get_virt_cycles(const hwd_context_t *);
- long_long _papi_hwd_get_virt_usec(const hwd_context_t *);
+ long long _papi_hwd_get_real_cycles(void);
+ long long _papi_hwd_get_real_usec(void);
+ long long _papi_hwd_get_virt_cycles(const hwd_context_t *);
+ long long _papi_hwd_get_virt_usec(const hwd_context_t *);
 /* End of above */
   int _papi_hwd_start(hwd_context_t *, hwd_control_state_t *);
   int _papi_hwd_reset(hwd_context_t *, hwd_control_state_t *);
   int _papi_hwd_stop(hwd_context_t *, hwd_control_state_t *);
- int _papi_hwd_write(hwd_context_t *, hwd_control_state_t *, long_long events[]);
+ int _papi_hwd_write(hwd_context_t *, hwd_control_state_t *, long long events[]);
  int _papi_hwd_ctl(hwd_context_t *, int code, _papi_int_option_t * option);
  int _papi_hwd_init_global(void);
   int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold);
@@ -219,7 +219,7 @@ void _papi_hwd_dispatch_timer(int signal, hwd_siginfo_t * info, void *tmp);
 void PAPIERROR(char *format, ...);
 
 #if !defined(HAVE_FFSLL)
- int ffsll(long_long lli);
+ int ffsll(long long lli);
 #endif
 
 #endif                          /* PAPI_PROTOS_H */

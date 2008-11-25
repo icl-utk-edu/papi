@@ -18,7 +18,7 @@ static void print_help(void)
 }
 
 /* computes min, max, and mean for an array; returns std deviation */
-static double do_stats(long_long *array, long_long *min, long_long *max, double *average) {
+static double do_stats(long long *array, long long *min, long long *max, double *average) {
    int i;
    double std, tmp;
 
@@ -39,7 +39,7 @@ static double do_stats(long_long *array, long_long *min, long_long *max, double 
    return(std);
 }
 
-static void do_std_dev(long_long *a, int *s, double std, double ave) {
+static void do_std_dev(long long *a, int *s, double std, double ave) {
    int i,j;
    double dev[10];
 
@@ -55,7 +55,7 @@ static void do_std_dev(long_long *a, int *s, double std, double ave) {
    }
 }
 
-static void do_dist(long_long *a, long_long min, long_long max, int bins, int *d) {
+static void do_dist(long long *a, long long min, long long max, int bins, int *d) {
    int i, j;
    int dmax = 0;
    int range = (int)(max - min + 1); /* avoid edge conditions */
@@ -78,7 +78,7 @@ static void do_dist(long_long *a, long_long min, long_long max, int bins, int *d
    }
 }
 
-static void print_dist(long_long min, long_long max, int bins, int *d) {
+static void print_dist(long long min, long long max, int bins, int *d) {
    int i,j;
    int step = (int)(max - min) / bins;
 
@@ -94,7 +94,7 @@ static void print_dist(long_long min, long_long max, int bins, int *d) {
    }
 }
 
-static void print_stats(int i, long_long min, long_long max, double average, double std) {
+static void print_stats(int i, long long min, long long max, double average, double std) {
    char *test[] = {"PAPI_start/stop","PAPI_read"};
    printf("\nTotal cost for %s(2 counters) over %d iterations\n", test[i], num_iters);
    printf("min cycles   : %lld\nmax cycles   : %lld\nmean cycles  : %lf\nstd deviation: %lf\n ",
@@ -117,9 +117,9 @@ int main(int argc, char **argv)
    int bins = 100;
    int show_dist = 0, show_std_dev = 0;
    int s[10];
-   long_long totcyc, values[2];
-   long_long *array;
-   long_long min, max;
+   long long totcyc, values[2];
+   long long *array;
+   long long min, max;
    double  average, std;
 
 
@@ -183,7 +183,7 @@ int main(int argc, char **argv)
    if ((retval = PAPI_stop(EventSet, NULL)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-   array = (long_long *)malloc(num_iters*sizeof(long_long));
+   array = (long long *)malloc(num_iters*sizeof(long long));
 
    /* Start the start/stop eval */
 

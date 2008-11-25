@@ -46,7 +46,7 @@ and typically 2 escrs are valid with each event.
 Thus, you must track and optimize two different selectors: one for the 18 counters,
 and a second for the 45 escrs. 
 The bits set in counter[0] correspond to the counters available for use with escr[0].
-The value of escr[0] is the bit position in a long_long selector determining which escrs
+The value of escr[0] is the bit position in a long long selector determining which escrs
 have been allocated.
 Example:
 Native event PNE_branch_retired_all can live on 6 counters

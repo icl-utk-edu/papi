@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
   int i, rank;
   int retval, perr, ev_set = PAPI_NULL;
   int encoding;
-  long_long counts[NCOUNTS];
+  long long counts[NCOUNTS];
 
 #include "bglpersonality.h"
 #include "rts.h"

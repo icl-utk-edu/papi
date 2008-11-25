@@ -57,7 +57,7 @@ typedef struct MX_reg_alloc {
 } MX_reg_alloc_t;
 
 typedef struct MX_control_state {
-  long_long counts[MX_MAX_COUNTERS];
+  long long counts[MX_MAX_COUNTERS];
 } MX_control_state_t;
 
 typedef struct MX_context {

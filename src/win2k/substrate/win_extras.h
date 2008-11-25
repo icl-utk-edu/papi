@@ -27,8 +27,8 @@
 #include <mmsystem.h>
 
 // Defines to map Windows types onto Unix types
-#define long_long LONGLONG
-#define u_long_long ULONGLONG
+#define long long LONGLONG
+#define unsigned long long ULONGLONG
 #define caddr_t char *
 
 // defines for process id
@@ -36,11 +36,19 @@
 #define getpid GetCurrentProcessId
 
 // Routine found in Unix strings support
-#define strcasecmp stricmp
+#define strcasecmp _stricmp
+
+// Convert to a linux conformant sleep function
+#define sleep(s) Sleep(s*1000)
+
+// Convert to a POSIX conformant name
+#define putenv _putenv
 
 // Prototypes for routines not found in MS Visual C++
 extern int ffs(int i);
 extern int rand_r (unsigned int *Seed);
+extern int getpagesize(void);
+
 
 
 #endif // _WIN_EXTRAS

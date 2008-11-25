@@ -407,8 +407,8 @@ NET_native_event_entry_t net_native_table[] = {
    {{0, 0}, "", ""}
 };
 
-long_long _papi_hwd_net_register_start[NET_MAX_COUNTERS];
-long_long _papi_hwd_net_register[NET_MAX_COUNTERS];
+long long _papi_hwd_net_register_start[NET_MAX_COUNTERS];
+long long _papi_hwd_net_register[NET_MAX_COUNTERS];
 
 /*
  * Substrate setup and shutdown
@@ -577,7 +577,7 @@ void update_counters(long long *counters, int curstate, int curstart, char *inpu
 
 }
 
-int read_net_counters(long_long *counters)
+int read_net_counters(long long *counters)
 {
    FILE *fp;
    char line[NETLINELEN], lastchar;
@@ -636,13 +636,13 @@ int read_net_counters(long_long *counters)
 
 int NET_start(hwd_context_t *ctx, hwd_control_state_t *ctrl){
    read_net_counters(_papi_hwd_net_register_start);
-   memcpy(_papi_hwd_net_register, _papi_hwd_net_register_start, NET_MAX_COUNTERS*sizeof(long_long));
+   memcpy(_papi_hwd_net_register, _papi_hwd_net_register_start, NET_MAX_COUNTERS*sizeof(long long));
 
    return(PAPI_OK);
 }
 
 
-int NET_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long **events, int flags)
+int NET_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long **events, int flags)
 {
     int i;
 
@@ -675,7 +675,7 @@ int NET_reset(hwd_context_t *ctx, hwd_control_state_t *ctrl)
    return(PAPI_OK);
 }
 
-int NET_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long_long *from)
+int NET_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long *from)
 {
    return(PAPI_OK);
 }
@@ -724,22 +724,22 @@ int NET_set_domain(hwd_control_state_t *cntrl, int domain)
  * Timing Routines
  * These functions should return the highest resolution timers available.
  */
-/*long_long _papi_hwd_get_real_usec(void)
+/*long long _papi_hwd_get_real_usec(void)
 {
    return(1);
 }
 
-long_long _papi_hwd_get_real_cycles(void)
+long long _papi_hwd_get_real_cycles(void)
 {
    return(1);
 }
 
-long_long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
+long long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
 {
    return(1);
 }
 
-long_long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
+long long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
 {
    return(1);
 }

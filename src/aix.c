@@ -335,10 +335,10 @@ static int get_system_info(void)
 /* At init time, the higher level library should always allocate and 
    reserve EventSet zero. */
 
-long_long _papi_hwd_get_real_usec(void)
+long long _papi_hwd_get_real_usec(void)
 {
    timebasestruct_t t;
-   long_long retval;
+   long long retval;
 
    read_real_time(&t, TIMEBASE_SZ);
    time_base_to_time(&t, TIMEBASE_SZ);
@@ -346,26 +346,26 @@ long_long _papi_hwd_get_real_usec(void)
    return (retval);
 }
 
-long_long _papi_hwd_get_real_cycles(void)
+long long _papi_hwd_get_real_cycles(void)
 {
-   return(_papi_hwd_get_real_usec() * (long_long)_papi_hwi_system_info.hw_info.mhz);
+   return(_papi_hwd_get_real_usec() * (long long)_papi_hwi_system_info.hw_info.mhz);
 }
 
-long_long _papi_hwd_get_virt_usec(const hwd_context_t * context)
+long long _papi_hwd_get_virt_usec(const hwd_context_t * context)
 {
-   long_long retval;
+   long long retval;
    struct tms buffer;
 
    times(&buffer);
    SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
-   retval = (long_long)((buffer.tms_utime+buffer.tms_stime)*
+   retval = (long long)((buffer.tms_utime+buffer.tms_stime)*
      (1000000/CLK_TCK));
    return (retval);
 }
 
-long_long _papi_hwd_get_virt_cycles(const hwd_context_t * context)
+long long _papi_hwd_get_virt_cycles(const hwd_context_t * context)
 {
-   return (_papi_hwd_get_virt_usec(context) * (long_long)_papi_hwi_system_info.hw_info.mhz);
+   return (_papi_hwd_get_virt_usec(context) * (long long)_papi_hwi_system_info.hw_info.mhz);
 }
 
 static void _papi_lock_init(void)
@@ -525,7 +525,7 @@ int _papi_hwd_reset(hwd_context_t * ESI, hwd_control_state_t * zero)
 }
 
 
-int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t *spc, long_long **vals, int flags)
+int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t *spc, long long **vals, int flags)
 {
    int retval;
 

@@ -11,7 +11,7 @@ getPapiFunction(char *f)
   library = dlopen("libpapi.so",RTLD_LAZY);
   if(!library) {
 #ifdef PAPIJ_DEBUG
-    fprintf(stderr,"getPapiFunction: dlopen() failed\n");
+    fprintf(stderr,"getPapiFunction: dlopen() failed %s\n",dlerror());
     perror("reason:");
 #endif
     return NULL;
@@ -38,7 +38,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_flops
   jfloat real,proc,mflop;
   jlong ins;
 
-  int ret, (*flops)(float *, float *, long_long *, float *);
+  int ret, (*flops)(float *, float *, long long *, float *);
 
   if( ! (flops = getPapiFunction("PAPI_flops")) )
     return -1;
@@ -102,7 +102,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_stop_1counters
 {
   jsize len;
   jlong *events;
-  int ret, (*stop_counters)(long_long *, int);
+  int ret, (*stop_counters)(long long *, int);
 
   if( ! (stop_counters = getPapiFunction("PAPI_stop_counters")) )
     return -1;
@@ -122,7 +122,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_read_1counters
 {
   jsize len;
   jlong *events;
-  int ret, (*read_counters)(long_long *, int);
+  int ret, (*read_counters)(long long *, int);
 
   if( ! (read_counters = getPapiFunction("PAPI_read_counters")) )
     return -1;
@@ -142,7 +142,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_accum_1counters
 {
   jsize len;
   jlong *events;
-  int ret, (*accum_counters)(long_long *, int);
+  int ret, (*accum_counters)(long long *, int);
 
   if( ! (accum_counters = getPapiFunction("PAPI_accum_counters")) )
     return -1;
@@ -161,7 +161,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_accum
   (JNIEnv *env, jobject obj, jobject set, jlongArray values)
 {
   jlong *v_arr;
-  int ret, (*accum)(int, long_long *), eventSet;
+  int ret, (*accum)(int, long long *), eventSet;
   jfieldID fid;
   jclass class;
 
@@ -186,7 +186,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_accum
 JNIEXPORT jint JNICALL Java_PapiJ_add_1event
   (JNIEnv *env, jobject obj, jobject set, jint event)
 {
-  int ret, eventSet, (*add_event)(int *, int);
+  int ret, eventSet, (*add_event)(int, int);   /* JT */
   jfieldID fid;
   jclass class;
 
@@ -199,7 +199,8 @@ JNIEXPORT jint JNICALL Java_PapiJ_add_1event
 
   eventSet = (*env)->GetIntField(env, set, fid);
 
-  ret = (*add_event)(&eventSet, event);
+  ret = (*add_event)(eventSet, event);     /* JT */
+
 
   (*env)->SetIntField(env, set, fid, eventSet);
 
@@ -209,7 +210,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_add_1event
 JNIEXPORT jint JNICALL Java_PapiJ_add_1events
   (JNIEnv *env, jobject obj, jobject set, jintArray events)
 {
-  int num, ret, eventSet, (*add_events)(int *, int *, int);
+  int num, ret, eventSet, (*add_events)(int, int *, int);   /* JT */
   jint *e_arr;
   jfieldID fid;
   jclass class;
@@ -226,7 +227,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_add_1events
   e_arr = (*env)->GetIntArrayElements(env, events, 0);
   num = (*env)->GetArrayLength(env, events);
 
-  ret = (*add_events)(&eventSet, (int*)e_arr, num);
+  ret = (*add_events)(eventSet, (int*)e_arr, num);    /* JT */
 
   (*env)->SetIntField(env, set, fid, eventSet);
   (*env)->ReleaseIntArrayElements(env, events, e_arr, 0);
@@ -237,7 +238,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_add_1events
 JNIEXPORT jint JNICALL Java_PapiJ_cleanup_1eventset
   (JNIEnv *env, jobject obj, jobject set)
 {
-  int ret, eventSet, (*cleanup_eventset)(int *);
+  int ret, eventSet, (*cleanup_eventset)(int);   /* JT */
   jfieldID fid;
   jclass class;
 
@@ -250,7 +251,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_cleanup_1eventset
 
   eventSet = (*env)->GetIntField(env, set, fid);
 
-  ret = (*cleanup_eventset)(&eventSet);
+  ret = (*cleanup_eventset)(eventSet);     /* JT */
 
   (*env)->SetIntField(env, set, fid, eventSet);
 
@@ -263,21 +264,43 @@ JNIEXPORT jint JNICALL Java_PapiJ_create_1eventset
   int ret, eventSet, (*create_eventset)(int *);
   jfieldID fid;
   jclass class;
-
-  if( ! (create_eventset = getPapiFunction("PAPI_create_eventset")) )
+  if( ! (create_eventset = getPapiFunction("PAPI_create_eventset")) ){
     return -1;
+  }
+  class = (*env)->GetObjectClass(env, set);
 
+  fid = (*env)->GetFieldID(env, class, "set", "I");
+
+  eventSet = PAPI_NULL;
+  /*eventSet = (*env)->GetIntField(env, set, fid);*/
+
+  ret = (*create_eventset)(&eventSet);
+
+  (*env)->SetIntField(env, set, fid, eventSet);
+
+ return ret;
+}
+
+JNIEXPORT jint JNICALL Java_PapiJ_num_1events
+  (JNIEnv *env, jobject obj, jobject set)
+{
+  int ret, eventSet, (*num_events)(int);
+  jfieldID fid;
+  jclass class;
+  if( ! (num_events = getPapiFunction("PAPI_num_events")) ){
+    return -1;
+  }
   class = (*env)->GetObjectClass(env, set);
 
   fid = (*env)->GetFieldID(env, class, "set", "I");
 
   eventSet = (*env)->GetIntField(env, set, fid);
 
-  ret = (*create_eventset)(&eventSet);
+  ret = (*num_events)(eventSet);
 
   (*env)->SetIntField(env, set, fid, eventSet);
 
-  return ret;
+ return ret;
 }
 
 JNIEXPORT jint JNICALL Java_PapiJ_destroy_1eventset
@@ -320,15 +343,15 @@ JNIEXPORT jobject JNICALL Java_PapiJ_get_1executable_1info
     return NULL;
 
   mid = (*env)->GetMethodID(env, class, "<init>", 
-    "(Ljava/lang/String;Ljava/lang/String;JJJJJJLjava/lang/String;)V");
+    "(Ljava/lang/String;Ljava/lang/String;JJJJJJ)V");
 
+  fprintf(stderr, "%s\n", exe->fullname);
   exe_obj = (*env)->NewObject(env, class, mid, 
     (*env)->NewStringUTF(env,exe->fullname), 
-    (*env)->NewStringUTF(env,exe->name),
-    (jlong)(jint)(exe->text_start), (jlong)(jint)(exe->text_end),
-    (jlong)(jint)(exe->data_start), (jlong)(jint)(exe->data_end),
-    (jlong)(jint)(exe->bss_start), (jlong)(jint)(exe->bss_end), 
-    (*env)->NewStringUTF(env,exe->lib_preload_env));
+    (*env)->NewStringUTF(env,exe->address_info.name),
+    (jlong)(jint)(exe->address_info.text_start), (jlong)(jint)(exe->address_info.text_end),
+    (jlong)(jint)(exe->address_info.data_start), (jlong)(jint)(exe->address_info.data_end),
+    (jlong)(jint)(exe->address_info.bss_start), (jlong)(jint)(exe->address_info.bss_end));
 
   return exe_obj;
 }
@@ -337,25 +360,126 @@ JNIEXPORT jobject JNICALL Java_PapiJ_get_1hardware_1info
   (JNIEnv *env, jobject obj)
 {
   PAPI_hw_info_t *hw, *(*get_hardware_info)(void);
-  jmethodID mid;
-  jclass class;
-  jobject hw_obj = NULL;
+  PAPI_mh_level_t *L;
+  jmethodID mid, mid1, mid2, mhlmid, itlbmid, dtlbmid, utlbmid, icmid, dcmid, ucmid;
+  jclass class, class1, mhlclass, itlbclass, dtlbclass, utlbclass, icclass, dcclass, ucclass;
+  jobject hw_obj = NULL, mh_obj = NULL, mhl_obj = NULL, itlb_obj = NULL, dtlb_obj = NULL, utlb_obj = NULL, ic_obj = NULL, dc_obj = NULL, uc_obj = NULL;
+  int levels, i, j, ti, td, tu, ci, cd, cu;
 
   if( ! (get_hardware_info = getPapiFunction("PAPI_get_hardware_info")) )
     return NULL;
 
   hw = (*get_hardware_info)();
+  L = (PAPI_mh_level_t *)&(hw->mem_hierarchy.level[0]);
+  levels = hw->mem_hierarchy.levels;
+
+  if( ! (class1 = (*env)->FindClass(env, "PAPI_mh_info")) ){
+    return NULL;
+  }
+  mid1 = (*env)->GetMethodID(env, class1, "<init>", "(I)V");
+  mid2 = (*env)->GetMethodID(env, class1, "mh_level_value", "(ILPAPI_mh_level_info;)V");
+  mh_obj = (*env)->NewObject(env, class1, mid1, levels);
+
+  for (i=0; i<levels; i++) {
+
+    if( ! (itlbclass = (*env)->FindClass(env, "PAPI_mh_itlb_info")) )
+      return NULL;
+    itlbmid = (*env)->GetMethodID(env, itlbclass, "<init>", "(III)V");
+
+    if( ! (dtlbclass = (*env)->FindClass(env, "PAPI_mh_dtlb_info")) )
+      return NULL;
+    dtlbmid = (*env)->GetMethodID(env, dtlbclass, "<init>", "(III)V");
+   
+    if( ! (utlbclass = (*env)->FindClass(env, "PAPI_mh_utlb_info")) )
+      return NULL;
+    utlbmid = (*env)->GetMethodID(env, utlbclass, "<init>", "(III)V");
+    
+    if( ! (icclass = (*env)->FindClass(env, "PAPI_mh_icache_info")) )
+      return NULL;
+    icmid = (*env)->GetMethodID(env, icclass, "<init>", "(IIIII)V");
+
+    if( ! (dcclass = (*env)->FindClass(env, "PAPI_mh_dcache_info")) )
+      return NULL;
+    dcmid = (*env)->GetMethodID(env, dcclass, "<init>", "(IIIII)V");
+    
+    if( ! (ucclass = (*env)->FindClass(env, "PAPI_mh_ucache_info")) )
+      return NULL;
+    ucmid = (*env)->GetMethodID(env, ucclass, "<init>", "(IIIII)V");
+    
+    ti=td=tu=0;
+    ci=cd=cu=0;
+    for(j=0;j<2;j++){
+      switch (L[i].tlb[j].type) {
+        case PAPI_MH_TYPE_UNIFIED:
+           utlb_obj = (*env)->NewObject(env, utlbclass, utlbmid, L[i].tlb[j].type,
+             L[i].tlb[j].num_entries, L[i].tlb[j].associativity);
+           tu=1;
+           break;
+        case PAPI_MH_TYPE_DATA:
+           dtlb_obj = (*env)->NewObject(env, dtlbclass, dtlbmid, L[i].tlb[j].type,
+             L[i].tlb[j].num_entries, L[i].tlb[j].associativity);
+           td=1;
+           break;
+        case PAPI_MH_TYPE_INST:
+           itlb_obj = (*env)->NewObject(env, itlbclass, itlbmid, L[i].tlb[j].type,
+             L[i].tlb[j].num_entries, L[i].tlb[j].associativity);
+           ti=1;
+           break;
+      }
+      switch (L[i].cache[j].type) {
+        case PAPI_MH_TYPE_UNIFIED:
+           uc_obj = (*env)->NewObject(env, ucclass, ucmid, L[i].cache[j].type,
+             (L[i].cache[j].size)>>10, L[i].cache[j].line_size, L[i].cache[j].num_lines, 
+             L[i].cache[j].associativity);
+           cu=1;
+           break;
+        case PAPI_MH_TYPE_DATA:
+           dc_obj = (*env)->NewObject(env, dcclass, dcmid, L[i].cache[j].type,
+             (L[i].cache[j].size)>>10, L[i].cache[j].line_size, L[i].cache[j].num_lines, 
+             L[i].cache[j].associativity);
+           cd=1; 
+           break;
+        case PAPI_MH_TYPE_INST:
+           ic_obj = (*env)->NewObject(env, icclass, icmid, L[i].cache[j].type,
+             (L[i].cache[j].size)>>10, L[i].cache[j].line_size, L[i].cache[j].num_lines, 
+             L[i].cache[j].associativity);
+           ci=1;
+           break;
+      }
+    }
+    if(!ti)
+      itlb_obj = (*env)->NewObject(env, itlbclass, itlbmid, 0, 0, 0);
+    if(!td)
+      dtlb_obj = (*env)->NewObject(env, dtlbclass, dtlbmid, 0, 0, 0);
+    if(!tu)
+      utlb_obj = (*env)->NewObject(env, utlbclass, utlbmid, 0, 0, 0);
+    if(!ci)
+      ic_obj = (*env)->NewObject(env, icclass, icmid, 0, 0, 0, 0, 0);
+    if(!cd)
+      dc_obj = (*env)->NewObject(env, dcclass, dcmid, 0, 0, 0, 0, 0);
+    if(!cu)
+      uc_obj = (*env)->NewObject(env, ucclass, ucmid, 0, 0, 0, 0, 0);
+
+    if( ! (mhlclass = (*env)->FindClass(env, "PAPI_mh_level_info")) ){
+      return NULL;
+    }
+    mhlmid = (*env)->GetMethodID(env, mhlclass, "<init>", "(LPAPI_mh_itlb_info;LPAPI_mh_dtlb_info;LPAPI_mh_utlb_info;LPAPI_mh_icache_info;LPAPI_mh_dcache_info;LPAPI_mh_ucache_info;)V");
+      mhl_obj = (*env)->NewObject(env, mhlclass, mhlmid, itlb_obj, dtlb_obj, utlb_obj, ic_obj, dc_obj, uc_obj);
+      (*env)->CallVoidMethod(env, mh_obj, mid2, i, mhl_obj);
+
+  }
 
   if( ! (class = (*env)->FindClass(env, "PAPI_hw_info")) )
     return NULL;
 
   mid = (*env)->GetMethodID(env, class, "<init>",
-    "(IIIILjava/lang/String;ILjava/lang/String;FF)V");
+    "(IIIILjava/lang/String;ILjava/lang/String;FFLPAPI_mh_info;)V");
+
 
   hw_obj = (*env)->NewObject(env, class, mid, hw->ncpu, hw->nnodes,
     hw->totalcpus, hw->vendor, (*env)->NewStringUTF(env,hw->vendor_string),
     hw->model, (*env)->NewStringUTF(env,hw->model_string), hw->revision,
-    hw->mhz);
+    hw->mhz, mh_obj);
 
   return hw_obj;
 }
@@ -374,7 +498,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_library_1init
 JNIEXPORT jlong JNICALL Java_PapiJ_get_1real_1cyc
   (JNIEnv *env, jobject obj)
 {
-  long_long (*get_real_cyc)(void);
+  long long (*get_real_cyc)(void);
 
   if( ! (get_real_cyc = getPapiFunction("PAPI_get_real_cyc")) )
     return -1;
@@ -385,7 +509,7 @@ JNIEXPORT jlong JNICALL Java_PapiJ_get_1real_1cyc
 JNIEXPORT jlong JNICALL Java_PapiJ_get_1real_1usec
   (JNIEnv *env, jobject obj)
 {
-  long_long (*get_real_usec)(void);
+  long long (*get_real_usec)(void);
 
   if( ! (get_real_usec = getPapiFunction("PAPI_get_real_usec")) )
     return -1;
@@ -396,7 +520,7 @@ JNIEXPORT jlong JNICALL Java_PapiJ_get_1real_1usec
 JNIEXPORT jlong JNICALL Java_PapiJ_get_1virt_1cyc
   (JNIEnv *env, jobject obj)
 {
-  long_long (*get_virt_cyc)(void);
+  unsigned long long (*get_virt_cyc)(void);    /* JT */
 
   if( ! (get_virt_cyc = getPapiFunction("PAPI_get_virt_cyc")) )
     return -1;
@@ -407,7 +531,7 @@ JNIEXPORT jlong JNICALL Java_PapiJ_get_1virt_1cyc
 JNIEXPORT jlong JNICALL Java_PapiJ_get_1virt_1usec
   (JNIEnv *env, jobject obj)
 {
-  long_long (*get_virt_usec)(void);
+  unsigned long long (*get_virt_usec)(void);     /* JT */
 
   if( ! (get_virt_usec = getPapiFunction("PAPI_get_virt_usec")) )
     return -1;
@@ -494,34 +618,6 @@ JNIEXPORT jint JNICALL Java_PapiJ_profil
   return ret;
 }
 
-JNIEXPORT jobject JNICALL Java_PapiJ_query_1all_1events_1verbose
-  (JNIEnv *env, jobject obj)
-{
-  int num;
-  PAPI_preset_info_t *preset, *(*query_all)(void);
-  jmethodID mid;
-  jclass class;
-  jobject preset_obj = NULL;
-
-  if( ! (query_all = getPapiFunction("PAPI_query_all_events_verbose")) )
-    return NULL;
-
-  preset = (*query_all)();
-
-  if( ! (class = (*env)->FindClass(env, "PAPI_preset_info")) )
-    return NULL;
-
-  mid = (*env)->GetMethodID(env, class, "<init>",
-    "(Ljava/lang/String;ILjava/lang/String;ILjava/lang/String;I)V");
-
-  preset_obj = (*env)->NewObject(env, class, mid, 
-    (*env)->NewStringUTF(env,preset->event_name), preset->event_code,
-    (*env)->NewStringUTF(env,preset->event_descr), preset->avail,
-    (*env)->NewStringUTF(env,preset->event_note), preset->flags);
-
-  return preset_obj;
-}
-
 JNIEXPORT jint JNICALL Java_PapiJ_query_1event
   (JNIEnv *env, jobject obj, jint eventCode)
 {
@@ -533,47 +629,11 @@ JNIEXPORT jint JNICALL Java_PapiJ_query_1event
   return (*query_event)(eventCode);
 }
 
-JNIEXPORT jint JNICALL Java_PapiJ_query_1event_1verbose
-  (JNIEnv *env, jobject obj, jint eventCode, jobject p)
-{
-  int ret, (*query_event_verbose)(int, PAPI_preset_info_t *);
-  PAPI_preset_info_t *pinfo;
-  jclass class;
-  jfieldID fid;
-
-  if( ! (query_event_verbose = getPapiFunction("PAPI_query_event_verbose")) )
-    return -1;
-
-  ret = (*query_event_verbose)(eventCode, pinfo);
-
-  class = (*env)->GetObjectClass(env, p);
-
-  fid = (*env)->GetFieldID(env, class, "event_name", "Ljava/lang/String;");
-  (*env)->SetObjectField(env, p, fid, (*env)->NewStringUTF(env, pinfo->event_name));
-
-  fid = (*env)->GetFieldID(env, class, "event_code", "I");
-  (*env)->SetIntField(env, p, fid, pinfo->event_code);
-
-  fid = (*env)->GetFieldID(env, class, "event_descr", "Ljava/lang/String;");
-  (*env)->SetObjectField(env, p, fid, (*env)->NewStringUTF(env, pinfo->event_descr));
-
-  fid = (*env)->GetFieldID(env, class, "avail", "I");
-  (*env)->SetIntField(env, p, fid, pinfo->avail);
-
-  fid = (*env)->GetFieldID(env, class, "event_note", "Ljava/lang/String;");
-  (*env)->SetObjectField(env, p, fid, (*env)->NewStringUTF(env, pinfo->event_note));
-
-  fid = (*env)->GetFieldID(env, class, "flags", "I");
-  (*env)->SetIntField(env, p, fid, pinfo->flags);
-
-  return ret;
-}
-
 JNIEXPORT jint JNICALL Java_PapiJ_read
   (JNIEnv *env, jobject obj, jobject set, jlongArray values)
 {
   jlong *v_arr;
-  int ret, eventSet, (*papi_read)(int, long_long *);
+  int ret, eventSet, (*papi_read)(int, long long *);
   jfieldID fid;
   jclass class;
 
@@ -705,7 +765,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_stop
   (JNIEnv *env, jobject obj, jobject set, jlongArray values)
 {
   jlong *v_arr;
-  int ret, eventSet, (*papi_stop)(int, long_long *);
+  int ret, eventSet, (*papi_stop)(int, long long *);
   jfieldID fid;
   jclass class;
 
@@ -744,7 +804,7 @@ JNIEXPORT jint JNICALL Java_PapiJ_write
  (JNIEnv *env, jobject obj, jobject set, jlongArray values)
 {
   jlong *v_arr;
-  int ret, eventSet, (*papi_write)(int, long_long *);
+  int ret, eventSet, (*papi_write)(int, long long *);
   jfieldID fid;
   jclass class;
 

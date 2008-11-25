@@ -447,7 +447,7 @@ int mpx_remove_event(MPX_EventSet ** mpx_events, int EventCode)
 }
 
 #ifdef MPX_DEBUG_TIMER
-static long_long lastcall;
+static long long lastcall;
 #endif
 
 static void mpx_handler(int signal)
@@ -459,12 +459,12 @@ static void mpx_handler(int signal)
    int lastthread;
 #endif
 #ifdef MPX_DEBUG_OVERHEAD
-   long_long usec;
+   long long usec;
    int didwork = 0;
    usec = PAPI_get_real_usec();
 #endif
 #ifdef MPX_DEBUG_TIMER
-   long_long thiscall;
+   long long thiscall;
 #endif
 
    signal = signal;             /* unused */
@@ -552,9 +552,9 @@ static void mpx_handler(int signal)
        * disable the timer interrupt before they update the list.
        */
       if (me != NULL && me->cur_event != NULL) {
-         long_long counts[2];
+         long long counts[2];
          MasterEvent *cur_event = me->cur_event;
-         long_long cycles=0, total_cycles=0;
+         long long cycles=0, total_cycles=0;
 
          retval = PAPI_stop(cur_event->papi_event, counts);
          MPXDBG("retval=%d, cur_event=%p, I'm tid=%lx\n",
@@ -578,7 +578,7 @@ static void mpx_handler(int signal)
                if (cycles >= MPX_MINCYC)        /* Only update current rate on a decent slice */
                   cur_event->rate_estimate = (double) counts[0] / (double) cycles;
                cur_event->count_estimate +=
-                   (long_long) (total_cycles * cur_event->rate_estimate);
+                   (long long) (total_cycles * cur_event->rate_estimate);
             } else {
                /* Make sure we ran long enough to get a useful measurement (otherwise
                 * potentially inaccurate rate measurements get averaged in with
@@ -688,8 +688,8 @@ int MPX_start(MPX_EventSet * mpx_events)
 {
    int retval = PAPI_OK;
    int i;
-   long_long values[2];
-   long_long cycles_this_slice, current_thread_mpx_c = 0;
+   long long values[2];
+   long long cycles_this_slice, current_thread_mpx_c = 0;
    Threadlist *t;
 
    t = mpx_events->mythr;
@@ -736,15 +736,15 @@ int MPX_start(MPX_EventSet * mpx_events)
 #ifndef MPX_NONDECR
             if (mev != t->cur_event) {  /* This event is not running this slice */
                mpx_events->start_values[i] +=
-                   (long_long) (mev->rate_estimate *
+                   (long long) (mev->rate_estimate *
                                 (cycles_this_slice + t->total_c - mev->prev_total_c));
             } else {            /* The event is running, use current value + estimate */
                if (cycles_this_slice >= MPX_MINCYC)
-                  mpx_events->start_values[i] += values[0] + (long_long)
+                  mpx_events->start_values[i] += values[0] + (long long)
                       ((values[0] / (double) cycles_this_slice) *
                        (t->total_c - mev->prev_total_c));
                else             /* Use previous rate if the event has run too short time */
-                  mpx_events->start_values[i] += values[0] + (long_long)
+                  mpx_events->start_values[i] += values[0] + (long long)
                       (mev->rate_estimate * (t->total_c - mev->prev_total_c));
             }
 #endif
@@ -814,12 +814,12 @@ int MPX_start(MPX_EventSet * mpx_events)
    return retval;
 }
 
-int MPX_read(MPX_EventSet * mpx_events, long_long * values)
+int MPX_read(MPX_EventSet * mpx_events, long long * values)
 {
    int i;
    int retval;
-   long_long last_value[2];
-   long_long cycles_this_slice = 0;
+   long long last_value[2];
+   long long cycles_this_slice = 0;
    MasterEvent *cur_event;
    Threadlist *thread_data;
 
@@ -857,7 +857,7 @@ int MPX_read(MPX_EventSet * mpx_events, long_long * values)
          if (!(mev->is_a_rate)) {
             if (mev != thread_data->cur_event) {
                mpx_events->stop_values[i] +=
-                   (long_long) (mev->rate_estimate *
+                   (long long) (mev->rate_estimate *
                                 (cycles_this_slice + thread_data->total_c -
                                  mev->prev_total_c));
                MPXDBG(
@@ -867,7 +867,7 @@ int MPX_read(MPX_EventSet * mpx_events, long_long * values)
                        cycles_this_slice + thread_data->total_c - mev->prev_total_c);
             } else {
                mpx_events->stop_values[i] += last_value[0] +
-                   (long_long) (mev->rate_estimate *
+                   (long long) (mev->rate_estimate *
                                 (thread_data->total_c - mev->prev_total_c));
                MPXDBG(
                        "%s:%d:: -Active- %d, stop values=%lld (est. %lld, rate %g, cycles %lld)\n",
@@ -887,8 +887,8 @@ int MPX_read(MPX_EventSet * mpx_events, long_long * values)
    /* Store the values in user array. */
    for (i = 0; i < mpx_events->num_events; i++) {
       MasterEvent *mev = mpx_events->mev[i];
-      long_long elapsed_slices = 0;
-      long_long elapsed_values = mpx_events->stop_values[i]
+      long long elapsed_slices = 0;
+      long long elapsed_values = mpx_events->stop_values[i]
           - mpx_events->start_values[i];
 
       /* For rates, cycles contains the number of measurements,
@@ -915,7 +915,7 @@ int MPX_read(MPX_EventSet * mpx_events, long_long * values)
 int MPX_reset(MPX_EventSet * mpx_events)
 {
    int i, retval;
-   long_long values[PAPI_MPX_DEF_DEG];
+   long long values[PAPI_MPX_DEF_DEG];
 
    /* Get the current values from MPX_read */
    retval = MPX_read(mpx_events, values);
@@ -948,13 +948,13 @@ int MPX_reset(MPX_EventSet * mpx_events)
    return PAPI_OK;
 }
 
-int MPX_stop(MPX_EventSet * mpx_events, long_long * values)
+int MPX_stop(MPX_EventSet * mpx_events, long long * values)
 {
    int i, cur_mpx_event;
    int retval = PAPI_OK;
-   long_long dummy_value[2];
-   long_long dummy_mpx_values[PAPI_MPX_DEF_DEG];
-   /* long_long cycles_this_slice, total_cycles; */
+   long long dummy_value[2];
+   long long dummy_mpx_values[PAPI_MPX_DEF_DEG];
+   /* long long cycles_this_slice, total_cycles; */
    MasterEvent *cur_event, *head;
    Threadlist *thr;
 

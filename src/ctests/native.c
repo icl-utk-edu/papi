@@ -107,7 +107,7 @@ int main(int argc, char **argv)
 {
    int i, retval, native;
    const PAPI_hw_info_t *hwinfo;
-   long_long values[8];
+   long long values[8];
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 

@@ -57,7 +57,7 @@ typedef struct NET_reg_alloc {
 } NET_reg_alloc_t;
 
 typedef struct NET_control_state {
-  long_long counts[NET_MAX_COUNTERS];
+  long long counts[NET_MAX_COUNTERS];
 } NET_control_state_t;
 
 typedef struct NET_context {

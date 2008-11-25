@@ -72,11 +72,11 @@ int main(int argc, char **argv)
    int num_events1;
    int num_events2;
    int num_events3;
-   long_long **values;
+   long long **values;
    int i, j;
-   long_long min[3];
-   long_long max[3];
-   long_long sum[3];
+   long long min[3];
+   long long max[3];
+   long long sum[3];
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
@@ -173,9 +173,9 @@ int main(int argc, char **argv)
 /* 
       for (i=0;i<10;i++) {
          printf("Test type   : %12s%13s%13s\n", "1", "2", "3");
-         printf(TAB3, EVT1_STR, values[(i*3)+0][0], (long_long)0, (long_long)0);
-         printf(TAB3, EVT2_STR, (long_long)0, values[(i*3)+1][0], (long_long)0);
-         printf(TAB3, EVT3_STR, (long_long)0, (long_long)0, values[(i*3)+2][0]);
+         printf(TAB3, EVT1_STR, values[(i*3)+0][0], (long long)0, (long long)0);
+         printf(TAB3, EVT2_STR, (long long)0, values[(i*3)+1][0], (long long)0);
+         printf(TAB3, EVT3_STR, (long long)0, (long long)0, values[(i*3)+2][0]);
          printf
             ("-------------------------------------------------------------------------\n");
       }
@@ -195,17 +195,17 @@ int main(int argc, char **argv)
    }
 
    {
-      long_long tmin, tmax;
+      long long tmin, tmax;
 
 #if defined(sun) && defined(sparc)
-      tmax = (long_long) (sum[1] - sum[2]);
+      tmax = (long long) (sum[1] - sum[2]);
 #else
-      tmax = (long_long) (sum[1] + sum[2]);
+      tmax = (long long) (sum[1] + sum[2]);
 #endif
 
       printf ("percent error: %f\n", (float)(abs((int)(tmax - sum[0]))*100)/sum[0]);
-      tmin = (long_long) (tmax * 0.8);
-      tmax = (long_long) (tmax * 1.2);
+      tmin = (long long) (tmax * 0.8);
+      tmax = (long long) (tmax * 1.2);
       if (sum[0] > tmax || sum[0] < tmin)
          test_fail(__FILE__, __LINE__, CACHE_LEVEL, 1);
    }

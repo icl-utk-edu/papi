@@ -61,7 +61,7 @@ void init_papi(unsigned int *out_events, int *len)
 int case1()
 {
    int retval, i, EventSet = PAPI_NULL;
-   long_long values[2];
+   long long values[2];
 
    PAPI_events_len = 2;
    init_papi(PAPI_events, &PAPI_events_len);
@@ -107,7 +107,7 @@ int case1()
 int case2()
 {
    int retval, i, EventSet = PAPI_NULL;
-   long_long values[2];
+   long long values[2];
 
    PAPI_events_len = 2;
    init_papi(PAPI_events, &PAPI_events_len);
@@ -165,7 +165,7 @@ int case2()
 int case3()
 {
    int retval, i, EventSet = PAPI_NULL;
-   long_long values[2];
+   long long values[2];
 
    PAPI_events_len = 2;
    init_papi(PAPI_events, &PAPI_events_len);
@@ -219,7 +219,7 @@ int case3()
 int case4()
 {
    int retval, i, EventSet = PAPI_NULL;
-   long_long values[4];
+   long long values[4];
    char out[PAPI_MAX_STR_LEN];
 
    PAPI_events_len = 2;

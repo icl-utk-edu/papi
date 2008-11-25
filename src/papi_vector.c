@@ -19,13 +19,13 @@ int vec_int_one_dummy();
 int vec_int_dummy ();
 void vec_void_dummy();
 void * vec_void_star_dummy();
-long_long vec_long_long_dummy();
+long long vec_long_long_dummy();
 char * vec_char_star_dummy();
 long vec_long_dummy();
-long_long vec_dummy_get_virt_cycles (const hwd_context_t *zero);
-long_long vec_dummy_get_virt_usec (const hwd_context_t *zero);
-long_long vec_dummy_get_real_usec (void);
-long_long vec_dummy_get_real_cycles (void);
+long long vec_dummy_get_virt_cycles (const hwd_context_t *zero);
+long long vec_dummy_get_virt_usec (const hwd_context_t *zero);
+long long vec_dummy_get_real_usec (void);
+long long vec_dummy_get_real_cycles (void);
 
 extern papi_vector_t MY_VECTOR;
 #ifdef HAVE_ACPI
@@ -59,7 +59,7 @@ void _vectors_error()
   exit(PAPI_ESBSTR);
 }
 
-long_long vec_dummy_get_real_usec (void)
+long long vec_dummy_get_real_usec (void)
 {
 #ifdef _WIN32
 	LARGE_INTEGER PerformanceCount, Frequency;
@@ -72,13 +72,13 @@ long_long vec_dummy_get_real_usec (void)
 #endif
 } 
         
-long_long vec_dummy_get_real_cycles (void)
+long long vec_dummy_get_real_cycles (void)
 {
   float usec, cyc;
 
   usec = (float)vec_dummy_get_real_usec();
   cyc = usec * _papi_hwi_system_info.hw_info.mhz;
-  return((long_long)cyc);
+  return((long long)cyc);
 }
 
 #ifdef _BGL
@@ -87,9 +87,9 @@ long_long vec_dummy_get_real_cycles (void)
    #include <sys/resource.h>
 #endif
 
-long_long vec_dummy_get_virt_usec (const hwd_context_t *zero)
+long long vec_dummy_get_virt_usec (const hwd_context_t *zero)
 {
-  long_long retval;
+  long long retval;
 #ifdef _BGL
       struct rusage ruse;
       getrusage(RUSAGE_SELF, &ruse);
@@ -99,12 +99,12 @@ long_long vec_dummy_get_virt_usec (const hwd_context_t *zero)
     HANDLE p;
     BOOL ret;
     FILETIME Creation, Exit, Kernel, User;
-    long_long virt;
+    long long virt;
 
     p = GetCurrentProcess();
     ret = GetProcessTimes(p, &Creation, &Exit, &Kernel, &User);
     if (ret) {
-	virt = (((long_long)(Kernel.dwHighDateTime + User.dwHighDateTime))<<32)
+	virt = (((long long)(Kernel.dwHighDateTime + User.dwHighDateTime))<<32)
 	     + Kernel.dwLowDateTime + User.dwLowDateTime;
 	retval = virt/1000;
     }
@@ -123,13 +123,13 @@ long_long vec_dummy_get_virt_usec (const hwd_context_t *zero)
   return(retval);
 }
 
-long_long vec_dummy_get_virt_cycles (const hwd_context_t *zero)
+long long vec_dummy_get_virt_cycles (const hwd_context_t *zero)
 {
   float usec, cyc;
 
   usec = (float)vec_dummy_get_virt_usec(zero);
   cyc = usec * _papi_hwi_system_info.hw_info.mhz;
-  return((long_long)cyc);
+  return((long long)cyc);
 }
 
 int vec_int_ok_dummy (){
@@ -152,7 +152,7 @@ void vec_void_dummy(){
   return;
 }
 
-long_long vec_long_long_dummy(){
+long long vec_long_long_dummy(){
   return PAPI_ESBSTR;
 }
 
@@ -176,11 +176,11 @@ int _papi_hwi_innoculate_vector(papi_vector_t *v){
  if(!v->get_overflow_address) v->get_overflow_address=	(void *(*) (int, char *, int)) vec_void_star_dummy;
  if(!v->start) v->start=				(int (*) (hwd_context_t *, hwd_control_state_t *)) vec_int_dummy;
  if(!v->stop) v->stop=					(int (*) (hwd_context_t *, hwd_control_state_t *)) vec_int_dummy;
- if(!v->read) v->read=					(int (*)(hwd_context_t *, hwd_control_state_t *, long_long **, int)) vec_int_dummy;
+ if(!v->read) v->read=					(int (*)(hwd_context_t *, hwd_control_state_t *, long long **, int)) vec_int_dummy;
  if(!v->reset) v->reset =				(int (*) (hwd_context_t *, hwd_control_state_t *)) vec_int_dummy;
- if(!v->write) v->write=				(int (*) (hwd_context_t *, hwd_control_state_t *, long_long[])) vec_int_dummy;
- if(!v->get_real_cycles) v->get_real_cycles=		(long_long (*) ()) vec_dummy_get_real_cycles;
- if(!v->get_real_usec) v->get_real_usec=		(long_long (*) ()) vec_dummy_get_real_usec;
+ if(!v->write) v->write=				(int (*) (hwd_context_t *, hwd_control_state_t *, long long[])) vec_int_dummy;
+ if(!v->get_real_cycles) v->get_real_cycles=		(long long (*) ()) vec_dummy_get_real_cycles;
+ if(!v->get_real_usec) v->get_real_usec=		(long long (*) ()) vec_dummy_get_real_usec;
  if(!v->get_virt_cycles) v->get_virt_cycles=		vec_dummy_get_virt_cycles;
  if(!v->get_virt_usec) v->get_virt_usec=		vec_dummy_get_virt_usec;
  if(!v->stop_profiling) v->stop_profiling=		(int (*) (ThreadInfo_t *, EventSetInfo_t *)) vec_int_dummy;
@@ -243,7 +243,7 @@ char * find_dummy(void * func, char **buf){
     ptr = (void *)vec_void_star_dummy;
     *buf = papi_strdup("vec_void_star_dummy");
   }
-  else if ( vec_long_long_dummy == (long_long (*)())func ){
+  else if ( vec_long_long_dummy == (long long (*)())func ){
     ptr = (void *)vec_long_long_dummy;
     *buf = papi_strdup("vec_long_long_dummy");
   }
@@ -255,19 +255,19 @@ char * find_dummy(void * func, char **buf){
     ptr = (void *)vec_long_dummy;  
     *buf = papi_strdup("vec_long_dummy");
   }
-  else if ( vec_dummy_get_real_usec == (long_long(*)(void))func ) {
+  else if ( vec_dummy_get_real_usec == (long long(*)(void))func ) {
     ptr = (void *)vec_dummy_get_real_usec;
     *buf = papi_strdup("vec_dummy_get_real_usec");
   }
-  else if ( vec_dummy_get_real_cycles == (long_long(*)(void))func ) {
+  else if ( vec_dummy_get_real_cycles == (long long(*)(void))func ) {
     ptr = (void *)vec_dummy_get_real_cycles;
     *buf = papi_strdup("vec_dummy_get_real_cycles");
   }
-  else if ( vec_dummy_get_virt_usec == (long_long(*)(const hwd_context_t *))func ) {
+  else if ( vec_dummy_get_virt_usec == (long long(*)(const hwd_context_t *))func ) {
     ptr = (void *)vec_dummy_get_virt_usec;
     *buf = papi_strdup("vec_dummy_get_virt_usec");
   }
-  else if ( vec_dummy_get_virt_cycles == (long_long(*)(const hwd_context_t *))func ) {
+  else if ( vec_dummy_get_virt_cycles == (long long(*)(const hwd_context_t *))func ) {
     ptr = (void *)vec_dummy_get_virt_cycles;
     *buf = papi_strdup("vec_dummy_get_virt_cycles");
   }
