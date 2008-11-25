@@ -715,7 +715,7 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
          }
       } else if (EventCode & PAPI_NATIVE_MASK) {
          /* Check if native event exists */
-         if (_papi_hwi_query_native_event(EventCode & PAPI_COMPONENT_AND_MASK) != PAPI_OK)
+         if (_papi_hwi_query_native_event(EventCode) != PAPI_OK)
             return (PAPI_ENOEVNT);
 
          /* check if the native events have been used as overflow
@@ -906,7 +906,7 @@ int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode)
             return (retval);
       } else if (EventCode & PAPI_NATIVE_MASK) {
          /* Check if native event exists */
-         if (_papi_hwi_query_native_event(EventCode & PAPI_COMPONENT_AND_MASK) != PAPI_OK)
+         if (_papi_hwi_query_native_event(EventCode) != PAPI_OK)
             return (PAPI_ENOEVNT);
 
          /* Remove the native event. */
