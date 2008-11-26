@@ -655,8 +655,9 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
          /* Try to add the native. */
 
          remap = add_native_events(ESI, &EventCode, 1, &ESI->EventInfoArray[thisindex]);
-         if (remap < 0)
+         if (remap < 0) {
             return (PAPI_ECNFLCT);
+         }
          else {
             /* Fill in the EventCode (machine independent) information */
 
