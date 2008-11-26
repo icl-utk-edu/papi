@@ -2789,10 +2789,10 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 #endif
       /* The following checks the PFMLIB version 
 	  against the perfmon2 kernel version... */
-   strncpy(_papi_hwi_system_info.sub_info.support_version,buf,sizeof(_papi_hwi_system_info.sub_info.support_version));
    retval = get_string_from_file("/sys/kernel/perfmon/version",_papi_hwi_system_info.sub_info.kernel_version,sizeof(_papi_hwi_system_info.sub_info.kernel_version));
    if (retval != PAPI_OK)
       return(retval);
+#ifdef PFM_VERSION
    sprintf(buf, "%d.%d", PFM_VERSION_MAJOR(PFM_VERSION), PFM_VERSION_MINOR(PFM_VERSION));
    SUBDBG("Perfmon2 library versions...kernel: %s library: %s\n", _papi_hwi_system_info.sub_info.kernel_version, buf);
    if (strcmp (_papi_hwi_system_info.sub_info.kernel_version, buf) != 0) {
@@ -2804,6 +2804,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 		   return (PAPI_ESBSTR);
 	   }
    }
+#endif
 
    /* The following checks the version of the PFM library 
 	  against the version PAPI linked to... */
@@ -2819,6 +2820,8 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
        PAPIERROR("pfm_get_version(%p): %s", version, pfm_strerror(retval));
        return (PAPI_ESBSTR);
    }
+
+   sprintf(_papi_hwi_system_info.sub_info.support_version, "%d.%d", PFM_VERSION_MAJOR(version), PFM_VERSION_MINOR(version));
 
    if (PFM_VERSION_MAJOR(version) != PFM_VERSION_MAJOR(PFMLIB_VERSION)) {
       PAPIERROR("Version mismatch of libpfm: compiled %x vs. installed %x\n",
