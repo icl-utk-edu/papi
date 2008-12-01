@@ -459,8 +459,8 @@ static long long lastcall;
    PAPI_DOM_ALL, and can count it on other domains on counters
    1 and 2 along with a very limited number of other native
    events */
-int PNE_PM_RUN_CYC;
-#define SCALE_EVENT PNE_PM_RUN_CYC
+int _PNE_PM_RUN_CYC;
+#define SCALE_EVENT _PNE_PM_RUN_CYC
 #else
 #define SCALE_EVENT PAPI_TOT_CYC
 #endif
@@ -1175,7 +1175,7 @@ int mpx_init(int interval_ns)
 #endif
 
 #ifdef _POWER6
-   retval = PAPI_event_name_to_code("PM_RUN_CYC", &PNE_PM_RUN_CYC);
+   retval = PAPI_event_name_to_code("PM_RUN_CYC", &_PNE_PM_RUN_CYC);
    if (retval != PAPI_OK)
       return (retval);
 #endif

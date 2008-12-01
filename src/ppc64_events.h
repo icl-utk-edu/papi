@@ -10,7 +10,9 @@
 *          
 */
 
-/*#include ARCH_EVTS*/
+#ifdef ARCH_EVTS
+#include ARCH_EVTS
+#else
 #define GROUP_INTS 8
 #ifdef _POWER4
 #define PAPI_MAX_NATIVE_EVENTS 256
@@ -22,6 +24,7 @@
 #define PAPI_MAX_NATIVE_EVENTS 1024
 #endif
 #define MAX_GROUPS (GROUP_INTS * 32)
+#endif
 
 typedef struct PPC64_register {
    /* indicate which counters this event can live on */
@@ -70,7 +73,7 @@ typedef struct PPC64_native_map {
 typedef struct {
    int preset; /* Preset code */
    int derived; /* Derived code */
-   char *(findme[MAX_COUNTER_TERMS]); /* Strings to look for, more than 1 means derived */
+   char *(findme[MAX_COUNTERS]); /* Strings to look for, more than 1 means derived */
    char *operation; /* PostFix operations between terms */
    char *note; /* In case a note is included with a preset */
 } pfm_preset_search_entry_t;
