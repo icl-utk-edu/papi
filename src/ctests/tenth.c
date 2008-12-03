@@ -31,7 +31,7 @@
 #define MASK2		  MASK_L2_TCA
 #define MASK3		  MASK_L2_TCH
 #else
-#if defined(_POWER4) || defined(_POWER5) || defined(_POWER5p) || defined(_PPC970) || defined(_POWER6) || defined(__powerpc__)
+#if defined(__powerpc__)
 #define CACHE_LEVEL "PAPI_L1_DCA"
 #define EVT1		  PAPI_L1_DCA
 #define EVT2		  PAPI_L1_DCW
