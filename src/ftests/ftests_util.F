@@ -214,6 +214,8 @@ C       Is there a better way to write this?
         if (idx .NE. 1) then
 C         Eliminate the first + character
           str = str(2:LEN(str))
+C         Blank-fill the rest of the string so len_trim works correctly
+          str(idx:) = ' '
         else
           print *, 'error in stringify_domain'
           call pause()
