@@ -33,7 +33,7 @@
      . 'PAPI_library_init', retval)
       end if
 
-      call PAPIf_query_event(PAPI_FP_INS, retval)
+      call PAPIf_query_event(PAPI_TOT_INS, retval)
       if (retval.NE.PAPI_OK) then
         call ftest_skip(__FILE__, __LINE__, 'PAPI_FP_INS', PAPI_ENOEVNT)
       end if
@@ -45,7 +45,7 @@
      *retval)
       end if
 
-      call PAPIf_add_event( es1, PAPI_FP_INS, retval )
+      call PAPIf_add_event( es1, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_add_event', retval)
@@ -64,7 +64,7 @@
      *retval)
       end if
 
-      call PAPIf_add_event( es2, PAPI_FP_INS, retval )
+      call PAPIf_add_event( es2, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_add_event', retval)
@@ -83,7 +83,7 @@
      *retval)
       end if
 
-      call PAPIf_add_event( es3, PAPI_FP_INS, retval )
+      call PAPIf_add_event( es3, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_add_event', retval)
@@ -151,7 +151,7 @@
      . 'PAPIf_stop', retval)
       end if
 
-      call PAPIf_remove_event( es1, PAPI_FP_INS, retval )
+      call PAPIf_remove_event( es1, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_remove_event', retval)
@@ -163,7 +163,7 @@
      . 'PAPIf_remove_event', retval)
       end if
 
-      call PAPIf_remove_event( es2, PAPI_FP_INS, retval )
+      call PAPIf_remove_event( es2, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_remove_event', retval)
@@ -175,7 +175,7 @@
      . 'PAPIf_remove_event', retval)
       end if
 
-      call PAPIf_remove_event( es3, PAPI_FP_INS, retval )
+      call PAPIf_remove_event( es3, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_remove_event', retval)
@@ -227,7 +227,7 @@
 
       print *, 'Test type   :       PAPI_DOM_ALL    PAPI_DOM_KERNEL',
      *'   PAPI_DOM_USER'
-      write (*,200) 'PAPI_FP_INS', values(1), values(3), values(5)
+      write (*,200) 'PAPI_TOT_INS', values(1), values(3), values(5)
       write (*,200) 'PAPI_TOT_CYC', values(2), values(4), values(6)
  200  format(A15, ': ', I15, I15, I15)
 
