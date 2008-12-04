@@ -94,6 +94,8 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
    int num_events = 3;
    char * header =  "address\t\t\tcyc\tins\tfp_ins\n";
 #else
+   const unsigned int power6_events[] = { };
+   int power6_num_events = 0;
    const unsigned int std_events[] = {PAPI_TOT_CYC, PAPI_TOT_INS, PAPI_FP_OPS, PAPI_L2_TCM };
    int num_events = 4;
    char * header =  "address\t\t\tcyc\tins\tfp_ops\tl2_tcm\n";
