@@ -1384,10 +1384,11 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
        	    thread = internal.multiplex.ESI->master;
             retval = _papi_hwd_ctl(&thread->context, PAPI_MULTIPLEX, &internal);
 	}
-	    if (retval == PAPI_OK)
-	   	papi_return(_papi_hwi_convert_eventset_to_multiplex(&internal.multiplex));
 	 /* Kernel or PAPI may have changed this value so send it back out to the user */
 	 ptr->multiplex.ns = internal.multiplex.ns;
+	    if (retval == PAPI_OK)
+	   	papi_return(_papi_hwi_convert_eventset_to_multiplex(&internal.multiplex));
+		return(retval);
       }
    case PAPI_DEBUG: 
       {
@@ -1686,6 +1687,7 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
       if (ESI == NULL)
 	papi_return(PAPI_ENOEVST);
       ptr->granularity.granularity = ESI->granularity.granularity;
+	  break;
    case PAPI_SHLIBINFO:
       {
          int retval;
