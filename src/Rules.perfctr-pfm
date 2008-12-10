@@ -6,7 +6,7 @@
 #       maynardj@us.ibm.com
 
 DESCR   = "Linux with PerfCtr $(VERSION) patch and library, and perfmon2 libpfm library"
-TARGETS = serial attach multiplex_and_pthreads shared
+TARGETS = serial forkexec overflow profileattach multiplex_and_pthreads shared
 LIBRARY = libpapi.a
 SHLIB   = libpapi.so
 SUBSTR  = perfctr-$(CPU)
@@ -88,7 +88,7 @@ CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(BITFLAGS)
 
 ifeq (CATAMOUNT, $(COMPILER))
 LIBS    	= static
-TARGETS 	= serial multiplex
+TARGETS 	= serial forkexec overflow profilemultiplex
 MEMSUBSTR	= linux
 FFLAGS		= $(BITFLAGS)
 endif

@@ -5,7 +5,7 @@ MSUBSTR  = dadd-alpha
 MEMSUBSTR= alpha
 DESCR   = "Compaq Tru64 Unix with Alpha 21264EV6"
 LIBS	= static shared
-TARGETS	= serial multiplex
+TARGETS	= serial forkexec overflow profilemultiplex
 POST_BUILD =
 SPECIAL_REMOVE =
 

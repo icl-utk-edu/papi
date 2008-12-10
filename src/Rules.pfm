@@ -3,7 +3,7 @@
 DESCR   = "Linux with PFM $(VERSION) kernel support and library"
 LIBRARY = libpapi.a
 SHLIB   = libpapi.so
-TARGETS = serial multiplex_and_pthreads shared ear range
+TARGETS = serial forkexec overflow profilemultiplex_and_pthreads shared ear range
 SUBSTR  = linux-ia64
 MEMSUBSTR= linux-ia64
 

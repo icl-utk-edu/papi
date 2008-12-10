@@ -39,8 +39,8 @@
 /* private headers */
 #include "pfmlib_priv.h"		/* library private */
 #include "pfmlib_sicortex_priv.h"	/* architecture private */
-#include "sicortex/ice9/ice9a_all_spec_pme.h"
-#include "sicortex/ice9/ice9b_all_spec_pme.h"
+#include "sicortex/ice9a/ice9a_all_spec_pme.h"
+#include "sicortex/ice9b/ice9b_all_spec_pme.h"
 #include "sicortex/ice9/ice9_scb_spec_sw.h"
 
 /* let's define some handy shortcuts! */
@@ -85,7 +85,7 @@ static int compute_ice9_counters(int type)
   /* Compute the max */
 
   if (type == PFMLIB_MIPS_ICE9A_PMU) {
-    gen_mips64_pe = gen_mips64_ice9b_pe;
+    gen_mips64_pe = gen_mips64_ice9a_pe;
 //    core_counters = 2;
     bound = (sizeof(gen_mips64_ice9a_pe)/sizeof(pme_gen_mips64_entry_t));
   } else if (type == PFMLIB_MIPS_ICE9B_PMU) {
@@ -372,7 +372,7 @@ pfm_sicortex_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_sicortex_input_
 
 	if (PFMLIB_DEBUG()) {
 	  for (j=0; j < cnt; j++) {
-	    DPRINT(("ev[%d]=%s, counters=0x%x\n", j, sicortex_pe[e[j].event].pme_name,sicortex_pe[e[j].event].pme_counters));
+	    DPRINT("ev[%d]=%s, counters=0x%x\n", j, sicortex_pe[e[j].event].pme_name,sicortex_pe[e[j].event].pme_counters);
 	  }
 	}
 
@@ -389,19 +389,19 @@ pfm_sicortex_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_sicortex_input_
 		  {
 		    /* These counters can be used for this event */
 		    avail = ~used & sicortex_pe[e[j].event].pme_counters;
-		    DPRINT(("Rank %d: Counters available 0x%x\n",i,avail));
+		    DPRINT("Rank %d: Counters available 0x%x\n",i,avail);
 		    if (avail == 0x0)
 		      return PFMLIB_ERR_NOASSIGN;
 
 		    /* Pick one, mark as used*/
 		    cntr = ffs(avail) - 1;
-		    DPRINT(("Rank %d: Chose counter %d\n",i,cntr));
+		    DPRINT("Rank %d: Chose counter %d\n",i,cntr);
 	    
 		    /* Update registers */
 		    stuff_sicortex_regs(e,inp->pfp_dfl_plm,pc,pd,cntr,j,mod_in);
 		    
 		    used |= (1 << cntr);
-		    DPRINT(("Rank %d: Used counters 0x%x\n",i, used));
+		    DPRINT("Rank %d: Used counters 0x%x\n",i, used);
 		  }
 	      }
 	  }
@@ -432,15 +432,15 @@ pfm_sicortex_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_sicortex_input_
 		  }
 		/* These counters can be used for this event */
 		avail = sicortex_support.num_cnt - core_counters - used;
-		DPRINT(("SCB(%d): Counters available %d\n",j,avail));
+		DPRINT("SCB(%d): Counters available %d\n",j,avail);
 	    
 		cntr = (sicortex_support.num_cnt - core_counters) - avail;
-		DPRINT(("SCB(%d): Chose SCB counter %d\n",j,cntr));
+		DPRINT("SCB(%d): Chose SCB counter %d\n",j,cntr);
 
 		/* Update registers */
 		stuff_sicortex_regs(e,inp->pfp_dfl_plm,pc,pd,cntr,j,mod_in);
 		used++;
-		DPRINT(("SCB(%d): Used counters %d\n",j,used));
+		DPRINT("SCB(%d): Used counters %d\n",j,used);
 	      }
 	  }
 	if (used)
@@ -705,7 +705,7 @@ pfm_sicortex_has_umask_default(unsigned int ev)
 
 pfm_pmu_support_t sicortex_support = {
 	.pmu_name		= NULL,
-	.pmu_type		= 0,
+	.pmu_type		= PFMLIB_UNKNOWN_PMU,
 	.pme_count		= 0,
 	.pmc_count		= 0,
 	.pmd_count		= 0,

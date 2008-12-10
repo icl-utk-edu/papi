@@ -4,7 +4,7 @@ SUBSTR      = freebsd
 MEMSUBSTR 	= any-null
 DESCR       = "FreeBSD -over libpmc- substrate"
 LIBS        = static shared
-TARGETS     = serial multiplex_and_pthreads
+TARGETS     = serial forkexec overflow profilemultiplex_and_pthreads
 POST_BUILD  =
 SPECIAL_REMOVE =
 

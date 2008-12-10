@@ -13,17 +13,16 @@ MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
 SHARED  = shlib
-SERIAL  = fork fork2 exec exec2 forkexec forkexec2 forkexec3 forkexec4 fork_overflow exec_overflow child_overflow system_child_overflow system_overflow burn\
-	hwinfo code2name reset subinfo realtime virttime first exeinfo \
-	zero zero_fork branches dmem_info all_native_events all_events derived high-level2 describe memory  \
+SERIAL  = hwinfo code2name reset subinfo realtime virttime first exeinfo \
+	zero branches dmem_info all_native_events all_events derived high-level2 describe memory  \
 	zero_flip low-level high-level eventname case1 case2 \
-	calibrate flops second johnmay2 \
-	overflow overflow_force_software overflow_single_event \
-	overflow_twoevents timer_overflow overflow2 \
-	matrix-hl tenth encode encode2 \
-	profile profile_force_software sprofile profile_twoevents byte_profile\
-	ipc overflow_index overflow_one_and_read \
-        overflow_allcounters
+	calibrate flops second johnmay2 matrix-hl tenth encode encode2 ipc
+FORKEXEC  = fork fork2 exec exec2 forkexec forkexec2 forkexec3 forkexec4 fork_overflow exec_overflow \
+	child_overflow system_child_overflow system_overflow burn zero_fork \
+OVERFLOW  = fork_overflow exec_overflow child_overflow system_child_overflow system_overflow burn \
+	overflow overflow_force_software overflow_single_event overflow_twoevents timer_overflow overflow2 \
+	overflow_index overflow_one_and_read overflow_allcounters
+PROFILE  = profile profile_force_software sprofile profile_twoevents byte_profile
 
 ATTACH	= multiattach zero_attach
 P4_TEST	= p4_lst_ins
@@ -31,7 +30,7 @@ ACPI	= acpi
 EAR	= earprofile
 RANGE	= data_range
 BROKEN	= inherit pernode
-TESTS	= $(PTHREADS) $(SERIAL) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM)\
+TESTS	= $(PTHREADS) $(SERIAL) $(FORKEXEC) $(OVERFLOW) $(PROFILE) $(MPI) $(MPX) $(MPXPTHR) $(OMP) $(SMP) $(SHMEM)\
 	$(SHARED) $(EAR) $(RANGE) $(P4_TEST) $(ACPI) $(ATTACH)
 UTILOBJS= do_loops.o test_utils.o dummy.o
 
@@ -64,6 +63,12 @@ pthreads: $(PTHREADS)
 shmem: $(SHMEM)
 
 serial: $(SERIAL)
+
+forkexec: $(FORKEXEC)
+
+overflow: $(OVERFLOW)
+
+profile: $(PROFILE)
 
 sdsc2: sdsc2.c $(UTILOBJS) $(PAPILIB) 
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) sdsc.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lm -o $@
