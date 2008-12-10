@@ -88,7 +88,7 @@ CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(BITFLAGS)
 
 ifeq (CATAMOUNT, $(COMPILER))
 LIBS    	= static
-TARGETS 	= serial forkexec overflow profilemultiplex
+TARGETS 	= serial forkexec overflow profile multiplex
 MEMSUBSTR	= linux
 FFLAGS		= $(BITFLAGS)
 endif
