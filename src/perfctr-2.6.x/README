@@ -12,7 +12,7 @@ for using the Performance-Monitoring Counters (PMCs) found in
 many modern processors. Supported processors are:
 - All Intel x86 family 5, 6, and 15 processors, i.e., Pentium,
   Pentium MMX, Pentium Pro, Pentium II, Pentium III, Pentium M,
-  Pentium 4, Core, Core 2, and Atom, including Celeron and Xeon versions.
+  Pentium 4, Core, Core 2, Atom, and Core i7, including Celeron and Xeon versions.
 - The AMD K7, K8, and Family 10h processor families.
 - Cyrix 6x86MX, MII, and III.
 - VIA C3 (Cyrix III).

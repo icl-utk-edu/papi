@@ -3,6 +3,33 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.37, 2008-11-30
+- x86: Preliminary Intel Core i7 support, limited to handling it
+  as a Core2-like processor with four PMCs. The AnyThread evntsel
+  flag and off-core/uncore monitoring are not yet supported.
+- x86: Recognise Intel Family 6 Model 29 (Xeon 7400) as Core 2.
+- x86: Make core2_clear_counters() also clear the FREEZE_PERFMON_ON_PMI
+  bit in DEBUGCTLMSR. vtune leaves this bit set, which breaks perfctr.
+- x86: Make perfctr_clear_counters() initialise MSR_CORE_PERF_GLOBAL_CTRL
+  during initialisation. This fixes compatibility issues with drivers
+  that may leave this register cleared == all counters disabled. vtune
+  is reported to do this. Add ->clear_counters() op to perfctr_pmu_msrs
+  to handle this cleanly. Convert Via C3 to use this mechanism instead
+  of being a special case.
+
+Version 2.6.36, 2008-10-19
+- x86: Limit the value written to a fixed-function counter's MSR
+  to 40 bits. Extraneous high bits cause GP faults on Model 23
+  Core2s, while earlier processors would just ignore them.
+- Kernel 2.6.27-rc1 dropped the retry parameter to on_each_cpu()
+  and smp_call_function(). Adjust accordingly. Add compatibility
+  wrappers for older kernels.
+- Kernel 2.6.27-rc1 removed find_task_by_pid(). Migrate to new
+  find_task_by_vpid(). Add compatibility wrapper for older kernels.
+- Starting with kernel 2.6.27-rc1 one should use alloc_intr_gate()
+  not set_intr_gate() on x86 when binding a specific vector, as this
+  also marks the vector as allocated. Adjust <asm-x86/perfctr.h>.
+
 Version 2.6.35, 2008-06-30
 - x86: Preliminary Intel Atom support:
   * add Atom CPU type, it differs from all previous models

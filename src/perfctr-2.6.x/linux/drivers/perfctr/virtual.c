@@ -159,26 +159,26 @@ static inline void vperfctr_task_unlock(struct task_struct *p)
 
 #endif	/* !CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK */
 
-/* How to lock around find_task_by_pid(). The tasklist_lock always
+/* How to lock around find_task_by_vpid(). The tasklist_lock always
    works, but it's no longer exported starting with kernel 2.6.18.
    For kernels 2.6.18 and newer use rcu_read_{lock,unlock}(). */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,18)
-static inline void vperfctr_lock_find_task_by_pid(void)
+static inline void vperfctr_lock_find_task_by_vpid(void)
 {
 	rcu_read_lock();
 }
 
-static inline void vperfctr_unlock_find_task_by_pid(void)
+static inline void vperfctr_unlock_find_task_by_vpid(void)
 {
 	rcu_read_unlock();
 }
 #else	/* < 2.6.18 */
-static inline void vperfctr_lock_find_task_by_pid(void)
+static inline void vperfctr_lock_find_task_by_vpid(void)
 {
 	read_lock(&tasklist_lock);
 }
 
-static inline void vperfctr_unlock_find_task_by_pid(void)
+static inline void vperfctr_unlock_find_task_by_vpid(void)
 {
 	read_unlock(&tasklist_lock);
 }
@@ -1092,12 +1092,12 @@ int vperfctr_attach(int tid, int creat)
 		}
 	}
 	tsk = current;
-	if (tid != 0 && tid != tsk->pid) { /* remote? */
-		vperfctr_lock_find_task_by_pid();
-		tsk = find_task_by_pid(tid);
+	if (tid != 0 && tid != task_pid_vnr(tsk)) { /* remote? */
+		vperfctr_lock_find_task_by_vpid();
+		tsk = find_task_by_vpid(tid);
 		if (tsk)
 			get_task_struct(tsk);
-		vperfctr_unlock_find_task_by_pid();
+		vperfctr_unlock_find_task_by_vpid();
 		err = -ESRCH;
 		if (!tsk)
 			goto err_perfctr;

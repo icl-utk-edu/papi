@@ -58,6 +58,10 @@ void setup_control(const struct perfctr_info *info,
 	/* event 0xC0 (RETIRED_INSTRUCTIONS), any CPL, Enable */
 	evntsel0 = 0xC0 | (3 << 16) | (1 << 22);
 	break;
+      case PERFCTR_X86_INTEL_COREI7:
+	/* FP_COMP_OPS_EXE.ANY, USR, Enable, INT */
+	evntsel0 = 0x10 | (0xFF << 8) | (1 << 16) | (1 << 22) | (1 << 20);
+	break;
 #if !defined(__x86_64__)
       case PERFCTR_X86_AMD_K7:
 	/* K7 apparently can't count FLOPS. */

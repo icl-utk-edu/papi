@@ -86,7 +86,7 @@ static void sample_this_cpu(void *unused)
 
 static void sample_all_cpus(void)
 {
-	on_each_cpu(sample_this_cpu, NULL, 1, 1);
+	on_each_cpu(sample_this_cpu, NULL, 1);
 }
 
 static void do_sample_one_cpu(void *info)
@@ -99,7 +99,7 @@ static void do_sample_one_cpu(void *info)
 
 static void sample_one_cpu(unsigned int cpu)
 {
-	on_each_cpu(do_sample_one_cpu, (void*)(unsigned long)cpu, 1, 1);
+	on_each_cpu(do_sample_one_cpu, (void*)(unsigned long)cpu, 1);
 }
 
 static void sampling_timer_function(unsigned long interval)
@@ -141,7 +141,7 @@ static void start_this_cpu(void *unused)
 
 static void start_all_cpus(void)
 {
-	on_each_cpu(start_this_cpu, NULL, 1, 1);
+	on_each_cpu(start_this_cpu, NULL, 1);
 }
 
 static int gperfctr_control(struct perfctr_struct_buf *argp)

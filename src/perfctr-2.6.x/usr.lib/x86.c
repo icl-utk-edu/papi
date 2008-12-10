@@ -80,6 +80,8 @@ unsigned int perfctr_info_nrctrs(const struct perfctr_info *info)
 	return 5;
       case PERFCTR_X86_INTEL_ATOM:
 	return atom_nrctrs();
+      case PERFCTR_X86_INTEL_COREI7:
+	return 7;
       case PERFCTR_X86_GENERIC:
       default:
 	return 0;
@@ -133,6 +135,8 @@ const char *perfctr_info_cpu_name(const struct perfctr_info *info)
 	return "AMD Family 10h";
       case PERFCTR_X86_INTEL_ATOM:
 	return "Intel Atom";
+      case PERFCTR_X86_INTEL_COREI7:
+	return "Intel Core i7";
       default:
         return "?";
     }

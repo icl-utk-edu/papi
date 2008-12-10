@@ -6,6 +6,33 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.37, 2008-11-30
+- Preliminary support for Intel Core i7 (Nehalem) processors
+  (family 6 model 26). They are currently treated like Core 2s
+  but with four general-purpose counters, and with different
+  events and a new symbolic CPU type. The AnyThread evntsel flag
+  and "uncore" event monitoring are not yet supported.
+- Updated x86 driver to recognise Xeon 7400 (family 6 model 29)
+  as a member of the Core 2 family.
+- Extended x86 driver's CPU initialisation on Intel Core 2 and
+  newer CPUs to work around vtune leaving the performance monitor
+  unit in a "very" disabled state. Thanks to Mark Krentel for
+  reporting the problem and for facilitating tests that allowed
+  the cause of the problem to be identified.
+- Updated kernel support: 2.6.28-rc6, 2.6.18-120.el5 (RHEL5.3 beta),
+  2.6.18-92.1.18.el5 (RHEL5), 2.6.9-78.0.8.EL (RHEL4).
+
+Version 2.6.36, 2008-10-19
+- Fixed a driver error which caused Intel Family 6 Model 23
+  processors to crash kernels with general protection faults
+  if the fixed-function counters ran in interrupt-on-overflow
+  mode. Older Intel Family 6 Model 15 processors tolerate the
+  error which is why it was not detected before. Thanks to
+  Mark Krentel for reporting the problem and for facilitating
+  tests that allowed the cause of the problem to be identified.
+- Updated kernel support: 2.6.27, 2.6.26, 2.6.18-92.1.13.el5
+  (RHEL5), 2.6.9-78.0.5.EL (RHEL4).
+
 Version 2.6.35, 2008-06-30
 - Preliminary support for Intel Atom processors added.
   These processors are very poorly documented, but they are

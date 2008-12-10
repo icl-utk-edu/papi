@@ -71,4 +71,41 @@ static inline int ptrace_check_attach(struct task_struct *task, int kill) { retu
 #define filp_vfsmnt(filp)	((filp)->f_vfsmnt)
 #endif
 
+/* 2.6.24 introduced find_task_by_vpid() and task_pid_vnr().
+   2.6.26 deprecated find_task_by_pid() and 2.6.27-rc1 removed it.
+   We'll use 2.6.26 as the switch-over point. */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,26)
+static inline struct task_struct *perfctr_find_task_by_vpid(pid_t nr)
+{
+	return find_task_by_pid(nr);
+}
+#undef find_task_by_vpid
+#define find_task_by_vpid(nr)	perfctr_find_task_by_vpid((nr))
+static inline pid_t perfctr_task_pid_vnr(const struct task_struct *tsk)
+{
+	return tsk->pid;
+}
+#undef task_pid_vnr
+#define task_pid_vnr(tsk)	perfctr_task_pid_vnr((tsk))
+#endif
+
+/* 2.6.27-rc1 dropped the retry parameter from smp_call_function()
+   and on_each_cpu() -- we always called it with retry == 1 */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,27)
+static inline int perfctr_smp_call_function(
+	void (*func)(void *info), void *info, int wait)
+{
+	return smp_call_function(func, info, 1, wait);
+}
+#undef smp_call_function
+#define smp_call_function(f,i,w)	perfctr_smp_call_function((f),(i),(w))
+static inline int perfctr_on_each_cpu(
+	void (*func)(void *info), void *info, int wait)
+{
+	return on_each_cpu(func, info, 1, wait);
+}
+#undef on_each_cpu
+#define on_each_cpu(f,i,w)	perfctr_on_each_cpu((f),(i),(w))
+#endif
+
 #endif

@@ -1073,7 +1073,7 @@ static void perfctr_cpu_clear_one(void *ignore)
 
 static void perfctr_cpu_reset(void)
 {
-	on_each_cpu(perfctr_cpu_clear_one, NULL, 1, 1);
+	on_each_cpu(perfctr_cpu_clear_one, NULL, 1);
 	perfctr_cpu_set_ihandler(NULL);
 }
 

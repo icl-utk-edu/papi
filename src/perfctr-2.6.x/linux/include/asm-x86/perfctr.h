@@ -25,10 +25,11 @@
 #define PERFCTR_X86_AMD_K8C	15	/* Revision C */
 #define PERFCTR_X86_INTEL_P4M3	16	/* model 3 and above */
 #define PERFCTR_X86_INTEL_CORE	17	/* family 6 model 14 */
-#define PERFCTR_X86_INTEL_CORE2	18	/* family 6, models 15, 22, and 23 */
+#define PERFCTR_X86_INTEL_CORE2	18	/* family 6, models 15, 22, 23, 29 */
 #define PERFCTR_X86_AMD_FAM10H	19	/* family 10h */
 #define PERFCTR_X86_AMD_FAM10	PERFCTR_X86_AMD_FAM10H /* XXX: compat crap, delete soon */
 #define PERFCTR_X86_INTEL_ATOM	20	/* family 6 model 28 */
+#define PERFCTR_X86_INTEL_COREI7 21	/* family 6 model 26 */
 
 struct perfctr_sum_ctrs {
 	unsigned long long tsc;
@@ -207,8 +208,14 @@ static inline int perfctr_cpu_has_pending_interrupt(const struct perfctr_cpu_sta
 
 #if defined(CONFIG_KPERFCTR) && defined(CONFIG_X86_LOCAL_APIC)
 asmlinkage void perfctr_interrupt(struct pt_regs*);
+#include <linux/version.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,27)	/* 2.6.27-rc1 */
+#define perfctr_vector_init()	\
+	alloc_intr_gate(LOCAL_PERFCTR_VECTOR, perfctr_interrupt)
+#else
 #define perfctr_vector_init()	\
 	set_intr_gate(LOCAL_PERFCTR_VECTOR, perfctr_interrupt)
+#endif
 #else
 #define perfctr_vector_init()	do{}while(0)
 #endif
