@@ -292,7 +292,7 @@ static int check_multiplex_timeout(int ctx_fd, unsigned long *timeout_ns)
   if ((ret = pfm_create_evtsets(ctx_fd, &set[1], 1)) != PFMLIB_SUCCESS)
     {
       DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(&set[1],1));
-      PAPIERROR("pfm_create_evtsets(%d,%p,%d): %s", ctx_fd, &set[1], 1, pfm_strerror(ret));
+      PAPIERROR("pfm_create_evtsets(%d,%p,%d): %s", ctx_fd, &set[1], 1, strerror(ret));
       return(PAPI_ESYS);
     }      
 
@@ -338,7 +338,7 @@ detect_timeout_and_unavail_pmu_regs(pfmlib_regmask_t *r_pmcs, pfmlib_regmask_t *
 	ret = pfm_getinfo_evtsets(myfd, &setf, 1);
 	if (ret != PFMLIB_SUCCESS) 
 	  {
-	    PAPIERROR("pfm_getinfo_evtsets(): %s", pfm_strerror(ret));
+	    PAPIERROR("pfm_getinfo_evtsets(): %s", strerror(ret));
 	    return(PAPI_ESYS);
 	  }
       DEBUGCALL(DEBUG_SUBSTRATE,dump_setinfo(&setf,1));
@@ -3167,7 +3167,7 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctl)
   SUBDBG("PFM_WRITE_PMDS(%d,%p,%d)\n",ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count);
   if ((ret = pfm_write_pmds(ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count)))
     {
-      PAPIERROR("pfm_write_pmds(%d,%p,%d): %s",ctl->ctx_fd,ctl->pd,ctl->in.pfp_event_count, pfm_strerror(ret));
+      PAPIERROR("pfm_write_pmds(%d,%p,%d): %s",ctl->ctx_fd,ctl->pd,ctl->in.pfp_event_count, strerror(ret));
       return(PAPI_ESYS);
     }
 
@@ -3191,7 +3191,7 @@ int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctl, long long *fro
   SUBDBG("PFM_WRITE_PMDS(%d,%p,%d)\n",ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count);
   if ((ret = pfm_write_pmds(ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count)))
     {
-      PAPIERROR("pfm_write_pmds(%d,%p,%d): %s",ctl->ctx_fd,ctl->pd,ctl->in.pfp_event_count, pfm_strerror(ret));
+      PAPIERROR("pfm_write_pmds(%d,%p,%d): %s",ctl->ctx_fd,ctl->pd,ctl->in.pfp_event_count, strerror(ret));
       return(PAPI_ESYS);
     }
 
@@ -3208,7 +3208,7 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctl,
   if ((ret = pfm_read_pmds(ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count)))
     {
       DEBUGCALL(DEBUG_SUBSTRATE,dump_pmd(ctl));
-      PAPIERROR("pfm_read_pmds(%d,%p,%d): %s",ctl->ctx_fd,ctl->pd,ctl->in.pfp_event_count, pfm_strerror(ret));
+      PAPIERROR("pfm_read_pmds(%d,%p,%d): %s",ctl->ctx_fd,ctl->pd,ctl->in.pfp_event_count, strerror(ret));
       *events = NULL;
       return((errno == EBADF) ? PAPI_ECLOST : PAPI_ESYS);
     }
@@ -3237,7 +3237,7 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctl,
   if ((ret = pfm_getinfo_evtsets(ctl->ctx_fd, ctl->setinfo, ctl->num_sets)))
     {
       DEBUGCALL(DEBUG_SUBSTRATE,dump_setinfo(ctl->setinfo,ctl->num_sets));
-      PAPIERROR("pfm_getinfo_evtsets(%d,%p,%d): %s",ctl->ctx_fd, ctl->setinfo, ctl->num_sets, pfm_strerror(ret));
+      PAPIERROR("pfm_getinfo_evtsets(%d,%p,%d): %s",ctl->ctx_fd, ctl->setinfo, ctl->num_sets, strerror(ret));
       *events = NULL;
       return(PAPI_ESYS);
     }
@@ -3300,7 +3300,7 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctl)
       if ((ret = pfm_create_evtsets(ctl->ctx_fd,ctl->set,ctl->num_sets)) != PFMLIB_SUCCESS)
 	{
 	  DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(ctl->set,ctl->num_sets));
-	  PAPIERROR("pfm_create_evtsets(%d,%p,%d): %s", ctl->ctx_fd,ctl->set,ctl->num_sets, pfm_strerror(ret));
+	  PAPIERROR("pfm_create_evtsets(%d,%p,%d): %s", ctl->ctx_fd,ctl->set,ctl->num_sets, strerror(ret));
 	  return(PAPI_ESYS);
 	}
       DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(ctl->set,ctl->num_sets));
@@ -3319,7 +3319,7 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctl)
   if ((ret = pfm_write_pmcs(ctl->ctx_fd, ctl->pc, ctl->out.pfp_pmc_count)))
     {
       DEBUGCALL(DEBUG_SUBSTRATE,dump_pmc(ctl));
-      PAPIERROR("pfm_write_pmcs(%d,%p,%d): %s",ctl->ctx_fd,ctl->pc,ctl->out.pfp_pmc_count, pfm_strerror(ret));
+      PAPIERROR("pfm_write_pmcs(%d,%p,%d): %s",ctl->ctx_fd,ctl->pc,ctl->out.pfp_pmc_count, strerror(ret));
       return(PAPI_ESYS);
     }
   DEBUGCALL(DEBUG_SUBSTRATE,dump_pmc(ctl));
@@ -3339,7 +3339,7 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctl)
   if ((ret = pfm_write_pmds(ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count)))
     {
       DEBUGCALL(DEBUG_SUBSTRATE,dump_pmd(ctl));
-      PAPIERROR("pfm_write_pmds(%d,%p,%d): %s",ctl->ctx_fd,ctl->pd,ctl->in.pfp_event_count, pfm_strerror(ret));
+      PAPIERROR("pfm_write_pmds(%d,%p,%d): %s",ctl->ctx_fd,ctl->pd,ctl->in.pfp_event_count, strerror(ret));
       return(PAPI_ESYS);
     }
   DEBUGCALL(DEBUG_SUBSTRATE,dump_pmd(ctl));
@@ -3347,14 +3347,14 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctl)
   SUBDBG("PFM_LOAD_CONTEXT(%d,%p(%u))\n",ctl->ctx_fd,ctl->load,ctl->load->load_pid);
   if ((ret = pfm_load_context(ctl->ctx_fd,ctl->load)))
     {
-      PAPIERROR("pfm_load_context(%d,%p(%u)): %s", ctl->ctx_fd,ctl->load,ctl->load->load_pid, pfm_strerror(ret));
+      PAPIERROR("pfm_load_context(%d,%p(%u)): %s", ctl->ctx_fd,ctl->load,ctl->load->load_pid, strerror(ret));
       return PAPI_ESYS;
     }
 
   SUBDBG("PFM_START(%d,%p)\n",ctl->ctx_fd, NULL);
   if ((ret = pfm_start(ctl->ctx_fd, NULL)))
     {
-      PAPIERROR("pfm_start(%d): %s", ctl->ctx_fd, pfm_strerror(ret));
+      PAPIERROR("pfm_start(%d): %s", ctl->ctx_fd, strerror(ret));
       return(PAPI_ESYS);
     }
    return PAPI_OK;
@@ -3373,14 +3373,14 @@ int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctl)
       if ((ret == PFMLIB_ERR_NOTSUPP) && (ctl->load->load_pid != mygettid()))
 	return(PAPI_OK);
 
-      PAPIERROR("pfm_stop(%d): %s", ctl->ctx_fd, pfm_strerror(ret));
+      PAPIERROR("pfm_stop(%d): %s", ctl->ctx_fd, strerror(ret));
       return(PAPI_ESYS);
     }
 
   SUBDBG("PFM_UNLOAD_CONTEXT(%d) (tid %u)\n",ctl->ctx_fd,ctl->load->load_pid);
   if ((ret = pfm_unload_context(ctl->ctx_fd)))
     {
-      PAPIERROR("pfm_unload_context(%d): %s", ctl->ctx_fd, pfm_strerror(ret));
+      PAPIERROR("pfm_unload_context(%d): %s", ctl->ctx_fd, strerror(ret));
       return PAPI_ESYS;
     }
 
@@ -3392,7 +3392,7 @@ int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctl)
       if ((ret = pfm_delete_evtsets(ctl->ctx_fd,&ctl->set[1],ctl->num_sets-1)) != PFMLIB_SUCCESS)
 	{
 	  DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(&ctl->set[1],ctl->num_sets-1));
-	  PAPIERROR("pfm_delete_evtsets(%d,%p,%d): %s", ctl->ctx_fd,&ctl->set[1],ctl->num_sets-1, pfm_strerror(ret));
+	  PAPIERROR("pfm_delete_evtsets(%d,%p,%d): %s", ctl->ctx_fd,&ctl->set[1],ctl->num_sets-1, strerror(ret));
 	  return(PAPI_ESYS);
 	}
       DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(&ctl->set[1],ctl->num_sets-1));
@@ -3401,7 +3401,7 @@ int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctl)
       if ((ret = pfm_create_evtsets(ctl->ctx_fd,&set,1)) != PFMLIB_SUCCESS)
 	{
 	  DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(&set,1));
-	  PAPIERROR("pfm_create_evtsets(%d,%p,%d): %s", ctl->ctx_fd,&set,ctl->num_sets, pfm_strerror(ret));
+	  PAPIERROR("pfm_create_evtsets(%d,%p,%d): %s", ctl->ctx_fd,&set,ctl->num_sets, strerror(ret));
 	  return(PAPI_ESYS);
 	}
       DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(&set,1));
@@ -3987,7 +3987,7 @@ void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
         }
 
         if ((ret = pfm_restart(fd))) {
-            PAPIERROR("pfm_restart(%d): %s", fd, pfm_strerror(ret));
+            PAPIERROR("pfm_restart(%d): %s", fd, strerror(ret));
         }
     }
 }
