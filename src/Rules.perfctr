@@ -5,7 +5,7 @@
 #       maynardj@us.ibm.com
 
 DESCR   = "Linux with PerfCtr $(VERSION) patch and library"
-TARGETS = serial forkexec overflow profile attach multiplex_and_pthreads shared
+TARGETS = serial forkexec_tests overflow-tests profile_tests attach multiplex_and_pthreads shared
 LIBRARY = libpapi.a
 SHLIB   = libpapi.so
 SUBSTR  = perfctr-$(CPU)

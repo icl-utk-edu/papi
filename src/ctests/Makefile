@@ -18,7 +18,7 @@ SERIAL  = hwinfo code2name reset subinfo realtime virttime first exeinfo \
 	zero_flip low-level high-level eventname case1 case2 \
 	calibrate flops second johnmay2 matrix-hl tenth encode encode2 ipc
 FORKEXEC  = fork fork2 exec exec2 forkexec forkexec2 forkexec3 forkexec4 fork_overflow exec_overflow \
-	child_overflow system_child_overflow system_overflow burn zero_fork \
+	child_overflow system_child_overflow system_overflow burn zero_fork
 OVERFLOW  = fork_overflow exec_overflow child_overflow system_child_overflow system_overflow burn \
 	overflow overflow_force_software overflow_single_event overflow_twoevents timer_overflow overflow2 \
 	overflow_index overflow_one_and_read overflow_allcounters
@@ -64,11 +64,11 @@ shmem: $(SHMEM)
 
 serial: $(SERIAL)
 
-forkexec: $(FORKEXEC)
+forkexec_tests: $(FORKEXEC)
 
-overflow: $(OVERFLOW)
+overflow_tests: $(OVERFLOW)
 
-profile: $(PROFILE)
+profile_tests: $(PROFILE)
 
 sdsc2: sdsc2.c $(UTILOBJS) $(PAPILIB) 
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) sdsc.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lm -o $@

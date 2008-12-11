@@ -4,7 +4,7 @@ SUBSTR  	= any-null
 MEMSUBSTR 	= any-null
 DESCR		= "Sample substrate: Any hardware platform with GNU compilers"
 LIBS		= static shared
-TARGETS 	= serial forkexec overflow profile multiplex_and_pthreads
+TARGETS 	= serial forkexec_tests overflow-tests profile_tests multiplex_and_pthreads
 POST_BUILD =
 SPECIAL_REMOVE =
 

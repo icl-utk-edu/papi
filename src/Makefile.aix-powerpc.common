@@ -1,6 +1,6 @@
 MEMSUBSTR=aix
 LIBS   = static shared
-TARGETS        = serial forkexec overflow profile multiplex_and_pthreads smp omp
+TARGETS        = serial forkexec_tests overflow-tests profile_tests multiplex_and_pthreads smp omp
 POST_BUILD =
 SPECIAL_REMOVE =
 
