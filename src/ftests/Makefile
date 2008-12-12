@@ -20,6 +20,8 @@ p4:
 
 ear:
 
+forkexec_tests:
+
 range:
 
 mpi:
@@ -37,6 +39,10 @@ pthreads:
 shmem:
 
 multiplex_and_pthreads: 
+
+overflow_tests:
+
+profile_tests:
 
 serial:  $(TESTS)
 
