@@ -98,6 +98,18 @@ int setup_p3_presets(int cputype) {
       _papi_pfm_setup_presets("AMD64 (Barcelona)", 0);
       break;
 #endif
+#ifdef PERFCTR_X86_INTEL_ATOM  /* family 6 model 28 */
+   case PERFCTR_X86_INTEL_ATOM:
+      retval = _papi_pfm_init();
+      _papi_pfm_setup_presets("Intel Atom", 0);
+      break;
+#endif
+#ifdef PERFCTR_X86_INTEL_COREI7  /* family 6 model 26 */
+   case PERFCTR_X86_INTEL_COREI7:
+      retval = _papi_pfm_init();
+      _papi_pfm_setup_presets("Intel Core i7", 0);
+      break;
+#endif
 
    default:
      PAPIERROR(MODEL_ERROR);
