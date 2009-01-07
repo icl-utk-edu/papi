@@ -221,7 +221,7 @@ typedef P3_perfctr_context_t hwd_context_t;
 #define GCNTRL_ERROR "gperfctr_control() returned < 0"
 #define FOPEN_ERROR "fopen(%s) returned NULL"
 #define STATE_MAL_ERROR "Error allocating perfctr structures"
-#define MODEL_ERROR "This is not a Pentium I,II,III, Athlon or Opteron"
+#define MODEL_ERROR "This is not a supported cpu."
 
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
