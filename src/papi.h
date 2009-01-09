@@ -36,7 +36,8 @@
 #define PAPI_VERSION_INCREMENT(x)((x)          & 0xff)
 
 /* This is the official PAPI version */
-#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,6,2,0)
+/* By convention the INCREMENT digit indicates a development version if non-zero. */
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,6,2,1)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
 
 #ifdef __cplusplus
@@ -335,6 +336,15 @@ read the documentation carefully.  */
 #include <signal.h>
 #endif
 
+/*  Earlier versions of PAPI define a special long_long type to mask
+	an incompatibility between the Windows compiler and gcc-style compilers.
+	That problem no longer exists, so long_long has been purged from the source.
+	The defines below preserve backward compatibility. Their use is deprecated,
+	but will continue to be supported in the near term.
+*/
+#define long_long long long
+#define u_long_long unsigned long long
+
   typedef unsigned long PAPI_thread_id_t;
 
    typedef struct _papi_all_thr_spec {
@@ -487,6 +497,8 @@ read the documentation carefully.  */
 #define PAPI_MH_TYPE_LRU      0x100
 #define PAPI_MH_TYPE_PSEUDO_LRU 0x200
 #define PAPI_MH_CACHE_REPLACEMENT_POLICY(a) (a & 0xf00)
+#define PAPI_MH_TYPE_TLB       0x1000  /* tlb, not memory cache */
+#define PAPI_MH_TYPE_PREF      0x2000  /* prefetch buffer */
 #define PAPI_MH_MAX_LEVELS    4
 #define PAPI_MAX_MEM_HIERARCHY_LEVELS 	  PAPI_MH_MAX_LEVELS
 
