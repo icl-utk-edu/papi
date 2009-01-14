@@ -22,32 +22,49 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
    if (!TESTS_QUIET) {
-      printf("Test case:  Memory Information.\n");
+      printf("Memory Cache and TLB Hierarchy Information.\n");
       printf
           ("------------------------------------------------------------------------\n");
       /* Extract and report the tlb and cache information */
       L = (PAPI_mh_level_t *)&(meminfo->mem_hierarchy.level[0]);
+      printf("TLB Information.\n  There may be multiple descriptors for each level of TLB\n");
+      printf("  if multiple page sizes are supported.\n\n");
       /* Scan the TLB structures */
      for (i=0; i<meminfo->mem_hierarchy.levels; i++) {
          for (j=0; j<PAPI_MH_MAX_LEVELS; j++) {
             switch (PAPI_MH_CACHE_TYPE(L[i].tlb[j].type)) {
                case PAPI_MH_TYPE_UNIFIED:
-                  printf("L%d Unified TLB:", i+1);
+                  printf("L%d Unified TLB:\n", i+1);
                   break;
                case PAPI_MH_TYPE_DATA:
-                  printf("L%d Data TLB:", i+1);
+                  printf("L%d Data TLB:\n", i+1);
                   break;
                case PAPI_MH_TYPE_INST:
-                  printf("L%d Instruction TLB:", i+1);
+                  printf("L%d Instruction TLB:\n", i+1);
                   break;
             }
             if (L[i].tlb[j].type) {
-               printf("  Number of Entries: %d;  Associativity: %d\n\n",
-                  L[i].tlb[j].num_entries, L[i].tlb[j].associativity);
+               if (L[i].tlb[j].page_size)
+                  printf("  Page Size:         %6d KB\n", L[i].tlb[j].page_size>>10);
+               printf   ("  Number of Entries: %6d\n", L[i].tlb[j].num_entries);
+               switch (L[i].tlb[j].associativity) {
+                  case 0: /* undefined */
+                     break;
+                  case 1:
+                     printf("  Associativity:      Direct Mapped\n\n");
+                     break;
+                  case SHRT_MAX:
+                     printf("  Associativity:       Full\n\n");
+                     break;
+                  default:
+                     printf("  Associativity:     %6d\n\n",  L[i].tlb[j].associativity);
+                     break;
+               }
             }
          }
       }
       /* Scan the Cache structures */
+      printf("\nCache Information.\n\n");
       for (i=0; i<meminfo->mem_hierarchy.levels; i++) {
          for (j=0; j<2; j++) {
             switch (PAPI_MH_CACHE_TYPE(L[i].cache[j].type)) {
@@ -60,9 +77,15 @@ int main(int argc, char **argv)
                case PAPI_MH_TYPE_INST:
                   printf("L%d Instruction Cache:\n", i+1);
                   break;
+               case PAPI_MH_TYPE_TRACE:
+                  printf("L%d Trace Buffer:\n", i+1);
+                  break;
+               case PAPI_MH_TYPE_VECTOR:
+                  printf("L%d Vector Cache:\n", i+1);
+                  break;
             }
             if (L[i].cache[j].type) {
-               printf("  Total size: %dKB\n  Line size: %dB\n  Number of Lines: %d\n  Associativity: %d\n\n",
+               printf("  Total size:        %6d KB\n  Line size:         %6d B\n  Number of Lines:   %6d\n  Associativity:     %6d\n\n",
                   (L[i].cache[j].size)>>10, L[i].cache[j].line_size, L[i].cache[j].num_lines, L[i].cache[j].associativity);
             }
          }
