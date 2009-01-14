@@ -218,7 +218,6 @@ int main(int argc, char **argv)
 
    printf("Performing start/stop test...\n");
 
-#if 0
    for (i = 0; i < num_iters; i++) {
       totcyc = PAPI_get_real_cyc();
       PAPI_start(EventSet);
@@ -243,7 +242,6 @@ int main(int argc, char **argv)
       print_dist(min, max, bins, d);
       free(d);
    }
-#endif
 
    /* Start the read eval */
    printf("\n\nPerforming read test...\n");
