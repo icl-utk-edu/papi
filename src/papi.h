@@ -481,8 +481,12 @@ read the documentation carefully.  */
 
    /* The following defines and next for structures define the memory heirarchy */
    /* All sizes are in BYTES */
-   /* Except tlb size, which is in entries */
-
+   /* Associativity:
+		0: Undefined;
+		1: Direct Mapped
+		SHRT_MAX: Full
+		Other values == associativity
+   */
 #define PAPI_MH_TYPE_EMPTY    0x0
 #define PAPI_MH_TYPE_INST     0x1
 #define PAPI_MH_TYPE_DATA     0x2
@@ -499,17 +503,18 @@ read the documentation carefully.  */
 #define PAPI_MH_CACHE_REPLACEMENT_POLICY(a) (a & 0xf00)
 #define PAPI_MH_TYPE_TLB       0x1000  /* tlb, not memory cache */
 #define PAPI_MH_TYPE_PREF      0x2000  /* prefetch buffer */
-#define PAPI_MH_MAX_LEVELS    4
-#define PAPI_MAX_MEM_HIERARCHY_LEVELS 	  PAPI_MH_MAX_LEVELS
+#define PAPI_MH_MAX_LEVELS    6 /* # descriptors for each TLB or cache level */
+#define PAPI_MAX_MEM_HIERARCHY_LEVELS 	  4
 
    typedef struct _papi_mh_tlb_info {
       int type; /* Empty, instr, data, vector, unified */
       int num_entries;
+      int page_size;
       int associativity;
    } PAPI_mh_tlb_info_t;
 
    typedef struct _papi_mh_cache_info {
-      int type; /* Empty, instr, data, vector, unified */
+      int type; /* Empty, instr, data, vector, trace, unified */
       int size;
       int line_size;
       int num_lines;
