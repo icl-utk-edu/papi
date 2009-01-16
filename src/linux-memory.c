@@ -6,816 +6,1166 @@
 * File:    linux-memory.c
 * Author:  Kevin London
 *          london@cs.utk.edu
-*
-* Mods:    <your name here>
-*          <your email address>
+* Mods:    Dan Terpstra
+*          terpstra@eecs.utk.edu
+*          complete rewrite to conform to latest docs and convert
+*          Intel to a table driven implementation.
+*          Now also supports multiple TLB descriptors
 */
 
 #include "papi.h"
 #include "papi_internal.h"
 
+static void init_mem_hierarchy(PAPI_mh_info_t * mh_info);
 static int init_amd(PAPI_mh_info_t * mh_info);
-static short int init_amd_L2_assoc_inf(unsigned short int pattern);
+static short int _amd_L2_L3_assoc(unsigned short int pattern);
 static int init_intel(PAPI_mh_info_t * mh_info);
 inline_static void cpuid(unsigned int *, unsigned int *, unsigned int *, unsigned int *);
 
 int _papi_hwd_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type)
 {
-   int i,j;
-   int retval = 0;
+	int retval = 0;
+	union {
+		struct {
+			unsigned int ax, bx,cx,dx;
+		} e;
+		char vendor[20]; /* leave room for terminator bytes */
+	} reg;
 
-   /*
-      if ( !check_cpuid() ) {
-      return PAPI_ESBSTR;
-      }
-    */
+	/* Don't use cpu_type to determine the processor.
+	 * get the information directly from the chip.
+	 */
+	reg.e.ax = 0; /* function code 0: vendor string */
+	/* The vendor string is composed of EBX:EDX:ECX.
+	 * by swapping the register addresses in the call below,
+	 * the string is correctly composed in the char array.
+	 */
+	cpuid(&reg.e.ax, &reg.e.bx, &reg.e.dx, &reg.e.cx);
+	reg.vendor[16] = 0; 
+	MEMDBG("Vendor: %s\n", &reg.vendor[4]);
 
-   /* Defaults to Intel which is *probably* a safe assumption -KSL */
-   switch (cpu_type) {
-	   case PERFCTR_X86_AMD_K7:
-		  retval = init_amd(&hw_info->mem_hierarchy);
-		  break;
-#ifdef PERFCTR_X86_AMD_K8 /* this is defined in perfctr 2.5.x, ff */
-	   case PERFCTR_X86_AMD_K8:
-#endif
-#ifdef PERFCTR_X86_AMD_K8C  /* this is defined in perfctr 2.6.x */
-	   case PERFCTR_X86_AMD_K8C:
-#endif
-#ifdef PERFCTR_X86_AMD_FAM10  /* this is defined in perfctr 2.6.29 */
-	   case PERFCTR_X86_AMD_FAM10:
-#endif
-	   /* TODO: this may need to be rewritten to support Barcelona */
-		  retval = init_amd(&hw_info->mem_hierarchy);
-		  break;
-	   default:
-		  retval = init_intel(&hw_info->mem_hierarchy);
-		  break;
-   }
+	init_mem_hierarchy(&hw_info->mem_hierarchy);
 
-   /* Do some post-processing */
-   if (retval == PAPI_OK) {
-      for (i=0; i<PAPI_MH_MAX_LEVELS; i++) {
-         for (j=0; j<2; j++) {
-            /* Compute the number of levels of hierarchy actually used */
-            if (hw_info->mem_hierarchy.level[i].tlb[j].type != PAPI_MH_TYPE_EMPTY ||
-               hw_info->mem_hierarchy.level[i].cache[j].type != PAPI_MH_TYPE_EMPTY)
-               hw_info->mem_hierarchy.levels = i+1;
-            /* Cache sizes were reported as KB; convert to Bytes by multipying by 2^10 */
-            if (hw_info->mem_hierarchy.level[i].cache[j].size != 0)
-               hw_info->mem_hierarchy.level[i].cache[j].size <<= 10;
-            /* if line_size was reported without num_lines, compute it */
-             if ((hw_info->mem_hierarchy.level[i].cache[j].line_size != 0) &&
-                 (hw_info->mem_hierarchy.level[i].cache[j].size != 0))
-               hw_info->mem_hierarchy.level[i].cache[j].num_lines = 
-                  hw_info->mem_hierarchy.level[i].cache[j].size / hw_info->mem_hierarchy.level[i].cache[j].line_size;
-        }
-      }
-   }
+	if (!strncmp("GenuineIntel", &reg.vendor[4], 12)) {
+		hw_info->mem_hierarchy.levels = init_intel(&hw_info->mem_hierarchy);
+	} else if (strncmp("GenuineIntel", &reg.vendor[4], 12)) {
+		hw_info->mem_hierarchy.levels = init_amd(&hw_info->mem_hierarchy);
+	} else {
+		MEMDBG("Unsupported cpu type; Not Intel or AMD x86\n");
+		return(PAPI_ESBSTR);
+	}
 
-   /* This works only because an empty cache element is initialized to 0 */
-   SUBDBG("Detected L1: %d L2: %d  L3: %d\n",
-        hw_info->mem_hierarchy.level[0].cache[0].size + hw_info->mem_hierarchy.level[0].cache[1].size, 
-        hw_info->mem_hierarchy.level[1].cache[0].size + hw_info->mem_hierarchy.level[1].cache[1].size, 
-        hw_info->mem_hierarchy.level[2].cache[0].size + hw_info->mem_hierarchy.level[2].cache[1].size);
-   return retval;
+	/* This works only because an empty cache element is initialized to 0 */
+	MEMDBG("Detected L1: %d L2: %d  L3: %d\n",
+		hw_info->mem_hierarchy.level[0].cache[0].size + hw_info->mem_hierarchy.level[0].cache[1].size, 
+		hw_info->mem_hierarchy.level[1].cache[0].size + hw_info->mem_hierarchy.level[1].cache[1].size, 
+		hw_info->mem_hierarchy.level[2].cache[0].size + hw_info->mem_hierarchy.level[2].cache[1].size);
+	return retval;
+}
+
+static void init_mem_hierarchy(PAPI_mh_info_t * mh_info) {
+	int i,j;
+	PAPI_mh_level_t *L = mh_info->level;
+
+	/* initialize entire memory hierarchy structure to benign values */
+	for (i = 0; i < PAPI_MAX_MEM_HIERARCHY_LEVELS; i++) {
+		for (j = 0; j < PAPI_MH_MAX_LEVELS; j++) {
+			L[i].tlb[j].type = PAPI_MH_TYPE_EMPTY;
+			L[i].tlb[j].num_entries = 0;
+			L[i].tlb[j].associativity = 0;
+			L[i].cache[j].type = PAPI_MH_TYPE_EMPTY;
+			L[i].cache[j].size = 0;
+			L[i].cache[j].line_size = 0;
+			L[i].cache[j].num_lines = 0;
+			L[i].cache[j].associativity = 0;
+		}
+	}
+}
+
+static short int _amd_L2_L3_assoc(unsigned short int pattern)
+{
+	/* From "CPUID Specification" #25481 Rev 2.28, April 2008 */
+	short int assoc[16] = {0,1,2,-1,4,-1,8,-1,16,-1,32,48,64,96,128,SHRT_MAX};
+	if (pattern > 0xF) return -1;
+	return (assoc[pattern]);
 }
 
 /* Cache configuration for AMD AThlon/Duron */
 static int init_amd(PAPI_mh_info_t * mh_info)
 {
-   unsigned int reg_eax, reg_ebx, reg_ecx, reg_edx;
-   unsigned short int pattern;
-   PAPI_mh_level_t *L = mh_info->level;
+	union {
+		struct {
+			unsigned int ax, bx,cx,dx;
+		} e;
+		unsigned char byt[16];
+	} reg;
+	int i, j, levels = 0;
+	PAPI_mh_level_t *L = mh_info->level;
+
    /*
-    * Layout of CPU information taken from :
-    * "AMD Processor Recognition Application Note", 20734W-1 November 2002
-    *
-    * ****Does this properly decode Opterons (K8)? Probably not...
-    * See updated #20734 Rev 3.13, December 2005 for info on K7;
-    * See "CPUID Specification" #25481 Rev 2.18, January 2006 for info on K8.
-    */
+	* Layout of CPU information taken from :
+	* "CPUID Specification" #25481 Rev 2.28, April 2008 for most current info.
+	*/
 
-   SUBDBG("Initializing AMD (K7) memory\n");
-   /* AMD level 1 cache info */
-   reg_eax = 0x80000005;
-   cpuid(&reg_eax, &reg_ebx, &reg_ecx, &reg_edx);
+	MEMDBG("Initializing AMD memory info\n");
+	/* AMD level 1 cache info */
+	reg.e.ax = 0x80000005; /* extended function code 5: L1 Cache and TLB Identifiers */
+	cpuid(&reg.e.ax, &reg.e.bx, &reg.e.cx, &reg.e.dx);
 
-   SUBDBG("eax=0x%8.8x ebx=0x%8.8x ecx=0x%8.8x edx=0x%8.8x\n",
-        reg_eax, reg_ebx, reg_ecx, reg_edx);
-   /* TLB info in L1-cache */
+	MEMDBG("e.ax=0x%8.8x e.bx=0x%8.8x e.cx=0x%8.8x e.dx=0x%8.8x\n",
+		reg.e.ax, reg.e.bx, reg.e.cx, reg.e.dx);
+	MEMDBG(":\neax: %x %x %x %x\nebx: %x %x %x %x\necx: %x %x %x %x\nedx: %x %x %x %x\n",
+		reg.byt[0],  reg.byt[1],  reg.byt[2],  reg.byt[3],
+		reg.byt[4],  reg.byt[5],  reg.byt[6],  reg.byt[7],
+		reg.byt[8],  reg.byt[9],  reg.byt[10], reg.byt[11],
+		reg.byt[12], reg.byt[13], reg.byt[14], reg.byt[15]);
 
-   /* 2MB memory page information, 4MB pages has half the number of entries */
-   /* Most people run 4k pages on Linux systems, don't they? */
-   /*
-    * L[0].tlb[0].type          = PAPI_MH_TYPE_INST;
-    * L[0].tlb[0].num_entries   = (reg_eax&0xff);
-    * L[0].tlb[0].associativity = ((reg_eax&0xff00)>>8);
-    * L[0].tlb[1].type          = PAPI_MH_TYPE_DATA;
-    * L[0].tlb[1].num_entries   = ((reg_eax&0xff0000)>>16);
-    * L[0].tlb[1].associativity = ((reg_eax&0xff000000)>>24);
-    */
+	/* NOTE: We assume L1 cache and TLB always exists */
+	/* L1 TLB info */
 
-   /* 4k page information */
-   L[0].tlb[0].type          = PAPI_MH_TYPE_INST;
-   L[0].tlb[0].num_entries   = ((reg_ebx & 0x000000ff));
-   L[0].tlb[0].associativity = ((reg_ebx & 0x0000ff00) >> 8);
-   switch (L[0].tlb[0].associativity) {
-   case 0x00:                  /* Reserved */
-      L[0].tlb[0].associativity = -1;
-      break;
-   case 0xff:
-      L[0].tlb[0].associativity = SHRT_MAX;
-      break;
-   }
-   L[0].tlb[1].type          = PAPI_MH_TYPE_DATA;
-   L[0].tlb[1].num_entries          = ((reg_ebx & 0x00ff0000) >> 16);
-   L[0].tlb[1].associativity = ((reg_ebx & 0xff000000) >> 24);
-   switch (L[0].tlb[1].associativity) {
-   case 0x00:                  /* Reserved */
-      L[0].tlb[1].associativity = -1;
-      break;
-   case 0xff:
-      L[0].tlb[1].associativity = SHRT_MAX;
-      break;
-   }
+	/* 4MB memory page information; half the number of entries as 2MB */
+	L[0].tlb[0].type          = PAPI_MH_TYPE_INST;
+	L[0].tlb[0].num_entries   = reg.byt[0]/2;
+	L[0].tlb[0].page_size   = 4096 << 10;
+	L[0].tlb[0].associativity = reg.byt[1];
 
-   SUBDBG("L1 TLB info (to be over-written by L2):\n");
-   SUBDBG("\tI-num_entries %d,  I-assoc %d\n\tD-num_entries %d,  D-assoc %d\n",
-        L[0].tlb[0].num_entries, L[0].tlb[0].associativity,
-	  L[0].tlb[1].num_entries, L[0].tlb[1].associativity);
+	L[0].tlb[1].type          = PAPI_MH_TYPE_DATA;
+	L[0].tlb[1].num_entries   = reg.byt[2]/2;
+	L[0].tlb[1].page_size   = 4096 << 10;
+	L[0].tlb[1].associativity = reg.byt[3];
 
-   /* L1 D-cache/I-cache info */
+	/* 2MB memory page information */
+	L[0].tlb[2].type          = PAPI_MH_TYPE_INST;
+	L[0].tlb[2].num_entries   = reg.byt[0];
+	L[0].tlb[2].page_size   = 2048 << 10;
+	L[0].tlb[2].associativity = reg.byt[1];
 
-   L[0].cache[1].type = PAPI_MH_TYPE_DATA | PAPI_MH_TYPE_WB | PAPI_MH_TYPE_PSEUDO_LRU;
-   L[0].cache[1].size = ((reg_ecx & 0xff000000) >> 24);
-   L[0].cache[1].associativity = ((reg_ecx & 0x00ff0000) >> 16);
-   switch (L[0].cache[1].associativity) {
-   case 0x00:                  /* Reserved */
-      L[0].cache[1].associativity = -1;
-      break;
-   case 0xff:                  /* Fully assoc. */
-      L[0].cache[1].associativity = SHRT_MAX;
-      break;
-   }
-   /* Bit 15-8 is "Lines per tag" */
-   /* L[0].cache[1].num_lines = ((reg_ecx & 0x0000ff00) >> 8); */
-   L[0].cache[1].line_size = ((reg_ecx & 0x000000ff));
+	L[0].tlb[3].type          = PAPI_MH_TYPE_DATA;
+	L[0].tlb[3].num_entries   = reg.byt[2];
+	L[0].tlb[3].page_size   = 2048 << 10;
+	L[0].tlb[3].associativity = reg.byt[3];
 
-   L[0].cache[0].type = PAPI_MH_TYPE_INST;
-   L[0].cache[0].size = ((reg_edx & 0xff000000) >> 24);
-   L[0].cache[0].associativity = ((reg_edx & 0x00ff0000) >> 16);
-   switch (L[0].cache[0].associativity) {
-   case 0x00:                  /* Reserved */
-      L[0].cache[0].associativity = -1;
-      break;
-   case 0xff:
-      L[0].cache[0].associativity = SHRT_MAX;
-      break;
-   }
-   /* Bit 15-8 is "Lines per tag" */
-   /* L[0].cache[0].num_lines = ((reg_edx & 0x0000ff00) >> 8); */
-   L[0].cache[0].line_size = ((reg_edx & 0x000000ff));
+	/* 4k page information */
+	L[0].tlb[4].type          = PAPI_MH_TYPE_INST;
+	L[0].tlb[4].num_entries   = reg.byt[4];
+	L[0].tlb[4].page_size     = 4 << 10;
+	L[0].tlb[4].associativity = reg.byt[5];
 
-   reg_eax = 0x80000006;
-   cpuid(&reg_eax, &reg_ebx, &reg_ecx, &reg_edx);
+	L[0].tlb[5].type          = PAPI_MH_TYPE_DATA;
+	L[0].tlb[5].num_entries   = reg.byt[6];
+	L[0].tlb[5].page_size     = 4 << 10;
+	L[0].tlb[5].associativity = reg.byt[7];
 
-   SUBDBG("eax=0x%8.8x ebx=0x%8.8x ecx=0x%8.8x edx=0x%8.8x\n",
-        reg_eax, reg_ebx, reg_ecx, reg_edx);
+	for (i=0;i<PAPI_MH_MAX_LEVELS; i++) {
+		if (L[0].tlb[i].associativity == 0xff)
+			L[0].tlb[i].associativity = SHRT_MAX;
+	}
 
-   /* AMD level 2 cache info */
-   L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED | PAPI_MH_TYPE_WT | PAPI_MH_TYPE_PSEUDO_LRU;
-   L[1].cache[0].size = ((reg_ecx & 0xffff0000) >> 16);
-   pattern = ((reg_ecx & 0x0000f000) >> 12);
-   L[1].cache[0].associativity = init_amd_L2_assoc_inf(pattern);
-   /*   L[1].cache[0].num_lines = ((reg_ecx & 0x00000f00) >> 8); */
-   L[1].cache[0].line_size = ((reg_ecx & 0x000000ff));
+	/* L1 D-cache info */
+	L[0].cache[0].type = PAPI_MH_TYPE_DATA | PAPI_MH_TYPE_WB | PAPI_MH_TYPE_PSEUDO_LRU;
+	L[0].cache[0].size = reg.byt[11]<<10;
+	L[0].cache[0].associativity = reg.byt[10];
+	L[0].cache[0].line_size = reg.byt[8];
+	/* Byt[9] is "Lines per tag" */
+	/* Is that == lines per cache? */
+	/* L[0].cache[1].num_lines = reg.byt[9]; */
+	if (L[0].cache[0].line_size)
+		L[0].cache[0].num_lines = L[0].cache[0].size / L[0].cache[0].line_size;
+	MEMDBG("D-Cache Line Count: %d; Computed: %d\n", reg.byt[9], L[0].cache[0].num_lines);
 
-   /* L2 cache TLB information. This over-writes the L1 cache TLB info */
+	/* L1 I-cache info */
+	L[0].cache[1].type = PAPI_MH_TYPE_INST;
+	L[0].cache[1].size = reg.byt[15]<<10;
+	L[0].cache[1].associativity = reg.byt[14];
+	L[0].cache[1].line_size = reg.byt[12];
+	/* Byt[13] is "Lines per tag" */
+	/* Is that == lines per cache? */
+	/* L[0].cache[1].num_lines = reg.byt[13]; */
+	if (L[0].cache[1].line_size)
+		L[0].cache[1].num_lines = L[0].cache[1].size / L[0].cache[1].line_size;
+	MEMDBG("I-Cache Line Count: %d; Computed: %d\n", reg.byt[13], L[0].cache[1].num_lines);
 
-   /* 2MB memory page information, 4MB pages has half the number of entris */
-   /* Most people run 4k pages on Linux systems, don't they? */
-   /*
-    * mem_info->dtlb_size      = ((reg_eax&0x0fff0000)>>16);
-    * pattern = ((reg_eax&0xf0000000)>>28);
-    * mem_info->dtlb_assoc = init_amd_L2_assoc_inf(pattern);
-    * mem_info->itlb_size      = (reg_eax&0xfff);
-    * pattern = ((reg_eax&0xf000)>>12);
-    * mem_info->itlb_assoc = init_amd_L2_assoc_inf(pattern);
-    * if (!mem_info->dtlb_size) {
-    *   mem_info->total_tlb_size = mem_info->itlb_size  ; mem_info->itlb_size = 0;
-    * }
-    */
+	for (i=0;i<2; i++) {
+		if (L[0].cache[i].associativity == 0xff)
+			L[0].cache[i].associativity = SHRT_MAX;
+	}
 
-   /* 4k page information */
-   L[0].tlb[1].type = PAPI_MH_TYPE_DATA;
-   L[0].tlb[1].num_entries = ((reg_ebx & 0x0fff0000) >> 16);
-   pattern = ((reg_ebx & 0xf0000000) >> 28);
-   L[0].tlb[1].associativity = init_amd_L2_assoc_inf(pattern);
-   L[0].tlb[0].type = PAPI_MH_TYPE_INST;
-   L[0].tlb[0].num_entries = ((reg_ebx & 0x00000fff));
-   pattern = ((reg_ebx & 0x0000f000) >> 12);
-   L[0].tlb[0].associativity = init_amd_L2_assoc_inf(pattern);
+	/* AMD L2/L3 Cache and L2 TLB info */
+	/* NOTE: For safety we assume L2 and L3 cache and TLB may not exist */
 
-   if (!L[0].tlb[1].num_entries) {       /* The L2 TLB is a unified TLB, with the size itlb_size */
-      L[0].tlb[0].num_entries = 0;
-   }
+	reg.e.ax = 0x80000006; /* extended function code 6: L2/L3 Cache and L2 TLB Identifiers */
+	cpuid(&reg.e.ax, &reg.e.bx, &reg.e.cx, &reg.e.dx);
 
+	MEMDBG("e.ax=0x%8.8x e.bx=0x%8.8x e.cx=0x%8.8x e.dx=0x%8.8x\n",
+		reg.e.ax, reg.e.bx, reg.e.cx, reg.e.dx);
+	MEMDBG(":\neax: %x %x %x %x\nebx: %x %x %x %x\necx: %x %x %x %x\nedx: %x %x %x %x\n",
+		reg.byt[0],  reg.byt[1],  reg.byt[2],  reg.byt[3],
+		reg.byt[4],  reg.byt[5],  reg.byt[6],  reg.byt[7],
+		reg.byt[8],  reg.byt[9],  reg.byt[10], reg.byt[11],
+		reg.byt[12], reg.byt[13], reg.byt[14], reg.byt[15]);
 
-   /* AMD doesn't have Level 3 cache yet..... */
-   return PAPI_OK;
+	/* L2 TLB info */
+
+	if (reg.byt[0] | reg.byt[1]) { /* Level 2 ITLB exists */
+		/* 4MB ITLB page information; half the number of entries as 2MB */
+		L[1].tlb[0].type          = PAPI_MH_TYPE_INST;
+		L[1].tlb[0].num_entries   = (((short)(reg.byt[1]&0xF)<<8) + reg.byt[0])/2;
+		L[1].tlb[0].page_size     = 4096 << 10;
+		L[1].tlb[0].associativity = _amd_L2_L3_assoc((reg.byt[1]&0xF0)>>4);
+
+		/* 2MB ITLB page information */
+		L[1].tlb[2].type          = PAPI_MH_TYPE_INST;
+		L[1].tlb[2].num_entries   = L[1].tlb[0].num_entries * 2;
+		L[1].tlb[2].page_size     = 2048 << 10;
+		L[1].tlb[2].associativity = L[1].tlb[0].associativity;
+	}
+
+	if (reg.byt[2] | reg.byt[3]) { /* Level 2 DTLB exists */
+		/* 4MB DTLB page information; half the number of entries as 2MB */
+		L[1].tlb[1].type          = PAPI_MH_TYPE_DATA;
+		L[1].tlb[1].num_entries   = (((short)(reg.byt[3]&0xF)<<8) + reg.byt[2])/2;
+		L[1].tlb[1].page_size     = 4096 << 10;
+		L[1].tlb[1].associativity = _amd_L2_L3_assoc((reg.byt[3]&0xF0)>>4);
+
+		/* 2MB DTLB page information */
+		L[1].tlb[3].type          = PAPI_MH_TYPE_DATA;
+		L[1].tlb[3].num_entries   = L[1].tlb[1].num_entries * 2;
+		L[1].tlb[3].page_size     = 2048 << 10;
+		L[1].tlb[3].associativity = L[1].tlb[1].associativity;
+	}
+
+	/* 4k page information */
+	if (reg.byt[4] | reg.byt[5]) { /* Level 2 ITLB exists */
+		L[1].tlb[4].type          = PAPI_MH_TYPE_INST;
+		L[1].tlb[4].num_entries   = ((short)(reg.byt[5]&0xF)<<8) + reg.byt[4];
+		L[1].tlb[4].page_size     = 4 << 10;
+		L[1].tlb[4].associativity = _amd_L2_L3_assoc((reg.byt[5]&0xF0)>>4);
+	}
+	if (reg.byt[6] | reg.byt[7]) { /* Level 2 DTLB exists */
+		L[1].tlb[5].type          = PAPI_MH_TYPE_DATA;
+		L[1].tlb[5].num_entries   = ((short)(reg.byt[7]&0xF)<<8) + reg.byt[6];
+		L[1].tlb[5].page_size     = 4 << 10;
+		L[1].tlb[5].associativity = _amd_L2_L3_assoc((reg.byt[7]&0xF0)>>4);
+	}
+
+	/* AMD Level 2 cache info */
+	if (reg.e.cx) {
+		L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED | PAPI_MH_TYPE_WT | PAPI_MH_TYPE_PSEUDO_LRU;
+		L[1].cache[0].size = ((reg.e.cx & 0xffff0000) >> 6); /* right shift by 16; multiply by 2^10 */
+		L[1].cache[0].associativity = _amd_L2_L3_assoc((reg.byt[9]&0xF0)>>4);
+		L[1].cache[0].line_size = reg.byt[8];
+/*		L[1].cache[0].num_lines = reg.byt[9]&0xF; */
+		if (L[1].cache[0].line_size)
+			L[1].cache[0].num_lines = L[1].cache[0].size / L[1].cache[0].line_size;
+		MEMDBG("U-Cache Line Count: %d; Computed: %d\n", reg.byt[9]&0xF, L[1].cache[0].num_lines);
+	}
+
+   /* AMD Level 3 cache info (shared across cores) */
+	if (reg.e.dx) {
+		L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED | PAPI_MH_TYPE_WT | PAPI_MH_TYPE_PSEUDO_LRU;
+		L[2].cache[0].size = reg.e.dx & 0xfffc0000; /* in blocks of 512KB (2^18) */
+		L[2].cache[0].associativity = _amd_L2_L3_assoc((reg.byt[13]&0xF0)>>4);
+		L[2].cache[0].line_size = reg.byt[12];
+/*		L[2].cache[0].num_lines = reg.byt[13]&0xF; */
+		if (L[2].cache[0].line_size)
+			L[2].cache[0].num_lines = L[2].cache[0].size / L[2].cache[0].line_size;
+		MEMDBG("U-Cache Line Count: %d; Computed: %d\n", reg.byt[13]&0xF, L[1].cache[0].num_lines);
+	}
+	for (i=0; i<PAPI_MAX_MEM_HIERARCHY_LEVELS; i++) {
+		for (j=0; j<PAPI_MH_MAX_LEVELS; j++) {
+			/* Compute the number of levels of hierarchy actually used */
+			if (L[i].tlb[j].type != PAPI_MH_TYPE_EMPTY ||
+				L[i].cache[j].type != PAPI_MH_TYPE_EMPTY)
+				levels = i+1;
+			}
+		}
+	return (levels);
 }
 
-static short int init_amd_L2_assoc_inf(unsigned short int pattern)
-{
-   short int assoc;
-   /* "AMD Processor Recognition Application Note", 20734W-1 November 2002 */
-   switch (pattern) {
-   case 0x0:
-      assoc = 0;
-      break;
-   case 0x1:
-   case 0x2:
-   case 0x4:
-      assoc = pattern;
-      break;
-   case 0x6:
-      assoc = 8;
-      break;
-   case 0x8:
-      assoc = 16;
-      break;
-   case 0xf:
-      assoc = SHRT_MAX;         /* Full associativity */
-      break;
-   default:
-      /* We've encountered a pattern marked "reserved" in my manual */
-      assoc = -1;
-      break;
-   }
-   return assoc;
+   /*
+	* "Intel® Processor Identification and the CPUID Instruction",
+	* Application Note, AP-485, Nov 2008, 241618-033
+	*
+	* The following data structure and its instantiation trys to
+	* capture all the information in Section 3.1.3 of the above
+	* document. Not all of it is used by PAPI, but it could be.
+	* As the above document is revised, this table should be
+	* updated.
+	*/
+
+#define TLB_SIZES 3 /* number of different page sizes for a single TLB descriptor */
+struct _intel_cache_info {
+  int descriptor; /* 0x00 - 0xFF: register descriptor code */
+  int level; /* 1 to PAPI_MH_MAX_LEVELS */
+  int type;  /* Empty, instr, data, vector, unified | TLB */
+  int size[TLB_SIZES];  /* cache or  TLB page size(s) in kB */
+  int associativity; /* SHRT_MAX == fully associative */
+  int sector; /* 1 if cache is sectored; else 0 */
+  int line_size; /* for cache */
+  int entries; /* for TLB */
+};
+
+static struct _intel_cache_info intel_cache[] = {
+// 0x01
+	{	.descriptor = 0x01,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_INST,
+		.size[0] = 4,
+		.associativity = 4,
+		.entries = 32,
+	},
+// 0x02
+	{	.descriptor = 0x02,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_INST,
+		.size[0] = 4096,
+		.associativity = SHRT_MAX,
+		.entries = 2,
+	},
+// 0x03
+	{	.descriptor = 0x03,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_DATA,
+		.size[0] = 4,
+		.associativity = 4,
+		.entries = 64,
+	},
+// 0x04
+	{	.descriptor = 0x04,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_DATA,
+		.size[0] = 4096,
+		.associativity = 4,
+		.entries = 8,
+	},
+// 0x05
+	{	.descriptor = 0x05,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_DATA,
+		.size[0] = 4096,
+		.associativity = 4,
+		.entries = 32,
+	},
+// 0x06
+	{	.descriptor = 0x06,
+		.level = 1,
+		.type = PAPI_MH_TYPE_INST,
+		.size[0] = 8,
+		.associativity = 4,
+		.line_size = 32,
+	},
+// 0x08
+	{	.descriptor = 0x08,
+		.level = 1,
+		.type = PAPI_MH_TYPE_INST,
+		.size[0] = 16,
+		.associativity = 4,
+		.line_size = 32,
+	},
+// 0x09
+	{	.descriptor = 0x09,
+		.level = 1,
+		.type = PAPI_MH_TYPE_INST,
+		.size[0] = 32,
+		.associativity = 4,
+		.line_size = 64,
+	},
+// 0x0A
+	{	.descriptor = 0x0A,
+		.level = 1,
+		.type = PAPI_MH_TYPE_DATA,
+		.size[0] = 8,
+		.associativity = 2,
+		.line_size = 32,
+	},
+// 0x0C
+	{	.descriptor = 0x0C,
+		.level = 1,
+		.type = PAPI_MH_TYPE_DATA,
+		.size[0] = 16,
+		.associativity = 4,
+		.line_size = 32,
+	},
+// 0x0D
+	{	.descriptor = 0x0D,
+		.level = 1,
+		.type = PAPI_MH_TYPE_DATA,
+		.size[0] = 16,
+		.associativity = 4,
+		.line_size = 64,
+	},
+// 0x21
+	{	.descriptor = 0x21,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 256,
+		.associativity = 8,
+		.line_size = 64,
+	},
+// 0x22
+	{	.descriptor = 0x22,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 512,
+		.associativity = 4,
+		.sector = 1,
+		.line_size = 64,
+	},
+// 0x23
+	{	.descriptor = 0x23,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 1024,
+		.associativity = 8,
+		.sector = 1,
+		.line_size = 64,
+	},
+// 0x25
+	{	.descriptor = 0x25,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 2048,
+		.associativity = 8,
+		.sector = 1,
+		.line_size = 64,
+	},
+// 0x29
+	{	.descriptor = 0x29,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 4096,
+		.associativity = 8,
+		.sector = 1,
+		.line_size = 64,
+	},
+// 0x2C
+	{	.descriptor = 0x2C,
+		.level = 1,
+		.type = PAPI_MH_TYPE_DATA,
+		.size[0] = 32,
+		.associativity = 8,
+		.line_size = 64,
+	},
+// 0x30
+	{	.descriptor = 0x30,
+		.level = 1,
+		.type = PAPI_MH_TYPE_INST,
+		.size[0] = 32,
+		.associativity = 8,
+		.line_size = 64,
+	},
+// 0x39
+	{	.descriptor = 0x39,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 128,
+		.associativity = 4,
+		.sector = 1,
+		.line_size = 64,
+	},
+// 0x3A
+	{	.descriptor = 0x3A,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 192,
+		.associativity = 6,
+		.sector = 1,
+		.line_size = 64,
+	},
+// 0x3B
+	{	.descriptor = 0x3B,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 128,
+		.associativity = 2,
+		.sector = 1,
+		.line_size = 64,
+	},
+// 0x3C
+	{	.descriptor = 0x3C,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 256,
+		.associativity = 4,
+		.sector = 1,
+		.line_size = 64,
+	},
+// 0x3D
+	{	.descriptor = 0x3D,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 384,
+		.associativity = 6,
+		.sector = 1,
+		.line_size = 64,
+	},
+// 0x3E
+	{	.descriptor = 0x3E,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 512,
+		.associativity = 4,
+		.sector = 1,
+		.line_size = 64,
+	},
+// 0x40: no last level cache (??)
+// 0x41
+	{	.descriptor = 0x41,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 128,
+		.associativity = 4,
+		.line_size = 32,
+	},
+// 0x42
+	{	.descriptor = 0x42,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 256,
+		.associativity = 4,
+		.line_size = 32,
+	},
+// 0x43
+	{	.descriptor = 0x43,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 512,
+		.associativity = 4,
+		.line_size = 32,
+	},
+// 0x44
+	{	.descriptor = 0x44,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 1024,
+		.associativity = 4,
+		.line_size = 32,
+	},
+// 0x45
+	{	.descriptor = 0x45,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 2048,
+		.associativity = 4,
+		.line_size = 32,
+	},
+// 0x46
+	{	.descriptor = 0x46,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 4096,
+		.associativity = 4,
+		.line_size = 64,
+	},
+// 0x47
+	{	.descriptor = 0x47,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 8192,
+		.associativity = 8,
+		.line_size = 64,
+	},
+// 0x48
+	{	.descriptor = 0x48,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 3072,
+		.associativity = 12,
+		.line_size = 64,
+	},
+// 0x49 NOTE: for family 0x0F model 0x06 this is level 3
+	{	.descriptor = 0x49,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 4096,
+		.associativity = 16,
+		.line_size = 64,
+	},
+// 0x4A
+	{	.descriptor = 0x4A,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 6144,
+		.associativity = 12,
+		.line_size = 64,
+	},
+// 0x4B
+	{	.descriptor = 0x4B,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 8192,
+		.associativity = 16,
+		.line_size = 64,
+	},
+// 0x4C
+	{	.descriptor = 0x4C,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 12288,
+		.associativity = 12,
+		.line_size = 64,
+	},
+// 0x4D
+	{	.descriptor = 0x4D,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 16384,
+		.associativity = 16,
+		.line_size = 64,
+	},
+// 0x4E
+	{	.descriptor = 0x4E,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 6144,
+		.associativity = 24,
+		.line_size = 64,
+	},
+// 0x50
+	{	.descriptor = 0x50,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_INST,
+		.size = {4, 2048, 4096},
+		.associativity = SHRT_MAX,
+		.entries = 64,
+	},
+// 0x51
+	{	.descriptor = 0x51,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_INST,
+		.size = {4, 2048, 4096},
+		.associativity = SHRT_MAX,
+		.entries = 128,
+	},
+// 0x52
+	{	.descriptor = 0x52,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_INST,
+		.size = {4, 2048, 4096},
+		.associativity = SHRT_MAX,
+		.entries = 256,
+	},
+// 0x55
+	{	.descriptor = 0x55,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_INST,
+		.size = {2048, 4096, 0},
+		.associativity = SHRT_MAX,
+		.entries = 7,
+	},
+// 0x56
+	{	.descriptor = 0x56,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_DATA,
+		.size[0] = 4096,
+		.associativity = 4,
+		.entries = 16,
+	},
+// 0x57
+	{	.descriptor = 0x57,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_DATA,
+		.size[0] = 4,
+		.associativity = 4,
+		.entries = 16,
+	},
+// 0x5A
+	{	.descriptor = 0x5A,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_DATA,
+		.size = {2048, 4096, 0},
+		.associativity = 4,
+		.entries = 32,
+	},
+// 0x5B
+	{	.descriptor = 0x5B,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_DATA,
+		.size = {4, 4096, 0},
+		.associativity = SHRT_MAX,
+		.entries = 64,
+	},
+// 0x5C
+	{	.descriptor = 0x5C,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_DATA,
+		.size = {4, 4096, 0},
+		.associativity = SHRT_MAX,
+		.entries = 128,
+	},
+// 0x5D
+	{	.descriptor = 0x5D,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_DATA,
+		.size = {4, 4096, 0},
+		.associativity = SHRT_MAX,
+		.entries = 256,
+	},
+// 0x60
+	{	.descriptor = 0x60,
+		.level = 1,
+		.type = PAPI_MH_TYPE_DATA,
+		.size[0] = 16,
+		.associativity = 8,
+		.sector = 1,
+		.line_size = 64,
+	},
+// 0x66
+	{	.descriptor = 0x66,
+		.level = 1,
+		.type = PAPI_MH_TYPE_DATA,
+		.size[0] = 8,
+		.associativity = 4,
+		.sector = 1,
+		.line_size = 64,
+	},
+// 0x67
+	{	.descriptor = 0x67,
+		.level = 1,
+		.type = PAPI_MH_TYPE_DATA,
+		.size[0] = 16,
+		.associativity = 4,
+		.sector = 1,
+		.line_size = 64,
+	},
+// 0x68
+	{	.descriptor = 0x68,
+		.level = 1,
+		.type = PAPI_MH_TYPE_DATA,
+		.size[0] = 32,
+		.associativity = 4,
+		.sector = 1,
+		.line_size = 64,
+	},
+// 0x70
+	{	.descriptor = 0x70,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TRACE,
+		.size[0] = 12,
+		.associativity = 8,
+	},
+// 0x71
+	{	.descriptor = 0x71,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TRACE,
+		.size[0] = 16,
+		.associativity = 8,
+	},
+// 0x72
+	{	.descriptor = 0x72,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TRACE,
+		.size[0] = 32,
+		.associativity = 8,
+	},
+// 0x73
+	{	.descriptor = 0x73,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TRACE,
+		.size[0] = 64,
+		.associativity = 8,
+	},
+// 0x78
+	{	.descriptor = 0x78,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 1024,
+		.associativity = 4,
+		.line_size = 64,
+	},
+// 0x79
+	{	.descriptor = 0x79,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 128,
+		.associativity = 8,
+		.sector = 1,
+		.line_size = 64,
+	},
+// 0x7A
+	{	.descriptor = 0x7A,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 256,
+		.associativity = 8,
+		.sector = 1,
+		.line_size = 64,
+	},
+// 0x7B
+	{	.descriptor = 0x7B,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 512,
+		.associativity = 8,
+		.sector = 1,
+		.line_size = 64,
+	},
+// 0x7C
+	{	.descriptor = 0x7C,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 1024,
+		.associativity = 8,
+		.sector = 1,
+		.line_size = 64,
+	},
+// 0x7D
+	{	.descriptor = 0x7D,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 2048,
+		.associativity = 8,
+		.line_size = 64,
+	},
+// 0x7F
+	{	.descriptor = 0x7F,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 512,
+		.associativity = 2,
+		.line_size = 64,
+	},
+// 0x82
+	{	.descriptor = 0x82,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 256,
+		.associativity = 8,
+		.line_size = 32,
+	},
+// 0x83
+	{	.descriptor = 0x83,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 512,
+		.associativity = 8,
+		.line_size = 32,
+	},
+// 0x84
+	{	.descriptor = 0x84,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 1024,
+		.associativity = 8,
+		.line_size = 32,
+	},
+// 0x85
+	{	.descriptor = 0x85,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 2048,
+		.associativity = 8,
+		.line_size = 32,
+	},
+// 0x86
+	{	.descriptor = 0x86,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 512,
+		.associativity = 4,
+		.line_size = 64,
+	},
+// 0x87
+	{	.descriptor = 0x87,
+		.level = 2,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 1024,
+		.associativity = 8,
+		.line_size = 64,
+	},
+// 0xB0
+	{	.descriptor = 0xB0,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_INST,
+		.size[0] = 4,
+		.associativity = 4,
+		.entries = 128,
+	},
+// 0xB1 NOTE: This is currently the only instance where .entries
+//		is dependent on .size. It's handled as a code exception.
+//		If other instances appear in the future, the structure
+//		should probably change to accomodate it.
+	{	.descriptor = 0xB1,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_INST,
+		.size = {2048, 4096, 0},
+		.associativity = 4,
+		.entries = 8, /* or 4 if size = 4096 */
+	},
+// 0xB2
+	{	.descriptor = 0xB2,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_INST,
+		.size[0] = 4,
+		.associativity = 4,
+		.entries = 64,
+	},
+// 0xB3
+	{	.descriptor = 0xB3,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_DATA,
+		.size[0] = 4,
+		.associativity = 4,
+		.entries = 128,
+	},
+// 0xB4
+	{	.descriptor = 0xB4,
+		.level = 1,
+		.type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_DATA,
+		.size[0] = 4,
+		.associativity = 4,
+		.entries = 256,
+	},
+// 0xCA
+	{	.descriptor = 0xCA,
+		.level = 2,
+		.type = PAPI_MH_TYPE_TLB | PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 4,
+		.associativity = 4,
+		.entries = 512,
+	},
+// 0xD0
+	{	.descriptor = 0xD0,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 512,
+		.associativity = 4,
+		.line_size = 64,
+	},
+// 0xD1
+	{	.descriptor = 0xD1,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 1024,
+		.associativity = 4,
+		.line_size = 64,
+	},
+// 0xD2
+	{	.descriptor = 0xD2,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 2048,
+		.associativity = 4,
+		.line_size = 64,
+	},
+// 0xD6
+	{	.descriptor = 0xD6,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 1024,
+		.associativity = 8,
+		.line_size = 64,
+	},
+// 0xD7
+	{	.descriptor = 0xD7,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 2048,
+		.associativity = 8,
+		.line_size = 64,
+	},
+// 0xD8
+	{	.descriptor = 0xD8,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 4096,
+		.associativity = 8,
+		.line_size = 64,
+	},
+// 0xDC
+	{	.descriptor = 0xDC,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 2048,
+		.associativity = 12,
+		.line_size = 64,
+	},
+// 0xDD
+	{	.descriptor = 0xDD,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 4096,
+		.associativity = 12,
+		.line_size = 64,
+	},
+// 0xDE
+	{	.descriptor = 0xDE,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 8192,
+		.associativity = 12,
+		.line_size = 64,
+	},
+// 0xE2
+	{	.descriptor = 0xE2,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 2048,
+		.associativity = 16,
+		.line_size = 64,
+	},
+// 0xE3
+	{	.descriptor = 0xE3,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 4096,
+		.associativity = 16,
+		.line_size = 64,
+	},
+// 0xE4
+	{	.descriptor = 0xE4,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 8192,
+		.associativity = 16,
+		.line_size = 64,
+	},
+// 0xF0
+	{	.descriptor = 0xF0,
+		.level = 1,
+		.type = PAPI_MH_TYPE_PREF,
+		.size[0] = 64,
+	},
+// 0xF1
+	{	.descriptor = 0xF1,
+		.level = 1,
+		.type = PAPI_MH_TYPE_PREF,
+		.size[0] = 128,
+	},
+};
+
+#ifdef DEBUG
+static void print_intel_cache_table() {
+	int i,j;
+	for (i=0;i<(sizeof(intel_cache)/sizeof(struct _intel_cache_info));i++) {
+		printf("%d.\tDescriptor: 0x%x\n", i, intel_cache[i].descriptor);
+		printf("\t  Level:     %d\n", intel_cache[i].level);
+		printf("\t  Type:      %d\n", intel_cache[i].type);
+		printf("\t  Size(s):   ");
+		for (j=0; j<TLB_SIZES; j++)
+			printf("%d, ", intel_cache[i].size[j]);
+		printf("\n");
+		printf("\t  Assoc:     %d\n", intel_cache[i].associativity);
+		printf("\t  Sector:    %d\n", intel_cache[i].sector);
+		printf("\t  Line Size: %d\n", intel_cache[i].line_size);
+		printf("\t  Entries:   %d\n", intel_cache[i].entries);
+		printf("\n");
+	}
+}
+#endif
+
+/* Given a specific cache descriptor, this routine decodes the information from a table
+ * of such descriptors and fills out one or more records in a PAPI data structure.
+ * Called only by init_intel()
+ */
+static void intel_decode_descriptor(struct _intel_cache_info *d, PAPI_mh_level_t *L) {
+	int i, next;
+	int level = d->level - 1;
+	PAPI_mh_tlb_info_t *t;
+	PAPI_mh_cache_info_t *c;
+
+	if (d->descriptor == 0x49) { /* special case */
+		unsigned int r_eax, r_ebx, r_ecx, r_edx;
+		r_eax = 0x1; /* function code 1: family & model */
+		cpuid(&r_eax, &r_ebx, &r_ecx, &r_edx);
+		/* override table for Family F, model 6 only */
+		if ((r_eax & 0x0FFF3FF0) == 0xF60) level = 3;
+	}
+	if (d->type & PAPI_MH_TYPE_TLB) {
+		for (next = 0; next < PAPI_MH_MAX_LEVELS-1; next++) {
+			if (L[level].tlb[next].type == PAPI_MH_TYPE_EMPTY) break;
+		}
+		/* expand TLB entries for multiple possible page sizes */
+		for (i=0; i<TLB_SIZES && next<PAPI_MH_MAX_LEVELS && d->size[i]; i++, next++) {
+//			printf("Level %d Descriptor: %x TLB type %x next: %d, i: %d\n", level, d->descriptor, d->type, next, i);
+			t = &L[level].tlb[next];
+			t->type = PAPI_MH_CACHE_TYPE(d->type);
+			t->num_entries = d->entries;
+			t->page_size = d->size[i] << 10; /* minimum page size in KB*/
+			t->associativity = d->associativity;
+			/* another special case */
+			if (d->descriptor == 0xB1 && d->size[i] == 4096)
+				t->num_entries = d->entries/2;
+		}
+	} else {
+		for (next = 0; next < PAPI_MH_MAX_LEVELS-1; next++) {
+			if (L[level].cache[next].type == PAPI_MH_TYPE_EMPTY) break;
+		}
+//		printf("Level %d Descriptor: %x Cache type %x next: %d\n", level, d->descriptor, d->type, next);
+		c = &L[level].cache[next];
+		c->type = PAPI_MH_CACHE_TYPE(d->type);
+		c->size = d->size[0] << 10; /* convert from KB to bytes */
+		c->associativity = d->associativity;
+		if (d->line_size) {
+			c->line_size = d->line_size;
+			c->num_lines = c->size / c->line_size;
+		}
+	}
 }
 
 static int init_intel(PAPI_mh_info_t * mh_info)
 {
-   unsigned int reg_eax, reg_ebx, reg_ecx, reg_edx, value;
-   int i, j, k, count;
-   PAPI_mh_level_t *L = mh_info->level;
+	/* cpuid() returns memory copies of 4 32-bit registers
+	 * this union allows them to be accessed as either registers
+	 * or individual bytes. Remember that Intel is little-endian.
+	 */
+	union {
+		struct {
+			unsigned int ax, bx,cx,dx;
+		} e;
+		unsigned char descrip[16];
+	} reg;
 
-   /*
-    * "Intel® Processor Identification and the CPUID Instruction",
-    * Application Note, AP-485, Nov 2002, 241618-022
-    */
-   for (i = 0; i < 3; i++) {
-      L[i].tlb[0].type = PAPI_MH_TYPE_EMPTY;
-      L[i].tlb[0].num_entries = 0;
-      L[i].tlb[0].associativity = 0;
-      L[i].tlb[1].type = PAPI_MH_TYPE_EMPTY;
-      L[i].tlb[1].num_entries = 0;
-      L[i].tlb[1].associativity = 0;
-      L[i].cache[0].type = PAPI_MH_TYPE_EMPTY;
-      L[i].cache[0].associativity = 0;
-      L[i].cache[0].line_size = 0;
-      L[i].cache[0].size = 0;
-      L[i].cache[1].type = PAPI_MH_TYPE_EMPTY;
-      L[i].cache[1].associativity = 0;
-      L[i].cache[1].line_size = 0;
-      L[i].cache[1].size = 0;
-   }
+	int r; /* register boundary index */
+	int b; /* byte index into a register */
+	int i; /* byte index into the descrip array */
+	int t; /* table index into the static descriptor table */
+	int count; /* how many times to call cpuid; from eax:lsb */
+	int size;  /* size of the descriptor table */
+	int last_level = 0; /* how many levels in the cache hierarchy */
 
-   SUBDBG("Initializing Intel Memory\n");
-   /* All of Intels cache info is in 1 call to cpuid
-    * however it is a table lookup :(
-    */
-   reg_eax = 0x2;
-   cpuid(&reg_eax, &reg_ebx, &reg_ecx, &reg_edx);
-   SUBDBG("eax=0x%8.8x ebx=0x%8.8x ecx=0x%8.8x edx=0x%8.8x\n",
-        reg_eax, reg_ebx, reg_ecx, reg_edx);
+	/* All of Intel's cache info is in 1 call to cpuid
+	 * however it is a table lookup :(
+	*/
+	MEMDBG("Initializing Intel Cache and TLB descriptors\n");
 
-   count = (0xff & reg_eax);
-   for (j = 0; j < count; j++) {
-      for (i = 0; i < 4; i++) {
-         if (i == 0)
-            value = reg_eax;
-         else if (i == 1)
-            value = reg_ebx;
-         else if (i == 2)
-            value = reg_ecx;
-         else
-            value = reg_edx;
-         if (value & (1 << 31)) {       /* Bit 31 is 0 if information is valid */
-            SUBDBG("Register %d does not contain valid information (skipped)\n",
-                 i);
-            continue;
-         }
-         for (k = 0; k <= 4; k++) {
-            if (i == 0 && j == 0 && k == 0) {
-               value = value >> 8;
-               continue;
-            }
-            switch ((value & 0xff)) {
-            case 0x01:
-               L[0].tlb[0].num_entries = 32;
-               L[0].tlb[0].associativity = 4;
-               break;
-            case 0x02:
-               L[0].tlb[0].num_entries = 2;
-               L[0].tlb[0].associativity = 1;
-               break;
-            case 0x03:
-               L[0].tlb[1].num_entries = 8;
-               L[0].tlb[1].associativity = 4;
-               break;
-            case 0x04:
-               L[0].tlb[1].num_entries = 8;
-               L[0].tlb[1].associativity = 4;
-               break;
-            case 0x05:
-               L[0].tlb[1].num_entries = 32;
-               L[0].tlb[1].associativity = 4;
-               break;
-            case 0x06:
-               L[0].cache[0].size = 8;
-               L[0].cache[0].associativity = 4;
-               L[0].cache[0].line_size = 32;
-               break;
-            case 0x08:
-               L[0].cache[0].size = 16;
-               L[0].cache[0].associativity = 4;
-               L[0].cache[0].line_size = 32;
-               break;
-            case 0x0A:
-               L[0].cache[1].size = 8;
-               L[0].cache[1].associativity = 2;
-               L[0].cache[1].line_size = 32;
-               break;
-            case 0x0C:
-               L[0].cache[1].size = 16;
-               L[0].cache[1].associativity = 4;
-               L[0].cache[1].line_size = 32;
-               break;
-            case 0x10:
-               /* This value is not in my copy of the Intel manual */
-               /* IA64 codes, can most likely be moved to the IA64 memory,
-                * If we can't combine the two *Still Hoping ;) * -KSL
-                * This is L1 data cache
-                */
-               L[0].cache[1].size = 16;
-               L[0].cache[1].associativity = 4;
-               L[0].cache[1].line_size = 32;
-               break;
-            case 0x15:
-               /* This value is not in my copy of the Intel manual */
-               /* IA64 codes, can most likely be moved to the IA64 memory,
-                * If we can't combine the two *Still Hoping ;) * -KSL
-                * This is L1 instruction cache
-                */
-               L[0].cache[0].size = 16;
-               L[0].cache[0].associativity = 4;
-               L[0].cache[0].line_size = 32;
-               break;
-            case 0x1A:
-               /* This value is not in my copy of the Intel manual */
-               /* IA64 codes, can most likely be moved to the IA64 memory,
-                * If we can't combine the two *Still Hoping ;) * -KSL
-                * This is L1 instruction AND data cache
-                */
-               L[1].cache[0].size = 96;
-               L[1].cache[0].associativity = 6;
-               L[1].cache[0].line_size = 64;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x22:
-               L[2].cache[0].associativity = 4;
-               L[2].cache[0].line_size = 64;
-               L[2].cache[0].size = 512;
-               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x23:
-               L[2].cache[0].associativity = 8;
-               L[2].cache[0].line_size = 64;
-               L[2].cache[0].size = 1024;
-               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x25:
-               L[2].cache[0].associativity = 8;
-               L[2].cache[0].line_size = 64;
-               L[2].cache[0].size = 2048;
-               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x29:
-               L[2].cache[0].associativity = 8;
-               L[2].cache[0].line_size = 64;
-               L[2].cache[0].size = 4096;
-               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x2C:
-	       L[0].cache[1].associativity = 8;
-               L[0].cache[1].line_size = 64;
-               L[0].cache[1].size = 32;
-               break;
-            case 0x30:
-	       L[0].cache[0].associativity = 8;
-               L[0].cache[0].line_size = 64;
-               L[0].cache[0].size = 32;
-            case 0x39:
-               L[1].cache[0].associativity = 4;
-               L[1].cache[0].line_size = 64;
-               L[1].cache[0].size = 128;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x3A:
-               L[1].cache[0].associativity = 6;
-               L[1].cache[0].line_size = 64;
-               L[1].cache[0].size = 192;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x3B:
-               L[1].cache[0].associativity = 2;
-               L[1].cache[0].line_size = 64;
-               L[1].cache[0].size = 128;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x3C:
-               L[1].cache[0].associativity = 4;
-               L[1].cache[0].line_size = 64;
-               L[1].cache[0].size = 256;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x3D:
-               L[1].cache[0].associativity = 6;
-               L[1].cache[0].line_size = 64;
-               L[1].cache[0].size = 384;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x3E:
-               L[1].cache[0].associativity = 4;
-               L[1].cache[0].line_size = 64;
-               L[1].cache[0].size = 512;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x40:
-               if (L[1].cache[1].size) {
-                  /* We have valid L2 cache, but no L3 */
-                  L[2].cache[1].size = 0;
-               } else {
-                  /* We have no L2 cache */
-                  L[1].cache[1].size = 0;
-               }
-               break;
-            case 0x41:
-               L[1].cache[0].size = 128;
-               L[1].cache[0].associativity = 4;
-               L[1].cache[0].line_size = 32;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x42:
-               L[1].cache[0].size = 256;
-               L[1].cache[0].associativity = 4;
-               L[1].cache[0].line_size = 32;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x43:
-               L[1].cache[0].size = 512;
-               L[1].cache[0].associativity = 4;
-               L[1].cache[0].line_size = 32;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x44:
-               L[1].cache[0].size = 1024;
-               L[1].cache[0].associativity = 4;
-               L[1].cache[0].line_size = 32;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x45:
-               L[1].cache[0].size = 2048;
-               L[1].cache[0].associativity = 4;
-               L[1].cache[0].line_size = 32;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x46:
-               L[2].cache[0].size = 4096;
-               L[2].cache[0].associativity = 4;
-               L[2].cache[0].line_size = 64;
-               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x47:
-               L[2].cache[0].size = 8192;
-               L[2].cache[0].associativity = 8;
-               L[2].cache[0].line_size = 64;
-               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x49:
-               L[1].cache[0].size = 4096;
-               L[1].cache[0].associativity = 16;
-               L[1].cache[0].line_size = 64;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               L[2].cache[0].size = 4096;
-               L[2].cache[0].associativity = 16;
-               L[2].cache[0].line_size = 64;
-               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x4A:
-               L[2].cache[0].size = 6144;
-               L[2].cache[0].associativity = 12;
-               L[2].cache[0].line_size = 64;
-               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x4B:
-               L[2].cache[0].size = 8192;
-               L[2].cache[0].associativity = 16;
-               L[2].cache[0].line_size = 64;
-               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x4C:
-               L[2].cache[0].size = 12288;
-               L[2].cache[0].associativity = 12;
-               L[2].cache[0].line_size = 64;
-               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x4D:
-               L[2].cache[0].size = 16384;
-               L[2].cache[0].associativity = 16;
-               L[2].cache[0].line_size = 64;
-               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x50:
-               L[0].tlb[0].num_entries = 64;
-               L[0].tlb[0].associativity = 1;
-               break;
-            case 0x51:
-               L[0].tlb[0].num_entries = 128;
-               L[0].tlb[0].associativity = 1;
-               break;
-            case 0x52:
-               L[0].tlb[0].num_entries = 256;
-               L[0].tlb[0].associativity = 1;
-               break;
-            case 0x56:
-               L[0].tlb[1].num_entries = 16;
-               L[0].tlb[1].associativity = 4;
-               break;
-            case 0x57:
-               L[0].tlb[1].num_entries = 16;
-               L[0].tlb[1].associativity = 4;
-               break;
-            case 0x5B:
-               L[0].tlb[1].num_entries = 64;
-               L[0].tlb[1].associativity = 1;
-               break;
-            case 0x5C:
-               L[0].tlb[1].num_entries = 128;
-               L[0].tlb[1].associativity = 1;
-               break;
-            case 0x5D:
-               L[0].tlb[1].num_entries = 256;
-               L[0].tlb[1].associativity = 1;
-               break;
-	    case 0x60:
-	       L[0].cache[1].associativity = 8;
-               L[0].cache[1].line_size = 64;
-               L[0].cache[1].size = 16;
-               break;
-            case 0x66:
-               L[0].cache[1].associativity = 4;
-               L[0].cache[1].line_size = 64;
-               L[0].cache[1].size = 8;
-               break;
-            case 0x67:
-               L[0].cache[1].associativity = 4;
-               L[0].cache[1].line_size = 64;
-               L[0].cache[1].size = 16;
-               break;
-            case 0x68:
-               L[0].cache[1].associativity = 4;
-               L[0].cache[1].line_size = 64;
-               L[0].cache[1].size = 32;
-               break;
-	       /* Looks to me like these trace cache values
-	       (0x70 - 0x73) will overwrite L1 I-cache info.
-	       Should there be another slot in the cache table
-	       for them? - dkt 05/14/07*/
-            case 0x70:
-               /* 12k-uops trace cache */
-               L[0].cache[0].associativity = 8;
-               L[0].cache[0].size = 12;
-               L[0].cache[0].line_size = 0;
-               L[0].cache[0].type = PAPI_MH_TYPE_TRACE;
-               break;
-            case 0x71:
-               /* 16k-uops trace cache */
-               L[0].cache[0].associativity = 8;
-               L[0].cache[0].size = 16;
-               L[0].cache[0].line_size = 0;
-               L[0].cache[0].type = PAPI_MH_TYPE_TRACE;
-               break;
-            case 0x72:
-               /* 32k-uops trace cache */
-               L[0].cache[0].associativity = 8;
-               L[0].cache[0].size = 32;
-               L[0].cache[0].line_size = 0;
-               L[0].cache[0].type = PAPI_MH_TYPE_TRACE;
-               break;
-            case 0x73:
-               /* 64k-uops trace cache */
-               L[0].cache[0].associativity = 8;
-               L[0].cache[0].size = 64;
-               L[0].cache[0].line_size = 0;
-               L[0].cache[0].type = PAPI_MH_TYPE_TRACE;
-               break;
-            case 0x77:
-               /* This value is not in my copy of the Intel manual */
-               /* Once again IA-64 code, will most likely have to be moved */
-               /* This is sectored */
-               L[0].cache[0].size = 16;
-               L[0].cache[0].associativity = 4;
-               L[0].cache[0].line_size = 64;
-               break;
-            case 0x78:
-               L[1].cache[0].size = 1024;
-               L[1].cache[0].associativity = 4;
-               L[1].cache[0].line_size = 64;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x79:
-               L[1].cache[0].associativity = 8;
-               L[1].cache[0].line_size = 64;
-               L[1].cache[0].size = 128;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x7A:
-               L[1].cache[0].associativity = 8;
-               L[1].cache[0].line_size = 64;
-               L[1].cache[0].size = 256;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x7B:
-               L[1].cache[0].associativity = 8;
-               L[1].cache[0].line_size = 64;
-               L[1].cache[0].size = 512;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x7C:
-               L[1].cache[0].associativity = 8;
-               L[1].cache[0].line_size = 64;
-               L[1].cache[0].size = 1024;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x7D:
-               L[1].cache[0].associativity = 8;
-               L[1].cache[0].line_size = 64;
-               L[1].cache[0].size = 2048;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x7E:
-               /* This value is not in my copy of the Intel manual */
-               /* IA64 value */
-               L[1].cache[0].associativity = 8;
-               L[1].cache[0].line_size = 128;
-               L[1].cache[0].size = 256;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x7F:
-               L[1].cache[0].associativity = 2;
-               L[1].cache[0].line_size = 64;
-               L[1].cache[0].size = 512;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x81:
-               /* This value is not in my copy of the Intel manual */
-               /* This is not listed as IA64, but it might be, 
-                * Perhaps it is in an errata somewhere, I found the
-                * info at sandpile.org -KSL
-                */
-               L[1].cache[0].associativity = 8;
-               L[1].cache[0].line_size = 32;
-               L[1].cache[0].size = 128;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-            case 0x82:
-               L[1].cache[0].associativity = 8;
-               L[1].cache[0].line_size = 32;
-               L[1].cache[0].size = 256;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x83:
-               L[1].cache[0].associativity = 8;
-               L[1].cache[0].line_size = 32;
-               L[1].cache[0].size = 512;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x84:
-               L[1].cache[0].associativity = 8;
-               L[1].cache[0].line_size = 32;
-               L[1].cache[0].size = 1024;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x85:
-               L[1].cache[0].associativity = 8;
-               L[1].cache[0].line_size = 32;
-               L[1].cache[0].size = 2048;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x86:
-               L[1].cache[0].associativity = 4;
-               L[1].cache[0].line_size = 64;
-               L[1].cache[0].size = 512;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x87:
-               L[1].cache[0].associativity = 8;
-               L[1].cache[0].line_size = 64;
-               L[1].cache[0].size = 1024;
-               L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x88:
-               /* This value is not in my copy of the Intel manual */
-               /* IA64 */
-               L[2].cache[0].associativity = 4;
-               L[2].cache[0].line_size = 64;
-               L[2].cache[0].size = 2048;
-               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x89:
-               /* This value is not in my copy of the Intel manual */
-               /* IA64 */
-               L[2].cache[0].associativity = 4;
-               L[2].cache[0].line_size = 64;
-               L[2].cache[0].size = 4096;
-               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x8A:
-               /* This value is not in my copy of the Intel manual */
-               /* IA64 */
-               L[2].cache[0].associativity = 4;
-               L[2].cache[0].line_size = 64;
-               L[2].cache[0].size = 8192;
-               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x8D:
-               /* This value is not in my copy of the Intel manual */
-               /* IA64 */
-               L[2].cache[0].associativity = 12;
-               L[2].cache[0].line_size = 128;
-               L[2].cache[0].size = 3096;
-               L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-               break;
-            case 0x90:
-               L[0].tlb[0].associativity = 1;
-               L[0].tlb[0].num_entries = 64;
-               break;
-            case 0x96:
-               L[0].tlb[1].associativity = 1;
-               L[0].tlb[1].num_entries = 32;
-               break;
-            case 0x9b:
-               L[1].tlb[1].associativity = 1;
-               L[1].tlb[1].num_entries = 96;
-               break;
-            case 0xB0:
-               L[0].tlb[0].associativity = 4;
-               L[0].tlb[0].num_entries = 128;
-               break;
-            case 0xB1:
-		/* 4MB pages @ 4 way assoc
-		or 2MB pages @ 8 way assoc */
-               L[0].tlb[0].associativity = 4;
-               L[0].tlb[0].num_entries = 4;
-               break;
-            case 0xB3:
-               L[0].tlb[1].associativity = 4;
-               L[0].tlb[1].num_entries = 128;
-               break;
-            case 0xB4:
-               L[0].tlb[1].associativity = 4;
-               L[0].tlb[1].num_entries = 256;
-               break;
-               /* Note, there are still various IA64 cases not mapped yet */
-               /* I think I have them all now 9/10/04 */
-            }
-            value = value >> 8;
-         }
-      }
-   }
-   /* Scan memory hierarchy elements to look for non-zero structures.
-      If a structure is not empty, it must be marked as type DATA or type INST.
-      By convention, this routine always assumes {tlb,cache}[0] is INST and
-      {tlb,cache}[1] is DATA. If Intel produces a unified TLB or cache, this
-      algorithm will fail.
-   */
-  /* There are a bunch of Unified caches, changed slightly to support this 
-   * Unified should be in slot 0
-   */
-   for (i = 0; i < 3; i++) {
-      if( L[i].tlb[0].type == PAPI_MH_TYPE_EMPTY ) {
-         if (L[i].tlb[0].num_entries) L[i].tlb[0].type = PAPI_MH_TYPE_INST;
-         if (L[i].tlb[1].num_entries) L[i].tlb[1].type = PAPI_MH_TYPE_DATA;
-      }
-      if ( L[i].cache[0].type == PAPI_MH_TYPE_EMPTY) {
-         if (L[i].cache[0].size) L[i].cache[0].type = PAPI_MH_TYPE_INST;
-         if (L[i].cache[1].size) L[i].cache[1].type = PAPI_MH_TYPE_DATA;
-      }
-   }
+#ifdef DEBUG
+	if (ISLEVEL(DEBUG_MEMORY))
+		print_intel_cache_table();
+#endif
 
-   return PAPI_OK;
+	reg.e.ax = 0x2; /* function code 2: cache descriptors */
+	cpuid(&reg.e.ax, &reg.e.bx, &reg.e.cx, &reg.e.dx);
+
+	MEMDBG("e.ax=0x%8.8x e.bx=0x%8.8x e.cx=0x%8.8x e.dx=0x%8.8x\n",
+		reg.e.ax, reg.e.bx, reg.e.cx, reg.e.dx);
+	MEMDBG(":\nd0: %x %x %x %x\nd1: %x %x %x %x\nd2: %x %x %x %x\nd3: %x %x %x %x\n",
+		reg.descrip[0], reg.descrip[1], reg.descrip[2], reg.descrip[3],
+		reg.descrip[4], reg.descrip[5], reg.descrip[6], reg.descrip[7],
+		reg.descrip[8], reg.descrip[9], reg.descrip[10], reg.descrip[11],
+		reg.descrip[12], reg.descrip[13], reg.descrip[14], reg.descrip[15]);
+
+	count = reg.descrip[0]; /* # times to repeat CPUID call. Not implemented. */
+	size = (sizeof(intel_cache)/sizeof(struct _intel_cache_info)); /* # descriptors */
+	MEMDBG("Repeat cpuid(2,...) %d times. If not 1, code is broken.\n", count);
+	for (r = 0; r < 4; r++) { /* walk the registers */
+		if ((reg.descrip[r*4+3] & 0x80) == 0) { /* only process if high order bit is 0 */
+			for (b = 3; b >= 0; b--) { /* walk the descriptor bytes from high to low */
+				i = r*4+b; /* calculate an index into the array of descriptors */
+				if (i) { /* skip the low order byte in eax [0]; it's the count (see above) */
+					for (t = 0; t < size; t++) { /* walk the descriptor table */
+						if (reg.descrip[i] == intel_cache[t].descriptor) { /* find match */
+							if (intel_cache[t].level > last_level)
+								last_level = intel_cache[t].level;
+							intel_decode_descriptor(&intel_cache[t], mh_info->level);
+						}
+					}
+				}
+			}
+		}
+	}
+	MEMDBG("# of Levels: %d\n",last_level);
+	return(last_level);
 }
 
 /* Checks to see if cpuid exists on this processor, if
