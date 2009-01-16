@@ -106,7 +106,7 @@ pfm_pmu_support_t *gen_support;
 #define FIXED_PMD_BASE		16
 
 #define PFMLIB_GEN_IA32_ALL_FLAGS \
-	(PFM_GEN_IA32_SEL_INV|PFM_GEN_IA32_SEL_EDGE)
+	(PFM_GEN_IA32_SEL_INV|PFM_GEN_IA32_SEL_EDGE|PFM_GEN_IA32_SEL_ANYTHR)
 
 static char * pfm_gen_ia32_get_event_name(unsigned int i);
 
@@ -275,7 +275,7 @@ pfm_gen_ia32_init(void)
 		 * when forced, simulate v2
 		 * with 2 generic and 3 fixed counters
 		 */
-		eax.eax.version = 2;
+		eax.eax.version = 3;
 		eax.eax.num_cnt = 2;
 		eax.eax.cnt_width = 40;
 		eax.eax.ebx_length = 0; /* unused */
@@ -574,7 +574,7 @@ pfm_gen_ia32_dispatch_counters_v23(pfmlib_input_param_t *inp, pfmlib_gen_ia32_in
 		/*
 		 * check for valid flags
 		 */
-		if (e[j].flags & ~PFMLIB_GEN_IA32_ALL_FLAGS)
+		if (cntrs && cntrs[j].flags & ~PFMLIB_GEN_IA32_ALL_FLAGS)
 			return PFMLIB_ERR_INVAL;
 
 		if (cntrs && pmu_version != 3 && (cntrs[j].flags & PFM_GEN_IA32_SEL_ANYTHR)) {
@@ -593,8 +593,13 @@ pfm_gen_ia32_dispatch_counters_v23(pfmlib_input_param_t *inp, pfmlib_gen_ia32_in
 	if (fixed_ctr_mask) {
 		for(i=0; i < n; i++) {
 			/* fixed counters do not support event options (filters) */
-			if (HAS_OPTIONS(i))
-				continue;
+			if (HAS_OPTIONS(i)) {
+				if (pmu_version != 3)
+					continue;
+				if (cntrs[i].flags != PFM_GEN_IA32_SEL_ANYTHR)
+					continue;
+				/* ok for ANYTHR */
+			}
 			for(j=0; j < num_fixed_cnt; j++) {
 				if ((fixed_ctr_mask & (1<<j)) && gen_ia32_pe[e[i].event].pme_fixed == (FIXED_PMD_BASE+j)) {
 					assign[i] = FIXED_PMD_BASE+j;
@@ -634,6 +639,11 @@ pfm_gen_ia32_dispatch_counters_v23(pfmlib_input_param_t *inp, pfmlib_gen_ia32_in
 			val |= 1ULL;
 		if (plm & PFM_PLM3)
 			val |= 2ULL;
+
+		/* only possible for v3 */
+		if (cntrs[i].flags & PFM_GEN_IA32_SEL_ANYTHR)
+			val |= 4ULL;
+
 		val |= 1ULL << 3;	 /* force APIC int (kernel may force it anyway) */
 
 		reg.val |= val << ((assign[i]-FIXED_PMD_BASE)<<2);
@@ -653,9 +663,16 @@ pfm_gen_ia32_dispatch_counters_v23(pfmlib_input_param_t *inp, pfmlib_gen_ia32_in
 				reg.val);
 
 		for(i=0; i < num_fixed_cnt; i++) {
-			__pfm_vbprintf(" pmi%d=1 en%d=0x%"PRIx64,
-				i, i,
-				(reg.val >> (i*4)) & 0x3ULL);
+			if (pmu_version != 3) 
+				__pfm_vbprintf(" pmi%d=1 en%d=0x%"PRIx64,
+					i, i,
+					(reg.val >> (i*4)) & 0x3ULL);
+			else
+				__pfm_vbprintf(" pmi%d=1 en%d=0x%"PRIx64 " any%d=%"PRId64,
+					i, i,
+					(reg.val >> (i*4)) & 0x3ULL,
+					i,
+					!!((reg.val >> (i*4)) & 0x4ULL));
 		}
 
 		__pfm_vbprintf("] ");

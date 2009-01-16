@@ -117,8 +117,8 @@ typedef struct {
 } thread_desc_t;
 
 typedef struct _setdesc_t {
-	pfarg_pmc_t		pc[RTOP_NUM_PMDS];
-	pfarg_pmd_t		pd[RTOP_NUM_PMCS];
+	pfarg_pmr_t		pc[RTOP_NUM_PMDS];
+	pfarg_pmr_t		pd[RTOP_NUM_PMCS];
 	pfmlib_input_param_t	inp;
 	pfmlib_output_param_t	outp;
 	uint16_t		set_id;
@@ -152,7 +152,6 @@ typedef struct {
 static barrier_t 		barrier;
 static session_state_t		session_state;
 static program_options_t 	options;
-static pfarg_ctx_t 		master_ctx;
 static thread_desc_t		*thread_info;
 static struct termios		saved_tty;
 static int			time_to_quit;
@@ -498,8 +497,8 @@ handler_set0(int fd, FILE *fp, thread_desc_t *td, setdesc_t *my_sdesc)
 	/*
 	 * now read the results
 	 */
-	if (pfm_read_pmds(fd, my_sdesc->pd, my_sdesc->inp.pfp_event_count) == -1) {
-		warning( "CPU%ld pfm_read_pmds error errno %d\n", mycpu, errno);
+	if (pfm_read(fd, 0, PFM_RW_PMD, my_sdesc->pd, my_sdesc->inp.pfp_event_count * sizeof(pfarg_pmr_t)) == -1) {
+		warning( "CPU%ld pfm_readerror errno %d\n", mycpu, errno);
 		return -1;
 	}
 
@@ -545,9 +544,7 @@ static void
 do_measure_one_cpu(void *data)
 {
 	thread_desc_t	*arg= (thread_desc_t *)data;
-	pfarg_ctx_t	ctx;
-	pfarg_load_t	load_args;
-	pfarg_setdesc_t	setd;
+	pfarg_set_desc_t	setd;
 	setdesc_t 	*my_sdesc, *my_sdesc_tab = NULL;
 	long		mycpu;
 	sem_t		*his_sem;
@@ -594,15 +591,12 @@ do_measure_one_cpu(void *data)
 
 	}
 
-	memset(&load_args, 0, sizeof(load_args));
 	memset(&setd, 0, sizeof(setd));
 
 	ret = pin_self_cpu(mycpu);
 	if (ret) {
 		warning("CPU%ld cannot pin\n");
 	}
-
-	ctx = master_ctx;
 
 	my_sdesc_tab = malloc(sizeof(setdesc_t)*RTOP_NUM_SDESC);
 	if (my_sdesc_tab == NULL) {
@@ -612,12 +606,12 @@ do_measure_one_cpu(void *data)
 
 	memcpy(my_sdesc_tab, setdesc_tab, sizeof(setdesc_t)*RTOP_NUM_SDESC);
 
-	fd = pfm_create_context(&ctx, NULL, NULL, 0);
+	fd = pfm_create(PFM_FL_SYSTEM_WIDE, NULL);
 	if (fd == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
-		warning("CPU%ld cannot create context: %d\n", mycpu, errno);
+		warning("CPU%ld cannot create session: %d\n", mycpu, errno);
 		goto error;
 	}
 
@@ -636,14 +630,14 @@ do_measure_one_cpu(void *data)
 		/*
  		 * do not bother if we have only one set
  		 */
-		if (RTOP_NUM_SDESC > 1 && pfm_create_evtsets(fd, &setd, 1) == -1) {
+		if (RTOP_NUM_SDESC > 1 && pfm_create_sets(fd, 0, &setd, 1) == -1) {
 			warning("CPU%ld cannot create set%u: %d\n", mycpu, j, errno);
 			goto error;
 		}
 		my_sdesc->set_timeout = setd.set_timeout;
 
-		if (pfm_write_pmcs(fd, my_sdesc->pc, my_sdesc->outp.pfp_pmc_count) == -1) {
-			warning("CPU%ld pfm_write_pmcs error errno %d\n", mycpu, errno);
+		if (pfm_write(fd, 0, PFM_RW_PMC, my_sdesc->pc, my_sdesc->outp.pfp_pmc_count * sizeof(pfarg_pmr_t)) == -1) {
+			warning("CPU%ld pfm_write error errno %d\n", mycpu, errno);
 			goto error;
 		}
 
@@ -651,8 +645,8 @@ do_measure_one_cpu(void *data)
 	 	 * To be read, each PMD must be either written or declared
 	 	 * as being part of a sample (reg_smpl_pmds)
 	 	 */
-		if (pfm_write_pmds(fd, my_sdesc->pd, my_sdesc->inp.pfp_event_count) == -1) {
-			warning("CPU%ld pfm_write_pmds error errno %d\n", mycpu, errno);
+		if (pfm_write(fd, 0, PFM_RW_PMD, my_sdesc->pd, my_sdesc->inp.pfp_event_count * sizeof(pfarg_pmr_t)) == -1) {
+			warning("CPU%ld pfm_write(PMD) error errno %d\n", mycpu, errno);
 			goto error;
 		}
 	}
@@ -662,10 +656,8 @@ do_measure_one_cpu(void *data)
 	 * to monitor. The kernel checks and if calling from the wrong CPU, the
 	 * call fails. The affinity is not affected.
 	 */
-	load_args.load_pid = mycpu;
-
-	if (pfm_load_context(fd, &load_args) == -1) {
-		warning("CPU%ld pfm_load_context error errno %d\n", mycpu, errno);
+	if (pfm_attach(fd, 0, mycpu) == -1) {
+		warning("CPU%ld pfm_attach error errno %d\n", mycpu, errno);
 		goto error;
 	}
 
@@ -682,8 +674,8 @@ do_measure_one_cpu(void *data)
 
 	for(;session_state == SESSION_RUN;) {
 
-		if (pfm_start(fd, NULL) == -1) {
-			warning("CPU%ld pfm_start error errno %d\n", mycpu, errno);
+		if (pfm_set_state(fd, 0, PFM_ST_START) == -1) {
+			warning("CPU%ld pfm_set_state(start) error errno %d\n", mycpu, errno);
 			goto error;
 		}
 
@@ -692,8 +684,8 @@ do_measure_one_cpu(void *data)
 		 */
 		sem_wait(his_sem);
 
-		if (pfm_stop(fd) == -1) {
-			warning("CPU%ld pfm_stop error %d\n", mycpu, errno);
+		if (pfm_set_state(fd, 0, PFM_ST_STOP) == -1) {
+			warning("CPU%ld pfm_set_state(stop) error %d\n", mycpu, errno);
 			goto error;
 		}
 
@@ -840,7 +832,7 @@ abort:
 static void
 setup_measurement(void)
 {
-
+	pfarg_sinfo_t sif;
 	pfmlib_options_t pfmlib_options;
 	eventdesc_t *evt;
 	setdesc_t *sdesc;
@@ -863,14 +855,11 @@ setup_measurement(void)
 	if (ret != PFMLIB_SUCCESS)
 		fatal_error("Cannot initialize library: %s\n", pfm_strerror(ret));
 
-	/*
-	 * In system wide mode, the perfmon context cannot be inherited.
-	 * Also in this mode, we cannot use the blocking form of user level notification.
-	 */
-	master_ctx.ctx_flags = PFM_FL_SYSTEM_WIDE;
-
 	if (pfm_get_cycle_event(&trigger_event) != PFMLIB_SUCCESS)
 		fatal_error("cannot find cycle event for trigger\n");
+
+	memset(&sif, 0, sizeof(sif));
+	get_sif(PFM_FL_SYSTEM_WIDE, &sif);
 
 	for(i=0; i < RTOP_NUM_SDESC; i++) {
 
@@ -907,7 +896,7 @@ setup_measurement(void)
 	 	 * use. Of source, it is possible that no valid assignement may
 	 	 * be possible if certina PMU registers  are not available.
 	 	 */
-		detect_unavail_pmcs(-1, &sdesc->inp.pfp_unavail_pmcs);
+		detect_unavail_pmu_regs(&sif, &sdesc->inp.pfp_unavail_pmcs, NULL);
 
 		/*
 		 * let the library figure out the values for the PMCS

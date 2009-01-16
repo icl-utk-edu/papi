@@ -113,10 +113,9 @@ main(int argc, char **argv)
 	int ret, ctx_fd;
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
-	pfarg_pmd_t pd[NUM_PMDS];
-	pfarg_pmc_t pc[NUM_PMCS];
-	pfarg_ctx_t ctx;
-	pfarg_load_t load_args;
+	pfarg_pmr_t pd[NUM_PMDS];
+	pfarg_pmr_t pc[NUM_PMCS];
+	pfarg_sinfo_t sif;
 	pfmlib_options_t pfmlib_options;
 	unsigned int num_counters;
 	int pr[2], pw[2];
@@ -174,14 +173,14 @@ main(int argc, char **argv)
 
 	memset(pd, 0, sizeof(pd));
 	memset(pc, 0, sizeof(pc));
-	memset(&ctx, 0, sizeof(ctx));
-	memset(&load_args, 0, sizeof(load_args));
 
 	/*
 	 * prepare parameters to library.
 	 */
 	memset(&inp,0, sizeof(inp));
 	memset(&outp,0, sizeof(outp));
+
+	memset(&sif,0, sizeof(sif));
 
 	/*
 	 * be nice to user!
@@ -219,15 +218,15 @@ main(int argc, char **argv)
 	inp.pfp_event_count = i;
 
 	/*
-	 * now create a new context, per process context.
-	 * This just creates a new context with some initial state, it is not
+	 * now create a new per-thread session.
+	 * This just creates a new session with some initial state, it is not
 	 * active nor attached to any process.
 	 */
-	ctx_fd = pfm_create_context(&ctx, NULL, NULL, 0);
+	ctx_fd = pfm_create(0, &sif);
 	if (ctx_fd == -1)  {
 		if (errno == ENOSYS)
 			fatal_error("Your kernel does not have performance monitoring support!\n");
-		fatal_error("Can't create PFM context %s\n", strerror(errno));
+		fatal_error("cannot create session%s\n", strerror(errno));
 	}
 
 	/*
@@ -241,7 +240,7 @@ main(int argc, char **argv)
 	 * use. Of source, it is possible that no valid assignement may
 	 * be possible if certain PMU registers  are not available.
 	 */
-	detect_unavail_pmcs(ctx_fd, &inp.pfp_unavail_pmcs);
+	detect_unavail_pmu_regs(&sif, &inp.pfp_unavail_pmcs, NULL);
 
 	/*
 	 * let the library figure out the values for the PMCS
@@ -269,18 +268,17 @@ main(int argc, char **argv)
 	/*
 	 * Now program the registers
 	 */
-	if (pfm_write_pmcs(ctx_fd, pc, outp.pfp_pmc_count))
-		fatal_error("pfm_write_pmcs error errno %d\n",errno);
+	if (pfm_write(ctx_fd, 0, PFM_RW_PMC, pc, outp.pfp_pmc_count * sizeof(*pc)))
+		fatal_error("pfm_write error errno %d\n",errno);
 
-	if (pfm_write_pmds(ctx_fd, pd, outp.pfp_pmd_count))
-		fatal_error("pfm_write_pmds error errno %d\n",errno);
+	if (pfm_write(ctx_fd, 0, PFM_RW_PMD, pd, outp.pfp_pmd_count * sizeof(*pd)))
+		fatal_error("pfm_write(PMD) error errno %d\n",errno);
 
 	/*
-	 * now we load (i.e., attach) the context to ourself
+	 * now we attached the session to ourself
 	 */
-	load_args.load_pid = getpid();
-	if (pfm_load_context(ctx_fd, &load_args))
-		fatal_error("pfm_load_context error errno %d\n",errno);
+	if (pfm_attach(ctx_fd, 0, getpid()))
+		fatal_error("pfm_attach error errno %d\n",errno);
 
 	/*
  	 * create second process which is not monitoring at the moment
@@ -289,7 +287,7 @@ main(int argc, char **argv)
 		case -1:
 			fatal_error("cannot create child\n");
 		case 0:
-			/* do not inherit context fd */
+			/* do not inherit session fd */
 			close(ctx_fd);
 			/* pr[]: write master, read child */
 			/* pw[]: read master, write child */
@@ -304,8 +302,8 @@ main(int argc, char **argv)
 	/*
 	 * Let's roll now
 	 */
-	if (pfm_start(ctx_fd, NULL))
-		fatal_error("pfm_start error errno %d\n",errno);
+	if (pfm_set_state(ctx_fd, 0, PFM_ST_START))
+		fatal_error("pfm_set_state(start) error errno %d\n",errno);
 
 	signal(SIGALRM, sig_handler);
 	alarm(10);
@@ -317,16 +315,16 @@ main(int argc, char **argv)
 		nbytes = read(pw[0], &c, 1);	
 	}
 
-	if (pfm_stop(ctx_fd))
-		fatal_error("pfm_stop error errno %d\n",errno);
+	if (pfm_set_state(ctx_fd, 0, PFM_ST_STOP))
+		fatal_error("pfm_set_state(stop) error errno %d\n",errno);
 
 	/*
 	 * now read the results. We use pfp_event_count because
 	 * libpfm guarantees that counters for the events always
 	 * come first.
 	 */
-	if (pfm_read_pmds(ctx_fd, pd, inp.pfp_event_count))
-		fatal_error( "pfm_read_pmds error errno %d\n",errno);
+	if (pfm_read(ctx_fd, 0, PFM_RW_PMD, pd, inp.pfp_event_count * sizeof(*pd)))
+		fatal_error( "pfm_read error errno %d\n",errno);
 
 	/*
 	 * print the results
@@ -349,7 +347,7 @@ main(int argc, char **argv)
 	close(pr[1]);
 	close(pw[0]);
 	/*
-	 * and destroy our context
+	 * and destroy our session
 	 */
 	close(ctx_fd);
 	return 0;

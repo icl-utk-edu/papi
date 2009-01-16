@@ -31,7 +31,7 @@ extern "C" {
 #include <perfmon/pfmlib_os.h>
 #include <perfmon/pfmlib_comp.h>
 
-#define PFMLIB_VERSION		(3 << 16 | 5)
+#define PFMLIB_VERSION		(3 << 16 | 6)
 #define PFMLIB_MAJ_VERSION(v)	((v)>>16)
 #define PFMLIB_MIN_VERSION(v)	((v) & 0xffff)
 
@@ -235,6 +235,7 @@ extern pfm_err_t pfm_get_inst_retired_event(pfmlib_event_t *e);
 #define PFMLIB_INTEL_PPRO_PMU		37	/* Intel Pentium Pro */
 #define PFMLIB_INTEL_PII_PMU		38	/* Intel Pentium II */
 #define PFMLIB_INTEL_ATOM_PMU		39	/* Intel Atom */
+#define PFMLIB_INTEL_NHM_PMU            40      /* Intel Nehalem */
 
 #define PFMLIB_MIPS_20KC_PMU		64	/* MIPS 20KC */
 #define PFMLIB_MIPS_24K_PMU		65	/* MIPS 24K */

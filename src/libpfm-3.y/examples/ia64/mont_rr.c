@@ -125,10 +125,8 @@ main(int argc, char **argv)
 	pfmlib_output_param_t outp;
 	pfmlib_mont_input_param_t mont_inp;
 	pfmlib_mont_output_param_t mont_outp;
-	pfarg_pmd_t pd[NUM_PMDS];
-	pfarg_pmc_t pc[NUM_PMCS];
-	pfarg_ctx_t ctx;
-	pfarg_load_t load_args;
+	pfarg_pmr_t pd[NUM_PMDS];
+	pfarg_pmr_t pc[NUM_PMCS];
 	pfmlib_options_t pfmlib_options;
 	unsigned int i;
 	int id, num_pmcs = 0;
@@ -176,8 +174,6 @@ main(int argc, char **argv)
 	
 	memset(pd, 0, sizeof(pd));
 	memset(pc, 0, sizeof(pc));
-	memset(&ctx, 0, sizeof(ctx));
-	memset(&load_args, 0, sizeof(load_args));
 
 	/*
 	 * prepare parameters to library. we don't use any Itanium
@@ -249,14 +245,13 @@ main(int argc, char **argv)
 			(unsigned long)test_data_fake+sizeof(test_data_t)*TEST_DATA_COUNT);
 
 	/*
-	 * now create the context for self monitoring/per-task
+	 * now create the session
 	 */
-	id = pfm_create_context(&ctx, NULL, NULL, 0);
+	id = pfm_create(0, NULL);
 	if (id == -1) {
-		if (errno == ENOSYS) {
+		if (errno == ENOSYS)
 			fatal_error("Your kernel does not have performance monitoring support!\n");
-		}
-		fatal_error("Can't create PFM context %s\n", strerror(errno));
+		fatal_error("cannot create session %s\n", strerror(errno));
 	}
 	/*
 	 * Now prepare the argument to initialize the PMDs and PMCS.
@@ -295,19 +290,17 @@ main(int argc, char **argv)
 	 * the kernel because, as we said earlier, pc may contain more elements than
 	 * the number of events we specified, i.e., contains more than coutning monitors.
 	 */
-	if (pfm_write_pmcs(id, pc, num_pmcs))
-		fatal_error("child: pfm_write_pmcs error errno %d\n",errno);
+	if (pfm_write(id, 0, PFM_RW_PMC, pc, num_pmcs * sizeof(*pc)))
+		fatal_error("pfm_write error errno %d\n",errno);
 
-	if (pfm_write_pmds(id, pd, outp.pfp_pmd_count))
-		fatal_error( "child: pfm_write_pmds error errno %d\n",errno);
+	if (pfm_write(id, 0, PFM_RW_PMD, pd, outp.pfp_pmd_count * sizeof(*pd)))
+		fatal_error( "pfm_write(PMD) error errno %d\n",errno);
 
 	/*
-	 * now we load (i.e., attach) the context to ourself
+	 * now attach session
 	 */
-	load_args.load_pid = getpid();
-
-	if (pfm_load_context(id, &load_args))
-		fatal_error("pfm_load_context error errno %d\n",errno);
+	if (pfm_attach(id, 0, getpid()))
+		fatal_error("pfm_attach error errno %d\n",errno);
 
 	/*
 	 * Let's make sure that the hardware does the unaligned accesses (do not use the
@@ -325,20 +318,23 @@ main(int argc, char **argv)
 	 * This is an artificial example just to demonstrate how to use data address range
 	 * restrictions.
 	 */
-	pfm_self_start(id);
+
+	if (pfm_set_state(id, 0, PFM_ST_START))
+		fatal_error("pfm_set_state error errno %d\n",errno);
 
 	for(i=0; i < N_LOOP; i++) {
 		do_test(test_data);
 		do_test(test_data_fake);
 	}
 
-	pfm_self_stop(id);
+	if (pfm_set_state(id, 0, PFM_ST_STOP))
+		fatal_error("pfm_set_state error errno %d\n",errno);
 
 	/*
 	 * now read the results
 	 */
-	if (pfm_read_pmds(id, pd, inp.pfp_event_count))
-		fatal_error("pfm_read_pmds error errno %d\n",errno);
+	if (pfm_read(id, 0, PFM_RW_PMD, pd, inp.pfp_event_count * sizeof(*pd)))
+		fatal_error("pfm_read error errno %d\n",errno);
 
 	/*
 	 * print the results

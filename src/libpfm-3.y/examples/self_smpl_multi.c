@@ -62,10 +62,8 @@ struct over_args {
 	pfmlib_event_t ev;
 	pfmlib_input_param_t  inp;
 	pfmlib_output_param_t outp;
-	pfarg_pmc_t pc[PFMLIB_MAX_PMCS];
-	pfarg_pmd_t pd[PFMLIB_MAX_PMDS];
-	pfarg_ctx_t ctx;
-	pfarg_load_t load_arg;
+	pfarg_pmr_t pc[PFMLIB_MAX_PMCS];
+	pfarg_pmd_attr_t pd[PFMLIB_MAX_PMDS];
 	int fd;
 	pid_t tid;
 	pthread_t self;
@@ -156,7 +154,7 @@ sigio_handler(int sig, siginfo_t *info, void *context)
 
 	/*
 	 * file descripor is the only reliable source of information
-	 * to identify context from which the notification originated
+	 * to identify session from which the notification originated
 	 *
 	 * Depending on scheduling, the signal may not be processed by the
 	 * thread which posted it, i.e., the thread which had the nortification
@@ -180,10 +178,10 @@ sigio_handler(int sig, siginfo_t *info, void *context)
 		DPRINT("bad thread");
 	}
 
+	pfm_read(fd, 0, PFM_RW_PMD, &ov->pd[1], sizeof(pfarg_pmd_attr_t));
 	/*
  	 * extract notification message
  	 */
-	pfm_read_pmds(fd, &ov->pd[1], 1);
 	if (read(fd, &msg, sizeof(msg)) != sizeof(msg))
 		errx(1, "read from sigio fd failed");
 
@@ -200,11 +198,11 @@ sigio_handler(int sig, siginfo_t *info, void *context)
 	user_callback(fd);
 
 	/*
- 	 * when context is not that of the current thread, pfm_restart() does
+ 	 * when session is not that of the current thread, pfm_restart() does
  	 * not guarante that upon return monitoring will be resumed. There
  	 * may be a delay due to scheduling.
  	 */
-	if (pfm_restart(fd) != 0) {
+	if (pfm_set_state(fd, 0, PFM_ST_RESTART) != 0) {
 		bad_restart[fd]++;
 		DPRINT("bad restart");
 	}
@@ -214,8 +212,10 @@ void
 overflow_start(struct over_args *ov, char *name)
 {
 	int i, fd, flags;
+	pfarg_sinfo_t sif;
 
 	memset(ov, 0, sizeof(struct over_args));
+	memset(&sif, 0, sizeof(sif));
 
 	if (pfm_get_cycle_event(&ov->ev) != PFMLIB_SUCCESS)
 		errx(1, "pfm_get_cycle_event failed");
@@ -225,16 +225,16 @@ overflow_start(struct over_args *ov, char *name)
 	ov->inp.pfp_flags = 0;
 	ov->inp.pfp_events[0] = ov->ev;
 
-	fd = pfm_create_context(&ov->ctx, NULL, NULL, 0);
+	fd = pfm_create(0, &sif);
 	if (fd < 0)
-		errx(1, "pfm_create_context failed");
+		errx(1, "pfm_create_session failed");
 
 	fd2ov[fd] = ov;
 	ov->fd = fd;
 	ov->tid = gettid();
 	ov->self = pthread_self();
 
-	detect_unavail_pmcs(fd, &ov->inp.pfp_unavail_pmcs);
+	detect_unavail_pmu_regs(&sif, &ov->inp.pfp_unavail_pmcs, NULL);
 
 	if (pfm_dispatch_events(&ov->inp, NULL, &ov->outp, NULL) != PFMLIB_SUCCESS)
 		errx(1, "pfm_dispatch_events failed");
@@ -252,16 +252,14 @@ overflow_start(struct over_args *ov, char *name)
 	ov->pd[0].reg_long_reset = - threshold;
 	ov->pd[0].reg_short_reset = - threshold;
 
-	if (pfm_write_pmcs(fd, ov->pc, ov->outp.pfp_pmc_count))
-		errx(1, "pfm_write_pmcs failed");
+	if (pfm_write(fd, 0, PFM_RW_PMC, ov->pc, ov->outp.pfp_pmc_count * sizeof(pfarg_pmr_t)))
+		errx(1, "pfm_write failed");
 
-	if (pfm_write_pmds(fd, ov->pd, ov->outp.pfp_pmd_count))
-		errx(1, "pfm_write_pmds failed");
+	if (pfm_write(fd, 0, PFM_RW_PMD_ATTR, ov->pd, ov->outp.pfp_pmd_count * sizeof(pfarg_pmd_attr_t)))
+		errx(1, "pfm_write(PMD) failed");
 
-	ov->load_arg.load_pid = gettid();
-
-	if (pfm_load_context(fd, &ov->load_arg) != 0)
-		errx(1, "pfm_load_context failed");
+	if (pfm_attach(fd, 0, gettid()) != 0)
+		errx(1, "pfm_attach failed");
 
 	flags = fcntl(fd, F_GETFL, 0);
 	if (fcntl(fd, F_SETFL, flags | O_ASYNC) < 0)
@@ -273,7 +271,8 @@ overflow_start(struct over_args *ov, char *name)
 	if (fcntl(fd, F_SETSIG, signum) < 0)
 		errx(1, "fcntl SETSIG failed");
 
-	pfm_self_start(fd);
+	if (pfm_set_state(fd, 0, PFM_ST_START))
+		errx(1, "pfm_set_state(start) failed");
 
 	printf("launch %s: fd: %d, tid: %d, self: %p\n",
 		name, fd, ov->tid, (void *)ov->self);
@@ -282,7 +281,8 @@ overflow_start(struct over_args *ov, char *name)
 void
 overflow_stop(struct over_args *ov)
 {
-	pfm_self_stop(ov->fd);
+	if (pfm_set_state(ov->fd, 0, PFM_ST_STOP))
+		errx(1, "pfm_set_state(stop) failed");
 }
 
 void *

@@ -39,8 +39,8 @@
 /* private headers */
 #include "pfmlib_priv.h"		/* library private */
 #include "pfmlib_sicortex_priv.h"	/* architecture private */
-#include "sicortex/ice9/ice9a_all_spec_pme.h"
-#include "sicortex/ice9/ice9b_all_spec_pme.h"
+#include "sicortex/ice9a/ice9a_all_spec_pme.h"
+#include "sicortex/ice9b/ice9b_all_spec_pme.h"
 #include "sicortex/ice9/ice9_scb_spec_sw.h"
 
 /* let's define some handy shortcuts! */

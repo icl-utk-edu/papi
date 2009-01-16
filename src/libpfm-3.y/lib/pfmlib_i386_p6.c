@@ -291,7 +291,7 @@ pfm_i386_p6_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_i386_p6_input_pa
 			return PFMLIB_ERR_INVAL;
 		}
 
-		if (e[j].flags & ~PFMLIB_I386_P6_ALL_FLAGS) {
+		if (cntrs && cntrs[j].flags & ~PFMLIB_I386_P6_ALL_FLAGS) {
 			DPRINT("event=%d invalid flags=0x%lx\n", e[j].event, e[j].flags);
 			return PFMLIB_ERR_INVAL;
 		}

@@ -267,7 +267,7 @@ skip:
 }
 
 static int
-setup_pmu_ibsop_native(pfarg_pmc_t *pc, pfarg_pmd_t *pd)
+setup_pmu_ibsop_native(pfarg_pmr_t *pc, pfarg_pmr_t *pd, pfarg_pmd_attr_t *pa)
 {
 	uint64_t ibs_ops_smpl;
 
@@ -305,22 +305,23 @@ setup_pmu_ibsop_native(pfarg_pmc_t *pc, pfarg_pmd_t *pd)
 	pd[0].reg_num = 7;
 	pd[0].reg_flags = PFM_REGFL_OVFL_NOTIFY;
 	pd[0].reg_value =  pc[0].reg_value;
-	pd[0].reg_long_reset  = pc[0].reg_value;
-	pd[0].reg_short_reset = pc[0].reg_value;
 
-	pfm_bv_set(pd[0].reg_smpl_pmds, 7);
-	pfm_bv_set(pd[0].reg_smpl_pmds, 8);
-	pfm_bv_set(pd[0].reg_smpl_pmds, 9);
-	pfm_bv_set(pd[0].reg_smpl_pmds, 10);
-	pfm_bv_set(pd[0].reg_smpl_pmds, 11);
-	pfm_bv_set(pd[0].reg_smpl_pmds, 12);
-	pfm_bv_set(pd[0].reg_smpl_pmds, 13);
+	pa[0].reg_long_reset  = pc[0].reg_value;
+	pa[0].reg_short_reset = pc[0].reg_value;
+
+	pfm_bv_set(pa[0].reg_smpl_pmds, 7);
+	pfm_bv_set(pa[0].reg_smpl_pmds, 8);
+	pfm_bv_set(pa[0].reg_smpl_pmds, 9);
+	pfm_bv_set(pa[0].reg_smpl_pmds, 10);
+	pfm_bv_set(pa[0].reg_smpl_pmds, 11);
+	pfm_bv_set(pa[0].reg_smpl_pmds, 12);
+	pfm_bv_set(pa[0].reg_smpl_pmds, 13);
 
 	return PFMLIB_SUCCESS;
 }
 
 static int
-setup_pmu_ibsop(pfarg_pmc_t *pc, pfarg_pmd_t *pd)
+setup_pmu_ibsop(pfarg_pmr_t *pc, pfarg_pmr_t *pd, pfarg_pmd_attr_t *pa)
 {
 	pfmlib_amd64_input_param_t inp_mod;
 	pfmlib_output_param_t outp;
@@ -371,14 +372,14 @@ setup_pmu_ibsop(pfarg_pmc_t *pc, pfarg_pmd_t *pd)
 			(int)pd[0].reg_num);
 		return PFMLIB_ERR_INVAL;
 	}
-	pd[0].reg_smpl_pmds[0] =
+	pa[0].reg_smpl_pmds[0] =
 		((1UL << PMD_IBSOP_NUM) - 1) << outp.pfp_pmds[0].reg_num;
 
 	return PFMLIB_SUCCESS;
 }
 
 static int
-setup_pmu_ibsfetch(pfarg_pmc_t *pc, pfarg_pmd_t *pd)
+setup_pmu_ibsfetch(pfarg_pmr_t *pc, pfarg_pmr_t *pd, pfarg_pmd_attr_t *pa)
 {
 	pfmlib_amd64_input_param_t inp_mod;
 	pfmlib_output_param_t outp;
@@ -429,7 +430,7 @@ setup_pmu_ibsfetch(pfarg_pmc_t *pc, pfarg_pmd_t *pd)
 			(int)pd[0].reg_num);
 		return PFMLIB_ERR_INVAL;
 	}
-	pd[0].reg_smpl_pmds[0] =
+	pa[0].reg_smpl_pmds[0] =
 		((1UL << PMD_IBSFETCH_NUM) - 1) << outp.pfp_pmds[0].reg_num;
 
 	return PFMLIB_SUCCESS;
@@ -438,13 +439,12 @@ setup_pmu_ibsfetch(pfarg_pmc_t *pc, pfarg_pmd_t *pd)
 int
 mainloop(char **arg)
 {
-	pfarg_pmc_t pc[1];
-	pfarg_pmd_t pd[1];
+	pfarg_pmr_t pc[1];
+	pfarg_pmr_t pd[1];
+	pfarg_pmd_attr_t pa[1];
 
 	smpl_hdr_t *hdr;
-	pfarg_ctx_t ctx;
 	smpl_arg_t buf_arg;
-	pfarg_load_t load_arg;
 	struct timeval start_time, end_time;
 	pfarg_msg_t msg;
 	uint64_t ovfl_count = 0;
@@ -454,11 +454,11 @@ mainloop(char **arg)
 	int status, ret, fd;
 	int pmc_count, pmd_count;
 	unsigned int num_smpl_pmds = 0;
+	uint32_t ctx_flags;
 
-	memset(&ctx,0, sizeof(ctx));
 	memset(pd, 0, sizeof(pd));
+	memset(pa, 0, sizeof(pa));
 	memset(pc, 0, sizeof(pc));
-	memset(&load_arg, 0, sizeof(load_arg));
 
 	/* defaults */
 	num_smpl_pmds = 7;
@@ -466,24 +466,22 @@ mainloop(char **arg)
 
 	switch (options.opt_setup) {
 	case OPT_IBSOP:
-		ret = setup_pmu_ibsop(pc, pd);
+		ret = setup_pmu_ibsop(pc, pd, pa);
 		break;
 	case OPT_IBSOP_NATIVE:
-		ret = setup_pmu_ibsop_native(pc, pd);
+		ret = setup_pmu_ibsop_native(pc, pd, pa);
 		break;
 	case OPT_IBSFETCH:
 		num_smpl_pmds = 3;
-		ret = setup_pmu_ibsfetch(pc, pd);
+		ret = setup_pmu_ibsfetch(pc, pd, pa);
 		break;
 	default:
 		ret = PFMLIB_ERR_NOTSUPP;
 		break;
 	}
 
-	if (ret != PFMLIB_SUCCESS) {
-		fatal_error("Can't setup #%d\n", options.opt_setup);
-		exit(1);
-	}
+	if (ret != PFMLIB_SUCCESS)
+		fatal_error("cannot setup #%d\n", options.opt_setup);
 
 	/*
 	 * in this example program, we use fixed-size entries, therefore we
@@ -493,7 +491,7 @@ mainloop(char **arg)
 	entry_size = sizeof(smpl_entry_t)+(num_smpl_pmds<<3);
 
 	/*
-	 * prepare context structure.
+	 * prepare session flags
 	 */
 
 	/*
@@ -501,7 +499,12 @@ mainloop(char **arg)
 	 * The format is identified by its UUID which must be copied
 	 * into the ctx_buf_fmt_id field.
 	 */
-	ctx.ctx_flags = options.opt_block ? PFM_FL_NOTIFY_BLOCK : 0;
+	ctx_flags = options.opt_block ? PFM_FL_NOTIFY_BLOCK : 0;
+
+	/*
+ 	 * we use a samplig format, thus we are passing extra arguments
+ 	 */
+	ctx_flags |= PFM_FL_SMPL_FMT;
 
 	/*
 	 * the size of the buffer is indicated in bytes (not entries).
@@ -512,14 +515,14 @@ mainloop(char **arg)
 	buf_arg.buf_size = 3*getpagesize();
 
 	/*
-	 * now create our perfmon context.
+	 * now create our perfmon session.
 	 */
-	fd = pfm_create_context(&ctx, FMT_NAME, &buf_arg, sizeof(buf_arg));
+	fd = pfm_create(ctx_flags, NULL, FMT_NAME, &buf_arg, sizeof(buf_arg));
 	if (fd == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
-		fatal_error("Can't create PFM context %s\n", strerror(errno));
+		fatal_error("cannot create session %s\n", strerror(errno));
 	}
 
 	/*
@@ -545,15 +548,15 @@ mainloop(char **arg)
 	/*
 	 * Now program the registers
 	 */
-	if (pfm_write_pmcs(fd, pc, pmc_count))
-		fatal_error("pfm_write_pmcs error errno %d\n",errno);
+	if (pfm_write(fd, 0, PFM_RW_PMC, pc, pmc_count * sizeof(*pc)))
+		fatal_error("pfm_write error errno %d\n",errno);
 	/*
 	 * initialize the PMDs
 	 * To be read, each PMD must be either written or declared
 	 * as being part of a sample (reg_smpl_pmds, reg_reset_pmds)
 	 */
-	if (pfm_write_pmds(fd, pd, pmd_count))
-		fatal_error("pfm_write_pmds error errno %d\n",errno);
+	if (pfm_write(fd, 0, PFM_RW_PMD_ATTR, pd, pmd_count * sizeof(*pd)))
+		fatal_error("pfm_write(PMD) error errno %d\n",errno);
 
 	/*
 	 * Create the child task
@@ -564,7 +567,7 @@ mainloop(char **arg)
 	/*
 	 * In order to get the PFM_END_MSG message, it is important
 	 * to ensure that the child task does not inherit the file
-	 * descriptor of the context. By default, file descriptor
+	 * descriptor of the session. By default, file descriptor
 	 * are inherited during exec(). We explicitely close it
 	 * here. We could have set it up through fcntl(FD_CLOEXEC)
 	 * to achieve the same thing.
@@ -588,17 +591,16 @@ mainloop(char **arg)
 	}
 
 	/*
-	 * attach context to stopped task
+	 * attach session to stopped task
 	 */
-	load_arg.load_pid = pid;
-	if (pfm_load_context (fd, &load_arg))
-		fatal_error("pfm_load_context error errno %d\n",errno);
+	if (pfm_attach(fd, 0, pid))
+		fatal_error("pfm_attach error errno %d\n",errno);
 
 	/*
 	 * activate monitoring for stopped task.
 	 * (nothing will be measured at this point
 	 */
-	if (pfm_start(fd, NULL))
+	if (pfm_set_state(fd, 0, PFM_ST_START))
 		fatal_error("pfm_start error errno %d\n",errno);
 	/*
 	 * detach child. Side effect includes
@@ -626,7 +628,7 @@ mainloop(char **arg)
 		}
 		switch(msg.type) {
 			case PFM_MSG_OVFL: /* the sampling buffer is full */
-				process_smpl_buf(hdr, pd[0].reg_smpl_pmds, num_smpl_pmds, entry_size);
+				process_smpl_buf(hdr, pa[0].reg_smpl_pmds, num_smpl_pmds, entry_size);
 				ovfl_count++;
 				/*
 				 * reactivate monitoring once we are done with the samples
@@ -635,11 +637,11 @@ mainloop(char **arg)
 				 * as the task may have disappeared while we were processing
 				 * the samples.
 				 */
-				if (pfm_restart(fd)) {
+				if (pfm_set_state(fd, 0, PFM_ST_RESTART)) {
 					if (errno != EBUSY)
-						fatal_error("pfm_restart error errno %d\n",errno);
+						fatal_error("pfm_set_state(restart) error errno %d\n",errno);
 					else
-						warning("pfm_restart: task probably terminated \n");
+						warning("pfm_set_state(restart): task probably terminated \n");
 				}
 				break;
 			case PFM_MSG_END: /* monitored task terminated */
@@ -658,12 +660,12 @@ terminate_session:
 	/*
 	 * check for any leftover samples
 	 */
-	process_smpl_buf(hdr, pd[0].reg_smpl_pmds, num_smpl_pmds, entry_size);
+	process_smpl_buf(hdr, pa[0].reg_smpl_pmds, num_smpl_pmds, entry_size);
 
 	close(fd);
 
 	/*
-	 * unmap buffer, actually free the buffer and context because placed after
+	 * unmap buffer, actually free the buffer and session because placed after
 	 * the close(), i.e. is the last reference. See comments about close() above.
 	 */
 	ret = munmap(hdr, (size_t)buf_arg.buf_size);

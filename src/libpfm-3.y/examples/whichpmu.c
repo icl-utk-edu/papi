@@ -37,6 +37,7 @@ main(void)
 	pfmlib_regmask_t impl_pmds, impl_pmcs;
 	pfmlib_regmask_t avail_pmcs, avail_pmds;
 	pfmlib_regmask_t impl_counters, una_pmcs, una_pmds;
+	pfarg_sinfo_t sif;
 	unsigned int n, num_pmds, num_pmcs, num_counters, num_events;
 	unsigned int width = 0;
 	unsigned int i;
@@ -75,7 +76,7 @@ main(void)
 	pfm_get_num_pmcs(&num_pmcs);
 	pfm_get_num_counters(&num_counters);
 
-	detect_unavail_pmu_regs(-1, &una_pmcs, &una_pmds);
+	detect_unavail_pmu_regs(&sif, &una_pmcs, &una_pmds);
 	pfm_regmask_andnot(&avail_pmcs, &impl_pmcs, &una_pmcs);
 	pfm_regmask_andnot(&avail_pmds, &impl_pmds, &una_pmds);
 

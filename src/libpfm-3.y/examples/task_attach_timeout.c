@@ -63,10 +63,9 @@ parent(pid_t pid, unsigned long delay)
 {
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
-	pfarg_ctx_t ctx[1];
-	pfarg_pmc_t pc[NUM_PMCS];
-	pfarg_pmd_t pd[NUM_PMDS];
-	pfarg_load_t load_args;
+	pfarg_pmr_t pc[NUM_PMCS];
+	pfarg_pmr_t pd[NUM_PMDS];
+	pfarg_sinfo_t sif;
 	struct pollfd pollfd;
 	pfarg_msg_t msg;
 	unsigned int i, num_counters;
@@ -76,20 +75,17 @@ parent(pid_t pid, unsigned long delay)
 
 	memset(pc, 0, sizeof(pc));
 	memset(pd, 0, sizeof(pd));
-	memset(ctx, 0, sizeof(ctx));
 	memset(&inp,0, sizeof(inp));
 	memset(&outp,0, sizeof(outp));
-	memset(&load_args,0, sizeof(load_args));
+	memset(&sif,0, sizeof(sif));
 
 	pfm_get_num_counters(&num_counters);
 
-	if (pfm_get_cycle_event(&inp.pfp_events[0]) != PFMLIB_SUCCESS) {
+	if (pfm_get_cycle_event(&inp.pfp_events[0]) != PFMLIB_SUCCESS)
 		fatal_error("cannot find cycle event\n");
-	}
 
-	if (pfm_get_inst_retired_event(&inp.pfp_events[1]) != PFMLIB_SUCCESS) {
+	if (pfm_get_inst_retired_event(&inp.pfp_events[1]) != PFMLIB_SUCCESS)
 		fatal_error("cannot find inst retired event\n");
-	}
 	i = 2;
 
 	/*
@@ -109,14 +105,14 @@ parent(pid_t pid, unsigned long delay)
 	inp.pfp_event_count = i;
 
 	/*
-	 * now create a context. we will later attach it to the task we are creating.
+	 * now create a session. we will later attach it to the task we are creating.
 	 */
-	ctx_fd = pfm_create_context(ctx, NULL, NULL, 0);
+	ctx_fd = pfm_create(0, &sif);
 	if (ctx_fd == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
-		fatal_error("Can't create PFM context %s\n", strerror(errno));
+		fatal_error("cannot create session %s\n", strerror(errno));
 	}
 	/*
 	 * build the pfp_unavail_pmcs bitmask by looking
@@ -129,7 +125,7 @@ parent(pid_t pid, unsigned long delay)
 	 * use. Of source, it is possible that no valid assignement may
 	 * be possible if certina PMU registers  are not available.
 	 */
-	detect_unavail_pmcs(ctx_fd, &inp.pfp_unavail_pmcs);
+	detect_unavail_pmu_regs(&sif, &inp.pfp_unavail_pmcs, NULL);
 
 	/*
 	 * let the library figure out the values for the PMCS
@@ -167,20 +163,19 @@ parent(pid_t pid, unsigned long delay)
 	 * the number of events we specified, i.e., contains more thann counting monitors.
 	 */
 
-	if (pfm_write_pmcs(ctx_fd, pc, outp.pfp_pmc_count) == -1)
-		fatal_error("pfm_write_pmcs error errno %d\n",errno);
+	if (pfm_write(ctx_fd, 0, PFM_RW_PMC, pc, outp.pfp_pmc_count * sizeof(*pc)) == -1)
+		fatal_error("pfm_write error errno %d\n",errno);
 
 	/*
 	 * To be read, each PMD must be either written or declared
 	 * as being part of a sample (reg_smpl_pmds)
 	 */
-	if (pfm_write_pmds(ctx_fd, pd, outp.pfp_pmd_count) == -1)
-		fatal_error("pfm_write_pmds error errno %d\n",errno);
+	if (pfm_write(ctx_fd, 0, PFM_RW_PMD, pd, outp.pfp_pmd_count * sizeof(*pd)) == -1)
+		fatal_error("pfm_write(PMD) error errno %d\n",errno);
 
 	ret = ptrace(PTRACE_ATTACH, pid, NULL, 0);
-	if (ret == -1) {
+	if (ret == -1)
 		fatal_error("cannot attach to %d: %s\n", pid, strerror(errno));
-	}
 
 	/*
 	 * wait for the child to be actually stopped
@@ -190,30 +185,25 @@ parent(pid_t pid, unsigned long delay)
 	/*
 	 * check if process exited early
 	 */
-	if (WIFEXITED(status)) {
+	if (WIFEXITED(status))
 		fatal_error("command process %d exited too early with status %d\n", pid, WEXITSTATUS(status));
-	}
 
 	/*
 	 * the task is stopped at this point
 	 */
 	
 	/*
-	 * now we load (i.e., attach) the context to ourself
+	 * now we attach (i.e., attach) the session to ourself
 	 */
-	load_args.load_pid = pid;
-
-	if (pfm_load_context(ctx_fd, &load_args) == -1) {
-		fatal_error("pfm_load_context error errno %d\n",errno);
-	}
+	if (pfm_attach(ctx_fd, 0, pid) == -1)
+		fatal_error("pfm_attach error errno %d\n",errno);
 
 	/*
 	 * activate monitoring. The task is still STOPPED at this point. Monitoring
 	 * will not take effect until the execution of the task is resumed.
 	 */
-	if (pfm_start(ctx_fd, NULL) == -1) {
-		fatal_error("pfm_start error errno %d\n",errno);
-	}
+	if (pfm_set_state(ctx_fd, 0, PFM_ST_START) == -1)
+		fatal_error("pfm_set_state(start) error errno %d\n",errno);
 
 	/*
 	 * now resume execution of the task, effectively activating
@@ -231,8 +221,8 @@ parent(pid_t pid, unsigned long delay)
 	 * totally unrelated to our program. Instead we use a perfmon facility that
 	 * notifies us when the monitoring task is exiting.
 	 *
-	 * When a task with a monitoring context attached to it exits, a PFM_MSG_END
-	 * is generated. It can be retrieve with a simple read() on the context's descriptor.
+	 * When a task with a monitoring session attached to it exits, a PFM_MSG_END
+	 * is generated. It can be retrieve with a simple read() on the session's descriptor.
 	 *
 	 * Another reason why you might return from the read is if there was a counter
 	 * overflow, unlikely in this example.
@@ -256,9 +246,8 @@ parent(pid_t pid, unsigned long delay)
 		 		*/
 				ret = read(ctx_fd, &msg, sizeof(msg));
 
-				if (msg.type != PFM_MSG_END) {
+				if (msg.type != PFM_MSG_END)
 					fatal_error("unexpected msg type : %d\n", msg.type);
-				}
 			}
 			break;
 		case   0:
@@ -266,9 +255,8 @@ parent(pid_t pid, unsigned long delay)
 			 * we timed out, we need to stop the task to unload
 			 */
 			ret = ptrace(PTRACE_ATTACH, pid, NULL, 0);
-			if (ret == -1) {
+			if (ret == -1)
 				fatal_error("cannot attach to %d: %s\n", pid, strerror(errno));
-			}
 			/*
 			 * wait for task to be actually stopped
 			 */
@@ -279,9 +267,8 @@ parent(pid_t pid, unsigned long delay)
 	 		 */
 			if (WIFEXITED(status)) goto read_results;
 
-			if (pfm_unload_context(ctx_fd) == -1) {
-				fatal_error("pfm_unload_context error errno %d\n",errno);
-			}
+			if (pfm_attach(ctx_fd, 0, PFM_NO_TARGET) == -1)
+				fatal_error("pfm_detach error errno %d\n",errno);
 
 			/*
 			 * let it run free again
@@ -296,8 +283,8 @@ read_results:
 	/*
 	 * now simply read the results.
 	 */
-	if (pfm_read_pmds(ctx_fd, pd, inp.pfp_event_count) == -1) {
-		fatal_error("pfm_read_pmds error errno %d\n",errno);
+	if (pfm_read(ctx_fd, 0, PFM_RW_PMD, pd, inp.pfp_event_count * sizeof(*pd)) == -1) {
+		fatal_error("pfm_read(PMD) error errno %d\n",errno);
 		return -1;
 	}
 
@@ -317,7 +304,7 @@ read_results:
 			name);
 	}
 	/*
-	 * free the context
+	 * free the session 
 	 */
 	close(ctx_fd);
 

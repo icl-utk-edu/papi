@@ -272,14 +272,12 @@ main(void)
 {
 	int ret;
 	int type = 0;
-	pfarg_pmd_t pd[NUM_PMDS];
-	pfarg_pmc_t pc[NUM_PMCS];
+	pfarg_pmr_t pc[NUM_PMCS];
+	pfarg_pmd_attr_t pd[NUM_PMDS];
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
 	pfmlib_mont_input_param_t mont_inp;
-	pfarg_ctx_t ctx;
 	smpl_arg_t buf_arg;
-	pfarg_load_t load_args;
 	pfmlib_options_t pfmlib_options;
 	struct sigaction act;
 	unsigned int i;
@@ -316,8 +314,8 @@ main(void)
 	pfmlib_options.pfm_verbose = 0; /* set to 1 for debug */
 	pfm_set_options(&pfmlib_options);
 
+	memset(pc, 0, sizeof(pc));
 	memset(pd, 0, sizeof(pd));
-	memset(&ctx, 0, sizeof(ctx));
 	memset(&buf_arg, 0, sizeof(buf_arg));
 
 	/*
@@ -370,14 +368,13 @@ main(void)
 	buf_arg.buf_size = getpagesize();
 
 	/*
-	 * now create the context for self monitoring/per-task
+	 * now create the session
 	 */
-	id = pfm_create_context(&ctx, "default", &buf_arg, sizeof(buf_arg));
+	id = pfm_create(PFM_FL_SMPL_FMT, NULL, "default", &buf_arg, sizeof(buf_arg));
 	if (id == -1) {
-		if (errno == ENOSYS) {
+		if (errno == ENOSYS)
 			fatal_error("Your kernel does not have performance monitoring support!\n");
-		}
-		fatal_error("Can't create PFM context %s\n", strerror(errno));
+		fatal_error("cannot create session %s\n", strerror(errno));
 	}
 
 	/*
@@ -420,6 +417,7 @@ main(void)
 	 * to our first event which is our sampling period.
 	 */
 	pd[0].reg_value       = - SMPL_PERIOD;
+
 	pd[0].reg_long_reset  = - SMPL_PERIOD;
 	pd[0].reg_short_reset = - SMPL_PERIOD;
 
@@ -446,18 +444,17 @@ main(void)
 	/*
 	 * Now program the registers
 	 */
-	if (pfm_write_pmcs(id, pc, outp.pfp_pmc_count))
-		fatal_error("pfm_write_pmcs error errno %d\n",errno);
+	if (pfm_write(id, 0, PFM_RW_PMC, pc, outp.pfp_pmc_count * sizeof(*pc)))
+		fatal_error("pfm_write error errno %d\n",errno);
 
-	if (pfm_write_pmds(id, pd, outp.pfp_pmd_count))
-		fatal_error("pfm_write_pmds error errno %d\n",errno);
+	if (pfm_write(id, 0, PFM_RW_PMD_ATTR, pd, outp.pfp_pmd_count * sizeof(*pd)))
+		fatal_error("pfm_write(PMD) error errno %d\n",errno);
 
 	/*
-	 * now we load (i.e., attach) the context to ourself
+	 * now we attach session
 	 */
-	load_args.load_pid = getpid();
-	if (pfm_load_context(id, &load_args))
-		fatal_error("pfm_load_context error errno %d\n",errno);
+	if (pfm_attach(id, 0, getpid()))
+		fatal_error("pfm_attach error errno %d\n",errno);
 
 	/*
 	 * setup asynchronous notification on the file descriptor
@@ -476,11 +473,13 @@ main(void)
 	/*
 	 * Let's roll now.
 	 */
-	pfm_self_start(id);
+	if (pfm_set_state(id, 0, PFM_ST_START))
+		fatal_error("pfm_set_state error errno %d\n",errno);
 
 	do_test(1000);
 
-	pfm_self_stop(id);
+	if (pfm_set_state(id, 0, PFM_ST_STOP))
+		fatal_error("pfm_set_state error errno %d\n",errno);
 
 	/*
 	 * We must call the processing routine to cover the last entries recorded

@@ -51,8 +51,9 @@ endif
 
 #
 # CONFIG_PFMLIB_SHARED: y=compile static and shared versions, n=static only
-#
+# CONFIG_PFMLIB_OLD_PFMV2: enable old ( 2.x, x <=4) perfmon2 (mutually exclusive with v3 support)
 CONFIG_PFMLIB_SHARED=y
+CONFIG_PFMLIB_OLD_PFMV2=n
 
 #
 # Cray-X2 is cross-compiled. Check the programming environment
@@ -76,7 +77,7 @@ endif
 # Library version
 #
 VERSION=3
-REVISION=5
+REVISION=6
 AGE=0
 
 #
@@ -126,16 +127,19 @@ endif
 ifeq ($(XTPE_COMPILE_TARGET),linux)
 CONFIG_PFMLIB_ARCH_CRAYXT=y
 CONFIG_PFMLIB_SHARED=n
+CONFIG_PFMLIB_OLD_PFMV2=y
 endif
 
 ifeq ($(XTPE_COMPILE_TARGET),catamount)
 CONFIG_PFMLIB_ARCH_CRAYXT=y
 CONFIG_PFMLIB_SHARED=n
+CONFIG_PFMLIB_OLD_PFMV2=y
 endif
 
 ifeq ($(ARCH),crayx2)
 CONFIG_PFMLIB_ARCH_CRAYX2=y
 CONFIG_PFMLIB_SHARED=n
+CONFIG_PFMLIB_OLD_PFMV2=y
 endif
 
 ifeq ($(ARCH),cell)
@@ -158,10 +162,10 @@ endif
 # icc the Intel Itanium Compiler (7.x,8.x, 9.x)
 # or GNU C
 #CC=icc
-CC=gcc
+CC?=gcc
 LIBS=
 INSTALL=install
-LN=ln -sf
+LN?=ln -sf
 PFMINCDIR=$(TOPDIR)/include
 PFMLIBDIR=$(TOPDIR)/lib
 DBG?=-g -Wall -Werror
@@ -178,24 +182,26 @@ PFMLIB=$(PFMLIBDIR)/libpfm.a
 # Reset options for Cray XT
 ifeq ($(CONFIG_PFMLIB_ARCH_CRAYXT),y)
 LDFLAGS+=-static
+CONFIG_PFMLIB_OLD_PFMV2=y
 endif
 
 # Reset the compiler for Cray-X2 (load x2-gcc module)
 ifeq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
 CC=craynv-cray-linux-gnu-gcc
 LDFLAGS+=-static
+CONFIG_PFMLIB_OLD_PFMV2=y
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_SICORTEX),y)
-PFM_VERSION_FLAG=PFMLIB_VERSION_24
-endif
-
-ifneq ($(PFM_VERSION_FLAG),)
-CFLAGS+=-D$(PFM_VERSION_FLAG)
+CONFIG_PFMLIB_OLD_PFMV2=y
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_POWERPC64),y)
 CFLAGS+= -m64
 LDFLAGS+= -m64
 LIBDIR=$(PREFIX)/lib64
+endif
+
+ifeq ($(CONFIG_PFMLIB_OLD_PFMV2),y)
+CFLAGS +=-DPFMLIB_OLD_PFMV2
 endif

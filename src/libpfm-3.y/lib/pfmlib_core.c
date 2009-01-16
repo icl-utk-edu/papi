@@ -233,7 +233,7 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 		/*
 		 * check for valid flags
 		 */
-		if (e[i].flags & ~PFMLIB_CORE_ALL_FLAGS)
+		if (cntrs && cntrs[i].flags & ~PFMLIB_CORE_ALL_FLAGS)
 			return PFMLIB_ERR_INVAL;
 
 		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_UMASK_NCOMBO

@@ -28,6 +28,7 @@ include $(TOPDIR)/rules.mk
 # perfmon/perfmon.h is installed below
 HEADERS=perfmon/perfmon_dfl_smpl.h \
 	perfmon/pfmlib.h           \
+	perfmon/perfmon_v2.h	   \
 	perfmon/pfmlib_comp.h      \
 	perfmon/pfmlib_os.h
 
@@ -45,15 +46,19 @@ endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_X86_64),y)
 HEADERS += perfmon/pfmlib_os_x86_64.h   \
+	   perfmon/pfmlib_os_i386.h   	\
 	   perfmon/pfmlib_comp_x86_64.h \
+	   perfmon/pfmlib_comp_i386.h 	\
 	   perfmon/perfmon_x86_64.h     \
 	   perfmon/perfmon_i386.h       \
+	   perfmon/pfmlib_i386_p6.h	\
 	   perfmon/perfmon_pebs_p4_smpl.h  \
 	   perfmon/perfmon_pebs_core_smpl.h  \
 	   perfmon/pfmlib_amd64.h	\
 	   perfmon/pfmlib_pentium4.h	\
 	   perfmon/pfmlib_core.h	\
 	   perfmon/pfmlib_intel_atom.h	\
+	   perfmon/pfmlib_intel_nhm.h	\
 	   perfmon/pfmlib_gen_ia32.h
 
 endif
@@ -68,6 +73,7 @@ HEADERS += perfmon/pfmlib_os_i386.h   	\
 	   perfmon/pfmlib_pentium4.h    \
 	   perfmon/pfmlib_core.h        \
 	   perfmon/pfmlib_intel_atom.h	\
+	   perfmon/pfmlib_intel_nhm.h	\
 	   perfmon/pfmlib_i386_p6.h	\
 	   perfmon/pfmlib_gen_ia32.h
 
@@ -106,9 +112,9 @@ endif
 .PHONY: all clean distclean depend perfmon.h dir
 
 perfmon.h: dir
-ifneq (,$(PFM_VERSION_FLAG))
-	echo "#ifndef $(PFM_VERSION_FLAG)" > $(DESTDIR)$(INCDIR)/perfmon/perfmon.h
-	echo "#define $(PFM_VERSION_FLAG)" >> $(DESTDIR)$(INCDIR)/perfmon/perfmon.h
+ifeq ($(CONFIG_PFMLIB_OLD_PFMV2),y)
+	echo "#ifndef PFMLIB_OLD_PFMV2" > $(DESTDIR)$(INCDIR)/perfmon/perfmon.h
+	echo "#define PFMLIB_OLD_PFMV2" >> $(DESTDIR)$(INCDIR)/perfmon/perfmon.h
 	echo "#endif" >> $(DESTDIR)$(INCDIR)/perfmon/perfmon.h
 	cat perfmon/perfmon.h >> $(DESTDIR)$(INCDIR)/perfmon/perfmon.h
 	chmod 644 $(DESTDIR)$(INCDIR)/perfmon/perfmon.h

@@ -87,7 +87,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{.pme_name = "INSTRUCTIONS_RETIRED",
 	 .pme_code = 0x00c0,
-	 .pme_flags = PFMLIB_CORE_FIXED0|PFMLIB_CORE_PEBS,
+	 .pme_flags = PFMLIB_CORE_FIXED0,
 	 .pme_desc =  "count the number of instructions at retirement. Alias to event INST_RETIRED:ANY_P",
 	},
 	{.pme_name = "UNHALTED_REFERENCE_CYCLES",
@@ -493,7 +493,6 @@ static pme_core_entry_t core_pe[]={
 		{ .pme_uname = "CORE_P",
 		  .pme_udesc = "Core cycles when core is not halted",
 		  .pme_ucode = 0x0,
-	  	  .pme_flags = PFMLIB_CORE_FIXED1
 		},
 		{ .pme_uname = "REF",
 		  .pme_udesc = "Reference cycles. This event is not affected by core changes such as P-states or TM2 transitions but counts at the same frequency as the time stamp counter. This event can approximate elapsed time. This event has a constant ratio with the CPU_CLK_UNHALTED:BUS event",

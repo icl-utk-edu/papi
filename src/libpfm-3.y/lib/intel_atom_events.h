@@ -98,7 +98,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	.pme_flags = PFMLIB_INTEL_ATOM_FIXED0|PFMLIB_INTEL_ATOM_PEBS,
 	.pme_desc  = "Instructions retired"
 	},
-/* 3 */{.pme_name = "LAST_LEVEL_CACHE_REFERENCE",
+/* 3 */{.pme_name = "LAST_LEVEL_CACHE_REFERENCES",
 	.pme_code = 0x4f2e,
 	.pme_desc = "Last level of cache references"
 	},
@@ -1030,7 +1030,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	  .pme_numasks = 2
 	},
 };
-#define PME_INTEL_ATOM_UNHALTED_INTEL_ATOM_CYCLES	0
+#define PME_INTEL_ATOM_UNHALTED_CORE_CYCLES		0
 #define PME_INTEL_ATOM_INSTRUCTIONS_RETIRED		2
 #define PME_INTEL_ATOM_EVENT_COUNT	   		(sizeof(intel_atom_pe)/sizeof(pme_intel_atom_entry_t))
 

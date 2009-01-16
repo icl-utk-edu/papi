@@ -1,5 +1,5 @@
 /*
- * detect_pmu_regs.c - detect unavailable PMD/PMC registers based on perfmon2 information
+ * detect_pmu_regs.c - detect unavailable PMD/PMC registers based on perfmon3 information
  *
  * Copyright (c) 2006-2007 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
@@ -34,79 +34,56 @@
 #include <perfmon/perfmon.h>
 #include <perfmon/pfmlib.h>
 
+int
+get_sif(int flags, pfarg_sinfo_t *sif)
+{
+	int fd;
+
+	/* initialize as all available */
+	if (sif) {
+		memset(sif->sif_avail_pmcs, 0xff, sizeof(sif->sif_avail_pmcs));
+		memset(sif->sif_avail_pmds, 0xff, sizeof(sif->sif_avail_pmds));
+	}
+	fd = pfm_create(flags, sif);
+	if (fd > -1)
+		close(fd);
+	return fd > -1 ? 0 : -1;
+}
 /*
  * The goal of this function is to help pfm_dispatch_events()
  * in situations where not all PMC/PMD registers are available.
  *
- * It builds bitmasks of *unavailable* PMC/PMD registers.
- * It can use an existing perfmon context file descriptor or if
- * non is passed, it will create a temporary context to retrieve
- * the information.
- *
- * Note that there is no guarantee that the registers marked
- * as available will actually be available by the time the perfmon
- * context is loaded. 
+ * It builds bitmasks of *unavailable* PMC/PMD registers from the
+ * information returned by pfm_create_session().
  *
  * arguments:
- * 	fd : a perfmon context file descriptor, or -1
+ * 	sif: pfarg_sinfo_t pointer
  * 	r_pmcs: a bitmask for PMC availability, NULL if not needed
  * 	r_pmcs: a bitmask for PMD availability, NULL if not needed
- *
- * return:
- * 	-1: invalid file descriptor passed or cannot retrieve information
- * 	 0: success
  */
-int
-detect_unavail_pmu_regs(int fd, pfmlib_regmask_t *r_pmcs, pfmlib_regmask_t *r_pmds)
+void
+detect_unavail_pmu_regs(pfarg_sinfo_t *sif, pfmlib_regmask_t *r_pmcs, pfmlib_regmask_t *r_pmds)
 {
-	pfarg_ctx_t ctx;
-	pfarg_setinfo_t	setf;
-	int ret, i, j, myfd, max;
+	int i, j, max;
 
-	memset(&ctx, 0, sizeof(ctx));
-	memset(&setf, 0, sizeof(setf));
-	/*
-	 * if no context descriptor is passed, then create
-	 * a temporary context
-	 */
-	if (fd == -1) {
-		myfd = pfm_create_context(&ctx, NULL, NULL, 0);
-		if (myfd == -1)
-			return -1;
-	} else {
-		myfd = fd;
-	}
-	/*
-	 * retrieve available register bitmasks from set0
-	 * which is guaranteed to exist for every context
-	 *
-	 * if myfd is bogus (passed by user) then we return
-	 * an error.
-	 */
-	ret = pfm_getinfo_evtsets(myfd, &setf, 1);
-	if (ret == 0) {
-		if (r_pmcs) {
-			memset(r_pmcs, 0, sizeof(*r_pmcs));
-			max = PFMLIB_REG_BV < PFM_PMC_BV ? PFMLIB_REG_BV : PFM_PMC_BV;
-			for(i=0; i < max; i++) {
-				for(j=0; j < 64; j++) {
-					if ((setf.set_avail_pmcs[i] & (1ULL << j)) == 0)
-						pfm_regmask_set(r_pmcs, (i<<6)+j);
-				}
-			}
-		}
-		if (r_pmds) {
-			memset(r_pmds, 0, sizeof(*r_pmds));
-			max = PFMLIB_REG_BV < PFM_PMD_BV ? PFMLIB_REG_BV : PFM_PMD_BV;
-			for(i=0; i < max; i++) {
-				for(j=0; j < 64; j++) {
-					if ((setf.set_avail_pmds[i] & (1ULL << j)) == 0)
-						pfm_regmask_set(r_pmds, (i<<6)+j);
-				}
+	if (r_pmcs) {
+		memset(r_pmcs, 0, sizeof(*r_pmcs));
+		max = PFMLIB_REG_BV < PFM_PMC_BV ? PFMLIB_REG_BV : PFM_PMC_BV;
+		for(i=0; i < max; i++) {
+			for(j=0; j < 64; j++) {
+				if ((sif->sif_avail_pmcs[i] & (1ULL << j)) == 0)
+					pfm_regmask_set(r_pmcs, (i<<6)+j);
 			}
 		}
 	}
-	if (fd == -1)
-		close(myfd);
-	return ret;
+	if (r_pmds) {
+		memset(r_pmds, 0, sizeof(*r_pmds));
+		max = PFMLIB_REG_BV < PFM_PMD_BV ? PFMLIB_REG_BV : PFM_PMD_BV;
+		for(i=0; i < max; i++) {
+			for(j=0; j < 64; j++) {
+				if ((sif->sif_avail_pmds[i] & (1ULL << j)) == 0)
+					pfm_regmask_set(r_pmds, (i<<6)+j);
+			}
+		}
+	}
 }

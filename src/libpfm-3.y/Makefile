@@ -27,10 +27,14 @@ TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)
 
 include config.mk
 
-DIRS=lib examples include docs
+DIRS=lib examples_v2.x include docs
+
+ifneq ($(CONFIG_PFMLIB_OLD_PFMV2),y)
+DIRS += examples
+endif
 
 ifeq ($(ARCH),ia64)
-DIRS +=old_interface_ia64_examples
+DIRS +=examples_ia64_v2.0
 endif
 
 ifeq ($(SYS),Linux)

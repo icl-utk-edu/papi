@@ -28,7 +28,7 @@ include $(TOPDIR)/rules.mk
 LIBS += -lm
 
 ifeq ($(SYS),Linux)
-TARGETS=smpl_p4_pebs smpl_core_pebs smpl_amd64_ibs
+TARGETS=smpl_p4_pebs smpl_core_pebs smpl_amd64_ibs smpl_core_pebs_sys
 endif
 
 all: $(TARGETS)

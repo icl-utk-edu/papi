@@ -111,8 +111,8 @@ typedef struct _event_set_t {
 
 static program_options_t options;
 
-static pfarg_pmc_t	*all_pmcs;
-static pfarg_pmd_t	*all_pmds;
+static pfarg_pmr_t	*all_pmcs;
+static pfarg_pmd_attr_t	*all_pmds;
 static uint64_t		*all_values;
 static event_set_t	*current_set, *all_sets;
 
@@ -382,7 +382,7 @@ update_set(int ctxid)
 	if (options.opt_ovfl_switch)
 		count--;
 
-	ret = pfm_read_pmds(ctxid, all_pmds + base, count);
+	ret = pfm_read(ctxid, 0, PFM_RW_PMD_ATTR, all_pmds + base, count * sizeof(*all_pmds));
 	if (ret == -1)
 		fatal_error("error reading set: %s\n", strerror(errno));
 
@@ -414,19 +414,17 @@ switch_sets(int ctxid)
 	 * state is left over from the previous set and which could conflict
 	 * on restart
 	 */
-	if (pfm_write_pmcs(ctxid, all_pmcs+current_set->pmcs_base, current_set->npmcs) == -1) {
+	if (pfm_write(ctxid, 0, PFM_RW_PMC, all_pmcs+current_set->pmcs_base, current_set->npmcs * sizeof(*all_pmcs)) == -1)
 		fatal_error("error writing pmcs: %s\n", strerror(errno));
-	}
 
-	if (pfm_write_pmds(ctxid, all_pmds+current_set->pmds_base, current_set->npmds) == -1) {
+	if (pfm_write(ctxid, 0, PFM_RW_PMD_ATTR, all_pmds+current_set->pmds_base, current_set->npmds * sizeof(*all_pmds)) == -1)
 		fatal_error("error writing pmds: %s\n", strerror(errno));
-	}
 
 	full_periods++;
 
-	if (options.opt_ovfl_switch && pfm_restart(ctxid) == -1) {
+	if (options.opt_ovfl_switch && pfm_set_state(ctxid, 0, PFM_ST_RESTART) == -1) {
 		if (errno != EBUSY)
-			fatal_error("error pfm_restart: %s\n", strerror(errno));
+			fatal_error("error pfm_set_state(restart): %s\n", strerror(errno));
 		/*
 		 * in case of EBUSY, it probably means the task has exited now
 		 */
@@ -453,25 +451,21 @@ static int
 measure_one_task(char **argv)
 {
 	int ctxid;
-	pfarg_ctx_t ctx[1];
-	pfarg_load_t load_arg;
 	struct pollfd pollfd;
+	pfarg_sinfo_t sif;
 	pid_t pid;
 	int status, ret;
-
-	memset(ctx, 0, sizeof(ctx));
-	memset(&load_arg, 0, sizeof(load_arg));
 
 	/*
 	 * create the context
 	 */
 
-	ctxid = pfm_create_context(ctx, NULL, NULL, 0);
+	ctxid = pfm_create(0, &sif);
 	if (ctxid == -1 ) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
-		fatal_error("Can't create PFM context %s\n", strerror(errno));
+		fatal_error("cannot create session %s\n", strerror(errno));
 	}
 	/*
 	 * set close-on-exec to ensure we will be getting the PFM_END_MSG, i.e.,
@@ -483,13 +477,12 @@ measure_one_task(char **argv)
 	/*
 	 * write registers for first set
 	 */
-	if (pfm_write_pmcs(ctxid, all_pmcs+current_set->pmcs_base, current_set->npmcs) == -1) {
-		fatal_error("error pfm_write_pmcs: %s\n", strerror(errno));
-	}
+	if (pfm_write(ctxid, 0, PFM_RW_PMC, all_pmcs+current_set->pmcs_base, current_set->npmcs * sizeof(*all_pmcs)) == -1)
+		fatal_error("error pfm_write: %s\n", strerror(errno));
 
-	if (pfm_write_pmds(ctxid, all_pmds+current_set->pmds_base, current_set->npmds) == -1) {
-		fatal_error("error pfm_write_pmds: %s\n", strerror(errno));
-	}
+	if (pfm_write(ctxid, 0, PFM_RW_PMD_ATTR, all_pmds+current_set->pmds_base, current_set->npmds * sizeof(*all_pmds)) == -1)
+		fatal_error("error pfm_write: %s\n", strerror(errno));
+
 	/*
 	 * now launch the child code
 	 */
@@ -513,19 +506,16 @@ measure_one_task(char **argv)
 	/*
 	 * now attach the context
 	 */
-	load_arg.load_pid = pid;
-	if (pfm_load_context(ctxid, &load_arg) == -1) {
-		fatal_error("pfm_load_context error errno %d\n",errno);
-	}
+	if (pfm_attach(ctxid, 0, pid) == -1)
+		fatal_error("pfm_attach error errno %d\n",errno);
 
 	current_set->set_runs = 1;
 
 	/*
 	 * start monitoring
 	 */
-	if (pfm_start(ctxid, NULL) == -1) {
-		fatal_error("pfm_start error errno %d\n",errno);
-	}
+	if (pfm_set_state(ctxid, 0, PFM_ST_START) == -1)
+		fatal_error("pfm_set_state(start) error errno %d\n",errno);
 
 	ptrace(PTRACE_DETACH, pid, NULL, 0);
 
@@ -609,15 +599,11 @@ finish_line:
 static int
 measure_one_cpu(char **argv)
 {
+	pfarg_sinfo_t sif;
 	int ctxid, status;
-	pfarg_ctx_t ctx[1];
-	pfarg_load_t load_arg;
 	struct pollfd pollfd;
 	pid_t pid = 0;
 	int ret, timeout;
-
-	memset(ctx, 0, sizeof(ctx));
-	memset(&load_arg, 0, sizeof(load_arg));
 
 	if (options.pin_cpu == -1) {
 		options.pin_cpu = 0;
@@ -625,16 +611,15 @@ measure_one_cpu(char **argv)
 		pin_cpu(getpid(), 0);
 	}
 
-	ctx[0].ctx_flags = PFM_FL_SYSTEM_WIDE;
 	/*
 	 * create the context
 	 */
-	ctxid = pfm_create_context(ctx, NULL, NULL, 0);
+	ctxid = pfm_create(PFM_FL_SYSTEM_WIDE, &sif);
 	if (ctxid == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
-		fatal_error("Can't create PFM context %s\n", strerror(errno));
+		fatal_error("cannot create session %s\n", strerror(errno));
 	}
 
 	/*
@@ -650,8 +635,8 @@ measure_one_cpu(char **argv)
 	 * Note that there is a limitation on the size of the argument vector
 	 * that can be passed. It is usually set to a page size (16KB).
 	 */
-	if (pfm_write_pmcs(ctxid, all_pmcs+current_set->pmcs_base, current_set->npmcs) == -1)
-		fatal_error("error: pfm_write_pmcs errno: %s\n", strerror(errno));
+	if (pfm_write(ctxid, 0, PFM_RW_PMC, all_pmcs+current_set->pmcs_base, current_set->npmcs * sizeof(*all_pmcs)) == -1)
+		fatal_error("error: pfm_write errno: %s\n", strerror(errno));
 
 	/*
 	 * initialize the PMD registers.
@@ -659,8 +644,8 @@ measure_one_cpu(char **argv)
 	 * To be read, each PMD must be either written or declared
 	 * as being part of a sample (reg_smpl_pmds)
 	 */
-	if (pfm_write_pmds(ctxid, all_pmds+current_set->pmds_base, current_set->npmds) == -1)
-		fatal_error("pfm_write_pmds error errno %d\n", strerror(errno));
+	if (pfm_write(ctxid, 0, PFM_RW_PMD_ATTR, all_pmds+current_set->pmds_base, current_set->npmds * sizeof(*all_pmds)) == -1)
+		fatal_error("pfm_write(PMD) error errno %d\n", strerror(errno));
 
 	/*
 	 * now launch the child code
@@ -687,15 +672,14 @@ measure_one_cpu(char **argv)
 	/*
 	 * now attach the context
 	 */
-	load_arg.load_pid = options.pin_cpu;
-	if (pfm_load_context(ctxid, &load_arg) == -1)
-		fatal_error("pfm_load_context error errno %d\n",errno);
+	if (pfm_attach(ctxid, 0, options.pin_cpu) == -1)
+		fatal_error("pfm_attach error errno %d\n",errno);
 
 	/*
 	 * start monitoring
 	 */
-	if (pfm_start(ctxid, NULL) == -1)
-		fatal_error("pfm_start error errno %d\n",errno);
+	if (pfm_set_state(ctxid, 0, PFM_ST_START) == -1)
+		fatal_error("pfm_set_state(start) error errno %d\n",errno);
 
 	if (pid) {
 		signal(SIGCHLD, sigchld_handler);
@@ -722,8 +706,9 @@ measure_one_cpu(char **argv)
 				 * and use signal based notification
 				 */
 				if (options.opt_ovfl_switch) {
+					ssize_t r;
 					pfarg_msg_t msg;
-					read(ctxid, &msg, sizeof(msg));
+					r = read(ctxid, &msg, sizeof(msg));
 				}
 				switch_sets(ctxid);
 				break;
@@ -749,6 +734,7 @@ measure_one_cpu(char **argv)
 int
 mainloop(char **argv)
 {
+	pfarg_sinfo_t sif;
 	event_set_t *e;
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
@@ -803,8 +789,8 @@ mainloop(char **argv)
 
 	vbprintf("total_events=%u\n", total_events);
 
-	all_pmcs   = calloc(1, sizeof(pfarg_pmc_t)*total_events);
-	all_pmds   = calloc(1, sizeof(pfarg_pmd_t)*total_events);
+	all_pmcs   = calloc(1, sizeof(pfarg_pmr_t)*total_events);
+	all_pmds   = calloc(1, sizeof(pfarg_pmd_attr_t)*total_events);
 	all_values = calloc(1, sizeof(uint64_t)*total_events);
 
 	if (all_pmcs == NULL || all_pmds == NULL || all_values == NULL)
@@ -813,6 +799,7 @@ mainloop(char **argv)
 	/*
 	 * use the library to figure out assignments for all events of all sets
 	 */
+	get_sif(options.opt_is_system ? PFM_FL_SYSTEM_WIDE : 0, &sif);
 	for (i=0, e = all_sets; i < num_sets; i++, e = e->next) {
 
 		memset(&inp,0, sizeof(inp));
@@ -829,8 +816,7 @@ mainloop(char **argv)
 	 	 * use. Of source, it is possible that no valid assignement may
 	 	 * be possible if certina PMU registers  are not available.
 	 	 */
-		detect_unavail_pmcs(-1, &inp.pfp_unavail_pmcs);
-
+		detect_unavail_pmu_regs(&sif, &inp.pfp_unavail_pmcs, NULL);
 
 		str = e->event_str;
 		for(j=0, p = str; p && j < allowed_counters; j++) {
@@ -896,16 +882,10 @@ mainloop(char **argv)
 		e->npmds  = num_pmds - e->pmds_base;
 
 		if (options.opt_ovfl_switch) {
-			/*
-			 * We do this even in system-wide mode to ensure
-			 * that the task does not start until we are ready
-			 * to monitor.
-			 * setup the sampling period
-			 */
+			all_pmds[num_pmds-1].reg_flags       = PFM_REGFL_OVFL_NOTIFY;
 			all_pmds[num_pmds-1].reg_value       = - options.smpl_period;
 			all_pmds[num_pmds-1].reg_short_reset = - options.smpl_period;
 			all_pmds[num_pmds-1].reg_long_reset  = - options.smpl_period;
-			all_pmds[num_pmds-1].reg_flags = PFM_REGFL_OVFL_NOTIFY;
 		}
 		vbprintf("set%d pmc_base=%d pmd_base=%d npmcs=%d npmds=%d\n",
 			e->id,

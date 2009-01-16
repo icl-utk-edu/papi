@@ -239,7 +239,7 @@ pfm_intel_atom_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_intel_atom_in
 		/*
 		 * check for valid flags
 		 */
-		if (e[i].flags & ~PFMLIB_INTEL_ATOM_ALL_FLAGS)
+		if (cntrs && cntrs[i].flags & ~PFMLIB_INTEL_ATOM_ALL_FLAGS)
 			return PFMLIB_ERR_INVAL;
 
 		if (intel_atom_pe[e[i].event].pme_flags & PFMLIB_INTEL_ATOM_UMASK_NCOMBO
@@ -718,7 +718,7 @@ pfm_intel_atom_get_event_mask_code(unsigned int ev, unsigned int midx, unsigned 
 static int
 pfm_intel_atom_get_cycle_event(pfmlib_event_t *e)
 {
-	e->event = PME_INTEL_ATOM_UNHALTED_INTEL_ATOM_CYCLES;
+	e->event = PME_INTEL_ATOM_UNHALTED_CORE_CYCLES;
 	return PFMLIB_SUCCESS;
 }
 

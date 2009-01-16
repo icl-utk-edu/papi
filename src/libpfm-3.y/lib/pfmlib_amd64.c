@@ -57,6 +57,9 @@
 #define PFMLIB_AMD64_HAS_COMBO(_e) \
 	((pfm_amd64_get_event_entry(_e)->pme_flags & PFMLIB_AMD64_UMASK_COMBO) != 0)
 
+
+#define PFMLIB_AMD64_ALL_FLAGS \
+	(PFM_AMD64_SEL_INV|PFM_AMD64_SEL_EDGE|PFM_AMD64_SEL_GUEST|PFM_AMD64_SEL_HOST)
 /*
  * Description of the PMC register mappings use by
  * this module:
@@ -189,7 +192,7 @@ static inline void cpuid(unsigned int op, unsigned int *a, unsigned int *b,
 }
 
 static void
-pfm_amd64_setup(int revision)
+pfm_amd64_setup(amd64_rev_t revision)
 {
 	amd64_pmu.revision = revision;
 	snprintf(amd64_pmu.name, NAME_SIZE, "AMD64 (%s)",
@@ -373,6 +376,10 @@ pfm_amd64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_amd64_input_param_
 		if (!is_valid_rev(pfm_amd64_get_event_entry(e[i].event)->pme_flags)) {
 			DPRINT("CPU does not have correct revision level\n");
 			return PFMLIB_ERR_BADHOST;
+		}
+		if (cntrs && (cntrs[j].flags & ~PFMLIB_AMD64_ALL_FLAGS)) {
+			DPRINT("invalid AMD64 flags\n");
+			return PFMLIB_ERR_INVAL;
 		}
 
 		if (cntrs && (cntrs[j].cnt_mask >= PMU_AMD64_CNT_MASK_MAX)) {

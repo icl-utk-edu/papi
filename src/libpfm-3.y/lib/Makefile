@@ -30,7 +30,12 @@ include $(TOPDIR)/rules.mk
 SRCS=pfmlib_common.c pfmlib_priv.c
 
 ifeq ($(SYS),Linux)
-SRCS += pfmlib_os_linux.c
+SRCS += pfmlib_os_linux.c pfmlib_os_linux_v2.c
+
+ifneq ($(CONFIG_PFMLIB_OLD_PFMV2),y)
+SRCS += pfmlib_os_linux_v3.c
+endif
+
 endif
 
 ifeq ($(SYS),Darwin)
@@ -51,13 +56,14 @@ endif
 ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
 INCARCH = $(INC_IA32)
 SRCS   += pfmlib_i386_p6.c pfmlib_pentium4.c pfmlib_amd64.c pfmlib_core.c pfmlib_gen_ia32.c \
-	  pfmlib_intel_atom.c
+	  pfmlib_intel_atom.c pfmlib_intel_nhm.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_I386
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_X86_64),y)
 INCARCH = $(INC_X86_64)
-SRCS   += pfmlib_pentium4.c pfmlib_amd64.c pfmlib_core.c pfmlib_gen_ia32.c pfmlib_intel_atom.c
+SRCS   += pfmlib_pentium4.c pfmlib_amd64.c pfmlib_core.c pfmlib_gen_ia32.c pfmlib_intel_atom.c \
+          pfmlib_intel_nhm.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_X86_64
 endif
 
@@ -146,24 +152,28 @@ INC_IA32=$(PFMINCDIR)/perfmon/perfmon_pebs_core_smpl.h \
   $(PFMINCDIR)/perfmon/pfmlib_pentium4.h \
   $(PFMINCDIR)/perfmon/pfmlib_amd64.h \
   $(PFMINCDIR)/perfmon/pfmlib_core.h \
+  $(PFMINCDIR)/perfmon/pfmlib_intel_atom.h \
+  $(PFMINCDIR)/perfmon/pfmlib_intel_nhm.h \
   $(PFMINCDIR)/perfmon/pfmlib_i386_p6.h \
   $(PFMINCDIR)/perfmon/pfmlib_gen_ia32.h \
   $(PFMINCDIR)/perfmon/pfmlib_comp_i386.h \
   $(PFMINCDIR)/perfmon/pfmlib_os_i386.h \
   amd64_events.h  i386_p6_events.h \
   pentium4_events.h gen_ia32_events.h coreduo_events.h core_events.h \
-  intel_atom_events.h
+  intel_atom_events.h intel_nehalem_events.h
 
 INC_X86_64= $(PFMINCDIR)/perfmon/perfmon_pebs_core_smpl.h \
   $(PFMINCDIR)/perfmon/perfmon_pebs_p4_smpl.h \
   $(PFMINCDIR)/perfmon/pfmlib_amd64.h \
   $(PFMINCDIR)/perfmon/pfmlib_core.h \
+  $(PFMINCDIR)/perfmon/pfmlib_intel_atom.h \
+  $(PFMINCDIR)/perfmon/pfmlib_intel_nhm.h \
   $(PFMINCDIR)/perfmon/pfmlib_gen_ia32.h \
   $(PFMINCDIR)/perfmon/pfmlib_pentium4.h \
   $(PFMINCDIR)/perfmon/pfmlib_comp_x86_64.h \
   $(PFMINCDIR)/perfmon/pfmlib_os_x86_64.h \
   amd64_events.h pentium4_events.h gen_ia32_events.h core_events.h \
-  intel_atom_events.h
+  intel_atom_events.h intel_nehalem_events.h
 
 INC_MIPS64= $(PFMINCDIR)/perfmon/pfmlib_gen_mips64.h \
   $(PFMINCDIR)/perfmon/pfmlib_comp_mips64.h \

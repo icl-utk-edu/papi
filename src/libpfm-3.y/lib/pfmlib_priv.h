@@ -119,6 +119,7 @@ extern pfm_pmu_support_t gen_powerpc_support;
 extern pfm_pmu_support_t sparc_support;
 extern pfm_pmu_support_t cell_support;
 extern pfm_pmu_support_t intel_atom_support;
+extern pfm_pmu_support_t intel_nhm_support;
 
 static inline unsigned int pfm_num_masks(int e)
 {
@@ -129,5 +130,16 @@ static inline unsigned int pfm_num_masks(int e)
 
 extern FILE *libpfm_fp;
 extern int forced_pmu;
+extern int _pfmlib_sys_base; /* syscall base */
+extern int _pfmlib_major_version; /* kernel perfmon major version */
+extern int _pfmlib_minor_version; /* kernel perfmon minor version */
+extern void pfm_init_syscalls(void);
 
+static inline int
+_pfmlib_get_sys_base()
+{
+	if (!_pfmlib_sys_base)
+		pfm_init_syscalls();
+	return _pfmlib_sys_base;
+}
 #endif /* __PFMLIB_PRIV_H__ */
