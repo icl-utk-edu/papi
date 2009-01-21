@@ -95,14 +95,20 @@ int _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
 #ifdef PERFCTR_X86_INTEL_CORE2
    case PERFCTR_X86_INTEL_CORE2:
 #endif
+#ifdef PERFCTR_X86_INTEL_ATOM
+   case PERFCTR_X86_INTEL_ATOM:
+#endif
+#ifdef PERFCTR_X86_INTEL_COREI7
+   case PERFCTR_X86_INTEL_COREI7:
+#endif
 #ifdef PERFCTR_X86_AMD_K8
    case PERFCTR_X86_AMD_K8:
 #endif
 #ifdef PERFCTR_X86_AMD_K8C
    case PERFCTR_X86_AMD_K8C:
 #endif
-#ifdef PERFCTR_X86_AMD_FAM10  /* this is defined in perfctr 2.6.29 */
-   case PERFCTR_X86_AMD_FAM10:
+#ifdef PERFCTR_X86_AMD_FAM10H  /* this is defined in perfctr 2.6.29 */
+   case PERFCTR_X86_AMD_FAM10H:
 #endif
    case PERFCTR_X86_AMD_K7:
       for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
