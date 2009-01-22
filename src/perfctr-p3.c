@@ -345,20 +345,25 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * state) {
    
    if((error = vperfctr_control(ctx->perfctr, &state->control)) < 0) {
       SUBDBG("vperfctr_control returns: %d\n", error);
-      { PAPIERROR( VCNTRL_ERROR); return(PAPI_ESYS); }
+      PAPIERROR( VCNTRL_ERROR); return(PAPI_ESYS);
    }
    return (PAPI_OK);
 }
 
 int _papi_hwd_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
+   int error;
+
    if( state->rvperfctr != NULL ) {
      if(rvperfctr_stop((struct rvperfctr*)ctx->perfctr) < 0)
        { PAPIERROR( RCNTRL_ERROR); return(PAPI_ESYS); }
      return (PAPI_OK);
    }
 
-   if(vperfctr_stop(ctx->perfctr) < 0)
-     { PAPIERROR( VCNTRL_ERROR); return(PAPI_ESYS); }
+   error = vperfctr_stop(ctx->perfctr);
+   if(error < 0) {
+      SUBDBG("vperfctr_stop returns: %d\n", error);
+      PAPIERROR( VCNTRL_ERROR); return(PAPI_ESYS);
+	}
    return(PAPI_OK);
 }
 
