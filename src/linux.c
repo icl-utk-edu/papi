@@ -63,6 +63,12 @@ inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
 #ifdef PERFCTR_X86_INTEL_CORE2
    case PERFCTR_X86_INTEL_CORE2:
 #endif
+#ifdef PERFCTR_X86_INTEL_ATOM  /* family 6 model 28 */
+   case PERFCTR_X86_INTEL_ATOM:
+#endif
+#ifdef PERFCTR_X86_INTEL_COREI7  /* family 6 model 26 */
+   case PERFCTR_X86_INTEL_COREI7:
+#endif
       return (PAPI_VENDOR_INTEL);
 #ifdef PERFCTR_X86_AMD_K8
    case PERFCTR_X86_AMD_K8:
@@ -431,6 +437,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context) {
 
 int _papi_hwd_init(hwd_context_t * ctx) {
    struct vperfctr_control tmp;
+   int error;
 
    /* Initialize our thread/process pointer. */
    if ((ctx->perfctr = vperfctr_open()) == NULL) { 
@@ -461,8 +468,11 @@ int _papi_hwd_init(hwd_context_t * ctx) {
 #endif
 
    /* Start the per thread/process virtualized TSC */
-   if (vperfctr_control(ctx->perfctr, &tmp) < 0)
-     { PAPIERROR( VCNTRL_ERROR); return(PAPI_ESYS); }
+   error = vperfctr_control(ctx->perfctr, &tmp);
+   if (error < 0) {
+	   SUBDBG("starting virtualized TSC; vperfctr_control returns %d\n", error);
+	   PAPIERROR( VCNTRL_ERROR); return(PAPI_ESYS);
+   }
 
    return (PAPI_OK);
 }
