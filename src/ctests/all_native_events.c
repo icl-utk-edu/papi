@@ -56,10 +56,11 @@ static int add_remove_event(int EventSet, int event_code, char *name) {
 
 int main(int argc, char **argv)
 {
-   int i, k, EventSet=PAPI_NULL, add_count=0, err_count=0;
+   int i, k, EventSet=PAPI_NULL, add_count=0, err_count=0, unc_count=0;
    int retval;
    PAPI_event_info_t info, info1;
    const PAPI_hw_info_t *hwinfo = NULL;
+   int Intel_i7;
    int event_code;
    const PAPI_substrate_info_t *s = NULL;
 
@@ -78,6 +79,9 @@ int main(int argc, char **argv)
 	  ("Test case ALL_NATIVE_EVENTS: Available native events and hardware information.\n", 0, &hwinfo);
    if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
+   /* we need a little exception processing if it's a Core i7 */
+   Intel_i7 = strstr(hwinfo->model_string, "Intel Core i7");
+
    if ((s = PAPI_get_substrate_info()) == NULL)
       test_fail(__FILE__, __LINE__, "PAPI_get_substrate_info", 2);
 
@@ -88,6 +92,12 @@ int main(int argc, char **argv)
 
    do {
 	retval = PAPI_get_event_info(i, &info);
+	if (Intel_i7) {
+		if (!strncmp(info.symbol, "UNC_", 4)) {
+			unc_count++;
+			continue;
+		}
+	}
 	if (s->cntr_umasks) {
 		k = i;
 		if (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
@@ -117,7 +127,9 @@ int main(int argc, char **argv)
 
     printf("\n\nSuccessfully found, added, and removed %d events.\n", add_count);
     if (err_count)
-    printf("Failed to add %d events.\n", err_count);
+		printf("Failed to add %d events.\n", err_count);
+    if (unc_count)
+		printf("%d Uncore events were ignored.\n", unc_count);
     if ( add_count > 0 )
       test_pass(__FILE__, NULL, 0);
     else
