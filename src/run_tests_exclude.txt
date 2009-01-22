@@ -1,10 +1,9 @@
-# this file enumerates test cases s that will NOT be run
+# this file enumerates test cases that will NOT be run
 # when the run_tests.sh macro is executed
 # enter each test name on a separate line
 # lines beginning with # will be ignored
 # this file must have UNIX line endings
 
-# now these tests pass -pjm
-#ctests/exec2
-#ctests/forkexec3
-#ctests/forkexec4
+# these tests haven't been implemented
+ctests/encode
+ctests/encode2
