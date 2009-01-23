@@ -275,8 +275,8 @@ pfm_intel_atom_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_intel_atom_in
 				DPRINT("two events compete for FIXED_CTR2\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
-			if (HAS_OPTIONS(i)) {
-				DPRINT("fixed counters do not support inversion/counter-mask\n");
+			if (cntrs && ((cntrs[i].flags & (PFM_INTEL_ATOM_SEL_EDGE|PFM_INTEL_ATOM_SEL_INV)) || cntrs[i].cnt_mask)) {
+				DPRINT("UNHALTED_REFERENCE_CYCLES only accepts anythr filter\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
 		}
@@ -345,9 +345,12 @@ pfm_intel_atom_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_intel_atom_in
 	if (fixed_ctr) {
 		for(i=0; i < n; i++) {
 			/* fixed counters do not support event options (filters) */
-			if (HAS_OPTIONS(i) || (use_pebs && pfm_intel_atom_has_pebs(e+i)))
-				continue;
-
+			if (HAS_OPTIONS(i)) {
+				if (use_pebs && pfm_intel_atom_has_pebs(e+i))
+					continue;
+				if (cntrs[i].flags != PFM_INTEL_ATOM_SEL_ANYTHR)
+					continue;
+			}
 			if ((fixed_ctr & 0x1) && pfm_intel_atom_is_fixed(e+i, 0)) {
 				assign_pc[i] = 16;
 				fixed_ctr &= ~1;
@@ -394,6 +397,8 @@ pfm_intel_atom_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_intel_atom_in
 			val |= 1ULL;
 		if (plm & PFM_PLM3)
 			val |= 2ULL;
+		if (cntrs[i].flags & PFM_INTEL_ATOM_SEL_ANYTHR)
+			val |= 4ULL;
 		val |= 1ULL << 3;	 /* force APIC int (kernel may force it anyway) */
 
 		reg.val |= val << ((assign_pc[i]-16)<<2);
@@ -405,12 +410,15 @@ pfm_intel_atom_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_intel_atom_in
 		pc[npc].reg_addr  = 0x38D;
 		pc[npc].reg_alt_addr  = 0x38D;
 
-		__pfm_vbprintf("[FIXED_CTRL(pmc%u)=0x%"PRIx64" pmi0=1 en0=0x%"PRIx64" pmi1=1 en1=0x%"PRIx64" pmi2=1 en2=0x%"PRIx64"] ",
+		__pfm_vbprintf("[FIXED_CTRL(pmc%u)=0x%"PRIx64" pmi0=1 en0=0x%"PRIx64" any0=%d pmi1=1 en1=0x%"PRIx64" any1=%d pmi2=1 en2=0x%"PRIx64" any2=%d] ",
 				pc[npc].reg_num,
 				reg.val,
 				reg.val & 0x3ULL,
+				!!(reg.val & 0x4ULL),
 				(reg.val>>4) & 0x3ULL,
-				(reg.val>>8) & 0x3ULL);
+				!!((reg.val>>4) & 0x4ULL),
+				(reg.val>>8) & 0x3ULL,
+				!!((reg.val>>8) & 0x4ULL));
 
 		if ((fixed_ctr & 0x1) == 0)
 			__pfm_vbprintf("INSTRUCTIONS_RETIRED ");

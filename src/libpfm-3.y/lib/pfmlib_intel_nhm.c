@@ -357,7 +357,7 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 				DPRINT("two events compete for FIXED_CTR2\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
-			if (cntrs && ((cntrs[i].flags != PFM_NHM_SEL_ANYTHR) || cntrs[i].cnt_mask)) {
+			if (cntrs && ((cntrs[i].flags & (PFM_NHM_SEL_INV|PFM_NHM_SEL_EDGE)) || cntrs[i].cnt_mask)) {
 				DPRINT("UNHALTED_REFERENCE_CYCLES only accepts anythr filter\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
@@ -1028,7 +1028,7 @@ pfm_nhm_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 
 
 	if (nhm_pe[j].pme_flags & PFMLIB_NHM_UNC_FIXED) {
-		pfm_regmask_set(counters, 19);
+		pfm_regmask_set(counters, 20);
 		return;
 	}
 
@@ -1254,20 +1254,20 @@ pfm_nhm_is_uncore(pfmlib_event_t *e)
 }
 
 static const char *data_src_encodings[]={
-/*  0 */	"unknown LLC cache miss",
-/*  1 */	"minimal latency core cache hit. Request was satisfied by data cache",
+/*  0 */	"unknown L3 cache miss",
+/*  1 */	"minimal latency core cache hit. Request was satisfied by L1 data cache",
 /*  2 */	"pending core cache HIT. Outstanding core cache miss to same cacheline address already underway",
-/*  3 */	"data request satisfied by the MLC",
-/*  4 */	"LLC HIT. Local or remote home request that hit LLC in the uncore with no coherency actions required (snooping)",
-/*  5 */	"LLC HIT. Local or remote home request that hit LLC and was serviced by another core with a cross core snoop where no modified copy was found (clean)",
-/*  6 */	"LLC HIT. Local or remote home request that hit LLC and was serviced by another core with a cross core snoop where modified copy was found (HITM)",
+/*  3 */	"data request satisfied by the L2",
+/*  4 */	"L3 HIT. Local or remote home request that hit L3 in the uncore with no coherency actions required (snooping)",
+/*  5 */	"L3 HIT. Local or remote home request that hit L3 and was serviced by another core with a cross core snoop where no modified copy was found (clean)",
+/*  6 */	"L3 HIT. Local or remote home request that hit L3 and was serviced by another core with a cross core snoop where modified copies were found (HITM)",
 /*  7 */	"reserved",
-/*  8 */	"LLC MISS. Local homed request that missed LLC and was serviced by forwarded data following a cross package snoop where no modified copy was found (remote home request are not counted)",
-/*  9 */	"LLC MISS. Local homed request that missed LLC and was serviced by forwarded data following a cross package snoop where no modified copy was found and coherency actions taken",
-/* 10 */	"LLC MISS. Local homed request that missed LLC and was serviced by local DRAM (go to shared state)",
-/* 11 */	"LLC MISS. Remote homed request that missed LLC and was serviced by remote DRAM (go to shared state)",
-/* 12 */	"LLC MISS. Local homed request that missed LLC and was serviced by local DRAM (go to exclusive state)",
-/* 13 */	"LLC MISS. Remote homed request that missed LLC and was serviced by remote DRAM (go to exclusive state)",
+/*  8 */	"L3 MISS. Local homed request that missed L3 and was serviced by forwarded data following a cross package snoop where no modified copy was found (remote home requests are not counted)",
+/*  9 */	"reserved",
+/* 10 */	"L3 MISS. Local homed request that missed L3 and was serviced by local DRAM (go to shared state)",
+/* 11 */	"L3 MISS. Remote homed request that missed L3 and was serviced by remote DRAM (go to shared state)",
+/* 12 */	"L3 MISS. Local homed request that missed L3 and was serviced by local DRAM (go to exclusive state)",
+/* 13 */	"L3 MISS. Remote homed request that missed L3 and was serviced by remote DRAM (go to exclusive state)",
 /* 14 */	"reserved",
 /* 15 */	"request to uncacheable memory"
 };
