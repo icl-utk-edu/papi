@@ -63,7 +63,7 @@ void mainloop(int arg)
    if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
       test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
    if (!TESTS_QUIET) {
-      printf("Added %s\n", "PAPI_TOT_INC");
+      printf("Added %s\n", "PAPI_TOT_INS");
    }
 
    retval = PAPI_add_event(EventSet, PAPI_TOT_CYC);
