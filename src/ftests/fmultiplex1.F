@@ -39,10 +39,10 @@
 
       end
 
-      subroutine init_papi(tests_quiet, event)
+      subroutine init_papi(event)
       IMPLICIT integer (p)
       integer retval
-      integer tests_quiet, event
+      integer event
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)

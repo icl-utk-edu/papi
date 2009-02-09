@@ -38,7 +38,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       CHARACTER*(MSGLEN-1) invstr4
       CHARACTER*(MSGLEN-2) invstr5
 
-      integer check,retcode,lastchar
+      integer check,lastchar
       integer code,papicode
       integer getstrlen
       external getstrlen
@@ -71,18 +71,18 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
        end if
 
       lastchar=PAPI_MAX_STR_LEN
-      call checkstr(code,ckstr,retcode,check,lastchar,tests_quiet)
+      call checkstr(code,ckstr,check,lastchar,tests_quiet)
       lastchar=getstrlen(ckstr)
  
-      call checkstr(code,invstr1,retcode,check,lastchar,tests_quiet)
+      call checkstr(code,invstr1,check,lastchar,tests_quiet)
 
-      call checkstr(code,invstr2,retcode,check,lastchar,tests_quiet)
+      call checkstr(code,invstr2,check,lastchar,tests_quiet)
 
-      call checkstr(code,invstr3,retcode,check,lastchar,tests_quiet)
+      call checkstr(code,invstr3,check,lastchar,tests_quiet)
 
-      call checkstr(code,invstr4,retcode,check,lastchar,tests_quiet)
+      call checkstr(code,invstr4,check,lastchar,tests_quiet)
 
-      call checkstr(code,invstr5,retcode,check,lastchar,tests_quiet)
+      call checkstr(code,invstr5,check,lastchar,tests_quiet)
 
  100  format(t1,a,i4)
 
@@ -205,10 +205,10 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       call ftests_pass(__FILE__)      
       end
 
-      subroutine checkstr(incode,string,outcode,check,lastchar,quiet)
+      subroutine checkstr(incode,string,check,lastchar,quiet)
       implicit integer (P)
       integer incode
-      integer outcode,check,lastchar, quiet
+      integer check,lastchar, quiet
       character*(*) string
       character*(PAPI_MAX_STR_LEN) papierr
       integer code
