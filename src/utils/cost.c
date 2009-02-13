@@ -292,7 +292,7 @@ int main(int argc, char **argv)
    do_output(4, array, bins, show_std_dev, show_dist);
 
    /* Start the reset eval */
-   printf("\nPerforming reses test...\n");
+   printf("\nPerforming reset test...\n");
 
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
