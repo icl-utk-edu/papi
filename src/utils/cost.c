@@ -96,7 +96,7 @@ static void print_dist(long long min, long long max, int bins, int *d) {
 
 static void print_stats(int i, long long min, long long max, double average, double std) {
    char *test[] = {"loop latency", "PAPI_start/stop (2 counters)",
-	   "PAPI_read (2 counters)", "PAPI_read_ts (2 counters)", "PAPI_accum (2 counters)"};
+	   "PAPI_read (2 counters)", "PAPI_read_ts (2 counters)", "PAPI_accum (2 counters)", "PAPI_reset (2 counters)"};
    printf("\nTotal cost for %s over %d iterations\n", test[i], num_iters);
    printf("min cycles   : %lld\nmax cycles   : %lld\nmean cycles  : %lf\nstd deviation: %lf\n ",
       min, max, average, std);
@@ -290,6 +290,23 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
    do_output(4, array, bins, show_std_dev, show_dist);
+
+   /* Start the reset eval */
+   printf("\nPerforming reses test...\n");
+
+   if ((retval = PAPI_start(EventSet)) != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_start", retval);
+
+   for (i = 0; i < num_iters; i++) {
+      totcyc = PAPI_get_real_cyc();
+      PAPI_reset(EventSet);
+      totcyc = PAPI_get_real_cyc() - totcyc;
+      array[i] = totcyc;
+   }
+   if ((retval = PAPI_stop(EventSet, values)) != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+
+   do_output(5, array, bins, show_std_dev, show_dist);
 
    free(array);
    test_pass(__FILE__, NULL, 0);
