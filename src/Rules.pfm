@@ -2,11 +2,10 @@
 
 DESCR   = "Linux with PFM $(VERSION) kernel support and library"
 LIBRARY = libpapi.a
-SHLIB   = libpapi.so.$(PAPIVER)
+SHLIB   = libpapi.so
+TARGETS = serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads shared ear range
 SUBSTR  = linux-ia64
 MEMSUBSTR= linux-ia64
-LIBS	= static shared
-TARGETS = serial multiplex_and_pthreads shared ear range
 
 #
 # GNU G77/GCC section
@@ -18,7 +17,7 @@ OMPCFLGS = -fopenmp
 endif
 
 CC_R    	= $(CC) -pthread
-CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.$(PAPIVER) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
+CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,$(SHLIB) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
 FFLAGS		+= -ffixed-line-length-132
 CFLAGS		+= -Wall 
 
@@ -92,7 +91,7 @@ ifneq (,${PFM_ROOT})
 else
 	@echo '$@ not installed!'; exit 1
 endif
-	$(MAKE) $(MAKEFLAGS)
+	$(MAKE)
 endif
 MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
 

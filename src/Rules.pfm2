@@ -2,15 +2,10 @@
 
 DESCR   = "Linux with PFM $(VERSION) kernel support and library"
 LIBRARY = libpapi.a
-SHLIB   = libpapi.so.$(PAPIVER)
-LIBS	= static shared
-TARGETS = ear serial multiplex_and_pthreads shared
+SHLIB   = libpapi.so
+TARGETS = ear serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads shared
 SUBSTR	= perfmon
 MEMSUBSTR = perfmon
-
-ifeq ($(COMPILER),CRAYX2)
-LIBS	= static
-endif
 
 #
 # GNU G77/GCC section
@@ -22,7 +17,7 @@ OMPCFLGS = -fopenmp
 endif
 
 CC_R    	:= $(CC) -pthread
-CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.$(PAPIVER) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
+CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
 FFLAGS		+= -ffixed-line-length-132
 CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) $(DEBUGFLAGS) -D_REENTRANT
 TOPTFLAGS	:= -g -O
@@ -37,30 +32,39 @@ endif
 # DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
 #
 
+# The next section avoids setting BAD things like -I/usr/include -L/usr/lib. 
+
+ifneq (/usr,$(PFM_PREFIX))
+PWD = $(shell pwd)
 ifeq (,$(PFM_LIB_PATH))
 ifeq (,$(PFM_ROOT))
-	PWD = $(shell pwd)
         PFM_ROOT := $(PWD)/libpfm-3.y
 endif
         PFM_LIB_PATH := $(PFM_ROOT)/lib
 	CC_SHR += -Wl,-rpath-link -Wl,$(PFM_LIB_PATH)
 endif
-
 ifeq (,$(PFM_INC_PATH))
 ifeq (,$(PFM_ROOT))
-        PFM_ROOT := ./libpfm-3.y
+        PFM_ROOT := $(PWD)/libpfm-3.y
 endif
         PFM_INC_PATH := $(PFM_ROOT)/include
 endif
-
+ifneq (/usr/include,$(PFM_INC_PATH))
 CFLAGS	+= -I$(PFM_INC_PATH) 
+endif
+endif
 
 # I hate these platform dependencies, but this id's the existence of 
 # _ntv_name_to_code in perfmon for extras optimization.
 CFLAGS	+= -DPFM2
 
-MISCHDRS = perfmon.h papi_pfm_events.h
+MISCHDRS = perfmon.h papi_pfm_events.h $(PFM_EVENTS_TABLE)
 MISCSRCS = papi_pfm_events.c
+
+ifneq (CRAYX2, $(COMPILER))
+  MISCSRCS +=  x86_cache_info.c
+endif
+
 # This is necessary to avoid text relocations. You cannot do -Lxx -lx because
 # it will attempt to use the static library if a shared library ending in
 # .so does not exist
@@ -74,7 +78,7 @@ ifneq (,${PFM_ROOT})
 else
 	@echo '$@ not installed!'; exit 1
 endif
-	$(MAKE) $(MAKEFLAGS)
+	$(MAKE)
 endif
 MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
 
@@ -85,6 +89,9 @@ config.h:
 
 $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
 	$(AR) xv $<
+
+x86_cache_info.o: x86_cache_info.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c x86_cache_info.c -o $@
 
 papi_pfm_events.o: papi_pfm_events.c $(HEADERS) $(PFM_EVENTS_TABLE)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_pfm_events.c -o $@
@@ -103,15 +110,13 @@ endif
 
 native_install:
 ifneq (,${PFM_ROOT})
-	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
+	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" PFM_VERSION_FLAG="$(PFM_VERSION)" DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
 	-install -d $(DESTDIR)$(LIBDIR)
-ifneq ($(COMPILER),CRAYX2)
-  ifneq ($(COMPILER),CATAMOUNT)
+ifneq (,$(findstring shared,$(LIBS)))
 	cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE)
 	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so.$(PAPIVER)
 	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so
-  endif
 endif
 	-install -d $(DESTDIR)$(DATADIR)
 	cp -f ./perfmon_events.csv $(DESTDIR)$(DATADIR)

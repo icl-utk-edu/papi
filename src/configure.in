@@ -8,6 +8,46 @@ AC_INIT(PAPI, 3.9.0, ptools-perfapi@cs.utk.edu)
 AC_CONFIG_SRCDIR([papi.c])
 AC_CONFIG_HEADER([config.h])
 
+dnl AS_AC_EXPAND(VAR, CONFIGURE_VAR)
+dnl example
+dnl AS_AC_EXPAND(SYSCONFDIR, $sysconfdir)
+dnl will set SYSCONFDIR to /usr/local/etc if prefix=/usr/local
+
+AC_DEFUN([AS_AC_EXPAND],
+[
+  EXP_VAR=[$1]
+  FROM_VAR=[$2]
+
+  dnl first expand prefix and exec_prefix if necessary
+  prefix_save=$prefix
+  exec_prefix_save=$exec_prefix
+
+  dnl if no prefix given, then use /usr/local, the default prefix
+  if test "x$prefix" = "xNONE"; then
+   prefix="$ac_default_prefix"
+  fi
+  dnl if no exec_prefix given, then use prefix
+  if test "x$exec_prefix" = "xNONE"; then
+   exec_prefix=$prefix
+  fi
+
+  full_var="$FROM_VAR"
+  dnl loop until it doesn't change anymore
+  while true; do
+    new_full_var="`eval echo $full_var`"
+   if test "x$new_full_var" = "x$full_var"; then break; fi
+    full_var=$new_full_var
+  done
+
+  dnl clean up
+  full_var=$new_full_var
+  AC_DEFINE_UNQUOTED([$1], "$full_var")
+
+  dnl restore prefix and exec_prefix
+  prefix=$prefix_save
+  exec_prefix=$exec_prefix_save
+])
+
 get_bitmode()
 {
  input="bad"
@@ -40,6 +80,9 @@ get_bitmode()
 # checking for Makefile argument, if not specified, check CPU, OS, OSVER and bitmode
 #
 
+use_shared=yes
+use_static=yes
+use_static_tests=no
 AC_MSG_CHECKING(for architecture)
 AC_ARG_WITH(arch,
 	   [  --with-arch=<arch>		Specify architecture (uname -m)],
@@ -83,6 +126,7 @@ fi
 ])
 AC_MSG_RESULT($OS)
 if test "$OS" = "catamount"; then
+   pfm_events=static
    if test "x$CC" = "x"; then
       CC=qk-gcc
    fi
@@ -97,6 +141,9 @@ if test "$OS" = "catamount"; then
    ffsll=yes
    cross_compiling=yes
    perfctr=5
+   use_shared=no
+   use_static=yes
+   use_static_tests=yes
 elif test "$OS" = "bgl"; then
    if test "x$CC" = "x"; then
       CC=powerpc-bgl-blrts-gnu-gcc
@@ -161,7 +208,8 @@ case "$OS" in
            model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
            # family 15 is always P4; model 1 is vanilla pre-HT, model 2 is vanilla; model 3 is em64t, 4 is Pentium D, 6 is Xeon D
            if test "$family" = "6"; then
-             if test "$model" = "15"; then
+             # model 14 is an ancient Core; the others are Core2, but 28 is Atom; it may not work with the Core substrate
+             if (test "$model" = "14" || test "$model" = "15" || test "$model" = "22" || test "$model" = "23" || test "$model" = "28"); then
                CPU=core
              fi
            elif test "$family" = "15"; then
@@ -199,7 +247,8 @@ case "$OS" in
            fi
            family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
            model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
-           if test "$family" = "15"; then
+# Add Barcelona (family=16) to this test -- dkt
+           if (test "$family" = "15" || test "$family" = "16"); then
 # There are a whole bunch of model numbers, but I think all family=15 are opteron -- dkt
 # see AMD Opteron Revision Guide, pub 25759, Table 1 for details
 #             if (test "$model" = "5" || test "$model" = "65"); then
@@ -216,6 +265,7 @@ case "$OS" in
                POWER4*) CPU="POWER4";;
                POWER5) CPU="POWER5";;
                POWER5+) CPU="POWER5+";;
+               POWER6) CPU="POWER6";;
              esac
           elif test "$family" = "ppc"; then
              CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
@@ -224,9 +274,7 @@ case "$OS" in
 	       745*) CPU="PPC32";;
                750) CPU="PPC32";;
              esac
-          elif test "$family" = "mips"; then
-	       CPU=mips
-	  elif test "$family" = "mips64"; then
+          elif test "$family" = "mips" -o "$family" = "mips64"; then
 	       CPU=mips
 	  fi
          fi
@@ -263,7 +311,33 @@ esac
 ])
 AC_MSG_RESULT($CPU)
 AC_DEFINE_UNQUOTED(CPU,$CPU,[cpu type])
-
+if test "$cross_compiling" = "no" -a "$OS" = "linux" -a "$CPU" = "mips"; then
+	  AC_CHECK_FILE(/etc/sicortex-release,[CPU=sicortex])
+	  if test "$CPU" = "sicortex"; then
+   	     F77=pathf95
+# V2.3 R81 has a good cycle timer, everything else is broken
+             AC_MSG_CHECKING(for working cycle fast trap)
+	     hasgoodcycletimer=`cat /etc/sicortex-release | grep "V2.[[23]]"`
+	     if test "x$hasgoodcycletimer" != "x"; then	     
+		walltimer=cycle
+		AC_MSG_RESULT(yes)
+	     else
+		AC_MSG_RESULT(no)
+	     fi
+	  fi
+fi	    
+if test "$OS" = "CLE"; then
+   virtualtimer=times
+   tls=__thread
+   walltimer=cycle
+   ffsll=yes
+   pfm_events=static
+   cross_compiling=yes
+   use_shared=no
+   use_static=yes
+   use_static_tests=yes
+fi
+         
 #
 # Check for bitmode, this sucks and needs to be redone
 #
@@ -381,7 +455,10 @@ AC_TRY_RUN([
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
-#include <sn/mmtimer.h>
+#include <linux/mmtimer.h>
+#ifndef MMTIMER_FULLNAME
+#define MMTIMER_FULLNAME "/dev/mmtimer"
+#endif
 
 int main()
 {
@@ -568,6 +645,13 @@ elif test "x$tls" != "x"; then
    AC_DEFINE_UNQUOTED(HAVE_THREAD_LOCAL_STORAGE,$tls,[Keyword for per-thread variables])
 fi
 AC_MSG_RESULT($tls)
+
+AC_ARG_ENABLE(papi-vector,
+	[  --disable-papi-vector	Disable indirect substrate functions ],
+	[ 
+	if test "$enableval" != "yes" ; then
+	AC_DEFINE(PAPI_NO_VECTOR, 1, [Do not use indirect substrate functions])
+	fi ])
 
 if test "x$virtualtimer" = "x"; then
 AC_ARG_WITH(virtualtimer,
@@ -810,7 +894,7 @@ AC_ARG_WITH(perfctr_prefix,
             [perfctr_prefix=""]
             )
 AC_ARG_WITH(perfctr_incdir,
-           [  --with-perfctr-incdir=<path>	Specify directory of perfmon header files ],
+           [  --with-perfctr-incdir=<path>	Specify directory of perfctr header files ],
            [perfctr_incdir=$withval],
            [perfctr_incdir=""]
             )
@@ -819,24 +903,33 @@ AC_ARG_WITH(perfctr_libdir,
            [perfctr_libdir=$withval],
            [perfctr_libdir=""]
             )
-
 AC_ARG_WITH(perfmon,
-            [  --with-perfmon=<1,2>		Specify perfmon version number ],
+            [  --with-perfmon=<x.y>		Specify perfmon version number ],
             [perfmon=$withval],
-            [perfmon="no"
-if test "$cross_compiling" = "no" ; then
-	    AC_CHECK_FILE(/sys/kernel/perfmon/version,[perfmon=2],[AC_CHECK_FILE(/proc/perfmon,[perfmon=1])])
+            [perfmon=0
+	    if test "$cross_compiling" = "no" ; then
+	       AC_CHECK_FILE(/sys/kernel/perfmon/version,[
+	       perfmon=`cat /sys/kernel/perfmon/version`
+	       ],[AC_CHECK_FILE(/proc/perfmon,[
+	       perfmon=`cat /proc/perfmon | grep version | cut -d: -f2`
+	       ],[perfmon=0])])
+	    fi]
+)
+
+if test "$perfmon" != 0; then
+   AC_MSG_CHECKING(for perfmon version)
+#   AC_MSG_RESULT("x${perfmon}x")
+   perfmon=`echo ${perfmon} | sed 's/^[ \t]*//;s/[ \t]*$//'`
+#   AC_MSG_RESULT($perfmon)
+   perfmon=`echo ${perfmon} | grep -e '[[1-9]]\.[[0-9]][[0-9]]*'`
+#   AC_MSG_RESULT($perfmon)
+   if test "x$perfmon" = "x"; then
+      AC_MSG_ERROR("Badly formed perfmon version string")
+      perfmon=0
+   fi
+   AC_MSG_RESULT($perfmon)
+   perfmon=`echo ${perfmon} | sed 's/\.//'`
 fi
-])
-case "$perfmon" in
-   yes)
-      AC_CHECK_FILE(/sys/kernel/perfmon/version,[perfmon=2],[AC_CHECK_FILE(/proc/perfmon,[perfmon=1])]) ;;
-   1|2|no)
-      ;;
-   *)					     
-      AC_MSG_ERROR([The perfmon option you specified is not supported])
-      ;;
-esac
 
 AC_ARG_WITH(pfm_root,
            [  --with-pfm-root=<path>	Specify path to prebuilt pfm distribution ],
@@ -863,11 +956,74 @@ AC_ARG_WITH(pmapi,
             [pmapi=$withval],
             [pmapi=default]
             )
+if test "x$pfm_events" = "x"; then
 AC_ARG_WITH(pfm_events,
             [  --with-pfm-events=<static,file>	Specify source of events for pfmlib-based systems ],
             [pfm_events=$withval],
-            [pfm_events="file"]
+            [pfm_events="static"]
             )
+fi
+
+# Old IA64 substrate can use semaphores
+AC_ARG_WITH(with-semaphores,
+            [  --with-semaphores Use semaphores instead of atomic locks (IA64) ],
+	    [with_semaphores=$withval],
+	    [with_semaphores="no"])
+
+# check for which tests to run on install
+if test "x$tests" = "x"; then
+AC_ARG_WITH(tests,
+            [  --with-tests=<ctests,ftests,"ctests ftests">	Specify which tests to run on install ],
+            [tests=$withval],
+            [tests="ctests ftests"]
+            )
+fi
+
+if test "$pfm_events" = "static"; then
+   pfm_events_table="perfmon_events_table.h"
+   CFLAGS="$CFLAGS -DSTATIC_PERFMON_EVENTS_TABLE"
+AC_MSG_NOTICE(Generating perfmon_events_table.h)
+sh perfmon_events_table.sh > perfmon_events_table.h
+fi
+
+#
+# Static tests
+#
+AC_MSG_CHECKING(for building tests static)
+AC_ARG_ENABLE(static-tests,
+  AC_HELP_STRING([--enable-static-tests], [Enable tests built static]),
+  [use_static_tests=$enableval])
+AC_MSG_RESULT($use_static_tests)
+#
+# Fix up: modify LDPATH for static linking if specified
+#
+if test "$use_static_tests" = "yes"; then
+   STATIC="-static"
+else
+   STATIC=""
+fi
+#
+# Shared and Static Lib options
+#
+AC_MSG_CHECKING(for which libraries to build)
+AC_ARG_ENABLE(shared,
+  AC_HELP_STRING([--disable-shared], [Disable the use of shared library]),
+  [use_shared=$enableval])
+AC_ARG_ENABLE(static,
+  AC_HELP_STRING([--disable-static], [Disable the use of static library]),
+  [use_static=$enableval])
+papiLIBS=""
+if test "$use_shared" = "yes"; then
+   papiLIBS="shared"
+fi
+if test "$use_static" = "yes"; then
+   papiLIBS="$papiLIBS static"
+fi
+# Override architectural defaults
+AC_MSG_RESULT($papiLIBS)
+#
+#
+#
 if test "$cross_compiling" = "yes" ; then
 AC_MSG_CHECKING(for native compiler for header generation)
 AC_ARG_WITH(nativecc,
@@ -942,55 +1098,58 @@ if test "$perfctr" = 7 -a "$arch" != "ppc64"; then
    AC_MSG_ERROR([Perfctr 2.7.x only works on PPC64 machines. Please repatch your kernel with 2.6.x.])
 fi
 
-if test "$perfmon" != "no"; then
-   dotest=0
-if test "$pfm_root" != ""; then
-   LIBS="-L$pfm_root/lib -lpfm"
-   CPPFLAGS="-I$pfm_root/include"
-   dotest=1
-elif test "$pfm_prefix" != ""; then
-   LIBS="-L$pfm_prefix/lib -lpfm"
-   CPPFLAGS="-I$pfm_prefix/include"
-   pfm_libdir="$pfm_prefix/lib"
-   pfm_incdir="$pfm_prefix/include"
-   dotest=1
-else
-   if test "$pfm_libdir" != ""; then
-      LIBS="-L$pfm_libdir -lpfm"
+if test $perfmon != 0; then
+      dotest=0
+   if test "$pfm_root" != ""; then
+      LIBS="-L$pfm_root/lib -lpfm"
+      CPPFLAGS="-I$pfm_root/include"
       dotest=1
-   fi
-   if test "$pfm_incdir" != ""; then
-      CPPFLAGS="-I$pfm_incdir"
+   elif test "$pfm_prefix" != ""; then
+      LIBS="-L$pfm_prefix/lib -lpfm"
+      CPPFLAGS="-I$pfm_prefix/include"
+      if test "$pfm_libdir" = ""; then
+         pfm_libdir="$pfm_prefix/lib"
+      fi
+      if test "$pfm_prefix" = ""; then
+         pfm_incdir="$pfm_prefix/include"
+      fi
       dotest=1
+   else
+      if test "$pfm_libdir" != ""; then
+         LIBS="-L$pfm_libdir -lpfm"
+         dotest=1
+      fi
+      if test "$pfm_incdir" != ""; then
+         CPPFLAGS="-I$pfm_incdir"
+         dotest=1
+      fi
    fi
-fi
-if test "$dotest" = 1; then
-AC_CHECK_LIB([pfm], [pfm_initialize], [
-	AC_CHECK_HEADERS([perfmon/pfmlib.h],[
-	if test "$arch" = "ia64"; then
-		AC_CHECK_HEADERS([perfmon/pfmlib_montecito.h])
-        fi
-	AC_CHECK_FUNC(pfm_get_event_description, [AC_DEFINE(HAVE_PFM_GET_EVENT_DESCRIPTION,1,[event description function])],[])
-	AC_CHECK_MEMBER(pfmlib_reg_t.reg_evt_idx, [AC_DEFINE(HAVE_PFM_REG_EVT_IDX,1,[old reg_evt_idx])],[],[#include "perfmon/pfmlib.h"])
-	AC_CHECK_MEMBER(pfmlib_output_param_t.pfp_pmd_count, [AC_DEFINE(HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT,1,[new pfmlib_output_param_t])],[],[#include "perfmon/pfmlib.h"])
-	AC_CHECK_MEMBER(pfm_msg_t.type, [AC_DEFINE(HAVE_PFM_MSG_TYPE,1,[new pfm_msg_t])],[],[#include "perfmon/perfmon.h"])
-      ], [AC_MSG_ERROR([perfmon/pfmlib.h could not be found, please examine config.log and rerun configure with different flags])])], [
-	AC_MSG_ERROR([libpfm.a could not be found, please examine config.log and rerun configure with different flags])
-      ])
-else
-# included snapshots have this function
-AC_DEFINE(HAVE_PERFMON_PFMLIB_MONTECITO_H,1,[Montecito headers])
-AC_DEFINE(HAVE_PFM_GET_EVENT_DESCRIPTION,1,[event description function])
-AC_DEFINE(HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT,1,[new pfmlib_output_param_t])
-AC_DEFINE(HAVE_PFM_MSG_TYPE,1,[new pfm_msg_t])
-fi
+   if test $perfmon -gt 20; then
+      pfm_version="PFMLIB_VERSION_${perfmon}"
+   fi
+   if test "$dotest" = 1; then
+   AC_CHECK_LIB([pfm], [pfm_initialize], [
+   	AC_CHECK_HEADERS([perfmon/pfmlib.h],[
+   	if test "$arch" = "ia64"; then
+   		AC_CHECK_HEADERS([perfmon/pfmlib_montecito.h])
+           fi
+   	AC_CHECK_FUNC(pfm_get_event_description, [AC_DEFINE(HAVE_PFM_GET_EVENT_DESCRIPTION,1,[event description function])],[])
+   	AC_CHECK_MEMBER(pfmlib_reg_t.reg_evt_idx, [AC_DEFINE(HAVE_PFM_REG_EVT_IDX,1,[old reg_evt_idx])],[],[#include "perfmon/pfmlib.h"])
+   	AC_CHECK_MEMBER(pfmlib_output_param_t.pfp_pmd_count, [AC_DEFINE(HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT,1,[new pfmlib_output_param_t])],[],[#include "perfmon/pfmlib.h"])
+   	AC_CHECK_MEMBER(pfm_msg_t.type, [AC_DEFINE(HAVE_PFM_MSG_TYPE,1,[new pfm_msg_t])],[],[#include "perfmon/perfmon.h"])
+         ], [AC_MSG_ERROR([perfmon/pfmlib.h could not be found, please examine config.log and rerun configure with different flags])])], [
+   	AC_MSG_ERROR([libpfm.a could not be found, please examine config.log and rerun configure with different flags])
+         ])
+   else
+   # included snapshots have this function
+      AC_DEFINE(HAVE_PERFMON_PFMLIB_MONTECITO_H,1,[Montecito headers])
+      AC_DEFINE(HAVE_PFM_GET_EVENT_DESCRIPTION,1,[event description function])
+      AC_DEFINE(HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT,1,[new pfmlib_output_param_t])
+   fi
 fi
 
-AC_MSG_CHECKING(for perfmon version)
-if test "$perfmon" = "no"; then
-   AC_MSG_RESULT(none)
-   else
-   AC_MSG_RESULT($perfmon)
+if test "$with_semaphores" != "no"; then
+   AC_DEFINE(USE_SEMAPHORES, 1, [Use semaphores for locking])
 fi
 
 if test "$OS" = "aix"; then
@@ -1005,6 +1164,7 @@ if test "$OS" = "aix"; then
 	;;
       power4) PMAPI="/usr/pmapi" ;;
       power5) PMAPI="/usr/pmapi" ;;
+      power6) PMAPI="/usr/pmapi" ;;
       esac
       PMINIT=""
       LIBS="-L$PMAPI/lib -lpmapi"
@@ -1030,11 +1190,64 @@ fi
 AC_MSG_CHECKING(for Makefile to use)
 if test "x$MAKEVER" = "x"; then
 case "$OS" in
+   freebsd)
+       MAKEVER="freebsd"
+       LDFLAGS="-lpmc"
+
+       # HWPMC driver is available for FreeBSD >= 6
+       FREEBSD_VERSION=`uname -r | cut -c 1`
+       if test "${FREEBSD_VERSION}" -lt 6 ; then
+          AC_MSG_ERROR([PAPI requires at least FreeBSD 6 to work])
+       fi
+
+       # Determine if HWPMC module is on the kernel
+       dmesg | grep hwpmc 2> /dev/null > /dev/null
+       if test "$?" != "0" ; then
+          AC_MSG_ERROR([Error! HWPMC module seems not to be on the kernel. Have you compiled the kernel with HWPMC? (see INSTALL.TXT])
+       fi
+
+       # Determine the number of counters
+       echo "/* Automatically generated file by configure */" > freebsd-config.h
+       echo "#ifndef _FREEBSD_CONFIG_H_" >> freebsd-config.h
+       echo "#define _FREEBSD_CONFIG_H_" >> freebsd-config.h
+       echo "" >> freebsd-config.h
+
+       AC_TRY_LINK(
+       [#include <unistd.h>
+        #include <pmc.h>],
+       [int i = pmc_init();],
+       [pmc_pmc_init_linked="yes"], [pmc_pmc_init_linked="no"])
+
+       if test "${pmc_init_linked}" = "no" ; then
+          AC_MSG_ERROR([Failed to link hwpmc example])
+       fi
+
+       AC_TRY_RUN(
+       [ #include <unistd.h>
+         #include <pmc.h>
+         int main()
+         { 
+           const struct pmc_cpuinfo *info;
+           if (pmc_init() < 0) return 0;
+           if (pmc_cpuinfo (&info) < 0) return 0;
+           return info->pm_npmc-1;
+         }
+       ],
+       [ num_counters="0" ], [ num_counters="$?"])
+
+       if test "${num_counters}" = "0" ; then
+          AC_MSG_ERROR([pmc_npmc info returned 0. Please check you have HWPMC module loaded into the kernel (see hwpmc(4))])
+       fi
+
+       echo "#define HWPMC_NUM_COUNTERS ${num_counters}" >> freebsd-config.h
+       echo "" >> freebsd-config.h
+       echo "#endif" >> freebsd-config.h
+   ;;
    aix)
       if test "${OSVER}" = "5"; then
          if test "${CPU}" = "power3"; then 
                MAKEVER="$OS""$OSVER"-"$CPU""$BM"
-   else
+         else
                MAKEVER="$OS"-"$CPU""$BM"
          fi
       else
@@ -1050,9 +1263,14 @@ case "$OS" in
    ;;
    bgl)
 	   MAKEVER=linux-bgl
+       tests=bgl_tests
    ;;
    catamount)
 	   MAKEVER="$OS"-perfctr-opteron
+	   ;;
+	   
+   CLE)
+	   MAKEVER="$OS"-perfmon2
 	   ;;
 	   
    solaris)
@@ -1064,7 +1282,7 @@ case "$OS" in
        MAKEVER="$OS"-"$CPU""$BM"
        ;;
    linux)
-	if test "$perfmon" = 2; then
+	if test $perfmon -gt 20 ; then
 		    MAKEVER="$OS"-perfmon2
        else
        case "$CPU" in
@@ -1078,7 +1296,7 @@ case "$OS" in
                    AC_MSG_ERROR([The bitmode you specified is not supported])
                  fi
 		 if test "$CPU" = "montecito"; then
-		    MAKEVER="$OS"-pfm-itanium2
+		    MAKEVER="$OS"-pfm-itanium3
 		    else
 		    MAKEVER="$OS"-pfm-"$CPU"
 		 fi ;;
@@ -1118,7 +1336,7 @@ case "$OS" in
                    AC_MSG_ERROR([The bitmode you specified is not supported])
                  fi
                  MAKEVER="$OS"-perfctr-"$CPU" ;;
-            POWER4|POWER5|POWER5+|PPC970)
+            POWER4|POWER5|POWER5+|POWER6|PPC970)
                  MAKEVER="$OS"-perfctr-"$CPU""$BM" ;;
 	    mips64)
 		 MAKEVER="$OS"-perfmon2 ;;
@@ -1153,10 +1371,13 @@ case "$MAKEVER" in
     aix-power4-64bit);;
     aix-power5);;
     aix-power5-64bit);;
+    aix-power6);;
+    aix-power6-64bit);;
     aix5-power3);;
     aix5-power3-64bit);;
     any-null);;
     catamount-perfctr-opteron);;
+    CLE-perfmon2);;
     dadd-alpha);;
     irix-mips);;
     irix-mips-64bit);;
@@ -1176,15 +1397,17 @@ case "$MAKEVER" in
     linux-perfctr-p4);;
     linux-pfm-itanium);;
     linux-pfm-itanium2);;
+    linux-pfm-itanium3);;
     solaris-ultra);;
     solaris-ultra-64bit);;
     tru64-alpha);;
     unicos-t3e);;
     unicos-x1-msp);;
     unicos-x1-ssp);;
-    linux-perfctr-POWER4|linux-perfctr-POWER5|linux-perfctr-POWER5+|linux-perfctr-PPC970|linux-perfctr-PPC32);;
-    linux-perfctr-POWER4-64bit|linux-perfctr-POWER5-64bit|linux-perfctr-POWER5+-64bit|linux-perfctr-PPC970-64bit);;
+    linux-perfctr-POWER4|linux-perfctr-POWER5|linux-perfctr-POWER5+|linux-perfctr-POWER6|linux-perfctr-PPC970|linux-perfctr-PPC32);;
+    linux-perfctr-POWER4-64bit|linux-perfctr-POWER5-64bit|linux-perfctr-POWER5+-64bit|linux-perfctr-POWER6-64bit|linux-perfctr-PPC970-64bit);;
     linux-perfmon2);;
+    freebsd);;
     *)
     echo Platform $MAKEVER is not supported
     exit -1
@@ -1265,19 +1488,19 @@ esac
 #
 # Fix up: put inside papi in share directory
 #
-if test "$datadir" = '${datarootdir}'; then
-   datadir="${prefix}/share/papi"
-   PAPI_DATADIR="${prefix}/share/papi"
-fi
+#if test "$datadir" = '${datarootdir}'; then
+#   datadir="${prefix}/share/papi"
+#   PAPI_DATADIR="${prefix}/share/papi"
+#fi
 
 #
 # Fix up: Linux man pages in /usr/share/man
 #
-if test "$OS" = "linux"; then
-   if test "$mandir" = '${datarootdir}/man'; then
-      mandir='${prefix}/share/man'
-   fi
-fi
+#if test "$OS" = "linux"; then
+#   if test "$mandir" = '${datarootdir}/man'; then
+#      mandir='${prefix}/share/man'
+#   fi
+#fi
 
 #
 # Fix up: If we're on linux and 64 bit build, then put libs in the right place
@@ -1291,7 +1514,21 @@ if test "$OS" = "linux" -a "$bitmode" = "64"; then
    fi
 fi
 
-AC_DEFINE_UNQUOTED(PAPI_DATADIR, "$PAPI_DATADIR", [package data directory])
+#AC_DEFINE_UNQUOTED(PAPI_DATADIR, "$PAPI_DATADIR", [package data directory])
+AC_MSG_CHECKING(for library to link)
+AC_ARG_WITH(shlib,
+	[  --with-shlib=<yes,no>	Specify static[no] or dynamic[yes] papi library to link with test cases and utilities],
+	[shlib=dynamic],
+	[shlib=static]
+	)
+AC_MSG_RESULT($shlib)
+if test "$shlib" = "dynamic"; then
+	SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib:$(PWD)/libpfm-2.x/libpfm;export LIBPATH=.:./libpfm-3.y/lib:./libpfm-2.x/libpfm;'   
+    LINKLIB='../$(SHLIB)'
+else
+    LINKLIB='../$(LIBRARY)'
+fi
+
 AC_SUBST(prefix)
 AC_SUBST(exec_prefix)
 AC_SUBST(libdir)
@@ -1300,6 +1537,8 @@ AC_SUBST(mandir)
 AC_SUBST(bindir)
 AC_SUBST(datadir)
 AC_SUBST(datarootdir)
+AC_SUBST(docdir)
+AC_SUBST(PACKAGE_TARNAME)
 AC_SUBST(arch)
 AC_SUBST(DEBUGFLAGS)
 AC_SUBST(MAKEVER)
@@ -1308,6 +1547,8 @@ AC_SUBST(F77)
 AC_SUBST(CPP)
 AC_SUBST(CC)
 AC_SUBST(AR)
+AC_SUBST(papiLIBS)
+AC_SUBST(STATIC)
 AC_SUBST(LDFLAGS)
 AC_SUBST(NOTLS)
 AC_SUBST(altix)
@@ -1317,6 +1558,7 @@ AC_SUBST(perfctr_prefix)
 AC_SUBST(perfctr_incdir)
 AC_SUBST(perfctr_libdir)
 AC_SUBST(pfm_root)
+AC_SUBST(pfm_version)
 AC_SUBST(pfm_prefix)
 AC_SUBST(pfm_incdir)
 AC_SUBST(pfm_libdir)
@@ -1329,6 +1571,10 @@ AC_SUBST(OS)
 AC_SUBST(CFLAGS)
 AC_SUBST(FFLAGS)
 AC_SUBST(pfm_events)
+AC_SUBST(pfm_events_table)
+AC_SUBST(tests)
+AC_SUBST(SETPATH)
+AC_SUBST(LINKLIB)
 
 if test "$cross_compiling" = "yes" ; then
    AC_MSG_NOTICE(Compiling genpapifdef with $nativecc because cross compiling)
