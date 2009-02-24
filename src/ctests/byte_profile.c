@@ -126,7 +126,6 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
       printf("Overall event counts:\n");
 
    for (i=0;i<num_events;i++) {
-printf("%d %p\n", i, events[i]);
       if ((retval = PAPI_profil(profbuf[i], blength, start, scale,
             EventSet, events[i], thresh, PAPI_PROFIL_POSIX | bucket)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
