@@ -43,7 +43,11 @@ int main(int argc, char **argv)
    else
       mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_INS;
 #else
+  #if defined(ITANIUM2)
+   mask = MASK_TOT_CYC | MASK_FP_OPS | MASK_L2_TCM | MASK_L1_DCM;
+  #else
    mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_OPS | MASK_L2_TCM;
+  #endif
 #endif
    EventSet = add_test_events(&num_events, &mask);
    values = allocate_test_space(1, num_events);
@@ -96,7 +100,11 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
 #else
    const unsigned int power6_events[] = { };
    int power6_num_events = 0;
+  #if defined(ITANIUM2)
+   const unsigned int std_events[] = {PAPI_TOT_CYC, PAPI_FP_OPS, PAPI_L2_TCM, PAPI_L1_DCM };
+  #else
    const unsigned int std_events[] = {PAPI_TOT_CYC, PAPI_TOT_INS, PAPI_FP_OPS, PAPI_L2_TCM };
+  #endif
    int num_events = 4;
    char * header =  "address\t\t\tcyc\tins\tfp_ops\tl2_tcm\n";
 #endif
@@ -118,6 +126,7 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
       printf("Overall event counts:\n");
 
    for (i=0;i<num_events;i++) {
+printf("%d %p\n", i, events[i]);
       if ((retval = PAPI_profil(profbuf[i], blength, start, scale,
             EventSet, events[i], thresh, PAPI_PROFIL_POSIX | bucket)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
