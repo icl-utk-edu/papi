@@ -19,9 +19,10 @@
       call ftests_pass(__FILE__)
       end
 
-      subroutine init_papi()
+      subroutine init_papi(tests_quiet)
       IMPLICIT integer (p)
       integer retval
+      integer tests_quiet
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
