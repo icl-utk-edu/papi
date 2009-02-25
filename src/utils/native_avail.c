@@ -158,6 +158,7 @@ int main(int argc, char **argv)
 	const PAPI_hw_info_t *hwinfo = NULL;
 	command_flags_t flags;
 	int enum_modifier;
+	char *pmask;
 
 	tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
@@ -201,6 +202,9 @@ int main(int argc, char **argv)
 						do {
 							retval = PAPI_get_event_info(i, &info);
 							if (retval == PAPI_OK) {
+								if ((pmask = strchr (info.symbol, ':')) == NULL) {
+									continue;
+								}
 								strcpy(info.symbol, strchr(info.symbol, ':'));
 								strcpy(info.long_descr, strchr(info.long_descr, ':')+1);
 								printf("%-29s|%s|%s|\n", " Mask Info:", info.symbol, info.long_descr);
@@ -273,7 +277,10 @@ int main(int argc, char **argv)
 				do {
 					retval = PAPI_get_event_info(k, &info);
 					if (retval == PAPI_OK) {
-						strcpy(info.symbol, strchr(info.symbol, ':'));
+						if ((pmask = strchr (info.symbol, ':')) == NULL) {
+							continue;
+						}
+						strcpy(info.symbol, pmask);
 						strcpy(info.long_descr, strchr(info.long_descr, ':')+1);
 						print_event(&info, 2);
 					}
