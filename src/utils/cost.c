@@ -5,7 +5,7 @@ static int num_iters = NUM_ITERS;
 static void print_help(void)
 {
    printf("This is the PAPI cost program.\n");
-   printf("It computes min / max / mean / std. deviation for PAPI start/stop pairs and for PAPI reads.  Usage:\n\n");
+   printf("It computes min / max / mean / std. deviation for PAPI start/stop pairs; for PAPI reads, and for PAPI_accums.  Usage:\n\n");
    printf("    cost [options] [parameters]\n");
    printf("    cost TESTS_QUIET\n\n");
    printf("Options:\n\n");
@@ -95,8 +95,9 @@ static void print_dist(long long min, long long max, int bins, int *d) {
 }
 
 static void print_stats(int i, long long min, long long max, double average, double std) {
-   char *test[] = {"PAPI_start/stop","PAPI_read"};
-   printf("\nTotal cost for %s(2 counters) over %d iterations\n", test[i], num_iters);
+   char *test[] = {"loop latency", "PAPI_start/stop (2 counters)",
+	   "PAPI_read (2 counters)", "PAPI_read_ts (2 counters)", "PAPI_accum (2 counters)", "PAPI_reset (2 counters)"};
+   printf("\nTotal cost for %s over %d iterations\n", test[i], num_iters);
    printf("min cycles   : %lld\nmax cycles   : %lld\nmean cycles  : %lf\nstd deviation: %lf\n ",
       min, max, average, std);
 }
@@ -110,17 +111,37 @@ static void print_std_dev(int *s) {
    for (i=0;i<10;i++) printf("  %d\t", s[i]); 
    printf("\n\n");
 }
+static void do_output(int test_type, long long *array, int bins, int show_std_dev, int show_dist) {
+   int s[10];
+   long long min, max;
+   double average, std;
+
+   std = do_stats(array, &min, &max, &average);
+
+   print_stats(test_type, min, max, average, std);
+
+   if (show_std_dev) {
+      do_std_dev(array, s, std, average);
+      print_std_dev(s);
+   }
+
+   if (show_dist) {
+      int *d;
+      d = malloc(bins*sizeof(int));
+      do_dist(array, min, max, bins, d);
+      print_dist(min, max, bins, d);
+      free(d);
+   }
+}
+
 
 int main(int argc, char **argv)
 {
    int i, retval, EventSet = PAPI_NULL;
    int bins = 100;
    int show_dist = 0, show_std_dev = 0;
-   int s[10];
    long long totcyc, values[2];
    long long *array;
-   long long min, max;
-   double  average, std;
 
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
@@ -132,7 +153,7 @@ int main(int argc, char **argv)
             if (bins) i++;
             else {
                printf ("-b requires a bin count!\n");
-               exit(0);
+               exit(1);
             }
          }
          if (strstr(argv[i], "-d"))
@@ -148,13 +169,13 @@ int main(int argc, char **argv)
             if (num_iters) i++;
             else {
                printf ("-t requires a threshold value!\n");
-               exit(0);
+               exit(1);
             }
          }
       }
    }
 
-   printf("Cost of execution for PAPI start/stop and PAPI read.\n");
+   printf("Cost of execution for PAPI start/stop, read and accum.\n");
    printf("This test takes a while. Please be patient...\n");
 
    if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
@@ -175,77 +196,117 @@ int main(int argc, char **argv)
       if ((retval = PAPI_add_event(EventSet, PAPI_TOT_IIS)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
+   /* Make sure no errors and warm up */
 
-   /* Make sure no errors */
-
+   totcyc = PAPI_get_real_cyc();
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
    if ((retval = PAPI_stop(EventSet, NULL)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
    array = (long long *)malloc(num_iters*sizeof(long long));
+   if (array == NULL ) 
+      test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+
+   /* Determine clock latency */
+
+   printf("\nPerforming loop latency test...\n");
+
+   for (i = 0; i < num_iters; i++) {
+      totcyc = PAPI_get_real_cyc();
+      totcyc = PAPI_get_real_cyc() - totcyc;
+      array[i] = totcyc;
+   }
+
+   do_output(0, array, bins, show_std_dev, show_dist);
 
    /* Start the start/stop eval */
 
-   printf("Performing start/stop test...\n");
-   if (array == NULL ) 
-      test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+   printf("\nPerforming start/stop test...\n");
 
    for (i = 0; i < num_iters; i++) {
       totcyc = PAPI_get_real_cyc();
       PAPI_start(EventSet);
       PAPI_stop(EventSet, values);
       totcyc = PAPI_get_real_cyc() - totcyc;
-      array[i]=totcyc;
+      array[i] = totcyc;
    }
 
-   std = do_stats(array, &min, &max, &average);
-
-   print_stats(0, min, max, average, std);
-
-   if (show_std_dev) {
-      do_std_dev(array, s, std, average);
-      print_std_dev(s);
-   }
-
-   if (show_dist) {
-      int *d;
-      d = malloc(bins*sizeof(int));
-      do_dist(array, min, max, bins, d);
-      print_dist(min, max, bins, d);
-      free(d);
-   }
-
+   do_output(1, array, bins, show_std_dev, show_dist);
 
    /* Start the read eval */
-   printf("\n\nPerforming read test...\n");
+   printf("\nPerforming read test...\n");
+
+   if ((retval = PAPI_start(EventSet)) != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_start", retval);
+   PAPI_read(EventSet, values);
+
+   for (i = 0; i < num_iters; i++) {
+      totcyc = PAPI_get_real_cyc();
+      PAPI_read(EventSet, values);
+      totcyc = PAPI_get_real_cyc() - totcyc;
+      array[i] = totcyc;
+   }
+   if ((retval = PAPI_stop(EventSet, values)) != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+
+   do_output(2, array, bins, show_std_dev, show_dist);
+
+   /* Start the read with timestamp eval */
+   printf("\nPerforming read with timestamp test...\n");
+
+   if ((retval = PAPI_start(EventSet)) != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_start", retval);
+   PAPI_read_ts(EventSet, values, &totcyc);
+
+   for (i = 0; i < num_iters; i++) {
+      PAPI_read_ts(EventSet, values, &array[i]);
+   }
+   if ((retval = PAPI_stop(EventSet, values)) != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+
+   /* post-process the timing array */
+   for (i = num_iters - 1; i > 0 ; i--) {
+      array[i] -= array[i-1];
+   }
+   array[0] -= totcyc;
+
+   do_output(3, array, bins, show_std_dev, show_dist);
+
+   /* Start the accum eval */
+   printf("\nPerforming accum test...\n");
+
+   if ((retval = PAPI_start(EventSet)) != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_start", retval);
+   PAPI_accum(EventSet, values);
+
+   for (i = 0; i < num_iters; i++) {
+      totcyc = PAPI_get_real_cyc();
+      PAPI_accum(EventSet, values);
+      totcyc = PAPI_get_real_cyc() - totcyc;
+      array[i] = totcyc;
+   }
+   if ((retval = PAPI_stop(EventSet, values)) != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+
+   do_output(4, array, bins, show_std_dev, show_dist);
+
+   /* Start the reset eval */
+   printf("\nPerforming reset test...\n");
 
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
    for (i = 0; i < num_iters; i++) {
       totcyc = PAPI_get_real_cyc();
-      PAPI_read(EventSet, values);
+      PAPI_reset(EventSet);
       totcyc = PAPI_get_real_cyc() - totcyc;
-      array[i]=totcyc;
+      array[i] = totcyc;
    }
+   if ((retval = PAPI_stop(EventSet, values)) != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-   std = do_stats(array, &min, &max, &average);
-   
-   print_stats(1, min, max, average, std);
-
-   if (show_std_dev) {
-      do_std_dev(array, s, std, average);
-      print_std_dev(s);
-   }
-
-   if (show_dist) {
-      int *d;
-      d = malloc(bins*sizeof(int));
-      do_dist(array, min, max, bins, d);
-      print_dist(min, max, bins, d);
-      free(d);
-   }
+   do_output(5, array, bins, show_std_dev, show_dist);
 
    free(array);
    test_pass(__FILE__, NULL, 0);

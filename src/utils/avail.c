@@ -17,7 +17,7 @@ static char *is_derived(PAPI_event_info_t *info)
 
 static void print_help(char **argv)
 {
-   printf("Usage: %s [-adht] [-e event name]\n",argv[0]);
+   printf("Usage: %s [options]\n",argv[0]);
    printf("Options:\n\n");
    printf("General command options:\n");
    printf("\t-a, --avail   Display only available preset events\n");
@@ -54,6 +54,9 @@ int main(int argc, char **argv)
    int print_tabular = 1;
    PAPI_event_info_t info;
    const PAPI_hw_info_t *hwinfo = NULL;
+   int tot_count = 0;
+   int avail_count = 0;
+   int deriv_count = 0;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
@@ -140,6 +143,32 @@ int main(int argc, char **argv)
 				   printf("%-29s|%s|\n", "Description:", info.long_descr);
 				   for (k=0;k<(int)info.count;k++)
 					   printf(" Register[%2d]:   0x%08x  |%s|\n",k, info.code[k], info.name[k]);
+
+					/* if unit masks exist but none are specified, process all */
+					if (!strchr(name, ':')) {
+                       {
+                        int cidx, num_cmp;
+                        num_cmp = PAPI_num_components();
+                        for(cidx=0;cidx<num_cmp;i++){
+						const PAPI_component_info_t *s = PAPI_get_component_info(cidx);
+						if (s->cntr_umasks) {
+							if (PAPI_enum_event(&i, PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
+								printf ("\nUnit Masks:\n");
+								do {
+									retval = PAPI_get_event_info(i, &info);
+									if (retval == PAPI_OK) {
+										strcpy(info.symbol, strchr(info.symbol, ':'));
+										strcpy(info.long_descr, strchr(info.long_descr, ':')+1);
+										printf("%-29s|%s|%s|\n", " Mask Info:", info.symbol, info.long_descr);
+										for (k=0;k<(int)info.count;k++)
+											printf("  Register[%2d]:  0x%08x  |%s|\n",k, info.code[k], info.name[k]);
+									}
+								} while (PAPI_enum_event(&i, PAPI_NTV_ENUM_UMASKS) == PAPI_OK);
+							}
+						}
+                        }
+                       }
+					}
 			   }
 		   }
 	   }
@@ -181,27 +210,42 @@ int main(int argc, char **argv)
 						   if (info.note[0]) printf(" (%s)", info.note);
 						   printf("\n");
 						  }
+						  tot_count++;
+						  if (info.count) avail_count++;
+						  if (!strcmp(is_derived(&info), "Yes")) deriv_count++;
 					  }
 			   } else {
 				   if ((print_avail_only && info.count) || (print_avail_only == 0))
-					  {
-						  printf("%s\t0x%x\t%d\t|%s|\n |%s|\n |%s|\n |%s|\n |%s|\n",
-							  info.symbol,
-							  info.event_code,
-							  info.count,
-							  info.short_descr,
-							  info.long_descr,
-							  info.note,
-							  info.derived,
-							  info.postfix);
-						  for (j=0;j<(int)info.count;j++) 
-							  printf(" Native Code[%d]: 0x%x |%s|\n",j,info.code[j], info.name[j]);
-					  }
+				   {
+					  printf("%s\t0x%x\t%d\t|%s|\n |%s|\n |%s|\n |%s|\n |%s|\n",
+						  info.symbol,
+						  info.event_code,
+						  info.count,
+						  info.short_descr,
+						  info.long_descr,
+						  info.note,
+						  info.derived,
+						  info.postfix);
+					  for (j=0;j<(int)info.count;j++) 
+						  printf(" Native Code[%d]: 0x%x |%s|\n",j,info.code[j], info.name[j]);
+				   }
+				   tot_count++;
+				   if (info.count) avail_count++;
+				   if (!strcmp(is_derived(&info), "Yes")) deriv_count++;
 			   }
 		   }
 	   } while (PAPI_enum_event(&i, print_avail_only) == PAPI_OK);
    }
    printf ("-------------------------------------------------------------------------\n");
+   if (!print_event_info) {
+	   if (print_avail_only) {
+		  printf("Of %d available events, %d ", avail_count, deriv_count);
+	   } else {
+		  printf("Of %d possible events, %d are available, of which %d ", tot_count, avail_count, deriv_count);
+	   }
+	   if (deriv_count == 1) { printf("is derived.\n\n"); }
+		  else { printf ("are derived.\n\n"); }
+   }
 
    test_pass(__FILE__, NULL, 0);
    exit(1);

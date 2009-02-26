@@ -17,6 +17,38 @@ static char *is_derived(PAPI_event_info_t *info)
 		return("Yes");
 }
 
+static int add_remove_event(int EventSet, int evt)
+{
+	int retval;
+
+	if((retval=PAPI_add_event(EventSet, evt)) != PAPI_OK) {
+		printf("Error adding event.\n");
+	} else {
+		if((retval=PAPI_remove_event(EventSet,evt))!=PAPI_OK)
+			printf("Error removing event.\n");
+	}
+	return(retval);
+}
+
+static int show_event_info(int evt)
+{
+	int k;
+	int retval;
+	PAPI_event_info_t info;
+
+	if ((retval = PAPI_get_event_info(evt, &info)) == PAPI_OK) {
+		printf("%s\t0x%x\n |%s|\n",
+			info.symbol,
+			info.event_code,
+			info.long_descr);
+
+		for (k=0;k<(int)info.count;k++)
+			if (strlen(info.name[k]))
+				printf(" |Register Value[%d]: 0x%-10x  %s|\n",k,info.code[k], info.name[k]);
+	}
+	return(retval);
+}
+
 void papi_init(int argc, char **argv)
 {
 	const PAPI_hw_info_t *hwinfo = NULL;
@@ -45,7 +77,7 @@ void papi_init(int argc, char **argv)
 int native()
 {
 	int i, j, k;
-	int retval;
+	int retval, added;
 	const PAPI_component_info_t *c = NULL;
 	PAPI_event_info_t info;
 
@@ -58,56 +90,59 @@ int native()
 	PAPI_enum_event(&i, PAPI_ENUM_FIRST);
 
 	do {
-		retval=PAPI_add_event(EventSet,i);
-		if(retval != PAPI_OK) continue;
-		j++;
-		retval = PAPI_get_event_info(i, &info);
-
-		printf("%s\t0x%x\n |%s|\n",
-			info.symbol,
-			info.event_code,
-			info.long_descr);
-
-		for (k=0;k<(int)info.count;k++)
-			if (strlen(info.name[k]))
-				printf(" |Register Value[%d]: 0x%-10x  %s|\n",k,info.code[k], info.name[k]);
-
-/*		modifier = PAPI_NTV_ENUM_GROUPS returns event codes with a
-			groups id for each group in which this
-			native event lives, in bits 16 - 23 of event code
-			terminating with PAPI_ENOEVNT at the end of the list.
-*/
-		if (c->cntr_groups) {
+		/* If unit masks are supported, perfmon requires that at least one
+		   mask bit be set before adding the event.
+		   */
+		if (c->cntr_umasks) {
 			k = i;
-			if (PAPI_enum_event(&k, PAPI_NTV_ENUM_GROUPS) == PAPI_OK) {
-				printf("Groups: ");
-				do {
-					printf("%4d", ((k & PAPI_NTV_GROUP_AND_MASK) >> PAPI_NTV_GROUP_SHIFT) - 1);
-				} while (PAPI_enum_event(&k, PAPI_NTV_ENUM_GROUPS) == PAPI_OK);
-				printf("\n");
-			}
-		}
-
-/*		modifier = PAPI_NTV_ENUM_UMASKS returns an event code for each
+			/* modifier = PAPI_NTV_ENUM_UMASKS returns an event code for each
 			unit mask bit defined for this native event. This can be used
 			to get event info for that mask bit. It terminates
 			with PAPI_ENOEVNT at the end of the list.
-*/
-		if (c->cntr_umasks) {
-			k = i;
+			*/
 			if (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
-				do {
-					retval = PAPI_get_event_info(k, &info);
-					if (retval == PAPI_OK) {
-						printf("    0x%-10x%s  |%s|\n", info.event_code,
-							strchr(info.symbol, ':'), strchr(info.long_descr, ':')+1);
-					}
-				} while (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK);
+				if ((added = add_remove_event(EventSet,k)) == PAPI_OK) {
+					show_event_info(i);
+					do {
+						retval = PAPI_get_event_info(k, &info);
+						if (retval == PAPI_OK) {
+							printf("    0x%-10x%s  |%s|\n", info.event_code,
+								strchr(info.symbol, ':'), strchr(info.long_descr, ':')+1);
+						}
+					} while (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK);
+					j++;
+				}
+			}
+			else {
+				if ((added = add_remove_event(EventSet,i)) == PAPI_OK) {
+					show_event_info(i);
+					j++;
+				}
+			}
+		} else {
+			if ((added = add_remove_event(EventSet,i)) == PAPI_OK) {
+				show_event_info(i);
+				j++;
 			}
 		}
-		printf ("-------------------------------------------------------------------------\n");
-		if((retval=PAPI_remove_event(EventSet,i))!=PAPI_OK)
-			printf("Error in PAPI_remove_event\n");
+		if (added == PAPI_OK) {
+		/* modifier = PAPI_NTV_ENUM_GROUPS returns event codes with a
+			groups id for each group in which this
+			native event lives, in bits 16 - 23 of event code
+			terminating with PAPI_ENOEVNT at the end of the list.
+		*/
+			if (c->cntr_groups) {
+				k = i;
+				if (PAPI_enum_event(&k, PAPI_NTV_ENUM_GROUPS) == PAPI_OK) {
+					printf("Groups: ");
+					do {
+						printf("%4d", ((k & PAPI_NTV_GROUP_AND_MASK) >> PAPI_NTV_GROUP_SHIFT) - 1);
+					} while (PAPI_enum_event(&k, PAPI_NTV_ENUM_GROUPS) == PAPI_OK);
+					printf("\n");
+				}
+			}
+			printf ("-------------------------------------------------------------------------\n");
+		}
 	} while (PAPI_enum_event(&i, PAPI_ENUM_EVENTS) == PAPI_OK);
 
 	printf ("-------------------------------------------------------------------------\n");
