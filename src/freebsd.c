@@ -168,14 +168,11 @@ int init_presets(void)
  */
 int init_mdi(void)
 {
-	int result;
 	const struct pmc_cpuinfo *info;
    
 	SHOW_WHERE_I_AM;
 
 	/* Initialize PMC library */
-	result = pmc_init();
-
 	if (pmc_init() < 0)
 		return PAPI_ESYS;
       
@@ -187,7 +184,7 @@ int init_mdi(void)
 		/* Get CPU clock rate from HW.CLOCKRATE sysctl value, and
 		   MODEL from HW.MODEL */
 		int mib[5];
-		unsigned len;
+		size_t len;
 		int hw_clockrate;
 		char hw_model[PAPI_MAX_STR_LEN];
      
