@@ -14,7 +14,7 @@ __ 1. Notify developers that a release is imminent and the repository should be
 __ 2. Check/Change the version number in: papi.h, configure.in, Makefile.in;
 	and commit to cvs if needed.
 
-__ 2a. If configure.is changed, run autoconf (2.61) 
+__ 2a. If configure.in is changed, run autoconf (2.61) 
 	and commit the resulting configure.
 
 __ 3. Create a ChangeLog for the current release. 
