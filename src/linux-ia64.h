@@ -34,7 +34,18 @@
 #include <sys/ucontext.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
+#ifdef USE_SEMAPHORES
 #include <sys/sem.h>
+#endif
+
+#if defined(HAVE_MMTIMER)
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <linux/mmtimer.h>
+#ifndef MMTIMER_FULLNAME
+#define MMTIMER_FULLNAME "/dev/mmtimer"
+#endif
+#endif
 
 #ifdef ALTIX
 #include <sys/ioctl.h>
@@ -55,9 +66,8 @@
 #endif
 #ifdef ITANIUM2
 #include "perfmon/pfmlib_itanium2.h"
-#if defined(PFM30) && defined(HAVE_PERFMON_PFMLIB_MONTECITO_H)
+#elif defined(ITANIUM3)
 #include "perfmon/pfmlib_montecito.h"
-#endif
 #else
 #include "perfmon/pfmlib_itanium.h"
 #endif
@@ -71,41 +81,63 @@ typedef int ia64_reg_alloc_t;
 #ifdef PFM30
    #define NUM_PMCS PFMLIB_MAX_PMCS
    #define NUM_PMDS PFMLIB_MAX_PMDS
-#ifdef HAVE_PERFMON_PFMLIB_MONTECITO_H
-   #define MAX_COUNTERS PMU_MONT_NUM_COUNTERS
-#elif defined(ITANIUM2)
-   #define MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
-#else
-   #define MAX_COUNTERS PMU_ITA_NUM_COUNTERS
-#endif
+   
+   #ifdef ITANIUM3
+     #define MAX_COUNTERS PMU_MONT_NUM_COUNTERS
+   #elif defined(ITANIUM2)
+     #define MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
+   #else
+     #define MAX_COUNTERS PMU_ITA_NUM_COUNTERS
+   #endif
+   
+   #if defined(ITANIUM3)
+   /* Native events consist of a flag field, an event field, and a unit mask field.
+    * The next 4 macros define the characteristics of the event and unit mask fields.
+    * Unit Masks are only supported on Montecito and above.
+    */
+   #define PAPI_NATIVE_EVENT_AND_MASK 0x00000fff	/* 12 bits == 4096 max events */
+   #define PAPI_NATIVE_EVENT_SHIFT 0
+   #define PAPI_NATIVE_UMASK_AND_MASK 0x0ffff000	/* 16 bits for unit masks */
+   #define PAPI_NATIVE_UMASK_MAX 16				/* 16 possible unit masks */
+   #define PAPI_NATIVE_UMASK_SHIFT 12
+   #endif
+
    typedef struct param_t {
-	  pfarg_reg_t pd[NUM_PMDS];
+      pfarg_reg_t pd[NUM_PMDS];
       pfarg_reg_t pc[NUM_PMCS];
       pfmlib_input_param_t inp;
       pfmlib_output_param_t outp;
-	  void	*mod_inp;	/* model specific input parameters to libpfm    */
-	  void	*mod_outp;	/* model specific output parameters from libpfm */
+      void *mod_inp;	/* model specific input parameters to libpfm    */
+      void *mod_outp;	/* model specific output parameters from libpfm */
    } pfmw_param_t;
+   #ifdef ITANIUM3
+   typedef struct mont_param_t {
+      pfmlib_mont_input_param_t mont_input_param;
+      pfmlib_mont_output_param_t  mont_output_param;
+   } pfmw_mont_param_t;
+   typedef pfmw_mont_param_t pfmw_ita_param_t;
+   #elif defined(ITANIUM2)
    typedef struct ita2_param_t {
       pfmlib_ita2_input_param_t ita2_input_param;
-	  pfmlib_ita2_output_param_t  ita2_output_param;
-   }  pfmw_ita2_param_t;
- #ifdef ITANIUM2
+      pfmlib_ita2_output_param_t  ita2_output_param;
+   } pfmw_ita2_param_t;
    typedef pfmw_ita2_param_t pfmw_ita_param_t;
- #else
+   #else
    typedef int pfmw_ita_param_t;
- #endif
+   #endif
+
    #define PMU_FIRST_COUNTER  4
 #else
    #define NUM_PMCS PMU_MAX_PMCS
    #define NUM_PMDS PMU_MAX_PMDS
- #ifdef ITANIUM2
+   
+   #ifdef ITANIUM2
       typedef pfmlib_ita2_param_t pfmw_ita_param_t;
       #define MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
- #else
+   #else
       typedef pfmlib_ita_param_t pfmw_ita_param_t;
       #define MAX_COUNTERS PMU_ITA_NUM_COUNTERS
- #endif
+   #endif
    typedef pfmlib_param_t pfmw_param_t;
 #endif
 
@@ -169,17 +201,20 @@ typedef ia64_context_t cmp_context_t;
 
 #define SMPL_BUF_NENTRIES 64
 #define M_PMD(x)        (1UL<<(x))
+#if defined(ITANIUM3)
+#define DEAR_REGS_MASK	    (M_PMD(32)|M_PMD(33)|M_PMD(36))
+#define ETB_REGS_MASK		(M_PMD(38)| M_PMD(39)| \
+		                 M_PMD(48)|M_PMD(49)|M_PMD(50)|M_PMD(51)|M_PMD(52)|M_PMD(53)|M_PMD(54)|M_PMD(55)|\
+				 M_PMD(56)|M_PMD(57)|M_PMD(58)|M_PMD(59)|M_PMD(60)|M_PMD(61)|M_PMD(62)|M_PMD(63))
+#else
 #define DEAR_REGS_MASK      (M_PMD(2)|M_PMD(3)|M_PMD(17))
 #define BTB_REGS_MASK       (M_PMD(8)|M_PMD(9)|M_PMD(10)|M_PMD(11)|M_PMD(12)|M_PMD(13)|M_PMD(14)|M_PMD(15)|M_PMD(16))
-
-extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
-extern int sem_set;
+#endif
 
 #define MY_VECTOR _ia64_vector
 
-#if 0
-#define MUTEX_OPEN (unsigned int)1
-#define MUTEX_CLOSED (unsigned int)0
+#ifdef USE_SEMAPHORES
+extern int sem_set;
 
 /* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
  * else val = MUTEX_CLOSED */
@@ -198,6 +233,10 @@ if (semop(sem_set, &sem_unlock, 1) == -1 ) {     \
 abort(); } }
 // PAPIERROR("semop errno %d",errno); abort(); } }
 
+#else
+extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
+#define MUTEX_OPEN 0
+#define MUTEX_CLOSED 1
 
 #ifdef __INTEL_COMPILER
 #define _papi_hwd_lock(lck) { while(_InterlockedCompareExchange_acq(&_papi_hwd_lock_data[lck],MUTEX_CLOSED,MUTEX_OPEN) != MUTEX_OPEN) { ; } } 
@@ -205,16 +244,13 @@ abort(); } }
 #define _papi_hwd_unlock(lck) { _InterlockedExchange((volatile int *)&_papi_hwd_lock_data[lck], MUTEX_OPEN); }
 #else                           /* GCC */
 #define _papi_hwd_lock(lck)			 			      \
-   { uint64_t res = 0;							      \
+   { int res = 0;							      \
     do {								      \
       __asm__ __volatile__ ("mov ar.ccv=%0;;" :: "r"(MUTEX_OPEN));            \
       __asm__ __volatile__ ("cmpxchg4.acq %0=[%1],%2,ar.ccv" : "=r"(res) : "r"(&_papi_hwd_lock_data[lck]), "r"(MUTEX_CLOSED) : "memory");				      \
-    } while (res != (uint64_t)MUTEX_OPEN); }
+    } while (res != MUTEX_OPEN); }
 
-#define _papi_hwd_unlock(lck)			 			      \
-    { uint64_t res = 0;							      \
-    __asm__ __volatile__ ("xchg4 %0=[%1],%2" : "=r"(res) : "r"(&_papi_hwd_lock_data[lck]), "r"(MUTEX_OPEN) : "memory"); }
-#endif
-#endif
-
-#endif
+#define _papi_hwd_unlock(lck) {  __asm__ __volatile__ ("st4.rel [%0]=%1" : : "r"(&_papi_hwd_lock_data[lck]), "r"(MUTEX_OPEN) : "memory"); }
+#endif /* __INTEL_COMPILER */
+#endif /* USE_SEMAPHORES */
+#endif /* _PAPI_LINUX_IA64_H */
