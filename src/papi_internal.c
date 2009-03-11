@@ -26,6 +26,9 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_memory.h"
+#if defined(__FreeBSD__)
+# include <ctype.h>  /* isdigit */
+#endif
 
 /********************/
 /* BEGIN PROTOTYPES */
@@ -67,7 +70,7 @@ PAPI_debug_handler_t _papi_hwi_debug_handler = default_debug_handler;
 void PAPIERROR(char *format, ...)
 {
   va_list args;
-   if ((_papi_hwi_error_level != PAPI_QUIET) || (getenv("PAPI_VERBOSE")))
+  if ((_papi_hwi_error_level != PAPI_QUIET) || (getenv("PAPI_VERBOSE")))
      {
        va_start(args, format); 
        fprintf(stderr, "PAPI Error: ");
@@ -79,7 +82,6 @@ void PAPIERROR(char *format, ...)
 
 static int default_debug_handler(int errorCode)
 {
-//   extern hwi_describe_t _papi_hwi_err[];
    char str[PAPI_HUGE_STR_LEN];
 
    if (errorCode == PAPI_OK)
@@ -196,7 +198,7 @@ static void initialize_EventInfoArray(EventSetInfo_t * ESI)
    tmp.event_code = PAPI_NULL;
    tmp.ops = NULL;
    tmp.derived = NOT_DERIVED;
-   for (j = 0; j < PAPI_MAX_COUNTER_TERMS; j++)
+   for (j = 0; j < MAX_COUNTER_TERMS; j++)
      tmp.pos[j] = -1;
    
    for (i = 0; i < limit; i++) {
@@ -237,8 +239,6 @@ static int create_EventSet(EventSetInfo_t **here)
    memset(ESI, 0x00, sizeof(EventSetInfo_t));
 
    ESI->CmpIdx = -1; /* when eventset is created, it is not decided yet which component it belongs to, until first event is added */
-
-   /*printf("ESI(%p)  ESI->CmpIdx(%d)\n", ESI, ESI->CmpIdx);*/
 
    ESI->state = PAPI_STOPPED;
 
@@ -389,7 +389,7 @@ int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle)
    if ((EventSet == NULL) || (handle == NULL))
       return (PAPI_EINVAL);
 
-   if ( *EventSet != PAPI_NULL )
+   if (*EventSet != PAPI_NULL)
       return (PAPI_EINVAL);
    /* Well, then allocate a new one. Use n to keep track of a NEW EventSet */
 
@@ -523,7 +523,7 @@ static void remap_event_position(EventSetInfo_t * ESI, int thisindex)
       /* fill in the new information */
       if (head[j].event_code & PAPI_PRESET_MASK) {
          preset_index = head[j].event_code & PAPI_PRESET_AND_MASK;
-         for (k = 0; k < PAPI_MAX_COUNTER_TERMS; k++) {
+         for (k = 0; k < MAX_COUNTER_TERMS; k++) {
             nevt = _papi_hwi_presets.data[preset_index]->native[k];
             if (nevt == PAPI_NULL)
                break;
@@ -569,10 +569,9 @@ static int add_native_fail_clean(EventSetInfo_t * ESI, int nevt)
          if (ESI->NativeInfoArray[i].ni_owners == 0) {
             ESI->NativeInfoArray[i].ni_event = 0;
             ESI->NativeInfoArray[i].ni_position = -1;
-            memset(ESI->NativeInfoArray[i].ni_bits, 0x00, _papi_hwd[ESI->CmpIdx]->size.reg_value);
             ESI->NativeCount--;
          }
-         INTDBG("add_events fail, and remove added native events of the event:0x%x\n", nevt);
+         INTDBG("add_events fail, and remove added native events of the event: 0x%x\n", nevt);
          return i;
       }
    }
@@ -730,8 +729,9 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
          /* Try to add the native. */
 
          remap = add_native_events(ESI, &EventCode, 1, &ESI->EventInfoArray[thisindex]);
-         if (remap < 0)
+         if (remap < 0) {
             return (PAPI_ECNFLCT);
+         }
          else {
             /* Fill in the EventCode (machine independent) information */
 
@@ -747,7 +747,7 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
 
    } else {
       /* Multiplexing is special. See multiplex.c */
-     retval = mpx_add_event(&ESI->multiplex.mpx_evset, EventCode, ESI->CmpIdx);
+     retval = mpx_add_event(&ESI->multiplex.mpx_evset, EventCode, ESI->domain.domain, ESI->granularity.granularity, ESI->CmpIdx);
       if (retval < PAPI_OK)
          return (retval);
       ESI->EventInfoArray[thisindex].event_code = EventCode;    /* Relevant */
@@ -830,24 +830,16 @@ int remove_native_events(EventSetInfo_t * ESI, int *nevt, int size)
             if (native[j].ni_event == 0 || native[j].ni_owners == 0)
                continue;
             else {
-		native[i].ni_event = native[j].ni_event;
-		native[i].ni_position = native[j].ni_position;
-		native[i].ni_owners = native[j].ni_owners;
-		memcpy(native[i].ni_bits, native[j].ni_bits, _papi_hwd[ESI->CmpIdx]->size.reg_value);
-
-		native[j].ni_event = -1;
-		native[j].ni_position = -1;
-		native[j].ni_owners = 0;
-		memset(native[j].ni_bits, 0x00, _papi_hwd[ESI->CmpIdx]->size.reg_value);
-		copy++;
-		break;
+               memcpy(native + i, native + j, sizeof(NativeInfo_t));
+               memset(native + j, 0, sizeof(NativeInfo_t));
+               native[j].ni_position = -1;
+               copy++;
+               break;
             }
          }
          if (copy == 0) {
-	    native[j].ni_event = -1;
-            native[j].ni_position = -1;
-            native[j].ni_owners = 0;
-	    memset(native[j].ni_bits, 0x00,_papi_hwd[ESI->CmpIdx]->size.reg_value);
+            memset(native + i, 0, sizeof(NativeInfo_t));
+            native[i].ni_position = -1;
          }
       }
    }
@@ -924,7 +916,7 @@ int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode)
          array[thisindex] = array[thisindex+1];
 
       array[thisindex].event_code = PAPI_NULL;
-      for (j = 0; j < PAPI_MAX_COUNTER_TERMS; j++)
+      for (j = 0; j < MAX_COUNTER_TERMS; j++)
          array[thisindex].pos[j] = -1;
       array[thisindex].ops = NULL;
       array[thisindex].derived = NOT_DERIVED;
@@ -936,13 +928,12 @@ int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode)
 int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long long * values)
 {
    int retval;
-   long long *dp;
+   long long *dp = NULL;
    int i, j = 0, index;
 
    retval = _papi_hwd[ESI->CmpIdx]->read(context, ESI->ctl_state, &dp, ESI->state);
    if (retval != PAPI_OK)
      return (retval);
-
 
    /* This routine distributes hardware counters to software counters in the
       order that they were added. Note that the higher level
@@ -952,35 +943,31 @@ int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long long * va
       changed.  
     */
 
-   for (i = 0; i < _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs; i++) 
+   for (i = 0; j != ESI->NumberOfEvents; i++, j++) 
      {
        index = ESI->EventInfoArray[i].pos[0];
-      if (index == -1)
+       if (index == -1)
          continue;
-
-      INTDBG("Event index %d, position is 0x%x\n", j, index);
-
-      /* If this is not a derived event */
-
-      if (ESI->EventInfoArray[i].derived == NOT_DERIVED) 
-	{
-	  INTDBG("counter index is %d\n", index);
-	  values[j] = dp[index];
-	} 
-      else /* If this is a derived event */ 
-	{ 
-	  values[j] = handle_derived(&ESI->EventInfoArray[i], dp);
+       
+       INTDBG("Event index %d, position is 0x%x\n", j, index);
+       
+       /* If this is not a derived event */
+       
+       if (ESI->EventInfoArray[i].derived == NOT_DERIVED) 
+	 {
+	   INTDBG("counter index is %d\n", index);
+	   values[j] = dp[index];
+	 } 
+       else /* If this is a derived event */ 
+	 { 
+	   values[j] = handle_derived(&ESI->EventInfoArray[i], dp);
 #ifdef DEBUG
-	  if (values[j] < (long long)0) {
+	   if (values[j] < (long long)0) {
             INTDBG("Derived Event is negative!!: %lld\n", values[j]);
-	  }
-      INTDBG("read value is =%lld \n", values[j]);
+	   }
+	   INTDBG("read value is =%lld \n", values[j]);
 #endif
-	}
-
-      /* Early exit! */
-      if (++j == ESI->NumberOfEvents)
-         break;
+	 }
      }
 
    return (PAPI_OK);
@@ -1014,7 +1001,7 @@ int _papi_hwi_convert_eventset_to_multiplex(_papi_int_multiplex_t *mpx)
       convert them to multiplex events */
 
    if (ESI->NumberOfEvents)
-     {
+     {											  
        mpxlist = (int *) papi_malloc(sizeof(int) * ESI->NumberOfEvents);
        if (mpxlist == NULL) 
 	   return (PAPI_ENOMEM);
@@ -1034,7 +1021,7 @@ int _papi_hwi_convert_eventset_to_multiplex(_papi_int_multiplex_t *mpx)
 	   ((_papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex) && 
 	    (flags & PAPI_MULTIPLEX_FORCE_SW))) 
 	 {
-	   retval = MPX_add_events(&ESI->multiplex.mpx_evset, mpxlist, j, ESI->CmpIdx);
+	   retval = MPX_add_events(&ESI->multiplex.mpx_evset, mpxlist, j, ESI->domain.domain, ESI->granularity.granularity, ESI->CmpIdx);
 	   if (retval != PAPI_OK) 
 	     {
 	       papi_free(mpxlist);
@@ -1049,7 +1036,7 @@ int _papi_hwi_convert_eventset_to_multiplex(_papi_int_multiplex_t *mpx)
    ESI->state |= PAPI_MULTIPLEXING;
    if (_papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex && (flags & PAPI_MULTIPLEX_FORCE_SW))
      ESI->multiplex.flags = PAPI_MULTIPLEX_FORCE_SW;
-   ESI->multiplex.us = mpx->us;
+   ESI->multiplex.ns = mpx->ns;
  
    return (PAPI_OK);
 }
@@ -1093,6 +1080,7 @@ int _papi_hwi_init_global(void)
 
 /* Machine info struct initialization using defaults */
 /* See _papi_mdi definition in papi_internal.h       */
+
 int _papi_hwi_init_global_internal(void)
 {
   int retval;
@@ -1105,6 +1093,9 @@ int _papi_hwi_init_global_internal(void)
   _papi_hwi_presets.type = _papi_hwi_preset_type;
 
   memset(&_papi_hwi_system_info,0x0,sizeof(_papi_hwi_system_info));
+#ifndef _WIN32
+  memset(_papi_hwi_using_signal,0x0,sizeof(_papi_hwi_using_signal));
+#endif
 
    /* Global struct to maintain EventSet mapping */
    retval = allocate_eventset_map(&_papi_hwi_system_info.global_eventset_map);
@@ -1123,12 +1114,9 @@ int _papi_hwi_init_global_internal(void)
    _papi_hwi_system_info.hw_info.model_string[0] = '\0';        /* model_string */
    _papi_hwi_system_info.hw_info.revision = 0.0;        /* revision */
    _papi_hwi_system_info.hw_info.mhz = 0.0;     /* mhz */
-   _papi_hwi_system_info.hw_info.clock_mhz = 0;
-   _papi_hwi_system_info.hw_info.clock_ticks = sysconf(_SC_CLK_TCK);
-
+ 
    return (PAPI_OK);
 }
-
 
 void _papi_hwi_shutdown_global_internal(void)
 {
@@ -1152,7 +1140,7 @@ static long long handle_derived_add(int *position, long long * from)
    long long retval = 0;
 
    i = 0;
-   while (i < PAPI_MAX_COUNTER_TERMS) {
+   while (i < MAX_COUNTER_TERMS) {
       pos = position[i++];
       if (pos == PAPI_NULL)
          break;
@@ -1168,7 +1156,7 @@ static long long handle_derived_subtract(int *position, long long * from)
    long long retval = from[position[0]];
 
    i = 1;
-   while (i < PAPI_MAX_COUNTER_TERMS) {
+   while (i < MAX_COUNTER_TERMS) {
       pos = position[i++];
       if (pos == PAPI_NULL)
          break;
@@ -1204,7 +1192,7 @@ static long long handle_derived_add_ps(int *position, long long * from)
 */ long long _papi_hwi_postfix_calc(EventInfo_t * evi, long long * hw_counter)
 {
    char *point = evi->ops, operand[16];
-   double stack[PAPI_MAX_COUNTER_TERMS];
+   double stack[MAX_COUNTER_TERMS];
    int i, top = 0;
 
    while (*point != '\0') {

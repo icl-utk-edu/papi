@@ -14,12 +14,12 @@
  *          smeds@pdc.kth.se
  *          Haihang You
  *          you@cs.utk.edu 
- *	    Kevin London
- *	    london@cs.utk.edu
+ *	        Kevin London
+ *	        london@cs.utk.edu
  *          Maynard Johnson
  *          maynardj@us.ibm.com
- *	    Dan Terpstra
- *	    terpstra@cs.utk.edu
+ *	        Dan Terpstra
+ *	        terpstra@cs.utk.edu
  */
 
 /* xxxx Will this stuff run unmodified on multiple components?
@@ -160,6 +160,9 @@ static void mpx_init_timers(int interval)
    /* Fill in the interval timer values now to save a
     * little time later.
     */
+#ifdef OUTSIDE_PAPI
+   interval = MPX_DEFAULT_INTERVAL;
+#endif
    /* interval is in usec & Windows needs msec resolution */
    mpx_time = interval / 1000;
 }
@@ -207,12 +210,12 @@ static void mpx_shutdown_itimer(void)
       }
 }
 
-inline_static void mpx_release(void)
+static void mpx_release(void)
 {
    mpx_startup_itimer();
 }
 
-inline_static void mpx_hold(void)
+static void mpx_hold(void)
 {
    mpx_shutdown_itimer();
 }
@@ -236,20 +239,26 @@ static void mpx_init_timers(int interval)
    /* Fill in the interval timer values now to save a
     * little time later.
     */
+#ifdef OUTSIDE_PAPI
+   interval = MPX_DEFAULT_INTERVAL;
+#endif
 
 #ifdef REGENERATE
    /* Signal handler restarts the timer every time it runs */
-   itime.it_interval.tv_usec = 0;
-#else
-   /* Timer resets itself automatically */
-   itime.it_interval.tv_usec = interval;
-#endif
    itime.it_interval.tv_sec = 0;
+   itime.it_interval.tv_usec = 0;
    itime.it_value.tv_sec = 0;
    itime.it_value.tv_usec = interval;
+#else
+   /* Timer resets itself automatically */
+   itime.it_interval.tv_sec = 0;
+   itime.it_interval.tv_usec = interval;
+   itime.it_value.tv_sec = 0;
+   itime.it_value.tv_usec = interval;
+#endif
 
    sigemptyset( &sigreset );
-   sigaddset( &sigreset, _papi_hwi_system_info.mpx_info.timer_sig);
+   sigaddset( &sigreset, _papi_hwd[0]->cmp_info.itimer_sig);
 }
 
 static int mpx_startup_itimer(void)
@@ -263,15 +272,15 @@ static int mpx_startup_itimer(void)
    sigact.sa_flags = SA_RESTART;
    sigact.sa_handler = mpx_handler;
 
-   if (sigaction(_papi_hwi_system_info.mpx_info.timer_sig, &sigact, NULL) == -1)
+   if (sigaction(_papi_hwd[0]->cmp_info.itimer_sig, &sigact, NULL) == -1)
      {
         PAPIERROR("sigaction start errno %d",errno);
 	return PAPI_ESYS;
      }
 
-   if (setitimer(_papi_hwi_system_info.mpx_info.timer_num, &itime, NULL) == -1)
+   if (setitimer(_papi_hwd[0]->cmp_info.itimer_num, &itime, NULL) == -1)
      {
-       sigaction(_papi_hwi_system_info.mpx_info.timer_sig, &oaction, NULL);
+       sigaction(_papi_hwd[0]->cmp_info.itimer_sig, &oaction, NULL);
        PAPIERROR("setitimer start errno %d",errno);
        return PAPI_ESYS;
      }
@@ -280,16 +289,17 @@ static int mpx_startup_itimer(void)
 
 static void mpx_restore_signal(void)
 {
-    if (_papi_hwi_system_info.mpx_info.timer_sig != PAPI_NULL) { 
-	if (signal(_papi_hwi_system_info.mpx_info.timer_sig, SIG_IGN) == SIG_ERR)
+  MPXDBG("restore signal\n");
+  if (_papi_hwd[0]->cmp_info.itimer_sig != PAPI_NULL) { 
+	if (signal(_papi_hwd[0]->cmp_info.itimer_sig, SIG_IGN) == SIG_ERR)
      	PAPIERROR("sigaction stop errno %d",errno); }
 }
 
 static void mpx_shutdown_itimer(void)
 {
   MPXDBG("setitimer off\n");
-  if (_papi_hwi_system_info.mpx_info.timer_num != PAPI_NULL) {
- 	if (setitimer(_papi_hwi_system_info.mpx_info.timer_num, (struct itimerval *)&itimestop, NULL) == -1)
+  if (_papi_hwd[0]->cmp_info.itimer_num != PAPI_NULL) {
+ 	if (setitimer(_papi_hwd[0]->cmp_info.itimer_num, (struct itimerval *)&itimestop, NULL) == -1)
      	PAPIERROR("setitimer stop errno %d",errno); }
 }
 #endif                          /* _WIN32 */
@@ -327,10 +337,10 @@ static MPX_EventSet *mpx_malloc(Threadlist * t)
    return (newset);
 }
 
-int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode, int cidx)
+int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode, int domain, int granularity, int cidx)
 {
    MPX_EventSet *newset = *mpx_events;
-   int retval, def_dom, def_grn, alloced_thread = 0, alloced_newset = 0;
+   int retval, alloced_thread = 0, alloced_newset = 0;
    Threadlist *t;
 
    /* Get the global list of threads */
@@ -411,16 +421,13 @@ int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode, int cidx)
 
    /* Removed newset->num_events++, moved to mpx_insert_events() */
 
-   def_dom = PAPI_get_cmp_opt(PAPI_DEFDOM, NULL, cidx);
-   def_grn = PAPI_get_cmp_opt(PAPI_DEFGRN, NULL, cidx);
-
    mpx_hold();
 
    /* Create PAPI events (if they don't already exist) and link
     * the new event set to them, add them to the master list for
     the thread, reset master event list for this thread */
 
-   retval = mpx_insert_events(newset, &EventCode, 1, def_dom, def_grn);
+   retval = mpx_insert_events(newset, &EventCode, 1, domain, granularity);
    if (retval != PAPI_OK) {
       if (alloced_newset) {
          papi_free(newset);
@@ -449,6 +456,19 @@ int mpx_remove_event(MPX_EventSet ** mpx_events, int EventCode)
 #ifdef MPX_DEBUG_TIMER
 static long long lastcall;
 #endif
+
+
+#ifdef _POWER6
+/* POWER6 can always count PM_RUN_CYC on counter 6 in domain
+   PAPI_DOM_ALL, and can count it on other domains on counters
+   1 and 2 along with a very limited number of other native
+   events */
+int _PNE_PM_RUN_CYC;
+#define SCALE_EVENT _PNE_PM_RUN_CYC
+#else
+#define SCALE_EVENT PAPI_TOT_CYC
+#endif
+
 
 static void mpx_handler(int signal)
 {
@@ -517,7 +537,7 @@ static void mpx_handler(int signal)
       for (t = tlist; t != NULL; t = t->next) {
          if (pthread_equal(t->thr, self) == 0) {
             ++threads_responding;
-            retval = pthread_kill(t->thr, _papi_hwd[cidx]->cmp_info.multiplex_timer_sig);
+            retval = pthread_kill(t->thr, _papi_hwd[0]->cmp_info.itimer_sig);
             assert(retval == 0);
 #ifdef MPX_DEBUG_SIGNALS
             MPXDBG("%x signaling %x\n", self, t->thr);
@@ -564,13 +584,12 @@ static void mpx_handler(int signal)
          MPXDBG("counts[0] = %lld counts[1] = %lld\n", counts[0], counts[1]);
 
          cur_event->count += counts[0];
-         cycles = (cur_event->pi.event_type == PAPI_TOT_CYC)
+         cycles = (cur_event->pi.event_type == SCALE_EVENT)
              ? counts[0] : counts[1];
 
          me->total_c += cycles;
          total_cycles = me->total_c - cur_event->prev_total_c;
          cur_event->prev_total_c = me->total_c;
-         cur_event->handler_count++;
 
             /* If it's a rate, count occurrences & average later */
             if (!cur_event->is_a_rate) {
@@ -634,7 +653,7 @@ static void mpx_handler(int signal)
 	if ((t->tid == _papi_hwi_thread_id_fn()) || (t->head == NULL))
 	  continue;
          MPXDBG("forwarding signal to thread %lx\n", t->tid);
-         retval = (*_papi_hwi_thread_kill_fn) (t->tid, _papi_hwd[cidx]->cmp_info.multiplex_timer_sig);
+         retval = (*_papi_hwi_thread_kill_fn) (t->tid, _papi_hwd[0]->cmp_info.itimer_sig);
          if (retval != 0) {
             MPXDBG("forwarding signal to thread %lx returned %d\n",
                    t->tid, retval);
@@ -656,7 +675,7 @@ static void mpx_handler(int signal)
     */
    /* Reset the timer once all threads have responded */
    if (lastthread) {
-      retval = setitimer(_papi_hwd[cidx]->cmp_info.multiplex_timer_num, &itime, NULL);
+      retval = setitimer(_papi_hwd[0]->cmp_info.itimer_num, &itime, NULL);
       assert(retval == 0);
 #ifdef MPX_DEBUG_TIMER
       MPXDBG("timer restarted by %lx\n", me->tid);
@@ -671,12 +690,12 @@ static void mpx_handler(int signal)
 #endif
 }
 
-int MPX_add_events(MPX_EventSet ** mpx_events, int *event_list, int num_events, int cidx)
+int MPX_add_events(MPX_EventSet ** mpx_events, int *event_list, int num_events, int domain, int granularity, int cidx)
 {
    int i, retval = PAPI_OK;
 
    for (i = 0; i < num_events; i++) {
-      retval = mpx_add_event(mpx_events, event_list[i], cidx);
+      retval = mpx_add_event(mpx_events, event_list[i], domain, granularity, cidx);
 
       if (retval != PAPI_OK)
          return (retval);
@@ -702,8 +721,8 @@ int MPX_start(MPX_EventSet * mpx_events)
       assert(retval == PAPI_OK);
       if (retval == PAPI_OK)
 	{
-	  cycles_this_slice = ((t->cur_event->pi.event_type == PAPI_TOT_CYC)
-			       ? values[0] : values[1]);
+	  cycles_this_slice = (t->cur_event->pi.event_type == SCALE_EVENT)
+			       ? values[0] : values[1];
 	}
       else
 	{
@@ -766,7 +785,6 @@ int MPX_start(MPX_EventSet * mpx_events)
          mev->rate_estimate = 0.0;
          mev->prev_total_c = current_thread_mpx_c;
          mev->count = 0;
-         mev->handler_count = 0;
       }
       /* Adjust start value to include events and cycles
        * counted previously for this event set.
@@ -835,7 +853,7 @@ int MPX_read(MPX_EventSet * mpx_events, long long * values)
       if (retval != PAPI_OK)
          return retval;
 
-      cycles_this_slice = (cur_event->pi.event_type == PAPI_TOT_CYC)
+      cycles_this_slice = (cur_event->pi.event_type == SCALE_EVENT)
           ? last_value[0] : last_value[1];
 
       /* Save the current counter values and get
@@ -1073,16 +1091,102 @@ void MPX_shutdown(void)
   mpx_restore_signal();
 }
 
-int mpx_init(int interval)
+
+int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
 {
 #ifdef PTHREADS
    int retval;
 #endif
+#ifdef OLD
+   int i;
+   int granularity, domain;
+   int *event_list;
+#endif
 
+   return (PAPI_EINVAL);
+
+#ifdef OLD
+   if (ptr == NULL || mpx_events == NULL)
+      return PAPI_EINVAL;
+
+   switch (option) {
+      /* options that are not per-eventset */
+   case PAPI_INHERIT:
+      return PAPI_set_opt(option, ptr);
+      break;
+
+      /* options that are per-eventset */
+      /* Changing domain or granularity causes the events
+       * in the set to be measured differently.  Conceivably,
+       * one might want to accumulate events measured
+       * differently into the same counter, but it's easier
+       * not to allow it.  So we'll handle new options by
+       * removing the old events and adding new ones with
+       * the new options.
+       */
+   case PAPI_DOMAIN:
+   case PAPI_GRANUL:
+      /* Event set must not be running */
+      if (mpx_events->status == MPX_RUNNING)
+         return PAPI_EINVAL;
+
+      /* Determine the option values to use */
+      if (option == PAPI_DOMAIN) {
+         domain = ptr->domain.domain;
+         granularity = mpx_events->mev[0]->pi.granularity;
+      } else if (option == PAPI_GRANUL) {
+         domain = mpx_events->mev[0]->pi.domain;
+         granularity = ptr->granularity.granularity;
+      }
+
+      /* If no change needed, just return */
+      if (mpx_events->mev[0]->pi.domain == domain
+          && mpx_events->mev[0]->pi.granularity == granularity)
+         return PAPI_OK;
+
+      /* Make a list of the events in the current set */
+      event_list = (int *) papi_malloc(mpx_events->num_events * sizeof(int));
+      if (event_list == NULL)
+	return PAPI_ENOMEM;
+
+      for (i = 0; i < mpx_events->num_events; i++)
+        event_list[i] = mpx_events->mev[i]->pi.event_type;
+
+      mpx_hold();
+
+      /* Remove the events from the master list and the current set */
+      mpx_delete_events(mpx_events);
+
+      /* Put the events back in the event set with the
+       * new options.
+       */
+      mpx_insert_events(mpx_events, event_list, i, domain, granularity);
+
+      mpx_release();
+
+      papi_free(event_list);
+
+      break;
+   }
+   return PAPI_OK;
+#endif
+}
+
+int mpx_init(int interval_ns)
+{
+#if defined(PTHREADS) || defined(_POWER6)
+   int retval;
+#endif
+
+#ifdef _POWER6
+   retval = PAPI_event_name_to_code("PM_RUN_CYC", &_PNE_PM_RUN_CYC);
+   if (retval != PAPI_OK)
+      return (retval);
+#endif
    tlist = NULL;
    mpx_hold();
    mpx_shutdown_itimer();
-   mpx_init_timers(interval);
+   mpx_init_timers(interval_ns / 1000);
    
    return (PAPI_OK);
 }
@@ -1097,6 +1201,7 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
 {
    int i, retval = 0, num_events_success = 0;
    MasterEvent *mev;
+   PAPI_option_t options;
    MasterEvent **head = &mpx_events->mythr->head;
 
    /* For each event, see if there is already a corresponding
@@ -1122,7 +1227,6 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
          mev->pi.granularity = granularity;
          mev->uses = mev->active = 0;
          mev->prev_total_c = mev->count = mev->cycles = 0;
-         mev->handler_count = 0;
          mev->rate_estimate = 0.0;
          mev->count_estimate = 0;
          mev->is_a_rate = 0;
@@ -1132,7 +1236,7 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
             MPXDBG("Event %d could not be counted.\n", event_list[i]);
             goto bail;
          }
-
+         
          retval = PAPI_add_event(mev->papi_event, event_list[i]);
          if (retval != PAPI_OK) {
             MPXDBG("Event %d could not be counted.\n", event_list[i]);
@@ -1142,13 +1246,36 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
          /* Always count total cycles so we can scale results.
           * If user just requested cycles, don't add that event again. */
 
-         if (event_list[i] != PAPI_TOT_CYC) {
-            retval = PAPI_add_event(mev->papi_event, PAPI_TOT_CYC);
+         if (event_list[i] != SCALE_EVENT) {
+            retval = PAPI_add_event(mev->papi_event, SCALE_EVENT);
             if (retval != PAPI_OK) {
-               MPXDBG("PAPI_TOT_CYC could not be counted at the same time.\n");
+               MPXDBG("Scale event could not be counted at the same time.\n");
                goto bail;
             }
          }
+         /* Set the options for the event set */
+         memset(&options, 0x0, sizeof(options));
+         options.domain.eventset = mev->papi_event;
+         options.domain.domain = domain;
+         retval = PAPI_set_opt(PAPI_DOMAIN, &options);
+         if (retval != PAPI_OK) {
+            MPXDBG("PAPI_set_opt(PAPI_DOMAIN, ...) = %d\n", retval);
+            goto bail;
+         }
+         
+         memset(&options, 0x0, sizeof(options));
+         options.granularity.eventset = mev->papi_event;
+         options.granularity.granularity = granularity;
+         retval = PAPI_set_opt(PAPI_GRANUL, &options);
+         if (retval != PAPI_OK) {
+            if (retval != PAPI_ESBSTR) {
+               /* ignore substrate errors because they typically mean
+                  "not supported by the substrate" */
+               MPXDBG("PAPI_set_opt(PAPI_GRANUL, ...) = %d\n", retval);
+               goto bail;
+            }
+         }
+
 
          /* Chain the event set into the 
           * master list of event sets used in

@@ -118,6 +118,8 @@ int PAPI_register_thread(void)
 {
    ThreadInfo_t *thread;
 
+   if (init_level == PAPI_NOT_INITED)
+      papi_return(PAPI_ENOINIT);
    papi_return(_papi_hwi_lookup_or_create_thread(&thread));
 }
 
@@ -171,6 +173,8 @@ int PAPI_get_thr_specific(int tag, void **ptr)
    ThreadInfo_t *thread;
    int doall = 0, retval = PAPI_OK;
 
+   if (init_level == PAPI_NOT_INITED)
+      papi_return(PAPI_ENOINIT);
    if (tag & PAPI_TLS_ALL_THREADS)
      {
        tag = tag ^ PAPI_TLS_ALL_THREADS;
@@ -199,6 +203,8 @@ int PAPI_set_thr_specific(int tag, void *ptr)
    ThreadInfo_t *thread;
    int retval = PAPI_OK;
 
+   if (init_level == PAPI_NOT_INITED)
+      papi_return(PAPI_ENOINIT);
    if ((tag < 0) || (tag > PAPI_NUM_TLS))
       papi_return(PAPI_EINVAL);
 
@@ -214,9 +220,9 @@ int PAPI_set_thr_specific(int tag, void *ptr)
 
 int PAPI_library_init(int version)
 {
-   int tmp = 0, tmpel;
-   /* xxxx This is a poor attempt at a lock. 
-      This should be replaced with a 
+  int tmp = 0, tmpel;
+   /* This is a poor attempt at a lock. 
+      For 3.1 this should be replaced with a 
       true UNIX semaphore. We cannot use PAPI
       locks here because they are not initialized yet */
    static int _in_papi_library_init_cnt = 0;
@@ -314,6 +320,7 @@ int PAPI_library_init(int version)
    _papi_hwi_error_level = PAPI_VERB_ECONT;
 
    /* Initialize internal globals */
+
    if (_papi_hwi_init_global_internal() != PAPI_OK) {
      _in_papi_library_init_cnt--;
      _papi_hwi_error_level = tmpel;
@@ -321,6 +328,7 @@ int PAPI_library_init(int version)
    }
 
    /* Initialize substrate globals */
+
    tmp = _papi_hwi_init_global();
    if (tmp) {
       init_retval = tmp;
@@ -355,7 +363,7 @@ int PAPI_library_init(int version)
       init_retval = tmp;
       _papi_hwi_shutdown_global_internal();
       for (i=0;i<papi_num_components; i++) {
-	_papi_hwd[i]->shutdown_global();
+	    _papi_hwd[i]->shutdown_global();
       }
       _in_papi_library_init_cnt--;
      _papi_hwi_error_level = tmpel;
@@ -466,14 +474,8 @@ int PAPI_set_event_info(PAPI_event_info_t * info, int *EventCode, int replace)
    if (info->event_code & PAPI_PRESET_MASK) {
       /* do some sanity checks */
       if (info->derived) {
-         type = _papi_hwi_derived_type(info->derived);
-
-         if(type == -1)
-            papi_return(PAPI_EINVAL); /* not a valid Derived type string */
-         if(type != NOT_DERIVED && info->count < 2)
-            papi_return(PAPI_EINVAL); /* can't be derived with only one term */
-         if(type == NOT_DERIVED && info->count > 1)
-            papi_return(PAPI_EINVAL); /* must be derived if more than one term */
+	if (_papi_hwi_derived_type(info->derived,&type) != PAPI_OK)
+	  return(PAPI_EINVAL);
       }
       papi_return(_papi_hwi_set_event_info(info, EventCode));
    }
@@ -649,41 +651,38 @@ int PAPI_enum_event(int *EventCode, int modifier)
      return (PAPI_ENOCMP);
    
    if (i & PAPI_PRESET_MASK) {
-     if (modifier == PAPI_ENUM_FIRST) {
-       *EventCode = PAPI_PRESET_MASK;
-       return (PAPI_OK);
-     }
-     i &= PAPI_PRESET_AND_MASK;
-     while (++i < PAPI_MAX_PRESET_EVENTS) {
-       if (_papi_hwi_presets.info[i].symbol == NULL)
-	 return (PAPI_ENOEVNT); /* NULL pointer terminates list */
-       if (modifier & PAPI_PRESET_ENUM_AVAIL) {
-	 if (_papi_hwi_presets.count[i] == 0)
-	   continue;
-       }
-       *EventCode = i | PAPI_PRESET_MASK;
-       return (PAPI_OK);
-     }
+	   if (modifier == PAPI_ENUM_FIRST) {
+			 *EventCode = PAPI_PRESET_MASK;
+			 return (PAPI_OK);
+	   }
+       i &= PAPI_PRESET_AND_MASK;
+       while (++i < PAPI_MAX_PRESET_EVENTS) 
+	 {
+	   if (_papi_hwi_presets.info[i].symbol == NULL)
+	     return (PAPI_ENOEVNT); /* NULL pointer terminates list */
+	   if (modifier & PAPI_PRESET_ENUM_AVAIL)
+	     {
+	       if (_papi_hwi_presets.count[i] == 0)
+		 continue;
+	     }
+	   *EventCode = i | PAPI_PRESET_MASK;
+	   return (PAPI_OK);
+         }
    }
    else if (i & PAPI_NATIVE_MASK) {
        /* Should check against num native events here */
-  SUBDBG("Modifier: %d\n",modifier);
        return (_papi_hwd[cidx]->ntv_enum_events((unsigned int *) EventCode, modifier));
    }
-   return (PAPI_EINVAL);
+   papi_return (PAPI_EINVAL);
 }
 
-/* Kevin's model required eventset to be specified with a component index.
-	Haihang's model separates create and allocate with a 'late binding'.
-	When the first event is added, the eventset is bound to that substrate
-	and the space is allocated. Must make sure that eventset queries to empty
-	sets are handled properly and that deleting the last event 'unbinds' the set.
-*/
 int PAPI_create_eventset(int *EventSet)
 {
    ThreadInfo_t *master;
    int retval;
 
+   if (init_level == PAPI_NOT_INITED)
+      papi_return(PAPI_ENOINIT);
    retval = _papi_hwi_lookup_or_create_thread(&master);
    if (retval)
      papi_return(retval);
@@ -744,8 +743,8 @@ int PAPI_add_event(int EventSet, int EventCode)
 
    /* Check argument for validity */
 
-   if ((((EventCode & PAPI_PRESET_MASK) == 0) && 
-       ((EventCode & PAPI_NATIVE_MASK) == 0))) 
+   if (((EventCode & PAPI_PRESET_MASK) == 0) && 
+       (EventCode & PAPI_NATIVE_MASK) == 0)
      papi_return(PAPI_EINVAL);
 
    /* Of course, it must be stopped in order to modify it. */
@@ -885,45 +884,60 @@ int PAPI_start(int EventSet)
 
    /* If overflowing is enabled, turn it on */
 
-   if (ESI->state & PAPI_OVERFLOWING) 
+   if ((ESI->state & PAPI_OVERFLOWING) && !(ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE))
      {
-       if (!(ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
-	 {
-           APIDBG("Overflow using: %s with a interval of %d ms\n", (ESI->overflow.flags&PAPI_OVERFLOW_FORCE_SW)?"[Forced Software]":"Software", ESI->overflow.timer_ms);
-	   retval = _papi_hwi_start_signal(_papi_hwd[cidx]->cmp_info.hardware_intr_sig, NEED_CONTEXT, cidx);
-	   if (retval != PAPI_OK)
-	     papi_return(retval);
-	   retval = _papi_hwi_start_timer(ESI->overflow.timer_ms);
-	   if (retval != PAPI_OK)
-	     {
-               APIDBG("Error starting _papi_hwi_start_timer: %d\n", retval);
-	       _papi_hwi_stop_signal(_papi_hwd[cidx]->cmp_info.hardware_intr_sig);
-	       papi_return(retval);
-	     }
-	 }
-        else {
-           APIDBG("Overflow using: [Hardware]\n");
-        }
+       retval = _papi_hwi_start_signal(_papi_hwd[cidx]->cmp_info.itimer_sig, NEED_CONTEXT, cidx);
+       if (retval != PAPI_OK)
+	 papi_return(retval);
+
+       /* Update the state of this EventSet and thread before to avoid races */
+       ESI->state ^= PAPI_STOPPED;
+       ESI->state |= PAPI_RUNNING;
+       if (!(ESI->state & PAPI_ATTACHED))
+	 thread->running_eventset[cidx] = ESI;
+
+       retval = _papi_hwd[cidx]->start(thread->context[cidx], ESI->ctl_state);
+       if (retval != PAPI_OK) {
+	 _papi_hwi_stop_signal(_papi_hwd[cidx]->cmp_info.itimer_sig);
+	 ESI->state ^= PAPI_RUNNING;
+	 ESI->state |= PAPI_STOPPED;
+	 if (!(ESI->state & PAPI_ATTACHED))
+	   thread->running_eventset[cidx] = NULL;
+	 papi_return(retval);
+       }
+
+       retval = _papi_hwi_start_timer(_papi_hwd[cidx]->cmp_info.itimer_num, 
+				      _papi_hwd[cidx]->cmp_info.itimer_sig,
+				      _papi_hwd[cidx]->cmp_info.itimer_ns);
+       if (retval != PAPI_OK) {
+	 _papi_hwi_stop_signal(_papi_hwd[cidx]->cmp_info.itimer_sig);
+	 _papi_hwd[cidx]->stop(thread->context, ESI->ctl_state);
+	 ESI->state ^= PAPI_RUNNING;
+	 ESI->state |= PAPI_STOPPED;
+	 if (!(ESI->state & PAPI_ATTACHED))
+	   thread->running_eventset[cidx] = NULL;
+	 papi_return(retval);
+       }
+     }
+   else
+     {
+       /* Update the state of this EventSet and thread before to avoid races */
+       ESI->state ^= PAPI_STOPPED;
+       ESI->state |= PAPI_RUNNING;
+       if (!(ESI->state & PAPI_ATTACHED))
+	 thread->running_eventset[cidx] = ESI;
+
+       retval = _papi_hwd[cidx]->start(thread->context[cidx], ESI->ctl_state);
+       if (retval != PAPI_OK) {
+	 _papi_hwd[cidx]->stop(thread->context[cidx], ESI->ctl_state);
+	 ESI->state ^= PAPI_RUNNING;
+	 ESI->state |= PAPI_STOPPED;
+	 if (!(ESI->state & PAPI_ATTACHED))
+	   thread->running_eventset[cidx] = NULL;
+	 papi_return(retval);
+       }
      }
 
-   /* Merge the control bits from the new EventSet into the active counter config. */
-
-   retval = _papi_hwd[cidx]->start(thread->context[cidx], ESI->ctl_state);
-   if (retval != PAPI_OK)
-      papi_return(retval);
-
-   /* Update the state of this EventSet */
-
-   ESI->state ^= PAPI_STOPPED;
-   ESI->state |= PAPI_RUNNING;
-
-   /* Update the running event set for this thread */
-
-   /* #warning "I don't know why this is here" */
-
-     thread->running_eventset[cidx] = ESI;
-
-   APIDBG("PAPI_start returns %d\n", retval);
    return (retval);
 }
 
@@ -991,13 +1005,12 @@ int PAPI_stop(int EventSet, long long * values)
 
    if (ESI->state & PAPI_OVERFLOWING) 
      {
-       ESI->overflow.count = 0;
        if (!(ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
 	 {
-	   retval = _papi_hwi_stop_timer();
+	   retval = _papi_hwi_stop_timer(_papi_hwd[cidx]->cmp_info.itimer_num, _papi_hwd[cidx]->cmp_info.itimer_sig);
 	   if (retval != PAPI_OK)
 	     papi_return(retval);
-	   _papi_hwi_stop_signal(_papi_hwd[cidx]->cmp_info.hardware_intr_sig);
+	   _papi_hwi_stop_signal(_papi_hwd[cidx]->cmp_info.itimer_sig);
 	 }
      }
 
@@ -1007,10 +1020,10 @@ int PAPI_stop(int EventSet, long long * values)
    ESI->state |= PAPI_STOPPED;
 
    /* Update the running event set for this thread */
- 
+
    /* #warning "I don't know why this is here" */
 
-  if (!(ESI->state & PAPI_ATTACHED))
+   if (!(ESI->state & PAPI_ATTACHED))
      thread->running_eventset[cidx] = NULL ;
 
 #if defined(DEBUG)
@@ -1051,13 +1064,6 @@ int PAPI_reset(int EventSet)
 
          retval = _papi_hwd[cidx]->reset(thread->context[cidx], ESI->ctl_state);
 
-         if ((ESI->state & PAPI_OVERFLOWING) &&
-             (ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
-            ESI->overflow.count = 0;
-
-         if ((ESI->state & PAPI_PROFILING) && (_papi_hwd[cidx]->cmp_info.hardware_intr) &&
-             !(ESI->profile.flags&PAPI_PROFIL_FORCE_SW))
-            ESI->profile.overflowcount = 0;
       }
    } else {
       memset(ESI->sw_stop, 0x00, ESI->NumberOfEvents * sizeof(long long));
@@ -1081,7 +1087,6 @@ int PAPI_read(int EventSet, long long * values)
    if (cidx < 0) papi_return(cidx);
 
    thread = ESI->master;
-
    if (values == NULL)
       papi_return(PAPI_EINVAL);
 
@@ -1106,19 +1111,23 @@ int PAPI_read(int EventSet, long long * values)
 #endif
 
    APIDBG("PAPI_read returns %d\n", retval);
-   return (retval);
+   return (PAPI_OK);
 }
 
-int PAPI_read_fast_ts(int EventSet, long long * values, long long *cyc)
+int PAPI_read_ts(int EventSet, long long * values, long long *cyc)
 {
    EventSetInfo_t *ESI;
    ThreadInfo_t *thread;
-   int retval;
+   int cidx, retval;
 
    ESI = _papi_hwi_lookup_EventSet(EventSet);
+
+   cidx = valid_ESI_component(ESI);
+   if (cidx < 0) papi_return(cidx);
+
    thread = ESI->master;
    retval = _papi_hwi_read(thread->context[ESI->CmpIdx], ESI, values);
-   *cyc = PAPI_get_real_cyc();
+   *cyc = _papi_hwd[cidx]->get_real_cycles();
    return(retval);
 }
 
@@ -1255,7 +1264,7 @@ int PAPI_multiplex_init(void)
 {
    int retval;
 
-   retval = mpx_init(_papi_hwi_system_info.mpx_info.timer_us);
+   retval = mpx_init(_papi_hwd[0]->cmp_info.itimer_ns);
    papi_return(retval);
 }
 
@@ -1313,11 +1322,27 @@ int PAPI_detach(int EventSet)
 int PAPI_set_multiplex(int EventSet)
 {
    PAPI_option_t mpx;
+   EventSetInfo_t *ESI;
+   int cidx;
 
+   /* Is the EventSet already in existence? */
+
+   ESI = _papi_hwi_lookup_EventSet(EventSet);
+
+   if (ESI == NULL)
+      papi_return(PAPI_ENOEVST);
+
+   /* if the eventset has no index and no events, return OK
+      otherwise return NOCMP */
+   cidx = valid_ESI_component(ESI);
+   if (cidx < 0) {
+       if (ESI->NumberOfEvents) papi_return(cidx);
+       papi_return(PAPI_OK);
+   }
    memset(&mpx,0x0,sizeof(mpx));
    mpx.multiplex.eventset = EventSet;
    mpx.multiplex.flags = PAPI_MULTIPLEX_DEFAULT;
-   mpx.multiplex.us = _papi_hwi_system_info.mpx_info.timer_us;
+   mpx.multiplex.ns = _papi_hwd[cidx]->cmp_info.itimer_ns;
    return(PAPI_set_opt(PAPI_MULTIPLEX, &mpx));
 }
 
@@ -1328,6 +1353,8 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
    ThreadInfo_t *thread = NULL;
    int cidx;
 
+   if ((option != PAPI_DEBUG) && (init_level == PAPI_NOT_INITED))
+      papi_return(PAPI_ENOINIT);
    if (ptr == NULL)
       papi_return(PAPI_EINVAL);
 
@@ -1390,54 +1417,87 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
        internal.attach.ESI->attach.tid = ptr->attach.tid;
        return(PAPI_OK);
      }
-   case PAPI_DEF_MPX_USEC:
+   case PAPI_DEF_MPX_NS:
      {
        cidx = 0; /* xxxx for now, assume we only check against cpu component */
-       if (ptr->multiplex.us <= 1)
+       if (ptr->multiplex.ns < 0)
 	 papi_return(PAPI_EINVAL);
        /* We should check the resolution here with the system, either
 	  substrate if kernel multiplexing or PAPI if SW multiplexing. */
-       internal.multiplex.us = ptr->multiplex.us;
-       if (_papi_hwd[cidx]->cmp_info.kernel_multiplex)
-	{
-         retval = _papi_hwi_lookup_or_create_thread(&thread);
-         if (retval != PAPI_OK)
-		return(retval);
-	 retval = _papi_hwd[cidx]->ctl(thread->context[cidx], PAPI_DEF_MPX_USEC, &internal);
-	}
+       internal.multiplex.ns = ptr->multiplex.ns;
+       /* Low level just checks/adjusts the args for this substrate */
+       retval = _papi_hwd[cidx]->ctl(thread->context[cidx], PAPI_DEF_MPX_NS, &internal);
        if (retval == PAPI_OK)
-	{
-	_papi_hwi_system_info.mpx_info.timer_us = internal.multiplex.us;
-	 ptr->multiplex.us = internal.multiplex.us;
-	}
-       return(PAPI_OK);
+	 {
+	   _papi_hwd[cidx]->cmp_info.itimer_ns = internal.multiplex.ns;
+	   ptr->multiplex.ns = internal.multiplex.ns;
+	 }
+       papi_return(retval);
+     }
+   case PAPI_DEF_ITIMER_NS:
+     {
+       cidx = 0; /* xxxx for now, assume we only check against cpu component */
+       if (ptr->itimer.ns < 0)
+	 papi_return(PAPI_EINVAL);
+       internal.itimer.ns = ptr->itimer.ns;
+       /* Low level just checks/adjusts the args for this substrate */
+       retval =  _papi_hwd[cidx]->ctl(NULL, PAPI_DEF_ITIMER_NS, &internal);
+       if (retval == PAPI_OK)
+	 {
+	   _papi_hwd[cidx]->cmp_info.itimer_ns = internal.itimer.ns;
+	   ptr->itimer.ns = internal.itimer.ns;
+	 }
+       papi_return(retval);
+     }
+   case PAPI_DEF_ITIMER:
+     {
+       cidx = 0; /* xxxx for now, assume we only check against cpu component */
+       if (ptr->itimer.ns < 0)
+	 papi_return(PAPI_EINVAL);
+       memcpy(&internal.itimer,&ptr->itimer,sizeof(PAPI_itimer_option_t));
+       /* Low level just checks/adjusts the args for this substrate */
+       retval = _papi_hwd[cidx]->ctl(NULL, PAPI_DEF_ITIMER, &internal);
+       if (retval == PAPI_OK) {
+	 _papi_hwd[cidx]->cmp_info.itimer_num = ptr->itimer.itimer_num;
+	 _papi_hwd[cidx]->cmp_info.itimer_sig = ptr->itimer.itimer_sig;
+	 if (ptr->itimer.ns > 0)
+	   _papi_hwd[cidx]->cmp_info.itimer_ns = ptr->itimer.ns;
+	 /* flags are currently ignored, eventually the flags will be able
+	    to specify whether or not we use POSIX itimers (clock_gettimer) */
+       }
+       papi_return(retval);
      }
    case PAPI_MULTIPLEX:
       {
          EventSetInfo_t *ESI;
          ESI = _papi_hwi_lookup_EventSet(ptr->multiplex.eventset);
+
          if (ESI == NULL)
             papi_return(PAPI_ENOEVST);
+
+	 cidx = valid_ESI_component(ESI);
+	 if (cidx < 0) papi_return(cidx);
+
          if (!(ESI->state & PAPI_STOPPED))
             papi_return(PAPI_EISRUN);
          if (ESI->state & PAPI_MULTIPLEXING)
             papi_return(PAPI_EINVAL);
 
-	 cidx = valid_ESI_component(ESI);
-	 if (cidx < 0) papi_return(cidx);
-
+	 if (ptr->multiplex.ns < 0)
+	   papi_return(PAPI_EINVAL);
 	 internal.multiplex.ESI = ESI;
-	 internal.multiplex.us = ptr->multiplex.us;
+	 internal.multiplex.ns = ptr->multiplex.ns;
 	 internal.multiplex.flags = ptr->multiplex.flags;
 	 if ((_papi_hwd[cidx]->cmp_info.kernel_multiplex) && ((ptr->multiplex.flags & PAPI_MULTIPLEX_FORCE_SW) == 0))
 	   {
        	    thread = internal.multiplex.ESI->master;
             retval = _papi_hwd[cidx]->ctl(thread->context[cidx], PAPI_MULTIPLEX, &internal);
 	}
+	 /* Kernel or PAPI may have changed this value so send it back out to the user */
+	 ptr->multiplex.ns = internal.multiplex.ns;
 	    if (retval == PAPI_OK)
 	   	papi_return(_papi_hwi_convert_eventset_to_multiplex(&internal.multiplex));
-	 /* Kernel or PAPI may have changed this value so send it back out to the user */
-	 ptr->multiplex.us = internal.multiplex.us;
+		return(retval);
       }
    case PAPI_DEBUG: 
       {
@@ -1459,12 +1519,11 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
          if ((dom < PAPI_DOM_MIN) || (dom > PAPI_DOM_MAX))
             papi_return(PAPI_EINVAL);
 
+         /* Change the global structure. The _papi_hwd_init_control_state function 
+	    in the substrates gets information from the global structure instead of
+            per-thread information. */
 	 cidx = valid_component(ptr->defdomain.def_cidx);
 	 if (cidx < 0) papi_return(cidx);
-
-         /* Change the component structure. The _papi_hwd_init_control_state function 
-	    in the components gets information from the global structure instead of
-            per-thread information. */
 
 	 /* Check what the substrate supports */
 
@@ -1610,7 +1669,7 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 	 cidx = valid_ESI_component(ESI);
 	 if (cidx < 0) papi_return(cidx);
 
-	 thread = ESI->master;
+         thread = ESI->master;
 
          internal.address_range.ESI = ESI;
 
@@ -1658,6 +1717,10 @@ int PAPI_get_multiplex(int EventSet)
 int PAPI_get_opt(int option, PAPI_option_t * ptr)
 {
   EventSetInfo_t *ESI;
+  int cidx;
+	 
+   if ((option != PAPI_DEBUG) && (init_level == PAPI_NOT_INITED))
+      papi_return(PAPI_ENOINIT);
 
    switch (option) {
    case PAPI_DETACH:
@@ -1680,6 +1743,33 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
        ptr->attach.tid = ESI->attach.tid;
        return ((ESI->state & PAPI_ATTACHED) != 0);
      }
+   case PAPI_DEF_MPX_NS:
+     {
+       /* xxxx for now, assume we only check against cpu component */
+       if (ptr == NULL)
+	 papi_return(PAPI_EINVAL);
+       ptr->multiplex.ns = _papi_hwd[0]->cmp_info.itimer_ns;
+       return(PAPI_OK);
+     }
+   case PAPI_DEF_ITIMER_NS:
+     {
+       /* xxxx for now, assume we only check against cpu component */
+       if (ptr == NULL)
+	 papi_return(PAPI_EINVAL);
+       ptr->itimer.ns = _papi_hwd[0]->cmp_info.itimer_ns;
+       return(PAPI_OK);
+     }
+   case PAPI_DEF_ITIMER:
+     {
+       /* xxxx for now, assume we only check against cpu component */
+       if (ptr == NULL)
+	 papi_return(PAPI_EINVAL);
+       ptr->itimer.itimer_num = _papi_hwd[0]->cmp_info.itimer_num;
+       ptr->itimer.itimer_sig = _papi_hwd[0]->cmp_info.itimer_sig;
+       ptr->itimer.ns = _papi_hwd[0]->cmp_info.itimer_ns;
+       ptr->itimer.flags = 0;
+       return(PAPI_OK);
+     }
    case PAPI_MULTIPLEX:
       {
 	 if (ptr == NULL)
@@ -1687,7 +1777,7 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
          ESI = _papi_hwi_lookup_EventSet(ptr->multiplex.eventset);
          if (ESI == NULL)
             papi_return(PAPI_ENOEVST);
-	 ptr->multiplex.us = ESI->multiplex.us;
+	 ptr->multiplex.ns = ESI->multiplex.ns;
 	 ptr->multiplex.flags = ESI->multiplex.flags;
          return (ESI->state & PAPI_MULTIPLEXING) != 0;
       }
@@ -1706,6 +1796,17 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
       return ((int) _papi_hwi_system_info.hw_info.mhz);
    case PAPI_MAX_CPUS:
       return (_papi_hwi_system_info.hw_info.ncpu);
+  /* For now, MAX_HWCTRS and MAX CTRS are identical.
+     At some future point, they may map onto different values.
+  */
+   case PAPI_MAX_HWCTRS:
+      return (_papi_hwd[0]->cmp_info.num_cntrs);
+   case PAPI_MAX_MPX_CTRS:
+      return (_papi_hwd[0]->cmp_info.num_mpx_cntrs);
+   case PAPI_DEFDOM:
+      return (_papi_hwd[0]->cmp_info.default_domain);
+   case PAPI_DEFGRN:
+      return (_papi_hwd[0]->cmp_info.default_granularity);
 #if 0
    case PAPI_INHERIT:
       {
@@ -1724,6 +1825,17 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
       if (ESI == NULL)
 	papi_return(PAPI_ENOEVST);
       ptr->granularity.granularity = ESI->granularity.granularity;
+	  break;
+   case PAPI_SHLIBINFO:
+      {
+         int retval;
+
+         if (ptr == NULL)
+            papi_return(PAPI_EINVAL);
+         retval = _papi_hwd[0]->update_shlib_info();
+         ptr->shlib_info = &_papi_hwi_system_info.shlib_info;
+         papi_return(retval);
+      }
    case PAPI_EXEINFO:
       if (ptr == NULL)
          papi_return(PAPI_EINVAL);
@@ -1734,6 +1846,15 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
          papi_return(PAPI_EINVAL);
       ptr->hw_info = &_papi_hwi_system_info.hw_info;
       break;
+   case PAPI_COMPONENTINFO:
+       if (ptr == NULL)
+	 papi_return(PAPI_EINVAL);
+       ESI = _papi_hwi_lookup_EventSet(ptr->attach.eventset);
+	 cidx = valid_ESI_component(ESI);
+	 if (cidx < 0) papi_return(cidx);
+
+      ptr->cmp_info = &_papi_hwd[cidx]->cmp_info;
+      return(PAPI_OK);
    case PAPI_DOMAIN:
       if (ptr == NULL)
          papi_return(PAPI_EINVAL);
@@ -1744,13 +1865,7 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
       return(PAPI_OK);
    case PAPI_LIB_VERSION:
       return (PAPI_VERSION);
-    case PAPI_DEF_MPX_USEC:
-     {
-       if (ptr == NULL)
-	 papi_return(PAPI_EINVAL);
-       ptr->multiplex.us = _papi_hwi_system_info.mpx_info.timer_us;
-       return(PAPI_OK);
-     }
+#if 0
 /* The following cases all require a component index 
     and are handled by PAPI_get_cmp_opt() with cidx == 0*/
    case PAPI_MAX_HWCTRS:
@@ -1760,7 +1875,7 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
    case PAPI_SHLIBINFO:
    case PAPI_COMPONENTINFO:
      return(PAPI_get_cmp_opt(option, ptr, 0));
-
+#endif
    default:
       papi_return(PAPI_EINVAL);
    }
@@ -1850,11 +1965,11 @@ void PAPI_shutdown(void)
      ESI = map->dataSlotArray[i];
      if (ESI) {
        if (ESI->master == master) {
-	 if (ESI->state & PAPI_RUNNING) 
-	   PAPI_stop(i, NULL);
-	 PAPI_cleanup_eventset(i);
+         if (ESI->state & PAPI_RUNNING) 
+           PAPI_stop(i, NULL);
+         PAPI_cleanup_eventset(i);
        } else if (ESI->state & PAPI_RUNNING) 
-	 j++;
+       j++;
      }
    }
 
@@ -1918,10 +2033,9 @@ int PAPI_perror(int code, char *destination, int length)
 int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
                   PAPI_overflow_handler_t handler)
 {
-   int retval, cidx, index, event_counter, i;
+   int retval, cidx, index, i;
    EventSetInfo_t *ESI;
    ThreadInfo_t *thread;
-   EventSetOverflowInfo_t *o;
 
    ESI = _papi_hwi_lookup_EventSet(EventSet);
    if (ESI == NULL)
@@ -1946,102 +2060,101 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
 
    /* We do not support derived events in overflow */
    /* Unless it's DERIVED_CMPD in which no calculations are done */
+
    if ( !(flags&PAPI_OVERFLOW_FORCE_SW)&& threshold != 0 &&
        (ESI->EventInfoArray[index].derived) && 
        (ESI->EventInfoArray[index].derived != DERIVED_CMPD))
       papi_return(PAPI_EINVAL);
 
-/* the first time to call PAPI_overflow function */
+   /* the first time to call PAPI_overflow function */
+
    if (!(ESI->state & PAPI_OVERFLOWING)) {
       if (handler == NULL)
          papi_return(PAPI_EINVAL);
       if (threshold == 0)
          papi_return(PAPI_EINVAL);
    }
-
-   o = &ESI->overflow; /* dereference the overflow structure */
-   if (threshold > 0 && o->event_counter >= _papi_hwd[cidx]->cmp_info.num_cntrs)
+   if (threshold > 0 && ESI->overflow.event_counter >= _papi_hwd[cidx]->cmp_info.num_cntrs)
       papi_return(PAPI_ECNFLCT);
 
    if (threshold == 0) {
-      for (i = 0; i < o->event_counter; i++) {
-         if (o->EventCode[i] == EventCode)
+      for (i = 0; i < ESI->overflow.event_counter; i++) {
+         if (ESI->overflow.EventCode[i] == EventCode)
             break;
       }
       /* EventCode not found */
-      if (i == o->event_counter)
+      if (i == ESI->overflow.event_counter)
          papi_return(PAPI_EINVAL);
       /* compact these arrays */
-      while (i < o->event_counter - 1) {
-         o->deadline[i] = o->deadline[i + 1];
-         o->threshold[i] = o->threshold[i + 1];
-         o->EventIndex[i] = o->EventIndex[i + 1];
-         o->EventCode[i] = o->EventCode[i + 1];
+      while (i < ESI->overflow.event_counter - 1) {
+         ESI->overflow.deadline[i] = ESI->overflow.deadline[i + 1];
+         ESI->overflow.threshold[i] = ESI->overflow.threshold[i + 1];
+         ESI->overflow.EventIndex[i] = ESI->overflow.EventIndex[i + 1];
+         ESI->overflow.EventCode[i] = ESI->overflow.EventCode[i + 1];
          i++;
       }
-      o->deadline[i] = 0;
-      o->threshold[i] = 0;
-      o->EventIndex[i] = 0;
-      o->EventCode[i] = 0;
-
-      o->event_counter--;
+      ESI->overflow.deadline[i] = 0;
+      ESI->overflow.threshold[i] = 0;
+      ESI->overflow.EventIndex[i] = 0;
+      ESI->overflow.EventCode[i] = 0;
+      ESI->overflow.event_counter--;
    } else {
-      if ( o->event_counter > 0 ){
-         if ( (flags&PAPI_OVERFLOW_FORCE_SW) && (o->flags&PAPI_OVERFLOW_HARDWARE))
+      if ( ESI->overflow.event_counter > 0 ){
+         if ( (flags&PAPI_OVERFLOW_FORCE_SW) && (ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE))
             papi_return(PAPI_ECNFLCT);
-         if ( !(flags&PAPI_OVERFLOW_FORCE_SW) && (o->flags&PAPI_OVERFLOW_FORCE_SW))
+         if ( !(flags&PAPI_OVERFLOW_FORCE_SW) && (ESI->overflow.flags&PAPI_OVERFLOW_FORCE_SW))
             papi_return(PAPI_ECNFLCT);
       }
-      for (i = 0; i < o->event_counter; i++) {
-         if (o->EventCode[i] == EventCode)
+      for (i = 0; i < ESI->overflow.event_counter; i++) {
+         if (ESI->overflow.EventCode[i] == EventCode)
             break;
       }
-      if (i == o->event_counter){
-         o->event_counter++;
-         event_counter = o->event_counter;
-         o->deadline[event_counter - 1] = threshold;
-         o->threshold[event_counter - 1] = threshold;
-         o->EventIndex[event_counter - 1] = index;
-         o->EventCode[event_counter - 1] = EventCode;
-         o->flags = flags;
+      /* A new entry */
+      if (i == ESI->overflow.event_counter) {
+         ESI->overflow.EventCode[i] = EventCode;
+         ESI->overflow.event_counter++;
       }
-      else {
-         o->deadline[i] = threshold;
-         o->threshold[i] = threshold;
-         o->EventIndex[i] = index;
-         o->flags = flags;
-      }
+      /* New or existing entry */
+      ESI->overflow.deadline[i] = threshold;
+      ESI->overflow.threshold[i] = threshold;
+      ESI->overflow.EventIndex[i] = index;
+      ESI->overflow.flags = flags;
    }
-   o->handler = handler;
-   o->count = 0;
 
-   /* Set up the option structure for the low level */
+   /* If overflowing is already active, we should check to
+      make sure that we don't specify a different handler
+      or different flags here. You can't mix them. */
+
+   ESI->overflow.handler = handler;
+
+   /* Set up the option structure for the low level.
+      If we have hardware interrupts and we are not using
+      forced software emulated interrupts */
 
    if (_papi_hwd[cidx]->cmp_info.hardware_intr && 
-       !(o->flags&PAPI_OVERFLOW_FORCE_SW)) {
-      if ( threshold != 0 )
-         o->flags |= PAPI_OVERFLOW_HARDWARE;
-      retval = _papi_hwd[cidx]->set_overflow(ESI, index, threshold);
-      if ( !(o->flags&PAPI_OVERFLOW_HARDWARE) )
-         o->timer_ms = PAPI_ITIMER_MS;
-      else if (retval < PAPI_OK){
-         if ( o->event_counter == 0 )
-            o->flags = 0;
-         papi_return(retval);
-      }
-   } else{
-      o->timer_ms = PAPI_ITIMER_MS;
-      o->flags &= ~(PAPI_OVERFLOW_HARDWARE);
+       !(ESI->overflow.flags & PAPI_OVERFLOW_FORCE_SW)) {
+     retval = _papi_hwd[cidx]->set_overflow(ESI, index, threshold);
+     if (retval == PAPI_OK) 
+       ESI->overflow.flags |= PAPI_OVERFLOW_HARDWARE;
+     else {
+       papi_return (retval); /* We should undo stuff here */
+     }
+   } else {
+     /* Make sure hardware overflow is not set */
+     ESI->overflow.flags &= ~(PAPI_OVERFLOW_HARDWARE);
    }
 
-   APIDBG("Overflow using: %s\n", (o->flags&PAPI_OVERFLOW_HARDWARE?"[Hardware]":o->flags&PAPI_OVERFLOW_FORCE_SW?"[Forced Software]":"[Software]"));
-   /* Toggle the overflow flag */
-   if ((o->event_counter == 1 && threshold > 0) ||
-       (o->event_counter == 0 && threshold == 0))
-      ESI->state ^= PAPI_OVERFLOWING;
+   APIDBG("Overflow using: %s\n", (ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE?"[Hardware]":ESI->overflow.flags&PAPI_OVERFLOW_FORCE_SW?"[Forced Software]":"[Software]"));
 
-   if ( o->event_counter == 0 )
-      o->flags = 0;
+   /* Toggle the overflow flags and ESI state */
+
+   if (ESI->overflow.event_counter >= 1)
+      ESI->state |= PAPI_OVERFLOWING;
+   else {
+      ESI->state ^= PAPI_OVERFLOWING;
+      ESI->overflow.flags = 0;
+      ESI->overflow.handler = NULL;
+   }
 
    return(PAPI_OK);
 }
@@ -2050,7 +2163,6 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
                     int EventCode, int threshold, int flags)
 {
    EventSetInfo_t *ESI;
-   EventSetProfileInfo_t *p;
    int retval, index, i, buckets;
    int forceSW=0;
    int cidx;
@@ -2105,60 +2217,61 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
       if (threshold == 0)
          papi_return(PAPI_EINVAL);
    }
-   p = &ESI->profile; /* dereference the profile structure */
-   if (threshold > 0 && p->event_counter >= _papi_hwd[cidx]->cmp_info.num_cntrs)
+   if (threshold > 0 && ESI->profile.event_counter >= _papi_hwd[cidx]->cmp_info.num_cntrs)
       papi_return(PAPI_ECNFLCT);
 
    if (threshold == 0) {
-      for (i = 0; i < p->event_counter; i++) {
-         if (p->EventCode[i] == EventCode)
+      for (i = 0; i < ESI->profile.event_counter; i++) {
+         if (ESI->profile.EventCode[i] == EventCode)
             break;
       }
       /* EventCode not found */
-      if (i == p->event_counter)
+      if (i == ESI->profile.event_counter)
          papi_return(PAPI_EINVAL);
       /* compact these arrays */
-      while (i < p->event_counter - 1) {
-         p->prof[i] = p->prof[i + 1];
-         p->count[i] = p->count[i + 1];
-         p->threshold[i] = p->threshold[i + 1];
-         p->EventIndex[i] = p->EventIndex[i + 1];
-         p->EventCode[i] = p->EventCode[i + 1];
+      while (i < ESI->profile.event_counter - 1) {
+         ESI->profile.prof[i] = ESI->profile.prof[i + 1];
+         ESI->profile.count[i] = ESI->profile.count[i + 1];
+         ESI->profile.threshold[i] = ESI->profile.threshold[i + 1];
+         ESI->profile.EventIndex[i] = ESI->profile.EventIndex[i + 1];
+         ESI->profile.EventCode[i] = ESI->profile.EventCode[i + 1];
          i++;
       }
-      p->prof[i] = NULL;
-      p->count[i] = 0;
-      p->threshold[i] = 0;
-      p->EventIndex[i] = 0;
-      p->EventCode[i] = 0;
-      p->event_counter--;
+      ESI->profile.prof[i] = NULL;
+      ESI->profile.count[i] = 0;
+      ESI->profile.threshold[i] = 0;
+      ESI->profile.EventIndex[i] = 0;
+      ESI->profile.EventCode[i] = 0;
+      ESI->profile.event_counter--;
    } else {
-      if ( p->event_counter > 0 ) {
-        if ( (flags&PAPI_PROFIL_FORCE_SW) && !(p->flags&PAPI_PROFIL_FORCE_SW) )
+      if ( ESI->profile.event_counter > 0 ) {
+        if ( (flags&PAPI_PROFIL_FORCE_SW) && !(ESI->profile.flags&PAPI_PROFIL_FORCE_SW) )
           papi_return(PAPI_ECNFLCT);
-        if ( !(flags&PAPI_PROFIL_FORCE_SW) && (p->flags&PAPI_PROFIL_FORCE_SW) )
+        if ( !(flags&PAPI_PROFIL_FORCE_SW) && (ESI->profile.flags&PAPI_PROFIL_FORCE_SW) )
           papi_return(PAPI_ECNFLCT);
       }
 
-      for (i = 0; i < p->event_counter; i++) {
-         if (p->EventCode[i] == EventCode)
+      for (i = 0; i < ESI->profile.event_counter; i++) {
+         if (ESI->profile.EventCode[i] == EventCode)
             break;
       }
 
-      if (i == p->event_counter){
-         i = p->event_counter;
-         p->event_counter++;
-         p->EventCode[i] = EventCode;
+      if (i == ESI->profile.event_counter){
+         i = ESI->profile.event_counter;
+         ESI->profile.event_counter++;
+         ESI->profile.EventCode[i] = EventCode;
       }
-      p->prof[i] = prof;
-      p->count[i] = profcnt;
-      p->threshold[i] = threshold;
-      p->EventIndex[i] = index;
+      ESI->profile.prof[i] = prof;
+      ESI->profile.count[i] = profcnt;
+      ESI->profile.threshold[i] = threshold;
+      ESI->profile.EventIndex[i] = index;
    }
+
+   APIDBG("Profile event counter is %d\n",ESI->profile.event_counter);
 
    /* Clear out old flags */
    if (threshold == 0) 
-     flags |= p->flags;
+     flags |= ESI->profile.flags;
 
    /* make sure no invalid flags are set */
    if (flags & ~(PAPI_PROFIL_POSIX | PAPI_PROFIL_RANDOM | PAPI_PROFIL_WEIGHTED
@@ -2171,7 +2284,7 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
    /* if we have kernel-based profiling, then we're just asking for signals on interrupt. */
    /* if we don't have kernel-based profiling, then we're asking for emulated PMU interrupt */
    if ((flags & PAPI_PROFIL_FORCE_SW) && (_papi_hwd[cidx]->cmp_info.kernel_profile == 0)) 
-      forceSW = PAPI_OVERFLOW_FORCE_SW;
+     forceSW = PAPI_OVERFLOW_FORCE_SW;
 
    /* make sure one and only one bucket size is set */
    buckets = flags & PAPI_PROFIL_BUCKETS;
@@ -2184,28 +2297,30 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
    }
 
    /* Set up the option structure for the low level */
-   p->flags = flags;
+   ESI->profile.flags = flags;
 
-   if (flags & PAPI_PROFIL_FORCE_SW)
-     retval = PAPI_overflow(EventSet, EventCode, threshold, forceSW, _papi_hwi_dummy_handler);
-   else 
-      retval = _papi_hwd[cidx]->set_profile(ESI, index, threshold);
-
+   if (_papi_hwd[cidx]->cmp_info.kernel_profile &&
+       !(ESI->profile.flags & PAPI_PROFIL_FORCE_SW)) {
+     retval = _papi_hwd[cidx]->set_profile(ESI, index, threshold);
+     if ((retval == PAPI_OK) && (threshold > 0)) {
+       /* We need overflowing because we use the overflow dispatch handler */
+       ESI->state |= PAPI_OVERFLOWING;
+       ESI->overflow.flags |= PAPI_OVERFLOW_HARDWARE;
+     }
+   } else {
+       retval = PAPI_overflow(EventSet, EventCode, threshold, forceSW, _papi_hwi_dummy_handler);
+   }
    if (retval < PAPI_OK)
-      return (retval);
+       papi_return (retval); /* We should undo stuff here */
 
-   APIDBG("Profile event counter is %d\n",ESI->profile.event_counter);
+   /* Toggle the profiling flags and ESI state */
 
-   /* Toggle profiling flag if we are the first or the last event to be profiled on */
-
-   if ((p->event_counter == 1 && threshold > 0) ||
-       (p->event_counter == 0 && threshold == 0))
-      ESI->state ^= PAPI_PROFILING;
-
-   /* Set flags to 0 if we are clearing the last event */
-
-   if (p->event_counter == 0 && threshold == 0)
-     p->flags = 0;
+   if (ESI->profile.event_counter >= 1)
+     ESI->state |= PAPI_PROFILING;
+   else {
+     ESI->state ^= PAPI_PROFILING;
+     ESI->profile.flags = 0;
+   }
 
    return(PAPI_OK);
 }
@@ -2231,7 +2346,7 @@ int PAPI_profil(void *buf, unsigned bufsiz, caddr_t offset,
             break;
       }
 
-      if (i == ESI->profile.event_counter){
+      if (i == ESI->profile.event_counter) {
         prof = (PAPI_sprofil_t *) papi_malloc(sizeof(PAPI_sprofil_t));
         memset(prof, 0x0, sizeof(PAPI_sprofil_t));
         prof->pr_base = buf;
@@ -2282,9 +2397,10 @@ int PAPI_set_cmp_granularity(int granularity, int cidx)
 {
    PAPI_option_t ptr;
 
+   memset (&ptr, 0, sizeof(ptr));
    ptr.defgranularity.def_cidx = cidx;
    ptr.defgranularity.granularity = granularity;
-   papi_return(PAPI_set_opt(PAPI_GRANUL, &ptr));
+   papi_return(PAPI_set_opt(PAPI_DEFGRN, &ptr));
 }
 
 /* This function sets the low level default counting domain
@@ -2301,6 +2417,7 @@ int PAPI_set_cmp_domain(int domain, int cidx)
 {
    PAPI_option_t ptr;
 
+   memset (&ptr, 0, sizeof(ptr));
    ptr.defdomain.def_cidx = cidx;
    ptr.defdomain.domain = domain;
    papi_return(PAPI_set_opt(PAPI_DEFDOM, &ptr));
@@ -2392,6 +2509,7 @@ const PAPI_exe_info_t *PAPI_get_executable_info(void)
    PAPI_option_t ptr;
    int retval;
 
+   memset (&ptr, 0, sizeof(ptr));
    retval = PAPI_get_opt(PAPI_EXEINFO, &ptr);
    if (retval == PAPI_OK)
       return (ptr.exe_info);
@@ -2404,6 +2522,7 @@ const PAPI_shlib_info_t *PAPI_get_shared_lib_info(void)
    PAPI_option_t ptr;
    int retval;
 
+   memset (&ptr, 0, sizeof(ptr));
    retval = PAPI_get_opt(PAPI_SHLIBINFO, &ptr);
    if (retval == PAPI_OK)
       return (ptr.shlib_info);
@@ -2416,6 +2535,7 @@ const PAPI_hw_info_t *PAPI_get_hardware_info(void)
    PAPI_option_t ptr;
    int retval;
 
+   memset (&ptr, 0, sizeof(ptr));
    retval = PAPI_get_opt(PAPI_HWINFO, &ptr);
    if (retval == PAPI_OK)
       return (ptr.hw_info);
@@ -2431,6 +2551,11 @@ long long PAPI_get_real_cyc(void)
    return (_papi_hwd[0]->get_real_cycles());
 }
 
+long long PAPI_get_real_nsec(void)
+{
+  return ((_papi_hwd[0]->get_real_cycles()*1000LL)/(long long)_papi_hwi_system_info.hw_info.mhz);
+}
+
 long long PAPI_get_real_usec(void)
 {
    return (_papi_hwd[0]->get_real_usec());
@@ -2441,10 +2566,25 @@ long long PAPI_get_virt_cyc(void)
    ThreadInfo_t *master;
    int retval;
    
+   if (init_level == PAPI_NOT_INITED)
+      papi_return(PAPI_ENOINIT);
    if ((retval = _papi_hwi_lookup_or_create_thread(&master)) != PAPI_OK)
      papi_return(retval);
 
    return ((long long)_papi_hwd[0]->get_virt_cycles(master->context[0]));
+}
+
+long long PAPI_get_virt_nsec(void)
+{
+   ThreadInfo_t *master;
+   int retval;
+
+   if (init_level == PAPI_NOT_INITED)
+      papi_return(PAPI_ENOINIT);
+   if ((retval = _papi_hwi_lookup_or_create_thread(&master)) != PAPI_OK)
+     papi_return(retval);
+
+   return ((_papi_hwd[0]->get_virt_cycles(master->context[0])*1000LL)/(long long)_papi_hwi_system_info.hw_info.mhz);
 }
 
 long long PAPI_get_virt_usec(void)
@@ -2528,7 +2668,7 @@ int PAPI_get_overflow_event_index(int EventSet, long long overflow_vector, int *
 	   overflow_vector ^= (long long)1 << set_bit;
 	   for(j=0; j< ESI->NumberOfEvents; j++ )
 	   {
-	      for(k = 0, pos = 0; k < PAPI_MAX_COUNTER_TERMS && pos >= 0; k++) 
+	      for(k = 0, pos = 0; k < MAX_COUNTER_TERMS && pos >= 0; k++) 
 		  {
 		     pos = ESI->EventInfoArray[j].pos[k];
 		     if ((set_bit == pos) && 
