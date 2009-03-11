@@ -24,6 +24,7 @@
  * applications on Linux.
  */
 
+#include "amd64_events_k7.h"
 #include "amd64_events_k8.h"
 #include "amd64_events_fam10h.h"
 
@@ -32,6 +33,13 @@ struct pme_amd64_table {
 	pme_amd64_entry_t	*events;
 	unsigned int		cpu_clks;
 	unsigned int		ret_inst;
+};
+
+static struct pme_amd64_table amd64_k7_table = {
+	.num	  = PME_AMD64_K7_EVENT_COUNT,
+	.events	  = amd64_k7_pe,
+	.cpu_clks = PME_AMD64_K7_CPU_CLK_UNHALTED,
+	.ret_inst = PME_AMD64_K7_RETIRED_INSTRUCTIONS,
 };
 
 static struct pme_amd64_table amd64_k8_table = {

@@ -22,6 +22,13 @@
  */
 
 static pme_cell_entry_t cell_pe[] = {
+	{.pme_name = "CYCLES",
+	 .pme_desc = "CPU cycles",
+	 .pme_code = 0x0, /* 0 */
+	 .pme_enable_word = WORD_NONE,
+	 .pme_freq = PFM_CELL_PME_FREQ_PPU_MFC,
+	 .pme_type = COUNT_TYPE_OCCURRENCE,
+	},
 	{.pme_name = "BRANCH_COMMIT_TH0",
 	 .pme_desc = "Branch instruction committed.",
 	 .pme_code = 0x834, /* 2100 */

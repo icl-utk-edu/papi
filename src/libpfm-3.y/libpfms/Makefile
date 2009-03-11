@@ -27,15 +27,14 @@ include $(TOPDIR)/rules.mk
 
 DIRS=lib
 CFLAGS+= -pthread -D_GNU_SOURCE -I./include
-LDFLAGS+=-static 
-LIBS += -L./lib -lpfms -lpfm -lm
+LIBS += -L$(TOPDIR)/libpfms/lib -lpfms $(PFMLIB) -lm
 
 TARGETS=syst_smp
 
 all: $(TARGETS)
 
 syst_smp: ./lib/libpfms.a syst_smp.o
-	$(CC) $(LDFLAGS) -o $@ syst_smp.o $(LIBS) -lpthread
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ syst_smp.o $(LIBS) -lpthread
 
 clean:
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
@@ -43,7 +42,13 @@ clean:
 
 distclean: clean
 
-./lib/libpfms.a subdirs: 
-	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d all ; done
+.FORCE: lib/libpfms.a
+lib/libpfms.a: 
+	@set -e ; $(MAKE) -C lib all
 
-.PHONY: install depend
+install depend: $(TARGETS)
+
+install depend:
+ifeq ($(CONFIG_PFMLIB_ARCH_SICORTEX),y)
+	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
+endif

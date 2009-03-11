@@ -82,11 +82,10 @@ int
 main(int argc, char **argv)
 {
 	char **p;
-	pfarg_pmc_t pc[NUM_PMCS];
-	pfarg_pmd_t pd[NUM_PMDS];
+	pfarg_pmr_t pc[NUM_PMCS];
+	pfarg_pmr_t pd[NUM_PMDS];
+	pfarg_sinfo_t sif;
 	uint64_t pdo[NUM_PMDS];
-	pfarg_ctx_t ctx[1];
-	pfarg_load_t load_args;
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
 	pfmlib_options_t pfmlib_options;
@@ -116,10 +115,9 @@ main(int argc, char **argv)
 	memset(pc, 0, sizeof(pc));
 	memset(pd, 0, sizeof(pd));
 	memset(pdo, 0, sizeof(pdo));
-	memset(ctx, 0, sizeof(ctx));
 	memset(&inp,0, sizeof(inp));
 	memset(&outp,0, sizeof(outp));
-	memset(&load_args,0, sizeof(load_args));
+	memset(&sif,0, sizeof(sif));
 
 	/*
 	 * be nice to user!
@@ -127,17 +125,14 @@ main(int argc, char **argv)
 	if (argc > 1) {
 		p = argv+1;
 		for (i=0; *p ; i++, p++) {
-			if (pfm_find_full_event(*p, &inp.pfp_events[i]) != PFMLIB_SUCCESS) {
+			if (pfm_find_full_event(*p, &inp.pfp_events[i]) != PFMLIB_SUCCESS)
 				fatal_error("Cannot find %s event\n", *p);
-			}
 		}
 	} else {
-		if (pfm_get_cycle_event(&inp.pfp_events[0]) != PFMLIB_SUCCESS) {
+		if (pfm_get_cycle_event(&inp.pfp_events[0]) != PFMLIB_SUCCESS)
 			fatal_error("cannot find cycle event\n");
-		}
-		if (pfm_get_inst_retired_event(&inp.pfp_events[1]) != PFMLIB_SUCCESS) {
+		if (pfm_get_inst_retired_event(&inp.pfp_events[1]) != PFMLIB_SUCCESS)
 			fatal_error("cannot find inst retired event\n");
-		}
 		i = 2;
 	}
 	/*
@@ -163,12 +158,6 @@ main(int argc, char **argv)
 	inp.pfp_flags = PFMLIB_PFP_SYSTEMWIDE;
 
 	/*
-	 * In system wide mode, the perfmon context cannot be inherited.
-	 * Also in this mode, we cannot use the blocking form of user level notification.
-	 */
-	ctx[0].ctx_flags = PFM_FL_SYSTEM_WIDE;
-
-	/*
 	 * pick a random CPU. Assumes CPU are numbered with no holes
 	 */
 	srandom(getpid());
@@ -189,14 +178,14 @@ main(int argc, char **argv)
 	 */
 
 	/*
-	 * now create the context for self monitoring/per-task
+	 * now create the system-wide session 
 	 */
-	ctx_fd = pfm_create_context(ctx, NULL, NULL, 0);
+	ctx_fd = pfm_create(PFM_FL_SYSTEM_WIDE, &sif);
 	if (ctx_fd == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
-		fatal_error("Can't create PFM context %s\n", strerror(errno));
+		fatal_error("cannot create session %s\n", strerror(errno));
 	}
 	/*
 	 * build the pfp_unavail_pmcs bitmask by looking
@@ -209,7 +198,7 @@ main(int argc, char **argv)
 	 * use. Of source, it is possible that no valid assignement may
 	 * be possible if certina PMU registers  are not available.
 	 */
-	detect_unavail_pmcs(ctx_fd, &inp.pfp_unavail_pmcs);
+	detect_unavail_pmu_regs(&sif, &inp.pfp_unavail_pmcs, NULL);
 
 	/*
 	 * let the library figure out the values for the PMCS
@@ -234,20 +223,17 @@ main(int argc, char **argv)
 	/*
 	 * Now program the registers
 	 */
-	if (pfm_write_pmcs(ctx_fd, pc, outp.pfp_pmc_count) == -1)
-		fatal_error("pfm_write_pmcs error errno %d\n",errno);
+	if (pfm_write(ctx_fd, 0, PFM_RW_PMC, pc, outp.pfp_pmc_count * sizeof(*pc)) == -1)
+		fatal_error("pfm_write error errno %d\n",errno);
 
-	if (pfm_write_pmds(ctx_fd, pd, outp.pfp_pmd_count) == -1)
-		fatal_error("pfm_write_pmds error errno %d\n",errno);
+	if (pfm_write(ctx_fd, 0, PFM_RW_PMD, pd, outp.pfp_pmd_count * sizeof(*pd)) == -1)
+		fatal_error("pfm_write(PMDS) error errno %d\n",errno);
 
 	/*
-	 * in system-wide mode, this field must provide the CPU the caller wants
-	 * to monitor. The kernel checks and if calling from the wrong CPU, the
-	 * call fails. The affinity is not affected.
+ 	 * attach the session to the CPU
 	 */
-	load_args.load_pid = which_cpu;
-	if (pfm_load_context(ctx_fd, &load_args) == -1)
-		fatal_error("pfm_load_context error errno %d\n",errno);
+	if (pfm_attach(ctx_fd, 0, which_cpu) == -1)
+		fatal_error("pfm_attach error errno %d\n",errno);
 
 	printf("<monitoring started on CPU%d, press CTRL-C to quit before 20s time limit>\n", which_cpu);
 
@@ -255,8 +241,8 @@ main(int argc, char **argv)
 		/*
 		 * start monitoring
 		 */
-		if (pfm_start(ctx_fd, NULL) == -1)
-			fatal_error("pfm_start error errno %d\n",errno);
+		if (pfm_set_state(ctx_fd, 0, PFM_ST_START) == -1)
+			fatal_error("pfm_set_state(start) error errno %d\n",errno);
 
 		sleep(2);
 
@@ -264,14 +250,14 @@ main(int argc, char **argv)
 		 * stop monitoring. 
 		 * changed at the user level.
 		 */
-		if (pfm_stop(ctx_fd) == -1)
-			fatal_error("pfm_stop error errno %d\n",errno);
+		if (pfm_set_state(ctx_fd, 0, PFM_ST_STOP) == -1)
+			fatal_error("pfm_set_state(stop) error errno %d\n",errno);
 
 		/*
 		 * read the results
 		 */
-		if (pfm_read_pmds(ctx_fd, pd, inp.pfp_event_count) == -1)
-			fatal_error( "pfm_read_pmds error errno %d\n",errno);
+		if (pfm_read(ctx_fd, 0, PFM_RW_PMD, pd, inp.pfp_event_count * sizeof(*pd)) == -1)
+			fatal_error( "pfm_read error errno %d\n",errno);
 
 		/*
 		 * print the results

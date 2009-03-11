@@ -87,7 +87,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{.pme_name = "INSTRUCTIONS_RETIRED",
 	 .pme_code = 0x00c0,
-	 .pme_flags = PFMLIB_CORE_FIXED0|PFMLIB_CORE_PEBS,
+	 .pme_flags = PFMLIB_CORE_FIXED0,
 	 .pme_desc =  "count the number of instructions at retirement. Alias to event INST_RETIRED:ANY_P",
 	},
 	{.pme_name = "UNHALTED_REFERENCE_CYCLES",
@@ -114,6 +114,9 @@ static pme_core_entry_t core_pe[]={
 	/*
 	 * END: architected events
 	 */
+	/*
+	 * BEGIN: Core 2 Duo events
+	 */
 	{ .pme_name = "RS_UOPS_DISPATCHED_CYCLES",
 	  .pme_code = 0xa1,
 	  .pme_flags = PFMLIB_CORE_PMC0,
@@ -132,7 +135,7 @@ static pme_core_entry_t core_pe[]={
 		  .pme_ucode = 0x4
 		},
 		{ .pme_uname = "PORT_3",
-		  .pme_udesc = "on port 0",
+		  .pme_udesc = "on port 3",
 		  .pme_ucode = 0x8
 		},
 		{ .pme_uname = "PORT_4",
@@ -155,9 +158,10 @@ static pme_core_entry_t core_pe[]={
 	  .pme_code = 0xa0,
 	  .pme_desc =  "Number of micro-ops dispatched for execution",
 	},
-	/*
-	 * BEGIN: Core 2 Duo events
-	 */
+	{ .pme_name = "RS_UOPS_DISPATCHED_NONE",
+	  .pme_code = 0xa0 | (1 << 23 | 1 << 24),
+	  .pme_desc =  "Number of of cycles in which no micro-ops is dispatched for execution",
+	},
 	{ .pme_name = "LOAD_BLOCK",
 	  .pme_code = 0x3,
 	  .pme_flags = 0,
@@ -489,7 +493,6 @@ static pme_core_entry_t core_pe[]={
 		{ .pme_uname = "CORE_P",
 		  .pme_udesc = "Core cycles when core is not halted",
 		  .pme_ucode = 0x0,
-	  	  .pme_flags = PFMLIB_CORE_FIXED1
 		},
 		{ .pme_uname = "REF",
 		  .pme_udesc = "Reference cycles. This event is not affected by core changes such as P-states or TM2 transitions but counts at the same frequency as the time stamp counter. This event can approximate elapsed time. This event has a constant ratio with the CPU_CLK_UNHALTED:BUS event",
@@ -597,12 +600,8 @@ static pme_core_entry_t core_pe[]={
 		  .pme_udesc = "Streaming SIMD Extensions (SSE) PrefetchT1 and PrefetchT2 instructions missing all cache levels",
 		  .pme_ucode = 0x2
 		},
-		{ .pme_uname = "STORES",
-		  .pme_udesc = "Streaming SIMD Extensions (SSE) Weakly-ordered store instructions missing all cache levels",
-		  .pme_ucode = 0x3
-		}
 	   },
-	   .pme_numasks = 4
+	   .pme_numasks = 3
 	},
 	{ .pme_name = "LOAD_HIT_PRE",
 	  .pme_code = 0x4c,
@@ -1102,7 +1101,7 @@ static pme_core_entry_t core_pe[]={
 		{ .pme_uname = "ANY_P",
 		  .pme_udesc = "Instructions retired (precise event)",
 		  .pme_ucode = 0x0,
-	  	  .pme_flags = PFMLIB_CORE_PEBS|PFMLIB_CORE_FIXED0
+	  	  .pme_flags = PFMLIB_CORE_PEBS
 		},
 		{ .pme_uname = "LOADS",
 		  .pme_udesc = "Instructions retired, which contain a load",
@@ -1138,7 +1137,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "UOPS_RETIRED",
 	  .pme_code = 0xc2,
-	  .pme_flags = PFMLIB_CORE_PEBS,
+	  .pme_flags = 0,
 	  .pme_desc =  "Fused load+op or load+indirect branch retired",
 	  .pme_umasks = {
 		{ .pme_uname = "LD_IND_BR",

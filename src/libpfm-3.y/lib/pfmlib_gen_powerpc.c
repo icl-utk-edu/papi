@@ -25,7 +25,9 @@
  * Support for libpfm for the PowerPC970, POWER4,4+,5,5+,6 processors.
  */
 
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+  #define _GNU_SOURCE /* for getline */
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -367,6 +369,48 @@ static unsigned long long power4_mmcr1_counter_mask[POWER4_NUM_EVENT_COUNTERS] =
 	0x1fUL << (63 - 61)  /* PMC8 */
 };
 
+static unsigned long long power4_mmcr0_counter_off_val[POWER4_NUM_EVENT_COUNTERS] = {
+	0, /* PMC1 */
+	0, /* PMC2 */
+	0,
+	0,
+	0,
+	0,
+	0,
+	0
+};
+static unsigned long long power4_mmcr1_counter_off_val[POWER4_NUM_EVENT_COUNTERS] = {
+	0,
+	0,
+	0, /* PMC3 */
+	0, /* PMC4 */
+	0, /* PMC5 */
+	0, /* PMC6 */
+	0, /* PMC7 */
+	0  /* PMC8 */
+};
+
+static unsigned long long ppc970_mmcr0_counter_off_val[POWER4_NUM_EVENT_COUNTERS] = {
+	0x8UL << (63 - 55), /* PMC1 */
+	0x8UL << (63 - 62), /* PMC2 */
+	0,
+	0,
+	0,
+	0,
+	0,
+	0
+};
+static unsigned long long ppc970_mmcr1_counter_off_val[POWER4_NUM_EVENT_COUNTERS] = {
+	0,
+	0,
+	0x8UL << (63 - 36), /* PMC3 */
+	0x8UL << (63 - 41), /* PMC4 */
+	0x8UL << (63 - 46), /* PMC5 */
+	0x8UL << (63 - 51), /* PMC6 */
+	0x8UL << (63 - 56), /* PMC7 */
+	0x8UL << (63 - 61)  /* PMC8 */
+};
+
 /* These masks are used on POWER5,5+,5++,6 */
 static unsigned long long power5_mmcr0_counter_mask[POWER5_NUM_EVENT_COUNTERS] = {
 	0,
@@ -381,16 +425,35 @@ static unsigned long long power5_mmcr1_counter_mask[POWER5_NUM_EVENT_COUNTERS] =
 	0xffUL << (63 - 47), /* PMC2 */
 	0xffUL << (63 - 55), /* PMC3 */
 	0xffUL << (63 - 63), /* PMC4 */
-        0,
-        0
+	0,
+	0
 };
 
+static unsigned long long power5_mmcr0_counter_off_val[POWER5_NUM_EVENT_COUNTERS] = {
+	0,
+	0,
+	0,
+	0,
+	0,
+	0
+};
+
+static unsigned long long power5_mmcr1_counter_off_val[POWER5_NUM_EVENT_COUNTERS] = {
+	0, /* PMC1 */
+	0, /* PMC2 */
+	0, /* PMC3 */
+	0, /* PMC4 */
+	0,
+	0
+};
 
 unsigned *pmd_priv_vec;
 
 static unsigned long long mmcr0_fc5_6_mask;
 static unsigned long long *mmcr0_counter_mask;
 static unsigned long long *mmcr1_counter_mask;
+static unsigned long long *mmcr0_counter_off_val;
+static unsigned long long *mmcr1_counter_off_val;
 
 /**
  * pfm_gen_powerpc_dispatch_events
@@ -401,6 +464,7 @@ static unsigned long long *mmcr1_counter_mask;
 static int pfm_gen_powerpc_dispatch_events(pfmlib_input_param_t *input,
 				   void *model_input,
 				   pfmlib_output_param_t *output,
+
 				   void *model_output)
 {
 	/* model_input and model_output are unused on POWER */
@@ -431,7 +495,9 @@ static int pfm_gen_powerpc_dispatch_events(pfmlib_input_param_t *input,
 	memset(group_vector, 0xff, sizeof(unsigned long long) * get_num_group_vec());
 
 	for (i = 0; i < input->pfp_event_count; i++) {
+			mmcr0_val |= mmcr0_counter_off_val[i];	
 		intersect_groups(group_vector, get_group_vector(input->pfp_events[i].event));
+			mmcr1_val |= mmcr1_counter_off_val[i];	
 	}
 	group = first_group(group_vector);
 	while (group != -1) {
@@ -462,6 +528,7 @@ static int pfm_gen_powerpc_dispatch_events(pfmlib_input_param_t *input,
 					output->pfp_pmds[i].reg_num = j + 1;
 					output->pfp_pmds[i].reg_reserved1 = 0;
 					output->pfp_pmd_count = i + 1;
+
 					/* Find the next counter */
 					break;
 				}
@@ -488,11 +555,13 @@ try_next_group: ;
 	for (i = 0; i < get_num_event_counters(); i++) {
 		if (! (counters_used & (1 << i))) {	
 			/*
-			 * This counter is not used, so zero out that
-			 * selector
+			 * This counter is not used, so set that
+			 * selector to its off value.
 			 */
 			mmcr0_val &= ~mmcr0_counter_mask[i];	
+			mmcr0_val |= mmcr0_counter_off_val[i];	
 			mmcr1_val &= ~mmcr1_counter_mask[i];	
+			mmcr1_val |= mmcr1_counter_off_val[i];	
 		}
 	}
 	/*
@@ -548,7 +617,7 @@ try_next_group: ;
 
 	/* We always use the same number of control regs */
 	output->pfp_pmc_count = get_num_control_regs();
-		
+	
 	return PFMLIB_SUCCESS;
 }
 
@@ -570,7 +639,7 @@ try_next_group: ;
 static int pfm_gen_powerpc_pmu_detect(void)
 {
 	if (__is_processor(PV_970) || __is_processor(PV_970FX) || __is_processor(PV_970GX)) {
-		gen_powerpc_support.pmu_type = PFMLIB_POWER4_PMU;          
+		gen_powerpc_support.pmu_type = PFMLIB_PPC970_PMU;          
 		gen_powerpc_support.pmu_name = "PPC970";          
 		gen_powerpc_support.pme_count = PPC970_PME_EVENT_COUNT;
 		gen_powerpc_support.pmd_count = PPC970_NUM_EVENT_COUNTERS;
@@ -579,6 +648,8 @@ static int pfm_gen_powerpc_pmu_detect(void)
 		mmcr0_fc5_6_mask = 0;
 		mmcr0_counter_mask = power4_mmcr0_counter_mask;
 		mmcr1_counter_mask = power4_mmcr1_counter_mask;
+		mmcr0_counter_off_val = ppc970_mmcr0_counter_off_val;
+		mmcr1_counter_off_val = ppc970_mmcr1_counter_off_val;
 		pmd_priv_vec = gq_pmd_priv_vec;
 		return PFMLIB_SUCCESS;
 	}
@@ -592,11 +663,13 @@ static int pfm_gen_powerpc_pmu_detect(void)
 		mmcr0_fc5_6_mask = 0;
 		mmcr0_counter_mask = power4_mmcr0_counter_mask;
 		mmcr1_counter_mask = power4_mmcr1_counter_mask;
+		mmcr0_counter_off_val = ppc970_mmcr0_counter_off_val;
+		mmcr1_counter_off_val = ppc970_mmcr1_counter_off_val;
 		pmd_priv_vec = gq_pmd_priv_vec;
 		return PFMLIB_SUCCESS;
 	}
 	if (__is_processor(PV_POWER4) || __is_processor(PV_POWER4p)) {
-		gen_powerpc_support.pmu_type = PFMLIB_POWER4_PMU;          
+		gen_powerpc_support.pmu_type = PFMLIB_PPC970_PMU;          
 		gen_powerpc_support.pmu_name = "POWER4";          
 		gen_powerpc_support.pme_count = POWER4_PME_EVENT_COUNT;
 		gen_powerpc_support.pmd_count = POWER4_NUM_EVENT_COUNTERS;
@@ -605,6 +678,10 @@ static int pfm_gen_powerpc_pmu_detect(void)
 		mmcr0_fc5_6_mask = 0;
 		mmcr0_counter_mask = power4_mmcr0_counter_mask;
 		mmcr1_counter_mask = power4_mmcr1_counter_mask;
+		mmcr0_counter_off_val = ppc970_mmcr0_counter_off_val;
+		mmcr1_counter_off_val = ppc970_mmcr1_counter_off_val;
+		mmcr0_counter_off_val = power4_mmcr0_counter_off_val;
+		mmcr1_counter_off_val = power4_mmcr1_counter_off_val;
 		pmd_priv_vec = gq_pmd_priv_vec;
 		return PFMLIB_SUCCESS;
 	}
@@ -616,8 +693,12 @@ static int pfm_gen_powerpc_pmu_detect(void)
 		gen_powerpc_support.pmc_count = POWER5_NUM_CONTROL_REGS;
 		gen_powerpc_support.num_cnt = POWER5_NUM_EVENT_COUNTERS;
 		mmcr0_fc5_6_mask = MMCR0_FC5_6;
+		mmcr0_counter_off_val = ppc970_mmcr0_counter_off_val;
+		mmcr1_counter_off_val = ppc970_mmcr1_counter_off_val;
 		mmcr0_counter_mask = power5_mmcr0_counter_mask;
 		mmcr1_counter_mask = power5_mmcr1_counter_mask;
+		mmcr0_counter_off_val = power5_mmcr0_counter_off_val;
+		mmcr1_counter_off_val = power5_mmcr1_counter_off_val;
 		pmd_priv_vec = gr_pmd_priv_vec;
 		return PFMLIB_SUCCESS;
 	}
@@ -627,9 +708,13 @@ static int pfm_gen_powerpc_pmu_detect(void)
 		gen_powerpc_support.pme_count = POWER5p_PME_EVENT_COUNT;
 		gen_powerpc_support.pmd_count = POWER5p_NUM_EVENT_COUNTERS;
 		gen_powerpc_support.pmc_count = POWER5p_NUM_CONTROL_REGS;
+		mmcr0_counter_off_val = power4_mmcr0_counter_off_val;
+		mmcr1_counter_off_val = power4_mmcr1_counter_off_val;
 		gen_powerpc_support.num_cnt = POWER5p_NUM_EVENT_COUNTERS;
 		mmcr0_counter_mask = power5_mmcr0_counter_mask;
 		mmcr1_counter_mask = power5_mmcr1_counter_mask;
+		mmcr0_counter_off_val = power5_mmcr0_counter_off_val;
+		mmcr1_counter_off_val = power5_mmcr1_counter_off_val;
 		if (PVR_VER(mfspr(SPRN_PVR)) >= 0x300) {
 			/* this is a newer, GS model POWER5+ */
 			mmcr0_fc5_6_mask = 0;
@@ -638,6 +723,8 @@ static int pfm_gen_powerpc_pmu_detect(void)
 			mmcr0_fc5_6_mask = MMCR0_FC5_6;
 			pmd_priv_vec = gr_pmd_priv_vec;
 		}
+		mmcr0_counter_off_val = power5_mmcr0_counter_off_val;
+		mmcr1_counter_off_val = power5_mmcr1_counter_off_val;
 		return PFMLIB_SUCCESS;
 	}
 	if (__is_processor(PV_POWER6)) {
@@ -650,9 +737,14 @@ static int pfm_gen_powerpc_pmu_detect(void)
 		mmcr0_fc5_6_mask = 0;
 		mmcr0_counter_mask = power5_mmcr0_counter_mask;
 		mmcr1_counter_mask = power5_mmcr1_counter_mask;
+		mmcr0_counter_off_val = power5_mmcr0_counter_off_val;
+		mmcr1_counter_off_val = power5_mmcr1_counter_off_val;
+		mmcr0_counter_off_val = power5_mmcr0_counter_off_val;
+		mmcr1_counter_off_val = power5_mmcr1_counter_off_val;
 		pmd_priv_vec = gs_pmd_priv_vec;
 		return PFMLIB_SUCCESS;
 	}
+
 	return PFMLIB_ERR_NOTSUPP;
 }
 
@@ -670,6 +762,7 @@ static void pfm_gen_powerpc_get_impl_pmcs(pfmlib_regmask_t *impl_pmcs)
 /**
  * pfm_gen_powerpc_get_impl_pmds
  *
+
  * Set the appropriate bit in the impl_pmcs bitmask for each PMD that's
  * available.
  **/
@@ -780,10 +873,10 @@ pfm_gen_powerpc_get_inst_retired(pfmlib_event_t *e)
 		e->event = POWER5_PME_PM_INST_CMPL;
 		break;
 	case PFMLIB_POWER5p_PMU:
-		e->event = POWER5p_PME_PM_RUN_INST_CMPL;
+		e->event = POWER5p_PME_PM_INST_CMPL;
 		break;
 	case PFMLIB_POWER6_PMU:
-		e->event = POWER6_PME_PM_RUN_INST_CMPL;
+		e->event = POWER6_PME_PM_INST_CMPL;
 		break;
 	default:
 		/* perhaps gen_powerpc_suport.pmu_type wasn't initialized? */
@@ -800,7 +893,7 @@ pfm_gen_powerpc_get_inst_retired(pfmlib_event_t *e)
 pfm_pmu_support_t gen_powerpc_support = {
 	/* the next 6 fields are initialized in pfm_gen_powerpc_pmu_detect */
 	.pmu_name		= NULL,
-	.pmu_type		= 0,
+	.pmu_type		= PFMLIB_UNKNOWN_PMU,
 	.pme_count		= 0,
 	.pmd_count		= 0,
 	.pmc_count		= 0,

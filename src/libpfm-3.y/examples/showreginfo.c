@@ -111,12 +111,12 @@ try_again:
 		 */
 		if (ret2 == 0) {
 			memset(&ctx, 0, sizeof(ctx));
-			ret2 = pfm_create_context(&ctx, NULL, NULL, 0);
-			if (ret2 > 0) {
+			ret2 = pfm_create(0, NULL);
+			if (ret2 > -1) {
 				close(ret2);
 				goto try_again;
 			}
-			fatal_error("invalid or missing perfmon support for your CPU (need at least v2.3)\n");
+			fatal_error("invalid or missing perfmon support for your CPU (need at least v3.0)\n");
 		}
 	}
 	if (use_html) {
@@ -131,9 +131,9 @@ try_again:
 		puts("<tbody>");
 	} else {
 		printf("model  : %s\n", buffer);
-		puts(  "-------------------------------------------------------------------------------------\n"
-				"name   |   default  value   |   reserved  mask   | hw address or index | description\n"
-				"-------+--------------------+--------------------+---------------------+-------------");
+		puts(  "----------------------------------------------------------------------------\n"
+				"name   |   default  value   |   reserved  mask   | hw address | description\n"
+				"-------+--------------------+--------------------+------------+-------------");
 	}
 
 	for(i=0; i < PFM_MAX_PMCS; i++) {
@@ -163,7 +163,7 @@ try_again:
 					hw_addr,
 					name);
 		} else {
-			printf("pmc%-3d | 0x%016llx | 0x%016llx | 0x%-17lx | %s\n",
+			printf("pmc%-3d | 0x%016llx | 0x%016llx | 0x%-8lx | %s\n",
 					i,
 					dfl,
 					rsvd,
@@ -175,7 +175,7 @@ try_again:
 	if (use_html)
 		puts("<tbody>");
 	else
-		puts("-------+--------------------+--------------------+---------------------+-------------");
+		puts("-------+--------------------+--------------------+------------+-------------");
 
 	for(i=0; i < PFM_MAX_PMDS; i++) {
 
@@ -202,7 +202,7 @@ try_again:
 					hw_addr,
 					name);
 		} else {	
-			printf("pmd%-3d | 0x%016llx | 0x%016llx | 0x%-17lx | %s\n",
+			printf("pmd%-3d | 0x%016llx | 0x%016llx | 0x%-8lx | %s\n",
 					i,
 					dfl,
 					rsvd,
@@ -215,7 +215,7 @@ try_again:
 		puts("</body>");
 		puts("</html>");
 	} else  {
-		puts("-------------------------------------------------------------------------------------");
+		puts("----------------------------------------------------------------------------");
 		printf("%u PMC registers, %u PMD registers\n", num_pmcs, num_pmds);
 	}
 	return 0;

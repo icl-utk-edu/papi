@@ -53,7 +53,7 @@ typedef struct {
 } options_t;
 
 static uint64_t collected_samples;
-static pfarg_pmd_t pd[NUM_PMDS];
+static pfarg_pmd_attr_t pd[NUM_PMDS];
 static unsigned int num_pmds;
 static options_t options;
 static volatile int terminate;
@@ -191,8 +191,8 @@ process_sample(int fd,  unsigned long ip, pid_t pid, pid_t tid, uint16_t cpu)
 {
 	unsigned int j;
 
-	if (pfm_read_pmds(fd, pd, num_pmds))
-		fatal_error("pfm_read_pmds error errno %d\n",errno);
+	if (pfm_read(fd, 0, PFM_RW_PMD_ATTR, pd, num_pmds * sizeof(*pd)))
+		fatal_error("pfm_read(PMD) error errno %d\n",errno);
 
 	if (options.opt_no_show) goto done;
 
@@ -201,7 +201,7 @@ process_sample(int fd,  unsigned long ip, pid_t pid, pid_t tid, uint16_t cpu)
 		pid,
 		tid,
 		cpu,
-		- pd[0].reg_last_reset_val,
+		- pd[0].reg_last_value,
 		ip);
 
 	for(j=1; j < num_pmds; j++) {	
@@ -221,15 +221,15 @@ cld_handler(int n)
 int
 mainloop(char **arg)
 {
-	pfarg_ctx_t ctx;
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
-	pfarg_pmc_t pc[NUM_PMCS];
-	pfarg_load_t load_args;
+	pfarg_pmr_t pc[NUM_PMCS];
+	pfarg_sinfo_t sif;
 	struct timeval start_time, end_time;
 	struct rusage rusage;
 	pfarg_msg_t msg;
 	uint64_t ovfl_count = 0;
+	uint32_t ctx_flags = 0;
 	pid_t pid;
 	int status, ret, fd;
 	unsigned int i, num_counters;
@@ -237,12 +237,10 @@ mainloop(char **arg)
 	/*
 	 * intialize all locals
 	 */
-	memset(&ctx, 0, sizeof(ctx));
 	memset(&inp,0, sizeof(inp));
 	memset(&outp,0, sizeof(outp));
 	memset(pc, 0, sizeof(pc));
-	memset(&load_args, 0, sizeof(load_args));
-
+	memset(&sif,0, sizeof(sif));
 
 	pfm_get_num_counters(&num_counters);
 
@@ -288,7 +286,8 @@ mainloop(char **arg)
 	 * use. Of source, it is possible that no valid assignement may
 	 * be possible if certina PMU registers  are not available.
 	 */
-	detect_unavail_pmcs(-1, &inp.pfp_unavail_pmcs);
+	get_sif(options.opt_sys? PFM_FL_SYSTEM_WIDE:0, &sif);
+	detect_unavail_pmu_regs(&sif, &inp.pfp_unavail_pmcs, NULL);
 
 	/*
 	 * let the library figure out the values for the PMCS
@@ -336,13 +335,12 @@ mainloop(char **arg)
 	/*
 	 * setup randomization parameters, we allow a range of up to +256 here.
 	 */
-	pd[0].reg_random_seed = 5;
 	pd[0].reg_random_mask = 0xff;
 
 	printf("programming %u PMCS and %u PMDS\n", outp.pfp_pmc_count, inp.pfp_event_count);
 
 	/*
-	 * prepare context structure.
+	 * prepare session flags
 	 */
 	if (options.opt_sys) {
 		if (options.opt_block)
@@ -352,35 +350,35 @@ mainloop(char **arg)
 
 		pin_cpu(getpid(), 0);
 
-		ctx.ctx_flags |= PFM_FL_SYSTEM_WIDE;
+		ctx_flags |= PFM_FL_SYSTEM_WIDE;
 	}
 
 	if (options.opt_block)
-		ctx.ctx_flags  |= PFM_FL_NOTIFY_BLOCK;
+		ctx_flags  |= PFM_FL_NOTIFY_BLOCK;
 
 	/*
-	 * now create our perfmon context.
+	 * now create perfmon session
 	 */
-	fd = pfm_create_context(&ctx, NULL, NULL, 0);
+	fd = pfm_create(ctx_flags, NULL);
 	if (fd == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
-		fatal_error("Can't create PFM context %s\n", strerror(errno));
+		fatal_error("cannot create session %s\n", strerror(errno));
 	}
 
 	/*
 	 * Now program the registers
 	 */
-	if (pfm_write_pmcs(fd, pc, outp.pfp_pmc_count))
-		fatal_error("pfm_write_pmcs error errno %d\n",errno);
+	if (pfm_write(fd, 0, PFM_RW_PMC, pc, outp.pfp_pmc_count * sizeof(*pc)))
+		fatal_error("pfm_write error errno %d\n",errno);
 	/*
 	 * initialize the PMDs
 	 * To be read, each PMD must be either written or declared
 	 * as being part of a sample (reg_smpl_pmds)
 	 */
-	if (pfm_write_pmds(fd, pd, outp.pfp_pmd_count))
-		fatal_error("pfm_write_pmds error errno %d\n",errno);
+	if (pfm_write(fd, 0, PFM_RW_PMD_ATTR, pd, outp.pfp_pmd_count * sizeof(*pd)))
+		fatal_error("pfm_write(PMD) error errno %d\n",errno);
 
 	num_pmds = outp.pfp_pmd_count;
 
@@ -395,7 +393,7 @@ mainloop(char **arg)
 	/*
 	 * In order to get the PFM_END_MSG message, it is important
 	 * to ensure that the child task does not inherit the file
-	 * descriptor of the context. By default, file descriptor
+	 * descriptor of the session. By default, file descriptor
 	 * are inherited during exec(). We explicitely close it
 	 * here. We could have set it up through fcntl(FD_CLOEXEC)
 	 * to achieve the same thing.
@@ -419,18 +417,17 @@ mainloop(char **arg)
 	}
 
 	/*
-	 * attach context to stopped task
+	 * attach to either pid or CPU0
 	 */
-	load_args.load_pid = options.opt_sys ? getpid() : pid;
-	if (pfm_load_context(fd, &load_args))
-		fatal_error("pfm_load_context error errno %d\n",errno);
+	if (pfm_attach(fd, 0, options.opt_sys ? 0 : pid))
+		fatal_error("pfm_attach error errno %d\n",errno);
 
 	/*
 	 * activate monitoring for stopped task.
 	 * (nothing will be measured at this point
 	 */
-	if (pfm_start(fd, NULL))
-		fatal_error("pfm_start error errno %d\n",errno);
+	if (pfm_set_state(fd, 0, PFM_ST_START))
+		fatal_error("pfm_set_state(start) error errno %d\n",errno);
 
 	if (options.opt_sys)
 		signal(SIGCHLD, cld_handler);
@@ -460,9 +457,9 @@ mainloop(char **arg)
 						   msg.pfm_ovfl_msg.msg_ovfl_tid,
 						   msg.pfm_ovfl_msg.msg_ovfl_cpu);
 				ovfl_count++;
-				if (pfm_restart(fd) == -1) {
+				if (pfm_set_state(fd, 0, PFM_ST_RESTART) == -1) {
 					if (errno != EBUSY)
-						fatal_error("pfm_restart error errno %d\n",errno);
+						fatal_error("pfm_set_state(restart) error errno %d\n",errno);
 				}
 				break;
 			case PFM_MSG_END: /* monitored task terminated (not for system-wide) */
@@ -480,7 +477,7 @@ terminate_session:
 	gettimeofday(&end_time, NULL);
 
 	/*
-	 * destroy perfmon context
+	 * destroy perfmon session
 	 */
 	close(fd);
 

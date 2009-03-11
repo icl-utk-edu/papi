@@ -1,5 +1,5 @@
 /*
- * Intel architectural PMU v1
+ * Intel architectural PMU v1, v2, v3
  *
  * Copyright (c) 2006-2007 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
@@ -61,7 +61,7 @@ typedef union {
 		unsigned long sel_edge:1;		/* edge detec */
 		unsigned long sel_pc:1;			/* pin control */
 		unsigned long sel_int:1;		/* enable APIC intr */
-		unsigned long sel_res1:1;		/* reserved */
+		unsigned long sel_any:1;		/* any thread (v3) */
 		unsigned long sel_en:1;			/* enable */
 		unsigned long sel_inv:1;		/* invert counter mask */
 		unsigned long sel_cnt_mask:8;		/* counter mask */
@@ -76,6 +76,7 @@ typedef struct {
 
 #define PFM_GEN_IA32_SEL_INV	0x1	/* inverse */
 #define PFM_GEN_IA32_SEL_EDGE	0x2	/* edge detect */
+#define PFM_GEN_IA32_SEL_ANYTHR 0x4	/* measure on any thread (v3 and up) */
 
 /*
  * model-specific parameters for the library

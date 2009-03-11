@@ -43,44 +43,51 @@ ifeq ($(CONFIG_PFMLIB_ARCH_CRAYXT),y)
 CFLAGS += -DCONFIG_PFMLIB_ARCH_CRAYXT
 endif
 
-CFLAGS+= -pthread -D_GNU_SOURCE -I$(PFMINCDIR)
+CFLAGS+= -I. -D_GNU_SOURCE
 LIBS += -lm
 
-TARGETS=self task task_attach task_attach_timeout syst \
-	notify_self notify_self2 notify_self3 \
-	whichpmu multiplex multiplex2 set_notify \
-	showreginfo task_smpl task_smpl_user showevtinfo \
-	pfmsetup
+ifeq ($(SYS),Linux)
+CFLAGS+= -pthread
+LIBS += -lrt
+endif
 
-XTRA=self_standalone notify_standalone smpl_standalone rtop
+TARGET_GEN=showevtinfo check_events
 
-all: $(TARGETS) $(XTRA)
+ifeq ($(SYS),Linux)
+TARGET_LINUX +=self task task_attach task_attach_timeout syst \
+	  notify_self notify_self2 notify_self3 \
+	  multiplex multiplex2 set_notify whichpmu \
+	  showreginfo task_smpl task_smpl_user \
+	  pfmsetup self_smpl_multi self_pipe \
+	  notify_self_fork
+
+XTRA += rtop
+endif
+
+all: $(TARGET_GEN) $(TARGET_LINUX) $(XTRA)
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
-
+# Many systems don't have ncurses installed
 rtop: rtop.o detect_pmcs.o $(PFMLIB)
-	$(CC) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^ $(LIBS)  -lpthread -lncurses
+	-$(CC) $(CFLAGS) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^ $(LIBS)  -lpthread -lncurses
 
-self_standalone: self_standalone.o
-	$(CC) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^
-
-notify_standalone: notify_standalone.o
-	$(CC) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^
-
-smpl_standalone: smpl_standalone.o
-	$(CC) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^
-
-$(TARGETS):  %:%.o  detect_pmcs.o $(PFMLIB)
+$(TARGET_LINUX):  %:%.o detect_pmcs.o $(PFMLIB)
 	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS) 
 
+$(TARGET_GEN):  %:%.o $(PFMLIB)
+	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS) 
 clean:
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
-	$(RM) -f *.o $(TARGETS) $(XTRA) *~
-
-smpl_standalone.o self_standalone.o notify_standalone.o : standalone.h
+	$(RM) -f *.o $(TARGET_LINUX) $(TARGET_GEN) $(XTRA) *~
 
 distclean: clean
 
+install_examples: $(TARGET_LINUX) $(TARGET_GEN)
+
+install_examples:
+	@echo installing: $(TARGET_LINUX) $(TARGET_GEN)
+	-mkdir -p $(DESTDIR)$(EXAMPLESDIR)
+	$(INSTALL) -m 755 $(TARGET_LINUX) $(TARGET_GEN) $(DESTDIR)$(EXAMPLESDIR)
+	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 #
 # examples are installed as part of the RPM install, typically in /usr/share/doc/libpfm-X.Y/
 #
-.PHONY: install depend

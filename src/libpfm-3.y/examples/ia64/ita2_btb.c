@@ -56,11 +56,6 @@ typedef pfm_dfl_smpl_arg_t	smpl_arg_t;
  */
 #define SMPL_PERIOD	(4UL*256)
 
-/*
- * We use a small buffer size to exercise the overflow handler
- */
-#define SMPL_BUF_NENTRIES	64
-
 static void *smpl_vaddr;
 static unsigned int entry_size;
 static int id;
@@ -249,8 +244,8 @@ overflow_handler(int n, struct siginfo *info, struct sigcontext *sc)
 	/*
 	 * And resume monitoring
 	 */
-	if (pfm_restart(id) == -1) {
-		perror("pfm_restart");
+	if (pfm_set_state(id, 0, PFM_ST_RESTART) == -1) {
+		perror("pfm_set_state_session(restart)");
 		exit(1);
 	}
 }
@@ -261,14 +256,12 @@ main(void)
 {
 	int ret;
 	int type = 0;
-	pfarg_pmd_t pd[NUM_PMDS];
-	pfarg_pmc_t pc[NUM_PMCS];
+	pfarg_pmr_t pc[NUM_PMCS];
+	pfarg_pmd_attr_t pd[NUM_PMDS];
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
 	pfmlib_ita2_input_param_t ita2_inp;
-	pfarg_ctx_t ctx;
 	smpl_arg_t buf_arg;
-	pfarg_load_t load_args;
 	pfmlib_options_t pfmlib_options;
 	struct sigaction act;
 	unsigned int i;
@@ -307,7 +300,7 @@ main(void)
 	pfm_set_options(&pfmlib_options);
 
 	memset(pd, 0, sizeof(pd));
-	memset(&ctx, 0, sizeof(ctx));
+	memset(pc, 0, sizeof(pc));
 	memset(&buf_arg, 0, sizeof(buf_arg));
 
 	/*
@@ -320,22 +313,21 @@ main(void)
 
 	/*
 	 * Before calling pfm_find_dispatch(), we must specify what kind
-	 * of branches we want to capture. We are interesteed in all the mispredicted branches,
-	 * therefore we program we set the various fields of the BTB config to:
+	 * of branches we want to capture. We are interested in all the
+	 * mispredicted (target, taken/not taken) branches, therefore we
+	 * program the various fields of the BTB config to:
 	 */
 	ita2_inp.pfp_ita2_btb.btb_used = 1;
 
-	ita2_inp.pfp_ita2_btb.btb_ds  = 0;
-	ita2_inp.pfp_ita2_btb.btb_tm  = 0x3;
-	ita2_inp.pfp_ita2_btb.btb_ptm = 0x3;
-	ita2_inp.pfp_ita2_btb.btb_ppm = 0x3;
-	ita2_inp.pfp_ita2_btb.btb_brt = 0x0;
+	ita2_inp.pfp_ita2_btb.btb_ds  = 0;   /* capture target */
+	ita2_inp.pfp_ita2_btb.btb_tm  = 0x3; /* all branches */
+	ita2_inp.pfp_ita2_btb.btb_ptm = 0x1; /* target mispredicted */
+	ita2_inp.pfp_ita2_btb.btb_ppm = 0x1; /* mispredicted path */
+	ita2_inp.pfp_ita2_btb.btb_brt = 0x0; /* all types captured */
 	ita2_inp.pfp_ita2_btb.btb_plm = PFM_PLM3;
 
-	if (pfm_find_full_event("BRANCH_EVENT", &inp.pfp_events[0]) != PFMLIB_SUCCESS) {
+	if (pfm_find_full_event("BRANCH_EVENT", &inp.pfp_events[0]) != PFMLIB_SUCCESS)
 		fatal_error("cannot find event BRANCH_EVENT\n");
-	}
-
 	/*
 	 * set the (global) privilege mode:
 	 * 	PFM_PLM3 : user level only
@@ -349,9 +341,9 @@ main(void)
 	/*
 	 * let the library figure out the values for the PMCS
 	 */
-	if ((ret=pfm_dispatch_events(&inp, &ita2_inp, &outp, NULL)) != PFMLIB_SUCCESS) {
+	if ((ret=pfm_dispatch_events(&inp, &ita2_inp, &outp, NULL)) != PFMLIB_SUCCESS)
 		fatal_error("cannot configure events: %s\n", pfm_strerror(ret));
-	}
+
 	/*
 	 * the size of the buffer is indicated in bytes (not entries).
 	 *
@@ -362,14 +354,14 @@ main(void)
 
 
 	/*
-	 * now create the context for self monitoring/per-task
+	 * now create the session
 	 */
-	id = pfm_create_context(&ctx, "default", &buf_arg, sizeof(buf_arg));
+	id = pfm_create(PFM_FL_SMPL_FMT, NULL, "default", &buf_arg, sizeof(buf_arg));
 	if (id == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
-		fatal_error("Can't create PFM context %s\n", strerror(errno));
+		fatal_error("cannot create session %s\n", strerror(errno));
 	}
 
 	/*
@@ -416,6 +408,7 @@ main(void)
 	 * to our first event which is our sampling period.
 	 */
 	pd[0].reg_value       = - SMPL_PERIOD;
+
 	pd[0].reg_long_reset  = - SMPL_PERIOD;
 	pd[0].reg_short_reset = - SMPL_PERIOD;
 
@@ -438,18 +431,17 @@ main(void)
 		/*
 	 * Now program the registers
 	 */
-	if (pfm_write_pmcs(id, pc, outp.pfp_pmc_count) == -1)
-		fatal_error("pfm_write_pmcs error errno %d\n",errno);
+	if (pfm_write(id, 0, PFM_RW_PMC, pc, outp.pfp_pmc_count * sizeof(*pc)) == -1)
+		fatal_error("pfm_write error errno %d\n",errno);
 
-	if (pfm_write_pmds(id, pd, outp.pfp_pmd_count) == -1)
-		fatal_error("pfm_write_pmds error errno %d\n",errno);
+	if (pfm_write(id, 0, PFM_RW_PMD_ATTR, pd, outp.pfp_pmd_count * sizeof(*pd)) == -1)
+		fatal_error("pfm_write(PMD) error errno %d\n",errno);
 
 	/*
-	 * now we load (i.e., attach) the context to ourself
+	 * now attach session
 	 */
-	load_args.load_pid = getpid();
-	if (pfm_load_context(id, &load_args) == -1)
-		fatal_error("pfm_load_context error errno %d\n",errno);
+	if (pfm_attach(id, 0, getpid()) == -1)
+		fatal_error("pfm_attach error errno %d\n",errno);
 
 	/*
 	 * setup asynchronous notification on the file descriptor
@@ -468,11 +460,13 @@ main(void)
 	/*
 	 * Let's roll now.
 	 */
-	pfm_self_start(id);
+	if (pfm_set_state(id, 0, PFM_ST_START))
+		fatal_error("pfm_set_state error errno %d\n",errno);
 
 	do_test(100000);
 
-	pfm_self_stop(id);
+	if (pfm_set_state(id, 0, PFM_ST_STOP))
+		fatal_error("pfm_set_state error errno %d\n",errno);
 
 	/*
 	 * We must call the processing routine to cover the last entries recorded

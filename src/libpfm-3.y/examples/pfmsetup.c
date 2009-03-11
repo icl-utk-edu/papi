@@ -243,7 +243,7 @@ struct context {
 	int id;
 	int fd;
 	int cpu;
-	pfarg_ctx_t ctx_arg;
+	uint32_t ctx_flags;
 	pfm_dfl_smpl_arg_t smpl_arg;
 	struct event_set *event_sets;
 	struct context *next;
@@ -342,20 +342,6 @@ static void insert_event_set(struct context *ctx, struct event_set *evt)
 
 	evt->next = *next_evt;
 	*next_evt = evt;
-}
-
-static void remove_event_set(struct context *ctx, struct event_set *evt)
-{
-	struct event_set **next_evt;
-
-	for (next_evt = &ctx->event_sets;
-	     *next_evt;
-	     next_evt = &((*next_evt)->next)) {
-		if (*next_evt == evt) {
-			*next_evt = evt->next;
-			break;
-		}
-	}
 }
 
 static struct program *find_program(int program_id)
@@ -460,7 +446,6 @@ static void revert_affinity(cpu_set_t *old_cpu_set)
  **/
 static int create_context(int argc, char **argv)
 {
-	pfarg_ctx_t ctx_arg;
 	pfm_dfl_smpl_arg_t smpl_arg;
 	struct context *new_ctx = NULL;
 	char *sampler_name = NULL;
@@ -470,6 +455,7 @@ static int create_context(int argc, char **argv)
 	int system_wide = FALSE;
 	int c, ctx_id = 0;
 	int rc;
+	uint32_t ctx_flags;
 	size_t sz;
 
 	struct option long_opts[] = {
@@ -479,7 +465,7 @@ static int create_context(int argc, char **argv)
 		{"block-on-notify", no_argument,       NULL, 4},
 		{NULL,              0,                 NULL, 0} };
 
-	memset(&ctx_arg, 0, sizeof(ctx_arg));
+	ctx_flags = 0;
 
 	opterr = 0;
 	optind = 0;
@@ -536,11 +522,14 @@ static int create_context(int argc, char **argv)
 		sz = 0;
 	}
 
-	ctx_arg.ctx_flags = (system_wide     ? PFM_FL_SYSTEM_WIDE  : 0) |
-			    (no_overflow_msg ? PFM_FL_OVFL_NO_MSG  : 0) |
-			    (block_on_notify ? PFM_FL_NOTIFY_BLOCK : 0);
+	ctx_flags = (system_wide     ? PFM_FL_SYSTEM_WIDE  : 0) |
+		    (no_overflow_msg ? PFM_FL_OVFL_NO_MSG  : 0) |
+		    (block_on_notify ? PFM_FL_NOTIFY_BLOCK : 0);
 
-	rc = pfm_create_context(&ctx_arg, sampler_name, smpl_p, sz);
+	if (sampler_name)
+		ctx_flags |= PFM_FL_SMPL_FMT;
+
+	rc = pfm_create(ctx_flags, NULL, sampler_name, smpl_p, sz);
 	if (rc == -1) {
 		rc = errno;
 		LOG_ERROR("pfm_create_context system call returned "
@@ -571,7 +560,7 @@ static int create_context(int argc, char **argv)
 	new_ctx->id = ctx_id;
 	new_ctx->fd = rc;
 	new_ctx->cpu = -1;
-	new_ctx->ctx_arg = ctx_arg;
+	new_ctx->ctx_flags = ctx_flags;
 	new_ctx->smpl_arg = smpl_arg;
 
 	insert_context(new_ctx);
@@ -603,10 +592,10 @@ static int load_context(int argc, char **argv)
 	struct context *ctx;
 	struct event_set *evt;
 	struct program *prog;
-	pfarg_load_t load_arg;
 	cpu_set_t old_cpu_set;
 	int ctx_id, event_set_id, program_id;
 	int system_wide, rc;
+	int load_pid =  0;
 
 	ctx_id = strtoul(argv[1], NULL, 0);
 	event_set_id = strtoul(argv[2], NULL, 0);
@@ -631,9 +620,7 @@ static int load_context(int argc, char **argv)
 			  event_set_id, ctx_id);
 		return EINVAL;
 	}
-	load_arg.load_set = evt->id;
-
-	system_wide = ctx->ctx_arg.ctx_flags & PFM_FL_SYSTEM_WIDE;
+	system_wide = ctx->ctx_flags & PFM_FL_SYSTEM_WIDE;
 	if (system_wide) {
 		if (ctx->cpu >= 0) {
 			LOG_ERROR("Trying to load context %d which is already "
@@ -647,20 +634,20 @@ static int load_context(int argc, char **argv)
 		}
 
 		/* Specify the CPU as the PID. */
-		load_arg.load_pid = program_id;
+		load_pid = program_id;
 	} else {
 		prog = find_program(program_id);
 		if (!prog) {
 			LOG_ERROR("Can't find program with ID %d.", program_id);
 			return EINVAL;
 		}
-		load_arg.load_pid = prog->pid;
+		load_pid = prog->pid;
 	}
 
-	rc = pfm_load_context(ctx->fd, &load_arg);
+	rc = pfm_attach(ctx->fd, 0, load_pid);
 	if (rc) {
 		rc = errno;
-		LOG_ERROR("pfm_load_context system call returned "
+		LOG_ERROR("pfm_attach  system call returned "
 			  "an error: %d.", rc);
 		return rc;
 	}
@@ -707,7 +694,7 @@ static int unload_context(int argc, char **argv)
 		return EINVAL;
 	}
 
-	system_wide = ctx->ctx_arg.ctx_flags & PFM_FL_SYSTEM_WIDE;
+	system_wide = ctx->ctx_flags & PFM_FL_SYSTEM_WIDE;
 	if (system_wide) {
 		if (ctx->cpu < 0) {
 			/* This context isn't loaded on any CPU. */
@@ -722,10 +709,10 @@ static int unload_context(int argc, char **argv)
 		}
 	}
 
-	rc = pfm_unload_context(ctx->fd);
+	rc = pfm_attach(ctx->fd, 0, PFM_NO_TARGET);
 	if (rc) {
 		rc = errno;
-		LOG_ERROR("pfm_unload_context system call returned "
+		LOG_ERROR("pfm_attach(detach) system call returned "
 			  "an error: %d.", rc);
 		return rc;
 	}
@@ -794,7 +781,7 @@ static int write_pmc(int argc, char **argv)
 {
 	struct context *ctx;
 	struct event_set *evt;
-	pfarg_pmc_t *pmc_args = NULL;
+	pfarg_pmr_t *pmc_args = NULL;
 	cpu_set_t old_cpu_set;
 	int ctx_id, event_set_id;
 	int pmc_id, num_pmcs;
@@ -846,7 +833,7 @@ static int write_pmc(int argc, char **argv)
 		pmc_args[i].reg_value = pmc_value;
 	}
 
-	system_wide = ctx->ctx_arg.ctx_flags & PFM_FL_SYSTEM_WIDE;
+	system_wide = ctx->ctx_flags & PFM_FL_SYSTEM_WIDE;
 	if (system_wide && ctx->cpu >= 0) {
 		rc = set_affinity(ctx->cpu, &old_cpu_set);
 		if (rc) {
@@ -854,10 +841,10 @@ static int write_pmc(int argc, char **argv)
 		}
 	}
 
-	rc = pfm_write_pmcs(ctx->fd, pmc_args, num_pmcs);
+	rc = pfm_write(ctx->fd, 0, PFM_RW_PMC, pmc_args, num_pmcs * sizeof(*pmc_args));
 	if (rc) {
 		rc = errno;
-		LOG_ERROR("pfm_write_pmcs system call returned "
+		LOG_ERROR("pfm_write system call returned "
 			  "an error: %d.", rc);
 		goto out;
 	}
@@ -881,7 +868,7 @@ static int write_pmd(int argc, char **argv)
 {
 	struct context *ctx;
 	struct event_set *evt;
-	pfarg_pmd_t *pmd_args = NULL;
+	pfarg_pmr_t *pmd_args = NULL;
 	cpu_set_t old_cpu_set;
 	int ctx_id, event_set_id;
 	int pmd_id, num_pmds;
@@ -933,7 +920,7 @@ static int write_pmd(int argc, char **argv)
 		pmd_args[i].reg_value = pmd_value;
 	}
 
-	system_wide = ctx->ctx_arg.ctx_flags & PFM_FL_SYSTEM_WIDE;
+	system_wide = ctx->ctx_flags & PFM_FL_SYSTEM_WIDE;
 	if (system_wide && ctx->cpu >= 0) {
 		rc = set_affinity(ctx->cpu, &old_cpu_set);
 		if (rc) {
@@ -941,10 +928,10 @@ static int write_pmd(int argc, char **argv)
 		}
 	}
 
-	rc = pfm_write_pmds(ctx->fd, pmd_args, num_pmds);
+	rc = pfm_write(ctx->fd, 0, PFM_RW_PMD, pmd_args, num_pmds * sizeof(*pmd_args));
 	if (rc) {
 		rc = errno;
-		LOG_ERROR("pfm_write_pmds system call returned "
+		LOG_ERROR("pfm_write system call returned "
 			  "an error: %d.", rc);
 		goto out;
 	}
@@ -968,7 +955,7 @@ static int read_pmd(int argc, char **argv)
 {
 	struct context *ctx;
 	struct event_set *evt;
-	pfarg_pmd_t *pmd_args = NULL;
+	pfarg_pmr_t *pmd_args = NULL;
 	cpu_set_t old_cpu_set;
 	int ctx_id, event_set_id;
 	int pmd_id, num_pmds;
@@ -1016,7 +1003,7 @@ static int read_pmd(int argc, char **argv)
 		pmd_args[i].reg_set = evt->id;
 	}
 
-	system_wide = ctx->ctx_arg.ctx_flags & PFM_FL_SYSTEM_WIDE;
+	system_wide = ctx->ctx_flags & PFM_FL_SYSTEM_WIDE;
 	if (system_wide && ctx->cpu >= 0) {
 		rc = set_affinity(ctx->cpu, &old_cpu_set);
 		if (rc) {
@@ -1024,10 +1011,10 @@ static int read_pmd(int argc, char **argv)
 		}
 	}
 
-	rc = pfm_read_pmds(ctx->fd, pmd_args, num_pmds);
+	rc = pfm_read(ctx->fd, 0, PFM_RW_PMD, pmd_args, num_pmds * sizeof(*pmd_args));
 	if (rc) {
 		rc = errno;
-		LOG_ERROR("pfm_read_pmds system call returned "
+		LOG_ERROR("pfm_read system call returned "
 			  "an error: %d.", rc);
 		goto out;
 	}
@@ -1050,14 +1037,11 @@ out:
  **/
 static int start_counting(int argc, char **argv)
 {
-	pfarg_start_t start_arg;
 	struct context *ctx;
 	struct event_set *evt;
 	cpu_set_t old_cpu_set;
 	int ctx_id, event_set_id;
 	int system_wide, rc;
-
-	memset(&start_arg, 0, sizeof(start_arg));
 
 	ctx_id = strtoul(argv[1], NULL, 0);
 	event_set_id = strtoul(argv[2], NULL, 0);
@@ -1081,9 +1065,7 @@ static int start_counting(int argc, char **argv)
 		return EINVAL;
 	}
 
-	start_arg.start_set = evt->id;
-
-	system_wide = ctx->ctx_arg.ctx_flags & PFM_FL_SYSTEM_WIDE;
+	system_wide = ctx->ctx_flags & PFM_FL_SYSTEM_WIDE;
 	if (system_wide && ctx->cpu >= 0) {
 		rc = set_affinity(ctx->cpu, &old_cpu_set);
 		if (rc) {
@@ -1091,10 +1073,10 @@ static int start_counting(int argc, char **argv)
 		}
 	}
 
-	rc = pfm_start(ctx->fd, &start_arg);
+	rc = pfm_set_state(ctx->fd, 0, PFM_ST_START);
 	if (rc) {
 		rc = errno;
-		LOG_ERROR("pfm_start system call returned an error: %d.", rc);
+		LOG_ERROR("pfm_set_state system call returned an error: %d.", rc);
 		return rc;
 	}
 
@@ -1137,7 +1119,7 @@ static int stop_counting(int argc, char **argv)
 		return EINVAL;
 	}
 
-	system_wide = ctx->ctx_arg.ctx_flags & PFM_FL_SYSTEM_WIDE;
+	system_wide = ctx->ctx_flags & PFM_FL_SYSTEM_WIDE;
 	if (system_wide && ctx->cpu >= 0) {
 		rc = set_affinity(ctx->cpu, &old_cpu_set);
 		if (rc) {
@@ -1145,10 +1127,10 @@ static int stop_counting(int argc, char **argv)
 		}
 	}
 
-	rc = pfm_stop(ctx->fd);
+	rc = pfm_set_state(ctx->fd, 0, PFM_ST_STOP);
 	if (rc) {
 		rc = errno;
-		LOG_ERROR("pfm_stop system call returned an error: %d.", rc);
+		LOG_ERROR("pfm_set_state(stop) system call returned an error: %d.", rc);
 		return rc;
 	}
 
@@ -1190,7 +1172,7 @@ static int restart_counting(int argc, char **argv)
 		return EINVAL;
 	}
 
-	system_wide = ctx->ctx_arg.ctx_flags & PFM_FL_SYSTEM_WIDE;
+	system_wide = ctx->ctx_flags & PFM_FL_SYSTEM_WIDE;
 	if (system_wide && ctx->cpu >= 0) {
 		rc = set_affinity(ctx->cpu, &old_cpu_set);
 		if (rc) {
@@ -1198,10 +1180,10 @@ static int restart_counting(int argc, char **argv)
 		}
 	}
 
-	rc = pfm_restart(ctx->fd);
+	rc = pfm_set_state(ctx->fd, 0, PFM_ST_RESTART);
 	if (rc) {
 		rc = errno;
-		LOG_ERROR("pfm_restart system call returned an error: %d.", rc);
+		LOG_ERROR("pfm_set_state(restart) system call returned an error: %d.", rc);
 		return rc;
 	}
 
@@ -1224,7 +1206,7 @@ static int restart_counting(int argc, char **argv)
  **/
 static int create_eventset(int argc, char **argv)
 {
-	pfarg_setdesc_t set_arg;
+	pfarg_set_desc_t set_arg;
 	struct context *ctx;
 	struct event_set *evt;
 	cpu_set_t old_cpu_set;
@@ -1313,7 +1295,7 @@ static int create_eventset(int argc, char **argv)
 	set_arg.set_flags = (switch_on_overflow ? PFM_SETFL_OVFL_SWITCH : 0) |
 			    (switch_on_timeout  ? PFM_SETFL_TIME_SWITCH : 0);
 
-	system_wide = ctx->ctx_arg.ctx_flags & PFM_FL_SYSTEM_WIDE;
+	system_wide = ctx->ctx_flags & PFM_FL_SYSTEM_WIDE;
 	if (system_wide && ctx->cpu >= 0) {
 		rc = set_affinity(ctx->cpu, &old_cpu_set);
 		if (rc) {
@@ -1322,10 +1304,10 @@ static int create_eventset(int argc, char **argv)
 		}
 	}
 
-	rc = pfm_create_evtsets(ctx->fd, &set_arg, 1);
+	rc = pfm_create_sets(ctx->fd, 0, &set_arg, 1);
 	if (rc) {
 		rc = errno;
-		LOG_ERROR("pfm_create_evtsets system call returned "
+		LOG_ERROR("pfm_create_sets system call returned "
 			  "an error: %d.", rc);
 		free(evt);
 		return rc;
@@ -1356,65 +1338,8 @@ static int create_eventset(int argc, char **argv)
  **/
 static int delete_eventset(int argc, char **argv)
 {
-	pfarg_setdesc_t set_arg;
-	struct context *ctx;
-	struct event_set *evt;
-	cpu_set_t old_cpu_set;
-	int ctx_id, event_set_id;
-	int system_wide, rc;
-
-	memset(&set_arg, 0, sizeof(set_arg));
-
-	ctx_id = strtoul(argv[1], NULL, 0);
-	event_set_id = strtoul(argv[2], NULL, 0);
-
-	if (ctx_id <= 0 || event_set_id < 0) {
-		LOG_ERROR("context ID and event-set ID must be "
-			  "positive integers.");
-		return EINVAL;
-	}
-
-	ctx = find_context(ctx_id);
-	if (!ctx) {
-		LOG_ERROR("Can't find context with ID %d.", ctx_id);
-		return EINVAL;
-	}
-
-	evt = find_event_set(ctx, event_set_id);
-	if (!evt) {
-		LOG_ERROR("Can't find event-set with ID %d in context %d.",
-			  event_set_id, ctx_id);
-		return EINVAL;
-	}
-
-	set_arg.set_id = evt->id;
-
-	system_wide = ctx->ctx_arg.ctx_flags & PFM_FL_SYSTEM_WIDE;
-	if (system_wide && ctx->cpu >= 0) {
-		rc = set_affinity(ctx->cpu, &old_cpu_set);
-		if (rc) {
-			return rc;
-		}
-	}
-
-	rc = pfm_delete_evtsets(ctx->fd, &set_arg, 1);
-	if (rc) {
-		rc = errno;
-		LOG_ERROR("pfm_delete_evtsets system call returned "
-			  "an error: %d.", rc);
-		return rc;
-	}
-
-	if (system_wide && ctx->cpu >= 0) {
-		revert_affinity(&old_cpu_set);
-	}
-
-	remove_event_set(ctx, evt);
-	free(evt);
-
-	LOG_INFO("Deleted event-set %d from context %d.", event_set_id, ctx_id);
-
-	return 0;
+	LOG_ERROR("pfm_delete_evtsets not supported in v3.x");
+	return EINVAL;
 }
 
 /**
@@ -1424,7 +1349,7 @@ static int delete_eventset(int argc, char **argv)
  **/
 static int getinfo_eventset(int argc, char **argv)
 {
-	pfarg_setinfo_t set_arg;
+	pfarg_set_info_t set_arg;
 	struct context *ctx;
 	struct event_set *evt;
 	cpu_set_t old_cpu_set;
@@ -1457,7 +1382,7 @@ static int getinfo_eventset(int argc, char **argv)
 
 	set_arg.set_id = evt->id;
 
-	system_wide = ctx->ctx_arg.ctx_flags & PFM_FL_SYSTEM_WIDE;
+	system_wide = ctx->ctx_flags & PFM_FL_SYSTEM_WIDE;
 	if (system_wide && ctx->cpu >= 0) {
 		rc = set_affinity(ctx->cpu, &old_cpu_set);
 		if (rc) {
@@ -1465,7 +1390,7 @@ static int getinfo_eventset(int argc, char **argv)
 		}
 	}
 
-	rc = pfm_getinfo_evtsets(ctx->fd, &set_arg, 1);
+	rc = pfm_getinfo_sets(ctx->fd, 0, &set_arg, 1);
 	if (rc) {
 		rc = errno;
 		LOG_ERROR("pfm_getinfo_evtsets system call returned "
@@ -1478,7 +1403,6 @@ static int getinfo_eventset(int argc, char **argv)
 	}
 
 	LOG_INFO("Got info for event-set %d in context %d.", event_set_id, ctx_id);
-	LOG_INFO("   Flags: 0x%x", set_arg.set_flags);
 	LOG_INFO("   Runs: %llu", (unsigned long long)set_arg.set_runs);
 	LOG_INFO("   Timeout: %"PRIu64, set_arg.set_timeout);
 

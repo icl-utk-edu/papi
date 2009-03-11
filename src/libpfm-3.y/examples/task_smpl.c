@@ -230,17 +230,17 @@ int
 mainloop(char **arg)
 {
 	smpl_hdr_t *hdr;
-	pfarg_ctx_t ctx;
 	smpl_arg_t buf_arg;
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
-	pfarg_pmd_t pd[NUM_PMDS];
-	pfarg_pmc_t pc[NUM_PMCS];
-	pfarg_load_t load_args;
+	pfarg_pmd_attr_t pd[NUM_PMDS];
+	pfarg_pmr_t pc[NUM_PMCS];
+	pfarg_sinfo_t sif;
 	struct timeval start_time, end_time;
 	struct rusage rusage;
 	pfarg_msg_t msg;
 	uint64_t ovfl_count = 0;
+	uint32_t ctx_flags;
 	size_t entry_size;
 	void *buf_addr;
 	pid_t pid;
@@ -251,13 +251,12 @@ mainloop(char **arg)
 	/*
 	 * intialize all locals
 	 */
-	memset(&ctx, 0, sizeof(ctx));
 	memset(&buf_arg, 0, sizeof(buf_arg));
 	memset(&inp,0, sizeof(inp));
 	memset(&outp,0, sizeof(outp));
 	memset(pd, 0, sizeof(pd));
 	memset(pc, 0, sizeof(pc));
-	memset(&load_args, 0, sizeof(load_args));
+	memset(&sif, 0, sizeof(sif));
 
 	pfm_get_num_counters(&num_counters);
 
@@ -297,7 +296,8 @@ mainloop(char **arg)
 	 * use. Of source, it is possible that no valid assignement may
 	 * be possible if certina PMU registers  are not available.
 	 */
-	detect_unavail_pmcs(-1, &inp.pfp_unavail_pmcs);
+	get_sif(0, &sif);
+	detect_unavail_pmu_regs(&sif, &inp.pfp_unavail_pmcs, NULL);
 
 	/*
 	 * let the library figure out the values for the PMCS
@@ -355,7 +355,6 @@ mainloop(char **arg)
 	/*
 	 * setup randomization parameters, we allow a range of up to +256 here.
 	 */
-	pd[0].reg_random_seed = 5;
 	pd[0].reg_random_mask = 0xff;
 
 	/*
@@ -368,15 +367,15 @@ mainloop(char **arg)
 	printf("programming %u PMCS and %u PMDS\n", outp.pfp_pmc_count, inp.pfp_event_count);
 
 	/*
-	 * prepare context structure.
-	 */
+ 	 * indicate we are using a smapling format, i.e., extra arguments
+ 	 * passed to pfm_create_session()
+ 	 */
+	ctx_flags = PFM_FL_SMPL_FMT;
 
 	/*
-	 * We initialize the format specific information.
-	 * The format is identified by its UUID which must be copied
-	 * into the ctx_buf_fmt_id field.
+	 * add overflow blocking is necessary
 	 */
-	ctx.ctx_flags = options.opt_block ? PFM_FL_NOTIFY_BLOCK : 0;
+	ctx_flags |= options.opt_block ? PFM_FL_NOTIFY_BLOCK : 0;
 
 	/*
 	 * the size of the buffer is indicated in bytes (not entries).
@@ -387,14 +386,14 @@ mainloop(char **arg)
 	buf_arg.buf_size = 3*getpagesize()+512;
 
 	/*
-	 * now create our perfmon context.
+	 * now create our session
 	 */
-	fd = pfm_create_context(&ctx, FMT_NAME, &buf_arg, sizeof(buf_arg));
+	fd = pfm_create(ctx_flags, NULL, FMT_NAME, &buf_arg, sizeof(buf_arg));
 	if (fd == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
-		fatal_error("Can't create PFM context %s\n", strerror(errno));
+		fatal_error("cannot create session %s\n", strerror(errno));
 	}
 
 	/*
@@ -420,15 +419,15 @@ mainloop(char **arg)
 	/*
 	 * Now program the registers
 	 */
-	if (pfm_write_pmcs(fd, pc, outp.pfp_pmc_count))
-		fatal_error("pfm_write_pmcs error errno %d\n",errno);
+	if (pfm_write(fd, 0, PFM_RW_PMC, pc, outp.pfp_pmc_count * sizeof(*pc)))
+		fatal_error("pfm_write error errno %d\n",errno);
 	/*
 	 * initialize the PMDs
 	 * To be read, each PMD must be either written or declared
 	 * as being part of a sample (reg_smpl_pmds, reg_reset_pmds)
 	 */
-	if (pfm_write_pmds(fd, pd, outp.pfp_pmd_count))
-		fatal_error("pfm_write_pmds error errno %d\n",errno);
+	if (pfm_write(fd, 0, PFM_RW_PMD_ATTR, pd, outp.pfp_pmd_count * sizeof(*pd)))
+		fatal_error("pfm_write(PMD) error errno %d\n",errno);
 
 	/*
 	 * Create the child task
@@ -439,7 +438,7 @@ mainloop(char **arg)
 	/*
 	 * In order to get the PFM_END_MSG message, it is important
 	 * to ensure that the child task does not inherit the file
-	 * descriptor of the context. By default, file descriptor
+	 * descriptor of the session. By default, file descriptor
 	 * are inherited during exec(). We explicitely close it
 	 * here. We could have set it up through fcntl(FD_CLOEXEC)
 	 * to achieve the same thing.
@@ -463,18 +462,17 @@ mainloop(char **arg)
 	}
 
 	/*
-	 * attach context to stopped task
+	 * attach session to stopped task
 	 */
-	load_args.load_pid = pid;
-	if (pfm_load_context (fd, &load_args))
-		fatal_error("pfm_load_context error errno %d\n",errno);
+	if (pfm_attach(fd, 0, pid))
+		fatal_error("pfm_attach error errno %d\n",errno);
 
 	/*
 	 * activate monitoring for stopped task.
 	 * (nothing will be measured at this point
 	 */
-	if (pfm_start(fd, NULL))
-		fatal_error("pfm_start error errno %d\n",errno);
+	if (pfm_set_state(fd, 0, PFM_ST_START))
+		fatal_error("pfm_set_state(start) error errno %d\n",errno);
 	/*
 	 * detach child. Side effect includes
 	 * activation of monitoring.
@@ -510,11 +508,11 @@ mainloop(char **arg)
 				 * as the task may have disappeared while we were processing
 				 * the samples.
 				 */
-				if (pfm_restart(fd)) {
+				if (pfm_set_state(fd, 0, PFM_ST_RESTART)) {
 					if (errno != EBUSY)
-						fatal_error("pfm_restart error errno %d\n",errno);
+						fatal_error("pfm_set_state(restart) error errno %d\n",errno);
 					else
-						warning("pfm_restart: task probably terminated \n");
+						warning("pfm_set_state(restart): task probably terminated \n");
 				}
 				break;
 			case PFM_MSG_END: /* monitored task terminated */
@@ -537,12 +535,12 @@ terminate_session:
 
 	/*
 	 * close file descritor. Because of mmap() the number of reference to the
-	 * "file" is 2, thus the context is only freed when the last reference is closed
+	 * "file" is 2, thus the session is only freed when the last reference is closed
 	 * either by closed or munmap() depending on the order in which those calls are
 	 * made:
-	 * 	- close() -> munmap(): context and buffer destroyed after munmap().
+	 * 	- close() -> munmap(): session and buffer destroyed after munmap().
 	 * 			       buffer remains accessible after close().
-	 * 	- munmap() -> close(): buffer unaccessible after munmap(), context and
+	 * 	- munmap() -> close(): buffer unaccessible after munmap(), session and
 	 * 			       buffer destroyed after close().
 	 *
 	 * It is important to free the resources cleanly, especially because the sampling
@@ -551,7 +549,7 @@ terminate_session:
 	close(fd);
 
 	/*
-	 * unmap buffer, actually free the buffer and context because placed after
+	 * unmap buffer, actually free the buffer and session because placed after
 	 * the close(), i.e. is the last reference. See comments about close() above.
 	 */
 	ret = munmap(hdr, (size_t)buf_arg.buf_size);

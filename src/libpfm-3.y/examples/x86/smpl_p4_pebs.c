@@ -25,8 +25,9 @@
  * This file is part of libpfm, a performance monitoring support library for
  * applications on Linux.
  */
-
-#define _GNU_SOURCE /* for getline */
+#ifndef _GNU_SOURCE
+  #define _GNU_SOURCE /* for getline */
+#endif
 #include <sys/types.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -217,11 +218,10 @@ check_valid_cpu(void)
 int
 main(int argc, char **argv)
 {
-	pfarg_pmd_t pd[NUM_PMDS];
-	pfarg_pmc_t pc[NUM_PMCS];
-	pfarg_ctx_t ctx;
+	pfarg_pmr_t pd[NUM_PMDS];
+	pfarg_pmr_t pc[NUM_PMCS];
+	pfarg_pmd_attr_t pa[NUM_PMDS];
 	smpl_arg_t buf_arg;
-	pfarg_load_t load_args;
 	pfarg_msg_t msg;
 	smpl_hdr_t *hdr;
 	void *buf_addr;
@@ -236,24 +236,21 @@ main(int argc, char **argv)
 
 	memset(pd, 0, sizeof(pd));
 	memset(pc, 0, sizeof(pc));
-	memset(&ctx, 0, sizeof(ctx));
 	memset(&buf_arg, 0, sizeof(buf_arg));
-	memset(&load_args, 0, sizeof(load_args));
 
 	buf_arg.buf_size = getpagesize();
 	buf_arg.cnt_reset = -SMPL_PERIOD;
-	ctx.ctx_flags = 0;
 	/*
 	 * trigger interrupt when reached 90% of buffer
 	 */
 	buf_arg.intr_thres = (buf_arg.buf_size/sizeof(smpl_entry_t))*90/100;
 
-	fd = pfm_create_context(&ctx, FMT_NAME, &buf_arg, sizeof(buf_arg));
+	fd = pfm_create(PFM_FL_SMPL_FMT, NULL, FMT_NAME, &buf_arg, sizeof(buf_arg));
 	if (fd == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
-		fatal_error("Can't create PFM context %s, maybe you do not have the P4/Xeon PEBS sampling format in the kernel.\n Check /sys/kernel/perfmon\n", strerror(errno));
+		fatal_error("cannot create session %s, maybe you do not have the P4/Xeon PEBS sampling format in the kernel.\n Check /sys/kernel/perfmon\n", strerror(errno));
 	}
 
 	/*
@@ -264,7 +261,7 @@ main(int argc, char **argv)
 	if (buf_addr == MAP_FAILED)
 		fatal_error("cannot mmap sampling buffer errno %d\n", errno);
 
-	printf("context [%d] buffer mapped @%p\n", fd, buf_addr);
+	printf("session [%d] buffer mapped @%p\n", fd, buf_addr);
 
 	hdr = (smpl_hdr_t *)buf_addr;
 
@@ -336,17 +333,18 @@ main(int argc, char **argv)
 	pd[0].reg_num = 8;
 	pd[0].reg_flags = PFM_REGFL_OVFL_NOTIFY;
 	pd[0].reg_value = -SMPL_PERIOD;
-	pd[0].reg_long_reset = -SMPL_PERIOD;
-	pd[0].reg_short_reset = -SMPL_PERIOD;
+
+	pa[0].reg_long_reset = -SMPL_PERIOD;
+	pa[0].reg_short_reset = -SMPL_PERIOD;
 
 	/*
 	 * Now program the registers
 	 */
-	if (pfm_write_pmcs(fd, pc, npmcs) == -1)
-		fatal_error("pfm_write_pmcs error errno %d\n",errno);
+	if (pfm_write(fd, 0, PFM_RW_PMC, pc, npmcs * sizeof(*pc)) == -1)
+		fatal_error("pfm_writeerror errno %d\n",errno);
 
-	if (pfm_write_pmds(fd, pd, 1) == -1)
-		fatal_error("pfm_write_pmds error errno %d\n",errno);
+	if (pfm_write(fd, 0, PFM_RW_PMD_ATTR, pd, sizeof(*pd)) == -1)
+		fatal_error("pfm_write(PMD) error errno %d\n",errno);
 
 	signal(SIGCHLD, SIG_IGN);
 	/*
@@ -357,7 +355,7 @@ main(int argc, char **argv)
 	/*
 	 * In order to get the PFM_END_MSG message, it is important
 	 * to ensure that the child task does not inherit the file
-	 * descriptor of the context. By default, file descriptor
+	 * descriptor of the session. By default, file descriptor
 	 * are inherited during exec(). We explicitely close it
 	 * here. We could have set it up through fcntl(FD_CLOEXEC)
 	 * to achieve the same thing.
@@ -381,16 +379,15 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 *  attach the context to self
+	 *  attach the session
 	 */
-	load_args.load_pid = pid;
-	if (pfm_load_context(fd, &load_args) == -1)
-		fatal_error("pfm_load_context error errno %d\n",errno);
+	if (pfm_attach(fd, 0, pid) == -1)
+		fatal_error("pfm_attach error errno %d\n",errno);
 	/*
 	 * start monitoring
 	 */
-	if (pfm_start(fd, NULL) == -1)
-		fatal_error("pfm_start error errno %d\n",errno);
+	if (pfm_set_state(fd, 0, PFM_ST_START) == -1)
+		fatal_error("pfm_set_state(start) error errno %d\n",errno);
 
 	/*
 	 * detach child. Side effect includes
@@ -423,11 +420,11 @@ main(int argc, char **argv)
 				 * as the task may have disappeared while we were processing
 				 * the samples.
 				 */
-				if (pfm_restart(fd) == -1) {
+				if (pfm_set_state(fd, 0, PFM_ST_RESTART) == -1) {
 					if (errno != EBUSY)
-						fatal_error("pfm_restart error errno %d\n",errno);
+						fatal_error("pfm_set_state(restart)_ error errno %d\n",errno);
 					else
-						warning("pfm_restart: task has probably terminated \n");
+						warning("pfm_set_state(restart): task has probably terminated \n");
 				}
 				break;
 			case PFM_MSG_END: /* monitored task terminated */

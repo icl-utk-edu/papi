@@ -78,10 +78,8 @@ main(void)
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
 	pfmlib_mont_input_param_t mont_inp;
-	pfarg_pmd_t pd[NUM_PMDS];
-	pfarg_pmc_t pc[NUM_PMCS];
-	pfarg_ctx_t ctx;
-	pfarg_load_t load_args;
+	pfarg_pmr_t pd[NUM_PMDS];
+	pfarg_pmr_t pc[NUM_PMCS];
 	pfmlib_options_t pfmlib_options;
 	int ret;
 	int type = 0;
@@ -115,8 +113,6 @@ main(void)
 
 	memset(pd, 0, sizeof(pd));
 	memset(pc, 0, sizeof(pc));
-	memset(&ctx, 0, sizeof(ctx));
-	memset(&load_args, 0, sizeof(load_args));
 
 	memset(&inp,0, sizeof(inp));
 	memset(&outp,0, sizeof(outp));
@@ -181,14 +177,13 @@ main(void)
 		fatal_error("cannot configure events: %s\n", pfm_strerror(ret));
 
 	/*
-	 * now create the context for self monitoring/per-task
+	 * now create the session
 	 */
-	id = pfm_create_context(&ctx, NULL, NULL, 0);
+	id = pfm_create(0, NULL);
 	if (id == -1) {
-		if (errno == ENOSYS) {
+		if (errno == ENOSYS)
 			fatal_error("Your kernel does not have performance monitoring support!\n");
-		}
-		fatal_error("Can't create PFM context %s\n", strerror(errno));
+		fatal_error("cannot create session %s\n", strerror(errno));
 	}
 	/*
 	 * Now prepare the argument to initialize the PMDs and PMCS.
@@ -212,34 +207,34 @@ main(void)
 	 * the kernel because, as we said earlier, pc may contain more elements than
 	 * the number of events we specified, i.e., contains more thann coutning monitors.
 	 */
-	if (pfm_write_pmcs(id, pc, outp.pfp_pmc_count))
-		fatal_error("pfm_write_pmcs error errno %d\n",errno);
+	if (pfm_write(id, 0, PFM_RW_PMC, pc, outp.pfp_pmc_count * sizeof(*pc)))
+		fatal_error("pfm_write error errno %d\n",errno);
 
-	if (pfm_write_pmds(id, pd, outp.pfp_pmd_count))
-		fatal_error("pfm_write_pmds error errno %d\n",errno);
+	if (pfm_write(id, 0, PFM_RW_PMD, pd, outp.pfp_pmd_count * sizeof(*pd)))
+		fatal_error("pfm_write error errno %d\n",errno);
 
 	/*
-	 * now we load (i.e., attach) the context to ourself
+	 * now we attach the session
 	 */
-	load_args.load_pid = getpid();
-
-	if (pfm_load_context(id, &load_args))
-		fatal_error("pfm_load_context error errno %d\n",errno);
+	if (pfm_attach(id, 0, getpid()))
+		fatal_error("pfm_attach error errno %d\n",errno);
 
 	/*
 	 * Let's roll now.
 	 */
-	pfm_self_start(id);
+	if (pfm_set_state(id, 0, PFM_ST_START))
+		fatal_error("pfm_set_state error errno %d\n",errno);
 
 	do_test(NLOOP);
 
-	pfm_self_stop(id);
+	if (pfm_set_state(id, 0, PFM_ST_STOP))
+		fatal_error("pfm_set_state error errno %d\n",errno);
 
 	/*
 	 * now read the results
 	 */
-	if (pfm_read_pmds(id, pd, inp.pfp_event_count))
-		fatal_error("pfm_read_pmds error errno %d\n",errno);
+	if (pfm_read(id, 0, PFM_RW_PMD, pd, inp.pfp_event_count * sizeof(*pd)))
+		fatal_error("pfm_read error errno %d\n",errno);
 
 	/*
 	 * print the results

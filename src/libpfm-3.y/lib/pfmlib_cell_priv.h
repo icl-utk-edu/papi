@@ -65,6 +65,9 @@ typedef struct {
 #define REG_PM_START_STOP	0x0017
 
 #define NONE_SIGNAL		0x0000
+#define SIGNAL_SPU		41
+#define SIGNAL_SPU_TRIGGER	42
+#define SIGNAL_SPU_EVENT	43
 
 #define COUNT_TYPE_BOTH_TYPE		1
 #define COUNT_TYPE_CUMULATIVE_LEN	2

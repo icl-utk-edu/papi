@@ -398,7 +398,7 @@ valid_assign(pfmlib_event_t *e, unsigned int *as, pfmlib_regmask_t *r_pmcs, unsi
 
 			umask = evt_umask(e[i].event);
 
-			DPRINT(("pmc4_evt=%d pmc4_umask=0x%lx cnt_list[%d]=%d grp=%d umask=0x%lx\n", pmc4_evt, pmc4_umask, i, e[i].event,evt_grp(e[i].event), umask));
+			DPRINT("pmc4_evt=%d pmc4_umask=0x%lx cnt_list[%d]=%d grp=%d umask=0x%lx\n", pmc4_evt, pmc4_umask, i, e[i].event,evt_grp(e[i].event), umask);
 
 			if (as[i] != 4 && evt_grp(e[i].event) == PFMLIB_ITA2_EVT_L2_CACHE_GRP && umask != 0 && umask != pmc4_umask) break;
 		}
@@ -407,7 +407,7 @@ valid_assign(pfmlib_event_t *e, unsigned int *as, pfmlib_regmask_t *r_pmcs, unsi
 
 	return PFMLIB_SUCCESS;
 do_failure:
-	DPRINT(("%s : failure %d\n", __FUNCTION__, failure));
+	DPRINT("%s : failure %d\n", __FUNCTION__, failure);
 	return PFMLIB_ERR_NOASSIGN;
 }
 
@@ -480,8 +480,8 @@ pfm_ita2_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t 
 
 	if (PFMLIB_DEBUG())
 		for (m=0; m < cnt; m++) {
-			DPRINT(("ev[%d]=%s counters=0x%lx\n", m, itanium2_pe[e[m].event].pme_name,
-				itanium2_pe[e[m].event].pme_counters));
+			DPRINT("ev[%d]=%s counters=0x%lx\n", m, itanium2_pe[e[m].event].pme_name,
+				itanium2_pe[e[m].event].pme_counters);
 		}
 
 	if (cnt > PMU_ITA2_NUM_COUNTERS) return PFMLIB_ERR_TOOMANY;
@@ -497,7 +497,7 @@ pfm_ita2_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t 
 	max_l2 = PMU_ITA2_FIRST_COUNTER + PMU_ITA2_NUM_COUNTERS*(cnt>2);
 	max_l3 = PMU_ITA2_FIRST_COUNTER + PMU_ITA2_NUM_COUNTERS*(cnt>3);
 
-	DPRINT(("max_l0=%u max_l1=%u max_l2=%u max_l3=%u\n", max_l0, max_l1, max_l2, max_l3));
+	DPRINT("max_l0=%u max_l1=%u max_l2=%u max_l3=%u\n", max_l0, max_l1, max_l2, max_l3);
 	/*
 	 *  For now, worst case in the loop nest: 4! (factorial)
 	 */
@@ -615,7 +615,7 @@ pfm_dispatch_iear(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in, 
 		param->pfp_ita2_iear.ear_umask = evt_umask(inp->pfp_events[i].event);
 		param->pfp_ita2_iear.ear_ism   = PFMLIB_ITA2_ISM_BOTH; /* force both instruction sets */
 
-		DPRINT(("I-EAR event with no info\n"));
+		DPRINT("I-EAR event with no info\n");
 	}
 
 	/*
@@ -639,7 +639,7 @@ pfm_dispatch_iear(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in, 
 		reg.pmc10_ita2_cache_reg.iear_umask = param->pfp_ita2_iear.ear_umask;
 		reg.pmc10_ita2_cache_reg.iear_ism   = param->pfp_ita2_iear.ear_ism;
 	} else {
-		DPRINT(("ALAT mode not supported in I-EAR mode\n"));
+		DPRINT("ALAT mode not supported in I-EAR mode\n");
 		return PFMLIB_ERR_INVAL;
 	}
 
@@ -719,7 +719,7 @@ pfm_dispatch_dear(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in, 
 		param->pfp_ita2_dear.ear_umask = evt_umask(inp->pfp_events[i].event);
 		param->pfp_ita2_dear.ear_ism   = PFMLIB_ITA2_ISM_BOTH; /* force both instruction sets */
 
-		DPRINT(("D-EAR event with no info\n"));
+		DPRINT("D-EAR event with no info\n");
 	}
 
 	/* sanity check on the mode */
@@ -954,7 +954,7 @@ pfm_dispatch_btb(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in, p
 		}
 	}
 
-	DPRINT(("found_btb=%d found_bar_dear=%d\n", found_btb, found_bad_dear));
+	DPRINT("found_btb=%d found_bar_dear=%d\n", found_btb, found_bad_dear);
 
 	/*
 	 * did not find D-EAR TLB/ALAT event, need to check param structure
@@ -990,7 +990,7 @@ pfm_dispatch_btb(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in, p
 		param->pfp_ita2_btb.btb_ppm = 0x3; 	/* all branches */
 		param->pfp_ita2_btb.btb_brt = 0x0; 	/* all branches */
 
-		DPRINT(("BTB event with no info\n"));
+		DPRINT("BTB event with no info\n");
 	}
 
 	/*
@@ -1074,16 +1074,16 @@ do_normal_rr(unsigned long start, unsigned long end,
 
 	size = end - start;
 
-	DPRINT(("start=0x%016lx end=0x%016lx size=0x%lx bytes (%lu bundles) nbr=%d dir=%d\n",
-			start, end, size, size >> 4, nbr, dir));
+	DPRINT("start=0x%016lx end=0x%016lx size=0x%lx bytes (%lu bundles) nbr=%d dir=%d\n",
+			start, end, size, size >> 4, nbr, dir);
 
 	p2 = pfm_ia64_fls(size);
 
 	c = ALIGN_DOWN(end, p2);
 
-	DPRINT(("largest power of two possible: 2^%d=0x%lx, crossing=0x%016lx\n",
+	DPRINT("largest power of two possible: 2^%d=0x%lx, crossing=0x%016lx\n",
 				p2,
-				1UL << p2, c));
+				1UL << p2, c);
 
 	if ((c - (1UL<<p2)) >= start) {
 		l_addr = c - (1UL << p2);
@@ -1337,11 +1337,11 @@ compute_single_rr(pfmlib_ita2_input_rr_t *irr, int dfl_plm, int *base_idx, pfmli
 		m++;
 	}
 
-	DPRINT(("size=%ld, l=%d m=%d, internal: 0x%lx full: 0x%lx\n",
+	DPRINT("size=%ld, l=%d m=%d, internal: 0x%lx full: 0x%lx\n",
 		size,
 		l, m,
 		1UL << l,
-		1UL << m));
+		1UL << m);
 
 	for (; m < 64; m++) {
 		p_start = ALIGN_DOWN(start, m);
@@ -1350,7 +1350,7 @@ compute_single_rr(pfmlib_ita2_input_rr_t *irr, int dfl_plm, int *base_idx, pfmli
 	}
 	return PFMLIB_ERR_IRRINVAL;
 found:
-	DPRINT(("m=%d p_start=0x%lx p_end=0x%lx\n", m, p_start,p_end));
+	DPRINT("m=%d p_start=0x%lx p_end=0x%lx\n", m, p_start,p_end);
 
 	/* when the event is not IA64_INST_RETIRED, then we MUST use ibrp0 */
 	br[0].reg_num   = reg_idx;
@@ -1412,7 +1412,7 @@ compute_normal_rr(pfmlib_ita2_input_rr_t *irr, int dfl_plm, int n, int *base_idx
 				&br_index,
 				&reg_idx, in_rr->rr_plm ? in_rr->rr_plm : dfl_plm);
 
-		DPRINT(("br_index=%d reg_idx=%d\n", br_index, reg_idx));
+		DPRINT("br_index=%d reg_idx=%d\n", br_index, reg_idx);
 
 		/*
 		 * compute offsets
@@ -1481,8 +1481,8 @@ pfm_dispatch_irange(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in
 	fine_mode      = irr->rr_flags & PFMLIB_ITA2_RR_NO_FINE_MODE ?
 		         0 : check_fine_mode_possible(irr, n_intervals);
 
-	DPRINT(("n_intervals=%d retired_only=%d retired_count=%d prefetch_count=%d fine_mode=%d\n",
-		n_intervals, retired_only, retired_count, prefetch_count, fine_mode));
+	DPRINT("n_intervals=%d retired_only=%d retired_count=%d prefetch_count=%d fine_mode=%d\n",
+		n_intervals, retired_only, retired_count, prefetch_count, fine_mode);
 
 	/*
 	 * On Itanium2, there are more constraints on what can be measured with irange.

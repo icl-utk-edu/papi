@@ -25,16 +25,22 @@ include $(TOPDIR)/config.mk
 include $(TOPDIR)/rules.mk
 
 #
-# Library version
-#
-VERSION=3
-REVISION=2
-AGE=0
-
-#
 # Common files
 #
-SRCS=pfmlib_common.c pfmlib_os.c pfmlib_priv.c
+SRCS=pfmlib_common.c pfmlib_priv.c
+
+ifeq ($(SYS),Linux)
+SRCS += pfmlib_os_linux.c pfmlib_os_linux_v2.c
+
+ifneq ($(CONFIG_PFMLIB_OLD_PFMV2),y)
+SRCS += pfmlib_os_linux_v3.c
+endif
+
+endif
+
+ifeq ($(SYS),Darwin)
+SRCS += pfmlib_os_macos.c
+endif
 
 CFLAGS+=-D_REENTRANT
 
@@ -49,13 +55,15 @@ endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
 INCARCH = $(INC_IA32)
-SRCS   += pfmlib_i386_p6.c pfmlib_pentium4.c pfmlib_amd64.c pfmlib_core.c pfmlib_gen_ia32.c
+SRCS   += pfmlib_i386_p6.c pfmlib_pentium4.c pfmlib_amd64.c pfmlib_core.c pfmlib_gen_ia32.c \
+	  pfmlib_intel_atom.c pfmlib_intel_nhm.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_I386
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_X86_64),y)
 INCARCH = $(INC_X86_64)
-SRCS   += pfmlib_pentium4.c pfmlib_amd64.c pfmlib_core.c pfmlib_gen_ia32.c
+SRCS   += pfmlib_pentium4.c pfmlib_amd64.c pfmlib_core.c pfmlib_gen_ia32.c pfmlib_intel_atom.c \
+          pfmlib_intel_nhm.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_X86_64
 endif
 
@@ -65,9 +73,13 @@ SRCS   += pfmlib_gen_mips64.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_MIPS64
 
 ifeq ($(CONFIG_PFMLIB_ARCH_SICORTEX),y)
+  INCARCH = $(INC_SICORTEX)
   CFLAGS += -DCONFIG_PFMLIB_ARCH_SICORTEX
+ifneq ($(SCINCDIR),)
+  CFLAGS += -I$(SCINCDIR)
 endif
-
+  SRCS   += pfmlib_sicortex.c
+endif
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_POWERPC),y)
@@ -98,11 +110,15 @@ SRCS   += pfmlib_cell.c
 CFLAGS += -DCONFIG_PFMLIB_CELL
 endif
 
-CFLAGS+=-I.
-ALIBPFM=libpfm.a
-
+ifeq ($(SYS),Linux)
+SLDFLAGS=-shared -Wl,-soname -Wl,$(VLIBPFM)
 SLIBPFM=libpfm.so.$(VERSION).$(REVISION).$(AGE)
 VLIBPFM=libpfm.so.$(VERSION)
+SOLIBEXT=so
+endif
+
+CFLAGS+=-I.
+ALIBPFM=libpfm.a
 
 TARGETS=$(ALIBPFM)
 
@@ -136,28 +152,35 @@ INC_IA32=$(PFMINCDIR)/perfmon/perfmon_pebs_core_smpl.h \
   $(PFMINCDIR)/perfmon/pfmlib_pentium4.h \
   $(PFMINCDIR)/perfmon/pfmlib_amd64.h \
   $(PFMINCDIR)/perfmon/pfmlib_core.h \
+  $(PFMINCDIR)/perfmon/pfmlib_intel_atom.h \
+  $(PFMINCDIR)/perfmon/pfmlib_intel_nhm.h \
   $(PFMINCDIR)/perfmon/pfmlib_i386_p6.h \
   $(PFMINCDIR)/perfmon/pfmlib_gen_ia32.h \
   $(PFMINCDIR)/perfmon/pfmlib_comp_i386.h \
   $(PFMINCDIR)/perfmon/pfmlib_os_i386.h \
   amd64_events.h  i386_p6_events.h \
-  pentium4_events.h gen_ia32_events.h coreduo_events.h core_events.h
+  pentium4_events.h gen_ia32_events.h coreduo_events.h core_events.h \
+  intel_atom_events.h intel_nehalem_events.h
 
 INC_X86_64= $(PFMINCDIR)/perfmon/perfmon_pebs_core_smpl.h \
   $(PFMINCDIR)/perfmon/perfmon_pebs_p4_smpl.h \
   $(PFMINCDIR)/perfmon/pfmlib_amd64.h \
   $(PFMINCDIR)/perfmon/pfmlib_core.h \
+  $(PFMINCDIR)/perfmon/pfmlib_intel_atom.h \
+  $(PFMINCDIR)/perfmon/pfmlib_intel_nhm.h \
   $(PFMINCDIR)/perfmon/pfmlib_gen_ia32.h \
   $(PFMINCDIR)/perfmon/pfmlib_pentium4.h \
   $(PFMINCDIR)/perfmon/pfmlib_comp_x86_64.h \
   $(PFMINCDIR)/perfmon/pfmlib_os_x86_64.h \
-  amd64_events.h pentium4_events.h gen_ia32_events.h core_events.h
-
+  amd64_events.h pentium4_events.h gen_ia32_events.h core_events.h \
+  intel_atom_events.h intel_nehalem_events.h
 
 INC_MIPS64= $(PFMINCDIR)/perfmon/pfmlib_gen_mips64.h \
   $(PFMINCDIR)/perfmon/pfmlib_comp_mips64.h \
   $(PFMINCDIR)/perfmon/pfmlib_os_mips64.h \
   gen_mips64_events.h
+
+INC_SICORTEX= $(INC_MIPS64) $(PFMINCDIR)/perfmon/pfmlib_sicortex.h 
 
 INC_POWERPC= $(PFMINCDIR)/perfmon/pfmlib_powerpc.h \
   $(PFMINCDIR)/perfmon/pfmlib_comp_powerpc.h \
@@ -188,12 +211,12 @@ libpfm.a:  $(OBJS)
 	$(AR) cru $@ $(OBJS)
 
 $(SLIBPFM):  $(SOBJS)
-	$(CC) -shared -Wl,-soname -Wl,$(VLIBPFM) -o $@ $(SOBJS)
+	$(CC) $(CFLAGS) $(SLDFLAGS)  -o $@ $(SOBJS)
 	$(LN) $@ $(VLIBPFM)
-	$(LN) $@ libpfm.so
+	$(LN) $@ libpfm.$(SOLIBEXT)
 
 clean:
-	$(RM) -f *.o *.lo *.a *.so* *~
+	$(RM) -f *.o *.lo *.a *.so* *~ *.$(SOLIBEXT)
 
 distclean: clean
 
@@ -201,11 +224,13 @@ depend:
 	$(MKDEP) $(CFLAGS) $(SRCS)
 
 install: $(TARGETS)
+
+install:
 	@echo building: $(TARGETS)
 	-mkdir -p $(DESTDIR)$(LIBDIR)
 	$(INSTALL) -m 644 $(ALIBPFM) $(DESTDIR)$(LIBDIR)
 ifeq ($(CONFIG_PFMLIB_SHARED),y)
 	$(INSTALL) $(SLIBPFM) $(DESTDIR)$(LIBDIR)
 	cd $(DESTDIR)$(LIBDIR); $(LN) $(SLIBPFM) $(VLIBPFM)
-	cd $(DESTDIR)$(LIBDIR); $(LN) $(SLIBPFM) libpfm.so
+	cd $(DESTDIR)$(LIBDIR); $(LN) $(SLIBPFM) libpfm.$(SOLIBEXT)
 endif

@@ -43,14 +43,14 @@ static int
 pfm_crayx2_get_event_code (unsigned int i, unsigned int cnt, int *code)
 {
 	if (cnt != PFMLIB_CNT_FIRST && cnt > crayx2_support.num_cnt) {
-		DPRINT (("return: count %d exceeded #counters\n", cnt));
+		DPRINT ("return: count %d exceeded #counters\n", cnt);
 		return PFMLIB_ERR_INVAL;
 	} else if (i >= crayx2_support.pme_count) {
-		DPRINT (("return: event index %d exceeded #events\n", i));
+		DPRINT ("return: event index %d exceeded #events\n", i);
 		return PFMLIB_ERR_INVAL;
 	}
 	*code = crayx2_pe[i].pme_code;
-	DPRINT (("return: event code is %#x\n", *code));
+	DPRINT ("return: event code is %#x\n", *code);
 
 	return PFMLIB_SUCCESS;
 }
@@ -59,10 +59,10 @@ static char *
 pfm_crayx2_get_event_name (unsigned int i)
 {
 	if (i >= crayx2_support.pme_count) {
-		DPRINT (("return: event index %d exceeded #events\n", i));
+		DPRINT ("return: event index %d exceeded #events\n", i);
 		return NULL;
 	}
-	DPRINT (("return: event name '%s'\n", crayx2_pe[i].pme_name));
+	DPRINT ("return: event name '%s'\n", crayx2_pe[i].pme_name);
 
 	return (char *) crayx2_pe[i].pme_name;
 }
@@ -74,7 +74,7 @@ pfm_crayx2_get_event_counters (unsigned int j, pfmlib_regmask_t *counters)
 
 	memset (counters, 0, sizeof (*counters));
 
-	DPRINT (("event counters for %d counters\n", PMU_CRAYX2_NUM_COUNTERS));
+	DPRINT ("event counters for %d counters\n", PMU_CRAYX2_NUM_COUNTERS);
 	for (i=0; i<PMU_CRAYX2_NUM_COUNTERS; i++) {
 		pfm_regmask_set (counters, i);
 	}
@@ -82,25 +82,25 @@ pfm_crayx2_get_event_counters (unsigned int j, pfmlib_regmask_t *counters)
 }
 
 static int
-pfm_crayx2_chip_use (uint64_t used[ ], unsigned int n)
+pfm_crayx2_chip_use (uint32_t used[ ], unsigned int n)
 {
 	int i, u = 0;
 
 	for (i=0; i<n; i++) {
 		u += pfmlib_popcnt (used[i]);
 	}
-	DPRINT (("number of counters used on chip %d\n", u));
+	DPRINT ("number of counters used on chip %d\n", u);
 
 	return u;
 }
 
 static counter_use_t
-pfm_crayx2_counter_use (unsigned int ctr, unsigned int event, uint64_t *used, uint64_t *evmsk)
+pfm_crayx2_counter_use (unsigned int ctr, unsigned int event, uint32_t *used, uint64_t *evmsk)
 {
 	counter_use_t ret = CTR_OK;
 
 	if (*used & (1 << ctr)) {
-		if (event == PFM_EVENT_GET (*evmsk, event)) {
+		if (event == PFM_EVENT_GET (*evmsk, ctr)) {
 			ret = CTR_REDUNDANT;
 		} else {
 			ret = CTR_CONFLICT;
@@ -116,12 +116,12 @@ static int
 pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_output_param_t *outp, void *model_out)
 {
 	unsigned int i, npmcs = 0, npmds = 0, base_pmc = 0;
-	uint64_t Pused[PME_CRAYX2_CPU_CHIPS];
-	uint64_t Cused[PME_CRAYX2_CACHE_CHIPS];
-	uint64_t Mused[PME_CRAYX2_MEMORY_CHIPS];
+	uint32_t Pused[PME_CRAYX2_CPU_CHIPS];
+	uint32_t Cused[PME_CRAYX2_CACHE_CHIPS];
+	uint32_t Mused[PME_CRAYX2_MEMORY_CHIPS];
 	uint64_t Pevents = 0, Cevents = 0, Mevents = 0;
 
-	DPRINT (("dispatching event info to the PMCs and PMDs\n"));
+	DPRINT ("dispatching event info to the PMCs and PMDs\n");
 
 	/*	NOTES:
 	 *	Multiplexing is not supported on X2.
@@ -131,11 +131,11 @@ pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 
 	if (PFMLIB_DEBUG ( )) {
 		int j;
-		DPRINT (("input: pfp_event_count %d pfp_dfl_plm %#x pfp_flags %#x\n", inp->pfp_event_count, inp->pfp_dfl_plm, inp->pfp_flags));
+		DPRINT ("input: pfp_event_count %d pfp_dfl_plm %#x pfp_flags %#x\n", inp->pfp_event_count, inp->pfp_dfl_plm, inp->pfp_flags);
 		for (i=0; i<inp->pfp_event_count; i++) {
-			DPRINT ((" %3d: event %3d plm %#3x flags %#8lx num_masks %d\n", i, inp->pfp_events[i].event, inp->pfp_events[i].plm, inp->pfp_events[i].flags, inp->pfp_events[i].num_masks));
+			DPRINT (" %3d: event %3d plm %#3x flags %#8lx num_masks %d\n", i, inp->pfp_events[i].event, inp->pfp_events[i].plm, inp->pfp_events[i].flags, inp->pfp_events[i].num_masks);
 			for (j=0; j<inp->pfp_events[i].num_masks; j++) {
-				DPRINT ((" unit-mask-%2d: %d\n", j, inp->pfp_events[i].unit_masks[j]));
+				DPRINT (" unit-mask-%2d: %d\n", j, inp->pfp_events[i].unit_masks[j]);
 			}
 		}
 	}
@@ -143,10 +143,10 @@ pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 	/*	Better have at least one event specified and not exceed limit.
 	 */
 	if (inp->pfp_event_count == 0) {
-		DPRINT (("return: event count is 0\n"));
+		DPRINT ("return: event count is 0\n");
 		return PFMLIB_ERR_INVAL;
 	} else if (inp->pfp_event_count > PMU_CRAYX2_NUM_COUNTERS) {
-		DPRINT (("return: event count exceeds max %d\n", PMU_CRAYX2_NUM_COUNTERS));
+		DPRINT ("return: event count exceeds max %d\n", PMU_CRAYX2_NUM_COUNTERS);
 		return PFMLIB_ERR_TOOMANY;
 	}
 
@@ -171,19 +171,19 @@ pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 		ev = crayx2_pe[code].pme_event;
 		chipno = crayx2_pe[code].pme_chipno;
 
-		DPRINT (("%3d: code %3d chip %1d ctr %2d ev %1d chipno %2d\n", code, i, chip, ctr, ev, chipno));
+		DPRINT ("%3d: code %3d chip %1d ctr %2d ev %1d chipno %2d\n", code, i, chip, ctr, ev, chipno);
 
 		/*	These priviledge levels are not recognized.
 		 */
 		if (inp->pfp_events[i].plm != 0) {
-			DPRINT (("%3d: priviledge level %#x per event not allowed\n", i, inp->pfp_events[i].plm));
+			DPRINT ("%3d: priviledge level %#x per event not allowed\n", i, inp->pfp_events[i].plm);
 			return PFMLIB_ERR_INVAL;
 		}
 
 		/*	No masks exist.
 		 */
 		if (inp->pfp_events[i].num_masks > 0) {
-			DPRINT (("too many masks for event\n"));
+			DPRINT ("too many masks for event\n");
 			return PFMLIB_ERR_TOOMANY;
 		}
 
@@ -198,21 +198,21 @@ pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 		} else if (chip == PME_CRAYX2_CHIP_MEMORY) {
 			ret = pfm_crayx2_counter_use (ctr, ev, &Mused[chipno], &Mevents);
 		} else {
-			DPRINT (("return: invalid chip\n"));
+			DPRINT ("return: invalid chip\n");
 			return PFMLIB_ERR_INVAL;
 		}
 
 		/*	Each chip's counter can only count one event.
 		 */
 		if (ret == CTR_CONFLICT) {
-			DPRINT (("return: ctr conflict\n"));
+			DPRINT ("return: ctr conflict\n");
 			return PFMLIB_ERR_EVTINCOMP;
 		} else if (ret == CTR_REDUNDANT) {
 #if (CRAYX2_NO_REDUNDANT != 0)
-			DPRINT (("return: ctr redundant\n"));
+			DPRINT ("return: ctr redundant\n");
 			return PFMLIB_ERR_EVTMANY;
 #else
-			DPRINT (("warning: ctr redundant\n"));
+			DPRINT ("warning: ctr redundant\n");
 #endif /* CRAYX2_NO_REDUNDANT */
 		}
 
@@ -227,12 +227,12 @@ pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 	outp->pfp_pmd_count = npmds;
 
 	if (PFMLIB_DEBUG ( )) {
-		DPRINT (("P event mask %#16lx\n", Pevents));
-		DPRINT (("C event mask %#16lx\n", Cevents));
-		DPRINT (("M event mask %#16lx\n", Mevents));
-		DPRINT (("PMDs: pmd_count %d\n", outp->pfp_pmd_count));
+		DPRINT ("P event mask %#16lx\n", Pevents);
+		DPRINT ("C event mask %#16lx\n", Cevents);
+		DPRINT ("M event mask %#16lx\n", Mevents);
+		DPRINT ("PMDs: pmd_count %d\n", outp->pfp_pmd_count);
 		for (i=0; i<outp->pfp_pmd_count; i++) {
-			DPRINT ((" %3d: reg_value %3lld reg_num %3d reg_addr %#16llx\n", i, outp->pfp_pmds[i].reg_value, outp->pfp_pmds[i].reg_num, outp->pfp_pmds[i].reg_addr));
+			DPRINT (" %3d: reg_value %3lld reg_num %3d reg_addr %#16llx\n", i, outp->pfp_pmds[i].reg_value, outp->pfp_pmds[i].reg_num, outp->pfp_pmds[i].reg_addr);
 		}
 	}
 
@@ -240,7 +240,7 @@ pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 	 *	some counting.
 	 */
 	if (pfm_crayx2_chip_use (Pused, PME_CRAYX2_CPU_CHIPS) > 0) {
-		uint64_t Pctrl = (PFM_CPU_START | PFM_CPU_CLEAR_ALL);
+		uint64_t Pctrl = PFM_CPU_START;
 		uint64_t Pen = PFM_ENABLE_RW;
 
 		if (inp->pfp_dfl_plm & (PFM_PLM0 | PFM_PLM1)) {
@@ -276,7 +276,7 @@ pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 		npmcs++;
 	}
 	if (pfm_crayx2_chip_use (Cused, PME_CRAYX2_CACHE_CHIPS) > 0) {
-		uint64_t Cctrl = (PFM_CACHE_START | PFM_CACHE_CLEAR_ALL);
+		uint64_t Cctrl = PFM_CACHE_START;
 		uint64_t Cen = PFM_ENABLE_RW;		/* domains N/A */
 
 		/*	Second of three Cache PMC registers.
@@ -302,7 +302,7 @@ pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 		npmcs++;
 	}
 	if (pfm_crayx2_chip_use (Mused, PME_CRAYX2_MEMORY_CHIPS) > 0) {
-		uint64_t Mctrl = (PFM_MEM_START | PFM_MEM_CLEAR_ALL);
+		uint64_t Mctrl = PFM_MEM_START;
 		uint64_t Men = PFM_ENABLE_RW;		/* domains N/A */
 
 		/*	Third of three Memory PMC registers.
@@ -330,9 +330,9 @@ pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 	outp->pfp_pmc_count = npmcs;
 
 	if (PFMLIB_DEBUG ( )) {
-		DPRINT (("PMCs: pmc_count %d\n", outp->pfp_pmc_count));
+		DPRINT ("PMCs: pmc_count %d\n", outp->pfp_pmc_count);
 		for (i=0; i<outp->pfp_pmc_count; i++) {
-			DPRINT ((" %3d: reg_value %#16llx reg_num %3d reg_addr %#16llx\n", i, outp->pfp_pmcs[i].reg_value, outp->pfp_pmcs[i].reg_num, outp->pfp_pmcs[i].reg_addr));
+			DPRINT (" %3d: reg_value %#16llx reg_num %3d reg_addr %#16llx\n", i, outp->pfp_pmcs[i].reg_value, outp->pfp_pmcs[i].reg_num, outp->pfp_pmcs[i].reg_addr);
 		}
 	}
 	return PFMLIB_SUCCESS;
@@ -344,23 +344,23 @@ pfm_crayx2_pmu_detect (void)
 	char buffer[128];
 	int ret;
 
-	DPRINT (("detect the PMU attributes\n"));
+	DPRINT ("detect the PMU attributes\n");
 
 	ret = __pfm_getcpuinfo_attr ("vendor_id", buffer, sizeof(buffer));
 
 	if (ret != 0 || strcasecmp (buffer, "Cray") != 0) {
-		DPRINT (("return: no 'Cray' vendor_id\n"));
+		DPRINT ("return: no 'Cray' vendor_id\n");
 		return PFMLIB_ERR_NOTSUPP;
 	}
 
 	ret = __pfm_getcpuinfo_attr ("type", buffer, sizeof(buffer));
 
 	if (ret != 0 || strcasecmp (buffer, "craynv2") != 0) {
-		DPRINT (("return: no 'craynv2' type\n"));
+		DPRINT ("return: no 'craynv2' type\n");
 		return PFMLIB_ERR_NOTSUPP;
 	}
 
-	DPRINT (("Cray X2 nv2 found\n"));
+	DPRINT ("Cray X2 nv2 found\n");
 
 	return PFMLIB_SUCCESS;
 }
@@ -370,7 +370,7 @@ pfm_crayx2_get_impl_pmcs (pfmlib_regmask_t *impl_pmcs)
 {
 	unsigned int i;
 
-	DPRINT (("entered with PMC_COUNT %d\n", PMU_CRAYX2_PMC_COUNT));
+	DPRINT ("entered with PMC_COUNT %d\n", PMU_CRAYX2_PMC_COUNT);
 	for (i=0; i<PMU_CRAYX2_PMC_COUNT; i++) {
 		pfm_regmask_set (impl_pmcs, i);
 	}
@@ -383,7 +383,7 @@ pfm_crayx2_get_impl_pmds (pfmlib_regmask_t *impl_pmds)
 {
 	unsigned int i;
 
-	DPRINT (("entered with PMD_COUNT %d\n", PMU_CRAYX2_PMD_COUNT));
+	DPRINT ("entered with PMD_COUNT %d\n", PMU_CRAYX2_PMD_COUNT);
 	for (i=0; i<PMU_CRAYX2_PMD_COUNT; i++) {
 		pfm_regmask_set (impl_pmds, i);
 	}
@@ -396,7 +396,7 @@ pfm_crayx2_get_impl_counters (pfmlib_regmask_t *impl_counters)
 {
 	unsigned int i;
 
-	DPRINT (("entered with NUM_COUNTERS %d\n", PMU_CRAYX2_NUM_COUNTERS));
+	DPRINT ("entered with NUM_COUNTERS %d\n", PMU_CRAYX2_NUM_COUNTERS);
 	for (i=0; i<PMU_CRAYX2_NUM_COUNTERS; i++) {
 		pfm_regmask_set (impl_counters, i);
 	}
@@ -408,7 +408,7 @@ static void
 pfm_crayx2_get_hw_counter_width (unsigned int *width)
 {
 	*width = PMU_CRAYX2_COUNTER_WIDTH;
-	DPRINT (("return: width set to %d\n", *width));
+	DPRINT ("return: width set to %d\n", *width);
 
 	return;
 }
@@ -419,7 +419,7 @@ pfm_crayx2_get_event_desc (unsigned int ev, char **str)
 	const char *s = crayx2_pe[ev].pme_desc;
 
 	*str = (s == NULL ? NULL : strdup (s));
-	DPRINT (("return: event description is '%s'\n", (s == NULL ? "" : s)));
+	DPRINT ("return: event description is '%s'\n", (s == NULL ? "" : s));
 
 	return PFMLIB_SUCCESS;
 }
@@ -427,14 +427,14 @@ pfm_crayx2_get_event_desc (unsigned int ev, char **str)
 static unsigned int
 pfm_crayx2_get_num_event_masks (unsigned int ev)
 {
-	DPRINT (("return: #event masks is %d\n", crayx2_pe[ev].pme_numasks));
+	DPRINT ("return: #event masks is %d\n", crayx2_pe[ev].pme_numasks);
 	return crayx2_pe[ev].pme_numasks;
 }
 
 static char *
 pfm_crayx2_get_event_mask_name (unsigned int ev, unsigned int midx)
 {
-	DPRINT (("return: event mask name is '%s'\n", crayx2_pe[ev].pme_umasks[midx].pme_uname));
+	DPRINT ("return: event mask name is '%s'\n", crayx2_pe[ev].pme_umasks[midx].pme_uname);
 	return (char *) crayx2_pe[ev].pme_umasks[midx].pme_uname;
 }
 
@@ -442,7 +442,7 @@ static int
 pfm_crayx2_get_event_mask_code (unsigned int ev, unsigned int midx, unsigned int *code)
 {
 	*code = crayx2_pe[ev].pme_umasks[midx].pme_ucode;
-	DPRINT (("return: event mask code is %#x\n", *code));
+	DPRINT ("return: event mask code is %#x\n", *code);
 
 	return PFMLIB_SUCCESS;
 }
@@ -453,7 +453,7 @@ pfm_crayx2_get_event_mask_desc (unsigned int ev, unsigned int midx, char **str)
 	const char *s = crayx2_pe[ev].pme_umasks[midx].pme_udesc;
 
 	*str = (s == NULL ? NULL : strdup (s));
-	DPRINT (("return: event mask description is '%s'\n", (s == NULL ? "" : s)));
+	DPRINT ("return: event mask description is '%s'\n", (s == NULL ? "" : s));
 
 	return PFMLIB_SUCCESS;
 }
@@ -462,7 +462,7 @@ static int
 pfm_crayx2_get_cycle_event (pfmlib_event_t *e)
 {
 	e->event = PME_CRAYX2_CYCLES;
-	DPRINT (("return: event code for cycles %#x\n", e->event));
+	DPRINT ("return: event code for cycles %#x\n", e->event);
 
 	return PFMLIB_SUCCESS;
 }
@@ -471,7 +471,7 @@ static int
 pfm_crayx2_get_inst_retired (pfmlib_event_t *e)
 {
 	e->event = PME_CRAYX2_INSTR_GRADUATED;
-	DPRINT (("return: event code for retired instr %#x\n", e->event));
+	DPRINT ("return: event code for retired instr %#x\n", e->event);
 
 	return PFMLIB_SUCCESS;
 }

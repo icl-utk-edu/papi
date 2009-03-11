@@ -32,17 +32,9 @@ LDFLAGS+=-static
 
 LIBS += -lm
 
-ifeq ($(CONFIG_PFMLIB_ITANIUM),y)
 SRCS +=ita_rr.c ita_irr.c ita_opcode.c ita_btb.c ita_dear.c
-endif
-
-ifeq ($(CONFIG_PFMLIB_ITANIUM2),y)
 SRCS +=ita2_opcode.c ita2_rr.c ita2_irr.c ita2_dear.c ita2_btb.c
-endif
-
-ifeq ($(CONFIG_PFMLIB_MONTECITO),y)
 SRCS +=mont_opcode.c mont_rr.c mont_irr.c mont_dear.c mont_etb.c
-endif
 
 TARGETS = $(SRCS:.c=)
 
@@ -61,7 +53,13 @@ distclean: clean
 depend:
 	$(MKDEP) $(CFLAGS) $(SRCS)
 
+install_examples: $(TARGETS)
+
+install_examples:
+	@echo installing: $(TARGETS)
+	-mkdir -p $(DESTDIR)$(EXAMPLESDIR)/ia64
+	$(INSTALL) -m 755 $(TARGETS) $(DESTDIR)$(EXAMPLESDIR)/ia64
+
 #
 # examples are installed as part of the RPM install, typically in /usr/share/doc/libpfm-X.Y/
 #
-.PHONY: install

@@ -43,6 +43,7 @@
 
 #include <perfmon/pfmlib.h>
 #include <perfmon/pfmlib_core.h>
+#include <perfmon/pfmlib_intel_atom.h>
 
 #include "../detect_pmcs.h"
 
@@ -105,7 +106,7 @@ process_smpl_buf(smpl_hdr_t *hdr)
 	static uint64_t last_count;
 	smpl_entry_t *ent;
 	uint64_t entry;
-	unsigned long count;
+	uint64_t count;
 
 	count = (hdr->ds.pebs_index - hdr->ds.pebs_buf_base)/sizeof(*ent);
 
@@ -116,7 +117,6 @@ process_smpl_buf(smpl_hdr_t *hdr)
 	}
 	last_count = count;
 	last_overflow = hdr->overflows;
-
 	/*
 	 * the beginning of the buffer does not necessarily follow the header
 	 * due to alignement.
@@ -148,17 +148,18 @@ main(int argc, char **argv)
 	pfmlib_output_param_t outp;
 	pfmlib_core_input_param_t mod_inp;
 	pfmlib_options_t pfmlib_options;
-	pfarg_pmd_t pd[NUM_PMDS];
-	pfarg_pmc_t pc[NUM_PMCS];
-	pfarg_ctx_t ctx;
+	pfarg_pmr_t pc[NUM_PMCS];
+	pfarg_pmd_attr_t pd[NUM_PMDS];
+	pfarg_sinfo_t sif;
 	smpl_arg_t buf_arg;
-	pfarg_load_t load_args;
 	pfarg_msg_t msg;
 	smpl_hdr_t *hdr;
 	void *buf_addr;
+	uint64_t pebs_size;
 	pid_t pid;
 	int ret, fd, status, type;
 	unsigned int i;
+	uint32_t ctx_flags;
 
 	if (argc < 2)
 		fatal_error("you need to pass a program to sample\n");
@@ -170,7 +171,7 @@ main(int argc, char **argv)
 	 * check we are on an Intel Core PMU
 	 */
 	pfm_get_pmu_type(&type);
-	if (type != PFMLIB_INTEL_CORE_PMU)
+	if (type != PFMLIB_INTEL_CORE_PMU && type != PFMLIB_INTEL_ATOM_PMU)
 		fatal_error("This program only works with an Intel Core processor\n");
 
 	/*
@@ -186,10 +187,9 @@ main(int argc, char **argv)
 	memset(&inp, 0, sizeof(inp));
 	memset(&outp, 0, sizeof(outp));
 	memset(&mod_inp, 0, sizeof(mod_inp));
+	memset(&sif, 0, sizeof(sif));
 
-	memset(&ctx, 0, sizeof(ctx));
 	memset(&buf_arg, 0, sizeof(buf_arg));
-	memset(&load_args, 0, sizeof(load_args));
 
 	/*
 	 * search for our sampling event
@@ -206,9 +206,15 @@ main(int argc, char **argv)
 	mod_inp.pfp_core_pebs.pebs_used = 1;
 
 	/*
-	 * sampling buffer parameters
+	 * sampling buffer size
+	 *
+	 * requested size includes space for:
+	 * 	- buffer header
+	 * 	- alignment padding (up to 1ULL<3 -1)
+	 * 	- actual PEBS buffer
 	 */
-	buf_arg.buf_size = 4*getpagesize();
+	pebs_size = 3 * getpagesize();
+	buf_arg.buf_size = pebs_size;
 
 	/*
 	 * sampling period cannot use more bits than HW counter can supoprt
@@ -218,29 +224,36 @@ main(int argc, char **argv)
 	/*
 	 * we want to block the monitored thread when the buffer becomes full
 	 */
-	ctx.ctx_flags = PFM_FL_NOTIFY_BLOCK;
+	ctx_flags = PFM_FL_NOTIFY_BLOCK | PFM_FL_SMPL_FMT;
 
 	/*
-	 * trigger notification (interrupt) when reached 90% of buffer
+	 * trigger notification (interrupt) when reached 90% of entries
+	 * are recorded.
 	 */
-	buf_arg.intr_thres = (buf_arg.buf_size/sizeof(smpl_entry_t))*90/100;
+	buf_arg.intr_thres = (pebs_size/sizeof(smpl_entry_t))*90/100;
+
+	printf("ent=%zu pebs_sz=%"PRIu64" max=%"PRIu64" thr=%"PRIu64"\n",
+		sizeof(smpl_entry_t),
+		pebs_size,
+		pebs_size/sizeof(smpl_entry_t),
+		(pebs_size*90/100)/sizeof(smpl_entry_t));
 
 	/*
-	 * create context and sampling buffer
+	 * create session and sampling buffer
 	 */
-	fd = pfm_create_context(&ctx, FMT_NAME, &buf_arg, sizeof(buf_arg));
+	fd = pfm_create(ctx_flags, &sif, FMT_NAME, &buf_arg, sizeof(buf_arg));
 	if (fd == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
-		fatal_error("cannot create PFM context %s, maybe you do not have the PEBS sampling format in the kernel.\nCheck /sys/kernel/perfmon/formats\n", strerror(errno));
+		fatal_error("cannot create session %s, maybe you do not have the PEBS sampling format in the kernel.\nCheck /sys/kernel/perfmon/formats\n", strerror(errno));
 	}
 
 	/*
 	 * map buffer into our address space
 	 */
 	buf_addr = mmap(NULL, (size_t)buf_arg.buf_size, PROT_READ, MAP_PRIVATE, fd, 0);
-	printf("context [%d] buffer mapped @%p\n", fd, buf_addr);
+	printf("session [%d] buffer mapped @%p\n", fd, buf_addr);
 	if (buf_addr == MAP_FAILED)
 		fatal_error("cannot mmap sampling buffer errno %d\n", errno);
 
@@ -264,7 +277,7 @@ main(int argc, char **argv)
 	/*
 	 * get which PMC registers are available
 	 */
-	detect_unavail_pmcs(fd, &inp.pfp_unavail_pmcs);
+	detect_unavail_pmu_regs(&sif, &inp.pfp_unavail_pmcs, NULL);
 
 	/*
 	 * let libpfm figure out how to assign event onto PMU registers
@@ -302,17 +315,18 @@ main(int argc, char **argv)
 	 */
 	pd[0].reg_flags = PFM_REGFL_OVFL_NOTIFY;
 	pd[0].reg_value = -SMPL_PERIOD;
+
 	pd[0].reg_long_reset = -SMPL_PERIOD;
 	pd[0].reg_short_reset = -SMPL_PERIOD;
 	
 	/*
 	 * Now program the registers
 	 */
-	if (pfm_write_pmcs(fd, pc, outp.pfp_pmc_count) == -1)
-		fatal_error("pfm_write_pmcs error errno %d\n",errno);
+	if (pfm_write(fd, 0, PFM_RW_PMC, pc, outp.pfp_pmc_count * sizeof(*pc)) == -1)
+		fatal_error("pfm_write error errno %d\n",errno);
 
-	if (pfm_write_pmds(fd, pd, outp.pfp_pmd_count) == -1)
-		fatal_error("pfm_write_pmds error errno %d\n",errno);
+	if (pfm_write(fd, 0, PFM_RW_PMD_ATTR, pd, outp.pfp_pmd_count * sizeof(*pd)) == -1)
+		fatal_error("pfm_write(PMD) error errno %d\n",errno);
 
 	signal(SIGCHLD, SIG_IGN);
 	/*
@@ -323,7 +337,7 @@ main(int argc, char **argv)
 	/*
 	 * In order to get the PFM_END_MSG message, it is important
 	 * to ensure that the child task does not inherit the file
-	 * descriptor of the context. By default, file descriptor
+	 * descriptor of the session. By default, file descriptor
 	 * are inherited during exec(). We explicitely close it
 	 * here. We could have set it up through fcntl(FD_CLOEXEC)
 	 * to achieve the same thing.
@@ -347,17 +361,16 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 *  attach the context to child
+	 *  attach the session to child
 	 */
-	load_args.load_pid = pid;
-	if (pfm_load_context(fd, &load_args) == -1)
-		fatal_error("pfm_load_context error errno %d\n",errno);
+	if (pfm_attach(fd, 0, pid) == -1)
+		fatal_error("pfm_attach error errno %d\n",errno);
 
 	/*
 	 * start monitoring
 	 */
-	if (pfm_start(fd, NULL) == -1)
-		fatal_error("pfm_start error errno %d\n",errno);
+	if (pfm_set_state(fd, 0, PFM_ST_START) == -1)
+		fatal_error("pfm_set_state(start) error errno %d\n",errno);
 
 	/*
 	 * detach child. Side effect includes
@@ -390,11 +403,11 @@ main(int argc, char **argv)
 				 * as the task may have disappeared while we were processing
 				 * the samples.
 				 */
-				if (pfm_restart(fd) == -1) {
+				if (pfm_set_state(fd, 0, PFM_ST_RESTART) == -1) {
 					if (errno != EBUSY)
-						fatal_error("pfm_restart error errno %d\n",errno);
+						fatal_error("pfm_set_state(restart) error errno %d\n",errno);
 					else
-						warning("pfm_restart: task has probably terminated \n");
+						warning("pfm_set_state(restart): task has probably terminated \n");
 				}
 				break;
 			case PFM_MSG_END: /* monitored task terminated */
@@ -415,12 +428,12 @@ terminate_session:
 	process_smpl_buf(hdr);
 
 	/*
-	 * close context
+	 * close session
 	 */
 	close(fd);
 
 	/*
-	 * unmap sampling buffer and actually free the perfmon context
+	 * unmap sampling buffer and actually free the perfmon session
 	 */
 	munmap(buf_addr, (size_t)buf_arg.buf_size);
 

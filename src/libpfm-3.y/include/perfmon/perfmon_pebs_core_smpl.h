@@ -4,7 +4,7 @@
  *
  * This file implements the sampling format to support Intel
  * Precise Event Based Sampling (PEBS) feature of Intel
- * Core-based processors.
+ * Core and Atom processors.
  *
  * What is PEBS?
  * ------------
@@ -65,8 +65,8 @@ extern "C" {
  */
 typedef struct {
 	uint64_t	cnt_reset;	/* counter reset value */
-	size_t		buf_size;	/* size of the buffer in bytes */
-	size_t		intr_thres;	/* index of interrupt threshold entry */
+	uint64_t	buf_size;	/* size of the buffer in bytes */
+	uint64_t	intr_thres;	/* index of interrupt threshold entry */
 	uint64_t	reserved[6];	/* for future use */
 } pfm_pebs_core_smpl_arg_t;
 

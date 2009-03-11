@@ -24,9 +24,22 @@
 
 #ifndef __PFMLIB_CRAYX2_H__
 #define __PFMLIB_CRAYX2_H__ 1
+/*
+ * Allows <asm/perfmon.h> to be included on its own.
+ */
+#define PFM_MAX_HW_PMCS 12
+#define PFM_MAX_HW_PMDS 512
 
 #include <asm/perfmon.h>
 #include <sys/types.h>
+
+/*	Priviledge level mask for Cray-X2:
+ *
+ *	PFM_PLM0 = Kernel
+ *	PFM_PLM1 = Kernel
+ *	PFM_PLM2 = Exception
+ *	PFM_PLM3 = User 
+ */
 
 /*	The performance control (PMC) registers appear as follows:
  *	PMC0	control for CPU chip

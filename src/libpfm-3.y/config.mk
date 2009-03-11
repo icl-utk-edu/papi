@@ -28,6 +28,7 @@
 # It is included by every Makefile
 #
 #
+SYS  := $(shell uname -s)
 ARCH := $(shell uname -m)
 ifeq (i686,$(findstring i686,$(ARCH)))
 override ARCH=ia32
@@ -50,8 +51,9 @@ endif
 
 #
 # CONFIG_PFMLIB_SHARED: y=compile static and shared versions, n=static only
-#
+# CONFIG_PFMLIB_OLD_PFMV2: enable old ( 2.x, x <=4) perfmon2 (mutually exclusive with v3 support)
 CONFIG_PFMLIB_SHARED=y
+CONFIG_PFMLIB_OLD_PFMV2=n
 
 #
 # Cray-X2 is cross-compiled. Check the programming environment
@@ -64,10 +66,19 @@ endif
 #
 # Cell Broadband Engine is reported as PPC but needs special handling.
 #
+ifeq ($(SYS),Linux)
 MACHINE := $(shell grep -q 'Cell Broadband Engine' /proc/cpuinfo && echo cell)
 ifeq (cell,$(MACHINE))
 override ARCH=cell
 endif
+endif
+
+#
+# Library version
+#
+VERSION=3
+REVISION=8
+AGE=0
 
 #
 # Where should things (lib, headers, man) go in the end.
@@ -77,6 +88,7 @@ PREFIX=$(install_prefix)
 LIBDIR=$(PREFIX)/lib
 INCDIR=$(PREFIX)/include
 MANDIR=$(PREFIX)/share/man
+EXAMPLESDIR=$(PREFIX)/share/doc/libpfm-$(VERSION).$(REVISION).$(AGE)/examples
 
 #
 # Configuration Paramaters for libpfm library
@@ -114,26 +126,32 @@ endif
 
 ifeq ($(XTPE_COMPILE_TARGET),linux)
 CONFIG_PFMLIB_ARCH_CRAYXT=y
+CONFIG_PFMLIB_SHARED=n
+CONFIG_PFMLIB_OLD_PFMV2=y
 endif
 
 ifeq ($(XTPE_COMPILE_TARGET),catamount)
 CONFIG_PFMLIB_ARCH_CRAYXT=y
 CONFIG_PFMLIB_SHARED=n
+CONFIG_PFMLIB_OLD_PFMV2=y
 endif
 
 ifeq ($(ARCH),crayx2)
 CONFIG_PFMLIB_ARCH_CRAYX2=y
 CONFIG_PFMLIB_SHARED=n
+CONFIG_PFMLIB_OLD_PFMV2=y
 endif
 
 ifeq ($(ARCH),cell)
 CONFIG_PFMLIB_CELL=y
 endif
 
-#
-# optimization level
-#
-OPTIM=-O2
+# handle special cases for 64-bit builds
+ifeq ($(BITMODE),64)
+ifeq ($(ARCH),powerpc)
+CONFIG_PFMLIB_ARCH_POWERPC64=y
+endif
+endif
 
 #
 # you shouldn't have to touch anything beyond this point
@@ -144,29 +162,46 @@ OPTIM=-O2
 # icc the Intel Itanium Compiler (7.x,8.x, 9.x)
 # or GNU C
 #CC=icc
-CC=gcc
+CC?=gcc
 LIBS=
 INSTALL=install
-LN=ln -sf
+LN?=ln -sf
 PFMINCDIR=$(TOPDIR)/include
 PFMLIBDIR=$(TOPDIR)/lib
-DBG=-g -Wall -Werror
-CFLAGS=$(OPTIM) $(DBG) -I$(PFMINCDIR)
-LDFLAGS=-L$(PFMLIBDIR)
+DBG?=-g -Wall -Werror
+# gcc/mips64 bug
+ifeq ($(CONFIG_PFMLIB_ARCH_SICORTEX),y)
+OPTIM?=-O
+else
+OPTIM?=-O2
+endif
+CFLAGS+=$(OPTIM) $(DBG) -I$(PFMINCDIR)
 MKDEP=makedepend
 PFMLIB=$(PFMLIBDIR)/libpfm.a
 
-
 # Reset options for Cray XT
 ifeq ($(CONFIG_PFMLIB_ARCH_CRAYXT),y)
-CFLAGS+=$(PFM_VERSION_FLAG)
 LDFLAGS+=-static
+CONFIG_PFMLIB_OLD_PFMV2=y
 endif
 
 # Reset the compiler for Cray-X2 (load x2-gcc module)
 ifeq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
 CC=craynv-cray-linux-gnu-gcc
-CFLAGS+=$(PFM_VERSION_FLAG)
 LDFLAGS+=-static
+CONFIG_PFMLIB_OLD_PFMV2=y
 endif
 
+ifeq ($(CONFIG_PFMLIB_ARCH_SICORTEX),y)
+CONFIG_PFMLIB_OLD_PFMV2=y
+endif
+
+ifeq ($(CONFIG_PFMLIB_ARCH_POWERPC64),y)
+CFLAGS+= -m64
+LDFLAGS+= -m64
+LIBDIR=$(PREFIX)/lib64
+endif
+
+ifeq ($(CONFIG_PFMLIB_OLD_PFMV2),y)
+CFLAGS +=-DPFMLIB_OLD_PFMV2
+endif

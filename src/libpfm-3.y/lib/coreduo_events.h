@@ -39,7 +39,7 @@ static pme_gen_ia32_entry_t coreduo_pe[]={
 	.pme_code = 0xc0,
 	.pme_desc = "Instructions retired"
 	},
-/* 3 */{.pme_name = "LAST_LEVEL_CACHE_REFERENCE",
+/* 3 */{.pme_name = "LAST_LEVEL_CACHE_REFERENCES",
 	.pme_code = 0x4f2e,
 	.pme_desc = "Last level of cache references"
 	},

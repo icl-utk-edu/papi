@@ -24,7 +24,9 @@
  * This file is part of libpfm, a performance monitoring support library for
  * applications on Linux.
  */
-#define _GNU_SOURCE 1
+#ifndef _GNU_SOURCE
+  #define _GNU_SOURCE /* for getline */
+#endif
 #include <sys/types.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -48,7 +50,7 @@ static volatile unsigned long notification_received;
 #define NUM_PMCS PFMLIB_MAX_PMCS
 #define NUM_PMDS PFMLIB_MAX_PMDS
 
-static pfarg_pmd_t pd[NUM_PMDS];
+static pfarg_pmr_t pdx[1];
 static int ctx_fd;
 static char *event1_name;
 
@@ -90,8 +92,8 @@ sigio_handler(int n, struct siginfo *info, void *data)
 	if (fd != ctx_fd)
 		fatal_error("handler does not get valid file descriptor\n");
 
-	if (event1_name && pfm_read_pmds(fd, pd+1, 1))
-		fatal_error("pfm_read_pmds: %s", strerror(errno));
+	if (event1_name && pfm_read(fd, 0, PFM_RW_PMD, pdx, sizeof(pdx)))
+		fatal_error("pfm_read: %s", strerror(errno));
 retry:
 	r = read(fd, &msg, sizeof(msg));
 	if (r != sizeof(msg)) {
@@ -114,15 +116,15 @@ retry:
 	 * XXX: risky to do printf() in signal handler!
 	 */
 	if (event1_name)
-		printf("Notification %lu: %"PRIu64" %s\n", notification_received, pd[1].reg_value, event1_name);
+		printf("Notification %lu: %"PRIu64" %s\n", notification_received, pdx[0].reg_value, event1_name);
 	else
 		printf("Notification %lu\n", notification_received);
 
 	/*
 	 * And resume monitoring
 	 */
-	if (pfm_restart(fd))
-		fatal_error("pfm_restart: %d\n", errno);
+	if (pfm_set_state(fd, 0, PFM_ST_RESTART))
+		fatal_error("pfm_set_state(restart): %d\n", errno);
 }
 
 /*
@@ -148,11 +150,11 @@ static inline void pfm_bv_set(uint64_t *bv, uint16_t rnum)
 int
 main(int argc, char **argv)
 {
-	pfarg_ctx_t ctx;
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
-	pfarg_pmc_t pc[NUM_PMCS];
-	pfarg_load_t load_args;
+	pfarg_pmr_t pc[NUM_PMCS];
+	pfarg_pmd_attr_t pd[NUM_PMDS];
+	pfarg_sinfo_t sif;
 	pfmlib_options_t pfmlib_options;
 	struct sigaction act;
 	unsigned int i, num_counters;
@@ -186,10 +188,10 @@ main(int argc, char **argv)
 	sigaction (SIGIO, &act, 0);
 
 	memset(pc, 0, sizeof(pc));
-	memset(&ctx, 0, sizeof(ctx));
-	memset(&load_args, 0, sizeof(load_args));
+	memset(pd, 0, sizeof(pd));
 	memset(&inp,0, sizeof(inp));
 	memset(&outp,0, sizeof(outp));
+	memset(&sif,0, sizeof(sif));
 
 	pfm_get_num_counters(&num_counters);
 
@@ -226,14 +228,14 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * now create the context for self monitoring/per-task
+	 * now create the session for self monitoring/per-task
 	 */
-	ctx_fd = pfm_create_context(&ctx, NULL, NULL, 0);
+	ctx_fd = pfm_create(0, &sif);
 	if (ctx_fd == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
-		fatal_error("Can't create PFM context %s\n", strerror(errno));
+		fatal_error("cannot create session %s\n", strerror(errno));
 	}
 
 	/*
@@ -247,7 +249,7 @@ main(int argc, char **argv)
 	 * use. Of source, it is possible that no valid assignement may
 	 * be possible if certina PMU registers  are not available.
 	 */
-	detect_unavail_pmcs(ctx_fd, &inp.pfp_unavail_pmcs);
+	detect_unavail_pmu_regs(&sif, &inp.pfp_unavail_pmcs, NULL);
 
 	/*
 	 * let the library figure out the values for the PMCS
@@ -270,8 +272,10 @@ main(int argc, char **argv)
 	 */
 	pd[0].reg_flags |= PFM_REGFL_OVFL_NOTIFY;
 
-	if (inp.pfp_event_count > 1)
+	if (inp.pfp_event_count > 1) {
 		pfm_bv_set(pd[0].reg_reset_pmds, pd[1].reg_num);
+		pdx[0].reg_num = pd[1].reg_num;
+	}
 
 	/*
 	 * we arm the first counter, such that it will overflow
@@ -284,18 +288,17 @@ main(int argc, char **argv)
 	/*
 	 * Now program the registers
 	 */
-	if (pfm_write_pmcs(ctx_fd, pc, outp.pfp_pmc_count))
-		fatal_error("pfm_write_pmcs error errno %d\n",errno);
+	if (pfm_write(ctx_fd, 0, PFM_RW_PMC, pc, outp.pfp_pmc_count * sizeof(*pc)))
+		fatal_error("pfm_write error errno %d\n",errno);
 
-	if (pfm_write_pmds(ctx_fd, pd, outp.pfp_pmd_count))
-		fatal_error("pfm_write_pmds error errno %d\n",errno);
+	if (pfm_write(ctx_fd, 0, PFM_RW_PMD_ATTR, pd, outp.pfp_pmd_count * sizeof(*pd)))
+		fatal_error("pfm_write(PMD) error errno %d\n",errno);
 
 	/*
 	 * we want to monitor ourself
 	 */
-	load_args.load_pid = getpid();
-	if (pfm_load_context(ctx_fd, &load_args))
-		fatal_error("pfm_load_context error errno %d\n",errno);
+	if (pfm_attach(ctx_fd, 0, getpid()))
+		fatal_error("pfm_attach error errno %d\n",errno);
 
 	/*
 	 * setup asynchronous notification on the file descriptor
@@ -329,14 +332,16 @@ main(int argc, char **argv)
 	/*
 	 * Let's roll now
 	 */
-	pfm_self_start(ctx_fd);
+	if (pfm_set_state(ctx_fd, 0, PFM_ST_START))
+		fatal_error("pfm_set_state(start) error errno %d\n", errno);
 
 	busyloop();
 
-	pfm_self_stop(ctx_fd);
+	if (pfm_set_state(ctx_fd, 0, PFM_ST_STOP))
+		fatal_error("pfm_set_state(stop) error errno %d\n", errno);
 
 	/*
-	 * free our context
+	 * destroy our context
 	 */
 	close(ctx_fd);
 

@@ -126,11 +126,9 @@ main(int argc, char **argv)
 	pfmlib_output_param_t outp;
 	pfmlib_ita_input_param_t ita_inp;
 	pfmlib_ita_output_param_t ita_outp;
-	pfarg_pmd_t pd[NUM_PMDS];
-	pfarg_pmc_t pc[NUM_PMCS];
-	pfarg_pmc_t ibrs[8];
-	pfarg_ctx_t ctx[1];
-	pfarg_load_t load_args;
+	pfarg_pmr_t pd[NUM_PMDS];
+	pfarg_pmr_t pc[NUM_PMCS];
+	pfarg_pmr_t ibrs[8];
 	unsigned long range_start, range_end;
 	pfmlib_options_t pfmlib_options;
 	struct fd {			/* function descriptor */
@@ -187,11 +185,20 @@ main(int argc, char **argv)
 
 	fd = (struct fd *)saxpy2;
 	range_end   =  fd->addr;
-	
+
+	/*
+	 * linker may reorder saxpy() and saxpy2()
+	 */
+	if (range_end < range_start) {
+		unsigned long tmp;
+		tmp = range_start;
+		range_start = range_end;
+		range_end = tmp;
+	}
+
+	memset(pc, 0, sizeof(pc));
 	memset(pd, 0, sizeof(pd));
-	memset(ctx, 0, sizeof(ctx));
 	memset(ibrs,0, sizeof(ibrs));
-	memset(&load_args,0, sizeof(load_args));
 	memset(&inp,0, sizeof(inp));
 	memset(&outp,0, sizeof(outp));
 	memset(&ita_inp,0, sizeof(ita_inp));
@@ -202,9 +209,8 @@ main(int argc, char **argv)
 	 */
 	p = event_list;
 	for (i=0; p->event_name ; i++, p++) {
-		if (pfm_find_event(p->event_name, &inp.pfp_events[i].event) != PFMLIB_SUCCESS) {
+		if (pfm_find_event(p->event_name, &inp.pfp_events[i].event) != PFMLIB_SUCCESS)
 			fatal_error("Cannot find %s event\n", p->event_name);
-		}
 	}
 
 
@@ -244,9 +250,8 @@ main(int argc, char **argv)
 	/*
 	 * let the library figure out the values for the PMCS
 	 */
-	if ((ret=pfm_dispatch_events(&inp, &ita_inp, &outp, &ita_outp)) != PFMLIB_SUCCESS) {
+	if ((ret=pfm_dispatch_events(&inp, &ita_inp, &outp, &ita_outp)) != PFMLIB_SUCCESS)
 		fatal_error("cannot configure events: %s\n", pfm_strerror(ret));
-	}
 
 	/*
 	 * print offsets
@@ -261,14 +266,13 @@ main(int argc, char **argv)
 			ita_outp.pfp_ita_irange.rr_nbr_used >> 1);
 
 	/*
-	 * now create the context for self monitoring/per-task
+	 * now create the session
 	 */
-	id = pfm_create_context(ctx, NULL, NULL, 0);
+	id = pfm_create(0, NULL);
 	if (id == -1) {
-		if (errno == ENOSYS) {
+		if (errno == ENOSYS)
 			fatal_error("Your kernel does not have performance monitoring support!\n");
-		}
-		fatal_error("cannot create PFM context %s\n", strerror(errno));
+		fatal_error("cannot create session %s\n", strerror(errno));
 	}
 	/*
 	 * Now prepare the argument to initialize the PMDs and PMCS.
@@ -304,8 +308,8 @@ main(int argc, char **argv)
 	 * IMPORTANT: programming the debug register MUST always be done before the PMCs
 	 * otherwise the kernel will fail on PFM_WRITE_PMCS. This is for security reasons.
 	 */
-	if (pfm_write_pmcs(id, ibrs, ita_outp.pfp_ita_irange.rr_nbr_used) == -1)
-		fatal_error("pfm_write_pmcs error errno %d\n",errno);
+	if (pfm_write(id, 0, PFM_RW_PMC, ibrs, ita_outp.pfp_ita_irange.rr_nbr_used * sizeof(*ibrs)) == -1)
+		fatal_error("pfm_write error errno %d\n",errno);
 
 	/*
 	 * Now program the registers
@@ -314,20 +318,17 @@ main(int argc, char **argv)
 	 * the kernel because, as we said earlier, pc may contain more elements than
 	 * the number of events we specified, i.e., contains more than coutning monitors.
 	 */
-	if (pfm_write_pmcs(id, pc, outp.pfp_pmc_count) == -1)
-		fatal_error("pfm_write_pmcs error errno %d\n",errno);
+	if (pfm_write(id, 0, PFM_RW_PMC, pc, outp.pfp_pmc_count * sizeof(*pc)) == -1)
+		fatal_error("pfm_write error errno %d\n",errno);
 
-	if (pfm_write_pmds(id, pd, outp.pfp_pmd_count) == -1)
-		fatal_error("pfm_write_pmds error errno %d\n",errno);
+	if (pfm_write(id, 0, PFM_RW_PMD, pd, outp.pfp_pmd_count * sizeof(*pd)) == -1)
+		fatal_error("pfm_write(PMD) error errno %d\n",errno);
 
 	/*
-	 * now we load (i.e., attach) the context to ourself
+	 * now attach session
 	 */
-	load_args.load_pid = getpid();
-
-	if (pfm_load_context(id, &load_args) == -1) {
-		fatal_error("pfm_load_context error errno %d\n",errno);
-	}
+	if (pfm_attach(id, 0, getpid()) == -1)
+		fatal_error("pfm_attach error errno %d\n",errno);
 
 	/*
 	 * Let's roll now.
@@ -337,18 +338,19 @@ main(int argc, char **argv)
 	 * get if code range restriction was not used. The core loop in both case uses
 	 * two floating point operation per iteration.
 	 */
-	pfm_self_start(id);
+	if (pfm_set_state(id, 0, PFM_ST_START))
+		fatal_error("pfm_set_state error errno %d\n",errno);
 
 	do_test();
 
-	pfm_self_stop(id);
+	if (pfm_set_state(id, 0, PFM_ST_STOP))
+		fatal_error("pfm_set_state error errno %d\n",errno);
 
 	/*
 	 * now read the results
 	 */
-	if (pfm_read_pmds(id, pd, inp.pfp_event_count) == -1) {
-		fatal_error("pfm_read_pmds error errno %d\n",errno);
-	}
+	if (pfm_read(id, 0, PFM_RW_PMD, pd, inp.pfp_event_count * sizeof(*pd)) == -1)
+		fatal_error("pfm_read error errno %d\n",errno);
 
 	/*
 	 * print the results

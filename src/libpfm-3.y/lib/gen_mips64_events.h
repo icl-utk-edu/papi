@@ -1337,7 +1337,7 @@ static pme_gen_mips64_entry_t gen_mips64_r12000_pe[] = {
 	 .pme_counters = 0xf,
 	 .pme_desc = "Instructions graduated"
 	},
-	{.pme_name="QUADWORRDS_WRITEBACK_FROM_SC",
+	{.pme_name="QUADWORDS_WRITEBACK_FROM_SC",
 	 .pme_code = 0x07070707,
 	 .pme_counters = 0xf,
 	 .pme_desc = "Quadwords written back from secondary cache"

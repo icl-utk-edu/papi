@@ -78,12 +78,11 @@
 #define CORE_CTR_BASE		0xc1
 #define FIXED_CTR_BASE		0x309
 
-#define MAX_COUNTERS	4 /* highest implemented counter */
-
 #define PFMLIB_CORE_ALL_FLAGS \
 	(PFM_CORE_SEL_INV|PFM_CORE_SEL_EDGE)
 
 static pfmlib_regmask_t core_impl_pmcs, core_impl_pmds;
+static int highest_counter;
 
 static int
 pfm_core_detect(void)
@@ -109,17 +108,14 @@ pfm_core_detect(void)
 	if (ret == -1)
 		return PFMLIB_ERR_NOTSUPP;
 
-	model = atoi(buffer);
-	/*
-	 * XXX: is there a way to identify a Core-based processor?
-	 * So for now, look for Core 2 only
-	 */
 	if (family != 6)
 		return PFMLIB_ERR_NOTSUPP;
 
+	model = atoi(buffer);
 	switch(model) {
 		case 15: /* Merom */
 		case 23: /* Penryn */
+		case 29: /* Dunnington */
 			  break;
 		default:
 			return PFMLIB_ERR_NOTSUPP;
@@ -135,6 +131,8 @@ pfm_core_detect(void)
 	pfm_regmask_set(&core_impl_pmds, 16);
 	pfm_regmask_set(&core_impl_pmds, 17);
 	pfm_regmask_set(&core_impl_pmds, 18);
+
+	highest_counter = 18;
 
 	return PFMLIB_SUCCESS;
 }
@@ -199,7 +197,7 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 	unsigned long plm;
 	unsigned long long fixed_ctr;
 	unsigned int npc, npmc0, npmc1, nf2;
-	unsigned int i, j, n, k, umask, use_pebs = 0, done_pebs;
+	unsigned int i, j, n, k, ucode, use_pebs = 0, done_pebs;
 	unsigned int assign_pc[PMU_CORE_NUM_COUNTERS];
 	unsigned int next_gen, last_gen;
 
@@ -235,12 +233,12 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 		/*
 		 * check for valid flags
 		 */
-		if (e[i].flags & ~PFMLIB_CORE_ALL_FLAGS)
+		if (cntrs && cntrs[i].flags & ~PFMLIB_CORE_ALL_FLAGS)
 			return PFMLIB_ERR_INVAL;
 
 		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_UMASK_NCOMBO
 		    && e[i].num_masks > 1) {
-			DPRINT(("events does not support unit mask combination\n"));
+			DPRINT("events does not support unit mask combination\n");
 				return PFMLIB_ERR_NOASSIGN;
 		}
 
@@ -250,7 +248,7 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 		 */
 		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_PMC0) {
 			if (++npmc0 > 1) {
-				DPRINT(("two events compete for a PMC0\n"));
+				DPRINT("two events compete for a PMC0\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
 		}
@@ -259,7 +257,7 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 		 */
 		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_PMC1) {
 			if (++npmc1 > 1) {
-				DPRINT(("two events compete for a PMC1\n"));
+				DPRINT("two events compete for a PMC1\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
 		}
@@ -268,11 +266,11 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
  		 */
 		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_FIXED2_ONLY) {
 			if (++nf2 > 1) {
-				DPRINT(("two events compete for FIXED_CTR2\n"));
+				DPRINT("two events compete for FIXED_CTR2\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
 			if (HAS_OPTIONS(i)) {
-				DPRINT(("fixed counters do not support inversion/counter-mask\n"));
+				DPRINT("fixed counters do not support inversion/counter-mask\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
 		}
@@ -286,11 +284,11 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 
 			if (flags & PFMLIB_CORE_FIXED2_ONLY) {
 				if (++nf2 > 1) {
-					DPRINT(("two events compete for FIXED_CTR2\n"));
+					DPRINT("two events compete for FIXED_CTR2\n");
 					return PFMLIB_ERR_NOASSIGN;
 				}
 				if (HAS_OPTIONS(i)) {
-					DPRINT(("fixed counters do not support inversion/counter-mask\n"));
+					DPRINT("fixed counters do not support inversion/counter-mask\n");
 					return PFMLIB_ERR_NOASSIGN;
 				}
 			}
@@ -314,14 +312,17 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 			if (pfm_regmask_isset(r_pmcs, 0))
 				return PFMLIB_ERR_NOASSIGN;
 			assign_pc[i] = 0;
-			next_gen++;
+			next_gen = 1;
 			done_pebs = 1;
 		}
 		if (core_pe[e[i].event].pme_flags & PFMLIB_CORE_PMC1) {
 			if (pfm_regmask_isset(r_pmcs, 1))
 				return PFMLIB_ERR_NOASSIGN;
 			assign_pc[i] = 1;
-			next_gen++;
+			if (next_gen == 1)
+				next_gen = 2;
+			else
+				next_gen = 0;
 		}
 	}
 	/*
@@ -361,14 +362,14 @@ pfm_core_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_core_input_param_t 
 	for(i=0; i < n; i++) {
 		if (assign_pc[i] == -1) {
 			for(; next_gen <= last_gen; next_gen++) {
-DPRINT(("i=%d next_gen=%d last=%d isset=%d\n", i, next_gen, last_gen, pfm_regmask_isset(r_pmcs, next_gen)));
+DPRINT("i=%d next_gen=%d last=%d isset=%d\n", i, next_gen, last_gen, pfm_regmask_isset(r_pmcs, next_gen));
 				if (!pfm_regmask_isset(r_pmcs, next_gen))
 					break;
 			}
 			if (next_gen <= last_gen)
 				assign_pc[i] = next_gen++;
 			else {
-				DPRINT(("cannot assign generic counters\n"));
+				DPRINT("cannot assign generic counters\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
 		}
@@ -434,13 +435,16 @@ DPRINT(("i=%d next_gen=%d last=%d isset=%d\n", i, next_gen, last_gen, pfm_regmas
 		/* if plm is 0, then assume not specified per-event and use default */
 		plm = e[i].plm ? e[i].plm : inp->pfp_dfl_plm;
 
-		reg.sel_event_select = core_pe[e[i].event].pme_code & 0xff;
+		val = core_pe[e[i].event].pme_code;
 
-		umask = (core_pe[e[i].event].pme_code >> 8) & 0xff;
+		reg.sel_event_select = val  & 0xff;
+
+		ucode = (val >> 8) & 0xff;
 
 		for(k=0; k < e[i].num_masks; k++) {
-			umask |= core_pe[e[i].event].pme_umasks[e[i].unit_masks[k]].pme_ucode;
+			ucode |= core_pe[e[i].event].pme_umasks[e[i].unit_masks[k]].pme_ucode;
 		}
+
 
 		/*
 		 * for events supporting Core specificity (self, both), a value
@@ -448,27 +452,37 @@ DPRINT(("i=%d next_gen=%d last=%d isset=%d\n", i, next_gen, last_gen, pfm_regmas
 		 * force to SELF if user did not specify anything
 		 */
 		if ((core_pe[e[i].event].pme_flags & PFMLIB_CORE_CSPEC)
-		    && ((umask & (0x3 << 6)) == 0)) {
-				umask |= 1 << 6;
+		    && ((ucode & (0x3 << 6)) == 0)) {
+				ucode |= 1 << 6;
 		}
 
-		reg.sel_unit_mask  = umask;
+		val |= ucode << 8;
+
+		reg.sel_unit_mask  = ucode;
 		reg.sel_usr        = plm & PFM_PLM3 ? 1 : 0;
 		reg.sel_os         = plm & PFM_PLM0 ? 1 : 0;
 		reg.sel_en         = 1; /* force enable bit to 1 */
 		reg.sel_int        = 1; /* force APIC int to 1 */
 
-		if (cntrs) {
-			/*
-			 * counter mask is 8-bit wide, do not silently
-			 * wrap-around
-			 */
-			if (cntrs[i].cnt_mask > 255)
-				return PFMLIB_ERR_INVAL;
+		reg.sel_cnt_mask = val >>24;
+		reg.sel_inv = val >> 23;
+		reg.sel_edge = val >> 18;
 
-			reg.sel_cnt_mask = cntrs[i].cnt_mask;
-			reg.sel_edge	 = cntrs[i].flags & PFM_CORE_SEL_EDGE ? 1 : 0;
-			reg.sel_inv	 = cntrs[i].flags & PFM_CORE_SEL_INV ? 1 : 0;
+		if (cntrs) {
+			if (!reg.sel_cnt_mask) {
+				/*
+			 	 * counter mask is 8-bit wide, do not silently
+			 	 * wrap-around
+			 	 */
+				if (cntrs[i].cnt_mask > 255)
+					return PFMLIB_ERR_INVAL;
+				reg.sel_cnt_mask = cntrs[i].cnt_mask;
+			}
+
+			if (!reg.sel_edge)
+				reg.sel_edge = cntrs[i].flags & PFM_CORE_SEL_EDGE ? 1 : 0;
+			if (!reg.sel_inv)
+				reg.sel_inv = cntrs[i].flags & PFM_CORE_SEL_INV ? 1 : 0;
 		}
 
 		pc[npc].reg_num     = assign_pc[i];
@@ -669,7 +683,7 @@ pfm_core_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_outpu
 	pfmlib_core_input_param_t *mod_in  = (pfmlib_core_input_param_t *)model_in;
 
 	if (inp->pfp_dfl_plm & (PFM_PLM1|PFM_PLM2)) {
-		DPRINT(("invalid plm=%x\n", inp->pfp_dfl_plm));
+		DPRINT("invalid plm=%x\n", inp->pfp_dfl_plm);
 		return PFMLIB_ERR_INVAL;
 	}
 	return pfm_core_dispatch_counters(inp, mod_in, outp);
@@ -679,7 +693,7 @@ static int
 pfm_core_get_event_code(unsigned int i, unsigned int cnt, int *code)
 {
 	if (cnt != PFMLIB_CNT_FIRST
-	    && (cnt > MAX_COUNTERS ||
+	    && (cnt > highest_counter ||
 		!pfm_regmask_isset(&core_impl_pmds, cnt)))
 		return PFMLIB_ERR_INVAL;
 

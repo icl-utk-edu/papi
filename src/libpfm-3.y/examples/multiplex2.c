@@ -19,7 +19,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  */
-#define _GNU_SOURCE 1
+#ifndef _GNU_SOURCE
+  #define _GNU_SOURCE /* for getline */
+#endif
 #include <sys/types.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -33,9 +35,9 @@
 #include <signal.h>
 #include <math.h>
 #include <limits.h>
-#include <fcntl.h>
 #include <setjmp.h>
-#include <sys/ioctl.h>
+#include <fcntl.h>
+#include <time.h>
 #include <sys/wait.h>
 #include <sys/ptrace.h>
 
@@ -48,7 +50,7 @@
 
 #define MULTIPLEX_VERSION	"0.2"
 
-#define SMPL_FREQ_IN_HZ	300
+#define SMPL_FREQ_IN_HZ	100
 
 #define NUM_PMCS 256
 
@@ -68,9 +70,11 @@ typedef struct {
 	} program_opt_flags;
 
 	unsigned long	max_counters;	/* maximum number of counter for the platform */
-	uint32_t smpl_freq;
+	uint64_t	smpl_freq_hz;
+	uint64_t	smpl_freq_ns;
 	unsigned long	session_timeout;
 	uint64_t	smpl_period;
+	uint64_t	clock_res;
 
 	unsigned long	cpu_mhz;
 
@@ -101,9 +105,9 @@ typedef int	pfm_ctxid_t;
 
 static program_options_t options;
 
-static pfarg_pmc_t	*all_pmcs;
-static pfarg_pmd_t	*all_pmds;
-static pfarg_setdesc_t	*all_sets;
+static pfarg_pmr_t	*all_pmcs;
+static pfarg_pmd_attr_t	*all_pmds;
+static pfarg_set_desc_t	*all_sets;
 static event_set_t	*all_events;
 
 static unsigned int 	num_pmds, num_pmcs, num_sets, total_events;
@@ -259,7 +263,7 @@ print_results(int ctxid, uint64_t *eff_timeout)
 	unsigned int i, j, cnt, ovfl_event;
 	uint64_t value, tot_runs = 0;
 	uint64_t tot_dur = 0, c;
-	pfarg_setinfo_t	*all_setinfos;
+	pfarg_set_info_t	*all_setinfos;
 	event_set_t *e;
 	char *p;
 	char tmp1[32], tmp2[32], *str;
@@ -267,11 +271,11 @@ print_results(int ctxid, uint64_t *eff_timeout)
 	char stotal_str[32], *stotal;
 	int ret;
 
-	all_setinfos = malloc(sizeof(pfarg_setinfo_t)*num_sets);
+	all_setinfos = malloc(sizeof(pfarg_set_info_t)*num_sets);
 	if (all_setinfos == NULL)
 		fatal_error("cannot allocate all_setinfo\n");
 
-	memset(all_setinfos, 0, sizeof(pfarg_setinfo_t)*num_sets);
+	memset(all_setinfos, 0, sizeof(pfarg_set_info_t)*num_sets);
 
 	for(i=0; i < num_sets; i++)
 		all_setinfos[i].set_id = i;
@@ -283,7 +287,7 @@ print_results(int ctxid, uint64_t *eff_timeout)
 	 * it may be necesarry to split into multiple calls. That limit
 	 * is usally at page size (16KB)
 	 */
-	ret = pfm_read_pmds(ctxid, all_pmds, num_pmds);
+	ret = pfm_read(ctxid, 0, PFM_RW_PMD_ATTR, all_pmds, num_pmds * sizeof(*all_pmds));
 	if (ret == -1)
 		fatal_error("cannot read pmds: %s\n", strerror(errno));
 
@@ -294,7 +298,7 @@ print_results(int ctxid, uint64_t *eff_timeout)
 	 * it may be necesarry to split into multiple calls. That limit
 	 * is usually at page size (16KB)
 	 */
-	ret = pfm_getinfo_evtsets(ctxid, all_setinfos, num_sets);
+	ret = pfm_getinfo_sets(ctxid, 0, all_setinfos, num_sets * sizeof(*all_setinfos));
 	if (ret == -1)
 		fatal_error("cannot get set info: %s\n", strerror(errno));
 
@@ -307,7 +311,7 @@ print_results(int ctxid, uint64_t *eff_timeout)
 		if (all_setinfos[i].set_runs == 0)
 			fatal_error("not enough runs to collect meaningful results: set%u did not run\n", i);
 		tot_runs += all_setinfos[i].set_runs;
-		tot_dur  += all_setinfos[i].set_act_duration;
+		tot_dur  += all_setinfos[i].set_duration;
 	}
 
 	/*
@@ -319,9 +323,9 @@ print_results(int ctxid, uint64_t *eff_timeout)
 	 *
 	 */
 	if (options.opt_no_header == 0) {
-		printf("# %u Hz period = %u nsecs\n# %"PRIu64" cycles @ %lu MHz\n", 
-			options.smpl_freq, 
-			1000000000 / options.smpl_freq, 
+		printf("# %.2fHz period = %"PRIu64"nsecs\n# %"PRIu64" cycles @ %lu MHz\n", 
+			1000000000.0 / options.smpl_freq_ns, 
+			options.smpl_freq_ns, 
 			options.smpl_period,
 			options.cpu_mhz);
 
@@ -367,7 +371,7 @@ print_results(int ctxid, uint64_t *eff_timeout)
 			 * We use double to avoid overflowing of the 64-bit count in case of very
 			 * large total duration
 			 */
-			c = llround(((double)value*tot_dur)/(double)all_setinfos[i].set_act_duration);
+			c = llround(((double)value*tot_dur)/(double)all_setinfos[i].set_duration);
 			sprintf(tmp2, "%"PRIu64, c);
 
 			if (options.opt_us_format) {
@@ -408,41 +412,39 @@ static int
 measure_one_task(char **argv)
 {
 	int ctxid;
-	pfarg_ctx_t ctx[1];
-	pfarg_setdesc_t *my_sets;
-	pfarg_pmc_t *my_pmcs;
-	pfarg_pmd_t *my_pmds;
-	pfarg_load_t load_arg;
+	pfarg_sinfo_t sif;
+	pfarg_set_desc_t *my_sets;
+	pfarg_pmr_t *my_pmcs;
+	pfarg_pmd_attr_t *my_pmds;
 	uint64_t eff_timeout;
 	pfarg_msg_t msg;
 	pid_t pid;
 	int status, ret;
 
-	my_pmcs = malloc(sizeof(pfarg_pmc_t)*num_pmcs);
-	my_pmds = malloc(sizeof(pfarg_pmd_t)*num_pmds);
-	my_sets = malloc(sizeof(pfarg_setdesc_t)*num_sets);
+	memset(&sif, 0, sizeof(sif));
+
+	my_pmcs = malloc(sizeof(pfarg_pmr_t)*num_pmcs);
+	my_pmds = malloc(sizeof(pfarg_pmd_attr_t)*num_pmds);
+	my_sets = malloc(sizeof(pfarg_set_desc_t)*num_sets);
 
 	if (my_pmcs == NULL || my_pmds == NULL || my_sets == NULL)
 		fatal_error("cannot allocate event tables\n");
 	/*
 	 * make private copies
 	 */
-	memcpy(my_pmcs, all_pmcs, sizeof(pfarg_pmc_t)*num_pmcs);
-	memcpy(my_pmds, all_pmds, sizeof(pfarg_pmd_t)*num_pmds);
-	memcpy(my_sets, all_sets, sizeof(pfarg_setdesc_t)*num_sets);
-
-	memset(ctx, 0, sizeof(ctx));
-	memset(&load_arg, 0, sizeof(load_arg));
+	memcpy(my_pmcs, all_pmcs, sizeof(pfarg_pmr_t)*num_pmcs);
+	memcpy(my_pmds, all_pmds, sizeof(pfarg_pmd_attr_t)*num_pmds);
+	memcpy(my_sets, all_sets, sizeof(pfarg_set_desc_t)*num_sets);
 
 	/*
 	 * create the context
 	 */
-	ctxid = pfm_create_context(ctx, NULL, NULL, 0);
+	ctxid = pfm_create(0, &sif);
 	if (ctxid == -1 ) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
-		fatal_error("Can't create PFM context %s\n", strerror(errno));
+		fatal_error("cannot create session %s\n", strerror(errno));
 	}
 	/*
 	 * set close-on-exec to ensure we will be getting the PFM_END_MSG, i.e.,
@@ -460,7 +462,7 @@ measure_one_task(char **argv)
 	 */
 	vbprintf("requested timeout %"PRIu64" nsecs\n", my_sets[0].set_timeout);
 
-	if (pfm_create_evtsets(ctxid, my_sets, num_sets))
+	if (pfm_create_sets(ctxid, 0, my_sets, num_sets * sizeof(*my_sets)))
 		fatal_error("cannot create sets\n");
 
 	eff_timeout = my_sets[0].set_timeout;
@@ -472,17 +474,16 @@ measure_one_task(char **argv)
 	 * Note that there is a limitation on the size of the argument vector
 	 * that can be passed. It is usually set to a page size (16KB).
 	 */
-	if (pfm_write_pmcs(ctxid, my_pmcs, num_pmcs) == -1)
-		fatal_error("pfm_write_pmcs error errno %d\n",errno);
+	if (pfm_write(ctxid, 0, PFM_RW_PMC, my_pmcs, num_pmcs * sizeof(*my_pmcs)) == -1)
+		fatal_error("pfm_write error errno %d\n",errno);
 
 	/*
 	 * initialize the PMD registers.
 	 *
-	 * To be read, each PMD must be either written or declared
-	 * as being part of a sample (reg_smpl_pmds)
+	 * Can use global pma because they are used read-only
 	 */
-	if (pfm_write_pmds(ctxid, my_pmds, num_pmds) == -1)
-		fatal_error("pfm_write_pmds error errno %d\n",errno);
+	if (pfm_write(ctxid, 0, PFM_RW_PMD_ATTR, my_pmds, num_pmds * sizeof(*my_pmds)) == -1)
+		fatal_error("pfm_write(PMD) error errno %d\n",errno);
 
 	/*
 	 * now launch the child code
@@ -505,17 +506,16 @@ measure_one_task(char **argv)
 	vbprintf("child created and stopped\n");
 
 	/*
-	 * now attach the context
+	 * now attach session
 	 */
-	load_arg.load_pid = pid;
-	if (pfm_load_context(ctxid, &load_arg) == -1)
-		fatal_error("pfm_load_context error errno %d\n",errno);
+	if (pfm_attach(ctxid, 0, pid) == -1)
+		fatal_error("pfm_attach error errno %d\n",errno);
 
 	/*
 	 * start monitoring
 	 */
-	if (pfm_start(ctxid, NULL) == -1)
-		fatal_error("pfm_start error errno %d\n",errno);
+	if (pfm_set_state(ctxid, 0, PFM_ST_START) == -1)
+		fatal_error("pfm_set_state(start) error errno %d\n",errno);
 
 	ptrace(PTRACE_DETACH, pid, NULL, 0);
 	vbprintf("child restarted\n");
@@ -561,7 +561,7 @@ finish_line:
 		waitpid(pid, NULL, WUNTRACED);
 
 		/* detach context */
-		pfm_unload_context(ctxid);
+		pfm_attach(ctxid, 0, PFM_NO_TARGET);
 	}
 
 	if (options.attach_pid == 0) {
@@ -584,29 +584,27 @@ static int
 measure_one_cpu(char **argv)
 {
 	int ctxid, status;
-	pfarg_ctx_t ctx[1];
-	pfarg_pmc_t *my_pmcs;
-	pfarg_pmd_t *my_pmds;
-	pfarg_setdesc_t *my_sets;
-	pfarg_load_t load_arg;
+	pfarg_pmr_t *my_pmcs;
+	pfarg_pmd_attr_t *my_pmds;
+	pfarg_set_desc_t *my_sets;
+	pfarg_sinfo_t sif;
 	pid_t pid = 0;
 	int ret;
 
-	my_pmcs = malloc(sizeof(pfarg_pmc_t)*total_events);
-	my_pmds = malloc(sizeof(pfarg_pmd_t)*total_events);
-	my_sets = malloc(sizeof(pfarg_setdesc_t)*num_sets);
+	memset(&sif, 0, sizeof(sif));
+
+	my_pmcs = malloc(sizeof(pfarg_pmr_t)*total_events);
+	my_pmds = malloc(sizeof(pfarg_pmd_attr_t)*total_events);
+	my_sets = malloc(sizeof(pfarg_set_desc_t)*num_sets);
 
 	if (my_pmcs == NULL || my_pmds == NULL || my_sets == NULL)
 		fatal_error("cannot allocate event tables\n");
 	/*
 	 * make private copies
 	 */
-	memcpy(my_pmcs, all_pmcs, sizeof(pfarg_pmc_t)*num_pmcs);
-	memcpy(my_pmds, all_pmds, sizeof(pfarg_pmd_t)*num_pmds);
-	memcpy(my_sets, all_sets, sizeof(pfarg_setdesc_t)*num_sets);
-
-	memset(ctx, 0, sizeof(ctx));
-	memset(&load_arg, 0, sizeof(load_arg));
+	memcpy(my_pmcs, all_pmcs, sizeof(pfarg_pmr_t)*num_pmcs);
+	memcpy(my_pmds, all_pmds, sizeof(pfarg_pmd_attr_t)*num_pmds);
+	memcpy(my_sets, all_sets, sizeof(pfarg_set_desc_t)*num_sets);
 
 	if (options.pin_cpu == -1) {
 		options.pin_cpu = 0;
@@ -614,16 +612,15 @@ measure_one_cpu(char **argv)
 		pin_cpu(getpid(), 0);
 	}
 
-	ctx[0].ctx_flags = PFM_FL_SYSTEM_WIDE;
 	/*
-	 * create the context
+	 * create session
 	 */
-	ctxid = pfm_create_context(ctx, NULL, NULL, 0);
+	ctxid = pfm_create(PFM_FL_SYSTEM_WIDE, &sif);
 	if (ctxid == -1) {
 		if (errno == ENOSYS) {
 			fatal_error("Your kernel does not have performance monitoring support!\n");
 		}
-		fatal_error("Can't create PFM context %s\n", strerror(errno));
+		fatal_error("cannot create session %s\n", strerror(errno));
 	}
 	/*
 	 * set close-on-exec to ensure we will be getting the PFM_END_MSG, i.e.,
@@ -639,7 +636,7 @@ measure_one_cpu(char **argv)
 	 * reason. However to avoid special casing set0 for creation, a PFM_CREATE_EVTSETS
 	 * for set0 does not complain and behaves as a PFM_CHANGE_EVTSETS
 	 */
-	if (pfm_create_evtsets(ctxid, my_sets, num_sets))
+	if (pfm_create_sets(ctxid, 0, my_sets, num_sets * sizeof(*my_sets)))
 		fatal_error("cannot create sets\n");
 
 	/*
@@ -648,17 +645,16 @@ measure_one_cpu(char **argv)
 	 * Note that there is a limitation on the size of the argument vector
 	 * that can be passed. It is usually set to a page size (16KB).
 	 */
-	if (pfm_write_pmcs(ctxid, my_pmcs, num_pmcs) == -1)
-		fatal_error("pfm_write_pmcs error errno %d\n",errno);
+	if (pfm_write(ctxid, 0, PFM_RW_PMC, my_pmcs, num_pmcs * sizeof(*my_pmcs)) == -1)
+		fatal_error("pfm_write error errno %d\n",errno);
 
 	/*
 	 * initialize the PMD registers.
 	 *
-	 * To be read, each PMD must be either written or declared
-	 * as being part of a sample (reg_smpl_pmds)
+	 * We use all_Pmas because they are not modified, i.e., read-only
 	 */
-	if (pfm_write_pmds(ctxid, my_pmds, num_pmds) == -1)
-		fatal_error("pfm_write_pmds error errno %d\n",errno);
+	if (pfm_write(ctxid, 0, PFM_RW_PMD_ATTR, my_pmds, num_pmds * sizeof(*my_pmds)) == -1)
+		fatal_error("pfm_write(PMD) error errno %d\n",errno);
 
 	/*
 	 * now launch the child code
@@ -685,15 +681,14 @@ measure_one_cpu(char **argv)
 	/*
 	 * now attach the context
 	 */
-	load_arg.load_pid = options.opt_is_system ? getpid() : pid;
-	if (pfm_load_context(ctxid, &load_arg) == -1)
-		fatal_error("pfm_load_context error errno %d\n",errno);
+	if (pfm_attach(ctxid, 0, options.pin_cpu) == -1)
+		fatal_error("pfm_attach error errno %d\n",errno);
 
 	/*
 	 * start monitoring
 	 */
-	if (pfm_start(ctxid, NULL) == -1)
-		fatal_error("pfm_start error errno %d\n",errno);
+	if (pfm_set_state(ctxid, 0, PFM_ST_START) == -1)
+		fatal_error("pfm_set_state(start) error errno %d\n",errno);
 
 	if (pid) ptrace(PTRACE_DETACH, pid, NULL, 0);
 
@@ -719,6 +714,7 @@ int
 mainloop(char **argv)
 {
 	event_set_t *e;
+	pfarg_sinfo_t sif;
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
 	pfmlib_regmask_t impl_counters, used_pmcs;
@@ -745,9 +741,9 @@ mainloop(char **argv)
 
 	pfm_get_impl_counters(&impl_counters);
 
-	options.smpl_period = (options.cpu_mhz*1000000)/options.smpl_freq;
+	options.smpl_period = (options.cpu_mhz*1000000)/options.smpl_freq_hz;
 
-	vbprintf("%lu Hz period = %"PRIu64" cycles @ %lu Mhz\n", options.smpl_freq, options.smpl_period, options.cpu_mhz);
+	vbprintf("%"PRIu64"Hz period = %"PRIu64" cycles @ %luMhz\n", options.smpl_freq_hz, options.smpl_period, options.cpu_mhz);
 
 	for (e = all_events; e; e = e->next) {
 		for (p = str = e->event_str; p ; ) {
@@ -775,9 +771,9 @@ mainloop(char **argv)
 	 * assumes number of pmds = number  of events
 	 * cannot assume number of pmcs = num of events (e.g., P4 2 PMCS per event)
 	 */
-	all_pmcs = calloc(NUM_PMCS, sizeof(pfarg_pmc_t));
-	all_pmds = calloc(total_events, sizeof(pfarg_pmd_t));
-	all_sets = calloc(num_sets, sizeof(pfarg_setdesc_t));
+	all_pmcs = calloc(NUM_PMCS, sizeof(pfarg_pmr_t));
+	all_pmds = calloc(total_events, sizeof(pfarg_pmd_attr_t));
+	all_sets = calloc(num_sets, sizeof(pfarg_set_desc_t));
 
 	if (all_pmcs == NULL || all_pmds == NULL || all_sets == NULL)
 		fatal_error("cannot allocate event tables\n");
@@ -801,7 +797,8 @@ mainloop(char **argv)
 	 	 * use. Of source, it is possible that no valid assignement may
 	 	 * be possible if certina PMU registers  are not available.
 	 	 */
-		detect_unavail_pmcs(-1, &inp.pfp_unavail_pmcs);
+		get_sif(options.opt_is_system? PFM_FL_SYSTEM_WIDE: 0, &sif);
+		detect_unavail_pmu_regs(&sif, &inp.pfp_unavail_pmcs, NULL);
 
 		str = e->event_str;
 		for(j=0, p = str; p && j < allowed_counters; j++) {
@@ -874,7 +871,7 @@ mainloop(char **argv)
 			 * the first overflow of our trigger counter does
 			 * trigger a switch.
 			 */
-			all_pmds[num_pmds-1].reg_ovfl_switch_cnt = 1;
+			all_pmds[num_pmds-1].reg_ovfl_swcnt = 1;
 
 			/*
 			 * We do this even in system-wide mode to ensure
@@ -894,7 +891,7 @@ mainloop(char **argv)
 			 * The structure will by then contain the actual timeout.
 			 */
 			all_sets[i].set_flags    = PFM_SETFL_TIME_SWITCH;
-			all_sets[i].set_timeout  = 1000000000 / options.smpl_freq;
+			all_sets[i].set_timeout  = options.smpl_freq_ns;
 		}
 #ifdef __ia64__
 		if (options.opt_excl_intr && options.opt_is_system)
@@ -1016,6 +1013,8 @@ main(int argc, char **argv)
 	pfmlib_options_t pfmlib_options;
 	event_set_t *tail = NULL, *es;
 	unsigned long long_val;
+	struct timespec ts;
+	uint64_t f_ns, d, f_final;
 	int c, ret;
 
 	options.pin_cmd_cpu = options.pin_cpu = -1;
@@ -1035,10 +1034,10 @@ main(int argc, char **argv)
 				  options.opt_us_format = 1;
 				  break;
 			case   2:
-				if (options.smpl_freq) fatal_error("sampling frequency set twice\n");
-				options.smpl_freq = strtoul(optarg, &endptr, 10);
+				if (options.smpl_freq_hz) fatal_error("sampling frequency set twice\n");
+				options.smpl_freq_hz = strtoull(optarg, &endptr, 10);
 				if (*endptr != '\0')
-					fatal_error("invalid freqyency: %s\n", optarg);
+					fatal_error("invalid frequency: %s\n", optarg);
 				break;
 			case   3:
 			case 'k':
@@ -1122,7 +1121,50 @@ main(int argc, char **argv)
 	if ((options.cpu_mhz = get_cpu_speed()) == 0)
 		fatal_error("can't get CPU speed\n");
 
-	if (options.smpl_freq == 0UL) options.smpl_freq = SMPL_FREQ_IN_HZ;
+
+	/*
+ 	 * extract kernel clock resolution
+ 	 */
+        clock_getres(CLOCK_MONOTONIC, &ts);
+       	options.clock_res  = ts.tv_sec * 1000000000 + ts.tv_nsec;
+
+	/*
+ 	 * adjust frequency to be a multiple of clock resolution
+ 	 * otherwise kernel will fail pfm_create_evtsets()
+ 	 */
+
+	/*
+ 	 * f_ns = run period in ns (1s/hz)
+ 	 * default switch period is clock resolution
+ 	 */
+	if (options.smpl_freq_hz == 0)
+		f_ns = options.clock_res;
+	else
+		f_ns = 1000000000 / options.smpl_freq_hz;
+
+	/* round up period in nanoseconds */
+	d = (f_ns+options.clock_res-1) / options.clock_res;
+
+	/* final period (multilple of clock_res */
+	f_final = d * options.clock_res;
+
+	if (options.opt_ovfl_switch)
+		printf("clock_res=%"PRIu64"ns(%.2fHz) ask period=%"PRIu64"ns(%.2fHz) get period=%"PRIu64"ns(%.2fHz)\n",
+			options.clock_res,
+			1000000000.0 / options.clock_res,
+			f_ns,
+			1000000000.0 / f_ns,
+			f_final,
+			1000000000.0 / f_final);
+
+	if (f_ns != f_final)
+		printf("Not getting the expected frequency due to kernel/hw limitation\n");
+
+	/* adjust period */
+	options.smpl_freq_ns = f_final;
+
+	/* not used */
+	options.smpl_freq_hz = 1000000000 / f_final;
 
 	if (options.opt_plm == 0) options.opt_plm = PFM_PLM3;
 

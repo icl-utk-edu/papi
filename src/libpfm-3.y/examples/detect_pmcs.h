@@ -28,17 +28,8 @@
 #define __DETECT_PMCS_H__
 
 #include <perfmon/pfmlib.h>
-
-/*
- * if no context exists, pass -1 for fd
- * if do not care about PMCS, pass r_pmcs as NULL
- * if do not care about PMDs, pass r_pmds as NULL
- */
-extern int detect_unavail_pmu_regs(int fd, pfmlib_regmask_t *r_pmcs, pfmlib_regmask_t *r_pmds);
-
-static inline int detect_unavail_pmcs(int fd, pfmlib_regmask_t *r_pmcs)
-{
-	return detect_unavail_pmu_regs(fd, r_pmcs, NULL);
-}
+#include <perfmon/perfmon.h>
+extern int get_sif(int flags, pfarg_sinfo_t *sif);
+extern int detect_unavail_pmu_regs(pfarg_sinfo_t *sif, pfmlib_regmask_t *r_pmcs, pfmlib_regmask_t *r_pmds);
 
 #endif /* __DETECT_PMCS_H__ */

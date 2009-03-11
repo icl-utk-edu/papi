@@ -50,8 +50,8 @@ static volatile unsigned long notification_received;
 
 static int ctx_fd;
 static char *event1_name;
-static pfarg_setinfo_t setinfo[NUM_SETS];
-static pfarg_pmd_t pd[2];
+static pfarg_set_info_t setinfo[NUM_SETS];
+static pfarg_pmd_attr_t pd[2];
 
 static void fatal_error(char *fmt,...) __attribute__((noreturn));
 
@@ -98,12 +98,13 @@ retry:
 		fatal_error("unexpected msg type: %d\n",msg.type);
 	}
 
-	if (pfm_getinfo_evtsets(ctx_fd, setinfo, NUM_SETS) == -1) {
-		fatal_error("pfm_getinfo_evtsets: %s", strerror(errno));
+	if (pfm_getinfo_sets(ctx_fd, 0, setinfo, NUM_SETS * sizeof(*setinfo)) == -1) {
+		fatal_error("pfm_getinfo_sets: %s", strerror(errno));
 	}
-	if (pfm_read_pmds(ctx_fd, pd, 2) == -1) {
-		fatal_error("pfm_read_pmds: %s", strerror(errno));
-	}
+
+	if (pfm_read(ctx_fd, 0, PFM_RW_PMD_ATTR, pd, 2 * sizeof(*pd)) == -1)
+		fatal_error("pfm_read: %s", strerror(errno));
+
 	/*
 	 * XXX: risky to do printf() in signal handler!
 	 */
@@ -129,9 +130,8 @@ retry:
 	/*
 	 * And resume monitoring
 	 */
-	if (pfm_restart(ctx_fd) == -1) {
-		fatal_error("pfm_restart: %s", strerror(errno));
-	}
+	if (pfm_set_state(ctx_fd, 0, PFM_ST_RESTART) == -1)
+		fatal_error("pfm_set_state(restart): %s", strerror(errno));
 }
 
 /*
@@ -156,10 +156,10 @@ busyloop(void)
  * build end marker set
  */
 void
-setup_end_marker(int fd, unsigned int set_id, uint64_t num_ovfls, int plm_mask)
+setup_end_marker(int fd, pfarg_sinfo_t *sif, unsigned int set_id, uint64_t num_ovfls, int plm_mask)
 {
-	pfarg_setdesc_t setdesc;
-	pfarg_pmc_t pc[8];
+	pfarg_set_desc_t setdesc;
+	pfarg_pmr_t pc[8];
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
 	unsigned int i;
@@ -167,7 +167,6 @@ setup_end_marker(int fd, unsigned int set_id, uint64_t num_ovfls, int plm_mask)
 
 	memset(&setdesc, 0, sizeof(setdesc));
 	memset(pc, 0, sizeof(pc));
-	memset(pd, 0, sizeof(pd));
 	memset(&inp,0, sizeof(inp));
 	memset(&outp,0, sizeof(outp));
 
@@ -195,7 +194,7 @@ setup_end_marker(int fd, unsigned int set_id, uint64_t num_ovfls, int plm_mask)
 	 * use. Of source, it is possible that no valid assignement may
 	 * be possible if certina PMU registers  are not available.
 	 */
-	detect_unavail_pmcs(fd, &inp.pfp_unavail_pmcs);
+	detect_unavail_pmu_regs(sif, &inp.pfp_unavail_pmcs, NULL);
 
 	if ((ret=pfm_dispatch_events(&inp, NULL, &outp, NULL)) != PFMLIB_SUCCESS)
 		fatal_error("Cannot configure events: %s\n", pfm_strerror(ret));
@@ -215,18 +214,20 @@ setup_end_marker(int fd, unsigned int set_id, uint64_t num_ovfls, int plm_mask)
 	 */
 	pd[0].reg_flags		  = 0;
 	pd[0].reg_value           = -1;
+
 	pd[0].reg_long_reset      = -1;
 	pd[0].reg_short_reset     = -1;
-	pd[0].reg_ovfl_switch_cnt = 1;
+	pd[0].reg_ovfl_swcnt      = 1;
 
 	/*
 	 * second cycle overflow: generate notification, switch on restart
 	 */
 	pd[1].reg_flags		  = PFM_REGFL_OVFL_NOTIFY;
 	pd[1].reg_value           = -num_ovfls*FUDGE;
+
 	pd[1].reg_long_reset      = -num_ovfls*FUDGE;
 	pd[1].reg_short_reset     = -num_ovfls*FUDGE;
-	pd[1].reg_ovfl_switch_cnt =  1;
+	pd[1].reg_ovfl_swcnt      =  1;
 
 	/*
 	 * set uses overflow switch
@@ -235,29 +236,28 @@ setup_end_marker(int fd, unsigned int set_id, uint64_t num_ovfls, int plm_mask)
 	setdesc.set_flags           = PFM_SETFL_OVFL_SWITCH;
 	setdesc.set_timeout	    = 0;
 
-	if (pfm_create_evtsets(fd, &setdesc, 1) == -1)
-		fatal_error("pfm_create_evtsets error errno %d\n",errno);
+	if (pfm_create_sets(fd, 0, &setdesc, sizeof(setdesc)) == -1)
+		fatal_error("pfm_create_sets error errno %d\n",errno);
 
-	if (pfm_write_pmcs(fd, pc, outp.pfp_pmc_count) == -1)
-		fatal_error("pfm_write_pmcs error errno %d\n",errno);
+	if (pfm_write(fd, 0, PFM_RW_PMC, pc, outp.pfp_pmc_count * sizeof(*pc)) == -1)
+		fatal_error("pfm_write error errno %d\n",errno);
 	/*
 	 * To be read, each PMD must be either written or declared
 	 * as being part of a sample (reg_smpl_pmds)
 	 */
-	if (pfm_write_pmds(fd, pd, outp.pfp_pmd_count) == -1)
-		fatal_error("pfm_write_pmds error errno %d\n",errno);
+	if (pfm_write(fd, 0, PFM_RW_PMD_ATTR, pd, outp.pfp_pmd_count * sizeof(*pd)) == -1)
+		fatal_error("pfm_write(PMD) error errno %d\n",errno);
 }
 
 int
 main(int argc, char **argv)
 {
-	pfarg_ctx_t ctx[1];
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
-	pfarg_pmc_t pc[NUM_PMCS];
-	pfarg_pmd_t pd[NUM_PMDS];
-	pfarg_load_t load_args;
-	pfarg_setdesc_t setdesc;
+	pfarg_pmr_t pc[NUM_PMCS];
+	pfarg_pmd_attr_t pd[NUM_PMDS];
+	pfarg_sinfo_t sif;
+	pfarg_set_desc_t setdesc;
 	pfmlib_options_t pfmlib_options;
 	struct sigaction act;
 	uint64_t num_ovfls;
@@ -301,20 +301,20 @@ main(int argc, char **argv)
 
 
 	memset(pc, 0, sizeof(pc));
-	memset(ctx, 0, sizeof(ctx));
-	memset(&load_args, 0, sizeof(load_args));
+	memset(pd, 0, sizeof(pd));
 	memset(&inp,0, sizeof(inp));
 	memset(&outp,0, sizeof(outp));
 	memset(&setdesc,0, sizeof(setdesc));
+	memset(&sif, 0, sizeof(sif));
 
 	if (pfm_get_cycle_event(&inp.pfp_events[0]) != PFMLIB_SUCCESS)
 		fatal_error("cannot find cycle event\n");
 
 	pfm_get_max_event_name_len(&len);
 	event1_name = malloc(len+1);
-	if (event1_name == NULL) {
+	if (event1_name == NULL)
 		fatal_error("cannot allocate event name\n");
-	}
+
 	pfm_get_full_event_name(&inp.pfp_events[1], event1_name, len+1);
 
 	/*
@@ -329,13 +329,13 @@ main(int argc, char **argv)
 	inp.pfp_event_count = 1;
 
 	/*
-	 * now create the context for self monitoring/per-task
+	 * now create the session
 	 */
-	ctx_fd = pfm_create_context(ctx, NULL, NULL, 0);
+	ctx_fd = pfm_create(0, &sif);
 	if (ctx_fd == -1) {
 		if (errno == ENOSYS)
 			fatal_error("Your kernel does not have performance monitoring support!\n");
-		fatal_error("Can't create PFM context %s\n", strerror(errno));
+		fatal_error("cannot create session %s\n", strerror(errno));
 	}
 
 	/*
@@ -349,7 +349,7 @@ main(int argc, char **argv)
 	 * use. Of source, it is possible that no valid assignement may
 	 * be possible if certina PMU registers  are not available.
 	 */
-	detect_unavail_pmcs(ctx_fd, &inp.pfp_unavail_pmcs);
+	detect_unavail_pmu_regs(&sif, &inp.pfp_unavail_pmcs, NULL);
 
 	/*
 	 * let the library figure out the values for the PMCS
@@ -371,9 +371,10 @@ main(int argc, char **argv)
 		pd[i].reg_num = outp.pfp_pmds[i].reg_num;
 
 	pd[0].reg_value           = 0;
+
 	pd[0].reg_long_reset      = 0;
 	pd[0].reg_short_reset     = 0;
-	pd[0].reg_ovfl_switch_cnt = 0;
+	pd[0].reg_ovfl_swcnt      = 0;
 
 	for(k=0; k < NUM_SETS; k++) {
 
@@ -387,55 +388,49 @@ main(int argc, char **argv)
 		for (i=0; i < outp.pfp_pmd_count; i++)
 			pd[i].reg_set = k;
 
-		if (pfm_create_evtsets(ctx_fd, &setdesc, 1) == -1)
-			fatal_error("pfm_create_evtsets error errno %d\n",errno);
+		if (pfm_create_sets(ctx_fd, 0, &setdesc, sizeof(setdesc)) == -1)
+			fatal_error("pfm_create_sets error errno %d\n",errno);
 
-		if (pfm_write_pmcs(ctx_fd, pc, outp.pfp_pmc_count) == -1)
-			fatal_error("pfm_write_pmcs error errno %d\n",errno);
+		if (pfm_write(ctx_fd, 0, PFM_RW_PMC, pc, outp.pfp_pmc_count * sizeof(*pc)) == -1)
+			fatal_error("pfm_write error errno %d\n",errno);
 
 		/*
 	 	 * To be read, each PMD must be either written or declared
 	 	 * as being part of a sample (reg_smpl_pmds)
 	 	 */
-		if (pfm_write_pmds(ctx_fd, pd, outp.pfp_pmd_count) == -1)
-			fatal_error("pfm_write_pmds error errno %d\n",errno);
+		if (pfm_write(ctx_fd, 0, PFM_RW_PMD_ATTR, pd, outp.pfp_pmd_count * sizeof(*pd)) == -1)
+			fatal_error("pfm_write(PMD) error errno %d\n",errno);
 	}
-	setup_end_marker(ctx_fd, k, num_ovfls, inp.pfp_dfl_plm);
+	setup_end_marker(ctx_fd, &sif, k, num_ovfls, inp.pfp_dfl_plm);
 
 	/*
 	 * we want to monitor ourself
-	 */
-	load_args.load_pid = getpid();
-	load_args.load_set = 0;
-
-	if (pfm_load_context(ctx_fd, &load_args) == -1) {
-		fatal_error("pfm_load_context error errno %d\n",errno);
-	}
+	 */ if (pfm_attach(ctx_fd, 0, getpid()) == -1)
+		fatal_error("pfm_attach error errno %d\n",errno);
 
 	/*
 	 * setup asynchronous notification on the file descriptor
 	 */
 	ret = fcntl(ctx_fd, F_SETFL, fcntl(ctx_fd, F_GETFL, 0) | O_ASYNC);
-	if (ret == -1) {
+	if (ret == -1)
 		fatal_error("cannot set ASYNC: %s\n", strerror(errno));
-	}
 
 	/*
 	 * get ownership of the descriptor
 	 */
 	ret = fcntl(ctx_fd, F_SETOWN, getpid());
-	if (ret == -1) {
+	if (ret == -1)
 		fatal_error("cannot setown: %s\n", strerror(errno));
-	}
+
 	/*
 	 * Let's roll now
 	 */
 
-	pfm_start(ctx_fd, NULL);
+	pfm_set_state(ctx_fd, 0, PFM_ST_START);
 
 	busyloop();
 
-	pfm_stop(ctx_fd);
+	pfm_set_state(ctx_fd, 0, PFM_ST_STOP);
 
 	close(ctx_fd);
 

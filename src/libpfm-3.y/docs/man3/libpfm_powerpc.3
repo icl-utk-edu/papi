@@ -13,7 +13,7 @@ processors: PPC970(FX,GX), PPC970MP POWER4, POWER4+, POWER5, POWER5+, and POWER6
 .sp
 .SH MODEL-SPECIFIC PARAMETERS
 At present, the model_in and model_out model-specific input and output
-parameters are not used by pfm_dispatch_events call.  For future
+parameters are not used by \fBpfm_dispatch_events()\fR function.  For future
 compatibility, NULLs must be passed for these arguments.
 .sp
 .SH COMBINING EVENTS IN A SET
@@ -22,7 +22,7 @@ together arbitrarily in the same event set, even if there are a sufficient
 number of counters available.  This implementation for IBM PowerPC/POWER
 bases the event compatibility on a set of previously-defined compatible
 event groups.  If the events placed in an event set are all members of one
-of the predefined event groups, a call to pfm_dispatch_events will be
+of the predefined event groups, a call to the \fBpfm_dispatch_events()\fR function will be
 successful.  With the current interface, there is no way to discover
 apriori which events are compatible, so application software that wishes to
 combine events must do so by trial and error, possibly using multiplexed
@@ -30,7 +30,7 @@ event sets to count events that cannot otherwise be combined in the same
 set.
 .sp
 .SH ERRORS
-Refer to the description of \fBpfm_dispatch_events()\fR for errors.
+Refer to the description of the \fBpfm_dispatch_events()\fR function for errors.
 .SH SEE ALSO
 pfm_dispatch_events(3) and set of examples shipped with the library
 .SH AUTHOR

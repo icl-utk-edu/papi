@@ -34,7 +34,7 @@ model specific PMU features.
 .sp
 The Itanium 2 900 (Montecito) processor specific functions presented here are mostly used to retrieve
 the characteristics of an event. Given a opaque event descriptor, obtained
-by \fBpfm_find_event\fR or its derivatives, they return a boolean value
+by the \fBpfm_find_event()\fR or its derivative functions, they return a boolean value
 indicating whether this event support this feature or is of a particular
 kind.
 .sp
@@ -124,11 +124,11 @@ The event does not belong to a processor thread
 Hybrid event. It is floating if measured with .me. If is causal otherwise.
 .LP
 .sp
-The \fBpfm_mont_irange_is_fine\fR function returns 1 if the configuration description passed
+The \fBpfm_mont_irange_is_fine()\fR function returns 1 if the configuration description passed
 in \fBoutp\fR, the generic output parameters and \fBmod_out\fR, the Itanium 2
 9000 (Montecito) specific output parameters, 
 use code range restriction in fine mode. Otherwise the function returns 0. This function can only be 
-called after a call \fBpfm_dispatch_events()\fR which returned successfully and had the data
+called after a call to the \fBpfm_dispatch_events()\fR function returns successfully and had the data
 structures pointed to by \fBoutp\fR and \fBmod_out\fR as output parameters.
 .sp
 The \fBpfm_mont_get_event_ear_mode()\fR function returns in \fBmode\fR the EAR mode of the
@@ -146,7 +146,7 @@ The event is an ALAT EAR. It can only be a data EAR event.
 .sp
 .LP
 When the Itanium 2 9000 (Montecito) specific features are needed to support a measurement their
-descriptions must be passed as model-specific input arguments to the \fBpfm_dispatch_events\fR call.
+descriptions must be passed as model-specific input arguments to the \fBpfm_dispatch_events()\fR function.
 The Itanium 2 9000 (Montecito) specific input arguments are described in the \fBpfmlib_mont_input_param_t\fR
 structure and the output parameters in \fBpfmlib_mont_output_param_t\fR. They are defined as follows:
 .sp
@@ -260,7 +260,7 @@ for this event. Qualifiers includes opcode matching, code and data range restric
 event is marked as not supporting a particular qualifier, it usually means that it is ignored, i.e.,
 the extra level of filtering is ignored. For instance, the FE_BUBBLE_ALL event does not support code
 range restrictions and by default the library will refuse to program it if range restriction is also 
-requested. Using the flag will override the check and the call to \fBpfm_dispatch_events\fR will succeed. 
+requested. Using the flag will override the check and the call to the \fBpfm_dispatch_events()\fR function will succeed. 
 In this case, FE_BUBBLE_ALL will be measured for the entire program and not just for the code range requested. 
 For certain measurements this is perfectly acceptable as the range restriction will only be applied relevant
 to events which support it. Make sure you understand which events do not support certain qualifiers before
@@ -389,7 +389,7 @@ the ETB is not programmed.
 .SH DATA AND CODE RANGE RESTRICTIONS
 The \fBpfp_mont_drange\fR and \fBpfp_mont_irange\fR fields control the range restrictions for the data and 
 code respectively. The idea is that the application passes a set of ranges, each designated by a start 
-and end address. Upon return from \fBpfm_dispatch_events()\fR, the application gets back the set of 
+and end address. Upon return from the \fBpfm_dispatch_events()\fR function, the application gets back the set of 
 registers and their values that needs to be programmed via a kernel interface.
 
 Range restriction is implemented using the debug registers. There is a limited number of debug registers and they go in pair. With
@@ -487,7 +487,7 @@ The number of cycles by which to delay the freeze of the ETB after a PMU interru
 .LP
 .sp
 .SH ERRORS
-Refer to the description of \fBpfm_dispatch_events()\fR for errors when using
+Refer to the description of the \fBpfm_dispatch_events()\fR function for errors when using
 the Itanium 2 9000 (Montecito) specific input and output arguments.
 .SH SEE ALSO
 pfm_dispatch_events(3) and set of examples shipped with the library

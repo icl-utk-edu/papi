@@ -58,7 +58,7 @@ Each event is described in the \fBpfp_events\fR table by an opaque descriptor st
 the \fBevent\fR field. This descriptor is obtained with the \fBpfm_find_full_event()\fR
 or derivative functions.  For some events, it may be necessary to specify at least one
 unit mask in the \fBunit_masks\fR table. A unit mask is yet another opaque descriptor
-obtained via \fBpfm_find_event_mask()\fR or \fBpfm_find_full_event\fR. Typically, if
+obtained via the \fBpfm_find_event_mask()\fR or \fBpfm_find_full_event()\fR functions. Typically, if
 an event supports multiple unit masks, they can be combined in which case more than one
 entry in \fBunit_masks\fR must be specified. The actual number of unit mask descriptors
 passed must be indicated in \fBnum_masks\fR. When no unit mask is used, this
@@ -141,14 +141,14 @@ address or index for the PMC register.
 Refer to the PMU specific manual for a description of the model-specific 
 output parameters to be returned in \fBmod_out\fR.
 .sp
-The current implementation of the \fBpfm_dispatch_events\fR completely overwrites
+The current implementation of the \fBpfm_dispatch_events()\fR function completely overwrites
 the \fBpfmlib_output_param\fR structure. In other words, results do not accumulate
 into the \fBpfp_pmcs\fR table across multiple calls. Unused fields are
 guaranteed to be zeroed upon successful return.
 .sp
 Depending on the PMU model, there may not always be a one to one mapping between
 a PMC register and a data register. Register dependencies may be more intricate.
-However the \fBpfm_dispatch_events\fR guarantees certain ordering between the
+However the \fBpfm_dispatch_events()\fR function guarantees certain ordering between the
 \fBpfp_pmcs\fR and \fBpfp_pmds\fR tables. In particular, it guarantees that 
 the \fBpfp_pmds\fR table always starts with the counters corresponding, in
 the same order, to the events as provided in the \fBpfp_event\fR table on input.
