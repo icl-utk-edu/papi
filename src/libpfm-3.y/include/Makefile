@@ -109,9 +109,11 @@ HEADERS += perfmon/pfmlib_os_crayx2.h   \
 	   perfmon/pfmlib_crayx2.h
 endif
 
-.PHONY: all clean distclean depend perfmon.h dir
+.PHONY:	perfmon.h dir
 
 perfmon.h: dir
+
+perfmon.h:
 ifeq ($(CONFIG_PFMLIB_OLD_PFMV2),y)
 	echo "#ifndef PFMLIB_OLD_PFMV2" > $(DESTDIR)$(INCDIR)/perfmon/perfmon.h
 	echo "#define PFMLIB_OLD_PFMV2" >> $(DESTDIR)$(INCDIR)/perfmon/perfmon.h
@@ -123,7 +125,9 @@ else
 endif
 
 dir:
-	-mkdir -p $(DESTDIR)$(INCDIR)/perfmon
+	mkdir -p $(DESTDIR)$(INCDIR)/perfmon
 
-install: dir perfmon.h
+install: dir perfmon.h $(HEADERS)
+
+install:
 	$(INSTALL) -m 644 $(HEADERS) $(DESTDIR)$(INCDIR)/perfmon

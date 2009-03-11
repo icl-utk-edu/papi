@@ -183,7 +183,7 @@ static pme_nhm_entry_t nhm_pe[]={
 		.pme_umasks = { 
 			{ .pme_uname  = "ALL_BRANCHES",
 				.pme_udesc  = "Retired branch instructions (Precise Event)",
-				.pme_ucode  = 0x00,
+				.pme_ucode  = 0x04,
 				.pme_uflags = PFMLIB_NHM_PEBS,
 			}, 
 			{ .pme_uname  = "CONDITIONAL",

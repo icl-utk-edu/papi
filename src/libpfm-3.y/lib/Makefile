@@ -224,6 +224,8 @@ depend:
 	$(MKDEP) $(CFLAGS) $(SRCS)
 
 install: $(TARGETS)
+
+install:
 	@echo building: $(TARGETS)
 	-mkdir -p $(DESTDIR)$(LIBDIR)
 	$(INSTALL) -m 644 $(ALIBPFM) $(DESTDIR)$(LIBDIR)

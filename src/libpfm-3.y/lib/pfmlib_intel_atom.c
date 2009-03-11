@@ -397,7 +397,7 @@ pfm_intel_atom_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_intel_atom_in
 			val |= 1ULL;
 		if (plm & PFM_PLM3)
 			val |= 2ULL;
-		if (cntrs[i].flags & PFM_INTEL_ATOM_SEL_ANYTHR)
+		if (cntrs && cntrs[i].flags & PFM_INTEL_ATOM_SEL_ANYTHR)
 			val |= 4ULL;
 		val |= 1ULL << 3;	 /* force APIC int (kernel may force it anyway) */
 

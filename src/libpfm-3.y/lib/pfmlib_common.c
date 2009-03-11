@@ -333,6 +333,8 @@ pfm_find_event_byname(const char *n, unsigned int *idx)
 	 */
 	for(i=0; i < pfm_current->pme_count; i++) {
 		e = pfm_current->get_event_name(i);
+		if (!e)
+			continue;
 		if (!strncasecmp(e, n, len)
 		    && len == strlen(e))
 			goto found;
@@ -435,13 +437,21 @@ pfm_do_find_event_mask(unsigned int ev, const char *str, unsigned int *mask_idx)
 	unsigned int i, c, num_masks = 0;
 	unsigned long mask_val = -1;
 	char *endptr = NULL;
+	char *mask_name;
+
+	/* empty mask name */
+	if (*str == '\0')
+		return PFMLIB_ERR_UMASK;
 
 	num_masks = pfm_num_masks(ev);
 	for (i = 0; i < num_masks; i++) {
-		if (!strcasecmp(pfm_current->get_event_mask_name(ev, i), str)) {
-			*mask_idx = i;
-			return PFMLIB_SUCCESS;
-		}
+		mask_name = pfm_current->get_event_mask_name(ev, i);
+		if (!mask_name)
+			continue;
+		if (strcasecmp(mask_name, str))
+			continue;
+		*mask_idx = i;
+		return PFMLIB_SUCCESS;
 	}
 	/* don't give up yet; check for a exact numerical value */
 	mask_val = strtoul(str, &endptr, 0);
@@ -492,6 +502,10 @@ pfm_add_numeric_masks(pfmlib_event_t *e, const char *str)
 	unsigned long mask_val = -1, m = 0;
 	char *endptr = NULL;
 	int ret = PFMLIB_ERR_UMASK;
+
+	/* empty mask name */
+	if (*str == '\0')
+		return PFMLIB_ERR_UMASK;
 
 	num_masks = pfm_num_masks(e->event);
 
@@ -557,6 +571,8 @@ pfm_get_event_name(unsigned int i, char *name, size_t maxlen)
 		return PFMLIB_ERR_INVAL;
 
 	str = pfm_current->get_event_name(i);
+	if (!str)
+		return PFMLIB_ERR_BADHOST;
 	l = strlen(str);
 
 	/*
@@ -612,7 +628,7 @@ pfm_get_event_counters(unsigned int i, pfmlib_regmask_t *counters)
 int
 pfm_get_event_mask_name(unsigned int ev, unsigned int mask, char *name, size_t maxlen)
 {
-	char *n;
+	char *str;
 	unsigned int num;
 	size_t l, j;
 
@@ -629,15 +645,14 @@ pfm_get_event_mask_name(unsigned int ev, unsigned int mask, char *name, size_t m
 	if (mask >= num)
 		return PFMLIB_ERR_INVAL;
 
-	n = pfm_current->get_event_mask_name(ev, mask);
-	if (n == NULL)
-		return PFMLIB_ERR_INVAL;
-
-	l = strlen(n);
+	str = pfm_current->get_event_mask_name(ev, mask);
+	if (!str)
+		return PFMLIB_ERR_BADHOST;
+	l = strlen(str);
 	if (l >= (maxlen-1))
 		return PFMLIB_ERR_FULL;
 
-	strcpy(name, n);
+	strcpy(name, str);
 
 	/*
 	 * present nice uniform names
@@ -887,6 +902,7 @@ pfm_get_max_event_name_len(size_t *len)
 {
 	unsigned int i, j, num_masks;
 	size_t max = 0, l;
+	char *str;
 
 	if (PFMLIB_INITIALIZED() == 0)
 		return PFMLIB_ERR_NOINIT;
@@ -894,7 +910,10 @@ pfm_get_max_event_name_len(size_t *len)
 		return PFMLIB_ERR_INVAL;
 
 	for(i=0; i < pfm_current->pme_count; i++) {
-		l = strlen(pfm_current->get_event_name(i));
+		str = pfm_current->get_event_name(i);
+		if (!str)
+			continue;
+		l = strlen(str);
 		if (l > max) max = l;
 
 		num_masks = pfm_num_masks(i);
@@ -904,7 +923,10 @@ pfm_get_max_event_name_len(size_t *len)
 		 * which is inserted as the unit mask separator
 		 */
 		for (j = 0; j < num_masks; j++) {
-			l += 1 + strlen(pfm_current->get_event_mask_name(i, j));
+			str = pfm_current->get_event_mask_name(i, j);
+			if (!str)
+				continue;
+			l += 1 + strlen(str);
 		}
 		if (l > max) max = l;
 	}
@@ -1001,7 +1023,7 @@ pfm_get_event_mask_code(unsigned int event_idx, unsigned int mask_idx, unsigned 
 int
 pfm_get_full_event_name(pfmlib_event_t *e, char *name, size_t maxlen)
 {
-	char *n;
+	char *str;
 	size_t l, j;
 	int ret;
 
@@ -1022,21 +1044,25 @@ pfm_get_full_event_name(pfmlib_event_t *e, char *name, size_t maxlen)
 	 */
 	*name = '\0';
 
-	n = pfm_current->get_event_name(e->event);
-	l = strlen(n);
+	str = pfm_current->get_event_name(e->event);
+	if (!str)
+		return PFMLIB_ERR_BADHOST;
+	l = strlen(str);
 	if (l > (maxlen-1))
 		return PFMLIB_ERR_FULL;
 
-	strcpy(name, n);
+	strcpy(name, str);
 	maxlen -= l + 1;
 	for(j=0; j < e->num_masks; j++) {
-		n = pfm_current->get_event_mask_name(e->event, e->unit_masks[j]);
-		l = strlen(n);
+		str = pfm_current->get_event_mask_name(e->event, e->unit_masks[j]);
+		if (!str)
+			continue;
+		l = strlen(str);
 		if (l > (maxlen-1))
 			return PFMLIB_ERR_FULL;
 
 		strcat(name, ":");
-		strcat(name, n);
+		strcat(name, str);
 		maxlen -= l + 1;
 	}
 	/*
@@ -1095,14 +1121,13 @@ pfm_find_full_event(const char *v, pfmlib_event_t *e)
 		  return PFMLIB_SUCCESS;
 	}
 	
+	ret = PFMLIB_ERR_UMASK;
 	/*
 	 * error if:
 	 * 	- event has no unit mask and at least one is passed
 	 */
- 	if (p && !j) {
-		ret = PFMLIB_ERR_UMASK;
+ 	if (p && !j)
 		goto error;
-	}
 
 	/*
 	 * error if:
@@ -1111,15 +1136,19 @@ pfm_find_full_event(const char *v, pfmlib_event_t *e)
 	if (j && !p) {
 		if (pfm_current->has_umask_default
 		    && pfm_current->has_umask_default(e->event)) {
-		free(str);
-		return PFMLIB_SUCCESS;
-	}
-		ret = PFMLIB_ERR_UMASK;
+			free(str);
+			return PFMLIB_SUCCESS;
+		}
 		goto error;
 	}
 
 	/* skip : */
 	p++;
+	/*
+ 	 * separator is passed but there is nothing behind it
+ 	 */
+	if (!*p)
+		goto error;
 
 	/* parse unit masks */
 	for( q = p; q ; p = q) {

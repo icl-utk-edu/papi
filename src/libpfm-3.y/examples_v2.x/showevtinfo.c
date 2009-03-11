@@ -59,6 +59,7 @@ show_event_info(char *name, unsigned int idx)
 	char *desc;
 	unsigned int n1, n2, i, c;
 	int code, prev_code = 0, first = 1;
+	int ret;
 
 	pfm_get_event_counters(idx, &cnt);
 	pfm_get_num_counters(&n2);
@@ -99,9 +100,11 @@ show_event_info(char *name, unsigned int idx)
 	puts("]");
 	pfm_get_num_event_masks(idx, &n1);
 	for (i = 0; i < n1; i++) {
+		ret = pfm_get_event_mask_name(idx, i, name, max_len+1);
+		if (ret != PFMLIB_SUCCESS)
+			continue;
 		pfm_get_event_mask_description(idx, i, &desc);
 		pfm_get_event_mask_code(idx, i, &c);
-		pfm_get_event_mask_name(idx, i, name, max_len+1);
 		printf("Umask-%02u : 0x%02x : [%s] : %s\n", i, c, name, desc);
 		free(desc);
 	}
@@ -112,6 +115,7 @@ int
 main(int argc, char **argv)
 {
 	unsigned int i, count, match;
+	int ret;
 	char *name;
 	regex_t preg;
 	char model[MAX_PMU_NAME_LEN];
@@ -140,7 +144,11 @@ main(int argc, char **argv)
 		match = 0;
 
 		for(i=0; i < count; i++) {
-			pfm_get_event_name(i, name, max_len+1);
+			ret = pfm_get_event_name(i, name, max_len+1);
+			/* skip unsupported events */
+			if (ret != PFMLIB_SUCCESS)
+				continue;
+
 			if (regexec(&preg, name, 0, NULL, 0) == 0) {
 				show_event_info(name, i);
 				match++;

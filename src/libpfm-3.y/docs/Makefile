@@ -25,8 +25,6 @@ TOPDIR  := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)/..
 include $(TOPDIR)/config.mk
 include $(TOPDIR)/rules.mk
 
-.PHONY: all clean distclean depend
-
 ifeq ($(CONFIG_PFMLIB_ARCH_IA64),y)
 ARCH_MAN=libpfm_itanium.3 libpfm_itanium2.3 libpfm_montecito.3
 endif

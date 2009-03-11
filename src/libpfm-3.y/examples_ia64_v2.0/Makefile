@@ -81,4 +81,3 @@ depend:
 #
 # examples are installed as part of the RPM install, typically in /usr/share/doc/libpfm-X.Y/
 #
-.PHONY: install

@@ -82,6 +82,8 @@ clean:
 distclean: clean
 
 install_examples: $(TARGET_LINUX) $(TARGET_GEN)
+
+install_examples:
 	@echo installing: $(TARGET_LINUX) $(TARGET_GEN)
 	-mkdir -p $(DESTDIR)$(EXAMPLESDIR)
 	$(INSTALL) -m 755 $(TARGET_LINUX) $(TARGET_GEN) $(DESTDIR)$(EXAMPLESDIR)
@@ -89,4 +91,3 @@ install_examples: $(TARGET_LINUX) $(TARGET_GEN)
 #
 # examples are installed as part of the RPM install, typically in /usr/share/doc/libpfm-X.Y/
 #
-.PHONY: install depend install_examples

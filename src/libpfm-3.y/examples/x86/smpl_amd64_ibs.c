@@ -683,8 +683,8 @@ terminate_session:
 static void
 usage(void)
 {
-	printf("usage: task_smpl [-h] [--help] [--no-show] [--ovfl-block] "
-	       "[--ibsop] [--ibsfetch] [--ibsop-native] cmd\n");
+	printf("usage: smpl_amd64_ibs [-hdv] [--help] [--no-show] "
+	       "[--ovfl-block] [--ibsop] [--ibsfetch] [--ibsop-native] cmd\n");
 }
 
 int
@@ -693,7 +693,14 @@ main(int argc, char **argv)
 	pfmlib_options_t pfmlib_options;
 	int c, ret;
 
-	while ((c=getopt_long(argc, argv,"h", the_options, 0)) != -1) {
+	/*
+	 * pass options to library
+	 */
+	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
+	pfmlib_options.pfm_debug   = 0; /* set to 1 for debug */
+	pfmlib_options.pfm_verbose = 0; /* set to 1 for verbose */
+
+	while ((c=getopt_long(argc, argv,"+hvd", the_options, 0)) != -1) {
 		switch(c) {
 			case 0: continue;
 
@@ -701,6 +708,12 @@ main(int argc, char **argv)
 			case 'h':
 				usage();
 				exit(0);
+			case 'v':
+				pfmlib_options.pfm_verbose = 1;
+				continue;
+			case 'd':
+				pfmlib_options.pfm_debug = 1;
+				continue;
 			default:
 				fatal_error("");
 		}
@@ -710,12 +723,6 @@ main(int argc, char **argv)
 		fatal_error("You must specify a command to execute\n");
 	}
 	
-	/*
-	 * pass options to library (optional)
-	 */
-	memset(&pfmlib_options, 0, sizeof(pfmlib_options));
-	pfmlib_options.pfm_debug   = 0; /* set to 1 for debug */
-	pfmlib_options.pfm_verbose = 1; /* set to 1 for verbose */
 	pfm_set_options(&pfmlib_options);
 
 	/*

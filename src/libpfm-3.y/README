@@ -1,5 +1,5 @@
             ------------------------------------------------------
-                                    libpfm-3.7:
+                                    libpfm-3.8:
       a helper library to program the Performance Monitoring Unit (PMU)
             ------------------------------------------------------
  	  Copyright (c) 2001-2007 Hewlett-Packard Development Company, L.P.
@@ -16,7 +16,7 @@ This version of libpfm supports:
 		Itanium (Merced), Itanium 2 (McKinley, Madison, Deerfield),
 		Itanium 2 9000/9100 (Montecito, Montvale) and Generic
 	- For AMD X86:
-		AMD Opteron (K8, fam 10h)
+		AMD64 (K8, family 10h)
 	- For Intel X86: 
 		Intel P6 (Pentium II, Pentium Pro, Pentium III, Pentium M)
 		Intel Yonah (Core Duo/Core Solo),

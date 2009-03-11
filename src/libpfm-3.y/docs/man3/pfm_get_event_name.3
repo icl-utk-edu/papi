@@ -28,7 +28,7 @@ The buffer size must be large enough to store the event name, otherwise
 an error is returned. This behavior is required to avoid returning partial
 names with no way for the caller to verify this is not the full name, except
 by failing other calls. The buffer can be appropriately sized using the
-\fBpfm_get_max_event_name_len()\fR function. The name is returned has a
+\fBpfm_get_max_event_name_len()\fR function. The returned name is a
 null terminated string with all upper-case characters and no spaces.
 .sp
 The \fBpfm_get_full_event_name()\fR function returns in \fBname\fR the event 
@@ -55,36 +55,37 @@ Given an opaque event descriptor \fBe\fR, the \fBpfm_get_event_counters()\fR
 function returns in \fBcounters\fR a bitmask of type \fBpfmlib_regmask_t\fR where 
 each bit set represents a PMU config register which can be used to program this 
 event. The bitmask must be accessed using accessor macros defined by the library.
+.so
+The \fBpfm_get_num_events()\fR function returns in \fBcount\fR the
+total number of events available for the PMU model. On some PMU
+models, however, not all events in the table may be useable due
+to processor stepping changes. However, The library guarantees that
+no more that \fBcount\fR events are available.
 .sp
 It is possible to list all existing events for the detected host PMU
 using accessor functions as the full table of events is not accessible
 to the applications. The index of the first event is always zero,
 then using the \fBpfm_get_num_events()\fR function you get the total number of events.
-Event descriptors are contiguous therefore a simple loop will allow
+On some PMU models, e.g., AMD64, not all events are necessarily supported by the host
+PMU, therefore the count returned by this calls may not be the actual number of available
+events. Event descriptors are contiguous therefore a simple loop will allow
 complete scanning. The typical scan loop is constructed as 
 follows:
 .sp
 .nf
 unsigned int i, count;
 char name[256];
+int ret;
 pfm_get_num_events(&count);
 for(i=0;i < count; i++)
 {
-   pfm_get_event_name(i, name, 256);
+   ret = pfm_get_event_name(i, name, 256);
+   if (ret != PFMLIB_SUCCESS)
+       continue;
    printf("%s\\n", name);
 }
 .fi
 
-.so
-The \fBpfm_get_num_events()\fR function returns in \fBcount\fR the
-total number of events supported by the host PMU.
-.sp
-The former \fBpfm_get_first_event()\fR function has been deprecated. You can simply
-initialize your variable to 0 to point to the first event.
-.sp
-The former \fBpfm_get_next_event()\fR function has been deprecated. You need
-to retrieve the total number of events for the host PMU
-and then increment your loop variable until you reach that count.
 .sp
 The \fBpfm_get_max_event_name_len()\fR function returns in \fBlen\fR 
 the maximum length in bytes for the name of the events or its unit masks, if any,
@@ -128,5 +129,5 @@ the event or unit mask descriptor, or the \fBcnt\fR argument is invalid, or a po
 .SH SEE ALSO
 pfm_get_impl_counters(3), pfm_get_max_event_name_len(3), free(3)
 .SH AUTHOR
-Stephane Eranian <eranian@hpl.hp.com>
+Stephane Eranian <eranian@gmail.com>
 .PP

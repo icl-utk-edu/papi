@@ -46,8 +46,9 @@ distclean: clean
 lib/libpfms.a: 
 	@set -e ; $(MAKE) -C lib all
 
-.PHONY: install depend
 install depend: $(TARGETS)
+
+install depend:
 ifeq ($(CONFIG_PFMLIB_ARCH_SICORTEX),y)
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 endif

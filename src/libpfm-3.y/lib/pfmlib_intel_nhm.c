@@ -389,8 +389,8 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 		 * they are doing
 		 */
 		if (ne->pme_flags & (PFMLIB_NHM_UNC|PFMLIB_NHM_UNC_FIXED)) {
-			if ((e[i].plm && e[i].plm != (PFM_PLM0|PFM_PLM3))
-			    || (inp->pfp_dfl_plm != (PFM_PLM0|PFM_PLM3))) {
+			if ((!e[i].plm && (inp->pfp_dfl_plm != (PFM_PLM0|PFM_PLM3)))
+			    || (e[i].plm != (PFM_PLM0|PFM_PLM3))) {
 				DPRINT("uncore events must have PLM0|PLM3\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
@@ -535,7 +535,7 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 			val |= 1ULL;
 		if (plm & PFM_PLM3)
 			val |= 2ULL;
-		if (cntrs[i].flags & PFM_NHM_SEL_ANYTHR)
+		if (cntrs && cntrs[i].flags & PFM_NHM_SEL_ANYTHR)
 			val |= 4ULL;
 		val |= 1ULL << 3;	 /* force APIC int (kernel may force it anyway) */
 

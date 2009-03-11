@@ -75,42 +75,9 @@
 #define AMD64_SEL_BASE	0xc0010000
 #define AMD64_CTR_BASE	0xc0010004
 
-#define AMD64_FAM10H AMD64_FAM10H_REV_B
-
-typedef enum {
-	AMD64_CPU_UN,
-	AMD64_K7,
-	AMD64_K8_REV_B,
-	AMD64_K8_REV_C,
-	AMD64_K8_REV_D,
-	AMD64_K8_REV_E,
-	AMD64_K8_REV_F,
-	AMD64_K8_REV_G,
-	AMD64_FAM10H_REV_B,
-	AMD64_FAM10H_REV_C,
-} amd64_rev_t;
-
-static const char *amd64_rev_strs[]= {
-	"?", "B", "C", "D", "E", "F", "G", "B", "C"
-};
-
-static const char *amd64_cpu_strs[]= {
-	"unknown model",
-	"K7",
-	"K8 RevB",
-	"K8 RevC",
-	"K8 RevD",
-	"K8 RevE",
-	"K8 RevF",
-	"K8 RevG",
-	"Barcelona RevB",
-	"Barcelona RevC",
-};
-
-#define NAME_SIZE 32
 static struct {
 	amd64_rev_t	revision;
-	char		name[NAME_SIZE];
+	char		*name;
 	unsigned int	cpu_clks;
 	unsigned int	ret_inst;
 	int		family;
@@ -118,6 +85,13 @@ static struct {
 	int		stepping;
 	pme_amd64_entry_t *events;
 } amd64_pmu;
+
+pme_amd64_entry_t unsupported_event = {
+	.pme_name = "<unsupported>",
+	.pme_desc = "This event is not supported be this cpu revision.",
+	.pme_code = ~0,
+	.pme_flags = PFMLIB_AMD64_NOT_SUPP,
+};
 
 pfm_pmu_support_t amd64_support;
 
@@ -164,11 +138,17 @@ amd64_get_revision(int family, int model, int stepping)
 			return AMD64_K8_REV_B;
 		}
 	} else if (family == 16) {
-		if (model <= 3)
-			return AMD64_FAM10H_REV_B;
-		if (model <= 6)
+		switch (model) {
+		case 4:
+		case 5:
+		case 6:
 			return AMD64_FAM10H_REV_C;
-		return AMD64_FAM10H_REV_B;
+		case 8:
+		case 9:
+			return AMD64_FAM10H_REV_D;
+		default:
+			return AMD64_FAM10H_REV_B;
+		}
 	}
 
 	return AMD64_CPU_UN;
@@ -195,8 +175,7 @@ static void
 pfm_amd64_setup(amd64_rev_t revision)
 {
 	amd64_pmu.revision = revision;
-	snprintf(amd64_pmu.name, NAME_SIZE, "AMD64 (%s)",
-		 amd64_cpu_strs[revision]);
+	amd64_pmu.name = (char *)amd64_cpu_strs[revision];
 	amd64_support.pmu_name	= amd64_pmu.name;
 
 	/* K8 (default) */
@@ -262,19 +241,48 @@ pfm_amd64_detect(void)
 	return PFMLIB_SUCCESS;
 }
 
+static void
+pfm_amd64_force(void)
+{
+	char *str;
+	int pmu_type;
+
+	/* parses LIBPFM_FORCE_PMU=16,<family>,<model>,<stepping> */
+	str = getenv("LIBPFM_FORCE_PMU");
+	if (!str)
+		goto failed;
+	pmu_type = strtol(str, &str, 10);
+	if (pmu_type != 16)
+		goto failed;
+	if (!*str || *str++ != ',')
+		goto failed;
+	amd64_family = strtol(str, &str, 10);
+	if (!*str || *str++ != ',')
+		goto failed;
+	amd64_model = strtol(str, &str, 10);
+	if (!*str || *str++ != ',')
+		goto failed;
+	amd64_stepping = strtol(str, &str, 10);
+	if (!*str)
+		goto done;
+failed:
+	DPRINT("force failed at: %s\n", str ? str : "<NULL>");
+	/* force AMD64 =  force to Barcelona */
+	amd64_family = 16;
+	amd64_model  = 2;
+	amd64_stepping = 2;
+done:
+	amd64_revision = amd64_get_revision(amd64_family, amd64_model,
+					    amd64_stepping);
+}
+
 static int
 pfm_amd64_init(void)
 {
-	/*
-	 * force AMD64 =  force to Barcelona
-	 */
-	if (forced_pmu != PFMLIB_NO_PMU) {
-		amd64_family = 16;
-		amd64_model  = 2;
-		amd64_stepping = 2;
-		amd64_revision = amd64_get_revision(amd64_family, amd64_model, amd64_stepping);
-	}
-	__pfm_vbprintf("AMD family=%d model=0x%x stepping=0x%x rev=%s (%s)\n",
+	if (forced_pmu != PFMLIB_NO_PMU)
+		pfm_amd64_force();
+
+	__pfm_vbprintf("AMD family=%d model=0x%x stepping=0x%x rev=%s, %s\n",
 		       amd64_family,
 		       amd64_model,
 		       amd64_stepping,
@@ -287,33 +295,39 @@ pfm_amd64_init(void)
 }
 
 static int
-is_valid_rev(int flags)
+is_valid_rev(unsigned int flags, int revision)
 {
-	if (flags & PFMLIB_AMD64_K8_REV_D
-	   && amd64_revision < AMD64_K8_REV_D)
-	   	return 0;
+	if (revision < from_revision(flags))
+		return 0;
 
-	if (flags & PFMLIB_AMD64_K8_REV_E
-	   && amd64_revision < AMD64_K8_REV_E)
-	   	return 0;
-
-	if (flags & PFMLIB_AMD64_K8_REV_F
-	   && amd64_revision < AMD64_K8_REV_F)
-	   	return 0;
+	if (revision > till_revision(flags))
+		return 0;
 
 	/* no restrictions or matches restrictions */
 	return 1;
 }
 
 static inline pme_amd64_entry_t
-*pfm_amd64_get_event_entry(unsigned int i)
+*pfm_amd64_get_event_entry(unsigned int index)
 {
-	unsigned int index = i;
-
+	/*
+	 * Since there are no NULL pointer checks for the return
+	 * value, &unsupported_event is returned instead. Function
+	 * is_valid_index() may be used to validate the index.
+	 */
+	pme_amd64_entry_t *event;
 	if (index >= amd64_event_count)
-		return NULL;
+		return &unsupported_event;
+	event = &amd64_events[index];
+	if (!is_valid_rev(event->pme_flags, amd64_revision))
+		return &unsupported_event;
+	return event;
+}
 
-	return &amd64_events[index];
+static inline int
+is_valid_index(unsigned int index)
+{
+	return (pfm_amd64_get_event_entry(index) != &unsupported_event);
 }
 
 /*
@@ -373,7 +387,8 @@ pfm_amd64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_amd64_input_param_
 		 * check revision restrictions at the event level
 		 * (check at the umask level later)
 		 */
-		if (!is_valid_rev(pfm_amd64_get_event_entry(e[i].event)->pme_flags)) {
+		if (!is_valid_rev(pfm_amd64_get_event_entry(e[i].event)->pme_flags,
+				  amd64_revision)) {
 			DPRINT("CPU does not have correct revision level\n");
 			return PFMLIB_ERR_BADHOST;
 		}
@@ -408,7 +423,8 @@ pfm_amd64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_amd64_input_param_
 		/* if plm is 0, then assume not specified per-event and use default */
 		plm = e[j].plm ? e[j].plm : inp->pfp_dfl_plm;
 
-		if (!is_valid_rev(pfm_amd64_get_event_entry(e[j].event)->pme_flags))
+		if (!is_valid_rev(pfm_amd64_get_event_entry(e[j].event)->pme_flags,
+				  amd64_revision))
 			return PFMLIB_ERR_BADHOST;
 
 		reg.sel_event_mask  = pfm_amd64_get_event_entry(e[j].event)->pme_code;
@@ -417,7 +433,8 @@ pfm_amd64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_amd64_input_param_
 		umask = 0;
 		for(k=0; k < e[j].num_masks; k++) {
 			/* check unit mask revision restrictions */
-			if (!is_valid_rev(pfm_amd64_get_event_entry(e[j].event)->pme_umasks[e[j].unit_masks[k]].pme_uflags))
+			if (!is_valid_rev(pfm_amd64_get_event_entry(e[j].event)->pme_umasks[e[j].unit_masks[k]].pme_uflags,
+					  amd64_revision))
 				return PFMLIB_ERR_BADHOST;
 
 			umask |= pfm_amd64_get_event_entry(e[j].event)->pme_umasks[e[j].unit_masks[k]].pme_ucode;
@@ -645,6 +662,8 @@ pfm_amd64_get_hw_counter_width(unsigned int *width)
 static char *
 pfm_amd64_get_event_name(unsigned int i)
 {
+	if (!is_valid_index(i))
+		return NULL;
 	return pfm_amd64_get_event_entry(i)->pme_name;
 }
 
@@ -664,7 +683,11 @@ pfm_amd64_get_event_desc(unsigned int ev, char **str)
 static char *
 pfm_amd64_get_event_mask_name(unsigned int ev, unsigned int midx)
 {
-	return pfm_amd64_get_event_entry(ev)->pme_umasks[midx].pme_uname;
+	pme_amd64_umask_t *umask;
+	umask = &pfm_amd64_get_event_entry(ev)->pme_umasks[midx];
+	if (!is_valid_rev(umask->pme_uflags, amd64_revision))
+		return NULL;
+	return umask->pme_uname;
 }
 
 static int

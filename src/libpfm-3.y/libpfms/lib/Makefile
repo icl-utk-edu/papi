@@ -84,8 +84,9 @@ clean:
 
 distclean: clean
 
-.PHONY: install depend
 install: $(TARGETS)
+
+install:
 	-mkdir -p $(DESTDIR)$(LIBDIR)
 	$(INSTALL) -m 644 $(ALIBPFM) $(DESTDIR)$(LIBDIR)
 	$(INSTALL) $(SLIBPFM) $(DESTDIR)$(LIBDIR)

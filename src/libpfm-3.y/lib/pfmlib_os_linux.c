@@ -165,7 +165,7 @@ static void adjust__pfmlib_sys_base(int version)
 	}
 #endif
 }
-#elif (_MIPS_SIM == _ABI32) || (_MIPS_SIM == _MIPS_SIM_ABI32)
+#elif (_MIPS_SIM == _ABIO32) || (_MIPS_SIM == _MIPS_SIM_ABI32)
 static void adjust__pfmlib_sys_base(int version)
 {
 	_pfmlib_sys_base = 4000;
