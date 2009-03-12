@@ -63,7 +63,7 @@ int prof_events(int num_tests, const PAPI_hw_info_t *hw_info) {
   /* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
       PAPI_TOT_INS, depends on the availability of the event on the
       platform */
-   EventSet = add_two_events(&num_events, &PAPI_event, hw_info, &mask);
+   EventSet = add_two_nonderived_events(&num_events, &PAPI_event, hw_info, &mask);
 
    values = allocate_test_space(num_tests, num_events);
 
@@ -96,8 +96,9 @@ void prof_print_address(char *title, const PAPI_exe_info_t *prginfo) {
 void prof_print_prof_info(caddr_t start, caddr_t end, int threshold, char *event_name)
 {
    printf("Profiling event  : %s\n", event_name);
-   printf("Profile Threshold: %d\n", THRESHOLD);
-   printf("Profile Range    : 0x%p to 0x%p\n",start,end);
+   printf("Profile Threshold: %d\n", threshold);
+   printf("Profile Iters    : %d\n",(getenv("NUM_ITERS") ? atoi(getenv("NUM_ITERS")) : NUM_ITERS));
+   printf("Profile Range    : %p to %p\n",start,end);
    printf("----------------------------------------------------------------\n");
    printf("\n");
 }
@@ -112,14 +113,14 @@ void do_no_profile (void) {
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   do_both(NUM_ITERS);
+   do_flops(getenv("NUM_ITERS") ? atoi(getenv("NUM_ITERS")) : NUM_ITERS);
 
    if ((retval = PAPI_stop(EventSet, values[0])) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-   printf("Test type\t\t: No profiling\n");
+   printf("Test type   : \t%s\n", "No profiling");
    printf(TAB1, event_name, (values[0])[0]);
-   printf(TAB1, "PAPI_TOT_CYC:", (values[0])[1]);
+   printf(TAB1, "PAPI_TOT_CYC", (values[0])[1]);
 }
 
 /* This routine allocates and initializes up to 5 equal sized profiling buffers.

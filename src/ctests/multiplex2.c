@@ -21,6 +21,7 @@ void init_papi(void)
    retval = PAPI_library_init(PAPI_VER_CURRENT);
    if (retval != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+
 }
 
 /* Tests that we can really multiplex a lot. */
@@ -76,11 +77,12 @@ int case1(void)
    if (values == NULL)
       test_fail(__FILE__, __LINE__, "malloc", 0);
 
+   do_stuff();
+
    if (PAPI_start(EventSet) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   do_both(NUM_ITERS);
-   do_misses(10, 1024*1024*4);
+   do_stuff();
 
    retval = PAPI_stop(EventSet, values);
    if (retval != PAPI_OK)

@@ -12,9 +12,9 @@ static void test_continue(char *file, int line, char *call, int retval)
 int main(int argc, char **argv)
 {
   int retval;
-  int code = PAPI_TOT_CYC;
+  unsigned int code = PAPI_TOT_CYC;
   char event_name[PAPI_MAX_STR_LEN];
-   const PAPI_hw_info_t *hwinfo = NULL;
+  const PAPI_hw_info_t *hwinfo = NULL;
   const PAPI_component_info_t *cmp_info;
 
   tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
@@ -23,23 +23,8 @@ int main(int argc, char **argv)
   if (retval != PAPI_VER_CURRENT)
     test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
   
-   if ((hwinfo = PAPI_get_hardware_info()) == NULL)
-      test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
-
-  printf("Test case code2name.c: Check limits and indexing of event tables.\n");
-  printf ("-------------------------------------------------------------------------\n");
-  printf("Vendor string and code   : %s (%d)\n", hwinfo->vendor_string,
-         hwinfo->vendor);
-  printf("Model string and code    : %s (%d)\n", hwinfo->model_string, hwinfo->model);
-  printf("CPU Revision             : %f\n", hwinfo->revision);
-  printf("CPU Megahertz            : %f\n", hwinfo->mhz);
-  printf("CPU Clock Megahertz      : %d\n", hwinfo->clock_mhz);
-  printf("CPU's in this Node       : %d\n", hwinfo->ncpu);
-  printf("Nodes in this System     : %d\n", hwinfo->nnodes);
-  printf("Total CPU's              : %d\n", hwinfo->totalcpus);
-  printf("Number Hardware Counters : %d\n", PAPI_get_opt(PAPI_MAX_HWCTRS, NULL));
-  printf("Max Multiplex Counters   : %d\n", PAPI_get_opt(PAPI_MAX_MPX_CTRS, NULL));
-  printf ("-------------------------------------------------------------------------\n\n");
+  retval = papi_print_header ("Test case code2name.c: Check limits and indexing of event tables.\n", 0, &hwinfo);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
   printf("Looking for PAPI_TOT_CYC...\n");
   retval = PAPI_event_code_to_name(code, event_name);

@@ -51,8 +51,8 @@ int main(int argc, char **argv)
    int EventSet=PAPI_NULL;
    long long(values[2])[2];
    long long min, max;
-   int num_flops, retval;
-   int PAPI_event, mythreshold;
+   int num_flops = NUM_FLOPS, retval;
+   int PAPI_event, mythreshold=THRESHOLD;
    char event_name[PAPI_MAX_STR_LEN];
    const PAPI_hw_info_t *hw_info = NULL;
    int num_events, mask; 
@@ -70,24 +70,21 @@ int main(int argc, char **argv)
    /* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
       PAPI_TOT_INS, depending on the availability of the event on the
       platform */
-   EventSet = add_two_events(&num_events, &PAPI_event, hw_info, &mask);
+   EventSet = add_two_nonderived_events(&num_events, &PAPI_event, hw_info, &mask);
 
-   if ( PAPI_event == PAPI_FP_INS || PAPI_event == PAPI_FP_OPS ) 
-      mythreshold = THRESHOLD;
-   else
 #if defined(linux)
-      mythreshold = hw_info->mhz*10000*2;
-#else
-      mythreshold = THRESHOLD*2;
+     {
+       char *tmp = getenv("THRESHOLD");
+       if (tmp) 
+	     mythreshold = atoi(tmp);
+     }
 #endif
-
-   num_flops = NUM_FLOPS*2;
 
    retval = PAPI_start(EventSet);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   do_flops(num_flops);
+   do_flops(NUM_FLOPS);
 
    retval = PAPI_stop(EventSet, values[0]);
    if (retval != PAPI_OK)
@@ -161,6 +158,7 @@ int main(int argc, char **argv)
 
    min = (long long) (((values[0])[0] * (1.0 - OVR_TOLERANCE)) / (long long) mythreshold);
    max = (long long) (((values[0])[0] * (1.0 + OVR_TOLERANCE)) / (long long) mythreshold);
+   printf("Overflows: total(%d) > max(%lld) || total(%d) < min(%lld) ", total, max, total, min);
    if (total > max || total < min)
       test_fail(__FILE__, __LINE__, "Overflows", 1);
 

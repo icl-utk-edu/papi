@@ -5,7 +5,12 @@
 *          london@cs.utk.edu
 * Mods:    Maynard Johnson
 *          maynardj@us.ibm.com
-* Mods:    <your name here>
+*          Philip Mucci
+*	       mucci@cs.utk.edu
+*          Haihang You
+*	       you@cs.utk.edu
+*	       <your name here>
+
 *          <your email address>
 */
 
@@ -31,43 +36,43 @@
 #include "papi_test.h"
 
 #ifdef _CRAYT3E
-#define OVER_FMT	"handler(%d ) Overflow at %x! overflow_vector=0x%x!\n"
+#define OVER_FMT	"handler(%d) Overflow at %x! overflow_vector=0x%x!\n"
 #define OUT_FMT		"%-12s : %16lld%16d%16lld\n"
 #elif defined(_WIN32)
-#define OVER_FMT	"handler(%d ) Overflow at %p! overflow_vector=0x%x!\n"
+#define OVER_FMT	"handler(%d) Overflow at %p! overflow_vector=0x%x!\n"
 #define OUT_FMT		"%-12s : %16I64d%16d%16I64d\n"
 #else
-#define OVER_FMT	"handler(%d ) Overflow at %p overflow_vector=0x%llx!\n"
+#define OVER_FMT	"handler(%d) Overflow at %p overflow_vector=0x%llx!\n"
 #define OUT_FMT		"%-12s : %16lld%16d%16lld\n"
 #endif
 
-extern int _papi_hwi_error_level;
-static int total[2] = {0,0};                  /* total overflows */
-static int use_total=0;
+#define HARD_TOLERANCE 0.25
+#define SOFT_TOLERANCE 0.90
+#define MY_NUM_TESTS 5
 
+static int total[MY_NUM_TESTS] = {0,};                  /* total overflows */
+static int use_total=0;                                 /* which total field to bump */
+static long long values[MY_NUM_TESTS] = { 0,};
+   
 void handler(int EventSet, void *address, long long overflow_vector, void *context)
 {
    if (!TESTS_QUIET) {
       fprintf(stderr, OVER_FMT, EventSet, address, overflow_vector);
    }
 
-   if ( use_total )
-      total[1]++;
-   else
-      total[0]++;
+   total[use_total]++;
 }
 
 int main(int argc, char **argv)
 {
    int EventSet=PAPI_NULL;
-   long long values[3] = { 0, 0, 0 };
-   long long min, max;
-   int save_debug_setting;
-   int num_flops, retval;
-   int PAPI_event=0, mythreshold;
+   long long hard_min, hard_max, soft_min, soft_max;
+   int retval;
+   int PAPI_event=0, mythreshold=THRESHOLD;
    char event_name[PAPI_MAX_STR_LEN];
    PAPI_option_t  opt;
    PAPI_event_info_t info;
+   PAPI_option_t itimer; 
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
@@ -105,14 +110,6 @@ int main(int argc, char **argv)
    if ( PAPI_event == 0 )
       test_fail(__FILE__, __LINE__, "No suitable event for this test found!", 0);
    
-
-   if (PAPI_event == PAPI_FP_INS )
-      mythreshold = THRESHOLD;
-   else if ( PAPI_event == PAPI_TOT_INS )
-      mythreshold = THRESHOLD * 10;
-   else 
-      mythreshold = THRESHOLD * 2;
-
    retval = PAPI_create_eventset(&EventSet);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
@@ -121,15 +118,22 @@ int main(int argc, char **argv)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
 
+   do_stuff();
+
+   /* Do reference count */
+
    retval = PAPI_start(EventSet);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   do_flops(NUM_FLOPS);
+   do_stuff();
 
-   retval = PAPI_stop(EventSet, &values[0]);
+   retval = PAPI_stop(EventSet, &values[use_total]);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+   use_total++;
+
+   /* Now do hardware overflow reference count */
 
    retval = PAPI_overflow(EventSet, PAPI_event, mythreshold, 0, handler);
    if (retval != PAPI_OK)
@@ -139,86 +143,121 @@ int main(int argc, char **argv)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   do_flops(NUM_FLOPS);
+   do_stuff();
 
-   retval = PAPI_stop(EventSet, &values[1]);
+   retval = PAPI_stop(EventSet, &values[use_total]);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+   use_total++;
 
-   use_total = 1;
-
-   retval = PAPI_add_event(EventSet, PAPI_TOT_CYC);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-
-   retval = PAPI_overflow(EventSet, PAPI_event, 0, PAPI_OVERFLOW_FORCE_SW, handler);
+   retval = PAPI_overflow(EventSet, PAPI_event, 0, 0, handler);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
+   /* Now do software overflow reference count, uses SIGPROF */
+   
    retval = PAPI_overflow(EventSet, PAPI_event, mythreshold, PAPI_OVERFLOW_FORCE_SW, handler);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
-
-   /* expecting error code, so let's suppress printout of error message */
-   PAPI_get_opt(PAPI_DEBUG, &opt);
-   save_debug_setting = opt.debug.level;
-   opt.debug.level = PAPI_QUIET;
-   PAPI_set_opt(PAPI_DEBUG, &opt);
-   retval = PAPI_overflow(EventSet, PAPI_TOT_CYC, mythreshold, 0, handler);
-   if (retval == PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_overflow: allowed hardware and software overflow", -1);
-   opt.debug.level = save_debug_setting;
-   PAPI_set_opt(PAPI_DEBUG, &opt);
-
-   retval = PAPI_overflow(EventSet, PAPI_TOT_CYC, mythreshold, PAPI_OVERFLOW_FORCE_SW, handler);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_overflow: didn't allow 2 software overflow", -1);
-
-   retval = PAPI_remove_event(EventSet, PAPI_TOT_CYC);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_remove_event", retval);
 
    retval = PAPI_start(EventSet);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   do_flops(NUM_FLOPS);
+   do_stuff();
 
-   retval = PAPI_stop(EventSet, &values[2]);
+   retval = PAPI_stop(EventSet, &values[use_total]);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+   use_total++;
 
-   num_flops = NUM_FLOPS;
-#if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_CRAYT3E) || defined(_POWER4)
-   num_flops *= 2;
-#endif
+   retval = PAPI_overflow(EventSet, PAPI_event, 0, PAPI_OVERFLOW_FORCE_SW, handler);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
+
+  /* Now do software overflow with SIGVTALRM */
+
+   memset(&itimer,0,sizeof(itimer));
+   itimer.itimer.itimer_num = ITIMER_VIRTUAL; 
+   itimer.itimer.itimer_sig = SIGVTALRM; 
+
+   if (PAPI_set_opt(PAPI_DEF_ITIMER,&itimer) != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_set_opt", retval);
+ 
+   retval = PAPI_overflow(EventSet, PAPI_event, mythreshold, PAPI_OVERFLOW_FORCE_SW, handler);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
+
+   retval = PAPI_start(EventSet);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_start", retval);
+
+   do_stuff();
+
+   retval = PAPI_stop(EventSet, &values[use_total]);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+   use_total++;
+
+   retval = PAPI_overflow(EventSet, PAPI_event, 0, PAPI_OVERFLOW_FORCE_SW, handler);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
+
+   /* Now do software overflow with SIGALRM */
+   
+   memset(&itimer,0,sizeof(itimer));
+   itimer.itimer.itimer_num = ITIMER_REAL; 
+   itimer.itimer.itimer_sig = SIGALRM; 
+   if (PAPI_set_opt(PAPI_DEF_ITIMER,&itimer) != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_set_opt", retval);
+ 
+   retval = PAPI_overflow(EventSet, PAPI_event, mythreshold, PAPI_OVERFLOW_FORCE_SW, handler);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
+
+   retval = PAPI_start(EventSet);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_start", retval);
+
+   do_stuff();
+
+   retval = PAPI_stop(EventSet, &values[use_total]);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+   use_total++;
+
+   retval = PAPI_overflow(EventSet, PAPI_event, 0, PAPI_OVERFLOW_FORCE_SW, handler);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
    if (!TESTS_QUIET) {
       if ((retval = PAPI_event_code_to_name(PAPI_event, event_name)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
 
-      printf("Test case: Overflow dispatch of 1st event in set with 1 event.\n");
-      printf("--------------------------------------------------------------\n");
+      printf("Test case: Software overflow of various types with 1 event in set.\n");
+      printf("-----------------------------------------------\n");
       printf("Threshold for overflow is: %d\n", mythreshold);
-      printf("Using %d iterations of c += a*b\n", NUM_FLOPS);
       printf("-----------------------------------------------\n");
 
-      printf("Test type    : %16d%16d%16d\n", 1, 2, 3);
-      printf(OUT_FMT, event_name, values[0], 0, values[2]);
-      printf("Overflows    : %16s%16d%16d\n", "", total[0], total[1]);
+      printf("Test type    : %16s%16s%16s%16s%16s\n", "Reference", "Hardware", "ITIMER_PROF", "ITIMER_VIRTUAL", "ITIMER_REAL");
+      printf("%-13s: %16lld%16lld%16lld%16lld%16lld\n",info.symbol,values[0],values[1],values[2],values[3],values[4]);
+      printf("Overflows    : %16d%16d%16d%16d%16d\n", total[0],total[1],total[2],total[3],total[4]);
       printf("-----------------------------------------------\n");
 
       printf("Verification:\n");
      
-      printf("Overflow in Column 2 approximately equals overflows in column 3\n");
+      printf("Overflow in Column 2 greater than or equal to overflows in column 3\n");
+      printf("Overflow in Column 3 greater than 0\n");
    }
 
-   min = (long long) ((values[0] * (1.0 - OVR_TOLERANCE)) / (long long) mythreshold);
-   max = (long long) ((values[0] * (1.0 + OVR_TOLERANCE)) / (long long) mythreshold);
-   if (total[0] > max || total[0] < min)
+   hard_min = (long long) ((values[0] * (1.0 - HARD_TOLERANCE)) / (long long) mythreshold);
+   hard_max = (long long) ((values[0] * (1.0 + HARD_TOLERANCE)) / (long long) mythreshold);
+   soft_min = (long long) ((values[0] * (1.0 - SOFT_TOLERANCE)) / (long long) mythreshold);
+   soft_max = (long long) ((values[0] * (1.0)) / (long long) mythreshold);
+   if (total[1] > hard_max || total[1] < hard_min)
       test_fail(__FILE__, __LINE__, "Hardware Overflows", 1);
 
-   if (total[1] > max || total[1] < min)
+   if (total[2] > soft_max || total[2] < soft_min)
       test_fail(__FILE__, __LINE__, "Software Overflows", 1);
 
    test_pass(__FILE__, NULL, 0);

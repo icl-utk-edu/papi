@@ -56,12 +56,13 @@ static int add_remove_event(int EventSet, int event_code, char *name) {
 
 int main(int argc, char **argv)
 {
-   int i, k, EventSet=PAPI_NULL, add_count=0, err_count=0;
+   int i, k, EventSet=PAPI_NULL, add_count=0, err_count=0, unc_count=0;
    int retval;
-   PAPI_event_info_t info;
+   PAPI_event_info_t info, info1;
    const PAPI_hw_info_t *hwinfo = NULL;
+   int Intel_i7;
    int event_code;
-   const PAPI_component_info_t *c = NULL;
+   const PAPI_component_info_t *s = NULL;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
    /*for(i=0;i<argc;i++) */
@@ -78,7 +79,10 @@ int main(int argc, char **argv)
 	  ("Test case ALL_NATIVE_EVENTS: Available native events and hardware information.\n", 0, &hwinfo);
    if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
-   if ((c = PAPI_get_component_info(0)) == NULL)
+   /* we need a little exception processing if it's a Core i7 */
+   Intel_i7 = strstr(hwinfo->model_string, "Intel Core i7");
+
+   if ((s = PAPI_get_component_info(0)) == NULL)
       test_fail(__FILE__, __LINE__, "PAPI_get_substrate_info", 2);
 
    /* For platform independence, always ASK FOR the first event */
@@ -88,25 +92,33 @@ int main(int argc, char **argv)
 
    do {
 	retval = PAPI_get_event_info(i, &info);
-	if (c->cntr_umasks) {
+	if (Intel_i7) {
+		if (!strncmp(info.symbol, "UNC_", 4)) {
+			unc_count++;
+			continue;
+		}
+	}
+	if (s->cntr_umasks) {
 		k = i;
 		if (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
 			do {
-				retval = PAPI_get_event_info(k, &info);
-				event_code = info.event_code;
-				if (add_remove_event(EventSet, event_code, info.symbol))
+				retval = PAPI_get_event_info(k, &info1);
+				event_code = info1.event_code;
+				if (add_remove_event(EventSet, event_code, info1.symbol))
 					add_count++;
 				else err_count++;
 			} while (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK);
 		}
-		if (retval == PAPI_OK)
-			printf("\n");
+		else{
+		  event_code = info.event_code;
+  		  if (add_remove_event(EventSet, event_code, info.symbol))
+			add_count++;
+		  else err_count++;
+	       }
 	}
 	else {
 		event_code = info.event_code;
-#ifdef _POWER4
-		event_code &= 0xff00ffff;
-#endif
+		if (s->cntr_groups) event_code &= ~PAPI_NTV_GROUP_AND_MASK;
 		if (add_remove_event(EventSet, event_code, info.symbol))
 			add_count++;
 		else err_count++;
@@ -115,7 +127,9 @@ int main(int argc, char **argv)
 
     printf("\n\nSuccessfully found, added, and removed %d events.\n", add_count);
     if (err_count)
-    printf("Failed to add %d events.\n", err_count);
+		printf("Failed to add %d events.\n", err_count);
+    if (unc_count)
+		printf("%d Uncore events were ignored.\n", unc_count);
     if ( add_count > 0 )
       test_pass(__FILE__, NULL, 0);
     else

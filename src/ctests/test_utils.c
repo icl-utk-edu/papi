@@ -20,12 +20,14 @@ int papi_print_header (char *prompt, int event_flag, const PAPI_hw_info_t **hwin
 
 	printf ("%s", prompt);
 	printf("--------------------------------------------------------------------------------\n");
+	printf("PAPI Version             : %d.%d.%d.%d\n", PAPI_VERSION_MAJOR(PAPI_VERSION),
+		PAPI_VERSION_MINOR(PAPI_VERSION), PAPI_VERSION_REVISION(PAPI_VERSION),
+		PAPI_VERSION_INCREMENT(PAPI_VERSION));
 	printf("Vendor string and code   : %s (%d)\n", (*hwinfo)->vendor_string, (*hwinfo)->vendor);
 	printf("Model string and code    : %s (%d)\n", (*hwinfo)->model_string, (*hwinfo)->model);
 	printf("CPU Revision             : %f\n", (*hwinfo)->revision);
 	printf("CPU Megahertz            : %f\n", (*hwinfo)->mhz);
 	printf("CPU Clock Megahertz      : %d\n", (*hwinfo)->clock_mhz);
-	printf("CPU Clock Ticks  / sec   : %d\n", (*hwinfo)->clock_ticks);
 	printf("CPU's in this Node       : %d\n", (*hwinfo)->ncpu);
 	printf("Nodes in this System     : %d\n", (*hwinfo)->nnodes);
 	printf("Total CPU's              : %d\n", (*hwinfo)->totalcpus);
@@ -497,17 +499,8 @@ void test_fail(char *file, int line, char *call, int retval)
 {
    char buf[128];
 
-   if (retval == PAPI_ESBSTR || retval == PAPI_ENOEVNT || retval == PAPI_ECNFLCT || 
-       retval == PAPI_EPERM)
-      test_skip(file, line, call, retval);
    memset(buf, '\0', sizeof(buf));
-   if (retval != 0)
-      fprintf(stdout,"%-40s FAILED\nLine # %d\n", file, line);
-   else {
-      fprintf(stdout,"%-40s SKIPPED\n", file);
-      if (!TESTS_QUIET)
-         fprintf(stdout,"Line # %d\n", line);
-   }
+   fprintf(stdout,"%-40s FAILED\nLine # %d\n", file, line);
    if (retval == PAPI_ESYS) {
       sprintf(buf, "System error in %s", call);
       perror(buf);
@@ -622,7 +615,11 @@ int add_two_events(int *num_events, int *papi_event,
   while ((i < 3) && (!event_found)) {
     if (PAPI_query_event(potential_evt_to_add[i][0]) == PAPI_OK) {
       if (PAPI_get_event_info(potential_evt_to_add[i][0], &info) == PAPI_OK) {
+#if defined(__crayx2)					/* CRAY X2 */
+	if ((info.count > 0) && (counters > info.count) && !strcmp(info.derived,"NOT_DERIVED")) event_found = 1;
+#else
 	if ((info.count > 0) && (counters > info.count)) event_found = 1;
+#endif
       }
     }
     if (!event_found)
@@ -678,10 +675,10 @@ int enum_add_native_events(int *num_events, int **evtcodes)
 	int i = 0, k, event_code, retval;
 	unsigned int counters, event_found = 0;
 	PAPI_event_info_t info;
-	const PAPI_component_info_t *c = NULL;
+	const PAPI_component_info_t *s = NULL;
 
-	c = PAPI_get_component_info(0);
-	if (c == NULL)
+	s = PAPI_get_component_info(0);
+	if (s == NULL)
 		test_fail(__FILE__, __LINE__, "PAPI_get_component_info", PAPI_ESBSTR);
 
 	counters = (unsigned int)PAPI_num_hwctrs();
@@ -699,7 +696,7 @@ int enum_add_native_events(int *num_events, int **evtcodes)
 	do {
 		retval = PAPI_get_event_info(i, &info);
 
-		if (c->cntr_umasks) {
+		if (s->cntr_umasks) {
 			k = i;
 			if (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
 				do {
@@ -715,6 +712,13 @@ int enum_add_native_events(int *num_events, int **evtcodes)
 							fprintf(stdout, "%d is not available.\n", event_code);
 					}
 				} while (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK && event_found<counters);
+			} else {
+				event_code = info.event_code;
+				retval = PAPI_add_event(EventSet, event_code);
+				if (retval == PAPI_OK){
+					(*evtcodes)[event_found] = event_code;
+					event_found ++;
+				}
 			}
 			if (!TESTS_QUIET && retval == PAPI_OK)
 				printf("\n");

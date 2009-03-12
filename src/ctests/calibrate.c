@@ -36,7 +36,7 @@ extern int TESTS_QUIET;
 
 static void print_help(char **argv)
 {
-   printf("Usage: %s [-ivmdh]\n",argv[0]);
+   printf("Usage: %s [-ivmdh] [-e event]\n",argv[0]);
    printf("Options:\n\n");
    printf("\t-i            Inner Product test.\n");
    printf("\t-v            Matrix-Vector multiply test.\n");
@@ -196,6 +196,8 @@ int main(int argc, char *argv[])
      element_size = sizeof(double);
    else 
      element_size = sizeof(float);
+
+   printf("\n");
 
    retval = PAPI_OK;
 
@@ -375,22 +377,9 @@ static void headerlines(char *title, int TESTS_QUIET)
    const PAPI_hw_info_t *hwinfo = NULL;
 
    if (!TESTS_QUIET) {
-      if ((hwinfo = PAPI_get_hardware_info()) == NULL)
-         test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 1);
+      if (papi_print_header ("", 0, &hwinfo) != PAPI_OK)
+         test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
-      printf
-          ("\n-------------------------------------------------------------------------\n");
-      printf("Vendor string and code   : %s (%d)\n", hwinfo->vendor_string,
-             hwinfo->vendor);
-      printf("Model string and code    : %s (%d)\n", hwinfo->model_string, hwinfo->model);
-      printf("CPU revision             : %f\n", hwinfo->revision);
-      printf("CPU Megahertz            : %f\n", hwinfo->mhz);
-      printf("CPU Clock Megahertz      : %d\n", hwinfo->clock_mhz);
-      printf("CPU's in an SMP node     : %d\n", hwinfo->ncpu);
-      printf("Nodes in the system      : %d\n", hwinfo->nnodes);
-      printf("Total CPU's in the system: %d\n", hwinfo->totalcpus);
-      printf
-          ("-------------------------------------------------------------------------\n");
       printf("\n%s:\n%8s %12s %12s %8s %8s\n", title, "i", "papi", "theory", "diff",
              "%error");
       printf
@@ -417,6 +406,7 @@ static void resultline(int i, int j, int EventSet)
   long long flpins = 0;
   long long papi, theory;
   int diff, retval;
+  const PAPI_hw_info_t *hwinfo = NULL;
   
   retval = PAPI_stop(EventSet, &flpins);
   if (retval != PAPI_OK) 
@@ -435,7 +425,9 @@ static void resultline(int i, int j, int EventSet)
   printf("%8d %12lld %12lld %8d %10.4f\n", i, papi, theory, diff, ferror);
   
 #ifndef DONT_FAIL
-  if (ferror > MAX_ERROR && diff > MAX_DIFF)
+  if ((hwinfo = PAPI_get_hardware_info()) == NULL)
+    test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 1);
+  if (hwinfo->vendor != PAPI_VENDOR_AMD && ferror > MAX_ERROR && diff > MAX_DIFF)
     test_fail(__FILE__, __LINE__, "Calibrate: error exceeds 10%", PAPI_EMISC);
 #endif
 }

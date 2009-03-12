@@ -14,23 +14,10 @@ int main(int argc, char **argv)
   if (retval != PAPI_VER_CURRENT)
     test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
   
-  if ((hwinfo = PAPI_get_hardware_info()) == NULL)
-    test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
-  mh = &hwinfo->mem_hierarchy;
+  retval = papi_print_header ("Test case hwinfo.c: Check output of PAPI_get_hardware_info.\n", 0, &hwinfo);
+  if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
-  printf("Test case hwinfo.c: Check output of PAPI_get_hardware_info.\n");
-  printf("----------------------------------------------------------\n");
-  printf("Vendor string and code   : %s (%d)\n", hwinfo->vendor_string,hwinfo->vendor);
-  printf("Model string and code    : %s (%d)\n", hwinfo->model_string,hwinfo->model);
-  printf("CPU Revision             : %f\n", hwinfo->revision);
-  printf("CPU Megahertz            : %f\n", hwinfo->mhz);
-  printf("CPU Clock Megahertz      : %d\n", hwinfo->clock_mhz);
-  printf("CPU's in this Node       : %d\n", hwinfo->ncpu);
-  printf("Nodes in this System     : %d\n", hwinfo->nnodes);
-  printf("Total CPU's              : %d\n", hwinfo->totalcpus);
-  printf("Number Hardware Counters : %d\n", PAPI_get_opt(PAPI_MAX_HWCTRS, NULL));
-  printf("Max Multiplex Counters   : %d\n", PAPI_get_opt(PAPI_MAX_MPX_CTRS, NULL));
-  printf("----------------------------------------------------------\n\n");
+  mh = &hwinfo->mem_hierarchy;
 
   validate_string((char *)hwinfo->vendor_string,"vendor_string");
   validate_string((char *)hwinfo->model_string,"model_string");

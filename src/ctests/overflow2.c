@@ -66,7 +66,7 @@ int main(int argc, char **argv)
    if (hw_info == NULL)
      test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
-#if defined(POWER3)
+#if defined(POWER3) || defined(__crayx2) || defined(__sparc__)
    PAPI_event = PAPI_TOT_INS;
 #else
    /* query and set up the right instruction to monitor */

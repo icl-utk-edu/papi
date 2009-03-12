@@ -20,27 +20,39 @@ int main(int argc, char **argv)
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
-   retval = PAPI_library_init(PAPI_VER_CURRENT);
-   if (retval != PAPI_VER_CURRENT)
-      test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
-
-   if (strcmp(argv[0],"xxx") == 0)
-     exit(0);
-
-   if (fork() == 0)
+   if ((argc > 1) && (strcmp(argv[1],"xxx") == 0))
      {
-       char *ptr[2] = { NULL, NULL };
-       ptr[0] = "xxx";
        retval = PAPI_library_init(PAPI_VER_CURRENT);
        if (retval != PAPI_VER_CURRENT)
-	 test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
-       if (execvp(argv[0],ptr) == -1)
-	 test_fail(__FILE__, __LINE__, "execvp", PAPI_ESYS);
-       exit(0);
+	 test_fail(__FILE__, __LINE__, "execed PAPI_library_init", retval);
      }
-   else
-     wait(&status);
+   else 
+     {
+       retval = PAPI_library_init(PAPI_VER_CURRENT);
+       if (retval != PAPI_VER_CURRENT)
+	 test_fail(__FILE__, __LINE__, "main PAPI_library_init", retval);
 
+       PAPI_shutdown();
+
+       if (fork() == 0)
+	 {
+	   retval = PAPI_library_init(PAPI_VER_CURRENT);
+	   if (retval != PAPI_VER_CURRENT)
+	     test_fail(__FILE__, __LINE__, "forked PAPI_library_init", retval);
+
+	   PAPI_shutdown();
+
+	   if (execlp(argv[0],argv[0],"xxx",NULL) == -1)
+	     test_fail(__FILE__, __LINE__, "execlp", PAPI_ESYS);
+	 }
+       else
+	 {
+	   wait(&status);
+	   if (WEXITSTATUS(status) != 0)
+	     test_fail(__FILE__, __LINE__, "fork", WEXITSTATUS(status));
+	 }
+     }
+   
    test_pass(__FILE__, NULL, 0);
    exit(1);
 }

@@ -48,7 +48,7 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
    /* Add the events */
-
+   printf("Adding: %s\n", event_name);
    retval = PAPI_add_event(EventSet1, PAPI_event);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
@@ -137,7 +137,7 @@ int main(int argc, char **argv)
 
       sprintf(add_event_str, "%-12s : \t", event_name);
       printf(TAB2, add_event_str, values1[0], values2[1]);
-      printf(TAB2, "PAPI_TOT_INS : \t", values1[1], values2[0]);
+      printf(TAB2, "PAPI_TOT_CYC : \t", values1[1], values2[0]);
       printf(TAB1, "Real usec    : \t", elapsed_us);
       printf(TAB1, "Real cycles  : \t", elapsed_cyc);
 

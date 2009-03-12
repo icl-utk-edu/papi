@@ -62,7 +62,7 @@ void *thread(void *arg)
       test_fail(__FILE__, __LINE__, "PAPI_start", ret);
     }
 
-    do_both(NUM_ITERS);
+    do_stuff();
 
     ret = PAPI_stop(eventset, values);
     if ( ret != PAPI_OK ) {
@@ -87,6 +87,7 @@ int main(int argc, char **argv)
     int nthreads=8, ret, i;
     PAPI_event_info_t info;
     pthread_t *threads;
+    const PAPI_hw_info_t *hw_info;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
@@ -103,6 +104,17 @@ int main(int argc, char **argv)
     ret = PAPI_library_init(PAPI_VER_CURRENT);
     if ( ret != PAPI_VER_CURRENT ) {
       test_fail(__FILE__, __LINE__, "PAPI_library_init", ret);
+    }
+
+    hw_info = PAPI_get_hardware_info();
+    if (hw_info == NULL)
+      test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
+
+    if (strcmp(hw_info->model_string, "POWER6") == 0) {
+       ret = PAPI_set_domain(PAPI_DOM_ALL);
+       if ( ret != PAPI_OK ) {
+         test_fail(__FILE__, __LINE__, "PAPI_set_domain", ret);
+       }
     }
 
     ret = PAPI_thread_init((unsigned long (*)(void)) pthread_self);
@@ -132,6 +144,8 @@ int main(int argc, char **argv)
               && (numevents < PAPI_MPX_DEF_DEG) );
 
     printf("Found %d events\n", numevents);
+
+    do_stuff();
 
     printf("Creating %d threads:\n", nthreads);
 

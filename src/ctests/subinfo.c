@@ -1,5 +1,5 @@
 /* 
-* File:    subinfo.c
+* File:    cmpinfo.c
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -28,7 +28,6 @@ int main(int argc, char **argv)
    printf("substrate_version: %s\n",cmpinfo->version);
    printf("support_version: %s\n",cmpinfo->support_version);
    printf("kernel_version: %s\n",cmpinfo->kernel_version);
-   printf("CmpIdx: %d\n",cmpinfo->CmpIdx);
    printf("num_cntrs: %d\n",cmpinfo->num_cntrs);
    printf("num_mpx_cntrs: %d\n",cmpinfo->num_mpx_cntrs);
    printf("num_preset_events: %d\n",cmpinfo->num_preset_events);           /* Number of counters the substrate supports */
@@ -38,7 +37,12 @@ int main(int argc, char **argv)
    printf("default_granularity: 0x%x (%s)\n",cmpinfo->default_granularity,stringify_granularity(cmpinfo->default_granularity));
    /* The default granularity when this substrate is used */
    printf("available_granularities: 0x%x (%s)\n",cmpinfo->available_granularities,stringify_all_granularities(cmpinfo->available_granularities)); /* Available granularities */
+   printf("itimer_sig: %d\n",cmpinfo->itimer_sig);     
+   printf("itimer_num: %d\n",cmpinfo->itimer_num);     
+   printf("itimer_ns: %d\n",cmpinfo->itimer_ns);      
+   printf("itimer_res_ns: %d\n",cmpinfo->itimer_res_ns); 
    printf("hardware_intr_sig: %d\n",cmpinfo->hardware_intr_sig);      /* Width of opcode matcher if exists, 0 if not */
+   printf("clock_ticks: %d\n",cmpinfo->clock_ticks);      
    printf("opcode_match_width: %d\n",cmpinfo->opcode_match_width);      /* Width of opcode matcher if exists, 0 if not */
 /*   printf("reserved_ints[4]: %d\n",cmpinfo->reserved_ints[4]); */
    printf("hardware_intr: %d\n",cmpinfo->hardware_intr);         /* Needs hw overflow intr to be emulated in software*/
@@ -56,7 +60,7 @@ int main(int argc, char **argv)
    printf("edge_detect: %d\n",cmpinfo->edge_detect);    /* Has a fast virtual timer */
    printf("invert: %d\n",cmpinfo->invert);    /* Has a fast virtual timer */
    printf("profile_ear: %d\n",cmpinfo->profile_ear);     /* Supports data/instr/tlb miss address sampling */
-   printf("cntr_groups: %d\n",cmpinfo->cntr_groups);           /* counters are arranged by group like POWER4,5,6 */
+   printf("cntr_groups: %d\n",cmpinfo->cntr_groups);           /* Underlying hardware uses counter groups */
    printf("cntr_umasks: %d\n",cmpinfo->cntr_umasks);           /* counters have unit masks */
    printf("cntr_IEAR_events: %d\n",cmpinfo->cntr_IEAR_events);      /* counters support instr event addr register */
    printf("cntr_DEAR_events: %d\n",cmpinfo->cntr_DEAR_events);      /* counters support data event addr register */

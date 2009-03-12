@@ -21,8 +21,9 @@
 void *thread_fn(void *dummy)
 {
    while (1){
-      do_both(NUM_ITERS);
+     do_stuff();
    }
+   return(NULL);
 }
 
 /* Runs a bunch of multiplexed events */
@@ -69,7 +70,7 @@ void mainloop(int arg)
    if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
       test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
    if (!TESTS_QUIET) {
-      printf("Added %s\n", "PAPI_TOT_INC");
+      printf("Added %s\n", "PAPI_TOT_INS");
    }
 
    retval = PAPI_add_event(EventSet, PAPI_TOT_CYC);
@@ -79,41 +80,59 @@ void mainloop(int arg)
       printf("Added %s\n", "PAPI_TOT_CYC");
    }
 
+   values = (long long *) malloc(MAX_TO_ADD * sizeof(long long));
+   if (values == NULL)
+      test_fail(__FILE__, __LINE__, "malloc", 0);
+
    for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++) {
       retval = PAPI_get_event_info(i | PAPI_PRESET_MASK, &pset);
       if (retval != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_get_event_info", retval);
 
       if (pset.count) {
-      printf("Adding %s\n", pset.symbol);
+        printf("Adding %s\n", pset.symbol);
 
-      retval = PAPI_add_event(EventSet, pset.event_code);
-      if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
-	test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+        retval = PAPI_add_event(EventSet, pset.event_code);
+        if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
+	      test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
       
-      if (retval == PAPI_OK) {
-	printf("Added %s\n", pset.symbol);
-      } else {
-	printf("Could not add %s\n", pset.symbol);
-      }
+        if (retval == PAPI_OK) {
+	      printf("Added %s\n", pset.symbol);
+        } else {
+	      printf("Could not add %s\n", pset.symbol);
+        }
 
-      if (retval == PAPI_OK) {
-	if (++j >= MAX_TO_ADD)
-	  break;
+	do_stuff();
+
+        if (retval == PAPI_OK) {
+          retval = PAPI_start(EventSet);
+          if (retval != PAPI_OK)
+            test_fail(__FILE__, __LINE__, "PAPI_start", retval);
+
+	  do_stuff();
+
+          retval = PAPI_stop(EventSet, values);
+          if (retval != PAPI_OK)
+          test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+          
+          if(values[j]){
+	        if (++j >= MAX_TO_ADD)
+	          break;
+          }
+          else{
+            retval = PAPI_remove_event(EventSet, pset.event_code);
+            if (retval == PAPI_OK)
+	          printf("Removed %s\n", pset.symbol);
+          }
+        }
       }
    }
-   }
-
-   values = (long long *) malloc(MAX_TO_ADD * sizeof(long long));
-   if (values == NULL)
-      test_fail(__FILE__, __LINE__, "malloc", 0);
 
    retval = PAPI_start(EventSet);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   do_both(arg);
-   do_misses(1, 1024*1024*4);
+   do_stuff();
 
    retval = PAPI_stop(EventSet, values);
    if (retval != PAPI_OK)

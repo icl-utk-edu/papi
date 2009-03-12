@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 	   retval = PAPI_get_dmem_info(&dmem);
 	   if (retval != PAPI_OK)
 		  test_fail(__FILE__, __LINE__, "PAPI_get_dmem_info", retval);
-//	   dump_memory_info(stdout,&dmem);
+/*	   dump_memory_info(stdout,&dmem); */
 	   value[i] = dmem.size;
 	   m[i] = (double *) malloc(ALLOCMEM * sizeof(double));
 	   touch_dummy(m[j], ALLOCMEM);
