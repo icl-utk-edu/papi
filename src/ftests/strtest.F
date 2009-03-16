@@ -2,39 +2,43 @@ C  Strtest - Perform some basic tests of the functionality of the
 C  string passing to and from the PAPI Fortran interface. 
 C
 C    Test 1: Look up an event name from an event code. Use this name
-C    to try and locate the event code using the name received. Long,
-C    short and too short strings are used in the tests
+C            to try and locate the event code using the name received.
+C            Long, short and too short strings are used in the tests
 C
 C    Test 2: Look up a PAPI error string. Use long, short and too 
-C    short strings to store the result.
+C            short strings to store the result.
+C
+C    Test 3: Look up and display event descriptions 
+C            using PAPIf_get_event_info.
 C
 C    Comments:
 C    When using the Fortran interface it may not always be possible to
 C    use the PAPI predefined constants as actual arguments. Due to the
 C    values in these compilers might occasionally cast these into the
-C    wrong type. In the code below the line code=MSGCODE is used to make
-C    sure that the event code get the right type.
+C    wrong type. In the code below the line code=MSGCODE is used to 
+C    make sure that the event code get the right type.
 C
-#include "fpapi.h"
+#include "fpapi_test.h"
 C Set MSGLEN to the number of characters in the named event in MSGCODE
 #define MSGLEN 11
 #define MSGCODE PAPI_L1_DCM 
 #define ERRCODE PAPI_EINVAL
        
       program strtest
-      implicit none
+      implicit integer (p)
       
       CHARACTER*(PAPI_MAX_STR_LEN) papistr,papierr
       CHARACTER*(PAPI_MAX_STR_LEN/2) papihalfstr
       CHARACTER*(PAPI_MAX_STR_LEN*2) papidblstr
 
+      CHARACTER*(PAPI_MAX_STR_LEN) ckstr
       CHARACTER*(MSGLEN) invstr1
       CHARACTER*(MSGLEN+1) invstr2
       CHARACTER*(MSGLEN+2) invstr3
       CHARACTER*(MSGLEN-1) invstr4
       CHARACTER*(MSGLEN-2) invstr5
 
-      integer i,check,len,retcode,lastchar
+      integer check,lastchar
       integer code,papicode
       integer getstrlen
       external getstrlen
@@ -46,6 +50,8 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       check=PAPI_VER_CURRENT
       call PAPIF_library_init(check)
       if ( check.NE.PAPI_VER_CURRENT) then
+           call PAPIF_perror(check,papierr,code)
+           print *,'*ERROR* '//papierr(1:getstrlen(papierr))
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPI_library_init', check)
       end if
@@ -65,18 +71,18 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
        end if
 
       lastchar=PAPI_MAX_STR_LEN
-      call checkstr(code,papistr,retcode,check,lastchar,tests_quiet)
-      lastchar=getstrlen(papistr)
+      call checkstr(code,ckstr,check,lastchar,tests_quiet)
+      lastchar=getstrlen(ckstr)
  
-      call checkstr(code,invstr1,retcode,check,lastchar,tests_quiet)
+      call checkstr(code,invstr1,check,lastchar,tests_quiet)
 
-      call checkstr(code,invstr2,retcode,check,lastchar,tests_quiet)
+      call checkstr(code,invstr2,check,lastchar,tests_quiet)
 
-      call checkstr(code,invstr3,retcode,check,lastchar,tests_quiet)
+      call checkstr(code,invstr3,check,lastchar,tests_quiet)
 
-      call checkstr(code,invstr4,retcode,check,lastchar,tests_quiet)
+      call checkstr(code,invstr4,check,lastchar,tests_quiet)
 
-      call checkstr(code,invstr5,retcode,check,lastchar,tests_quiet)
+      call checkstr(code,invstr5,check,lastchar,tests_quiet)
 
  100  format(t1,a,i4)
 
@@ -94,6 +100,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       call test_papif_perror(ERRCODE,papihalfstr,check,tests_quiet)
       call test_papif_perror(ERRCODE,papidblstr,check,tests_quiet)
       call test_papif_perror(ERRCODE,invstr1,check,tests_quiet)
+      call test_papif_perror(ERRCODE,invstr5,check,tests_quiet)
 
 
       if (tests_quiet .EQ. 0) then
@@ -108,8 +115,8 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
          print 200,'Test 1'
       end if
 
-      papistr="PAPI_L1_DCM"
-      papicode=-1
+      papistr="  "
+      papicode=PAPI_L1_DCM
       call test_papif_descr(papistr,papicode,papidblstr,
      .  check,tests_quiet)
       call checkcode(papicode,PAPI_L1_DCM,tests_quiet)
@@ -130,8 +137,8 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
          print 200,'Test 3'
       end if
 
-      invstr1="PAPI_L1_ICM"
-      papicode=-1
+      invstr1="  "
+      papicode=PAPI_L1_ICM
       call test_papif_descr(invstr1,papicode,papidblstr,
      .  check,tests_quiet)
       call checkcode(papicode,PAPI_L1_ICM,tests_quiet)
@@ -152,8 +159,8 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
          print 200,'Test 5  (This should get a truncated description)'
       end if
 
-      invstr2="PAPI_L3_DCM"
-      papicode=-1
+      invstr2="  "
+      papicode=PAPI_L3_DCM
       call test_papif_descr(invstr2,papicode,invstr1,
      .  check,tests_quiet)
       call checkcode(papicode,PAPI_L3_DCM,tests_quiet)
@@ -198,13 +205,13 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       call ftests_pass(__FILE__)      
       end
 
-      subroutine checkstr(incode,string,outcode,check,lastchar,quiet)
-      implicit none
+      subroutine checkstr(incode,string,check,lastchar,quiet)
+      implicit integer (P)
       integer incode
-      integer outcode,check,lastchar, quiet
+      integer check,lastchar, quiet
       character*(*) string
       character*(PAPI_MAX_STR_LEN) papierr
-      integer code,i
+      integer code
       integer getstrlen
       external getstrlen
 
@@ -263,16 +270,16 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       end
 
       subroutine test_papif_perror(incode,string,check,quiet)
-      implicit none
+      implicit integer (P)
       integer incode,check,quiet
       character*(*) string
       integer code,i
       integer getstrlen
       external getstrlen
 
+      i=getstrlen(string)
       code=incode
       call PAPIF_perror(code,string,check)
-      i=getstrlen(string)
 
       if (quiet .EQ. 0) then
         print 100,'Testing string of length ',i
@@ -292,17 +299,19 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       end
 
       subroutine test_papif_descr(name,code,string,check,quiet)
-      implicit none
-      integer code
+      implicit integer (P)
+      integer code,count,flags
       integer check,quiet
       character*(*) name,string
 
-      character*(PAPI_MAX_STR_LEN) papierr
-      integer i
+      character*(PAPI_MAX_STR_LEN) label,note,papierr
       integer getstrlen
       external getstrlen
 
-      call PAPIF_describe_event(name,code,string,check)
+C      This API was deprecated with PAPI 3
+C      call PAPIF_describe_event(name,code,string,check)
+      call PAPIF_get_event_info(code,name,string,label,count,
+     $     note,flags,check)
  100  format(t1,a,'"',a,'"')
       if (quiet .EQ. 0) then
         print 100,'The event description is: ',
@@ -314,10 +323,10 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
           call PAPIF_perror(check,papierr,code)
           print *,'*ERROR* '//papierr(1:getstrlen(papierr))
           print *,'******* '//'Error in test_papif_descr using '//
-     $      'PAPIF_describe_event'
+     $      'PAPIF_get_event_info'
       else
           call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIF_describe_event', check)
+     . 'PAPIF_get_event_info', check)
         end if
       end if
 
@@ -328,7 +337,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       end
 
       integer function getstrlen(string)
-      implicit none
+      implicit integer (P)
       character*(*) string
       integer i
 
@@ -346,7 +355,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       end
 
       subroutine findnull(string,quiet)
-      implicit none
+      implicit integer (P)
       integer quiet,i
       character*(*) string
 
@@ -365,7 +374,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
 
 
       subroutine checkcode(code,check,quiet)
-      implicit none
+      implicit integer (P)
       integer code
       integer check,quiet
 
@@ -383,7 +392,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       end
 
       subroutine checkname(name,check,quiet)
-      implicit none
+      implicit integer (P)
       character*(*) name
       character*(*) check
       integer i,quiet

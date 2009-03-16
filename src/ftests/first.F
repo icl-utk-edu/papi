@@ -1,7 +1,7 @@
-#include "fpapi.h"
+#include "fpapi_test.h"
 
       program first
-      IMPLICIT NONE
+      IMPLICIT integer (p)
       
       integer event1
       INTEGER retval
@@ -18,6 +18,7 @@
       external get_quiet
 
       tests_quiet = get_quiet()
+      EventSet = PAPI_NULL
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
@@ -26,15 +27,6 @@
      . 'PAPI_library_init', retval)
       end if
 
-      if (tests_quiet .EQ. 0) then
-         call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
-         if ( retval.NE.PAPI_OK) then
-            call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_set_debug', 
-     *retval)
-         end if
-      end if
-      
       call PAPIf_query_event(PAPI_FP_INS, retval)
        if (retval .NE. PAPI_OK) then
         event1 = PAPI_TOT_INS 
@@ -69,7 +61,7 @@
      . 'PAPIf_start', retval)
       end if
 
-      call do_flops(NUM_FLOPS)
+      call fdo_flops(NUM_FLOPS)
 
       call PAPIf_read(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
@@ -83,7 +75,7 @@
      . 'PAPIf_reset', retval)
       end if
 
-      call do_flops(NUM_FLOPS)
+      call fdo_flops(NUM_FLOPS)
 
       call PAPIf_read(EventSet, values(3), retval)
       if ( retval .NE. PAPI_OK ) then
@@ -91,7 +83,7 @@
      . 'PAPIf_read', retval)
       end if
 
-      call do_flops(NUM_FLOPS)
+      call fdo_flops(NUM_FLOPS)
 
       call PAPIf_read(EventSet, values(5), retval)
       if ( retval .NE. PAPI_OK ) then
@@ -99,7 +91,7 @@
      . 'PAPIf_read', retval)
       end if
 
-      call do_flops(NUM_FLOPS)
+      call fdo_flops(NUM_FLOPS)
 
       call PAPIf_stop(EventSet, values(7), retval)
       if ( retval .NE. PAPI_OK ) then
@@ -119,7 +111,7 @@
      * '--------------------------------'
       end if
 
-      call PAPIf_get_domain(EventSet, domain, PAPI_GET_DEFDOM, retval)
+      call PAPIf_get_domain(EventSet, domain, PAPI_DEFDOM, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_get_domain', retval)
@@ -128,10 +120,10 @@
       call stringify_domain(domain, domainstr)
       if (tests_quiet .EQ. 0) then
       write (*,900) 'Default domain is:', domain, domainstr
- 900  format(a20, i3, ' ', a20)
+ 900  format(a20, i3, ' ', a70)
       end if
  
-      call PAPIf_get_granularity(eventset, granularity, PAPI_GET_DEFGRN, 
+      call PAPIf_get_granularity(eventset, granularity, PAPI_DEFGRN, 
      *retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
@@ -173,8 +165,8 @@
         print *, 'Column 4 exactly equals column 5'
       end if
 
-      min = values(3)*0.9
-      max = values(3)*1.1
+      min = values(3)*0.8
+      max = values(3)*1.2
 
       if ((values(1).gt.max) .OR. (values(1).lt.min) .OR. 
      *(values(5).gt.(max*2)) .OR. (values(5).lt.(min*2)) .OR.
@@ -184,8 +176,8 @@
      . name, 1)
       end if
 
-      min = values(4)*0.8
-      max = values(4)*1.2
+      min = values(4)*0.65
+      max = values(4)*1.35
       if ((values(2).gt.max) .OR. (values(2).lt.min) .OR. 
      *(values(6).gt.(max*2)) .OR. (values(6).lt.(min*2)) .OR.
      *(values(8).gt.(max*3)) .OR. (values(8).lt.(min*3)) .OR.

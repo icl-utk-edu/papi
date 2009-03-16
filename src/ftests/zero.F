@@ -1,7 +1,6 @@
-#include "fpapi.h"
+#include "fpapi_test.h"
       
       program zero
-      implicit none
 
       integer*8 values(10)
       integer es, event
@@ -17,6 +16,7 @@
       external get_quiet
 
       tests_quiet = get_quiet()
+      es = PAPI_NULL
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
@@ -32,12 +32,6 @@
         event = PAPI_FP_INS
       end if
 
-      call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
-      if ( retval.NE.PAPI_OK) then
-        call ftest_fail(__FILE__, __LINE__,
-     .       'PAPIf_set_debug', retval)
-      end if
-      
       call PAPIf_create_eventset(es, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
@@ -66,7 +60,7 @@
      .       'PAPIf_start', retval)
       end if
 
-      call do_flops(NUM_FLOPS)
+      call fdo_flops(NUM_FLOPS)
 
       call PAPIf_stop(es, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
@@ -83,7 +77,7 @@
      *       "--------------------------"
       end if
 
-      call PAPIf_get_domain(es, domain, PAPI_GET_DEFDOM, retval)
+      call PAPIf_get_domain(es, domain, PAPI_DEFDOM, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      .       'PAPIf_get_domain', retval)
@@ -94,7 +88,7 @@
         write (*,800) "Default domain is     :", domain, domainstr
       end if
 
-      call PAPIf_get_granularity(es, granularity, PAPI_GET_DEFGRN, 
+      call PAPIf_get_granularity(es, granularity, PAPI_DEFGRN, 
      *     retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
@@ -111,7 +105,7 @@
         end if
         n=len_trim(name)
         write (*,800) "Default granularity is:", granularity, grnstr
- 800    format(a25, i3, " (", a13, ")")
+ 800    format(a25, i3, " ", a70)
         write (*,810) "Using", NUM_FLOPS,
      $       " iterations of c = c + a * b"
  810    format(a7, i9, a)

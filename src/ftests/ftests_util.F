@@ -1,19 +1,17 @@
-#include "fpapi.h"
-
-#define L1_MISS_BUFFER_SIZE_INTS 128*1024
-
+#include "fpapi_test.h"
 
       integer function get_quiet()
 #if _WIN32
       use dflib
 #endif
-      implicit none
+      implicit integer (p)
       character*25 chbuf
-      common quiet
-#if defined(_CRAYT3E)
+#if defined(_CRAYT3E) || defined(__crayx1) || defined(__crayx2)
       integer ilen,ierror
 #endif
+      integer retval
       integer quiet
+      common quiet
 
 C     This routine tests for a command line argument
 C     that matches 'TESTS_QUIET'
@@ -21,31 +19,27 @@ C     If found, it returns 1 to set output to quiet
 C     The routine was placed her to hide the ugly
 C     Windows #if stuff from normal view
 C     And also to make the test code read cleaner
-      get_quiet=0
-#if defined(_CRAYT3E)
+#if defined(_CRAYT3E) || defined(__crayx1) || defined(__crayx2)
       call pxfgetarg(1,chbuf,ilen,ierror)
 #else 
       call getarg(1,chbuf)
 #endif
+      get_quiet = 0
       if (LGE(chbuf, 'TESTS_QUIET')) then
         get_quiet=1
+      else
+         call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
+         if ( retval.NE.PAPI_OK) then
+            call ftest_fail(__FILE__, __LINE__,
+     .       'PAPIf_set_debug', retval)
+         end if
       end if
       quiet=get_quiet
       end
 
 
-      subroutine dummy(array)
-      implicit none
-      real array
-      
-C     This is a dummy routine that can be used to make the
-C     compiler believe that the result of a loop is actually
-C     used in the program. See eg. fmatrixpapi.F
-
-      end
-
       integer function len_trim(string)
-      implicit none
+      implicit integer (p)
       character*(*) string
 
       do len_trim=len(string),1,-1
@@ -55,7 +49,7 @@ C     used in the program. See eg. fmatrixpapi.F
       end
 
       subroutine ftests_warning(line,msg)
-      implicit none
+      implicit integer (p)
       character*(*) msg
       integer line
 
@@ -64,7 +58,7 @@ C     used in the program. See eg. fmatrixpapi.F
       end
 
       subroutine ftests_fatal_error(line,msg)
-      implicit none
+      implicit integer (p)
       character*(*) msg
       integer line
 
@@ -74,7 +68,7 @@ C     used in the program. See eg. fmatrixpapi.F
       end
 
       subroutine ftests_perror(line,msg)
-      implicit none
+      implicit integer (p)
       character*(*) msg
       integer line
 
@@ -85,7 +79,7 @@ C     used in the program. See eg. fmatrixpapi.F
       end
       
       subroutine ftests_pass(test_str)
-      implicit none
+      implicit integer (p)
       character*(*) test_str
 
       write(*,100) test_str,' PASSED'
@@ -96,7 +90,7 @@ C     used in the program. See eg. fmatrixpapi.F
       end
 
       subroutine ftests_skip(test_str,papiretval)
-      implicit none
+      implicit integer (p)
       character*(*) test_str
       character*(PAPI_MAX_STR_LEN) papi_errstr
       integer papiretval,iret
@@ -118,7 +112,7 @@ C     used in the program. See eg. fmatrixpapi.F
       end
 
       subroutine ftest_fail(file, line, callstr, retval)
-      implicit none
+      implicit integer (p)
       character*(*) file
       integer line
       character*(*) callstr
@@ -128,7 +122,7 @@ C     used in the program. See eg. fmatrixpapi.F
       external len_trim
 
       if ( retval.eq.PAPI_ESBSTR .OR. retval.eq.PAPI_ENOEVNT
-     &    .OR. retval.eq.PAPI_ECNFLCT ) then
+     &    .OR. retval.eq.PAPI_ECNFLCT .OR. retval.eq.PAPI_EPERM ) then
         call ftest_skip(file, line, callstr, retval)
       end if
       if ( retval.eq.PAPI_ENOEVNT ) then
@@ -160,7 +154,7 @@ C     used in the program. See eg. fmatrixpapi.F
       end
 
       subroutine ftest_skip(file, line, callstr, retval)
-      implicit none
+      implicit integer (p)
       character*(*) file
       integer line
       character*(*) callstr
@@ -191,76 +185,47 @@ C     used in the program. See eg. fmatrixpapi.F
  100  format(a,t41,a)
       end
 
-
-C     
-C     TEST UTILITIES
-C     
-      subroutine do_flops(n)
-      implicit none      
-      integer n
-      real*8 a, b, c
-      integer i
-      a = 0.5
-      b = 6.2
-      c = 0.11
-      do i = 1, n
-        c = c + a * b
-      end do
-      end
-
-      subroutine do_l1misses(n)
-      implicit none      
-      integer n
-      integer i, j
-      integer buf(L1_MISS_BUFFER_SIZE_INTS)      
-      do i = 1, n
-        do j=1, L1_MISS_BUFFER_SIZE_INTS
-          buf(j)=buf(L1_MISS_BUFFER_SIZE_INTS-j)+1
-        end do
-      end do
-      end
-
-      subroutine do_both(n)
-      implicit none      
-      integer n
-      real*8 a, b, c
-      integer i, j
-      integer buf(L1_MISS_BUFFER_SIZE_INTS)      
-      a = 0.5
-      b = 6.2
-      c = 0.11
-      do i = 1, n
-        do j=1, n
-          c = c + a * b
-        end do
-        do j=1, L1_MISS_BUFFER_SIZE_INTS
-          buf(j)=buf(L1_MISS_BUFFER_SIZE_INTS-j)+1
-        end do
-      end do
-      end
-
       subroutine stringify_domain(domain, str)
-      implicit none      
+      implicit integer (p)      
       integer domain
       character*(PAPI_MAX_STR_LEN) str
-
-      if (domain .EQ. PAPI_DOM_USER) then
-        str = "PAPI_DOM_USER"
-      else if (domain .EQ. PAPI_DOM_KERNEL) then
-        str = "PAPI_DOM_KERNEL"
-      else if (domain .EQ. PAPI_DOM_OTHER) then
-        str = "PAPI_DOM_OTHER"
-      else if (domain .EQ. PAPI_DOM_ALL) then
+      
+      if (domain .EQ. PAPI_DOM_ALL) then
         str = "PAPI_DOM_ALL"
       else
-        print *, 'error in stringify_domain'
-        call pause()
-        stop
+        idx = 1;
+C       Is there a better way to write this?
+        if (IAND(domain, PAPI_DOM_USER) .NE. 0) then
+          str(idx:idx+13) = "+PAPI_DOM_USER"
+          idx = idx + 14
+        end if
+        if (IAND(domain, PAPI_DOM_KERNEL) .NE. 0) then
+          str(idx:idx+15) = "+PAPI_DOM_KERNEL"
+          idx = idx + 16
+        end if
+        if (IAND(domain, PAPI_DOM_SUPERVISOR) .NE. 0) then
+          str(idx:idx+19) = "+PAPI_DOM_SUPERVISOR"
+          idx = idx + 20
+        end if
+        if (IAND(domain, PAPI_DOM_OTHER) .NE. 0) then
+          str(idx:idx+14) = "+PAPI_DOM_OTHER"
+          idx = idx + 15
+        end if
+        if (idx .NE. 1) then
+C         Eliminate the first + character
+          str = str(2:LEN(str))
+C         Blank-fill the rest of the string so len_trim works correctly
+          str(idx:) = ' '
+        else
+          print *, 'error in stringify_domain'
+          call pause()
+          stop
+        end if
       end if
       end
 
       subroutine stringify_granularity(granularity, str)
-      implicit none      
+      implicit integer (p)      
       integer granularity
       character*(PAPI_MAX_STR_LEN) str
 
@@ -287,7 +252,7 @@ C     For Windows, it links to a simple C routine
 C     that prompts the user for a keypress
 C     For every other platform it is a nop.
       subroutine pause()
-      implicit none      
+      implicit integer (p)      
       integer quiet
       common quiet
 
@@ -300,7 +265,7 @@ C     For every other platform it is a nop.
 
 C     Print the content of an event set
       subroutine PrintEventSet(ES)
-      IMPLICIT NONE
+      IMPLICIT integer (p)
       integer ES
       integer MAXEVENT
       parameter(MAXEVENT=64)

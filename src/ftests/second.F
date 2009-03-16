@@ -1,7 +1,7 @@
-#include "fpapi.h"
+#include "fpapi_test.h"
 
       program second
-      implicit none
+      implicit integer (p)
       integer domain, granularity
       character*(PAPI_MAX_STR_LEN) domainstr, grnstr
       integer*8 values(10), max, min
@@ -22,6 +22,9 @@
 #endif
 
       tests_quiet = get_quiet()
+      es1 = PAPI_NULL
+      es2 = PAPI_NULL
+      es3 = PAPI_NULL
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
@@ -30,17 +33,11 @@
      . 'PAPI_library_init', retval)
       end if
 
-      call PAPIf_query_event(PAPI_FP_INS, retval)
+      call PAPIf_query_event(PAPI_TOT_INS, retval)
       if (retval.NE.PAPI_OK) then
         call ftest_skip(__FILE__, __LINE__, 'PAPI_FP_INS', PAPI_ENOEVNT)
       end if
 
-      call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
-      if ( retval.NE.PAPI_OK) then
-        call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_set_debug', retval)
-      end if
-      
       call PAPIf_create_eventset(es1, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
@@ -48,7 +45,7 @@
      *retval)
       end if
 
-      call PAPIf_add_event( es1, PAPI_FP_INS, retval )
+      call PAPIf_add_event( es1, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_add_event', retval)
@@ -67,7 +64,7 @@
      *retval)
       end if
 
-      call PAPIf_add_event( es2, PAPI_FP_INS, retval )
+      call PAPIf_add_event( es2, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_add_event', retval)
@@ -86,7 +83,7 @@
      *retval)
       end if
 
-      call PAPIf_add_event( es3, PAPI_FP_INS, retval )
+      call PAPIf_add_event( es3, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_add_event', retval)
@@ -118,7 +115,7 @@
 
       call PAPIf_start(es1, retval)
 
-      call do_flops(NUM_FLOPS)
+      call fdo_flops(NUM_FLOPS)
 
       if (retval.eq.PAPI_OK) then
       call PAPIf_stop(es1, values(1), retval)
@@ -130,7 +127,7 @@
 
       call PAPIf_start(es2, retval)
 
-      call do_flops(NUM_FLOPS)
+      call fdo_flops(NUM_FLOPS)
 
       if (retval.eq.PAPI_OK) then
       call PAPIf_stop(es2, values(3), retval)
@@ -146,7 +143,7 @@
      . 'PAPIf_start', retval)
       end if
 
-      call do_flops(NUM_FLOPS)
+      call fdo_flops(NUM_FLOPS)
 
       call PAPIf_stop(es3, values(5), retval)
       if ( retval .NE. PAPI_OK ) then
@@ -154,39 +151,39 @@
      . 'PAPIf_stop', retval)
       end if
 
-      call PAPIf_rem_event( es1, PAPI_FP_INS, retval )
+      call PAPIf_remove_event( es1, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_rem_event', retval)
+     . 'PAPIf_remove_event', retval)
       end if
 
-      call PAPIf_rem_event( es1, PAPI_TOT_CYC, retval )
+      call PAPIf_remove_event( es1, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_rem_event', retval)
+     . 'PAPIf_remove_event', retval)
       end if
 
-      call PAPIf_rem_event( es2, PAPI_FP_INS, retval )
+      call PAPIf_remove_event( es2, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_rem_event', retval)
+     . 'PAPIf_remove_event', retval)
       end if
 
-      call PAPIf_rem_event( es2, PAPI_TOT_CYC, retval )
+      call PAPIf_remove_event( es2, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_rem_event', retval)
+     . 'PAPIf_remove_event', retval)
       end if
 
-      call PAPIf_rem_event( es3, PAPI_FP_INS, retval )
+      call PAPIf_remove_event( es3, PAPI_TOT_INS, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_rem_event', retval)
+     . 'PAPIf_remove_event', retval)
       end if
-      call PAPIf_rem_event( es3, PAPI_TOT_CYC, retval )
+      call PAPIf_remove_event( es3, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_rem_event', retval)
+     . 'PAPIf_remove_event', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
@@ -196,7 +193,7 @@
      *  '------------------------------'
       end if
 
-      call PAPIf_get_domain(es1, domain, PAPI_GET_DEFDOM, retval)
+      call PAPIf_get_domain(es1, domain, PAPI_DEFDOM, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_get_domain', retval)
@@ -206,9 +203,9 @@
       if (tests_quiet .EQ. 0) then
       write (*,900) 'Default domain is:', domain, domainstr
       end if
- 900  format(a20, i3, ' ', a20)
+ 900  format(a20, i3, ' ', a70)
 
-      call PAPIf_get_granularity(es1, granularity, PAPI_GET_DEFGRN, 
+      call PAPIf_get_granularity(es1, granularity, PAPI_DEFGRN, 
      *retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
@@ -230,7 +227,7 @@
 
       print *, 'Test type   :       PAPI_DOM_ALL    PAPI_DOM_KERNEL',
      *'   PAPI_DOM_USER'
-      write (*,200) 'PAPI_FP_INS', values(1), values(3), values(5)
+      write (*,200) 'PAPI_TOT_INS', values(1), values(3), values(5)
       write (*,200) 'PAPI_TOT_CYC', values(2), values(4), values(6)
  200  format(A15, ': ', I15, I15, I15)
 
