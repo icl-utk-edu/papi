@@ -60,7 +60,7 @@ int main(int argc, char **argv)
    int retval;
    PAPI_event_info_t info, info1;
    const PAPI_hw_info_t *hwinfo = NULL;
-   int Intel_i7;
+   char *Intel_i7;
    int event_code;
    const PAPI_substrate_info_t *s = NULL;
 
@@ -80,6 +80,7 @@ int main(int argc, char **argv)
    if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
    /* we need a little exception processing if it's a Core i7 */
+   /* Unfortunately, this test never succeeds... */
    Intel_i7 = strstr(hwinfo->model_string, "Intel Core i7");
 
    if ((s = PAPI_get_substrate_info()) == NULL)
