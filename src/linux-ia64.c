@@ -289,7 +289,7 @@ inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int *event,
 
   tevent = EventCode & PAPI_NATIVE_AND_MASK;
   major = (tevent & PAPI_NATIVE_EVENT_AND_MASK) >> PAPI_NATIVE_EVENT_SHIFT;
-  if (major >= _papi_hwi_system_info.sub_info.num_native_events)
+  if (major >= MY_VECTOR.cmp_info.num_native_events)
     return(PAPI_ENOEVNT);
 
   minor = (tevent & PAPI_NATIVE_UMASK_AND_MASK) >> PAPI_NATIVE_UMASK_SHIFT;
@@ -353,7 +353,7 @@ int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
   SUBDBG("This is umask %d of %d\n",umask,num_masks);
 
   if (modifier == PAPI_ENUM_EVENTS) {
-    if (event < _papi_hwi_system_info.sub_info.num_native_events - 1) {
+    if (event < MY_VECTOR.cmp_info.num_native_events - 1) {
 	  *EventCode = encode_native_event_raw(event+1,0);
        return(PAPI_OK);
 	}
@@ -379,7 +379,7 @@ int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
     return(PAPI_ENOEVNT);
   }
   else {
-	   while (event++ < _papi_hwi_system_info.sub_info.num_native_events - 1) {
+	   while (event++ < MY_VECTOR.cmp_info.num_native_events - 1) {
 		  *EventCode = encode_native_event_raw(event+1,0);
 		  if(_hwd_modify_event(event+1, modifier))
 			 return(PAPI_OK);
@@ -917,7 +917,7 @@ int _ia64_get_system_info(void)
   MY_VECTOR.cmp_info.cntr_OPCM_events = 1;      /* counter events support opcode matching */
 #ifndef PFM20
   /* Put the signal handler in use to consume PFM_END_MSG's */
-  _papi_hwi_start_signal(MY_VECTOR.cmp_info.hardware_intr_sig, 1);
+  _papi_hwi_start_signal(MY_VECTOR.cmp_info.hardware_intr_sig, 1, MY_VECTOR.cmp_info.CmpIdx);
 #endif
 
    return (PAPI_OK);
@@ -1980,7 +1980,7 @@ int _ia64_update_control_state(hwd_control_state_t * this_state,
       events[i] = PFMW_PEVT_EVENT(evt,i);
    */
 #if defined(PFM30)
-   for (i = 0; i < MY_VECTOR.cmp_info.sub_info.num_cntrs; i++)
+   for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++)
       PFMW_PEVT_EVENT(evt,i) = 0;
    PFMW_PEVT_EVTCOUNT(evt) = 0;
    memset(PFMW_PEVT_PFPPC(evt), 0, sizeof(PFMW_PEVT_PFPPC(evt)));
