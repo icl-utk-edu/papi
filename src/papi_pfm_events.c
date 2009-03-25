@@ -203,52 +203,17 @@ static inline int find_preset_code(char *tmp, int *code)
   return(PAPI_EINVAL);
 }
 
-/* Static version of the perfmon csv file. */
-#if defined(STATIC_PERFMON_EVENTS_TABLE)
-#include "perfmon_events_table.h"
-#endif
-
-/* #define SHOW_LOADS */
-
-static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_entry_t *here)
+/* Look for an event file 'name' in a couple common locations.
+   Return a valid file handle if found */
+static FILE *open_event_table(char *name)
 {
-  char line[LINE_MAX];
-#if !defined(STATIC_PERFMON_EVENTS_TABLE)
-  char name[PATH_MAX];
-  char *tmpn;
   FILE *table;
-#else
-  char *name = "builtin perfmon_events_table";
-  char *tmp_perfmon_events_table = perfmon_events_table;
-#endif
-  int line_no = 1, derived = 0, insert = 2, preset = 0;
-  int get_presets = 0;   /* only get PRESETS after CPU is identified */
-  int found_presets = 0; /* only terminate search after PRESETS are found */
-						 /* this allows support for synonyms for CPU names */
 
-#ifdef SHOW_LOADS
-  SUBDBG("%p\n",here);
-#endif
-
-  here[0].preset = PAPI_TOT_CYC;
-  here[0].derived = NOT_DERIVED;
-  here[1].preset = PAPI_TOT_INS;
-  here[1].derived = NOT_DERIVED;
-
-#if !defined(STATIC_PERFMON_EVENTS_TABLE)
-  if ((tmpn = getenv("PAPI_PERFMON_EVENT_FILE")) && (strlen(tmpn) != 0))
-    sprintf(name,"%s",tmpn);
-  else
-#ifdef PAPI_DATADIR
-    sprintf(name,"%s/%s",PAPI_DATADIR,PERFMON_EVENT_FILE);
-#else
-    sprintf(name,"%s",PERFMON_EVENT_FILE);
-#endif
   SUBDBG("Opening %s\n",name);
   table = fopen(name,"r");
   if (table == NULL)
-    {
-      SUBDBG("Open %s failed, trying ./%s.\n",name,PERFMON_EVENT_FILE);
+  {
+    SUBDBG("Open %s failed, trying ./%s.\n",name,PERFMON_EVENT_FILE);
     sprintf(name,"%s",PERFMON_EVENT_FILE);
     table = fopen(name,"r");
   }
@@ -258,33 +223,103 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
     sprintf(name,"../%s",PERFMON_EVENT_FILE);
     table = fopen(name,"r");
   }
-      if (table == NULL)
-	{
-	  PAPIERROR("fopen(%s): %s, please set the PAPI_PERFMON_EVENT_FILE env. variable",name,strerror(errno));
-	  return(PAPI_ESYS);
-	}
-  SUBDBG("Open %s succeeded.\n",name);
-  while (fgets(line,LINE_MAX,table))
-    {
-      char *t;
-      int i;
+  if (table) SUBDBG("Open %s succeeded.\n",name);
+  return (table);
+}
+
+/* parse a single line from either a file or character table
+   Strip trailing <cr>; return 0 if empty */
+static int get_event_line(char *line, FILE *table, char **tmp_perfmon_events_table)
+{
+  int ret;
+  int i;
+
+  if (table) {
+    if(fgets(line, LINE_MAX, table)) {
+      ret = 1;
       i = strlen(line);
       if (line[i-1] == '\n')
-	line[i-1] = '\0';
+      line[i-1] = '\0';
+    } else ret = 0;
+  } else {
+    for (i=0; **tmp_perfmon_events_table && **tmp_perfmon_events_table != '\n'; i++) {
+      line[i] = **tmp_perfmon_events_table;
+      (*tmp_perfmon_events_table)++;
+    }
+    if (**tmp_perfmon_events_table == '\n') {
+      (*tmp_perfmon_events_table)++;
+    }
+    line[i] = '\0';
+    ret = **tmp_perfmon_events_table;
+  }
+  return(ret);
+}
+
+/* Static version of the perfmon csv file. */
+#if defined(STATIC_PERFMON_EVENTS_TABLE)
+#include "perfmon_events_table.h"
 #else
-  SUBDBG("Reading from builtin perfmon_events_table.\n");
-  while (*tmp_perfmon_events_table)
-    {
-      char *t;
-      int i;
-      for (i=0; *tmp_perfmon_events_table && *tmp_perfmon_events_table != '\n'; i++) {
-        line[i] = *tmp_perfmon_events_table++;
-      }
-      if (*tmp_perfmon_events_table == '\n') {
-        tmp_perfmon_events_table++;
-      }
-      line[i] = '\0';
+  static char *perfmon_events_table = NULL;
 #endif
+
+/* #define SHOW_LOADS */
+
+static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_entry_t *here)
+{
+  pfmlib_event_t event;
+  char line[LINE_MAX];
+  char name[PATH_MAX] = "builtin perfmon_events_table";
+  char *tmp_perfmon_events_table = NULL;
+  char *tmpn;
+  FILE *table;
+  int line_no = 1, derived = 0, insert = 0, preset = 0;
+  int get_presets = 0;   /* only get PRESETS after CPU is identified */
+  int found_presets = 0; /* only terminate search after PRESETS are found */
+						 /* this allows support for synonyms for CPU names */
+
+#ifdef SHOW_LOADS
+  SUBDBG("%p\n",here);
+#endif
+
+  /* make sure these events are supported before adding them */
+  if (pfm_get_cycle_event(&event) != PFMLIB_ERR_NOTSUPP) {
+    here[insert].preset = PAPI_TOT_CYC;
+    here[insert++].derived = -1;
+  }
+  if (pfm_get_inst_retired_event(&event) != PFMLIB_ERR_NOTSUPP) {
+    here[insert].preset = PAPI_TOT_INS;
+    here[insert++].derived = -1;
+  }
+
+  /* try the environment variable first */
+  if ((tmpn = getenv("PAPI_PERFMON_EVENT_FILE")) && (strlen(tmpn) != 0)) {
+    sprintf(name,"%s",tmpn);
+    table = fopen(name,"r");
+  }
+  /* if no valid environment variable, look for built-in table */
+  else if (perfmon_events_table) {
+	  tmp_perfmon_events_table = perfmon_events_table;
+	  table = NULL;
+  }
+  /* if no env var and no built-in, search for default file */
+  else {
+#ifdef PAPI_DATADIR
+    sprintf(name,"%s/%s",PAPI_DATADIR,PERFMON_EVENT_FILE);
+#else
+    sprintf(name,"%s",PERFMON_EVENT_FILE);
+#endif
+	table = open_event_table(name);
+  }
+  /* if no valid file or built-in table, bail */
+  if (table == NULL && tmp_perfmon_events_table == NULL) {
+    PAPIERROR("fopen(%s): %s, please set the PAPI_PERFMON_EVENT_FILE env. variable",name,strerror(errno));
+    return(PAPI_ESYS);
+  }
+
+  /* at this point either a valid file pointer or built-in table pointer */
+  while (get_event_line(line, table, &tmp_perfmon_events_table)) {
+      char *t;
+	  int i;
       t = trim_string(strtok(line,","));
       if ((t == NULL) || (strlen(t) == 0))
 	continue;
@@ -311,9 +346,9 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 	      PAPIERROR("Expected name after CPU token at line %d of %s -- ignoring",line_no,name);
 	      goto nextline;
 	    }
-//#ifdef SHOW_LOADS
+#ifdef SHOW_LOADS
 	  SUBDBG("Examining CPU (%s) vs. (%s)\n",t,pmu_name);
-//#endif
+#endif
 	  if (strcasecmp(t, pmu_name) == 0)
 	    {
 	      int type;
@@ -439,6 +474,7 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 	  }
 
 	  insert++;
+	  SUBDBG("# events inserted: --%d-- \n",insert);
 	}
       else
 	{
@@ -449,11 +485,10 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
       line_no++;
     }
  done:
-#if !defined(STATIC_PERFMON_EVENTS_TABLE)
-  fclose(table);
-#endif
-      return(PAPI_OK);
-    }
+  if (table)
+    fclose(table);
+  return(PAPI_OK);
+}
 
 /* Frees memory for all the strdup'd char strings in a preset string array.
     Assumes the array is initialized to 0 and has at least one 0 entry at the end.
@@ -481,108 +516,97 @@ static void free_notes(hwi_dev_notes_t *here)
 
 static int generate_preset_search_map(hwi_search_t **maploc, hwi_dev_notes_t **noteloc, pfm_preset_search_entry_t *strmap)
 {
-  int i = 0, j = 0, k = 0, term, ret;
-  hwi_search_t *psmap;
-  hwi_dev_notes_t *notemap;
-  pfmlib_event_t event;
+	int i = 0, j = 0, k = 0, term, ret;
+	hwi_search_t *psmap;
+	hwi_dev_notes_t *notemap;
+	pfmlib_event_t event;
 
-  /* Count up the proposed presets */
-  while (strmap[i].preset)
-    i++;
-  SUBDBG("generate_preset_search_map(%p,%p,%p) %d proposed presets\n",maploc,noteloc,strmap,i);
-  i++;
+	/* Count up the proposed presets */
+	while (strmap[i].preset)
+		i++;
+	SUBDBG("generate_preset_search_map(%p,%p,%p) %d proposed presets\n",maploc,noteloc,strmap,i);
+	i++;
 
-  /* Add null entry */
-  psmap = (hwi_search_t *)malloc(i*sizeof(hwi_search_t));
-  notemap = (hwi_dev_notes_t *)malloc(i*sizeof(hwi_dev_notes_t));
-  if ((psmap == NULL) || (notemap == NULL))
-    return(PAPI_ENOMEM);
-  memset(psmap,0x0,i*sizeof(hwi_search_t));
-  memset(notemap,0x0,i*sizeof(hwi_dev_notes_t));
+	/* Add null entry */
+	psmap = (hwi_search_t *)malloc(i*sizeof(hwi_search_t));
+	notemap = (hwi_dev_notes_t *)malloc(i*sizeof(hwi_dev_notes_t));
+	if ((psmap == NULL) || (notemap == NULL))
+		return(PAPI_ENOMEM);
+	memset(psmap,0x0,i*sizeof(hwi_search_t));
+	memset(notemap,0x0,i*sizeof(hwi_dev_notes_t));
 
-  i = 0;
-  while (strmap[i].preset)
-  {
-      if (strmap[i].preset == PAPI_TOT_CYC)
-      {
-	  SUBDBG("pfm_get_cycle_event(%p)\n",&event);
-	  if ((ret = pfm_get_cycle_event(&event)) == PFMLIB_SUCCESS)
-	  {
-	      if (setup_preset_term(&psmap[j].data.native[0], &event) == PAPI_OK)
-	      {
-		psmap[j].event_code = strmap[i].preset;
-		psmap[j].data.derived = strmap[i].derived;
-		psmap[j].data.native[1] = PAPI_NULL;
-		j++;
-	      }
-	  }
-	  else
-	    PAPIERROR("pfm_get_cycle_event(%p): %s",&event, pfm_strerror(ret));
-      }
-      else if (strmap[i].preset == PAPI_TOT_INS) 
-      {
-	  SUBDBG("pfm_get_inst_retired_event(%p)\n",&event);
-	  if ((ret = pfm_get_inst_retired_event(&event)) == PFMLIB_SUCCESS)
-	  {
-	      if (setup_preset_term(&psmap[j].data.native[0], &event) == PAPI_OK)
-	      {
-		psmap[j].event_code = strmap[i].preset;
-		psmap[j].data.derived = strmap[i].derived;
-		psmap[j].data.native[1] = PAPI_NULL;
-		j++;
-	      }
-	  }
-	  else
-	    PAPIERROR("pfm_get_inst_retired_event(%p): %s",&event, pfm_strerror(ret));	    
-      }
-      else
-      {
-	  /* Handle derived events */
-	  term = 0;
-	  do {
-	      SUBDBG("pfm_find_full_event(%s,%p)\n",strmap[i].findme[term],&event);
-	      if ((ret = pfm_find_full_event(strmap[i].findme[term],&event)) == PFMLIB_SUCCESS)
-	      {
-		if ((ret = setup_preset_term(&psmap[j].data.native[term], &event)) == PAPI_OK)
-		{
-		    term++;
+	i = 0;
+	while (strmap[i].preset) {
+		if ((strmap[i].preset == PAPI_TOT_CYC) && (strmap[i].derived == -1)) {
+			SUBDBG("pfm_get_cycle_event(%p)\n",&event);
+			if ((ret = pfm_get_cycle_event(&event)) == PFMLIB_SUCCESS) {
+				if (setup_preset_term(&psmap[j].data.native[0], &event) == PAPI_OK) {
+					psmap[j].event_code = strmap[i].preset;
+					psmap[j].data.derived = NOT_DERIVED;
+					psmap[j].data.native[1] = PAPI_NULL;
+					j++;
+				}
+			}
+			else
+				SUBDBG("pfm_get_cycle_event(%p): %s\n",&event, pfm_strerror(ret));
 		}
-		else break;
-	      }
-	      else {
-		PAPIERROR("pfm_find_full_event(%s,%p): %s",strmap[i].findme[term],&event,pfm_strerror(ret));
-		term++;
-	      }
-	  } while (strmap[i].findme[term] != NULL && term < MAX_COUNTER_TERMS);
+		else if ((strmap[i].preset == PAPI_TOT_INS) && (strmap[i].derived == -1)) {
+			SUBDBG("pfm_get_inst_retired_event(%p)\n",&event);
+			if ((ret = pfm_get_inst_retired_event(&event)) == PFMLIB_SUCCESS) {
+				if (setup_preset_term(&psmap[j].data.native[0], &event) == PAPI_OK) {
+					psmap[j].event_code = strmap[i].preset;
+					psmap[j].data.derived = NOT_DERIVED;
+					psmap[j].data.native[1] = PAPI_NULL;
+					j++;
+				}
+			}
+			else
+				SUBDBG("pfm_get_inst_retired_event(%p): %s\n",&event, pfm_strerror(ret));
+		}
+		else {
+			/* Handle derived events */
+			term = 0;
+			do {
+				SUBDBG("pfm_find_full_event(%s,%p)\n",strmap[i].findme[term],&event);
+				if ((ret = pfm_find_full_event(strmap[i].findme[term],&event)) == PFMLIB_SUCCESS) {
+					if ((ret = setup_preset_term(&psmap[j].data.native[term], &event)) == PAPI_OK) {
+						term++;
+					}
+					else break;
+				}
+				else {
+					PAPIERROR("pfm_find_full_event(%s,%p): %s",strmap[i].findme[term],&event,pfm_strerror(ret));
+					term++;
+				}
+			} while (strmap[i].findme[term] != NULL && term < MAX_COUNTER_TERMS);
 
-	  /* terminate the native term array with PAPI_NULL */
-	  if (term < MAX_COUNTER_TERMS) psmap[j].data.native[term] = PAPI_NULL;
+			/* terminate the native term array with PAPI_NULL */
+			if (term < MAX_COUNTER_TERMS) psmap[j].data.native[term] = PAPI_NULL;
 
-	if (ret == PAPI_OK)
-	{
-	    psmap[j].event_code = strmap[i].preset;
-	    psmap[j].data.derived = strmap[i].derived;
-	    if (strmap[i].derived == DERIVED_POSTFIX) {
-	      strncpy(psmap[j].data.operation, strmap[i].operation, PAPI_MIN_STR_LEN);
-	    }
-	    if (strmap[i].note) {
-	      notemap[k].event_code = strmap[i].preset;
-	      notemap[k].dev_note = strdup(strmap[i].note);
-	      k++;
-	    }
-	    j++;
+			if (ret == PAPI_OK)
+			{
+				psmap[j].event_code = strmap[i].preset;
+				psmap[j].data.derived = strmap[i].derived;
+				if (strmap[i].derived == DERIVED_POSTFIX) {
+					strncpy(psmap[j].data.operation, strmap[i].operation, PAPI_MIN_STR_LEN);
+				}
+				if (strmap[i].note) {
+					notemap[k].event_code = strmap[i].preset;
+					notemap[k].dev_note = strdup(strmap[i].note);
+					k++;
+				}
+				j++;
+			}
+		}
+		i++;
 	}
-      }
-      i++;
-    }
-   if (i != j) 
-     {
-       PAPIERROR("%d of %d events in %s were not valid",i-j,i,PERFMON_EVENT_FILE);
-     }
-   SUBDBG("generate_preset_search_map(%p,%p,%p) %d actual presets\n",maploc,noteloc,strmap,j);
-   *maploc = psmap;
-   *noteloc = notemap;
-   return (PAPI_OK);
+	if (i != j) {
+		PAPIERROR("%d of %d events in %s were not valid",i-j,i,PERFMON_EVENT_FILE);
+	}
+	SUBDBG("generate_preset_search_map(%p,%p,%p) %d actual presets\n",maploc,noteloc,strmap,j);
+	*maploc = psmap;
+	*noteloc = notemap;
+	return (PAPI_OK);
 }
 
 /* Break a PAPI native event code into its composite event code and pfm mask bits */
@@ -709,11 +733,12 @@ int _papi_pfm_init()
 
 unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code)
 {
-    pfmlib_event_t event;
-  int i;
+  pfmlib_event_t event;
+  int i, ret;
 
-    SUBDBG("pfm_find_full_event(%s,%p)\n",name,&event);
-    if (pfm_find_full_event(name,&event) == PFMLIB_SUCCESS) {
+  SUBDBG("pfm_find_full_event(%s,%p)\n",name,&event);
+  ret = pfm_find_full_event(name,&event);
+  if (ret == PFMLIB_SUCCESS) {
 	/* we can only capture PAPI_NATIVE_UMASK_MAX or fewer masks */
 	if (event.num_masks > PAPI_NATIVE_UMASK_MAX) {
 	  SUBDBG("num_masks (%d) > max masks (%d)\n",event.num_masks, PAPI_NATIVE_UMASK_MAX);
@@ -728,10 +753,16 @@ unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code)
 		}
 	  }
 	  *event_code = encode_native_event(event.event, event.num_masks, event.unit_masks);
-	return(PAPI_OK);
-    }
+	  return(PAPI_OK);
+	}
+  } else if (ret == PFMLIB_ERR_UMASK) {
+	ret = pfm_find_event(name, &event.event);
+	if (ret == PFMLIB_SUCCESS) {
+	  *event_code = encode_native_event(event.event, 0, 0);
+	  return(PAPI_OK);
+	}
   }
-    return(PAPI_ENOEVNT);
+  return(PAPI_ENOEVNT);
 }
 
 int _papi_pfm_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
@@ -860,45 +891,49 @@ int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
 
   ret = pfm_get_num_event_masks(event,&num_masks);
   if (ret != PFMLIB_SUCCESS) {
-      PAPIERROR("pfm_get_num_event_masks(%d,%p): %s",event,&num_masks,pfm_strerror(ret));
-      return(PAPI_ENOEVNT);
-    }
+    PAPIERROR("pfm_get_num_event_masks(%d,%p): %s",event,&num_masks,pfm_strerror(ret));
+    return(PAPI_ENOEVNT);
+  }
   if (num_masks > PAPI_NATIVE_UMASK_MAX) num_masks = PAPI_NATIVE_UMASK_MAX;
   SUBDBG("This is umask %d of %d\n",umask,num_masks);
-  SUBDBG("Modifier: %d\n",modifier);
 
   if (modifier == PAPI_ENUM_EVENTS) {
     if (event < MY_VECTOR.cmp_info.num_native_events - 1) {
-	    *EventCode = encode_native_event_raw(event+1,0);
-	  return(PAPI_OK);
+	  *EventCode = encode_native_event_raw(event+1,0);
+	  return (PAPI_OK);
 	}
-      return (PAPI_ENOEVNT);
-    }
+    return (PAPI_ENOEVNT);
+  }
   else if (modifier == PAPI_NTV_ENUM_UMASK_COMBOS){
     if (umask+1 < (1<<num_masks)) {
 	  *EventCode = encode_native_event_raw(event,umask+1);
 	  return (PAPI_OK);
 	}
-      return(PAPI_ENOEVNT);
-    }
+    return(PAPI_ENOEVNT);
+  }
   else if (modifier == PAPI_NTV_ENUM_UMASKS) {
-      int thisbit = ffs(umask);
-      
+    int thisbit = ffs(umask);
+
     SUBDBG("First bit is %d in %08x\b\n",thisbit-1,umask);
-      thisbit = 1 << thisbit;
+    thisbit = 1 << thisbit;
 
     if (thisbit & ((1<<num_masks)-1)) {
 	  *EventCode = encode_native_event_raw(event,thisbit);
 	  return (PAPI_OK);
 	}
-      return(PAPI_ENOEVNT);
-    }
+    return(PAPI_ENOEVNT);
+  }
   else
     return(PAPI_EINVAL);
 }
 
 #ifndef PENTIUM4
 
+/* This call is broken. Selector can be much bigger than 32 bits. It should be a pfmlib_regmask_t - pjm */
+/* Also, libpfm assumes events can live on different counters with different codes. This call only returns
+    the first occurence found. */
+/* Right now its only called by ntv_code_to_bits in p3_pfm_events, so we're ok. But for it to be
+    generally useful it should be fixed. - dkt */
 int _pfm_get_counter_info(unsigned int event, unsigned int *selector, int *code)
 {
     pfmlib_regmask_t cnt, impl;
@@ -919,23 +954,22 @@ int _pfm_get_counter_info(unsigned int event, unsigned int *selector, int *code)
       return(PAPI_ESBSTR);
     }
 
-    *selector = 0;
-    for (i=0; num; i++) {
-	if (pfm_regmask_isset(&impl, i))
-		num--;
-	if (pfm_regmask_isset(&cnt, i)) {
-	    if (first) {
-	      if ((ret = pfm_get_event_code_counter(event,i,code)) != PFMLIB_SUCCESS)
-	      {
-		PAPIERROR("pfm_get_event_code_counter(%d, %d, %p): %s", event, i, code, pfm_strerror(ret));
-		return(PAPI_ESBSTR);
-	      }
-	      first = 0;
-	    }
-	    *selector |= 1 << i;
+	*selector = 0;
+	for (i=0; num; i++) {
+		if (pfm_regmask_isset(&impl, i))
+			num--;
+		if (pfm_regmask_isset(&cnt, i)) {
+			if (first) {
+				if ((ret = pfm_get_event_code_counter(event,i,code)) != PFMLIB_SUCCESS) {
+					PAPIERROR("pfm_get_event_code_counter(%p, %d, %p): %s", event, i, code, pfm_strerror(ret));
+					return(PAPI_ESBSTR);
+				}
+				first = 0;
+			}
+			*selector |= 1 << i;
+		}
 	}
-    }
-    return(PAPI_OK);
+	return(PAPI_OK);
 }
 #endif
 
@@ -960,100 +994,88 @@ int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
   return (PAPI_OK);
 }
 
-/* This implementation is patterned after PAPI/perfctr ...
-    It may no longer be relevant, but I didn't want to lose it -- dkt 5/21/7 
-static void copy_value(unsigned int val, char *nam, char *names, unsigned int *values, int len)
-{
-   *values = val;
-   strncpy(names, nam, len);
-   names[len-1] = 0;
-}
-
-int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
-                               unsigned int *values, int name_len, int count)
-{
-    unsigned int selector;
-   int mask, i = 0;
-    int ret, code;
-
-    if ((ret = _pfm_get_counter_info(bits->event, &selector, &code)) != PAPI_OK)
-      return(ret);
-
-   copy_value(bits->event, "PFM Event Index", &names[i*name_len], &values[i], name_len);
-   if (++i == count) return(i);
-   copy_value(code, "Event Code", &names[i*name_len], &values[i], name_len);
-   if (++i == count) return(i);
-   copy_value(selector, "Counters", &names[i*name_len], &values[i], name_len);
-   if (++i == count) return(i);
-   mask = convert_pfm_masks(bits);
-   copy_value(mask, "Event Unit Mask", &names[i*name_len], &values[i], name_len);
-   return(++i);
-}
-*/
-
-
-/* This implementation is from Phil's final commit to the 3.5.0 branch ...
-    It needs to be confirmed for current relevant platforms */
 static char *_pmc_name(int i)
 {
   /* Should get this from /sys */
-#if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
-  switch (i) {
-  case 0:
-    return "Core counter 0";
-  case 1:
-    return "Core counter 1";
-  default:
-    return "SCB counter";
-  }
-#else
-  return "Event Code";
-#endif
-}
+  extern int _perfmon2_pfm_pmu_type;
 
-int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
-                               unsigned int *values, int name_len, int count)
-{
-  int ret;
-  pfmlib_regmask_t selector = _perfmon2_pfm_native_map[bits->event].resources.selector;
-  int j, n = _papi_hwi_system_info.sub_info.num_cntrs;
-  int foo, did_something=0;
-
-#if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
   switch (_perfmon2_pfm_pmu_type)
     {
+#if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
       /* All the counters after the 2 CPU counters, the 4 sample counters are SCB registers. */
     case PFMLIB_MIPS_ICE9A_PMU:
     case PFMLIB_MIPS_ICE9B_PMU:
-      if (n > 7) n = 7;
+      switch (i) {
+      case 0:
+	return "Core counter 0";
+      case 1:
+	return "Core counter 1";
+      default:
+	return "SCB counter";
+      }
       break;
+#endif
     default:
-      break;
+      return "Event Code";
     }
+}
+
+int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
+								unsigned int *values, int name_len, int count)
+{
+	int ret;
+	pfmlib_regmask_t selector;
+	int j, n = MY_VECTOR.cmp_info.num_cntrs;
+	int foo, did_something=0;
+	unsigned int umask;
+
+	if ((ret = pfm_get_event_counters(((pfm_register_t *)bits)->event,&selector)) != PFMLIB_SUCCESS) {
+		PAPIERROR("pfm_get_event_counters(%d,%p): %s",((pfm_register_t *)bits)->event,&selector,pfm_strerror(ret));
+		return(PAPI_ESBSTR);
+	}
+
+#if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
+	extern int _perfmon2_pfm_pmu_type;
+	switch (_perfmon2_pfm_pmu_type) {
+		/* All the counters after the 2 CPU counters, the 4 sample counters are SCB registers. */
+		case PFMLIB_MIPS_ICE9A_PMU:
+		case PFMLIB_MIPS_ICE9B_PMU:
+			if (n > 7) n = 7;
+				break;
+		default:
+			break;
+	}
 #endif
 
-  for (j=0;n;j++)
-    {
-      if (pfm_regmask_isset(&selector,j))
-	{
-	  if ((ret = pfm_get_event_code_counter(bits->event,j,&foo)) != PFMLIB_SUCCESS)
-	    {
-	      PAPIERROR("pfm_get_event_code_counter(%d,%d,%p): %s",*bits,j,&foo,pfm_strerror(ret));
-	      return(PAPI_EBUG);
-	    }
-	  /* Overflow check */
-	  if ((did_something*name_len + strlen(_pmc_name(j)) + 1) >= count*name_len)
-	    {
-	      SUBDBG("Would overflow register name array.");
-	      return(did_something);
-	    }
-	  values[did_something] = foo;
-	  strncpy(&names[did_something*name_len],_pmc_name(j),name_len);
-	  did_something++;
+	for (j=0;n;j++) {
+		if (pfm_regmask_isset(&selector,j)) {
+			if ((ret = pfm_get_event_code_counter(((pfm_register_t *)bits)->event,j,&foo)) != PFMLIB_SUCCESS) {
+				PAPIERROR("pfm_get_event_code_counter(%p,%d,%d,%p): %s",*((pfm_register_t *)bits),((pfm_register_t *)bits)->event,j,&foo,pfm_strerror(ret));
+				return(PAPI_EBUG);
+			}
+			/* Overflow check */
+			if ((did_something*name_len + strlen(_pmc_name(j)) + 1) >= count*name_len) {
+				SUBDBG("Would overflow register name array.");
+				return(did_something);
+			}
+			values[did_something] = foo;
+			strncpy(&names[did_something*name_len],_pmc_name(j),name_len);
+			did_something++;
+			if (did_something == count) break;
+		}
+		n--;
 	}
-      n--;
-    }
-  return(did_something);
+	/* assumes umask is unchanged, even if event code changes */
+	umask = convert_pfm_masks(bits);
+	if (umask && (did_something < count)) {
+		values[did_something] = umask;
+		if (strlen(&names[did_something*name_len]))
+		  strncpy(&names[did_something*name_len]," Unit Mask",name_len);
+		else
+		  strncpy(&names[did_something*name_len],"Unit Mask",name_len);
+		did_something++;
+	}
+	return(did_something);
 }
 
 #endif /* PERFCTR_PFM_EVENTS */

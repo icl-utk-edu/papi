@@ -46,34 +46,21 @@
 
 #define inline_static inline static
 
-typedef pfmlib_event_t hwd_register_t;
-typedef int hwd_register_map_t;
-typedef int hwd_reg_alloc_t;
+typedef pfmlib_event_t pfm_register_t;
+typedef int pfm_register_map_t;
+typedef int pfm_reg_alloc_t;
 
 /* Native events consist of a flag field, an event field, and a unit mask field.
  * The next 4 macros define the characteristics of the event and unit mask fields.
  */
-#define PAPI_NATIVE_EVENT_AND_MASK 0x00000fff /* 12 bits == 4096 max events */
+#define PAPI_NATIVE_EVENT_AND_MASK 0x00000fff	/* 12 bits == 4096 max events */
 #define PAPI_NATIVE_EVENT_SHIFT 0
-#define PAPI_NATIVE_UMASK_AND_MASK 0x0ffff000 /* 16 bits for unit masks */
+#define PAPI_NATIVE_UMASK_AND_MASK 0x0ffff000	/* 16 bits for unit masks */
 #define PAPI_NATIVE_UMASK_MAX 16				/* 16 possible unit masks */
 #define PAPI_NATIVE_UMASK_SHIFT 12
 
 #define MAX_COUNTERS PFMLIB_MAX_PMCS
 #define MAX_COUNTER_TERMS PFMLIB_MAX_PMCS
-#define PERFMON_EVENT_FILE "perfmon_events.csv"
-
-// ...now defined in papi_pfm_events.h
-//typedef struct {
-//   /* Preset code */
-//   int preset;
-//   /* Derived code */
-//   int derived;
-//   /* Strings to look for, more than 1 means derived */
-//   char *(findme[MAX_COUNTERS]);
-//   /* Operations between entities */
-//   char operation[MAX_COUNTERS];
-//} pfm_preset_search_entry_t;
 
 typedef struct {
   /* Context structure to kernel, different for attached */
@@ -82,12 +69,12 @@ typedef struct {
   /* Load structure to kernel, different for attached */
   pfarg_load_t *load;
   /* Which counters to use? Bits encode counters to use, may be duplicates */
-  hwd_register_map_t bits;
+  pfm_register_map_t bits;
   /* Buffer to pass to library to control the counters */
   pfmlib_input_param_t in;
   /* Buffer to pass from the library to control the counters */
   pfmlib_output_param_t out;
-  /* Is this eventset multiplexed? */
+  /* Is this eventset multiplexed? Actually it holds the microseconds of the switching interval, 0 if not mpx. */
   int multiplexed;
   /* Arguments to kernel for multiplexing, first number of sets */
   int num_sets;
@@ -101,7 +88,7 @@ typedef struct {
   pfarg_pmd_t pd[PFMLIB_MAX_PMDS];
   /* Buffer to gather counters */
   long long counts[PFMLIB_MAX_PMDS];
-} hwd_control_state_t;
+} pfm_control_state_t;
 
 typedef struct {
 #if defined(USE_PROC_PTTIMER)
@@ -116,30 +103,20 @@ typedef struct {
   pfm_dfl_smpl_arg_t smpl;
   /* Address of mmap()'ed sample buffer */
   void *smpl_buf;
-} hwd_context_t;
+} pfm_context_t;
 
-// ...now defined in papi_pfm_events.h
-//typedef struct hwd_native_register {
-//  pfmlib_regmask_t selector;
-//  int pfmlib_event_index;
-//} hwd_native_register_t;
-//
-//typedef struct hwd_native_event_entry {
-//   /* If it exists, then this is the name of this event */
-//   char name[PAPI_MAX_STR_LEN];
-//   /* If it exists, then this is the description of this event */
-//   char description[PAPI_HUGE_STR_LEN];
-//  /* description of the resources required by this native event */
-//  hwd_native_register_t resources;
-//} hwd_native_event_entry_t;
+/* typedefs to conform to PAPI component layer code. */
+/* these are void * in the PAPI framework layer code. */
+typedef pfm_reg_alloc_t cmp_reg_alloc_t;
+typedef pfm_register_t cmp_register_t;
+typedef pfm_control_state_t cmp_control_state_t;
+typedef pfm_context_t cmp_context_t;
 
-/* Lock macros. */
-/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
- * else val = MUTEX_CLOSED */
+#define MY_VECTOR _papi_pfm_vector
 
 extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
-#define MUTEX_OPEN 1
-#define MUTEX_CLOSED 0
+#define MUTEX_OPEN 0
+#define MUTEX_CLOSED 1
 
 /* Locking functions */
 
@@ -149,15 +126,13 @@ extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 #define _papi_hwd_unlock(lck) { _InterlockedExchange((volatile int *)&_papi_hwd_lock_data[lck], MUTEX_OPEN); }
 #else                           /* GCC */
 #define _papi_hwd_lock(lck)			 			      \
-   { uint64_t res = 0;							      \
+   { int res = 0;							      \
     do {								      \
       __asm__ __volatile__ ("mov ar.ccv=%0;;" :: "r"(MUTEX_OPEN));            \
       __asm__ __volatile__ ("cmpxchg4.acq %0=[%1],%2,ar.ccv" : "=r"(res) : "r"(&_papi_hwd_lock_data[lck]), "r"(MUTEX_CLOSED) : "memory");				      \
-    } while (res != (uint64_t)MUTEX_OPEN); }
+    } while (res != MUTEX_OPEN); }
 
-#define _papi_hwd_unlock(lck)			 			      \
-    { uint64_t res = 0;							      \
-    __asm__ __volatile__ ("xchg4 %0=[%1],%2" : "=r"(res) : "r"(&_papi_hwd_lock_data[lck]), "r"(MUTEX_OPEN) : "memory"); }
+#define _papi_hwd_unlock(lck) {  __asm__ __volatile__ ("st4.rel [%0]=%1" : : "r"(&_papi_hwd_lock_data[lck]), "r"(MUTEX_OPEN) : "memory"); }
 #endif
 #elif defined(__i386__)||defined(__x86_64__)
 #define  _papi_hwd_lock(lck)                    \
@@ -175,57 +150,108 @@ do                                              \
    __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(_papi_hwd_lock_data[lck]), "0"(MUTEX_OPEN) : "memory");                                \
 } while(0)
 #elif defined(mips)
-static inline unsigned int papi_cmpxchg_u32(volatile unsigned int * m, unsigned int old,
-	unsigned int new)
+static inline void __raw_spin_lock(volatile unsigned int *lock)
 {
-  unsigned int retval;
-  __asm__ __volatile__(
-		       "	.set	push					\n"
-		       "	.set	noat					\n"
-		       "	.set	mips3					\n"
-		       "1:	ll	%0, %2					\n"
-		       "	ll	%0, %2					\n" // Remove
-		       "	bne	%0, %z3, 2f				\n"
-		       "	.set	mips0					\n"
-		       "	move	$1, %z4					\n"
-		       "	.set	mips3					\n"
-		       "	sc	$1, %1					\n"
-		       "	beqz	$1, 1b					\n"
-		       "	sync						\n"
-		       "2:							\n"
-		       "	.set	pop					\n"
-		       : "=&r" (retval), "=R" (*m)
-		       : "R" (*m), "Jr" (old), "Jr" (new)
-		       : "memory");
-  return retval;
-}
-static inline unsigned int papi_xchg_u32(volatile unsigned int * m, unsigned int val)
-{
-  unsigned int retval;
-  unsigned int dummy;
-  
-  __asm__ __volatile__(
-		       "	.set	mips3					\n"
-		       "1:	ll	%0, %3					\n"
-		       "	ll	%0, %3					\n" // Remove 
-		       "	.set	mips0					\n"
-		       "	move	%2, %z4					\n"
-		       "	.set	mips3					\n"
-		       "	sc	%2, %1					\n"
-		       "	beqz	%2, 1b					\n"
-		       "	sync						\n"
-		       "	.set	mips0					\n"
-		       : "=&r" (retval), "=m" (*m), "=&r" (dummy)
-		       : "R" (*m), "Jr" (val)
-		       : "memory");
-  return retval;
+  unsigned int tmp;
+  extern int _perfmon2_pfm_pmu_type;
+  if (_perfmon2_pfm_pmu_type == PFMLIB_MIPS_R10000_PMU)
+    {
+		__asm__ __volatile__(
+		"	.set	noreorder	# __raw_spin_lock	\n"
+		"1:	ll	%1, %2					\n"
+		"	bnez	%1, 1b					\n"
+		"	 li	%1, 1					\n"
+		"	sc	%1, %0					\n"
+		"	beqzl	%1, 1b					\n"
+		"	 nop						\n"
+		"	sync						\n"
+		"	.set	reorder					\n"
+		: "=m" (*lock), "=&r" (tmp)
+		: "m" (*lock)
+		: "memory");
+    } 
+  else if (_perfmon2_pfm_pmu_type == PFMLIB_MIPS_ICE9A_PMU) 
+    {
+		__asm__ __volatile__(
+		"	.set	noreorder	# __raw_spin_lock	\n"
+		"1:	ll	%1, %2					\n"
+		"  	ll	%1, %2					\n"
+		"	bnez	%1, 1b					\n"
+		"	 li	%1, 1					\n"
+		"	sc	%1, %0					\n"
+		"	beqz	%1, 1b					\n"
+		"	 sync						\n"
+		"	.set	reorder					\n"
+		: "=m" (*lock), "=&r" (tmp)
+		: "m" (*lock)
+		: "memory");
+    } 
+  else 
+    {
+		__asm__ __volatile__(
+		"	.set	noreorder	# __raw_spin_lock	\n"
+		"1:	ll	%1, %2					\n"
+		"	bnez	%1, 1b					\n"
+		"	 li	%1, 1					\n"
+		"	sc	%1, %0					\n"
+		"	beqz	%1, 1b					\n"
+		"	 sync						\n"
+		"	.set	reorder					\n"
+		: "=m" (*lock), "=&r" (tmp)
+		: "m" (*lock)
+		: "memory");
+    }
 }
 
+static inline void __raw_spin_unlock(volatile unsigned int *lock)
+{
+	__asm__ __volatile__(
+	"	.set	noreorder	# __raw_spin_unlock	\n"
+	"	sync						\n"
+	"	sw	$0, %0					\n"
+	"	.set\treorder					\n"
+	: "=m" (*lock)
+	: "m" (*lock)
+	: "memory");
+}
+#define  _papi_hwd_lock(lck) __raw_spin_lock(&_papi_hwd_lock_data[lck]);
+#define  _papi_hwd_unlock(lck) __raw_spin_unlock(&_papi_hwd_lock_data[lck])
+#elif defined(__powerpc__)
+
+/*
+ * These functions are slight modifications of the functions in
+ * /usr/include/asm-ppc/system.h.
+ *
+ *  We can't use the ones in system.h directly because they are defined
+ *  only when __KERNEL__ is defined.
+ */
+
+static __inline__ unsigned long
+papi_xchg_u32(volatile void *p, unsigned long val)
+{
+        unsigned long prev;
+
+        __asm__ __volatile__ ("\n\
+        sync \n\
+1:      lwarx   %0,0,%2 \n\
+        stwcx.  %3,0,%2 \n\
+        bne-    1b \n\
+        isync"
+        : "=&r" (prev), "=m" (*(volatile unsigned long *)p)
+        : "r" (p), "r" (val), "m" (*(volatile unsigned long *)p)
+        : "cc", "memory");
+
+        return prev;
+}
+
+/*
+ * The two defines below are taken directly from the MIPS implementation.
+ */
 #define  _papi_hwd_lock(lck)                          \
 do {                                                    \
   unsigned int retval;                                 \
   do {                                                  \
-  retval = papi_cmpxchg_u32(&_papi_hwd_lock_data[lck],MUTEX_CLOSED,MUTEX_OPEN);  \
+  retval = papi_xchg_u32(&_papi_hwd_lock_data[lck],MUTEX_CLOSED);  \
   } while(retval != (unsigned int)MUTEX_OPEN);	        \
 } while(0)
 #define  _papi_hwd_unlock(lck)                          \
@@ -233,6 +259,53 @@ do {                                                    \
   unsigned int retval;                                 \
   retval = papi_xchg_u32(&_papi_hwd_lock_data[lck],MUTEX_OPEN); \
 } while(0)
+
+#elif defined(__crayx2)					/* CRAY X2 */
+#include <pthread.h>
+static pthread_spinlock_t crayx2_mutex[PAPI_MAX_LOCK];
+inline static void _papi_hwd_lock_init (void)
+{
+	int i;
+	for (i=0; i<PAPI_MAX_LOCK; i++) {
+		pthread_spin_init (&crayx2_mutex[i], PTHREAD_PROCESS_PRIVATE);
+	}
+}
+inline static void _papi_hwd_lock (int lck)
+{
+	pthread_spin_lock (&crayx2_mutex[lck]);
+	_papi_hwd_lock_data[lck] = MUTEX_CLOSED;
+}
+inline static void _papi_hwd_unlock (int lck)
+{
+	pthread_spin_unlock (&crayx2_mutex[lck]);
+	_papi_hwd_lock_data[lck] = MUTEX_OPEN;
+}
+#elif defined(__sparc__)
+static inline void __raw_spin_lock(volatile unsigned int *lock)
+{
+	__asm__ __volatile__(
+	"\n1:\n\t"
+	"ldstub	[%0], %%g2\n\t"
+	"orcc	%%g2, 0x0, %%g0\n\t"
+	"bne,a	2f\n\t"
+	" ldub	[%0], %%g2\n\t"
+	".subsection	2\n"
+	"2:\n\t"
+	"orcc	%%g2, 0x0, %%g0\n\t"
+	"bne,a	2b\n\t"
+	" ldub	[%0], %%g2\n\t"
+	"b,a	1b\n\t"
+	".previous\n"
+	: /* no outputs */
+	: "r" (lock)
+	: "g2", "memory", "cc");
+}
+static inline void __raw_spin_unlock(volatile unsigned int *lock)
+{
+	__asm__ __volatile__("stb %%g0, [%0]" : : "r" (lock) : "memory");
+}
+#define  _papi_hwd_lock(lck) __raw_spin_lock(&_papi_hwd_lock_data[lck]);
+#define  _papi_hwd_unlock(lck) __raw_spin_unlock(&_papi_hwd_lock_data[lck])
 #else
 #error "_papi_hwd_lock/unlock undefined!"
 #endif
@@ -250,6 +323,19 @@ typedef ucontext_t hwd_ucontext_t;
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.gregs[REG_RIP]
 #elif defined(mips)
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.pc
+#elif defined(__powerpc__) && !defined(__powerpc64__)
+/*
+ * The index of the Next IP (REG_NIP) was obtained by looking at kernel
+ * source code.  It wasn't documented anywhere else that I could find.
+ */
+#define REG_NIP 32
+#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.uc_regs->gregs[REG_NIP]
+#elif defined(__powerpc64__)
+#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.regs->nip
+#elif defined(__crayx2)					/* CRAY X2 */
+#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.regs.pc
+#elif defined(__sparc__)
+#define OVERFLOW_ADDRESS(ctx) ((struct sigcontext *)ctx.ucontext)->si_regs.pc
 #else
 #error "OVERFLOW_ADDRESS() undefined!"
 #endif
