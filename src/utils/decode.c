@@ -52,7 +52,7 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
    i = PAPI_PRESET_MASK;
-   printf("name,derived,postfix,short_descr,long_descr,note,[{native,...}]\n\n");
+   printf("name,derived,postfix,short_descr,long_descr,note,[native,...]\n\n");
 
    do {
       if (PAPI_get_event_info(i, &info) == PAPI_OK) {
@@ -63,9 +63,8 @@ int main(int argc, char **argv)
          else { printf(","); }
 	      if (info.note[0]) printf("\"%s\"", info.note);
 
-         printf ("{");
          for (j=0;j<(int)info.count;j++) printf(",%s",info.name[j]);
-         printf("}\n");
+         printf("\n");
 	   }
    } while (PAPI_enum_event(&i, print_avail_only) == PAPI_OK);
    exit(0);
