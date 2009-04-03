@@ -925,6 +925,7 @@ if test "$perfmon" != 0; then
    fi
    AC_MSG_RESULT($perfmon)
    perfmon=`echo ${perfmon} | sed 's/\.//'`
+#   AC_MSG_RESULT($perfmon)
 fi
 
 AC_ARG_WITH(pfm_root,
@@ -980,6 +981,10 @@ if test "$pfm_events" = "static"; then
    CFLAGS="$CFLAGS -DSTATIC_PERFMON_EVENTS_TABLE"
 AC_MSG_NOTICE(Generating perfmon_events_table.h)
 sh perfmon_events_table.sh > perfmon_events_table.h
+fi
+
+if test $perfmon -lt 25; then
+   CFLAGS="$CFLAGS -DPFMLIB_OLD_PFMV2"
 fi
 
 #
@@ -1119,9 +1124,6 @@ if test $perfmon != 0; then
          CPPFLAGS="-I$pfm_incdir"
          dotest=1
       fi
-   fi
-   if test $perfmon -gt 20; then
-      pfm_version="PFMLIB_VERSION_${perfmon}"
    fi
    if test "$dotest" = 1; then
    AC_CHECK_LIB([pfm], [pfm_initialize], [
@@ -1476,7 +1478,6 @@ AC_SUBST(perfctr_prefix)
 AC_SUBST(perfctr_incdir)
 AC_SUBST(perfctr_libdir)
 AC_SUBST(pfm_root)
-AC_SUBST(pfm_version)
 AC_SUBST(pfm_prefix)
 AC_SUBST(pfm_incdir)
 AC_SUBST(pfm_libdir)

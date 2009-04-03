@@ -42,7 +42,10 @@ void clock_res_check(int flag)
    min = max = (double)(elapsed_cyc[1]-elapsed_cyc[0]);
    for (i = 1; i < NUM_ITERS; i++) {
       if (elapsed_cyc[i] - elapsed_cyc[i - 1] < 0){
-	 test_fail(__FILE__,__LINE__,"Negative elapsed time, bailing", -1);
+		  printf("Elapsed Cycles[%d]: %lld;\nElapsed Cycles[%d]: %lld;\nDifference: %lld\n",
+			  i, elapsed_cyc[i], i-1, elapsed_cyc[i - 1], elapsed_cyc[i] - elapsed_cyc[i - 1]);
+	 printf("Negative elapsed time!\n");
+//	 test_fail(__FILE__,__LINE__,"Negative elapsed time, bailing", -1);
       }
       diff_cyc = elapsed_cyc[i] - elapsed_cyc[i - 1];
       if (min > diff_cyc) min = (double)diff_cyc;

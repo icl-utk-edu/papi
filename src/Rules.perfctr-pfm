@@ -237,7 +237,7 @@ CFLAGS	+= -DPERFCTR_PFM_EVENTS
 PFM_OBJS=$(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
 ifeq (,$(PFM_OBJS))
   $(PFM_LIB_PATH)/libpfm.a:
-	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)" PFM_VERSION_FLAG="$(PFM_VERSION)" DIRS=lib
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)" DIRS=lib
 	$(MAKE)
 endif
 
@@ -300,7 +300,7 @@ ifeq ($(ARCH),ppc64)
 	cp -Rf ./event_data $(DESTDIR)$(DATADIR)
 endif
 ifneq (,${PFM_ROOT})
-	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC=$(CC) PFM_VERSION_FLAG="$(PFM_VERSION)" DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
+	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC=$(CC) DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
 ifneq (,${PERFCTR_ROOT})
 ifeq (${VERSION},2.4.x)

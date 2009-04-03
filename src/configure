@@ -684,7 +684,6 @@ perfctr_prefix
 perfctr_incdir
 perfctr_libdir
 pfm_root
-pfm_version
 pfm_prefix
 pfm_incdir
 pfm_libdir
@@ -5968,6 +5967,7 @@ echo "$as_me: error: \"Badly formed perfmon version string\"" >&2;}
    { echo "$as_me:$LINENO: result: $perfmon" >&5
 echo "${ECHO_T}$perfmon" >&6; }
    perfmon=`echo ${perfmon} | sed 's/\.//'`
+#   AC_MSG_RESULT($perfmon)
 fi
 
 
@@ -6056,6 +6056,10 @@ if test "$pfm_events" = "static"; then
 { echo "$as_me:$LINENO: Generating perfmon_events_table.h" >&5
 echo "$as_me: Generating perfmon_events_table.h" >&6;}
 sh perfmon_events_table.sh > perfmon_events_table.h
+fi
+
+if test $perfmon -lt 25; then
+   CFLAGS="$CFLAGS -DPFMLIB_OLD_PFMV2"
 fi
 
 #
@@ -6626,9 +6630,6 @@ if test $perfmon != 0; then
          CPPFLAGS="-I$pfm_incdir"
          dotest=1
       fi
-   fi
-   if test $perfmon -gt 20; then
-      pfm_version="PFMLIB_VERSION_${perfmon}"
    fi
    if test "$dotest" = 1; then
    { echo "$as_me:$LINENO: checking for pfm_initialize in -lpfm" >&5
@@ -8015,7 +8016,6 @@ fi
 
 
 
-
 if test "$cross_compiling" = "yes" ; then
    { echo "$as_me:$LINENO: Compiling genpapifdef with $nativecc because cross compiling" >&5
 echo "$as_me: Compiling genpapifdef with $nativecc because cross compiling" >&6;}
@@ -8722,7 +8722,6 @@ perfctr_prefix!$perfctr_prefix$ac_delim
 perfctr_incdir!$perfctr_incdir$ac_delim
 perfctr_libdir!$perfctr_libdir$ac_delim
 pfm_root!$pfm_root$ac_delim
-pfm_version!$pfm_version$ac_delim
 pfm_prefix!$pfm_prefix$ac_delim
 pfm_incdir!$pfm_incdir$ac_delim
 pfm_libdir!$pfm_libdir$ac_delim
@@ -8736,7 +8735,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 81; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 80; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

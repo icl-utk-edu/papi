@@ -74,7 +74,7 @@ PFM_OBJS=$(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
 ifeq (,$(PFM_OBJS))
 $(PFM_LIB_PATH)/libpfm.a:
 ifneq (,${PFM_ROOT})
-	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)" PFM_VERSION_FLAG="$(PFM_VERSION)"
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)"
 else
 	@echo '$@ not installed!'; exit 1
 endif
@@ -110,7 +110,7 @@ endif
 
 native_install:
 ifneq (,${PFM_ROOT})
-	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" PFM_VERSION_FLAG="$(PFM_VERSION)" DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
+	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
 	-install -d $(DESTDIR)$(LIBDIR)
 ifneq (,$(findstring shared,$(LIBS)))
