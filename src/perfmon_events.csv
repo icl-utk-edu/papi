@@ -1,7 +1,9 @@
 #
 # Every CPU automatically has PAPI_TOT_CYC and PAPI_TOT_INS added
 #
-# Processor identifier and additional flags
+# Processor identifier and additional flags.
+# The processor identifier *can not* contain any comma characters as these
+# characters serve to delimit fields.
 #
 CPU,Cray X2
 #
@@ -140,6 +142,8 @@ PRESET,PAPI_L2_TCM,NOT_DERIVED,CPU_L2MISSALL
 PRESET,PAPI_L2_TCA,NOT_DERIVED,CPU_L2REQ
 #
 CPU,AMD64
+CPU,AMD64 (unknown model)
+CPU,AMD64 (K7)
 CPU,AMD64 (K8 RevB)
 CPU,AMD64 (K8 RevC)
 CPU,AMD64 (K8 RevD)
@@ -212,6 +216,9 @@ PRESET,PAPI_FP_OPS,DERIVED_SUB,RETIRED_MMX_AND_FP_INSTRUCTIONS:X87:SCALAR_SSE_AN
 CPU,AMD64 (Barcelona)
 CPU,AMD64 (Barcelona RevB)
 CPU,AMD64 (Barcelona RevC)
+CPU,AMD64 (Family 10h RevB Barcelona)
+CPU,AMD64 (Family 10h RevC Shanghai)
+CPU,AMD64 (Family 10h RevD Istanbul)
 #
 PRESET,PAPI_L1_ICH,DERIVED_SUB,INSTRUCTION_CACHE_FETCHES,INSTRUCTION_CACHE_REFILLS_FROM_SYSTEM,INSTRUCTION_CACHE_REFILLS_FROM_L2
 PRESET,PAPI_L1_ICM,NOT_DERIVED,INSTRUCTION_CACHE_MISSES
