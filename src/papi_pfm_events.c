@@ -264,9 +264,10 @@ static int get_event_line(char *line, FILE *table, char **tmp_perfmon_events_tab
 
 /* #define SHOW_LOADS */
 
-static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_entry_t *here)
+static int load_preset_table(char *pmu_str, int pmu_type, pfm_preset_search_entry_t *here)
 {
   pfmlib_event_t event;
+  char pmu_name[PAPI_MIN_STR_LEN];
   char line[LINE_MAX];
   char name[PATH_MAX] = "builtin perfmon_events_table";
   char *tmp_perfmon_events_table = NULL;
@@ -280,6 +281,14 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
 #ifdef SHOW_LOADS
   SUBDBG("%p\n",here);
 #endif
+
+  /* copy the pmu identifier, stripping commas if found */
+  tmpn = pmu_name;
+  while(*pmu_str) {
+    if(*pmu_str != ',') *tmpn++ = *pmu_str;
+	pmu_str++;
+  }
+  *tmpn = '\0';
 
   /* make sure these events are supported before adding them */
   if (pfm_get_cycle_event(&event) != PFMLIB_ERR_NOTSUPP) {
