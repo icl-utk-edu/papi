@@ -62,7 +62,9 @@ MISCHDRS = perfmon.h papi_pfm_events.h $(PFM_EVENTS_TABLE)
 MISCSRCS = papi_pfm_events.c
 
 ifneq (CRAYX2, $(COMPILER))
-  MISCSRCS +=  x86_cache_info.c
+  ifneq (ia64, $(ARCH))
+    MISCSRCS +=  x86_cache_info.c
+  endif
 endif
 
 # This is necessary to avoid text relocations. You cannot do -Lxx -lx because
