@@ -169,83 +169,105 @@ char* component_type(char *id)
   return str+5;
 }
 
+void xmlize_event(FILE *f, PAPI_event_info_t *info, int num) {
+	char *xml_symbol, *xml_desc;
 
-void enum_events(FILE *f, int cidx, 
-		 const PAPI_component_info_t *comp, 
-		 int modifier)
+	xml_symbol = xmlize(info->symbol);
+	xml_desc = xmlize(info->long_descr);
+	if (num >= 0)
+		fprintf(f, "    <event index=\"%d\" name=\"%s\" desc=\"%s\" code=\"0x%x\">\n",
+			num, xml_symbol, xml_desc, info->event_code);
+	else
+		fprintf(f, "        <modifier name=\"%s\" desc=\"%s\" code=\"0x%x\"> </modifier>\n",
+			xml_symbol, xml_desc, info->event_code );
+	free(xml_symbol);
+	free(xml_desc);
+}
+
+
+void enum_preset_events(FILE *f, int cidx, 
+		 const PAPI_component_info_t *comp)
 {
-  int i, k, num;
-  int retval;
-  PAPI_event_info_t info;
-  char *xml_symbol, *xml_desc;
+	int i, num;
+	int retval;
+	PAPI_event_info_t info;
 
-  i = PAPI_COMPONENT_MASK(cidx)|modifier;
-
-  fprintf(f, "  <eventset type=\"%s\">\n", 
-	  modifier&PAPI_PRESET_MASK?"PRESET":"NATIVE" );
-  
-  num=-1;
-  retval=PAPI_enum_event(&i, PAPI_ENUM_FIRST);
-  while( retval==PAPI_OK )
-    {
-      num++;
-      retval = PAPI_get_event_info(i, &info);
-      if( retval!=PAPI_OK ) {
-	retval = PAPI_enum_event(&i, PAPI_ENUM_EVENTS);
-	continue;
-      }
-
-      if( !test_event(cidx, i) )
-	{
-	  retval = PAPI_enum_event(&i, PAPI_ENUM_EVENTS);
-	  continue;
-	}
-	  xml_symbol = xmlize(info.symbol);
-	  xml_desc = xmlize(info.long_descr);
-      fprintf(f, "    <event index=\"%d\" name=\"%s\" desc=\"%s\" code=\"0x%x\">\n",
-	      num, xml_symbol, xml_desc, info.event_code);
-	  free(xml_symbol);
-	  free(xml_desc);
-
-      
-
-      if( modifier&PAPI_NATIVE_MASK )
-	{
-	  if (comp->cntr_umasks) {
-	    k = i;
-	    if (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
-	      do {
-		retval = PAPI_get_event_info(k, &info);
-		if (retval == PAPI_OK) {
-		  		  
-		  if( !test_event(cidx, k) )
-		    {
-		      retval = PAPI_enum_event(&i, PAPI_ENUM_EVENTS);
-		      continue;
-		    }
-
-		  xml_symbol = xmlize(strchr(info.symbol, ':'));
-		  xml_desc = xmlize(strchr(info.long_descr, ':')+1);
-		  fprintf(f, "        <modifier name=\"%s\" desc=\"%s\" code=\"0x%x\"> </modifier>\n",
-			  xml_symbol, xml_desc, info.event_code );
-		  free(xml_symbol);
-		  free(xml_desc);
-
+	i = PAPI_COMPONENT_MASK(cidx)|PAPI_PRESET_MASK;
+	fprintf(f, "  <eventset type=\"PRESET\">\n");
+	num=-1;
+	retval=PAPI_enum_event(&i, PAPI_ENUM_FIRST);
+	while( retval==PAPI_OK ) {
+		num++;
+		retval = PAPI_get_event_info(i, &info);
+		if( retval!=PAPI_OK ) {
+			retval = PAPI_enum_event(&i, PAPI_ENUM_EVENTS);
+			continue;
 		}
-	      } while (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK);
-	    }
-	  }
+		if( test_event(cidx, i) ) {
+			xmlize_event(f, &info, num);
+			fprintf(f, "    </event>\n" );
+		}
+		retval = PAPI_enum_event(&i, PAPI_ENUM_EVENTS);
 	}
+	fprintf(f, "  </eventset>\n");
+}
 
-      fprintf(f, "    </event>\n" );
+void enum_native_events(FILE *f, int cidx, 
+		 const PAPI_component_info_t *comp)
+{
+	int i, k, num;
+	int retval;
+	PAPI_event_info_t info;
 
-      retval = PAPI_enum_event(&i, PAPI_ENUM_EVENTS);
-    }
+	i = PAPI_COMPONENT_MASK(cidx)|PAPI_NATIVE_MASK;
+	fprintf(f, "  <eventset type=\"NATIVE\">\n");
+	num=-1;
+	retval=PAPI_enum_event(&i, PAPI_ENUM_FIRST);
+	while( retval==PAPI_OK ) {
+		num++;
+		retval = PAPI_get_event_info(i, &info);
+		if( retval!=PAPI_OK ) {
+			retval = PAPI_enum_event(&i, PAPI_ENUM_EVENTS);
+			continue;
+		}
 
-  fprintf(f, "  </eventset>\n");
-
-
-  
+		/* check if this component supports unit masks on native events */
+		if (comp->cntr_umasks) {
+			k = i;
+			/* test if this event has unit masks */
+			if (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
+				/* add the event */
+				if( test_event(cidx, k) ) {
+					xmlize_event(f, &info, num);
+					/* add the event's unit masks */
+					do {
+						retval = PAPI_get_event_info(k, &info);
+						if (retval == PAPI_OK) {
+							if( !test_event(cidx, k) )
+							{
+								retval = PAPI_enum_event(&i, PAPI_ENUM_EVENTS);
+								continue;
+							}
+							xmlize_event(f, &info, -1);
+						}
+					} while (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK);
+					fprintf(f, "    </event>\n" );
+				}
+			} else { /* this event has no unit masks; test & write the event */
+				if( test_event(cidx, i) ) {
+					xmlize_event(f, &info, num);
+					fprintf(f, "    </event>\n" );
+				}
+			}
+		} else { /*  unit masks not supported; just test & write the event */
+			if( test_event(cidx, i) ) {
+				xmlize_event(f, &info, num);
+				fprintf(f, "    </event>\n" );
+			}
+		}
+		retval = PAPI_enum_event(&i, PAPI_ENUM_EVENTS);
+	}
+	fprintf(f, "  </eventset>\n");
 }
 
 void usage( int argc, char *argv[] )
@@ -355,9 +377,9 @@ int main( int argc, char *argv[] )
 	      cidx, cidx?component_type((char*)(comp->name)):"CPU", comp->name );
 
       if( native )
-	enum_events(stdout, cidx, comp, PAPI_NATIVE_MASK);
+		enum_native_events(stdout, cidx, comp);
       if( preset )
-	enum_events(stdout, cidx, comp, PAPI_PRESET_MASK);
+		enum_preset_events(stdout, cidx, comp);
 
       fprintf(stdout, "</component>\n");
     }
@@ -371,9 +393,9 @@ int main( int argc, char *argv[] )
 		  cidx, cidx?component_type((char*)(comp->name)):"CPU", comp->name );
 	  
 	  if( native )
-	    enum_events(stdout, cidx, comp, PAPI_NATIVE_MASK);
+		enum_native_events(stdout, cidx, comp);
 	  if( preset )
-	    enum_events(stdout, cidx, comp, PAPI_PRESET_MASK);
+		enum_preset_events(stdout, cidx, comp);
 
 	  fprintf(stdout, "</component>\n");
 
