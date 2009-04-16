@@ -2983,11 +2983,11 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
 	}
 
       if (flags & PAPI_PROFIL_DATA_EAR)
-	*pc = data_addr.pmd_val;
+	*pc = (caddr_t)data_addr.pmd_val;
       else if (flags & PAPI_PROFIL_INST_EAR)
 	{
 	  unsigned long tmp = ((load_addr.pmd36_mont_reg.dear_iaddr + (unsigned long)load_addr.pmd36_mont_reg.dear_bn) << 4) | (unsigned long)load_addr.pmd36_mont_reg.dear_slot;
-	  *pc = tmp;
+	  *pc = (caddr_t)tmp;
 	}
       else
 	{
@@ -3033,7 +3033,7 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
       if (flags & PAPI_PROFIL_INST_EAR)
 	{
 	  unsigned long tmp = icache_line_addr.pmd34_mont_reg.iear_iaddr << 5;
-	  *pc = tmp;
+	  *pc = (caddr_t)tmp;
 	}
       else 
       	{
@@ -3081,11 +3081,11 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
 	}
 
       if (flags & PAPI_PROFIL_DATA_EAR)
-	*pc = data_addr.pmd_val;
+	*pc = (caddr_t)data_addr.pmd_val;
       else if (flags & PAPI_PROFIL_INST_EAR)
 	{
 	  unsigned long tmp = ((load_addr.pmd17_ita2_reg.dear_iaddr + (unsigned long)load_addr.pmd17_ita2_reg.dear_bn) << 4) | (unsigned long)load_addr.pmd17_ita2_reg.dear_slot;
-	  *pc = tmp;
+	  *pc = (caddr_t)tmp;
 	}
       else
 	{
@@ -3131,7 +3131,7 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
       if (flags & PAPI_PROFIL_INST_EAR)
 	{
 	  unsigned long tmp = icache_line_addr.pmd0_ita2_reg.iear_iaddr << 5;
-	  *pc = tmp;
+	  *pc = (caddr_t)tmp;
 	}
       else 
 	{
@@ -3170,7 +3170,7 @@ process_smpl_buf(int num_smpl_pmds, int entry_size, ThreadInfo_t **thr)
   pfm_dfl_smpl_hdr_t *hdr = (*thr)->context.smpl_buf;
   int ret, profile_index, flags;
   unsigned int native_pfm_index;
-  caddr_t pc;
+  caddr_t pc = NULL;
   long long weight;
 
   DEBUGCALL(DEBUG_SUBSTRATE,dump_smpl_hdr(hdr));
@@ -3332,7 +3332,7 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
       memset(&ctx->smpl,0,sizeof(buf_arg));
       ctx->smpl_buf = NULL;
       ret = _papi_hwd_set_overflow(ESI,EventIndex,threshold);
-#warning "This should be handled somewhere else"
+//#warning "This should be handled somewhere else"
       ESI->state &= ~(PAPI_OVERFLOWING);
       ESI->overflow.flags &= ~(PAPI_OVERFLOW_HARDWARE);
 
