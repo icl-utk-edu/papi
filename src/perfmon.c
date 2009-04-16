@@ -3000,11 +3000,11 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
 	}
 
       if (flags & PAPI_PROFIL_DATA_EAR)
-	*pc = data_addr.pmd_val;
+	*pc = (caddr_t)data_addr.pmd_val;
       else if (flags & PAPI_PROFIL_INST_EAR)
 	{
 	  unsigned long tmp = ((load_addr.pmd36_mont_reg.dear_iaddr + (unsigned long)load_addr.pmd36_mont_reg.dear_bn) << 4) | (unsigned long)load_addr.pmd36_mont_reg.dear_slot;
-	  *pc = tmp;
+	  *pc = (caddr_t)tmp;
 	}
       else
 	{
@@ -3050,7 +3050,7 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
       if (flags & PAPI_PROFIL_INST_EAR)
 	{
 	  unsigned long tmp = icache_line_addr.pmd34_mont_reg.iear_iaddr << 5;
-	  *pc = tmp;
+	  *pc = (caddr_t)tmp;
 	}
       else 
       	{
@@ -3098,11 +3098,11 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
 	}
 
       if (flags & PAPI_PROFIL_DATA_EAR)
-	*pc = data_addr.pmd_val;
+	*pc = (caddr_t)data_addr.pmd_val;
       else if (flags & PAPI_PROFIL_INST_EAR)
 	{
 	  unsigned long tmp = ((load_addr.pmd17_ita2_reg.dear_iaddr + (unsigned long)load_addr.pmd17_ita2_reg.dear_bn) << 4) | (unsigned long)load_addr.pmd17_ita2_reg.dear_slot;
-	  *pc = tmp;
+	  *pc = (caddr_t)tmp;
 	}
       else
 	{
@@ -3148,7 +3148,7 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
       if (flags & PAPI_PROFIL_INST_EAR)
 	{
 	  unsigned long tmp = icache_line_addr.pmd0_ita2_reg.iear_iaddr << 5;
-	  *pc = tmp;
+	  *pc = (caddr_t)tmp;
 	}
       else 
 	{
@@ -3188,7 +3188,7 @@ process_smpl_buf(int num_smpl_pmds, int entry_size, ThreadInfo_t **thr)
   pfm_dfl_smpl_hdr_t *hdr = ((pfm_context_t *)(*thr)->context[cidx])->smpl_buf;
   int ret, profile_index, flags;
   unsigned int native_pfm_index;
-  caddr_t pc;
+  caddr_t pc = NULL;
   long long weight;
 
   DEBUGCALL(DEBUG_SUBSTRATE,dump_smpl_hdr(hdr));
@@ -3324,6 +3324,85 @@ int _papi_pfm_stop_profiling(ThreadInfo_t * thread, EventSetInfo_t * ESI)
   return(process_smpl_buf(0, sizeof(pfm_dfl_smpl_entry_t), &thread));
 }
 
+int _papi_pfm_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
+{
+   pfm_control_state_t *this_state = (pfm_control_state_t *)(ESI->ctl_state);
+   int j, retval = PAPI_OK, *pos;
+
+   /* Which counter are we on, this looks suspicious because of the pos[0],
+      but this could be because of derived events. We should do more here
+      to figure out exactly what the position is, because the event may
+      actually have more than one position. */
+   
+   pos = ESI->EventInfoArray[EventIndex].pos;
+   j = pos[0];
+   SUBDBG("Hardware counter %d used in overflow, threshold %d\n", j, threshold);
+
+   if (threshold == 0) 
+     {
+       /* If this counter isn't set to overflow */
+       
+       if ((this_state->pd[j].reg_flags & PFM_REGFL_OVFL_NOTIFY) == 0)
+	 return(PAPI_EINVAL);
+       
+       /* Remove the signal handler */
+       
+       retval = _papi_hwi_stop_signal(MY_VECTOR.cmp_info.hardware_intr_sig);
+       if (retval != PAPI_OK)
+	 return(retval);
+
+       /* Disable overflow */
+
+       this_state->pd[j].reg_flags ^= PFM_REGFL_OVFL_NOTIFY;
+
+	/*
+	 * we may want to reset the other PMDs on
+	 * every overflow. If we do not set
+	 * this, the non-overflowed counters
+	 * will be untouched.
+
+	 if (inp.pfp_event_count > 1)
+	 this_state->pd[j].reg_reset_pmds[0] ^= 1UL << counter_to_reset */
+
+       /* Clear the overflow period */
+
+      this_state->pd[j].reg_value = 0;
+      this_state->pd[j].reg_long_reset = 0;
+      this_state->pd[j].reg_short_reset = 0;
+      this_state->pd[j].reg_random_seed = 0;
+      this_state->pd[j].reg_random_mask = 0;
+     } 
+   else
+     {
+       /* Enable the signal handler */
+
+       retval = _papi_hwi_start_signal(MY_VECTOR.cmp_info.hardware_intr_sig, 1, MY_VECTOR.cmp_info.CmpIdx);
+       if (retval != PAPI_OK)
+	 return(retval);
+
+       /* Set it to overflow */
+
+       this_state->pd[j].reg_flags |= PFM_REGFL_OVFL_NOTIFY;
+       
+	/*
+	 * we may want to reset the other PMDs on
+	 * every overflow. If we do not set
+	 * this, the non-overflowed counters
+	 * will be untouched.
+
+	 if (inp.pfp_event_count > 1)
+	 this_state->pd[j].reg_reset_pmds[0] |= 1UL << counter_to_reset */
+       
+       /* Set the overflow period */
+
+       this_state->pd[j].reg_value = - (unsigned long long) threshold + 1;
+       this_state->pd[j].reg_short_reset = - (unsigned long long) threshold + 1;
+       this_state->pd[j].reg_long_reset = - (unsigned long long) threshold + 1;
+     }
+   return (retval);
+}
+
+
 int _papi_pfm_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
   int cidx = MY_VECTOR.cmp_info.CmpIdx;
@@ -3352,7 +3431,7 @@ int _papi_pfm_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
       memset(&ctx->smpl,0,sizeof(buf_arg));
       ctx->smpl_buf = NULL;
       ret = _papi_pfm_set_overflow(ESI,EventIndex,threshold);
-#warning "This should be handled somewhere else"
+//#warning "This should be handled somewhere else"
       ESI->state &= ~(PAPI_OVERFLOWING);
       ESI->overflow.flags &= ~(PAPI_OVERFLOW_HARDWARE);
 
@@ -3438,84 +3517,6 @@ int _papi_pfm_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
   ctx->smpl_buf = buf_addr;
 
   return(PAPI_OK);
-}
-
-int _papi_pfm_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
-{
-   pfm_control_state_t *this_state = (pfm_control_state_t *)(ESI->ctl_state);
-   int j, retval = PAPI_OK, *pos;
-
-   /* Which counter are we on, this looks suspicious because of the pos[0],
-      but this could be because of derived events. We should do more here
-      to figure out exactly what the position is, because the event may
-      actually have more than one position. */
-   
-   pos = ESI->EventInfoArray[EventIndex].pos;
-   j = pos[0];
-   SUBDBG("Hardware counter %d used in overflow, threshold %d\n", j, threshold);
-
-   if (threshold == 0) 
-     {
-       /* If this counter isn't set to overflow */
-       
-       if ((this_state->pd[j].reg_flags & PFM_REGFL_OVFL_NOTIFY) == 0)
-	 return(PAPI_EINVAL);
-       
-       /* Remove the signal handler */
-       
-       retval = _papi_hwi_stop_signal(MY_VECTOR.cmp_info.hardware_intr_sig);
-       if (retval != PAPI_OK)
-	 return(retval);
-
-       /* Disable overflow */
-
-       this_state->pd[j].reg_flags ^= PFM_REGFL_OVFL_NOTIFY;
-
-	/*
-	 * we may want to reset the other PMDs on
-	 * every overflow. If we do not set
-	 * this, the non-overflowed counters
-	 * will be untouched.
-
-	 if (inp.pfp_event_count > 1)
-	 this_state->pd[j].reg_reset_pmds[0] ^= 1UL << counter_to_reset */
-
-       /* Clear the overflow period */
-
-      this_state->pd[j].reg_value = 0;
-      this_state->pd[j].reg_long_reset = 0;
-      this_state->pd[j].reg_short_reset = 0;
-      this_state->pd[j].reg_random_seed = 0;
-      this_state->pd[j].reg_random_mask = 0;
-     } 
-   else
-     {
-       /* Enable the signal handler */
-
-       retval = _papi_hwi_start_signal(MY_VECTOR.cmp_info.hardware_intr_sig, 1, MY_VECTOR.cmp_info.CmpIdx);
-       if (retval != PAPI_OK)
-	 return(retval);
-
-       /* Set it to overflow */
-
-       this_state->pd[j].reg_flags |= PFM_REGFL_OVFL_NOTIFY;
-       
-	/*
-	 * we may want to reset the other PMDs on
-	 * every overflow. If we do not set
-	 * this, the non-overflowed counters
-	 * will be untouched.
-
-	 if (inp.pfp_event_count > 1)
-	 this_state->pd[j].reg_reset_pmds[0] |= 1UL << counter_to_reset */
-       
-       /* Set the overflow period */
-
-       this_state->pd[j].reg_value = - (unsigned long long) threshold + 1;
-       this_state->pd[j].reg_short_reset = - (unsigned long long) threshold + 1;
-       this_state->pd[j].reg_long_reset = - (unsigned long long) threshold + 1;
-     }
-   return (retval);
 }
 
 int _papi_pfm_init_control_state(hwd_control_state_t *ctl0)
