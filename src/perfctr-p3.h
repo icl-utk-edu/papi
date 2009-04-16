@@ -110,10 +110,10 @@ typedef ucontext_t hwd_ucontext_t;
   #ifdef __CATAMOUNT__
     #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->sc_rip)
   #else
-    #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->rip)
+    #define GET_OVERFLOW_ADDRESS(ctx) &ctx->ucontext->uc_mcontext.gregs[REG_RIP]
   #endif
 #else
-  #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->eip)
+  #define GET_OVERFLOW_ADDRESS(ctx) &ctx->ucontext->uc_mcontext.gregs[REG_EIP]
 #endif
 
 /* Linux DOES support hardware overflow */
