@@ -76,7 +76,7 @@ int prof_events(int num_tests, const PAPI_hw_info_t *hw_info) {
 /* This function displays info from the prginfo structure in a standardized format.
 */
 void prof_print_address(char *title, const PAPI_exe_info_t *prginfo) {
-   printf(title);
+   printf("%s\n", title);
    printf("----------------------------------------------------------------\n");
    printf("Text start: %p, Text end: %p, Text length: 0x%x\n",
             prginfo->address_info.text_start, prginfo->address_info.text_end,
@@ -174,7 +174,7 @@ void prof_head(unsigned long blength, int bucket, int num_buckets, char *header)
    printf("PAPI_profil() hash table, Bucket size: %d bits.\n", bucket_size*8);
    printf("Number of buckets: %d.\nLength of buffer: %ld bytes.\n", num_buckets, blength);
    printf("------------------------------------------------------------\n");
-   printf(header);
+   printf("%s\n", header);
 }
 
 /* This function prints a standardized profile output based on the bucket size.
