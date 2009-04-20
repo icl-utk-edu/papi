@@ -3237,19 +3237,19 @@ void _papi_pfm_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
 
     if (thread == NULL) {
         PAPIERROR("thread == NULL in _papi_hwd_dispatch_timer!");
-	if (n == MY_VECTOR.cmp_info.hardware_intr_sig) { read(fd, &msg, sizeof(msg)); pfm_restart(fd); }
+	if (n == MY_VECTOR.cmp_info.hardware_intr_sig) { ret = read(fd, &msg, sizeof(msg)); pfm_restart(fd); }
         return;
     }
 
     if (thread->running_eventset[cidx] == NULL) {
         PAPIERROR("thread->running_eventset == NULL in _papi_hwd_dispatch_timer!");
-	if (n == MY_VECTOR.cmp_info.hardware_intr_sig) { read(fd, &msg, sizeof(msg)); pfm_restart(fd); }
+	if (n == MY_VECTOR.cmp_info.hardware_intr_sig) { ret = read(fd, &msg, sizeof(msg)); pfm_restart(fd); }
 	return;
     }
 
     if (thread->running_eventset[cidx]->overflow.flags == 0) {
         PAPIERROR("thread->running_eventset->overflow.flags == 0 in _papi_hwd_dispatch_timer!");
-	if (n == MY_VECTOR.cmp_info.hardware_intr_sig) { read(fd, &msg, sizeof(msg)); pfm_restart(fd); }
+	if (n == MY_VECTOR.cmp_info.hardware_intr_sig) { ret = read(fd, &msg, sizeof(msg)); pfm_restart(fd); }
 	return;
     }
       
@@ -3269,7 +3269,7 @@ void _papi_pfm_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
       }
       if (wanted_fd != fd) {
 	PAPIERROR("expected fd %d, got %d in _papi_hwi_dispatch_timer!",wanted_fd,fd);
-	if (n == MY_VECTOR.cmp_info.hardware_intr_sig) { read(fd, &msg, sizeof(msg)); pfm_restart(fd); }
+	if (n == MY_VECTOR.cmp_info.hardware_intr_sig) { ret = read(fd, &msg, sizeof(msg)); pfm_restart(fd); }
 	return;
       }
  retry:
