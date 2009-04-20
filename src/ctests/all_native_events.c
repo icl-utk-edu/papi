@@ -60,7 +60,7 @@ int main(int argc, char **argv)
    int retval;
    PAPI_event_info_t info, info1;
    const PAPI_hw_info_t *hwinfo = NULL;
-   int Intel_i7;
+   char *Intel_i7;
    int event_code;
    const PAPI_component_info_t *s = NULL;
 
