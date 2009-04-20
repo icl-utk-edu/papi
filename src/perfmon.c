@@ -3155,7 +3155,7 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
     safety:
 #endif
     {
-      *pc = (caddr_t)(*ent)->ip;
+      *pc = (caddr_t)((size_t)((*ent)->ip));
       ++(*ent);
       return(0);
     }
