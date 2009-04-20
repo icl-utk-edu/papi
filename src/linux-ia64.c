@@ -1470,6 +1470,8 @@ static unsigned long check_btb_reg(pfmw_arch_pmd_reg_t reg)
       return 0;
 #endif
 }
+
+#if 0 /* defined but not used */
 static unsigned long check_btb(pfmw_arch_pmd_reg_t * btb, pfmw_arch_pmd_reg_t * pmd16)
 {
    int i, last;
@@ -1495,6 +1497,7 @@ static unsigned long check_btb(pfmw_arch_pmd_reg_t * btb, pfmw_arch_pmd_reg_t * 
    else
       return PAPI_ESYS;
 }
+#endif /* 0 */
 #endif
 
 static int ia64_process_profile_buffer(ThreadInfo_t *thread, EventSetInfo_t *ESI)
@@ -1772,7 +1775,7 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
   else
     ret = pfmw_recreate_context(ESI,&this_state->smpl_vaddr, EventIndex);
 
-#warning "This should be handled in the high level layers"
+//#warning "This should be handled in the high level layers"
   ESI->state ^= PAPI_OVERFLOWING;
   ESI->overflow.flags ^= PAPI_OVERFLOW_HARDWARE;
 
