@@ -1437,6 +1437,7 @@ int set_dear_ita_param(pfmw_ita_param_t * ita_lib_param, int EventCode)
    return PAPI_OK;
 }
 
+#if 0 /* the next two routines are defined but not used */
 static unsigned long check_btb_reg(pfmw_arch_pmd_reg_t reg)
 {
 #ifdef ITANIUM2
@@ -1471,7 +1472,6 @@ static unsigned long check_btb_reg(pfmw_arch_pmd_reg_t reg)
 #endif
 }
 
-#if 0 /* defined but not used */
 static unsigned long check_btb(pfmw_arch_pmd_reg_t * btb, pfmw_arch_pmd_reg_t * pmd16)
 {
    int i, last;
