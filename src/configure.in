@@ -983,8 +983,11 @@ AC_MSG_NOTICE(Generating perfmon_events_table.h)
 sh perfmon_events_table.sh > perfmon_events_table.h
 fi
 
-if test $perfmon -lt 25; then
-   CFLAGS="$CFLAGS -DPFMLIB_OLD_PFMV2"
+old_pfmv2="n"
+if test $perfmon != 0; then
+   if test $perfmon -lt 25; then
+      old_pfmv2="y"
+   fi
 fi
 
 #
@@ -1478,6 +1481,7 @@ AC_SUBST(perfctr_prefix)
 AC_SUBST(perfctr_incdir)
 AC_SUBST(perfctr_libdir)
 AC_SUBST(pfm_root)
+AC_SUBST(old_pfmv2)
 AC_SUBST(pfm_prefix)
 AC_SUBST(pfm_incdir)
 AC_SUBST(pfm_libdir)
