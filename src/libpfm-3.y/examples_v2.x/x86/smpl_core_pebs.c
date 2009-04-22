@@ -47,7 +47,7 @@
 
 #include "../detect_pmcs.h"
 
-#define SMPL_EVENT	"INSTRUCTIONS_RETIRED" /* not all event support PEBS */
+#define SMPL_EVENT	"INST_RETIRED:ANY_P" /* not all events support PEBS */
 
 #define NUM_PMCS	16
 #define NUM_PMDS	16

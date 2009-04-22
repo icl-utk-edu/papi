@@ -52,8 +52,8 @@ endif
 #
 # CONFIG_PFMLIB_SHARED: y=compile static and shared versions, n=static only
 # CONFIG_PFMLIB_OLD_PFMV2: enable old ( 2.x, x <=4) perfmon2 (mutually exclusive with v3 support)
-CONFIG_PFMLIB_SHARED=y
-CONFIG_PFMLIB_OLD_PFMV2=n
+CONFIG_PFMLIB_SHARED?=y
+CONFIG_PFMLIB_OLD_PFMV2?=n
 
 #
 # Cray-X2 is cross-compiled. Check the programming environment
@@ -83,8 +83,8 @@ AGE=0
 #
 # Where should things (lib, headers, man) go in the end.
 #
-install_prefix=/usr/local
-PREFIX=$(install_prefix)
+install_prefix?=/usr/local
+PREFIX?=$(install_prefix)
 LIBDIR=$(PREFIX)/lib
 INCDIR=$(PREFIX)/include
 MANDIR=$(PREFIX)/share/man
