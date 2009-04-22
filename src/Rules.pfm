@@ -87,7 +87,7 @@ PFM_OBJS = $(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
 ifeq (,$(PFM_OBJS))
 $(PFM_LIB_PATH)/libpfm.a:
 ifneq (,${PFM_ROOT})
-	$(MAKE) -C $(PFM_ROOT) CC="$(CC)" OPTIM="$(OPTIM)" 
+	$(MAKE) -C $(PFM_ROOT) CC="$(CC)" OPTIM="$(OPTIM)"  CONFIG_PFMLIB_OLD_PFMV2="$(PFM_OLD_PFMV2)"
 else
 	@echo '$@ not installed!'; exit 1
 endif

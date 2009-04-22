@@ -30,6 +30,7 @@ LIBS	  = @papiLIBS@
 STATIC	  = @STATIC@
 PFM_PREFIX	= @pfm_prefix@ 
 PFM_ROOT  	= @pfm_root@
+PFM_OLD_PFMV2	= @old_pfmv2@
 PFM_LIB_PATH	= @pfm_libdir@
 PFM_INC_PATH	= @pfm_incdir@
 PFM_EVENTS	= @pfm_events@

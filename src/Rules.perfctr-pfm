@@ -211,7 +211,7 @@ endif
 # We only need to build the library, not the examples, etc.
 ifeq (,$(PFM_OBJS))
   ifneq (,${PFM_ROOT})
-	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)" DIRS=lib
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)" DIRS=lib CONFIG_PFMLIB_OLD_PFMV2="$(PFM_OLD_PFMV2)"
   else
     @echo '$@ not installed!'; exit 1
   endif
