@@ -1632,7 +1632,7 @@ static inline void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sig
 {
   _papi_hwi_context_t ctx;
   ThreadInfo_t *thread = _papi_hwi_lookup_thread();
-  unsigned long address;
+  caddr_t address;
   int cidx = MY_VECTOR.cmp_info.CmpIdx;
   
 #if defined(DEBUG)
@@ -1644,7 +1644,7 @@ static inline void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sig
 
   ctx.si = info;
   ctx.ucontext = sc;
-  address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
+  address = GET_OVERFLOW_ADDRESS((&ctx));
   
   if ((thread == NULL) || (thread->running_eventset[cidx] == NULL)) {
     SUBDBG("%p, %p\n",thread,thread->running_eventset[cidx]);

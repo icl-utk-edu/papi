@@ -390,8 +390,8 @@ void _p3_dispatch_timer(int signal, siginfo_t * si, void *context) {
 
    pc = GET_OVERFLOW_ADDRESS(ctx);
 
-   _papi_hwi_dispatch_overflow_signal((void *)&ctx,&isHardware,
-                                      OVERFLOW_MASK, GEN_OVERFLOW,&master,pc, MY_VECTOR.cmp_info.CmpIdx);
+   _papi_hwi_dispatch_overflow_signal((void *)&ctx, pc, &isHardware,
+                                      OVERFLOW_MASK, GEN_OVERFLOW, &master, MY_VECTOR.cmp_info.CmpIdx);
 
    /* We are done, resume interrupting counters */
    if (isHardware) {
@@ -903,7 +903,9 @@ static int _p3_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 }
 
 static int _p3_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI) {
-   ESI->profile.overflowcount = 0;
+#warning "_stop_profiling isn't implemented"
+	/* How do we turn off overflow? */
+/*   ESI->profile.overflowcount = 0; */
    return (PAPI_OK);
 }
 
@@ -983,7 +985,7 @@ papi_vector_t _p3_vector = {
 	.available_domains =	PAPI_DOM_USER|PAPI_DOM_KERNEL,
 	.default_granularity =	PAPI_GRN_THR,
 	.available_granularities = PAPI_GRN_THR,
-	.hardware_intr_sig =	PAPI_SIGNAL,
+	.hardware_intr_sig =	PAPI_INT_SIGNAL,
 
 	/* component specific cmp_info initializations */
 	.fast_real_timer =	1,

@@ -14,7 +14,7 @@
 #define __USE_XOPEN_EXTENDED
 #endif
 
-//#include "papi_sys_headers.h"
+/* #include "papi_sys_headers.h" */
 
 #include <stdlib.h>
 #include <stdio.h>

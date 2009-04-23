@@ -103,7 +103,7 @@ inline_static int profil_increment(long long value,
 }
 
 
-static void posix_profil(unsigned long address, PAPI_sprofil_t * prof,
+static void posix_profil(caddr_t address, PAPI_sprofil_t * prof,
                          int flags, long long excess, long long threshold)
 {
    unsigned short *buf16;
@@ -125,12 +125,12 @@ static void posix_profil(unsigned long address, PAPI_sprofil_t * prof,
          - dividing by implicit 2 (2^^1 for a total of 2^^17), for even addresses
          NOTE: 131072 is a valid scale value. It produces byte resolution of addresses
       */
-      lloffset = ((unsigned long long)(address - (unsigned long)prof->pr_off)) * prof->pr_scale;
+      lloffset = ((size_t)(address - (size_t)prof->pr_off)) * prof->pr_scale;
       indx = (unsigned long)(lloffset >> 17);
    }
 
    /* confirm addresses within specified range */
-   if (address >= (unsigned long)prof->pr_off) {
+   if (address >= prof->pr_off) {
       /* test first for 16-bit buckets; this should be the fast case */
       if (flags & PAPI_PROFIL_BUCKET_16) {
          if ((indx * sizeof(short)) < prof->pr_size) {
@@ -158,13 +158,13 @@ static void posix_profil(unsigned long address, PAPI_sprofil_t * prof,
    }
 }
 
-void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, unsigned long pc,
+void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, caddr_t pc,
                       long long over, int profile_index)
 {
   EventSetProfileInfo_t *profile = &ESI->profile;
   PAPI_sprofil_t *sprof;
-  unsigned long offset = 0;
-  unsigned long best_offset = 0;
+  caddr_t offset = 0;
+  caddr_t best_offset = 0;
   int count;
   int best_index = -1;
   int i;
@@ -176,7 +176,7 @@ void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, unsigned long pc,
     
   for (i = 0; i < count; i++)
   {
-      offset = (unsigned long)sprof[i].pr_off;
+      offset = sprof[i].pr_off;
       if ((offset < pc) && (offset > best_offset))
       {
          best_index = i;
@@ -210,7 +210,7 @@ void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, unsigned long pc,
      situation).
 */
 
-int _papi_hwi_dispatch_overflow_signal(void *papiContext, unsigned long address, int *isHardware, long long overflow_bit, int genOverflowBit, ThreadInfo_t **t, int cidx)
+int _papi_hwi_dispatch_overflow_signal(void *papiContext, caddr_t address, int *isHardware, long long overflow_bit, int genOverflowBit, ThreadInfo_t **t, int cidx)
 {
    int retval, event_counter, i, overflow_flag, pos;
    int papi_index, j;

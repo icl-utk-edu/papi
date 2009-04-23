@@ -79,8 +79,8 @@ int _xml_papi_hwi_setup_all_presets(char *arch, hwi_dev_notes_t *notes);
  int _papi_hwi_stop_signal(int signal);
  int _papi_hwi_start_signal(int signal, int need_context, int cidx);
  int _papi_hwi_initialize(DynamicArray_t **);
- int _papi_hwi_dispatch_overflow_signal(void *papiContext, unsigned long address, int *, long long, int, ThreadInfo_t **master, int cidx);
- void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, unsigned long address, long long over, int profile_index);
+ int _papi_hwi_dispatch_overflow_signal(void *papiContext, caddr_t address, int *, long long, int, ThreadInfo_t **master, int cidx);
+ void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, caddr_t address, long long over, int profile_index);
 
  /* The following PAPI internal functions are defined by the papi_data.c file. */
 

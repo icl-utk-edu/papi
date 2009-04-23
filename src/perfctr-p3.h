@@ -7,6 +7,9 @@
  */
 #define CONFIG_SMP
 #endif
+
+#include "linux.h"
+
 #include <inttypes.h>
 #include "libperfctr.h"
 
@@ -42,15 +45,16 @@
 
 /* new (PAPI => 3.9.0) style overflow address: */
 #ifdef __x86_64__
+	/* this may not work for catamount, but who cares! */
   #ifdef __CATAMOUNT__
-    #define OVERFLOW_PC sc_rip
+    #define OVERFLOW_REG REG_SC_RIP
   #else
-    #define OVERFLOW_PC rip
+    #define OVERFLOW_REG REG_RIP
   #endif
 #else
-    #define OVERFLOW_PC eip
+    #define OVERFLOW_REG REG_EIP
 #endif
-#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&((hwd_ucontext_t *)ctx.ucontext)->uc_mcontext))->OVERFLOW_PC)
+#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)ctx.ucontext->uc_mcontext.gregs[OVERFLOW_REG]
 
 /* Linux DOES support hardware overflow */
 #define HW_OVERFLOW 1

@@ -374,10 +374,12 @@ int _linux_get_system_info(void)
    _papi_hwi_system_info.hw_info.vendor = -1;
 
    /* Multiplex info */
-
+/* This structure disappeared from the papi_mdi_t definition
+	Don't know why or where it went...
    _papi_hwi_system_info.mpx_info.timer_sig = PAPI_SIGNAL;
    _papi_hwi_system_info.mpx_info.timer_num = PAPI_ITIMER;
    _papi_hwi_system_info.mpx_info.timer_us = PAPI_MPX_DEF_US;
+*/
 
    if ((f = fopen("/proc/cpuinfo", "r")) == NULL)
      { PAPIERROR("fopen(/proc/cpuinfo) errno %d",errno); return(PAPI_ESYS); }
