@@ -121,6 +121,10 @@ ifeq (static,$(PFM_EVENTS))
 	PFM_EVENTS_TABLE := perfmon_events_table.h
 endif
 
+ifeq (y,$(PFM_OLD_PFMV2))
+	CFLAGS		 += -DPFM_OLD_PFMV2
+endif
+
 #
 # DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
 #
