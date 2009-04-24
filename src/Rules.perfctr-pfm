@@ -123,7 +123,7 @@ ifeq (static,$(PFM_EVENTS))
 endif
 
 ifeq (y,$(PFM_OLD_PFMV2))
-	CFLAGS		 += -DPFM_OLD_PFMV2
+	CFLAGS		 += -DPFMLIB_OLD_PFMV2
 endif
 
 #
@@ -265,7 +265,7 @@ linux.o: linux.c $(HEADERS)
 papi_pfm_events.o: papi_pfm_events.c $(HEADERS) $(PFM_EVENTS_TABLE)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_pfm_events.c -o $@
 
-perfmon_events_table.h:	perfmon_events.csv perfmon_events_table.sh
+$(PFM_EVENTS_TABLE):	perfmon_events.csv perfmon_events_table.sh
 	ksh perfmon_events_table.sh > $@
 
 $(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c $(HEADERS)
@@ -280,7 +280,7 @@ ifneq (,${PFM_ROOT})
 	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" clean
 endif
 ifeq (static,$(PFM_EVENTS))
-	-rm -f perfmon_events_table.h
+	-rm -f $(PFM_EVENTS_TABLE)
 endif
 
 native_install: 
