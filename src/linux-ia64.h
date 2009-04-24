@@ -196,8 +196,7 @@ typedef ia64_register_t cmp_register_t;
 typedef ia64_control_state_t cmp_control_state_t;
 typedef ia64_context_t cmp_context_t;
 
-//#define GET_OVERFLOW_ADDRESS(ctx)  (void*)ctx->ucontext->sc_ip
-#define GET_OVERFLOW_ADDRESS(ctx)  ((caddr_t)(((hwd_ucontext_t *)ctx)->sc_ip))
+#define GET_OVERFLOW_ADDRESS(ctx)  ((caddr_t)((ctx->ucontext)->sc_ip))
 
 #define SMPL_BUF_NENTRIES 64
 #define M_PMD(x)        (1UL<<(x))

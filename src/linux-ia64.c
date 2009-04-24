@@ -1619,7 +1619,7 @@ static int ia64_process_profile_buffer(ThreadInfo_t *thread, EventSetInfo_t *ESI
 	   buf_pos += (hweight64(DEAR_REGS_MASK)<<3);
          }
 
-         _papi_hwi_dispatch_profile(ESI, (unsigned long)pc, (long long) 0, count);
+         _papi_hwi_dispatch_profile(ESI, (caddr_t)pc, (long long) 0, count);
 	 overflow_vector ^= (unsigned long)1 << reg_num;
       }
       /*  move to next entry */
@@ -1645,7 +1645,7 @@ static inline void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sig
   ctx.si = info;
   ctx.ucontext = sc;
   address = GET_OVERFLOW_ADDRESS((&ctx));
-  
+
   if ((thread == NULL) || (thread->running_eventset[cidx] == NULL)) {
     SUBDBG("%p, %p\n",thread,thread->running_eventset[cidx]);
     return;
