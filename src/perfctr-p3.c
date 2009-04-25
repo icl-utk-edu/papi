@@ -903,7 +903,8 @@ static int _p3_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 }
 
 static int _p3_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI) {
-#warning "_stop_profiling isn't implemented"
+/* For some reason, this warning kills the build */
+/* #warning "_stop_profiling isn't implemented" */
 	/* How do we turn off overflow? */
 /*   ESI->profile.overflowcount = 0; */
    return (PAPI_OK);
