@@ -2,6 +2,7 @@
 #define _PAPI_PENTIUM4_H
 
 #include "p4_events.h"
+#include "linux.h"
 
 #ifdef _WIN32
 #include "cpuinfo.h"
@@ -148,11 +149,11 @@ typedef ucontext_t hwd_ucontext_t;
 
 /* new (PAPI => 3.9.0) style overflow address: */
 #ifdef __x86_64__
-    #define OVERFLOW_PC rip
+    #define OVERFLOW_REG REG_RIP
 #else
-    #define OVERFLOW_PC eip
+    #define OVERFLOW_REG REG_EIP
 #endif
-#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&((hwd_ucontext_t *)ctx.ucontext)->uc_mcontext))->OVERFLOW_PC)
+#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)ctx.ucontext->uc_mcontext.gregs[OVERFLOW_REG]
 
 /* Linux DOES support hardware overflow */
 #define HW_OVERFLOW 1

@@ -39,8 +39,8 @@ int _p4_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values
 /* Prototypes for entry points found in papi_pfm_events */
 int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifer);
 int _papi_pfm_ntv_name_to_code(char *name, unsigned int *event_code);
-char *_papi_pfm_ntv_code_to_name(unsigned int EventCode);
-char *_papi_pfm_ntv_code_to_descr(unsigned int EventCode);
+int _papi_pfm_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len);
+int _papi_pfm_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len);
 int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits);
 int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values,
                           int name_len, int count);
@@ -386,8 +386,8 @@ void _p4_dispatch_timer(int signal, siginfo_t * si, void *context) {
 
    pc = GET_OVERFLOW_ADDRESS(ctx);
 
-   _papi_hwi_dispatch_overflow_signal((void *)&ctx,&isHardware,
-                                      OVERFLOW_MASK, GEN_OVERFLOW,&master,pc, MY_VECTOR.cmp_info.CmpIdx);
+   _papi_hwi_dispatch_overflow_signal((void *)&ctx, pc, &isHardware,
+                                      OVERFLOW_MASK, GEN_OVERFLOW,&master, MY_VECTOR.cmp_info.CmpIdx);
 
    /* We are done, resume interrupting counters */
    if (isHardware) {
@@ -1069,7 +1069,11 @@ static void swap_events(EventSetInfo_t * ESI, struct vperfctr_control *contr, in
 
 static int _p4_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI)
 {
-   ESI->profile.overflowcount = 0;
+/* For some reason, this warning kills the build */
+/* #warning "_stop_profiling isn't implemented" */
+	/* How do we turn off overflow? */
+/*   ESI->profile.overflowcount = 0; */
+   return (PAPI_OK);
    return (PAPI_OK);
 }
 
@@ -1219,7 +1223,7 @@ int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
 #elif defined(PAPI_PENTIUM4_FP_X87_SSE_SP)
    #define P4_FPU " X87 SSE_SP"
 #elif defined(PAPI_PENTIUM4_FP_SSE_SP_DP)
-   #define P4_FPU " SSE_SP SSE_DP
+   #define P4_FPU " SSE_SP SSE_DP"
 #else
    #define P4_FPU " X87 SSE_DP"
 #endif
@@ -1295,7 +1299,7 @@ papi_vector_t _p4_vector = {
 	.available_domains =	PAPI_DOM_USER|PAPI_DOM_KERNEL,
 	.default_granularity =	PAPI_GRN_THR,
 	.available_granularities = PAPI_GRN_THR,
-	.hardware_intr_sig =	PAPI_SIGNAL,
+	.hardware_intr_sig =	PAPI_INT_SIGNAL,
 
 	/* component specific cmp_info initializations */
 	.fast_real_timer =	1,
