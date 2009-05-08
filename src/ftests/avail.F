@@ -1,10 +1,9 @@
 C This file performs the following tests:
 C Hardware info
-#include "fpapi.h"
-#define PAPI_MAX_PRESET_EVENTS 128
+#include "fpapi_test.h"
 
       program avail
-      IMPLICIT NONE
+      IMPLICIT integer (p)
 
       INTEGER ncpu,nnodes,totalcpus,vendor,model, check, handle, n
       CHARACTER*(PAPI_MAX_STR_LEN) vstring, mstring
@@ -54,7 +53,8 @@ C Hardware info
       end if
       event_name=' '
       do i=0, PAPI_MAX_PRESET_EVENTS-1
-         call papif_query_event_verbose(z'80000000'+i, event_name, 
+C PAPI_L1_DCM is the first event in the list
+         call papif_get_event_info(PAPI_L1_DCM+i, event_name, 
      *   event_descr, event_label, avail_flag, event_note, flags, check)
          if (avail_flag.EQ.1) then
             avail_str = 'Yes'
@@ -73,7 +73,8 @@ C Hardware info
             do k=len(event_note),1,-1
               if(l.EQ.1.AND.event_note(k:k).NE.' ') l=k
             end do
-            write (6, 100) event_name, z'80000000'+i, avail_str, 
+C PAPI_L1_DCM is the first event in the list
+            write (6, 100) event_name, PAPI_L1_DCM+i, avail_str, 
      *       flags_str, event_descr, event_note(1:l)
  100  format(A12, '0x', z8, 2x, A5, 1x, A5, A45, 1x,'(', A, ')') 
          end if
