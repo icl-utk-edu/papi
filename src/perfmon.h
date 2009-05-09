@@ -340,6 +340,6 @@ typedef ucontext_t hwd_ucontext_t;
 #error "OVERFLOW_ADDRESS() undefined!"
 #endif
 
-#define GET_OVERFLOW_ADDRESS(ctx) (OVERFLOW_ADDRESS((*ctx)))
+#define GET_OVERFLOW_ADDRESS(ctx) ((caddr_t)OVERFLOW_ADDRESS((*ctx)))
 
 #endif

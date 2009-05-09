@@ -3211,7 +3211,7 @@ process_smpl_buf(int num_smpl_pmds, int entry_size, ThreadInfo_t **thr)
 
       weight = process_smpl_entry(native_pfm_index,flags,&ent,&pc);
 
-      _papi_hwi_dispatch_profile((*thr)->running_eventset[cidx], (unsigned long)pc,
+      _papi_hwi_dispatch_profile((*thr)->running_eventset[cidx], pc,
 				 weight, profile_index);
  
       entry++;
@@ -3231,7 +3231,7 @@ void _papi_pfm_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
     pfarg_msg_t msg;
 #endif
     int ret, wanted_fd, fd = info->si_fd;
-    unsigned long address;
+    caddr_t address;
     ThreadInfo_t *thread = _papi_hwi_lookup_thread();
     int cidx = MY_VECTOR.cmp_info.CmpIdx;
 
@@ -3257,7 +3257,7 @@ void _papi_pfm_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
     ctx.ucontext = (hwd_ucontext_t *)uc;
 
     if (thread->running_eventset[cidx]->overflow.flags & PAPI_OVERFLOW_FORCE_SW) {
-      address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
+      address = GET_OVERFLOW_ADDRESS((&ctx));
       _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 
 					 0, 0, &thread, cidx);
     }
@@ -3305,7 +3305,7 @@ void _papi_pfm_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
 	    process_smpl_buf(0, sizeof(pfm_dfl_smpl_entry_t), &thread);
 	  else 
                 _papi_hwi_dispatch_overflow_signal((void *) &ctx, 
-                              msg.pfm_ovfl_msg.msg_ovfl_ip,
+                              (caddr_t)msg.pfm_ovfl_msg.msg_ovfl_ip,
                               NULL, 
                               msg.pfm_ovfl_msg.msg_ovfl_pmds[0], 
                               0, &thread, cidx);
