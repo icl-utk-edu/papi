@@ -153,6 +153,12 @@ CFLAGS += $(EVENTFLAGS) -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) $(CFLAGS-$(
 
 MISCHDRS = perfctr-$(CPU).h
 MISCSRCS =  linux.c $(ARCH_SPEC_EVTS)
+
+# x86 cache info now in its own file
+ifeq (linux, $(MEMSUBSTR))
+  MISCSRCS +=  x86_cache_info.c
+endif
+
 # Pentium 4 no longer needs a p4_events.c file
 ifneq (,$(CPU_EVENTS))
   MISCSRCS +=  $(CPU_EVENTS).c
@@ -261,6 +267,9 @@ $(CPU_EVENTS).o: $(CPU_EVENTS).c $(HEADERS)
 
 linux.o: linux.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
+
+x86_cache_info.o: x86_cache_info.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c x86_cache_info.c -o $@
 
 papi_pfm_events.o: papi_pfm_events.c $(HEADERS) $(PFM_EVENTS_TABLE)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_pfm_events.c -o $@
