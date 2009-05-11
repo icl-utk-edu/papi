@@ -3305,7 +3305,7 @@ void _papi_pfm_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
 	    process_smpl_buf(0, sizeof(pfm_dfl_smpl_entry_t), &thread);
 	  else 
                 _papi_hwi_dispatch_overflow_signal((void *) &ctx, 
-                              (caddr_t)msg.pfm_ovfl_msg.msg_ovfl_ip,
+                              (caddr_t)((size_t)msg.pfm_ovfl_msg.msg_ovfl_ip),
                               NULL, 
                               msg.pfm_ovfl_msg.msg_ovfl_pmds[0], 
                               0, &thread, cidx);
