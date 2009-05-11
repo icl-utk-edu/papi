@@ -19,10 +19,9 @@
       call ftests_pass(__FILE__)
       end
 
-      subroutine init_papi(tests_quiet)
+      subroutine init_papi()
       IMPLICIT integer (p)
       integer retval
-      integer tests_quiet
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
@@ -45,7 +44,7 @@
       integer*8 values(MAX_TO_ADD*2)
 
       EventSet = PAPI_NULL
-      call init_papi(tests_quiet)
+      call init_papi()
 
       call PAPIf_multiplex_init(retval)
       if ( retval.NE.PAPI_OK) then
