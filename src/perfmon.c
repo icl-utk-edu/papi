@@ -2164,7 +2164,7 @@ int _papi_pfm_init_substrate(int cidx)
      retval = detect_timeout_and_unavail_pmu_regs(&_perfmon2_pfm_unavailable_pmcs,
 						  &_perfmon2_pfm_unavailable_pmds,
 						  &min_timeout_ns);
-     MY_VECTOR.cmp_info.itimer_ns = min_timeout_ns;
+     MY_VECTOR.cmp_info.itimer_ns = 10000000;
      /* This field represents the minimum timer resolution. Anything lower
 	is not possible. Anything higher and it must be a multiple of this */
      MY_VECTOR.cmp_info.itimer_res_ns = min_timeout_ns;
