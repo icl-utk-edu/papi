@@ -82,14 +82,6 @@ typedef int ia64_reg_alloc_t;
    #define NUM_PMCS PFMLIB_MAX_PMCS
    #define NUM_PMDS PFMLIB_MAX_PMDS
    
-   #ifdef ITANIUM3
-     #define MAX_COUNTERS PMU_MONT_NUM_COUNTERS
-   #elif defined(ITANIUM2)
-     #define MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
-   #else
-     #define MAX_COUNTERS PMU_ITA_NUM_COUNTERS
-   #endif
-   
    #if defined(ITANIUM3)
    /* Native events consist of a flag field, an event field, and a unit mask field.
     * The next 4 macros define the characteristics of the event and unit mask fields.
@@ -133,14 +125,13 @@ typedef int ia64_reg_alloc_t;
    
    #ifdef ITANIUM2
       typedef pfmlib_ita2_param_t pfmw_ita_param_t;
-      #define MAX_COUNTERS PMU_ITA2_NUM_COUNTERS
    #else
       typedef pfmlib_ita_param_t pfmw_ita_param_t;
-      #define MAX_COUNTERS PMU_ITA_NUM_COUNTERS
    #endif
    typedef pfmlib_param_t pfmw_param_t;
 #endif
 
+#define MAX_COUNTERS 12
 #define MAX_COUNTER_TERMS MAX_COUNTERS
 
 typedef struct ia64_control_state {

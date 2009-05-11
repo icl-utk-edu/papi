@@ -1209,7 +1209,7 @@ long long _ia64_get_virt_cycles(const hwd_context_t * zero)
 int _ia64_reset(hwd_context_t * ctx, hwd_control_state_t * machdep)
 {
    pfmw_param_t *pevt = &(((ia64_control_state_t *)machdep)->evt);
-   pfarg_reg_t writeem[MAX_COUNTERS];
+   pfarg_reg_t writeem[MY_VECTOR.cmp_info.num_cntrs];
    int i;
 
    pfmw_stop((ia64_context_t *)ctx);
@@ -1232,7 +1232,7 @@ int _ia64_read(hwd_context_t * ctx, hwd_control_state_t * machdep,
                    long long ** events, int flags)
 {
    int i;
-   pfarg_reg_t readem[MAX_COUNTERS];
+   pfarg_reg_t readem[MY_VECTOR.cmp_info.num_cntrs];
 
    pfmw_stop((ia64_context_t *)ctx);
    memset(readem, 0x0, sizeof readem);
@@ -2189,7 +2189,6 @@ papi_vector_t _ia64_vector = {
     .itimer_num = PAPI_INT_ITIMER,
     .itimer_ns = PAPI_INT_MPX_DEF_US * 1000,
     .itimer_res_ns = 1,
-//    .clock_ticks = sysconf(_SC_CLK_TCK),
     },
 
     /* sizes of framework-opaque component-private structures */
@@ -2207,13 +2206,6 @@ papi_vector_t _ia64_vector = {
     .read =			_ia64_read,
     .shutdown =		_ia64_shutdown,
     .ctl =			_ia64_ctl,
-//    .bpt_map_set =		_ia64_bpt_map_set,
-//    .bpt_map_avail =		_ia64_bpt_map_avail,
-//    .bpt_map_exclusive =	_ia64_bpt_map_exclusive,
-//    .bpt_map_shared =		_ia64_bpt_map_shared,
-//    .bpt_map_preempt =		_ia64_bpt_map_preempt,
-//    .bpt_map_update =		_ia64_bpt_map_update,
-//    .allocate_registers =	_ia64_allocate_registers,
     .update_control_state =	_ia64_update_control_state,
     .update_shlib_info =	_ia64_update_shlib_info,
     .set_domain =		_ia64_set_domain,
@@ -2224,8 +2216,6 @@ papi_vector_t _ia64_vector = {
     .ntv_enum_events =		_ia64_ntv_enum_events,
     .ntv_code_to_name =		_ia64_ntv_code_to_name,
     .ntv_code_to_descr =	_ia64_ntv_code_to_descr,
-//    .ntv_code_to_bits =		_ia64_ntv_code_to_bits,
-//    .ntv_bits_to_info =		_ia64_ntv_bits_to_info,
     .init_substrate =		_ia64_init_substrate,
     .dispatch_timer =		_ia64_dispatch_timer,
     .get_real_usec =		_ia64_get_real_usec,
