@@ -28,7 +28,7 @@ extern int _pfm_get_counter_info(unsigned int event, unsigned int *selector, int
 
 extern papi_vector_t MY_VECTOR;
 
-static int _papi_hwd_fixup_fp(void);
+static int _papi_hwd_fixup_fp(char *);
 
 
 /*********************************************/
@@ -76,21 +76,39 @@ int setup_p3_presets(int cputype) {
 #ifdef PERFCTR_X86_INTEL_CORE2
    case PERFCTR_X86_INTEL_CORE2:
       retval = _papi_pfm_init();
-      _papi_pfm_setup_presets("Intel Core", 0);
+      _papi_pfm_setup_presets("Intel Core2", 0);
 	  break;
 #endif
 #ifdef PERFCTR_X86_AMD_K8 /* this is defined in perfctr 2.5.x */
    case PERFCTR_X86_AMD_K8:
       retval = _papi_pfm_init();
       _papi_pfm_setup_presets("AMD64", 0);
-      _papi_hwd_fixup_fp();
+      _papi_hwd_fixup_fp("AMD64");
       break;
 #endif
 #ifdef PERFCTR_X86_AMD_K8C  /* this is defined in perfctr 2.6.x */
    case PERFCTR_X86_AMD_K8C:
       retval = _papi_pfm_init();
       _papi_pfm_setup_presets("AMD64", 0);
-      _papi_hwd_fixup_fp();
+      _papi_hwd_fixup_fp("AMD64");
+      break;
+#endif
+#ifdef PERFCTR_X86_AMD_FAM10  /* this is defined in perfctr 2.6.29 */
+   case PERFCTR_X86_AMD_FAM10:
+      retval = _papi_pfm_init();
+      _papi_pfm_setup_presets("AMD64 (Barcelona)", 0);
+      break;
+#endif
+#ifdef PERFCTR_X86_INTEL_ATOM  /* family 6 model 28 */
+   case PERFCTR_X86_INTEL_ATOM:
+      retval = _papi_pfm_init();
+      _papi_pfm_setup_presets("Intel Atom", 0);
+      break;
+#endif
+#ifdef PERFCTR_X86_INTEL_COREI7  /* family 6 model 26 */
+   case PERFCTR_X86_INTEL_COREI7:
+      retval = _papi_pfm_init();
+      _papi_pfm_setup_presets("Intel Core i7", 0);
       break;
 #endif
 
@@ -168,12 +186,14 @@ int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
 
 extern int _papi_pfm_setup_presets(char *name, int type);
 
-static int _papi_hwd_fixup_fp(void)
+static int _papi_hwd_fixup_fp(char *name)
 {
-   char table_name[PAPI_MIN_STR_LEN] = "AMD64 FPU ";
+   char table_name[PAPI_MIN_STR_LEN];
    char *str = getenv("PAPI_OPTERON_FP");
 
    /* if the env variable isn't set, return the defaults */
+   strcpy(table_name, name);
+   strcat(table_name, " FPU ");
    if ((str == NULL) || (strlen(str) == 0)) {
       strcat(table_name, AMD_FPU);
    } else {
