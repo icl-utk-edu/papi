@@ -518,11 +518,20 @@ static int _p3_init_control_state(hwd_control_state_t * cntl) {
 #ifdef PERFCTR_X86_INTEL_CORE2
    case PERFCTR_X86_INTEL_CORE2:
 #endif
+#ifdef PERFCTR_X86_INTEL_ATOM
+   case PERFCTR_X86_INTEL_ATOM:
+#endif
+#ifdef PERFCTR_X86_INTEL_COREI7
+   case PERFCTR_X86_INTEL_COREI7:
+#endif
 #ifdef PERFCTR_X86_AMD_K8
    case PERFCTR_X86_AMD_K8:
 #endif
 #ifdef PERFCTR_X86_AMD_K8C
    case PERFCTR_X86_AMD_K8C:
+#endif
+#ifdef PERFCTR_X86_AMD_FAM10H  /* this is defined in perfctr 2.6.29 */
+   case PERFCTR_X86_AMD_FAM10H:
 #endif
    case PERFCTR_X86_AMD_K7:
       for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
@@ -531,6 +540,12 @@ static int _p3_init_control_state(hwd_control_state_t * cntl) {
       }
       break;
    }
+
+#ifdef VPERFCTR_CONTROL_CLOEXEC
+	ptr->control.flags = VPERFCTR_CONTROL_CLOEXEC;
+	SUBDBG("close on exec\t\t\t%u\n", ptr->control.flags);
+#endif
+
    /* Make sure the TSC is always on */
    ptr->control.cpu_control.tsc_on = 1;
    return(PAPI_OK);
@@ -621,14 +636,6 @@ static int _p3_allocate_registers(EventSetInfo_t *ESI) {
    int i, j, natNum;
    cmp_reg_alloc_t event_list[MAX_COUNTERS];
    cmp_register_t *ptr;
-   int pfm_events=0; 
- 
-#ifdef PERFCTR_X86_AMD_K8 /* this is defined in perfctr 2.5.x */
-    if (_papi_hwi_system_info.hw_info.model == PERFCTR_X86_AMD_K8) pfm_events = 1;
-#endif
-#ifdef PERFCTR_X86_AMD_K8C  /* this is defined in perfctr 2.6.x */
-    if (_papi_hwi_system_info.hw_info.model == PERFCTR_X86_AMD_K8C) pfm_events = 1;
-#endif
 
    /* Initialize the local structure needed
       for counter allocation and optimization. */
@@ -639,6 +646,10 @@ static int _p3_allocate_registers(EventSetInfo_t *ESI) {
 
       /* make sure register allocator only looks at legal registers */
       event_list[i].ra_selector = event_list[i].ra_bits.selector & ALLCNTRS;
+#ifdef PERFCTR_X86_INTEL_CORE2
+      if(_papi_hwi_system_info.hw_info.model == PERFCTR_X86_INTEL_CORE2)
+        event_list[i].ra_selector |= ((event_list[i].ra_bits.selector>>16)<<2) & ALLCNTRS;
+#endif
 
       /* calculate native event rank, which is no. of counters it can live on */
       event_list[i].ra_rank = 0;
@@ -650,6 +661,10 @@ static int _p3_allocate_registers(EventSetInfo_t *ESI) {
    }
    if(_papi_hwi_bipartite_alloc(event_list, natNum, ESI->CmpIdx)) { /* successfully mapped */
       for(i = 0; i < natNum; i++) {
+#ifdef PERFCTR_X86_INTEL_CORE2
+         if(_papi_hwi_system_info.hw_info.model == PERFCTR_X86_INTEL_CORE2)
+           event_list[i].ra_bits.selector = event_list[i].ra_selector;
+#endif
          /* Copy all info about this native event to the NativeInfo struct */
          ptr = ESI->NativeInfoArray[i].ni_bits;
          *ptr = event_list[i].ra_bits;
@@ -687,16 +702,37 @@ static void clear_cs_events(hwd_control_state_t *state) {
    in the native info structure array. */
 static int _p3_update_control_state(hwd_control_state_t *state,
                                    NativeInfo_t *native, int count, hwd_context_t * ctx) {
-   int i;
+   int i, k;
    cmp_control_state_t *this_state = (cmp_control_state_t *)state;
 
    /* clear out the events from the control state */
    clear_cs_events(this_state);
 
-   /* fill the counters we're using */
-   for (i = 0; i < count; i++) {
-      /* Add counter control command values to eventset */
-      this_state->control.cpu_control.evntsel[i] |= ((cmp_register_t *) native[i].ni_bits)->counter_cmd;
+   switch (_papi_hwi_system_info.hw_info.model) {
+     #ifdef PERFCTR_X86_INTEL_CORE2
+     case PERFCTR_X86_INTEL_CORE2:
+       /* fill the counters we're using */
+       for (i = 0; i < count; i++) {
+         for(k=0;k<MAX_COUNTERS;k++)
+           if(((cmp_register_t *) native[i].ni_bits)->selector & (1 << k)) {
+             break;
+           }
+         if(k>1)
+           this_state->control.cpu_control.pmc_map[i] = (k-2) | 0x40000000;
+         else
+           this_state->control.cpu_control.pmc_map[i] = k;
+
+         /* Add counter control command values to eventset */
+         this_state->control.cpu_control.evntsel[i] |= ((cmp_register_t *) native[i].ni_bits)->counter_cmd;
+       }
+       break;
+     #endif
+     default:
+	   /* fill the counters we're using */
+	   for (i = 0; i < count; i++) {
+		  /* Add counter control command values to eventset */
+		  this_state->control.cpu_control.evntsel[i] |= ((cmp_register_t *) native[i].ni_bits)->counter_cmd;
+	   }
    }
    this_state->control.cpu_control.nractrs = count;
    return (PAPI_OK);
@@ -711,6 +747,7 @@ cmp_control_state_t *this_state = (cmp_control_state_t *)state;
 #ifdef DEBUG
    print_control(&this_state->control.cpu_control);
 #endif
+
    if (this_state->rvperfctr != NULL) 
      {
        if((error = rvperfctr_control(this_state->rvperfctr, &this_state->control)) < 0) 
@@ -724,20 +761,25 @@ cmp_control_state_t *this_state = (cmp_control_state_t *)state;
    
    if((error = vperfctr_control(this_ctx->perfctr, &this_state->control)) < 0) {
       SUBDBG("vperfctr_control returns: %d\n", error);
-      { PAPIERROR( VCNTRL_ERROR); return(PAPI_ESYS); }
+      PAPIERROR( VCNTRL_ERROR); return(PAPI_ESYS);
    }
    return (PAPI_OK);
 }
 
 static int _p3_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
+	int error;
+
    if(((cmp_control_state_t *)state)->rvperfctr != NULL ) {
      if(rvperfctr_stop((struct rvperfctr*)((cmp_context_t *)ctx)->perfctr) < 0)
        { PAPIERROR( RCNTRL_ERROR); return(PAPI_ESYS); }
      return (PAPI_OK);
    }
 
-   if(vperfctr_stop(((cmp_context_t *)ctx)->perfctr) < 0)
-     { PAPIERROR( VCNTRL_ERROR); return(PAPI_ESYS); }
+   error = vperfctr_stop(((cmp_context_t *)ctx)->perfctr);
+   if(error < 0) {
+      SUBDBG("vperfctr_stop returns: %d\n", error);
+      PAPIERROR( VCNTRL_ERROR); return(PAPI_ESYS);
+   }
    return(PAPI_OK);
 }
 
@@ -849,15 +891,9 @@ static int _p3_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    i = ESI->EventInfoArray[EventIndex].pos[0];
    if (i >= ncntrs) {
        PAPIERROR("Selector id %d is larger than ncntrs %d", i, ncntrs);
-       return PAPI_EBUG;
+         return PAPI_EINVAL;
    }
    if (threshold != 0) {        /* Set an overflow threshold */
-      if ((ESI->EventInfoArray[EventIndex].derived) &&
-          (ESI->EventInfoArray[EventIndex].derived != DERIVED_CMPD)){
-         OVFDBG("Can't overflow on a derived event.\n");
-         return PAPI_EINVAL;
-      }
-
       retval = _papi_hwi_start_signal(MY_VECTOR.cmp_info.hardware_intr_sig,
 	  NEED_CONTEXT, MY_VECTOR.cmp_info.CmpIdx);
       if (retval != PAPI_OK)

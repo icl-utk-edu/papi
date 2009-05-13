@@ -128,12 +128,13 @@ typedef ucontext_t hwd_ucontext_t;
 #define CNTR2 0x2
 #define CNTR3 0x4
 #define CNTR4 0x8
+#define CNTR5 0x10
 #define CNTRS12 (CNTR1|CNTR2)
-#define ALLCNTRS (CNTR1|CNTR2|CNTR3|CNTR4)
+#define ALLCNTRS (CNTR1|CNTR2|CNTR3|CNTR4|CNTR5)
 
-#define HAS_MESI  0x0010 /* indicates this event supports MESI modifiers */ 
-#define HAS_MOESI 0x0020 /* indicates this event supports MOESI modifiers */
-#define HAS_UMASK 0x0040 /* indicates this event supports general UMASK modifiers */
+#define HAS_MESI  0x0100 /* indicates this event supports MESI modifiers */ 
+#define HAS_MOESI 0x0200 /* indicates this event supports MOESI modifiers */
+#define HAS_UMASK 0x0400 /* indicates this event supports general UMASK modifiers */
 #define MOESI_M   0x1000 /* Modified bit */
 #define MOESI_O   0x0800 /* Owner bit */
 #define MOESI_E   0x0400 /* Exclusive bit */
@@ -164,7 +165,7 @@ typedef ucontext_t hwd_ucontext_t;
 #define GCNTRL_ERROR "gperfctr_control() returned < 0"
 #define FOPEN_ERROR "fopen(%s) returned NULL"
 #define STATE_MAL_ERROR "Error allocating perfctr structures"
-#define MODEL_ERROR "This is not a Pentium I,II,III, Athlon or Opteron"
+#define MODEL_ERROR "This is not a supported cpu."
 
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
