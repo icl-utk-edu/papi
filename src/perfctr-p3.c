@@ -210,17 +210,6 @@ void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
 int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
    int i, j, natNum;
    hwd_reg_alloc_t event_list[MAX_COUNTERS];
-   int pfm_events=0; 
- 
-#ifdef PERFCTR_X86_AMD_K8 /* this is defined in perfctr 2.5.x */
-    if (_papi_hwi_system_info.hw_info.model == PERFCTR_X86_AMD_K8) pfm_events = 1;
-#endif
-#ifdef PERFCTR_X86_AMD_K8C  /* this is defined in perfctr 2.6.x */
-    if (_papi_hwi_system_info.hw_info.model == PERFCTR_X86_AMD_K8C) pfm_events = 1;
-#endif
-#ifdef PERFCTR_X86_AMD_FAM10  /* this is defined in perfctr 2.6.29 */
-    if (_papi_hwi_system_info.hw_info.model == PERFCTR_X86_AMD_FAM10) pfm_events = 1;
-#endif
 
    /* Initialize the local structure needed
       for counter allocation and optimization. */
