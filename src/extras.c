@@ -169,7 +169,7 @@ void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, caddr_t pc,
   int best_index = -1;
   int i;
 
-  PRFDBG("handled IP 0x%lx\n",pc);
+  PRFDBG("handled IP 0x%p\n",pc);
 
   sprof = profile->prof[profile_index];
   count = profile->count[profile_index];
