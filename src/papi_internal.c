@@ -838,7 +838,9 @@ int remove_native_events(EventSetInfo_t * ESI, int *nevt, int size)
             }
          }
          if (copy == 0) {
+            hwd_register_t *bits = native[i].ni_bits; /* save pointer to bits */
             memset(native + i, 0, sizeof(NativeInfo_t));
+            native[i].ni_bits = bits; /* restore pointer to bits */
             native[i].ni_position = -1;
          }
       }
