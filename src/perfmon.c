@@ -31,7 +31,6 @@ hwi_search_t *preset_search_map;
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 extern papi_vector_t _papi_pfm_vector;
 extern int _papi_pfm_setup_presets(char *name, int type);
-extern int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits);
 extern int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier);
 extern int _papi_pfm_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len);
 extern int _papi_pfm_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len);
@@ -123,7 +122,7 @@ static void dump_setinfo(pfarg_setinfo_t *setinfo, int num_sets)
     }
 }
 
-static void dump_pmc(hwd_control_state_t * ctl)
+static void dump_pmc(pfm_control_state_t *ctl)
 {
   int i;
   pfarg_pmc_t *pc = ctl->pc;
@@ -138,7 +137,7 @@ static void dump_pmc(hwd_control_state_t * ctl)
     }
 }
 
-static void dump_pmd(hwd_control_state_t * ctl)
+static void dump_pmd(pfm_control_state_t *ctl)
 {
   int i;
   pfarg_pmd_t *pd = ctl->pd;

@@ -994,12 +994,12 @@ int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
   if (_pfm_decode_native_event(EventCode,&event,&umask) != PAPI_OK)
     return(PAPI_ENOEVNT);
 
-  memset(&gete,0x0,sizeof(gete));
+  memset(&gete,0x0,sizeof(pfmlib_event_t));
 
   gete.event = event;
   gete.num_masks = prepare_umask(umask,gete.unit_masks);
   
-  memcpy(bits,&gete,sizeof(*bits));
+  memcpy(bits,&gete,sizeof(pfmlib_event_t));
   return (PAPI_OK);
 }
 
