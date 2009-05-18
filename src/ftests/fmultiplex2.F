@@ -1,5 +1,7 @@
 #include "fpapi_test.h"
 
+#define MAX_TO_ADD 5
+
       program multiplex2
       IMPLICIT integer (p)
 

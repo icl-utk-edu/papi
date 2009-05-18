@@ -13,7 +13,6 @@
 #define TOLERANCE   .2
 #define OVR_TOLERANCE .75
 #define MPX_TOLERANCE .20
-#define MAX_TO_ADD 5
 #define TIME_LIMIT_IN_US 60*1000000    /* Run for about 1 minute or 60000000 us */
 
 
