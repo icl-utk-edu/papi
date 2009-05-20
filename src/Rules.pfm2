@@ -67,7 +67,9 @@ MISCSRCS = papi_pfm_events.c
 
 ifneq (CRAYX2, $(COMPILER))
   ifneq (ia64, $(ARCH))
-    MISCSRCS +=  x86_cache_info.c
+    ifneq (ppc64, $(ARCH))
+      MISCSRCS +=  x86_cache_info.c
+    endif
   endif
 endif
 
