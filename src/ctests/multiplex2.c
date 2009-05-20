@@ -70,7 +70,7 @@ int case1(void)
 				}
 			}
 		}
-	} while ((PAPI_enum_event(&i, PAPI_PRESET_ENUM_AVAIL) == PAPI_OK) && (j <= max_mux));
+	} while ((PAPI_enum_event(&i, PAPI_PRESET_ENUM_AVAIL) == PAPI_OK) && (j < max_mux));
 
 	events = (int *) malloc(j * sizeof(int));
 	if (events == NULL)
@@ -119,7 +119,7 @@ int case1(void)
 	}
 
 	if (allvalid){
-		printf("Caution: %d counter pair had identical values\n", allvalid);
+		printf("Caution: %d counter pair(s) had identical values\n", allvalid);
 	}
 
 	free(events);
