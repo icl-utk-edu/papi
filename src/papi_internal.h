@@ -181,6 +181,8 @@ extern int papi_num_components;
 #define hwd_control_state_t	void
 #define hwd_reg_alloc_t		void
 #define hwd_register_t		void
+#define hwd_siginfo_t		void
+#define hwd_ucontext_t		void
 
 /* DEFINES END HERE */
 
