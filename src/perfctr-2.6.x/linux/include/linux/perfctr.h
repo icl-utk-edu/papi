@@ -1,7 +1,7 @@
 /* $Id$
  * Performance-Monitoring Counters driver
  *
- * Copyright (C) 1999-2004  Mikael Pettersson
+ * Copyright (C) 1999-2008  Mikael Pettersson
  */
 #ifndef _LINUX_PERFCTR_H
 #define _LINUX_PERFCTR_H
@@ -30,7 +30,7 @@ struct perfctr_cpu_mask {
 /* abi_version values: Lower 16 bits contain the CPU data version, upper
    16 bits contain the API version. Each half has a major version in its
    upper 8 bits, and a minor version in its lower 8 bits. */
-#define PERFCTR_API_VERSION	0x0501	/* 5.1 */
+#define PERFCTR_API_VERSION	0x0502	/* 5.2 */
 #define PERFCTR_ABI_VERSION	((PERFCTR_API_VERSION<<16)|PERFCTR_CPU_VERSION)
 
 /* cpu_features flag bits */
@@ -48,11 +48,14 @@ struct vperfctr_control {
 	int si_signo;
 	struct perfctr_cpu_control cpu_control;
 	unsigned int preserve;
-	unsigned int _reserved1;
+	unsigned int flags;
 	unsigned int _reserved2;
 	unsigned int _reserved3;
 	unsigned int _reserved4;
 };
+
+/* vperfctr_control flags bits */
+#define VPERFCTR_CONTROL_CLOEXEC	0x01	/* close (unlink) state before exec */
 
 /* parameter in GPERFCTR_CONTROL command */
 struct gperfctr_cpu_control {
@@ -131,6 +134,7 @@ struct vperfctr;	/* opaque */
 
 /* process management operations */
 extern void __vperfctr_exit(struct vperfctr*);
+extern void __vperfctr_flush(struct vperfctr*);
 extern void __vperfctr_suspend(struct vperfctr*);
 extern void __vperfctr_resume(struct vperfctr*);
 extern void __vperfctr_sample(struct vperfctr*);
@@ -140,6 +144,7 @@ extern void __vperfctr_set_cpus_allowed(struct task_struct*, struct vperfctr*, c
 extern struct vperfctr_stub {
 	struct module *owner;
 	void (*exit)(struct vperfctr*);
+	void (*flush)(struct vperfctr*);
 	void (*suspend)(struct vperfctr*);
 	void (*resume)(struct vperfctr*);
 	void (*sample)(struct vperfctr*);
@@ -148,12 +153,14 @@ extern struct vperfctr_stub {
 #endif
 } vperfctr_stub;
 extern void _vperfctr_exit(struct vperfctr*);
+extern void _vperfctr_flush(struct vperfctr*);
 #define _vperfctr_suspend(x)	vperfctr_stub.suspend((x))
 #define _vperfctr_resume(x)	vperfctr_stub.resume((x))
 #define _vperfctr_sample(x)	vperfctr_stub.sample((x))
 #define _vperfctr_set_cpus_allowed(x,y,z) (*vperfctr_stub.set_cpus_allowed)((x),(y),(z))
 #else	/* !CONFIG_PERFCTR_MODULE */
 #define _vperfctr_exit(x)	__vperfctr_exit((x))
+#define _vperfctr_flush(x)	__vperfctr_flush((x))
 #define _vperfctr_suspend(x)	__vperfctr_suspend((x))
 #define _vperfctr_resume(x)	__vperfctr_resume((x))
 #define _vperfctr_sample(x)	__vperfctr_sample((x))
@@ -176,6 +183,14 @@ static inline void perfctr_exit_thread(struct thread_struct *thread)
 	perfctr = thread->perfctr;
 	if (perfctr)
 		_vperfctr_exit(perfctr);
+}
+
+static inline void perfctr_flush_thread(struct thread_struct *thread)
+{
+	struct vperfctr *perfctr;
+	perfctr = thread->perfctr;
+	if (perfctr)
+		_vperfctr_flush(perfctr);
 }
 
 static inline void perfctr_suspend_thread(struct thread_struct *prev)
@@ -220,6 +235,7 @@ static inline void perfctr_set_cpus_allowed(struct task_struct *p, cpumask_t new
 static inline void perfctr_copy_task(struct task_struct *p, struct pt_regs *r) { }
 static inline void perfctr_release_task(struct task_struct *p) { }
 static inline void perfctr_exit_thread(struct thread_struct *t) { }
+static inline void perfctr_flush_thread(struct thread_struct *t) { }
 static inline void perfctr_suspend_thread(struct thread_struct *t) { }
 static inline void perfctr_resume_thread(struct thread_struct *t) { }
 static inline void perfctr_sample_thread(struct thread_struct *t) { }

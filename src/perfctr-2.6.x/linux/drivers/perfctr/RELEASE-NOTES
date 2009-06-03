@@ -3,6 +3,98 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.37, 2008-11-30
+- x86: Preliminary Intel Core i7 support, limited to handling it
+  as a Core2-like processor with four PMCs. The AnyThread evntsel
+  flag and off-core/uncore monitoring are not yet supported.
+- x86: Recognise Intel Family 6 Model 29 (Xeon 7400) as Core 2.
+- x86: Make core2_clear_counters() also clear the FREEZE_PERFMON_ON_PMI
+  bit in DEBUGCTLMSR. vtune leaves this bit set, which breaks perfctr.
+- x86: Make perfctr_clear_counters() initialise MSR_CORE_PERF_GLOBAL_CTRL
+  during initialisation. This fixes compatibility issues with drivers
+  that may leave this register cleared == all counters disabled. vtune
+  is reported to do this. Add ->clear_counters() op to perfctr_pmu_msrs
+  to handle this cleanly. Convert Via C3 to use this mechanism instead
+  of being a special case.
+
+Version 2.6.36, 2008-10-19
+- x86: Limit the value written to a fixed-function counter's MSR
+  to 40 bits. Extraneous high bits cause GP faults on Model 23
+  Core2s, while earlier processors would just ignore them.
+- Kernel 2.6.27-rc1 dropped the retry parameter to on_each_cpu()
+  and smp_call_function(). Adjust accordingly. Add compatibility
+  wrappers for older kernels.
+- Kernel 2.6.27-rc1 removed find_task_by_pid(). Migrate to new
+  find_task_by_vpid(). Add compatibility wrapper for older kernels.
+- Starting with kernel 2.6.27-rc1 one should use alloc_intr_gate()
+  not set_intr_gate() on x86 when binding a specific vector, as this
+  also marks the vector as allocated. Adjust <asm-x86/perfctr.h>.
+
+Version 2.6.35, 2008-06-30
+- x86: Preliminary Intel Atom support:
+  * add Atom CPU type, it differs from all previous models
+  * Atom is poorly documented, so query cpuid leaf 0xA for
+    its architectural PMU capabilities; initial Atoms appear
+    to have APM V3, 2 40-bit general-purpose counters, 7
+    architectural events, and 1 40-bit fixed-function counter
+- x86: Replace the p6_is_core2 flag with separate variables
+  indicating (a) having per-evntsel enable bits, and (b) the
+  number of fixed-function counters available.
+- x86: intel_p6_init(): recognise Celeron model 16h and
+  treat it as a Core 2.
+- x86: Clean up intel_p6_init(): replace complex if conditions
+  with explicit switches on x86_model, explicitly enumerate
+  accepted model numbers.
+- x86: Correct p6_like_check_control() to reject regular
+  pmcs >= 2 on Core2 before mapping fixed-function counters
+  0x40000000+N to pmcs 2+N for duplicate counter checking.
+  The failure to reject those invalid pmcs made it possible
+  for users to cause the driver to perform invalid wrmsr and
+  rdpmc accesses with kernel hangs as the result.
+
+Version 2.6.35-pre1, 2008-06-23
+- Add optional close-on-exec feature for per-process perfctrs:
+  * reassign _reserved1 as flags in vperfctr_control
+  * add VPERFCTR_CONTROL_CLOEXEC flag
+  * add perfctr_flush_thread() hook to exec() path
+  * map perfctr_flush_thread() to __vperfctr_flush() via
+    inline functions and virtual_stub.c
+  * in __virtual_flush(), if CLOEXEC is set then unlink the state
+  * bump API version to 5.2
+
+Version 2.6.34, 2008-05-29
+- Reorder kernel version and HAVE_EXPORT___put_task_struct
+  tests in compat.h to handle the SuSE 2.6.16.42-0.12 kernel
+  exporting __put_task_struct_cb().
+- Fix warning about DONT_HAVE_i_blksize being undefined in
+  the SuSE 2.6.16.42-0.12 kernel.
+
+Version 2.6.33, 2008-05-18
+- x86: Intel Family 6 Model 23 support missed that it needs
+  to trigger LVTPC reinit. Fix that.
+
+Version 2.6.32, 2008-04-20
+- x86: Recognize Intel Family 6 Model 23 as Core2.
+- x86: Update perfctr_sysclass definition for kernel 2.6.25.
+
+Version 2.6.31, 2008-01-26
+- x86: Correct Barcelona CPU type to read FAM10H not FAM10
+  w/o the trailing H. In struct perfctr_cpu_control, place
+  p4 struct in a union and alias p4.escr[] with envtsel_high[]:
+  this allows passing high 32 evntsel bits for Barcelona.
+  Update driver to also manage high 32 evntsel bits on Barcelona,
+  on other processors those bits are forced to zero.
+
+Version 2.6.30, 2007-10-28
+- x86: Kernel 2.6.24-rc1 changed the calling convention for
+  the cpu_data macro. Updated accordingly, and added compat
+  code providing the new behaviour in older kernels.
+- ppc32: Kernel 2.6.24-rc1 removed the get_property() compat
+  macro. Use of_get_property() with kernels >= 2.6.22.
+- The workaround for RHEL5 removing ptrace_check_attach()
+  only works when perfctr is built as a module. Fix it to
+  also work in the non-modular case.
+
 Version 2.6.29, 2007-10-07
 - Add new cpu_type for AMD Family 10h, to reduce confusion.
 - Very preliminary support for AMD Family 10h processors.

@@ -1,7 +1,7 @@
 /* $Id$
  * x86-specific code.
  *
- * Copyright (C) 2000-2007  Mikael Pettersson
+ * Copyright (C) 2000-2008  Mikael Pettersson
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,12 +21,13 @@ void setup_control(const struct perfctr_info *info,
 
     /* Attempt to set up control to count clocks via the TSC
        and FLOPS via PMC0. */
-    switch( info->cpu_type ) {
+    switch (info->cpu_type) {
       case PERFCTR_X86_GENERIC:
 	nractrs = 0;		/* no PMCs available */
 	break;
       case PERFCTR_X86_AMD_K8:
       case PERFCTR_X86_AMD_K8C:
+      case PERFCTR_X86_AMD_FAM10H:
 	/* RETIRED_FPU_INSTRS, Unit Mask "x87 instrs", any CPL, Enable */
 	evntsel0 = 0xCB | (0x01 << 8) | (3 << 16) | (1 << 22);
 	break;
@@ -50,6 +51,16 @@ void setup_control(const struct perfctr_info *info,
       case PERFCTR_X86_INTEL_CORE2:
 	/* event 0xC1 umask 0xFE (X87_OPS_RETIRED_ANY), any CPL, Enable */
 	evntsel0 = 0xC1 | (0xFE << 8) | (3 << 16) | (1 << 22);
+	break;
+      case PERFCTR_X86_INTEL_ATOM:
+	/* Atom's architectural events don't include FLOPS */
+	counting_mips = 1;
+	/* event 0xC0 (RETIRED_INSTRUCTIONS), any CPL, Enable */
+	evntsel0 = 0xC0 | (3 << 16) | (1 << 22);
+	break;
+      case PERFCTR_X86_INTEL_COREI7:
+	/* FP_COMP_OPS_EXE.ANY, USR, Enable, INT */
+	evntsel0 = 0x10 | (0xFF << 8) | (1 << 16) | (1 << 22) | (1 << 20);
 	break;
 #if !defined(__x86_64__)
       case PERFCTR_X86_AMD_K7:

@@ -40,15 +40,15 @@ ppc_ABIVER=5
 arm_ABIVER=0
 SO_ABIVER=$($(ARCH)_ABIVER)
 
-SO_LIBVER=2.6.29
+SO_LIBVER=2.6.37
 SO_NAME=libperfctr.so.$(SO_ABIVER)
 SO_LIB=libperfctr.so.$(SO_ABIVER).$(SO_LIBVER)
 
 HDEP=libperfctr.h $(BUILD_INCLDIR)/linux/perfctr.h $(BUILD_INCLDIR)/asm/perfctr.h
 
-i386_ASM_DIR=i386
-x86_64_ASM_DIR=i386
-ppc_ASM_DIR=ppc
+i386_ASM_DIR=x86
+x86_64_ASM_DIR=x86
+ppc_ASM_DIR=powerpc
 arm_ASM_DIR=arm
 ARCH_ASM_DIR=asm-$($(ARCH)_ASM_DIR)
 
@@ -74,7 +74,7 @@ libperfctr.a:	$(AR_OBJS)
 
 # not installed, only built as a workaround for PAPI's broken Makefiles
 libperfctr.o:	$(AR_OBJS)
-	ld $(LD_FLAGS) -r -o $@ $(AR_OBJS)
+	ld -r -o $@ $(AR_OBJS)
 
 libperfctr.so:	$(SO_OBJS)
 	$(CC) -shared -o $@ -Wl,-soname,$(SO_NAME) $(SO_OBJS)

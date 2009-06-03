@@ -1,7 +1,7 @@
 /* $Id$
  * Virtual per-process performance counters.
  *
- * Copyright (C) 1999-2007  Mikael Pettersson
+ * Copyright (C) 1999-2008  Mikael Pettersson
  */
 #include <linux/version.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
@@ -52,6 +52,7 @@ struct vperfctr {
 #ifdef CONFIG_PERFCTR_INTERRUPT_SUPPORT
 	unsigned int iresume_cstatus;
 #endif
+	unsigned int flags;
 };
 #define IS_RUNNING(perfctr)	perfctr_cstatus_enabled((perfctr)->cpu_state.cstatus)
 
@@ -158,26 +159,26 @@ static inline void vperfctr_task_unlock(struct task_struct *p)
 
 #endif	/* !CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK */
 
-/* How to lock around find_task_by_pid(). The tasklist_lock always
+/* How to lock around find_task_by_vpid(). The tasklist_lock always
    works, but it's no longer exported starting with kernel 2.6.18.
    For kernels 2.6.18 and newer use rcu_read_{lock,unlock}(). */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,18)
-static inline void vperfctr_lock_find_task_by_pid(void)
+static inline void vperfctr_lock_find_task_by_vpid(void)
 {
 	rcu_read_lock();
 }
 
-static inline void vperfctr_unlock_find_task_by_pid(void)
+static inline void vperfctr_unlock_find_task_by_vpid(void)
 {
 	rcu_read_unlock();
 }
 #else	/* < 2.6.18 */
-static inline void vperfctr_lock_find_task_by_pid(void)
+static inline void vperfctr_lock_find_task_by_vpid(void)
 {
 	read_lock(&tasklist_lock);
 }
 
-static inline void vperfctr_unlock_find_task_by_pid(void)
+static inline void vperfctr_unlock_find_task_by_vpid(void)
 {
 	read_unlock(&tasklist_lock);
 }
@@ -425,6 +426,16 @@ void __vperfctr_exit(struct vperfctr *perfctr)
 	vperfctr_unlink(current, perfctr);
 }
 
+/* sys_execve() -> .. -> flush_old_exec() -> .. -> __vperfctr_flush().
+ * Unlink the thread's perfctr state, if the CLOEXEC control flag is set.
+ * PREEMPT note: flush_old_exec() does not run with preemption disabled.
+ */
+void __vperfctr_flush(struct vperfctr *perfctr)
+{
+	if (perfctr->flags & VPERFCTR_CONTROL_CLOEXEC)
+		__vperfctr_exit(perfctr);
+}
+
 /* schedule() --> switch_to() --> .. --> __vperfctr_suspend().
  * If the counters are running, suspend them.
  * PREEMPT note: switch_to() runs with preemption disabled.
@@ -559,6 +570,8 @@ static int sys_vperfctr_control(struct vperfctr *perfctr,
 		if (!(control.preserve & (1<<i)))
 			perfctr->cpu_state.pmc[i].sum = 0;
 
+	perfctr->flags = control.flags;
+
 	if (tsk == current)
 		vperfctr_resume(perfctr);
 
@@ -647,6 +660,7 @@ static int sys_vperfctr_read_control(struct vperfctr *perfctr,
 		preempt_disable();
 	control.si_signo = perfctr->si_signo;
 	control.cpu_control = perfctr->cpu_state.control;
+	control.flags = perfctr->flags;
 	if (tsk == current)
 		preempt_enable();
 	control.preserve = 0;
@@ -949,7 +963,7 @@ static struct inode *vperfctr_get_inode(void)
 	inode->i_uid = current->fsuid;
 	inode->i_gid = current->fsgid;
 	inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19) && !DONT_HAVE_i_blksize
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19) && !defined(DONT_HAVE_i_blksize)
 	inode->i_blksize = 0;
 #endif
 	return inode;
@@ -1078,12 +1092,12 @@ int vperfctr_attach(int tid, int creat)
 		}
 	}
 	tsk = current;
-	if (tid != 0 && tid != tsk->pid) { /* remote? */
-		vperfctr_lock_find_task_by_pid();
-		tsk = find_task_by_pid(tid);
+	if (tid != 0 && tid != task_pid_vnr(tsk)) { /* remote? */
+		vperfctr_lock_find_task_by_vpid();
+		tsk = find_task_by_vpid(tid);
 		if (tsk)
 			get_task_struct(tsk);
-		vperfctr_unlock_find_task_by_pid();
+		vperfctr_unlock_find_task_by_vpid();
 		err = -ESRCH;
 		if (!tsk)
 			goto err_perfctr;
@@ -1142,6 +1156,7 @@ static void vperfctr_stub_init(void)
 	off = vperfctr_stub;
 	vperfctr_stub.owner = THIS_MODULE;
 	vperfctr_stub.exit = __vperfctr_exit;
+	vperfctr_stub.flush = __vperfctr_flush;
 	vperfctr_stub.suspend = __vperfctr_suspend;
 	vperfctr_stub.resume = __vperfctr_resume;
 	vperfctr_stub.sample = __vperfctr_sample;

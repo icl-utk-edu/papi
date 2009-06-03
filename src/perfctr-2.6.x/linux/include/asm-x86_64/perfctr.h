@@ -1,1 +1,1 @@
-#include <asm-i386/perfctr.h>
+#include <asm-x86/perfctr.h>

@@ -1,7 +1,7 @@
 /* $Id$
  * x86/x86_64 performance-monitoring counters driver.
  *
- * Copyright (C) 1999-2007  Mikael Pettersson
+ * Copyright (C) 1999-2008  Mikael Pettersson
  */
 #include <linux/version.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
@@ -21,7 +21,9 @@
 #undef MSR_K7_EVNTSEL0
 #undef MSR_CORE_PERF_FIXED_CTR0
 #undef MSR_CORE_PERF_FIXED_CTR_CTRL
+#undef MSR_CORE_PERF_GLOBAL_CTRL
 #undef MSR_IA32_MISC_ENABLE
+#undef MSR_IA32_DEBUGCTLMSR
 #include <asm/fixmap.h>
 #include <asm/apic.h>
 struct hw_interrupt_type;
@@ -43,7 +45,10 @@ struct per_cpu_cache {	/* roughly a subset of perfctr_cpu_state */
 	struct {
 		/* NOTE: these caches have physical indices, not virtual */
 		unsigned int evntsel[18];
-		unsigned int escr[0x3E2-0x3A0];
+		union {
+			unsigned int escr[0x3E2-0x3A0];
+			unsigned int evntsel_high[18];
+		};
 		unsigned int pebs_enable;
 		unsigned int pebs_matrix_vert;
 	} control;
@@ -69,6 +74,7 @@ struct perfctr_pmu_msrs {
 	const struct perfctr_msr_range *perfctrs; /* for {reserve,release}_perfctr_nmi() */
 	const struct perfctr_msr_range *evntsels; /* for {reserve,release}_evntsel_nmi() */
 	const struct perfctr_msr_range *extras;
+	void (*clear_counters)(int init);
 };
 
 /* Intel P5, Cyrix 6x86MX/MII/III, Centaur WinChip C6/2/3 */
@@ -80,8 +86,8 @@ struct perfctr_pmu_msrs {
 #define C6_CESR_RESERVED	(~0x00FF)
 
 /* Intel P6, VIA C3 */
-#define MSR_P6_PERFCTR0		0xC1		/* .. 0xC2 */
-#define MSR_P6_EVNTSEL0		0x186		/* .. 0x187 */
+#define MSR_P6_PERFCTR0		0xC1		/* .. 0xC4 */
+#define MSR_P6_EVNTSEL0		0x186		/* .. 0x189 */
 #define P6_EVNTSEL_ENABLE	0x00400000
 #define P6_EVNTSEL_INT		0x00100000
 #define P6_EVNTSEL_CPL		0x00030000
@@ -89,9 +95,12 @@ struct perfctr_pmu_msrs {
 #define VC3_EVNTSEL1_RESERVED	(~0x1FF)
 
 /* Intel Core */
+#define MSR_IA32_DEBUGCTLMSR		0x000001D9
+#define MSR_IA32_DEBUGCTLMSR_FREEZE_PERFMON_ON_PMI	(1<<12)
 #define MSR_CORE_PERF_FIXED_CTR0	0x309	/* .. 0x30B */
 #define MSR_CORE_PERF_FIXED_CTR_CTRL	0x38D
 #define MSR_CORE_PERF_FIXED_CTR_CTRL_PMIANY	0x00000888
+#define MSR_CORE_PERF_GLOBAL_CTRL	0x38F
 #define CORE2_PMC_FIXED_FLAG		(1<<30)
 #define CORE2_PMC_FIXED_MASK		0x3
 
@@ -101,6 +110,9 @@ struct perfctr_pmu_msrs {
 
 /* AMD K8 */
 #define IS_K8_NB_EVENT(EVNTSEL)	((((EVNTSEL) >> 5) & 0x7) == 0x7)
+
+/* AMD Family 10h */
+#define FAM10H_EVNTSEL_HIGH_RESERVED	(~0x30F)
 
 /* Intel P4, Intel Pentium M, Intel Core */
 #define MSR_IA32_MISC_ENABLE	0x1A0
@@ -399,12 +411,13 @@ static void c6_write_control(const struct perfctr_cpu_state *state)
 
 /*
  * Intel P6 family (Pentium Pro, Pentium II, Pentium III, Pentium M,
- * Intel Core, and Intel Core 2, including Xeon and Celeron versions.
+ * Intel Core, Intel Core 2, Atom, and Core i7, including Xeon and Celeron versions.
  * - One TSC and two 40-bit PMCs.
+ *   Core i7 has four 48-bit PMCs.
  * - One 32-bit EVNTSEL MSR for each PMC.
  * - EVNTSEL0 contains a global enable/disable bit.
  *   That bit is reserved in EVNTSEL1.
- *   On Core 2 each EVNTSEL has its own enable/disable bit.
+ *   On Core 2, Atom, and Core i7 each EVNTSEL has its own enable/disable bit.
  * - Each EVNTSEL contains a CPL field.
  * - Overflow interrupts are possible, but requires that the
  *   local APIC is available. Some Mobile P6s have no local APIC.
@@ -413,20 +426,27 @@ static void c6_write_control(const struct perfctr_cpu_state *state)
  * - Most events are symmetric, but a few are not.
  * - Core 2 adds three fixed-function counters. A single shared control
  *   register has the control bits (CPL:2 + PMI:1) for these counters.
+ * - Initial Atoms appear to have one fixed-function counter.
  */
 
+static int is_fam10h;
 static int k8_is_multicore;	/* affects northbridge events */
-static int p6_is_core2;		/* affects P6_EVNTSEL_ENABLE usage */
+static int p6_has_separate_enables;	/* affects EVNTSEL.ENable rules */
+static unsigned int p6_nr_pmcs;	/* number of general-purpose counters */
+static unsigned int p6_nr_ffcs;	/* number of fixed-function counters */
 
 /* shared with K7 */
 static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, int is_global)
 {
 	unsigned int evntsel, i, nractrs, nrctrs, pmc_mask, pmc;
 	unsigned int core2_fixed_ctr_ctrl;
+	unsigned int max_nrctrs;
+
+	max_nrctrs = is_k7 ? 4 : p6_nr_pmcs + p6_nr_ffcs;
 
 	nractrs = state->control.nractrs;
 	nrctrs = nractrs + state->control.nrictrs;
-	if (nrctrs < nractrs || nrctrs > (is_k7 ? 4 : p6_is_core2 ? 5 : 2))
+	if (nrctrs < nractrs || nrctrs > max_nrctrs)
 		return -EINVAL;
 
 	pmc_mask = 0;
@@ -436,13 +456,29 @@ static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, int
 		state->pmc[i].map = pmc;
 		/* pmc_map[i] is what we pass to RDPMC
 		 * to check that pmc_map[] is well-defined on Core 2,
-		 * we map FIXED_CTR 0x40000000+N to PMC 2+N
+		 * we map FIXED_CTR 0x40000000+N to PMC p6_nr_pmcs+N
 		 */
-		if (!is_k7 && p6_is_core2 && (pmc & CORE2_PMC_FIXED_FLAG))
-			pmc = 2 + (pmc & ~CORE2_PMC_FIXED_FLAG);
-		if (pmc >= (is_k7 ? 4 : p6_is_core2 ? 5 : 2) || (pmc_mask & (1<<pmc)))
+		if (!is_k7 && p6_nr_ffcs != 0) {
+			if (pmc & CORE2_PMC_FIXED_FLAG)
+				pmc = p6_nr_pmcs + (pmc & ~CORE2_PMC_FIXED_FLAG);
+			else if (pmc >= p6_nr_pmcs)
+				return -EINVAL;
+		}
+		if (pmc >= max_nrctrs || (pmc_mask & (1<<pmc)))
 			return -EINVAL;
 		pmc_mask |= (1<<pmc);
+		/*
+		 * check evntsel_high on AMD Fam10h
+		 * on others we force it to zero (should return -EINVAL but
+		 * having zeroes there has not been a requirement before)
+		 */
+		if (is_fam10h) {
+			unsigned int evntsel_high = state->control.evntsel_high[i];
+			if (evntsel_high & FAM10H_EVNTSEL_HIGH_RESERVED)
+				return -EINVAL;
+		} else
+			state->control.evntsel_high[i] = 0;
+		/* check evntsel */
 		evntsel = state->control.evntsel[i];
 		/* prevent the K8 multicore NB event clobber erratum */
 		if (!is_global && k8_is_multicore && IS_K8_NB_EVENT(evntsel))
@@ -451,7 +487,7 @@ static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, int
 		if (evntsel & P6_EVNTSEL_RESERVED)
 			return -EPERM;
 		/* check ENable bit */
-		if (is_k7 || p6_is_core2) {
+		if (is_k7 || p6_has_separate_enables) {
 			/* ENable bit must be set in each evntsel */
 			if (!(evntsel & P6_EVNTSEL_ENABLE))
 				return -EINVAL;
@@ -476,7 +512,7 @@ static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, int
 			if (i >= nractrs)
 				return -EINVAL;
 		}
-		if (!is_k7 && p6_is_core2) {
+		if (!is_k7 && p6_nr_ffcs != 0) {
 			pmc = state->control.pmc_map[i];
 			if (pmc & CORE2_PMC_FIXED_FLAG) {
 				unsigned int ctl = 0;
@@ -526,6 +562,7 @@ static void p6_like_isuspend(struct perfctr_cpu_state *state,
 			   We don't need to make it into a parameter. */
 			pmc_idx = pmc_raw & P4_MASK_FAST_RDPMC;
 			cache->control.evntsel[pmc_idx] = 0;
+			cache->control.evntsel_high[pmc_idx] = 0;
 			/* On P4 this intensionally also clears the CCCR.OVF flag. */
 			wrmsr(msr_evntsel0+pmc_idx, 0, 0);
 		}
@@ -570,8 +607,15 @@ static void p6_like_iresume(const struct perfctr_cpu_state *state,
 	for(i = perfctr_cstatus_nractrs(cstatus); i < nrctrs; ++i) {
 		unsigned int pmc_raw = state->pmc[i].map;
 		unsigned int msr_perfctr;
+		unsigned int pmc_value_hi;
+
 		if (pmc_raw & CORE2_PMC_FIXED_FLAG) {
 			msr_perfctr = MSR_CORE_PERF_FIXED_CTR0 + (pmc_raw & CORE2_PMC_FIXED_MASK);
+			/* Limit the value written to a fixed-function counter's MSR
+			 * to 40 bits. Extraneous high bits cause GP faults on Model 23
+			 * Core2s, while earlier processors would just ignore them.
+			 */
+			pmc_value_hi = 0xff;
 		} else {
 			/* Note: P4_MASK_FAST_RDPMC is a no-op for P6 and K7.
 			   We don't need to make it into a parameter. */
@@ -581,12 +625,14 @@ static void p6_like_iresume(const struct perfctr_cpu_state *state,
 			   counter increments and missed overflow interrupts. */
 			if (cache->control.evntsel[pmc_idx]) {
 				cache->control.evntsel[pmc_idx] = 0;
+				cache->control.evntsel_high[pmc_idx] = 0;
 				wrmsr(msr_evntsel0+pmc_idx, 0, 0);
 			}
 			msr_perfctr = msr_perfctr0 + pmc_idx;
+			pmc_value_hi = -1;
 		}
 		/* P4 erratum N15 does not apply since the CCCR is disabled. */
-		wrmsr(msr_perfctr, state->pmc[i].start, -1);
+		wrmsr(msr_perfctr, state->pmc[i].start, pmc_value_hi);
 	}
 	/* cache->k1.id remains != state->k1.id */
 }
@@ -614,13 +660,18 @@ static void p6_like_write_control(const struct perfctr_cpu_state *state,
 		return;
 	nrctrs = perfctr_cstatus_nrctrs(state->cstatus);
 	for(i = 0; i < nrctrs; ++i) {
-		unsigned int evntsel = state->control.evntsel[i];
-		unsigned int pmc = state->pmc[i].map;
+		unsigned int pmc, evntsel, evntsel_high;
+
+		pmc = state->pmc[i].map;
 		if (pmc & CORE2_PMC_FIXED_FLAG)
 			continue;
-		if (evntsel != cache->control.evntsel[pmc]) {
+		evntsel = state->control.evntsel[i];
+		evntsel_high = state->control.evntsel_high[i];
+		if (evntsel != cache->control.evntsel[pmc] ||
+		    evntsel_high != cache->control.evntsel_high[pmc]) {
 			cache->control.evntsel[pmc] = evntsel;
-			wrmsr(msr_evntsel0+pmc, evntsel, 0);
+			cache->control.evntsel_high[pmc] = evntsel_high;
+			wrmsr(msr_evntsel0+pmc, evntsel, evntsel_high);
 		}
 	}
 	if (state->core2_fixed_ctr_ctrl != 0 &&
@@ -637,13 +688,13 @@ static void p6_write_control(const struct perfctr_cpu_state *state)
 	p6_like_write_control(state, MSR_P6_EVNTSEL0);
 }
 
-static const struct perfctr_msr_range p6_perfctrs[] = {
-	{ MSR_P6_PERFCTR0, 2 },
+static struct perfctr_msr_range p6_perfctrs[] = {
+	{ MSR_P6_PERFCTR0, 2 }, /* on Core i7 we'll update this count */
 	{ 0, 0 },
 };
 
-static const struct perfctr_msr_range p6_evntsels[] = {
-	{ MSR_P6_EVNTSEL0, 2 },
+static struct perfctr_msr_range p6_evntsels[] = {
+	{ MSR_P6_EVNTSEL0, 2 }, /* on Core i7 we'll update this count */
 	{ 0, 0 },
 };
 
@@ -652,16 +703,28 @@ static const struct perfctr_pmu_msrs p6_pmu_msrs = {
 	.evntsels = p6_evntsels,
 };
 
-static const struct perfctr_msr_range core2_extras[] = {
-	{ MSR_CORE_PERF_FIXED_CTR0, 3 },
+static struct perfctr_msr_range core2_extras[] = {
+	{ MSR_CORE_PERF_FIXED_CTR0, 3 }, /* on Atom we'll update this count */
 	{ MSR_CORE_PERF_FIXED_CTR_CTRL, 1 },
 	{ 0, 0 },
 };
+
+static void core2_clear_counters(int init)
+{
+	if (init) {
+		unsigned int low, high;
+		rdmsr(MSR_IA32_DEBUGCTLMSR, low, high);
+		low &= ~MSR_IA32_DEBUGCTLMSR_FREEZE_PERFMON_ON_PMI;
+		wrmsr(MSR_IA32_DEBUGCTLMSR, low, high);
+		wrmsr(MSR_CORE_PERF_GLOBAL_CTRL, (1 << p6_nr_pmcs) - 1, (1 << p6_nr_ffcs) - 1);
+	}
+}
 
 static const struct perfctr_pmu_msrs core2_pmu_msrs = {
 	.perfctrs = p6_perfctrs,
 	.evntsels = p6_evntsels,
 	.extras = core2_extras,
+	.clear_counters = core2_clear_counters,
 };
 
 /*
@@ -679,6 +742,9 @@ static const struct perfctr_pmu_msrs core2_pmu_msrs = {
  *
  * The K8 has the same hardware layout as the K7. It also has
  * better documentation and a different set of available events.
+ *
+ * AMD Family 10h is similar to the K7, but the EVNTSEL MSRs
+ * have been widened to 64 bits.
  */
 
 static int k7_check_control(struct perfctr_cpu_state *state, int is_global)
@@ -747,11 +813,15 @@ static int vc3_check_control(struct perfctr_cpu_state *state, int is_global)
 	return 0;
 }
 
-static void vc3_clear_counters(void)
+static void vc3_clear_counters(int init)
 {
 	/* Not documented, but seems to be default after boot. */
 	wrmsr(MSR_P6_EVNTSEL0+1, 0x00070079, 0);
 }
+
+static const struct perfctr_pmu_msrs vc3_pmu_msrs = {
+	.clear_counters = vc3_clear_counters,
+};
 
 /*
  * Intel Pentium 4.
@@ -1259,19 +1329,13 @@ void perfctr_cpu_sample(struct perfctr_cpu_state *state)
 	}
 }
 
-static void (*clear_counters)(void); /* VIA C3 needs non-standard initialisation */
 static const struct perfctr_pmu_msrs *pmu_msrs;
 
-static void perfctr_cpu_clear_counters(void)
+static void perfctr_cpu_clear_counters(int init)
 {
 	const struct perfctr_pmu_msrs *pmu;
 	const struct perfctr_msr_range *msrs;
 	int i;
-
-	if (clear_counters) {
-		clear_counters();
-		return;
-	}
 
 	pmu = pmu_msrs;
 	if (!pmu)
@@ -1291,6 +1355,8 @@ static void perfctr_cpu_clear_counters(void)
 	if (msrs)
 		for(i = 0; msrs[i].first_msr; ++i)
 			clear_msr_range(msrs[i].first_msr, msrs[i].nr_msrs);
+	if (pmu->clear_counters)
+		(*pmu->clear_counters)(init);
 }
 
 /****************************************************************
@@ -1380,7 +1446,7 @@ static void __init p4_ht_mask_setup_cpu(void *forbidden)
 	 */
 
 	/* Ensure that CPUID reports all levels. */
-	if (cpu_data[cpu].x86_model == 3) { /* >= 3? */
+	if (cpu_data(cpu).x86_model == 3) { /* >= 3? */
 		unsigned int low, high;
 		rdmsr(MSR_IA32_MISC_ENABLE, low, high);
 		if (low & (1<<22)) { /* LIMIT_CPUID_MAXVAL */
@@ -1446,7 +1512,7 @@ static int __init p4_ht_smp_init(void)
 	unsigned int cpu;
 
 	cpus_clear(forbidden);
-	smp_call_function(p4_ht_mask_setup_cpu, &forbidden, 1, 1);
+	smp_call_function(p4_ht_mask_setup_cpu, &forbidden, 1);
 	p4_ht_mask_setup_cpu(&forbidden);
 	if (cpus_empty(forbidden))
 		return 0;
@@ -1558,61 +1624,179 @@ static int __init intel_p6_init(void)
 {
 	static char p6_name[] __initdata = "Intel P6";
 	static char core2_name[] __initdata = "Intel Core 2";
+	static char atom_name[] __initdata = "Intel Atom";
+	static char corei7_name[] __initdata = "Intel Core i7";
 	unsigned int misc_enable;
 
-	/* Detect things that matter to the driver. */
-	if (current_cpu_data.x86_model == 9 ||		/* Pentium M */
-	    current_cpu_data.x86_model == 13 || 	/* Pentium M */
-	    current_cpu_data.x86_model == 14 || 	/* Intel Core */
-	    current_cpu_data.x86_model == 15) { 	/* Intel Core 2 */
+	/*
+	 * Post P4 family 6 models (Pentium M, Core, Core 2, Atom)
+	 * have MISC_ENABLE.PERF_AVAIL like the P4.
+	 */
+	switch (current_cpu_data.x86_model) {
+	case 9:		/* Pentium M */
+	case 13:	/* Pentium M */
+	case 14:	/* Core */
+	case 15:	/* Core 2 */
+	case 22:	/* Core 2 based Celeron model 16h */
+	case 23:	/* Core 2 */
+	case 26:	/* Core i7 */
+	case 28:	/* Atom */
+	case 29:	/* Core 2 based Xeon 7400 */
 		rdmsr_low(MSR_IA32_MISC_ENABLE, misc_enable);
 		if (!(misc_enable & MSR_IA32_MISC_ENABLE_PERF_AVAIL))
 			return -ENODEV;
 	}
-	if (current_cpu_data.x86_model == 15) {		/* Intel Core 2 */
-		p6_is_core2 = 1;
-	} else if (current_cpu_data.x86_model < 3) {	/* Pentium Pro */
-		/* Avoid Pentium Pro Erratum 26. */
+
+	/*
+	 * Core 2 made each EVNTSEL have its own ENable bit,
+	 * and added three fixed-function counters.
+	 * On Atom cpuid tells us the number of fixed-function counters.
+	 * Core i7 extended the number of PMCs to four.
+	 */
+	p6_nr_pmcs = 2;
+	switch (current_cpu_data.x86_model) {
+	case 15:	/* Core 2 */
+	case 22:	/* Core 2 based Celeron model 16h */
+	case 23:	/* Core 2 */
+	case 29:	/* Core 2 based Xeon 7400 */
+		perfctr_cpu_name = core2_name;
+		p6_has_separate_enables = 1;
+		p6_nr_ffcs = 3;
+		break;
+	case 26:	/* Core i7 */
+		perfctr_cpu_name = corei7_name;
+		p6_has_separate_enables = 1;
+		p6_nr_ffcs = 3;
+		p6_nr_pmcs = 4;
+		break;
+	case 28: {	/* Atom */
+		unsigned int maxlev, eax, ebx, dummy, edx;
+
+		perfctr_cpu_name = atom_name;
+		p6_has_separate_enables = 1;
+
+		maxlev = cpuid_eax(0);
+		if (maxlev < 0xA) {
+			printk(KERN_WARNING "%s: cpuid[0].eax == %u, unable to query 0xA leaf\n",
+			       __FUNCTION__, maxlev);
+			return -EINVAL;
+		}
+		cpuid(0xA, &eax, &ebx, &dummy, &edx);
+		/* ensure we have at least APM V2 with 2 40-bit general-purpose counters */
+		if ((eax & 0xff) < 2 ||
+		    ((eax >> 8) & 0xff) != 2 ||
+		    ((eax >> 16) & 0xff) < 40) {
+			printk(KERN_WARNING "%s: cpuid[0xA].eax == 0x%08x appears bogus\n",
+			       __FUNCTION__, eax);
+			return -EINVAL;
+		}
+		/* extract the number of fixed-function counters: Core2 has 3,
+		   and initial Atoms appear to have 1; play it safe and reject
+		   excessive values */
+		p6_nr_ffcs = edx & 0x1f;
+		if (p6_nr_ffcs > 3) {
+			printk(KERN_WARNING "%s: cpuid[0xA] == { edx == 0x%08x, "
+			       "eax == 0x%08x } appears bogus\n",
+			       __FUNCTION__, edx, eax);
+			p6_nr_ffcs = 0;
+		}
+		break;
+	}
+	default:
+		perfctr_cpu_name = p6_name;
+		break;
+	}
+
+	/*
+	 * Avoid Pentium Pro Erratum 26.
+	 */
+	if (current_cpu_data.x86_model < 3) {	/* Pentium Pro */
 		if (current_cpu_data.x86_mask < 9)
 			perfctr_info.cpu_features &= ~PERFCTR_FEATURE_RDPMC;
 	}
-	/* Detect and set up legacy cpu_type for user-space. */
-	if (current_cpu_data.x86_model == 15) {		/* Intel Core 2 */
-		perfctr_info.cpu_type = PERFCTR_X86_INTEL_CORE2;
-	} else if (current_cpu_data.x86_model == 14) {	/* Intel Core */
-		/* XXX: what about erratum AE19? */
-		perfctr_info.cpu_type = PERFCTR_X86_INTEL_CORE;
-	} else if (current_cpu_data.x86_model == 9 ||	/* Pentium M */
-		   current_cpu_data.x86_model == 13) {	/* Pentium M */
+
+	/*
+	 * Detect and set up legacy cpu_type for user-space.
+	 */
+	switch (current_cpu_data.x86_model) {
+	default:
+		printk(KERN_WARNING __FILE__ "%s: unknown model %u processor, "
+		       "please report this to perfctr-devel or mikpe@it.uu.se\n",
+		       __FUNCTION__, current_cpu_data.x86_model);
+		/*FALLTHROUGH*/
+	case 0:		/* Pentium Pro A-step */
+	case 1:		/* Pentium Pro */
+	case 4:		/* Pentium Pro based P55CT overdrive for P54 */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_P6;
+		break;
+	case 3:		/* Pentium II or PII-based overdrive for PPro */
+	case 5:		/* Pentium II */
+	case 6:		/* Pentium II */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_PII;
+		break;
+	case 7:		/* Pentium III */
+	case 8:		/* Pentium III */
+	case 10:	/* Pentium III Xeon model A */
+	case 11:	/* Pentium III */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_PIII;
+		break;
+	case 9:		/* Pentium M */
+	case 13:	/* Pentium M */
 		/* Erratum Y3 probably does not apply since we
 		   read only the low 32 bits. */
 		perfctr_info.cpu_type = PERFCTR_X86_INTEL_PENTM;
-	} else if (current_cpu_data.x86_model >= 7) {	/* PIII */
-		perfctr_info.cpu_type = PERFCTR_X86_INTEL_PIII;
-	} else if (current_cpu_data.x86_model >= 3) {	/* PII or Celeron */
-		perfctr_info.cpu_type = PERFCTR_X86_INTEL_PII;
-	} else {					/* Pentium Pro */
-		perfctr_info.cpu_type = PERFCTR_X86_INTEL_P6;
+		break;
+	case 14:	/* Core */
+		/* XXX: what about erratum AE19? */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_CORE;
+		break;
+	case 15:	/* Core 2 */
+	case 22:	/* Core 2 based Celeron model 16h */
+	case 23:	/* Core 2 */
+	case 29:	/* Core 2 based Xeon 7400 */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_CORE2;
+		break;
+	case 26:	/* Core i7 */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_COREI7;
+		break;
+	case 28:	/* Atom */
+		perfctr_info.cpu_type = PERFCTR_X86_INTEL_ATOM;
+		break;
 	}
-	perfctr_set_tests_type(p6_is_core2 ? PTT_CORE2 : PTT_P6);
-	perfctr_cpu_name = p6_is_core2 ? core2_name : p6_name;
+
+	perfctr_set_tests_type(p6_nr_ffcs != 0 ? PTT_CORE2 : PTT_P6);
 	read_counters = rdpmc_read_counters;
 	write_control = p6_write_control;
 	check_control = p6_check_control;
-	pmu_msrs = p6_is_core2 ? &core2_pmu_msrs : &p6_pmu_msrs;
+	p6_perfctrs[0].nr_msrs = p6_nr_pmcs;
+	p6_evntsels[0].nr_msrs = p6_nr_pmcs;
+	core2_extras[0].nr_msrs = p6_nr_ffcs;
+	pmu_msrs = p6_nr_ffcs != 0 ? &core2_pmu_msrs : &p6_pmu_msrs;
+
 #ifdef CONFIG_X86_LOCAL_APIC
 	if (cpu_has_apic) {
 		perfctr_info.cpu_features |= PERFCTR_FEATURE_PCINT;
 		cpu_isuspend = p6_isuspend;
 		cpu_iresume = p6_iresume;
-		/* P-M apparently inherited P4's LVTPC auto-masking :-( */
-		if (current_cpu_data.x86_model == 9 ||
-		    current_cpu_data.x86_model == 13 ||
-		    current_cpu_data.x86_model == 14 ||
-		    current_cpu_data.x86_model == 15)
+		/*
+		 * Post P4 family 6 models (Pentium M, Core, Core 2, Atom)
+		 * have LVTPC auto-masking like the P4.
+		 */
+		switch (current_cpu_data.x86_model) {
+		case 9:		/* Pentium M */
+		case 13:	/* Pentium M */
+		case 14:	/* Core */
+		case 15:	/* Core 2 */
+		case 22:	/* Core 2 based Celeron model 16h */
+		case 23:	/* Core 2 */
+		case 26:	/* Core i7 */
+		case 28:	/* Atom */
+		case 29:	/* Core 2 based Xeon 7400 */
 			lvtpc_reinit_needed = 1;
+		}
 	}
 #endif
+
 	return 0;
 }
 
@@ -1663,7 +1847,7 @@ static void __init k8_multicore_init(void)
 	cpumask_t non0cores;
 
 	cpus_clear(non0cores);
-	smp_call_function(k8_multicore_init_cpu, &non0cores, 1, 1);
+	smp_call_function(k8_multicore_init_cpu, &non0cores, 1);
 	k8_multicore_init_cpu(&non0cores);
 	if (cpus_empty(non0cores))
 		return;
@@ -1694,8 +1878,9 @@ static int __init amd_init(void)
 		}
 		k8_multicore_init();
 		break;
-	case 16: /* XXX: preliminary, needs 64-bit evntsels */
-		perfctr_info.cpu_type = PERFCTR_X86_AMD_FAM10;
+	case 16:
+		is_fam10h = 1;
+		perfctr_info.cpu_type = PERFCTR_X86_AMD_FAM10H;
 		k8_multicore_init();
 		break;
 	default:
@@ -1788,8 +1973,7 @@ static int __init centaur_init(void)
 		read_counters = rdpmc_read_counters;
 		write_control = p6_write_control;
 		check_control = vc3_check_control;
-		clear_counters = vc3_clear_counters;
-		pmu_msrs = NULL;
+		pmu_msrs = &vc3_pmu_msrs;
 		return 0;
 	}
 	return -ENODEV;
@@ -1836,7 +2020,7 @@ static void perfctr_cpu_init_one(void *ignore)
 {
 	/* PREEMPT note: when called via smp_call_function(),
 	   this is in IRQ context with preemption disabled. */
-	perfctr_cpu_clear_counters();
+	perfctr_cpu_clear_counters(1);
 	perfctr_cpu_invalidate_cache();
 	if (cpu_has_apic)
 		apic_write(APIC_LVTPC, LOCAL_PERFCTR_VECTOR);
@@ -1848,7 +2032,7 @@ static void perfctr_cpu_exit_one(void *ignore)
 {
 	/* PREEMPT note: when called via smp_call_function(),
 	   this is in IRQ context with preemption disabled. */
-	perfctr_cpu_clear_counters();
+	perfctr_cpu_clear_counters(0);
 	perfctr_cpu_invalidate_cache();
 	if (cpu_has_apic)
 		apic_write(APIC_LVTPC, APIC_DM_NMI | APIC_LVT_MASKED);
@@ -1894,7 +2078,11 @@ static int perfctr_device_resume(struct sys_device *dev)
 }
 
 static struct sysdev_class perfctr_sysclass = {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,25)
+	.name		= "perfctr",
+#else
 	set_kset_name("perfctr"),
+#endif
 	.resume		= perfctr_device_resume,
 	.suspend	= perfctr_device_suspend,
 };
@@ -2054,7 +2242,7 @@ static void perfctr_release_counters(void)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,21)
 	perfctr_release_counters_cpu(NULL);
 #else
-	on_each_cpu(perfctr_release_counters_cpu, NULL, 1, 1);
+	on_each_cpu(perfctr_release_counters_cpu, NULL, 1);
 #endif
 }
 
@@ -2104,7 +2292,7 @@ static int perfctr_reserve_counters(void)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,21)
 	perfctr_reserve_counters_cpu(&error);
 #else
-	on_each_cpu(perfctr_reserve_counters_cpu, &error, 1, 1);
+	on_each_cpu(perfctr_reserve_counters_cpu, &error, 1);
 #endif
 	return atomic_read(&error);
 }
@@ -2118,7 +2306,7 @@ static int reserve_lapic_nmi(void)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 	disable_lapic_nmi_watchdog();
 #else
-	on_each_cpu(stop_apic_nmi_watchdog, NULL, 1, 1);
+	on_each_cpu(stop_apic_nmi_watchdog, NULL, 1);
 #endif
 	return perfctr_reserve_counters();
 }
@@ -2133,7 +2321,7 @@ static void release_lapic_nmi(void)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 	enable_lapic_nmi_watchdog();
 #else
-	on_each_cpu(setup_apic_nmi_watchdog, NULL, 1, 1);
+	on_each_cpu(setup_apic_nmi_watchdog, NULL, 1);
 #endif
 }
 #endif
@@ -2222,7 +2410,7 @@ const char *perfctr_cpu_reserve(const char *service)
 	__module_get(THIS_MODULE);
 	if (perfctr_info.cpu_features & PERFCTR_FEATURE_RDPMC)
 		mmu_cr4_features |= X86_CR4_PCE;
-	on_each_cpu(perfctr_cpu_init_one, NULL, 1, 1);
+	on_each_cpu(perfctr_cpu_init_one, NULL, 1);
 	perfctr_cpu_set_ihandler(NULL);
 	x86_pm_init();
 	ret = NULL;
@@ -2242,7 +2430,7 @@ void perfctr_cpu_release(const char *service)
 	/* power down the counters */
 	if (perfctr_info.cpu_features & PERFCTR_FEATURE_RDPMC)
 		mmu_cr4_features &= ~X86_CR4_PCE;
-	on_each_cpu(perfctr_cpu_exit_one, NULL, 1, 1);
+	on_each_cpu(perfctr_cpu_exit_one, NULL, 1);
 	perfctr_cpu_set_ihandler(NULL);
 	x86_pm_exit();
 	current_service = 0;

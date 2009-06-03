@@ -2,7 +2,7 @@
  * Kernel stub used to support virtual perfctrs when the
  * perfctr driver is built as a module.
  *
- * Copyright (C) 2000-2007  Mikael Pettersson
+ * Copyright (C) 2000-2008  Mikael Pettersson
  */
 #include <linux/version.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
@@ -30,6 +30,7 @@ static void bug_set_cpus_allowed(struct task_struct *owner, struct vperfctr *per
 
 struct vperfctr_stub vperfctr_stub = {
 	.exit = bug_void_perfctr,
+	.flush = bug_void_perfctr,
 	.suspend = bug_void_perfctr,
 	.resume = bug_void_perfctr,
 	.sample = bug_void_perfctr,
@@ -63,14 +64,21 @@ void _vperfctr_exit(struct vperfctr *perfctr)
 	module_put(vperfctr_stub.owner);
 }
 
+/* __vperfctr_flush() is a conditional __vperfctr_exit(),
+ * so it needs the same protection.
+ */
+void _vperfctr_flush(struct vperfctr *perfctr)
+{
+	__module_get(vperfctr_stub.owner);
+	vperfctr_stub.flush(perfctr);
+	module_put(vperfctr_stub.owner);
+}
+
 EXPORT_SYMBOL(vperfctr_stub);
 EXPORT_SYMBOL___put_task_struct;
 
-#if defined(CONFIG_UTRACE)
-/* alas, I don't yet know how to convert this to utrace */
-int ptrace_check_attach(struct task_struct *task, int kill) { return -ESRCH; }
-#else
+#if !defined(CONFIG_UTRACE)
 #include <linux/mm.h> /* for 2.4.15 and up, except 2.4.20-8-redhat */
 #include <linux/ptrace.h> /* for 2.5.32 and up, and 2.4.20-8-redhat */
-#endif
 EXPORT_SYMBOL(ptrace_check_attach);
+#endif

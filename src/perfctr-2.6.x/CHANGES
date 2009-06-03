@@ -6,6 +6,143 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.37, 2008-11-30
+- Preliminary support for Intel Core i7 (Nehalem) processors
+  (family 6 model 26). They are currently treated like Core 2s
+  but with four general-purpose counters, and with different
+  events and a new symbolic CPU type. The AnyThread evntsel flag
+  and "uncore" event monitoring are not yet supported.
+- Updated x86 driver to recognise Xeon 7400 (family 6 model 29)
+  as a member of the Core 2 family.
+- Extended x86 driver's CPU initialisation on Intel Core 2 and
+  newer CPUs to work around vtune leaving the performance monitor
+  unit in a "very" disabled state. Thanks to Mark Krentel for
+  reporting the problem and for facilitating tests that allowed
+  the cause of the problem to be identified.
+- Updated kernel support: 2.6.28-rc6, 2.6.18-120.el5 (RHEL5.3 beta),
+  2.6.18-92.1.18.el5 (RHEL5), 2.6.9-78.0.8.EL (RHEL4).
+
+Version 2.6.36, 2008-10-19
+- Fixed a driver error which caused Intel Family 6 Model 23
+  processors to crash kernels with general protection faults
+  if the fixed-function counters ran in interrupt-on-overflow
+  mode. Older Intel Family 6 Model 15 processors tolerate the
+  error which is why it was not detected before. Thanks to
+  Mark Krentel for reporting the problem and for facilitating
+  tests that allowed the cause of the problem to be identified.
+- Updated kernel support: 2.6.27, 2.6.26, 2.6.18-92.1.13.el5
+  (RHEL5), 2.6.9-78.0.5.EL (RHEL4).
+
+Version 2.6.35, 2008-06-30
+- Preliminary support for Intel Atom processors added.
+  These processors are very poorly documented, but they are
+  known to be family 6 model 28, and to support Intel's
+  "architectural performance monitor". Current models seem
+  to have two general-purpose counters, one fixed-function
+  counter, and to support the seven architectural events.
+  Thanks to Steve Blackburn for running tests on his Atom.
+- Updated x86 driver to recognise the Celeron model 16h
+  as a member of the Core2 family.
+- Corrected an error in the x86 driver's control validation
+  procedure. The error was introduced in perfctr-2.6.29 when
+  support for the Core2's fixed-function counters was added.
+  The error made the driver accept some invalid controls
+  (on Core2 processors only), which could result in kernel
+  hangs due to exceptions from invalid register accesses.
+  Thanks to Anton Ertl for reporting the initial problem.
+- Updated README to add Atom and AMD Family 10h to list of
+  supported processors.
+- Updated kernel support: 2.6.26-rc8, 2.6.18-92.1.6.el5 (RHEL5),
+  2.6.18-92.1.1.el5 (RHEL5), 2.6.9-67.0.20.EL (RHEL4).
+
+Version 2.6.35-pre1, 2008-06-23
+- Added optional close-on-exec feature for per-process perfctrs.
+  To enable it, set control.flags |= VPERFCTR_CONTROL_CLOEXEC
+  in a struct vperfctr_control object before passing it to
+  vperfctr_control(). If the flag is set when a thread executes
+  an execve() system call, then its perfctr state is detached
+  from the thread as if a call to vperfctr_unlink() had occurred.
+  If the flag is clear then the state survives execve() just like
+  it always did before.
+- The vperfctr_open() library function now sets close-on-exec
+  on the file descriptor embedded in the returned vperfctr handle.
+- Removed library support for the ancient /proc/<pid>/perfctr
+  kernel interface which hasn't worked since perfctr-2.6.0.
+
+Version 2.6.34, 2008-05-29
+- Updated kernel support: 2.6.26-rc4, 2.6.18-92.el5 (RHEL5U2),
+  2.6.18-53.1.21.el5 (RHEL5), 2.6.16.42-0.12 (SuSE).
+- Corrected the kernel driver's version number: perfctr-2.6.33
+  forgot to increment it.
+
+Version 2.6.33, 2008-05-18
+- x86: The support for Intel Family 6 Model 23 processors added in
+  perfctr-2.6.32 was incomplete, causing overflow interrupts to not
+  work properly on those processors. This has been fixed. (Thanks
+  to Mark Krentel for reporting the issue and testing patches.)
+- Updated kernel support: 2.6.26-rc2, 2.6.18-53.1.19.el5 (RHEL5),
+  2.6.9-67.0.15.EL (RHEL4).
+
+Version 2.6.32, 2008-04-20
+- Library: add experimental vperfctr_open_mode(mode) procedure.
+  The plain vperfctr_open() always opens the perfctr state in
+  O_CREAT|O_EXCL mode, which means that it will fail if the
+  invoking thread already has a perfctr state. The mode parameter
+  to vperfctr_open_mode() can be used to avoid this behaviour:
+  with mode == 0 no state will be created and a handle to the
+  thread's existing state (if any) is returned; to select the
+  current behaviour pass mode == VPERFCTR_OPEN_CREAT_EXCL to
+  vperfctr_open_mode(). For example:
+
+  the_state_is_shared = 0;
+  vperfctr = vperfctr_open_mode(VPERFCTR_OPEN_CREAT_EXCL);
+  if (vperfctr == NULL && errno == EEXIST) {
+     // error out due to the resource conflict, or:
+     vperfctr = vperfctr_open_mode(0);
+     the_state_is_shared = 1;
+  }
+  ...
+
+  The purpose of this API extension is to hopefully allow PAPI
+  to handle some use cases that currently cause it to error out.
+- Fix 'make install' to select the correct file to install
+  as <asm/perfctr.h>. Fixes regression caused by i386/x86_64
+  arch unification in perfctr-2.6.30. ppc32 also needed fixing.
+- x86: Recognize Intel Family 6 Model 23 as Core2.
+- Updated kernel support: 2.6.25, 2.6.18-53.1.14.el5 (RHEL5),
+  2.6.9-67.0.7.EL (RHEL4).
+
+Version 2.6.31, 2008-01-26
+- x86: Barcelona (AMD Family 10h) updates:
+  * Correct CPU type constant to read FAM10H with trailing H.
+    The old spelling also remains, for now.
+  * Barcelona event selectors are 64-bit, not 32-bit as in K8.
+    Add evntsel_high[] array to struct perfctr_cpu_control to
+    allow passing high 32 bits of evntsels to the driver.
+    This array overlaps the p4 control sub-struct. (Uses a GCC
+    anonymous union, to avoid source-incompatible changes.)
+    Currently only some Northbridge events need the high bits.
+  * Update driver to accept and check high evntsel bits on
+    Barcelona, and to maintain all 64 evntsel bits in PMU
+    context switches.
+  * Update examples/perfex/ to indicate how to also set up
+    the high 32 evntsel bits for Barcelona (run perfex -h).
+- Minor coding style (mostly obsolete whitespace style) fixes.
+- Updated kernel support: 2.6.24, 2.6.18-53.1.6.el5 (RHEL5),
+  2.6.9-67.0.1.EL (RHEL4).
+
+Version 2.6.30, 2007-10-28
+- Kernel 2.6.24-rc1 replaced the previously separate i386
+  and x86_64 source code directories with new shared x86
+  directories. Updated the linux/include/ hierarchy and the
+  update-kernel script to handle new and old source layouts.
+- Several driver updates to handle kernel 2.6.24-rc1 changes
+  on both x86 and ppc32.
+- Fixed a problem which could break RHEL5 kernel builds in
+  some configurations.
+- Updated kernel support: 2.6.24-rc1, 2.6.23, 2.6.18-8.1.14.el5
+  (RHEL5), and 2.6.9-55.0.6.EL (RHEL4).
+
 Version 2.6.29, 2007-10-07
 - Added support for the fixed-function counters in Intel Core 2
   processors. To user-space they look like ordinary P6 counters,

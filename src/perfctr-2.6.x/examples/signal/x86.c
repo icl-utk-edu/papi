@@ -1,7 +1,7 @@
 /* $Id$
  * x86-specific code.
  *
- * Copyright (C) 2001-2007  Mikael Pettersson
+ * Copyright (C) 2001-2008  Mikael Pettersson
  */
 #define __USE_GNU /* enable symbolic names for gregset_t[] indices */
 #include <sys/ucontext.h>
@@ -61,6 +61,19 @@ void do_setup(const struct perfctr_info *info,
 	/* BR_INST_RETIRED_TAKEN, USR, Enable, INT */
 	evntsel1 = 0xC4 | (0x0C << 8) | (1 << 16) | (1 << 22) | (1 << 20);
 	break;
+      case PERFCTR_X86_INTEL_ATOM:
+	/* Atom's architectural events don't include FLOPS */
+	/* INST_RETIRED_ANY, USR, Enable, INT */
+	evntsel0 = 0xC0 | (1 << 16) | (1 << 22) | (1 << 20);
+	/* BR_INST_RETIRED_ANY, USR, Enable, INT */
+	evntsel1 = 0xC4 | (1 << 16) | (1 << 22) | (1 << 20);
+	break;
+      case PERFCTR_X86_INTEL_COREI7:
+	/* FP_COMP_OPS_EXE.ANY, USR, Enable, INT */
+	evntsel0 = 0x10 | (0xFF << 8) | (1 << 16) | (1 << 22) | (1 << 20);
+	/* BR_INST_RETIRED.ALL, USR, Enable, INT */
+	evntsel1 = 0xC4 | (1 << 16) | (1 << 22) | (1 << 20);
+	break;
 #if !defined(__x86_64__)
       case PERFCTR_X86_AMD_K7:
 	/* K7 can't count FLOPS. Count RETIRED_INSTRUCTIONS instead. */
@@ -88,6 +101,7 @@ void do_setup(const struct perfctr_info *info,
 	break;
       case PERFCTR_X86_AMD_K8:
       case PERFCTR_X86_AMD_K8C:
+      case PERFCTR_X86_AMD_FAM10H:
 	/* RETIRED_FPU_INSTRS, Unit Mask "x87 instrs", any CPL, Enable, INT */
 	evntsel0 = 0xCB | (0x01 << 8) | (3 << 16) | (1 << 22) | (1 << 20);
 	/* RETIRED_TAKEN_BRANCHES, USR, Enable, INT */
