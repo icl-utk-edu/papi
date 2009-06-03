@@ -110,6 +110,8 @@ typedef struct _p3_perfctr_context {
 /*  _p3_perfctr_control_t start; */
 } _p3_perfctr_context_t;
 
+/* Override void* definitions from PAPI framework layer */
+/* with typedefs to conform to PAPI component layer code. */
 #undef  hwd_reg_alloc_t
 typedef _p3_reg_alloc_t hwd_reg_alloc_t;
 #undef  hwd_register_t
