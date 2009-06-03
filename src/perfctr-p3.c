@@ -370,7 +370,7 @@ static int _p3_init_substrate(int cidx)
    return (PAPI_OK);
 }
 
-void _p3_dispatch_timer(int signal, siginfo_t * si, void *context) {
+void _p3_dispatch_timer(int signal, hwd_siginfo_t *si, void *context) {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *master = NULL;
    int isHardware = 0;
@@ -378,13 +378,13 @@ void _p3_dispatch_timer(int signal, siginfo_t * si, void *context) {
    int cidx = MY_VECTOR.cmp_info.CmpIdx;
 
    ctx.si = si;
-   ctx.ucontext = (ucontext_t *)context;
+   ctx.ucontext = context;
 
 #ifdef __CATAMOUNT__
 #define OVERFLOW_MASK 0
 #define GEN_OVERFLOW 1
 #else
-#define OVERFLOW_MASK si->si_pmc_ovf_mask
+#define OVERFLOW_MASK ((siginfo_t *)si)->si_pmc_ovf_mask
 #define GEN_OVERFLOW 0
 #endif
 
@@ -395,27 +395,27 @@ void _p3_dispatch_timer(int signal, siginfo_t * si, void *context) {
 
    /* We are done, resume interrupting counters */
    if (isHardware) {
-      errno = vperfctr_iresume(((cmp_context_t *)master->context[cidx])->perfctr);
+      errno = vperfctr_iresume(master->context[cidx]->perfctr);
       if (errno < 0) {
-	  PAPIERROR("vperfctr_iresume errno %d for perfctr: %p",errno, ((cmp_context_t *)master->context[cidx])->perfctr);
+	  PAPIERROR("vperfctr_iresume errno %d for perfctr: %p",errno, master->context[cidx]->perfctr);
       }
    }
 }
 static int attach( hwd_control_state_t * ctl, unsigned long tid ) {
 	struct vperfctr_control tmp;
 
-	((cmp_control_state_t *)ctl)->rvperfctr = rvperfctr_open( tid );
-	if(((cmp_control_state_t *)ctl)->rvperfctr == NULL ) {
+	ctl->rvperfctr = rvperfctr_open( tid );
+	if(ctl->rvperfctr == NULL ) {
 		PAPIERROR( VOPEN_ERROR ); return (PAPI_ESYS);
 		}
-	SUBDBG( "attach rvperfctr_open() = %p\n", ((cmp_control_state_t *)ctl)->rvperfctr );
+	SUBDBG( "attach rvperfctr_open() = %p\n", ctl->rvperfctr );
 	
 	/* Initialize the per thread/process virtualized TSC */
 	memset( &tmp, 0x0, sizeof(tmp) );
 	tmp.cpu_control.tsc_on = 1;
 
 	/* Start the per thread/process virtualized TSC */
-	if( rvperfctr_control(((cmp_control_state_t *)ctl)->rvperfctr, & tmp ) < 0 ) {
+	if( rvperfctr_control(ctl->rvperfctr, & tmp ) < 0 ) {
 		PAPIERROR(RCNTRL_ERROR); return(PAPI_ESYS);
 		}
 
@@ -423,7 +423,7 @@ static int attach( hwd_control_state_t * ctl, unsigned long tid ) {
 	} /* end attach() */
 
 static int detach( hwd_control_state_t * ctl, unsigned long tid ) {
-	rvperfctr_close(((cmp_control_state_t *)ctl)->rvperfctr );
+	rvperfctr_close(ctl->rvperfctr );
 	return (PAPI_OK);
 	} /* end detach() */
 
@@ -468,12 +468,12 @@ static long long _p3_get_real_cycles(void) {
 
 static long long _p3_get_virt_cycles(const hwd_context_t * ctx)
 {
-   return ((long long)vperfctr_read_tsc(((cmp_context_t *)ctx)->perfctr) * tb_scale_factor);
+   return ((long long)vperfctr_read_tsc(ctx->perfctr) * tb_scale_factor);
 }
 
 static long long _p3_get_virt_usec(const hwd_context_t * ctx)
 {
-   return (((long long)vperfctr_read_tsc(((cmp_context_t *)ctx)->perfctr) * tb_scale_factor) /
+   return (((long long)vperfctr_read_tsc(ctx->perfctr) * tb_scale_factor) /
            (long long)_papi_hwi_system_info.hw_info.mhz);
 }
 
@@ -484,14 +484,13 @@ static long long _p3_get_virt_usec(const hwd_context_t * ctx)
 
 static int _p3_init_control_state(hwd_control_state_t * cntl) {
    int i, def_mode = 0;
-   cmp_control_state_t *ptr = (cmp_control_state_t *)cntl;
 
    if (MY_VECTOR.cmp_info.default_domain & PAPI_DOM_USER)
       def_mode |= PERF_USR;
    if (MY_VECTOR.cmp_info.default_domain & PAPI_DOM_KERNEL)
      def_mode |= PERF_OS;
 
-   ptr->allocated_registers.selector = 0;
+   cntl->allocated_registers.selector = 0;
    switch (_papi_hwi_system_info.hw_info.model) {
    case PERFCTR_X86_GENERIC:
    case PERFCTR_X86_CYRIX_MII:
@@ -509,10 +508,10 @@ static int _p3_init_control_state(hwd_control_state_t * cntl) {
 #ifdef PERFCTR_X86_INTEL_PENTM
    case PERFCTR_X86_INTEL_PENTM:
 #endif
-      ptr->control.cpu_control.evntsel[0] |= PERF_ENABLE;
+      cntl->control.cpu_control.evntsel[0] |= PERF_ENABLE;
       for(i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
-         ptr->control.cpu_control.evntsel[i] |= def_mode;
-         ptr->control.cpu_control.pmc_map[i] = i;
+         cntl->control.cpu_control.evntsel[i] |= def_mode;
+         cntl->control.cpu_control.pmc_map[i] = i;
       }
       break;
 #ifdef PERFCTR_X86_INTEL_CORE2
@@ -535,43 +534,42 @@ static int _p3_init_control_state(hwd_control_state_t * cntl) {
 #endif
    case PERFCTR_X86_AMD_K7:
       for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
-         ptr->control.cpu_control.evntsel[i] |= PERF_ENABLE | def_mode;
-         ptr->control.cpu_control.pmc_map[i] = i;
+         cntl->control.cpu_control.evntsel[i] |= PERF_ENABLE | def_mode;
+         cntl->control.cpu_control.pmc_map[i] = i;
       }
       break;
    }
 
 #ifdef VPERFCTR_CONTROL_CLOEXEC
-	ptr->control.flags = VPERFCTR_CONTROL_CLOEXEC;
-	SUBDBG("close on exec\t\t\t%u\n", ptr->control.flags);
+	cntl->control.flags = VPERFCTR_CONTROL_CLOEXEC;
+	SUBDBG("close on exec\t\t\t%u\n", cntl->control.flags);
 #endif
 
    /* Make sure the TSC is always on */
-   ptr->control.cpu_control.tsc_on = 1;
+   cntl->control.cpu_control.tsc_on = 1;
    return(PAPI_OK);
 }
 
-static int _p3_set_domain(hwd_control_state_t * cntrl, int domain) {
+static int _p3_set_domain(hwd_control_state_t * cntl, int domain) {
    int i, did = 0;
-   cmp_control_state_t *ptr = (cmp_control_state_t *)cntrl;
    int num_cntrs = MY_VECTOR.cmp_info.num_cntrs;
 
      /* Clear the current domain set for this event set */
      /* We don't touch the Enable bit in this code but  */
      /* leave it as it is */
    for(i = 0; i < num_cntrs; i++) {
-      ptr->control.cpu_control.evntsel[i] &= ~(PERF_OS|PERF_USR);
+      cntl->control.cpu_control.evntsel[i] &= ~(PERF_OS|PERF_USR);
    }
    if(domain & PAPI_DOM_USER) {
       did = 1;
       for(i = 0; i < num_cntrs; i++) {
-         ptr->control.cpu_control.evntsel[i] |= PERF_USR;
+         cntl->control.cpu_control.evntsel[i] |= PERF_USR;
       }
    }
    if(domain & PAPI_DOM_KERNEL) {
       did = 1;
       for(i = 0; i < num_cntrs; i++) {
-         ptr->control.cpu_control.evntsel[i] |= PERF_OS;
+         cntl->control.cpu_control.evntsel[i] |= PERF_OS;
       }
    }
    if(!did)
@@ -584,22 +582,22 @@ static int _p3_set_domain(hwd_control_state_t * cntrl, int domain) {
     if it can be mapped to counter ctr.
     Returns true if it can, false if it can't. */
 static int _p3_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr) {
-   return(((cmp_reg_alloc_t *)dst)->ra_selector & (1 << ctr));
+   return(dst->ra_selector & (1 << ctr));
 }
 
 /* This function forces the event to
     be mapped to only counter ctr.
     Returns nothing.  */
 static void _p3_bpt_map_set(hwd_reg_alloc_t *dst, int ctr) {
-   ((cmp_reg_alloc_t *)dst)->ra_selector = 1 << ctr;
-   ((cmp_reg_alloc_t *)dst)->ra_rank = 1;
+   dst->ra_selector = 1 << ctr;
+   dst->ra_rank = 1;
 }
 
 /* This function examines the event to determine
    if it has a single exclusive mapping.
    Returns true if exlusive, false if non-exclusive.  */
 static int _p3_bpt_map_exclusive(hwd_reg_alloc_t * dst) {
-   return (((cmp_reg_alloc_t *)dst)->ra_rank == 1);
+   return (dst->ra_rank == 1);
 }
 
 /* This function compares the dst and src events
@@ -607,7 +605,7 @@ static int _p3_bpt_map_exclusive(hwd_reg_alloc_t * dst) {
     is exclusive, so this detects a conflict if true.
     Returns true if conflict, false if no conflict.  */
 static int _p3_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
-   return (((cmp_reg_alloc_t *)dst)->ra_selector & ((cmp_reg_alloc_t *)src)->ra_selector);
+   return (dst->ra_selector & src->ra_selector);
 }
 
 /* This function removes shared resources available to the src event
@@ -619,23 +617,23 @@ static void _p3_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
    int i;
    unsigned shared;
 
-   shared = ((cmp_reg_alloc_t *)dst)->ra_selector & ((cmp_reg_alloc_t *)src)->ra_selector;
+   shared = dst->ra_selector & src->ra_selector;
    if (shared)
-      ((cmp_reg_alloc_t *)dst)->ra_selector ^= shared;
-   for (i = 0, ((cmp_reg_alloc_t *)dst)->ra_rank = 0; i < MAX_COUNTERS; i++)
-      if (((cmp_reg_alloc_t *)dst)->ra_selector & (1 << i))
-         ((cmp_reg_alloc_t *)dst)->ra_rank++;
+      dst->ra_selector ^= shared;
+   for (i = 0, dst->ra_rank = 0; i < MAX_COUNTERS; i++)
+      if (dst->ra_selector & (1 << i))
+         dst->ra_rank++;
 }
 
 static void _p3_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
-   ((cmp_reg_alloc_t *)dst)->ra_selector = ((cmp_reg_alloc_t *)src)->ra_selector;
+   dst->ra_selector = src->ra_selector;
 }
 
 /* Register allocation */
 static int _p3_allocate_registers(EventSetInfo_t *ESI) {
    int i, j, natNum;
-   cmp_reg_alloc_t event_list[MAX_COUNTERS];
-   cmp_register_t *ptr;
+   hwd_reg_alloc_t event_list[MAX_COUNTERS];
+   hwd_register_t *ptr;
 
    /* Initialize the local structure needed
       for counter allocation and optimization. */
@@ -678,23 +676,22 @@ static int _p3_allocate_registers(EventSetInfo_t *ESI) {
 
 static void clear_cs_events(hwd_control_state_t *state) {
    int i,j;
-   cmp_control_state_t *this_state = (cmp_control_state_t *)state;
 
    /* total counters is sum of accumulating (nractrs) and interrupting (nrictrs) */
-   j = this_state->control.cpu_control.nractrs + this_state->control.cpu_control.nrictrs;
+   j = state->control.cpu_control.nractrs + state->control.cpu_control.nrictrs;
 
    /* Remove all counter control command values from eventset. */
    for (i = 0; i < j; i++) {
       SUBDBG("Clearing pmc event entry %d\n", i);
-      this_state->control.cpu_control.pmc_map[i] = i;
-      this_state->control.cpu_control.evntsel[i] 
-         = this_state->control.cpu_control.evntsel[i] & (PERF_ENABLE|PERF_OS|PERF_USR);
-      this_state->control.cpu_control.ireset[i] = 0;
+      state->control.cpu_control.pmc_map[i] = i;
+      state->control.cpu_control.evntsel[i] 
+         = state->control.cpu_control.evntsel[i] & (PERF_ENABLE|PERF_OS|PERF_USR);
+      state->control.cpu_control.ireset[i] = 0;
    }
 
    /* clear both a and i counter counts */
-   this_state->control.cpu_control.nractrs = 0;
-   this_state->control.cpu_control.nrictrs = 0;
+   state->control.cpu_control.nractrs = 0;
+   state->control.cpu_control.nrictrs = 0;
 }
 
 /* This function clears the current contents of the control structure and 
@@ -703,10 +700,9 @@ static void clear_cs_events(hwd_control_state_t *state) {
 static int _p3_update_control_state(hwd_control_state_t *state,
                                    NativeInfo_t *native, int count, hwd_context_t * ctx) {
    int i, k;
-   cmp_control_state_t *this_state = (cmp_control_state_t *)state;
 
    /* clear out the events from the control state */
-   clear_cs_events(this_state);
+   clear_cs_events(state);
 
    switch (_papi_hwi_system_info.hw_info.model) {
      #ifdef PERFCTR_X86_INTEL_CORE2
@@ -714,16 +710,16 @@ static int _p3_update_control_state(hwd_control_state_t *state,
        /* fill the counters we're using */
        for (i = 0; i < count; i++) {
          for(k=0;k<MAX_COUNTERS;k++)
-           if(((cmp_register_t *) native[i].ni_bits)->selector & (1 << k)) {
+           if(native[i].ni_bits->selector & (1 << k)) {
              break;
            }
          if(k>1)
-           this_state->control.cpu_control.pmc_map[i] = (k-2) | 0x40000000;
+           state->control.cpu_control.pmc_map[i] = (k-2) | 0x40000000;
          else
-           this_state->control.cpu_control.pmc_map[i] = k;
+           state->control.cpu_control.pmc_map[i] = k;
 
          /* Add counter control command values to eventset */
-         this_state->control.cpu_control.evntsel[i] |= ((cmp_register_t *) native[i].ni_bits)->counter_cmd;
+         state->control.cpu_control.evntsel[i] |= native[i].ni_bits->counter_cmd;
        }
        break;
      #endif
@@ -731,26 +727,24 @@ static int _p3_update_control_state(hwd_control_state_t *state,
 	   /* fill the counters we're using */
 	   for (i = 0; i < count; i++) {
 		  /* Add counter control command values to eventset */
-		  this_state->control.cpu_control.evntsel[i] |= ((cmp_register_t *) native[i].ni_bits)->counter_cmd;
+		  state->control.cpu_control.evntsel[i] |= native[i].ni_bits->counter_cmd;
 	   }
    }
-   this_state->control.cpu_control.nractrs = count;
+   state->control.cpu_control.nractrs = count;
    return (PAPI_OK);
 }
 
 
 static int _p3_start(hwd_context_t * ctx, hwd_control_state_t * state) {
    int error;
-cmp_context_t * this_ctx = (cmp_context_t *)ctx;
-cmp_control_state_t *this_state = (cmp_control_state_t *)state;
 
 #ifdef DEBUG
-   print_control(&this_state->control.cpu_control);
+   print_control(&state->control.cpu_control);
 #endif
 
-   if (this_state->rvperfctr != NULL) 
+   if (state->rvperfctr != NULL) 
      {
-       if((error = rvperfctr_control(this_state->rvperfctr, &this_state->control)) < 0) 
+       if((error = rvperfctr_control(state->rvperfctr, &state->control)) < 0) 
 	 {
 	   SUBDBG("rvperfctr_control returns: %d\n", error);
 	   PAPIERROR(RCNTRL_ERROR); 
@@ -759,7 +753,7 @@ cmp_control_state_t *this_state = (cmp_control_state_t *)state;
        return (PAPI_OK);
      }
    
-   if((error = vperfctr_control(this_ctx->perfctr, &this_state->control)) < 0) {
+   if((error = vperfctr_control(ctx->perfctr, &state->control)) < 0) {
       SUBDBG("vperfctr_control returns: %d\n", error);
       PAPIERROR( VCNTRL_ERROR); return(PAPI_ESYS);
    }
@@ -769,13 +763,13 @@ cmp_control_state_t *this_state = (cmp_control_state_t *)state;
 static int _p3_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
 	int error;
 
-   if(((cmp_control_state_t *)state)->rvperfctr != NULL ) {
-     if(rvperfctr_stop((struct rvperfctr*)((cmp_context_t *)ctx)->perfctr) < 0)
+   if(state->rvperfctr != NULL ) {
+     if(rvperfctr_stop((struct rvperfctr*)ctx->perfctr) < 0)
        { PAPIERROR( RCNTRL_ERROR); return(PAPI_ESYS); }
      return (PAPI_OK);
    }
 
-   error = vperfctr_stop(((cmp_context_t *)ctx)->perfctr);
+   error = vperfctr_stop(ctx->perfctr);
    if(error < 0) {
       SUBDBG("vperfctr_stop returns: %d\n", error);
       PAPIERROR( VCNTRL_ERROR); return(PAPI_ESYS);
@@ -783,12 +777,10 @@ static int _p3_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
    return(PAPI_OK);
 }
 
-static int _p3_read(hwd_context_t * ctx, hwd_control_state_t * state, long long ** dp, int flags) {
-cmp_context_t * this_ctx = (cmp_context_t *)ctx;
-cmp_control_state_t *spc = (cmp_control_state_t *)state;
+static int _p3_read(hwd_context_t * ctx, hwd_control_state_t * spc, long long ** dp, int flags) {
 
    if ( flags & PAPI_PAUSED ) {
-     vperfctr_read_state(this_ctx->perfctr, &spc->state, NULL);
+     vperfctr_read_state(ctx->perfctr, &spc->state, NULL);
      int i=0;
      for ( i=0;i<spc->control.cpu_control.nractrs+spc->control.cpu_control.nrictrs; i++) {
        SUBDBG("vperfctr_read_state: counter %d =  %lld\n", i, spc->state.pmc[i]);
@@ -799,7 +791,7 @@ cmp_control_state_t *spc = (cmp_control_state_t *)state;
       if( spc->rvperfctr != NULL ) {
         rvperfctr_read_ctrs( spc->rvperfctr, &spc->state );
       } else {
-        vperfctr_read_ctrs(this_ctx->perfctr, &spc->state);
+        vperfctr_read_ctrs(ctx->perfctr, &spc->state);
         }
    }
       *dp = (long long *) spc->state.pmc;
@@ -824,11 +816,11 @@ static int _p3_reset(hwd_context_t *ctx, hwd_control_state_t *cntrl) {
 /* This routine is for shutting down threads, including the
    master thread. */
 static int _p3_shutdown(hwd_context_t * ctx) {
-   int retval = vperfctr_unlink(((cmp_context_t *)ctx)->perfctr);
-   SUBDBG("_p3_shutdown vperfctr_unlink(%p) = %d\n", ((cmp_context_t *)ctx)->perfctr, retval);
-   vperfctr_close(((cmp_context_t *)ctx)->perfctr);
-   SUBDBG("_p3_shutdown vperfctr_close(%p)\n", ((cmp_context_t *)ctx)->perfctr);
-   memset(ctx, 0x0, sizeof(cmp_context_t));
+   int retval = vperfctr_unlink(ctx->perfctr);
+   SUBDBG("_p3_shutdown vperfctr_unlink(%p) = %d\n", ctx->perfctr, retval);
+   vperfctr_close(ctx->perfctr);
+   SUBDBG("_p3_shutdown vperfctr_close(%p)\n", ctx->perfctr);
+   memset(ctx, 0x0, sizeof(hwd_context_t));
 
    if(retval)
       return(PAPI_ESYS);
@@ -874,7 +866,7 @@ static void swap_events(EventSetInfo_t * ESI, struct hwd_pmc_control *contr, int
 }
 
 static int _p3_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) {
-   struct hwd_pmc_control *contr = &((cmp_control_state_t *)ESI->ctl_state)->control;
+   struct hwd_pmc_control *contr = &ESI->ctl_state->control;
    int i, ncntrs, nricntrs = 0, nracntrs = 0, retval = 0;
 
 #ifdef __CATAMOUNT__

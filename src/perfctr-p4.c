@@ -141,7 +141,6 @@ int setup_p4_presets(int cputype)
 static int _p4_init_control_state(hwd_control_state_t * cntl)
 {
    int def_mode = 0, i;
-   cmp_control_state_t *ptr = (cmp_control_state_t *)cntl;
 
    if (MY_VECTOR.cmp_info.default_domain & PAPI_DOM_USER)
       def_mode |= ESCR_T0_USR;
@@ -149,14 +148,14 @@ static int _p4_init_control_state(hwd_control_state_t * cntl)
      def_mode |= ESCR_T0_OS;
 
    for(i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
-      ptr->control.cpu_control.evntsel_aux[i] |= def_mode;
+      cntl->control.cpu_control.evntsel_aux[i] |= def_mode;
    }
-   ptr->control.cpu_control.tsc_on = 1;
-   ptr->control.cpu_control.nractrs = 0;
-   ptr->control.cpu_control.nrictrs = 0;
+   cntl->control.cpu_control.tsc_on = 1;
+   cntl->control.cpu_control.nractrs = 0;
+   cntl->control.cpu_control.nrictrs = 0;
 #if 0
-   ptr->interval_usec = sampling_interval;
-   ptr->nrcpus = all_cpus;
+   cntl->interval_usec = sampling_interval;
+   cntl->nrcpus = all_cpus;
 #endif
    return(PAPI_OK);
 }
@@ -371,7 +370,7 @@ static int _p4_init_substrate(int cidx)
    return (PAPI_OK);
 }
 
-void _p4_dispatch_timer(int signal, siginfo_t * si, void *context) {
+void _p4_dispatch_timer(int signal, hwd_siginfo_t * si, void *context) {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *master = NULL;
    int isHardware = 0;
@@ -379,9 +378,9 @@ void _p4_dispatch_timer(int signal, siginfo_t * si, void *context) {
    int cidx = MY_VECTOR.cmp_info.CmpIdx;
 
    ctx.si = si;
-   ctx.ucontext = (ucontext_t *)context;
+   ctx.ucontext = context;
 
-#define OVERFLOW_MASK si->si_pmc_ovf_mask
+#define OVERFLOW_MASK ((siginfo_t *)si)->si_pmc_ovf_mask
 #define GEN_OVERFLOW 0
 
    pc = GET_OVERFLOW_ADDRESS(ctx);
@@ -391,27 +390,27 @@ void _p4_dispatch_timer(int signal, siginfo_t * si, void *context) {
 
    /* We are done, resume interrupting counters */
    if (isHardware) {
-      errno = vperfctr_iresume(((cmp_context_t *)master->context[cidx])->perfctr);
+      errno = vperfctr_iresume(master->context[cidx]->perfctr);
       if (errno < 0) {
-	  PAPIERROR("vperfctr_iresume errno %d for perfctr: %p",errno, ((cmp_context_t *)master->context[cidx])->perfctr);
+	  PAPIERROR("vperfctr_iresume errno %d for perfctr: %p",errno, master->context[cidx]->perfctr);
       }
    }
 }
 static int attach( hwd_control_state_t * ctl, unsigned long tid ) {
 	struct vperfctr_control tmp;
 
-	((cmp_control_state_t *)ctl)->rvperfctr = rvperfctr_open( tid );
-	if(((cmp_control_state_t *)ctl)->rvperfctr == NULL ) {
+	ctl->rvperfctr = rvperfctr_open( tid );
+	if(ctl->rvperfctr == NULL ) {
 		PAPIERROR( VOPEN_ERROR ); return (PAPI_ESYS);
 		}
-	SUBDBG( "attach rvperfctr_open() = %p\n", ((cmp_control_state_t *)ctl)->rvperfctr );
+	SUBDBG( "attach rvperfctr_open() = %p\n", ctl->rvperfctr );
 	
 	/* Initialize the per thread/process virtualized TSC */
 	memset( &tmp, 0x0, sizeof(tmp) );
 	tmp.cpu_control.tsc_on = 1;
 
 	/* Start the per thread/process virtualized TSC */
-	if( rvperfctr_control(((cmp_control_state_t *)ctl)->rvperfctr, & tmp ) < 0 ) {
+	if( rvperfctr_control(ctl->rvperfctr, & tmp ) < 0 ) {
 		PAPIERROR(RCNTRL_ERROR); return(PAPI_ESYS);
 		}
 
@@ -419,7 +418,7 @@ static int attach( hwd_control_state_t * ctl, unsigned long tid ) {
 	} /* end attach() */
 
 static int detach( hwd_control_state_t * ctl, unsigned long tid ) {
-	rvperfctr_close(((cmp_control_state_t *)ctl)->rvperfctr );
+	rvperfctr_close(ctl->rvperfctr );
 	return (PAPI_OK);
 	} /* end detach() */
 
@@ -451,12 +450,12 @@ static long long _p4_get_real_cycles(void) {
 
 static long long _p4_get_virt_cycles(const hwd_context_t * ctx)
 {
-   return ((long long)vperfctr_read_tsc(((cmp_context_t *)ctx)->perfctr) * tb_scale_factor);
+   return ((long long)vperfctr_read_tsc(ctx->perfctr) * tb_scale_factor);
 }
 
 static long long _p4_get_virt_usec(const hwd_context_t * ctx)
 {
-   return (((long long)vperfctr_read_tsc(((cmp_context_t *)ctx)->perfctr) * tb_scale_factor) /
+   return (((long long)vperfctr_read_tsc(ctx->perfctr) * tb_scale_factor) /
            (long long)_papi_hwi_system_info.hw_info.mhz);
 }
 
@@ -466,11 +465,9 @@ static long long _p4_get_virt_usec(const hwd_context_t * ctx)
  ******************************************************************************/
 
 
-static int _p4_start(hwd_context_t * this_ctx, hwd_control_state_t * this_state)
+static int _p4_start(hwd_context_t * ctx, hwd_control_state_t * state)
 {
    int error;
-   cmp_context_t * ctx = (cmp_context_t *)this_ctx;
-   cmp_control_state_t *state = (cmp_control_state_t *)this_state;
 
 #ifdef DEBUG
    SUBDBG("From _p4_start...\n");
@@ -499,11 +496,8 @@ static int _p4_start(hwd_context_t * this_ctx, hwd_control_state_t * this_state)
    return (PAPI_OK);
 }
 
-static int _p4_stop(hwd_context_t * this_ctx, hwd_control_state_t * this_state)
+static int _p4_stop(hwd_context_t * ctx, hwd_control_state_t * state)
 {
-   cmp_context_t * ctx = (cmp_context_t *)this_ctx;
-   cmp_control_state_t *state = (cmp_control_state_t *)this_state;
-
    if( state->rvperfctr != NULL ) {
      if(rvperfctr_stop((struct rvperfctr*)ctx->perfctr) < 0)
        { PAPIERROR( RCNTRL_ERROR); return(PAPI_ESYS); }
@@ -519,12 +513,9 @@ static int _p4_stop(hwd_context_t * this_ctx, hwd_control_state_t * this_state)
    return (PAPI_OK);
 }
 
-static int _p4_read(hwd_context_t * this_ctx, hwd_control_state_t * this_state,
+static int _p4_read(hwd_context_t * ctx, hwd_control_state_t * spc,
                    long long ** dp, int flags)
 {
-   cmp_context_t * ctx = (cmp_context_t *)this_ctx;
-   cmp_control_state_t *spc = (cmp_control_state_t *)this_state;
-
    if ( flags & PAPI_PAUSED ) {
      vperfctr_read_state(ctx->perfctr, &spc->state, NULL);
    }  
@@ -557,11 +548,11 @@ static int _p4_read(hwd_context_t * this_ctx, hwd_control_state_t * this_state,
 
 static int _p4_shutdown(hwd_context_t * ctx)
 {
-   int retval = vperfctr_unlink(((cmp_context_t *)ctx)->perfctr);
-   SUBDBG("_p4_shutdown vperfctr_unlink(%p) = %d\n", ((cmp_context_t *)ctx)->perfctr, retval);
-   vperfctr_close(((cmp_context_t *)ctx)->perfctr);
-   SUBDBG("_p4_shutdown vperfctr_close(%p)\n", ((cmp_context_t *)ctx)->perfctr);
-   memset(ctx, 0x0, sizeof(cmp_context_t));
+   int retval = vperfctr_unlink(ctx->perfctr);
+   SUBDBG("_p4_shutdown vperfctr_unlink(%p) = %d\n", ctx->perfctr, retval);
+   vperfctr_close(ctx->perfctr);
+   SUBDBG("_p4_shutdown vperfctr_close(%p)\n", ctx->perfctr);
+   memset(ctx, 0x0, sizeof(hwd_context_t));
 
    if (retval)
       return (PAPI_ESYS);
@@ -598,7 +589,7 @@ static void print_alloc(_p4_reg_alloc_t * a)
 */
 static int _p4_bpt_map_avail(hwd_reg_alloc_t * dst, int ctr)
 {
-   return (((cmp_reg_alloc_t *)dst)->ra_selector & (1 << ctr));
+   return (dst->ra_selector & (1 << ctr));
 }
 
 /* This function forces the event to
@@ -607,15 +598,15 @@ static int _p4_bpt_map_avail(hwd_reg_alloc_t * dst, int ctr)
 */
 static void _p4_bpt_map_set(hwd_reg_alloc_t * dst, int ctr)
 {
-   ((cmp_reg_alloc_t *)dst)->ra_selector = (1 << ctr);
-   ((cmp_reg_alloc_t *)dst)->ra_rank = 1;
+   dst->ra_selector = (1 << ctr);
+   dst->ra_rank = 1;
    /* Pentium 4 requires that both an escr and a counter are selected.
       Find which counter mask contains this counter.
       Set the opposite escr to empty (-1) */
-   if (((cmp_reg_alloc_t *)dst)->ra_bits.counter[0] & ((cmp_reg_alloc_t *)dst)->ra_selector)
-      ((cmp_reg_alloc_t *)dst)->ra_escr[1] = -1;
+   if (dst->ra_bits.counter[0] & dst->ra_selector)
+      dst->ra_escr[1] = -1;
    else
-      ((cmp_reg_alloc_t *)dst)->ra_escr[0] = -1;
+      dst->ra_escr[0] = -1;
 }
 
 /* This function examines the event to determine
@@ -624,7 +615,7 @@ static void _p4_bpt_map_set(hwd_reg_alloc_t * dst, int ctr)
 */
 static int _p4_bpt_map_exclusive(hwd_reg_alloc_t * dst)
 {
-   return (((cmp_reg_alloc_t *)dst)->ra_rank == 1);
+   return (dst->ra_rank == 1);
 }
 
 /* This function compares the dst and src events
@@ -632,11 +623,9 @@ static int _p4_bpt_map_exclusive(hwd_reg_alloc_t * dst)
     is exclusive, so this detects a conflict if true.
     Returns true if conflict, false if no conflict.
 */
-static int _p4_bpt_map_shared(hwd_reg_alloc_t * hdst, hwd_reg_alloc_t * hsrc)
+static int _p4_bpt_map_shared(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 {
    int retval1, retval2;
-   cmp_reg_alloc_t * dst = (cmp_reg_alloc_t *)hdst;
-   cmp_reg_alloc_t * src = (cmp_reg_alloc_t *)hsrc;
 
    /* Pentium 4 needs to check for conflict of both counters and esc registers */
              /* selectors must share bits */
@@ -662,13 +651,10 @@ static int _p4_bpt_map_shared(hwd_reg_alloc_t * hdst, hwd_reg_alloc_t * hsrc)
     the src event will be exclusive, but the code shouldn't assume it.
     Returns nothing.
 */
-static void _p4_bpt_map_preempt(hwd_reg_alloc_t * hdst, hwd_reg_alloc_t * hsrc)
+static void _p4_bpt_map_preempt(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 {
    int i;
    unsigned shared;
-   cmp_reg_alloc_t * dst = (cmp_reg_alloc_t *)hdst;
-   cmp_reg_alloc_t * src = (cmp_reg_alloc_t *)hsrc;
-
 
    /* On Pentium 4, shared resources include escrs, counters, and pebs registers
       There is only one pair of pebs registers, so if two events use them differently
@@ -722,11 +708,8 @@ static void _p4_bpt_map_preempt(hwd_reg_alloc_t * hdst, hwd_reg_alloc_t * hsrc)
     the dst event based on information in the src event.
     Returns nothing.
 */
-static void _p4_bpt_map_update(hwd_reg_alloc_t * hdst, hwd_reg_alloc_t * hsrc)
+static void _p4_bpt_map_update(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 {
-   cmp_reg_alloc_t * dst = (cmp_reg_alloc_t *)hdst;
-   cmp_reg_alloc_t * src = (cmp_reg_alloc_t *)hsrc;
-
    dst->ra_selector = src->ra_selector;
    dst->ra_escr[0] = src->ra_escr[0];
    dst->ra_escr[1] = src->ra_escr[1];
@@ -738,8 +721,8 @@ static void _p4_bpt_map_update(hwd_reg_alloc_t * hdst, hwd_reg_alloc_t * hsrc)
 static int _p4_allocate_registers(EventSetInfo_t * ESI)
 {
    int i, j, natNum;
-   cmp_reg_alloc_t event_list[MAX_COUNTERS], *e;
-   cmp_register_t *ptr;
+   hwd_reg_alloc_t event_list[MAX_COUNTERS], *e;
+   hwd_register_t *ptr;
 
 
    /* not yet successfully mapped, but have enough slots for events */
@@ -800,7 +783,7 @@ static int _p4_allocate_registers(EventSetInfo_t * ESI)
 }
 
 
-static void clear_cs_events(cmp_control_state_t * this_state)
+static void clear_cs_events(hwd_control_state_t * this_state)
 {
    int i,j;
 
@@ -840,17 +823,16 @@ static int _p4_update_control_state(hwd_control_state_t * state,
 {
    int i, retval = PAPI_OK;
 
-   cmp_register_t *bits;
-   cmp_control_state_t *this_state = (cmp_control_state_t *)state;
-   struct perfctr_cpu_control *cpu_control = &this_state->control.cpu_control;
+   hwd_register_t *bits;
+   struct perfctr_cpu_control *cpu_control = &state->control.cpu_control;
 
    /* clear out the events from the control state */
-   clear_cs_events(this_state);
+   clear_cs_events(state);
 
    /* fill the counters we're using */
    for (i = 0; i < count; i++) {
       /* dereference the mapping information about this native event */
-      bits = (cmp_register_t *)(native[i].ni_bits);
+      bits = native[i].ni_bits;
 
       /* Add counter control command values to eventset */
 
@@ -890,25 +872,23 @@ static int _p4_update_control_state(hwd_control_state_t * state,
 	 /* if pebs_matrix_vert == bits->pebs_matrix_vert, do nothing */
      }
    }
-   this_state->control.cpu_control.nractrs = count;
+   state->control.cpu_control.nractrs = count;
 
    /* Make sure the TSC is always on */
-   this_state->control.cpu_control.tsc_on = 1;
+   state->control.cpu_control.tsc_on = 1;
 
 #ifdef DEBUG
    SUBDBG("From _p4_update_control_state...\n");
-   print_control(&this_state->control.cpu_control);
+   print_control(&state->control.cpu_control);
 #endif
    return (retval);
 }
 
 
-static int _p4_set_domain(hwd_control_state_t * ctl, int domain)
+static int _p4_set_domain(hwd_control_state_t * cntrl, int domain)
 {
    int i, did = 0;
-   cmp_control_state_t *cntrl = (cmp_control_state_t *)ctl;
 
-    
      /* Clear the current domain set for this event set */
      /* We don't touch the Enable bit in this code but  */
      /* leave it as it is */
@@ -992,7 +972,7 @@ static void swap_events(EventSetInfo_t * ESI, struct vperfctr_control *contr, in
 
    static int _p4_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
-   struct hwd_pmc_control *contr = &((cmp_control_state_t *)ESI->ctl_state)->control;
+   struct hwd_pmc_control *contr = &ESI->ctl_state->control;
    int i, ncntrs, nricntrs = 0, nracntrs = 0, retval = 0;
 
    OVFDBG("EventIndex=%d\n", EventIndex);
@@ -1118,13 +1098,13 @@ int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
        convert to an intel counter number; or it into bits->counter
     */
     for (i = 0; i < MAX_ESCRS_PER_EVENT; i++) {
-	((cmp_register_t *)bits)->counter[i] = 0;
+	bits->counter[i] = 0;
 	escr = pentium4_events[event].allowed_escrs[i];
 	if (escr < 0) {
 	    continue;
 	}
 
-	((cmp_register_t *)bits)->escr[i] = escr;
+	bits->escr[i] = escr;
 	for (j = 0; j < MAX_CCCRS_PER_ESCR; j++) {
 	    cccr = pentium4_escrs[escr].allowed_cccrs[j];
 	    if (cccr < 0) {
@@ -1132,13 +1112,13 @@ int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
 	    }
 
 	    pmd = pentium4_cccrs[cccr].pmd;
-	    ((cmp_register_t *)bits)->counter[i] |= (1 << pfm2intel[pmd]);
+	    bits->counter[i] |= (1 << pfm2intel[pmd]);
 	}
     }
     /* if there's only one valid escr, copy the values */
     if (escr < 0) {
-	((cmp_register_t *)bits)->escr[1]    = ((cmp_register_t *)bits)->escr[0];
-	((cmp_register_t *)bits)->counter[1] = ((cmp_register_t *)bits)->counter[0];
+	bits->escr[1]    = bits->escr[0];
+	bits->counter[1] = bits->counter[0];
     }
 
     /* Calculate the event-mask value. Invalid masks
@@ -1165,7 +1145,7 @@ int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
     escr_value.bits.event_select = pentium4_events[event].event_select;
     escr_value.bits.reserved     = 0;
 
-    ((cmp_register_t *)bits)->event = escr_value.val;
+    bits->event = escr_value.val;
 
     /* initialize the proper bits in the cccr register */
     cccr_value.val = 0;
@@ -1188,12 +1168,12 @@ int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
     cccr_value.bits.cascade       = 0; /* FIXME: How do we handle "cascading" counters? */
     cccr_value.bits.overflow      = 0;
 
-    ((cmp_register_t *)bits)->cccr = cccr_value.val;
+    bits->cccr = cccr_value.val;
 
     /* these flags are always zero, from what I can tell */
-    ((cmp_register_t *)bits)->pebs_enable = 0;	// flag for PEBS counting
-    ((cmp_register_t *)bits)->pebs_matrix_vert = 0;	// flag for PEBS_MATRIX_VERT, whatever that is 
-    ((cmp_register_t *)bits)->ireset = 0;		// I don't really know what this does
+    bits->pebs_enable = 0;	// flag for PEBS counting
+    bits->pebs_matrix_vert = 0;	// flag for PEBS_MATRIX_VERT, whatever that is 
+    bits->ireset = 0;		// I don't really know what this does
 
     SUBDBG("escr: 0x%lx; cccr:  0x%lx\n", escr_value.val, cccr_value.val);
 
@@ -1206,15 +1186,15 @@ int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                unsigned int *values, int name_len, int count)
 {
    int i = 0;
-   copy_value(((cmp_register_t *)bits)->cccr, "P4 CCCR", &names[i*name_len], &values[i], name_len);
+   copy_value(bits->cccr, "P4 CCCR", &names[i*name_len], &values[i], name_len);
    if (++i == count) return(i);
-   copy_value(((cmp_register_t *)bits)->event, "P4 Event", &names[i*name_len], &values[i], name_len);
+   copy_value(bits->event, "P4 Event", &names[i*name_len], &values[i], name_len);
    if (++i == count) return(i);
-   copy_value(((cmp_register_t *)bits)->pebs_enable, "P4 PEBS Enable", &names[i*name_len], &values[i], name_len);
+   copy_value(bits->pebs_enable, "P4 PEBS Enable", &names[i*name_len], &values[i], name_len);
    if (++i == count) return(i);
-   copy_value(((cmp_register_t *)bits)->pebs_matrix_vert, "P4 PEBS Matrix Vertical", &names[i*name_len], &values[i], name_len);
+   copy_value(bits->pebs_matrix_vert, "P4 PEBS Matrix Vertical", &names[i*name_len], &values[i], name_len);
    if (++i == count) return(i);
-   copy_value(((cmp_register_t *)bits)->ireset, "P4 iReset", &names[i*name_len], &values[i], name_len);
+   copy_value(bits->ireset, "P4 iReset", &names[i*name_len], &values[i], name_len);
    return(++i);
 }
 

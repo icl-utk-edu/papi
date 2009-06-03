@@ -26,7 +26,7 @@ int _linux_init(hwd_context_t * ctx) {
    struct vperfctr_control tmp;
 
    /* Initialize our thread/process pointer. */
-   if ((((cmp_context_t *)ctx)->perfctr = vperfctr_open()) == NULL)
+   if ((ctx->perfctr = vperfctr_open()) == NULL)
      { PAPIERROR( VOPEN_ERROR); return(PAPI_ESYS); }
    SUBDBG("_linux_init vperfctr_open() = %p\n", ((cmp_context_t *)ctx)->perfctr);
 
@@ -35,7 +35,7 @@ int _linux_init(hwd_context_t * ctx) {
    tmp.cpu_control.tsc_on = 1;
 
    /* Start the per thread/process virtualized TSC */
-   if (vperfctr_control(((cmp_context_t *)ctx)->perfctr, &tmp) < 0)
+   if (vperfctr_control(ctx->perfctr, &tmp) < 0)
      { PAPIERROR( VCNTRL_ERROR); return(PAPI_ESYS); }
 
    return (PAPI_OK);

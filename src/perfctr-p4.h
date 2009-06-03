@@ -114,17 +114,17 @@ typedef struct _p4_perfctr_context {
 /*  _p4_perfctr_control_t start; */
 } _p4_perfctr_context_t;
 
-/* typedefs to conform to PAPI component layer code. */
-/* these are void * in the PAPI framework layer code. */
-typedef _p4_reg_alloc_t cmp_reg_alloc_t;
-typedef _p4_perfctr_control_t cmp_control_state_t;
-typedef _p4_register_t cmp_register_t;
-typedef _p4_perfctr_context_t cmp_context_t;
 
-typedef siginfo_t hwd_siginfo_t;
-typedef ucontext_t hwd_ucontext_t;
-
-//typedef P4_perfctr_event_t cmp_event_t;
+/* Override void* definitions from PAPI framework layer */
+/* with typedefs to conform to PAPI component layer code. */
+#undef  hwd_reg_alloc_t
+typedef _p4_reg_alloc_t hwd_reg_alloc_t;
+#undef  hwd_register_t
+typedef _p4_register_t hwd_register_t;
+#undef  hwd_control_state_t
+typedef _p4_perfctr_control_t hwd_control_state_t;
+#undef  hwd_context_t
+typedef _p4_perfctr_context_t hwd_context_t;
 
 #define hwd_pmc_control vperfctr_control
 
@@ -153,7 +153,7 @@ typedef ucontext_t hwd_ucontext_t;
 #else
     #define OVERFLOW_REG REG_EIP
 #endif
-#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)ctx.ucontext->uc_mcontext.gregs[OVERFLOW_REG]
+#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)((ucontext_t *)(ctx.ucontext))->uc_mcontext.gregs[OVERFLOW_REG]
 
 /* Linux DOES support hardware overflow */
 #define HW_OVERFLOW 1
