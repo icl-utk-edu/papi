@@ -911,7 +911,7 @@ int PAPI_start(int EventSet)
 				      _papi_hwd[cidx]->cmp_info.itimer_ns);
        if (retval != PAPI_OK) {
 	 _papi_hwi_stop_signal(_papi_hwd[cidx]->cmp_info.itimer_sig);
-	 _papi_hwd[cidx]->stop(thread->context, ESI->ctl_state);
+	 _papi_hwd[cidx]->stop(thread->context[cidx], ESI->ctl_state);
 	 ESI->state ^= PAPI_RUNNING;
 	 ESI->state |= PAPI_STOPPED;
 	 if (!(ESI->state & PAPI_ATTACHED))
