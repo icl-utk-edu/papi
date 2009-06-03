@@ -4,8 +4,7 @@
 /* This file handles the OS dependent part of the POWER3 and POWER4 architectures.
   It supports both AIX 4 and AIX 5. The switch between AIX 4 and 5 is driven by the 
   system defined value _AIX_VERSION_510.
-  Other routines also include minor conditionally compiled differences.
-*/
+  Other routines also include minor conditionally compiled differences. */
 
 #include "papi.h"
 #include "papi_internal.h"
