@@ -311,8 +311,9 @@ static inline void __raw_spin_unlock(volatile unsigned int *lock)
 #endif
 
 /* Signal handling functions */
-
+#undef hwd_siginfo_t
 typedef struct siginfo hwd_siginfo_t;
+#undef hwd_ucontext_t
 typedef ucontext_t hwd_ucontext_t;
 
 #if defined(__ia64__)

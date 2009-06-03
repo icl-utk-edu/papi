@@ -656,7 +656,7 @@ inline_static unsigned long get_cycles(void)
 int _ia64_set_domain(hwd_control_state_t * this_state, int domain)
 {
    int mode = 0, did = 0, i;
-   pfmw_param_t *evt = &((ia64_control_state_t *)this_state)->evt;
+   pfmw_param_t *evt = &this_state->evt;
 
    if (domain & PAPI_DOM_USER) {
       did = 1;
@@ -1125,7 +1125,7 @@ int _ia64_init(hwd_context_t * zero)
 	PAPIERROR("open(%s)",buf);
 	return(PAPI_ESYS);
       }
-    ((ia64_context_t *)zero)->stat_fd = fd;
+    zero->stat_fd = fd;
   }
 #endif
   return(pfmw_create_context(zero));
@@ -1148,13 +1148,13 @@ long long _ia64_get_virt_usec(const hwd_context_t * zero)
      long long utime, stime;
      int rv, cnt = 0, i = 0;
 
-     rv = read(((ia64_context_t *)zero)->stat_fd,buf,LINE_MAX*sizeof(char));
+     rv = read(zero->stat_fd,buf,LINE_MAX*sizeof(char));
      if (rv == -1)
        {
 	 PAPIERROR("read()");
 	 return(PAPI_ESYS);
        }
-     lseek(((ia64_context_t *)zero)->stat_fd,0,SEEK_SET);
+     lseek(zero->stat_fd,0,SEEK_SET);
 
      buf[rv] = '\0';
      SUBDBG("Thread stat file is:%s\n",buf);
@@ -1208,23 +1208,23 @@ long long _ia64_get_virt_cycles(const hwd_context_t * zero)
 /* reset the hardware counters */
 int _ia64_reset(hwd_context_t * ctx, hwd_control_state_t * machdep)
 {
-   pfmw_param_t *pevt = &(((ia64_control_state_t *)machdep)->evt);
-   pfarg_reg_t writeem[MY_VECTOR.cmp_info.num_cntrs];
+   pfmw_param_t *pevt = &(machdep->evt);
+   pfarg_reg_t writeem[MAX_COUNTERS];
    int i;
 
-   pfmw_stop((ia64_context_t *)ctx);
+   pfmw_stop(ctx);
    memset(writeem, 0, sizeof writeem);
    for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
       /* Writing doesn't matter, we're just zeroing the counter. */
       writeem[i].reg_num = PMU_FIRST_COUNTER + i;
       if (PFMW_PEVT_PFPPC_REG_FLG(pevt,i) & PFM_REGFL_OVFL_NOTIFY)
-	writeem[i].reg_value = ((ia64_control_state_t *)machdep)->pd[i].reg_long_reset;
+	writeem[i].reg_value = machdep->pd[i].reg_long_reset;
    }
-   if (pfmw_perfmonctl(((ia64_context_t *)ctx)->tid, ((ia64_context_t *)ctx)->fd, PFM_WRITE_PMDS, writeem, MY_VECTOR.cmp_info.num_cntrs) == -1) {
+   if (pfmw_perfmonctl(ctx->tid, ctx->fd, PFM_WRITE_PMDS, writeem, MY_VECTOR.cmp_info.num_cntrs) == -1) {
       PAPIERROR("perfmonctl(PFM_WRITE_PMDS) errno %d", errno);
       return PAPI_ESYS;
    }
-   pfmw_start((ia64_context_t *)ctx);
+   pfmw_start(ctx);
    return (PAPI_OK);
 }
 
@@ -1234,7 +1234,7 @@ int _ia64_read(hwd_context_t * ctx, hwd_control_state_t * machdep,
    int i;
    pfarg_reg_t readem[MY_VECTOR.cmp_info.num_cntrs];
 
-   pfmw_stop((ia64_context_t *)ctx);
+   pfmw_stop(ctx);
    memset(readem, 0x0, sizeof readem);
 
 /* read the 4 counters, the high level function will process the 
@@ -1244,31 +1244,31 @@ int _ia64_read(hwd_context_t * ctx, hwd_control_state_t * machdep,
       readem[i].reg_num = PMU_FIRST_COUNTER + i;
    }
 
-   if (pfmw_perfmonctl(((ia64_context_t *)ctx)->tid, ((ia64_context_t *)ctx)->fd, PFM_READ_PMDS, readem, MY_VECTOR.cmp_info.num_cntrs) == -1) {
+   if (pfmw_perfmonctl(ctx->tid, ctx->fd, PFM_READ_PMDS, readem, MY_VECTOR.cmp_info.num_cntrs) == -1) {
       SUBDBG("perfmonctl error READ_PMDS errno %d\n", errno);
-      pfmw_start((ia64_context_t *)ctx);
+      pfmw_start(ctx);
       return PAPI_ESYS;
    }
 
    for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
-      ((ia64_control_state_t *)machdep)->counters[i] = readem[i].reg_value;
+      machdep->counters[i] = readem[i].reg_value;
       SUBDBG("read counters is %ld\n", readem[i].reg_value);
    }
 
 #ifdef ITANIUM
-   pfmw_param_t *pevt= &(((ia64_control_state_t *)machdep)->evt);
+   pfmw_param_t *pevt= &(machdep->evt);
    pfmw_arch_pmc_reg_t flop_hack;
    /* special case, We need to scale FP_OPS_HI */
    for (i = 0; i < PFMW_PEVT_EVTCOUNT(pevt); i++) {
       PFMW_ARCH_REG_PMCVAL(flop_hack) = 
                       PFMW_PEVT_PFPPC_REG_VAL(pevt,i);
       if (PFMW_ARCH_REG_PMCES(flop_hack) == 0xa)
-         ((ia64_control_state_t *)machdep)->counters[i] *= 4;
+         machdep->counters[i] *= 4;
    }
 #endif
 
-   *events = ((ia64_control_state_t *)machdep)->counters;
-   pfmw_start((ia64_context_t *)ctx);
+   *events = machdep->counters;
+   pfmw_start(ctx);
    return PAPI_OK;
 }
 
@@ -1276,19 +1276,19 @@ int _ia64_read(hwd_context_t * ctx, hwd_control_state_t * machdep,
 int _ia64_start(hwd_context_t * ctx, hwd_control_state_t * current_state)
 {
    int i;
-   pfmw_param_t *pevt = &(((ia64_control_state_t *)current_state)->evt);
+   pfmw_param_t *pevt = &(current_state->evt);
 
-   pfmw_stop((ia64_context_t *)ctx);
+   pfmw_stop(ctx);
 
 /* write PMCS */
-   if (pfmw_perfmonctl(((ia64_context_t *)ctx)->tid, ((ia64_context_t *)ctx)->fd, PFM_WRITE_PMCS,
+   if (pfmw_perfmonctl(ctx->tid, ctx->fd, PFM_WRITE_PMCS,
         PFMW_PEVT_PFPPC(pevt), 
         PFMW_PEVT_PFPPC_COUNT(pevt)) == -1) {
       PAPIERROR("perfmonctl(PFM_WRITE_PMCS) errno %d", errno);
       return (PAPI_ESYS);
    }
 #ifdef PFM30
-   if (pfmw_perfmonctl(((ia64_context_t *)ctx)->tid, ((ia64_context_t *)ctx)->fd, PFM_WRITE_PMDS, PFMW_PEVT_PFPPD(pevt), PFMW_PEVT_EVTCOUNT(pevt)) == -1) {
+   if (pfmw_perfmonctl(ctx->tid, ctx->fd, PFM_WRITE_PMDS, PFMW_PEVT_PFPPD(pevt), PFMW_PEVT_EVTCOUNT(pevt)) == -1) {
       PAPIERROR("perfmonctl(PFM_WRITE_PMDS) errno %d", errno);
       return (PAPI_ESYS);
 	}
@@ -1298,22 +1298,22 @@ int _ia64_start(hwd_context_t * ctx, hwd_control_state_t * current_state)
   PAPI_profil are called, then the initial value is the threshold
 */
    for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++)
-      ((ia64_control_state_t *)current_state)->pd[i].reg_num = PMU_FIRST_COUNTER + i;
+      current_state->pd[i].reg_num = PMU_FIRST_COUNTER + i;
 
-   if (pfmw_perfmonctl(((ia64_context_t *)ctx)->tid, ((ia64_context_t *)ctx)->fd, 
-           PFM_WRITE_PMDS, ((ia64_control_state_t *)current_state)->pd, MY_VECTOR.cmp_info.num_cntrs) == -1) {
+   if (pfmw_perfmonctl(ctx->tid, ctx->fd, 
+           PFM_WRITE_PMDS, current_state->pd, MY_VECTOR.cmp_info.num_cntrs) == -1) {
       PAPIERROR("perfmonctl(WRITE_PMDS) errno %d", errno);
       return (PAPI_ESYS);
    }
 
-   pfmw_start((ia64_context_t *)ctx);
+   pfmw_start(ctx);
 
    return PAPI_OK;
 }
 
 int _ia64_stop(hwd_context_t * ctx, hwd_control_state_t * zero)
 {
-   pfmw_stop((ia64_context_t *)ctx);
+   pfmw_stop(ctx);
    return PAPI_OK;
 }
 
@@ -1327,72 +1327,74 @@ inline_static int round_requested_ns(int ns)
   }
 }
 
-int _ia64_ctl(hwd_context_t * zero, int code, _papi_int_option_t * option)
-{
-   int ret;
-   switch (code) {
-   case PAPI_DEFDOM:
-      return (set_default_domain(&option->domain.ESI->ctl_state, option->domain.domain));
-   case PAPI_DOMAIN:
-      return (_ia64_set_domain(&option->domain.ESI->ctl_state, option->domain.domain));
-   case PAPI_DEFGRN:
-      return (set_default_granularity
-              (&option->domain.ESI->ctl_state, option->granularity.granularity));
-   case PAPI_GRANUL:
-      return (set_granularity
-              (&option->granularity.ESI->ctl_state, option->granularity.granularity));
+int _ia64_ctl(hwd_context_t * zero, int code, _papi_int_option_t * option) {
+	int ret;
+	switch (code) {
+		case PAPI_DEFDOM:
+			return (set_default_domain(
+				(hwd_control_state_t *)&option->domain.ESI->ctl_state,
+				option->domain.domain));
+		case PAPI_DOMAIN:
+			return (_ia64_set_domain(
+				(hwd_control_state_t *)&option->domain.ESI->ctl_state,
+				option->domain.domain));
+		case PAPI_DEFGRN:
+			return (set_default_granularity(
+				(hwd_control_state_t *)&option->granularity.ESI->ctl_state,
+				option->granularity.granularity));
+		case PAPI_GRANUL:
+			return (set_granularity(
+				(hwd_control_state_t *)&option->granularity.ESI->ctl_state,
+				option->granularity.granularity));
 #if 0
-   case PAPI_INHERIT:
-      return (set_inherit(option->inherit.inherit));
+		case PAPI_INHERIT:
+			return (set_inherit(option->inherit.inherit));
 #endif
-   case PAPI_DATA_ADDRESS:
-      ret=set_default_domain(&option->address_range.ESI->ctl_state, option->address_range.domain);
-	  if(ret != PAPI_OK) return(ret);
-	  set_drange(zero, &option->address_range.ESI->ctl_state, option);
-      return (PAPI_OK);
-   case PAPI_INSTR_ADDRESS:
-      ret=set_default_domain(&option->address_range.ESI->ctl_state, option->address_range.domain);
-	  if(ret != PAPI_OK) return(ret);
-	  set_irange(zero, &option->address_range.ESI->ctl_state, option);
-      return (PAPI_OK);
-  case PAPI_DEF_ITIMER:
-    {
-      /* flags are currently ignored, eventually the flags will be able
-	 to specify whether or not we use POSIX itimers (clock_gettimer) */
-      if ((option->itimer.itimer_num == ITIMER_REAL) &&
-	  (option->itimer.itimer_sig != SIGALRM))
-	return PAPI_EINVAL;
-      if ((option->itimer.itimer_num == ITIMER_VIRTUAL) &&
-	  (option->itimer.itimer_sig != SIGVTALRM))
-	return PAPI_EINVAL;
-      if ((option->itimer.itimer_num == ITIMER_PROF) &&
-	  (option->itimer.itimer_sig != SIGPROF))
-	return PAPI_EINVAL;
-      if (option->itimer.ns > 0)
-	option->itimer.ns = round_requested_ns(option->itimer.ns);
-      /* At this point, we assume the user knows what he or
-	 she is doing, they maybe doing something arch specific */
-      return PAPI_OK;
-    }
-  case PAPI_DEF_MPX_NS:
-    { 
-      option->multiplex.ns = round_requested_ns(option->multiplex.ns);
-      return(PAPI_OK);
-    }
-  case PAPI_DEF_ITIMER_NS:
-    { 
-      option->itimer.ns = round_requested_ns(option->itimer.ns);
-      return(PAPI_OK);
-    }
-   default:
-      return (PAPI_EINVAL);
-   }
+		case PAPI_DATA_ADDRESS:
+			ret=set_default_domain((hwd_control_state_t *)&option->address_range.ESI->ctl_state, option->address_range.domain);
+			if(ret != PAPI_OK) return(ret);
+			set_drange(zero, (hwd_control_state_t *)&option->address_range.ESI->ctl_state, option);
+			return (PAPI_OK);
+		case PAPI_INSTR_ADDRESS:
+			ret=set_default_domain((hwd_control_state_t *)&option->address_range.ESI->ctl_state, option->address_range.domain);
+			if(ret != PAPI_OK) return(ret);
+			set_irange(zero, (hwd_control_state_t *)&option->address_range.ESI->ctl_state, option);
+			return (PAPI_OK);
+		case PAPI_DEF_ITIMER: {
+			/* flags are currently ignored, eventually the flags will be able
+			to specify whether or not we use POSIX itimers (clock_gettimer) */
+			if ((option->itimer.itimer_num == ITIMER_REAL) &&
+				(option->itimer.itimer_sig != SIGALRM))
+				return PAPI_EINVAL;
+			if ((option->itimer.itimer_num == ITIMER_VIRTUAL) &&
+				(option->itimer.itimer_sig != SIGVTALRM))
+				return PAPI_EINVAL;
+			if ((option->itimer.itimer_num == ITIMER_PROF) &&
+				(option->itimer.itimer_sig != SIGPROF))
+				return PAPI_EINVAL;
+			if (option->itimer.ns > 0)
+				option->itimer.ns = round_requested_ns(option->itimer.ns);
+			/* At this point, we assume the user knows what he or
+			she is doing, they maybe doing something arch specific */
+			return PAPI_OK;
+		}
+		case PAPI_DEF_MPX_NS: {
+			option->multiplex.ns = round_requested_ns(option->multiplex.ns);
+			return(PAPI_OK);
+		}
+		case PAPI_DEF_ITIMER_NS: {
+			option->itimer.ns = round_requested_ns(option->itimer.ns);
+			return(PAPI_OK);
+		}
+		default:
+			return (PAPI_EINVAL);
+	}
 }
 
 int _ia64_shutdown(hwd_context_t * ctx)
 {
 #if defined(USE_PROC_PTTIMER)
-  close(((ia64_context_t *)ctx)->stat_fd);
+  close(ctx->stat_fd);
 #endif  
 
    return (pfmw_destroy_context(ctx));
@@ -1527,7 +1529,7 @@ static int ia64_process_profile_buffer(ThreadInfo_t *thread, EventSetInfo_t *ESI
      return(PAPI_EBUG);
 
    this_state = ESI->ctl_state;
-   hdr = (pfmw_smpl_hdr_t *) ((ia64_control_state_t *)this_state)->smpl_vaddr;
+   hdr = (pfmw_smpl_hdr_t *) this_state->smpl_vaddr;
 
 #ifdef PFM30
    entry_size = sizeof(pfmw_smpl_entry_t);
@@ -1733,7 +1735,7 @@ void _ia64_dispatch_timer(int signal, hwd_siginfo_t * info, void *context)
 static int set_notify(EventSetInfo_t * ESI, int index, int value)
 {
    int *pos, count, hwcntr, i;
-   pfmw_param_t *pevt = &(((ia64_control_state_t *)ESI->ctl_state)->evt);
+   pfmw_param_t *pevt = &(ESI->ctl_state->evt);
 
    pos = ESI->EventInfoArray[index].pos;
    count = 0;
@@ -1784,7 +1786,7 @@ int _ia64_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
   if (threshold == 0)
     ret = pfmw_create_context(ctx);
   else
-    ret = pfmw_recreate_context(ESI,&((ia64_control_state_t *)this_state)->smpl_vaddr, EventIndex);
+    ret = pfmw_recreate_context(ESI,&this_state->smpl_vaddr, EventIndex);
 
 //#warning "This should be handled in the high level layers"
   ESI->state ^= PAPI_OVERFLOWING;
@@ -1815,9 +1817,9 @@ int _ia64_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
       set_notify(ESI, EventIndex, 0);
 
-      ((ia64_control_state_t *)this_state)->pd[j].reg_value = 0;
-      ((ia64_control_state_t *)this_state)->pd[j].reg_long_reset = 0;
-      ((ia64_control_state_t *)this_state)->pd[j].reg_short_reset = 0;
+      this_state->pd[j].reg_value = 0;
+      this_state->pd[j].reg_long_reset = 0;
+      this_state->pd[j].reg_short_reset = 0;
      } 
    else 
      {
@@ -1829,9 +1831,9 @@ int _ia64_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
       set_notify(ESI, EventIndex, PFM_REGFL_OVFL_NOTIFY);
 
-      ((ia64_control_state_t *)this_state)->pd[j].reg_value = (~0UL)-(unsigned long) threshold + 1;
-      ((ia64_control_state_t *)this_state)->pd[j].reg_short_reset = (~0UL)-(unsigned long) threshold + 1;
-      ((ia64_control_state_t *)this_state)->pd[j].reg_long_reset = (~0UL)-(unsigned long) threshold + 1;
+      this_state->pd[j].reg_value = (~0UL)-(unsigned long) threshold + 1;
+      this_state->pd[j].reg_short_reset = (~0UL)-(unsigned long) threshold + 1;
+      this_state->pd[j].reg_long_reset = (~0UL)-(unsigned long) threshold + 1;
 
      }
    return (retval);
@@ -1912,8 +1914,8 @@ int _ia64_init_control_state(hwd_control_state_t * ptr)
    pfmw_param_t *evt;
    pfmw_ita_param_t *param;
    
-   evt=&(((ia64_control_state_t *)ptr)->evt);
-   param=&(((ia64_control_state_t *)ptr)->ita_lib_param);
+   evt=&(ptr->evt);
+   param=&(ptr->ita_lib_param);
    memset(evt, 0, sizeof(pfmw_param_t));
    memset(param, 0, sizeof(pfmw_ita_param_t));
 
@@ -1921,18 +1923,18 @@ int _ia64_init_control_state(hwd_control_state_t * ptr)
 /* set library parameter pointer */
 #ifdef PFM20
 #ifdef ITANIUM2
-   ((ia64_control_state_t *)ptr)->ita_lib_param.pfp_magic = PFMLIB_ITA2_PARAM_MAGIC;
+   ptr->ita_lib_param.pfp_magic = PFMLIB_ITA2_PARAM_MAGIC;
 #else
-   ((ia64_control_state_t *)ptr)->ita_lib_param.pfp_magic = PFMLIB_ITA_PARAM_MAGIC;
+   ptr->ita_lib_param.pfp_magic = PFMLIB_ITA_PARAM_MAGIC;
 #endif
-   ((ia64_control_state_t *)ptr)->evt.pfp_model = &((ia64_control_state_t *)ptr)->ita_lib_param;
+   ptr->evt.pfp_model = &ptr->ita_lib_param;
 #elif PFM30
  #if defined(ITANIUM3)
-    evt->mod_inp  = &(((ia64_control_state_t *)ptr)->ita_lib_param.mont_input_param);
-    evt->mod_outp = &(((ia64_control_state_t *)ptr)->ita_lib_param.mont_output_param);
+    evt->mod_inp  = &(ptr->ita_lib_param.mont_input_param);
+    evt->mod_outp = &(ptr->ita_lib_param.mont_output_param);
  #elif defined(ITANIUM2)
-	evt->mod_inp  = &(((ia64_control_state_t *)ptr)->ita_lib_param.ita2_input_param);
-	evt->mod_outp = &(((ia64_control_state_t *)ptr)->ita_lib_param.ita2_output_param);
+	evt->mod_inp  = &(ptr->ita_lib_param.ita2_input_param);
+	evt->mod_outp = &(ptr->ita_lib_param.ita2_output_param);
  #endif
 #endif
 	return(PAPI_OK);
@@ -1947,7 +1949,7 @@ int _ia64_update_control_state(hwd_control_state_t * this_state,
                    NativeInfo_t * native, int count, hwd_context_t * zero )
 {
    int i, org_cnt;
-   pfmw_param_t *evt = &((ia64_control_state_t *)this_state)->evt;
+   pfmw_param_t *evt = &this_state->evt;
    pfmw_param_t copy_evt;
 #if defined(ITANIUM3)
    unsigned int event, umask, EventCode;
@@ -2025,7 +2027,7 @@ int _ia64_update_control_state(hwd_control_state_t * this_state,
   #else
       if (pfm_ita_is_dear(index))
   #endif
-         set_dear_ita_param(&((ia64_control_state_t *)this_state)->ita_lib_param, index);
+         set_dear_ita_param(&this_state->ita_lib_param, index);
 #endif
       PFMW_PEVT_EVENT(evt,i) = index;
 #endif

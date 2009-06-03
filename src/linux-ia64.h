@@ -173,19 +173,25 @@ typedef struct Itanium_context {
 //typedef Itanium_context_t hwd_context_t;
 
 /* for _papi_hwi_context_t */
+#undef hwd_siginfo_t
 #ifdef PFM30
    typedef struct siginfo  hwd_siginfo_t;
 #else
    typedef pfm_siginfo_t hwd_siginfo_t;
 #endif
+#undef  hwd_ucontext_t
 typedef struct sigcontext hwd_ucontext_t;
 
-/* typedefs to conform to PAPI component layer code. */
-/* these are void * in the PAPI framework layer code. */
-typedef ia64_reg_alloc_t cmp_reg_alloc_t;
-typedef ia64_register_t cmp_register_t;
-typedef ia64_control_state_t cmp_control_state_t;
-typedef ia64_context_t cmp_context_t;
+/* Override void* definitions from PAPI framework layer */
+/* with typedefs to conform to PAPI component layer code. */
+#undef  hwd_reg_alloc_t
+typedef ia64_reg_alloc_t hwd_reg_alloc_t;
+#undef  hwd_register_t
+typedef ia64_register_t hwd_register_t;
+#undef  hwd_control_state_t
+typedef ia64_control_state_t hwd_control_state_t;
+#undef  hwd_context_t
+typedef ia64_context_t hwd_context_t;
 
 #define GET_OVERFLOW_ADDRESS(ctx)  ((caddr_t)((ctx->ucontext)->sc_ip))
 
