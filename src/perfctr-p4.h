@@ -168,9 +168,9 @@ typedef siginfo_t hwd_siginfo_t;
 typedef ucontext_t hwd_ucontext_t;
 
 #ifdef __x86_64__
-  #define GET_OVERFLOW_ADDRESS(ctx) &ctx->ucontext->uc_mcontext.gregs[REG_RIP]
+  #define GET_OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.gregs[REG_RIP]
 #else
-  #define GET_OVERFLOW_ADDRESS(ctx) &ctx->ucontext->uc_mcontext.gregs[REG_EIP]
+  #define GET_OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.gregs[REG_EIP]
 #endif
 
 /* Linux DOES support hardware overflow */
