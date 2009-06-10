@@ -43,6 +43,12 @@
 #endif
 */
 
+/* Signal handling functions */
+#undef hwd_siginfo_t
+typedef struct siginfo hwd_siginfo_t;
+#undef hwd_ucontext_t
+typedef ucontext_t hwd_ucontext_t;
+
 /* new (PAPI => 3.9.0) style overflow address: */
 #ifdef __x86_64__
 	/* this may not work for catamount, but who cares! */
@@ -54,7 +60,7 @@
 #else
     #define OVERFLOW_REG REG_EIP
 #endif
-#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)ctx->ucontext->uc_mcontext.gregs[OVERFLOW_REG]
+#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(ctx.ucontext->uc_mcontext.gregs[OVERFLOW_REG])
 
 /* Linux DOES support hardware overflow */
 #define HW_OVERFLOW 1

@@ -317,30 +317,30 @@ typedef struct siginfo hwd_siginfo_t;
 typedef ucontext_t hwd_ucontext_t;
 
 #if defined(__ia64__)
-#define OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.sc_ip
+#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.sc_ip
 #elif defined(__i386__)
-#define OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.gregs[REG_EIP]
+#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.gregs[REG_EIP]
 #elif defined(__x86_64__)
-#define OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.gregs[REG_RIP]
+#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.gregs[REG_RIP]
 #elif defined(mips)
-#define OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.pc
+#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.pc
 #elif defined(__powerpc__) && !defined(__powerpc64__)
 /*
  * The index of the Next IP (REG_NIP) was obtained by looking at kernel
  * source code.  It wasn't documented anywhere else that I could find.
  */
 #define REG_NIP 32
-#define OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.uc_regs->gregs[REG_NIP]
+#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.uc_regs->gregs[REG_NIP]
 #elif defined(__powerpc64__)
-#define OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.regs->nip
+#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.regs->nip
 #elif defined(__crayx2)					/* CRAY X2 */
-#define OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.regs.pc
+#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.regs.pc
 #elif defined(__sparc__)
-#define OVERFLOW_ADDRESS(ctx) ((struct sigcontext *)ctx->ucontext)->si_regs.pc
+#define OVERFLOW_ADDRESS(ctx) ((struct sigcontext *)ctx.ucontext)->si_regs.pc
 #else
 #error "OVERFLOW_ADDRESS() undefined!"
 #endif
 
-#define GET_OVERFLOW_ADDRESS(ctx) OVERFLOW_ADDRESS(ctx)
+#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(OVERFLOW_ADDRESS(ctx))
 
 #endif
