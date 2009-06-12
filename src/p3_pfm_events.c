@@ -157,7 +157,7 @@ int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
     bits->counter_cmd = code | ((_pfm_convert_umask(event, umask)) << 8);
 
     SUBDBG("selector: 0x%x\n", bits->selector);
-    SUBDBG("event: 0x%x; umask: 0x%x; code: 0x%x; cmd: 0x%x\n",event, umask, code, ((cmp_register_t *)bits)->counter_cmd);
+    SUBDBG("event: 0x%x; umask: 0x%x; code: 0x%x; cmd: 0x%x\n",event, umask, code, ((hwd_register_t *)bits)->counter_cmd);
     return (PAPI_OK);
 }
 

@@ -28,7 +28,7 @@ int _linux_init(hwd_context_t * ctx) {
    /* Initialize our thread/process pointer. */
    if ((ctx->perfctr = vperfctr_open()) == NULL)
      { PAPIERROR( VOPEN_ERROR); return(PAPI_ESYS); }
-   SUBDBG("_linux_init vperfctr_open() = %p\n", ((cmp_context_t *)ctx)->perfctr);
+   SUBDBG("_linux_init vperfctr_open() = %p\n", ((hwd_context_t *)ctx)->perfctr);
 
    /* Initialize the per thread/process virtualized TSC */
    memset(&tmp, 0x0, sizeof(tmp));
