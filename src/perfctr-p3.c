@@ -153,41 +153,50 @@ void print_control(const struct perfctr_cpu_control *control) {
  ******************************************************************************/
 
 #if (!defined(PPC64) && !defined(PPC32))
-inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
-   switch (perfctr_cpu_type) {
-   case PERFCTR_X86_INTEL_P5:
-   case PERFCTR_X86_INTEL_P5MMX:
-   case PERFCTR_X86_INTEL_P6:
-   case PERFCTR_X86_INTEL_PII:
-   case PERFCTR_X86_INTEL_PIII:
-   case PERFCTR_X86_INTEL_P4:
-   case PERFCTR_X86_INTEL_P4M2:
+inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type){
+	switch (perfctr_cpu_type) {
+		case PERFCTR_X86_INTEL_P5:
+		case PERFCTR_X86_INTEL_P5MMX:
+		case PERFCTR_X86_INTEL_P6:
+		case PERFCTR_X86_INTEL_PII:
+		case PERFCTR_X86_INTEL_PIII:
+		case PERFCTR_X86_INTEL_P4:
+		case PERFCTR_X86_INTEL_P4M2:
 #ifdef PERFCTR_X86_INTEL_P4M3
-   case PERFCTR_X86_INTEL_P4M3:
+		case PERFCTR_X86_INTEL_P4M3:
 #endif
 #ifdef PERFCTR_X86_INTEL_PENTM
-   case PERFCTR_X86_INTEL_PENTM:
+		case PERFCTR_X86_INTEL_PENTM:
 #endif
 #ifdef PERFCTR_X86_INTEL_CORE
-   case PERFCTR_X86_INTEL_CORE:
+		case PERFCTR_X86_INTEL_CORE:
 #endif
 #ifdef PERFCTR_X86_INTEL_CORE2
-   case PERFCTR_X86_INTEL_CORE2:
+		case PERFCTR_X86_INTEL_CORE2:
 #endif
-      return (PAPI_VENDOR_INTEL);
+#ifdef PERFCTR_X86_INTEL_ATOM/* family 6 model 28 */
+		case PERFCTR_X86_INTEL_ATOM:
+#endif
+#ifdef PERFCTR_X86_INTEL_COREI7/* family 6 model 26 */
+		case PERFCTR_X86_INTEL_COREI7:
+#endif
+			return (PAPI_VENDOR_INTEL);
 #ifdef PERFCTR_X86_AMD_K8
-   case PERFCTR_X86_AMD_K8:
+		case PERFCTR_X86_AMD_K8:
 #endif
 #ifdef PERFCTR_X86_AMD_K8C
-   case PERFCTR_X86_AMD_K8C:
+		case PERFCTR_X86_AMD_K8C:
 #endif
-   case PERFCTR_X86_AMD_K7:
-      return (PAPI_VENDOR_AMD);
-   case PERFCTR_X86_CYRIX_MII:
-      return (PAPI_VENDOR_CYRIX);
-   default:
-      return (PAPI_VENDOR_UNKNOWN);
-   }
+#ifdef PERFCTR_X86_AMD_FAM10/* this is defined in perfctr 2.6.29 */
+		case PERFCTR_X86_AMD_FAM10:
+#endif
+		case PERFCTR_X86_AMD_K7:
+			return (PAPI_VENDOR_AMD);
+		case PERFCTR_X86_CYRIX_MII:
+			return (PAPI_VENDOR_CYRIX);
+		default:
+			return (PAPI_VENDOR_UNKNOWN);
+	}
 }
 
 /* 
