@@ -1,4 +1,6 @@
 MEMSUBSTR=aix
+MEMSUBSTRC = $(MEMSUBSTR)-memory.c
+MEMSUBSTRO = $(MEMSUBSTR)-memory.o
 LIBS   = static shared
 TARGETS        = serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads smp omp
 POST_BUILD =

@@ -6,6 +6,8 @@ SHLIB   = libpapi.so
 TARGETS = ear serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads shared
 SUBSTR	= perfmon
 MEMSUBSTR = perfmon
+MEMSUBSTRC = $(MEMSUBSTR)-memory.c
+MEMSUBSTRO = $(MEMSUBSTR)-memory.o
 
 #
 # GNU G77/GCC section

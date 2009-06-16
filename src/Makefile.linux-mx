@@ -1,21 +1,26 @@
 LIBRARY   	= libpapi.a
-SHLIB     	= libpapi.so
-SUBSTR  	= any-null
+SHLIB     	= #libpapi.so
+SUBSTR  	= linux-mx
+MEMSUBSTR 	= linux-mx
+MEMSUBSTRC = $(MEMSUBSTR)-memory.c
+MEMSUBSTRO = $(MEMSUBSTR)-memory.o
 DESCR		= "Sample substrate: Any hardware platform with GNU compilers"
 LIBS		= static shared
-TARGETS 	= serial multiplex_and_pthreads
+TARGETS 	= serial mpi
 POST_BUILD =
 SPECIAL_REMOVE =
 
+F77		= g77
+CC		= gcc
 CC_R    	= $(CC) -pthread
-SHRFLAGS	= -fPIC -DPIC
+MPICC		= mpicc
 CC_SHR		= $(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
-CFLAGS  	+= -Wall -DDEBUG 
-FFLAGS		+= -Wall 
+CFLAGS  	= -Wall -g -DDEBUG 
+FFLAGS		= -Wall -g
 
 CPU		= 
-MISCSRCS 	=
-MISCOBJS 	=
+MISCSRCS 	= 
+MISCOBJS 	=  
 
 include Makefile.inc
 

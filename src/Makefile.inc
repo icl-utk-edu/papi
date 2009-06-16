@@ -1,9 +1,9 @@
 PAPI_SRCDIR = $(PWD)	
-SOURCES	  = $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c multiplex.c \
+SOURCES	  = $(MISCSRCS) $(MEMSUBSTRC) papi.c papi_internal.c papi_hl.c extras.c multiplex.c \
     papi_fwrappers.c papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c \
     papi_data.c threads.c $(SUBSTR).c papi_preset.c \
     papi_vector.c papi_memory.c $(COMPSRCS)
-OBJECTS   = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o multiplex.o \
+OBJECTS   = $(MISCOBJS) $(MEMSUBSTRO) papi.o papi_internal.o papi_hl.o extras.o multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o PAPI_FWRAPPERS.o \
     papi_data.o threads.o $(SUBSTR).o papi_preset.o \
     papi_vector.o papi_memory.o $(COMPOBJS)
@@ -13,10 +13,10 @@ HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h \
 LIBCFLAGS += -I. $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" 
 FHEADERS  = fpapi.h f77papi.h f90papi.h
 
-ifdef MEMSUBSTR
-	SOURCES += $(MEMSUBSTR)-memory.c
-	OBJECTS += $(MEMSUBSTR)-memory.o
-endif
+#ifdef MEMSUBSTR
+#	SOURCES += $(MEMSUBSTR)-memory.c
+#	OBJECTS += $(MEMSUBSTR)-memory.o
+#endif
 
 all: showconf $(LIBS) utils tests
 
@@ -85,8 +85,8 @@ threads.o: threads.c $(HEADERS)
 papi_hl.o: papi_hl.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_hl.c -o papi_hl.o 
 
-$(MEMSUBSTR)-memory.o: $(MEMSUBSTR)-memory.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(MEMSUBSTR)-memory.c -o $(MEMSUBSTR)-memory.o
+$(MEMSUBSTRO): $(MEMSUBSTRC) $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(MEMSUBSTRC) -o $(MEMSUBSTRO)
 
 extras.o: extras.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c extras.c -o extras.o 
