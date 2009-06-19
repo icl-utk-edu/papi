@@ -1,10 +1,6 @@
 # $Id$
 # Makefile for the Performance-monitoring counters driver.
 
-ifeq ($(VERSION)$(PATCHLEVEL),24)
-include Makefile24
-else
-
 # We need -fno-unit-at-a-time with gcc-3.4 on x86 to avoid stack overflow.
 # Kernels >= 2.6.6 do that automatically but older ones do not, so we
 # unconditionally add that option here just in case.
@@ -45,5 +41,3 @@ obj-m			+= $(m-objs-m)
 
 obj-$(CONFIG_KPERFCTR)	+= kperfctr.o
 kperfctr-objs		:= $(kernel-objs-y)
-
-endif	# ifeq 24

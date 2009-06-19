@@ -1,7 +1,7 @@
 /* $Id$
  * x86/x86_64 performance-monitoring counters driver.
  *
- * Copyright (C) 1999-2008  Mikael Pettersson
+ * Copyright (C) 1999-2009  Mikael Pettersson
  */
 #include <linux/version.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
@@ -23,6 +23,7 @@
 #undef MSR_CORE_PERF_FIXED_CTR_CTRL
 #undef MSR_CORE_PERF_GLOBAL_CTRL
 #undef MSR_IA32_MISC_ENABLE
+#undef MSR_IA32_MISC_ENABLE_PEBS_UNAVAIL
 #undef MSR_IA32_DEBUGCTLMSR
 #include <asm/fixmap.h>
 #include <asm/apic.h>
@@ -283,7 +284,7 @@ static int p5_like_check_control(struct perfctr_cpu_state *state,
 	return 0;
 }
 
-static int p5_check_control(struct perfctr_cpu_state *state, int is_global)
+static int p5_check_control(struct perfctr_cpu_state *state, cpumask_t *cpumask)
 {
 	return p5_like_check_control(state, P5_CESR_RESERVED, 0);
 }
@@ -360,7 +361,7 @@ static const struct perfctr_pmu_msrs p5_pmu_msrs = {
  *   (and CESR bit 26 for PMC1).
  */
 
-static int mii_check_control(struct perfctr_cpu_state *state, int is_global)
+static int mii_check_control(struct perfctr_cpu_state *state, cpumask_t *cpumask)
 {
 	return p5_like_check_control(state, MII_CESR_RESERVED, 0);
 }
@@ -386,7 +387,7 @@ static int mii_check_control(struct perfctr_cpu_state *state, int is_global)
  */
 
 #if !defined(CONFIG_X86_TSC)
-static int c6_check_control(struct perfctr_cpu_state *state, int is_global)
+static int c6_check_control(struct perfctr_cpu_state *state, cpumask_t *cpumask)
 {
 	if (state->control.tsc_on)
 		return -EINVAL;
@@ -430,17 +431,20 @@ static void c6_write_control(const struct perfctr_cpu_state *state)
  */
 
 static int is_fam10h;
-static int k8_is_multicore;	/* affects northbridge events */
+static int amd_is_multicore;		/* northbridge events need special care */
+static int amd_is_k8_mc_RevE;
+static cpumask_t amd_mc_core0_mask;	/* only these may use NB events */
 static int p6_has_separate_enables;	/* affects EVNTSEL.ENable rules */
 static unsigned int p6_nr_pmcs;	/* number of general-purpose counters */
 static unsigned int p6_nr_ffcs;	/* number of fixed-function counters */
 
 /* shared with K7 */
-static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, int is_global)
+static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, cpumask_t *cpumask)
 {
 	unsigned int evntsel, i, nractrs, nrctrs, pmc_mask, pmc;
 	unsigned int core2_fixed_ctr_ctrl;
 	unsigned int max_nrctrs;
+	unsigned int amd_mc_nb_event_seen;
 
 	max_nrctrs = is_k7 ? 4 : p6_nr_pmcs + p6_nr_ffcs;
 
@@ -451,6 +455,7 @@ static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, int
 
 	pmc_mask = 0;
 	core2_fixed_ctr_ctrl = 0;	/* must be zero on CPUs != Core 2 */
+	amd_mc_nb_event_seen = 0;
 	for(i = 0; i < nrctrs; ++i) {
 		pmc = state->control.pmc_map[i];
 		state->pmc[i].map = pmc;
@@ -480,9 +485,14 @@ static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, int
 			state->control.evntsel_high[i] = 0;
 		/* check evntsel */
 		evntsel = state->control.evntsel[i];
-		/* prevent the K8 multicore NB event clobber erratum */
-		if (!is_global && k8_is_multicore && IS_K8_NB_EVENT(evntsel))
-			return -EPERM;
+		/* handle per-thread counting of AMD multicore northbridge events */
+		if (cpumask != NULL && amd_is_multicore && IS_K8_NB_EVENT(evntsel)) {
+			/* K8 RevE NB event erratum is incompatible with per-thread counters */
+			if (amd_is_k8_mc_RevE)
+				return -EPERM;
+			/* remember to restrict this session to amd_mc_core0_mask */
+			amd_mc_nb_event_seen = 1;
+		}
 		/* protect reserved bits */
 		if (evntsel & P6_EVNTSEL_RESERVED)
 			return -EPERM;
@@ -525,12 +535,14 @@ static int p6_like_check_control(struct perfctr_cpu_state *state, int is_k7, int
 	}
 	state->core2_fixed_ctr_ctrl = core2_fixed_ctr_ctrl;
 	state->k1.id = new_id();
+	if (amd_mc_nb_event_seen)
+		*cpumask = amd_mc_core0_mask;
 	return 0;
 }
 
-static int p6_check_control(struct perfctr_cpu_state *state, int is_global)
+static int p6_check_control(struct perfctr_cpu_state *state, cpumask_t *cpumask)
 {
-	return p6_like_check_control(state, 0, is_global);
+	return p6_like_check_control(state, 0, cpumask);
 }
 
 #ifdef CONFIG_X86_LOCAL_APIC
@@ -747,9 +759,9 @@ static const struct perfctr_pmu_msrs core2_pmu_msrs = {
  * have been widened to 64 bits.
  */
 
-static int k7_check_control(struct perfctr_cpu_state *state, int is_global)
+static int k7_check_control(struct perfctr_cpu_state *state, cpumask_t *cpumask)
 {
-	return p6_like_check_control(state, 1, is_global);
+	return p6_like_check_control(state, 1, cpumask);
 }
 
 #ifdef CONFIG_X86_LOCAL_APIC
@@ -797,7 +809,7 @@ static const struct perfctr_pmu_msrs k7_pmu_msrs = {
  * - No local APIC or interrupt-mode support.
  * - pmc_map[0] must be 1, if nractrs == 1.
  */
-static int vc3_check_control(struct perfctr_cpu_state *state, int is_global)
+static int vc3_check_control(struct perfctr_cpu_state *state, cpumask_t *cpumask)
 {
 	if (state->control.nrictrs || state->control.nractrs > 1)
 		return -EINVAL;
@@ -918,7 +930,7 @@ static int p4_IQ_ESCR_ok;	/* only models <= 2 can use IQ_ESCR{0,1} */
 static int p4_is_ht;		/* affects several CCCR & ESCR fields */
 static int p4_extended_cascade_ok;	/* only models >= 2 can use extended cascading */
 
-static int p4_check_control(struct perfctr_cpu_state *state, int is_global)
+static int p4_check_control(struct perfctr_cpu_state *state, cpumask_t *cpumask)
 {
 	unsigned int i, nractrs, nrctrs, pmc_mask;
 
@@ -966,7 +978,7 @@ static int p4_check_control(struct perfctr_cpu_state *state, int is_global)
 		escr_val = state->control.p4.escr[i];
 		if (escr_val & P4_ESCR_RESERVED)
 			return -EPERM;
-		if ((escr_val & P4_ESCR_CPL_T1) && (!p4_is_ht || !is_global))
+		if ((escr_val & P4_ESCR_CPL_T1) && (!p4_is_ht || cpumask != NULL))
 			return -EINVAL;
 		/* compute and cache ESCR address */
 		escr_addr = p4_escr_addr(pmc, cccr_val);
@@ -996,6 +1008,8 @@ static int p4_check_control(struct perfctr_cpu_state *state, int is_global)
 	} else if (state->control.p4.pebs_matrix_vert)
 		return -EPERM;
 	state->k1.id = new_id();
+	if (nrctrs != 0 && cpumask != NULL)
+		cpus_complement(*cpumask, perfctr_cpus_forbidden_mask);
 	return 0;
 }
 
@@ -1092,7 +1106,7 @@ static const struct perfctr_pmu_msrs p4_pmu_msrs_models_3up = {
  * Generic driver for any x86 with a working TSC.
  */
 
-static int generic_check_control(struct perfctr_cpu_state *state, int is_global)
+static int generic_check_control(struct perfctr_cpu_state *state, cpumask_t *cpumask)
 {
 	if (state->control.nractrs || state->control.nrictrs)
 		return -EINVAL;
@@ -1246,8 +1260,8 @@ static inline void setup_imode_start_values(struct perfctr_cpu_state *state) { }
 static inline void debug_no_imode(const struct perfctr_cpu_state *state) { }
 #endif	/* CONFIG_X86_LOCAL_APIC */
 
-static int (*check_control)(struct perfctr_cpu_state*, int);
-int perfctr_cpu_update_control(struct perfctr_cpu_state *state, int is_global)
+static int (*check_control)(struct perfctr_cpu_state*, cpumask_t*);
+int perfctr_cpu_update_control(struct perfctr_cpu_state *state, cpumask_t *cpumask)
 {
 	int err;
 
@@ -1260,7 +1274,7 @@ int perfctr_cpu_update_control(struct perfctr_cpu_state *state, int is_global)
 	    && state->control.nrictrs)
 		return -EPERM;
 
-	err = check_control(state, is_global);
+	err = check_control(state, cpumask);
 	if (err < 0)
 		return err;
 	err = check_ireset(state);
@@ -1819,44 +1833,90 @@ static int __init intel_init(void)
  * Multicore K8s have issues with northbridge events:
  * 1. The NB is shared between the cores, so two different cores
  *    in the same node cannot count NB events simultaneously.
- *    This can be handled by using perfctr_cpus_forbidden_mask to
- *    restrict NB-using threads to core0 of all nodes.
+ *    This is handled by using a cpumask to restrict NB-using
+ *    threads to core0 of all processors.
  * 2. The initial multicore chips (Revision E) have an erratum
  *    which causes the NB counters to be reset when either core
  *    reprograms its evntsels (even for non-NB events).
  *    This is only an issue because of scheduling of threads, so
  *    we restrict NB events to the non thread-centric API.
- *
- * For now we only implement the workaround for issue 2, as this
- * also handles issue 1.
- *
- * TODO: Detect post Revision E chips and implement a weaker
- * workaround for them.
  */
 #ifdef CONFIG_SMP
-static void __init k8_multicore_init_cpu(void *non0cores)
+struct amd_mc_init_data {
+	atomic_t non0core_seen;
+	cpumask_t core0_mask;
+};
+
+static void __init amd_mc_init_cpu(void *data)
 {
-	unsigned int core_id = cpuid_ebx(1) >> 27;
-	if (core_id != 0)
+	int cpu = smp_processor_id();
+	unsigned int apic_core_id_size, core_id;
+	struct amd_mc_init_data *amd_mc_init_data = data;
+
+	if ((cpuid_edx(1) & (1<<28)) == 0 ||		/* HTT is off */
+	    cpuid_eax(0x80000000) < 0x80000008)	{	/* no Core Count info */
+		/* each processor is single-core */
+		apic_core_id_size = 0;
+	} else {
+		unsigned int ecx = cpuid_ecx(0x80000008);
+
+		apic_core_id_size = (ecx >> 12) & 0xF; /* XXX: resvd in early CPUs */
+		if (apic_core_id_size == 0) {
+			unsigned int max_cores = (ecx & 0xFF) + 1;
+
+			while ((1 << apic_core_id_size) < max_cores)
+				++apic_core_id_size;
+		}
+	}
+
+	core_id = (cpuid_ebx(1) >> 24) & ((1 << apic_core_id_size) - 1);
+	printk(KERN_INFO "%s: cpu %d core_id %u\n", __FUNCTION__, cpu, core_id);
+
+	if (core_id != 0) {
+		atomic_set(&amd_mc_init_data->non0core_seen, 1);
+	} else {
 		/* We rely on cpu_set() being atomic! */
-		cpu_set(smp_processor_id(), *(cpumask_t*)non0cores);
+		cpu_set(cpu, amd_mc_init_data->core0_mask);
+	}
 }
 
-static void __init k8_multicore_init(void)
+static int __init amd_multicore_init(void)
 {
-	cpumask_t non0cores;
+	struct amd_mc_init_data amd_mc_init_data;
 
-	cpus_clear(non0cores);
-	smp_call_function(k8_multicore_init_cpu, &non0cores, 1);
-	k8_multicore_init_cpu(&non0cores);
-	if (cpus_empty(non0cores))
-		return;
-	k8_is_multicore = 1;
-	printk(KERN_INFO "perfctr/x86.c: multi-core K8s detected:"
-	       " restricting access to northbridge events\n");
+	atomic_set(&amd_mc_init_data.non0core_seen, 0);
+	cpus_clear(amd_mc_init_data.core0_mask);
+
+	smp_call_function(amd_mc_init_cpu, &amd_mc_init_data, 1);
+	amd_mc_init_cpu(&amd_mc_init_data);
+
+	if (atomic_read(&amd_mc_init_data.non0core_seen) == 0) {
+		printk(KERN_INFO "%s: !non0core_seen\n", __FUNCTION__);
+		return 0;
+	}
+#if 1	/* XXX: temporary sanity check, should be impossible */
+	if (cpus_empty(amd_mc_init_data.core0_mask)) {
+		printk(KERN_ERR "%s: Error: cpus_empty(core0_mask)\n", __FUNCTION__);
+		return -ENODEV;
+	}
+#endif
+
+	amd_is_multicore = 1;
+	if (current_cpu_data.x86 == 15 &&
+	    current_cpu_data.x86_model >= 0x20 &&
+	    current_cpu_data.x86_model < 0x40) {
+		amd_is_k8_mc_RevE = 1;
+		printk(KERN_INFO "perfctr/x86.c: multi-core K8 RevE detected:"
+		       " restricting access to northbridge events\n");
+	} else {
+		amd_mc_core0_mask = amd_mc_init_data.core0_mask;
+		printk(KERN_INFO "perfctr/x86.c: multi-core AMDs detected:"
+		       " forcing northbridge events to core0 CPUs\n");
+	}
+	return 0;
 }
 #else	/* CONFIG_SMP */
-#define k8_multicore_init()	do{}while(0)
+#define amd_multicore_init()	(0)
 #endif	/* CONFIG_SMP */
 
 static int __init amd_init(void)
@@ -1876,12 +1936,14 @@ static int __init amd_init(void)
 		} else {
 			perfctr_info.cpu_type = PERFCTR_X86_AMD_K8;
 		}
-		k8_multicore_init();
+		if (amd_multicore_init() < 0)
+			return -ENODEV;
 		break;
 	case 16:
 		is_fam10h = 1;
 		perfctr_info.cpu_type = PERFCTR_X86_AMD_FAM10H;
-		k8_multicore_init();
+		if (amd_multicore_init() < 0)
+			return -ENODEV;
 		break;
 	default:
 		return -ENODEV;
@@ -2054,8 +2116,6 @@ static void perfctr_pm_resume(void)
 	printk("perfctr/x86: PM resume\n");
 }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,71)
-
 #include <linux/sysdev.h>
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,14)
@@ -2104,38 +2164,6 @@ static void x86_pm_exit(void)
 	sysdev_class_unregister(&perfctr_sysclass);
 }
 
-#else	/* 2.4 kernel */
-
-static int x86_pm_callback(struct pm_dev *dev, pm_request_t rqst, void *data)
-{
-	switch (rqst) {
-	case PM_SUSPEND:
-		perfctr_pm_suspend();
-		break;
-	case PM_RESUME:
-		perfctr_pm_resume();
-		break;
-	}
-	return 0;
-}
-
-static struct pm_dev *x86_pmdev;
-
-static void x86_pm_init(void)
-{
-	x86_pmdev = apic_pm_register(PM_SYS_DEV, 0, x86_pm_callback);
-}
-
-static void x86_pm_exit(void)
-{
-	if (x86_pmdev) {
-		apic_pm_unregister(x86_pmdev);
-		x86_pmdev = NULL;
-	}
-}
-
-#endif	/* 2.4 kernel */
-
 #else	/* CONFIG_X86_LOCAL_APIC && CONFIG_PM */
 
 static inline void x86_pm_init(void) { }
@@ -2144,18 +2172,6 @@ static inline void x86_pm_exit(void) { }
 #endif	/* CONFIG_X86_LOCAL_APIC && CONFIG_PM */
 
 #ifdef CONFIG_X86_LOCAL_APIC
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,67)
-static void disable_lapic_nmi_watchdog(void)
-{
-#ifdef CONFIG_PM
-	if (nmi_pmdev) {
-		apic_pm_unregister(nmi_pmdev);
-		nmi_pmdev = 0;
-	}
-#endif
-}
-#endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,6)
 static int reserve_lapic_nmi(void)

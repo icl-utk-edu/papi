@@ -1,7 +1,7 @@
 /* $Id$
  * ARM/XScale performance-monitoring counters driver.
  *
- * Copyright (C) 2005-2007  Mikael Pettersson
+ * Copyright (C) 2005-2009  Mikael Pettersson
  */
 #include <linux/version.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
@@ -12,6 +12,7 @@
 #include <linux/init.h>
 #include <linux/sched.h>
 #include <linux/perfctr.h>
+#include <asm/cputype.h>
 
 #include "compat.h"
 
@@ -659,7 +660,7 @@ static int check_control(struct perfctr_cpu_state *state)
 	return xscale_check_control(state);
 }
 
-int perfctr_cpu_update_control(struct perfctr_cpu_state *state, int is_global)
+int perfctr_cpu_update_control(struct perfctr_cpu_state *state, cpumask_t *cpumask)
 {
 	int err;
 

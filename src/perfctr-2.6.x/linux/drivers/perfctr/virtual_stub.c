@@ -2,7 +2,7 @@
  * Kernel stub used to support virtual perfctrs when the
  * perfctr driver is built as a module.
  *
- * Copyright (C) 2000-2008  Mikael Pettersson
+ * Copyright (C) 2000-2009  Mikael Pettersson
  */
 #include <linux/version.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
@@ -55,7 +55,7 @@ struct vperfctr_stub vperfctr_stub = {
  * count before the call, and decrement it again afterwards. Thus,
  * the final drop to zero occurs here and not in the module itself.
  * (All other code paths that drop the use count do so via a file
- * object, and VFS in 2.4+ kernels also refcount the module.)
+ * object, and VFS also refcounts the module.)
  */
 void _vperfctr_exit(struct vperfctr *perfctr)
 {
@@ -78,7 +78,7 @@ EXPORT_SYMBOL(vperfctr_stub);
 EXPORT_SYMBOL___put_task_struct;
 
 #if !defined(CONFIG_UTRACE)
-#include <linux/mm.h> /* for 2.4.15 and up, except 2.4.20-8-redhat */
-#include <linux/ptrace.h> /* for 2.5.32 and up, and 2.4.20-8-redhat */
+#include <linux/mm.h>
+#include <linux/ptrace.h>
 EXPORT_SYMBOL(ptrace_check_attach);
 #endif

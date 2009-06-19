@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * x86/x86_64-specific kernel-resident code.
  *
- * Copyright (C) 1999-2007  Mikael Pettersson
+ * Copyright (C) 1999-2007, 2009  Mikael Pettersson
  */
 #include <linux/version.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
@@ -19,48 +19,6 @@
 #include <asm/apic.h>
 #include "x86_compat.h"
 #include "compat.h"
-
-/* XXX: belongs to a virtual_compat.c file */
-#if defined(CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK) && defined(CONFIG_PERFCTR_VIRTUAL) && LINUX_VERSION_CODE < KERNEL_VERSION(2,4,21) && !defined(HAVE_SET_CPUS_ALLOWED)
-/**
- * set_cpus_allowed() - change a given task's processor affinity
- * @p: task to bind
- * @new_mask: bitmask of allowed processors
- *
- * Upon return, the task is running on a legal processor.  Note the caller
- * must have a valid reference to the task: it must not exit() prematurely.
- * This call can sleep; do not hold locks on call.
- */
-void set_cpus_allowed(struct task_struct *p, unsigned long new_mask)
-{
-	new_mask &= cpu_online_map;
-	BUG_ON(!new_mask);
-
-	/* This must be our own, safe, call from sys_vperfctr_control(). */
-
-	p->cpus_allowed = new_mask;
-
-	/*
-	 * If the task is on a no-longer-allowed processor, we need to move
-	 * it.  If the task is not current, then set need_resched and send
-	 * its processor an IPI to reschedule.
-	 */
-	if (!(p->cpus_runnable & p->cpus_allowed)) {
-		if (p != current) {
-			p->need_resched = 1;
-			smp_send_reschedule(p->processor);
-		}
-		/*
-		 * Wait until we are on a legal processor.  If the task is
-		 * current, then we should be on a legal processor the next
-		 * time we reschedule.  Otherwise, we need to wait for the IPI.
-		 */
-		while (!(p->cpus_runnable & p->cpus_allowed))
-			schedule();
-	}
-}
-EXPORT_SYMBOL(set_cpus_allowed);
-#endif
 
 #ifdef CONFIG_X86_LOCAL_APIC
 static void perfctr_default_ihandler(unsigned long pc)
@@ -105,7 +63,6 @@ extern unsigned int cpu_khz;
 extern unsigned long cpu_khz;
 #endif
 
-/* Wrapper to avoid namespace clash in RedHat 8.0's 2.4.18-14 kernel. */
 unsigned int perfctr_cpu_khz(void)
 {
 	return cpu_khz;
@@ -130,12 +87,6 @@ EXPORT_SYMBOL(stop_apic_nmi_watchdog);
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,6)
 EXPORT_SYMBOL(nmi_perfctr_msr);
-#endif
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,67) && defined(CONFIG_PM)
-EXPORT_SYMBOL(apic_pm_register);
-EXPORT_SYMBOL(apic_pm_unregister);
-EXPORT_SYMBOL(nmi_pmdev);
 #endif
 
 EXPORT_SYMBOL(__perfctr_cpu_mask_interrupts);

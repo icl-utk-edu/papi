@@ -1,7 +1,7 @@
 /* $Id$
  * x86/x86_64 Performance-Monitoring Counters driver
  *
- * Copyright (C) 1999-2008  Mikael Pettersson
+ * Copyright (C) 1999-2009  Mikael Pettersson
  */
 #ifndef _ASM_X86_PERFCTR_H
 #define _ASM_X86_PERFCTR_H
@@ -164,10 +164,12 @@ extern void perfctr_cpu_release(const char *service);
 /* PRE: state has no running interrupt-mode counters.
    Check that the new control data is valid.
    Update the driver's private control data.
-   is_global should be zero for per-process counters and non-zero
-   for global-mode counters. This matters for HT P4s, alas.
+   cpumask must be NULL for global-mode counters and non-NULL
+   for per-thread counters. If cpumask is non-NULL and the control
+   data requires the task to be restricted to a specific set of
+   CPUs, then *cpumask will be updated accordingly.
    Returns a negative error code if the control data is invalid. */
-extern int perfctr_cpu_update_control(struct perfctr_cpu_state *state, int is_global);
+extern int perfctr_cpu_update_control(struct perfctr_cpu_state *state, cpumask_t *cpumask);
 
 /* Read a-mode counters. Subtract from start and accumulate into sums.
    Must be called with preemption disabled. */

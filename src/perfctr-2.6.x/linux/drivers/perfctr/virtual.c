@@ -1,7 +1,7 @@
 /* $Id$
  * Virtual per-process performance counters.
  *
- * Copyright (C) 1999-2008  Mikael Pettersson
+ * Copyright (C) 1999-2009  Mikael Pettersson
  */
 #include <linux/version.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
@@ -10,7 +10,7 @@
 #define __NO_VERSION__
 #include <linux/module.h>
 #include <linux/init.h>
-#include <linux/compiler.h>	/* for unlikely() in 2.4.18 and older */
+#include <linux/compiler.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/ptrace.h>
@@ -44,7 +44,9 @@ struct vperfctr {
 	unsigned int sampling_timer ____cacheline_aligned;
 #ifdef CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK
 	atomic_t bad_cpus_allowed;
+	cpumask_t cpumask;
 #endif
+	pid_t updater_tgid;	/* to detect self vs remote vperfctr_control races */
 #if 0 && defined(CONFIG_PERFCTR_DEBUG)
 	unsigned start_smp_id;
 	unsigned suspended;
@@ -126,6 +128,11 @@ static inline void vperfctr_init_bad_cpus_allowed(struct vperfctr *perfctr)
 	atomic_set(&perfctr->bad_cpus_allowed, 0);
 }
 
+static inline void vperfctr_init_cpumask(struct vperfctr *perfctr)
+{
+	cpus_setall(perfctr->cpumask);
+}
+
 /* Concurrent set_cpus_allowed() is possible. The only lock it
    can take is the task lock, so we have to take it as well.
    task_lock/unlock also disables/enables preemption. */
@@ -143,6 +150,8 @@ static inline void vperfctr_task_unlock(struct task_struct *p)
 #else	/* !CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK */
 
 static inline void vperfctr_init_bad_cpus_allowed(struct vperfctr *perfctr) { }
+
+static inline void vperfctr_init_cpumask(struct vperfctr *perfctr) { }
 
 /* Concurrent set_cpus_allowed() is impossible or irrelevant.
    Disabling and enabling preemption suffices for an atomic region. */
@@ -254,6 +263,7 @@ static struct vperfctr *get_empty_vperfctr(void)
 	if (!IS_ERR(perfctr)) {
 		atomic_set(&perfctr->count, 1);
 		vperfctr_init_bad_cpus_allowed(perfctr);
+		vperfctr_init_cpumask(perfctr);
 		spin_lock_init(&perfctr->owner_lock);
 		debug_init(perfctr);
 	}
@@ -490,10 +500,7 @@ void __vperfctr_set_cpus_allowed(struct task_struct *owner,
 				 struct vperfctr *perfctr,
 				 cpumask_t new_mask)
 {
-	cpumask_t tmp;
-
-	cpus_and(tmp, new_mask, perfctr_cpus_forbidden_mask);
-	if (!cpus_empty(tmp)) {
+	if (!cpus_subset(new_mask, perfctr->cpumask)) {
 		atomic_set(&perfctr->bad_cpus_allowed, 1);
 		printk(KERN_WARNING "perfctr: process %d (comm %s) issued unsafe"
 		       " set_cpus_allowed() on process %d (comm %s)\n",
@@ -521,6 +528,7 @@ static int sys_vperfctr_control(struct vperfctr *perfctr,
 	int err;
 	unsigned int next_cstatus;
 	unsigned int nrctrs, i;
+	cpumask_t cpumask;
 
 	if (!tsk)
 		return -ESRCH;	/* attempt to update unlinked perfctr */
@@ -529,20 +537,9 @@ static int sys_vperfctr_control(struct vperfctr *perfctr,
 	if (err)
 		return err;
 
-	if (control.cpu_control.nractrs || control.cpu_control.nrictrs) {
-		cpumask_t old_mask, new_mask;
-
-		old_mask = tsk->cpus_allowed;
-		cpus_andnot(new_mask, old_mask, perfctr_cpus_forbidden_mask);
-
-		if (cpus_empty(new_mask))
-			return -EINVAL;
-		if (!cpus_equal(new_mask, old_mask))
-			set_cpus_allowed(tsk, new_mask);
-	}
-
-	/* PREEMPT note: preemption is disabled over the entire
-	   region since we're updating an active perfctr. */
+	/* Step 1: Update the control but keep the counters disabled.
+	   PREEMPT note: Preemption is disabled since we're updating
+	   an active perfctr. */
 	preempt_disable();
 	if (IS_RUNNING(perfctr)) {
 		if (tsk == current)
@@ -552,30 +549,76 @@ static int sys_vperfctr_control(struct vperfctr *perfctr,
 	}
 	perfctr->cpu_state.control = control.cpu_control;
 	/* remote access note: perfctr_cpu_update_control() is ok */
-	err = perfctr_cpu_update_control(&perfctr->cpu_state, 0);
-	if (err < 0)
-		goto out;
-	next_cstatus = perfctr->cpu_state.cstatus;
+	cpus_setall(cpumask);
+#ifdef CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK
+	/* make a stopped vperfctr have an unconstrained cpumask */
+	perfctr->cpumask = cpumask;
+#endif
+	err = perfctr_cpu_update_control(&perfctr->cpu_state, &cpumask);
+	if (err < 0) {
+		next_cstatus = 0;
+	} else {
+		next_cstatus = perfctr->cpu_state.cstatus;
+		perfctr->cpu_state.cstatus = 0;
+		perfctr->updater_tgid = current->tgid;
+#ifdef CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK
+		perfctr->cpumask = cpumask;
+#endif
+	}
+	preempt_enable_no_resched();
+
 	if (!perfctr_cstatus_enabled(next_cstatus))
-		goto out;
+		return err;
 
-	/* XXX: validate si_signo? */
-	perfctr->si_signo = control.si_signo;
+#ifdef CONFIG_PERFCTR_CPUS_FORBIDDEN_MASK
+	/* Step 2: Update the task's CPU affinity mask.
+	   PREEMPT note: Preemption must be enabled for set_cpus_allowed(). */
+	if (control.cpu_control.nractrs || control.cpu_control.nrictrs) {
+		cpumask_t old_mask, new_mask;
 
-	if (!perfctr_cstatus_has_tsc(next_cstatus))
-		perfctr->cpu_state.tsc_sum = 0;
+		old_mask = tsk->cpus_allowed;
+		cpus_and(new_mask, old_mask, cpumask);
 
-	nrctrs = perfctr_cstatus_nrctrs(next_cstatus);
-	for(i = 0; i < nrctrs; ++i)
-		if (!(control.preserve & (1<<i)))
-			perfctr->cpu_state.pmc[i].sum = 0;
+		if (cpus_empty(new_mask))
+			return -EINVAL;
+		if (!cpus_equal(new_mask, old_mask))
+			set_cpus_allowed(tsk, new_mask);
+	}
+#endif
 
-	perfctr->flags = control.flags;
+	/* Step 3: Enable the counters with the new control and affinity.
+	   PREEMPT note: Preemption is disabled since we're updating
+	   an active perfctr. */
+	preempt_disable();
 
-	if (tsk == current)
-		vperfctr_resume(perfctr);
+	/* We had to enable preemption above for set_cpus_allowed() so we may
+	   have lost a race with a concurrent update via the remote control
+	   interface. If so then we must abort our update of this perfctr. */
+	if (perfctr->updater_tgid != current->tgid) {
+		printk(KERN_WARNING "perfctr: control update by task %d"
+		       " was lost due to race with update by task %d\n",
+		       current->tgid, perfctr->updater_tgid);
+		err = -EBUSY;
+	} else {
+		/* XXX: validate si_signo? */
+		perfctr->si_signo = control.si_signo;
 
- out:
+		perfctr->cpu_state.cstatus = next_cstatus;
+
+		if (!perfctr_cstatus_has_tsc(next_cstatus))
+			perfctr->cpu_state.tsc_sum = 0;
+
+		nrctrs = perfctr_cstatus_nrctrs(next_cstatus);
+		for(i = 0; i < nrctrs; ++i)
+			if (!(control.preserve & (1<<i)))
+				perfctr->cpu_state.pmc[i].sum = 0;
+
+		perfctr->flags = control.flags;
+
+		if (tsk == current)
+			vperfctr_resume(perfctr);
+	}
+
 	preempt_enable();
 	return err;
 }
@@ -689,9 +732,18 @@ static int vperfctr_mmap(struct file *filp, struct vm_area_struct *vma)
 	perfctr = filp->private_data;
 	if (!perfctr)
 		return -EPERM;
+	/* 2.6.29-rc1 changed arch/x86/mm/pat.c to WARN_ON when
+	   remap_pfn_range() is applied to plain RAM pages.
+	   Comments there indicate that one should set_memory_wc()
+	   before the remap, but that doesn't silence the WARN_ON.
+	   Luckily vm_insert_page() works without complaints. */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,29)
+	return vm_insert_page(vma, vma->vm_start, virt_to_page((unsigned long)perfctr));
+#else
 	return remap_pfn_range(vma, vma->vm_start,
 			       virt_to_phys(perfctr) >> PAGE_SHIFT,
 			       PAGE_SIZE, vma->vm_page_prot);
+#endif
 }
 
 static int vperfctr_release(struct inode *inode, struct file *filp)
@@ -796,10 +848,7 @@ struct file_operations vperfctr_file_ops = {
 
 #define VPERFCTRFS_MAGIC (('V'<<24)|('P'<<16)|('M'<<8)|('C'))
 
-/* The code to set up a `struct file_system_type' for a pseudo fs
-   is unfortunately not the same in 2.4 and 2.6. */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,0)
-#include <linux/mount.h> /* needed for 2.6, included by fs.h in 2.4 */
+#include <linux/mount.h>
 
 /* 2.6 kernels prior to 2.6.11-rc1 don't EXPORT_SYMBOL() get_sb_pseudo().
    This is a verbatim copy, only renamed. */
@@ -874,60 +923,6 @@ static struct file_system_type vperfctrfs_type = {
 	.kill_sb	= kill_anon_super,
 };
 
-#else	/* 2.4 */
-
-static int vperfctrfs_statfs(struct super_block *sb, struct statfs *buf)
-{
-	buf->f_type = VPERFCTRFS_MAGIC;
-	buf->f_bsize = 1024;
-	buf->f_namelen = 255;
-	return 0;
-}
-
-static struct super_operations vperfctrfs_ops = {
-	.statfs = vperfctrfs_statfs,
-};
-
-static struct super_block*
-vperfctrfs_read_super(struct super_block *sb, void *data, int silent)
-{
-	static const struct qstr d_name = { "vperfctrfs:", 11, 0 };
-	struct dentry *dentry;
-	struct inode *root;
-
-	root = new_inode(sb);
-	if (!root)
-		return NULL;
-	root->i_mode = S_IFDIR | S_IRUSR | S_IWUSR;
-	root->i_uid = root->i_gid = 0;
-	root->i_atime = root->i_mtime = root->i_ctime = CURRENT_TIME;
-	sb->s_blocksize = 1024;
-	sb->s_blocksize_bits = 10;
-	sb->s_magic = VPERFCTRFS_MAGIC;
-	sb->s_op = &vperfctrfs_ops; /* XXX: check if 2.4 really needs this */
-	sb->s_root = dentry = d_alloc(NULL, &d_name);
-	if (!dentry) {
-		iput(root);
-		return NULL;
-	}
-	dentry->d_sb = sb;
-	dentry->d_parent = dentry;
-	d_instantiate(dentry, root);
-	return sb;
-}
-
-/* DECLARE_FSTYPE() hides 'owner: THIS_MODULE'. kern_mount() increments
-   owner's use count, and since we're not unmountable from user-space,
-   the module can't be unloaded because it's use count is >= 1.
-   So we declare the file_system_type manually without the owner field. */
-static struct file_system_type vperfctrfs_type = {
-	.name		= "vperfctrfs",
-	.read_super	= vperfctrfs_read_super,
-	.fs_flags	= FS_NOMOUNT,
-};
-
-#endif	/* 2.4 */
-
 /* XXX: check if s/vperfctr_mnt/vperfctrfs_type.kern_mnt/ would work */
 static struct vfsmount *vperfctr_mnt;
 
@@ -960,8 +955,8 @@ static struct inode *vperfctr_get_inode(void)
 	inode->i_fop = &vperfctr_file_ops;
 	inode->i_state = I_DIRTY;
 	inode->i_mode = S_IFCHR | S_IRUSR | S_IWUSR;
-	inode->i_uid = current->fsuid;
-	inode->i_gid = current->fsgid;
+	inode->i_uid = current_fsuid();
+	inode->i_gid = current_fsgid();
 	inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19) && !defined(DONT_HAVE_i_blksize)
 	inode->i_blksize = 0;
@@ -985,7 +980,11 @@ static int vperfctrfs_delete_dentry(struct dentry *dentry)
 #endif
 }
 
-static struct dentry_operations vperfctrfs_dentry_operations = {
+static
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,30)
+const
+#endif
+struct dentry_operations vperfctrfs_dentry_operations = {
 	.d_delete	= vperfctrfs_delete_dentry,
 };
 

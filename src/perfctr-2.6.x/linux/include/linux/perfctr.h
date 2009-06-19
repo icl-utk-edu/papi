@@ -1,7 +1,7 @@
 /* $Id$
  * Performance-Monitoring Counters driver
  *
- * Copyright (C) 1999-2008  Mikael Pettersson
+ * Copyright (C) 1999-2009  Mikael Pettersson
  */
 #ifndef _LINUX_PERFCTR_H
 #define _LINUX_PERFCTR_H
@@ -117,13 +117,6 @@ extern int sys_perfctr_cpus_forbidden(struct perfctr_cpu_mask*);
 #endif	/* CONFIG_KPERFCTR */
 
 #ifdef __KERNEL__
-
-/* Needed for perfctr_set_cpus_allowed() prototype. */
-#include <linux/version.h>
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0) && !defined(HAVE_CPUMASK_T)
-typedef unsigned long cpumask_t;
-#define PERFCTR_HAVE_CPUMASK_T
-#endif
 
 #ifdef CONFIG_PERFCTR_VIRTUAL
 

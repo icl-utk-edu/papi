@@ -2,13 +2,9 @@
  * Performance-monitoring counters driver.
  * Compatibility definitions for 2.6 kernels.
  *
- * Copyright (C) 1999-2007  Mikael Pettersson
+ * Copyright (C) 1999-2009  Mikael Pettersson
  */
 #include <linux/version.h>
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
-#include "compat24.h"
-#else
 
 #include "cpumask.h"
 
@@ -108,4 +104,8 @@ static inline int perfctr_on_each_cpu(
 #define on_each_cpu(f,i,w)	perfctr_on_each_cpu((f),(i),(w))
 #endif
 
+/* 2.6.29-rc1 changed how ->fsuid and ->fsgid are accessed */
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,29)) && !defined(current_fsuid)
+#define current_fsuid()	(current->fsuid)
+#define current_fsgid()	(current->fsgid)
 #endif

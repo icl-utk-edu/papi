@@ -2,7 +2,7 @@
  * Performance-monitoring counters driver.
  * Top-level initialisation code.
  *
- * Copyright (C) 1999-2007  Mikael Pettersson
+ * Copyright (C) 1999-2007, 2009  Mikael Pettersson
  */
 #include <linux/version.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
@@ -27,9 +27,6 @@ MODULE_AUTHOR("Mikael Pettersson <mikpe@it.uu.se>");
 MODULE_DESCRIPTION("Performance-monitoring counters driver");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("char-major-10-182");
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,63)
-EXPORT_NO_SYMBOLS;
-#endif
 
 #ifdef CONFIG_PERFCTR_DEBUG
 #define VERSION_DEBUG " DEBUG"
@@ -94,35 +91,26 @@ int sys_perfctr_cpus_forbidden(struct perfctr_cpu_mask *argp)
 
 #if defined(CONFIG_IA32_EMULATION) && !HAVE_COMPAT_IOCTL
 #include <asm/ioctl32.h>
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,4,23)
-static int perfctr_ioctl32_handler(unsigned int fd, unsigned int cmd, unsigned long arg, struct file *filp)
-{
-	/* filp->f_op->ioctl is known to exist; see sys32_ioctl() */
-	return filp->f_op->ioctl(filp->f_dentry->d_inode, filp, cmd, arg);
-}
-#else
-#define perfctr_ioctl32_handler	0
-#endif
 
 static void __init perfctr_register_ioctl32_conversions(void)
 {
 	int err;
 
-	err  = register_ioctl32_conversion(PERFCTR_ABI, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(PERFCTR_INFO, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(PERFCTR_CPUS, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(PERFCTR_CPUS_FORBIDDEN, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(VPERFCTR_CREAT, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(VPERFCTR_OPEN, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(VPERFCTR_READ_SUM, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(VPERFCTR_UNLINK, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(VPERFCTR_CONTROL, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(VPERFCTR_IRESUME, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(VPERFCTR_READ_CONTROL, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(GPERFCTR_CONTROL, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(GPERFCTR_READ, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(GPERFCTR_STOP, perfctr_ioctl32_handler);
-	err |= register_ioctl32_conversion(GPERFCTR_START, perfctr_ioctl32_handler);
+	err  = register_ioctl32_conversion(PERFCTR_ABI, 0);
+	err |= register_ioctl32_conversion(PERFCTR_INFO, 0);
+	err |= register_ioctl32_conversion(PERFCTR_CPUS, 0);
+	err |= register_ioctl32_conversion(PERFCTR_CPUS_FORBIDDEN, 0);
+	err |= register_ioctl32_conversion(VPERFCTR_CREAT, 0);
+	err |= register_ioctl32_conversion(VPERFCTR_OPEN, 0);
+	err |= register_ioctl32_conversion(VPERFCTR_READ_SUM, 0);
+	err |= register_ioctl32_conversion(VPERFCTR_UNLINK, 0);
+	err |= register_ioctl32_conversion(VPERFCTR_CONTROL, 0);
+	err |= register_ioctl32_conversion(VPERFCTR_IRESUME, 0);
+	err |= register_ioctl32_conversion(VPERFCTR_READ_CONTROL, 0);
+	err |= register_ioctl32_conversion(GPERFCTR_CONTROL, 0);
+	err |= register_ioctl32_conversion(GPERFCTR_READ, 0);
+	err |= register_ioctl32_conversion(GPERFCTR_STOP, 0);
+	err |= register_ioctl32_conversion(GPERFCTR_START, 0);
 	if( err )
 		printk(KERN_ERR "perfctr: register_ioctl32_conversion() failed\n");
 }
