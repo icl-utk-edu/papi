@@ -160,7 +160,7 @@ INC_IA32=$(PFMINCDIR)/perfmon/perfmon_pebs_core_smpl.h \
   $(PFMINCDIR)/perfmon/pfmlib_os_i386.h \
   amd64_events.h  i386_p6_events.h \
   pentium4_events.h gen_ia32_events.h coreduo_events.h core_events.h \
-  intel_atom_events.h intel_nehalem_events.h
+  intel_atom_events.h intel_corei7_events.h intel_corei7_unc_events.h
 
 INC_X86_64= $(PFMINCDIR)/perfmon/perfmon_pebs_core_smpl.h \
   $(PFMINCDIR)/perfmon/perfmon_pebs_p4_smpl.h \
@@ -173,7 +173,7 @@ INC_X86_64= $(PFMINCDIR)/perfmon/perfmon_pebs_core_smpl.h \
   $(PFMINCDIR)/perfmon/pfmlib_comp_x86_64.h \
   $(PFMINCDIR)/perfmon/pfmlib_os_x86_64.h \
   amd64_events.h pentium4_events.h gen_ia32_events.h core_events.h \
-  intel_atom_events.h intel_nehalem_events.h
+  intel_atom_events.h intel_corei7_events.h intel_corei7_unc_events.h
 
 INC_MIPS64= $(PFMINCDIR)/perfmon/pfmlib_gen_mips64.h \
   $(PFMINCDIR)/perfmon/pfmlib_comp_mips64.h \

@@ -11,7 +11,8 @@ masks
 .BI "int pfm_find_full_event(const char *"str ", pfmlib_event_t *"e ");"
 .BI "int pfm_find_event_bycode(int "code ", unsigned int *"desc ");"
 .BI "int pfm_find_event_bycode_next(unsigned int "desc1 ", int "code ", unsigned int *"desc ");"
-.BI "int pfm_find_event_mask(unsigned int *"idx ", const char *"str ", unsigned int *"mask_idx ");"
+.BI "int pfm_find_event_mask(unsigned int "idx ", const char *"str ", unsigned int *"mask_idx ");"
+
 .sp
 .SH DESCRIPTION
 The PMU counters can be programmed to count the number of occurrences

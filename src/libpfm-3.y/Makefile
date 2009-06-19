@@ -32,7 +32,7 @@ DIRS=lib include docs
 EXAMPLES_DIRS = examples_v2.x
 
 ifneq ($(CONFIG_PFMLIB_OLD_PFMV2),y)
-EXAMPLES_DIRS += examples
+EXAMPLES_DIRS += examples_v3.x
 endif
 
 ifeq ($(ARCH),ia64)

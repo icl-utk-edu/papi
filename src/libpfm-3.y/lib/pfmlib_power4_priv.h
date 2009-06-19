@@ -27,6 +27,7 @@
 
 typedef struct {
    char *pme_name;
+   unsigned pme_code;
    char *pme_short_desc;
    char *pme_long_desc;
    int pme_event_ids[POWER4_NUM_EVENT_COUNTERS];
