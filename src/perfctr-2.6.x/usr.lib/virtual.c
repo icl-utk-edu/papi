@@ -1,7 +1,7 @@
 /* $Id$
  * Library interface to virtual per-process performance counters.
  *
- * Copyright (C) 1999-2008  Mikael Pettersson
+ * Copyright (C) 1999-2009  Mikael Pettersson
  */
 
 #include <stdio.h>
@@ -345,6 +345,11 @@ int rvperfctr_control(const struct rvperfctr *rvperfctr,
 int rvperfctr_stop(const struct rvperfctr *rvperfctr)
 {
     return vperfctr_stop(&rvperfctr->vperfctr);
+}
+
+int rvperfctr_iresume(const struct rvperfctr *rvperfctr)
+{
+    return vperfctr_iresume(&rvperfctr->vperfctr);
 }
 
 int rvperfctr_unlink(const struct rvperfctr *rvperfctr)

@@ -7,7 +7,7 @@ $Id$
 
 Overview
 --------
-This package adds support to the Linux kernel (2.4.16 or newer)
+This package adds support to the Linux kernel (2.6.0 or newer)
 for using the Performance-Monitoring Counters (PMCs) found in
 many modern processors. Supported processors are:
 - All Intel x86 family 5, 6, and 15 processors, i.e., Pentium,
@@ -68,21 +68,8 @@ where such support exists in the processors.
 
 Limitations
 -----------
-- Kernels older than 2.4.16 are not supported since perfctr-2.6.
-  You can use the previous stable series, perfctr-2.4, if you
-  must use an older kernel, but this has several limitations:
-  * Older kernels do not support AMD64 (x86-64).
-  * The performance counters in hyper-threaded P4s/Xeons cannot
-    be used with kernels older than 2.4.15. You'd have to disable
-    hyper-threading or SMP, or restrict yourself to TSC sampling.
-  * No profiling using counter overflow interrupts, except in 2.4.10
-    and newer kernels, and some early 2.4-ac/redhat kernels.
-  * Application code compiled for perfctr-2.4 is not compatible
-    with perfctr-2.6, and vice versa.
-  * The perfctr-2.4 series does not support 2.6 kernels.
-  Some of these limitations may be fixable. Contact the author if
-  you are willing to fund development in this direction.
-- The performance counter interrupt facility requires SMP or
+- Kernels older than 2.6.0 are not supported.
+- The performance counter interrupt facility on x86 requires SMP or
   uniprocessor APIC support. In the latter case, the BIOS must be
   reasonably non-buggy. Unfortunately, this is often not the case.
 - Almost no documentation. "Use the source, Luke."
@@ -112,7 +99,7 @@ and its usage. To subscribe to perfctr-devel, visit
 
 Licensing
 ---------
-Copyright (C) 1999-2008  Mikael Pettersson <mikpe@it.uu.se>
+Copyright (C) 1999-2009  Mikael Pettersson <mikpe@it.uu.se>
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public

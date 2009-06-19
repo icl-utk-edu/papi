@@ -1,6 +1,6 @@
 Name: perfctr
 Summary: Linux performance monitoring counters software
-Version: 2.6.37
+Version: 2.6.39
 Release: 1
 License: LGPL
 Group: Development/Tools
@@ -58,24 +58,6 @@ rm -rf %{buildroot}
 %doc README CHANGES TODO OTHER
 
 %post
-function fix_mod_config() {
-    filename="$1"
-    tmpfile="$filename.perfctr-tmp"
-
-    if [ -f "$filename" ]; then
-	if LC_ALL=C fgrep -q 'alias char-major-10-182 perfctr' "$filename" ; then
-	    :
-	else
-	    cat "$filename" > "$tmpfile"
-	    echo 'alias char-major-10-182 perfctr' >> "$tmpfile"
-	    cp -f -- "$tmpfile" "$filename"
-	    rm -f -- "$tmpfile"
-	fi
-    fi
-}
-
-fix_mod_config /etc/modules.conf
-
 if [ ! -c /dev/perfctr ]; then
     mknod -m 644 /dev/perfctr c 10 182
 fi
@@ -99,6 +81,9 @@ fi
 
 
 %changelog
+* Fri Jan 23 2009 Mikael Pettersson <mikpe@it.uu.se> -
+- Remove 2.4 kernel support: do not fix up /etc/modules.conf.
+
 * Sun Oct 07 2007 Mikael Pettersson <mikpe@it.uu.se> -
 - Corrected URL.
 

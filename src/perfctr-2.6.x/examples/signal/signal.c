@@ -4,10 +4,10 @@
  * can be caught and sent to the process as a user-specified signal.
  *
  * Limitations:
- * - Requires a 2.4 or newer kernel with local APIC support.
- * - Requires a CPU with a local APIC (P4, P6, K8, K7).
+ * - x86 requires a kernel with local APIC support.
+ * - x86 requires a CPU with a local APIC.
  *
- * Copyright (C) 2001-2004  Mikael Pettersson
+ * Copyright (C) 2001-2004, 2009  Mikael Pettersson
  */
 #define __USE_GNU /* enable symbolic names for gregset_t[] indices */
 #include <sys/ucontext.h>
@@ -37,7 +37,7 @@ static void do_open(void)
 }
 
 #if defined(__powerpc__)
-/* It seems that the 2.4 PPC32 Linux kernels do not clear the high
+/* It seems that the PPC32 Linux kernels do not clear the high
    bits of the si_code when copying the siginfo_t to user-space.
    This works around that. */
 #define get_si_code(SI)	((SI) & 0xFFFF)

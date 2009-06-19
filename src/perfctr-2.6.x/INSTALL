@@ -144,10 +144,7 @@ this device must be created. As root, execute:
 If the driver was built as a module, it will be have to be loaded
 into the kernel before it can be used. This will happen automatically
 if the kernel was built with support for the kernel module loader
-(CONFIG_KMOD=y). For 2.6 kernels no further action is needed. For
-2.4 kernels, the following should be added to /etc/modules.conf:
-
-	alias char-major-10-182 perfctr
+(CONFIG_KMOD=y).
 
 
 LIBRARY

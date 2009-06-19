@@ -3,6 +3,41 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.39, 2009-06-11
+- ppc and arm: updates to match perfctr_cpu_update_control() changes,
+  add missing #include <asm/cputype.h> to arm.c
+- global.c: coding style fixups
+- x86.c: update AMD multicore detection to match the documentation
+  and actually work on current processors, set up cpumask of all
+  core0 CPUs, detect RevE processors, update p6_like_check_control()
+  to allow per-thread sessions to use AMD NB events on post-RevE
+  processors but limit them to core0 CPUs
+- x86.c: replace is_global parameter to perfctr_cpu_update_control()
+  with a cpumask_t pointer, make P4 update this cpumask instead of
+  hard-coding the use of perfctr_cpus_forbidden_mask in virtual.c,
+  add cpumask to struct vperfctr, update virtual.c to use the cpumask
+  from perfctr_cpu_update_control() not perfctr_cpus_forbidden_mask
+  to derive the task's new cpumask, update set_cpus_allowed() callback
+  to validate new cpumask against the vperfctr's private one, update
+  global.c to pass a NULL cpumask_t pointer
+- virtual.c: rearrange sys_vperfctr_control() so that set_cpus_allowed()
+  comes after perfctr_cpu_update_control(), record updater's ->tgid so
+  races with concurrent updaters can be detected and handled
+- virtual.c: make vperfctrfs_dentry_operations 'const' in 2.6.30 and
+  later kernels.
+- x86.c: silence MSR_IA32_MISC_ENABLE_PEBS_UNAVAIL redefinition warning.
+
+Version 2.6.38, 2009-01-23
+- Remove 2.4 kernel support from <linux/perfctr.h> (cpumask_t workaround).
+- Remove 2.4 kernel support from build system.
+- Remove 2.4 kernel support from .c files.
+- Remove 2.4 kernel support from .h files.
+- Kernel 2.6.29-rc1 changed remap_pfn_range() to WARN_ON when applied
+  to plain RAM. Update virtual.c to use vm_insert_page() instead.
+- Kernel 2.6.29-rc1 moved a task's fsuid/fsgid field to the ->cred
+  struct. Update virtual.c to use current_fsuid() and current_fsgid().
+  Update compat.h to supply these macros for older kernels.
+
 Version 2.6.37, 2008-11-30
 - x86: Preliminary Intel Core i7 support, limited to handling it
   as a Core2-like processor with four PMCs. The AnyThread evntsel

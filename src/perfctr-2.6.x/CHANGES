@@ -6,6 +6,27 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.39, 2009-06-11
+- Updated driver's AMD multicore detection code to actually work.
+  Tested on Istanbul and Shanghai Opterons.
+- Updated driver to allow per-thread counting of Northbridge events
+  on multicore AMD processors. Since the NB is shared between cores,
+  threads counting NB events will be forced via their CPU affinity
+  mask to core0 of the available processors. On early K8 RevE processors
+  NB events remain limited to global-mode counting, due to an erratum.
+- Updated kernel support: 2.6.30, 2.6.29, 2.6.18-128.1.10.el5 (RHEL5),
+  2.6.18-92.1.26.el5 (RHEL5), 2.6.9-89.EL (RHEL4), 2.6.9-78.0.22.EL (RHEL4).
+
+Version 2.6.38, 2009-01-23
+- Added rvperfctr_iresume() procedure to the user-space library.
+  This allows a monitor process to resume overflow counters in a
+  target process after the target has received an overflow signal.
+- Updated kernel support: 2.6.29-rc2, 2.6.28, 2.6.18-128.el5
+  (RHEL5.3), 2.6.9-78.0.13.EL (RHEL4).
+- Removed support for 2.4 kernels. 2.4 kernels have effectively
+  been unsupported since early 2007, this change makes it official
+  by removing all 2.4-specific files and #ifdefs.
+
 Version 2.6.37, 2008-11-30
 - Preliminary support for Intel Core i7 (Nehalem) processors
   (family 6 model 26). They are currently treated like Core 2s
