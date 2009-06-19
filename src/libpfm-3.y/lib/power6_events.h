@@ -24,6 +24,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_REJECT_STQ_FULL 0
 	[ POWER6_PME_PM_LSU_REJECT_STQ_FULL ] = {
 		.pme_name = "PM_LSU_REJECT_STQ_FULL",
+		.pme_code = 0x1a0030,
 		.pme_short_desc = "LSU reject due to store queue full",
 		.pme_long_desc = "LSU reject due to store queue full",
 		.pme_event_ids = { 243, -1, -1, -1, -1, -1 },
@@ -36,6 +37,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_FXU_MULTI 1
 	[ POWER6_PME_PM_DPU_HELD_FXU_MULTI ] = {
 		.pme_name = "PM_DPU_HELD_FXU_MULTI",
+		.pme_code = 0x210a6,
 		.pme_short_desc = "DISP unit held due to FXU multicycle",
 		.pme_long_desc = "DISP unit held due to FXU multicycle",
 		.pme_event_ids = { 37, 45, 36, 44, -1, -1 },
@@ -48,6 +50,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_VMX1_STALL 2
 	[ POWER6_PME_PM_VMX1_STALL ] = {
 		.pme_name = "PM_VMX1_STALL",
+		.pme_code = 0xb008c,
 		.pme_short_desc = "VMX1 stall",
 		.pme_long_desc = "VMX1 stall",
 		.pme_event_ids = { 328, 335, 322, 320, -1, -1 },
@@ -60,6 +63,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PMC2_SAVED 3
 	[ POWER6_PME_PM_PMC2_SAVED ] = {
 		.pme_name = "PM_PMC2_SAVED",
+		.pme_code = 0x100022,
 		.pme_short_desc = "PMC2 rewind value saved",
 		.pme_long_desc = "PMC2 rewind value saved",
 		.pme_event_ids = { 291, -1, -1, -1, -1, -1 },
@@ -72,6 +76,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SB_IC_INV 4
 	[ POWER6_PME_PM_L2SB_IC_INV ] = {
 		.pme_name = "PM_L2SB_IC_INV",
+		.pme_code = 0x5068c,
 		.pme_short_desc = "L2 slice B I cache invalidate",
 		.pme_long_desc = "L2 slice B I cache invalidate",
 		.pme_event_ids = { 174, 183, 174, 180, -1, -1 },
@@ -84,6 +89,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_IERAT_MISS_64K 5
 	[ POWER6_PME_PM_IERAT_MISS_64K ] = {
 		.pme_name = "PM_IERAT_MISS_64K",
+		.pme_code = 0x392076,
 		.pme_short_desc = "IERAT misses for 64K page",
 		.pme_long_desc = "IERAT misses for 64K page",
 		.pme_event_ids = { -1, -1, 344, -1, -1, -1 },
@@ -96,6 +102,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_PRIO_DIFF_3or4_CYC 6
 	[ POWER6_PME_PM_THRD_PRIO_DIFF_3or4_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_DIFF_3or4_CYC",
+		.pme_code = 0x323040,
 		.pme_short_desc = "Cycles thread priority difference is 3 or 4",
 		.pme_long_desc = "Cycles thread priority difference is 3 or 4",
 		.pme_event_ids = { -1, -1, 310, -1, -1, -1 },
@@ -108,6 +115,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LD_REF_L1_BOTH 7
 	[ POWER6_PME_PM_LD_REF_L1_BOTH ] = {
 		.pme_name = "PM_LD_REF_L1_BOTH",
+		.pme_code = 0x180036,
 		.pme_short_desc = "Both units L1 D cache load reference",
 		.pme_long_desc = "Both units L1 D cache load reference",
 		.pme_event_ids = { 202, -1, -1, -1, -1, -1 },
@@ -120,6 +128,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU1_FCONV 8
 	[ POWER6_PME_PM_FPU1_FCONV ] = {
 		.pme_name = "PM_FPU1_FCONV",
+		.pme_code = 0xd10a8,
 		.pme_short_desc = "FPU1 executed FCONV instruction",
 		.pme_long_desc = "FPU1 executed FCONV instruction",
 		.pme_event_ids = { 88, 97, 86, 94, -1, -1 },
@@ -132,6 +141,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_IBUF_FULL_COUNT 9
 	[ POWER6_PME_PM_IBUF_FULL_COUNT ] = {
 		.pme_name = "PM_IBUF_FULL_COUNT",
+		.pme_code = 0x40085,
 		.pme_short_desc = "Periods instruction buffer full",
 		.pme_long_desc = "Periods instruction buffer full",
 		.pme_event_ids = { 338, 345, 332, 330, -1, -1 },
@@ -144,6 +154,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_LSU_DERAT_MISS 10
 	[ POWER6_PME_PM_MRK_LSU_DERAT_MISS ] = {
 		.pme_name = "PM_MRK_LSU_DERAT_MISS",
+		.pme_code = 0x400012,
 		.pme_short_desc = "Marked DERAT miss",
 		.pme_long_desc = "Marked DERAT miss",
 		.pme_event_ids = { -1, -1, -1, 271, -1, -1 },
@@ -156,6 +167,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_ST_CMPL 11
 	[ POWER6_PME_PM_MRK_ST_CMPL ] = {
 		.pme_name = "PM_MRK_ST_CMPL",
+		.pme_code = 0x1003,
 		.pme_short_desc = "Marked store instruction completed",
 		.pme_long_desc = "A sampled store has completed (data home)",
 		.pme_event_ids = { 282, -1, -1, -1, -1, -1 },
@@ -168,6 +180,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2_CASTOUT_MOD 12
 	[ POWER6_PME_PM_L2_CASTOUT_MOD ] = {
 		.pme_name = "PM_L2_CASTOUT_MOD",
+		.pme_code = 0x150630,
 		.pme_short_desc = "L2 castouts - Modified (M",
 		.pme_long_desc = " Mu",
 		.pme_event_ids = { 185, -1, -1, -1, -1, -1 },
@@ -180,6 +193,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU1_ST_FOLDED 13
 	[ POWER6_PME_PM_FPU1_ST_FOLDED ] = {
 		.pme_name = "PM_FPU1_ST_FOLDED",
+		.pme_code = 0xd10ac,
 		.pme_short_desc = "FPU1 folded store",
 		.pme_long_desc = "FPU1 folded store",
 		.pme_event_ids = { 100, 109, 98, 106, -1, -1 },
@@ -192,6 +206,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_INST_TIMEO 14
 	[ POWER6_PME_PM_MRK_INST_TIMEO ] = {
 		.pme_name = "PM_MRK_INST_TIMEO",
+		.pme_code = 0x40003e,
 		.pme_short_desc = "Marked Instruction finish timeout ",
 		.pme_long_desc = "Marked Instruction finish timeout ",
 		.pme_event_ids = { -1, -1, -1, 263, -1, -1 },
@@ -204,6 +219,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_WT 15
 	[ POWER6_PME_PM_DPU_WT ] = {
 		.pme_name = "PM_DPU_WT",
+		.pme_code = 0x300004,
 		.pme_short_desc = "Cycles DISP unit is stalled waiting for instructions",
 		.pme_long_desc = "Cycles DISP unit is stalled waiting for instructions",
 		.pme_event_ids = { -1, -1, 54, -1, -1, -1 },
@@ -216,6 +232,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_RESTART 16
 	[ POWER6_PME_PM_DPU_HELD_RESTART ] = {
 		.pme_name = "PM_DPU_HELD_RESTART",
+		.pme_code = 0x30086,
 		.pme_short_desc = "DISP unit held after restart coming",
 		.pme_long_desc = "DISP unit held after restart coming",
 		.pme_event_ids = { 47, 56, 46, 54, -1, -1 },
@@ -228,6 +245,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_IERAT_MISS 17
 	[ POWER6_PME_PM_IERAT_MISS ] = {
 		.pme_name = "PM_IERAT_MISS",
+		.pme_code = 0x420ce,
 		.pme_short_desc = "IERAT miss count",
 		.pme_long_desc = "IERAT miss count",
 		.pme_event_ids = { 137, 146, 136, 143, -1, -1 },
@@ -240,6 +258,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_SINGLE 18
 	[ POWER6_PME_PM_FPU_SINGLE ] = {
 		.pme_name = "PM_FPU_SINGLE",
+		.pme_code = 0x5120,
 		.pme_short_desc = "FPU executed single precision instruction",
 		.pme_long_desc = "FPU is executing single precision instruction. Combined Unit 0 + Unit 1",
 		.pme_event_ids = { -1, -1, -1, 122, -1, -1 },
@@ -252,6 +271,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_PTEG_FROM_LMEM 19
 	[ POWER6_PME_PM_MRK_PTEG_FROM_LMEM ] = {
 		.pme_name = "PM_MRK_PTEG_FROM_LMEM",
+		.pme_code = 0x412042,
 		.pme_short_desc = "Marked PTEG loaded from local memory",
 		.pme_long_desc = "Marked PTEG loaded from local memory",
 		.pme_event_ids = { -1, -1, -1, 278, -1, -1 },
@@ -264,6 +284,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_HV_COUNT 20
 	[ POWER6_PME_PM_HV_COUNT ] = {
 		.pme_name = "PM_HV_COUNT",
+		.pme_code = 0x200017,
 		.pme_short_desc = "Hypervisor Periods",
 		.pme_long_desc = "Periods when the processor is executing in Hypervisor (MSR[HV] = 1 and MSR[PR]=0)",
 		.pme_event_ids = { -1, 351, -1, -1, -1, -1 },
@@ -276,6 +297,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SA_ST_HIT 21
 	[ POWER6_PME_PM_L2SA_ST_HIT ] = {
 		.pme_name = "PM_L2SA_ST_HIT",
+		.pme_code = 0x50786,
 		.pme_short_desc = "L2 slice A store hits",
 		.pme_long_desc = "A store request made from the core hit in the L2 directory.  This event is provided on each of the three L2 slices A,B, and C.",
 		.pme_event_ids = { 168, 177, 168, 174, -1, -1 },
@@ -288,6 +310,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2_LD_MISS_INST 22
 	[ POWER6_PME_PM_L2_LD_MISS_INST ] = {
 		.pme_name = "PM_L2_LD_MISS_INST",
+		.pme_code = 0x250530,
 		.pme_short_desc = "L2 instruction load misses",
 		.pme_long_desc = "L2 instruction load misses",
 		.pme_event_ids = { -1, 196, -1, -1, -1, -1 },
@@ -300,6 +323,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_EXT_INT 23
 	[ POWER6_PME_PM_EXT_INT ] = {
 		.pme_name = "PM_EXT_INT",
+		.pme_code = 0x8002,
 		.pme_short_desc = "External interrupts",
 		.pme_long_desc = "An external interrupt occurred",
 		.pme_event_ids = { -1, 67, 57, -1, -1, -1 },
@@ -312,6 +336,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU1_LDF 24
 	[ POWER6_PME_PM_LSU1_LDF ] = {
 		.pme_name = "PM_LSU1_LDF",
+		.pme_code = 0x734,
 		.pme_short_desc = "LSU1 executed Floating Point load instruction",
 		.pme_long_desc = "A floating point load was executed from LSU unit 1",
 		.pme_event_ids = { 221, 230, 216, 221, -1, -1 },
@@ -324,6 +349,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FAB_CMD_ISSUED 25
 	[ POWER6_PME_PM_FAB_CMD_ISSUED ] = {
 		.pme_name = "PM_FAB_CMD_ISSUED",
+		.pme_code = 0x150130,
 		.pme_short_desc = "Fabric command issued",
 		.pme_long_desc = "Fabric command issued",
 		.pme_event_ids = { 59, -1, -1, -1, -1, -1 },
@@ -336,6 +362,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PTEG_FROM_L21 26
 	[ POWER6_PME_PM_PTEG_FROM_L21 ] = {
 		.pme_name = "PM_PTEG_FROM_L21",
+		.pme_code = 0x213048,
 		.pme_short_desc = "PTEG loaded from private L2 other core",
 		.pme_long_desc = "PTEG loaded from private L2 other core",
 		.pme_event_ids = { -1, 305, -1, -1, -1, -1 },
@@ -348,6 +375,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SA_MISS 27
 	[ POWER6_PME_PM_L2SA_MISS ] = {
 		.pme_name = "PM_L2SA_MISS",
+		.pme_code = 0x50584,
 		.pme_short_desc = "L2 slice A misses",
 		.pme_long_desc = "L2 slice A misses",
 		.pme_event_ids = { 167, 176, 167, 173, -1, -1 },
@@ -360,6 +388,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PTEG_FROM_RL2L3_MOD 28
 	[ POWER6_PME_PM_PTEG_FROM_RL2L3_MOD ] = {
 		.pme_name = "PM_PTEG_FROM_RL2L3_MOD",
+		.pme_code = 0x11304c,
 		.pme_short_desc = "PTEG loaded from remote L2 or L3 modified",
 		.pme_long_desc = "PTEG loaded from remote L2 or L3 modified",
 		.pme_event_ids = { 299, -1, -1, -1, -1, -1 },
@@ -372,6 +401,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_WT_COUNT 29
 	[ POWER6_PME_PM_DPU_WT_COUNT ] = {
 		.pme_name = "PM_DPU_WT_COUNT",
+		.pme_code = 0x300005,
 		.pme_short_desc = "Periods DISP unit is stalled waiting for instructions",
 		.pme_long_desc = "Periods DISP unit is stalled waiting for instructions",
 		.pme_event_ids = { -1, -1, 340, -1, -1, -1 },
@@ -384,6 +414,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_PTEG_FROM_L25_MOD 30
 	[ POWER6_PME_PM_MRK_PTEG_FROM_L25_MOD ] = {
 		.pme_name = "PM_MRK_PTEG_FROM_L25_MOD",
+		.pme_code = 0x312046,
 		.pme_short_desc = "Marked PTEG loaded from L2.5 modified",
 		.pme_long_desc = "Marked PTEG loaded from L2.5 modified",
 		.pme_event_ids = { -1, -1, 272, -1, -1, -1 },
@@ -396,6 +427,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LD_HIT_L2 31
 	[ POWER6_PME_PM_LD_HIT_L2 ] = {
 		.pme_name = "PM_LD_HIT_L2",
+		.pme_code = 0x250730,
 		.pme_short_desc = "L2 D cache load hits",
 		.pme_long_desc = "L2 D cache load hits",
 		.pme_event_ids = { -1, 209, -1, -1, -1, -1 },
@@ -408,6 +440,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PTEG_FROM_DL2L3_SHR 32
 	[ POWER6_PME_PM_PTEG_FROM_DL2L3_SHR ] = {
 		.pme_name = "PM_PTEG_FROM_DL2L3_SHR",
+		.pme_code = 0x31304c,
 		.pme_short_desc = "PTEG loaded from distant L2 or L3 shared",
 		.pme_long_desc = "PTEG loaded from distant L2 or L3 shared",
 		.pme_event_ids = { -1, -1, 290, -1, -1, -1 },
@@ -420,6 +453,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MEM_DP_RQ_GLOB_LOC 33
 	[ POWER6_PME_PM_MEM_DP_RQ_GLOB_LOC ] = {
 		.pme_name = "PM_MEM_DP_RQ_GLOB_LOC",
+		.pme_code = 0x150230,
 		.pme_short_desc = "Memory read queue marking cache line double pump state from global to local",
 		.pme_long_desc = "Memory read queue marking cache line double pump state from global to local",
 		.pme_event_ids = { 257, -1, -1, -1, -1, -1 },
@@ -432,6 +466,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L3SA_MISS 34
 	[ POWER6_PME_PM_L3SA_MISS ] = {
 		.pme_name = "PM_L3SA_MISS",
+		.pme_code = 0x50084,
 		.pme_short_desc = "L3 slice A misses",
 		.pme_long_desc = "L3 slice A misses",
 		.pme_event_ids = { 192, 202, 190, 195, -1, -1 },
@@ -444,6 +479,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_NO_ITAG_COUNT 35
 	[ POWER6_PME_PM_NO_ITAG_COUNT ] = {
 		.pme_name = "PM_NO_ITAG_COUNT",
+		.pme_code = 0x40089,
 		.pme_short_desc = "Periods no ITAG available",
 		.pme_long_desc = "Periods no ITAG available",
 		.pme_event_ids = { 340, 347, 334, 332, -1, -1 },
@@ -456,6 +492,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DSLB_MISS 36
 	[ POWER6_PME_PM_DSLB_MISS ] = {
 		.pme_name = "PM_DSLB_MISS",
+		.pme_code = 0x705,
 		.pme_short_desc = "Data SLB misses",
 		.pme_long_desc = "A SLB miss for a data request occurred. SLB misses trap to the operating system to resolve",
 		.pme_event_ids = { 56, 65, 55, 63, -1, -1 },
@@ -468,6 +505,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_FLUSH_ALIGN 37
 	[ POWER6_PME_PM_LSU_FLUSH_ALIGN ] = {
 		.pme_name = "PM_LSU_FLUSH_ALIGN",
+		.pme_code = 0x220cc,
 		.pme_short_desc = "Flush caused by alignement exception",
 		.pme_long_desc = "Flush caused by alignement exception",
 		.pme_event_ids = { 235, 244, 229, 235, -1, -1 },
@@ -480,6 +518,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_FPU_CR 38
 	[ POWER6_PME_PM_DPU_HELD_FPU_CR ] = {
 		.pme_name = "PM_DPU_HELD_FPU_CR",
+		.pme_code = 0x210a0,
 		.pme_short_desc = "DISP unit held due to FPU updating CR",
 		.pme_long_desc = "DISP unit held due to FPU updating CR",
 		.pme_event_ids = { 35, 43, 34, 42, -1, -1 },
@@ -492,6 +531,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PTEG_FROM_L2MISS 39
 	[ POWER6_PME_PM_PTEG_FROM_L2MISS ] = {
 		.pme_name = "PM_PTEG_FROM_L2MISS",
+		.pme_code = 0x113028,
 		.pme_short_desc = "PTEG loaded from L2 miss",
 		.pme_long_desc = "PTEG loaded from L2 miss",
 		.pme_event_ids = { 296, -1, -1, -1, -1, -1 },
@@ -504,6 +544,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DATA_FROM_DMEM 40
 	[ POWER6_PME_PM_MRK_DATA_FROM_DMEM ] = {
 		.pme_name = "PM_MRK_DATA_FROM_DMEM",
+		.pme_code = 0x20304a,
 		.pme_short_desc = "Marked data loaded from distant memory",
 		.pme_long_desc = "Marked data loaded from distant memory",
 		.pme_event_ids = { -1, 269, -1, -1, -1, -1 },
@@ -516,6 +557,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_VMX_COMPLEX_ISUED 41
 	[ POWER6_PME_PM_VMX_COMPLEX_ISUED ] = {
 		.pme_name = "PM_VMX_COMPLEX_ISUED",
+		.pme_code = 0x0,
 		.pme_short_desc = "VMX instruction issued to complex",
 		.pme_long_desc = "VMX instruction issued to complex",
 		.pme_event_ids = { 329, 336, 323, 321, -1, -1 },
@@ -528,6 +570,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PTEG_FROM_LMEM 42
 	[ POWER6_PME_PM_PTEG_FROM_LMEM ] = {
 		.pme_name = "PM_PTEG_FROM_LMEM",
+		.pme_code = 0x41304a,
 		.pme_short_desc = "PTEG loaded from local memory",
 		.pme_long_desc = "PTEG loaded from local memory",
 		.pme_event_ids = { -1, -1, -1, 291, -1, -1 },
@@ -540,6 +583,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DERAT_REF_64K 43
 	[ POWER6_PME_PM_MRK_DERAT_REF_64K ] = {
 		.pme_name = "PM_MRK_DERAT_REF_64K",
+		.pme_code = 0x182044,
 		.pme_short_desc = "Marked DERAT reference for 64K page",
 		.pme_long_desc = "Marked DERAT reference for 64K page",
 		.pme_event_ids = { 353, -1, -1, -1, -1, -1 },
@@ -552,6 +596,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SA_LD_REQ_INST 44
 	[ POWER6_PME_PM_L2SA_LD_REQ_INST ] = {
 		.pme_name = "PM_L2SA_LD_REQ_INST",
+		.pme_code = 0x50580,
 		.pme_short_desc = "L2 slice A instruction load requests",
 		.pme_long_desc = "L2 slice A instruction load requests",
 		.pme_event_ids = { 166, 175, 166, 172, -1, -1 },
@@ -564,6 +609,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DERAT_MISS_16M 45
 	[ POWER6_PME_PM_MRK_DERAT_MISS_16M ] = {
 		.pme_name = "PM_MRK_DERAT_MISS_16M",
+		.pme_code = 0x392044,
 		.pme_short_desc = "Marked DERAT misses for 16M page",
 		.pme_long_desc = "A marked data request (load or store) missed the ERAT for 16M page and resulted in an ERAT reload.",
 		.pme_event_ids = { -1, -1, 346, -1, -1, -1 },
@@ -576,6 +622,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_DL2L3_MOD 46
 	[ POWER6_PME_PM_DATA_FROM_DL2L3_MOD ] = {
 		.pme_name = "PM_DATA_FROM_DL2L3_MOD",
+		.pme_code = 0x40005c,
 		.pme_short_desc = "Data loaded from distant L2 or L3 modified",
 		.pme_long_desc = "Data loaded from distant L2 or L3 modified",
 		.pme_event_ids = { -1, -1, -1, 13, -1, -1 },
@@ -588,6 +635,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU0_FXMULT 47
 	[ POWER6_PME_PM_FPU0_FXMULT ] = {
 		.pme_name = "PM_FPU0_FXMULT",
+		.pme_code = 0xd0086,
 		.pme_short_desc = "FPU0 executed fixed point multiplication",
 		.pme_long_desc = "FPU0 executed fixed point multiplication",
 		.pme_event_ids = { 82, 91, 80, 88, -1, -1 },
@@ -600,6 +648,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L3SB_MISS 48
 	[ POWER6_PME_PM_L3SB_MISS ] = {
 		.pme_name = "PM_L3SB_MISS",
+		.pme_code = 0x5008c,
 		.pme_short_desc = "L3 slice B misses",
 		.pme_long_desc = "L3 slice B misses",
 		.pme_event_ids = { 195, 205, 193, 198, -1, -1 },
@@ -612,6 +661,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_STCX_CANCEL 49
 	[ POWER6_PME_PM_STCX_CANCEL ] = {
 		.pme_name = "PM_STCX_CANCEL",
+		.pme_code = 0x830ec,
 		.pme_short_desc = "stcx cancel by core",
 		.pme_long_desc = "stcx cancel by core",
 		.pme_event_ids = { 305, 311, 297, 296, -1, -1 },
@@ -624,6 +674,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SA_LD_MISS_DATA 50
 	[ POWER6_PME_PM_L2SA_LD_MISS_DATA ] = {
 		.pme_name = "PM_L2SA_LD_MISS_DATA",
+		.pme_code = 0x50482,
 		.pme_short_desc = "L2 slice A data load misses",
 		.pme_long_desc = "L2 slice A data load misses",
 		.pme_event_ids = { 162, 171, 162, 168, -1, -1 },
@@ -636,6 +687,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_IC_INV_L2 51
 	[ POWER6_PME_PM_IC_INV_L2 ] = {
 		.pme_name = "PM_IC_INV_L2",
+		.pme_code = 0x250632,
 		.pme_short_desc = "L1 I cache entries invalidated from L2",
 		.pme_long_desc = "L1 I cache entries invalidated from L2",
 		.pme_event_ids = { -1, 141, 131, -1, -1, -1 },
@@ -648,6 +700,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD 52
 	[ POWER6_PME_PM_DPU_HELD ] = {
 		.pme_name = "PM_DPU_HELD",
+		.pme_code = 0x200004,
 		.pme_short_desc = "DISP unit held",
 		.pme_long_desc = "DISP unit held",
 		.pme_event_ids = { -1, 38, -1, -1, -1, -1 },
@@ -660,6 +713,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PMC1_OVERFLOW 53
 	[ POWER6_PME_PM_PMC1_OVERFLOW ] = {
 		.pme_name = "PM_PMC1_OVERFLOW",
+		.pme_code = 0x200a,
 		.pme_short_desc = "PMC1 Overflow",
 		.pme_long_desc = "PMC1 Overflow",
 		.pme_event_ids = { -1, 303, -1, -1, -1, -1 },
@@ -672,6 +726,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_PRIO_6_CYC 54
 	[ POWER6_PME_PM_THRD_PRIO_6_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_6_CYC",
+		.pme_code = 0x222046,
 		.pme_short_desc = "Cycles thread running at priority level 6",
 		.pme_long_desc = "Cycles thread running at priority level 6",
 		.pme_event_ids = { -1, 323, -1, -1, -1, -1 },
@@ -684,6 +739,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_PTEG_FROM_L3MISS 55
 	[ POWER6_PME_PM_MRK_PTEG_FROM_L3MISS ] = {
 		.pme_name = "PM_MRK_PTEG_FROM_L3MISS",
+		.pme_code = 0x312054,
 		.pme_short_desc = "Marked PTEG loaded from L3 miss",
 		.pme_long_desc = "Marked PTEG loaded from L3 miss",
 		.pme_event_ids = { -1, -1, 274, -1, -1, -1 },
@@ -696,6 +752,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_LSU0_REJECT_UST 56
 	[ POWER6_PME_PM_MRK_LSU0_REJECT_UST ] = {
 		.pme_name = "PM_MRK_LSU0_REJECT_UST",
+		.pme_code = 0x930e2,
 		.pme_short_desc = "LSU0 marked unaligned store reject",
 		.pme_long_desc = "LSU0 marked unaligned store reject",
 		.pme_event_ids = { 272, 284, 266, 267, -1, -1 },
@@ -708,6 +765,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_INST_DISP 57
 	[ POWER6_PME_PM_MRK_INST_DISP ] = {
 		.pme_name = "PM_MRK_INST_DISP",
+		.pme_code = 0x10001a,
 		.pme_short_desc = "Marked instruction dispatched",
 		.pme_long_desc = "Marked instruction dispatched",
 		.pme_event_ids = { 267, 279, -1, -1, -1, -1 },
@@ -720,6 +778,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LARX 58
 	[ POWER6_PME_PM_LARX ] = {
 		.pme_name = "PM_LARX",
+		.pme_code = 0x830ea,
 		.pme_short_desc = "Larx executed",
 		.pme_long_desc = "Larx executed",
 		.pme_event_ids = { 197, 207, 195, 200, -1, -1 },
@@ -732,6 +791,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_CMPL 59
 	[ POWER6_PME_PM_INST_CMPL ] = {
 		.pme_name = "PM_INST_CMPL",
+		.pme_code = 0x1,
 		.pme_short_desc = "Instructions completed",
 		.pme_long_desc = "Number of PPC instructions completed. ",
 		.pme_event_ids = { 139, 148, 138, 145, -1, -1 },
@@ -744,6 +804,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FXU_IDLE 60
 	[ POWER6_PME_PM_FXU_IDLE ] = {
 		.pme_name = "PM_FXU_IDLE",
+		.pme_code = 0x5002,
 		.pme_short_desc = "FXU idle",
 		.pme_long_desc = "FXU0 and FXU1 are both idle",
 		.pme_event_ids = { 117, -1, -1, -1, -1, -1 },
@@ -756,6 +817,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DATA_FROM_DL2L3_MOD 61
 	[ POWER6_PME_PM_MRK_DATA_FROM_DL2L3_MOD ] = {
 		.pme_name = "PM_MRK_DATA_FROM_DL2L3_MOD",
+		.pme_code = 0x40304c,
 		.pme_short_desc = "Marked data loaded from distant L2 or L3 modified",
 		.pme_long_desc = "Marked data loaded from distant L2 or L3 modified",
 		.pme_event_ids = { -1, -1, -1, 256, -1, -1 },
@@ -768,6 +830,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2_LD_REQ_DATA 62
 	[ POWER6_PME_PM_L2_LD_REQ_DATA ] = {
 		.pme_name = "PM_L2_LD_REQ_DATA",
+		.pme_code = 0x150430,
 		.pme_short_desc = "L2 data load requests",
 		.pme_long_desc = "L2 data load requests",
 		.pme_event_ids = { 186, -1, -1, -1, -1, -1 },
@@ -780,6 +843,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_DERAT_MISS_CYC 63
 	[ POWER6_PME_PM_LSU_DERAT_MISS_CYC ] = {
 		.pme_name = "PM_LSU_DERAT_MISS_CYC",
+		.pme_code = 0x1000fc,
 		.pme_short_desc = "DERAT miss latency",
 		.pme_long_desc = "DERAT miss latency",
 		.pme_event_ids = { 234, -1, -1, 234, -1, -1 },
@@ -792,6 +856,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_POWER_COUNT 64
 	[ POWER6_PME_PM_DPU_HELD_POWER_COUNT ] = {
 		.pme_name = "PM_DPU_HELD_POWER_COUNT",
+		.pme_code = 0x20003d,
 		.pme_short_desc = "Periods DISP unit held due to Power Management",
 		.pme_long_desc = "Periods DISP unit held due to Power Management",
 		.pme_event_ids = { -1, 356, -1, -1, -1, -1 },
@@ -804,6 +869,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_FROM_RL2L3_MOD 65
 	[ POWER6_PME_PM_INST_FROM_RL2L3_MOD ] = {
 		.pme_name = "PM_INST_FROM_RL2L3_MOD",
+		.pme_code = 0x142044,
 		.pme_short_desc = "Instruction fetched from remote L2 or L3 modified",
 		.pme_long_desc = "Instruction fetched from remote L2 or L3 modified",
 		.pme_event_ids = { 146, -1, -1, -1, -1, -1 },
@@ -816,6 +882,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_DMEM_CYC 66
 	[ POWER6_PME_PM_DATA_FROM_DMEM_CYC ] = {
 		.pme_name = "PM_DATA_FROM_DMEM_CYC",
+		.pme_code = 0x20002e,
 		.pme_short_desc = "Load latency from distant memory",
 		.pme_long_desc = "Load latency from distant memory",
 		.pme_event_ids = { -1, 14, -1, -1, -1, -1 },
@@ -828,6 +895,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_DMEM 67
 	[ POWER6_PME_PM_DATA_FROM_DMEM ] = {
 		.pme_name = "PM_DATA_FROM_DMEM",
+		.pme_code = 0x20005e,
 		.pme_short_desc = "Data loaded from distant memory",
 		.pme_long_desc = "Data loaded from distant memory",
 		.pme_event_ids = { -1, 13, -1, -1, -1, -1 },
@@ -840,6 +908,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_REJECT_PARTIAL_SECTOR 68
 	[ POWER6_PME_PM_LSU_REJECT_PARTIAL_SECTOR ] = {
 		.pme_name = "PM_LSU_REJECT_PARTIAL_SECTOR",
+		.pme_code = 0x1a0032,
 		.pme_short_desc = "LSU reject due to partial sector valid",
 		.pme_long_desc = "LSU reject due to partial sector valid",
 		.pme_event_ids = { 241, -1, -1, 242, -1, -1 },
@@ -852,6 +921,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_REJECT_DERAT_MPRED 69
 	[ POWER6_PME_PM_LSU_REJECT_DERAT_MPRED ] = {
 		.pme_name = "PM_LSU_REJECT_DERAT_MPRED",
+		.pme_code = 0x2a0030,
 		.pme_short_desc = "LSU reject due to mispredicted DERAT",
 		.pme_long_desc = "LSU reject due to mispredicted DERAT",
 		.pme_event_ids = { -1, 249, -1, -1, -1, -1 },
@@ -864,6 +934,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU1_REJECT_ULD 70
 	[ POWER6_PME_PM_LSU1_REJECT_ULD ] = {
 		.pme_name = "PM_LSU1_REJECT_ULD",
+		.pme_code = 0x90088,
 		.pme_short_desc = "LSU1 unaligned load reject",
 		.pme_long_desc = "LSU1 unaligned load reject",
 		.pme_event_ids = { 231, 240, 226, 231, -1, -1 },
@@ -876,6 +947,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_L3_CYC 71
 	[ POWER6_PME_PM_DATA_FROM_L3_CYC ] = {
 		.pme_name = "PM_DATA_FROM_L3_CYC",
+		.pme_code = 0x200022,
 		.pme_short_desc = "Load latency from L3",
 		.pme_long_desc = "Load latency from L3",
 		.pme_event_ids = { -1, 21, -1, -1, -1, -1 },
@@ -888,6 +960,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FXU1_BUSY_FXU0_IDLE 72
 	[ POWER6_PME_PM_FXU1_BUSY_FXU0_IDLE ] = {
 		.pme_name = "PM_FXU1_BUSY_FXU0_IDLE",
+		.pme_code = 0x4002,
 		.pme_short_desc = "FXU1 busy FXU0 idle",
 		.pme_long_desc = "FXU0 was idle while FXU1 was busy",
 		.pme_event_ids = { -1, -1, -1, 124, -1, -1 },
@@ -900,6 +973,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_FROM_MEM_DP 73
 	[ POWER6_PME_PM_INST_FROM_MEM_DP ] = {
 		.pme_name = "PM_INST_FROM_MEM_DP",
+		.pme_code = 0x142042,
 		.pme_short_desc = "Instruction fetched from double pump memory",
 		.pme_long_desc = "Instruction fetched from double pump memory",
 		.pme_event_ids = { 145, -1, -1, -1, -1, -1 },
@@ -912,6 +986,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_FLUSH_DSI 74
 	[ POWER6_PME_PM_LSU_FLUSH_DSI ] = {
 		.pme_name = "PM_LSU_FLUSH_DSI",
+		.pme_code = 0x220ce,
 		.pme_short_desc = "Flush caused by DSI",
 		.pme_long_desc = "Flush caused by DSI",
 		.pme_event_ids = { 236, 245, 230, 236, -1, -1 },
@@ -924,6 +999,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DERAT_REF_16G 75
 	[ POWER6_PME_PM_MRK_DERAT_REF_16G ] = {
 		.pme_name = "PM_MRK_DERAT_REF_16G",
+		.pme_code = 0x482044,
 		.pme_short_desc = "Marked DERAT reference for 16G page",
 		.pme_long_desc = "Marked DERAT reference for 16G page",
 		.pme_event_ids = { -1, -1, -1, 345, -1, -1 },
@@ -936,6 +1012,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_LDF_BOTH 76
 	[ POWER6_PME_PM_LSU_LDF_BOTH ] = {
 		.pme_name = "PM_LSU_LDF_BOTH",
+		.pme_code = 0x180038,
 		.pme_short_desc = "Both LSU units executed Floating Point load instruction",
 		.pme_long_desc = "Both LSU units executed Floating Point load instruction",
 		.pme_event_ids = { 237, -1, 232, -1, -1, -1 },
@@ -948,6 +1025,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU1_1FLOP 77
 	[ POWER6_PME_PM_FPU1_1FLOP ] = {
 		.pme_name = "PM_FPU1_1FLOP",
+		.pme_code = 0xc0088,
 		.pme_short_desc = "FPU1 executed add",
 		.pme_long_desc = " mult",
 		.pme_event_ids = { 86, 95, 84, 92, -1, -1 },
@@ -960,6 +1038,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_RMEM_CYC 78
 	[ POWER6_PME_PM_DATA_FROM_RMEM_CYC ] = {
 		.pme_name = "PM_DATA_FROM_RMEM_CYC",
+		.pme_code = 0x40002c,
 		.pme_short_desc = "Load latency from remote memory",
 		.pme_long_desc = "Load latency from remote memory",
 		.pme_event_ids = { -1, -1, -1, 23, -1, -1 },
@@ -972,6 +1051,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_PTEG_SECONDARY 79
 	[ POWER6_PME_PM_INST_PTEG_SECONDARY ] = {
 		.pme_name = "PM_INST_PTEG_SECONDARY",
+		.pme_code = 0x910ac,
 		.pme_short_desc = "Instruction table walk matched in secondary PTEG",
 		.pme_long_desc = "Instruction table walk matched in secondary PTEG",
 		.pme_event_ids = { 150, 159, 150, 156, -1, -1 },
@@ -984,6 +1064,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L1_ICACHE_MISS 80
 	[ POWER6_PME_PM_L1_ICACHE_MISS ] = {
 		.pme_name = "PM_L1_ICACHE_MISS",
+		.pme_code = 0x100056,
 		.pme_short_desc = "L1 I cache miss count",
 		.pme_long_desc = "L1 I cache miss count",
 		.pme_event_ids = { 154, 163, -1, -1, -1, -1 },
@@ -996,6 +1077,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_DISP_LLA 81
 	[ POWER6_PME_PM_INST_DISP_LLA ] = {
 		.pme_name = "PM_INST_DISP_LLA",
+		.pme_code = 0x310a2,
 		.pme_short_desc = "Instruction dispatched under load look ahead",
 		.pme_long_desc = "Instruction dispatched under load look ahead",
 		.pme_event_ids = { 140, 150, 140, 146, -1, -1 },
@@ -1008,6 +1090,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_BOTH_RUN_CYC 82
 	[ POWER6_PME_PM_THRD_BOTH_RUN_CYC ] = {
 		.pme_name = "PM_THRD_BOTH_RUN_CYC",
+		.pme_code = 0x400004,
 		.pme_short_desc = "Both threads in run cycles",
 		.pme_long_desc = "Both threads in run cycles",
 		.pme_event_ids = { -1, -1, -1, 304, -1, -1 },
@@ -1020,6 +1103,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_ST_CHAINED 83
 	[ POWER6_PME_PM_LSU_ST_CHAINED ] = {
 		.pme_name = "PM_LSU_ST_CHAINED",
+		.pme_code = 0x820ce,
 		.pme_short_desc = "number of chained stores",
 		.pme_long_desc = "number of chained stores",
 		.pme_event_ids = { 246, 257, 240, 245, -1, -1 },
@@ -1032,6 +1116,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU1_FXDIV 84
 	[ POWER6_PME_PM_FPU1_FXDIV ] = {
 		.pme_name = "PM_FPU1_FXDIV",
+		.pme_code = 0xc10a8,
 		.pme_short_desc = "FPU1 executed fixed point division",
 		.pme_long_desc = "FPU1 executed fixed point division",
 		.pme_event_ids = { 96, 105, 94, 102, -1, -1 },
@@ -1044,6 +1129,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FREQ_UP 85
 	[ POWER6_PME_PM_FREQ_UP ] = {
 		.pme_name = "PM_FREQ_UP",
+		.pme_code = 0x40003c,
 		.pme_short_desc = "Frequency is being slewed up due to Power Management",
 		.pme_long_desc = "Frequency is being slewed up due to Power Management",
 		.pme_event_ids = { -1, -1, -1, 123, -1, -1 },
@@ -1056,6 +1142,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FAB_RETRY_SYS_PUMP 86
 	[ POWER6_PME_PM_FAB_RETRY_SYS_PUMP ] = {
 		.pme_name = "PM_FAB_RETRY_SYS_PUMP",
+		.pme_code = 0x50182,
 		.pme_short_desc = "Retry of a system pump",
 		.pme_long_desc = " locally mastered  ",
 		.pme_event_ids = { 65, 75, 64, 71, -1, -1 },
@@ -1068,6 +1155,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_LMEM 87
 	[ POWER6_PME_PM_DATA_FROM_LMEM ] = {
 		.pme_name = "PM_DATA_FROM_LMEM",
+		.pme_code = 0x40005e,
 		.pme_short_desc = "Data loaded from local memory",
 		.pme_long_desc = "Data loaded from local memory",
 		.pme_event_ids = { -1, -1, -1, 20, -1, -1 },
@@ -1080,6 +1168,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PMC3_OVERFLOW 88
 	[ POWER6_PME_PM_PMC3_OVERFLOW ] = {
 		.pme_name = "PM_PMC3_OVERFLOW",
+		.pme_code = 0x400a,
 		.pme_short_desc = "PMC3 Overflow",
 		.pme_long_desc = "PMC3 Overflow",
 		.pme_event_ids = { -1, -1, -1, 288, -1, -1 },
@@ -1092,6 +1181,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU0_REJECT_SET_MPRED 89
 	[ POWER6_PME_PM_LSU0_REJECT_SET_MPRED ] = {
 		.pme_name = "PM_LSU0_REJECT_SET_MPRED",
+		.pme_code = 0xa0084,
 		.pme_short_desc = "LSU0 reject due to mispredicted set",
 		.pme_long_desc = "LSU0 reject due to mispredicted set",
 		.pme_event_ids = { 216, 225, 211, 216, -1, -1 },
@@ -1104,6 +1194,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU0_REJECT_DERAT_MPRED 90
 	[ POWER6_PME_PM_LSU0_REJECT_DERAT_MPRED ] = {
 		.pme_name = "PM_LSU0_REJECT_DERAT_MPRED",
+		.pme_code = 0xa0082,
 		.pme_short_desc = "LSU0 reject due to mispredicted DERAT",
 		.pme_long_desc = "LSU0 reject due to mispredicted DERAT",
 		.pme_event_ids = { 209, 218, 204, 209, -1, -1 },
@@ -1116,6 +1207,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU1_REJECT_STQ_FULL 91
 	[ POWER6_PME_PM_LSU1_REJECT_STQ_FULL ] = {
 		.pme_name = "PM_LSU1_REJECT_STQ_FULL",
+		.pme_code = 0xa0088,
 		.pme_short_desc = "LSU1 reject due to store queue full",
 		.pme_long_desc = "LSU1 reject due to store queue full",
 		.pme_event_ids = { 230, 239, 225, 230, -1, -1 },
@@ -1128,6 +1220,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_BR_MPRED 92
 	[ POWER6_PME_PM_MRK_BR_MPRED ] = {
 		.pme_name = "PM_MRK_BR_MPRED",
+		.pme_code = 0x300052,
 		.pme_short_desc = "Marked branch mispredicted",
 		.pme_long_desc = "Marked branch mispredicted",
 		.pme_event_ids = { -1, -1, 251, -1, -1, -1 },
@@ -1140,6 +1233,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SA_ST_MISS 93
 	[ POWER6_PME_PM_L2SA_ST_MISS ] = {
 		.pme_name = "PM_L2SA_ST_MISS",
+		.pme_code = 0x50486,
 		.pme_short_desc = "L2 slice A store misses",
 		.pme_long_desc = "L2 slice A store misses",
 		.pme_event_ids = { 169, 178, 169, 175, -1, -1 },
@@ -1152,6 +1246,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU0_REJECT_EXTERN 94
 	[ POWER6_PME_PM_LSU0_REJECT_EXTERN ] = {
 		.pme_name = "PM_LSU0_REJECT_EXTERN",
+		.pme_code = 0xa10a4,
 		.pme_short_desc = "LSU0 external reject request ",
 		.pme_long_desc = "LSU0 external reject request ",
 		.pme_event_ids = { 210, 219, 205, 210, -1, -1 },
@@ -1164,6 +1259,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_BR_TAKEN 95
 	[ POWER6_PME_PM_MRK_BR_TAKEN ] = {
 		.pme_name = "PM_MRK_BR_TAKEN",
+		.pme_code = 0x100052,
 		.pme_short_desc = "Marked branch taken",
 		.pme_long_desc = "Marked branch taken",
 		.pme_event_ids = { 258, -1, -1, -1, -1, -1 },
@@ -1176,6 +1272,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_ISLB_MISS 96
 	[ POWER6_PME_PM_ISLB_MISS ] = {
 		.pme_name = "PM_ISLB_MISS",
+		.pme_code = 0x701,
 		.pme_short_desc = "Instruction SLB misses",
 		.pme_long_desc = "A SLB miss for an instruction fetch as occurred",
 		.pme_event_ids = { 152, 161, 152, 158, -1, -1 },
@@ -1188,6 +1285,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_CYC 97
 	[ POWER6_PME_PM_CYC ] = {
 		.pme_name = "PM_CYC",
+		.pme_code = 0x7,
 		.pme_short_desc = "Processor cycles",
 		.pme_long_desc = "Processor cycles",
 		.pme_event_ids = { 12, 11, 10, 12, -1, -1 },
@@ -1200,6 +1298,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_FXDIV 98
 	[ POWER6_PME_PM_FPU_FXDIV ] = {
 		.pme_name = "PM_FPU_FXDIV",
+		.pme_code = 0x1c1034,
 		.pme_short_desc = "FPU executed fixed point division",
 		.pme_long_desc = "FPU executed fixed point division",
 		.pme_event_ids = { 105, -1, -1, 110, -1, -1 },
@@ -1212,6 +1311,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_LLA_END 99
 	[ POWER6_PME_PM_DPU_HELD_LLA_END ] = {
 		.pme_name = "PM_DPU_HELD_LLA_END",
+		.pme_code = 0x30084,
 		.pme_short_desc = "DISP unit held due to load look ahead ended",
 		.pme_long_desc = "DISP unit held due to load look ahead ended",
 		.pme_event_ids = { 43, 51, 42, 50, -1, -1 },
@@ -1224,6 +1324,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MEM0_DP_CL_WR_LOC 100
 	[ POWER6_PME_PM_MEM0_DP_CL_WR_LOC ] = {
 		.pme_name = "PM_MEM0_DP_CL_WR_LOC",
+		.pme_code = 0x50286,
 		.pme_short_desc = "cacheline write setting dp to local side 0",
 		.pme_long_desc = "cacheline write setting dp to local side 0",
 		.pme_event_ids = { 249, 260, 243, 248, -1, -1 },
@@ -1236,6 +1337,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_LSU_REJECT_ULD 101
 	[ POWER6_PME_PM_MRK_LSU_REJECT_ULD ] = {
 		.pme_name = "PM_MRK_LSU_REJECT_ULD",
+		.pme_code = 0x193034,
 		.pme_short_desc = "Marked unaligned load reject",
 		.pme_long_desc = "Marked unaligned load reject",
 		.pme_event_ids = { 276, -1, -1, 274, -1, -1 },
@@ -1248,6 +1350,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_1PLUS_PPC_CMPL 102
 	[ POWER6_PME_PM_1PLUS_PPC_CMPL ] = {
 		.pme_name = "PM_1PLUS_PPC_CMPL",
+		.pme_code = 0x5003,
 		.pme_short_desc = "One or more PPC instruction completed",
 		.pme_long_desc = "A group containing at least one PPC instruction completed. For microcoded instructions that span multiple groups, this will only occur once.",
 		.pme_event_ids = { 1, -1, -1, -1, -1, -1 },
@@ -1260,6 +1363,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PTEG_FROM_DMEM 103
 	[ POWER6_PME_PM_PTEG_FROM_DMEM ] = {
 		.pme_name = "PM_PTEG_FROM_DMEM",
+		.pme_code = 0x21304a,
 		.pme_short_desc = "PTEG loaded from distant memory",
 		.pme_long_desc = "PTEG loaded from distant memory",
 		.pme_event_ids = { -1, 304, -1, -1, -1, -1 },
@@ -1272,6 +1376,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_WT_BR_MPRED_COUNT 104
 	[ POWER6_PME_PM_DPU_WT_BR_MPRED_COUNT ] = {
 		.pme_name = "PM_DPU_WT_BR_MPRED_COUNT",
+		.pme_code = 0x40000d,
 		.pme_short_desc = "Periods DISP unit is stalled due to branch misprediction",
 		.pme_long_desc = "Periods DISP unit is stalled due to branch misprediction",
 		.pme_event_ids = { -1, -1, -1, 340, -1, -1 },
@@ -1284,6 +1389,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_GCT_FULL_CYC 105
 	[ POWER6_PME_PM_GCT_FULL_CYC ] = {
 		.pme_name = "PM_GCT_FULL_CYC",
+		.pme_code = 0x300,
 		.pme_short_desc = "Cycles GCT full",
 		.pme_long_desc = "The ISU sends a signal indicating the gct is full. ",
 		.pme_event_ids = { 120, 128, 119, 127, -1, -1 },
@@ -1296,6 +1402,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_FROM_L25_SHR 106
 	[ POWER6_PME_PM_INST_FROM_L25_SHR ] = {
 		.pme_name = "PM_INST_FROM_L25_SHR",
+		.pme_code = 0x5426,
 		.pme_short_desc = "Instruction fetched from L2.5 shared",
 		.pme_long_desc = "Instruction fetched from L2.5 shared",
 		.pme_event_ids = { -1, -1, -1, 150, -1, -1 },
@@ -1308,6 +1415,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DERAT_MISS_4K 107
 	[ POWER6_PME_PM_MRK_DERAT_MISS_4K ] = {
 		.pme_name = "PM_MRK_DERAT_MISS_4K",
+		.pme_code = 0x292044,
 		.pme_short_desc = "Marked DERAT misses for 4K page",
 		.pme_long_desc = "A marked data request (load or store) missed the ERAT for 4K page and resulted in an ERAT reload.",
 		.pme_event_ids = { -1, 364, -1, -1, -1, -1 },
@@ -1320,6 +1428,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DC_PREF_STREAM_ALLOC 108
 	[ POWER6_PME_PM_DC_PREF_STREAM_ALLOC ] = {
 		.pme_name = "PM_DC_PREF_STREAM_ALLOC",
+		.pme_code = 0x737,
 		.pme_short_desc = "D cache new prefetch stream allocated",
 		.pme_long_desc = "A new Prefetch Stream was allocated",
 		.pme_event_ids = { 22, 29, 21, 29, -1, -1 },
@@ -1332,6 +1441,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU1_FIN 109
 	[ POWER6_PME_PM_FPU1_FIN ] = {
 		.pme_name = "PM_FPU1_FIN",
+		.pme_code = 0x117,
 		.pme_short_desc = "FPU1 produced a result",
 		.pme_long_desc = "fp1 finished, produced a result. This only indicates finish, not completion. ",
 		.pme_event_ids = { 90, 99, 88, 96, -1, -1 },
@@ -1344,6 +1454,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_BR_MPRED_TA 110
 	[ POWER6_PME_PM_BR_MPRED_TA ] = {
 		.pme_name = "PM_BR_MPRED_TA",
+		.pme_code = 0x433,
 		.pme_short_desc = "Branch mispredictions due to target address",
 		.pme_long_desc = "branch miss predict due to a target address prediction. This signal will be asserted each time the branch execution unit detects an incorrect target address prediction. This signal will be asserted after a valid branch execution unit issue and will cause a branch mispredict flush unless a flush is detected from an older instruction.",
 		.pme_event_ids = { 7, 5, 5, 7, -1, -1 },
@@ -1356,6 +1467,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_POWER 111
 	[ POWER6_PME_PM_DPU_HELD_POWER ] = {
 		.pme_name = "PM_DPU_HELD_POWER",
+		.pme_code = 0x20003c,
 		.pme_short_desc = "DISP unit held due to Power Management",
 		.pme_long_desc = "DISP unit held due to Power Management",
 		.pme_event_ids = { -1, 55, -1, -1, -1, -1 },
@@ -1368,6 +1480,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_RUN_INST_CMPL 112
 	[ POWER6_PME_PM_RUN_INST_CMPL ] = {
 		.pme_name = "PM_RUN_INST_CMPL",
+		.pme_code = 0x500009,
 		.pme_short_desc = "Run instructions completed",
 		.pme_long_desc = "Number of run instructions completed. ",
 		.pme_event_ids = { -1, -1, -1, -1, 0, -1 },
@@ -1380,6 +1493,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_GCT_EMPTY_CYC 113
 	[ POWER6_PME_PM_GCT_EMPTY_CYC ] = {
 		.pme_name = "PM_GCT_EMPTY_CYC",
+		.pme_code = 0x1004,
 		.pme_short_desc = "Cycles GCT empty",
 		.pme_long_desc = "The Global Completion Table is completely empty",
 		.pme_event_ids = { 119, 127, -1, -1, -1, -1 },
@@ -1392,6 +1506,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LLA_COUNT 114
 	[ POWER6_PME_PM_LLA_COUNT ] = {
 		.pme_name = "PM_LLA_COUNT",
+		.pme_code = 0xc01f,
 		.pme_short_desc = "Transitions into Load Look Ahead mode",
 		.pme_long_desc = "Transitions into Load Look Ahead mode",
 		.pme_event_ids = { 347, 354, 339, 339, -1, -1 },
@@ -1404,6 +1519,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU0_REJECT_NO_SCRATCH 115
 	[ POWER6_PME_PM_LSU0_REJECT_NO_SCRATCH ] = {
 		.pme_name = "PM_LSU0_REJECT_NO_SCRATCH",
+		.pme_code = 0xa10a2,
 		.pme_short_desc = "LSU0 reject due to scratch register not available",
 		.pme_long_desc = "LSU0 reject due to scratch register not available",
 		.pme_event_ids = { 214, 223, 209, 214, -1, -1 },
@@ -1416,6 +1532,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_WT_IC_MISS 116
 	[ POWER6_PME_PM_DPU_WT_IC_MISS ] = {
 		.pme_name = "PM_DPU_WT_IC_MISS",
+		.pme_code = 0x20000c,
 		.pme_short_desc = "Cycles DISP unit is stalled due to I cache miss",
 		.pme_long_desc = "Cycles DISP unit is stalled due to I cache miss",
 		.pme_event_ids = { -1, 64, -1, -1, -1, -1 },
@@ -1428,6 +1545,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_L3MISS 117
 	[ POWER6_PME_PM_DATA_FROM_L3MISS ] = {
 		.pme_name = "PM_DATA_FROM_L3MISS",
+		.pme_code = 0x3000fe,
 		.pme_short_desc = "Data loaded from private L3 miss",
 		.pme_long_desc = "Data loaded from private L3 miss",
 		.pme_event_ids = { -1, -1, 15, 19, -1, -1 },
@@ -1440,6 +1558,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_FPSCR 118
 	[ POWER6_PME_PM_FPU_FPSCR ] = {
 		.pme_name = "PM_FPU_FPSCR",
+		.pme_code = 0x2d0032,
 		.pme_short_desc = "FPU executed FPSCR instruction",
 		.pme_long_desc = "FPU executed FPSCR instruction",
 		.pme_event_ids = { -1, 112, 100, -1, -1, -1 },
@@ -1452,6 +1571,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_VMX1_INST_ISSUED 119
 	[ POWER6_PME_PM_VMX1_INST_ISSUED ] = {
 		.pme_name = "PM_VMX1_INST_ISSUED",
+		.pme_code = 0x60088,
 		.pme_short_desc = "VMX1 instruction issued",
 		.pme_long_desc = "VMX1 instruction issued",
 		.pme_event_ids = { 325, 332, 319, 317, -1, -1 },
@@ -1464,6 +1584,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FLUSH 120
 	[ POWER6_PME_PM_FLUSH ] = {
 		.pme_name = "PM_FLUSH",
+		.pme_code = 0x100010,
 		.pme_short_desc = "Flushes",
 		.pme_long_desc = "Flushes",
 		.pme_event_ids = { 67, -1, -1, 73, -1, -1 },
@@ -1476,6 +1597,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_ST_HIT_L2 121
 	[ POWER6_PME_PM_ST_HIT_L2 ] = {
 		.pme_name = "PM_ST_HIT_L2",
+		.pme_code = 0x150732,
 		.pme_short_desc = "L2 D cache store hits",
 		.pme_long_desc = "L2 D cache store hits",
 		.pme_event_ids = { 308, -1, -1, 298, -1, -1 },
@@ -1488,6 +1610,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_SYNC_CYC 122
 	[ POWER6_PME_PM_SYNC_CYC ] = {
 		.pme_name = "PM_SYNC_CYC",
+		.pme_code = 0x920cc,
 		.pme_short_desc = "Sync duration",
 		.pme_long_desc = "Sync duration",
 		.pme_event_ids = { 312, 319, 303, 303, -1, -1 },
@@ -1500,6 +1623,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FAB_SYS_PUMP 123
 	[ POWER6_PME_PM_FAB_SYS_PUMP ] = {
 		.pme_name = "PM_FAB_SYS_PUMP",
+		.pme_code = 0x50180,
 		.pme_short_desc = "System pump operation",
 		.pme_long_desc = " locally mastered",
 		.pme_event_ids = { 66, 76, 65, 72, -1, -1 },
@@ -1512,6 +1636,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_IC_PREF_REQ 124
 	[ POWER6_PME_PM_IC_PREF_REQ ] = {
 		.pme_name = "PM_IC_PREF_REQ",
+		.pme_code = 0x426,
 		.pme_short_desc = "Instruction prefetch requests",
 		.pme_long_desc = "Asserted when a non-canceled prefetch is made to the cache interface unit (CIU).",
 		.pme_event_ids = { 133, 142, 132, 139, -1, -1 },
@@ -1524,6 +1649,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MEM0_DP_RQ_GLOB_LOC 125
 	[ POWER6_PME_PM_MEM0_DP_RQ_GLOB_LOC ] = {
 		.pme_name = "PM_MEM0_DP_RQ_GLOB_LOC",
+		.pme_code = 0x50280,
 		.pme_short_desc = "Memory read queue marking cache line double pump state from global to local side 0",
 		.pme_long_desc = "Memory read queue marking cache line double pump state from global to local side 0",
 		.pme_event_ids = { 250, 261, 244, 249, -1, -1 },
@@ -1536,6 +1662,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_ISSUE_0 126
 	[ POWER6_PME_PM_FPU_ISSUE_0 ] = {
 		.pme_name = "PM_FPU_ISSUE_0",
+		.pme_code = 0x320c6,
 		.pme_short_desc = "FPU issue 0 per cycle",
 		.pme_long_desc = "FPU issue 0 per cycle",
 		.pme_event_ids = { 107, 115, 103, 112, -1, -1 },
@@ -1548,6 +1675,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_PRIO_2_CYC 127
 	[ POWER6_PME_PM_THRD_PRIO_2_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_2_CYC",
+		.pme_code = 0x322040,
 		.pme_short_desc = "Cycles thread running at priority level 2",
 		.pme_long_desc = "Cycles thread running at priority level 2",
 		.pme_event_ids = { -1, -1, 308, -1, -1, -1 },
@@ -1560,6 +1688,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_VMX_SIMPLE_ISSUED 128
 	[ POWER6_PME_PM_VMX_SIMPLE_ISSUED ] = {
 		.pme_name = "PM_VMX_SIMPLE_ISSUED",
+		.pme_code = 0x70082,
 		.pme_short_desc = "VMX instruction issued to simple",
 		.pme_long_desc = "VMX instruction issued to simple",
 		.pme_event_ids = { 335, 342, 329, 327, -1, -1 },
@@ -1572,6 +1701,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_FPU1_FIN 129
 	[ POWER6_PME_PM_MRK_FPU1_FIN ] = {
 		.pme_name = "PM_MRK_FPU1_FIN",
+		.pme_code = 0xd008a,
 		.pme_short_desc = "Marked instruction FPU1 processing finished",
 		.pme_long_desc = "Marked instruction FPU1 processing finished",
 		.pme_event_ids = { 266, 275, 260, 261, -1, -1 },
@@ -1584,6 +1714,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_CW 130
 	[ POWER6_PME_PM_DPU_HELD_CW ] = {
 		.pme_name = "PM_DPU_HELD_CW",
+		.pme_code = 0x20084,
 		.pme_short_desc = "DISP unit held due to cache writes ",
 		.pme_long_desc = "DISP unit held due to cache writes ",
 		.pme_event_ids = { 33, 41, 32, 40, -1, -1 },
@@ -1596,6 +1727,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L3SA_REF 131
 	[ POWER6_PME_PM_L3SA_REF ] = {
 		.pme_name = "PM_L3SA_REF",
+		.pme_code = 0x50080,
 		.pme_short_desc = "L3 slice A references",
 		.pme_long_desc = "L3 slice A references",
 		.pme_event_ids = { 193, 203, 191, 196, -1, -1 },
@@ -1608,6 +1740,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_STCX 132
 	[ POWER6_PME_PM_STCX ] = {
 		.pme_name = "PM_STCX",
+		.pme_code = 0x830e6,
 		.pme_short_desc = "STCX executed",
 		.pme_long_desc = "STCX executed",
 		.pme_event_ids = { 304, 310, 296, 295, -1, -1 },
@@ -1620,6 +1753,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SB_MISS 133
 	[ POWER6_PME_PM_L2SB_MISS ] = {
 		.pme_name = "PM_L2SB_MISS",
+		.pme_code = 0x5058c,
 		.pme_short_desc = "L2 slice B misses",
 		.pme_long_desc = "L2 slice B misses",
 		.pme_event_ids = { 181, 190, 181, 187, -1, -1 },
@@ -1632,6 +1766,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU0_REJECT 134
 	[ POWER6_PME_PM_LSU0_REJECT ] = {
 		.pme_name = "PM_LSU0_REJECT",
+		.pme_code = 0xa10a6,
 		.pme_short_desc = "LSU0 reject",
 		.pme_long_desc = "LSU0 reject",
 		.pme_event_ids = { 208, 217, 203, 208, -1, -1 },
@@ -1644,6 +1779,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_TB_BIT_TRANS 135
 	[ POWER6_PME_PM_TB_BIT_TRANS ] = {
 		.pme_name = "PM_TB_BIT_TRANS",
+		.pme_code = 0x8005,
 		.pme_short_desc = "Time Base bit transition",
 		.pme_long_desc = "When the selected time base bit (as specified in MMCR0[TBSEL])transitions from 0 to 1 ",
 		.pme_event_ids = { 313, -1, 304, -1, -1, -1 },
@@ -1656,6 +1792,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THERMAL_MAX 136
 	[ POWER6_PME_PM_THERMAL_MAX ] = {
 		.pme_name = "PM_THERMAL_MAX",
+		.pme_code = 0x30002a,
 		.pme_short_desc = "Processor in thermal MAX",
 		.pme_long_desc = "Processor in thermal MAX",
 		.pme_event_ids = { -1, -1, 305, -1, -1, -1 },
@@ -1668,6 +1805,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU0_STF 137
 	[ POWER6_PME_PM_FPU0_STF ] = {
 		.pme_name = "PM_FPU0_STF",
+		.pme_code = 0x122,
 		.pme_short_desc = "FPU0 executed store instruction",
 		.pme_long_desc = "This signal is active for one cycle when fp0 is executing a store instruction.",
 		.pme_event_ids = { 84, 93, 82, 90, -1, -1 },
@@ -1680,6 +1818,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU1_FMA 138
 	[ POWER6_PME_PM_FPU1_FMA ] = {
 		.pme_name = "PM_FPU1_FMA",
+		.pme_code = 0x105,
 		.pme_short_desc = "FPU1 executed multiply-add instruction",
 		.pme_long_desc = "This signal is active for one cycle when fp1 is executing multiply-add kind of instruction. This could be fmadd*, fnmadd*, fmsub*, fnmsub* where XYZ* means XYZ, XYZs, XYZ., XYZs.",
 		.pme_event_ids = { 92, 101, 90, 98, -1, -1 },
@@ -1692,6 +1831,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU1_REJECT_LHS 139
 	[ POWER6_PME_PM_LSU1_REJECT_LHS ] = {
 		.pme_name = "PM_LSU1_REJECT_LHS",
+		.pme_code = 0x9008e,
 		.pme_short_desc = "LSU1 load hit store reject",
 		.pme_long_desc = "LSU1 load hit store reject",
 		.pme_event_ids = { 226, 235, 221, 226, -1, -1 },
@@ -1704,6 +1844,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_INT 140
 	[ POWER6_PME_PM_DPU_HELD_INT ] = {
 		.pme_name = "PM_DPU_HELD_INT",
+		.pme_code = 0x310a8,
 		.pme_short_desc = "DISP unit held due to exception",
 		.pme_long_desc = "DISP unit held due to exception",
 		.pme_event_ids = { 40, 48, 39, 47, -1, -1 },
@@ -1716,6 +1857,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_LLA_BOTH_CYC 141
 	[ POWER6_PME_PM_THRD_LLA_BOTH_CYC ] = {
 		.pme_name = "PM_THRD_LLA_BOTH_CYC",
+		.pme_code = 0x400008,
 		.pme_short_desc = "Both threads in Load Look Ahead",
 		.pme_long_desc = "Both threads in Load Look Ahead",
 		.pme_event_ids = { -1, -1, -1, 306, -1, -1 },
@@ -1728,6 +1870,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_THERMAL_COUNT 142
 	[ POWER6_PME_PM_DPU_HELD_THERMAL_COUNT ] = {
 		.pme_name = "PM_DPU_HELD_THERMAL_COUNT",
+		.pme_code = 0x10002b,
 		.pme_short_desc = "Periods DISP unit held due to thermal condition",
 		.pme_long_desc = "Periods DISP unit held due to thermal condition",
 		.pme_event_ids = { 348, -1, -1, -1, -1, -1 },
@@ -1740,6 +1883,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PMC4_REWIND 143
 	[ POWER6_PME_PM_PMC4_REWIND ] = {
 		.pme_name = "PM_PMC4_REWIND",
+		.pme_code = 0x100020,
 		.pme_short_desc = "PMC4 rewind event",
 		.pme_long_desc = "PMC4 rewind event",
 		.pme_event_ids = { 293, -1, -1, -1, -1, -1 },
@@ -1752,6 +1896,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DERAT_REF_16M 144
 	[ POWER6_PME_PM_DERAT_REF_16M ] = {
 		.pme_name = "PM_DERAT_REF_16M",
+		.pme_code = 0x382070,
 		.pme_short_desc = "DERAT reference for 16M page",
 		.pme_long_desc = "DERAT reference for 16M page",
 		.pme_event_ids = { -1, -1, 342, -1, -1, -1 },
@@ -1764,6 +1909,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU0_FCONV 145
 	[ POWER6_PME_PM_FPU0_FCONV ] = {
 		.pme_name = "PM_FPU0_FCONV",
+		.pme_code = 0xd10a0,
 		.pme_short_desc = "FPU0 executed FCONV instruction",
 		.pme_long_desc = "FPU0 executed FCONV instruction",
 		.pme_event_ids = { 73, 82, 71, 79, -1, -1 },
@@ -1776,6 +1922,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SA_LD_REQ_DATA 146
 	[ POWER6_PME_PM_L2SA_LD_REQ_DATA ] = {
 		.pme_name = "PM_L2SA_LD_REQ_DATA",
+		.pme_code = 0x50480,
 		.pme_short_desc = "L2 slice A data load requests",
 		.pme_long_desc = "L2 slice A data load requests",
 		.pme_event_ids = { 165, 174, 165, 171, -1, -1 },
@@ -1788,6 +1935,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_MEM_DP 147
 	[ POWER6_PME_PM_DATA_FROM_MEM_DP ] = {
 		.pme_name = "PM_DATA_FROM_MEM_DP",
+		.pme_code = 0x10005e,
 		.pme_short_desc = "Data loaded from double pump memory",
 		.pme_long_desc = "Data loaded from double pump memory",
 		.pme_event_ids = { 15, -1, -1, -1, -1, -1 },
@@ -1800,6 +1948,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_VMX_FLOAT_ISSUED 148
 	[ POWER6_PME_PM_MRK_VMX_FLOAT_ISSUED ] = {
 		.pme_name = "PM_MRK_VMX_FLOAT_ISSUED",
+		.pme_code = 0x70088,
 		.pme_short_desc = "Marked VMX instruction issued to float",
 		.pme_long_desc = "Marked VMX instruction issued to float",
 		.pme_event_ids = { 286, 298, 281, 283, -1, -1 },
@@ -1812,6 +1961,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_PTEG_FROM_L2MISS 149
 	[ POWER6_PME_PM_MRK_PTEG_FROM_L2MISS ] = {
 		.pme_name = "PM_MRK_PTEG_FROM_L2MISS",
+		.pme_code = 0x412054,
 		.pme_short_desc = "Marked PTEG loaded from L2 miss",
 		.pme_long_desc = "Marked PTEG loaded from L2 miss",
 		.pme_event_ids = { -1, -1, -1, 277, -1, -1 },
@@ -1824,6 +1974,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_PRIO_DIFF_1or2_CYC 150
 	[ POWER6_PME_PM_THRD_PRIO_DIFF_1or2_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_DIFF_1or2_CYC",
+		.pme_code = 0x223040,
 		.pme_short_desc = "Cycles thread priority difference is 1 or 2",
 		.pme_long_desc = "Cycles thread priority difference is 1 or 2",
 		.pme_event_ids = { -1, 324, -1, -1, -1, -1 },
@@ -1836,6 +1987,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_VMX0_STALL 151
 	[ POWER6_PME_PM_VMX0_STALL ] = {
 		.pme_name = "PM_VMX0_STALL",
+		.pme_code = 0xb0084,
 		.pme_short_desc = "VMX0 stall",
 		.pme_long_desc = "VMX0 stall",
 		.pme_event_ids = { 324, 331, 318, 316, -1, -1 },
@@ -1848,6 +2000,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_IC_DEMAND_L2_BHT_REDIRECT 152
 	[ POWER6_PME_PM_IC_DEMAND_L2_BHT_REDIRECT ] = {
 		.pme_name = "PM_IC_DEMAND_L2_BHT_REDIRECT",
+		.pme_code = 0x420ca,
 		.pme_short_desc = "L2 I cache demand request due to BHT redirect",
 		.pme_long_desc = "L2 I cache demand request due to BHT redirect",
 		.pme_event_ids = { 131, 139, 129, 137, -1, -1 },
@@ -1860,6 +2013,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_DERAT_MISS 153
 	[ POWER6_PME_PM_LSU_DERAT_MISS ] = {
 		.pme_name = "PM_LSU_DERAT_MISS",
+		.pme_code = 0x6700,
 		.pme_short_desc = "DERAT misses",
 		.pme_long_desc = "Total DERAT Misses (Unit 0 + Unit 1). Requests that miss the Derat are rejected and retried until the request hits in the Erat. This may result in multiple erat misses for the same instruction.",
 		.pme_event_ids = { -1, 243, -1, 335, -1, -1 },
@@ -1872,6 +2026,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU0_SINGLE 154
 	[ POWER6_PME_PM_FPU0_SINGLE ] = {
 		.pme_name = "PM_FPU0_SINGLE",
+		.pme_code = 0x123,
 		.pme_short_desc = "FPU0 executed single precision instruction",
 		.pme_long_desc = "This signal is active for one cycle when fp0 is executing single precision instruction.",
 		.pme_event_ids = { 83, 92, 81, 89, -1, -1 },
@@ -1884,6 +2039,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_ISSUE_STEERING 155
 	[ POWER6_PME_PM_FPU_ISSUE_STEERING ] = {
 		.pme_name = "PM_FPU_ISSUE_STEERING",
+		.pme_code = 0x320c4,
 		.pme_short_desc = "FPU issue steering",
 		.pme_long_desc = "FPU issue steering",
 		.pme_event_ids = { 115, 123, 111, 120, -1, -1 },
@@ -1896,6 +2052,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_PRIO_1_CYC 156
 	[ POWER6_PME_PM_THRD_PRIO_1_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_1_CYC",
+		.pme_code = 0x222040,
 		.pme_short_desc = "Cycles thread running at priority level 1",
 		.pme_long_desc = "Cycles thread running at priority level 1",
 		.pme_event_ids = { -1, 322, -1, -1, -1, -1 },
@@ -1908,6 +2065,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_ISSUE_ST_FOLDED 157
 	[ POWER6_PME_PM_FPU_ISSUE_ST_FOLDED ] = {
 		.pme_name = "PM_FPU_ISSUE_ST_FOLDED",
+		.pme_code = 0x320c2,
 		.pme_short_desc = "FPU issue a folded store",
 		.pme_long_desc = "FPU issue a folded store",
 		.pme_event_ids = { 116, 124, 112, 121, -1, -1 },
@@ -1920,6 +2078,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DFU_FIN 158
 	[ POWER6_PME_PM_DFU_FIN ] = {
 		.pme_name = "PM_DFU_FIN",
+		.pme_code = 0xe0080,
 		.pme_short_desc = "DFU instruction finish",
 		.pme_long_desc = "DFU instruction finish",
 		.pme_event_ids = { 29, 36, 28, 36, -1, -1 },
@@ -1932,6 +2091,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_BR_PRED_CCACHE 159
 	[ POWER6_PME_PM_BR_PRED_CCACHE ] = {
 		.pme_name = "PM_BR_PRED_CCACHE",
+		.pme_code = 0x410a4,
 		.pme_short_desc = "Branch count cache prediction",
 		.pme_long_desc = "Branch count cache prediction",
 		.pme_event_ids = { 9, 7, 7, 9, -1, -1 },
@@ -1944,6 +2104,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_ST_CMPL_INT 160
 	[ POWER6_PME_PM_MRK_ST_CMPL_INT ] = {
 		.pme_name = "PM_MRK_ST_CMPL_INT",
+		.pme_code = 0x3003,
 		.pme_short_desc = "Marked store completed with intervention",
 		.pme_long_desc = "A marked store previously sent to the memory subsystem completed (data home) after requiring intervention",
 		.pme_event_ids = { -1, -1, 277, -1, -1, -1 },
@@ -1956,6 +2117,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FAB_MMIO 161
 	[ POWER6_PME_PM_FAB_MMIO ] = {
 		.pme_name = "PM_FAB_MMIO",
+		.pme_code = 0x50186,
 		.pme_short_desc = "MMIO operation",
 		.pme_long_desc = " locally mastered",
 		.pme_event_ids = { 62, 72, 61, 68, -1, -1 },
@@ -1968,6 +2130,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_VMX_SIMPLE_ISSUED 162
 	[ POWER6_PME_PM_MRK_VMX_SIMPLE_ISSUED ] = {
 		.pme_name = "PM_MRK_VMX_SIMPLE_ISSUED",
+		.pme_code = 0x7008a,
 		.pme_short_desc = "Marked VMX instruction issued to simple",
 		.pme_long_desc = "Marked VMX instruction issued to simple",
 		.pme_event_ids = { 288, 300, 283, 285, -1, -1 },
@@ -1980,6 +2143,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_STF 163
 	[ POWER6_PME_PM_FPU_STF ] = {
 		.pme_name = "PM_FPU_STF",
+		.pme_code = 0x6120,
 		.pme_short_desc = "FPU executed store instruction",
 		.pme_long_desc = "FPU is executing a store instruction. Combined Unit 0 + Unit 1",
 		.pme_event_ids = { -1, -1, 113, -1, -1, -1 },
@@ -1992,6 +2156,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MEM1_DP_CL_WR_GLOB 164
 	[ POWER6_PME_PM_MEM1_DP_CL_WR_GLOB ] = {
 		.pme_name = "PM_MEM1_DP_CL_WR_GLOB",
+		.pme_code = 0x5028c,
 		.pme_short_desc = "cacheline write setting dp to global side 1",
 		.pme_long_desc = "cacheline write setting dp to global side 1",
 		.pme_event_ids = { 252, 263, 246, 251, -1, -1 },
@@ -2004,6 +2169,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DATA_FROM_L3MISS 165
 	[ POWER6_PME_PM_MRK_DATA_FROM_L3MISS ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L3MISS",
+		.pme_code = 0x303028,
 		.pme_short_desc = "Marked data loaded from L3 miss",
 		.pme_long_desc = "Marked data loaded from L3 miss",
 		.pme_event_ids = { -1, -1, 255, -1, -1, -1 },
@@ -2016,6 +2182,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_GCT_NOSLOT_CYC 166
 	[ POWER6_PME_PM_GCT_NOSLOT_CYC ] = {
 		.pme_name = "PM_GCT_NOSLOT_CYC",
+		.pme_code = 0x100008,
 		.pme_short_desc = "Cycles no GCT slot allocated",
 		.pme_long_desc = "Cycles this thread does not have any slots allocated in the GCT.",
 		.pme_event_ids = { 121, -1, -1, -1, -1, -1 },
@@ -2028,6 +2195,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2_ST_REQ_DATA 167
 	[ POWER6_PME_PM_L2_ST_REQ_DATA ] = {
 		.pme_name = "PM_L2_ST_REQ_DATA",
+		.pme_code = 0x250432,
 		.pme_short_desc = "L2 data store requests",
 		.pme_long_desc = "L2 data store requests",
 		.pme_event_ids = { -1, 200, 188, -1, -1, -1 },
@@ -2040,6 +2208,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_TABLEWALK_COUNT 168
 	[ POWER6_PME_PM_INST_TABLEWALK_COUNT ] = {
 		.pme_name = "PM_INST_TABLEWALK_COUNT",
+		.pme_code = 0x920cb,
 		.pme_short_desc = "Periods doing instruction tablewalks",
 		.pme_long_desc = "Periods doing instruction tablewalks",
 		.pme_event_ids = { 341, 348, 335, 333, -1, -1 },
@@ -2052,6 +2221,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PTEG_FROM_L35_SHR 169
 	[ POWER6_PME_PM_PTEG_FROM_L35_SHR ] = {
 		.pme_name = "PM_PTEG_FROM_L35_SHR",
+		.pme_code = 0x21304e,
 		.pme_short_desc = "PTEG loaded from L3.5 shared",
 		.pme_long_desc = "PTEG loaded from L3.5 shared",
 		.pme_event_ids = { -1, 306, -1, -1, -1, -1 },
@@ -2064,6 +2234,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_ISYNC 170
 	[ POWER6_PME_PM_DPU_HELD_ISYNC ] = {
 		.pme_name = "PM_DPU_HELD_ISYNC",
+		.pme_code = 0x2008a,
 		.pme_short_desc = "DISP unit held due to ISYNC ",
 		.pme_long_desc = "DISP unit held due to ISYNC ",
 		.pme_event_ids = { 41, 49, 40, 48, -1, -1 },
@@ -2076,6 +2247,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DATA_FROM_L25_SHR 171
 	[ POWER6_PME_PM_MRK_DATA_FROM_L25_SHR ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L25_SHR",
+		.pme_code = 0x193d,
 		.pme_short_desc = "Marked data loaded from L2.5 shared",
 		.pme_long_desc = "DL1 was reloaded with shared (T or SL) data from the L2 of a chip on this MCM due to a marked demand load",
 		.pme_event_ids = { -1, -1, -1, 257, -1, -1 },
@@ -2088,6 +2260,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L3SA_HIT 172
 	[ POWER6_PME_PM_L3SA_HIT ] = {
 		.pme_name = "PM_L3SA_HIT",
+		.pme_code = 0x50082,
 		.pme_short_desc = "L3 slice A hits",
 		.pme_long_desc = "L3 slice A hits",
 		.pme_event_ids = { 191, 201, 189, 194, -1, -1 },
@@ -2100,6 +2273,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DERAT_MISS_16G 173
 	[ POWER6_PME_PM_DERAT_MISS_16G ] = {
 		.pme_name = "PM_DERAT_MISS_16G",
+		.pme_code = 0x492070,
 		.pme_short_desc = "DERAT misses for 16G page",
 		.pme_long_desc = "A data request (load or store) missed the ERAT for 16G page and resulted in an ERAT reload.",
 		.pme_event_ids = { -1, -1, -1, 343, -1, -1 },
@@ -2112,6 +2286,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_PTEG_2ND_HALF 174
 	[ POWER6_PME_PM_DATA_PTEG_2ND_HALF ] = {
 		.pme_name = "PM_DATA_PTEG_2ND_HALF",
+		.pme_code = 0x910a2,
 		.pme_short_desc = "Data table walk matched in second half pri­mary PTEG",
 		.pme_long_desc = "Data table walk matched in second half pri­mary PTEG",
 		.pme_event_ids = { 18, 26, 18, 25, -1, -1 },
@@ -2124,6 +2299,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SA_ST_REQ 175
 	[ POWER6_PME_PM_L2SA_ST_REQ ] = {
 		.pme_name = "PM_L2SA_ST_REQ",
+		.pme_code = 0x50484,
 		.pme_short_desc = "L2 slice A store requests",
 		.pme_long_desc = "A store request as seen at the L2 directory has been made from the core. Stores are counted after gathering in the L2 store queues. The event is provided on each of the three slices A,B,and C.",
 		.pme_event_ids = { 170, 179, 170, 176, -1, -1 },
@@ -2136,6 +2312,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_FROM_LMEM 176
 	[ POWER6_PME_PM_INST_FROM_LMEM ] = {
 		.pme_name = "PM_INST_FROM_LMEM",
+		.pme_code = 0x442042,
 		.pme_short_desc = "Instruction fetched from local memory",
 		.pme_long_desc = "Instruction fetched from local memory",
 		.pme_event_ids = { -1, -1, -1, 152, -1, -1 },
@@ -2148,6 +2325,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_IC_DEMAND_L2_BR_REDIRECT 177
 	[ POWER6_PME_PM_IC_DEMAND_L2_BR_REDIRECT ] = {
 		.pme_name = "PM_IC_DEMAND_L2_BR_REDIRECT",
+		.pme_code = 0x420cc,
 		.pme_short_desc = "L2 I cache demand request due to branch redirect",
 		.pme_long_desc = "L2 I cache demand request due to branch redirect",
 		.pme_event_ids = { 132, 140, 130, 138, -1, -1 },
@@ -2160,6 +2338,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PTEG_FROM_L2 178
 	[ POWER6_PME_PM_PTEG_FROM_L2 ] = {
 		.pme_name = "PM_PTEG_FROM_L2",
+		.pme_code = 0x113048,
 		.pme_short_desc = "PTEG loaded from L2",
 		.pme_long_desc = "PTEG loaded from L2",
 		.pme_event_ids = { 295, -1, -1, -1, -1, -1 },
@@ -2172,6 +2351,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_PTEG_1ST_HALF 179
 	[ POWER6_PME_PM_DATA_PTEG_1ST_HALF ] = {
 		.pme_name = "PM_DATA_PTEG_1ST_HALF",
+		.pme_code = 0x910a0,
 		.pme_short_desc = "Data table walk matched in first half primary PTEG",
 		.pme_long_desc = "Data table walk matched in first half primary PTEG",
 		.pme_event_ids = { 17, 25, 17, 24, -1, -1 },
@@ -2184,6 +2364,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_BR_MPRED_COUNT 180
 	[ POWER6_PME_PM_BR_MPRED_COUNT ] = {
 		.pme_name = "PM_BR_MPRED_COUNT",
+		.pme_code = 0x410aa,
 		.pme_short_desc = "Branch misprediction due to count prediction",
 		.pme_long_desc = "Branch misprediction due to count prediction",
 		.pme_event_ids = { 5, 3, 3, 5, -1, -1 },
@@ -2196,6 +2377,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_IERAT_MISS_4K 181
 	[ POWER6_PME_PM_IERAT_MISS_4K ] = {
 		.pme_name = "PM_IERAT_MISS_4K",
+		.pme_code = 0x492076,
 		.pme_short_desc = "IERAT misses for 4K page",
 		.pme_long_desc = "IERAT misses for 4K page",
 		.pme_event_ids = { -1, -1, -1, 344, -1, -1 },
@@ -2208,6 +2390,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_BOTH_RUN_COUNT 182
 	[ POWER6_PME_PM_THRD_BOTH_RUN_COUNT ] = {
 		.pme_name = "PM_THRD_BOTH_RUN_COUNT",
+		.pme_code = 0x400005,
 		.pme_short_desc = "Periods both threads in run cycles",
 		.pme_long_desc = "Periods both threads in run cycles",
 		.pme_event_ids = { -1, -1, -1, 336, -1, -1 },
@@ -2220,6 +2403,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_REJECT_ULD 183
 	[ POWER6_PME_PM_LSU_REJECT_ULD ] = {
 		.pme_name = "PM_LSU_REJECT_ULD",
+		.pme_code = 0x190030,
 		.pme_short_desc = "Unaligned load reject",
 		.pme_long_desc = "Unaligned load reject",
 		.pme_event_ids = { 244, -1, -1, -1, -1, -1 },
@@ -2232,6 +2416,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_DL2L3_MOD_CYC 184
 	[ POWER6_PME_PM_DATA_FROM_DL2L3_MOD_CYC ] = {
 		.pme_name = "PM_DATA_FROM_DL2L3_MOD_CYC",
+		.pme_code = 0x40002a,
 		.pme_short_desc = "Load latency from distant L2 or L3 modified",
 		.pme_long_desc = "Load latency from distant L2 or L3 modified",
 		.pme_event_ids = { -1, -1, -1, 14, -1, -1 },
@@ -2244,6 +2429,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_PTEG_FROM_RL2L3_MOD 185
 	[ POWER6_PME_PM_MRK_PTEG_FROM_RL2L3_MOD ] = {
 		.pme_name = "PM_MRK_PTEG_FROM_RL2L3_MOD",
+		.pme_code = 0x112044,
 		.pme_short_desc = "Marked PTEG loaded from remote L2 or L3 modified",
 		.pme_long_desc = "Marked PTEG loaded from remote L2 or L3 modified",
 		.pme_event_ids = { 280, -1, -1, -1, -1, -1 },
@@ -2256,6 +2442,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU0_FLOP 186
 	[ POWER6_PME_PM_FPU0_FLOP ] = {
 		.pme_name = "PM_FPU0_FLOP",
+		.pme_code = 0xc0086,
 		.pme_short_desc = "FPU0 executed 1FLOP",
 		.pme_long_desc = " FMA",
 		.pme_event_ids = { 76, 85, 74, 82, -1, -1 },
@@ -2268,6 +2455,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU0_FEST 187
 	[ POWER6_PME_PM_FPU0_FEST ] = {
 		.pme_name = "PM_FPU0_FEST",
+		.pme_code = 0x112,
 		.pme_short_desc = "FPU0 executed FEST instruction",
 		.pme_long_desc = "This signal is active for one cycle when fp0 is executing one of the estimate instructions. This could be fres* or frsqrte* where XYZ* means XYZ or XYZ. ",
 		.pme_event_ids = { 74, 83, 72, 80, -1, -1 },
@@ -2280,6 +2468,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_LSU0_REJECT_LHS 188
 	[ POWER6_PME_PM_MRK_LSU0_REJECT_LHS ] = {
 		.pme_name = "PM_MRK_LSU0_REJECT_LHS",
+		.pme_code = 0x930e6,
 		.pme_short_desc = "LSU0 marked load hit store reject",
 		.pme_long_desc = "LSU0 marked load hit store reject",
 		.pme_event_ids = { 270, 282, 264, 265, -1, -1 },
@@ -2292,6 +2481,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_VMX_RESULT_SAT_1 189
 	[ POWER6_PME_PM_VMX_RESULT_SAT_1 ] = {
 		.pme_name = "PM_VMX_RESULT_SAT_1",
+		.pme_code = 0xb0086,
 		.pme_short_desc = "VMX valid result with sat=1",
 		.pme_long_desc = "VMX valid result with sat=1",
 		.pme_event_ids = { 334, 341, 328, 326, -1, -1 },
@@ -2304,6 +2494,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_NO_ITAG_CYC 190
 	[ POWER6_PME_PM_NO_ITAG_CYC ] = {
 		.pme_name = "PM_NO_ITAG_CYC",
+		.pme_code = 0x40088,
 		.pme_short_desc = "Cyles no ITAG available",
 		.pme_long_desc = "Cyles no ITAG available",
 		.pme_event_ids = { 290, 302, 285, 287, -1, -1 },
@@ -2316,6 +2507,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU1_REJECT_NO_SCRATCH 191
 	[ POWER6_PME_PM_LSU1_REJECT_NO_SCRATCH ] = {
 		.pme_name = "PM_LSU1_REJECT_NO_SCRATCH",
+		.pme_code = 0xa10aa,
 		.pme_short_desc = "LSU1 reject due to scratch register not available",
 		.pme_long_desc = "LSU1 reject due to scratch register not available",
 		.pme_event_ids = { 227, 236, 222, 227, -1, -1 },
@@ -2328,6 +2520,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_0INST_FETCH 192
 	[ POWER6_PME_PM_0INST_FETCH ] = {
 		.pme_name = "PM_0INST_FETCH",
+		.pme_code = 0x442d,
 		.pme_short_desc = "No instructions fetched",
 		.pme_long_desc = "No instructions were fetched this cycles (due to IFU hold, redirect, or icache miss)",
 		.pme_event_ids = { 0, 0, 0, 0, -1, -1 },
@@ -2340,6 +2533,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_WT_BR_MPRED 193
 	[ POWER6_PME_PM_DPU_WT_BR_MPRED ] = {
 		.pme_name = "PM_DPU_WT_BR_MPRED",
+		.pme_code = 0x40000c,
 		.pme_short_desc = "Cycles DISP unit is stalled due to branch misprediction",
 		.pme_long_desc = "Cycles DISP unit is stalled due to branch misprediction",
 		.pme_event_ids = { -1, -1, -1, 62, -1, -1 },
@@ -2352,6 +2546,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L1_PREF 194
 	[ POWER6_PME_PM_L1_PREF ] = {
 		.pme_name = "PM_L1_PREF",
+		.pme_code = 0x731,
 		.pme_short_desc = "L1 cache data prefetches",
 		.pme_long_desc = "A request to prefetch data into the L1 was made",
 		.pme_event_ids = { 155, 164, 155, 161, -1, -1 },
@@ -2364,6 +2559,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_VMX_FLOAT_MULTICYCLE 195
 	[ POWER6_PME_PM_VMX_FLOAT_MULTICYCLE ] = {
 		.pme_name = "PM_VMX_FLOAT_MULTICYCLE",
+		.pme_code = 0xb0082,
 		.pme_short_desc = "VMX multi-cycle floating point instruction issued",
 		.pme_long_desc = "VMX multi-cycle floating point instruction issued",
 		.pme_event_ids = { 331, 338, 325, 323, -1, -1 },
@@ -2376,6 +2572,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_L25_SHR_CYC 196
 	[ POWER6_PME_PM_DATA_FROM_L25_SHR_CYC ] = {
 		.pme_name = "PM_DATA_FROM_L25_SHR_CYC",
+		.pme_code = 0x200024,
 		.pme_short_desc = "Load latency from L2.5 shared",
 		.pme_long_desc = "Load latency from L2.5 shared",
 		.pme_event_ids = { -1, 16, -1, -1, -1, -1 },
@@ -2388,6 +2585,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_L3 197
 	[ POWER6_PME_PM_DATA_FROM_L3 ] = {
 		.pme_name = "PM_DATA_FROM_L3",
+		.pme_code = 0x300058,
 		.pme_short_desc = "Data loaded from L3",
 		.pme_long_desc = "DL1 was reloaded from the local L3 due to a demand load",
 		.pme_event_ids = { -1, -1, 14, -1, -1, -1 },
@@ -2400,6 +2598,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PMC2_OVERFLOW 198
 	[ POWER6_PME_PM_PMC2_OVERFLOW ] = {
 		.pme_name = "PM_PMC2_OVERFLOW",
+		.pme_code = 0x300a,
 		.pme_short_desc = "PMC2 Overflow",
 		.pme_long_desc = "PMC2 Overflow",
 		.pme_event_ids = { -1, -1, 286, -1, -1, -1 },
@@ -2412,6 +2611,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_VMX0_LD_WRBACK 199
 	[ POWER6_PME_PM_VMX0_LD_WRBACK ] = {
 		.pme_name = "PM_VMX0_LD_WRBACK",
+		.pme_code = 0x60084,
 		.pme_short_desc = "VMX0 load writeback valid",
 		.pme_long_desc = "VMX0 load writeback valid",
 		.pme_event_ids = { 323, 330, 317, 315, -1, -1 },
@@ -2424,6 +2624,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU0_DENORM 200
 	[ POWER6_PME_PM_FPU0_DENORM ] = {
 		.pme_name = "PM_FPU0_DENORM",
+		.pme_code = 0x120,
 		.pme_short_desc = "FPU0 received denormalized data",
 		.pme_long_desc = "This signal is active for one cycle when one of the operands is denormalized.",
 		.pme_event_ids = { 72, 81, 70, 78, -1, -1 },
@@ -2436,6 +2637,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_FETCH_CYC 201
 	[ POWER6_PME_PM_INST_FETCH_CYC ] = {
 		.pme_name = "PM_INST_FETCH_CYC",
+		.pme_code = 0x424,
 		.pme_short_desc = "Cycles at least 1 instruction fetched",
 		.pme_long_desc = "Asserted each cycle when the IFU sends at least one instruction to the IDU. ",
 		.pme_event_ids = { 141, 151, 141, 147, -1, -1 },
@@ -2448,6 +2650,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_LDF 202
 	[ POWER6_PME_PM_LSU_LDF ] = {
 		.pme_name = "PM_LSU_LDF",
+		.pme_code = 0x8730,
 		.pme_short_desc = "LSU executed Floating Point load instruction",
 		.pme_long_desc = "LSU executed Floating Point load instruction",
 		.pme_event_ids = { -1, 246, 231, -1, -1, -1 },
@@ -2460,6 +2663,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_REJECT_L2_CORR 203
 	[ POWER6_PME_PM_LSU_REJECT_L2_CORR ] = {
 		.pme_name = "PM_LSU_REJECT_L2_CORR",
+		.pme_code = 0x1a1034,
 		.pme_short_desc = "LSU reject due to L2 correctable error",
 		.pme_long_desc = "LSU reject due to L2 correctable error",
 		.pme_event_ids = { 239, -1, -1, 239, -1, -1 },
@@ -2472,6 +2676,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DERAT_REF_64K 204
 	[ POWER6_PME_PM_DERAT_REF_64K ] = {
 		.pme_name = "PM_DERAT_REF_64K",
+		.pme_code = 0x282070,
 		.pme_short_desc = "DERAT reference for 64K page",
 		.pme_long_desc = "DERAT reference for 64K page",
 		.pme_event_ids = { -1, 360, -1, -1, -1, -1 },
@@ -2484,6 +2689,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_PRIO_3_CYC 205
 	[ POWER6_PME_PM_THRD_PRIO_3_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_3_CYC",
+		.pme_code = 0x422040,
 		.pme_short_desc = "Cycles thread running at priority level 3",
 		.pme_long_desc = "Cycles thread running at priority level 3",
 		.pme_event_ids = { -1, -1, -1, 307, -1, -1 },
@@ -2496,6 +2702,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_FMA 206
 	[ POWER6_PME_PM_FPU_FMA ] = {
 		.pme_name = "PM_FPU_FMA",
+		.pme_code = 0x2100,
 		.pme_short_desc = "FPU executed multiply-add instruction",
 		.pme_long_desc = "This signal is active for one cycle when FPU is executing multiply-add kind of instruction. This could be fmadd*, fnmadd*, fmsub*, fnmsub* where XYZ* means XYZ, XYZs, XYZ., XYZs. Combined Unit 0 + Unit 1",
 		.pme_event_ids = { -1, 111, -1, -1, -1, -1 },
@@ -2508,6 +2715,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_FROM_L35_MOD 207
 	[ POWER6_PME_PM_INST_FROM_L35_MOD ] = {
 		.pme_name = "PM_INST_FROM_L35_MOD",
+		.pme_code = 0x142046,
 		.pme_short_desc = "Instruction fetched from L3.5 modified",
 		.pme_long_desc = "Instruction fetched from L3.5 modified",
 		.pme_event_ids = { 144, -1, -1, -1, -1, -1 },
@@ -2520,6 +2728,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DFU_CONV 208
 	[ POWER6_PME_PM_DFU_CONV ] = {
 		.pme_name = "PM_DFU_CONV",
+		.pme_code = 0xe008e,
 		.pme_short_desc = "DFU convert from fixed op",
 		.pme_long_desc = "DFU convert from fixed op",
 		.pme_event_ids = { 26, 33, 25, 33, -1, -1 },
@@ -2532,6 +2741,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_FROM_L25_MOD 209
 	[ POWER6_PME_PM_INST_FROM_L25_MOD ] = {
 		.pme_name = "PM_INST_FROM_L25_MOD",
+		.pme_code = 0x6426,
 		.pme_short_desc = "Instruction fetched from L2.5 modified",
 		.pme_long_desc = "Instruction fetched from L2.5 modified",
 		.pme_event_ids = { -1, -1, 144, -1, -1, -1 },
@@ -2544,6 +2754,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PTEG_FROM_L35_MOD 210
 	[ POWER6_PME_PM_PTEG_FROM_L35_MOD ] = {
 		.pme_name = "PM_PTEG_FROM_L35_MOD",
+		.pme_code = 0x11304e,
 		.pme_short_desc = "PTEG loaded from L3.5 modified",
 		.pme_long_desc = "PTEG loaded from L3.5 modified",
 		.pme_event_ids = { 297, -1, -1, -1, -1, -1 },
@@ -2556,6 +2767,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_VMX_ST_ISSUED 211
 	[ POWER6_PME_PM_MRK_VMX_ST_ISSUED ] = {
 		.pme_name = "PM_MRK_VMX_ST_ISSUED",
+		.pme_code = 0xb0088,
 		.pme_short_desc = "Marked VMX store issued",
 		.pme_long_desc = "Marked VMX store issued",
 		.pme_event_ids = { 289, 301, 284, 286, -1, -1 },
@@ -2568,6 +2780,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_VMX_FLOAT_ISSUED 212
 	[ POWER6_PME_PM_VMX_FLOAT_ISSUED ] = {
 		.pme_name = "PM_VMX_FLOAT_ISSUED",
+		.pme_code = 0x70080,
 		.pme_short_desc = "VMX instruction issued to float",
 		.pme_long_desc = "VMX instruction issued to float",
 		.pme_event_ids = { 330, 337, 324, 322, -1, -1 },
@@ -2580,6 +2793,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU0_REJECT_L2_CORR 213
 	[ POWER6_PME_PM_LSU0_REJECT_L2_CORR ] = {
 		.pme_name = "PM_LSU0_REJECT_L2_CORR",
+		.pme_code = 0xa10a0,
 		.pme_short_desc = "LSU0 reject due to L2 correctable error",
 		.pme_long_desc = "LSU0 reject due to L2 correctable error",
 		.pme_event_ids = { 212, 221, 207, 212, -1, -1 },
@@ -2592,6 +2806,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_L2MISS 214
 	[ POWER6_PME_PM_THRD_L2MISS ] = {
 		.pme_name = "PM_THRD_L2MISS",
+		.pme_code = 0x310a0,
 		.pme_short_desc = "Thread in L2 miss",
 		.pme_long_desc = "Thread in L2 miss",
 		.pme_event_ids = { 314, 321, 307, 305, -1, -1 },
@@ -2604,6 +2819,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_FCONV 215
 	[ POWER6_PME_PM_FPU_FCONV ] = {
 		.pme_name = "PM_FPU_FCONV",
+		.pme_code = 0x1d1034,
 		.pme_short_desc = "FPU executed FCONV instruction",
 		.pme_long_desc = "FPU executed FCONV instruction",
 		.pme_event_ids = { 102, -1, -1, 107, -1, -1 },
@@ -2616,6 +2832,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_FXMULT 216
 	[ POWER6_PME_PM_FPU_FXMULT ] = {
 		.pme_name = "PM_FPU_FXMULT",
+		.pme_code = 0x1d0032,
 		.pme_short_desc = "FPU executed fixed point multiplication",
 		.pme_long_desc = "FPU executed fixed point multiplication",
 		.pme_event_ids = { 106, -1, -1, 111, -1, -1 },
@@ -2628,6 +2845,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU1_FRSP 217
 	[ POWER6_PME_PM_FPU1_FRSP ] = {
 		.pme_name = "PM_FPU1_FRSP",
+		.pme_code = 0xd10aa,
 		.pme_short_desc = "FPU1 executed FRSP instruction",
 		.pme_long_desc = "FPU1 executed FRSP instruction",
 		.pme_event_ids = { 94, 103, 92, 100, -1, -1 },
@@ -2640,6 +2858,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DERAT_REF_16M 218
 	[ POWER6_PME_PM_MRK_DERAT_REF_16M ] = {
 		.pme_name = "PM_MRK_DERAT_REF_16M",
+		.pme_code = 0x382044,
 		.pme_short_desc = "Marked DERAT reference for 16M page",
 		.pme_long_desc = "Marked DERAT reference for 16M page",
 		.pme_event_ids = { -1, -1, 345, -1, -1, -1 },
@@ -2652,6 +2871,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SB_CASTOUT_SHR 219
 	[ POWER6_PME_PM_L2SB_CASTOUT_SHR ] = {
 		.pme_name = "PM_L2SB_CASTOUT_SHR",
+		.pme_code = 0x5068a,
 		.pme_short_desc = "L2 slice B castouts - Shared",
 		.pme_long_desc = "L2 slice B castouts - Shared",
 		.pme_event_ids = { 172, 181, 172, 178, -1, -1 },
@@ -2664,6 +2884,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_ONE_RUN_COUNT 220
 	[ POWER6_PME_PM_THRD_ONE_RUN_COUNT ] = {
 		.pme_name = "PM_THRD_ONE_RUN_COUNT",
+		.pme_code = 0x1000fb,
 		.pme_short_desc = "Periods one of the threads in run cycles",
 		.pme_long_desc = "Periods one of the threads in run cycles",
 		.pme_event_ids = { 344, -1, -1, -1, -1, -1 },
@@ -2676,6 +2897,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_FROM_RMEM 221
 	[ POWER6_PME_PM_INST_FROM_RMEM ] = {
 		.pme_name = "PM_INST_FROM_RMEM",
+		.pme_code = 0x342042,
 		.pme_short_desc = "Instruction fetched from remote memory",
 		.pme_long_desc = "Instruction fetched from remote memory",
 		.pme_event_ids = { -1, -1, 147, -1, -1, -1 },
@@ -2688,6 +2910,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_BOTH_BUS 222
 	[ POWER6_PME_PM_LSU_BOTH_BUS ] = {
 		.pme_name = "PM_LSU_BOTH_BUS",
+		.pme_code = 0x810aa,
 		.pme_short_desc = "Both data return buses busy simultaneously",
 		.pme_long_desc = "Both data return buses busy simultaneously",
 		.pme_event_ids = { 233, 242, 228, 233, -1, -1 },
@@ -2700,6 +2923,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU1_FSQRT_FDIV 223
 	[ POWER6_PME_PM_FPU1_FSQRT_FDIV ] = {
 		.pme_name = "PM_FPU1_FSQRT_FDIV",
+		.pme_code = 0xc008c,
 		.pme_short_desc = "FPU1 executed FSQRT or FDIV instruction",
 		.pme_long_desc = "FPU1 executed FSQRT or FDIV instruction",
 		.pme_event_ids = { 95, 104, 93, 101, -1, -1 },
@@ -2712,6 +2936,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2_LD_REQ_INST 224
 	[ POWER6_PME_PM_L2_LD_REQ_INST ] = {
 		.pme_name = "PM_L2_LD_REQ_INST",
+		.pme_code = 0x150530,
 		.pme_short_desc = "L2 instruction load requests",
 		.pme_long_desc = "L2 instruction load requests",
 		.pme_event_ids = { 187, -1, -1, -1, -1, -1 },
@@ -2724,6 +2949,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_PTEG_FROM_L35_SHR 225
 	[ POWER6_PME_PM_MRK_PTEG_FROM_L35_SHR ] = {
 		.pme_name = "PM_MRK_PTEG_FROM_L35_SHR",
+		.pme_code = 0x212046,
 		.pme_short_desc = "Marked PTEG loaded from L3.5 shared",
 		.pme_long_desc = "Marked PTEG loaded from L3.5 shared",
 		.pme_event_ids = { -1, 291, -1, -1, -1, -1 },
@@ -2736,6 +2962,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_BR_PRED_CR 226
 	[ POWER6_PME_PM_BR_PRED_CR ] = {
 		.pme_name = "PM_BR_PRED_CR",
+		.pme_code = 0x410a2,
 		.pme_short_desc = "A conditional branch was predicted",
 		.pme_long_desc = " CR prediction",
 		.pme_event_ids = { 10, 8, 8, 10, -1, -1 },
@@ -2748,6 +2975,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_LSU0_REJECT_ULD 227
 	[ POWER6_PME_PM_MRK_LSU0_REJECT_ULD ] = {
 		.pme_name = "PM_MRK_LSU0_REJECT_ULD",
+		.pme_code = 0x930e0,
 		.pme_short_desc = "LSU0 marked unaligned load reject",
 		.pme_long_desc = "LSU0 marked unaligned load reject",
 		.pme_event_ids = { 271, 283, 265, 266, -1, -1 },
@@ -2760,6 +2988,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_REJECT 228
 	[ POWER6_PME_PM_LSU_REJECT ] = {
 		.pme_name = "PM_LSU_REJECT",
+		.pme_code = 0x4a1030,
 		.pme_short_desc = "LSU reject",
 		.pme_long_desc = "LSU reject",
 		.pme_event_ids = { -1, -1, -1, 238, -1, -1 },
@@ -2772,6 +3001,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_REJECT_LHS_BOTH 229
 	[ POWER6_PME_PM_LSU_REJECT_LHS_BOTH ] = {
 		.pme_name = "PM_LSU_REJECT_LHS_BOTH",
+		.pme_code = 0x290038,
 		.pme_short_desc = "Load hit store reject both units",
 		.pme_long_desc = "Load hit store reject both units",
 		.pme_event_ids = { -1, 250, -1, 241, -1, -1 },
@@ -2784,6 +3014,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_GXO_ADDR_CYC_BUSY 230
 	[ POWER6_PME_PM_GXO_ADDR_CYC_BUSY ] = {
 		.pme_name = "PM_GXO_ADDR_CYC_BUSY",
+		.pme_code = 0x50382,
 		.pme_short_desc = "Outbound GX address utilization (# of cycles address out is valid)",
 		.pme_long_desc = "Outbound GX address utilization (# of cycles address out is valid)",
 		.pme_event_ids = { 125, 132, 123, 131, -1, -1 },
@@ -2796,6 +3027,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_SRQ_EMPTY_COUNT 231
 	[ POWER6_PME_PM_LSU_SRQ_EMPTY_COUNT ] = {
 		.pme_name = "PM_LSU_SRQ_EMPTY_COUNT",
+		.pme_code = 0x40001d,
 		.pme_short_desc = "Periods SRQ empty",
 		.pme_long_desc = "The Store Request Queue is empty",
 		.pme_event_ids = { -1, -1, -1, 341, -1, -1 },
@@ -2808,6 +3040,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PTEG_FROM_L3 232
 	[ POWER6_PME_PM_PTEG_FROM_L3 ] = {
 		.pme_name = "PM_PTEG_FROM_L3",
+		.pme_code = 0x313048,
 		.pme_short_desc = "PTEG loaded from L3",
 		.pme_long_desc = "PTEG loaded from L3",
 		.pme_event_ids = { -1, -1, 292, -1, -1, -1 },
@@ -2820,6 +3053,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_VMX0_LD_ISSUED 233
 	[ POWER6_PME_PM_VMX0_LD_ISSUED ] = {
 		.pme_name = "PM_VMX0_LD_ISSUED",
+		.pme_code = 0x60082,
 		.pme_short_desc = "VMX0 load issued",
 		.pme_long_desc = "VMX0 load issued",
 		.pme_event_ids = { 322, 329, 316, 314, -1, -1 },
@@ -2832,6 +3066,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FXU_PIPELINED_MULT_DIV 234
 	[ POWER6_PME_PM_FXU_PIPELINED_MULT_DIV ] = {
 		.pme_name = "PM_FXU_PIPELINED_MULT_DIV",
+		.pme_code = 0x210ae,
 		.pme_short_desc = "Fix point multiply/divide pipelined",
 		.pme_long_desc = "Fix point multiply/divide pipelined",
 		.pme_event_ids = { 118, 126, 118, 126, -1, -1 },
@@ -2844,6 +3079,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU1_STF 235
 	[ POWER6_PME_PM_FPU1_STF ] = {
 		.pme_name = "PM_FPU1_STF",
+		.pme_code = 0x126,
 		.pme_short_desc = "FPU1 executed store instruction",
 		.pme_long_desc = "This signal is active for one cycle when fp1 is executing a store instruction.",
 		.pme_event_ids = { 99, 108, 97, 105, -1, -1 },
@@ -2856,6 +3092,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DFU_ADD 236
 	[ POWER6_PME_PM_DFU_ADD ] = {
 		.pme_name = "PM_DFU_ADD",
+		.pme_code = 0xe008c,
 		.pme_short_desc = "DFU add type instruction",
 		.pme_long_desc = "DFU add type instruction",
 		.pme_event_ids = { 23, 30, 22, 30, -1, -1 },
@@ -2868,6 +3105,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MEM_DP_CL_WR_GLOB 237
 	[ POWER6_PME_PM_MEM_DP_CL_WR_GLOB ] = {
 		.pme_name = "PM_MEM_DP_CL_WR_GLOB",
+		.pme_code = 0x250232,
 		.pme_short_desc = "cache line write setting double pump state to global",
 		.pme_long_desc = "cache line write setting double pump state to global",
 		.pme_event_ids = { -1, 267, 250, -1, -1, -1 },
@@ -2880,6 +3118,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_LSU1_REJECT_ULD 238
 	[ POWER6_PME_PM_MRK_LSU1_REJECT_ULD ] = {
 		.pme_name = "PM_MRK_LSU1_REJECT_ULD",
+		.pme_code = 0x930e8,
 		.pme_short_desc = "LSU1 marked unaligned load reject",
 		.pme_long_desc = "LSU1 marked unaligned load reject",
 		.pme_event_ids = { 274, 286, 268, 269, -1, -1 },
@@ -2892,6 +3131,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_ITLB_REF 239
 	[ POWER6_PME_PM_ITLB_REF ] = {
 		.pme_name = "PM_ITLB_REF",
+		.pme_code = 0x920c2,
 		.pme_short_desc = "Instruction TLB reference",
 		.pme_long_desc = "Instruction TLB reference",
 		.pme_event_ids = { 153, 162, 153, 159, -1, -1 },
@@ -2904,6 +3144,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU0_REJECT_L2MISS 240
 	[ POWER6_PME_PM_LSU0_REJECT_L2MISS ] = {
 		.pme_name = "PM_LSU0_REJECT_L2MISS",
+		.pme_code = 0x90084,
 		.pme_short_desc = "LSU0 L2 miss reject",
 		.pme_long_desc = "LSU0 L2 miss reject",
 		.pme_event_ids = { 211, 220, 206, 211, -1, -1 },
@@ -2916,6 +3157,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_L35_SHR 241
 	[ POWER6_PME_PM_DATA_FROM_L35_SHR ] = {
 		.pme_name = "PM_DATA_FROM_L35_SHR",
+		.pme_code = 0x20005a,
 		.pme_short_desc = "Data loaded from L3.5 shared",
 		.pme_long_desc = "Data loaded from L3.5 shared",
 		.pme_event_ids = { -1, 19, -1, -1, -1, -1 },
@@ -2928,6 +3170,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DATA_FROM_RL2L3_MOD 242
 	[ POWER6_PME_PM_MRK_DATA_FROM_RL2L3_MOD ] = {
 		.pme_name = "PM_MRK_DATA_FROM_RL2L3_MOD",
+		.pme_code = 0x10304c,
 		.pme_short_desc = "Marked data loaded from remote L2 or L3 modified",
 		.pme_long_desc = "Marked data loaded from remote L2 or L3 modified",
 		.pme_event_ids = { 263, -1, -1, -1, -1, -1 },
@@ -2940,6 +3183,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU0_FPSCR 243
 	[ POWER6_PME_PM_FPU0_FPSCR ] = {
 		.pme_name = "PM_FPU0_FPSCR",
+		.pme_code = 0x130,
 		.pme_short_desc = "FPU0 executed FPSCR instruction",
 		.pme_long_desc = "This signal is active for one cycle when fp0 is executing fpscr move related instruction. This could be mtfsfi*, mtfsb0*, mtfsb1*. mffs*, mtfsf*, mcrsf* where XYZ* means XYZ, XYZs, XYZ., XYZs",
 		.pme_event_ids = { 78, 87, 76, 84, -1, -1 },
@@ -2952,6 +3196,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_L2 244
 	[ POWER6_PME_PM_DATA_FROM_L2 ] = {
 		.pme_name = "PM_DATA_FROM_L2",
+		.pme_code = 0x1837,
 		.pme_short_desc = "Data loaded from L2",
 		.pme_long_desc = "DL1 was reloaded from the local L2 due to a demand load",
 		.pme_event_ids = { 13, -1, -1, -1, -1, -1 },
@@ -2964,6 +3209,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_XER 245
 	[ POWER6_PME_PM_DPU_HELD_XER ] = {
 		.pme_name = "PM_DPU_HELD_XER",
+		.pme_code = 0x20088,
 		.pme_short_desc = "DISP unit held due to XER dependency",
 		.pme_long_desc = "DISP unit held due to XER dependency",
 		.pme_event_ids = { 54, 62, 52, 60, -1, -1 },
@@ -2976,6 +3222,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FAB_NODE_PUMP 246
 	[ POWER6_PME_PM_FAB_NODE_PUMP ] = {
 		.pme_name = "PM_FAB_NODE_PUMP",
+		.pme_code = 0x50188,
 		.pme_short_desc = "Node pump operation",
 		.pme_long_desc = " locally mastered",
 		.pme_event_ids = { 63, 73, 62, 69, -1, -1 },
@@ -2988,6 +3235,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_VMX_RESULT_SAT_0_1 247
 	[ POWER6_PME_PM_VMX_RESULT_SAT_0_1 ] = {
 		.pme_name = "PM_VMX_RESULT_SAT_0_1",
+		.pme_code = 0xb008e,
 		.pme_short_desc = "VMX valid result with sat bit is set (0->1)",
 		.pme_long_desc = "VMX valid result with sat bit is set (0->1)",
 		.pme_event_ids = { 333, 340, 327, 325, -1, -1 },
@@ -3000,6 +3248,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LD_REF_L1 248
 	[ POWER6_PME_PM_LD_REF_L1 ] = {
 		.pme_name = "PM_LD_REF_L1",
+		.pme_code = 0x8810,
 		.pme_short_desc = "L1 D cache load references",
 		.pme_long_desc = "Total DL1 Load references",
 		.pme_event_ids = { 201, 212, 198, 203, -1, -1 },
@@ -3012,6 +3261,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_TLB_REF 249
 	[ POWER6_PME_PM_TLB_REF ] = {
 		.pme_name = "PM_TLB_REF",
+		.pme_code = 0x920c8,
 		.pme_short_desc = "TLB reference",
 		.pme_long_desc = "TLB reference",
 		.pme_event_ids = { 320, 327, 314, 312, -1, -1 },
@@ -3024,6 +3274,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DC_PREF_OUT_OF_STREAMS 250
 	[ POWER6_PME_PM_DC_PREF_OUT_OF_STREAMS ] = {
 		.pme_name = "PM_DC_PREF_OUT_OF_STREAMS",
+		.pme_code = 0x732,
 		.pme_short_desc = "D cache out of streams",
 		.pme_long_desc = "out of streams",
 		.pme_event_ids = { 21, 28, 20, 28, -1, -1 },
@@ -3036,6 +3287,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FLUSH_FPU 251
 	[ POWER6_PME_PM_FLUSH_FPU ] = {
 		.pme_name = "PM_FLUSH_FPU",
+		.pme_code = 0x230ec,
 		.pme_short_desc = "Flush caused by FPU exception",
 		.pme_long_desc = "Flush caused by FPU exception",
 		.pme_event_ids = { 69, 78, 67, 75, -1, -1 },
@@ -3048,6 +3300,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MEM1_DP_CL_WR_LOC 252
 	[ POWER6_PME_PM_MEM1_DP_CL_WR_LOC ] = {
 		.pme_name = "PM_MEM1_DP_CL_WR_LOC",
+		.pme_code = 0x5028e,
 		.pme_short_desc = "cacheline write setting dp to local side 1",
 		.pme_long_desc = "cacheline write setting dp to local side 1",
 		.pme_event_ids = { 253, 264, 247, 252, -1, -1 },
@@ -3060,6 +3313,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SB_LD_HIT 253
 	[ POWER6_PME_PM_L2SB_LD_HIT ] = {
 		.pme_name = "PM_L2SB_LD_HIT",
+		.pme_code = 0x5078a,
 		.pme_short_desc = "L2 slice B load hits",
 		.pme_long_desc = "L2 slice B load hits",
 		.pme_event_ids = { 175, 184, 175, 181, -1, -1 },
@@ -3072,6 +3326,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FAB_DCLAIM 254
 	[ POWER6_PME_PM_FAB_DCLAIM ] = {
 		.pme_name = "PM_FAB_DCLAIM",
+		.pme_code = 0x50184,
 		.pme_short_desc = "Dclaim operation",
 		.pme_long_desc = " locally mastered",
 		.pme_event_ids = { 60, 70, 59, 66, -1, -1 },
@@ -3084,6 +3339,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MEM_DP_CL_WR_LOC 255
 	[ POWER6_PME_PM_MEM_DP_CL_WR_LOC ] = {
 		.pme_name = "PM_MEM_DP_CL_WR_LOC",
+		.pme_code = 0x150232,
 		.pme_short_desc = "cache line write setting double pump state to local",
 		.pme_long_desc = "cache line write setting double pump state to local",
 		.pme_event_ids = { 256, -1, -1, 255, -1, -1 },
@@ -3096,6 +3352,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_BR_MPRED_CR 256
 	[ POWER6_PME_PM_BR_MPRED_CR ] = {
 		.pme_name = "PM_BR_MPRED_CR",
+		.pme_code = 0x432,
 		.pme_short_desc = "Branch mispredictions due to CR bit setting",
 		.pme_long_desc = "This signal is asserted when the branch execution unit detects a branch mispredict because the CR value is opposite of the predicted value. This signal is asserted after a branch issue event and will result in a branch redirect flush if not overridden by a flush of an older instruction.",
 		.pme_event_ids = { 6, 4, 4, 6, -1, -1 },
@@ -3108,6 +3365,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_REJECT_EXTERN 257
 	[ POWER6_PME_PM_LSU_REJECT_EXTERN ] = {
 		.pme_name = "PM_LSU_REJECT_EXTERN",
+		.pme_code = 0x3a1030,
 		.pme_short_desc = "LSU external reject request ",
 		.pme_long_desc = "LSU external reject request ",
 		.pme_event_ids = { -1, -1, 235, -1, -1, -1 },
@@ -3120,6 +3378,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_RL2L3_MOD 258
 	[ POWER6_PME_PM_DATA_FROM_RL2L3_MOD ] = {
 		.pme_name = "PM_DATA_FROM_RL2L3_MOD",
+		.pme_code = 0x10005c,
 		.pme_short_desc = "Data loaded from remote L2 or L3 modified",
 		.pme_long_desc = "Data loaded from remote L2 or L3 modified",
 		.pme_event_ids = { 16, -1, -1, -1, -1, -1 },
@@ -3132,6 +3391,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_RU_WQ 259
 	[ POWER6_PME_PM_DPU_HELD_RU_WQ ] = {
 		.pme_name = "PM_DPU_HELD_RU_WQ",
+		.pme_code = 0x2008e,
 		.pme_short_desc = "DISP unit held due to RU FXU write queue full",
 		.pme_long_desc = "DISP unit held due to RU FXU write queue full",
 		.pme_event_ids = { 48, 57, 47, 55, -1, -1 },
@@ -3144,6 +3404,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LD_MISS_L1 260
 	[ POWER6_PME_PM_LD_MISS_L1 ] = {
 		.pme_name = "PM_LD_MISS_L1",
+		.pme_code = 0x3810,
 		.pme_short_desc = "L1 D cache load misses",
 		.pme_long_desc = "Total DL1 Load references that miss the DL1",
 		.pme_event_ids = { 199, 210, 197, 202, -1, -1 },
@@ -3156,6 +3417,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DC_INV_L2 261
 	[ POWER6_PME_PM_DC_INV_L2 ] = {
 		.pme_name = "PM_DC_INV_L2",
+		.pme_code = 0x817,
 		.pme_short_desc = "L1 D cache entries invalidated from L2",
 		.pme_long_desc = "A dcache invalidated was received from the L2 because a line in L2 was castout.",
 		.pme_event_ids = { 20, -1, -1, 27, -1, -1 },
@@ -3168,6 +3430,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_PTEG_FROM_RMEM 262
 	[ POWER6_PME_PM_MRK_PTEG_FROM_RMEM ] = {
 		.pme_name = "PM_MRK_PTEG_FROM_RMEM",
+		.pme_code = 0x312042,
 		.pme_short_desc = "Marked PTEG loaded from remote memory",
 		.pme_long_desc = "Marked PTEG loaded from remote memory",
 		.pme_event_ids = { -1, -1, 275, -1, -1, -1 },
@@ -3180,6 +3443,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_FIN 263
 	[ POWER6_PME_PM_FPU_FIN ] = {
 		.pme_name = "PM_FPU_FIN",
+		.pme_code = 0x4110,
 		.pme_short_desc = "FPU produced a result",
 		.pme_long_desc = "FPU finished, produced a result This only indicates finish, not completion. Combined Unit 0 + Unit 1",
 		.pme_event_ids = { 103, -1, -1, -1, -1, -1 },
@@ -3192,6 +3456,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FXU0_FIN 264
 	[ POWER6_PME_PM_FXU0_FIN ] = {
 		.pme_name = "PM_FXU0_FIN",
+		.pme_code = 0x332,
 		.pme_short_desc = "FXU0 produced a result",
 		.pme_long_desc = "The Fixed Point unit 0 finished an instruction and produced a result",
 		.pme_event_ids = { -1, -1, 117, -1, -1, -1 },
@@ -3204,6 +3469,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_FPQ 265
 	[ POWER6_PME_PM_DPU_HELD_FPQ ] = {
 		.pme_name = "PM_DPU_HELD_FPQ",
+		.pme_code = 0x20086,
 		.pme_short_desc = "DISP unit held due to FPU issue queue full",
 		.pme_long_desc = "DISP unit held due to FPU issue queue full",
 		.pme_event_ids = { 34, 42, 33, 41, -1, -1 },
@@ -3216,6 +3482,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_GX_DMA_READ 266
 	[ POWER6_PME_PM_GX_DMA_READ ] = {
 		.pme_name = "PM_GX_DMA_READ",
+		.pme_code = 0x5038c,
 		.pme_short_desc = "DMA Read Request",
 		.pme_long_desc = "DMA Read Request",
 		.pme_event_ids = { 128, 135, 126, 134, -1, -1 },
@@ -3228,6 +3495,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU1_REJECT_PARTIAL_SECTOR 267
 	[ POWER6_PME_PM_LSU1_REJECT_PARTIAL_SECTOR ] = {
 		.pme_name = "PM_LSU1_REJECT_PARTIAL_SECTOR",
+		.pme_code = 0xa008e,
 		.pme_short_desc = "LSU1 reject due to partial sector valid",
 		.pme_long_desc = "LSU1 reject due to partial sector valid",
 		.pme_event_ids = { 228, 237, 223, 228, -1, -1 },
@@ -3240,6 +3508,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_0INST_FETCH_COUNT 268
 	[ POWER6_PME_PM_0INST_FETCH_COUNT ] = {
 		.pme_name = "PM_0INST_FETCH_COUNT",
+		.pme_code = 0x40081,
 		.pme_short_desc = "Periods with no instructions fetched",
 		.pme_long_desc = "No instructions were fetched this periods (due to IFU hold, redirect, or icache miss)",
 		.pme_event_ids = { 337, 344, 331, 329, -1, -1 },
@@ -3252,6 +3521,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PMC5_OVERFLOW 269
 	[ POWER6_PME_PM_PMC5_OVERFLOW ] = {
 		.pme_name = "PM_PMC5_OVERFLOW",
+		.pme_code = 0x600a,
 		.pme_short_desc = "PMC5 Overflow",
 		.pme_long_desc = "PMC5 Overflow",
 		.pme_event_ids = { 294, -1, -1, -1, -1, -1 },
@@ -3264,6 +3534,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SB_LD_REQ 270
 	[ POWER6_PME_PM_L2SB_LD_REQ ] = {
 		.pme_name = "PM_L2SB_LD_REQ",
+		.pme_code = 0x50788,
 		.pme_short_desc = "L2 slice B load requests ",
 		.pme_long_desc = "L2 slice B load requests ",
 		.pme_event_ids = { 178, 187, 178, 184, -1, -1 },
@@ -3276,6 +3547,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_PRIO_DIFF_0_CYC 271
 	[ POWER6_PME_PM_THRD_PRIO_DIFF_0_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_DIFF_0_CYC",
+		.pme_code = 0x123040,
 		.pme_short_desc = "Cycles no thread priority difference",
 		.pme_long_desc = "Cycles no thread priority difference",
 		.pme_event_ids = { 318, -1, -1, -1, -1, -1 },
@@ -3288,6 +3560,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_RMEM 272
 	[ POWER6_PME_PM_DATA_FROM_RMEM ] = {
 		.pme_name = "PM_DATA_FROM_RMEM",
+		.pme_code = 0x30005e,
 		.pme_short_desc = "Data loaded from remote memory",
 		.pme_long_desc = "Data loaded from remote memory",
 		.pme_event_ids = { -1, -1, 16, -1, -1, -1 },
@@ -3300,6 +3573,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_LMQ_SRQ_EMPTY_BOTH_CYC 273
 	[ POWER6_PME_PM_LSU_LMQ_SRQ_EMPTY_BOTH_CYC ] = {
 		.pme_name = "PM_LSU_LMQ_SRQ_EMPTY_BOTH_CYC",
+		.pme_code = 0x30001c,
 		.pme_short_desc = "Cycles both threads LMQ and SRQ empty",
 		.pme_long_desc = "Cycles both threads LMQ and SRQ empty",
 		.pme_event_ids = { -1, -1, 234, -1, -1, -1 },
@@ -3312,6 +3586,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_ST_REF_L1_BOTH 274
 	[ POWER6_PME_PM_ST_REF_L1_BOTH ] = {
 		.pme_name = "PM_ST_REF_L1_BOTH",
+		.pme_code = 0x280038,
 		.pme_short_desc = "Both units L1 D cache store reference",
 		.pme_long_desc = "Both units L1 D cache store reference",
 		.pme_event_ids = { -1, 316, -1, 301, -1, -1 },
@@ -3324,6 +3599,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_VMX_PERMUTE_ISSUED 275
 	[ POWER6_PME_PM_VMX_PERMUTE_ISSUED ] = {
 		.pme_name = "PM_VMX_PERMUTE_ISSUED",
+		.pme_code = 0x70086,
 		.pme_short_desc = "VMX instruction issued to permute",
 		.pme_long_desc = "VMX instruction issued to permute",
 		.pme_event_ids = { 332, 339, 326, 324, -1, -1 },
@@ -3336,6 +3612,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_BR_TAKEN 276
 	[ POWER6_PME_PM_BR_TAKEN ] = {
 		.pme_name = "PM_BR_TAKEN",
+		.pme_code = 0x200052,
 		.pme_short_desc = "Branches taken",
 		.pme_long_desc = "Branches taken",
 		.pme_event_ids = { -1, 10, -1, -1, -1, -1 },
@@ -3348,6 +3625,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FAB_DMA 277
 	[ POWER6_PME_PM_FAB_DMA ] = {
 		.pme_name = "PM_FAB_DMA",
+		.pme_code = 0x5018c,
 		.pme_short_desc = "DMA operation",
 		.pme_long_desc = " locally mastered",
 		.pme_event_ids = { 61, 71, 60, 67, -1, -1 },
@@ -3360,6 +3638,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_GCT_EMPTY_COUNT 278
 	[ POWER6_PME_PM_GCT_EMPTY_COUNT ] = {
 		.pme_name = "PM_GCT_EMPTY_COUNT",
+		.pme_code = 0x200009,
 		.pme_short_desc = "Periods GCT empty",
 		.pme_long_desc = "The Global Completion Table is completely empty.",
 		.pme_event_ids = { -1, 358, -1, -1, -1, -1 },
@@ -3372,6 +3651,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU1_SINGLE 279
 	[ POWER6_PME_PM_FPU1_SINGLE ] = {
 		.pme_name = "PM_FPU1_SINGLE",
+		.pme_code = 0x127,
 		.pme_short_desc = "FPU1 executed single precision instruction",
 		.pme_long_desc = "This signal is active for one cycle when fp1 is executing single precision instruction.",
 		.pme_event_ids = { 98, 107, 96, 104, -1, -1 },
@@ -3384,6 +3664,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SA_CASTOUT_SHR 280
 	[ POWER6_PME_PM_L2SA_CASTOUT_SHR ] = {
 		.pme_name = "PM_L2SA_CASTOUT_SHR",
+		.pme_code = 0x50682,
 		.pme_short_desc = "L2 slice A castouts - Shared",
 		.pme_long_desc = "L2 slice A castouts - Shared",
 		.pme_event_ids = { 158, 167, 158, 164, -1, -1 },
@@ -3396,6 +3677,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L3SB_REF 281
 	[ POWER6_PME_PM_L3SB_REF ] = {
 		.pme_name = "PM_L3SB_REF",
+		.pme_code = 0x50088,
 		.pme_short_desc = "L3 slice B references",
 		.pme_long_desc = "L3 slice B references",
 		.pme_event_ids = { 196, 206, 194, 199, -1, -1 },
@@ -3408,6 +3690,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU0_FRSP 282
 	[ POWER6_PME_PM_FPU0_FRSP ] = {
 		.pme_name = "PM_FPU0_FRSP",
+		.pme_code = 0xd10a2,
 		.pme_short_desc = "FPU0 executed FRSP instruction",
 		.pme_long_desc = "FPU0 executed FRSP instruction",
 		.pme_event_ids = { 79, 88, 77, 85, -1, -1 },
@@ -3420,6 +3703,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PMC4_SAVED 283
 	[ POWER6_PME_PM_PMC4_SAVED ] = {
 		.pme_name = "PM_PMC4_SAVED",
+		.pme_code = 0x300022,
 		.pme_short_desc = "PMC4 rewind value saved",
 		.pme_long_desc = "PMC4 rewind value saved",
 		.pme_event_ids = { -1, -1, 288, -1, -1, -1 },
@@ -3432,6 +3716,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SA_DC_INV 284
 	[ POWER6_PME_PM_L2SA_DC_INV ] = {
 		.pme_name = "PM_L2SA_DC_INV",
+		.pme_code = 0x50686,
 		.pme_short_desc = "L2 slice A D cache invalidate",
 		.pme_long_desc = "L2 slice A D cache invalidate",
 		.pme_event_ids = { 159, 168, 159, 165, -1, -1 },
@@ -3444,6 +3729,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_GXI_ADDR_CYC_BUSY 285
 	[ POWER6_PME_PM_GXI_ADDR_CYC_BUSY ] = {
 		.pme_name = "PM_GXI_ADDR_CYC_BUSY",
+		.pme_code = 0x50388,
 		.pme_short_desc = "Inbound GX address utilization (# of cycle address is in valid)",
 		.pme_long_desc = "Inbound GX address utilization (# of cycle address is in valid)",
 		.pme_event_ids = { 122, 129, 120, 128, -1, -1 },
@@ -3456,6 +3742,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU0_FMA 286
 	[ POWER6_PME_PM_FPU0_FMA ] = {
 		.pme_name = "PM_FPU0_FMA",
+		.pme_code = 0x101,
 		.pme_short_desc = "FPU0 executed multiply-add instruction",
 		.pme_long_desc = "This signal is active for one cycle when fp0 is executing multiply-add kind of instruction. This could be fmadd*, fnmadd*, fmsub*, fnmsub* where XYZ* means XYZ, XYZs, XYZ., XYZs.",
 		.pme_event_ids = { 77, 86, 75, 83, -1, -1 },
@@ -3468,6 +3755,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_SLB_MISS 287
 	[ POWER6_PME_PM_SLB_MISS ] = {
 		.pme_name = "PM_SLB_MISS",
+		.pme_code = 0x183034,
 		.pme_short_desc = "SLB misses",
 		.pme_long_desc = "SLB misses",
 		.pme_event_ids = { 303, -1, -1, 294, -1, -1 },
@@ -3480,6 +3768,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_ST_GPS 288
 	[ POWER6_PME_PM_MRK_ST_GPS ] = {
 		.pme_name = "PM_MRK_ST_GPS",
+		.pme_code = 0x6003,
 		.pme_short_desc = "Marked store sent to GPS",
 		.pme_long_desc = "A sampled store has been sent to the memory subsystem",
 		.pme_event_ids = { -1, 294, -1, -1, -1, -1 },
@@ -3492,6 +3781,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DERAT_REF_4K 289
 	[ POWER6_PME_PM_DERAT_REF_4K ] = {
 		.pme_name = "PM_DERAT_REF_4K",
+		.pme_code = 0x182070,
 		.pme_short_desc = "DERAT reference for 4K page",
 		.pme_long_desc = "DERAT reference for 4K page",
 		.pme_event_ids = { 350, -1, -1, -1, -1, -1 },
@@ -3504,6 +3794,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2_CASTOUT_SHR 290
 	[ POWER6_PME_PM_L2_CASTOUT_SHR ] = {
 		.pme_name = "PM_L2_CASTOUT_SHR",
+		.pme_code = 0x250630,
 		.pme_short_desc = "L2 castouts - Shared (T",
 		.pme_long_desc = " Te",
 		.pme_event_ids = { -1, 194, -1, -1, -1, -1 },
@@ -3516,6 +3807,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_STCX_CR 291
 	[ POWER6_PME_PM_DPU_HELD_STCX_CR ] = {
 		.pme_name = "PM_DPU_HELD_STCX_CR",
+		.pme_code = 0x2008c,
 		.pme_short_desc = "DISP unit held due to STCX updating CR ",
 		.pme_long_desc = "DISP unit held due to STCX updating CR ",
 		.pme_event_ids = { 51, 60, 50, 58, -1, -1 },
@@ -3528,6 +3820,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU0_ST_FOLDED 292
 	[ POWER6_PME_PM_FPU0_ST_FOLDED ] = {
 		.pme_name = "PM_FPU0_ST_FOLDED",
+		.pme_code = 0xd10a4,
 		.pme_short_desc = "FPU0 folded store",
 		.pme_long_desc = "FPU0 folded store",
 		.pme_event_ids = { 85, 94, 83, 91, -1, -1 },
@@ -3540,6 +3833,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DATA_FROM_L21 293
 	[ POWER6_PME_PM_MRK_DATA_FROM_L21 ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L21",
+		.pme_code = 0x203048,
 		.pme_short_desc = "Marked data loaded from private L2 other core",
 		.pme_long_desc = "Marked data loaded from private L2 other core",
 		.pme_event_ids = { -1, 270, -1, -1, -1, -1 },
@@ -3552,6 +3846,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_PRIO_DIFF_minus3or4_CYC 294
 	[ POWER6_PME_PM_THRD_PRIO_DIFF_minus3or4_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_DIFF_minus3or4_CYC",
+		.pme_code = 0x323046,
 		.pme_short_desc = "Cycles thread priority difference is -3 or -4",
 		.pme_long_desc = "Cycles thread priority difference is -3 or -4",
 		.pme_event_ids = { -1, -1, 311, -1, -1, -1 },
@@ -3564,6 +3859,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_L35_MOD 295
 	[ POWER6_PME_PM_DATA_FROM_L35_MOD ] = {
 		.pme_name = "PM_DATA_FROM_L35_MOD",
+		.pme_code = 0x10005a,
 		.pme_short_desc = "Data loaded from L3.5 modified",
 		.pme_long_desc = "Data loaded from L3.5 modified",
 		.pme_event_ids = { 14, -1, -1, -1, -1, -1 },
@@ -3576,6 +3872,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_DL2L3_SHR 296
 	[ POWER6_PME_PM_DATA_FROM_DL2L3_SHR ] = {
 		.pme_name = "PM_DATA_FROM_DL2L3_SHR",
+		.pme_code = 0x30005c,
 		.pme_short_desc = "Data loaded from distant L2 or L3 shared",
 		.pme_long_desc = "Data loaded from distant L2 or L3 shared",
 		.pme_event_ids = { -1, -1, 11, -1, -1, -1 },
@@ -3588,6 +3885,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_GXI_DATA_CYC_BUSY 297
 	[ POWER6_PME_PM_GXI_DATA_CYC_BUSY ] = {
 		.pme_name = "PM_GXI_DATA_CYC_BUSY",
+		.pme_code = 0x5038a,
 		.pme_short_desc = "Inbound GX Data utilization (# of cycle data in is valid)",
 		.pme_long_desc = "Inbound GX Data utilization (# of cycle data in is valid)",
 		.pme_event_ids = { 124, 131, 122, 130, -1, -1 },
@@ -3600,6 +3898,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_REJECT_STEAL 298
 	[ POWER6_PME_PM_LSU_REJECT_STEAL ] = {
 		.pme_name = "PM_LSU_REJECT_STEAL",
+		.pme_code = 0x9008c,
 		.pme_short_desc = "LSU reject due to steal",
 		.pme_long_desc = "LSU reject due to steal",
 		.pme_event_ids = { 242, 254, 239, 243, -1, -1 },
@@ -3612,6 +3911,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_ST_FIN 299
 	[ POWER6_PME_PM_ST_FIN ] = {
 		.pme_name = "PM_ST_FIN",
+		.pme_code = 0x100054,
 		.pme_short_desc = "Store instructions finished",
 		.pme_long_desc = "Store instructions finished",
 		.pme_event_ids = { 307, 313, -1, -1, -1, -1 },
@@ -3624,6 +3924,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_CR_LOGICAL 300
 	[ POWER6_PME_PM_DPU_HELD_CR_LOGICAL ] = {
 		.pme_name = "PM_DPU_HELD_CR_LOGICAL",
+		.pme_code = 0x3008e,
 		.pme_short_desc = "DISP unit held due to CR",
 		.pme_long_desc = " LR or CTR updated by CR logical",
 		.pme_event_ids = { 32, 40, 31, 39, -1, -1 },
@@ -3636,6 +3937,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_SEL_T0 301
 	[ POWER6_PME_PM_THRD_SEL_T0 ] = {
 		.pme_name = "PM_THRD_SEL_T0",
+		.pme_code = 0x310a6,
 		.pme_short_desc = "Decode selected thread 0",
 		.pme_long_desc = "Decode selected thread 0",
 		.pme_event_ids = { 319, 326, 312, 311, -1, -1 },
@@ -3648,6 +3950,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PTEG_RELOAD_VALID 302
 	[ POWER6_PME_PM_PTEG_RELOAD_VALID ] = {
 		.pme_name = "PM_PTEG_RELOAD_VALID",
+		.pme_code = 0x130e8,
 		.pme_short_desc = "TLB reload valid",
 		.pme_long_desc = "TLB reload valid",
 		.pme_event_ids = { 300, 308, 295, 292, -1, -1 },
@@ -3660,6 +3963,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2_PREF_ST 303
 	[ POWER6_PME_PM_L2_PREF_ST ] = {
 		.pme_name = "PM_L2_PREF_ST",
+		.pme_code = 0x810a8,
 		.pme_short_desc = "L2 cache prefetches",
 		.pme_long_desc = "L2 cache prefetches",
 		.pme_event_ids = { 189, 199, 187, 192, -1, -1 },
@@ -3672,6 +3976,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_STCX_FAIL 304
 	[ POWER6_PME_PM_MRK_STCX_FAIL ] = {
 		.pme_name = "PM_MRK_STCX_FAIL",
+		.pme_code = 0x726,
 		.pme_short_desc = "Marked STCX failed",
 		.pme_long_desc = "A marked stcx (stwcx or stdcx) failed",
 		.pme_event_ids = { 281, 293, 276, 279, -1, -1 },
@@ -3684,6 +3989,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU0_REJECT_LHS 305
 	[ POWER6_PME_PM_LSU0_REJECT_LHS ] = {
 		.pme_name = "PM_LSU0_REJECT_LHS",
+		.pme_code = 0x90086,
 		.pme_short_desc = "LSU0 load hit store reject",
 		.pme_long_desc = "LSU0 load hit store reject",
 		.pme_event_ids = { 213, 222, 208, 213, -1, -1 },
@@ -3696,6 +4002,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DFU_EXP_EQ 306
 	[ POWER6_PME_PM_DFU_EXP_EQ ] = {
 		.pme_name = "PM_DFU_EXP_EQ",
+		.pme_code = 0xe0084,
 		.pme_short_desc = "DFU operand exponents are equal for add type",
 		.pme_long_desc = "DFU operand exponents are equal for add type",
 		.pme_event_ids = { 28, 35, 27, 35, -1, -1 },
@@ -3708,6 +4015,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_FP_FX_MULT 307
 	[ POWER6_PME_PM_DPU_HELD_FP_FX_MULT ] = {
 		.pme_name = "PM_DPU_HELD_FP_FX_MULT",
+		.pme_code = 0x210a8,
 		.pme_short_desc = "DISP unit held due to non fixed multiple/divide after fixed multiply/divide",
 		.pme_long_desc = "DISP unit held due to non fixed multiple/divide after fixed multiply/divide",
 		.pme_event_ids = { 36, 44, 35, 43, -1, -1 },
@@ -3720,6 +4028,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2_LD_MISS_DATA 308
 	[ POWER6_PME_PM_L2_LD_MISS_DATA ] = {
 		.pme_name = "PM_L2_LD_MISS_DATA",
+		.pme_code = 0x250430,
 		.pme_short_desc = "L2 data load misses",
 		.pme_long_desc = "L2 data load misses",
 		.pme_event_ids = { -1, 195, -1, -1, -1, -1 },
@@ -3732,6 +4041,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_L35_MOD_CYC 309
 	[ POWER6_PME_PM_DATA_FROM_L35_MOD_CYC ] = {
 		.pme_name = "PM_DATA_FROM_L35_MOD_CYC",
+		.pme_code = 0x400026,
 		.pme_short_desc = "Load latency from L3.5 modified",
 		.pme_long_desc = "Load latency from L3.5 modified",
 		.pme_event_ids = { -1, -1, -1, 18, -1, -1 },
@@ -3744,6 +4054,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FLUSH_FXU 310
 	[ POWER6_PME_PM_FLUSH_FXU ] = {
 		.pme_name = "PM_FLUSH_FXU",
+		.pme_code = 0x230ea,
 		.pme_short_desc = "Flush caused by FXU exception",
 		.pme_long_desc = "Flush caused by FXU exception",
 		.pme_event_ids = { 70, 79, 68, 76, -1, -1 },
@@ -3756,6 +4067,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_ISSUE_1 311
 	[ POWER6_PME_PM_FPU_ISSUE_1 ] = {
 		.pme_name = "PM_FPU_ISSUE_1",
+		.pme_code = 0x320c8,
 		.pme_short_desc = "FPU issue 1 per cycle",
 		.pme_long_desc = "FPU issue 1 per cycle",
 		.pme_event_ids = { 108, 116, 104, 113, -1, -1 },
@@ -3768,6 +4080,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_LMEM_CYC 312
 	[ POWER6_PME_PM_DATA_FROM_LMEM_CYC ] = {
 		.pme_name = "PM_DATA_FROM_LMEM_CYC",
+		.pme_code = 0x20002c,
 		.pme_short_desc = "Load latency from local memory",
 		.pme_long_desc = "Load latency from local memory",
 		.pme_event_ids = { -1, 22, -1, -1, -1, -1 },
@@ -3780,6 +4093,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_LSU_SOPS 313
 	[ POWER6_PME_PM_DPU_HELD_LSU_SOPS ] = {
 		.pme_name = "PM_DPU_HELD_LSU_SOPS",
+		.pme_code = 0x30080,
 		.pme_short_desc = "DISP unit held due to LSU slow ops (sync",
 		.pme_long_desc = " tlbie",
 		.pme_event_ids = { 45, 53, 44, 52, -1, -1 },
@@ -3792,6 +4106,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_PTEG_2ND_HALF 314
 	[ POWER6_PME_PM_INST_PTEG_2ND_HALF ] = {
 		.pme_name = "PM_INST_PTEG_2ND_HALF",
+		.pme_code = 0x910aa,
 		.pme_short_desc = "Instruction table walk matched in second half primary PTEG",
 		.pme_long_desc = "Instruction table walk matched in second half primary PTEG",
 		.pme_event_ids = { 149, 158, 149, 155, -1, -1 },
@@ -3804,6 +4119,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRESH_TIMEO 315
 	[ POWER6_PME_PM_THRESH_TIMEO ] = {
 		.pme_name = "PM_THRESH_TIMEO",
+		.pme_code = 0x2003,
 		.pme_short_desc = "Threshold timeout",
 		.pme_long_desc = "The threshold timer expired",
 		.pme_event_ids = { -1, -1, 313, -1, -1, -1 },
@@ -3816,6 +4132,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_REJECT_UST_BOTH 316
 	[ POWER6_PME_PM_LSU_REJECT_UST_BOTH ] = {
 		.pme_name = "PM_LSU_REJECT_UST_BOTH",
+		.pme_code = 0x190036,
 		.pme_short_desc = "Unaligned store reject both units",
 		.pme_long_desc = "Unaligned store reject both units",
 		.pme_event_ids = { 245, -1, -1, -1, -1, -1 },
@@ -3828,6 +4145,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_REJECT_FAST 317
 	[ POWER6_PME_PM_LSU_REJECT_FAST ] = {
 		.pme_name = "PM_LSU_REJECT_FAST",
+		.pme_code = 0x30003e,
 		.pme_short_desc = "LSU fast reject",
 		.pme_long_desc = "LSU fast reject",
 		.pme_event_ids = { -1, -1, 236, -1, -1, -1 },
@@ -3840,6 +4158,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_THRD_PRIO 318
 	[ POWER6_PME_PM_DPU_HELD_THRD_PRIO ] = {
 		.pme_name = "PM_DPU_HELD_THRD_PRIO",
+		.pme_code = 0x3008a,
 		.pme_short_desc = "DISP unit held due to lower priority thread",
 		.pme_long_desc = "DISP unit held due to lower priority thread",
 		.pme_event_ids = { 53, 61, 51, 59, -1, -1 },
@@ -3852,6 +4171,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2_PREF_LD 319
 	[ POWER6_PME_PM_L2_PREF_LD ] = {
 		.pme_name = "PM_L2_PREF_LD",
+		.pme_code = 0x810a6,
 		.pme_short_desc = "L2 cache prefetches",
 		.pme_long_desc = "L2 cache prefetches",
 		.pme_event_ids = { 188, 198, 186, 191, -1, -1 },
@@ -3864,6 +4184,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_FEST 320
 	[ POWER6_PME_PM_FPU_FEST ] = {
 		.pme_name = "PM_FPU_FEST",
+		.pme_code = 0x3110,
 		.pme_short_desc = "FPU executed FEST instruction",
 		.pme_long_desc = "This signal is active for one cycle when executing one of the estimate instructions. This could be fres* or frsqrte* where XYZ* means XYZ or XYZ. Combined Unit 0 + Unit 1.",
 		.pme_event_ids = { -1, -1, -1, 108, -1, -1 },
@@ -3876,6 +4197,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DATA_FROM_RMEM 321
 	[ POWER6_PME_PM_MRK_DATA_FROM_RMEM ] = {
 		.pme_name = "PM_MRK_DATA_FROM_RMEM",
+		.pme_code = 0x30304a,
 		.pme_short_desc = "Marked data loaded from remote memory",
 		.pme_long_desc = "Marked data loaded from remote memory",
 		.pme_event_ids = { -1, -1, 256, -1, -1, -1 },
@@ -3888,6 +4210,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LD_MISS_L1_CYC 322
 	[ POWER6_PME_PM_LD_MISS_L1_CYC ] = {
 		.pme_name = "PM_LD_MISS_L1_CYC",
+		.pme_code = 0x10000c,
 		.pme_short_desc = "L1 data load miss cycles",
 		.pme_long_desc = "L1 data load miss cycles",
 		.pme_event_ids = { 200, 211, -1, -1, -1, -1 },
@@ -3900,6 +4223,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DERAT_MISS_4K 323
 	[ POWER6_PME_PM_DERAT_MISS_4K ] = {
 		.pme_name = "PM_DERAT_MISS_4K",
+		.pme_code = 0x192070,
 		.pme_short_desc = "DERAT misses for 4K page",
 		.pme_long_desc = "A data request (load or store) missed the ERAT for 4K page and resulted in an ERAT reload.",
 		.pme_event_ids = { 351, -1, -1, -1, -1, -1 },
@@ -3912,6 +4236,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_COMPLETION 324
 	[ POWER6_PME_PM_DPU_HELD_COMPLETION ] = {
 		.pme_name = "PM_DPU_HELD_COMPLETION",
+		.pme_code = 0x210ac,
 		.pme_short_desc = "DISP unit held due to completion holding dispatch ",
 		.pme_long_desc = "DISP unit held due to completion holding dispatch ",
 		.pme_event_ids = { 31, 39, 30, 38, -1, -1 },
@@ -3924,6 +4249,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_ISSUE_STALL_ST 325
 	[ POWER6_PME_PM_FPU_ISSUE_STALL_ST ] = {
 		.pme_name = "PM_FPU_ISSUE_STALL_ST",
+		.pme_code = 0x320ce,
 		.pme_short_desc = "FPU issue stalled due to store",
 		.pme_long_desc = "FPU issue stalled due to store",
 		.pme_event_ids = { 113, 121, 109, 118, -1, -1 },
@@ -3936,6 +4262,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SB_DC_INV 326
 	[ POWER6_PME_PM_L2SB_DC_INV ] = {
 		.pme_name = "PM_L2SB_DC_INV",
+		.pme_code = 0x5068e,
 		.pme_short_desc = "L2 slice B D cache invalidate",
 		.pme_long_desc = "L2 slice B D cache invalidate",
 		.pme_event_ids = { 173, 182, 173, 179, -1, -1 },
@@ -3948,6 +4275,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PTEG_FROM_L25_SHR 327
 	[ POWER6_PME_PM_PTEG_FROM_L25_SHR ] = {
 		.pme_name = "PM_PTEG_FROM_L25_SHR",
+		.pme_code = 0x41304e,
 		.pme_short_desc = "PTEG loaded from L2.5 shared",
 		.pme_long_desc = "PTEG loaded from L2.5 shared",
 		.pme_event_ids = { -1, -1, -1, 290, -1, -1 },
@@ -3960,6 +4288,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PTEG_FROM_DL2L3_MOD 328
 	[ POWER6_PME_PM_PTEG_FROM_DL2L3_MOD ] = {
 		.pme_name = "PM_PTEG_FROM_DL2L3_MOD",
+		.pme_code = 0x41304c,
 		.pme_short_desc = "PTEG loaded from distant L2 or L3 modified",
 		.pme_long_desc = "PTEG loaded from distant L2 or L3 modified",
 		.pme_event_ids = { -1, -1, -1, 289, -1, -1 },
@@ -3972,6 +4301,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FAB_CMD_RETRIED 329
 	[ POWER6_PME_PM_FAB_CMD_RETRIED ] = {
 		.pme_name = "PM_FAB_CMD_RETRIED",
+		.pme_code = 0x250130,
 		.pme_short_desc = "Fabric command retried",
 		.pme_long_desc = "Fabric command retried",
 		.pme_event_ids = { -1, 69, -1, -1, -1, -1 },
@@ -3984,6 +4314,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_BR_PRED_LSTACK 330
 	[ POWER6_PME_PM_BR_PRED_LSTACK ] = {
 		.pme_name = "PM_BR_PRED_LSTACK",
+		.pme_code = 0x410a6,
 		.pme_short_desc = "A conditional branch was predicted",
 		.pme_long_desc = " link stack",
 		.pme_event_ids = { 11, 9, 9, 11, -1, -1 },
@@ -3996,6 +4327,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_GXO_DATA_CYC_BUSY 331
 	[ POWER6_PME_PM_GXO_DATA_CYC_BUSY ] = {
 		.pme_name = "PM_GXO_DATA_CYC_BUSY",
+		.pme_code = 0x50384,
 		.pme_short_desc = "Outbound GX Data utilization (# of cycles data out is valid)",
 		.pme_long_desc = "Outbound GX Data utilization (# of cycles data out is valid)",
 		.pme_event_ids = { 127, 134, 125, 133, -1, -1 },
@@ -4008,6 +4340,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DFU_SUBNORM 332
 	[ POWER6_PME_PM_DFU_SUBNORM ] = {
 		.pme_name = "PM_DFU_SUBNORM",
+		.pme_code = 0xe0086,
 		.pme_short_desc = "DFU result is a subnormal",
 		.pme_long_desc = "DFU result is a subnormal",
 		.pme_event_ids = { 30, 37, 29, 37, -1, -1 },
@@ -4020,6 +4353,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_ISSUE_OOO 333
 	[ POWER6_PME_PM_FPU_ISSUE_OOO ] = {
 		.pme_name = "PM_FPU_ISSUE_OOO",
+		.pme_code = 0x320c0,
 		.pme_short_desc = "FPU issue out-of-order",
 		.pme_long_desc = "FPU issue out-of-order",
 		.pme_event_ids = { 111, 119, 107, 116, -1, -1 },
@@ -4032,6 +4366,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_REJECT_ULD_BOTH 334
 	[ POWER6_PME_PM_LSU_REJECT_ULD_BOTH ] = {
 		.pme_name = "PM_LSU_REJECT_ULD_BOTH",
+		.pme_code = 0x290036,
 		.pme_short_desc = "Unaligned load reject both units",
 		.pme_long_desc = "Unaligned load reject both units",
 		.pme_event_ids = { -1, 255, -1, -1, -1, -1 },
@@ -4044,6 +4379,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SB_ST_MISS 335
 	[ POWER6_PME_PM_L2SB_ST_MISS ] = {
 		.pme_name = "PM_L2SB_ST_MISS",
+		.pme_code = 0x5048e,
 		.pme_short_desc = "L2 slice B store misses",
 		.pme_long_desc = "L2 slice B store misses",
 		.pme_event_ids = { 183, 192, 183, 189, -1, -1 },
@@ -4056,6 +4392,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_L25_MOD_CYC 336
 	[ POWER6_PME_PM_DATA_FROM_L25_MOD_CYC ] = {
 		.pme_name = "PM_DATA_FROM_L25_MOD_CYC",
+		.pme_code = 0x400024,
 		.pme_short_desc = "Load latency from L2.5 modified",
 		.pme_long_desc = "Load latency from L2.5 modified",
 		.pme_event_ids = { -1, -1, -1, 17, -1, -1 },
@@ -4068,6 +4405,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_PTEG_1ST_HALF 337
 	[ POWER6_PME_PM_INST_PTEG_1ST_HALF ] = {
 		.pme_name = "PM_INST_PTEG_1ST_HALF",
+		.pme_code = 0x910a8,
 		.pme_short_desc = "Instruction table walk matched in first half primary PTEG",
 		.pme_long_desc = "Instruction table walk matched in first half primary PTEG",
 		.pme_event_ids = { 148, 157, 148, 154, -1, -1 },
@@ -4080,6 +4418,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DERAT_MISS_16M 338
 	[ POWER6_PME_PM_DERAT_MISS_16M ] = {
 		.pme_name = "PM_DERAT_MISS_16M",
+		.pme_code = 0x392070,
 		.pme_short_desc = "DERAT misses for 16M page",
 		.pme_long_desc = "A data request (load or store) missed the ERAT for 16M page and resulted in an ERAT reload.",
 		.pme_event_ids = { -1, -1, 343, -1, -1, -1 },
@@ -4092,6 +4431,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_GX_DMA_WRITE 339
 	[ POWER6_PME_PM_GX_DMA_WRITE ] = {
 		.pme_name = "PM_GX_DMA_WRITE",
+		.pme_code = 0x5038e,
 		.pme_short_desc = "All DMA Write Requests (including dma wrt lgcy)",
 		.pme_long_desc = "All DMA Write Requests (including dma wrt lgcy)",
 		.pme_event_ids = { 129, 136, 127, 135, -1, -1 },
@@ -4104,6 +4444,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_PTEG_FROM_DL2L3_MOD 340
 	[ POWER6_PME_PM_MRK_PTEG_FROM_DL2L3_MOD ] = {
 		.pme_name = "PM_MRK_PTEG_FROM_DL2L3_MOD",
+		.pme_code = 0x412044,
 		.pme_short_desc = "Marked PTEG loaded from distant L2 or L3 modified",
 		.pme_long_desc = "Marked PTEG loaded from distant L2 or L3 modified",
 		.pme_event_ids = { -1, -1, -1, 275, -1, -1 },
@@ -4116,6 +4457,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MEM1_DP_RQ_GLOB_LOC 341
 	[ POWER6_PME_PM_MEM1_DP_RQ_GLOB_LOC ] = {
 		.pme_name = "PM_MEM1_DP_RQ_GLOB_LOC",
+		.pme_code = 0x50288,
 		.pme_short_desc = "Memory read queue marking cache line double pump state from global to local side 1",
 		.pme_long_desc = "Memory read queue marking cache line double pump state from global to local side 1",
 		.pme_event_ids = { 254, 265, 248, 253, -1, -1 },
@@ -4128,6 +4470,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SB_LD_REQ_DATA 342
 	[ POWER6_PME_PM_L2SB_LD_REQ_DATA ] = {
 		.pme_name = "PM_L2SB_LD_REQ_DATA",
+		.pme_code = 0x50488,
 		.pme_short_desc = "L2 slice B data load requests",
 		.pme_long_desc = "L2 slice B data load requests",
 		.pme_event_ids = { 179, 188, 179, 185, -1, -1 },
@@ -4140,6 +4483,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SA_LD_MISS_INST 343
 	[ POWER6_PME_PM_L2SA_LD_MISS_INST ] = {
 		.pme_name = "PM_L2SA_LD_MISS_INST",
+		.pme_code = 0x50582,
 		.pme_short_desc = "L2 slice A instruction load misses",
 		.pme_long_desc = "L2 slice A instruction load misses",
 		.pme_event_ids = { 163, 172, 163, 169, -1, -1 },
@@ -4152,6 +4496,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_LSU0_REJECT_L2MISS 344
 	[ POWER6_PME_PM_MRK_LSU0_REJECT_L2MISS ] = {
 		.pme_name = "PM_MRK_LSU0_REJECT_L2MISS",
+		.pme_code = 0x930e4,
 		.pme_short_desc = "LSU0 marked L2 miss reject",
 		.pme_long_desc = "LSU0 marked L2 miss reject",
 		.pme_event_ids = { 269, 281, 263, 264, -1, -1 },
@@ -4164,6 +4509,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_IFU_FIN 345
 	[ POWER6_PME_PM_MRK_IFU_FIN ] = {
 		.pme_name = "PM_MRK_IFU_FIN",
+		.pme_code = 0x20000a,
 		.pme_short_desc = "Marked instruction IFU processing finished",
 		.pme_long_desc = "Marked instruction IFU processing finished",
 		.pme_event_ids = { -1, 278, -1, -1, -1, -1 },
@@ -4176,6 +4522,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_FROM_L3 346
 	[ POWER6_PME_PM_INST_FROM_L3 ] = {
 		.pme_name = "PM_INST_FROM_L3",
+		.pme_code = 0x342040,
 		.pme_short_desc = "Instruction fetched from L3",
 		.pme_long_desc = "An instruction fetch group was fetched from L3. Fetch Groups can contain up to 8 instructions",
 		.pme_event_ids = { -1, -1, 145, -1, -1, -1 },
@@ -4188,6 +4535,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FXU1_FIN 347
 	[ POWER6_PME_PM_FXU1_FIN ] = {
 		.pme_name = "PM_FXU1_FIN",
+		.pme_code = 0x336,
 		.pme_short_desc = "FXU1 produced a result",
 		.pme_long_desc = "The Fixed Point unit 1 finished an instruction and produced a result",
 		.pme_event_ids = { -1, -1, -1, 125, -1, -1 },
@@ -4200,6 +4548,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_PRIO_4_CYC 348
 	[ POWER6_PME_PM_THRD_PRIO_4_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_4_CYC",
+		.pme_code = 0x422046,
 		.pme_short_desc = "Cycles thread running at priority level 4",
 		.pme_long_desc = "Cycles thread running at priority level 4",
 		.pme_event_ids = { -1, -1, -1, 308, -1, -1 },
@@ -4212,6 +4561,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DATA_FROM_L35_MOD 349
 	[ POWER6_PME_PM_MRK_DATA_FROM_L35_MOD ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L35_MOD",
+		.pme_code = 0x10304e,
 		.pme_short_desc = "Marked data loaded from L3.5 modified",
 		.pme_long_desc = "Marked data loaded from L3.5 modified",
 		.pme_event_ids = { 261, -1, -1, -1, -1, -1 },
@@ -4224,6 +4574,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_REJECT_SET_MPRED 350
 	[ POWER6_PME_PM_LSU_REJECT_SET_MPRED ] = {
 		.pme_name = "PM_LSU_REJECT_SET_MPRED",
+		.pme_code = 0x2a0032,
 		.pme_short_desc = "LSU reject due to mispredicted set",
 		.pme_long_desc = "LSU reject due to mispredicted set",
 		.pme_event_ids = { -1, 252, 238, -1, -1, -1 },
@@ -4236,6 +4587,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DERAT_MISS_16G 351
 	[ POWER6_PME_PM_MRK_DERAT_MISS_16G ] = {
 		.pme_name = "PM_MRK_DERAT_MISS_16G",
+		.pme_code = 0x492044,
 		.pme_short_desc = "Marked DERAT misses for 16G page",
 		.pme_long_desc = "A marked data request (load or store) missed the ERAT for 16G page and resulted in an ERAT reload.",
 		.pme_event_ids = { -1, -1, -1, 346, -1, -1 },
@@ -4248,6 +4600,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU0_FXDIV 352
 	[ POWER6_PME_PM_FPU0_FXDIV ] = {
 		.pme_name = "PM_FPU0_FXDIV",
+		.pme_code = 0xc10a0,
 		.pme_short_desc = "FPU0 executed fixed point division",
 		.pme_long_desc = "FPU0 executed fixed point division",
 		.pme_event_ids = { 81, 90, 79, 87, -1, -1 },
@@ -4260,6 +4613,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_LSU1_REJECT_UST 353
 	[ POWER6_PME_PM_MRK_LSU1_REJECT_UST ] = {
 		.pme_name = "PM_MRK_LSU1_REJECT_UST",
+		.pme_code = 0x930ea,
 		.pme_short_desc = "LSU1 marked unaligned store reject",
 		.pme_long_desc = "LSU1 marked unaligned store reject",
 		.pme_event_ids = { 275, 287, 269, 270, -1, -1 },
@@ -4272,6 +4626,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_ISSUE_DIV_SQRT_OVERLAP 354
 	[ POWER6_PME_PM_FPU_ISSUE_DIV_SQRT_OVERLAP ] = {
 		.pme_name = "PM_FPU_ISSUE_DIV_SQRT_OVERLAP",
+		.pme_code = 0x320cc,
 		.pme_short_desc = "FPU divide/sqrt overlapped with other divide/sqrt",
 		.pme_long_desc = "FPU divide/sqrt overlapped with other divide/sqrt",
 		.pme_event_ids = { 110, 118, 106, 115, -1, -1 },
@@ -4284,6 +4639,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_FROM_L35_SHR 355
 	[ POWER6_PME_PM_INST_FROM_L35_SHR ] = {
 		.pme_name = "PM_INST_FROM_L35_SHR",
+		.pme_code = 0x242046,
 		.pme_short_desc = "Instruction fetched from L3.5 shared",
 		.pme_long_desc = "Instruction fetched from L3.5 shared",
 		.pme_event_ids = { -1, 155, -1, -1, -1, -1 },
@@ -4296,6 +4652,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_LSU_REJECT_LHS 356
 	[ POWER6_PME_PM_MRK_LSU_REJECT_LHS ] = {
 		.pme_name = "PM_MRK_LSU_REJECT_LHS",
+		.pme_code = 0x493030,
 		.pme_short_desc = "Marked load hit store reject",
 		.pme_long_desc = "Marked load hit store reject",
 		.pme_event_ids = { -1, -1, -1, 273, -1, -1 },
@@ -4308,6 +4665,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_LMQ_FULL_CYC 357
 	[ POWER6_PME_PM_LSU_LMQ_FULL_CYC ] = {
 		.pme_name = "PM_LSU_LMQ_FULL_CYC",
+		.pme_code = 0x837,
 		.pme_short_desc = "Cycles LMQ full",
 		.pme_long_desc = "The LMQ was full",
 		.pme_event_ids = { 238, 247, 233, 237, -1, -1 },
@@ -4320,6 +4678,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_SYNC_COUNT 358
 	[ POWER6_PME_PM_SYNC_COUNT ] = {
 		.pme_name = "PM_SYNC_COUNT",
+		.pme_code = 0x920cd,
 		.pme_short_desc = "SYNC instructions completed",
 		.pme_long_desc = "SYNC instructions completed",
 		.pme_event_ids = { 342, 349, 336, 334, -1, -1 },
@@ -4332,6 +4691,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MEM0_DP_RQ_LOC_GLOB 359
 	[ POWER6_PME_PM_MEM0_DP_RQ_LOC_GLOB ] = {
 		.pme_name = "PM_MEM0_DP_RQ_LOC_GLOB",
+		.pme_code = 0x50282,
 		.pme_short_desc = "Memory read queue marking cache line double pump state from local to global side 0",
 		.pme_long_desc = "Memory read queue marking cache line double pump state from local to global side 0",
 		.pme_event_ids = { 251, 262, 245, 250, -1, -1 },
@@ -4344,6 +4704,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SA_CASTOUT_MOD 360
 	[ POWER6_PME_PM_L2SA_CASTOUT_MOD ] = {
 		.pme_name = "PM_L2SA_CASTOUT_MOD",
+		.pme_code = 0x50680,
 		.pme_short_desc = "L2 slice A castouts - Modified",
 		.pme_long_desc = "L2 slice A castouts - Modified",
 		.pme_event_ids = { 157, 166, 157, 163, -1, -1 },
@@ -4356,6 +4717,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_LMQ_SRQ_EMPTY_BOTH_COUNT 361
 	[ POWER6_PME_PM_LSU_LMQ_SRQ_EMPTY_BOTH_COUNT ] = {
 		.pme_name = "PM_LSU_LMQ_SRQ_EMPTY_BOTH_COUNT",
+		.pme_code = 0x30001d,
 		.pme_short_desc = "Periods both threads LMQ and SRQ empty",
 		.pme_long_desc = "Periods both threads LMQ and SRQ empty",
 		.pme_event_ids = { -1, -1, 341, -1, -1, -1 },
@@ -4368,6 +4730,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PTEG_FROM_MEM_DP 362
 	[ POWER6_PME_PM_PTEG_FROM_MEM_DP ] = {
 		.pme_name = "PM_PTEG_FROM_MEM_DP",
+		.pme_code = 0x11304a,
 		.pme_short_desc = "PTEG loaded from double pump memory",
 		.pme_long_desc = "PTEG loaded from double pump memory",
 		.pme_event_ids = { 298, -1, -1, -1, -1, -1 },
@@ -4380,6 +4743,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_REJECT_SLOW 363
 	[ POWER6_PME_PM_LSU_REJECT_SLOW ] = {
 		.pme_name = "PM_LSU_REJECT_SLOW",
+		.pme_code = 0x20003e,
 		.pme_short_desc = "LSU slow reject",
 		.pme_long_desc = "LSU slow reject",
 		.pme_event_ids = { -1, 253, -1, -1, -1, -1 },
@@ -4392,6 +4756,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PTEG_FROM_L25_MOD 364
 	[ POWER6_PME_PM_PTEG_FROM_L25_MOD ] = {
 		.pme_name = "PM_PTEG_FROM_L25_MOD",
+		.pme_code = 0x31304e,
 		.pme_short_desc = "PTEG loaded from L2.5 modified",
 		.pme_long_desc = "PTEG loaded from L2.5 modified",
 		.pme_event_ids = { -1, -1, 291, -1, -1, -1 },
@@ -4404,6 +4769,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_PRIO_7_CYC 365
 	[ POWER6_PME_PM_THRD_PRIO_7_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_7_CYC",
+		.pme_code = 0x122046,
 		.pme_short_desc = "Cycles thread running at priority level 7",
 		.pme_long_desc = "Cycles thread running at priority level 7",
 		.pme_event_ids = { 317, -1, -1, -1, -1, -1 },
@@ -4416,6 +4782,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_PTEG_FROM_RL2L3_SHR 366
 	[ POWER6_PME_PM_MRK_PTEG_FROM_RL2L3_SHR ] = {
 		.pme_name = "PM_MRK_PTEG_FROM_RL2L3_SHR",
+		.pme_code = 0x212044,
 		.pme_short_desc = "Marked PTEG loaded from remote L2 or L3 shared",
 		.pme_long_desc = "Marked PTEG loaded from remote L2 or L3 shared",
 		.pme_event_ids = { -1, 292, -1, -1, -1, -1 },
@@ -4428,6 +4795,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_ST_REQ_L2 367
 	[ POWER6_PME_PM_ST_REQ_L2 ] = {
 		.pme_name = "PM_ST_REQ_L2",
+		.pme_code = 0x250732,
 		.pme_short_desc = "L2 store requests",
 		.pme_long_desc = "L2 store requests",
 		.pme_event_ids = { -1, 317, 301, -1, -1, -1 },
@@ -4440,6 +4808,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_ST_REF_L1 368
 	[ POWER6_PME_PM_ST_REF_L1 ] = {
 		.pme_name = "PM_ST_REF_L1",
+		.pme_code = 0x7810,
 		.pme_short_desc = "L1 D cache store references",
 		.pme_long_desc = "Total DL1 Store references",
 		.pme_event_ids = { 310, 315, 300, 300, -1, -1 },
@@ -4452,6 +4821,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_ISSUE_STALL_THRD 369
 	[ POWER6_PME_PM_FPU_ISSUE_STALL_THRD ] = {
 		.pme_name = "PM_FPU_ISSUE_STALL_THRD",
+		.pme_code = 0x330e0,
 		.pme_short_desc = "FPU issue stalled due to thread resource conflict",
 		.pme_long_desc = "FPU issue stalled due to thread resource conflict",
 		.pme_event_ids = { 114, 122, 110, 119, -1, -1 },
@@ -4464,6 +4834,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_RUN_COUNT 370
 	[ POWER6_PME_PM_RUN_COUNT ] = {
 		.pme_name = "PM_RUN_COUNT",
+		.pme_code = 0x10000b,
 		.pme_short_desc = "Run Periods",
 		.pme_long_desc = "Processor Periods gated by the run latch",
 		.pme_event_ids = { 343, 350, -1, -1, -1, -1 },
@@ -4476,6 +4847,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_RUN_CYC 371
 	[ POWER6_PME_PM_RUN_CYC ] = {
 		.pme_name = "PM_RUN_CYC",
+		.pme_code = 0x1005,
 		.pme_short_desc = "Run cycles",
 		.pme_long_desc = "Processor Cycles gated by the run latch",
 		.pme_event_ids = { 302, 309, -1, -1, -1, 0 },
@@ -4488,6 +4860,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PTEG_FROM_RMEM 372
 	[ POWER6_PME_PM_PTEG_FROM_RMEM ] = {
 		.pme_name = "PM_PTEG_FROM_RMEM",
+		.pme_code = 0x31304a,
 		.pme_short_desc = "PTEG loaded from remote memory",
 		.pme_long_desc = "PTEG loaded from remote memory",
 		.pme_event_ids = { -1, -1, 294, -1, -1, -1 },
@@ -4500,6 +4873,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU0_LDF 373
 	[ POWER6_PME_PM_LSU0_LDF ] = {
 		.pme_name = "PM_LSU0_LDF",
+		.pme_code = 0x730,
 		.pme_short_desc = "LSU0 executed Floating Point load instruction",
 		.pme_long_desc = "A floating point load was executed from LSU unit 0",
 		.pme_event_ids = { 205, 214, 200, 205, -1, -1 },
@@ -4512,6 +4886,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_ST_MISS_L1 374
 	[ POWER6_PME_PM_ST_MISS_L1 ] = {
 		.pme_name = "PM_ST_MISS_L1",
+		.pme_code = 0x813,
 		.pme_short_desc = "L1 D cache store misses",
 		.pme_long_desc = "A store missed the dcache",
 		.pme_event_ids = { 309, 314, 299, 299, -1, -1 },
@@ -4524,6 +4899,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_FROM_DL2L3_SHR 375
 	[ POWER6_PME_PM_INST_FROM_DL2L3_SHR ] = {
 		.pme_name = "PM_INST_FROM_DL2L3_SHR",
+		.pme_code = 0x342044,
 		.pme_short_desc = "Instruction fetched from distant L2 or L3 shared",
 		.pme_long_desc = "Instruction fetched from distant L2 or L3 shared",
 		.pme_event_ids = { -1, -1, 142, -1, -1, -1 },
@@ -4536,6 +4912,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SA_IC_INV 376
 	[ POWER6_PME_PM_L2SA_IC_INV ] = {
 		.pme_name = "PM_L2SA_IC_INV",
+		.pme_code = 0x50684,
 		.pme_short_desc = "L2 slice A I cache invalidate",
 		.pme_long_desc = "L2 slice A I cache invalidate",
 		.pme_event_ids = { 160, 169, 160, 166, -1, -1 },
@@ -4548,6 +4925,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_ONE_RUN_CYC 377
 	[ POWER6_PME_PM_THRD_ONE_RUN_CYC ] = {
 		.pme_name = "PM_THRD_ONE_RUN_CYC",
+		.pme_code = 0x100016,
 		.pme_short_desc = "One of the threads in run cycles",
 		.pme_long_desc = "One of the threads in run cycles",
 		.pme_event_ids = { 315, -1, -1, -1, -1, -1 },
@@ -4560,6 +4938,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SB_LD_REQ_INST 378
 	[ POWER6_PME_PM_L2SB_LD_REQ_INST ] = {
 		.pme_name = "PM_L2SB_LD_REQ_INST",
+		.pme_code = 0x50588,
 		.pme_short_desc = "L2 slice B instruction load requests",
 		.pme_long_desc = "L2 slice B instruction load requests",
 		.pme_event_ids = { 180, 189, 180, 186, -1, -1 },
@@ -4572,6 +4951,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DATA_FROM_L25_MOD 379
 	[ POWER6_PME_PM_MRK_DATA_FROM_L25_MOD ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L25_MOD",
+		.pme_code = 0x393d,
 		.pme_short_desc = "Marked data loaded from L2.5 modified",
 		.pme_long_desc = "DL1 was reloaded with modified (M) data from the L2 of a chip on this MCM due to a marked demand load",
 		.pme_event_ids = { -1, -1, 253, -1, -1, -1 },
@@ -4584,6 +4964,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_XTHRD 380
 	[ POWER6_PME_PM_DPU_HELD_XTHRD ] = {
 		.pme_name = "PM_DPU_HELD_XTHRD",
+		.pme_code = 0x30082,
 		.pme_short_desc = "DISP unit held due to cross thread resource conflicts",
 		.pme_long_desc = "DISP unit held due to cross thread resource conflicts",
 		.pme_event_ids = { 55, 63, 53, 61, -1, -1 },
@@ -4596,6 +4977,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SB_ST_REQ 381
 	[ POWER6_PME_PM_L2SB_ST_REQ ] = {
 		.pme_name = "PM_L2SB_ST_REQ",
+		.pme_code = 0x5048c,
 		.pme_short_desc = "L2 slice B store requests",
 		.pme_long_desc = "A store request as seen at the L2 directory has been made from the core. Stores are counted after gathering in the L2 store queues. The event is provided on each of the three slices A,B,and C.",
 		.pme_event_ids = { 184, 193, 184, 190, -1, -1 },
@@ -4608,6 +4990,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_FROM_L21 382
 	[ POWER6_PME_PM_INST_FROM_L21 ] = {
 		.pme_name = "PM_INST_FROM_L21",
+		.pme_code = 0x242040,
 		.pme_short_desc = "Instruction fetched from private L2 other core",
 		.pme_long_desc = "Instruction fetched from private L2 other core",
 		.pme_event_ids = { -1, 154, -1, -1, -1, -1 },
@@ -4620,6 +5003,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_FROM_L3MISS 383
 	[ POWER6_PME_PM_INST_FROM_L3MISS ] = {
 		.pme_name = "PM_INST_FROM_L3MISS",
+		.pme_code = 0x342054,
 		.pme_short_desc = "Instruction fetched missed L3",
 		.pme_long_desc = "Instruction fetched missed L3",
 		.pme_event_ids = { -1, -1, 146, -1, -1, -1 },
@@ -4632,6 +5016,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L3SB_HIT 384
 	[ POWER6_PME_PM_L3SB_HIT ] = {
 		.pme_name = "PM_L3SB_HIT",
+		.pme_code = 0x5008a,
 		.pme_short_desc = "L3 slice B hits",
 		.pme_long_desc = "L3 slice B hits",
 		.pme_event_ids = { 194, 204, 192, 197, -1, -1 },
@@ -4644,6 +5029,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_EE_OFF_EXT_INT 385
 	[ POWER6_PME_PM_EE_OFF_EXT_INT ] = {
 		.pme_name = "PM_EE_OFF_EXT_INT",
+		.pme_code = 0x337,
 		.pme_short_desc = "Cycles MSR(EE) bit off and external interrupt pending",
 		.pme_long_desc = "Cycles MSR(EE) bit off and external interrupt pending",
 		.pme_event_ids = { 57, 66, 56, 64, -1, -1 },
@@ -4656,6 +5042,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_FROM_DL2L3_MOD 386
 	[ POWER6_PME_PM_INST_FROM_DL2L3_MOD ] = {
 		.pme_name = "PM_INST_FROM_DL2L3_MOD",
+		.pme_code = 0x442044,
 		.pme_short_desc = "Instruction fetched from distant L2 or L3 modified",
 		.pme_long_desc = "Instruction fetched from distant L2 or L3 modified",
 		.pme_event_ids = { -1, -1, -1, 148, -1, -1 },
@@ -4668,6 +5055,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PMC6_OVERFLOW 387
 	[ POWER6_PME_PM_PMC6_OVERFLOW ] = {
 		.pme_name = "PM_PMC6_OVERFLOW",
+		.pme_code = 0x700a,
 		.pme_short_desc = "PMC6 Overflow",
 		.pme_long_desc = "PMC6 Overflow",
 		.pme_event_ids = { -1, -1, 289, -1, -1, -1 },
@@ -4680,6 +5068,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_FLOP 388
 	[ POWER6_PME_PM_FPU_FLOP ] = {
 		.pme_name = "PM_FPU_FLOP",
+		.pme_code = 0x1c0032,
 		.pme_short_desc = "FPU executed 1FLOP",
 		.pme_long_desc = " FMA",
 		.pme_event_ids = { 104, -1, -1, 109, -1, -1 },
@@ -4692,6 +5081,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FXU_BUSY 389
 	[ POWER6_PME_PM_FXU_BUSY ] = {
 		.pme_name = "PM_FXU_BUSY",
+		.pme_code = 0x6002,
 		.pme_short_desc = "FXU busy",
 		.pme_long_desc = "FXU0 and FXU1 are both busy",
 		.pme_event_ids = { -1, 125, -1, -1, -1, -1 },
@@ -4704,6 +5094,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU1_FLOP 390
 	[ POWER6_PME_PM_FPU1_FLOP ] = {
 		.pme_name = "PM_FPU1_FLOP",
+		.pme_code = 0xc008e,
 		.pme_short_desc = "FPU1 executed 1FLOP",
 		.pme_long_desc = " FMA",
 		.pme_event_ids = { 91, 100, 89, 97, -1, -1 },
@@ -4716,6 +5107,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_IC_RELOAD_SHR 391
 	[ POWER6_PME_PM_IC_RELOAD_SHR ] = {
 		.pme_name = "PM_IC_RELOAD_SHR",
+		.pme_code = 0x4008e,
 		.pme_short_desc = "I cache line reloading to be shared by threads",
 		.pme_long_desc = "I cache line reloading to be shared by threads",
 		.pme_event_ids = { 135, 144, 134, 141, -1, -1 },
@@ -4728,6 +5120,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_TABLEWALK_CYC 392
 	[ POWER6_PME_PM_INST_TABLEWALK_CYC ] = {
 		.pme_name = "PM_INST_TABLEWALK_CYC",
+		.pme_code = 0x920ca,
 		.pme_short_desc = "Cycles doing instruction tablewalks",
 		.pme_long_desc = "Cycles doing instruction tablewalks",
 		.pme_event_ids = { 151, 160, 151, 157, -1, -1 },
@@ -4740,6 +5133,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_RL2L3_MOD_CYC 393
 	[ POWER6_PME_PM_DATA_FROM_RL2L3_MOD_CYC ] = {
 		.pme_name = "PM_DATA_FROM_RL2L3_MOD_CYC",
+		.pme_code = 0x400028,
 		.pme_short_desc = "Load latency from remote L2 or L3 modified",
 		.pme_long_desc = "Load latency from remote L2 or L3 modified",
 		.pme_event_ids = { -1, -1, -1, 22, -1, -1 },
@@ -4752,6 +5146,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_PRIO_DIFF_5or6_CYC 394
 	[ POWER6_PME_PM_THRD_PRIO_DIFF_5or6_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_DIFF_5or6_CYC",
+		.pme_code = 0x423040,
 		.pme_short_desc = "Cycles thread priority difference is 5 or 6",
 		.pme_long_desc = "Cycles thread priority difference is 5 or 6",
 		.pme_event_ids = { -1, -1, -1, 309, -1, -1 },
@@ -4764,6 +5159,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_IBUF_FULL_CYC 395
 	[ POWER6_PME_PM_IBUF_FULL_CYC ] = {
 		.pme_name = "PM_IBUF_FULL_CYC",
+		.pme_code = 0x40084,
 		.pme_short_desc = "Cycles instruction buffer full",
 		.pme_long_desc = "Cycles instruction buffer full",
 		.pme_event_ids = { 130, 138, 128, 136, -1, -1 },
@@ -4776,6 +5172,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SA_LD_REQ 396
 	[ POWER6_PME_PM_L2SA_LD_REQ ] = {
 		.pme_name = "PM_L2SA_LD_REQ",
+		.pme_code = 0x50780,
 		.pme_short_desc = "L2 slice A load requests ",
 		.pme_long_desc = "L2 slice A load requests ",
 		.pme_event_ids = { 164, 173, 164, 170, -1, -1 },
@@ -4788,6 +5185,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_VMX1_LD_WRBACK 397
 	[ POWER6_PME_PM_VMX1_LD_WRBACK ] = {
 		.pme_name = "PM_VMX1_LD_WRBACK",
+		.pme_code = 0x6008c,
 		.pme_short_desc = "VMX1 load writeback valid",
 		.pme_long_desc = "VMX1 load writeback valid",
 		.pme_event_ids = { 327, 334, 321, 319, -1, -1 },
@@ -4800,6 +5198,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_FPU_FIN 398
 	[ POWER6_PME_PM_MRK_FPU_FIN ] = {
 		.pme_name = "PM_MRK_FPU_FIN",
+		.pme_code = 0x7004,
 		.pme_short_desc = "Marked instruction FPU processing finished",
 		.pme_long_desc = "One of the Floating Point Units finished a marked instruction. Instructions that finish may not necessary complete",
 		.pme_event_ids = { -1, 276, 261, -1, -1, -1 },
@@ -4812,6 +5211,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_PRIO_5_CYC 399
 	[ POWER6_PME_PM_THRD_PRIO_5_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_5_CYC",
+		.pme_code = 0x322046,
 		.pme_short_desc = "Cycles thread running at priority level 5",
 		.pme_long_desc = "Cycles thread running at priority level 5",
 		.pme_event_ids = { -1, -1, 309, -1, -1, -1 },
@@ -4824,6 +5224,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DFU_BACK2BACK 400
 	[ POWER6_PME_PM_DFU_BACK2BACK ] = {
 		.pme_name = "PM_DFU_BACK2BACK",
+		.pme_code = 0xe0082,
 		.pme_short_desc = "DFU back to back operations executed",
 		.pme_long_desc = "DFU back to back operations executed",
 		.pme_event_ids = { 25, 32, 24, 32, -1, -1 },
@@ -4836,6 +5237,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DATA_FROM_LMEM 401
 	[ POWER6_PME_PM_MRK_DATA_FROM_LMEM ] = {
 		.pme_name = "PM_MRK_DATA_FROM_LMEM",
+		.pme_code = 0x40304a,
 		.pme_short_desc = "Marked data loaded from local memory",
 		.pme_long_desc = "Marked data loaded from local memory",
 		.pme_event_ids = { -1, -1, -1, 258, -1, -1 },
@@ -4848,6 +5250,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_REJECT_LHS 402
 	[ POWER6_PME_PM_LSU_REJECT_LHS ] = {
 		.pme_name = "PM_LSU_REJECT_LHS",
+		.pme_code = 0x190032,
 		.pme_short_desc = "Load hit store reject",
 		.pme_long_desc = "Load hit store reject",
 		.pme_event_ids = { 240, -1, -1, 240, -1, -1 },
@@ -4860,6 +5263,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_SPR 403
 	[ POWER6_PME_PM_DPU_HELD_SPR ] = {
 		.pme_name = "PM_DPU_HELD_SPR",
+		.pme_code = 0x3008c,
 		.pme_short_desc = "DISP unit held due to MTSPR/MFSPR",
 		.pme_long_desc = "DISP unit held due to MTSPR/MFSPR",
 		.pme_event_ids = { 50, 59, 49, 57, -1, -1 },
@@ -4872,6 +5276,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FREQ_DOWN 404
 	[ POWER6_PME_PM_FREQ_DOWN ] = {
 		.pme_name = "PM_FREQ_DOWN",
+		.pme_code = 0x30003c,
 		.pme_short_desc = "Frequency is being slewed down due to Power Management",
 		.pme_long_desc = "Frequency is being slewed down due to Power Management",
 		.pme_event_ids = { -1, -1, 115, -1, -1, -1 },
@@ -4884,6 +5289,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DFU_ENC_BCD_DPD 405
 	[ POWER6_PME_PM_DFU_ENC_BCD_DPD ] = {
 		.pme_name = "PM_DFU_ENC_BCD_DPD",
+		.pme_code = 0xe008a,
 		.pme_short_desc = "DFU Encode BCD to DPD",
 		.pme_long_desc = "DFU Encode BCD to DPD",
 		.pme_event_ids = { 27, 34, 26, 34, -1, -1 },
@@ -4896,6 +5302,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_GPR 406
 	[ POWER6_PME_PM_DPU_HELD_GPR ] = {
 		.pme_name = "PM_DPU_HELD_GPR",
+		.pme_code = 0x20080,
 		.pme_short_desc = "DISP unit held due to GPR dependencies",
 		.pme_long_desc = "DISP unit held due to GPR dependencies",
 		.pme_event_ids = { 39, 47, 38, 46, -1, -1 },
@@ -4908,6 +5315,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU0_NCST 407
 	[ POWER6_PME_PM_LSU0_NCST ] = {
 		.pme_name = "PM_LSU0_NCST",
+		.pme_code = 0x820cc,
 		.pme_short_desc = "LSU0 non-cachable stores",
 		.pme_long_desc = "LSU0 non-cachable stores",
 		.pme_event_ids = { 207, 216, 202, 207, -1, -1 },
@@ -4920,6 +5328,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_INST_ISSUED 408
 	[ POWER6_PME_PM_MRK_INST_ISSUED ] = {
 		.pme_name = "PM_MRK_INST_ISSUED",
+		.pme_code = 0x10001c,
 		.pme_short_desc = "Marked instruction issued",
 		.pme_long_desc = "Marked instruction issued",
 		.pme_event_ids = { 268, -1, -1, -1, -1, -1 },
@@ -4932,6 +5341,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_FROM_RL2L3_SHR 409
 	[ POWER6_PME_PM_INST_FROM_RL2L3_SHR ] = {
 		.pme_name = "PM_INST_FROM_RL2L3_SHR",
+		.pme_code = 0x242044,
 		.pme_short_desc = "Instruction fetched from remote L2 or L3 shared",
 		.pme_long_desc = "Instruction fetched from remote L2 or L3 shared",
 		.pme_event_ids = { -1, 156, -1, -1, -1, -1 },
@@ -4944,6 +5354,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_DENORM 410
 	[ POWER6_PME_PM_FPU_DENORM ] = {
 		.pme_name = "PM_FPU_DENORM",
+		.pme_code = 0x1120,
 		.pme_short_desc = "FPU received denormalized data",
 		.pme_long_desc = "This signal is active for one cycle when one of the operands is denormalized. Combined Unit 0 + Unit 1",
 		.pme_event_ids = { -1, 110, 99, -1, -1, -1 },
@@ -4956,6 +5367,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PTEG_FROM_L3MISS 411
 	[ POWER6_PME_PM_PTEG_FROM_L3MISS ] = {
 		.pme_name = "PM_PTEG_FROM_L3MISS",
+		.pme_code = 0x313028,
 		.pme_short_desc = "PTEG loaded from L3 miss",
 		.pme_long_desc = "PTEG loaded from L3 miss",
 		.pme_event_ids = { -1, -1, 293, -1, -1, -1 },
@@ -4968,6 +5380,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_RUN_PURR 412
 	[ POWER6_PME_PM_RUN_PURR ] = {
 		.pme_name = "PM_RUN_PURR",
+		.pme_code = 0x4000f4,
 		.pme_short_desc = "Run PURR Event",
 		.pme_long_desc = "Run PURR Event",
 		.pme_event_ids = { -1, -1, -1, 347, -1, -1 },
@@ -4980,6 +5393,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_VMX0_LD_WRBACK 413
 	[ POWER6_PME_PM_MRK_VMX0_LD_WRBACK ] = {
 		.pme_name = "PM_MRK_VMX0_LD_WRBACK",
+		.pme_code = 0x60086,
 		.pme_short_desc = "Marked VMX0 load writeback valid",
 		.pme_long_desc = "Marked VMX0 load writeback valid",
 		.pme_event_ids = { 283, 295, 278, 280, -1, -1 },
@@ -4992,6 +5406,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2_MISS 414
 	[ POWER6_PME_PM_L2_MISS ] = {
 		.pme_name = "PM_L2_MISS",
+		.pme_code = 0x250532,
 		.pme_short_desc = "L2 cache misses",
 		.pme_long_desc = "L2 cache misses",
 		.pme_event_ids = { -1, 197, 185, -1, -1, -1 },
@@ -5004,6 +5419,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DATA_FROM_L3 415
 	[ POWER6_PME_PM_MRK_DATA_FROM_L3 ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L3",
+		.pme_code = 0x303048,
 		.pme_short_desc = "Marked data loaded from L3",
 		.pme_long_desc = "DL1 was reloaded from the local L3 due to a marked demand load",
 		.pme_event_ids = { -1, -1, 254, -1, -1, -1 },
@@ -5016,6 +5432,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_LSU1_REJECT_LHS 416
 	[ POWER6_PME_PM_MRK_LSU1_REJECT_LHS ] = {
 		.pme_name = "PM_MRK_LSU1_REJECT_LHS",
+		.pme_code = 0x930ee,
 		.pme_short_desc = "LSU1 marked load hit store reject",
 		.pme_long_desc = "LSU1 marked load hit store reject",
 		.pme_event_ids = { 273, 285, 267, 268, -1, -1 },
@@ -5028,6 +5445,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SB_LD_MISS_INST 417
 	[ POWER6_PME_PM_L2SB_LD_MISS_INST ] = {
 		.pme_name = "PM_L2SB_LD_MISS_INST",
+		.pme_code = 0x5058a,
 		.pme_short_desc = "L2 slice B instruction load misses",
 		.pme_long_desc = "L2 slice B instruction load misses",
 		.pme_event_ids = { 177, 186, 177, 183, -1, -1 },
@@ -5040,6 +5458,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PTEG_FROM_RL2L3_SHR 418
 	[ POWER6_PME_PM_PTEG_FROM_RL2L3_SHR ] = {
 		.pme_name = "PM_PTEG_FROM_RL2L3_SHR",
+		.pme_code = 0x21304c,
 		.pme_short_desc = "PTEG loaded from remote L2 or L3 shared",
 		.pme_long_desc = "PTEG loaded from remote L2 or L3 shared",
 		.pme_event_ids = { -1, 307, -1, -1, -1, -1 },
@@ -5052,6 +5471,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DERAT_MISS_64K 419
 	[ POWER6_PME_PM_MRK_DERAT_MISS_64K ] = {
 		.pme_name = "PM_MRK_DERAT_MISS_64K",
+		.pme_code = 0x192044,
 		.pme_short_desc = "Marked DERAT misses for 64K page",
 		.pme_long_desc = "A marked data request (load or store) missed the ERAT for 64K page and resulted in an ERAT reload.",
 		.pme_event_ids = { 354, -1, -1, -1, -1, -1 },
@@ -5064,6 +5484,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LWSYNC 420
 	[ POWER6_PME_PM_LWSYNC ] = {
 		.pme_name = "PM_LWSYNC",
+		.pme_code = 0x810ae,
 		.pme_short_desc = "Isync instruction completed",
 		.pme_long_desc = "Isync instruction completed",
 		.pme_event_ids = { 247, 258, 241, 246, -1, -1 },
@@ -5076,6 +5497,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU1_FXMULT 421
 	[ POWER6_PME_PM_FPU1_FXMULT ] = {
 		.pme_name = "PM_FPU1_FXMULT",
+		.pme_code = 0xd008e,
 		.pme_short_desc = "FPU1 executed fixed point multiplication",
 		.pme_long_desc = "FPU1 executed fixed point multiplication",
 		.pme_event_ids = { 97, 106, 95, 103, -1, -1 },
@@ -5088,6 +5510,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MEM0_DP_CL_WR_GLOB 422
 	[ POWER6_PME_PM_MEM0_DP_CL_WR_GLOB ] = {
 		.pme_name = "PM_MEM0_DP_CL_WR_GLOB",
+		.pme_code = 0x50284,
 		.pme_short_desc = "cacheline write setting dp to global side 0",
 		.pme_long_desc = "cacheline write setting dp to global side 0",
 		.pme_event_ids = { 248, 259, 242, 247, -1, -1 },
@@ -5100,6 +5523,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU0_REJECT_PARTIAL_SECTOR 423
 	[ POWER6_PME_PM_LSU0_REJECT_PARTIAL_SECTOR ] = {
 		.pme_name = "PM_LSU0_REJECT_PARTIAL_SECTOR",
+		.pme_code = 0xa0086,
 		.pme_short_desc = "LSU0 reject due to partial sector valid",
 		.pme_long_desc = "LSU0 reject due to partial sector valid",
 		.pme_event_ids = { 215, 224, 210, 215, -1, -1 },
@@ -5112,6 +5536,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_IMC_MATCH_CMPL 424
 	[ POWER6_PME_PM_INST_IMC_MATCH_CMPL ] = {
 		.pme_name = "PM_INST_IMC_MATCH_CMPL",
+		.pme_code = 0x1000f0,
 		.pme_short_desc = "IMC matched instructions completed",
 		.pme_long_desc = "Number of instructions resulting from the marked instructions expansion that completed.",
 		.pme_event_ids = { 147, -1, -1, 153, -1, -1 },
@@ -5124,6 +5549,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_THERMAL 425
 	[ POWER6_PME_PM_DPU_HELD_THERMAL ] = {
 		.pme_name = "PM_DPU_HELD_THERMAL",
+		.pme_code = 0x10002a,
 		.pme_short_desc = "DISP unit held due to thermal condition",
 		.pme_long_desc = "DISP unit held due to thermal condition",
 		.pme_event_ids = { 52, -1, -1, -1, -1, -1 },
@@ -5136,6 +5562,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_FRSP 426
 	[ POWER6_PME_PM_FPU_FRSP ] = {
 		.pme_name = "PM_FPU_FRSP",
+		.pme_code = 0x2d1034,
 		.pme_short_desc = "FPU executed FRSP instruction",
 		.pme_long_desc = "FPU executed FRSP instruction",
 		.pme_event_ids = { -1, 113, 101, -1, -1, -1 },
@@ -5148,6 +5575,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_INST_FIN 427
 	[ POWER6_PME_PM_MRK_INST_FIN ] = {
 		.pme_name = "PM_MRK_INST_FIN",
+		.pme_code = 0x7005,
 		.pme_short_desc = "Marked instruction finished",
 		.pme_long_desc = "One of the execution units finished a marked instruction. Instructions that finish may not necessary complete",
 		.pme_event_ids = { -1, -1, 262, 262, -1, -1 },
@@ -5160,6 +5588,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_PTEG_FROM_DL2L3_SHR 428
 	[ POWER6_PME_PM_MRK_PTEG_FROM_DL2L3_SHR ] = {
 		.pme_name = "PM_MRK_PTEG_FROM_DL2L3_SHR",
+		.pme_code = 0x312044,
 		.pme_short_desc = "Marked PTEG loaded from distant L2 or L3 shared",
 		.pme_long_desc = "Marked PTEG loaded from distant L2 or L3 shared",
 		.pme_event_ids = { -1, -1, 271, -1, -1, -1 },
@@ -5172,6 +5601,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DTLB_REF 429
 	[ POWER6_PME_PM_MRK_DTLB_REF ] = {
 		.pme_name = "PM_MRK_DTLB_REF",
+		.pme_code = 0x920c0,
 		.pme_short_desc = "Marked Data TLB reference",
 		.pme_long_desc = "Marked Data TLB reference",
 		.pme_event_ids = { 264, 273, 258, 259, -1, -1 },
@@ -5184,6 +5614,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_PTEG_FROM_L25_SHR 430
 	[ POWER6_PME_PM_MRK_PTEG_FROM_L25_SHR ] = {
 		.pme_name = "PM_MRK_PTEG_FROM_L25_SHR",
+		.pme_code = 0x412046,
 		.pme_short_desc = "Marked PTEG loaded from L2.5 shared",
 		.pme_long_desc = "Marked PTEG loaded from L2.5 shared",
 		.pme_event_ids = { -1, -1, -1, 276, -1, -1 },
@@ -5196,6 +5627,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_LSU 431
 	[ POWER6_PME_PM_DPU_HELD_LSU ] = {
 		.pme_name = "PM_DPU_HELD_LSU",
+		.pme_code = 0x210a2,
 		.pme_short_desc = "DISP unit held due to LSU move or invalidate SLB and SR",
 		.pme_long_desc = "DISP unit held due to LSU move or invalidate SLB and SR",
 		.pme_event_ids = { 44, 52, 43, 51, -1, -1 },
@@ -5208,6 +5640,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_FSQRT_FDIV 432
 	[ POWER6_PME_PM_FPU_FSQRT_FDIV ] = {
 		.pme_name = "PM_FPU_FSQRT_FDIV",
+		.pme_code = 0x2c0032,
 		.pme_short_desc = "FPU executed FSQRT or FDIV instruction",
 		.pme_long_desc = "FPU executed FSQRT or FDIV instruction",
 		.pme_event_ids = { -1, 114, 102, -1, -1, -1 },
@@ -5220,6 +5653,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_LMQ_SRQ_EMPTY_COUNT 433
 	[ POWER6_PME_PM_LSU_LMQ_SRQ_EMPTY_COUNT ] = {
 		.pme_name = "PM_LSU_LMQ_SRQ_EMPTY_COUNT",
+		.pme_code = 0x20001d,
 		.pme_short_desc = "Periods LMQ and SRQ empty",
 		.pme_long_desc = "Periods when both the LMQ and SRQ are empty (LSU is idle)",
 		.pme_event_ids = { -1, 359, -1, -1, -1, -1 },
@@ -5232,6 +5666,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_PTEG_SECONDARY 434
 	[ POWER6_PME_PM_DATA_PTEG_SECONDARY ] = {
 		.pme_name = "PM_DATA_PTEG_SECONDARY",
+		.pme_code = 0x910a4,
 		.pme_short_desc = "Data table walk matched in secondary PTEG",
 		.pme_long_desc = "Data table walk matched in secondary PTEG",
 		.pme_event_ids = { 19, 27, 19, 26, -1, -1 },
@@ -5244,6 +5679,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU1_FEST 435
 	[ POWER6_PME_PM_FPU1_FEST ] = {
 		.pme_name = "PM_FPU1_FEST",
+		.pme_code = 0x116,
 		.pme_short_desc = "FPU1 executed FEST instruction",
 		.pme_long_desc = "This signal is active for one cycle when fp1 is executing one of the estimate instructions. This could be fres* or frsqrte* where XYZ* means XYZ or XYZ. ",
 		.pme_event_ids = { 89, 98, 87, 95, -1, -1 },
@@ -5256,6 +5692,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SA_LD_HIT 436
 	[ POWER6_PME_PM_L2SA_LD_HIT ] = {
 		.pme_name = "PM_L2SA_LD_HIT",
+		.pme_code = 0x50782,
 		.pme_short_desc = "L2 slice A load hits",
 		.pme_long_desc = "L2 slice A load hits",
 		.pme_event_ids = { 161, 170, 161, 167, -1, -1 },
@@ -5268,6 +5705,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_MEM_DP_CYC 437
 	[ POWER6_PME_PM_DATA_FROM_MEM_DP_CYC ] = {
 		.pme_name = "PM_DATA_FROM_MEM_DP_CYC",
+		.pme_code = 0x40002e,
 		.pme_short_desc = "Load latency from double pump memory",
 		.pme_long_desc = "Load latency from double pump memory",
 		.pme_event_ids = { -1, -1, -1, 21, -1, -1 },
@@ -5280,6 +5718,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_BR_MPRED_CCACHE 438
 	[ POWER6_PME_PM_BR_MPRED_CCACHE ] = {
 		.pme_name = "PM_BR_MPRED_CCACHE",
+		.pme_code = 0x410ae,
 		.pme_short_desc = "Branch misprediction due to count cache prediction",
 		.pme_long_desc = "Branch misprediction due to count cache prediction",
 		.pme_event_ids = { 4, 2, 2, 4, -1, -1 },
@@ -5292,6 +5731,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_COUNT 439
 	[ POWER6_PME_PM_DPU_HELD_COUNT ] = {
 		.pme_name = "PM_DPU_HELD_COUNT",
+		.pme_code = 0x200005,
 		.pme_short_desc = "Periods DISP unit held",
 		.pme_long_desc = "Dispatch unit held",
 		.pme_event_ids = { -1, 355, -1, -1, -1, -1 },
@@ -5304,6 +5744,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU1_REJECT_SET_MPRED 440
 	[ POWER6_PME_PM_LSU1_REJECT_SET_MPRED ] = {
 		.pme_name = "PM_LSU1_REJECT_SET_MPRED",
+		.pme_code = 0xa008c,
 		.pme_short_desc = "LSU1 reject due to mispredicted set",
 		.pme_long_desc = "LSU1 reject due to mispredicted set",
 		.pme_event_ids = { 229, 238, 224, 229, -1, -1 },
@@ -5316,6 +5757,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_ISSUE_2 441
 	[ POWER6_PME_PM_FPU_ISSUE_2 ] = {
 		.pme_name = "PM_FPU_ISSUE_2",
+		.pme_code = 0x320ca,
 		.pme_short_desc = "FPU issue 2 per cycle",
 		.pme_long_desc = "FPU issue 2 per cycle",
 		.pme_event_ids = { 109, 117, 105, 114, -1, -1 },
@@ -5328,6 +5770,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU1_REJECT_L2_CORR 442
 	[ POWER6_PME_PM_LSU1_REJECT_L2_CORR ] = {
 		.pme_name = "PM_LSU1_REJECT_L2_CORR",
+		.pme_code = 0xa10a8,
 		.pme_short_desc = "LSU1 reject due to L2 correctable error",
 		.pme_long_desc = "LSU1 reject due to L2 correctable error",
 		.pme_event_ids = { 225, 234, 220, 225, -1, -1 },
@@ -5340,6 +5783,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_PTEG_FROM_DMEM 443
 	[ POWER6_PME_PM_MRK_PTEG_FROM_DMEM ] = {
 		.pme_name = "PM_MRK_PTEG_FROM_DMEM",
+		.pme_code = 0x212042,
 		.pme_short_desc = "Marked PTEG loaded from distant memory",
 		.pme_long_desc = "Marked PTEG loaded from distant memory",
 		.pme_event_ids = { -1, 289, -1, -1, -1, -1 },
@@ -5352,6 +5796,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MEM1_DP_RQ_LOC_GLOB 444
 	[ POWER6_PME_PM_MEM1_DP_RQ_LOC_GLOB ] = {
 		.pme_name = "PM_MEM1_DP_RQ_LOC_GLOB",
+		.pme_code = 0x5028a,
 		.pme_short_desc = "Memory read queue marking cache line double pump state from local to global side 1",
 		.pme_long_desc = "Memory read queue marking cache line double pump state from local to global side 1",
 		.pme_event_ids = { 255, 266, 249, 254, -1, -1 },
@@ -5364,6 +5809,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_PRIO_DIFF_minus1or2_CYC 445
 	[ POWER6_PME_PM_THRD_PRIO_DIFF_minus1or2_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_DIFF_minus1or2_CYC",
+		.pme_code = 0x223046,
 		.pme_short_desc = "Cycles thread priority difference is -1 or -2",
 		.pme_long_desc = "Cycles thread priority difference is -1 or -2",
 		.pme_event_ids = { -1, 325, -1, -1, -1, -1 },
@@ -5376,6 +5822,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_PRIO_0_CYC 446
 	[ POWER6_PME_PM_THRD_PRIO_0_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_0_CYC",
+		.pme_code = 0x122040,
 		.pme_short_desc = "Cycles thread running at priority level 0",
 		.pme_long_desc = "Cycles thread running at priority level 0",
 		.pme_event_ids = { 316, -1, -1, -1, -1, -1 },
@@ -5388,6 +5835,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FXU0_BUSY_FXU1_IDLE 447
 	[ POWER6_PME_PM_FXU0_BUSY_FXU1_IDLE ] = {
 		.pme_name = "PM_FXU0_BUSY_FXU1_IDLE",
+		.pme_code = 0x7002,
 		.pme_short_desc = "FXU0 busy FXU1 idle",
 		.pme_long_desc = "FXU0 is busy while FXU1 was idle",
 		.pme_event_ids = { -1, -1, 116, -1, -1, -1 },
@@ -5400,6 +5848,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU1_REJECT_DERAT_MPRED 448
 	[ POWER6_PME_PM_LSU1_REJECT_DERAT_MPRED ] = {
 		.pme_name = "PM_LSU1_REJECT_DERAT_MPRED",
+		.pme_code = 0xa008a,
 		.pme_short_desc = "LSU1 reject due to mispredicted DERAT",
 		.pme_long_desc = "LSU1 reject due to mispredicted DERAT",
 		.pme_event_ids = { 223, 232, 218, 223, -1, -1 },
@@ -5412,6 +5861,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_VMX1_LD_WRBACK 449
 	[ POWER6_PME_PM_MRK_VMX1_LD_WRBACK ] = {
 		.pme_name = "PM_MRK_VMX1_LD_WRBACK",
+		.pme_code = 0x6008e,
 		.pme_short_desc = "Marked VMX1 load writeback valid",
 		.pme_long_desc = "Marked VMX1 load writeback valid",
 		.pme_event_ids = { 284, 296, 279, 281, -1, -1 },
@@ -5424,6 +5874,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_RL2L3_SHR_CYC 450
 	[ POWER6_PME_PM_DATA_FROM_RL2L3_SHR_CYC ] = {
 		.pme_name = "PM_DATA_FROM_RL2L3_SHR_CYC",
+		.pme_code = 0x200028,
 		.pme_short_desc = "Load latency from remote L2 or L3 shared",
 		.pme_long_desc = "Load latency from remote L2 or L3 shared",
 		.pme_event_ids = { -1, 24, -1, -1, -1, -1 },
@@ -5436,6 +5887,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_IERAT_MISS_16M 451
 	[ POWER6_PME_PM_IERAT_MISS_16M ] = {
 		.pme_name = "PM_IERAT_MISS_16M",
+		.pme_code = 0x292076,
 		.pme_short_desc = "IERAT misses for 16M page",
 		.pme_long_desc = "IERAT misses for 16M page",
 		.pme_event_ids = { -1, 362, -1, -1, -1, -1 },
@@ -5448,6 +5900,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DATA_FROM_MEM_DP 452
 	[ POWER6_PME_PM_MRK_DATA_FROM_MEM_DP ] = {
 		.pme_name = "PM_MRK_DATA_FROM_MEM_DP",
+		.pme_code = 0x10304a,
 		.pme_short_desc = "Marked data loaded from double pump memory",
 		.pme_long_desc = "Marked data loaded from double pump memory",
 		.pme_event_ids = { 262, -1, -1, -1, -1, -1 },
@@ -5460,6 +5913,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LARX_L1HIT 453
 	[ POWER6_PME_PM_LARX_L1HIT ] = {
 		.pme_name = "PM_LARX_L1HIT",
+		.pme_code = 0x830e2,
 		.pme_short_desc = "larx hits in L1",
 		.pme_long_desc = "larx hits in L1",
 		.pme_event_ids = { 198, 208, 196, 201, -1, -1 },
@@ -5472,6 +5926,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2_ST_MISS_DATA 454
 	[ POWER6_PME_PM_L2_ST_MISS_DATA ] = {
 		.pme_name = "PM_L2_ST_MISS_DATA",
+		.pme_code = 0x150432,
 		.pme_short_desc = "L2 data store misses",
 		.pme_long_desc = "L2 data store misses",
 		.pme_event_ids = { 190, -1, -1, 193, -1, -1 },
@@ -5484,6 +5939,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_ST_FOLDED 455
 	[ POWER6_PME_PM_FPU_ST_FOLDED ] = {
 		.pme_name = "PM_FPU_ST_FOLDED",
+		.pme_code = 0x3d1030,
 		.pme_short_desc = "FPU folded store",
 		.pme_long_desc = "FPU folded store",
 		.pme_event_ids = { -1, -1, 114, -1, -1, -1 },
@@ -5496,6 +5952,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DATA_FROM_L35_SHR 456
 	[ POWER6_PME_PM_MRK_DATA_FROM_L35_SHR ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L35_SHR",
+		.pme_code = 0x20304e,
 		.pme_short_desc = "Marked data loaded from L3.5 shared",
 		.pme_long_desc = "Marked data loaded from L3.5 shared",
 		.pme_event_ids = { -1, 271, -1, -1, -1, -1 },
@@ -5508,6 +5965,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_MULT_GPR 457
 	[ POWER6_PME_PM_DPU_HELD_MULT_GPR ] = {
 		.pme_name = "PM_DPU_HELD_MULT_GPR",
+		.pme_code = 0x210aa,
 		.pme_short_desc = "DISP unit held due to multiple/divide multiply/divide GPR dependencies",
 		.pme_long_desc = "DISP unit held due to multiple/divide multiply/divide GPR dependencies",
 		.pme_event_ids = { 46, 54, 45, 53, -1, -1 },
@@ -5520,6 +5978,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU0_1FLOP 458
 	[ POWER6_PME_PM_FPU0_1FLOP ] = {
 		.pme_name = "PM_FPU0_1FLOP",
+		.pme_code = 0xc0080,
 		.pme_short_desc = "FPU0 executed add",
 		.pme_long_desc = " mult",
 		.pme_event_ids = { 71, 80, 69, 77, -1, -1 },
@@ -5532,6 +5991,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_IERAT_MISS_16G 459
 	[ POWER6_PME_PM_IERAT_MISS_16G ] = {
 		.pme_name = "PM_IERAT_MISS_16G",
+		.pme_code = 0x192076,
 		.pme_short_desc = "IERAT misses for 16G page",
 		.pme_long_desc = "IERAT misses for 16G page",
 		.pme_event_ids = { 352, -1, -1, -1, -1, -1 },
@@ -5544,6 +6004,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_IC_PREF_WRITE 460
 	[ POWER6_PME_PM_IC_PREF_WRITE ] = {
 		.pme_name = "PM_IC_PREF_WRITE",
+		.pme_code = 0x430e0,
 		.pme_short_desc = "Instruction prefetch written into I cache",
 		.pme_long_desc = "Instruction prefetch written into I cache",
 		.pme_event_ids = { 134, 143, 133, 140, -1, -1 },
@@ -5556,6 +6017,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_PRIO_DIFF_minus5or6_CYC 461
 	[ POWER6_PME_PM_THRD_PRIO_DIFF_minus5or6_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_DIFF_minus5or6_CYC",
+		.pme_code = 0x423046,
 		.pme_short_desc = "Cycles thread priority difference is -5 or -6",
 		.pme_long_desc = "Cycles thread priority difference is -5 or -6",
 		.pme_event_ids = { -1, -1, -1, 310, -1, -1 },
@@ -5568,6 +6030,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU0_FIN 462
 	[ POWER6_PME_PM_FPU0_FIN ] = {
 		.pme_name = "PM_FPU0_FIN",
+		.pme_code = 0x113,
 		.pme_short_desc = "FPU0 produced a result",
 		.pme_long_desc = "fp0 finished, produced a result This only indicates finish, not completion. ",
 		.pme_event_ids = { 75, 84, 73, 81, -1, -1 },
@@ -5580,6 +6043,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_L2_CYC 463
 	[ POWER6_PME_PM_DATA_FROM_L2_CYC ] = {
 		.pme_name = "PM_DATA_FROM_L2_CYC",
+		.pme_code = 0x200020,
 		.pme_short_desc = "Load latency from L2",
 		.pme_long_desc = "Load latency from L2",
 		.pme_event_ids = { -1, 18, -1, -1, -1, -1 },
@@ -5592,6 +6056,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DERAT_REF_16G 464
 	[ POWER6_PME_PM_DERAT_REF_16G ] = {
 		.pme_name = "PM_DERAT_REF_16G",
+		.pme_code = 0x482070,
 		.pme_short_desc = "DERAT reference for 16G page",
 		.pme_long_desc = "DERAT reference for 16G page",
 		.pme_event_ids = { -1, -1, -1, 342, -1, -1 },
@@ -5604,6 +6069,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_BR_PRED 465
 	[ POWER6_PME_PM_BR_PRED ] = {
 		.pme_name = "PM_BR_PRED",
+		.pme_code = 0x410a0,
 		.pme_short_desc = "A conditional branch was predicted",
 		.pme_long_desc = "A conditional branch was predicted",
 		.pme_event_ids = { 8, 6, 6, 8, -1, -1 },
@@ -5616,6 +6082,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_VMX1_LD_ISSUED 466
 	[ POWER6_PME_PM_VMX1_LD_ISSUED ] = {
 		.pme_name = "PM_VMX1_LD_ISSUED",
+		.pme_code = 0x6008a,
 		.pme_short_desc = "VMX1 load issued",
 		.pme_long_desc = "VMX1 load issued",
 		.pme_event_ids = { 326, 333, 320, 318, -1, -1 },
@@ -5628,6 +6095,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SB_CASTOUT_MOD 467
 	[ POWER6_PME_PM_L2SB_CASTOUT_MOD ] = {
 		.pme_name = "PM_L2SB_CASTOUT_MOD",
+		.pme_code = 0x50688,
 		.pme_short_desc = "L2 slice B castouts - Modified",
 		.pme_long_desc = "L2 slice B castouts - Modified",
 		.pme_event_ids = { 171, 180, 171, 177, -1, -1 },
@@ -5640,6 +6108,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_FROM_DMEM 468
 	[ POWER6_PME_PM_INST_FROM_DMEM ] = {
 		.pme_name = "PM_INST_FROM_DMEM",
+		.pme_code = 0x242042,
 		.pme_short_desc = "Instruction fetched from distant memory",
 		.pme_long_desc = "Instruction fetched from distant memory",
 		.pme_event_ids = { -1, 152, -1, -1, -1, -1 },
@@ -5652,6 +6121,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_L35_SHR_CYC 469
 	[ POWER6_PME_PM_DATA_FROM_L35_SHR_CYC ] = {
 		.pme_name = "PM_DATA_FROM_L35_SHR_CYC",
+		.pme_code = 0x200026,
 		.pme_short_desc = "Load latency from L3.5 shared",
 		.pme_long_desc = "Load latency from L3.5 shared",
 		.pme_event_ids = { -1, 20, -1, -1, -1, -1 },
@@ -5664,6 +6134,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU0_NCLD 470
 	[ POWER6_PME_PM_LSU0_NCLD ] = {
 		.pme_name = "PM_LSU0_NCLD",
+		.pme_code = 0x820ca,
 		.pme_short_desc = "LSU0 non-cacheable loads",
 		.pme_long_desc = "LSU0 non-cacheable loads",
 		.pme_event_ids = { 206, 215, 201, 206, -1, -1 },
@@ -5676,6 +6147,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FAB_RETRY_NODE_PUMP 471
 	[ POWER6_PME_PM_FAB_RETRY_NODE_PUMP ] = {
 		.pme_name = "PM_FAB_RETRY_NODE_PUMP",
+		.pme_code = 0x5018a,
 		.pme_short_desc = "Retry of a node pump",
 		.pme_long_desc = " locally mastered",
 		.pme_event_ids = { 64, 74, 63, 70, -1, -1 },
@@ -5688,6 +6160,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_VMX0_INST_ISSUED 472
 	[ POWER6_PME_PM_VMX0_INST_ISSUED ] = {
 		.pme_name = "PM_VMX0_INST_ISSUED",
+		.pme_code = 0x60080,
 		.pme_short_desc = "VMX0 instruction issued",
 		.pme_long_desc = "VMX0 instruction issued",
 		.pme_event_ids = { 321, 328, 315, 313, -1, -1 },
@@ -5700,6 +6173,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_L25_MOD 473
 	[ POWER6_PME_PM_DATA_FROM_L25_MOD ] = {
 		.pme_name = "PM_DATA_FROM_L25_MOD",
+		.pme_code = 0x383d,
 		.pme_short_desc = "Data loaded from L2.5 modified",
 		.pme_long_desc = "DL1 was reloaded with modified (M) data from the L2 of a chip on this MCM due to a demand load",
 		.pme_event_ids = { -1, -1, 12, -1, -1, -1 },
@@ -5712,6 +6186,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_ITLB_ISLB 474
 	[ POWER6_PME_PM_DPU_HELD_ITLB_ISLB ] = {
 		.pme_name = "PM_DPU_HELD_ITLB_ISLB",
+		.pme_code = 0x210a4,
 		.pme_short_desc = "DISP unit held due to SLB or TLB invalidates ",
 		.pme_long_desc = "DISP unit held due to SLB or TLB invalidates ",
 		.pme_event_ids = { 42, 50, 41, 49, -1, -1 },
@@ -5724,6 +6199,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_LMQ_SRQ_EMPTY_CYC 475
 	[ POWER6_PME_PM_LSU_LMQ_SRQ_EMPTY_CYC ] = {
 		.pme_name = "PM_LSU_LMQ_SRQ_EMPTY_CYC",
+		.pme_code = 0x2002,
 		.pme_short_desc = "Cycles LMQ and SRQ empty",
 		.pme_long_desc = "Cycles when both the LMQ and SRQ are empty (LSU is idle)",
 		.pme_event_ids = { -1, 248, -1, -1, -1, -1 },
@@ -5736,6 +6212,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_CONC_RUN_INST 476
 	[ POWER6_PME_PM_THRD_CONC_RUN_INST ] = {
 		.pme_name = "PM_THRD_CONC_RUN_INST",
+		.pme_code = 0x300026,
 		.pme_short_desc = "Concurrent run instructions",
 		.pme_long_desc = "Concurrent run instructions",
 		.pme_event_ids = { -1, -1, 306, -1, -1, -1 },
@@ -5748,6 +6225,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_PTEG_FROM_L2 477
 	[ POWER6_PME_PM_MRK_PTEG_FROM_L2 ] = {
 		.pme_name = "PM_MRK_PTEG_FROM_L2",
+		.pme_code = 0x112040,
 		.pme_short_desc = "Marked PTEG loaded from L2.5 modified",
 		.pme_long_desc = "Marked PTEG loaded from L2.5 modified",
 		.pme_event_ids = { 277, -1, -1, -1, -1, -1 },
@@ -5760,6 +6238,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PURR 478
 	[ POWER6_PME_PM_PURR ] = {
 		.pme_name = "PM_PURR",
+		.pme_code = 0x10000e,
 		.pme_short_desc = "PURR Event",
 		.pme_long_desc = "PURR Event",
 		.pme_event_ids = { 301, -1, -1, 293, -1, -1 },
@@ -5772,6 +6251,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DERAT_MISS_64K 479
 	[ POWER6_PME_PM_DERAT_MISS_64K ] = {
 		.pme_name = "PM_DERAT_MISS_64K",
+		.pme_code = 0x292070,
 		.pme_short_desc = "DERAT misses for 64K page",
 		.pme_long_desc = "A data request (load or store) missed the ERAT for 64K page and resulted in an ERAT reload.",
 		.pme_event_ids = { -1, 361, -1, -1, -1, -1 },
@@ -5784,6 +6264,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PMC2_REWIND 480
 	[ POWER6_PME_PM_PMC2_REWIND ] = {
 		.pme_name = "PM_PMC2_REWIND",
+		.pme_code = 0x300020,
 		.pme_short_desc = "PMC2 rewind event",
 		.pme_long_desc = "PMC2 rewind event",
 		.pme_event_ids = { -1, -1, 287, -1, -1, -1 },
@@ -5796,6 +6277,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_FROM_L2 481
 	[ POWER6_PME_PM_INST_FROM_L2 ] = {
 		.pme_name = "PM_INST_FROM_L2",
+		.pme_code = 0x1426,
 		.pme_short_desc = "Instructions fetched from L2",
 		.pme_long_desc = "An instruction fetch group was fetched from L2. Fetch Groups can contain up to 8 instructions",
 		.pme_event_ids = { 143, -1, -1, -1, -1, -1 },
@@ -5808,6 +6290,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_DISP 482
 	[ POWER6_PME_PM_INST_DISP ] = {
 		.pme_name = "PM_INST_DISP",
+		.pme_code = 0x320,
 		.pme_short_desc = "Instructions dispatched",
 		.pme_long_desc = "The ISU sends the number of instructions dispatched.",
 		.pme_event_ids = { -1, 149, 139, -1, -1, -1 },
@@ -5820,6 +6303,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_L25_SHR 483
 	[ POWER6_PME_PM_DATA_FROM_L25_SHR ] = {
 		.pme_name = "PM_DATA_FROM_L25_SHR",
+		.pme_code = 0x183d,
 		.pme_short_desc = "Data loaded from L2.5 shared",
 		.pme_long_desc = "DL1 was reloaded with shared (T or SL) data from the L2 of a chip on this MCM due to a demand load",
 		.pme_event_ids = { -1, -1, -1, 16, -1, -1 },
@@ -5832,6 +6316,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L1_DCACHE_RELOAD_VALID 484
 	[ POWER6_PME_PM_L1_DCACHE_RELOAD_VALID ] = {
 		.pme_name = "PM_L1_DCACHE_RELOAD_VALID",
+		.pme_code = 0x834,
 		.pme_short_desc = "L1 reload data source valid",
 		.pme_long_desc = "The data source information is valid",
 		.pme_event_ids = { -1, -1, 154, 160, -1, -1 },
@@ -5844,6 +6329,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU1_REJECT_UST 485
 	[ POWER6_PME_PM_LSU1_REJECT_UST ] = {
 		.pme_name = "PM_LSU1_REJECT_UST",
+		.pme_code = 0x9008a,
 		.pme_short_desc = "LSU1 unaligned store reject",
 		.pme_long_desc = "LSU1 unaligned store reject",
 		.pme_event_ids = { 232, 241, 227, 232, -1, -1 },
@@ -5856,6 +6342,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FAB_ADDR_COLLISION 486
 	[ POWER6_PME_PM_FAB_ADDR_COLLISION ] = {
 		.pme_name = "PM_FAB_ADDR_COLLISION",
+		.pme_code = 0x5018e,
 		.pme_short_desc = "local node launch collision with off-node address   ",
 		.pme_long_desc = "local node launch collision with off-node address   ",
 		.pme_event_ids = { 58, 68, 58, 65, -1, -1 },
@@ -5868,6 +6355,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_FXU_FIN 487
 	[ POWER6_PME_PM_MRK_FXU_FIN ] = {
 		.pme_name = "PM_MRK_FXU_FIN",
+		.pme_code = 0x6004,
 		.pme_short_desc = "Marked instruction FXU processing finished",
 		.pme_long_desc = "The fixed point units (Unit 0 + Unit 1) finished a marked instruction. Instructions that finish may not necessary complete.",
 		.pme_event_ids = { -1, 277, -1, -1, -1, -1 },
@@ -5880,6 +6368,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU0_REJECT_UST 488
 	[ POWER6_PME_PM_LSU0_REJECT_UST ] = {
 		.pme_name = "PM_LSU0_REJECT_UST",
+		.pme_code = 0x90082,
 		.pme_short_desc = "LSU0 unaligned store reject",
 		.pme_long_desc = "LSU0 unaligned store reject",
 		.pme_event_ids = { 219, 228, 214, 219, -1, -1 },
@@ -5892,6 +6381,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_PMC4_OVERFLOW 489
 	[ POWER6_PME_PM_PMC4_OVERFLOW ] = {
 		.pme_name = "PM_PMC4_OVERFLOW",
+		.pme_code = 0x500a,
 		.pme_short_desc = "PMC4 Overflow",
 		.pme_long_desc = "PMC4 Overflow",
 		.pme_event_ids = { 292, -1, -1, -1, -1, -1 },
@@ -5904,6 +6394,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_PTEG_FROM_L3 490
 	[ POWER6_PME_PM_MRK_PTEG_FROM_L3 ] = {
 		.pme_name = "PM_MRK_PTEG_FROM_L3",
+		.pme_code = 0x312040,
 		.pme_short_desc = "Marked PTEG loaded from L3",
 		.pme_long_desc = "Marked PTEG loaded from L3",
 		.pme_event_ids = { -1, -1, 273, -1, -1, -1 },
@@ -5916,6 +6407,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_FROM_L2MISS 491
 	[ POWER6_PME_PM_INST_FROM_L2MISS ] = {
 		.pme_name = "PM_INST_FROM_L2MISS",
+		.pme_code = 0x442054,
 		.pme_short_desc = "Instructions fetched missed L2",
 		.pme_long_desc = "An instruction fetch group was fetched from beyond L2.",
 		.pme_event_ids = { -1, -1, -1, 151, -1, -1 },
@@ -5928,6 +6420,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SB_ST_HIT 492
 	[ POWER6_PME_PM_L2SB_ST_HIT ] = {
 		.pme_name = "PM_L2SB_ST_HIT",
+		.pme_code = 0x5078e,
 		.pme_short_desc = "L2 slice B store hits",
 		.pme_long_desc = "A store request made from the core hit in the L2 directory.  This event is provided on each of the three L2 slices A,B, and C.",
 		.pme_event_ids = { 182, 191, 182, 188, -1, -1 },
@@ -5940,6 +6433,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_WT_IC_MISS_COUNT 493
 	[ POWER6_PME_PM_DPU_WT_IC_MISS_COUNT ] = {
 		.pme_name = "PM_DPU_WT_IC_MISS_COUNT",
+		.pme_code = 0x20000d,
 		.pme_short_desc = "Periods DISP unit is stalled due to I cache miss",
 		.pme_long_desc = "Periods DISP unit is stalled due to I cache miss",
 		.pme_event_ids = { -1, 357, -1, -1, -1, -1 },
@@ -5952,6 +6446,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DATA_FROM_DL2L3_SHR 494
 	[ POWER6_PME_PM_MRK_DATA_FROM_DL2L3_SHR ] = {
 		.pme_name = "PM_MRK_DATA_FROM_DL2L3_SHR",
+		.pme_code = 0x30304c,
 		.pme_short_desc = "Marked data loaded from distant L2 or L3 shared",
 		.pme_long_desc = "Marked data loaded from distant L2 or L3 shared",
 		.pme_event_ids = { -1, -1, 252, -1, -1, -1 },
@@ -5964,6 +6459,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_PTEG_FROM_L35_MOD 495
 	[ POWER6_PME_PM_MRK_PTEG_FROM_L35_MOD ] = {
 		.pme_name = "PM_MRK_PTEG_FROM_L35_MOD",
+		.pme_code = 0x112046,
 		.pme_short_desc = "Marked PTEG loaded from L3.5 modified",
 		.pme_long_desc = "Marked PTEG loaded from L3.5 modified",
 		.pme_event_ids = { 278, -1, -1, -1, -1, -1 },
@@ -5976,6 +6472,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU1_FPSCR 496
 	[ POWER6_PME_PM_FPU1_FPSCR ] = {
 		.pme_name = "PM_FPU1_FPSCR",
+		.pme_code = 0xd008c,
 		.pme_short_desc = "FPU1 executed FPSCR instruction",
 		.pme_long_desc = "FPU1 executed FPSCR instruction",
 		.pme_event_ids = { 93, 102, 91, 99, -1, -1 },
@@ -5988,6 +6485,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_REJECT_UST 497
 	[ POWER6_PME_PM_LSU_REJECT_UST ] = {
 		.pme_name = "PM_LSU_REJECT_UST",
+		.pme_code = 0x290030,
 		.pme_short_desc = "Unaligned store reject",
 		.pme_long_desc = "Unaligned store reject",
 		.pme_event_ids = { -1, 256, -1, -1, -1, -1 },
@@ -6000,6 +6498,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU0_DERAT_MISS 498
 	[ POWER6_PME_PM_LSU0_DERAT_MISS ] = {
 		.pme_name = "PM_LSU0_DERAT_MISS",
+		.pme_code = 0x702,
 		.pme_short_desc = "LSU0 DERAT misses",
 		.pme_long_desc = "A data request (load or store) from LSU Unit 0 missed the ERAT and resulted in an ERAT reload. Multiple instructions may miss the ERAT entry for the same 4K page, but only one reload will occur.",
 		.pme_event_ids = { 204, 213, 199, 204, -1, -1 },
@@ -6012,6 +6511,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_PTEG_FROM_MEM_DP 499
 	[ POWER6_PME_PM_MRK_PTEG_FROM_MEM_DP ] = {
 		.pme_name = "PM_MRK_PTEG_FROM_MEM_DP",
+		.pme_code = 0x112042,
 		.pme_short_desc = "Marked PTEG loaded from double pump memory",
 		.pme_long_desc = "Marked PTEG loaded from double pump memory",
 		.pme_event_ids = { 279, -1, -1, -1, -1, -1 },
@@ -6024,6 +6524,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DATA_FROM_L2 500
 	[ POWER6_PME_PM_MRK_DATA_FROM_L2 ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L2",
+		.pme_code = 0x1937,
 		.pme_short_desc = "Marked data loaded from L2",
 		.pme_long_desc = "DL1 was reloaded from the local L2 due to a marked demand load",
 		.pme_event_ids = { 259, -1, -1, -1, -1, -1 },
@@ -6036,6 +6537,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU0_FSQRT_FDIV 501
 	[ POWER6_PME_PM_FPU0_FSQRT_FDIV ] = {
 		.pme_name = "PM_FPU0_FSQRT_FDIV",
+		.pme_code = 0xc0084,
 		.pme_short_desc = "FPU0 executed FSQRT or FDIV instruction",
 		.pme_long_desc = "FPU0 executed FSQRT or FDIV instruction",
 		.pme_event_ids = { 80, 89, 78, 86, -1, -1 },
@@ -6048,6 +6550,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_FXU_SOPS 502
 	[ POWER6_PME_PM_DPU_HELD_FXU_SOPS ] = {
 		.pme_name = "PM_DPU_HELD_FXU_SOPS",
+		.pme_code = 0x30088,
 		.pme_short_desc = "DISP unit held due to FXU slow ops (mtmsr",
 		.pme_long_desc = " scv",
 		.pme_event_ids = { 38, 46, 37, 45, -1, -1 },
@@ -6060,6 +6563,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_FPU0_FIN 503
 	[ POWER6_PME_PM_MRK_FPU0_FIN ] = {
 		.pme_name = "PM_MRK_FPU0_FIN",
+		.pme_code = 0xd0082,
 		.pme_short_desc = "Marked instruction FPU0 processing finished",
 		.pme_long_desc = "Marked instruction FPU0 processing finished",
 		.pme_event_ids = { 265, 274, 259, 260, -1, -1 },
@@ -6072,6 +6576,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L2SB_LD_MISS_DATA 504
 	[ POWER6_PME_PM_L2SB_LD_MISS_DATA ] = {
 		.pme_name = "PM_L2SB_LD_MISS_DATA",
+		.pme_code = 0x5048a,
 		.pme_short_desc = "L2 slice B data load misses",
 		.pme_long_desc = "L2 slice B data load misses",
 		.pme_event_ids = { 176, 185, 176, 182, -1, -1 },
@@ -6084,6 +6589,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_SRQ_EMPTY_CYC 505
 	[ POWER6_PME_PM_LSU_SRQ_EMPTY_CYC ] = {
 		.pme_name = "PM_LSU_SRQ_EMPTY_CYC",
+		.pme_code = 0x4003,
 		.pme_short_desc = "Cycles SRQ empty",
 		.pme_long_desc = "The Store Request Queue is empty",
 		.pme_event_ids = { -1, -1, -1, 244, -1, -1 },
@@ -6096,6 +6602,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_1PLUS_PPC_DISP 506
 	[ POWER6_PME_PM_1PLUS_PPC_DISP ] = {
 		.pme_name = "PM_1PLUS_PPC_DISP",
+		.pme_code = 0x100012,
 		.pme_short_desc = "Cycles at least one instruction dispatched",
 		.pme_long_desc = "Cycles at least one instruction dispatched",
 		.pme_event_ids = { 2, -1, -1, 1, -1, -1 },
@@ -6108,6 +6615,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_VMX_ST_ISSUED 507
 	[ POWER6_PME_PM_VMX_ST_ISSUED ] = {
 		.pme_name = "PM_VMX_ST_ISSUED",
+		.pme_code = 0xb0080,
 		.pme_short_desc = "VMX store issued",
 		.pme_long_desc = "VMX store issued",
 		.pme_event_ids = { 336, 343, 330, 328, -1, -1 },
@@ -6120,6 +6628,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_L2MISS 508
 	[ POWER6_PME_PM_DATA_FROM_L2MISS ] = {
 		.pme_name = "PM_DATA_FROM_L2MISS",
+		.pme_code = 0x2000fe,
 		.pme_short_desc = "Data loaded missed L2",
 		.pme_long_desc = "DL1 was reloaded from beyond L2.",
 		.pme_event_ids = { -1, 17, 13, -1, -1, -1 },
@@ -6132,6 +6641,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU0_REJECT_ULD 509
 	[ POWER6_PME_PM_LSU0_REJECT_ULD ] = {
 		.pme_name = "PM_LSU0_REJECT_ULD",
+		.pme_code = 0x90080,
 		.pme_short_desc = "LSU0 unaligned load reject",
 		.pme_long_desc = "LSU0 unaligned load reject",
 		.pme_event_ids = { 218, 227, 213, 218, -1, -1 },
@@ -6144,6 +6654,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_SUSPENDED 510
 	[ POWER6_PME_PM_SUSPENDED ] = {
 		.pme_name = "PM_SUSPENDED",
+		.pme_code = 0x0,
 		.pme_short_desc = "Suspended",
 		.pme_long_desc = "Suspended",
 		.pme_event_ids = { 311, 318, 302, 302, -1, -1 },
@@ -6156,6 +6667,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DFU_ADD_SHIFTED_BOTH 511
 	[ POWER6_PME_PM_DFU_ADD_SHIFTED_BOTH ] = {
 		.pme_name = "PM_DFU_ADD_SHIFTED_BOTH",
+		.pme_code = 0xe0088,
 		.pme_short_desc = "DFU add type with both operands shifted",
 		.pme_long_desc = "DFU add type with both operands shifted",
 		.pme_event_ids = { 24, 31, 23, 31, -1, -1 },
@@ -6168,6 +6680,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU_REJECT_NO_SCRATCH 512
 	[ POWER6_PME_PM_LSU_REJECT_NO_SCRATCH ] = {
 		.pme_name = "PM_LSU_REJECT_NO_SCRATCH",
+		.pme_code = 0x2a1034,
 		.pme_short_desc = "LSU reject due to scratch register not available",
 		.pme_long_desc = "LSU reject due to scratch register not available",
 		.pme_event_ids = { -1, 251, 237, -1, -1, -1 },
@@ -6180,6 +6693,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_STCX_FAIL 513
 	[ POWER6_PME_PM_STCX_FAIL ] = {
 		.pme_name = "PM_STCX_FAIL",
+		.pme_code = 0x721,
 		.pme_short_desc = "STCX failed",
 		.pme_long_desc = "A stcx (stwcx or stdcx) failed",
 		.pme_event_ids = { 306, 312, 298, 297, -1, -1 },
@@ -6192,6 +6706,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU1_DENORM 514
 	[ POWER6_PME_PM_FPU1_DENORM ] = {
 		.pme_name = "PM_FPU1_DENORM",
+		.pme_code = 0x124,
 		.pme_short_desc = "FPU1 received denormalized data",
 		.pme_long_desc = "This signal is active for one cycle when one of the operands is denormalized.",
 		.pme_event_ids = { 87, 96, 85, 93, -1, -1 },
@@ -6204,6 +6719,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_GCT_NOSLOT_COUNT 515
 	[ POWER6_PME_PM_GCT_NOSLOT_COUNT ] = {
 		.pme_name = "PM_GCT_NOSLOT_COUNT",
+		.pme_code = 0x100009,
 		.pme_short_desc = "Periods no GCT slot allocated",
 		.pme_long_desc = "Periods this thread does not have any slots allocated in the GCT.",
 		.pme_event_ids = { 349, -1, -1, -1, -1, -1 },
@@ -6216,6 +6732,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_DL2L3_SHR_CYC 516
 	[ POWER6_PME_PM_DATA_FROM_DL2L3_SHR_CYC ] = {
 		.pme_name = "PM_DATA_FROM_DL2L3_SHR_CYC",
+		.pme_code = 0x20002a,
 		.pme_short_desc = "Load latency from distant L2 or L3 shared",
 		.pme_long_desc = "Load latency from distant L2 or L3 shared",
 		.pme_event_ids = { -1, 12, -1, -1, -1, -1 },
@@ -6228,6 +6745,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_L21 517
 	[ POWER6_PME_PM_DATA_FROM_L21 ] = {
 		.pme_name = "PM_DATA_FROM_L21",
+		.pme_code = 0x200058,
 		.pme_short_desc = "Data loaded from private L2 other core",
 		.pme_long_desc = "Data loaded from private L2 other core",
 		.pme_event_ids = { -1, 15, -1, -1, -1, -1 },
@@ -6240,6 +6758,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_1FLOP 518
 	[ POWER6_PME_PM_FPU_1FLOP ] = {
 		.pme_name = "PM_FPU_1FLOP",
+		.pme_code = 0x1c0030,
 		.pme_short_desc = "FPU executed one flop instruction ",
 		.pme_long_desc = "This event counts the number of one flop instructions. These could be fadd*, fmul*, fsub*, fneg+, fabs+, fnabs+, fres+, frsqrte+, fcmp**, or fsel where XYZ* means XYZ, XYZs, XYZ., XYZs., XYZ+ means XYZ, XYZ., and XYZ** means XYZu, XYZo.",
 		.pme_event_ids = { 101, -1, -1, -1, -1, -1 },
@@ -6252,6 +6771,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU1_REJECT 519
 	[ POWER6_PME_PM_LSU1_REJECT ] = {
 		.pme_name = "PM_LSU1_REJECT",
+		.pme_code = 0xa10ae,
 		.pme_short_desc = "LSU1 reject",
 		.pme_long_desc = "LSU1 reject",
 		.pme_event_ids = { 222, 231, 217, 222, -1, -1 },
@@ -6264,6 +6784,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_IC_REQ 520
 	[ POWER6_PME_PM_IC_REQ ] = {
 		.pme_name = "PM_IC_REQ",
+		.pme_code = 0x4008a,
 		.pme_short_desc = "I cache demand of prefetch request",
 		.pme_long_desc = "I cache demand of prefetch request",
 		.pme_event_ids = { 136, 145, 135, 142, -1, -1 },
@@ -6276,6 +6797,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DFU_FIN 521
 	[ POWER6_PME_PM_MRK_DFU_FIN ] = {
 		.pme_name = "PM_MRK_DFU_FIN",
+		.pme_code = 0x300008,
 		.pme_short_desc = "DFU marked instruction finish",
 		.pme_long_desc = "DFU marked instruction finish",
 		.pme_event_ids = { -1, -1, 257, -1, -1, -1 },
@@ -6288,6 +6810,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_NOT_LLA_CYC 522
 	[ POWER6_PME_PM_NOT_LLA_CYC ] = {
 		.pme_name = "PM_NOT_LLA_CYC",
+		.pme_code = 0x401e,
 		.pme_short_desc = "Load Look Ahead not Active",
 		.pme_long_desc = "Load Look Ahead not Active",
 		.pme_event_ids = { 346, 353, 338, 338, -1, -1 },
@@ -6300,6 +6823,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_INST_FROM_L1 523
 	[ POWER6_PME_PM_INST_FROM_L1 ] = {
 		.pme_name = "PM_INST_FROM_L1",
+		.pme_code = 0x142d,
 		.pme_short_desc = "Instruction fetched from L1",
 		.pme_long_desc = "An instruction fetch group was fetched from L1. Fetch Groups can contain up to 8 instructions",
 		.pme_event_ids = { 142, 153, 143, 149, -1, -1 },
@@ -6312,6 +6836,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_VMX_COMPLEX_ISSUED 524
 	[ POWER6_PME_PM_MRK_VMX_COMPLEX_ISSUED ] = {
 		.pme_name = "PM_MRK_VMX_COMPLEX_ISSUED",
+		.pme_code = 0x7008c,
 		.pme_short_desc = "Marked VMX instruction issued to complex",
 		.pme_long_desc = "Marked VMX instruction issued to complex",
 		.pme_event_ids = { 285, 297, 280, 282, -1, -1 },
@@ -6324,6 +6849,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_BRU_FIN 525
 	[ POWER6_PME_PM_BRU_FIN ] = {
 		.pme_name = "PM_BRU_FIN",
+		.pme_code = 0x430e6,
 		.pme_short_desc = "BRU produced a result",
 		.pme_long_desc = "BRU produced a result",
 		.pme_event_ids = { 3, 1, 1, 2, -1, -1 },
@@ -6336,6 +6862,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU1_REJECT_EXTERN 526
 	[ POWER6_PME_PM_LSU1_REJECT_EXTERN ] = {
 		.pme_name = "PM_LSU1_REJECT_EXTERN",
+		.pme_code = 0xa10ac,
 		.pme_short_desc = "LSU1 external reject request ",
 		.pme_long_desc = "LSU1 external reject request ",
 		.pme_event_ids = { 224, 233, 219, 224, -1, -1 },
@@ -6348,6 +6875,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_L21_CYC 527
 	[ POWER6_PME_PM_DATA_FROM_L21_CYC ] = {
 		.pme_name = "PM_DATA_FROM_L21_CYC",
+		.pme_code = 0x400020,
 		.pme_short_desc = "Load latency from private L2 other core",
 		.pme_long_desc = "Load latency from private L2 other core",
 		.pme_event_ids = { -1, -1, -1, 15, -1, -1 },
@@ -6360,6 +6888,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_GXI_CYC_BUSY 528
 	[ POWER6_PME_PM_GXI_CYC_BUSY ] = {
 		.pme_name = "PM_GXI_CYC_BUSY",
+		.pme_code = 0x50386,
 		.pme_short_desc = "Inbound GX bus utilizations (# of cycles in use)",
 		.pme_long_desc = "Inbound GX bus utilizations (# of cycles in use)",
 		.pme_event_ids = { 123, 130, 121, 129, -1, -1 },
@@ -6372,6 +6901,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_LD_MISS_L1 529
 	[ POWER6_PME_PM_MRK_LD_MISS_L1 ] = {
 		.pme_name = "PM_MRK_LD_MISS_L1",
+		.pme_code = 0x1720,
 		.pme_short_desc = "Marked L1 D cache load misses",
 		.pme_long_desc = "Marked L1 D cache load misses",
 		.pme_event_ids = { -1, 280, -1, -1, -1, -1 },
@@ -6384,6 +6914,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_L1_WRITE_CYC 530
 	[ POWER6_PME_PM_L1_WRITE_CYC ] = {
 		.pme_name = "PM_L1_WRITE_CYC",
+		.pme_code = 0x434,
 		.pme_short_desc = "Cycles writing to instruction L1",
 		.pme_long_desc = "This signal is asserted each cycle a cache write is active.",
 		.pme_event_ids = { 156, 165, 156, 162, -1, -1 },
@@ -6396,6 +6927,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LLA_CYC 531
 	[ POWER6_PME_PM_LLA_CYC ] = {
 		.pme_name = "PM_LLA_CYC",
+		.pme_code = 0xc01e,
 		.pme_short_desc = "Load Look Ahead Active",
 		.pme_long_desc = "Load Look Ahead Active",
 		.pme_event_ids = { 345, 352, 337, 337, -1, -1 },
@@ -6408,6 +6940,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DATA_FROM_L2MISS 532
 	[ POWER6_PME_PM_MRK_DATA_FROM_L2MISS ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L2MISS",
+		.pme_code = 0x103028,
 		.pme_short_desc = "Marked data loaded missed L2",
 		.pme_long_desc = "DL1 was reloaded from beyond L2 due to a marked demand load.",
 		.pme_event_ids = { 260, -1, -1, -1, -1, -1 },
@@ -6420,6 +6953,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_GCT_FULL_COUNT 533
 	[ POWER6_PME_PM_GCT_FULL_COUNT ] = {
 		.pme_name = "PM_GCT_FULL_COUNT",
+		.pme_code = 0x40087,
 		.pme_short_desc = "Periods GCT full",
 		.pme_long_desc = "The ISU sends a signal indicating the gct is full.",
 		.pme_event_ids = { 339, 346, 333, 331, -1, -1 },
@@ -6432,6 +6966,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MEM_DP_RQ_LOC_GLOB 534
 	[ POWER6_PME_PM_MEM_DP_RQ_LOC_GLOB ] = {
 		.pme_name = "PM_MEM_DP_RQ_LOC_GLOB",
+		.pme_code = 0x250230,
 		.pme_short_desc = "Memory read queue marking cache line double pump state from local to global",
 		.pme_long_desc = "Memory read queue marking cache line double pump state from local to global",
 		.pme_event_ids = { -1, 268, -1, -1, -1, -1 },
@@ -6444,6 +6979,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DATA_FROM_RL2L3_SHR 535
 	[ POWER6_PME_PM_DATA_FROM_RL2L3_SHR ] = {
 		.pme_name = "PM_DATA_FROM_RL2L3_SHR",
+		.pme_code = 0x20005c,
 		.pme_short_desc = "Data loaded from remote L2 or L3 shared",
 		.pme_long_desc = "Data loaded from remote L2 or L3 shared",
 		.pme_event_ids = { -1, 23, -1, -1, -1, -1 },
@@ -6456,6 +6992,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_LSU_REJECT_UST 536
 	[ POWER6_PME_PM_MRK_LSU_REJECT_UST ] = {
 		.pme_name = "PM_MRK_LSU_REJECT_UST",
+		.pme_code = 0x293034,
 		.pme_short_desc = "Marked unaligned store reject",
 		.pme_long_desc = "Marked unaligned store reject",
 		.pme_event_ids = { -1, 288, 270, -1, -1, -1 },
@@ -6468,6 +7005,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_VMX_PERMUTE_ISSUED 537
 	[ POWER6_PME_PM_MRK_VMX_PERMUTE_ISSUED ] = {
 		.pme_name = "PM_MRK_VMX_PERMUTE_ISSUED",
+		.pme_code = 0x7008e,
 		.pme_short_desc = "Marked VMX instruction issued to permute",
 		.pme_long_desc = "Marked VMX instruction issued to permute",
 		.pme_event_ids = { 287, 299, 282, 284, -1, -1 },
@@ -6480,6 +7018,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_PTEG_FROM_L21 538
 	[ POWER6_PME_PM_MRK_PTEG_FROM_L21 ] = {
 		.pme_name = "PM_MRK_PTEG_FROM_L21",
+		.pme_code = 0x212040,
 		.pme_short_desc = "Marked PTEG loaded from private L2 other core",
 		.pme_long_desc = "Marked PTEG loaded from private L2 other core",
 		.pme_event_ids = { -1, 290, -1, -1, -1, -1 },
@@ -6492,6 +7031,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_THRD_GRP_CMPL_BOTH_CYC 539
 	[ POWER6_PME_PM_THRD_GRP_CMPL_BOTH_CYC ] = {
 		.pme_name = "PM_THRD_GRP_CMPL_BOTH_CYC",
+		.pme_code = 0x200018,
 		.pme_short_desc = "Cycles group completed by both threads",
 		.pme_long_desc = "Cycles group completed by both threads",
 		.pme_event_ids = { -1, 320, -1, -1, -1, -1 },
@@ -6504,6 +7044,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_BR_MPRED 540
 	[ POWER6_PME_PM_BR_MPRED ] = {
 		.pme_name = "PM_BR_MPRED",
+		.pme_code = 0x400052,
 		.pme_short_desc = "Branches incorrectly predicted",
 		.pme_long_desc = "Branches incorrectly predicted",
 		.pme_event_ids = { -1, -1, -1, 3, -1, -1 },
@@ -6516,6 +7057,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LD_REQ_L2 541
 	[ POWER6_PME_PM_LD_REQ_L2 ] = {
 		.pme_name = "PM_LD_REQ_L2",
+		.pme_code = 0x150730,
 		.pme_short_desc = "L2 load requests ",
 		.pme_long_desc = "L2 load requests ",
 		.pme_event_ids = { 203, -1, -1, -1, -1, -1 },
@@ -6528,6 +7070,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FLUSH_ASYNC 542
 	[ POWER6_PME_PM_FLUSH_ASYNC ] = {
 		.pme_name = "PM_FLUSH_ASYNC",
+		.pme_code = 0x220ca,
 		.pme_short_desc = "Flush caused by asynchronous exception",
 		.pme_long_desc = "Flush caused by asynchronous exception",
 		.pme_event_ids = { 68, 77, 66, 74, -1, -1 },
@@ -6540,6 +7083,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_HV_CYC 543
 	[ POWER6_PME_PM_HV_CYC ] = {
 		.pme_name = "PM_HV_CYC",
+		.pme_code = 0x3004,
 		.pme_short_desc = "Hypervisor Cycles",
 		.pme_long_desc = "Cycles when the processor is executing in Hypervisor (MSR[HV] = 1 and MSR[PR]=0)",
 		.pme_event_ids = { -1, 137, -1, -1, -1, -1 },
@@ -6552,6 +7096,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU1_DERAT_MISS 544
 	[ POWER6_PME_PM_LSU1_DERAT_MISS ] = {
 		.pme_name = "PM_LSU1_DERAT_MISS",
+		.pme_code = 0x706,
 		.pme_short_desc = "LSU1 DERAT misses",
 		.pme_long_desc = "A data request (load or store) from LSU Unit 1 missed the ERAT and resulted in an ERAT reload. Multiple instructions may miss the ERAT entry for the same 4K page, but only one reload will occur.",
 		.pme_event_ids = { 220, 229, 215, 220, -1, -1 },
@@ -6564,6 +7109,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_DPU_HELD_SMT 545
 	[ POWER6_PME_PM_DPU_HELD_SMT ] = {
 		.pme_name = "PM_DPU_HELD_SMT",
+		.pme_code = 0x20082,
 		.pme_short_desc = "DISP unit held due to SMT conflicts ",
 		.pme_long_desc = "DISP unit held due to SMT conflicts ",
 		.pme_event_ids = { 49, 58, 48, 56, -1, -1 },
@@ -6576,6 +7122,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_LSU_FIN 546
 	[ POWER6_PME_PM_MRK_LSU_FIN ] = {
 		.pme_name = "PM_MRK_LSU_FIN",
+		.pme_code = 0x8004,
 		.pme_short_desc = "Marked instruction LSU processing finished",
 		.pme_long_desc = "One of the Load/Store Units finished a marked instruction. Instructions that finish may not necessary complete",
 		.pme_event_ids = { -1, -1, -1, 272, -1, -1 },
@@ -6588,6 +7135,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DATA_FROM_RL2L3_SHR 547
 	[ POWER6_PME_PM_MRK_DATA_FROM_RL2L3_SHR ] = {
 		.pme_name = "PM_MRK_DATA_FROM_RL2L3_SHR",
+		.pme_code = 0x20304c,
 		.pme_short_desc = "Marked data loaded from remote L2 or L3 shared",
 		.pme_long_desc = "Marked data loaded from remote L2 or L3 shared",
 		.pme_event_ids = { -1, 272, -1, -1, -1, -1 },
@@ -6600,6 +7148,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_LSU0_REJECT_STQ_FULL 548
 	[ POWER6_PME_PM_LSU0_REJECT_STQ_FULL ] = {
 		.pme_name = "PM_LSU0_REJECT_STQ_FULL",
+		.pme_code = 0xa0080,
 		.pme_short_desc = "LSU0 reject due to store queue full",
 		.pme_long_desc = "LSU0 reject due to store queue full",
 		.pme_event_ids = { 217, 226, 212, 217, -1, -1 },
@@ -6612,6 +7161,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_MRK_DERAT_REF_4K 549
 	[ POWER6_PME_PM_MRK_DERAT_REF_4K ] = {
 		.pme_name = "PM_MRK_DERAT_REF_4K",
+		.pme_code = 0x282044,
 		.pme_short_desc = "Marked DERAT reference for 4K page",
 		.pme_long_desc = "Marked DERAT reference for 4K page",
 		.pme_event_ids = { -1, 363, -1, -1, -1, -1 },
@@ -6624,6 +7174,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_FPU_ISSUE_STALL_FPR 550
 	[ POWER6_PME_PM_FPU_ISSUE_STALL_FPR ] = {
 		.pme_name = "PM_FPU_ISSUE_STALL_FPR",
+		.pme_code = 0x330e2,
 		.pme_short_desc = "FPU issue stalled due to FPR dependencies",
 		.pme_long_desc = "FPU issue stalled due to FPR dependencies",
 		.pme_event_ids = { 112, 120, 108, 117, -1, -1 },
@@ -6636,6 +7187,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_IFU_FIN 551
 	[ POWER6_PME_PM_IFU_FIN ] = {
 		.pme_name = "PM_IFU_FIN",
+		.pme_code = 0x430e4,
 		.pme_short_desc = "IFU finished an instruction",
 		.pme_long_desc = "IFU finished an instruction",
 		.pme_event_ids = { 138, 147, 137, 144, -1, -1 },
@@ -6648,6 +7200,7 @@ static pme_power6_entry_t power6_pe[] = {
 #define POWER6_PME_PM_GXO_CYC_BUSY 552
 	[ POWER6_PME_PM_GXO_CYC_BUSY ] = {
 		.pme_name = "PM_GXO_CYC_BUSY",
+		.pme_code = 0x50380,
 		.pme_short_desc = "Outbound GX bus utilizations (# of cycles in use)",
 		.pme_long_desc = "Outbound GX bus utilizations (# of cycles in use)",
 		.pme_event_ids = { 126, 133, 124, 132, -1, -1 },

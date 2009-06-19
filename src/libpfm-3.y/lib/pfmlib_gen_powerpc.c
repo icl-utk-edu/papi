@@ -235,8 +235,46 @@ static int pfm_gen_powerpc_get_event_code(unsigned int event,
 				   unsigned int pmd,
 				   int *code)
 {
-        *code = get_event_id(event, pmd);
-	return 0;
+	switch (gen_powerpc_support.pmu_type) {
+	case PFMLIB_PPC970_PMU:
+                if (event < PPC970_PME_EVENT_COUNT) {
+			*code = ppc970_pe[event].pme_code;
+       			return PFMLIB_SUCCESS;
+                } else
+			return PFMLIB_ERR_INVAL;
+	case PFMLIB_PPC970MP_PMU:
+                if (event < PPC970MP_PME_EVENT_COUNT) {
+			*code = ppc970mp_pe[event].pme_code;
+			return PFMLIB_SUCCESS;
+                } else
+			return PFMLIB_ERR_INVAL;
+	case PFMLIB_POWER4_PMU:
+                if (event < POWER4_PME_EVENT_COUNT) {
+			*code = power4_pe[event].pme_code;
+			return PFMLIB_SUCCESS;
+                } else
+			return PFMLIB_ERR_INVAL;
+	case PFMLIB_POWER5_PMU:
+                if (event < POWER5_PME_EVENT_COUNT) {
+			*code = power5_pe[event].pme_code;
+			return PFMLIB_SUCCESS;
+                } else
+			return PFMLIB_ERR_INVAL;
+	case PFMLIB_POWER5p_PMU:
+                if (event < POWER5p_PME_EVENT_COUNT) {
+			*code = power5p_pe[event].pme_code;
+			return PFMLIB_SUCCESS;
+                } else
+			return PFMLIB_ERR_INVAL;
+	case PFMLIB_POWER6_PMU:
+                if (event < POWER6_PME_EVENT_COUNT) {
+			*code = power6_pe[event].pme_code;
+			return PFMLIB_SUCCESS;
+                } else
+			return PFMLIB_ERR_INVAL;
+	default:
+		return PFMLIB_ERR_BADHOST;
+	}
 }
 
 /**

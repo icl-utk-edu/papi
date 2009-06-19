@@ -80,6 +80,7 @@ do_test(unsigned long size)
     for(i=0; i<size; i++) {
         array[i]=1;
     }
+    free(array);
     return sum;
 }
 

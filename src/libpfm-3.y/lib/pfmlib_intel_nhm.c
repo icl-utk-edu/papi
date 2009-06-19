@@ -36,9 +36,9 @@
 #include "pfmlib_priv.h"
 #include "pfmlib_intel_nhm_priv.h"
 
-#include "intel_nehalem_events.h"
-
-#define is_pebs(i)	(nhm_pe[i].pme_flags & PFMLIB_NHM_PEBS)
+/* Intel Core i7 event tables */
+#include "intel_corei7_events.h"
+#include "intel_corei7_unc_events.h"
 
 /* let's define some handy shortcuts! */
 #define usel_event	unc_perfevtsel.usel_event
@@ -122,13 +122,25 @@
 #define PFMLIB_NHM_ALL_FLAGS \
 	(PFM_NHM_SEL_INV|PFM_NHM_SEL_EDGE|PFM_NHM_SEL_ANYTHR)
 
+pfm_pmu_support_t intel_nhm_support;
+
 static pfmlib_regmask_t nhm_impl_pmcs, nhm_impl_pmds;
+static pme_nhm_entry_t *pe, *unc_pe;
+static unsigned int num_pe, num_unc_pe;
+static int cpu_model;
+static int pme_cycles, pme_instr;
+
+static inline pme_nhm_entry_t *
+get_nhm_entry(unsigned int i)
+{
+        return i >= num_pe ? pe+i : unc_pe+i-num_pe;
+}
 
 static int
 pfm_nhm_detect(void)
 {
 	int ret;
-	int family, model;
+	int family;
 	char buffer[128];
 
 	ret = __pfm_getcpuinfo_attr("vendor_id", buffer, sizeof(buffer));
@@ -148,7 +160,7 @@ pfm_nhm_detect(void)
 	if (ret == -1)
 		return PFMLIB_ERR_NOTSUPP;
 
-	model = atoi(buffer);
+	cpu_model = atoi(buffer);
 	/*
 	 * XXX: is there a way to identify a Core-based processor?
 	 * So for now, look for Core 2 only
@@ -156,7 +168,7 @@ pfm_nhm_detect(void)
 	if (family != 6)
 		return PFMLIB_ERR_NOTSUPP;
 
-	switch(model) {
+	switch(cpu_model) {
 		case 26: /* Nehalem*/
 			  break;
 		default:
@@ -213,6 +225,21 @@ pfm_nhm_init(void)
 	for(i=31; i < 64; i++)
 		pfm_regmask_set(&nhm_impl_pmds, i);
 
+	switch(cpu_model) {
+	case 26:
+		num_pe = PME_COREI7_EVENT_COUNT;
+		num_unc_pe = PME_COREI7_UNC_EVENT_COUNT;
+		pe = corei7_pe;
+		unc_pe = corei7_unc_pe;
+		pme_cycles = PME_COREI7_UNHALTED_CORE_CYCLES;
+		pme_instr = PME_COREI7_INSTRUCTIONS_RETIRED;
+		break;
+	default:
+		return PFMLIB_ERR_NOTSUPP;
+	}
+	
+	intel_nhm_support.pme_count = num_pe + num_unc_pe;
+
 	return PFMLIB_SUCCESS;
 }
 
@@ -220,10 +247,12 @@ pfm_nhm_init(void)
 static int
 pfm_nhm_is_fixed(pfmlib_event_t *e, unsigned int f)
 {
+	pme_nhm_entry_t *ne;
 	unsigned int fl, flc, i;
 	unsigned int mask = 0;
 
-	fl = nhm_pe[e->event].pme_flags;
+	ne = get_nhm_entry(e->event);
+	fl = ne->pme_flags;
 
 	/*
 	 * first pass: check if event as a whole supports fixed counters
@@ -251,7 +280,7 @@ pfm_nhm_is_fixed(pfmlib_event_t *e, unsigned int f)
 	 */
 	flc = 0;
 	for(i=0; i < e->num_masks; i++) {
-		fl = nhm_pe[e->event].pme_umasks[e->unit_masks[i]].pme_uflags;
+		fl = ne->pme_umasks[e->unit_masks[i]].pme_uflags;
 		if (fl & mask)
 			flc++;
 	}
@@ -312,7 +341,7 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 		if (e[i].plm & (PFM_PLM1|PFM_PLM2))
 			return PFMLIB_ERR_INVAL;
 
-		ne = nhm_pe+e[i].event;
+		ne = get_nhm_entry(e[i].event);
 
 		/*
 		 * check for valid flags
@@ -389,8 +418,8 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 		 * they are doing
 		 */
 		if (ne->pme_flags & (PFMLIB_NHM_UNC|PFMLIB_NHM_UNC_FIXED)) {
-			if ((!e[i].plm && (inp->pfp_dfl_plm != (PFM_PLM0|PFM_PLM3)))
-			    || (e[i].plm != (PFM_PLM0|PFM_PLM3))) {
+			if (inp->pfp_dfl_plm != (PFM_PLM0|PFM_PLM3)
+			    && e[i].plm != (PFM_PLM0|PFM_PLM3)) {
 				DPRINT("uncore events must have PLM0|PLM3\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
@@ -409,7 +438,7 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 	 */
 	if (nuf) {
 		for(i=0; i < n; i++) {
-			ne = nhm_pe+e[i].event;
+			ne = get_nhm_entry(e[i].event);
 			if (ne->pme_flags & PFMLIB_NHM_UNC_FIXED) {
 				if (pfm_regmask_isset(r_pmcs, 20))
 					return PFMLIB_ERR_NOASSIGN;
@@ -432,7 +461,7 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 	 */
 	if (npmc01) {
 		for(i=0; i < n; i++) {
-			ne = nhm_pe+e[i].event;
+			ne = get_nhm_entry(e[i].event);
 			if (ne->pme_flags & PFMLIB_NHM_PMC01) {
 				while (next_gen < 2 && pfm_regmask_isset(r_pmcs, next_gen))
 					next_gen++;
@@ -487,7 +516,7 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 	next_unc_gen = 21; /* first generic uncore counter config */
 	last_unc_gen = 28; /* last generic uncore counter config */
 	for(i=0; i < n; i++) {
-		ne = nhm_pe+e[i].event;
+		ne = get_nhm_entry(e[i].event);
 		if (ne->pme_flags & PFMLIB_NHM_UNC) {
 			for(; next_unc_gen <= last_unc_gen; next_unc_gen++) {
 				if (!pfm_regmask_isset(r_pmcs, next_unc_gen))
@@ -589,7 +618,8 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 		/* if plm is 0, then assume not specified per-event and use default */
 		plm = e[i].plm ? e[i].plm : inp->pfp_dfl_plm;
 
-		val = nhm_pe[e[i].event].pme_code;
+		ne = get_nhm_entry(e[i].event);
+		val = ne->pme_code;
 
 		reg.sel_event = val & 0xff;
 
@@ -597,8 +627,8 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 
 		u_flags = 0;
 		for(k=0; k < e[i].num_masks; k++) {
-			umask |= nhm_pe[e[i].event].pme_umasks[e[i].unit_masks[k]].pme_ucode;
-			u_flags |= nhm_pe[e[i].event].pme_umasks[e[i].unit_masks[k]].pme_uflags;
+			umask |= ne->pme_umasks[e[i].unit_masks[k]].pme_ucode;
+			u_flags |= ne->pme_umasks[e[i].unit_masks[k]].pme_uflags;
 		}
 		val |= umask << 8;
 
@@ -639,7 +669,7 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 				reg.sel_anythr = cntrs[i].flags & PFM_NHM_SEL_ANYTHR ? 1 : 0;
 		}
 
-		if (u_flags || (nhm_pe[e[i].event].pme_flags & PFMLIB_NHM_PEBS))
+		if (u_flags || (ne->pme_flags & PFMLIB_NHM_PEBS))
 				pebs_mask |= 1ULL << assign_pc[i];
 
 		/*
@@ -669,7 +699,7 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 				reg.sel_inv,
 				reg.sel_edge,
 				reg.sel_cnt_mask,
-				nhm_pe[e[i].event].pme_name);
+				ne->pme_name);
 
 		__pfm_vbprintf("[PMC%u(pmd%u)]\n",
 				pc[npc].reg_num,
@@ -701,14 +731,15 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 
 		reg.val = 0; /* assume reserved bits are zerooed */
 
-		val = nhm_pe[e[i].event].pme_code;
+		ne = get_nhm_entry(e[i].event);
+		val = ne->pme_code;
 
 		reg.usel_event = val & 0xff;
 
 		umask = (val >> 8) & 0xff;
 
 		for(k=0; k < e[i].num_masks; k++)
-			umask |= nhm_pe[e[i].event].pme_umasks[e[i].unit_masks[k]].pme_ucode;
+			umask |= ne->pme_umasks[e[i].unit_masks[k]].pme_ucode;
 
 		val |= umask << 8;
 
@@ -769,7 +800,7 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 				reg.usel_edge,
 				reg.usel_occ,
 				reg.usel_cnt_mask,
-				nhm_pe[e[i].event].pme_name);
+				ne->pme_name);
 
 		__pfm_vbprintf("[UNC_PMC%u(pmd%u)]\n",
 				pc[npc].reg_num - 21,
@@ -1014,7 +1045,7 @@ pfm_nhm_get_event_code(unsigned int i, unsigned int cnt, int *code)
 		!pfm_regmask_isset(&cnts, cnt)))
 		return PFMLIB_ERR_INVAL;
 
-	*code = nhm_pe[i].pme_code;
+	*code = get_nhm_entry(i)->pme_code;
 
 	return PFMLIB_SUCCESS;
 }
@@ -1022,17 +1053,19 @@ pfm_nhm_get_event_code(unsigned int i, unsigned int cnt, int *code)
 static void
 pfm_nhm_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 {
+	pme_nhm_entry_t *ne;
 	unsigned int i;
 
 	memset(counters, 0, sizeof(*counters));
 
+	ne = get_nhm_entry(j);
 
-	if (nhm_pe[j].pme_flags & PFMLIB_NHM_UNC_FIXED) {
+	if (ne->pme_flags & PFMLIB_NHM_UNC_FIXED) {
 		pfm_regmask_set(counters, 20);
 		return;
 	}
 
-	if (nhm_pe[j].pme_flags & PFMLIB_NHM_UNC) {
+	if (ne->pme_flags & PFMLIB_NHM_UNC) {
 		pfm_regmask_set(counters, 20);
 		pfm_regmask_set(counters, 21);
 		pfm_regmask_set(counters, 22);
@@ -1046,24 +1079,24 @@ pfm_nhm_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 	/*
 	 * fixed counter events have no unit mask
 	 */
-	if (nhm_pe[j].pme_flags & PFMLIB_NHM_FIXED0)
+	if (ne->pme_flags & PFMLIB_NHM_FIXED0)
 		pfm_regmask_set(counters, 16);
 
-	if (nhm_pe[j].pme_flags & PFMLIB_NHM_FIXED1)
+	if (ne->pme_flags & PFMLIB_NHM_FIXED1)
 		pfm_regmask_set(counters, 17);
 
-	if (nhm_pe[j].pme_flags & PFMLIB_NHM_FIXED2_ONLY)
+	if (ne->pme_flags & PFMLIB_NHM_FIXED2_ONLY)
 		pfm_regmask_set(counters, 18);
 
 	/*
 	 * extract from unit mask level
 	 */
-	for (i=0; i < nhm_pe[j].pme_numasks; i++) {
-		if (nhm_pe[j].pme_umasks[i].pme_uflags & PFMLIB_NHM_FIXED0)
+	for (i=0; i < ne->pme_numasks; i++) {
+		if (ne->pme_umasks[i].pme_uflags & PFMLIB_NHM_FIXED0)
 			pfm_regmask_set(counters, 16);
-		if (nhm_pe[j].pme_umasks[i].pme_uflags & PFMLIB_NHM_FIXED1)
+		if (ne->pme_umasks[i].pme_uflags & PFMLIB_NHM_FIXED1)
 			pfm_regmask_set(counters, 17);
-		if (nhm_pe[j].pme_umasks[i].pme_uflags & PFMLIB_NHM_FIXED2_ONLY)
+		if (ne->pme_umasks[i].pme_uflags & PFMLIB_NHM_FIXED2_ONLY)
 			pfm_regmask_set(counters, 18);
 	}
 
@@ -1074,7 +1107,7 @@ pfm_nhm_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 	if (!pfm_regmask_isset(counters, 18)) {
 		pfm_regmask_set(counters, 0);
 		pfm_regmask_set(counters, 1);
-		if (!(nhm_pe[j].pme_flags & PFMLIB_NHM_PMC01)) {
+		if (!(ne->pme_flags & PFMLIB_NHM_PMC01)) {
 			pfm_regmask_set(counters, 2);
 			pfm_regmask_set(counters, 3);
 		}
@@ -1136,14 +1169,14 @@ pfm_nhm_get_hw_counter_width(unsigned int *width)
 static char *
 pfm_nhm_get_event_name(unsigned int i)
 {
-	return nhm_pe[i].pme_name;
+	return get_nhm_entry(i)->pme_name;
 }
 
 static int
 pfm_nhm_get_event_description(unsigned int ev, char **str)
 {
 	char *s;
-	s = nhm_pe[ev].pme_desc;
+	s = get_nhm_entry(ev)->pme_desc;
 	if (s) {
 		*str = strdup(s);
 	} else {
@@ -1155,7 +1188,7 @@ pfm_nhm_get_event_description(unsigned int ev, char **str)
 static char *
 pfm_nhm_get_event_mask_name(unsigned int ev, unsigned int midx)
 {
-	return nhm_pe[ev].pme_umasks[midx].pme_uname;
+	return get_nhm_entry(ev)->pme_umasks[midx].pme_uname;
 }
 
 static int
@@ -1163,7 +1196,7 @@ pfm_nhm_get_event_mask_desc(unsigned int ev, unsigned int midx, char **str)
 {
 	char *s;
 
-	s = nhm_pe[ev].pme_umasks[midx].pme_udesc;
+	s = get_nhm_entry(ev)->pme_umasks[midx].pme_udesc;
 	if (s) {
 		*str = strdup(s);
 	} else {
@@ -1175,27 +1208,27 @@ pfm_nhm_get_event_mask_desc(unsigned int ev, unsigned int midx, char **str)
 static unsigned int
 pfm_nhm_get_num_event_masks(unsigned int ev)
 {
-	return nhm_pe[ev].pme_numasks;
+	return get_nhm_entry(ev)->pme_numasks;
 }
 
 static int
 pfm_nhm_get_event_mask_code(unsigned int ev, unsigned int midx, unsigned int *code)
 {
-	*code =nhm_pe[ev].pme_umasks[midx].pme_ucode;
+	*code =get_nhm_entry(ev)->pme_umasks[midx].pme_ucode;
 	return PFMLIB_SUCCESS;
 }
 
 static int
 pfm_nhm_get_cycle_event(pfmlib_event_t *e)
 {
-	e->event = PME_NHM_UNHALTED_CORE_CYCLES;
+	e->event = pme_cycles;
 	return PFMLIB_SUCCESS;
 }
 
 static int
 pfm_nhm_get_inst_retired(pfmlib_event_t *e)
 {
-	e->event = PME_NHM_INSTRUCTIONS_RETIRED;
+	e->event = pme_instr;;
 	return PFMLIB_SUCCESS;
 }
 
@@ -1216,12 +1249,14 @@ pfm_nhm_get_inst_retired(pfmlib_event_t *e)
 int
 pfm_nhm_is_pebs(pfmlib_event_t *e)
 {
+	pme_nhm_entry_t *ne;
 	unsigned int i, n=0;
 
-	if (e == NULL || e->event >= PME_NHM_EVENT_COUNT)
+	if (e == NULL || e->event >= intel_nhm_support.pme_count)
 		return PFMLIB_ERR_INVAL;
 
-	if (nhm_pe[e->event].pme_flags & PFMLIB_NHM_PEBS)
+	ne = get_nhm_entry(e->event);
+	if (ne->pme_flags & PFMLIB_NHM_PEBS)
 		return 1;
 
 	/*
@@ -1229,9 +1264,9 @@ pfm_nhm_is_pebs(pfmlib_event_t *e)
 	 */
 	for(i=0; i < e->num_masks; i++) {
 		/* check for valid unit mask */
-		if (e->unit_masks[i] >= nhm_pe[e->event].pme_numasks)
+		if (e->unit_masks[i] >= ne->pme_numasks)
 			return PFMLIB_ERR_INVAL;
-		if (nhm_pe[e->event].pme_umasks[e->unit_masks[i]].pme_uflags & PFMLIB_NHM_PEBS)
+		if (ne->pme_umasks[e->unit_masks[i]].pme_uflags & PFMLIB_NHM_PEBS)
 			n++;
 	}
 	return n > 0 && n == e->num_masks;
@@ -1247,10 +1282,10 @@ pfm_nhm_is_pebs(pfmlib_event_t *e)
 int
 pfm_nhm_is_uncore(pfmlib_event_t *e)
 {
-	if (e == NULL || e->event >= PME_NHM_EVENT_COUNT)
+	if (e == NULL || e->event >= intel_nhm_support.pme_count)
 		return PFMLIB_ERR_INVAL;
 
-	return !!(nhm_pe[e->event].pme_flags & (PFMLIB_NHM_UNC|PFMLIB_NHM_UNC_FIXED));
+	return !!(get_nhm_entry(e->event)->pme_flags & (PFMLIB_NHM_UNC|PFMLIB_NHM_UNC_FIXED));
 }
 
 static const char *data_src_encodings[]={
@@ -1292,7 +1327,7 @@ int pfm_nhm_data_src_desc(unsigned int val, char **desc)
 pfm_pmu_support_t intel_nhm_support={
 	.pmu_name		= "Intel Nehalem",
 	.pmu_type		= PFMLIB_INTEL_NHM_PMU,
-	.pme_count		= PME_NHM_EVENT_COUNT,
+	.pme_count		= 0, /* patched at runtime */
 	.pmc_count		= 18,
 	.pmd_count		= 16,
 	.num_cnt		= 16,

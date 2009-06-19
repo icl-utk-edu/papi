@@ -196,8 +196,12 @@ static pme_gen_ia32_entry_t coreduo_pe[]={
 		{ .pme_uname = "THIS_CORE_THIS_AGENT",
 		  .pme_udesc = "monitoring this core and this agent",
 		  .pme_ucode = 0x1<<6,
-		},
+		}
 	 }
+	},
+/* 18 */{.pme_name = "FP_COMP_OPS_EXE",
+	.pme_code = 0x10,
+	.pme_desc = "FP computational Instruction executed. FADD, FSUB, FCOM, FMULs, MUL, IMUL, FDIVs, DIV, IDIV, FPREMs, FSQRT are included; but exclude FADD or FMUL used in the middle of a transcendental instruction."
 	}
 };
 #define PME_COREDUO_UNHALTED_CORE_CYCLES	0

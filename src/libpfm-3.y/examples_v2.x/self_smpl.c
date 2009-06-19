@@ -1,7 +1,11 @@
 /*
- * ita2_dear.c - example of how use the D-EAR with the Itanium 2 PMU
+ * self_smpl.c - example of self sampling using a kernel samplig buffer
  *
- * Copyright (c) 2003-2006 Hewlett-Packard Development Company, L.P.
+ * Copyright (c) 2009 Google, Inc
+ * Contributed by Stephane Eranian <eranian@gmail.com>
+ *
+ * Based on mont_dear.c from:
+ * Copyright (c) 2005-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,7 +26,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * This file is part of libpfm, a performance monitoring support library for
- * applications on Linux/ia64.
+ * applications on Linux.
  */
 #include <sys/types.h>
 #include <stdio.h>
@@ -34,36 +38,22 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <inttypes.h>
+#include <err.h>
 
+#include <perfmon/pfmlib.h>
 #include <perfmon/perfmon.h>
 #include <perfmon/perfmon_dfl_smpl.h>
-#include <perfmon/pfmlib_itanium2.h>
 
-#define NUM_PMCS PFMLIB_MAX_PMCS
-#define NUM_PMDS PFMLIB_MAX_PMDS
+#define SMPL_PERIOD	(2400000)
 
-#define MAX_EVT_NAME_LEN	128
-#define MAX_PMU_NAME_LEN	32
-
-#define SMPL_PERIOD	(40)
-
-#define EVENT_NAME	"data_ear_cache_lat4"
-
-typedef pfm_dfl_smpl_hdr_t		dear_hdr_t;
-typedef pfm_dfl_smpl_entry_t	dear_entry_t;
+typedef pfm_dfl_smpl_hdr_t	smpl_hdr_t;
+typedef pfm_dfl_smpl_entry_t	smpl_entry_t;
 typedef pfm_dfl_smpl_arg_t	smpl_arg_t;
 
+static int fd;
 static void *smpl_vaddr;
-static unsigned long entry_size;
-static int id;
-
-#define BPL (sizeof(uint64_t)<<3)
-#define LBPL	6
-
-static inline void pfm_bv_set(uint64_t *bv, uint16_t rnum)
-{
-	bv[rnum>>LBPL] |= 1UL << (rnum&(BPL-1));
-}
+static size_t entry_size;
 
 long
 do_test(unsigned long size)
@@ -71,7 +61,6 @@ do_test(unsigned long size)
     unsigned long i, sum  = 0;
     int *array;
 
-    printf("buffer size %.1fMB\n", (size*sizeof(int))/1024.0);
     array = (int *)malloc(size * sizeof(int));
     if (array == NULL ) {
         printf("line = %d No memory available!\n", __LINE__);
@@ -80,95 +69,51 @@ do_test(unsigned long size)
     for(i=0; i<size; i++) {
         array[i]=1;
     }
+    free(array);
     return sum;
 }
-
-static void fatal_error(char *fmt,...) __attribute__((noreturn));
-
-static void
-fatal_error(char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-
-	exit(1);
-}
-
-/*
- * print content of sampling buffer
- *
- * XXX: using stdio to print from a signal handler is not safe with multi-threaded
- * applications
- */
-#define safe_printf	printf
 
 static void
 process_smpl_buffer(void)
 {
-	dear_hdr_t *hdr;
-	dear_entry_t *ent;
+	static uint64_t last_ovfl = ~0UL;
+	static uint64_t smpl_entry = 0;
+	smpl_hdr_t *hdr;
+	smpl_entry_t *ent;
 	unsigned long pos;
-	unsigned long smpl_entry = 0;
-	pfm_ita2_pmd_reg_t *reg;
+	uint64_t count;
 	int ret;
-	unsigned int i;
-	static unsigned long last_ovfl = ~0UL;
 
-	hdr = (dear_hdr_t *)smpl_vaddr;
+	hdr = (smpl_hdr_t *)smpl_vaddr;
 
 	/*
 	 * check that we are not diplaying the previous set of samples again.
 	 * Required to take care of the last batch of samples.
 	 */
 	if (hdr->hdr_overflows <= last_ovfl && last_ovfl != ~0UL) {
-		printf("skipping identical set of samples %lu <= %lu\n", hdr->hdr_overflows, last_ovfl);
+		printf("skipping identical set of samples %"PRIu64" <= %"PRIu64"\n", hdr->hdr_overflows, last_ovfl);
 		return;
 	}
 
 	pos = (unsigned long)(hdr+1);
-
+	count = hdr->hdr_count;
 	/*
 	 * walk through all the entries recored in the buffer
 	 */
-	for(i=0; i < hdr->hdr_count; i++) {
-
+	while(count--) {
 		ret = 0;
 
-		ent = (dear_entry_t *)pos;
+		ent = (smpl_entry_t *)pos;
 		/*
 		 * print entry header
 		 */
-		safe_printf("Entry %ld PID:%d TID:%d CPU:%d STAMP:0x%lx IIP:0x%016lx\n",
+		printf("Entry %"PRIu64" PID:%d TID:%d CPU:%d STAMP:0x%"PRIx64" IIP:0x%016"PRIx64"\n",
 			smpl_entry++,
 			ent->tgid,
 			ent->pid,
 			ent->cpu,
 			ent->tstamp,
 			ent->ip);
-
-		/*
-		 * point to first recorded register (always contiguous with entry header)
-		 */
-		reg = (pfm_ita2_pmd_reg_t*)(ent+1);
-
-		safe_printf("PMD2 : 0x%016lx\n", reg->pmd_val);
-
-		reg++;
-
-		safe_printf("PMD3 : 0x%016lx, latency %u\n",
-			    reg->pmd_val,
-			    reg->pmd3_ita2_reg.dear_latency);
-
-		reg++;
-
-		safe_printf("PMD17: 0x%016lx, valid %c, address 0x%016lx\n",
-				reg->pmd_val,
-				reg->pmd17_ita2_reg.dear_vl ? 'Y': 'N',
-				(reg->pmd17_ita2_reg.dear_iaddr << 4) |
-				(unsigned long)reg->pmd17_ita2_reg.dear_slot);
 
 		/*
 		 * move to next entry
@@ -180,49 +125,35 @@ process_smpl_buffer(void)
 static void
 overflow_handler(int n, struct siginfo *info, struct sigcontext *sc)
 {
-	/* dangerous */
-	printf("Notification received\n");
-
 	process_smpl_buffer();
 	/*
 	 * And resume monitoring
 	 */
-	if (pfm_restart(id) == -1) {
-		perror("pfm_restart");
-		exit(1);
-	}
+	if (pfm_restart(fd))
+		errx(1, "pfm_restart");
 }
 
 int
 main(void)
 {
-	pfarg_pmr_t pd[NUM_PMDS];
-	pfarg_pmr_t pc[NUM_PMCS];
-	pfarg_pmd_attr_t pa[NUM_PMDS];
+	pfarg_pmd_t pd[8];
+	pfarg_pmc_t pc[8];
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
+	pfarg_ctx_t ctx;
+	pfarg_load_t load_args;
 	smpl_arg_t buf_arg;
 	pfmlib_options_t pfmlib_options;
+	unsigned long nloop = 10000;
 	struct sigaction act;
 	unsigned int i;
-	int ret, type = 0;
+	int ret;
 
 	/*
 	 * Initialize pfm library (required before we can use it)
 	 */
-	ret = pfm_initialize();
-	if (ret != PFMLIB_SUCCESS)
-		fatal_error("Cannot initialize library: %s\n", pfm_strerror(ret));
-
-	/*
-	 * Let's make sure we run this on the right CPU
-	 */
-	pfm_get_pmu_type(&type);
-	if (type != PFMLIB_ITANIUM2_PMU) {
-		char model[MAX_PMU_NAME_LEN];
-		pfm_get_pmu_name(model, MAX_PMU_NAME_LEN);
-		fatal_error("this program does not work with %s PMU\n", model);
-	}
+	if (pfm_initialize() != PFMLIB_SUCCESS)
+		errx(1, "cannot initialize library\n");
 
 	/*
 	 * Install the overflow handler (SIGIO)
@@ -230,7 +161,6 @@ main(void)
 	memset(&act, 0, sizeof(act));
 	act.sa_handler = (sig_t)overflow_handler;
 	sigaction (SIGIO, &act, 0);
-
 
 	/*
 	 * pass options to library (optional)
@@ -244,8 +174,10 @@ main(void)
 
 	memset(pd, 0, sizeof(pd));
 	memset(pc, 0, sizeof(pc));
-	memset(pa, 0, sizeof(pa));
+	memset(pc, 0, sizeof(pc));
+	memset(&ctx, 0, sizeof(ctx));
 	memset(&buf_arg, 0, sizeof(buf_arg));
+	memset(&load_args, 0, sizeof(load_args));
 
 	/*
 	 * prepare parameters to library. we don't use any Itanium
@@ -259,8 +191,8 @@ main(void)
 	 * program a counting monitor with the IA64_TAGGED_INST_RETIRED_PMC8
 	 * event.
 	 */
-	if (pfm_find_full_event(EVENT_NAME, &inp.pfp_events[0]) != PFMLIB_SUCCESS)
-		fatal_error("cannot find event %s\n", EVENT_NAME);
+	if (pfm_get_cycle_event(&inp.pfp_events[0]) != PFMLIB_SUCCESS)
+		errx(1, "cannot find cycle event\n");
 
 	/*
 	 * set the (global) privilege mode:
@@ -279,7 +211,7 @@ main(void)
 	 * We use all global settings for this EAR.
 	 */
 	if ((ret=pfm_dispatch_events(&inp, NULL, &outp, NULL)) != PFMLIB_SUCCESS)
-		fatal_error("cannot configure events: %s\n", pfm_strerror(ret));
+		errx(1, "cannot configure events: %s\n", pfm_strerror(ret));
 
 	/*
 	 * the size of the buffer is indicated in bytes (not entries).
@@ -290,22 +222,27 @@ main(void)
 	buf_arg.buf_size = getpagesize();
 
 	/*
-	 * now create the session
+	 * do not generate overflow notification messages
 	 */
-	id = pfm_create(PFM_FL_SMPL_FMT, NULL, "default", &buf_arg, sizeof(buf_arg));
-	if (id == -1) {
-		if (errno == ENOSYS) {
-			fatal_error("Your kernel does not have performance monitoring support!\n");
-		}
-		fatal_error("cannot create session %s\n", strerror(errno));
+	ctx.ctx_flags = PFM_FL_OVFL_NO_MSG;
+
+	/*
+	 * now create the context for self monitoring/per-task
+	 */
+	fd = pfm_create_context(&ctx, PFM_DFL_SMPL_NAME, &buf_arg, sizeof(buf_arg));
+	if (fd == -1) {
+		if (errno == ENOSYS)
+			errx(1, "kernel does not have performance monitoring support!\n");
+		errx(1, "cannot create PFM context %s\n", strerror(errno));
 	}
+
 	/*
 	 * retrieve the virtual address at which the sampling
 	 * buffer has been mapped
 	 */
-	smpl_vaddr = mmap(NULL, (size_t)buf_arg.buf_size, PROT_READ, MAP_PRIVATE, id, 0);
+	smpl_vaddr = mmap(NULL, (size_t)buf_arg.buf_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if (smpl_vaddr == MAP_FAILED)
-		fatal_error("cannot mmap sampling buffer errno %d\n", errno);
+		errx(1, "cannot mmap sampling buffer errno %d\n", errno);
 
 	printf("Sampling buffer mapped at %p\n", smpl_vaddr);
 
@@ -334,19 +271,14 @@ main(void)
 	 * indicate we want notification when buffer is full
 	 */
 	pd[0].reg_flags |= PFM_REGFL_OVFL_NOTIFY;
-
-	pfm_bv_set(pa[0].reg_smpl_pmds, 2);
-	pfm_bv_set(pa[0].reg_smpl_pmds, 3);
-	pfm_bv_set(pa[0].reg_smpl_pmds, 17);
-	entry_size = sizeof(dear_entry_t) + 3 * 8;
+	entry_size = sizeof(smpl_entry_t);
 
 	/*
 	 * initialize the PMD and the sampling period
 	 */
 	pd[0].reg_value       = - SMPL_PERIOD;
-
-	pa[0].reg_long_reset  = - SMPL_PERIOD;
-	pa[0].reg_short_reset = - SMPL_PERIOD;
+	pd[0].reg_long_reset  = - SMPL_PERIOD;
+	pd[0].reg_short_reset = - SMPL_PERIOD;
 
 	/*
 	 * Now program the registers
@@ -355,39 +287,46 @@ main(void)
 	 * the kernel because, as we said earlier, pc may contain more elements than
 	 * the number of events we specified, i.e., contains more thann coutning monitors.
 	 */
-	if (pfm_write(id, 0, PFM_RW_PMC, pc, outp.pfp_pmc_count * sizeof(*pc)) == -1)
-		fatal_error("pfm_write error errno %d\n",errno);
-	if (pfm_write(id, 0, PFM_RW_PMD, pd, outp.pfp_pmd_count * sizeof(*pc)) == -1)
-		fatal_error("pfm_write(PMD) error errno %d\n",errno);
+	if (pfm_write_pmcs(fd, pc, outp.pfp_pmc_count))
+		errx(1, "pfm_write_pmcs error errno %d\n",errno);
+
+	if (pfm_write_pmds(fd, pd, outp.pfp_pmd_count))
+		errx(1, "pfm_write_pmds error errno %d\n",errno);
+
 	/*
-	 * attach session to stopped task
+	 * attach context to stopped task
 	 */
-	if (pfm_attach(id, 0, getpid()) == -1)
-		fatal_error("pfm_attach error errno %d\n",errno);
+	load_args.load_pid = getpid();
+	if (pfm_load_context(fd, &load_args))
+		errx(1, "pfm_load_context error errno %d\n",errno);
+
 	/*
 	 * setup asynchronous notification on the file descriptor
 	 */
-	ret = fcntl(id, F_SETFL, fcntl(id, F_GETFL, 0) | O_ASYNC);
+	ret = fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_ASYNC);
 	if (ret == -1)
-		fatal_error("cannot set ASYNC: %s\n", strerror(errno));
+		errx(1, "cannot set ASYNC: %s\n", strerror(errno));
 
 	/*
 	 * get ownership of the descriptor
 	 */
-	ret = fcntl(id, F_SETOWN, getpid());
+	ret = fcntl(fd, F_SETOWN, getpid());
 	if (ret == -1)
-		fatal_error("cannot setown: %s\n", strerror(errno));
+		errx(1, "cannot setown: %s\n", strerror(errno));
 
 	/*
 	 * Let's roll now.
 	 */
-	if (pfm_set_state(id, 0, PFM_ST_START))
-		fatal_error("pfm_set_state error errno %d\n",errno);
+	ret = pfm_start(fd, NULL);
+	if (ret == -1)
+		errx(1, "cannot pfm_start: %s\n", strerror(errno));
 
-	do_test(100000);
+	while(nloop--)
+		do_test(100000);
 
-	if (pfm_set_state(id, 0, PFM_ST_STOP))
-		fatal_error("pfm_set_state error errno %d\n",errno);
+	ret = pfm_stop(fd);
+	if (ret == -1)
+		errx(1, "cannot pfm_stop: %s\n", strerror(errno));
 
 	/*
 	 * We must call the processing routine to cover the last entries recorded
@@ -399,6 +338,6 @@ main(void)
 	 * let's stop this now
 	 */
 	munmap(smpl_vaddr, (size_t)buf_arg.buf_size);
-	close(id);
+	close(fd);
 	return 0;
 }

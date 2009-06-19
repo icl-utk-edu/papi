@@ -184,7 +184,10 @@ parent(char **arg)
 	/*
 	 * and launch the child code
 	 */
-	if (pid == 0) exit(child(arg));
+	if (pid == 0) {
+		close(ctx_fd);
+		exit(child(arg));
+	}
 
 	/*
 	 * wait for the child to exec

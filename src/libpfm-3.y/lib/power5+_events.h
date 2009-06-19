@@ -24,6 +24,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_REJECT_RELOAD_CDF 0
 	[ POWER5p_PME_PM_LSU_REJECT_RELOAD_CDF ] = {
 		.pme_name = "PM_LSU_REJECT_RELOAD_CDF",
+		.pme_code = 0x2c4090,
 		.pme_short_desc = "LSU reject due to reload CDF or tag update collision",
 		.pme_long_desc = "Total cycles the Load Store Unit is busy rejecting instructions because of Critical Data Forward.  When critical data arrives from the storage system it is formatted and immediately forwarded, bypassing the data cache, to the destination register using the result bus.  Any instruction the requires the result bus in the same cycle is rejected.  Tag update rejects are caused when an instruction requires access to the Dcache directory or ERAT in the same system when they are being updated.  Combined Unit 0 + 1.",
 		.pme_event_ids = { -1, 243, 240, -1, -1, -1 },
@@ -35,6 +36,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU1_SINGLE 1
 	[ POWER5p_PME_PM_FPU1_SINGLE ] = {
 		.pme_name = "PM_FPU1_SINGLE",
+		.pme_code = 0x20e7,
 		.pme_short_desc = "FPU1 executed single precision instruction",
 		.pme_long_desc = "FPU1 has executed a single precision instruction.",
 		.pme_event_ids = { 82, 81, 81, 83, -1, -1 },
@@ -46,6 +48,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L3SB_REF 2
 	[ POWER5p_PME_PM_L3SB_REF ] = {
 		.pme_name = "PM_L3SB_REF",
+		.pme_code = 0x701c4,
 		.pme_short_desc = "L3 slice B references",
 		.pme_long_desc = "Number of attempts made by this chip cores to find data in the L3. Reported per L3 slice",
 		.pme_event_ids = { 188, 185, 184, 183, -1, -1 },
@@ -57,6 +60,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_PRIO_DIFF_3or4_CYC 3
 	[ POWER5p_PME_PM_THRD_PRIO_DIFF_3or4_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_DIFF_3or4_CYC",
+		.pme_code = 0x430e5,
 		.pme_short_desc = "Cycles thread priority difference is 3 or 4",
 		.pme_long_desc = "Cycles when this thread's priority is higher than the other thread's priority by 3 or 4.",
 		.pme_event_ids = { 343, 338, 336, 332, -1, -1 },
@@ -68,6 +72,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_INST_FROM_L275_SHR 4
 	[ POWER5p_PME_PM_INST_FROM_L275_SHR ] = {
 		.pme_name = "PM_INST_FROM_L275_SHR",
+		.pme_code = 0x322096,
 		.pme_short_desc = "Instruction fetched from L2.75 shared",
 		.pme_long_desc = "An instruction fetch group was fetched with shared (T) data from the L2 on a different module than this processor is located. Fetch groups can contain up to 8 instructions",
 		.pme_event_ids = { -1, -1, 115, -1, -1, -1 },
@@ -79,6 +84,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_L375_MOD 5
 	[ POWER5p_PME_PM_MRK_DATA_FROM_L375_MOD ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L375_MOD",
+		.pme_code = 0x1c70a7,
 		.pme_short_desc = "Marked data loaded from L3.75 modified",
 		.pme_long_desc = "The processor's Data Cache was reloaded with modified  (M) data from the L3 of a chip on a different module than this processor is located due to a marked load.",
 		.pme_event_ids = { 274, -1, -1, 268, -1, -1 },
@@ -90,6 +96,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DTLB_MISS_4K 6
 	[ POWER5p_PME_PM_DTLB_MISS_4K ] = {
 		.pme_name = "PM_DTLB_MISS_4K",
+		.pme_code = 0x1c208d,
 		.pme_short_desc = "Data TLB miss for 4K page",
 		.pme_long_desc = "Data TLB references to 4KB pages that missed the TLB. Page size is determined at TLB reload time.",
 		.pme_event_ids = { 32, -1, -1, -1, -1, -1 },
@@ -101,6 +108,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_CLB_FULL_CYC 7
 	[ POWER5p_PME_PM_CLB_FULL_CYC ] = {
 		.pme_name = "PM_CLB_FULL_CYC",
+		.pme_code = 0x220e5,
 		.pme_short_desc = "Cycles CLB full",
 		.pme_long_desc = "Cycles when both thread's CLB is full.",
 		.pme_event_ids = { 14, 13, 13, 14, -1, -1 },
@@ -112,6 +120,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_ST_CMPL 8
 	[ POWER5p_PME_PM_MRK_ST_CMPL ] = {
 		.pme_name = "PM_MRK_ST_CMPL",
+		.pme_code = 0x100003,
 		.pme_short_desc = "Marked store instruction completed",
 		.pme_long_desc = "A sampled store has completed (data home)",
 		.pme_event_ids = { 299, -1, -1, -1, -1, -1 },
@@ -123,6 +132,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_FLUSH_LRQ_FULL 9
 	[ POWER5p_PME_PM_LSU_FLUSH_LRQ_FULL ] = {
 		.pme_name = "PM_LSU_FLUSH_LRQ_FULL",
+		.pme_code = 0x320e7,
 		.pme_short_desc = "Flush caused by LRQ full",
 		.pme_long_desc = "This thread was flushed at dispatch because its Load Request Queue was full. This allows the other thread to have more machine resources for it to make progress while this thread is stalled.",
 		.pme_event_ids = { 232, 231, 230, 227, -1, -1 },
@@ -134,6 +144,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_L275_SHR 10
 	[ POWER5p_PME_PM_MRK_DATA_FROM_L275_SHR ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L275_SHR",
+		.pme_code = 0x3c7097,
 		.pme_short_desc = "Marked data loaded from L2.75 shared",
 		.pme_long_desc = "The processor's Data Cache was reloaded with shared (T) data from the L2 on a different module than this processor is located due to a marked load.",
 		.pme_event_ids = { -1, -1, 265, -1, -1, -1 },
@@ -145,6 +156,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_1INST_CLB_CYC 11
 	[ POWER5p_PME_PM_1INST_CLB_CYC ] = {
 		.pme_name = "PM_1INST_CLB_CYC",
+		.pme_code = 0x400c1,
 		.pme_short_desc = "Cycles 1 instruction in CLB",
 		.pme_long_desc = "The cache line buffer (CLB) is a 6-deep, 4-wide instruction buffer. Fullness is reported on a cycle basis with each event representing the number of cycles the CLB had the corresponding number of entries occupied.  These events give a real time history of the number of instruction buffers used, but not the number of PowerPC instructions within those buffers.  Each thread has its own set of CLB; these events are thread specific.",
 		.pme_event_ids = { 1, 1, 1, 2, -1, -1 },
@@ -156,6 +168,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MEM_SPEC_RD_CANCEL 12
 	[ POWER5p_PME_PM_MEM_SPEC_RD_CANCEL ] = {
 		.pme_name = "PM_MEM_SPEC_RD_CANCEL",
+		.pme_code = 0x721e6,
 		.pme_short_desc = "Speculative memory read cancelled",
 		.pme_long_desc = "Speculative memory read cancelled (i.e. cresp = sourced by L2/L3)",
 		.pme_event_ids = { 264, 263, 259, 258, -1, -1 },
@@ -167,6 +180,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DTLB_MISS_16M 13
 	[ POWER5p_PME_PM_MRK_DTLB_MISS_16M ] = {
 		.pme_name = "PM_MRK_DTLB_MISS_16M",
+		.pme_code = 0x3c608d,
 		.pme_short_desc = "Marked Data TLB misses for 16M page",
 		.pme_long_desc = "Marked Data TLB misses for 16M page",
 		.pme_event_ids = { -1, -1, 273, -1, -1, -1 },
@@ -178,6 +192,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU_FDIV 14
 	[ POWER5p_PME_PM_FPU_FDIV ] = {
 		.pme_name = "PM_FPU_FDIV",
+		.pme_code = 0x100088,
 		.pme_short_desc = "FPU executed FDIV instruction",
 		.pme_long_desc = "The floating point unit has executed a divide instruction. This could be fdiv, fdivs, fdiv., fdivs.. Combined Unit 0 + Unit 1.",
 		.pme_event_ids = { 87, -1, -1, -1, -1, -1 },
@@ -189,6 +204,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU_SINGLE 15
 	[ POWER5p_PME_PM_FPU_SINGLE ] = {
 		.pme_name = "PM_FPU_SINGLE",
+		.pme_code = 0x102090,
 		.pme_short_desc = "FPU executed single precision instruction",
 		.pme_long_desc = "FPU is executing single precision instruction. Combined Unit 0 + Unit 1.",
 		.pme_event_ids = { 90, -1, -1, 90, -1, -1 },
@@ -200,6 +216,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU0_FMA 16
 	[ POWER5p_PME_PM_FPU0_FMA ] = {
 		.pme_name = "PM_FPU0_FMA",
+		.pme_code = 0xc1,
 		.pme_short_desc = "FPU0 executed multiply-add instruction",
 		.pme_long_desc = "The floating point unit has executed a multiply-add kind of instruction.  This could be fmadd*, fnmadd*, fmsub*, fnmsub* where XYZ* means XYZ, XYZs, XYZ., XYZs.",
 		.pme_event_ids = { 63, 62, 62, 64, -1, -1 },
@@ -211,6 +228,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_SLB_MISS 17
 	[ POWER5p_PME_PM_SLB_MISS ] = {
 		.pme_name = "PM_SLB_MISS",
+		.pme_code = 0x280088,
 		.pme_short_desc = "SLB misses",
 		.pme_long_desc = "Total of all Segment Lookaside Buffer (SLB) misses, Instructions + Data.",
 		.pme_event_ids = { -1, 307, -1, -1, -1, -1 },
@@ -222,6 +240,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU1_FLUSH_LRQ 18
 	[ POWER5p_PME_PM_LSU1_FLUSH_LRQ ] = {
 		.pme_name = "PM_LSU1_FLUSH_LRQ",
+		.pme_code = 0xc00c6,
 		.pme_short_desc = "LSU1 LRQ flushes",
 		.pme_long_desc = "A load was flushed by unit 1 because a younger load executed before an older store executed and they had overlapping data OR two loads executed out of order and they have byte overlap and there was a snoop in between to an overlapped byte.",
 		.pme_event_ids = { 220, 216, 216, 215, -1, -1 },
@@ -233,6 +252,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SA_ST_HIT 19
 	[ POWER5p_PME_PM_L2SA_ST_HIT ] = {
 		.pme_name = "PM_L2SA_ST_HIT",
+		.pme_code = 0x733e0,
 		.pme_short_desc = "L2 slice A store hits",
 		.pme_long_desc = "A store request made from the core hit in the L2 directory.  This event is provided on each of the three L2 slices A, B, and C.",
 		.pme_event_ids = { 142, 139, 138, 137, -1, -1 },
@@ -244,6 +264,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DTLB_MISS 20
 	[ POWER5p_PME_PM_DTLB_MISS ] = {
 		.pme_name = "PM_DTLB_MISS",
+		.pme_code = 0x800c4,
 		.pme_short_desc = "Data TLB misses",
 		.pme_long_desc = "Data TLB misses, all page sizes.",
 		.pme_event_ids = { 31, 30, 30, 31, -1, -1 },
@@ -255,6 +276,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_BR_PRED_TA 21
 	[ POWER5p_PME_PM_BR_PRED_TA ] = {
 		.pme_name = "PM_BR_PRED_TA",
+		.pme_code = 0x230e3,
 		.pme_short_desc = "A conditional branch was predicted",
 		.pme_long_desc = " target prediction",
 		.pme_event_ids = { 203, 11, 351, 348, -1, -1 },
@@ -266,6 +288,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_L375_MOD_CYC 22
 	[ POWER5p_PME_PM_MRK_DATA_FROM_L375_MOD_CYC ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L375_MOD_CYC",
+		.pme_code = 0x4c70a7,
 		.pme_short_desc = "Marked load latency from L3.75 modified",
 		.pme_long_desc = "Cycles a marked load waited for data from this level of the storage system.  Counting begins when a marked load misses the data cache and ends when the data is reloaded into the data cache.  To calculate average latency divide this count by the number of marked misses to the same level.",
 		.pme_event_ids = { -1, -1, -1, 269, -1, -1 },
@@ -277,6 +300,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_CMPLU_STALL_FXU 23
 	[ POWER5p_PME_PM_CMPLU_STALL_FXU ] = {
 		.pme_name = "PM_CMPLU_STALL_FXU",
+		.pme_code = 0x211099,
 		.pme_short_desc = "Completion stall caused by FXU instruction",
 		.pme_long_desc = "Following a completion stall (any period when no groups completed) the last instruction to finish before completion resumes was a fixed point instruction.",
 		.pme_event_ids = { -1, 16, -1, -1, -1, -1 },
@@ -288,6 +312,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_EXT_INT 24
 	[ POWER5p_PME_PM_EXT_INT ] = {
 		.pme_name = "PM_EXT_INT",
+		.pme_code = 0x400003,
 		.pme_short_desc = "External interrupts",
 		.pme_long_desc = "An interrupt due to an external exception occurred",
 		.pme_event_ids = { -1, -1, -1, 37, -1, -1 },
@@ -299,6 +324,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_LSU1_FLUSH_LRQ 25
 	[ POWER5p_PME_PM_MRK_LSU1_FLUSH_LRQ ] = {
 		.pme_name = "PM_MRK_LSU1_FLUSH_LRQ",
+		.pme_code = 0x810c6,
 		.pme_short_desc = "LSU1 marked LRQ flushes",
 		.pme_long_desc = "A marked load was flushed by unit 1 because a younger load executed before an older store executed and they had overlapping data OR two loads executed out of order and they have byte overlap and there was a snoop in between to an overlapped byte.",
 		.pme_event_ids = { 292, 292, 286, 289, -1, -1 },
@@ -310,6 +336,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_ST_GPS 26
 	[ POWER5p_PME_PM_MRK_ST_GPS ] = {
 		.pme_name = "PM_MRK_ST_GPS",
+		.pme_code = 0x200003,
 		.pme_short_desc = "Marked store sent to GPS",
 		.pme_long_desc = "A sampled store has been sent to the memory subsystem",
 		.pme_event_ids = { -1, 299, -1, -1, -1, -1 },
@@ -321,6 +348,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU1_LDF 27
 	[ POWER5p_PME_PM_LSU1_LDF ] = {
 		.pme_name = "PM_LSU1_LDF",
+		.pme_code = 0xc50c4,
 		.pme_short_desc = "LSU1 executed Floating Point load instruction",
 		.pme_long_desc = "A floating point load was executed by LSU1",
 		.pme_event_ids = { 224, 220, 220, 219, -1, -1 },
@@ -332,6 +360,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FAB_CMD_ISSUED 28
 	[ POWER5p_PME_PM_FAB_CMD_ISSUED ] = {
 		.pme_name = "PM_FAB_CMD_ISSUED",
+		.pme_code = 0x700c7,
 		.pme_short_desc = "Fabric command issued",
 		.pme_long_desc = "Incremented when a chip issues a command on its SnoopA address bus. Each of the two address busses (SnoopA and SnoopB) is capable of one transaction per fabric cycle (one fabric cycle = 2 cpu cycles in normal 2:1 mode), but each chip can only drive the SnoopA bus, and can only drive one transaction every two fabric cycles (i.e., every four cpu cycles). In MCM-based systems, two chips interleave their accesses to each of the two fabric busses (SnoopA, SnoopB) to reach a peak capability of one transaction per cpu clock cycle. The two chips that drive SnoopB are wired so that the chips refer to the bus as SnoopA but it is connected to the other two chips as SnoopB.  Note that this event will only be recorded by the FBC on the chip that sourced the operation. The signal is delivered at FBC speed and the count must be scaled.",
 		.pme_event_ids = { 37, 36, 36, 38, -1, -1 },
@@ -343,6 +372,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU0_SRQ_STFWD 29
 	[ POWER5p_PME_PM_LSU0_SRQ_STFWD ] = {
 		.pme_name = "PM_LSU0_SRQ_STFWD",
+		.pme_code = 0xc60e1,
 		.pme_short_desc = "LSU0 SRQ store forwarded",
 		.pme_long_desc = "Data from a store instruction was forwarded to a load on unit 0.  A load that misses L1 but becomes a store forward is treated as a load miss and it causes the DL1 load miss event to be counted.  It does not go into the LMQ. If a load that hits L1 but becomes a store forward, then it's not treated as a load miss.",
 		.pme_event_ids = { 217, 213, 213, 212, -1, -1 },
@@ -354,6 +384,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_CR_MAP_FULL_CYC 30
 	[ POWER5p_PME_PM_CR_MAP_FULL_CYC ] = {
 		.pme_name = "PM_CR_MAP_FULL_CYC",
+		.pme_code = 0x100c4,
 		.pme_short_desc = "Cycles CR logical operation mapper full",
 		.pme_long_desc = "The Conditional Register mapper cannot accept any more groups. This condition will prevent dispatch groups from being dispatched.  This event only indicates that the mapper was full, not that dispatch was prevented.",
 		.pme_event_ids = { 16, 19, 15, 20, -1, -1 },
@@ -365,6 +396,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SA_RCST_DISP_FAIL_RC_FULL 31
 	[ POWER5p_PME_PM_L2SA_RCST_DISP_FAIL_RC_FULL ] = {
 		.pme_name = "PM_L2SA_RCST_DISP_FAIL_RC_FULL",
+		.pme_code = 0x722e0,
 		.pme_short_desc = "L2 slice A RC store dispatch attempt failed due to all RC full",
 		.pme_long_desc = "A Read/Claim dispatch for a store failed because all RC machines are busy.",
 		.pme_event_ids = { 137, 134, 133, 132, -1, -1 },
@@ -376,6 +408,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_LSU0_FLUSH_ULD 32
 	[ POWER5p_PME_PM_MRK_LSU0_FLUSH_ULD ] = {
 		.pme_name = "PM_MRK_LSU0_FLUSH_ULD",
+		.pme_code = 0x810c1,
 		.pme_short_desc = "LSU0 marked unaligned load flushes",
 		.pme_long_desc = "A marked load was flushed from unit 0 because it was unaligned (crossed a 64byte boundary, or 32 byte if it missed the L1)",
 		.pme_event_ids = { 290, 290, 284, 287, -1, -1 },
@@ -387,6 +420,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_FLUSH_SRQ_FULL 33
 	[ POWER5p_PME_PM_LSU_FLUSH_SRQ_FULL ] = {
 		.pme_name = "PM_LSU_FLUSH_SRQ_FULL",
+		.pme_code = 0x330e0,
 		.pme_short_desc = "Flush caused by SRQ full",
 		.pme_long_desc = "This thread was flushed at dispatch because its Store Request Queue was full. This allows the other thread to have more machine resources for it to make progress while this thread is stalled.",
 		.pme_event_ids = { 234, 232, 231, 229, -1, -1 },
@@ -398,6 +432,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MEM_RQ_DISP_Q16to19 34
 	[ POWER5p_PME_PM_MEM_RQ_DISP_Q16to19 ] = {
 		.pme_name = "PM_MEM_RQ_DISP_Q16to19",
+		.pme_code = 0x727e6,
 		.pme_short_desc = "Memory read queue dispatched to queues 16-19",
 		.pme_long_desc = "A memory operation was dispatched to read queue 16,17,18 or 19. This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 360, 353, 352, 246, -1, -1 },
@@ -409,6 +444,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FLUSH_IMBAL 35
 	[ POWER5p_PME_PM_FLUSH_IMBAL ] = {
 		.pme_name = "PM_FLUSH_IMBAL",
+		.pme_code = 0x330e3,
 		.pme_short_desc = "Flush caused by thread GCT imbalance",
 		.pme_long_desc = "This thread has been flushed at dispatch because it is stalled and a GCT imbalance exists.  GCT thresholds are set in the TSCR register. This allows the other thread to have more machine resources for it to make progress while this thread is stalled.",
 		.pme_event_ids = { 54, 53, 53, 55, -1, -1 },
@@ -420,6 +456,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_PRIO_DIFF_minus3or4_CYC 36
 	[ POWER5p_PME_PM_THRD_PRIO_DIFF_minus3or4_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_DIFF_minus3or4_CYC",
+		.pme_code = 0x430e1,
 		.pme_short_desc = "Cycles thread priority difference is -3 or -4",
 		.pme_long_desc = "Cycles when this thread's priority is lower than the other thread's priority by 3 or 4.",
 		.pme_event_ids = { 346, 341, 339, 335, -1, -1 },
@@ -431,6 +468,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DATA_FROM_L35_MOD 37
 	[ POWER5p_PME_PM_DATA_FROM_L35_MOD ] = {
 		.pme_name = "PM_DATA_FROM_L35_MOD",
+		.pme_code = 0x2c309e,
 		.pme_short_desc = "Data loaded from L3.5 modified",
 		.pme_long_desc = "The processor's Data Cache was reloaded with modified (M) data from the L3 of a chip on the same module as this processor is located due to a demand load.",
 		.pme_event_ids = { -1, 22, 21, -1, -1, -1 },
@@ -442,6 +480,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MEM_HI_PRIO_WR_CMPL 38
 	[ POWER5p_PME_PM_MEM_HI_PRIO_WR_CMPL ] = {
 		.pme_name = "PM_MEM_HI_PRIO_WR_CMPL",
+		.pme_code = 0x726e6,
 		.pme_short_desc = "High priority write completed",
 		.pme_long_desc = "A memory write,  which was upgraded to high priority, completed.  Writes can be upgraded to high priority to ensure that read traffic does not lock out writes. This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 253, 252, 248, 247, -1, -1 },
@@ -453,6 +492,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU1_FDIV 39
 	[ POWER5p_PME_PM_FPU1_FDIV ] = {
 		.pme_name = "PM_FPU1_FDIV",
+		.pme_code = 0xc4,
 		.pme_short_desc = "FPU1 executed FDIV instruction",
 		.pme_long_desc = "FPU1 has executed a divide instruction.  This could be fdiv, fdivs, fdiv. fdivs.",
 		.pme_event_ids = { 74, 73, 73, 75, -1, -1 },
@@ -464,6 +504,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MEM_RQ_DISP 40
 	[ POWER5p_PME_PM_MEM_RQ_DISP ] = {
 		.pme_name = "PM_MEM_RQ_DISP",
+		.pme_code = 0x701c6,
 		.pme_short_desc = "Memory read queue dispatched",
 		.pme_long_desc = "A memory read was dispatched. This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 261, 260, 256, 255, -1, -1 },
@@ -475,6 +516,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU0_FRSP_FCONV 41
 	[ POWER5p_PME_PM_FPU0_FRSP_FCONV ] = {
 		.pme_name = "PM_FPU0_FRSP_FCONV",
+		.pme_code = 0x10c1,
 		.pme_short_desc = "FPU0 executed FRSP or FCONV instructions",
 		.pme_long_desc = "FPU0 has executed a frsp or convert kind of instruction. This could be frsp*, fcfid*, fcti* where XYZ* means XYZ, XYZs, XYZ., XYZs.",
 		.pme_event_ids = { 66, 65, 65, 67, -1, -1 },
@@ -486,6 +528,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LWSYNC_HELD 42
 	[ POWER5p_PME_PM_LWSYNC_HELD ] = {
 		.pme_name = "PM_LWSYNC_HELD",
+		.pme_code = 0x130e0,
 		.pme_short_desc = "LWSYNC held at dispatch",
 		.pme_long_desc = "Cycles a LWSYNC instruction was held at dispatch. LWSYNC instructions are held at dispatch until all previous loads are done and all previous stores have issued. LWSYNC enters the Store Request Queue and is sent to the storage subsystem but does not wait for a response.",
 		.pme_event_ids = { 250, 249, 245, 244, -1, -1 },
@@ -497,6 +540,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FXU_FIN 43
 	[ POWER5p_PME_PM_FXU_FIN ] = {
 		.pme_name = "PM_FXU_FIN",
+		.pme_code = 0x313088,
 		.pme_short_desc = "FXU produced a result",
 		.pme_long_desc = "The fixed point unit (Unit 0 + Unit 1) finished an instruction. Instructions that finish may not necessary complete.",
 		.pme_event_ids = { -1, -1, 93, -1, -1, -1 },
@@ -508,6 +552,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DSLB_MISS 44
 	[ POWER5p_PME_PM_DSLB_MISS ] = {
 		.pme_name = "PM_DSLB_MISS",
+		.pme_code = 0x800c5,
 		.pme_short_desc = "Data SLB misses",
 		.pme_long_desc = "A SLB miss for a data request occurred. SLB misses trap to the operating system to resolve.",
 		.pme_event_ids = { 30, 29, 29, 30, -1, -1 },
@@ -519,6 +564,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DATA_FROM_L275_SHR 45
 	[ POWER5p_PME_PM_DATA_FROM_L275_SHR ] = {
 		.pme_name = "PM_DATA_FROM_L275_SHR",
+		.pme_code = 0x3c3097,
 		.pme_short_desc = "Data loaded from L2.75 shared",
 		.pme_long_desc = "The processor's Data Cache was reloaded with shared (T) data from the L2 on a different module than this processor is located due to a demand load.",
 		.pme_event_ids = { -1, -1, 18, -1, -1, -1 },
@@ -530,6 +576,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FXLS1_FULL_CYC 46
 	[ POWER5p_PME_PM_FXLS1_FULL_CYC ] = {
 		.pme_name = "PM_FXLS1_FULL_CYC",
+		.pme_code = 0x110c4,
 		.pme_short_desc = "Cycles FXU1/LS1 queue full",
 		.pme_long_desc = "The issue queue that feeds the Fixed Point unit 1 / Load Store Unit 1 is full. This condition will prevent dispatch groups from being dispatched.  This event only indicates that the queue was full, not that dispatch was prevented.",
 		.pme_event_ids = { 92, 90, 89, 92, -1, -1 },
@@ -541,6 +588,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_SEL_T0 47
 	[ POWER5p_PME_PM_THRD_SEL_T0 ] = {
 		.pme_name = "PM_THRD_SEL_T0",
+		.pme_code = 0x410c0,
 		.pme_short_desc = "Decode selected thread 0",
 		.pme_long_desc = "Thread selection picked thread 0 for decode.",
 		.pme_event_ids = { 352, 347, 345, 341, -1, -1 },
@@ -552,6 +600,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_PTEG_RELOAD_VALID 48
 	[ POWER5p_PME_PM_PTEG_RELOAD_VALID ] = {
 		.pme_name = "PM_PTEG_RELOAD_VALID",
+		.pme_code = 0x830e4,
 		.pme_short_desc = "PTEG reload valid",
 		.pme_long_desc = "A Page Table Entry was loaded into the TLB.",
 		.pme_event_ids = { 311, 306, 305, 303, -1, -1 },
@@ -563,6 +612,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_STCX_FAIL 49
 	[ POWER5p_PME_PM_MRK_STCX_FAIL ] = {
 		.pme_name = "PM_MRK_STCX_FAIL",
+		.pme_code = 0x820e6,
 		.pme_short_desc = "Marked STCX failed",
 		.pme_long_desc = "A marked stcx (stwcx or stdcx) failed",
 		.pme_event_ids = { 298, 298, 293, 297, -1, -1 },
@@ -574,6 +624,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_LMQ_LHR_MERGE 50
 	[ POWER5p_PME_PM_LSU_LMQ_LHR_MERGE ] = {
 		.pme_name = "PM_LSU_LMQ_LHR_MERGE",
+		.pme_code = 0xc70e5,
 		.pme_short_desc = "LMQ LHR merges",
 		.pme_long_desc = "A data cache miss occurred for the same real cache line address as an earlier request already in the Load Miss Queue and was merged into the LMQ entry.",
 		.pme_event_ids = { 238, 235, 233, 232, -1, -1 },
@@ -585,6 +636,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_2INST_CLB_CYC 51
 	[ POWER5p_PME_PM_2INST_CLB_CYC ] = {
 		.pme_name = "PM_2INST_CLB_CYC",
+		.pme_code = 0x400c2,
 		.pme_short_desc = "Cycles 2 instructions in CLB",
 		.pme_long_desc = "The cache line buffer (CLB) is a 6-deep, 4-wide instruction buffer. Fullness is reported on a cycle basis with each event representing the number of cycles the CLB had the corresponding number of entries occupied.  These events give a real time history of the number of instruction buffers used, but not the number of PowerPC instructions within those buffers.  Each thread has its own set of CLB; these events are thread specific.",
 		.pme_event_ids = { 3, 2, 2, 3, -1, -1 },
@@ -596,6 +648,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FAB_PNtoVN_DIRECT 52
 	[ POWER5p_PME_PM_FAB_PNtoVN_DIRECT ] = {
 		.pme_name = "PM_FAB_PNtoVN_DIRECT",
+		.pme_code = 0x723e7,
 		.pme_short_desc = "PN to VN beat went straight to its destination",
 		.pme_long_desc = "Fabric Data beats that the base chip takes the inbound PN data and passes it through to the outbound VN bus without going into a sidecar. The signal is delivered at FBC speed and the count must be scaled accordingly.",
 		.pme_event_ids = { 49, 48, 48, 50, -1, -1 },
@@ -607,6 +660,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_PTEG_FROM_L2MISS 53
 	[ POWER5p_PME_PM_PTEG_FROM_L2MISS ] = {
 		.pme_name = "PM_PTEG_FROM_L2MISS",
+		.pme_code = 0x38309b,
 		.pme_short_desc = "PTEG loaded from L2 miss",
 		.pme_long_desc = "A Page Table Entry was loaded into the TLB but not from the local L2.",
 		.pme_event_ids = { -1, -1, 300, -1, -1, -1 },
@@ -618,6 +672,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_CMPLU_STALL_LSU 54
 	[ POWER5p_PME_PM_CMPLU_STALL_LSU ] = {
 		.pme_name = "PM_CMPLU_STALL_LSU",
+		.pme_code = 0x211098,
 		.pme_short_desc = "Completion stall caused by LSU instruction",
 		.pme_long_desc = "Following a completion stall (any period when no groups completed) the last instruction to finish before completion resumes was a load/store instruction.",
 		.pme_event_ids = { -1, 17, -1, -1, -1, -1 },
@@ -629,6 +684,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DSLB_MISS 55
 	[ POWER5p_PME_PM_MRK_DSLB_MISS ] = {
 		.pme_name = "PM_MRK_DSLB_MISS",
+		.pme_code = 0xc50c7,
 		.pme_short_desc = "Marked Data SLB misses",
 		.pme_long_desc = "A Data SLB miss was caused by a marked instruction.",
 		.pme_event_ids = { 276, 278, 271, 273, -1, -1 },
@@ -640,6 +696,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_FLUSH_ULD 56
 	[ POWER5p_PME_PM_LSU_FLUSH_ULD ] = {
 		.pme_name = "PM_LSU_FLUSH_ULD",
+		.pme_code = 0x1c0088,
 		.pme_short_desc = "LRQ unaligned load flushes",
 		.pme_long_desc = "A load was flushed because it was unaligned (crossed a 64byte boundary, or 32 byte if it missed the L1).  Combined Unit 0 + 1.",
 		.pme_event_ids = { 235, -1, -1, -1, -1, -1 },
@@ -651,6 +708,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_PTEG_FROM_LMEM 57
 	[ POWER5p_PME_PM_PTEG_FROM_LMEM ] = {
 		.pme_name = "PM_PTEG_FROM_LMEM",
+		.pme_code = 0x283087,
 		.pme_short_desc = "PTEG loaded from local memory",
 		.pme_long_desc = "A Page Table Entry was loaded into the TLB from memory attached to the same module this proccessor is located on.",
 		.pme_event_ids = { -1, 305, 304, -1, -1, -1 },
@@ -662,6 +720,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_BRU_FIN 58
 	[ POWER5p_PME_PM_MRK_BRU_FIN ] = {
 		.pme_name = "PM_MRK_BRU_FIN",
+		.pme_code = 0x200005,
 		.pme_short_desc = "Marked instruction BRU processing finished",
 		.pme_long_desc = "The branch unit finished a marked instruction. Instructions that finish may not necessary complete.",
 		.pme_event_ids = { -1, 268, -1, -1, -1, -1 },
@@ -673,6 +732,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MEM_WQ_DISP_WRITE 59
 	[ POWER5p_PME_PM_MEM_WQ_DISP_WRITE ] = {
 		.pme_name = "PM_MEM_WQ_DISP_WRITE",
+		.pme_code = 0x703c6,
 		.pme_short_desc = "Memory write queue dispatched due to write",
 		.pme_long_desc = "A memory write was dispatched to a write queue. This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 268, 267, 263, 262, -1, -1 },
@@ -684,6 +744,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_L275_MOD_CYC 60
 	[ POWER5p_PME_PM_MRK_DATA_FROM_L275_MOD_CYC ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L275_MOD_CYC",
+		.pme_code = 0x4c70a3,
 		.pme_short_desc = "Marked load latency from L2.75 modified",
 		.pme_long_desc = "Cycles a marked load waited for data from this level of the storage system.  Counting begins when a marked load misses the data cache and ends when the data is reloaded into the data cache.  To calculate average latency divide this count by the number of marked misses to the same level.",
 		.pme_event_ids = { -1, -1, -1, 266, -1, -1 },
@@ -695,6 +756,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU1_NCLD 61
 	[ POWER5p_PME_PM_LSU1_NCLD ] = {
 		.pme_name = "PM_LSU1_NCLD",
+		.pme_code = 0xc50c5,
 		.pme_short_desc = "LSU1 non-cacheable loads",
 		.pme_long_desc = "A non-cacheable load was executed by Unit 0.",
 		.pme_event_ids = { 225, 221, 221, 220, -1, -1 },
@@ -706,6 +768,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SA_RCLD_DISP_FAIL_OTHER 62
 	[ POWER5p_PME_PM_L2SA_RCLD_DISP_FAIL_OTHER ] = {
 		.pme_name = "PM_L2SA_RCLD_DISP_FAIL_OTHER",
+		.pme_code = 0x731e0,
 		.pme_short_desc = "L2 slice A RC load dispatch attempt failed due to other reasons",
 		.pme_long_desc = "A Read/Claim dispatch for a load failed for some reason other than Full or Collision conditions.",
 		.pme_event_ids = { 132, 129, 128, 127, -1, -1 },
@@ -717,6 +780,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_SNOOP_PW_RETRY_WQ_PWQ 63
 	[ POWER5p_PME_PM_SNOOP_PW_RETRY_WQ_PWQ ] = {
 		.pme_name = "PM_SNOOP_PW_RETRY_WQ_PWQ",
+		.pme_code = 0x717c6,
 		.pme_short_desc = "Snoop partial-write retry due to collision with active write or partial-write queue",
 		.pme_long_desc = "A snoop request for a partial write to memory was retried because it matched the cache line of an active write or partial write.  When this happens the snoop request is retried and the active write is changed to high priority.  This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 316, 311, 309, 307, -1, -1 },
@@ -728,6 +792,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU1_FULL_CYC 64
 	[ POWER5p_PME_PM_FPU1_FULL_CYC ] = {
 		.pme_name = "PM_FPU1_FULL_CYC",
+		.pme_code = 0x100c7,
 		.pme_short_desc = "Cycles FPU1 issue queue full",
 		.pme_long_desc = "The issue queue for FPU1 cannot accept any more instructions. Dispatch to this issue queue is stopped",
 		.pme_event_ids = { 81, 80, 80, 82, -1, -1 },
@@ -739,6 +804,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPR_MAP_FULL_CYC 65
 	[ POWER5p_PME_PM_FPR_MAP_FULL_CYC ] = {
 		.pme_name = "PM_FPR_MAP_FULL_CYC",
+		.pme_code = 0x100c1,
 		.pme_short_desc = "Cycles FPR mapper full",
 		.pme_long_desc = "The floating point unit has executed an add, mult, sub, compare, fsel, fneg, fabs, fnabs, fres, or frsqrte kind of instruction.  These are single FLOP operations.",
 		.pme_event_ids = { 57, 56, 56, 58, -1, -1 },
@@ -750,6 +816,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L3SA_ALL_BUSY 66
 	[ POWER5p_PME_PM_L3SA_ALL_BUSY ] = {
 		.pme_name = "PM_L3SA_ALL_BUSY",
+		.pme_code = 0x721e3,
 		.pme_short_desc = "L3 slice A active for every cycle all CI/CO machines busy",
 		.pme_long_desc = "Cycles All Castin/Castout machines are busy.",
 		.pme_event_ids = { 177, 174, 173, 172, -1, -1 },
@@ -761,6 +828,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_3INST_CLB_CYC 67
 	[ POWER5p_PME_PM_3INST_CLB_CYC ] = {
 		.pme_name = "PM_3INST_CLB_CYC",
+		.pme_code = 0x400c3,
 		.pme_short_desc = "Cycles 3 instructions in CLB",
 		.pme_long_desc = "The cache line buffer (CLB) is a 6-deep, 4-wide instruction buffer. Fullness is reported on a cycle basis with each event representing the number of cycles the CLB had the corresponding number of entries occupied.  These events give a real time history of the number of instruction buffers used, but not the number of PowerPC instructions within those buffers.  Each thread has its own set of CLB; these events are thread specific.",
 		.pme_event_ids = { 4, 3, 3, 4, -1, -1 },
@@ -772,6 +840,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MEM_PWQ_DISP_Q2or3 68
 	[ POWER5p_PME_PM_MEM_PWQ_DISP_Q2or3 ] = {
 		.pme_name = "PM_MEM_PWQ_DISP_Q2or3",
+		.pme_code = 0x734e6,
 		.pme_short_desc = "Memory partial-write queue dispatched to Write Queue 2 or 3",
 		.pme_long_desc = "Memory partial-write queue dispatched to Write Queue 2 or 3. This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 257, 250, 252, 251, -1, -1 },
@@ -783,6 +852,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SA_SHR_INV 69
 	[ POWER5p_PME_PM_L2SA_SHR_INV ] = {
 		.pme_name = "PM_L2SA_SHR_INV",
+		.pme_code = 0x710c0,
 		.pme_short_desc = "L2 slice A transition from shared to invalid",
 		.pme_long_desc = "A cache line in the local L2 directory made a state transition from Shared (Shared, Shared L, or Tagged) to the Invalid state. This transition was caused by any external snoop request. The event is provided on each of the three slices A, B, and C. NOTE: For this event to be useful the tablewalk duration event should also be counted.",
 		.pme_event_ids = { 140, 137, 136, 135, -1, -1 },
@@ -794,6 +864,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRESH_TIMEO 70
 	[ POWER5p_PME_PM_THRESH_TIMEO ] = {
 		.pme_name = "PM_THRESH_TIMEO",
+		.pme_code = 0x30000b,
 		.pme_short_desc = "Threshold timeout",
 		.pme_long_desc = "The threshold timer expired",
 		.pme_event_ids = { -1, -1, 348, -1, -1, -1 },
@@ -805,6 +876,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SA_RC_DISP_FAIL_CO_BUSY_ALL 71
 	[ POWER5p_PME_PM_L2SA_RC_DISP_FAIL_CO_BUSY_ALL ] = {
 		.pme_name = "PM_L2SA_RC_DISP_FAIL_CO_BUSY_ALL",
+		.pme_code = 0x713c0,
 		.pme_short_desc = "L2 slice A RC dispatch attempt failed due to all CO busy",
 		.pme_long_desc = "A Read/Claim dispatch was rejected because all Castout machines were busy.",
 		.pme_event_ids = { 139, 136, 135, 134, -1, -1 },
@@ -816,6 +888,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_SEL_OVER_GCT_IMBAL 72
 	[ POWER5p_PME_PM_THRD_SEL_OVER_GCT_IMBAL ] = {
 		.pme_name = "PM_THRD_SEL_OVER_GCT_IMBAL",
+		.pme_code = 0x410c4,
 		.pme_short_desc = "Thread selection overrides caused by GCT imbalance",
 		.pme_long_desc = "Thread selection was overridden because of a GCT imbalance.",
 		.pme_event_ids = { 349, 344, 342, 338, -1, -1 },
@@ -827,6 +900,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU_FSQRT 73
 	[ POWER5p_PME_PM_FPU_FSQRT ] = {
 		.pme_name = "PM_FPU_FSQRT",
+		.pme_code = 0x200090,
 		.pme_short_desc = "FPU executed FSQRT instruction",
 		.pme_long_desc = "The floating point unit has executed a square root instruction. This could be fsqrt* where XYZ* means XYZ, XYZs, XYZ., XYZs. Combined Unit 0 + Unit 1.",
 		.pme_event_ids = { -1, 86, 86, -1, -1, -1 },
@@ -838,6 +912,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_PMC1_OVERFLOW 74
 	[ POWER5p_PME_PM_PMC1_OVERFLOW ] = {
 		.pme_name = "PM_PMC1_OVERFLOW",
+		.pme_code = 0x20000a,
 		.pme_short_desc = "PMC1 Overflow",
 		.pme_long_desc = "Overflows from PMC1 are counted.  This effectively widens the PMC. The Overflow from the original PMC will not trigger an exception even if the PMU is configured to generate exceptions on overflow.",
 		.pme_event_ids = { -1, 301, -1, -1, -1, -1 },
@@ -849,6 +924,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_LSU0_FLUSH_LRQ 75
 	[ POWER5p_PME_PM_MRK_LSU0_FLUSH_LRQ ] = {
 		.pme_name = "PM_MRK_LSU0_FLUSH_LRQ",
+		.pme_code = 0x810c2,
 		.pme_short_desc = "LSU0 marked LRQ flushes",
 		.pme_long_desc = "A marked load was flushed by unit 0 because a younger load executed before an older store executed and they had overlapping data OR two loads executed out of order and they have byte overlap and there was a snoop in between to an overlapped byte.",
 		.pme_event_ids = { 288, 288, 282, 285, -1, -1 },
@@ -860,6 +936,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L3SC_SNOOP_RETRY 76
 	[ POWER5p_PME_PM_L3SC_SNOOP_RETRY ] = {
 		.pme_name = "PM_L3SC_SNOOP_RETRY",
+		.pme_code = 0x731e5,
 		.pme_short_desc = "L3 slice C snoop retries",
 		.pme_long_desc = "Number of times an L3 retried a snoop because it got two in at the same time (one on snp_a, one on snp_b)",
 		.pme_event_ids = { 197, 194, 193, 192, -1, -1 },
@@ -871,6 +948,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DATA_TABLEWALK_CYC 77
 	[ POWER5p_PME_PM_DATA_TABLEWALK_CYC ] = {
 		.pme_name = "PM_DATA_TABLEWALK_CYC",
+		.pme_code = 0x800c7,
 		.pme_short_desc = "Cycles doing data tablewalks",
 		.pme_long_desc = "Cycles a translation tablewalk is active.  While a tablewalk is active any request attempting to access the TLB will be rejected and retried.",
 		.pme_event_ids = { 25, 24, 24, 25, -1, -1 },
@@ -882,6 +960,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_PRIO_6_CYC 78
 	[ POWER5p_PME_PM_THRD_PRIO_6_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_6_CYC",
+		.pme_code = 0x420e5,
 		.pme_short_desc = "Cycles thread running at priority level 6",
 		.pme_long_desc = "Cycles this thread was running at priority level 6.",
 		.pme_event_ids = { 339, 334, 332, 328, -1, -1 },
@@ -893,6 +972,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU_FEST 79
 	[ POWER5p_PME_PM_FPU_FEST ] = {
 		.pme_name = "PM_FPU_FEST",
+		.pme_code = 0x1010a8,
 		.pme_short_desc = "FPU executed FEST instruction",
 		.pme_long_desc = "The floating point unit has executed an estimate instructions. This could be fres* or frsqrte* where XYZ* means XYZ or  XYZ.   Combined Unit 0 + Unit 1.",
 		.pme_event_ids = { 88, -1, -1, 87, -1, -1 },
@@ -904,6 +984,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FAB_M1toP1_SIDECAR_EMPTY 80
 	[ POWER5p_PME_PM_FAB_M1toP1_SIDECAR_EMPTY ] = {
 		.pme_name = "PM_FAB_M1toP1_SIDECAR_EMPTY",
+		.pme_code = 0x702c7,
 		.pme_short_desc = "M1 to P1 sidecar empty",
 		.pme_long_desc = "Fabric cycles when the Minus-1 hip/hop sidecars (sidecars for chip to chip data transfer) are empty. The signal is delivered at FBC speed and the count must be scaled accordingly.",
 		.pme_event_ids = { 43, 42, 42, 44, -1, -1 },
@@ -915,6 +996,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_RMEM 81
 	[ POWER5p_PME_PM_MRK_DATA_FROM_RMEM ] = {
 		.pme_name = "PM_MRK_DATA_FROM_RMEM",
+		.pme_code = 0x1c70a1,
 		.pme_short_desc = "Marked data loaded from remote memory",
 		.pme_long_desc = "The processor's Data Cache was reloaded due to a marked load from memory attached to a different module than this proccessor is located on.",
 		.pme_event_ids = { 275, -1, -1, 271, -1, -1 },
@@ -926,6 +1008,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_L35_MOD_CYC 82
 	[ POWER5p_PME_PM_MRK_DATA_FROM_L35_MOD_CYC ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L35_MOD_CYC",
+		.pme_code = 0x4c70a6,
 		.pme_short_desc = "Marked load latency from L3.5 modified",
 		.pme_long_desc = "Cycles a marked load waited for data from this level of the storage system.  Counting begins when a marked load misses the data cache and ends when the data is reloaded into the data cache.  To calculate average latency divide this count by the number of marked misses to the same level.",
 		.pme_event_ids = { -1, -1, -1, 267, -1, -1 },
@@ -937,6 +1020,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MEM_PWQ_DISP 83
 	[ POWER5p_PME_PM_MEM_PWQ_DISP ] = {
 		.pme_name = "PM_MEM_PWQ_DISP",
+		.pme_code = 0x704c6,
 		.pme_short_desc = "Memory partial-write queue dispatched",
 		.pme_long_desc = "Number of Partial Writes dispatched.  The MC provides resources to gather partial cacheline writes (Partial line DMA writes & CI-stores) to up to four different cachelines at a time.  This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 256, 255, 251, 250, -1, -1 },
@@ -948,6 +1032,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FAB_P1toM1_SIDECAR_EMPTY 84
 	[ POWER5p_PME_PM_FAB_P1toM1_SIDECAR_EMPTY ] = {
 		.pme_name = "PM_FAB_P1toM1_SIDECAR_EMPTY",
+		.pme_code = 0x701c7,
 		.pme_short_desc = "P1 to M1 sidecar empty",
 		.pme_long_desc = "Fabric cycles when the Plus-1 hip/hop sidecars (sidecars for chip to chip data transfer) are empty. The signal is delivered at FBC speed and the count must be scaled accordingly.",
 		.pme_event_ids = { 45, 44, 44, 46, -1, -1 },
@@ -959,6 +1044,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LD_MISS_L1_LSU0 85
 	[ POWER5p_PME_PM_LD_MISS_L1_LSU0 ] = {
 		.pme_name = "PM_LD_MISS_L1_LSU0",
+		.pme_code = 0xc10c2,
 		.pme_short_desc = "LSU0 L1 D cache load misses",
 		.pme_long_desc = "Load references that miss the Level 1 Data cache, by unit 0.",
 		.pme_event_ids = { 199, 196, 196, 194, -1, -1 },
@@ -970,6 +1056,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_SNOOP_PARTIAL_RTRY_QFULL 86
 	[ POWER5p_PME_PM_SNOOP_PARTIAL_RTRY_QFULL ] = {
 		.pme_name = "PM_SNOOP_PARTIAL_RTRY_QFULL",
+		.pme_code = 0x730e6,
 		.pme_short_desc = "Snoop partial write retry due to partial-write queues full",
 		.pme_long_desc = "A snoop request for a partial write to memory was retried because the write queues that handle partial writes were full. When this happens the active writes are changed to high priority. This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 314, 309, 307, 305, -1, -1 },
@@ -981,6 +1068,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU1_STALL3 87
 	[ POWER5p_PME_PM_FPU1_STALL3 ] = {
 		.pme_name = "PM_FPU1_STALL3",
+		.pme_code = 0x20e5,
 		.pme_short_desc = "FPU1 stalled in pipe3",
 		.pme_long_desc = "FPU1 has generated a stall in pipe3 due to overflow, underflow, massive cancel, convert to integer (sometimes), or convert from integer (always).",
 		.pme_event_ids = { 83, 82, 82, 84, -1, -1 },
@@ -992,6 +1080,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_GCT_USAGE_80to99_CYC 88
 	[ POWER5p_PME_PM_GCT_USAGE_80to99_CYC ] = {
 		.pme_name = "PM_GCT_USAGE_80to99_CYC",
+		.pme_code = 0x30001f,
 		.pme_short_desc = "Cycles GCT 80-99% full",
 		.pme_long_desc = "Cycles when the Global Completion Table has between 80% and 99% of its slots used.  The GCT has 20 entries shared between threads",
 		.pme_event_ids = { -1, -1, 96, -1, -1, -1 },
@@ -1003,6 +1092,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_WORK_HELD 89
 	[ POWER5p_PME_PM_WORK_HELD ] = {
 		.pme_name = "PM_WORK_HELD",
+		.pme_code = 0x40000c,
 		.pme_short_desc = "Work held",
 		.pme_long_desc = "RAS Unit has signaled completion to stop and there are groups waiting to complete",
 		.pme_event_ids = { -1, -1, -1, 345, -1, -1 },
@@ -1014,6 +1104,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_INST_CMPL 90
 	[ POWER5p_PME_PM_INST_CMPL ] = {
 		.pme_name = "PM_INST_CMPL",
+		.pme_code = 0x100009,
 		.pme_short_desc = "Instructions completed",
 		.pme_long_desc = "Number of PowerPC instructions that completed.",
 		.pme_event_ids = { 303, 302, -1, -1, -1, -1 },
@@ -1025,6 +1116,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU1_FLUSH_UST 91
 	[ POWER5p_PME_PM_LSU1_FLUSH_UST ] = {
 		.pme_name = "PM_LSU1_FLUSH_UST",
+		.pme_code = 0xc00c5,
 		.pme_short_desc = "LSU1 unaligned store flushes",
 		.pme_long_desc = "A store was flushed from unit 1 because it was unaligned (crossed a 4K boundary)",
 		.pme_event_ids = { 223, 219, 219, 218, -1, -1 },
@@ -1036,6 +1128,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FXU_IDLE 92
 	[ POWER5p_PME_PM_FXU_IDLE ] = {
 		.pme_name = "PM_FXU_IDLE",
+		.pme_code = 0x100012,
 		.pme_short_desc = "FXU idle",
 		.pme_long_desc = "FXU0 and FXU1 are both idle.",
 		.pme_event_ids = { 96, -1, -1, -1, -1, -1 },
@@ -1047,6 +1140,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU0_FLUSH_ULD 93
 	[ POWER5p_PME_PM_LSU0_FLUSH_ULD ] = {
 		.pme_name = "PM_LSU0_FLUSH_ULD",
+		.pme_code = 0xc00c0,
 		.pme_short_desc = "LSU0 unaligned load flushes",
 		.pme_long_desc = "A load was flushed from unit 0 because it was unaligned (crossed a 64 byte boundary, or 32 byte if it missed the L1)",
 		.pme_event_ids = { 209, 205, 205, 204, -1, -1 },
@@ -1058,6 +1152,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU1_REJECT_LMQ_FULL 94
 	[ POWER5p_PME_PM_LSU1_REJECT_LMQ_FULL ] = {
 		.pme_name = "PM_LSU1_REJECT_LMQ_FULL",
+		.pme_code = 0xc40c5,
 		.pme_short_desc = "LSU1 reject due to LMQ full or missed data coming",
 		.pme_long_desc = "Total cycles the Load Store Unit 1 is busy rejecting instructions because the Load Miss Queue was full. The LMQ has eight entries.  If all eight entries are full, subsequent load instructions are rejected.",
 		.pme_event_ids = { 227, 223, 223, 222, -1, -1 },
@@ -1069,6 +1164,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_GRP_DISP_REJECT 95
 	[ POWER5p_PME_PM_GRP_DISP_REJECT ] = {
 		.pme_name = "PM_GRP_DISP_REJECT",
+		.pme_code = 0x120e4,
 		.pme_short_desc = "Group dispatch rejected",
 		.pme_long_desc = "A group that previously attempted dispatch was rejected.",
 		.pme_event_ids = { 104, 104, 102, 103, -1, -1 },
@@ -1080,6 +1176,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_PTEG_FROM_L25_SHR 96
 	[ POWER5p_PME_PM_PTEG_FROM_L25_SHR ] = {
 		.pme_name = "PM_PTEG_FROM_L25_SHR",
+		.pme_code = 0x183097,
 		.pme_short_desc = "PTEG loaded from L2.5 shared",
 		.pme_long_desc = "A Page Table Entry was loaded into the TLB with shared  (T or SL) data from the L2 of a chip on the same module as this processor is located due to a demand load.",
 		.pme_event_ids = { 305, -1, -1, -1, -1, -1 },
@@ -1091,6 +1188,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SA_MOD_INV 97
 	[ POWER5p_PME_PM_L2SA_MOD_INV ] = {
 		.pme_name = "PM_L2SA_MOD_INV",
+		.pme_code = 0x730e0,
 		.pme_short_desc = "L2 slice A transition from modified to invalid",
 		.pme_long_desc = "A cache line in the local L2 directory made a state transition from the Modified state to the Invalid state. This transition was caused by any RWITM snoop request that hit against a modified entry in the local L2. The event is provided on each of the three slices A, B, and C.",
 		.pme_event_ids = { 128, 125, 124, 123, -1, -1 },
@@ -1102,6 +1200,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FAB_CMD_RETRIED 98
 	[ POWER5p_PME_PM_FAB_CMD_RETRIED ] = {
 		.pme_name = "PM_FAB_CMD_RETRIED",
+		.pme_code = 0x710c7,
 		.pme_short_desc = "Fabric command retried",
 		.pme_long_desc = "Incremented when a command issued by a chip on its SnoopA address bus is retried for any reason. The overwhelming majority of retries are due to running out of memory controller queues but retries can also be caused by trying to reference addresses that are in a transient cache state -- e.g. a line is transient after issuing a DCLAIM instruction to a shared line but before the associated store completes.  Each chip reports its own counts.  The signal is delivered at FBC speed and the count must be scaled accordingly.",
 		.pme_event_ids = { 38, 37, 37, 39, -1, -1 },
@@ -1113,6 +1212,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L3SA_SHR_INV 99
 	[ POWER5p_PME_PM_L3SA_SHR_INV ] = {
 		.pme_name = "PM_L3SA_SHR_INV",
+		.pme_code = 0x710c3,
 		.pme_short_desc = "L3 slice A transition from shared to invalid",
 		.pme_long_desc = "L3 snooper detects someone doing a store to a line that is Sx in this L3(i.e. invalidate hit SX and dispatched).",
 		.pme_event_ids = { 182, 179, 178, 177, -1, -1 },
@@ -1124,6 +1224,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SB_RC_DISP_FAIL_CO_BUSY_ALL 100
 	[ POWER5p_PME_PM_L2SB_RC_DISP_FAIL_CO_BUSY_ALL ] = {
 		.pme_name = "PM_L2SB_RC_DISP_FAIL_CO_BUSY_ALL",
+		.pme_code = 0x713c1,
 		.pme_short_desc = "L2 slice B RC dispatch attempt failed due to all CO busy",
 		.pme_long_desc = "A Read/Claim dispatch was rejected because all Castout machines were busy.",
 		.pme_event_ids = { 155, 152, 151, 150, -1, -1 },
@@ -1135,6 +1236,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SA_RCST_DISP_FAIL_ADDR 101
 	[ POWER5p_PME_PM_L2SA_RCST_DISP_FAIL_ADDR ] = {
 		.pme_name = "PM_L2SA_RCST_DISP_FAIL_ADDR",
+		.pme_code = 0x712c0,
 		.pme_short_desc = "L2 slice A RC store dispatch attempt failed due to address collision with RC/CO/SN/SQ",
 		.pme_long_desc = "A Read/Claim dispatch for a store failed because of an address conflict.  Two RC machines will never both work on the same line or line in the same congruence class at the same time.",
 		.pme_event_ids = { 135, 132, 131, 130, -1, -1 },
@@ -1146,6 +1248,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SA_RCLD_DISP_FAIL_RC_FULL 102
 	[ POWER5p_PME_PM_L2SA_RCLD_DISP_FAIL_RC_FULL ] = {
 		.pme_name = "PM_L2SA_RCLD_DISP_FAIL_RC_FULL",
+		.pme_code = 0x721e0,
 		.pme_short_desc = "L2 slice A RC load dispatch attempt failed due to all RC full",
 		.pme_long_desc = "A Read/Claim dispatch for a load failed because all RC machines are busy.",
 		.pme_event_ids = { 133, 130, 129, 128, -1, -1 },
@@ -1157,6 +1260,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_PTEG_FROM_L375_MOD 103
 	[ POWER5p_PME_PM_PTEG_FROM_L375_MOD ] = {
 		.pme_name = "PM_PTEG_FROM_L375_MOD",
+		.pme_code = 0x1830a7,
 		.pme_short_desc = "PTEG loaded from L3.75 modified",
 		.pme_long_desc = "A Page Table Entry was loaded into the TLB with modified  (M) data from the L3 of a chip on a different module than this processor is located, due to a demand load.",
 		.pme_event_ids = { 309, -1, -1, 301, -1, -1 },
@@ -1168,6 +1272,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_LSU1_FLUSH_UST 104
 	[ POWER5p_PME_PM_MRK_LSU1_FLUSH_UST ] = {
 		.pme_name = "PM_MRK_LSU1_FLUSH_UST",
+		.pme_code = 0x810c5,
 		.pme_short_desc = "LSU1 marked unaligned store flushes",
 		.pme_long_desc = "A marked store was flushed from unit 1 because it was unaligned (crossed a 4k boundary)",
 		.pme_event_ids = { 295, 295, 289, 292, -1, -1 },
@@ -1179,6 +1284,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_BR_ISSUED 105
 	[ POWER5p_PME_PM_BR_ISSUED ] = {
 		.pme_name = "PM_BR_ISSUED",
+		.pme_code = 0x230e4,
 		.pme_short_desc = "Branches issued",
 		.pme_long_desc = "A branch instruction was issued to the branch unit.  A branch that was incorrectly predicted may issue and execute multiple times.",
 		.pme_event_ids = { 9, 8, 8, 9, -1, -1 },
@@ -1190,6 +1296,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_GRP_BR_REDIR 106
 	[ POWER5p_PME_PM_MRK_GRP_BR_REDIR ] = {
 		.pme_name = "PM_MRK_GRP_BR_REDIR",
+		.pme_code = 0x212091,
 		.pme_short_desc = "Group experienced marked branch redirect",
 		.pme_long_desc = "A group containing a marked (sampled) instruction experienced a branch redirect.",
 		.pme_event_ids = { -1, 283, -1, -1, -1, -1 },
@@ -1201,6 +1308,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_EE_OFF 107
 	[ POWER5p_PME_PM_EE_OFF ] = {
 		.pme_name = "PM_EE_OFF",
+		.pme_code = 0x130e3,
 		.pme_short_desc = "Cycles MSR(EE) bit off",
 		.pme_long_desc = "Cycles MSR(EE) bit was off indicating that interrupts due to external exceptions were masked.",
 		.pme_event_ids = { 35, 34, 34, 35, -1, -1 },
@@ -1212,6 +1320,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_IERAT_XLATE_WR_LP 108
 	[ POWER5p_PME_PM_IERAT_XLATE_WR_LP ] = {
 		.pme_name = "PM_IERAT_XLATE_WR_LP",
+		.pme_code = 0x210c6,
 		.pme_short_desc = "Large page translation written to ierat",
 		.pme_long_desc = "An entry was written into the IERAT as a result of an IERAT miss.  This event can be used to count IERAT misses.  An ERAT miss that are later ignored will not be counted unless the ERAT is written before the instruction stream is changed.",
 		.pme_event_ids = { 114, 112, 111, 111, -1, -1 },
@@ -1223,6 +1332,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DTLB_REF_64K 109
 	[ POWER5p_PME_PM_DTLB_REF_64K ] = {
 		.pme_name = "PM_DTLB_REF_64K",
+		.pme_code = 0x2c2086,
 		.pme_short_desc = "Data TLB reference for 64K page",
 		.pme_long_desc = "Data TLB references for 64KB pages. Includes hits + misses.",
 		.pme_event_ids = { -1, 33, -1, -1, -1, -1 },
@@ -1234,6 +1344,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MEM_RQ_DISP_Q4to7 110
 	[ POWER5p_PME_PM_MEM_RQ_DISP_Q4to7 ] = {
 		.pme_name = "PM_MEM_RQ_DISP_Q4to7",
+		.pme_code = 0x712c6,
 		.pme_short_desc = "Memory read queue dispatched to queues 4-7",
 		.pme_long_desc = "A memory operation was dispatched to read queue 4,5,6 or 7. This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 262, 259, 258, 257, -1, -1 },
@@ -1245,6 +1356,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MEM_FAST_PATH_RD_DISP 111
 	[ POWER5p_PME_PM_MEM_FAST_PATH_RD_DISP ] = {
 		.pme_name = "PM_MEM_FAST_PATH_RD_DISP",
+		.pme_code = 0x731e6,
 		.pme_short_desc = "Fast path memory read dispatched",
 		.pme_long_desc = "Fast path memory read dispatched",
 		.pme_event_ids = { 251, 354, 246, 245, -1, -1 },
@@ -1256,6 +1368,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_INST_FROM_L3 112
 	[ POWER5p_PME_PM_INST_FROM_L3 ] = {
 		.pme_name = "PM_INST_FROM_L3",
+		.pme_code = 0x12208d,
 		.pme_short_desc = "Instruction fetched from L3",
 		.pme_long_desc = "An instruction fetch group was fetched from the local L3. Fetch groups can contain up to 8 instructions",
 		.pme_event_ids = { 121, -1, 116, -1, -1, -1 },
@@ -1267,6 +1380,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_ITLB_MISS 113
 	[ POWER5p_PME_PM_ITLB_MISS ] = {
 		.pme_name = "PM_ITLB_MISS",
+		.pme_code = 0x800c0,
 		.pme_short_desc = "Instruction TLB misses",
 		.pme_long_desc = "A TLB miss for an Instruction Fetch has occurred",
 		.pme_event_ids = { 124, 121, 120, 119, -1, -1 },
@@ -1278,6 +1392,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FXU1_BUSY_FXU0_IDLE 114
 	[ POWER5p_PME_PM_FXU1_BUSY_FXU0_IDLE ] = {
 		.pme_name = "PM_FXU1_BUSY_FXU0_IDLE",
+		.pme_code = 0x400012,
 		.pme_short_desc = "FXU1 busy FXU0 idle",
 		.pme_long_desc = "FXU0 was idle while FXU1 was busy.",
 		.pme_event_ids = { -1, -1, -1, 95, -1, -1 },
@@ -1289,6 +1404,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DTLB_REF_4K 115
 	[ POWER5p_PME_PM_DTLB_REF_4K ] = {
 		.pme_name = "PM_DTLB_REF_4K",
+		.pme_code = 0x1c2086,
 		.pme_short_desc = "Data TLB reference for 4K page",
 		.pme_long_desc = "Data TLB references for 4KB pages. Includes hits + misses.",
 		.pme_event_ids = { 34, -1, -1, -1, -1, -1 },
@@ -1300,6 +1416,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FXLS_FULL_CYC 116
 	[ POWER5p_PME_PM_FXLS_FULL_CYC ] = {
 		.pme_name = "PM_FXLS_FULL_CYC",
+		.pme_code = 0x1110a8,
 		.pme_short_desc = "Cycles FXLS queue is full",
 		.pme_long_desc = "Cycles when the issue queues for one or both FXU/LSU units is full.  Use with caution since this is the sum of cycles when Unit 0 was full plus Unit 1 full.  It does not indicate when both units were full.",
 		.pme_event_ids = { 93, -1, -1, 93, -1, -1 },
@@ -1311,6 +1428,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_GRP_DISP_VALID 117
 	[ POWER5p_PME_PM_GRP_DISP_VALID ] = {
 		.pme_name = "PM_GRP_DISP_VALID",
+		.pme_code = 0x120e3,
 		.pme_short_desc = "Group dispatch valid",
 		.pme_long_desc = "A group is available for dispatch.  This does not mean it was successfully dispatched.",
 		.pme_event_ids = { 105, 105, 104, 104, -1, -1 },
@@ -1322,6 +1440,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_FLUSH_UST 118
 	[ POWER5p_PME_PM_LSU_FLUSH_UST ] = {
 		.pme_name = "PM_LSU_FLUSH_UST",
+		.pme_code = 0x2c0088,
 		.pme_short_desc = "SRQ unaligned store flushes",
 		.pme_long_desc = "A store was flushed because it was unaligned (crossed a 4K boundary).  Combined Unit 0 + 1.",
 		.pme_event_ids = { -1, 233, -1, -1, -1, -1 },
@@ -1333,6 +1452,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FXU1_FIN 119
 	[ POWER5p_PME_PM_FXU1_FIN ] = {
 		.pme_name = "PM_FXU1_FIN",
+		.pme_code = 0x130e6,
 		.pme_short_desc = "FXU1 produced a result",
 		.pme_long_desc = "The Fixed Point unit 1 finished an instruction and produced a result.  Instructions that finish may not necessary complete.",
 		.pme_event_ids = { 95, 92, 92, 96, -1, -1 },
@@ -1344,6 +1464,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_PRIO_4_CYC 120
 	[ POWER5p_PME_PM_THRD_PRIO_4_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_4_CYC",
+		.pme_code = 0x420e3,
 		.pme_short_desc = "Cycles thread running at priority level 4",
 		.pme_long_desc = "Cycles this thread was running at priority level 4.",
 		.pme_event_ids = { 337, 332, 330, 326, -1, -1 },
@@ -1355,6 +1476,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_L35_MOD 121
 	[ POWER5p_PME_PM_MRK_DATA_FROM_L35_MOD ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L35_MOD",
+		.pme_code = 0x2c709e,
 		.pme_short_desc = "Marked data loaded from L3.5 modified",
 		.pme_long_desc = "The processor's Data Cache was reloaded with modified (M) data from the L3 of a chip on the same module as this processor is located due to a marked load.",
 		.pme_event_ids = { -1, 273, 268, -1, -1, -1 },
@@ -1366,6 +1488,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_4INST_CLB_CYC 122
 	[ POWER5p_PME_PM_4INST_CLB_CYC ] = {
 		.pme_name = "PM_4INST_CLB_CYC",
+		.pme_code = 0x400c4,
 		.pme_short_desc = "Cycles 4 instructions in CLB",
 		.pme_long_desc = "The cache line buffer (CLB) is a 6-deep, 4-wide instruction buffer. Fullness is reported on a cycle basis with each event representing the number of cycles the CLB had the corresponding number of entries occupied.  These events give a real time history of the number of instruction buffers used, but not the number of PowerPC instructions within those buffers.  Each thread has its own set of CLB; these events are thread specific.",
 		.pme_event_ids = { 5, 4, 4, 5, -1, -1 },
@@ -1377,6 +1500,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DTLB_REF_16M 123
 	[ POWER5p_PME_PM_MRK_DTLB_REF_16M ] = {
 		.pme_name = "PM_MRK_DTLB_REF_16M",
+		.pme_code = 0x3c6086,
 		.pme_short_desc = "Marked Data TLB reference for 16M page",
 		.pme_long_desc = "Data TLB references by a marked instruction for 16MB pages.",
 		.pme_event_ids = { -1, -1, 275, -1, -1, -1 },
@@ -1388,6 +1512,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_INST_FROM_L375_MOD 124
 	[ POWER5p_PME_PM_INST_FROM_L375_MOD ] = {
 		.pme_name = "PM_INST_FROM_L375_MOD",
+		.pme_code = 0x42209d,
 		.pme_short_desc = "Instruction fetched from L3.75 modified",
 		.pme_long_desc = "An instruction fetch group was fetched with modified  (M) data from the L3 of a chip on a different module than this processor is located. Fetch groups can contain up to 8 instructions",
 		.pme_event_ids = { -1, -1, -1, 116, -1, -1 },
@@ -1399,6 +1524,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_GRP_CMPL 125
 	[ POWER5p_PME_PM_GRP_CMPL ] = {
 		.pme_name = "PM_GRP_CMPL",
+		.pme_code = 0x300013,
 		.pme_short_desc = "Group completed",
 		.pme_long_desc = "A group completed. Microcoded instructions that span multiple groups will generate this event once per group.",
 		.pme_event_ids = { -1, -1, 100, -1, -1, -1 },
@@ -1410,6 +1536,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SC_RCST_DISP_FAIL_ADDR 126
 	[ POWER5p_PME_PM_L2SC_RCST_DISP_FAIL_ADDR ] = {
 		.pme_name = "PM_L2SC_RCST_DISP_FAIL_ADDR",
+		.pme_code = 0x712c2,
 		.pme_short_desc = "L2 slice C RC store dispatch attempt failed due to address collision with RC/CO/SN/SQ",
 		.pme_long_desc = "A Read/Claim dispatch for a store failed because of an address conflict.  Two RC machines will never both work on the same line or line in the same congruence class at the same time.",
 		.pme_event_ids = { 167, 164, 163, 162, -1, -1 },
@@ -1421,6 +1548,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU1_1FLOP 127
 	[ POWER5p_PME_PM_FPU1_1FLOP ] = {
 		.pme_name = "PM_FPU1_1FLOP",
+		.pme_code = 0xc7,
 		.pme_short_desc = "FPU1 executed add",
 		.pme_long_desc = " mult",
 		.pme_event_ids = { 72, 71, 71, 73, -1, -1 },
@@ -1432,6 +1560,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU_FRSP_FCONV 128
 	[ POWER5p_PME_PM_FPU_FRSP_FCONV ] = {
 		.pme_name = "PM_FPU_FRSP_FCONV",
+		.pme_code = 0x2010a8,
 		.pme_short_desc = "FPU executed FRSP or FCONV instructions",
 		.pme_long_desc = "The floating point unit has executed a frsp or convert kind of instruction.  This could be frsp*, fcfid*, fcti* where XYZ* means XYZ, XYZs, XYZ., XYZs. Combined Unit 0 + Unit 1.",
 		.pme_event_ids = { -1, 85, 85, -1, -1, -1 },
@@ -1443,6 +1572,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L3SC_REF 129
 	[ POWER5p_PME_PM_L3SC_REF ] = {
 		.pme_name = "PM_L3SC_REF",
+		.pme_code = 0x701c5,
 		.pme_short_desc = "L3 slice C references",
 		.pme_long_desc = "Number of attempts made by this chip cores to find data in the L3. Reported per L3 slice.",
 		.pme_event_ids = { 195, 192, 191, 190, -1, -1 },
@@ -1454,6 +1584,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_5INST_CLB_CYC 130
 	[ POWER5p_PME_PM_5INST_CLB_CYC ] = {
 		.pme_name = "PM_5INST_CLB_CYC",
+		.pme_code = 0x400c5,
 		.pme_short_desc = "Cycles 5 instructions in CLB",
 		.pme_long_desc = "The cache line buffer (CLB) is a 6-deep, 4-wide instruction buffer. Fullness is reported on a cycle basis with each event representing the number of cycles the CLB had the corresponding number of entries occupied.  These events give a real time history of the number of instruction buffers used, but not the number of PowerPC instructions within those buffers.  Each thread has its own set of CLB; these events are thread specific.",
 		.pme_event_ids = { 6, 5, 5, 6, -1, -1 },
@@ -1465,6 +1596,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_L2MISS_BOTH_CYC 131
 	[ POWER5p_PME_PM_THRD_L2MISS_BOTH_CYC ] = {
 		.pme_name = "PM_THRD_L2MISS_BOTH_CYC",
+		.pme_code = 0x410c7,
 		.pme_short_desc = "Cycles both threads in L2 misses",
 		.pme_long_desc = "Cycles that both threads have L2 miss pending.  If only one thread has a L2 miss pending the other thread is given priority at decode.  If both threads have L2 miss pending decode priority is determined by the number of GCT entries used.",
 		.pme_event_ids = { 332, 328, 326, 322, -1, -1 },
@@ -1476,6 +1608,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MEM_PW_GATH 132
 	[ POWER5p_PME_PM_MEM_PW_GATH ] = {
 		.pme_name = "PM_MEM_PW_GATH",
+		.pme_code = 0x714c6,
 		.pme_short_desc = "Memory partial-write gathered",
 		.pme_long_desc = "Two or more partial-writes have been merged into a single memory write. This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 259, 258, 254, 253, -1, -1 },
@@ -1487,6 +1620,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DTLB_REF_16G 133
 	[ POWER5p_PME_PM_DTLB_REF_16G ] = {
 		.pme_name = "PM_DTLB_REF_16G",
+		.pme_code = 0x4c2086,
 		.pme_short_desc = "Data TLB reference for 16G page",
 		.pme_long_desc = "Data TLB references for 16GB pages. Includes hits + misses.",
 		.pme_event_ids = { -1, -1, -1, 34, -1, -1 },
@@ -1498,6 +1632,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FAB_DCLAIM_ISSUED 134
 	[ POWER5p_PME_PM_FAB_DCLAIM_ISSUED ] = {
 		.pme_name = "PM_FAB_DCLAIM_ISSUED",
+		.pme_code = 0x720e7,
 		.pme_short_desc = "dclaim issued",
 		.pme_long_desc = "A DCLAIM command was issued. Each chip reports its own counts.  The signal is delivered at FBC speed and the count must be scaled accordingly.",
 		.pme_event_ids = { 39, 38, 38, 40, -1, -1 },
@@ -1509,6 +1644,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FAB_PNtoNN_SIDECAR 135
 	[ POWER5p_PME_PM_FAB_PNtoNN_SIDECAR ] = {
 		.pme_name = "PM_FAB_PNtoNN_SIDECAR",
+		.pme_code = 0x713c7,
 		.pme_short_desc = "PN to NN beat went to sidecar first",
 		.pme_long_desc = "Fabric Data beats that the base chip takes the inbound PN data and forwards it on to the outbound NN data bus after going into a sidecar first. The signal is delivered at FBC speed and the count must be scaled.",
 		.pme_event_ids = { 48, 47, 47, 49, -1, -1 },
@@ -1520,6 +1656,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_GRP_IC_MISS 136
 	[ POWER5p_PME_PM_GRP_IC_MISS ] = {
 		.pme_name = "PM_GRP_IC_MISS",
+		.pme_code = 0x120e7,
 		.pme_short_desc = "Group experienced I cache miss",
 		.pme_long_desc = "Number of groups, counted at dispatch, that have encountered an icache miss redirect.  Every group constructed from a fetch group that missed the instruction cache will count.",
 		.pme_event_ids = { 106, 106, 105, 105, -1, -1 },
@@ -1531,6 +1668,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_INST_FROM_L35_SHR 137
 	[ POWER5p_PME_PM_INST_FROM_L35_SHR ] = {
 		.pme_name = "PM_INST_FROM_L35_SHR",
+		.pme_code = 0x12209d,
 		.pme_short_desc = "Instruction fetched from L3.5 shared",
 		.pme_long_desc = "An instruction fetch group was fetched with shared (S) data from the L3 of a chip on the same module as this processor is located. Fetch groups can contain up to 8 instructions",
 		.pme_event_ids = { 122, -1, -1, -1, -1, -1 },
@@ -1542,6 +1680,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_LMQ_FULL_CYC 138
 	[ POWER5p_PME_PM_LSU_LMQ_FULL_CYC ] = {
 		.pme_name = "PM_LSU_LMQ_FULL_CYC",
+		.pme_code = 0xc30e7,
 		.pme_short_desc = "Cycles LMQ full",
 		.pme_long_desc = "The Load Miss Queue was full.",
 		.pme_event_ids = { 237, 234, 232, 231, -1, -1 },
@@ -1553,6 +1692,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_L2_CYC 139
 	[ POWER5p_PME_PM_MRK_DATA_FROM_L2_CYC ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L2_CYC",
+		.pme_code = 0x2c70a0,
 		.pme_short_desc = "Marked load latency from L2",
 		.pme_long_desc = "Cycles a marked load waited for data from this level of the storage system.  Counting begins when a marked load misses the data cache and ends when the data is reloaded into the data cache.  To calculate average latency divide this count by the number of marked misses to the same level.",
 		.pme_event_ids = { -1, 272, -1, -1, -1, -1 },
@@ -1564,6 +1704,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_SRQ_SYNC_CYC 140
 	[ POWER5p_PME_PM_LSU_SRQ_SYNC_CYC ] = {
 		.pme_name = "PM_LSU_SRQ_SYNC_CYC",
+		.pme_code = 0x830e5,
 		.pme_short_desc = "SRQ sync duration",
 		.pme_long_desc = "Cycles that a sync instruction is active in the Store Request Queue.",
 		.pme_event_ids = { 249, 248, 244, 243, -1, -1 },
@@ -1575,6 +1716,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU0_BUSY_REJECT 141
 	[ POWER5p_PME_PM_LSU0_BUSY_REJECT ] = {
 		.pme_name = "PM_LSU0_BUSY_REJECT",
+		.pme_code = 0xc20e1,
 		.pme_short_desc = "LSU0 busy due to reject",
 		.pme_long_desc = "Total cycles the Load Store Unit 0 is busy rejecting instructions.",
 		.pme_event_ids = { 205, 201, 201, 200, -1, -1 },
@@ -1586,6 +1728,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_REJECT_ERAT_MISS 142
 	[ POWER5p_PME_PM_LSU_REJECT_ERAT_MISS ] = {
 		.pme_name = "PM_LSU_REJECT_ERAT_MISS",
+		.pme_code = 0x1c4090,
 		.pme_short_desc = "LSU reject due to ERAT miss",
 		.pme_long_desc = "Total cycles the Load Store Unit is busy rejecting instructions due to an ERAT miss. Combined unit 0 + 1. Requests that miss the Derat are rejected and retried until the request hits in the Erat.",
 		.pme_event_ids = { 244, -1, -1, 238, -1, -1 },
@@ -1597,6 +1740,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_RMEM_CYC 143
 	[ POWER5p_PME_PM_MRK_DATA_FROM_RMEM_CYC ] = {
 		.pme_name = "PM_MRK_DATA_FROM_RMEM_CYC",
+		.pme_code = 0x4c70a1,
 		.pme_short_desc = "Marked load latency from remote memory",
 		.pme_long_desc = "Cycles a marked load waited for data from this level of the storage system.  Counting begins when a marked load misses the data cache and ends when the data is reloaded into the data cache.  To calculate average latency divide this count by the number of marked misses to the same level.",
 		.pme_event_ids = { -1, -1, -1, 272, -1, -1 },
@@ -1608,6 +1752,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DATA_FROM_L375_SHR 144
 	[ POWER5p_PME_PM_DATA_FROM_L375_SHR ] = {
 		.pme_name = "PM_DATA_FROM_L375_SHR",
+		.pme_code = 0x3c309e,
 		.pme_short_desc = "Data loaded from L3.75 shared",
 		.pme_long_desc = "The processor's Data Cache was reloaded with shared (S) data from the L3 of a chip on a different module than this processor is located due to a demand load.",
 		.pme_event_ids = { -1, -1, 22, -1, -1, -1 },
@@ -1619,6 +1764,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_PTEG_FROM_L25_MOD 145
 	[ POWER5p_PME_PM_PTEG_FROM_L25_MOD ] = {
 		.pme_name = "PM_PTEG_FROM_L25_MOD",
+		.pme_code = 0x283097,
 		.pme_short_desc = "PTEG loaded from L2.5 modified",
 		.pme_long_desc = "A Page Table Entry was loaded into the TLB with modified (M) data from the L2 of a chip on the same module as this processor is located due to a demand load.",
 		.pme_event_ids = { -1, 303, 298, -1, -1, -1 },
@@ -1630,6 +1776,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU0_FMOV_FEST 146
 	[ POWER5p_PME_PM_FPU0_FMOV_FEST ] = {
 		.pme_name = "PM_FPU0_FMOV_FEST",
+		.pme_code = 0x10c0,
 		.pme_short_desc = "FPU0 executed FMOV or FEST instructions",
 		.pme_long_desc = "FPU0 has executed a move kind of instruction or one of the estimate instructions.  This could be fmr*, fneg*, fabs*, fnabs* , fres* or frsqrte* where XYZ* means XYZ or XYZ.",
 		.pme_event_ids = { 64, 63, 63, 65, -1, -1 },
@@ -1641,6 +1788,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_PRIO_7_CYC 147
 	[ POWER5p_PME_PM_THRD_PRIO_7_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_7_CYC",
+		.pme_code = 0x420e6,
 		.pme_short_desc = "Cycles thread running at priority level 7",
 		.pme_long_desc = "Cycles this thread was running at priority level 7.",
 		.pme_event_ids = { 340, 335, 333, 329, -1, -1 },
@@ -1652,6 +1800,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU1_FLUSH_SRQ 148
 	[ POWER5p_PME_PM_LSU1_FLUSH_SRQ ] = {
 		.pme_name = "PM_LSU1_FLUSH_SRQ",
+		.pme_code = 0xc00c7,
 		.pme_short_desc = "LSU1 SRQ lhs flushes",
 		.pme_long_desc = "A store was flushed because younger load hits and older store that is already in the SRQ or in the same group.",
 		.pme_event_ids = { 221, 217, 217, 216, -1, -1 },
@@ -1663,6 +1812,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LD_REF_L1_LSU0 149
 	[ POWER5p_PME_PM_LD_REF_L1_LSU0 ] = {
 		.pme_name = "PM_LD_REF_L1_LSU0",
+		.pme_code = 0xc10c0,
 		.pme_short_desc = "LSU0 L1 D cache load references",
 		.pme_long_desc = "Load references to Level 1 Data Cache, by unit 0.",
 		.pme_event_ids = { 202, 198, 198, 197, -1, -1 },
@@ -1674,6 +1824,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SC_RCST_DISP 150
 	[ POWER5p_PME_PM_L2SC_RCST_DISP ] = {
 		.pme_name = "PM_L2SC_RCST_DISP",
+		.pme_code = 0x702c2,
 		.pme_short_desc = "L2 slice C RC store dispatch attempt",
 		.pme_long_desc = "A Read/Claim dispatch for a Store was attempted.",
 		.pme_event_ids = { 166, 163, 162, 161, -1, -1 },
@@ -1685,6 +1836,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_CMPLU_STALL_DIV 151
 	[ POWER5p_PME_PM_CMPLU_STALL_DIV ] = {
 		.pme_name = "PM_CMPLU_STALL_DIV",
+		.pme_code = 0x411099,
 		.pme_short_desc = "Completion stall caused by DIV instruction",
 		.pme_long_desc = "Following a completion stall (any period when no groups completed) the last instruction to finish before completion resumes was a fixed point divide instruction. This is a subset of PM_CMPLU_STALL_FXU.",
 		.pme_event_ids = { -1, -1, -1, 15, -1, -1 },
@@ -1696,6 +1848,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MEM_RQ_DISP_Q12to15 152
 	[ POWER5p_PME_PM_MEM_RQ_DISP_Q12to15 ] = {
 		.pme_name = "PM_MEM_RQ_DISP_Q12to15",
+		.pme_code = 0x732e6,
 		.pme_short_desc = "Memory read queue dispatched to queues 12-15",
 		.pme_long_desc = "A memory operation was dispatched to read queue 12,13,14 or 15. This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 359, 262, 255, 248, -1, -1 },
@@ -1707,6 +1860,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_INST_FROM_L375_SHR 153
 	[ POWER5p_PME_PM_INST_FROM_L375_SHR ] = {
 		.pme_name = "PM_INST_FROM_L375_SHR",
+		.pme_code = 0x32209d,
 		.pme_short_desc = "Instruction fetched from L3.75 shared",
 		.pme_long_desc = "An instruction fetch group was fetched with shared  (S) data from the L3 of a chip on a different module than this processor is located.  Fetch groups can contain up to 8 instructions",
 		.pme_event_ids = { -1, -1, 117, -1, -1, -1 },
@@ -1718,6 +1872,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_ST_REF_L1 154
 	[ POWER5p_PME_PM_ST_REF_L1 ] = {
 		.pme_name = "PM_ST_REF_L1",
+		.pme_code = 0x2c10a8,
 		.pme_short_desc = "L1 D cache store references",
 		.pme_long_desc = "Store references to the Data Cache. Combined Unit 0 + 1.",
 		.pme_event_ids = { -1, 323, 322, -1, -1, -1 },
@@ -1729,6 +1884,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L3SB_ALL_BUSY 155
 	[ POWER5p_PME_PM_L3SB_ALL_BUSY ] = {
 		.pme_name = "PM_L3SB_ALL_BUSY",
+		.pme_code = 0x721e4,
 		.pme_short_desc = "L3 slice B active for every cycle all CI/CO machines busy",
 		.pme_long_desc = "Cycles All Castin/Castout machines are busy.",
 		.pme_event_ids = { 184, 181, 180, 179, -1, -1 },
@@ -1740,6 +1896,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FAB_P1toVNorNN_SIDECAR_EMPTY 156
 	[ POWER5p_PME_PM_FAB_P1toVNorNN_SIDECAR_EMPTY ] = {
 		.pme_name = "PM_FAB_P1toVNorNN_SIDECAR_EMPTY",
+		.pme_code = 0x711c7,
 		.pme_short_desc = "P1 to VN/NN sidecar empty",
 		.pme_long_desc = "Fabric cycles when the Plus-1 jump sidecar (sidecars for mcm to mcm data transfer) is empty. The signal is delivered at FBC speed and the count must be scaled accordingly.",
 		.pme_event_ids = { 46, 45, 45, 47, -1, -1 },
@@ -1751,6 +1908,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_L275_SHR_CYC 157
 	[ POWER5p_PME_PM_MRK_DATA_FROM_L275_SHR_CYC ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L275_SHR_CYC",
+		.pme_code = 0x2c70a3,
 		.pme_short_desc = "Marked load latency from L2.75 shared",
 		.pme_long_desc = "Cycles a marked load waited for data from this level of the storage system.  Counting begins when a marked load misses the data cache and ends when the data is reloaded into the data cache.  To calculate average latency divide this count by the number of marked misses to the same level.",
 		.pme_event_ids = { -1, 271, -1, -1, -1, -1 },
@@ -1762,6 +1920,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FAB_HOLDtoNN_EMPTY 158
 	[ POWER5p_PME_PM_FAB_HOLDtoNN_EMPTY ] = {
 		.pme_name = "PM_FAB_HOLDtoNN_EMPTY",
+		.pme_code = 0x722e7,
 		.pme_short_desc = "Hold buffer to NN empty",
 		.pme_long_desc = "Fabric cyles when the Next Node out hold-buffers are emtpy.  The signal is delivered at FBC speed and the count must be scaled accordingly.",
 		.pme_event_ids = { 41, 40, 40, 42, -1, -1 },
@@ -1773,6 +1932,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DATA_FROM_LMEM 159
 	[ POWER5p_PME_PM_DATA_FROM_LMEM ] = {
 		.pme_name = "PM_DATA_FROM_LMEM",
+		.pme_code = 0x2c3087,
 		.pme_short_desc = "Data loaded from local memory",
 		.pme_long_desc = "The processor's Data Cache was reloaded from memory attached to the same module this proccessor is located on.",
 		.pme_event_ids = { -1, 23, 23, -1, -1, -1 },
@@ -1784,6 +1944,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_RUN_CYC 160
 	[ POWER5p_PME_PM_RUN_CYC ] = {
 		.pme_name = "PM_RUN_CYC",
+		.pme_code = 0x100005,
 		.pme_short_desc = "Run cycles",
 		.pme_long_desc = "Processor Cycles gated by the run latch.  Operating systems use the run latch to indicate when they are doing useful work.  The run latch is typically cleared in the OS idle loop.  Gating by the run latch filters out the idle loop.",
 		.pme_event_ids = { 312, -1, -1, -1, -1, 0 },
@@ -1795,6 +1956,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_PTEG_FROM_RMEM 161
 	[ POWER5p_PME_PM_PTEG_FROM_RMEM ] = {
 		.pme_name = "PM_PTEG_FROM_RMEM",
+		.pme_code = 0x1830a1,
 		.pme_short_desc = "PTEG loaded from remote memory",
 		.pme_long_desc = "A Page Table Entry was loaded into the TLB from memory attached to a different module than this proccessor is located on.",
 		.pme_event_ids = { 310, -1, -1, 302, -1, -1 },
@@ -1806,6 +1968,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SC_RCLD_DISP 162
 	[ POWER5p_PME_PM_L2SC_RCLD_DISP ] = {
 		.pme_name = "PM_L2SC_RCLD_DISP",
+		.pme_code = 0x701c2,
 		.pme_short_desc = "L2 slice C RC load dispatch attempt",
 		.pme_long_desc = "A Read/Claim dispatch for a Load was attempted",
 		.pme_event_ids = { 162, 159, 158, 157, -1, -1 },
@@ -1817,6 +1980,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_LRQ_S0_VALID 163
 	[ POWER5p_PME_PM_LSU_LRQ_S0_VALID ] = {
 		.pme_name = "PM_LSU_LRQ_S0_VALID",
+		.pme_code = 0xc60e6,
 		.pme_short_desc = "LRQ slot 0 valid",
 		.pme_long_desc = "This signal is asserted every cycle that the Load Request Queue slot zero is valid. The SRQ is 32 entries long and is allocated round-robin.  In SMT mode the LRQ is split between the two threads (16 entries each).",
 		.pme_event_ids = { 243, 241, 239, 237, -1, -1 },
@@ -1828,6 +1992,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU0_LDF 164
 	[ POWER5p_PME_PM_LSU0_LDF ] = {
 		.pme_name = "PM_LSU0_LDF",
+		.pme_code = 0xc50c0,
 		.pme_short_desc = "LSU0 executed Floating Point load instruction",
 		.pme_long_desc = "A floating point load was executed by LSU0",
 		.pme_event_ids = { 211, 207, 207, 206, -1, -1 },
@@ -1839,6 +2004,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_PMC3_OVERFLOW 165
 	[ POWER5p_PME_PM_PMC3_OVERFLOW ] = {
 		.pme_name = "PM_PMC3_OVERFLOW",
+		.pme_code = 0x40000a,
 		.pme_short_desc = "PMC3 Overflow",
 		.pme_long_desc = "Overflows from PMC3 are counted.  This effectively widens the PMC. The Overflow from the original PMC will not trigger an exception even if the PMU is configured to generate exceptions on overflow.",
 		.pme_event_ids = { -1, -1, -1, 299, -1, -1 },
@@ -1850,6 +2016,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_IMR_RELOAD 166
 	[ POWER5p_PME_PM_MRK_IMR_RELOAD ] = {
 		.pme_name = "PM_MRK_IMR_RELOAD",
+		.pme_code = 0x820e2,
 		.pme_short_desc = "Marked IMR reloaded",
 		.pme_long_desc = "A DL1 reload occurred due to marked load",
 		.pme_event_ids = { 283, 284, 277, 281, -1, -1 },
@@ -1861,6 +2028,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_GRP_TIMEO 167
 	[ POWER5p_PME_PM_MRK_GRP_TIMEO ] = {
 		.pme_name = "PM_MRK_GRP_TIMEO",
+		.pme_code = 0x40000b,
 		.pme_short_desc = "Marked group completion timeout",
 		.pme_long_desc = "The sampling timeout expired indicating that the previously sampled instruction is no longer in the processor",
 		.pme_event_ids = { -1, -1, -1, 280, -1, -1 },
@@ -1872,6 +2040,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_ST_MISS_L1 168
 	[ POWER5p_PME_PM_ST_MISS_L1 ] = {
 		.pme_name = "PM_ST_MISS_L1",
+		.pme_code = 0xc10c3,
 		.pme_short_desc = "L1 D cache store misses",
 		.pme_long_desc = "A store missed the dcache.  Combined Unit 0 + 1.",
 		.pme_event_ids = { 327, 322, 321, 318, -1, -1 },
@@ -1883,6 +2052,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_STOP_COMPLETION 169
 	[ POWER5p_PME_PM_STOP_COMPLETION ] = {
 		.pme_name = "PM_STOP_COMPLETION",
+		.pme_code = 0x300018,
 		.pme_short_desc = "Completion stopped",
 		.pme_long_desc = "RAS Unit has signaled completion to stop",
 		.pme_event_ids = { -1, -1, 320, -1, -1, -1 },
@@ -1894,6 +2064,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_BUSY_REJECT 170
 	[ POWER5p_PME_PM_LSU_BUSY_REJECT ] = {
 		.pme_name = "PM_LSU_BUSY_REJECT",
+		.pme_code = 0x2c2088,
 		.pme_short_desc = "LSU busy due to reject",
 		.pme_long_desc = "Total cycles the Load Store Unit is busy rejecting instructions. Combined unit 0 + 1.",
 		.pme_event_ids = { -1, 227, -1, -1, -1, -1 },
@@ -1905,6 +2076,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_ISLB_MISS 171
 	[ POWER5p_PME_PM_ISLB_MISS ] = {
 		.pme_name = "PM_ISLB_MISS",
+		.pme_code = 0x800c1,
 		.pme_short_desc = "Instruction SLB misses",
 		.pme_long_desc = "A SLB miss for an instruction fetch as occurred",
 		.pme_event_ids = { 123, 120, 119, 118, -1, -1 },
@@ -1916,6 +2088,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_CYC 172
 	[ POWER5p_PME_PM_CYC ] = {
 		.pme_name = "PM_CYC",
+		.pme_code = 0xf,
 		.pme_short_desc = "Processor cycles",
 		.pme_long_desc = "Processor cycles",
 		.pme_event_ids = { 17, 20, 16, 21, -1, -1 },
@@ -1927,6 +2100,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_ONE_RUN_CYC 173
 	[ POWER5p_PME_PM_THRD_ONE_RUN_CYC ] = {
 		.pme_name = "PM_THRD_ONE_RUN_CYC",
+		.pme_code = 0x10000b,
 		.pme_short_desc = "One of the threads in run cycles",
 		.pme_long_desc = "At least one thread has set its run latch. Operating systems use the run latch to indicate when they are doing useful work.  The run latch is typically cleared in the OS idle loop. This event does not respect FCWAIT.",
 		.pme_event_ids = { 333, -1, -1, -1, -1, -1 },
@@ -1938,6 +2112,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_GRP_BR_REDIR_NONSPEC 174
 	[ POWER5p_PME_PM_GRP_BR_REDIR_NONSPEC ] = {
 		.pme_name = "PM_GRP_BR_REDIR_NONSPEC",
+		.pme_code = 0x112091,
 		.pme_short_desc = "Group experienced non-speculative branch redirect",
 		.pme_long_desc = "Number of groups, counted at completion, that have encountered a branch redirect.",
 		.pme_event_ids = { 102, -1, -1, -1, -1, -1 },
@@ -1949,6 +2124,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU1_SRQ_STFWD 175
 	[ POWER5p_PME_PM_LSU1_SRQ_STFWD ] = {
 		.pme_name = "PM_LSU1_SRQ_STFWD",
+		.pme_code = 0xc60e5,
 		.pme_short_desc = "LSU1 SRQ store forwarded",
 		.pme_long_desc = "Data from a store instruction was forwarded to a load on unit 1.  A load that misses L1 but becomes a store forward is treated as a load miss and it causes the DL1 load miss event to be counted.  It does not go into the LMQ. If a load that hits L1 but becomes a store forward, then it's not treated as a load miss.",
 		.pme_event_ids = { 230, 226, 226, 225, -1, -1 },
@@ -1960,6 +2136,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L3SC_MOD_INV 176
 	[ POWER5p_PME_PM_L3SC_MOD_INV ] = {
 		.pme_name = "PM_L3SC_MOD_INV",
+		.pme_code = 0x730e5,
 		.pme_short_desc = "L3 slice C transition from modified to invalid",
 		.pme_long_desc = "L3 snooper detects someone doing a store to a line that is truly M in this L3 (i.e. L3 going M=>I)  Mu|Me are not included since they are formed due to a previous read op Tx is not included since it is considered shared at this point.",
 		.pme_event_ids = { 193, 190, 189, 188, -1, -1 },
@@ -1971,6 +2148,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2_PREF 177
 	[ POWER5p_PME_PM_L2_PREF ] = {
 		.pme_name = "PM_L2_PREF",
+		.pme_code = 0xc50c3,
 		.pme_short_desc = "L2 cache prefetches",
 		.pme_long_desc = "A request to prefetch data into L2 was made",
 		.pme_event_ids = { 176, 173, 172, 171, -1, -1 },
@@ -1982,6 +2160,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_GCT_NOSLOT_BR_MPRED 178
 	[ POWER5p_PME_PM_GCT_NOSLOT_BR_MPRED ] = {
 		.pme_name = "PM_GCT_NOSLOT_BR_MPRED",
+		.pme_code = 0x41009c,
 		.pme_short_desc = "No slot in GCT caused by branch mispredict",
 		.pme_long_desc = "Cycles when the Global Completion Table has no slots from this thread because of a branch misprediction.",
 		.pme_event_ids = { -1, -1, -1, 98, -1, -1 },
@@ -1993,6 +2172,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_L25_MOD 179
 	[ POWER5p_PME_PM_MRK_DATA_FROM_L25_MOD ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L25_MOD",
+		.pme_code = 0x2c7097,
 		.pme_short_desc = "Marked data loaded from L2.5 modified",
 		.pme_long_desc = "The processor's Data Cache was reloaded with modified (M) data from the L2 of a chip on the same module as this processor is located  due to a marked load.",
 		.pme_event_ids = { -1, 269, 264, -1, -1, -1 },
@@ -2004,6 +2184,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SB_ST_REQ 180
 	[ POWER5p_PME_PM_L2SB_ST_REQ ] = {
 		.pme_name = "PM_L2SB_ST_REQ",
+		.pme_code = 0x723e1,
 		.pme_short_desc = "L2 slice B store requests",
 		.pme_long_desc = "A store request as seen at the L2 directory has been made from the core. Stores are counted after gathering in the L2 store queues. The event is provided on each of the three slices A, B, and C.",
 		.pme_event_ids = { 159, 156, 155, 154, -1, -1 },
@@ -2015,6 +2196,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SB_MOD_INV 181
 	[ POWER5p_PME_PM_L2SB_MOD_INV ] = {
 		.pme_name = "PM_L2SB_MOD_INV",
+		.pme_code = 0x730e1,
 		.pme_short_desc = "L2 slice B transition from modified to invalid",
 		.pme_long_desc = "A cache line in the local L2 directory made a state transition from the Modified state to the Invalid state. This transition was caused by any RWITM snoop request that hit against a modified entry in the local L2. The event is provided on each of the three slices A, B, and C.",
 		.pme_event_ids = { 144, 141, 140, 139, -1, -1 },
@@ -2026,6 +2208,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_L1_RELOAD_VALID 182
 	[ POWER5p_PME_PM_MRK_L1_RELOAD_VALID ] = {
 		.pme_name = "PM_MRK_L1_RELOAD_VALID",
+		.pme_code = 0xc70e4,
 		.pme_short_desc = "Marked L1 reload data source valid",
 		.pme_long_desc = "The source information is valid and is for a marked load",
 		.pme_event_ids = { 284, 285, 279, 282, -1, -1 },
@@ -2037,6 +2220,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L3SB_HIT 183
 	[ POWER5p_PME_PM_L3SB_HIT ] = {
 		.pme_name = "PM_L3SB_HIT",
+		.pme_code = 0x711c4,
 		.pme_short_desc = "L3 slice B hits",
 		.pme_long_desc = "Number of attempts made by this chip cores that resulted in an L3 hit.  Reported per L3 slice",
 		.pme_event_ids = { 185, 182, 181, 180, -1, -1 },
@@ -2048,6 +2232,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SB_SHR_MOD 184
 	[ POWER5p_PME_PM_L2SB_SHR_MOD ] = {
 		.pme_name = "PM_L2SB_SHR_MOD",
+		.pme_code = 0x700c1,
 		.pme_short_desc = "L2 slice B transition from shared to modified",
 		.pme_long_desc = "A cache line in the local L2 directory made a state transition from Shared (Shared, Shared L , or Tagged) to the Modified state. This transition was caused by a store from either of the two local CPUs to a cache line in any of the Shared states. The event is provided on each of the three slices A, B, and C.",
 		.pme_event_ids = { 157, 154, 153, 152, -1, -1 },
@@ -2059,6 +2244,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_EE_OFF_EXT_INT 185
 	[ POWER5p_PME_PM_EE_OFF_EXT_INT ] = {
 		.pme_name = "PM_EE_OFF_EXT_INT",
+		.pme_code = 0x130e7,
 		.pme_short_desc = "Cycles MSR(EE) bit off and external interrupt pending",
 		.pme_long_desc = "Cycles when an interrupt due to an external exception is pending but external exceptions were masked.",
 		.pme_event_ids = { 36, 35, 35, 36, -1, -1 },
@@ -2070,6 +2256,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_1PLUS_PPC_CMPL 186
 	[ POWER5p_PME_PM_1PLUS_PPC_CMPL ] = {
 		.pme_name = "PM_1PLUS_PPC_CMPL",
+		.pme_code = 0x100013,
 		.pme_short_desc = "One or more PPC instruction completed",
 		.pme_long_desc = "A group containing at least one PPC instruction completed. For microcoded instructions that span multiple groups, this will only occur once.",
 		.pme_event_ids = { 2, -1, -1, -1, -1, -1 },
@@ -2081,6 +2268,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SC_SHR_MOD 187
 	[ POWER5p_PME_PM_L2SC_SHR_MOD ] = {
 		.pme_name = "PM_L2SC_SHR_MOD",
+		.pme_code = 0x700c2,
 		.pme_short_desc = "L2 slice C transition from shared to modified",
 		.pme_long_desc = "A cache line in the local L2 directory made a state transition from Shared (Shared, Shared L , or Tagged) to the Modified state. This transition was caused by a store from either of the two local CPUs to a cache line in any of the Shared states. The event is provided on each of the three slices A, B, and C.",
 		.pme_event_ids = { 173, 170, 169, 168, -1, -1 },
@@ -2092,6 +2280,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_PMC6_OVERFLOW 188
 	[ POWER5p_PME_PM_PMC6_OVERFLOW ] = {
 		.pme_name = "PM_PMC6_OVERFLOW",
+		.pme_code = 0x30001a,
 		.pme_short_desc = "PMC6 Overflow",
 		.pme_long_desc = "Overflows from PMC6 are counted.  This effectively widens the PMC. The Overflow from the original PMC will not trigger an exception even if the PMU is configured to generate exceptions on overflow.",
 		.pme_event_ids = { -1, -1, 297, -1, -1, -1 },
@@ -2103,6 +2292,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_IC_PREF_INSTALL 189
 	[ POWER5p_PME_PM_IC_PREF_INSTALL ] = {
 		.pme_name = "PM_IC_PREF_INSTALL",
+		.pme_code = 0x210c7,
 		.pme_short_desc = "Instruction prefetched installed in prefetch buffer",
 		.pme_long_desc = "A prefetch buffer entry (line) is allocated but the request is not a demand fetch.",
 		.pme_event_ids = { 252, 251, 108, 108, -1, -1 },
@@ -2114,6 +2304,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_LRQ_FULL_CYC 190
 	[ POWER5p_PME_PM_LSU_LRQ_FULL_CYC ] = {
 		.pme_name = "PM_LSU_LRQ_FULL_CYC",
+		.pme_code = 0x110c2,
 		.pme_short_desc = "Cycles LRQ full",
 		.pme_long_desc = "Cycles when the LRQ is full.",
 		.pme_event_ids = { 241, 239, 237, 235, -1, -1 },
@@ -2125,6 +2316,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_TLB_MISS 191
 	[ POWER5p_PME_PM_TLB_MISS ] = {
 		.pme_name = "PM_TLB_MISS",
+		.pme_code = 0x180088,
 		.pme_short_desc = "TLB misses",
 		.pme_long_desc = "Total of Data TLB mises + Instruction TLB misses",
 		.pme_event_ids = { 356, -1, -1, -1, -1, -1 },
@@ -2136,6 +2328,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_GCT_FULL_CYC 192
 	[ POWER5p_PME_PM_GCT_FULL_CYC ] = {
 		.pme_name = "PM_GCT_FULL_CYC",
+		.pme_code = 0x100c0,
 		.pme_short_desc = "Cycles GCT full",
 		.pme_long_desc = "The Global Completion Table is completely full.",
 		.pme_event_ids = { 97, 96, 94, 97, -1, -1 },
@@ -2147,6 +2340,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FXU_BUSY 193
 	[ POWER5p_PME_PM_FXU_BUSY ] = {
 		.pme_name = "PM_FXU_BUSY",
+		.pme_code = 0x200012,
 		.pme_short_desc = "FXU busy",
 		.pme_long_desc = "Cycles when both FXU0 and FXU1 are busy.",
 		.pme_event_ids = { -1, 93, -1, -1, -1, -1 },
@@ -2158,6 +2352,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_L3_CYC 194
 	[ POWER5p_PME_PM_MRK_DATA_FROM_L3_CYC ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L3_CYC",
+		.pme_code = 0x2c70a4,
 		.pme_short_desc = "Marked load latency from L3",
 		.pme_long_desc = "Cycles a marked load waited for data from this level of the storage system.  Counting begins when a marked load misses the data cache and ends when the data is reloaded into the data cache.  To calculate average latency divide this count by the number of marked misses to the same level.",
 		.pme_event_ids = { -1, 276, -1, -1, -1, -1 },
@@ -2169,6 +2364,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_REJECT_LMQ_FULL 195
 	[ POWER5p_PME_PM_LSU_REJECT_LMQ_FULL ] = {
 		.pme_name = "PM_LSU_REJECT_LMQ_FULL",
+		.pme_code = 0x2c4088,
 		.pme_short_desc = "LSU reject due to LMQ full or missed data coming",
 		.pme_long_desc = "Total cycles the Load Store Unit is busy rejecting instructions because the Load Miss Queue was full. The LMQ has eight entries.  If all the eight entries are full, subsequent load instructions are rejected. Combined unit 0 + 1.",
 		.pme_event_ids = { -1, 242, -1, -1, -1, -1 },
@@ -2180,6 +2376,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_SRQ_S0_ALLOC 196
 	[ POWER5p_PME_PM_LSU_SRQ_S0_ALLOC ] = {
 		.pme_name = "PM_LSU_SRQ_S0_ALLOC",
+		.pme_code = 0xc20e7,
 		.pme_short_desc = "SRQ slot 0 allocated",
 		.pme_long_desc = "SRQ Slot zero was allocated",
 		.pme_event_ids = { 247, 245, 242, 241, -1, -1 },
@@ -2191,6 +2388,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_GRP_MRK 197
 	[ POWER5p_PME_PM_GRP_MRK ] = {
 		.pme_name = "PM_GRP_MRK",
+		.pme_code = 0x100014,
 		.pme_short_desc = "Group marked in IDU",
 		.pme_long_desc = "A group was sampled (marked).  The group is called a marked group.  One instruction within the group is tagged for detailed monitoring.  The sampled instruction is called a marked instructions.  Events associated with the marked instruction are annotated with the marked term.",
 		.pme_event_ids = { 109, -1, -1, -1, -1, -1 },
@@ -2202,6 +2400,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_INST_FROM_L25_SHR 198
 	[ POWER5p_PME_PM_INST_FROM_L25_SHR ] = {
 		.pme_name = "PM_INST_FROM_L25_SHR",
+		.pme_code = 0x122096,
 		.pme_short_desc = "Instruction fetched from L2.5 shared",
 		.pme_long_desc = "An instruction fetch group was fetched with shared  (T or SL) data from the L2 of a chip on the same module as this processor is located. Fetch groups can contain up to 8 instructions.",
 		.pme_event_ids = { 119, -1, -1, -1, -1, -1 },
@@ -2213,6 +2412,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DC_PREF_STREAM_ALLOC 199
 	[ POWER5p_PME_PM_DC_PREF_STREAM_ALLOC ] = {
 		.pme_name = "PM_DC_PREF_STREAM_ALLOC",
+		.pme_code = 0x830e7,
 		.pme_short_desc = "D cache new prefetch stream allocated",
 		.pme_long_desc = "A new Prefetch Stream was allocated.",
 		.pme_event_ids = { 29, 28, 28, 29, -1, -1 },
@@ -2224,6 +2424,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU1_FIN 200
 	[ POWER5p_PME_PM_FPU1_FIN ] = {
 		.pme_name = "PM_FPU1_FIN",
+		.pme_code = 0x10c7,
 		.pme_short_desc = "FPU1 produced a result",
 		.pme_long_desc = "FPU1 finished, produced a result.  This only indicates finish,  not completion. Floating Point Stores are included in this count but not Floating Point Loads., ,",
 		.pme_event_ids = { 76, 75, 75, 77, -1, -1 },
@@ -2235,6 +2436,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_BR_MPRED_TA 201
 	[ POWER5p_PME_PM_BR_MPRED_TA ] = {
 		.pme_name = "PM_BR_MPRED_TA",
+		.pme_code = 0x230e6,
 		.pme_short_desc = "Branch mispredictions due to target address",
 		.pme_long_desc = "A branch instruction target was incorrectly predicted. This will result in a branch mispredict flush unless a flush is detected from an older instruction.",
 		.pme_event_ids = { 11, 10, 10, 11, -1, -1 },
@@ -2246,6 +2448,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DTLB_REF_64K 202
 	[ POWER5p_PME_PM_MRK_DTLB_REF_64K ] = {
 		.pme_name = "PM_MRK_DTLB_REF_64K",
+		.pme_code = 0x2c6086,
 		.pme_short_desc = "Marked Data TLB reference for 64K page",
 		.pme_long_desc = "Data TLB references by a marked instruction for 64KB pages.",
 		.pme_event_ids = { -1, 282, -1, -1, -1, -1 },
@@ -2257,6 +2460,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_RUN_INST_CMPL 203
 	[ POWER5p_PME_PM_RUN_INST_CMPL ] = {
 		.pme_name = "PM_RUN_INST_CMPL",
+		.pme_code = 0x500009,
 		.pme_short_desc = "Run instructions completed",
 		.pme_long_desc = "Number of run instructions completed.",
 		.pme_event_ids = { -1, -1, -1, -1, 0, -1 },
@@ -2268,6 +2472,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_CRQ_FULL_CYC 204
 	[ POWER5p_PME_PM_CRQ_FULL_CYC ] = {
 		.pme_name = "PM_CRQ_FULL_CYC",
+		.pme_code = 0x110c1,
 		.pme_short_desc = "Cycles CR issue queue full",
 		.pme_long_desc = "The issue queue that feeds the Conditional Register unit is full. This condition will prevent dispatch groups from being dispatched.  This event only indicates that the queue was full, not that dispatch was prevented.",
 		.pme_event_ids = { 15, 18, 14, 19, -1, -1 },
@@ -2279,6 +2484,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SA_RCLD_DISP 205
 	[ POWER5p_PME_PM_L2SA_RCLD_DISP ] = {
 		.pme_name = "PM_L2SA_RCLD_DISP",
+		.pme_code = 0x701c0,
 		.pme_short_desc = "L2 slice A RC load dispatch attempt",
 		.pme_long_desc = "A Read/Claim dispatch for a Load was attempted",
 		.pme_event_ids = { 130, 127, 126, 125, -1, -1 },
@@ -2290,6 +2496,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_SNOOP_WR_RETRY_QFULL 206
 	[ POWER5p_PME_PM_SNOOP_WR_RETRY_QFULL ] = {
 		.pme_name = "PM_SNOOP_WR_RETRY_QFULL",
+		.pme_code = 0x710c6,
 		.pme_short_desc = "Snoop read retry due to read queue full",
 		.pme_long_desc = "A snoop request for a write to memory was retried because the write queues were full.  When this happens the snoop request is retried and the writes in the write reorder queue are changed to high priority.  This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 322, 317, 315, 313, -1, -1 },
@@ -2301,6 +2508,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DTLB_REF_4K 207
 	[ POWER5p_PME_PM_MRK_DTLB_REF_4K ] = {
 		.pme_name = "PM_MRK_DTLB_REF_4K",
+		.pme_code = 0x1c6086,
 		.pme_short_desc = "Marked Data TLB reference for 4K page",
 		.pme_long_desc = "Data TLB references by a marked instruction for 4KB pages.",
 		.pme_event_ids = { 280, -1, -1, -1, -1, -1 },
@@ -2312,6 +2520,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_SRQ_S0_VALID 208
 	[ POWER5p_PME_PM_LSU_SRQ_S0_VALID ] = {
 		.pme_name = "PM_LSU_SRQ_S0_VALID",
+		.pme_code = 0xc20e6,
 		.pme_short_desc = "SRQ slot 0 valid",
 		.pme_long_desc = "This signal is asserted every cycle that the Store Request Queue slot zero is valid. The SRQ is 32 entries long and is allocated round-robin.  In SMT mode the SRQ is split between the two threads (16 entries each).",
 		.pme_event_ids = { 248, 246, 243, 242, -1, -1 },
@@ -2323,6 +2532,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU0_FLUSH_LRQ 209
 	[ POWER5p_PME_PM_LSU0_FLUSH_LRQ ] = {
 		.pme_name = "PM_LSU0_FLUSH_LRQ",
+		.pme_code = 0xc00c2,
 		.pme_short_desc = "LSU0 LRQ flushes",
 		.pme_long_desc = "A load was flushed by unit 0 because a younger load executed before an older store executed and they had overlapping data OR two loads executed out of order and they have byte overlap and there was a snoop in between to an overlapped byte.",
 		.pme_event_ids = { 207, 203, 203, 202, -1, -1 },
@@ -2334,6 +2544,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_INST_FROM_L275_MOD 210
 	[ POWER5p_PME_PM_INST_FROM_L275_MOD ] = {
 		.pme_name = "PM_INST_FROM_L275_MOD",
+		.pme_code = 0x422096,
 		.pme_short_desc = "Instruction fetched from L2.75 modified",
 		.pme_long_desc = "An instruction fetch group was fetched with modified (M) data from the L2 on a different module than this processor is located.  Fetch groups can contain up to 8 instructions",
 		.pme_event_ids = { -1, -1, -1, 115, -1, -1 },
@@ -2345,6 +2556,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_GCT_EMPTY_CYC 211
 	[ POWER5p_PME_PM_GCT_EMPTY_CYC ] = {
 		.pme_name = "PM_GCT_EMPTY_CYC",
+		.pme_code = 0x200004,
 		.pme_short_desc = "Cycles GCT empty",
 		.pme_long_desc = "The Global Completion Table is completely empty",
 		.pme_event_ids = { -1, 95, -1, -1, -1, -1 },
@@ -2356,6 +2568,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LARX_LSU0 212
 	[ POWER5p_PME_PM_LARX_LSU0 ] = {
 		.pme_name = "PM_LARX_LSU0",
+		.pme_code = 0x820e7,
 		.pme_short_desc = "Larx executed on LSU0",
 		.pme_long_desc = "A larx (lwarx or ldarx) was executed on side 0 (there is no corresponding unit 1 event since larx instructions can only execute on unit 0)",
 		.pme_event_ids = { 198, 195, 194, 193, -1, -1 },
@@ -2367,6 +2580,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_PRIO_DIFF_5or6_CYC 213
 	[ POWER5p_PME_PM_THRD_PRIO_DIFF_5or6_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_DIFF_5or6_CYC",
+		.pme_code = 0x430e6,
 		.pme_short_desc = "Cycles thread priority difference is 5 or 6",
 		.pme_long_desc = "Cycles when this thread's priority is higher than the other thread's priority by 5 or 6.",
 		.pme_event_ids = { 344, 339, 337, 333, -1, -1 },
@@ -2378,6 +2592,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_SNOOP_RETRY_1AHEAD 214
 	[ POWER5p_PME_PM_SNOOP_RETRY_1AHEAD ] = {
 		.pme_name = "PM_SNOOP_RETRY_1AHEAD",
+		.pme_code = 0x725e6,
 		.pme_short_desc = "Snoop retry due to one ahead collision",
 		.pme_long_desc = "Snoop retry due to one ahead collision",
 		.pme_event_ids = { 320, 315, 313, 311, -1, -1 },
@@ -2389,6 +2604,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU1_FSQRT 215
 	[ POWER5p_PME_PM_FPU1_FSQRT ] = {
 		.pme_name = "PM_FPU1_FSQRT",
+		.pme_code = 0xc6,
 		.pme_short_desc = "FPU1 executed FSQRT instruction",
 		.pme_long_desc = "FPU1 has executed a square root instruction. This could be fsqrt* where XYZ* means XYZ, XYZs, XYZ., XYZs.",
 		.pme_event_ids = { 80, 79, 79, 81, -1, -1 },
@@ -2400,6 +2616,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_LD_MISS_L1_LSU1 216
 	[ POWER5p_PME_PM_MRK_LD_MISS_L1_LSU1 ] = {
 		.pme_name = "PM_MRK_LD_MISS_L1_LSU1",
+		.pme_code = 0x820e4,
 		.pme_short_desc = "LSU1 marked L1 D cache load misses",
 		.pme_long_desc = "Load references that miss the Level 1 Data cache, by LSU1.",
 		.pme_event_ids = { 287, 287, 281, 284, -1, -1 },
@@ -2411,6 +2628,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_FPU_FIN 217
 	[ POWER5p_PME_PM_MRK_FPU_FIN ] = {
 		.pme_name = "PM_MRK_FPU_FIN",
+		.pme_code = 0x300014,
 		.pme_short_desc = "Marked instruction FPU processing finished",
 		.pme_long_desc = "One of the Floating Point Units finished a marked instruction. Instructions that finish may not necessary complete",
 		.pme_event_ids = { -1, -1, 276, -1, -1, -1 },
@@ -2422,6 +2640,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_PRIO_5_CYC 218
 	[ POWER5p_PME_PM_THRD_PRIO_5_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_5_CYC",
+		.pme_code = 0x420e4,
 		.pme_short_desc = "Cycles thread running at priority level 5",
 		.pme_long_desc = "Cycles this thread was running at priority level 5.",
 		.pme_event_ids = { 338, 333, 331, 327, -1, -1 },
@@ -2433,6 +2652,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_LMEM 219
 	[ POWER5p_PME_PM_MRK_DATA_FROM_LMEM ] = {
 		.pme_name = "PM_MRK_DATA_FROM_LMEM",
+		.pme_code = 0x2c7087,
 		.pme_short_desc = "Marked data loaded from local memory",
 		.pme_long_desc = "The processor's Data Cache was reloaded due to a marked load from memory attached to the same module this proccessor is located on.",
 		.pme_event_ids = { -1, 277, 270, -1, -1, -1 },
@@ -2444,6 +2664,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_SNOOP_TLBIE 220
 	[ POWER5p_PME_PM_SNOOP_TLBIE ] = {
 		.pme_name = "PM_SNOOP_TLBIE",
+		.pme_code = 0x800c3,
 		.pme_short_desc = "Snoop TLBIE",
 		.pme_long_desc = "A tlbie was snooped from another processor.",
 		.pme_event_ids = { 321, 316, 314, 312, -1, -1 },
@@ -2455,6 +2676,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU1_FRSP_FCONV 221
 	[ POWER5p_PME_PM_FPU1_FRSP_FCONV ] = {
 		.pme_name = "PM_FPU1_FRSP_FCONV",
+		.pme_code = 0x10c5,
 		.pme_short_desc = "FPU1 executed FRSP or FCONV instructions",
 		.pme_long_desc = "FPU1 has executed a frsp or convert kind of instruction.  This could be frsp*, fcfid*, fcti* where XYZ* means XYZ, XYZs, XYZ., XYZs.",
 		.pme_event_ids = { 79, 78, 78, 80, -1, -1 },
@@ -2466,6 +2688,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DTLB_MISS_16G 222
 	[ POWER5p_PME_PM_DTLB_MISS_16G ] = {
 		.pme_name = "PM_DTLB_MISS_16G",
+		.pme_code = 0x4c208d,
 		.pme_short_desc = "Data TLB miss for 16G page",
 		.pme_long_desc = "Data TLB references to 16GB pages that missed the TLB. Page size is determined at TLB reload time.",
 		.pme_event_ids = { -1, -1, -1, 32, -1, -1 },
@@ -2477,6 +2700,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L3SB_SNOOP_RETRY 223
 	[ POWER5p_PME_PM_L3SB_SNOOP_RETRY ] = {
 		.pme_name = "PM_L3SB_SNOOP_RETRY",
+		.pme_code = 0x731e4,
 		.pme_short_desc = "L3 slice B snoop retries",
 		.pme_long_desc = "Number of times an L3 retried a snoop because it got two in at the same time (one on snp_a, one on snp_b)",
 		.pme_event_ids = { 190, 187, 186, 185, -1, -1 },
@@ -2488,6 +2712,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FAB_VBYPASS_EMPTY 224
 	[ POWER5p_PME_PM_FAB_VBYPASS_EMPTY ] = {
 		.pme_name = "PM_FAB_VBYPASS_EMPTY",
+		.pme_code = 0x731e7,
 		.pme_short_desc = "Vertical bypass buffer empty",
 		.pme_long_desc = "Fabric cycles when the Middle Bypass sidecar is empty. The signal is delivered at FBC speed and the count must be scaled accordingly.",
 		.pme_event_ids = { 51, 50, 50, 52, -1, -1 },
@@ -2499,6 +2724,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_L275_MOD 225
 	[ POWER5p_PME_PM_MRK_DATA_FROM_L275_MOD ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L275_MOD",
+		.pme_code = 0x1c70a3,
 		.pme_short_desc = "Marked data loaded from L2.75 modified",
 		.pme_long_desc = "The processor's Data Cache was reloaded with modified (M) data from the L2 on a different module than this processor is located due to a marked load.",
 		.pme_event_ids = { 271, -1, -1, 265, -1, -1 },
@@ -2510,6 +2736,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SB_RCST_DISP 226
 	[ POWER5p_PME_PM_L2SB_RCST_DISP ] = {
 		.pme_name = "PM_L2SB_RCST_DISP",
+		.pme_code = 0x702c1,
 		.pme_short_desc = "L2 slice B RC store dispatch attempt",
 		.pme_long_desc = "A Read/Claim dispatch for a Store was attempted.",
 		.pme_event_ids = { 150, 147, 146, 145, -1, -1 },
@@ -2521,6 +2748,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_6INST_CLB_CYC 227
 	[ POWER5p_PME_PM_6INST_CLB_CYC ] = {
 		.pme_name = "PM_6INST_CLB_CYC",
+		.pme_code = 0x400c6,
 		.pme_short_desc = "Cycles 6 instructions in CLB",
 		.pme_long_desc = "The cache line buffer (CLB) is a 6-deep, 4-wide instruction buffer. Fullness is reported on a cycle basis with each event representing the number of cycles the CLB had the corresponding number of entries occupied.  These events give a real time history of the number of instruction buffers used, but not the number of PowerPC instructions within those buffers.  Each thread has its own set of CLB; these events are thread specific.",
 		.pme_event_ids = { 7, 6, 6, 7, -1, -1 },
@@ -2532,6 +2760,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FLUSH 228
 	[ POWER5p_PME_PM_FLUSH ] = {
 		.pme_name = "PM_FLUSH",
+		.pme_code = 0x110c7,
 		.pme_short_desc = "Flushes",
 		.pme_long_desc = "Flushes occurred including LSU and Branch flushes.",
 		.pme_event_ids = { 52, 51, 51, 53, -1, -1 },
@@ -2543,6 +2772,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SC_MOD_INV 229
 	[ POWER5p_PME_PM_L2SC_MOD_INV ] = {
 		.pme_name = "PM_L2SC_MOD_INV",
+		.pme_code = 0x730e2,
 		.pme_short_desc = "L2 slice C transition from modified to invalid",
 		.pme_long_desc = "A cache line in the local L2 directory made a state transition from the Modified state to the Invalid state. This transition was caused by any RWITM snoop request that hit against a modified entry in the local L2. The event is provided on each of the three slices A, B, and C.",
 		.pme_event_ids = { 160, 157, 156, 155, -1, -1 },
@@ -2554,6 +2784,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU_DENORM 230
 	[ POWER5p_PME_PM_FPU_DENORM ] = {
 		.pme_name = "PM_FPU_DENORM",
+		.pme_code = 0x102088,
 		.pme_short_desc = "FPU received denormalized data",
 		.pme_long_desc = "The floating point unit has encountered a denormalized operand.  Combined Unit 0 + Unit 1.",
 		.pme_event_ids = { 86, -1, -1, -1, -1, -1 },
@@ -2565,6 +2796,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L3SC_HIT 231
 	[ POWER5p_PME_PM_L3SC_HIT ] = {
 		.pme_name = "PM_L3SC_HIT",
+		.pme_code = 0x711c5,
 		.pme_short_desc = "L3 slice C hits",
 		.pme_long_desc = "Number of attempts made by this chip cores that resulted in an L3 hit.  Reported per L3 Slice",
 		.pme_event_ids = { 192, 189, 188, 187, -1, -1 },
@@ -2576,6 +2808,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_SNOOP_WR_RETRY_RQ 232
 	[ POWER5p_PME_PM_SNOOP_WR_RETRY_RQ ] = {
 		.pme_name = "PM_SNOOP_WR_RETRY_RQ",
+		.pme_code = 0x706c6,
 		.pme_short_desc = "Snoop write/dclaim retry due to collision with active read queue",
 		.pme_long_desc = "A snoop request for a write or dclaim to memory was retried because it matched the cacheline of an active read.  This event is sent from the Memory Controller clock domain and must be scaled accordingly",
 		.pme_event_ids = { 323, 318, 316, 314, -1, -1 },
@@ -2587,6 +2820,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU1_REJECT_SRQ 233
 	[ POWER5p_PME_PM_LSU1_REJECT_SRQ ] = {
 		.pme_name = "PM_LSU1_REJECT_SRQ",
+		.pme_code = 0xc40c4,
 		.pme_short_desc = "LSU1 SRQ lhs rejects",
 		.pme_long_desc = "Total cycles the Load Store Unit 1 is busy rejecting instructions because of Load Hit Store conditions.  Loads are rejected when data is needed from a previous store instruction but store forwarding is not possible because the data is not fully contained in the Store Data Queue or is not yet available in the Store Data Queue.",
 		.pme_event_ids = { 229, 225, 225, 224, -1, -1 },
@@ -2598,6 +2832,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L3SC_ALL_BUSY 234
 	[ POWER5p_PME_PM_L3SC_ALL_BUSY ] = {
 		.pme_name = "PM_L3SC_ALL_BUSY",
+		.pme_code = 0x721e5,
 		.pme_short_desc = "L3 slice C active for every cycle all CI/CO machines busy",
 		.pme_long_desc = "Cycles All Castin/Castout machines are busy.",
 		.pme_event_ids = { 191, 188, 187, 186, -1, -1 },
@@ -2609,6 +2844,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_IC_PREF_REQ 235
 	[ POWER5p_PME_PM_IC_PREF_REQ ] = {
 		.pme_name = "PM_IC_PREF_REQ",
+		.pme_code = 0x220e6,
 		.pme_short_desc = "Instruction prefetch requests",
 		.pme_long_desc = "An instruction prefetch request has been made.",
 		.pme_event_ids = { 112, 110, 109, 109, -1, -1 },
@@ -2620,6 +2856,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_GRP_IC_MISS 236
 	[ POWER5p_PME_PM_MRK_GRP_IC_MISS ] = {
 		.pme_name = "PM_MRK_GRP_IC_MISS",
+		.pme_code = 0x412091,
 		.pme_short_desc = "Group experienced marked I cache miss",
 		.pme_long_desc = "A group containing a marked (sampled) instruction experienced an instruction cache miss.",
 		.pme_event_ids = { -1, -1, -1, 279, -1, -1 },
@@ -2631,6 +2868,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_GCT_NOSLOT_IC_MISS 237
 	[ POWER5p_PME_PM_GCT_NOSLOT_IC_MISS ] = {
 		.pme_name = "PM_GCT_NOSLOT_IC_MISS",
+		.pme_code = 0x21009c,
 		.pme_short_desc = "No slot in GCT caused by I cache miss",
 		.pme_long_desc = "Cycles when the Global Completion Table has no slots from this thread because of an Instruction Cache miss.",
 		.pme_event_ids = { -1, 97, -1, -1, -1, -1 },
@@ -2642,6 +2880,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_L3 238
 	[ POWER5p_PME_PM_MRK_DATA_FROM_L3 ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L3",
+		.pme_code = 0x1c708e,
 		.pme_short_desc = "Marked data loaded from L3",
 		.pme_long_desc = "The processor's Data Cache was reloaded from the local L3 due to a marked load.",
 		.pme_event_ids = { 272, -1, 267, -1, -1, -1 },
@@ -2653,6 +2892,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_GCT_NOSLOT_SRQ_FULL 239
 	[ POWER5p_PME_PM_GCT_NOSLOT_SRQ_FULL ] = {
 		.pme_name = "PM_GCT_NOSLOT_SRQ_FULL",
+		.pme_code = 0x310084,
 		.pme_short_desc = "No slot in GCT caused by SRQ full",
 		.pme_long_desc = "Cycles when the Global Completion Table has no slots from this thread because the Store Request Queue (SRQ)  is full.  This happens when the storage subsystem can not process the stores in the SRQ.  Groups can not be dispatched until a SRQ entry is available.",
 		.pme_event_ids = { -1, -1, 95, -1, -1, -1 },
@@ -2664,6 +2904,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_CMPLU_STALL_DCACHE_MISS 240
 	[ POWER5p_PME_PM_CMPLU_STALL_DCACHE_MISS ] = {
 		.pme_name = "PM_CMPLU_STALL_DCACHE_MISS",
+		.pme_code = 0x21109a,
 		.pme_short_desc = "Completion stall caused by D cache miss",
 		.pme_long_desc = "Following a completion stall (any period when no groups completed) the last instruction to finish before completion resumes suffered a Data Cache Miss. Data Cache Miss has higher priority than any other Load/Store delay, so if an instruction encounters multiple delays only the Data Cache Miss will be reported and the entire delay period will be charged to Data Cache Miss. This is a subset of PM_CMPLU_STALL_LSU.",
 		.pme_event_ids = { -1, 14, -1, -1, -1, -1 },
@@ -2675,6 +2916,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_SEL_OVER_ISU_HOLD 241
 	[ POWER5p_PME_PM_THRD_SEL_OVER_ISU_HOLD ] = {
 		.pme_name = "PM_THRD_SEL_OVER_ISU_HOLD",
+		.pme_code = 0x410c5,
 		.pme_short_desc = "Thread selection overrides caused by ISU holds",
 		.pme_long_desc = "Thread selection was overridden because of an ISU hold.",
 		.pme_event_ids = { 350, 345, 343, 339, -1, -1 },
@@ -2686,6 +2928,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_FLUSH_LRQ 242
 	[ POWER5p_PME_PM_LSU_FLUSH_LRQ ] = {
 		.pme_name = "PM_LSU_FLUSH_LRQ",
+		.pme_code = 0x2c0090,
 		.pme_short_desc = "LRQ flushes",
 		.pme_long_desc = "A load was flushed because a younger load executed before an older store executed and they had overlapping data OR two loads executed out of order and they have byte overlap and there was a snoop in between to an overlapped byte.  Combined Units 0 and 1.",
 		.pme_event_ids = { -1, 230, 229, -1, -1, -1 },
@@ -2697,6 +2940,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_PRIO_2_CYC 243
 	[ POWER5p_PME_PM_THRD_PRIO_2_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_2_CYC",
+		.pme_code = 0x420e1,
 		.pme_short_desc = "Cycles thread running at priority level 2",
 		.pme_long_desc = "Cycles this thread was running at priority level 2.",
 		.pme_event_ids = { 335, 330, 328, 324, -1, -1 },
@@ -2708,6 +2952,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L3SA_MOD_INV 244
 	[ POWER5p_PME_PM_L3SA_MOD_INV ] = {
 		.pme_name = "PM_L3SA_MOD_INV",
+		.pme_code = 0x730e3,
 		.pme_short_desc = "L3 slice A transition from modified to invalid",
 		.pme_long_desc = "L3 snooper detects someone doing a store to a line that is truly M in this L3 (i.e. L3 going M=>I)  Mu|Me are not included since they are formed due to a prev read op.  Tx is not included since it is considered shared at this point.",
 		.pme_event_ids = { 179, 176, 175, 174, -1, -1 },
@@ -2719,6 +2964,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_FLUSH_SRQ 245
 	[ POWER5p_PME_PM_LSU_FLUSH_SRQ ] = {
 		.pme_name = "PM_LSU_FLUSH_SRQ",
+		.pme_code = 0x1c0090,
 		.pme_short_desc = "SRQ flushes",
 		.pme_long_desc = "A store was flushed because younger load hits and older store that is already in the SRQ or in the same group.  Combined Unit 0 + 1.",
 		.pme_event_ids = { 233, -1, -1, 228, -1, -1 },
@@ -2730,6 +2976,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_LSU_SRQ_INST_VALID 246
 	[ POWER5p_PME_PM_MRK_LSU_SRQ_INST_VALID ] = {
 		.pme_name = "PM_MRK_LSU_SRQ_INST_VALID",
+		.pme_code = 0xc70e6,
 		.pme_short_desc = "Marked instruction valid in SRQ",
 		.pme_long_desc = "This signal is asserted every cycle when a marked request is resident in the Store Request Queue",
 		.pme_event_ids = { 297, 297, 292, 296, -1, -1 },
@@ -2741,6 +2988,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L3SA_REF 247
 	[ POWER5p_PME_PM_L3SA_REF ] = {
 		.pme_name = "PM_L3SA_REF",
+		.pme_code = 0x701c3,
 		.pme_short_desc = "L3 slice A references",
 		.pme_long_desc = "Number of attempts made by this chip cores to find data in the L3. Reported per L3 slice",
 		.pme_event_ids = { 181, 178, 177, 176, -1, -1 },
@@ -2752,6 +3000,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SC_RC_DISP_FAIL_CO_BUSY_ALL 248
 	[ POWER5p_PME_PM_L2SC_RC_DISP_FAIL_CO_BUSY_ALL ] = {
 		.pme_name = "PM_L2SC_RC_DISP_FAIL_CO_BUSY_ALL",
+		.pme_code = 0x713c2,
 		.pme_short_desc = "L2 slice C RC dispatch attempt failed due to all CO busy",
 		.pme_long_desc = "A Read/Claim dispatch was rejected because all Castout machines were busy.",
 		.pme_event_ids = { 171, 168, 167, 166, -1, -1 },
@@ -2763,6 +3012,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU0_STALL3 249
 	[ POWER5p_PME_PM_FPU0_STALL3 ] = {
 		.pme_name = "PM_FPU0_STALL3",
+		.pme_code = 0x20e1,
 		.pme_short_desc = "FPU0 stalled in pipe3",
 		.pme_long_desc = "FPU0 has generated a stall in pipe3 due to overflow, underflow, massive cancel, convert to integer (sometimes), or convert from integer (always).",
 		.pme_event_ids = { 70, 69, 69, 71, -1, -1 },
@@ -2774,6 +3024,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_TB_BIT_TRANS 250
 	[ POWER5p_PME_PM_TB_BIT_TRANS ] = {
 		.pme_name = "PM_TB_BIT_TRANS",
+		.pme_code = 0x100018,
 		.pme_short_desc = "Time Base bit transition",
 		.pme_long_desc = "When the selected time base bit (as specified in MMCR0[TBSEL])transitions from 0 to 1",
 		.pme_event_ids = { 331, -1, -1, -1, -1, -1 },
@@ -2785,6 +3036,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_GPR_MAP_FULL_CYC 251
 	[ POWER5p_PME_PM_GPR_MAP_FULL_CYC ] = {
 		.pme_name = "PM_GPR_MAP_FULL_CYC",
+		.pme_code = 0x130e5,
 		.pme_short_desc = "Cycles GPR mapper full",
 		.pme_long_desc = "The General Purpose Register mapper cannot accept any more groups. This condition will prevent dispatch groups from being dispatched.  This event only indicates that the mapper was full, not that dispatch was prevented.",
 		.pme_event_ids = { 100, 99, 97, 99, -1, -1 },
@@ -2796,6 +3048,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_LSU_FLUSH_LRQ 252
 	[ POWER5p_PME_PM_MRK_LSU_FLUSH_LRQ ] = {
 		.pme_name = "PM_MRK_LSU_FLUSH_LRQ",
+		.pme_code = 0x381088,
 		.pme_short_desc = "Marked LRQ flushes",
 		.pme_long_desc = "A marked load was flushed because a younger load executed before an older store executed and they had overlapping data OR two loads executed out of order and they have byte overlap and there was a snoop in between to an overlapped byte.",
 		.pme_event_ids = { -1, -1, 290, -1, -1, -1 },
@@ -2807,6 +3060,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU0_STF 253
 	[ POWER5p_PME_PM_FPU0_STF ] = {
 		.pme_name = "PM_FPU0_STF",
+		.pme_code = 0x20e2,
 		.pme_short_desc = "FPU0 executed store instruction",
 		.pme_long_desc = "FPU0 has executed a Floating Point Store instruction.",
 		.pme_event_ids = { 71, 70, 70, 72, -1, -1 },
@@ -2818,6 +3072,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DTLB_MISS 254
 	[ POWER5p_PME_PM_MRK_DTLB_MISS ] = {
 		.pme_name = "PM_MRK_DTLB_MISS",
+		.pme_code = 0xc50c6,
 		.pme_short_desc = "Marked Data TLB misses",
 		.pme_long_desc = "Data TLB references by a marked instruction that missed the TLB (all page sizes).",
 		.pme_event_ids = { 277, 279, 272, 274, -1, -1 },
@@ -2829,6 +3084,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU1_FMA 255
 	[ POWER5p_PME_PM_FPU1_FMA ] = {
 		.pme_name = "PM_FPU1_FMA",
+		.pme_code = 0xc5,
 		.pme_short_desc = "FPU1 executed multiply-add instruction",
 		.pme_long_desc = "The floating point unit has executed a multiply-add kind of instruction. This could be fmadd*, fnmadd*, fmsub*, fnmsub* where XYZ* means XYZ, XYZs, XYZ., XYZs.",
 		.pme_event_ids = { 77, 76, 76, 78, -1, -1 },
@@ -2840,6 +3096,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SA_MOD_TAG 256
 	[ POWER5p_PME_PM_L2SA_MOD_TAG ] = {
 		.pme_name = "PM_L2SA_MOD_TAG",
+		.pme_code = 0x720e0,
 		.pme_short_desc = "L2 slice A transition from modified to tagged",
 		.pme_long_desc = "A cache line in the local L2 directory made a state transition from the Modified state to the Tagged state. This transition was caused by a read snoop request that hit against a modified entry in the local L2. The event is provided on each of the three slices A, B, and C.",
 		.pme_event_ids = { 129, 126, 125, 124, -1, -1 },
@@ -2851,6 +3108,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU1_FLUSH_ULD 257
 	[ POWER5p_PME_PM_LSU1_FLUSH_ULD ] = {
 		.pme_name = "PM_LSU1_FLUSH_ULD",
+		.pme_code = 0xc00c4,
 		.pme_short_desc = "LSU1 unaligned load flushes",
 		.pme_long_desc = "A load was flushed from unit 1 because it was unaligned (crossed a 64 byte boundary, or 32 byte if it missed the L1).",
 		.pme_event_ids = { 222, 218, 218, 217, -1, -1 },
@@ -2862,6 +3120,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_INST_FIN 258
 	[ POWER5p_PME_PM_MRK_INST_FIN ] = {
 		.pme_name = "PM_MRK_INST_FIN",
+		.pme_code = 0x300005,
 		.pme_short_desc = "Marked instruction finished",
 		.pme_long_desc = "One of the execution units finished a marked instruction.  Instructions that finish may not necessary complete",
 		.pme_event_ids = { -1, -1, 278, -1, -1, -1 },
@@ -2873,6 +3132,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_LSU0_FLUSH_UST 259
 	[ POWER5p_PME_PM_MRK_LSU0_FLUSH_UST ] = {
 		.pme_name = "PM_MRK_LSU0_FLUSH_UST",
+		.pme_code = 0x810c0,
 		.pme_short_desc = "LSU0 marked unaligned store flushes",
 		.pme_long_desc = "A marked store was flushed from unit 0 because it was unaligned",
 		.pme_event_ids = { 291, 291, 285, 288, -1, -1 },
@@ -2884,6 +3144,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU0_FULL_CYC 260
 	[ POWER5p_PME_PM_FPU0_FULL_CYC ] = {
 		.pme_name = "PM_FPU0_FULL_CYC",
+		.pme_code = 0x100c3,
 		.pme_short_desc = "Cycles FPU0 issue queue full",
 		.pme_long_desc = "The issue queue for FPU0 cannot accept any more instruction. Dispatch to this issue queue is stopped.",
 		.pme_event_ids = { 68, 67, 67, 69, -1, -1 },
@@ -2895,6 +3156,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_LRQ_S0_ALLOC 261
 	[ POWER5p_PME_PM_LSU_LRQ_S0_ALLOC ] = {
 		.pme_name = "PM_LSU_LRQ_S0_ALLOC",
+		.pme_code = 0xc60e7,
 		.pme_short_desc = "LRQ slot 0 allocated",
 		.pme_long_desc = "LRQ slot zero was allocated",
 		.pme_event_ids = { 242, 240, 238, 236, -1, -1 },
@@ -2906,6 +3168,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_LSU1_FLUSH_ULD 262
 	[ POWER5p_PME_PM_MRK_LSU1_FLUSH_ULD ] = {
 		.pme_name = "PM_MRK_LSU1_FLUSH_ULD",
+		.pme_code = 0x810c4,
 		.pme_short_desc = "LSU1 marked unaligned load flushes",
 		.pme_long_desc = "A marked load was flushed from unit 1 because it was unaligned (crossed a 64byte boundary, or 32 byte if it missed the L1)",
 		.pme_event_ids = { 294, 294, 288, 291, -1, -1 },
@@ -2917,6 +3180,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DTLB_REF 263
 	[ POWER5p_PME_PM_MRK_DTLB_REF ] = {
 		.pme_name = "PM_MRK_DTLB_REF",
+		.pme_code = 0xc60e4,
 		.pme_short_desc = "Marked Data TLB reference",
 		.pme_long_desc = "Total number of Data TLB references by a marked instruction for all page sizes. Page size is determined at TLB reload time.",
 		.pme_event_ids = { 279, 281, 274, 276, -1, -1 },
@@ -2928,6 +3192,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_BR_UNCOND 264
 	[ POWER5p_PME_PM_BR_UNCOND ] = {
 		.pme_name = "PM_BR_UNCOND",
+		.pme_code = 0x123087,
 		.pme_short_desc = "Unconditional branch",
 		.pme_long_desc = "An unconditional branch was executed.",
 		.pme_event_ids = { 12, -1, -1, -1, -1, -1 },
@@ -2939,6 +3204,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_SEL_OVER_L2MISS 265
 	[ POWER5p_PME_PM_THRD_SEL_OVER_L2MISS ] = {
 		.pme_name = "PM_THRD_SEL_OVER_L2MISS",
+		.pme_code = 0x410c3,
 		.pme_short_desc = "Thread selection overrides caused by L2 misses",
 		.pme_long_desc = "Thread selection was overridden because one thread was had a L2 miss pending.",
 		.pme_event_ids = { 351, 346, 344, 340, -1, -1 },
@@ -2950,6 +3216,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SB_SHR_INV 266
 	[ POWER5p_PME_PM_L2SB_SHR_INV ] = {
 		.pme_name = "PM_L2SB_SHR_INV",
+		.pme_code = 0x710c1,
 		.pme_short_desc = "L2 slice B transition from shared to invalid",
 		.pme_long_desc = "A cache line in the local L2 directory made a state transition from Shared (Shared, Shared L, or Tagged) to the Invalid state. This transition was caused by any external snoop request. The event is provided on each of the three slices A, B, and C. NOTE: For this event to be useful the tablewalk duration event should also be counted.",
 		.pme_event_ids = { 156, 153, 152, 151, -1, -1 },
@@ -2961,6 +3228,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MEM_LO_PRIO_WR_CMPL 267
 	[ POWER5p_PME_PM_MEM_LO_PRIO_WR_CMPL ] = {
 		.pme_name = "PM_MEM_LO_PRIO_WR_CMPL",
+		.pme_code = 0x736e6,
 		.pme_short_desc = "Low priority write completed",
 		.pme_long_desc = "A memory write,  which was not upgraded to high priority, completed.  This event is sent from the Memory Controller clock domain and must be scaled accordingly",
 		.pme_event_ids = { 255, 254, 250, 249, -1, -1 },
@@ -2972,6 +3240,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DTLB_MISS_64K 268
 	[ POWER5p_PME_PM_MRK_DTLB_MISS_64K ] = {
 		.pme_name = "PM_MRK_DTLB_MISS_64K",
+		.pme_code = 0x2c608d,
 		.pme_short_desc = "Marked Data TLB misses for 64K page",
 		.pme_long_desc = "Data TLB references to 64KB pages by a marked instruction that missed the TLB. Page size is determined at TLB reload time.",
 		.pme_event_ids = { -1, 280, -1, -1, -1, -1 },
@@ -2983,6 +3252,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_ST_MISS_L1 269
 	[ POWER5p_PME_PM_MRK_ST_MISS_L1 ] = {
 		.pme_name = "PM_MRK_ST_MISS_L1",
+		.pme_code = 0x820e3,
 		.pme_short_desc = "Marked L1 D cache store misses",
 		.pme_long_desc = "A marked store missed the dcache",
 		.pme_event_ids = { 300, 300, 295, 298, -1, -1 },
@@ -2994,6 +3264,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L3SC_MOD_TAG 270
 	[ POWER5p_PME_PM_L3SC_MOD_TAG ] = {
 		.pme_name = "PM_L3SC_MOD_TAG",
+		.pme_code = 0x720e5,
 		.pme_short_desc = "L3 slice C transition from modified to TAG",
 		.pme_long_desc = "L3 snooper detects someone doing a read to a line that is truly M in this L3(i.e. L3 going M->T or M->I(go_Mu case); Mu|Me are not included since they are formed due to a prev read op).  Tx is not included since it is considered shared at this point.",
 		.pme_event_ids = { 194, 191, 190, 189, -1, -1 },
@@ -3005,6 +3276,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_GRP_DISP_SUCCESS 271
 	[ POWER5p_PME_PM_GRP_DISP_SUCCESS ] = {
 		.pme_name = "PM_GRP_DISP_SUCCESS",
+		.pme_code = 0x300002,
 		.pme_short_desc = "Group dispatch success",
 		.pme_long_desc = "Number of groups sucessfully dispatched (not rejected)",
 		.pme_event_ids = { -1, -1, 103, -1, -1, -1 },
@@ -3016,6 +3288,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_PRIO_DIFF_1or2_CYC 272
 	[ POWER5p_PME_PM_THRD_PRIO_DIFF_1or2_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_DIFF_1or2_CYC",
+		.pme_code = 0x430e4,
 		.pme_short_desc = "Cycles thread priority difference is 1 or 2",
 		.pme_long_desc = "Cycles when this thread's priority is higher than the other thread's priority by 1 or 2.",
 		.pme_event_ids = { 342, 337, 335, 331, -1, -1 },
@@ -3027,6 +3300,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_IC_DEMAND_L2_BHT_REDIRECT 273
 	[ POWER5p_PME_PM_IC_DEMAND_L2_BHT_REDIRECT ] = {
 		.pme_name = "PM_IC_DEMAND_L2_BHT_REDIRECT",
+		.pme_code = 0x230e0,
 		.pme_short_desc = "L2 I cache demand request due to BHT redirect",
 		.pme_long_desc = "A demand (not prefetch) miss to the instruction cache was sent to the L2 as a result of a branch prediction redirect (CR mispredict).",
 		.pme_event_ids = { 110, 108, 106, 106, -1, -1 },
@@ -3038,6 +3312,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_DERAT_MISS 274
 	[ POWER5p_PME_PM_LSU_DERAT_MISS ] = {
 		.pme_name = "PM_LSU_DERAT_MISS",
+		.pme_code = 0x280090,
 		.pme_short_desc = "DERAT misses",
 		.pme_long_desc = "Total D-ERAT Misses.  Requests that miss the Derat are rejected and retried until the request hits in the Erat. This may result in multiple erat misses for the same instruction.  Combined Unit 0 + 1.",
 		.pme_event_ids = { -1, 228, 227, -1, -1, -1 },
@@ -3049,6 +3324,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MEM_WQ_DISP_Q8to15 275
 	[ POWER5p_PME_PM_MEM_WQ_DISP_Q8to15 ] = {
 		.pme_name = "PM_MEM_WQ_DISP_Q8to15",
+		.pme_code = 0x733e6,
 		.pme_short_desc = "Memory write queue dispatched to queues 8-15",
 		.pme_long_desc = "A memory operation was dispatched to a write queue in the range between 8 and 15. This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 266, 265, 261, 260, -1, -1 },
@@ -3060,6 +3336,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU0_SINGLE 276
 	[ POWER5p_PME_PM_FPU0_SINGLE ] = {
 		.pme_name = "PM_FPU0_SINGLE",
+		.pme_code = 0x20e3,
 		.pme_short_desc = "FPU0 executed single precision instruction",
 		.pme_long_desc = "FPU0 has executed a single precision instruction.",
 		.pme_event_ids = { 69, 68, 68, 70, -1, -1 },
@@ -3071,6 +3348,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_PRIO_1_CYC 277
 	[ POWER5p_PME_PM_THRD_PRIO_1_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_1_CYC",
+		.pme_code = 0x420e0,
 		.pme_short_desc = "Cycles thread running at priority level 1",
 		.pme_long_desc = "Cycles this thread was running at priority level 1. Priority level 1 is the lowest and indicates the thread is sleeping.",
 		.pme_event_ids = { 334, 329, 327, 323, -1, -1 },
@@ -3082,6 +3360,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SC_RCST_DISP_FAIL_OTHER 278
 	[ POWER5p_PME_PM_L2SC_RCST_DISP_FAIL_OTHER ] = {
 		.pme_name = "PM_L2SC_RCST_DISP_FAIL_OTHER",
+		.pme_code = 0x732e2,
 		.pme_short_desc = "L2 slice C RC store dispatch attempt failed due to other reasons",
 		.pme_long_desc = "A Read/Claim dispatch for a store  failed for some reason other than Full or Collision conditions.  Rejected dispatches do not count because they have not yet been attempted.",
 		.pme_event_ids = { 168, 165, 164, 163, -1, -1 },
@@ -3093,6 +3372,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_SNOOP_RD_RETRY_RQ 279
 	[ POWER5p_PME_PM_SNOOP_RD_RETRY_RQ ] = {
 		.pme_name = "PM_SNOOP_RD_RETRY_RQ",
+		.pme_code = 0x705c6,
 		.pme_short_desc = "Snoop read retry due to collision with active read queue",
 		.pme_long_desc = "A snoop request for a read from memory was retried because it matched the cache line of an active read.  The snoop request is retried because the L2 may be able to source data via intervention for the 2nd read faster than the MC.  This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 318, 313, 311, 309, -1, -1 },
@@ -3104,6 +3384,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FAB_HOLDtoVN_EMPTY 280
 	[ POWER5p_PME_PM_FAB_HOLDtoVN_EMPTY ] = {
 		.pme_name = "PM_FAB_HOLDtoVN_EMPTY",
+		.pme_code = 0x721e7,
 		.pme_short_desc = "Hold buffer to VN empty",
 		.pme_long_desc = "Fabric cycles when the Vertical Node out hold-buffers are emtpy. The signal is delivered at FBC speed and the count must be scaled accordingly.",
 		.pme_event_ids = { 42, 41, 41, 43, -1, -1 },
@@ -3115,6 +3396,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU1_FEST 281
 	[ POWER5p_PME_PM_FPU1_FEST ] = {
 		.pme_name = "PM_FPU1_FEST",
+		.pme_code = 0x10c6,
 		.pme_short_desc = "FPU1 executed FEST instruction",
 		.pme_long_desc = "FPU1 has executed an estimate instructions.  This could be fres* or frsqrte* where XYZ* means XYZ or XYZ.",
 		.pme_event_ids = { 75, 74, 74, 76, -1, -1 },
@@ -3126,6 +3408,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_SNOOP_DCLAIM_RETRY_QFULL 282
 	[ POWER5p_PME_PM_SNOOP_DCLAIM_RETRY_QFULL ] = {
 		.pme_name = "PM_SNOOP_DCLAIM_RETRY_QFULL",
+		.pme_code = 0x720e6,
 		.pme_short_desc = "Snoop dclaim/flush retry due to write/dclaim queues full",
 		.pme_long_desc = "The memory controller A memory write was dispatched to a write queue. This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 313, 308, 306, 304, -1, -1 },
@@ -3137,6 +3420,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_L25_SHR_CYC 283
 	[ POWER5p_PME_PM_MRK_DATA_FROM_L25_SHR_CYC ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L25_SHR_CYC",
+		.pme_code = 0x2c70a2,
 		.pme_short_desc = "Marked load latency from L2.5 shared",
 		.pme_long_desc = "Cycles a marked load waited for data from this level of the storage system.  Counting begins when a marked load misses the data cache and ends when the data is reloaded into the data cache.  To calculate average latency divide this count by the number of marked misses to the same level.",
 		.pme_event_ids = { -1, 270, -1, -1, -1, -1 },
@@ -3148,6 +3432,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_ST_CMPL_INT 284
 	[ POWER5p_PME_PM_MRK_ST_CMPL_INT ] = {
 		.pme_name = "PM_MRK_ST_CMPL_INT",
+		.pme_code = 0x300003,
 		.pme_short_desc = "Marked store completed with intervention",
 		.pme_long_desc = "A marked store previously sent to the memory subsystem completed (data home) after requiring intervention",
 		.pme_event_ids = { -1, -1, 294, -1, -1, -1 },
@@ -3159,6 +3444,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FLUSH_BR_MPRED 285
 	[ POWER5p_PME_PM_FLUSH_BR_MPRED ] = {
 		.pme_name = "PM_FLUSH_BR_MPRED",
+		.pme_code = 0x110c6,
 		.pme_short_desc = "Flush caused by branch mispredict",
 		.pme_long_desc = "A flush was caused by a branch mispredict.",
 		.pme_event_ids = { 53, 52, 52, 54, -1, -1 },
@@ -3170,6 +3456,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DTLB_MISS_16G 286
 	[ POWER5p_PME_PM_MRK_DTLB_MISS_16G ] = {
 		.pme_name = "PM_MRK_DTLB_MISS_16G",
+		.pme_code = 0x4c608d,
 		.pme_short_desc = "Marked Data TLB misses for 16G page",
 		.pme_long_desc = "Data TLB references to 16GB pages by a marked instruction that missed the TLB. Page size is determined at TLB reload time.",
 		.pme_event_ids = { -1, -1, -1, 275, -1, -1 },
@@ -3181,6 +3468,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU_STF 287
 	[ POWER5p_PME_PM_FPU_STF ] = {
 		.pme_name = "PM_FPU_STF",
+		.pme_code = 0x202090,
 		.pme_short_desc = "FPU executed store instruction",
 		.pme_long_desc = "FPU has executed a store instruction. Combined Unit 0 + Unit 1.",
 		.pme_event_ids = { -1, 88, 87, -1, -1, -1 },
@@ -3192,6 +3480,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SB_RCLD_DISP_FAIL_ADDR 288
 	[ POWER5p_PME_PM_L2SB_RCLD_DISP_FAIL_ADDR ] = {
 		.pme_name = "PM_L2SB_RCLD_DISP_FAIL_ADDR",
+		.pme_code = 0x711c1,
 		.pme_short_desc = "L2 slice B RC load dispatch attempt failed due to address collision with RC/CO/SN/SQ",
 		.pme_long_desc = "A Read/Claim dispatch for a load failed because of an address conflict.  Two RC machines will never both work on the same line or line in the same congruence class at the same time.",
 		.pme_event_ids = { 147, 144, 143, 142, -1, -1 },
@@ -3203,6 +3492,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_CMPLU_STALL_FPU 289
 	[ POWER5p_PME_PM_CMPLU_STALL_FPU ] = {
 		.pme_name = "PM_CMPLU_STALL_FPU",
+		.pme_code = 0x411098,
 		.pme_short_desc = "Completion stall caused by FPU instruction",
 		.pme_long_desc = "Following a completion stall (any period when no groups completed) the last instruction to finish before completion resumes was a floating point instruction.",
 		.pme_event_ids = { -1, -1, -1, 17, -1, -1 },
@@ -3214,6 +3504,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_PRIO_DIFF_minus1or2_CYC 290
 	[ POWER5p_PME_PM_THRD_PRIO_DIFF_minus1or2_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_DIFF_minus1or2_CYC",
+		.pme_code = 0x430e2,
 		.pme_short_desc = "Cycles thread priority difference is -1 or -2",
 		.pme_long_desc = "Cycles when this thread's priority is lower than the other thread's priority by 1 or 2.",
 		.pme_event_ids = { 345, 340, 338, 334, -1, -1 },
@@ -3225,6 +3516,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_GCT_NOSLOT_CYC 291
 	[ POWER5p_PME_PM_GCT_NOSLOT_CYC ] = {
 		.pme_name = "PM_GCT_NOSLOT_CYC",
+		.pme_code = 0x100004,
 		.pme_short_desc = "Cycles no GCT slot allocated",
 		.pme_long_desc = "Cycles when the Global Completion Table has no slots from this thread.",
 		.pme_event_ids = { 98, -1, -1, -1, -1, -1 },
@@ -3236,6 +3528,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FXU0_BUSY_FXU1_IDLE 292
 	[ POWER5p_PME_PM_FXU0_BUSY_FXU1_IDLE ] = {
 		.pme_name = "PM_FXU0_BUSY_FXU1_IDLE",
+		.pme_code = 0x300012,
 		.pme_short_desc = "FXU0 busy FXU1 idle",
 		.pme_long_desc = "FXU0 is busy while FXU1 was idle",
 		.pme_event_ids = { -1, -1, 90, -1, -1, -1 },
@@ -3247,6 +3540,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_PTEG_FROM_L35_SHR 293
 	[ POWER5p_PME_PM_PTEG_FROM_L35_SHR ] = {
 		.pme_name = "PM_PTEG_FROM_L35_SHR",
+		.pme_code = 0x18309e,
 		.pme_short_desc = "PTEG loaded from L3.5 shared",
 		.pme_long_desc = "A Page Table Entry was loaded into the TLB with shared (S) data from the L3 of a chip on the same module as this processor is located, due to a demand load.",
 		.pme_event_ids = { 308, -1, -1, -1, -1, -1 },
@@ -3258,6 +3552,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DTLB_REF_16G 294
 	[ POWER5p_PME_PM_MRK_DTLB_REF_16G ] = {
 		.pme_name = "PM_MRK_DTLB_REF_16G",
+		.pme_code = 0x4c6086,
 		.pme_short_desc = "Marked Data TLB reference for 16G page",
 		.pme_long_desc = "Data TLB references by a marked instruction for 16GB pages.",
 		.pme_event_ids = { -1, -1, -1, 277, -1, -1 },
@@ -3269,6 +3564,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_LSU_FLUSH_UST 295
 	[ POWER5p_PME_PM_MRK_LSU_FLUSH_UST ] = {
 		.pme_name = "PM_MRK_LSU_FLUSH_UST",
+		.pme_code = 0x2810a8,
 		.pme_short_desc = "Marked unaligned store flushes",
 		.pme_long_desc = "A marked store was flushed because it was unaligned",
 		.pme_event_ids = { -1, 296, 291, -1, -1, -1 },
@@ -3280,6 +3576,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_L25_SHR 296
 	[ POWER5p_PME_PM_MRK_DATA_FROM_L25_SHR ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L25_SHR",
+		.pme_code = 0x1c7097,
 		.pme_short_desc = "Marked data loaded from L2.5 shared",
 		.pme_long_desc = "The processor's Data Cache was reloaded with shared  (T or SL) data from the L2 of a chip on the same module as this processor is located due to a marked load.",
 		.pme_event_ids = { 270, -1, -1, -1, -1, -1 },
@@ -3291,6 +3588,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L3SA_HIT 297
 	[ POWER5p_PME_PM_L3SA_HIT ] = {
 		.pme_name = "PM_L3SA_HIT",
+		.pme_code = 0x711c3,
 		.pme_short_desc = "L3 slice A hits",
 		.pme_long_desc = "Number of attempts made by this chip cores that resulted in an L3 hit.  Reported per L3 slice",
 		.pme_event_ids = { 178, 175, 174, 173, -1, -1 },
@@ -3302,6 +3600,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_L35_SHR 298
 	[ POWER5p_PME_PM_MRK_DATA_FROM_L35_SHR ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L35_SHR",
+		.pme_code = 0x1c709e,
 		.pme_short_desc = "Marked data loaded from L3.5 shared",
 		.pme_long_desc = "The processor's Data Cache was reloaded with shared (S) data from the L3 of a chip on the same module as this processor is located due to a marked load.",
 		.pme_event_ids = { 273, -1, -1, -1, -1, -1 },
@@ -3313,6 +3612,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SB_RCST_DISP_FAIL_ADDR 299
 	[ POWER5p_PME_PM_L2SB_RCST_DISP_FAIL_ADDR ] = {
 		.pme_name = "PM_L2SB_RCST_DISP_FAIL_ADDR",
+		.pme_code = 0x712c1,
 		.pme_short_desc = "L2 slice B RC store dispatch attempt failed due to address collision with RC/CO/SN/SQ",
 		.pme_long_desc = "A Read/Claim dispatch for a store failed because of an address conflict.  Two RC machines will never both work on the same line or line in the same congruence class at the same time.",
 		.pme_event_ids = { 151, 148, 147, 146, -1, -1 },
@@ -3324,6 +3624,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_IERAT_XLATE_WR 300
 	[ POWER5p_PME_PM_IERAT_XLATE_WR ] = {
 		.pme_name = "PM_IERAT_XLATE_WR",
+		.pme_code = 0x220e7,
 		.pme_short_desc = "Translation written to ierat",
 		.pme_long_desc = "An entry was written into the IERAT as a result of an IERAT miss.  This event can be used to count IERAT misses.  An ERAT miss that are later ignored will not be counted unless the ERAT is written before the instruction stream is changed.",
 		.pme_event_ids = { 113, 111, 110, 110, -1, -1 },
@@ -3335,6 +3636,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SA_ST_REQ 301
 	[ POWER5p_PME_PM_L2SA_ST_REQ ] = {
 		.pme_name = "PM_L2SA_ST_REQ",
+		.pme_code = 0x723e0,
 		.pme_short_desc = "L2 slice A store requests",
 		.pme_long_desc = "A store request as seen at the L2 directory has been made from the core. Stores are counted after gathering in the L2 store queues. The event is provided on each of the three slices A, B, and C.",
 		.pme_event_ids = { 143, 140, 139, 138, -1, -1 },
@@ -3346,6 +3648,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_INST_FROM_LMEM 302
 	[ POWER5p_PME_PM_INST_FROM_LMEM ] = {
 		.pme_name = "PM_INST_FROM_LMEM",
+		.pme_code = 0x222086,
 		.pme_short_desc = "Instruction fetched from local memory",
 		.pme_long_desc = "An instruction fetch group was fetched from memory attached to the same module this proccessor is located on.  Fetch groups can contain up to 8 instructions",
 		.pme_event_ids = { -1, 119, -1, -1, -1, -1 },
@@ -3357,6 +3660,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_SEL_T1 303
 	[ POWER5p_PME_PM_THRD_SEL_T1 ] = {
 		.pme_name = "PM_THRD_SEL_T1",
+		.pme_code = 0x410c1,
 		.pme_short_desc = "Decode selected thread 1",
 		.pme_long_desc = "Thread selection picked thread 1 for decode.",
 		.pme_event_ids = { 353, 348, 346, 342, -1, -1 },
@@ -3368,6 +3672,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_IC_DEMAND_L2_BR_REDIRECT 304
 	[ POWER5p_PME_PM_IC_DEMAND_L2_BR_REDIRECT ] = {
 		.pme_name = "PM_IC_DEMAND_L2_BR_REDIRECT",
+		.pme_code = 0x230e1,
 		.pme_short_desc = "L2 I cache demand request due to branch redirect",
 		.pme_long_desc = "A demand (not prefetch) miss to the instruction cache was sent to the L2 as a result of a branch prediction redirect (either ALL mispredicted or Target).",
 		.pme_event_ids = { 111, 109, 107, 107, -1, -1 },
@@ -3379,6 +3684,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_L35_SHR_CYC 305
 	[ POWER5p_PME_PM_MRK_DATA_FROM_L35_SHR_CYC ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L35_SHR_CYC",
+		.pme_code = 0x2c70a6,
 		.pme_short_desc = "Marked load latency from L3.5 shared",
 		.pme_long_desc = "Cycles a marked load waited for data from this level of the storage system.  Counting begins when a marked load misses the data cache and ends when the data is reloaded into the data cache.  To calculate average latency divide this count by the number of marked misses to the same level.",
 		.pme_event_ids = { -1, 274, -1, -1, -1, -1 },
@@ -3390,6 +3696,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU0_1FLOP 306
 	[ POWER5p_PME_PM_FPU0_1FLOP ] = {
 		.pme_name = "PM_FPU0_1FLOP",
+		.pme_code = 0xc3,
 		.pme_short_desc = "FPU0 executed add",
 		.pme_long_desc = " mult",
 		.pme_event_ids = { 58, 57, 57, 59, -1, -1 },
@@ -3401,6 +3708,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_PTEG_FROM_L2 307
 	[ POWER5p_PME_PM_PTEG_FROM_L2 ] = {
 		.pme_name = "PM_PTEG_FROM_L2",
+		.pme_code = 0x183087,
 		.pme_short_desc = "PTEG loaded from L2",
 		.pme_long_desc = "A Page Table Entry was loaded into the TLB from the local L2 due to a demand load",
 		.pme_event_ids = { 304, -1, -1, -1, -1, -1 },
@@ -3412,6 +3720,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MEM_PW_CMPL 308
 	[ POWER5p_PME_PM_MEM_PW_CMPL ] = {
 		.pme_name = "PM_MEM_PW_CMPL",
+		.pme_code = 0x724e6,
 		.pme_short_desc = "Memory partial-write completed",
 		.pme_long_desc = "Number of Partial Writes completed.   This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 258, 257, 253, 252, -1, -1 },
@@ -3423,6 +3732,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_PRIO_DIFF_minus5or6_CYC 309
 	[ POWER5p_PME_PM_THRD_PRIO_DIFF_minus5or6_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_DIFF_minus5or6_CYC",
+		.pme_code = 0x430e0,
 		.pme_short_desc = "Cycles thread priority difference is -5 or -6",
 		.pme_long_desc = "Cycles when this thread's priority is lower than the other thread's priority by 5 or 6.",
 		.pme_event_ids = { 347, 342, 340, 336, -1, -1 },
@@ -3434,6 +3744,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SB_RCLD_DISP_FAIL_OTHER 310
 	[ POWER5p_PME_PM_L2SB_RCLD_DISP_FAIL_OTHER ] = {
 		.pme_name = "PM_L2SB_RCLD_DISP_FAIL_OTHER",
+		.pme_code = 0x731e1,
 		.pme_short_desc = "L2 slice B RC load dispatch attempt failed due to other reasons",
 		.pme_long_desc = "A Read/Claim dispatch for a load failed for some reason other than Full or Collision conditions.",
 		.pme_event_ids = { 148, 145, 144, 143, -1, -1 },
@@ -3445,6 +3756,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DTLB_MISS_4K 311
 	[ POWER5p_PME_PM_MRK_DTLB_MISS_4K ] = {
 		.pme_name = "PM_MRK_DTLB_MISS_4K",
+		.pme_code = 0x1c608d,
 		.pme_short_desc = "Marked Data TLB misses for 4K page",
 		.pme_long_desc = "Data TLB references to 4KB pages by a marked instruction that missed the TLB. Page size is determined at TLB reload time.",
 		.pme_event_ids = { 278, -1, -1, -1, -1, -1 },
@@ -3456,6 +3768,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU0_FIN 312
 	[ POWER5p_PME_PM_FPU0_FIN ] = {
 		.pme_name = "PM_FPU0_FIN",
+		.pme_code = 0x10c3,
 		.pme_short_desc = "FPU0 produced a result",
 		.pme_long_desc = "FPU0 finished, produced a result.  This only indicates finish,  not completion. Floating Point Stores are included in this count but not Floating Point Loads.",
 		.pme_event_ids = { 62, 61, 61, 63, -1, -1 },
@@ -3467,6 +3780,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L3SC_SHR_INV 313
 	[ POWER5p_PME_PM_L3SC_SHR_INV ] = {
 		.pme_name = "PM_L3SC_SHR_INV",
+		.pme_code = 0x710c5,
 		.pme_short_desc = "L3 slice C transition from shared to invalid",
 		.pme_long_desc = "L3 snooper detects someone doing a store to a line that is Sx in this L3(i.e. invalidate hit SX and dispatched).",
 		.pme_event_ids = { 196, 193, 192, 191, -1, -1 },
@@ -3478,6 +3792,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_GRP_BR_REDIR 314
 	[ POWER5p_PME_PM_GRP_BR_REDIR ] = {
 		.pme_name = "PM_GRP_BR_REDIR",
+		.pme_code = 0x120e6,
 		.pme_short_desc = "Group experienced branch redirect",
 		.pme_long_desc = "Number of groups, counted at dispatch, that have encountered a branch redirect.  Every group constructed from a fetch group that has been redirected will count.",
 		.pme_event_ids = { 101, 100, 98, 100, -1, -1 },
@@ -3489,6 +3804,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SC_RCLD_DISP_FAIL_RC_FULL 315
 	[ POWER5p_PME_PM_L2SC_RCLD_DISP_FAIL_RC_FULL ] = {
 		.pme_name = "PM_L2SC_RCLD_DISP_FAIL_RC_FULL",
+		.pme_code = 0x721e2,
 		.pme_short_desc = "L2 slice C RC load dispatch attempt failed due to all RC full",
 		.pme_long_desc = "A Read/Claim dispatch for a load failed because all RC machines are busy.",
 		.pme_event_ids = { 165, 162, 161, 160, -1, -1 },
@@ -3500,6 +3816,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_LSU_FLUSH_SRQ 316
 	[ POWER5p_PME_PM_MRK_LSU_FLUSH_SRQ ] = {
 		.pme_name = "PM_MRK_LSU_FLUSH_SRQ",
+		.pme_code = 0x481088,
 		.pme_short_desc = "Marked SRQ lhs flushes",
 		.pme_long_desc = "A marked store was flushed because younger load hits and older store that is already in the SRQ or in the same group.",
 		.pme_event_ids = { -1, -1, -1, 294, -1, -1 },
@@ -3511,6 +3828,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_PTEG_FROM_L275_SHR 317
 	[ POWER5p_PME_PM_PTEG_FROM_L275_SHR ] = {
 		.pme_name = "PM_PTEG_FROM_L275_SHR",
+		.pme_code = 0x383097,
 		.pme_short_desc = "PTEG loaded from L2.75 shared",
 		.pme_long_desc = "A Page Table Entry was loaded into the TLB with shared (T) data from the L2 on a different module than this processor is located due to a demand load.",
 		.pme_event_ids = { -1, -1, 299, -1, -1, -1 },
@@ -3522,6 +3840,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SB_RCLD_DISP_FAIL_RC_FULL 318
 	[ POWER5p_PME_PM_L2SB_RCLD_DISP_FAIL_RC_FULL ] = {
 		.pme_name = "PM_L2SB_RCLD_DISP_FAIL_RC_FULL",
+		.pme_code = 0x721e1,
 		.pme_short_desc = "L2 slice B RC load dispatch attempt failed due to all RC full",
 		.pme_long_desc = "A Read/Claim dispatch for a load failed because all RC machines are busy.",
 		.pme_event_ids = { 149, 146, 145, 144, -1, -1 },
@@ -3533,6 +3852,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_SNOOP_RD_RETRY_WQ 319
 	[ POWER5p_PME_PM_SNOOP_RD_RETRY_WQ ] = {
 		.pme_name = "PM_SNOOP_RD_RETRY_WQ",
+		.pme_code = 0x715c6,
 		.pme_short_desc = "Snoop read retry due to collision with active write queue",
 		.pme_long_desc = "A snoop request for a read from memory was retried because it matched the cache line of an active write. The snoop request is retried and the active write is changed to high priority.  This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 319, 314, 312, 310, -1, -1 },
@@ -3544,6 +3864,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FAB_DCLAIM_RETRIED 320
 	[ POWER5p_PME_PM_FAB_DCLAIM_RETRIED ] = {
 		.pme_name = "PM_FAB_DCLAIM_RETRIED",
+		.pme_code = 0x730e7,
 		.pme_short_desc = "dclaim retried",
 		.pme_long_desc = "A DCLAIM command was retried.  Each chip reports its own counts.  The signal is delivered at FBC speed and the count must be scaled accordingly.",
 		.pme_event_ids = { 40, 39, 39, 41, -1, -1 },
@@ -3555,6 +3876,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU0_NCLD 321
 	[ POWER5p_PME_PM_LSU0_NCLD ] = {
 		.pme_name = "PM_LSU0_NCLD",
+		.pme_code = 0xc50c1,
 		.pme_short_desc = "LSU0 non-cacheable loads",
 		.pme_long_desc = "A non-cacheable load was executed by unit 0.",
 		.pme_event_ids = { 212, 208, 208, 207, -1, -1 },
@@ -3566,6 +3888,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU1_BUSY_REJECT 322
 	[ POWER5p_PME_PM_LSU1_BUSY_REJECT ] = {
 		.pme_name = "PM_LSU1_BUSY_REJECT",
+		.pme_code = 0xc20e5,
 		.pme_short_desc = "LSU1 busy due to reject",
 		.pme_long_desc = "Total cycles the Load Store Unit 1 is busy rejecting instructions.",
 		.pme_event_ids = { 218, 214, 214, 213, -1, -1 },
@@ -3577,6 +3900,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FXLS0_FULL_CYC 323
 	[ POWER5p_PME_PM_FXLS0_FULL_CYC ] = {
 		.pme_name = "PM_FXLS0_FULL_CYC",
+		.pme_code = 0x110c0,
 		.pme_short_desc = "Cycles FXU0/LS0 queue full",
 		.pme_long_desc = "The issue queue that feeds the Fixed Point unit 0 / Load Store Unit 0 is full. This condition will prevent dispatch groups from being dispatched.  This event only indicates that the queue was full, not that dispatch was prevented.",
 		.pme_event_ids = { 91, 89, 88, 91, -1, -1 },
@@ -3588,6 +3912,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DTLB_REF_16M 324
 	[ POWER5p_PME_PM_DTLB_REF_16M ] = {
 		.pme_name = "PM_DTLB_REF_16M",
+		.pme_code = 0x3c2086,
 		.pme_short_desc = "Data TLB reference for 16M page",
 		.pme_long_desc = "Data TLB references for 16MB pages. Includes hits + misses.",
 		.pme_event_ids = { -1, -1, 33, -1, -1, -1 },
@@ -3599,6 +3924,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU0_FEST 325
 	[ POWER5p_PME_PM_FPU0_FEST ] = {
 		.pme_name = "PM_FPU0_FEST",
+		.pme_code = 0x10c2,
 		.pme_short_desc = "FPU0 executed FEST instruction",
 		.pme_long_desc = "FPU0 has executed an estimate instructions. This could be fres* or frsqrte* where XYZ* means XYZ or XYZ.",
 		.pme_event_ids = { 61, 60, 60, 62, -1, -1 },
@@ -3610,6 +3936,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_GCT_USAGE_60to79_CYC 326
 	[ POWER5p_PME_PM_GCT_USAGE_60to79_CYC ] = {
 		.pme_name = "PM_GCT_USAGE_60to79_CYC",
+		.pme_code = 0x20001f,
 		.pme_short_desc = "Cycles GCT 60-79% full",
 		.pme_long_desc = "Cycles when the Global Completion Table has between 60% and 70% of its slots used.  The GCT has 20 entries shared between threads.",
 		.pme_event_ids = { -1, 98, -1, -1, -1, -1 },
@@ -3621,6 +3948,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DATA_FROM_L25_MOD 327
 	[ POWER5p_PME_PM_DATA_FROM_L25_MOD ] = {
 		.pme_name = "PM_DATA_FROM_L25_MOD",
+		.pme_code = 0x2c3097,
 		.pme_short_desc = "Data loaded from L2.5 modified",
 		.pme_long_desc = "The processor's Data Cache was reloaded with modified (M) data from the L2 of a chip on the same module as this processor is located due to a demand load.",
 		.pme_event_ids = { -1, 21, 17, -1, -1, -1 },
@@ -3632,6 +3960,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SC_RCLD_DISP_FAIL_ADDR 328
 	[ POWER5p_PME_PM_L2SC_RCLD_DISP_FAIL_ADDR ] = {
 		.pme_name = "PM_L2SC_RCLD_DISP_FAIL_ADDR",
+		.pme_code = 0x711c2,
 		.pme_short_desc = "L2 slice C RC load dispatch attempt failed due to address collision with RC/CO/SN/SQ",
 		.pme_long_desc = "A Read/Claim dispatch for a load failed because of an address conflict.  Two RC machines will never both work on the same line or line in the same congruence class at the same time.",
 		.pme_event_ids = { 163, 160, 159, 158, -1, -1 },
@@ -3643,6 +3972,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU0_REJECT_ERAT_MISS 329
 	[ POWER5p_PME_PM_LSU0_REJECT_ERAT_MISS ] = {
 		.pme_name = "PM_LSU0_REJECT_ERAT_MISS",
+		.pme_code = 0xc40c3,
 		.pme_short_desc = "LSU0 reject due to ERAT miss",
 		.pme_long_desc = "Total cycles the Load Store Unit 0 is busy rejecting instructions due to an ERAT miss.  Requests that miss the Derat are rejected and retried until the request hits in the Erat.",
 		.pme_event_ids = { 213, 209, 209, 208, -1, -1 },
@@ -3654,6 +3984,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DATA_FROM_L375_MOD 330
 	[ POWER5p_PME_PM_DATA_FROM_L375_MOD ] = {
 		.pme_name = "PM_DATA_FROM_L375_MOD",
+		.pme_code = 0x1c30a7,
 		.pme_short_desc = "Data loaded from L3.75 modified",
 		.pme_long_desc = "The processor's Data Cache was reloaded with modified (M) data from the L3 of a chip on the same module as this processor is located due to a demand load.",
 		.pme_event_ids = { 23, -1, -1, 23, -1, -1 },
@@ -3665,6 +3996,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_LMQ_SRQ_EMPTY_CYC 331
 	[ POWER5p_PME_PM_LSU_LMQ_SRQ_EMPTY_CYC ] = {
 		.pme_name = "PM_LSU_LMQ_SRQ_EMPTY_CYC",
+		.pme_code = 0x200015,
 		.pme_short_desc = "Cycles LMQ and SRQ empty",
 		.pme_long_desc = "Cycles when both the LMQ and SRQ are empty (LSU is idle)",
 		.pme_event_ids = { -1, 238, 236, -1, -1, -1 },
@@ -3676,6 +4008,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DTLB_MISS_64K 332
 	[ POWER5p_PME_PM_DTLB_MISS_64K ] = {
 		.pme_name = "PM_DTLB_MISS_64K",
+		.pme_code = 0x2c208d,
 		.pme_short_desc = "Data TLB miss for 64K page",
 		.pme_long_desc = "Data TLB references to 64KB pages that missed the TLB. Page size is determined at TLB reload time.",
 		.pme_event_ids = { -1, 31, -1, -1, -1, -1 },
@@ -3687,6 +4020,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU0_REJECT_RELOAD_CDF 333
 	[ POWER5p_PME_PM_LSU0_REJECT_RELOAD_CDF ] = {
 		.pme_name = "PM_LSU0_REJECT_RELOAD_CDF",
+		.pme_code = 0xc40c2,
 		.pme_short_desc = "LSU0 reject due to reload CDF or tag update collision",
 		.pme_long_desc = "Total cycles the Load Store Unit 0 is busy rejecting instructions because of Critical Data Forward.  When critical data arrives from the storage system it is formatted and immediately forwarded, bypassing the data cache, to the destination register using the result bus.  Any instruction the requires the result bus in the same cycle is rejected.  Tag update rejects are caused when an instruction requires access to the Dcache directory or ERAT in the same system when they are being updated.",
 		.pme_event_ids = { 215, 211, 211, 210, -1, -1 },
@@ -3698,6 +4032,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_0INST_FETCH 334
 	[ POWER5p_PME_PM_0INST_FETCH ] = {
 		.pme_name = "PM_0INST_FETCH",
+		.pme_code = 0x42208d,
 		.pme_short_desc = "No instructions fetched",
 		.pme_long_desc = "No instructions were fetched this cycles (due to IFU hold, redirect, or icache miss)",
 		.pme_event_ids = { -1, -1, -1, 1, -1, -1 },
@@ -3709,6 +4044,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU1_REJECT_RELOAD_CDF 335
 	[ POWER5p_PME_PM_LSU1_REJECT_RELOAD_CDF ] = {
 		.pme_name = "PM_LSU1_REJECT_RELOAD_CDF",
+		.pme_code = 0xc40c6,
 		.pme_short_desc = "LSU1 reject due to reload CDF or tag update collision",
 		.pme_long_desc = "Total cycles the Load Store Unit 1 is busy rejecting instructions because of Critical Data Forward.  When critical data arrives from the storage system it is formatted and immediately forwarded, bypassing the data cache, to the destination register using the result bus.  Any instruction the requires the result bus in the same cycle is rejected.  Tag update rejects are caused when an instruction requires access to the Dcache directory or ERAT in the same system when they are being updated.",
 		.pme_event_ids = { 228, 224, 224, 223, -1, -1 },
@@ -3720,6 +4056,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MEM_WQ_DISP_Q0to7 336
 	[ POWER5p_PME_PM_MEM_WQ_DISP_Q0to7 ] = {
 		.pme_name = "PM_MEM_WQ_DISP_Q0to7",
+		.pme_code = 0x723e6,
 		.pme_short_desc = "Memory write queue dispatched to queues 0-7",
 		.pme_long_desc = "A memory operation was dispatched to a write queue in the range between 0 and 7. This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 265, 264, 260, 259, -1, -1 },
@@ -3731,6 +4068,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L1_PREF 337
 	[ POWER5p_PME_PM_L1_PREF ] = {
 		.pme_name = "PM_L1_PREF",
+		.pme_code = 0xc70e7,
 		.pme_short_desc = "L1 cache data prefetches",
 		.pme_long_desc = "A request to prefetch data into the L1 was made",
 		.pme_event_ids = { 126, 123, 122, 121, -1, -1 },
@@ -3742,6 +4080,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_LMEM_CYC 338
 	[ POWER5p_PME_PM_MRK_DATA_FROM_LMEM_CYC ] = {
 		.pme_name = "PM_MRK_DATA_FROM_LMEM_CYC",
+		.pme_code = 0x4c70a0,
 		.pme_short_desc = "Marked load latency from local memory",
 		.pme_long_desc = "Cycles a marked load waited for data from this level of the storage system.  Counting begins when a marked load misses the data cache and ends when the data is reloaded into the data cache.  To calculate average latency divide this count by the number of marked misses to the same level.",
 		.pme_event_ids = { -1, -1, -1, 270, -1, -1 },
@@ -3753,6 +4092,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_BRQ_FULL_CYC 339
 	[ POWER5p_PME_PM_BRQ_FULL_CYC ] = {
 		.pme_name = "PM_BRQ_FULL_CYC",
+		.pme_code = 0x100c5,
 		.pme_short_desc = "Cycles branch queue full",
 		.pme_long_desc = "Cycles when the issue queue that feeds the branch unit is full. This condition will prevent dispatch groups from being dispatched.  This event only indicates that the queue was full, not that dispatch was prevented.",
 		.pme_event_ids = { 8, 7, 7, 8, -1, -1 },
@@ -3764,6 +4104,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_GRP_IC_MISS_NONSPEC 340
 	[ POWER5p_PME_PM_GRP_IC_MISS_NONSPEC ] = {
 		.pme_name = "PM_GRP_IC_MISS_NONSPEC",
+		.pme_code = 0x112099,
 		.pme_short_desc = "Group experienced non-speculative I cache miss",
 		.pme_long_desc = "Number of groups, counted at completion, that have encountered an instruction cache miss.",
 		.pme_event_ids = { 108, -1, -1, -1, -1, -1 },
@@ -3775,6 +4116,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_PTEG_FROM_L275_MOD 341
 	[ POWER5p_PME_PM_PTEG_FROM_L275_MOD ] = {
 		.pme_name = "PM_PTEG_FROM_L275_MOD",
+		.pme_code = 0x1830a3,
 		.pme_short_desc = "PTEG loaded from L2.75 modified",
 		.pme_long_desc = "A Page Table Entry was loaded into the TLB with modified (M) data from the L2 on a different module than this processor is located due to a demand load.",
 		.pme_event_ids = { 306, -1, -1, 300, -1, -1 },
@@ -3786,6 +4128,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_LD_MISS_L1_LSU0 342
 	[ POWER5p_PME_PM_MRK_LD_MISS_L1_LSU0 ] = {
 		.pme_name = "PM_MRK_LD_MISS_L1_LSU0",
+		.pme_code = 0x820e0,
 		.pme_short_desc = "LSU0 marked L1 D cache load misses",
 		.pme_long_desc = "Load references that miss the Level 1 Data cache, by LSU0.",
 		.pme_event_ids = { 286, 286, 280, 283, -1, -1 },
@@ -3797,6 +4140,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_L375_SHR_CYC 343
 	[ POWER5p_PME_PM_MRK_DATA_FROM_L375_SHR_CYC ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L375_SHR_CYC",
+		.pme_code = 0x2c70a7,
 		.pme_short_desc = "Marked load latency from L3.75 shared",
 		.pme_long_desc = "Cycles a marked load waited for data from this level of the storage system.  Counting begins when a marked load misses the data cache and ends when the data is reloaded into the data cache.  To calculate average latency divide this count by the number of marked misses to the same level.",
 		.pme_event_ids = { -1, 275, -1, -1, -1, -1 },
@@ -3808,6 +4152,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DATA_FROM_L3 344
 	[ POWER5p_PME_PM_DATA_FROM_L3 ] = {
 		.pme_name = "PM_DATA_FROM_L3",
+		.pme_code = 0x1c308e,
 		.pme_short_desc = "Data loaded from L3",
 		.pme_long_desc = "The processor's Data Cache was reloaded from the local L3 due to a demand load.",
 		.pme_event_ids = { 21, -1, 20, -1, -1, -1 },
@@ -3819,6 +4164,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_INST_FROM_L2 345
 	[ POWER5p_PME_PM_INST_FROM_L2 ] = {
 		.pme_name = "PM_INST_FROM_L2",
+		.pme_code = 0x122086,
 		.pme_short_desc = "Instruction fetched from L2",
 		.pme_long_desc = "An instruction fetch group was fetched from L2. Fetch Groups can contain up to 8 instructions",
 		.pme_event_ids = { 118, -1, -1, -1, -1, -1 },
@@ -3830,6 +4176,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_FLUSH 346
 	[ POWER5p_PME_PM_LSU_FLUSH ] = {
 		.pme_name = "PM_LSU_FLUSH",
+		.pme_code = 0x110c5,
 		.pme_short_desc = "Flush initiated by LSU",
 		.pme_long_desc = "A flush was initiated by the Load Store Unit",
 		.pme_event_ids = { 231, 229, 228, 226, -1, -1 },
@@ -3841,6 +4188,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_PMC2_OVERFLOW 347
 	[ POWER5p_PME_PM_PMC2_OVERFLOW ] = {
 		.pme_name = "PM_PMC2_OVERFLOW",
+		.pme_code = 0x30000a,
 		.pme_short_desc = "PMC2 Overflow",
 		.pme_long_desc = "Overflows from PMC2 are counted.  This effectively widens the PMC. The Overflow from the original PMC will not trigger an exception even if the PMU is configured to generate exceptions on overflow.",
 		.pme_event_ids = { -1, -1, 296, -1, -1, -1 },
@@ -3852,6 +4200,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU0_DENORM 348
 	[ POWER5p_PME_PM_FPU0_DENORM ] = {
 		.pme_name = "PM_FPU0_DENORM",
+		.pme_code = 0x20e0,
 		.pme_short_desc = "FPU0 received denormalized data",
 		.pme_long_desc = "FPU0 has encountered a denormalized operand.",
 		.pme_event_ids = { 59, 58, 58, 60, -1, -1 },
@@ -3863,6 +4212,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU1_FMOV_FEST 349
 	[ POWER5p_PME_PM_FPU1_FMOV_FEST ] = {
 		.pme_name = "PM_FPU1_FMOV_FEST",
+		.pme_code = 0x10c4,
 		.pme_short_desc = "FPU1 executed FMOV or FEST instructions",
 		.pme_long_desc = "FPU1 has executed a move kind of instruction or one of the estimate instructions.  This could be fmr*, fneg*, fabs*, fnabs* , fres* or frsqrte* where XYZ* means XYZ or XYZ.",
 		.pme_event_ids = { 78, 77, 77, 79, -1, -1 },
@@ -3874,6 +4224,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_INST_FETCH_CYC 350
 	[ POWER5p_PME_PM_INST_FETCH_CYC ] = {
 		.pme_name = "PM_INST_FETCH_CYC",
+		.pme_code = 0x220e4,
 		.pme_short_desc = "Cycles at least 1 instruction fetched",
 		.pme_long_desc = "Cycles when at least one instruction was sent from the fetch unit to the decode unit.",
 		.pme_event_ids = { 117, 115, 114, 114, -1, -1 },
@@ -3885,6 +4236,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_INST_DISP 351
 	[ POWER5p_PME_PM_INST_DISP ] = {
 		.pme_name = "PM_INST_DISP",
+		.pme_code = 0x300009,
 		.pme_short_desc = "Instructions dispatched",
 		.pme_long_desc = "Number of PowerPC instructions successfully dispatched.",
 		.pme_event_ids = { -1, -1, 113, 113, -1, -1 },
@@ -3896,6 +4248,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_LDF 352
 	[ POWER5p_PME_PM_LSU_LDF ] = {
 		.pme_name = "PM_LSU_LDF",
+		.pme_code = 0x1c50a8,
 		.pme_short_desc = "LSU executed Floating Point load instruction",
 		.pme_long_desc = "LSU executed Floating Point load instruction.  Combined Unit 0 + 1.",
 		.pme_event_ids = { 236, -1, -1, 230, -1, -1 },
@@ -3907,6 +4260,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DATA_FROM_L25_SHR 353
 	[ POWER5p_PME_PM_DATA_FROM_L25_SHR ] = {
 		.pme_name = "PM_DATA_FROM_L25_SHR",
+		.pme_code = 0x1c3097,
 		.pme_short_desc = "Data loaded from L2.5 shared",
 		.pme_long_desc = "The processor's Data Cache was reloaded with shared (T or SL) data from the L2 of a chip on the same module as this processor is located due to a demand load.",
 		.pme_event_ids = { 19, -1, -1, -1, -1, -1 },
@@ -3918,6 +4272,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L1_DCACHE_RELOAD_VALID 354
 	[ POWER5p_PME_PM_L1_DCACHE_RELOAD_VALID ] = {
 		.pme_name = "PM_L1_DCACHE_RELOAD_VALID",
+		.pme_code = 0xc30e4,
 		.pme_short_desc = "L1 reload data source valid",
 		.pme_long_desc = "The data source information is valid,the data cache has been reloaded.  Prior to POWER5+ this included data cache reloads due to prefetch activity.  With POWER5+ this now only includes reloads due to demand loads.",
 		.pme_event_ids = { 125, 122, 121, 120, -1, -1 },
@@ -3929,6 +4284,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MEM_WQ_DISP_DCLAIM 355
 	[ POWER5p_PME_PM_MEM_WQ_DISP_DCLAIM ] = {
 		.pme_name = "PM_MEM_WQ_DISP_DCLAIM",
+		.pme_code = 0x713c6,
 		.pme_short_desc = "Memory write queue dispatched due to dclaim/flush",
 		.pme_long_desc = "A memory dclaim or flush operation was dispatched to a write queue. This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 267, 266, 262, 261, -1, -1 },
@@ -3940,6 +4296,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_GRP_ISSUED 356
 	[ POWER5p_PME_PM_MRK_GRP_ISSUED ] = {
 		.pme_name = "PM_MRK_GRP_ISSUED",
+		.pme_code = 0x100015,
 		.pme_short_desc = "Marked group issued",
 		.pme_long_desc = "A sampled instruction was issued.",
 		.pme_event_ids = { 282, -1, -1, -1, -1, -1 },
@@ -3951,6 +4308,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU_FULL_CYC 357
 	[ POWER5p_PME_PM_FPU_FULL_CYC ] = {
 		.pme_name = "PM_FPU_FULL_CYC",
+		.pme_code = 0x110090,
 		.pme_short_desc = "Cycles FPU issue queue full",
 		.pme_long_desc = "Cycles when one or both FPU issue queues are full.  Combined Unit 0 + 1.  Use with caution since this is the sum of cycles when Unit 0 was full plus Unit 1 full.  It does not indicate when both units were full.",
 		.pme_event_ids = { 89, -1, -1, 89, -1, -1 },
@@ -3962,6 +4320,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_INST_FROM_L35_MOD 358
 	[ POWER5p_PME_PM_INST_FROM_L35_MOD ] = {
 		.pme_name = "PM_INST_FROM_L35_MOD",
+		.pme_code = 0x22209d,
 		.pme_short_desc = "Instruction fetched from L3.5 modified",
 		.pme_long_desc = "An instruction fetch group was fetched with modified (M) data from the L3 of a chip on the same module as this processor is located. Fetch groups can contain up to 8 instructions",
 		.pme_event_ids = { -1, 118, -1, -1, -1, -1 },
@@ -3973,6 +4332,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU_FMA 359
 	[ POWER5p_PME_PM_FPU_FMA ] = {
 		.pme_name = "PM_FPU_FMA",
+		.pme_code = 0x200088,
 		.pme_short_desc = "FPU executed multiply-add instruction",
 		.pme_long_desc = "This signal is active for one cycle when FPU is executing multiply-add kind of instruction. This could be fmadd*, fnmadd*, fmsub*, fnmsub* where XYZ* means XYZ, XYZs, XYZ., XYZs. Combined Unit 0 + Unit 1.",
 		.pme_event_ids = { -1, 84, -1, -1, -1, -1 },
@@ -3984,6 +4344,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_PRIO_3_CYC 360
 	[ POWER5p_PME_PM_THRD_PRIO_3_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_3_CYC",
+		.pme_code = 0x420e2,
 		.pme_short_desc = "Cycles thread running at priority level 3",
 		.pme_long_desc = "Cycles this thread was running at priority level 3.",
 		.pme_event_ids = { 336, 331, 329, 325, -1, -1 },
@@ -3995,6 +4356,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_CRU_FIN 361
 	[ POWER5p_PME_PM_MRK_CRU_FIN ] = {
 		.pme_name = "PM_MRK_CRU_FIN",
+		.pme_code = 0x400005,
 		.pme_short_desc = "Marked instruction CRU processing finished",
 		.pme_long_desc = "The Condition Register Unit finished a marked instruction. Instructions that finish may not necessary complete.",
 		.pme_event_ids = { -1, -1, -1, 263, -1, -1 },
@@ -4006,6 +4368,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_SNOOP_WR_RETRY_WQ 362
 	[ POWER5p_PME_PM_SNOOP_WR_RETRY_WQ ] = {
 		.pme_name = "PM_SNOOP_WR_RETRY_WQ",
+		.pme_code = 0x716c6,
 		.pme_short_desc = "Snoop write/dclaim retry due to collision with active write queue",
 		.pme_long_desc = "A snoop request for a write or dclaim to memory was retried because it matched the cache line of an active write.  The snoop request is retried and the active write is changed to high priority.  This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 324, 319, 317, 315, -1, -1 },
@@ -4017,6 +4380,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_CMPLU_STALL_REJECT 363
 	[ POWER5p_PME_PM_CMPLU_STALL_REJECT ] = {
 		.pme_name = "PM_CMPLU_STALL_REJECT",
+		.pme_code = 0x41109a,
 		.pme_short_desc = "Completion stall caused by reject",
 		.pme_long_desc = "Following a completion stall (any period when no groups completed) the last instruction to finish before completion resumes suffered a load/store reject. This is a subset of PM_CMPLU_STALL_LSU.",
 		.pme_event_ids = { -1, -1, -1, 18, -1, -1 },
@@ -4028,6 +4392,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_FXU_FIN 364
 	[ POWER5p_PME_PM_MRK_FXU_FIN ] = {
 		.pme_name = "PM_MRK_FXU_FIN",
+		.pme_code = 0x200014,
 		.pme_short_desc = "Marked instruction FXU processing finished",
 		.pme_long_desc = "One of the Fixed Point Units finished a marked instruction.  Instructions that finish may not necessary complete.",
 		.pme_event_ids = { -1, 94, -1, -1, -1, -1 },
@@ -4039,6 +4404,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU1_REJECT_ERAT_MISS 365
 	[ POWER5p_PME_PM_LSU1_REJECT_ERAT_MISS ] = {
 		.pme_name = "PM_LSU1_REJECT_ERAT_MISS",
+		.pme_code = 0xc40c7,
 		.pme_short_desc = "LSU1 reject due to ERAT miss",
 		.pme_long_desc = "Total cycles the Load Store Unit 1 is busy rejecting instructions due to an ERAT miss.  Requests that miss the Derat are rejected and retried until the request hits in the Erat.",
 		.pme_event_ids = { 226, 222, 222, 221, -1, -1 },
@@ -4050,6 +4416,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SB_RCST_DISP_FAIL_OTHER 366
 	[ POWER5p_PME_PM_L2SB_RCST_DISP_FAIL_OTHER ] = {
 		.pme_name = "PM_L2SB_RCST_DISP_FAIL_OTHER",
+		.pme_code = 0x732e1,
 		.pme_short_desc = "L2 slice B RC store dispatch attempt failed due to other reasons",
 		.pme_long_desc = "A Read/Claim dispatch for a store  failed for some reason other than Full or Collision conditions.  Rejected dispatches do not count because they have not yet been attempted.",
 		.pme_event_ids = { 152, 149, 148, 147, -1, -1 },
@@ -4061,6 +4428,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SC_RC_DISP_FAIL_CO_BUSY 367
 	[ POWER5p_PME_PM_L2SC_RC_DISP_FAIL_CO_BUSY ] = {
 		.pme_name = "PM_L2SC_RC_DISP_FAIL_CO_BUSY",
+		.pme_code = 0x703c2,
 		.pme_short_desc = "L2 slice C RC dispatch attempt failed due to RC/CO pair chosen was miss and CO already busy",
 		.pme_long_desc = "A Read/Claim  Dispatch was rejected at dispatch because the Castout Machine was busy.  In the case of an RC starting up on a miss and the victim is valid, the CO machine must be available for the RC to process the access. If the CO is still busy working on an old castout, then the RC must not-ack the access if it is a miss(re-issued by the CIU). If it is a miss and the CO is available to process the castout, the RC will accept the access. Once the RC has finished, it can restart and process new accesses that result in a hit (or miss that doesn't need a CO) even though the CO is still processing a castout from a previous access.",
 		.pme_event_ids = { 170, 167, 166, 165, -1, -1 },
@@ -4072,6 +4440,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_PMC4_OVERFLOW 368
 	[ POWER5p_PME_PM_PMC4_OVERFLOW ] = {
 		.pme_name = "PM_PMC4_OVERFLOW",
+		.pme_code = 0x10000a,
 		.pme_short_desc = "PMC4 Overflow",
 		.pme_long_desc = "Overflows from PMC4 are counted.  This effectively widens the PMC. The Overflow from the original PMC will not trigger an exception even if the PMU is configured to generate exceptions on overflow.",
 		.pme_event_ids = { 301, -1, -1, -1, -1, -1 },
@@ -4083,6 +4452,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L3SA_SNOOP_RETRY 369
 	[ POWER5p_PME_PM_L3SA_SNOOP_RETRY ] = {
 		.pme_name = "PM_L3SA_SNOOP_RETRY",
+		.pme_code = 0x731e3,
 		.pme_short_desc = "L3 slice A snoop retries",
 		.pme_long_desc = "Number of times an L3 retried a snoop because it got two in at the same time (one on snp_a, one on snp_b)",
 		.pme_event_ids = { 183, 180, 179, 178, -1, -1 },
@@ -4094,6 +4464,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_PTEG_FROM_L35_MOD 370
 	[ POWER5p_PME_PM_PTEG_FROM_L35_MOD ] = {
 		.pme_name = "PM_PTEG_FROM_L35_MOD",
+		.pme_code = 0x28309e,
 		.pme_short_desc = "PTEG loaded from L3.5 modified",
 		.pme_long_desc = "A Page Table Entry was loaded into the TLB with modified (M) data from the L3 of a chip on the same module as this processor is located, due to a demand load.",
 		.pme_event_ids = { -1, 304, 302, -1, -1, -1 },
@@ -4105,6 +4476,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_INST_FROM_L25_MOD 371
 	[ POWER5p_PME_PM_INST_FROM_L25_MOD ] = {
 		.pme_name = "PM_INST_FROM_L25_MOD",
+		.pme_code = 0x222096,
 		.pme_short_desc = "Instruction fetched from L2.5 modified",
 		.pme_long_desc = "An instruction fetch group was fetched with modified (M) data from the L2 of a chip on the same module as this processor is located.  Fetch groups can contain up to 8 instructions.",
 		.pme_event_ids = { -1, 117, -1, -1, -1, -1 },
@@ -4116,6 +4488,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_SMT_HANG 372
 	[ POWER5p_PME_PM_THRD_SMT_HANG ] = {
 		.pme_name = "PM_THRD_SMT_HANG",
+		.pme_code = 0x330e7,
 		.pme_short_desc = "SMT hang detected",
 		.pme_long_desc = "A hung thread was detected",
 		.pme_event_ids = { 354, 349, 347, 343, -1, -1 },
@@ -4127,6 +4500,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_CMPLU_STALL_ERAT_MISS 373
 	[ POWER5p_PME_PM_CMPLU_STALL_ERAT_MISS ] = {
 		.pme_name = "PM_CMPLU_STALL_ERAT_MISS",
+		.pme_code = 0x41109b,
 		.pme_short_desc = "Completion stall caused by ERAT miss",
 		.pme_long_desc = "Following a completion stall (any period when no groups completed) the last instruction to finish before completion resumes suffered an ERAT miss. This is a subset of  PM_CMPLU_STALL_REJECT.",
 		.pme_event_ids = { -1, -1, -1, 16, -1, -1 },
@@ -4138,6 +4512,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L3SA_MOD_TAG 374
 	[ POWER5p_PME_PM_L3SA_MOD_TAG ] = {
 		.pme_name = "PM_L3SA_MOD_TAG",
+		.pme_code = 0x720e3,
 		.pme_short_desc = "L3 slice A transition from modified to TAG",
 		.pme_long_desc = "L3 snooper detects someone doing a read to a line that is truly M in this L3(i.e. L3 going M->T or M->I(go_Mu case) Mu|Me are not included since they are formed due to a prev read op).  Tx is not included since it is considered shared at this point.",
 		.pme_event_ids = { 180, 177, 176, 175, -1, -1 },
@@ -4149,6 +4524,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_INST_FROM_L2MISS 375
 	[ POWER5p_PME_PM_INST_FROM_L2MISS ] = {
 		.pme_name = "PM_INST_FROM_L2MISS",
+		.pme_code = 0x12209b,
 		.pme_short_desc = "Instruction fetched missed L2",
 		.pme_long_desc = "An instruction fetch group was fetched from beyond the local L2.",
 		.pme_event_ids = { 120, -1, -1, -1, -1, -1 },
@@ -4160,6 +4536,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FLUSH_SYNC 376
 	[ POWER5p_PME_PM_FLUSH_SYNC ] = {
 		.pme_name = "PM_FLUSH_SYNC",
+		.pme_code = 0x330e1,
 		.pme_short_desc = "Flush caused by sync",
 		.pme_long_desc = "This thread has been flushed at dispatch due to a sync, lwsync, ptesync, or tlbsync instruction.  This allows the other thread to have more machine resources for it to make progress until the sync finishes.",
 		.pme_event_ids = { 56, 55, 55, 57, -1, -1 },
@@ -4171,6 +4548,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_GRP_DISP 377
 	[ POWER5p_PME_PM_MRK_GRP_DISP ] = {
 		.pme_name = "PM_MRK_GRP_DISP",
+		.pme_code = 0x100002,
 		.pme_short_desc = "Marked group dispatched",
 		.pme_long_desc = "A group containing a sampled instruction was dispatched",
 		.pme_event_ids = { 281, -1, -1, -1, -1, -1 },
@@ -4182,6 +4560,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MEM_RQ_DISP_Q8to11 378
 	[ POWER5p_PME_PM_MEM_RQ_DISP_Q8to11 ] = {
 		.pme_name = "PM_MEM_RQ_DISP_Q8to11",
+		.pme_code = 0x722e6,
 		.pme_short_desc = "Memory read queue dispatched to queues 8-11",
 		.pme_long_desc = "A memory operation was dispatched to read queue 8,9,10 or 11. This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 263, 261, 247, 349, -1, -1 },
@@ -4193,6 +4572,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SC_ST_HIT 379
 	[ POWER5p_PME_PM_L2SC_ST_HIT ] = {
 		.pme_name = "PM_L2SC_ST_HIT",
+		.pme_code = 0x733e2,
 		.pme_short_desc = "L2 slice C store hits",
 		.pme_long_desc = "A store request made from the core hit in the L2 directory.  The event is provided on each of the  three slices A, B, and C.",
 		.pme_event_ids = { 174, 171, 170, 169, -1, -1 },
@@ -4204,6 +4584,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SB_MOD_TAG 380
 	[ POWER5p_PME_PM_L2SB_MOD_TAG ] = {
 		.pme_name = "PM_L2SB_MOD_TAG",
+		.pme_code = 0x720e1,
 		.pme_short_desc = "L2 slice B transition from modified to tagged",
 		.pme_long_desc = "A cache line in the local L2 directory made a state transition from the Modified state to the Tagged state. This transition was caused by a read snoop request that hit against a modified entry in the local L2. The event is provided on each of the three slices A, B, and C.",
 		.pme_event_ids = { 145, 142, 141, 140, -1, -1 },
@@ -4215,6 +4596,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_CLB_EMPTY_CYC 381
 	[ POWER5p_PME_PM_CLB_EMPTY_CYC ] = {
 		.pme_name = "PM_CLB_EMPTY_CYC",
+		.pme_code = 0x410c6,
 		.pme_short_desc = "Cycles CLB empty",
 		.pme_long_desc = "Cycles when both thread's CLB is completely empty.",
 		.pme_event_ids = { 13, 12, 12, 13, -1, -1 },
@@ -4226,6 +4608,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SB_ST_HIT 382
 	[ POWER5p_PME_PM_L2SB_ST_HIT ] = {
 		.pme_name = "PM_L2SB_ST_HIT",
+		.pme_code = 0x733e1,
 		.pme_short_desc = "L2 slice B store hits",
 		.pme_long_desc = "A store request made from the core hit in the L2 directory.  This event is provided on each of the three L2 slices A, B and C.",
 		.pme_event_ids = { 158, 155, 154, 153, -1, -1 },
@@ -4237,6 +4620,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MEM_NONSPEC_RD_CANCEL 383
 	[ POWER5p_PME_PM_MEM_NONSPEC_RD_CANCEL ] = {
 		.pme_name = "PM_MEM_NONSPEC_RD_CANCEL",
+		.pme_code = 0x711c6,
 		.pme_short_desc = "Non speculative memory read cancelled",
 		.pme_long_desc = "A non-speculative read was cancelled because the combined response indicated it was sourced from aother L2 or L3.   This event is sent from the Memory Controller clock domain and must be scaled accordingly",
 		.pme_event_ids = { 254, 253, 249, 351, -1, -1 },
@@ -4248,6 +4632,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_BR_PRED_CR_TA 384
 	[ POWER5p_PME_PM_BR_PRED_CR_TA ] = {
 		.pme_name = "PM_BR_PRED_CR_TA",
+		.pme_code = 0x423087,
 		.pme_short_desc = "A conditional branch was predicted",
 		.pme_long_desc = " CR and target prediction",
 		.pme_event_ids = { -1, -1, -1, 12, -1, -1 },
@@ -4259,6 +4644,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_LSU0_FLUSH_SRQ 385
 	[ POWER5p_PME_PM_MRK_LSU0_FLUSH_SRQ ] = {
 		.pme_name = "PM_MRK_LSU0_FLUSH_SRQ",
+		.pme_code = 0x810c3,
 		.pme_short_desc = "LSU0 marked SRQ lhs flushes",
 		.pme_long_desc = "A marked store was flushed because younger load hits and older store that is already in the SRQ or in the same group.",
 		.pme_event_ids = { 289, 289, 283, 286, -1, -1 },
@@ -4270,6 +4656,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_LSU_FLUSH_ULD 386
 	[ POWER5p_PME_PM_MRK_LSU_FLUSH_ULD ] = {
 		.pme_name = "PM_MRK_LSU_FLUSH_ULD",
+		.pme_code = 0x1810a8,
 		.pme_short_desc = "Marked unaligned load flushes",
 		.pme_long_desc = "A marked load was flushed because it was unaligned (crossed a 64byte boundary, or 32 byte if it missed the L1)",
 		.pme_event_ids = { 296, -1, -1, 295, -1, -1 },
@@ -4281,6 +4668,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_INST_DISP_ATTEMPT 387
 	[ POWER5p_PME_PM_INST_DISP_ATTEMPT ] = {
 		.pme_name = "PM_INST_DISP_ATTEMPT",
+		.pme_code = 0x120e1,
 		.pme_short_desc = "Instructions dispatch attempted",
 		.pme_long_desc = "Number of PowerPC Instructions dispatched (attempted, not filtered by success.",
 		.pme_event_ids = { 116, 114, 354, 254, -1, -1 },
@@ -4292,6 +4680,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_INST_FROM_RMEM 388
 	[ POWER5p_PME_PM_INST_FROM_RMEM ] = {
 		.pme_name = "PM_INST_FROM_RMEM",
+		.pme_code = 0x422086,
 		.pme_short_desc = "Instruction fetched from remote memory",
 		.pme_long_desc = "An instruction fetch group was fetched from memory attached to a different module than this proccessor is located on.  Fetch groups can contain up to 8 instructions",
 		.pme_event_ids = { -1, -1, -1, 117, -1, -1 },
@@ -4303,6 +4692,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_ST_REF_L1_LSU0 389
 	[ POWER5p_PME_PM_ST_REF_L1_LSU0 ] = {
 		.pme_name = "PM_ST_REF_L1_LSU0",
+		.pme_code = 0xc10c1,
 		.pme_short_desc = "LSU0 L1 D cache store references",
 		.pme_long_desc = "Store references to the Data Cache by LSU0.",
 		.pme_event_ids = { 328, 324, 323, 319, -1, -1 },
@@ -4314,6 +4704,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU0_DERAT_MISS 390
 	[ POWER5p_PME_PM_LSU0_DERAT_MISS ] = {
 		.pme_name = "PM_LSU0_DERAT_MISS",
+		.pme_code = 0x800c2,
 		.pme_short_desc = "LSU0 DERAT misses",
 		.pme_long_desc = "Total D-ERAT Misses by LSU0.   Requests that miss the Derat are rejected and retried until the request hits in the Erat. This may result in multiple erat misses for the same instruction.",
 		.pme_event_ids = { 206, 202, 202, 201, -1, -1 },
@@ -4325,6 +4716,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU_STALL3 391
 	[ POWER5p_PME_PM_FPU_STALL3 ] = {
 		.pme_name = "PM_FPU_STALL3",
+		.pme_code = 0x202088,
 		.pme_short_desc = "FPU stalled in pipe3",
 		.pme_long_desc = "FPU has generated a stall in pipe3 due to overflow, underflow, massive cancel, convert to integer (sometimes), or convert from integer (always). This signal is active during the entire duration of the stall. Combined Unit 0 + Unit 1.",
 		.pme_event_ids = { -1, 87, -1, -1, -1, -1 },
@@ -4336,6 +4728,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SB_RCLD_DISP 392
 	[ POWER5p_PME_PM_L2SB_RCLD_DISP ] = {
 		.pme_name = "PM_L2SB_RCLD_DISP",
+		.pme_code = 0x701c1,
 		.pme_short_desc = "L2 slice B RC load dispatch attempt",
 		.pme_long_desc = "A Read/Claim dispatch for a Load was attempted",
 		.pme_event_ids = { 146, 143, 142, 141, -1, -1 },
@@ -4347,6 +4740,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_BR_PRED_CR 393
 	[ POWER5p_PME_PM_BR_PRED_CR ] = {
 		.pme_name = "PM_BR_PRED_CR",
+		.pme_code = 0x230e2,
 		.pme_short_desc = "A conditional branch was predicted",
 		.pme_long_desc = " CR prediction",
 		.pme_event_ids = { 358, 352, 11, 347, -1, -1 },
@@ -4358,6 +4752,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_L2 394
 	[ POWER5p_PME_PM_MRK_DATA_FROM_L2 ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L2",
+		.pme_code = 0x1c7087,
 		.pme_short_desc = "Marked data loaded from L2",
 		.pme_long_desc = "The processor's Data Cache was reloaded from the local L2 due to a marked load.",
 		.pme_event_ids = { 269, -1, -1, -1, -1, -1 },
@@ -4369,6 +4764,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU0_FLUSH_SRQ 395
 	[ POWER5p_PME_PM_LSU0_FLUSH_SRQ ] = {
 		.pme_name = "PM_LSU0_FLUSH_SRQ",
+		.pme_code = 0xc00c3,
 		.pme_short_desc = "LSU0 SRQ lhs flushes",
 		.pme_long_desc = "A store was flushed by unit 0 because younger load hits and older store that is already in the SRQ or in the same group.",
 		.pme_event_ids = { 208, 204, 204, 203, -1, -1 },
@@ -4380,6 +4776,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FAB_PNtoNN_DIRECT 396
 	[ POWER5p_PME_PM_FAB_PNtoNN_DIRECT ] = {
 		.pme_name = "PM_FAB_PNtoNN_DIRECT",
+		.pme_code = 0x703c7,
 		.pme_short_desc = "PN to NN beat went straight to its destination",
 		.pme_long_desc = "Fabric Data beats that the base chip takes the inbound PN data and passes it through to the outbound NN bus without going into a sidecar. The signal is delivered at FBC speed and the count must be scaled.",
 		.pme_event_ids = { 47, 46, 46, 48, -1, -1 },
@@ -4391,6 +4788,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_IOPS_CMPL 397
 	[ POWER5p_PME_PM_IOPS_CMPL ] = {
 		.pme_name = "PM_IOPS_CMPL",
+		.pme_code = 0x1,
 		.pme_short_desc = "Internal operations completed",
 		.pme_long_desc = "Number of internal operations that completed.",
 		.pme_event_ids = { 115, 113, 112, 112, -1, -1 },
@@ -4402,6 +4800,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SA_RCST_DISP 398
 	[ POWER5p_PME_PM_L2SA_RCST_DISP ] = {
 		.pme_name = "PM_L2SA_RCST_DISP",
+		.pme_code = 0x702c0,
 		.pme_short_desc = "L2 slice A RC store dispatch attempt",
 		.pme_long_desc = "A Read/Claim dispatch for a Store was attempted.",
 		.pme_event_ids = { 134, 131, 130, 129, -1, -1 },
@@ -4413,6 +4812,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SA_RCST_DISP_FAIL_OTHER 399
 	[ POWER5p_PME_PM_L2SA_RCST_DISP_FAIL_OTHER ] = {
 		.pme_name = "PM_L2SA_RCST_DISP_FAIL_OTHER",
+		.pme_code = 0x732e0,
 		.pme_short_desc = "L2 slice A RC store dispatch attempt failed due to other reasons",
 		.pme_long_desc = "A Read/Claim dispatch for a store failed for some reason other than Full or Collision conditions.  Rejected dispatches do not count because they have not yet been attempted.",
 		.pme_event_ids = { 136, 133, 132, 131, -1, -1 },
@@ -4424,6 +4824,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SC_SHR_INV 400
 	[ POWER5p_PME_PM_L2SC_SHR_INV ] = {
 		.pme_name = "PM_L2SC_SHR_INV",
+		.pme_code = 0x710c2,
 		.pme_short_desc = "L2 slice C transition from shared to invalid",
 		.pme_long_desc = "A cache line in the local L2 directory made a state transition from Shared (Shared, Shared L, or Tagged) to the Invalid state. This transition was caused by any external snoop request. The event is provided on each of the three slices A, B, and C. NOTE: For this event to be useful the tablewalk duration event should also be counted.",
 		.pme_event_ids = { 172, 169, 168, 167, -1, -1 },
@@ -4435,6 +4836,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_SNOOP_RETRY_AB_COLLISION 401
 	[ POWER5p_PME_PM_SNOOP_RETRY_AB_COLLISION ] = {
 		.pme_name = "PM_SNOOP_RETRY_AB_COLLISION",
+		.pme_code = 0x735e6,
 		.pme_short_desc = "Snoop retry due to a b collision",
 		.pme_long_desc = "Snoop retry due to a b collision",
 		.pme_event_ids = { 361, 355, 353, 350, -1, -1 },
@@ -4446,6 +4848,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FAB_PNtoVN_SIDECAR 402
 	[ POWER5p_PME_PM_FAB_PNtoVN_SIDECAR ] = {
 		.pme_name = "PM_FAB_PNtoVN_SIDECAR",
+		.pme_code = 0x733e7,
 		.pme_short_desc = "PN to VN beat went to sidecar first",
 		.pme_long_desc = "Fabric data beats that the base chip takes the inbound PN data and forwards it on to the outbound VN data bus after going into a sidecar first. The signal is delivered at FBC speed and the count must be scaled accordingly.",
 		.pme_event_ids = { 50, 49, 49, 51, -1, -1 },
@@ -4457,6 +4860,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU0_REJECT_LMQ_FULL 403
 	[ POWER5p_PME_PM_LSU0_REJECT_LMQ_FULL ] = {
 		.pme_name = "PM_LSU0_REJECT_LMQ_FULL",
+		.pme_code = 0xc40c1,
 		.pme_short_desc = "LSU0 reject due to LMQ full or missed data coming",
 		.pme_long_desc = "Total cycles the Load Store Unit 0 is busy rejecting instructions because the Load Miss Queue was full. The LMQ has eight entries.  If all eight entries are full, subsequent load instructions are rejected.",
 		.pme_event_ids = { 214, 210, 210, 209, -1, -1 },
@@ -4468,6 +4872,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_LMQ_S0_ALLOC 404
 	[ POWER5p_PME_PM_LSU_LMQ_S0_ALLOC ] = {
 		.pme_name = "PM_LSU_LMQ_S0_ALLOC",
+		.pme_code = 0xc30e6,
 		.pme_short_desc = "LMQ slot 0 allocated",
 		.pme_long_desc = "The first entry in the LMQ was allocated.",
 		.pme_event_ids = { 239, 236, 234, 233, -1, -1 },
@@ -4479,6 +4884,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_SNOOP_PW_RETRY_RQ 405
 	[ POWER5p_PME_PM_SNOOP_PW_RETRY_RQ ] = {
 		.pme_name = "PM_SNOOP_PW_RETRY_RQ",
+		.pme_code = 0x707c6,
 		.pme_short_desc = "Snoop partial-write retry due to collision with active read queue",
 		.pme_long_desc = "A snoop request for a partial write to memory was retried because it matched the cache line of an active read.  This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 315, 310, 308, 306, -1, -1 },
@@ -4490,6 +4896,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DTLB_REF 406
 	[ POWER5p_PME_PM_DTLB_REF ] = {
 		.pme_name = "PM_DTLB_REF",
+		.pme_code = 0xc20e4,
 		.pme_short_desc = "Data TLB references",
 		.pme_long_desc = "Total number of Data TLB references for all page sizes. Page size is determined at TLB reload time.",
 		.pme_event_ids = { 33, 32, 32, 33, -1, -1 },
@@ -4501,6 +4908,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_PTEG_FROM_L3 407
 	[ POWER5p_PME_PM_PTEG_FROM_L3 ] = {
 		.pme_name = "PM_PTEG_FROM_L3",
+		.pme_code = 0x18308e,
 		.pme_short_desc = "PTEG loaded from L3",
 		.pme_long_desc = "A Page Table Entry was loaded into the TLB from the local L3 due to a demand load.",
 		.pme_event_ids = { 307, -1, 301, -1, -1, -1 },
@@ -4512,6 +4920,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FAB_M1toVNorNN_SIDECAR_EMPTY 408
 	[ POWER5p_PME_PM_FAB_M1toVNorNN_SIDECAR_EMPTY ] = {
 		.pme_name = "PM_FAB_M1toVNorNN_SIDECAR_EMPTY",
+		.pme_code = 0x712c7,
 		.pme_short_desc = "M1 to VN/NN sidecar empty",
 		.pme_long_desc = "Fabric cycles when the Minus-1 jump sidecar (sidecars for mcm to mcm data transfer) is empty. The signal is delivered at FBC speed and the count must be scaled accordingly.",
 		.pme_event_ids = { 44, 43, 43, 45, -1, -1 },
@@ -4523,6 +4932,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_SRQ_EMPTY_CYC 409
 	[ POWER5p_PME_PM_LSU_SRQ_EMPTY_CYC ] = {
 		.pme_name = "PM_LSU_SRQ_EMPTY_CYC",
+		.pme_code = 0x400015,
 		.pme_short_desc = "Cycles SRQ empty",
 		.pme_long_desc = "Cycles the Store Request Queue is empty",
 		.pme_event_ids = { -1, -1, -1, 239, -1, -1 },
@@ -4534,6 +4944,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU1_STF 410
 	[ POWER5p_PME_PM_FPU1_STF ] = {
 		.pme_name = "PM_FPU1_STF",
+		.pme_code = 0x20e6,
 		.pme_short_desc = "FPU1 executed store instruction",
 		.pme_long_desc = "FPU1 has executed a Floating Point Store instruction.",
 		.pme_event_ids = { 84, 83, 83, 85, -1, -1 },
@@ -4545,6 +4956,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_LMQ_S0_VALID 411
 	[ POWER5p_PME_PM_LSU_LMQ_S0_VALID ] = {
 		.pme_name = "PM_LSU_LMQ_S0_VALID",
+		.pme_code = 0xc30e5,
 		.pme_short_desc = "LMQ slot 0 valid",
 		.pme_long_desc = "This signal is asserted every cycle when the first entry in the LMQ is valid. The LMQ had eight entries that are allocated FIFO",
 		.pme_event_ids = { 240, 237, 235, 234, -1, -1 },
@@ -4556,6 +4968,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_GCT_USAGE_00to59_CYC 412
 	[ POWER5p_PME_PM_GCT_USAGE_00to59_CYC ] = {
 		.pme_name = "PM_GCT_USAGE_00to59_CYC",
+		.pme_code = 0x10001f,
 		.pme_short_desc = "Cycles GCT less than 60% full",
 		.pme_long_desc = "Cycles when the Global Completion Table has fewer than 60% of its slots used.  The GCT has 20 entries shared between threads.",
 		.pme_event_ids = { 99, -1, -1, -1, -1, -1 },
@@ -4567,6 +4980,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU_FMOV_FEST 413
 	[ POWER5p_PME_PM_FPU_FMOV_FEST ] = {
 		.pme_name = "PM_FPU_FMOV_FEST",
+		.pme_code = 0x301088,
 		.pme_short_desc = "FPU executed FMOV or FEST instructions",
 		.pme_long_desc = "The floating point unit has executed a move kind of instruction or one of the estimate instructions. This could be fmr*, fneg*, fabs*, fnabs* , fres* or frsqrte* where XYZ* means XYZ or XYZ.. Combined Unit 0 + Unit 1.",
 		.pme_event_ids = { -1, -1, 84, -1, -1, -1 },
@@ -4578,6 +4992,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DATA_FROM_L2MISS 414
 	[ POWER5p_PME_PM_DATA_FROM_L2MISS ] = {
 		.pme_name = "PM_DATA_FROM_L2MISS",
+		.pme_code = 0x3c309b,
 		.pme_short_desc = "Data loaded missed L2",
 		.pme_long_desc = "The processor's Data Cache was reloaded but not from the local L2.",
 		.pme_event_ids = { -1, -1, 19, -1, -1, -1 },
@@ -4589,6 +5004,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_XER_MAP_FULL_CYC 415
 	[ POWER5p_PME_PM_XER_MAP_FULL_CYC ] = {
 		.pme_name = "PM_XER_MAP_FULL_CYC",
+		.pme_code = 0x100c2,
 		.pme_short_desc = "Cycles XER mapper full",
 		.pme_long_desc = "The XER mapper cannot accept any more groups. This condition will prevent dispatch groups from being dispatched.  This event only indicates that the mapper was full, not that dispatch was prevented.",
 		.pme_event_ids = { 357, 351, 350, 346, -1, -1 },
@@ -4600,6 +5016,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_GRP_DISP_BLK_SB_CYC 416
 	[ POWER5p_PME_PM_GRP_DISP_BLK_SB_CYC ] = {
 		.pme_name = "PM_GRP_DISP_BLK_SB_CYC",
+		.pme_code = 0x130e1,
 		.pme_short_desc = "Cycles group dispatch blocked by scoreboard",
 		.pme_long_desc = "A scoreboard operation on a non-renamed resource has blocked dispatch.",
 		.pme_event_ids = { 103, 103, 101, 102, -1, -1 },
@@ -4611,6 +5028,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FLUSH_SB 417
 	[ POWER5p_PME_PM_FLUSH_SB ] = {
 		.pme_name = "PM_FLUSH_SB",
+		.pme_code = 0x330e2,
 		.pme_short_desc = "Flush caused by scoreboard operation",
 		.pme_long_desc = "This thread has been flushed at dispatch because its scoreboard bit is set indicating that a non-renamed resource is being updated. This allows the other thread to have more machine resources for it to make progress while this thread is stalled.",
 		.pme_event_ids = { 55, 54, 54, 56, -1, -1 },
@@ -4622,6 +5040,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_L375_SHR 418
 	[ POWER5p_PME_PM_MRK_DATA_FROM_L375_SHR ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L375_SHR",
+		.pme_code = 0x3c709e,
 		.pme_short_desc = "Marked data loaded from L3.75 shared",
 		.pme_long_desc = "The processor's Data Cache was reloaded with shared (S) data from the L3 of a chip on a different module than this processor is located due to a marked load.",
 		.pme_event_ids = { -1, -1, 269, -1, -1, -1 },
@@ -4633,6 +5052,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_GRP_CMPL 419
 	[ POWER5p_PME_PM_MRK_GRP_CMPL ] = {
 		.pme_name = "PM_MRK_GRP_CMPL",
+		.pme_code = 0x400013,
 		.pme_short_desc = "Marked group completed",
 		.pme_long_desc = "A group containing a sampled instruction completed.  Microcoded instructions that span multiple groups will generate this event once per group.",
 		.pme_event_ids = { -1, -1, -1, 278, -1, -1 },
@@ -4644,6 +5064,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_SUSPENDED 420
 	[ POWER5p_PME_PM_SUSPENDED ] = {
 		.pme_name = "PM_SUSPENDED",
+		.pme_code = 0x0,
 		.pme_short_desc = "Suspended",
 		.pme_long_desc = "The counter is suspended (does not count).",
 		.pme_event_ids = { 330, 326, 325, 321, -1, -1 },
@@ -4655,6 +5076,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_SNOOP_RD_RETRY_QFULL 421
 	[ POWER5p_PME_PM_SNOOP_RD_RETRY_QFULL ] = {
 		.pme_name = "PM_SNOOP_RD_RETRY_QFULL",
+		.pme_code = 0x700c6,
 		.pme_short_desc = "Snoop read retry due to read queue full",
 		.pme_long_desc = "A snoop request for a read from memory was retried because the read queues were full.  This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 317, 312, 310, 308, -1, -1 },
@@ -4666,6 +5088,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_GRP_IC_MISS_BR_REDIR_NONSPEC 422
 	[ POWER5p_PME_PM_GRP_IC_MISS_BR_REDIR_NONSPEC ] = {
 		.pme_name = "PM_GRP_IC_MISS_BR_REDIR_NONSPEC",
+		.pme_code = 0x120e5,
 		.pme_short_desc = "Group experienced non-speculative I cache miss or branch redirect",
 		.pme_long_desc = "Group experienced non-speculative I cache miss or branch redirect",
 		.pme_event_ids = { 107, 101, 99, 101, -1, -1 },
@@ -4677,6 +5100,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DATA_FROM_L35_SHR 423
 	[ POWER5p_PME_PM_DATA_FROM_L35_SHR ] = {
 		.pme_name = "PM_DATA_FROM_L35_SHR",
+		.pme_code = 0x1c309e,
 		.pme_short_desc = "Data loaded from L3.5 shared",
 		.pme_long_desc = "The processor's Data Cache was reloaded with shared (S) data from the L3 of a chip on the same module as this processor is located due to a demand load.",
 		.pme_event_ids = { 22, -1, -1, -1, -1, -1 },
@@ -4688,6 +5112,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L3SB_MOD_INV 424
 	[ POWER5p_PME_PM_L3SB_MOD_INV ] = {
 		.pme_name = "PM_L3SB_MOD_INV",
+		.pme_code = 0x730e4,
 		.pme_short_desc = "L3 slice B transition from modified to invalid",
 		.pme_long_desc = "L3 snooper detects someone doing a store to a line that is truly M in this L3 (i.e. L3 going M=>I).  Mu|Me are not included since they are formed due to a prev read op.  Tx is not included since it is considered shared at this point.",
 		.pme_event_ids = { 186, 183, 182, 181, -1, -1 },
@@ -4699,6 +5124,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_STCX_FAIL 425
 	[ POWER5p_PME_PM_STCX_FAIL ] = {
 		.pme_name = "PM_STCX_FAIL",
+		.pme_code = 0x820e1,
 		.pme_short_desc = "STCX failed",
 		.pme_long_desc = "A stcx (stwcx or stdcx) failed",
 		.pme_event_ids = { 325, 320, 318, 316, -1, -1 },
@@ -4710,6 +5136,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LD_MISS_L1_LSU1 426
 	[ POWER5p_PME_PM_LD_MISS_L1_LSU1 ] = {
 		.pme_name = "PM_LD_MISS_L1_LSU1",
+		.pme_code = 0xc10c5,
 		.pme_short_desc = "LSU1 L1 D cache load misses",
 		.pme_long_desc = "Load references that miss the Level 1 Data cache, by unit 1.",
 		.pme_event_ids = { 200, 199, 199, 198, -1, -1 },
@@ -4721,6 +5148,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_GRP_DISP 427
 	[ POWER5p_PME_PM_GRP_DISP ] = {
 		.pme_name = "PM_GRP_DISP",
+		.pme_code = 0x200002,
 		.pme_short_desc = "Group dispatches",
 		.pme_long_desc = "A group was dispatched",
 		.pme_event_ids = { -1, 102, -1, -1, -1, -1 },
@@ -4732,6 +5160,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DC_PREF_DST 428
 	[ POWER5p_PME_PM_DC_PREF_DST ] = {
 		.pme_name = "PM_DC_PREF_DST",
+		.pme_code = 0x830e6,
 		.pme_short_desc = "DST (Data Stream Touch) stream start",
 		.pme_long_desc = "A prefetch stream was started using the DST instruction.",
 		.pme_event_ids = { 28, 27, 27, 28, -1, -1 },
@@ -4743,6 +5172,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU1_DENORM 429
 	[ POWER5p_PME_PM_FPU1_DENORM ] = {
 		.pme_name = "PM_FPU1_DENORM",
+		.pme_code = 0x20e4,
 		.pme_short_desc = "FPU1 received denormalized data",
 		.pme_long_desc = "FPU1 has encountered a denormalized operand.",
 		.pme_event_ids = { 73, 72, 72, 74, -1, -1 },
@@ -4754,6 +5184,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU0_FPSCR 430
 	[ POWER5p_PME_PM_FPU0_FPSCR ] = {
 		.pme_name = "PM_FPU0_FPSCR",
+		.pme_code = 0x30e0,
 		.pme_short_desc = "FPU0 executed FPSCR instruction",
 		.pme_long_desc = "FPU0 has executed FPSCR move related instruction. This could be mtfsfi*, mtfsb0*, mtfsb1*, mffs*, mtfsf*, mcrsf* where XYZ* means XYZ, XYZs, XYZ., XYZs.",
 		.pme_event_ids = { 65, 64, 64, 66, -1, -1 },
@@ -4765,6 +5196,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DATA_FROM_L2 431
 	[ POWER5p_PME_PM_DATA_FROM_L2 ] = {
 		.pme_name = "PM_DATA_FROM_L2",
+		.pme_code = 0x1c3087,
 		.pme_short_desc = "Data loaded from L2",
 		.pme_long_desc = "The processor's Data Cache was reloaded from the local L2 due to a demand load.",
 		.pme_event_ids = { 18, -1, -1, -1, -1, -1 },
@@ -4776,6 +5208,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SA_RCLD_DISP_FAIL_ADDR 432
 	[ POWER5p_PME_PM_L2SA_RCLD_DISP_FAIL_ADDR ] = {
 		.pme_name = "PM_L2SA_RCLD_DISP_FAIL_ADDR",
+		.pme_code = 0x711c0,
 		.pme_short_desc = "L2 slice A RC load dispatch attempt failed due to address collision with RC/CO/SN/SQ",
 		.pme_long_desc = "A Read/Claim dispatch for a load failed because of an address conflict.  Two RC machines will never both work on the same line or line in the same congruence class at the same time.",
 		.pme_event_ids = { 131, 128, 127, 126, -1, -1 },
@@ -4787,6 +5220,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU_1FLOP 433
 	[ POWER5p_PME_PM_FPU_1FLOP ] = {
 		.pme_name = "PM_FPU_1FLOP",
+		.pme_code = 0x100090,
 		.pme_short_desc = "FPU executed one flop instruction",
 		.pme_long_desc = "The floating point unit has executed an add, mult, sub, compare, fsel, fneg, fabs, fnabs, fres, or frsqrte kind of instruction.  These are single FLOP operations.",
 		.pme_event_ids = { 85, -1, -1, 86, -1, -1 },
@@ -4798,6 +5232,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SC_RCLD_DISP_FAIL_OTHER 434
 	[ POWER5p_PME_PM_L2SC_RCLD_DISP_FAIL_OTHER ] = {
 		.pme_name = "PM_L2SC_RCLD_DISP_FAIL_OTHER",
+		.pme_code = 0x731e2,
 		.pme_short_desc = "L2 slice C RC load dispatch attempt failed due to other reasons",
 		.pme_long_desc = "A Read/Claim dispatch for a load failed for some reason other than Full or Collision conditions.",
 		.pme_event_ids = { 164, 161, 160, 159, -1, -1 },
@@ -4809,6 +5244,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU0_FSQRT 435
 	[ POWER5p_PME_PM_FPU0_FSQRT ] = {
 		.pme_name = "PM_FPU0_FSQRT",
+		.pme_code = 0xc2,
 		.pme_short_desc = "FPU0 executed FSQRT instruction",
 		.pme_long_desc = "FPU0 has executed a square root instruction. This could be fsqrt* where XYZ* means XYZ, XYZs, XYZ., XYZs.",
 		.pme_event_ids = { 67, 66, 66, 68, -1, -1 },
@@ -4820,6 +5256,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SC_RCST_DISP_FAIL_RC_FULL 436
 	[ POWER5p_PME_PM_L2SC_RCST_DISP_FAIL_RC_FULL ] = {
 		.pme_name = "PM_L2SC_RCST_DISP_FAIL_RC_FULL",
+		.pme_code = 0x722e1,
 		.pme_short_desc = "L2 slice C RC store dispatch attempt failed due to all RC full",
 		.pme_long_desc = "A Read/Claim dispatch for a store failed because all RC machines are busy.",
 		.pme_event_ids = { 169, 166, 165, 164, -1, -1 },
@@ -4831,6 +5268,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LD_REF_L1 437
 	[ POWER5p_PME_PM_LD_REF_L1 ] = {
 		.pme_name = "PM_LD_REF_L1",
+		.pme_code = 0x1c10a8,
 		.pme_short_desc = "L1 D cache load references",
 		.pme_long_desc = "Load references to the Level 1 Data Cache. Combined unit 0 + 1.",
 		.pme_event_ids = { 201, -1, -1, 196, -1, -1 },
@@ -4842,6 +5280,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_INST_FROM_L1 438
 	[ POWER5p_PME_PM_INST_FROM_L1 ] = {
 		.pme_name = "PM_INST_FROM_L1",
+		.pme_code = 0x22208d,
 		.pme_short_desc = "Instruction fetched from L1",
 		.pme_long_desc = "An instruction fetch group was fetched from L1. Fetch Groups can contain up to 8 instructions",
 		.pme_event_ids = { -1, 116, -1, -1, -1, -1 },
@@ -4853,6 +5292,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_TLBIE_HELD 439
 	[ POWER5p_PME_PM_TLBIE_HELD ] = {
 		.pme_name = "PM_TLBIE_HELD",
+		.pme_code = 0x130e4,
 		.pme_short_desc = "TLBIE held at dispatch",
 		.pme_long_desc = "Cycles a TLBIE instruction was held at dispatch.",
 		.pme_event_ids = { 355, 350, 349, 344, -1, -1 },
@@ -4864,6 +5304,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DC_PREF_OUT_OF_STREAMS 440
 	[ POWER5p_PME_PM_DC_PREF_OUT_OF_STREAMS ] = {
 		.pme_name = "PM_DC_PREF_OUT_OF_STREAMS",
+		.pme_code = 0xc50c2,
 		.pme_short_desc = "D cache out of prefetch streams",
 		.pme_long_desc = "A new prefetch stream was detected but no more stream entries were available.",
 		.pme_event_ids = { 27, 26, 26, 27, -1, -1 },
@@ -4875,6 +5316,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_L25_MOD_CYC 441
 	[ POWER5p_PME_PM_MRK_DATA_FROM_L25_MOD_CYC ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L25_MOD_CYC",
+		.pme_code = 0x4c70a2,
 		.pme_short_desc = "Marked load latency from L2.5 modified",
 		.pme_long_desc = "Cycles a marked load waited for data from this level of the storage system.  Counting begins when a marked load misses the data cache and ends when the data is reloaded into the data cache.  To calculate average latency divide this count by the number of marked misses to the same level.",
 		.pme_event_ids = { -1, -1, -1, 264, -1, -1 },
@@ -4886,6 +5328,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_LSU1_FLUSH_SRQ 442
 	[ POWER5p_PME_PM_MRK_LSU1_FLUSH_SRQ ] = {
 		.pme_name = "PM_MRK_LSU1_FLUSH_SRQ",
+		.pme_code = 0x810c7,
 		.pme_short_desc = "LSU1 marked SRQ lhs flushes",
 		.pme_long_desc = "A marked store was flushed because younger load hits and older store that is already in the SRQ or in the same group.",
 		.pme_event_ids = { 293, 293, 287, 290, -1, -1 },
@@ -4897,6 +5340,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MEM_RQ_DISP_Q0to3 443
 	[ POWER5p_PME_PM_MEM_RQ_DISP_Q0to3 ] = {
 		.pme_name = "PM_MEM_RQ_DISP_Q0to3",
+		.pme_code = 0x702c6,
 		.pme_short_desc = "Memory read queue dispatched to queues 0-3",
 		.pme_long_desc = "A memory operation was dispatched to read queue 0,1,2, or 3. This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 		.pme_event_ids = { 260, 256, 257, 256, -1, -1 },
@@ -4908,6 +5352,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_ST_REF_L1_LSU1 444
 	[ POWER5p_PME_PM_ST_REF_L1_LSU1 ] = {
 		.pme_name = "PM_ST_REF_L1_LSU1",
+		.pme_code = 0xc10c4,
 		.pme_short_desc = "LSU1 L1 D cache store references",
 		.pme_long_desc = "Store references to the Data Cache by LSU1.",
 		.pme_event_ids = { 329, 325, 324, 320, -1, -1 },
@@ -4919,6 +5364,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_LD_MISS_L1 445
 	[ POWER5p_PME_PM_MRK_LD_MISS_L1 ] = {
 		.pme_name = "PM_MRK_LD_MISS_L1",
+		.pme_code = 0x182088,
 		.pme_short_desc = "Marked L1 D cache load misses",
 		.pme_long_desc = "Marked L1 D cache load misses",
 		.pme_event_ids = { 285, -1, -1, -1, -1, -1 },
@@ -4930,6 +5376,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L1_WRITE_CYC 446
 	[ POWER5p_PME_PM_L1_WRITE_CYC ] = {
 		.pme_name = "PM_L1_WRITE_CYC",
+		.pme_code = 0x230e7,
 		.pme_short_desc = "Cycles writing to instruction L1",
 		.pme_long_desc = "Cycles that a cache line was written to the instruction cache.",
 		.pme_event_ids = { 127, 124, 123, 122, -1, -1 },
@@ -4941,6 +5388,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SC_ST_REQ 447
 	[ POWER5p_PME_PM_L2SC_ST_REQ ] = {
 		.pme_name = "PM_L2SC_ST_REQ",
+		.pme_code = 0x723e2,
 		.pme_short_desc = "L2 slice C store requests",
 		.pme_long_desc = "A store request as seen at the L2 directory has been made from the core. Stores are counted after gathering in the L2 store queues. The event is provided on each of the three slices A, B, and C.",
 		.pme_event_ids = { 175, 172, 171, 170, -1, -1 },
@@ -4952,6 +5400,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_CMPLU_STALL_FDIV 448
 	[ POWER5p_PME_PM_CMPLU_STALL_FDIV ] = {
 		.pme_name = "PM_CMPLU_STALL_FDIV",
+		.pme_code = 0x21109b,
 		.pme_short_desc = "Completion stall caused by FDIV or FQRT instruction",
 		.pme_long_desc = "Following a completion stall (any period when no groups completed) the last instruction to finish before completion resumes was a floating point divide or square root instruction. This is a subset of PM_CMPLU_STALL_FPU.",
 		.pme_event_ids = { -1, 15, -1, -1, -1, -1 },
@@ -4963,6 +5412,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_SEL_OVER_CLB_EMPTY 449
 	[ POWER5p_PME_PM_THRD_SEL_OVER_CLB_EMPTY ] = {
 		.pme_name = "PM_THRD_SEL_OVER_CLB_EMPTY",
+		.pme_code = 0x410c2,
 		.pme_short_desc = "Thread selection overrides caused by CLB empty",
 		.pme_long_desc = "Thread selection was overridden because one thread's CLB was empty.",
 		.pme_event_ids = { 348, 343, 341, 337, -1, -1 },
@@ -4974,6 +5424,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_BR_MPRED_CR 450
 	[ POWER5p_PME_PM_BR_MPRED_CR ] = {
 		.pme_name = "PM_BR_MPRED_CR",
+		.pme_code = 0x230e5,
 		.pme_short_desc = "Branch mispredictions due to CR bit setting",
 		.pme_long_desc = "A conditional branch instruction was incorrectly predicted as taken or not taken.  The branch execution unit detects a branch mispredict because the CR value is opposite of the predicted value. This will result in a branch redirect flush if not overfidden by a flush of an older instruction.",
 		.pme_event_ids = { 10, 9, 9, 10, -1, -1 },
@@ -4985,6 +5436,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L3SB_MOD_TAG 451
 	[ POWER5p_PME_PM_L3SB_MOD_TAG ] = {
 		.pme_name = "PM_L3SB_MOD_TAG",
+		.pme_code = 0x720e4,
 		.pme_short_desc = "L3 slice B transition from modified to TAG",
 		.pme_long_desc = "L3 snooper detects someone doing a read to a line that is truly M in this L3(i.e. L3 going M->T or M->I(go_Mu case); Mu|Me are not included since they are formed due to a prev read op).  Tx is not included since it is considered shared at this point.",
 		.pme_event_ids = { 187, 184, 183, 182, -1, -1 },
@@ -4996,6 +5448,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_DATA_FROM_L2MISS 452
 	[ POWER5p_PME_PM_MRK_DATA_FROM_L2MISS ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L2MISS",
+		.pme_code = 0x3c709b,
 		.pme_short_desc = "Marked data loaded missed L2",
 		.pme_long_desc = "DL1 was reloaded from beyond L2 due to a marked demand load.",
 		.pme_event_ids = { -1, -1, 266, -1, -1, -1 },
@@ -5007,6 +5460,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_REJECT_SRQ 453
 	[ POWER5p_PME_PM_LSU_REJECT_SRQ ] = {
 		.pme_name = "PM_LSU_REJECT_SRQ",
+		.pme_code = 0x1c4088,
 		.pme_short_desc = "LSU SRQ lhs rejects",
 		.pme_long_desc = "Total cycles the Load Store Unit is busy rejecting instructions because of Load Hit Store conditions.  Loads are rejected when data is needed from a previous store instruction but store forwarding is not possible because the data is not fully contained in the Store Data Queue or is not yet available in the Store Data Queue.  Combined Unit 0 + 1.",
 		.pme_event_ids = { 245, -1, -1, -1, -1, -1 },
@@ -5018,6 +5472,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LD_MISS_L1 454
 	[ POWER5p_PME_PM_LD_MISS_L1 ] = {
 		.pme_name = "PM_LD_MISS_L1",
+		.pme_code = 0x3c1088,
 		.pme_short_desc = "L1 D cache load misses",
 		.pme_long_desc = "Load references that miss the Level 1 Data cache. Combined unit 0 + 1.",
 		.pme_event_ids = { -1, -1, 195, -1, -1, -1 },
@@ -5029,6 +5484,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_INST_FROM_PREF 455
 	[ POWER5p_PME_PM_INST_FROM_PREF ] = {
 		.pme_name = "PM_INST_FROM_PREF",
+		.pme_code = 0x32208d,
 		.pme_short_desc = "Instruction fetched from prefetch",
 		.pme_long_desc = "An instruction fetch group was fetched from the prefetch buffer. Fetch groups can contain up to 8 instructions",
 		.pme_event_ids = { -1, -1, 118, -1, -1, -1 },
@@ -5040,6 +5496,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_STCX_PASS 456
 	[ POWER5p_PME_PM_STCX_PASS ] = {
 		.pme_name = "PM_STCX_PASS",
+		.pme_code = 0x820e5,
 		.pme_short_desc = "Stcx passes",
 		.pme_long_desc = "A stcx (stwcx or stdcx) instruction was successful",
 		.pme_event_ids = { 326, 321, 319, 317, -1, -1 },
@@ -5051,6 +5508,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DC_INV_L2 457
 	[ POWER5p_PME_PM_DC_INV_L2 ] = {
 		.pme_name = "PM_DC_INV_L2",
+		.pme_code = 0xc10c7,
 		.pme_short_desc = "L1 D cache entries invalidated from L2",
 		.pme_long_desc = "A dcache invalidated was received from the L2 because a line in L2 was castout.",
 		.pme_event_ids = { 26, 25, 25, 26, -1, -1 },
@@ -5062,6 +5520,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_SRQ_FULL_CYC 458
 	[ POWER5p_PME_PM_LSU_SRQ_FULL_CYC ] = {
 		.pme_name = "PM_LSU_SRQ_FULL_CYC",
+		.pme_code = 0x110c3,
 		.pme_short_desc = "Cycles SRQ full",
 		.pme_long_desc = "Cycles the Store Request Queue is full.",
 		.pme_event_ids = { 246, 244, 241, 240, -1, -1 },
@@ -5073,6 +5532,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU_FIN 459
 	[ POWER5p_PME_PM_FPU_FIN ] = {
 		.pme_name = "PM_FPU_FIN",
+		.pme_code = 0x401088,
 		.pme_short_desc = "FPU produced a result",
 		.pme_long_desc = "FPU finished, produced a result.  This only indicates finish,  not completion. Combined Unit 0 + Unit 1.  Floating Point Stores are included in this count but not Floating Point Loads., , , XYZs",
 		.pme_event_ids = { -1, -1, -1, 88, -1, -1 },
@@ -5084,6 +5544,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU_SRQ_STFWD 460
 	[ POWER5p_PME_PM_LSU_SRQ_STFWD ] = {
 		.pme_name = "PM_LSU_SRQ_STFWD",
+		.pme_code = 0x2c6088,
 		.pme_short_desc = "SRQ store forwarded",
 		.pme_long_desc = "Data from a store instruction was forwarded to a load.  A load that misses L1 but becomes a store forward is treated as a load miss and it causes the DL1 load miss event to be counted.  It does not go into the LMQ. If a load that hits L1 but becomes a store forward, then it's not treated as a load miss. Combined Unit 0 + 1.",
 		.pme_event_ids = { -1, 247, -1, -1, -1, -1 },
@@ -5095,6 +5556,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SA_SHR_MOD 461
 	[ POWER5p_PME_PM_L2SA_SHR_MOD ] = {
 		.pme_name = "PM_L2SA_SHR_MOD",
+		.pme_code = 0x700c0,
 		.pme_short_desc = "L2 slice A transition from shared to modified",
 		.pme_long_desc = "A cache line in the local L2 directory made a state transition from Shared (Shared, Shared L , or Tagged) to the Modified state. This transition was caused by a store from either of the two local CPUs to a cache line in any of the Shared states. The event is provided on each of the three slices A, B, and C.",
 		.pme_event_ids = { 141, 138, 137, 136, -1, -1 },
@@ -5106,6 +5568,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_0INST_CLB_CYC 462
 	[ POWER5p_PME_PM_0INST_CLB_CYC ] = {
 		.pme_name = "PM_0INST_CLB_CYC",
+		.pme_code = 0x400c0,
 		.pme_short_desc = "Cycles no instructions in CLB",
 		.pme_long_desc = "The cache line buffer (CLB) is a 6-deep, 4-wide instruction buffer. Fullness is reported on a cycle basis with each event representing the number of cycles the CLB had the corresponding number of entries occupied.  These events give a real time history of the number of instruction buffers used, but not the number of PowerPC instructions within those buffers.  Each thread has its own set of CLB; these events are thread specific.",
 		.pme_event_ids = { 0, 0, 0, 0, -1, -1 },
@@ -5117,6 +5580,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FXU0_FIN 463
 	[ POWER5p_PME_PM_FXU0_FIN ] = {
 		.pme_name = "PM_FXU0_FIN",
+		.pme_code = 0x130e2,
 		.pme_short_desc = "FXU0 produced a result",
 		.pme_long_desc = "The Fixed Point unit 0 finished an instruction and produced a result.  Instructions that finish may not necessary complete.",
 		.pme_event_ids = { 94, 91, 91, 94, -1, -1 },
@@ -5128,6 +5592,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SB_RCST_DISP_FAIL_RC_FULL 464
 	[ POWER5p_PME_PM_L2SB_RCST_DISP_FAIL_RC_FULL ] = {
 		.pme_name = "PM_L2SB_RCST_DISP_FAIL_RC_FULL",
+		.pme_code = 0x722e2,
 		.pme_short_desc = "L2 slice B RC store dispatch attempt failed due to all RC full",
 		.pme_long_desc = "A Read/Claim dispatch for a store failed because all RC machines are busy.",
 		.pme_event_ids = { 153, 150, 149, 148, -1, -1 },
@@ -5139,6 +5604,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_GRP_CMPL_BOTH_CYC 465
 	[ POWER5p_PME_PM_THRD_GRP_CMPL_BOTH_CYC ] = {
 		.pme_name = "PM_THRD_GRP_CMPL_BOTH_CYC",
+		.pme_code = 0x200013,
 		.pme_short_desc = "Cycles group completed by both threads",
 		.pme_long_desc = "Cycles that both threads completed.",
 		.pme_event_ids = { -1, 327, -1, -1, -1, -1 },
@@ -5150,6 +5616,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_PMC5_OVERFLOW 466
 	[ POWER5p_PME_PM_PMC5_OVERFLOW ] = {
 		.pme_name = "PM_PMC5_OVERFLOW",
+		.pme_code = 0x10001a,
 		.pme_short_desc = "PMC5 Overflow",
 		.pme_long_desc = "Overflows from PMC5 are counted.  This effectively widens the PMC. The Overflow from the original PMC will not trigger an exception even if the PMU is configured to generate exceptions on overflow.",
 		.pme_event_ids = { 302, -1, -1, -1, -1, -1 },
@@ -5161,6 +5628,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_FPU0_FDIV 467
 	[ POWER5p_PME_PM_FPU0_FDIV ] = {
 		.pme_name = "PM_FPU0_FDIV",
+		.pme_code = 0xc0,
 		.pme_short_desc = "FPU0 executed FDIV instruction",
 		.pme_long_desc = "FPU0 has executed a divide instruction. This could be fdiv, fdivs, fdiv. fdivs.",
 		.pme_event_ids = { 60, 59, 59, 61, -1, -1 },
@@ -5172,6 +5640,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_PTEG_FROM_L375_SHR 468
 	[ POWER5p_PME_PM_PTEG_FROM_L375_SHR ] = {
 		.pme_name = "PM_PTEG_FROM_L375_SHR",
+		.pme_code = 0x38309e,
 		.pme_short_desc = "PTEG loaded from L3.75 shared",
 		.pme_long_desc = "A Page Table Entry  was loaded into the TLB with shared (S) data from the L3 of a chip on a different module than this processor is located, due to a demand load.",
 		.pme_event_ids = { -1, -1, 303, -1, -1, -1 },
@@ -5183,6 +5652,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_HV_CYC 469
 	[ POWER5p_PME_PM_HV_CYC ] = {
 		.pme_name = "PM_HV_CYC",
+		.pme_code = 0x20000b,
 		.pme_short_desc = "Hypervisor Cycles",
 		.pme_long_desc = "Cycles when the processor is executing in Hypervisor (MSR[HV] = 1 and MSR[PR]=0)",
 		.pme_event_ids = { -1, 107, -1, -1, -1, -1 },
@@ -5194,6 +5664,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SA_RC_DISP_FAIL_CO_BUSY 470
 	[ POWER5p_PME_PM_L2SA_RC_DISP_FAIL_CO_BUSY ] = {
 		.pme_name = "PM_L2SA_RC_DISP_FAIL_CO_BUSY",
+		.pme_code = 0x703c0,
 		.pme_short_desc = "L2 slice A RC dispatch attempt failed due to RC/CO pair chosen was miss and CO already busy",
 		.pme_long_desc = "A Read/Claim  Dispatch was rejected at dispatch because the Castout Machine was busy.  In the case of an RC starting up on a miss and the victim is valid, the CO machine must be available for the RC to process the access. If the CO is still busy working on an old castout, then the RC must not-ack the access if it is a miss(re-issued by the CIU). If it is a miss and the CO is available to process the castout, the RC will accept the access. Once the RC has finished, it can restart and process new accesses that result in a hit (or miss that doesn't need a CO) even though the CO is still processing a castout from a previous access.",
 		.pme_event_ids = { 138, 135, 134, 133, -1, -1 },
@@ -5205,6 +5676,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_THRD_PRIO_DIFF_0_CYC 471
 	[ POWER5p_PME_PM_THRD_PRIO_DIFF_0_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_DIFF_0_CYC",
+		.pme_code = 0x430e3,
 		.pme_short_desc = "Cycles no thread priority difference",
 		.pme_long_desc = "Cycles when this thread's priority is equal to the other thread's priority.",
 		.pme_event_ids = { 341, 336, 334, 330, -1, -1 },
@@ -5216,6 +5688,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LR_CTR_MAP_FULL_CYC 472
 	[ POWER5p_PME_PM_LR_CTR_MAP_FULL_CYC ] = {
 		.pme_name = "PM_LR_CTR_MAP_FULL_CYC",
+		.pme_code = 0x100c6,
 		.pme_short_desc = "Cycles LR/CTR mapper full",
 		.pme_long_desc = "The LR/CTR mapper cannot accept any more groups. This condition will prevent dispatch groups from being dispatched.  This event only indicates that the mapper was full, not that dispatch was prevented.",
 		.pme_event_ids = { 204, 200, 200, 199, -1, -1 },
@@ -5227,6 +5700,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L3SB_SHR_INV 473
 	[ POWER5p_PME_PM_L3SB_SHR_INV ] = {
 		.pme_name = "PM_L3SB_SHR_INV",
+		.pme_code = 0x710c4,
 		.pme_short_desc = "L3 slice B transition from shared to invalid",
 		.pme_long_desc = "L3 snooper detects someone doing a store to a line that is Sx in this L3(i.e. invalidate hit SX and dispatched).",
 		.pme_event_ids = { 189, 186, 185, 184, -1, -1 },
@@ -5238,6 +5712,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DATA_FROM_RMEM 474
 	[ POWER5p_PME_PM_DATA_FROM_RMEM ] = {
 		.pme_name = "PM_DATA_FROM_RMEM",
+		.pme_code = 0x1c30a1,
 		.pme_short_desc = "Data loaded from remote memory",
 		.pme_long_desc = "The processor's Data Cache was reloaded from memory attached to a different module than this proccessor is located on.",
 		.pme_event_ids = { 24, -1, -1, 24, -1, -1 },
@@ -5249,6 +5724,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DATA_FROM_L275_MOD 475
 	[ POWER5p_PME_PM_DATA_FROM_L275_MOD ] = {
 		.pme_name = "PM_DATA_FROM_L275_MOD",
+		.pme_code = 0x1c30a3,
 		.pme_short_desc = "Data loaded from L2.75 modified",
 		.pme_long_desc = "The processor's Data Cache was reloaded with modified (M) data from the L2 on a different module than this processor is located due to a demand load.",
 		.pme_event_ids = { 20, -1, -1, 22, -1, -1 },
@@ -5260,6 +5736,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU0_REJECT_SRQ 476
 	[ POWER5p_PME_PM_LSU0_REJECT_SRQ ] = {
 		.pme_name = "PM_LSU0_REJECT_SRQ",
+		.pme_code = 0xc40c0,
 		.pme_short_desc = "LSU0 SRQ lhs rejects",
 		.pme_long_desc = "Total cycles the Load Store Unit 0 is busy rejecting instructions because of Load Hit Store conditions.  Loads are rejected when data is needed from a previous store instruction but store forwarding is not possible because the data is not fully contained in the Store Data Queue or is not yet available in the Store Data Queue.",
 		.pme_event_ids = { 216, 212, 212, 211, -1, -1 },
@@ -5271,6 +5748,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU1_DERAT_MISS 477
 	[ POWER5p_PME_PM_LSU1_DERAT_MISS ] = {
 		.pme_name = "PM_LSU1_DERAT_MISS",
+		.pme_code = 0x800c6,
 		.pme_short_desc = "LSU1 DERAT misses",
 		.pme_long_desc = "A data request (load or store) from LSU Unit 1 missed the ERAT and resulted in an ERAT reload. Multiple instructions may miss the ERAT entry for the same 4K page, but only one reload will occur.",
 		.pme_event_ids = { 219, 215, 215, 214, -1, -1 },
@@ -5282,6 +5760,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_MRK_LSU_FIN 478
 	[ POWER5p_PME_PM_MRK_LSU_FIN ] = {
 		.pme_name = "PM_MRK_LSU_FIN",
+		.pme_code = 0x400014,
 		.pme_short_desc = "Marked instruction LSU processing finished",
 		.pme_long_desc = "One of the Load/Store Units finished a marked instruction. Instructions that finish may not necessary complete",
 		.pme_event_ids = { -1, -1, -1, 293, -1, -1 },
@@ -5293,6 +5772,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_DTLB_MISS_16M 479
 	[ POWER5p_PME_PM_DTLB_MISS_16M ] = {
 		.pme_name = "PM_DTLB_MISS_16M",
+		.pme_code = 0x3c208d,
 		.pme_short_desc = "Data TLB miss for 16M page",
 		.pme_long_desc = "Data TLB references to 16MB pages that missed the TLB. Page size is determined at TLB reload time.",
 		.pme_event_ids = { -1, -1, 31, -1, -1, -1 },
@@ -5304,6 +5784,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_LSU0_FLUSH_UST 480
 	[ POWER5p_PME_PM_LSU0_FLUSH_UST ] = {
 		.pme_name = "PM_LSU0_FLUSH_UST",
+		.pme_code = 0xc00c1,
 		.pme_short_desc = "LSU0 unaligned store flushes",
 		.pme_long_desc = "A store was flushed from unit 0 because it was unaligned (crossed a 4K boundary).",
 		.pme_event_ids = { 210, 206, 206, 205, -1, -1 },
@@ -5315,6 +5796,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SB_RC_DISP_FAIL_CO_BUSY 481
 	[ POWER5p_PME_PM_L2SB_RC_DISP_FAIL_CO_BUSY ] = {
 		.pme_name = "PM_L2SB_RC_DISP_FAIL_CO_BUSY",
+		.pme_code = 0x703c1,
 		.pme_short_desc = "L2 slice B RC dispatch attempt failed due to RC/CO pair chosen was miss and CO already busy",
 		.pme_long_desc = "A Read/Claim  Dispatch was rejected at dispatch because the Castout Machine was busy.  In the case of an RC starting up on a miss and the victim is valid, the CO machine must be available for the RC to process the access. If the CO is still busy working on an old castout, then the RC must not-ack the access if it is a miss(re-issued by the CIU). If it is a miss and the CO is available to process the castout, the RC will accept the access. Once the RC has finished, it can restart and process new accesses that result in a hit (or miss that doesn't need a CO) even though the CO is still processing a castout from a previous access.",
 		.pme_event_ids = { 154, 151, 150, 149, -1, -1 },
@@ -5326,6 +5808,7 @@ static pme_power5p_entry_t power5p_pe[] = {
 #define POWER5p_PME_PM_L2SC_MOD_TAG 482
 	[ POWER5p_PME_PM_L2SC_MOD_TAG ] = {
 		.pme_name = "PM_L2SC_MOD_TAG",
+		.pme_code = 0x720e2,
 		.pme_short_desc = "L2 slice C transition from modified to tagged",
 		.pme_long_desc = "A cache line in the local L2 directory made a state transition from the Modified state to the Tagged state. This transition was caused by a read snoop request that hit against a modified entry in the local L2. The event is provided on each of the three slices A, B, and C.",
 		.pme_event_ids = { 161, 158, 157, 156, -1, -1 },

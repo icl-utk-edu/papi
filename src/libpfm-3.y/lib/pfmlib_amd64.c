@@ -252,7 +252,7 @@ pfm_amd64_force(void)
 	if (!str)
 		goto failed;
 	pmu_type = strtol(str, &str, 10);
-	if (pmu_type != 16)
+	if (pmu_type != PFMLIB_AMD64_PMU)
 		goto failed;
 	if (!*str || *str++ != ',')
 		goto failed;

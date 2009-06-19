@@ -111,6 +111,7 @@ static void adjust__pfmlib_sys_base(int version)
 	_pfmlib_sys_base = 273;
 #else
 	switch(version) {
+		case 29:
 		case 28:
 		case 27:
 			_pfmlib_sys_base = 295;
@@ -129,6 +130,7 @@ static void adjust__pfmlib_sys_base(int version)
 static void adjust__pfmlib_sys_base(int version)
 {
 	switch(version) {
+		case 29:
 		case 28:
 		case 27:	
 			_pfmlib_sys_base = 333;
@@ -151,6 +153,7 @@ static void adjust__pfmlib_sys_base(int version)
 	_pfmlib_sys_base += 279;
 #else
 	switch(version) {
+		case 29:
 		case 28:
 		case 27:
 			_pfmlib_sys_base += 293;
@@ -173,6 +176,7 @@ static void adjust__pfmlib_sys_base(int version)
 	_pfmlib_sys_base += 316;
 #else
 	switch(version) {
+		case 29:
 		case 28:
 		case 27:
 			_pfmlib_sys_base += 330;
@@ -195,6 +199,7 @@ static void adjust__pfmlib_sys_base(int version)
 	_pfmlib_sys_base += 275;
 #else
 	switch(version) {
+		case 29:
 		case 28:
 		case 27:
 			_pfmlib_sys_base += 289;
@@ -214,6 +219,7 @@ static void adjust__pfmlib_sys_base(int version)
 static void adjust__pfmlib_sys_base(int version)
 {
 	switch(version) {
+		case 29:
 		case 28:
 		case 27:
 			_pfmlib_sys_base = 1319;
@@ -231,9 +237,10 @@ static void adjust__pfmlib_sys_base(int version)
 static void adjust__pfmlib_sys_base(int version)
 {
 	switch(version) {
+		case 29:
 		case 28:
 		case 27:
-			_pfmlib_sys_base = 323;
+			_pfmlib_sys_base = 319;
 			break;
 		case 26:
 		case 25:
