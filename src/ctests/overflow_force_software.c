@@ -236,9 +236,9 @@ int main(int argc, char **argv)
 		printf("Threshold for overflow is: %d\n", mythreshold);
 		printf("------------------------------------------------------------------------------\n");
 
-		printf("Test type : %11s%13s%13s%13s%13s\n", "Reference", "Hardware", "ITIMER_PROF", "ITIMER_VIRT", "ITIMER_REAL");
-		printf("%-13s: %11lld%13lld%13lld%13lld%13lld\n",info.symbol,values[0],values[1],values[2],values[3],values[4]);
-		printf("Overflows : %11d%13d%13d%13d%13d\n", total[0],total[1],total[2],total[3],total[4]);
+		printf("Test type   : %11s%13s%13s%13s%13s\n", "Reference", "Hardware", "ITIMER_PROF", "ITIMER_VIRT", "ITIMER_REAL");
+		printf("%-12s: %11lld%13lld%13lld%13lld%13lld\n",info.symbol,values[0],values[1],values[2],values[3],values[4]);
+		printf("Overflows   : %11d%13d%13d%13d%13d\n", total[0],total[1],total[2],total[3],total[4]);
 		printf("------------------------------------------------------------------------------\n");
 
 		printf("Verification:\n");
