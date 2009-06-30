@@ -33,7 +33,7 @@ int _ia64_update_shlib_info(void);
 
 /* Static locals */
 
-static int _perfmon2_pfm_pmu_type;
+int _perfmon2_pfm_pmu_type;
 
 /*
 static papi_svector_t _linux_ia64_table[] = {
@@ -70,7 +70,6 @@ static unsigned long mmdev_ratio;
 static volatile unsigned long *mmdev_timer_addr;
 #endif
 
-#ifndef PFMLIB_ITANIUM2_PMU
 static itanium_preset_search_t ia1_preset_search_map[] = {
    {PAPI_L1_TCM, DERIVED_ADD, {"L1D_READ_MISSES_RETIRED", "L2_INST_DEMAND_READS", 0, 0}},
    {PAPI_L1_ICM, 0, {"L2_INST_DEMAND_READS", 0, 0, 0}},
@@ -104,7 +103,7 @@ static itanium_preset_search_t ia1_preset_search_map[] = {
    {PAPI_L3_ICR, 0, {"L3_READS_INST_READS_ALL", 0, 0, 0}},
    {PAPI_TLB_DM, 0, {"DTLB_MISSES", 0, 0, 0}},
    {PAPI_TLB_IM, 0, {"ITLB_MISSES_FETCH", 0, 0, 0}},
-   {PAPI_MEM_SCY, 0, {"MEMORY_CYCLE", PAPI_NULL, 0, 0}},
+   {PAPI_MEM_SCY, 0, {"MEMORY_CYCLE", 0, 0, 0}},
    {PAPI_STL_ICY, 0, {"UNSTALLED_BACKEND_CYCLE", 0, 0, 0}},
    {PAPI_BR_INS, 0, {"BRANCH_EVENT", 0, 0, 0}},
    {PAPI_BR_PRC, 0, {"BRANCH_PREDICTOR_ALL_CORRECT_PREDICTIONS", 0, 0, 0}},
@@ -118,7 +117,7 @@ static itanium_preset_search_t ia1_preset_search_map[] = {
    {PAPI_LST_INS, DERIVED_ADD, {"LOADS_RETIRED", "STORES_RETIRED", 0, 0}},
    {0, 0, {0, 0, 0, 0}}
 };
-#else
+
 static itanium_preset_search_t ia2_preset_search_map[] = {
    {PAPI_CA_SNP, 0, {"BUS_SNOOPS_SELF", 0, 0, 0}},
    {PAPI_CA_INV, DERIVED_ADD, {"BUS_MEM_READ_BRIL_SELF", "BUS_MEM_READ_BIL_SELF", 0, 0}},
@@ -188,7 +187,6 @@ static itanium_preset_search_t ia2_preset_search_map[] = {
    {0, 0, {0, 0, 0, 0}}
 };
 
-#if defined(PFMLIB_MONTECITO_PMU)
 static itanium_preset_search_t ia3_preset_search_map[] = {
 /* not sure */
    {PAPI_CA_SNP, 0, {"BUS_SNOOP_STALL_CYCLES_ANY", 0, 0, 0}},
@@ -268,8 +266,6 @@ static itanium_preset_search_t ia3_preset_search_map[] = {
    {PAPI_L2_TCW, 0, {"L2D_REFERENCES_WRITES", 0, 0, 0}},
    {0, 0, {0, 0, 0, 0}}
 };
-#endif
-#endif
 
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
@@ -278,9 +274,9 @@ static itanium_preset_search_t ia3_preset_search_map[] = {
 /*****************************************************************************
  * Code to support unit masks; only needed by Montecito and above            *
  *****************************************************************************/
-#if defined(ITANIUM3)
+#ifdef PFMLIB_MONTECITO_PMU
 
-static inline int _hwd_modify_event(unsigned int event, int modifier);
+static inline int _ia64_modify_event(unsigned int event, int modifier);
 
 /* Break a PAPI native event code into its composite event code and pfm mask bits */
 inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int *event, unsigned int *umask)
@@ -381,7 +377,7 @@ int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
   else {
 	   while (event++ < MY_VECTOR.cmp_info.num_native_events - 1) {
 		  *EventCode = encode_native_event_raw(event+1,0);
-		  if(_hwd_modify_event(event+1, modifier))
+		  if(_ia64_modify_event(event+1, modifier))
 			 return(PAPI_OK);
 	   }
 	   return (PAPI_ENOEVNT);
@@ -581,25 +577,26 @@ int generate_preset_search_map(hwi_search_t **maploc, itanium_preset_search_t *o
       cnt = 0;
       while (*findme != NULL) {
          if (cnt == MAX_COUNTER_TERMS){
-	    PAPIERROR("Count (%d) == MAX_COUNTER_TERMS (%d)\n",cnt,MAX_COUNTER_TERMS);
+	        PAPIERROR("Count (%d) == MAX_COUNTER_TERMS (%d)\n",cnt,MAX_COUNTER_TERMS);
             return(PAPI_EBUG);
          }
-#if defined(ITANIUM3)
-         if (_papi_pfm_ntv_name_to_code(*findme, (unsigned int *)&psmap[i].data.native[cnt]) != PAPI_OK)
-         {
-            PAPIERROR("_papi_pfm_ntv_name_to_code(%s) failed\n", *findme);
-            return (PAPI_EBUG);
+         if(_perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU){
+           if (_papi_pfm_ntv_name_to_code(*findme, (unsigned int *)&psmap[i].data.native[cnt]) != PAPI_OK){
+              PAPIERROR("_papi_pfm_ntv_name_to_code(%s) failed\n", *findme);
+              return (PAPI_EBUG);
+           }
+           else
+              psmap[i].data.native[cnt] ^= PAPI_NATIVE_MASK;
          }
-#else
-         if (pfm_find_event_byname(*findme, (unsigned int *)&psmap[i].data.native[cnt]) !=
-             PFMLIB_SUCCESS)
-         {
-            PAPIERROR("pfm_find_event_byname(%s) failed\n", *findme);
-            return (PAPI_EBUG);
+         else{
+           if (pfm_find_event_byname(*findme, (unsigned int *)&psmap[i].data.native[cnt]) != PFMLIB_SUCCESS){
+              PAPIERROR("pfm_find_event_byname(%s) failed\n", *findme);
+              return (PAPI_EBUG);
+           }
+           else
+              psmap[i].data.native[cnt] ^= PAPI_NATIVE_MASK;
          }
-#endif
-         else
-            psmap[i].data.native[cnt] ^= PAPI_NATIVE_MASK;
+
          findme++;
          cnt++;
       }
@@ -653,10 +650,10 @@ inline_static unsigned long get_cycles(void)
    return tmp;
 }
 
-int _ia64_set_domain(hwd_control_state_t * this_state, int domain)
+int _ia64_ita_set_domain(hwd_control_state_t * this_state, int domain)
 {
    int mode = 0, did = 0, i;
-   pfmw_param_t *evt = &this_state->evt;
+   pfmw_param_t *evt = &((ia64_control_state_t *)this_state)->evt;
 
    if (domain & PAPI_DOM_USER) {
       did = 1;
@@ -678,13 +675,13 @@ int _ia64_set_domain(hwd_control_state_t * this_state, int domain)
 
    for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
       if (PFMW_PEVT_PFPPC_REG_NUM(evt,i)) {
-         pfmw_arch_pmc_reg_t value;
+         pfm_ita_pmc_reg_t value;
          SUBDBG("slot %d, register %lud active, config value 0x%lx\n",
                 i, (unsigned long) (PFMW_PEVT_PFPPC_REG_NUM(evt,i)),
                 PFMW_PEVT_PFPPC_REG_VAL(evt,i));
 
          PFMW_ARCH_REG_PMCVAL(value) = PFMW_PEVT_PFPPC_REG_VAL(evt,i);
-         PFMW_ARCH_REG_PMCPLM(value) = mode;
+         value.pmc_ita_count_reg.pmc_plm = mode;
          PFMW_PEVT_PFPPC_REG_VAL(evt,i) = PFMW_ARCH_REG_PMCVAL(value);
 
          SUBDBG("new config value 0x%lx\n", PFMW_PEVT_PFPPC_REG_VAL(evt,i));
@@ -692,6 +689,118 @@ int _ia64_set_domain(hwd_control_state_t * this_state, int domain)
    }
 
    return (PAPI_OK);
+}
+
+#ifdef PFMLIB_ITANIUM2_PMU
+int _ia64_ita2_set_domain(hwd_control_state_t * this_state, int domain)
+{
+   int mode = 0, did = 0, i;
+   pfmw_param_t *evt = &((ia64_control_state_t *)this_state)->evt;
+
+   if (domain & PAPI_DOM_USER) {
+      did = 1;
+      mode |= PFM_PLM3;
+   }
+
+   if (domain & PAPI_DOM_KERNEL) {
+      did = 1;
+      mode |= PFM_PLM0;
+   }
+
+   if (!did)
+      return (PAPI_EINVAL);
+
+   PFMW_PEVT_DFLPLM(evt) = mode;
+
+   /* Bug fix in case we don't call pfmw_dispatch_events after this code */
+   /* Who did this? This sucks, we should always call it here -PJM */
+
+   for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
+      if (PFMW_PEVT_PFPPC_REG_NUM(evt,i)) {
+         pfm_ita2_pmc_reg_t value;
+         SUBDBG("slot %d, register %lud active, config value 0x%lx\n",
+                i, (unsigned long) (PFMW_PEVT_PFPPC_REG_NUM(evt,i)),
+                PFMW_PEVT_PFPPC_REG_VAL(evt,i));
+
+         PFMW_ARCH_REG_PMCVAL(value) = PFMW_PEVT_PFPPC_REG_VAL(evt,i);
+         value.pmc_ita2_counter_reg.pmc_plm = mode;
+         PFMW_PEVT_PFPPC_REG_VAL(evt,i) = PFMW_ARCH_REG_PMCVAL(value);
+
+         SUBDBG("new config value 0x%lx\n", PFMW_PEVT_PFPPC_REG_VAL(evt,i));
+      }
+   }
+
+   return (PAPI_OK);
+}
+#endif
+
+#ifdef PFMLIB_MONTECITO_PMU
+int _ia64_mont_set_domain(hwd_control_state_t * this_state, int domain)
+{
+   int mode = 0, did = 0, i;
+   pfmw_param_t *evt = &((ia64_control_state_t *)this_state)->evt;
+
+   if (domain & PAPI_DOM_USER) {
+      did = 1;
+      mode |= PFM_PLM3;
+   }
+
+   if (domain & PAPI_DOM_KERNEL) {
+      did = 1;
+      mode |= PFM_PLM0;
+   }
+
+   if (!did)
+      return (PAPI_EINVAL);
+
+   PFMW_PEVT_DFLPLM(evt) = mode;
+
+   /* Bug fix in case we don't call pfmw_dispatch_events after this code */
+   /* Who did this? This sucks, we should always call it here -PJM */
+
+   for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
+      if (PFMW_PEVT_PFPPC_REG_NUM(evt,i)) {
+         pfm_mont_pmc_reg_t value;
+         SUBDBG("slot %d, register %lud active, config value 0x%lx\n",
+                i, (unsigned long) (PFMW_PEVT_PFPPC_REG_NUM(evt,i)),
+                PFMW_PEVT_PFPPC_REG_VAL(evt,i));
+
+         PFMW_ARCH_REG_PMCVAL(value) = PFMW_PEVT_PFPPC_REG_VAL(evt,i);
+         value.pmc_mont_counter_reg.pmc_plm = mode;
+         PFMW_PEVT_PFPPC_REG_VAL(evt,i) = PFMW_ARCH_REG_PMCVAL(value);
+
+         SUBDBG("new config value 0x%lx\n", PFMW_PEVT_PFPPC_REG_VAL(evt,i));
+      }
+   }
+
+   return (PAPI_OK);
+}
+#endif
+
+int _ia64_set_domain(hwd_control_state_t * this_state, int domain)
+{
+	switch (_perfmon2_pfm_pmu_type) {
+#ifndef PFMLIB_ITANIUM2_PMU
+	case PFMLIB_ITANIUM_PMU:
+		return(_ia64_ita_set_domain(this_state, domain));
+	break;
+#endif
+
+#ifdef PFMLIB_ITANIUM2_PMU
+	case PFMLIB_ITANIUM2_PMU:
+		return(_ia64_ita2_set_domain(this_state, domain));
+	break;
+#endif
+
+#ifdef PFMLIB_MONTECITO_PMU
+	case PFMLIB_MONTECITO_PMU:
+		return(_ia64_mont_set_domain(this_state, domain));
+	break;
+#endif
+	default:
+		PAPIERROR("PMU type %d is not supported by this substrate",_perfmon2_pfm_pmu_type);
+		return(PAPI_EBUG);
+	}
 }
 
 inline static int set_granularity(hwd_control_state_t * this_state, int domain)
@@ -708,6 +817,107 @@ inline static int set_granularity(hwd_control_state_t * this_state, int domain)
       return (PAPI_EINVAL);
    }
    return (PAPI_OK);
+}
+
+int _ia64_ita_read(hwd_context_t * ctx, hwd_control_state_t * machdep,
+                   long long ** events, int flags)
+{
+   int i;
+   pfarg_reg_t readem[MY_VECTOR.cmp_info.num_cntrs];
+
+   pfmw_stop((ia64_context_t *)ctx);
+   memset(readem, 0x0, sizeof readem);
+
+/* read the 4 counters, the high level function will process the 
+   mapping for papi event to hardware counter 
+*/
+   for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
+      readem[i].reg_num = PMU_FIRST_COUNTER + i;
+   }
+
+   if (pfmw_perfmonctl(((ia64_context_t *)ctx)->tid, ((ia64_context_t *)ctx)->fd, PFM_READ_PMDS, readem, MY_VECTOR.cmp_info.num_cntrs) == -1) {
+      SUBDBG("perfmonctl error READ_PMDS errno %d\n", errno);
+      pfmw_start((ia64_context_t *)ctx);
+      return PAPI_ESYS;
+   }
+
+   for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
+      ((ia64_control_state_t *)machdep)->counters[i] = readem[i].reg_value;
+      SUBDBG("read counters is %ld\n", readem[i].reg_value);
+   }
+
+   pfmw_param_t *pevt= &(((ia64_control_state_t *)machdep)->evt);
+   pfm_ita_pmc_reg_t flop_hack;
+   /* special case, We need to scale FP_OPS_HI */
+   for (i = 0; i < PFMW_PEVT_EVTCOUNT(pevt); i++) {
+      PFMW_ARCH_REG_PMCVAL(flop_hack) = PFMW_PEVT_PFPPC_REG_VAL(pevt,i);
+      if (flop_hack.pmc_ita_count_reg.pmc_es == 0xa)
+         ((ia64_control_state_t *)machdep)->counters[i] *= 4;
+   }
+
+   *events = ((ia64_control_state_t *)machdep)->counters;
+   pfmw_start((ia64_context_t *)ctx);
+   return PAPI_OK;
+}
+
+#if defined(PFMLIB_MONTECITO_PMU) || defined(PFMLIB_ITANIUM2_PMU)
+int _ia64_ita23_read(hwd_context_t * ctx, hwd_control_state_t * machdep,
+                   long long ** events, int flags)
+{
+   int i;
+   pfarg_reg_t readem[MY_VECTOR.cmp_info.num_cntrs];
+
+   pfmw_stop((ia64_context_t *)ctx);
+   memset(readem, 0x0, sizeof readem);
+
+/* read the 4 counters, the high level function will process the 
+   mapping for papi event to hardware counter 
+*/
+   for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
+      readem[i].reg_num = PMU_FIRST_COUNTER + i;
+   }
+
+   if (pfmw_perfmonctl(((ia64_context_t *)ctx)->tid, ((ia64_context_t *)ctx)->fd, PFM_READ_PMDS, readem, MY_VECTOR.cmp_info.num_cntrs) == -1) {
+      SUBDBG("perfmonctl error READ_PMDS errno %d\n", errno);
+      pfmw_start((ia64_context_t *)ctx);
+      return PAPI_ESYS;
+   }
+
+   for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
+      ((ia64_control_state_t *)machdep)->counters[i] = readem[i].reg_value;
+      SUBDBG("read counters is %ld\n", readem[i].reg_value);
+   }
+
+   *events = ((ia64_control_state_t *)machdep)->counters;
+   pfmw_start((ia64_context_t *)ctx);
+   return PAPI_OK;
+}
+#endif
+
+int _ia64_read(hwd_context_t * ctx, hwd_control_state_t * machdep, long long ** events, int flags)
+{
+	switch (_perfmon2_pfm_pmu_type) {
+#ifndef PFMLIB_ITANIUM2_PMU
+	case PFMLIB_ITANIUM_PMU:
+		return(_ia64_ita2_set_domain(this_state, domain));
+	break;
+#endif
+
+#ifdef PFMLIB_ITANIUM2_PMU
+	case PFMLIB_ITANIUM2_PMU:
+		return(_ia64_ita23_read(ctx, machdep, events, flags));
+	break;
+#endif
+
+#ifdef PFMLIB_MONTECITO_PMU
+	case PFMLIB_MONTECITO_PMU:
+		return(_ia64_ita23_read(ctx, machdep, events, flags));
+	break;
+#endif
+	default:
+		PAPIERROR("PMU type %d is not supported by this substrate",_perfmon2_pfm_pmu_type);
+		return(PAPI_EBUG);
+	}
 }
 
 /* This function should tell your kernel extension that your children
@@ -909,16 +1119,14 @@ int _ia64_get_system_info(void)
   MY_VECTOR.cmp_info.kernel_profile = 1;
   MY_VECTOR.cmp_info.data_address_range = 1;    /* Supports data address range limiting */
   MY_VECTOR.cmp_info.instr_address_range = 1;   /* Supports instruction address range limiting */
-#if defined(ITANIUM3)
-  MY_VECTOR.cmp_info.cntr_umasks = 1;           /* counters have unit masks */
-#endif
+  if(_perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU)
+    MY_VECTOR.cmp_info.cntr_umasks = 1;           /* counters have unit masks */
+
   MY_VECTOR.cmp_info.cntr_IEAR_events = 1;      /* counters support instr event addr register */
   MY_VECTOR.cmp_info.cntr_DEAR_events = 1;      /* counters support data event addr register */
   MY_VECTOR.cmp_info.cntr_OPCM_events = 1;      /* counter events support opcode matching */
-#ifndef PFM20
   /* Put the signal handler in use to consume PFM_END_MSG's */
   _papi_hwi_start_signal(MY_VECTOR.cmp_info.hardware_intr_sig, 1, MY_VECTOR.cmp_info.CmpIdx);
-#endif
 
    return (PAPI_OK);
 }
@@ -1011,17 +1219,23 @@ int _ia64_init_substrate(int cidx)
 #ifndef PFMLIB_ITANIUM2_PMU
    case PFMLIB_ITANIUM_PMU:
      ia_preset_search_map = ia1_preset_search_map;
+     MY_VECTOR.set_domain =	_ia64_ita_set_domain;
+     MY_VECTOR.read =	_ia64_ita_read;
      break;
 #endif
 #ifdef PFMLIB_ITANIUM2_PMU
    case PFMLIB_ITANIUM2_PMU:
      ia_preset_search_map = ia2_preset_search_map;
+     MY_VECTOR.set_domain =	_ia64_ita2_set_domain;
+     MY_VECTOR.read =	_ia64_ita23_read;
      break;
 #endif
 
 #ifdef PFMLIB_MONTECITO_PMU
    case PFMLIB_MONTECITO_PMU:
      ia_preset_search_map = ia3_preset_search_map;
+     MY_VECTOR.set_domain =	_ia64_mont_set_domain;
+     MY_VECTOR.read =	_ia64_ita23_read;
      break;
 #endif
    default:
@@ -1228,51 +1442,6 @@ int _ia64_reset(hwd_context_t * ctx, hwd_control_state_t * machdep)
    return (PAPI_OK);
 }
 
-int _ia64_read(hwd_context_t * ctx, hwd_control_state_t * machdep,
-                   long long ** events, int flags)
-{
-   int i;
-   pfarg_reg_t readem[MY_VECTOR.cmp_info.num_cntrs];
-
-   pfmw_stop(ctx);
-   memset(readem, 0x0, sizeof readem);
-
-/* read the 4 counters, the high level function will process the 
-   mapping for papi event to hardware counter 
-*/
-   for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
-      readem[i].reg_num = PMU_FIRST_COUNTER + i;
-   }
-
-   if (pfmw_perfmonctl(ctx->tid, ctx->fd, PFM_READ_PMDS, readem, MY_VECTOR.cmp_info.num_cntrs) == -1) {
-      SUBDBG("perfmonctl error READ_PMDS errno %d\n", errno);
-      pfmw_start(ctx);
-      return PAPI_ESYS;
-   }
-
-   for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
-      machdep->counters[i] = readem[i].reg_value;
-      SUBDBG("read counters is %ld\n", readem[i].reg_value);
-   }
-
-#ifdef ITANIUM
-   pfmw_param_t *pevt= &(machdep->evt);
-   pfmw_arch_pmc_reg_t flop_hack;
-   /* special case, We need to scale FP_OPS_HI */
-   for (i = 0; i < PFMW_PEVT_EVTCOUNT(pevt); i++) {
-      PFMW_ARCH_REG_PMCVAL(flop_hack) = 
-                      PFMW_PEVT_PFPPC_REG_VAL(pevt,i);
-      if (PFMW_ARCH_REG_PMCES(flop_hack) == 0xa)
-         machdep->counters[i] *= 4;
-   }
-#endif
-
-   *events = machdep->counters;
-   pfmw_start(ctx);
-   return PAPI_OK;
-}
-
-
 int _ia64_start(hwd_context_t * ctx, hwd_control_state_t * current_state)
 {
    int i;
@@ -1287,12 +1456,10 @@ int _ia64_start(hwd_context_t * ctx, hwd_control_state_t * current_state)
       PAPIERROR("perfmonctl(PFM_WRITE_PMCS) errno %d", errno);
       return (PAPI_ESYS);
    }
-#ifdef PFM30
    if (pfmw_perfmonctl(ctx->tid, ctx->fd, PFM_WRITE_PMDS, PFMW_PEVT_PFPPD(pevt), PFMW_PEVT_EVTCOUNT(pevt)) == -1) {
       PAPIERROR("perfmonctl(PFM_WRITE_PMDS) errno %d", errno);
       return (PAPI_ESYS);
 	}
-#endif
 
 /* set the initial value of the hardware counter , if PAPI_overflow or
   PAPI_profil are called, then the initial value is the threshold
@@ -1424,92 +1591,7 @@ static void cleanup_semaphores(void)
 }
 #endif
 
-#ifdef PFM20
-/* This function set the parameters which needed by DATA EAR */
-int set_dear_ita_param(pfmw_ita_param_t * ita_lib_param, int EventCode)
-{
-#ifdef ITANIUM2
-   ita_lib_param->pfp_magic = PFMLIB_ITA2_PARAM_MAGIC;
-   ita_lib_param->pfp_ita2_dear.ear_used = 1;
-   pfm_ita2_get_ear_mode(EventCode, &ita_lib_param->pfp_ita2_dear.ear_mode);
-   ita_lib_param->pfp_ita2_dear.ear_plm = PFM_PLM3;
-   ita_lib_param->pfp_ita2_dear.ear_ism = PFMLIB_ITA2_ISM_IA64; /* ia64 only */
-   pfm_ita2_get_event_umask(EventCode, &ita_lib_param->pfp_ita2_dear.ear_umask);
-#else
-   ita_lib_param->pfp_magic = PFMLIB_ITA_PARAM_MAGIC;
-   ita_lib_param->pfp_ita_dear.ear_used = 1;
-   ita_lib_param->pfp_ita_dear.ear_is_tlb = pfm_ita_is_dear_tlb(EventCode);
-   ita_lib_param->pfp_ita_dear.ear_plm = PFM_PLM3;
-   ita_lib_param->pfp_ita_dear.ear_ism = PFMLIB_ITA_ISM_IA64;   /* ia64 only */
-   pfm_ita_get_event_umask(EventCode, &ita_lib_param->pfp_ita_dear.ear_umask);
-#endif
-   return PAPI_OK;
-}
-
-#if 0 /* the next two routines are defined but not used */
-static unsigned long check_btb_reg(pfmw_arch_pmd_reg_t reg)
-{
-#ifdef ITANIUM2
-   int is_valid = reg.pmd8_15_ita2_reg.btb_b == 0
-       && reg.pmd8_15_ita2_reg.btb_mp == 0 ? 0 : 1;
-#else
-   int is_valid = reg.pmd8_15_ita_reg.btb_b == 0 && reg.pmd8_15_ita_reg.btb_mp
-       == 0 ? 0 : 1;
-#endif
-
-   if (!is_valid)
-      return 0;
-
-#ifdef ITANIUM2
-   if (reg.pmd8_15_ita2_reg.btb_b) {
-      unsigned long addr;
-
-      addr = reg.pmd8_15_ita2_reg.btb_addr << 4;
-      addr |= reg.pmd8_15_ita2_reg.btb_slot < 3 ? reg.pmd8_15_ita2_reg.btb_slot : 0;
-      return addr;
-   } else
-      return 0;
-#else
-   if (reg.pmd8_15_ita_reg.btb_b) {
-      unsigned long addr;
-
-      addr = reg.pmd8_15_ita_reg.btb_addr << 4;
-      addr |= reg.pmd8_15_ita_reg.btb_slot < 3 ? reg.pmd8_15_ita_reg.btb_slot : 0;
-      return addr;
-   } else
-      return 0;
-#endif
-}
-
-static unsigned long check_btb(pfmw_arch_pmd_reg_t * btb, pfmw_arch_pmd_reg_t * pmd16)
-{
-   int i, last;
-   unsigned long addr, lastaddr;
-
-#ifdef ITANIUM2
-   i = (pmd16->pmd16_ita2_reg.btbi_full) ? pmd16->pmd16_ita2_reg.btbi_bbi : 0;
-   last = pmd16->pmd16_ita2_reg.btbi_bbi;
-#else
-   i = (pmd16->pmd16_ita_reg.btbi_full) ? pmd16->pmd16_ita_reg.btbi_bbi : 0;
-   last = pmd16->pmd16_ita_reg.btbi_bbi;
-#endif
-
-   addr = 0;
-   do {
-      lastaddr = check_btb_reg(btb[i]);
-      if (lastaddr)
-         addr = lastaddr;
-      i = (i + 1) % 8;
-   } while (i != last);
-   if (addr)
-      return addr;
-   else
-      return PAPI_ESYS;
-}
-#endif /* 0 */
-#endif
-
-static int ia64_process_profile_buffer(ThreadInfo_t *thread, EventSetInfo_t *ESI)
+static int ia64_ita_process_profile_buffer(ThreadInfo_t *thread, EventSetInfo_t *ESI)
 {
    pfmw_smpl_hdr_t *hdr;
    pfmw_smpl_entry_t *ent;
@@ -1517,32 +1599,18 @@ static int ia64_process_profile_buffer(ThreadInfo_t *thread, EventSetInfo_t *ESI
    unsigned long entry_size;
    int i, ret, reg_num, count, pos;
    unsigned int EventCode=0, eventindex, native_index=0;
-   hwd_control_state_t *this_state;
-   pfmw_arch_pmd_reg_t *reg;
+   ia64_control_state_t *this_state;
+   pfm_ita_pmd_reg_t *reg;
    unsigned long overflow_vector, pc;
-#if defined(ITANIUM3)
-   unsigned int umask;
-#endif
 
 
    if ((ESI->state & PAPI_PROFILING) == 0)
      return(PAPI_EBUG);
 
-   this_state = ESI->ctl_state;
+   this_state = (ia64_control_state_t *)(ESI->ctl_state);
    hdr = (pfmw_smpl_hdr_t *) this_state->smpl_vaddr;
 
-#ifdef PFM30
    entry_size = sizeof(pfmw_smpl_entry_t);
-#else
-   entry_size = hdr->hdr_entry_size;
-   /*
-    * Make sure the kernel uses the format we understand
-    */
-   if (PFM_VERSION_MAJOR(hdr->hdr_version) != PFM_VERSION_MAJOR(PFM_SMPL_VERSION)) {
-      PAPIERROR("Perfmon v%u.%u sampling format is not supported",
-              PFM_VERSION_MAJOR(hdr->hdr_version), PFM_VERSION_MINOR(hdr->hdr_version));
-   }
-#endif
 
    /*
     * walk through all the entries recorded in the buffer
@@ -1551,12 +1619,8 @@ static int ia64_process_profile_buffer(ThreadInfo_t *thread, EventSetInfo_t *ESI
    for (i = 0; i < hdr->hdr_count; i++) {
       ret = 0;
       ent = (pfmw_smpl_entry_t *) buf_pos;
-#ifdef PFM30
       /* PFM30 only one PMD overflows in each sample */
       overflow_vector = 1 << ent->ovfl_pmd;
-#else
-      overflow_vector = ent->regs;
-#endif
 
       SUBDBG("Entry %d PID:%d CPU:%d ovfl_vector:0x%lx IIP:0x%016lx\n",
 	     i,
@@ -1566,68 +1630,230 @@ static int ia64_process_profile_buffer(ThreadInfo_t *thread, EventSetInfo_t *ESI
 	     ent->ip);
 
       while (overflow_vector) {
-	reg_num = ffs(overflow_vector) - 1;
+	     reg_num = ffs(overflow_vector) - 1;
          /* find the event code */
          for (count = 0; count < ESI->profile.event_counter; count++) {
             eventindex = ESI->profile.EventIndex[count];
             pos = ESI->EventInfoArray[eventindex].pos[0];
             if (pos + PMU_FIRST_COUNTER == reg_num) {
                EventCode = ESI->profile.EventCode[count];
-#if defined(ITANIUM3)
-               if (_pfm_decode_native_event(ESI->NativeInfoArray[pos].ni_event,&native_index,&umask) != PAPI_OK)
-                  return(PAPI_ENOEVNT);
-#else
-               native_index = ESI->NativeInfoArray[pos].ni_event 
-		 & PAPI_NATIVE_AND_MASK;
-#endif
+               native_index = ESI->NativeInfoArray[pos].ni_event & PAPI_NATIVE_AND_MASK;
                break;
             }
          }
          /* something is wrong */
-         if (count == ESI->profile.event_counter)
-	   {
-	     PAPIERROR("wrong count: %d vs. ESI->profile.event_counter %d\n", count, ESI->profile.event_counter);
-	     return(PAPI_EBUG);
-	   }
+         if (count == ESI->profile.event_counter){
+	        PAPIERROR("wrong count: %d vs. ESI->profile.event_counter %d\n", count, ESI->profile.event_counter);
+	        return(PAPI_EBUG);
+	     }
 
          /* print entry header */
          pc = ent->ip;
-      //   printf("ent->ip = 0x%lx \n", ent->ip);
-#ifdef ITANIUM2
-         if (pfm_ita2_is_dear(native_index)) 
-#elif defined(ITANIUM3)
-         if (pfm_mont_is_dear(native_index)) 
-#else
-	 if (pfm_ita_is_dear(native_index)) 
-#endif
-	 {
-	   reg = (pfmw_arch_pmd_reg_t *) (ent + 1);
-	   reg++;
-	   reg++;
-#if defined(ITANIUM3)
-	   pc = ((reg->pmd36_mont_reg.dear_iaddr +
-			   reg->pmd36_mont_reg.dear_bn) << 4)
-	     | reg->pmd36_mont_reg.dear_slot;
-#elif defined(ITANIUM2)
-	   pc = ((reg->pmd17_ita2_reg.dear_iaddr +
-			   reg->pmd17_ita2_reg.dear_bn) << 4)
-	     | reg->pmd17_ita2_reg.dear_slot;
-	   
-#else
-	   pc = (reg->pmd17_ita_reg.dear_iaddr << 4)
-	     | (reg->pmd17_ita_reg.dear_slot);
-#endif
-	   /* adjust pointer position */
-	   buf_pos += (hweight64(DEAR_REGS_MASK)<<3);
+	     if (pfm_ita_is_dear(native_index)){
+	       reg = (pfm_ita_pmd_reg_t *) (ent + 1);
+	       reg++;
+	       reg++;
+           pc = (reg->pmd17_ita_reg.dear_iaddr << 4) | (reg->pmd17_ita_reg.dear_slot);
+           /* adjust pointer position */
+	       buf_pos += (hweight64(DEAR_REGS_MASK)<<3);
          }
 
          _papi_hwi_dispatch_profile(ESI, (caddr_t)pc, (long long) 0, count);
-	 overflow_vector ^= (unsigned long)1 << reg_num;
+	     overflow_vector ^= (unsigned long)1 << reg_num;
       }
       /*  move to next entry */
       buf_pos += entry_size;
    }                            /* end of if */
    return (PAPI_OK);
+}
+
+#ifdef PFMLIB_ITANIUM2_PMU
+static int ia64_ita2_process_profile_buffer(ThreadInfo_t *thread, EventSetInfo_t *ESI)
+{
+   pfmw_smpl_hdr_t *hdr;
+   pfmw_smpl_entry_t *ent;
+   unsigned long buf_pos;
+   unsigned long entry_size;
+   int i, ret, reg_num, count, pos;
+   unsigned int EventCode=0, eventindex, native_index=0;
+   ia64_control_state_t *this_state;
+   pfm_ita2_pmd_reg_t *reg;
+   unsigned long overflow_vector, pc;
+
+
+   if ((ESI->state & PAPI_PROFILING) == 0)
+     return(PAPI_EBUG);
+
+   this_state = (ia64_control_state_t *)(ESI->ctl_state);
+   hdr = (pfmw_smpl_hdr_t *) this_state->smpl_vaddr;
+
+   entry_size = sizeof(pfmw_smpl_entry_t);
+
+   /*
+    * walk through all the entries recorded in the buffer
+    */
+   buf_pos = (unsigned long) (hdr + 1);
+   for (i = 0; i < hdr->hdr_count; i++) {
+      ret = 0;
+      ent = (pfmw_smpl_entry_t *) buf_pos;
+      /* PFM30 only one PMD overflows in each sample */
+      overflow_vector = 1 << ent->ovfl_pmd;
+
+      SUBDBG("Entry %d PID:%d CPU:%d ovfl_vector:0x%lx IIP:0x%016lx\n",
+	     i,
+	     ent->pid,
+	     ent->cpu,
+	     overflow_vector,
+	     ent->ip);
+
+      while (overflow_vector) {
+	     reg_num = ffs(overflow_vector) - 1;
+         /* find the event code */
+         for (count = 0; count < ESI->profile.event_counter; count++) {
+            eventindex = ESI->profile.EventIndex[count];
+            pos = ESI->EventInfoArray[eventindex].pos[0];
+            if (pos + PMU_FIRST_COUNTER == reg_num) {
+               EventCode = ESI->profile.EventCode[count];
+               native_index = ESI->NativeInfoArray[pos].ni_event & PAPI_NATIVE_AND_MASK;
+               break;
+            }
+         }
+         /* something is wrong */
+         if (count == ESI->profile.event_counter){
+	        PAPIERROR("wrong count: %d vs. ESI->profile.event_counter %d\n", count, ESI->profile.event_counter);
+	        return(PAPI_EBUG);
+	     }
+
+         /* print entry header */
+         pc = ent->ip;
+         if (pfm_ita2_is_dear(native_index)){
+	        reg = (pfm_ita2_pmd_reg_t *) (ent + 1);
+	        reg++;
+	        reg++;
+	        pc = ((reg->pmd17_ita2_reg.dear_iaddr +
+			   reg->pmd17_ita2_reg.dear_bn) << 4)
+	           | reg->pmd17_ita2_reg.dear_slot;
+	   
+	        /* adjust pointer position */
+	        buf_pos += (hweight64(DEAR_REGS_MASK)<<3);
+         }
+
+         _papi_hwi_dispatch_profile(ESI, (caddr_t)pc, (long long) 0, count);
+	     overflow_vector ^= (unsigned long)1 << reg_num;
+      }
+      /*  move to next entry */
+      buf_pos += entry_size;
+   }                            /* end of if */
+   return (PAPI_OK);
+}
+#endif
+
+#ifdef PFMLIB_MONTECITO_PMU
+static int ia64_mont_process_profile_buffer(ThreadInfo_t *thread, EventSetInfo_t *ESI)
+{
+   pfmw_smpl_hdr_t *hdr;
+   pfmw_smpl_entry_t *ent;
+   unsigned long buf_pos;
+   unsigned long entry_size;
+   int i, ret, reg_num, count, pos;
+   unsigned int EventCode=0, eventindex, native_index=0;
+   ia64_control_state_t *this_state;
+   pfm_mont_pmd_reg_t *reg;
+   unsigned long overflow_vector, pc;
+   unsigned int umask;
+
+
+   if ((ESI->state & PAPI_PROFILING) == 0)
+     return(PAPI_EBUG);
+
+   this_state = (ia64_control_state_t *)ESI->ctl_state;
+   hdr = (pfmw_smpl_hdr_t *) this_state->smpl_vaddr;
+
+   entry_size = sizeof(pfmw_smpl_entry_t);
+
+   /*
+    * walk through all the entries recorded in the buffer
+    */
+   buf_pos = (unsigned long) (hdr + 1);
+   for (i = 0; i < hdr->hdr_count; i++) {
+      ret = 0;
+      ent = (pfmw_smpl_entry_t *) buf_pos;
+      /* PFM30 only one PMD overflows in each sample */
+      overflow_vector = 1 << ent->ovfl_pmd;
+
+      SUBDBG("Entry %d PID:%d CPU:%d ovfl_vector:0x%lx IIP:0x%016lx\n",
+	     i,
+	     ent->pid,
+	     ent->cpu,
+	     overflow_vector,
+	     ent->ip);
+
+      while (overflow_vector) {
+	     reg_num = ffs(overflow_vector) - 1;
+         /* find the event code */
+         for (count = 0; count < ESI->profile.event_counter; count++) {
+            eventindex = ESI->profile.EventIndex[count];
+            pos = ESI->EventInfoArray[eventindex].pos[0];
+            if (pos + PMU_FIRST_COUNTER == reg_num) {
+               EventCode = ESI->profile.EventCode[count];
+               if (_pfm_decode_native_event(ESI->NativeInfoArray[pos].ni_event,&native_index,&umask) != PAPI_OK)
+                  return(PAPI_ENOEVNT);
+               break;
+            }
+         }
+         /* something is wrong */
+         if (count == ESI->profile.event_counter){
+	        PAPIERROR("wrong count: %d vs. ESI->profile.event_counter %d\n", count, ESI->profile.event_counter);
+	        return(PAPI_EBUG);
+	     }
+
+         /* print entry header */
+         pc = ent->ip;
+         if (pfm_mont_is_dear(native_index)){
+	       reg = (pfm_mont_pmd_reg_t *) (ent + 1);
+	       reg++;
+	       reg++;
+	       pc = ((reg->pmd36_mont_reg.dear_iaddr +
+			   reg->pmd36_mont_reg.dear_bn) << 4)
+	           | reg->pmd36_mont_reg.dear_slot;
+	       /* adjust pointer position */
+	       buf_pos += (hweight64(DEAR_REGS_MASK)<<3);
+         }
+
+         _papi_hwi_dispatch_profile(ESI, (caddr_t)pc, (long long) 0, count);
+	     overflow_vector ^= (unsigned long)1 << reg_num;
+      }
+      /*  move to next entry */
+      buf_pos += entry_size;
+   }                            /* end of if */
+   return (PAPI_OK);
+}
+#endif
+
+static int ia64_process_profile_buffer(ThreadInfo_t *thread, EventSetInfo_t *ESI)
+{
+	switch (_perfmon2_pfm_pmu_type) {
+#ifndef PFMLIB_ITANIUM2_PMU
+	case PFMLIB_ITANIUM_PMU:
+		return(ia64_ita_process_profile_buffer(thread, ESI));
+	break;
+#endif
+
+#ifdef PFMLIB_ITANIUM2_PMU
+	case PFMLIB_ITANIUM2_PMU:
+		return(ia64_ita2_process_profile_buffer(thread, ESI));
+	break;
+#endif
+
+#ifdef PFMLIB_MONTECITO_PMU
+	case PFMLIB_MONTECITO_PMU:
+		return(ia64_mont_process_profile_buffer(thread, ESI));
+	break;
+#endif
+	default:
+		PAPIERROR("PMU type %d is not supported by this substrate",_perfmon2_pfm_pmu_type);
+		return(PAPI_EBUG);
+	}
 }
 
 static inline void ia64_dispatch_sigprof(int n, hwd_siginfo_t * info, struct sigcontext *sc)
@@ -1858,16 +2084,16 @@ int _ia64_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 
 int _ia64_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len)
 {
-#if defined(ITANIUM3)
+  if(_perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU)
 	return(_papi_pfm_ntv_code_to_descr(EventCode, ntv_descr, len));
-#else
-#if defined(HAVE_PFM_GET_EVENT_DESCRIPTION)
-  pfmw_get_event_description(EventCode^PAPI_NATIVE_MASK, ntv_descr, len);
-  return(PAPI_OK);
-#else
-   return (_ia64_ntv_code_to_name(EventCode, ntv_descr, len));
-#endif
-#endif
+  else{
+  #if defined(HAVE_PFM_GET_EVENT_DESCRIPTION)
+    pfmw_get_event_description(EventCode^PAPI_NATIVE_MASK, ntv_descr, len);
+    return(PAPI_OK);
+  #else
+    return (_ia64_ntv_code_to_name(EventCode, ntv_descr, len));
+  #endif
+  }
 }
 
 static inline int _ia64_modify_event(unsigned int event, int modifier)
@@ -1890,9 +2116,9 @@ static inline int _ia64_modify_event(unsigned int event, int modifier)
 
 int _ia64_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
-#if defined(ITANIUM3)
+  if(_perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU)
 	return(_papi_pfm_ntv_enum_events(EventCode, modifier));
-#else
+  else{
    int index = *EventCode & PAPI_NATIVE_AND_MASK;
 
    if (modifier == PAPI_ENUM_FIRST) {
@@ -1906,38 +2132,94 @@ int _ia64_ntv_enum_events(unsigned int *EventCode, int modifier)
          return(PAPI_OK);
    }
    return (PAPI_ENOEVNT);
-#endif
+  }
 }
 
-int _ia64_init_control_state(hwd_control_state_t * ptr)
+int _ia64_ita_init_control_state(hwd_control_state_t * this_state)
 {
    pfmw_param_t *evt;
-   pfmw_ita_param_t *param;
-   
-   evt=&(ptr->evt);
-   param=&(ptr->ita_lib_param);
-   memset(evt, 0, sizeof(pfmw_param_t));
-   memset(param, 0, sizeof(pfmw_ita_param_t));
+   pfmw_ita1_param_t *param;
+   ia64_control_state_t *ptr;
 
-   _ia64_set_domain(ptr, MY_VECTOR.cmp_info.default_domain);
+   ptr = (ia64_control_state_t *)this_state;
+   evt=&(ptr->evt);
+
+   param=&(ptr->ita_lib_param.ita_param);
+   memset(evt, 0, sizeof(pfmw_param_t));
+   memset(param, 0, sizeof(pfmw_ita1_param_t));
+
+   _ia64_ita_set_domain(this_state, MY_VECTOR.cmp_info.default_domain);
 /* set library parameter pointer */
-#ifdef PFM20
-#ifdef ITANIUM2
-   ptr->ita_lib_param.pfp_magic = PFMLIB_ITA2_PARAM_MAGIC;
-#else
-   ptr->ita_lib_param.pfp_magic = PFMLIB_ITA_PARAM_MAGIC;
-#endif
-   ptr->evt.pfp_model = &ptr->ita_lib_param;
-#elif PFM30
- #if defined(ITANIUM3)
-    evt->mod_inp  = &(ptr->ita_lib_param.mont_input_param);
-    evt->mod_outp = &(ptr->ita_lib_param.mont_output_param);
- #elif defined(ITANIUM2)
-	evt->mod_inp  = &(ptr->ita_lib_param.ita2_input_param);
-	evt->mod_outp = &(ptr->ita_lib_param.ita2_output_param);
- #endif
-#endif
+
 	return(PAPI_OK);
+}
+
+int _ia64_ita2_init_control_state(hwd_control_state_t * this_state)
+{
+   pfmw_param_t *evt;
+   pfmw_ita2_param_t *param;
+   ia64_control_state_t *ptr;
+
+   ptr = (ia64_control_state_t *)this_state;
+   evt=&(ptr->evt);
+
+   param=&(ptr->ita_lib_param.ita2_param);
+   memset(evt, 0, sizeof(pfmw_param_t));
+   memset(param, 0, sizeof(pfmw_ita2_param_t));
+
+   _ia64_ita2_set_domain(this_state, MY_VECTOR.cmp_info.default_domain);
+/* set library parameter pointer */
+	evt->mod_inp  = &(param->ita2_input_param);
+	evt->mod_outp = &(param->ita2_output_param);
+
+	return(PAPI_OK);
+}
+
+int _ia64_mont_init_control_state(hwd_control_state_t * this_state)
+{
+   pfmw_param_t *evt;
+   pfmw_mont_param_t *param;
+   ia64_control_state_t *ptr;
+
+   ptr = (ia64_control_state_t *)this_state;
+   evt=&(ptr->evt);
+
+   param=&(ptr->ita_lib_param.mont_param);
+   memset(evt, 0, sizeof(pfmw_param_t));
+   memset(param, 0, sizeof(pfmw_mont_param_t));
+
+   _ia64_mont_set_domain(this_state, MY_VECTOR.cmp_info.default_domain);
+/* set library parameter pointer */
+    evt->mod_inp  = &(param->mont_input_param);
+    evt->mod_outp = &(param->mont_output_param);
+
+	return(PAPI_OK);
+}
+
+int _ia64_init_control_state(hwd_control_state_t * this_state)
+{
+	switch (_perfmon2_pfm_pmu_type) {
+#ifndef PFMLIB_ITANIUM2_PMU
+	case PFMLIB_ITANIUM_PMU:
+		return(_ia64_ita_init_control_state(this_state));
+	break;
+#endif
+
+#ifdef PFMLIB_ITANIUM2_PMU
+	case PFMLIB_ITANIUM2_PMU:
+		return(_ia64_ita2_init_control_state(this_state));
+	break;
+#endif
+
+#ifdef PFMLIB_MONTECITO_PMU
+	case PFMLIB_MONTECITO_PMU:
+		return(_ia64_mont_init_control_state(this_state));
+	break;
+#endif
+	default:
+		PAPIERROR("PMU type %d is not supported by this substrate",_perfmon2_pfm_pmu_type);
+		return(PAPI_EBUG);
+	}
 }
 
 void _ia64_remove_native(hwd_control_state_t * this_state, NativeInfo_t * nativeInfo)
@@ -1945,34 +2227,23 @@ void _ia64_remove_native(hwd_control_state_t * this_state, NativeInfo_t * native
    return;
 }
 
-int _ia64_update_control_state(hwd_control_state_t * this_state,
+int _ia64_mont_update_control_state(hwd_control_state_t * this_state,
                    NativeInfo_t * native, int count, hwd_context_t * zero )
 {
    int i, org_cnt;
    pfmw_param_t *evt = &this_state->evt;
    pfmw_param_t copy_evt;
-#if defined(ITANIUM3)
    unsigned int event, umask, EventCode;
    int j;
    pfmlib_event_t gete;
    char name[128];
-#else
-   int index;
-#endif
 
    if (count == 0) {
-#if defined(PFM30)
       for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++)
          PFMW_PEVT_EVENT(evt,i) = 0;
       PFMW_PEVT_EVTCOUNT(evt) = 0;
       memset(PFMW_PEVT_PFPPC(evt), 0, sizeof(PFMW_PEVT_PFPPC(evt)));
       memset(&evt->inp.pfp_unavail_pmcs, 0, sizeof(pfmlib_regmask_t));
-#else
-      for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++)
-         PFMW_PEVT_EVENT(evt,i) = 0;
-      PFMW_PEVT_EVTCOUNT(evt) = 0;
-      memset(PFMW_PEVT_PFPPC(evt), 0, sizeof(PFMW_PEVT_PFPPC(evt)));
-#endif
       return (PAPI_OK);
    }
 
@@ -1980,28 +2251,17 @@ int _ia64_update_control_state(hwd_control_state_t * this_state,
    org_cnt = PFMW_PEVT_EVTCOUNT(evt);
    
    memcpy(&copy_evt, evt, sizeof(pfmw_param_t));
-   for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++)
-   /*for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++)
-      events[i] = PFMW_PEVT_EVENT(evt,i);
-   */
-#if defined(PFM30)
+
    for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++)
       PFMW_PEVT_EVENT(evt,i) = 0;
    PFMW_PEVT_EVTCOUNT(evt) = 0;
    memset(PFMW_PEVT_PFPPC(evt), 0, sizeof(PFMW_PEVT_PFPPC(evt)));
    memset(&evt->inp.pfp_unavail_pmcs, 0, sizeof(pfmlib_regmask_t));
-#else
-   for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++)
-         PFMW_PEVT_EVENT(evt,i) = 0;
-   PFMW_PEVT_EVTCOUNT(evt) = 0;
-   memset(PFMW_PEVT_PFPPC(evt), 0, sizeof(PFMW_PEVT_PFPPC(evt)));
-#endif
 
    SUBDBG(" original count is %d\n", org_cnt);
 
 /* add new native events to the evt structure */
    for (i = 0; i < count; i++) {
-#if defined(ITANIUM3)
       memset(&gete,0,sizeof(gete));
       EventCode = native[i].ni_event;
       _papi_pfm_ntv_code_to_name(EventCode, name, 128);
@@ -2019,18 +2279,6 @@ int _ia64_update_control_state(hwd_control_state_t * this_state,
         for(j=0; j< gete.num_masks; j++)
 	  evt->inp.pfp_events[i].unit_masks[j] = gete.unit_masks[j];
       }
-#else
-      index = native[i].ni_event & PAPI_NATIVE_AND_MASK;
-#ifdef PFM20
-  #ifdef ITANIUM2
-      if (pfm_ita2_is_dear(index))
-  #else
-      if (pfm_ita_is_dear(index))
-  #endif
-         set_dear_ita_param(&this_state->ita_lib_param, index);
-#endif
-      PFMW_PEVT_EVENT(evt,i) = index;
-#endif
    }
    PFMW_PEVT_EVTCOUNT(evt) = count;
    /* Recalcuate the pfmlib_param_t structure, may also signal conflict */
@@ -2054,6 +2302,91 @@ int _ia64_update_control_state(hwd_control_state_t * this_state,
    }
 
    return (PAPI_OK);
+}
+
+int _ia64_ita_update_control_state(hwd_control_state_t * this_state,
+                   NativeInfo_t * native, int count, hwd_context_t * zero )
+{
+   int i, org_cnt;
+   pfmw_param_t *evt = &this_state->evt;
+   pfmw_param_t copy_evt;
+   int index;
+
+   if (count == 0) {
+      for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++)
+         PFMW_PEVT_EVENT(evt,i) = 0;
+      PFMW_PEVT_EVTCOUNT(evt) = 0;
+      memset(PFMW_PEVT_PFPPC(evt), 0, sizeof(PFMW_PEVT_PFPPC(evt)));
+      memset(&evt->inp.pfp_unavail_pmcs, 0, sizeof(pfmlib_regmask_t));
+      return (PAPI_OK);
+   }
+
+/* save the old data */
+   org_cnt = PFMW_PEVT_EVTCOUNT(evt);
+   
+   memcpy(&copy_evt, evt, sizeof(pfmw_param_t));
+   for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++)
+      PFMW_PEVT_EVENT(evt,i) = 0;
+   PFMW_PEVT_EVTCOUNT(evt) = 0;
+   memset(PFMW_PEVT_PFPPC(evt), 0, sizeof(PFMW_PEVT_PFPPC(evt)));
+   memset(&evt->inp.pfp_unavail_pmcs, 0, sizeof(pfmlib_regmask_t));
+
+   SUBDBG(" original count is %d\n", org_cnt);
+
+/* add new native events to the evt structure */
+   for (i = 0; i < count; i++) {
+      index = native[i].ni_event & PAPI_NATIVE_AND_MASK;
+      PFMW_PEVT_EVENT(evt,i) = index;
+   }
+   PFMW_PEVT_EVTCOUNT(evt) = count;
+   /* Recalcuate the pfmlib_param_t structure, may also signal conflict */
+   if (pfmw_dispatch_events(evt)) {
+      SUBDBG("pfmw_dispatch_events fail\n");
+      /* recover the old data */
+      PFMW_PEVT_EVTCOUNT(evt) = org_cnt;
+      /*for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++)
+         PFMW_PEVT_EVENT(evt,i) = events[i];
+      */
+      memcpy(evt, &copy_evt, sizeof(pfmw_param_t));
+      return (PAPI_ECNFLCT);
+   }
+   SUBDBG("event_count=%d\n", PFMW_PEVT_EVTCOUNT(evt));
+
+   for (i = 0; i < PFMW_PEVT_EVTCOUNT(evt); i++) {
+      native[i].ni_position = PFMW_PEVT_PFPPC_REG_NUM(evt,i) 
+                              - PMU_FIRST_COUNTER;
+      SUBDBG("event_code is %d, reg_num is %d\n", native[i].ni_event & PAPI_NATIVE_AND_MASK,
+             native[i].ni_position);
+   }
+
+   return (PAPI_OK);
+}
+
+int _ia64_update_control_state(hwd_control_state_t * this_state,
+                   NativeInfo_t * native, int count, hwd_context_t * zero )
+{
+	switch (_perfmon2_pfm_pmu_type) {
+#ifndef PFMLIB_ITANIUM2_PMU
+	case PFMLIB_ITANIUM_PMU:
+		return(_ia64_ita_update_control_state(this_state, native, count, zero));
+	break;
+#endif
+
+#ifdef PFMLIB_ITANIUM2_PMU
+	case PFMLIB_ITANIUM2_PMU:
+		return(_ia64_ita_update_control_state(this_state, native, count, zero));
+	break;
+#endif
+
+#ifdef PFMLIB_MONTECITO_PMU
+	case PFMLIB_MONTECITO_PMU:
+		return(_ia64_mont_update_control_state(this_state, native, count, zero));
+	break;
+#endif
+	default:
+		PAPIERROR("PMU type %d is not supported by this substrate",_perfmon2_pfm_pmu_type);
+		return(PAPI_EBUG);
+	}
 }
 
 int _ia64_update_shlib_info(void)

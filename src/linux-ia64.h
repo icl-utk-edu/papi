@@ -61,16 +61,10 @@
 #include "config.h"
 #include "perfmon/pfmlib.h"
 #include "perfmon/perfmon.h"
-#ifdef PFM30
 #include "perfmon/perfmon_default_smpl.h"
-#endif
-#ifdef ITANIUM2
-#include "perfmon/pfmlib_itanium2.h"
-#elif defined(ITANIUM3)
 #include "perfmon/pfmlib_montecito.h"
-#else
+#include "perfmon/pfmlib_itanium2.h"
 #include "perfmon/pfmlib_itanium.h"
-#endif
 
 #define inline_static inline static
 
@@ -78,11 +72,10 @@ typedef int ia64_register_t;
 typedef int ia64_register_map_t;
 typedef int ia64_reg_alloc_t;
 
-#ifdef PFM30
+
    #define NUM_PMCS PFMLIB_MAX_PMCS
    #define NUM_PMDS PFMLIB_MAX_PMDS
    
-   #if defined(ITANIUM3)
    /* Native events consist of a flag field, an event field, and a unit mask field.
     * The next 4 macros define the characteristics of the event and unit mask fields.
     * Unit Masks are only supported on Montecito and above.
@@ -92,7 +85,6 @@ typedef int ia64_reg_alloc_t;
    #define PAPI_NATIVE_UMASK_AND_MASK 0x0ffff000	/* 16 bits for unit masks */
    #define PAPI_NATIVE_UMASK_MAX 16				/* 16 possible unit masks */
    #define PAPI_NATIVE_UMASK_SHIFT 12
-   #endif
 
    typedef struct param_t {
       pfarg_reg_t pd[NUM_PMDS];
@@ -102,34 +94,30 @@ typedef int ia64_reg_alloc_t;
       void *mod_inp;	/* model specific input parameters to libpfm    */
       void *mod_outp;	/* model specific output parameters from libpfm */
    } pfmw_param_t;
-   #ifdef ITANIUM3
+//   #ifdef ITANIUM3
    typedef struct mont_param_t {
       pfmlib_mont_input_param_t mont_input_param;
       pfmlib_mont_output_param_t  mont_output_param;
    } pfmw_mont_param_t;
-   typedef pfmw_mont_param_t pfmw_ita_param_t;
-   #elif defined(ITANIUM2)
+//   typedef pfmw_mont_param_t pfmw_ita_param_t;
+//   #elif defined(ITANIUM2)
    typedef struct ita2_param_t {
       pfmlib_ita2_input_param_t ita2_input_param;
-      pfmlib_ita2_output_param_t  ita2_output_param;
+      pfmlib_ita2_output_param_t ita2_output_param;
    } pfmw_ita2_param_t;
-   typedef pfmw_ita2_param_t pfmw_ita_param_t;
-   #else
-   typedef int pfmw_ita_param_t;
-   #endif
+//   typedef pfmw_ita2_param_t pfmw_ita_param_t;
+//   #else
+   typedef int pfmw_ita1_param_t;
+//   #endif
 
    #define PMU_FIRST_COUNTER  4
-#else
-   #define NUM_PMCS PMU_MAX_PMCS
-   #define NUM_PMDS PMU_MAX_PMDS
-   
-   #ifdef ITANIUM2
-      typedef pfmlib_ita2_param_t pfmw_ita_param_t;
-   #else
-      typedef pfmlib_ita_param_t pfmw_ita_param_t;
-   #endif
-   typedef pfmlib_param_t pfmw_param_t;
-#endif
+
+   typedef union {
+     pfmw_ita1_param_t ita_param;
+     pfmw_ita2_param_t ita2_param;
+     pfmw_mont_param_t mont_param;
+   } pfmw_ita_param_t;
+
 
 #define MAX_COUNTERS 12
 #define MAX_COUNTER_TERMS MAX_COUNTERS
@@ -174,11 +162,8 @@ typedef struct Itanium_context {
 
 /* for _papi_hwi_context_t */
 #undef hwd_siginfo_t
-#ifdef PFM30
-   typedef struct siginfo  hwd_siginfo_t;
-#else
-   typedef pfm_siginfo_t hwd_siginfo_t;
-#endif
+typedef struct siginfo  hwd_siginfo_t;
+
 #undef  hwd_ucontext_t
 typedef struct sigcontext hwd_ucontext_t;
 
@@ -197,15 +182,15 @@ typedef ia64_context_t hwd_context_t;
 
 #define SMPL_BUF_NENTRIES 64
 #define M_PMD(x)        (1UL<<(x))
-#if defined(ITANIUM3)
-#define DEAR_REGS_MASK	    (M_PMD(32)|M_PMD(33)|M_PMD(36))
-#define ETB_REGS_MASK		(M_PMD(38)| M_PMD(39)| \
+
+#define MONT_DEAR_REGS_MASK	    (M_PMD(32)|M_PMD(33)|M_PMD(36))
+#define MONT_ETB_REGS_MASK		(M_PMD(38)| M_PMD(39)| \
 		                 M_PMD(48)|M_PMD(49)|M_PMD(50)|M_PMD(51)|M_PMD(52)|M_PMD(53)|M_PMD(54)|M_PMD(55)|\
 				 M_PMD(56)|M_PMD(57)|M_PMD(58)|M_PMD(59)|M_PMD(60)|M_PMD(61)|M_PMD(62)|M_PMD(63))
-#else
+
 #define DEAR_REGS_MASK      (M_PMD(2)|M_PMD(3)|M_PMD(17))
 #define BTB_REGS_MASK       (M_PMD(8)|M_PMD(9)|M_PMD(10)|M_PMD(11)|M_PMD(12)|M_PMD(13)|M_PMD(14)|M_PMD(15)|M_PMD(16))
-#endif
+
 
 #define MY_VECTOR _ia64_vector
 
