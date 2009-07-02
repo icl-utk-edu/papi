@@ -12,10 +12,6 @@
 #ifndef FreeBSD_MAP_P6
 #define FreeBSD_MAP_P6
 
-/*
-	NativeEvent_Value_UnknownProcessor must match NativeEvent_Label_UnknownProcessor 
-*/
-
 enum NativeEvent_Value_P6Processor {
 	PNE_P6_BACLEARS = PAPI_NATIVE_MASK,
 	PNE_P6_BR_BOGUS,

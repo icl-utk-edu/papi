@@ -23,7 +23,7 @@
 ****************************************************************************/
 
 /*
-	NativeEvent_Value_P6Processor must match P6Processor_info 
+	NativeEvent_Value_P4Processor must match P4Processor_info 
 */
 
 Native_Event_LabelDescription_t P4Processor_info[] =

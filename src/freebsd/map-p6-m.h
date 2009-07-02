@@ -12,10 +12,6 @@
 #ifndef FreeBSD_MAP_P6_M
 #define FreeBSD_MAP_P6_M
 
-/*
-	NativeEvent_Value_P6_M_Processor must match NativeEvent_Label_P6_M_Processor
-*/
-
 enum NativeEvent_Value_P6_M_Processor {
 	/* P6 common events */
 	PNE_P6_M_BACLEARS = PAPI_NATIVE_MASK,

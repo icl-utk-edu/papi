@@ -12,10 +12,6 @@
 #ifndef FreeBSD_MAP_UNKNOWN
 #define FreeBSD_MAP_UNKNOWN
 
-/*
-	NativeEvent_Value_UnknownProcessor must match NativeEvent_Label_UnknownProcessor 
-*/
-
 enum NativeEvent_Value_UnknownProcessor {
 	PNE_UNK_BRANCHES = PAPI_NATIVE_MASK,
 	PNE_UNK_BRANCH_MISPREDICTS,

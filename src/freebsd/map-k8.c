@@ -23,7 +23,7 @@
 ****************************************************************************/
 
 /*
-	NativeEvent_Value_P6Processor must match P6Processor_info 
+	NativeEvent_Value_K8Processor must match K8Processor_info 
 */
 
 Native_Event_LabelDescription_t K8Processor_info[] =
