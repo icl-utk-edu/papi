@@ -230,22 +230,25 @@ supported HW)
 
 After this step, just recompile the kernel and boot it.
 
-FreeBSD 7 does not ship with a fortran compiler. To compile fortan tests
-you will need to install a fortran compiler first (e.g. installing it from
-/usr/ports/lang/gcc42), and setup the F77 environment variable with the 
-compiler you want to use (e.g. gfortran42). 
+FreeBSD 7 (or greater) does not ship with a fortran compiler. To compile
+fortan tests you will need to install a fortran compiler first (e.g.
+installing it from /usr/ports/lang/gcc42), and setup the F77 environment
+variable with the compiler you want to use (e.g. gfortran42). 
 
-Now, see NOTE 2, and follow the "General Installation" steps.
+Fortran compilers may issue errors due to "Integer too big for its kind *".
+Add to FFLAGS environment variable a compiler option to use int*8 by default
+(in gfortran42 it is -fdefault-integer-8).
+
+Follow the "General Installation" steps.
 
 NOTE 1: 
+--
 HWPMC driver supports the following processors: Intel Pentium 2,
 Intel Pentium Pro, Intel Pentium 3, Intel Pentium M, Intel Celeron,
 Intel Pentium 4, AMD K7 (AMD Athlon) and AMD K8 (AMD Athlon64 / Opteron).
 
-NOTE 2:
-Fortran compilers may issue errors due to "Integer too big for its kind *".
-Add to FFLAGS environment variable a compiler option to use int*8 by default
-(in gfortran42 it is -fdefault-integer-8).
+FreeBSD 8 also adds support for Core/Core2/Atom processors. There is also a
+patch for FreeBSD 7/7.1 in http://wiki.freebsd.org/PmcTools
 
 Linux - IBM Cell
 *****************************************************************************
