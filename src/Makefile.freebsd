@@ -8,6 +8,7 @@ TARGETS     = serial forkexec_tests overflow_tests profile_tests multiplex_and_p
 POST_BUILD  =
 SPECIAL_REMOVE =
 
+#DEBUGFLAGS  = -DDEBUG
 
 CC_R        = $(CC) -pthread
 CC_SHR      = $(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)" -DPIC -fPIC -I. -Ifreebsd
@@ -16,8 +17,8 @@ FFLAGS      += -Wall -g -O
 
 CPU	      = 
 
-MISCHDRS = freebsd/map-unknown.h freebsd/map.h freebsd/map-p6.h freebsd/map-p6-m.h freebsd/map-p6-3.h freebsd/map-p6-2.h freebsd/map-p6-c.h freebsd/map-k7.h freebsd/map-k8.h freebsd/map-p4.h
-MISCSRCS = freebsd/map-unknown.c freebsd/map.c freebsd/map-p6.c freebsd/map-p6-m.c freebsd/map-p6-3.c freebsd/map-p6-2.c freebsd/map-p6-c.c freebsd/map-k7.c freebsd/map-k8.c freebsd/map-p4.c
+MISCHDRS = freebsd/map-unknown.h freebsd/map.h freebsd/map-p6.h freebsd/map-p6-m.h freebsd/map-p6-3.h freebsd/map-p6-2.h freebsd/map-p6-c.h freebsd/map-k7.h freebsd/map-k8.h freebsd/map-p4.h freebsd/map-core2.h freebsd/map-core2-extreme.h
+MISCSRCS = freebsd/map-unknown.c freebsd/map.c freebsd/map-p6.c freebsd/map-p6-m.c freebsd/map-p6-3.c freebsd/map-p6-2.c freebsd/map-p6-c.c freebsd/map-k7.c freebsd/map-k8.c freebsd/map-p4.c freebsd/map-core2.c freebsd/map-core2-extreme.c
 MISCOBJS = $(MISCSRCS:.c=.o)
 SHLIBDEPS =
 
@@ -51,6 +52,12 @@ freebsd/map-k8.o: freebsd/map-k8.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) -c $< -o $@
 
 freebsd/map-p4.o: freebsd/map-p4.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-core2.o: freebsd/map-core2.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-core2-extreme.o: freebsd/map-core2-extreme.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) -c $< -o $@
 
 freebsd.o: freebsd.c $(HEADERS)

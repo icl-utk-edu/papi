@@ -147,6 +147,10 @@ int init_presets(void)
 		Context.CPUsubstrate = CPU_K8;
 	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_PIV") == 0)
 		Context.CPUsubstrate = CPU_P4;
+	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_CORE2") == 0)
+		Context.CPUsubstrate = CPU_CORE2;
+	else if (strcmp(pmc_name_of_cputype(info->pm_cputype), "INTEL_CORE2EXTREME") == 0)
+		Context.CPUsubstrate = CPU_CORE2EXTREME;
 	else
 		/* Unknown processor! */
 		Context.CPUsubstrate = CPU_UNKNOWN;
