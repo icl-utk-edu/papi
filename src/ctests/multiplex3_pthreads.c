@@ -68,6 +68,14 @@ void mainloop(int arg)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_set_multiplex", retval);
 
+   if ((retval =
+        PAPI_thread_init((unsigned long (*)(void)) (pthread_self))) != PAPI_OK) {
+      if (retval == PAPI_ESBSTR)
+         test_skip(__FILE__, __LINE__, "PAPI_thread_init", retval);
+      else
+         test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
+   }
+
    retval = PAPI_add_event(EventSet, PAPI_TOT_INS);
    if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
       test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
