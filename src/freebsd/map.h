@@ -27,6 +27,8 @@ enum
 	CPU_P4,
 	CPU_K7,
 	CPU_K8,
+	CPU_CORE2,
+	CPU_CORE2EXTREME,
 	CPU_LAST
 };
 
@@ -57,5 +59,7 @@ extern int freebsd_substrate_number_of_events (int processortype);
 #include "map-p4.h"
 #include "map-k7.h"
 #include "map-k8.h"
+#include "map-core2.h"
+#include "map-core2-extreme.h"
 
 #endif /* _FreeBSD_MAP_H_ */
