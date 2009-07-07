@@ -296,7 +296,7 @@ extern inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int 
       /* indicate which PMD to include in the sample */
 /* DEAR and BTB events */
 	switch (_perfmon2_pfm_pmu_type) {
-#ifndef PFMLIB_ITANIUM2_PMU
+//#ifndef PFMLIB_ITANIUM2_PMU
 	case PFMLIB_ITANIUM_PMU:
       if (pfm_ita_is_dear(native_index))
          set_pmds_to_write(ESI, EventIndex, DEAR_REGS_MASK);
@@ -304,9 +304,9 @@ extern inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int 
                || EventCode == PAPI_BR_INS)
          set_pmds_to_write(ESI, EventIndex, BTB_REGS_MASK);
 	break;
-#endif
+//#endif
 
-#ifdef PFMLIB_ITANIUM2_PMU
+//#ifdef PFMLIB_ITANIUM2_PMU
 	case PFMLIB_ITANIUM2_PMU:
       if (pfm_ita2_is_dear(native_index))
          set_pmds_to_write(ESI, EventIndex, DEAR_REGS_MASK);
@@ -314,16 +314,16 @@ extern inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int 
                || EventCode == PAPI_BR_INS)
          set_pmds_to_write(ESI, EventIndex, BTB_REGS_MASK);
 	break;
-#endif
+//#endif
 
-#ifdef PFMLIB_MONTECITO_PMU
+//#ifdef PFMLIB_MONTECITO_PMU
 	case PFMLIB_MONTECITO_PMU:
       if (pfm_mont_is_dear(native_index))
          set_pmds_to_write(ESI, EventIndex, MONT_DEAR_REGS_MASK);
       else if (pfm_mont_is_etb(native_index) || EventCode == PAPI_BR_INS)
          set_pmds_to_write(ESI, EventIndex, MONT_ETB_REGS_MASK);
 	break;
-#endif
+//#endif
 	default:
 		PAPIERROR("PMU type %d is not supported by this substrate",_perfmon2_pfm_pmu_type);
 		return(PAPI_EBUG);
@@ -363,23 +363,23 @@ extern inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int 
    inline int pfmw_is_dear(unsigned int i)
    {
 	switch (_perfmon2_pfm_pmu_type) {
-#ifndef PFMLIB_ITANIUM2_PMU
+//#ifndef PFMLIB_ITANIUM2_PMU
 	case PFMLIB_ITANIUM_PMU:
 		return(pfm_ita_is_dear(i));
 	break;
-#endif
+//#endif
 
-#ifdef PFMLIB_ITANIUM2_PMU
+//#ifdef PFMLIB_ITANIUM2_PMU
 	case PFMLIB_ITANIUM2_PMU:
 		return(pfm_ita2_is_dear(i));
 	break;
-#endif
+//#endif
 
-#ifdef PFMLIB_MONTECITO_PMU
+//#ifdef PFMLIB_MONTECITO_PMU
 	case PFMLIB_MONTECITO_PMU:
 		return(pfm_mont_is_dear(i));
 	break;
-#endif
+//#endif
 	default:
 		PAPIERROR("PMU type %d is not supported by this substrate",_perfmon2_pfm_pmu_type);
 		return(PAPI_EBUG);
@@ -389,23 +389,23 @@ extern inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int 
    inline int pfmw_is_iear(unsigned int i)
    {
 	switch (_perfmon2_pfm_pmu_type) {
-#ifndef PFMLIB_ITANIUM2_PMU
+//#ifndef PFMLIB_ITANIUM2_PMU
 	case PFMLIB_ITANIUM_PMU:
 		return(pfm_ita_is_iear(i));
 	break;
-#endif
+//#endif
 
-#ifdef PFMLIB_ITANIUM2_PMU
+//#ifdef PFMLIB_ITANIUM2_PMU
 	case PFMLIB_ITANIUM2_PMU:
 		return(pfm_ita2_is_iear(i));
 	break;
-#endif
+//#endif
 
-#ifdef PFMLIB_MONTECITO_PMU
+//#ifdef PFMLIB_MONTECITO_PMU
 	case PFMLIB_MONTECITO_PMU:
 		return(pfm_mont_is_iear(i));
 	break;
-#endif
+//#endif
 	default:
 		PAPIERROR("PMU type %d is not supported by this substrate",_perfmon2_pfm_pmu_type);
 		return(PAPI_EBUG);
@@ -415,23 +415,23 @@ extern inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int 
    inline int pfmw_support_darr(unsigned int i)
    {
 	switch (_perfmon2_pfm_pmu_type) {
-#ifndef PFMLIB_ITANIUM2_PMU
+//#ifndef PFMLIB_ITANIUM2_PMU
 	case PFMLIB_ITANIUM_PMU:
 		return(pfm_ita_support_darr(i));
 	break;
-#endif
+//#endif
 
-#ifdef PFMLIB_ITANIUM2_PMU
+//#ifdef PFMLIB_ITANIUM2_PMU
 	case PFMLIB_ITANIUM2_PMU:
 		return(pfm_ita2_support_darr(i));
 	break;
-#endif
+//#endif
 
-#ifdef PFMLIB_MONTECITO_PMU
+//#ifdef PFMLIB_MONTECITO_PMU
 	case PFMLIB_MONTECITO_PMU:
 		return(pfm_mont_support_darr(i));
 	break;
-#endif
+//#endif
 	default:
 		PAPIERROR("PMU type %d is not supported by this substrate",_perfmon2_pfm_pmu_type);
 		return(PAPI_EBUG);
@@ -441,23 +441,23 @@ extern inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int 
    inline int pfmw_support_iarr(unsigned int i)
    {
 	switch (_perfmon2_pfm_pmu_type) {
-#ifndef PFMLIB_ITANIUM2_PMU
+//#ifndef PFMLIB_ITANIUM2_PMU
 	case PFMLIB_ITANIUM_PMU:
 		return(pfm_ita_support_iarr(i));
 	break;
-#endif
+//#endif
 
-#ifdef PFMLIB_ITANIUM2_PMU
+//#ifdef PFMLIB_ITANIUM2_PMU
 	case PFMLIB_ITANIUM2_PMU:
 		return(pfm_ita2_support_iarr(i));
 	break;
-#endif
+//#endif
 
-#ifdef PFMLIB_MONTECITO_PMU
+//#ifdef PFMLIB_MONTECITO_PMU
 	case PFMLIB_MONTECITO_PMU:
 		return(pfm_mont_support_iarr(i));
 	break;
-#endif
+//#endif
 	default:
 		PAPIERROR("PMU type %d is not supported by this substrate",_perfmon2_pfm_pmu_type);
 		return(PAPI_EBUG);
@@ -467,23 +467,23 @@ extern inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int 
    inline int pfmw_support_opcm(unsigned int i)
    {
 	switch (_perfmon2_pfm_pmu_type) {
-#ifndef PFMLIB_ITANIUM2_PMU
+//#ifndef PFMLIB_ITANIUM2_PMU
 	case PFMLIB_ITANIUM_PMU:
 		return(pfm_ita_support_opcm(i));
 	break;
-#endif
+//#endif
 
-#ifdef PFMLIB_ITANIUM2_PMU
+//#ifdef PFMLIB_ITANIUM2_PMU
 	case PFMLIB_ITANIUM2_PMU:
 		return(pfm_ita2_support_opcm(i));
 	break;
-#endif
+//#endif
 
-#ifdef PFMLIB_MONTECITO_PMU
+//#ifdef PFMLIB_MONTECITO_PMU
 	case PFMLIB_MONTECITO_PMU:
 		return(pfm_mont_support_opcm(i));
 	break;
-#endif
+//#endif
 	default:
 		PAPIERROR("PMU type %d is not supported by this substrate",_perfmon2_pfm_pmu_type);
 		return(PAPI_EBUG);
@@ -499,15 +499,15 @@ static void check_ibrp_events(hwd_control_state_t *current_state)
 	unsigned int j, i, seen_retired, ibrp, idx;
 	int code;
 	int retired_code, incr;
-#ifdef PFMLIB_ITANIUM2_PMU
+//#ifdef PFMLIB_ITANIUM2_PMU
 	pfmlib_ita2_output_param_t *ita2_output_param;
-#endif
-#ifdef PFMLIB_MONTECITO_PMU
+//#endif
+//#ifdef PFMLIB_MONTECITO_PMU
 	pfmlib_mont_output_param_t *mont_output_param;
-#endif
+//#endif
 
 	switch (_perfmon2_pfm_pmu_type) {
-#ifdef PFMLIB_ITANIUM2_PMU
+//#ifdef PFMLIB_ITANIUM2_PMU
 	case PFMLIB_ITANIUM2_PMU:
 		ita2_output_param = &(this_state->ita_lib_param.ita2_param.ita2_output_param);
 		/*
@@ -547,9 +547,9 @@ static void check_ibrp_events(hwd_control_state_t *current_state)
 		}
 
 	break;
-#endif
+//#endif
 
-#ifdef PFMLIB_MONTECITO_PMU
+//#ifdef PFMLIB_MONTECITO_PMU
 	case PFMLIB_MONTECITO_PMU:
 		mont_output_param = &(this_state->ita_lib_param.mont_param.mont_output_param);
 		/*
@@ -588,7 +588,7 @@ static void check_ibrp_events(hwd_control_state_t *current_state)
 				printf("warning: code range uses IBR pair %d which is not monitored using %s\n", ibrp, retired_events[ibrp]);
 		}
 	break;
-#endif
+//#endif
 	default:
 		PAPIERROR("PMU type %d is not supported by this substrate",_perfmon2_pfm_pmu_type);
 	}
@@ -601,21 +601,21 @@ inline int install_irange(hwd_context_t *pctx, hwd_control_state_t *current_stat
 	int  r;
 	int pid=((ia64_context_t *)pctx)->fd;
 
-#ifdef PFMLIB_ITANIUM2_PMU
+//#ifdef PFMLIB_ITANIUM2_PMU
 	pfmlib_ita2_output_param_t *ita2_output_param;
 	pfarg_dbreg_t ita2_dbreg[PFMON_ITA2_MAX_IBRS];
-#endif
-#ifdef PFMLIB_MONTECITO_PMU
+//#endif
+//#ifdef PFMLIB_MONTECITO_PMU
 	pfmlib_mont_output_param_t *mont_output_param;
 	pfarg_dbreg_t mont_dbreg[PFMON_MONT_MAX_IBRS];
-#endif
+//#endif
 
 	memset(mont_dbreg, 0, sizeof(mont_dbreg));
 	memset(ita2_dbreg, 0, sizeof(ita2_dbreg));
 	check_ibrp_events(current_state);
 
 	switch (_perfmon2_pfm_pmu_type) {
-#ifdef PFMLIB_ITANIUM2_PMU
+//#ifdef PFMLIB_ITANIUM2_PMU
 	case PFMLIB_ITANIUM2_PMU:
 		ita2_output_param = &(this_state->ita_lib_param.ita2_param.ita2_output_param);
 		used_dbr = ita2_output_param->pfp_ita2_irange.rr_nbr_used;
@@ -632,9 +632,9 @@ inline int install_irange(hwd_context_t *pctx, hwd_control_state_t *current_stat
 		}
 		return (PAPI_OK);
 	break;
-#endif
+//#endif
 
-#ifdef PFMLIB_MONTECITO_PMU
+//#ifdef PFMLIB_MONTECITO_PMU
 	case PFMLIB_MONTECITO_PMU:
 		mont_output_param = &(this_state->ita_lib_param.mont_param.mont_output_param);
 
@@ -652,7 +652,7 @@ inline int install_irange(hwd_context_t *pctx, hwd_control_state_t *current_stat
 		}
 		return (PAPI_OK);
 	break;
-#endif
+//#endif
 	default:
 		PAPIERROR("PMU type %d is not supported by this substrate",_perfmon2_pfm_pmu_type);
     	return (PAPI_ESBSTR);
@@ -666,20 +666,20 @@ inline int install_drange(hwd_context_t *pctx, hwd_control_state_t *current_stat
 	int r;
 	int pid=((ia64_context_t *)pctx)->fd;
 
-#ifdef PFMLIB_ITANIUM2_PMU
+//#ifdef PFMLIB_ITANIUM2_PMU
 	pfmlib_ita2_output_param_t *ita2_output_param;
 	pfarg_dbreg_t ita2_dbreg[PFMON_ITA2_MAX_IBRS];
-#endif
-#ifdef PFMLIB_MONTECITO_PMU
+//#endif
+//#ifdef PFMLIB_MONTECITO_PMU
 	pfmlib_mont_output_param_t *mont_output_param;
 	pfarg_dbreg_t mont_dbreg[PFMON_MONT_MAX_IBRS];
-#endif
+//#endif
 
 	memset(mont_dbreg, 0, sizeof(mont_dbreg));
 	memset(ita2_dbreg, 0, sizeof(ita2_dbreg));
 
 	switch (_perfmon2_pfm_pmu_type) {
-#ifdef PFMLIB_ITANIUM2_PMU
+//#ifdef PFMLIB_ITANIUM2_PMU
 	case PFMLIB_ITANIUM2_PMU:
 		ita2_output_param = &(this_state->ita_lib_param.ita2_param.ita2_output_param);
 		used_dbr = ita2_output_param->pfp_ita2_drange.rr_nbr_used;
@@ -696,9 +696,9 @@ inline int install_drange(hwd_context_t *pctx, hwd_control_state_t *current_stat
 		}
 		return (PAPI_OK);
 	break;
-#endif
+//#endif
 
-#ifdef PFMLIB_MONTECITO_PMU
+//#ifdef PFMLIB_MONTECITO_PMU
 	case PFMLIB_MONTECITO_PMU:
 		mont_output_param = &(this_state->ita_lib_param.mont_param.mont_output_param);
 		used_dbr = mont_output_param->pfp_mont_drange.rr_nbr_used;
@@ -715,7 +715,7 @@ inline int install_drange(hwd_context_t *pctx, hwd_control_state_t *current_stat
 		}
 		return (PAPI_OK);
 	break;
-#endif
+//#endif
 	default:
 		PAPIERROR("PMU type %d is not supported by this substrate",_perfmon2_pfm_pmu_type);
     	return (PAPI_ESBSTR);
@@ -735,17 +735,17 @@ inline int set_drange(hwd_context_t *ctx, hwd_control_state_t *current_state, _p
 	ia64_control_state_t *this_state = (ia64_control_state_t *)current_state;
 	pfmw_param_t *evt = &(this_state->evt);
 	pfmlib_input_param_t *inp = &evt->inp;
-#ifdef PFMLIB_ITANIUM2_PMU
+//#ifdef PFMLIB_ITANIUM2_PMU
 	pfmlib_ita2_input_param_t *ita2_inp = &(this_state->ita_lib_param.ita2_param.ita2_input_param);
 	pfmlib_ita2_output_param_t *ita2_outp = &(this_state->ita_lib_param.ita2_param.ita2_output_param);
-#endif
-#ifdef PFMLIB_MONTECITO_PMU
+//#endif
+//#ifdef PFMLIB_MONTECITO_PMU
 	pfmlib_mont_input_param_t *mont_inp = &(this_state->ita_lib_param.mont_param.mont_input_param);
 	pfmlib_mont_output_param_t *mont_outp = &(this_state->ita_lib_param.mont_param.mont_output_param);
-#endif
+//#endif
 
 	switch (_perfmon2_pfm_pmu_type) {
-#ifdef PFMLIB_ITANIUM2_PMU
+//#ifdef PFMLIB_ITANIUM2_PMU
 	case PFMLIB_ITANIUM2_PMU:
 
 		if((unsigned long)option->address_range.start==(unsigned long)option->address_range.end || ((unsigned long)option->address_range.start==0 && (unsigned long)option->address_range.end==0))
@@ -796,9 +796,9 @@ inline int set_drange(hwd_context_t *ctx, hwd_control_state_t *current_state, _p
 		return(ret);
 
 	break;
-#endif
+//#endif
 
-#ifdef PFMLIB_MONTECITO_PMU
+//#ifdef PFMLIB_MONTECITO_PMU
 	case PFMLIB_MONTECITO_PMU:
 
 		if((unsigned long)option->address_range.start==(unsigned long)option->address_range.end || ((unsigned long)option->address_range.start==0 && (unsigned long)option->address_range.end==0))
@@ -850,7 +850,7 @@ inline int set_drange(hwd_context_t *ctx, hwd_control_state_t *current_state, _p
 		return(ret);
 	
 	break;
-#endif
+//#endif
 	default:
 		PAPIERROR("PMU type %d is not supported by this substrate",_perfmon2_pfm_pmu_type);
     	return (PAPI_ESBSTR);
@@ -863,17 +863,17 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
 	ia64_control_state_t *this_state = (ia64_control_state_t *)current_state;
 	pfmw_param_t *evt = &(this_state->evt);
 	pfmlib_input_param_t *inp = &evt->inp;
-#ifdef PFMLIB_ITANIUM2_PMU
+//#ifdef PFMLIB_ITANIUM2_PMU
 	pfmlib_ita2_input_param_t *ita2_inp = &(this_state->ita_lib_param.ita2_param.ita2_input_param);
 	pfmlib_ita2_output_param_t *ita2_outp = &(this_state->ita_lib_param.ita2_param.ita2_output_param);
-#endif
-#ifdef PFMLIB_MONTECITO_PMU
+//#endif
+//#ifdef PFMLIB_MONTECITO_PMU
 	pfmlib_mont_input_param_t *mont_inp = &(this_state->ita_lib_param.mont_param.mont_input_param);
 	pfmlib_mont_output_param_t *mont_outp = &(this_state->ita_lib_param.mont_param.mont_output_param);
-#endif
+//#endif
 
 	switch (_perfmon2_pfm_pmu_type) {
-#ifdef PFMLIB_ITANIUM2_PMU
+//#ifdef PFMLIB_ITANIUM2_PMU
 	case PFMLIB_ITANIUM2_PMU:
 
 	if((unsigned long)option->address_range.start==(unsigned long)option->address_range.end || ((unsigned long)option->address_range.start==0 && (unsigned long)option->address_range.end==0))
@@ -922,9 +922,9 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
 	}
 
 	break;
-#endif
+//#endif
 
-#ifdef PFMLIB_MONTECITO_PMU
+//#ifdef PFMLIB_MONTECITO_PMU
 	case PFMLIB_MONTECITO_PMU:
 
 	if((unsigned long)option->address_range.start==(unsigned long)option->address_range.end || ((unsigned long)option->address_range.start==0 && (unsigned long)option->address_range.end==0))
@@ -973,7 +973,7 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
 		}
 	
 	break;
-#endif
+//#endif
 	default:
 		PAPIERROR("PMU type %d is not supported by this substrate",_perfmon2_pfm_pmu_type);
     	return (PAPI_ESBSTR);
