@@ -3235,19 +3235,19 @@ void _papi_pfm_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
     int cidx = MY_VECTOR.cmp_info.CmpIdx;
 
     if (thread == NULL) {
-        PAPIERROR("thread == NULL in _papi_hwd_dispatch_timer!");
+        PAPIERROR("thread == NULL in _papi_pfm_dispatch_timer!");
 	if (n == MY_VECTOR.cmp_info.hardware_intr_sig) { ret = read(fd, &msg, sizeof(msg)); pfm_restart(fd); }
         return;
     }
 
     if (thread->running_eventset[cidx] == NULL) {
-        PAPIERROR("thread->running_eventset == NULL in _papi_hwd_dispatch_timer!");
+        PAPIERROR("thread->running_eventset == NULL in _papi_pfm_dispatch_timer!");
 	if (n == MY_VECTOR.cmp_info.hardware_intr_sig) { ret = read(fd, &msg, sizeof(msg)); pfm_restart(fd); }
 	return;
     }
 
     if (thread->running_eventset[cidx]->overflow.flags == 0) {
-        PAPIERROR("thread->running_eventset->overflow.flags == 0 in _papi_hwd_dispatch_timer!");
+        PAPIERROR("thread->running_eventset->overflow.flags == 0 in _papi_pfm_dispatch_timer!");
 	if (n == MY_VECTOR.cmp_info.hardware_intr_sig) { ret = read(fd, &msg, sizeof(msg)); pfm_restart(fd); }
 	return;
     }
@@ -3299,22 +3299,37 @@ void _papi_pfm_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
 	}
 #endif
 
-        if (ret != -1) {
-	  if ((thread->running_eventset[cidx]->state & PAPI_PROFILING) && !(thread->running_eventset[cidx]->profile.flags & PAPI_PROFIL_FORCE_SW))
-	    process_smpl_buf(0, sizeof(pfm_dfl_smpl_entry_t), &thread);
-	  else 
-                _papi_hwi_dispatch_overflow_signal((void *) &ctx, 
-                              (caddr_t)((size_t)msg.pfm_ovfl_msg.msg_ovfl_ip),
-                              NULL, 
-                              msg.pfm_ovfl_msg.msg_ovfl_pmds[0], 
-                              0, &thread, cidx);
-            
-        }
+		if (ret != -1) {
+			if ((thread->running_eventset[cidx]->state & PAPI_PROFILING) &&
+				!(thread->running_eventset[cidx]->profile.flags & PAPI_PROFIL_FORCE_SW))
+				process_smpl_buf(0, sizeof(pfm_dfl_smpl_entry_t), &thread);
+			else {
+				/* PAPI assumes that the overflow vector contains the register index of the
+				overflowing native event. That is generally true, but Stephane used some
+				tricks to offset the fixed counters on Core2 (Core? i7?) by 16. This hack
+				corrects for that hack in a (hopefully) transparent manner */
+				unsigned long i, vector = msg.pfm_ovfl_msg.msg_ovfl_pmds[0];
+				pfm_control_state_t *ctl = (pfm_control_state_t *)thread->running_eventset[cidx]->ctl_state;
+				for (i=0;i<ctl->in.pfp_event_count;i++) {
+					/* We're only comparing to pmds[0]. A more robust implementation would
+					compare to pmds[0-3]. The bit mask must be converted to an index
+					for the comparison to work */
+					if(ctl->pd[i].reg_num == ffsl(msg.pfm_ovfl_msg.msg_ovfl_pmds[0]) - 1) {
+						/* if a match is found, convert the index back to a bitmask */
+						vector = 1 << i;
+						break;
+					}
+				}
+				_papi_hwi_dispatch_overflow_signal((void *) &ctx,
+					(caddr_t)((size_t)msg.pfm_ovfl_msg.msg_ovfl_ip),
+					NULL, vector, 0, &thread, cidx);
+			}
+		}
 
-        if ((ret = pfm_restart(fd))) {
-            PAPIERROR("pfm_restart(%d): %s", fd, strerror(ret));
-        }
-    }
+		if ((ret = pfm_restart(fd))) {
+			PAPIERROR("pfm_restart(%d): %s", fd, strerror(ret));
+		}
+	}
 }
 
 int _papi_pfm_stop_profiling(ThreadInfo_t * thread, EventSetInfo_t * ESI)
