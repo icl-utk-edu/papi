@@ -1324,6 +1324,7 @@ case "$OS" in
 				AC_MSG_ERROR([The bitmode you specified is not supported])
 				MAKEVER="$OS"-perfctr-"$CPU"
 			fi
+		fi
 		 ;; 
             p2)
                 if test "${bitmode}" = "64"; then
