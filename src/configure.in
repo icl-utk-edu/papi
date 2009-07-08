@@ -208,9 +208,21 @@ case "$OS" in
            model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
            # family 15 is always P4; model 1 is vanilla pre-HT, model 2 is vanilla; model 3 is em64t, 4 is Pentium D, 6 is Xeon D
            if test "$family" = "6"; then
-             # model 14 is an ancient Core; the others are Core2, but 28 is Atom; it may not work with the Core substrate
-             if (test "$model" = "14" || test "$model" = "15" || test "$model" = "22" || test "$model" = "23" || test "$model" = "28"); then
+             # model 14 is an ancient Core
+             if test "$model" = "14"; then
                CPU=core
+             fi
+             # models 15, 22, 23 are Core2 variants
+             if (test "$model" = "15" || test "$model" = "22" || test "$model" = "23"); then
+               CPU=core2
+             fi
+             # model 26 is Nehalem
+             if test "$model" = "26"; then
+               CPU=i7
+             fi
+             # model 28 is Atom
+             if test "$model" = "28"; then
+               CPU=atom
              fi
            elif test "$family" = "15"; then
              if (test "$model" = "3" || test "$model" = "4" || test "$model" = "6"); then
@@ -1304,36 +1316,20 @@ case "$OS" in
 		    else
 		    MAKEVER="$OS"-pfm-"$CPU"
 		 fi ;;
-            opteron|core|em64t|athlon|p4|p3)
+            opteron|core|core2|i7|atom|em64t|athlon|p4|p3)
 		if test "$arch" = "x86_64"; then
-			if test "$perfctr" != "no"; then
-				if test "${with_bitmode}" = "32"; then
-				 	MAKEVER="$OS"-perfctr-"$CPU""-32bit" 
-				else
-					MAKEVER="$OS"-perfctr-"$CPU" 
-				fi
-			else
+			MAKEVER="$OS"-perfctr-p3
+		else
+			if test "${bitmode}" = "64"; then
+				AC_MSG_ERROR([The bitmode you specified is not supported])
 				MAKEVER="$OS"-perfctr-"$CPU"
 			fi
-		else
-		        if test "${bitmode}" = "64"; then
-			   AC_MSG_ERROR([The bitmode you specified is not supported])
-			elif test "$perfctr" != "no"; then
-			   MAKEVER="$OS"-perfctr-"$CPU" 
-			else
-			   MAKEVER="$OS"-perfctr-"$CPU"
-			fi
-		fi
 		 ;; 
             p2)
                 if test "${bitmode}" = "64"; then
                    AC_MSG_ERROR([The bitmode you specified is not supported])
                 fi
-		if test "$perfctr" != "no"; then
-		   MAKEVER="$OS"-perfctr-"$CPU" 
-		else
-		   MAKEVER="$OS"-perfctr-"$CPU"
-		fi
+			MAKEVER="$OS"-perfctr-"$CPU"
 		;;
             PPC32)
                  if test "${bitmode}" = "64"; then
@@ -1390,15 +1386,10 @@ case "$MAKEVER" in
     linux-acpi);;
     linux-mx);;
     linux-perfctr-athlon);;
-    linux-perfctr-core);;
-    linux-perfctr-em64t);;
-    linux-perfctr-em64t-32bit);;
-    linux-perfctr-opteron);;
-    linux-perfctr-opteron-32bit);;
     linux-perfctr-p2);;
     linux-perfctr-p3);;
-    linux-perfctr-p3-32bit);;
     linux-perfctr-p4);;
+    linux-perfctr-em64t);;
     linux-pfm-itanium);;
     linux-pfm-itanium2);;
     linux-pfm-itanium3);;
