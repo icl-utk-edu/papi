@@ -1324,6 +1324,7 @@ int PAPI_set_multiplex(int EventSet)
    PAPI_option_t mpx;
    EventSetInfo_t *ESI;
    int cidx;
+   int ret;
 
    /* Is the EventSet already in existence? */
 
@@ -1339,6 +1340,9 @@ int PAPI_set_multiplex(int EventSet)
        if (ESI->NumberOfEvents) papi_return(cidx);
        papi_return(PAPI_OK);
    }
+   if ((ret = mpx_check(EventSet)) != PAPI_OK)
+	papi_return(ret);
+
    memset(&mpx,0x0,sizeof(mpx));
    mpx.multiplex.eventset = EventSet;
    mpx.multiplex.flags = PAPI_MULTIPLEX_DEFAULT;

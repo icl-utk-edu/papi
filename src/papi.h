@@ -79,9 +79,10 @@ failure.
 #define PAPI_EPERM   -15        /* You lack the necessary permissions */
 #define PAPI_ENOINIT -16        /* PAPI hasn't been initialized yet */
 #define PAPI_EBUF    -17        /* Buffer size exceeded (usually strings) */
-#define PAPI_ENOCMP	-18	/* Component Index isn't set */
+#define PAPI_EINVAL_DOM -18     /* The EventSet's domain is not supported for the operation */
+#define PAPI_ENOCMP  -19        /* Component Index isn't set */
 
-#define PAPI_NUM_ERRORS	 19	/* Number of error messages specified in this API. */
+#define PAPI_NUM_ERRORS	 20	/* Number of error messages specified in this API. */
 
 #define PAPI_NOT_INITED		0
 #define PAPI_LOW_LEVEL_INITED 	1       /* Low level has called library init */
