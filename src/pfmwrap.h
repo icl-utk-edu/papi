@@ -28,6 +28,7 @@ static inline int hweight64 (unsigned long x)
 #endif
 
 extern int _perfmon2_pfm_pmu_type;
+extern papi_vector_t _ia64_vector;
 
 static inline pid_t mygettid(void)
 {
@@ -177,7 +178,7 @@ char *retired_events[]={
          return(PAPI_ESYS);
       }
 
-      ret = fcntl(((ia64_context_t *)ctx)->fd, F_SETSIG, SIGIO);
+      ret = fcntl(((ia64_context_t *)ctx)->fd, F_SETSIG, _ia64_vector.cmp_info.hardware_intr_sig);
       if (ret == -1) {
          PAPIERROR("fcntl(%d,F_SETSIG) errno %d", ((ia64_context_t *)ctx)->fd, errno);
         return(PAPI_ESYS);
