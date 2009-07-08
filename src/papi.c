@@ -1247,7 +1247,10 @@ int PAPI_detach(int EventSet)
 int PAPI_set_multiplex(int EventSet)
 {
    PAPI_option_t mpx;
+   int ret;
 
+   if ((ret = mpx_check(EventSet)) != PAPI_OK)
+	papi_return(ret);
    memset(&mpx,0x0,sizeof(mpx));
    mpx.multiplex.eventset = EventSet;
    mpx.multiplex.flags = PAPI_MULTIPLEX_DEFAULT;
