@@ -48,11 +48,7 @@
       EventSet = PAPI_NULL
       call init_papi()
 
-      call PAPIf_multiplex_init(retval)
-      if ( retval.NE.PAPI_OK) then
-        call ftest_fail(__FILE__, __LINE__,
-     .       'papif_multiplex_init', retval)
-      end if
+      call init_multiplex()
 
       call PAPIf_create_eventset(EventSet, retval)
       if ( retval.NE.PAPI_OK) then
