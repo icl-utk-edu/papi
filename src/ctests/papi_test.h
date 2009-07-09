@@ -87,6 +87,7 @@ void test_skip(char *file, int line, char *call, int retval);
 void test_print_event_header(char *call, int evset);
 void touch_dummy(double *ptr, int size);
 int approx_equals(double a, double b);
+void init_multiplex(void);
 
 /*
 	In Windows, all exit() calls are vectored to

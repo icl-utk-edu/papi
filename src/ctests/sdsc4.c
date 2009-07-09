@@ -83,8 +83,7 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
 #ifdef MPX
-   if ((retval = PAPI_multiplex_init()))
-      test_fail(__FILE__, __LINE__, "PAPI_multiplex_init", retval);
+   init_multiplex();
 
    /* In Component PAPI, EventSets must be assigned a component index
       before you can fiddle with their internals.

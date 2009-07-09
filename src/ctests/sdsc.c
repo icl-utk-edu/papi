@@ -187,8 +187,7 @@ int main(int argc, char **argv)
 
    decide_which_events(events, &nevents);
 
-   if ((retval = PAPI_multiplex_init()))
-      test_fail(__FILE__, __LINE__, "PAPI_multiplex_init", retval);
+   init_multiplex();
 
    /* Find a reasonable number of iterations (each 
     * event active 20 times) during the measurement

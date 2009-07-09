@@ -46,9 +46,7 @@ char *argv[];
    if (!TESTS_QUIET) {
       printf("Activating PAPI Multiplex\n");
    }
-   retval = PAPI_multiplex_init();
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI multiplex init fail\n", retval);
+   init_multiplex();
 #endif
 
    retval = PAPI_create_eventset(&EventSet);

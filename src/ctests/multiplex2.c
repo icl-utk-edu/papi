@@ -35,10 +35,7 @@ int case1(void)
 	char evname[PAPI_MAX_STR_LEN];
 
 	init_papi();
-
-	retval = PAPI_multiplex_init();
-	if (retval != PAPI_OK)
-		test_fail(__FILE__, __LINE__, "PAPI_multiplex_init", retval);
+	init_multiplex();
 
 	retval = PAPI_create_eventset(&EventSet);
 	if (retval != PAPI_OK)
