@@ -30,7 +30,7 @@ if (@ARGV!=2)
 else
 {
 	$file = $ARGV[0];
-	$type = $ARGV[1];
+	$type = uc($ARGV[1]);
 }
 
 open FILE, $file;

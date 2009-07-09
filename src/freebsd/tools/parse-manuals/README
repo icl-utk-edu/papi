@@ -8,3 +8,11 @@ The input, at least for Core/Core2/Atom, derives directly from the (3) pmc.* fil
 * DESCRIPTION
 * EMPTY LINE
 
+I executed it by calling it like
+
+  ./parse.pl atom.txt ATOM
+
+  or
+
+  ./parse.pl core.txt CORE
+
