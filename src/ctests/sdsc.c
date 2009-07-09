@@ -19,6 +19,34 @@
 
 static double dummy3(double x, int iters);
 
+void init_papi(void)
+{
+	int retval;
+	const PAPI_hw_info_t *hw_info;
+	const PAPI_substrate_info_t * subinfo;
+
+	/* Initialize the library */
+
+	retval = PAPI_library_init(PAPI_VER_CURRENT);
+	if (retval != PAPI_VER_CURRENT)
+		test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+
+	subinfo = PAPI_get_substrate_info();
+	if (subinfo == NULL)
+		test_fail(__FILE__, __LINE__, "PAPI_get_substrate_info", 2);
+
+	hw_info = PAPI_get_hardware_info();
+	if (hw_info == NULL)
+		test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
+
+	if ((strstr(subinfo->name, "linux.c")) &&
+	     strcmp(hw_info->model_string, "POWER6") == 0) {
+		retval = PAPI_set_domain(PAPI_DOM_ALL);
+		if (retval != PAPI_OK)
+			test_fail(__FILE__, __LINE__, "PAPI_set_domain", retval);
+	}
+}
+
 void check_values(int eventset, int *events, int nevents, long long *values, long long *refvalues)
 {
   double spread[MAXEVENTS];
@@ -182,8 +210,7 @@ int main(int argc, char **argv)
       printf("Comparing a multiplex measurement with separate measurements.\n\n");
    }
 
-   if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
-      test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+   init_papi();
 
    decide_which_events(events, &nevents);
 

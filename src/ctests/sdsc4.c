@@ -83,9 +83,7 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
 #ifdef MPX
-   if ((retval = PAPI_multiplex_init()))
-      test_fail(__FILE__, __LINE__, "PAPI_multiplex_init", retval);
-
+   init_multiplex();
    if ((retval = PAPI_set_multiplex(eventset)))
       test_fail(__FILE__, __LINE__, "PAPI_set_multiplex", retval);
 #endif

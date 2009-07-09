@@ -37,21 +37,14 @@ void mainloop(int arg)
   int EventSet = PAPI_NULL;
   int retval, i, j = 2;
   PAPI_event_info_t pset;
-  const PAPI_hw_info_t *hw_info;
 
-   /* Initialize the library */
+	/* Initialize the library */
 
-   retval = PAPI_library_init(PAPI_VER_CURRENT);
-   if (retval != PAPI_VER_CURRENT)
-      test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+	retval = PAPI_library_init(PAPI_VER_CURRENT);
+	if (retval != PAPI_VER_CURRENT)
+		test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   hw_info = PAPI_get_hardware_info();
-   if (hw_info == NULL)
-      test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
-
-   retval = PAPI_multiplex_init();
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_multiplex_init", retval);
+   init_multiplex();
 
    retval = PAPI_create_eventset(&EventSet);
    if (retval != PAPI_OK)

@@ -38,17 +38,15 @@ char *argv[];
    for (i = 0; i < PAPI_MAX_EVENTS; i++)
       PAPI_values1[i] = PAPI_values2[i] = 0;
 
-   retval = PAPI_library_init(PAPI_VER_CURRENT);
-   if (retval != PAPI_VER_CURRENT)
-      test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+	retval = PAPI_library_init(PAPI_VER_CURRENT);
+	if (retval != PAPI_VER_CURRENT)
+		test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
 #ifdef MULTIPLEX
    if (!TESTS_QUIET) {
       printf("Activating PAPI Multiplex\n");
    }
-   retval = PAPI_multiplex_init();
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI multiplex init fail\n", retval);
+   init_multiplex();
 #endif
 
    retval = PAPI_create_eventset(&EventSet);
