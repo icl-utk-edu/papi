@@ -46,6 +46,12 @@ void init_freebsd_libpmc_mappings (void)
 	_papi_hwd_native_info[CPU_K8].map = K8Processor_map;
 	_papi_hwd_native_info[CPU_K8].info = K8Processor_info;
 
+	_papi_hwd_native_info[CPU_ATOM].map = AtomProcessor_map;
+	_papi_hwd_native_info[CPU_ATOM].info = AtomProcessor_info;
+
+	_papi_hwd_native_info[CPU_CORE].map = CoreProcessor_map;
+	_papi_hwd_native_info[CPU_CORE].info = CoreProcessor_info;
+
 	_papi_hwd_native_info[CPU_CORE2].map = Core2Processor_map;
 	_papi_hwd_native_info[CPU_CORE2].info = Core2Processor_info;
 
