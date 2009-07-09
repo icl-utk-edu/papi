@@ -66,6 +66,11 @@ means
 
    PAPI_L1_TCA (level 1 total cache accesses) is the sum of the PNE_K8_DC_ACCESS and PNE_K8_IC_FETCH.
 
+   It is important to check whether the compiling substrate (i.e., the running substrate) can affort using as many PMCs as defined. For example, on the former example the user must check that the processor can use at least 2 PMCs at the same time. There is a define (HWPMC_NUM_COUNTERS) that is defined at ./configure time and contains the number of performance counters that can be used at the same time. The previous example should be written as
+
+      #if HWPMC_NUM_COUNTERS >= 2
+        {PAPI_L1_TCA, {DERIVED_ADD, {PNE_K8_DC_ACCESS, PNE_K8_IC_FETCH, PAPI_NULL}, {0,}}},
+      #endif
 
 See papi_internal.h for other available operations.
 
