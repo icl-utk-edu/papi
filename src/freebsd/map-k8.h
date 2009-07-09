@@ -3,10 +3,10 @@
 /****************************/
 
 /* 
-* File:    freebsd-map-k8.h
+* File:    map-k8.h
 * CVS:     $Id$
 * Author:  Harald Servat
-*          harald.servat@gmail.com
+*          redcrash@gmail.com
 */
 
 #ifndef FreeBSD_MAP_K8

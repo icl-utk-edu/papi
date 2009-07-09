@@ -7,7 +7,7 @@
 * Author:  Kevin London
 *          london@cs.utk.edu
 * Mods:    Harald Servat
-*          harald.servat@gmail.com
+*          redcrash@gmail.com
 */
 
 #ifndef _PAPI_FreeBSD_H

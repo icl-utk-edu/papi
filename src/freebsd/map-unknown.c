@@ -3,10 +3,10 @@
 /****************************/
 
 /* 
-* File:    freebsd-map-unknown.c
+* File:    map-unknown.c
 * CVS:     $Id$
 * Author:  Harald Servat
-*          harald.servat@gmail.com
+*          redcrash@gmail.com
 */
 
 #include SUBSTRATE

@@ -3,7 +3,7 @@
 /****************************/
 
 /* 
-* File:    freebsd-map-core2-extreme.c
+* File:    map-core2-extreme.c
 * CVS:     $Id$
 * Author:  George Neville-Neil
 *          gnn@freebsd.org
@@ -19,7 +19,7 @@
 /****************************************************************************
  CORE2_EXTREME SUBSTRATE 
  CORE2_EXTREME SUBSTRATE 
- CORE2_EXTREME SUBSTRATE (aka Athlon64)
+ CORE2_EXTREME SUBSTRATE
  CORE2_EXTREME SUBSTRATE
  CORE2_EXTREME SUBSTRATE
 ****************************************************************************/

@@ -6,7 +6,7 @@
 * File:    freebsd-map.h
 * CVS:     $Id$
 * Author:  Harald Servat
-*          harald.servat@gmail.com
+*          redcrash@gmail.com
 */
 
 #ifndef _FreeBSD_MAP_H_

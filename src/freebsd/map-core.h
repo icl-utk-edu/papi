@@ -3,7 +3,7 @@
 /****************************/
 
 /* 
-* File:    freebsd-map-core.h
+* File:    map-core.h
 * CVS:     $Id$
 * Author:  Harald Servat
 *          redcrash@gmail.com

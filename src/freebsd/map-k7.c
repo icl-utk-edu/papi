@@ -3,10 +3,10 @@
 /****************************/
 
 /* 
-* File:    freebsd-map-k7.c
+* File:    map-k7.c
 * CVS:     $Id$
 * Author:  Harald Servat
-*          harald.servat@gmail.com
+*          redcrash@gmail.com
 */
 
 #include SUBSTRATE

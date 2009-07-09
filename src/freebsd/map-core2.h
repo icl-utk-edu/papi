@@ -3,7 +3,7 @@
 /****************************/
 
 /* 
-* File:    freebsd-map-core2.h
+* File:    map-core2.h
 * CVS:     $Id$
 * Author:  George Neville-Neil
 *          gnn@freebsd.org

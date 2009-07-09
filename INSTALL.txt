@@ -8,7 +8,7 @@
 * Mods:    Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    Harald Servat
-*          harald.servat@gmail.com
+*          redcrash@gmail.com
 * Mods:    <your name here>
 *          <your email address>
 */

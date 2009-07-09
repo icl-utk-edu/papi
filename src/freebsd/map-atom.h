@@ -3,7 +3,7 @@
 /****************************/
 
 /* 
-* File:    freebsd-map-atom.h
+* File:    map-atom.h
 * CVS:     $Id$
 * Author:  Harald Servat
 *          redcrash@gmail.com

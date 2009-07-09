@@ -3,7 +3,7 @@
 /****************************/
 
 /* 
-* File:    freebsd-map-core2.c
+* File:    map-core2.c
 * CVS:     $Id$
 * Author:  George Neville-Neil
 *          gnn@freebsd.org
@@ -19,7 +19,7 @@
 /****************************************************************************
  CORE2 SUBSTRATE 
  CORE2 SUBSTRATE 
- CORE2 SUBSTRATE (aka Athlon64)
+ CORE2 SUBSTRATE
  CORE2 SUBSTRATE
  CORE2 SUBSTRATE
 ****************************************************************************/

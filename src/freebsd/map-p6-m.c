@@ -3,10 +3,10 @@
 /****************************/
 
 /* 
-* File:    freebsd-map-p6-M.c
+* File:    map-p6-M.c
 * CVS:     $Id$
 * Author:  Harald Servat
-*          harald.servat@gmail.com
+*          redcrash@gmail.com
 */
 
 #include SUBSTRATE

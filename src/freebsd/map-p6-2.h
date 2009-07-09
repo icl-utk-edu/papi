@@ -3,10 +3,10 @@
 /****************************/
 
 /* 
-* File:    freebsd-map-p6-2.h
+* File:    map-p6-2.h
 * CVS:     $Id$
 * Author:  Harald Servat
-*          harald.servat@gmail.com
+*          redcrash@gmail.com
 */
 
 #ifndef FreeBSD_MAP_P6_2
