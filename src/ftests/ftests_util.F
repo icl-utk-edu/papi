@@ -293,3 +293,42 @@ C     Print the content of an event set
       write(*,*)
       end
 
+      subroutine init_multiplex()
+      IMPLICIT integer (p)
+      integer retval
+      CHARACTER*(PAPI_MAX_STR_LEN)  vstring, mstring
+      INTEGER ncpu,nnodes,totalcpus,vendor,model
+      REAL revision, mhz
+
+C     Get PAPI h/w info
+      call PAPIf_get_hardware_info( ncpu, nnodes, totalcpus, vendor,
+     .   vstring, model, mstring, revision, mhz )
+      do i=len(mstring),1,-1
+        if(mstring(i:i).NE.' ') goto 10
+      end do
+ 10   if(i.LT.1)then
+        nchr=1
+      else
+        nchr=i
+      end if
+
+      if ( mstring(1:nchr).EQ."POWER6") then
+C     Setting domain to user+kernel+supervisor is really only necessary when
+C     using PAPI multiplexing on POWER6/perfctr.  But since the Fortran API
+C     does not include access to substrate info, we'll just set the domain
+C     in this manner for all substrates on POWER6.
+      call PAPIf_set_domain(PAPI_DOM_ALL, retval)
+      if ( retval.NE.PAPI_OK) then
+        call ftest_fail(__FILE__, __LINE__,
+     . 'PAPIf_set_domain', retval)
+      end if
+      end if
+
+      call PAPIf_multiplex_init(retval)
+      if ( retval.NE.PAPI_OK) then
+        call ftest_fail(__FILE__, __LINE__,
+     &      'papif_multiplex_init', retval)
+      end if
+
+      end
+

@@ -68,11 +68,7 @@ C     Tests that PAPI_multiplex_init does not mess with normal operation.
 
       EventSet = PAPI_NULL
       call init_papi(event)
-      call PAPIf_multiplex_init(retval)
-      if ( retval.NE.PAPI_OK) then
-        call ftest_fail(__FILE__, __LINE__,
-     &      'papif_multiplex_init', retval)
-      end if
+      call init_multiplex()
 
       call PAPIf_create_eventset(EventSet, retval)
       if ( retval.NE.PAPI_OK) then
