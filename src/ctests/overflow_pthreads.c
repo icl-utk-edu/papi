@@ -165,7 +165,7 @@ int main(int argc, char **argv)
 
    for (i=0;i<NUM_THREADS;i++)
    {
-     if (total[i] <= (int)((ratio*(float)expected[i])/2.0)) 
+     if (total[i] < (int)((ratio*(float)expected[i])/2.0)) 
        test_fail(__FILE__,__LINE__,"not enough overflows",PAPI_EMISC);
    }
      
