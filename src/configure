@@ -7827,7 +7827,7 @@ echo "$as_me: error: The bitmode you specified is not supported" >&2;}
 		    else
 		    MAKEVER="$OS"-pfm-"$CPU"
 		 fi ;;
-            opteron|core|core2|i7|atom|em64t|athlon|p4|p3)
+            opteron|core|core2|i7|atom|em64t|p3)
 		if test "$arch" = "x86_64"; then
 			MAKEVER="$OS"-perfctr-p3
 		else
@@ -7837,6 +7837,18 @@ echo "$as_me: error: The bitmode you specified is not supported" >&2;}
    { (exit 1); exit 1; }; }
 			fi
 			MAKEVER="$OS"-perfctr-p3
+		fi
+		 ;;
+            athlon|p4)
+		if test "$arch" = "x86_64"; then
+			MAKEVER="$OS"-perfctr-"$CPU"
+		else
+			if test "${bitmode}" = "64"; then
+				{ { echo "$as_me:$LINENO: error: The bitmode you specified is not supported" >&5
+echo "$as_me: error: The bitmode you specified is not supported" >&2;}
+   { (exit 1); exit 1; }; }
+			fi
+			MAKEVER="$OS"-perfctr-"$CPU"
 		fi
 		 ;;
             p2)

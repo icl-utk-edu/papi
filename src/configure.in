@@ -1313,7 +1313,7 @@ case "$OS" in
 		    else
 		    MAKEVER="$OS"-pfm-"$CPU"
 		 fi ;;
-            opteron|core|core2|i7|atom|em64t|athlon|p4|p3)
+            opteron|core|core2|i7|atom|em64t|p3)
 		if test "$arch" = "x86_64"; then
 			MAKEVER="$OS"-perfctr-p3
 		else
@@ -1321,6 +1321,16 @@ case "$OS" in
 				AC_MSG_ERROR([The bitmode you specified is not supported])
 			fi
 			MAKEVER="$OS"-perfctr-p3
+		fi
+		 ;; 
+            athlon|p4)
+		if test "$arch" = "x86_64"; then
+			MAKEVER="$OS"-perfctr-"$CPU"
+		else
+			if test "${bitmode}" = "64"; then
+				AC_MSG_ERROR([The bitmode you specified is not supported])
+			fi
+			MAKEVER="$OS"-perfctr-"$CPU"
 		fi
 		 ;; 
             p2)
