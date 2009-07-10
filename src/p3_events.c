@@ -117,7 +117,7 @@ int setup_p3_presets(int cputype) {
      _papi_hwi_{lock,unlock} calls.
    They are declared static to reserve non-volatile space for constructed strings.
 */
-static char name[128];
+//static char name[128];
 static char description[1024];
 
 static void mask2hex(int umask, char *hex)
@@ -253,8 +253,8 @@ int _p3_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
    if(native_table[event].resources.selector == 0) {
       return (PAPI_ENOEVNT);
    }
-   *(cmp_register_t *)bits = native_table[event].resources;
-   ((cmp_register_t *)bits)->counter_cmd |= umask; /* OR unit mask bits into command */
+   *bits = native_table[event].resources;
+   bits->counter_cmd |= umask; /* OR unit mask bits into command */
    return (PAPI_OK);
 }
 
@@ -326,9 +326,9 @@ int _p3_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                unsigned int *values, int name_len, int count)
 {
    int i = 0;
-   copy_value(((cmp_register_t *)bits)->selector, "Event Selector", &names[i*name_len], &values[i], name_len);
+   copy_value((bits)->selector, "Event Selector", &names[i*name_len], &values[i], name_len);
    if (++i == count) return(i);
-   copy_value(((cmp_register_t *)bits)->counter_cmd, "Event Code", &names[i*name_len], &values[i], name_len);
+   copy_value((bits)->counter_cmd, "Event Code", &names[i*name_len], &values[i], name_len);
    return(++i);
 }
 /*
