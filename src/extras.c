@@ -559,7 +559,7 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
 {
    int retval = PAPI_ENOEVNT;
 
-#if ((defined PERFCTR_PFM_EVENTS) | (defined PFM2))
+#if ((defined PERFCTR_PFM_EVENTS) | (defined SUBSTRATE_USES_LIBPFM))
    extern unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code);
    retval = _papi_pfm_ntv_name_to_code(in, out);
 #else

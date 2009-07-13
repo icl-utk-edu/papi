@@ -960,6 +960,12 @@ AC_ARG_WITH(pfm_libdir,
            [pfm_libdir=$withval],
            [pfm_libdir=""]
             )
+AC_ARG_WITH(pcl,
+            [  --with-pcl=<yes,no>		Specify existence of Performance Counters for Linux],
+            [pcl=$withval],
+            [pcl="no"
+	       AC_CHECK_FILE(/sys/devices/system/cpu/perf_counters, [ pcl="yes" ]) ]
+            )
 AC_ARG_WITH(pmapi,
             [  --with-pmapi=<path>		Specify path of pmapi on aix system ],
             [pmapi=$withval],
@@ -1114,7 +1120,7 @@ if test "$perfctr" = 7 -a "$arch" != "ppc64"; then
    AC_MSG_ERROR([Perfctr 2.7.x only works on PPC64 machines. Please repatch your kernel with 2.6.x.])
 fi
 
-if test $perfmon != 0; then
+if test $perfmon != 0 -o $pcl = "yes"; then
       dotest=0
    if test "$pfm_root" != ""; then
       LIBS="-L$pfm_root/lib -lpfm"
@@ -1295,6 +1301,9 @@ case "$OS" in
        MAKEVER="$OS"-"$CPU""$BM"
        ;;
    linux)
+       if test $pcl = "yes" ; then
+         MAKEVER="$OS"-pcl
+       else
 	if test $perfmon -gt 20 ; then
 		    MAKEVER="$OS"-perfmon2
        else
@@ -1354,6 +1363,7 @@ case "$OS" in
 		 MAKEVER="$OS"-"$CPU" ;;
        esac
        fi
+       fi
        ;;
   irix)
        MAKEVER="$OS"-"$CPU""$BM"
@@ -1410,6 +1420,7 @@ case "$MAKEVER" in
     linux-perfctr-POWER4|linux-perfctr-POWER5|linux-perfctr-POWER5+|linux-perfctr-POWER6|linux-perfctr-PPC970|linux-perfctr-PPC32);;
     linux-perfctr-POWER4-64bit|linux-perfctr-POWER5-64bit|linux-perfctr-POWER5+-64bit|linux-perfctr-POWER6-64bit|linux-perfctr-PPC970-64bit);;
     linux-perfmon2);;
+    linux-pcl);;
     freebsd);;
     *)
     echo Platform $MAKEVER is not supported

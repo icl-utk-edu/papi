@@ -1,1 +1,2 @@
-include Rules.pfm2
+SUBSTR = perfmon
+include Rules.pfm_pcl
