@@ -1460,34 +1460,28 @@ int _ia64_ctl(hwd_context_t * zero, int code, _papi_int_option_t * option) {
 	int ret;
 	switch (code) {
 		case PAPI_DEFDOM:
-			return (set_default_domain(
-				(hwd_control_state_t *)option->domain.ESI->ctl_state,
+			return (set_default_domain(option->domain.ESI->ctl_state,
 				option->domain.domain));
 		case PAPI_DOMAIN:
-			return (_ia64_set_domain(
-				(hwd_control_state_t *)option->domain.ESI->ctl_state,
-				option->domain.domain));
+			return (_ia64_set_domain(option->domain.ESI->ctl_state, option->domain.domain));
 		case PAPI_DEFGRN:
-			return (set_default_granularity(
-				(hwd_control_state_t *)option->granularity.ESI->ctl_state,
-				option->granularity.granularity));
+			return (set_default_granularity(option->granularity.ESI->ctl_state, option->granularity.granularity));
 		case PAPI_GRANUL:
-			return (set_granularity(
-				(hwd_control_state_t *)option->granularity.ESI->ctl_state,
+			return (set_granularity(option->granularity.ESI->ctl_state,
 				option->granularity.granularity));
 #if 0
 		case PAPI_INHERIT:
 			return (set_inherit(option->inherit.inherit));
 #endif
 		case PAPI_DATA_ADDRESS:
-			ret=set_default_domain((hwd_control_state_t *)option->address_range.ESI->ctl_state, option->address_range.domain);
+			ret=set_default_domain(option->address_range.ESI->ctl_state, option->address_range.domain);
 			if(ret != PAPI_OK) return(ret);
-			set_drange(zero, (hwd_control_state_t *)option->address_range.ESI->ctl_state, option);
+			set_drange(zero, option->address_range.ESI->ctl_state, option);
 			return (PAPI_OK);
 		case PAPI_INSTR_ADDRESS:
-			ret=set_default_domain((hwd_control_state_t *)option->address_range.ESI->ctl_state, option->address_range.domain);
+			ret=set_default_domain(option->address_range.ESI->ctl_state, option->address_range.domain);
 			if(ret != PAPI_OK) return(ret);
-			set_irange(zero, (hwd_control_state_t *)option->address_range.ESI->ctl_state, option);
+			set_irange(zero, option->address_range.ESI->ctl_state, option);
 			return (PAPI_OK);
 		case PAPI_DEF_ITIMER: {
 			/* flags are currently ignored, eventually the flags will be able
@@ -1646,7 +1640,7 @@ static int ia64_ita2_process_profile_buffer(ThreadInfo_t *thread, EventSetInfo_t
      return(PAPI_EBUG);
 
    this_state = (ia64_control_state_t *)(ESI->ctl_state);
-   hdr = (pfmw_smpl_hdr_t *) this_state->smpl_vaddr;
+   hdr = (pfmw_smpl_hdr_t *)(this_state->smpl_vaddr);
 
    entry_size = sizeof(pfmw_smpl_entry_t);
 
@@ -1962,7 +1956,7 @@ int _ia64_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
   if (threshold == 0)
     ret = pfmw_create_context(ctx);
   else
-    ret = pfmw_recreate_context(ESI,&this_state->smpl_vaddr, EventIndex);
+    ret = pfmw_recreate_context(ESI,ctx,&this_state->smpl_vaddr, EventIndex);
 
 //#warning "This should be handled in the high level layers"
   ESI->state ^= PAPI_OVERFLOWING;

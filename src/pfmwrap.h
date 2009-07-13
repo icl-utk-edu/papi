@@ -198,16 +198,16 @@ char *retired_events[]={
    }
 
    inline int pfmw_create_context(hwd_context_t *thr_ctx) {
-      pfarg_context_t ctx[1];
-      memset(ctx, 0, sizeof(ctx));
+      pfarg_context_t ctx;
+      memset(&ctx, 0, sizeof(ctx));
 
       SUBDBG("PFM_CREATE_CONTEXT on 0\n");
-      if (perfmonctl(0, PFM_CREATE_CONTEXT, ctx, 1) == -1) 
+      if (perfmonctl(0, PFM_CREATE_CONTEXT, &ctx, 1) == -1) 
 	{
 	  PAPIERROR("perfmonctl(PFM_CREATE_CONTEXT) errno %d", errno);
 	  return(PAPI_ESYS);
       }
-      ((ia64_context_t *)thr_ctx)->fd = ctx[0].ctx_fd;
+      ((ia64_context_t *)thr_ctx)->fd = ctx.ctx_fd;
       ((ia64_context_t *)thr_ctx)->tid = mygettid();
       SUBDBG("PFM_CREATE_CONTEXT returns FD %d, TID %d\n",(int)((ia64_context_t *)thr_ctx)->fd,(int)((ia64_context_t *)thr_ctx)->tid);
 
@@ -237,15 +237,15 @@ char *retired_events[]={
    
 extern inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int *event, unsigned int *umask);
 
-   inline int pfmw_recreate_context(EventSetInfo_t * ESI, void **smpl_vaddr, 
+   inline int pfmw_recreate_context(EventSetInfo_t * ESI, hwd_context_t *thr_ctx, void **smpl_vaddr, 
                                int EventIndex) 
    {
-	pfm_default_smpl_ctx_arg_t ctx[1];
+	pfm_default_smpl_ctx_arg_t ctx;
 	pfm_uuid_t buf_fmt_id = PFM_DEFAULT_SMPL_UUID;
 	int ctx_fd;
 	unsigned int native_index, EventCode; 
 	int pos;
-	hwd_context_t *thr_ctx = (hwd_context_t *) &ESI->master->context;
+	//hwd_context_t *thr_ctx = (hwd_context_t *) &ESI->master->context;
 #ifdef PFMLIB_MONTECITO_PMU
 	unsigned int umask;
 #endif
@@ -261,24 +261,24 @@ extern inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int 
 #endif
 		native_index= ESI->NativeInfoArray[pos].ni_event & PAPI_NATIVE_AND_MASK;
 	
-      memset(ctx,0,sizeof(ctx[0]));
+      memset(&ctx,0,sizeof(ctx));
       /*
        * We initialize the format specific information.
        * The format is identified by its UUID which must be copied
        * into the ctx_buf_fmt_id field.
        */
-      memcpy(ctx[0].ctx_arg.ctx_smpl_buf_id, buf_fmt_id, sizeof(pfm_uuid_t));
+      memcpy(ctx.ctx_arg.ctx_smpl_buf_id, buf_fmt_id, sizeof(pfm_uuid_t));
       /*
        * the size of the buffer is indicated in bytes (not entries).
        * The kernel will record into the buffer up to a certain point.
        * No partial samples are ever recorded.
        */
-      ctx[0].buf_arg.buf_size = 4096;
+      ctx.buf_arg.buf_size = 4096;
       /*
        * now create the context for self monitoring/per-task
        */
       SUBDBG("PFM_CREATE_CONTEXT on 0\n");
-      if (perfmonctl(0, PFM_CREATE_CONTEXT, ctx, 1) == -1 ) {
+      if (perfmonctl(0, PFM_CREATE_CONTEXT, &ctx, 1) == -1 ) {
          if (errno == ENOSYS) 
 	   PAPIERROR("Your kernel does not have performance monitoring support");
 	 else
@@ -289,7 +289,7 @@ extern inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int 
        * extract the file descriptor we will use to
        * identify this newly created context
        */
-      ctx_fd = ctx[0].ctx_arg.ctx_fd;
+      ctx_fd = ctx.ctx_arg.ctx_fd;
       /* save the fd into the thread context struct */
       ((ia64_context_t *)thr_ctx)->fd = ctx_fd;
       ((ia64_context_t *)thr_ctx)->tid = mygettid();
@@ -322,7 +322,7 @@ extern inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int 
 		return(PAPI_EBUG);
 	}
 
-      *smpl_vaddr = ctx[0].ctx_arg.ctx_smpl_vaddr;
+      *smpl_vaddr = ctx.ctx_arg.ctx_smpl_vaddr;
 
       return(pfmw_create_ctx_common(thr_ctx)); 
    }
