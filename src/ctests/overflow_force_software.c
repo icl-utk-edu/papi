@@ -80,10 +80,6 @@ int main(int argc, char **argv)
 	if (retval != PAPI_VER_CURRENT)
 		test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-	retval = PAPI_get_opt(PAPI_COMPONENTINFO, &opt);
-	if ( !opt.cmp_info->hardware_intr )
-		test_skip(__FILE__, __LINE__, "Platform does not support Hardware overflow", 0);
-
 	/* query and set up the right instruction to monitor */
 	if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
 		if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
@@ -117,6 +113,10 @@ int main(int argc, char **argv)
 	retval = PAPI_add_event(EventSet, PAPI_event);
 	if (retval != PAPI_OK)
 		test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+
+	retval = PAPI_get_opt(PAPI_COMPONENTINFO, &opt);
+	if (retval != PAPI_OK)
+		test_skip(__FILE__, __LINE__, "Platform does not support Hardware overflow", 0);
 
 	do_stuff();
 
