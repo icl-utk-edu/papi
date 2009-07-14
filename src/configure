@@ -1314,6 +1314,7 @@ Optional Packages:
   --with-pfm-prefix=<path>	Specify prefix to installed pfm distribution
   --with-pfm-incdir=<path>	Specify directory of perfmon header files
   --with-pfm-libdir=<path>	Specify directory of pfm library
+  --with-pcl=<yes,no>		Specify existence of Performance Counters for Linux
   --with-pmapi=<path>		Specify path of pmapi on aix system
   --with-pfm-events=<static,file>	Specify source of events for pfmlib-based systems
   --with-semaphores Use semaphores instead of atomic locks (IA64)
@@ -6037,6 +6038,36 @@ else
 fi
 
 
+# Check whether --with-pcl was given.
+if test "${with_pcl+set}" = set; then
+  withval=$with_pcl; pcl=$withval
+else
+  pcl="no"
+	       { echo "$as_me:$LINENO: checking for /sys/devices/system/cpu/perf_counters" >&5
+echo $ECHO_N "checking for /sys/devices/system/cpu/perf_counters... $ECHO_C" >&6; }
+if test "${ac_cv_file__sys_devices_system_cpu_perf_counters+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "/sys/devices/system/cpu/perf_counters"; then
+  ac_cv_file__sys_devices_system_cpu_perf_counters=yes
+else
+  ac_cv_file__sys_devices_system_cpu_perf_counters=no
+fi
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_file__sys_devices_system_cpu_perf_counters" >&5
+echo "${ECHO_T}$ac_cv_file__sys_devices_system_cpu_perf_counters" >&6; }
+if test $ac_cv_file__sys_devices_system_cpu_perf_counters = yes; then
+   pcl="yes"
+fi
+
+
+fi
+
+
 # Check whether --with-pmapi was given.
 if test "${with_pmapi+set}" = set; then
   withval=$with_pmapi; pmapi=$withval
@@ -6638,7 +6669,7 @@ echo "$as_me: error: Perfctr 2.7.x only works on PPC64 machines. Please repatch 
    { (exit 1); exit 1; }; }
 fi
 
-if test $perfmon != 0; then
+if test $perfmon != 0 -o $pcl = "yes"; then
       dotest=0
    if test "$pfm_root" != ""; then
       LIBS="-L$pfm_root/lib -lpfm"
@@ -7822,6 +7853,9 @@ echo "$as_me: error: The bitmode you specified is not supported" >&2;}
        MAKEVER="$OS"-"$CPU""$BM"
        ;;
    linux)
+       if test $pcl = "yes" ; then
+         MAKEVER="$OS"-pcl
+       else
 	if test $perfmon -gt 20 ; then
 		    MAKEVER="$OS"-perfmon2
        else
@@ -7893,6 +7927,7 @@ echo "$as_me: error: The bitmode you specified is not supported" >&2;}
 		 MAKEVER="$OS"-"$CPU" ;;
        esac
        fi
+       fi
        ;;
   irix)
        MAKEVER="$OS"-"$CPU""$BM"
@@ -7950,6 +7985,7 @@ case "$MAKEVER" in
     linux-perfctr-POWER4|linux-perfctr-POWER5|linux-perfctr-POWER5+|linux-perfctr-POWER6|linux-perfctr-PPC970|linux-perfctr-PPC32);;
     linux-perfctr-POWER4-64bit|linux-perfctr-POWER5-64bit|linux-perfctr-POWER5+-64bit|linux-perfctr-POWER6-64bit|linux-perfctr-PPC970-64bit);;
     linux-perfmon2);;
+    linux-pcl);;
     freebsd);;
     *)
     echo Platform $MAKEVER is not supported

@@ -4,8 +4,9 @@ DESCR   = "Linux with $(SUBSTR) kernel support and library"
 LIBRARY = libpapi.a
 SHLIB   = libpapi.so
 TARGETS = ear serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads shared
-SUBSTR	= pcl
 MEMSUBSTR = perfmon
+MEMSUBSTRC = $(MEMSUBSTR)-memory.c
+MEMSUBSTRO = $(MEMSUBSTR)-memory.o
 
 #
 # GNU G77/GCC section

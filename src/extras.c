@@ -567,6 +567,13 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
 {
    int retval = PAPI_ENOEVNT;
 
+// XXX This is from PAPI Classic; we should check the vector table for
+// an implemented version of name_to_code.
+//#if ((defined PERFCTR_PFM_EVENTS) | (defined SUBSTRATE_USES_LIBPFM))
+//   extern unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code);
+//   retval = _papi_pfm_ntv_name_to_code(in, out);
+//#else
+
    char name[PAPI_HUGE_STR_LEN]; /* make sure it's big enough */
    unsigned int i, j;
 
