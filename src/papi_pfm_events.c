@@ -275,6 +275,7 @@ static int load_preset_table(char *pmu_str, int pmu_type, pfm_preset_search_entr
   int get_presets = 0;   /* only get PRESETS after CPU is identified */
   int found_presets = 0; /* only terminate search after PRESETS are found */
 						 /* this allows support for synonyms for CPU names */
+  int found_cpu = 0;
 
 #ifdef SHOW_LOADS
   SUBDBG("%p\n",here);
@@ -360,9 +361,11 @@ static int load_preset_table(char *pmu_str, int pmu_type, pfm_preset_search_entr
 	    {
 	      int type;
 
-//#ifdef SHOW_LOADS
+          found_cpu = 1;
+
+#ifdef SHOW_LOADS
 	      SUBDBG("Found CPU %s at line %d of %s.\n",t,line_no,name);
-//#endif
+#endif
 	      t = trim_string(strtok(NULL,","));
 	      if ((t == NULL) || (strlen(t) == 0))
 		{
@@ -494,6 +497,11 @@ static int load_preset_table(char *pmu_str, int pmu_type, pfm_preset_search_entr
  done:
   if (table)
     fclose(table);
+
+  if(!found_cpu){
+	 PAPIERROR("Examine csv file for CPU(%s).",pmu_name);
+     return PAPI_EBUG;
+  }
   return(PAPI_OK);
 }
 
