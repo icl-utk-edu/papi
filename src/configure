@@ -1307,7 +1307,7 @@ Optional Packages:
   --with-pfm-prefix=<path>	Specify prefix to installed pfm distribution
   --with-pfm-incdir=<path>	Specify directory of perfmon header files
   --with-pfm-libdir=<path>	Specify directory of pfm library
-  --with-pcl=<yes,no>
+  --with-pcl=<yes,no>		Specify existence of Performance Counters for Linux
   --with-pmapi=<path>		Specify path of pmapi on aix system
   --with-pfm-events=<static,file>	Specify source of events for pfmlib-based systems
   --with-semaphores Use semaphores instead of atomic locks (IA64)
@@ -6020,13 +6020,14 @@ else
 
 fi
 
+if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
 
 # Check whether --with-pcl was given.
 if test "${with_pcl+set}" = set; then
   withval=$with_pcl; pcl=$withval
 else
   pcl="no"
-	       { echo "$as_me:$LINENO: checking for /sys/devices/system/cpu/perf_counters" >&5
+            { echo "$as_me:$LINENO: checking for /sys/devices/system/cpu/perf_counters" >&5
 echo $ECHO_N "checking for /sys/devices/system/cpu/perf_counters... $ECHO_C" >&6; }
 if test "${ac_cv_file__sys_devices_system_cpu_perf_counters+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -6050,6 +6051,9 @@ fi
 
 fi
 
+else
+   pcl="no"
+fi
 
 # Check whether --with-pmapi was given.
 if test "${with_pmapi+set}" = set; then
