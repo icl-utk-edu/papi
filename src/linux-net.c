@@ -884,8 +884,8 @@ papi_vector_t _net_vector = {
       .available_domains =	PAPI_DOM_USER,
       .default_granularity =	PAPI_GRN_THR,
       .available_granularities = PAPI_GRN_THR,
-      .hardware_intr_sig =	PAPI_SIGNAL,
-      
+      .hardware_intr_sig =    PAPI_INT_SIGNAL,
+
       /* component specific cmp_info initializations */
       .fast_real_timer =	0,
       .fast_virtual_timer =	0,
