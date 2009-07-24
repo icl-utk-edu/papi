@@ -6,10 +6,9 @@
 #       maynardj@us.ibm.com
 
 DESCR   = "Linux with PerfCtr $(VERSION) patch and library, and perfmon2 libpfm library"
-LIBS    = static shared
 TARGETS = serial forkexec_tests overflow_tests profile_tests attach multiplex_and_pthreads shared
 LIBRARY = libpapi.a
-SHLIB   = libpapi.so.$(PAPIVER)
+SHLIB   = libpapi.so
 SUBSTR  = perfctr-$(CPU)
 ARCH	= $(shell uname -m)
 
@@ -79,7 +78,7 @@ OMPCFLGS = -fopenmp
 endif
 
 CC_R    	:= $(CC) -pthread
-CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.$(PAPIVER) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
+CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
 FFLAGS		+= -Wall -ffixed-line-length-132 $(BITFLAGS)
 CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(BITFLAGS)
 
@@ -89,7 +88,7 @@ CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(BITFLAGS)
 
 ifeq (CATAMOUNT, $(COMPILER))
 LIBS    	= static
-TARGETS 	= serial multiplex
+TARGETS 	= serial forkexec_tests overflow_tests profile_tests multiplex
 MEMSUBSTR	= linux
 FFLAGS		= $(BITFLAGS)
 endif
@@ -130,31 +129,38 @@ endif
 # DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
 #
 
+ifneq (/usr,$(PERFCTR_PREFIX))
+PWD = $(shell pwd)
 ifeq (,$(PERFCTR_LIB_PATH))
 ifeq (,$(PERFCTR_ROOT))
-	PERFCTR_ROOT := ./perfctr-$(VERSION)
+	PERFCTR_ROOT := $(PWD)/perfctr-$(VERSION)
 endif
 	PERFCTR_LIB_PATH := $(PERFCTR_ROOT)/usr.lib
+	CC_SHR += -Wl,-rpath-link -Wl,$(PERFCTR_LIB_PATH)
 endif
 ifeq (,$(PERFCTR_INC_PATH))
 ifeq (,$(PERFCTR_ROOT))
-	PERFCTR_ROOT := ./perfctr-$(VERSION)
+	PERFCTR_ROOT := $(PWD)/perfctr-$(VERSION)
 endif
 	PERFCTR_INC_PATH := $(PERFCTR_ROOT)/usr.lib
 	PERFCTR_KINC_PATH := $(PERFCTR_ROOT)/linux/include
 else
 	PERFCTR_KINC_PATH := $(PERFCTR_INC_PATH)
 endif
+ifneq (/usr/include,$(PERFCTR_INC_PATH))
+CFLAGS += -I$(PERFCTR_INC_PATH) 
+endif
+ifneq (/usr/include/linux/include,$(PERFCTR_KINC_PATH))
+CFLAGS += -I$(PERFCTR_KINC_PATH) 
+endif
+endif
 
 CFLAGS-2.5.4 := -DPERFCTR25
 CFLAGS-2.6.x := -DPERFCTR26
 CFLAGS-2.7.x := $(CFLAGS-2.6.x)
-CFLAGS += $(EVENTFLAGS) -I$(PERFCTR_INC_PATH) -I$(PERFCTR_KINC_PATH) $(CFLAGS-$(VERSION))
+CFLAGS += $(EVENTFLAGS) $(CFLAGS-$(VERSION))
 
-MEMSUBSTRC = $(MEMSUBSTR)-memory.c
-MEMSUBSTRO = $(MEMSUBSTR)-memory.o
-
-MISCHDRS = perfctr-$(CPU).h
+MISCHDRS = perfctr-$(CPU).h $(PFM_EVENTS_TABLE)
 MISCSRCS =  linux.c $(ARCH_SPEC_EVTS)
 
 # x86 cache info now in its own file
@@ -167,34 +173,6 @@ ifneq (,$(CPU_EVENTS))
   MISCSRCS +=  $(CPU_EVENTS).c
 endif
 PERFCTR_OBJS = $(shell $(AR) t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
-
-####################################################################
-# This section builds libpfm to get at its support for native events
-ifeq (,$(PFM_LIB_PATH))
-  ifeq (,$(PFM_ROOT))
-	PFM_ROOT := ./libpfm-3.y
-  endif
-  PFM_LIB_PATH := $(PFM_ROOT)/lib
-  CC_SHR += -Wl,-rpath-link -Wl,$(PFM_LIB_PATH)
-endif
-
-ifeq (,$(PFM_INC_PATH))
-  ifeq (,$(PFM_ROOT))
-	PFM_ROOT := ./libpfm-3.y
-  endif
-  PFM_INC_PATH := $(PFM_ROOT)/include
-endif
-CFLAGS	+= -I$(PFM_INC_PATH) -DPERFCTR_PFM_EVENTS
-PFM_OBJS=$(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
-####################################################################
-
-# This sets up the shared lib deps *after* pfm is built, since we need the pfm
-# Event table even if we're using perfctr.
-ifneq (,$(PFM_LIB_PATH))
-  PFM_LIBS=-L$(PFM_LIB_PATH) -lpfm
-endif
-SHLIBDEPS = -Bdynamic -L$(PERFCTR_LIB_PATH) -lperfctr $(PFM_LIBS)
-
 
 ifeq (,$(PERFCTR_OBJS))
 $(PERFCTR_LIB_PATH)/libperfctr.a:
@@ -218,27 +196,8 @@ ifneq (,${PERFCTR_ROOT})
 else
 	@echo '$@ not installed!'; exit 1
 endif
-
-####################################################################
-# This section builds libpfm to get at its support for native events
-# We only need to build the library, not the examples, etc.
-ifeq (,$(PFM_OBJS))
-  ifneq (,${PFM_ROOT})
-	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)" DIRS=lib CONFIG_PFMLIB_OLD_PFMV2="$(PFM_OLD_PFMV2)"
-  else
-    @echo '$@ not installed!'; exit 1
-  endif
+	$(MAKE)
 endif
-####################################################################
-
-	$(MAKE) $(MAKEFLAGS)
-endif
-#MISCOBJS = $(PERFCTR_OBJS) $(MISCSRCS:.c=.o) 
-####################################################################
-MISCSRCS += papi_pfm_events.c
-MISCOBJS += $(PERFCTR_OBJS) $(PFM_OBJS) $(MISCSRCS:.c=.o)
-MISCHDRS += papi_pfm_events.h
-####################################################################
 
 #Dynamic linking loader needs correct version of libperfctr
 ifeq ($(VERSION),2.7.x)
@@ -253,6 +212,48 @@ endif
 endif
 POST_BUILD = cp $(PERFCTR_LIB_PATH)/libperfctr.so .;ln -fs libperfctr.so libperfctr.so.$(SO_ABIVER)
 SPECIAL_REMOVE = rm -f libperfctr.so*
+
+####################################################################
+# This section builds libpfm to get at its support for native events
+# We only need to build the library, not the examples, etc.
+ifneq (/usr,$(PFM_PREFIX))
+PWD = $(shell pwd)
+ifeq (,$(PFM_LIB_PATH))
+ifeq (,$(PFM_ROOT))
+	PFM_ROOT := $(PWD)/libpfm-3.y
+endif
+	PFM_LIB_PATH := $(PFM_ROOT)/lib
+	CC_SHR += -Wl,-rpath-link -Wl,$(PFM_LIB_PATH)
+endif
+ifeq (,$(PFM_INC_PATH))
+ifeq (,$(PFM_ROOT))
+        PFM_ROOT := $(PWD)/libpfm-3.y
+endif
+        PFM_INC_PATH := $(PFM_ROOT)/include
+endif
+ifneq (/usr/include,$(PFM_INC_PATH))
+CFLAGS	+= -I$(PFM_INC_PATH) 
+endif
+endif
+
+CFLAGS	+= -DPERFCTR_PFM_EVENTS
+
+PFM_OBJS=$(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
+ifeq (,$(PFM_OBJS))
+  $(PFM_LIB_PATH)/libpfm.a:
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)" DIRS=lib CONFIG_PFMLIB_OLD_PFMV2="$(PFM_OLD_PFMV2)"
+	$(MAKE)
+endif
+
+# This sets up the shared lib deps *after* pfm is built, since we need the pfm
+# Event table even if we're using perfctr.
+PFM_LIBS=-L$(PFM_LIB_PATH) -lpfm
+
+MISCSRCS += papi_pfm_events.c
+MISCOBJS += $(PERFCTR_OBJS) $(PFM_OBJS) $(MISCSRCS:.c=.o)
+MISCHDRS += papi_pfm_events.h
+SHLIBDEPS = -Bdynamic -L$(PERFCTR_LIB_PATH) -lperfctr $(PFM_LIBS)
+####################################################################
 
 include Makefile.inc
 
@@ -278,7 +279,7 @@ papi_pfm_events.o: papi_pfm_events.c $(HEADERS) $(PFM_EVENTS_TABLE)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_pfm_events.c -o $@
 
 $(PFM_EVENTS_TABLE):	perfmon_events.csv perfmon_events_table.sh
-	ksh perfmon_events_table.sh > $@
+	sh perfmon_events_table.sh > $@
 
 $(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c  $(ARCH_EVENTS)_map.c -o $@
@@ -296,33 +297,36 @@ ifeq (static,$(PFM_EVENTS))
 endif
 
 native_install: 
-	-mkdir -p $(DATADIR)
-	-chmod go+rx $(DATADIR)
-	-cp -f ./perfmon_events.csv $(DATADIR)
+	-mkdir -p $(DESTDIR)$(DATADIR)
+	-chmod go+rx $(DESTDIR)$(DATADIR)
+	-cp -f ./perfmon_events.csv $(DESTDIR)$(DATADIR)
 ifeq ($(ARCH),ppc64)
-	cp -Rf ./event_data $(DATADIR)
+	cp -Rf ./event_data $(DESTDIR)$(DATADIR)
 endif
 ifneq (,${PFM_ROOT})
 	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC=$(CC) DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
 ifneq (,${PERFCTR_ROOT})
 ifeq (${VERSION},2.4.x)
-	cp -p $(PERFCTR_ROOT)/usr.lib/libperfctr.so $(PREFIX)/lib$(LIB_SUFFIX)
-	cp -p $(PERFCTR_ROOT)/usr.lib/event_codes.h $(PREFIX)/include
-	cp -p $(PERFCTR_ROOT)/usr.lib/libperfctr.h  $(PREFIX)/include
+	mkdir -p $(DESTDIR)$(PREFIX)/lib$(LIB_SUFFIX)
+	cp -p $(PERFCTR_ROOT)/usr.lib/libperfctr.so $(DESTDIR)$(PREFIX)/lib$(LIB_SUFFIX)
+	mkdir -p $(DESTDIR)$(PREFIX)/include
+	cp -p $(PERFCTR_ROOT)/usr.lib/event_codes.h $(DESTDIR)$(PREFIX)/include
+	cp -p $(PERFCTR_ROOT)/usr.lib/libperfctr.h  $(DESTDIR)$(PREFIX)/include
 else
 ifeq (x86_64,${ARCH})
 ifeq (32,${BITS})
-	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(PREFIX) BINDIR=$(BINDIR) LIBDIR=$(LIBDIR) INCLDIR=$(INCDIR) ARCH="i386" install
+	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(DESTDIR)$(PREFIX) BINDIR=$(DESTDIR)$(BINDIR) LIBDIR=$(DESTDIR)$(LIBDIR) INCLDIR=$(DESTDIR)$(INCDIR) ARCH="i386" install
 else
-	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(PREFIX) BINDIR=$(BINDIR) LIBDIR=$(LIBDIR) INCLDIR=$(INCDIR) install
+	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(DESTDIR)$(PREFIX) BINDIR=$(DESTDIR)$(BINDIR) LIBDIR=$(DESTDIR)$(LIBDIR) INCLDIR=$(DESTDIR)$(INCDIR) install
 endif
 else
-	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(PREFIX) BINDIR=$(BINDIR) LIBDIR=$(LIBDIR) INCLDIR=$(INCDIR) install
+	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(DESTDIR)$(PREFIX) BINDIR=$(DESTDIR)$(BINDIR) LIBDIR=$(DESTDIR)$(LIBDIR) INCLDIR=$(DESTDIR)$(INCDIR) install
 endif
 endif
 endif
   ifneq (CATAMOUNT, $(COMPILER))
+	mkdir -p $(DESTDIR)$(LIBDIR)
 	cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE)
 	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so.$(PAPIVER)
 	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so
