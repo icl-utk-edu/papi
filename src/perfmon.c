@@ -2286,6 +2286,7 @@ int _papi_pfm_init_substrate(int cidx)
   MY_VECTOR.cmp_info.profile_ear = 1;  
   MY_VECTOR.cmp_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
   MY_VECTOR.cmp_info.hardware_intr_sig = SIGRTMIN+2;
+  MY_VECTOR.cmp_info.clock_ticks = sysconf(_SC_CLK_TCK);
 
   /* FIX: For now, use the pmu_type from Perfmon */
 
@@ -3702,8 +3703,6 @@ papi_vector_t _papi_pfm_vector = {
     .get_real_cycles =		_papi_pfm_get_real_cycles,
     .get_virt_cycles =		_papi_pfm_get_virt_cycles,
     .get_virt_usec =		_papi_pfm_get_virt_usec,
-
-    /* from OS */
     .get_memory_info =	_papi_pfm_get_memory_info,
     .init =		_papi_sub_pfm_init,
     .get_dmem_info =	_papi_pfm_get_dmem_info,
@@ -3714,5 +3713,6 @@ papi_vector_t _papi_pfm_vector = {
     .ntv_code_to_descr =	_papi_pfm_ntv_code_to_descr,
     .ntv_code_to_bits =	_papi_pfm_ntv_code_to_bits,
     .ntv_bits_to_info =	_papi_pfm_ntv_bits_to_info,
+    /* from OS */
 };
 
