@@ -75,9 +75,9 @@ int main(int argc, char **argv)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   QUIETPRINTF("Running %d iterations of do_reads().\n", NUM_READS);
+   QUIETPRINTF("Running do_stuff().\n");
 
-   do_reads(NUM_READS);
+   do_stuff();
 
    retval = PAPI_stop(EventSet, &values);
    if (retval != PAPI_OK)
