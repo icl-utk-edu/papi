@@ -590,8 +590,10 @@ papi_vector_t _p3_vector = {
 	.available_domains =	PAPI_DOM_USER|PAPI_DOM_KERNEL,
 	.default_granularity =	PAPI_GRN_THR,
 	.available_granularities = PAPI_GRN_THR,
-	.hardware_intr_sig =	PAPI_INT_SIGNAL,
 	.itimer_sig = PAPI_INT_MPX_SIGNAL,
+    .itimer_num = PAPI_INT_ITIMER,
+    .itimer_res_ns = 1,
+	.hardware_intr_sig =	PAPI_INT_SIGNAL,
 
 	/* component specific cmp_info initializations */
 	.fast_real_timer =	1,

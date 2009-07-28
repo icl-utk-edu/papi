@@ -223,6 +223,8 @@ int _linux_init_substrate(int cidx)
 
    SUBDBG("Hardware/OS %s support counter generated interrupts\n",
           MY_VECTOR.cmp_info.hardware_intr ? "does" : "does not");
+   MY_VECTOR.cmp_info.itimer_ns = PAPI_INT_MPX_DEF_US * 1000;
+   MY_VECTOR.cmp_info.clock_ticks = sysconf(_SC_CLK_TCK);
 
    strcpy(_papi_hwi_system_info.hw_info.model_string, PERFCTR_CPU_NAME(&info));
    _papi_hwi_system_info.hw_info.model = info.cpu_type;

@@ -1100,6 +1100,7 @@ int _ia64_get_system_info(void)
   MY_VECTOR.cmp_info.cntr_IEAR_events = 1;      /* counters support instr event addr register */
   MY_VECTOR.cmp_info.cntr_DEAR_events = 1;      /* counters support data event addr register */
   MY_VECTOR.cmp_info.cntr_OPCM_events = 1;      /* counter events support opcode matching */
+  MY_VECTOR.cmp_info.clock_ticks = sysconf(_SC_CLK_TCK);
   /* Put the signal handler in use to consume PFM_END_MSG's */
   _papi_hwi_start_signal(MY_VECTOR.cmp_info.hardware_intr_sig, 1, MY_VECTOR.cmp_info.CmpIdx);
 
