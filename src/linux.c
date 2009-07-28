@@ -382,7 +382,7 @@ void _linux_dispatch_timer(int signal, siginfo_t * si, void *context) {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *master = NULL;
    int isHardware = 0;
-   unsigned long address;
+   caddr_t address;
    int cidx = MY_VECTOR.cmp_info.CmpIdx;
 
    ctx.si = si;
@@ -396,7 +396,7 @@ void _linux_dispatch_timer(int signal, siginfo_t * si, void *context) {
 #define GEN_OVERFLOW 0
 #endif
 
-   address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
+   address = (caddr_t) GET_OVERFLOW_ADDRESS((&ctx));
    _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, &isHardware, 
                                       OVERFLOW_MASK, GEN_OVERFLOW, &master, MY_VECTOR.cmp_info.CmpIdx);
 
