@@ -1,8 +1,37 @@
 #ifndef _PAPI_PENTIUM4_H
 #define _PAPI_PENTIUM4_H
 
+#ifndef __USE_GNU
+#define __USE_GNU
+#endif
+#ifndef __USE_UNIX98
+#define __USE_UNIX98
+#endif
+#ifndef __USE_XOPEN_EXTENDED
+#define __USE_XOPEN_EXTENDED
+#endif
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <signal.h>
+#include <malloc.h>
+#include <unistd.h>
+#include <assert.h>
+#include <string.h>
+#include <math.h>
+#include <ctype.h>
+#include <string.h>
+#include <limits.h>
+#include <time.h>
+#include <errno.h>
+#include <sys/times.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/ucontext.h>
+#include <linux/unistd.h>
+
 #include "p4_events.h"
-#include "linux.h"
 
 #ifdef _WIN32
 #include "cpuinfo.h"
@@ -16,26 +45,26 @@
 /* Native events consist of a flag field, an event field, and a unit mask field.
  * The next 4 macros define the characteristics of the event and unit mask fields.
  */
-#define PAPI_NATIVE_EVENT_AND_MASK 0x000000ff /* 8 bits == 256 max events */
+#define PAPI_NATIVE_EVENT_AND_MASK 0x000000ff	/* 8 bits == 256 max events */
 #define PAPI_NATIVE_EVENT_SHIFT 0
-#define PAPI_NATIVE_UMASK_AND_MASK 0x0fffff00 /* 20 bits for unit masks */
+#define PAPI_NATIVE_UMASK_AND_MASK 0x0fffff00	/* 20 bits for unit masks */
 /* top 4 bits (16 - 19) encode tags for execution_event tagging */
 #define PAPI_NATIVE_UMASK_MAX 16				/* 16 possible unit masks */
 #define PAPI_NATIVE_UMASK_SHIFT 8
 
-#define MAX_COUNTERS	       18
+#define MAX_COUNTERS		18
 #define MAX_COUNTER_TERMS	8
 
 /* Per event data structure for each event */
 
-typedef struct _p4_perfctr_event {
+typedef struct P4_perfctr_event {
    unsigned pmc_map;
    unsigned evntsel;
    unsigned evntsel_aux;
    unsigned pebs_enable;
    unsigned pebs_matrix_vert;
    unsigned ireset;
-} _p4_perfctr_event_t;
+} P4_perfctr_event_t;
 
 /*
 The name and description fields should be self-explanatory.
@@ -63,11 +92,11 @@ and bit 41 of escr_selector must be set. These resources are then not available 
 any other native event.
 */
 
-typedef struct _p4_perfctr_codes {
-   _p4_perfctr_event_t data[MAX_COUNTER_TERMS];
-} _p4_perfctr_preset_t;
+typedef struct P4_perfctr_codes {
+   P4_perfctr_event_t data[MAX_COUNTER_TERMS];
+} P4_perfctr_preset_t;
 
-typedef struct _p4_register {
+typedef struct P4_register {
    unsigned counter[2];         // bitmap of valid counters for each escr
    unsigned escr[2];            // bit offset for each of 2 valid escrs
    unsigned cccr;               // value to be loaded into cccr register
@@ -75,21 +104,21 @@ typedef struct _p4_register {
    unsigned pebs_enable;        // flag for PEBS counting
    unsigned pebs_matrix_vert;   // flag for PEBS_MATRIX_VERT, whatever that is 
    unsigned ireset;             // I don't really know what this does
-} _p4_register_t;
+} P4_register_t;
 
 /* defines the fields needed by _papi_hwd_allocate_registers
    to map the counter set */
-typedef struct _p4_reg_alloc {
-   _p4_register_t ra_bits;       /* Info about this native event mapping */
+typedef struct P4_reg_alloc {
+   P4_register_t ra_bits;       /* Info about this native event mapping */
    unsigned ra_selector;        /* Bit mask showing which counters can carry this metric */
    unsigned ra_rank;            /* How many counters can carry this metric */
    unsigned ra_escr[2];         /* Bit field array showing which (of 45) esc registers can carry this metric */
-} _p4_reg_alloc_t;
+} P4_reg_alloc_t;
 
 typedef struct hwd_p4_native_map {
    char *name;                  // ASCII name of the native event
    char *description;           // ASCII description of the native event
-   _p4_register_t bits;          // description of resources needed by this event
+   P4_register_t bits;          // description of resources needed by this event
    int mask;                    // contains all valid mask bits for this event group
    int synonym;                 // index of next synonym if event can be multiply encoded 
 } hwd_p4_native_map_t;
@@ -100,31 +129,31 @@ typedef struct hwd_p4_mask {
    char *description;           // ASCII description of the native event
 } hwd_p4_mask_t;
 
-typedef struct _p4_perfctr_control {
+typedef struct P4_perfctr_control {
    struct vperfctr_control control;
    struct perfctr_sum_ctrs state;
    /* Allow attach to be per-eventset. */
    struct rvperfctr * rvperfctr;
-} _p4_perfctr_control_t;
+} P4_perfctr_control_t;
 
 /* Per thread data structure for thread level counters */
 
-typedef struct _p4_perfctr_context {
+typedef struct P4_perfctr_context {
    struct vperfctr *perfctr;
-/*  _p4_perfctr_control_t start; */
-} _p4_perfctr_context_t;
+/*  P4_perfctr_control_t start; */
+} P4_perfctr_context_t;
 
 
 /* Override void* definitions from PAPI framework layer */
 /* with typedefs to conform to PAPI component layer code. */
 #undef  hwd_reg_alloc_t
-typedef _p4_reg_alloc_t hwd_reg_alloc_t;
+typedef P4_reg_alloc_t hwd_reg_alloc_t;
 #undef  hwd_register_t
-typedef _p4_register_t hwd_register_t;
+typedef P4_register_t hwd_register_t;
 #undef  hwd_control_state_t
-typedef _p4_perfctr_control_t hwd_control_state_t;
+typedef P4_perfctr_control_t hwd_control_state_t;
 #undef  hwd_context_t
-typedef _p4_perfctr_context_t hwd_context_t;
+typedef P4_perfctr_context_t hwd_context_t;
 
 #define hwd_pmc_control vperfctr_control
 
@@ -139,32 +168,47 @@ typedef _p4_perfctr_context_t hwd_context_t;
 #define STATE_MAL_ERROR "Error allocating perfctr structures"
 #define MODEL_ERROR "This is not a Pentium 4"
 
-/* old (PAPI <= 3.5) style overflow address:
-#ifdef __x86_64__
-#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->rip)
-#else
-#define GET_OVERFLOW_ADDRESS(ctx)  (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->eip)
-#endif
-*/
-
 /* Signal handling functions */
 #undef hwd_siginfo_t
-typedef struct siginfo hwd_siginfo_t;
+typedef siginfo_t hwd_siginfo_t;
 #undef hwd_ucontext_t
 typedef ucontext_t hwd_ucontext_t;
 
-/* new (PAPI => 3.9.0) style overflow address: */
 #ifdef __x86_64__
-    #define OVERFLOW_REG REG_RIP
+  #define GET_OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.gregs[REG_RIP]
 #else
-    #define OVERFLOW_REG REG_EIP
+  #define GET_OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.gregs[REG_EIP]
 #endif
-#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(ctx.ucontext->uc_mcontext.gregs[OVERFLOW_REG])
 
 /* Linux DOES support hardware overflow */
 #define HW_OVERFLOW 1
 
+/* Locks */
+extern volatile unsigned int lock[PAPI_MAX_LOCK];
+/* volatile uint32_t lock; */
+
+#define MUTEX_OPEN 1
+#define MUTEX_CLOSED 0
 #include <inttypes.h>
+
+/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
+ * else val = MUTEX_CLOSED */
+#define  _papi_hwd_lock(lck)                                            \
+do                                                                      \
+{                                                                       \
+   unsigned int res = 0;                                               \
+   do{                                                                  \
+   __asm__ __volatile__ ("lock ; " "cmpxchg %1,%2" : "=a"(res) : "q"(MUTEX_CLOSED), "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory"); \
+   } while(res != (unsigned int)MUTEX_OPEN);                           \
+}while(0)
+
+#define  _papi_hwd_unlock(lck)                                          \
+do                                                                      \
+{                                                                       \
+   unsigned int res = 0;                                               \
+__asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");   \
+}while(0)
+
 
 extern int sighold(int);
 extern int sigrelse(int);
