@@ -19,6 +19,11 @@ static int add_remove_event(int EventSet, int event_code, char *name) {
     char errstring[PAPI_MAX_STR_LEN];
     long long values;
 
+#ifdef PENTIUM4
+    if(strcmp(name, "REPLAY_EVENT:BR_MSP")==0)
+      return 1;
+#endif
+
     retval = PAPI_add_event(EventSet, event_code);
     if (retval != PAPI_OK) {
 	  printf("Error adding %s\n", name);
