@@ -427,7 +427,7 @@ static void resultline(int i, int j, int EventSet)
 #ifndef DONT_FAIL
   if ((hwinfo = PAPI_get_hardware_info()) == NULL)
     test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 1);
-  if (hwinfo->vendor != PAPI_VENDOR_AMD && ferror > MAX_ERROR && diff > MAX_DIFF)
+  if (hwinfo->vendor != PAPI_VENDOR_AMD && ferror > MAX_ERROR && diff > MAX_DIFF && i > 20)
     test_fail(__FILE__, __LINE__, "Calibrate: error exceeds 10%", PAPI_EMISC);
 #endif
 }
