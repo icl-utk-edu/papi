@@ -85,17 +85,18 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
    /* Make sure that required resources are available */
+   /* Skip (don't fail!) if they are not */
    retval = PAPI_query_event(EVT1);
    if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, EVT1_STR, retval);
+      test_skip(__FILE__, __LINE__, EVT1_STR, retval);
 
    retval = PAPI_query_event(EVT2);
    if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, EVT2_STR, retval);
+      test_skip(__FILE__, __LINE__, EVT2_STR, retval);
 
    retval = PAPI_query_event(EVT3);
    if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, EVT3_STR, retval);
+      test_skip(__FILE__, __LINE__, EVT3_STR, retval);
 
 
    EventSet1 = add_test_events(&num_events1, &mask1);
