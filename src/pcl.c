@@ -1165,6 +1165,7 @@ PAPI_mh_info_t sys_mem_info[4] = {
 };
 
 #define SPRN_PVR 0x11F          /* Processor Version Register */
+#define PVR_PROCESSOR_SHIFT 16
 static unsigned int mfpvr (void)
 {
   unsigned long pvr;
@@ -1176,7 +1177,7 @@ asm ("mfspr          %0,%1": "=r" (pvr):"i" (SPRN_PVR));
 
 int ppc64_get_memory_info (PAPI_hw_info_t * hw_info)
 {
-  unsigned int pvr = mfpvr ();
+  unsigned int pvr = mfpvr() >> PVR_PROCESSOR_SHIFT;
 
   int index;
   switch (pvr)
