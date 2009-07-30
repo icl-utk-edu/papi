@@ -1,9 +1,8 @@
+#include <inttypes.h>
 #include "papi.h"
 #include "papi_internal.h"
-#include "papi_vector.h"
-#include "papi_memory.h"
-#include <inttypes.h>
 #include "linux-net.h"
+#include "papi_memory.h"
 
 #define NETITEMS 13
 
@@ -92,319 +91,319 @@ enum native_name {
 };
 
 NET_native_event_entry_t net_native_table[] = {
-   {{1, NETPATH},
+	{{1, {NETPATH}},
    "LO_RX_PACKETS",
    "LO_RX_PACKETS",
    },
-   {{2, NETPATH},
+   {{2, {NETPATH}},
    "LO_RX_ERRORS",
    "LO_RX_ERRORS",
    },
-   {{3, NETPATH},
+   {{3, {NETPATH}},
    "LO_RX_DROPPED",
    "LO_RX_DROPPED",
    },
-   {{4, NETPATH},
+   {{4, {NETPATH}},
    "LO_RX_OVERRUNS",
    "LO_RX_OVERRUNS",
    },
-   {{5, NETPATH},
+   {{5, {NETPATH}},
    "LO_RX_FRAME",
    "LO_RX_FRAME",
    },
-   {{6, NETPATH},
+   {{6, {NETPATH}},
    "LO_RX_BYTES",
    "LO_RX_BYTES",
    },
-   {{7, NETPATH},
+   {{7, {NETPATH}},
    "LO_TX_PACKETS",
    "LO_TX_PACKETS",
    },
-   {{8, NETPATH},
+   {{8, {NETPATH}},
    "LO_TX_ERRORS",
    "LO_TX_ERRORS",
    },
-   {{9, NETPATH},
+   {{9, {NETPATH}},
    "LO_TX_DROPPED",
    "LO_TX_DROPPED",
    },
-   {{10, NETPATH},
+   {{10, {NETPATH}},
    "LO_TX_OVERRUNS",
    "LO_TX_OVERRUNS",
    },
-   {{11, NETPATH},
+   {{11, {NETPATH}},
    "LO_TX_CARRIER",
    "LO_TX_CARRIER",
    },
-   {{12, NETPATH},
+   {{12, {NETPATH}},
    "LO_TX_BYTES",
    "LO_TX_BYTES",
    },
-   {{13, NETPATH},
+   {{13, {NETPATH}},
    "LO_COLLISIONS",
    "LO_COLLISIONS",
    },
-   {{14, NETPATH},
+   {{14, {NETPATH}},
    "ETH0_RX_PACKETS",
    "ETH0_RX_PACKETS",
    },
-   {{15, NETPATH},
+   {{15, {NETPATH}},
    "ETH0_RX_ERRORS",
    "ETH0_RX_ERRORS",
    },
-   {{16, NETPATH},
+   {{16, {NETPATH}},
    "ETH0_RX_DROPPED",
    "ETH0_RX_DROPPED",
    },
-   {{17, NETPATH},
+   {{17, {NETPATH}},
    "ETH0_RX_OVERRUNS",
    "ETH0_RX_OVERRUNS",
    },
-   {{18, NETPATH},
+   {{18, {NETPATH}},
    "ETH0_RX_FRAME",
    "ETH0_RX_FRAME",
    },
-   {{19, NETPATH},
+   {{19, {NETPATH}},
    "ETH0_RX_BYTES",
    "ETH0_RX_BYTES",
    },
-   {{20, NETPATH},
+   {{20, {NETPATH}},
    "ETH0_TX_PACKETS",
    "ETH0_TX_PACKETS",
    },
-   {{21, NETPATH},
+   {{21, {NETPATH}},
    "ETH0_TX_ERRORS",
    "ETH0_TX_ERRORS",
    },
-   {{22, NETPATH},
+   {{22, {NETPATH}},
    "ETH0_TX_DROPPED",
    "ETH0_TX_DROPPED",
    },
-   {{23, NETPATH},
+   {{23, {NETPATH}},
    "ETH0_TX_OVERRUNS",
    "ETH0_TX_OVERRUNS",
    },
-   {{24, NETPATH},
+   {{24, {NETPATH}},
    "ETH0_TX_CARRIER",
    "ETH0_TX_CARRIER",
    },
-   {{25, NETPATH},
+   {{25, {NETPATH}},
    "ETH0_TX_BYTES",
    "ETH0_TX_BYTES",
    },
-   {{26, NETPATH},
+   {{26, {NETPATH}},
    "ETH0_COLLISIONS",
    "ETH0_COLLISIONS",
    },
-   {{27, NETPATH},
+   {{27, {NETPATH}},
    "ETH1_RX_PACKETS",
    "ETH1_RX_PACKETS",
    },
-   {{28, NETPATH},
+   {{28, {NETPATH}},
    "ETH1_RX_ERRORS",
    "ETH1_RX_ERRORS",
    },
-   {{29, NETPATH},
+   {{29, {NETPATH}},
    "ETH1_RX_DROPPED",
    "ETH1_RX_DROPPED",
    },
-   {{30, NETPATH},
+   {{30, {NETPATH}},
    "ETH1_RX_OVERRUNS",
    "ETH1_RX_OVERRUNS",
    },
-   {{31, NETPATH},
+   {{31, {NETPATH}},
    "ETH1_RX_FRAME",
    "ETH1_RX_FRAME",
    },
-   {{32, NETPATH},
+   {{32, {NETPATH}},
    "ETH1_RX_BYTES",
    "ETH1_RX_BYTES",
    },
-   {{33, NETPATH},
+   {{33, {NETPATH}},
    "ETH1_TX_PACKETS",
    "ETH1_TX_PACKETS",
    },
-   {{34, NETPATH},
+   {{34, {NETPATH}},
    "ETH1_TX_ERRORS",
    "ETH1_TX_ERRORS",
    },
-   {{35, NETPATH},
+   {{35, {NETPATH}},
    "ETH1_TX_DROPPED",
    "ETH1_TX_DROPPED",
    },
-   {{36, NETPATH},
+   {{36, {NETPATH}},
    "ETH1_TX_OVERRUNS",
    "ETH1_TX_OVERRUNS",
    },
-   {{37, NETPATH},
+   {{37, {NETPATH}},
    "ETH1_TX_CARRIER",
    "ETH1_TX_CARRIER",
    },
-   {{38, NETPATH},
+   {{38, {NETPATH}},
    "ETH1_TX_BYTES",
    "ETH1_TX_BYTES",
    },
-   {{39, NETPATH},
+   {{39, {NETPATH}},
    "ETH1_COLLISIONS",
    "ETH1_COLLISIONS",
    },
-   {{40, NETPATH},
+   {{40, {NETPATH}},
    "ETH2_RX_PACKETS",
    "ETH2_RX_PACKETS",
    },
-   {{41, NETPATH},
+   {{41, {NETPATH}},
    "ETH2_RX_ERRORS",
    "ETH2_RX_ERRORS",
    },
-   {{42, NETPATH},
+   {{42, {NETPATH}},
    "ETH2_RX_DROPPED",
    "ETH2_RX_DROPPED",
    },
-   {{43, NETPATH},
+   {{43, {NETPATH}},
    "ETH2_RX_OVERRUNS",
    "ETH2_RX_OVERRUNS",
    },
-   {{44, NETPATH},
+   {{44, {NETPATH}},
    "ETH2_RX_FRAME",
    "ETH2_RX_FRAME",
    },
-   {{45, NETPATH},
+   {{45, {NETPATH}},
    "ETH2_RX_BYTES",
    "ETH2_RX_BYTES",
    },
-   {{46, NETPATH},
+   {{46, {NETPATH}},
    "ETH2_TX_PACKETS",
    "ETH2_TX_PACKETS",
    },
-   {{47, NETPATH},
+   {{47, {NETPATH}},
    "ETH2_TX_ERRORS",
    "ETH2_TX_ERRORS",
    },
-   {{48, NETPATH},
+   {{48, {NETPATH}},
    "ETH2_TX_DROPPED",
    "ETH2_TX_DROPPED",
    },
-   {{49, NETPATH},
+   {{49, {NETPATH}},
    "ETH2_TX_OVERRUNS",
    "ETH2_TX_OVERRUNS",
    },
-   {{50, NETPATH},
+   {{50, {NETPATH}},
    "ETH2_TX_CARRIER",
    "ETH2_TX_CARRIER",
    },
-   {{51, NETPATH},
+   {{51, {NETPATH}},
    "ETH2_TX_BYTES",
    "ETH2_TX_BYTES",
    },
-   {{52, NETPATH},
+   {{52, {NETPATH}},
    "ETH2_COLLISIONS",
    "ETH2_COLLISIONS",
    },
-   {{53, NETPATH},
+   {{53, {NETPATH}},
    "ETH3_RX_PACKETS",
    "ETH3_RX_PACKETS",
    },
-   {{54, NETPATH},
+   {{54, {NETPATH}},
    "ETH3_RX_ERRORS",
    "ETH3_RX_ERRORS",
    },
-   {{55, NETPATH},
+   {{55, {NETPATH}},
    "ETH3_RX_DROPPED",
    "ETH3_RX_DROPPED",
    },
-   {{56, NETPATH},
+   {{56, {NETPATH}},
    "ETH3_RX_OVERRUNS",
    "ETH3_RX_OVERRUNS",
    },
-   {{57, NETPATH},
+   {{57, {NETPATH}},
    "ETH3_RX_FRAME",
    "ETH3_RX_FRAME",
    },
-   {{58, NETPATH},
+   {{58, {NETPATH}},
    "ETH3_RX_BYTES",
    "ETH3_RX_BYTES",
    },
-   {{59, NETPATH},
+   {{59, {NETPATH}},
    "ETH3_TX_PACKETS",
    "ETH3_TX_PACKETS",
    },
-   {{60, NETPATH},
+   {{60, {NETPATH}},
    "ETH3_TX_ERRORS",
    "ETH3_TX_ERRORS",
    },
-   {{61, NETPATH},
+   {{61, {NETPATH}},
    "ETH3_TX_DROPPED",
    "ETH3_TX_DROPPED",
    },
-   {{62, NETPATH},
+   {{62, {NETPATH}},
    "ETH3_TX_OVERRUNS",
    "ETH3_TX_OVERRUNS",
    },
-   {{63, NETPATH},
+   {{63, {NETPATH}},
    "ETH3_TX_CARRIER",
    "ETH3_TX_CARRIER",
    },
-   {{64, NETPATH},
+   {{64, {NETPATH}},
    "ETH3_TX_BYTES",
    "ETH3_TX_BYTES",
    },
-   {{65, NETPATH},
+   {{65, {NETPATH}},
    "ETH3_COLLISIONS",
    "ETH3_COLLISIONS",
    },
-   {{66, NETPATH},
+   {{66, {NETPATH}},
    "ETH4_RX_PACKETS",
    "ETH4_RX_PACKETS",
    },
-   {{67, NETPATH},
+   {{67, {NETPATH}},
    "ETH4_RX_ERRORS",
    "ETH4_RX_ERRORS",
    },
-   {{68, NETPATH},
+   {{68, {NETPATH}},
    "ETH4_RX_DROPPED",
    "ETH4_RX_DROPPED",
    },
-   {{69, NETPATH},
+   {{69, {NETPATH}},
    "ETH4_RX_OVERRUNS",
    "ETH4_RX_OVERRUNS",
    },
-   {{70, NETPATH},
+   {{70, {NETPATH}},
    "ETH4_RX_FRAME",
    "ETH4_RX_FRAME",
    },
-   {{71, NETPATH},
+   {{71, {NETPATH}},
    "ETH4_RX_BYTES",
    "ETH4_RX_BYTES",
    },
-   {{72, NETPATH},
+   {{72, {NETPATH}},
    "ETH4_TX_PACKETS",
    "ETH4_TX_PACKETS",
    },
-   {{73, NETPATH},
+   {{73, {NETPATH}},
    "ETH4_TX_ERRORS",
    "ETH4_TX_ERRORS",
    },
-   {{74, NETPATH},
+   {{74, {NETPATH}},
    "ETH4_TX_DROPPED",
    "ETH4_TX_DROPPED",
    },
-   {{75, NETPATH},
+   {{75, {NETPATH}},
    "ETH4_TX_OVERRUNS",
    "ETH4_TX_OVERRUNS",
    },
-   {{76, NETPATH},
+   {{76, {NETPATH}},
    "ETH4_TX_CARRIER",
    "ETH4_TX_CARRIER",
    },
-   {{77, NETPATH},
+   {{77, {NETPATH}},
    "ETH4_TX_BYTES",
    "ETH4_TX_BYTES",
    },
-   {{78, NETPATH},
+   {{78, {NETPATH}},
    "ETH4_COLLISIONS",
    "ETH4_COLLISIONS",
    },
-   {{0, 0}, "", ""}
+	{{0, {0}}, "", ""}
 };
 
 long long _papi_hwd_net_register_start[NET_MAX_COUNTERS];
@@ -582,7 +581,7 @@ int read_net_counters(long long *counters)
    FILE *fp;
    char line[NETLINELEN], lastchar;
    char *fields=NULL;
-   int i, tf, lno, curstart, cname=0, state, curstate;
+   int i, tf, lno, curstart = -1, cname = 0, state, curstate = -1;
 
    fp=popen(NETPATH, "r");
    if(!fp){
@@ -745,13 +744,13 @@ long long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
 }
 */
 
-char *NET_ntv_code_to_name(unsigned int EventCode, char *name, int len)
+int NET_ntv_code_to_name(unsigned int EventCode, char *name, int len)
 {
    strncpy(name, net_native_table[EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK].name, len);
    return(PAPI_OK);
 }
 
-char *NET_ntv_code_to_descr(unsigned int EventCode, char *name, int len)
+int NET_ntv_code_to_descr(unsigned int EventCode, char *name, int len)
 {
    strncpy(name, net_native_table[EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK].description, len);
    return(PAPI_OK);
@@ -790,80 +789,6 @@ int NET_ntv_enum_events(unsigned int *EventCode, int modifier)
    } 
    else
       return (PAPI_EINVAL);
-}
-
-/* 
- * Counter Allocation Functions, only need to implement if
- *    the substrate needs smart counter allocation.
- */
-/* Register allocation */
-int NET_allocate_registers(EventSetInfo_t *ESI) {
-   int i, natNum;
-   NET_reg_alloc_t event_list[NET_MAX_COUNTERS];
-
-   /* Initialize the local structure needed
-      for counter allocation and optimization. */
-   natNum = ESI->NativeCount;
-   for(i = 0; i < natNum; i++) {
-      /* retrieve the mapping information about this native event */
-      NET_ntv_code_to_bits(ESI->NativeInfoArray[i].ni_event, &event_list[i].ra_bits);
-
-   }
-   if(_papi_hwi_bipartite_alloc(event_list, natNum, ESI->CmpIdx)) { /* successfully mapped */
-      for(i = 0; i < natNum; i++) {
-         /* Copy all info about this native event to the NativeInfo struct */
-         memcpy(&(ESI->NativeInfoArray[i].ni_bits) , &(event_list[i].ra_bits), sizeof(hwd_register_t));
-         /* Array order on perfctr is event ADD order, not counter #... */
-         ESI->NativeInfoArray[i].ni_position = event_list[i].ra_bits.selector-1;
-      }
-      return 1;
-   } else
-      return 0;
-}
-
-/* Forces the event to be mapped to only counter ctr. */
-void NET_bpt_map_set(hwd_reg_alloc_t *dst, int ctr) {
-}
-
-/* This function examines the event to determine if it can be mapped 
- * to counter ctr.  Returns true if it can, false if it can't. 
- */
-int NET_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr) {
-   return(1);
-} 
-
-/* This function examines the event to determine if it has a single 
- * exclusive mapping.  Returns true if exlusive, false if 
- * non-exclusive.  
- */
-int NET_bpt_map_exclusive(hwd_reg_alloc_t * dst) {
-   return(1);
-}
-
-/* This function compares the dst and src events to determine if any 
- * resources are shared. Typically the src event is exclusive, so 
- * this detects a conflict if true. Returns true if conflict, false 
- * if no conflict.  
- */
-int NET_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
-{
-  return(0);
-}
-
-/* This function removes shared resources available to the src event
- *  from the resources available to the dst event,
- *  and reduces the rank of the dst event accordingly. Typically,
- *  the src event will be exclusive, but the code shouldn't assume it.
- *  Returns nothing.  
- */
-void NET_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) 
-{
-  return;
-}
-
-void NET_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) 
-{
-  return;
 }
 
 /*
@@ -910,13 +835,6 @@ papi_vector_t _net_vector = {
     .read =			NET_read,
     .shutdown =			NET_shutdown,
     .ctl =			NET_ctl,
-    .bpt_map_set =		NET_bpt_map_set,
-    .bpt_map_avail =		NET_bpt_map_avail,
-    .bpt_map_exclusive =	NET_bpt_map_exclusive,
-    .bpt_map_shared =		NET_bpt_map_shared,
-    .bpt_map_preempt =		NET_bpt_map_preempt,
-    .bpt_map_update =		NET_bpt_map_update,
-/*    .allocate_registers =	MX_allocate_registers,*/
     .update_control_state =	NET_update_control_state,
     .set_domain =		NET_set_domain,
     .reset =			NET_reset,

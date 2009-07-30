@@ -1,9 +1,8 @@
+#include <inttypes.h>
 #include "papi.h"
 #include "papi_internal.h"
-#include "papi_vector.h"
-#include "papi_memory.h"
-#include <inttypes.h>
 #include "linux-acpi.h"
+#include "papi_memory.h"
 
 int init_presets();
 
@@ -387,79 +386,6 @@ int ACPI_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *value
 	return(1);
 }
 
-/* 
- * Counter Allocation Functions, only need to implement if
- *    the substrate needs smart counter allocation.
- */
-/* Register allocation */
-int ACPI_allocate_registers(EventSetInfo_t *ESI) {
-	int i, natNum;
-	ACPI_reg_alloc_t event_list[ACPI_MAX_COUNTERS];
-
-	/* Initialize the local structure needed
-	for counter allocation and optimization. */
-	natNum = ESI->NativeCount;
-	for(i = 0; i < natNum; i++) {
-		/* retrieve the mapping information about this native event */
-		ACPI_ntv_code_to_bits(ESI->NativeInfoArray[i].ni_event, &(event_list[i].ra_bits));
-
-	}
-	if(_papi_hwi_bipartite_alloc(event_list, natNum, ESI->CmpIdx)) { /* successfully mapped */
-		for(i = 0; i < natNum; i++) {
-			/* Copy all info about this native event to the NativeInfo struct */
-			memcpy(&(ESI->NativeInfoArray[i].ni_bits) , &(event_list[i].ra_bits), sizeof(ACPI_register_t));
-			/* Array order on perfctr is event ADD order, not counter #... */
-			ESI->NativeInfoArray[i].ni_position = event_list[i].ra_bits.selector-1;
-		}
-		return 1;
-	} else
-		return 0;
-}
-
-/* Forces the event to be mapped to only counter ctr. */
-void ACPI_bpt_map_set(hwd_reg_alloc_t *dst, int ctr) {
-}
-
-/* This function examines the event to determine if it can be mapped 
- * to counter ctr.  Returns true if it can, false if it can't.
- */
-int ACPI_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr) {
-	return(1);
-} 
-
-/* This function examines the event to determine if it has a single 
- * exclusive mapping.  Returns true if exlusive, false if 
- * non-exclusive.
- */
-int ACPI_bpt_map_exclusive(hwd_reg_alloc_t * dst) {
-	return(1);
-}
-
-/* This function compares the dst and src events to determine if any 
- * resources are shared. Typically the src event is exclusive, so 
- * this detects a conflict if true. Returns true if conflict, false 
- * if no conflict.
- */
-int ACPI_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src)
-{
-	return(0);
-}
-
-/* This function removes shared resources available to the src event
- *  from the resources available to the dst event,
- *  and reduces the rank of the dst event accordingly. Typically,
- *  the src event will be exclusive, but the code shouldn't assume it.
- *  Returns nothing.  
- */
-void ACPI_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) 
-{
-	return;
-}
-
-void ACPI_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) 
-{
-	return;
-}
 
 /*
  * Shared Library Information and other Information Functions
@@ -506,13 +432,6 @@ papi_vector_t _acpi_vector = {
 	.read =			ACPI_read,
 	.shutdown =			ACPI_shutdown,
 	.ctl =			ACPI_ctl,
-	.bpt_map_set =		ACPI_bpt_map_set,
-	.bpt_map_avail =		ACPI_bpt_map_avail,
-	.bpt_map_exclusive =	ACPI_bpt_map_exclusive,
-	.bpt_map_shared =		ACPI_bpt_map_shared,
-	.bpt_map_preempt =		ACPI_bpt_map_preempt,
-	.bpt_map_update =		ACPI_bpt_map_update,
-/*	.allocate_registers =	ACPI_allocate_registers,*/
 	.update_control_state =	ACPI_update_control_state,
 	.set_domain =		ACPI_set_domain,
 	.reset =			ACPI_reset,
