@@ -37,7 +37,7 @@
 
 /* This is the official PAPI version */
 /* By convention the INCREMENT digit indicates a development version if non-zero. */
-#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,6,2,2)
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,6,2,3)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
 
 #ifdef __cplusplus
