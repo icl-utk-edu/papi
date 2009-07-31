@@ -1721,7 +1721,6 @@ int PAPI_get_multiplex(int EventSet)
 int PAPI_get_opt(int option, PAPI_option_t * ptr)
 {
   EventSetInfo_t *ESI;
-  int cidx;
 	 
    if ((option != PAPI_DEBUG) && (init_level == PAPI_NOT_INITED))
       papi_return(PAPI_ENOINIT);
@@ -1803,14 +1802,6 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
   /* For now, MAX_HWCTRS and MAX CTRS are identical.
      At some future point, they may map onto different values.
   */
-   case PAPI_MAX_HWCTRS:
-      return (_papi_hwd[0]->cmp_info.num_cntrs);
-   case PAPI_MAX_MPX_CTRS:
-      return (_papi_hwd[0]->cmp_info.num_mpx_cntrs);
-   case PAPI_DEFDOM:
-      return (_papi_hwd[0]->cmp_info.default_domain);
-   case PAPI_DEFGRN:
-      return (_papi_hwd[0]->cmp_info.default_granularity);
 #if 0
    case PAPI_INHERIT:
       {
@@ -1830,16 +1821,6 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
 	papi_return(PAPI_ENOEVST);
       ptr->granularity.granularity = ESI->granularity.granularity;
 	  break;
-   case PAPI_SHLIBINFO:
-      {
-         int retval;
-
-         if (ptr == NULL)
-            papi_return(PAPI_EINVAL);
-         retval = _papi_hwd[0]->update_shlib_info();
-         ptr->shlib_info = &_papi_hwi_system_info.shlib_info;
-         papi_return(retval);
-      }
    case PAPI_EXEINFO:
       if (ptr == NULL)
          papi_return(PAPI_EINVAL);
@@ -1850,15 +1831,7 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
          papi_return(PAPI_EINVAL);
       ptr->hw_info = &_papi_hwi_system_info.hw_info;
       break;
-   case PAPI_COMPONENTINFO:
-       if (ptr == NULL)
-	 papi_return(PAPI_EINVAL);
-       ESI = _papi_hwi_lookup_EventSet(ptr->attach.eventset);
-	 cidx = valid_ESI_component(ESI);
-	 if (cidx < 0) papi_return(cidx);
 
-      ptr->cmp_info = &_papi_hwd[cidx]->cmp_info;
-      return(PAPI_OK);
    case PAPI_DOMAIN:
       if (ptr == NULL)
          papi_return(PAPI_EINVAL);
@@ -1869,7 +1842,6 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
       return(PAPI_OK);
    case PAPI_LIB_VERSION:
       return (PAPI_VERSION);
-#if 0
 /* The following cases all require a component index 
     and are handled by PAPI_get_cmp_opt() with cidx == 0*/
    case PAPI_MAX_HWCTRS:
@@ -1879,7 +1851,6 @@ int PAPI_get_opt(int option, PAPI_option_t * ptr)
    case PAPI_SHLIBINFO:
    case PAPI_COMPONENTINFO:
      return(PAPI_get_cmp_opt(option, ptr, 0));
-#endif
    default:
       papi_return(PAPI_EINVAL);
    }
