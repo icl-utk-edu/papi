@@ -2877,6 +2877,24 @@ void _papi_pcl_dispatch_timer (int n, hwd_siginfo_t * info, void *uc)
        */
      head = mmap_read_head(pe);
      ip = *(__u64 *)(data + ((head - 8) & pe->mask));
+      /*
+       * Update the tail to the current head pointer. 
+       *
+       * Note: that if we were to read the record at the tail pointer,
+       * rather than the one at the head (as you might otherwise think
+       * would be natural), we could run into problems.  Signals don't
+       * stack well on Linux, particularly if not using RT signals, and if
+       * they come in rapidly enough, we can lose some.  Overtime, the head
+       * could catch up to the tail and monitoring would be stopped, and
+       * since no more signals are coming in, this problem will never be
+       * resolved, resulting in a complete loss of overflow notification
+       * from that point on.  So the solution we use here will result in
+       * only the most recent IP value being read every time there are two
+       * or more samples in the buffer (for that one overflow signal).  But
+       * the handler will always bring up the tail, so the head should
+       * never run into the tail.
+       */
+     mmap_write_tail(pe, head);
 
       /*
        * The fourth parameter is supposed to be a vector of bits indicating
