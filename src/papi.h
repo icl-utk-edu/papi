@@ -37,7 +37,7 @@
 
 /* This is the official PAPI version */
 /* Big increment for PAPI-C technology pre-release */
-#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,9,1,0)
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,9,2,0)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
 
 #ifdef __cplusplus

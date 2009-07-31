@@ -3,8 +3,8 @@
 # File: configure.in
 
 
-AC_PREREQ(2.59)
-AC_INIT(PAPI, 3.9.1, ptools-perfapi@cs.utk.edu)
+AC_PREREQ(2.61)
+AC_INIT(PAPI, 3.9.2, ptools-perfapi@eecs.utk.edu)
 AC_CONFIG_SRCDIR([papi.c])
 AC_CONFIG_HEADER([config.h])
 
