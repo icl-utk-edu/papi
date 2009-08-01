@@ -982,7 +982,7 @@ nocache:
 
 #if defined(__powerpc__)
 
-PAPI_mh_info_t sys_mem_info[4] = {
+PAPI_mh_info_t sys_mem_info[5] = {
   {3,
    {
     {                           // level 1 begins
@@ -1161,7 +1161,63 @@ PAPI_mh_info_t sys_mem_info[4] = {
      }
     ,
     }
-   }                            // POWER6 end
+   }
+  ,                             // POWER6 end
+  // This section is a placeholder for Power7 data, and is currently
+  // just a copy of the Power6 data.  When Power7 goes public, this
+  // should be updated.
+  {3,
+   {
+    {                           // level 1 begins
+     {                          // tlb's begin
+      /// POWER7 has an ERAT (Effective to Real Address
+      /// Translation) instead of a TLB.  For the purposes of this
+      /// data, we will treat it like a TLB.
+      {PAPI_MH_TYPE_INST, 128, 2}
+      ,
+      {PAPI_MH_TYPE_DATA, 128, 128}
+      }
+     ,
+     {                          // caches begin
+      {PAPI_MH_TYPE_INST, 65536, 128, 512, 4}
+      ,
+      {PAPI_MH_TYPE_DATA, 65536, 128, 512, 8}
+      }
+     }
+    ,
+    {                           // level 2 begins
+     {                          // tlb's begin
+      {PAPI_MH_TYPE_EMPTY, -1, -1}
+      ,
+      {PAPI_MH_TYPE_EMPTY, -1, -1}
+      }
+     ,
+     {                          // caches begin
+      {PAPI_MH_TYPE_UNIFIED, 4194304, 128, 16384, 8}
+      ,
+      {PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
+      }
+     }
+    ,
+    {                           // level 3 begins
+     {                          // tlb's begin
+      {PAPI_MH_TYPE_EMPTY, -1, -1}
+      ,
+      {PAPI_MH_TYPE_EMPTY, -1, -1}
+      }
+     ,
+     {                          // caches begin
+      /// POWER7 has a 2 slice L3 cache.  Each slice is 16MB, so
+      /// combined they are 32MB and usable by each core.  For
+      /// this reason, we will treat it as a single 32MB cache.
+      {PAPI_MH_TYPE_UNIFIED, 33554432, 128, 262144, 16}
+      ,
+      {PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
+      }
+     }
+    ,
+    }
+   }                            // POWER7 end
 };
 
 #define SPRN_PVR 0x11F          /* Processor Version Register */
@@ -1198,6 +1254,9 @@ int ppc64_get_memory_info (PAPI_hw_info_t * hw_info)
       break;
     case 0x3E:                 /* POWER6 */
       index = 3;
+      break;
+    case 0x3F:                 /* POWER7 */
+      index = 4;
       break;
     default:
       index = -1;
@@ -2018,7 +2077,7 @@ int _papi_hwd_init_substrate (papi_vectors_t * vtable)
   /* The following checks the version of the PFM library
      against the version PAPI linked to... */
   SUBDBG ("pfm_initialize()\n");
-  if (pfm_initialize () != PFMLIB_SUCCESS)
+  if ((retval = pfm_initialize ()) != PFMLIB_SUCCESS)
     {
       PAPIERROR ("pfm_initialize(): %s", pfm_strerror (retval));
       return PAPI_ESBSTR;
