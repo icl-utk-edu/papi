@@ -32,7 +32,7 @@ void *thread_fn(void *dummy)
 
 void mainloop(int arg)
 {
-  int allvalid = 1;
+  int allvalid;
   long long *values;
   int EventSet = PAPI_NULL;
   int retval, i, j = 2;
@@ -135,14 +135,15 @@ void mainloop(int arg)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
    test_print_event_header("multiplex3_pthreads:\n", EventSet);
+   allvalid = 0;
    for (i = 0; i < MAX_TO_ADD; i++) {
      printf(ONENUM, values[i]);
-     if (values[i] == 0)
-       allvalid = 0;
+     if (values[i] != 0)
+       allvalid ++;
    }
    printf("\n");
    if (!allvalid)
-      test_fail(__FILE__, __LINE__, "one or more counter registered no counts",1);
+      test_fail(__FILE__, __LINE__, "all counter registered no counts",1);
 
    retval = PAPI_cleanup_eventset(EventSet);    /* JT */
    if (retval != PAPI_OK)
