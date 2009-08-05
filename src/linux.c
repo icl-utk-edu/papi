@@ -420,7 +420,7 @@ int _linux_init(hwd_context_t * ctx) {
      /* New versions of perfctr have this, which allows us to
 	get a previously created context, i.e. one created after
 	a fork and now we're inside a new process that has been exec'd */
-     if (errno == EEXIST) {
+     if (errno) {
        if ((ctx->perfctr = vperfctr_open_mode(0)) == NULL) {
 	 PAPIERROR(VOPEN_ERROR); return(PAPI_ESYS); 
        } 
