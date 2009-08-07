@@ -152,12 +152,14 @@ static void print_event(PAPI_event_info_t *info, int offset) {
 
 int main(int argc, char **argv)
 {
-	int i, j, k;
+	int i, j=0, k;
 	int retval;
 	PAPI_event_info_t info;
 	const PAPI_hw_info_t *hwinfo = NULL;
 	command_flags_t flags;
 	int enum_modifier;
+	char *pmask;
+	int numcmp, cid;
 
 	tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
@@ -201,6 +203,9 @@ int main(int argc, char **argv)
 						do {
 							retval = PAPI_get_event_info(i, &info);
 							if (retval == PAPI_OK) {
+								if ((pmask = strchr (info.symbol, ':')) == NULL) {
+									continue;
+								}
 								strcpy(info.symbol, strchr(info.symbol, ':'));
 								strcpy(info.long_descr, strchr(info.long_descr, ':')+1);
 								printf("%-29s|%s|%s|\n", " Mask Info:", info.symbol, info.long_descr);
@@ -220,11 +225,15 @@ int main(int argc, char **argv)
 	printf
 		("--------------------------------------------------------------------------------\n");
 
+   numcmp = PAPI_num_components();
+
+   for(cid=0;cid<numcmp;cid++){
+
 	j = 0;
 
 	/* For platform independence, always ASK FOR the first event */
 	/* Don't just assume it'll be the first numeric value */
-	i = 0 | PAPI_NATIVE_MASK;
+	i = 0 | PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK(cid);
 	PAPI_enum_event(&i, PAPI_ENUM_FIRST);
 
 	do {
@@ -273,7 +282,10 @@ int main(int argc, char **argv)
 				do {
 					retval = PAPI_get_event_info(k, &info);
 					if (retval == PAPI_OK) {
-						strcpy(info.symbol, strchr(info.symbol, ':'));
+						if ((pmask = strchr (info.symbol, ':')) == NULL) {
+							continue;
+						}
+						strcpy(info.symbol, pmask);
 						strcpy(info.long_descr, strchr(info.long_descr, ':')+1);
 						print_event(&info, 2);
 					}
@@ -282,9 +294,10 @@ int main(int argc, char **argv)
 			printf ("--------------------------------------------------------------------------------\n");
 		}
 	} while (PAPI_enum_event(&i, enum_modifier) == PAPI_OK);
+	}
 
 	printf ("--------------------------------------------------------------------------------\n");
 	printf("Total events reported: %d\n", j);
 	test_pass(__FILE__, NULL, 0);
-	exit(1);
+	exit(0);
 }
