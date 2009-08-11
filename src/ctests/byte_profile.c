@@ -47,7 +47,7 @@ int main(int argc, char **argv)
    mask = MASK_TOT_CYC | MASK_FP_OPS | MASK_L2_TCM | MASK_L1_DCM;
   #else
    if (strcmp(hw_info->model_string, "Intel Pentium III")==0)
-      mask = MASK_TOT_CYC | MASK_FP_OPS;
+      mask = MASK_TOT_CYC | MASK_TOT_INS;
    else
       mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_OPS | MASK_L2_TCM;
   #endif
@@ -107,7 +107,7 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
    const unsigned int std_events[] = {PAPI_TOT_CYC, PAPI_FP_OPS, PAPI_L2_TCM, PAPI_L1_DCM };
   #else
    const unsigned int std_events[] = {PAPI_TOT_CYC, PAPI_TOT_INS, PAPI_FP_OPS, PAPI_L2_TCM };
-   const unsigned int p3_events[] = {PAPI_TOT_CYC, PAPI_FP_OPS};
+   const unsigned int p3_events[] = {PAPI_TOT_CYC, PAPI_TOT_INS};
   #endif
    int num_events = 4;
    char * header =  "address\t\t\tcyc\tins\tfp_ops\tl2_tcm\n";
@@ -156,8 +156,10 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
 #if defined(__powerpc__)
       printf(TAB1, "PAPI_FP_INS", (values[0])[--event]);
 #else
-      printf(TAB1, "PAPI_FP_OPS:", (values[0])[--event]);
-      printf(TAB1, "PAPI_L2_TCM:", (values[0])[--event]);
+      if (strcmp(hw_info->model_string, "Intel Pentium III") != 0) {
+        printf(TAB1, "PAPI_FP_OPS:", (values[0])[--event]);
+        printf(TAB1, "PAPI_L2_TCM:", (values[0])[--event]);
+      }
 #endif
    }
 
