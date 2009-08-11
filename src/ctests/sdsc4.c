@@ -79,11 +79,13 @@ int main(int argc, char **argv)
    if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
+#ifdef MPX
+   init_multiplex();
+#endif
    if ((retval = PAPI_create_eventset(&eventset)))
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
 #ifdef MPX
-   init_multiplex();
    if ((retval = PAPI_set_multiplex(eventset)))
       test_fail(__FILE__, __LINE__, "PAPI_set_multiplex", retval);
 #endif

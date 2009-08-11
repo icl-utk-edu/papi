@@ -135,12 +135,8 @@ C     Tests that PAPI_set_multiplex() works before adding events
 
       EventSet = PAPI_NULL
       call init_papi(event)
-      call PAPIf_multiplex_init(retval)
-      if ( retval.NE.PAPI_OK) then
-        call ftest_fail(__FILE__, __LINE__,
-     &      'papif_multiplex_init', retval)
-      end if
-
+      call init_multiplex()
+      
       call PAPIf_create_eventset(EventSet, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
@@ -213,11 +209,7 @@ C     Tests that PAPI_set_multiplex() works after adding events
 
       EventSet = PAPI_NULL
       call init_papi(event)
-      call PAPIf_multiplex_init(retval)
-      if ( retval.NE.PAPI_OK) then
-        call ftest_fail(__FILE__, __LINE__,
-     &      'papif_multiplex_init', retval)
-      end if
+      call init_multiplex()
 
       call PAPIf_create_eventset(EventSet, retval)
       if ( retval.NE.PAPI_OK) then
@@ -297,12 +289,7 @@ C     PAPI_add_event()/PAPI_set_multiplex()
 
       EventSet = PAPI_NULL
       call init_papi(event)
-      call PAPIf_multiplex_init(retval)
-      if ( retval.NE.PAPI_OK) then
-        call ftest_fail(__FILE__, __LINE__,
-     &      'papif_multiplex_init', retval)
-      end if
-
+      call init_multiplex()
 
       call PAPIf_create_eventset(EventSet, retval)
       if ( retval.NE.PAPI_OK) then
