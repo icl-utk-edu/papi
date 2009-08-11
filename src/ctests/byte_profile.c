@@ -46,7 +46,10 @@ int main(int argc, char **argv)
   #if defined(ITANIUM2)
    mask = MASK_TOT_CYC | MASK_FP_OPS | MASK_L2_TCM | MASK_L1_DCM;
   #else
-   mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_OPS | MASK_L2_TCM;
+   if (strcmp(hw_info->model_string, "Intel Pentium III")==0)
+      mask = MASK_TOT_CYC | MASK_FP_OPS;
+   else
+      mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_OPS | MASK_L2_TCM;
   #endif
 #endif
    EventSet = add_test_events(&num_events, &mask);
@@ -104,6 +107,7 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
    const unsigned int std_events[] = {PAPI_TOT_CYC, PAPI_FP_OPS, PAPI_L2_TCM, PAPI_L1_DCM };
   #else
    const unsigned int std_events[] = {PAPI_TOT_CYC, PAPI_TOT_INS, PAPI_FP_OPS, PAPI_L2_TCM };
+   const unsigned int p3_events[] = {PAPI_TOT_CYC, PAPI_FP_OPS};
   #endif
    int num_events = 4;
    char * header =  "address\t\t\tcyc\tins\tfp_ops\tl2_tcm\n";
@@ -112,7 +116,12 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
    if (strcmp(hw_info->model_string, "POWER6") == 0) {
       events = power6_events;
       num_events = power6_num_events;
-   } else {
+   }
+   else if (strcmp(hw_info->model_string, "Intel Pentium III")==0){
+      events = p3_events;
+      num_events = 2;
+  }
+   else {
       events = std_events;
    }
 
