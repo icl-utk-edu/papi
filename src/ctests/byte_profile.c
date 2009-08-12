@@ -107,11 +107,11 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
    const unsigned int std_events[] = {PAPI_TOT_CYC, PAPI_FP_OPS, PAPI_L2_TCM, PAPI_L1_DCM };
   #else
    const unsigned int std_events[] = {PAPI_TOT_CYC, PAPI_TOT_INS, PAPI_FP_OPS, PAPI_L2_TCM };
-   const unsigned int p3_events[] = {PAPI_TOT_CYC, PAPI_TOT_INS};
   #endif
    int num_events = 4;
    char * header =  "address\t\t\tcyc\tins\tfp_ops\tl2_tcm\n";
 #endif
+   const unsigned int p3_events[] = {PAPI_TOT_CYC, PAPI_TOT_INS};
 
    if (strcmp(hw_info->model_string, "POWER6") == 0) {
       events = power6_events;
