@@ -132,11 +132,16 @@ static void print_event(PAPI_event_info_t *info, int offset) {
 	else sprintf(str, "0x");
 
 	/* copy the code and symbol */
-	sprintf(&str[strlen(str)], "%-11x%s  | ", info->event_code, info->symbol);
+	sprintf(&str[strlen(str)], "%-11x%s", info->event_code, info->symbol);
 
-	while (j < strlen(info->long_descr)) {
+	if ( strlen(info->long_descr) > 0 )
+		strcat(str, "  | ");
+
+	while (j <= strlen(info->long_descr))
+	{
 		i = EVT_LINE - strlen(str) - 2;
-		if (i > 0) {
+		if (i > 0)
+		{
 			strncat(str, &info->long_descr[j], i);
 			j +=i;
 			i = strlen(str);
@@ -227,9 +232,10 @@ int main(int argc, char **argv)
 
    numcmp = PAPI_num_components();
 
-   for(cid=0;cid<numcmp;cid++){
-
-	j = 0;
+   j = 0;
+	
+   for(cid=0;cid<numcmp;cid++)
+   {
 
 	/* For platform independence, always ASK FOR the first event */
 	/* Don't just assume it'll be the first numeric value */
