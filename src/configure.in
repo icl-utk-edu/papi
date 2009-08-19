@@ -1438,7 +1438,7 @@ esac
 #compnts="$MAKEVER"
 #echo $compnts
 AC_ARG_WITH(mx,
-            [  --with-mx=<no,yes>	Build a MX component in the library ],
+            [  --with-mx=<no,yes>	        Build a MX component in the library ],
             [mx=$withval],
             [mx=no]
             )
@@ -1462,7 +1462,7 @@ case "$mx" in
 esac
 
 AC_ARG_WITH(net,
-            [  --with-net=<no,yes>	Build a net(ifconfig) component in the library ],
+            [  --with-net=<no,yes>	        Build a net (ifconfig) component in the library ],
             [net=$withval],
             [net=no]
             )
@@ -1481,13 +1481,13 @@ case "$net" in
       compsrcs="${compsrcs} linux-net.c" 
       comphdrs="${comphdrs} linux-net.h" 
       compobjs="${compobjs} linux-net.o" 
-      AC_DEFINE(HAVE_NET, 1, [system has net(ifconfig) component])
+      AC_DEFINE(HAVE_NET, 1, [system has net (ifconfig) component])
       ;;
 esac
 #echo $compnts
 
 AC_ARG_WITH(acpi,
-            [  --with-acpi=<no,yes>	Build a ACPI component in the library ],
+            [  --with-acpi=<no,yes>	        Build an ACPI component in the library ],
             [acpi=$withval],
             [acpi=no]
             )
@@ -1503,6 +1503,53 @@ case "$acpi" in
    no)
       acpival="" ;;
 esac
+
+
+AC_ARG_WITH(lmsensors,
+            [  --with-lmsensors=<no,yes>     Build an lm-sensors component in the library ],
+            [lmsensors=$withval],
+            [lmsensors=no]
+            )
+case "$lmsensors" in
+   yes)
+      lmsensorsval="LMSENSORS"
+      compnts="${compnts} ${lmsensorsval}"
+      compsrcs="${compsrcs} linux-lmsensors.c"
+      comphdrs="${comphdrs} linux-lmsensors.h"
+      compobjs="${compobjs} linux-lmsensors.o"
+	  
+      AC_DEFINE(HAVE_LMSENSORS, 1, [system has lm-sensors component])
+
+# looking for lm-sensors header files
+	  AC_ARG_WITH(sensors_incdir,
+                  [  --with-sensors_incdir=<path>  Specify directory of lm-sensors header files ],
+                  [sensors_incdir=$withval],
+                  [sensors_incdir=""]
+                 )
+	  CFLAGS="$CFLAGS -I$sensors_incdir"
+      AC_CHECK_HEADER([sensors.h],
+                      [AC_DEFINE([HAVE_SENSORS_H], [1], [lm-sensors header] )],
+                      [AC_MSG_ERROR([sensors.h could not be found. See --with-sensors_incdir ])],
+                      [#include <sensors.h>])
+
+# looking for lm-sensors lib
+	  AC_ARG_WITH(sensors_libdir,
+                  [  --with-sensors_libdir=<path>  Specify directory of lm-sensors library ],
+                  [sensors_libdir=$withval],
+                  [AC_MSG_ERROR([libsensors.a is needed for the PAPI lm-sensors component. See --with-sensors_libdir ])]
+			     )
+	  AC_CHECK_LIB([sensors], [sensors_init], [],
+				   [AC_MSG_ERROR([libsensors.a is needed for the PAPI lm-sensors component])])
+				   
+# libsensors.a needed to compile with papi utilities and tests	  
+	  LINK_SENSORS_LIB="$sensors_libdir/libsensors.a -lm"
+      ;;
+   no)
+      lmsensorsval="" ;;
+esac
+
+
+
 
 #echo $compnts
 
@@ -1549,6 +1596,7 @@ if test "$shlib" = "dynamic"; then
 else
     LINKLIB='../$(LIBRARY)'
 fi
+LINKLIB="$LINKLIB $LINK_SENSORS_LIB"
 
 AC_SUBST(prefix)
 AC_SUBST(exec_prefix)

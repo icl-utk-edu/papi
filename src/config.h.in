@@ -3,9 +3,6 @@
 /* cpu type */
 #undef CPU
 
-/* system has ACPI component */
-#undef HAVE_ACPI
-
 /* POSIX 1b realtime clock */
 #undef HAVE_CLOCK_GETTIME_REALTIME
 
@@ -41,6 +38,12 @@
 
 /* system has net(ifconfig) component */
 #undef HAVE_NET
+
+/* system has ACPI component */
+#undef HAVE_ACPI
+
+/* system has lm-sensors component */
+#undef HAVE_LMSENSORS
 
 /* Define to 1 if you have the <perfmon/pfmlib.h> header file. */
 #undef HAVE_PERFMON_PFMLIB_H

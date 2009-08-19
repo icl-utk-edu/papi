@@ -1320,9 +1320,12 @@ Optional Packages:
   --with-semaphores Use semaphores instead of atomic locks (IA64)
   --with-tests=<ctests,ftests,"ctests ftests">	Specify which tests to run on install
   --with-nativecc=<path>	Specify native C compiler for header generation
-  --with-mx=<no,yes>	Build a MX component in the library
-  --with-net=<no,yes>	Build a net(ifconfig) component in the library
-  --with-acpi=<no,yes>	Build a ACPI component in the library
+  --with-mx=<no,yes>	        Build a MX component in the library
+  --with-net=<no,yes>	        Build a net (ifconfig) component in the library
+  --with-acpi=<no,yes>	        Build an ACPI component in the library
+  --with-lmsensors=<no,yes>     Build an lm-sensors component in the library
+  --with-sensors_incdir=<path>  Specify directory of lm-sensors header files
+  --with-sensors_libdir=<path>  Specify directory of lm-sensors library
   --with-shlib=<yes,no>	Specify staticno or dynamicyes papi library to link with test cases and utilities
 
 Some influential environment variables:
@@ -8176,6 +8179,197 @@ _ACEOF
       acpival="" ;;
 esac
 
+
+
+# Check whether --with-lmsensors was given.
+if test "${with_lmsensors+set}" = set; then
+  withval=$with_lmsensors; lmsensors=$withval
+else
+  lmsensors=no
+
+fi
+
+case "$lmsensors" in
+   yes)
+      lmsensorsval="LMSENSORS"
+      compnts="${compnts} ${lmsensorsval}"
+      compsrcs="${compsrcs} linux-lmsensors.c"
+      comphdrs="${comphdrs} linux-lmsensors.h"
+      compobjs="${compobjs} linux-lmsensors.o"
+
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LMSENSORS 1
+_ACEOF
+
+
+# looking for lm-sensors header files
+
+# Check whether --with-sensors_incdir was given.
+if test "${with_sensors_incdir+set}" = set; then
+  withval=$with_sensors_incdir; sensors_incdir=$withval
+else
+  sensors_incdir=""
+
+fi
+
+	  CFLAGS="$CFLAGS -I$sensors_incdir"
+      { echo "$as_me:$LINENO: checking for sensors.h" >&5
+echo $ECHO_N "checking for sensors.h... $ECHO_C" >&6; }
+if test "${ac_cv_header_sensors_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <sensors.h>
+
+#include <sensors.h>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+  ac_cv_header_sensors_h=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_header_sensors_h=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_header_sensors_h" >&5
+echo "${ECHO_T}$ac_cv_header_sensors_h" >&6; }
+if test $ac_cv_header_sensors_h = yes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_SENSORS_H 1
+_ACEOF
+
+else
+  { { echo "$as_me:$LINENO: error: sensors.h could not be found. See --with-sensors_incdir " >&5
+echo "$as_me: error: sensors.h could not be found. See --with-sensors_incdir " >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+
+
+# looking for lm-sensors lib
+
+# Check whether --with-sensors_libdir was given.
+if test "${with_sensors_libdir+set}" = set; then
+  withval=$with_sensors_libdir; sensors_libdir=$withval
+else
+  { { echo "$as_me:$LINENO: error: libsensors.a is needed for the PAPI lm-sensors component. See --with-sensors_libdir " >&5
+echo "$as_me: error: libsensors.a is needed for the PAPI lm-sensors component. See --with-sensors_libdir " >&2;}
+   { (exit 1); exit 1; }; }
+
+fi
+
+
+{ echo "$as_me:$LINENO: checking for sensors_init in -lsensors" >&5
+echo $ECHO_N "checking for sensors_init in -lsensors... $ECHO_C" >&6; }
+if test "${ac_cv_lib_sensors_sensors_init+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsensors  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char sensors_init ();
+int
+main ()
+{
+return sensors_init ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_lib_sensors_sensors_init=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_sensors_sensors_init=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_sensors_sensors_init" >&5
+echo "${ECHO_T}$ac_cv_lib_sensors_sensors_init" >&6; }
+if test $ac_cv_lib_sensors_sensors_init = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBSENSORS 1
+_ACEOF
+
+  LIBS="-lsensors $LIBS"
+
+else
+  { { echo "$as_me:$LINENO: error: libsensors.a is needed for the PAPI lm-sensors component" >&5
+echo "$as_me: error: libsensors.a is needed for the PAPI lm-sensors component" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+
+# libsensors.a needed to compile with papi utilities and tests
+	  LINK_SENSORS_LIB="$sensors_libdir/libsensors.a -lm"
+      ;;
+   no)
+      lmsensorsval="" ;;
+esac
+
+
+
+
 #echo $compnts
 
 #
@@ -8227,6 +8421,7 @@ if test "$shlib" = "dynamic"; then
 else
     LINKLIB='../$(LIBRARY)'
 fi
+LINKLIB="$LINKLIB $LINK_SENSORS_LIB"
 
 
 

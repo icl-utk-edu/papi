@@ -1,6 +1,12 @@
 #ifndef _PAPI_VECTOR_H
 #define _PAPI_VECTOR_H
 
+/* Identifier for each component */
+typedef struct cmp_id {
+	char name[PAPI_MAX_STR_LEN];
+	char descr[PAPI_MAX_STR_LEN];
+} cmp_id_t;
+
 /* Sies of structure private to each component */
 typedef struct cmp_struct_sizes {
     int		context;

@@ -37,6 +37,10 @@ extern papi_vector_t _mx_vector;
 #ifdef HAVE_NET
 extern papi_vector_t _net_vector;
 #endif
+#ifdef HAVE_LMSENSORS
+extern papi_vector_t _lmsensors_vector;
+#endif
+
 
 papi_vector_t *_papi_hwd[] = {
   &MY_VECTOR,
@@ -49,6 +53,9 @@ papi_vector_t *_papi_hwd[] = {
 #ifdef HAVE_NET
   &_net_vector,
 #endif
+#ifdef HAVE_LMSENSORS
+    &_lmsensors_vector,
+#endif	
   NULL
 };
 int papi_num_components = (sizeof(_papi_hwd)/sizeof(*_papi_hwd)) - 1;
