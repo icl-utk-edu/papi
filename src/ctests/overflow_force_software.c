@@ -7,6 +7,8 @@
 * maynardj@us.ibm.com
 * Philip Mucci
 * mucci@cs.utk.edu
+* Haihang You
+* you@cs.utk.edu
 * <your name here>
 * <your email address>
 */
@@ -65,11 +67,12 @@ int main(int argc, char **argv)
 	int EventSet=PAPI_NULL;
 	long long hard_min, hard_max, soft_min, soft_max;
 	int retval;
-	int PAPI_event=0, mythreshold=THRESHOLD;
+	int PAPI_event=0, mythreshold;
 	char event_name[PAPI_MAX_STR_LEN];
 	PAPI_option_t opt;
 	PAPI_event_info_t info;
 	PAPI_option_t itimer;
+	const PAPI_hw_info_t *hw_info = NULL;
 
 	tests_quiet(argc, argv); /* Set TESTS_QUIET variable */
 
@@ -106,6 +109,19 @@ int main(int argc, char **argv)
 
 	if ( PAPI_event == 0 )
 		test_skip(__FILE__, __LINE__, "No suitable event for this test found!", 0);
+
+   hw_info = PAPI_get_hardware_info();
+   if (hw_info == NULL)
+     test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
+
+   if ( PAPI_event == PAPI_FP_INS )
+      mythreshold = THRESHOLD ;
+   else 
+#if defined(linux)
+      mythreshold = hw_info->mhz*10000*2;
+#else
+      mythreshold = THRESHOLD*2;
+#endif
 
 	retval = PAPI_create_eventset(&EventSet);
 	if (retval != PAPI_OK)
