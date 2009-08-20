@@ -52,7 +52,7 @@ int main(int argc, char **argv)
    long long values[2] = { 0, 0 };
    long long min, max;
    int num_flops=NUM_FLOPS, retval;
-   int PAPI_event=0, mythreshold=THRESHOLD;
+   int PAPI_event=0, mythreshold;
    char event_name[PAPI_MAX_STR_LEN];
    const PAPI_hw_info_t *hw_info = NULL;
 
@@ -88,6 +88,15 @@ int main(int argc, char **argv)
             PAPI_event = PAPI_TOT_INS;
       }
    }
+
+   if ( PAPI_event == PAPI_FP_INS )
+      mythreshold = THRESHOLD ;
+   else 
+#if defined(linux)
+      mythreshold = hw_info->mhz*10000*2;
+#else
+      mythreshold = THRESHOLD*2;
+#endif
 
    retval = PAPI_create_eventset(&EventSet);
    if (retval != PAPI_OK)

@@ -34,6 +34,8 @@ void handler(int EventSet, void *address, long long overflow_vector, void * cont
     total[EventSet]++;
 }
 
+int mythreshold;
+
 void *Thread(void *arg)
 {
    int retval, num_tests = 1;
@@ -49,7 +51,7 @@ void *Thread(void *arg)
       platform */
    EventSet1 = add_two_nonderived_events(&num_events1, &papi_event, hw_info, &mask1);
 
-   expected[EventSet1] = *(int *)arg / THRESHOLD;
+   expected[EventSet1] = *(int *)arg / mythreshold;
    myid[EventSet1] = PAPI_thread_id();
 
    values = allocate_test_space(num_tests, num_events1);
@@ -58,7 +60,7 @@ void *Thread(void *arg)
 
    elapsed_cyc = PAPI_get_real_cyc();
 
-   if ((retval = PAPI_overflow(EventSet1, papi_event, THRESHOLD, 0, handler))
+   if ((retval = PAPI_overflow(EventSet1, papi_event, mythreshold, 0, handler))
                  != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
@@ -66,7 +68,7 @@ void *Thread(void *arg)
    if ((retval = PAPI_start(EventSet1)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
-   do_flops(*(int *) arg);
+   do_stuff();
 
    if ((retval = PAPI_stop(EventSet1, values[0])) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
@@ -123,6 +125,12 @@ int main(int argc, char **argv)
          test_fail(__FILE__, __LINE__, "PAPI_thread_init", retval);
    }
 
+#if defined(linux)
+      mythreshold = hw_info->mhz*10000*2;
+#else
+      mythreshold = THRESHOLD*2;
+#endif
+
    pthread_attr_init(&attr);
 #ifdef PTHREAD_CREATE_UNDETACHED
    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_UNDETACHED);
@@ -147,7 +155,7 @@ int main(int argc, char **argv)
    {
        long long t = 0, r = 0;
        for (i=0;i<NUM_THREADS;i++) {
-	   t += (NUM_FLOPS * (i+1))/THRESHOLD;
+	   t += (NUM_FLOPS * (i+1))/mythreshold;
 	   r += total[i];
        }
        printf("Expected total overflows: %lld\n",t);
