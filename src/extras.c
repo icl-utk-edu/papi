@@ -233,8 +233,6 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, caddr_t address, int *
    if (thread != NULL) 
      {
        ESI = thread->running_eventset[cidx];
-       if (ESI->CmpIdx != cidx)
-	   return(PAPI_ENOCMP);
 
        if ((ESI == NULL) || ((ESI->state & PAPI_OVERFLOWING) == 0))
 	 {
@@ -244,6 +242,9 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, caddr_t address, int *
 #endif
 	   return(PAPI_OK);
 	 }
+
+     if (ESI->CmpIdx != cidx)
+	   return(PAPI_ENOCMP);
 
        if (ESI->master != thread)
 	 {
