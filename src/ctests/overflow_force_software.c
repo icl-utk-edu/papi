@@ -266,7 +266,7 @@ int main(int argc, char **argv)
 	hard_min = (long long) ((values[0] * (1.0 - HARD_TOLERANCE)) / (long long) mythreshold);
 	hard_max = (long long) ((values[0] * (1.0 + HARD_TOLERANCE)) / (long long) mythreshold);
 	soft_min = (long long) ((values[0] * (1.0 - SOFT_TOLERANCE)) / (long long) mythreshold);
-	soft_max = (long long) ((values[0] * (1.0)) / (long long) mythreshold);
+	soft_max = (long long) ((values[0] * (1.0 + SOFT_TOLERANCE)) / (long long) mythreshold);
 	if (total[1] > hard_max || total[1] < hard_min)
 		test_fail(__FILE__, __LINE__, "Hardware Overflows outside limits", 1);
 
