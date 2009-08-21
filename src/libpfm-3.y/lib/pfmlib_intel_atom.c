@@ -137,6 +137,8 @@ pfm_intel_atom_init(void)
 	pfm_regmask_set(&intel_atom_impl_pmds, 17);
 	pfm_regmask_set(&intel_atom_impl_pmds, 18);
 
+	highest_counter = 18;
+
 	/* PEBS */
 	pfm_regmask_set(&intel_atom_impl_pmcs, 17);
 

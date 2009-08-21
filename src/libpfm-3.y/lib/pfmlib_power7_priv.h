@@ -2,11 +2,11 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-#ifndef __PFMLIB_POWER6_PRIV_H__
-#define __PFMLIB_POWER6_PRIV_H__
+#ifndef __PFMLIB_POWER7_PRIV_H__
+#define __PFMLIB_POWER7_PRIV_H__
 
 /*
-* File:    pfmlib_power6_priv.h
+* File:    pfmlib_power7_priv.h
 * CVS:
 * Author:  Corey Ashford
 *          cjashfor@us.ibm.com
@@ -21,9 +21,9 @@
 *
 */
 
-#define POWER6_NUM_EVENT_COUNTERS 6
-#define POWER6_NUM_GROUP_VEC 4
-#define POWER6_NUM_CONTROL_REGS 3
+#define POWER7_NUM_EVENT_COUNTERS 6
+#define POWER7_NUM_GROUP_VEC 4
+#define POWER7_NUM_CONTROL_REGS 3
 
 
 #endif

@@ -445,7 +445,6 @@ DPRINT("i=%d next_gen=%d last=%d isset=%d\n", i, next_gen, last_gen, pfm_regmask
 			ucode |= core_pe[e[i].event].pme_umasks[e[i].unit_masks[k]].pme_ucode;
 		}
 
-
 		/*
 		 * for events supporting Core specificity (self, both), a value
 		 * of 0 for bits 15:14 (7:6 in our umask) is reserved, therefore we
@@ -453,7 +452,16 @@ DPRINT("i=%d next_gen=%d last=%d isset=%d\n", i, next_gen, last_gen, pfm_regmask
 		 */
 		if ((core_pe[e[i].event].pme_flags & PFMLIB_CORE_CSPEC)
 		    && ((ucode & (0x3 << 6)) == 0)) {
-				ucode |= 1 << 6;
+			ucode |= 1 << 6;
+		}
+		/*
+		 * for events supporting MESI, a value
+		 * of 0 for bits 11:8 (0-3 in our umask) means nothing will be
+		 * counted. Therefore, we force a default of 0xf (M,E,S,I).
+		 */
+		if ((core_pe[e[i].event].pme_flags & PFMLIB_CORE_MESI)
+		    && ((ucode & 0xf) == 0)) {
+			ucode |= 0xf;
 		}
 
 		val |= ucode << 8;

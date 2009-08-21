@@ -39,12 +39,14 @@
 
 #include "pfmlib_priv.h"
 
+#include "pfmlib_power_priv.h"
 #include "pfmlib_ppc970_priv.h"
 #include "pfmlib_ppc970mp_priv.h"
 #include "pfmlib_power4_priv.h"
 #include "pfmlib_power5_priv.h"
 #include "pfmlib_power5+_priv.h"
 #include "pfmlib_power6_priv.h"
+#include "pfmlib_power7_priv.h"
 
 #include "ppc970_events.h"
 #include "ppc970mp_events.h"
@@ -52,178 +54,80 @@
 #include "power5_events.h"
 #include "power5+_events.h"
 #include "power6_events.h"
+#include "power7_events.h"
 
-/* Add structures here to define the PMD and PMC mappings. */
+#define FIRST_POWER_PMU PFMLIB_PPC970_PMU
 
-static int get_num_event_counters() {
+static const int num_group_vec[] = {
+	[PFMLIB_PPC970_PMU - FIRST_POWER_PMU] = PPC970_NUM_GROUP_VEC,
+	[PFMLIB_PPC970MP_PMU - FIRST_POWER_PMU] = PPC970MP_NUM_GROUP_VEC,
+	[PFMLIB_POWER4_PMU - FIRST_POWER_PMU] = POWER4_NUM_GROUP_VEC,
+	[PFMLIB_POWER5_PMU - FIRST_POWER_PMU] = POWER5_NUM_GROUP_VEC,
+	[PFMLIB_POWER5p_PMU - FIRST_POWER_PMU] = POWER5p_NUM_GROUP_VEC,
+	[PFMLIB_POWER6_PMU - FIRST_POWER_PMU] = POWER6_NUM_GROUP_VEC,
+	[PFMLIB_POWER7_PMU - FIRST_POWER_PMU] = POWER7_NUM_GROUP_VEC
+};
+
+static const int event_count[] = {
+	[PFMLIB_PPC970_PMU - FIRST_POWER_PMU] = PPC970_PME_EVENT_COUNT,
+	[PFMLIB_PPC970MP_PMU - FIRST_POWER_PMU] = PPC970MP_PME_EVENT_COUNT,
+	[PFMLIB_POWER5_PMU - FIRST_POWER_PMU] = POWER5_PME_EVENT_COUNT,
+	[PFMLIB_POWER5p_PMU - FIRST_POWER_PMU] = POWER5p_PME_EVENT_COUNT,
+	[PFMLIB_POWER6_PMU - FIRST_POWER_PMU] = POWER6_PME_EVENT_COUNT,
+	[PFMLIB_POWER7_PMU - FIRST_POWER_PMU] = POWER7_PME_EVENT_COUNT
+};
+
+unsigned *pmd_priv_vec;
+
+static unsigned long long mmcr0_fc5_6_mask;
+static unsigned long long *mmcr0_counter_mask;
+static unsigned long long *mmcr1_counter_mask;
+static unsigned long long *mmcr0_counter_off_val;
+static unsigned long long *mmcr1_counter_off_val;
+
+static const pme_power_entry_t *pe;
+static const pmg_power_group_t *groups;
+
+static inline int get_num_event_counters() {
 	return gen_powerpc_support.pmd_count;
 }
 
-static int get_num_control_regs() {
+static inline int get_num_control_regs() {
 	return gen_powerpc_support.pmc_count;
 }
 
-static int get_num_group_vec() {
-	switch (gen_powerpc_support.pmu_type) {
-	case PFMLIB_PPC970_PMU:
-		return PPC970_NUM_GROUP_VEC;
-	case PFMLIB_PPC970MP_PMU:
-		return PPC970MP_NUM_GROUP_VEC;
-	case PFMLIB_POWER4_PMU:
-		return POWER4_NUM_GROUP_VEC;
-	case PFMLIB_POWER5_PMU:
-		return POWER5_NUM_GROUP_VEC;
-	case PFMLIB_POWER5p_PMU:
-		return POWER5p_NUM_GROUP_VEC;
-	case PFMLIB_POWER6_PMU:
-		return POWER6_NUM_GROUP_VEC;
-	}
-	return -1;
+static inline const unsigned long long *get_group_vector(int event) {
+	return pe[event].pme_group_vector;
 }
 
-static unsigned long long *get_group_vector(int event) {
-	switch (gen_powerpc_support.pmu_type) {
-	case PFMLIB_PPC970_PMU:
-		return &ppc970_pe[event].pme_group_vector[0];
-	case PFMLIB_PPC970MP_PMU:
-		return &ppc970mp_pe[event].pme_group_vector[0];
-	case PFMLIB_POWER4_PMU:
-		return &power4_pe[event].pme_group_vector[0];
-	case PFMLIB_POWER5_PMU:
-		return &power5_pe[event].pme_group_vector[0];
-	case PFMLIB_POWER5p_PMU:
-		return &power5p_pe[event].pme_group_vector[0];
-	case PFMLIB_POWER6_PMU:
-		return &power6_pe[event].pme_group_vector[0];
-	}
-	return (unsigned long long *)-1;
+static inline int get_event_id(int event, int counter) {
+	return pe[event].pme_event_ids[counter];
 }
 
-static int get_event_id(int event, int counter) {
-	switch (gen_powerpc_support.pmu_type) {
-	case PFMLIB_PPC970_PMU:
-		return ppc970_pe[event].pme_event_ids[counter];
-	case PFMLIB_PPC970MP_PMU:
-		return ppc970mp_pe[event].pme_event_ids[counter];
-	case PFMLIB_POWER4_PMU:
-		return power4_pe[event].pme_event_ids[counter];
-	case PFMLIB_POWER5_PMU:
-		return power5_pe[event].pme_event_ids[counter];
-	case PFMLIB_POWER5p_PMU:
-		return power5p_pe[event].pme_event_ids[counter];
-	case PFMLIB_POWER6_PMU:
-		return power6_pe[event].pme_event_ids[counter];
-	}
-	return -1;
+static inline char *get_event_name(int event) {
+	return pe[event].pme_name;
 }
 
-static char *get_event_name(int event) {
-	switch (gen_powerpc_support.pmu_type) {
-	case PFMLIB_PPC970_PMU:
-		return ppc970_pe[event].pme_name;
-	case PFMLIB_PPC970MP_PMU:
-		return ppc970mp_pe[event].pme_name;
-	case PFMLIB_POWER4_PMU:
-		return power4_pe[event].pme_name;
-	case PFMLIB_POWER5_PMU:
-		return power5_pe[event].pme_name;
-	case PFMLIB_POWER5p_PMU:
-		return power5p_pe[event].pme_name;
-	case PFMLIB_POWER6_PMU:
-		return power6_pe[event].pme_name;
-	}
-	return (char *)-1;
+static inline char *get_long_desc(int event) {
+	return pe[event].pme_long_desc;
 }
 
-static char *get_long_desc(int event) {
-	switch (gen_powerpc_support.pmu_type) {
-	case PFMLIB_PPC970_PMU:
-		return ppc970_pe[event].pme_long_desc;
-	case PFMLIB_PPC970MP_PMU:
-		return ppc970mp_pe[event].pme_long_desc;
-	case PFMLIB_POWER4_PMU:
-		return power4_pe[event].pme_long_desc;
-	case PFMLIB_POWER5_PMU:
-		return power5_pe[event].pme_long_desc;
-	case PFMLIB_POWER5p_PMU:
-		return power5p_pe[event].pme_long_desc;
-	case PFMLIB_POWER6_PMU:
-		return power6_pe[event].pme_long_desc;
-	}
-	return (char *)-1;
+static inline int get_group_event_id(int group, int counter) {
+	return groups[group].pmg_event_ids[counter];
 }
 
-static int get_group_event_id(int group, int counter) {
-	switch (gen_powerpc_support.pmu_type) {
-	case PFMLIB_PPC970_PMU:
-		return ppc970_groups[group].pmg_event_ids[counter];
-	case PFMLIB_PPC970MP_PMU:
-		return ppc970mp_groups[group].pmg_event_ids[counter];
-	case PFMLIB_POWER4_PMU:
-		return power4_groups[group].pmg_event_ids[counter];
-	case PFMLIB_POWER5_PMU:
-		return power5_groups[group].pmg_event_ids[counter];
-	case PFMLIB_POWER5p_PMU:
-		return power5p_groups[group].pmg_event_ids[counter];
-	case PFMLIB_POWER6_PMU:
-		return power6_groups[group].pmg_event_ids[counter];
-	}
-	return -1;
+static inline unsigned long long get_mmcr0(int group) {
+	return groups[group].pmg_mmcr0;
 }
 
-static unsigned long long get_mmcr0(int group) {
-	switch (gen_powerpc_support.pmu_type) {
-	case PFMLIB_PPC970_PMU:
-		return ppc970_groups[group].pmg_mmcr0;
-	case PFMLIB_PPC970MP_PMU:
-		return ppc970mp_groups[group].pmg_mmcr0;
-	case PFMLIB_POWER4_PMU:
-		return power4_groups[group].pmg_mmcr0;
-	case PFMLIB_POWER5_PMU:
-		return power5_groups[group].pmg_mmcr0;
-	case PFMLIB_POWER5p_PMU:
-		return power5p_groups[group].pmg_mmcr0;
-	case PFMLIB_POWER6_PMU:
-		return power6_groups[group].pmg_mmcr0;
-	}
-	return -1;
+static inline unsigned long long get_mmcr1(int group) {
+	return groups[group].pmg_mmcr1;
 }
 
-static unsigned long long get_mmcr1(int group) {
-	switch (gen_powerpc_support.pmu_type) {
-	case PFMLIB_PPC970_PMU:
-		return ppc970_groups[group].pmg_mmcr1;
-	case PFMLIB_PPC970MP_PMU:
-		return ppc970mp_groups[group].pmg_mmcr1;
-	case PFMLIB_POWER4_PMU:
-		return power4_groups[group].pmg_mmcr1;
-	case PFMLIB_POWER5_PMU:
-		return power5_groups[group].pmg_mmcr1;
-	case PFMLIB_POWER5p_PMU:
-		return power5p_groups[group].pmg_mmcr1;
-	case PFMLIB_POWER6_PMU:
-		return power6_groups[group].pmg_mmcr1;
-	}
-	return -1;
+static inline unsigned long long get_mmcra(int group) {
+	return groups[group].pmg_mmcra;
 }
-
-static unsigned long long get_mmcra(int group) {
-	switch (gen_powerpc_support.pmu_type) {
-	case PFMLIB_PPC970_PMU:
-		return ppc970_groups[group].pmg_mmcra;
-	case PFMLIB_PPC970MP_PMU:
-		return ppc970mp_groups[group].pmg_mmcra;
-	case PFMLIB_POWER4_PMU:
-		return power4_groups[group].pmg_mmcra;
-	case PFMLIB_POWER5_PMU:
-		return power5_groups[group].pmg_mmcra;
-	case PFMLIB_POWER5p_PMU:
-		return power5p_groups[group].pmg_mmcra;
-	case PFMLIB_POWER6_PMU:
-		return power6_groups[group].pmg_mmcra;
-	}
-	return -1;
-}
+   
 
 /**
  * pfm_gen_powerpc_get_event_code
@@ -235,46 +139,11 @@ static int pfm_gen_powerpc_get_event_code(unsigned int event,
 				   unsigned int pmd,
 				   int *code)
 {
-	switch (gen_powerpc_support.pmu_type) {
-	case PFMLIB_PPC970_PMU:
-                if (event < PPC970_PME_EVENT_COUNT) {
-			*code = ppc970_pe[event].pme_code;
-       			return PFMLIB_SUCCESS;
-                } else
-			return PFMLIB_ERR_INVAL;
-	case PFMLIB_PPC970MP_PMU:
-                if (event < PPC970MP_PME_EVENT_COUNT) {
-			*code = ppc970mp_pe[event].pme_code;
-			return PFMLIB_SUCCESS;
-                } else
-			return PFMLIB_ERR_INVAL;
-	case PFMLIB_POWER4_PMU:
-                if (event < POWER4_PME_EVENT_COUNT) {
-			*code = power4_pe[event].pme_code;
-			return PFMLIB_SUCCESS;
-                } else
-			return PFMLIB_ERR_INVAL;
-	case PFMLIB_POWER5_PMU:
-                if (event < POWER5_PME_EVENT_COUNT) {
-			*code = power5_pe[event].pme_code;
-			return PFMLIB_SUCCESS;
-                } else
-			return PFMLIB_ERR_INVAL;
-	case PFMLIB_POWER5p_PMU:
-                if (event < POWER5p_PME_EVENT_COUNT) {
-			*code = power5p_pe[event].pme_code;
-			return PFMLIB_SUCCESS;
-                } else
-			return PFMLIB_ERR_INVAL;
-	case PFMLIB_POWER6_PMU:
-                if (event < POWER6_PME_EVENT_COUNT) {
-			*code = power6_pe[event].pme_code;
-			return PFMLIB_SUCCESS;
-                } else
-			return PFMLIB_ERR_INVAL;
-	default:
-		return PFMLIB_ERR_BADHOST;
-	}
+	if (event < event_count[gen_powerpc_support.pmu_type - FIRST_POWER_PMU]) {
+		*code = pe[event].pme_code;
+		return PFMLIB_SUCCESS;
+	} else
+		return PFMLIB_ERR_INVAL;
 }
 
 /**
@@ -332,11 +201,11 @@ static void remove_group(unsigned long long *group_vec, int group)
         group_vec[group / 64] &= ~(1ULL << (group % 64));
 }
 
-static void intersect_groups(unsigned long long *result, unsigned long long *operand)
+static void intersect_groups(unsigned long long *result, const unsigned long long *operand)
 {
         int i;
 
-        for (i = 0; i < get_num_group_vec(); i++) {
+        for (i = 0; i < num_group_vec[gen_powerpc_support.pmu_type - FIRST_POWER_PMU]; i++) {
                 result[i] &= operand[i];
         }
 }
@@ -345,7 +214,7 @@ static int first_group(unsigned long long *group_vec)
 {
         int i, bit;
 
-        for (i = 0; i < get_num_group_vec(); i++) {
+        for (i = 0; i < num_group_vec[gen_powerpc_support.pmu_type - FIRST_POWER_PMU]; i++) {
                 bit = ffsll(group_vec[i]);
                 if (bit) {
                         return (bit - 1) + (i * 64);
@@ -449,7 +318,7 @@ static unsigned long long ppc970_mmcr1_counter_off_val[POWER4_NUM_EVENT_COUNTERS
 	0x8UL << (63 - 61)  /* PMC8 */
 };
 
-/* These masks are used on POWER5,5+,5++,6 */
+/* These masks are used on POWER5,5+,5++,6,7 */
 static unsigned long long power5_mmcr0_counter_mask[POWER5_NUM_EVENT_COUNTERS] = {
 	0,
 	0,
@@ -485,13 +354,6 @@ static unsigned long long power5_mmcr1_counter_off_val[POWER5_NUM_EVENT_COUNTERS
 	0
 };
 
-unsigned *pmd_priv_vec;
-
-static unsigned long long mmcr0_fc5_6_mask;
-static unsigned long long *mmcr0_counter_mask;
-static unsigned long long *mmcr1_counter_mask;
-static unsigned long long *mmcr0_counter_off_val;
-static unsigned long long *mmcr1_counter_off_val;
 
 /**
  * pfm_gen_powerpc_dispatch_events
@@ -510,13 +372,15 @@ static int pfm_gen_powerpc_dispatch_events(pfmlib_input_param_t *input,
 	int i, j, group;
 	int counters_used = 0;
 	unsigned long long mmcr0_val, mmcr1_val;
-	unsigned long long *group_vector = malloc(sizeof(unsigned long long) * get_num_group_vec());
+	unsigned long long group_vector[num_group_vec[gen_powerpc_support.pmu_type - FIRST_POWER_PMU]];
+	unsigned int plm;
+
+	plm  = (input->pfp_events[0].plm != 0) ? input->pfp_events[0].plm : input->pfp_dfl_plm;
 
         /*
          * Verify that all of the privilege level masks are identical, as
          * we cannot have mixed levels on POWER
          */
-	unsigned int plm = (input->pfp_events[0].plm != 0) ? input->pfp_events[0].plm : input->pfp_dfl_plm;
 
 	for (i = 1; i < input->pfp_event_count; i++) {
 		if (input->pfp_events[i].plm == 0) {
@@ -530,12 +394,12 @@ static int pfm_gen_powerpc_dispatch_events(pfmlib_input_param_t *input,
 	}
 
 	/* start by setting all of the groups as available */
-	memset(group_vector, 0xff, sizeof(unsigned long long) * get_num_group_vec());
+	memset(group_vector, 0xff, sizeof(unsigned long long) * num_group_vec[gen_powerpc_support.pmu_type - FIRST_POWER_PMU]);
 
 	for (i = 0; i < input->pfp_event_count; i++) {
-			mmcr0_val |= mmcr0_counter_off_val[i];	
+		mmcr0_val |= mmcr0_counter_off_val[i];	
 		intersect_groups(group_vector, get_group_vector(input->pfp_events[i].event));
-			mmcr1_val |= mmcr1_counter_off_val[i];	
+		mmcr1_val |= mmcr1_counter_off_val[i];	
 	}
 	group = first_group(group_vector);
 	while (group != -1) {
@@ -582,10 +446,10 @@ static int pfm_gen_powerpc_dispatch_events(pfmlib_input_param_t *input,
 		break; 
 try_next_group: ;
 	}
-	if (group == -1) {
+	if (group == -1)
 		/* We did not find a group that meets the constraints */
 		return PFMLIB_ERR_NOASSIGN;
-	}
+
 	/* We now have a group that meets the constraints */
 
 	mmcr0_val = get_mmcr0(group);
@@ -655,7 +519,7 @@ try_next_group: ;
 
 	/* We always use the same number of control regs */
 	output->pfp_pmc_count = get_num_control_regs();
-	
+
 	return PFMLIB_SUCCESS;
 }
 
@@ -689,6 +553,8 @@ static int pfm_gen_powerpc_pmu_detect(void)
 		mmcr0_counter_off_val = ppc970_mmcr0_counter_off_val;
 		mmcr1_counter_off_val = ppc970_mmcr1_counter_off_val;
 		pmd_priv_vec = gq_pmd_priv_vec;
+		pe = ppc970_pe;
+		groups = ppc970_groups;
 		return PFMLIB_SUCCESS;
 	}
 	if (__is_processor(PV_970MP)) {
@@ -704,6 +570,8 @@ static int pfm_gen_powerpc_pmu_detect(void)
 		mmcr0_counter_off_val = ppc970_mmcr0_counter_off_val;
 		mmcr1_counter_off_val = ppc970_mmcr1_counter_off_val;
 		pmd_priv_vec = gq_pmd_priv_vec;
+		pe = ppc970mp_pe;
+		groups = ppc970mp_groups;
 		return PFMLIB_SUCCESS;
 	}
 	if (__is_processor(PV_POWER4) || __is_processor(PV_POWER4p)) {
@@ -721,6 +589,8 @@ static int pfm_gen_powerpc_pmu_detect(void)
 		mmcr0_counter_off_val = power4_mmcr0_counter_off_val;
 		mmcr1_counter_off_val = power4_mmcr1_counter_off_val;
 		pmd_priv_vec = gq_pmd_priv_vec;
+		pe = power4_pe;
+		groups = power4_groups;
 		return PFMLIB_SUCCESS;
 	}
 	if (__is_processor(PV_POWER5)) {
@@ -738,6 +608,8 @@ static int pfm_gen_powerpc_pmu_detect(void)
 		mmcr0_counter_off_val = power5_mmcr0_counter_off_val;
 		mmcr1_counter_off_val = power5_mmcr1_counter_off_val;
 		pmd_priv_vec = gr_pmd_priv_vec;
+		pe = power5_pe;
+		groups = power5_groups;
 		return PFMLIB_SUCCESS;
 	}
 	if (__is_processor(PV_POWER5p)) {
@@ -763,6 +635,8 @@ static int pfm_gen_powerpc_pmu_detect(void)
 		}
 		mmcr0_counter_off_val = power5_mmcr0_counter_off_val;
 		mmcr1_counter_off_val = power5_mmcr1_counter_off_val;
+		pe = power5p_pe;
+		groups = power5p_groups;
 		return PFMLIB_SUCCESS;
 	}
 	if (__is_processor(PV_POWER6)) {
@@ -780,6 +654,27 @@ static int pfm_gen_powerpc_pmu_detect(void)
 		mmcr0_counter_off_val = power5_mmcr0_counter_off_val;
 		mmcr1_counter_off_val = power5_mmcr1_counter_off_val;
 		pmd_priv_vec = gs_pmd_priv_vec;
+		pe = power6_pe;
+		groups = power6_groups;
+		return PFMLIB_SUCCESS;
+	}
+	if (__is_processor(PV_POWER7)) {
+		gen_powerpc_support.pmu_type = PFMLIB_POWER7_PMU;
+		gen_powerpc_support.pmu_name = "POWER7";
+		gen_powerpc_support.pme_count = POWER7_PME_EVENT_COUNT;
+		gen_powerpc_support.pmd_count = POWER7_NUM_EVENT_COUNTERS;
+		gen_powerpc_support.pmc_count = POWER7_NUM_CONTROL_REGS;
+		gen_powerpc_support.num_cnt = POWER7_NUM_EVENT_COUNTERS;
+		mmcr0_fc5_6_mask = 0;
+		mmcr0_counter_mask = power5_mmcr0_counter_mask;
+		mmcr1_counter_mask = power5_mmcr1_counter_mask;
+		mmcr0_counter_off_val = power5_mmcr0_counter_off_val;
+		mmcr1_counter_off_val = power5_mmcr1_counter_off_val;
+		mmcr0_counter_off_val = power5_mmcr0_counter_off_val;
+		mmcr1_counter_off_val = power5_mmcr1_counter_off_val;
+		pmd_priv_vec = gr_pmd_priv_vec;
+		pe = power7_pe;
+		groups = power7_groups;
 		return PFMLIB_SUCCESS;
 	}
 
@@ -884,6 +779,9 @@ pfm_gen_powerpc_get_cycle_event(pfmlib_event_t *e)
 	case PFMLIB_POWER6_PMU:
 		e->event = POWER6_PME_PM_RUN_CYC;
 		break;
+	case PFMLIB_POWER7_PMU:
+		e->event = POWER7_PME_PM_RUN_CYC;
+		break;
 	default:
 		/* perhaps gen_powerpc_suport.pmu_type wasn't initialized? */
 		return PFMLIB_ERR_NOINIT;
@@ -915,6 +813,9 @@ pfm_gen_powerpc_get_inst_retired(pfmlib_event_t *e)
 		break;
 	case PFMLIB_POWER6_PMU:
 		e->event = POWER6_PME_PM_INST_CMPL;
+		break;
+	case PFMLIB_POWER7_PMU:
+		e->event = POWER7_PME_PM_INST_CMPL;
 		break;
 	default:
 		/* perhaps gen_powerpc_suport.pmu_type wasn't initialized? */

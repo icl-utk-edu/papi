@@ -32,7 +32,7 @@ This version of libpfm supports:
 		XT3, XT4, XT5, XT5h, X2
 	- For IBM:
 		IBM Cell processor
-		POWER: PPC970, PPC970MP, POWER4+, POWER5, POWER5+, POWER6
+		POWER: PPC970, PPC970MP, POWER4+, POWER5, POWER5+, POWER6, POWER7
 	- For Sun:
 		 Sparc: Ultra12, Ultra3, Ultra3i, Ultra3Plus, Ultra4Plus,
 		 Sparc: Niagara1, Niagara2

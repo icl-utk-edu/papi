@@ -266,6 +266,7 @@ extern pfm_err_t pfm_get_inst_retired_event(pfmlib_event_t *e);
 #define PFMLIB_POWER5_PMU               114	/* IBM POWER5 */
 #define PFMLIB_POWER5p_PMU              115	/* IBM POWER5+ */
 #define PFMLIB_POWER6_PMU               116	/* IBM POWER6 */
+#define PFMLIB_POWER7_PMU               117	/* IBM POWER7 */
 
 #define PFMLIB_SPARC_ULTRA12_PMU	130	/* UltraSPARC I, II, IIi, and IIe */
 #define PFMLIB_SPARC_ULTRA3_PMU		131	/* UltraSPARC III */

@@ -186,7 +186,8 @@ INC_POWERPC= $(PFMINCDIR)/perfmon/pfmlib_powerpc.h \
   $(PFMINCDIR)/perfmon/pfmlib_comp_powerpc.h \
   $(PFMINCDIR)/perfmon/pfmlib_os_powerpc.h \
   ppc970_events.h ppc970mp_events.h power4_events.h \
-  power5_events.h power5+_events.h power6_events.h powerpc_reg.h
+  power5_events.h power5+_events.h power6_events.h \
+  power7_events.h powerpc_reg.h
 
 INC_SPARC= $(PFMINCDIR)/perfmon/pfmlib_sparc.h \
   $(PFMINCDIR)/perfmon/pfmlib_comp_sparc.h \
