@@ -641,7 +641,7 @@ pfm_gen_ia32_dispatch_counters_v23(pfmlib_input_param_t *inp, pfmlib_gen_ia32_in
 			val |= 2ULL;
 
 		/* only possible for v3 */
-		if (cntrs[i].flags & PFM_GEN_IA32_SEL_ANYTHR)
+		if (cntrs && cntrs[i].flags & PFM_GEN_IA32_SEL_ANYTHR)
 			val |= 4ULL;
 
 		val |= 1ULL << 3;	 /* force APIC int (kernel may force it anyway) */

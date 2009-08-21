@@ -620,7 +620,7 @@ static pme_nhm_entry_t corei7_pe[]={
 		.pme_numasks = 2
 	}, 
 	{ .pme_name   = "L1D_CACHE_LD",
-		.pme_desc   = "L1 data cache read in E state",
+		.pme_desc   = "L1 data cache read in E state. WARNING: event may overcount loads",
 		.pme_code   = 0x40,
 		.pme_flags  = PFMLIB_NHM_PMC01,
 		.pme_umasks = { 
@@ -663,12 +663,12 @@ static pme_nhm_entry_t corei7_pe[]={
 				.pme_uflags = 0,
 			},
 			{ .pme_uname  = "HIT",
-				.pme_udesc  = "L1 data cache load lock hits",
+				.pme_udesc  = "L1 data cache load lock hits. WARNING: overcounts by 3x",
 				.pme_ucode  = 0x01,
 				.pme_uflags = 0,
 			}, 
 			{ .pme_uname  = "M_STATE",
-				.pme_udesc  = "L1 data cache load locks in M state",
+				.pme_udesc  = "L1 data cache load locks in M state. WARNING: overcounts by 3x",
 				.pme_ucode  = 0x08,
 				.pme_uflags = 0,
 			}, 
@@ -691,7 +691,7 @@ static pme_nhm_entry_t corei7_pe[]={
 		.pme_flags  = PFMLIB_NHM_PMC01,
 	}, 
 	{ .pme_name   = "L1D_CACHE_ST",
-		.pme_desc   = "L1 data cache stores in E state",
+		.pme_desc   = "L1 data cache stores in E state. WARNING: event may overcount stores,",
 		.pme_code   = 0x41,
 		.pme_flags  = PFMLIB_NHM_PMC01,
 		.pme_umasks = { 

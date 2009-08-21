@@ -182,6 +182,9 @@ pfm_nhm_init(void)
 {
 	int i;
 
+	if (forced_pmu != PFMLIB_NO_PMU)
+		cpu_model = 26;
+
 	pfm_regmask_set(&nhm_impl_pmcs, 0);
 	pfm_regmask_set(&nhm_impl_pmcs, 1);
 	pfm_regmask_set(&nhm_impl_pmcs, 2);
@@ -626,10 +629,16 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 		umask = (val >> 8) & 0xff;
 
 		u_flags = 0;
-		for(k=0; k < e[i].num_masks; k++) {
-			umask |= ne->pme_umasks[e[i].unit_masks[k]].pme_ucode;
-			u_flags |= ne->pme_umasks[e[i].unit_masks[k]].pme_uflags;
-		}
+		/*
+ 		 * for OFFCORE_RESPONSE, the unit masks are all in the
+		 * dedicated OFFCORE_RSP MSR and event unit mask must be
+		 * 0x1 (extracted from pme_code
+		 */
+		if (!(ne->pme_flags & PFMLIB_NHM_OFFCORE_RSP0))
+			for(k=0; k < e[i].num_masks; k++) {
+				umask |= ne->pme_umasks[e[i].unit_masks[k]].pme_ucode;
+				u_flags |= ne->pme_umasks[e[i].unit_masks[k]].pme_uflags;
+			}
 		val |= umask << 8;
 
 		reg.sel_umask  = umask;

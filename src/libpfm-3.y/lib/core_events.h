@@ -25,7 +25,7 @@
 
 #define INTEL_CORE_MESI_UMASKS \
 		{ .pme_uname = "MESI",\
-		  .pme_udesc = "Any cacheline access",\
+		  .pme_udesc = "Any cacheline access (default)",\
 		  .pme_ucode = 0xf\
 		},\
 		{ .pme_uname = "I_STATE",\
@@ -405,7 +405,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "L2_IFETCH",
 	  .pme_code = 0x28,
-	  .pme_flags = PFMLIB_CORE_CSPEC,
+	  .pme_flags = PFMLIB_CORE_CSPEC|PFMLIB_CORE_MESI,
 	  .pme_desc =  "L2 cacheable instruction fetch requests",
 	  .pme_umasks = {
 		INTEL_CORE_MESI_UMASKS,
@@ -415,7 +415,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "L2_LD",
 	  .pme_code = 0x29,
-	  .pme_flags = PFMLIB_CORE_CSPEC,
+	  .pme_flags = PFMLIB_CORE_CSPEC|PFMLIB_CORE_MESI,
 	  .pme_desc =  "L2 cache reads",
 	  .pme_umasks = {
 		INTEL_CORE_MESI_UMASKS,
@@ -426,7 +426,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "L2_ST",
 	  .pme_code = 0x2a,
-	  .pme_flags = PFMLIB_CORE_CSPEC,
+	  .pme_flags = PFMLIB_CORE_CSPEC|PFMLIB_CORE_MESI,
 	  .pme_desc =  "L2 store requests",
 	  .pme_umasks = {
 		INTEL_CORE_MESI_UMASKS,
@@ -436,7 +436,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "L2_LOCK",
 	  .pme_code = 0x2b,
-	  .pme_flags = PFMLIB_CORE_CSPEC,
+	  .pme_flags = PFMLIB_CORE_CSPEC|PFMLIB_CORE_MESI,
 	  .pme_desc =  "L2 locked accesses",
 	  .pme_umasks = {
 		INTEL_CORE_MESI_UMASKS,
@@ -446,7 +446,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "L2_RQSTS",
 	  .pme_code = 0x2e,
-	  .pme_flags = PFMLIB_CORE_CSPEC,
+	  .pme_flags = PFMLIB_CORE_CSPEC|PFMLIB_CORE_MESI,
 	  .pme_desc =  "L2 cache requests",
 	  .pme_umasks = {
 		INTEL_CORE_MESI_UMASKS,
@@ -457,7 +457,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "L2_REJECT_BUSQ",
 	  .pme_code = 0x30,
-	  .pme_flags = PFMLIB_CORE_CSPEC,
+	  .pme_flags = PFMLIB_CORE_CSPEC|PFMLIB_CORE_MESI,
 	  .pme_desc =  "Rejected L2 cache requests",
 	  .pme_umasks = {
 		INTEL_CORE_MESI_UMASKS,
@@ -512,7 +512,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "L1D_CACHE_LD",
 	  .pme_code = 0x40,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_MESI,
 	  .pme_desc =  "L1 cacheable data reads",
 	  .pme_umasks = {
 		INTEL_CORE_MESI_UMASKS
@@ -521,7 +521,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "L1D_CACHE_ST",
 	  .pme_code = 0x41,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_MESI,
 	  .pme_desc =  "L1 cacheable data writes",
 	  .pme_umasks = {
 		INTEL_CORE_MESI_UMASKS
@@ -530,7 +530,7 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "L1D_CACHE_LOCK",
 	  .pme_code = 0x42,
-	  .pme_flags = 0,
+	  .pme_flags = PFMLIB_CORE_MESI,
 	  .pme_desc =  "L1 data cacheable locked reads",
 	  .pme_umasks = {
 		INTEL_CORE_MESI_UMASKS
