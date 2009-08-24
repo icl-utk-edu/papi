@@ -17,7 +17,13 @@ endif
 
 CC_R    	:= $(CC) -pthread
 CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
-FFLAGS		+= -ffixed-line-length-132
+
+ifeq (pgf77,$(F77))
+	FFLAGS      += -Mextend
+else
+	FFLAGS     += -ffixed-line-length-132
+endif
+
 CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) $(DEBUGFLAGS) -D_REENTRANT
 TOPTFLAGS	:= -g -O
 FTOPTFLAGS	:= $(FTOPTFLAGS)

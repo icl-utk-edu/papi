@@ -18,7 +18,13 @@ endif
 
 CC_R    	= $(CC) -pthread
 CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,$(SHLIB) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
-FFLAGS		+= -ffixed-line-length-132
+
+ifeq (pgf77,$(F77))
+	FFLAGS      += -Mextend
+else
+	FFLAGS     += -ffixed-line-length-132
+endif
+
 CFLAGS		+= -Wall 
 
 KERNMINVER	= $(shell uname -r | cut -f2 -d.)
