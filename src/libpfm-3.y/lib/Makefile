@@ -56,7 +56,7 @@ endif
 ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
 INCARCH = $(INC_IA32)
 SRCS   += pfmlib_i386_p6.c pfmlib_pentium4.c pfmlib_amd64.c pfmlib_core.c pfmlib_gen_ia32.c \
-	  pfmlib_intel_atom.c pfmlib_intel_nhm.c
+	  pfmlib_intel_atom.c pfmlib_intel_nhm.c pfmlib_coreduo.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_I386
 endif
 

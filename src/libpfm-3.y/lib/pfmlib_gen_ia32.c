@@ -3,9 +3,6 @@
  *
  * The file provides support for the Intel architectural PMU v1 and v2.
  *
- * It also provides support for Core Duo/Core Solo processors which
- * implement the architectural PMU v1 with more than architected events.
- *
  * Copyright (c) 2005-2007 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
@@ -47,7 +44,6 @@
 #include "pfmlib_gen_ia32_priv.h"		/* architecture private */
 
 #include "gen_ia32_events.h"			/* architected event table */
-#include "coreduo_events.h"			/* Core Duo/Core Solo event table */
 
 /* let's define some handy shortcuts! */
 #define sel_event_select perfevtsel.sel_event_select
@@ -333,60 +329,6 @@ pfm_gen_ia32_init(void)
 	gen_support = &gen_ia32_support;
 
 	return PFMLIB_SUCCESS;
-}
-
-static int
-pfm_coreduo_detect(void)
-{
-	int ret, family, model;
-	char buffer[128];
-
-	ret = __pfm_getcpuinfo_attr("vendor_id", buffer, sizeof(buffer));
-	if (ret == -1)
-		return PFMLIB_ERR_NOTSUPP;
-
-	if (strcmp(buffer, "GenuineIntel"))
-		return PFMLIB_ERR_NOTSUPP;
-
-	ret = __pfm_getcpuinfo_attr("cpu family", buffer, sizeof(buffer));
-	if (ret == -1)
-		return PFMLIB_ERR_NOTSUPP;
-
-	family = atoi(buffer);
-
-	ret = __pfm_getcpuinfo_attr("model", buffer, sizeof(buffer));
-	if (ret == -1)
-		return PFMLIB_ERR_NOTSUPP;
-
-	model = atoi(buffer);
-
-	/*
-	 * check for core solo/core duo
-	 */
-	return family == 6 && model == 14 ? PFMLIB_SUCCESS : PFMLIB_ERR_NOTSUPP;
-}
-
-static int
-pfm_coreduo_init(void)
-{
-	unsigned int i;
-
-	gen_ia32_pe = coreduo_pe;
-	gen_support = &coreduo_support;
-	gen_ia32_cycle_event = PME_COREDUO_UNHALTED_CORE_CYCLES;
-	gen_ia32_inst_retired_event = PME_COREDUO_INSTRUCTIONS_RETIRED;
-
-	/* architecrtural perfmon v1 */
-	pmu_version = 1;
-
-	num_gen_cnt = 2;
-	num_fixed_cnt = 0;
-
-	for(i=0; i < 2; i++) {
-		pfm_regmask_set(&gen_ia32_impl_pmcs, i);
-		pfm_regmask_set(&gen_ia32_impl_pmds, i);
-	}
-	return PFMLIB_SUCCESS;;
 }
 
 static int
@@ -967,30 +909,4 @@ pfm_pmu_support_t gen_ia32_support={
 	.get_event_mask_name	= pfm_gen_ia32_get_event_mask_name,
 	.get_event_mask_code	= pfm_gen_ia32_get_event_mask_code,
 	.get_event_mask_desc	= pfm_gen_ia32_get_event_mask_desc
-};
-
-pfm_pmu_support_t coreduo_support={
-	.pmu_name		= "Intel Core Duo/Core Solo",
-	.pmu_type		= PFMLIB_COREDUO_PMU,
-	.pme_count		= PME_COREDUO_EVENT_COUNT,
-	.pmc_count		= 2,
-	.pmd_count		= 2,
-	.num_cnt		= 2,
-	.get_event_code		= pfm_gen_ia32_get_event_code,
-	.get_event_name		= pfm_gen_ia32_get_event_name,
-	.get_event_counters	= pfm_gen_ia32_get_event_counters,
-	.dispatch_events	= pfm_gen_ia32_dispatch_events,
-	.pmu_detect		= pfm_coreduo_detect,
-	.pmu_init		= pfm_coreduo_init,
-	.get_impl_pmcs		= pfm_gen_ia32_get_impl_pmcs,
-	.get_impl_pmds		= pfm_gen_ia32_get_impl_pmds,
-	.get_impl_counters	= pfm_gen_ia32_get_impl_counters,
-	.get_hw_counter_width	= pfm_gen_ia32_get_hw_counter_width,
-	.get_event_desc         = pfm_gen_ia32_get_event_description,
-	.get_num_event_masks	= pfm_gen_ia32_get_num_event_masks,
-	.get_event_mask_name	= pfm_gen_ia32_get_event_mask_name,
-	.get_event_mask_code	= pfm_gen_ia32_get_event_mask_code,
-	.get_event_mask_desc	= pfm_gen_ia32_get_event_mask_desc,
-	.get_cycle_event	= pfm_gen_ia32_get_cycle_event,
-	.get_inst_retired_event = pfm_gen_ia32_get_inst_retired
 };
