@@ -120,7 +120,12 @@ pfm_core_detect(void)
 		default:
 			return PFMLIB_ERR_NOTSUPP;
 	}
+	return PFMLIB_SUCCESS;
+}
 
+static int
+pfm_core_init(void)
+{
 	pfm_regmask_set(&core_impl_pmcs, 0);
 	pfm_regmask_set(&core_impl_pmcs, 1);
 	pfm_regmask_set(&core_impl_pmcs, 16);
@@ -897,6 +902,7 @@ pfm_pmu_support_t core_support={
 	.get_event_counters	= pfm_core_get_event_counters,
 	.dispatch_events	= pfm_core_dispatch_events,
 	.pmu_detect		= pfm_core_detect,
+	.pmu_init		= pfm_core_init,
 	.get_impl_pmcs		= pfm_core_get_impl_pmcs,
 	.get_impl_pmds		= pfm_core_get_impl_pmds,
 	.get_impl_counters	= pfm_core_get_impl_counters,
