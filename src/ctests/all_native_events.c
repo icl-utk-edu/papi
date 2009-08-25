@@ -102,7 +102,7 @@ int main(int argc, char **argv)
 
    do {
 	retval = PAPI_get_event_info(i, &info);
-	if (Intel_i7) {
+	if (Intel_i7 || (hwinfo->vendor == PAPI_VENDOR_INTEL)) {
 		if (!strncmp(info.symbol, "UNC_", 4)) {
 			unc_count++;
 			continue;
