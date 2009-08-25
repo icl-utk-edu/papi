@@ -1,0 +1,42 @@
+SHELL = /bin/bash
+LIBRARY	=libpapi.a
+SHLIB	=libpapi.so
+SUBSTR  = solaris-niagara2
+MSUBSTR  = solaris-niagara2
+MEMSUBSTR= solaris-niagara2
+DESCR	= "Support for UltraSPARC T2 on Solaris 10 w/ libcpc 2"
+LIBS	= static shared 
+TARGETS	= serial multiplex_and_pthreads shared
+#
+# Sun Studio 12 compilers
+#
+TARGETS		+= smp omp
+CC		= cc 
+CPP     	= $(CC) -E
+CC_R		= $(CC) -mt
+CC_SHR		= $(CC) -ztext -G -Kpic  
+CFLAGS  	= -D__EXTENSIONS__ -DNO_VARARG_MACRO -g
+SMPCFLGS	= -xexplicitpar
+OMPCFLGS	= -xopenmp
+F77		= f90
+FFLAGS		= $(CFLAGS)
+TOPTFLAGS	= 
+NOOPT		= -xO0 
+OPTFLAGS	= -O
+#
+# Do not touch below here 
+#
+FOPTFLAGS	= $(OPTFLAGS)
+LDFLAGS 	+= -lcpc
+MISCSRCS	=  
+MISCOBJS	=  
+POST_BUILD =
+SPECIAL_REMOVE =
+
+include Makefile.inc
+
+native_clean:
+
+native_install:
+
+native_clobber:
