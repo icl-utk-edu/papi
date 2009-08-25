@@ -290,16 +290,28 @@ case "$OS" in
              
          ;;
   solaris) 
+         ##F Detect platform
          processor=`uname -p`
-           #this determines if its an Ultrasparc I,II,or III
-         if test "$processor" = "sparc"; then
-           CPU=`/bin/uname -a | egrep sun4u`
-           if test "$CPU" = ""; then
-             AC_MSG_ERROR([Sorry but for Solaris you need to have an Ultrasparc for PAPI to work])
-           else CPU=ultra
-           fi
+         ##F Detect CPU model
+         machinetype=`uname -m`
+
+         if test "$processor" = "sparc"
+         then
+		case "$machinetype" in
+                sun4u)
+                      CPU=ultra
+                      ;;
+                sun4v)
+                      CPU=niagara2
+                      ;; 
+                *)
+                      AC_MSG_ERROR([Sorry, machine type ($machinetype) not supported])
+                      ;;
+                esac
+         else
+               AC_MSG_ERROR([Sorry, no support for other CPUs than US I, II, III or T2])
          fi
-         ;;
+  ;;
   irix) CPU=`hinv -t cpu | cut -d ' ' -f 2 | tr '[A-Z]' '[a-z]' | uniq`;;
   osf1) CPU=`uname -p`;;
   unicos)
@@ -1062,9 +1074,53 @@ fi
  
 # Checks for libraries.
 if test "$OS" = "solaris"; then
-AC_CHECK_LIB([cpc], [cpc_take_sample], [], [
-      AC_MSG_ERROR([libcpc.a is needed on solaris])
-      ])
+
+##F Both PAPI backends on Solaris require libcpc
+   AC_CHECK_HEADER([libcpc.h],[
+                                CFLAGS="$CFLAGS -lcpc"
+        AC_TRY_RUN([
+        #include <stdlib.h>
+        #include <libcpc.h>
+
+        int main()
+        {
+            // Check for libcpc 2
+            if(CPC_VER_CURRENT == 2)
+            {
+                exit(0);
+            }
+
+            exit(1);
+        }
+       ], [cpc_version=2], [cpc_version=0])],
+       [AC_MSG_ERROR([libcpc is needed for running PAPI on Solaris])
+   ])
+##F The niagara2 backend needs libcpc2
+    echo '====================================================================='
+    echo '         PAPI is available for the following Sun platforms:'
+    echo '---------------------------------------------------------------------'
+    echo
+    echo '    - UltraSPARC I, II & III on Solaris 8 & 9 using libcpc 1'
+    echo '      --> PAPI substrate: solaris-ultra'
+    echo
+    echo '    - UltraSPARC T2          on Solaris 10    using libcpc 2'
+    echo '      --> PAPI substrate: solaris-niagara2'
+    echo 
+    echo "    - Your substrate will be: $OS-$CPU"
+    echo '====================================================================='
+    if test "$CPU" = "niagara2"
+    then
+        ##F Check for the definition of CPC_VER_CURRENT
+        if test "$cpc_version" != "2"
+        then
+            AC_MSG_ERROR([libcpc2 needed for Niagara 2])
+        fi
+    else
+        ##F PAPI 3.6.2
+        AC_CHECK_LIB([cpc], [cpc_take_sample], [], [
+              AC_MSG_ERROR([libcpc.a is needed on Solaris, install SUNWcpc])
+            ])
+    fi
 fi
 
 if test "$perfctr" != "no"; then
@@ -1301,8 +1357,11 @@ case "$OS" in
           if test "`isainfo -v | grep "64"`" = ""; then
              AC_MSG_ERROR([The bitmode you specified is not supported])
           fi
+       	  
+          MAKEVER="$OS"-"$CPU""$BM"
+       else
+          MAKEVER="$OS"-"$CPU" 
        fi
-       MAKEVER="$OS"-"$CPU""$BM"
        ;;
    linux)
        if test $pcl = "yes" ; then
@@ -1417,6 +1476,9 @@ case "$MAKEVER" in
     linux-pfm-itanium3);;
     solaris-ultra);;
     solaris-ultra-64bit);;
+    ##F Recognize a new build target
+    solaris-niagara2|solaris-niagara2-32bit);;
+    solaris-niagara2-64bit);;
     tru64-alpha);;
     unicos-t3e);;
     unicos-x1-msp);;
