@@ -86,6 +86,7 @@ int main(int argc, char **argv)
 
    /* we need a little exception processing if it's a Core i7 */
    /* Unfortunately, this test never succeeds... */
+   printf("Model String: %s\n",hwinfo->model_string);
    Intel_i7 = strstr(hwinfo->model_string, "Intel Core i7");
 
    if ((s = PAPI_get_substrate_info()) == NULL)
@@ -98,7 +99,7 @@ int main(int argc, char **argv)
 
    do {
 	retval = PAPI_get_event_info(i, &info);
-	if (Intel_i7) {
+	if (Intel_i7 || (hwinfo->vendor == PAPI_VENDOR_INTEL)) {
 		if (!strncmp(info.symbol, "UNC_", 4)) {
 			unc_count++;
 			continue;
