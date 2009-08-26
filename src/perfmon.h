@@ -8,11 +8,15 @@
 *
 */
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <unistd.h>
 #include <assert.h>
+#ifndef WIN32
+#include <unistd.h>
+#include <libgen.h>
+#endif
 #include <errno.h>
 #include <string.h>
 #include <math.h>
@@ -21,7 +25,8 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <inttypes.h>
-#include <libgen.h>
+
+#ifndef WIN32
 #include <sys/mman.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
@@ -29,6 +34,7 @@
 #include <sys/times.h>
 #include <sys/ucontext.h>
 #include <sys/ptrace.h>
+#endif
 #include "perfmon/pfmlib.h"
 #include "perfmon/perfmon.h"
 #include "perfmon/perfmon_dfl_smpl.h"
@@ -105,7 +111,12 @@ typedef struct {
   void *smpl_buf;
 } hwd_context_t;
 
+#ifdef WIN32
+extern CRITICAL_SECTION _papi_hwd_lock_data[PAPI_MAX_LOCK];
+#else
 extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
+#endif
+
 #define MUTEX_OPEN 0
 #define MUTEX_CLOSED 1
 
@@ -125,6 +136,11 @@ extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 
 #define _papi_hwd_unlock(lck) {  __asm__ __volatile__ ("st4.rel [%0]=%1" : : "r"(&_papi_hwd_lock_data[lck]), "r"(MUTEX_OPEN) : "memory"); }
 #endif
+#elif defined(WIN32)
+
+#define  _papi_hwd_lock(lck) EnterCriticalSection(&_papi_hwd_lock_data[lck])
+#define  _papi_hwd_unlock(lck) LeaveCriticalSection(&_papi_hwd_lock_data[lck])
+
 #elif defined(__i386__)||defined(__x86_64__)
 #define  _papi_hwd_lock(lck)                    \
 do                                              \
@@ -304,10 +320,18 @@ static inline void __raw_spin_unlock(volatile unsigned int *lock)
 /* Signal handling functions */
 
 typedef struct siginfo hwd_siginfo_t;
+#ifdef WIN32
+typedef CONTEXT hwd_ucontext_t;
+#else
 typedef ucontext_t hwd_ucontext_t;
+#endif
 
 #if defined(__ia64__)
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.sc_ip
+#elif defined(_WIN64)
+#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->Rip
+#elif defined(WIN32)
+#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->Eip
 #elif defined(__i386__)
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.gregs[REG_EIP]
 #elif defined(__x86_64__)
