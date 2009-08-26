@@ -107,6 +107,7 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 #ifdef _WIN32
   #define PAPI_INT_SIGNAL 1
   #define PAPI_INT_ITIMER 1
+  #define PAPI_INT_MPX_SIGNAL 1
 #else
   #ifdef __CATAMOUNT__ /* Catamount only defines ITIMER_REAL with a 1 sec(!) resolution */
     #define PAPI_INT_MPX_SIGNAL SIGALRM
