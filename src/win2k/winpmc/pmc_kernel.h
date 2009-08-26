@@ -5,63 +5,31 @@
 #ifndef _PMC_KERNEL_H
 #define _PMC_KERNEL_H
 
-#ifndef PENTIUM4
-#define nPMC 4
-#else
-#define nPMC 18
+#if !defined(__i386__)
+#define __i386__
 #endif
 
-struct pmc_sum_ctrs {
-	ULONGLONG tsc;			/* tsc */
-	ULONGLONG pmc[nPMC];		/* pmc[0], ..., pmc[n] */
-};
+#include <perfmon/perfmon.h>
 
-struct pmc_large_ctrs {
-	ULARGE_INTEGER tsc;		/* tsc */
-	ULARGE_INTEGER pmc[nPMC];	/* pmc[0], ..., pmc[n] */
-};
+typedef unsigned uint;
 
-struct pmc_low_ctrs {
-	unsigned int tsc;		/* tsc */
-	unsigned int pmc[nPMC];		/* pmc[0], ..., pmc[n] */
-};
+uint (*translate_pmc)(uint reg);
+uint (*translate_pmd)(uint reg);
 
-struct pmc_cpu_control {
-	unsigned int tsc_on;
-	unsigned int nractrs;		/* # of a-mode counters */
-	unsigned int nrictrs;		/* # of i-mode counters */
-	unsigned int pmc_map[nPMC];
-	unsigned int evntsel[nPMC];	/* one per counter, even on P5 */
-	struct {
-		unsigned int pebs_enable;	/* for replay tagging */
-		unsigned int pebs_matrix_vert;	/* for replay tagging */
-		unsigned int escr[nPMC];	/* P4 ESCR contents */
-	} p4;
-	int ireset[nPMC];			/* <= 0, for i-mode counters */
-};
+void write_control(pfarg_pmc_t *r, uint count);
+void read_write_data(pfarg_pmd_t *r, uint count, uint write);
 
-struct vpmc_control {
-	int si_signo;
-	struct pmc_cpu_control cpu_control;
-};
-
-struct pmc_control {
-	unsigned int evntsel[nPMC];
-};
-
-struct pmc_info {
-	unsigned int family;
-	unsigned int features;
-	unsigned int stepping;
-	unsigned int model;
+struct CPUInfo {
+	uint family;
+	uint features;
+	uint stepping;
+	uint model;
 	char vendor[12];
 };
 
 /* External entry points */
-extern int kern_pmc_init(void);
-extern int kern_pmc_info(struct pmc_info *info);
-extern int kern_pmc_control(struct pmc_control *control);
-extern void kern_pmc_exit(void);
+int kern_pmc_init();
+void kern_pmc_exit();
 
 
 // define a whole passel of status codes to aid in debugging
