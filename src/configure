@@ -1971,6 +1971,11 @@ if test "$T3EOS" != ""; then
    OS=unicos
 fi
 
+# XTOS_VERSION exists only on Cray systems supporting XT and hence CLE OS
+if test "$XTOS_VERSION"; then
+	use_shared=no
+fi
+
 /bin/rm -f ckcat
 cc ckcatamount.c 2>&1 | cat > ckcat
 if test "`cat ckcat | grep "IS_CATAMOUNT"`" != ""; then
