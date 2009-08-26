@@ -1041,7 +1041,12 @@ int _papi_hwi_init_global_internal(void)
    _papi_hwi_system_info.sub_info.itimer_ns = PAPI_INT_MPX_DEF_US * 1000;
    _papi_hwi_system_info.sub_info.itimer_res_ns = 1;
    _papi_hwi_system_info.sub_info.hardware_intr_sig = PAPI_INT_SIGNAL;
+#ifdef WIN32
+    _papi_hwi_system_info.sub_info.clock_ticks = 64;    // todo
+#else
    _papi_hwi_system_info.sub_info.clock_ticks = sysconf(_SC_CLK_TCK);
+#endif
+
    _papi_hwi_system_info.sub_info.reserved[0] = 0;
    _papi_hwi_system_info.sub_info.reserved[1] = 0;
    _papi_hwi_system_info.sub_info.hardware_intr = 0;         /* Needs hw overflow intr to be emulated in software*/
