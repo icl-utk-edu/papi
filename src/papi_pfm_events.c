@@ -27,8 +27,11 @@ extern int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                unsigned int *values, int name_len, int count);
 
 /* Globals declared extern elsewhere */
-
+#ifdef _WIN32
+extern CRITICAL_SECTION _papi_hwd_lock_data[PAPI_MAX_LOCK];
+#else
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
+#endif 
 
 /* NOTE: PAPI stores umask info in a variable sized (16 bit?) bitfield.
     Perfmon2 stores umask info in a large (48 element?) array of values.
@@ -1043,6 +1046,7 @@ int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
 	int j, n = _papi_hwi_system_info.sub_info.num_cntrs;
 	int foo, did_something=0;
 	unsigned int umask;
+	extern int _perfmon2_pfm_pmu_type;
 
 	if ((ret = pfm_get_event_counters(bits->event,&selector)) != PFMLIB_SUCCESS) {
 		PAPIERROR("pfm_get_event_counters(%d,%p): %s",bits->event,&selector,pfm_strerror(ret));
@@ -1050,13 +1054,13 @@ int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
 	}
 
 #if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
-	extern int _perfmon2_pfm_pmu_type;
-	switch (_perfmon2_pfm_pmu_type) {
+	switch (_perfmon2_pfm_pmu_type)
+	{
 		/* All the counters after the 2 CPU counters, the 4 sample counters are SCB registers. */
 		case PFMLIB_MIPS_ICE9A_PMU:
 		case PFMLIB_MIPS_ICE9B_PMU:
 			if (n > 7) n = 7;
-				break;
+			break;
 		default:
 			break;
 	}
