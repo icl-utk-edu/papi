@@ -280,6 +280,54 @@ The only requirement for Solaris is that you must be running version 2.8 or
 newer.  As long as that requirement is met, no additional steps are required 
 to install PAPI and you can follow the general installation guide.
 
+Solaris 10 - UltraSPARC T2/Niagara 2
+*****************************************************************************
+PAPI supports the Niagara 2 on Solaris 10 as of PAPI 3.7.0. The substrate
+offers support for common basic operations like adding/reading/etc and the
+advanced features multiplexing (see below), overflow handling and profiling.
+The implementation for Solaris 10 is based on libcpc 2, which offers access
+to the underlying performance counters. Performance counters for the
+UltraSPARC architecture are described in the UltraSPARC architecture manual
+in general with detailed descriptions in the actual processor manual. In
+case of this substrate the documentation for performance counters can be
+found at:
+
+ - http://www.opensparc.net/publications/specifications/
+
+In order to install PAPI on this platform make sure the packages SUNWcpc and
+SUNWcpcu are installed. For the compilation Sun Studio 12 was used while the
+substrate has been developed. GNU GCC has not been tested and would require
+to modify the makefiles Makefile.solaris-niagara2 (32 bit) and
+Makefile.solaris-niagara2-64bit (64 bit).
+
+The steps required for installation are as follows:
+
+	./configure --with-bitmode=[32|64] --prefix=/is/optional
+	
+		If no --with-bitmode parameter is present a default of
+		32 bit is assumed.
+
+		If no --prefix is used, a default of /usr/local is assumed.
+
+	make
+	make install
+
+If you want to link your application against your installation you should
+make sure to include at least the following linker options:
+
+	-lpapi -lcpc
+
+PLEASE NOTE: This is the first revision of Niagara 2/libcpc 2/Solaris 10
+support and needs further testing! Contributions, especially for the preset
+definitions, would be very appreciated.
+
+MULTIPLEXING: As the Niagara 2 offers no native event to count the cycles
+elapsed, a "synthetic event" was created offering access to the cycle count.
+This event is neither as accurate as the native events, nor it should be
+used for anything else than the multiplexing mode, which needs the cycle
+count in order to work. Therefore multiplexing and the preset PAPI_TOT_CYC
+should be only used with caution. BEWARE OF WRONG COUNTER RESULTS!
+
 Unicos - Cray X1
 *****************************************************************************
 No additional steps are required to get PAPI working on Unicos.
