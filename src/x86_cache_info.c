@@ -1167,6 +1167,41 @@ static int init_intel(PAPI_mh_info_t * mh_info)
 	return(last_level);
 }
 
+#ifdef _WIN32
+static void cpuid(unsigned int *a, unsigned int *b,
+                         unsigned int *c, unsigned int *d)
+{
+	 unsigned int op = *a;
+  // .byte 0x53 == push ebx. it's universal for 32 and 64 bit
+  // .byte 0x5b == pop ebx.
+  // Some gcc's (4.1.2 on Core2) object to pairing push/pop and ebx in 64 bit mode.
+  // Using the opcode directly avoids this problem.
+  __asm__ __volatile__ (".byte 0x53\n\tcpuid\n\tmovl %%ebx, %%esi\n\t.byte 0x5b"
+       : "=a" (*a),
+	     "=S" (*b),
+		 "=c" (*c),
+		 "=d" (*d)
+       : "a" (op));
+#if 0
+   volatile unsigned long tmp, tmp2, tmp3, tmp4;
+   volatile unsigned long in_tmp;
+
+   in_tmp = *a;
+   asm {
+      mov eax, in_tmp;
+      cpuid;
+      mov tmp, eax;
+      mov tmp2, ebx;
+      mov tmp3, ecx;
+      mov tmp4, edx;
+   }
+   *a = tmp;
+   *b = tmp2;
+   *c = tmp3;
+   *d = tmp4;
+#endif
+}
+#else
 inline_static void cpuid(unsigned int *a, unsigned int *b,
                   unsigned int *c, unsigned int *d)
 {
@@ -1182,4 +1217,5 @@ inline_static void cpuid(unsigned int *a, unsigned int *b,
 		 "=d" (*d)
        : "a" (op));
 }
+#endif
 
