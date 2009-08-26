@@ -85,8 +85,7 @@ int main(int argc, char **argv)
    if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
    /* we need a little exception processing if it's a Core i7 */
-   /* Unfortunately, this test never succeeds... */
-   printf("Model String: %s\n",hwinfo->model_string);
+   /* Unfortunately, this test only succeeds on perfmon... */
    Intel_i7 = strstr(hwinfo->model_string, "Intel Core i7");
 
    if ((s = PAPI_get_substrate_info()) == NULL)
