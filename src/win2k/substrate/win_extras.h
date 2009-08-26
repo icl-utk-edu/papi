@@ -27,6 +27,8 @@
 #include <mmsystem.h>
 
 // Defines to map Windows types onto Unix types
+//#define long long LONGLONG
+//#define unsigned long long ULONGLONG
 #define caddr_t char *
 
 // defines for process id
@@ -44,7 +46,7 @@
 
 // Prototypes for routines not found in MS Visual C++
 extern int ffs(int i);
-extern int rand_r (unsigned int *Seed);
+extern int rand_r(unsigned int *Seed);
 extern int getpagesize(void);
 
 
