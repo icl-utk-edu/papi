@@ -347,7 +347,7 @@ foundit:
 
 #ifdef _WIN32
 
-volatile int _papi_hwi_using_signal = 0;
+int _papi_hwi_using_signal[PAPI_NSIG];
 static MMRESULT wTimerID;       // unique ID for referencing this timer
 static UINT wTimerRes;          // resolution for this timer
 
