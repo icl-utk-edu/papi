@@ -425,9 +425,9 @@ static int get_cpu_info(PAPI_hw_info_t *hw_info)
 {
    int retval = PAPI_OK;
    char maxargs[PAPI_HUGE_STR_LEN];
-#ifdef WIN32
    char model[48], *s;
    int i;
+#ifdef WIN32
    for (i = 0; i < 3; ++i)
      __cpuid(&model[i * 16], 0x80000002 + i);
    for (i = 0; i < 48; ++i)
@@ -654,7 +654,7 @@ static int get_cpu_info(PAPI_hw_info_t *hw_info)
       }
 #endif
    fclose(f);
-#endif
+#endif  /* _WIN32 */
    return (retval);
 }
 
@@ -1765,7 +1765,7 @@ int _papi_hwd_update_shlib_info(void)
                                                                                 
       fclose(f);
    }
-#endif
+#endif /* ! WIN32 */
    return (PAPI_OK);
 }
            
@@ -1784,13 +1784,13 @@ static char *basename(const char *path)
 static int get_system_info(papi_mdi_t *mdi)
 {
    int retval;
+   int len;
    /* Software info */
 
    /* Path and args */
 
 #ifdef WIN32
    SYSTEM_INFO si;
-   int len;
    HANDLE hModule;
 
    _papi_hwi_system_info.pid = getpid();
@@ -2067,7 +2067,7 @@ int tune_up_fd(int ctx_fd)
       PAPIERROR("cannot fcntl(F_SETSIG,%d) on %d: %s", _papi_hwi_system_info.sub_info.hardware_intr_sig, ctx_fd, strerror(errno));
       return(PAPI_ESYS);
     }
-#endif
+#endif /* ! WIN32 */
   return(PAPI_OK);
 }
 
@@ -2139,7 +2139,7 @@ static int detach(hwd_context_t *ctx, hwd_control_state_t *ctl)
 
   return(PAPI_OK);
 }
-#endif
+#endif /* ! WIN32 */
 
 inline static int set_domain(hwd_control_state_t * ctl, int domain)
 {
