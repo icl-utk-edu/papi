@@ -20,7 +20,7 @@
 #endif
 
 /* Needed for ioctl call */
-#include <stropts.h>
+#include <sys/ioctl.h>
 
 /* These sentinels tell papi_hwd_overflow() how to set the
  * wakeup_events field in the event descriptor record.
