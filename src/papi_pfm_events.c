@@ -357,9 +357,7 @@ static int load_preset_table(char *pmu_str, int pmu_type, pfm_preset_search_entr
 	      PAPIERROR("Expected name after CPU token at line %d of %s -- ignoring",line_no,name);
 	      goto nextline;
 	    }
-#ifdef SHOW_LOADS
 	  SUBDBG("Examining CPU (%s) vs. (%s)\n",t,pmu_name);
-#endif
 	  if (strcasecmp(t, pmu_name) == 0)
 	    {
 	      int type;
@@ -379,9 +377,7 @@ static int load_preset_table(char *pmu_str, int pmu_type, pfm_preset_search_entr
 		}
 	      else if ((sscanf(t,"%d",&type) == 1) && (type == pmu_type))
 		{
-#ifdef SHOW_LOADS
 		  SUBDBG("Found CPU %s type %d at line %d of %s.\n",pmu_name,type,line_no,name);
-#endif
 		  get_presets = 1;
 		}
 	      else
