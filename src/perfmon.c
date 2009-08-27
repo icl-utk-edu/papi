@@ -45,7 +45,9 @@ extern papi_svector_t _papi_pfm_event_vectors[];
 papi_svector_t _linux_pfm_table[] = {
   {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
   {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
+#ifdef WIN32
   {(void (*)())_papi_hwd_shutdown_global, VEC_PAPI_HWD_SHUTDOWN_GLOBAL},
+#endif
   {(void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE},
 #ifdef WIN32
     {(void (*)())_papi_hwd_timer_callback, VEC_PAPI_HWD_DISPATCH_TIMER},
@@ -3826,7 +3828,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t *ctl,
    return (PAPI_OK);
 }
 
-
+#ifdef WIN32
 void CALLBACK _papi_hwd_timer_callback(UINT wTimerID, UINT msg, 
         DWORD dwUser, DWORD dw1, DWORD dw2) 
 {
@@ -3854,4 +3856,4 @@ void CALLBACK _papi_hwd_timer_callback(UINT wTimerID, UINT msg,
     // pass a void pointer to cpu register data here
     _papi_hwi_dispatch_overflow_signal((void *)&ctx, GET_OVERFLOW_ADDRESS((&ctx)), &isHardware, OVERFLOW_MASK, GEN_OVERFLOW, &master); 
 }
-
+#endif
