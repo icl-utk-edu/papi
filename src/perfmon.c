@@ -427,9 +427,10 @@ static int get_cpu_info(PAPI_hw_info_t *hw_info)
 {
    int retval = PAPI_OK;
    char maxargs[PAPI_HUGE_STR_LEN];
-   char model[48], *s;
-   int i;
+   char *s;
 #ifdef WIN32
+   char model[48];
+   int i;
    for (i = 0; i < 3; ++i)
      __cpuid(&model[i * 16], 0x80000002 + i);
    for (i = 0; i < 48; ++i)
@@ -1786,7 +1787,6 @@ static char *basename(const char *path)
 static int get_system_info(papi_mdi_t *mdi)
 {
    int retval;
-   int len;
    /* Software info */
 
    /* Path and args */
@@ -1794,6 +1794,7 @@ static int get_system_info(papi_mdi_t *mdi)
 #ifdef WIN32
    SYSTEM_INFO si;
    HANDLE hModule;
+   int len;
 
    _papi_hwi_system_info.pid = getpid();
 
