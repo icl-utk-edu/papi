@@ -91,7 +91,7 @@ unsigned long PAPI_thread_id(void)
    if (_papi_hwi_thread_id_fn != NULL)
      return ((*_papi_hwi_thread_id_fn) ());
    else
-     return ((unsigned long) PAPI_EMISC);
+     papi_return (PAPI_EMISC);
 }
 
 /* Thread Functions */
