@@ -8379,7 +8379,7 @@ if test "$OS" = "aix"; then
       esac
       PMINIT=""
       LIBS="-L$PMAPI/lib -lpmapi"
-      CPPFLAGS="-I$PMAPI/include"
+      CPPFLAGS="$CPPFLAGS -I$PMAPI/include"
       { $as_echo "$as_me:$LINENO: checking for pm_initialize in -lpmapi" >&5
 $as_echo_n "checking for pm_initialize in -lpmapi... " >&6; }
 if test "${ac_cv_lib_pmapi_pm_initialize+set}" = set; then

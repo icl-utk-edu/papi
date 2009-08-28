@@ -1252,7 +1252,7 @@ if test "$OS" = "aix"; then
       esac
       PMINIT=""
       LIBS="-L$PMAPI/lib -lpmapi"
-      CPPFLAGS="-I$PMAPI/include"
+      CPPFLAGS="$CPPFLAGS -I$PMAPI/include"
       AC_CHECK_LIB([pmapi], [pm_initialize], [
 			    PMINIT="-DPM_INITIALIZE"], [
 			    AC_CHECK_LIB([pmapi], [pm_init], [
@@ -1572,6 +1572,7 @@ AC_SUBST(pfm_libdir)
 AC_SUBST(bitmode)
 AC_SUBST(CFLAGS)
 AC_SUBST(FFLAGS)
+AC_SUBST(CPPFLAGS)
 AC_SUBST(pfm_events)
 AC_SUBST(pfm_events_table)
 AC_SUBST(tests)
