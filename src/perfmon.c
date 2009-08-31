@@ -3315,7 +3315,7 @@ void _papi_pfm_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
 	wanted_fd = ((pfm_context_t *)thread->context[cidx])->ctx_fd;
       }
       if (wanted_fd != fd) {
-	PAPIERROR("expected fd %d, got %d in _papi_hwi_dispatch_timer!",wanted_fd,fd);
+	SUBDBG("expected fd %d, got %d in _papi_hwi_dispatch_timer!",wanted_fd,fd);
 	if (n == MY_VECTOR.cmp_info.hardware_intr_sig) { ret = read(fd, &msg, sizeof(msg)); pfm_restart(fd); }
 	return;
       }
