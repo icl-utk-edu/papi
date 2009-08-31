@@ -17,4 +17,5 @@ CFLAGS		+= -D __crayxt
 
 endif
 
+SUBSTR		= perfmon.h
 include Rules.pfm_pcl
