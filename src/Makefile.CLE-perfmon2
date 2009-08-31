@@ -17,4 +17,4 @@ CFLAGS		+= -D __crayxt
 
 endif
 
-include Rules.pfm2
+include Rules.pfm_pcl
