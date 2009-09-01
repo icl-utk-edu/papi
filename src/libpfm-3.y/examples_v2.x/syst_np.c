@@ -33,7 +33,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
-#include <syscall.h>
+#include <sched.h>
 #include <err.h>
 
 #include <perfmon/pfmlib.h>
@@ -47,26 +47,20 @@
 
 #define MAX_EVT_NAME_LEN	128
 
-/*
- * pin task to CPU
- */
-#ifndef __NR_sched_setaffinity
-#error "you need to define __NR_sched_setaffinity"
-#endif
-
 #define MAX_CPUS	2048
-#define NR_CPU_BITS	(MAX_CPUS>>3)
+
 int
 pin_cpu(pid_t pid, unsigned int cpu)
 {
-	uint64_t my_mask[NR_CPU_BITS];
+	cpu_set_t my_set;
+        CPU_ZERO(&my_set);
 
 	if (cpu >= MAX_CPUS)
 		errx(1, "this program supports only up to %d CPUs", MAX_CPUS);
 
-	my_mask[cpu>>6] = 1ULL << (cpu&63);
+	CPU_SET(cpu, &my_set);
 
-	return syscall(__NR_sched_setaffinity, pid, sizeof(my_mask), &my_mask);
+	return sched_setaffinity(pid, sizeof(cpu_set_t), &my_set);
 }
 
 int

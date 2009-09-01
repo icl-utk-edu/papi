@@ -115,16 +115,11 @@ pfm_coreduo_init(void)
 {
 	pfm_regmask_set(&coreduo_impl_pmcs, 0);
 	pfm_regmask_set(&coreduo_impl_pmcs, 1);
-	pfm_regmask_set(&coreduo_impl_pmcs, 16);
-	pfm_regmask_set(&coreduo_impl_pmcs, 17);
 
 	pfm_regmask_set(&coreduo_impl_pmds, 0);
 	pfm_regmask_set(&coreduo_impl_pmds, 1);
-	pfm_regmask_set(&coreduo_impl_pmds, 16);
-	pfm_regmask_set(&coreduo_impl_pmds, 17);
-	pfm_regmask_set(&coreduo_impl_pmds, 18);
 
-	highest_counter = 18;
+	highest_counter = 1;
 
 	return PFMLIB_SUCCESS;
 }
