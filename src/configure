@@ -1974,6 +1974,14 @@ fi
 # XTOS_VERSION exists only on Cray systems supporting XT and hence CLE OS
 if test "$XTOS_VERSION"; then
 	use_shared=no
+    use_static=yes
+	pfm_events=static
+    cross_compiling=yes
+# ffsll, tls, walltimer, virtualtimer must be sprecified for cross-compiling
+	ffsll=yes
+	tls=__thread
+    walltimer=cycle
+	virtualtimer=times
 fi
 
 /bin/rm -f ckcat
@@ -8931,6 +8939,7 @@ if test "$shlib" = "dynamic"; then
 else
     LINKLIB='../$(LIBRARY)'
 fi
+
 
 
 

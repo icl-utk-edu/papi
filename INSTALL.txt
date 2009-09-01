@@ -149,7 +149,7 @@ use:
 and instead of:
 	% make fulltest
 useg
-	% ./run_cat_tests.sh
+    % ./run_cat_tests.sh
 
 PLATFORM NOTES:
 PAPI on Catamount currently supports single event overflow. It does not 
@@ -158,24 +158,31 @@ profile tests in the PAPI distribution WILL SEGFAULT in this release.
 
 CLE - Cray XT3/XT4/XT5 Opteron
 *****************************************************************************
-The Cray XT3/4/5 is a cross-compiled environment. You must specify the OS and
+The Cray XT3/4/5 is a cross-compiled environment. You must specify the
 perfmon version to configure as shown below.
 
-Before running configure to create the make file that supports a Cray XT CLE
+Before running configure to create the makefile that supports a Cray XT CLE
 build of PAPI, execute the following module commands:
-
-% module purge
-% module load Base-opts PrgEnv-gnu
+    % module purge
+    % module load Base-opts
+    % module load pgi
+Note: do not load the programming environment module (e.g. PrgEnv-pgi) 
+but the compiler module (e.g. pgi) as shown above.
 
 Check CLE compute nodes for the version of perfmon2 that it supports:
-
-% aprun -b -a xt cat /sys/kernel/perfmon/version
+    % aprun -b -a xt cat /sys/kernel/perfmon/version
 
 and use this version when configuring PAPI:
+    % configure --with-perfmon=2.3 --prefix=<install-dir>
 
-% configure --with-perfmon=2.3 --prefix=<install-dir> --with-OS=CLE
+Example ORNL's Jaguar system: 
+To build PAPI for the compute nodes on ORNL's Jaguar system, you should use
+the Cray wrapper 'cc'. The wrappers will call the appropriate compiler which
+will use the appropriate header files and link against the appropriate
+libraries.
+    % configure --with-perfmon=2.3 --prefix=<install-dir> CC=cc
 
-The testing targets in the make file will not work in the XT CLE environment.
+The testing targets in the makefile will not work in the XT CLE environment.
 It is necessary to log into an interactive session and run the tests
 manually through the job submission system. For example, instead of:
 	% make test
