@@ -46,12 +46,13 @@ int main(int argc, char **argv)
   #if defined(ITANIUM2)
    mask = MASK_TOT_CYC | MASK_FP_OPS | MASK_L2_TCM | MASK_L1_DCM;
   #else
-   if (strcmp(hw_info->model_string, "Intel Pentium III")==0)
+   if (PAPI_get_opt(PAPI_MAX_HWCTRS, NULL) == 2)
       mask = MASK_TOT_CYC | MASK_TOT_INS;
    else
       mask = MASK_TOT_CYC | MASK_TOT_INS | MASK_FP_OPS | MASK_L2_TCM;
   #endif
 #endif
+
    EventSet = add_test_events(&num_events, &mask);
    values = allocate_test_space(1, num_events);
 
@@ -117,7 +118,7 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
       events = power6_events;
       num_events = power6_num_events;
    }
-   else if (strcmp(hw_info->model_string, "Intel Pentium III")==0){
+   else if (PAPI_get_opt(PAPI_MAX_HWCTRS, NULL) == 2){
       events = p3_events;
       num_events = 2;
   }
