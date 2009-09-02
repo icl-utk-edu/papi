@@ -2295,11 +2295,12 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 
      /* Perfmon2 timeouts are based on the clock tick, we need to check
 	them otherwise it will complain at us when we multiplex */
-     struct timespec ts;
-     unsigned long min_timeout_ns;
+    
+	   unsigned long min_timeout_ns;
 #ifdef _WIN32
 	 min_timeout_ns = 10000000;
 #else
+	 struct timespec ts;
      if (syscall(__NR_clock_getres,CLOCK_REALTIME,&ts) == -1) { 
        PAPIERROR("Could not detect proper HZ rate, multiplexing may fail\n");
        min_timeout_ns = 10000000;
