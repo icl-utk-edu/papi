@@ -141,5 +141,5 @@ EXPORTS
 ; Miscellaneous exported structures
 ;
 	_papi_hwi_system_info			@601
-
+	gettimeofday					@602
 
