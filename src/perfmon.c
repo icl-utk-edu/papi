@@ -291,6 +291,86 @@ inline_static long long get_cycles(void)
 #error "No get_cycles support for this architecture. Please modify perfmon.c or compile with a different timer"
 #endif
 
+#define PFM_MAX_PMCDS 20
+
+int _papi_pfm_write_pmcs(hwd_context_t * ctx, hwd_control_state_t * ctl)
+{
+  int i=0, ret;
+
+  SUBDBG("PFM_WRITE_PMCS(%d,%p,%d)\n",ctl->ctx_fd, ctl->pc, ctl->out.pfp_pmc_count);
+  if(ctl->out.pfp_pmc_count>PFM_MAX_PMCDS){
+    for(i=0;i<ctl->out.pfp_pmc_count-PFM_MAX_PMCDS;i+=PFM_MAX_PMCDS){
+      if ((ret = pfm_write_pmcs(ctl->ctx_fd, ctl->pc+i, PFM_MAX_PMCDS))){
+        DEBUGCALL(DEBUG_SUBSTRATE,dump_pmc(ctl));
+        PAPIERROR("pfm_write_pmcs(%d,%p,%d): %s",ctl->ctx_fd,ctl->pc,ctl->out.pfp_pmc_count, strerror(ret));
+        return(PAPI_ESYS);
+      }
+    }
+    DEBUGCALL(DEBUG_SUBSTRATE,dump_pmc(ctl));
+  }
+  if ((ret = pfm_write_pmcs(ctl->ctx_fd, ctl->pc+i, ctl->out.pfp_pmc_count-i))){
+      DEBUGCALL(DEBUG_SUBSTRATE,dump_pmc(ctl));
+      PAPIERROR("pfm_write_pmcs(%d,%p,%d): %s",ctl->ctx_fd,ctl->pc,ctl->out.pfp_pmc_count, strerror(ret));
+      return(PAPI_ESYS);
+  }
+  DEBUGCALL(DEBUG_SUBSTRATE,dump_pmc(ctl));
+
+  return PAPI_OK;
+}
+
+int _papi_pfm_write_pmds(hwd_context_t * ctx, hwd_control_state_t * ctl)
+{
+  int i=0, ret;
+
+  SUBDBG("PFM_WRITE_PMDS(%d,%p,%d)\n",ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count);
+  if(ctl->in.pfp_event_count>PFM_MAX_PMCDS){
+    for(i=0;i<ctl->in.pfp_event_count-PFM_MAX_PMCDS;i+=PFM_MAX_PMCDS){
+      if ((ret = pfm_write_pmds(ctl->ctx_fd, ctl->pd+i, PFM_MAX_PMCDS))){
+        DEBUGCALL(DEBUG_SUBSTRATE,dump_pmd(ctl));
+        PAPIERROR("pfm_write_pmds(%d,%p,%d): errno=%d %s",ctl->ctx_fd,ctl->pd,ctl->in.pfp_event_count, errno, strerror(ret));
+	    perror("pfm_write_pmds");
+        return(PAPI_ESYS);
+      }
+    }
+    DEBUGCALL(DEBUG_SUBSTRATE,dump_pmd(ctl));
+  }
+  if ((ret = pfm_write_pmds(ctl->ctx_fd, ctl->pd+i, ctl->in.pfp_event_count-i))){
+      DEBUGCALL(DEBUG_SUBSTRATE,dump_pmd(ctl));
+      PAPIERROR("pfm_write_pmds(%d,%p,%d): errno=%d %s",ctl->ctx_fd,ctl->pd,ctl->in.pfp_event_count, errno, strerror(ret));
+	  perror("pfm_write_pmds");
+      return(PAPI_ESYS);
+  }
+  DEBUGCALL(DEBUG_SUBSTRATE,dump_pmd(ctl));
+
+  return PAPI_OK;
+}
+
+int _papi_pfm_read_pmds(hwd_context_t * ctx, hwd_control_state_t * ctl)
+{
+  int i=0, ret;
+
+  SUBDBG("PFM_READ_PMDS(%d,%p,%d)\n",ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count);
+  if(ctl->in.pfp_event_count>PFM_MAX_PMCDS){
+    for(i=0;i<ctl->in.pfp_event_count-PFM_MAX_PMCDS;i+=PFM_MAX_PMCDS){
+      if ((ret = pfm_read_pmds(ctl->ctx_fd, ctl->pd+i, PFM_MAX_PMCDS))){
+        DEBUGCALL(DEBUG_SUBSTRATE,dump_pmd(ctl));
+        PAPIERROR("pfm_read_pmds(%d,%p,%d): %s",ctl->ctx_fd,ctl->pd,ctl->in.pfp_event_count, strerror(ret));
+        return((errno == EBADF) ? PAPI_ECLOST : PAPI_ESYS);
+      }
+    }
+    DEBUGCALL(DEBUG_SUBSTRATE,dump_pmd(ctl));
+  }
+  if ((ret = pfm_read_pmds(ctl->ctx_fd, ctl->pd+i, ctl->in.pfp_event_count-i))){
+      DEBUGCALL(DEBUG_SUBSTRATE,dump_pmd(ctl));
+      PAPIERROR("pfm_read_pmds(%d,%p,%d): %s",ctl->ctx_fd,ctl->pd,ctl->in.pfp_event_count, strerror(ret));
+      return((errno == EBADF) ? PAPI_ECLOST : PAPI_ESYS);
+  }
+  DEBUGCALL(DEBUG_SUBSTRATE,dump_pmd(ctl));
+
+  return PAPI_OK;
+}
+
+
 /* This routine effectively does argument checking as the real magic will happen
    in compute_kernel_args. This just gets the value back from the kernel. */
 
@@ -2308,11 +2388,13 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
        min_timeout_ns = ts.tv_nsec;
      }
 #endif
+
      /* This will fail if we've done timeout detection wrong */
      retval = detect_timeout_and_unavail_pmu_regs(&_perfmon2_pfm_unavailable_pmcs,
 						  &_perfmon2_pfm_unavailable_pmds,
 						  &min_timeout_ns);
-     _papi_hwi_system_info.sub_info.itimer_ns = 1000000;
+
+     _papi_hwi_system_info.sub_info.itimer_ns = min_timeout_ns;
      /* This field represents the minimum timer resolution. Anything lower
 	is not possible. Anything higher and it must be a multiple of this */
      _papi_hwi_system_info.sub_info.itimer_res_ns = min_timeout_ns;
@@ -2664,12 +2746,9 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctl)
 	ctl->pd[i].reg_value = 0ULL;
     }
 
-  SUBDBG("PFM_WRITE_PMDS(%d,%p,%d)\n",ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count);
-  if ((ret = pfm_write_pmds(ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count)))
-    {
-      PAPIERROR("pfm_write_pmds(%d,%p,%d): %s",ctl->ctx_fd,ctl->pd,ctl->in.pfp_event_count, strerror(ret));
-      return(PAPI_ESYS);
-    }
+  ret = _papi_pfm_write_pmds(ctx, ctl);
+  if(ret!=PAPI_OK)
+    return PAPI_ESYS;
 
   return (PAPI_OK);
 }
@@ -2688,12 +2767,9 @@ int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctl, long long *fro
 	ctl->pd[i].reg_value = from[i];
     }
 
-  SUBDBG("PFM_WRITE_PMDS(%d,%p,%d)\n",ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count);
-  if ((ret = pfm_write_pmds(ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count)))
-    {
-      PAPIERROR("pfm_write_pmds(%d,%p,%d): %s",ctl->ctx_fd,ctl->pd,ctl->in.pfp_event_count, strerror(ret));
-      return(PAPI_ESYS);
-    }
+  ret = _papi_pfm_write_pmds(ctx, ctl);
+  if(ret!=PAPI_OK)
+    return PAPI_ESYS;
 
   return (PAPI_OK);
 }
@@ -2704,16 +2780,10 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctl,
   int i, ret;
   long long tot_runs = 0LL;
 
-  SUBDBG("PFM_READ_PMDS(%d,%p,%d)\n",ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count);
-  if ((ret = pfm_read_pmds(ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count)))
-    {
-      DEBUGCALL(DEBUG_SUBSTRATE,dump_pmd(ctl));
-      PAPIERROR("pfm_read_pmds(%d,%p,%d): %s",ctl->ctx_fd,ctl->pd,ctl->in.pfp_event_count, strerror(ret));
-      *events = NULL;
-      return((errno == EBADF) ? PAPI_ECLOST : PAPI_ESYS);
-    }
-  DEBUGCALL(DEBUG_SUBSTRATE,dump_pmd(ctl));
-  
+  ret = _papi_pfm_read_pmds(ctx, ctl);
+  if(ret!=PAPI_OK)
+    return PAPI_ESYS;
+
   /* Copy the values over */
 
   for (i=0; i < ctl->in.pfp_event_count; i++) 
@@ -2800,7 +2870,8 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctl)
       if ((ret = pfm_create_evtsets(ctl->ctx_fd,ctl->set,ctl->num_sets)) != PFMLIB_SUCCESS)
 	{
 	  DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(ctl->set,ctl->num_sets));
-	  PAPIERROR("pfm_create_evtsets(%d,%p,%d): %s", ctl->ctx_fd,ctl->set,ctl->num_sets, strerror(ret));
+	  PAPIERROR("pfm_create_evtsets(%d,%p,%d): errno=%d  %s", ctl->ctx_fd,ctl->set,ctl->num_sets, errno, strerror(ret));
+	  perror("pfm_create_evtsets");
 	  return(PAPI_ESYS);
 	}
       DEBUGCALL(DEBUG_SUBSTRATE,dump_sets(ctl->set,ctl->num_sets));
@@ -2815,15 +2886,10 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctl)
    * monitors.
    */
 
-  SUBDBG("PFM_WRITE_PMCS(%d,%p,%d)\n",ctl->ctx_fd, ctl->pc, ctl->out.pfp_pmc_count);
-  if ((ret = pfm_write_pmcs(ctl->ctx_fd, ctl->pc, ctl->out.pfp_pmc_count)))
-    {
-      DEBUGCALL(DEBUG_SUBSTRATE,dump_pmc(ctl));
-      PAPIERROR("pfm_write_pmcs(%d,%p,%d): %s",ctl->ctx_fd,ctl->pc,ctl->out.pfp_pmc_count, strerror(ret));
-      return(PAPI_ESYS);
-    }
-  DEBUGCALL(DEBUG_SUBSTRATE,dump_pmc(ctl));
-  
+  ret = _papi_pfm_write_pmcs(ctx, ctl);
+  if(ret!=PAPI_OK)
+    return PAPI_ESYS;
+ 
   /* Set counters to zero as per PAPI_start man page, unless it is set to overflow */
 
   for (i=0; i < ctl->in.pfp_event_count; i++) 
@@ -2835,14 +2901,9 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctl)
    * as being part of a sample (reg_smpl_pmds)
    */
 
-  SUBDBG("PFM_WRITE_PMDS(%d,%p,%d)\n",ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count);
-  if ((ret = pfm_write_pmds(ctl->ctx_fd, ctl->pd, ctl->in.pfp_event_count)))
-    {
-      DEBUGCALL(DEBUG_SUBSTRATE,dump_pmd(ctl));
-      PAPIERROR("pfm_write_pmds(%d,%p,%d): %s",ctl->ctx_fd,ctl->pd,ctl->in.pfp_event_count, strerror(ret));
-      return(PAPI_ESYS);
-    }
-  DEBUGCALL(DEBUG_SUBSTRATE,dump_pmd(ctl));
+  ret = _papi_pfm_write_pmds(ctx, ctl);
+  if(ret!=PAPI_OK)
+    return PAPI_ESYS;
 
   SUBDBG("PFM_LOAD_CONTEXT(%d,%p(%u))\n",ctl->ctx_fd,ctl->load,ctl->load->load_pid);
   if ((ret = pfm_load_context(ctl->ctx_fd,ctl->load)))
@@ -2912,11 +2973,11 @@ int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctl)
 
 inline_static int round_requested_ns(int ns)
 {
-  if (ns < _papi_hwi_system_info.sub_info.itimer_res_ns) {
+  if (ns <= _papi_hwi_system_info.sub_info.itimer_res_ns) {
     return _papi_hwi_system_info.sub_info.itimer_res_ns;
   } else {
     int leftover_ns = ns % _papi_hwi_system_info.sub_info.itimer_res_ns;
-    return ns + leftover_ns;
+    return (ns - leftover_ns + _papi_hwi_system_info.sub_info.itimer_res_ns);
   }
 }
 
