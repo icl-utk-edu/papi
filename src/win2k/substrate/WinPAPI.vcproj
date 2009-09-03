@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="6.00"
+	Version="7.00"
 	Name="WinPAPI"
 	ProjectGUID="{79C06D69-82F0-4DE7-BF2B-77BAE876EBD9}"
 	RootNamespace="WinPAPI"
@@ -54,7 +54,7 @@
 				AdditionalOptions="/D CONFIG_PFMLIB_ARCH_I386"
 				Optimization="0"
 				AdditionalIncludeDirectories=".;..\..;..\winpmc;..\winpmc\sys;..\..\libpfm-3.y\include"
-				PreprocessorDefinitions="DEBUG;_DEBUG;_WINDOWS;_USRDLL;FORTRANCAPS;WinPAPI_EXPORTS;_CRT_SECURE_NO_DEPRECATE;__i386__;inline=__inline;LINE_MAX=512;PATH_MAX=64;SUBSTRATE=&lt;perfmon.h&gt;;CONFIG_PFMLIB_ARCH_I386;STATIC_PERFMON_EVENTS_TABLE;PERFCTR_PFM_EVENTS;isblank=isspace;NO_VARARG_MACRO"
+				PreprocessorDefinitions="DEBUG;_DEBUG;_WINDOWS;_USRDLL;FORTRANCAPS;WinPAPI_EXPORTS;_CRT_SECURE_NO_DEPRECATE;__i386__;inline=__inline;LINE_MAX=512;PATH_MAX=64;SUBSTRATE=&lt;perfmon.h&gt;;CONFIG_PFMLIB_ARCH_I386;STATIC_PERFMON_EVENTS_TABLE;SUBSTRATE_USES_LIBPFM;isblank=isspace;NO_VARARG_MACRO"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
