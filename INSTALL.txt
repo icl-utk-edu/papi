@@ -538,6 +538,19 @@ used for anything else than the multiplexing mode, which needs the cycle
 count in order to work. Therefore multiplexing and the preset PAPI_TOT_CYC
 should be only used with caution. BEWARE OF WRONG COUNTER RESULTS!
 
+HINT: In case of a data race the Instr_FGU_arithmetic might not count all 
+events therefore there might be a difference between theory and actual 
+results. The missing events might be caused by consistency or coherency 
+protocols reverting the operations as they overlap. The behavior was observed 
+with several threads accessing the same data set and performing the same 
+floating-point instructions (OpenMP parallel region with data shared on heap, 
+no synchronization or locking). 
+
+You should encounter this problem only in faulty programs with shared memory 
+parallization (compare single threaded vs. multi threaded event count) - a 
+correct implementation should give you exact results. Other native events 
+related to instructions (Instr_*) might be influenced by this behavior.
+
 Unicos - Cray X1
 *****************************************************************************
 No additional steps are required to get PAPI working on Unicos.
