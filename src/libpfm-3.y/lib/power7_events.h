@@ -1472,7 +1472,7 @@ static const unsigned long long power7_group_vecs[][POWER7_NUM_GROUP_VEC] = {
 		0x1ea80000e00c4001ULL,
 		0xe0f0070804120ce6ULL,
 		0x60007b087f80f3f7ULL,
-		0x1ffffffffcb838ffULL
+		0xdffffffffcb838ffULL
 	},
 	[ POWER7_PME_PM_FXU_IDLE ] = {
 		0x0024000000000000ULL,
@@ -1736,7 +1736,7 @@ static const unsigned long long power7_group_vecs[][POWER7_NUM_GROUP_VEC] = {
 		0x0000000000000000ULL,
 		0x1000000000000000ULL,
 		0x0000000000000000ULL,
-		0x0000000000000000ULL
+		0x2000000000000000ULL
 	},
 	[ POWER7_PME_PM_GCT_FULL_CYC ] = {
 		0x0000000000000000ULL,
@@ -1784,7 +1784,7 @@ static const unsigned long long power7_group_vecs[][POWER7_NUM_GROUP_VEC] = {
 		0xfffd2fffffffffffULL,
 		0xffffffffffffffffULL,
 		0xffffffffffffffffULL,
-		0x1fffffffffffffffULL
+		0xffffffffffffffffULL
 	},
 	[ POWER7_PME_PM_MRK_VSU_FIN ] = {
 		0x0000000000000000ULL,
@@ -2408,7 +2408,7 @@ static const unsigned long long power7_group_vecs[][POWER7_NUM_GROUP_VEC] = {
 		0x0000000400000000ULL,
 		0x0200000000000000ULL,
 		0x0000000000000000ULL,
-		0x0000000000000000ULL
+		0xc000000000000000ULL
 	},
 	[ POWER7_PME_PM_VSU0_VECT_DOUBLE_ISSUED ] = {
 		0x0000000000000000ULL,
@@ -2438,7 +2438,7 @@ static const unsigned long long power7_group_vecs[][POWER7_NUM_GROUP_VEC] = {
 		0x0000000000008000ULL,
 		0x0200001000000000ULL,
 		0x0000000000000000ULL,
-		0x0000000000184000ULL
+		0x8000000000184000ULL
 	},
 	[ POWER7_PME_PM_DATA_FROM_RL2L3_MOD ] = {
 		0x0000000000000000ULL,
@@ -2648,7 +2648,7 @@ static const unsigned long long power7_group_vecs[][POWER7_NUM_GROUP_VEC] = {
 		0x0000000000000000ULL,
 		0x0000000000000000ULL,
 		0x0000060000000000ULL,
-		0x0000000000080000ULL
+		0xc000000000080000ULL
 	},
 	[ POWER7_PME_PM_PTEG_FROM_L21_SHR ] = {
 		0x0000000001000000ULL,
@@ -3014,7 +3014,7 @@ static const unsigned long long power7_group_vecs[][POWER7_NUM_GROUP_VEC] = {
 		0x0000000000000000ULL,
 		0x0000000000000000ULL,
 		0x0000000000000100ULL,
-		0x0000000000000000ULL
+		0x2000000000000000ULL
 	},
 	[ POWER7_PME_PM_VSU1_FIN ] = {
 		0x0000000000000000ULL,
@@ -3032,7 +3032,7 @@ static const unsigned long long power7_group_vecs[][POWER7_NUM_GROUP_VEC] = {
 		0xfffd2fffffffffffULL,
 		0xffffffffffffffffULL,
 		0xffffffffffffffffULL,
-		0x1fffffffffffffffULL
+		0xffffffffffffffffULL
 	},
 	[ POWER7_PME_PM_PTEG_FROM_RMEM ] = {
 		0x0000000090800000ULL,
@@ -3062,7 +3062,7 @@ static const unsigned long long power7_group_vecs[][POWER7_NUM_GROUP_VEC] = {
 		0x0000000000000000ULL,
 		0x0000000000000000ULL,
 		0x0000000000000000ULL,
-		0x0000000000084000ULL
+		0x4000000000084000ULL
 	},
 	[ POWER7_PME_PM_L2_NODE_PUMP ] = {
 		0x0000000000000000ULL,
@@ -3620,7 +3620,7 @@ static const unsigned long long power7_group_vecs[][POWER7_NUM_GROUP_VEC] = {
 		0x0000000000000000ULL,
 		0x0000000000000000ULL,
 		0x0000000000000100ULL,
-		0x0000000000000000ULL
+		0x2000000000000000ULL
 	},
 	[ POWER7_PME_PM_LSU_LMQ_SRQ_EMPTY_CYC ] = {
 		0x0000000000000000ULL,
@@ -4124,7 +4124,7 @@ static const unsigned long long power7_group_vecs[][POWER7_NUM_GROUP_VEC] = {
 		0x0000000000000000ULL,
 		0x0000000000000000ULL,
 		0x0000000000070100ULL,
-		0x0000000000000000ULL
+		0x2000000000000000ULL
 	},
 	[ POWER7_PME_PM_HV_CYC ] = {
 		0x0000000000000000ULL,
@@ -8553,10 +8553,17 @@ static const int power7_group_event_ids[][POWER7_NUM_EVENT_COUNTERS] = {
 	[ 245 ] = { 209, 76, 186, 184, 0, 0 },
 	[ 246 ] = { 80, 193, 186, 186, 0, 0 },
 	[ 247 ] = { 80, 177, 194, 186, 0, 0 },
-	[ 248 ] = { 193, 76, 204, 183, 0, 0 }
+	[ 248 ] = { 193, 76, 204, 183, 0, 0 },
+	[ 249 ] = { 194, 191, 202, 75, 0, 0 },
+	[ 250 ] = { 60, 225, 74, 182, 0, 0 },
+	[ 251 ] = { 204, 76, 195, 193, 0, 0 },
+	[ 252 ] = { 21, 23, 74, 186, 0, 0 },
+	[ 253 ] = { 248, 249, 244, 235, 0, 0 },
+	[ 254 ] = { 80, 233, 228, 106, 0, 0 },
+	[ 255 ] = { 80, 233, 111, 105, 0, 0 }
 };
 
-static const pmg_power_group_t power7_groups[] = {
+static pmg_power_group_t power7_groups[] = {
 	[ 0 ] = {
 		.pmg_name = "pm_utilization",
 		.pmg_desc = "CPI and utilization data",
@@ -10548,6 +10555,62 @@ static const pmg_power_group_t power7_groups[] = {
 		.pmg_mmcr0 = 0x0000000000000000ULL,
 		.pmg_mmcr1 = 0x000000003c023238ULL,
 		.pmg_mmcra = 0x0000000000000001ULL
+	},
+	[ 249 ] = {
+		.pmg_name = "pm_mrk_misc5",
+		.pmg_desc = "Marked misc events",
+		.pmg_event_ids = power7_group_event_ids[249],
+		.pmg_mmcr0 = 0x0000000000000000ULL,
+		.pmg_mmcr1 = 0x000000003d323f02ULL,
+		.pmg_mmcra = 0x0000000000000001ULL
+	},
+	[ 250 ] = {
+		.pmg_name = "pm_mrk_misc6",
+		.pmg_desc = "Marked misc events",
+		.pmg_event_ids = power7_group_event_ids[250],
+		.pmg_mmcr0 = 0x0000000000000000ULL,
+		.pmg_mmcr1 = 0x0000000030f40230ULL,
+		.pmg_mmcra = 0x0000000000000001ULL
+	},
+	[ 251 ] = {
+		.pmg_name = "pm_mrk_misc7",
+		.pmg_desc = "Marked misc events",
+		.pmg_event_ids = power7_group_event_ids[251],
+		.pmg_mmcr0 = 0x0000000000000000ULL,
+		.pmg_mmcr1 = 0xd000000082026464ULL,
+		.pmg_mmcra = 0x0000000000000001ULL
+	},
+	[ 252 ] = {
+		.pmg_name = "pm_mrk_misc8",
+		.pmg_desc = "Marked misc events",
+		.pmg_event_ids = power7_group_event_ids[252],
+		.pmg_mmcr0 = 0x0000000000000000ULL,
+		.pmg_mmcr1 = 0x000000001e1e0232ULL,
+		.pmg_mmcra = 0x0000000000000001ULL
+	},
+	[ 253 ] = {
+		.pmg_name = "pm_vsu15",
+		.pmg_desc = "FP ops",
+		.pmg_event_ids = power7_group_event_ids[253],
+		.pmg_mmcr0 = 0x0000000000000000ULL,
+		.pmg_mmcr1 = 0xaaaa000f809ca098ULL,
+		.pmg_mmcra = 0x0000000000000000ULL
+	},
+	[ 254 ] = {
+		.pmg_name = "pm_l1_dcache_accesses",
+		.pmg_desc = "L1 D-Cache accesses",
+		.pmg_event_ids = power7_group_event_ids[254],
+		.pmg_mmcr0 = 0x0000000000000000ULL,
+		.pmg_mmcr1 = 0x000c000102f0f080ULL,
+		.pmg_mmcra = 0x0000000000000000ULL
+	},
+	[ 255 ] = {
+		.pmg_name = "pm_loads_and_stores",
+		.pmg_desc = "Load and Store instructions",
+		.pmg_event_ids = power7_group_event_ids[255],
+		.pmg_mmcr0 = 0x0000000000000000ULL,
+		.pmg_mmcr1 = 0x00c0000202f080f0ULL,
+		.pmg_mmcra = 0x0000000000000000ULL
 	}
 };
 
