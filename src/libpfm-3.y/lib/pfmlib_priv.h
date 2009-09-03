@@ -87,7 +87,7 @@ extern int __pfm_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen)
 extern void pfm_init_syscalls(void);
 
 #ifdef PFMLIB_DEBUG
-#ifdef WIN32
+#ifdef _WIN32
 #define DPRINT(...)
 #else
 #define DPRINT(fmt, a...) \
