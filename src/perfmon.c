@@ -2394,7 +2394,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 						  &_perfmon2_pfm_unavailable_pmds,
 						  &min_timeout_ns);
 
-     _papi_hwi_system_info.sub_info.itimer_ns = min_timeout_ns;
+     _papi_hwi_system_info.sub_info.itimer_ns = 10000000;
      /* This field represents the minimum timer resolution. Anything lower
 	is not possible. Anything higher and it must be a multiple of this */
      _papi_hwi_system_info.sub_info.itimer_res_ns = min_timeout_ns;
