@@ -651,7 +651,7 @@ inline int set_irange(hwd_context_t * ctx, hwd_control_state_t * current_state, 
       return(pfmw_create_ctx_common(thr_ctx)); 
    }
 
-   inline int set_pmds_to_write(EventSetInfo_t * ESI, int index, int value)
+   inline int set_pmds_to_write(EventSetInfo_t * ESI, unsigned int index, long value)
    {
       int *pos, count, hwcntr, i;
       hwd_control_state_t *this_state = (hwd_control_state_t *)&ESI->machdep;
