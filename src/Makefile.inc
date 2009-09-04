@@ -153,7 +153,8 @@ dist:
 
 install-all: install install-tests
 
-install: install-lib install-man install-utils
+#install: install-lib install-man install-utils
+install: install-lib install-utils
 
 install-lib: native_install
 	@echo "Headers (INCDIR) being installed in: \"$(DESTDIR)$(INCDIR)\""; 
@@ -174,8 +175,9 @@ install-lib: native_install
 		cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so; \
 	fi
 
-install-man: 
-	cd ../man && $(MAKE) DOCDIR=$(DESTDIR)$(DOCDIR) MANDIR=$(DESTDIR)$(MANDIR) install
+# the man pages and doc files have been deprecated and replaced by web documentation
+#install-man: 
+#	cd ../man && $(MAKE) DOCDIR=$(DESTDIR)$(DOCDIR) MANDIR=$(DESTDIR)$(MANDIR) install
 
 install-utils: 
 	$(SETPATH) cd utils; $(MAKE) BINDIR="$(DESTDIR)$(BINDIR)" CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. $(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY=$(LINKLIB) install
