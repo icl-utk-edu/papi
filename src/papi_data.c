@@ -340,7 +340,7 @@ const unsigned int _papi_hwi_preset_type[] = {
    /*124*/ 0,
    /*125*/ 0,
    /*126*/ 0,
-   /*127*/ 0,
+   /*127*/ 0
 };
 
 const hwi_describe_t _papi_hwi_err[PAPI_NUM_ERRORS] = {
