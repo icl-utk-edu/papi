@@ -105,7 +105,7 @@ enum {
    PAPI_LD_INS_idx,  /*Load instructions executed */
    PAPI_SR_INS_idx,  /*Store instructions executed */
    PAPI_BR_INS_idx,  /*Total branch instructions executed */
-   PAPI_VEC_INS_idx, /*Vector/SIMD instructions executed */
+   PAPI_VEC_INS_idx, /*Vector/SIMD instructions executed (could include integer) */
    PAPI_RES_STL_idx, /*Cycles processor is stalled on resource */
    PAPI_FP_STAL_idx, /*Cycles any FP units are stalled */
    PAPI_TOT_CYC_idx, /*Total cycles */
@@ -154,7 +154,11 @@ enum {
    PAPI_FDV_INS_idx, /*FD ins */
    PAPI_FSQ_INS_idx, /*FSq ins */
    PAPI_FNV_INS_idx, /*Finv ins */
-   PAPI_FP_OPS_idx,  /*Floating point operations executed */
+   PAPI_FP_OPS_idx,  /* Floating point operations executed */
+   PAPI_SP_OPS_idx,  /* Floating point operations executed; optimized to count scaled single precision vector operations */
+   PAPI_DP_OPS_idx,  /* Floating point operations executed; optimized to count scaled double precision vector operations */
+   PAPI_VEC_SP_idx,  /* Single precision vector/SIMD instructions */
+   PAPI_VEC_DP_idx,  /* Double precision vector/SIMD instructions */
 #ifdef _BGL
    PAPI_BGL_OED_idx,     /*Oedipus operations */
    PAPI_BGL_TS_32B_idx , /*Torus 32B chunks sent */
@@ -221,7 +225,7 @@ enum {
 #define PAPI_LD_INS  (PAPI_LD_INS_idx  | PAPI_PRESET_MASK) /*Load instructions executed */
 #define PAPI_SR_INS  (PAPI_SR_INS_idx  | PAPI_PRESET_MASK) /*Store instructions executed */
 #define PAPI_BR_INS  (PAPI_BR_INS_idx  | PAPI_PRESET_MASK) /*Total branch instructions executed */
-#define PAPI_VEC_INS (PAPI_VEC_INS_idx | PAPI_PRESET_MASK) /*Vector/SIMD instructions executed */
+#define PAPI_VEC_INS (PAPI_VEC_INS_idx | PAPI_PRESET_MASK) /*Vector/SIMD instructions executed (could include integer) */
 #define PAPI_RES_STL (PAPI_RES_STL_idx | PAPI_PRESET_MASK) /*Cycles processor is stalled on resource */
 #define PAPI_FP_STAL (PAPI_FP_STAL_idx | PAPI_PRESET_MASK) /*Cycles any FP units are stalled */
 #define PAPI_TOT_CYC (PAPI_TOT_CYC_idx | PAPI_PRESET_MASK) /*Total cycles */
@@ -267,8 +271,11 @@ enum {
 #define PAPI_FDV_INS (PAPI_FDV_INS_idx | PAPI_PRESET_MASK) /*FD ins */
 #define PAPI_FSQ_INS (PAPI_FSQ_INS_idx | PAPI_PRESET_MASK) /*FSq ins */
 #define PAPI_FNV_INS (PAPI_FNV_INS_idx | PAPI_PRESET_MASK) /*Finv ins */
-#define PAPI_FP_OPS  (PAPI_FP_OPS_idx  | PAPI_PRESET_MASK) /*Floating point operations executed */
-
+#define PAPI_FP_OPS  (PAPI_FP_OPS_idx  | PAPI_PRESET_MASK) /* Floating point operations executed */
+#define PAPI_SP_OPS  (PAPI_SP_OPS_idx  | PAPI_PRESET_MASK) /* Floating point operations executed; optimized to count scaled single precision vector operations */
+#define PAPI_DP_OPS  (PAPI_DP_OPS_idx  | PAPI_PRESET_MASK) /* Floating point operations executed; optimized to count scaled double precision vector operations */
+#define PAPI_VEC_SP  (PAPI_VEC_SP_idx  | PAPI_PRESET_MASK) /* Single precision vector/SIMD instructions */
+#define PAPI_VEC_DP  (PAPI_VEC_DP_idx  | PAPI_PRESET_MASK) /* Double precision vector/SIMD instructions */
 #ifdef _BGL
 #define PAPI_BGL_OED (PAPI_BGL_OED_idx | PAPI_PRESET_MASK)
 #define PAPI_BGL_TS_32B (PAPI_BGL_TS_32B_idx | PAPI_PRESET_MASK)
