@@ -118,6 +118,7 @@ my_thread(void *v)
 	print_rate(num);
     }
 
+    PAPI_shutdown();
     return (NULL);
 }
 
