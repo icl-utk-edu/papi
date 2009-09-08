@@ -87,11 +87,15 @@ extern int __pfm_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen)
 extern void pfm_init_syscalls(void);
 
 #ifdef PFMLIB_DEBUG
+#ifdef _WIN32
+#define DPRINT(...) /* todo */
+#else
 #define DPRINT(fmt, a...) \
 	do { \
 		if (pfm_config.options.pfm_debug) { \
 			fprintf(libpfm_fp, "%s (%s.%d): " fmt, __FILE__, __func__, __LINE__, ## a); } \
 	} while (0)
+#endif
 #else
 #define DPRINT(a)
 #endif
