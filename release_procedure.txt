@@ -60,6 +60,8 @@ __ 17. Create a News item on the PAPI Web page.
 
 __ 18. Email the papi developer and discussion lists with an announcement.
 
+__ 19. Post the announcement on the PAPI User Forum.
+
 
 
 	

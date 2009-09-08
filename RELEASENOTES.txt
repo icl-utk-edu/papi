@@ -1,4 +1,86 @@
 ===============================================================================
+PAPI 3.7.0 RELEASE NOTES                                            08 Sep 2009
+===============================================================================
+
+This file documents changes in recent PAPI releases in inverse chronological
+order.
+
+For details on installing PAPI on your machine, consult the INSTALL.txt file
+in this directory.
+
+For specific and detailed information on changes made in this release, grep
+the ChangeLogP370.txt file for keywords of interest or go directly to the PAPI
+cvs tree.
+
+
+GENERAL NOTES
+===============================================================================
+This release is a recommended upgrade to PAPI 3.6.x. It addresses a number of 
+open issues and introduces support for several new platforms, including Intel
+Nehalem (Core i7), Atom, POWER7 and Niagara2.
+
+If you are currently using PAPI 3.6.x or earlier, it is recommended that you 
+upgrade to this version.
+
+As always, if you identify strange behavior or reproducible bugs, please
+contact the PAPI team or the PAPI User Forum.
+
+And visit the PAPI website for the latest updates:
+http://icl.cs.utk.edu/papi/
+
+NOTE: If you are looking for the man pages and other user documentation, look
+online. We decided we could provide better and more timely support by 
+maintaining just the online documentation. Let us know if you think this is a
+bad decision.
+
+
+CHANGES IN PAPI 3.7.0 SINCE PAPI 3.6.2
+===============================================================================
+Bug Fixes:
+----------
+- many minor bugs fixed in tests and in specific cpu components
+- fixed support for Intel CoreDuo (not Core2) broken in PAPI 3.6.x
+- fixed library init failure on AIX Power6 when executable names > 32 char long
+- fixed avail.F construct that was crashing some versions of gfortran
+
+Enhancements:
+-------------
+- A new utility has been added: papi_version
+- Added 4 new PRESET events to better handle SIMD instructions on Intel cpus:
+  PAPI_DP_OPS - counts double precision scalar and vector FP operations
+  PAPI_SP_OPS - counts single precision scalar and vector FP operations
+  PAPI_VEC_DP - counts double precision vector instructions
+  PAPI_VEC_SP - counts single precision vector instructions
+- FreeBSD support upgrade and new support for Atom and Intel Core2
+
+New Platforms:
+-------------
+- Intel Core i7 (Nehalem) support for 7 core counters; no support for 
+  Uncore counters
+- Intel Atom 
+- AMD Opteron Barcelona, Shanghai, Istanbul event table support
+- POWER7 support for Linux thanks to IBM
+- Sun Niagara2 support thanks to Aachen University, Germany
+- Resurrected support for PAPI on Windows; now supports Intel Core2 and Core i7
+
+Major Issues:
+-------------
+- PAPI for Windows does not support 64-bit versions due to compiler issues.
+
+Experimental:
+-------------
+- Support for the perf_counters (PCL: Performance Counters for Linux) interface
+  is available as a technology pre-release for Linux kernel 3.6.31 and later.
+  This has been tested on IBM POWER and Intel Core2 and successfully performs 
+  basic counting operations. It has not been stress tested. Caveat Emptor.
+
+Known Bugs:
+-----------
+- clock speeds are occasionally not reported correctly for systems with
+  SpeedStep technology.
+- Intel Atom crashes on a small number of standard tests. 
+
+===============================================================================
 PAPI 3.6.2 RELEASE NOTES                                            03 Oct 2008
 ===============================================================================
 
