@@ -53,19 +53,11 @@ General Installation
 
 	% make install
 
-	b) To install PAPI manual pages from the build tree:
-
-	% make install-man
-
-	c) To install PAPI test programs from the build tree:
+	b) To install PAPI test programs from the build tree:
 
 	% make install-tests
 
-	d) To install all of the above in one step from the build tree:
-
-	% make install-all
-
-	e) To create a binary kit, papi-<arch>.tgz:
+	c) To create a binary kit, papi-<arch>.tgz:
 
 	% make dist
 
@@ -73,19 +65,19 @@ General Installation
 MORE ABOUT CONFIGURE OPTIONS
 *****************************************************************************
 
-Beginning with PAPI 3.5.0, there is an extensive array of options available
-from the configure command-line. These options select default directories,
-32- or 64-bit library modes, driver versions, compiler settings and more.
-For complete details on the command-line options:
+An extensive array of options is available from the configure command-line. 
+These options select default directories, 32- or 64-bit library modes, driver 
+versions, compiler settings and more. For complete details on the command-line 
+options:
 	% ./configure --help
 
 *****************************************************************************
 Operating System Specific Installation Steps (In Alphabetical Order by OS)
 *****************************************************************************
 
-AIX - IBM POWER3, POWER4, POWER5, POWER6
+AIX - IBM POWER4, POWER5, POWER6
 *****************************************************************************
-PAPI is supported on AIX 5.x for POWER3,4,5 and 6.
+PAPI is supported on AIX 5.x for POWER4,5 and 6.
 Use ./configure to select the desired make options for your system, 
 specifying the --with_bitmode=32 or --with-bitmode=64 to select wordlength.
 32 bits is the default.
@@ -116,6 +108,11 @@ automate testing for your installation.
 WARNING: ./configure might fail if the cross compiler is not in your path.
 	 In that is the case, just add it to your path 
 	 and everything should work.
+
+BG/P 
+*****************************************************************************
+BG/P is not supported in PAPI 3.7.0. It requires the PAPI 3.9.0 or greater 
+release and a patch available from IBM.
 
 Catamount - Cray XT3/XT4 Opteron
 *****************************************************************************
@@ -257,14 +254,18 @@ Intel Pentium 4, AMD K7 (AMD Athlon) and AMD K8 (AMD Athlon64 / Opteron).
 FreeBSD 8 also adds support for Core/Core2/Atom processors. There is also a
 patch for FreeBSD 7/7.1 in http://wiki.freebsd.org/PmcTools
 
+IRIX - MIPS
+*****************************************************************************
+No additional steps are required to install PAPI on IRIX. Follow the 
+general installation guide, and everything should work.
+
 Linux - IBM Cell
 *****************************************************************************
 PAPI on Cell requires the perfmon2 patch and libpfm library available from
 sourceforge <http://sourceforge.net/projects/perfmon2>. If the kernel is
 properly patched, PAPI should configure and build as described under General
-Installation, above. Support for Cell is currently experimental and limited
-to basic counting and native event support, with a limited number of PRESET
-events. 
+Installation, above. Support for Cell is experimental and limited to basic
+counting and native event support, with a limited number of PRESET events. 
 
 Linux - Itanium I, II, Montecito, Montvale
 *****************************************************************************
@@ -293,11 +294,25 @@ Linux - MIPS/MIPS64
 
 If the kernel is patched with Perfmon2, you're all set to go. 
 
-Linux - PPC64 (POWER4,5,6 and PowerPC970)
+Linux - PPC64 (POWER4, 5, 6, 7 and PowerPC970)
 ****************************************************************************
+Linux/PPC64 kernels prior to 2.6.31 must be patched with either Perfctr or
+Perfmon and recompiled to support access to hardware counters. Kernels 
+including 2.6.31 and following include built-in support for the perf_counters
+or PCL (Performance Counters for Linux) interface. PAPI supports all three.
+
+PCL:
+If you are running Linux kernel 2.6.31 or later, your system has built-in 
+support for hardware counters through the perf_counters interface. No kernel 
+patch is required. The current version of configure for PAPI does not auto-
+matically detect the presence of perf_counters, so you need to specify
+	% ./configure --with-pcl=yes
+on the configure command line. This interface has not been fully tested, but
+has been verified to work on basic counting operations. It should be considered
+a technical pre-release.
+
 PERFCTR:
-Linux/PPC64 requires that the kernel be patched and recompiled with the
-PerfCtr patch.   The required patches and complete installation instructions
+The required patches and complete installation instructions for Perfctr
 are provided in the papi/src/perfctr-2.7.x directory. PPC64 is the ONLY 
 platform that REQUIRES use of PerfCtr 2.7.x.
 
@@ -356,22 +371,30 @@ build and installation procedure.
 Note: BITMODE is ignored by PAPI's Makefile, and is only used by
 libpfm's Makefile.
 
-Linux/x86 - Intel Pentium, Core and AMD Athlon, Opteron
+Linux/x86 - Intel Pentium, Core, Core2, Atom, i7 and AMD Athlon, Opteron
 *****************************************************************************
-Linux/x86 requires that the kernel be patched and recompiled to enable access
-to the performance counters.
+Linux/x86 kernels prior to 2.6.31 must be patched with either Perfctr or
+Perfmon and recompiled to support access to hardware counters. Kernels 
+including 2.6.31 and following include built-in support for the perf_counters
+or PCL (Performance Counters for Linux) interface. PAPI supports all three of
+these interfaces.
 
-Historically, PAPI has used the PerfCtr patch.
-This version of PAPI also supports the perfmon2 patch found at
-http://sourceforge.net/projects/perfmon2. Installation details for perfmon2
-can also be found at this website. Since this software is still evolving, 
-not all features are guaranteed to work on all platforms.
+PCL:
+If you are running Linux kernel 2.6.31 or later, your system has built-in 
+support for hardware counters through the perf_counters interface. No kernel 
+patch is required. The current version of configure for PAPI does not auto-
+matically detect the presence of perf_counters, so you need to specify
+	% ./configure --with-pcl=yes
+on the configure command line. This interface has not been fully tested, but
+has been verified to work on basic counting operations. It should be considered
+a technical pre-release.
 
-No matter which driver is installed, this version of PAPI still builds the 
-libpfm library to provide information on native events.
+PERFMON2:
+Make sure that your Linux/PPC64 kernel is patched with the newest perfmon2
+driver found at http://sourceforge.net/projects/perfmon2. The standard 
+installation procedure applies here.
 
-Detailed instructions on installing the perfctr patch are provided below.
-
+PERFCTR:
 The required perfctr patches and complete installation instructions are 
 provided in the papi/src/perfctr-2.6.x directory. Please see the INSTALL file
 in that directory.
@@ -382,16 +405,6 @@ profiling ala gprof via the hardware counters.
 
 So, when you configure your kernel to build with PERFCTR as above, make
 sure you turn on APIC support in the "Processor type and features" section.
-This should be enabled by default if you are on an SMP, but it is disabled
-by default on a UP. 
-
-In our 2.4.x kernels:
-> grep PIC /usr/src/linux/.config
-/usr/src/linux/.config:CONFIG_X86_GOOD_APIC=y
-/usr/src/linux/.config:CONFIG_X86_UP_APIC=y
-/usr/src/linux/.config:CONFIG_X86_UP_IOAPIC=y
-/usr/src/linux/.config:CONFIG_X86_LOCAL_APIC=y
-/usr/src/linux/.config:CONFIG_X86_IO_APIC=y
 
 You can verify the APIC is working after rebooting with the new kernel
 by running the 'perfex -i' command found in the perfctr/examples/perfex
@@ -447,15 +460,6 @@ KERNEL=="perfctr",              NAME="perfctr", MODE="0644"
 These lines tell udev to always create the device file with the appropriate permissions.
 Use 'perfex -i' from the perfctr distribution to test this fix.
 
-PLATFORM NOTES:
-Opteron fails the matrix-hl test because the default definition of PAPI_FP_OPS
-overcounts speculative floating point operations.
-
-IRIX - MIPS
-*****************************************************************************
-No additional steps are required to install PAPI on IRIX. Follow the 
-general installation guide, and everything should work.
-
 Linux - SiCortex
 *****************************************************************************
 
@@ -479,7 +483,7 @@ When cross-compiling on the front end:
      --with-tls --with-ffsll --with-pfm-events=static \
      --with-walltimer=gettimeofday 
 
-     If you have a machine that is more recent that V2.3 and R80, then change
+     If you have a machine that is more recent than V2.3 and R80, then change
      the last line to:
 
      --with-walltimer=cycle
@@ -550,18 +554,6 @@ You should encounter this problem only in faulty programs with shared memory
 parallization (compare single threaded vs. multi threaded event count) - a 
 correct implementation should give you exact results. Other native events 
 related to instructions (Instr_*) might be influenced by this behavior.
-
-Unicos - Cray X1
-*****************************************************************************
-No additional steps are required to get PAPI working on Unicos.
-Follow the general installation guide, and everything should work.
-
-PLATFORM NOTES:
-Cray X1 is not actively supported. PAPI 3.6 currently compiles and links and
-successfully completes many tests, but has not been fulled debugged on all tests.
-If you have a need for a specific unimplemented feature on this platform, either 
-use PAPI 3.5 or contact the PAPI team for support.
-
 
 Windows XP/2000/Server 2003 - Intel Pentium III or AMD Athlon / Opteron
 *****************************************************************************

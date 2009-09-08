@@ -31,38 +31,34 @@ __ 5. Modify RELEASENOTES.txt to summarize the major changes listed in the log.
 __ 6. Add ChangeLogXYZ.txt to cvs and commit both ChangeLogXYZ.txt and 
 	RELEASENOTES.txt.
 
-__ 7. Export the PAPI FAQ to PAPI_FAQ.html in case anything changed.
+__ 7. Update any documentation that may have changed.
 
-__ 8. Update and commit any man pages that changed.
+__ 8. Branch cvs.
 
-__ 9. Update and commit any other documentation that changed.
-
-__ 10. Branch cvs.
-
-__ 11. Export the branch to a clean working directory:
+__ 9. Export the branch to a clean working directory:
 	> cvs export -r <branch> <module> ex:
 	> cvs export -r papi-3-2-0 papi
 
-__ 12. Delete any unneccessary files or directories
+__ 10. Delete any unneccessary files or directories
 		particularly .doc and .pdf files in the /doc directory
 
-__ 13. Rename the directory from papi to papi-X.Y.Z
+__ 11. Rename the directory from papi to papi-X.Y.Z
 
-__ 14. tar the directory:
+__ 12. tar the directory:
 	> tar -cvf papi-X.Y.Z.tar papi-X.Y.Z
 
-__ 15. zip the tarball:
+__ 13. zip the tarball:
 	gzip papi-X.Y.Z.tar
 
-__ 16. Copy the tarball to icl:/sw/www/icl/projects/papi/downloads
+__ 14. Copy the tarball to icl:/sw/www/icl/projects/papi/downloads
 
-__ 17. Check permissions on the tarball. 664 is good. 
+__ 15. Check permissions on the tarball. 664 is good. 
 
-__ 18. Create a link with supporting text on the PAPI software web page.
+__ 16. Create a link with supporting text on the PAPI software web page.
 
-__ 19. Create a News item on the PAPI Web page.
+__ 17. Create a News item on the PAPI Web page.
 
-__ 20. Email the papi developer and discussion lists with an announcement.
+__ 18. Email the papi developer and discussion lists with an announcement.
 
 
 
