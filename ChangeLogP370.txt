@@ -1,0 +1,593 @@
+2009-09-08	you
+	* src/ctests/krentel_pthreads.c 1.5:
+		call PAPI_stop instead of PAPI_Shutdown
+
+2009-09-08	terpstra
+	* INSTALL.txt 1.37:
+	* README 1.8:
+	* release_procedure.txt 1.9:
+		Updates for the impending release.
+
+2009-09-06	jagode
+	* src/papiStdEventDefs.h 1.36:
+	* src/perfmon_events.csv 1.51:
+		Added 4 new preset events to count the correct # of floating 
+		point operations for optimized libraries that use SIMD (single 
+		and double precision); SIMD instructions (single and double 
+		precision).
+
+	* src/papi_data.c 1.33:
+		minor change
+
+2009-09-04	you
+	* src/pfmwrap.h 1.39:
+		remove the compile errors
+
+2009-09-04	terpstra
+	* src/Makefile.inc 1.132:
+		Changes to eliminate the installation of outdated man pages.
+		Better no pages than outdated pages.
+		Current man page content is now online at the PAPI documentation site.
+
+2009-09-03	you
+	* src/perfmon.c 1.91:
+		set itimer_ns = 10000000;
+		modify round_requested_ns to make ns multiple of itimer_res_ns
+
+2009-09-03	ralph
+	* src/win2k/substrate/WinPAPI.vcproj 1.4:
+		Switching from PERFCTR_PFM_EVENTS to SUBSTRATE_USES_LIBPFM #
+		define
+
+	* src/libpfm-3.y/lib/pfmlib_priv.h 1.4:
+		Revert to version 1.1.1.9 (Dan's latest import in the log)
+
+	* src/libpfm-3.y/lib/pfmlib_os_win32.c 1.2:
+		Removing, guess we will have to push this upstream.
+
+	* src/win2k/substrate/stdint.h 1.2:
+	* src/win2k/substrate/win_extras.h 1.10:
+		Fixed line-endings in windows only headers
+
+2009-09-03	terpstra
+	* src/libpfm-3.y/lib/power7_events.h 1.1.1.2:
+		Import POWER7 event fix
+
+2009-09-02	ralph
+	* src/extras.c 1.152:
+		gettimeofday routine for windows
+
+	* src/ctests/papi_test.h 1.34:
+		Adding include files for Windows
+
+	* src/win2k/substrate/inttypes.h 1.1:
+		Adding header files for use in windows
+
+	* src/win2k/substrate/WinPAPI.def 1.12:
+		Exporting gettimeofday in the winpapi dll
+
+2009-09-02	terpstra
+	* src/ctests/byte_profile.c 1.16:
+		Check for counters == 2 instead of cpu == Pentium III.
+		Now it passes for CoreDuo.
+
+	* src/libpfm-3.y/lib/pfmlib_coreduo.c 1.1.1.3:
+		Import another CoreDuo counter fix
+
+2009-09-01	terpstra
+	* src/libpfm-3.y/examples_v2.x/syst.c 1.1.1.2:
+	* src/libpfm-3.y/examples_v2.x/syst_multi_np.c 1.1.1.2:
+	* src/libpfm-3.y/examples_v2.x/syst_np.c 1.1.1.2:
+		Import CoreDuo counter fix
+
+2009-09-01	jagode
+	* src/configure 1.106:
+	* src/configure.in 1.107:
+		Update support for XT4/5 as well as INSTALL.txt.
+
+2009-08-31	sbk
+	* src/Makefile.CLE-perfmon2 1.6:
+		"perfmon", not "perfmon.h". Duh.
+
+2009-08-31	terpstra
+	* src/Makefile.in 1.26:
+	* src/papi.h 1.188:
+		Bump version numbers to 3.7.0.0 in prep for the upcoming 
+		release.
+
+2009-08-31	jagode
+	* src/ctests/fork_exec_overflow.c 1.8:
+	* src/ctests/fork_exec_overflow.c [papi-c-exp] 1.7.8.2:
+		Eliminate unused err header file.
+
+2009-08-29	jagode
+	* src/ctests/omptough.c 1.4:
+		Adjust argument assignment between types for PAPI_thread_init() 
+		function (issue in 64-bit mode).
+
+2009-08-28	jagode
+	* src/Makefile.aix-power6 1.3:
+	* src/Makefile.aix-power6-64bit 1.2:
+		Allow pre-processing source code using CPPFLAGS (because of 
+		issues on Power6 (AIX) in 64-bit mode.
+
+2009-08-27	terpstra
+	* src/papi.c 1.332:
+		Heike was right in the first place. All that was needed was to 
+		remove the cast on the return value for papi_return() in 
+		PAPI_thread_id(). After much ado about nothing, we are finally 
+		back to where she said we should be all along.
+
+	* src/mb.h 1.2:
+	* src/pcl.c 1.5:
+	* src/sys_perf_counter_open.c 1.2:
+		Tweaks to make pcl compile and link for x86. Don't know if it's 
+		right, because it doesn't work yet, but at least it builds.
+
+	* src/papi_pfm_events.c 1.31:
+		Enable a couple debug statements to make it easier to find cpu 
+		tables in perfmon_events.csv
+
+2009-08-27	servat
+	* src/freebsd/map-atom.c 1.3:
+	* src/freebsd/map-core.c 1.3:
+		Add some PAPI preset counters for Atom/Core processors
+
+	* src/freebsd/map-core.h 1.3:
+		Missing start of enumeration value for native counter
+
+2009-08-26	ralph
+	* src/x86_cache_info.c 1.4:
+		Wrong version of the file, think before you type and all..
+
+	* src/perfmon.h 1.18:
+		Making perfmon.h more windows friendly.
+
+	* src/papi_internal.c 1.130:
+		Update to support Windows.
+
+	* src/papi_internal.h 1.177:
+		Added a definition to support Windows
+
+	* src/win2k/winpmc/WinPMC.c 1.7:
+	* src/win2k/winpmc/WinPMC.h 1.5:
+	* src/win2k/winpmc/msr-index.h 1.1:
+	* src/win2k/winpmc/pmc_kernel.h 1.7:
+	* src/win2k/winpmc/pmc_x86.c 1.6:
+	* src/win2k/winpmc/pmc_x86.h 1.4:
+		Updates to Windows Driver
+
+2009-08-25	ralph
+	* src/win2k/substrate/README 1.1:
+		*** empty log message ***
+
+2009-08-25	terpstra
+	* src/Makefile.solaris-niagara2 1.1:
+	* src/Makefile.solaris-niagara2-64bit 1.1:
+	* src/solaris-niagara2-memory.c 1.1:
+	* src/solaris-niagara2.c 1.1:
+	* src/solaris-niagara2.h 1.1:
+		First commit of Solaris Niagara2 support.
+		Thanks to Fabian Gorsler of Aachen University, Germany.
+
+2009-08-24	terpstra
+	* src/libpfm-3.y/include/Makefile 1.1.1.8:
+	* src/libpfm-3.y/include/perfmon/pfmlib_coreduo.h 1.1.1.1:
+	* src/libpfm-3.y/lib/Makefile 1.1.1.14:
+	* src/libpfm-3.y/lib/coreduo_events.h 1.1.1.4:
+	* src/libpfm-3.y/lib/pfmlib_core.c 1.1.1.11:
+	* src/libpfm-3.y/lib/pfmlib_coreduo_priv.h 1.1.1.1:
+	* src/libpfm-3.y/lib/pfmlib_gen_ia32.c 1.1.1.10:
+		Importing updates for CoreDuo
+
+2009-08-24	jagode
+	* src/Rules.perfctr 1.44:
+	* src/Rules.perfctr-pfm 1.26:
+	* src/Rules.pfm 1.39:
+	* src/Rules.pfm2 1.37:
+	* src/Rules.pfm_pcl 1.3:
+		Add pgi compiler support to accept 132-column source code
+
+	* src/ftests/fmultiplex1.F 1.34:
+	* src/ftests/fmultiplex2.F 1.29:
+	* src/ftests/ftests_util.F 1.44:
+		Eliminate pgi compiler warnings on Cray XT4/5
+
+2009-08-21	you
+	* src/ctests/overflow_force_software.c 1.22:
+		set soft_max
+
+2009-08-20	you
+	* src/ctests/overflow.c 1.64:
+	* src/ctests/overflow_pthreads.c 1.39:
+	* src/ctests/overflow_single_event.c 1.43:
+		set overflow threshold value
+
+2009-08-19	jagode
+	* src/linux-lmsensors.h 1.1:
+		file linux-lmsensors.h was initially added on branch papi-c-exp.
+
+	* src/linux-lmsensors.c 1.1:
+		file linux-lmsensors.c was initially added on branch papi-c-exp.
+
+2009-08-11	terpstra
+	* src/ctests/sdsc2.c 1.11:
+	* src/ctests/sdsc4.c 1.12:
+		Changes in init_multiplex order submitted by Maynard Johnson to 
+		fix test cases for power6 & elsewhere.
+
+2009-08-05	you
+	* src/linux.c 1.64:
+		for perfctr-2.6.x, when vperfctr_open() return error, call 
+		vperfctr_open_mode(0)
+
+2009-08-03	you
+	* src/ctests/derived.c 1.21:
+		zero count is ok.
+
+	* src/ctests/multiplex3_pthreads.c 1.41:
+		change pass condition from all non-zero to any non-zero.
+
+2009-07-28	you
+	* src/ctests/locks_pthreads.c 1.12:
+		lower the number of iterations to make buildbot pass, otherwise 
+		running time exceeds the time limit
+
+	* src/ctests/calibrate.c 1.38:
+		won't fail if i<=20
+
+2009-07-13	terpstra
+	* src/Makefile.linux-pcl 1.1:
+	* src/pcl.h 1.1:
+	* src/syscalls.h 1.1:
+		New files to support Corey Ashford's pcl contribution.
+
+	* src/Makefile.linux-perfmon2 1.3:
+		Modified files to support Corey Ashford's pcl contribution.
+
+2009-07-09	servat
+	* src/freebsd/HOWTO-add-new-substrates 1.3:
+		
+		Small upgrade of the documentation
+
+	* src/Makefile.freebsd 1.8:
+		
+		Initial support for Core / Atom processors.
+
+	* src/freebsd.c 1.6:
+	* src/freebsd.h 1.3:
+	* src/freebsd/map-atom.h 1.2:
+	* src/freebsd/map-core2-extreme.c 1.3:
+	* src/freebsd/map-core2-extreme.h 1.2:
+	* src/freebsd/map-core2.c 1.3:
+	* src/freebsd/map-core2.h 1.2:
+	* src/freebsd/map-k7.c 1.3:
+	* src/freebsd/map-k7.h 1.2:
+	* src/freebsd/map-k8.c 1.3:
+	* src/freebsd/map-k8.h 1.2:
+	* src/freebsd/map-p4.c 1.3:
+	* src/freebsd/map-p4.h 1.2:
+	* src/freebsd/map-p6-2.c 1.3:
+	* src/freebsd/map-p6-2.h 1.3:
+	* src/freebsd/map-p6-3.c 1.3:
+	* src/freebsd/map-p6-3.h 1.3:
+	* src/freebsd/map-p6-c.c 1.3:
+	* src/freebsd/map-p6-c.h 1.3:
+	* src/freebsd/map-p6-m.c 1.2:
+	* src/freebsd/map-p6-m.h 1.3:
+	* src/freebsd/map-p6.c 1.2:
+	* src/freebsd/map-p6.h 1.3:
+	* src/freebsd/map-unknown.c 1.2:
+	* src/freebsd/map-unknown.h 1.3:
+	* src/freebsd/map.c 1.4:
+	* src/freebsd/map.h 1.4:
+	* src/freebsd/memory.c 1.2:
+		
+		Changed contact information.
+
+2009-07-09	terpstra
+	* src/ctests/mendes-alt.c 1.13:
+	* src/ctests/multiplex2.c 1.32:
+	* src/ctests/sdsc.c 1.18:
+	* src/ctests/test_utils.c 1.73:
+		This patch changes some C testcases to set the domain to
+		PAPI_DOM_ALL when required (POWER6 with perfctr substrate).
+		Submitted by Maynard Johnson @ IBM
+
+2009-07-08	terpstra
+	* src/multiplex.c 1.73:
+	* src/papi_protos.h 1.67:
+		This patch changes the papi library to return a new error code,
+		PAPI_EINVAL_DOM, when using PAPI multiplexing on the
+		POWER6/perfctr platform if the domain of the event set does not
+		include user+kernel+supervisor.
+		Submitted by Maynard Johnson @ IBM
+
+	* src/Makefile.linux-perfctr-core 1.3:
+		Clean up commented lines.
+
+2009-06-24	terpstra
+	* src/libpfm-3.y/lib/intel_nehalem_events.h 1.2:
+		Removing files that no longer exist in sourceforge.
+
+2009-06-10	terpstra
+	* src/perfctr-p3.h 1.48:
+	* src/perfctr-p4.h 1.44:
+		Remove unneeded '&' from GET_OVERFLOW_ADDRESS macro
+		definition. This was returning the *address of* the instruction pointer
+		instead of the *value of* the instruction pointer, and causing all profiling
+		tests to fail.
+
+2009-06-06	jagode
+	* src/aix.c 1.82:
+		Fix of PAPI_library_init failure on AIX-Power6 systems when the 
+		name of the executable is longer than 32 characters. Problem: /
+		proc/xxxx/map contains only the first 32 characters for each 
+		entry.
+
+2009-06-04	terpstra
+	* src/perfctr-2.6.x/linux/include/asm-arm/perfctr.h [papi-c-exp] 1.1.1.1.10.2:
+	* src/perfctr-2.6.x/linux/include/asm-powerpc/perfctr.h [papi-c-exp] 1.1.1.1.10.2:
+		Merging in some missing linux/include folders and files.
+
+	* src/utils/avail.c 1.45:
+		Iterate argv from 1 to argc instead of 0, since 0 is the executable name,
+		which may inadvertently contains a match.
+
+2009-05-18	terpstra
+	* src/ctests/test_utils.h 1.35:
+		Migrate #define MAX_TO_ADDD to the (few) tests that actually use 
+		it.
+
+2009-05-13	terpstra
+	* src/perfctr-p3.c 1.88:
+		Remove some dead code.
+
+2009-05-08	terpstra
+	* src/ftests/avail.F 1.24:
+		Replace z'80000000' with PAPI_L1_DCM in recognition that z'80000000'
+		is undefined for 32-bit integers by strict interpretation of the Fortran spec,
+		and PAPI_L1_DCM is the first event, which is what is intended by this
+		construct anyway.
+		This eliminates a compiler crash that occurs in some versions of gfortran.
+
+2009-05-04	maynardj
+	* src/power4_events_map.c 1.4:
+	* src/power5+_events_map.c 1.2:
+	* src/power5_events_map.c 1.4:
+	* src/ppc970_events_map.c 1.4:
+		Fix build error involving native_name_map on ppc64
+
+2009-04-22	terpstra
+	* src/libpfm-3.y/examples_v2.x/x86/smpl_core_pebs.c 1.1.1.2:
+		Import of latest libpfm changes
+
+2009-04-21	terpstra
+	* src/linux-ia64.c 1.173:
+		#if 0 out another unused routine
+
+2009-04-20	terpstra
+	* src/ctests/prof_utils.c 1.7:
+		Fix bad syntax on two print statements.
+
+2009-04-09	terpstra
+	* src/utils/event_info.c 1.9:
+		Modify native event handling to deal with modifiers and perfmon.
+		This fixes a bug where events would not be recorded if they had modifiers.
+
+	* src/Makefile.catamount-perfctr-opteron 1.14:
+		Relaxed perfmon version dependencies per Steve Kaufmann's recommendations.
+		You can still specify a perfmon version from the configure command line,
+		but now it serves only determine which makefile to use and which ABI to
+		specify. A version < 2.5 will define PFMLIB_OLD_PFMV2 for CFLAGS.
+
+2009-04-01	terpstra
+	* src/libpfm-3.y/python/Makefile [papi-c-exp] 1.1.1.1.8.2:
+	* src/libpfm-3.y/python/README [papi-c-exp] 1.1.1.1.8.2:
+	* src/libpfm-3.y/python/self.py [papi-c-exp] 1.1.1.1.8.2:
+	* src/libpfm-3.y/python/setup.py [papi-c-exp] 1.1.1.1.8.2:
+	* src/libpfm-3.y/python/src/__init__.py [papi-c-exp] 1.1.1.1.8.2:
+	* src/libpfm-3.y/python/src/perfmon_int.i [papi-c-exp] 1.1.1.1.8.2:
+	* src/libpfm-3.y/python/src/pmu.py [papi-c-exp] 1.1.1.1.8.2:
+	* src/libpfm-3.y/python/src/session.py [papi-c-exp] 1.1.1.1.8.2:
+	* src/libpfm-3.y/python/sys.py [papi-c-exp] 1.1.1.1.8.2:
+		Added new directories and files to the papi-c branch.
+
+2009-03-16	you
+	* src/ctests/exec2.c [papi-c-exp] 1.1.10.1:
+		merge from papi-head
+
+2009-03-12	terpstra
+	* src/ctests/realtime.c 1.13:
+		Convert error checks to information reporting.
+		This acknowledges that the MHz value reported in /proc/cpuinfo no longer
+		tracks the actual clock rate, at least for several of our Intel multicore cpus.
+		We might be better off computing this value instead of relying on cpuinfo.
+		Then we run into speedstep issues.
+
+2009-03-11	you
+	* src/Makefile.aix-power6 [papi-c-exp] 1.2.6.1:
+	* src/Makefile.aix-power6-64bit [papi-c-exp] 1.1.6.1:
+	* src/Makefile.linux-pfm-itanium3 [papi-c-exp] 1.1.10.1:
+		merge from papi-head
+
+2009-02-25	sbk
+	* src/utils/native_avail.c 1.39:
+		Protect native_avail from sending NULL to strcpy which results in a segfault.
+		A mask for an event may not apply to the CPU and therefore strchr(name,':')
+		may return NULL and be the second argument to strcpy. This happened for the
+		AMD K8 event PROBE and its umask UPSTREAM_WRITES which only applies to AMD
+		Rev D and later.
+
+2009-02-23	you
+	* src/ctests/burn.c [papi-c-exp] 1.3.8.1:
+	* src/ctests/fork2.c [papi-c-exp] 1.1.10.1:
+	* src/ctests/fork_exec_overflow.c [papi-c-exp] 1.7.8.1:
+	* src/ctests/forkexec3.c [papi-c-exp] 1.1.10.1:
+	* src/ctests/forkexec4.c [papi-c-exp] 1.1.10.1:
+	* src/ctests/krentel_pthreads.c [papi-c-exp] 1.3.10.1:
+	* src/ctests/pthrtough2.c [papi-c-exp] 1.6.10.1:
+		add files from head branch
+
+2009-02-09	terpstra
+	* src/ftests/strtest.F 1.17:
+		Removed unused variables to keep compiler from complaining.
+
+	* src/ftests/Makefile 1.64:
+		Rearrange flags for avail to match other dependencies and try to figure out
+		why gfortran doesn't like this file. No luck so far.
+
+	* src/utils/event_chooser.c 1.14:
+		Fix native event reporting for Opteron/perfmon. Events with unit masks
+		were not being handled properly, causig dispatch_events errors in libpfm.
+
+2009-01-22	terpstra
+	* src/ctests/tenth.c 1.38:
+		Don't Fail if events don't exist; just Skip instead.
+
+	* src/run_tests_exclude.txt 1.4:
+		Exclude encode and encode2 since they aren't implemented 
+		anywhere.
+
+2009-01-20	terpstra
+	* src/libpfm-3.y/lib/pfmlib_os.c 1.2:
+		These files no longer in the sourceforge repository.
+
+2009-01-16	terpstra
+	* src/linux-memory.c 1.39:
+		Segregated the cpuid-based cache and tlb info collection out of linux-memory.c
+		and deleted it from perfmon.c. Now both make systems include x86_cache_info.c
+		and the former files call a routine there to collect this information. Note that
+		x86_cache_info should be usable directly in a Windows implementation.
+		Tested on Intel Nehalem/perfctr and Core2/perfmon; Opteron/perfctr
+
+2009-01-16	seymour
+	* src/jni/EventSet.java 1.3:
+	* src/jni/FlipInfo.java 1.2:
+	* src/jni/FlopInfo.java 1.3:
+	* src/jni/IpcInfo.java 1.2:
+	* src/jni/Makefile 1.7:
+	...
+		-modifying the JNI wrappers to have package name edu.utk.cs.icl.papi.
+		keith
+
+2009-01-14	terpstra
+	* src/utils/mem_info.c 1.13:
+		Output cleanup and changes to support more features.
+
+2009-01-07	terpstra
+	* src/p3_pfm_events.c 1.9:
+		Add perfctr definitions of Intel Atom and Core i7 processors as found in perfctr
+		2.6.37. This allows PAPI to properly execute basic operations on these
+		processors, but as libpfm does not yet have event tables for i7, this is not
+		very useful.
+
+2008-12-12	sbk
+	* src/Makefile.aix-power3 1.16:
+	* src/Makefile.aix-powerpc.common 1.12:
+	* src/Makefile.aix5-power3 1.26:
+	* src/Makefile.aix5-power3-64bit 1.16:
+	* src/Makefile.any-null 1.24:
+	* src/Makefile.dadd-alpha 1.20:
+	* src/Makefile.irix-mips 1.58:
+	* src/Makefile.irix-mips-64bit 1.24:
+	* src/Makefile.solaris-ultra 1.69:
+		"overflow-tests" should have been "overflow_tests". Need empty targets
+		in the make file for Fortran tests to avoid "don't know how to make" errors.
+
+2008-12-12	terpstra
+	* src/ctests/reset.c 1.4:
+		Beef up the reset test, which really tests start, stop, accum, reset.
+		Now there's nine different sequences that exercise a wide variety of
+		combinations. If something isn't behaving right, it should show up here.
+
+2008-12-11	terpstra
+	* src/ctests/Makefile 1.151:
+		Change the names of some of the new test targets to avoid namespace collision.
+		Don't know if it was necessary, but it seemed prudent.
+
+2008-12-10	terpstra
+	* src/libpfm-3.y/lib/pfmlib_sicortex.c 1.2:
+		Split the SERIAL tests target into SERIAL, FORKEXEC, OVERFLOW and PROFILE
+		This provides a bit more control over test compilation for platforms like BG/P
+		that don't support fork/exec and may not support overflow and profiling.
+
+2008-12-08	you
+	* src/Makefile.linux-perfctr-POWER4 1.3:
+	* src/Makefile.linux-perfctr-POWER4-64bit 1.3:
+	* src/Makefile.linux-perfctr-POWER5 1.4:
+	* src/Makefile.linux-perfctr-POWER5+ 1.4:
+	* src/Makefile.linux-perfctr-POWER5+-64bit 1.4:
+	* src/Makefile.linux-perfctr-POWER5-64bit 1.4:
+	* src/Makefile.linux-perfctr-POWER6 1.2:
+	* src/Makefile.linux-perfctr-POWER6-64bit 1.2:
+	* src/Makefile.linux-perfctr-PPC32 1.3:
+	* src/Makefile.linux-perfctr-PPC970 1.4:
+	* src/Makefile.linux-perfctr-PPC970-64bit 1.4:
+		set PAPI_DATADIR for installed library to find the events file.
+
+2008-12-04	terpstra
+	* src/ftests/second.F 1.28:
+		Fixes from Corey Ashford to bring Fortran version into line with C version and
+		eliminate the compile time check for POWER6.
+
+2008-12-03	terpstra
+	* src/ftests/tenth.F 1.28:
+		Fixes from Corey Ashford to eliminate the compile time check for POWER6.
+		Also a fix for a nasty bug in Fortran strings.
+
+	* src/ctests/kufrin.c 1.9:
+	* src/ctests/multiplex1.c 1.49:
+	* src/ctests/multiplex1_pthreads.c 1.47:
+		Fixes from Corey Ashford to eliminate the compile time check for 
+		POWER6.
+
+2008-12-01	you
+	* src/power6_events_map.c 1.2:
+	* src/ppc64_events.h 1.7:
+		fix compilation errors on power6 linux
+
+2008-11-26	terpstra
+	* src/papi_hl.c 1.75:
+		Fix return value for error return of PAPI_stop_counters.
+
+2008-11-24	terpstra
+	* <all source files>
+		Big commit to remove all instances of long_long and u_long_long.
+		These constructs were introduced years ago to accomodate the Microsoft
+		compiler, which didn't understand (long long) and (unsigned long long).
+		That restriction has since been removed.
+		And besides, we're using the Intel compiler now anyway...
+		This change has been tested clean on Linux, and should only matter for
+		Windows anyway. Please test on other platforms as well. Any code *not* in
+		cvs that uses long_long will also need to be modified, as these definitions
+		no longer exist in papi.h.
+
+2008-11-12	sbk
+	* src/Makefile.CNL-perfmon2 1.14:
+		Rename Cray "CNL" to the more techically correct "CLE" Cray 
+		Linux Environment.
+
+2008-11-03	you
+	* src/run_tests.sh 1.34:
+		add --with-shlib=<yes|no>, by default it is 'no', and all test 
+		cases and utilities are linked with static library, otherwise 
+		link with dynamic library.
+
+2008-10-14	terpstra
+	* src/utils/clockres.c 1.21:
+	* src/utils/version.c 1.2:
+		Change return value for PAPI utility functions from exit(1) to exit(0).
+		Don't know how this crept in, but it's been there for years, and just got
+		propagated from one tool to another.
+		Same is true for many of our tests.
+		Thanks to Steve Kaufmann of Cray for catching this.
+
+2008-10-09	terpstra
+	* src/utils/Makefile 1.15:
+		Add a utility to report the PAPI version number.
+		Currently this is a simple one line output of the 4 digit PAPI_VERSION
+		value from papi.h.
+		It may be useful to add enhancements in the future to also report which
+		substrate library and version (perfctr, perfmon, etc.) is linked in as well.
+
