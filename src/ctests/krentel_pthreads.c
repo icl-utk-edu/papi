@@ -78,23 +78,21 @@ do_cycles(long num, int len)
 }
 
 void
-launch_timer(void)
+launch_timer(int *EventSet)
 {
-    int EventSet = PAPI_NULL;
-
     if (PAPI_register_thread() != PAPI_OK)
         test_fail(__FILE__,__LINE__,"PAPI_register_thread failed",1);
 
-    if (PAPI_create_eventset(&EventSet) != PAPI_OK)
+    if (PAPI_create_eventset(EventSet) != PAPI_OK)
         test_fail(__FILE__,__LINE__,"PAPI_create_eventset failed",1);
 
-    if (PAPI_add_event(EventSet, EVENT) != PAPI_OK)
+    if (PAPI_add_event(*EventSet, EVENT) != PAPI_OK)
         test_fail(__FILE__,__LINE__,"PAPI_add_event failed",1);
 
-    if (PAPI_overflow(EventSet, EVENT, threshold, 0, my_handler) != PAPI_OK)
+    if (PAPI_overflow(*EventSet, EVENT, threshold, 0, my_handler) != PAPI_OK)
         test_fail(__FILE__,__LINE__,"PAPI_overflow failed",1);
 
-    if (PAPI_start(EventSet) != PAPI_OK)
+    if (PAPI_start(*EventSet) != PAPI_OK)
         test_fail(__FILE__,__LINE__,"PAPI_start failed",1);
 }
 
@@ -103,6 +101,8 @@ my_thread(void *v)
 {
     long num = (long)v;
     int n;
+    int EventSet = PAPI_NULL;
+    long long value;
 
     pthread_setspecific(key, v);
 
@@ -110,7 +110,7 @@ my_thread(void *v)
     iter[num] = 0;
     last[num] = start;
 
-    launch_timer();
+    launch_timer(&EventSet);
     printf("launched timer in thread %ld\n", num);
 
     for (n = 1; n <= program_time; n++) {
@@ -118,6 +118,7 @@ my_thread(void *v)
 	print_rate(num);
     }
 
+    PAPI_stop(EventSet, &value);
     return (NULL);
 }
 
