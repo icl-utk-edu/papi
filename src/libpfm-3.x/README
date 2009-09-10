@@ -12,14 +12,11 @@ of several modern processors.
 
 
 This version of libpfm supports:
-	- For Intel IA-64 :  Itanium (Merced), Itanium 2 (McKinley, Madison, Deerfield), Itanium 2 9000/9100 (Montecito,Montvale) and Generic
-	- For AMD/Intel X86-64:  AMD Opteron, Xeon, Intel Core 2 Duo, Intel Core 2 Quad
-	- For AMD/Intel IA-32 :  Pentium II, Pentium Pro, Pentium III, Pentium M/P6, Core Duo/Core Solo, Intel Pentium 4, AMD Opteron (32 bit mode), Intel Core 2 Duo (32 bit mode)
+	- For IA-64 :  Itanium (Merced), Itanium 2 (McKinley, Madison, Deerfield), Itanium 2 9000 (Montecito) and Generic
+	- For X86-64:  AMD Opteron, Xeon, Intel Core 2 Duo
+	- For IA-32 :  Pentium M/P6, Core Duo/Core Solo, Intel Pentium 4, AMD Opteron (32 bit mode), Intel Core 2 Duo (32 bit mode)
 	- For MIPS:  5K, 20K, 25KF, 34K, 5KC, 74K, R10000, R12000, RM7000, RM9000, SB1, VR5432, VR5500
 	- For Cray: BlackWidow
-	- IBM Cell processor
-        - For IBM POWER: PPC970, PPC970MP, POWER4+, POWER5, POWER5+, POWER6
-	- For Sun Sparc: Ultra12, Ultra3, Ultra3i, Ultra3Plus, Ultra4Plus, Niagara1, Niagara2
 
 The core library is generic and does not depend on the perfmon interface. It is possible to use
 it on other operating systems (some adjustments may still be needed).

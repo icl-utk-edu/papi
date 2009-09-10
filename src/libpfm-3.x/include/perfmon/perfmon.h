@@ -31,14 +31,6 @@ extern "C" {
 #include <perfmon/perfmon_powerpc.h>
 #endif
 
-#ifdef __cell__
-#include <perfmon/perfmon_powerpc.h>
-#endif
-
-#ifdef __sparc__
-#include <perfmon/perfmon_sparc.h>
-#endif
-
 #ifdef __mips__
 #include <perfmon/perfmon_mips64.h>
 #endif
@@ -77,6 +69,20 @@ extern "C" {
 #define PFM_SETFL_TIME_SWITCH	0x02 /* switch set on timeout */
 
 /*
+ * PMD/PMC return flags in case of error (ignored on input)
+ *
+ * Those flags are used on output and must be checked in case EINVAL is returned
+ * by a command accepting a vector of values and each has a flag field, such as
+ * pfarg_pmc_t or pfarg_pmd_t.
+ */
+#define PFM_REG_RETFL_NOTAVAIL	(1<<31) /* set if register is implemented but not available */
+#define PFM_REG_RETFL_EINVAL	(1<<30) /* set if register entry is invalid */
+#define PFM_REG_RETFL_NOSET	(1<<29) /* event set does not exist */
+#define PFM_REG_RETFL_MASK	(PFM_REG_RETFL_NOTAVAIL|PFM_REG_RETFL_EINVAL|PFM_REG_RETFL_NOSET)
+
+#define PFM_REG_HAS_ERROR(flag)	(((flag) & PFM_REG_RETFL_MASK) != 0)
+
+/*
  * argument to pfm_create_context()
  */
 #ifndef PFMLIB_VERSION_22
@@ -94,6 +100,7 @@ typedef struct {
 #define PFM_FL_NOTIFY_BLOCK    	 0x01	/* block task on user notifications */
 #define PFM_FL_SYSTEM_WIDE	 0x02	/* create a system wide context */
 #define PFM_FL_OVFL_NO_MSG	 0x80   /* no overflow msgs */
+#define PFM_FL_MAP_SETS		 0x10	/* event sets are remapped */
 
 /*
  * argument for pfm_write_pmcs()
@@ -101,7 +108,7 @@ typedef struct {
 typedef struct {
 	uint16_t reg_num;	   			/* which register */
 	uint16_t reg_set;	   			/* event set for this register */
-	uint32_t reg_flags;	   			/* REGFL flags */
+	uint32_t reg_flags;	   			/* input: flags, return: reg error */
 	uint64_t reg_value;	   			/* pmc value */
 	uint64_t reg_reserved2[4];			/* for future use */
 } pfarg_pmc_t;
@@ -112,7 +119,7 @@ typedef struct {
 typedef struct {
 	uint16_t reg_num;	   	/* which register */
 	uint16_t reg_set;	   	/* event set for this register */
-	uint32_t reg_flags;	   	/* REGFL flags */
+	uint32_t reg_flags;	   	/* input: flags, return: reg error */
 	uint64_t reg_value;	   	/* initial pmc/pmd value */
 	uint64_t reg_long_reset;	/* reset after buffer overflow notification */
 	uint64_t reg_short_reset;   	/* reset after counter overflow */
@@ -153,7 +160,7 @@ typedef struct {
 typedef struct {
 	uint16_t	set_id;		  /* which set */
 	uint16_t	set_reserved1;	  /* for future use */
-	uint32_t    	set_flags; 	  /* SETFL flags */
+	uint32_t    	set_flags; 	  /* input: flags for set, output: err flag */
 	uint64_t	set_timeout;	  /* requested/effective switch timeout in nsecs */
 	uint64_t	reserved[6];	  /* for future use */
 } pfarg_setdesc_t;
@@ -166,14 +173,14 @@ typedef struct {
 typedef struct {
         uint16_t	set_id;             /* which set */
         uint16_t	set_reserved1;      /* for future use */
-        uint32_t	set_flags;          /* output: SETFL flags */
+        uint32_t	set_flags;          /* output:flags or error */
         uint64_t 	set_ovfl_pmds[PFM_PMD_BV]; /* output: last ovfl PMDs which triggered a switch from set */
         uint64_t	set_runs;           /* output: number of times the set was active */
         uint64_t	set_timeout;        /* output:effective/leftover switch timeout in nsecs */
 	uint64_t	set_act_duration;   /* output: time set was active in nsecs */
 	uint64_t	set_avail_pmcs[PFM_PMC_BV];
 	uint64_t	set_avail_pmds[PFM_PMD_BV];
-        uint64_t	set_reserved3[6];   /* for future use */
+        uint64_t	reserved[6];        /* for future use */
 } pfarg_setinfo_t;
 
 typedef struct {
@@ -197,7 +204,7 @@ typedef struct {
 #define PFM_VERSION_MAJ		 2U
 
 #ifndef PFMLIB_VERSION_22
-#define PFM_VERSION_MIN		 7U
+#define PFM_VERSION_MIN		 6U
 #endif
 
 #define PFM_VERSION		 (((PFM_VERSION_MAJ&0xffff)<<16)|(PFM_VERSION_MIN & 0xffff))
@@ -211,7 +218,7 @@ typedef struct {
 typedef struct {
  	uint16_t	set_id;		  /* which set */
 	uint16_t	set_id_next;	  /* next set to go to (must use PFM_SETFL_EXPL_NEXT) */
- 	uint32_t    	set_flags; 	  /* SETFL flags */
+ 	uint32_t    	set_flags; 	  /* input: flags for set, output: err flag */
  	uint64_t	set_timeout;	  /* requested/effective switch timeout in nsecs */
 	uint64_t	set_mmap_offset;  /* cookie to pass as mmap offset to access 64-bit virtual PMD */
 	uint64_t	reserved[5];	  /* for future use */
@@ -228,7 +235,7 @@ typedef struct {
 typedef struct {
 	uint16_t	set_id;             /* which set */
 	uint16_t	set_id_next;        /* output: next set to go to (must use PFM_SETFL_EXPL_NEXT) */
-	uint32_t	set_flags;          /* output: SETFL flags */
+	uint32_t	set_flags;          /* output:flags or error */
 	uint64_t 	set_ovfl_pmds[PFM_PMD_BV]; /* output: last ovfl PMDs which triggered a switch from set */
 	uint64_t	set_runs;           /* output: number of times the set was active */
 	uint64_t	set_timeout;        /* output:effective/leftover switch timeout in nsecs */
@@ -286,12 +293,12 @@ extern int pfm_unload_context(int fd);
 #ifdef CONFIG_PFMLIB_ARCH_CRAYXT
 #define __NR_pfm_create_context		273
 #else
-#define __NR_pfm_create_context		286
+#define __NR_pfm_create_context		284
 #endif
 #endif /* __x86_64__ */
 
 #ifdef __i386__
-#define __NR_pfm_create_context		325
+#define __NR_pfm_create_context		324
 #endif
 
 #ifdef __ia64__
@@ -301,25 +308,17 @@ extern int pfm_unload_context(int fd);
 #if defined(__mips__)
 #if (_MIPS_SIM == _ABIN32) || (_MIPS_SIM == _MIPS_SIM_NABI32)
 #define __NR_Linux 6000
-#define __NR_pfm_create_context         __NR_Linux+280
+#define __NR_pfm_create_context         __NR_Linux+279
 #elif (_MIPS_SIM == _ABI32) || (_MIPS_SIM == _MIPS_SIM_ABI32)
 #define __NR_Linux 4000
-#define __NR_pfm_create_context         __NR_Linux+321
+#define __NR_pfm_create_context         __NR_Linux+316
 #elif (_MIPS_SIM == _ABI64) || (_MIPS_SIM == _MIPS_SIM_ABI64)
 #define __NR_Linux 5000
-#define __NR_pfm_create_context         __NR_Linux+284
+#define __NR_pfm_create_context         __NR_Linux+275
 #endif
 #endif
 
 #ifdef __powerpc__
-#define __NR_pfm_create_context		310
-#endif
-
-#ifdef __sparc__
-#define __NR_pfm_create_context		315
-#endif
-
-#ifdef __cell__
 #define __NR_pfm_create_context		309
 #endif
 

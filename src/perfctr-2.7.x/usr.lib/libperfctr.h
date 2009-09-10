@@ -1,7 +1,7 @@
 /* $Id$
  * Library interface to Linux Performance-Monitoring Counters.
  *
- * Copyright (C) 1999-2005  Mikael Pettersson
+ * Copyright (C) 1999-2007  Mikael Pettersson
  */
 
 #ifndef __LIB_PERFCTR_H
@@ -79,6 +79,7 @@ struct perfctr_cpu_control {
 #define PERFCTR_PPC64_POWER4p	2
 #define PERFCTR_PPC64_970 	3
 #define PERFCTR_PPC64_POWER5	4
+#define PERFCTR_PPC64_970MP	5
 
 struct perfctr_cpu_control {
 	unsigned int tsc_on;
@@ -300,5 +301,7 @@ const char *perfctr_info_cpu_name(const struct perfctr_info*);
 void perfctr_info_print(const struct perfctr_info*);
 void perfctr_cpus_info_print(const struct perfctr_cpus_info*);
 void perfctr_cpu_control_print(const struct perfctr_cpu_control*);
+unsigned int perfctr_linux_version_code(void);
+#define PERFCTR_KERNEL_VERSION(v,p,s)	(((v) << 16) + ((p) << 8) + (s))
 
 #endif /* __LIB_PERFCTR_H */

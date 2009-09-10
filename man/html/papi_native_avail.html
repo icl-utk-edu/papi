@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_NATIVE_AVAIL 1 "April, 2008" -->
+<!-- .TH PAPI_NATIVE_AVAIL 1 "May, 2005" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -274,7 +274,7 @@ papi_native_avail - provides detailed information for PAPI native events.
 </A>
 <BLOCKQUOTE>
 <P>
-<B>papi_native_avail</B> [<I>options</I>]
+<B>papi_native_avail</B>
 <P>
 <P>
 <!-- .SH DESCRIPTION -->
@@ -286,10 +286,9 @@ papi_native_avail - provides detailed information for PAPI native events.
 </A>
 <BLOCKQUOTE>
 <B>papi_native_avail</B> is a PAPI utility program that reports information about the native events available on the current platform.
-A native event is an event specific to a given hardware platform. Some platforms support special features for certain events.
-Those events can be determined by applying filters to the list. On many platforms, native events may have optional settings,
-or unit masks. In such cases, the native event and each unit mask is presented. For each native event, a name, a description,
-and the PAPI event code are provided.
+A native event is an event specific to a specific hardware platform. On many platforms, a specific native event may have a number of
+optional settings. In such cases, the native event and the valid settings are presented, rather than every possible combination of
+those settings. For each native event, a name, a description, and specific bit patterns are provided.
 <P>
 <P>
 <!-- .SH OPTIONS -->
@@ -301,93 +300,12 @@ and the PAPI event code are provided.
 </A>
 <BLOCKQUOTE>
 <P>
-<B>General command options:</B>
 <P>
-<!-- .TP -->
-<TABLE cellpadding=3>
-<TR valign=top><TD colspan=2>
-<I>-d, --detail</I>
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-Display detailed information about native events.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<I>-e &lt;event&gt;</I>
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-Display detailed event information for the named native event.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<I>-h, --help</I>
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-Display help information about this utility.
-<P>
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<B>Event filtering and display options:
-<!-- Consumed .TP -->
-<BR>
-(These options may not be present, depending on the architecture. Use </B><I>--help</I><B> to confirm availability.)</B>
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-<P>
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD width=6% nowrap>
-<I>--darr</I>
-</TD><TD valign=bottom>
-Display events supporting Data Address Range Restriction.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD width=6% nowrap>
-<I>--dear</I>
-</TD><TD valign=bottom>
-Display Data Event Address Register events only.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD width=6% nowrap>
-<I>--iarr</I>
-</TD><TD valign=bottom>
-Display events supporting Instruction Address Range Restriction.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD width=6% nowrap>
-<I>--iear</I>
-</TD><TD valign=bottom>
-Display Instruction Event Address Register events only.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD width=6% nowrap>
-<I>--opcm</I>
-</TD><TD valign=bottom>
-Display events supporting OpCode Matching.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<I>--nomasks</I>
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-Suppress display of Unit Mask information.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<I>--nogroups</I>
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-Suppress display of Event grouping information.
+This utility has no command line options.
 <P>
 <P>
 <!-- .SH BUGS  -->
-</TD></TR>
-<TR></TR></TABLE></BLOCKQUOTE>
+</BLOCKQUOTE>
 <A name=4>
 
      <H3>BUGS</H3>
@@ -413,14 +331,13 @@ If you find a bug, it should be reported to the PAPI Mailing List at &lt;<A HREF
 <A HREF="papi_clockres.html">papi_clockres (1)</A>, 
 <A HREF="papi_command_line.html">papi_command_line (1)</A>, 
 <A HREF="papi_cost.html">papi_cost (1)</A>, 
-<!-- .BR papi_event_chooser "(1), " papi_mem_info "(1), " papi_native_avail "(1), " papi_xml_event_info "(1)" -->
+<!-- .BR papi_decode "(1), " papi_event_chooser "(1), " papi_mem_info "(1)" -->
+<A HREF="papi_decode.html">papi_decode (1)</A>, 
 <A HREF="papi_event_chooser.html">papi_event_chooser (1)</A>, 
-<A HREF="papi_mem_info.html">papi_mem_info (1)</A>, 
-<A HREF="papi_native_avail.html">papi_native_avail (1)</A>, 
-<A HREF="papi_xml_event_info.html">papi_xml_event_info (1)</A>
+<A HREF="papi_mem_info.html">papi_mem_info (1)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I></I></TD> <TD width=33% align=center>PAPI_NATIVE_AVAIL (1)</TD> <TD align=right width=33%><I>April, 2008</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I></I></TD> <TD width=33% align=center>PAPI_NATIVE_AVAIL (1)</TD> <TD align=right width=33%><I>May, 2005</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>
@@ -504,6 +421,17 @@ If you find a bug, it should be reported to the PAPI Mailing List at &lt;<A HREF
 <TR VALIGN="top">
 
 <TD ALIGN="center" HEIGHT="22" ROWSPAN="2" VALIGN="TOP">
+
+<SPAN CLASS="FOOTERNOTE">
+
+Contact PAPI: 
+
+<A HREF="mailto:papi@cs.utk.edu">
+
+papi@cs.utk.edu</A>
+
+</SPAN>
+
 </TD>
 
 <TD ALIGN="center" HEIGHT="11" WIDTH="200">

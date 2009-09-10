@@ -63,13 +63,13 @@
 /* Native events consist of a flag field, an event field, and a unit mask field.
  * The next 4 macros define the characteristics of the event and unit mask fields.
  */
-#define PAPI_NATIVE_EVENT_AND_MASK 0x00000fff	/* 12 bits == 4096 max events */
+#define PAPI_NATIVE_EVENT_AND_MASK 0x000003ff	/* 10 bits == 1024 max events */
 #define PAPI_NATIVE_EVENT_SHIFT 0
-#define PAPI_NATIVE_UMASK_AND_MASK 0x0ffff000	/* 16 bits for unit masks */
+#define PAPI_NATIVE_UMASK_AND_MASK 0x03fffc00	/* 16 bits for unit masks */
 #define PAPI_NATIVE_UMASK_MAX 16				/* 16 possible unit masks */
-#define PAPI_NATIVE_UMASK_SHIFT 12
+#define PAPI_NATIVE_UMASK_SHIFT 10
 
-#define PERF_MAX_COUNTERS 5
+#define PERF_MAX_COUNTERS 7
 #define MAX_COUNTERS PERF_MAX_COUNTERS
 #define MAX_COUNTER_TERMS  MAX_COUNTERS
 #define P3_MAX_REGS_PER_EVENT 2
@@ -102,7 +102,9 @@ do                                              \
    __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN) : "memory");                                \
 } while(0)
 
+#undef hwd_siginfo_t
 typedef siginfo_t hwd_siginfo_t;
+#undef hwd_ucontext_t
 typedef ucontext_t hwd_ucontext_t;
 
 /* Overflow macros */
@@ -155,7 +157,9 @@ typedef struct native_event_entry {
 } native_event_entry_t;
 
 /* typedefs to conform to hardware independent PAPI code. */
+#undef hwd_reg_alloc_t
 typedef P3_reg_alloc_t hwd_reg_alloc_t;
+#undef hwd_register_t
 typedef P3_register_t hwd_register_t;
 
 typedef struct P3_perfctr_control {
@@ -174,8 +178,11 @@ typedef struct P3_perfctr_context {
 /*  P3_perfctr_control_t start; */
 } P3_perfctr_context_t;
 
+/* Override void* definitions from PAPI framework layer */
 /* typedefs to conform to hardware independent PAPI code. */
+#undef hwd_control_state_t
 typedef P3_perfctr_control_t hwd_control_state_t;
+#undef hwd_context_t
 typedef P3_perfctr_context_t hwd_context_t;
 #define hwd_pmc_control vperfctr_control
 
@@ -225,6 +232,9 @@ typedef P3_perfctr_context_t hwd_context_t;
 
 extern native_event_entry_t *native_table;
 extern hwi_search_t *preset_search_map;
+
+#define MY_VECTOR _p3_vector
+
 
 #if __CATAMOUNT__
   extern void _start ( );

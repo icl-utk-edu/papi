@@ -91,16 +91,6 @@ Insufficient memory to complete the operation.
 .if t .ft P
 .fi         
 
-.SH IBM POWER6 NOTES
-The event set 
-.I must
-have its domain set to PAPI_DOM_ALL or equivalently
-PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR, otherwise a
-PAPI_ECNFLT error will result.  This is due to the POWER6's cycle counting
-hardware being able to count only in this domain.  For more details, see the IBM POWER6 NOTES in the
-.BR PAPI_add_event "(3)"
-documentation.
-
 .SH BUGS
 This function has no known bugs.
 

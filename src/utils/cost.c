@@ -160,7 +160,7 @@ int main(int argc, char **argv)
             show_dist = 1;
          if (strstr(argv[i], "-h")) {
             print_help();
-            exit(0);
+            exit(1);
          }
          if (strstr(argv[i], "-s"))
             show_std_dev = 1;
@@ -310,5 +310,5 @@ int main(int argc, char **argv)
 
    free(array);
    test_pass(__FILE__, NULL, 0);
-   exit(0);
+   exit(1);
 }

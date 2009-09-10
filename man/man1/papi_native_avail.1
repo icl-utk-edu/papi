@@ -1,71 +1,24 @@
 .\" $Id$
-.TH PAPI_NATIVE_AVAIL 1 "April, 2008"
+.TH PAPI_NATIVE_AVAIL 1 "May, 2005"
 .SH NAME
 papi_native_avail \- provides detailed information for PAPI native events.
 
 .SH SYNOPSIS
 
-\fBpapi_native_avail\fP [\fIoptions\fP]
+\fBpapi_native_avail\fP
 
 
 .SH DESCRIPTION
 \fBpapi_native_avail\fP is a PAPI utility program that reports information about the native events available on the current platform.
-A native event is an event specific to a given hardware platform. Some platforms support special features for certain events.
-Those events can be determined by applying filters to the list. On many platforms, native events may have optional settings, 
-or unit masks. In such cases, the native event and each unit mask is presented. For each native event, a name, a description, 
-and the PAPI event code are provided.
+A native event is an event specific to a specific hardware platform. On many platforms, a specific native event may have a number of
+optional settings. In such cases, the native event and the valid settings are presented, rather than every possible combination of
+those settings. For each native event, a name, a description, and specific bit patterns are provided.
 
 
 .SH OPTIONS
 
-\fBGeneral command options:\fP
 
-.TP
-\fI-d, --detail\fP
-Display detailed information about native events.
-
-.TP
-\fI-e <event>\fP
-Display detailed event information for the named native event.
-
-.TP
-\fI-h, --help\fP
-Display help information about this utility.
-
-
-.TP
-\fBEvent filtering and display options:
-.TP
-(These options may not be present, depending on the architecture. Use \fI--help\fB to confirm availability.)\fP
-
-
-.TP
-\fI--darr\fP
-Display events supporting Data Address Range Restriction.
-
-.TP
-\fI--dear\fP
-Display Data Event Address Register events only.
-
-.TP
-\fI--iarr\fP
-Display events supporting Instruction Address Range Restriction.
-
-.TP
-\fI--iear\fP
-Display Instruction Event Address Register events only.
-
-.TP
-\fI--opcm\fP
-Display events supporting OpCode Matching.
-
-.TP
-\fI--nomasks\fP
-Suppress display of Unit Mask information.
-
-.TP
-\fI--nogroups\fP
-Suppress display of Event grouping information.
+This utility has no command line options.
 
 
 .SH BUGS 
@@ -75,4 +28,4 @@ If you find a bug, it should be reported to the PAPI Mailing List at <ptools-per
 
 .SH SEE ALSO
 .BR PAPI "(3), " papi_avail "(1), " papi_clockres "(1), " papi_command_line "(1), " papi_cost "(1), "
-.BR papi_event_chooser "(1), " papi_mem_info "(1), " papi_native_avail "(1), " papi_xml_event_info "(1)"
+.BR papi_decode "(1), " papi_event_chooser "(1), " papi_mem_info "(1)"

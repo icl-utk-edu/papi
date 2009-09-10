@@ -10,21 +10,7 @@
 *          
 */
 
-#ifdef ARCH_EVTS
 #include ARCH_EVTS
-#else
-#define GROUP_INTS 8
-#ifdef _POWER4
-#define PAPI_MAX_NATIVE_EVENTS 256
-#elif defined(_POWER5)
-#define PAPI_MAX_NATIVE_EVENTS 512
-#elif defined(_POWER6)
-#define PAPI_MAX_NATIVE_EVENTS 1024
-#else
-#define PAPI_MAX_NATIVE_EVENTS 1024
-#endif
-#define MAX_GROUPS (GROUP_INTS * 32)
-#endif
 
 typedef struct PPC64_register {
    /* indicate which counters this event can live on */
@@ -46,7 +32,7 @@ typedef struct PPC64_groups {
   unsigned int counter_cmd[MAX_COUNTERS];
   #else
 /* Buffer containing counter cmds for this group */
-   unsigned int counter_cmd[MAX_COUNTERS];
+   unsigned char counter_cmd[MAX_COUNTERS];
 #endif
 } PPC64_groups_t;
 
@@ -68,22 +54,13 @@ typedef struct PPC64_native_map {
    int index;
 } PPC64_native_map_t;
 
-#define PERFMON_EVENT_FILE "perfmon_events.csv"
-
-typedef struct {
-   int preset; /* Preset code */
-   int derived; /* Derived code */
-   char *(findme[MAX_COUNTERS]); /* Strings to look for, more than 1 means derived */
-   char *operation; /* PostFix operations between terms */
-   char *note; /* In case a note is included with a preset */
-} pfm_preset_search_entry_t;
 
 extern native_event_entry_t native_table[PAPI_MAX_NATIVE_EVENTS];
 #ifndef __perfctr__
 extern hwd_pminfo_t pminfo;
 extern pm_groups_info_t pmgroups;
 #endif
-extern PPC64_native_map_t native_name_map[PAPI_MAX_NATIVE_EVENTS];
+extern PPC64_native_map_t native_name_map[MAX_NATNAME_MAP_INDEX];
 extern hwd_groups_t group_map[MAX_GROUPS];
 
 int check_native_name();

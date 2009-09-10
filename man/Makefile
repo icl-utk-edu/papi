@@ -1,6 +1,7 @@
-install: clean install-man install-doc
+clean:
+	rm -f *~ core man3/*~
 
-install-man:
+install:
 	@echo "Man pages (MANDIR) being installed in: \"$(MANDIR)\""; 
 	-mkdir -p $(MANDIR)/man3
 	-chmod go+rx $(MANDIR)/man3
@@ -10,18 +11,3 @@ install-man:
 	-chmod go+rx $(MANDIR)/man1
 	-cp man1/*.1 $(MANDIR)/man1
 	-chmod go+r $(MANDIR)/man1/*.1
-
-install-doc:
-	@echo "Docs (DOCDIR) being installed in: \"$(DOCDIR)\""; 
-	-mkdir -p $(DOCDIR)
-	-chmod go+rx $(DOCDIR)
-	-cp ../*.txt ../*.html ../doc/PAPI_*.doc ../doc/PAPI_*.pdf ../doc/*.html ../doc/*.gif $(DOCDIR)
-	-chmod go+r $(DOCDIR)/*
-	-mkdir -p $(DOCDIR)/html
-	-chmod go+rx $(DOCDIR)/html
-	-cp ./html/*.html $(DOCDIR)/html
-	-chmod go+r $(DOCDIR)/html/*
-
-clean:
-	rm -f *~ core man3/*~
-	rm -f *~ core man1/*~

@@ -59,13 +59,13 @@ This handler receives the
 .I EventSet
 of the overflowing event, the Program Counter 
 .I address 
-when the interrupt occurred, an
+when the interrupt occured, an
 .I overflow_vector
 that can be processed to determined which event(s) caused the overflow, 
 and a pointer to the machine 
 .I context, 
 which can be used in a platform-specific manor
-to extract register information about what was happening when the overflow occurred.
+to extract register information about what was happening when the overflow occured.
 
 .SH ARGUMENTS
 .I EventSet 
@@ -159,15 +159,6 @@ setting the threshold to 100000. Use the handler defined above.
   retval = PAPI_overflow(EventSet, PAPI_TOT_INS, 100000, 0, handler);
 .if t .ft P
 .fi
-
-.SH IBM POWER6 NOTES
-
-.P
-If you call PAPI_overflow on PM_RUN_CYC or PM_RUN_INST_CMPL, you may
-receive PAPI_ECNFLCT because of restrictions to event counters 5 & 6. For 
-more details, see the IBM POWER6 NOTES in the 
-.BR PAPI_add_event "(3)"
-documentation.
 
 .SH BUGS
 This function has no known bugs.

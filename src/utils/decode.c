@@ -34,7 +34,7 @@ int main(int argc, char **argv)
             print_avail_only = PAPI_PRESET_ENUM_AVAIL;
          if (strstr(argv[i], "-h")) {
             print_help();
-            exit(0);
+            exit(1);
          }
       }
 
@@ -67,5 +67,5 @@ int main(int argc, char **argv)
          printf("\n");
 	   }
    } while (PAPI_enum_event(&i, print_avail_only) == PAPI_OK);
-   exit(0);
+   exit(1);
 }

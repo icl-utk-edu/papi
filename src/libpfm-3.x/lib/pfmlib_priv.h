@@ -98,17 +98,13 @@ extern pfm_pmu_support_t itanium_support;
 extern pfm_pmu_support_t generic_ia64_support;
 extern pfm_pmu_support_t amd64_support;
 extern pfm_pmu_support_t i386_p6_support;
-extern pfm_pmu_support_t i386_ppro_support;
-extern pfm_pmu_support_t i386_pii_support;
 extern pfm_pmu_support_t i386_pm_support;
 extern pfm_pmu_support_t gen_ia32_support;
 extern pfm_pmu_support_t generic_mips64_support;
 extern pfm_pmu_support_t pentium4_support;
 extern pfm_pmu_support_t coreduo_support;
 extern pfm_pmu_support_t core_support;
-extern pfm_pmu_support_t gen_powerpc_support;
-extern pfm_pmu_support_t sparc_support;
-extern pfm_pmu_support_t cell_support;
+extern pfm_pmu_support_t generic_powerpc_support;
 
 static inline unsigned int pfm_num_masks(int e)
 {

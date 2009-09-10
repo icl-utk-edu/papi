@@ -62,8 +62,9 @@ $(SLIBPFM):  $(SOBJS)
 	$(LN) -sf $@ libpfms.so.$(VERSION)
 
 clean:
-	$(RM) -f *.o *.lo *.a *.so* *~
+	$(RM) -f $(OBJS) $(SOBJS) $(SUPP_OBJS)
 
 distclean: clean
+	$(RM) -f $(TARGETS) *.so* *~
 
 .PHONY: install depend

@@ -1,5 +1,8 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
 
+/* cpu type */
+#undef CPU
+
 /* POSIX 1b realtime clock */
 #undef HAVE_CLOCK_GETTIME_REALTIME
 
@@ -29,6 +32,18 @@
 
 /* Altix memory mapped global cycle counter */
 #undef HAVE_MMTIMER
+
+/* system has myrinet mx component */
+#undef HAVE_MX
+
+/* system has net(ifconfig) component */
+#undef HAVE_NET
+
+/* system has ACPI component */
+#undef HAVE_ACPI
+
+/* system has lm-sensors component */
+#undef HAVE_LMSENSORS
 
 /* Define to 1 if you have the <perfmon/pfmlib.h> header file. */
 #undef HAVE_PERFMON_PFMLIB_H
@@ -78,6 +93,12 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* The path of mx_counters */
+#undef MXPATH
+
+/* The path of ifconfig */
+#undef NETPATH
+
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 
@@ -93,8 +114,8 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* Do not use indirect substrate functions */
-#undef PAPI_NO_VECTOR
+/* package data directory */
+#undef PAPI_DATADIR
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
@@ -104,9 +125,6 @@
 
 /* Use /proc for per-thread times */
 #undef USE_PROC_PTTIMER
-
-/* Use semaphores for locking */
-#undef USE_SEMAPHORES
 
 /* Enable GNU extensions on systems that have them.  */
 #ifndef _GNU_SOURCE

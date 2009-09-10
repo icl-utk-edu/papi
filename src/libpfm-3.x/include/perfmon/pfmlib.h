@@ -197,15 +197,12 @@ extern int pfm_get_inst_retired_event(pfmlib_event_t *e);
 #define PFMLIB_MONTECITO_PMU 	 	4	/* Intel Dual-Core Itanium 2 9000 */
 #define PFMLIB_AMD64_PMU		16	/* AMD AMD64 */
 #define PFMLIB_GEN_IA32_PMU		63	/* Intel architectural PMU for X86 */
-#define PFMLIB_I386_P6_PMU		32	/* Intel PIII (P6 core) */
+#define PFMLIB_I386_P6_PMU		32	/* Intel P6 (excl. Pentium M) */
 #define PFMLIB_PENTIUM4_PMU		33	/* Intel Pentium4/Xeon/EM64T */
 #define PFMLIB_COREDUO_PMU		34	/* Intel Core Duo/Core Solo */
 #define PFMLIB_I386_PM_PMU		35	/* Intel Pentium M */
 #define PFMLIB_CORE_PMU			36	/* obsolete, use PFMLIB_INTEL_CORE_PMU */
 #define PFMLIB_INTEL_CORE_PMU		36	/* Intel Core */
-#define PFMLIB_INTEL_PPRO_PMU		37	/* Intel Pentium Pro */
-#define PFMLIB_INTEL_PII_PMU		38	/* Intel Pentium II */
-
 #define PFMLIB_MIPS_20KC_PMU		64	/* MIPS 20KC */
 #define PFMLIB_MIPS_24K_PMU		65	/* MIPS 24K */
 #define PFMLIB_MIPS_25KF_PMU		66	/* MIPS 25KF */
@@ -225,24 +222,6 @@ extern int pfm_get_inst_retired_event(pfmlib_event_t *e);
 #define PFMLIB_POWERPC_PMU		90	/* POWERPC */
 
 #define PFMLIB_CRAYX2_PMU		96	/* Cray X2 */
-
-#define	PFMLIB_CELL_PMU			100	/* CELL */
-
-#define PFMLIB_PPC970_PMU               110	/* IBM PowerPC 970(FX,GX) */
-#define PFMLIB_PPC970MP_PMU             111	/* IBM PowerPC 970MP */     
-#define PFMLIB_POWER3_PMU               112	/* IBM POWER3 */
-#define PFMLIB_POWER4_PMU               113	/* IBM POWER4 */
-#define PFMLIB_POWER5_PMU               114	/* IBM POWER5 */
-#define PFMLIB_POWER5p_PMU              115	/* IBM POWER5+ */
-#define PFMLIB_POWER6_PMU               116	/* IBM POWER6 */
-
-#define PFMLIB_SPARC_ULTRA12_PMU	130	/* UltraSPARC I, II, IIi, and IIe */
-#define PFMLIB_SPARC_ULTRA3_PMU		131	/* UltraSPARC III */
-#define PFMLIB_SPARC_ULTRA3I_PMU	132	/* UltraSPARC IIIi and IIIi+ */
-#define PFMLIB_SPARC_ULTRA3PLUS_PMU	133	/* UltraSPARC III+ and IV */
-#define PFMLIB_SPARC_ULTRA4PLUS_PMU	134	/* UltraSPARC IV+ */
-#define PFMLIB_SPARC_NIAGARA1_PMU	135	/* Niagara-1 */
-#define PFMLIB_SPARC_NIAGARA2_PMU	136	/* Niagara-2 */
 
 /*
  * pfmlib error codes

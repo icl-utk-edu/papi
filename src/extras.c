@@ -26,7 +26,8 @@ vendors did in the kernel extensions or performance libraries. */
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
-#include "papi_vector_redefine.h"
+#include "papi_memory.h"
+
 
 /*******************/
 /* BEGIN EXTERNALS */
@@ -102,7 +103,7 @@ inline_static int profil_increment(long long value,
 }
 
 
-static void posix_profil(unsigned long address, PAPI_sprofil_t * prof,
+static void posix_profil(caddr_t address, PAPI_sprofil_t * prof,
                          int flags, long long excess, long long threshold)
 {
    unsigned short *buf16;
@@ -124,12 +125,12 @@ static void posix_profil(unsigned long address, PAPI_sprofil_t * prof,
          - dividing by implicit 2 (2^^1 for a total of 2^^17), for even addresses
          NOTE: 131072 is a valid scale value. It produces byte resolution of addresses
       */
-      lloffset = ((unsigned long long)(address - (unsigned long)prof->pr_off)) * prof->pr_scale;
+      lloffset = (address - prof->pr_off) * prof->pr_scale;
       indx = (unsigned long)(lloffset >> 17);
    }
 
    /* confirm addresses within specified range */
-   if (address >= (unsigned long)prof->pr_off) {
+   if (address >= prof->pr_off) {
       /* test first for 16-bit buckets; this should be the fast case */
       if (flags & PAPI_PROFIL_BUCKET_16) {
          if ((indx * sizeof(short)) < prof->pr_size) {
@@ -157,25 +158,25 @@ static void posix_profil(unsigned long address, PAPI_sprofil_t * prof,
    }
 }
 
-void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, unsigned long pc,
+void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, caddr_t pc,
                       long long over, int profile_index)
 {
   EventSetProfileInfo_t *profile = &ESI->profile;
   PAPI_sprofil_t *sprof;
-  unsigned long offset = 0;
-  unsigned long best_offset = 0;
+  caddr_t offset = 0;
+  caddr_t best_offset = 0;
   int count;
   int best_index = -1;
   int i;
 
-  PRFDBG("handled IP 0x%lx\n",pc);
+  PRFDBG("handled IP 0x%p\n",pc);
 
   sprof = profile->prof[profile_index];
   count = profile->count[profile_index];
     
   for (i = 0; i < count; i++)
   {
-      offset = (unsigned long)sprof[i].pr_off;
+      offset = sprof[i].pr_off;
       if ((offset < pc) && (offset > best_offset))
       {
          best_index = i;
@@ -209,20 +210,20 @@ void _papi_hwi_dispatch_profile(EventSetInfo_t * ESI, unsigned long pc,
      situation).
 */
 
-int _papi_hwi_dispatch_overflow_signal(void *papiContext, unsigned long address, int *isHardware, long long overflow_bit, int genOverflowBit, ThreadInfo_t **t)
+int _papi_hwi_dispatch_overflow_signal(void *papiContext, caddr_t address, int *isHardware, long long overflow_bit, int genOverflowBit, ThreadInfo_t **t, int cidx)
 {
    int retval, event_counter, i, overflow_flag, pos;
    int papi_index, j;
    int profile_index = 0;
    long long overflow_vector;
 
-   long long temp[MAX_COUNTERS], over;
+   long long temp[_papi_hwd[cidx]->cmp_info.num_cntrs], over;
    long long latest = 0;
    ThreadInfo_t *thread;
    EventSetInfo_t *ESI;
    _papi_hwi_context_t *ctx = (_papi_hwi_context_t *) papiContext;
 
-   OVFDBG("handled context 0x%lx, IP 0x%lx\n",(unsigned long)papiContext,(unsigned long)address);
+   OVFDBG("enter\n");
 
    if (*t) 
      thread = *t;
@@ -231,7 +232,7 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, unsigned long address,
    
    if (thread != NULL) 
      {
-       ESI = thread->running_eventset;
+       ESI = thread->running_eventset[cidx];
 
        if ((ESI == NULL) || ((ESI->state & PAPI_OVERFLOWING) == 0))
 	 {
@@ -241,6 +242,9 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, unsigned long address,
 #endif
 	   return(PAPI_OK);
 	 }
+
+     if (ESI->CmpIdx != cidx)
+	   return(PAPI_ENOCMP);
 
        if (ESI->master != thread)
 	 {
@@ -263,7 +267,7 @@ int _papi_hwi_dispatch_overflow_signal(void *papiContext, unsigned long address,
       overflow_vector = 0;
 
       if (!(ESI->overflow.flags&PAPI_OVERFLOW_HARDWARE)) {
-         retval = _papi_hwi_read(&thread->context, ESI, ESI->sw_stop);
+         retval = _papi_hwi_read(thread->context[cidx], ESI, ESI->sw_stop);
          if (retval < PAPI_OK)
 	   return(retval);
          for (i = 0; i < event_counter; i++) {
@@ -347,7 +351,7 @@ foundit:
 
 #ifdef _WIN32
 
-int _papi_hwi_using_signal[PAPI_NSIG];
+volatile int _papi_hwi_using_signal = 0;
 static MMRESULT wTimerID;       // unique ID for referencing this timer
 static UINT wTimerRes;          // resolution for this timer
 
@@ -382,7 +386,7 @@ int _papi_hwi_start_timer(int ns)
    return (retval);
 }
 
-int _papi_hwi_start_signal(int signal, int need_context)
+int _papi_hwi_start_signal(int signal, int need_context, int cidx)
 {
   return(PAPI_OK);
 }
@@ -439,7 +443,7 @@ int _papi_hwi_start_timer(int timer, int signal, int ns)
    return (PAPI_OK);
 }
 
-int _papi_hwi_start_signal(int signal, int need_context)
+int _papi_hwi_start_signal(int signal, int need_context, int cidx)
 {
    struct sigaction action;
 
@@ -455,17 +459,17 @@ int _papi_hwi_start_signal(int signal, int need_context)
    memset(&action, 0x00, sizeof(struct sigaction));
    action.sa_flags = SA_RESTART;
 #if defined(__ALPHA) && defined(__osf__)
-   action.sa_handler = (void (*)(int)) _papi_hwd_dispatch_timer;
+   action.sa_handler = (void (*)(int)) _papi_hwd[cidx]->dispatch_timer;
 #elif defined(_BGL)
-   action.sa_sigaction = (void (*)(int, siginfo_t *, void *)) _papi_hwd_dispatch_timer;
+   action.sa_sigaction = (void (*)(int, siginfo_t *, void *)) _papi_hwd[cidx]->dispatch_timer;
    if (need_context)
      action.sa_flags |= SIGPWR;
 #elif defined(__crayx1)
-   action.sa_handler = (void (*)(int)) _papi_hwd_dispatch_timer;
+   action.sa_handler = (void (*)(int)) _papi_hwd[cidx]->dispatch_timer;
    if (need_context)
       action.sa_flags |= SA_SIGINFO;
 #else
-   action.sa_sigaction = (void (*)(int, siginfo_t *, void *)) _papi_hwd_dispatch_timer;
+   action.sa_sigaction = (void (*)(int, siginfo_t *, void *)) _papi_hwd[cidx]->dispatch_timer;
    if (need_context)
      action.sa_flags |= SA_SIGINFO;
 #endif
@@ -549,7 +553,12 @@ int _papi_hwi_stop_timer(int timer, int signal)
 int _papi_hwi_query_native_event(unsigned int EventCode)
 {
    char name[PAPI_HUGE_STR_LEN]; /* probably overkill, but should always be big enough */
-   return(_papi_hwd_ntv_code_to_name(EventCode, name, sizeof(name)));
+   int cidx = PAPI_COMPONENT_INDEX(EventCode);
+
+   if ( cidx < 0 || cidx > papi_num_components)
+      return (PAPI_ENOCMP);
+
+   return(_papi_hwd[cidx]->ntv_code_to_name(EventCode, name, sizeof(name)));
 }
 
 /* Converts an ASCII name into a native event code usable by other routines
@@ -559,34 +568,38 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
 {
    int retval = PAPI_ENOEVNT;
 
-#if ((defined PERFCTR_PFM_EVENTS) | (defined SUBSTRATE_USES_LIBPFM))
-   extern unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code);
-   retval = _papi_pfm_ntv_name_to_code(in, out);
-#else
+// XXX This is from PAPI Classic; we should check the vector table for
+// an implemented version of name_to_code.
+//#if ((defined PERFCTR_PFM_EVENTS) | (defined SUBSTRATE_USES_LIBPFM))
+//   extern unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code);
+//   retval = _papi_pfm_ntv_name_to_code(in, out);
+//#else
 
    char name[PAPI_HUGE_STR_LEN]; /* make sure it's big enough */
-   unsigned int i = 0 | PAPI_NATIVE_MASK;
+   unsigned int i, j;
 
-   _papi_hwd_ntv_enum_events(&i, PAPI_ENUM_FIRST);
-   _papi_hwi_lock(INTERNAL_LOCK);
-   do {
-      retval = _papi_hwd_ntv_code_to_name(i, name, sizeof(name));
+   for (j=0,i = 0 | PAPI_NATIVE_MASK;j<papi_num_components; j++,i = 0 | PAPI_NATIVE_MASK) {
+     _papi_hwd[j]->ntv_enum_events(&i, PAPI_ENUM_FIRST);
+     _papi_hwi_lock(INTERNAL_LOCK);
+     do {
+        /* first check each component for name_to_code */
+        retval = _papi_hwd[j]->ntv_code_to_name(i, name, sizeof(name));
 /*      printf("name =|%s|\ninput=|%s|\n", name, in); */
-      if (retval == PAPI_OK) {
-         if (strcasecmp(name, in) == 0) {
-            *out = i;
-            break;
-	     } else {
-            retval = PAPI_ENOEVNT;
-         }
-      } else {
-         *out = 0;
-         retval = PAPI_ENOEVNT;
-         break;
-      }
-   } while (_papi_hwd_ntv_enum_events(&i, PAPI_ENUM_EVENTS) == PAPI_OK) ;
-   _papi_hwi_unlock(INTERNAL_LOCK);
-#endif /* PERFCTR_PFM_EVENTS */
+        if (retval == PAPI_OK) {
+           if (strcasecmp(name, in) == 0) {
+              *out = i | PAPI_COMPONENT_MASK(j);;
+              break;
+	        } else {
+              retval = PAPI_ENOEVNT;
+           }
+        } else {
+           *out = 0;
+           retval = PAPI_ENOEVNT;
+           break;
+        }
+     } while ((_papi_hwd[j]->ntv_enum_events(&i, PAPI_ENUM_EVENTS) == PAPI_OK));
+     _papi_hwi_unlock(INTERNAL_LOCK);
+   }
    return (retval);
 }
 
@@ -595,8 +608,13 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
    Returns NULL if name not found */
 int _papi_hwi_native_code_to_name(unsigned int EventCode, char *hwi_name, int len)
 {
+   int cidx = PAPI_COMPONENT_INDEX(EventCode);
+
+   if ( cidx < 0 || cidx > papi_num_components)
+      return (PAPI_ENOCMP);
+
    if (EventCode & PAPI_NATIVE_MASK) {
-      return(_papi_hwd_ntv_code_to_name(EventCode, hwi_name, len));
+      return(_papi_hwd[cidx]->ntv_code_to_name(EventCode, hwi_name, len));
    }
    return (PAPI_ENOEVNT);
 }
@@ -607,9 +625,14 @@ int _papi_hwi_native_code_to_name(unsigned int EventCode, char *hwi_name, int le
 int _papi_hwi_native_code_to_descr(unsigned int EventCode, char *hwi_descr, int len)
 {
    int retval = PAPI_ENOEVNT;
+   int cidx = PAPI_COMPONENT_INDEX(EventCode);
+
+   if ( cidx < 0 || cidx > papi_num_components)
+      return (PAPI_ENOCMP);
+
    if (EventCode & PAPI_NATIVE_MASK) {
       _papi_hwi_lock(INTERNAL_LOCK);
-      retval = _papi_hwd_ntv_code_to_descr(EventCode, hwi_descr, len);
+      retval = _papi_hwd[cidx]->ntv_code_to_descr(EventCode, hwi_descr, len);
       _papi_hwi_unlock(INTERNAL_LOCK);
    }
    return (retval);
@@ -619,36 +642,48 @@ int _papi_hwi_native_code_to_descr(unsigned int EventCode, char *hwi_descr, int 
 /* The native event equivalent of PAPI_get_event_info */
 int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * info)
 {
-   hwd_register_t bits;
-   int retval;
+	hwd_register_t *bits = NULL;
+	int retval;
+	int cidx = PAPI_COMPONENT_INDEX(EventCode);
 
-   if (EventCode & PAPI_NATIVE_MASK) {
-     memset(info,0,sizeof(*info));
-      retval =_papi_hwd_ntv_code_to_name(EventCode, info->symbol, sizeof(info->symbol));
-      if (retval == PAPI_OK || retval == PAPI_EBUF) {
-         /* Fill in the info structure */
-         info->event_code = EventCode;
-         retval = _papi_hwd_ntv_code_to_descr(EventCode, info->long_descr, sizeof(info->long_descr));
-         if (retval == PAPI_OK || retval == PAPI_EBUF) {
-	     info->short_descr[0] = '\0';
-	     info->derived[0] = '\0';
-	     info->postfix[0] = '\0';
+	if ( cidx < 0 || cidx > papi_num_components)
+		return (PAPI_ENOCMP);
 
-	     /* Convert the register bits structure for this EventCode into
-		arrays of names and values (substrate dependent).
-	     */
-	     retval = _papi_hwd_ntv_code_to_bits(EventCode, &bits);
-	     if (retval == PAPI_OK)
-	       retval = _papi_hwd_ntv_bits_to_info(&bits, (char *)&info->name[0][0], info->code, PAPI_2MAX_STR_LEN, PAPI_MAX_INFO_TERMS);
-	     if (retval < 0) 
-	       info->count = 0;
-	     else 
-	       info->count = retval;
-	     return (PAPI_OK);
-	 }
-      }
-   }
-   return (PAPI_ENOEVNT);
+	if (EventCode & PAPI_NATIVE_MASK) {
+		memset(info,0,sizeof(*info));
+		retval =_papi_hwd[cidx]->ntv_code_to_name(EventCode, info->symbol, sizeof(info->symbol));
+		if (retval == PAPI_OK || retval == PAPI_EBUF) {
+
+			/* Fill in the info structure */
+			info->event_code = EventCode;
+			retval = _papi_hwd[cidx]->ntv_code_to_descr(EventCode, info->long_descr, sizeof(info->long_descr));
+			if (retval == PAPI_OK || retval == PAPI_EBUF) {
+				info->short_descr[0] = '\0';
+				info->derived[0] = '\0';
+				info->postfix[0] = '\0';
+
+				/* Convert the register bits structure for this EventCode into
+				arrays of names and values (substrate dependent).
+				*/
+				bits = papi_malloc(_papi_hwd[cidx]->size.reg_value);
+				if ( bits == NULL ){
+					info->count = 0;
+					return(PAPI_ENOMEM);
+				}
+				retval = _papi_hwd[cidx]->ntv_code_to_bits(EventCode, bits);
+				if (retval == PAPI_OK)
+                  retval = _papi_hwd[cidx]->ntv_bits_to_info(bits, (char *)&info->name[0][0], info->code, PAPI_2MAX_STR_LEN, PAPI_MAX_INFO_TERMS);
+				if (retval < 0) 
+                  info->count = 0;
+				else
+                  info->count = retval;
+				if ( bits ) papi_free(bits);
+				return (PAPI_OK);
+			}
+		}
+	}
+	if ( bits ) papi_free(bits);
+	return (PAPI_ENOEVNT);
 }
 
 #if !defined(HAVE_FFSLL)
@@ -722,41 +757,4 @@ extern int getpagesize(void)
    return ((int) SystemInfo.dwPageSize);
 }
 
-/* 
-	Yet another Unix routine with no Windows support.
-*/
-int gettimeofday(struct timeval *tv, struct timezone *tz)
-{
-  FILETIME ft;
-  unsigned __int64 tmpres = 0;
-  static int tzflag;
- 
-  if (NULL != tv)
-  {
-    GetSystemTimeAsFileTime(&ft);
- 
-    tmpres |= ft.dwHighDateTime;
-    tmpres <<= 32;
-    tmpres |= ft.dwLowDateTime;
- 
-    /*converting file time to unix epoch*/
-    tmpres /= 10;  /*convert into microseconds*/
-    tmpres -= DELTA_EPOCH_IN_MICROSECS; 
-    tv->tv_sec = (long)(tmpres / 1000000UL);
-    tv->tv_usec = (long)(tmpres % 1000000UL);
-  }
- 
-  if (NULL != tz)
-  {
-    if (!tzflag)
-    {
-      _tzset();
-      tzflag++;
-    }
-    tz->tz_minuteswest = _timezone / 60;
-    tz->tz_dsttime = _daylight;
-  }
- 
-  return 0;
-}
 #endif                          /* _WIN32 */

@@ -1,6 +1,6 @@
 /* 
  * PPC64-specific perfctr library procedures.
- * Copyright (C) 2004  Mikael Pettersson
+ * Copyright (C) 2004, 2007  Mikael Pettersson
  * Copyright (C) 2004  Maynard Johnson
  *
  */
@@ -13,14 +13,28 @@
 #include "libperfctr.h"
 #include "ppc64.h"
 
-#ifndef __NR_vperfctr_info
-#define __NR_vperfctr_open	275
+static unsigned int __NR_vperfctr_open;
 #define __NR_vperfctr_control	(__NR_vperfctr_open+1)
 #define __NR_vperfctr_write	(__NR_vperfctr_open+2)
 #define __NR_vperfctr_read	(__NR_vperfctr_open+3)
-#endif
 
 #include <unistd.h>
+
+static void init_sys_vperfctr(void)
+{
+    if (!__NR_vperfctr_open) {
+	unsigned int nr;
+	unsigned int kver = perfctr_linux_version_code();
+
+	if (kver >= PERFCTR_KERNEL_VERSION(2,6,18))
+	    nr = 310;
+	else if (kver >= PERFCTR_KERNEL_VERSION(2,6,16))
+	    nr = 301;
+	else
+	    nr = 280;
+	__NR_vperfctr_open = nr;
+    }
+}
 
 /*
  * The actual syscalls.
@@ -28,21 +42,25 @@
 
 int _sys_vperfctr_open(int fd_unused, int tid, int creat)
 {
+    init_sys_vperfctr();
     return syscall(__NR_vperfctr_open, tid, creat);
 }
 
 int _sys_vperfctr_control(int fd, unsigned int cmd)
 {
+    init_sys_vperfctr();
     return syscall(__NR_vperfctr_control, fd, cmd);
 }
 
 static int _sys_vperfctr_write(int fd, unsigned int domain, const void *arg, unsigned int argbytes)
 {
+    init_sys_vperfctr();
     return syscall(__NR_vperfctr_write, fd, domain, arg, argbytes);
 }
 
 static int _sys_vperfctr_read(int fd, unsigned int domain, void *arg, unsigned int argbytes)
 {
+    init_sys_vperfctr();
     return syscall(__NR_vperfctr_read, fd, domain, arg, argbytes);
 }
 
@@ -307,6 +325,8 @@ int _sys_vperfctr_read_control(int fd, unsigned int cpu_type, struct vperfctr_co
 #define PV_970FX	0x003C
 #define PV_630        	0x0040
 #define PV_630p	        0x0041
+#define PV_970MP	0x0044
+#define PV_970GX	0x0045
 
 static unsigned int mfpvr(void)
 {
@@ -332,6 +352,9 @@ void perfctr_info_cpu_init(struct perfctr_info *info)
       case PV_970FX:
 	cpu_type = PERFCTR_PPC64_970;
 	break;
+      case PV_970MP:
+	cpu_type = PERFCTR_PPC64_970MP;
+	break;
       case PV_POWER5:
       case PV_POWER5p: 
 	cpu_type = PERFCTR_PPC64_POWER5;
@@ -352,6 +375,7 @@ unsigned int perfctr_info_nrctrs(const struct perfctr_info *info)
       case PERFCTR_PPC64_POWER4:
       case PERFCTR_PPC64_POWER4p:
       case PERFCTR_PPC64_970:
+      case PERFCTR_PPC64_970MP:
       	return 8;
       case PERFCTR_PPC64_POWER5:
       	return 6;
@@ -371,6 +395,8 @@ const char *perfctr_info_cpu_name(const struct perfctr_info *info)
 	return "POWER4+";
       case PERFCTR_PPC64_970:
 	return "PowerPC 970";
+      case PERFCTR_PPC64_970MP:
+	return "PowerPC 970MP";
       case PERFCTR_PPC64_POWER5:
 	return "POWER5";
       default:

@@ -54,9 +54,10 @@ $(TARGETS):  %:%.o $(PFMLIB)
 	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $^ $(LIBS) 
 
 clean:
-	$(RM) -f *.o $(TARGETS)
+	$(RM) -f *.o 
 
 distclean: clean
+	$(RM) -f $(TARGETS)
 
 depend:
 	$(MKDEP) $(CFLAGS) $(SRCS)

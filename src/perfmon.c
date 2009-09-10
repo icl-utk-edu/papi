@@ -36,9 +36,18 @@ CRITICAL_SECTION _papi_hwd_lock_data[PAPI_MAX_LOCK];
 #else
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 #endif
-
+extern papi_vector_t _papi_pfm_vector;
 extern int _papi_pfm_setup_presets(char *name, int type);
-extern int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits);
+extern int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier);
+extern int _papi_pfm_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len);
+extern int _papi_pfm_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len);
+extern int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits);
+extern int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
+								unsigned int *values, int name_len, int count);
+
+int _papi_pfm_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold);
+
+/*
 extern papi_svector_t _papi_pfm_event_vectors[];
 
 
@@ -81,6 +90,7 @@ papi_svector_t _linux_pfm_table[] = {
 //  {(void (*)())_papi_hwd_ntv_bits_to_info, VEC_PAPI_HWD_NTV_BITS_TO_INFO},
  {NULL, VEC_PAPI_END}
 };
+*/
 
 /* Static locals */
 
@@ -132,7 +142,7 @@ static void dump_setinfo(pfarg_setinfo_t *setinfo, int num_sets)
     }
 }
 
-static void dump_pmc(hwd_control_state_t * ctl)
+static void dump_pmc(pfm_control_state_t *ctl)
 {
   int i;
   pfarg_pmc_t *pc = ctl->pc;
@@ -147,7 +157,7 @@ static void dump_pmc(hwd_control_state_t * ctl)
     }
 }
 
-static void dump_pmd(hwd_control_state_t * ctl)
+static void dump_pmd(pfm_control_state_t *ctl)
 {
   int i;
   pfarg_pmd_t *pd = ctl->pd;
@@ -293,7 +303,7 @@ inline_static long long get_cycles(void)
 
 #define PFM_MAX_PMCDS 20
 
-int _papi_pfm_write_pmcs(hwd_context_t * ctx, hwd_control_state_t * ctl)
+int _papi_pfm_write_pmcs(pfm_context_t * ctx, pfm_control_state_t * ctl)
 {
   int i=0, ret;
 
@@ -318,7 +328,7 @@ int _papi_pfm_write_pmcs(hwd_context_t * ctx, hwd_control_state_t * ctl)
   return PAPI_OK;
 }
 
-int _papi_pfm_write_pmds(hwd_context_t * ctx, hwd_control_state_t * ctl)
+int _papi_pfm_write_pmds(pfm_context_t * ctx, pfm_control_state_t * ctl)
 {
   int i=0, ret;
 
@@ -345,7 +355,7 @@ int _papi_pfm_write_pmds(hwd_context_t * ctx, hwd_control_state_t * ctl)
   return PAPI_OK;
 }
 
-int _papi_pfm_read_pmds(hwd_context_t * ctx, hwd_control_state_t * ctl)
+int _papi_pfm_read_pmds(pfm_context_t * ctx, pfm_control_state_t * ctl)
 {
   int i=0, ret;
 
@@ -775,7 +785,7 @@ VmLib:      1360 kB
 VmPTE:        20 kB
 */
 
-int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
+int _papi_pfm_get_dmem_info(PAPI_dmem_info_t *d)
 {
   char fn[PATH_MAX], tmp[PATH_MAX];
   FILE *f;
@@ -1710,7 +1720,7 @@ static int sparc_get_memory_info(PAPI_hw_info_t *hw_info)
 }
 #endif
 
-int _papi_hwd_get_memory_info(PAPI_hw_info_t * hwinfo, int unused)
+int _papi_pfm_get_memory_info(PAPI_hw_info_t * hwinfo, int unused)
 {
   int retval = PAPI_OK;
 
@@ -1733,7 +1743,7 @@ int _papi_hwd_get_memory_info(PAPI_hw_info_t * hwinfo, int unused)
   return(retval);
 }
 
-int _papi_hwd_update_shlib_info(void)
+int _papi_pfm_update_shlib_info(void)
 {
 #ifndef WIN32
    char fname[PAPI_HUGE_STR_LEN];
@@ -1907,7 +1917,7 @@ static int get_system_info(papi_mdi_t *mdi)
 
    /* Executable regions, may require reading /proc/pid/maps file */
 
-   retval = _papi_hwd_update_shlib_info();
+   retval = _papi_pfm_update_shlib_info();
    SUBDBG("Text: Start %p, End %p, length %d\n",
           mdi->exe_info.address_info.text_start,
           mdi->exe_info.address_info.text_end,
@@ -1947,7 +1957,7 @@ static int get_system_info(papi_mdi_t *mdi)
   if (retval)
     return(retval);
 
-  retval = _papi_hwd_get_memory_info(&mdi->hw_info,mdi->hw_info.model);
+  retval = _papi_pfm_get_memory_info(&mdi->hw_info,mdi->hw_info.model);
   if (retval)
     return(retval);
 
@@ -1977,8 +1987,9 @@ inline_static pid_t mygettid(void)
 }
 
 
-inline static int compute_kernel_args(hwd_control_state_t * ctl)
+inline static int compute_kernel_args(hwd_control_state_t * ctl0)
 {
+  pfm_control_state_t *ctl = (pfm_control_state_t *)ctl0;
   pfmlib_input_param_t *inp = &ctl->in;
   pfmlib_output_param_t *outp = &ctl->out;
   pfmlib_input_param_t tmpin;
@@ -1999,10 +2010,10 @@ inline static int compute_kernel_args(hwd_control_state_t * ctl)
      when we have higher level code call set_profile,set_overflow etc when there
      is hardware (substrate) support, but this change won't happen for PAPI 3.5 */
 
-  SUBDBG("entry multiplexed %d, pfp_event_count %d, num_cntrs %d, num_sets %d\n",ctl->multiplexed, inp->pfp_event_count, _papi_hwi_system_info.sub_info.num_cntrs,*num_sets);
-  if ((ctl->multiplexed) && (inp->pfp_event_count > _papi_hwi_system_info.sub_info.num_cntrs))
+  SUBDBG("entry multiplexed %d, pfp_event_count %d, num_cntrs %d, num_sets %d\n",ctl->multiplexed, inp->pfp_event_count, MY_VECTOR.cmp_info.num_cntrs,*num_sets);
+  if ((ctl->multiplexed) && (inp->pfp_event_count > MY_VECTOR.cmp_info.num_cntrs))
     {
-	dispatch_count = _papi_hwi_system_info.sub_info.num_cntrs;
+	dispatch_count = MY_VECTOR.cmp_info.num_cntrs;
     }
 
   while (togo)
@@ -2011,7 +2022,7 @@ inline static int compute_kernel_args(hwd_control_state_t * ctl)
       memset(&tmpin,0x0,sizeof(tmpin));
       memset(&tmpout,0x0,sizeof(tmpout));
       
-      SUBDBG("togo %d, done %d, dispatch_count %d, num_cntrs %d\n",togo,done,dispatch_count,_papi_hwi_system_info.sub_info.num_cntrs);
+      SUBDBG("togo %d, done %d, dispatch_count %d, num_cntrs %d\n",togo,done,dispatch_count,MY_VECTOR.cmp_info.num_cntrs);
       tmpin.pfp_event_count = dispatch_count;
       tmpin.pfp_dfl_plm = inp->pfp_dfl_plm;
 
@@ -2084,8 +2095,8 @@ inline static int compute_kernel_args(hwd_control_state_t * ctl)
       
       togo -= dispatch_count;
       done += dispatch_count;
-      if (togo > _papi_hwi_system_info.sub_info.num_cntrs)
-	dispatch_count = _papi_hwi_system_info.sub_info.num_cntrs;
+      if (togo > MY_VECTOR.cmp_info.num_cntrs)
+	dispatch_count = MY_VECTOR.cmp_info.num_cntrs;
       else
 	dispatch_count = togo;
 
@@ -2144,10 +2155,10 @@ int tune_up_fd(int ctx_fd)
    * event is originating which can be quite useful when monitoring
    * multiple tasks from a single thread.
    */
-  ret = fcntl(ctx_fd, F_SETSIG, _papi_hwi_system_info.sub_info.hardware_intr_sig);
+  ret = fcntl(ctx_fd, F_SETSIG, MY_VECTOR.cmp_info.hardware_intr_sig);
   if (ret == -1)
     {
-      PAPIERROR("cannot fcntl(F_SETSIG,%d) on %d: %s", _papi_hwi_system_info.sub_info.hardware_intr_sig, ctx_fd, strerror(errno));
+      PAPIERROR("cannot fcntl(F_SETSIG,%d) on %d: %s", MY_VECTOR.cmp_info.hardware_intr_sig, ctx_fd, strerror(errno));
       return(PAPI_ESYS);
     }
 #endif /* ! WIN32 */
@@ -2198,10 +2209,10 @@ static int attach(hwd_control_state_t *ctl, unsigned long tid)
   SUBDBG("PFM_CREATE_CONTEXT returned fd %d\n",ret);
   tune_up_fd(ret);
 
-  ctl->ctx_fd = ret;
-  ctl->ctx = newctx;
+  ((pfm_control_state_t *)ctl)->ctx_fd = ret;
+  ((pfm_control_state_t *)ctl)->ctx = newctx;
   load_args->load_pid = tid;
-  ctl->load = load_args;
+  ((pfm_control_state_t *)ctl)->load = load_args;
 
   return(PAPI_OK);
 }
@@ -2210,22 +2221,23 @@ static int detach(hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
   int i;
 
-  i = close(ctl->ctx_fd);
-  SUBDBG("CLOSE fd %d returned %d\n",ctl->ctx_fd,i);
+  i = close(((pfm_control_state_t *)ctl)->ctx_fd);
+  SUBDBG("CLOSE fd %d returned %d\n",((pfm_control_state_t *)ctl)->ctx_fd,i);
 
   /* Restore to main threads context */
-  free(ctl->ctx);
-  ctl->ctx = &ctx->ctx;
-  ctl->ctx_fd = ctx->ctx_fd;
-  free(ctl->load);
-  ctl->load = &ctx->load;
+  free(((pfm_control_state_t *)ctl)->ctx);
+  ((pfm_control_state_t *)ctl)->ctx = &((pfm_context_t *)ctx)->ctx;
+  ((pfm_control_state_t *)ctl)->ctx_fd = ((pfm_context_t *)ctx)->ctx_fd;
+  free(((pfm_control_state_t *)ctl)->load);
+  ((pfm_control_state_t *)ctl)->load = &((pfm_context_t *)ctx)->load;
 
   return(PAPI_OK);
 }
 #endif /* ! WIN32 */
 
-inline static int set_domain(hwd_control_state_t * ctl, int domain)
+inline static int set_domain(hwd_control_state_t * ctl0, int domain)
 {
+  pfm_control_state_t *ctl = (pfm_control_state_t *) ctl0;
   int mode = 0, did = 0;
   pfmlib_input_param_t *inp = &ctl->in;
 
@@ -2302,7 +2314,7 @@ static int get_string_from_file(char *file, char *str, int len)
   return(PAPI_OK);
 }
 
-int _papi_hwd_init_substrate(papi_vectors_t *vtable)
+int _papi_pfm_init_substrate(int cidx)
 {
   int i, retval;
   unsigned int ncnt;
@@ -2313,34 +2325,35 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 #endif
   char buf[PAPI_HUGE_STR_LEN];
 
-#ifndef PAPI_NO_VECTOR
-  /* Setup the vector entries that the OS knows about */
+/*#ifndef PAPI_NO_VECTOR
+  // Setup the vector entries that the OS knows about 
   retval = _papi_hwi_setup_vector_table( vtable, _linux_pfm_table);
   if ( retval != PAPI_OK ) return(retval);
-  /* And the vector entries for native event control */
+  // And the vector entries for native event control 
   retval = _papi_hwi_setup_vector_table( vtable, _papi_pfm_event_vectors);
   if ( retval != PAPI_OK ) return(retval);
 #endif
+*/
       /* The following checks the PFMLIB version 
 	  against the perfmon2 kernel version... */
-   strncpy(_papi_hwi_system_info.sub_info.support_version,buf,sizeof(_papi_hwi_system_info.sub_info.support_version));
+   strncpy(MY_VECTOR.cmp_info.support_version,buf,sizeof(MY_VECTOR.cmp_info.support_version));
 
 #ifdef WIN32
    strcpy(_papi_hwi_system_info.sub_info.kernel_version, "PFM for Windows");
    OpenWinPMCDriver();
 #else
-   retval = get_string_from_file("/sys/kernel/perfmon/version",_papi_hwi_system_info.sub_info.kernel_version,sizeof(_papi_hwi_system_info.sub_info.kernel_version));
+   retval = get_string_from_file("/sys/kernel/perfmon/version",MY_VECTOR.cmp_info.kernel_version,sizeof(MY_VECTOR.cmp_info.kernel_version));
    if (retval != PAPI_OK)
       return(retval);
 #ifdef PFM_VERSION
    sprintf(buf, "%d.%d", PFM_VERSION_MAJOR(PFM_VERSION), PFM_VERSION_MINOR(PFM_VERSION));
-   SUBDBG("Perfmon2 library versions...kernel: %s library: %s\n", _papi_hwi_system_info.sub_info.kernel_version, buf);
-   if (strcmp (_papi_hwi_system_info.sub_info.kernel_version, buf) != 0) {
+   SUBDBG("Perfmon2 library versions...kernel: %s library: %s\n", MY_VECTOR.cmp_info.kernel_version, buf);
+   if (strcmp (MY_VECTOR.cmp_info.kernel_version, buf) != 0) {
 	   /* do a little exception processing; 81 is compatible with 80 */
 	   if (!((PFM_VERSION_MINOR(PFM_VERSION) == 81)
-		   && (strncmp (_papi_hwi_system_info.sub_info.kernel_version, "2.8", 3) == 0))) {
+		   && (strncmp (MY_VECTOR.cmp_info.kernel_version, "2.8", 3) == 0))) {
 		  PAPIERROR("Version mismatch of libpfm: compiled %s vs. installed %s\n",
-				  buf, _papi_hwi_system_info.sub_info.kernel_version);
+				  buf, MY_VECTOR.cmp_info.kernel_version);
 		   return (PAPI_ESBSTR);
 	   }
    }
@@ -2361,7 +2374,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
        return (PAPI_ESBSTR);
    }
 
-   sprintf(_papi_hwi_system_info.sub_info.support_version, "%d.%d", PFM_VERSION_MAJOR(version), PFM_VERSION_MINOR(version));
+   sprintf(MY_VECTOR.cmp_info.support_version, "%d.%d", PFM_VERSION_MAJOR(version), PFM_VERSION_MINOR(version));
 
    if (PFM_VERSION_MAJOR(version) != PFM_VERSION_MAJOR(PFMLIB_VERSION)) {
       PAPIERROR("Version mismatch of libpfm: compiled %x vs. installed %x\n",
@@ -2394,10 +2407,10 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 						  &_perfmon2_pfm_unavailable_pmds,
 						  &min_timeout_ns);
 
-     _papi_hwi_system_info.sub_info.itimer_ns = 10000000;
+     MY_VECTOR.cmp_info.itimer_ns = 10000000;
      /* This field represents the minimum timer resolution. Anything lower
 	is not possible. Anything higher and it must be a multiple of this */
-     _papi_hwi_system_info.sub_info.itimer_res_ns = min_timeout_ns;
+     MY_VECTOR.cmp_info.itimer_res_ns = min_timeout_ns;
 
      if (retval != PAPI_OK)
        return(retval);
@@ -2446,32 +2459,32 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
       return(PAPI_ESBSTR);
     }
   SUBDBG("pfm_get_num_events: %d\n", ncnt);
-  _papi_hwi_system_info.sub_info.num_native_events = ncnt;
-  strcpy(_papi_hwi_system_info.sub_info.name, "$Id$");          
-  strcpy(_papi_hwi_system_info.sub_info.version, "$Revision$");  
+  MY_VECTOR.cmp_info.num_native_events = ncnt;
+  strcpy(MY_VECTOR.cmp_info.name, "$Id$");          
+  strcpy(MY_VECTOR.cmp_info.version, "$Revision$");  
   sprintf(buf,"%08x",version);
 
-  pfm_get_num_counters((unsigned int *)&_papi_hwi_system_info.sub_info.num_cntrs);
-  SUBDBG("pfm_get_num_counters: %d\n", _papi_hwi_system_info.sub_info.num_cntrs);
+  pfm_get_num_counters((unsigned int *)&MY_VECTOR.cmp_info.num_cntrs);
+  SUBDBG("pfm_get_num_counters: %d\n", MY_VECTOR.cmp_info.num_cntrs);
   retval = get_system_info(&_papi_hwi_system_info);
   if (retval)
     return (retval);
   if ((_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_MIPS)||(_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_SICORTEX))
-    _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR|PAPI_DOM_OTHER;
+    MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR|PAPI_DOM_OTHER;
   else
     if (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM)
       {
         /* powerpc */
-        _papi_hwi_system_info.sub_info.available_domains |=
+        MY_VECTOR.cmp_info.available_domains |=
           PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR;
         if (strcmp(_papi_hwi_system_info.hw_info.model_string, "POWER6") == 0)
           {
-            _papi_hwi_system_info.sub_info.default_domain =
+            MY_VECTOR.cmp_info.default_domain =
               PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR;
           }
       }
     else
-      _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL;    
+      MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_KERNEL;    
 
   if (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_SUN)
     {
@@ -2486,7 +2499,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 	break;
 
       default:
-	_papi_hwi_system_info.sub_info.available_domains |=
+	MY_VECTOR.cmp_info.available_domains |=
 	  PAPI_DOM_SUPERVISOR;
 	break;
       }
@@ -2494,34 +2507,35 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 
   if (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_CRAY)
     {
-	_papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_OTHER;
+	MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_OTHER;
     }
 
   if ((_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL) ||
       (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_AMD))
     {
-      _papi_hwi_system_info.sub_info.fast_counter_read = 1;
-      _papi_hwi_system_info.sub_info.fast_real_timer = 1;
-      _papi_hwi_system_info.sub_info.cntr_umasks = 1;
+      MY_VECTOR.cmp_info.fast_counter_read = 1;
+      MY_VECTOR.cmp_info.fast_real_timer = 1;
+      MY_VECTOR.cmp_info.cntr_umasks = 1;
     }
   if (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_SICORTEX) {
-      _papi_hwi_system_info.sub_info.fast_real_timer = 1;
-      _papi_hwi_system_info.sub_info.cntr_umasks = 1;
+      MY_VECTOR.cmp_info.fast_real_timer = 1;
+      MY_VECTOR.cmp_info.cntr_umasks = 1;
   }    
 #ifdef WIN32
   /****WIN32: can we figure out how to get Windows to support hdw interrupts on
     counter overflow? The hardware supports it; does the OS? */
-  _papi_hwi_system_info.sub_info.hardware_intr = 0;
+  MY_VECTOR.cmp_info.hardware_intr = 0;
 #else
-  _papi_hwi_system_info.sub_info.hardware_intr = 1;
-  _papi_hwi_system_info.sub_info.hardware_intr_sig = SIGRTMIN+2;
+  MY_VECTOR.cmp_info.hardware_intr = 1;
+  MY_VECTOR.cmp_info.hardware_intr_sig = SIGRTMIN+2;
 #endif
-  _papi_hwi_system_info.sub_info.attach = 1;
-  _papi_hwi_system_info.sub_info.attach_must_ptrace = 1;
-  _papi_hwi_system_info.sub_info.kernel_multiplex = 1;
-  _papi_hwi_system_info.sub_info.kernel_profile = 1;
-  _papi_hwi_system_info.sub_info.profile_ear = 1;  
-  _papi_hwi_system_info.sub_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
+  MY_VECTOR.cmp_info.attach = 1;
+  MY_VECTOR.cmp_info.attach_must_ptrace = 1;
+  MY_VECTOR.cmp_info.kernel_multiplex = 1;
+  MY_VECTOR.cmp_info.kernel_profile = 1;
+  MY_VECTOR.cmp_info.profile_ear = 1;  
+  MY_VECTOR.cmp_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
+  MY_VECTOR.cmp_info.clock_ticks = sysconf(_SC_CLK_TCK);
 
   /* FIX: For now, use the pmu_type from Perfmon */
 
@@ -2574,7 +2588,7 @@ static int init_proc_thread_timer(hwd_context_t *thr_ctx)
 }
 #endif
 
-int _papi_hwd_init(hwd_context_t * thr_ctx)
+int _papi_sub_pfm_init(hwd_context_t * thr_ctx)
 {
   pfarg_load_t load_args;
   pfarg_ctx_t newctx;
@@ -2591,22 +2605,22 @@ int _papi_hwd_init(hwd_context_t * thr_ctx)
 
   if ((ret = pfm_create_context(&newctx, NULL, NULL, 0)) == -1)
     {
-      PAPIERROR("_papi_hwd_init:pfm_create_context(): %s", strerror(errno));
+      PAPIERROR("_papi_pfm_init:pfm_create_context(): %s", strerror(errno));
       return(PAPI_ESYS);
     }
   SUBDBG("PFM_CREATE_CONTEXT returned fd %d\n",ret);
   tune_up_fd(ret);
   ctx_fd = ret;
   
-  memcpy(&thr_ctx->ctx,&newctx,sizeof(newctx));
-  thr_ctx->ctx_fd = ctx_fd;
+  memcpy(&((pfm_context_t *)thr_ctx)->ctx,&newctx,sizeof(newctx));
+  ((pfm_context_t *)thr_ctx)->ctx_fd = ctx_fd;
   load_args.load_pid = mygettid();
-  memcpy(&thr_ctx->load,&load_args,sizeof(load_args));
+  memcpy(&((pfm_context_t *)thr_ctx)->load,&load_args,sizeof(load_args));
 
   return(PAPI_OK);
 }
 
-long long _papi_hwd_get_real_usec(void) {
+long long _papi_pfm_get_real_usec(void) {
   long long retval;
 #if defined(HAVE_CLOCK_GETTIME_REALTIME)
    {
@@ -2628,17 +2642,17 @@ long long _papi_hwd_get_real_usec(void) {
   return(retval);
 }
                                                                                 
-long long _papi_hwd_get_real_cycles(void) {
+long long _papi_pfm_get_real_cycles(void) {
   long long retval;
 #if defined(HAVE_GETTIMEOFDAY)||defined(__powerpc__)||(defined(mips)&&!defined(HAVE_CYCLE))
-  retval = _papi_hwd_get_real_usec()*(long long)_papi_hwi_system_info.hw_info.mhz;
+  retval = _papi_pfm_get_real_usec()*(long long)_papi_hwi_system_info.hw_info.mhz;
 #else
   retval = get_cycles();
 #endif
   return(retval);
 }
 
-long long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
+long long _papi_pfm_get_virt_usec(const hwd_context_t * zero)
 {
    long long retval;
 #if defined(USE_PROC_PTTIMER)
@@ -2648,7 +2662,7 @@ long long _papi_hwd_get_virt_usec(const hwd_context_t * zero)
      int rv, cnt = 0, i = 0;
 
 again:
-     rv = read(zero->stat_fd,buf,LINE_MAX*sizeof(char));
+     rv = read(((pfm_context_t *)zero)->stat_fd,buf,LINE_MAX*sizeof(char));
      if (rv == -1)
        {
 	 if (errno == EBADF)
@@ -2661,7 +2675,7 @@ again:
 	 PAPIERROR("read()");
 	 return(PAPI_ESYS);
        }
-     lseek(zero->stat_fd,0,SEEK_SET);
+     lseek(((pfm_context_t *)zero)->stat_fd,0,SEEK_SET);
 
      buf[rv] = '\0';
      SUBDBG("Thread stat file is:%s\n",buf);
@@ -2682,7 +2696,7 @@ again:
 	 PAPIERROR("Unable to scan two items from thread stat file at 13th space?");
 	 return(PAPI_ESBSTR);
        }
-     retval = (utime+stime)*(long long)1000000/_papi_hwi_system_info.sub_info.clock_ticks;
+     retval = (utime+stime)*(long long)1000000/MY_VECTOR.cmp_info.clock_ticks;
    }
 #elif defined(HAVE_CLOCK_GETTIME_THREAD)
    {
@@ -2696,7 +2710,7 @@ again:
      struct tms buffer;
      times(&buffer);
      SUBDBG("user %d system %d\n",(int)buffer.tms_utime,(int)buffer.tms_stime);
-     retval = (long long)((buffer.tms_utime+buffer.tms_stime)*1000000/_papi_hwi_system_info.sub_info.clock_ticks);
+     retval = (long long)((buffer.tms_utime+buffer.tms_stime)*1000000/MY_VECTOR.cmp_info.clock_ticks);
      /* NOT CLOCKS_PER_SEC as in the headers! */
    }
 #elif defined(HAVE_PER_THREAD_GETRUSAGE)
@@ -2727,26 +2741,26 @@ again:
    return (retval);
 }
 
-long long _papi_hwd_get_virt_cycles(const hwd_context_t * zero)
+long long _papi_pfm_get_virt_cycles(const hwd_context_t * zero)
 {
-   return (_papi_hwd_get_virt_usec(zero)*(long long)_papi_hwi_system_info.hw_info.mhz);
+   return (_papi_pfm_get_virt_usec(zero)*(long long)_papi_hwi_system_info.hw_info.mhz);
 }
 
 /* reset the hardware counters */
-int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctl)
+int _papi_pfm_reset(hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
   int i, ret;
 
   /* Read could have clobbered the values */
-  for (i=0; i < ctl->in.pfp_event_count; i++) 
+  for (i=0; i < ((pfm_control_state_t *)ctl)->in.pfp_event_count; i++) 
     {
-      if (ctl->pd[i].reg_flags & PFM_REGFL_OVFL_NOTIFY)
-	ctl->pd[i].reg_value = ctl->pd[i].reg_long_reset;
+      if (((pfm_control_state_t *)ctl)->pd[i].reg_flags & PFM_REGFL_OVFL_NOTIFY)
+	((pfm_control_state_t *)ctl)->pd[i].reg_value = ((pfm_control_state_t *)ctl)->pd[i].reg_long_reset;
       else
-	ctl->pd[i].reg_value = 0ULL;
+	((pfm_control_state_t *)ctl)->pd[i].reg_value = 0ULL;
     }
 
-  ret = _papi_pfm_write_pmds(ctx, ctl);
+  ret = _papi_pfm_write_pmds((pfm_context_t *)ctx, (pfm_control_state_t *)ctl);
   if(ret!=PAPI_OK)
     return PAPI_ESYS;
 
@@ -2754,31 +2768,34 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *ctl)
 }
 
 /* write(set) the hardware counters */
-int _papi_hwd_write(hwd_context_t *ctx, hwd_control_state_t *ctl, long long *from)
+int _papi_pfm_write(hwd_context_t *ctx, hwd_control_state_t *ctl, long long *from)
 {
   int i, ret;
 
   /* Read could have clobbered the values */
-  for (i=0; i < ctl->in.pfp_event_count; i++) 
+  for (i=0; i < ((pfm_control_state_t *)ctl)->in.pfp_event_count; i++) 
     {
-      if (ctl->pd[i].reg_flags & PFM_REGFL_OVFL_NOTIFY)
-	ctl->pd[i].reg_value = from[i] + ctl->pd[i].reg_long_reset;
+      if (((pfm_control_state_t *)ctl)->pd[i].reg_flags & PFM_REGFL_OVFL_NOTIFY)
+	((pfm_control_state_t *)ctl)->pd[i].reg_value = from[i] + ((pfm_control_state_t *)ctl)->pd[i].reg_long_reset;
       else
-	ctl->pd[i].reg_value = from[i];
+	((pfm_control_state_t *)ctl)->pd[i].reg_value = from[i];
     }
 
-  ret = _papi_pfm_write_pmds(ctx, ctl);
+  ret = _papi_pfm_write_pmds((pfm_context_t *)ctx, (pfm_control_state_t *)ctl);
   if(ret!=PAPI_OK)
     return PAPI_ESYS;
+
 
   return (PAPI_OK);
 }
 
-int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctl,
+int _papi_pfm_read(hwd_context_t * ctx0, hwd_control_state_t * ctl0,
                    long long ** events, int flags)
 {
   int i, ret;
   long long tot_runs = 0LL;
+  pfm_control_state_t *ctl = (pfm_control_state_t *) ctl0;
+  pfm_context_t *ctx = (pfm_context_t *)ctx0;
 
   ret = _papi_pfm_read_pmds(ctx, ctl);
   if(ret!=PAPI_OK)
@@ -2845,9 +2862,11 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctl,
 int _papi_hwd_start_create_context = 0;	/* CrayPat checkpoint support */
 #endif /* XT/X2 */
 
-int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctl)
+int _papi_pfm_start(hwd_context_t * ctx0, hwd_control_state_t * ctl0)
 {
   int i, ret; 
+  pfm_control_state_t *ctl = (pfm_control_state_t *) ctl0;
+  pfm_context_t *ctx = (pfm_context_t *)ctx0;
 
 #if defined(__crayxt) || defined(__crayx2)
   if (_papi_hwd_start_create_context) {
@@ -2921,9 +2940,11 @@ int _papi_hwd_start(hwd_context_t * ctx, hwd_control_state_t * ctl)
    return PAPI_OK;
 }
 
-int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctl)
+int _papi_pfm_stop(hwd_context_t * ctx0, hwd_control_state_t * ctl0)
 {
   int ret;
+  pfm_control_state_t *ctl = (pfm_control_state_t *) ctl0;
+//  pfm_context_t *ctx = (pfm_context_t *)ctx0;
 
   SUBDBG("PFM_STOP(%d)\n",ctl->ctx_fd);
   if ((ret = pfm_stop(ctl->ctx_fd)))
@@ -2973,44 +2994,44 @@ int _papi_hwd_stop(hwd_context_t * ctx, hwd_control_state_t * ctl)
 
 inline_static int round_requested_ns(int ns)
 {
-  if (ns <= _papi_hwi_system_info.sub_info.itimer_res_ns) {
-    return _papi_hwi_system_info.sub_info.itimer_res_ns;
+  if (ns <= MY_VECTOR.cmp_info.itimer_res_ns) {
+    return MY_VECTOR.cmp_info.itimer_res_ns;
   } else {
-    int leftover_ns = ns % _papi_hwi_system_info.sub_info.itimer_res_ns;
-    return (ns - leftover_ns + _papi_hwi_system_info.sub_info.itimer_res_ns);
+    int leftover_ns = ns % MY_VECTOR.cmp_info.itimer_res_ns;
+    return (ns - leftover_ns + MY_VECTOR.cmp_info.itimer_res_ns);
   }
 }
 
-int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
+int _papi_pfm_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
   switch (code) {
   case PAPI_MULTIPLEX:
     {
       option->multiplex.ns = round_requested_ns(option->multiplex.ns);
-      option->multiplex.ESI->machdep.multiplexed = option->multiplex.ns;
+      ((pfm_control_state_t *)(option->multiplex.ESI->ctl_state))->multiplexed = option->multiplex.ns;
       return(PAPI_OK);
     }
 #ifndef WIN32
   case PAPI_ATTACH:
-    return(attach(&option->attach.ESI->machdep, option->attach.tid));
+    return(attach((pfm_control_state_t *)(option->attach.ESI->ctl_state), option->attach.tid));
   case PAPI_DETACH:
-    return(detach(ctx, &option->attach.ESI->machdep));
+    return(detach(ctx, (pfm_control_state_t *)(option->attach.ESI->ctl_state)));
 #endif
   case PAPI_DOMAIN:
-    return(set_domain(&option->domain.ESI->machdep, option->domain.domain));
+    return(set_domain((pfm_control_state_t *)(option->domain.ESI->ctl_state), option->domain.domain));
   case PAPI_GRANUL:
     return (set_granularity
-	    (&option->granularity.ESI->machdep, option->granularity.granularity));
+	    ((pfm_control_state_t *)(option->granularity.ESI->ctl_state), option->granularity.granularity));
 #if 0
   case PAPI_DATA_ADDRESS:
-    ret=set_default_domain(&option->address_range.ESI->machdep, option->address_range.domain);
+    ret=set_default_domain((pfm_control_state_t *)(option->address_range.ESI->ctl_state), option->address_range.domain);
     if(ret != PAPI_OK) return(ret);
-    set_drange(ctx, &option->address_range.ESI->machdep, option);
+    set_drange(ctx, (pfm_control_state_t *)(option->address_range.ESI->ctl_state), option);
     return (PAPI_OK);
   case PAPI_INSTR_ADDRESS:
-    ret=set_default_domain(&option->address_range.ESI->machdep, option->address_range.domain);
+    ret=set_default_domain((pfm_control_state_t *)(option->address_range.ESI->ctl_state), option->address_range.domain);
     if(ret != PAPI_OK) return(ret);
-    set_irange(ctx, &option->address_range.ESI->machdep, option);
+    set_irange(ctx, (pfm_control_state_t *)(option->address_range.ESI->ctl_state), option);
     return (PAPI_OK);
 #endif
 
@@ -3050,8 +3071,9 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
   }
 }
 
-int _papi_hwd_shutdown(hwd_context_t * ctx)
+int _papi_pfm_shutdown(hwd_context_t * ctx0)
 {
+  pfm_context_t *ctx = (pfm_context_t *)ctx0;
   int ret;
 #if defined(USE_PROC_PTTIMER)
   close(ctx->stat_fd);
@@ -3069,7 +3091,7 @@ int _papi_hwd_shutdown(hwd_context_t * ctx)
 static inline int find_profile_index(EventSetInfo_t *ESI, int pmd, int *flags, unsigned int *native_index, int *profile_index)
 {
   int pos, esi_index, count;
-  hwd_control_state_t *ctl = &ESI->machdep;
+  pfm_control_state_t *ctl = (pfm_control_state_t *)ESI->ctl_state;
   pfarg_pmd_t *pd;
   pfarg_pmc_t *pc;
   int i;
@@ -3428,10 +3450,11 @@ static inline int process_smpl_entry(unsigned int native_pfm_index, int flags, p
 static inline int
 process_smpl_buf(int num_smpl_pmds, int entry_size, ThreadInfo_t **thr)
 {
+  int cidx = MY_VECTOR.cmp_info.CmpIdx;
   pfm_dfl_smpl_entry_t *ent;
   size_t pos;
   uint64_t entry, count;
-  pfm_dfl_smpl_hdr_t *hdr = (*thr)->context.smpl_buf;
+  pfm_dfl_smpl_hdr_t *hdr = ((pfm_context_t *)(*thr)->context[cidx])->smpl_buf;
   int ret, profile_index, flags;
   unsigned int native_pfm_index;
   caddr_t pc = NULL;
@@ -3451,13 +3474,13 @@ process_smpl_buf(int num_smpl_pmds, int entry_size, ThreadInfo_t **thr)
 
       /* Find the index of the profile buffers if we are profiling on many events */
 
-      ret = find_profile_index((*thr)->running_eventset,ent->ovfl_pmd,&flags,&native_pfm_index,&profile_index);
+      ret = find_profile_index((*thr)->running_eventset[cidx],ent->ovfl_pmd,&flags,&native_pfm_index,&profile_index);
       if (ret != PAPI_OK)
 	return(ret);
 
       weight = process_smpl_entry(native_pfm_index,flags,&ent,&pc);
 
-      _papi_hwi_dispatch_profile((*thr)->running_eventset, (unsigned long)pc,
+      _papi_hwi_dispatch_profile((*thr)->running_eventset[cidx], pc,
 				 weight, profile_index);
  
       entry++;
@@ -3469,7 +3492,7 @@ process_smpl_buf(int num_smpl_pmds, int entry_size, ThreadInfo_t **thr)
 /* This function  used when hardware overflows ARE working 
     or when software overflows are forced					*/
 
-void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
+void _papi_pfm_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
 {
     _papi_hwi_context_t ctx;
 #ifdef HAVE_PFM_MSG_TYPE
@@ -3478,44 +3501,45 @@ void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
     pfarg_msg_t msg;
 #endif
     int ret, wanted_fd, fd = info->si_fd;
-    unsigned long address;
+    caddr_t address;
     ThreadInfo_t *thread = _papi_hwi_lookup_thread();
+    int cidx = MY_VECTOR.cmp_info.CmpIdx;
 
     if (thread == NULL) {
-        PAPIERROR("thread == NULL in _papi_hwd_dispatch_timer!");
-	if (n == _papi_hwi_system_info.sub_info.hardware_intr_sig) { ret = read(fd, &msg, sizeof(msg)); pfm_restart(fd); }
+        PAPIERROR("thread == NULL in _papi_pfm_dispatch_timer!");
+	if (n == MY_VECTOR.cmp_info.hardware_intr_sig) { ret = read(fd, &msg, sizeof(msg)); pfm_restart(fd); }
         return;
     }
 
-    if (thread->running_eventset == NULL) {
-        PAPIERROR("thread->running_eventset == NULL in _papi_hwd_dispatch_timer!");
-	if (n == _papi_hwi_system_info.sub_info.hardware_intr_sig) { ret = read(fd, &msg, sizeof(msg)); pfm_restart(fd); }
+    if (thread->running_eventset[cidx] == NULL) {
+        PAPIERROR("thread->running_eventset == NULL in _papi_pfm_dispatch_timer!");
+	if (n == MY_VECTOR.cmp_info.hardware_intr_sig) { ret = read(fd, &msg, sizeof(msg)); pfm_restart(fd); }
 	return;
     }
 
-    if (thread->running_eventset->overflow.flags == 0) {
-        PAPIERROR("thread->running_eventset->overflow.flags == 0 in _papi_hwd_dispatch_timer!");
-	if (n == _papi_hwi_system_info.sub_info.hardware_intr_sig) { ret = read(fd, &msg, sizeof(msg)); pfm_restart(fd); }
+    if (thread->running_eventset[cidx]->overflow.flags == 0) {
+        PAPIERROR("thread->running_eventset->overflow.flags == 0 in _papi_pfm_dispatch_timer!");
+	if (n == MY_VECTOR.cmp_info.hardware_intr_sig) { ret = read(fd, &msg, sizeof(msg)); pfm_restart(fd); }
 	return;
     }
       
     ctx.si = info;
     ctx.ucontext = (hwd_ucontext_t *)uc;
 
-    if (thread->running_eventset->overflow.flags & PAPI_OVERFLOW_FORCE_SW) {
-      address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
+    if (thread->running_eventset[cidx]->overflow.flags & PAPI_OVERFLOW_FORCE_SW) {
+      address = GET_OVERFLOW_ADDRESS((&ctx));
       _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 
-					 0, 0, &thread);
+					 0, 0, &thread, cidx);
     }
     else {
-      if (thread->running_eventset->overflow.flags == PAPI_OVERFLOW_HARDWARE) {
-	wanted_fd = thread->running_eventset->machdep.ctx_fd;
+      if (thread->running_eventset[cidx]->overflow.flags == PAPI_OVERFLOW_HARDWARE) {
+	wanted_fd = ((pfm_control_state_t *)(thread->running_eventset[cidx]->ctl_state))->ctx_fd;
       } else {
-	wanted_fd = thread->context.ctx_fd;
+	wanted_fd = ((pfm_context_t *)thread->context[cidx])->ctx_fd;
       }
       if (wanted_fd != fd) {
 	SUBDBG("expected fd %d, got %d in _papi_hwi_dispatch_timer!",wanted_fd,fd);
-	if (n == _papi_hwi_system_info.sub_info.hardware_intr_sig) { ret = read(fd, &msg, sizeof(msg)); pfm_restart(fd); }
+	if (n == MY_VECTOR.cmp_info.hardware_intr_sig) { ret = read(fd, &msg, sizeof(msg)); pfm_restart(fd); }
 	return;
       }
  retry:
@@ -3547,8 +3571,8 @@ void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
 #endif
 
 		if (ret != -1) {
-			if ((thread->running_eventset->state & PAPI_PROFILING) && 
-				!(thread->running_eventset->profile.flags & PAPI_PROFIL_FORCE_SW))
+			if ((thread->running_eventset[cidx]->state & PAPI_PROFILING) &&
+				!(thread->running_eventset[cidx]->profile.flags & PAPI_PROFIL_FORCE_SW))
 				process_smpl_buf(0, sizeof(pfm_dfl_smpl_entry_t), &thread);
 			else {
 				/* PAPI assumes that the overflow vector contains the register index of the
@@ -3556,11 +3580,11 @@ void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
 				tricks to offset the fixed counters on Core2 (Core? i7?) by 16. This hack
 				corrects for that hack in a (hopefully) transparent manner */
 				unsigned long i, vector = msg.pfm_ovfl_msg.msg_ovfl_pmds[0];
-				hwd_control_state_t *ctl = &(thread->running_eventset->machdep);
+				pfm_control_state_t *ctl = (pfm_control_state_t *)thread->running_eventset[cidx]->ctl_state;
 				for (i=0;i<ctl->in.pfp_event_count;i++) {
 					/* We're only comparing to pmds[0]. A more robust implementation would
-					   compare to pmds[0-3]. The bit mask must be converted to an index
-					   for the comparison to work */
+					compare to pmds[0-3]. The bit mask must be converted to an index
+					for the comparison to work */
 					if(ctl->pd[i].reg_num == ffsl(msg.pfm_ovfl_msg.msg_ovfl_pmds[0]) - 1) {
 						/* if a match is found, convert the index back to a bitmask */
 						vector = 1 << i;
@@ -3568,8 +3592,8 @@ void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
 					}
 				}
 				_papi_hwi_dispatch_overflow_signal((void *) &ctx,
-					msg.pfm_ovfl_msg.msg_ovfl_ip,
-					NULL, vector, 0, &thread);
+					(caddr_t)((size_t)msg.pfm_ovfl_msg.msg_ovfl_ip),
+					NULL, vector, 0, &thread, cidx);
 			}
 		}
 
@@ -3579,16 +3603,17 @@ void _papi_hwd_dispatch_timer(int n, hwd_siginfo_t * info, void *uc)
 	}
 }
 
-int _papi_hwd_stop_profiling(ThreadInfo_t * thread, EventSetInfo_t * ESI)
+int _papi_pfm_stop_profiling(ThreadInfo_t * thread, EventSetInfo_t * ESI)
 {
   /* Process any remaining samples in the sample buffer */
   return(process_smpl_buf(0, sizeof(pfm_dfl_smpl_entry_t), &thread));
 }
 
-int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
+int _papi_pfm_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
-  hwd_control_state_t *ctl = &ESI->machdep;
-  hwd_context_t *ctx = &ESI->master->context;
+  int cidx = MY_VECTOR.cmp_info.CmpIdx;
+  pfm_control_state_t *ctl = (pfm_control_state_t *)(ESI->ctl_state);
+  pfm_context_t *ctx = (pfm_context_t *)(ESI->master->context[cidx]);
   pfarg_ctx_t newctx;
   void *buf_addr = NULL;
   pfm_dfl_smpl_arg_t buf_arg;
@@ -3611,7 +3636,7 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
       ctl->ctx = &ctx->ctx;
       memset(&ctx->smpl,0,sizeof(buf_arg));
       ctx->smpl_buf = NULL;
-      ret = _papi_hwd_set_overflow(ESI,EventIndex,threshold);
+      ret = _papi_pfm_set_overflow(ESI,EventIndex,threshold);
 //#warning "This should be handled somewhere else"
       ESI->state &= ~(PAPI_OVERFLOWING);
       ESI->overflow.flags &= ~(PAPI_OVERFLOW_HARDWARE);
@@ -3657,7 +3682,7 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
       return(PAPI_ESBSTR);
     }
 
-  ret = _papi_hwd_set_overflow(ESI,EventIndex,threshold);
+  ret = _papi_pfm_set_overflow(ESI,EventIndex,threshold);
   if (ret != PAPI_OK)
     {
       munmap(buf_addr,buf_arg.buf_size);
@@ -3673,7 +3698,7 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
       int pos, native_index;
       pd = ctl->pd;
       pos = ESI->EventInfoArray[EventIndex].pos[0];
-      native_index = ESI->NativeInfoArray[pos].ni_bits.event;
+      native_index = ((pfm_register_t *)(ESI->NativeInfoArray[pos].ni_bits))->event;
       setup_ear_event(native_index,&pd[pos],ESI->profile.flags);
     }
 
@@ -3702,9 +3727,9 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
 #endif
 
-int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
+int _papi_pfm_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
-   hwd_control_state_t *this_state = &ESI->machdep;
+   pfm_control_state_t *this_state = (pfm_control_state_t *)(ESI->ctl_state);
    int j, retval = PAPI_OK, *pos;
 
    /* Which counter are we on, this looks suspicious because of the pos[0],
@@ -3725,7 +3750,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
        
        /* Remove the signal handler */
        
-       retval = _papi_hwi_stop_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig);
+       retval = _papi_hwi_stop_signal(MY_VECTOR.cmp_info.hardware_intr_sig);
        if (retval != PAPI_OK)
 	 return(retval);
 
@@ -3754,7 +3779,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
      {
        /* Enable the signal handler */
 
-       retval = _papi_hwi_start_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig, 1);
+       retval = _papi_hwi_start_signal(MY_VECTOR.cmp_info.hardware_intr_sig, 1, MY_VECTOR.cmp_info.CmpIdx);
        if (retval != PAPI_OK)
 	 return(retval);
 
@@ -3780,8 +3805,9 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    return (retval);
 }
 
-int _papi_hwd_init_control_state(hwd_control_state_t *ctl)
+int _papi_pfm_init_control_state(hwd_control_state_t *ctl0)
 {
+  pfm_control_state_t *ctl = (pfm_control_state_t *)ctl0;
   pfmlib_input_param_t *inp = &ctl->in;
   pfmlib_output_param_t *outp = &ctl->out;
   pfarg_pmd_t *pd = ctl->pd;
@@ -3799,22 +3825,22 @@ int _papi_hwd_init_control_state(hwd_control_state_t *ctl)
   ctl->ctx = NULL;
   ctl->ctx_fd = -1;
   ctl->load = NULL;
-  set_domain(ctl,_papi_hwi_system_info.sub_info.default_domain);
+  set_domain(ctl,MY_VECTOR.cmp_info.default_domain);
   return(PAPI_OK);
 }
 
-int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
+int _papi_pfm_allocate_registers(EventSetInfo_t * ESI)
 {
   int i, j;
   for (i = 0; i < ESI->NativeCount; i++) 
     {
-      if (_papi_pfm_ntv_code_to_bits(ESI->NativeInfoArray[i].ni_event,&ESI->NativeInfoArray[i].ni_bits) != PAPI_OK)
+      if (_papi_pfm_ntv_code_to_bits(ESI->NativeInfoArray[i].ni_event,ESI->NativeInfoArray[i].ni_bits) != PAPI_OK)
 	goto bail;
     }
   return(1);
  bail:
   for (j = 0; j < i; j++) 
-    memset(&ESI->NativeInfoArray[j].ni_bits,0x0,sizeof(ESI->NativeInfoArray[j].ni_bits));
+    memset(ESI->NativeInfoArray[j].ni_bits,0x0,sizeof(pfm_register_t));
   return(0);
 }
 
@@ -3822,8 +3848,10 @@ int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
    updates it with whatever resources are allocated for all the native events
    in the native info structure array. */
 
-int _papi_hwd_update_control_state(hwd_control_state_t *ctl,
-                                   NativeInfo_t *native, int count, hwd_context_t * ctx) {
+int _papi_pfm_update_control_state(hwd_control_state_t *ctl0,
+                                   NativeInfo_t *native, int count, hwd_context_t * ctx0) {
+  pfm_control_state_t *ctl = (pfm_control_state_t *)ctl0;
+  pfm_context_t *ctx = (pfm_context_t *)ctx0;
   int i = 0, ret;
   int last_reg_set = 0, reg_set_done = 0, offset = 0;
   pfmlib_input_param_t tmpin,*inp = &ctl->in;
@@ -3845,8 +3873,8 @@ int _papi_hwd_update_control_state(hwd_control_state_t *ctl,
   for (i=0;i<count;i++)
     {
       SUBDBG("Stuffing native event index %d (code 0x%x) into input structure.\n",
-	     i,native[i].ni_bits.event);
-      memcpy(inp->pfp_events+i,&(native[i].ni_bits),sizeof(pfmlib_event_t));
+	     i,((pfm_register_t *)native[i].ni_bits)->event);
+      memcpy(inp->pfp_events+i,native[i].ni_bits,sizeof(pfmlib_event_t));
     }
   inp->pfp_event_count = count;
       
@@ -3874,7 +3902,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t *ctl,
       reg_set_done++;
 
       native[i].ni_position = i;
-      SUBDBG("native event index %d (code 0x%x) is at PMD offset %d\n", i, native[i].ni_bits.event, native[i].ni_position);
+      SUBDBG("native event index %d (code 0x%x) is at PMD offset %d\n", i, ((pfm_register_t *)native[i].ni_bits)->event, native[i].ni_position);
     }
       
    /* If structure has not yet been filled with a context, fill it
@@ -3920,3 +3948,72 @@ void CALLBACK _papi_hwd_timer_callback(UINT wTimerID, UINT msg,
     _papi_hwi_dispatch_overflow_signal((void *)&ctx, GET_OVERFLOW_ADDRESS((&ctx)), &isHardware, OVERFLOW_MASK, GEN_OVERFLOW, &master); 
 }
 #endif
+
+papi_vector_t _papi_pfm_vector = {
+    .cmp_info = {
+	/* default component information (unspecified values are initialized to 0) */
+	.default_domain =	PAPI_DOM_USER,
+	.available_domains =	PAPI_DOM_USER|PAPI_DOM_KERNEL,
+	.default_granularity =	PAPI_GRN_THR,
+	.available_granularities = PAPI_GRN_THR,
+
+    .hardware_intr = 1,
+    .attach = 1,
+    .attach_must_ptrace = 1,
+    .kernel_multiplex = 1,
+    .kernel_profile = 1,
+    .profile_ear = 1,  
+    .num_mpx_cntrs = PFMLIB_MAX_PMDS,
+    .hardware_intr_sig = PAPI_INT_SIGNAL,
+ 
+	/* component specific cmp_info initializations */
+	.fast_real_timer =	1,
+	.fast_virtual_timer =	0,
+	.attach =		0,
+	.attach_must_ptrace =	0,
+    .itimer_sig = PAPI_INT_MPX_SIGNAL,
+    .itimer_num = PAPI_INT_ITIMER,
+    .itimer_ns = PAPI_INT_MPX_DEF_US * 1000,
+    .itimer_res_ns = 1,
+    },
+
+    /* sizes of framework-opaque component-private structures */
+    .size = {
+	.context =		sizeof(pfm_context_t),
+	.control_state =	sizeof(pfm_control_state_t),
+	.reg_value =		sizeof(pfm_register_t),
+	.reg_alloc =		sizeof(pfm_reg_alloc_t),
+    },
+    /* function pointers in this component */
+    .init_control_state =	_papi_pfm_init_control_state,
+    .start =			_papi_pfm_start,
+    .stop =			_papi_pfm_stop,
+    .read =			_papi_pfm_read,
+    .shutdown =		_papi_pfm_shutdown,
+    .ctl =			_papi_pfm_ctl,
+    .update_control_state =	_papi_pfm_update_control_state,
+    .update_shlib_info =	_papi_pfm_update_shlib_info,
+    .set_domain =		set_domain,
+    .reset =			_papi_pfm_reset,
+    .set_overflow =		_papi_pfm_set_overflow,
+    .set_profile =		_papi_pfm_set_profile,
+    .stop_profiling =		_papi_pfm_stop_profiling,
+    .init_substrate =		_papi_pfm_init_substrate,
+    .dispatch_timer =		_papi_pfm_dispatch_timer,
+    .get_real_usec =		_papi_pfm_get_real_usec,
+    .get_real_cycles =		_papi_pfm_get_real_cycles,
+    .get_virt_cycles =		_papi_pfm_get_virt_cycles,
+    .get_virt_usec =		_papi_pfm_get_virt_usec,
+    .get_memory_info =	_papi_pfm_get_memory_info,
+    .init =		_papi_sub_pfm_init,
+    .get_dmem_info =	_papi_pfm_get_dmem_info,
+    .allocate_registers =	_papi_pfm_allocate_registers,
+    .write =	_papi_pfm_write,
+    .ntv_enum_events =	_papi_pfm_ntv_enum_events,
+    .ntv_code_to_name =	_papi_pfm_ntv_code_to_name,
+    .ntv_code_to_descr =	_papi_pfm_ntv_code_to_descr,
+    .ntv_code_to_bits =	_papi_pfm_ntv_code_to_bits,
+    .ntv_bits_to_info =	_papi_pfm_ntv_bits_to_info,
+    /* from OS */
+};
+

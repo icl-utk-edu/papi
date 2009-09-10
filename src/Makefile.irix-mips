@@ -3,11 +3,13 @@ SHLIB     = libpapi.so
 SUBSTR  = irix-mips
 MSUBSTR  = irix-mips
 MEMSUBSTR= irix
+MEMSUBSTRC = $(MEMSUBSTR)-memory.c
+MEMSUBSTRO = $(MEMSUBSTR)-memory.o
 DESCR	= "IRIX 6.x or greater with MIPS R10k/12k/14k"
 LIBS	= static shared 
-TARGETS	= serial forkexec_tests overflow_tests profile_tests multiplex smp omp shared 
+TARGETS	= serial multiplex smp omp shared 
 FLAGS  	= 
-CFLAGS  = -c99 -woff 1116,1552 $(FLAGS) -DNO_VARARG_MACRO -DNEED_FFSLL 
+CFLAGS  = -c99 -woff 1116,1552 $(FLAGS) -DNO_VARARG_MACRO -DNEED_FFSLL -DCOMP_VECTOR=_irix_vectors
 TOPTFLAGS= -O0
 OPTFLAGS= -O3
 FOPTFLAGS= $(OPTFLAGS)

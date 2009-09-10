@@ -26,6 +26,7 @@ extern inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int 
 extern inline unsigned int _pfm_convert_umask(unsigned int event, unsigned int umask);
 extern int _pfm_get_counter_info(unsigned int event, unsigned int *selector, int *code);
 
+extern papi_vector_t MY_VECTOR;
 
 static int _papi_hwd_fixup_fp(char *);
 
@@ -115,7 +116,7 @@ int setup_p3_presets(int cputype) {
      PAPIERROR(MODEL_ERROR);
      return(PAPI_ESBSTR);
    }
-   SUBDBG("Number of native events: %d\n",_papi_hwi_system_info.sub_info.num_native_events);
+   SUBDBG("Number of native events: %d\n",MY_VECTOR.cmp_info.num_native_events);
    return(retval);
 }
 
@@ -156,7 +157,7 @@ int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
     bits->counter_cmd = code | ((_pfm_convert_umask(event, umask)) << 8);
 
     SUBDBG("selector: 0x%x\n", bits->selector);
-	SUBDBG("event: 0x%x; umask: 0x%x; code: 0x%x; cmd: 0x%x\n",event, umask, code, bits->counter_cmd);
+    SUBDBG("event: 0x%x; umask: 0x%x; code: 0x%x; cmd: 0x%x\n",event, umask, code, ((hwd_register_t *)bits)->counter_cmd);
     return (PAPI_OK);
 }
 

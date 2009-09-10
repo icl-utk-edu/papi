@@ -56,7 +56,7 @@ typedef struct {
   pcl_per_event_info_t pcl_per_event_info[PCL_MAX_MPX_EVENTS];
   /* Buffer to gather counters */
   long long counts[PFMLIB_MAX_PMDS];
-} hwd_control_state_t;
+} pcl_control_state_t;
 
 /* PCL uses an FD per event counter */
 
@@ -80,7 +80,7 @@ typedef struct {
   int state;
   int num_pcl_evts;
   pcl_evt_t pcl_evt[PCL_MAX_MPX_EVENTS];
-} hwd_context_t;
+} pcl_context_t;
 
 #if defined(DEBUG)
 #define DEBUGCALL(a,b) { if (ISLEVEL(a)) { b; } }
@@ -90,9 +90,10 @@ typedef struct {
 
 #define inline_static inline static
 
-typedef pfmlib_event_t hwd_register_t;
-typedef int hwd_register_map_t;
-typedef int hwd_reg_alloc_t;
+typedef pfmlib_event_t pfm_register_t;
+typedef int pcl_reg_alloc_t;
+
+#define MY_VECTOR _papi_pcl_vector
 
 /* Native events consist of a flag field, an event field, and a unit mask field.
  * The next 4 macros define the characteristics of the event and unit mask fields.
@@ -304,7 +305,9 @@ static inline void __raw_spin_unlock(volatile unsigned int *lock)
 
 /* Signal handling functions */
 
+#undef hwd_siginfo_t
 typedef struct siginfo hwd_siginfo_t;
+#undef hwd_ucontext_t
 typedef ucontext_t hwd_ucontext_t;
 
 #if defined(__ia64__)

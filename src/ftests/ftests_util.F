@@ -193,7 +193,7 @@ C     And also to make the test code read cleaner
       if (domain .EQ. PAPI_DOM_ALL) then
         str = "PAPI_DOM_ALL"
       else
-        idx = 1
+        idx = 1;
 C       Is there a better way to write this?
         if (IAND(domain, PAPI_DOM_USER) .NE. 0) then
           str(idx:idx+13) = "+PAPI_DOM_USER"

@@ -1,18 +1,13 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.00"
+	Version="8.00"
 	Name="WinPAPI"
 	ProjectGUID="{79C06D69-82F0-4DE7-BF2B-77BAE876EBD9}"
-	RootNamespace="WinPAPI"
-	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
 			Name="Win32"
-		/>
-		<Platform
-			Name="x64"
 		/>
 	</Platforms>
 	<ToolFiles>
@@ -51,10 +46,10 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/D CONFIG_PFMLIB_ARCH_I386"
+				AdditionalOptions="/D &quot;SUBSTRATE=&lt;winpmc-p3.h&gt;&quot;"
 				Optimization="0"
-				AdditionalIncludeDirectories=".;..\..;..\winpmc;..\winpmc\sys;..\..\libpfm-3.y\include"
-				PreprocessorDefinitions="DEBUG;_DEBUG;_WINDOWS;_USRDLL;FORTRANCAPS;WinPAPI_EXPORTS;_CRT_SECURE_NO_DEPRECATE;__i386__;inline=__inline;LINE_MAX=512;PATH_MAX=64;SUBSTRATE=&lt;perfmon.h&gt;;CONFIG_PFMLIB_ARCH_I386;STATIC_PERFMON_EVENTS_TABLE;SUBSTRATE_USES_LIBPFM;isblank=isspace;NO_VARARG_MACRO"
+				AdditionalIncludeDirectories=".;..\..;..\winpmc;..\winpmc\sys"
+				PreprocessorDefinitions="_DEBUG;DEBUG;_WINDOWS;_USRDLL;FORTRANCAPS;WinPAPI_EXPORTS;NO_VARARG_MACRO;NO_FUNCTION_MACRO;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -64,7 +59,6 @@
 				ProgramDataBaseFileName=".\Debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
-				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
 			/>
 			<Tool
@@ -88,8 +82,6 @@
 				ModuleDefinitionFile=".\WinPAPI.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Debug/WinPAPI.pdb"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				ImportLibrary=".\Debug/WinPAPI.lib"
 				TargetMachine="1"
 			/>
@@ -114,6 +106,9 @@
 				Name="VCAppVerifierTool"
 			/>
 			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Installing debug dll"
 				CommandLine="copy debug\WinPAPI.dll c:\windows\system32"
@@ -128,7 +123,6 @@
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="2"
-			WholeProgramOptimization="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -153,16 +147,13 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="&#x0D;&#x0A;"
+				AdditionalOptions="/D SUBSTRATE=&lt;winpmc-p3.h&gt;&#x0D;&#x0A;"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories=".;..\..;..\winpmc;..\winpmc\sys;..\..\libpfm-3.y\include"
-				PreprocessorDefinitions="NDEBUG;_WINDOWS;_USRDLL;FORTRANCAPS;WinPAPI_EXPORTS;_CRT_SECURE_NO_DEPRECATE;__i386__;inline=__inline;LINE_MAX=512;PATH_MAX=64;SUBSTRATE=&lt;perfmon.h&gt;;CONFIG_PFMLIB_ARCH_I386;STATIC_PERFMON_EVENTS_TABLE;PERFCTR_PFM_EVENTS;isblank=isspace;NO_VARARG_MACRO"
+				AdditionalIncludeDirectories=".;..\..;..\winpmc;..\winpmc\sys"
+				PreprocessorDefinitions="NDEBUG;_WINDOWS;_USRDLL;FORTRANCAPS;WinPAPI_EXPORTS;NO_VARARG_MACRO;NO_FUNCTION_MACRO;_CRT_SECURE_NO_DEPRECATE"
 				StringPooling="true"
-				ExceptionHandling="1"
 				RuntimeLibrary="0"
-				BufferSecurityCheck="false"
 				EnableFunctionLevelLinking="true"
 				PrecompiledHeaderFile=".\Release/WinPAPI.pch"
 				AssemblerListingLocation=".\Release/"
@@ -190,8 +181,6 @@
 				SuppressStartupBanner="true"
 				ModuleDefinitionFile=".\WinPAPI.def"
 				ProgramDatabaseFile=".\Release/WinPAPI.pdb"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				ImportLibrary=".\Release/WinPAPI.lib"
 				TargetMachine="1"
 			/>
@@ -216,207 +205,7 @@
 				Name="VCAppVerifierTool"
 			/>
 			<Tool
-				Name="VCPostBuildEventTool"
-				Description="Copying DLL to target directories"
-				CommandLine="copy release\WinPAPI.dll ..\shell\release&#x0D;&#x0A;copy release\WinPAPI.dll c:\windows\system32&#x0D;&#x0A;"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Debug|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
-				MkTypLibCompatible="true"
-				SuppressStartupBanner="true"
-				TargetEnvironment="3"
-				TypeLibraryName=".\Debug/WinPAPI.tlb"
-				HeaderFileName=""
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				AdditionalOptions="/D CONFIG_PFMLIB_ARCH_I386"
-				Optimization="0"
-				AdditionalIncludeDirectories=".;..\..;..\winpmc;..\winpmc\sys;..\..\libpfm-3.y\include"
-				PreprocessorDefinitions="DEBUG;_DEBUG;_WINDOWS;_USRDLL;FORTRANCAPS;WinPAPI_EXPORTS;_CRT_SECURE_NO_DEPRECATE;__i386__;inline=__inline;LINE_MAX=512;PATH_MAX=64;SUBSTRATE=&lt;perfmon.h&gt;;CONFIG_PFMLIB_ARCH_I386;STATIC_PERFMON_EVENTS_TABLE;PERFCTR_PFM_EVENTS;isblank=isspace;NO_VARARG_MACRO"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/WinPAPI.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
-				WarningLevel="3"
-				SuppressStartupBanner="true"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="3"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1033"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="winmm.lib odbc32.lib odbccp32.lib libcmt.lib psapi.lib"
-				OutputFile=".\Debug/WinPAPI.dll"
-				LinkIncremental="2"
-				SuppressStartupBanner="true"
-				IgnoreDefaultLibraryNames="libcmtd.lib"
-				ModuleDefinitionFile=".\WinPAPI.def"
-				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/WinPAPI.pdb"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
-				ImportLibrary=".\Debug/WinPAPI.lib"
-				TargetMachine="17"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-				SuppressStartupBanner="true"
-				OutputFile=".\Debug/WinPAPI.bsc"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				Description="Installing debug dll"
-				CommandLine="copy debug\WinPAPI.dll c:\windows\system32"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Release|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="2"
-			WholeProgramOptimization="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="true"
-				SuppressStartupBanner="true"
-				TargetEnvironment="3"
-				TypeLibraryName=".\Release/WinPAPI.tlb"
-				HeaderFileName=""
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				AdditionalOptions="&#x0D;&#x0A;"
-				Optimization="2"
-				InlineFunctionExpansion="1"
-				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories=".;..\..;..\winpmc;..\winpmc\sys;..\..\libpfm-3.y\include"
-				PreprocessorDefinitions="NDEBUG;_WINDOWS;_USRDLL;FORTRANCAPS;WinPAPI_EXPORTS;_CRT_SECURE_NO_DEPRECATE;__i386__;inline=__inline;LINE_MAX=512;PATH_MAX=64;SUBSTRATE=&lt;perfmon.h&gt;;CONFIG_PFMLIB_ARCH_I386;STATIC_PERFMON_EVENTS_TABLE;PERFCTR_PFM_EVENTS;isblank=isspace;NO_VARARG_MACRO"
-				StringPooling="true"
-				ExceptionHandling="1"
-				RuntimeLibrary="0"
-				BufferSecurityCheck="false"
-				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/WinPAPI.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
-				WarningLevel="3"
-				SuppressStartupBanner="true"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1033"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="winmm.lib odbc32.lib odbccp32.lib libcmt.lib psapi.lib"
-				OutputFile=".\Release/WinPAPI.dll"
-				LinkIncremental="1"
-				SuppressStartupBanner="true"
-				ModuleDefinitionFile=".\WinPAPI.def"
-				ProgramDatabaseFile=".\Release/WinPAPI.pdb"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
-				ImportLibrary=".\Release/WinPAPI.lib"
-				TargetMachine="17"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-				SuppressStartupBanner="true"
-				OutputFile=".\Release/WinPAPI.bsc"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -432,6 +221,28 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
+			<File
+				RelativePath="cpuinfo.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+			</File>
 			<File
 				RelativePath="..\..\extras.c"
 				>
@@ -453,8 +264,12 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\linux-memory.c"
+				>
 				<FileConfiguration
-					Name="Debug|x64"
+					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -463,7 +278,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Release|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -493,8 +308,16 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\os_windows.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\p3_events.c"
+				>
 				<FileConfiguration
-					Name="Debug|x64"
+					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -503,7 +326,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Release|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -533,24 +356,6 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\papi_data.c"
@@ -573,31 +378,9 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\papi_fwrappers.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\papi_hl.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -617,8 +400,12 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\papi_hl.c"
+				>
 				<FileConfiguration
-					Name="Debug|x64"
+					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -627,7 +414,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Release|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -657,31 +444,9 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\papi_memory.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\papi_pfm_events.c"
 				>
 			</File>
 			<File
@@ -705,32 +470,32 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\papi_vector.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\perfmon.c"
+				RelativePath="..\winpmc\pmclib.c"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\threads.c"
@@ -753,47 +518,24 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="WinPAPI.def"
 				>
 			</File>
 			<File
-				RelativePath="..\..\x86_cache_info.c"
+				RelativePath=".\winpmc-p3.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -g -DSUBSTRATE=\&quot;perfmon.h\&quot; -I $(InputDir)\libpfm-3.y\include -I $(InputDir)win2k\substrate -I $(InputDir) -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl"
 			>
+			<File
+				RelativePath="cpuinfo.h"
+				>
+			</File>
 			<File
 				RelativePath="..\..\perfctr-2.6.x\usr.lib\libperfctr.h"
 				>
@@ -827,10 +569,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\perfmon.h"
-				>
-			</File>
-			<File
 				RelativePath="..\winpmc\pmclib.h"
 				>
 			</File>
@@ -840,396 +578,6 @@
 			</File>
 			<File
 				RelativePath=".\winpmc-p3.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="libpfm"
-			>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\core_events.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\coreduo_events.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\gen_ia32_events.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\i386_p6_events.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\intel_corei7_events.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\intel_corei7_unc_events.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\pfmlib_amd64.c"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -g -Dsnprintf=_snprintf_c -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -O2 -Dsnprintf=_snprintf_c -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="x86_64-w64-mingw32-gcc -c -g -m64 -Dsnprintf=_snprintf_c -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -O2 -Dsnprintf=_snprintf_c -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\pfmlib_common.c"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -g -DCONFIG_PFMLIB_ARCH_X86_64 -DCONFIG_PFMLIB_ARCH_I386 -Dstrcasecmp=stricmp -Dstrncasecmp=strnicmp -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -O2 -DCONFIG_PFMLIB_ARCH_X86_64 -Dstrcasecmp=stricmp -Dstrncasecmp=strnicmp -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="x86_64-w64-mingw32-gcc -c -g -DCONFIG_PFMLIB_ARCH_X86_64 -DCONFIG_PFMLIB_ARCH_I386 -Dstrcasecmp=stricmp -Dstrncasecmp=strnicmp -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -O2 -DCONFIG_PFMLIB_ARCH_X86_64 -Dstrcasecmp=stricmp -Dstrncasecmp=strnicmp -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\pfmlib_core.c"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -g -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -O2 -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="x86_64-w64-mingw32-gcc -c -g -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -O2 -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\pfmlib_core_priv.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\pfmlib_coreduo.c"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -g -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\pfmlib_coreduo_priv.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\pfmlib_gen_ia32.c"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -g -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -O2 -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="x86_64-w64-mingw32-gcc -c -g -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -O2 -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\pfmlib_gen_ia32_priv.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\pfmlib_i386_p6.c"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -g -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -O2 -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="x86_64-w64-mingw32-gcc -c -g -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -O2 -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\pfmlib_i386_p6_priv.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\pfmlib_intel_atom.c"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -g -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -O2 -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="x86_64-w64-mingw32-gcc -c -g -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -O2 -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\pfmlib_intel_atom_priv.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\pfmlib_intel_nhm.c"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -g -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\pfmlib_intel_nhm_priv.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\pfmlib_os_win32.c"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AssemblerOutput="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AssemblerOutput="0"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\pfmlib_pentium4.c"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -g -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -O2 -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="x86_64-w64-mingw32-gcc -c -g -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="gcc -c -O2 -I $(InputDir)\..\include -o $(OutDir)\$(InputName).obj $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\pfmlib_priv.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\pfmlib_priv.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\libpfm-3.y\lib\pfmlib_priv_comp.h"
 				>
 			</File>
 		</Filter>

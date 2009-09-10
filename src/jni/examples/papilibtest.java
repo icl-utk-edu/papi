@@ -1,5 +1,3 @@
-import edu.utk.cs.icl.papi.*;
-
 public class papilibtest {
   public static void main(String [] args) {
     PapiJ p = new PapiJ();

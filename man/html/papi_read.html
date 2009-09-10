@@ -259,9 +259,6 @@ PAPI HOME
 PAPI_read - read hardware counters from an event set
 <!-- .LP -->
 <P>
-PAPI_read_ts - read hardware counters with a timestamp
-<!-- .LP -->
-<P>
 PAPI_accum - accumulate and reset counters in an event set
 <P>
 <!-- .SH SYNOPSIS -->
@@ -290,8 +287,6 @@ PAPI_accum - accumulate and reset counters in an event set
 <B>#include &lt;papi.h&gt;</B> 
 <!-- .BI "int\ PAPI_read(int " EventSet ", long_long *" values ");" -->
 <B>int PAPI_read(int </B><I>EventSet</I><B>, long_long *</B><I>values</I><B>);</B> 
-<!-- .BI "int\ PAPI_read_ts(int " EventSet ", long_long *" values ", long_long *" cyc ");" -->
-<B>int PAPI_read_ts(int </B><I>EventSet</I><B>, long_long *</B><I>values</I><B>, long_long *</B><I>cyc</I><B>);</B> 
 <!-- .BI "int\ PAPI_accum(int " EventSet ", long_long *" values ");" -->
 <B>int PAPI_accum(int </B><I>EventSet</I><B>, long_long *</B><I>values</I><B>);</B> 
 <!-- .fi -->
@@ -303,8 +298,6 @@ PAPI_accum - accumulate and reset counters in an event set
 <B>#include fpapi.h</B> 
 <!-- .BI PAPIF_read(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check ) -->
 <B>PAPIF_read(C_INT </B><I>EventSet, </I><B>C_LONG_LONG(*) </B><I>values, </I><B>C_INT </B><I>check</I><B>)</B> 
-<!-- .BI PAPIF_read_ts(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_LONG_LONG(*)\  cyc,\  C_INT\  check) -->
-<B>PAPIF_read_ts(C_INT </B><I>EventSet, </I><B>C_LONG_LONG(*) </B><I>values, </I><B>C_LONG_LONG(*) </B><I>cyc, </I><B>C_INT </B><I>check)</I> 
 <!-- .BI PAPIF_accum(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check ) -->
 <B>PAPIF_accum(C_INT </B><I>EventSet, </I><B>C_LONG_LONG(*) </B><I>values, </I><B>C_INT </B><I>check</I><B>)</B> 
 <!-- .fi -->
@@ -319,20 +312,14 @@ PAPI_accum - accumulate and reset counters in an event set
 </A>
 <BLOCKQUOTE>
 <P>
-These calls assume an initialized PAPI library and a properly added event set.
+These calls assume an initialized PAPI library and a properly added
+event set.
 <P>
 <!-- .B PAPI_read() -->
-<B>PAPI_read()</B> copies the counters of the indicated event set into the array
+<B>PAPI_read()</B> copies the counters of the indicated event set into
+the array
 <!-- .IR values . -->
 <I>values</I>. The counters continue counting after the read.
-<!-- .LP -->
-<P>
-<!-- .B PAPI_read_ts() -->
-<B>PAPI_read_ts()</B> copies the counters of the indicated event set into the array
-<!-- .IR values . -->
-<I>values</I>. It also places a real-time cycle timestamp into
-<!-- .IR cyc . -->
-<I>cyc</I>. The counters continue counting after the read. This call DOES NO ERROR CHECKING for performance sakes. The user should call a PAPI_read() before to make sure that this call will succeed. Invalid arguments to this call will likely result in dumping core.
 <!-- .LP -->
 <P>
 <!-- .B PAPI_accum() -->
@@ -544,6 +531,17 @@ These functions have no known bugs.
 <TR VALIGN="top">
 
 <TD ALIGN="center" HEIGHT="22" ROWSPAN="2" VALIGN="TOP">
+
+<SPAN CLASS="FOOTERNOTE">
+
+Contact PAPI: 
+
+<A HREF="mailto:papi@cs.utk.edu">
+
+papi@cs.utk.edu</A>
+
+</SPAN>
+
 </TD>
 
 <TD ALIGN="center" HEIGHT="11" WIDTH="200">

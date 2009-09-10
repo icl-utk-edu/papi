@@ -1,11 +1,13 @@
 MEMSUBSTR=aix
+MEMSUBSTRC = $(MEMSUBSTR)-memory.c
+MEMSUBSTRO = $(MEMSUBSTR)-memory.o
 LIBS   = static shared
 TARGETS        = serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads smp omp
 POST_BUILD =
 SPECIAL_REMOVE =
 
 FLAGS	= -I$(PMAPI)/include -qmaxmem=-1 -qarch=$(cpu_option) -qtune=$(cpu_option) -qlanglvl=extended  $(BITS)
-CFLAGS	+= $(DEBUGFLAGS) $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_AIX -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" #-DPAPI_NO_VECTOR
+CFLAGS	+= $(DEBUGFLAGS) $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_AIX -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors #-DPAPI_NO_VECTOR
 CFLAGS	+= -DSTATIC_PERFMON_EVENTS_TABLE
 OPTFLAGS= -O3 -qstrict $(PMINIT)
 TOPTFLAGS=

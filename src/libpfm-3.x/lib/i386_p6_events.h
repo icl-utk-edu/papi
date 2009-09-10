@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2007 Hewlett-Packard Development Company, L.P.
+ * Copyright (c) 2005-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -75,243 +75,6 @@
 		  .pme_udesc = "non hardware prefetched lines", \
 		  .pme_ucode = 0x2 << 4 \
 		}} 
-
-
-#define I386_P6_PII_ONLY_PME \
-	{.pme_name = "MMX_INSTR_EXEC",\
-	 .pme_code = 0xb0,\
-	 .pme_desc = "Number of MMX instructions executed"\
-	},\
-	{.pme_name = "MMX_INSTR_RET",\
-	 .pme_code = 0xce,\
-	 .pme_desc = "Number of MMX instructions retired"\
-	}\
-
-#define I386_P6_PII_PIII_PME \
-	{.pme_name = "MMX_SAT_INSTR_EXEC",\
-	 .pme_code = 0xb1,\
-	 .pme_desc = "Number of MMX saturating instructions executed"\
-	},\
-	{.pme_name = "MMX_UOPS_EXEC",\
-	 .pme_code = 0xb2,\
-	 .pme_desc = "Number of MMX micro-ops executed"\
-	},\
-	{.pme_name = "MMX_INSTR_TYPE_EXEC",\
-	 .pme_code = 0xb3,\
-	 .pme_desc = "Number of MMX instructions executed by type",\
-	 .pme_flags   = PFMLIB_I386_P6_UMASK_COMBO, \
-	 .pme_numasks = 6, \
-	 .pme_umasks = { \
-		{ .pme_uname = "MUL", \
-		  .pme_udesc = "MMX packed multiply instructions executed", \
-		  .pme_ucode = 0x1 \
-		}, \
-		{ .pme_uname = "SHIFT", \
-		  .pme_udesc = "MMX packed shift instructions executed", \
-		  .pme_ucode = 0x2 \
-		}, \
-		{ .pme_uname = "PACK", \
-		  .pme_udesc = "MMX pack operation instructions executed", \
-		  .pme_ucode = 0x4 \
-		}, \
-		{ .pme_uname = "UNPACK", \
-		  .pme_udesc = "MMX unpack operation instructions executed", \
-		  .pme_ucode = 0x8 \
-		}, \
-		{ .pme_uname = "LOGICAL", \
-		  .pme_udesc = "MMX packed logical instructions executed", \
-		  .pme_ucode = 0x10 \
-		}, \
-		{ .pme_uname = "ARITH", \
-		  .pme_udesc = "MMX packed arithmetic instructions executed", \
-		  .pme_ucode = 0x20 \
-		} \
-	 }\
-	},\
-	{.pme_name = "FP_MMX_TRANS",\
-	 .pme_code = 0xcc,\
-	 .pme_desc = "Number of MMX transitions",\
-	 .pme_numasks = 2, \
-	 .pme_umasks = { \
-		{ .pme_uname = "TO_FP", \
-		  .pme_udesc = "from MMX instructions to floating-point instructions", \
-		  .pme_ucode = 0x00 \
-		}, \
-		{ .pme_uname = "TO_MMX", \
-		  .pme_udesc = "from floating-point instructions to MMX instructions", \
-		  .pme_ucode = 0x01 \
-		}\
-	 }\
-	},\
-	{.pme_name = "MMX_ASSIST",\
-	 .pme_code = 0xcd,\
-	 .pme_desc = "Number of MMX micro-ops executed"\
-	},\
-	{.pme_name = "SEG_RENAME_STALLS",\
-	 .pme_code = 0xd4,\
-	 .pme_desc = "Number of Segment Register Renaming Stalls", \
-	 .pme_flags   = PFMLIB_I386_P6_UMASK_COMBO, \
-	 .pme_numasks = 4, \
-	 .pme_umasks = { \
-		{ .pme_uname = "ES", \
-		  .pme_udesc = "Segment register ES", \
-		  .pme_ucode = 0x1 \
-		}, \
-		{ .pme_uname = "DS", \
-		  .pme_udesc = "Segment register DS", \
-		  .pme_ucode = 0x2 \
-		}, \
-		{ .pme_uname = "FS", \
-		  .pme_udesc = "Segment register FS", \
-		  .pme_ucode = 0x4 \
-		}, \
-		{ .pme_uname = "GS", \
-		  .pme_udesc = "Segment register GS", \
-		  .pme_ucode = 0x8 \
-		} \
-	 }\
-	},\
-	{.pme_name = "SEG_REG_RENAMES",\
-	 .pme_code = 0xd5,\
-	 .pme_desc = "Number of Segment Register Renames", \
-	 .pme_flags   = PFMLIB_I386_P6_UMASK_COMBO, \
-	 .pme_numasks = 4, \
-	 .pme_umasks = { \
-		{ .pme_uname = "ES", \
-		  .pme_udesc = "Segment register ES", \
-		  .pme_ucode = 0x1 \
-		}, \
-		{ .pme_uname = "DS", \
-		  .pme_udesc = "Segment register DS", \
-		  .pme_ucode = 0x2 \
-		}, \
-		{ .pme_uname = "FS", \
-		  .pme_udesc = "Segment register FS", \
-		  .pme_ucode = 0x4 \
-		}, \
-		{ .pme_uname = "GS", \
-		  .pme_udesc = "Segment register GS", \
-		  .pme_ucode = 0x8 \
-		} \
-	 }\
-	},\
-	{.pme_name = "RET_SEG_RENAMES",\
-	 .pme_code = 0xd6,\
-	 .pme_desc = "Number of segment register rename events retired"\
-	} \
-
-#define I386_P6_PIII_PME \
-	{.pme_name = "EMON_KNI_PREF_DISPATCHED",\
-	 .pme_code = 0x07,\
-	 .pme_desc = "Number of Streaming SIMD extensions prefetch/weakly-ordered instructions dispatched " \
-		     "(speculative prefetches are included in counting). Pentium III and later",\
-	 .pme_numasks = 4, \
-	 .pme_umasks = { \
-		{ .pme_uname = "NTA", \
-		  .pme_udesc = "prefetch NTA", \
-		  .pme_ucode = 0x00 \
-		}, \
-		{ .pme_uname = "T1", \
-		  .pme_udesc = "prefetch T1", \
-		  .pme_ucode = 0x01 \
-		}, \
-		{ .pme_uname = "T2", \
-		  .pme_udesc = "prefetch T2", \
-		  .pme_ucode = 0x02 \
-		}, \
-		{ .pme_uname = "WEAK", \
-		  .pme_udesc = "weakly ordered stores", \
-		  .pme_ucode = 0x03 \
-		} \
-	 } \
-	},\
-	{.pme_name = "EMON_KNI_PREF_MISS",\
-	 .pme_code = 0x4b,\
-	 .pme_desc = "Number of prefetch/weakly-ordered instructions that miss all caches. Pentium III and later",\
-	 .pme_numasks = 4, \
-	 .pme_umasks = { \
-		{ .pme_uname = "NTA", \
-		  .pme_udesc = "prefetch NTA", \
-		  .pme_ucode = 0x00 \
-		}, \
-		{ .pme_uname = "T1", \
-		  .pme_udesc = "prefetch T1", \
-		  .pme_ucode = 0x01 \
-		}, \
-		{ .pme_uname = "T2", \
-		  .pme_udesc = "prefetch T2", \
-		  .pme_ucode = 0x02 \
-		}, \
-		{ .pme_uname = "WEAK", \
-		  .pme_udesc = "weakly ordered stores", \
-		  .pme_ucode = 0x03 \
-		} \
-	 } \
-	} \
-
-
-#define I386_P6_CPU_CLK_UNHALTED \
-	{.pme_name = "CPU_CLK_UNHALTED",\
-	 .pme_code = 0x79,\
-	 .pme_desc =  "Number cycles during which the processor is not halted"\
-	}\
-
-
-#define I386_P6_NOT_PM_PME \
-	{.pme_name = "L2_LD",\
-	 .pme_code = 0x29,\
-	 .pme_desc =  "Number of L2 data loads. This event indicates that a normal, unlocked, load memory access "\
-	 	"was received by the L2. It includes only L2 cacheable memory accesses; it does not include I/O "\
-		"accesses, other non-memory accesses, or memory accesses such as UC/WT memory accesses. It does include "\
-		"L2 cacheable TLB miss memory accesses",\
-	 I386_P6_MESI_UMASKS\
-	},\
-	{.pme_name = "L2_LINES_IN",\
-	 .pme_code = 0x24,\
-	 .pme_desc =  "Number of lines allocated in the L2"\
-	},\
-	{.pme_name = "L2_LINES_OUT",\
-	 .pme_code = 0x26,\
-	 .pme_desc =  "Number of lines removed from the L2 for any reason"\
-	},\
-	{.pme_name = "L2_M_LINES_OUTM",\
-	 .pme_code = 0x27,\
-	 .pme_desc =  "Number of modified lines removed from the L2 for any reason"\
-	}\
-
-
-#define I386_P6_PIII_NOT_PM_PME \
-	{.pme_name = "EMON_KNI_INST_RETIRED",\
-	 .pme_code = 0xd8,\
-	 .pme_desc = "Number of SSE instructions retired. Pentium III and later",\
-	 .pme_numasks = 2, \
-	 .pme_umasks = { \
-		{ .pme_uname = "PACKED_SCALAR", \
-		  .pme_udesc = "packed and scalar instructions", \
-		  .pme_ucode = 0x00 \
-		}, \
-		{ .pme_uname = "SCALAR", \
-		  .pme_udesc = "scalar only", \
-		  .pme_ucode = 0x01 \
-		} \
-	 } \
-	},\
-	{.pme_name = "EMON_KNI_COMP_INST_RET",\
-	 .pme_code = 0xd9,\
-	 .pme_desc = "Number of SSE computation instructions retired. Pentium III and later",\
-	 .pme_numasks = 2, \
-	 .pme_umasks = { \
-		{ .pme_uname = "PACKED_SCALAR", \
-		  .pme_udesc = "packed and scalar instructions", \
-		  .pme_ucode = 0x00 \
-		}, \
-		{ .pme_uname = "SCALAR", \
-		  .pme_udesc = "scalar only", \
-		  .pme_ucode = 0x01 \
-		} \
-	 } \
-	}\
-
 
 
 #define I386_P6_COMMON_PME \
@@ -705,6 +468,53 @@
 		     "Counting is performed if it is the first or second half or if it is blocked, squashed, "\
 		     "or missed. In this context, misaligned means crossing a 64-bit boundary"\
 	},\
+	{.pme_name = "EMON_KNI_PREF_DISPATCHED",\
+	 .pme_code = 0x07,\
+	 .pme_desc = "Number of Streaming SIMD extensions prefetch/weakly-ordered instructions dispatched " \
+		     "(speculative prefetches are included in counting). Pentium III and later",\
+	 .pme_numasks = 4, \
+	 .pme_umasks = { \
+		{ .pme_uname = "NTA", \
+		  .pme_udesc = "prefetch NTA", \
+		  .pme_ucode = 0x00 \
+		}, \
+		{ .pme_uname = "T1", \
+		  .pme_udesc = "prefetch T1", \
+		  .pme_ucode = 0x01 \
+		}, \
+		{ .pme_uname = "T2", \
+		  .pme_udesc = "prefetch T2", \
+		  .pme_ucode = 0x02 \
+		}, \
+		{ .pme_uname = "WEAK", \
+		  .pme_udesc = "weakly ordered stores", \
+		  .pme_ucode = 0x03 \
+		} \
+	 } \
+	},\
+	{.pme_name = "EMON_KNI_PREF_MISS",\
+	 .pme_code = 0x4b,\
+	 .pme_desc = "Number of prefetch/weakly-ordered instructions that miss all caches. Pentium III and later",\
+	 .pme_numasks = 4, \
+	 .pme_umasks = { \
+		{ .pme_uname = "NTA", \
+		  .pme_udesc = "prefetch NTA", \
+		  .pme_ucode = 0x00 \
+		}, \
+		{ .pme_uname = "T1", \
+		  .pme_udesc = "prefetch T1", \
+		  .pme_ucode = 0x01 \
+		}, \
+		{ .pme_uname = "T2", \
+		  .pme_udesc = "prefetch T2", \
+		  .pme_ucode = 0x02 \
+		}, \
+		{ .pme_uname = "WEAK", \
+		  .pme_udesc = "weakly ordered stores", \
+		  .pme_ucode = 0x03 \
+		} \
+	 } \
+	},\
 	{.pme_name = "UOPS_RETIRED",\
 	 .pme_code = 0xc2,\
 	 .pme_desc =  "Number of micro-ops retired"\
@@ -712,6 +522,36 @@
 	{.pme_name = "INST_DECODED",\
 	 .pme_code = 0xd0,\
 	 .pme_desc = "Number of instructions decoded"\
+	},\
+	{.pme_name = "EMON_KNI_INST_RETIRED",\
+	 .pme_code = 0xd8,\
+	 .pme_desc = "Number of SSE instructions retired. Pentium III and later",\
+	 .pme_numasks = 2, \
+	 .pme_umasks = { \
+		{ .pme_uname = "PACKED_SCALAR", \
+		  .pme_udesc = "packed and scalar instructions", \
+		  .pme_ucode = 0x00 \
+		}, \
+		{ .pme_uname = "SCALAR", \
+		  .pme_udesc = "scalar only", \
+		  .pme_ucode = 0x01 \
+		} \
+	 } \
+	},\
+	{.pme_name = "EMON_KNI_COMP_INST_RET",\
+	 .pme_code = 0xd9,\
+	 .pme_desc = "Number of SSE computation instructions retired. Pentium III and later",\
+	 .pme_numasks = 2, \
+	 .pme_umasks = { \
+		{ .pme_uname = "PACKED_SCALAR", \
+		  .pme_udesc = "packed and scalar instructions", \
+		  .pme_ucode = 0x00 \
+		}, \
+		{ .pme_uname = "SCALAR", \
+		  .pme_udesc = "scalar only", \
+		  .pme_ucode = 0x01 \
+		} \
+	 } \
 	},\
 	{.pme_name = "HW_INT_RX",\
 	 .pme_code = 0xc8,\
@@ -775,56 +615,160 @@
 	{.pme_name = "SEGMENT_REG_LOADS",\
 	 .pme_code = 0x06,\
 	 .pme_desc = "Number of segment register loads."\
-	}\
-
-
+	},\
+	{.pme_name = "MMX_INSTR_EXEC",\
+	 .pme_code = 0xb0,\
+	 .pme_desc = "Number of MMX instructions executed"\
+	},\
+	{.pme_name = "MMX_SAT_INSTR_EXEC",\
+	 .pme_code = 0xb1,\
+	 .pme_desc = "Number of MMX saturating instructions executed"\
+	},\
+	{.pme_name = "MMX_UOPS_EXEC",\
+	 .pme_code = 0xb2,\
+	 .pme_desc = "Number of MMX micro-ops executed"\
+	},\
+	{.pme_name = "MMX_INSTR_TYPE_EXEC",\
+	 .pme_code = 0xb3,\
+	 .pme_desc = "Number of MMX instructions executed by type",\
+	 .pme_flags   = PFMLIB_I386_P6_UMASK_COMBO, \
+	 .pme_numasks = 6, \
+	 .pme_umasks = { \
+		{ .pme_uname = "MUL", \
+		  .pme_udesc = "MMX packed multiply instructions executed", \
+		  .pme_ucode = 0x1 \
+		}, \
+		{ .pme_uname = "SHIFT", \
+		  .pme_udesc = "MMX packed shift instructions executed", \
+		  .pme_ucode = 0x2 \
+		}, \
+		{ .pme_uname = "PACK", \
+		  .pme_udesc = "MMX pack operation instructions executed", \
+		  .pme_ucode = 0x4 \
+		}, \
+		{ .pme_uname = "UNPACK", \
+		  .pme_udesc = "MMX unpack operation instructions executed", \
+		  .pme_ucode = 0x8 \
+		}, \
+		{ .pme_uname = "LOGICAL", \
+		  .pme_udesc = "MMX packed logical instructions executed", \
+		  .pme_ucode = 0x10 \
+		}, \
+		{ .pme_uname = "ARITH", \
+		  .pme_udesc = "MMX packed arithmetic instructions executed", \
+		  .pme_ucode = 0x20 \
+		} \
+	 }\
+	},\
+	{.pme_name = "FP_MMX_TRANS",\
+	 .pme_code = 0xcc,\
+	 .pme_desc = "Number of MMX transitions",\
+	 .pme_numasks = 2, \
+	 .pme_umasks = { \
+		{ .pme_uname = "TO_FP", \
+		  .pme_udesc = "from MMX instructions to floating-point instructions", \
+		  .pme_ucode = 0x00 \
+		}, \
+		{ .pme_uname = "TO_MMX", \
+		  .pme_udesc = "from floating-point instructions to MMX instructions", \
+		  .pme_ucode = 0x01 \
+		}\
+	 }\
+	},\
+	{.pme_name = "MMX_ASSIST",\
+	 .pme_code = 0xcd,\
+	 .pme_desc = "Number of MMX micro-ops executed"\
+	},\
+	{.pme_name = "MMX_INSTR_RET",\
+	 .pme_code = 0xce,\
+	 .pme_desc = "Number of MMX instructions retired"\
+	},\
+	{.pme_name = "SEG_RENAME_STALLS",\
+	 .pme_code = 0xd4,\
+	 .pme_desc = "Number of Segment Register Renaming Stalls", \
+	 .pme_flags   = PFMLIB_I386_P6_UMASK_COMBO, \
+	 .pme_numasks = 4, \
+	 .pme_umasks = { \
+		{ .pme_uname = "ES", \
+		  .pme_udesc = "Segment register ES", \
+		  .pme_ucode = 0x1 \
+		}, \
+		{ .pme_uname = "DS", \
+		  .pme_udesc = "Segment register DS", \
+		  .pme_ucode = 0x2 \
+		}, \
+		{ .pme_uname = "FS", \
+		  .pme_udesc = "Segment register FS", \
+		  .pme_ucode = 0x4 \
+		}, \
+		{ .pme_uname = "GS", \
+		  .pme_udesc = "Segment register GS", \
+		  .pme_ucode = 0x8 \
+		} \
+	 }\
+	},\
+	{.pme_name = "SEG_REG_RENAMES",\
+	 .pme_code = 0xd5,\
+	 .pme_desc = "Number of Segment Register Renames", \
+	 .pme_flags   = PFMLIB_I386_P6_UMASK_COMBO, \
+	 .pme_numasks = 4, \
+	 .pme_umasks = { \
+		{ .pme_uname = "ES", \
+		  .pme_udesc = "Segment register ES", \
+		  .pme_ucode = 0x1 \
+		}, \
+		{ .pme_uname = "DS", \
+		  .pme_udesc = "Segment register DS", \
+		  .pme_ucode = 0x2 \
+		}, \
+		{ .pme_uname = "FS", \
+		  .pme_udesc = "Segment register FS", \
+		  .pme_ucode = 0x4 \
+		}, \
+		{ .pme_uname = "GS", \
+		  .pme_udesc = "Segment register GS", \
+		  .pme_ucode = 0x8 \
+		} \
+	 }\
+	},\
+	{.pme_name = "RET_SEG_RENAMES",\
+	 .pme_code = 0xd6,\
+	 .pme_desc = "Number of segment register rename events retired"\
+	}
 
 /*
- * Pentium Pro Processor Event Table
+ * Generic P6 processor event table
  */
-static pme_i386_p6_entry_t i386_ppro_pe []={
-        I386_P6_CPU_CLK_UNHALTED, /* should be first */
-        I386_P6_COMMON_PME,       /* generic p6 */
-	I386_P6_NOT_PM_PME,       /* generic p6 that conflict with Pentium M */
+static pme_i386_p6_entry_t i386_p6_pe []={
+	{.pme_name = "CPU_CLK_UNHALTED",
+	 .pme_code = 0x79,
+	 .pme_desc =  "Number cycles during which the processor is not halted"
+	},
+	I386_P6_COMMON_PME,
+	{.pme_name = "L2_LD",
+	 .pme_code = 0x29,
+	 .pme_desc =  "Number of L2 data loads. This event indicates that a normal, unlocked, load memory access "
+	 	"was received by the L2. It includes only L2 cacheable memory accesses; it does not include I/O "
+		"accesses, other non-memory accesses, or memory accesses such as UC/WT memory accesses. It does include "
+		"L2 cacheable TLB miss memory accesses",
+	 I386_P6_MESI_UMASKS
+	},
+	{.pme_name = "L2_LINES_IN",
+	 .pme_code = 0x24,
+	 .pme_desc =  "Number of lines allocated in the L2"
+	},
+	{.pme_name = "L2_LINES_OUT",
+	 .pme_code = 0x26,
+	 .pme_desc =  "Number of lines removed from the L2 for any reason"
+	},
+	{.pme_name = "L2_M_LINES_OUTM",
+	 .pme_code = 0x27,
+	 .pme_desc =  "Number of modified lines removed from the L2 for any reason"
+	}
 };
-
-#define PME_I386_PPRO_CPU_CLK_UNHALTED 0
-#define PME_I386_PPRO_INST_RETIRED 1
-#define PME_I386_PPRO_EVENT_COUNT 	(sizeof(i386_ppro_pe)/sizeof(pme_i386_p6_entry_t))
-
-
-/*
- * Pentium II Processor Event Table
- */
-static pme_i386_p6_entry_t i386_pII_pe []={
-        I386_P6_CPU_CLK_UNHALTED, /* should be first */
-        I386_P6_COMMON_PME,   /* generic p6 */
-	I386_P6_PII_ONLY_PME, /* pentium II only */
-        I386_P6_PII_PIII_PME, /* pentium II and later */
-	I386_P6_NOT_PM_PME,   /* generic p6 that conflict with Pentium M */
-};
-
-#define PME_I386_PII_CPU_CLK_UNHALTED 0
-#define PME_I386_PII_INST_RETIRED 1
-#define PME_I386_PII_EVENT_COUNT 	(sizeof(i386_pII_pe)/sizeof(pme_i386_p6_entry_t))
-
-
-/*
- * Pentium III Processor Event Table
- */
-static pme_i386_p6_entry_t i386_pIII_pe []={
-        I386_P6_CPU_CLK_UNHALTED, /* should be first */
-        I386_P6_COMMON_PME,     /* generic p6 */
-        I386_P6_PII_PIII_PME,   /* pentium II and later */
-	I386_P6_PIII_PME,       /* pentium III and later */
-	I386_P6_NOT_PM_PME,     /* generic p6 that conflict with Pentium M */
-	I386_P6_PIII_NOT_PM_PME /* pentium III that conflict with Pentium M */
-};
-
-#define PME_I386_PIII_CPU_CLK_UNHALTED 0
-#define PME_I386_PIII_INST_RETIRED 1
-#define PME_I386_PIII_EVENT_COUNT 	(sizeof(i386_pIII_pe)/sizeof(pme_i386_p6_entry_t))
-
+#define PME_I386_P6_CPU_CLK_UNHALTED 0
+#define PME_I386_P6_INST_RETIRED 1
+#define PME_I386_P6_EVENT_COUNT 	(sizeof(i386_p6_pe)/sizeof(pme_i386_p6_entry_t))
 
 /*
  * Pentium M event table
@@ -839,9 +783,7 @@ static pme_i386_p6_entry_t i386_pm_pe []={
 	 .pme_desc = "Number cycles during which the processor is not halted and not in a thermal trip"
 	},
 
-	I386_P6_COMMON_PME,     /* generic p6 */
- 	I386_P6_PII_PIII_PME,   /* pentium II and later */
- 	I386_P6_PIII_PME,       /* pentium III and later */
+	I386_P6_COMMON_PME, 
 
 	{.pme_name = "EMON_EST_TRANS",
 	 .pme_code = 0x58,

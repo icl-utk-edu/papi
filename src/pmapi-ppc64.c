@@ -8,7 +8,7 @@
 extern hwd_groups_t group_map[];
 
 static hwi_search_t _papi_hwd_ppc64_preset_map[] = {
-#ifdef __POWER4
+#ifdef _POWER4
    {PAPI_L1_DCM, {DERIVED_ADD, {PNE_PM_LD_MISS_L1, PNE_PM_ST_MISS_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},      /*Level 1 data cache misses */
    {PAPI_L1_DCA, {DERIVED_ADD, {PNE_PM_LD_REF_L1, PNE_PM_ST_REF_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},        /*Level 1 data cache access */
    {PAPI_FXU_IDL, {0, {PNE_PM_FXU_IDLE, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},      /*Cycles integer units are idle */
@@ -62,7 +62,7 @@ static hwi_search_t _papi_hwd_ppc64_preset_map[] = {
    
 /* Stop editing here */
    {0, {0, {PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}}        /* end of list */
-#elif defined(__POWER5)
+#elif defined(_POWER5)
    {PAPI_L1_DCM, {DERIVED_ADD, {PNE_PM_LD_MISS_L1, PNE_PM_ST_MISS_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Level 1 data cache misses */
    {PAPI_L1_DCA, {DERIVED_ADD, {PNE_PM_LD_REF_L1, PNE_PM_ST_REF_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},        /*Level 1 data cache access */
    /* can't count level 1 data cache hits due to hardware limitations. */
@@ -226,7 +226,7 @@ static int do_counter_allocation(ppc64_reg_alloc_t * event_list, int size)
                 && event_list[i].ra_counter_cmd[j] == group_map[group].counter_cmd[j])
                event_list[i].ra_position = j;
          }
-      } 
+      }
       return group;
    }
 }

@@ -630,24 +630,16 @@ const native_event_entry_t _papi_hwd_ppc7450_native_map[] = {
 /*************************************/
 
 /* Given a native event code, returns the short text label. */
-int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
+char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
-   if ((EventCode & PAPI_NATIVE_AND_MASK) >= _papi_hwi_system_info.sub_info.num_native_events)
-       return (PAPI_EINVAL);
-   strncpy(ntv_name, native_table[EventCode & PAPI_NATIVE_AND_MASK].name, len);
-   if (strlen(native_table[EventCode & PAPI_NATIVE_AND_MASK].name) > len-1) return (PAPI_EBUF);
-   return (PAPI_OK);
+   return (native_table[EventCode & PAPI_NATIVE_AND_MASK].name);
 }
 
 /* Given a native event code, returns the longer native event
    description. */
-int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len)
+char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
-   if ((EventCode & PAPI_NATIVE_AND_MASK) >= _papi_hwi_system_info.sub_info.num_native_events)
-       return (PAPI_EINVAL);
-   strncpy(ntv_descr, native_table[EventCode & PAPI_NATIVE_AND_MASK].description, len);
-   if (strlen(native_table[EventCode & PAPI_NATIVE_AND_MASK].description) > len-1) return (PAPI_EBUF);
-   return (PAPI_OK);
+   return (native_table[EventCode & PAPI_NATIVE_AND_MASK].description);
 }
 
 /* Given a native event code, assigns the native event's 
@@ -668,11 +660,6 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
    if the next one exists.  If not, returns the proper error code. */
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
-   if (modifier == PAPI_ENUM_FIRST) {
-         *EventCode = PAPI_NATIVE_MASK;
-         return (PAPI_OK);
-   }
-
    if (native_table[(*EventCode & PAPI_NATIVE_AND_MASK) + 1].resources.selector) {
       *EventCode = *EventCode + 1;
       return (PAPI_OK);

@@ -878,6 +878,7 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold)
 
 int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI) 
 {
+   ESI->profile.overflowcount = 0;
    return (PAPI_OK);
 }
 
@@ -892,7 +893,7 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
    case PAPI_DEFGRN:
       return(PAPI_ESBSTR);
    default:
-      return (PAPI_ENOSUPP);
+      return (PAPI_EINVAL);
    }
 }
 
@@ -984,14 +985,27 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 /* CODE TO SUPPORT OPAQUE NATIVE MAP */
 /*************************************/
 
+/* **NOT THREAD SAFE STATIC!!**
+   The name and description strings below are both declared static. 
+   This is NOT thread-safe, because these values are returned 
+     for use by the calling program, and could be trashed by another thread
+     before they are used. To prevent this, any call to routines using these
+     variables (_papi_hwd_code_to_{name,descr}) should be wrapped in 
+     _papi_hwi_{lock,unlock} calls.
+   They are declared static to reserve non-volatile space for constructed strings.
+*/
+static char name[128];
+static char description[1024];
+
 static inline void internal_decode_event(unsigned int EventCode, int *event)
 {
    /* mask off the native event flag and the MOESI bits */
    *event = (EventCode & PAPI_NATIVE_AND_MASK);
 }
 
+
 /* Given a native event code, returns the short text label. */
-int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
+char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
    BGL_PERFCTR_event_t event;
 
@@ -999,21 +1013,20 @@ int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
 
    if(event.num == -1) {
       SUBDBG(stderr, "invalid native event\n");
-      return (PAPI_ENOEVNT);
+      /*return PAPI_ECNFLCT;*/
    }
 
-   if(event.num != BGL_PAPI_TIMEBASE) {
-      strncpy(ntv_name, (char *)(native_table[event.num].event_name), len);
-      if (strlen((char *)(native_table[event.num].event_name)) > len-1) return (PAPI_EBUF);
-   } else {
-      strncpy(ntv_name, "BGL_PAPI_TIMEBASE", len);
+   if(event.num != BGL_PAPI_TIMEBASE)
+      return (char *)(native_table[event.num].event_name);
+   else {
+      strcpy(name, "BGL_PAPI_TIMEBASE");
+      return (name);
    }
-   return (PAPI_OK);
 }
 
 /* Given a native event code, returns the longer native event
    description. */
-int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len)
+char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
    BGL_PERFCTR_event_t event;
 
@@ -1021,16 +1034,15 @@ int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len
 
    if(event.num == -1) {
       SUBDBG(stderr, "invalid native event\n");
-      return PAPI_ENOEVNT;
+      /*return PAPI_ECNFLCT;*/
    }
 
-   if(event.num != BGL_PAPI_TIMEBASE) {
-      strncpy(ntv_descr, (char *)(native_table[event.num].event_descr), len);
-      if (strlen((char *)(native_table[event.num].event_descr)) > len-1) return (PAPI_EBUF);
-   } else {
-      strncpy(ntv_descr, "special event for getting the timebase reg", len);
+   if(event.num != BGL_PAPI_TIMEBASE)
+      return (char *)(native_table[event.num].event_descr);
+   else {
+      strcpy(description, "special event for getting the timebase reg");
+      return (description);
    }
-   return (PAPI_OK);
 }
 
 /* Given a native event code, assigns the native event's 
@@ -1063,16 +1075,12 @@ int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t* bits)
    return (PAPI_OK);
 }
 
-/* Given a native event code, for the next event in the table if the next one exists. 
+/* Given a native event code, looks for next MOESI bit if applicable.
+   If not, looks for the next event in the table if the next one exists. 
    If not, returns the proper error code. */
 int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
    BGL_PERFCTR_event_t event;
-
-   if (modifier == PAPI_ENUM_FIRST) {
-         *EventCode = PAPI_NATIVE_MASK;
-         return (PAPI_OK);
-   }
 
    get_bgl_native_event(*EventCode+1, &event);
 

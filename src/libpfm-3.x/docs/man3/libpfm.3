@@ -30,19 +30,24 @@ the complexity behind simple interfaces. The library does this without limiting
 accessibility to model specific features by using a layered design.
 
 The library is structured in two layers. The common layer provides an interface
-that is shared across all PMU models.This layer is good enough to setup simple monitoring
-sessions which count occurrences of events. Then, there is a model-specific layer which 
+that is shared by all implementations. For instance, getting an event descriptor using
+the event name is the same operation on all IA-64 implementation, even though the returned
+descriptor and the event name can vary.  This layer is good enough to setup simple monitoring
+sessions which count occurrences of simple events. Then there is a model specific layer which 
 gives access to the model-specific features. For instance, on Itanium, you can use the library
-to setup the registers for the the Branch Trace Buffer. Model-specific interfaces have the
-abbreviated PMU model name in their names. For instance, 
+to figure out how to initialize PMC12 which controls the Branch Trace Buffer. Model 
+specific interfaces have the abbreviated PMU model name in their names. For instance, 
 \fBpfm_ita2_get_event_umask()\fR is an Itanium2 (ita2) specific function. 
 
 When the library is initialized, it automatically probes the host CPU and enables the right 
-set of interfaces. 
+set of interfaces. The layered design uses a modular implementation, where support for each
+CPU is well separated and can be compiled in or out of the library.
 
-The common interface is defined in the \fBpfmlib.h\fR header file. Model-specific interfaces
-are defined in model-specific header files. For instance, \fBpfmlib_itanium2.h\fR provides
-the Itanium2 interface.
+The common interface is defined in the \fBpfmlib.h\fR header file. The Itanium specific interface is
+in \fBpfmlib_itanium.h\fR. The \fBpfmlib_itanium2.h\fR provides the Itanium2 interface.
+
+The common interface is described in individual man pages. There is one man page
+for each model specific set of interfaces.
 
 .SH AUTHOR
 Stephane Eranian <eranian@hpl.hp.com>

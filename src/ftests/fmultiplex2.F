@@ -1,4 +1,5 @@
 #include "fpapi_test.h"
+
 #define MAX_TO_ADD 5
 
       program multiplex2
@@ -55,6 +56,12 @@
         call ftest_fail(__FILE__, __LINE__,
      .       'PAPIf_create_eventset',
      *       retval)
+      end if
+
+      call PAPIf_assign_eventset_component(EventSet, 0, retval)
+      if ( retval.NE.PAPI_OK) then
+        call ftest_fail(__FILE__, __LINE__,
+     &      'PAPIf_assign_eventset_component', retval)
       end if
 
       call PAPIf_set_multiplex(EventSet, retval)
@@ -122,7 +129,7 @@
       end if
 
       fd = 1
-      call do_stuff()
+      call do_stuff();
 
       call PAPIf_stop(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then

@@ -74,7 +74,7 @@ libperfctr.a:	$(AR_OBJS)
 
 # not installed, only built as a workaround for PAPI's broken Makefiles
 libperfctr.o:	$(AR_OBJS)
-	ld $(LD_FLAGS) -r -o $@ $(AR_OBJS)
+	ld -r -o $@ $(AR_OBJS)
 
 libperfctr.so:	$(SO_OBJS)
 	$(CC) -shared -o $@ -Wl,-soname,$(SO_NAME) $(SO_OBJS)

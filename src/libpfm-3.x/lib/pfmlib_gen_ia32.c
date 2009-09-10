@@ -718,13 +718,9 @@ pfm_gen_ia32_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 	unsigned int i;
 
 	memset(counters, 0, sizeof(*counters));
-	for(i=0; i < num_gen_cnt; i++)
-		pfm_regmask_set(counters, i);
 
-	for(i=0; i < num_fixed_cnt; i++) {
-		if (gen_ia32_pe[j].pme_fixed == (FIXED_PMD_BASE+i))
-			pfm_regmask_set(counters, FIXED_PMD_BASE+i);
-	}
+	for(i=0; i < gen_support->pmc_count; i++)
+		pfm_regmask_set(counters, i);
 }
 
 static void

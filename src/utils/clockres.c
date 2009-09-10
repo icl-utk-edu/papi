@@ -23,5 +23,5 @@ int main(int argc, char **argv)
    clockcore();
 
    test_pass(__FILE__, NULL, 0);
-   exit(0);
+   exit(1);
 }

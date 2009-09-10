@@ -11,20 +11,19 @@
 
 #include "papi.h"
 #include "papi_internal.h"
-#include "papi_vector.h"
 #include "papi_memory.h"
+
+extern papi_vector_t MY_VECTOR;
+int _linux_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type);
+int _linux_get_system_info(void);
 
 #ifdef PPC64
 extern int setup_ppc64_presets(int cputype);
-extern int ppc64_setup_vector_table(papi_vectors_t *);
 #elif defined(PPC32)
 extern int setup_ppc32_presets(int cputype);
-extern int ppc32_setup_vector_table(papi_vectors_t *);
 #else
 extern int setup_p4_presets(int cputype);
-extern int setup_p4_vector_table(papi_vectors_t *);
 extern int setup_p3_presets(int cputype);
-extern int setup_p3_vector_table(papi_vectors_t *);
 #endif
 
 /* This should be in a linux.h header file maybe. */
@@ -141,24 +140,7 @@ static void lock_init(void) {
 }
 #endif
 
-#ifndef PAPI_NO_VECTOR
-papi_svector_t _linux_os_table[] = {
- #ifndef __CATAMOUNT__
-   {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
- #endif
- {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
- {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
- {(void (*)())_papi_hwd_ctl, VEC_PAPI_HWD_CTL},
- {(void (*)())_papi_hwd_get_real_usec, VEC_PAPI_HWD_GET_REAL_USEC},
- {(void (*)())_papi_hwd_get_real_cycles, VEC_PAPI_HWD_GET_REAL_CYCLES},
- {(void (*)())_papi_hwd_get_virt_cycles, VEC_PAPI_HWD_GET_VIRT_CYCLES},
- {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
- {(void (*)())_papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
- { NULL, VEC_PAPI_END}
-};
-#endif
-
-int _papi_hwd_init_substrate(papi_vectors_t *vtable)
+int _linux_init_substrate(int cidx)
 {
   int retval;
   struct perfctr_info info;
@@ -168,12 +150,6 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
   int fd;
 #else
   struct vperfctr *dev;
-#endif
-
-  /* Setup the vector entries that the OS knows about */
-#ifndef PAPI_NO_VECTOR
-  retval = _papi_hwi_setup_vector_table( vtable, _linux_os_table);
-  if ( retval != PAPI_OK ) return(retval);
 #endif
 
  #if defined(PERFCTR26)
@@ -199,7 +175,7 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    /* Opened once for all threads. */
    if ((dev = vperfctr_open()) == NULL)
      { PAPIERROR( VOPEN_ERROR); return(PAPI_ESYS); }
-   SUBDBG("_papi_hwd_init_substrate vperfctr_open = %p\n", dev);
+   SUBDBG("_linux_init_substrate vperfctr_open = %p\n", dev);
 
    /* Get info from the kernel */
    retval = vperfctr_info(dev, &info);
@@ -209,43 +185,46 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
 #endif
 
   /* Fill in what we can of the papi_system_info. */
-  retval = _papi_hwd_get_system_info();
+  retval = MY_VECTOR.get_system_info();
   if (retval != PAPI_OK)
      return (retval);
 
    /* Setup memory info */
-   retval = _papi_hwd_get_memory_info(&_papi_hwi_system_info.hw_info, (int) info.cpu_type);
+   retval = MY_VECTOR.get_memory_info(&_papi_hwi_system_info.hw_info, (int) info.cpu_type);
    if (retval)
       return (retval);
 
-   strcpy(_papi_hwi_system_info.sub_info.name, "$Id$");
-   strcpy(_papi_hwi_system_info.sub_info.version, "$Revision$");
+   strcpy(MY_VECTOR.cmp_info.name, "$Id$");
+   strcpy(MY_VECTOR.cmp_info.version, "$Revision$");
    sprintf(abiv,"0x%08X",info.abi_version);
-   strcpy(_papi_hwi_system_info.sub_info.support_version, abiv);
-   strcpy(_papi_hwi_system_info.sub_info.kernel_version, info.driver_version);
-   _papi_hwi_system_info.sub_info.num_cntrs = PERFCTR_CPU_NRCTRS(&info);
-   _papi_hwi_system_info.sub_info.fast_counter_read = (info.cpu_features & PERFCTR_FEATURE_RDPMC) ? 1 : 0;
-   _papi_hwi_system_info.sub_info.fast_real_timer = 1;
-   _papi_hwi_system_info.sub_info.fast_virtual_timer = 1;
-   _papi_hwi_system_info.sub_info.attach = 1;
-   _papi_hwi_system_info.sub_info.attach_must_ptrace = 1;
-   _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
+   strcpy(MY_VECTOR.cmp_info.support_version, abiv);
+   strcpy(MY_VECTOR.cmp_info.kernel_version, info.driver_version);
+   MY_VECTOR.cmp_info.CmpIdx = cidx;
+   MY_VECTOR.cmp_info.num_cntrs = PERFCTR_CPU_NRCTRS(&info);
+   MY_VECTOR.cmp_info.fast_counter_read = (info.cpu_features & PERFCTR_FEATURE_RDPMC) ? 1 : 0;
+   MY_VECTOR.cmp_info.fast_real_timer = 1;
+   MY_VECTOR.cmp_info.fast_virtual_timer = 1;
+   MY_VECTOR.cmp_info.attach = 1;
+   MY_VECTOR.cmp_info.attach_must_ptrace = 1;
+   MY_VECTOR.cmp_info.default_domain = PAPI_DOM_USER;
 #if (!defined(PPC64) && !defined(PPC32))
    /* AMD and Intel ia386 processors all support unit mask bits */
-   _papi_hwi_system_info.sub_info.cntr_umasks = 1;
+   MY_VECTOR.cmp_info.cntr_umasks = 1;
 #endif
 #if defined(PPC64)
-   _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR;
+   MY_VECTOR.cmp_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_SUPERVISOR;
 #else
-   _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
+   MY_VECTOR.cmp_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
 #endif
-   _papi_hwi_system_info.sub_info.default_granularity = PAPI_GRN_THR;
-   _papi_hwi_system_info.sub_info.available_granularities = PAPI_GRN_THR;
-   _papi_hwi_system_info.sub_info.hardware_intr =
+   MY_VECTOR.cmp_info.default_granularity = PAPI_GRN_THR;
+   MY_VECTOR.cmp_info.available_granularities = PAPI_GRN_THR;
+   MY_VECTOR.cmp_info.hardware_intr =
        (info.cpu_features & PERFCTR_FEATURE_PCINT) ? 1 : 0;
 
    SUBDBG("Hardware/OS %s support counter generated interrupts\n",
-          _papi_hwi_system_info.sub_info.hardware_intr ? "does" : "does not");
+          MY_VECTOR.cmp_info.hardware_intr ? "does" : "does not");
+   MY_VECTOR.cmp_info.itimer_ns = PAPI_INT_MPX_DEF_US * 1000;
+   MY_VECTOR.cmp_info.clock_ticks = sysconf(_SC_CLK_TCK);
 
    strcpy(_papi_hwi_system_info.hw_info.model_string, PERFCTR_CPU_NAME(&info));
    _papi_hwi_system_info.hw_info.model = info.cpu_type;
@@ -278,25 +257,25 @@ int _papi_hwd_init_substrate(papi_vectors_t *vtable)
    /* Setup presets last. Some platforms depend on earlier info */
 #if (!defined(PPC64) && !defined(PPC32))
    if ( check_p4(info.cpu_type) ){
-     retval = setup_p4_vector_table(vtable);
+//     retval = setup_p4_vector_table(vtable);
      if (!retval)
      	retval = setup_p4_presets(info.cpu_type);
    }
    else{
-     retval = setup_p3_vector_table(vtable);
+//     retval = setup_p3_vector_table(vtable);
      if (!retval)
      	retval = setup_p3_presets(info.cpu_type);
    }
 #elif (defined(PPC64))
 	/* Setup native and preset events */
-	retval = ppc64_setup_vector_table(vtable);
+//	retval = ppc64_setup_vector_table(vtable);
     if (!retval)
     	retval = setup_ppc64_native_table();
     if (!retval)
     	retval = setup_ppc64_presets(info.cpu_type);
 #elif (defined(PPC32))
 	/* Setup native and preset events */
-	retval = ppc32_setup_vector_table(vtable);
+//	retval = ppc32_setup_vector_table(vtable);
 	if (!retval)
     	retval = setup_ppc32_presets(info.cpu_type);
 #endif
@@ -340,36 +319,31 @@ static int detach( hwd_control_state_t * ctl, unsigned long tid ) {
 
 inline_static int round_requested_ns(int ns)
 {
-  if (ns < _papi_hwi_system_info.sub_info.itimer_res_ns) {
-    return _papi_hwi_system_info.sub_info.itimer_res_ns;
+  if (ns < MY_VECTOR.cmp_info.itimer_res_ns) {
+    return MY_VECTOR.cmp_info.itimer_res_ns;
   } else {
-    int leftover_ns = ns % _papi_hwi_system_info.sub_info.itimer_res_ns;
+    int leftover_ns = ns % MY_VECTOR.cmp_info.itimer_res_ns;
     return ns + leftover_ns;
   }
 }
 
-int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
+int _linux_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
-#if defined(PPC64)
-   extern int _papi_hwd_set_domain(EventSetInfo_t * ESI, int domain);
-#else
-   extern int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain);
-#endif
    switch (code) {
    case PAPI_DOMAIN:
    case PAPI_DEFDOM:
 #if defined(PPC64)
-      return (_papi_hwd_set_domain(option->domain.ESI, option->domain.domain));
+      return (MY_VECTOR.set_domain(option->domain.ESI, option->domain.domain));
 #else
-      return (_papi_hwd_set_domain(&option->domain.ESI->machdep, option->domain.domain));
+      return (MY_VECTOR.set_domain(option->domain.ESI->ctl_state, option->domain.domain));
 #endif
    case PAPI_GRANUL:
    case PAPI_DEFGRN:
       return(PAPI_ESBSTR);
    case PAPI_ATTACH:
-      return (attach(&option->attach.ESI->machdep, option->attach.tid));
+      return (attach(option->attach.ESI->ctl_state, option->attach.tid));
    case PAPI_DETACH:
-      return (detach(&option->attach.ESI->machdep, option->attach.tid));
+      return (detach(option->attach.ESI->ctl_state, option->attach.tid));
   case PAPI_DEF_ITIMER:
     {
       /* flags are currently ignored, eventually the flags will be able
@@ -404,11 +378,12 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
    }
 }
 
-void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context) {
+void _linux_dispatch_timer(int signal, siginfo_t * si, void *context) {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *master = NULL;
    int isHardware = 0;
-   unsigned long address;
+   caddr_t address;
+   int cidx = MY_VECTOR.cmp_info.CmpIdx;
 
    ctx.si = si;
    ctx.ucontext = (ucontext_t *)context;
@@ -421,13 +396,13 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context) {
 #define GEN_OVERFLOW 0
 #endif
 
-   address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
+   address = (caddr_t) GET_OVERFLOW_ADDRESS((&ctx));
    _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, &isHardware, 
-                                      OVERFLOW_MASK, GEN_OVERFLOW, &master);
+                                      OVERFLOW_MASK, GEN_OVERFLOW, &master, MY_VECTOR.cmp_info.CmpIdx);
 
    /* We are done, resume interrupting counters */
    if (isHardware) {
-      errno = vperfctr_iresume(master->context.perfctr);
+      errno = vperfctr_iresume(master->context[cidx]->perfctr);
       if (errno < 0) {
          PAPIERROR("vperfctr_iresume errno %d",errno);
       }
@@ -435,7 +410,7 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *context) {
 }
 
 
-int _papi_hwd_init(hwd_context_t * ctx) {
+int _linux_init(hwd_context_t * ctx) {
    struct vperfctr_control tmp;
    int error;
 
@@ -479,7 +454,7 @@ int _papi_hwd_init(hwd_context_t * ctx) {
 
 #ifdef __CATAMOUNT__
 
-int _papi_hwd_get_system_info(void)
+int _linux_get_system_info(void)
 {
    pid_t pid;
 
@@ -521,7 +496,7 @@ int _papi_hwd_get_system_info(void)
 
 #else
 
-int _papi_hwd_update_shlib_info(void)
+int _linux_update_shlib_info(void)
 {
    char fname[PAPI_HUGE_STR_LEN];
    PAPI_address_map_t *tmp, *tmp2;
@@ -740,7 +715,7 @@ static char *search_cpu_info(FILE * f, char *search_str, char *line)
  * bogomips        : 1091.17
  * */
 
-int _papi_hwd_get_system_info(void)
+int _linux_get_system_info(void)
 {
    int tmp, retval;
    char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
@@ -773,7 +748,7 @@ int _papi_hwd_get_system_info(void)
 
    /* Executable regions, may require reading /proc/pid/maps file */
 
-   retval = _papi_hwd_update_shlib_info();
+   retval = _linux_update_shlib_info();
 
    /* PAPI_preload_option information */
 
@@ -935,20 +910,20 @@ inline_static long long get_cycles(void) {
 }
 #endif //PPC64
 
-long long _papi_hwd_get_real_usec(void) {
+long long _linux_get_real_usec(void) {
    return((long long)get_cycles() / (long long)_papi_hwi_system_info.hw_info.mhz);
 }
 
-long long _papi_hwd_get_real_cycles(void) {
+long long _linux_get_real_cycles(void) {
    return((long long)get_cycles());
 }
 
-long long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
+long long _linux_get_virt_cycles(const hwd_context_t * ctx)
 {
    return ((long long)vperfctr_read_tsc(ctx->perfctr) * tb_scale_factor);
 }
 
-long long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
+long long _linux_get_virt_usec(const hwd_context_t * ctx)
 {
    return (((long long)vperfctr_read_tsc(ctx->perfctr) * tb_scale_factor) /
            (long long)_papi_hwi_system_info.hw_info.mhz);
@@ -957,7 +932,7 @@ long long _papi_hwd_get_virt_usec(const hwd_context_t * ctx)
 /* This routine is for shutting down threads, including the
    master thread. */
 
-int _papi_hwd_shutdown(hwd_context_t * ctx)
+int _linux_shutdown(hwd_context_t * ctx)
 {
 #ifdef DEBUG 
    int retval = vperfctr_unlink(ctx->perfctr);
@@ -966,7 +941,7 @@ int _papi_hwd_shutdown(hwd_context_t * ctx)
    vperfctr_unlink(ctx->perfctr);
 #endif
    vperfctr_close(ctx->perfctr);
-   SUBDBG("_papi_hwd_shutdown vperfctr_close(%p)\n", ctx->perfctr);
+   SUBDBG("_linux_shutdown vperfctr_close(%p)\n", ctx->perfctr);
    memset(ctx, 0x0, sizeof(hwd_context_t));
    return (PAPI_OK);
 }

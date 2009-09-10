@@ -36,17 +36,21 @@ int _papi_hwi_setup_all_presets(hwi_search_t *findem, hwi_dev_notes_t *notes)
 	   /* find the index for the event to be initialized */
 	   preset_index = (findem[pnum].event_code & PAPI_PRESET_AND_MASK);
 	   
-	   /* count and set the number of native terms in this event, these items are contiguous 
-	   This code is TERRIBLE. First:
+	   /* count and set the number of native terms in this event, these items are contiguous.
+	      PAPI_MAX_COUNTER_TERMS is arbitrarily defined in the high level to be a reasonable
+	      number of terms to use in a derived event linear expression, currently 8.
+	      This wastes space for components with less than 8 counters, but keeps the framework
+	      independent of the components.
 
-	   - MAX_COUNTER_TERMS should be a substrate variable. What it means no one knows. 
-	   - We should never EVER check a NATIVE code against any value. PAPI_NULL could be a valid event code! 
-	     pjm */
-	   
+	      The 'native' field below is an arbitrary opaque identifier that points to information
+	      on an actual native event. It is not an event code itself (whatever that might mean).
+	      By definition, this value can never == PAPI_NULL.
+	      - dkt */
+
 	   INTDBG("Counting number of terms for preset index %d, search map index %d.\n",preset_index,pnum);
 	   i = 0;
 	   j = 0;
-	   while (i < MAX_COUNTER_TERMS)
+	   while (i < PAPI_MAX_COUNTER_TERMS)
 	     {
 	       if (findem[pnum].data.native[i] != PAPI_NULL)
 		 j++;
@@ -78,7 +82,6 @@ int _papi_hwi_setup_all_presets(hwi_search_t *findem, hwi_dev_notes_t *notes)
 	      *actually* be duplicated unless it is modified */
 	   else 
 	     {
-		   if (_papi_hwi_presets.data[preset_index] != NULL) papi_free(_papi_hwi_presets.data[preset_index]);
 	       _papi_hwi_presets.data[preset_index] = papi_malloc(sizeof(hwi_preset_data_t));
 	       memcpy(_papi_hwi_presets.data[preset_index],&findem[pnum].data,sizeof(hwi_preset_data_t));
 	     }
@@ -98,7 +101,8 @@ int _papi_hwi_setup_all_presets(hwi_search_t *findem, hwi_dev_notes_t *notes)
 	   _papi_hwi_presets.dev_note[preset_index] = papi_strdup(notes[pnum].dev_note);
 	 }
      }
-   _papi_hwi_system_info.sub_info.num_preset_events += did_something;
+   /* xxxx right now presets are only cpu, component 0 */
+   _papi_hwd[0]->cmp_info.num_preset_events += did_something;
 
    return (did_something ? 0 : PAPI_ESBSTR);
 }
@@ -139,7 +143,8 @@ int _papi_hwi_cleanup_all_presets(void)
         _papi_hwi_presets.dev_note[preset_index] = NULL;
       }
    }
-   _papi_hwi_system_info.sub_info.num_preset_events = 0;
+   /* xxxx right now presets are only cpu, component 0 */
+   _papi_hwd[0]->cmp_info.num_preset_events = 0;
    return (PAPI_OK);
 }
 

@@ -462,7 +462,7 @@ static int _internal_get_system_info(void)
    _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL|PAPI_DOM_OTHER|PAPI_DOM_SUPERVISOR;
    _papi_hwi_system_info.sub_info.hardware_intr = 1;
    _papi_hwi_system_info.sub_info.kernel_multiplex = 1;
-   _papi_hwi_system_info.sub_info.multiplex_timer_us = 1000000/_papi_hwi_system_info.sub_info.clock_ticks;
+   _papi_hwi_system_info.sub_info.multiplex_timer_us = 1000000/sysconf(_SC_CLK_TCK);
    
    retval = _papi_hwd_update_shlib_info();
    if (retval != PAPI_OK) 
@@ -729,19 +729,11 @@ if (ISLEVEL(DEBUG_SUBSTRATE)) {
    return (PAPI_OK);
 }
 
-inline_static int round_requested_ns(int ns)
-{
-  if (ns < _papi_hwi_system_info.sub_info.itimer_res_ns) {
-    return _papi_hwi_system_info.sub_info.itimer_res_ns;
-  } else {
-    int leftover_ns = ns % _papi_hwi_system_info.sub_info.itimer_res_ns;
-    return ns + leftover_ns;
-  }
-}
-
 int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
    switch (code) {
+   case PAPI_DEF_MPX_USEC:
+   	return(PAPI_ESBSTR);
    case PAPI_MULTIPLEX:
      option->domain.ESI->machdep.multiplexed = 1;
      return(PAPI_OK);
@@ -755,37 +747,8 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
    case PAPI_GRANUL:
       return (set_granularity
               (&option->granularity.ESI->machdep, option->granularity.granularity));
-  case PAPI_DEF_ITIMER:
-    {
-      /* flags are currently ignored, eventually the flags will be able
-	 to specify whether or not we use POSIX itimers (clock_gettimer) */
-      if ((option->itimer.itimer_num == ITIMER_REAL) &&
-	  (option->itimer.itimer_sig != SIGALRM))
-	return PAPI_EINVAL;
-      if ((option->itimer.itimer_num == ITIMER_VIRTUAL) &&
-	  (option->itimer.itimer_sig != SIGVTALRM))
-	return PAPI_EINVAL;
-      if ((option->itimer.itimer_num == ITIMER_PROF) &&
-	  (option->itimer.itimer_sig != SIGPROF))
-	return PAPI_EINVAL;
-      if (option->itimer.ns > 0)
-	option->itimer.ns = round_requested_ns(option->itimer.ns);
-      /* At this point, we assume the user knows what he or
-	 she is doing, they maybe doing something arch specific */
-      return PAPI_OK;
-    }
-  case PAPI_DEF_MPX_NS:
-    { 
-      option->multiplex.ns = round_requested_ns(option->multiplex.ns);
-      return(PAPI_OK);
-    }
-  case PAPI_DEF_ITIMER_NS:
-    { 
-      option->itimer.ns = round_requested_ns(option->itimer.ns);
-      return(PAPI_OK);
-    }
    default:
-      return (PAPI_ENOSUPP);
+      return (PAPI_EINVAL);
    }
 }
 
@@ -1061,30 +1024,25 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    return (PAPI_OK);
 }
 
-char *_papi_hwd_ntv_code_to_name(unsigned int EventCode, ntv_name, len)
+char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
    int nidx;
 
    nidx = EventCode ^ PAPI_NATIVE_MASK;
-   if (nidx >= _papi_hwi_system_info.sub_info.num_native_events) return (PAPI_EINVAL);
-   strncpy(ntv_name, native_table[nidx], len);
-   if (strlen(native_table[nidx]) > len-1) return (PAPI_EBUF);
-   return (PAPI_OK);
+   if (nidx >= 0 && nidx < PAPI_MAX_NATIVE_EVENTS)
+      return (native_table[nidx]);
+   else
+      return NULL;
 }
 
-char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode, ntv_descr, len)
+char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
-   return (_papi_hwd_ntv_code_to_name(EventCode, ntv_descr, len));
+   return (_papi_hwd_ntv_code_to_name(EventCode));
 }
 
-int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
+int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 {
    int index = *EventCode & PAPI_NATIVE_AND_MASK;
-
-   if (modifier == PAPI_ENUM_FIRST) {
-         *EventCode = PAPI_NATIVE_MASK;
-         return (PAPI_OK);
-   }
 
    if (index < MAX_NATIVE_EVENT - 1) {
       *EventCode = *EventCode + 1;

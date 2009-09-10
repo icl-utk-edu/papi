@@ -1,63 +1,37 @@
-WinPAPI Version 3.7 Release Notes
-August, 2009
+/* 
+* File:    README.TXT
+* Author:  dan terpstra
+*          terpstra@cs.utk.edu
+*/  
+
+WinPAPI Version 2.1 Release Notes
+Feb, 2002
 
 NOTES:
-This folder contains a LIMITED FUNCTION RELEASE of PAPI for Windows.
-It runs on Windows versions from XP on.*
+The stuff in this folder is a LIMITED FUNCTION RELEASE of PAPI for Windows 2000.
+It runs on Windows NT, 2000 and XP.
 It requires Administrator priveleges to install the kernel driver.
 It works on both UniProcessor and MultiProcessor builds of Windows.
 It binds itself to a single processor on MP systems.
-It measures system-wide events, not per thread nor per process.
-It supports most modern processors that Windows runs on (excepting IA64).
+It measures system-wide events, not thread or process specific.
 It currently DOES NOT support multiplexing, overflow, or profiling.
 
-*  It currently DOES NOT support 64 bit versions of Windows. 
+With those caveats out of the way, here's what we've got:
 
 DIRECTORIES INCLUDED:
 - ftests:	Compaq Visual Fortran projects for PAPI test examples. 
 - help:	html files that document what's in the install.
-- MatLab:	projects and files to build a MATLAB mex file to exercise PAPI FLOPS. (UNTESTED)
+- MatLab:	projects and files to build a MATLAB mex file to exercise PAPI FLOPS.
 - shell:	contains various pieces for building a shell application for exercising the WinPAPI Library.
 - substrate: the stuff for building a static WinPAPI library to link to your application
-- ctests:	C projects for PAPI test examples.
+- tests:	C projects for PAPI test examples.
 - winpmc:	stuff to build and install the Windows PMC system service (kernel driver) 
 	that provides access to the performance counters.
 
 TOOLS REQUIRED:
 - The tests, shell and substrate require Microsoft Visual C++ version 6 or better.
-- Libpfm, a part of the substrate requires Mingw (www.mingw.org)
-- The WinPMC driver requires the Windows DDK or its successor the 
-Windows Driver Kit, available for download from 
-www.microsoft.com/whdc/resources/downloads.mspx (may require free registration)
-needs to support your platform.
-
-You need to extract the PAPI src folder to a directory WITH OUT spaces.
-( C:\Documents and Settings\... is bad!)
-
-
-Overview of the build process for WinPAPI:
-gcc is used to compile libpfm and x86_cache_info.c (vc++ will probably never 
-	support C99 style initializations)
-vc++ builds the rest and the Microsoft linker is used to build the dll,
-allowing for the use of the Visual Studio debugger.
-
-WinPAPI: Note, MinGW (or however you choose to get gcc on Windows)is required 
-	 to build PAPI)
-- Open substrate\WinPAPI.vcproj.
-- Now is a good time to make sure Visual Studio can find gcc:
-	Select the Menu option Tools>Options
-	Under the Projects and Solutions Branch select VC++ Directories
-	Make sure Show directories for: is listing Executable files and 
-		add your MinGW bin directory (eg C:\MinGW\bin)
-- The project should compile and install the library in a system wide
-  location (C:\WINDOWS\System32) (also $(PAPI_DIR)\win2k\substrate\Debug)
-
-WinPMC Driver:
-- Under the Start menu folder for the Driver Development Kits find the
-	build environment suited for your platform and 
-	select the checked (debug) build.
-- Navigate to the win2k\winpmc directory.
-- build -ceZ
-- copy /B objchk_$(platform)\$(i386 | amd64)\WinPMC.sys C:\WINDOWS\System32\drivers
-- ntaddsvc winpmc
-- net start winpmc
+- The Fortran tests require Compaq Visual Fortran V 6.6 or greater.
+- Workspaces and projects for all of these codes are included in the respective directories.
+- The WinPMC driver requires the Microsoft NTDDK development environment, 
+	which depends on Visual C++, and is available as a free download 
+	from the Microsoft website.

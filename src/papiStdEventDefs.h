@@ -30,7 +30,12 @@ platform's documentation carefully.
 #define PAPI_NATIVE_MASK 0x40000000
 #define PAPI_PRESET_AND_MASK 0x7FFFFFFF
 /*#define PAPI_NATIVE_AND_MASK 0x3FFFFFFF*/ /* this masks both native and preset bits */
-#define PAPI_NATIVE_AND_MASK 0xBFFFFFFF
+#define PAPI_NATIVE_AND_MASK 0xBFFFFFFF     /* this masks just the native bit */
+
+/* These defines allow for 16 possible (4 bits) simultaneous substrates */
+#define PAPI_COMPONENT_INDEX(a) ((0x3c000000&a)>>26)
+#define PAPI_COMPONENT_MASK(a)  (0x3c000000&(a<<26))
+#define PAPI_COMPONENT_AND_MASK  0xc3ffffff
 
 #define PAPI_MAX_PRESET_EVENTS 128      /*The maxmimum number of preset events */
 
@@ -154,11 +159,11 @@ enum {
    PAPI_FDV_INS_idx, /*FD ins */
    PAPI_FSQ_INS_idx, /*FSq ins */
    PAPI_FNV_INS_idx, /*Finv ins */
-   PAPI_FP_OPS_idx,  /* Floating point operations executed */
+   PAPI_FP_OPS_idx,  /*Floating point operations executed */
    PAPI_SP_OPS_idx,  /* Floating point operations executed; optimized to count scaled single precision vector operations */
    PAPI_DP_OPS_idx,  /* Floating point operations executed; optimized to count scaled double precision vector operations */
    PAPI_VEC_SP_idx,  /* Single precision vector/SIMD instructions */
-   PAPI_VEC_DP_idx,  /* Double precision vector/SIMD instructions */
+   PAPI_VEC_DP_idx,  /* Double precision vector/SIMD instructions */	
 #ifdef _BGL
    PAPI_BGL_OED_idx,     /*Oedipus operations */
    PAPI_BGL_TS_32B_idx , /*Torus 32B chunks sent */
@@ -271,7 +276,7 @@ enum {
 #define PAPI_FDV_INS (PAPI_FDV_INS_idx | PAPI_PRESET_MASK) /*FD ins */
 #define PAPI_FSQ_INS (PAPI_FSQ_INS_idx | PAPI_PRESET_MASK) /*FSq ins */
 #define PAPI_FNV_INS (PAPI_FNV_INS_idx | PAPI_PRESET_MASK) /*Finv ins */
-#define PAPI_FP_OPS  (PAPI_FP_OPS_idx  | PAPI_PRESET_MASK) /* Floating point operations executed */
+#define PAPI_FP_OPS  (PAPI_FP_OPS_idx  | PAPI_PRESET_MASK) /*Floating point operations executed */
 #define PAPI_SP_OPS  (PAPI_SP_OPS_idx  | PAPI_PRESET_MASK) /* Floating point operations executed; optimized to count scaled single precision vector operations */
 #define PAPI_DP_OPS  (PAPI_DP_OPS_idx  | PAPI_PRESET_MASK) /* Floating point operations executed; optimized to count scaled double precision vector operations */
 #define PAPI_VEC_SP  (PAPI_VEC_SP_idx  | PAPI_PRESET_MASK) /* Single precision vector/SIMD instructions */

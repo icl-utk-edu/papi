@@ -15,7 +15,7 @@ int main(int argc, char **argv)
   unsigned int code = PAPI_TOT_CYC;
   char event_name[PAPI_MAX_STR_LEN];
   const PAPI_hw_info_t *hwinfo = NULL;
-  const PAPI_substrate_info_t *sub_info;
+  const PAPI_component_info_t *cmp_info;
 
   tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
@@ -62,10 +62,10 @@ int main(int argc, char **argv)
   printf("Found |%s|\n", event_name);
 
   /* Find the last defined native event */
-  sub_info = PAPI_get_substrate_info();
-  if (sub_info == NULL)
-    test_fail(__FILE__, __LINE__, "PAPI_get_substrate_info", PAPI_ESBSTR);
-  code = (sub_info->num_native_events - 1) | PAPI_NATIVE_MASK;
+  cmp_info = PAPI_get_component_info(0);
+  if (cmp_info == NULL)
+    test_fail(__FILE__, __LINE__, "PAPI_get_component_info", PAPI_ESBSTR);
+  code = (cmp_info->num_native_events - 1) | PAPI_NATIVE_MASK;
   printf("Looking for last native event: 0x%x...\n", code);
   retval = PAPI_event_code_to_name(code, event_name);
   if (retval != PAPI_OK)
@@ -73,7 +73,8 @@ int main(int argc, char **argv)
   printf("Found |%s|\n", event_name);
 
   /* Highly doubtful we have this many natives */
-  code = PAPI_NATIVE_MASK | (PAPI_NATIVE_MASK-1);
+  /* Turn on all bits *except* PRESET bit and COMPONENT bits */
+  code = PAPI_PRESET_AND_MASK & PAPI_COMPONENT_AND_MASK;
   printf("Looking for highest definable native event: 0x%x...\n", code);
   retval = PAPI_event_code_to_name(code, event_name);
   if (retval != PAPI_OK)

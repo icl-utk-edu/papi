@@ -337,10 +337,10 @@ get a more precise range if necessary. Hence, up to the 4 pairs can be used to d
 returns the start and end offsets of the actual range compared to the requested range. 
 
 If range restriction is to be used, the \fBrr_used\fR field must be set to one, otherwise settings will be ignored. 
-The ranges are described by the \fBpfmlib_ita_input_rr_t\fR structure. Up to 4 ranges can be defined. Each
+The ranges are described by the \fBpfmlib_ita2_input_rr_t\fR structure. Up to 4 ranges can be defined. Each
 range is described in by a entry in \fBrr_limits\fR. 
 
-The \fBpfmlib_ita_input_rr_desc_t\fR structure is defined as follows:
+The \fBpfmlib_ita2_input_rr_desc_t\fR structure is defined as follows:
 .TP
 .B rr_plm
 The privilege level at which the range is active. It can be any combinations of \fBPFM_PLM0\fR, \fBPFM_PLM1\fR, \fBPFM_PLM2\fR, \fBPFM_PLM3\fR. 
@@ -357,7 +357,7 @@ must be bundle aligned, i.e., 16-byte aligned.
 .LP
 .sp
 The library will provide the values for the debug registers as well as some information
-about the actual ranges in the output parameters and more precisely in the \fBpfmlib_ita_output_rr_t\fR
+about the actual ranges in the output parameters and more precisely in the \fBpfmlib_ita2_output_rr_t\fR
 structure for each range. The structure is defined as follows:
 .TP
 .B rr_nbr_used

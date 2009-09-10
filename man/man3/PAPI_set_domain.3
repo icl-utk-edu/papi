@@ -2,13 +2,15 @@
 .TH PAPI_set_domain 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-PAPI_set_domain \- set the default execution domain for new event sets
+ PAPI_set_domain \- set the default counting domain for new event sets bound to the cpu component
+ PAPI_set_cmp_domain \- set the default counting domain for new event sets bound to the specified component
 
 .SH SYNOPSIS
 .B C Interface
 .nf
 .B #include <papi.h>
 .BI "int PAPI_set_domain(int " domain ");"
+.BI "int PAPI_set_cmp_domain(int " domain ", int " cidx ");"
 .fi
 .B Fortran Interface
 .nf
@@ -19,13 +21,19 @@ PAPI_set_domain \- set the default execution domain for new event sets
 
 .SH DESCRIPTION
 .B "PAPI_set_domain" 
-sets the default execution domain for all new event sets created by
+sets the default counting domain for all new event sets created by
 .BR "PAPI_create_eventset" (3) 
-in all threads. Event sets that are already in existence are not affected. 
+in all threads. This call implicitly sets the domain for the cpu component
+(component 0) and is included to preserve backward compatibility.
+.LP
+.B "PAPI_set_cmp_domain" 
+sets the default counting domain for all new event sets
+in all threads, and requires an explicit component argument. 
+Event sets that are already in existence are not affected. 
 To change the domain of an existing event set, please see the 
 .BR "PAPI_set_opt" (3)
-man page. The reader should note that the domain of an event set
-affects only which mode the counter continue to run. Counts are still
+man page.The reader should note that the domain of an event set
+affects only the mode in which the counter continues to run. Counts are still
 aggregated for the current process, and not for any other processes in
 the system. Thus when requesting
 .BR PAPI_DOM_KERNEL , 
@@ -33,6 +41,9 @@ the user is asking for events that occur on behalf of the process,
 inside the kernel.
 
 .SH ARGUMENTS
+.I cidx
+-- An integer identifier for a component. By convention, component 0 is always the cpu component.
+
 .I "domain"
 -- one of the following constants as defined in the papi.h header file:
 
@@ -61,6 +72,11 @@ One or more of the arguments is invalid.
 .B "PAPI_ENOEVST"
 The event set specified does not exist.
 .TP
+.B "PAPI_ENOCMP"
+The argument
+.I cidx
+is not a valid component.
+.TP
 .B "PAPI_EISRUN"
 The event set is currently counting events.
 
@@ -80,7 +96,9 @@ if (retval > 0 && retval != PAPI_VER_CURRENT) {
 if (retval < 0) 
   handle_error(retval);
 
-if ((retval = PAPI_set_domain(PAPI_DOM_KERNEL)) != PAPI_OK)
+/* Set the default domain for the cpu component */
+
+if ((retval = PAPI_set_cmp_domain(PAPI_DOM_KERNEL,0)) != PAPI_OK)
   handle_error(retval);
 
 if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
@@ -92,4 +110,4 @@ if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
 This function has no known bugs.
 
 .SH SEE ALSO
-.BR PAPI_set_opt "(3)" 
+.BR PAPI_set_granularity "(3), " PAPI_set_opt "(3), " PAPI_get_opt "(3) "

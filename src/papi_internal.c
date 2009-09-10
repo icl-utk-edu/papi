@@ -25,8 +25,6 @@
 
 #include "papi.h"
 #include "papi_internal.h"
-#include "papi_vector.h"
-#include "papi_vector_redefine.h"
 #include "papi_memory.h"
 #if defined(__FreeBSD__)
 # include <ctype.h>  /* isdigit */
@@ -182,15 +180,17 @@ static int expand_dynamic_array(DynamicArray_t * DA)
 static int EventInfoArrayLength(const EventSetInfo_t * ESI)
 {
    if (ESI->state & PAPI_MULTIPLEXING)
-      return (_papi_hwi_system_info.sub_info.num_mpx_cntrs);
+      return (_papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs);
    else
-      return (_papi_hwi_system_info.sub_info.num_cntrs);
+      return (_papi_hwd[ESI->CmpIdx]->cmp_info.num_cntrs);
 }
 
 static void initialize_EventInfoArray(EventSetInfo_t * ESI)
 {
-   int i, j, limit = _papi_hwi_system_info.sub_info.num_mpx_cntrs;
+   int i, j, limit;
    EventInfo_t tmp;
+
+   limit = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
 
    /* This is an optimization */
 
@@ -210,62 +210,113 @@ static void initialize_EventInfoArray(EventSetInfo_t * ESI)
 static void initialize_NativeInfoArray(EventSetInfo_t * ESI)
 {
    int i;
+   /* xxxx should these arrays be num_mpx_cntrs or num_cntrs in size?? */
+   int max_counters;
+   int sz;
+   char *ptr;
 
-   for (i = 0; i < MAX_COUNTERS; i++) {
+   max_counters = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
+   sz = _papi_hwd[ESI->CmpIdx]->size.reg_value;
+   ptr = (((char *)ESI->NativeInfoArray)+(max_counters*sizeof(NativeInfo_t)));
+
+   for (i = 0; i < max_counters; i++) {
       ESI->NativeInfoArray[i].ni_event = -1;
       ESI->NativeInfoArray[i].ni_position = -1;
       ESI->NativeInfoArray[i].ni_owners = 0;
+      ESI->NativeInfoArray[i].ni_bits = (hwd_register_t *)ptr;
+      ptr+=sz; 
    }
    ESI->NativeCount = 0;
 }
 
-
-static int allocate_EventSet(EventSetInfo_t **here)
+static int create_EventSet(EventSetInfo_t **here)
 {
    EventSetInfo_t *ESI;
-   int max_counters, ret;
 
    ESI = (EventSetInfo_t *) papi_malloc(sizeof(EventSetInfo_t));
    if (ESI == NULL)
       return (PAPI_ENOMEM);
    memset(ESI, 0x00, sizeof(EventSetInfo_t));
 
-   ret = _papi_hwd_init_control_state(&ESI->machdep); /* this used to be init_config */
-   if (ret != PAPI_OK)
-     {
-       papi_free(ESI);
-     return(ret);
-     }
+   ESI->CmpIdx = -1; /* when eventset is created, it is not decided yet which component it belongs to, until first event is added */
 
-   max_counters = _papi_hwi_system_info.sub_info.num_mpx_cntrs;
+   ESI->state = PAPI_STOPPED;
+
+   *here = ESI;
+   return(PAPI_OK);
+}
+
+int _papi_hwi_assign_eventset(EventSetInfo_t *ESI, int cidx)
+{
+   int max_counters;
+   char *ptr;
+
+   ESI->CmpIdx = cidx;
+
+   max_counters = _papi_hwd[cidx]->cmp_info.num_mpx_cntrs; 
+   ESI->ctl_state = (hwd_control_state_t *)papi_malloc(_papi_hwd[cidx]->size.control_state);
    ESI->sw_stop = (long long *) papi_malloc(max_counters * sizeof(long long));
    ESI->hw_start = (long long *) papi_malloc(max_counters * sizeof(long long));
    ESI->EventInfoArray = (EventInfo_t *) papi_malloc(max_counters * sizeof(EventInfo_t));
+/* allocate room for the native events and for the component-private register structures */
+/* xxxx should these arrays be num_mpx_cntrs or num_cntrs in size?? */
+   ESI->NativeInfoArray = (NativeInfo_t *) papi_malloc(max_counters * sizeof(NativeInfo_t)+max_counters*_papi_hwd[cidx]->size.reg_value);
 
-   if (
-         (ESI->sw_stop == NULL) || (ESI->hw_start == NULL)
-         || (ESI->EventInfoArray == NULL)) {
-      if (ESI->sw_stop)
-         papi_free(ESI->sw_stop);
-      if (ESI->hw_start)
-         papi_free(ESI->hw_start);
-      if (ESI->EventInfoArray)
-         papi_free(ESI->EventInfoArray);
-      papi_free(ESI);
-      return (PAPI_ENOMEM);
+   /* NOTE: the next two malloc allocate blocks of memory that are later parcelled into overflow and profile arrays */
+   ESI->overflow.deadline = (long long *) papi_malloc((sizeof(long long)+sizeof(int)*3)*max_counters);
+   ESI->profile.prof = (PAPI_sprofil_t **) papi_malloc((sizeof(PAPI_sprofil_t *)*max_counters+max_counters*sizeof(int)*4));
+
+   if ((ESI->ctl_state == NULL) ||
+       (ESI->sw_stop == NULL) || (ESI->hw_start == NULL) ||
+       (ESI->NativeInfoArray == NULL) || (ESI->EventInfoArray == NULL) ||
+       (ESI->profile.prof == NULL) || (ESI->overflow.deadline == NULL)) {
+	if (ESI->sw_stop)	    papi_free(ESI->sw_stop);
+	if (ESI->hw_start)	    papi_free(ESI->hw_start);
+	if (ESI->EventInfoArray)    papi_free(ESI->EventInfoArray);
+	if ( ESI->NativeInfoArray)  papi_free(ESI->NativeInfoArray);
+	if (ESI->ctl_state)	    papi_free(ESI->ctl_state);
+	if ( ESI->overflow.deadline)  papi_free(ESI->overflow.deadline);
+	if ( ESI->profile.prof)  papi_free(ESI->profile.prof);
+	papi_free(ESI);
+	return (PAPI_ENOMEM);
    }
    memset(ESI->sw_stop, 0x00, max_counters * sizeof(long long));
    memset(ESI->hw_start, 0x00, max_counters * sizeof(long long));
+   memset(ESI->ctl_state, 0x00,_papi_hwd[cidx]->size.control_state);
+
+   /* Carve up the overflow block into separate arrays */
+   ptr = (char *) ESI->overflow.deadline;
+   ptr += sizeof(long long)*max_counters;
+   ESI->overflow.threshold = (int *) ptr;
+   ptr += sizeof(int)*max_counters;
+   ESI->overflow.EventIndex = (int *) ptr;
+   ptr += sizeof(int)*max_counters;
+   ESI->overflow.EventCode = (int *) ptr;
+
+   /* Carve up the profile block into separate arrays */
+   ptr =(char *)ESI->profile.prof+(sizeof(PAPI_sprofil_t *)*max_counters);
+   ESI->profile.count = (int *) ptr;
+   ptr += sizeof(int)*max_counters;
+   ESI->profile.threshold = (int *) ptr;
+   ptr += sizeof(int)*max_counters;
+   ESI->profile.EventIndex = (int *) ptr;
+   ptr += sizeof(int)*max_counters;
+   ESI->profile.EventCode = (int *) ptr;
+  
 
    initialize_EventInfoArray(ESI);
    initialize_NativeInfoArray(ESI);
 
+   _papi_hwd[cidx]->init_control_state(ESI->ctl_state); /* this used to be init_config */
+
+   ESI->domain.domain = _papi_hwd[cidx]->cmp_info.default_domain;
+   ESI->granularity.granularity = _papi_hwd[cidx]->cmp_info.default_granularity;
+
    ESI->state = PAPI_STOPPED;
 
-   ESI->domain.domain = _papi_hwi_system_info.sub_info.default_domain;
-   ESI->granularity.granularity = _papi_hwi_system_info.sub_info.default_granularity;
+   ESI->domain.domain = _papi_hwd[cidx]->cmp_info.default_domain;
+   ESI->granularity.granularity = _papi_hwd[cidx]->cmp_info.default_granularity;
 
-   *here = ESI;
    return(PAPI_OK);
 }
 
@@ -278,15 +329,19 @@ static int allocate_EventSet(EventSetInfo_t **here)
 
 static void free_EventSet(EventSetInfo_t * ESI)
 {
-  if (ESI->EventInfoArray)
-    papi_free(ESI->EventInfoArray);
-  if (ESI->sw_stop)
-    papi_free(ESI->sw_stop);
-  if (ESI->hw_start)
-    papi_free(ESI->hw_start);
-  if ((ESI->state & PAPI_MULTIPLEXING) && ESI->multiplex.mpx_evset)
-    papi_free(ESI->multiplex.mpx_evset);
-  memset(ESI, 0x00, sizeof(EventSetInfo_t));
+   if (ESI->EventInfoArray)	papi_free(ESI->EventInfoArray);
+   if ( ESI->NativeInfoArray)	papi_free(ESI->NativeInfoArray);
+   if ( ESI->overflow.deadline )	papi_free(ESI->overflow.deadline);
+   if ( ESI->profile.prof )	papi_free(ESI->profile.prof);
+   if (ESI->ctl_state)		papi_free(ESI->ctl_state);
+   if (ESI->sw_stop)		papi_free(ESI->sw_stop);
+   if (ESI->hw_start)		papi_free(ESI->hw_start);
+   if ((ESI->state & PAPI_MULTIPLEXING) && ESI->multiplex.mpx_evset)
+     papi_free(ESI->multiplex.mpx_evset);
+
+#ifdef DEBUG
+   memset(ESI, 0x00, sizeof(EventSetInfo_t));
+#endif
    papi_free(ESI);
 }
 
@@ -338,7 +393,7 @@ int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle)
       return (PAPI_EINVAL);
    /* Well, then allocate a new one. Use n to keep track of a NEW EventSet */
 
-   retval = allocate_EventSet(&ESI);
+   retval = create_EventSet(&ESI);
    if (retval != PAPI_OK)
       return (retval);
 
@@ -430,6 +485,10 @@ int _papi_hwi_remove_EventSet(EventSetInfo_t * ESI)
 int _papi_hwi_add_native_precheck(EventSetInfo_t * ESI, int nevt)
 {
    int i;
+   int cidx = PAPI_COMPONENT_INDEX(nevt);
+
+   if ( cidx < 0 || cidx > papi_num_components)
+      return -1;
 
    /* to find the native event from the native events list */
    for (i = 0; i < ESI->NativeCount; i++) {
@@ -494,10 +553,16 @@ static void remap_event_position(EventSetInfo_t * ESI, int thisindex)
 
 static int add_native_fail_clean(EventSetInfo_t * ESI, int nevt)
 {
-   int i;
+   int i, max_counters;
+   int cidx = PAPI_COMPONENT_INDEX(nevt);
+
+   if ( cidx < 0 || cidx > papi_num_components)
+      return -1;
+
+   max_counters = _papi_hwd[cidx]->cmp_info.num_mpx_cntrs; 
 
    /* to find the native event from the native events list */
-   for (i = 0; i < MAX_COUNTERS; i++) {
+   for (i = 0; i < max_counters; i++) {
       if (nevt == ESI->NativeInfoArray[i].ni_event) {
          ESI->NativeInfoArray[i].ni_owners--;
          /* to clean the entry in the nativeInfo array */
@@ -528,7 +593,7 @@ static int add_native_events(EventSetInfo_t * ESI, int *nevt, int size, EventInf
          out->pos[i] = ESI->NativeInfoArray[nidx].ni_position;
       } else {
          /* all counters have been used, add_native fail */
-         if (ESI->NativeCount == MAX_COUNTERS) {
+         if (ESI->NativeCount == _papi_hwd[ESI->CmpIdx]->cmp_info.num_cntrs) {
             /* to clean owners for previous added native events */
             for (j = 0; j < i; j++) {
                if ((nidx = add_native_fail_clean(ESI, nevt[j])) >= 0) {
@@ -552,10 +617,10 @@ static int add_native_events(EventSetInfo_t * ESI, int *nevt, int size, EventInf
 
    /* if remap!=0, we need reallocate counters */
    if (remap) {
-      if (_papi_hwd_allocate_registers(ESI)) {
+      if (_papi_hwd[ESI->CmpIdx]->allocate_registers(ESI)) {
          retval =
-             _papi_hwd_update_control_state(&ESI->machdep, ESI->NativeInfoArray,
-                                            ESI->NativeCount,&ESI->master->context);
+             _papi_hwd[ESI->CmpIdx]->update_control_state(ESI->ctl_state, ESI->NativeInfoArray,
+		ESI->NativeCount,ESI->master->context[ESI->CmpIdx]);
          if (retval != PAPI_OK)
 	   {
 	   clean:
@@ -582,6 +647,15 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
 {
    int i, j, thisindex, remap, retval = PAPI_OK;
 
+   if(ESI->CmpIdx<0){
+     if((retval=_papi_hwi_assign_eventset(ESI, PAPI_COMPONENT_INDEX(EventCode)))!= PAPI_OK)
+       return retval;
+   }
+   else{
+     if(ESI->CmpIdx != PAPI_COMPONENT_INDEX(EventCode))
+       return PAPI_EINVAL;
+   }
+
    /* Make sure the event is not present and get the next
       free slot. */
    thisindex = get_free_EventCodeIndex(ESI, EventCode);
@@ -595,7 +669,7 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
 
       if (EventCode & PAPI_PRESET_MASK) {
          int count;
-         int preset_index = EventCode & PAPI_PRESET_AND_MASK;
+         int preset_index = EventCode & PAPI_PRESET_AND_MASK & PAPI_COMPONENT_AND_MASK;
 
 
          /* Check if it's within the valid range */
@@ -673,7 +747,7 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
 
    } else {
       /* Multiplexing is special. See multiplex.c */
-     retval = mpx_add_event(&ESI->multiplex.mpx_evset, EventCode, ESI->domain.domain, ESI->granularity.granularity);
+     retval = mpx_add_event(&ESI->multiplex.mpx_evset, EventCode, ESI->domain.domain, ESI->granularity.granularity, ESI->CmpIdx);
       if (retval < PAPI_OK)
          return (retval);
       ESI->EventInfoArray[thisindex].event_code = EventCode;    /* Relevant */
@@ -692,6 +766,12 @@ int _papi_hwi_add_pevent(EventSetInfo_t * ESI, int EventCode, void *inout)
 {
    int thisindex, retval;
 
+
+   if(ESI->CmpIdx<0){
+     if((retval=_papi_hwi_assign_eventset(ESI, PAPI_COMPONENT_INDEX(EventCode)))!=PAPI_OK)
+       return retval;
+   }
+
    /* Make sure the event is not present and get a free slot. */
 
    thisindex = get_free_EventCodeIndex(ESI, EventCode);
@@ -701,7 +781,7 @@ int _papi_hwi_add_pevent(EventSetInfo_t * ESI, int EventCode, void *inout)
    /* Fill in machine depending info including the EventInfoArray. */
 
    retval =
-       _papi_hwd_add_prog_event(&ESI->machdep, EventCode, inout,
+       _papi_hwd[ESI->CmpIdx]->add_prog_event(ESI->ctl_state, EventCode, inout,
                                 &ESI->EventInfoArray[thisindex]);
    if (retval < PAPI_OK)
       return (retval);
@@ -718,7 +798,6 @@ int _papi_hwi_add_pevent(EventSetInfo_t * ESI, int EventCode, void *inout)
 
 int remove_native_events(EventSetInfo_t * ESI, int *nevt, int size)
 {
-   hwd_control_state_t *this_state = &ESI->machdep;
    NativeInfo_t *native = ESI->NativeInfoArray;
    int i, j, zero = 0, retval;
 
@@ -759,7 +838,9 @@ int remove_native_events(EventSetInfo_t * ESI, int *nevt, int size)
             }
          }
          if (copy == 0) {
+            hwd_register_t *bits = native[i].ni_bits; /* save pointer to bits */
             memset(native + i, 0, sizeof(NativeInfo_t));
+            native[i].ni_bits = bits; /* restore pointer to bits */
             native[i].ni_position = -1;
          }
       }
@@ -772,8 +853,8 @@ int remove_native_events(EventSetInfo_t * ESI, int *nevt, int size)
       clear the now empty slots, reinitialize the index, and update the count.
       Then send the info down to the substrate to update the hwd control structure. */
    if (zero) {
-      retval = _papi_hwd_update_control_state(this_state, native, ESI->NativeCount,
-		&ESI->master->context);
+      retval = _papi_hwd[ESI->CmpIdx]->update_control_state(ESI->ctl_state, native, ESI->NativeCount,
+		ESI->master->context[ESI->CmpIdx]);
       if (retval != PAPI_OK)
          return (retval);
    }
@@ -852,7 +933,7 @@ int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long long * va
    long long *dp = NULL;
    int i, j = 0, index;
 
-   retval = _papi_hwd_read(context, &ESI->machdep, &dp, ESI->state);
+   retval = _papi_hwd[ESI->CmpIdx]->read(context, ESI->ctl_state, &dp, ESI->state);
    if (retval != PAPI_OK)
      return (retval);
 
@@ -896,9 +977,11 @@ int _papi_hwi_read(hwd_context_t * context, EventSetInfo_t * ESI, long long * va
 
 int _papi_hwi_cleanup_eventset(EventSetInfo_t * ESI)
 {
-   int retval, i, tmp = _papi_hwi_system_info.sub_info.num_mpx_cntrs;
+   int retval, i, tmp;
    /* Always clean the whole thing */
 
+   tmp = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
+   
    for (i = (tmp - 1); i >= 0; i--) {
       if (ESI->EventInfoArray[i].event_code != PAPI_NULL) {
          retval = _papi_hwi_remove_event(ESI, ESI->EventInfoArray[i].event_code);
@@ -936,11 +1019,11 @@ int _papi_hwi_convert_eventset_to_multiplex(_papi_int_multiplex_t *mpx)
 
        /* Resize the EventInfo_t array */
        
-       if ((_papi_hwi_system_info.sub_info.kernel_multiplex == 0) || 
-	   ((_papi_hwi_system_info.sub_info.kernel_multiplex) && 
+       if ((_papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex == 0) || 
+	   ((_papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex) && 
 	    (flags & PAPI_MULTIPLEX_FORCE_SW))) 
 	 {
-	   retval = MPX_add_events(&ESI->multiplex.mpx_evset, mpxlist, j, ESI->domain.domain, ESI->granularity.granularity);
+	   retval = MPX_add_events(&ESI->multiplex.mpx_evset, mpxlist, j, ESI->domain.domain, ESI->granularity.granularity, ESI->CmpIdx);
 	   if (retval != PAPI_OK) 
 	     {
 	       papi_free(mpxlist);
@@ -953,7 +1036,7 @@ int _papi_hwi_convert_eventset_to_multiplex(_papi_int_multiplex_t *mpx)
    /* Update the state before initialization! */
 
    ESI->state |= PAPI_MULTIPLEXING;
-   if (_papi_hwi_system_info.sub_info.kernel_multiplex && (flags & PAPI_MULTIPLEX_FORCE_SW))
+   if (_papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex && (flags & PAPI_MULTIPLEX_FORCE_SW))
      ESI->multiplex.flags = PAPI_MULTIPLEX_FORCE_SW;
    ESI->multiplex.ns = mpx->ns;
  
@@ -977,22 +1060,24 @@ int _papi_hwi_query(int preset_index, int *flags, char **note)
 #endif
 
 /*
- * Routine that initializes the substrates
- * Currently, only one substrate is initialized, eventually
- * this will be many substrates
+ * Routine that initializes all available components.
+ * A component is available if a pointer to its info vector
+ * appears in the NULL terminated_papi_hwd table.
  */
 int _papi_hwi_init_global(void)
 {
-   int retval;
+   int retval, i=0;
 
-#ifdef PAPI_NO_VECTOR
-   retval = _papi_hwd_init_substrate(NULL);
-#else
-   retval = _papi_hwi_initialize_vector_table(&_papi_vector_table);
-   if (retval != PAPI_OK ) return(retval);
-   retval = _papi_hwd_init_substrate(&_papi_vector_table);
-#endif
-   return(retval);
+   while(_papi_hwd[i]){
+     retval = _papi_hwi_innoculate_vector(_papi_hwd[i]);
+     if (retval != PAPI_OK ) 
+       return(retval);
+     retval = _papi_hwd[i]->init_substrate(i);
+     if (retval != PAPI_OK ) 
+       return(retval);
+     i++;
+   } 
+   return(PAPI_OK);
 }
 
 /* Machine info struct initialization using defaults */
@@ -1020,55 +1105,6 @@ int _papi_hwi_init_global_internal(void)
      return(retval);
 
    _papi_hwi_system_info.pid = 0;       /* Process identifier */
-
-   /* The PAPI_substrate_info_t struct defined in papi.h */
-
-   _papi_hwi_system_info.sub_info.name[0] = '\0';              /* Name of the substrate we're using, usually CVS RCS Id */
-   _papi_hwi_system_info.sub_info.version[0] = '\0';           /* Version of this substrate, usually CVS Revision */
-   _papi_hwi_system_info.sub_info.support_version[0] = '\0';   /* Version of the support library */
-   _papi_hwi_system_info.sub_info.kernel_version[0] = '\0';    /* Version of the kernel PMC support driver */
-   _papi_hwi_system_info.sub_info.num_cntrs = 0;               /* Number of counters the substrate supports */
-   _papi_hwi_system_info.sub_info.num_mpx_cntrs = PAPI_MPX_DEF_DEG; /* Number of counters the substrate (or PAPI) can multiplex */
-   _papi_hwi_system_info.sub_info.num_preset_events = 0;       
-   _papi_hwi_system_info.sub_info.num_native_events = 0;       
-   _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;          /* The default domain when this substrate is used */
-   _papi_hwi_system_info.sub_info.available_domains = _papi_hwi_system_info.sub_info.default_domain;       /* Available domains */ 
-   _papi_hwi_system_info.sub_info.default_granularity = PAPI_GRN_THR;     /* The default granularity when this substrate is used */
-   _papi_hwi_system_info.sub_info.available_granularities = _papi_hwi_system_info.sub_info.default_granularity; /* Available granularities */
-   _papi_hwi_system_info.sub_info.opcode_match_width = 0;      /* Width of opcode matcher if exists, 0 if not */
-   _papi_hwi_system_info.sub_info.itimer_sig = PAPI_INT_MPX_SIGNAL;
-   _papi_hwi_system_info.sub_info.itimer_num = PAPI_INT_ITIMER;
-   _papi_hwi_system_info.sub_info.itimer_ns = PAPI_INT_MPX_DEF_US * 1000;
-   _papi_hwi_system_info.sub_info.itimer_res_ns = 1;
-   _papi_hwi_system_info.sub_info.hardware_intr_sig = PAPI_INT_SIGNAL;
-#ifdef WIN32
-    _papi_hwi_system_info.sub_info.clock_ticks = 64;    // todo
-#else
-   _papi_hwi_system_info.sub_info.clock_ticks = sysconf(_SC_CLK_TCK);
-#endif
-
-   _papi_hwi_system_info.sub_info.reserved[0] = 0;
-   _papi_hwi_system_info.sub_info.reserved[1] = 0;
-   _papi_hwi_system_info.sub_info.hardware_intr = 0;         /* Needs hw overflow intr to be emulated in software*/
-   _papi_hwi_system_info.sub_info.precise_intr = 0;          /* Performance interrupts happen precisely */
-   _papi_hwi_system_info.sub_info.posix1b_timers = 0;        
-   _papi_hwi_system_info.sub_info.kernel_profile = 0;        /* Needs kernel profile support (buffered interrupts) to be emulated */
-   _papi_hwi_system_info.sub_info.kernel_multiplex = 0;      /* In kernel multiplexing */
-   _papi_hwi_system_info.sub_info.data_address_range = 0;    /* Supports data address range limiting */
-   _papi_hwi_system_info.sub_info.instr_address_range = 0;   /* Supports instruction address range limiting */
-   _papi_hwi_system_info.sub_info.fast_real_timer = 0;       /* Has a fast real timer */
-   _papi_hwi_system_info.sub_info.fast_virtual_timer = 0;    /* Has a fast virtual timer */
-   _papi_hwi_system_info.sub_info.attach = 0;    	     /* Can attach */
-   _papi_hwi_system_info.sub_info.attach_must_ptrace = 0;    /* Attaching code must first ptrace and stop the child */
-   _papi_hwi_system_info.sub_info.edge_detect = 0;           /* Supports edge detection on events */
-   _papi_hwi_system_info.sub_info.invert = 0;                /* Supports invert detection on events */
-   _papi_hwi_system_info.sub_info.profile_ear = 0;           /* Supports data/instr/tlb miss address sampling */
-   _papi_hwi_system_info.sub_info.cntr_groups = 0;           /* Underlying hardware uses counter groups */
-   _papi_hwi_system_info.sub_info.cntr_umasks = 0;           /* counters have unit masks */
-   _papi_hwi_system_info.sub_info.cntr_IEAR_events = 0;      /* counters support instr event addr register */
-   _papi_hwi_system_info.sub_info.cntr_DEAR_events = 0;      /* counters support data event addr register */
-   _papi_hwi_system_info.sub_info.cntr_OPCM_events = 0;      /* counter events support opcode matching */
-   _papi_hwi_system_info.sub_info.reserved_bits = 0;
 
    /* The PAPI_hw_info_t struct defined in papi.h */
    _papi_hwi_system_info.hw_info.ncpu = 0;     /* ncpu */
@@ -1256,7 +1292,7 @@ static long long handle_derived(EventInfo_t * evi, long long * from)
 }
 
 #if 0
-void print_state(EventSetInfo_t * ESI)
+void print_state(EventSetInfo_t * ESI, int cidx)
 {
    int i;
 
@@ -1265,30 +1301,30 @@ void print_state(EventSetInfo_t * ESI)
            ESI->NativeCount);
 
    APIDBG( "\nnative_event code       ");
-   for (i = 0; i < MAX_COUNTERS; i++)
+   for (i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++)
       APIDBG( "0x%15x", ESI->NativeInfoArray[i].ni_event);
    APIDBG( "\n");
 
    APIDBG( "native_event_position     ");
-   for (i = 0; i < MAX_COUNTERS; i++)
+   for (i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++)
       APIDBG( "%15d", ESI->NativeInfoArray[i].ni_position);
    APIDBG( "\n");
 
 #if 0                           /* This code is specific to POWER */
    APIDBG( "native_event_selectors    ");
-   for (i = 0; i < MAX_COUNTERS; i++)
+   for (i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++)
       APIDBG( "%15d",
               native_table[ESI->NativeInfoArray[i].ni_event].resources.selector);
    APIDBG( "\n");
 
    APIDBG( "counter_cmd               ");
-   for (i = 0; i < MAX_COUNTERS; i++)
-      APIDBG( "%15d", (&(ESI->machdep))->counter_cmd.events[i]);
+   for (i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++)
+      APIDBG( "%15d", ESI->ctl_state->counter_cmd.events[i]);
    APIDBG( "\n");
 #endif
 
    APIDBG( "native links              ");
-   for (i = 0; i < MAX_COUNTERS; i++)
+   for (i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++)
       APIDBG( "%15d", ESI->NativeInfoArray[i].ni_owners);
    APIDBG( "\n");
 
@@ -1299,12 +1335,14 @@ void print_state(EventSetInfo_t * ESI)
     success  return 1
     fail     return 0
 */
-int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t * event_list, int count)
+int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t * event_list, int count, int cidx)
 {
    int i, j;
-   int idx_q[MAX_COUNTERS];     /* queue of indexes of lowest rank events */
-   int map_q[MAX_COUNTERS];     /* queue of mapped events (TRUE if mapped) */
+   char *ptr = (char *) event_list;
+   int idx_q[count];     /* queue of indexes of lowest rank events */
+   int map_q[count];     /* queue of mapped events (TRUE if mapped) */
    int head, tail;
+   int size = _papi_hwd[cidx]->size.reg_alloc;
 
    /* build a queue of indexes to all events 
       that live on one counter only (rank == 1) */
@@ -1312,23 +1350,24 @@ int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t * event_list, int count)
    tail = 0;                    /* points to bottom of queue */
    for (i = 0; i < count; i++) {
       map_q[i] = 0;
-      if (_papi_hwd_bpt_map_exclusive(&event_list[i]))
+      if (_papi_hwd[cidx]->bpt_map_exclusive((hwd_reg_alloc_t *)&ptr[size*i]))
          idx_q[tail++] = i;
    }
    /* scan the single counter queue looking for events that share counters.
       If two events can live only on one counter, return failure.
       If the second event lives on more than one counter, remove shared counter
       from its selector and reduce its rank. 
-      Mark first event as mapped to its counter. */ while (head < tail) {
+      Mark first event as mapped to its counter. */
+   while (head < tail) {
       for (i = 0; i < count; i++) {
          if (i != idx_q[head]) {
-            if (_papi_hwd_bpt_map_shared(&event_list[i], &event_list[idx_q[head]])) {
+            if (_papi_hwd[cidx]->bpt_map_shared((hwd_reg_alloc_t *)&ptr[size*i], (hwd_reg_alloc_t *)&ptr[size*idx_q[head]])) {
                /* both share a counter; if second is exclusive, mapping fails */
-               if (_papi_hwd_bpt_map_exclusive(&event_list[i]))
+               if (_papi_hwd[cidx]->bpt_map_exclusive((hwd_reg_alloc_t *)&ptr[size*i]))
                   return 0;
                else {
-                  _papi_hwd_bpt_map_preempt(&event_list[i], &event_list[idx_q[head]]);
-                  if (_papi_hwd_bpt_map_exclusive(&event_list[i]))
+                  _papi_hwd[cidx]->bpt_map_preempt((hwd_reg_alloc_t *)&ptr[size*i], (hwd_reg_alloc_t *)&ptr[size*idx_q[head]]);
+                  if (_papi_hwd[cidx]->bpt_map_exclusive((hwd_reg_alloc_t *)&ptr[size*i]))
                      idx_q[tail++] = i;
                }
             }
@@ -1340,47 +1379,56 @@ int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t * event_list, int count)
    if (tail == count) {
       return 1;                 /* idx_q includes all events; everything is successfully mapped */
    } else {
-      hwd_reg_alloc_t rest_event_list[MAX_COUNTERS];
-      hwd_reg_alloc_t copy_rest_event_list[MAX_COUNTERS];
+      char * rest_event_list;
+      char * copy_rest_event_list;
       int remainder;
+      rest_event_list = (char *) papi_malloc(size*_papi_hwd[cidx]->cmp_info.num_cntrs);
+      copy_rest_event_list = (char *) papi_malloc(size*_papi_hwd[cidx]->cmp_info.num_cntrs);
+      if ( !rest_event_list || !copy_rest_event_list ) {
+        if(rest_event_list) papi_free(rest_event_list);
+        if(copy_rest_event_list) papi_free(copy_rest_event_list);
+        return(0);
+      }
 
       /* copy all unmapped events to a second list and make a backup */
       for (i = 0, j = 0; i < count; i++) {
          if (map_q[i] == 0) {
-            memcpy(&copy_rest_event_list[j++], &event_list[i], sizeof(hwd_reg_alloc_t));
+            memcpy(&copy_rest_event_list[size*j++], &ptr[size*i], size);
          }
       }
       remainder = j;
 
-      memcpy(rest_event_list, copy_rest_event_list,
-             sizeof(hwd_reg_alloc_t) * (remainder));
+      memcpy(rest_event_list, copy_rest_event_list, size * remainder);
 
       /* try each possible mapping until you fail or find one that works */
-      for (i = 0; i < MAX_COUNTERS; i++) {
+      for (i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++) {
          /* for the first unmapped event, try every possible counter */
-         if (_papi_hwd_bpt_map_avail(rest_event_list, i)) {
-            _papi_hwd_bpt_map_set(rest_event_list, i);
+         if (_papi_hwd[cidx]->bpt_map_avail((hwd_reg_alloc_t *)rest_event_list, i)) {
+            _papi_hwd[cidx]->bpt_map_set((hwd_reg_alloc_t *)rest_event_list, i);
             /* remove selected counter from all other unmapped events */
             for (j = 1; j < remainder; j++) {
-               if (_papi_hwd_bpt_map_shared(&rest_event_list[j], rest_event_list))
-                  _papi_hwd_bpt_map_preempt(&rest_event_list[j], rest_event_list);
+               if (_papi_hwd[cidx]->bpt_map_shared((hwd_reg_alloc_t *)&rest_event_list[size*j], (hwd_reg_alloc_t *)rest_event_list))
+                  _papi_hwd[cidx]->bpt_map_preempt((hwd_reg_alloc_t *)&rest_event_list[size*j], (hwd_reg_alloc_t *)rest_event_list);
             }
             /* if recursive call to allocation works, break out of the loop */
-            if (_papi_hwi_bipartite_alloc(rest_event_list, remainder))
+            if (_papi_hwi_bipartite_alloc((hwd_reg_alloc_t *)rest_event_list, remainder, cidx))
                break;
 
             /* recursive mapping failed; copy the backup list and try the next combination */
-            memcpy(rest_event_list, copy_rest_event_list,
-                   sizeof(hwd_reg_alloc_t) * (remainder));
+            memcpy(rest_event_list, copy_rest_event_list, size * remainder);
          }
       }
-      if (i == MAX_COUNTERS) {
-         return 0;              /* fail to find mapping */
+      if (i == _papi_hwd[cidx]->cmp_info.num_cntrs) {
+	papi_free(rest_event_list);
+	papi_free(copy_rest_event_list);
+	return 0;              /* fail to find mapping */
       }
       for (i = 0, j = 0; i < count; i++) {
          if (map_q[i] == 0)
-            _papi_hwd_bpt_map_update(&event_list[i], &rest_event_list[j++]);
+            _papi_hwd[cidx]->bpt_map_update((hwd_reg_alloc_t *)&ptr[size*i], (hwd_reg_alloc_t *)&rest_event_list[size*j++]);
       }
+      papi_free(rest_event_list);
+      papi_free(copy_rest_event_list);
       return 1;
    }
 }

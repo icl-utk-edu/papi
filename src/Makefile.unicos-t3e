@@ -7,7 +7,7 @@ DESCR	= "Cray UNICOS/mk Unix with Alpha 21164"
 LIBS	= static
 TARGETS	= serial multiplex
 
-CFLAGS	= -h calchars -g -DNO_VARARG_MACRO -DNEED_FFSLL -DNO_DLFCN -DDEBUG
+CFLAGS	= -h calchars -g -DNO_VARARG_MACRO -DNEED_FFSLL -DNO_DLFCN -DDEBUG  -DCOMP_VECTOR=_t3e_vectors
 FFLAGS	= -F
 NOOPT	= -O0
 OPTFLAGS= -O3

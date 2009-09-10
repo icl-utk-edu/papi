@@ -1,125 +1,80 @@
 #ifndef _PAPI_VECTOR_H
 #define _PAPI_VECTOR_H
 
+/* Identifier for each component */
+typedef struct cmp_id {
+	char name[PAPI_MAX_STR_LEN];
+	char descr[PAPI_MAX_STR_LEN];
+} cmp_id_t;
+
+/* Sies of structure private to each component */
+typedef struct cmp_struct_sizes {
+    int		context;
+    int		control_state;
+    int		reg_value;
+    int		reg_alloc;
+} cmp_struct_sizes_t;
+
 /* Vector Table Stuff */
-typedef struct papi_svector {
-  void (*func)();
-  int  func_type;
-} papi_svector_t;
+typedef struct papi_vectors {
+/* Substrate specific data structure */
+    PAPI_component_info_t   cmp_info; /* See definition in papi.h */
 
-/* If not vector code, or if not in the substrate, VECTOR_STATIC maps to a null string.
-	Thus, prototypes behave the same as always.
-	If inside the substrate (as defined by IN_SUBSTRATE at the top of a substrate file)
-	VECTOR_STATIC maps to static, which allows routines to be properly prototyped and
-	declared as static within the substrate file. This removes the warning messages,
-	while preserving prototype checking on both sides of the substrate boundary.
-*/
+/* Substrate specific structure sizes*/
+    cmp_struct_sizes_t size;
 
-#ifdef PAPI_NO_VECTOR
-#define papi_vectors_t void *
-#define VECTOR_STATIC	
-#else
-#ifndef IN_SUBSTRATE
-#define VECTOR_STATIC 
-#else
-#define VECTOR_STATIC static
-#endif
-enum {
-   VEC_PAPI_END=0,
-   VEC_PAPI_HWD_READ,
-   VEC_PAPI_HWD_DISPATCH_TIMER,
-   VEC_PAPI_HWD_GET_OVERFLOW_ADDRESS,
-   VEC_PAPI_HWD_START,
-   VEC_PAPI_HWD_STOP,
-   VEC_PAPI_HWD_GET_REAL_CYCLES,
-   VEC_PAPI_HWD_GET_REAL_USEC,
-   VEC_PAPI_HWD_GET_VIRT_CYCLES,
-   VEC_PAPI_HWD_GET_VIRT_USEC,
-   VEC_PAPI_HWD_RESET,
-   VEC_PAPI_HWD_WRITE,
-   VEC_PAPI_HWD_STOP_PROFILING,
-   VEC_PAPI_HWD_INIT,
-   VEC_PAPI_HWD_INIT_CONTROL_STATE,
-   VEC_PAPI_HWD_UPDATE_SHLIB_INFO,
-   VEC_PAPI_HWD_GET_SYSTEM_INFO,
-   VEC_PAPI_HWD_GET_MEMORY_INFO,
-   VEC_PAPI_HWD_UPDATE_CONTROL_STATE,
-   VEC_PAPI_HWD_CTL,
-   VEC_PAPI_HWD_SET_OVERFLOW,
-   VEC_PAPI_HWD_SET_PROFILE,
-   VEC_PAPI_HWD_ADD_PROG_EVENT,
-   VEC_PAPI_HWD_SET_DOMAIN,
-   VEC_PAPI_HWD_NTV_ENUM_EVENTS,
-   VEC_PAPI_HWD_NTV_CODE_TO_NAME,
-   VEC_PAPI_HWD_NTV_CODE_TO_DESCR,
-   VEC_PAPI_HWD_NTV_CODE_TO_BITS,
-   VEC_PAPI_HWD_NTV_BITS_TO_INFO,
-   VEC_PAPI_HWD_ALLOCATE_REGISTERS,
-   VEC_PAPI_HWD_BPT_MAP_AVAIL,
-   VEC_PAPI_HWD_BPT_MAP_SET,
-   VEC_PAPI_HWD_BPT_MAP_EXCLUSIVE,
-   VEC_PAPI_HWD_BPT_MAP_SHARED,
-   VEC_PAPI_HWD_BPT_MAP_PREEMPT,
-   VEC_PAPI_HWD_BPT_MAP_UPDATE,
-   VEC_PAPI_HWD_GET_DMEM_INFO,
-   VEC_PAPI_HWD_SHUTDOWN,
-   VEC_PAPI_HWD_SHUTDOWN_GLOBAL,
-   VEC_PAPI_HWD_USER,
-   VEC_MAX_ENTRIES
-};
-typedef struct papi_vectors{
-  int (*_vec_papi_hwd_read) (void *, void *, long long **, int);
+/* List of exposed function pointers for this component */
 #ifdef _WIN32 /* Windows requires a different callback format */
-  void (*_vec_papi_hwd_timer_callback) (UINT, UINT, DWORD, DWORD, DWORD);
+    void	(*timer_callback)	(UINT, UINT, DWORD, DWORD, DWORD);
 #else
-  void (*_vec_papi_hwd_dispatch_timer) (int, siginfo_t *, void *);
+    void	(*dispatch_timer)	(int, hwd_siginfo_t *, void *);
 #endif
-  void *(*_vec_papi_hwd_get_overflow_address) (int, char *);
-  int (*_vec_papi_hwd_start) (void *, void *);
-  int (*_vec_papi_hwd_stop) (void *, void *);
-  long long (*_vec_papi_hwd_get_real_cycles) ();
-  long long (*_vec_papi_hwd_get_real_usec) ();
-  long long (*_vec_papi_hwd_get_virt_cycles) (void *);
-  long long (*_vec_papi_hwd_get_virt_usec) (void *);
-  int (*_vec_papi_hwd_reset) (void *, void *);
-  int (*_vec_papi_hwd_write) (void *, void *, long long[]);
-  int (*_vec_papi_hwd_stop_profiling) (ThreadInfo_t *, EventSetInfo_t *);
-  int (*_vec_papi_hwd_init) (void *);
-  int (*_vec_papi_hwd_init_control_state) (void *);
-  int (*_vec_papi_hwd_update_shlib_info) (void);
-  int (*_vec_papi_hwd_get_system_info) ();
-  int (*_vec_papi_hwd_get_memory_info) (PAPI_hw_info_t *, int);
-  int (*_vec_papi_hwd_update_control_state) (void *, NativeInfo_t *, int, void *);
-  int (*_vec_papi_hwd_ctl) (void *, int, _papi_int_option_t *);
-  int (*_vec_papi_hwd_set_overflow) (EventSetInfo_t *, int, int);
-  int (*_vec_papi_hwd_set_profile) (EventSetInfo_t *, int, int);
-  int (*_vec_papi_hwd_add_prog_event) (void *, unsigned int, void *, EventInfo_t *);
-  int (*_vec_papi_hwd_set_domain) (void *, int);
-  int (*_vec_papi_hwd_ntv_enum_events) (unsigned int *, int);
-  int (*_vec_papi_hwd_ntv_code_to_name) (unsigned int, char *, int);
-  int (*_vec_papi_hwd_ntv_code_to_descr) (unsigned int, char *, int);
-  int (*_vec_papi_hwd_ntv_code_to_bits) (unsigned int, void *);
-  int (*_vec_papi_hwd_ntv_bits_to_info) (void *, char *, unsigned int *, int, int);
-  int (*_vec_papi_hwd_allocate_registers) (EventSetInfo_t *);
-  int (*_vec_papi_hwd_bpt_map_avail) (void *, int);
-  void (*_vec_papi_hwd_bpt_map_set) (void *, int);
-  int (*_vec_papi_hwd_bpt_map_exclusive) (void *);
-  int (*_vec_papi_hwd_bpt_map_shared) (void *, void *);
-  void (*_vec_papi_hwd_bpt_map_preempt) (void *, void *);
-  void (*_vec_papi_hwd_bpt_map_update) (void *, void *);
-  int (*_vec_papi_hwd_get_dmem_info) (PAPI_dmem_info_t *);
-  int (*_vec_papi_hwd_shutdown) (void *);
-  int (*_vec_papi_hwd_shutdown_global) (void);
-  int (*_vec_papi_hwd_user) (int, void *, void *);
-}papi_vectors_t;
+    void *	(*get_overflow_address)	(int, char *, int);
+    int		(*start)		(hwd_context_t *, hwd_control_state_t *);
+    int		(*stop)			(hwd_context_t *, hwd_control_state_t *);
+    int		(*read)			(hwd_context_t *, hwd_control_state_t *, long long **, int);
+    int		(*reset)		(hwd_context_t *, hwd_control_state_t *);
+    int		(*write)		(hwd_context_t *, hwd_control_state_t *, long long[]);
+    long long	(*get_real_cycles)	(void);
+    long long	(*get_real_usec)	(void);
+    long long	(*get_virt_cycles)	(const hwd_context_t *);
+    long long	(*get_virt_usec)	(const hwd_context_t *);
+    int		(*stop_profiling)	(ThreadInfo_t *, EventSetInfo_t *);
+    int		(*init_substrate)	(int);
+    int		(*init)			(hwd_context_t *);
+    int		(*init_control_state)	(hwd_control_state_t * ptr);
+    int		(*update_shlib_info)	(void);
+    int		(*get_system_info)	(void);
+    int		(*get_memory_info)	(PAPI_hw_info_t *, int);
+    int		(*update_control_state)	(hwd_control_state_t *, NativeInfo_t *, int, hwd_context_t *);
+    int		(*ctl)			(hwd_context_t *, int , _papi_int_option_t *);
+    int		(*set_overflow)		(EventSetInfo_t *, int, int);
+    int		(*set_profile)		(EventSetInfo_t *, int, int);
+    int		(*add_prog_event)	(hwd_control_state_t *, unsigned int, void *, EventInfo_t *);
+    int		(*set_domain)		(hwd_control_state_t *, int);
+    int		(*ntv_enum_events)	(unsigned int *, int);
+    int		(*ntv_name_to_code)	(char *, unsigned int *);
+    int		(*ntv_code_to_name)	(unsigned int, char *, int);
+    int		(*ntv_code_to_descr)	(unsigned int, char *, int);
+    int		(*ntv_code_to_bits)	(unsigned int, hwd_register_t *);
+    int		(*ntv_bits_to_info)	(hwd_register_t *, char *, unsigned int *, int, int);
+    int		(*allocate_registers)	(EventSetInfo_t *);
+    int		(*bpt_map_avail)	(hwd_reg_alloc_t *, int);
+    void	(*bpt_map_set)		(hwd_reg_alloc_t *, int);
+    int		(*bpt_map_exclusive)	(hwd_reg_alloc_t *);
+    int		(*bpt_map_shared)	(hwd_reg_alloc_t *, hwd_reg_alloc_t *);
+    void	(*bpt_map_preempt)	(hwd_reg_alloc_t *, hwd_reg_alloc_t *);
+    void	(*bpt_map_update)	(hwd_reg_alloc_t *, hwd_reg_alloc_t *);
+    int		(*get_dmem_info)	(PAPI_dmem_info_t *);
+    int		(*shutdown)		(hwd_context_t *);
+    int		(*shutdown_global)	(void);
+    int		(*user)			(int, void *, void *);
+}papi_vector_t;
 
-extern papi_vectors_t _papi_vector_table;
+extern papi_vector_t *_papi_hwd[];
 
 /* Prototypes */
-int _papi_hwi_setup_vector_table(papi_vectors_t *table, papi_svector_t *stable);
-int _papi_hwi_initialize_vector_table(papi_vectors_t *table);
-void vector_print_table(papi_vectors_t *table, int print_func);
-
-#endif
+int _papi_hwi_innoculate_vector(papi_vector_t *v);
+void vector_print_table(papi_vector_t *v, int print_func);
 
 #endif /* _PAPI_VECTOR_H */

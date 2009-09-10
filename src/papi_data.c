@@ -362,7 +362,8 @@ const hwi_describe_t _papi_hwi_err[PAPI_NUM_ERRORS] = {
    /*15*/ {PAPI_EPERM, "PAPI_EPERM", "Permission level does not permit operation"},
    /*16*/ {PAPI_ENOINIT, "PAPI_ENOINIT", "Not initialized"},
    /*17*/ {PAPI_EBUF, "PAPI_EBUF", "Buffer size exceeded"},
-   /*18*/ {PAPI_EINVAL_DOM, "PAPI_EINVAL_DOM", "The EventSet's domain is not supported for the operation"}
+   /*18*/ {PAPI_EINVAL_DOM, "PAPI_EINVAL_DOM", "The EventSet's domain is not supported for the operation"},
+   /*19*/ {PAPI_ENOCMP, "PAPI_ENOCMP", "Component Index isn't set"}
 };
 
 #ifndef NO_LIBPAPI

@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI_get_virt_cyc 3 "July, 2008" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI_get_virt_cyc 3 "September, 2004" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -260,9 +260,6 @@ PAPI_get_virt_cyc - get virtual time counter value in clock cycles
 <!-- .LP -->
 <P>
 PAPI_get_virt_usec - get virtual time counter values in microseconds
-<!-- .LP -->
-<P>
-PAPI_get_virt_ns - get virtual time counter values in nanoseconds
 <P>
 <!-- .SH SYNOPSIS -->
 </BLOCKQUOTE>
@@ -290,8 +287,6 @@ PAPI_get_virt_ns - get virtual time counter values in nanoseconds
 <B>long_long PAPI_get_virt_cyc(void);</B> 
 <!-- .BI "long_long PAPI_get_virt_usec(void);" -->
 <B>long_long PAPI_get_virt_usec(void);</B> 
-<!-- .BI "long_long PAPI_get_virt_ns(void);" -->
-<B>long_long PAPI_get_virt_ns(void);</B> 
 <!-- .fi -->
 </PRE>
 <!-- .B Fortran Interface -->
@@ -299,12 +294,10 @@ PAPI_get_virt_ns - get virtual time counter values in nanoseconds
 <PRE>
 <!-- .B #include "fpapi.h" -->
 <B>#include fpapi.h</B> 
-<!-- .BI PAPIF_get_virt_cyc(C_LONG_LONG\  cyc) -->
-<B>PAPIF_get_virt_cyc(C_LONG_LONG </B><I>cyc)</I> 
-<!-- .BI PAPIF_get_virt_usec(C_LONG_LONG\  us) -->
-<B>PAPIF_get_virt_usec(C_LONG_LONG </B><I>us)</I> 
-<!-- .BI PAPIF_get_virt_ns(C_LONG_LONG\  ns) -->
-<B>PAPIF_get_virt_ns(C_LONG_LONG </B><I>ns)</I> 
+<!-- .BI PAPIF_get_virt_usec(C_LONG_LONG\  time) -->
+<B>PAPIF_get_virt_usec(C_LONG_LONG </B><I>time)</I> 
+<!-- .BI PAPIF_get_virt_cyc(C_LONG_LONG\  virt_cyc) -->
+<B>PAPIF_get_virt_cyc(C_LONG_LONG </B><I>virt_cyc)</I> 
 <!-- .fi -->
 </PRE>
 <P>
@@ -316,7 +309,7 @@ PAPI_get_virt_ns - get virtual time counter values in nanoseconds
 
 </A>
 <BLOCKQUOTE>
-All of these functions return the total number of virtual units from
+Both of these functions return the total number of virtual units from
 some arbitrary starting point. Virtual units accrue every time the
 process is running in user-mode on behalf of the process. Like the
 real time counters, these are guaranteed to exist on every platform
@@ -386,6 +379,8 @@ These functions have no known bugs.
 <BLOCKQUOTE>
 <!-- .BR PAPI_library_init "(3), " -->
 <A HREF="papi_library_init.html">PAPI_library_init (3)</A>, 
+<!-- .BR PAPI_get_real_usec "(3), "  -->
+<A HREF="papi_get_real_usec.html">PAPI_get_real_usec (3)</A>, 
 <!-- .BR PAPI_get_real_cyc "(3), " -->
 <A HREF="papi_get_real_cyc.html">PAPI_get_real_cyc (3)</A>, 
 <!-- .BR PAPI "(3), "  -->
@@ -394,7 +389,7 @@ These functions have no known bugs.
 <A HREF="papif.html">PAPIF (3)</A>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_virt_cyc (3)</TD> <TD align=right width=33%><I>July, 2008</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI_get_virt_cyc (3)</TD> <TD align=right width=33%><I>September, 2004</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>
@@ -478,6 +473,17 @@ These functions have no known bugs.
 <TR VALIGN="top">
 
 <TD ALIGN="center" HEIGHT="22" ROWSPAN="2" VALIGN="TOP">
+
+<SPAN CLASS="FOOTERNOTE">
+
+Contact PAPI: 
+
+<A HREF="mailto:papi@cs.utk.edu">
+
+papi@cs.utk.edu</A>
+
+</SPAN>
+
 </TD>
 
 <TD ALIGN="center" HEIGHT="11" WIDTH="200">

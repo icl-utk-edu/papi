@@ -3,9 +3,11 @@ SHLIB	=libpapi.so
 SUBSTR  = solaris-ultra
 MSUBSTR  = solaris-ultra
 MEMSUBSTR= solaris
+MEMSUBSTRC = $(MEMSUBSTR)-memory.c
+MEMSUBSTRO = $(MEMSUBSTR)-memory.o
 DESCR	= "Solaris 5.8 or greater with UltraSPARC I, II or III"
 LIBS	= static shared 
-TARGETS	= serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads shared
+TARGETS	= serial multiplex_and_pthreads shared
 #
 # Sun Workshop compilers: V5.0 and V6.0 R2
 #
@@ -14,7 +16,7 @@ CC		= cc
 CPP     	= $(CC) -E
 CC_R		= $(CC) -mt
 CC_SHR		= $(CC) -ztext -G -Kpic  
-CFLAGS  	= -xtarget=ultra3 -xarch=v8plusa -DNO_VARARG_MACRO -D__EXTENSIONS__ -DPAPI_NO_MEMORY_MANAGEMENT
+CFLAGS  	= -xtarget=ultra3 -xarch=v8plusa -DNO_VARARG_MACRO -D__EXTENSIONS__ -DPAPI_NO_MEMORY_MANAGEMENT  -DCOMP_VECTOR=_solaris_vectors
 SMPCFLGS	= -xexplicitpar
 OMPCFLGS	= -xopenmp
 F77		= f90
@@ -22,6 +24,19 @@ FFLAGS		= $(CFLAGS)
 TOPTFLAGS	= 
 NOOPT		= -xO0 
 OPTFLAGS	= -g -fast -xtarget=ultra3 -xarch=v8plusa 
+#
+# gcc 
+#
+#CC			= gcc
+#F77		= g77
+#CPP		= $(CC) -E
+#CC_R		= $(CC) 
+#CC_SHR		= $(CC) -shared -fpic
+#OPTFLAGS	= -O3
+#CFLAGS  	= -DNEED_FFSLL
+#FFLAGS		= $(CFLAGS)
+#TOPTFLAGS   =
+#SMPCFLGS    =
 #
 # Do not touch below here 
 #

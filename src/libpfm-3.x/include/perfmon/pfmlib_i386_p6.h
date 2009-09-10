@@ -1,7 +1,7 @@
 /*
- * Intel Pentium II/Pentium Pro/Pentium III/Pentium M PMU specific types and definitions
+ * P6/Pentium M PMU specific types and definitions
  *
- * Copyright (c) 2005-2007 Hewlett-Packard Development Company, L.P.
+ * Copyright (c) 2005-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy

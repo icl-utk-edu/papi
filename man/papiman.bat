@@ -7,7 +7,6 @@ perl manServer_papi.pl -o html man1/papi_decode.1
 perl manServer_papi.pl -o html man1/papi_event_chooser.1
 perl manServer_papi.pl -o html man1/papi_mem_info.1
 perl manServer_papi.pl -o html man1/papi_native_avail.1
-perl manServer_papi.pl -o html man1/papi_xml_event_info.1
 
 REM PAPI Miscellaneous Pages
 perl manServer_papi.pl -o html man3/PAPI.3
@@ -19,6 +18,7 @@ REM PAPI Low Level Interface
 perl manServer_papi.pl -o html man3/PAPI_accum.3
 perl manServer_papi.pl -o html man3/PAPI_add_event.3
 perl manServer_papi.pl -o html man3/PAPI_add_events.3
+perl manServer_papi.pl -o html man3/PAPI_assign_eventset_component.3
 perl manServer_papi.pl -o html man3/PAPI_attach.3
 perl manServer_papi.pl -o html man3/PAPI_cleanup_eventset.3
 perl manServer_papi.pl -o html man3/PAPI_create_eventset.3
@@ -28,6 +28,7 @@ perl manServer_papi.pl -o html man3/PAPI_encode_events.3
 perl manServer_papi.pl -o html man3/PAPI_enum_event.3
 perl manServer_papi.pl -o html man3/PAPI_event_code_to_name.3
 perl manServer_papi.pl -o html man3/PAPI_event_name_to_code.3
+perl manServer_papi.pl -o html man3/PAPI_get_component_info.3
 perl manServer_papi.pl -o html man3/PAPI_get_dmem_info.3
 perl manServer_papi.pl -o html man3/PAPI_get_event_info.3
 perl manServer_papi.pl -o html man3/PAPI_get_executable_info.3
@@ -38,7 +39,6 @@ perl manServer_papi.pl -o html man3/PAPI_get_overflow_event_index.3
 perl manServer_papi.pl -o html man3/PAPI_get_real_cyc.3
 perl manServer_papi.pl -o html man3/PAPI_get_real_usec.3
 perl manServer_papi.pl -o html man3/PAPI_get_shared_lib_info.3
-perl manServer_papi.pl -o html man3/PAPI_get_substrate_info.3
 perl manServer_papi.pl -o html man3/PAPI_get_thr_specific.3
 perl manServer_papi.pl -o html man3/PAPI_get_virt_cyc.3
 perl manServer_papi.pl -o html man3/PAPI_get_virt_usec.3
@@ -48,6 +48,8 @@ perl manServer_papi.pl -o html man3/PAPI_list_events.3
 perl manServer_papi.pl -o html man3/PAPI_list_threads.3
 perl manServer_papi.pl -o html man3/PAPI_lock.3
 perl manServer_papi.pl -o html man3/PAPI_multiplex_init.3
+perl manServer_papi.pl -o html man3/PAPI_num_components.3
+perl manServer_papi.pl -o html man3/PAPI_num_cmp_hwctrs.3
 perl manServer_papi.pl -o html man3/PAPI_num_events.3
 perl manServer_papi.pl -o html man3/PAPI_num_hwctrs.3
 perl manServer_papi.pl -o html man3/PAPI_overflow.3
@@ -55,12 +57,13 @@ perl manServer_papi.pl -o html man3/PAPI_perror.3
 perl manServer_papi.pl -o html man3/PAPI_profil.3
 perl manServer_papi.pl -o html man3/PAPI_query_event.3
 perl manServer_papi.pl -o html man3/PAPI_read.3
-perl manServer_papi.pl -o html man3/PAPI_read_ts.3
 perl manServer_papi.pl -o html man3/PAPI_register_thread.3
 perl manServer_papi.pl -o html man3/PAPI_remove_event.3
 perl manServer_papi.pl -o html man3/PAPI_remove_events.3
 perl manServer_papi.pl -o html man3/PAPI_reset.3
 perl manServer_papi.pl -o html man3/PAPI_set_debug.3
+perl manServer_papi.pl -o html man3/PAPI_set_cmp_domain.3
+perl manServer_papi.pl -o html man3/PAPI_set_cmp_granularity.3
 perl manServer_papi.pl -o html man3/PAPI_set_domain.3
 perl manServer_papi.pl -o html man3/PAPI_set_event_info.3
 perl manServer_papi.pl -o html man3/PAPI_set_granularity.3

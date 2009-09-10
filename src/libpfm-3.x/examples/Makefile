@@ -39,10 +39,6 @@ ifeq ($(ARCH),x86_64)
 DIRS +=x86
 endif
 
-ifeq ($(CONFIG_PFMLIB_ARCH_CRAYXT),y)
-CFLAGS += -DCONFIG_PFMLIB_ARCH_CRAYXT
-endif
-
 CFLAGS+= -pthread -D_GNU_SOURCE -I$(PFMINCDIR)
 LIBS += -lm
 
@@ -74,11 +70,13 @@ $(TARGETS):  %:%.o  detect_pmcs.o $(PFMLIB)
 
 clean:
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
-	$(RM) -f *.o $(TARGETS) $(XTRA) *~
+	$(RM) -f *.o 
 
 smpl_standalone.o self_standalone.o notify_standalone.o : standalone.h
 
 distclean: clean
+	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
+	$(RM) -f $(TARGETS) $(XTRA) *~
 
 #
 # examples are installed as part of the RPM install, typically in /usr/share/doc/libpfm-X.Y/

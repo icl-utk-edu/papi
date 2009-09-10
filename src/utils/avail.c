@@ -66,7 +66,7 @@ int main(int argc, char **argv)
 			name = argv[i+1];
 			if ((name == NULL) || (strlen(name) == 0)) {
 				print_help(argv);
-				exit(0);
+				exit(1);
 			}
 		}
 		else if (strstr(argv[i], "-a"))
@@ -75,7 +75,7 @@ int main(int argc, char **argv)
 			print_tabular = 0;
 		else if (strstr(argv[i], "-h")) {
 			print_help(argv);
-			exit(0);
+			exit(1);
 		}
 		else if (strstr(argv[i], "--br"))
 			filter |= PAPI_PRESET_BIT_BR;
@@ -129,12 +129,12 @@ int main(int argc, char **argv)
 					printf("%-29s|%s|\n%-29s|%s|\n",
 						"Derived Type:", info.derived, "Postfix Processing String:", info.postfix);
 					for (j=0;j<(int)info.count;j++) {
-						printf(" Native Code[%d]: 0x%x  |%s|\n",j,info.code[j], info.name[j]);
+						printf(" Native Code[%d]: 0x%x |%s|\n",j,info.code[j], info.name[j]);
 						PAPI_get_event_info(info.code[j], &n_info);
-						printf(" Number of Register Values:   %d\n", n_info.count);
+						printf(" Number of Register Values: %d\n", n_info.count);
 						for (k=0;k<(int)n_info.count;k++)
-							printf(" Register[%2d]:   0x%08x  |%s|\n",k, n_info.code[k], n_info.name[k]);
-						printf(" Native Event Description:   |%s|\n\n", n_info.long_descr);
+							printf(" Register[%2d]: 0x%08x |%s|\n",k, n_info.code[k], n_info.name[k]);
+						printf(" Native Event Description: |%s|\n\n", n_info.long_descr);
 					}
 				}
 				else { /* must be a native event code */
@@ -142,24 +142,28 @@ int main(int argc, char **argv)
 						"Event name:", info.symbol, "Event Code:", info.event_code, "Number of Register Values:", info.count);
 					printf("%-29s|%s|\n", "Description:", info.long_descr);
 					for (k=0;k<(int)info.count;k++)
-						printf(" Register[%2d]:   0x%08x  |%s|\n",k, info.code[k], info.name[k]);
+						printf(" Register[%2d]: 0x%08x |%s|\n",k, info.code[k], info.name[k]);
 
 					/* if unit masks exist but none are specified, process all */
 					if (!strchr(name, ':')) {
-						const PAPI_substrate_info_t *s = PAPI_get_substrate_info();
-						if (s->cntr_umasks) {
-							if (PAPI_enum_event(&i, PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
-								printf ("\nUnit Masks:\n");
-								do {
-									retval = PAPI_get_event_info(i, &info);
-									if (retval == PAPI_OK) {
-										strcpy(info.symbol, strchr(info.symbol, ':'));
-										strcpy(info.long_descr, strchr(info.long_descr, ':')+1);
-										printf("%-29s|%s|%s|\n", " Mask Info:", info.symbol, info.long_descr);
-										for (k=0;k<(int)info.count;k++)
-											printf("  Register[%2d]:  0x%08x  |%s|\n",k, info.code[k], info.name[k]);
-									}
-								} while (PAPI_enum_event(&i, PAPI_NTV_ENUM_UMASKS) == PAPI_OK);
+						int cidx, num_cmp;
+						num_cmp = PAPI_num_components();
+						for(cidx=0;cidx<num_cmp;i++) {
+							const PAPI_component_info_t *s = PAPI_get_component_info(cidx);
+							if (s->cntr_umasks) {
+								if (PAPI_enum_event(&i, PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
+									printf ("\nUnit Masks:\n");
+									do {
+										retval = PAPI_get_event_info(i, &info);
+										if (retval == PAPI_OK) {
+											strcpy(info.symbol, strchr(info.symbol, ':'));
+											strcpy(info.long_descr, strchr(info.long_descr, ':')+1);
+											printf("%-29s|%s|%s|\n", " Mask Info:", info.symbol, info.long_descr);
+											for (k=0;k<(int)info.count;k++)
+												printf("  Register[%2d]:  0x%08x  |%s|\n",k, info.code[k], info.name[k]);
+										}
+									} while (PAPI_enum_event(&i, PAPI_NTV_ENUM_UMASKS) == PAPI_OK);
+								}
 							}
 						}
 					}
@@ -242,5 +246,5 @@ int main(int argc, char **argv)
 	}
 
 	test_pass(__FILE__, NULL, 0);
-	exit(0);
+	exit(1);
 }

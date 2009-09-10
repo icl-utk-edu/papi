@@ -5,6 +5,6 @@ ARCH_EVENTS	= ppc970_events
 CPU_TYPE 	= ppc64
 # for Debian, comment the following line out
 BITS		= 32
-CFLAGS	= -D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DPAPI_DATADIR=\"${DATADIR}\"
+CFLAGS	= -D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\"
 FFLAGS  = -D_$(CPU_MODEL)
 include Rules.perfctr

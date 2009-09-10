@@ -80,5 +80,5 @@ int main(int argc, char **argv)
    printf("\n----------------------------------\n");
    printf("Verification: None.\n This utility lets you add events from the command line interface to see if they work.\n");
    test_pass(__FILE__, NULL, 0);
-   exit(0);
+   exit(1);
 }

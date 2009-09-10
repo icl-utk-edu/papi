@@ -99,45 +99,37 @@ static amd64_rev_t amd64_get_revision(int model, int stepping)
 	return AMD64_REV_UN;
 }
 
-static inline void cpuid(unsigned int op, unsigned int *a, unsigned int *b,
-                  unsigned int *c, unsigned int *d)
-{
-  __asm__ __volatile__ ("movl %%ebx, %%edi\n\tcpuid\n\tmovl %%ebx, %%esi\n\tmovl %%edi, %%ebx"
-       : "=a" (*a),
-	     "=S" (*b),
-		 "=c" (*c),
-		 "=d" (*d)
-       : "a" (op)
-       : "%edi" );
-}
-
 static int
 pfm_amd64_detect(void)
 {
-	unsigned int a, b, c, d;
-	int family, model, stepping;
+	int ret, family, model, stepping;
 	char buffer[128];
 
-	cpuid(0, &a, &b, &c, &d);
-	strncpy(&buffer[0], (char *)(&b), 4);
-	strncpy(&buffer[4], (char *)(&d), 4);
-	strncpy(&buffer[8], (char *)(&c), 4);
-	buffer[12] = '\0';
+	ret = __pfm_getcpuinfo_attr("vendor_id", buffer, sizeof(buffer));
+	if (ret == -1)
+		return PFMLIB_ERR_NOTSUPP;
 
 	if (strcmp(buffer, "AuthenticAMD"))
 		return PFMLIB_ERR_NOTSUPP;
 
-	cpuid(1, &a, &b, &c, &d);
-	family = (a >> 8) & 0x0000000f;  // bits 11 - 8
-	model  = (a >> 4) & 0x0000000f;  // Bits  7 - 4
-	if (family == 0xf) {
-		family += (a >> 20) & 0x000000ff; // Extended family
-		model  |= (a >> 12) & 0x000000f0; // Extended model
-	}
-	stepping= a & 0x0000000f;  // bits  3 - 0
-
-	if (family != 15 && family != 16)
+	ret = __pfm_getcpuinfo_attr("cpu family", buffer, sizeof(buffer));
+	if (ret == -1)
 		return PFMLIB_ERR_NOTSUPP;
+
+	family = atoi(buffer);
+	if (family != 15)
+		return PFMLIB_ERR_NOTSUPP;
+
+	ret = __pfm_getcpuinfo_attr("model", buffer, sizeof(buffer));
+	if (ret == -1)
+		return PFMLIB_ERR_NOTSUPP;
+
+	model = atoi(buffer);
+	ret = __pfm_getcpuinfo_attr("stepping", buffer, sizeof(buffer));
+	if (ret == -1)
+		return PFMLIB_ERR_NOTSUPP;
+
+	stepping = atoi(buffer);
 
 	amd64_revision = amd64_get_revision(model, stepping);
 

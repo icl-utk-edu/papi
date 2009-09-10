@@ -43,9 +43,9 @@ static pme_gen_ia32_entry_t coreduo_pe[]={
 	.pme_code = 0x4f2e,
 	.pme_desc = "Last level of cache references"
 	},
-/* 4 */{.pme_name = "LAST_LEVEL_CACHE_MISSES",
-	.pme_code = 0x412e,
-	.pme_desc = "Last level of cache misses",
+/* 4 */{.pme_name    = "LAST_LEVEL_CACHE_MISSES",
+	.pme_code    = 0x4120,
+	.pme_desc    = "Last level of cache misses",
        },
 /* 5  */{.pme_name = "BRANCH_INSTRUCTIONS_RETIRED",
 	.pme_code = 0xc4,

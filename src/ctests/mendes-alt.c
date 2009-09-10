@@ -38,9 +38,9 @@ char *argv[];
    for (i = 0; i < PAPI_MAX_EVENTS; i++)
       PAPI_values1[i] = PAPI_values2[i] = 0;
 
-	retval = PAPI_library_init(PAPI_VER_CURRENT);
-	if (retval != PAPI_VER_CURRENT)
-		test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+   retval = PAPI_library_init(PAPI_VER_CURRENT);
+   if (retval != PAPI_VER_CURRENT)
+      test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
 #ifdef MULTIPLEX
    if (!TESTS_QUIET) {
@@ -54,6 +54,13 @@ char *argv[];
       test_fail(__FILE__, __LINE__, "PAPI set event fail\n", retval);
 
 #ifdef MULTIPLEX
+      /* In Component PAPI, EventSets must be assigned a component index
+      before you can fiddle with their internals.
+      0 is always the cpu component */
+   retval = PAPI_assign_eventset_component(EventSet, 0);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_assign_eventset_component", retval);
+
    retval = PAPI_set_multiplex(EventSet);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_set_multiplex fails \n", retval);

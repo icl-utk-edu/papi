@@ -144,7 +144,7 @@ enum {
    native event indeces as defined above.
 */
 
-const hwi_search_t _papi_hwd_p2_preset_map[] = {
+hwi_search_t _papi_hwd_p2_preset_map[] = {
    {PAPI_L1_DCM, {0, {PNE_P2_DCU_LINES_IN, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_L1_ICM, {0, {PNE_P2_L2_IFETCH_MESI, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
    {PAPI_L2_DCM,
@@ -215,7 +215,7 @@ const hwi_search_t _papi_hwd_p2_preset_map[] = {
 /* Please see the architecture's manual for any clarifications.         */
 
 const int _papi_hwd_p2_native_count = (PNE_P2_LAST_NATIVE_EVENT & PAPI_NATIVE_AND_MASK);
-const native_event_entry_t _papi_hwd_p2_native_map[] = {
+native_event_entry_t _papi_hwd_p2_native_map[] = {
    {"DATA_MEM_REFS",
     "All loads/stores from/to any memory type",
     {CNTRS12, 0x43}},

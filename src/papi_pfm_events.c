@@ -20,6 +20,8 @@ xxx - bits_to_info uses native_map not pfm()
 #include "papi_memory.h"
 #include "papi_pfm_events.h"
 
+extern papi_vector_t MY_VECTOR;
+
 /* These routines are defined externally for PERFCTR_PFM_EVENTS == TRUE, or
     internally for PERFCTR_PFM_EVENTS == FALSE */
 extern int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits);
@@ -27,11 +29,8 @@ extern int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                unsigned int *values, int name_len, int count);
 
 /* Globals declared extern elsewhere */
-#ifdef _WIN32
-extern CRITICAL_SECTION _papi_hwd_lock_data[PAPI_MAX_LOCK];
-#else
+
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
-#endif 
 
 /* NOTE: PAPI stores umask info in a variable sized (16 bit?) bitfield.
     Perfmon2 stores umask info in a large (48 element?) array of values.
@@ -278,7 +277,6 @@ static int load_preset_table(char *pmu_str, int pmu_type, pfm_preset_search_entr
   int get_presets = 0;   /* only get PRESETS after CPU is identified */
   int found_presets = 0; /* only terminate search after PRESETS are found */
 						 /* this allows support for synonyms for CPU names */
-  int found_cpu = 0;
 
 #ifdef SHOW_LOADS
   SUBDBG("%p\n",here);
@@ -357,16 +355,16 @@ static int load_preset_table(char *pmu_str, int pmu_type, pfm_preset_search_entr
 	      PAPIERROR("Expected name after CPU token at line %d of %s -- ignoring",line_no,name);
 	      goto nextline;
 	    }
+#ifdef SHOW_LOADS
 	  SUBDBG("Examining CPU (%s) vs. (%s)\n",t,pmu_name);
+#endif
 	  if (strcasecmp(t, pmu_name) == 0)
 	    {
 	      int type;
 
-          found_cpu = 1;
-
-#ifdef SHOW_LOADS
+//#ifdef SHOW_LOADS
 	      SUBDBG("Found CPU %s at line %d of %s.\n",t,line_no,name);
-#endif
+//#endif
 	      t = trim_string(strtok(NULL,","));
 	      if ((t == NULL) || (strlen(t) == 0))
 		{
@@ -377,7 +375,9 @@ static int load_preset_table(char *pmu_str, int pmu_type, pfm_preset_search_entr
 		}
 	      else if ((sscanf(t,"%d",&type) == 1) && (type == pmu_type))
 		{
+#ifdef SHOW_LOADS
 		  SUBDBG("Found CPU %s type %d at line %d of %s.\n",pmu_name,type,line_no,name);
+#endif
 		  get_presets = 1;
 		}
 	      else
@@ -496,11 +496,6 @@ static int load_preset_table(char *pmu_str, int pmu_type, pfm_preset_search_entr
  done:
   if (table)
     fclose(table);
-
-  if(!found_cpu){
-	 PAPIERROR("Examine csv file for CPU(%s).",pmu_name);
-     return PAPI_EBUG;
-  }
   return(PAPI_OK);
 }
 
@@ -630,7 +625,7 @@ inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int *event,
 
   tevent = EventCode & PAPI_NATIVE_AND_MASK;
   major = (tevent & PAPI_NATIVE_EVENT_AND_MASK) >> PAPI_NATIVE_EVENT_SHIFT;
-  if (major >= _papi_hwi_system_info.sub_info.num_native_events)
+  if (major >= MY_VECTOR.cmp_info.num_native_events)
     return(PAPI_ENOEVNT);
 
   minor = (tevent & PAPI_NATIVE_UMASK_AND_MASK) >> PAPI_NATIVE_UMASK_SHIFT;
@@ -732,7 +727,7 @@ int _papi_pfm_init()
        return (PAPI_ESBSTR);
      }
 
-   /* Fill in sub_info.num_native_events */
+   /* Fill in MY_VECTOR.cmp_info.num_native_events */
 
    SUBDBG("pfm_get_num_events(%p)\n",&ncnt);
    if ((retval = pfm_get_num_events(&ncnt)) != PFMLIB_SUCCESS)
@@ -741,7 +736,7 @@ int _papi_pfm_init()
       return(PAPI_ESBSTR);
    }
    SUBDBG("pfm_get_num_events() returns: %d\n",ncnt);
-  _papi_hwi_system_info.sub_info.num_native_events = ncnt;
+  MY_VECTOR.cmp_info.num_native_events = ncnt;
   return (PAPI_OK);
 }
 
@@ -912,7 +907,7 @@ int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
   SUBDBG("This is umask %d of %d\n",umask,num_masks);
 
   if (modifier == PAPI_ENUM_EVENTS) {
-    if (event < _papi_hwi_system_info.sub_info.num_native_events - 1) {
+    if (event < MY_VECTOR.cmp_info.num_native_events - 1) {
 	  *EventCode = encode_native_event_raw(event+1,0);
 	  return (PAPI_OK);
 	}
@@ -999,12 +994,12 @@ int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
   if (_pfm_decode_native_event(EventCode,&event,&umask) != PAPI_OK)
     return(PAPI_ENOEVNT);
 
-  memset(&gete,0x0,sizeof(gete));
+  memset(&gete,0x0,sizeof(pfmlib_event_t));
 
   gete.event = event;
   gete.num_masks = prepare_umask(umask,gete.unit_masks);
   
-  memcpy(bits,&gete,sizeof(*bits));
+  memcpy(bits,&gete,sizeof(pfmlib_event_t));
   return (PAPI_OK);
 }
 
@@ -1039,24 +1034,23 @@ int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
 {
 	int ret;
 	pfmlib_regmask_t selector;
-	int j, n = _papi_hwi_system_info.sub_info.num_cntrs;
+	int j, n = MY_VECTOR.cmp_info.num_cntrs;
 	int foo, did_something=0;
 	unsigned int umask;
-	extern int _perfmon2_pfm_pmu_type;
 
-	if ((ret = pfm_get_event_counters(bits->event,&selector)) != PFMLIB_SUCCESS) {
-		PAPIERROR("pfm_get_event_counters(%d,%p): %s",bits->event,&selector,pfm_strerror(ret));
+	if ((ret = pfm_get_event_counters(((pfm_register_t *)bits)->event,&selector)) != PFMLIB_SUCCESS) {
+		PAPIERROR("pfm_get_event_counters(%d,%p): %s",((pfm_register_t *)bits)->event,&selector,pfm_strerror(ret));
 		return(PAPI_ESBSTR);
 	}
 
 #if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
-	switch (_perfmon2_pfm_pmu_type)
-	{
+	extern int _perfmon2_pfm_pmu_type;
+	switch (_perfmon2_pfm_pmu_type) {
 		/* All the counters after the 2 CPU counters, the 4 sample counters are SCB registers. */
 		case PFMLIB_MIPS_ICE9A_PMU:
 		case PFMLIB_MIPS_ICE9B_PMU:
 			if (n > 7) n = 7;
-			break;
+				break;
 		default:
 			break;
 	}
@@ -1064,8 +1058,8 @@ int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
 
 	for (j=0;n;j++) {
 		if (pfm_regmask_isset(&selector,j)) {
-			if ((ret = pfm_get_event_code_counter(bits->event,j,&foo)) != PFMLIB_SUCCESS) {
-				PAPIERROR("pfm_get_event_code_counter(%p,%d,%d,%p): %s",*bits,bits->event,j,&foo,pfm_strerror(ret));
+			if ((ret = pfm_get_event_code_counter(((pfm_register_t *)bits)->event,j,&foo)) != PFMLIB_SUCCESS) {
+				PAPIERROR("pfm_get_event_code_counter(%p,%d,%d,%p): %s",*((pfm_register_t *)bits),((pfm_register_t *)bits)->event,j,&foo,pfm_strerror(ret));
 				return(PAPI_EBUG);
 			}
 			/* Overflow check */
@@ -1095,6 +1089,7 @@ int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
 
 #endif /* PERFCTR_PFM_EVENTS */
 
+/*
 papi_svector_t _papi_pfm_event_vectors[] = {
   {(void (*)())_papi_pfm_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
   {(void (*)())_papi_pfm_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
@@ -1103,5 +1098,5 @@ papi_svector_t _papi_pfm_event_vectors[] = {
   {(void (*)())_papi_pfm_ntv_bits_to_info, VEC_PAPI_HWD_NTV_BITS_TO_INFO},
  {NULL, VEC_PAPI_END}
 };
-
+*/
 

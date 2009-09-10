@@ -91,8 +91,8 @@ parent(char **arg)
 	pid_t pid;
 	char name[MAX_EVT_NAME_LEN];
 
-	memset(pc, 0, sizeof(pc));
-	memset(pd, 0, sizeof(pd));
+	memset(pc, 0, sizeof(ctx));
+	memset(pd, 0, sizeof(ctx));
 	memset(ctx, 0, sizeof(ctx));
 	memset(&inp,0, sizeof(inp));
 	memset(&outp,0, sizeof(outp));

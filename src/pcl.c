@@ -22,7 +22,7 @@
 /* Needed for ioctl call */
 #include <sys/ioctl.h>
 
-/* These sentinels tell papi_hwd_overflow() how to set the
+/* These sentinels tell papi_pcl_set_overflow() how to set the
  * wakeup_events field in the event descriptor record.
  */
 #define WAKEUP_COUNTER_OVERFLOW 0
@@ -31,42 +31,21 @@
 /* Globals declared extern elsewhere */
 
 hwi_search_t *preset_search_map;
-volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
+volatile unsigned int _papi_pcl_lock_data[PAPI_MAX_LOCK];
+extern papi_vector_t _papi_pcl_vector;
 
-extern int _papi_pfm_setup_presets (char *name, int type);
-extern int _papi_pfm_ntv_code_to_bits (unsigned int EventCode, hwd_register_t * bits);
-extern papi_svector_t _papi_pfm_event_vectors[];
+extern int _papi_pfm_setup_presets(char *name, int type);
+extern int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier);
+extern int _papi_pfm_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len);
+extern int _papi_pfm_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len);
+extern int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits);
+extern int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
+                                                                unsigned int *values, int name_len, int count);
 
-papi_svector_t _linux_pfm_table[] = {
-  {(void (*)()) _papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
-  {(void (*)()) _papi_hwd_init, VEC_PAPI_HWD_INIT},
-  {(void (*)()) _papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE},
-  {(void (*)()) _papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
-  {(void (*)()) _papi_hwd_ctl, VEC_PAPI_HWD_CTL},
-  {(void (*)()) _papi_hwd_get_real_usec, VEC_PAPI_HWD_GET_REAL_USEC},
-  {(void (*)()) _papi_hwd_get_real_cycles, VEC_PAPI_HWD_GET_REAL_CYCLES},
-  {(void (*)()) _papi_hwd_get_virt_cycles, VEC_PAPI_HWD_GET_VIRT_CYCLES},
-  {(void (*)()) _papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
-  {(void (*)()) _papi_hwd_update_control_state, VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
-  {(void (*)()) _papi_hwd_allocate_registers, VEC_PAPI_HWD_ALLOCATE_REGISTERS},
-  {(void (*)()) _papi_hwd_start, VEC_PAPI_HWD_START},
-  {(void (*)()) _papi_hwd_stop, VEC_PAPI_HWD_STOP},
-  {(void (*)()) _papi_hwd_read, VEC_PAPI_HWD_READ},
-  {(void (*)()) _papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN},
-  {(void (*)()) _papi_hwd_reset, VEC_PAPI_HWD_RESET},
-  {(void (*)()) _papi_hwd_write, VEC_PAPI_HWD_WRITE},
-  {(void (*)()) _papi_hwd_set_profile, VEC_PAPI_HWD_SET_PROFILE},
-  {(void (*)()) _papi_hwd_stop_profiling, VEC_PAPI_HWD_STOP_PROFILING},
-  {(void (*)()) _papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
-  {(void (*)()) _papi_hwd_get_memory_info, VEC_PAPI_HWD_GET_MEMORY_INFO},
-  {(void (*)()) _papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
-//  {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
-//  {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
-//  {(void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
-//  {(void (*)())_papi_hwd_ntv_code_to_bits, VEC_PAPI_HWD_NTV_CODE_TO_BITS},
-//  {(void (*)())_papi_hwd_ntv_bits_to_info, VEC_PAPI_HWD_NTV_BITS_TO_INFO},
-  {NULL, VEC_PAPI_END}
-};
+/* Forward function declarations */
+int _papi_pcl_update_control_state (hwd_control_state_t * ctl, NativeInfo_t * native, int count, hwd_context_t * ctx);
+int _papi_pcl_set_overflow (EventSetInfo_t * ESI, int EventIndex, int threshold);
+
 
 #define min(x, y) ({				\
 	typeof(x) _min1 = (x);			\
@@ -463,7 +442,7 @@ VmLib:      1360 kB
 VmPTE:        20 kB
 */
 
-int _papi_hwd_get_dmem_info (PAPI_dmem_info_t * d)
+int _papi_pcl_get_dmem_info (PAPI_dmem_info_t * d)
 {
   char fn[PATH_MAX], tmp[PATH_MAX];
   FILE *f;
@@ -1163,14 +1142,11 @@ PAPI_mh_info_t sys_mem_info[5] = {
     }
    }
   ,                             // POWER6 end
-  // This section is a placeholder for Power7 data, and is currently
-  // just a copy of the Power6 data.  When Power7 goes public, this
-  // should be updated.
   {3,
    {
     {                           // level 1 begins
      {                          // tlb's begin
-      /// POWER7 has an ERAT (Effective to Real Address
+      /// POWER6 has an ERAT (Effective to Real Address
       /// Translation) instead of a TLB.  For the purposes of this
       /// data, we will treat it like a TLB.
       {PAPI_MH_TYPE_INST, 128, 2}
@@ -1207,7 +1183,7 @@ PAPI_mh_info_t sys_mem_info[5] = {
       }
      ,
      {                          // caches begin
-      /// POWER7 has a 2 slice L3 cache.  Each slice is 16MB, so
+      /// POWER6 has a 2 slice L3 cache.  Each slice is 16MB, so
       /// combined they are 32MB and usable by each core.  For
       /// this reason, we will treat it as a single 32MB cache.
       {PAPI_MH_TYPE_UNIFIED, 33554432, 128, 262144, 16}
@@ -1510,7 +1486,7 @@ static int sparc_get_memory_info (PAPI_hw_info_t * hw_info)
 }
 #endif
 
-int _papi_hwd_get_memory_info (PAPI_hw_info_t * hwinfo, int unused)
+int _papi_pcl_get_memory_info (PAPI_hw_info_t * hwinfo, int unused)
 {
   int retval = PAPI_OK;
 
@@ -1533,7 +1509,7 @@ int _papi_hwd_get_memory_info (PAPI_hw_info_t * hwinfo, int unused)
   return retval;
 }
 
-int _papi_hwd_update_shlib_info (void)
+int _papi_pcl_update_shlib_info (void)
 {
   char fname[PAPI_HUGE_STR_LEN];
   unsigned long t_index = 0, d_index = 0, b_index = 0, counting = 1;
@@ -1690,7 +1666,7 @@ static int get_system_info (papi_mdi_t * mdi)
 
   /* Executable regions, may require reading /proc/pid/maps file */
 
-  retval = _papi_hwd_update_shlib_info ();
+  retval = _papi_pcl_update_shlib_info ();
   SUBDBG ("Text: Start %p, End %p, length %d\n",
           mdi->exe_info.address_info.text_start,
           mdi->exe_info.address_info.text_end,
@@ -1721,7 +1697,7 @@ static int get_system_info (papi_mdi_t * mdi)
   if (retval)
     return retval;
 
-  retval = _papi_hwd_get_memory_info (&mdi->hw_info, mdi->hw_info.model);
+  retval = _papi_pcl_get_memory_info (&mdi->hw_info, mdi->hw_info.model);
   if (retval)
     return retval;
 
@@ -1744,7 +1720,7 @@ inline_static pid_t mygettid (void)
 #endif
 }
 
-inline static int partition_events (hwd_context_t * ctx, hwd_control_state_t * ctl)
+inline static int partition_events (pcl_context_t * ctx, pcl_control_state_t * ctl)
 {
   int i;
 
@@ -1826,7 +1802,7 @@ inline static int partition_events (hwd_context_t * ctx, hwd_control_state_t * c
  */
 #define NR_MMAP_PAGES (1 + 8)
 
-static int tune_up_fd (hwd_context_t * ctx, int evt_idx)
+static int tune_up_fd (pcl_context_t * ctx, int evt_idx)
 {
   int ret;
   void *buf_addr;
@@ -1858,10 +1834,10 @@ static int tune_up_fd (hwd_context_t * ctx, int evt_idx)
    * event is originating which can be quite useful when monitoring
    * multiple tasks from a single thread.
    */
-  ret = fcntl (fd, F_SETSIG, _papi_hwi_system_info.sub_info.hardware_intr_sig);
+  ret = fcntl (fd, F_SETSIG, MY_VECTOR.cmp_info.hardware_intr_sig);
   if (ret == -1)
     {
-      PAPIERROR ("cannot fcntl(F_SETSIG,%d) on %d: %s", _papi_hwi_system_info.sub_info.hardware_intr_sig, fd,
+      PAPIERROR ("cannot fcntl(F_SETSIG,%d) on %d: %s", MY_VECTOR.cmp_info.hardware_intr_sig, fd,
                  strerror (errno));
       return (PAPI_ESYS);
     }
@@ -1882,7 +1858,7 @@ static int tune_up_fd (hwd_context_t * ctx, int evt_idx)
 }
 
 
-inline static int open_pcl_evts (hwd_context_t * ctx, hwd_control_state_t * ctl)
+inline static int open_pcl_evts (pcl_context_t * ctx, pcl_control_state_t * ctl)
 {
   int i, j = 0, ret = PAPI_OK;
 
@@ -1946,7 +1922,7 @@ cleanup:
   return ret;
 }
 
-inline static int close_pcl_evts(hwd_context_t * ctx)
+inline static int close_pcl_evts(pcl_context_t * ctx)
 {
   int i, ret;
 
@@ -2000,7 +1976,7 @@ inline static int close_pcl_evts(hwd_context_t * ctx)
 }
 
 
-static int attach (hwd_control_state_t * ctl, unsigned long tid)
+static int attach (pcl_control_state_t * ctl, unsigned long tid)
 {
   /* NYI!  FIXME */
   SUBDBG("attach is unimplemented!");
@@ -2008,7 +1984,7 @@ static int attach (hwd_control_state_t * ctl, unsigned long tid)
   return PAPI_OK;
 }
 
-static int detach (hwd_context_t * ctx, hwd_control_state_t * ctl)
+static int detach (pcl_context_t * ctx, pcl_control_state_t * ctl)
 {
   /* NYI!  FIXME */
   SUBDBG("detach is unimplemented!");
@@ -2019,17 +1995,18 @@ static int detach (hwd_context_t * ctx, hwd_control_state_t * ctl)
 inline static int set_domain (hwd_control_state_t * ctl, int domain)
 {
   int i;
+  pcl_control_state_t * pcl_ctl = (pcl_control_state_t *)ctl;
 
-  ctl->domain = domain;
-  for (i = 0; i < ctl->num_events; i++) {
-    ctl->events[i].exclude_user = !(ctl->domain & PAPI_DOM_USER);
-    ctl->events[i].exclude_kernel = !(ctl->domain & PAPI_DOM_KERNEL);
-    ctl->events[i].exclude_hv = !(ctl->domain & PAPI_DOM_SUPERVISOR);
+  pcl_ctl->domain = domain;
+  for (i = 0; i < pcl_ctl->num_events; i++) {
+    pcl_ctl->events[i].exclude_user = !(pcl_ctl->domain & PAPI_DOM_USER);
+    pcl_ctl->events[i].exclude_kernel = !(pcl_ctl->domain & PAPI_DOM_KERNEL);
+    pcl_ctl->events[i].exclude_hv = !(pcl_ctl->domain & PAPI_DOM_SUPERVISOR);
   }
   return PAPI_OK;
 }
 
-inline static int set_granularity (hwd_control_state_t * this_state, int domain)
+inline static int set_granularity (pcl_control_state_t * this_state, int domain)
 {
   switch (domain)
     {
@@ -2055,24 +2032,13 @@ inline static int set_inherit (int arg)
   return PAPI_ESBSTR;
 }
 
-int _papi_hwd_init_substrate (papi_vectors_t * vtable)
+int _papi_pcl_init_substrate (int cidx)
 {
   int i, retval;
   unsigned int ncnt;
   unsigned int version;
   char pmu_name[PAPI_MIN_STR_LEN];
   char buf[PAPI_HUGE_STR_LEN];
-
-#ifndef PAPI_NO_VECTOR
-  /* Setup the vector entries that the OS knows about */
-  retval = _papi_hwi_setup_vector_table (vtable, _linux_pfm_table);
-  if (retval != PAPI_OK)
-    return retval;
-  /* And the vector entries for native event control */
-  retval = _papi_hwi_setup_vector_table (vtable, _papi_pfm_event_vectors);
-  if (retval != PAPI_OK)
-    return retval;
-#endif
 
   /* The following checks the version of the PFM library
      against the version PAPI linked to... */
@@ -2090,7 +2056,7 @@ int _papi_hwd_init_substrate (papi_vectors_t * vtable)
       return PAPI_ESBSTR;
     }
 
-  sprintf (_papi_hwi_system_info.sub_info.support_version, "%d.%d", PFM_VERSION_MAJOR (version),
+  sprintf (MY_VECTOR.cmp_info.support_version, "%d.%d", PFM_VERSION_MAJOR (version),
            PFM_VERSION_MINOR (version));
 
   if (PFM_VERSION_MAJOR (version) != PFM_VERSION_MAJOR (PFMLIB_VERSION))
@@ -2122,7 +2088,7 @@ int _papi_hwd_init_substrate (papi_vectors_t * vtable)
   SUBDBG ("PMU is a %s, type %d\n", pmu_name, _perfmon2_pfm_pmu_type);
 
 
-  /* Fill in sub_info */
+  /* Fill in cmp_info */
 
   SUBDBG ("pfm_get_num_events(%p)\n", &ncnt);
   if ((retval = pfm_get_num_events (&ncnt)) != PFMLIB_SUCCESS)
@@ -2131,30 +2097,30 @@ int _papi_hwd_init_substrate (papi_vectors_t * vtable)
       return PAPI_ESBSTR;
     }
   SUBDBG ("pfm_get_num_events: %d\n", ncnt);
-  _papi_hwi_system_info.sub_info.num_native_events = ncnt;
-  strcpy (_papi_hwi_system_info.sub_info.name, "$Id$");
-  strcpy (_papi_hwi_system_info.sub_info.version, "$Revision$");
+  MY_VECTOR.cmp_info.num_native_events = ncnt;
+  strcpy (MY_VECTOR.cmp_info.name, "$Id$");
+  strcpy (MY_VECTOR.cmp_info.version, "$Revision$");
   sprintf (buf, "%08x", version);
 
-  pfm_get_num_counters ((unsigned int *) &_papi_hwi_system_info.sub_info.num_cntrs);
-  SUBDBG ("pfm_get_num_counters: %d\n", _papi_hwi_system_info.sub_info.num_cntrs);
+  pfm_get_num_counters ((unsigned int *) &MY_VECTOR.cmp_info.num_cntrs);
+  SUBDBG ("pfm_get_num_counters: %d\n", MY_VECTOR.cmp_info.num_cntrs);
   retval = get_system_info (&_papi_hwi_system_info);
   if (retval)
     return retval;
   if ((_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_MIPS)
       || (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_SICORTEX))
-    _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR | PAPI_DOM_OTHER;
+    MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR | PAPI_DOM_OTHER;
   else if (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM)
     {
       /* powerpc */
-      _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
+      MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
       if (strcmp (_papi_hwi_system_info.hw_info.model_string, "POWER6") == 0)
         {
-          _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
+          MY_VECTOR.cmp_info.default_domain = PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
         }
     }
   else
-    _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_KERNEL;
+    MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_KERNEL;
 
   if (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_SUN)
     {
@@ -2170,37 +2136,37 @@ int _papi_hwd_init_substrate (papi_vectors_t * vtable)
           break;
 
         default:
-          _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_SUPERVISOR;
+          MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_SUPERVISOR;
           break;
         }
     }
 
   if (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_CRAY)
     {
-      _papi_hwi_system_info.sub_info.available_domains |= PAPI_DOM_OTHER;
+      MY_VECTOR.cmp_info.available_domains |= PAPI_DOM_OTHER;
     }
 
   if ((_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL) ||
       (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_AMD))
     {
-      _papi_hwi_system_info.sub_info.fast_counter_read = 1;
-      _papi_hwi_system_info.sub_info.fast_real_timer = 1;
-      _papi_hwi_system_info.sub_info.cntr_umasks = 1;
+      MY_VECTOR.cmp_info.fast_counter_read = 1;
+      MY_VECTOR.cmp_info.fast_real_timer = 1;
+      MY_VECTOR.cmp_info.cntr_umasks = 1;
     }
   if (_papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_SICORTEX)
     {
-      _papi_hwi_system_info.sub_info.fast_real_timer = 1;
-      _papi_hwi_system_info.sub_info.cntr_umasks = 1;
+      MY_VECTOR.cmp_info.fast_real_timer = 1;
+      MY_VECTOR.cmp_info.cntr_umasks = 1;
     }
 
-  _papi_hwi_system_info.sub_info.hardware_intr = 1;
-  _papi_hwi_system_info.sub_info.attach = 1;
-  _papi_hwi_system_info.sub_info.attach_must_ptrace = 1;
-  _papi_hwi_system_info.sub_info.kernel_multiplex = 1;
-  _papi_hwi_system_info.sub_info.kernel_profile = 1;
-  _papi_hwi_system_info.sub_info.profile_ear = 0;
-  _papi_hwi_system_info.sub_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
-  _papi_hwi_system_info.sub_info.hardware_intr_sig = SIGRTMIN + 2;
+  MY_VECTOR.cmp_info.hardware_intr = 1;
+  MY_VECTOR.cmp_info.attach = 1;
+  MY_VECTOR.cmp_info.attach_must_ptrace = 1;
+  MY_VECTOR.cmp_info.kernel_multiplex = 1;
+  MY_VECTOR.cmp_info.kernel_profile = 1;
+  MY_VECTOR.cmp_info.profile_ear = 0;
+  MY_VECTOR.cmp_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
+  MY_VECTOR.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
 
   /* FIX: For now, use the pmu_type from Perfmon */
 
@@ -2221,7 +2187,7 @@ int _papi_hwd_init_substrate (papi_vectors_t * vtable)
 }
 
 #if defined(USE_PROC_PTTIMER)
-static int init_proc_thread_timer (hwd_context_t * thr_ctx)
+static int init_proc_thread_timer (pcl_context_t * thr_ctx)
 {
   char buf[LINE_MAX];
   int fd;
@@ -2237,13 +2203,13 @@ static int init_proc_thread_timer (hwd_context_t * thr_ctx)
 }
 #endif
 
-int _papi_hwd_init (hwd_context_t * thr_ctx)
+int _papi_sub_pcl_init (hwd_context_t * thr_ctx)
 {
   /* No initialization is needed for PCL */
   return PAPI_OK;
 }
 
-long long _papi_hwd_get_real_usec (void)
+long long _papi_pcl_get_real_usec (void)
 {
   long long retval;
 #if defined(HAVE_CLOCK_GETTIME_REALTIME)
@@ -2266,18 +2232,18 @@ long long _papi_hwd_get_real_usec (void)
   return retval;
 }
 
-long long _papi_hwd_get_real_cycles (void)
+long long _papi_pcl_get_real_cycles (void)
 {
   long long retval;
 #if defined(HAVE_GETTIMEOFDAY)||defined(__powerpc__)||(defined(mips)&&!defined(HAVE_CYCLE))
-  retval = _papi_hwd_get_real_usec () * (long long) _papi_hwi_system_info.hw_info.mhz;
+  retval = _papi_pcl_get_real_usec () * (long long) _papi_hwi_system_info.hw_info.mhz;
 #else
   retval = get_cycles ();
 #endif
   return retval;
 }
 
-long long _papi_hwd_get_virt_usec (const hwd_context_t * zero)
+long long _papi_pcl_get_virt_usec (const hwd_context_t * zero)
 {
   long long retval;
 #if defined(USE_PROC_PTTIMER)
@@ -2323,7 +2289,7 @@ long long _papi_hwd_get_virt_usec (const hwd_context_t * zero)
         PAPIERROR ("Unable to scan two items from thread stat file at 13th space?");
         return PAPI_ESBSTR;
       }
-    retval = (utime + stime) * (long long) 1000000 / _papi_hwi_system_info.sub_info.clock_ticks;
+    retval = (utime + stime) * (long long) 1000000 / MY_VECTOR.cmp_info.clock_ticks;
   }
 #elif defined(HAVE_CLOCK_GETTIME_THREAD)
   {
@@ -2337,7 +2303,7 @@ long long _papi_hwd_get_virt_usec (const hwd_context_t * zero)
     struct tms buffer;
     times (&buffer);
     SUBDBG ("user %d system %d\n", (int) buffer.tms_utime, (int) buffer.tms_stime);
-    retval = (long long) ((buffer.tms_utime + buffer.tms_stime) * 1000000 / _papi_hwi_system_info.sub_info.clock_ticks);
+    retval = (long long) ((buffer.tms_utime + buffer.tms_stime) * 1000000 / MY_VECTOR.cmp_info.clock_ticks);
     /* NOT CLOCKS_PER_SEC as in the headers! */
   }
 #elif defined(HAVE_PER_THREAD_GETRUSAGE)
@@ -2354,13 +2320,13 @@ long long _papi_hwd_get_virt_usec (const hwd_context_t * zero)
   return retval;
 }
 
-long long _papi_hwd_get_virt_cycles (const hwd_context_t * zero)
+long long _papi_pcl_get_virt_cycles (const hwd_context_t * zero)
 {
-  return _papi_hwd_get_virt_usec (zero) * (long long) _papi_hwi_system_info.hw_info.mhz;
+  return _papi_pcl_get_virt_usec (zero) * (long long) _papi_hwi_system_info.hw_info.mhz;
 }
 
 
-static int pcl_enable_counters (hwd_context_t * ctx, hwd_control_state_t * ctl)
+static int pcl_enable_counters (pcl_context_t * ctx, pcl_control_state_t * ctl)
 {
   int ret;
   int i;
@@ -2389,10 +2355,12 @@ static int pcl_enable_counters (hwd_context_t * ctx, hwd_control_state_t * ctl)
 }
 
 /* reset the hardware counters */
-int _papi_hwd_reset (hwd_context_t * ctx, hwd_control_state_t * ctl)
+int _papi_pcl_reset (hwd_context_t * ctx, hwd_control_state_t * ctl)
 {
   int ret;
   int saved_state;
+  pcl_context_t * pcl_ctx  = (pcl_context_t *)ctx;
+  pcl_control_state_t * pcl_ctl = (pcl_control_state_t *)ctl;
 
   /*
    * The only way to actually reset the event counters using PCL is to
@@ -2402,25 +2370,25 @@ int _papi_hwd_reset (hwd_context_t * ctx, hwd_control_state_t * ctl)
    *  with the actual counters.  I will leave this for a future
    *  optimization.
    */
-  saved_state = ctx->state;
+  saved_state = pcl_ctx->state;
 
-  ret = close_pcl_evts(ctx);
+  ret = close_pcl_evts(pcl_ctx);
   if (ret)
     return ret;
 
-  ret = open_pcl_evts(ctx, ctl);
+  ret = open_pcl_evts(pcl_ctx, pcl_ctl);
   if (ret)
     return ret;
 
   if (saved_state & PCL_RUNNING) {
-    return pcl_enable_counters (ctx, ctl);
+    return pcl_enable_counters (pcl_ctx, pcl_ctl);
   }
 
   return PAPI_OK;
 }
 
 /* write(set) the hardware counters */
-int _papi_hwd_write (hwd_context_t * ctx, hwd_control_state_t * ctl, long long *from)
+int _papi_pcl_write (hwd_context_t * ctx, hwd_control_state_t * ctl, long long *from)
 {
   /*
    * Counters cannot be written using PCL.  Do we need to virtualize the
@@ -2441,9 +2409,11 @@ int _papi_hwd_write (hwd_context_t * ctx, hwd_control_state_t * ctl, long long *
 #define PCL_TOTAL_TIME_ENABLED 1
 #define PCL_TOTAL_TIME_RUNNING 2
 
-int _papi_hwd_read (hwd_context_t * ctx, hwd_control_state_t * ctl, long long **events, int flags)
+int _papi_pcl_read (hwd_context_t * ctx, hwd_control_state_t * ctl, long long **events, int flags)
 {
   int i, ret;
+  pcl_context_t * pcl_ctx  = (pcl_context_t *)ctx;
+  pcl_control_state_t * pcl_ctl = (pcl_control_state_t *)ctl;
 
   /*
    * FIXME this loop should not be needed.  We ought to be able to read up
@@ -2453,13 +2423,13 @@ int _papi_hwd_read (hwd_context_t * ctx, hwd_control_state_t * ctl, long long **
    * read them up, then re-enable the group leader.
    */
 
-  if (ctx->state & PCL_RUNNING)
+  if (pcl_ctx->state & PCL_RUNNING)
     {
-      for (i = 0; i < ctx->num_pcl_evts; i++)
+      for (i = 0; i < pcl_ctx->num_pcl_evts; i++)
         /* disable only the group leaders */
-        if (ctx->pcl_evt[i].group_leader == i)
+        if (pcl_ctx->pcl_evt[i].group_leader == i)
           {
-            ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_DISABLE);
+            ret = ioctl (pcl_ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_DISABLE);
             if (ret == -1)
               {
                 /* Never should happen */
@@ -2467,19 +2437,19 @@ int _papi_hwd_read (hwd_context_t * ctx, hwd_control_state_t * ctl, long long **
               }
           }
     }
-  for (i = 0; i < ctl->num_events; i++)
+  for (i = 0; i < pcl_ctl->num_events; i++)
     {
       uint64_t counter[3];
       int read_size;
 
       read_size = sizeof (uint64_t);
-      if (ctl->multiplexed)
+      if (pcl_ctl->multiplexed)
         {
           /* Read the enabled and running times as well as the count */
           read_size *= 3;
         }
 
-      ret = read (ctx->pcl_evt[i].event_fd, counter, read_size);
+      ret = read (pcl_ctx->pcl_evt[i].event_fd, counter, read_size);
       if (ret < read_size)
         {
           /* We should get exactly how many bytes we asked for */
@@ -2487,19 +2457,19 @@ int _papi_hwd_read (hwd_context_t * ctx, hwd_control_state_t * ctl, long long **
           return PAPI_ESBSTR;
         }
 
-      if (ctl->events[i].sample_period != 0)
+      if (pcl_ctl->events[i].sample_period != 0)
         {
           /*
            * Calculate how many counts up it's gone since its most recent
            * sample_period overflow
            */
-          counter[PCL_COUNT] -= ~0ULL - ctl->events[i].sample_period;
+          counter[PCL_COUNT] -= ~0ULL - pcl_ctl->events[i].sample_period;
         }
-      if (ctl->multiplexed)
+      if (pcl_ctl->multiplexed)
         {
           if (counter[PCL_TOTAL_TIME_RUNNING])
             {
-              ctl->counts[i] =
+              pcl_ctl->counts[i] =
                 (__u64) ((double) counter[PCL_COUNT] * (double) counter[PCL_TOTAL_TIME_ENABLED] /
                          (double) counter[PCL_TOTAL_TIME_RUNNING]);
             }
@@ -2510,21 +2480,21 @@ int _papi_hwd_read (hwd_context_t * ctx, hwd_control_state_t * ctl, long long **
                 {
                   return PAPI_EBUG;
                 }
-              ctl->counts[i] = 0;
+              pcl_ctl->counts[i] = 0;
             }
         }
       else
         {
-          ctl->counts[i] = counter[PCL_COUNT];
+          pcl_ctl->counts[i] = counter[PCL_COUNT];
         }
     }
 
-  if (ctx->state & PCL_RUNNING)
+  if (pcl_ctx->state & PCL_RUNNING)
     {
-      for (i = 0; i < ctx->num_pcl_evts; i++)
-        if (ctx->pcl_evt[i].group_leader == i)
+      for (i = 0; i < pcl_ctx->num_pcl_evts; i++)
+        if (pcl_ctx->pcl_evt[i].group_leader == i)
           {
-            ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_ENABLE);
+            ret = ioctl (pcl_ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_ENABLE);
             if (ret == -1)
               {
                 /* Never should happen */
@@ -2533,70 +2503,75 @@ int _papi_hwd_read (hwd_context_t * ctx, hwd_control_state_t * ctl, long long **
           }
     }
 
-  *events = ctl->counts;
+  *events = pcl_ctl->counts;
 
   return PAPI_OK;
 
 }
 
 #if defined(__crayxt) || defined(__crayx2)
-int _papi_hwd_start_create_context = 0; /* CrayPat checkpoint support */
+int _papi_pcl_start_create_context = 0; /* CrayPat checkpoint support */
 #endif /* XT/X2 */
 
-int _papi_hwd_start (hwd_context_t * ctx, hwd_control_state_t * ctl)
+int _papi_pcl_start (hwd_context_t * ctx, hwd_control_state_t * ctl)
 {
+  pcl_context_t * pcl_ctx  = (pcl_context_t *)ctx;
+  pcl_control_state_t * pcl_ctl = (pcl_control_state_t *)ctl;
   int ret;
 
 #if 0
-  ret = _papi_hwd_reset(ctx, ctl);
+  ret = _papi_hwd_reset(pcl_ctx, pcl_ctl);
   if (ret)
     return ret;
 #endif
-  ret = pcl_enable_counters(ctx, ctl);
+  ret = pcl_enable_counters(pcl_ctx, pcl_ctl);
   return ret;
 }
 
-int _papi_hwd_stop (hwd_context_t * ctx, hwd_control_state_t * ctl)
+int _papi_pcl_stop (hwd_context_t * ctx, hwd_control_state_t * ctl)
 {
   int ret;
   int i;
+  pcl_context_t * pcl_ctx  = (pcl_context_t *)ctx;
 
   /* Just disable the group leaders */
-  for (i = 0; i < ctx->num_pcl_evts; i++)
-    if (ctx->pcl_evt[i].group_leader == i)
+  for (i = 0; i < pcl_ctx->num_pcl_evts; i++)
+    if (pcl_ctx->pcl_evt[i].group_leader == i)
       {
-        ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_DISABLE);
+        ret = ioctl (pcl_ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_DISABLE);
         if (ret == -1)
           {
-            PAPIERROR ("ioctl(%d, PERF_COUNTER_IOC_DISABLE) returned error, Linux says: %s", ctx->pcl_evt[i].event_fd, strerror(errno));
+            PAPIERROR ("ioctl(%d, PERF_COUNTER_IOC_DISABLE) returned error, Linux says: %s", pcl_ctx->pcl_evt[i].event_fd, strerror(errno));
             return PAPI_EBUG;
           }
       }
-  ctx->state &= ~PCL_RUNNING;
+  pcl_ctx->state &= ~PCL_RUNNING;
 
   return PAPI_OK;
 }
 
 inline_static int round_requested_ns(int ns)
 {
-  if (ns < _papi_hwi_system_info.sub_info.itimer_res_ns) {
-    return _papi_hwi_system_info.sub_info.itimer_res_ns;
+  if (ns < MY_VECTOR.cmp_info.itimer_res_ns) {
+    return MY_VECTOR.cmp_info.itimer_res_ns;
   } else {
-    int leftover_ns = ns % _papi_hwi_system_info.sub_info.itimer_res_ns;
+    int leftover_ns = ns % MY_VECTOR.cmp_info.itimer_res_ns;
     return ns + leftover_ns;
   }
 }
 
-int _papi_hwd_ctl (hwd_context_t * ctx, int code, _papi_int_option_t * option)
+int _papi_pcl_ctl (hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
   int ret;
+  pcl_context_t * pcl_ctx  = (pcl_context_t *)ctx;
 
   switch (code)
     {
     case PAPI_MULTIPLEX:
       {
-        option->multiplex.ESI->machdep.multiplexed = 1;
-        ret = _papi_hwd_update_control_state(&option->multiplex.ESI->machdep, NULL, option->multiplex.ESI->machdep.num_events, ctx);
+        pcl_control_state_t *pcl_ctl = (pcl_control_state_t *)(option->multiplex.ESI->ctl_state);
+        pcl_ctl->multiplexed = 1;
+        ret = _papi_pcl_update_control_state(pcl_ctl, NULL, pcl_ctl->num_events, pcl_ctx);
         /*
          * Variable ns is not supported on PCL, but we can clear the pinned
          * bits in the events to allow the scheduler to multiplex the
@@ -2606,26 +2581,26 @@ int _papi_hwd_ctl (hwd_context_t * ctx, int code, _papi_int_option_t * option)
       }
     case PAPI_ATTACH:
       return PAPI_ENOSUPP; /* FIXME */
-      return attach (&option->attach.ESI->machdep, option->attach.tid);
+      return attach ((pcl_control_state_t *)(option->attach.ESI->ctl_state), option->attach.tid);
     case PAPI_DETACH:
       return PAPI_ENOSUPP; /* FIXME */
-      return detach (ctx, &option->attach.ESI->machdep);
+      return detach (pcl_ctx, (pcl_control_state_t *)(option->attach.ESI->ctl_state));
     case PAPI_DOMAIN:
-      return set_domain (&option->domain.ESI->machdep, option->domain.domain);
+      return set_domain ((pcl_control_state_t *)(option->domain.ESI->ctl_state), option->domain.domain);
     case PAPI_GRANUL:
-      return set_granularity (&option->granularity.ESI->machdep, option->granularity.granularity);
+      return set_granularity ((pcl_control_state_t *)(option->granularity.ESI->ctl_state), option->granularity.granularity);
 #if 0
     case PAPI_DATA_ADDRESS:
-      ret = set_default_domain (&option->address_range.ESI->machdep, option->address_range.domain);
+      ret = set_default_domain ((pcl_control_state_t *)(option->address_range.ESI->ctl_state), option->address_range.domain);
       if (ret != PAPI_OK)
         return ret;
-      set_drange (ctx, &option->address_range.ESI->machdep, option);
+      set_drange (pcl_ctx, (pcl_control_state_t *)(option->address_range.ESI->ctl_state), option);
       return PAPI_OK;
     case PAPI_INSTR_ADDRESS:
-      ret = set_default_domain (&option->address_range.ESI->machdep, option->address_range.domain);
+      ret = set_default_domain ((pcl_control_state_t *)(option->address_range.ESI->ctl_state), option->address_range.domain);
       if (ret != PAPI_OK)
         return ret;
-      set_irange (ctx, &option->address_range.ESI->machdep, option);
+      set_irange (pcl_ctx, (pcl_control_state_t *)(option->address_range.ESI->ctl_state), option);
       return PAPI_OK;
 #endif
     case PAPI_DEF_ITIMER:
@@ -2659,10 +2634,12 @@ int _papi_hwd_ctl (hwd_context_t * ctx, int code, _papi_int_option_t * option)
     }
 }
 
-int _papi_hwd_shutdown (hwd_context_t * ctx)
+int _papi_pcl_shutdown (hwd_context_t * ctx)
 {
+  pcl_context_t * pcl_ctx  = (pcl_context_t *)ctx;
   int ret;
-  ret = close_pcl_evts(ctx);
+
+  ret = close_pcl_evts(pcl_ctx);
   return ret;
 }
 
@@ -2765,8 +2742,9 @@ static void mmap_write_tail(pcl_evt_t *pe, uint64_t tail)
 }
 
 
-static void mmap_read (ThreadInfo_t * thr, pcl_evt_t * pe, int pcl_evt_index, int profile_index)
-{
+static void mmap_read (ThreadInfo_t ** thr, pcl_evt_t * pe, int pcl_evt_index, int profile_index)
+{ 
+  int cidx = MY_VECTOR.cmp_info.CmpIdx;
   uint64_t head = mmap_read_head (pe);
   uint64_t old = pe->tail;
   unsigned char *data = pe->mmap_buf + getpagesize ();
@@ -2836,7 +2814,7 @@ static void mmap_read (ThreadInfo_t * thr, pcl_evt_t * pe, int pcl_evt_index, in
       switch (event->header.type)
         {
         case PERF_EVENT_SAMPLE:
-          _papi_hwi_dispatch_profile (thr->running_eventset, (unsigned long) event->ip.ip, 0, profile_index);
+          _papi_hwi_dispatch_profile ((*thr)->running_eventset[cidx], (caddr_t) event->ip.ip, 0, profile_index);
           break;
         case PERF_EVENT_LOST:
           SUBDBG ("Warning: because of a PCL mmap buffer overrun, %"PRId64
@@ -2854,16 +2832,17 @@ static void mmap_read (ThreadInfo_t * thr, pcl_evt_t * pe, int pcl_evt_index, in
 }
 
 
-static inline int process_smpl_buf (int pcl_evt_idx, ThreadInfo_t * thr)
+static inline int process_smpl_buf (int pcl_evt_idx, ThreadInfo_t ** thr)
 {
   int ret, flags, profile_index;
   unsigned native_index;
+  int cidx = MY_VECTOR.cmp_info.CmpIdx;
 
-  ret = find_profile_index (thr->running_eventset, pcl_evt_idx, &flags, &native_index, &profile_index);
+  ret = find_profile_index ((*thr)->running_eventset[cidx], pcl_evt_idx, &flags, &native_index, &profile_index);
   if (ret != PAPI_OK)
     return (ret);
 
-  mmap_read (thr, &thr->context.pcl_evt[pcl_evt_idx], pcl_evt_idx, profile_index);
+  mmap_read (thr, &((pcl_context_t *)(*thr)->context[cidx])->pcl_evt[pcl_evt_idx], pcl_evt_idx, profile_index);
 
   return (PAPI_OK);
 }
@@ -2873,40 +2852,41 @@ static inline int process_smpl_buf (int pcl_evt_idx, ThreadInfo_t * thr)
  * software overflows are forced
  */
 
-void _papi_hwd_dispatch_timer (int n, hwd_siginfo_t * info, void *uc)
+void _papi_pcl_dispatch_timer (int n, hwd_siginfo_t * info, void *uc)
 {
   _papi_hwi_context_t ctx;
   int found_evt_idx = -1, fd = info->si_fd;
-  unsigned long address;
+  caddr_t address;
   ThreadInfo_t *thread = _papi_hwi_lookup_thread ();
+  int cidx = MY_VECTOR.cmp_info.CmpIdx;
 
   if (thread == NULL)
     {
-      PAPIERROR ("thread == NULL in _papi_hwd_dispatch_timer for fd %d!", fd);
+      PAPIERROR ("thread == NULL in _papi_pcl_dispatch_timer for fd %d!", fd);
       return;
     }
 
-  if (thread->running_eventset == NULL)
+  if (thread->running_eventset[cidx] == NULL)
     {
-      PAPIERROR ("thread->running_eventset == NULL in _papi_hwd_dispatch_timer for fd %d!", fd);
+      PAPIERROR ("thread->running_eventset == NULL in _papi_pcl_dispatch_timer for fd %d!", fd);
       return;
     }
 
-  if (thread->running_eventset->overflow.flags == 0)
+  if (thread->running_eventset[cidx]->overflow.flags == 0)
     {
-      PAPIERROR ("thread->running_eventset->overflow.flags == 0 in _papi_hwd_dispatch_timer for fd %d!", fd);
+      PAPIERROR ("thread->running_eventset->overflow.flags == 0 in _papi_pcl_dispatch_timer for fd %d!", fd);
       return;
     }
 
   ctx.si = info;
   ctx.ucontext = (hwd_ucontext_t *) uc;
 
-  if (thread->running_eventset->overflow.flags & PAPI_OVERFLOW_FORCE_SW)
+  if (thread->running_eventset[cidx]->overflow.flags & PAPI_OVERFLOW_FORCE_SW)
     {
       address = (unsigned long) GET_OVERFLOW_ADDRESS ((&ctx));
-      _papi_hwi_dispatch_overflow_signal ((void *) &ctx, address, NULL, 0, 0, &thread);
+      _papi_hwi_dispatch_overflow_signal ((void *) &ctx, address, NULL, 0, 0, &thread, cidx);
     }
-  if (thread->running_eventset->overflow.flags != PAPI_OVERFLOW_HARDWARE)
+  if (thread->running_eventset[cidx]->overflow.flags != PAPI_OVERFLOW_HARDWARE)
     {
       PAPIERROR
         ("thread->running_eventset->overflow.flags is set to something other than PAPI_OVERFLOW_HARDWARE or PAPI_OVERFLOW_FORCE_SW for fd %d", fd);
@@ -2915,9 +2895,9 @@ void _papi_hwd_dispatch_timer (int n, hwd_siginfo_t * info, void *uc)
     int i;
 
     /* See if the fd is one that's part of the this thread's context */
-    for (i = 0; i < thread->context.num_pcl_evts; i++)
+    for (i = 0; i < ((pcl_context_t *)thread->context[cidx])->num_pcl_evts; i++)
       {
-        if (fd == thread->context.pcl_evt[i].event_fd)
+        if (fd == ((pcl_context_t *)thread->context[cidx])->pcl_evt[i].event_fd)
           {
             found_evt_idx = i;
             break;
@@ -2929,14 +2909,14 @@ void _papi_hwd_dispatch_timer (int n, hwd_siginfo_t * info, void *uc)
       }
   }
 
-  if ((thread->running_eventset->state & PAPI_PROFILING)
-      && !(thread->running_eventset->profile.flags & PAPI_PROFIL_FORCE_SW))
-    process_smpl_buf (found_evt_idx, thread);
+  if ((thread->running_eventset[cidx]->state & PAPI_PROFILING)
+      && !(thread->running_eventset[cidx]->profile.flags & PAPI_PROFIL_FORCE_SW))
+    process_smpl_buf (found_evt_idx, &thread);
   else
     {
       __u64 ip;
       unsigned int head;
-      pcl_evt_t *pe = &thread->context.pcl_evt[found_evt_idx];
+      pcl_evt_t *pe = &((pcl_context_t *)thread->context[cidx])->pcl_evt[found_evt_idx];
       unsigned char *data = pe->mmap_buf + getpagesize ();
 
       /*
@@ -2984,31 +2964,32 @@ void _papi_hwd_dispatch_timer (int n, hwd_siginfo_t * info, void *uc)
        * user level in PCL (the kernel event dispatcher hides that info).
        */
 
-      _papi_hwi_dispatch_overflow_signal ((void *) &ctx, ip, NULL, (1 << found_evt_idx), 0, &thread);
+      _papi_hwi_dispatch_overflow_signal ((void *) &ctx, (caddr_t)ip, NULL, (1 << found_evt_idx), 0, &thread, cidx);
 
     }
 
   /* Need restart here when PCL supports that -- FIXME */
 }
 
-int _papi_hwd_stop_profiling (ThreadInfo_t * thread, EventSetInfo_t * ESI)
+int _papi_pcl_stop_profiling (ThreadInfo_t * thread, EventSetInfo_t * ESI)
 {
   int i, ret = PAPI_OK;
+  int cidx = MY_VECTOR.cmp_info.CmpIdx;
 
   /*
    * Loop through all of the events and process those which have mmap
    * buffers attached.
    */
-  for (i = 0; i < thread->context.num_pcl_evts; i++)
+  for (i = 0; i < ((pcl_context_t *)thread->context[cidx])->num_pcl_evts; i++)
     {
       /*
        * Use the mmap_buf field as an indicator of this fd being used for
        * profiling
        */
-      if (thread->context.pcl_evt[i].mmap_buf)
+      if (((pcl_context_t *)thread->context[cidx])->pcl_evt[i].mmap_buf)
         {
           /* Process any remaining samples in the sample buffer */
-          ret = process_smpl_buf (i, thread);
+          ret = process_smpl_buf (i, &thread);
           if (ret)
             {
               PAPIERROR ("process_smpl_buf returned error %d", ret);
@@ -3021,12 +3002,13 @@ int _papi_hwd_stop_profiling (ThreadInfo_t * thread, EventSetInfo_t * ESI)
 
 
 
-int _papi_hwd_set_profile (EventSetInfo_t * ESI, int EventIndex, int threshold)
+int _papi_pcl_set_profile (EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
   int ret;
   int evt_idx;
-  hwd_context_t * ctx = &ESI->master->context;
-  hwd_control_state_t *ctl = &ESI->machdep;
+  int cidx = MY_VECTOR.cmp_info.CmpIdx;
+  pcl_context_t * ctx = (pcl_context_t *)(ESI->master->context[cidx]);
+  pcl_control_state_t *ctl = (pcl_control_state_t *)(ESI->ctl_state);
 
   /*
    * Since you can't profile on a derived event, the event is always the
@@ -3047,7 +3029,7 @@ int _papi_hwd_set_profile (EventSetInfo_t * ESI, int EventIndex, int threshold)
       ctx->pcl_evt[evt_idx].mmap_buf = NULL;
       ctx->pcl_evt[evt_idx].nr_mmap_pages = 0;
       ctl->events[evt_idx].sample_type &= ~PERF_SAMPLE_IP;
-      ret = _papi_hwd_set_overflow (ESI, EventIndex, threshold);
+      ret = _papi_pcl_set_overflow (ESI, EventIndex, threshold);
 // #warning "This should be handled somewhere else"
       ESI->state &= ~(PAPI_OVERFLOWING);
       ESI->overflow.flags &= ~(PAPI_OVERFLOW_HARDWARE);
@@ -3076,17 +3058,18 @@ int _papi_hwd_set_profile (EventSetInfo_t * ESI, int EventIndex, int threshold)
   ctx->pcl_evt[evt_idx].nr_mmap_pages = NR_MMAP_PAGES;
   ctl->events[evt_idx].sample_type |= PERF_SAMPLE_IP;
 
-  ret = _papi_hwd_set_overflow (ESI, EventIndex, threshold);
+  ret = _papi_pcl_set_overflow (ESI, EventIndex, threshold);
   if (ret != PAPI_OK)
     return ret;
 
   return PAPI_OK;
 }
 
-int _papi_hwd_set_overflow (EventSetInfo_t * ESI, int EventIndex, int threshold)
+int _papi_pcl_set_overflow (EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
-  hwd_context_t *ctx = &ESI->master->context;
-  hwd_control_state_t *ctl = &ESI->machdep;
+  int cidx = MY_VECTOR.cmp_info.CmpIdx;
+  pcl_context_t * ctx = (pcl_context_t *)(ESI->master->context[cidx]);
+  pcl_control_state_t *ctl = (pcl_control_state_t *)(ESI->ctl_state);
   int i, evt_idx, found_non_zero_sample_period = 0, retval = PAPI_OK;
 
   evt_idx = ESI->EventInfoArray[EventIndex].pos[0];
@@ -3141,7 +3124,7 @@ int _papi_hwd_set_overflow (EventSetInfo_t * ESI, int EventIndex, int threshold)
   if (found_non_zero_sample_period)
     {
       /* Enable the signal handler */
-      retval = _papi_hwi_start_signal (_papi_hwi_system_info.sub_info.hardware_intr_sig, 1);
+      retval = _papi_hwi_start_signal (MY_VECTOR.cmp_info.hardware_intr_sig, 1, MY_VECTOR.cmp_info.CmpIdx);
     }
   else
     {
@@ -3149,28 +3132,28 @@ int _papi_hwd_set_overflow (EventSetInfo_t * ESI, int EventIndex, int threshold)
        * Remove the signal handler, if there are no remaining non-zero
        * sample_periods set
        */
-      retval = _papi_hwi_stop_signal (_papi_hwi_system_info.sub_info.hardware_intr_sig);
+      retval = _papi_hwi_stop_signal (MY_VECTOR.cmp_info.hardware_intr_sig);
       if (retval != PAPI_OK)
         return retval;
     }
-  retval = _papi_hwd_update_control_state (ctl, NULL, ESI->machdep.num_events, ctx);
+  retval = _papi_pcl_update_control_state (ctl, NULL, ((pcl_control_state_t *)(ESI->ctl_state))->num_events, ctx);
 
   return retval;
 }
 
-int _papi_hwd_init_control_state (hwd_control_state_t * ctl)
+int _papi_pcl_init_control_state (hwd_control_state_t * ctl)
 {
-  memset(ctl, 0, sizeof(hwd_control_state_t));
-  set_domain (ctl, _papi_hwi_system_info.sub_info.default_domain);
+  memset(ctl, 0, sizeof(pcl_control_state_t));
+  set_domain (ctl, MY_VECTOR.cmp_info.default_domain);
   return PAPI_OK;
 }
 
-int _papi_hwd_allocate_registers (EventSetInfo_t * ESI)
+int _papi_pcl_allocate_registers (EventSetInfo_t * ESI)
 {
   int i, j;
   for (i = 0; i < ESI->NativeCount; i++)
     {
-      if (_papi_pfm_ntv_code_to_bits (ESI->NativeInfoArray[i].ni_event, &ESI->NativeInfoArray[i].ni_bits) != PAPI_OK)
+      if (_papi_pfm_ntv_code_to_bits (ESI->NativeInfoArray[i].ni_event, ESI->NativeInfoArray[i].ni_bits) != PAPI_OK)
         goto bail;
     }
   return 1;
@@ -3184,20 +3167,22 @@ bail:
    updates it with whatever resources are allocated for all the native events
    in the native info structure array. */
 
-int _papi_hwd_update_control_state (hwd_control_state_t * ctl, NativeInfo_t * native, int count, hwd_context_t * ctx)
+int _papi_pcl_update_control_state (hwd_control_state_t * ctl, NativeInfo_t * native, int count, hwd_context_t * ctx)
 {
   int i = 0, ret;
+  pcl_context_t * pcl_ctx  = (pcl_context_t *)ctx;
+  pcl_control_state_t * pcl_ctl = (pcl_control_state_t *)ctl;
 
-  if (ctx->cookie != PCL_CTX_INITIALIZED)
+  if (pcl_ctx->cookie != PCL_CTX_INITIALIZED)
     {
-      memset (ctl->events, 0, sizeof (struct perf_counter_attr) * PCL_MAX_MPX_EVENTS);
-      memset (ctx, 0, sizeof (hwd_context_t));
-      ctx->cookie = PCL_CTX_INITIALIZED;
+      memset (pcl_ctl->events, 0, sizeof (struct perf_counter_attr) * PCL_MAX_MPX_EVENTS);
+      memset (pcl_ctx, 0, sizeof (pcl_context_t));
+      pcl_ctx->cookie = PCL_CTX_INITIALIZED;
     }
   else
     {
       /* close all of the existing fds and start over again */
-      close_pcl_evts (ctx);
+      close_pcl_evts (pcl_ctx);
     }
 
   if (count == 0)
@@ -3216,17 +3201,17 @@ int _papi_hwd_update_control_state (hwd_control_state_t * ctl, NativeInfo_t * na
       if (native)
         {
           int code;
-          ret = pfm_get_event_code_counter (native[i].ni_bits.event, 0, &code);
+          ret = pfm_get_event_code_counter (((pfm_register_t *)native[i].ni_bits)->event, 0, &code);
           if (ret)
             {
               /* Unrecognized code, but should never happen */
               return PAPI_EBUG;
             }
           SUBDBG ("Stuffing native event index %d (code 0x%x, raw code 0x%x) into events array.\n", i,
-                  native[i].ni_bits.event, code);
+                  ((pfm_register_t *)native[i].ni_bits)->event, code);
           /* use raw event types, not the predefined ones */
-          ctl->events[i].type = PERF_TYPE_RAW;
-          ctl->events[i].config = (__u64) code;
+          pcl_ctl->events[i].type = PERF_TYPE_RAW;
+          pcl_ctl->events[i].config = (__u64) code;
         }
       else
         {
@@ -3234,14 +3219,14 @@ int _papi_hwd_update_control_state (hwd_control_state_t * ctl, NativeInfo_t * na
         }
 
       /* Will be set to the threshold set by PAPI_overflow. */
-      /* ctl->events[i].sample_period = 0; */
+      /* pcl_ctl->events[i].sample_period = 0; */
 
       /*
        * This field gets modified depending on what the event is being used
        * for.  In particular, the PERF_SAMPLE_IP bit is turned on when
        * doing profiling.
        */
-      /* ctl->events[i].record_type = 0; */
+      /* pcl_ctl->events[i].record_type = 0; */
 
       /* Leave the disabling for when we know which
          events are the group leaders.  We only disable group leaders. */
@@ -3249,43 +3234,43 @@ int _papi_hwd_update_control_state (hwd_control_state_t * ctl, NativeInfo_t * na
 
       /* PAPI currently only monitors one thread at a time, so leave the
          inherit flag off */
-      /* ctl->events[i].inherit = 0; */
+      /* pcl_ctl->events[i].inherit = 0; */
 
       /*
        * Only the group leader's pinned field must be set to 1.  It's an
        * error for any other event in the group to have its pinned value
        * set to 1.
        */
-      ctl->events[i].pinned = (i == 0) && !(ctl->multiplexed);
+      pcl_ctl->events[i].pinned = (i == 0) && !(pcl_ctl->multiplexed);
 
       /*
        * 'exclusive' is used only for arch-specific PMU features which can
        * affect the behavior of other groups/counters currently on the PMU.
        */
-      /* ctl->events[i].exclusive = 0; */
+      /* pcl_ctl->events[i].exclusive = 0; */
 
       /*
        * Leave the exclusion bits for when we know what PAPI domain is
        * going to be used
        */
-      /* ctl->events[i].exclude_user = 0; */
-      /* ctl->events[i].exclude_kernel = 0; */
-      /* ctl->events[i].exclude_hv = 0; */
-      /* ctl->events[i].exclude_idle = 0; */
+      /* pcl_ctl->events[i].exclude_user = 0; */
+      /* pcl_ctl->events[i].exclude_kernel = 0; */
+      /* pcl_ctl->events[i].exclude_hv = 0; */
+      /* pcl_ctl->events[i].exclude_idle = 0; */
 
       /*
        * We don't need to record mmap's, or process comm data (not sure what
        * this is exactly).
        *
        */
-      /* ctl->events[i].mmap = 0; */
-      /* ctl->events[i].comm = 0; */
+      /* pcl_ctl->events[i].mmap = 0; */
+      /* pcl_ctl->events[i].comm = 0; */
 
       /*
        * In its current design, PAPI uses sample periods exclusively, so
        * turn off the freq flag.
        */
-      /* ctl->events[i].freq = 0; */
+      /* pcl_ctl->events[i].freq = 0; */
 
       /*
        * In this substrate, wakeup_events is set to zero when profiling,
@@ -3294,22 +3279,22 @@ int _papi_hwd_update_control_state (hwd_control_state_t * ctl, NativeInfo_t * na
        * that user space is alerted on every counter overflow.  In any
        * case, this field is set later.
        */
-      /* ctl->events[i].wakeup_events = 0; */
+      /* pcl_ctl->events[i].wakeup_events = 0; */
 
       /*
        * When multiplexed, keep track of time enabled vs. time running for
        * scaling purposes.
        */
-      ctl->events[i].read_format = ctl->multiplexed ? PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_TOTAL_TIME_RUNNING : 0;
+      pcl_ctl->events[i].read_format = pcl_ctl->multiplexed ? PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_TOTAL_TIME_RUNNING : 0;
       if (native)
         {
           native[i].ni_position = i;
         }
     }
-  ctl->num_events = count;
-  set_domain (ctl, ctl->domain);
+  pcl_ctl->num_events = count;
+  set_domain (pcl_ctl, pcl_ctl->domain);
 
-  ret = open_pcl_evts (ctx, ctl);
+  ret = open_pcl_evts (pcl_ctx, pcl_ctl);
   if (ret != PAPI_OK)
     {
       /* Restore values */
@@ -3318,3 +3303,72 @@ int _papi_hwd_update_control_state (hwd_control_state_t * ctl, NativeInfo_t * na
 
   return PAPI_OK;
 }
+
+papi_vector_t _papi_pcl_vector = {
+    .cmp_info = {
+	/* default component information (unspecified values are initialized to 0) */
+	.default_domain =	PAPI_DOM_USER,
+	.available_domains =	PAPI_DOM_USER|PAPI_DOM_KERNEL,
+	.default_granularity =	PAPI_GRN_THR,
+	.available_granularities = PAPI_GRN_THR,
+
+    .hardware_intr = 1,
+    .attach = 1,
+    .attach_must_ptrace = 1,
+    .kernel_multiplex = 1,
+    .kernel_profile = 1,
+    .profile_ear = 1,  
+    .num_mpx_cntrs = PFMLIB_MAX_PMDS,
+    .hardware_intr_sig = PAPI_INT_SIGNAL,
+ 
+	/* component specific cmp_info initializations */
+	.fast_real_timer =	1,
+	.fast_virtual_timer =	0,
+	.attach =		0,
+	.attach_must_ptrace =	0,
+    .itimer_sig = PAPI_INT_MPX_SIGNAL,
+    .itimer_num = PAPI_INT_ITIMER,
+    .itimer_ns = PAPI_INT_MPX_DEF_US * 1000, /* Not actually supported in PCL */
+    .itimer_res_ns = 1,
+    },
+
+    /* sizes of framework-opaque component-private structures */
+    .size = {
+	.context =		sizeof(pcl_context_t),
+	.control_state =	sizeof(pcl_control_state_t),
+	.reg_value =		sizeof(pfm_register_t),
+	.reg_alloc =		sizeof(pcl_reg_alloc_t),
+    },
+    /* function pointers in this component */
+    .init_control_state =	_papi_pcl_init_control_state,
+    .start =			_papi_pcl_start,
+    .stop =			_papi_pcl_stop,
+    .read =			_papi_pcl_read,
+    .shutdown =		_papi_pcl_shutdown,
+    .ctl =			_papi_pcl_ctl,
+    .update_control_state =	_papi_pcl_update_control_state,
+    .update_shlib_info =	_papi_pcl_update_shlib_info,
+    .set_domain =		set_domain,
+    .reset =			_papi_pcl_reset,
+    .set_overflow =		_papi_pcl_set_overflow,
+    .set_profile =		_papi_pcl_set_profile,
+    .stop_profiling =		_papi_pcl_stop_profiling,
+    .init_substrate =		_papi_pcl_init_substrate,
+    .dispatch_timer =		_papi_pcl_dispatch_timer,
+    .get_real_usec =		_papi_pcl_get_real_usec,
+    .get_real_cycles =		_papi_pcl_get_real_cycles,
+    .get_virt_cycles =		_papi_pcl_get_virt_cycles,
+    .get_virt_usec =		_papi_pcl_get_virt_usec,
+
+    /* from OS */
+    .get_memory_info =	_papi_pcl_get_memory_info,
+    .init =		_papi_sub_pcl_init,
+    .get_dmem_info =	_papi_pcl_get_dmem_info,
+    .allocate_registers =	_papi_pcl_allocate_registers,
+    .write =	_papi_pcl_write,
+    .ntv_enum_events =	_papi_pfm_ntv_enum_events,
+    .ntv_code_to_name =	_papi_pfm_ntv_code_to_name,
+    .ntv_code_to_descr =	_papi_pfm_ntv_code_to_descr,
+    .ntv_code_to_bits =	_papi_pfm_ntv_code_to_bits,
+    .ntv_bits_to_info =	_papi_pfm_ntv_bits_to_info,
+};

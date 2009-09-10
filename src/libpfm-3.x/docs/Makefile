@@ -27,48 +27,6 @@ include $(TOPDIR)/rules.mk
 
 .PHONY: all clean distclean depend
 
-ifeq ($(CONFIG_PFMLIB_ARCH_IA64),y)
-ARCH_MAN=libpfm_itanium.3 libpfm_itanium2.3 libpfm_montecito.3
-endif
-
-ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
-ARCH_MAN=libpfm_p6.3 libpfm_core.3 libpfm_amd64.3
-endif
-
-ifeq ($(CONFIG_PFMLIB_ARCH_X86_64),y)
-ARCH_MAN=libpfm_amd64.3 libpfm_core.3
-endif
-
-ifeq ($(CONFIG_PFMLIB_ARCH_MIPS64),y)
-endif
-
-ifeq ($(CONFIG_PFMLIB_ARCH_POWERPC),y)
-ARCH_MAN=libpfm_powerpc.3
-endif
-
-ifeq ($(CONFIG_PFMLIB_ARCH_CRAYXT),y)
-endif
-
-ifeq ($(CONFIG_PFMLIB_CELL),y)
-endif
-
-GEN_MAN= libpfm.3 pfm_dispatch_events.3 pfm_find_event.3 pfm_find_event_bycode.3 \
-         pfm_find_event_bycode_next.3 pfm_find_event_mask.3 pfm_find_full_event.3 \
-         pfm_force_pmu.3 pfm_get_cycle_event.3 pfm_get_event_code.3 pfm_get_event_code_counter.3 \
-         pfm_get_event_counters.3 pfm_get_event_description.3 pfm_get_event_mask_code.3 \
-         pfm_get_event_mask_description.3 pfm_get_event_mask_name.3 pfm_get_event_name.3 \
-         pfm_get_full_event_name.3 pfm_get_hw_counter_width.3 pfm_get_impl_counters.3 \
-         pfm_get_impl_pmcs.3 pfm_get_impl_pmds.3 pfm_get_inst_retired.3 pfm_get_max_event_name_len.3 \
-         pfm_get_num_counters.3 pfm_get_num_events.3 pfm_get_num_pmcs.3 \
-         pfm_get_num_pmds.3 pfm_get_pmu_name.3 pfm_get_pmu_name_bytype.3 \
-         pfm_get_pmu_type.3 pfm_get_version.3 pfm_initialize.3 \
-         pfm_list_supported_pmus.3 pfm_pmu_is_supported.3 pfm_regmask_and.3 \
-         pfm_regmask_clr.3 pfm_regmask_copy.3 pfm_regmask_eq.3 pfm_regmask_isset.3 \
-         pfm_regmask_or.3 pfm_regmask_set.3 pfm_regmask_weight.3 pfm_set_options.3 \
-         pfm_strerror.3
-
-MAN=$(GEN_MAN) $(ARCH_MAN)
 install:
-
 	-mkdir -p $(DESTDIR)$(MANDIR)/man3
-	( cd man3; $(INSTALL) -m 644 $(MAN) $(DESTDIR)$(MANDIR)/man3 )
+	( cd man3; $(INSTALL) -m 644 *.3 $(DESTDIR)$(MANDIR)/man3 )

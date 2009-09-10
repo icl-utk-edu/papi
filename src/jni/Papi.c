@@ -1,6 +1,6 @@
 #include <dlfcn.h>
 #include <jni.h>
-#include "edu_utk_cs_icl_papi_PapiJ.h"
+#include "PapiJ.h"
 #include "papi.h"
 
 void *
@@ -28,7 +28,7 @@ getPapiFunction(char *f)
   return func;
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_flops
+JNIEXPORT jint JNICALL Java_PapiJ_flops
   (JNIEnv *env, jobject obj, jobject info)
 {
 
@@ -66,7 +66,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_flops
   return ret;
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_num_1counters
+JNIEXPORT jint JNICALL Java_PapiJ_num_1counters
   (JNIEnv *env, jobject obj)
 {
   int (*num_counters)(void);
@@ -77,7 +77,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_num_1counters
   return (*num_counters)();
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_start_1counters
+JNIEXPORT jint JNICALL Java_PapiJ_start_1counters
   (JNIEnv *env, jobject obj, jintArray values)
 {
   jsize len;
@@ -97,7 +97,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_start_1counters
   return ret;
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_stop_1counters
+JNIEXPORT jint JNICALL Java_PapiJ_stop_1counters
   (JNIEnv *env, jobject obj, jlongArray values)
 {
   jsize len;
@@ -117,7 +117,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_stop_1counters
   return ret;
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_read_1counters
+JNIEXPORT jint JNICALL Java_PapiJ_read_1counters
   (JNIEnv *env, jobject obj, jlongArray values)
 {
   jsize len;
@@ -137,7 +137,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_read_1counters
   return ret;
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_accum_1counters
+JNIEXPORT jint JNICALL Java_PapiJ_accum_1counters
   (JNIEnv *env, jobject obj, jlongArray values)
 {
   jsize len;
@@ -157,7 +157,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_accum_1counters
   return ret;
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_accum
+JNIEXPORT jint JNICALL Java_PapiJ_accum
   (JNIEnv *env, jobject obj, jobject set, jlongArray values)
 {
   jlong *v_arr;
@@ -183,7 +183,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_accum
   return ret;
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_add_1event
+JNIEXPORT jint JNICALL Java_PapiJ_add_1event
   (JNIEnv *env, jobject obj, jobject set, jint event)
 {
   int ret, eventSet, (*add_event)(int, int);   /* JT */
@@ -207,7 +207,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_add_1event
   return ret;
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_add_1events
+JNIEXPORT jint JNICALL Java_PapiJ_add_1events
   (JNIEnv *env, jobject obj, jobject set, jintArray events)
 {
   int num, ret, eventSet, (*add_events)(int, int *, int);   /* JT */
@@ -235,7 +235,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_add_1events
   return ret;
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_cleanup_1eventset
+JNIEXPORT jint JNICALL Java_PapiJ_cleanup_1eventset
   (JNIEnv *env, jobject obj, jobject set)
 {
   int ret, eventSet, (*cleanup_eventset)(int);   /* JT */
@@ -258,7 +258,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_cleanup_1eventset
   return ret;
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_create_1eventset
+JNIEXPORT jint JNICALL Java_PapiJ_create_1eventset
   (JNIEnv *env, jobject obj, jobject set)
 {
   int ret, eventSet, (*create_eventset)(int *);
@@ -281,7 +281,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_create_1eventset
  return ret;
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_num_1events
+JNIEXPORT jint JNICALL Java_PapiJ_num_1events
   (JNIEnv *env, jobject obj, jobject set)
 {
   int ret, eventSet, (*num_events)(int);
@@ -303,7 +303,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_num_1events
  return ret;
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_destroy_1eventset
+JNIEXPORT jint JNICALL Java_PapiJ_destroy_1eventset
   (JNIEnv *env, jobject obj, jobject set)
 {
   int ret, eventSet, (*destroy_eventset)(int *);
@@ -326,7 +326,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_destroy_1eventset
   return ret;
 }
 
-JNIEXPORT jobject JNICALL Java_edu_utk_cs_icl_papi_PapiJ_get_1executable_1info
+JNIEXPORT jobject JNICALL Java_PapiJ_get_1executable_1info
   (JNIEnv *env, jobject obj)
 {
   PAPI_exe_info_t *exe, *(*get_executable_info)(void);
@@ -339,7 +339,7 @@ JNIEXPORT jobject JNICALL Java_edu_utk_cs_icl_papi_PapiJ_get_1executable_1info
 
   exe = (*get_executable_info)();
 
-  if( ! (class = (*env)->FindClass(env, "edu/utk/cs/icl/papi/PAPI_exe_info")) )
+  if( ! (class = (*env)->FindClass(env, "PAPI_exe_info")) )
     return NULL;
 
   mid = (*env)->GetMethodID(env, class, "<init>", 
@@ -356,7 +356,7 @@ JNIEXPORT jobject JNICALL Java_edu_utk_cs_icl_papi_PapiJ_get_1executable_1info
   return exe_obj;
 }
 
-JNIEXPORT jobject JNICALL Java_edu_utk_cs_icl_papi_PapiJ_get_1hardware_1info
+JNIEXPORT jobject JNICALL Java_PapiJ_get_1hardware_1info
   (JNIEnv *env, jobject obj)
 {
   PAPI_hw_info_t *hw, *(*get_hardware_info)(void);
@@ -373,36 +373,36 @@ JNIEXPORT jobject JNICALL Java_edu_utk_cs_icl_papi_PapiJ_get_1hardware_1info
   L = (PAPI_mh_level_t *)&(hw->mem_hierarchy.level[0]);
   levels = hw->mem_hierarchy.levels;
 
-  if( ! (class1 = (*env)->FindClass(env, "edu/utk/cs/icl/papi/PAPI_mh_info")) ){
+  if( ! (class1 = (*env)->FindClass(env, "PAPI_mh_info")) ){
     return NULL;
   }
   mid1 = (*env)->GetMethodID(env, class1, "<init>", "(I)V");
-  mid2 = (*env)->GetMethodID(env, class1, "mh_level_value", "(ILedu/utk/cs/icl/papi/PAPI_mh_level_info;)V");
+  mid2 = (*env)->GetMethodID(env, class1, "mh_level_value", "(ILPAPI_mh_level_info;)V");
   mh_obj = (*env)->NewObject(env, class1, mid1, levels);
 
   for (i=0; i<levels; i++) {
 
-    if( ! (itlbclass = (*env)->FindClass(env, "edu/utk/cs/icl/papi/PAPI_mh_itlb_info")) )
+    if( ! (itlbclass = (*env)->FindClass(env, "PAPI_mh_itlb_info")) )
       return NULL;
     itlbmid = (*env)->GetMethodID(env, itlbclass, "<init>", "(III)V");
 
-    if( ! (dtlbclass = (*env)->FindClass(env, "edu/utk/cs/icl/papi/PAPI_mh_dtlb_info")) )
+    if( ! (dtlbclass = (*env)->FindClass(env, "PAPI_mh_dtlb_info")) )
       return NULL;
     dtlbmid = (*env)->GetMethodID(env, dtlbclass, "<init>", "(III)V");
    
-    if( ! (utlbclass = (*env)->FindClass(env, "edu/utk/cs/icl/papi/PAPI_mh_utlb_info")) )
+    if( ! (utlbclass = (*env)->FindClass(env, "PAPI_mh_utlb_info")) )
       return NULL;
     utlbmid = (*env)->GetMethodID(env, utlbclass, "<init>", "(III)V");
     
-    if( ! (icclass = (*env)->FindClass(env, "edu/utk/cs/icl/papi/PAPI_mh_icache_info")) )
+    if( ! (icclass = (*env)->FindClass(env, "PAPI_mh_icache_info")) )
       return NULL;
     icmid = (*env)->GetMethodID(env, icclass, "<init>", "(IIIII)V");
 
-    if( ! (dcclass = (*env)->FindClass(env, "edu/utk/cs/icl/papi/PAPI_mh_dcache_info")) )
+    if( ! (dcclass = (*env)->FindClass(env, "PAPI_mh_dcache_info")) )
       return NULL;
     dcmid = (*env)->GetMethodID(env, dcclass, "<init>", "(IIIII)V");
     
-    if( ! (ucclass = (*env)->FindClass(env, "edu/utk/cs/icl/papi/PAPI_mh_ucache_info")) )
+    if( ! (ucclass = (*env)->FindClass(env, "PAPI_mh_ucache_info")) )
       return NULL;
     ucmid = (*env)->GetMethodID(env, ucclass, "<init>", "(IIIII)V");
     
@@ -460,20 +460,20 @@ JNIEXPORT jobject JNICALL Java_edu_utk_cs_icl_papi_PapiJ_get_1hardware_1info
     if(!cu)
       uc_obj = (*env)->NewObject(env, ucclass, ucmid, 0, 0, 0, 0, 0);
 
-    if( ! (mhlclass = (*env)->FindClass(env, "edu/utk/cs/icl/papi/PAPI_mh_level_info")) ){
+    if( ! (mhlclass = (*env)->FindClass(env, "PAPI_mh_level_info")) ){
       return NULL;
     }
-    mhlmid = (*env)->GetMethodID(env, mhlclass, "<init>", "(Ledu/utk/cs/icl/papi/PAPI_mh_itlb_info;Ledu/utk/cs/icl/papi/PAPI_mh_dtlb_info;Ledu/utk/cs/icl/papi/PAPI_mh_utlb_info;Ledu/utk/cs/icl/papi/PAPI_mh_icache_info;Ledu/utk/cs/icl/papi/PAPI_mh_dcache_info;Ledu/utk/cs/icl/papi/PAPI_mh_ucache_info;)V");
-    mhl_obj = (*env)->NewObject(env, mhlclass, mhlmid, itlb_obj, dtlb_obj, utlb_obj, ic_obj, dc_obj, uc_obj);
+    mhlmid = (*env)->GetMethodID(env, mhlclass, "<init>", "(LPAPI_mh_itlb_info;LPAPI_mh_dtlb_info;LPAPI_mh_utlb_info;LPAPI_mh_icache_info;LPAPI_mh_dcache_info;LPAPI_mh_ucache_info;)V");
+      mhl_obj = (*env)->NewObject(env, mhlclass, mhlmid, itlb_obj, dtlb_obj, utlb_obj, ic_obj, dc_obj, uc_obj);
       (*env)->CallVoidMethod(env, mh_obj, mid2, i, mhl_obj);
 
   }
 
-  if( ! (class = (*env)->FindClass(env, "edu/utk/cs/icl/papi/PAPI_hw_info")) )
+  if( ! (class = (*env)->FindClass(env, "PAPI_hw_info")) )
     return NULL;
 
   mid = (*env)->GetMethodID(env, class, "<init>",
-    "(IIIILjava/lang/String;ILjava/lang/String;FFLedu/utk/cs/icl/papi/PAPI_mh_info;)V");
+    "(IIIILjava/lang/String;ILjava/lang/String;FFLPAPI_mh_info;)V");
 
 
   hw_obj = (*env)->NewObject(env, class, mid, hw->ncpu, hw->nnodes,
@@ -484,7 +484,7 @@ JNIEXPORT jobject JNICALL Java_edu_utk_cs_icl_papi_PapiJ_get_1hardware_1info
   return hw_obj;
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_library_1init
+JNIEXPORT jint JNICALL Java_PapiJ_library_1init
   (JNIEnv *env, jobject obj, jint ver)
 {
   int (*library_init)(int);
@@ -495,7 +495,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_library_1init
   return (*library_init)(ver); 
 }
 
-JNIEXPORT jlong JNICALL Java_edu_utk_cs_icl_papi_PapiJ_get_1real_1cyc
+JNIEXPORT jlong JNICALL Java_PapiJ_get_1real_1cyc
   (JNIEnv *env, jobject obj)
 {
   long long (*get_real_cyc)(void);
@@ -506,7 +506,7 @@ JNIEXPORT jlong JNICALL Java_edu_utk_cs_icl_papi_PapiJ_get_1real_1cyc
   return (*get_real_cyc)(); 
 }
 
-JNIEXPORT jlong JNICALL Java_edu_utk_cs_icl_papi_PapiJ_get_1real_1usec
+JNIEXPORT jlong JNICALL Java_PapiJ_get_1real_1usec
   (JNIEnv *env, jobject obj)
 {
   long long (*get_real_usec)(void);
@@ -517,7 +517,7 @@ JNIEXPORT jlong JNICALL Java_edu_utk_cs_icl_papi_PapiJ_get_1real_1usec
   return (*get_real_usec)(); 
 }
 
-JNIEXPORT jlong JNICALL Java_edu_utk_cs_icl_papi_PapiJ_get_1virt_1cyc
+JNIEXPORT jlong JNICALL Java_PapiJ_get_1virt_1cyc
   (JNIEnv *env, jobject obj)
 {
   unsigned long long (*get_virt_cyc)(void);    /* JT */
@@ -528,7 +528,7 @@ JNIEXPORT jlong JNICALL Java_edu_utk_cs_icl_papi_PapiJ_get_1virt_1cyc
   return (*get_virt_cyc)(); 
 }
 
-JNIEXPORT jlong JNICALL Java_edu_utk_cs_icl_papi_PapiJ_get_1virt_1usec
+JNIEXPORT jlong JNICALL Java_PapiJ_get_1virt_1usec
   (JNIEnv *env, jobject obj)
 {
   unsigned long long (*get_virt_usec)(void);     /* JT */
@@ -539,7 +539,7 @@ JNIEXPORT jlong JNICALL Java_edu_utk_cs_icl_papi_PapiJ_get_1virt_1usec
   return (*get_virt_usec)(); 
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_list_1events
+JNIEXPORT jint JNICALL Java_PapiJ_list_1events
   (JNIEnv *env, jobject obj, jobject set, jintArray events)
 {
   int num, ret, (*list_events)(int, int*, int*), eventSet;
@@ -566,7 +566,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_list_1events
   return ret;
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_perror
+JNIEXPORT jint JNICALL Java_PapiJ_perror
   (JNIEnv *env, jobject obj, jint code, jcharArray dest)
 {
   int ret, num, (*papi_perror)(int, char *, int);
@@ -586,7 +586,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_perror
   return ret;
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_profil
+JNIEXPORT jint JNICALL Java_PapiJ_profil
   (JNIEnv *env, jobject obj, jshortArray buf, jlong offset, jint scale,
       jobject set, jint eventCode, jint thresh, jint flags)
 {
@@ -618,7 +618,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_profil
   return ret;
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_query_1event
+JNIEXPORT jint JNICALL Java_PapiJ_query_1event
   (JNIEnv *env, jobject obj, jint eventCode)
 {
   int (*query_event)(int);
@@ -629,7 +629,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_query_1event
   return (*query_event)(eventCode);
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_read
+JNIEXPORT jint JNICALL Java_PapiJ_read
   (JNIEnv *env, jobject obj, jobject set, jlongArray values)
 {
   jlong *v_arr;
@@ -655,7 +655,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_read
   return ret;
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_reset
+JNIEXPORT jint JNICALL Java_PapiJ_reset
   (JNIEnv *env, jobject obj, jobject set)
 {
   int eventSet, (*papi_reset)(int);
@@ -674,7 +674,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_reset
   return (*papi_reset)(eventSet);
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_restore
+JNIEXPORT jint JNICALL Java_PapiJ_restore
   (JNIEnv *env, jobject obj)
 {
   int (*papi_restore)(void);
@@ -685,7 +685,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_restore
   return (*papi_restore)();
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_save
+JNIEXPORT jint JNICALL Java_PapiJ_save
   (JNIEnv *env, jobject obj)
 {
   int (*papi_save)(void);
@@ -696,7 +696,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_save
   return (*papi_save)();
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_set_1debug
+JNIEXPORT jint JNICALL Java_PapiJ_set_1debug
   (JNIEnv *env, jobject obj, jint level)
 {
   int (*set_debug)(int);
@@ -707,7 +707,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_set_1debug
   return (*set_debug)(level);
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_set_1domain
+JNIEXPORT jint JNICALL Java_PapiJ_set_1domain
   (JNIEnv *env, jobject obj, jint domain)
 {
   int (*set_domain)(int);
@@ -718,7 +718,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_set_1domain
   return (*set_domain)(domain);
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_set_1granularity
+JNIEXPORT jint JNICALL Java_PapiJ_set_1granularity
   (JNIEnv *env, jobject obj, jint granularity)
 {
   int (*set_granularity)(int);
@@ -729,7 +729,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_set_1granularity
   return (*set_granularity)(granularity);
 }
 
-JNIEXPORT void JNICALL Java_edu_utk_cs_icl_papi_PapiJ_shutdown
+JNIEXPORT void JNICALL Java_PapiJ_shutdown
   (JNIEnv *env, jobject obj)
 {
   int (*papi_shutdown)(void);
@@ -742,7 +742,7 @@ JNIEXPORT void JNICALL Java_edu_utk_cs_icl_papi_PapiJ_shutdown
   return;
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_start
+JNIEXPORT jint JNICALL Java_PapiJ_start
   (JNIEnv *env, jobject obj, jobject set)
 {
   int eventSet, (*papi_start)(int);
@@ -761,7 +761,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_start
   return (*papi_start)(eventSet);
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_stop
+JNIEXPORT jint JNICALL Java_PapiJ_stop
   (JNIEnv *env, jobject obj, jobject set, jlongArray values)
 {
   jlong *v_arr;
@@ -787,7 +787,7 @@ JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_stop
   return ret;
 }
 
-JNIEXPORT jstring JNICALL Java_edu_utk_cs_icl_papi_PapiJ_strerror
+JNIEXPORT jstring JNICALL Java_PapiJ_strerror
   (JNIEnv *env, jobject obj, jint code)
 {
   char *ret, *(*papi_strerror)(int);
@@ -800,7 +800,7 @@ JNIEXPORT jstring JNICALL Java_edu_utk_cs_icl_papi_PapiJ_strerror
   return (*env)->NewStringUTF(env,ret);
 }
 
-JNIEXPORT jint JNICALL Java_edu_utk_cs_icl_papi_PapiJ_write
+JNIEXPORT jint JNICALL Java_PapiJ_write
  (JNIEnv *env, jobject obj, jobject set, jlongArray values)
 {
   jlong *v_arr;

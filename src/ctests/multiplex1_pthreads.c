@@ -166,8 +166,16 @@ void *case2_pthreads(void *arg)
    if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
+   /* In Component PAPI, EventSets must be assigned a component index
+      before you can fiddle with their internals.
+      0 is always the cpu component */
+   retval = PAPI_assign_eventset_component(EventSet, 0);
+   if (retval != PAPI_OK)
+      CPP_TEST_FAIL("PAPI_assign_eventset_component", retval);
+
    if ((retval = PAPI_set_multiplex(EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_set_multiplex", retval);
+      printf("++case2 thread %4x:", (unsigned) pthread_self());
 
    for (i = 0; i < PAPI_events_len; i++) {
       char out[PAPI_MAX_STR_LEN];

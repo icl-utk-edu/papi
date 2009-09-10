@@ -14,7 +14,7 @@
 #ifndef _PAPI_PERFCTR_PPC64            /* _PAPI_PERFCTR_PPC64 */
 #define _PAPI_PERFCTR_PPC64
 
-#if defined(_POWER5) || defined(_POWER5p) || defined(_POWER6)
+#if defined(_POWER5) || defined(_POWER5p)
 #define MAX_COUNTERS 6
 #define NUM_COUNTER_MASKS 4	
 /* masks for PMC1-4 should be AND'ed into MMCR1 */
@@ -22,12 +22,8 @@
 #define PMC2_SEL_MASK	0xFFFFFFFFFF00FFFFULL
 #define PMC3_SEL_MASK	0xFFFFFFFFFFFF00FFULL
 #define PMC4_SEL_MASK	0xFFFFFFFFFFFFFF00ULL
-#ifndef _POWER6
 /* PMC5_6_FREEZE should be OR'ed into MMCR0 */
 #define PMC5_PMC6_FREEZE	0x00000010UL
-#else
-/* POWER6's counters 5 and 6 cannot be frozen */
-#endif
 #else
 #define MAX_COUNTERS 8
 #define NUM_COUNTER_MASKS	MAX_COUNTERS+1
@@ -67,7 +63,7 @@
 //#define PAPI_MAX_STR_LEN 129
 
 // control bits MMCR0
-#define PERF_INT_ENABLE			0x0000C000 // enables interrupts on PMC1 as well as PMC2-PMCj (not POWER6: 2<=j<=MAX_COUNTERS, POWER6: 2<=j<=4) 
+#define PERF_INT_ENABLE			0x0000C000 // enables interrupts on PMC1 as well as PMC2-PMCj (2<=j<=MAX_COUNTERS)
 #define PMC_OVFL                        0x80000000
 #define PERF_KERNEL                     0x40000000
 #define PERF_USER                       0x20000000
@@ -153,6 +149,9 @@ typedef struct ppc64_perfctr_control {
 // the members below are from power4.h	
    /* Buffer to pass to the kernel to control the counters */
    int group_id;
+   /* Interrupt interval */
+   int timer_ms;
+
 	
 // the members below are from perfctr-p3.h	
    hwd_native_t native[MAX_COUNTERS];

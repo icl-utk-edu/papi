@@ -467,6 +467,7 @@ static int create_context(int argc, char **argv)
 	void *smpl_p;
 	int no_overflow_msg = FALSE;
 	int block_on_notify = FALSE;
+	int remap_eventsets = FALSE;
 	int system_wide = FALSE;
 	int c, ctx_id = 0;
 	int rc;
@@ -477,6 +478,7 @@ static int create_context(int argc, char **argv)
 		{"system",          no_argument,       NULL, 2},
 		{"no-overflow-msg", no_argument,       NULL, 3},
 		{"block-on-notify", no_argument,       NULL, 4},
+		{"remap-eventsets", no_argument,       NULL, 5},
 		{NULL,              0,                 NULL, 0} };
 
 	memset(&ctx_arg, 0, sizeof(ctx_arg));
@@ -497,6 +499,9 @@ static int create_context(int argc, char **argv)
 			break;
 		case 4:
 			block_on_notify = TRUE;
+			break;
+		case 5:
+			remap_eventsets = TRUE;
 			break;
 		default:
 			LOG_ERROR("invalid option: %c", optopt);
@@ -538,7 +543,8 @@ static int create_context(int argc, char **argv)
 
 	ctx_arg.ctx_flags = (system_wide     ? PFM_FL_SYSTEM_WIDE  : 0) |
 			    (no_overflow_msg ? PFM_FL_OVFL_NO_MSG  : 0) |
-			    (block_on_notify ? PFM_FL_NOTIFY_BLOCK : 0);
+			    (block_on_notify ? PFM_FL_NOTIFY_BLOCK : 0) |
+			    (remap_eventsets ? PFM_FL_MAP_SETS     : 0);
 
 	rc = pfm_create_context(&ctx_arg, sampler_name, smpl_p, sz);
 	if (rc == -1) {
@@ -865,6 +871,28 @@ static int write_pmc(int argc, char **argv)
 	if (system_wide && ctx->cpu >= 0) {
 		revert_affinity(&old_cpu_set);
 	}
+
+	/* Check each PMC for success or failure. */
+	for (i = 0; i < num_pmcs; i++) {
+		if (pmc_args[i].reg_flags & PFM_REG_RETFL_NOTAVAIL) {
+			LOG_ERROR("PMC %d is not currently available.",
+				  pmc_args[i].reg_num);
+			rc = EBUSY;
+		} else if (pmc_args[i].reg_flags & PFM_REG_RETFL_EINVAL) {
+			LOG_ERROR("PMC %d is not a valid control register.",
+				  pmc_args[i].reg_num);
+			rc = EINVAL;
+		} else if (pmc_args[i].reg_flags & PFM_REG_RETFL_NOSET) {
+			LOG_ERROR("Event-set %d does not exist.",
+				  pmc_args[i].reg_set);
+			rc = EINVAL;
+		} else {
+			LOG_INFO("Wrote to PMC %d: 0x%llx",
+				 pmc_args[i].reg_num,
+				 (unsigned long long)pmc_args[i].reg_value);
+		}
+	}
+
 out:
 	free(pmc_args);
 	return rc;
@@ -952,6 +980,28 @@ static int write_pmd(int argc, char **argv)
 	if (system_wide && ctx->cpu >= 0) {
 		revert_affinity(&old_cpu_set);
 	}
+
+	/* Check each PMD for success or failure. */
+	for (i = 0; i < num_pmds; i++) {
+		if (pmd_args[i].reg_flags & PFM_REG_RETFL_NOTAVAIL) {
+			LOG_ERROR("PMD %d is not currently available.",
+				  pmd_args[i].reg_num);
+			rc = EBUSY;
+		} else if (pmd_args[i].reg_flags & PFM_REG_RETFL_EINVAL) {
+			LOG_ERROR("PMD %d is not a valid data register.",
+				  pmd_args[i].reg_num);
+			rc = EINVAL;
+		} else if (pmd_args[i].reg_flags & PFM_REG_RETFL_NOSET) {
+			LOG_ERROR("Event-set %d does not exist.",
+				  pmd_args[i].reg_set);
+			rc = EINVAL;
+		} else {
+			LOG_INFO("Wrote to PMD %d: %llu",
+				 pmd_args[i].reg_num,
+				 (unsigned long long)pmd_args[i].reg_value);
+		}
+	}
+
 out:
 	free(pmd_args);
 	return rc;
@@ -1035,6 +1085,28 @@ static int read_pmd(int argc, char **argv)
 	if (system_wide && ctx->cpu >= 0) {
 		revert_affinity(&old_cpu_set);
 	}
+
+	/* Check each PMD for success or failure. */
+	for (i = 0; i < num_pmds; i++) {
+		if (pmd_args[i].reg_flags & PFM_REG_RETFL_NOTAVAIL) {
+			LOG_ERROR("PMD %d is not currently available.",
+				  pmd_args[i].reg_num);
+			rc = EBUSY;
+		} else if (pmd_args[i].reg_flags & PFM_REG_RETFL_EINVAL) {
+			LOG_ERROR("PMD %d is not a valid data register.",
+				  pmd_args[i].reg_num);
+			rc = EINVAL;
+		} else if (pmd_args[i].reg_flags & PFM_REG_RETFL_NOSET) {
+			LOG_ERROR("Event-set %d does not exist.",
+				  pmd_args[i].reg_set);
+			rc = EINVAL;
+		} else {
+			LOG_INFO("Read from PMD %d: %llu",
+				 pmd_args[i].reg_num,
+				 (unsigned long long)pmd_args[i].reg_value);
+		}
+	}
+
 out:
 	free(pmd_args);
 	return rc;

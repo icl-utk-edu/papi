@@ -27,7 +27,7 @@ include $(TOPDIR)/rules.mk
 
 LIBS += -lm
 
-TARGETS=smpl_p4_pebs smpl_core_pebs smpl_amd64_ibs
+TARGETS=smpl_p4_pebs smpl_core_pebs
 
 all: $(TARGETS)
 
@@ -35,9 +35,10 @@ $(TARGETS):  %:%.o $(PFMLIB) ../detect_pmcs.o
 	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $^ $(LIBS)
 
 clean:
-	$(RM) -f *.o $(TARGETS) *~
+	$(RM) -f *.o 
 
 distclean: clean
+	$(RM) -f $(TARGETS) *~
 
 #
 # examples are installed as part of the RPM install, typically in /usr/share/doc/libpfm-X.Y/

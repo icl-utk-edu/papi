@@ -79,13 +79,7 @@ endif
 
 CC_R    	:= $(CC) -pthread
 CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
-
-ifeq (pgf77,$(F77))
-	FFLAGS      += -Wall -Mextend $(BITFLAGS)
-else
-	FFLAGS      += -Wall -ffixed-line-length-132 $(BITFLAGS)
-endif
-
+FFLAGS		+= -Wall -ffixed-line-length-132 $(BITFLAGS)
 CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(BITFLAGS)
 
 # 

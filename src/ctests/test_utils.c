@@ -675,9 +675,11 @@ int enum_add_native_events(int *num_events, int **evtcodes)
 	int i = 0, k, event_code, retval;
 	unsigned int counters, event_found = 0;
 	PAPI_event_info_t info;
-	const PAPI_substrate_info_t *s = NULL;
+	const PAPI_component_info_t *s = NULL;
 
-	s = PAPI_get_substrate_info();
+	s = PAPI_get_component_info(0);
+	if (s == NULL)
+		test_fail(__FILE__, __LINE__, "PAPI_get_component_info", PAPI_ESBSTR);
 
 	counters = (unsigned int)PAPI_num_hwctrs();
 	(*evtcodes) = (int *)calloc(counters, sizeof(int));
@@ -742,19 +744,20 @@ void init_multiplex(void)
 {
 	int retval;
 	const PAPI_hw_info_t *hw_info;
-	const PAPI_substrate_info_t * subinfo;
+	const PAPI_component_info_t * cmpinfo;
 
 	/* Initialize the library */
 
-	subinfo = PAPI_get_substrate_info();
-	if (subinfo == NULL)
-		test_fail(__FILE__, __LINE__, "PAPI_get_substrate_info", 2);
+	/* for now, assume multiplexing on CPU compnent only */
+	cmpinfo = PAPI_get_component_info(0);
+	if (cmpinfo == NULL)
+		test_fail(__FILE__, __LINE__, "PAPI_get_component_info", 2);
 
 	hw_info = PAPI_get_hardware_info();
 	if (hw_info == NULL)
 		test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
-	if ((strstr(subinfo->name, "linux.c")) &&
+	if ((strstr(cmpinfo->name, "linux.c")) &&
 		strcmp(hw_info->model_string, "POWER6") == 0) {
 		retval = PAPI_set_domain(PAPI_DOM_ALL);
 		if (retval != PAPI_OK)
@@ -764,5 +767,4 @@ void init_multiplex(void)
 	if (retval != PAPI_OK)
 		test_fail(__FILE__, __LINE__, "PAPI multiplex init fail\n", retval);
 }
-
 

@@ -50,7 +50,7 @@ clockres: clockres.F $(UTILOBJS) $(PAPILIB)
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) clockres.F $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o clockres
 
 avail: avail.F $(UTILOBJS)  $(PAPILIB)
-	-$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) avail.F  $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o avail
+	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) avail.F  $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o avail
 
 eventname: eventname.F $(UTILOBJS)  $(PAPILIB)
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) eventname.F $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o eventname

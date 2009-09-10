@@ -3,6 +3,7 @@
 
 .SH NAME
  PAPI_get_opt \- get PAPI library or event set options
+ PAPI_get_cmp_opt \- get component specific PAPI options
  PAPI_set_opt \- set PAPI library or event set options
  PAPIF_get_clockrate \- get the clockrate (Fortran only)
  PAPIF_get_domain \- get the counting domain (Fortran only)
@@ -14,6 +15,7 @@
 .nf
 .B #include <papi.h>
 .BI "int PAPI_get_opt(int " option ", PAPI_option_t *" ptr ");"
+.BI "int PAPI_get_cmp_opt(int " option ", PAPI_option_t *" ptr ", int " cidx ");"
 .BI "int PAPI_set_opt(int " option ", PAPI_option_t *" ptr ");"
 .fi
 .B Fortran Interface
@@ -31,11 +33,18 @@ and
 .B PAPI_set_opt() 
 query or change the options of the PAPI library or a specific event set 
 created by
-.BR "PAPI_create_eventset" (3).
+.BR "PAPI_create_eventset" (3). Some options may require that the eventset be
+bound to a component before they can execute successfully. This can be done either
+by adding an event or by explicitly calling 
+.BR "PAPI_assign_eventset_component" (3).
+
 The C interface for these functions passes a pointer to the
 .I PAPI_option_t
 structure. Not all options require or return information in this structure,
-and not all options are implemented for both get and set.
+and not all options are implemented for both get and set. Some options require 
+a component index to be provided. These options are handled explicitly by the 
+.B PAPI_get_cmp_opt() 
+call for 'get' and implicitly through the option structure for 'set'.
 
 The Fortran interface is a series of calls implementing various subsets of
 the C interface. Not all options in C are available in Fortran.
@@ -65,6 +74,9 @@ implementations of specific options.
 It is defined in
 .B papi.h
 and  below.
+.LP
+.I cidx
+-- An integer identifier for a component. By convention, component 0 is always the cpu component.
 .LP
 .I EventSet 
 -- input; a reference to an EventSetInfo structure
@@ -104,6 +116,7 @@ Get number of CPUs.
 T}
 PAPI_MAX_HWCTRS$T{
 Get number of counters.
+Requires a component index.
 T}
 PAPI_EXEINFO$T{
 Get Executable addresses for text/data/bss.
@@ -114,8 +127,9 @@ T}
 PAPI_SHLIBINFO$T{
 Get shared library information used by the program.
 T}
-PAPI_SUBSTRATEINFO$T{
-Get the PAPI features the substrate supports
+PAPI_COMPONENTINFO$T{
+Get the PAPI features the specified component supports.
+Requires a component index.
 T}
 PAPI_LIB_VERSION$T{
 Get the full PAPI version of the library
@@ -129,9 +143,11 @@ lB lw(45).
 Defaults for the global library
 PAPI_DEFDOM$T{
 Get/Set default counting domain for newly created event sets.
+Requires a component index.
 T}
 PAPI_DEFGRN$T{
 Get/Set default counting granularity.
+Requires a component index.
 T}
 PAPI_DEBUG$T{
 Get/Set the PAPI debug state and the debug handler. The available debug states are
@@ -144,26 +160,15 @@ cI s
 lB lw(45).
 Multiplexing control
 PAPI_MULTIPLEX$T{
-Get/Set options for multiplexing of the eventset. 
+Get/Set options for multiplexing. 
 T}
 PAPI_MAX_MPX_CTRS$T{
 Get maximum number of multiplexing counters. 
+Requires a component index.
 T}
-PAPI_DEF_MPX_NS$T{
-Get/Set the sampling time slice in nanoseconds for multiplexing, currently the same as PAPI_DEF_ITIMER_NS. The substrate is free to change the requested value according to the resolution of the underlying implementation.
+PAPI_DEF_MPX_USEC$T{
+Get/Set the sampling time slice in microseconds for multiplexing. 
 T}
-
-.T&
-cI s
-1B 1w(45).
-Control of interrupt timers
-PAPI_DEF_ITIMER_NS$T{
-Get/Set the sampling time slice in nanoseconds for software emulation of overflow and profiling, currently the same as PAPI_DEF_MPX_NS. 
-T}
-PAPI_DEF_ITIMER$T{
-Get/Set the signal, itimer and sampling time slice in nanoseconds for software emulation of overflow and profiling. A value of 0 for the sampling time slice means the default value is unchanged. 
-T}
-
 .T&
 cI s
 lB lw(45).
@@ -183,11 +188,11 @@ to be detached from any thread or process id.
 T}
 PAPI_DOMAIN$T{
 Get/Set domain for a single event set. The event set is specified 
-in ptr->domain.eventset
+in ptr->domain.eventset. Will error if eventset is not bound to a component.
 T}
 PAPI_GRANUL$T{
 Get/Set granularity for a single event set. The event set is specified 
-in ptr->granularity.eventset. Not implemented yet.
+in ptr->granularity.eventset. Will error if eventset is not bound to a component.
 T}
 .T&
 cI s
@@ -226,11 +231,11 @@ typedef union {
   PAPI_domain_option_t defdomain; 
   PAPI_attach_option_t attach;
   PAPI_multiplex_option_t multiplex;
-  PAPI_itimer_option_t itimer; 
   PAPI_hw_info_t *hw_info;
   PAPI_shlib_info_t *shlib_info;
   PAPI_exe_info_t *exe_info;
-  PAPI_substrate_info_t *sub_info;
+  PAPI_component_info_t *sub_info;
+  PAPI_overflow_option_t ovf_info;
   PAPI_addr_range_option_t addr;
 } PAPI_option_t;
 .if t .ft P
@@ -249,6 +254,11 @@ One or more of the arguments is invalid.
 .B "PAPI_ENOEVST"
 The event set specified does not exist.
 .TP
+.B "PAPI_ENOCMP"
+The argument
+.I cidx
+is not a valid component.
+.TP
 .B "PAPI_EISRUN"
 The event set is currently counting events.
 
@@ -258,10 +268,10 @@ The event set is currently counting events.
 .if t .ft CW
 PAPI_option_t options;
 
-if ((num = PAPI_get_opt(PAPI_MAX_HWCTRS,NULL)) <= 0)
+if ((num = PAPI_get_cmp_opt(PAPI_MAX_HWCTRS,NULL,0)) <= 0)
   handle_error();
 
-printf("This machine has %d counters.\n",num);
+printf("This component has %d counters.\n",num);
 
 /* Set the domain of this EventSet 
    to counter user and kernel modes for this
@@ -275,20 +285,8 @@ if (PAPI_set_opt(PAPI_DOMAIN, &options) != PAPI_OK)
 .if t .ft P
 .fi
 
-.SH IBM POWER6 NOTES
-
-.P
-If you call PAPI_set_opt(PAPI_DOMAIN, ...) on an event set containing 
-either of the events PM_RUN_CYC or PM_RUN_INST_CMPL with a domain
-anything other than PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR,
-you may receive PAPI_ECNFLCT because of restrictions to event counters 5 &
-6.  For more details, see the IBM POWER6 NOTES in the
-.BR PAPI_add_event "(3)"
-documentation.
-
 .SH BUGS
-The granularity functions are not yet implemented.
-The domain functions are only implemented on some platforms.
+The granularity and domain functions are only implemented on some components.
 There are no known bugs in these functions.
 
 .SH SEE ALSO

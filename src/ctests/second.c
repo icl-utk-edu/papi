@@ -119,7 +119,7 @@ void case1(int num)
    long long **values;
    int EventSet1=PAPI_NULL, EventSet2=PAPI_NULL, EventSet3=PAPI_NULL;
    PAPI_option_t options;
-   const PAPI_substrate_info_t *subinfo;
+   const PAPI_component_info_t *cmpinfo;
 
    memset(&options, 0x0, sizeof(options));
 
@@ -127,9 +127,9 @@ void case1(int num)
    if (retval != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   subinfo = PAPI_get_substrate_info();
-   if (subinfo == NULL)
-      test_fail(__FILE__, __LINE__, "PAPI_get_substrate_info", PAPI_ESBSTR);
+   cmpinfo = PAPI_get_component_info(0); /* get info from cpu component */
+   if (cmpinfo == NULL)
+      test_fail(__FILE__, __LINE__, "PAPI_get_component_info", PAPI_ESBSTR);
    
    if ((retval = PAPI_query_event(PAPI_TOT_INS)) != PAPI_OK)
       test_skip(__FILE__, __LINE__, "PAPI_query_event", retval);
@@ -138,16 +138,22 @@ void case1(int num)
       test_skip(__FILE__, __LINE__, "PAPI_query_event", retval);
 
    retval = PAPI_create_eventset(&EventSet1);
+   if (retval == PAPI_OK)
+       retval = PAPI_create_eventset(&EventSet2);
+   if (retval == PAPI_OK)
+       retval = PAPI_create_eventset(&EventSet3);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
-   retval = PAPI_create_eventset(&EventSet2);
+   /* In Component PAPI, EventSets must be assigned a component index
+      before you can fiddle with their internals. 0 is always the cpu component */
+   retval = PAPI_assign_eventset_component(EventSet1, 0);
+   if (retval == PAPI_OK)
+       retval = PAPI_assign_eventset_component(EventSet2, 0);
+   if (retval == PAPI_OK)
+       retval = PAPI_assign_eventset_component(EventSet3, 0);
    if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
-
-   retval = PAPI_create_eventset(&EventSet3);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
+      test_fail(__FILE__, __LINE__, "PAPI_assign_eventset_component", retval);
 
    if (num == CREATE)
    {
@@ -261,7 +267,7 @@ void case1(int num)
 		PAPI_start(EventSet1);
 		PAPI_stop(EventSet1, values[0]);
 		
-		/* change EventSet1 domain from All to User */
+		// change EventSet1 domain from All  to User
 		option.domain.domain = PAPI_DOM_USER;
 		option.domain.eventset = EventSet1;
 		retval = PAPI_set_opt(PAPI_DOMAIN, &option);
@@ -271,7 +277,7 @@ void case1(int num)
 		PAPI_start(EventSet2);
 		PAPI_stop(EventSet2, values[1]);
 		
-		/* change EventSet2 domain from Kernel to All */
+		// change EventSet2 domain from Kernel to All
 		option.domain.domain = PAPI_DOM_ALL;
 		option.domain.eventset = EventSet2;
 		retval = PAPI_set_opt(PAPI_DOMAIN, &option);
@@ -281,7 +287,7 @@ void case1(int num)
 		PAPI_start(EventSet3);
 		PAPI_stop(EventSet3, values[2]);
 		
-		/* change EventSet3 domain from User  to Kernel */
+		// change EventSet3 domain from User  to Kernel
 		option.domain.domain = PAPI_DOM_KERNEL;
 		option.domain.eventset = EventSet3;
 		retval = PAPI_set_opt(PAPI_DOMAIN, &option);
@@ -293,7 +299,7 @@ void case1(int num)
 		
 	}
 
-	if (num == SUPERVISOR && (subinfo->available_domains & PAPI_DOM_SUPERVISOR)) {
+	if (num == SUPERVISOR && (cmpinfo->available_domains & PAPI_DOM_SUPERVISOR)) {
 		PAPI_option_t option;
 
 		printf("\nTest case CHANGE 2: Change domain on EventSets to include/exclude supervisor events:\n");
@@ -304,7 +310,7 @@ void case1(int num)
 		if (retval != PAPI_OK)
 			test_fail(__FILE__, __LINE__, "PAPI_set_domain", retval);
 		
-		option.domain.domain = subinfo->available_domains ^ PAPI_DOM_SUPERVISOR;	
+		option.domain.domain = PAPI_DOM_ALL ^ PAPI_DOM_SUPERVISOR;	
 		option.domain.eventset = EventSet2;
 		retval = PAPI_set_opt(PAPI_DOMAIN, &option);
 		if (retval != PAPI_OK)

@@ -49,8 +49,6 @@ $cgiMode = 0;
 	}
 	$cmdLineMode = 1;
 	$file = $request;
-	$file =~ s,",,g;
-	$file =~ s,\\,/,g;
 	($dir,$name,$ext) = ($file =~ m,^(.*)/([^/]+)\.([^.]+)$,);
 	if ($outdir ne "") {
 		$dir = $outdir;

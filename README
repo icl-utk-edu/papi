@@ -2,27 +2,22 @@
 * File:    README
 * CVS:     $Id$
 * Author:  Philip Mucci
-*          mucci@eecs.utk.edu
-* Mods:    Dan Terpstra
-*          terpstra@eecs.utk.edu
+*          mucci@cs.utk.edu
+* Mods:    <your name here>
+*          <your email address>
 */  
 
 This directory contains:
 
 README		This file.
-LICENSE.txt	The text of the PAPI license.
+LICENSE.txt	The text of the PAPI license.	
 INSTALL.txt	Instructions for installing on all supported platforms.
+HISTORY.txt	A brief history of features and platforms added to PAPI.
+doc/ 		User documentation and support files.
+		See doc/README for details.
+man/ 		Stuff related to PAPI man pages. See man/README for details.
 src/ 		The PAPI library source files and support files.
-			See src/README for details.
-
-NOTE on directory contents
---------------------------
-
-Previous releases of PAPI contained man/ and doc/ directories with man pages
-and user documentation. These contents have now been placed online and can be 
-found under the PAPI References link on the main PAPI web page at: 
-http://icl.cs.utk.edu/papi/, or directly at: 
-http://icl.cs.utk.edu/projects/papi/wiki/Main_Page
+		See src/README for more details.
 
 
 Getting Started
@@ -36,11 +31,10 @@ a few tips on where to go from here.
   PAPI sources.
 - Visit the website at: <http://icl.cs.utk.edu/papi>
   There you can find late-breaking news that may be more current than in these
-  files. You can also find a variety of online documentation for the PAPI API.
-- Subscribe to the PAPI User Forum. A link can be found on the PAPI home page.
-- Sign up for the PAPI mailing list(s). Instructions are under the Contacts tab
-  on the PAPI home page.
-- Scan the RELEASENOTES.txt file to get an idea of what's new in the current release.
+  files. You can also find documentation in a greater variety of formats than
+  in the papi/doc/ directory.
+- Sign up for the PAPI mailing list(s). Instructions are on our home page.
+- Read the RELEASENOTES.txt file to get an idea of what's new in the current release.
 
 
 Installing PAPI
@@ -54,18 +48,15 @@ To install PAPI on your system:
 - Run the test suite when you are finished to verify that everything went ok.
   NOTE: Although we make every attempt to get all tests to PASS or SKIP on all
   platforms, there are occasional instances of FAILures due to excessively 
-  tight compliance thresholds or platform ideosynchracies. Occasionally a test
-  may FAIL when run from the script and PASS when run from the command line.
-  Sometimes a test is on the edge and will PASS on some runs and FAIL on 
-  others. Don't panic if one or two tests FAIL. Contact us with complete 
-  output and we'll see what we can do.
+  tight compliance thresholds or platform ideosynchracies. Don't panic if one
+  or two tests FAIL. Contact us with complete output and we'll see what we can do.
 
 Using PAPI
 ----------
 
 To use PAPI in your own programs:
-- Read the User's Guide found online at: 
-  http://icl.cs.utk.edu/projects/papi/wiki/User_Guide. 
+- Read the User's Guide. Versions in a variety of formats can be found in the 
+  doc/ directory and online.
 - Try out the utility programs in /utils to see what's in your system.
 - Try a test program. Source for a number of tests in both C and FORTRAN is
   available in the src/tests/ and src/ftests/ directories. Find a program
@@ -77,11 +68,11 @@ To use PAPI in your own programs:
 
 Bugs and Questions
 ------------------
-- Visit our FAQ at: http://icl.cs.utk.edu/papi/faq/
-- Join the PAPI User Forum at: http://icl.cs.utk.edu/papi/forum/
+- Visit our FAQ at: <http://icl.cs.utk.edu/papi/faq/>
+  or read a snapshot of the FAQ in papi/PAPI_FAQ.html
 - Subscribe to the PAPI mailing list at:
-  http://lists.eecs.utk.edu/mailman/listinfo/ptools-perfapi
-- Read historical postings to the forum and mailing list.
-- Post questions.
+  <http://lists.cs.utk.edu/listinfo/ptools-perfapi>
+- Read historical postings to the list.
+- Post questions to the list.
 - Post bugs to the PAPIZilla bug tracker at:
-  http://icl.cs.utk.edu/projects/papi/bugz/
+  <http://icl.cs.utk.edu/projects/papi/bugz/>

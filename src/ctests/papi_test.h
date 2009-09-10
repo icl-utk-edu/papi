@@ -23,14 +23,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/types.h>
-
-#ifdef _WIN32
-#include <sys/timeb.h>
-#include <winsock.h>
-#else
 #include <sys/time.h>
-#endif
-
 #include <math.h>
 
 #if defined ( _CRAYT3E )

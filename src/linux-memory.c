@@ -15,16 +15,18 @@
 #include "papi.h"
 #include "papi_internal.h"
 
+#include SUBSTRATE
+
 extern int x86_cache_info(PAPI_mh_info_t * mh_info);
 
-int _papi_hwd_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type)
+int _linux_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type)
 {
 	return (x86_cache_info(&hw_info->mem_hierarchy));
 }
 
 #ifdef _WIN32
 #include <Psapi.h>
-int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
+int _linux_get_dmem_info(PAPI_dmem_info_t *d)
 {
 
    HANDLE proc = GetCurrentProcess();
@@ -44,13 +46,12 @@ int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
 
 #else
 #ifdef __CATAMOUNT__
-int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
+int _linux_get_dmem_info(PAPI_dmem_info_t *d)
 {
 	return( PAPI_EINVAL );
 }
 #else
-//int get_dmem_info(long long *size, long long *resident, long long *shared, long long *text, long long *library, long long *heap, long long *locked, long long *stack, long long *ps, long long *vmhwm)
-int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
+int _linux_get_dmem_info(PAPI_dmem_info_t *d)
 {
   char fn[PATH_MAX], tmp[PATH_MAX];
   FILE *f;

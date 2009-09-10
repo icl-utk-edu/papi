@@ -13,11 +13,52 @@
 #include <stdio.h>
 #include "WinPMC.h"                           // contains I/O control codes
 
-#define VERSION_STRING		"PMC Driver Version: 2009"
+#define WELCOME_STRING		"Welcome to the Windows PMC Driver\n"
+#define VERSION_STRING		"PMC Driver Version: 2006/08/11:2  \n"
 
 /* variables */
 
 static PDEVICE_OBJECT DeviceObject;		  // pointer to the device object
+
+
+/*****************************************************************************
+;*
+;*		HELLOWORLD
+;*              prints "Hello World"
+;*
+;*              Input:	buffer for the message
+;*              Output:	length of output buffer
+;*
+;****************************************************************************/
+
+static int HelloWorld(char* buf)
+{
+
+strcpy(buf, "Hello, world !!!");
+return(strlen(buf)+1);
+}
+
+
+
+/*****************************************************************************
+;*
+;*		HELLOWORLDNUM
+;*              prints "Hello World" with a count
+;*
+;*              Input:	buffer for the message
+;*                	hello count
+;*              Output:	length of output buffer
+;*
+;****************************************************************************/
+
+static int HelloWorldNum(char* buf, int count)
+{
+
+sprintf(buf, "Hello, world %d times !!!", count);
+return(strlen(buf)+1);
+}
+
+
 
 /*****************************************************************************
 ;*
@@ -35,103 +76,154 @@ static PDEVICE_OBJECT DeviceObject;		  // pointer to the device object
 
 static NTSTATUS Dispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 {
-	PVOID	 		   *ioBuffer;
-	NTSTATUS           status;
-	PIO_STACK_LOCATION irpStack;
-	ULONG              ioControlCode;
-	ULONG              inputBufferLength;
-	ULONG              outputBufferLength;
-	PVOID   	 	   out;
+   PULONG             ioBuffer;
+   NTSTATUS           status;
+   PIO_STACK_LOCATION irpStack;
+   ULONG              ioControlCode;
+   ULONG              inputBufferLength;
+   ULONG              outputBufferLength;
 
-	/* default is OK and nothing returned */
+   struct pmc_info info;
 
-	// Just to be safe we are OK if the code takes some unhandled path.
 
-	Irp->IoStatus.Status      = STATUS_SUCCESS;
-	Irp->IoStatus.Information = 0;
+/* default is OK and nothing returned */
 
-	/* get a pointer to the current location in IRP */
+// Just to be safe we are OK if the code takes some unhandled path.
 
-	// This gets the IRP which fully describes the request made by the application.
+Irp->IoStatus.Status      = STATUS_SUCCESS;
+Irp->IoStatus.Information = 0;
 
-	irpStack = IoGetCurrentIrpStackLocation(Irp);
+/* get a pointer to the current location in IRP */
 
-	/* branch according to the MajorFunction */
+// This gets the IRP which fully describes the request made by the application.
 
-	switch (irpStack->MajorFunction)
-	{
-		// These two must be implemented and must succeed, but otherwise they may be empty.
-		// If you have something that should be done during CreateFile or CloseHandle, this
-		// is the place for it.
+irpStack = IoGetCurrentIrpStackLocation(Irp);
 
-	case IRP_MJ_CREATE:
-		status = kern_pmc_init();	// check cpu type & enable RDPMC
-		//	status = STATUS_SUCCESS;
-		break;
+/* branch according to the MajorFunction */
 
-	case IRP_MJ_CLOSE:
-		kern_pmc_exit();			// turn off RDPMC before leaving
-		status = STATUS_SUCCESS;
-		break;
+switch (irpStack->MajorFunction)
+ {
 
-		// This does all the actual work. We get the control code from the IRP and also the I/O buffer
-		// pointer and maximum length. The I/O buffer is used to transfer data - for large data packets
-		// there are other methods that avoid copying of the data but for our purposes I/O buffer is best.
-		// The length of data returned in the buffer must go to Irp->IoStatus.Information.
+// These two must be implemented and must succeed, but otherwise they may be empty.
+// If you have something that should be done during CreateFile or CloseHandle, this
+// is the place for it.
 
-	case IRP_MJ_DEVICE_CONTROL:
-		ioControlCode      = irpStack->Parameters.DeviceIoControl.IoControlCode;
-		ioBuffer           = Irp->AssociatedIrp.SystemBuffer;
-		out                = Irp->UserBuffer;
+  case IRP_MJ_CREATE:
+	status = kern_pmc_init();	// check cpu type & enable RDPMC
+//	status = STATUS_SUCCESS;
+  break;
 
-		inputBufferLength  = irpStack->Parameters.DeviceIoControl.InputBufferLength;
-		outputBufferLength = irpStack->Parameters.DeviceIoControl.OutputBufferLength;
+ case IRP_MJ_CLOSE:
+	kern_pmc_exit();			// turn off RDPMC before leaving
+	status = STATUS_SUCCESS;
+  break;
 
-		// The I/O control code specifies what to do. You are free to choose codes for individual actions but
-		// the lowest two bits are reserved and must be 0 if I/O buffer is to be used.
+// This does all the actual work. We get the control code from the IRP and also the I/O buffer
+// pointer and maximum length. The I/O buffer is used to transfer data - for large data packets
+// there are other methods that avoid copying of the data but for our purposes I/O buffer is best.
+// The length of data returned in the buffer must go to Irp->IoStatus.Information.
 
-		switch (ioControlCode & ~0x3)
+  case IRP_MJ_DEVICE_CONTROL:
+    ioControlCode      = irpStack->Parameters.DeviceIoControl.IoControlCode;
+    ioBuffer           = Irp->AssociatedIrp.SystemBuffer;
+    inputBufferLength  = irpStack->Parameters.DeviceIoControl.InputBufferLength;
+    outputBufferLength = irpStack->Parameters.DeviceIoControl.OutputBufferLength;
+
+// The I/O control code specifies what to do. You are free to choose codes for individual actions but
+// the lowest two bits are reserved and must be 0 if I/O buffer is to be used.
+
+    switch (ioControlCode & ~0x3)
+     {
+
+	// Has no input parameters, returns "Hello world." string in the I/O buffer
+   // For now this function has been coopted to display contents of the info structure.
+   // It should ultimately be given its own entry point.
+     case HELLO:
+//        Irp->IoStatus.Information = HelloWorld((char *) ioBuffer);
+//        status = STATUS_SUCCESS;
+        status = kern_pmc_info(&info);
+        if (status == STATUS_SUCCESS) {
+            if (outputBufferLength > 90) // this is a guess on the required length
+            {
+               strcpy((char *)ioBuffer, "\nVendor  : ");
+	            strncat((char *)ioBuffer, info.vendor, 12);
+               sprintf(((char *)ioBuffer) + strlen((char *)ioBuffer), "\nFamily  : %d\nModel   : %d\nStepping: %d\nFeatures: 0x%8x", 
+                  info.family, info.model, info.stepping, info.features);
+	            Irp->IoStatus.Information = strlen((char *)ioBuffer)+1;
+            }
+            else status = STATUS_BUFFER_TOO_SMALL;
+        }
+      break;
+
+	// Has one input parameters, returns "Hello world %d times." string in the I/O buffer
+	// where %d is the value of the parameter.
+      case HELLONUM:
+        Irp->IoStatus.Information = HelloWorldNum((char *) ioBuffer, ioBuffer[0]);
+        status = STATUS_SUCCESS;
+      break;
+
+	// Returns number of task switches since the driver was loaded.
+   // This function is no longer relevant
+      case TASKSWITCH:
+        ioBuffer[0] = 0;
+        Irp->IoStatus.Information = sizeof(int);
+        status = STATUS_SUCCESS;
+      break;
+
+	// Returns a driver version string to the caller
+	  case IOCTL_PMC_VERSION_STRING:
+		if (outputBufferLength > strlen(VERSION_STRING)+1)
 		{
-			// Returns number of task switches since the driver was loaded.
-			// This function is no longer relevant
-		case TASKSWITCH:
-			*((int*)ioBuffer) = 0;
-			Irp->IoStatus.Information = sizeof(int);
-			status = STATUS_SUCCESS;
-			break;
-			// Returns a driver version string to the caller
-		case IOCTL_PMC_VERSION_STRING:
-			if (outputBufferLength >= strlen(VERSION_STRING)+1)
-			{
-				strcpy((char *)ioBuffer, VERSION_STRING);
-				Irp->IoStatus.Information = strlen(VERSION_STRING)+1;
-				status = STATUS_SUCCESS;
-			}
-			else status = STATUS_BUFFER_TOO_SMALL;
-			break;
-		case IOCTL_PMC_WRITE_CONTROL_REGS:
-			write_control((pfarg_pmc_t *)ioBuffer[0], *(int*)ioBuffer[1]);
-			status = STATUS_SUCCESS;
-			break;
-		case IOCTL_PMC_WRITE_DATA_REGS:
-			read_write_data((pfarg_pmd_t *)ioBuffer[0], *(int*)ioBuffer[1], 1);
-			status = STATUS_SUCCESS;
-			break;
-		case IOCTL_PMC_READ_DATA_REGS:
-			read_write_data((pfarg_pmd_t *)ioBuffer[0], *(int*)ioBuffer[1], 0);
-			status = STATUS_SUCCESS;
-			break;
-			// Fails - invalid control code
-		default:
-			status = STATUS_INVALID_DEVICE_REQUEST;
+			strcpy((char *)ioBuffer, VERSION_STRING);
+			Irp->IoStatus.Information = strlen(VERSION_STRING)+1;
+		    status = STATUS_SUCCESS;
 		}
-	}
+		else status = STATUS_BUFFER_TOO_SMALL;
+	  break;
 
-	// Complete the request after it's done. The IO_NO_INCREMENT means we don't want to bump up
-	// the caller's priority because there was no waiting for the request to complete.
-	IoCompleteRequest(Irp, IO_NO_INCREMENT);
+	// Returns a welcome string to the caller
+	  case IOCTL_PMC_READ_TEST_STRING:
+		if (outputBufferLength > strlen(WELCOME_STRING)+1)
+		{
+			strcpy((char *)ioBuffer, WELCOME_STRING);
+			Irp->IoStatus.Information = strlen(WELCOME_STRING)+1;
+		    status = STATUS_SUCCESS;
+		}
+		else status = STATUS_BUFFER_TOO_SMALL;
+	  break;
 
-	return(status);
+	  case IOCTL_PMC_INFO:
+		if (outputBufferLength > strlen(WELCOME_STRING)+1)
+		{
+		    status = kern_pmc_info(&info);
+		    if (status == STATUS_SUCCESS) {
+			*(struct pmc_info *)ioBuffer = info;
+			Irp->IoStatus.Information = sizeof(struct pmc_info);
+		    }
+		}
+		else status = STATUS_BUFFER_TOO_SMALL;
+	  break;
+
+	  case IOCTL_PMC_CONTROL:
+		status = kern_pmc_control((struct pmc_control *)ioBuffer);
+	        *(int *)ioBuffer = status;
+		if (status >= 0) status = STATUS_SUCCESS;
+		Irp->IoStatus.Information = sizeof(int);
+	  break;
+
+// Fails - invalid control code
+
+      default:
+        status = STATUS_INVALID_DEVICE_REQUEST;
+     }
+ }
+
+// Complete the request after it's done. The IO_NO_INCREMENT means we don't want to bump up
+// the caller's priority because there was no waiting for the request to complete.
+
+IoCompleteRequest(Irp, IO_NO_INCREMENT);
+
+return(status);
 }
 
 
@@ -151,20 +243,20 @@ static NTSTATUS Dispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 
 static VOID Unload(PDRIVER_OBJECT DriverObject)
 {
-	UNICODE_STRING deviceLinkUnicodeString;
+UNICODE_STRING deviceLinkUnicodeString;
 
-	// unhook the context switch
+// unhook the context switch
 
-	// KeSetSwapContextNotifyRoutine(NULL);
+// KeSetSwapContextNotifyRoutine(NULL);
 
-	/* delete the symbolic link */
+/* delete the symbolic link */
 
-	RtlInitUnicodeString(&deviceLinkUnicodeString, L"\\DosDevices\\"DEVICENAME);
-	IoDeleteSymbolicLink(&deviceLinkUnicodeString);
+RtlInitUnicodeString(&deviceLinkUnicodeString, L"\\DosDevices\\"DEVICENAME);
+IoDeleteSymbolicLink(&deviceLinkUnicodeString);
 
-	/* delete the device object */
+/* delete the device object */
 
-	IoDeleteDevice(DriverObject->DeviceObject);
+IoDeleteDevice(DriverObject->DeviceObject);
 
 }
 
@@ -188,60 +280,60 @@ static VOID Unload(PDRIVER_OBJECT DriverObject)
 
 NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
 {
-	NTSTATUS           ntStatus;
-	UNICODE_STRING     deviceNameUnicodeString, deviceLinkUnicodeString;
+NTSTATUS           ntStatus;
+UNICODE_STRING     deviceNameUnicodeString, deviceLinkUnicodeString;
 
-	/* create device object */
+/* create device object */
 
-	// This always is necessary to do. The device name must be unicode string, so we must create it
-	// first. You can allocate device extension here - this is nonpaged memory associated to the device where
-	// you can put your variables, but I prefer to use local variables and/or memory allocated by
-	// ExAllocatePool for this purpose, so I usually put 0 here. Device type should indicate if this is a mouse,
-	// printer, etc. - for a non-standard device like ours any number bigger than 0x8000 is good. The device
-	// characteristics doesn't apply for non-standard devices. If you want to access the device
-	// from multiple processes at the same time, you must set it to non-exclusive.
+// This always is necessary to do. The device name must be unicode string, so we must create it
+// first. You can allocate device extension here - this is nonpaged memory associated to the device where
+// you can put your variables, but I prefer to use local variables and/or memory allocated by
+// ExAllocatePool for this purpose, so I usually put 0 here. Device type should indicate if this is a mouse,
+// printer, etc. - for a non-standard device like ours any number bigger than 0x8000 is good. The device
+// characteristics doesn't apply for non-standard devices. If you want to access the device
+// from multiple processes at the same time, you must set it to non-exclusive.
 
-	RtlInitUnicodeString(&deviceNameUnicodeString, L"\\Device\\"DEVICENAME);
-	ntStatus = IoCreateDevice (DriverObject,	     // pointer to driver object
-		0,			     // device extension size
-		&deviceNameUnicodeString, // device name
-		DEVICETYPE,		     // device type
-		0,			     // device characteristics
-		FALSE,                    // non-exclusive device
-		&DeviceObject);           // pointer to resulting device object
-	if (!NT_SUCCESS(ntStatus))
-		return(ntStatus);
+RtlInitUnicodeString(&deviceNameUnicodeString, L"\\Device\\"DEVICENAME);
+ntStatus = IoCreateDevice (DriverObject,	     // pointer to driver object
+                           0,			     // device extension size
+                           &deviceNameUnicodeString, // device name
+                           DEVICETYPE,		     // device type
+                           0,			     // device characteristics
+                           FALSE,                    // non-exclusive device
+                           &DeviceObject);           // pointer to resulting device object
+if (!NT_SUCCESS(ntStatus))
+  return(ntStatus);
 
-	/* create dispatch points for device control and unload */
+/* create dispatch points for device control and unload */
 
-	// This is also always necessary. Here you define the entry points to the driver. Normally you process all
-	// application requests in one routine (called Dispatch here). You must always process
-	// IRP_MJ_CREATE and IRP_MJ_CLOSE so that CreateFile and CloseHandle work from the application. Then you
-	// usually process IRP_MJ_READ, IRP_MJ_WRITE, IRP_MJ_DEVICE_CONTROL. Normally I use IRP_MJ_DEVICE_CONTROL for
-	// everything but sequential data streams coming from/to device - i.e data that look like they are being
-	// read from a file. We won't have any, so we don't process IRP_MJ_READ and IRP_MJ_WRITE.
-	// Then, you also need to register the Unload routine here.
+// This is also always necessary. Here you define the entry points to the driver. Normally you process all
+// application requests in one routine (called Dispatch here). You must always process
+// IRP_MJ_CREATE and IRP_MJ_CLOSE so that CreateFile and CloseHandle work from the application. Then you
+// usually process IRP_MJ_READ, IRP_MJ_WRITE, IRP_MJ_DEVICE_CONTROL. Normally I use IRP_MJ_DEVICE_CONTROL for
+// everything but sequential data streams coming from/to device - i.e data that look like they are being
+// read from a file. We won't have any, so we don't process IRP_MJ_READ and IRP_MJ_WRITE.
+// Then, you also need to register the Unload routine here.
 
-	DriverObject->MajorFunction[IRP_MJ_CREATE]         =
-		DriverObject->MajorFunction[IRP_MJ_CLOSE]          =
-		DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = Dispatch;
-	DriverObject->DriverUnload                         = Unload;
+DriverObject->MajorFunction[IRP_MJ_CREATE]         =
+DriverObject->MajorFunction[IRP_MJ_CLOSE]          =
+DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = Dispatch;
+DriverObject->DriverUnload                         = Unload;
 
-	/* create a symbolic link */
+/* create a symbolic link */
 
-	// This creates a symbolic DOS name. I'm not quite sure what is it for, but everyone creates it so let's do it as well.
-	// I believe it is used when you type "net start example" in the command prompt - the "example" is most probably
-	// this name. So, without doing this probably "net start xxxxxx" won't work, although I'm not 100% sure.
+// This creates a symbolic DOS name. I'm not quite sure what is it for, but everyone creates it so let's do it as well.
+// I believe it is used when you type "net start example" in the command prompt - the "example" is most probably
+// this name. So, without doing this probably "net start xxxxxx" won't work, although I'm not 100% sure.
 
-	RtlInitUnicodeString(&deviceLinkUnicodeString, L"\\DosDevices\\"DEVICENAME);
-	ntStatus = IoCreateSymbolicLink(&deviceLinkUnicodeString, &deviceNameUnicodeString);
-	if (!NT_SUCCESS(ntStatus))
-	{
-		IoDeleteDevice(DeviceObject);   // delete device if link creation failed
-		return(ntStatus);
-	}
+RtlInitUnicodeString(&deviceLinkUnicodeString, L"\\DosDevices\\"DEVICENAME);
+ntStatus = IoCreateSymbolicLink(&deviceLinkUnicodeString, &deviceNameUnicodeString);
+if (!NT_SUCCESS(ntStatus))
+ {
+  IoDeleteDevice(DeviceObject);   // delete device if link creation failed
+  return(ntStatus);
+ }
 
-	// That's all to initialization!
+// That's all to initialization!
 
-	return(STATUS_SUCCESS);
+return(STATUS_SUCCESS);
 }

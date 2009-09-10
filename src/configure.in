@@ -4,7 +4,7 @@
 
 
 AC_PREREQ(2.61)
-AC_INIT(PAPI, 3.7.0, ptools-perfapi@eecs.utk.edu)
+AC_INIT(PAPI, 3.9.2, ptools-perfapi@eecs.utk.edu)
 AC_CONFIG_SRCDIR([papi.c])
 AC_CONFIG_HEADER([config.h])
 
@@ -117,19 +117,6 @@ if test "$T3EOS" != ""; then
    OS=unicos
 fi
 
-# XTOS_VERSION exists only on Cray systems supporting XT and hence CLE OS
-if test "$XTOS_VERSION"; then
-	use_shared=no
-    use_static=yes
-	pfm_events=static
-    cross_compiling=yes
-# ffsll, tls, walltimer, virtualtimer must be sprecified for cross-compiling	
-	ffsll=yes
-	tls=__thread
-    walltimer=cycle
-	virtualtimer=times
-fi
-
 /bin/rm -f ckcat
 cc ckcatamount.c 2>&1 | cat > ckcat
 if test "`cat ckcat | grep "IS_CATAMOUNT"`" != ""; then
@@ -140,6 +127,12 @@ fi
 AC_MSG_RESULT($OS)
 if test "$OS" = "catamount"; then
    pfm_events=static
+   if test "x$CC" = "x"; then
+      CC=qk-gcc
+   fi
+   if test "x$F77" = "x"; then
+      F77=ftn
+   fi
    walltimer=cycle
    virtualtimer=perfctr
    bitmode=64
@@ -168,9 +161,6 @@ elif test "$OS" = "bgl"; then
    ffsll=yes
    cross_compiling=yes
    perfctr=6
-   use_shared=no
-   use_static=yes
-   use_static_tests=yes
 fi
 
 #
@@ -303,28 +293,16 @@ case "$OS" in
              
          ;;
   solaris) 
-         ##F Detect platform
          processor=`uname -p`
-         ##F Detect CPU model
-         machinetype=`uname -m`
-
-         if test "$processor" = "sparc"
-         then
-		case "$machinetype" in
-                sun4u)
-                      CPU=ultra
-                      ;;
-                sun4v)
-                      CPU=niagara2
-                      ;; 
-                *)
-                      AC_MSG_ERROR([Sorry, machine type ($machinetype) not supported])
-                      ;;
-                esac
-         else
-               AC_MSG_ERROR([Sorry, no support for other CPUs than US I, II, III or T2])
+           #this determines if its an Ultrasparc I,II,or III
+         if test "$processor" = "sparc"; then
+           CPU=`/bin/uname -a | egrep sun4u`
+           if test "$CPU" = ""; then
+             AC_MSG_ERROR([Sorry but for Solaris you need to have an Ultrasparc for PAPI to work])
+           else CPU=ultra
+           fi
          fi
-  ;;
+         ;;
   irix) CPU=`hinv -t cpu | cut -d ' ' -f 2 | tr '[A-Z]' '[a-z]' | uniq`;;
   osf1) CPU=`uname -p`;;
   unicos)
@@ -344,6 +322,7 @@ case "$OS" in
 esac 
 ])
 AC_MSG_RESULT($CPU)
+AC_DEFINE_UNQUOTED(CPU,$CPU,[cpu type])
 if test "$cross_compiling" = "no" -a "$OS" = "linux" -a "$CPU" = "mips"; then
 	  AC_CHECK_FILE(/etc/sicortex-release,[CPU=sicortex])
 	  if test "$CPU" = "sicortex"; then
@@ -962,7 +941,6 @@ if test "$perfmon" != 0; then
    fi
    AC_MSG_RESULT($perfmon)
    perfmon=`echo ${perfmon} | sed 's/\.//'`
-#   AC_MSG_RESULT($perfmon)
 fi
 
 AC_ARG_WITH(pfm_root,
@@ -1087,53 +1065,9 @@ fi
  
 # Checks for libraries.
 if test "$OS" = "solaris"; then
-
-##F Both PAPI backends on Solaris require libcpc
-   AC_CHECK_HEADER([libcpc.h],[
-                                CFLAGS="$CFLAGS -lcpc"
-        AC_TRY_RUN([
-        #include <stdlib.h>
-        #include <libcpc.h>
-
-        int main()
-        {
-            // Check for libcpc 2
-            if(CPC_VER_CURRENT == 2)
-            {
-                exit(0);
-            }
-
-            exit(1);
-        }
-       ], [cpc_version=2], [cpc_version=0])],
-       [AC_MSG_ERROR([libcpc is needed for running PAPI on Solaris])
-   ])
-##F The niagara2 backend needs libcpc2
-    echo '====================================================================='
-    echo '         PAPI is available for the following Sun platforms:'
-    echo '---------------------------------------------------------------------'
-    echo
-    echo '    - UltraSPARC I, II & III on Solaris 8 & 9 using libcpc 1'
-    echo '      --> PAPI substrate: solaris-ultra'
-    echo
-    echo '    - UltraSPARC T2          on Solaris 10    using libcpc 2'
-    echo '      --> PAPI substrate: solaris-niagara2'
-    echo 
-    echo "    - Your substrate will be: $OS-$CPU"
-    echo '====================================================================='
-    if test "$CPU" = "niagara2"
-    then
-        ##F Check for the definition of CPC_VER_CURRENT
-        if test "$cpc_version" != "2"
-        then
-            AC_MSG_ERROR([libcpc2 needed for Niagara 2])
-        fi
-    else
-        ##F PAPI 3.6.2
-        AC_CHECK_LIB([cpc], [cpc_take_sample], [], [
-              AC_MSG_ERROR([libcpc.a is needed on Solaris, install SUNWcpc])
-            ])
-    fi
+AC_CHECK_LIB([cpc], [cpc_take_sample], [], [
+      AC_MSG_ERROR([libcpc.a is needed on solaris])
+      ])
 fi
 
 if test "$perfctr" != "no"; then
@@ -1260,7 +1194,7 @@ if test "$OS" = "aix"; then
       esac
       PMINIT=""
       LIBS="-L$PMAPI/lib -lpmapi"
-      CPPFLAGS="$CPPFLAGS -I$PMAPI/include"
+      CPPFLAGS="-I$PMAPI/include"
       AC_CHECK_LIB([pmapi], [pm_initialize], [
 			    PMINIT="-DPM_INITIALIZE"], [
 			    AC_CHECK_LIB([pmapi], [pm_init], [
@@ -1370,11 +1304,8 @@ case "$OS" in
           if test "`isainfo -v | grep "64"`" = ""; then
              AC_MSG_ERROR([The bitmode you specified is not supported])
           fi
-       	  
-          MAKEVER="$OS"-"$CPU""$BM"
-       else
-          MAKEVER="$OS"-"$CPU" 
        fi
+       MAKEVER="$OS"-"$CPU""$BM"
        ;;
    linux)
        if test $pcl = "yes" ; then
@@ -1422,7 +1353,7 @@ case "$OS" in
                 if test "${bitmode}" = "64"; then
                    AC_MSG_ERROR([The bitmode you specified is not supported])
                 fi
-		MAKEVER="$OS"-perfctr-"$CPU"
+			MAKEVER="$OS"-perfctr-"$CPU"
 		;;
             PPC32)
                  if test "${bitmode}" = "64"; then
@@ -1489,9 +1420,6 @@ case "$MAKEVER" in
     linux-pfm-itanium3);;
     solaris-ultra);;
     solaris-ultra-64bit);;
-    ##F Recognize a new build target
-    solaris-niagara2|solaris-niagara2-32bit);;
-    solaris-niagara2-64bit);;
     tru64-alpha);;
     unicos-t3e);;
     unicos-x1-msp);;
@@ -1507,16 +1435,140 @@ case "$MAKEVER" in
     ;;
 esac
 
+#compnts="$MAKEVER"
+#echo $compnts
+AC_ARG_WITH(mx,
+            [  --with-mx=<no,yes>	        Build a MX component in the library ],
+            [mx=$withval],
+            [mx=no]
+            )
+case "$mx" in
+   yes)
+      MXPATH=""
+      AC_PATH_PROG(MXPATH, mx_counters)
+      if test "$MXPATH" = ""; then
+        echo "PAPI needs to know the path to mx_counters"
+        exit 1
+      fi
+      AC_DEFINE_UNQUOTED(MXPATH, "$MXPATH", [The path of mx_counters])
+
+      mxval="MX"
+      compnts="${compnts} ${mxval}" 
+      compsrcs="${compsrcs} linux-mx.c" 
+      comphdrs="${comphdrs} linux-mx.h" 
+      compobjs="${compobjs} linux-mx.o" 
+      AC_DEFINE(HAVE_MX, 1, [system has myrinet mx component])
+      ;;
+esac
+
+AC_ARG_WITH(net,
+            [  --with-net=<no,yes>	        Build a net (ifconfig) component in the library ],
+            [net=$withval],
+            [net=no]
+            )
+case "$net" in
+   yes)
+      NETPATH=""
+      AC_PATH_PROG(NETPATH, ifconfig)
+      if test "$NETPATH" = ""; then
+        echo "PAPI needs to know the path to ifconfig"
+        exit 1
+      fi
+      AC_DEFINE_UNQUOTED(NETPATH, "$NETPATH", [The path of ifconfig])
+
+      netval="NET"
+      compnts="${compnts} ${netval}" 
+      compsrcs="${compsrcs} linux-net.c" 
+      comphdrs="${comphdrs} linux-net.h" 
+      compobjs="${compobjs} linux-net.o" 
+      AC_DEFINE(HAVE_NET, 1, [system has net (ifconfig) component])
+      ;;
+esac
+#echo $compnts
+
+AC_ARG_WITH(acpi,
+            [  --with-acpi=<no,yes>	        Build an ACPI component in the library ],
+            [acpi=$withval],
+            [acpi=no]
+            )
+case "$acpi" in
+   yes)
+      acpival="ACPI" 
+      compnts="${compnts} ${acpival}" 
+      compsrcs="${compsrcs} linux-acpi.c" 
+      comphdrs="${comphdrs} linux-acpi.h" 
+      compobjs="${compobjs} linux-acpi.o" 
+      AC_DEFINE(HAVE_ACPI, 1, [system has ACPI component])
+      ;;
+   no)
+      acpival="" ;;
+esac
+
+
+AC_ARG_WITH(lmsensors,
+            [  --with-lmsensors=<no,yes>     Build an lm-sensors component in the library ],
+            [lmsensors=$withval],
+            [lmsensors=no]
+            )
+case "$lmsensors" in
+   yes)
+      lmsensorsval="LMSENSORS"
+      compnts="${compnts} ${lmsensorsval}"
+      compsrcs="${compsrcs} linux-lmsensors.c"
+      comphdrs="${comphdrs} linux-lmsensors.h"
+      compobjs="${compobjs} linux-lmsensors.o"
+	  
+      AC_DEFINE(HAVE_LMSENSORS, 1, [system has lm-sensors component])
+
+# looking for lm-sensors header files
+	  AC_ARG_WITH(sensors_incdir,
+                  [  --with-sensors_incdir=<path>  Specify directory of lm-sensors header files ],
+                  [sensors_incdir=$withval],
+                  [sensors_incdir=""]
+                 )
+	  CFLAGS="$CFLAGS -I$sensors_incdir"
+      AC_CHECK_HEADER([sensors.h],
+                      [AC_DEFINE([HAVE_SENSORS_H], [1], [lm-sensors header] )],
+                      [AC_MSG_ERROR([sensors.h could not be found. See --with-sensors_incdir ])],
+                      [#include <sensors.h>])
+
+# looking for lm-sensors lib
+	  AC_ARG_WITH(sensors_libdir,
+                  [  --with-sensors_libdir=<path>  Specify directory of lm-sensors library ],
+                  [sensors_libdir=$withval],
+                  [AC_MSG_ERROR([libsensors.a is needed for the PAPI lm-sensors component. See --with-sensors_libdir ])]
+			     )
+	  AC_CHECK_LIB([sensors], [sensors_init], [],
+				   [AC_MSG_ERROR([libsensors.a is needed for the PAPI lm-sensors component])])
+				   
+# libsensors.a needed to compile with papi utilities and tests	  
+	  LINK_SENSORS_LIB="$sensors_libdir/libsensors.a -lm"
+      ;;
+   no)
+      lmsensorsval="" ;;
+esac
+
+
+
+
+#echo $compnts
+
 #
 # Fix up: put inside papi in share directory
 #
 #if test "$datadir" = '${datarootdir}'; then
-#   datadir='${datarootdir}/${PACKAGE_TARNAME}'
+#   datadir="${prefix}/share/papi"
+#   PAPI_DATADIR="${prefix}/share/papi"
 #fi
-#papidatadir=$datadir
-#docdir='${prefix}/share/doc/papi'
-#AS_AC_EXPAND(PAPI_DATADIR, $papidatadir)
-#AC_DEFINE_UNQUOTED(HAVE_THREAD_LOCAL_STORAGE,"$docdir")
+
+#
+# Fix up: Linux man pages in /usr/share/man
+#
+#if test "$OS" = "linux"; then
+#   if test "$mandir" = '${datarootdir}/man'; then
+#      mandir='${prefix}/share/man'
+#   fi
+#fi
 
 #
 # Fix up: If we're on linux and 64 bit build, then put libs in the right place
@@ -1530,6 +1582,7 @@ if test "$OS" = "linux" -a "$bitmode" = "64"; then
    fi
 fi
 
+#AC_DEFINE_UNQUOTED(PAPI_DATADIR, "$PAPI_DATADIR", [package data directory])
 AC_MSG_CHECKING(for library to link)
 AC_ARG_WITH(shlib,
 	[  --with-shlib=<yes,no>	Specify static[no] or dynamic[yes] papi library to link with test cases and utilities],
@@ -1543,6 +1596,7 @@ if test "$shlib" = "dynamic"; then
 else
     LINKLIB='../$(LIBRARY)'
 fi
+LINKLIB="$LINKLIB $LINK_SENSORS_LIB"
 
 AC_SUBST(prefix)
 AC_SUBST(exec_prefix)
@@ -1578,9 +1632,13 @@ AC_SUBST(pfm_prefix)
 AC_SUBST(pfm_incdir)
 AC_SUBST(pfm_libdir)
 AC_SUBST(bitmode)
+AC_SUBST(compnts)
+AC_SUBST(compsrcs)
+AC_SUBST(comphdrs)
+AC_SUBST(compobjs)
+AC_SUBST(OS)
 AC_SUBST(CFLAGS)
 AC_SUBST(FFLAGS)
-AC_SUBST(CPPFLAGS)
 AC_SUBST(pfm_events)
 AC_SUBST(pfm_events_table)
 AC_SUBST(tests)

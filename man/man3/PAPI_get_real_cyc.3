@@ -1,12 +1,10 @@
 .\" $Id$
-.TH PAPI_get_real_cyc 3 "July, 2008" "PAPI Programmer's Reference" "PAPI"
+.TH PAPI_get_real_cyc 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
 PAPI_get_real_cyc \- get real time counter value in clock cycles
 .LP
 PAPI_get_real_usec \- get real time counter value in microseconds
-.LP
-PAPI_get_real_ns \- get real time counter value in nanoseconds
 
 .SH SYNOPSIS
 .B C Interface
@@ -14,20 +12,18 @@ PAPI_get_real_ns \- get real time counter value in nanoseconds
 .B #include <papi.h>
 .BI "long_long PAPI_get_real_cyc(void);"
 .BI "long_long PAPI_get_real_usec(void);"
-.BI "long_long PAPI_get_real_ns(void);"
 .fi
 .B Fortran Interface
 .nf
 .B #include "fpapi.h"
-.BI PAPIF_get_real_cyc(C_LONG_LONG\  cyc)
-.BI PAPIF_get_real_usec(C_LONG_LONG\  us)
-.BI PAPIF_get_real_ns(C_LONG_LONG\  ns)
+.BI PAPIF_get_real_usec(C_LONG_LONG\  time)
+.BI PAPIF_get_real_cyc(C_LONG_LONG\  real_cyc)
 .fi
 
 .SH DESCRIPTION
-All of these functions return the total real time passed since 
-some arbitrary starting point. The time is returned in clock cycles, 
-microseconds or nanoseconds respectively. These calls are equivalent to
+Both of these functions return the total real time passed since 
+some arbitrary starting point. The time is returned in clock cycles 
+or microseconds respectively. These calls are equivalent to
 wall clock time. 
 
 .SH ERRORS
@@ -50,5 +46,6 @@ These functions have no known bugs.
 .SH SEE ALSO
 .BR PAPI_library_init "(3), "
 .BR PAPI_get_virt_cyc "(3), " 
+.BR PAPI_get_virt_usec "(3), " 
 .BR PAPI "(3), " 
 .BR PAPIF "(3)" 

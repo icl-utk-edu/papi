@@ -143,15 +143,19 @@ typedef struct P4_perfctr_context {
 /*  P4_perfctr_control_t start; */
 } P4_perfctr_context_t;
 
+
+/* Override void* definitions from PAPI framework layer */
+/* with typedefs to conform to PAPI component layer code. */
+#undef  hwd_reg_alloc_t
 typedef P4_reg_alloc_t hwd_reg_alloc_t;
-
-typedef P4_perfctr_control_t hwd_control_state_t;
-
+#undef  hwd_register_t
 typedef P4_register_t hwd_register_t;
-
+#undef  hwd_control_state_t
+typedef P4_perfctr_control_t hwd_control_state_t;
+#undef  hwd_context_t
 typedef P4_perfctr_context_t hwd_context_t;
 
-typedef P4_perfctr_event_t hwd_event_t;
+#define hwd_pmc_control vperfctr_control
 
 #define AI_ERROR "No support for a-mode counters after adding an i-mode counter"
 #define VOPEN_ERROR "vperfctr_open() returned NULL, please run perfex -i to verify your perfctr installation"
@@ -164,7 +168,10 @@ typedef P4_perfctr_event_t hwd_event_t;
 #define STATE_MAL_ERROR "Error allocating perfctr structures"
 #define MODEL_ERROR "This is not a Pentium 4"
 
+/* Signal handling functions */
+#undef hwd_siginfo_t
 typedef siginfo_t hwd_siginfo_t;
+#undef hwd_ucontext_t
 typedef ucontext_t hwd_ucontext_t;
 
 #ifdef __x86_64__
@@ -205,6 +212,9 @@ __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN)
 
 extern int sighold(int);
 extern int sigrelse(int);
+
+
+#define MY_VECTOR _p4_vector
 
 /* Undefined identifiers in executable */
 

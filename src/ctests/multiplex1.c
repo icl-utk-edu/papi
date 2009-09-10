@@ -132,6 +132,13 @@ int case2()
    if (retval != PAPI_OK)
       CPP_TEST_FAIL("PAPI_create_eventset", retval);
 
+   /* In Component PAPI, EventSets must be assigned a component index
+      before you can fiddle with their internals.
+      0 is always the cpu component */
+   retval = PAPI_assign_eventset_component(EventSet, 0);
+   if (retval != PAPI_OK)
+      CPP_TEST_FAIL("PAPI_assign_eventset_component", retval);
+
    retval = PAPI_set_multiplex(EventSet);
    if (retval != PAPI_OK)
       CPP_TEST_FAIL("PAPI_set_multiplex", retval);

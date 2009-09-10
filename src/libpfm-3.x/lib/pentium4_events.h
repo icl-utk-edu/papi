@@ -1950,7 +1950,7 @@ pentium4_event_t pentium4_events[] = {
 	 .desc = "Instructions that have completed and "
 		 "retired during a clock cycle. Supported on models 3, 4, 6 only",
 	 .event_select = 0x7,
-	 .escr_select = 0x5,
+	 .escr_select = 0x4,
 	 .allowed_escrs = { 20, 42 },
 	 .event_masks = {
 		{.name = "NBOGUS",

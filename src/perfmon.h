@@ -8,15 +8,11 @@
 *
 */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <assert.h>
-#ifndef WIN32
 #include <unistd.h>
-#include <libgen.h>
-#endif
+#include <assert.h>
 #include <errno.h>
 #include <string.h>
 #include <math.h>
@@ -25,8 +21,7 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <inttypes.h>
-
-#ifndef WIN32
+#include <libgen.h>
 #include <sys/mman.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
@@ -34,7 +29,6 @@
 #include <sys/times.h>
 #include <sys/ucontext.h>
 #include <sys/ptrace.h>
-#endif
 #include "perfmon/pfmlib.h"
 #include "perfmon/perfmon.h"
 #include "perfmon/perfmon_dfl_smpl.h"
@@ -52,18 +46,18 @@
 
 #define inline_static inline static
 
-typedef pfmlib_event_t hwd_register_t;
-typedef int hwd_register_map_t;
-typedef int hwd_reg_alloc_t;
+typedef pfmlib_event_t pfm_register_t;
+typedef int pfm_register_map_t;
+typedef int pfm_reg_alloc_t;
 
 /* Native events consist of a flag field, an event field, and a unit mask field.
  * The next 4 macros define the characteristics of the event and unit mask fields.
  */
-#define PAPI_NATIVE_EVENT_AND_MASK 0x00000fff	/* 12 bits == 4096 max events */
+#define PAPI_NATIVE_EVENT_AND_MASK 0x000003ff	/* 12 bits == 4096 max events */
 #define PAPI_NATIVE_EVENT_SHIFT 0
-#define PAPI_NATIVE_UMASK_AND_MASK 0x0ffff000	/* 16 bits for unit masks */
+#define PAPI_NATIVE_UMASK_AND_MASK 0x03fffc00	/* 16 bits for unit masks */
 #define PAPI_NATIVE_UMASK_MAX 16				/* 16 possible unit masks */
-#define PAPI_NATIVE_UMASK_SHIFT 12
+#define PAPI_NATIVE_UMASK_SHIFT 10
 
 #define MAX_COUNTERS PFMLIB_MAX_PMCS
 #define MAX_COUNTER_TERMS PFMLIB_MAX_PMCS
@@ -75,7 +69,7 @@ typedef struct {
   /* Load structure to kernel, different for attached */
   pfarg_load_t *load;
   /* Which counters to use? Bits encode counters to use, may be duplicates */
-  hwd_register_map_t bits;
+  pfm_register_map_t bits;
   /* Buffer to pass to library to control the counters */
   pfmlib_input_param_t in;
   /* Buffer to pass from the library to control the counters */
@@ -94,7 +88,7 @@ typedef struct {
   pfarg_pmd_t pd[PFMLIB_MAX_PMDS];
   /* Buffer to gather counters */
   long long counts[PFMLIB_MAX_PMDS];
-} hwd_control_state_t;
+} pfm_control_state_t;
 
 typedef struct {
 #if defined(USE_PROC_PTTIMER)
@@ -109,14 +103,18 @@ typedef struct {
   pfm_dfl_smpl_arg_t smpl;
   /* Address of mmap()'ed sample buffer */
   void *smpl_buf;
-} hwd_context_t;
+} pfm_context_t;
 
-#ifdef WIN32
-extern CRITICAL_SECTION _papi_hwd_lock_data[PAPI_MAX_LOCK];
-#else
+/* typedefs to conform to PAPI component layer code. */
+/* these are void * in the PAPI framework layer code. */
+typedef pfm_reg_alloc_t cmp_reg_alloc_t;
+typedef pfm_register_t cmp_register_t;
+typedef pfm_control_state_t cmp_control_state_t;
+typedef pfm_context_t cmp_context_t;
+
+#define MY_VECTOR _papi_pfm_vector
+
 extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
-#endif
-
 #define MUTEX_OPEN 0
 #define MUTEX_CLOSED 1
 
@@ -136,11 +134,6 @@ extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 
 #define _papi_hwd_unlock(lck) {  __asm__ __volatile__ ("st4.rel [%0]=%1" : : "r"(&_papi_hwd_lock_data[lck]), "r"(MUTEX_OPEN) : "memory"); }
 #endif
-#elif defined(WIN32)
-
-#define  _papi_hwd_lock(lck) EnterCriticalSection(&_papi_hwd_lock_data[lck])
-#define  _papi_hwd_unlock(lck) LeaveCriticalSection(&_papi_hwd_lock_data[lck])
-
 #elif defined(__i386__)||defined(__x86_64__)
 #define  _papi_hwd_lock(lck)                    \
 do                                              \
@@ -318,20 +311,13 @@ static inline void __raw_spin_unlock(volatile unsigned int *lock)
 #endif
 
 /* Signal handling functions */
-
+#undef hwd_siginfo_t
 typedef struct siginfo hwd_siginfo_t;
-#ifdef WIN32
-typedef CONTEXT hwd_ucontext_t;
-#else
+#undef hwd_ucontext_t
 typedef ucontext_t hwd_ucontext_t;
-#endif
 
 #if defined(__ia64__)
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.sc_ip
-#elif defined(_WIN64)
-#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->Rip
-#elif defined(WIN32)
-#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->Eip
 #elif defined(__i386__)
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.gregs[REG_EIP]
 #elif defined(__x86_64__)
@@ -355,6 +341,6 @@ typedef ucontext_t hwd_ucontext_t;
 #error "OVERFLOW_ADDRESS() undefined!"
 #endif
 
-#define GET_OVERFLOW_ADDRESS(ctx) (OVERFLOW_ADDRESS((*ctx)))
+#define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(OVERFLOW_ADDRESS(ctx))
 
 #endif

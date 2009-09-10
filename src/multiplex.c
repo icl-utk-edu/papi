@@ -14,11 +14,17 @@
  *          smeds@pdc.kth.se
  *          Haihang You
  *          you@cs.utk.edu 
- *	    Kevin London
- *	    london@cs.utk.edu
+ *	        Kevin London
+ *	        london@cs.utk.edu
  *          Maynard Johnson
  *          maynardj@us.ibm.com
+ *	        Dan Terpstra
+ *	        terpstra@cs.utk.edu
  */
+
+/* xxxx Will this stuff run unmodified on multiple components?
+    What happens when several components are counting multiplexed?
+*/
 
 #define MPX_NONDECR
 /* Nils Smeds */
@@ -101,8 +107,6 @@
 
 #include "papi.h"
 #include "papi_internal.h"
-#include "papi_vector.h"
-#include "papi_vector_redefine.h"
 #include "papi_memory.h"
 
 #define MPX_MINCYC 25000
@@ -254,7 +258,7 @@ static void mpx_init_timers(int interval)
 #endif
 
    sigemptyset( &sigreset );
-   sigaddset( &sigreset, _papi_hwi_system_info.sub_info.itimer_sig);
+   sigaddset( &sigreset, _papi_hwd[0]->cmp_info.itimer_sig);
 }
 
 static int mpx_startup_itimer(void)
@@ -268,15 +272,15 @@ static int mpx_startup_itimer(void)
    sigact.sa_flags = SA_RESTART;
    sigact.sa_handler = mpx_handler;
 
-   if (sigaction(_papi_hwi_system_info.sub_info.itimer_sig, &sigact, NULL) == -1)
+   if (sigaction(_papi_hwd[0]->cmp_info.itimer_sig, &sigact, NULL) == -1)
      {
         PAPIERROR("sigaction start errno %d",errno);
 	return PAPI_ESYS;
      }
 
-   if (setitimer(_papi_hwi_system_info.sub_info.itimer_num, &itime, NULL) == -1)
+   if (setitimer(_papi_hwd[0]->cmp_info.itimer_num, &itime, NULL) == -1)
      {
-       sigaction(_papi_hwi_system_info.sub_info.itimer_sig, &oaction, NULL);
+       sigaction(_papi_hwd[0]->cmp_info.itimer_sig, &oaction, NULL);
        PAPIERROR("setitimer start errno %d",errno);
        return PAPI_ESYS;
      }
@@ -286,16 +290,16 @@ static int mpx_startup_itimer(void)
 static void mpx_restore_signal(void)
 {
   MPXDBG("restore signal\n");
-  if (_papi_hwi_system_info.sub_info.itimer_sig != PAPI_NULL) { 
-	if (signal(_papi_hwi_system_info.sub_info.itimer_sig, SIG_IGN) == SIG_ERR)
+  if (_papi_hwd[0]->cmp_info.itimer_sig != PAPI_NULL) { 
+	if (signal(_papi_hwd[0]->cmp_info.itimer_sig, SIG_IGN) == SIG_ERR)
      	PAPIERROR("sigaction stop errno %d",errno); }
 }
 
 static void mpx_shutdown_itimer(void)
 {
   MPXDBG("setitimer off\n");
-  if (_papi_hwi_system_info.sub_info.itimer_num != PAPI_NULL) {
- 	if (setitimer(_papi_hwi_system_info.sub_info.itimer_num, (struct itimerval *)&itimestop, NULL) == -1)
+  if (_papi_hwd[0]->cmp_info.itimer_num != PAPI_NULL) {
+ 	if (setitimer(_papi_hwd[0]->cmp_info.itimer_num, (struct itimerval *)&itimestop, NULL) == -1)
      	PAPIERROR("setitimer stop errno %d",errno); }
 }
 #endif                          /* _WIN32 */
@@ -333,7 +337,7 @@ static MPX_EventSet *mpx_malloc(Threadlist * t)
    return (newset);
 }
 
-int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode, int domain, int granularity)
+int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode, int domain, int granularity, int cidx)
 {
    MPX_EventSet *newset = *mpx_events;
    int retval, alloced_thread = 0, alloced_newset = 0;
@@ -533,7 +537,7 @@ static void mpx_handler(int signal)
       for (t = tlist; t != NULL; t = t->next) {
          if (pthread_equal(t->thr, self) == 0) {
             ++threads_responding;
-            retval = pthread_kill(t->thr, _papi_hwi_system_info.sub_info.itimer_sig);
+            retval = pthread_kill(t->thr, _papi_hwd[0]->cmp_info.itimer_sig);
             assert(retval == 0);
 #ifdef MPX_DEBUG_SIGNALS
             MPXDBG("%x signaling %x\n", self, t->thr);
@@ -649,7 +653,7 @@ static void mpx_handler(int signal)
 	if ((t->tid == _papi_hwi_thread_id_fn()) || (t->head == NULL))
 	  continue;
          MPXDBG("forwarding signal to thread %lx\n", t->tid);
-         retval = (*_papi_hwi_thread_kill_fn) (t->tid, _papi_hwi_system_info.sub_info.itimer_sig);
+         retval = (*_papi_hwi_thread_kill_fn) (t->tid, _papi_hwd[0]->cmp_info.itimer_sig);
          if (retval != 0) {
             MPXDBG("forwarding signal to thread %lx returned %d\n",
                    t->tid, retval);
@@ -671,7 +675,7 @@ static void mpx_handler(int signal)
     */
    /* Reset the timer once all threads have responded */
    if (lastthread) {
-      retval = setitimer(_papi_hwi_system_info.sub_info.itimer_num, &itime, NULL);
+      retval = setitimer(_papi_hwd[0]->cmp_info.itimer_num, &itime, NULL);
       assert(retval == 0);
 #ifdef MPX_DEBUG_TIMER
       MPXDBG("timer restarted by %lx\n", me->tid);
@@ -686,12 +690,12 @@ static void mpx_handler(int signal)
 #endif
 }
 
-int MPX_add_events(MPX_EventSet ** mpx_events, int *event_list, int num_events, int domain, int granularity)
+int MPX_add_events(MPX_EventSet ** mpx_events, int *event_list, int num_events, int domain, int granularity, int cidx)
 {
    int i, retval = PAPI_OK;
 
    for (i = 0; i < num_events; i++) {
-      retval = mpx_add_event(mpx_events, event_list[i], domain, granularity);
+      retval = mpx_add_event(mpx_events, event_list[i], domain, granularity, cidx);
 
       if (retval != PAPI_OK)
          return (retval);
@@ -1171,18 +1175,17 @@ int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
 int mpx_check(int EventSet)
 {
    /* Currently, there is only the need for one mpx check: if
-    * running on POWEOR6/perfctr platform, the domain must
+    * running on POWER6/perfctr platform, the domain must
     * include user, kernel, and supervisor, since the scale
     * event uses the dedicated counter #6, PM_RUN_CYC, which
     * cannot be controlled on a domain level.
     */
-   if (strstr(_papi_hwi_system_info.sub_info.name, "linux.c") == NULL)
+   EventSetInfo_t *ESI = _papi_hwi_lookup_EventSet(EventSet);
+   if (strstr(_papi_hwd[ESI->CmpIdx]->cmp_info.name, "linux.c") == NULL)
       return PAPI_OK;
 
    if (strcmp(_papi_hwi_system_info.hw_info.model_string, "POWER6") == 0) {
-      EventSetInfo_t *ESI;
       unsigned int chk_domain = PAPI_DOM_USER+PAPI_DOM_KERNEL+PAPI_DOM_SUPERVISOR;
-      ESI = _papi_hwi_lookup_EventSet(EventSet);
       if (ESI == NULL)
          return(PAPI_ENOEVST);
    
@@ -1261,8 +1264,23 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
             goto bail;
          }
          
-         /* Set the options for the event set */
+         retval = PAPI_add_event(mev->papi_event, event_list[i]);
+         if (retval != PAPI_OK) {
+            MPXDBG("Event %d could not be counted.\n", event_list[i]);
+            goto bail;
+         }
 
+         /* Always count total cycles so we can scale results.
+          * If user just requested cycles, don't add that event again. */
+
+         if (event_list[i] != SCALE_EVENT) {
+            retval = PAPI_add_event(mev->papi_event, SCALE_EVENT);
+            if (retval != PAPI_OK) {
+               MPXDBG("Scale event could not be counted at the same time.\n");
+               goto bail;
+            }
+         }
+         /* Set the options for the event set */
          memset(&options, 0x0, sizeof(options));
          options.domain.eventset = mev->papi_event;
          options.domain.domain = domain;
@@ -1285,22 +1303,6 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
             }
          }
 
-         retval = PAPI_add_event(mev->papi_event, event_list[i]);
-         if (retval != PAPI_OK) {
-            MPXDBG("Event %d could not be counted.\n", event_list[i]);
-            goto bail;
-         }
-
-         /* Always count total cycles so we can scale results.
-          * If user just requested cycles, don't add that event again. */
-
-         if (event_list[i] != SCALE_EVENT) {
-            retval = PAPI_add_event(mev->papi_event, SCALE_EVENT);
-            if (retval != PAPI_OK) {
-               MPXDBG("Scale event could not be counted at the same time.\n");
-               goto bail;
-            }
-         }
 
          /* Chain the event set into the 
           * master list of event sets used in

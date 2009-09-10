@@ -73,6 +73,11 @@ PAPI_FCALL(papif_create_eventset, PAPIF_CREATE_EVENTSET, (int *EventSet, int *ch
    *check = PAPI_create_eventset(EventSet);
 }
 
+PAPI_FCALL(papif_assign_eventset_component, PAPIF_ASSIGN_EVENTSET_COMPONENT, (int *EventSet, int *cidx, int *check))
+{
+   *check = PAPI_assign_eventset_component(*EventSet, *cidx);
+}
+
 PAPI_FCALL(papif_destroy_eventset, PAPIF_DESTROY_EVENTSET, (int *EventSet, int *check))
 {
    *check = PAPI_destroy_eventset(EventSet);
@@ -211,6 +216,11 @@ PAPI_FCALL(papif_num_hwctrs, PAPIF_num_hwctrs, (int *num))
    *num = PAPI_num_hwctrs();
 }
 
+PAPI_FCALL(papif_num_cmp_hwctrs, PAPIF_num_cmp_hwctrs, (int *cidx, int *num))
+{
+   *num = PAPI_num_cmp_hwctrs(*cidx);
+}
+
 PAPI_FCALL(papif_get_real_cyc, PAPIF_GET_REAL_CYC, (long long * real_cyc))
 {
    *real_cyc = PAPI_get_real_cyc();
@@ -221,11 +231,6 @@ PAPI_FCALL(papif_get_real_usec, PAPIF_GET_REAL_USEC, (long long * time))
    *time = PAPI_get_real_usec();
 }
 
-PAPI_FCALL(papif_get_real_nsec, PAPIF_GET_REAL_NSEC, (long long * time))
-{
-   *time = PAPI_get_real_nsec();
-}
-
 PAPI_FCALL(papif_get_virt_cyc, PAPIF_GET_VIRT_CYC, (long long * virt_cyc))
 {
    *virt_cyc = PAPI_get_virt_cyc();
@@ -234,11 +239,6 @@ PAPI_FCALL(papif_get_virt_cyc, PAPIF_GET_VIRT_CYC, (long long * virt_cyc))
 PAPI_FCALL(papif_get_virt_usec, PAPIF_GET_VIRT_USEC, (long long * time))
 {
    *time = PAPI_get_virt_usec();
-}
-
-PAPI_FCALL(papif_get_virt_nsec, PAPIF_GET_VIRT_NSEC, (long long * time))
-{
-   *time = PAPI_get_virt_nsec();
 }
 
 PAPI_FCALL(papif_is_initialized, PAPIF_IS_INITIALIZED, (int *level))
@@ -477,11 +477,6 @@ PAPI_FCALL(papif_read, PAPIF_READ, (int *EventSet, long long * values, int *chec
    *check = PAPI_read(*EventSet, values);
 }
 
-PAPI_FCALL(papif_read_ts, PAPIF_READ_TS, (int *EventSet, long long * values, long long *cyc, int *check))
-{
-   *check = PAPI_read_ts(*EventSet, values, cyc);
-}
-
 PAPI_FCALL(papif_remove_event, PAPIF_REMOVE_EVENT,
            (int *EventSet, int *Event, int *check))
 {
@@ -509,9 +504,19 @@ PAPI_FCALL(papif_set_domain, PAPIF_SET_DOMAIN, (int *domain, int *check))
    *check = PAPI_set_domain(*domain);
 }
 
+PAPI_FCALL(papif_set_cmp_domain, PAPIF_SET_CMP_DOMAIN, (int *domain, int *cidx, int *check))
+{
+   *check = PAPI_set_cmp_domain(*domain, *cidx);
+}
+
 PAPI_FCALL(papif_set_granularity, PAPIF_SET_GRANULARITY, (int *granularity, int *check))
 {
    *check = PAPI_set_granularity(*granularity);
+}
+
+PAPI_FCALL(papif_set_cmp_granularity, PAPIF_SET_CMP_GRANULARITY, (int *granularity, int *cidx, int *check))
+{
+   *check = PAPI_set_cmp_granularity(*granularity, *cidx);
 }
 
 PAPI_FCALL(papif_shutdown, PAPIF_SHUTDOWN, (void))

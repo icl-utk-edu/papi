@@ -4,8 +4,6 @@
 .SH NAME
 PAPI_read \- read hardware counters from an event set
 .LP
-PAPI_read_ts \- read hardware counters with a timestamp
-.LP
 PAPI_accum \- accumulate and reset counters in an event set
 
 .SH SYNOPSIS
@@ -13,32 +11,25 @@ PAPI_accum \- accumulate and reset counters in an event set
 .nf
 .B #include <papi.h>
 .BI "int\ PAPI_read(int " EventSet ", long_long *" values ");"
-.BI "int\ PAPI_read_ts(int " EventSet ", long_long *" values ", long_long *" cyc ");"
 .BI "int\ PAPI_accum(int " EventSet ", long_long *" values ");"
 .fi
 .B Fortran Interface
 .nf
 .B #include "fpapi.h"
 .BI PAPIF_read(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check )
-.BI PAPIF_read_ts(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_LONG_LONG(*)\  cyc,\  C_INT\  check)
 .BI PAPIF_accum(C_INT\  EventSet,\  C_LONG_LONG(*)\  values,\  C_INT\  check )
 .fi
 
 .SH DESCRIPTION
 
-These calls assume an initialized PAPI library and a properly added event set.
+These calls assume an initialized PAPI library and a properly added
+event set.
 
 .B PAPI_read()
-copies the counters of the indicated event set into the array
+copies the counters of the indicated event set into 
+the array
 .IR values .
 The counters continue counting after the read.
-.LP
-.B PAPI_read_ts()
-copies the counters of the indicated event set into the array
-.IR values .
-It also places a real-time cycle timestamp into
-.IR cyc .
-The counters continue counting after the read. This call DOES NO ERROR CHECKING for performance sakes. The user should call a PAPI_read() before to make sure that this call will succeed. Invalid arguments to this call will likely result in dumping core.
 .LP
 .B PAPI_accum()
 adds the counters of the indicated event set into the array

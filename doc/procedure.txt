@@ -53,7 +53,6 @@ __8.  execute cat_progref.bat (on Windows)
 	papi_overflow.html		papi_perror.html
 	papi_profil.html		papi_query_event.html
 	papi_read.html			papi_read_counters.html
-	papi_read_ts.html
 	papi_register_thread.html	papi_remove_event.html
 	papi_remove_events.html		papi_reset.html
 	papi_set_debug.html		papi_set_domain.html

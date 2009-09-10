@@ -123,7 +123,6 @@ static void dispatch_emt(int signal, siginfo_t * sip, void *arg)
 {
    int event_counter;
    _papi_hwi_context_t ctx;
-   unsigned long address;
 
    ctx.si = sip;
    ctx.ucontext = arg;
@@ -211,10 +210,8 @@ static void dispatch_emt(int signal, siginfo_t * sip, void *arg)
 	   }
       }
 
-      address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
-
       /* Call the regular overflow function in extras.c */
-      _papi_hwi_dispatch_overflow_signal(&ctx, address, NULL, overflow_vector, 0, &thread);
+      _papi_hwi_dispatch_overflow_signal(&ctx, NULL, overflow_vector, 0, &thread);
 
 #if DEBUG
       dump_cmd(sample);
@@ -607,8 +604,6 @@ build_tables(void)
 		preset_table[i].data.native[1]);
     } }
 #endif
-    _papi_hwi_system_info.sub_info.num_native_events = nctrs;
-    _papi_hwi_system_info.sub_info.num_preset_events = n;
     return PAPI_OK;
 }
 
@@ -786,7 +781,6 @@ papi_svector_t _solaris_ultra_table[] = {
  {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
  {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
  {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
- {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
  {(void (*)())_papi_hwd_shutdown_global, VEC_PAPI_HWD_SHUTDOWN_GLOBAL},
  {(void (*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
  {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
@@ -855,16 +849,6 @@ int _papi_hwd_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long **
    return PAPI_OK;
 }
 
-inline_static int round_requested_ns(int ns)
-{
-  if (ns < _papi_hwi_system_info.sub_info.itimer_res_ns) {
-    return _papi_hwi_system_info.sub_info.itimer_res_ns;
-  } else {
-    int leftover_ns = ns % _papi_hwi_system_info.sub_info.itimer_res_ns;
-    return ns + leftover_ns;
-  }
-}
-
 int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
 
@@ -879,43 +863,9 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
    case PAPI_GRANUL:
       return (set_granularity
               (&option->granularity.ESI->machdep, option->granularity.granularity));
-  case PAPI_DEF_ITIMER:
-    {
-      /* flags are currently ignored, eventually the flags will be able
-	 to specify whether or not we use POSIX itimers (clock_gettimer) */
-      if ((option->itimer.itimer_num == ITIMER_REAL) &&
-	  (option->itimer.itimer_sig != SIGALRM))
-	return PAPI_EINVAL;
-      if ((option->itimer.itimer_num == ITIMER_VIRTUAL) &&
-	  (option->itimer.itimer_sig != SIGVTALRM))
-	return PAPI_EINVAL;
-      if ((option->itimer.itimer_num == ITIMER_PROF) &&
-	  (option->itimer.itimer_sig != SIGPROF))
-	return PAPI_EINVAL;
-      if (option->itimer.ns > 0)
-	option->itimer.ns = round_requested_ns(option->itimer.ns);
-      /* At this point, we assume the user knows what he or
-	 she is doing, they maybe doing something arch specific */
-      return PAPI_OK;
-    }
-  case PAPI_DEF_MPX_NS:
-    { 
-      option->multiplex.ns = round_requested_ns(option->multiplex.ns);
-      return(PAPI_OK);
-    }
-  case PAPI_DEF_ITIMER_NS:
-    { 
-      option->itimer.ns = round_requested_ns(option->itimer.ns);
-      return(PAPI_OK);
-    }
    default:
-      return (PAPI_ENOSUPP);
+      return (PAPI_EINVAL);
    }
-}
-
-int _papi_hwd_shutdown(hwd_context_t * ctx)
-{
-   return (PAPI_OK);
 }
 
 int _papi_hwd_shutdown_global(void)
@@ -928,12 +878,10 @@ void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
 {
    _papi_hwi_context_t ctx;
    ThreadInfo_t *t = NULL;
-   unsigned long address;
 
    ctx.si = si;
    ctx.ucontext = info;
-   address = (unsigned long) GET_OVERFLOW_ADDRESS((&ctx));
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx, address, NULL, 0, 0, &t);
+   _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, 0, 0, &t);
 }
 
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
@@ -975,6 +923,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 /*
 int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI)
 {
+   ESI->profile.overflowcount = 0;
    return (PAPI_OK);
 }
 */
@@ -1023,14 +972,9 @@ int _papi_hwd_encode_native(char *name, int *code)
    return (PAPI_OK);
 }
 
-int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
+int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 {
    int index = *EventCode & PAPI_NATIVE_AND_MASK;
-
-   if (modifier == PAPI_ENUM_FIRST) {
-         *EventCode = PAPI_NATIVE_MASK;
-         return (PAPI_OK);
-   }
 
    if (cpuver <= CPC_ULTRA2) {
       if (index < MAX_NATIVE_EVENT_USII - 1) {
@@ -1048,20 +992,19 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
    return (PAPI_ENOEVNT);
 }
 
-int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
+char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
    int nidx;
 
    nidx = EventCode ^ PAPI_NATIVE_MASK;
-   if (nidx >= _papi_hwi_system_info.sub_info.num_native_events) return (PAPI_ENOEVNT);
-   strncpy(ntv_name, native_table[nidx].name, len);
-   if (strlen(native_table[nidx].name) > len-1) return (PAPI_EBUF);
-   return (PAPI_OK);
+   if (nidx >= 0 && nidx < PAPI_MAX_NATIVE_EVENTS)
+      return (native_table[nidx].name);
+   return NULL;
 }
 
-int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len)
+char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
-   return (_papi_hwd_ntv_code_to_name(EventCode, ntv_descr, len));
+   return (_papi_hwd_ntv_code_to_name(EventCode));
 }
 
 static void copy_value(unsigned int val, char *nam, char *names, unsigned int *values, int len)

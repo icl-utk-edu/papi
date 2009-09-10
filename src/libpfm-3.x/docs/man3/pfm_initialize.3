@@ -9,11 +9,13 @@ pfm_initialize \- initialize performance monitoring library
 .sp
 .SH DESCRIPTION
 This is the first function that a program using the library
-\fBmust\fR call otherwise the library will not function at all. 
-This function probes the host PMU and intialize the internal
-state of the library.  In the case of a multi-threaded application,
-this function needs to be called only once, most likely by the initial
-thread.
+must call otherwise the library will not function at all. 
+This function will probe the host CPU and automatically
+detect which PMU it has. All internal data structures will
+be initialized as a result of this call. In the case of
+a multi-threaded application, this function needs to be called
+only once, most likely by the initial thread.
+
 
 .SH RETURN
 The function returns whether or not it was successful, i.e., the

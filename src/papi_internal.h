@@ -85,6 +85,7 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 #endif
 
 #define DEADBEEF 0xdedbeef
+extern int papi_num_components;
 
   /********************************************************/
 /* This block provides general strings used in PAPI     */
@@ -107,7 +108,6 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 #ifdef _WIN32
   #define PAPI_INT_SIGNAL 1
   #define PAPI_INT_ITIMER 1
-  #define PAPI_INT_MPX_SIGNAL 1
 #else
   #ifdef __CATAMOUNT__ /* Catamount only defines ITIMER_REAL with a 1 sec(!) resolution */
     #define PAPI_INT_MPX_SIGNAL SIGALRM
@@ -165,8 +165,24 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 #define DONT_NEED_CONTEXT 	0
 
 /* Replacement for bogus supports_multiple_threads item */
+/* xxxx Should this be at the component level or the hw info level? I think it's system wide... */
+#define SUPPORTS_MULTIPLE_THREADS(cmp_info) (cmp_info.available_granularities & PAPI_GRN_THR)
 
-#define SUPPORTS_MULTIPLE_THREADS(mdi) (mdi.sub_info.available_granularities & PAPI_GRN_THR)
+/* This was defined by each substrate as = (MAX_COUNTERS < 8) ? MAX_COUNTERS : 8 
+    Now it's defined globally as 8 for everything. Mainly applies to max terms in
+    derived events.
+*/
+#define PAPI_MAX_COUNTER_TERMS	8
+
+/* these vestigial pointers are to structures defined in the components
+    they are opaque to the framework and defined as void at this level
+    they are remapped to real data in the component routines that use them */
+#define hwd_context_t		void
+#define hwd_control_state_t	void
+#define hwd_reg_alloc_t		void
+#define hwd_register_t		void
+#define hwd_siginfo_t		void
+#define hwd_ucontext_t		void
 
 /* DEFINES END HERE */
 
@@ -174,6 +190,7 @@ extern unsigned long int (*_papi_hwi_thread_id_fn)(void);
 #include "config.h"
 #endif
 
+//#include OS_HEADER
 #include SUBSTRATE
 #include "papi_preset.h"
 
@@ -189,10 +206,10 @@ typedef struct _EventSetOverflowInfo {
    int flags;
    int event_counter;
    PAPI_overflow_handler_t handler;
-   long long deadline[MAX_COUNTERS];
-   int threshold[MAX_COUNTERS];
-   int EventIndex[MAX_COUNTERS];
-   int EventCode[MAX_COUNTERS];
+   long long *deadline;
+   int *threshold;
+   int *EventIndex;
+   int *EventCode;
 } EventSetOverflowInfo_t;
 
 typedef struct _EventSetAttachInfo {
@@ -206,11 +223,11 @@ typedef struct _EventSetInheritInfo {
 #endif
 
 typedef struct _EventSetProfileInfo {
-   PAPI_sprofil_t *prof[MAX_COUNTERS];
-   int count[MAX_COUNTERS];     /* Number of buffers */
-   int threshold[MAX_COUNTERS];
-   int EventIndex[MAX_COUNTERS];
-   int EventCode[MAX_COUNTERS];
+   PAPI_sprofil_t **prof;
+   int *count;     /* Number of buffers */
+   int *threshold;
+   int *EventIndex;
+   int *EventCode;
    int flags;
    int event_counter;
 } EventSetProfileInfo_t;
@@ -239,7 +256,7 @@ typedef struct _NativeInfo {
    int ni_event;                /* native event code; always non-zero unless empty */
    int ni_position;             /* counter array position where this native event lives */
    int ni_owners;               /* specifies how many owners share this native event */
-   hwd_register_t ni_bits;      /* Substrate defined resources used by this native event */
+   hwd_register_t *ni_bits;      /* Substrate defined resources used by this native event */
 } NativeInfo_t;
 
 
@@ -332,13 +349,15 @@ typedef struct _EventSetInfo {
 				  kernel or the code that directly 
 				  accesses the counters. */
   
-  hwd_control_state_t machdep; /* This contains the encoding necessary for the 
-				  hardware to set the counters to the appropriate
-                                  conditions */
-  
+  hwd_control_state_t *ctl_state; /* This contains the encoding necessary for the 
+                                   hardware to set the counters to the appropriate
+                                   conditions */
+
   unsigned long int tid;       /* Thread ID, only used if PAPI_thread_init() is called  */
   
   int EventSetIndex;           /* Index of the EventSet in the array  */
+
+   int CmpIdx;		    /* Which Component this EventSet Belongs to */
   
   int NumberOfEvents;          /* Number of events added to EventSet */
   
@@ -350,7 +369,7 @@ typedef struct _EventSetInfo {
   
   int NativeCount;             /* How many native events in the array below. */
   
-  NativeInfo_t NativeInfoArray[MAX_COUNTERS];  /* Info about each native event in the set */
+  NativeInfo_t *NativeInfoArray;  /* Info about each native event in the set */
   
   EventSetDomainInfo_t domain;
   EventSetGranularityInfo_t granularity;
@@ -452,9 +471,10 @@ typedef struct {
 typedef struct _papi_mdi {
    DynamicArray_t global_eventset_map;  /* Global structure to maintain int<->EventSet mapping */
    pid_t pid;                   /* Process identifier */
-   PAPI_substrate_info_t sub_info; /* See definition in papi.h */
+/*   PAPI_substrate_info_t sub_info; *//* See definition in papi.h */
    PAPI_hw_info_t hw_info;      /* See definition in papi.h */
    PAPI_exe_info_t exe_info;    /* See definition in papi.h */
+/*   PAPI_mpx_info_t mpx_info; */   /* See definition in papi.h */
    PAPI_shlib_info_t shlib_info;    /* See definition in papi.h */
    PAPI_preload_info_t preload_info; /* See definition in papi.h */ 
 } papi_mdi_t;
@@ -462,6 +482,7 @@ typedef struct _papi_mdi {
 extern papi_mdi_t _papi_hwi_system_info;
 extern int _papi_hwi_error_level;
 extern const hwi_describe_t _papi_hwi_err[PAPI_NUM_ERRORS];
+/*extern volatile int _papi_hwi_using_signal;*/
 extern int _papi_hwi_using_signal[PAPI_NSIG];
 
 /*
@@ -575,7 +596,7 @@ inline_static int _papi_hwi_is_sw_multiplex(EventSetInfo_t *ESI)
   if ((ESI->state & PAPI_MULTIPLEXING) == 0)
     return(0);
   /* Does the substrate support kernel multiplexing */
-  if (_papi_hwi_system_info.sub_info.kernel_multiplex)
+  if (_papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex)
     {
       /* Have we forced software multiplexing */
       if (ESI->multiplex.flags == PAPI_MULTIPLEX_FORCE_SW)

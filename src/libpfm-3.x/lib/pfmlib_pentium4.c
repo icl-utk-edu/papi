@@ -621,17 +621,9 @@ pentium4_get_cycle_event(pfmlib_event_t *e)
 static int
 pentium4_get_inst_retired(pfmlib_event_t *e)
 {
-  if (p4_model != 3 && p4_model != 4 && p4_model != 6){
-    e->event = PENTIUM4_INST_RETIRED;
-	e->num_masks = 2;
-	e->unit_masks[0] = 0;
-	e->unit_masks[1] = 1;
-  }
-  else{
-	e->event = PME_INSTR_COMPLETED;
+	e->event = PENTIUM4_INST_RETIRED;
 	e->num_masks = 1;
 	e->unit_masks[0] = 0;
-  }
 	return PFMLIB_SUCCESS;
 }
 

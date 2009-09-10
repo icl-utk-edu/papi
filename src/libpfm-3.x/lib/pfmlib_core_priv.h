@@ -53,6 +53,5 @@ typedef struct {
 #define PFMLIB_CORE_PMC0		0x10 /* works only on IA32_PMC0  */
 #define PFMLIB_CORE_PEBS		0x20 /* support PEBS (precise event) */
 #define PFMLIB_CORE_CSPEC		0x40 /* requires a core specification */
-#define PFMLIB_CORE_PMC1		0x80 /* works only on IA32_PMC1 */
 
 #endif /* __PFMLIB_CORE_PRIV_H__ */

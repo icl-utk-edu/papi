@@ -20,8 +20,6 @@
 
 #include "papi.h"
 #include "papi_internal.h"
-#include "papi_vector.h"
-#include "papi_vector_redefine.h"
 #include "papi_memory.h"
 
 /* high level papi functions*/
@@ -406,7 +404,7 @@ int PAPI_stop_counters(long long * values, int array_len)
       return retval;
    }
    APIDBG("PAPI_stop_counters returns %d\n", retval);
-   return (retval);
+   return (PAPI_OK);
 }
 
 void _papi_hwi_shutdown_highlevel(){

@@ -6,6 +6,6 @@ CPU_TYPE 	= ppc64
 SHRFLAGS	= -fPIC
 # for Debian, comment the following line out
 BITS		= 64
-CFLAGS	= -g -DDEBUG -D_$(CPU_MODEL) -DNEED_FFSLL -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DPAPI_DATADIR=\"${DATADIR}\"
+CFLAGS	= -g -DDEBUG -D_$(CPU_MODEL) -DNEED_FFSLL -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\"
 FFLAGS  = -D_$(CPU_MODEL)
 include Rules.perfctr

@@ -42,14 +42,6 @@
 #include <perfmon/pfmlib_os_powerpc.h>
 #endif
 
-#ifdef __sparc__
-#include <perfmon/pfmlib_os_sparc.h>
-#endif
-
-#ifdef __cell__
-#include <perfmon/pfmlib_os_powerpc.h>
-#endif
-
 #ifdef __crayx2
 #include <perfmon/pfmlib_os_crayx2.h>
 #endif

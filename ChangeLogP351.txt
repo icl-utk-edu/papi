@@ -1,32 +1,8 @@
-2007-05-05 mucci
-	- Makefile.in: Added datarootdir
-	- Rules.pfm2: Use install to fix DATADIR and LIBDIR
-	- any-null: Compile fixes
-	- config.h: additional timer flags
-	- configure: bitmode, timer fixes, mandir, datadir fixes
-	- extras.c: added memset to guard against junk return values before ntv_bits_to_info
-	- papi.c: ENOINIT fixes
-	- papi.h: 3.5.1 version bump, sicortex vendor added, number of errors, added clock_mhz, peak, pte, new DMEM defs
-	- papi_data.c: ENOINIT error
-	- papi_internal.c: memset of info
-	- perfmon.c: unavail pmds, cycle counters, major mpxing fixes, counter allocation and sampling fixes, MIPS support, FD tuneup
-	- perfmon.c: timer fixes, SiCortex fixes
-	- perfmon.h: MIPS atomics
-	- perfmon_events.csv: SiCortex node chip defines
-	- ctests/Makefile, add new test cases, clean up build for parallel makes
-	- ftests/Makefile, build fixes for parallel makes
-	- ctests, new test cases...
-2007-02-15 mucci
-	- Added more clocks to configure
-	- Added SiCortex specific clock to perfmon.c
-	- Added clock_mhz in hw_info structure
-2007-02-10 mucci
-	- Fixed no init problem, added extra error code.
-2006-12-20 mucci
+2006-12-20	mucci
 	- Added code for VMPeak and VMPTE from later Linux to dmem_info
 	- Zero out the dmem info structure before returning
 	- Fixed bug in pagesize of dmem info
-2006-12-04	mucci
+2006-12-04 mucci
 	- Updated to latest 12-2006 release of Perfmon2 from Sourceforge.
 	- Previous perfmon2 releases are now incompatible
 2006-11-25	mucci

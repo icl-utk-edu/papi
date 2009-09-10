@@ -21,7 +21,7 @@ int get_number(char *buf);
    Thus (clevel - 1) produces the right level index.
 */
 
-int _papi_hwd_get_memory_info(PAPI_hw_info_t * mem_info, int cpu_type)
+int _ia64_get_memory_info(PAPI_hw_info_t * mem_info, int cpu_type)
 {
    unsigned int rev,model,family,archrev;
    int retval = 0;
@@ -143,7 +143,7 @@ int get_number( char *buf ){
 }
 
 
-int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
+int _ia64_get_dmem_info(PAPI_dmem_info_t *d)
 {
   char fn[PATH_MAX], tmp[PATH_MAX];
   FILE *f;

@@ -48,6 +48,10 @@ typedef struct {
  */
 #define PFMLIB_GEN_IA32_UMASK_COMBO	0x01 /* unit mask can be combined (default exclusive) */
 
+#define PFM_GEN_IA32_FIXED_CTR0	16	/* fixed counter 0 */
+#define PFM_GEN_IA32_FIXED_CTR1	17	/* fixed counter 1 */
+#define PFM_GEN_IA32_FIXED_CTR2	18	/* fixed counter 2 */
+
 typedef struct {
 	unsigned int version:8;
 	unsigned int num_cnt:8;

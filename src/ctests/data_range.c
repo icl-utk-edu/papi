@@ -70,7 +70,11 @@ int main(int argc, char **argv)
       
    retval = PAPI_cleanup_eventset(EventSet);
    if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_cleanup", retval);
+      test_fail(__FILE__, __LINE__, "PAPI_cleanup_eventset", retval);
+      
+   retval = PAPI_assign_eventset_component(EventSet, 0);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_assign_eventset_component", retval);
       
 /***************************************************************************************/
    printf("\n\nMeasure loads and stores on the pointers to the allocated arrays\n");

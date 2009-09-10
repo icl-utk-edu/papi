@@ -38,17 +38,24 @@ void mainloop(int arg)
   int retval, i, j = 2;
   PAPI_event_info_t pset;
 
-	/* Initialize the library */
+   /* Initialize the library */
 
-	retval = PAPI_library_init(PAPI_VER_CURRENT);
-	if (retval != PAPI_VER_CURRENT)
-		test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+   retval = PAPI_library_init(PAPI_VER_CURRENT);
+   if (retval != PAPI_VER_CURRENT)
+      test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
    init_multiplex();
 
    retval = PAPI_create_eventset(&EventSet);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
+
+   /* In Component PAPI, EventSets must be assigned a component index
+      before you can fiddle with their internals.
+      0 is always the cpu component */
+   retval = PAPI_assign_eventset_component(EventSet, 0);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_assign_eventset_component", retval);
 
    retval = PAPI_set_multiplex(EventSet);
    if (retval != PAPI_OK)

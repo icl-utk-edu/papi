@@ -36,8 +36,8 @@
 #define PAPI_VERSION_INCREMENT(x)((x)          & 0xff)
 
 /* This is the official PAPI version */
-/* By convention the INCREMENT digit indicates a development version if non-zero. */
-#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,7,0,0)
+/* Big increment for PAPI-C technology pre-release */
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,9,2,0)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
 
 #ifdef __cplusplus
@@ -80,6 +80,9 @@ failure.
 #define PAPI_ENOINIT -16        /* PAPI hasn't been initialized yet */
 #define PAPI_EBUF    -17        /* Buffer size exceeded (usually strings) */
 #define PAPI_EINVAL_DOM -18     /* The EventSet's domain is not supported for the operation */
+#define PAPI_ENOCMP  -19        /* Component Index isn't set */
+
+#define PAPI_NUM_ERRORS	 20	/* Number of error messages specified in this API. */
 
 #define PAPI_NOT_INITED		0
 #define PAPI_LOW_LEVEL_INITED 	1       /* Low level has called library init */
@@ -189,7 +192,6 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 /* Error predefines */
 
-#define PAPI_NUM_ERRORS  19     /* Number of error messages specified in this API. */
 #define PAPI_QUIET       0      /* Option to turn off automatic reporting of return codes < 0 to stderr. */
 #define PAPI_VERB_ECONT  1      /* Option to automatically report any return codes < 0 to stderr and continue. */
 #define PAPI_VERB_ESTOP  2      /* Option to automatically report any return codes < 0 to stderr and exit. */
@@ -242,7 +244,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_ATTACH		19      /* Attach to a another tid/pid instead of ourself */
 #define PAPI_SHLIBINFO          20      /* Shared Library information */
 #define PAPI_LIB_VERSION        21      /* Option to find out the complete version number of the PAPI library */
-#define PAPI_SUBSTRATEINFO      22      /* Find out what the substrate supports */
+#define PAPI_COMPONENTINFO      22      /* Find out what the component substrate supports */
 /* Currently the following options are only available on Itanium; they may be supported elsewhere in the future */
 #define PAPI_DATA_ADDRESS       23      /* Option to set data address range restriction */
 #define PAPI_INSTR_ADDRESS      24      /* Option to set instruction address range restriction */
@@ -385,11 +387,13 @@ read the documentation carefully.  */
    } PAPI_inherit_option_t;
 
    typedef struct _papi_domain_option {
+      int def_cidx; /* this structure requires a component index to set default domains */
       int eventset;
       int domain;
    } PAPI_domain_option_t;
 
    typedef struct _papi_granularity_option {
+      int def_cidx; /* this structure requires a component index to set default granularity */
       int eventset;
       int granularity;
    } PAPI_granularity_option_t;
@@ -401,19 +405,12 @@ read the documentation carefully.  */
       char lib_dir_sep;
    } PAPI_preload_info_t;
 
-  /* Fields for compatability */
-
-#if 0
-#define multiplex_timer_num itimer_num
-#define multiplex_timer_sig itimer_sig
-#define multiplex_timer_us  multiplex_ns*1000
-#endif
-
-   typedef struct _papi_substrate_option {
+   typedef struct _papi_component_option {
      char name[PAPI_MAX_STR_LEN];            /* Name of the substrate we're using, usually CVS RCS Id */
      char version[PAPI_MIN_STR_LEN];         /* Version of this substrate, usually CVS Revision */
      char support_version[PAPI_MIN_STR_LEN]; /* Version of the support library */
      char kernel_version[PAPI_MIN_STR_LEN];  /* Version of the kernel PMC support driver */
+     int CmpIdx;				/* Index into the vector array for this component; set at init time */
      int num_cntrs;               /* Number of hardware counters the substrate supports */
      int num_mpx_cntrs;           /* Number of hardware counters the substrate or PAPI can multiplex supports */
      int num_preset_events;       /* Number of preset events the substrate supports */
@@ -451,7 +448,13 @@ read the documentation carefully.  */
      unsigned int cntr_DEAR_events:1;      /* counters support data event addr register */
      unsigned int cntr_OPCM_events:1;      /* counter events support opcode matching */
      unsigned int reserved_bits:12;
-   } PAPI_substrate_info_t;
+   } PAPI_component_info_t;
+
+   typedef struct _papi_mpx_info {
+     int timer_sig;				/* Signal number used by the multiplex timer, 0 if not: PAPI_SIGNAL */
+     int timer_num;				/* Number of the itimer or POSIX 1 timer used by the multiplex timer: PAPI_ITIMER */
+     int timer_us;				/* uS between switching of sets: PAPI_MPX_DEF_US */
+   } PAPI_mpx_info_t;
 
    typedef int (*PAPI_debug_handler_t) (int code);
 
@@ -584,7 +587,7 @@ read the documentation carefully.  */
       PAPI_hw_info_t *hw_info;
       PAPI_shlib_info_t *shlib_info;
       PAPI_exe_info_t *exe_info;
-      PAPI_substrate_info_t *sub_info;
+      PAPI_component_info_t *cmp_info;
       PAPI_addr_range_option_t addr;
    } PAPI_option_t;
 
@@ -678,6 +681,7 @@ read the documentation carefully.  */
    int   PAPI_accum(int EventSet, long long * values);
    int   PAPI_add_event(int EventSet, int Event);
    int   PAPI_add_events(int EventSet, int *Events, int number);
+   int   PAPI_assign_eventset_component(int EventSet, int cidx);
    int   PAPI_attach(int EventSet, unsigned long tid);
    int   PAPI_cleanup_eventset(int EventSet);
    int   PAPI_create_eventset(int *EventSet);
@@ -692,9 +696,10 @@ read the documentation carefully.  */
    int   PAPI_set_event_info(PAPI_event_info_t * info, int *EventCode, int replace);
    const PAPI_exe_info_t *PAPI_get_executable_info(void);
    const PAPI_hw_info_t *PAPI_get_hardware_info(void);
-   const PAPI_substrate_info_t *PAPI_get_substrate_info(void);
+   const PAPI_component_info_t *PAPI_get_component_info(int cidx);
    int   PAPI_get_multiplex(int EventSet);
    int   PAPI_get_opt(int option, PAPI_option_t * ptr);
+   int   PAPI_get_cmp_opt(int option, PAPI_option_t * ptr,int cidx);
    long long PAPI_get_real_cyc(void);
    long long PAPI_get_real_nsec(void);
    long long PAPI_get_real_usec(void);
@@ -711,6 +716,8 @@ read the documentation carefully.  */
    int   PAPI_lock(int);
    int   PAPI_multiplex_init(void);
    int   PAPI_num_hwctrs(void);
+   int   PAPI_num_cmp_hwctrs(int cidx);
+   int   PAPI_num_hwctrs(void); /* for backward compatibility */
    int   PAPI_num_events(int EventSet);
    int   PAPI_overflow(int EventSet, int EventCode, int threshold,
                      int flags, PAPI_overflow_handler_t handler);
@@ -724,8 +731,10 @@ read the documentation carefully.  */
    int   PAPI_remove_events(int EventSet, int *Events, int number);
    int   PAPI_reset(int EventSet);
    int   PAPI_set_debug(int level);
-   int   PAPI_set_domain(int domain);
-   int   PAPI_set_granularity(int granularity);
+   int   PAPI_set_cmp_domain(int domain, int cidx);
+   int   PAPI_set_domain(int domain); /* for backward compatibility */
+   int   PAPI_set_cmp_granularity(int granularity, int cidx);
+   int   PAPI_set_granularity(int granularity); /* for backward compatibility */
    int   PAPI_set_multiplex(int EventSet);
    int   PAPI_set_opt(int option, PAPI_option_t * ptr);
    int   PAPI_set_thr_specific(int tag, void *ptr);
@@ -757,6 +766,7 @@ read the documentation carefully.  */
 
    int PAPI_accum_counters(long long * values, int array_len);
    int PAPI_num_counters(void);
+   int PAPI_num_components(void);
    int PAPI_read_counters(long long * values, int array_len);
    int PAPI_start_counters(int *events, int array_len);
    int PAPI_stop_counters(long long * values, int array_len);

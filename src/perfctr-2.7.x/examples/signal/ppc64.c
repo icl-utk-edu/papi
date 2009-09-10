@@ -1,4 +1,4 @@
-/* Maynard
+/* Maynard Johnson
  * PPC64-specific code.
  *
  */
@@ -29,24 +29,27 @@ void do_setup(const struct perfctr_info *info,
     cpu_control->tsc_on = 1;
     cpu_control->nractrs = 0;
     cpu_control->nrictrs = 1;
-
-#if 0
-    /* INSTRUCTIONS_COMPLETED */
-    cpu_control->pmc_map[0] = 0;
-    cpu_control->ppc64.mmcr0 = 0x0000090e;
-    cpu_control->ppc64.mmcr1 = 0x1003400045F29420;
-    cpu_control->ppc64.mmcra = 0x00002000;
-    /* not kernel mode, enable PMC1 interrupts */
-    cpu_control->ppc64.mmcr0 |= MMCR0_FCS | MMCR0_PMC1CE;
-#else
-    /* FLOPS COMPLETED */
     cpu_control->pmc_map[0] = 3;
-    cpu_control->ppc64.mmcr0 = 0x00000810;
-    cpu_control->ppc64.mmcr1 = 0x00000000420E84A0;
-    cpu_control->ppc64.mmcra = 0x00002000;
+
+    /* FLOPS COMPLETED */
+    if ((info->cpu_type == PERFCTR_PPC64_POWER4) ||
+        (info->cpu_type == PERFCTR_PPC64_POWER4p)) {
+	cpu_control->ppc64.mmcr0 = 0x00000810ULL;
+	cpu_control->ppc64.mmcr1 = 0x00000000420E84A0ULL;
+	cpu_control->ppc64.mmcra = 0x00002000ULL;
+    } else if (info->cpu_type == PERFCTR_PPC64_POWER5) {
+        cpu_control->ppc64.mmcr0 = 0x00000000ULL;
+        cpu_control->ppc64.mmcr1 = 0x0000000020202010ULL;
+        cpu_control->ppc64.mmcra = 0x00000000ULL;
+    } else if (info->cpu_type == PERFCTR_PPC64_970 ||
+	       info->cpu_type == PERFCTR_PPC64_970MP) {
+        cpu_control->ppc64.mmcr0 = 0x00000000ULL;
+        cpu_control->ppc64.mmcr1 = 0x00000000001E0480ULL;
+        cpu_control->ppc64.mmcra = 0x00002000ULL;
+    }
+
     /* not kernel mode, enable PMCj interrupts */
     cpu_control->ppc64.mmcr0 |= MMCR0_FCS | MMCR0_PMCjCE;
-#endif
 
     /* overflow after 100 events */
     cpu_control->ireset[0] = 0x80000000 - 100;

@@ -1,5 +1,5 @@
 <!-- .\" $Id$ -->
-<!-- .TH PAPI 3 "April, 2008" "PAPI Programmer's Reference" "PAPI" -->
+<!-- .TH PAPI 3.9 "April, 2007" "PAPI Programmer's Reference" "PAPI" -->
 <HTML>
 <HEAD>
 <TITLE>
@@ -263,14 +263,15 @@ PAPI - Performance Application Programming Interface
 <A name=contents></A><H3>CONTENTS</H3></A>
 <BLOCKQUOTE>
 <A HREF=#1>Synopsis</A><BR>
-<A HREF=#2>PAPI Presets</A><BR>
-<A HREF=#3>PAPI Native Events</A><BR>
-<A HREF=#4>High Level Functions</A><BR>
-<A HREF=#5>Low Level Functions</A><BR>
-<A HREF=#6>PAPI Utility Commands</A><BR>
-<A HREF=#7>See Also</A><BR>
+<A HREF=#2>Component PAPI</A><BR>
+<A HREF=#3>PAPI Presets</A><BR>
+<A HREF=#4>PAPI Native Events</A><BR>
+<A HREF=#5>High Level Functions</A><BR>
+<A HREF=#6>Low Level Functions</A><BR>
+<A HREF=#7>PAPI Utility Commands</A><BR>
+<A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=8>
+<A name=9>
 
      <H3>SYNOPSIS</H3>
 
@@ -286,9 +287,22 @@ more complete details. For general information on the Fortran interface see:
 <!-- .BR PAPIF(3) -->
 <A HREF="papif.html">PAPIF (3)</A> 
 <P>
-<!-- .SH PAPI Presets  -->
+<!-- .SH Component PAPI  -->
 </BLOCKQUOTE>
 <A name=2>
+
+     <H3>Component PAPI</H3>
+
+</A>
+<BLOCKQUOTE>
+Beginning with version 3.9, PAPI supports extensions to count performance
+information on multiple simultaneous components. This capability is only
+provided in the low level interface. New or modified function calls are
+prefixed with an asterisk.
+<P>
+<!-- .SH PAPI Presets  -->
+</BLOCKQUOTE>
+<A name=3>
 
      <H3>PAPI Presets</H3>
 
@@ -301,7 +315,7 @@ they can be supported. For a list of these events, see:
 <P>
 <!-- .SH PAPI Native Events  -->
 </BLOCKQUOTE>
-<A name=3>
+<A name=4>
 
      <H3>PAPI Native Events</H3>
 
@@ -314,7 +328,7 @@ a given platform. For more information on native events, see:
 <P>
 <!-- .SH High Level Functions  -->
 </BLOCKQUOTE>
-<A name=4>
+<A name=5>
 
      <H3>High Level Functions</H3>
 
@@ -360,7 +374,7 @@ calling a low level routine.
 <P>
 <!-- .SH Low Level Functions  -->
 </BLOCKQUOTE>
-<A name=5>
+<A name=6>
 
      <H3>Low Level Functions</H3>
 
@@ -385,6 +399,9 @@ See individual functions for details on usage and support.
 <A HREF="papi_add_event.html">PAPI_add_event (3)</A>  - add single PAPI preset or native hardware event to an event set
 <!-- .BR PAPI_add_events(3) " - add array of PAPI preset or native hardware events to an event set" -->
 <A HREF="papi_add_events.html">PAPI_add_events (3)</A>  - add array of PAPI preset or native hardware events to an event set
+<!-- .BR PAPI_assign_eventset_component(3) * " - assign a component index to an existing but empty eventset" -->
+<A HREF="papi_assign_eventset_component.html">PAPI_assign_eventset_component (3)</A> *
+ - assign a component index to an existing but empty eventset 
 <!-- .BR PAPI_attach(3) " - attach specified event set to a specific process or thread id" -->
 <A HREF="papi_attach.html">PAPI_attach (3)</A>  - attach specified event set to a specific process or thread id
 <!-- .BR PAPI_cleanup_eventset(3) " - remove all PAPI events from an event set" -->
@@ -395,12 +412,15 @@ See individual functions for details on usage and support.
 <A HREF="papi_destroy_eventset.html">PAPI_destroy_eventset (3)</A>  - deallocates memory associated with an empty PAPI event set
 <!-- .BR PAPI_detach(3) " - detach specified event set from a previously specified process or thread id" -->
 <A HREF="papi_detach.html">PAPI_detach (3)</A>  - detach specified event set from a previously specified process or thread id
-<!-- .BR PAPI_enum_event(3) " - return the event code for the next available preset or native event" -->
-<A HREF="papi_enum_event.html">PAPI_enum_event (3)</A>  - return the event code for the next available preset or native event
+<!-- .BR PAPI_enum_event(3) " - return the event code for the next available preset or natvie event" -->
+<A HREF="papi_enum_event.html">PAPI_enum_event (3)</A>  - return the event code for the next available preset or natvie event
 <!-- .BR PAPI_event_code_to_name(3) " - translate an integer PAPI event code into an ASCII PAPI preset or native name" -->
 <A HREF="papi_event_code_to_name.html">PAPI_event_code_to_name (3)</A>  - translate an integer PAPI event code into an ASCII PAPI preset or native name
 <!-- .BR PAPI_event_name_to_code(3) " - translate an ASCII PAPI preset or native name into an integer PAPI event code" -->
 <A HREF="papi_event_name_to_code.html">PAPI_event_name_to_code (3)</A>  - translate an ASCII PAPI preset or native name into an integer PAPI event code
+<!-- .BR PAPI_get_component_info(3) * " - get information about the component features" -->
+<A HREF="papi_get_component_info.html">PAPI_get_component_info (3)</A> *
+ - get information about the component features 
 <!-- .BR PAPI_get_dmem_info(3) " - get dynamic memory usage information" -->
 <A HREF="papi_get_dmem_info.html">PAPI_get_dmem_info (3)</A>  - get dynamic memory usage information
 <!-- .BR PAPI_get_event_info(3) " - get the name and descriptions for a given preset or native event code" -->
@@ -413,6 +433,9 @@ See individual functions for details on usage and support.
 <A HREF="papi_get_hardware_info.html">PAPI_get_hardware_info (3)</A>  - get information about the system hardware
 <!-- .BR PAPI_get_multiplex(3) " - get the multiplexing status of specified event set" -->
 <A HREF="papi_get_multiplex.html">PAPI_get_multiplex (3)</A>  - get the multiplexing status of specified event set
+<!-- .BR PAPI_get_cmp_opt(3) * " - query the component specific option settings of a specific event set" -->
+<A HREF="papi_get_cmp_opt.html">PAPI_get_cmp_opt (3)</A> *
+ - query the component specific option settings of a specific event set 
 <!-- .BR PAPI_get_opt(3) " - query the option settings of the PAPI library or a specific event set" -->
 <A HREF="papi_get_opt.html">PAPI_get_opt (3)</A>  - query the option settings of the PAPI library or a specific event set
 <!-- .BR PAPIF_get_clockrate(3) " - get the processor clockrate in MHz. Fortran only." -->
@@ -425,22 +448,16 @@ See individual functions for details on usage and support.
 <A HREF="papif_get_preload.html">PAPIF_get_preload (3)</A>  - get the &#146;LD_PRELOAD&#146; environment equivalent. Fortran only.
 <!-- .BR PAPI_get_real_cyc(3) " - return the total number of cycles since some arbitrary starting point" -->
 <A HREF="papi_get_real_cyc.html">PAPI_get_real_cyc (3)</A>  - return the total number of cycles since some arbitrary starting point
-<!-- .BR PAPI_get_real_ns(3) " - return the total number of nanoseconds since some arbitrary starting point" -->
-<A HREF="papi_get_real_ns.html">PAPI_get_real_ns (3)</A>  - return the total number of nanoseconds since some arbitrary starting point
 <!-- .BR PAPI_get_real_usec(3) " - return the total number of microseconds since some arbitrary starting point" -->
 <A HREF="papi_get_real_usec.html">PAPI_get_real_usec (3)</A>  - return the total number of microseconds since some arbitrary starting point
 <!-- .BR PAPI_get_shared_lib_info(3) " - get information about the shared libraries used by the process" -->
 <A HREF="papi_get_shared_lib_info.html">PAPI_get_shared_lib_info (3)</A>  - get information about the shared libraries used by the process
-<!-- .BR PAPI_get_substrate_info(3) " - get information about the substrate features" -->
-<A HREF="papi_get_substrate_info.html">PAPI_get_substrate_info (3)</A>  - get information about the substrate features
 <!-- .BR PAPI_get_thr_specific(3) " - return a pointer to a thread specific stored data structure" -->
 <A HREF="papi_get_thr_specific.html">PAPI_get_thr_specific (3)</A>  - return a pointer to a thread specific stored data structure
 <!-- .BR PAPI_get_overflow_event_index(3) " - decomposes an overflow_vector into an event index array" -->
 <A HREF="papi_get_overflow_event_index.html">PAPI_get_overflow_event_index (3)</A>  - decomposes an overflow_vector into an event index array
 <!-- .BR PAPI_get_virt_cyc(3) " - return the process cycles since some arbitrary starting point" -->
 <A HREF="papi_get_virt_cyc.html">PAPI_get_virt_cyc (3)</A>  - return the process cycles since some arbitrary starting point
-<!-- .BR PAPI_get_virt_ns(3) " - return the process nanoseconds since some arbitrary starting point" -->
-<A HREF="papi_get_virt_ns.html">PAPI_get_virt_ns (3)</A>  - return the process nanoseconds since some arbitrary starting point
 <!-- .BR PAPI_get_virt_usec(3) " - return the process microseconds since some arbitrary starting point" -->
 <A HREF="papi_get_virt_usec.html">PAPI_get_virt_usec (3)</A>  - return the process microseconds since some arbitrary starting point
 <!-- .BR PAPI_is_initialized(3) " - return the initialized state of the PAPI library" -->
@@ -455,8 +472,14 @@ See individual functions for details on usage and support.
 <A HREF="papi_lock.html">PAPI_lock (3)</A>  - lock one of two PAPI internal user mutex variables
 <!-- .BR PAPI_multiplex_init(3) " - initialize multiplex support in the PAPI library" -->
 <A HREF="papi_multiplex_init.html">PAPI_multiplex_init (3)</A>  - initialize multiplex support in the PAPI library
-<!-- .BR PAPI_num_hwctrs(3) " - return the number of hardware counters" -->
-<A HREF="papi_num_hwctrs.html">PAPI_num_hwctrs (3)</A>  - return the number of hardware counters
+<!-- .BR PAPI_num_components(3) * " - return the number of components currently installed" -->
+<A HREF="papi_num_components.html">PAPI_num_components (3)</A> *
+ - return the number of components currently installed 
+<!-- .BR PAPI_num_cmp_hwctrs(3) * " - return the number of hardware counters for a specified component" -->
+<A HREF="papi_num_cmp_hwctrs.html">PAPI_num_cmp_hwctrs (3)</A> *
+ - return the number of hardware counters for a specified component 
+<!-- .BR PAPI_num_hwctrs(3) " - return the number of hardware counters for the cpu" -->
+<A HREF="papi_num_hwctrs.html">PAPI_num_hwctrs (3)</A>  - return the number of hardware counters for the cpu
 <!-- .BR PAPI_num_events(3) " - return the number of events in an event set" -->
 <A HREF="papi_num_events.html">PAPI_num_events (3)</A>  - return the number of events in an event set
 <!-- .BR PAPI_overflow(3) " - set up an event set to begin registering overflows" -->
@@ -469,8 +492,6 @@ See individual functions for details on usage and support.
 <A HREF="papi_query_event.html">PAPI_query_event (3)</A>  - query if a PAPI event exists
 <!-- .BR PAPI_read(3) " - read hardware events from an event set with no reset" -->
 <A HREF="papi_read.html">PAPI_read (3)</A>  - read hardware events from an event set with no reset
-<!-- .BR PAPI_read_ts(3) " - timestamped read of hardware events" -->
-<A HREF="papi_read_ts.html">PAPI_read_ts (3)</A>  - timestamped read of hardware events
 <!-- .BR PAPI_register_thread(3) " - inform PAPI of the existence of a new thread" -->
 <A HREF="papi_register_thread.html">PAPI_register_thread (3)</A>  - inform PAPI of the existence of a new thread
 <!-- .BR PAPI_remove_event(3) " - remove a hardware event from a PAPI event set" -->
@@ -481,10 +502,16 @@ See individual functions for details on usage and support.
 <A HREF="papi_reset.html">PAPI_reset (3)</A>  - reset the hardware event counts in an event set
 <!-- .BR PAPI_set_debug(3) " - set the current debug level for PAPI" -->
 <A HREF="papi_set_debug.html">PAPI_set_debug (3)</A>  - set the current debug level for PAPI
+<!-- .BR PAPI_set_cmp_domain(3) * " - set the component specific default execution domain for new event sets" -->
+<A HREF="papi_set_cmp_domain.html">PAPI_set_cmp_domain (3)</A> *
+ - set the component specific default execution domain for new event sets 
 <!-- .BR PAPI_set_domain(3) " - set the default execution domain for new event sets" -->
 <A HREF="papi_set_domain.html">PAPI_set_domain (3)</A>  - set the default execution domain for new event sets
 <!-- .BR PAPIF_set_event_domain(3) " - set the execution domain for a specific event set. Fortran only." -->
 <A HREF="papif_set_event_domain.html">PAPIF_set_event_domain (3)</A>  - set the execution domain for a specific event set. Fortran only.
+<!-- .BR PAPI_set_cmp_granularity(3) * " - set the component specific default granularity for new event sets" -->
+<A HREF="papi_set_cmp_granularity.html">PAPI_set_cmp_granularity (3)</A> *
+ - set the component specific default granularity for new event sets 
 <!-- .BR PAPI_set_granularity(3) " - set the default granularity for new event sets" -->
 <A HREF="papi_set_granularity.html">PAPI_set_granularity (3)</A>  - set the default granularity for new event sets
 <!-- .BR PAPI_set_multiplex(3) " - convert a standard event set to a multiplexed event set" -->
@@ -520,7 +547,7 @@ See individual functions for details on usage and support.
 <P>
 <!-- .SH PAPI Utility Commands  -->
 </BLOCKQUOTE>
-<A name=6>
+<A name=7>
 
      <H3>PAPI Utility Commands</H3>
 
@@ -540,21 +567,21 @@ See individual utilities for details on usage.
 <A HREF="papi_cost.html">papi_cost (1)</A>  - provides availability and detail information for PAPI preset events
 <!-- .BR papi_command_line(1) " - executes PAPI preset or native events from the command line" -->
 <A HREF="papi_command_line.html">papi_command_line (1)</A>  - executes PAPI preset or native events from the command line
+<!-- .BR papi_decode(1) " - decodes PAPI preset events into a csv format suitable for PAPI_encode_events" -->
+<A HREF="papi_decode.html">papi_decode (1)</A>  - decodes PAPI preset events into a csv format suitable for PAPI_encode_events
 <!-- .BR papi_event_chooser(1) " - given a list of named events, lists other events that can be counted with them" -->
 <A HREF="papi_event_chooser.html">papi_event_chooser (1)</A>  - given a list of named events, lists other events that can be counted with them
 <!-- .BR papi_mem_info(1) " - provides information on the memory architecture of the current processor" -->
 <A HREF="papi_mem_info.html">papi_mem_info (1)</A>  - provides information on the memory architecture of the current processor
 <!-- .BR papi_native_avail(1) " - provides detailed information for PAPI native events" -->
 <A HREF="papi_native_avail.html">papi_native_avail (1)</A>  - provides detailed information for PAPI native events
-<!-- .BR papi_xml_event_info(1) " - provides event information for PAPI preset and native events in xml format" -->
-<A HREF="papi_xml_event_info.html">papi_xml_event_info (1)</A>  - provides event information for PAPI preset and native events in xml format
 <!-- .fi -->
 </PRE>
 <P>
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=7>
+<A name=8>
 
      <H3>SEE ALSO</H3>
 
@@ -573,7 +600,7 @@ The PAPI Web site: <A HREF="http://icl.cs.utk.edu/papi">http://icl.cs.utk.edu/pa
 <P>
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI (3)</TD> <TD align=right width=33%><I>April, 2008</I></TD> </TR></TABLE>
+<TABLE width=100%><TR> <TD width=33%><I>PAPI Programmer&#146;s Reference</I></TD> <TD width=33% align=center>PAPI (3.9)</TD> <TD align=right width=33%><I>April, 2007</I></TD> </TR></TABLE>
 <HR SIZE="1">
 
 </TD>
@@ -657,6 +684,17 @@ The PAPI Web site: <A HREF="http://icl.cs.utk.edu/papi">http://icl.cs.utk.edu/pa
 <TR VALIGN="top">
 
 <TD ALIGN="center" HEIGHT="22" ROWSPAN="2" VALIGN="TOP">
+
+<SPAN CLASS="FOOTERNOTE">
+
+Contact PAPI: 
+
+<A HREF="mailto:papi@cs.utk.edu">
+
+papi@cs.utk.edu</A>
+
+</SPAN>
+
 </TD>
 
 <TD ALIGN="center" HEIGHT="11" WIDTH="200">

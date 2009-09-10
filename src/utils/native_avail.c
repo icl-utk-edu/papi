@@ -19,7 +19,7 @@ typedef struct command_flags {
 	int groups;
 } command_flags_t;
 
-static void print_help(char **argv, const PAPI_substrate_info_t *s)
+static void print_help(char **argv, const PAPI_component_info_t *c)
 {
 	printf("This is the PAPI native avail program.\n");
 	printf("It provides availability and detail information for PAPI native events.\n");
@@ -29,33 +29,33 @@ static void print_help(char **argv, const PAPI_substrate_info_t *s)
 	printf("   -d           display detailed information about native events\n");
 	printf("   -e EVENTNAME display detail information about named native event\n");
 
-	if (s->data_address_range)
+	if (c->data_address_range)
 		printf("  --darr        display events supporting Data Address Range Restriction\n"); 
-	if (s->cntr_DEAR_events)
+	if (c->cntr_DEAR_events)
 		printf("  --dear        display Data Event Address Register events only\n"); 
-	if (s->instr_address_range)
+	if (c->instr_address_range)
 		printf("  --iarr        display events supporting Instruction Address Range Restriction\n"); 
-	if (s->cntr_IEAR_events)
+	if (c->cntr_IEAR_events)
 		printf("  --iear        display Instruction Event Address Register events only\n"); 
-	if (s->cntr_OPCM_events)
+	if (c->cntr_OPCM_events)
 		printf("  --opcm        display events supporting OpCode Matching\n"); 
-	if (s->cntr_umasks)
+	if (c->cntr_umasks)
 		printf("  --nomasks    suppress display of Unit Mask information\n"); 
-	if (s->cntr_groups)
+	if (c->cntr_groups)
 		printf("  --nogroups    suppress display of Event grouping information\n"); 
 printf("\n");
 }
 
 static void parse_args(int argc, char **argv, command_flags_t *f) {
-	const PAPI_substrate_info_t *s = NULL;
+	const PAPI_component_info_t *c = NULL;
 	int i;
 
-	s = PAPI_get_substrate_info();
+	c = PAPI_get_component_info(0);
 
 	/* Look for all currently defined commands */
 	memset(f, 0, sizeof(command_flags_t));
-	if (s->cntr_umasks) f->umask = 1;
-	if (s->cntr_groups) f->groups = 1;
+	if (c->cntr_umasks) f->umask = 1;
+	if (c->cntr_groups) f->groups = 1;
 	for (i = 1; i < argc; i++) {
 		if (!strcmp(argv[i], "--darr"))
 			f->darr = 1;
@@ -75,7 +75,7 @@ static void parse_args(int argc, char **argv, command_flags_t *f) {
 			f->details = 1;
 		else if (!strcmp(argv[i], "-e")) {
 			f->named = 1;
-			f->name = argv[++i];
+			f->name = argv[i+1];
 			if ((f->name == NULL) || (strlen(f->name) == 0) || (f->name[0] == '-'))
 				f->help = 1;
 		}
@@ -86,28 +86,28 @@ static void parse_args(int argc, char **argv, command_flags_t *f) {
 
 	/* if help requested, print and bail */
 	if (f->help) {
-		print_help(argv, s);
-		exit(0);
+		print_help(argv, c);
+		exit(1);
 	}
 
 	/* Look for flags unsupported by this component */
-	if (f->darr & !(s->data_address_range)) {
+	if (f->darr & !(c->data_address_range)) {
 		f->darr = 0;
 		printf("-darr not supported\n");
 	}
-	if (f->dear & !(s->cntr_DEAR_events)) {
+	if (f->dear & !(c->cntr_DEAR_events)) {
 		f->dear = 0;
 		printf("-dear not supported\n");
 	}
-	if (f->iarr & !(s->instr_address_range)) {
+	if (f->iarr & !(c->instr_address_range)) {
 		f->iarr = 0;
 		printf("-iarr not supported\n");
 	}
-	if (f->iear & !(s->cntr_IEAR_events)) {
+	if (f->iear & !(c->cntr_IEAR_events)) {
 		f->iear = 0;
 		printf("-iear not supported\n");
 	}
-	if (f->opcm & !(s->cntr_OPCM_events)) {
+	if (f->opcm & !(c->cntr_OPCM_events)) {
 		f->opcm = 0;
 		printf("-opcm not supported\n");
 	}
@@ -132,11 +132,16 @@ static void print_event(PAPI_event_info_t *info, int offset) {
 	else sprintf(str, "0x");
 
 	/* copy the code and symbol */
-	sprintf(&str[strlen(str)], "%-11x%s  | ", info->event_code, info->symbol);
+	sprintf(&str[strlen(str)], "%-11x%s", info->event_code, info->symbol);
 
-	while (j < strlen(info->long_descr)) {
+	if ( strlen(info->long_descr) > 0 )
+		strcat(str, "  | ");
+
+	while (j <= strlen(info->long_descr))
+	{
 		i = EVT_LINE - strlen(str) - 2;
-		if (i > 0) {
+		if (i > 0)
+		{
 			strncat(str, &info->long_descr[j], i);
 			j +=i;
 			i = strlen(str);
@@ -152,13 +157,14 @@ static void print_event(PAPI_event_info_t *info, int offset) {
 
 int main(int argc, char **argv)
 {
-	int i, j, k;
+	int i, j=0, k;
 	int retval;
 	PAPI_event_info_t info;
 	const PAPI_hw_info_t *hwinfo = NULL;
 	command_flags_t flags;
 	int enum_modifier;
 	char *pmask;
+	int numcmp, cid;
 
 	tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
@@ -224,11 +230,16 @@ int main(int argc, char **argv)
 	printf
 		("--------------------------------------------------------------------------------\n");
 
-	j = 0;
+   numcmp = PAPI_num_components();
+
+   j = 0;
+	
+   for(cid=0;cid<numcmp;cid++)
+   {
 
 	/* For platform independence, always ASK FOR the first event */
 	/* Don't just assume it'll be the first numeric value */
-	i = 0 | PAPI_NATIVE_MASK;
+	i = 0 | PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK(cid);
 	PAPI_enum_event(&i, PAPI_ENUM_FIRST);
 
 	do {
@@ -289,6 +300,7 @@ int main(int argc, char **argv)
 			printf ("--------------------------------------------------------------------------------\n");
 		}
 	} while (PAPI_enum_event(&i, enum_modifier) == PAPI_OK);
+	}
 
 	printf ("--------------------------------------------------------------------------------\n");
 	printf("Total events reported: %d\n", j);

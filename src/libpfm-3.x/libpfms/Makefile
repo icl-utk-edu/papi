@@ -39,9 +39,11 @@ syst_smp: ./lib/libpfms.a syst_smp.o
 
 clean:
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
-	$(RM) -f *.o $(TARGETS) *~
+	$(RM) -f *.o
 
 distclean: clean
+	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
+	$(RM) -f $(TARGETS) *~
 
 ./lib/libpfms.a subdirs: 
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d all ; done

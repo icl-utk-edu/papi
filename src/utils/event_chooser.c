@@ -78,11 +78,11 @@ int native()
 {
 	int i, j, k;
 	int retval, added;
-	const PAPI_substrate_info_t *s = NULL;
+	const PAPI_component_info_t *c = NULL;
 	PAPI_event_info_t info;
 
 	j = 0;
-	s = PAPI_get_substrate_info();
+	c = PAPI_get_component_info(0);
 
 	/* For platform independence, always ASK FOR the first event */
 	/* Don't just assume it'll be the first numeric value */
@@ -93,7 +93,7 @@ int native()
 		/* If unit masks are supported, perfmon requires that at least one
 		   mask bit be set before adding the event.
 		   */
-		if (s->cntr_umasks) {
+		if (c->cntr_umasks) {
 			k = i;
 			/* modifier = PAPI_NTV_ENUM_UMASKS returns an event code for each
 			unit mask bit defined for this native event. This can be used
@@ -131,7 +131,7 @@ int native()
 			native event lives, in bits 16 - 23 of event code
 			terminating with PAPI_ENOEVNT at the end of the list.
 		*/
-			if (s->cntr_groups) {
+			if (c->cntr_groups) {
 				k = i;
 				if (PAPI_enum_event(&k, PAPI_NTV_ENUM_GROUPS) == PAPI_OK) {
 					printf("Groups: ");
@@ -148,7 +148,7 @@ int native()
 	printf ("-------------------------------------------------------------------------\n");
 	printf("Total events reported: %d\n", j);
 	test_pass(__FILE__, NULL, 0);
-	exit(0);
+	exit(1);
 }
 
 int preset()
@@ -185,7 +185,7 @@ int preset()
 	printf ("-------------------------------------------------------------------------\n");
 	printf("Total events reported: %d\n", j);
 	test_pass(__FILE__, NULL, 0);
-	exit(0);
+	exit(1);
 }
 
 int main(int argc, char **argv)

@@ -5,11 +5,11 @@ MSUBSTR  = dadd-alpha
 MEMSUBSTR= alpha
 DESCR   = "Compaq Tru64 Unix with Alpha 21264EV6"
 LIBS	= static shared
-TARGETS	= serial forkexec_tests overflow_tests profile_tests multiplex
+TARGETS	= serial multiplex
 POST_BUILD =
 SPECIAL_REMOVE =
 
-CFLAGS 	= -I/usr/include/dcpi -Zp8 -DNO_VARARG_MACRO -DNEED_FFSLL 
+CFLAGS 	= -I/usr/include/dcpi -Zp8 -DNO_VARARG_MACRO -DNEED_FFSLL -DCOMP_VECTOR=_alpha_vectors
 FFLAGS	= 
 OPTFLAGS= -O 
 TOPTFLAGS=$(OPTFLAGS)

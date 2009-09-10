@@ -42,17 +42,17 @@
 #include <sys/ptrace.h>
 #include <sys/mman.h>
 #include <perfmon/perfmon.h>
-#include <perfmon/perfmon_pebs_p4_smpl.h>
+#include <perfmon/perfmon_pebs_smpl.h>
 
 #define NUM_PMCS	32
 #define NUM_PMDS	32
 
 #define SMPL_PERIOD	100000ULL	 /* must not use more bits than actual HW counter width */
 
-typedef pfm_pebs_p4_smpl_hdr_t		smpl_hdr_t;
-typedef pfm_pebs_p4_smpl_entry_t	smpl_entry_t;
-typedef pfm_pebs_p4_smpl_arg_t		smpl_arg_t;
-#define FMT_NAME			PFM_PEBS_P4_SMPL_NAME
+typedef pfm_pebs_smpl_hdr_t	smpl_hdr_t;
+typedef pfm_pebs_smpl_entry_t	smpl_entry_t;
+typedef pfm_pebs_smpl_arg_t	smpl_arg_t;
+#define FMT_NAME		PFM_PEBS_SMPL_NAME
 
 static uint64_t collected_samples;
 

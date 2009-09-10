@@ -1,12 +1,12 @@
 #include "papi.h"
 #include "papi_internal.h"
 
-int _papi_hwd_get_memory_info(PAPI_hw_info_t *hw, int id)
+int _any_get_memory_info(PAPI_hw_info_t *hw, int id)
 {
    return PAPI_OK;
 }
 
-int _papi_hwd_get_dmem_info(PAPI_dmem_info_t *d)
+int _any_get_dmem_info(PAPI_dmem_info_t *d)
 {
    d->size = 1;
    d->resident = 2;

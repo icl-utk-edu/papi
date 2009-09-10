@@ -19,34 +19,6 @@
 
 static double dummy3(double x, int iters);
 
-void init_papi(void)
-{
-	int retval;
-	const PAPI_hw_info_t *hw_info;
-	const PAPI_substrate_info_t * subinfo;
-
-	/* Initialize the library */
-
-	retval = PAPI_library_init(PAPI_VER_CURRENT);
-	if (retval != PAPI_VER_CURRENT)
-		test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
-
-	subinfo = PAPI_get_substrate_info();
-	if (subinfo == NULL)
-		test_fail(__FILE__, __LINE__, "PAPI_get_substrate_info", 2);
-
-	hw_info = PAPI_get_hardware_info();
-	if (hw_info == NULL)
-		test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
-
-	if ((strstr(subinfo->name, "linux.c")) &&
-	     strcmp(hw_info->model_string, "POWER6") == 0) {
-		retval = PAPI_set_domain(PAPI_DOM_ALL);
-		if (retval != PAPI_OK)
-			test_fail(__FILE__, __LINE__, "PAPI_set_domain", retval);
-	}
-}
-
 void check_values(int eventset, int *events, int nevents, long long *values, long long *refvalues)
 {
   double spread[MAXEVENTS];
@@ -210,27 +182,19 @@ int main(int argc, char **argv)
       printf("Comparing a multiplex measurement with separate measurements.\n\n");
    }
 
-   init_papi();
+   if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
+      test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
    decide_which_events(events, &nevents);
 
-#if 0
-   retval = PAPI_set_debug(PAPI_VERB_ECONT);
-   if (retval != PAPI_OK)
-     test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
-#endif
+   init_multiplex();
 
-   if ((retval = PAPI_multiplex_init()))
-      test_fail(__FILE__, __LINE__, "PAPI_multiplex_init", retval);
-
-#if 0
    /* Find a reasonable number of iterations (each 
     * event active 20 times) during the measurement
     */
    t2 = 10000 * 20 * nevents;   /* Target: 10000 usec/multiplex, 20 repeats */
    if (t2 > 30e6)
       test_skip(__FILE__, __LINE__, "This test takes too much time", retval);
-#endif
 
    y = dummy3(x, iters);
    /* Measure one run */
@@ -244,12 +208,6 @@ int main(int argc, char **argv)
        printf("Modified iteration count to %d\n\n",iters);
      }
 
-#if 0
-   else if (t1 > 30e6)          /* Make sure execution time is < 30s per repeated test */
-      test_skip(__FILE__, __LINE__, "This test takes too much time", retval);
-   printf("Using %d iterations.\n\n",iters);
-#endif      
-
    /* Now loop through the items one at a time */
 
    ref_measurements(iters, &eventset, events, nevents, refvalues); 
@@ -258,6 +216,14 @@ int main(int argc, char **argv)
 
    if ((retval = PAPI_create_eventset(&eventset)))
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
+
+
+   /* In Component PAPI, EventSets must be assigned a component index
+      before you can fiddle with their internals.
+      0 is always the cpu component */
+   retval = PAPI_assign_eventset_component(eventset, 0);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_assign_eventset_component", retval);
 
    if ((retval = PAPI_set_multiplex(eventset)))
      test_fail(__FILE__, __LINE__, "PAPI_set_multiplex", retval);
@@ -275,10 +241,6 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
    t2 = PAPI_get_real_usec();
 
-#if 0
-      printf("\tOperations= %.1f Mflop", y * 1e-6);
-      printf("\t(%g Mflop/s)\n\n", ((float) y / (t2 - t1)));
-#endif
    for (j = 0; j < nevents; j++) {
       PAPI_get_event_info(events[j], &info);
       if (!TESTS_QUIET) {

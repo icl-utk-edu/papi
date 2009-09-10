@@ -15,7 +15,7 @@ IPROBE_INCLUDES	= -I$(IPROBE_HOME)/suite_common/inc/common -I$(IPROBE_HOME)/suit
 
 IPROBE_LIBS = -L$(IPROBE_HOME)/lib/obj -llipr
 
-CFLAGS 	= -D__LINUX__ -DLINUX -g  -I./includes $(IPROBE_INCLUDES) -w 
+CFLAGS 	= -D__LINUX__ -DLINUX -DCOMP_VECTOR=_linux_alpha_vectors -g  -I./includes $(IPROBE_INCLUDES) -w 
 FFLAGS	= -g
 OPTFLAGS= 
 FOPTFLAGS= $(OPTFLAGS)

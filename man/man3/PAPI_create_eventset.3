@@ -1,5 +1,5 @@
 .\" $Id$
-.TH PAPI_create_eventset 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
+.TH PAPI_create_eventset 3 "April, 2007" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
 PAPI_create_eventset \- create an EventSet 
@@ -24,6 +24,15 @@ which must be initialized to
 .I "PAPI_NULL"
 before calling this routine. The user may then add hardware events 
 to the event set by calling
+.BR "PAPI_add_event" (3) 
+or similar routines. 
+
+.B "NOTE:" PAPI-C uses a late binding model to bind EventSets to components.
+When an EventSet is first created it is not bound to a component. This will cause
+some API calls that modify EventSet options to fail. An EventSet can be bound to
+a component explicitly by calling
+.BR "PAPI_assign_eventset_component" (3) 
+or implicitly by calling
 .BR "PAPI_add_event" (3) 
 or similar routines. 
 
@@ -69,4 +78,4 @@ This function has no known bugs.
 
 .SH SEE ALSO
 .BR PAPI_destroy_eventset "(3), " PAPI_cleanup_eventset "(3), "  
-.BR PAPI_add_event "(3) " 
+.BR PAPI_add_event "(3), " PAPI_assign_eventset_component "(3) " 

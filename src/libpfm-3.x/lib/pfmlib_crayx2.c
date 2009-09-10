@@ -140,14 +140,11 @@ pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 		}
 	}
 
-	/*	Better have at least one event specified and not exceed limit.
+	/*	Better have at least one event specified.
 	 */
 	if (inp->pfp_event_count == 0) {
 		DPRINT (("return: event count is 0\n"));
 		return PFMLIB_ERR_INVAL;
-	} else if (inp->pfp_event_count > PMU_CRAYX2_NUM_COUNTERS) {
-		DPRINT (("return: event count exceeds max %d\n", PMU_CRAYX2_NUM_COUNTERS));
-		return PFMLIB_ERR_TOOMANY;
 	}
 
 	memset (Pused, 0, sizeof(Pused));
@@ -169,9 +166,8 @@ pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 		chip = crayx2_pe[code].pme_chip;
 		ctr = crayx2_pe[code].pme_ctr;
 		ev = crayx2_pe[code].pme_event;
-		chipno = crayx2_pe[code].pme_chipno;
 
-		DPRINT (("%3d: code %3d chip %1d ctr %2d ev %1d chipno %2d\n", code, i, chip, ctr, ev, chipno));
+		DPRINT (("%3d: code %3d chip %1d ctr %2d ev %1d\n", code, i, chip, ctr, ev));
 
 		/*	These priviledge levels are not recognized.
 		 */
@@ -180,12 +176,29 @@ pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 			return PFMLIB_ERR_INVAL;
 		}
 
-		/*	No masks exist.
+		/*	Check out the code masks, which for M chips
+		 *	are actually the chip number to activate for
+		 *	the event. If no code masks are given, assume
+		 *	chip 0.
 		 */
-		if (inp->pfp_events[i].num_masks > 0) {
-			DPRINT (("too many masks for event\n"));
-			return PFMLIB_ERR_TOOMANY;
+		if (chip != PME_CRAYX2_CHIP_MEMORY) {
+			if (inp->pfp_events[i].num_masks > 0) {
+				DPRINT (("too many masks for P/C event\n"));
+				return PFMLIB_ERR_TOOMANY;
+			}
+			chipno = 0;
+
+		} else if (inp->pfp_events[i].num_masks == 0) {
+			chipno = 0;
+
+		} else {
+			if (inp->pfp_events[i].num_masks > 1) {
+				DPRINT (("too many masks for M event\n"));
+				return PFMLIB_ERR_TOOMANY;
+			}
+			chipno = inp->pfp_events[i].unit_masks[0];
 		}
+		DPRINT (("%3d: chip number %d\n", i, chipno));
 
 		/*	The event code. Set-up the event selection mask for
 		 *	the PMC of the respective chip. Check if more than
@@ -193,6 +206,7 @@ pfm_crayx2_dispatch_events (pfmlib_input_param_t *inp, void *model_in, pfmlib_ou
 		 */
 		if (chip == PME_CRAYX2_CHIP_CPU) {
 			ret = pfm_crayx2_counter_use (ctr, ev, &Pused[chipno], &Pevents);
+
 		} else if (chip == PME_CRAYX2_CHIP_CACHE) {
 			ret = pfm_crayx2_counter_use (ctr, ev, &Cused[chipno], &Cevents);
 		} else if (chip == PME_CRAYX2_CHIP_MEMORY) {

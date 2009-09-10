@@ -335,6 +335,20 @@ int _papi_hwd_reset(hwd_context_t *ctx, hwd_control_state_t *cntrl) {
    return(_papi_hwd_start(ctx, cntrl));
 }
 
+/* This routine is for shutting down threads, including the
+   master thread. */
+int _papi_hwd_shutdown(hwd_context_t * ctx) {
+   int retval = vperfctr_unlink(ctx->perfctr);
+   SUBDBG("_papi_hwd_shutdown vperfctr_unlink(%p) = %d\n", ctx->perfctr, retval);
+   vperfctr_close(ctx->perfctr);
+   SUBDBG("_papi_hwd_shutdown vperfctr_close(%p)\n", ctx->perfctr);
+   memset(ctx, 0x0, sizeof(hwd_context_t));
+
+   if(retval)
+      return(PAPI_ESYS);
+   return(PAPI_OK);
+}
+
 /* Perfctr requires that interrupting counters appear at the end of the pmc list
    In the case a user wants to interrupt on a counter in an evntset that is not
    among the last events, we need to move the perfctr virtual events around to
@@ -382,12 +396,19 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    OVFDBG("EventIndex=%d\n", EventIndex);
    /* The correct event to overflow is EventIndex */
 
+   /* Set an overflow threshold */
+   if (ESI->EventInfoArray[EventIndex].derived) 
+     {
+       OVFDBG("Can't overflow on a derived event.\n");
+       return PAPI_EINVAL;
+     }
+
    ncntrs = _papi_hwi_system_info.sub_info.num_cntrs;
    i = ESI->EventInfoArray[EventIndex].pos[0];
    if (i >= ncntrs) 
      {
        PAPIERROR("Selector id %d is larger than ncntrs %d", i, ncntrs);
-       return PAPI_EINVAL;
+       return PAPI_EBUG;
      }
 
    if (threshold != 0) 
@@ -480,6 +501,7 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold) {
 }
 
 int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI) {
+   ESI->profile.overflowcount = 0;
    return (PAPI_OK);
 }
 

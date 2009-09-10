@@ -39,7 +39,7 @@
 #include <sys/ptrace.h>
 #include <sys/mman.h>
 #include <perfmon/perfmon.h>
-#include <perfmon/perfmon_pebs_core_smpl.h>
+#include <perfmon/perfmon_pebs_smpl.h>
 
 #include <perfmon/pfmlib.h>
 #include <perfmon/pfmlib_core.h>
@@ -53,10 +53,10 @@
 
 #define SMPL_PERIOD	100000ULL	 /* must not use more bits than actual HW counter width */
 
-typedef pfm_pebs_core_smpl_hdr_t	smpl_hdr_t;
-typedef pfm_pebs_core_smpl_entry_t	smpl_entry_t;
-typedef pfm_pebs_core_smpl_arg_t	smpl_arg_t;
-#define FMT_NAME			PFM_PEBS_CORE_SMPL_NAME
+typedef pfm_pebs_smpl_hdr_t	smpl_hdr_t;
+typedef pfm_pebs_smpl_entry_t	smpl_entry_t;
+typedef pfm_pebs_smpl_arg_t	smpl_arg_t;
+#define FMT_NAME		PFM_PEBS_SMPL_NAME
 
 static uint64_t collected_samples;
 
@@ -128,12 +128,12 @@ process_smpl_buf(smpl_hdr_t *hdr)
 		/*
 		 * print some of the machine registers of each sample
 		 */
-		printf("entry %06"PRIu64" eflags:0x%08llx EAX:0x%08llx ESP:0x%08llx IP:0x%08llx\n",
+		printf("entry %06"PRIu64" eflags:0x%08lx EAX:0x%08lx ESP:0x%08lx IP:0x%08lx\n",
 			entry,
-			(unsigned long long)ent->eflags,
-			(unsigned long long)ent->eax,
-			(unsigned long long)ent->esp,
-			(unsigned long long)ent->ip);
+			ent->eflags,
+			ent->eax,
+			ent->esp,
+			ent->ip);
 		ent++;
 		entry++;
 	}
@@ -198,7 +198,7 @@ main(int argc, char **argv)
 		fatal_error("cannot find sampling event %s\n", SMPL_EVENT);
 
 	inp.pfp_event_count = 1;
-	inp.pfp_dfl_plm = PFM_PLM3|PFM_PLM0;
+	inp.pfp_dfl_plm = PFM_PLM3;
 
 	/*
 	 * important: inform libpfm we do use PEBS
@@ -246,13 +246,13 @@ main(int argc, char **argv)
 
 	hdr = (smpl_hdr_t *)buf_addr;
 
-	printf("pebs_base=0x%llx pebs_end=0x%llx index=0x%llx\n"
-	       "intr=0x%llx version=%u.%u\n"
+	printf("pebs_base=0x%lx pebs_end=0x%lx index=0x%lx\n"
+	       "intr=0x%lx version=%u.%u\n"
 	       "entry_size=%zu ds_size=%zu\n",
-			(unsigned long long)hdr->ds.pebs_buf_base,
-			(unsigned long long)hdr->ds.pebs_abs_max,
-			(unsigned long long)hdr->ds.pebs_index,
-			(unsigned long long)hdr->ds.pebs_intr_thres,
+			hdr->ds.pebs_buf_base,
+			hdr->ds.pebs_abs_max,
+			hdr->ds.pebs_index,
+			hdr->ds.pebs_intr_thres,
 			PFM_VERSION_MAJOR(hdr->version),
 			PFM_VERSION_MINOR(hdr->version),
 			sizeof(smpl_entry_t),
@@ -286,8 +286,8 @@ main(int argc, char **argv)
 		 * 64-bit emulation to avoid getting interrupts for each
 		 * sampling period, PEBS takes care of this part.
 		 */
-		if (pc[i].reg_num == 0)
-			pc[i].reg_flags = PFM_REGFL_NO_EMUL64;
+		if (pc[i].reg_num == 4) 
+			pc[0].reg_flags = PFM_REGFL_NO_EMUL64;
 	}
 
 	/*

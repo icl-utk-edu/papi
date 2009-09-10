@@ -27,7 +27,7 @@
 #endif
 
 static hwi_search_t preset_name_map_PPC64[PAPI_MAX_PRESET_EVENTS] = {
-#if defined(_POWER5) || defined(_POWER5p) || defined(_POWER6)
+#if defined(_POWER5) || defined(_POWER5p)
    {PAPI_L1_DCM, {DERIVED_ADD, {PNE_PM_LD_MISS_L1, PNE_PM_ST_MISS_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Level 1 data cache misses */
    {PAPI_L1_DCA, {DERIVED_ADD, {PNE_PM_LD_REF_L1, PNE_PM_ST_REF_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},        /*Level 1 data cache access */
    /* can't count level 1 data cache hits due to hardware limitations. */
@@ -45,60 +45,32 @@ static hwi_search_t preset_name_map_PPC64[PAPI_MAX_PRESET_EVENTS] = {
    {PAPI_L3_LDM, {DERIVED_ADD, {PNE_PM_DATA_FROM_LMEM, PNE_PM_DATA_FROM_RMEM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}}, /* Level 3 data cache read misses */
    /* can't count level 1 instruction cache accesses due to hardware limitations. */
    {PAPI_L1_ICH, {0, {PNE_PM_INST_FROM_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},  /* Level 1 inst cache hits */
-#if defined(_POWER6)
-   {PAPI_L1_ICM, {0, {PNE_PM_L1_ICACHE_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /* Level 1 instruction cache misses */
-#else
    /* can't count level 1 instruction cache misses due to hardware limitations. */
-#endif
    /* can't count level 2 instruction cache accesses due to hardware limitations. */
+   /* can't count level 2 instruction cache hits due to hardware limitations. */
    {PAPI_L2_ICM, {0, {PNE_PM_INST_FROM_L2MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},  /* Level 2 inst cache misses */
-   {PAPI_L2_ICH, {0, {PNE_PM_INST_FROM_L2, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},  /* Level 2 inst cache hits */
    {PAPI_L3_ICA, {0, {PNE_PM_INST_FROM_L2MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},  /* Level 3 inst cache accesses */
-   {PAPI_L3_ICH, {0, {PNE_PM_INST_FROM_L3, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},  /* Level 2 inst cache hits */
-#if defined(_POWER6)
-   {PAPI_L3_ICM, {0, {PNE_PM_INST_FROM_L3MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},  /* Level 2 inst cache misses */
-#else
+   /* can't count level 3 instruction cache hits due to hardware limitations. */
    {PAPI_L3_ICM, {DERIVED_ADD, {PNE_PM_DATA_FROM_LMEM, PNE_PM_DATA_FROM_RMEM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}}, /* Level 3 instruction cache misses (reads & writes) */
-#endif
    {PAPI_FMA_INS, {0, {PNE_PM_FPU_FMA, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},       /*FMA instructions completed */
    {PAPI_TOT_IIS, {0, {PNE_PM_INST_DISP, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},     /*Total instructions issued */
    {PAPI_TOT_INS, {0, {PNE_PM_INST_CMPL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},     /*Total instructions executed */
-#if defined (_POWER6)
-   {PAPI_INT_INS, {DERIVED_ADD, {PNE_PM_FXU0_FIN, PNE_PM_FXU1_FIN, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},       /*Integer instructions executed */
-#else
    {PAPI_INT_INS, {0, {PNE_PM_FXU_FIN, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},       /*Integer instructions executed */
-#endif
    {PAPI_FP_OPS, {DERIVED_ADD, {PNE_PM_FPU_1FLOP, PNE_PM_FPU_FMA, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL},{0}}}, /*Floating point instructions executed */
    {PAPI_FP_INS, {0, {PNE_PM_FPU_FIN, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Floating point instructions executed */
-#if defined (_POWER6)
-   /* Can't count FDIV and FSQRT instructions individually on POWER6 */
-   {PAPI_TOT_CYC, {0, {PNE_PM_CYC, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},   /*Processor cycles */
-#else
    {PAPI_TOT_CYC, {0, {PNE_PM_RUN_CYC, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},   /*Processor cycles gated by the run latch */
    {PAPI_FDV_INS, {0, {PNE_PM_FPU_FDIV, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*FD ins */
    {PAPI_FSQ_INS, {0, {PNE_PM_FPU_FSQRT, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},     /*FSq ins */
-#endif
-#if defined (_POWER6)
-   /* POWER6 does not have a TLB */
-#else
    {PAPI_TLB_DM, {0, {PNE_PM_DTLB_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Data translation lookaside buffer misses */
    {PAPI_TLB_IM, {0, {PNE_PM_ITLB_MISS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Instr translation lookaside buffer misses */
    {PAPI_TLB_TL, {DERIVED_ADD, {PNE_PM_DTLB_MISS, PNE_PM_ITLB_MISS,PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},        /*Total translation lookaside buffer misses */
-#endif
    {PAPI_HW_INT, {0, {PNE_PM_EXT_INT, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},        /*Hardware interrupts */
    {PAPI_STL_ICY, {0, {PNE_PM_0INST_FETCH, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},   /*Cycles with No Instruction Issue */
    {PAPI_LD_INS, {0, {PNE_PM_LD_REF_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Load instructions*/
    {PAPI_SR_INS, {0, {PNE_PM_ST_REF_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Store instructions*/
    {PAPI_LST_INS, {DERIVED_ADD, {PNE_PM_ST_REF_L1, PNE_PM_LD_REF_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Load and Store instructions*/
-#if defined (_POWER6)
-   {PAPI_BR_INS, {0, {PNE_PM_BRU_FIN, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},   /* Branch instructions*/
-   {PAPI_BR_MSP, {0, {PNE_PM_BR_MPRED, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},   /* Branch mispredictions */
-   {PAPI_BR_PRC, {0, {PNE_PM_BR_PRED, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},   /* Branches correctly predicted */
-#else
    {PAPI_BR_INS, {0, {PNE_PM_BR_ISSUED, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},   /* Branch instructions*/
    {PAPI_BR_MSP, {DERIVED_ADD, {PNE_PM_BR_MPRED_CR, PNE_PM_BR_MPRED_TA, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},   /* Branch mispredictions */
-   {PAPI_BR_PRC, {0, {PNE_PM_BR_PRED_CR_TA, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},   /* Branches correctly predicted */
-#endif
    {PAPI_FXU_IDL, {0, {PNE_PM_FXU_IDLE, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Cycles integer units are idle */
    {0, {0, {PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}}        /* end of list */
 #else
@@ -168,7 +140,7 @@ static hwi_search_t preset_name_map_PPC64[PAPI_MAX_PRESET_EVENTS] = {
 };
 hwi_search_t *preset_search_map;
 
-#if defined(_POWER5) || defined(_POWER5p) || defined(_POWER6)
+#if defined(_POWER5) || defined(_POWER5p)
 unsigned long long pmc_sel_mask[NUM_COUNTER_MASKS] = {
 	PMC1_SEL_MASK,
 	PMC2_SEL_MASK,
@@ -188,75 +160,6 @@ unsigned long long pmc_sel_mask[NUM_COUNTER_MASKS] = {
 	PMC8a_SEL_MASK
 };
 #endif
-
-
-/* pmc_dom_vector exists because some counters (POWER6, counters 5 & 6) do
-   not support being gated by the privilege level.  This array of bit
-   vectors is a general purpose mechanism that allows us to state whether a
-   given set of privilege levels are supported by a particular counter.  The
-   array is indexed by the counter number and then within the unsigned word
-   bit vector by the domain vector.  For example, to check counter 4 for
-   kernel domain and user domain compatibility, we address pmc_dom_vector[4
-   - 1] and then take the requested domain vector, in this case
-   PAPI_DOM_KERNEL (0x2) + PAPI_DOM_USER (0x1) = 0x3, and shift a 1 left by
-   that amount, giving a value of 0x0008.  This value is then AND'd with
-   pmc_dom_vector[4 - 1].  If this result is non-zero, the requested domain
-   is supported by that counter.  Note that the least significant bit is
-   not set in any of these vectors because there is no domain corresponding
-   to all zeros in the domain vector.
-  
-   PMC_INT_VECTOR defines which counters support an exception on overflow.
-   On POWER6, only counters 1-4 support generating an exception on
-   overflow.  */
-
-#ifdef _POWER6
-static unsigned pmc_dom_vector[MAX_COUNTERS] = {
-   0x0f0e,
-   0x0f0e,
-   0x0f0e,
-   0x0f0e,
-   /* Counters 5 & 6 support only PAPI_DOM_USER+PAPI_DOM_KERNEL+PAPI_DOM_SUPERVISOR */
-   0x0800,
-   0x0800
-};
-#define PMC_INT_VECTOR 0x0f
-#elif defined(_POWER5) || defined(POWER5p)
-static unsigned pmc_dom_vector[MAX_COUNTERS] = {
-   0x0f0e,
-   0x0f0e,
-   0x0f0e,
-   0x0f0e,
-   0x0f0e,
-   0x0f0e
-};
-#define PMC_INT_VECTOR 0x3f
-#else
-static unsigned pmc_dom_vector[MAX_COUNTERS] = {
-   0x0f0e,
-   0x0f0e,
-   0x0f0e,
-   0x0f0e,
-   0x0f0e,
-   0x0f0e,
-   0x0f0e,
-   0x0f0e
-};
-#define PMC_INT_VECTOR 0xff
-#endif
-
-/* Defined in papi_data.c */
-extern hwi_presets_t _papi_hwi_presets;
-
-inline_static int pmc_domain_is_supported(int reg, int dom)
-{
-	return (pmc_dom_vector[reg] & (1 << (dom))) != 0; 
-}
-
-
-inline_static int pmc_interrupt_is_supported(reg)
-{
-	return (PMC_INT_VECTOR & (1 << (reg))) != 0;
-}
 
 static void clear_unused_pmcsel_bits(hwd_control_state_t * cntrl) {
 	struct perfctr_cpu_control * cpu_ctl = &cntrl->control.cpu_control;
@@ -278,9 +181,6 @@ static void clear_unused_pmcsel_bits(hwd_control_state_t * cntrl) {
 				freeze_pmc5_pmc6++;
 			else
 				cpu_ctl->ppc64.mmcr1 &= pmc_sel_mask[i];			
-#elif defined(_POWER6)
-			if (i <= 3)
-				cpu_ctl->ppc64.mmcr1 &= pmc_sel_mask[i];
 #else		
 			if (i < 2) {
 				cpu_ctl->ppc64.mmcr0 &= pmc_sel_mask[i];
@@ -297,51 +197,28 @@ static void clear_unused_pmcsel_bits(hwd_control_state_t * cntrl) {
 		cpu_ctl->ppc64.mmcr0 |= PMC5_PMC6_FREEZE;
 #endif	
 }
-
-static int internal_allocate_registers(EventSetInfo_t *ESI, int domain);
-
-static int set_domain(EventSetInfo_t * ESI, unsigned int domain) 
+static int set_domain(hwd_control_state_t * cntrl, unsigned int domain) 
 {
-   struct perfctr_cpu_control * cpu_ctl = &ESI->machdep.control.cpu_control;
-   int num_used_counters = cpu_ctl->nractrs + cpu_ctl->nrictrs;
-   int i, did = 0;
-
-   /* Check for compatibility of the requested domain with the active
-      counters */
-   for (i = 0; i < num_used_counters; i++) {
-      if (pmc_domain_is_supported(cpu_ctl->pmc_map[i], domain))
-         continue;
-      else {
-         /* Make an attempt at remapping to counters that are capable of
-            the requested domain. */
-         if (internal_allocate_registers(ESI, domain)) {
-            /* successful.  We don't need to continue the check or recheck
-               because allocate_registers should not return success unless
-               the domain is compatible */
-            SUBDBG("Registers were reallocated successfully to account for new domain - %x\n", domain);
-            break;
-         } else {
-            SUBDBG("Counter %d doesn't support the requested domain mask - %x\n", cpu_ctl->pmc_map[i] + 1, domain);
-            return(PAPI_ECNFLCT);
-         }
-      }
-   }
-
+   int did = 0;
+    
 	/* A bit setting of '0' indicates "count this context".
 	 * Start off by turning off counting for all contexts; 
 	 * then, selectively re-enable.
 	 */
-	cpu_ctl->ppc64.mmcr0 |= PERF_USER | PERF_KERNEL | PERF_HYPERVISOR;
+	cntrl->control.cpu_control.ppc64.mmcr0 |= PERF_USER | PERF_KERNEL | PERF_HYPERVISOR;
    if(domain & PAPI_DOM_USER) {
-   	cpu_ctl->ppc64.mmcr0 &= ~PERF_USER;
+   	cntrl->control.cpu_control.ppc64.mmcr0 |= PERF_USER;
+   	cntrl->control.cpu_control.ppc64.mmcr0 ^= PERF_USER;
       did = 1;
    }
    if(domain & PAPI_DOM_KERNEL) {
-   	cpu_ctl->ppc64.mmcr0 &= ~PERF_KERNEL;
+   	cntrl->control.cpu_control.ppc64.mmcr0 |= PERF_KERNEL;
+   	cntrl->control.cpu_control.ppc64.mmcr0 ^= PERF_KERNEL;
       did = 1;
    }
    if(domain & PAPI_DOM_SUPERVISOR) {
-   	cpu_ctl->ppc64.mmcr0 &= ~PERF_HYPERVISOR;
+   	cntrl->control.cpu_control.ppc64.mmcr0 |= PERF_HYPERVISOR;
+   	cntrl->control.cpu_control.ppc64.mmcr0 ^= PERF_HYPERVISOR;
       did = 1;
    }
    
@@ -389,28 +266,12 @@ int setup_ppc64_presets(int cputype) {
 
 /*called when an EventSet is allocated */
 int _papi_hwd_init_control_state(hwd_control_state_t * ptr) {
-   int retval;
-
-   /* The set_domain function for ppc64 needs an EventSetInfo_t struct, not
-      just a machdep struct.  In order to avoid modifying the
-      hardware-independant caller (papi_internal.c), we do a bodge here to
-      create an empty EventSetInfo_t, initialize it, then copy the machdep
-      component to where ptr points.  */
-   EventSetInfo_t ESI_temp;
-
-   memset(&ESI_temp, 0x00, sizeof(EventSetInfo_t));
-
    int i = 0;
    for(i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
-      ESI_temp.machdep.control.cpu_control.pmc_map[i] = i;
+      ptr->control.cpu_control.pmc_map[i] = i;
    }
-   ESI_temp.machdep.control.cpu_control.tsc_on = 1;
-   if ((retval = set_domain(&ESI_temp, _papi_hwi_system_info.sub_info.default_domain)) != PAPI_OK) {
-      SUBDBG("set_domain returned error - %d\n", retval);
-		return retval;
-   }
-   memcpy(ptr, &ESI_temp.machdep, sizeof(hwd_control_state_t));
-
+   ptr->control.cpu_control.tsc_on = 1;
+   set_domain(ptr, _papi_hwi_system_info.sub_info.default_domain);
    return(PAPI_OK);
 }
 
@@ -471,31 +332,14 @@ int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
 	return PAPI_OK;
 }
 */
-/* this function recursively does Modified Bipartite Graph counter allocation 
+/* this function recusively does Modified Bipartite Graph counter allocation 
      success  return 1
 	 fail     return 0
 */
-static int do_counter_allocation(ppc64_reg_alloc_t * event_list, int size, int domain, EventSetOverflowInfo_t *overflow)
+static int do_counter_allocation(ppc64_reg_alloc_t * event_list, int size)
 {
-   int i, j, k, m, group, retval;
-   unsigned int map[GROUP_INTS], first_bit;
-   hwd_register_t ovf_event_reg[MAX_COUNTERS];
-   unsigned native_code;
-
-   for (m = 0; m < overflow->event_counter; m++) {
-      if (overflow->EventCode[m] & PAPI_PRESET_MASK) {
-         /* Only non-derived events support overflow, so only the first native event is used */
-         native_code = _papi_hwi_presets.data[overflow->EventCode[m] & PAPI_PRESET_AND_MASK]->native[0];
-      } else {
-         /* must be a native mask */
-         native_code = overflow->EventCode[m] & PAPI_NATIVE_AND_MASK;
-      }
-      
-      if ((retval = _papi_hwd_ntv_code_to_bits(native_code, &ovf_event_reg[m]))) {
-         SUBDBG("_papi_hwd_ntv_code_to_bits returned error");
-         return PAPI_EINVAL;
-      }
-   }
+   int i, j, group = -1;
+   unsigned int map[GROUP_INTS];
 
    for (i = 0; i < GROUP_INTS; i++) {
       map[i] = event_list[0].ra_group[i];
@@ -506,15 +350,9 @@ static int do_counter_allocation(ppc64_reg_alloc_t * event_list, int size, int d
          map[j] &= event_list[i].ra_group[j];
    }
 
-   k = 0;
-
-	try:
-
-   group = -1;
-   for (; k < GROUP_INTS; k++) {
-      if (map[k]) {
-         first_bit = ffs(map[k]) - 1; /* first_bit [0,31] */
-         group = first_bit + k * 32;
+   for (i = 0; i < GROUP_INTS; i++) {
+      if (map[i]) {
+         group = ffs(map[i]) - 1 + i * 32;
          break;
       }
    }
@@ -523,44 +361,10 @@ static int do_counter_allocation(ppc64_reg_alloc_t * event_list, int size, int d
       return group;             /* allocation fail */
    else {
       for (i = 0; i < size; i++) {
-         event_list[i].ra_position = -1;
          for (j = 0; j < MAX_COUNTERS; j++) {
             if (event_list[i].ra_counter_cmd[j] >= 0
-                && event_list[i].ra_counter_cmd[j] == group_map[group].counter_cmd[j]) {
-               /* check that the ra_position can handle this event
-                  set's domain */
-               if (! pmc_domain_is_supported(j, domain))
-                  /* Domain is not supported this counter.  Continue looking
-                     for a counter that does. */
-                  goto continue_searching;
-               for (m = 0; m < overflow->event_counter; m++) {
-                  /* does counter j support event code overflow->EventCode[m]? */
-                  if ((ovf_event_reg[m].selector & (1 << j)) &&
-                      (ovf_event_reg[m].counter_cmd[j] == group_map[group].counter_cmd[j])) {
-                     /* it does.  Check to see if it supports generating an interrupt. */
-                     if (! pmc_interrupt_is_supported(j)) 
-                        /* Interrupt on overflow is not supported on this
-                           counter.  Continue looking for a counter that
-                           does. */
-                        goto continue_searching;
-                     else
-                        /* we found a counter that supports interrupts */
-                        break;
-                  }
-               }
-               /* we found a match that passes the tests.  Go onto the next event. */
+                && event_list[i].ra_counter_cmd[j] == group_map[group].counter_cmd[j])
                event_list[i].ra_position = j;
-               break;
-            }
-            continue_searching:
-            /* null statement required after a label that is at the end of a block */
-            ;
-         }
-         if (event_list[i].ra_position == -1) {
-            /* No counter was found that supported the interrupt and domain
-               requirements.  Go try another group */
-            map[k] &= ~(1 << first_bit);
-            goto try;
          }
       }
       return group;
@@ -583,7 +387,7 @@ void _papi_hwd_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
 */
 
 /* Register allocation */
-static int internal_allocate_registers(EventSetInfo_t *ESI, int domain) {
+int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
    hwd_control_state_t *this_state = &ESI->machdep;
    int i, j, natNum, index;
    ppc64_reg_alloc_t event_list[MAX_COUNTERS];
@@ -611,7 +415,7 @@ static int internal_allocate_registers(EventSetInfo_t *ESI, int domain) {
          event_list[i].ra_group[j] = native_table[index].resources.group[j];
       }
    }
-   if ((group = do_counter_allocation(event_list, natNum, domain, &ESI->overflow)) >= 0) {      /* successfully mapped */
+   if ((group = do_counter_allocation(event_list, natNum)) >= 0) {      /* successfully mapped */
       /* copy counter allocations info back into NativeInfoArray */
       this_state->group_id = group;
       for (i = 0; i < natNum; i++) {
@@ -627,11 +431,6 @@ static int internal_allocate_registers(EventSetInfo_t *ESI, int domain) {
       return 0;
    }
 }
-
-int _papi_hwd_allocate_registers(EventSetInfo_t *ESI) {
-	return internal_allocate_registers(ESI, ESI->domain.domain);
-}
-
 
 /* This function clears the current contents of the control structure and 
    updates it with whatever resources are allocated for all the native events
@@ -736,6 +535,21 @@ int _papi_hwd_write(hwd_context_t * ctx, hwd_control_state_t * cntrl, long long 
 }
 */
 
+/* This routine is for shutting down threads, including the
+   master thread. */
+int _papi_hwd_shutdown(hwd_context_t * ctx) {
+   int retval = vperfctr_unlink(ctx->perfctr);
+   SUBDBG("_papi_hwd_shutdown vperfctr_unlink(%p) = %d\n", ctx->perfctr, retval);
+   vperfctr_close(ctx->perfctr);
+   SUBDBG("_papi_hwd_shutdown vperfctr_close(%p)\n", ctx->perfctr);
+   memset(ctx, 0x0, sizeof(hwd_context_t));
+
+   if(retval)
+      return(PAPI_ESYS);
+   return(PAPI_OK);
+}
+
+
 /* Perfctr requires that interrupting counters appear at the end of the pmc list
    In the case a user wants to interrupt on a counter in an evntset that is not
    among the last events, we need to move the perfctr virtual events around to
@@ -786,15 +600,9 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
       return PAPI_EINVAL;
    }
    if (threshold != 0) {        /* Set an overflow threshold */
-
-      if (! pmc_interrupt_is_supported(contr->cpu_control.pmc_map[EventIndex])) {
-         /* Make an attempt to reallocate to PMC registers that do support
-            interrupt on overflow */
-         retval = _papi_hwd_allocate_registers(ESI);
-         if (!retval) {
-            OVFDBG("Unable to allocate registers with requested event overflow\n");
-            return PAPI_ECNFLCT;
-         }
+      if (ESI->EventInfoArray[EventIndex].derived) {
+         OVFDBG("Can't overflow on a derived event.\n");
+         return PAPI_EINVAL;
       }
 
       if ((retval = _papi_hwi_start_signal(_papi_hwi_system_info.sub_info.hardware_intr_sig,NEED_CONTEXT)) != PAPI_OK)
@@ -847,21 +655,20 @@ int _papi_hwd_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold) {
 
 
 int _papi_hwd_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI) {
+   ESI->profile.overflowcount = 0;
    return (PAPI_OK);
 }
 
-int _papi_hwd_set_domain(EventSetInfo_t * ESI, int domain) {
-	return set_domain(ESI, domain);
+int _papi_hwd_set_domain(hwd_control_state_t * cntrl, int domain) {
+	return set_domain(cntrl, domain);
 }
 
 /* Routines to support an opaque native event table */
-int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
+char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
 {
    if ((EventCode & PAPI_NATIVE_AND_MASK) >= _papi_hwi_system_info.sub_info.num_native_events)
-       return (PAPI_ENOEVNT);
-   strncpy(ntv_name, native_name_map[EventCode & PAPI_NATIVE_AND_MASK].name, len);
-   if (strlen(native_name_map[EventCode & PAPI_NATIVE_AND_MASK].name) > len-1) return (PAPI_EBUF);
-   return (PAPI_OK);
+       return ('\0'); // return a null string for invalid events
+   return (native_name_map[EventCode & PAPI_NATIVE_AND_MASK].name);
 }
 
 int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
@@ -925,23 +732,17 @@ int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
 }
 
 
-int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len)
+char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
 {
-   if ((EventCode & PAPI_NATIVE_AND_MASK) >= _papi_hwi_system_info.sub_info.num_native_events)
-       return (PAPI_EINVAL);
-   strncpy(ntv_descr, native_table[native_name_map[EventCode & PAPI_NATIVE_AND_MASK].index].description, len);
-   if (strlen(native_table[native_name_map[EventCode & PAPI_NATIVE_AND_MASK].index].description) > len-1) return (PAPI_EBUF);
-   return (PAPI_OK);
+   if ((EventCode & PAPI_NATIVE_AND_MASK) >= _papi_hwi_system_info.sub_info.num_native_events) {
+	return "\0";
+   }
+   return (native_table[native_name_map[EventCode & PAPI_NATIVE_AND_MASK].index].description);
 }
 
-int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
+int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
 {
-   if (modifier == PAPI_ENUM_FIRST) {
-         *EventCode = PAPI_NATIVE_MASK;
-         return (PAPI_OK);
-   }
-
-   if (modifier == PAPI_ENUM_EVENTS) {
+   if (modifer == PAPI_ENUM_EVENTS) {
       int index = *EventCode & PAPI_NATIVE_AND_MASK;
 	if (index+1 == MAX_NATNAME_MAP_INDEX) {
 	    return (PAPI_ENOEVNT);
@@ -949,14 +750,14 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
 	    *EventCode = *EventCode + 1;
 	    return (PAPI_OK);
 	}
-   } else if (modifier == PAPI_NTV_ENUM_GROUPS) {
+   } else if (modifer == PAPI_PWR4_ENUM_GROUPS) {
 /* Use this modifier for all supported PPC64 processors. */
-      unsigned int group = (*EventCode & PAPI_NTV_GROUP_AND_MASK) >> PAPI_NTV_GROUP_SHIFT;
+      unsigned int group = (*EventCode & 0x00FF0000) >> 16;
       int index = *EventCode & 0x000001FF;
       int i;
       unsigned int tmpg;
 
-      *EventCode = *EventCode & (~PAPI_NTV_GROUP_SHIFT);
+      *EventCode = *EventCode & 0xFF00FFFF;
       for (i = 0; i < GROUP_INTS; i++) {
          tmpg = native_table[index].resources.group[i];
          if (group != 0) {
@@ -965,11 +766,15 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
          }
          if (tmpg != 0) {
             group = ffs(tmpg) + i * 32;
-            *EventCode = *EventCode | (group << PAPI_NTV_GROUP_SHIFT);
+            *EventCode = *EventCode | (group << 16);
             return (PAPI_OK);
          }
       }
-	  return (PAPI_ENOEVNT);
+	if (index+1 == MAX_NATNAME_MAP_INDEX) {
+	    return (PAPI_ENOEVNT);
+	}
+      *EventCode = *EventCode + 1;
+      return (PAPI_OK);
    }
    else
       return (PAPI_EINVAL);

@@ -5,31 +5,4 @@
 *          mucci@cs.utk.edu
 */
 
-This directory contains:
-	README		This file.
-	utils/		A collection of utility fuctions for use with PAPI.
-	ctests/		A collection of tests written in C to exercise PAPI.
-	ftests/		A collection of tests written in Fortran to exercise PAPI.
-	examples/	Example uses of PAPI. Not actively supported.
-	perfctr-2.X.x/	Various versions of the perfctr support library.
-				Current version for most systems: perfctr-2.6.x;
-				Current version for POWER: perfctr-2.7.x
-	libpfm-X.x/	Various versions of the perfmon support library.
-				libpfm-2.x and 3.x used on Itanium;
-				libpfm-3.y used on perfmon2 installations.
-				Also used for native event naming for perfctr systems
-	Matlab/		Support routines for use with Matlab
-	jni/		java interface for PAPI. Not actively maintained.
-	win2k/		Windows support files for PAPI. Not actively maintained.
-	*.{c,h}		Various source code files for PAPI and substrates.
-	config*.*	Configure scripts to install PAPI
-	perfmon_events.csv	Comma separated value file used with all libpfm
-				systems to define mappings between preset and native events.
-				Edit this file to experiment with alternative event definitions.
-	Makefile.*	Various components of the make system
-	Rules.*		Rules for building various classes of PAPI libraries
-	other assorted files...
-
-Makefile Usage:
-
-	see description in papi/INSTALL.txt 
+Please see the README in the root directory.

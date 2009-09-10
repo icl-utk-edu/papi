@@ -91,6 +91,7 @@ int _papi_hwd_get_system_info(void)
   _papi_hwi_system_info.num_gp_cntrs = _papi_hwi_system_info.num_cntrs;
 
   _papi_hwi_system_info.hw_info.mhz = (float)win_hwinfo.mhz;
+  _papi_hwi_system_info.hw_info.clock_mhz = mhz;
 
   return(PAPI_OK);
 }

@@ -67,7 +67,8 @@ int main(int argc, char **argv)
    const PAPI_hw_info_t *hwinfo = NULL;
    char *Intel_i7;
    int event_code;
-   const PAPI_substrate_info_t *s = NULL;
+   const PAPI_component_info_t *s = NULL;
+   int numcmp, cid;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
    /*for(i=0;i<argc;i++) */
@@ -84,16 +85,19 @@ int main(int argc, char **argv)
 	  ("Test case ALL_NATIVE_EVENTS: Available native events and hardware information.\n", 0, &hwinfo);
    if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
+   numcmp = PAPI_num_components();
+
    /* we need a little exception processing if it's a Core i7 */
-   /* Unfortunately, this test only succeeds on perfmon... */
+   /* Unfortunately, this test never succeeds... */
    Intel_i7 = strstr(hwinfo->model_string, "Intel Core i7");
 
-   if ((s = PAPI_get_substrate_info()) == NULL)
+   for(cid=0;cid<numcmp;cid++){
+   if ((s = PAPI_get_component_info(cid)) == NULL)
       test_fail(__FILE__, __LINE__, "PAPI_get_substrate_info", 2);
 
    /* For platform independence, always ASK FOR the first event */
    /* Don't just assume it'll be the first numeric value */
-   i = 0 | PAPI_NATIVE_MASK;
+   i = 0 | PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK(cid);
    PAPI_enum_event(&i, PAPI_ENUM_FIRST);
 
    do {
@@ -130,7 +134,7 @@ int main(int argc, char **argv)
 		else err_count++;
 	}
    } while (PAPI_enum_event(&i, PAPI_ENUM_EVENTS) == PAPI_OK);
-
+   }
     printf("\n\nSuccessfully found, added, and removed %d events.\n", add_count);
     if (err_count)
 		printf("Failed to add %d events.\n", err_count);

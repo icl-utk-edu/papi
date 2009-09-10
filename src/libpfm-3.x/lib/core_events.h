@@ -114,47 +114,7 @@ static pme_core_entry_t core_pe[]={
 	/*
 	 * END: architected events
 	 */
-	{ .pme_name = "RS_UOPS_DISPATCHED_CYCLES",
-	  .pme_code = 0xa1,
-	  .pme_flags = PFMLIB_CORE_PMC0,
-	  .pme_desc =  "Cycles micro-ops dispatched for execution",
-	  .pme_umasks = {
-		{ .pme_uname = "PORT_0",
-		  .pme_udesc = "on port 0",
-		  .pme_ucode = 0x1
-		},
-		{ .pme_uname = "PORT_1",
-		  .pme_udesc = "on port 1",
-		  .pme_ucode = 0x2
-		},
-		{ .pme_uname = "PORT_2",
-		  .pme_udesc = "on port 2",
-		  .pme_ucode = 0x4
-		},
-		{ .pme_uname = "PORT_3",
-		  .pme_udesc = "on port 0",
-		  .pme_ucode = 0x8
-		},
-		{ .pme_uname = "PORT_4",
-		  .pme_udesc = "on port 4",
-		  .pme_ucode = 0x10
-		},
-		{ .pme_uname = "PORT_5",
-		  .pme_udesc = "on port 5",
-		  .pme_ucode = 0x20
-		},
-		{ .pme_uname = "ANY",
-		  .pme_udesc = "on any port",
-		  .pme_ucode = 0x3f
-		},
-	   },	
-	   .pme_numasks = 7
 
-	},
-	{ .pme_name = "RS_UOPS_DISPATCHED",
-	  .pme_code = 0xa0,
-	  .pme_desc =  "Number of micro-ops dispatched for execution",
-	},
 	/*
 	 * BEGIN: Core 2 Duo events
 	 */
@@ -206,6 +166,11 @@ static pme_core_entry_t core_pe[]={
 		}
 	   },
 	   .pme_numasks = 2
+	},
+	{ .pme_name = "MISALIGN_MEM_REF",
+	  .pme_code = 0x5,
+	  .pme_flags = 0,
+	  .pme_desc =  "Memory references that cross an 8-byte boundary"
 	},
 	{ .pme_name = "SEGMENT_REG_LOADS",
 	  .pme_code = 0x6,
@@ -294,37 +259,37 @@ static pme_core_entry_t core_pe[]={
 	},
 	{ .pme_name = "FP_COMP_OPS_EXE",
 	  .pme_code = 0x10,
-	  .pme_flags = PFMLIB_CORE_PMC0,
+	  .pme_flags = 0,
 	  .pme_desc =  "Floating point computational micro-ops executed"
 	},
 	{ .pme_name = "FP_ASSIST",
 	  .pme_code = 0x11,
-	  .pme_flags = PFMLIB_CORE_PMC1,
+	  .pme_flags = 0,
 	  .pme_desc =  "Floating point assists"
 	},
 	{ .pme_name = "MUL",
 	  .pme_code = 0x12,
-	  .pme_flags = PFMLIB_CORE_PMC1,
+	  .pme_flags = 0,
 	  .pme_desc =  "Multiply operations executed"
 	},
 	{ .pme_name = "DIV",
 	  .pme_code = 0x13,
-	  .pme_flags = PFMLIB_CORE_PMC1,
+	  .pme_flags = 0,
 	  .pme_desc =  "Divide operations executed"
 	},
 	{ .pme_name = "CYCLES_DIV_BUSY",
 	  .pme_code = 0x14,
-	  .pme_flags = PFMLIB_CORE_PMC0,
+	  .pme_flags = 0,
 	  .pme_desc =  "Cycles the divider is busy"
 	},
 	{ .pme_name = "IDLE_DURING_DIV",
 	  .pme_code = 0x18,
-	  .pme_flags = PFMLIB_CORE_PMC0,
+	  .pme_flags = 0,
 	  .pme_desc =  "Cycles the divider is busy and all other execution units are idle"
 	},
 	{ .pme_name = "DELAYED_BYPASS",
 	  .pme_code = 0x19,
-	  .pme_flags = PFMLIB_CORE_PMC1,
+	  .pme_flags = 0,
 	  .pme_desc =  "Delayed bypass",
 	  .pme_umasks = {
 		{ .pme_uname = "FP",
@@ -620,7 +585,7 @@ static pme_core_entry_t core_pe[]={
 	{ .pme_name = "BUS_REQUEST_OUTSTANDING",
 	  .pme_code = 0x60,
 	  .pme_flags = PFMLIB_CORE_CSPEC,
-	  .pme_desc =  "Number of pending full cache line read transactions on the bus occurring in each cycle",
+	  .pme_desc =  "Outstanding cacheable data read bus requests duration",
 	  .pme_umasks = {
 		INTEL_CORE_SPECIFICITY_UMASKS,
 		INTEL_CORE_AGENT_UMASKS
@@ -1007,16 +972,11 @@ static pme_core_entry_t core_pe[]={
 	  .pme_flags = 0,
 	  .pme_desc =  "Branch predicted taken with bubble II"
 	},
-#if 0
-	/*
-	 * Looks like event 0xa1 supersedes this one
-	 */
 	{ .pme_name = "RS_UOPS_DISPATCHED",
 	  .pme_code = 0xa0,
 	  .pme_flags = 0,
 	  .pme_desc =  "Micro-ops dispatched for execution"
 	},
-#endif
 	{ .pme_name = "MACRO_INSTS",
 	  .pme_code = 0xaa,
 	  .pme_flags = 0,

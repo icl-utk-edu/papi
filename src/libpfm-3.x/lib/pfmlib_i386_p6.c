@@ -2,7 +2,7 @@
  * pfmlib_i386_pm.c : support for the P6 processor family (family=6)
  * 		      incl. Pentium II, Pentium III, Pentium Pro, Pentium M
  *
- * Copyright (c) 2005-2007 Hewlett-Packard Development Company, L.P.
+ * Copyright (c) 2005-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -33,7 +33,7 @@
 /* private headers */
 #include "pfmlib_priv.h"			/* library private */
 #include "pfmlib_i386_p6_priv.h"		/* architecture private */
-#include "i386_p6_events.h"			/* event tables */
+#include "i386_p6_events.h"			/* event tables P6 and Pentium M */
 
 /* let's define some handy shortcuts! */
 #define sel_event_mask	perfsel.sel_event_mask
@@ -49,7 +49,7 @@
 
 static char * pfm_i386_p6_get_event_name(unsigned int i);
 static pme_i386_p6_entry_t *i386_pe;
-static int i386_p6_cycle_event, i386_p6_inst_retired_event;
+static unsigned int i386_p6_num_events;
 
 #define PFMLIB_I386_P6_HAS_COMBO(_e) ((i386_pe[_e].pme_flags & PFMLIB_I386_P6_UMASK_COMBO) != 0)
 
@@ -91,39 +91,12 @@ pfm_i386_detect_common(void)
 
 	return family != 6 ? PFMLIB_ERR_NOTSUPP : PFMLIB_SUCCESS;
 }
-/*
- * detect Pentium Pro
- */
-static int
-pfm_i386_p6_detect_ppro(void)
-{
-	int ret, model;
-	char buffer[128];
-
-	ret = pfm_i386_detect_common();
-	if (ret != PFMLIB_SUCCESS)
-		return ret;
-
-	ret = __pfm_getcpuinfo_attr("model", buffer, sizeof(buffer));
-	if (ret == -1)
-		return PFMLIB_ERR_NOTSUPP;
-
-	model = atoi(buffer);
-
-	if (model != 1)
-		return PFMLIB_ERR_NOTSUPP;
-
- 	i386_pe = i386_ppro_pe;
-	i386_p6_cycle_event = PME_I386_PPRO_CPU_CLK_UNHALTED; 
-	i386_p6_inst_retired_event = PME_I386_PPRO_INST_RETIRED;
-	return PFMLIB_SUCCESS;
-}
 
 /*
- * detect Pentium II
+ * detect non Pentium M P6 cores
  */
 static int
-pfm_i386_p6_detect_pii(void)
+pfm_i386_p6_detect(void)
 {
 	int ret, model;
 	char buffer[128];
@@ -141,57 +114,25 @@ pfm_i386_p6_detect_pii(void)
 	switch(model) {
                 case 3: /* Pentium II */
                 case 5: /* Pentium II Deschutes */
- 		case 6: /* Pentium II Mendocino */
- 			i386_pe = i386_pII_pe;
-			i386_p6_cycle_event = PME_I386_PII_CPU_CLK_UNHALTED; 
-			i386_p6_inst_retired_event = PME_I386_PII_INST_RETIRED;
- 			break;
-		default:
-			return PFMLIB_ERR_NOTSUPP;
-	}
-	return PFMLIB_SUCCESS;
-}
-
-/*
- * detect Pentium III
- */
-static int
-pfm_i386_p6_detect_piii(void)
-{
-	int ret, model;
-	char buffer[128];
-
-	ret = pfm_i386_detect_common();
-	if (ret != PFMLIB_SUCCESS)
-		return ret;
-
-	ret = __pfm_getcpuinfo_attr("model", buffer, sizeof(buffer));
-	if (ret == -1)
-		return PFMLIB_ERR_NOTSUPP;
-
-	model = atoi(buffer);
-
-	switch(model) {
 		case 7: /* Pentium III Katmai */
 		case 8: /* Pentium III Coppermine */
 		case 9: /* Mobile Pentium III */
 		case 10:/* Pentium III Cascades */
 		case 11:/* Pentium III Tualatin */
- 			i386_pe = i386_pIII_pe;
-			i386_p6_cycle_event = PME_I386_PIII_CPU_CLK_UNHALTED; 
-			i386_p6_inst_retired_event = PME_I386_PIII_INST_RETIRED;
 			break;
 		default:
 			return PFMLIB_ERR_NOTSUPP;
 	}
+	i386_pe = i386_p6_pe;
+	i386_p6_num_events = PME_I386_P6_EVENT_COUNT;
 	return PFMLIB_SUCCESS;
 }
 
 /*
- * detect Pentium M
+ * detect only Pentium M core
  */
 static int
-pfm_i386_p6_detect_pm(void)
+pfm_i386_pm_detect(void)
 {
 	int ret, model;
 	char buffer[128];
@@ -209,8 +150,7 @@ pfm_i386_p6_detect_pm(void)
 		return PFMLIB_ERR_NOTSUPP;
 
 	i386_pe = i386_pm_pe;
-	i386_p6_cycle_event = PME_I386_PM_CPU_CLK_UNHALTED; 
-	i386_p6_inst_retired_event = PME_I386_PM_INST_RETIRED;
+	i386_p6_num_events = PME_I386_PM_EVENT_COUNT;
 
 	return PFMLIB_SUCCESS;
 }
@@ -516,7 +456,7 @@ pfm_i386_p6_get_event_mask_code(unsigned int ev, unsigned int midx, unsigned int
 static int
 pfm_i386_p6_get_cycle_event(pfmlib_event_t *e)
 {
-	e->event = i386_p6_cycle_event;
+	e->event = PME_I386_P6_CPU_CLK_UNHALTED;
 	return PFMLIB_SUCCESS;
 
 }
@@ -524,40 +464,30 @@ pfm_i386_p6_get_cycle_event(pfmlib_event_t *e)
 static int
 pfm_i386_p6_get_inst_retired(pfmlib_event_t *e)
 {
-	e->event = i386_p6_inst_retired_event;
+	e->event = PME_I386_P6_INST_RETIRED;
 	return PFMLIB_SUCCESS;
 }
-/* Pentium II support */
-pfm_pmu_support_t i386_pii_support={
-	.pmu_name		= "Intel Pentium II",
-	.pmu_type		= PFMLIB_INTEL_PII_PMU,
-	.pme_count		= PME_I386_PII_EVENT_COUNT,
-	.pmc_count		= PMU_I386_P6_NUM_PERFSEL,
-	.pmd_count		= PMU_I386_P6_NUM_PERFCTR,
-	.num_cnt		= PMU_I386_P6_NUM_COUNTERS,
-	.get_event_code		= pfm_i386_p6_get_event_code,
-	.get_event_name		= pfm_i386_p6_get_event_name,
-	.get_event_counters	= pfm_i386_p6_get_event_counters,
-	.dispatch_events	= pfm_i386_p6_dispatch_events,
-	.pmu_detect		= pfm_i386_p6_detect_pii,
-	.get_impl_pmcs		= pfm_i386_p6_get_impl_perfsel,
-	.get_impl_pmds		= pfm_i386_p6_get_impl_perfctr,
-	.get_impl_counters	= pfm_i386_p6_get_impl_counters,
-	.get_hw_counter_width	= pfm_i386_p6_get_hw_counter_width,
-	.get_event_desc         = pfm_i386_p6_get_event_description,
-	.get_num_event_masks	= pfm_i386_p6_get_num_event_masks,
-	.get_event_mask_name	= pfm_i386_p6_get_event_mask_name,
-	.get_event_mask_code	= pfm_i386_p6_get_event_mask_code,
-	.get_event_mask_desc	= pfm_i386_p6_get_event_mask_desc,
-	.get_cycle_event	= pfm_i386_p6_get_cycle_event,
-	.get_inst_retired_event = pfm_i386_p6_get_inst_retired
-};
+
+static int
+pfm_i386_pm_get_cycle_event(pfmlib_event_t *e)
+{
+	e->event = PME_I386_PM_CPU_CLK_UNHALTED;
+	return PFMLIB_SUCCESS;
+
+}
+
+static int
+pfm_i386_pm_get_inst_retired(pfmlib_event_t *e)
+{
+	e->event = PME_I386_PM_INST_RETIRED;
+	return PFMLIB_SUCCESS;
+}
 
 /* Generic P6 processor support (not incl. Pentium M) */
 pfm_pmu_support_t i386_p6_support={
 	.pmu_name		= "Intel P6 Processor Family",
 	.pmu_type		= PFMLIB_I386_P6_PMU,
-	.pme_count		= PME_I386_PIII_EVENT_COUNT,
+	.pme_count		= PME_I386_P6_EVENT_COUNT,
 	.pmc_count		= PMU_I386_P6_NUM_PERFSEL,
 	.pmd_count		= PMU_I386_P6_NUM_PERFCTR,
 	.num_cnt		= PMU_I386_P6_NUM_COUNTERS,
@@ -565,7 +495,7 @@ pfm_pmu_support_t i386_p6_support={
 	.get_event_name		= pfm_i386_p6_get_event_name,
 	.get_event_counters	= pfm_i386_p6_get_event_counters,
 	.dispatch_events	= pfm_i386_p6_dispatch_events,
-	.pmu_detect		= pfm_i386_p6_detect_piii,
+	.pmu_detect		= pfm_i386_p6_detect,
 	.get_impl_pmcs		= pfm_i386_p6_get_impl_perfsel,
 	.get_impl_pmds		= pfm_i386_p6_get_impl_perfctr,
 	.get_impl_counters	= pfm_i386_p6_get_impl_counters,
@@ -578,32 +508,6 @@ pfm_pmu_support_t i386_p6_support={
 	.get_cycle_event	= pfm_i386_p6_get_cycle_event,
 	.get_inst_retired_event = pfm_i386_p6_get_inst_retired
 };
-
-pfm_pmu_support_t i386_ppro_support={
-	.pmu_name		= "Intel Pentium Pro",
-	.pmu_type		= PFMLIB_INTEL_PPRO_PMU,
-	.pme_count		= PME_I386_PPRO_EVENT_COUNT,
-	.pmc_count		= PMU_I386_P6_NUM_PERFSEL,
-	.pmd_count		= PMU_I386_P6_NUM_PERFCTR,
-	.num_cnt		= PMU_I386_P6_NUM_COUNTERS,
-	.get_event_code		= pfm_i386_p6_get_event_code,
-	.get_event_name		= pfm_i386_p6_get_event_name,
-	.get_event_counters	= pfm_i386_p6_get_event_counters,
-	.dispatch_events	= pfm_i386_p6_dispatch_events,
-	.pmu_detect		= pfm_i386_p6_detect_ppro,
-	.get_impl_pmcs		= pfm_i386_p6_get_impl_perfsel,
-	.get_impl_pmds		= pfm_i386_p6_get_impl_perfctr,
-	.get_impl_counters	= pfm_i386_p6_get_impl_counters,
-	.get_hw_counter_width	= pfm_i386_p6_get_hw_counter_width,
-	.get_event_desc         = pfm_i386_p6_get_event_description,
-	.get_num_event_masks	= pfm_i386_p6_get_num_event_masks,
-	.get_event_mask_name	= pfm_i386_p6_get_event_mask_name,
-	.get_event_mask_code	= pfm_i386_p6_get_event_mask_code,
-	.get_event_mask_desc	= pfm_i386_p6_get_event_mask_desc,
-	.get_cycle_event	= pfm_i386_p6_get_cycle_event,
-	.get_inst_retired_event = pfm_i386_p6_get_inst_retired
-};
-
 
 /* Pentium M support */
 pfm_pmu_support_t i386_pm_support={
@@ -617,7 +521,7 @@ pfm_pmu_support_t i386_pm_support={
 	.get_event_name		= pfm_i386_p6_get_event_name,
 	.get_event_counters	= pfm_i386_p6_get_event_counters,
 	.dispatch_events	= pfm_i386_p6_dispatch_events,
-	.pmu_detect		= pfm_i386_p6_detect_pm,
+	.pmu_detect		= pfm_i386_pm_detect,
 	.get_impl_pmcs		= pfm_i386_p6_get_impl_perfsel,
 	.get_impl_pmds		= pfm_i386_p6_get_impl_perfctr,
 	.get_impl_counters	= pfm_i386_p6_get_impl_counters,
@@ -627,6 +531,6 @@ pfm_pmu_support_t i386_pm_support={
 	.get_event_mask_name	= pfm_i386_p6_get_event_mask_name,
 	.get_event_mask_code	= pfm_i386_p6_get_event_mask_code,
 	.get_event_mask_desc	= pfm_i386_p6_get_event_mask_desc,
-	.get_cycle_event	= pfm_i386_p6_get_cycle_event,
-	.get_inst_retired_event = pfm_i386_p6_get_inst_retired
+	.get_cycle_event	= pfm_i386_pm_get_cycle_event,
+	.get_inst_retired_event = pfm_i386_pm_get_inst_retired
 };

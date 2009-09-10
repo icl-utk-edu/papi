@@ -139,17 +139,5 @@ typedef union {
 	pfm_gen_msg_t	pfm_gen_msg;
 } pfm_msg_t;
 
-/*
- * PMD/PMC return flags in case of error (ignored on input)
- *
- * Those flags are used on output and must be checked in case EINVAL is returned
- * by a command accepting a vector of values and each has a flag field, such as
- * pfarg_pmc_t or pfarg_pmd_t.
- */
-#define PFM_REG_RETFL_NOTAVAIL	(1<<31) /* set if register is implemented but not available */
-#define PFM_REG_RETFL_EINVAL	(1<<30) /* set if register entry is invalid */
-#define PFM_REG_RETFL_MASK	(PFM_REG_RETFL_NOTAVAIL|PFM_REG_RETFL_EINVAL)
-
-#define PFM_REG_HAS_ERROR(flag)	(((flag) & PFM_REG_RETFL_MASK) != 0)
 
 #endif /* _PERFMON_COMPAT_H_ */

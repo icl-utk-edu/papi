@@ -21,7 +21,7 @@ typedef struct hwi_preset_data {  /* preset event data for each defined preset *
 /* Unused but should be to prevent checking native against PAPI_NULL:
    unsigned int mask;
    unsigned int count; */
-   int native[MAX_COUNTER_TERMS];    /* array of native event code(s) for this preset event */
+   int native[PAPI_MAX_COUNTER_TERMS];    /* array of native event code(s) for this preset event */
    char operation[PAPI_MIN_STR_LEN]; /* operation string: +,-,*,/,@(number of metrics), $(constant Mhz), %(1000000.0) */
 } hwi_preset_data_t;
 
@@ -37,11 +37,11 @@ typedef struct hwi_dev_notes {
 } hwi_dev_notes_t;
 
 typedef struct hwi_presets {  /* collected text and data info for all preset events */
-   unsigned int count[PAPI_MAX_PRESET_EVENTS];		/* array of number of terms in this event. 0 = no event */
-   const hwi_preset_info_t *info;					/* array of descriptive text for all events */
+   unsigned int count[PAPI_MAX_PRESET_EVENTS];       /* array of number of terms in this event. 0 = no event */
+   const hwi_preset_info_t *info;   /* array of descriptive text for all events */
    const unsigned int *type;						/* array of event types for all events */
-   hwi_preset_data_t *data[PAPI_MAX_PRESET_EVENTS];	/* sparse array of pointers to event data including native terms, etc. */
-   char *dev_note[PAPI_MAX_PRESET_EVENTS];			/* sparse array of pointers to optional developer note strings */
+   hwi_preset_data_t *data[PAPI_MAX_PRESET_EVENTS];  /* sparse array of pointers to event data including native terms, etc. */
+   char *dev_note[PAPI_MAX_PRESET_EVENTS];           /* sparse array of pointers to optional developer note strings */
 } hwi_presets_t;
 
 /* This is a general description structure definition for various parameter lists */   

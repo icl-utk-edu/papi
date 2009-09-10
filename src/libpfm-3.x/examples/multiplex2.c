@@ -257,8 +257,7 @@ static void
 print_results(int ctxid, uint64_t *eff_timeout)
 {
 	unsigned int i, j, cnt, ovfl_event;
-	uint64_t value, tot_runs = 0;
-	uint64_t tot_dur = 0, c;
+	uint64_t value, tot_runs = 0, set_runs;
 	pfarg_setinfo_t	*all_setinfos;
 	event_set_t *e;
 	char *p;
@@ -304,10 +303,10 @@ print_results(int ctxid, uint64_t *eff_timeout)
 	 * the number of runs per set can be at most off by 1 between all sets
 	 */
 	for (i=0, cnt = 0; i < num_sets; i++) {
-		if (all_setinfos[i].set_runs == 0)
+		set_runs = all_setinfos[i].set_runs;
+		if (set_runs == 0) 
 			fatal_error("not enough runs to collect meaningful results: set%u did not run\n", i);
-		tot_runs += all_setinfos[i].set_runs;
-		tot_dur  += all_setinfos[i].set_act_duration;
+		tot_runs += set_runs;
 	}
 
 	/*
@@ -336,13 +335,14 @@ print_results(int ctxid, uint64_t *eff_timeout)
 			printf("# system-wide mode on CPU core %d\n",options.pin_cpu);
 		printf("# %d sets\n", num_sets);
 		printf("# %.2f average run per set\n", (double)tot_runs/num_sets);
-		printf("# %.2f average ns per set\n", (double)tot_dur/num_sets);
 		printf("# set       measured total     #runs         scaled total event name\n");
 		printf("# ------------------------------------------------------------------\n");
 	}
 	ovfl_event = options.opt_ovfl_switch ? 1 : 0;
 
 	for (i=0, e = all_events, cnt = 0; i < num_sets; i++, e = e->next) {
+
+		set_runs = all_setinfos[i].set_runs;
 
 		str = e->event_str;
 
@@ -360,15 +360,8 @@ print_results(int ctxid, uint64_t *eff_timeout)
 
 			/* 
 			 * scaling
-			 * We use duration rather than number of runs to compute a more precise
-			 * scaled value. This avoids overcounting when the last set only partially
-			 * ran.
-			 *
-			 * We use double to avoid overflowing of the 64-bit count in case of very
-			 * large total duration
 			 */
-			c = llround(((double)value*tot_dur)/(double)all_setinfos[i].set_act_duration);
-			sprintf(tmp2, "%"PRIu64, c);
+			sprintf(tmp2, "%"PRIu64, ((value*tot_runs)/set_runs));  
 
 			if (options.opt_us_format) {
 				dec2sep(tmp2, stotal_str, ',');
@@ -380,7 +373,7 @@ print_results(int ctxid, uint64_t *eff_timeout)
 			printf("  %03d %20s  %8"PRIu64" %20s %s\n",
 					i,
 					mtotal,
-					all_setinfos[i].set_runs,
+					set_runs,
 					stotal,
 					str);
 			p = strchr(str, '\0');

@@ -200,9 +200,7 @@ static FILE * open_file(const char * fname)
 	char * cpu;
 	char * dot = ".";
 	char * dot_dot = "..";
-#if defined(_POWER6)
-	cpu = "power6";
-#elif defined(_POWER5p)
+#ifdef _POWER5p
 	cpu = "power5+";
 #elif defined(_POWER4)
 	cpu = "power4";
@@ -393,7 +391,7 @@ static ntv_event_group_info_t * parse_groupfile(FILE * grp_file)
 
 		switch (state) {
 			case 0:				
-#if defined(_POWER5) || defined(_POWER5p) || defined(_POWER6)
+#if defined(_POWER5) || defined(_POWER5p)
 				if ( sscanf(data, "#%u,%u,%u,%u,%u,%u,%u", &g,&event_num[0],&event_num[1],&event_num[2],&event_num[3],&event_num[4],&event_num[5]) == 7 ) {
 					state = 1;
 					if ( any_counter_invalid(event_num, 6)  ) {

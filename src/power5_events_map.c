@@ -14,7 +14,7 @@
 */
 #include SUBSTRATE
 
-PPC64_native_map_t native_name_map[PAPI_MAX_NATIVE_EVENTS] = {
+PPC64_native_map_t native_name_map[MAX_NATNAME_MAP_INDEX] = {
 	{"PM_0INST_CLB_CYC", -1}
 	,
 	{"PM_1INST_CLB_CYC", -1}

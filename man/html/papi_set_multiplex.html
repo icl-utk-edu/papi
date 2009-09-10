@@ -269,11 +269,10 @@ PAPI_set_multiplex - convert a standard event set to a multiplexed event set
 <A HREF=#4>Return Values</A><BR>
 <A HREF=#5>Errors</A><BR>
 <A HREF=#6>Examples</A><BR>
-<A HREF=#7>Ibm Power6 Notes</A><BR>
-<A HREF=#8>Bugs</A><BR>
-<A HREF=#9>See Also</A><BR>
+<A HREF=#7>Bugs</A><BR>
+<A HREF=#8>See Also</A><BR>
 </BLOCKQUOTE>
-<A name=10>
+<A name=9>
 
      <H3>SYNOPSIS</H3>
 
@@ -427,27 +426,9 @@ Insufficient memory to complete the operation.
 </TT><!-- .fi          -->
 </PRE>
 <P>
-<!-- .SH IBM POWER6 NOTES -->
-</BLOCKQUOTE>
-<A name=7>
-
-     <H3>IBM POWER6 NOTES</H3>
-
-</A>
-<BLOCKQUOTE>
-The event set
-<!-- .I must -->
-<I>must</I> have its domain set to PAPI_DOM_ALL or equivalently
-PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR, otherwise a
-PAPI_ECNFLT error will result.  This is due to the POWER6&#146;s cycle counting
-hardware being able to count only in this domain.  For more details, see the IBM POWER6 NOTES in the
-<!-- .BR PAPI_add_event "(3)" -->
-<A HREF="papi_add_event.html">PAPI_add_event (3)</A>
-documentation.
-<P>
 <!-- .SH BUGS -->
 </BLOCKQUOTE>
-<A name=8>
+<A name=7>
 
      <H3>BUGS</H3>
 
@@ -457,7 +438,7 @@ This function has no known bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=9>
+<A name=8>
 
      <H3>SEE ALSO</H3>
 
@@ -553,6 +534,17 @@ This function has no known bugs.
 <TR VALIGN="top">
 
 <TD ALIGN="center" HEIGHT="22" ROWSPAN="2" VALIGN="TOP">
+
+<SPAN CLASS="FOOTERNOTE">
+
+Contact PAPI: 
+
+<A HREF="mailto:papi@cs.utk.edu">
+
+papi@cs.utk.edu</A>
+
+</SPAN>
+
 </TD>
 
 <TD ALIGN="center" HEIGHT="11" WIDTH="200">

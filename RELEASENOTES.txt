@@ -1,5 +1,5 @@
 ===============================================================================
-PAPI 3.7.0 RELEASE NOTES                                            08 Sep 2009
+PAPI 3.9.0 TECHNOLOGY PRE-RELEASE NOTES                             05 Apr 2007
 ===============================================================================
 
 This file documents changes in recent PAPI releases in inverse chronological
@@ -9,100 +9,31 @@ For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 
 For specific and detailed information on changes made in this release, grep
-the ChangeLogP370.txt file for keywords of interest or go directly to the PAPI
+the ChangeLogP390.txt file for keywords of interest or go directly to the PAPI
 cvs tree.
 
 
 GENERAL NOTES
 ===============================================================================
-This release is a recommended upgrade to PAPI 3.6.x. It addresses a number of 
-open issues and introduces support for several new platforms, including Intel
-Nehalem (Core i7), Atom, POWER7 and Niagara2.
+PAPI 3.9.0 marks the first release of PAPI-C or component PAPI.
+This release has been labeled a technology pre-release. It is *not* ready for
+prime-time and only works on a limited number of platforms. It is also not 
+intended for general consumption, but as a means to evaluate a new technology
+thrust for the PAPI library.
 
-If you are currently using PAPI 3.6.x or earlier, it is recommended that you 
-upgrade to this version.
+If you are currently using anything prior to PAPI 3.5.0, upgrade to PAPI 3.5.0.
+If you are already a happy user of PAPI 3.5.0, there is no need to upgrade to 
+this version.
+If you are a technophile who loves to play with new stuff, consider installing
+this version on a non-critical system.
 
-As always, if you identify strange behavior or reproducible bugs, please
-contact the PAPI team or the PAPI User Forum.
-
-And visit the PAPI website for the latest updates:
-http://icl.cs.utk.edu/papi/
-
-NOTE: If you are looking for the man pages and other user documentation, look
-online. We decided we could provide better and more timely support by 
-maintaining just the online documentation. Let us know if you think this is a
-bad decision.
-
-
-CHANGES IN PAPI 3.7.0 SINCE PAPI 3.6.2
-===============================================================================
-Bug Fixes:
-----------
-- many minor bugs fixed in tests and in specific cpu components
-- fixed support for Intel CoreDuo (not Core2) broken in PAPI 3.6.x
-- fixed library init failure on AIX Power6 when executable names > 32 char long
-- fixed avail.F construct that was crashing some versions of gfortran
-
-Enhancements:
--------------
-- A new utility has been added: papi_version
-- Added 4 new PRESET events to better handle SIMD instructions on Intel cpus:
-  PAPI_DP_OPS - counts double precision scalar and vector FP operations
-  PAPI_SP_OPS - counts single precision scalar and vector FP operations
-  PAPI_VEC_DP - counts double precision vector instructions
-  PAPI_VEC_SP - counts single precision vector instructions
-- FreeBSD support upgrade and new support for Atom and Intel Core2
-
-New Platforms:
--------------
-- Intel Core i7 (Nehalem) support for 7 core counters; no support for 
-  Uncore counters
-- Intel Atom 
-- AMD Opteron Barcelona, Shanghai, Istanbul event table support
-- POWER7 support for Linux thanks to IBM
-- Sun Niagara2 support thanks to Aachen University, Germany
-- Resurrected support for PAPI on Windows; now supports Intel Core2 and Core i7
-
-Major Issues:
--------------
-- PAPI for Windows does not support 64-bit versions due to compiler issues.
-
-Experimental:
--------------
-- Support for the perf_counters (PCL: Performance Counters for Linux) interface
-  is available as a technology pre-release for Linux kernel 3.6.31 and later.
-  This has been tested on IBM POWER and Intel Core2 and successfully performs 
-  basic counting operations. It has not been stress tested. Caveat Emptor.
-
-Known Bugs:
------------
-- clock speeds are occasionally not reported correctly for systems with
-  SpeedStep technology.
-- Intel Atom crashes on a small number of standard tests. 
-
-===============================================================================
-PAPI 3.6.2 RELEASE NOTES                                            03 Oct 2008
-===============================================================================
-
-This file documents changes in recent PAPI releases in inverse chronological
-order.
-
-For details on installing PAPI on your machine, consult the INSTALL.txt file
-in this directory.
-
-For specific and detailed information on changes made in this release, grep
-the ChangeLogP362.txt file for keywords of interest or go directly to the PAPI
-cvs tree.
-
-
-GENERAL NOTES
-===============================================================================
-This release is a recommended upgrade to PAPI 3.6.1. It introduces support for
-the IBM POWER6/AIX, and contains a few critical bug fixes and enhancements
-identified from the PAPI 3.6.1 release. These changes are summarized below.
-
-If you are currently using PAPI 3.6.1 or earlier,
-it is recommended that you upgrade to this version.
+This release runs on:
+---------------------
+Pentium III
+Pentium 4
+Opteron
+Itanium
+If you are not running on one of these systems *do not upgrade*
 
 As always, if you identify strange behavior or demonstrable bugs, please
 contact the PAPI team or one of the PAPI development lists.
@@ -111,179 +42,15 @@ And visit the PAPI website for the latest updates:
 http://icl.cs.utk.edu/papi/
 
 
-CHANGES IN PAPI 3.6.2 SINCE PAPI 3.6.1
+CHANGES IN PAPI 3.9.0 SINCE PAPI 3.5.0
 ===============================================================================
-Bug Fixes:
-----------
-- actually now support POWER6/AIX as we earlier claimed.
-- libpfm now properly identifies perfmon2 v2.8 and 2.81 kernel patches
-- fixed a subtle bug in EventSetInfo handling that was introduced in 3.6.1
-	and resulted in possible event set pointer trashing in situations with
-	multiple threads and many event sets. Most visible in sefaults in the 
-	kufrin.c test case.
-
-Enhancements:
--------------
-- perfmon_events.csv now has better definitions for PAPI_FP_OPS for
-	POWER5, POWER5+ and POWER6 processors
-- papi_avail now prints a summary count of the event table at the bottom
-	cosmetic, but nice.
-
-New Platforms:
--------------
-- IBM POWER6 is now *really* supported, validating earlier claims that it was.
-
-Major Issues:
--------------
-- the global array that maintains pointers to EventSetInfo descriptors can
-	cause false cache-line sharing on some platforms. This can negatively
-	impact PAPI_read performance. A future solution is to add compile-time
-	padding to this array to minimize false sharing.
-- POWER6 cycle counts are available through two events. One (PM_CYC) behaves
-	like most other events but is available in only a limited number of groups.
-	The other (PM_RUN_CYC) is on a dedicated counter and always available, but
-	it does not generate overflows or distinguish between kernel and user space.
-	PAPI currently uses the second counter. This causes failures in second.c and
-	in most overflow/profile tests.
-- POWER6 also appears to have other overflow issues that need further exploration.
-
 Experimental:
 -------------
-- preliminary support is available in perfmon2 for Intel Atom and Dunnington cpus
-	This has not been tested at the PAPI level, due to lack of access to these
-	systems. If you have one, let us know.
-	
-Known Bugs:
------------
-- see PAPI 3.6.1 and earlier
-
-
-===============================================================================
-PAPI 3.6.1 RELEASE NOTES                                            01 Aug 2008
-===============================================================================
-
-This file documents changes in recent PAPI releases in inverse chronological
-order.
-
-For details on installing PAPI on your machine, consult the INSTALL.txt file
-in this directory.
-
-For specific and detailed information on changes made in this release, grep
-the ChangeLogP361.txt file for keywords of interest or go directly to the PAPI
-cvs tree.
-
-
-GENERAL NOTES
-===============================================================================
-This release is a minor upgrade to PAPI 3.6.0. It introduces support for  
-two new platforms, and contains a few critical bug fixes and enhancements
-identified from the PAPI 3.6.0 release. These changes are summarized below.
-
-If you are currently using PAPI 3.6.0 or earlier,
-it is recommended that you upgrade to this version.
-
-As always, if you identify strange behavior or demonstrable bugs, please
-contact the PAPI team or one of the PAPI development lists.
-
-And visit the PAPI website for the latest updates:
-http://icl.cs.utk.edu/papi/
-
-
-CHANGES IN PAPI 3.6.1 SINCE PAPI 3.6.0
-===============================================================================
-Bug Fixes:
-----------
-- aliased PAPI_ENUM_ALL to PAPI_ENUM_EVENTS to avoid breaking existing 
-	pre-3.6.0 code that called PAPI_enum_events.
-- Pentium 4 Models 2 and 3 are now properly recognized
-- better support across fork/exec for perfctr, perfmon2
-- overflow/profile now works properly on Intel Core
-- fix for max negative values in genpapifdef.c for latest gcc Fortran
-- fix for some meta-characters in papi_xml_event_info output
-- clarified return values for papi_add_events man pages
-
-Enhancements:
--------------
-- perfmon_events.csv now defaults to STATIC inclusions so
-	event definitions are less likely to get lost. See
-	--with-pfm-events flag in configure for details
-- proper identification of POWER5+ and POWER5++ with AIX
-- increased resolution of PAPI timers to nanoseconds and added two new APIs
-	to support this: PAPI_get_real_ns() and PAPI_get_virt_ns()
-
-New Platforms:
--------------
-- SiCortex running perfmon2 (preinstalled). See INSTALL.txt for installation
-	details
-- preliminary Cell support; basic counting & native events
-
-Major Issues:
--------------
-- issues have been identified when using PAPI_overflow with fork and exec
-  - perfmon2 requires a PAPI_shutdown before a fork
-  - perfctr requires a PAPI_shutdown before an exec
-  - this likely does not affect simple counting
-
-Experimental:
--------------
-- Cell support using perfmon2 patch
-	- 32-bit counters only
-	- unclear separation of virtual threads
-	- limited preset events
-	- no support for overflow, profile
-
-Known Bugs:
------------
-- see PAPI 3.6.0
-- SiCortex is overly restrictive on assigning events to counters
-	it occasionally reports conflicts when none exist. 
-
-
-CHANGES IN PAPI 3.6.0 SINCE PAPI 3.5.0
-===============================================================================
-Bug Fixes:
-----------
-- myriad; see ChangeLog360.txt for details
-
-Enhancements:
--------------
-- native events for Linux/Intel/AMD systems now all follow the perfmon2
-  naming scheme: EVENT_NAME:UMASK1:UMASK2:...
-- encoding of preset event definitions in a text file: perfmon_events.csv
-- enhancements to papi_avail; see "papi_avail -h" for details
-- enhancements to papi_native_avail; see "papi_native_avail -h" for details
-- new papi_xml_event_info to present preset and native event info in xml format
-  for easier consumption by higher level tools
-  useful for checkpoint/restart applications
-- PAPI_read_ts implemented for fast read with timestamp; see man page
-
-New Platforms:
--------------
-- AMD Opteron Barcelona Quad Core
-- Cray XT3/4 running CNL and perfmon2
-- Cray X2 prerelease running CNL and perfmon2
-- Itanium Montecito and Montvale with perfmon and perfmon2
-- FreeBSD with the HWPMC kernel driver for Intel and AMD
-- POWER6 with Linux
-
-Major Issues:
--------------
-- issues have been identified when using PAPI_overflow with fork and exec
-  - perfmon2 requires a PAPI_shutdown before a fork
-  - perfctr requires a PAPI_shutdown before an exec
-  - this likely does not affect simple counting
-
-Experimental:
--------------
-- perfmon2 is not yet mainstream and undergoing rapid development;
-  systems using this kernel mod should be considered experimental
-
-Known Bugs:
------------
-- TBD
-- all_native_events fails on REPLAY_EVENT for Pentium4
-- all_native_events fails on a subset of 39 events for Itanium Montecito/Montvale
-- overflow/profile behavior is indeterminate for Cray X1
+This is an experimental release.
+Virtually all of the changes since PAPI 3.5.0 are intended to allow PAPI to run
+multiple concurrent components or substrates to collect performance data from
+multiple sources. See the Change Log (ChangeLog390.txt) for specific details.
+See also /doc/PAPI-C.html for a description of the changes to PAPI-C.
 
 
 CHANGES IN PAPI 3.5.0 SINCE PAPI 3.2.1

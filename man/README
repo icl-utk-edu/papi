@@ -9,28 +9,19 @@
 
 This directory contains:
 
-README		This file.
 Makefile	Installs man pages.
 manServer.pl	A perl script to convert the man pages to html
 papiman.bat	A batch file (Windows or Unix) to automate the perl script.
 header.htm	html snippets to beautify the html of the converted man pages.
 footer.htm
-man1/		The troff formatted utility man pages.
-man3/		The troff formatted API man pages.
+man3/		The troff formatted man pages.
 html/		The html formatted man pages.
 images/		A collection of graphics used on the html pages.
 
 Makefile Usage:
 
-	make MANDIR=<mandir> DOCDIR=<docdir>
-	make install MANDIR=<mandir> DOCDIR=<docdir>
-		The above two usages are identical; they call all three targets below.
-	make clean
-		Remove stray files from the man1 and man3 directories.
-	make install-man MANDIR=<mandir>
-		Install just the man pages.
-	make install-doc DOCDIR=<docdir>
-		Install all other documentation files.
+	make
+	make install DESTDIR=<destdir>
 
 Philosophy:
 
@@ -41,6 +32,6 @@ Philosophy:
   in the /papi/doc directory, it is also converted into a Programmer's
   Reference and formatted as a Word .doc file, a PDF file, a PostScript
   file, and a single html file. All these formats are accessible on the
-  PAPI website and installed with the install-doc option.
+  PAPI website.
   Any content changes or additions must be made to the man pages and
   propagated forward from there.

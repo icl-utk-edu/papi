@@ -2,10 +2,8 @@
 .TH PAPI_add_event 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-.nf
-PAPI_add_event  \- add PAPI preset or native hardware event to an event set
-PAPI_add_events \- add PAPI presets or native hardware events to an event set
-.fi
+ PAPI_add_event  \- add PAPI preset or native hardware event to an event set
+ PAPI_add_events \- add PAPI presets or native hardware events to an event set
 
 .SH SYNOPSIS
 .B C Interface
@@ -30,12 +28,12 @@ PAPI_add_events() does the same, but for an array of events.
 A hardware event can be either a PAPI preset or a native hardware event code.
 For a list of PAPI preset events, see
 .BR "PAPI_presets" "(3) or run the"
-.I utils/papi_avail
-utility in the PAPI distribution. PAPI presets can be passed to
+.I avail
+test case in the PAPI distribution. PAPI presets can be passed to
 .BR "PAPI_query_event" "(3) to see if they exist on the underlying architecture."
-For a list of native events available on current platform, run the
-.I utils/papi_native_avail
-utility in the PAPI distribution. For the encoding of native events, see
+For a list of native events available on current platform, run
+native_avail
+test case in the PAPI distribution. For the encoding of native events, see
 .BR "PAPI_event_name_to_code" "(3) to learn how to generate native code for the supported native event on the underlying architecture."
 
 .SH ARGUMENTS
@@ -61,7 +59,7 @@ can partially succeed, exactly like
 .SH RETURN VALUES
 On success, these functions return
 .B "PAPI_OK." 
- On error a negative error code, or a positive number of elements that succeeded before the error, is returned.
+ On error, a less than zero error code is returned or the the number of elements that succeeded before the error.
 
 .SH ERRORS
 .TP
@@ -114,35 +112,6 @@ if (PAPI_add_event(EventSet, native) != PAPI_OK)
 
 .if t .ft P
 .fi
-
-.SH IBM POWER6 NOTES
-
-Event counters 5 and 6 in the IBM POWER6 are restricted:
-.br
-\(bu Each can count just a single, fixed event. 
-.br
-\(bu They are free-running and so can count only in the combined domain - PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR.
-.br
-\(bu They cannot interrupt on overflow.
-.P
-Although counter 6 counts processor cycles gated by the run latch
-(PM_RUN_CYC), the current implementation maps the PAPI preset event
-PAPI_TOT_CYC to PM_CYC because of the domain and overflow limitations of
-counter 6.  PM_CYC can be counted with relatively few other
-events, so it's likely that you will receive PAPI_ECNFLCT if you try to add
-PAPI_TOT_CYC to an event set that already contains other events.  If you
-can use the above mentioned combined domain and do not need the overflow
-capability, you should consider adding the native event PM_RUN_CYC instead
-of PAPI_TOT_CYC.
-.P
-Counter 5 counts the native event PM_RUN_INST_CMPL, which is instructions
-completed gated by the run latch.  For the same reasons given for counter
-6, PAPI_TOT_INS is mapped to PM_INST_CMPL instead of PM_RUN_INST_CMPL.  And
-as above, if you try to add PAPI_TOT_INS to an event group with other
-events already in it, you are likely to receive PAPI_ECNFLCT.  If you can
-use the above combined domain and do not need the overflow capability, you
-should consider adding the native event PM_RUN_INST_CMPL instead of
-PAPI_TOT_INS.
 
 .SH BUGS
 The vector function should take a pointer to a length argument so a proper return value can

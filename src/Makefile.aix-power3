@@ -2,10 +2,12 @@ LIBRARY   = libpapi.a
 SHLIB     = libpapi.so
 SUBSTR  = power3
 MSUBSTR = power3
-MEMSUBSTR=aix
+MEMSUBSTR = aix
+MEMSUBSTRC = $(MEMSUBSTR)-memory.c
+MEMSUBSTRO = $(MEMSUBSTR)-memory.o
 DESCR	= "AIX 4.3.3 with 604, 604e or 630"
 LIBS	= static shared
-TARGETS	= serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads smp omp
+TARGETS	= serial multiplex_and_pthreads smp omp
 #PMAPI	= /usr/lpp/pmtoolkit
 SHLIBDEPS = -L$(PMAPI)/lib -lpmapi
 POST_BUILD =
@@ -16,7 +18,7 @@ SPECIAL_REMOVE =
 # For version 1.2.1 add -DPMTOOLKIT_1_2_1
 
 FLAGS  = -I/usr/lpp/pmtoolkit/include -qmaxmem=-1 -qarch=pwr3 
-CFLAGS	= $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -DPOWER3 -DNEED_FFSLL
+CFLAGS	= $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -DPOWER3 -DNEED_FFSLL -DCOMP_VECTOR=_$(SUBSTR)_vectors
 #-DMPX_DEBUG_TIMER -DMPX_DEBUG
 OPTFLAGS= -O3 -qstrict
 NOOPT	= 

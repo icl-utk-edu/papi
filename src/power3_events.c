@@ -507,5 +507,5 @@ int power3_setup_native_table()
          }
       }
    }
-   return index;
+   return (PAPI_OK);
 }

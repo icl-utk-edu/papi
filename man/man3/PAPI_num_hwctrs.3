@@ -1,14 +1,16 @@
 .\" $Id$
-.TH PAPI_num_hwctrs 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
+.TH PAPI_num_hwctrs 3 "April, 2007" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
-PAPI_num_hwctrs \- return the number of hardware counters 
+ PAPI_num_hwctrs \- return the number of hardware counters on the cpu
+ PAPI_num_cmp_hwctrs \- return the number of hardware counters for the specified component
 
 .SH SYNOPSIS
 .B C Interface
 .nf
 .B #include <papi.h>
 .BI "int PAPI_num_hwctrs();"
+.BI "int PAPI_num_cmp_hwctrs(int " cidx ");"
 .fi
 .B Fortran Interface
 .nf
@@ -18,14 +20,20 @@ PAPI_num_hwctrs \- return the number of hardware counters
 
 .SH DESCRIPTION
 .B "PAPI_num_hwctrs()" 
-returns the number of physical hardware
-counters present in the processor. This count does not include any
-special purpose registers or performance hardware. 
+returns the number of physical hardware counters present in the cpu. 
+This is included to preserve backward compatability.
+.LP
+.B "PAPI_num_cmp_hwctrs()" 
+returns the number of counters present in the specified component. 
+By convention, component 0 is always the cpu.
+This count does not include any
+special purpose registers or other performance hardware. 
 .BR "PAPI_library_init" "(3) must be called"
 in order for this function to return anything greater than 0.
 
 .SH ARGUMENTS
-This function takes no arguments.
+.I cidx
+-- An integer identifier for a component. By convention, component 0 is always the cpu component.
 
 .SH RETURN VALUES
 On success, this function returns a value greater than zero.
@@ -36,8 +44,8 @@ A zero result usually means the library has not been initialized.
 .LP
 .nf
 .if t .ft CW
-/* Query the substrate for our resources. */
-printf("%d hardware counters found.\n", PAPI_num_hwctrs());
+/* Query the cpu component for the number of counters. */
+printf("%d hardware counters found.\n", PAPI_num_cmp_hwctrs(0));
 .if t .ft P
 .fi
 
@@ -45,5 +53,5 @@ printf("%d hardware counters found.\n", PAPI_num_hwctrs());
 None.
 
 .SH SEE ALSO
-.BR PAPI_library_init "(3),"
+.BR PAPI_init_library "(3),"
 .BR PAPI "(3)," PAPI_F "(3)"

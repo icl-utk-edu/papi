@@ -44,9 +44,6 @@ endif
 ifeq (ppc,$(findstring ppc,$(ARCH)))
 override ARCH=powerpc
 endif
-ifeq (sparc64,$(findstring sparc64,$(ARCH)))
-override ARCH=sparc
-endif
 
 #
 # Cray-X2 is cross-compiled. Check the programming environment
@@ -96,16 +93,8 @@ ifeq ($(ARCH),powerpc)
 CONFIG_PFMLIB_ARCH_POWERPC=y
 endif
 
-ifeq ($(ARCH),sparc)
-CONFIG_PFMLIB_ARCH_SPARC=y
-endif
-
 ifeq ($(ARCH),crayx2)
 CONFIG_PFMLIB_ARCH_CRAYX2=y
-endif
-
-ifeq ($(ARCH),cell)
-CONFIG_PFMLIB_CELL=y
 endif
 
 #

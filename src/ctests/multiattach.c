@@ -35,7 +35,7 @@ int main(int argc, char **argv)
    long long elapsed_us, elapsed_cyc, elapsed_virt_us, elapsed_virt_cyc;
    char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
    const PAPI_hw_info_t *hw_info;
-   const PAPI_substrate_info_t *subinfo;
+   const PAPI_component_info_t *cmpinfo;
    unsigned long pid, pid2;
 
    pid = fork();
@@ -55,10 +55,10 @@ int main(int argc, char **argv)
    if (retval != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   if ((subinfo = PAPI_get_substrate_info()) == NULL) 
-     test_fail(__FILE__, __LINE__, "PAPI_get_substrate_info", 0);
+   if ((cmpinfo = PAPI_get_component_info(0)) == NULL) 
+     test_fail(__FILE__, __LINE__, "PAPI_get_component_info", 0);
 
-   if (subinfo->attach == 0)
+   if (cmpinfo->attach == 0)
      test_skip(__FILE__, __LINE__, "Platform does not support attaching", 0);
 
     hw_info = PAPI_get_hardware_info();
@@ -71,7 +71,7 @@ int main(int argc, char **argv)
    EventSet1 = add_two_events(&num_events1, &PAPI_event, hw_info, &mask1);
    EventSet2 = add_two_events(&num_events1, &PAPI_event, hw_info, &mask1);
 
-  if (subinfo->attach_must_ptrace)
+  if (cmpinfo->attach_must_ptrace)
     {
       if (ptrace(PTRACE_ATTACH,pid,NULL,NULL) == -1)
 	{
@@ -126,7 +126,7 @@ int main(int argc, char **argv)
    elapsed_virt_cyc = PAPI_get_virt_cyc();
 
    /* Wait for the SIGSTOP. */
-   if( subinfo->attach_must_ptrace ) 
+   if( cmpinfo->attach_must_ptrace ) 
      {
        if( ptrace( PTRACE_CONT, pid, NULL, NULL ) == -1 ) {
 	 perror( "ptrace(PTRACE_CONT)" );
@@ -168,7 +168,7 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_start", retval);
 
    /* Wait for the SIGSTOP. */
-   if (subinfo->attach_must_ptrace)
+   if (cmpinfo->attach_must_ptrace)
     {
       if (ptrace(PTRACE_CONT,pid,NULL,NULL) == -1) {
 	perror("ptrace(PTRACE_ATTACH)");
@@ -220,7 +220,7 @@ int main(int argc, char **argv)
    remove_test_events(&EventSet1, mask1);
    remove_test_events(&EventSet2, mask1);
 
-   if( subinfo->attach_must_ptrace ) 
+   if( cmpinfo->attach_must_ptrace ) 
      {
        if( ptrace( PTRACE_CONT, pid, NULL, NULL ) == -1 ) {
 	 perror( "ptrace(PTRACE_CONT)" );

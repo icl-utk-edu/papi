@@ -62,7 +62,7 @@ or explicitly returned by Fortran.
 generated at init time with a quick timing routine
 .LP
 .I mem_hierarchy
--- PAPI memory hierarchy description
+-- PAPI memory heirarchy description
 
 .SH RETURN VALUES
 On success, the C function returns a non-NULL pointer, 
@@ -133,7 +133,7 @@ The C data structure returned by this function is found in
       float revision;               /* Revision of CPU */
       float mhz;                    /* Cycle time of this CPU, *may* be estimated at 
                                        init time with a quick timing routine */
-     PAPI_mh_info_t mem_hierarchy;  /* PAPI memory hierarchy description */
+     PAPI_mh_info_t mem_hierarchy;  /* PAPI memory heirarchy description */
    } PAPI_hw_info_t;
 
 .if t .ft P

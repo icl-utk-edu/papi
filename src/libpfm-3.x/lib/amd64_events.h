@@ -270,13 +270,13 @@ static pme_amd64_entry_t amd64_pe[]={
 		}
 	 }
 	},
-/* 14 */{.pme_name = "L1_DTLB_MISS_AND_L2_DTLB_HIT",
+/* 14 */{.pme_name = "L1_DTLB_MISS_AND_L2_DLTB_HIT",
 	.pme_code = 0x45,
-	.pme_desc = "L1 DTLB Miss and L2 DTLB Hit"
+	.pme_desc = "L1 DTLB Miss and L2 DLTB Hit"
 	},
-/* 15 */{.pme_name = "L1_DTLB_AND_L2_DTLB_MISS",
+/* 15 */{.pme_name = "L1_DTLB_AND_L2_DLTB_MISS",
 	.pme_code = 0x46,
-	.pme_desc = "L1 DTLB and L2 DTLB Miss"
+	.pme_desc = "L1 DTLB and L2 DLTB Miss"
 	},
 /* 16 */{.pme_name = "MISALIGNED_ACCESSES",
 	.pme_code = 0x47,

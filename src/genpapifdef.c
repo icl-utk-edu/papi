@@ -35,8 +35,7 @@
 #include <sys/types.h>
 #include <memory.h>
 
-/* Cray Red Storm & FreeBSD OS */
-#if !defined(__BSD__) && !defined(__FreeBSD__)
+#ifndef __BSD__ /* for Cray Red Storm */ 
 #include <malloc.h>
 #endif
 
@@ -46,7 +45,7 @@
 #include <assert.h>
 
 #define NO_LIBPAPI
-#define MAX_COUNTER_TERMS 8 /* to satisfy papi_preset.h */
+#define PAPI_MAX_COUNTER_TERMS 8 /* to satisfy papi_preset.h */
 #include "papi_preset.h"
 #include "papi_data.c"
 #undef NO_LIB_PAPI
@@ -106,8 +105,6 @@ const hwi_describe_t _papi_def[] = {
    {PAPI_DEFGRN, "PAPI_DEFGRN", NULL},
    {PAPI_GRANUL, "PAPI_GRANUL", NULL},
    {PAPI_DEF_MPX_NS,"PAPI_DEF_MPX_NS",NULL},
-   {PAPI_DEF_ITIMER_NS,"PAPI_DEF_ITIMER_NS",NULL},
-   {PAPI_DEF_ITIMER,"PAPI_DEF_ITIMER",NULL},
    {PAPI_EDGE_DETECT, "PAPI_EDGE_DETECT", NULL},
    {PAPI_INVERT, "PAPI_INVERT", NULL},
    {PAPI_MAX_MPX_CTRS, "PAPI_MAX_MPX_CTRS", NULL},
@@ -121,7 +118,7 @@ const hwi_describe_t _papi_def[] = {
    {PAPI_ATTACH, "PAPI_ATTACH", NULL},
    {PAPI_SHLIBINFO, "PAPI_SHLIBINFO", NULL},
    {PAPI_LIB_VERSION, "PAPI_LIB_VERSION", NULL},
-   {PAPI_SUBSTRATEINFO, "PAPI_SUBSTRATEINFO", NULL},
+   {PAPI_COMPONENTINFO, "PAPI_COMPONENTINFO", NULL},
    {PAPI_DETACH,"PAPI_DETACH",NULL},
 
    {PAPI_GRN_THR, "PAPI_GRN_THR", NULL},
@@ -171,6 +168,7 @@ const hwi_describe_t _papi_def[] = {
    {PAPIF_DMEM_MAXVAL, "PAPIF_DMEM_MAXVAL", NULL}
 
 };
+
 
 enum deftype_t { CDEFINE, F77DEFINE, F90DEFINE };
 static char comment_char = 'C';

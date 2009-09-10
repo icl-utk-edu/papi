@@ -3,16 +3,18 @@ SHLIB     = libpapi64.so
 SUBSTR  = power3
 MSUBSTR = power3
 MEMSUBSTR=aix
+MEMSUBSTRC = $(MEMSUBSTR)-memory.c
+MEMSUBSTRO = $(MEMSUBSTR)-memory.o
 DESCR   = "AIX 5.1.0 or greater with 604, 604e or 630 64 bit build"
 LIBS    = static shared
-TARGETS = serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads smp omp
+TARGETS = serial multiplex_and_pthreads smp omp
 #PMAPI   = /usr/pmapi
 SHLIBDEPS = -L$(PMAPI)/lib -lpmapi
 POST_BUILD =
 SPECIAL_REMOVE =
 
 FLAGS  	= -I$(PMAPI)/include -qmaxmem=-1 -qarch=pwr3 -qtune=pwr3 -qlanglvl=extended -q64 
-CFLAGS  = $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -DPOWER3 -DNEED_FFSLL
+CFLAGS  = $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -DPOWER3 -DNEED_FFSLL -DCOMP_VECTOR=_$(SUBSTR)_vectors
 OPTFLAGS= -O3 -qstrict
 TOPTFLAGS=
 FFLAGS  = $(FLAGS) -WF,-DPOWER3

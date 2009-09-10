@@ -7,7 +7,7 @@ DESCR   = "Compaq Tru64 Unix with Alpha 21264EV6"
 LIBS	= static shared
 TARGETS	= serial multiplex_and_pthreads omp
 
-CFLAGS 	=  -Zp8 -DNO_VARARG_MACRO -DNEED_FFSLL 
+CFLAGS 	=  -Zp8 -DNO_VARARG_MACRO -DNEED_FFSLL  -DCOMP_VECTOR=_tru64_alpha_vectors
 FFLAGS	= 
 OPTFLAGS= 
 TOPTFLAGS=$(OPTFLAGS)

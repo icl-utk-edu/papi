@@ -25,6 +25,8 @@ LIBRARY = libpapi.a
 SHLIB   = libpapi.so
 SUBSTR  = linux-bgl
 MEMSUBSTR = linux-bgl
+MEMSUBSTRC = $(MEMSUBSTR)-memory.c
+MEMSUBSTRO = $(MEMSUBSTR)-memory.o
 MSUBSTR= linux-bgl
 DESCR   = "Linux for BlueGene/L"
 LIBS    = static
@@ -32,7 +34,7 @@ TARGETS = serial #multiplex_and_pthreads
 
 CC_SHR  = $(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
 CC_R    = $(CC) -pthread
-CFLAGS += -I. #-DDEBUG
+CFLAGS += -I. -DCOMP_VECTOR=_bgl_vectors #-DDEBUG
 # Some nice flags to add to CFLAGS when debugging PAPI library itself
 # -DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
 MISCHDRS = 
@@ -40,12 +42,15 @@ MISCSRCS = linux-bgl-events.c
 MISCOBJS = $(MISCSRCS:.c=.o)
 SHLIBDEPS =
 
-#BGL_TESTS=bgl_tests
+BGL_TESTS=bgl_tests
 
 include Makefile.inc
 
 linux-bgl-events.o: linux-bgl-events.c  $(HEADERS)
-	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c linux-bgl-events.c -o linux-bgl-events.o
+	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" -DCOMP_VECTOR=_bgl_vectors $(OPTFLAGS) -c linux-bgl-events.c -o linux-bgl-events.o
+
+bgl_tests:$(LIBRARY) null 
+	cd ctests/bgl_tests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-DSUBSTRATE=\\\"$(SUBSTR).h\\\" $(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" bgl_test
 
 bgl_tests:$(LIBRARY) null 
 	cd ctests/bgl_tests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-DSUBSTRATE=\\\"$(SUBSTR).h\\\" $(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" bgl_test

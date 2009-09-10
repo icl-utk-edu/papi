@@ -39,6 +39,14 @@ void *thread(void *arg)
     
     printf("Event set %d created\n", eventset);
 
+    /* In Component PAPI, EventSets must be assigned a component index
+      before you can fiddle with their internals.
+      0 is always the cpu component */
+    ret = PAPI_assign_eventset_component(eventset, 0);
+    if ( ret != PAPI_OK ) {
+      test_fail(__FILE__, __LINE__, "PAPI_assign_eventset_component", ret);
+   }
+
     ret = PAPI_set_multiplex(eventset);
     if ( ret != PAPI_OK ) {
       test_fail(__FILE__, __LINE__, "PAPI_set_multiplex", ret);

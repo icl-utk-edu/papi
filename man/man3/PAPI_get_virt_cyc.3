@@ -1,12 +1,10 @@
 .\" $Id$
-.TH PAPI_get_virt_cyc 3 "July, 2008" "PAPI Programmer's Reference" "PAPI"
+.TH PAPI_get_virt_cyc 3 "September, 2004" "PAPI Programmer's Reference" "PAPI"
 
 .SH NAME
 PAPI_get_virt_cyc \- get virtual time counter value in clock cycles
 .LP
 PAPI_get_virt_usec \- get virtual time counter values in microseconds
-.LP
-PAPI_get_virt_ns \- get virtual time counter values in nanoseconds
 
 .SH SYNOPSIS
 .B C Interface
@@ -14,18 +12,16 @@ PAPI_get_virt_ns \- get virtual time counter values in nanoseconds
 .B #include <papi.h>
 .BI "long_long PAPI_get_virt_cyc(void);"
 .BI "long_long PAPI_get_virt_usec(void);"
-.BI "long_long PAPI_get_virt_ns(void);"
 .fi
 .B Fortran Interface
 .nf
 .B #include "fpapi.h"
-.BI PAPIF_get_virt_cyc(C_LONG_LONG\  cyc)
-.BI PAPIF_get_virt_usec(C_LONG_LONG\  us)
-.BI PAPIF_get_virt_ns(C_LONG_LONG\  ns)
+.BI PAPIF_get_virt_usec(C_LONG_LONG\  time)
+.BI PAPIF_get_virt_cyc(C_LONG_LONG\  virt_cyc)
 .fi
 
 .SH DESCRIPTION
-All of these functions return the total number of virtual units from
+Both of these functions return the total number of virtual units from
 some arbitrary starting point. Virtual units accrue every time the
 process is running in user-mode on behalf of the process. Like the
 real time counters, these are guaranteed to exist on every platform
@@ -61,6 +57,7 @@ These functions have no known bugs.
 
 .SH SEE ALSO
 .BR PAPI_library_init "(3), "
+.BR PAPI_get_real_usec "(3), " 
 .BR PAPI_get_real_cyc "(3), "
 .BR PAPI "(3), " 
 .BR PAPIF "(3)" 

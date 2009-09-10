@@ -156,12 +156,12 @@ show_task_rusage(const struct timeval *start, const struct timeval *end, const s
 		ru->ru_utime.tv_sec / 3600, 
 		(ru->ru_utime.tv_sec % 3600) / 60, 
 		ru->ru_utime.tv_sec% 60,
-		(long)(ru->ru_utime.tv_usec / 1000),
+		ru->ru_utime.tv_usec / 1000,
 
 		ru->ru_stime.tv_sec / 3600, 
 		(ru->ru_stime.tv_sec % 3600) / 60, 
 		ru->ru_stime.tv_sec% 60,
-		(long)(ru->ru_stime.tv_usec / 1000)
+		ru->ru_stime.tv_usec / 1000
 		);
 }
 
