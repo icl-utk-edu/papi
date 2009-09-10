@@ -1116,17 +1116,9 @@ int PAPI_read(int EventSet, long long * values)
 
 int PAPI_read_ts(int EventSet, long long * values, long long *cyc)
 {
-   EventSetInfo_t *ESI;
-   ThreadInfo_t *thread;
-   int cidx, retval;
+   int retval;
 
-   ESI = _papi_hwi_lookup_EventSet(EventSet);
-
-   cidx = valid_ESI_component(ESI);
-   if (cidx < 0) papi_return(cidx);
-
-   thread = ESI->master;
-   retval = _papi_hwi_read(thread->context[ESI->CmpIdx], ESI, values);
+   retval = PAPI_read(EventSet, values);
    *cyc = _papi_hwd[cidx]->get_real_cycles();
    return(retval);
 }
