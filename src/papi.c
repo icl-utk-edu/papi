@@ -1116,11 +1116,45 @@ int PAPI_read(int EventSet, long long * values)
 
 int PAPI_read_ts(int EventSet, long long * values, long long *cyc)
 {
-   int retval;
+   EventSetInfo_t *ESI;
+   ThreadInfo_t *thread;
+   int cidx, retval = PAPI_OK;
 
-   retval = PAPI_read(EventSet, values);
+   ESI = _papi_hwi_lookup_EventSet(EventSet);
+   if (ESI == NULL)
+      papi_return(PAPI_ENOEVST);
+      
+   cidx = valid_ESI_component(ESI);
+   if (cidx < 0) papi_return(cidx);
+
+   thread = ESI->master;
+   if (values == NULL)
+      papi_return(PAPI_EINVAL);
+
+   if (ESI->state & PAPI_RUNNING) {
+      if (_papi_hwi_is_sw_multiplex(ESI))
+         retval = MPX_read(ESI->multiplex.mpx_evset, values);
+      else
+         retval = _papi_hwi_read(thread->context[cidx], ESI, values);
+      if (retval != PAPI_OK)
+         papi_return(retval);
+   } else {
+      memcpy(values, ESI->sw_stop, ESI->NumberOfEvents * sizeof(long long));
+   }
+
    *cyc = _papi_hwd[cidx]->get_real_cycles();
-   return(retval);
+
+#if defined(DEBUG)
+   if (ISLEVEL(DEBUG_API))
+   {
+      int i;
+      for (i = 0; i < ESI->NumberOfEvents; i++)
+         APIDBG("PAPI_read values[%d]:\t%lld\n", i, values[i]);
+   }
+#endif
+
+   APIDBG("PAPI_read_ts returns %d\n", retval);
+   return (PAPI_OK);
 }
 
 int PAPI_accum(int EventSet, long long * values)
