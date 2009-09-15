@@ -129,7 +129,7 @@
       end if
 
       fd = 1
-      call do_stuff();
+      call do_stuff()
 
       call PAPIf_stop(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then

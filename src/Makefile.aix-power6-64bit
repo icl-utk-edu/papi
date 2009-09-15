@@ -8,6 +8,6 @@ MSUBSTR = power6
 DESCR	= "AIX 5.1.0 or greater with POWER6 64 bit build"
 BITS    = -q64
 ARG64	= -X64
-CPPFLAGS = -qlanglvl=extended
+CPPFLAGS += -qlanglvl=extended
 
 include Makefile.aix-powerpc.common

@@ -117,6 +117,19 @@ if test "$T3EOS" != ""; then
    OS=unicos
 fi
 
+# XTOS_VERSION exists only on Cray systems supporting XT and hence CLE OS
+if test "$XTOS_VERSION"; then
+	use_shared=no
+	use_static=yes
+	pfm_events=static
+	cross_compiling=yes
+# ffsll, tls, walltimer, virtualtimer must be sprecified for cross-compiling
+	ffsll=yes
+	tls=__thread
+	walltimer=cycle
+	virtualtimer=times
+fi
+
 /bin/rm -f ckcat
 cc ckcatamount.c 2>&1 | cat > ckcat
 if test "`cat ckcat | grep "IS_CATAMOUNT"`" != ""; then
@@ -1194,7 +1207,7 @@ if test "$OS" = "aix"; then
       esac
       PMINIT=""
       LIBS="-L$PMAPI/lib -lpmapi"
-      CPPFLAGS="-I$PMAPI/include"
+      CPPFLAGS="$CPPFLAGS -I$PMAPI/include"
       AC_CHECK_LIB([pmapi], [pm_initialize], [
 			    PMINIT="-DPM_INITIALIZE"], [
 			    AC_CHECK_LIB([pmapi], [pm_init], [
@@ -1639,6 +1652,7 @@ AC_SUBST(compobjs)
 AC_SUBST(OS)
 AC_SUBST(CFLAGS)
 AC_SUBST(FFLAGS)
+AC_SUBST(CPPFLAGS)
 AC_SUBST(pfm_events)
 AC_SUBST(pfm_events_table)
 AC_SUBST(tests)

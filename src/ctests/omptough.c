@@ -37,7 +37,7 @@ int main( int argc, char* argv[] )
       exit(1);
     }
 
-  if( (ret=PAPI_thread_init(pthread_self)!=PAPI_OK ) )
+  if( (ret = PAPI_thread_init((unsigned long (*)(void)) pthread_self)) != PAPI_OK )
     {
       fprintf(stderr, "PAPI thread initialization error '%s'\n",
 	      PAPI_strerror(ret) );

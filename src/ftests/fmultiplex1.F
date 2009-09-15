@@ -262,7 +262,7 @@ C     Tests that PAPI_set_multiplex() works after adding events
       end if
 
       fd = 1
-      call do_stuff();
+      call do_stuff()
       call PAPIf_stop(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
@@ -398,7 +398,7 @@ C Try alternative event if the above is not possible to use...
       end if
 
       fd = 1
-      call do_stuff();
+      call do_stuff()
       call PAPIf_stop(EventSet, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,

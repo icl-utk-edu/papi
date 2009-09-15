@@ -1859,6 +1859,19 @@ if test "$T3EOS" != ""; then
    OS=unicos
 fi
 
+# XTOS_VERSION exists only on Cray systems supporting XT and hence CLE OS
+if test "$XTOS_VERSION"; then
+	use_shared=no
+	use_static=yes
+	pfm_events=static
+	cross_compiling=yes
+# ffsll, tls, walltimer, virtualtimer must be sprecified for cross-compiling
+	ffsll=yes
+	tls=__thread
+	walltimer=cycle
+	virtualtimer=times
+fi
+
 /bin/rm -f ckcat
 cc ckcatamount.c 2>&1 | cat > ckcat
 if test "`cat ckcat | grep "IS_CATAMOUNT"`" != ""; then
@@ -7513,7 +7526,7 @@ if test "$OS" = "aix"; then
       esac
       PMINIT=""
       LIBS="-L$PMAPI/lib -lpmapi"
-      CPPFLAGS="-I$PMAPI/include"
+      CPPFLAGS="$CPPFLAGS -I$PMAPI/include"
       { echo "$as_me:$LINENO: checking for pm_initialize in -lpmapi" >&5
 echo $ECHO_N "checking for pm_initialize in -lpmapi... $ECHO_C" >&6; }
 if test "${ac_cv_lib_pmapi_pm_initialize+set}" = set; then
@@ -8422,6 +8435,7 @@ else
     LINKLIB='../$(LIBRARY)'
 fi
 LINKLIB="$LINKLIB $LINK_SENSORS_LIB"
+
 
 
 
