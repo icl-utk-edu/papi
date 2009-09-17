@@ -2883,7 +2883,7 @@ void _papi_pcl_dispatch_timer (int n, hwd_siginfo_t * info, void *uc)
 
   if (thread->running_eventset[cidx]->overflow.flags & PAPI_OVERFLOW_FORCE_SW)
     {
-      address = (unsigned long) GET_OVERFLOW_ADDRESS ((&ctx));
+      address = GET_OVERFLOW_ADDRESS (ctx);
       _papi_hwi_dispatch_overflow_signal ((void *) &ctx, address, NULL, 0, 0, &thread, cidx);
     }
   if (thread->running_eventset[cidx]->overflow.flags != PAPI_OVERFLOW_HARDWARE)
