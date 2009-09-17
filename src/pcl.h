@@ -33,8 +33,12 @@
 #include <sys/ucontext.h>
 #include <sys/ptrace.h>
 #include "perfmon/pfmlib.h"
-
-#include "perf_counter.h"
+/* #include "perf_counter.h" */
+/* It appears that for linux kernel 2.6.31, the /usr/include/linux dir
+ does not include perf_counter.h. Since this dir is populated by the
+ kernel-headers package, we'll have to wait for an update. 
+ For know, we use the workaround: */
+#include PCLINCLUDE
 #include "syscalls.h"
 
 /* Take a guess at this value for now - FIXME */

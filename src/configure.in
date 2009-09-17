@@ -986,6 +986,28 @@ AC_ARG_WITH(pcl,
 else
    pcl="no"
 fi
+
+# It appears that for linux kernel 2.6.31, the /usr/include/linux dir
+# does not include perf_counter.h. Since this dir is populated by the
+# kernel-headers package, we'll have to wait for an update. 
+# For know, we use the workaround:
+
+# looking for perf_counter header file
+if test "$pcl" = "yes"; then
+AC_ARG_WITH(pcl_incdir,
+			[  --with-pcl-incdir=<path>	Specify directory of perf_counter header file],
+			[pcl_incdir=$withval],
+			[pcl_incdir="no"
+			AC_CHECK_FILE(/usr/include/linux/perf_counter.h, [pcl_incdir="/usr/include/linux"], 
+			[AC_MSG_ERROR([perf_counter.h could not be found. See --with-pcl-incdir])]) ]
+			)
+fi
+	  
+if test "$pcl_incdir" != "no"; then
+			PCLPATH="$pcl_incdir"
+fi
+# workaround end
+
 AC_ARG_WITH(pmapi,
             [  --with-pmapi=<path>		Specify path of pmapi on aix system ],
             [pmapi=$withval],
@@ -1653,6 +1675,7 @@ AC_SUBST(OS)
 AC_SUBST(CFLAGS)
 AC_SUBST(FFLAGS)
 AC_SUBST(CPPFLAGS)
+AC_SUBST(PCLPATH)
 AC_SUBST(pfm_events)
 AC_SUBST(pfm_events_table)
 AC_SUBST(tests)

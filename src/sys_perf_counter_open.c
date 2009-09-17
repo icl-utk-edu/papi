@@ -1,7 +1,12 @@
 /* #include <linux/linkage.h> */
 #include <errno.h>
 #include <unistd.h>
-#include "perf_counter.h"
+/* #include "perf_counter.h" */
+/* It appears that for linux kernel 2.6.31, the /usr/include/linux dir
+ does not include perf_counter.h. Since this dir is populated by the
+ kernel-headers package, we'll have to wait for an update. 
+ For know, we use the workaround: */
+#include PCLINCLUDE
 
 // Temporarily need this definition from arch/powerpc/include/asm/unistd.h in the PCL kernel
 #ifdef __powerpc__
