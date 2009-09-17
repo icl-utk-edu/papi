@@ -1,0 +1,1629 @@
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+# File: configure.in
+
+
+AC_PREREQ(2.61)
+AC_INIT(PAPI, 3.7.0, ptools-perfapi@eecs.utk.edu)
+AC_CONFIG_SRCDIR([papi.c])
+AC_CONFIG_HEADER([config.h])
+
+dnl AS_AC_EXPAND(VAR, CONFIGURE_VAR)
+dnl example
+dnl AS_AC_EXPAND(SYSCONFDIR, $sysconfdir)
+dnl will set SYSCONFDIR to /usr/local/etc if prefix=/usr/local
+
+AC_DEFUN([AS_AC_EXPAND],
+[
+  EXP_VAR=[$1]
+  FROM_VAR=[$2]
+
+  dnl first expand prefix and exec_prefix if necessary
+  prefix_save=$prefix
+  exec_prefix_save=$exec_prefix
+
+  dnl if no prefix given, then use /usr/local, the default prefix
+  if test "x$prefix" = "xNONE"; then
+   prefix="$ac_default_prefix"
+  fi
+  dnl if no exec_prefix given, then use prefix
+  if test "x$exec_prefix" = "xNONE"; then
+   exec_prefix=$prefix
+  fi
+
+  full_var="$FROM_VAR"
+  dnl loop until it doesn't change anymore
+  while true; do
+    new_full_var="`eval echo $full_var`"
+   if test "x$new_full_var" = "x$full_var"; then break; fi
+    full_var=$new_full_var
+  done
+
+  dnl clean up
+  full_var=$new_full_var
+  AC_DEFINE_UNQUOTED([$1], "$full_var")
+
+  dnl restore prefix and exec_prefix
+  prefix=$prefix_save
+  exec_prefix=$exec_prefix_save
+])
+
+get_bitmode()
+{
+ input="bad"
+ while [ test "${input}" != "ok" ]
+ do
+   input="ok"
+   echo 
+   echo "Do you want to install 64bit mode library?"
+   echo 
+   echo -n "Choice is required [yes/no]: "
+   read num
+   case "${num}" in
+     yes)
+        bitmode=64
+        ;;
+     no)
+        bitmode=""
+        ;;
+     *)
+        echo
+        echo Warning: invalid choice \'$num\'. Type again.
+        echo
+        input="bad"
+        ;;
+   esac
+ done
+}
+
+# 
+# checking for Makefile argument, if not specified, check CPU, OS, OSVER and bitmode
+#
+
+use_shared=yes
+use_static=yes
+use_static_tests=no
+AC_MSG_CHECKING(for architecture)
+AC_ARG_WITH(arch,
+	   [  --with-arch=<arch>		Specify architecture (uname -m)],
+	   [arch=$withval],
+	   [arch=`uname -m`])
+AC_MSG_RESULT($arch)
+
+AC_ARG_WITH(makefile,
+            [  --with-makefile=<suffix>	Specify Makefile.<suffix> to use (soon deprecated)],
+            [MAKEVER=$withval
+	     AC_WARN([This option will be deprecated soon])],
+	    [
+#
+#checking for OS
+#
+AC_MSG_CHECKING(for OS)
+AC_ARG_WITH(OS,
+            [  --with-OS=<os>       		Specify operating system],
+            [OS=$withval],
+	    [
+OS="`uname | tr '[A-Z]' '[a-z]'`"
+case "$OS" in
+  cygwin*) OS=cygwin;;
+  SunOS)   OS=solaris ;;
+  sunos)   OS=solaris ;;
+  irix64)  OS=irix ;;
+  "unicos/mp") OS=unicos;;
+esac
+
+T3EOS="`uname -a | tr '[A-Z]' '[a-z]' | grep unicos`"
+if test "$T3EOS" != ""; then
+   OS=unicos
+fi
+
+# XTOS_VERSION exists only on Cray systems supporting XT and hence CLE OS
+if test "$XTOS_VERSION"; then
+	use_shared=no
+    use_static=yes
+	pfm_events=static
+    cross_compiling=yes
+# ffsll, tls, walltimer, virtualtimer must be sprecified for cross-compiling	
+	ffsll=yes
+	tls=__thread
+    walltimer=cycle
+	virtualtimer=times
+fi
+
+/bin/rm -f ckcat
+cc ckcatamount.c 2>&1 | cat > ckcat
+if test "`cat ckcat | grep "IS_CATAMOUNT"`" != ""; then
+OS=catamount
+fi
+/bin/rm -f ckcat
+])
+AC_MSG_RESULT($OS)
+if test "$OS" = "catamount"; then
+   pfm_events=static
+   walltimer=cycle
+   virtualtimer=perfctr
+   bitmode=64
+   tls=no
+   host=x86_64
+   ffsll=yes
+   cross_compiling=yes
+   perfctr=5
+   use_shared=no
+   use_static=yes
+   use_static_tests=yes
+elif test "$OS" = "bgl"; then
+   if test "x$CC" = "x"; then
+      CC=powerpc-bgl-blrts-gnu-gcc
+      CFLAGS="-D_BGL -gdwarf-2 -O2 -Wall"
+   fi
+   if test "x$F77" = "x"; then
+      F77=powerpc-bgl-blrts-gnu-g77
+      FFLAGS="-gdwarf-2 -O2 -Wall -Dlinux"
+   fi
+   walltimer=cycle
+   virtualtimer=perfctr
+   bitmode=32
+   tls=no
+   host=x86_64
+   ffsll=yes
+   cross_compiling=yes
+   perfctr=6
+   use_shared=no
+   use_static=yes
+   use_static_tests=yes
+fi
+
+#
+#checking for OS version number
+#
+AC_MSG_CHECKING(for OS version)
+AC_ARG_WITH(OSVER,
+            [  --with-OSVER=<ver>		Specify operating system version],
+            [OSVER=$withval],
+	    [
+case "$OS" in
+  aix) OSVER="`uname -v`";;
+  osf1) OSVER="`uname -r | sed -e 's/^V//'`" ;;
+  bgl|catamount) OSVER=irrelevant ;;
+  *|solaris|netbsd|linux|irix) OSVER="`uname -r`";;
+esac
+])
+AC_MSG_RESULT($OSVER)
+
+#
+# checking for CPU type
+#
+AC_MSG_CHECKING(for CPU type)
+AC_ARG_WITH(CPU,
+            [  --with-CPU=<cpu>		Specify CPU type],
+            [CPU=$withval],
+	    [
+
+#checking for CPU
+R="(R)"
+tm="(tm)"
+TM="(TM)"
+CPU=""
+case "$OS" in
+  aix)
+         CPU="`/usr/sbin/lsattr -E -l proc0 | grep type | cut -d '_' -f 2 | cut -d ' ' -f 1 | tr '[A-Z]' '[a-z]'`"
+         if test "$CPU" = ""; then
+         CPU="`/usr/sbin/lsattr -E -l proc1 | grep type | cut -d '_' -f 2 | cut -d ' ' -f 1 | tr '[A-Z]' '[a-z]'`"
+         fi
+         ;;
+  linux) 
+         if test "`cat /proc/cpuinfo | grep GenuineIntel`" != "" ; then
+           made=GenuineIntel
+           family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
+           model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
+           # family 15 is always P4; model 1 is vanilla pre-HT, model 2 is vanilla; model 3 is em64t, 4 is Pentium D, 6 is Xeon D
+           if test "$family" = "6"; then
+             # model 14 is an ancient Core
+             if test "$model" = "14"; then
+               CPU=core
+             fi
+             # models 15, 22, 23 are Core2 variants
+             if (test "$model" = "15" || test "$model" = "22" || test "$model" = "23"); then
+               CPU=core2
+             fi
+             # model 26 is Nehalem
+             if test "$model" = "26"; then
+               CPU=i7
+             fi
+             # model 28 is Atom
+             if test "$model" = "28"; then
+               CPU=atom
+             fi
+           elif test "$family" = "15"; then
+             if (test "$model" = "3" || test "$model" = "4" || test "$model" = "6"); then
+               CPU=em64t
+             elif (test "$model" = "1" || test "$model" = "2"); then
+               CPU=p4
+             fi
+           elif test "$family" = "32"; then
+	       CPU=montecito
+	   elif test "$family" = "31"; then
+	       CPU=itanium2
+	   elif test "$family" = "7"; then
+	       CPU=itanium
+           fi	   
+           if test "$CPU" = "" ; then       
+             if test "`cat /proc/cpuinfo | grep "Pentium${R} 4"`" != ""; then
+               CPU=p4
+             elif test "`cat /proc/cpuinfo | grep -i "Itanium 2"`" != ""; then
+               CPU=itanium2 
+             elif test "`cat /proc/cpuinfo | grep -i Itanium`" != ""; then
+               CPU=itanium
+             elif test "`cat /proc/cpuinfo | grep -i "Pentium III"`" != ""; then
+               CPU=p3
+             elif test "`cat /proc/cpuinfo | grep -i "Pentium II"`" != ""; then
+               CPU=p2
+	     else CPU=p3
+             fi
+           fi 
+         elif test "`cat /proc/cpuinfo | grep AuthenticAMD`" != ""; then
+           made=AuthenticAMD
+		   if test "`cat /proc/cpuinfo | grep "Athlon${tm}[[:space:]]*64"`" != ""; then
+             CPU=opteron
+           else CPU=athlon
+           fi
+           family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
+           model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
+# Add Barcelona (family=16) to this test -- dkt
+           if (test "$family" = "15" || test "$family" = "16"); then
+# There are a whole bunch of model numbers, but I think all family=15 are opteron -- dkt
+# see AMD Opteron Revision Guide, pub 25759, Table 1 for details
+#             if (test "$model" = "5" || test "$model" = "65"); then
+               CPU=opteron
+#             fi
+           fi
+         else
+           family=`uname -m`
+           if test "$family" = "ppc64"; then
+#             echo "family = ppc64"
+             CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
+             case "$CPU_info" in
+               PPC970*) CPU="PPC970";;
+               POWER4*) CPU="POWER4";;
+               POWER5) CPU="POWER5";;
+               POWER5+) CPU="POWER5+";;
+               POWER6) CPU="POWER6";;
+             esac
+          elif test "$family" = "ppc"; then
+             CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
+             case "$CPU_info" in
+               744*) CPU="PPC32";;
+	       745*) CPU="PPC32";;
+               750) CPU="PPC32";;
+             esac
+          elif test "$family" = "mips" -o "$family" = "mips64"; then
+	       CPU=mips
+	  fi
+         fi
+             
+         ;;
+  solaris) 
+         ##F Detect platform
+         processor=`uname -p`
+         ##F Detect CPU model
+         machinetype=`uname -m`
+
+         if test "$processor" = "sparc"
+         then
+		case "$machinetype" in
+                sun4u)
+                      CPU=ultra
+                      ;;
+                sun4v)
+                      CPU=niagara2
+                      ;; 
+                *)
+                      AC_MSG_ERROR([Sorry, machine type ($machinetype) not supported])
+                      ;;
+                esac
+         else
+               AC_MSG_ERROR([Sorry, no support for other CPUs than US I, II, III or T2])
+         fi
+  ;;
+  irix) CPU=`hinv -t cpu | cut -d ' ' -f 2 | tr '[A-Z]' '[a-z]' | uniq`;;
+  osf1) CPU=`uname -p`;;
+  unicos)
+        if test "`uname -a | tr '[A-Z]' '[a-z]' | grep crayx1`" != ""; then
+          CPU=x1-msp
+        fi
+        if test "`uname -a | tr '[A-Z]' '[a-z]' | grep t3e`" != ""; then
+          CPU=t3e
+        fi
+        ;;
+  catamount)
+	CPU=opteron
+	;;
+  bgl)
+	CPU=bgl
+	;;
+esac 
+])
+AC_MSG_RESULT($CPU)
+if test "$cross_compiling" = "no" -a "$OS" = "linux" -a "$CPU" = "mips"; then
+	  AC_CHECK_FILE(/etc/sicortex-release,[CPU=sicortex])
+	  if test "$CPU" = "sicortex"; then
+   	     F77=pathf95
+# V2.3 R81 has a good cycle timer, everything else is broken
+             AC_MSG_CHECKING(for working cycle fast trap)
+	     hasgoodcycletimer=`cat /etc/sicortex-release | grep "V2.[[23]]"`
+	     if test "x$hasgoodcycletimer" != "x"; then	     
+		walltimer=cycle
+		AC_MSG_RESULT(yes)
+	     else
+		AC_MSG_RESULT(no)
+	     fi
+	  fi
+fi	    
+if test "$OS" = "CLE"; then
+   virtualtimer=times
+   tls=__thread
+   walltimer=cycle
+   ffsll=yes
+   pfm_events=static
+   cross_compiling=yes
+   use_shared=no
+   use_static=yes
+   use_static_tests=yes
+fi
+         
+#
+# Check for bitmode, this sucks and needs to be redone
+#
+AC_MSG_CHECKING(for 32 or 64 bit mode)
+if test "x$bitmode" = "x"; then
+AC_ARG_WITH(bitmode,
+            [  --with-bitmode=<32,64>	Specify bit mode of library],
+            [bitmode=$withval],[bitmode=default])
+case "$bitmode" in
+   64)
+      bitmode=64
+      BM="-64bit" ;;
+   32)
+      bitmode=32 
+      BM="-32bit" ;;
+   default)
+      bitmode=default
+      BM="";;
+    *)
+      AC_MSG_ERROR([The bitmode you specified is not supported])
+      ;;
+esac
+fi
+AC_MSG_RESULT($bitmode)
+])
+
+AC_MSG_CHECKING(for debugging build)
+AC_ARG_WITH(debug,
+            [  --with-debug=<no,yes,memory>	Build a debugging version of the library ],
+            [debug=$withval],
+            [debug=no]
+            )
+case "$debug" in
+   yes)
+      DEBUGFLAGS="-DDEBUG" ;;
+   memory)
+      DEBUGFLAGS="" ;;
+   no)
+      DEBUGFLAGS="-DPAPI_NO_MEMORY_MANAGEMENT" ;;
+   *)					     
+      AC_MSG_ERROR([The debug option you specified is not supported])
+      ;;
+esac
+AC_MSG_RESULT($debug)
+
+# Checks for programs.
+AC_PROG_AWK
+AC_PROG_CC
+AC_PROG_F77
+if test "x$AR" = "x"; then
+   AR=ar
+fi
+if test "$OS" != "linux"; then
+   AC_PROG_CC(xlc cc gcc)
+   AC_PROG_F77(xlf f77 f90 f95 gfortran)
+fi
+AC_PROG_CPP
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+AC_PROG_RANLIB
+# Check for GNU extensions
+AC_GNU_SOURCE
+# Check for standard headers
+AC_HEADER_STDC
+# defines inline keyword to be inline keyword
+# This breaks for some dumb reason on PPC64
+# AC_C_INLINE
+# defines const keyword to be inline keyword
+# This breaks for some dumb reason on PPC64
+# AC_C_CONST
+
+didcheck=0
+if test "x$ffsll" = "x"; then
+AC_ARG_WITH(ffsll,
+	    [  --with-ffsll			This platform has the ffsll() function ],
+	    [ffsll=$withval],
+	    [ffsll=""
+if test "$cross_compiling" = "yes" ; then
+   AC_MSG_ERROR([ffsll must be specified for cross compile.])
+		  fi
+didcheck=1
+AC_CHECK_FUNC(ffsll,[ffsll=yes],[ffsll=no])
+])
+fi
+if test $didcheck = 0; then
+AC_MSG_CHECKING(for ffsll)
+case "$ffsll" in
+   yes)
+     AC_DEFINE(HAVE_FFSLL, 1, This platform has the ffsll() function)
+		  ;;
+   no)
+      ;;
+   *)
+     AC_MSG_ERROR([Unknown value for ffsll])
+      ;;
+esac 
+AC_MSG_RESULT($ffsll)
+fi
+
+#
+# Look for good real time clocks
+#
+if test "x$walltimer" = "x"; then
+AC_ARG_WITH(walltimer,
+            [  --with-walltimer=<gettimeofday,mmtimer,clock_realtime_hr,clock_realtime,cycle>     Specify realtime timer ],
+            [walltimer=$withval],
+            [walltimer=""
+if test "$cross_compiling" = "yes" ; then
+   AC_MSG_ERROR([walltimer must be specified for cross compile.])
+         fi
+AC_MSG_CHECKING(for working MMTIMER)
+AC_TRY_RUN([
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <sys/ioctl.h>
+#include <linux/mmtimer.h>
+#ifndef MMTIMER_FULLNAME
+#define MMTIMER_FULLNAME "/dev/mmtimer"
+#endif
+
+int main()
+{
+  int offset;
+  int fd;
+
+     if((fd = open(MMTIMER_FULLNAME, O_RDONLY)) == -1) {
+       exit(1);
+     }
+     if ((offset = ioctl(fd, MMTIMER_GETOFFSET, 0)) < 0) {
+       exit(1);
+     }
+     close(fd);
+     exit(0);
+}
+],[
+	walltimer="mmtimer"
+	AC_MSG_RESULT(yes)
+	],[
+AC_MSG_RESULT(no)
+AC_MSG_CHECKING(for working CLOCK_REALTIME_HR POSIX 1b timer)
+AC_TRY_RUN([
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <syscall.h>
+
+main()
+{
+  struct timespec t1, t2;
+  double seconds;
+
+  if (syscall(__NR_clock_gettime,CLOCK_REALTIME_HR,&t1) == -1) exit(1);
+  sleep(1);
+  if (syscall(__NR_clock_gettime,CLOCK_REALTIME_HR,&t2) == -1) exit(1);
+  seconds = ((double)t2.tv_sec + (double)t2.tv_nsec/1000000000.0) - ((double)t1.tv_sec + (double)t1.tv_nsec/1000000000.0);
+  if (seconds > 1.0)
+    exit(0);
+      else
+    exit(1);
+}
+],[
+	walltimer="clock_realtime_hr"
+	AC_MSG_RESULT(yes)
+      ],[
+AC_MSG_RESULT(no)
+AC_MSG_CHECKING(for working CLOCK_REALTIME POSIX 1b timer)
+AC_TRY_RUN([
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <syscall.h>
+
+main()
+{
+  struct timespec t1, t2;
+  double seconds;
+
+  if (syscall(__NR_clock_gettime,CLOCK_REALTIME,&t1) == -1) exit(1);
+  sleep(1);
+  if (syscall(__NR_clock_gettime,CLOCK_REALTIME,&t2) == -1) exit(1);
+  seconds = ((double)t2.tv_sec + (double)t2.tv_nsec/1000000000.0) - ((double)t1.tv_sec + (double)t1.tv_nsec/1000000000.0);
+  if (seconds > 1.0)
+    exit(0);
+         else
+    exit(1);
+}
+],[
+	walltimer="clock_realtime"
+	AC_MSG_RESULT(yes)
+	],[
+	walltimer="cycle"
+	AC_MSG_RESULT(no)])])])])
+         fi
+AC_MSG_CHECKING(for real time clock or cycle counter)
+if test "$walltimer" = "gettimeofday"; then
+   AC_DEFINE(HAVE_GETTIMEOFDAY, 1, [Normal gettimeofday timer])
+elif test "$walltimer" = "mmtimer"; then
+   AC_DEFINE(HAVE_MMTIMER, 1, [Altix memory mapped global cycle counter])
+   altix="-DALTIX"
+elif test "$walltimer" = "clock_realtime_hr"; then
+   AC_DEFINE(HAVE_CLOCK_GETTIME_REALTIME, CLOCK_REALTIME_HR, [POSIX 1b realtime HR clock])
+elif test "$walltimer" = "clock_realtime"; then
+   AC_DEFINE(HAVE_CLOCK_GETTIME_REALTIME, CLOCK_REALTIME, [POSIX 1b realtime clock])
+elif test "$walltimer" = "cycle"; then
+   AC_DEFINE(HAVE_CYCLE, 1, [Native access to a hardware cycle counter])
+else
+   AC_MSG_ERROR([Unknown value for walltimer])
+fi
+AC_MSG_RESULT($walltimer)
+	   
+#
+# Only thread tests after here
+# Should use this macro for PTHREADS
+# http://autoconf-archive.cryp.to/acx_pthread.html
+# That can detect the correct flags for pthreads (and whether they exist)
+#
+
+OLDLIBS=$LIBS
+      OLDLDFLAGS=$LDFLAGS
+      OLDCFLAGS=$CFLAGS
+      LDFLAGS=""
+      CFLAGS="-pthread"
+      LIBS=""
+if test "x$tls" = "x"; then
+AC_ARG_WITH(tls,
+            [  --with-tls=<keyword>		This platform supports thread local storage with a keyword ],
+            [tls=$withval],[
+if test "$cross_compiling" = "yes" ; then
+   AC_MSG_ERROR([tls must be specified for cross compile.])
+fi
+      AC_MSG_CHECKING(for working __thread)
+      #echo $with_tls
+      AC_TRY_RUN([
+             #include <pthread.h>
+             #include <unistd.h>
+             extern __thread int i;
+             static int res1, res2;
+
+             void thread_main (void *arg)
+             {
+               i = (int)arg;
+               sleep (1);
+               if ((int)arg == 1)
+		 res1 = (i == (int)arg);
+               else
+		 res2 = (i == (int)arg);
+             }
+
+	     __thread int i;
+
+             int main () 
+             {
+               pthread_t t1, t2;
+
+               i = 5;
+
+               pthread_create (&t1, NULL, thread_main, (void *)1);
+               pthread_create (&t2, NULL, thread_main, (void *)2);
+
+               pthread_join (t1, NULL);
+               pthread_join (t2, NULL);
+
+               return !(res1 + res2 == 2);
+             }
+      ], [
+            AC_MSG_RESULT(yes)
+	    tls="__thread"
+      ], [
+            AC_MSG_RESULT(no)
+            tls="no"
+      ])
+     #if test "x$TARGET" = "xAMD64" -o "x$TARGET" = "xX86"; then
+     if test "$OS" = "linux"; then
+        if test "x$tls" = "x__thread"; then
+                #
+                # On some linux distributions, TLS works in executables, but linking
+                # against a shared library containing TLS fails with:
+                # undefined reference to `__tls_get_addr'
+                #
+                rm -f conftest.c conftest.so conftest
+                echo "static __thread int foo; void main () { foo = 5; }" > conftest.c
+                gcc -fPIC --shared -o conftest.so conftest.c > /dev/null 2>&1
+                gcc -o conftest conftest.so > /dev/null 2>&1
+                if test ! -f conftest; then
+                   AC_MSG_WARN([Disabling usage of __thread.]);
+                   tls="no"
+                fi
+                rm -f conftest.c conftest.so conftest
+        fi
+     fi
+      ])
+fi
+AC_MSG_CHECKING(for high performance thread local storage)
+if test "$tls" = "no"; then
+        NOTLS="-DNO_TLS"
+elif test "x$tls" != "x"; then
+   if test "$tls" = "yes"; then
+      tls="__thread"
+     fi
+   NOTLS="-DUSE_COMPILER_TLS"
+   AC_DEFINE_UNQUOTED(HAVE_THREAD_LOCAL_STORAGE,$tls,[Keyword for per-thread variables])
+fi
+AC_MSG_RESULT($tls)
+
+AC_ARG_ENABLE(papi-vector,
+	[  --disable-papi-vector	Disable indirect substrate functions ],
+	[ 
+	if test "$enableval" != "yes" ; then
+	AC_DEFINE(PAPI_NO_VECTOR, 1, [Do not use indirect substrate functions])
+	fi ])
+
+if test "x$virtualtimer" = "x"; then
+AC_ARG_WITH(virtualtimer,
+            [  --with-virtualtimer=<clock_thread_cputime_id,times,proc,getrusage,perfctr>      Specify per-thread virtual timer ],
+            [virtualtimer=$withval],
+            [
+if test "$cross_compiling" = "yes" ; then
+   AC_MSG_ERROR([virtualtimer must be specified for cross compile.])
+fi
+AC_MSG_CHECKING(for working CLOCK_THREAD_CPUTIME_ID POSIX 1b timer)
+      AC_TRY_RUN([
+        #include <pthread.h>
+        #include <sys/signal.h>
+        #include <sys/times.h>
+        #include <assert.h>
+        #include <stdio.h>
+        #include <sys/types.h>
+        #include <unistd.h>
+        #include <sys/unistd.h>
+        #include <syscall.h>
+        #include <stdlib.h>
+
+        #if ! defined( SYS_gettid )
+        #define SYS_gettid 1105
+        #endif
+
+struct timespec threadone = { 0, 0 };
+struct timespec threadtwo = { 0, 0 };
+        pthread_t threadOne, threadTwo;
+        volatile int done = 0;
+
+        int gettid() {
+            return syscall( SYS_gettid );
+        }
+
+void *doThreadOne( void * v ) {
+            while (!done)
+	          sleep(1);
+        
+  if (syscall(__NR_clock_gettime,CLOCK_THREAD_CPUTIME_ID,&threadone) == -1)
+    {
+      perror("clock_gettime(CLOCK_THREAD_CPUTIME_ID)");
+      exit(1);
+    }
+        
+            return 0;
+        } 
+
+void *doThreadTwo( void * v ) {
+            long i;
+	    long j = 0xdeadbeef;
+        
+            for( i = 0; i < 0xFFFFFFF; ++i ) { j = j ^ i; }
+
+  if (syscall(__NR_clock_gettime,CLOCK_THREAD_CPUTIME_ID,&threadtwo) == -1)
+    {
+      perror("clock_gettime(CLOCK_THREAD_CPUTIME_ID)");
+      exit(1);
+    }
+        
+            done = 1;
+	        return j;
+        } 
+
+        int main( int argc, char ** argv ) {
+            int status;
+
+        
+            status = pthread_create( & threadOne, NULL, doThreadOne, NULL );
+            assert( status == 0 );
+            status = pthread_create( & threadTwo, NULL, doThreadTwo, NULL );
+            assert( status == 0 );  
+
+
+            status = pthread_join( threadTwo, NULL );
+            assert( status == 0 );
+            status = pthread_join( threadOne, NULL );
+            assert( status == 0 );
+
+    if ((threadone.tv_sec != threadtwo.tv_sec) || (threadone.tv_nsec != threadtwo.tv_nsec))
+       exit(0);
+    else
+	{	fprintf(stderr,"T1 %ld %ld T2 %ld %ld\n",threadone.tv_sec,threadone.tv_nsec,threadtwo.tv_sec,threadtwo.tv_nsec);
+	exit(1); }
+        } 
+      ], [
+            AC_MSG_RESULT(yes)
+    virtualtimer="clock_thread_cputime_id"
+      ], [
+      AC_MSG_RESULT(no)
+      #       NOTLS="" ;;
+      dnl ***********************************
+      dnl *** Checks for working per thread timer***
+      dnl ***********************************
+      AC_MSG_CHECKING(for working per-thread times() timer)
+AC_TRY_RUN([
+#include <pthread.h>
+#include <sys/signal.h>
+#include <sys/times.h>
+#include <assert.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/unistd.h>
+#include <syscall.h>
+#include <stdlib.h>
+
+#if ! defined( SYS_gettid )
+#define SYS_gettid 1105
+#endif
+
+        long threadone = 0;
+        long threadtwo = 0;
+pthread_t threadOne, threadTwo;
+volatile int done = 0;
+
+int gettid() {
+    return syscall( SYS_gettid );
+}
+
+        int doThreadOne( void * v ) {
+            struct tms tm;
+            int status;
+
+     while (!done)
+	  sleep(1);
+
+            status = times( & tm );
+            assert( status != -1 );
+            threadone = tm.tms_utime;
+
+    return 0;
+} 
+
+        int doThreadTwo( void * v ) {
+            struct tms tm;
+    long i;
+    long j = 0xdeadbeef;
+            int status;
+
+    for( i = 0; i < 0xFFFFFFF; ++i ) { j = j ^ i; }
+
+            status = times( & tm );
+            assert( status != -1 );
+
+            threadtwo = tm.tms_utime;
+    done = 1;
+	return j;
+} 
+
+int main( int argc, char ** argv ) {
+    int status;
+
+
+    status = pthread_create( & threadOne, NULL, doThreadOne, NULL );
+    assert( status == 0 );
+    status = pthread_create( & threadTwo, NULL, doThreadTwo, NULL );
+    assert( status == 0 );  
+
+
+    status = pthread_join( threadTwo, NULL );
+    assert( status == 0 );
+    status = pthread_join( threadOne, NULL );
+    assert( status == 0 );
+	        return (threadone == threadtwo);
+        } 
+],[
+	AC_MSG_RESULT(yes)
+	virtualtimer="times"
+],[
+        AC_MSG_RESULT(no)
+	virtualtimer="default"
+])])])
+fi
+
+LDFLAGS=$OLDLDFLAGS
+CFLAGS=$OLDCFLAGS
+LIBS=$OLDLIBS
+
+AC_MSG_CHECKING(for thread virtual clock or cycle counter)
+case "$virtualtimer" in
+   times)
+     AC_DEFINE(HAVE_PER_THREAD_TIMES, 1, [Working per thread timer])
+   ;;
+   getrusage)
+     AC_DEFINE(HAVE_PER_THREAD_GETRUSAGE, 1, [Working per thread getrusage])
+   ;;
+   clock_thread_cputime_id)
+     AC_DEFINE(HAVE_CLOCK_GETTIME_THREAD, CLOCK_THREAD_CPUTIME_ID, [POSIX 1b per-thread clock])
+   ;;
+   proc|default|perfctr)
+     AC_DEFINE(USE_PROC_PTTIMER, 1, [Use /proc for per-thread times])
+     AC_DEFINE(USE_PERFCTR_PTTIMER, 1, [Use the perfctr virtual TSC for per-thread times])
+   ;;
+esac
+AC_MSG_RESULT($virtualtimer)
+
+if test "x$perfctr" = "x"; then
+AC_ARG_WITH(perfctr,
+            [  --with-perfctr=<5,6,7>	Specify perfctr version number ],
+            [perfctr=$withval],
+            [perfctr="no"
+if test "$cross_compiling" = "no" ; then
+	    AC_CHECK_FILE(/sys/class/perfctr,[perfctr=7],[AC_CHECK_FILE(/dev/perfctr,[perfctr=6])])
+fi
+])
+fi
+case "$perfctr" in
+   yes)
+   if test "$arch" = "ppc64"; then
+      perfctr=7 
+   elif test "$OS" = "catamount"; then
+      perfctr=5
+   else
+      perfctr=6
+   fi ;;
+   5)
+   if test "$OS" != "catamount"; then
+   	AC_MSG_ERROR([Perfctr 2.5.x is only supported on Catamount systems])
+   fi ;;
+   7)
+   if test "$arch" != "ppc64"; then
+   	AC_MSG_ERROR([Perfctr 2.7.x is only supported on PPC64 systems])
+   fi ;;
+   6|no)
+      ;;
+   *)					     
+      AC_MSG_ERROR([The perfctr option you specified is not supported])
+      ;;
+esac
+
+AC_ARG_WITH(perfctr_root,
+            [  --with-perfctr-root=<path>	Specify path to prebuilt perfctr distribution ],
+            [perfctr_root=$withval],
+            [perfctr_root=""]
+            )
+AC_ARG_WITH(perfctr_prefix,
+            [  --with-perfctr-prefix=<path>	Specify prefix to installed perfctr distribution ],
+            [perfctr_prefix=$withval],
+            [perfctr_prefix=""]
+            )
+AC_ARG_WITH(perfctr_incdir,
+           [  --with-perfctr-incdir=<path>	Specify directory of perfctr header files ],
+           [perfctr_incdir=$withval],
+           [perfctr_incdir=""]
+            )
+AC_ARG_WITH(perfctr_libdir,
+           [  --with-perfctr-libdir=<path>	Specify directory of perfctr library ],
+           [perfctr_libdir=$withval],
+           [perfctr_libdir=""]
+            )
+AC_ARG_WITH(perfmon,
+            [  --with-perfmon=<x.y>		Specify perfmon version number ],
+            [perfmon=$withval],
+            [perfmon=0
+	    if test "$cross_compiling" = "no" ; then
+	       AC_CHECK_FILE(/sys/kernel/perfmon/version,[
+	       perfmon=`cat /sys/kernel/perfmon/version`
+	       ],[AC_CHECK_FILE(/proc/perfmon,[
+	       perfmon=`cat /proc/perfmon | grep version | cut -d: -f2`
+	       ],[perfmon=0])])
+	    fi]
+)
+
+if test "$perfmon" != 0; then
+   AC_MSG_CHECKING(for perfmon version)
+#   AC_MSG_RESULT("x${perfmon}x")
+   perfmon=`echo ${perfmon} | sed 's/^[ \t]*//;s/[ \t]*$//'`
+#   AC_MSG_RESULT($perfmon)
+   perfmon=`echo ${perfmon} | grep -e '[[1-9]]\.[[0-9]][[0-9]]*'`
+#   AC_MSG_RESULT($perfmon)
+   if test "x$perfmon" = "x"; then
+      AC_MSG_ERROR("Badly formed perfmon version string")
+      perfmon=0
+   fi
+   AC_MSG_RESULT($perfmon)
+   perfmon=`echo ${perfmon} | sed 's/\.//'`
+#   AC_MSG_RESULT($perfmon)
+fi
+
+AC_ARG_WITH(pfm_root,
+           [  --with-pfm-root=<path>	Specify path to prebuilt pfm distribution ],
+           [pfm_root=$withval],
+           [pfm_root=""]
+            )
+AC_ARG_WITH(pfm_prefix,
+           [  --with-pfm-prefix=<path>	Specify prefix to installed pfm distribution ],
+           [pfm_prefix=$withval],
+           [pfm_prefix=""]
+            )
+AC_ARG_WITH(pfm_incdir,
+           [  --with-pfm-incdir=<path>	Specify directory of perfmon header files ],
+           [pfm_incdir=$withval],
+           [pfm_incdir=""]
+            )
+AC_ARG_WITH(pfm_libdir,
+           [  --with-pfm-libdir=<path>	Specify directory of pfm library ],
+           [pfm_libdir=$withval],
+           [pfm_libdir=""]
+            )
+if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
+AC_ARG_WITH(pcl,
+            [  --with-pcl=<yes,no>		Specify existence of Performance Counters for Linux],
+            [pcl=$withval],
+            [pcl="no"
+            AC_CHECK_FILE(/sys/devices/system/cpu/perf_counters, [ pcl="yes" ]) ]
+            )
+else
+   pcl="no"
+fi
+
+# It appears that for linux kernel 2.6.31, the /usr/include/linux dir
+# does not include perf_counter.h. Since this dir is populated by the
+# kernel-headers package, we'll have to wait for an update. 
+# For know, we use the workaround:
+
+# looking for perf_counter header file
+if test "$pcl" = "yes"; then
+AC_ARG_WITH(pcl_incdir,
+			[  --with-pcl-incdir=<path>	Specify directory of perf_counter header file],
+			[pcl_incdir=$withval],
+			[pcl_incdir="no"
+			AC_CHECK_FILE(/usr/include/linux/perf_counter.h, [pcl_incdir="/usr/include/linux"], 
+			[AC_MSG_ERROR([perf_counter.h could not be found. See --with-pcl-incdir])]) ]
+			)
+fi
+	  
+if test "$pcl_incdir" != "no"; then
+			PCLPATH="$pcl_incdir"
+fi
+# workaround end
+
+AC_ARG_WITH(pmapi,
+            [  --with-pmapi=<path>		Specify path of pmapi on aix system ],
+            [pmapi=$withval],
+            [pmapi=default]
+            )
+if test "x$pfm_events" = "x"; then
+AC_ARG_WITH(pfm_events,
+            [  --with-pfm-events=<static,file>	Specify source of events for pfmlib-based systems ],
+            [pfm_events=$withval],
+            [pfm_events="static"]
+            )
+fi
+
+# Old IA64 substrate can use semaphores
+AC_ARG_WITH(with-semaphores,
+            [  --with-semaphores Use semaphores instead of atomic locks (IA64) ],
+	    [with_semaphores=$withval],
+	    [with_semaphores="no"])
+
+# check for which tests to run on install
+if test "x$tests" = "x"; then
+AC_ARG_WITH(tests,
+            [  --with-tests=<ctests,ftests,"ctests ftests">	Specify which tests to run on install ],
+            [tests=$withval],
+            [tests="ctests ftests"]
+            )
+fi
+
+if test "$pfm_events" = "static"; then
+   pfm_events_table="perfmon_events_table.h"
+   CFLAGS="$CFLAGS -DSTATIC_PERFMON_EVENTS_TABLE"
+AC_MSG_NOTICE(Generating perfmon_events_table.h)
+sh perfmon_events_table.sh > perfmon_events_table.h
+fi
+
+old_pfmv2="n"
+if test $perfmon != 0; then
+   if test $perfmon -lt 25; then
+      old_pfmv2="y"
+   fi
+fi
+
+#
+# Static tests
+#
+AC_MSG_CHECKING(for building tests static)
+AC_ARG_ENABLE(static-tests,
+  AC_HELP_STRING([--enable-static-tests], [Enable tests built static]),
+  [use_static_tests=$enableval])
+AC_MSG_RESULT($use_static_tests)
+#
+# Fix up: modify LDPATH for static linking if specified
+#
+if test "$use_static_tests" = "yes"; then
+   STATIC="-static"
+else
+   STATIC=""
+fi
+#
+# Shared and Static Lib options
+#
+AC_MSG_CHECKING(for which libraries to build)
+AC_ARG_ENABLE(shared,
+  AC_HELP_STRING([--disable-shared], [Disable the use of shared library]),
+  [use_shared=$enableval])
+AC_ARG_ENABLE(static,
+  AC_HELP_STRING([--disable-static], [Disable the use of static library]),
+  [use_static=$enableval])
+papiLIBS=""
+if test "$use_shared" = "yes"; then
+   papiLIBS="shared"
+fi
+if test "$use_static" = "yes"; then
+   papiLIBS="$papiLIBS static"
+fi
+# Override architectural defaults
+AC_MSG_RESULT($papiLIBS)
+#
+#
+#
+if test "$cross_compiling" = "yes" ; then
+AC_MSG_CHECKING(for native compiler for header generation)
+AC_ARG_WITH(nativecc,
+	[  --with-nativecc=<path>	Specify native C compiler for header generation ],
+	[nativecc=$withval],
+	[nativecc=gcc]
+	)
+AC_MSG_RESULT($nativecc)
+fi
+ 
+# Checks for libraries.
+if test "$OS" = "solaris"; then
+
+##F Both PAPI backends on Solaris require libcpc
+   AC_CHECK_HEADER([libcpc.h],[
+                                CFLAGS="$CFLAGS -lcpc"
+        AC_TRY_RUN([
+        #include <stdlib.h>
+        #include <libcpc.h>
+
+        int main()
+        {
+            // Check for libcpc 2
+            if(CPC_VER_CURRENT == 2)
+            {
+                exit(0);
+            }
+
+            exit(1);
+        }
+       ], [cpc_version=2], [cpc_version=0])],
+       [AC_MSG_ERROR([libcpc is needed for running PAPI on Solaris])
+   ])
+##F The niagara2 backend needs libcpc2
+    echo '====================================================================='
+    echo '         PAPI is available for the following Sun platforms:'
+    echo '---------------------------------------------------------------------'
+    echo
+    echo '    - UltraSPARC I, II & III on Solaris 8 & 9 using libcpc 1'
+    echo '      --> PAPI substrate: solaris-ultra'
+    echo
+    echo '    - UltraSPARC T2          on Solaris 10    using libcpc 2'
+    echo '      --> PAPI substrate: solaris-niagara2'
+    echo 
+    echo "    - Your substrate will be: $OS-$CPU"
+    echo '====================================================================='
+    if test "$CPU" = "niagara2"
+    then
+        ##F Check for the definition of CPC_VER_CURRENT
+        if test "$cpc_version" != "2"
+        then
+            AC_MSG_ERROR([libcpc2 needed for Niagara 2])
+        fi
+    else
+        ##F PAPI 3.6.2
+        AC_CHECK_LIB([cpc], [cpc_take_sample], [], [
+              AC_MSG_ERROR([libcpc.a is needed on Solaris, install SUNWcpc])
+            ])
+    fi
+fi
+
+if test "$perfctr" != "no"; then
+   dotest=0
+if test "$perfctr_root" != ""; then
+   LIBS="-L$perfctr_root/usr.lib -lperfctr"
+   CPPFLAGS="-I$perfctr_root/usr.lib -I$perfctr_root/linux/include"
+   dotest=1
+elif test "$perfctr_prefix" != ""; then
+   LIBS="-L$perfctr_prefix/lib -lperfctr"
+   CPPFLAGS="-I$perfctr_prefix/include"
+   perfctr_libdir="$perfctr_prefix/lib"
+   perfctr_incdir="$perfctr_prefix/include"
+   dotest=1
+else
+   if test "$perfctr_libdir" != ""; then
+      LIBS="-L$perfctr_libdir -lperfctr"
+      dotest=1
+   fi
+   if test "$perfctr_incdir" != ""; then
+      CPPFLAGS="-I$perfctr_incdir"
+      dotest=1
+   fi
+fi
+if test "$dotest" = 1; then
+AC_CHECK_LIB([perfctr], [vperfctr_open], [
+	AC_CHECK_HEADERS([libperfctr.h], [
+	oCFLAGS=$CFLAGS
+	CFLAGS="$CFLAGS -static"
+	AC_TRY_RUN([
+	#include <stdlib.h>
+	#include "libperfctr.h"
+	int main() 
+	{
+		if ((PERFCTR_ABI_VERSION >> 24) != 5) { exit(1); }
+       exit(0);
+	}
+	],[perfctr=6],[perfctr=7])
+	CFLAGS=$oCFLAGS
+], [
+	AC_MSG_ERROR([libperfctr.h could not be found, please examine config.log and rerun configure with different flags])])],[
+AC_MSG_ERROR([libperfctr.a could not be found, please examine config.log and rerun configure with different flags])
+])
+    else
+AC_DEFINE(HAVE_LIBPERFCTR_H,1,[perfctr header file])
+fi
+fi
+
+AC_MSG_CHECKING(for perfctr version)
+if test "$perfctr" = "no"; then
+   AC_MSG_RESULT(none)
+else
+   AC_MSG_RESULT(2.$perfctr)
+fi
+
+if test "$perfctr" = 7 -a "$arch" != "ppc64"; then
+   AC_MSG_ERROR([Perfctr 2.7.x only works on PPC64 machines. Please repatch your kernel with 2.6.x.])
+fi
+
+if test $perfmon != 0 -o $pcl = "yes"; then
+      dotest=0
+   if test "$pfm_root" != ""; then
+      LIBS="-L$pfm_root/lib -lpfm"
+      CPPFLAGS="-I$pfm_root/include"
+      dotest=1
+   elif test "$pfm_prefix" != ""; then
+      LIBS="-L$pfm_prefix/lib -lpfm"
+      CPPFLAGS="-I$pfm_prefix/include"
+      if test "$pfm_libdir" = ""; then
+         pfm_libdir="$pfm_prefix/lib"
+      fi
+      if test "$pfm_prefix" = ""; then
+         pfm_incdir="$pfm_prefix/include"
+      fi
+      dotest=1
+   else
+      if test "$pfm_libdir" != ""; then
+         LIBS="-L$pfm_libdir -lpfm"
+         dotest=1
+      fi
+      if test "$pfm_incdir" != ""; then
+         CPPFLAGS="-I$pfm_incdir"
+         dotest=1
+      fi
+   fi
+   if test "$dotest" = 1; then
+   AC_CHECK_LIB([pfm], [pfm_initialize], [
+   	AC_CHECK_HEADERS([perfmon/pfmlib.h],[
+   	if test "$arch" = "ia64"; then
+   		AC_CHECK_HEADERS([perfmon/pfmlib_montecito.h])
+           fi
+   	AC_CHECK_FUNC(pfm_get_event_description, [AC_DEFINE(HAVE_PFM_GET_EVENT_DESCRIPTION,1,[event description function])],[])
+   	AC_CHECK_MEMBER(pfmlib_reg_t.reg_evt_idx, [AC_DEFINE(HAVE_PFM_REG_EVT_IDX,1,[old reg_evt_idx])],[],[#include "perfmon/pfmlib.h"])
+   	AC_CHECK_MEMBER(pfmlib_output_param_t.pfp_pmd_count, [AC_DEFINE(HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT,1,[new pfmlib_output_param_t])],[],[#include "perfmon/pfmlib.h"])
+   	AC_CHECK_MEMBER(pfm_msg_t.type, [AC_DEFINE(HAVE_PFM_MSG_TYPE,1,[new pfm_msg_t])],[],[#include "perfmon/perfmon.h"])
+         ], [AC_MSG_ERROR([perfmon/pfmlib.h could not be found, please examine config.log and rerun configure with different flags])])], [
+   	AC_MSG_ERROR([libpfm.a could not be found, please examine config.log and rerun configure with different flags])
+         ])
+   else
+   # included snapshots have this function
+      AC_DEFINE(HAVE_PERFMON_PFMLIB_MONTECITO_H,1,[Montecito headers])
+      AC_DEFINE(HAVE_PFM_GET_EVENT_DESCRIPTION,1,[event description function])
+      AC_DEFINE(HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT,1,[new pfmlib_output_param_t])
+   fi
+fi
+
+if test "$with_semaphores" != "no"; then
+   AC_DEFINE(USE_SEMAPHORES, 1, [Use semaphores for locking])
+fi
+
+if test "$OS" = "aix"; then
+   if test "$pmapi" = "default"; then
+      case "$CPU" in
+      power3)
+	if test "${OSVER}" = "4"; then
+	   PMAPI="/usr/lpp/pmtoolkit"
+	else
+	   PMAPI="/usr/pmapi"
+	fi
+	;;
+      power4) PMAPI="/usr/pmapi" ;;
+      power5) PMAPI="/usr/pmapi" ;;
+      power6) PMAPI="/usr/pmapi" ;;
+      esac
+      PMINIT=""
+      LIBS="-L$PMAPI/lib -lpmapi"
+      CPPFLAGS="$CPPFLAGS -I$PMAPI/include"
+      AC_CHECK_LIB([pmapi], [pm_initialize], [
+			    PMINIT="-DPM_INITIALIZE"], [
+			    AC_CHECK_LIB([pmapi], [pm_init], [
+			    PMINIT="-DPM_INIT"], [
+			    AC_MSG_ERROR([libpmapi.a is needed on AIX, please examine config.log and rerun configure with different flags])
+			    ])],[])
+   else
+	PMAPI="$pmapi"
+   fi
+else
+      case "$pmapi" in
+         default) ;;
+         *)  
+	 AC_MSG_ERROR([pmapi is not needed on this platform]) 
+	     ;;
+      esac
+fi
+
+AC_MSG_CHECKING(for Makefile to use)
+if test "x$MAKEVER" = "x"; then
+case "$OS" in
+   freebsd)
+       MAKEVER="freebsd"
+       LDFLAGS="-lpmc"
+
+       # HWPMC driver is available for FreeBSD >= 6
+       FREEBSD_VERSION=`uname -r | cut -c 1`
+       if test "${FREEBSD_VERSION}" -lt 6 ; then
+          AC_MSG_ERROR([PAPI requires at least FreeBSD 6 to work])
+       fi
+
+       # Determine if HWPMC module is on the kernel
+       dmesg | grep hwpmc 2> /dev/null > /dev/null
+       if test "$?" != "0" ; then
+          AC_MSG_ERROR([Error! HWPMC module seems not to be on the kernel. Have you compiled the kernel with HWPMC? (see INSTALL.TXT])
+       fi
+
+       # Determine the number of counters
+       echo "/* Automatically generated file by configure */" > freebsd-config.h
+       echo "#ifndef _FREEBSD_CONFIG_H_" >> freebsd-config.h
+       echo "#define _FREEBSD_CONFIG_H_" >> freebsd-config.h
+       echo "" >> freebsd-config.h
+
+       AC_TRY_LINK(
+       [#include <unistd.h>
+        #include <pmc.h>],
+       [int i = pmc_init();],
+       [pmc_pmc_init_linked="yes"], [pmc_pmc_init_linked="no"])
+
+       if test "${pmc_init_linked}" = "no" ; then
+          AC_MSG_ERROR([Failed to link hwpmc example])
+       fi
+
+       AC_TRY_RUN(
+       [ #include <unistd.h>
+         #include <pmc.h>
+         int main()
+         { 
+           const struct pmc_cpuinfo *info;
+           if (pmc_init() < 0) return 0;
+           if (pmc_cpuinfo (&info) < 0) return 0;
+           return info->pm_npmc-1;
+         }
+       ],
+       [ num_counters="0" ], [ num_counters="$?"])
+
+       if test "${num_counters}" = "0" ; then
+          AC_MSG_ERROR([pmc_npmc info returned 0. Please check you have HWPMC module loaded into the kernel (see hwpmc(4))])
+       fi
+
+       echo "#define HWPMC_NUM_COUNTERS ${num_counters}" >> freebsd-config.h
+       echo "" >> freebsd-config.h
+       echo "#endif" >> freebsd-config.h
+   ;;
+   aix)
+      if test "${OSVER}" = "5"; then
+         if test "${CPU}" = "power3"; then 
+               MAKEVER="$OS""$OSVER"-"$CPU""$BM"
+         else
+               MAKEVER="$OS"-"$CPU""$BM"
+         fi
+      else
+         if test "${CPU}" = "power3"; then   
+            if test "${bitmode}" = "64"; then
+              AC_MSG_ERROR([The bitmode you specified is not supported])
+            fi
+            MAKEVER="$OS"-"$CPU"
+         else
+               MAKEVER="$OS"-"$CPU""$BM"
+         fi
+   fi
+   ;;
+   bgl)
+	   MAKEVER=linux-bgl
+       tests=bgl_tests
+   ;;
+   catamount)
+	   MAKEVER="$OS"-perfctr-opteron
+	   ;;
+	   
+   CLE)
+	   MAKEVER="$OS"-perfmon2
+	   ;;
+	   
+   solaris)
+       if test "${bitmode}" = "64"; then
+          if test "`isainfo -v | grep "64"`" = ""; then
+             AC_MSG_ERROR([The bitmode you specified is not supported])
+          fi
+       	  
+          MAKEVER="$OS"-"$CPU""$BM"
+       else
+          MAKEVER="$OS"-"$CPU" 
+       fi
+       ;;
+   linux)
+       if test $pcl = "yes" ; then
+         MAKEVER="$OS"-pcl
+       else
+	if test $perfmon -gt 20 ; then
+		    MAKEVER="$OS"-perfmon2
+       else
+       case "$CPU" in
+            alpha)
+                 if test "${bitmode}" = "64"; then
+                   AC_MSG_ERROR([The bitmode you specified is not supported])
+                 fi
+                 MAKEVER="$OS"-"$CPU" ;;
+            itanium|itanium2|montecito)
+                 if test "${with_bitmode}" = "32"; then
+                   AC_MSG_ERROR([The bitmode you specified is not supported])
+                 fi
+		 if test "$CPU" = "montecito"; then
+		    MAKEVER="$OS"-pfm-itanium3
+		    else
+		    MAKEVER="$OS"-pfm-"$CPU"
+		 fi ;;
+            opteron|core|core2|i7|atom|em64t|p3)
+		if test "$arch" = "x86_64"; then
+			MAKEVER="$OS"-perfctr-p3
+		else
+			if test "${bitmode}" = "64"; then
+				AC_MSG_ERROR([The bitmode you specified is not supported])
+			fi
+			MAKEVER="$OS"-perfctr-p3
+		fi
+		 ;; 
+            athlon|p4)
+		if test "$arch" = "x86_64"; then
+			MAKEVER="$OS"-perfctr-"$CPU"
+		else
+			if test "${bitmode}" = "64"; then
+				AC_MSG_ERROR([The bitmode you specified is not supported])
+			fi
+			MAKEVER="$OS"-perfctr-"$CPU"
+		fi
+		 ;; 
+            p2)
+                if test "${bitmode}" = "64"; then
+                   AC_MSG_ERROR([The bitmode you specified is not supported])
+                fi
+		MAKEVER="$OS"-perfctr-"$CPU"
+		;;
+            PPC32)
+                 if test "${bitmode}" = "64"; then
+                   AC_MSG_ERROR([The bitmode you specified is not supported])
+                 fi
+                 MAKEVER="$OS"-perfctr-"$CPU" ;;
+            POWER4|POWER5|POWER5+|POWER6|PPC970)
+                 MAKEVER="$OS"-perfctr-"$CPU""$BM" ;;
+	    mips64)
+		 MAKEVER="$OS"-perfmon2 ;;
+	    mx)
+		 MAKEVER="$OS"-"$CPU" ;;
+	    acpi)
+		 MAKEVER="$OS"-"$CPU" ;;
+       esac
+       fi
+       fi
+       ;;
+  irix)
+       MAKEVER="$OS"-"$CPU""$BM"
+       ;;
+  osf1)
+       case "$CPU" in
+            alpha)
+                 MAKEVER=tru64-"$CPU" ;;
+esac
+       ;;
+  unicos)
+                 MAKEVER="$OS"-"$CPU" ;;
+  *)
+                 MAKEVER="$OS"-"$CPU" ;;
+esac
+fi
+AC_MSG_RESULT($MAKEVER)
+
+#echo $MAKEVER
+case "$MAKEVER" in 
+    aix-power3);;
+    aix-power4);;
+    aix-power4-64bit);;
+    aix-power5);;
+    aix-power5-64bit);;
+    aix-power6);;
+    aix-power6-64bit);;
+    aix5-power3);;
+    aix5-power3-64bit);;
+    any-null);;
+    catamount-perfctr-opteron);;
+    CLE-perfmon2);;
+    dadd-alpha);;
+    irix-mips);;
+    irix-mips-64bit);;
+    linux-alpha);;
+    linux-bgl);;
+    linux-acpi);;
+    linux-mx);;
+    linux-perfctr-athlon);;
+    linux-perfctr-p2);;
+    linux-perfctr-p3);;
+    linux-perfctr-p4);;
+    linux-perfctr-em64t);;
+    linux-pfm-itanium);;
+    linux-pfm-itanium2);;
+    linux-pfm-itanium3);;
+    solaris-ultra);;
+    solaris-ultra-64bit);;
+    ##F Recognize a new build target
+    solaris-niagara2|solaris-niagara2-32bit);;
+    solaris-niagara2-64bit);;
+    tru64-alpha);;
+    unicos-t3e);;
+    unicos-x1-msp);;
+    unicos-x1-ssp);;
+    linux-perfctr-POWER4|linux-perfctr-POWER5|linux-perfctr-POWER5+|linux-perfctr-POWER6|linux-perfctr-PPC970|linux-perfctr-PPC32);;
+    linux-perfctr-POWER4-64bit|linux-perfctr-POWER5-64bit|linux-perfctr-POWER5+-64bit|linux-perfctr-POWER6-64bit|linux-perfctr-PPC970-64bit);;
+    linux-perfmon2);;
+    linux-pcl);;
+    freebsd);;
+    *)
+    echo Platform $MAKEVER is not supported
+    exit -1
+    ;;
+esac
+
+#
+# Fix up: put inside papi in share directory
+#
+#if test "$datadir" = '${datarootdir}'; then
+#   datadir='${datarootdir}/${PACKAGE_TARNAME}'
+#fi
+#papidatadir=$datadir
+#docdir='${prefix}/share/doc/papi'
+#AS_AC_EXPAND(PAPI_DATADIR, $papidatadir)
+#AC_DEFINE_UNQUOTED(HAVE_THREAD_LOCAL_STORAGE,"$docdir")
+
+#
+# Fix up: If we're on linux and 64 bit build, then put libs in the right place
+# may apply for cross compiling
+#
+if test "$OS" = "linux" -a "$bitmode" = "64"; then
+   if test "$arch" = "mips64" -o "$arch" = "ppc64" -o "$arch" = "x86_64"; then
+      if test "$libdir" = '${exec_prefix}/lib'; then
+        libdir='${exec_prefix}/lib64'
+      fi
+   fi
+fi
+
+AC_MSG_CHECKING(for library to link)
+AC_ARG_WITH(shlib,
+	[  --with-shlib=<yes,no>	Specify static[no] or dynamic[yes] papi library to link with test cases and utilities],
+	[shlib=dynamic],
+	[shlib=static]
+	)
+AC_MSG_RESULT($shlib)
+if test "$shlib" = "dynamic"; then
+	SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib:$(PWD)/libpfm-2.x/libpfm;export LIBPATH=.:./libpfm-3.y/lib:./libpfm-2.x/libpfm;'   
+    LINKLIB='../$(SHLIB)'
+else
+    LINKLIB='../$(LIBRARY)'
+fi
+
+AC_SUBST(prefix)
+AC_SUBST(exec_prefix)
+AC_SUBST(libdir)
+AC_SUBST(includedir)
+AC_SUBST(mandir)
+AC_SUBST(bindir)
+AC_SUBST(datadir)
+AC_SUBST(datarootdir)
+AC_SUBST(docdir)
+AC_SUBST(PACKAGE_TARNAME)
+AC_SUBST(arch)
+AC_SUBST(DEBUGFLAGS)
+AC_SUBST(MAKEVER)
+AC_SUBST(PMAPI)
+AC_SUBST(F77)
+AC_SUBST(CPP)
+AC_SUBST(CC)
+AC_SUBST(AR)
+AC_SUBST(papiLIBS)
+AC_SUBST(STATIC)
+AC_SUBST(LDFLAGS)
+AC_SUBST(NOTLS)
+AC_SUBST(altix)
+AC_SUBST(PMINIT)
+AC_SUBST(perfctr_root)
+AC_SUBST(perfctr_prefix)
+AC_SUBST(perfctr_incdir)
+AC_SUBST(perfctr_libdir)
+AC_SUBST(pfm_root)
+AC_SUBST(old_pfmv2)
+AC_SUBST(pfm_prefix)
+AC_SUBST(pfm_incdir)
+AC_SUBST(pfm_libdir)
+AC_SUBST(bitmode)
+AC_SUBST(CFLAGS)
+AC_SUBST(FFLAGS)
+AC_SUBST(CPPFLAGS)
+AC_SUBST(PCLPATH)
+AC_SUBST(pfm_events)
+AC_SUBST(pfm_events_table)
+AC_SUBST(tests)
+AC_SUBST(SETPATH)
+AC_SUBST(LINKLIB)
+
+if test "$cross_compiling" = "yes" ; then
+   AC_MSG_NOTICE(Compiling genpapifdef with $nativecc because cross compiling)
+   $nativecc -I. genpapifdef.c -o genpapifdef
+else
+   AC_MSG_NOTICE(Compiling genpapifdef with $CC)
+   $CC -I. genpapifdef.c -o genpapifdef
+fi
+
+AC_MSG_NOTICE(Generating fpapi.h)
+./genpapifdef -c > fpapi.h
+AC_MSG_NOTICE(Generating f77papi.h)
+./genpapifdef -f77 > f77papi.h
+AC_MSG_NOTICE(Generating f90papi.h)
+./genpapifdef -f90 > f90papi.h
+
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
