@@ -586,14 +586,19 @@ static int add_native_events(EventSetInfo_t * ESI, int *nevt, int size, EventInf
 {
    int nidx, i, j, remap = 0;
    int retval;
+   int max_counters;
 
+   if(_papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex)
+     max_counters = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
+   else
+     max_counters = _papi_hwd[ESI->CmpIdx]->cmp_info.num_cntrs;
    /* if the native event is already mapped, fill in */
    for (i = 0; i < size; i++) {
       if ((nidx = _papi_hwi_add_native_precheck(ESI, nevt[i])) >= 0) {
          out->pos[i] = ESI->NativeInfoArray[nidx].ni_position;
       } else {
          /* all counters have been used, add_native fail */
-         if (ESI->NativeCount == _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs) {
+         if (ESI->NativeCount == max_counters) {
             /* to clean owners for previous added native events */
             for (j = 0; j < i; j++) {
                if ((nidx = add_native_fail_clean(ESI, nevt[j])) >= 0) {
