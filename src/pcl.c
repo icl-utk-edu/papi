@@ -2519,11 +2519,9 @@ int _papi_pcl_start (hwd_context_t * ctx, hwd_control_state_t * ctl)
   pcl_control_state_t * pcl_ctl = (pcl_control_state_t *)ctl;
   int ret;
 
-#if 0
   ret = _papi_hwd_reset(pcl_ctx, pcl_ctl);
   if (ret)
     return ret;
-#endif
   ret = pcl_enable_counters(pcl_ctx, pcl_ctl);
   return ret;
 }
