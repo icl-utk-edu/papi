@@ -317,9 +317,10 @@ static MasterEvent *get_my_threads_master_event_list(void)
       return (tlist->head);
 
    tid = _papi_hwi_thread_id_fn();
+   unsigned long pid = getpid();
 
    while (t) {
-      if (t->tid == tid)
+      if (t->tid == tid || ((tid==0) && (t->tid==pid)))
          return (t->head);
       t = t->next;
    }
