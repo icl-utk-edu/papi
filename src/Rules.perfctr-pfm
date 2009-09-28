@@ -100,6 +100,13 @@ FFLAGS		= $(BITFLAGS)
 endif
 
 # 
+# c99 section
+# 
+ifeq (c99, $(CC))
+   CFLAGS += -DC99
+endif
+
+# 
 # Portland Group section
 # 
 
