@@ -113,6 +113,51 @@ linux-net.o: linux-net.c $(HEADERS)
 linux-lmsensors.o: linux-lmsensors.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-lmsensors.c -o linux-lmsensors.o 
 
+#
+# Required for AIX PowerPC configurations
+#
+ifeq (aix,$(MEMSUBSTR))
+pmapi-ppc64_events.o: pmapi-ppc64_events.c  $(HEADERS) perfmon_events_table.h
+	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c pmapi-ppc64_events.c -o pmapi-ppc64_events.o
+
+perfmon_events_table.h:	perfmon_events.csv perfmon_events_table.sh
+	sh perfmon_events_table.sh > $@
+
+$(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c  $(HEADERS)
+	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c $(ARCH_EVENTS)_map.c -o $(ARCH_EVENTS)_map.o
+
+aix.o: aix.c  $(HEADERS)
+	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
+endif
+
+#
+# Required for Linux-ACPI
+#
+ifeq (linux-acpi,$(MEMSUBSTR))
+acpi_events.o: acpi_events.c  $(HEADERS)
+	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c acpi_events.c -o acpi_events.o
+
+acpi.o: acpi.c  $(HEADERS)
+	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c acpi.c -o acpi.o
+endif
+
+#
+# Required for Linux-BGL
+#
+ifeq (linux-bgl,$(MEMSUBSTR)) 
+.SUFFIXES: .rts.o
+.c.rts.o:
+	$(CC) $(CFLAGS) -c $< -o $@
+
+linux-bgl-events.o: linux-bgl-events.c  $(HEADERS)
+	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" -DCOMP_VECTOR=_bgl_vectors $(OPTFLAGS) -c linux-bgl-events.c -o linux-bgl-events.o
+
+bgl_tests:$(LIBRARY) null 
+	cd ctests/bgl_tests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-DSUBSTRATE=\\\"$(SUBSTR).h\\\" $(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" bgl_test
+
+bgl_tests:$(LIBRARY) null 
+	cd ctests/bgl_tests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-DSUBSTRATE=\\\"$(SUBSTR).h\\\" $(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" bgl_test
+endif
 
 #
 # This is all done by configure now
@@ -160,7 +205,7 @@ clobber distclean: clean native_clobber
 null:
 
 dist: 
-	$(MAKE) -f Makefile.$(MSUBSTR) install-all PREFIX=`pwd`/papi-$(SUBSTR)
+	$(MAKE) install-all PREFIX=`pwd`/papi-$(SUBSTR)
 	tar cfv ./papi-$(SUBSTR).tar ./papi-$(SUBSTR)
 	gzip ./papi-$(SUBSTR).tar
 	rm -rf ./papi-$(SUBSTR)
@@ -197,3 +242,12 @@ install-utils:
 install-tests: 
 	$(SETPATH) cd ctests; $(MAKE) DATADIR="$(DESTDIR)$(DATADIR)" CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. $(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY=$(LINKLIB) install
 	$(SETPATH) cd ftests; $(MAKE) DATADIR="$(DESTDIR)$(DATADIR)" CC="$(CC)" CC_R="$(CC_R)" F77="$(F77)" CFLAGS="-I.. $(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" FTOPTFLAGS="$(FTOPTFLAGS)" FFLAGS="-I.. $(FFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY=$(LINKLIB) install
+
+#
+# Dummy targets for configurations that do not also include a Rules file with targets
+#
+native_clean:
+
+native_install:
+
+native_clobber:

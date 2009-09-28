@@ -80,6 +80,7 @@ get_bitmode()
 # checking for Makefile argument, if not specified, check CPU, OS, OSVER and bitmode
 #
 
+FILENAME=NO_INCLUDE_FILE
 use_shared=yes
 use_static=yes
 use_static_tests=no
@@ -1248,7 +1249,7 @@ else
       esac
 fi
 
-AC_MSG_CHECKING(for Makefile to use)
+AC_MSG_CHECKING(for platform description used to generate Makefile)
 if test "x$MAKEVER" = "x"; then
 case "$OS" in
    freebsd)
@@ -1466,7 +1467,9 @@ case "$MAKEVER" in
     freebsd);;
     *)
     echo Platform $MAKEVER is not supported
-    exit -1
+    if test "$CC" != "gcc" ; then
+       exit -1
+    fi
     ;;
 esac
 
@@ -1633,6 +1636,350 @@ else
 fi
 LINKLIB="$LINKLIB $LINK_SENSORS_LIB"
 
+# Use MAKEVER to set macros for specific OS/CPU
+if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || test "$MAKEVER" = "aix-power6" || test "$MAKEVER" = "aix-power6-64bit"); then
+   FILENAME=Makefile.inc
+   MEMSUBSTR=aix
+   MEMSUBSTRC=aix-memory.c
+   MEMSUBSTRO=aix-memory.o
+   LIBS="static shared"
+   TARGETS="serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads smp omp"
+   POST_BUILD =
+   SPECIAL_REMOVE =
+   FLAGS='-I$(PMAPI)/include -qmaxmem=-1 -qarch=$(cpu_option) -qtune=$(cpu_option) -qlanglvl=extended  $(BITS)'
+   CFLAGS='$(CFLAGS) $(DEBUGFLAGS) $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_AIX -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors -DSTATIC_PERFMON_EVENTS_TABLE'
+   #CFLAGS='$(CFLAGS) -DPAPI_NO_VECTOR'
+   OPTFLAGS='-O3 -qstrict $(PMINIT)'
+   TOPTFLAGS=
+   FFLAGS='$(FFLAGS) $(FLAGS) -WF,-D_$(CPU_MODEL) -WF,-DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
+   FOPTFLAGS='$(OPTFLAGS)'
+   FTOPTFLAGS='$(TOPTFLAGS)'
+   SMPCFLGS=-qsmp
+   OMPCFLGS='-qsmp=omp'
+   LDFLAGS='$(LDFLAGS) -L$(PMAPI)/lib -lpmapi'
+   CC_R=xlc_r
+   CC=xlc
+   CC_SHR="xlc -G -bnoentry"
+   MPICC=mpcc
+   F77=xlf
+   CPP='xlc -E $(CPPFLAGS)'
+   MISCHDRS="aix.h ppc64_events.h pmapi-ppc64.h perfmon_events_table.h"
+   MISCSRCS='aix.c pmapi-ppc64_events.c #$(ARCH_EVENTS)_map.c'
+   MISCOBJS='aix.o pmapi-ppc64_events.o #$(ARCH_EVENTS)_map.o'
+   if test "$MAKEVER" = "aix-power5"; then
+      LIBRARY=libpapi.a
+      SHLIB=libpapi.so
+      SUBSTR=pmapi-ppc64
+      ARCH_EVENTS=power5_events
+      CPU_MODEL=POWER5
+      cpu_option=pwr5
+      MSUBSTR=power5
+      DESCR="AIX 5.1.0 or greater with POWER5"
+      BITS=
+      ARG64= 
+   elif test "$MAKEVER" = "aix-power5-64bit"; then
+      LIBRARY=libpapi64.a
+      SHLIB=libpapi64.so
+      SUBSTR=pmapi-ppc64
+      ARCH_EVENTS=power5_events
+      CPU_MODEL=POWER5
+      cpu_option=pwr5
+      MSUBSTR=power5
+      DESCR="AIX 5.1.0 or greater with POWER5 64 bit build"
+      BITS=-q64
+      ARG64=-X64
+   elif test "$MAKEVER" = "aix-power6"; then
+      LIBRARY=libpapi.a
+      SHLIB=libpapi.so
+      SUBSTR=pmapi-ppc64
+      ARCH_EVENTS=power6_events
+      CPU_MODEL=POWER6
+      cpu_option=pwr6
+      MSUBSTR=power6
+      DESCR="AIX 5.1.0 or greater with POWER6"
+      BITS=
+      ARG64=
+      CPPFLAGS='$(CPPFLAGS) -qlanglvl=extended'
+   else
+      LIBRARY=libpapi64.a
+      SHLIB=libpapi64.so
+      SUBSTR=pmapi-ppc64
+      ARCH_EVENTS=power6_events
+      CPU_MODEL=POWER6
+      cpu_option=pwr6
+      MSUBSTR=power6
+      DESCR="AIX 5.1.0 or greater with POWER6 64 bit build"
+      BITS=-q64
+      ARG64=-X64
+      CPPFLAGS='$(CPPFLAGS) -qlanglvl=extended'
+   fi
+elif test "$MAKEVER" = "CLE-perfmon2"; then   
+   FILENAME=Rules.pfm_pcl
+   PE="$(shell echo $${CRAY_PE_TARGET})"
+   if test "$PE" = "cray-x2"; then
+      COMPILER=CRAYX2
+      CC=craynv-cray-linux-gnu-gcc
+      F77=craynv-cray-linux-gnu-gfortran
+      CPP='$(CC) -E'
+      LDFLAGS=-lpthread
+      TESTS=ctests
+   else
+      COMPILER=CRAYXT
+      F77=gfortran
+      CFLAGS='$(CFLAGS) -D __crayxt'
+   fi
+   SUBSTR=perfmon
+elif test "$MAKEVER" = "linux-acpi"; then
+   FILENAME=Makefile.inc
+   LIBRARY=libpapi.a
+   #SHLIB=libpapi.so
+   SHLIB=
+   SUBSTR=linux-acpi
+   MEMSUBSTR=linux-acpi
+   MEMSUBSTRC=linux-acpi-memory.c
+   MEMSUBSTRO=linux-acpi-memory.o
+   DESCR="Sample substrate: Any hardware platform with GNU compilers"
+   LIBS="static shared"
+   TARGETS="serial multiplex_and_pthreads acpi_test"
+   POST_BUILD =
+   SPECIAL_REMOVE =
+   F77=g77
+   CC=gcc
+   CC_R='$(CC) -pthread'
+   CC_SHR='$(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
+   CFLAGS="-Wall -g -DDEBUG -DACPI"
+   FFLAGS="-Wall -g"
+   CPU= 
+   #MISCSRCS="acpi.c acpi_events.c"
+   #MISCOBJS="acpi.o acpi_events.o" 
+   MISCSRCS=
+   MISCOBJS=
+elif test "$MAKEVER" = "linux-bgl"; then
+   FILENAME=Makefile.inc
+   BLRTS_GNU_ROOT="/bgl/BlueLight/ppcfloor/blrts-gnu"
+   BGLSYS_ROOT="/bgl/BlueLight/ppcfloor/bglsys" 
+   #CC='$(SILENT) $(BLRTS_GNU_ROOT)/bin/powerpc-bgl-blrts-gnu-gcc'
+   #F77='$(SILENT) $(BLRTS_GNU_ROOT)/bin/powerpc-bgl-blrts-gnu-g77'
+   #CFLAGS='-D_BGL -g -gdwarf-2 -O2 -Wall -I$(BGLSYS_ROOT)/include'
+   #FFLAGS='-g -gdwarf-2 -O2 -Wall -I$(BGLSYS_ROOT)/include -Dlinux' 
+   OPTFLAGS='-g -O3 -I$(BGLSYS_ROOT)/include'
+   TOPTFLAGS= 
+   FOPTFLAGS='$(OPTFLAGS)'
+   FTOPTFLAGS='$(TOPTFLAGS)'
+   LDFLAGS='-L$(BGLSYS_ROOT)/lib -lbgl_perfctr.rts -lmpich.rts -lmsglayer.rts -lrts.rts -ldevices.rts'
+   LIBRARY=libpapi.a
+   SHLIB=libpapi.so
+   SUBSTR=linux-bgl
+   MEMSUBSTR=linux-bgl
+   MEMSUBSTRC=linux-bgl-memory.c
+   MEMSUBSTRO=linux-bgl-memory.o
+   MSUBSTR=linux-bgl
+   DESCR="Linux for BlueGene/L"
+   LIBS=static
+   #TARGETS="serial multiplex_and_pthreads"
+   TARGETS=serial
+   CC_SHR='$(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
+   CC_R='$(CC) -pthread'
+   CFLAGS='$(CFLAGS) -I. -DCOMP_VECTOR=_bgl_vectors'
+   # Some nice flags to add to CFLAGS when debugging PAPI library itself
+   # -DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
+   MISCHDRS= 
+   MISCSRCS=linux-bgl-events.c
+   MISCOBJS='$(MISCSRCS:.c=.o)'
+   SHLIBDEPS=
+   BGL_TESTS=bgl_tests
+elif test "$MAKEVER" = "linux-mx"; then
+   FILENAME=Makefile.inc
+   LIBRARY=libpapi.a
+   #SHLIB=libpapi.so
+   SHLIB=
+   SUBSTR=linux-mx
+   MEMSUBSTR=linux-mx
+   MEMSUBSTRC=linux-mx-memory.c
+   MEMSUBSTRO=linux-mx-memory.o
+   DESCR="Sample substrate: Any hardware platform with GNU compilers"
+   LIBS="static shared"
+   TARGETS="serial mpi"
+   POST_BUILD=
+   SPECIAL_REMOVE=
+   F77=g77
+   CC=gcc
+   CC_R='$(CC) -pthread'
+   MPICC=mpicc
+   CC_SHR='$(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
+   CFLAGS="-Wall -g -DDEBUG" 
+   FFLAGS="-Wall -g"
+   CPU= 
+   MISCSRCS= 
+   MISCOBJS=   
+elif test "$MAKEVER" = "linux-pcl"; then
+   FILENAME=Rules.pfm_pcl
+   SUBSTR=pcl 
+elif test "$MAKEVER" = "linux-perfctr-athlon"; then
+   FILENAME=Rules.perfctr
+   if test "x$VERSION" = "x"; then
+      VERSION=2.6.x
+   fi
+   CPU=p3
+   FARGS="-D__athlon__"
+elif test "$MAKEVER" = "linux-perfctr-p3"; then
+   FILENAME=Rules.perfctr-pfm
+   if test "x$VERSION" = "x"; then
+      VERSION=2.6.x
+   fi
+   CPU=p3
+elif test "$MAKEVER" = "linux-perfctr-p4"; then
+   FILENAME=Rules.perfctr-pfm
+   if test "x$VERSION" = "x"; then
+      VERSION=2.6.x
+   fi
+   CPU=p4
+   TOPTFLAGS="-DPENTIUM4"
+   EVENTFLAGS="-DPAPI_PENTIUM4_FP_X87_SSE_DP -DPAPI_PENTIUM4_VEC_SSE"
+elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfctr-POWER5-64bit"); then
+   FILENAME=Rules.perfctr
+   VERSION=2.7.x
+   CPU=ppc64
+   CPU_MODEL=POWER5
+   ARCH_EVENTS=power5_events
+   CPU_TYPE=ppc64
+   # for Debian, comment the BITS macro out
+   if test "$MAKEVER" = "linux-perfctr-POWER5-64bit"; then
+      BITS=64
+   else
+      BITS=32
+   fi
+   CFLAGS='-D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
+   FFLAGS='-D_$(CPU_MODEL)'
+elif (test "$MAKEVER" = "linux-perfctr-POWER5+" || test "$MAKEVER" = "linux-perfctr-POWER5+-64bit") ; then
+   FILENAME=Rules.perfctr
+   VERSION=2.7.x
+   CPU=ppc64
+   CPU_MODEL=POWER5p
+   ARCH_EVENTS=power5+_events
+   CPU_TYPE=ppc64
+   SHRFLAGS=-fPIC
+   # for Debian, comment the BITS macro out
+   if test "$MAKEVER" = "linux-perfctr-POWER5+-64bit"; then
+      BITS=64
+      CFLAGS='-g -DDEBUG -D_$(CPU_MODEL) -DNEED_FFSLL -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
+   else
+      BITS=32
+      CFLAGS='-DDEBUG -D_$(CPU_MODEL) -DNEED_FFSLL -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
+   fi
+   FFLAGS='-D_$(CPU_MODEL)'
+elif test "$MAKEVER" = "linux-perfctr-PPC32"; then
+   FILENAME=Rules.perfctr
+   VERSION=2.6.x
+   CPU=ppc32
+   CPU_MODEL=PPC32
+   ARCH_EVENTS=ppc32_events
+   CPU_TYPE=ppc32
+   BITS=32
+   CFLAGS='-D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
+   FFLAGS='-D$(CPU_MODEL)'
+elif (test "$MAKEVER" = "linux-perfctr-PPC970" || test "$MAKEVER" = "linux-perfctr-PPC970-64bit"); then
+   FILENAME=Rules.perfctr
+   VERSION=2.7.x
+   CPU=ppc64
+   CPU_MODEL=PPC970
+   ARCH_EVENTS=ppc970_events
+   CPU_TYPE=ppc64
+   # for Debian, comment the BITS macro out
+   if test "$MAKEVER" = "linux-perfctr-PPC970-64bit"; then
+      BITS=64
+   else
+      BITS=32
+   fi
+   CFLAGS='-D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
+   FFLAGS='-D_$(CPU_MODEL)'
+elif test "$MAKEVER" = "linux-perfmon2"; then
+   FILENAME=Rules.pfm_pcl
+   SUBSTR=perfmon
+elif (test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-itanium3"); then
+   FILENAME=Rules.pfm
+   VERSION=3.y
+   #COMPILER=INTEL
+   if test "$MAKEVER" = "linux-pfm-itanium2"; then
+      CPU=2
+   else
+      CPU=3
+   fi
+elif (test "$MAKEVER" = "solaris-ultra" || test "$MAKEVER" = "solaris-ultra-64"); then
+   FILENAME=Makefile.inc
+   LIBRARY=libpapi.a
+   SHLIB=libpapi.so
+   SUBSTR=solaris-ultra
+   MSUBSTR=solaris-ultra
+   MEMSUBSTR=solaris
+   MEMSUBSTRC="solaris-memory.c"
+   MEMSUBSTRO="solaris-memory.o"
+   DESCR="Solaris 5.8 or greater with UltraSPARC I, II or III"
+   LIBS="static shared" 
+   TARGETS="serial multiplex_and_pthreads shared"
+   if test "$CC" = "gcc"; then
+      F77=g77
+      CPP="$CC -E"
+      CC_R="$CC" 
+      CC_SHR="$CC -shared -fpic"
+      OPTFLAGS=-O3
+      CFLAGS="-DNEED_FFSLL"
+      FFLAGS=$CFLAGS
+      TOPTFLAGS=
+      SMPCFLGS=
+   else 
+      # Sun Workshop compilers: V5.0 and V6.0 R2
+      TARGETS="$TARGETS smp omp"
+      CPP="$CC -E"
+      CC_R="$CC -mt"
+      CC_SHR="$CC -ztext -G -Kpic"  
+      CFLAGS="-xtarget=ultra3 -xarch=v8plusa -DNO_VARARG_MACRO -D__EXTENSIONS__ -DPAPI_NO_MEMORY_MANAGEMENT  -DCOMP_VECTOR=_solaris_vectors"
+      ORY_MANAGEMENT="-DCOMP_VECTOR=_solaris_vectors"
+      SMPCFLGS=-xexplicitpar
+      OMPCFLGS=-xopenmp
+      F77=f90
+      FFLAGS=$CFLAGS
+      TOPTFLAGS= 
+      NOOPT=-xO0 
+      OPTFLAGS="-g -fast -xtarget=ultra3 -xarch=v8plusa" 
+   fi
+   FOPTFLAGS=$OPTFLAGS
+   LDFLAGS="$LDFLAGS -lcpc"  
+   MISCSRCS=  
+   MISCOBJS=  
+   POST_BUILD=
+   SPECIAL_REMOVE=  
+   if test "$MAKEVER" = "solaris-ultra-64"; then
+      LIBRARY=libpapi64.a
+      SHLIB=libpapi64.so
+      CFLAGS="-xtarget=ultra3 -xarch=v9a -DNO_VARARG_MACRO -D__EXTENSIONS__ -DPAPI_NO_MEMORY_MANAGEMENT  -DCOMP_VECTOR=_solaris_vectors"
+      OPTFLAGS="-g -fast -xtarget=ultra3 -xarch=v9a"
+   fi
+elif test "$CC" = "gcc"; then
+   # any-null configuration
+   echo "Creating generic build for non-supported platform with GNU compiler"
+   FILENAME=Makefile.inc
+   LIBRARY=libpapi.a
+   SHLIB=libpapi.so
+   SUBSTR=any-null
+   DESCR="Sample substrate: Any hardware platform with GNU compilers"
+   LIBS="static shared"
+   TARGETS="serial multiplex_and_pthreads"
+   POST_BUILD =
+   SPECIAL_REMOVE =
+   CC_R='$(CC) -pthread'
+   SHRFLAGS="-fPIC -DPIC"
+   CC_SHR='$(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
+   CFLAGS='$(CFLAGS) -Wall -DDEBUG' 
+   FFLAGS='$(FFLAGS) -Wall' 
+   CPU= 
+   MISCSRCS=
+   MISCOBJS=
+else
+   echo "Unable to create generic build for non-GNU compiler"
+   exit -1
+fi
+
 AC_SUBST(prefix)
 AC_SUBST(exec_prefix)
 AC_SUBST(libdir)
@@ -1681,6 +2028,50 @@ AC_SUBST(pfm_events_table)
 AC_SUBST(tests)
 AC_SUBST(SETPATH)
 AC_SUBST(LINKLIB)
+AC_SUBST(VERSION)
+AC_SUBST(CPU)
+AC_SUBST(FARGS)
+AC_SUBST(TOPTFLAGS)
+AC_SUBST(EVENTFLAGS)
+AC_SUBST(FILENAME)
+AC_SUBST(LIBRARY)
+AC_SUBST(SHLIB)
+AC_SUBST(OPTFLAGS)
+AC_SUBST(SUBSTR)
+AC_SUBST(MSUBSTR)
+AC_SUBST(MEMSUBSTR)
+AC_SUBST(MEMSUBSTRC)
+AC_SUBST(MEMSUBSTRO)
+AC_SUBST(DESCR)
+AC_SUBST(LIBS)
+AC_SUBST(TARGETS)
+AC_SUBST(CC_R)
+AC_SUBST(CC_SHR)
+AC_SUBST(ORY_MANAGEMENT)
+AC_SUBST(SMPCFLGS)
+AC_SUBST(OMPCFLGS)
+AC_SUBST(NOOPT)
+AC_SUBST(FOPTFLAGS)
+AC_SUBST(MISCSRCS)
+AC_SUBST(MISCOBJS)
+AC_SUBST(POST_BUILD)
+AC_SUBST(SPECIAL_REMOVE)
+AC_SUBST(ARCH_EVENTS)
+AC_SUBST(CPU_MODEL)
+AC_SUBST(cpu_option)
+AC_SUBST(ARG64)
+AC_SUBST(FLAGS)
+AC_SUBST(FTOPTFLAGS)
+AC_SUBST(MPICC)
+AC_SUBST(MISCHDRS)
+AC_SUBST(SHRFLAGS)
+AC_SUBST(PE)
+AC_SUBST(COMPILER)
+AC_SUBST(BLRTS_GNU_ROOT)
+AC_SUBST(BGLSYS_ROOT)
+AC_SUBST(SHLIBDEPS)
+AC_SUBST(BGL_TESTS)
+AC_SUBST(CPU_TYPE)
 
 if test "$cross_compiling" = "yes" ; then
    AC_MSG_NOTICE(Compiling genpapifdef with $nativecc because cross compiling)
@@ -1696,6 +2087,10 @@ AC_MSG_NOTICE(Generating f77papi.h)
 ./genpapifdef -f77 > f77papi.h
 AC_MSG_NOTICE(Generating f90papi.h)
 ./genpapifdef -f90 > f90papi.h
+
+if test "$FILENAME" != "NO_INCLUDE_FILE" ; then
+   AC_MSG_NOTICE($FILENAME will be included in the generated Makefile)
+fi
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
