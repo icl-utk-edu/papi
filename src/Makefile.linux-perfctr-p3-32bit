@@ -1,7 +1,0 @@
-VERSION 	= 2.6.x
-CPU		= p3
-BITS		= 32
-
-#include Rules.perfctr
-# for using libpfm events
-include Rules.perfctr-pfm

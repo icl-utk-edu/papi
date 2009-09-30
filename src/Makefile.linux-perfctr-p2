@@ -1,4 +1,0 @@
-VERSION		?= 2.6.x
-CPU		= p3
-
-include Rules.perfctr

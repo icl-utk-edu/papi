@@ -1,6 +1,0 @@
-include Makefile.solaris-ultra
-
-LIBRARY	=libpapi64.a
-SHLIB	=libpapi64.so
-CFLAGS  =-xtarget=ultra3 -xarch=v9a -DNO_VARARG_MACRO -D__EXTENSIONS__ -DPAPI_NO_MEMORY_MANAGEMENT  -DCOMP_VECTOR=_solaris_vectors
-OPTFLAGS = -g -fast -xtarget=ultra3 -xarch=v9a

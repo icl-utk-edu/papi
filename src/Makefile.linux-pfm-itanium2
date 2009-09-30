@@ -1,7 +1,0 @@
-# Libpfm version is set automatically by the Rules.libpfm file
-# Override on command line or in this makefile
-# VERSION	= 2.0
-# COMPILER	?= INTEL
-CPU		= 2
-
-include Rules.pfm
