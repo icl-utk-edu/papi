@@ -113,6 +113,12 @@ linux-net.o: linux-net.c $(HEADERS)
 linux-lmsensors.o: linux-lmsensors.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-lmsensors.c -o linux-lmsensors.o 
 
+# Required for x86 configurations, but conditional probably isn't needed 
+ifeq ($(shell echo $(MISCSRCS) | grep -c "x86_cache_info.c"),1)
+x86_cache_info.o: x86_cache_info.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c x86_cache_info.c -o x86_cache_info.o
+endif
+
 #
 # Required for AIX PowerPC configurations
 #

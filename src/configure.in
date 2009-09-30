@@ -225,24 +225,30 @@ case "$OS" in
              # model 14 is an ancient Core
              if test "$model" = "14"; then
                CPU=core
+               MISCSRCS=x86_cache_info.c
              fi
              # models 15, 22, 23 are Core2 variants
              if (test "$model" = "15" || test "$model" = "22" || test "$model" = "23"); then
                CPU=core2
+               MISCSRCS=x86_cache_info.c
              fi
              # model 26 is Nehalem
              if test "$model" = "26"; then
                CPU=i7
+               MISCSRCS=x86_cache_info.c
              fi
              # model 28 is Atom
              if test "$model" = "28"; then
                CPU=atom
+               MISCSRCS=x86_cache_info.c
              fi
            elif test "$family" = "15"; then
              if (test "$model" = "3" || test "$model" = "4" || test "$model" = "6"); then
                CPU=em64t
+               MISCSRCS=x86_cache_info.c
              elif (test "$model" = "1" || test "$model" = "2"); then
                CPU=p4
+               MISCSRCS=x86_cache_info.c
              fi
            elif test "$family" = "32"; then
 	       CPU=montecito
@@ -254,22 +260,28 @@ case "$OS" in
            if test "$CPU" = "" ; then       
              if test "`cat /proc/cpuinfo | grep "Pentium${R} 4"`" != ""; then
                CPU=p4
+               MISCSRCS=x86_cache_info.c
              elif test "`cat /proc/cpuinfo | grep -i "Itanium 2"`" != ""; then
                CPU=itanium2 
              elif test "`cat /proc/cpuinfo | grep -i Itanium`" != ""; then
                CPU=itanium
              elif test "`cat /proc/cpuinfo | grep -i "Pentium III"`" != ""; then
                CPU=p3
+               MISCSRCS=x86_cache_info.c
              elif test "`cat /proc/cpuinfo | grep -i "Pentium II"`" != ""; then
                CPU=p2
 	     else CPU=p3
+               MISCSRCS=x86_cache_info.c
              fi
            fi 
          elif test "`cat /proc/cpuinfo | grep AuthenticAMD`" != ""; then
            made=AuthenticAMD
 		   if test "`cat /proc/cpuinfo | grep "Athlon${tm}[[:space:]]*64"`" != ""; then
              CPU=opteron
-           else CPU=athlon
+             MISCSRCS=x86_cache_info.c
+           else 
+             CPU=athlon
+             MISCSRCS=x86_cache_info.c
            fi
            family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
            model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
@@ -279,6 +291,7 @@ case "$OS" in
 # see AMD Opteron Revision Guide, pub 25759, Table 1 for details
 #             if (test "$model" = "5" || test "$model" = "65"); then
                CPU=opteron
+               MISCSRCS=x86_cache_info.c
 #             fi
            fi
          else
@@ -329,6 +342,7 @@ case "$OS" in
         ;;
   catamount)
 	CPU=opteron
+        MISCSRCS=x86_cache_info.c
 	;;
   bgl)
 	CPU=bgl
@@ -1644,13 +1658,10 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
    MEMSUBSTRO=aix-memory.o
    LIBS="static shared"
    TARGETS="serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads smp omp"
-   POST_BUILD =
-   SPECIAL_REMOVE =
    FLAGS='-I$(PMAPI)/include -qmaxmem=-1 -qarch=$(cpu_option) -qtune=$(cpu_option) -qlanglvl=extended  $(BITS)'
    CFLAGS='$(CFLAGS) $(DEBUGFLAGS) $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_AIX -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors -DSTATIC_PERFMON_EVENTS_TABLE'
    #CFLAGS='$(CFLAGS) -DPAPI_NO_VECTOR'
    OPTFLAGS='-O3 -qstrict $(PMINIT)'
-   TOPTFLAGS=
    FFLAGS='$(FFLAGS) $(FLAGS) -WF,-D_$(CPU_MODEL) -WF,-DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
    FOPTFLAGS='$(OPTFLAGS)'
    FTOPTFLAGS='$(TOPTFLAGS)'
@@ -1664,7 +1675,7 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
    F77=xlf
    CPP='xlc -E $(CPPFLAGS)'
    MISCHDRS="aix.h ppc64_events.h pmapi-ppc64.h perfmon_events_table.h"
-   MISCSRCS='aix.c pmapi-ppc64_events.c #$(ARCH_EVENTS)_map.c'
+   MISCSRCS="$MISCSRCS aix.c pmapi-ppc64_events.c #$(ARCH_EVENTS)_map.c"
    MISCOBJS='aix.o pmapi-ppc64_events.o #$(ARCH_EVENTS)_map.o'
    if test "$MAKEVER" = "aix-power5"; then
       LIBRARY=libpapi.a
@@ -1675,8 +1686,6 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
       cpu_option=pwr5
       MSUBSTR=power5
       DESCR="AIX 5.1.0 or greater with POWER5"
-      BITS=
-      ARG64= 
    elif test "$MAKEVER" = "aix-power5-64bit"; then
       LIBRARY=libpapi64.a
       SHLIB=libpapi64.so
@@ -1697,8 +1706,6 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
       cpu_option=pwr6
       MSUBSTR=power6
       DESCR="AIX 5.1.0 or greater with POWER6"
-      BITS=
-      ARG64=
       CPPFLAGS='$(CPPFLAGS) -qlanglvl=extended'
    else
       LIBRARY=libpapi64.a
@@ -1733,7 +1740,6 @@ elif test "$MAKEVER" = "linux-acpi"; then
    FILENAME=Makefile.inc
    LIBRARY=libpapi.a
    #SHLIB=libpapi.so
-   SHLIB=
    SUBSTR=linux-acpi
    MEMSUBSTR=linux-acpi
    MEMSUBSTRC=linux-acpi-memory.c
@@ -1741,19 +1747,12 @@ elif test "$MAKEVER" = "linux-acpi"; then
    DESCR="Sample substrate: Any hardware platform with GNU compilers"
    LIBS="static shared"
    TARGETS="serial multiplex_and_pthreads acpi_test"
-   POST_BUILD =
-   SPECIAL_REMOVE =
    F77=g77
    CC=gcc
    CC_R='$(CC) -pthread'
    CC_SHR='$(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
    CFLAGS="-Wall -g -DDEBUG -DACPI"
    FFLAGS="-Wall -g"
-   CPU= 
-   #MISCSRCS="acpi.c acpi_events.c"
-   #MISCOBJS="acpi.o acpi_events.o" 
-   MISCSRCS=
-   MISCOBJS=
 elif test "$MAKEVER" = "linux-bgl"; then
    FILENAME=Makefile.inc
    BLRTS_GNU_ROOT="/bgl/BlueLight/ppcfloor/blrts-gnu"
@@ -1763,7 +1762,6 @@ elif test "$MAKEVER" = "linux-bgl"; then
    #CFLAGS='-D_BGL -g -gdwarf-2 -O2 -Wall -I$(BGLSYS_ROOT)/include'
    #FFLAGS='-g -gdwarf-2 -O2 -Wall -I$(BGLSYS_ROOT)/include -Dlinux' 
    OPTFLAGS='-g -O3 -I$(BGLSYS_ROOT)/include'
-   TOPTFLAGS= 
    FOPTFLAGS='$(OPTFLAGS)'
    FTOPTFLAGS='$(TOPTFLAGS)'
    LDFLAGS='-L$(BGLSYS_ROOT)/lib -lbgl_perfctr.rts -lmpich.rts -lmsglayer.rts -lrts.rts -ldevices.rts'
@@ -1783,16 +1781,13 @@ elif test "$MAKEVER" = "linux-bgl"; then
    CFLAGS='$(CFLAGS) -I. -DCOMP_VECTOR=_bgl_vectors'
    # Some nice flags to add to CFLAGS when debugging PAPI library itself
    # -DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
-   MISCHDRS= 
-   MISCSRCS=linux-bgl-events.c
+   MISCSRCS="$MISCSRCS linux-bgl-events.c"
    MISCOBJS='$(MISCSRCS:.c=.o)'
-   SHLIBDEPS=
    BGL_TESTS=bgl_tests
 elif test "$MAKEVER" = "linux-mx"; then
    FILENAME=Makefile.inc
    LIBRARY=libpapi.a
    #SHLIB=libpapi.so
-   SHLIB=
    SUBSTR=linux-mx
    MEMSUBSTR=linux-mx
    MEMSUBSTRC=linux-mx-memory.c
@@ -1800,8 +1795,6 @@ elif test "$MAKEVER" = "linux-mx"; then
    DESCR="Sample substrate: Any hardware platform with GNU compilers"
    LIBS="static shared"
    TARGETS="serial mpi"
-   POST_BUILD=
-   SPECIAL_REMOVE=
    F77=g77
    CC=gcc
    CC_R='$(CC) -pthread'
@@ -1809,9 +1802,6 @@ elif test "$MAKEVER" = "linux-mx"; then
    CC_SHR='$(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
    CFLAGS="-Wall -g -DDEBUG" 
    FFLAGS="-Wall -g"
-   CPU= 
-   MISCSRCS= 
-   MISCOBJS=   
 elif test "$MAKEVER" = "linux-pcl"; then
    FILENAME=Rules.pfm_pcl
    SUBSTR=pcl 
@@ -1925,8 +1915,6 @@ elif (test "$MAKEVER" = "solaris-ultra" || test "$MAKEVER" = "solaris-ultra-64")
       OPTFLAGS=-O3
       CFLAGS="-DNEED_FFSLL"
       FFLAGS=$CFLAGS
-      TOPTFLAGS=
-      SMPCFLGS=
    else 
       # Sun Workshop compilers: V5.0 and V6.0 R2
       TARGETS="$TARGETS smp omp"
@@ -1944,11 +1932,7 @@ elif (test "$MAKEVER" = "solaris-ultra" || test "$MAKEVER" = "solaris-ultra-64")
       OPTFLAGS="-g -fast -xtarget=ultra3 -xarch=v8plusa" 
    fi
    FOPTFLAGS=$OPTFLAGS
-   LDFLAGS="$LDFLAGS -lcpc"  
-   MISCSRCS=  
-   MISCOBJS=  
-   POST_BUILD=
-   SPECIAL_REMOVE=  
+   LDFLAGS="$LDFLAGS -lcpc" 
    if test "$MAKEVER" = "solaris-ultra-64"; then
       LIBRARY=libpapi64.a
       SHLIB=libpapi64.so
@@ -1965,16 +1949,11 @@ elif test "$CC" = "gcc"; then
    DESCR="Sample substrate: Any hardware platform with GNU compilers"
    LIBS="static shared"
    TARGETS="serial multiplex_and_pthreads"
-   POST_BUILD =
-   SPECIAL_REMOVE =
    CC_R='$(CC) -pthread'
    SHRFLAGS="-fPIC -DPIC"
    CC_SHR='$(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
    CFLAGS='$(CFLAGS) -Wall -DDEBUG' 
    FFLAGS='$(FFLAGS) -Wall' 
-   CPU= 
-   MISCSRCS=
-   MISCOBJS=
 else
    echo "Unable to create generic build for non-GNU compiler"
    exit -1

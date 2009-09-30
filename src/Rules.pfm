@@ -88,8 +88,9 @@ ifeq (y,$(PFM_OLD_PFMV2))
 	CFLAGS		 += -DPFMLIB_OLD_PFMV2
 endif
 
+# MISCSRCS can be set in configure.in and that value should not be overwritten by a Rules file
 MISCHDRS = pfmwrap.h
-MISCSRCS = 
+#MISCSRCS = 
 # This is necessary to avoid text relocations. You cannot do -Lxx -lx because
 # it will attempt to use the static library if a shared library ending in
 # .so does not exist

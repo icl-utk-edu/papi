@@ -154,13 +154,9 @@ CFLAGS-2.6.x := -DPERFCTR26
 CFLAGS-2.7.x := $(CFLAGS-2.6.x)
 CFLAGS += $(EVENTFLAGS) $(CFLAGS-$(VERSION))
 
+# MISCSRCS can be set in configure.in and that value should not be overwritten by a Rules file
 MISCHDRS = perfctr-$(CPU).h
-MISCSRCS =  $(CPU)_events.c linux.c $(ARCH_SPEC_EVTS)
-
-# x86 cache info now in its own file
-ifeq (linux, $(MEMSUBSTR))
-  MISCSRCS +=  x86_cache_info.c
-endif
+MISCSRCS +=  $(CPU)_events.c linux.c $(ARCH_SPEC_EVTS)
 
 SHLIBDEPS = -Bdynamic -L$(PERFCTR_LIB_PATH) -lperfctr
 PERFCTR_OBJS = $(shell $(AR) t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
@@ -217,9 +213,6 @@ $(CPU)_events.o: $(CPU)_events.c $(HEADERS)
 
 linux.o: linux.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
-
-x86_cache_info.o: x86_cache_info.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c x86_cache_info.c -o $@
 
 $(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c  $(ARCH_EVENTS)_map.c -o $@
