@@ -46,5 +46,6 @@ BITS	= @bitmode@
 TESTS = @tests@
 SETPATH = @SETPATH@
 LINKLIB = @LINKLIB@
+MISCSRCS = @MISCSRCS@
 
 include ./Makefile.$(MAKEVER)

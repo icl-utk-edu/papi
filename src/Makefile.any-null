@@ -1,15 +1,23 @@
-LIBRARY   = libpapi.a
-SHLIB     = libpapi.so
-SUBSTR  = any-null
-MEMSUBSTR = any-null
-DESCR	= "Sample substrate: Any hardware platform with GNU compilers"
-LIBS	= static
-TARGETS = serial multiplex
+LIBRARY   	= libpapi.a
+SHLIB     	= libpapi.so
+SUBSTR  	= any-null
+MEMSUBSTR 	= any-null
+DESCR		= "Sample substrate: Any hardware platform with GNU compilers"
+LIBS		= static shared
+TARGETS 	= serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads
+POST_BUILD =
+SPECIAL_REMOVE =
 
-CFLAGS  = -Wall -g -DDEBUG
-FFLAGS	= -Wall -g
-CC	= gcc
-F77	= g77
+F77		= gfortran
+CC		= gcc
+CC_R    	= $(CC) -pthread
+SHRFLAGS	= -fPIC -DPIC
+CC_SHR		= $(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
+CFLAGS  	= -Wall -g -DDEBUG 
+FFLAGS		= -Wall -g
+
+CPU		=
+MISCOBJS 	=  
 
 include Makefile.inc
 
@@ -17,3 +25,4 @@ native_clean:
 
 native_install:
 
+native_clobber:

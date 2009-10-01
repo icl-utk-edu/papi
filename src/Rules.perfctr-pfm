@@ -1,0 +1,339 @@
+# This is a -*- makefile -*-
+# $Id$
+
+# File: Rules.perfctr
+# Mods: Maynard Johnson
+#       maynardj@us.ibm.com
+
+DESCR   = "Linux with PerfCtr $(VERSION) patch and library, and perfmon2 libpfm library"
+TARGETS = serial forkexec_tests overflow_tests profile_tests attach multiplex_and_pthreads shared
+LIBRARY = libpapi.a
+SHLIB   = libpapi.so
+SUBSTR  = perfctr-$(CPU)
+ARCH	= $(shell uname -m)
+
+ifeq (p4,$(CPU))
+TARGETS += p4
+CFLAGS 		+= -DPENTIUM4
+else
+ifeq (p3,$(CPU))
+CPU_EVENTS	:= p3_pfm_events
+else
+CPU_EVENTS	:= $(CPU)_events
+endif
+endif
+
+
+ifeq (i686,$(ARCH))
+ARCH = i386
+endif
+
+ifeq (i586,$(ARCH))
+ARCH = i386
+endif
+
+ifeq (i486,$(ARCH))
+ARCH = i386
+endif
+
+#
+# GNU G77/GCC section
+#
+
+ifeq (x86_64,$(ARCH))
+ifeq (32,$(BITS))
+BITFLAGS	?= -m32 
+else
+LIB_SUFFIX	:= 64
+endif
+MEMSUBSTR	:= linux
+endif
+
+ifeq (i386,$(ARCH))
+MEMSUBSTR	:= linux
+endif
+
+ifeq (ppc,$(ARCH))
+CFLAGS 		+= -DPPC32
+MEMSUBSTR 	= linux-ppc64
+endif
+
+ifeq ($(ARCH),ppc64)
+ifeq (32,$(BITS))
+BITFLAGS	?= -m32
+else
+LIB_SUFFIX	:= 64
+ifeq (64,$(BITS))
+BITFLAGS	?= -m64
+endif
+endif
+CFLAGS 		+= -DPPC64
+ARCH_SPEC_EVTS	:= $(ARCH_EVENTS)_map.c
+MEMSUBSTR 	= linux-ppc64
+endif
+
+ifneq (,$(shell $(CC) -v 2>&1 | grep version | cut -f3 -d" " | grep "^4.2"))
+TARGETS += omp
+OMPCFLGS = -fopenmp
+endif
+
+CC_R    	:= $(CC) -pthread
+CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
+
+ifeq (pgf77,$(F77))
+	FFLAGS      += -Wall -Mextend $(BITFLAGS)
+else
+	FFLAGS      += -Wall -ffixed-line-length-132 $(BITFLAGS)
+endif
+
+CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(BITFLAGS)
+
+# 
+# Catamount section
+# 
+
+ifeq (CATAMOUNT, $(COMPILER))
+LIBS    	= static
+TARGETS 	= serial forkexec_tests overflow_tests profile_tests multiplex
+MEMSUBSTR	= linux
+FFLAGS		= $(BITFLAGS)
+endif
+
+# 
+# Portland Group section
+# 
+
+ifeq (icc, $(CC))
+TARGETS	  	+= omp
+endif
+
+ifeq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))
+ifeq ($(ARCH),ppc64)
+#Workaround to gcc bug (see gcc bug #20611)
+OPTFLAGS        += -O2 $(DEBUGFLAGS)
+else
+OPTFLAGS	+= -O3 $(DEBUGFLAGS)
+endif
+else
+OPTFLAGS	+= -g -O $(DEBUGFLAGS)
+endif
+
+FFLAGS        	+= -Dlinux $(FARGS)
+TOPTFLAGS	+= -g -O  
+FTOPTFLAGS	= $(TOPTFLAGS)
+
+ifeq (static,$(PFM_EVENTS))
+	CFLAGS		 += -DSTATIC_PERFMON_EVENTS_TABLE
+	PFM_EVENTS_TABLE := perfmon_events_table.h
+endif
+
+ifeq (y,$(PFM_OLD_PFMV2))
+	CFLAGS		 += -DPFMLIB_OLD_PFMV2
+endif
+
+#
+# DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
+#
+
+ifneq (/usr,$(PERFCTR_PREFIX))
+PWD = $(shell pwd)
+ifeq (,$(PERFCTR_LIB_PATH))
+ifeq (,$(PERFCTR_ROOT))
+	PERFCTR_ROOT := $(PWD)/perfctr-$(VERSION)
+endif
+	PERFCTR_LIB_PATH := $(PERFCTR_ROOT)/usr.lib
+	CC_SHR += -Wl,-rpath-link -Wl,$(PERFCTR_LIB_PATH)
+endif
+ifeq (,$(PERFCTR_INC_PATH))
+ifeq (,$(PERFCTR_ROOT))
+	PERFCTR_ROOT := $(PWD)/perfctr-$(VERSION)
+endif
+	PERFCTR_INC_PATH := $(PERFCTR_ROOT)/usr.lib
+	PERFCTR_KINC_PATH := $(PERFCTR_ROOT)/linux/include
+else
+	PERFCTR_KINC_PATH := $(PERFCTR_INC_PATH)
+endif
+ifneq (/usr/include,$(PERFCTR_INC_PATH))
+CFLAGS += -I$(PERFCTR_INC_PATH) 
+endif
+ifneq (/usr/include/linux/include,$(PERFCTR_KINC_PATH))
+CFLAGS += -I$(PERFCTR_KINC_PATH) 
+endif
+endif
+
+CFLAGS-2.5.4 := -DPERFCTR25
+CFLAGS-2.6.x := -DPERFCTR26
+CFLAGS-2.7.x := $(CFLAGS-2.6.x)
+CFLAGS += $(EVENTFLAGS) $(CFLAGS-$(VERSION))
+
+MISCHDRS = perfctr-$(CPU).h $(PFM_EVENTS_TABLE)
+MISCSRCS +=  linux.c $(ARCH_SPEC_EVTS)
+
+# Pentium 4 no longer needs a p4_events.c file
+ifneq (,$(CPU_EVENTS))
+  MISCSRCS +=  $(CPU_EVENTS).c
+endif
+PERFCTR_OBJS = $(shell $(AR) t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
+
+ifeq (,$(PERFCTR_OBJS))
+$(PERFCTR_LIB_PATH)/libperfctr.a:
+ifneq (,${PERFCTR_ROOT})
+ ifeq (ppc64,${ARCH})
+	$(MAKE) CC='$(CC) $(BITFLAGS)' -C $(PERFCTR_ROOT)
+ endif
+ ifeq (CATAMOUNT, $(COMPILER))
+	$(MAKE) CC='$(CC)' -C $(PERFCTR_ROOT)
+ else
+  ifeq (x86_64,${ARCH})
+   ifeq (32,${BITS})
+	$(MAKE) CC='$(CC) $(BITFLAGS)' LD_FLAGS="-melf_i386" ARCH="i386" -C $(PERFCTR_ROOT)
+   else
+	$(MAKE) -C $(PERFCTR_ROOT)
+   endif
+  else
+	$(MAKE) -C $(PERFCTR_ROOT)
+  endif
+ endif
+else
+	@echo '$@ not installed!'; exit 1
+endif
+	$(MAKE)
+endif
+
+#Dynamic linking loader needs correct version of libperfctr
+ifeq ($(VERSION),2.7.x)
+	SO_ABIVER=6
+else
+ifeq ($(VERSION),2.6.x)
+	i386_ABIVER=5
+	x86_64_ABIVER=6
+	ppc_ABIVER=5
+	SO_ABIVER=$($(ARCH)_ABIVER)
+endif
+endif
+POST_BUILD = cp $(PERFCTR_LIB_PATH)/libperfctr.so .;ln -fs libperfctr.so libperfctr.so.$(SO_ABIVER)
+SPECIAL_REMOVE = rm -f libperfctr.so*
+
+####################################################################
+# This section builds libpfm to get at its support for native events
+# We only need to build the library, not the examples, etc.
+ifneq (/usr,$(PFM_PREFIX))
+PWD = $(shell pwd)
+ifeq (,$(PFM_LIB_PATH))
+ifeq (,$(PFM_ROOT))
+	PFM_ROOT := $(PWD)/libpfm-3.y
+endif
+	PFM_LIB_PATH := $(PFM_ROOT)/lib
+	CC_SHR += -Wl,-rpath-link -Wl,$(PFM_LIB_PATH)
+endif
+ifeq (,$(PFM_INC_PATH))
+ifeq (,$(PFM_ROOT))
+        PFM_ROOT := $(PWD)/libpfm-3.y
+endif
+        PFM_INC_PATH := $(PFM_ROOT)/include
+endif
+ifneq (/usr/include,$(PFM_INC_PATH))
+CFLAGS	+= -I$(PFM_INC_PATH) 
+endif
+endif
+
+CFLAGS	+= -DPERFCTR_PFM_EVENTS
+
+PFM_OBJS=$(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
+ifeq (,$(PFM_OBJS))
+  $(PFM_LIB_PATH)/libpfm.a:
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)" DIRS=lib CONFIG_PFMLIB_OLD_PFMV2="$(PFM_OLD_PFMV2)"
+	$(MAKE)
+endif
+
+# This sets up the shared lib deps *after* pfm is built, since we need the pfm
+# Event table even if we're using perfctr.
+PFM_LIBS=-L$(PFM_LIB_PATH) -lpfm
+
+MISCSRCS += papi_pfm_events.c
+MISCOBJS += $(PERFCTR_OBJS) $(PFM_OBJS) $(MISCSRCS:.c=.o)
+MISCHDRS += papi_pfm_events.h
+SHLIBDEPS = -Bdynamic -L$(PERFCTR_LIB_PATH) -lperfctr $(PFM_LIBS)
+####################################################################
+
+include Makefile.inc
+
+config.h:
+	@echo 'Please clobber your build and run ./configure. Direct Makefile access has been deprecated.'
+
+$(PERFCTR_OBJS): $(PERFCTR_LIB_PATH)/libperfctr.a
+	ar xv $<
+
+$(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
+	ar xv $<
+
+$(CPU_EVENTS).o: $(CPU_EVENTS).c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPU_EVENTS).c -o $@
+
+linux.o: linux.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
+
+papi_pfm_events.o: papi_pfm_events.c $(HEADERS) $(PFM_EVENTS_TABLE)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_pfm_events.c -o $@
+
+$(PFM_EVENTS_TABLE):	perfmon_events.csv perfmon_events_table.sh
+	sh perfmon_events_table.sh > $@
+
+$(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c  $(ARCH_EVENTS)_map.c -o $@
+
+native_clean:
+	-rm -f $(MISCOBJS)
+ifneq (,${PERFCTR_ROOT})
+	$(MAKE) -C $(PERFCTR_ROOT) clean
+endif
+ifneq (,${PFM_ROOT})
+	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" clean
+endif
+ifeq (static,$(PFM_EVENTS))
+	-rm -f $(PFM_EVENTS_TABLE)
+endif
+
+native_install: 
+	-mkdir -p $(DESTDIR)$(DATADIR)
+	-chmod go+rx $(DESTDIR)$(DATADIR)
+	-cp -f ./perfmon_events.csv $(DESTDIR)$(DATADIR)
+ifeq ($(ARCH),ppc64)
+	cp -Rf ./event_data $(DESTDIR)$(DATADIR)
+endif
+ifneq (,${PFM_ROOT})
+	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC=$(CC) DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
+endif
+ifneq (,${PERFCTR_ROOT})
+ifeq (${VERSION},2.4.x)
+	mkdir -p $(DESTDIR)$(PREFIX)/lib$(LIB_SUFFIX)
+	cp -p $(PERFCTR_ROOT)/usr.lib/libperfctr.so $(DESTDIR)$(PREFIX)/lib$(LIB_SUFFIX)
+	mkdir -p $(DESTDIR)$(PREFIX)/include
+	cp -p $(PERFCTR_ROOT)/usr.lib/event_codes.h $(DESTDIR)$(PREFIX)/include
+	cp -p $(PERFCTR_ROOT)/usr.lib/libperfctr.h  $(DESTDIR)$(PREFIX)/include
+else
+ifeq (x86_64,${ARCH})
+ifeq (32,${BITS})
+	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(DESTDIR)$(PREFIX) BINDIR=$(DESTDIR)$(BINDIR) LIBDIR=$(DESTDIR)$(LIBDIR) INCLDIR=$(DESTDIR)$(INCDIR) ARCH="i386" install
+else
+	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(DESTDIR)$(PREFIX) BINDIR=$(DESTDIR)$(BINDIR) LIBDIR=$(DESTDIR)$(LIBDIR) INCLDIR=$(DESTDIR)$(INCDIR) install
+endif
+else
+	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(DESTDIR)$(PREFIX) BINDIR=$(DESTDIR)$(BINDIR) LIBDIR=$(DESTDIR)$(LIBDIR) INCLDIR=$(DESTDIR)$(INCDIR) install
+endif
+endif
+endif
+  ifneq (CATAMOUNT, $(COMPILER))
+	mkdir -p $(DESTDIR)$(LIBDIR)
+	cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE)
+	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so.$(PAPIVER)
+	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so
+  endif
+
+native_clobber:
+ifneq (,${PERFCTR_ROOT})
+	$(MAKE) -C $(PERFCTR_ROOT) distclean
+endif
+ifneq (,${PFM_ROOT})
+	 $(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" distclean
+endif

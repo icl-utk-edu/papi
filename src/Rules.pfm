@@ -1,59 +1,137 @@
+# $Id$
 
-# Uncomment below and comment out the lines above to use a 
-# natively installed libpfm
-#PFM_LIB_PATH = /usr/lib
-#PFM_INC_PATH = /usr/include/perfmon
-#MISCOBJS= 
-#NATIVE_CLEAN = 
-
-#
-# Don't touch below here
-#
-LIBRARY   = libpapi.a
-SHLIB     = libpapi.so
+DESCR   = "Linux with PFM $(VERSION) kernel support and library"
+LIBRARY = libpapi.a
+SHLIB   = libpapi.so
+TARGETS = serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads shared ear range
 SUBSTR  = linux-ia64
 MEMSUBSTR= linux-ia64
-LIBS	= static shared
-# shared
-TARGETS = serial multiplex_and_pthreads
 
-MISCSRCS= linux.c
-PFMOBJS += pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o 
-MISCOBJS +=  linux.o $(PFMOBJS)  
-NATIVE_CLEAN = rm -f $(MISCOBJS); cd $(PFM_LIB_PATH); $(MAKE) clean
+#
+# GNU G77/GCC section
+#
 
-CFLAGS  += -I$(PFM_INC_PATH)  -I. -Wall  -DPAPI3 -g -DDEBUG 
-TOOLPATH = ../$(LIBPFMHOME)
-# -DDEBUG
-OPTFLAGS= -O3
-TOPTFLAGS = -O0
-FFLAGS	+=
-#  -Vaxlib
-LDFLAGS = 
-#LDFLAGS = -lPEPCF90 -lIEPCF90 -lF90 -lintrins
-FOPTFLAGS= $(OPTFLAGS)
-FTOPTFLAGS= $(TOPTFLAGS)
-CC_SHR  = gcc -shared -fpic -DCONFIG_PFMLIB_GENERIC -DCONFIG_PFMLIB_ITANIUM -DCONFIG_PFMLIB_ITANIUM2
-CC_R	= gcc -pthread
-CC	= gcc
-#F77	= /usr/local/intel/compiler50/ia64/bin/efc
-F77     = g77
-MISCHDRS= 
-SHLIBDEPS = -L$(PFM_LIB_PATH) -lpfm
+ifneq (,$(shell $(CC) -v 2>&1 | grep version | cut -f3 -d" " | grep "^4.2"))
+TARGETS += omp
+OMPCFLGS = -fopenmp
+endif
+
+CC_R    	= $(CC) -pthread
+CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,$(SHLIB) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
+
+ifeq (pgf77,$(F77))
+	FFLAGS      += -Mextend
+else
+	FFLAGS     += -ffixed-line-length-132
+endif
+
+CFLAGS		+= -Wall 
+
+KERNMINVER	= $(shell uname -r | cut -f2 -d.)
+POST_BUILD	=
+SPECIAL_REMOVE =
+
+ifeq (4,$(KERNMINVER)) 
+VERSION	?= 2.x
+else
+ifeq (2,$(KERNMINVER))
+VERSION	?= 2.x
+else
+VERSION ?= 3.y
+endif
+endif
+	
+ifneq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))
+OPTFLAGS	+= -g $(DEBUGFLAGS)
+endif
+FFLAGS        	+= -Dlinux -DITANIUM$(CPU)
+TOPTFLAGS	+= -O  
+FTOPTFLAGS	= $(TOPTFLAGS)
+
+#
+# DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
+#
+
+# If Altix, always build with PFM provided by the system
+# unless forced to override
+
+ifneq (,$(wildcard /etc/sgi-release))
+	PFM_PREFIX ?= /usr
+	ALTIX ?= -DALTIX
+endif
+
+ifeq (,$(PFM_LIB_PATH))
+ifeq (,$(PFM_ROOT))
+        PFM_ROOT := ./libpfm-$(VERSION)
+endif
+ifeq (2.x,$(VERSION))
+	PFM_LIB_PATH := $(PFM_ROOT)/libpfm
+else
+	PFM_LIB_PATH := $(PFM_ROOT)/lib
+endif
+endif
+ifeq (,$(PFM_INC_PATH))
+ifeq (,$(PFM_ROOT))
+        PFM_ROOT := ./libpfm-$(VERSION)
+endif
+        PFM_INC_PATH := $(PFM_ROOT)/include
+endif
+
+OPTIM := $(CFLAGS)
+CFLAGS-2.x := -DPFM20 -D_GNU_SOURCE
+CFLAGS-3.y := -DPFM30 -D_GNU_SOURCE  
+CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) $(NOTLS) $(ALTIX) $(CFLAGS-$(VERSION))
+
+ifeq (y,$(PFM_OLD_PFMV2))
+	CFLAGS		 += -DPFMLIB_OLD_PFMV2
+endif
+
+MISCHDRS = pfmwrap.h
+# This is necessary to avoid text relocations. You cannot do -Lxx -lx because
+# it will attempt to use the static library if a shared library ending in
+# .so does not exist
+SHLIBDEPS = -Bdynamic -L$(PFM_LIB_PATH) -lpfm
+
+PFM_OBJS = $(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
+ifeq (,$(PFM_OBJS))
+$(PFM_LIB_PATH)/libpfm.a:
+ifneq (,${PFM_ROOT})
+	$(MAKE) -C $(PFM_ROOT) CC="$(CC)" OPTIM="$(OPTIM)" CONFIG_PFMLIB_OLD_PFMV2="$(PFM_OLD_PFMV2)"
+else
+	@echo '$@ not installed!'; exit 1
+endif
+	$(MAKE)
+endif
+MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
 
 include Makefile.inc
 
-linux.o: linux.c
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
+config.h:
+	@echo 'Please clobber your build and run ./configure."
 
-$(PFMOBJS):
-	-cd $(PFM_LIB_PATH); $(MAKE)
-	ar xv $(PFM_LIB_PATH)/libpfm.a
+$(PFM_OBJS): 
+	$(AR) xv $(PFM_LIB_PATH)/libpfm.a
 
 native_clean:
-	rm -f $(MISCOBJS); cd $(PFM_LIB_PATH); $(MAKE) clean
+	-rm -f $(MISCOBJS) 
+ifneq (,${PFM_ROOT})
+	$(MAKE) -C $(PFM_ROOT) clean
+endif
 
 native_install:
-	-cp -p $(PFM_LIB_PATH)/libpfm.so.2 $(PREFIX)/lib
-	-cp -p $(PFM_INC_PATH)/*.h $(PREFIX)/include
+ifneq (,${PFM_ROOT})
+ifeq (2.x,$(VERSION))
+# This version has a very old makefile	
+	$(MAKE) -C $(PFM_ROOT) DESTDIR=$(DESTDIR)$(PREFIX) MANDIR=$(DESTDIR)$(MANDIR)/man3 install
+else
+	$(MAKE) -C $(PFM_ROOT) DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
+endif
+endif
+	cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE)
+	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so.$(PAPIVER)
+	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so
 
+native_clobber:
+ifneq (,${PFM_ROOT})
+	 $(MAKE) -C $(PFM_ROOT) distclean
+endif

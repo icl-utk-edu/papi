@@ -74,18 +74,10 @@ endif
 CFLAGS	+= -DSUBSTRATE_USES_LIBPFM
 
 MISCHDRS = perfmon.h papi_pfm_events.h $(PFM_EVENTS_TABLE)
-MISCSRCS = papi_pfm_events.c
+MISCSRCS += papi_pfm_events.c
 
 ifeq (pcl, $(SUBSTR))
   MISCSRCS += sys_perf_counter_open.c
-endif
-
-ifneq (CRAYX2, $(COMPILER))
-  ifneq (ia64, $(ARCH))
-    ifneq (ppc64, $(ARCH))
-      MISCSRCS +=  x86_cache_info.c
-    endif
-  endif
 endif
 
 # This is necessary to avoid text relocations. You cannot do -Lxx -lx because
@@ -112,9 +104,6 @@ config.h:
 
 $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
 	$(AR) xv $<
-
-x86_cache_info.o: x86_cache_info.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c x86_cache_info.c -o $@
 
 papi_pfm_events.o: papi_pfm_events.c $(HEADERS) $(PFM_EVENTS_TABLE)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_pfm_events.c -o $@
