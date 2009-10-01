@@ -34,7 +34,7 @@ MPICC	= mpcc
 F77	= xlf
 CPP	= xlc -E
 MISCHDRS= aix.h power3_events.h
-MISCSRCS += aix.c power3_events.c 
+MISCSRCS= aix.c power3_events.c 
 MISCOBJS= aix.o power3_events.o 
 
 include Makefile.inc

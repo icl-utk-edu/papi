@@ -23,7 +23,7 @@ F77    = xlf
 CPP    = xlc -E $(CPPFLAGS)
 
 MISCHDRS= aix.h ppc64_events.h pmapi-ppc64.h perfmon_events_table.h
-MISCSRCS += aix.c pmapi-ppc64_events.c #$(ARCH_EVENTS)_map.c
+MISCSRCS= aix.c pmapi-ppc64_events.c #$(ARCH_EVENTS)_map.c
 MISCOBJS= aix.o pmapi-ppc64_events.o #$(ARCH_EVENTS)_map.o
 
 include Makefile.inc

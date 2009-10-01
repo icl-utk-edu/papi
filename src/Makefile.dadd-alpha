@@ -28,8 +28,8 @@ F77	= f90
 #F77	= f90 -D__ALPHA
 #MISCOBJS= cpu_version.o read_cycle_counter.o
 MISCOBJS= cpu_version.o
-#MISCSRCS += alpha/cpu_version.s alpha/read_cycle_counter.s
-MISCSRCS += alpha/cpu_version.s
+#MISCSRCS= alpha/cpu_version.s alpha/read_cycle_counter.s
+MISCSRCS= alpha/cpu_version.s
 
 include Makefile.inc
 
