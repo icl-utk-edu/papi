@@ -101,11 +101,11 @@ multiplex.o: multiplex.c $(HEADERS)
 $(SUBSTR).o: $(SUBSTR).c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(SUBSTR).c -o $(SUBSTR).o 
 
-# Required for x86 configurations, but conditional probably isn't needed 
-ifeq ($(shell echo $(MISCSRCS) | grep -c "x86_cache_info.c"),1)
+# Required for x86 configurations. Note: ifeq conditional won't compile on AIX
+#ifeq ($(shell echo $(MISCSRCS) | grep -c "x86_cache_info.c"),1)
 x86_cache_info.o: x86_cache_info.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c x86_cache_info.c -o x86_cache_info.o
-endif
+#endif
 
 #
 # This is all done by configure now
