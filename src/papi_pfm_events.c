@@ -1010,7 +1010,7 @@ static char *_pmc_name(int i)
 
   switch (_perfmon2_pfm_pmu_type)
     {
-#if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
+#if defined(PFMLIB_MIPS_ICE9A_PMU)
       /* All the counters after the 2 CPU counters, the 4 sample counters are SCB registers. */
     case PFMLIB_MIPS_ICE9A_PMU:
     case PFMLIB_MIPS_ICE9B_PMU:
@@ -1043,7 +1043,7 @@ int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
 		return(PAPI_ESBSTR);
 	}
 
-#if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
+#if defined(PFMLIB_MIPS_ICE9A_PMU)
 	extern int _perfmon2_pfm_pmu_type;
 	switch (_perfmon2_pfm_pmu_type) {
 		/* All the counters after the 2 CPU counters, the 4 sample counters are SCB registers. */
