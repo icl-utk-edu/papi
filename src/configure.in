@@ -999,12 +999,18 @@ AC_ARG_WITH(pfm_libdir,
            [pfm_libdir=$withval],
            [pfm_libdir=""]
             )
+
+# set PCL only when manually set with --with-pcl, 
+# or by default if perfctr is not available
+
 if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
 AC_ARG_WITH(pcl,
             [  --with-pcl=<yes,no>		Specify existence of Performance Counters for Linux],
             [pcl=$withval],
             [pcl="no"
-            AC_CHECK_FILE(/sys/devices/system/cpu/perf_counters, [ pcl="yes" ]) ]
+			if test "$perfctr" = "no"; then
+            AC_CHECK_FILE(/sys/devices/system/cpu/perf_counters, [ pcl="yes" ])
+			fi ]
             )
 else
    pcl="no"
