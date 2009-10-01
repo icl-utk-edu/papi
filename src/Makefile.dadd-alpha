@@ -5,9 +5,11 @@ MSUBSTR  = dadd-alpha
 MEMSUBSTR= alpha
 DESCR   = "Compaq Tru64 Unix with Alpha 21264EV6"
 LIBS	= static shared
-TARGETS	= serial multiplex
+TARGETS	= serial forkexec_tests overflow_tests profile_tests multiplex
+POST_BUILD =
+SPECIAL_REMOVE =
 
-CFLAGS 	= -I/usr/include/dcpi -w -Zp8 -DNO_VARARG_MACRO -DHAS_NATIVE_MAP
+CFLAGS 	= -I/usr/include/dcpi -Zp8 -DNO_VARARG_MACRO -DNEED_FFSLL 
 FFLAGS	= 
 OPTFLAGS= -O 
 TOPTFLAGS=$(OPTFLAGS)
@@ -15,6 +17,7 @@ FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(TOPTFLAGS)
 SMPCFLGS= -mp
 OMPCFLGS= -omp
+SHLIBDEPS= /usr/lib/dcpi/dadd.a
 MISCLIBS= 
 LDFLAGS = -lrt -lclu /usr/lib/dcpi/dadd.a
 CC_SHR	= cc -shared -all -rpath . -lrt -lclu
@@ -25,8 +28,8 @@ F77	= f90
 #F77	= f90 -D__ALPHA
 #MISCOBJS= cpu_version.o read_cycle_counter.o
 MISCOBJS= cpu_version.o
-#MISCSRCS= alpha/cpu_version.s alpha/read_cycle_counter.s
-MISCSRCS= alpha/cpu_version.s
+#MISCSRCS += alpha/cpu_version.s alpha/read_cycle_counter.s
+MISCSRCS += alpha/cpu_version.s
 
 include Makefile.inc
 
@@ -40,4 +43,5 @@ native_clean:
 
 native_install:
 
+native_clobber:
 

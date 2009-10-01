@@ -1,0 +1,76 @@
+LIBRARY   	= libpapi.a
+SHLIB     	= libpapi.so
+SUBSTR      = freebsd
+MEMSUBSTR 	= any-null
+DESCR       = "FreeBSD -over libpmc- substrate"
+LIBS        = static shared
+TARGETS     = serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads
+POST_BUILD  =
+SPECIAL_REMOVE =
+
+#DEBUGFLAGS  = -DDEBUG
+
+CC_R        = $(CC) -pthread
+CC_SHR      = $(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)" -DPIC -fPIC -I. -Ifreebsd
+CFLAGS      += -Wall -g -O -I. -Ifreebsd -DPIC -fPIC $(DEBUGFLAGS)
+FFLAGS      += -Wall -g -O
+
+CPU	      = 
+
+MISCHDRS = freebsd/map-unknown.h freebsd/map.h freebsd/map-p6.h freebsd/map-p6-m.h freebsd/map-p6-3.h freebsd/map-p6-2.h freebsd/map-p6-c.h freebsd/map-k7.h freebsd/map-k8.h freebsd/map-p4.h freebsd/map-atom.h freebsd/map-core.h freebsd/map-core2.h freebsd/map-core2-extreme.h
+MISCSRCS += freebsd/map-unknown.c freebsd/map.c freebsd/map-p6.c freebsd/map-p6-m.c freebsd/map-p6-3.c freebsd/map-p6-2.c freebsd/map-p6-c.c freebsd/map-k7.c freebsd/map-k8.c freebsd/map-p4.c freebsd/map-atom.c freebsd/map-core.c freebsd/map-core2.c freebsd/map-core2-extreme.c
+MISCOBJS = $(MISCSRCS:.c=.o)
+SHLIBDEPS =
+
+include Makefile.inc
+
+freebsd/map.o: freebsd/map.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-unknown.o: freebsd/map-unknown.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-p6.o: freebsd/map-p6.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-p6-m.o: freebsd/map-p6-m.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-p6-3.o: freebsd/map-p6-3.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-p6-2.o: freebsd/map-p6-2.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-p6-c.o: freebsd/map-p6-c.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-k7.o: freebsd/map-k7.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-k8.o: freebsd/map-k8.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-p4.o: freebsd/map-p4.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-atom.o: freebsd/map-atom.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-core.o: freebsd/map-core.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-core2.o: freebsd/map-core2.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-core2-extreme.o: freebsd/map-core2-extreme.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd.o: freebsd.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+native_clean:
+
+native_install:
+
+native_clobber:

@@ -4,15 +4,19 @@ SUBSTR  = power3
 MSUBSTR = power3
 MEMSUBSTR=aix
 DESCR	= "AIX 4.3.3 with 604, 604e or 630"
-LIBS	= static aix-shared
-TARGETS	= serial multiplex_and_pthreads smp omp
+LIBS	= static shared
+TARGETS	= serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads smp omp
+#PMAPI	= /usr/lpp/pmtoolkit
+SHLIBDEPS = -L$(PMAPI)/lib -lpmapi
+POST_BUILD =
+SPECIAL_REMOVE =
 
 # Default source is for pmtoolkit 1.3.x and above.
 # For version 1.2.x add -DPMTOOLKIT_1_2
 # For version 1.2.1 add -DPMTOOLKIT_1_2_1
 
 FLAGS  = -I/usr/lpp/pmtoolkit/include -qmaxmem=-1 -qarch=pwr3 
-CFLAGS	= $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -DPOWER3
+CFLAGS	= $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -DPOWER3 -DNEED_FFSLL
 #-DMPX_DEBUG_TIMER -DMPX_DEBUG
 OPTFLAGS= -O3 -qstrict
 NOOPT	= 
@@ -22,29 +26,27 @@ FOPTFLAGS= $(OPTFLAGS)
 FTOPTFLAGS= $(TOPTFLAGS)
 SMPCFLGS= -qsmp
 OMPCFLGS= -qsmp=omp
-LDFLAGS = -L/usr/lpp/pmtoolkit/lib -lpmapi
+LDFLAGS = -L$(PMAPI)/lib -lpmapi
 CC_R	= xlc_r
 CC	= xlc
-CC_SHR	= ld -r
+CC_SHR	= xlc -G -berok
 MPICC	= mpcc
 F77	= xlf
 CPP	= xlc -E
 MISCHDRS= aix.h power3_events.h
-MISCSRCS= aix.c power3_events.c 
+MISCSRCS += aix.c power3_events.c 
 MISCOBJS= aix.o power3_events.o 
 
 include Makefile.inc
 
 power3_events.o: power3_events.c  $(HEADERS)
-	$(CC) $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c power3_events.c -o power3_events.o
+	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c power3_events.c -o power3_events.o
 
 aix.o: aix.c  $(HEADERS)
-	$(CC) $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
-
-aix-shared: $(SOURCES)
-	$(CC_SHR) $(OBJECTS) $(MISCLIBS) -o $(SHLIB)
+	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
 
 native_install:
 
 native_clean:
 
+native_clobber:
