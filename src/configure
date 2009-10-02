@@ -639,6 +639,7 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+MISCSRCS
 LINKLIB
 SETPATH
 tests
@@ -9011,6 +9012,7 @@ if test "$shlib" = "dynamic"; then
 else
     LINKLIB='../$(LIBRARY)'
 fi
+
 
 
 
