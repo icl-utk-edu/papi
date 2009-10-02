@@ -113,16 +113,10 @@ linux-net.o: linux-net.c $(HEADERS)
 linux-lmsensors.o: linux-lmsensors.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-lmsensors.c -o linux-lmsensors.o 
 
-# Required for x86 configurations, but conditional probably isn't needed 
-ifeq ($(shell echo $(MISCSRCS) | grep -c "x86_cache_info.c"),1)
 x86_cache_info.o: x86_cache_info.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c x86_cache_info.c -o x86_cache_info.o
-endif
 
-#
 # Required for AIX PowerPC configurations
-#
-ifeq (aix,$(MEMSUBSTR))
 pmapi-ppc64_events.o: pmapi-ppc64_events.c  $(HEADERS) perfmon_events_table.h
 	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c pmapi-ppc64_events.c -o pmapi-ppc64_events.o
 
@@ -134,23 +128,15 @@ $(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c  $(HEADERS)
 
 aix.o: aix.c  $(HEADERS)
 	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
-endif
 
-#
 # Required for Linux-ACPI
-#
-ifeq (linux-acpi,$(MEMSUBSTR))
 acpi_events.o: acpi_events.c  $(HEADERS)
 	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c acpi_events.c -o acpi_events.o
 
 acpi.o: acpi.c  $(HEADERS)
 	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c acpi.c -o acpi.o
-endif
 
-#
 # Required for Linux-BGL
-#
-ifeq (linux-bgl,$(MEMSUBSTR)) 
 .SUFFIXES: .rts.o
 .c.rts.o:
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -163,7 +149,6 @@ bgl_tests:$(LIBRARY) null
 
 bgl_tests:$(LIBRARY) null 
 	cd ctests/bgl_tests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-DSUBSTRATE=\\\"$(SUBSTR).h\\\" $(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" bgl_test
-endif
 
 #
 # This is all done by configure now
