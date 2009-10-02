@@ -1,0 +1,82 @@
+.TH LIBPFM 4  "September, 2009" "" "Linux Programmer's Manual"
+.SH NAME
+pfm_get_perf_event_attr \- encode event for perf_event API
+.SH SYNOPSIS
+.nf
+.B #include <perfmon/pfmlib_perf_event.h>
+.sp
+.BI "int pfm_get_perf_event_attr(const char *" str ", struct perf_event_attr *" attr ", int *" idx ");"
+.sp
+.SH DESCRIPTION
+This function can be used in conjunction with the perf_events Linux kernel API which
+provides access to hardware performance counters and also some kernel software counters.
+It takes an event string in \fBstr\fR and fills out the relevant parts of the perf_events
+specific data structure in \fBattr\fR. If \fBidx\fR is not NULL, it also returns the
+corresponding unique event identifier.
+
+Only select fields are modified by the function, the others are untouched.
+The following fields in \fBattr\fR are modified:
+.TP
+.B type
+The type of the event
+.TP
+.B config
+The encoding of the event
+.TP
+.B exclude_user
+Whether or not user level execution should be excluded from monitoring. The definition
+of user is PMU model specific.
+.TP
+.B exclude_kernel
+Whether or not kernel level execution should be excluded from monitoring. The definition
+of kernel is PMU model specific.
+.TP
+.B exclude_hv
+Whether or not hypervisor level execution should be excluded from monitoring. The definition
+of hypervisor is PMU model specific.
+.PP
+By default, if no privilege level modifier is specified in the event string, the library clears
+\fBexclude_user\fR, \fBexclude_kernel\fR and \fBexclude_hv\fR, resulting in the event being
+measured at all levels subject to hardware support.
+
+The function is able to work on only one event at a time. For convenience, it accepts
+event strings with commas. In that case, it will translate the first event up to the
+first comma. This is handy in case tools gets passed events as a comma-separated list.
+
+.SH RETURN
+The function returns in \fBattr\fR the perf_event encoding which corresponds to the event
+string. If \fBidx\fR is not NULL, then it will contain the unique event identifier upon
+successful return. The value \fBPFM_SUCCESS\fR is returned if successful, otherwise a negative
+error code is returned.
+
+.SH ERRORS
+.TP
+.B PFM_ERR_TOOSMALL
+The \fBcode\fR argument is too small for the encoding.
+.TP
+.B PFM_ERR_INVAL
+The \fBattr\fR argument is \fBNULL\fR.
+.TP
+.B PFM_ERR_NOMEM
+Not enough memory.
+.TP
+.B PFM_ERR_NOTFOUND
+Event not found.
+.TP
+.B PFM_ERR_ATTR
+Invalid event attribute (unit mask or modifier)
+.TP
+.B PFM_ERR_ATTR_VAL
+Invalid modifier value.
+.TP
+.B PFM_ERR_ATTR_SET
+attribute already set, cannot be changed.
+.TP
+.B PFM_ERR_ATTR_UMASK
+Missing unit mask.
+.TP
+.B PFM_ERR_ATTR_FEATCOMB
+Unit masks or features cannot be combined into a single event.
+.SH AUTHOR
+Stephane Eranian <eranian@gmail.com>
+.PP

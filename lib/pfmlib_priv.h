@@ -1,0 +1,220 @@
+/*
+ * Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
+ * Contributed by Stephane Eranian <eranian@hpl.hp.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+ * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * This file is part of libpfm, a performance monitoring support library for
+ * applications on Linux.
+ */
+#ifndef __PFMLIB_PRIV_H__
+#define __PFMLIB_PRIV_H__
+#include <stdio.h>
+#include <perfmon/pfmlib.h>
+#include <perfmon/pfmlib_perf_event.h>
+
+/*
+ * priv level values
+ */
+#define PFM_PLMH	0x10
+#define PFM_PLM3	0x8 /* priv level 3, 2, 1 (x86) */
+#define PFM_PLM2	0x4 /* not yet used */
+#define PFM_PLM1	0x2 /* not yet used */
+#define PFM_PLM0	0x1 /* kernel */
+
+#define PFM_ATTR_I(y, d) { .name = (y), .type = PFM_ATTR_MOD_INTEGER, .desc = (d) }
+#define PFM_ATTR_B(y, d) { .name = (y), .type = PFM_ATTR_MOD_BOOL, .desc = (d) }
+#define PFM_ATTR_NULL	{ .name = NULL }
+
+/*
+ * modifier mask
+ */
+typedef int pfmlib_modmsk_t;
+
+/*
+ * event identifier encoding:
+ * bit 00-24 : event table specific index
+ * bit 15-30 : PMU identifier (16384 possbilities)
+ * bit 31    : reserved (cannot be set to distinguish negative error code)
+ */
+#define PFMLIB_PMU_SHIFT	24
+#define PFMLIB_PMU_MASK		0x7fff /* must fit PFMLIB_PMU_MAX */
+#define PFMLIB_PMU_PIDX_MASK	((1<< PFMLIB_PMU_SHIFT)-1)
+
+typedef struct {
+	char 		*name;	/* name */
+	char		*desc;	/* description */
+	pfm_attr_t	type;	/* used to validate value (if any) */
+} pfmlib_attr_desc_t;
+
+/*
+ * attribute description passed to model-specific layer
+ */
+typedef struct {
+	int		id;		/* attribute index */
+	pfm_attr_t	type;		/* attribute type */
+	union {
+		uint64_t ival;			/* integer value (incl. bool) */
+		char *sval;			/* string */
+	};					/* attribute value */
+} pfmlib_attr_t;
+
+
+/*
+ * perf_event specific attributes that needs to be communicated
+ * back up to match perf_event_attr with hardware settings
+ */
+typedef struct {
+	int plm;
+	/* more to be added in the future */
+} pfmlib_perf_attr_t;
+
+#define PFMLIB_MAX_EVENT_ATTRS	64 /* max attributes per event desc */
+
+struct pfmlib_pmu;
+typedef struct {
+	struct pfmlib_pmu	*pmu;	/* pmu */
+	int			event;	/* pidx */
+	int			nattrs;	/* number of attrs in attrs[] */
+	pfmlib_attr_t		attrs[PFMLIB_MAX_EVENT_ATTRS];
+} pfmlib_event_desc_t;
+
+typedef struct pfmlib_pmu {
+	const char 	*desc;				/* PMU description */
+	const char 	*name;				/* pmu short name */
+	pfm_pmu_t	pmu;				/* PMU model */
+	int		pme_count;			/* number of events */
+	int		max_encoding;			/* max number of uint64_t to encode an event */
+	int		flags;				/* PMU flags */
+	const pfmlib_attr_desc_t *modifiers;		/* array of possible modifiers for PMU */
+	const void	*pe;				/* pointer to event table */
+
+	int 		 (*pmu_detect)(void *this);
+	int 		 (*pmu_init)(void *this);	/* optional */
+
+	const char	*(*get_event_desc)(void *this, int pidx);
+	const char	*(*get_event_name)(void *this, int pidx);
+	int		 (*get_event_code)(void *this, int pidx, uint64_t *code);
+	int		 (*get_event_first)(void *this);
+	int		 (*get_event_next)(void *this, int pidx);
+	int		 (*get_event_numasks)(void *this, int pidx);
+	pfmlib_modmsk_t	 (*get_event_modifiers)(void *this, int pidx);
+	int		 (*get_event_perf_type)(void *this, int pidx);
+
+	const char	*(*get_event_umask_name)(void *this, int pidx, int umask_idx);
+	const char	*(*get_event_umask_desc)(void *this, int pidx, int umask_idx);
+	int		 (*get_event_umask_code)(void *this, int pidx, int umask_idx, uint64_t *code);
+	int		 (*get_event_encoding)(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs);
+	int		 (*event_has_dfl_umask)(void *this, int idx); /* optional */
+	int		 (*event_is_valid)(void *this, int pidx);
+	int		 (*validate_table)(void *this, FILE *fp);
+} pfmlib_pmu_t;
+
+/*
+ * pfmlib_pmu_t flags
+ */
+#define PFMLIB_PMU_FL_ACTIVE	0x1	/* PMU is detected */
+
+typedef struct {
+	int	initdone;
+	int	verbose;
+	int	debug;
+} pfmlib_config_t;	
+
+#define PFMLIB_INITIALIZED()	(pfm_config.initdone)
+
+extern pfmlib_config_t pfm_config;
+
+extern void __pfm_vbprintf(const char *fmt,...);
+
+extern int pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d);
+extern int pfmlib_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen);
+extern int pfmlib_get_event_encoding(pfmlib_event_desc_t *e, uint64_t **codes, int *count, pfmlib_perf_attr_t *attrs);
+extern int pfmlib_pidx2idx(pfmlib_pmu_t *pmu, int pidx);
+
+#ifdef CONFIG_PFMLIB_DEBUG
+#define DPRINT(fmt, a...) \
+	do { \
+		if (pfm_config.debug) { \
+			fprintf(libpfm_fp, "%s (%s.%d): " fmt, __FILE__, __func__, __LINE__, ## a); } \
+	} while (0)
+#else
+#define DPRINT(fmt, a...)
+#endif
+
+extern pfmlib_pmu_t crayx2_support;
+extern pfmlib_pmu_t montecito_support;
+extern pfmlib_pmu_t itanium2_support;
+extern pfmlib_pmu_t itanium_support;
+extern pfmlib_pmu_t generic_ia64_support;
+extern pfmlib_pmu_t amd64_support;
+extern pfmlib_pmu_t intel_p6_support;
+extern pfmlib_pmu_t intel_ppro_support;
+extern pfmlib_pmu_t intel_pii_support;
+extern pfmlib_pmu_t intel_pm_support;
+extern pfmlib_pmu_t generic_mips64_support;
+extern pfmlib_pmu_t sicortex_support;
+extern pfmlib_pmu_t pentium4_support;
+extern pfmlib_pmu_t intel_coreduo_support;
+extern pfmlib_pmu_t intel_core_support;
+extern pfmlib_pmu_t intel_x86_arch_support;
+extern pfmlib_pmu_t intel_atom_support;
+extern pfmlib_pmu_t intel_nhm_support;
+extern pfmlib_pmu_t intel_nhm_unc_support;
+extern pfmlib_pmu_t gen_powerpc_support;
+extern pfmlib_pmu_t sparc_support;
+extern pfmlib_pmu_t cell_support;
+extern pfmlib_pmu_t perf_event_support;
+
+extern FILE *libpfm_fp;
+extern pfmlib_pmu_t *pfmlib_pmus[];
+extern char *pfmlib_forced_pmu;
+
+#define this_pe(t)	(((pfmlib_pmu_t *)t)->pe)
+
+/*
+ * population count (number of bits set)
+ */
+static inline int
+pfmlib_popcnt(unsigned long v)
+{
+	int sum = 0;
+
+	for(; v ; v >>=1) {
+		if (v & 0x1) sum++;
+	}
+	return sum;
+}
+
+/*
+ * find next bit set
+ */
+static inline size_t
+pfmlib_fnb(unsigned long value, size_t nbits, int p)
+{
+	unsigned long m;
+	size_t i;
+
+	for(i=p; i < nbits; i++) {
+		m = 1 << i;
+		if (value & m)
+			return i;
+	}
+	return i;
+}
+#endif /* __PFMLIB_PRIV_H__ */

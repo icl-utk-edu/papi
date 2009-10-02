@@ -1,0 +1,76 @@
+.TH LIBPFM 4  "September, 2009" "" "Linux Programmer's Manual"
+.SH NAME
+pfm_get_event_nattrs, pfm_get_event_attr_name, pfm_get_event_attr_desc, pfm_get_event_attr_code, pfm_get_event_attr_type \- retrieve event attribute information
+.SH SYNOPSIS
+.nf
+.B #include <perfmon/pfmlib.h>
+.sp
+.BI "int pfm_get_event_nattrs(int " idx ");"
+.BI "const char *pfm_get_event_attr_name(int " idx ", int " attr_idx ");"
+.BI "const char *pfm_get_event_attr_desc(int " idx ", int " attr_idx ");"
+.BI "int pfm_get_event_attr_code(int " idx ", int " attr_idx ",uint64_t *"code ");"
+.BI "pfm_attr_t fm_get_event_attr_type(int " idx ", int " attr_idx ");"
+.sp
+.SH DESCRIPTION
+An attribute defines a unit mask or a modifier. A unit-mask is an optional sub-event. A modifier
+is an optional filter which is provided by the hardware on which the event is programmed, for instance
+the privilege level at which to count the event. Not all events have unit masks. Not all events have
+the same modifiers. Modifiers vary from one PMU model to another or sometime from one register to
+another. The library manages the modifier per PMU model. Refer to the PMU-specific documentation
+to learn about the modifier. The unit mask are part of the event table and should therefore be
+described in the official PMU documentation from the vendor.
+
+For an event, each attribute is identified by a simple integer, starting at 0. Identifiers
+are numbered using contiguous integers. Thus if an event has 5 attributes, they are numbered
+0, 1, 2, 3, 4. This makes it easier to iterate over all the attributes of an event.
+
+The \fBpfm_get_event_nattrs()\fR function returns the number of attributes for the event idenfied
+by \fBidx\fR. If no attributes are defined, -1 is returned.
+
+The \fBpfm_get_event_attr_name()\fR function returns the name of the attribute \fBattr_idx\fR
+for event \fBidx\fR. The returned string is read-only. NULL is returned in case parameters are
+invalid.
+
+The \fBpfm_get_event_attr_desc()\fR function returns the description of the attribute \fBattr_idx\fR
+for event \fBidx\fR. The returned string is read-only. NULL is returned in case parameters are
+invalid. In case, no description exists, the string "no description available" is returned.
+
+The \fBpfm_get_event_attr_code()\fR function returns in \fB*code\fR the code of attribute
+\fBattr_idx\fR for event \fBidx\fR. Code are not guaranteed unique for an event. In fact,
+they are mostly useful for unit masks as they do correspond to the offical codes published
+by the hadware vendor. This function is mostly used when listing events and their attributes.
+The \fBcode\fR parameter must be point to valid memory, it is not allocated by the function.
+
+The \fBpfm_get_event_attr_type()\fR function returns the type of the attribute \fBattr_idx\fR
+for event \fBidx\fR. The following types are defined:
+.TP
+.B PFM_ATTR_UMASK
+The attribute corresponds to a unit masks, i.e. a sub-event
+.TP
+.B PFM_ATTR_MOD_BOOL
+The attribute corresponds to a modifier, i.e., an optional filter on the event
+which can have boolean values 0, 1, y, n, t, f.
+.TP
+.B PFM_ATTR_MOD_INTEGER
+The attribute corresponds to a integer modifier, i.e., an optional filter on the event
+which is an integer values. Range limits may be imposed by each specific modifier.
+
+.SH RETURN
+The \fBpfm_get_event_nattrs()\fR function returns the number of attributes or -1 if
+the event is invalid. The number of attribute may be zero.
+
+Both \fBpfm_get_event_attr_name()\fR  and \fBpfm_get_event_attr_desc()\fR functions return
+a read-only string. String is always null-terminated.
+
+The \fBpfm_get_event_attr_code()\fR function returns in \fBcode\fR, the value corresponding
+to the attribute. The return value is fBPFM_SUCCESS\fR unless there was an error.
+
+The \fBpfm_get_event_attr_type()\fR function returns a value of type \fBpfm_attr_t\fR if
+successful. Otherwise a negative error code is returned.
+.SH ERRORS
+.TP
+.B PFMLIB_ERR_INVAL
+Invalid event or attribute. Or the \fBcode\fR parameter is NULL.
+.SH AUTHOR
+Stephane Eranian <eranian@gmail.com>
+.PP

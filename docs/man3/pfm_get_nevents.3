@@ -1,0 +1,61 @@
+.TH LIBPFM 4  "September, 2009" "" "Linux Programmer's Manual"
+.SH NAME
+pfm_get_nevents, pfm_get_event_first, pfm_get_event_next \- iterate over events
+.SH SYNOPSIS
+.nf
+.B #include <perfmon/pfmlib.h>
+.sp
+.BI "int pfm_get_nevents("void ");"
+.BI "int pfm_get_event_first("void ");"
+.BI "int pfm_get_event_next(int "idx ");"
+.sp
+.SH DESCRIPTION
+Events are uniquely identified with opaque integer identifiers.
+There is no guaranteed order within identifiers. Thus, to iterate
+over all the events, it is necessary to use iterators.
+
+The \fBpfm_get_event_first()\fR function returns the identifier
+for the first available event. That identifier can be used to
+retrieve information about the event with \fBpfm_get_event_name()\fR,
+for instance.
+
+The \fBpfm_get_event_next()\fR function returns the identifier of
+the event following the one passed in \fBidx\fR.
+
+The \fBpfm_get_nevents()\fR function returns the total number
+of events available to applications. In case multiple PMU models
+are activated, this number represents the sum of all events.
+
+Using the \fBpfm_get_event_first()\fR and \fBpfm_get_event_next()\fR
+functions, it is possible to iterate over all available events. 
+The library provides a convenient iterator called \fBpfm_for_each_event\fR
+to do this.  Here is how it can be used to print all event names:
+.sp
+.nf
+void list_events(void)
+{
+   int i
+   pfm_for_each_event(i) {
+      printf("Event: %s\\n", pfm_get_event_name(i));
+  }
+}
+.fi
+
+.SH RETURN
+The \fBpfm_get_event_first()\fR function returns the identifier of the first
+available event. It returns -1 in case none is available.
+
+The \fBpfm_get_event_next()\fR function returns the identifier of the next
+available event. It returns -1 in case the provided identifier
+points to the last event available.
+
+The \fBpfm_get_nevents()\fR function returns the number of available
+events. If no event is available, \fB0\fR is returned.
+
+.SH ERRORS
+No error is returned by any of these functions.
+.SH SEE ALSO
+pfm_find_event(3)
+.SH AUTHOR
+Stephane Eranian <eranian@gmail.com>
+.PP
