@@ -1,0 +1,22 @@
+PE := $(shell echo $${CRAY_PE_TARGET})
+
+ifeq ($(PE), cray-x2)
+
+COMPILER	= CRAYX2
+CC		= craynv-cray-linux-gnu-gcc
+F77		= craynv-cray-linux-gnu-gfortran
+CPP		= $(CC) -E
+LDFLAGS		= -lpthread
+TESTS		= ctests
+
+else
+
+COMPILER	= CRAYXT
+F77		= gfortran
+CFLAGS		+= -D __crayxt
+
+endif
+
+MISCSRCS	= x86_cache_info.c
+SUBSTR		= perfmon
+include Rules.pfm_pcl
