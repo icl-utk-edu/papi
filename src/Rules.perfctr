@@ -81,7 +81,11 @@ else
 	FFLAGS      += -Wall -ffixed-line-length-132 $(BITFLAGS)
 endif
 
-CFLAGS		+= -D_GNU_SOURCE -Wall $(COMP) $(NOTLS) $(BITFLAGS)
+ifneq (c99,$(CC))
+   CFLAGS += -D_GNU_SOURCE -Wall $(COMP) $(NOTLS) $(BITFLAGS)
+else
+   CFLAGS += -D_GNU_SOURCE $(COMP) $(NOTLS) $(BITFLAGS)
+endif
 
 # 
 # Catamount section
@@ -213,9 +217,6 @@ $(CPU)_events.o: $(CPU)_events.c $(HEADERS)
 
 linux.o: linux.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
-
-#$(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c $(HEADERS)
-#	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c  $(ARCH_EVENTS)_map.c -o $@
 
 native_clean:
 	-rm -f $(MISCOBJS)

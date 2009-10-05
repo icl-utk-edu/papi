@@ -86,7 +86,11 @@ else
 	FFLAGS      += -Wall -ffixed-line-length-132 $(BITFLAGS)
 endif
 
-CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(BITFLAGS)
+ifneq (c99,$(CC))
+   CFLAGS += -D_GNU_SOURCE -Wall $(NOTLS) $(BITFLAGS)
+else
+   CFLAGS += -D_GNU_SOURCE $(NOTLS) $(BITFLAGS)
+endif
 
 # 
 # Catamount section
@@ -283,12 +287,6 @@ linux.o: linux.c $(HEADERS)
 
 papi_pfm_events.o: papi_pfm_events.c $(HEADERS) $(PFM_EVENTS_TABLE)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_pfm_events.c -o $@
-
-#$(PFM_EVENTS_TABLE):	perfmon_events.csv perfmon_events_table.sh
-#	sh perfmon_events_table.sh > $@
-
-#$(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c $(HEADERS)
-#	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c  $(ARCH_EVENTS)_map.c -o $@
 
 native_clean:
 	-rm -f $(MISCOBJS)

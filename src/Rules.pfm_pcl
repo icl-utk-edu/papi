@@ -26,7 +26,12 @@ else
 	FFLAGS		+= -ffixed-line-length-132
 endif
 
-CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) $(DEBUGFLAGS) -D_REENTRANT
+ifneq (c99,$(CC))
+   CFLAGS += -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) $(DEBUGFLAGS) -D_REENTRANT
+else
+   CFLAGS += -D_GNU_SOURCE $(NOTLS) $(ALTIX) $(DEBUGFLAGS) -D_REENTRANT
+endif
+
 TOPTFLAGS	:= -g -O
 FTOPTFLAGS	:= $(FTOPTFLAGS)
 
@@ -111,9 +116,6 @@ $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
 
 papi_pfm_events.o: papi_pfm_events.c $(HEADERS) $(PFM_EVENTS_TABLE)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_pfm_events.c -o $@
-
-#$(PFM_EVENTS_TABLE):	perfmon_events.csv perfmon_events_table.sh
-#	sh perfmon_events_table.sh > $@
 
 native_clean:
 	-rm -f $(MISCOBJS)
