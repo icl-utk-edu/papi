@@ -94,5 +94,5 @@ TESTS = @tests@
 TOPTFLAGS = @TOPTFLAGS@
 VERSION = @VERSION@
 
--include ./$(FILENAME)
+include ./$(FILENAME)
 
