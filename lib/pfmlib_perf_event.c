@@ -28,7 +28,7 @@
 #include "pfmlib_priv.h"
 
 static int
-get_perf_event_attr(const char *str, struct perf_event_attr *hw, int *idx)
+get_perf_event_encoding(const char *str, struct perf_event_attr *hw, int *idx)
 {
 	pfmlib_pmu_t *pmu;
 	pfmlib_event_desc_t e;
@@ -103,7 +103,7 @@ get_perf_event_attr(const char *str, struct perf_event_attr *hw, int *idx)
 }
 
 int
-pfm_get_perf_event_attr(const char *str, struct perf_event_attr *hw, int *idx)
+pfm_get_perf_event_encoding(const char *str, struct perf_event_attr *hw, int *idx)
 {
 	if (PFMLIB_INITIALIZED() == 0)
 		return PFM_ERR_NOINIT;
@@ -113,5 +113,5 @@ pfm_get_perf_event_attr(const char *str, struct perf_event_attr *hw, int *idx)
 
 	memset(hw, 0, sizeof(hw));
 
-	return get_perf_event_attr(str, hw, idx);
+	return get_perf_event_encoding(str, hw, idx);
 }

@@ -1,11 +1,11 @@
 .TH LIBPFM 4  "September, 2009" "" "Linux Programmer's Manual"
 .SH NAME
-pfm_get_perf_event_attr \- encode event for perf_event API
+pfm_get_perf_event_encoding \- encode event for perf_event API
 .SH SYNOPSIS
 .nf
 .B #include <perfmon/pfmlib_perf_event.h>
 .sp
-.BI "int pfm_get_perf_event_attr(const char *" str ", struct perf_event_attr *" attr ", int *" idx ");"
+.BI "int pfm_get_perf_event_encoding(const char *" str ", struct perf_event_attr *" attr ", int *" idx ");"
 .sp
 .SH DESCRIPTION
 This function can be used in conjunction with the perf_events Linux kernel API which

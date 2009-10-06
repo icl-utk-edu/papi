@@ -92,7 +92,7 @@ main(int argc, const char **argv)
 		 * For perf_event encoding, use
 		 * #include <perfmon/pfmlib_perf_event.h>
 		 * and the function:
-		 * pfm_get_perf_event_attr()
+		 * pfm_get_perf_event_encoding()
 		 */
 		ret = pfm_get_event_encoding(*p, &idx, &codes, &count);
 		if (ret != PFM_SUCCESS) {
