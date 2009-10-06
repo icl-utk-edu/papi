@@ -9221,15 +9221,15 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
    LIBS="static shared"
    TARGETS="serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads smp omp"
    FLAGS='-I$(PMAPI)/include -qmaxmem=-1 -qarch=$(cpu_option) -qtune=$(cpu_option) -qlanglvl=extended  $(BITS)'
-   CFLAGS="$(CFLAGS) $(DEBUGFLAGS) $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_AIX -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors -DSTATIC_PERFMON_EVENTS_TABLE"
-   #CFLAGS="$(CFLAGS) -DPAPI_NO_VECTOR"
+   CFLAGS='$(DEBUGFLAGS) $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_AIX -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors -DSTATIC_PERFMON_EVENTS_TABLE'
+   #CFLAGS="-DPAPI_NO_VECTOR"
    OPTFLAGS='-O3 -qstrict $(PMINIT)'
-   FFLAGS="$(FFLAGS) -WF,-D_$(CPU_MODEL) -WF,-DARCH_EVTS=\"$(ARCH_EVENTS).h\" $(FLAGS)"
+   FFLAGS='$(FLAGS) -WF,-D_$(CPU_MODEL) -WF,-DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
    FOPTFLAGS='$(OPTFLAGS)'
    FTOPTFLAGS='$(TOPTFLAGS)'
    SMPCFLGS=-qsmp
    OMPCFLGS='-qsmp=omp'
-   LDFLAGS="$(LDFLAGS) -L$(PMAPI)/lib -lpmapi"
+   LDFLAGS='-L$(PMAPI)/lib -lpmapi'
    CC_R=xlc_r
    CC=xlc
    CC_SHR="xlc -G -bnoentry"
@@ -9268,7 +9268,7 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
       cpu_option=pwr6
       MSUBSTR=power6
       DESCR="AIX 5.1.0 or greater with POWER6"
-      CPPFLAGS="$(CPPFLAGS) -qlanglvl=extended"
+      CPPFLAGS="-qlanglvl=extended"
    else
       LIBRARY=libpapi64.a
       SHLIB=libpapi64.so
@@ -9280,7 +9280,7 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
       DESCR="AIX 5.1.0 or greater with POWER6 64 bit build"
       BITS=-q64
       ARG64=-X64
-      CPPFLAGS="$(CPPFLAGS) -qlanglvl=extended"
+      CPPFLAGS="-qlanglvl=extended"
    fi
 elif test "$MAKEVER" = "CLE-perfmon2"; then
    FILENAME=Rules.pfm_pcl
