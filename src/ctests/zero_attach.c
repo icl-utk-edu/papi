@@ -29,8 +29,9 @@ int main(int argc, char **argv)
 {
    int status, retval, num_tests = 1, tmp;
    int EventSet1=PAPI_NULL;
-   int PAPI_event, mask1;
+   int mask1;
    int num_events1;
+   long long PAPI_event;
    long long **values;
    long long elapsed_us, elapsed_cyc, elapsed_virt_us, elapsed_virt_cyc;
    char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];

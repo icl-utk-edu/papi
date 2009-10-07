@@ -28,7 +28,7 @@ int main(int argc, char **argv)
    int retval;
 #define NUM_EVENTS 2
    long long values[NUM_EVENTS], dummyvalues[NUM_EVENTS];
-   unsigned int Events[NUM_EVENTS];
+   long long Events[NUM_EVENTS];
    int EventSet = PAPI_NULL;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
    if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
-   if ((retval = PAPI_add_events(EventSet, (int *) Events, NUM_EVENTS)) < PAPI_OK)
+   if ((retval = PAPI_add_events(EventSet, Events, NUM_EVENTS)) < PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_add_events", retval);
 
    if (!TESTS_QUIET) {

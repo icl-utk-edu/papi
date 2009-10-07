@@ -21,8 +21,8 @@
 
 extern int _papi_pfm_init();
 extern int _papi_pfm_setup_presets(char *name, int type);
-extern int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits);
-extern inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int *event, unsigned int *umask);
+extern int _papi_pfm_ntv_code_to_bits(long long EventCode, hwd_register_t * bits);
+extern inline int _pfm_decode_native_event(long long EventCode, unsigned int *event, unsigned int *umask);
 extern inline unsigned int _pfm_convert_umask(unsigned int event, unsigned int umask);
 extern int _pfm_get_counter_info(unsigned int event, unsigned int *selector, int *code);
 
@@ -143,7 +143,7 @@ int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
 /* perfctr-p3 assumes each event has only a single command code
        libpfm assumes each counter might have a different code.
 */
-int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
+int _papi_pfm_ntv_code_to_bits(long long EventCode, hwd_register_t *bits)
 {
     unsigned int event, umask;
     int ret, code;

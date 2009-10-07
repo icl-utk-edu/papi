@@ -376,24 +376,23 @@ int PAPI_library_init(int version)
    return (init_retval = PAPI_VER_CURRENT);
 }
 
-int PAPI_query_event(int EventCode)
+int PAPI_query_event(long long EventCode)
 {
-   if (EventCode & PAPI_PRESET_MASK) {
-      EventCode &= PAPI_PRESET_AND_MASK;
-      if (EventCode >= PAPI_MAX_PRESET_EVENTS)
-         papi_return(PAPI_ENOTPRESET);
+	PAPI_event_code_t ec;
 
-      if (_papi_hwi_presets.count[EventCode])
-         papi_return(PAPI_OK);
-      else
-         return(PAPI_ENOEVNT);
-   }
-
-   if (EventCode & PAPI_NATIVE_MASK) {
-      papi_return(_papi_hwi_query_native_event(EventCode));
-   }
-
-   papi_return(PAPI_ENOTPRESET);
+	ec.ll = EventCode;
+	if (ec.fmwk.PRESET) {
+		if(ec.fmwk.code >= PAPI_MAX_PRESET_EVENTS)
+			papi_return(PAPI_ENOTPRESET);
+		if (_papi_hwi_presets.count[ec.fmwk.code])
+			papi_return(PAPI_OK);
+		else
+			return(PAPI_ENOEVNT);
+	}
+	if (ec.fmwk.NATIVE) {
+		papi_return(_papi_hwi_query_native_event(ec.ll));
+	}
+	papi_return(PAPI_ENOTPRESET);
 }
 
 const PAPI_component_info_t *PAPI_get_component_info(int cidx)
@@ -410,24 +409,25 @@ const PAPI_component_info_t *PAPI_get_component_info(int cidx)
    calling either _papi_hwi_get_event_info or 
    _papi_hwi_get_native_event_info.
 */
-int PAPI_get_event_info(int EventCode, PAPI_event_info_t * info)
+int PAPI_get_event_info(long long EventCode, PAPI_event_info_t * info)
 {
-   int i = EventCode & PAPI_PRESET_AND_MASK;
+	PAPI_event_code_t ec;
 
-   if (info == NULL)
-      papi_return(PAPI_EINVAL);
+	if (info == NULL)
+		papi_return(PAPI_EINVAL);
 
-   if (EventCode & PAPI_PRESET_MASK) {
-      if (i >= PAPI_MAX_PRESET_EVENTS)
-         papi_return(PAPI_ENOTPRESET);
-      papi_return(_papi_hwi_get_event_info(EventCode, info));
-   }
- 
-   if (EventCode & PAPI_NATIVE_MASK) {
-      papi_return(_papi_hwi_get_native_event_info(EventCode, info));
-   }
+	ec.ll = EventCode;
+	if (ec.fmwk.PRESET) {
+		if (ec.fmwk.code >= PAPI_MAX_PRESET_EVENTS)
+			papi_return(PAPI_ENOTPRESET);
+		papi_return(_papi_hwi_get_event_info(ec.ll, info));
+	}
 
-   papi_return(PAPI_ENOTPRESET);
+	if (ec.fmwk.NATIVE) {
+		papi_return(_papi_hwi_get_native_event_info(ec.ll, info));
+	}
+
+	papi_return(PAPI_ENOTPRESET);
 }
 
 
@@ -446,7 +446,7 @@ int PAPI_get_event_info(int EventCode, PAPI_event_info_t * info)
    or override definitions of PAPI events on the fly. Bails if events 
    to be modified have been added to existing EventSets.
 */
-int PAPI_set_event_info(PAPI_event_info_t * info, int *EventCode, int replace)
+int PAPI_set_event_info(PAPI_event_info_t * info, long long *EventCode, int replace)
 {
 #ifndef PAPI_MOD_EVENTS /* defined if a modifiable event table is supported */
       papi_return(PAPI_ESBSTR);
@@ -592,88 +592,98 @@ int PAPI_encode_events(char * event_file, int replace)
    #endif /* PAPI_MOD_EVENTS */
 }
 
-int PAPI_event_code_to_name(int EventCode, char *out)
+int PAPI_event_code_to_name(long long EventCode, char *out)
 {
-   if (out == NULL)
-      papi_return(PAPI_EINVAL);
+	PAPI_event_code_t ec;
 
-   if (EventCode & PAPI_PRESET_MASK) {
-      EventCode &= PAPI_PRESET_AND_MASK;
-      if ((EventCode >= PAPI_MAX_PRESET_EVENTS)
-          || (_papi_hwi_presets.info[EventCode].symbol == NULL))
-         papi_return(PAPI_ENOTPRESET);
+	if (out == NULL)
+		papi_return(PAPI_EINVAL);
 
-      strncpy(out, _papi_hwi_presets.info[EventCode].symbol, PAPI_MAX_STR_LEN);
-      papi_return(PAPI_OK);
-   }
+	ec.ll = EventCode;
+	if (ec.fmwk.PRESET) {
+		if ((ec.fmwk.code >= PAPI_MAX_PRESET_EVENTS)
+			|| (_papi_hwi_presets.info[ec.fmwk.code].symbol == NULL))
+			papi_return(PAPI_ENOTPRESET);
 
-   if (EventCode & PAPI_NATIVE_MASK) {
-      return(_papi_hwi_native_code_to_name(EventCode, out, PAPI_MAX_STR_LEN));
-   }
+		strncpy(out, _papi_hwi_presets.info[ec.fmwk.code].symbol, PAPI_MAX_STR_LEN);
+		papi_return(PAPI_OK);
+	}
 
-   papi_return(PAPI_ENOEVNT);
+	if (ec.fmwk.NATIVE) {
+//		return(_papi_hwi_native_code_to_name(ec.fmwk.code, out, PAPI_MAX_STR_LEN));
+		return(_papi_hwi_native_code_to_name(ec.ll, out, PAPI_MAX_STR_LEN));
+	}
+
+	papi_return(PAPI_ENOEVNT);
 }
 
-int PAPI_event_name_to_code(char *in, int *out)
+int PAPI_event_name_to_code(char *in, long long *out)
 {
-   int i;
+	int i;
+	PAPI_event_code_t ec;
 
-   if ((in == NULL) || (out == NULL))
-      papi_return(PAPI_EINVAL);
+	if ((in == NULL) || (out == NULL))
+		papi_return(PAPI_EINVAL);
 
-   if (init_level == PAPI_NOT_INITED)
-      papi_return(PAPI_ENOINIT);
+	if (init_level == PAPI_NOT_INITED)
+		papi_return(PAPI_ENOINIT);
 
-   /* With user definable events, we can no longer assume
-      presets begin with "PAPI"...
-   if (strncmp(in, "PAPI", 4) == 0) {
-   */
-   for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++) {
-      if ((_papi_hwi_presets.info[i].symbol)
-            && (strcasecmp(_papi_hwi_presets.info[i].symbol, in) == 0)) {
-         *out = (i | PAPI_PRESET_MASK);
-         papi_return(PAPI_OK);
-      }
-   }
-   papi_return(_papi_hwi_native_name_to_code(in, out));
+	/* With user definable events, we can no longer assume
+	presets begin with "PAPI"...
+	if (strncmp(in, "PAPI", 4) == 0) {
+	*/
+	for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++) {
+		if ((_papi_hwi_presets.info[i].symbol)
+			&& (strcasecmp(_papi_hwi_presets.info[i].symbol, in) == 0)) {
+				ec.fmwk.code = i;
+				ec.fmwk.PRESET = 1;
+				*out = ec.ll;
+				papi_return(PAPI_OK);
+		}
+	}
+	papi_return(_papi_hwi_native_name_to_code(in, out));
 }
 
 /* Updates EventCode to next valid value, or returns error; 
   modifier can specify {all / available} for presets, or other values for native tables 
   and may be platform specific (Major groups / all mask bits; P / M / E chip, etc) */
-int PAPI_enum_event(int *EventCode, int modifier)
+int PAPI_enum_event(long long *EventCode, int modifier)
 {
-   int i = *EventCode;
-   int cidx = PAPI_COMPONENT_INDEX(*EventCode);
+	int i;
+	PAPI_event_code_t ec;
+	int cidx;
 
-   if ( cidx < 0 || cidx > papi_num_components ||
-	((i & PAPI_PRESET_MASK)&&cidx>0 ) )
-     return (PAPI_ENOCMP);
-   
-   if (i & PAPI_PRESET_MASK) {
-	   if (modifier == PAPI_ENUM_FIRST) {
-			 *EventCode = PAPI_PRESET_MASK;
-			 return (PAPI_OK);
-	   }
-       i &= PAPI_PRESET_AND_MASK;
-       while (++i < PAPI_MAX_PRESET_EVENTS) 
-	 {
-	   if (_papi_hwi_presets.info[i].symbol == NULL)
-	     return (PAPI_ENOEVNT); /* NULL pointer terminates list */
-	   if (modifier & PAPI_PRESET_ENUM_AVAIL)
-	     {
-	       if (_papi_hwi_presets.count[i] == 0)
-		 continue;
-	     }
-	   *EventCode = i | PAPI_PRESET_MASK;
-	   return (PAPI_OK);
-         }
-   }
-   else if (i & PAPI_NATIVE_MASK) {
-       /* Should check against num native events here */
-       return (_papi_hwd[cidx]->ntv_enum_events((unsigned int *) EventCode, modifier));
-   }
-   papi_return (PAPI_EINVAL);
+	ec.ll = *EventCode;
+	cidx = ec.fmwk.cmp_idx;
+
+	if ( cidx < 0 || cidx > papi_num_components || (ec.fmwk.PRESET && cidx>0) )
+		return (PAPI_ENOCMP);
+
+	if (ec.fmwk.PRESET) {
+		if (modifier == PAPI_ENUM_FIRST) {
+			*EventCode = PAPI_PRESET_BIT;
+			return (PAPI_OK);
+		}
+		i = ec.fmwk.code;
+		while (++i < PAPI_MAX_PRESET_EVENTS) 
+		{
+			if (_papi_hwi_presets.info[i].symbol == NULL)
+				return (PAPI_ENOEVNT); /* NULL pointer terminates list */
+			if (modifier & PAPI_PRESET_ENUM_AVAIL)
+			{
+				if (_papi_hwi_presets.count[i] == 0)
+					continue;
+			}
+			ec.fmwk.code = i;
+			*EventCode = ec.ll;
+			return (PAPI_OK);
+		}
+	}
+	else if (ec.fmwk.NATIVE) {
+		/* Should check against num native events here */
+		return (_papi_hwd[cidx]->ntv_enum_events(EventCode, modifier));
+	}
+	papi_return (PAPI_EINVAL);
 }
 
 int PAPI_create_eventset(int *EventSet)
@@ -731,80 +741,82 @@ int PAPI_add_pevent(int EventSet, int code, void *inout)
    papi_return (_papi_hwi_add_pevent(ESI, code, inout));
 }
 
-int PAPI_add_event(int EventSet, int EventCode)
+int PAPI_add_event(int EventSet, long long EventCode)
 {
-   EventSetInfo_t *ESI;
+	EventSetInfo_t *ESI;
+	PAPI_event_code_t ec;
 
-   /* Is the EventSet already in existence? */
+	/* Is the EventSet already in existence? */
 
-   ESI = _papi_hwi_lookup_EventSet(EventSet);
-   if (ESI == NULL)
-      papi_return(PAPI_ENOEVST);
+	ESI = _papi_hwi_lookup_EventSet(EventSet);
+	if (ESI == NULL)
+		papi_return(PAPI_ENOEVST);
 
-   /* Check argument for validity */
+	/* Check argument for validity */
 
-   if (((EventCode & PAPI_PRESET_MASK) == 0) && 
-       (EventCode & PAPI_NATIVE_MASK) == 0)
-     papi_return(PAPI_EINVAL);
+	ec.ll = EventCode;
+	if (!ec.fmwk.PRESET && !ec.fmwk.NATIVE && !ec.fmwk.SYS && !ec.fmwk.USER)
+		papi_return(PAPI_EINVAL);
 
-   /* Of course, it must be stopped in order to modify it. */
+	/* Of course, it must be stopped in order to modify it. */
 
-   if (ESI->state & PAPI_RUNNING)
-      papi_return(PAPI_EISRUN);
+	if (ESI->state & PAPI_RUNNING)
+		papi_return(PAPI_EISRUN);
 
-   /* Now do the magic. */
+	/* Now do the magic. */
 
-   papi_return(_papi_hwi_add_event(ESI, EventCode));
+	papi_return(_papi_hwi_add_event(ESI, EventCode));
 }
 
-int PAPI_remove_event(int EventSet, int EventCode)
+int PAPI_remove_event(int EventSet, long long EventCode)
 {
-   EventSetInfo_t *ESI;
-   int i;
+	EventSetInfo_t *ESI;
+	PAPI_event_code_t ec;
+	int i;
 
-   /* check for pre-existing ESI */
+	/* check for pre-existing ESI */
 
-   ESI = _papi_hwi_lookup_EventSet(EventSet);
-   if (ESI == NULL)
-      papi_return(PAPI_ENOEVST);
+	ESI = _papi_hwi_lookup_EventSet(EventSet);
+	if (ESI == NULL)
+		papi_return(PAPI_ENOEVST);
 
-   /* Check argument for validity */
+	/* Check argument for validity */
 
-   if (((EventCode & PAPI_PRESET_MASK) == 0) && 
-       (EventCode & PAPI_NATIVE_MASK) == 0)
-     papi_return(PAPI_EINVAL);
+	ec.ll = EventCode;
+	if (!ec.fmwk.PRESET && !ec.fmwk.NATIVE && !ec.fmwk.SYS && !ec.fmwk.USER)
+		papi_return(PAPI_EINVAL);
 
-   /* Of course, it must be stopped in order to modify it. */
+	/* Of course, it must be stopped in order to modify it. */
 
-   if (!(ESI->state & PAPI_STOPPED))
-      papi_return(PAPI_EISRUN);
+	if (!(ESI->state & PAPI_STOPPED))
+		papi_return(PAPI_EISRUN);
 
-   /* if the state is PAPI_OVERFLOWING, you must first call
-      PAPI_overflow with threshold=0 to remove the overflow flag */
+	/* if the state is PAPI_OVERFLOWING, you must first call
+	PAPI_overflow with threshold=0 to remove the overflow flag */
 
-   /* Turn off the even that is overflowing */
-   if (ESI->state & PAPI_OVERFLOWING) {
-      for(i=0; i<ESI->overflow.event_counter; i++ ) {
-        if ( ESI->overflow.EventCode[i] == EventCode ){
-           PAPI_overflow( EventSet, EventCode, 0, 0, ESI->overflow.handler);
-           break;
-        }
-      } 
-   }
-   
-   /* force the user to call PAPI_profil to clear the PAPI_PROFILING flag */
-   if (ESI->state & PAPI_PROFILING)  {
-     for (i=0; i < ESI->profile.event_counter; i++ ){
-       if ( ESI->profile.EventCode[i] == EventCode ){
-         PAPI_sprofil(NULL,0,EventSet,EventCode, 0, 0);
-         break;
-       }
-     }
-   }
+	/* Turn off the event that is overflowing */
+	if (ESI->state & PAPI_OVERFLOWING) {
+		for(i=0; i<ESI->overflow.event_counter; i++ ) {
+			if ( ESI->overflow.EventCode[i] == EventCode ){
+				PAPI_overflow( EventSet, EventCode, 0, 0, ESI->overflow.handler);
+				break;
+			}
+		} 
+	}
 
-   /* Now do the magic. */
+	/* force the user to call PAPI_profil to clear the PAPI_PROFILING flag */
+	if (ESI->state & PAPI_PROFILING)  {
+		for (i=0; i < ESI->profile.event_counter; i++ ){
+			if ( ESI->profile.EventCode[i] == EventCode ){
+				PAPI_sprofil(NULL,0,EventSet,EventCode, 0, 0);
+				break;
+			}
+		}
+	}
 
-   papi_return(_papi_hwi_remove_event(ESI, EventCode));
+	/* Now do the magic. */
+
+	papi_return(_papi_hwi_remove_event(ESI, EventCode));
 }
 
 int PAPI_destroy_eventset(int *EventSet)
@@ -2031,7 +2043,7 @@ int PAPI_perror(int code, char *destination, int length)
    in it and can set multiple events to register overflow, but need to call 
    this function multiple times. To turn off overflow, set the threshold to 0 */
 
-int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
+int PAPI_overflow(int EventSet, long long EventCode, int threshold, int flags,
                   PAPI_overflow_handler_t handler)
 {
    int retval, cidx, index, i;
@@ -2161,7 +2173,7 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
 }
 
 int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet, 
-                    int EventCode, int threshold, int flags)
+                    long long EventCode, int threshold, int flags)
 {
    EventSetInfo_t *ESI;
    int retval, index, i, buckets;
@@ -2327,7 +2339,7 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
 }
 
 int PAPI_profil(void *buf, unsigned bufsiz, caddr_t offset,
-                unsigned scale, int EventSet, int EventCode, int threshold, int flags)
+                unsigned scale, int EventSet, long long EventCode, int threshold, int flags)
 {
    EventSetInfo_t *ESI;
    int i;
@@ -2424,7 +2436,7 @@ int PAPI_set_cmp_domain(int domain, int cidx)
    papi_return(PAPI_set_opt(PAPI_DEFDOM, &ptr));
 }
 
-int PAPI_add_events(int EventSet, int *Events, int number)
+int PAPI_add_events(int EventSet, long long *Events, int number)
 {
    int i, retval;
 
@@ -2445,7 +2457,7 @@ int PAPI_add_events(int EventSet, int *Events, int number)
    return(PAPI_OK);
 }
 
-int PAPI_remove_events(int EventSet, int *Events, int number)
+int PAPI_remove_events(int EventSet, long long *Events, int number)
 {
    int i, retval;
 
@@ -2466,7 +2478,7 @@ int PAPI_remove_events(int EventSet, int *Events, int number)
    return(PAPI_OK);
 }
 
-int PAPI_list_events(int EventSet, int *Events, int *number)
+int PAPI_list_events(int EventSet, long long *Events, int *number)
 {
    EventSetInfo_t *ESI;
    int i,j;
@@ -2480,9 +2492,9 @@ int PAPI_list_events(int EventSet, int *Events, int *number)
 
    for (i=0,j=0; j < ESI->NumberOfEvents; i++) 
      {
-       if (ESI->EventInfoArray[i].event_code != PAPI_NULL)
+       if (ESI->EventInfoArray[i].ec.ll != PAPI_NULL)
 	 {
-	   Events[j] = ESI->EventInfoArray[i].event_code;
+	   Events[j] = ESI->EventInfoArray[i].ec.ll;
 	   j++;
 	   if (j == *number)
 	     break;

@@ -19,7 +19,8 @@ int main(int argc, char **argv)
 {
    int retval, num_tests = 1, tmp;
    int EventSet1=PAPI_NULL;
-   int PAPI_event, mask1;
+   int long long PAPI_event;
+   int mask1;
    int num_events1;
    long long **values;
    long long elapsed_us, elapsed_cyc, elapsed_virt_us, elapsed_virt_cyc;

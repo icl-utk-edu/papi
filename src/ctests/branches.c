@@ -32,7 +32,7 @@ int main(int argc, char **argv)
    double spread[MAXEVENTS];
    int nevents = MAXEVENTS;
    int eventset = PAPI_NULL;
-   int events[MAXEVENTS];
+   long long events[MAXEVENTS];
 
    events[0] = PAPI_BR_NTK;
    events[1] = PAPI_BR_PRC;

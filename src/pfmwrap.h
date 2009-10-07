@@ -235,7 +235,7 @@ char *retired_events[]={
       return (PAPI_OK);
    }
    
-extern inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int *event, unsigned int *umask);
+extern inline int _pfm_decode_native_event(long long EventCode, unsigned int *event, unsigned int *umask);
 
    inline int pfmw_recreate_context(EventSetInfo_t * ESI, hwd_context_t *thr_ctx, void **smpl_vaddr, 
                                int EventIndex) 

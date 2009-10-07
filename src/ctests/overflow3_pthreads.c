@@ -47,7 +47,7 @@ void mainloop(int arg)
    int num_events1;
    long long **values;
    const PAPI_hw_info_t *hw_info;
-   int PAPI_event;
+   long long PAPI_event;
    char event_name[PAPI_MAX_STR_LEN];
 
    if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)

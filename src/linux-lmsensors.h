@@ -82,8 +82,8 @@ typedef struct LM_SENSORS_reg_alloc
 
 typedef struct LM_SENSORS_control_state
 {
-	long_long       counts[LM_SENSORS_MAX_COUNTERS];	// used for caching
-	long_long       lastupdate;
+	long long       counts[LM_SENSORS_MAX_COUNTERS];	// used for caching
+	long long       lastupdate;
 } LM_SENSORS_control_state_t;
 
 

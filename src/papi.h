@@ -37,7 +37,7 @@
 
 /* This is the official PAPI version */
 /* Big increment for PAPI-C technology pre-release */
-#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,9,2,0)
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(3,9,3,0)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
 
 #ifdef __cplusplus
@@ -339,15 +339,6 @@ read the documentation carefully.  */
 #include <signal.h>
 #endif
 
-/*  Earlier versions of PAPI define a special long_long type to mask
-	an incompatibility between the Windows compiler and gcc-style compilers.
-	That problem no longer exists, so long_long has been purged from the source.
-	The defines below preserve backward compatibility. Their use is deprecated,
-	but will continue to be supported in the near term.
-*/
-#define long_long long long
-#define u_long_long unsigned long long
-
   typedef unsigned long PAPI_thread_id_t;
 
    typedef struct _papi_all_thr_spec {
@@ -643,7 +634,7 @@ read the documentation carefully.  */
 /* This definition also is HORRIBLE and should be replaced by a dynamic value. -pjm */
 #define PAPI_MAX_INFO_TERMS 12
    typedef struct event_info {
-      unsigned int event_code;               /* preset (0x8xxxxxxx) or native (0x4xxxxxxx) event code */
+      long long event_code;                  /* preset (0x8xxxxxxx) or native (0x4xxxxxxx) event code */
       unsigned int event_type;               /* event type or category for preset events only */
       unsigned int count;                    /* number of terms (usually 1) in the code and name fields
                                                 - for presets, these terms are native events
@@ -664,7 +655,7 @@ read the documentation carefully.  */
                                                    in papi_data.c that is currently not exposed to the user */
       char postfix[PAPI_MIN_STR_LEN];        /* string containing postfix operations; only defined for 
                                                 preset events of derived type DERIVED_POSTFIX */
-      unsigned int code[PAPI_MAX_INFO_TERMS];/* array of values that further describe the event:
+      long long code[PAPI_MAX_INFO_TERMS];/* array of values that further describe the event:
                                                 - for presets, native event_code values
                                                 - for native events, register values for event programming */
       char name[PAPI_MAX_INFO_TERMS]         /* names of code terms: */
@@ -679,21 +670,21 @@ read the documentation carefully.  */
 
 /* The Low Level API (Alphabetical) */
    int   PAPI_accum(int EventSet, long long * values);
-   int   PAPI_add_event(int EventSet, int Event);
-   int   PAPI_add_events(int EventSet, int *Events, int number);
+   int   PAPI_add_event(int EventSet, long long Event);
+   int   PAPI_add_events(int EventSet, long long *Events, int number);
    int   PAPI_assign_eventset_component(int EventSet, int cidx);
    int   PAPI_attach(int EventSet, unsigned long tid);
    int   PAPI_cleanup_eventset(int EventSet);
    int   PAPI_create_eventset(int *EventSet);
    int   PAPI_detach(int EventSet);
    int   PAPI_destroy_eventset(int *EventSet);
-   int   PAPI_enum_event(int *EventCode, int modifier);
-   int   PAPI_event_code_to_name(int EventCode, char *out);
-   int   PAPI_event_name_to_code(char *in, int *out);
+   int   PAPI_enum_event(long long *EventCode, int modifier);
+   int   PAPI_event_code_to_name(long long EventCode, char *out);
+   int   PAPI_event_name_to_code(char *in, long long *out);
    int  PAPI_get_dmem_info(PAPI_dmem_info_t *dest);
    int   PAPI_encode_events(char * event_file, int replace);
-   int   PAPI_get_event_info(int EventCode, PAPI_event_info_t * info);
-   int   PAPI_set_event_info(PAPI_event_info_t * info, int *EventCode, int replace);
+   int   PAPI_get_event_info(long long EventCode, PAPI_event_info_t * info);
+   int   PAPI_set_event_info(PAPI_event_info_t * info, long long *EventCode, int replace);
    const PAPI_exe_info_t *PAPI_get_executable_info(void);
    const PAPI_hw_info_t *PAPI_get_hardware_info(void);
    const PAPI_component_info_t *PAPI_get_component_info(int cidx);
@@ -711,7 +702,7 @@ read the documentation carefully.  */
    long long PAPI_get_virt_usec(void);
    int   PAPI_is_initialized(void);
    int   PAPI_library_init(int version);
-   int   PAPI_list_events(int EventSet, int *Events, int *number);
+   int   PAPI_list_events(int EventSet, long long *Events, int *number);
    int   PAPI_list_threads(unsigned long *tids, int *number);
    int   PAPI_lock(int);
    int   PAPI_multiplex_init(void);
@@ -719,16 +710,16 @@ read the documentation carefully.  */
    int   PAPI_num_cmp_hwctrs(int cidx);
    int   PAPI_num_hwctrs(void); /* for backward compatibility */
    int   PAPI_num_events(int EventSet);
-   int   PAPI_overflow(int EventSet, int EventCode, int threshold,
+   int   PAPI_overflow(int EventSet, long long EventCode, int threshold,
                      int flags, PAPI_overflow_handler_t handler);
    int   PAPI_perror(int code, char *destination, int length);
-   int   PAPI_profil(void *buf, unsigned bufsiz, caddr_t offset, unsigned scale, int EventSet, int EventCode, int threshold, int flags);
-   int   PAPI_query_event(int EventCode);
+   int   PAPI_profil(void *buf, unsigned bufsiz, caddr_t offset, unsigned scale, int EventSet, long long EventCode, int threshold, int flags);
+   int   PAPI_query_event(long long EventCode);
    int   PAPI_read(int EventSet, long long * values);
    int   PAPI_read_ts(int EventSet, long long * values, long long *cyc);
    int   PAPI_register_thread(void);
-   int   PAPI_remove_event(int EventSet, int EventCode);
-   int   PAPI_remove_events(int EventSet, int *Events, int number);
+   int   PAPI_remove_event(int EventSet, long long EventCode);
+   int   PAPI_remove_events(int EventSet, long long *Events, int number);
    int   PAPI_reset(int EventSet);
    int   PAPI_set_debug(int level);
    int   PAPI_set_cmp_domain(int domain, int cidx);
@@ -739,7 +730,7 @@ read the documentation carefully.  */
    int   PAPI_set_opt(int option, PAPI_option_t * ptr);
    int   PAPI_set_thr_specific(int tag, void *ptr);
    void  PAPI_shutdown(void);
-   int   PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet, int EventCode, int threshold, int flags);
+   int   PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet, long long EventCode, int threshold, int flags);
    int   PAPI_start(int EventSet);
    int   PAPI_state(int EventSet, int *status);
    int   PAPI_stop(int EventSet, long long * values);
@@ -768,7 +759,7 @@ read the documentation carefully.  */
    int PAPI_num_counters(void);
    int PAPI_num_components(void);
    int PAPI_read_counters(long long * values, int array_len);
-   int PAPI_start_counters(int *events, int array_len);
+   int PAPI_start_counters(long long *events, int array_len);
    int PAPI_stop_counters(long long * values, int array_len);
    int PAPI_flips(float *rtime, float *ptime, long long * flpins, float *mflips);
    int PAPI_flops(float *rtime, float *ptime, long long * flpops, float *mflops);

@@ -23,7 +23,7 @@
 /* variables global to profiling tests */
 long long **values;
 char event_name[PAPI_MAX_STR_LEN];
-int PAPI_event;
+long long PAPI_event;
 int EventSet = PAPI_NULL;
 void *profbuf[5];
 

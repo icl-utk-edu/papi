@@ -139,7 +139,7 @@ createNativeEvents ( void )
  * with PAPI
  */
 
-static long_long
+static long long
 getEventValue ( unsigned event_id )
 {
      double          value;
@@ -155,7 +155,7 @@ getEventValue ( unsigned event_id )
 		 return -1;
      }
 
-     return ( ( long_long ) ( value * 1000 ) );
+     return ( ( long long ) ( value * 1000 ) );
 }
 
 
@@ -253,7 +253,7 @@ LM_SENSORS_stop ( hwd_context_t * ctx, hwd_control_state_t * ctrl )
  */
 int
 LM_SENSORS_read ( hwd_context_t * ctx, hwd_control_state_t * ctrl,
-		  long_long ** events, int flags )
+		  long long ** events, int flags )
 {
      long long       start = PAPI_get_real_usec (  );
 	

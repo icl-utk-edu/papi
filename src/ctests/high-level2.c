@@ -9,8 +9,8 @@ extern int TESTS_QUIET;         /*Declared in test_utils.c */
 int main(int argc, char **argv)
 {
    int retval;
-   int Events, fip=0;
-   long long values, flpins;
+   int fip=0;
+   long long Events, values, flpins;
    float real_time, proc_time, mflops;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */

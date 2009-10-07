@@ -14,8 +14,9 @@ functionality for a parent and a forked child. */
 #include <sys/wait.h>
 
 int EventSet1=PAPI_NULL;
-int PAPI_event, mask1;
+int mask1;
 int num_events1 = 2;
+long long PAPI_event;
 long long elapsed_us, elapsed_cyc;
 long long **values;
 char event_name[PAPI_MAX_STR_LEN];

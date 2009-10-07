@@ -54,18 +54,18 @@ extern int _linux_shutdown(hwd_context_t * ctx);
 #define _p3_ntv_code_to_bits _papi_pfm_ntv_code_to_bits
 #define _p3_ntv_bits_to_info _papi_pfm_ntv_bits_to_info
 /* Cleverly add an entry that doesn't exist for non-pfm */
-int _p3_ntv_name_to_code(char *name, unsigned int *event_code);
+int _p3_ntv_name_to_code(char *name, long long *event_code);
 #else
 /* this routine doesn't exist if not pfm */
 #define _p3_ntv_name_to_code NULL
 #endif
 
 /* Prototypes for entry points found in either p3_events or papi_pfm_events */
-extern int _p3_ntv_enum_events(unsigned int *EventCode, int modifer);
-extern int _p3_ntv_code_to_name(unsigned int EventCode, char * name, int len);
-extern int _p3_ntv_code_to_descr(unsigned int EventCode, char * name, int len);
-extern int _p3_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits);
-extern int _p3_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values,
+extern int _p3_ntv_enum_events(long long *EventCode, int modifer);
+extern int _p3_ntv_code_to_name(long long EventCode, char * name, int len);
+extern int _p3_ntv_code_to_descr(long long EventCode, char * name, int len);
+extern int _p3_ntv_code_to_bits(long long EventCode, hwd_register_t *bits);
+extern int _p3_ntv_bits_to_info(hwd_register_t *bits, char *names, long long *values,
                           int name_len, int count);
 
 extern papi_mdi_t _papi_hwi_system_info;

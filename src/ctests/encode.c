@@ -63,6 +63,7 @@ int main(int argc, char **argv)
    int print_avail_only = PAPI_PRESET_ENUM_AVAIL;
    int print_tabular = 0;
    int print_table = 1;
+   long long ec;
    PAPI_event_info_t info;
    const PAPI_hw_info_t *hwinfo = NULL;
 	FILE *file = NULL;
@@ -162,7 +163,7 @@ int main(int argc, char **argv)
          }
 /*         print_this_event_info(&info);*/
          printf("Setting preset event info for: %s\n", info.symbol);
-         retval = PAPI_set_event_info(&info, &i, replace_event);
+         retval = PAPI_set_event_info(&info, &ec, replace_event);
          printf("Returns: %d\n", retval);
          if (retval == PAPI_ESBSTR) printf("This feature isn't supported!\n");
          if (retval == PAPI_EPERM) printf("Non-modifiable event conflict!\n");
@@ -177,7 +178,7 @@ int main(int argc, char **argv)
 	fclose(file);
 
    if (print_table) {
-      i = PAPI_PRESET_MASK;
+      ec = PAPI_PRESET_MASK;
       printf ("-------------------------------------------------------------------------\n");
       if (print_tabular) {
          if (print_avail_only) {
@@ -192,7 +193,7 @@ int main(int argc, char **argv)
       }
       printf ("-------------------------------------------------------------------------\n");
       do {
-         if (PAPI_get_event_info(i, &info) == PAPI_OK) {
+         if (PAPI_get_event_info(ec, &info) == PAPI_OK) {
             if (print_tabular) {
                if (print_avail_only) {
 		            printf("%s\t%s\t%s (%s)\n",
@@ -200,7 +201,7 @@ int main(int argc, char **argv)
 			            (info.count > 1 ? "Yes" : "No"),
 			            info.long_descr, (info.note ? info.note : ""));
                } else {
-		            printf("%s\t0x%x\t%s\t%s\t%s (%s)\n",
+		            printf("%s\t0x%llx\t%s\t%s\t%s (%s)\n",
 		                  info.symbol,
 		                  info.event_code,
 		                  (info.count ? "Yes" : "No"),
@@ -208,7 +209,7 @@ int main(int argc, char **argv)
 		                  info.long_descr, (info.note ? info.note : ""));
                }
             } else {
-	            printf("\n%s\t0x%x\t%d\n |%s|\n |%s|\n |%s|\n |%s|\n |%s|\n",
+	            printf("\n%s\t0x%llx\t%d\n |%s|\n |%s|\n |%s|\n |%s|\n |%s|\n",
 		            info.symbol,
 		            info.event_code,
 		            info.count,
@@ -217,10 +218,10 @@ int main(int argc, char **argv)
 		            info.note,
                   info.derived,
                   info.postfix);
-               for (j=0;j<(int)info.count;j++) printf(" |Native Code[%d]: 0x%x  %s|\n",j,info.code[j], info.name[j]);
+               for (j=0;j<(int)info.count;j++) printf(" |Native Code[%d]: 0x%llx  %s|\n",j,info.code[j], info.name[j]);
             }
 	      }
-      } while (PAPI_enum_event(&i, print_avail_only) == PAPI_OK);
+      } while (PAPI_enum_event(&ec, print_avail_only) == PAPI_OK);
       printf ("-------------------------------------------------------------------------\n");
    }
    test_pass(__FILE__, NULL, 0);

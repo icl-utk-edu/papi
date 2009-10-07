@@ -15,7 +15,7 @@
 #endif
 
 #define QUIETPRINTF if (!TESTS_QUIET) printf
-unsigned int PAPI_events[PAPI_MPX_DEF_DEG] = { 0, 0 };
+long long PAPI_events[PAPI_MPX_DEF_DEG] = { 0, 0 };
 const static int PAPI_events_len = 1;
 extern int TESTS_QUIET;
 
@@ -24,6 +24,7 @@ int main(int argc, char **argv)
    int retval, tmp;
    int EventSet=PAPI_NULL;
    int i;
+   PAPI_event_code_t ec;
    PAPI_event_info_t info;
    long long values;
    char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
@@ -45,15 +46,15 @@ int main(int argc, char **argv)
    tmp = PAPI_get_opt(PAPI_DEFGRN, NULL);
    QUIETPRINTF("Default granularity is: %d (%s)\n\n", tmp, stringify_granularity(tmp));
 
-   i = PAPI_PRESET_MASK;
+   ec.ll = PAPI_PRESET_MASK;
    do {
-      if (PAPI_get_event_info(i, &info) == PAPI_OK){
+      if (PAPI_get_event_info(ec.ll, &info) == PAPI_OK){
          if (info.count>1){
             PAPI_events[0]=info.event_code;
             break;
          }
       }
-   } while (PAPI_enum_event(&i, 0) == PAPI_OK);
+   } while (PAPI_enum_event(&ec.ll, 0) == PAPI_OK);
 
    if(PAPI_events[0]==0)
       CPP_TEST_SKIP();

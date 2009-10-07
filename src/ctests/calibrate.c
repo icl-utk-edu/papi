@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
    int element_size;
    int retval = PAPI_OK;
    char papi_event_str[PAPI_MIN_STR_LEN] = "PAPI_FP_OPS";
-   int papi_event;
+   long long papi_event;
    int EventSet = PAPI_NULL;
 
 /* Parse the input arguments */

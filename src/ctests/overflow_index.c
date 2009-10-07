@@ -76,7 +76,8 @@ int main(int argc, char **argv)
    int EventSet=PAPI_NULL;
    long long(values[3])[2];
    int retval;
-   int PAPI_event,k ,i;
+   int k ,i;
+   long long PAPI_event;
    char event_name[PAPI_MAX_STR_LEN];
    int index_array[2], number;
    int num_events1, mask1;

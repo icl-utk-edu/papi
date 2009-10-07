@@ -5,7 +5,8 @@ int main(int argc, char **argv)
 {
    int FPEventSet=PAPI_NULL;
    long long values;
-   int PAPI_event, retval;
+   int retval;
+   long long PAPI_event;
    char event_name[PAPI_MAX_STR_LEN];
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */

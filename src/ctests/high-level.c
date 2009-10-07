@@ -18,7 +18,7 @@ int main(int argc, char **argv)
    int retval;
    long long values[NUM_EVENTS], dummyvalues[NUM_EVENTS];
    long long myvalues[NUM_EVENTS];
-   unsigned int Events[NUM_EVENTS];
+   long long Events[NUM_EVENTS];
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
@@ -34,7 +34,7 @@ int main(int argc, char **argv)
    }
    Events[1] = PAPI_TOT_CYC;
 
-   retval = PAPI_start_counters((int *) Events, NUM_EVENTS);
+   retval = PAPI_start_counters(Events, NUM_EVENTS);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_start_counters", retval);
 

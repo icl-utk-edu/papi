@@ -20,7 +20,7 @@ int main(int argc, char **argv)
    double p[NROWS1][NCOLS1], q[NROWS2][NCOLS2], r[NROWS1][NCOLS2];
    int i, j, k, num_events, retval;
    /*     PAPI standardized event to be monitored */
-   int event[2];
+   long long event[2];
    /*     PAPI values of the counters */
    long long values[2], tmp;
    extern int TESTS_QUIET;

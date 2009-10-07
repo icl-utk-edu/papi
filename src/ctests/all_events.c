@@ -13,6 +13,7 @@ int main(int argc, char **argv)
    int retval, i;
    int EventSet=PAPI_NULL, count = 0, err_count = 0;
    long long values;
+   PAPI_event_code_t ec;
    PAPI_event_info_t info;
    char errstring[PAPI_MAX_STR_LEN];
 
@@ -27,8 +28,11 @@ int main(int argc, char **argv)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
+   ec.ll = 0;
+   ec.fmwk.PRESET = 1;
    for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++) {
-      if (PAPI_get_event_info(PAPI_PRESET_MASK|i, &info) != PAPI_OK)
+	   ec.fmwk.code = i;
+      if (PAPI_get_event_info(ec.ll, &info) != PAPI_OK)
          continue;
       if (!(info.count))
          continue;

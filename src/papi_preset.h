@@ -21,18 +21,18 @@ typedef struct hwi_preset_data {  /* preset event data for each defined preset *
 /* Unused but should be to prevent checking native against PAPI_NULL:
    unsigned int mask;
    unsigned int count; */
-   int native[PAPI_MAX_COUNTER_TERMS];    /* array of native event code(s) for this preset event */
+   long long native[PAPI_MAX_COUNTER_TERMS];    /* array of native event code(s) for this preset event */
    char operation[PAPI_MIN_STR_LEN]; /* operation string: +,-,*,/,@(number of metrics), $(constant Mhz), %(1000000.0) */
 } hwi_preset_data_t;
 
 typedef struct hwi_search {   /* search element for preset events defined for each platform */
   /* eventcode should have a more specific name, like papi_preset! -pjm */
-   unsigned int event_code;   /* Preset code that keys back to sparse preset array */
+   long long event_code;   /* Preset code that keys back to sparse preset array */
    hwi_preset_data_t data;    /* Event data for this preset event */
 } hwi_search_t;
 
 typedef struct hwi_dev_notes {
-   unsigned int event_code;   /* Preset code that keys back to sparse preset array */
+   long long event_code;   /* Preset code that keys back to sparse preset array */
    char *dev_note;          /* optional developer notes for this event */
 } hwi_dev_notes_t;
 

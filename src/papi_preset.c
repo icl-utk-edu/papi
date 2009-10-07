@@ -34,7 +34,7 @@ int _papi_hwi_setup_all_presets(hwi_search_t *findem, hwi_dev_notes_t *notes)
        for (pnum = 0; (pnum < PAPI_MAX_PRESET_EVENTS) && (findem[pnum].event_code != 0); pnum++) 
 	 {
 	   /* find the index for the event to be initialized */
-	   preset_index = (findem[pnum].event_code & PAPI_PRESET_AND_MASK);
+	   preset_index = ((PAPI_event_code_t)(findem[pnum].event_code)).fmwk.code;
 	   
 	   /* count and set the number of native terms in this event, these items are contiguous.
 	      PAPI_MAX_COUNTER_TERMS is arbitrarily defined in the high level to be a reasonable
@@ -95,7 +95,7 @@ int _papi_hwi_setup_all_presets(hwi_search_t *findem, hwi_dev_notes_t *notes)
        for (pnum = 0; (pnum < PAPI_MAX_PRESET_EVENTS) && (notes[pnum].event_code != 0); pnum++) 
 	 {
 	   /* strdup the note string into the sparse preset data array */
-	   preset_index = (notes[pnum].event_code & PAPI_PRESET_AND_MASK);
+	   preset_index = ((PAPI_event_code_t)(notes[pnum].event_code)).fmwk.code;
 	   if (_papi_hwi_presets.dev_note[preset_index] != NULL)
 	     papi_free(_papi_hwi_presets.dev_note[preset_index]);
 	   _papi_hwi_presets.dev_note[preset_index] = papi_strdup(notes[pnum].dev_note);

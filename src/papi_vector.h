@@ -52,12 +52,12 @@ typedef struct papi_vectors {
     int		(*set_profile)		(EventSetInfo_t *, int, int);
     int		(*add_prog_event)	(hwd_control_state_t *, unsigned int, void *, EventInfo_t *);
     int		(*set_domain)		(hwd_control_state_t *, int);
-    int		(*ntv_enum_events)	(unsigned int *, int);
-    int		(*ntv_name_to_code)	(char *, unsigned int *);
-    int		(*ntv_code_to_name)	(unsigned int, char *, int);
-    int		(*ntv_code_to_descr)	(unsigned int, char *, int);
-    int		(*ntv_code_to_bits)	(unsigned int, hwd_register_t *);
-    int		(*ntv_bits_to_info)	(hwd_register_t *, char *, unsigned int *, int, int);
+    int		(*ntv_enum_events)	(long long *, int);
+    int		(*ntv_name_to_code)	(char *, long long *);
+    int		(*ntv_code_to_name)	(long long, char *, int);
+    int		(*ntv_code_to_descr)	(long long, char *, int);
+    int		(*ntv_code_to_bits)	(long long, hwd_register_t *);
+    int		(*ntv_bits_to_info)	(hwd_register_t *, char *, long long *, int, int);
     int		(*allocate_registers)	(EventSetInfo_t *);
     int		(*bpt_map_avail)	(hwd_reg_alloc_t *, int);
     void	(*bpt_map_set)		(hwd_reg_alloc_t *, int);

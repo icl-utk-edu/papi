@@ -29,7 +29,8 @@ void init_papi(void)
 int case1(void)
 {
 	int retval, i, EventSet = PAPI_NULL, j = 0, k = 0, allvalid = 1;
-	int max_mux, nev, *events;
+	int max_mux, nev;
+	long long ec, *events;
 	long long *values;
 	PAPI_event_info_t pset;
 	char evname[PAPI_MAX_STR_LEN];
@@ -58,9 +59,9 @@ int case1(void)
 	/* Fill up the event set with as many non-derived events as we can */
 	printf("\nFilling the event set with as many non-derived events as we can...\n");
 
-	i = PAPI_PRESET_MASK;
+	ec = PAPI_PRESET_MASK;
 	do {
-		if (PAPI_get_event_info(i, &pset) == PAPI_OK) 
+		if (PAPI_get_event_info(ec, &pset) == PAPI_OK) 
 		{
 			if (pset.count && (strcmp(pset.derived,"NOT_DERIVED") == 0))
 			{
@@ -74,9 +75,9 @@ int case1(void)
 				}
 			}
 		}
-	} while ((PAPI_enum_event(&i, PAPI_PRESET_ENUM_AVAIL) == PAPI_OK) && (j < max_mux));
+	} while ((PAPI_enum_event(&ec, PAPI_PRESET_ENUM_AVAIL) == PAPI_OK) && (j < max_mux));
 
-	events = (int *) malloc(j * sizeof(int));
+	events = (long long *) malloc(j * sizeof(long long));
 	if (events == NULL)
 		test_fail(__FILE__, __LINE__, "malloc events", 0);
 

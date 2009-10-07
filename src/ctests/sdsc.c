@@ -19,7 +19,7 @@
 
 static double dummy3(double x, int iters);
 
-void check_values(int eventset, int *events, int nevents, long long *values, long long *refvalues)
+void check_values(int eventset, long long *events, int nevents, long long *values, long long *refvalues)
 {
   double spread[MAXEVENTS];
   int i = nevents, j = 0;
@@ -61,7 +61,7 @@ void check_values(int eventset, int *events, int nevents, long long *values, lon
       test_fail(__FILE__, __LINE__, "Values outside threshold", i);
 }
 
-void ref_measurements(int iters, int *eventset, int *events, int nevents, long long *refvalues)
+void ref_measurements(int iters, int *eventset, long long *events, int nevents, long long *refvalues)
 {
    PAPI_event_info_t info;
    int i, retval;
@@ -105,7 +105,7 @@ void ref_measurements(int iters, int *eventset, int *events, int nevents, long l
    *eventset = PAPI_NULL;
 }
 
-void decide_which_events(int *events, int *nevents)
+void decide_which_events(long long *events, int *nevents)
 {
   int i, j = 0;
   PAPI_event_info_t info;
@@ -144,7 +144,7 @@ int main(int argc, char **argv)
    double valsum[MAXEVENTS];
    int nevents = MAXEVENTS;
    int eventset = PAPI_NULL;
-   int events[MAXEVENTS];
+   long long events[MAXEVENTS];
 
    events[0] = PAPI_FP_INS;
    events[1] = PAPI_TOT_INS;

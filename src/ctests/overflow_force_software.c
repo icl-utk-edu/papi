@@ -67,7 +67,8 @@ int main(int argc, char **argv)
 	int EventSet=PAPI_NULL;
 	long long hard_min, hard_max, soft_min, soft_max;
 	int retval;
-	int PAPI_event=0, mythreshold;
+	int mythreshold;
+	long long PAPI_event=0;
 	char event_name[PAPI_MAX_STR_LEN];
 	PAPI_option_t opt;
 	PAPI_event_info_t info;

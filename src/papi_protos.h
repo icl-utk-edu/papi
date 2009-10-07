@@ -21,16 +21,15 @@
                           long long * values);
  int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle);
  int _papi_hwi_assign_eventset(EventSetInfo_t *ESI, int cidx);
- int _papi_hwi_add_event(EventSetInfo_t * ESI, int index);
- int _papi_hwi_add_pevent(EventSetInfo_t * ESI, int EventCode, void *inout);
- int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode);
+ int _papi_hwi_add_event(EventSetInfo_t * ESI, long long EventCode);
+ int _papi_hwi_add_pevent(EventSetInfo_t * ESI, long long EventCode, void *inout);
+ int _papi_hwi_remove_event(EventSetInfo_t * ESI, long long EventCode);
  int _papi_hwi_remove_EventSet(EventSetInfo_t * ESI);
  int _papi_hwi_cleanup_eventset(EventSetInfo_t * ESI);
  int _papi_hwi_get_domain(PAPI_domain_option_t * opt);
  int _papi_hwi_get_granularity(PAPI_granularity_option_t * opt);
  int _papi_hwi_convert_eventset_to_multiplex(_papi_int_multiplex_t *opt);
- int _papi_hwi_lookup_EventCodeIndex(const EventSetInfo_t * ESI,
-                                           unsigned int EventCode);
+ int _papi_hwi_lookup_EventCodeIndex(const EventSetInfo_t * ESI, long long EventCode);
 inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
  int _papi_hwi_remove_EventSet(EventSetInfo_t *);
  void print_state(EventSetInfo_t * ESI);
@@ -38,8 +37,8 @@ inline_static EventSetInfo_t *_papi_hwi_lookup_EventSet(int eventset);
  int _papi_hwi_init_global(void);
  void _papi_hwi_shutdown_global_internal(void);
  int _papi_hwi_cleanup_all_presets(void);
- int _papi_hwi_get_event_info(int EventCode, PAPI_event_info_t * info);
- int _papi_hwi_set_event_info(PAPI_event_info_t * info, int *EventCode);
+ int _papi_hwi_get_event_info(long long EventCode, PAPI_event_info_t * info);
+ int _papi_hwi_set_event_info(PAPI_event_info_t * info, long long *EventCode);
 
 /* The following PAPI internal functions are defined by the papi_preset.c file. */
 
@@ -53,9 +52,9 @@ int _xml_papi_hwi_setup_all_presets(char *arch, hwi_dev_notes_t *notes);
 
  int mpx_check(int EventSet);
  int mpx_init(int);
- int mpx_add_event(MPX_EventSet **, int EventCode, int domain, int granularity, int cidx);
+ int mpx_add_event(MPX_EventSet **, long long EventCode, int domain, int granularity, int cidx);
  int mpx_remove_event(MPX_EventSet **, int EventCode);
- int MPX_add_events(MPX_EventSet ** mpx_events, int *event_list, int num_events, int domain, int granularity, int cidx);
+ int MPX_add_events(MPX_EventSet ** mpx_events, long long *event_list, int num_events, int domain, int granularity, int cidx);
  int MPX_stop(MPX_EventSet * mpx_events, long long * values);
  int MPX_cleanup(MPX_EventSet ** mpx_events);
  void MPX_shutdown(void);
@@ -132,12 +131,12 @@ void _papi_hwd_dispatch_timer(int signal, hwd_siginfo_t * info, void *tmp);
 /* The following functions implement the native event query capability
    See extras.c or substrates for details... */
 
- int _papi_hwi_query_native_event(unsigned int EventCode);
- int _papi_hwi_get_native_event_info(unsigned int EventCode,
+ int _papi_hwi_query_native_event(long long EventCode);
+ int _papi_hwi_get_native_event_info(long long EventCode,
                                            PAPI_event_info_t * info);
- int _papi_hwi_native_name_to_code(char *in, int *out);
- int _papi_hwi_native_code_to_name(unsigned int EventCode, char *hwi_name, int len);
- int _papi_hwi_native_code_to_descr(unsigned int EventCode, char *hwi_descr, int len);
+ int _papi_hwi_native_name_to_code(char *in, long long *out);
+ int _papi_hwi_native_code_to_name(long long EventCode, char *hwi_name, int len);
+ int _papi_hwi_native_code_to_descr(long long EventCode, char *hwi_descr, int len);
 
 /* The following functions implement the hardware dependent native event table access.
    The first four routines are required. The next two are optional.

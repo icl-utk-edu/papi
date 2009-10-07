@@ -14,7 +14,7 @@
 
 #define MAX_EVENTS  3
 
-int Event[MAX_EVENTS] = {
+long long Event[MAX_EVENTS] = {
     PAPI_TOT_CYC,
     PAPI_FP_INS,
     PAPI_FAD_INS,

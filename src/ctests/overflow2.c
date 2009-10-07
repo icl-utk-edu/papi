@@ -52,7 +52,8 @@ int main(int argc, char **argv)
    long long(values[2])[2];
    long long min, max;
    int num_flops, retval;
-   int PAPI_event, mythreshold;
+   int mythreshold;
+   long long PAPI_event;
    char event_name[PAPI_MAX_STR_LEN];
    const PAPI_hw_info_t *hw_info = NULL;
 

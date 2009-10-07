@@ -12,20 +12,20 @@
 #include <pthread.h>
 #include "papi_test.h"
 
-unsigned int power6_preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
+long long power6_preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
    PAPI_FP_INS, PAPI_TOT_CYC, PAPI_L1_DCM, PAPI_L1_ICM, 0 };
-unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
+long long preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
    PAPI_FP_INS, PAPI_TOT_INS, PAPI_L1_DCM, PAPI_L1_ICM, 0 };
-static unsigned int PAPI_events[PAPI_MPX_DEF_DEG] = { 0, };
+static long long PAPI_events[PAPI_MPX_DEF_DEG] = { 0, };
 static int PAPI_events_len = 0;
 
 #define CPP_TEST_FAIL(string, retval) test_fail(__FILE__, __LINE__, string, retval)
 
-void init_papi_pthreads(unsigned int *out_events, int *len)
+void init_papi_pthreads(long long *out_events, int *len)
 {
    int retval;
    int i, real_len = 0;
-   unsigned int *in_events = preset_PAPI_events;
+   long long *in_events = preset_PAPI_events;
    const PAPI_hw_info_t *hw_info;
 
    /* Initialize the library */

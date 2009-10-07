@@ -23,7 +23,7 @@ int main(int argc, char **argv)
    int EventSet=PAPI_NULL;
    int retval;
    long long g1[2];
-   unsigned int eventcode = PAPI_TOT_INS;
+   long long eventcode = PAPI_TOT_INS;
    char eventname[PAPI_MAX_STR_LEN];
    PAPI_event_info_t info, info1, info2;
 
@@ -82,7 +82,7 @@ int main(int argc, char **argv)
      test_fail(__FILE__,__LINE__,"PAPI_describe_event",retval);	   
 */
    strcpy(eventname, info1.symbol);
-   if ((retval = PAPI_event_name_to_code(eventname, (int *) &eventcode)) != PAPI_OK)
+   if ((retval = PAPI_event_name_to_code(eventname, &eventcode)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", retval);
 
    if (eventcode != PAPI_TOT_INS)

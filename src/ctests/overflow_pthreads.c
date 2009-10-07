@@ -40,8 +40,9 @@ void *Thread(void *arg)
 {
    int retval, num_tests = 1;
    int EventSet1=PAPI_NULL;
-   int mask1, papi_event;
+   int mask1;
    int num_events1;
+   long long papi_event;
    long long **values;
    long long elapsed_us, elapsed_cyc;
    char event_name[PAPI_MAX_STR_LEN];

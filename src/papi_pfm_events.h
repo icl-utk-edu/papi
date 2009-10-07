@@ -27,7 +27,7 @@
 #define PERFMON_EVENT_FILE "perfmon_events.csv"
 
 typedef struct {
-   int preset; /* Preset code */
+   long long preset; /* Preset code */
    int derived; /* Derived code */
    char *(findme[MAX_COUNTER_TERMS]); /* Strings to look for, more than 1 means derived */
    char *operation; /* PostFix operations between terms */

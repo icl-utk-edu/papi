@@ -94,25 +94,25 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
    unsigned long blength;
    int num_buckets;
 
-   const unsigned int *events;
+   const long long *events;
 #if defined(__powerpc__)
-   const unsigned int power6_events[] = {PAPI_TOT_CYC, PAPI_FP_INS };
+   const long long power6_events[] = {PAPI_TOT_CYC, PAPI_FP_INS };
    int power6_num_events = 2;
    unsigned int std_events[] = {PAPI_TOT_CYC, PAPI_TOT_INS, PAPI_FP_INS };
    int num_events = 3;
    char * header =  "address\t\t\tcyc\tins\tfp_ins\n";
 #else
-   const unsigned int power6_events[] = { };
+   const long long power6_events[] = { };
    int power6_num_events = 0;
   #if defined(ITANIUM2)
-   const unsigned int std_events[] = {PAPI_TOT_CYC, PAPI_FP_OPS, PAPI_L2_TCM, PAPI_L1_DCM };
+   const long long std_events[] = {PAPI_TOT_CYC, PAPI_FP_OPS, PAPI_L2_TCM, PAPI_L1_DCM };
   #else
-   const unsigned int std_events[] = {PAPI_TOT_CYC, PAPI_TOT_INS, PAPI_FP_OPS, PAPI_L2_TCM };
+   const long long std_events[] = {PAPI_TOT_CYC, PAPI_TOT_INS, PAPI_FP_OPS, PAPI_L2_TCM };
   #endif
    int num_events = 4;
    char * header =  "address\t\t\tcyc\tins\tfp_ops\tl2_tcm\n";
 #endif
-   const unsigned int p3_events[] = {PAPI_TOT_CYC, PAPI_TOT_INS};
+   const long long p3_events[] = {PAPI_TOT_CYC, PAPI_TOT_INS};
 
    if (strcmp(hw_info->model_string, "POWER6") == 0) {
       events = power6_events;

@@ -12,7 +12,8 @@ static void test_continue(char *file, int line, char *call, int retval)
 int main(int argc, char **argv)
 {
   int retval;
-  unsigned int code = PAPI_TOT_CYC;
+  PAPI_event_code_t ec;
+  long long code = PAPI_TOT_CYC;
   char event_name[PAPI_MAX_STR_LEN];
   const PAPI_hw_info_t *hwinfo = NULL;
   const PAPI_component_info_t *cmp_info;
@@ -27,36 +28,43 @@ int main(int argc, char **argv)
   if (retval != PAPI_OK) test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
   printf("Looking for PAPI_TOT_CYC...\n");
-  retval = PAPI_event_code_to_name(code, event_name);
+  ec.ll = PAPI_TOT_CYC;
+  retval = PAPI_event_code_to_name(ec.ll, event_name);
   if (retval != PAPI_OK)
     test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
   printf("Found |%s|\n", event_name);
   
-  code = PAPI_FP_OPS;
-  printf("Looking for highest defined preset event (PAPI_FP_OPS): 0x%x...\n", code);
-  retval = PAPI_event_code_to_name(code, event_name);
+  ec.ll = PAPI_FP_OPS;
+  printf("Looking for highest defined preset event (PAPI_FP_OPS): 0x%llx...\n", code);
+  retval = PAPI_event_code_to_name(ec.ll, event_name);
   if (retval != PAPI_OK)
     test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
   printf("Found |%s|\n", event_name);
   
-  code = PAPI_PRESET_MASK | (PAPI_MAX_PRESET_EVENTS - 1);
-  printf("Looking for highest allocated preset event: 0x%x...\n", code);
-  retval = PAPI_event_code_to_name(code, event_name);
+  ec.ll = 0;
+  ec.fmwk.PRESET = 1;
+  ec.fmwk.code = (PAPI_MAX_PRESET_EVENTS - 1);
+  printf("Looking for highest allocated preset event: 0x%llx...\n", ec.ll);
+  retval = PAPI_event_code_to_name(ec.ll, event_name);
   if (retval != PAPI_OK)
     test_continue(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
   else printf("Found |%s|\n", event_name);
   
-  code = PAPI_PRESET_MASK | PAPI_NATIVE_AND_MASK;
-  printf("Looking for highest possible preset event: 0x%x...\n", code);
-  retval = PAPI_event_code_to_name(code, event_name);
+  ec.ll = 0;
+  ec.fmwk.PRESET = 1;
+  ec.fmwk.code = 0xFFFF;
+  printf("Looking for highest possible preset event: 0x%llx...\n", ec.ll);
+  retval = PAPI_event_code_to_name(ec.ll, event_name);
   if (retval != PAPI_OK)
     test_continue(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
   else printf("Found |%s|\n", event_name);
 
   /* Find the first defined native event */
-  code = PAPI_NATIVE_MASK;
-  printf("Looking for first native event: 0x%x...\n", code);
-  retval = PAPI_event_code_to_name(code, event_name);
+  ec.ll = 0;
+  ec.fmwk.NATIVE = 1;
+  ec.fmwk.code = 0;
+  printf("Looking for first native event: 0x%llx...\n", ec.ll);
+  retval = PAPI_event_code_to_name(ec.ll, event_name);
   if (retval != PAPI_OK)
     test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
   printf("Found |%s|\n", event_name);
@@ -65,18 +73,22 @@ int main(int argc, char **argv)
   cmp_info = PAPI_get_component_info(0);
   if (cmp_info == NULL)
     test_fail(__FILE__, __LINE__, "PAPI_get_component_info", PAPI_ESBSTR);
-  code = (cmp_info->num_native_events - 1) | PAPI_NATIVE_MASK;
-  printf("Looking for last native event: 0x%x...\n", code);
-  retval = PAPI_event_code_to_name(code, event_name);
+  ec.ll = 0;
+  ec.fmwk.code = (cmp_info->num_native_events - 1);
+  ec.fmwk.NATIVE = 1;
+  printf("Looking for last native event: 0x%llx...\n", ec.ll);
+  retval = PAPI_event_code_to_name(ec.ll, event_name);
   if (retval != PAPI_OK)
     test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
   printf("Found |%s|\n", event_name);
 
   /* Highly doubtful we have this many natives */
-  /* Turn on all bits *except* PRESET bit and COMPONENT bits */
-  code = PAPI_PRESET_AND_MASK & PAPI_COMPONENT_AND_MASK;
-  printf("Looking for highest definable native event: 0x%x...\n", code);
-  retval = PAPI_event_code_to_name(code, event_name);
+  /* Turn on NATIVE bit and all code bits */
+  ec.ll = 0;
+  ec.fmwk.NATIVE = 1;
+  ec.fmwk.code = 0xFFFF;
+  printf("Looking for highest definable native event: 0x%llx...\n", ec.ll);
+  retval = PAPI_event_code_to_name(ec.ll, event_name);
   if (retval != PAPI_OK)
     test_continue(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
   else printf("Found |%s|\n", event_name);

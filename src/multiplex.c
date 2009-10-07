@@ -149,7 +149,7 @@ static void *global_process_record;
 static void mpx_remove_unused(MasterEvent ** head);
 static void mpx_delete_events(MPX_EventSet *);
 static void mpx_delete_one_event(MPX_EventSet * mpx_events, int Event);
-static int mpx_insert_events(MPX_EventSet *, int *event_list, int num_events,
+static int mpx_insert_events(MPX_EventSet *, long long *event_list, int num_events,
                              int domain, int granularity);
 static void mpx_handler(int signal);
 
@@ -338,7 +338,7 @@ static MPX_EventSet *mpx_malloc(Threadlist * t)
    return (newset);
 }
 
-int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode, int domain, int granularity, int cidx)
+int mpx_add_event(MPX_EventSet ** mpx_events, long long EventCode, int domain, int granularity, int cidx)
 {
    MPX_EventSet *newset = *mpx_events;
    int retval, alloced_thread = 0, alloced_newset = 0;
@@ -464,7 +464,7 @@ static long long lastcall;
    PAPI_DOM_ALL, and can count it on other domains on counters
    1 and 2 along with a very limited number of other native
    events */
-int _PNE_PM_RUN_CYC;
+long long _PNE_PM_RUN_CYC;
 #define SCALE_EVENT _PNE_PM_RUN_CYC
 #else
 #define SCALE_EVENT PAPI_TOT_CYC
@@ -691,7 +691,7 @@ static void mpx_handler(int signal)
 #endif
 }
 
-int MPX_add_events(MPX_EventSet ** mpx_events, int *event_list, int num_events, int domain, int granularity, int cidx)
+int MPX_add_events(MPX_EventSet ** mpx_events, long long *event_list, int num_events, int domain, int granularity, int cidx)
 {
    int i, retval = PAPI_OK;
 
@@ -1101,7 +1101,7 @@ int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
 #ifdef OLD
    int i;
    int granularity, domain;
-   int *event_list;
+   long long *event_list;
 #endif
 
    return (PAPI_EINVAL);
@@ -1146,7 +1146,7 @@ int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
          return PAPI_OK;
 
       /* Make a list of the events in the current set */
-      event_list = (int *) papi_malloc(mpx_events->num_events * sizeof(int));
+      event_list = (long long *) papi_malloc(mpx_events->num_events * sizeof(long long));
       if (event_list == NULL)
 	return PAPI_ENOMEM;
 
@@ -1224,7 +1224,7 @@ int mpx_init(int interval_ns)
 
 /* MUST BE CALLED WITH THE TIMER INTERRUPT DISABLED */
 
-static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
+static int mpx_insert_events(MPX_EventSet * mpx_events, long long *event_list,
                              int num_events, int domain, int granularity)
 {
    int i, retval = 0, num_events_success = 0;
@@ -1261,13 +1261,13 @@ static int mpx_insert_events(MPX_EventSet * mpx_events, int *event_list,
          mev->papi_event = PAPI_NULL;
          retval = PAPI_create_eventset(&(mev->papi_event));
          if (retval != PAPI_OK) {
-            MPXDBG("Event %d could not be counted.\n", event_list[i]);
+            MPXDBG("Event %lld could not be counted.\n", event_list[i]);
             goto bail;
          }
          
          retval = PAPI_add_event(mev->papi_event, event_list[i]);
          if (retval != PAPI_OK) {
-            MPXDBG("Event %d could not be counted.\n", event_list[i]);
+            MPXDBG("Event %lld could not be counted.\n", event_list[i]);
             goto bail;
          }
 

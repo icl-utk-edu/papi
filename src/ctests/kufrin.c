@@ -12,7 +12,7 @@
 #include <pthread.h>
 #include "papi_test.h"
 
-int events[PAPI_MPX_DEF_DEG];
+long long events[PAPI_MPX_DEF_DEG];
 int numevents = 0;
 
 double loop(long n)
@@ -85,6 +85,7 @@ void *thread(void *arg)
 int main(int argc, char **argv)
 {
     int nthreads=8, ret, i;
+	long long ec;
     PAPI_event_info_t info;
     pthread_t *threads;
     const PAPI_hw_info_t *hw_info;
@@ -129,9 +130,9 @@ int main(int argc, char **argv)
 
     /* Fill up the event set with as many non-derived events as we can */
 
-    i = PAPI_PRESET_MASK;
+    ec = PAPI_PRESET_MASK;
     do {
-        if ( PAPI_get_event_info(i, &info) == PAPI_OK ) {
+        if ( PAPI_get_event_info(ec, &info) == PAPI_OK ) {
             if ( info.count == 1 ) {
                 events[numevents++] = info.event_code;
                 printf("Added %s\n", info.symbol);
@@ -140,7 +141,7 @@ int main(int argc, char **argv)
                 printf("Skipping derived event %s\n", info.symbol);
             }
         }
-    } while ( (PAPI_enum_event(&i, PAPI_PRESET_ENUM_AVAIL ) == PAPI_OK)
+    } while ( (PAPI_enum_event(&ec, PAPI_PRESET_ENUM_AVAIL ) == PAPI_OK)
               && (numevents < PAPI_MPX_DEF_DEG) );
 
     printf("Found %d events\n", numevents);

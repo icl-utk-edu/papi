@@ -579,7 +579,7 @@ int wait_exit(int retval)
 
 void test_print_event_header(char *call, int evset)
 {
-   int ev_ids[PAPI_MAX_HWCTRS + PAPI_MPX_DEF_DEG];
+   long long ev_ids[PAPI_MAX_HWCTRS + PAPI_MPX_DEF_DEG];
    int i, nev;
    int retval;
    char evname[PAPI_MAX_STR_LEN];
@@ -600,13 +600,13 @@ void test_print_event_header(char *call, int evset)
    fprintf(stdout,"\n");
 }
 
-int add_two_events(int *num_events, int *papi_event, 
+int add_two_events(int *num_events, long long *papi_event, 
                const PAPI_hw_info_t *hw_info, int *mask)
 {
   /* query and set up the right event to monitor */
    int EventSet = PAPI_NULL;
   PAPI_event_info_t info;
-  unsigned int potential_evt_to_add[3][2] = {{ PAPI_FP_INS, MASK_FP_INS},{ PAPI_FP_OPS, MASK_FP_OPS}, { PAPI_TOT_INS, MASK_TOT_INS}};
+  long long potential_evt_to_add[3][2] = {{ PAPI_FP_INS, MASK_FP_INS},{ PAPI_FP_OPS, MASK_FP_OPS}, { PAPI_TOT_INS, MASK_TOT_INS}};
   int i = 0;
   unsigned int counters, event_found = 0;
   
@@ -635,13 +635,13 @@ int add_two_events(int *num_events, int *papi_event,
    return(EventSet);
 }
 
-int add_two_nonderived_events(int *num_events, int *papi_event, 
+int add_two_nonderived_events(int *num_events, long long *papi_event, 
                const PAPI_hw_info_t *hw_info, int *mask)
 {
   /* query and set up the right event to monitor */
    int EventSet = PAPI_NULL;
   PAPI_event_info_t info;
-  unsigned int potential_evt_to_add[3][2] = {{ PAPI_FP_INS, MASK_FP_INS},{ PAPI_FP_OPS, MASK_FP_OPS}, { PAPI_TOT_INS, MASK_TOT_INS}};
+  long long potential_evt_to_add[3][2] = {{ PAPI_FP_INS, MASK_FP_INS},{ PAPI_FP_OPS, MASK_FP_OPS}, { PAPI_TOT_INS, MASK_TOT_INS}};
   int i = 0;
   unsigned int counters, event_found = 0;
   
@@ -668,11 +668,13 @@ int add_two_nonderived_events(int *num_events, int *papi_event,
 }
 
 /* add native events to use all counters */
-int enum_add_native_events(int *num_events, int **evtcodes)
+int enum_add_native_events(int *num_events, long long **evtcodes)
 {
 	/* query and set up the right event to monitor */
 	int EventSet = PAPI_NULL;
-	int i = 0, k, event_code, retval;
+	int retval;
+	long long event_code;
+	PAPI_event_code_t ec, ec1;
 	unsigned int counters, event_found = 0;
 	PAPI_event_info_t info;
 	const PAPI_component_info_t *s = NULL;
@@ -682,7 +684,7 @@ int enum_add_native_events(int *num_events, int **evtcodes)
 		test_fail(__FILE__, __LINE__, "PAPI_get_component_info", PAPI_ESBSTR);
 
 	counters = (unsigned int)PAPI_num_hwctrs();
-	(*evtcodes) = (int *)calloc(counters, sizeof(int));
+	(*evtcodes) = (long long *)calloc(counters, sizeof(long long));
 
 	retval = PAPI_create_eventset(&EventSet);
 	if (retval != PAPI_OK)
@@ -690,17 +692,18 @@ int enum_add_native_events(int *num_events, int **evtcodes)
 
 	/* For platform independence, always ASK FOR the first event */
 	/* Don't just assume it'll be the first numeric value */
-	i = 0 | PAPI_NATIVE_MASK;
-	PAPI_enum_event(&i, PAPI_ENUM_FIRST);
+	ec.ll = 0;
+	ec.fmwk.NATIVE = 1;
+	PAPI_enum_event(&(ec.ll), PAPI_ENUM_FIRST);
 
 	do {
-		retval = PAPI_get_event_info(i, &info);
+		retval = PAPI_get_event_info(ec.ll, &info);
 
 		if (s->cntr_umasks) {
-			k = i;
-			if (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
+			ec1 = ec;
+			if (PAPI_enum_event(&(ec1.ll), PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
 				do {
-					retval = PAPI_get_event_info(k, &info);
+					retval = PAPI_get_event_info(ec1.ll, &info);
 					event_code = info.event_code;
 					retval = PAPI_add_event(EventSet, event_code);
 					if (retval == PAPI_OK){
@@ -709,9 +712,9 @@ int enum_add_native_events(int *num_events, int **evtcodes)
 					}
 					else {
 						if (!TESTS_QUIET)
-							fprintf(stdout, "%d is not available.\n", event_code);
+							fprintf(stdout, "%lld is not available.\n", event_code);
 					}
-				} while (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK && event_found<counters);
+				} while (PAPI_enum_event(&(ec1.ll), PAPI_NTV_ENUM_UMASKS) == PAPI_OK && event_found<counters);
 			} else {
 				event_code = info.event_code;
 				retval = PAPI_add_event(EventSet, event_code);
@@ -731,10 +734,10 @@ int enum_add_native_events(int *num_events, int **evtcodes)
 			}
 			else {
 				if (!TESTS_QUIET)
-					fprintf(stdout, "%d is not available.\n", event_code);
+					fprintf(stdout, "%lld is not available.\n", event_code);
 			}
 		}
-	} while (PAPI_enum_event(&i, PAPI_ENUM_EVENTS) == PAPI_OK && event_found<counters);
+	} while (PAPI_enum_event(&(ec.ll), PAPI_ENUM_EVENTS) == PAPI_OK && event_found<counters);
 
 	*num_events = event_found;
 	return(EventSet);

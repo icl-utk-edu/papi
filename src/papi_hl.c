@@ -50,7 +50,7 @@ typedef struct _HighLevelInfo {
 
 extern int init_level;
 int _hl_rate_calls(float *real_time, float *proc_time, long long * ins, float *rate,
-                   int EVENT, HighLevelInfo * state);
+                   long long EVENT, HighLevelInfo * state);
 void _internal_cleanup_hl_info(HighLevelInfo * state);
 int _internal_check_state(HighLevelInfo ** state);
 int _internal_start_hl_counters(HighLevelInfo * state);
@@ -207,7 +207,7 @@ int PAPI_ipc(float *rtime, float *ptime, long long * ins, float *ipc)
 }
 
 int _hl_rate_calls(float *real_time, float *proc_time, long long * ins, float *rate,
-                   int EVENT, HighLevelInfo * state)
+                   long long EVENT, HighLevelInfo * state)
 {
    long long values[2] = { 0, 0 };
    int retval = 0;
@@ -283,7 +283,7 @@ int PAPI_num_counters(void)
 }
 
 /*========================================================================*/
-/* int PAPI_start_counters(int *events, int array_len)                    */
+/* int PAPI_start_counters(long long *events, int array_len)              */
 /* from draft standard:                                                   */
 /* Start counting the events named in the events array.                   */
 /* If the events array is already running, then you must call             */
@@ -295,7 +295,7 @@ int PAPI_num_counters(void)
 /* This will fail if flips or ipc is already running			  */
 /*========================================================================*/
 
-int PAPI_start_counters(int *events, int array_len)
+int PAPI_start_counters(long long *events, int array_len)
 {
    int i, retval;
    HighLevelInfo *state = NULL;

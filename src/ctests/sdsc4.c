@@ -30,7 +30,8 @@ int main(int argc, char **argv)
    double x = 1.1, y, dtmp;
    long long t1, t2;
    long long values[MAXEVENTS], refvals[MAXEVENTS];
-   int nsamples[MAXEVENTS], truelist[MAXEVENTS], ntrue;
+   long long truelist[MAXEVENTS];
+   int nsamples[MAXEVENTS], ntrue;
 #ifdef STARTSTOP
    long long dummies[MAXEVENTS];
 #endif
@@ -40,7 +41,7 @@ int main(int argc, char **argv)
    double spread[MAXEVENTS];
    int nevents = MAXEVENTS, nev1;
    int eventset = PAPI_NULL;
-   int events[MAXEVENTS];
+   long long events[MAXEVENTS];
    int eventidx[MAXEVENTS];
    int eventmap[MAXEVENTS];
 

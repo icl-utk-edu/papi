@@ -4,7 +4,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 int main(int argc, char **argv)
 {
    int retval;
-   int preset;
+   long long preset;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 

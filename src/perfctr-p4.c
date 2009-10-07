@@ -748,7 +748,7 @@ extern pentium4_escr_reg_t pentium4_escrs[];
 extern pentium4_cccr_reg_t pentium4_cccrs[];
 extern pentium4_event_t pentium4_events[];
 
-extern inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int *event, unsigned int *umask);
+extern inline int _pfm_decode_native_event(long long EventCode, unsigned int *event, unsigned int *umask);
 extern inline unsigned int _pfm_convert_umask(unsigned int event, unsigned int umask);
 
 /* convert a collection of pfm mask bits into an array of pfm mask indices */
@@ -818,7 +818,7 @@ static pentium4_replay_regs_t p4_replay_regs[]={
 /* this maps the arbitrary pmd index in libpfm/pentium4_events.h to the intel documentation */
 static int pfm2intel[] = {0, 1, 4, 5, 8, 9, 12, 13, 16, 2, 3, 6, 7, 10, 11, 14, 15, 17 };
 
-int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
+int _papi_pfm_ntv_code_to_bits(long long EventCode, hwd_register_t *bits)
 {
     pentium4_escr_value_t escr_value;
     pentium4_cccr_value_t cccr_value;

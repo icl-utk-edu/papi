@@ -24,7 +24,7 @@ extern papi_vector_t MY_VECTOR;
 
 /* These routines are defined externally for PERFCTR_PFM_EVENTS == TRUE, or
     internally for PERFCTR_PFM_EVENTS == FALSE */
-extern int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits);
+extern int _papi_pfm_ntv_code_to_bits(long long EventCode, hwd_register_t * bits);
 extern int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                unsigned int *values, int name_len, int count);
 
@@ -44,33 +44,39 @@ volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 /* This routine is used to step through all possible combinations of umask
     values. It assumes that mask contains a valid combination of array indices
     for this event. */
-static inline int encode_native_event_raw(unsigned int event, unsigned int mask)
+static inline long long encode_native_event_raw(long long event, unsigned int mask)
 {
-  unsigned int tmp = event << PAPI_NATIVE_EVENT_SHIFT;
-  SUBDBG("Old native index was 0x%08x with 0x%08x mask\n",tmp,mask);
-  tmp = tmp | (mask << PAPI_NATIVE_UMASK_SHIFT);
-  SUBDBG("New encoding is 0x%08x\n",tmp|PAPI_NATIVE_MASK);
-  return(tmp|PAPI_NATIVE_MASK);
+	PAPI_event_code_t ec;
+	unsigned int tmp = event << PAPI_NATIVE_EVENT_SHIFT;
+	SUBDBG("Old native index was 0x%08x with 0x%08x mask\n",tmp,mask);
+	tmp = tmp | (mask << PAPI_NATIVE_UMASK_SHIFT);
+	ec.fmwk.code = tmp;
+	ec.fmwk.NATIVE = 1;
+	SUBDBG("New encoding is 0x%016llx\n",ec.ll);
+	return(ec.ll);
 }
 
 /* This routine converts array indices contained in the mask_values array
     into bits in the umask field that is OR'd into the native event code.
     These bits are NOT the mask values themselves, but indices into an array
     of mask values contained in the native event table. */
-static inline int encode_native_event(unsigned int event, unsigned int num_mask, unsigned int *mask_values)
+static inline long long encode_native_event(long long event, unsigned int num_mask, unsigned int *mask_values)
 {
-  int i;
-  unsigned int tmp = event << PAPI_NATIVE_EVENT_SHIFT;
-  SUBDBG("Native base event is 0x%08x with %d masks\n",tmp,num_mask);
-  for (i=0;i<num_mask;i++) {
-      SUBDBG("Mask index is 0x%08x\n",mask_values[i]);
-      tmp = tmp | ((1 << mask_values[i]) << PAPI_NATIVE_UMASK_SHIFT);
-  }
-  SUBDBG("Full native encoding is 0x%08x\n",tmp|PAPI_NATIVE_MASK);
-  return(tmp|PAPI_NATIVE_MASK);
+	int i;
+	PAPI_event_code_t ec;
+	unsigned int tmp = event << PAPI_NATIVE_EVENT_SHIFT;
+	SUBDBG("Native base event is 0x%08x with %d masks\n",tmp,num_mask);
+	for (i=0;i<num_mask;i++) {
+		SUBDBG("Mask index is 0x%08x\n",mask_values[i]);
+		tmp = tmp | ((1 << mask_values[i]) << PAPI_NATIVE_UMASK_SHIFT);
+	}
+	ec.fmwk.code = tmp;
+	ec.fmwk.NATIVE = 1;
+	SUBDBG("Full native encoding is 0x%016llx\n",ec.ll);
+	return(ec.ll);
 }
 
-static int setup_preset_term(int *native, pfmlib_event_t *event)
+static int setup_preset_term(long long *native, pfmlib_event_t *event)
 {
     /* It seems this could be greatly simplified. If impl_cnt is non-zero,
 	the event lives on a counter. Therefore the entire routine could be:
@@ -187,20 +193,23 @@ static inline char *trim_note(char *in)
   return(note);
 }
 
-static inline int find_preset_code(char *tmp, int *code)
+static inline int find_preset_code(char *tmp, long long *code)
 {
-  int i = 0;
-  extern hwi_presets_t _papi_hwi_presets;
-  while (_papi_hwi_presets.info[i].symbol != NULL)
-    {
-      if (strcasecmp(tmp,_papi_hwi_presets.info[i].symbol) == 0)
+	int i = 0;
+	PAPI_event_code_t ec;
+	extern hwi_presets_t _papi_hwi_presets;
+	while (_papi_hwi_presets.info[i].symbol != NULL)
 	{
-	  *code = i|PAPI_PRESET_MASK;
-	  return(PAPI_OK);
+		if (strcasecmp(tmp,_papi_hwi_presets.info[i].symbol) == 0)
+		{
+			ec.fmwk.code = i;
+			ec.fmwk.PRESET = 1;
+			*code = ec.ll;
+			return(PAPI_OK);
+		}
+		i++;
 	}
-      i++;
-    }
-  return(PAPI_EINVAL);
+	return(PAPI_EINVAL);
 }
 
 /* Look for an event file 'name' in a couple common locations.
@@ -273,7 +282,8 @@ static int load_preset_table(char *pmu_str, int pmu_type, pfm_preset_search_entr
   char *tmp_perfmon_events_table = NULL;
   char *tmpn;
   FILE *table;
-  int line_no = 1, derived = 0, insert = 0, preset = 0;
+  int line_no = 1, derived = 0, insert = 0;
+  long long preset = 0;
   int get_presets = 0;   /* only get PRESETS after CPU is identified */
   int found_presets = 0; /* only terminate search after PRESETS are found */
 						 /* this allows support for synonyms for CPU names */
@@ -619,19 +629,21 @@ static int generate_preset_search_map(hwi_search_t **maploc, hwi_dev_notes_t **n
 }
 
 /* Break a PAPI native event code into its composite event code and pfm mask bits */
-inline int _pfm_decode_native_event(unsigned int EventCode, unsigned int *event, unsigned int *umask)
+inline int _pfm_decode_native_event(long long EventCode, unsigned int *event, unsigned int *umask)
 {
-  unsigned int tevent, major, minor;
+  PAPI_event_code_t ec;
+  unsigned int major, minor;
 
-  tevent = EventCode & PAPI_NATIVE_AND_MASK;
-  major = (tevent & PAPI_NATIVE_EVENT_AND_MASK) >> PAPI_NATIVE_EVENT_SHIFT;
+  ec.ll = EventCode;
+//  tevent = EventCode & PAPI_NATIVE_AND_MASK;
+  major = (ec.fmwk.code & PAPI_NATIVE_EVENT_AND_MASK) >> PAPI_NATIVE_EVENT_SHIFT;
   if (major >= MY_VECTOR.cmp_info.num_native_events)
     return(PAPI_ENOEVNT);
 
-  minor = (tevent & PAPI_NATIVE_UMASK_AND_MASK) >> PAPI_NATIVE_UMASK_SHIFT;
+  minor = (ec.fmwk.code & PAPI_NATIVE_UMASK_AND_MASK) >> PAPI_NATIVE_UMASK_SHIFT;
   *event = major;
   *umask = minor;
-  SUBDBG("EventCode 0x%08x is event %d, umask 0x%x\n",EventCode,major,minor);
+  SUBDBG("EventCode 0x%016llx is event %d, umask 0x%x\n",ec.ll,major,minor);
   return(PAPI_OK);
 }
 
@@ -774,7 +786,7 @@ unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code)
   return(PAPI_ENOEVNT);
 }
 
-int _papi_pfm_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
+int _papi_pfm_ntv_code_to_name(long long EventCode, char *ntv_name, int len)
 {
   int ret;
   unsigned int event, umask;
@@ -803,7 +815,7 @@ int _papi_pfm_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
   return(PAPI_OK);
 }
 
-int _papi_pfm_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len)
+int _papi_pfm_ntv_code_to_descr(long long EventCode, char *ntv_descr, int len)
 {
   unsigned int event, umask;
   char *eventd, **maskd, *tmp;
@@ -885,13 +897,13 @@ int _papi_pfm_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len
   return(ret);
 }
 
-int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier)
+int _papi_pfm_ntv_enum_events(long long *EventCode, int modifier)
 {
   unsigned int event, umask, num_masks;
   int ret;
 
   if (modifier == PAPI_ENUM_FIRST) {
-    *EventCode = PAPI_NATIVE_MASK; /* assumes first native event is always 0x4000000 */
+    *EventCode = PAPI_NATIVE_BIT; /* assumes first native event is always 0 */
     return (PAPI_OK);
   }
 
@@ -985,7 +997,7 @@ int _pfm_get_counter_info(unsigned int event, unsigned int *selector, int *code)
 
 #ifndef PERFCTR_PFM_EVENTS
 
-int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
+int _papi_pfm_ntv_code_to_bits(long long EventCode, hwd_register_t *bits)
 {
   unsigned int event, umask;
   pfmlib_event_t gete;

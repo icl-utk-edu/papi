@@ -14,7 +14,7 @@
 #include "papi_test.h"
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
-static int add_remove_event(int EventSet, int event_code, char *name) {
+static int add_remove_event(int EventSet, long long event_code, char *name) {
     int retval;
     char errstring[PAPI_MAX_STR_LEN];
     long long values;
@@ -61,12 +61,13 @@ static int add_remove_event(int EventSet, int event_code, char *name) {
 
 int main(int argc, char **argv)
 {
-   int i, k, EventSet=PAPI_NULL, add_count=0, err_count=0, unc_count=0;
+   int EventSet=PAPI_NULL, add_count=0, err_count=0, unc_count=0;
    int retval;
+   PAPI_event_code_t ec, ec1;
    PAPI_event_info_t info, info1;
    const PAPI_hw_info_t *hwinfo = NULL;
    char *Intel_i7;
-   int event_code;
+   long long event_code;
    const PAPI_component_info_t *s = NULL;
    int numcmp, cid;
 
@@ -97,11 +98,12 @@ int main(int argc, char **argv)
 
    /* For platform independence, always ASK FOR the first event */
    /* Don't just assume it'll be the first numeric value */
-   i = 0 | PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK(cid);
-   PAPI_enum_event(&i, PAPI_ENUM_FIRST);
+   ec.ll = PAPI_NATIVE_BIT;
+   ec.fmwk.cmp_idx = cid;
+   PAPI_enum_event(&ec.ll, PAPI_ENUM_FIRST);
 
    do {
-	retval = PAPI_get_event_info(i, &info);
+	retval = PAPI_get_event_info(ec.ll, &info);
 	if (Intel_i7 || (hwinfo->vendor == PAPI_VENDOR_INTEL)) {
 		if (!strncmp(info.symbol, "UNC_", 4)) {
 			unc_count++;
@@ -109,19 +111,17 @@ int main(int argc, char **argv)
 		}
 	}
 	if (s->cntr_umasks) {
-		k = i;
-		if (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
+		ec1 = ec;
+		if (PAPI_enum_event(&ec.ll, PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
 			do {
-				retval = PAPI_get_event_info(k, &info1);
-				event_code = info1.event_code;
-				if (add_remove_event(EventSet, event_code, info1.symbol))
+				retval = PAPI_get_event_info(ec.ll, &info1);
+				if (add_remove_event(EventSet, info1.event_code, info1.symbol))
 					add_count++;
 				else err_count++;
-			} while (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK);
+			} while (PAPI_enum_event(&ec1.ll, PAPI_NTV_ENUM_UMASKS) == PAPI_OK);
 		}
 		else{
-		  event_code = info.event_code;
-  		  if (add_remove_event(EventSet, event_code, info.symbol))
+  		  if (add_remove_event(EventSet, info.event_code, info.symbol))
 			add_count++;
 		  else err_count++;
 	       }
@@ -133,7 +133,7 @@ int main(int argc, char **argv)
 			add_count++;
 		else err_count++;
 	}
-   } while (PAPI_enum_event(&i, PAPI_ENUM_EVENTS) == PAPI_OK);
+   } while (PAPI_enum_event(&ec.ll, PAPI_ENUM_EVENTS) == PAPI_OK);
    }
     printf("\n\nSuccessfully found, added, and removed %d events.\n", add_count);
     if (err_count)

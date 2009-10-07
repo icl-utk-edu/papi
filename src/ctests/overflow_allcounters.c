@@ -48,7 +48,8 @@ int main(int argc, char **argv)
    int EventSet=PAPI_NULL;
    long long *values;
    int num_flops, retval, i, j;
-   int *events, mythreshold;
+   int mythreshold;
+   long long *events;
    char **names;
    const PAPI_hw_info_t *hw_info = NULL;
    int num_events, *ovt; 

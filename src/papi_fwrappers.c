@@ -52,13 +52,13 @@ PAPI_FCALL(papif_accum, PAPIF_ACCUM, (int *EventSet, long long * values, int *ch
    *check = PAPI_accum(*EventSet, values);
 }
 
-PAPI_FCALL(papif_add_event, PAPIF_ADD_EVENT, (int *EventSet, int *Event, int *check))
+PAPI_FCALL(papif_add_event, PAPIF_ADD_EVENT, (int *EventSet, long long *Event, int *check))
 {
    *check = PAPI_add_event(*EventSet, *Event);
 }
 
 PAPI_FCALL(papif_add_events, PAPIF_ADD_EVENTS,
-           (int *EventSet, int *Events, int *number, int *check))
+           (int *EventSet, long long *Events, int *number, int *check))
 {
    *check = PAPI_add_events(*EventSet, Events, *number);
 }
@@ -275,7 +275,7 @@ PAPI_FCALL(papif_thread_init, PAPIF_THREAD_INIT,
 }
 
 PAPI_FCALL(papif_list_events, PAPIF_LIST_EVENTS,
-           (int *EventSet, int *Events, int *number, int *check))
+           (int *EventSet, long long  *Events, int *number, int *check))
 {
    *check = PAPI_list_events(*EventSet, Events, number);
 }
@@ -333,24 +333,24 @@ PAPI_FCALL(papif_perror, PAPIF_PERROR, (int *code, char *destination, int *check
  * }
  */
 
-PAPI_FCALL(papif_query_event, PAPIF_QUERY_EVENT, (int *EventCode, int *check))
+PAPI_FCALL(papif_query_event, PAPIF_QUERY_EVENT, (long long *EventCode, int *check))
 {
    *check = PAPI_query_event(*EventCode);
 }
 
 #if defined ( _CRAYT3E )
 PAPI_FCALL(papif_get_event_info, PAPIF_GET_EVENT_INFO,
-           (unsigned int *EventCode, _fcd symbol_fcd, _fcd long_descr_fcd,
+           (long long *EventCode, _fcd symbol_fcd, _fcd long_descr_fcd,
             _fcd short_descr_fcd, int *count, _fcd event_note_fcd, int *flags,
             unsigned *check))
 #elif defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL(papif_get_event_info, PAPIF_GET_EVENT_INFO,
-           (int *EventCode, char *symbol, char *long_descr, char *short_descr, int *count,
+           (long long *EventCode, char *symbol, char *long_descr, char *short_descr, int *count,
             char *event_note, int *flags, int *check, int symbol_len, int long_descr_len,
             int short_descr_len, int event_note_len))
 #else
 PAPI_FCALL(papif_get_event_info, PAPIF_GET_EVENT_INFO,
-           (int *EventCode, char *symbol, char *long_descr, char *short_descr, int *count,
+           (long long *EventCode, char *symbol, char *long_descr, char *short_descr, int *count,
             char *event_note, int *flags, int *check))
 #endif
 {
@@ -397,13 +397,13 @@ PAPI_FCALL(papif_get_event_info, PAPIF_GET_EVENT_INFO,
 
 #if defined ( _CRAYT3E )
 PAPI_FCALL(papif_event_code_to_name, PAPIF_EVENT_CODE_TO_NAME,
-           (int *EventCode, _fcd out_fcd, int *check))
+           (long long *EventCode, _fcd out_fcd, int *check))
 #elif defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL(papif_event_code_to_name, PAPIF_EVENT_CODE_TO_NAME,
-           (int *EventCode, char *out_str, int *check, int out_len))
+           (long long *EventCode, char *out_str, int *check, int out_len))
 #else
 PAPI_FCALL(papif_event_code_to_name, PAPIF_EVENT_CODE_TO_NAME,
-           (int *EventCode, char *out, int *check))
+           (long long *EventCode, char *out, int *check))
 #endif
 {
 #if defined( _CRAYT3E ) || defined( _FORTRAN_STRLEN_AT_END )
@@ -426,13 +426,13 @@ PAPI_FCALL(papif_event_code_to_name, PAPIF_EVENT_CODE_TO_NAME,
 
 #if defined ( _CRAYT3E )
 PAPI_FCALL(papif_event_name_to_code, PAPIF_EVENT_NAME_TO_CODE,
-           (_fcd in_fcd, int *out, int *check))
+           (_fcd in_fcd, long long *out, int *check))
 #elif defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL(papif_event_name_to_code, PAPIF_EVENT_NAME_TO_CODE,
-           (char *in_str, int *out, int *check, int in_len))
+           (char *in_str, long long *out, int *check, int in_len))
 #else
 PAPI_FCALL(papif_event_name_to_code, PAPIF_EVENT_NAME_TO_CODE,
-           (char *in, int *out, int *check))
+           (char *in, long long *out, int *check))
 #endif
 {
 #if defined( _CRAYT3E ) || defined( _FORTRAN_STRLEN_AT_END )
@@ -462,29 +462,29 @@ PAPI_FCALL(papif_event_name_to_code, PAPIF_EVENT_NAME_TO_CODE,
 #endif
 }
 
-PAPI_FCALL(papif_num_events, PAPIF_NUM_EVENTS, (int *EventCode, int *count))
+PAPI_FCALL(papif_num_events, PAPIF_NUM_EVENTS, (long long *EventCode, int *count))
 {
    *count = PAPI_num_events(*EventCode);
 }
 
-PAPI_FCALL(papif_enum_event, PAPIF_ENUM_EVENT, (int *EventCode, int *modifier, int *check))
+PAPI_FCALL(papif_enum_event, PAPIF_ENUM_EVENT, (long long *EventCode, int *modifier, int *check))
 {
    *check = PAPI_enum_event(EventCode, *modifier);
 }
 
-PAPI_FCALL(papif_read, PAPIF_READ, (int *EventSet, long long * values, int *check))
+PAPI_FCALL(papif_read, PAPIF_READ, (long long *EventSet, long long * values, int *check))
 {
    *check = PAPI_read(*EventSet, values);
 }
 
 PAPI_FCALL(papif_remove_event, PAPIF_REMOVE_EVENT,
-           (int *EventSet, int *Event, int *check))
+           (int *EventSet, long long *Event, int *check))
 {
    *check = PAPI_remove_event(*EventSet, *Event);
 }
 
 PAPI_FCALL(papif_remove_events, PAPIF_REMOVE_EVENTS,
-           (int *EventSet, int *Events, int *number, int *check))
+           (int *EventSet, long long *Events, int *number, int *check))
 {
    *check = PAPI_remove_events(*EventSet, Events, *number);
 }
@@ -547,7 +547,7 @@ PAPI_FCALL(papif_write, PAPIF_WRITE, (int *EventSet, long long * values, int *ch
 /* The High Level API Wrappers */
 
 PAPI_FCALL(papif_start_counters, PAPIF_START_COUNTERS,
-           (int *events, int *array_len, int *check))
+           (long long *events, int *array_len, int *check))
 {
    *check = PAPI_start_counters(events, *array_len);
 }
