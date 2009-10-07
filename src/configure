@@ -9237,8 +9237,8 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
    F77=xlf
    CPP='xlc -E $(CPPFLAGS)'
    MISCHDRS="aix.h ppc64_events.h pmapi-ppc64.h perfmon_events_table.h"
-   MISCSRCS="$MISCSRCS aix.c pmapi-ppc64_events.c #$(ARCH_EVENTS)_map.c"
-   MISCOBJS='aix.o pmapi-ppc64_events.o #$(ARCH_EVENTS)_map.o'
+   MISCSRCS="aix.c pmapi-ppc64_events.c"
+   MISCOBJS="aix.o pmapi-ppc64_events.o"
    if test "$MAKEVER" = "aix-power5"; then
       LIBRARY=libpapi.a
       SHLIB=libpapi.so
