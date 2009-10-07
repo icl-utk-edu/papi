@@ -26,12 +26,7 @@ else
 	FFLAGS		+= -ffixed-line-length-132
 endif
 
-ifneq (c99,$(CC))
-   CFLAGS += -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) $(DEBUGFLAGS) -D_REENTRANT
-else
-   CFLAGS += -D_GNU_SOURCE $(NOTLS) $(ALTIX) $(DEBUGFLAGS) -D_REENTRANT
-endif
-
+CFLAGS += -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) $(DEBUGFLAGS) -D_REENTRANT
 TOPTFLAGS	:= -g -O
 FTOPTFLAGS	:= $(FTOPTFLAGS)
 

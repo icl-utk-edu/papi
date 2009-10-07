@@ -27,10 +27,7 @@ else
 	FFLAGS      += -ffixed-line-length-132
 endif
 
-ifneq (c99,$CC))
-   CFLAGS += -Wall 
-endif
-
+CFLAGS += -Wall 
 KERNMINVER	= $(shell uname -r | cut -f2 -d.)
 POST_BUILD	=
 SPECIAL_REMOVE =

@@ -81,11 +81,7 @@ else
 	FFLAGS      += -Wall -ffixed-line-length-132 $(BITFLAGS)
 endif
 
-ifneq (c99,$(CC))
-   CFLAGS += -D_GNU_SOURCE -Wall $(COMP) $(NOTLS) $(BITFLAGS)
-else
-   CFLAGS += -D_GNU_SOURCE $(COMP) $(NOTLS) $(BITFLAGS)
-endif
+CFLAGS += -D_GNU_SOURCE -Wall $(COMP) $(NOTLS) $(BITFLAGS)
 
 # 
 # Catamount section

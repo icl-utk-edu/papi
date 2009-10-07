@@ -86,11 +86,7 @@ else
 	FFLAGS      += -Wall -ffixed-line-length-132 $(BITFLAGS)
 endif
 
-ifneq (c99,$(CC))
-   CFLAGS += -D_GNU_SOURCE -Wall $(NOTLS) $(BITFLAGS)
-else
-   CFLAGS += -D_GNU_SOURCE $(NOTLS) $(BITFLAGS)
-endif
+CFLAGS += -D_GNU_SOURCE -Wall $(NOTLS) $(BITFLAGS)
 
 # 
 # Catamount section
@@ -101,13 +97,6 @@ LIBS    	= static
 TARGETS 	= serial forkexec_tests overflow_tests profile_tests multiplex
 MEMSUBSTR	= linux
 FFLAGS		= $(BITFLAGS)
-endif
-
-# 
-# c99 section
-# 
-ifeq (c99, $(CC))
-   CFLAGS += -DC99
 endif
 
 # 
