@@ -428,6 +428,8 @@ AC_PROG_AWK
 #prevent icc warnings about overriding optimization settings set by AC_PROG_CC
 if test "$CC" != "icc"; then
    AC_PROG_CC
+else
+   CFLAGS="-wr188"
 fi
 AC_PROG_F77
 if test "x$AR" = "x"; then
