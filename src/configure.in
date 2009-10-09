@@ -432,7 +432,10 @@ AC_MSG_RESULT($debug)
 
 # Checks for programs.
 AC_PROG_AWK
-AC_PROG_CC
+#prevent icc warnings about overriding optimization settings set by AC_PROG_CC
+if test "$CC" != "icc"; then
+   AC_PROG_CC
+fi
 AC_PROG_F77
 if test "x$AR" = "x"; then
    AR=ar
