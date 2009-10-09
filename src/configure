@@ -2448,7 +2448,9 @@ fi
   test -n "$AWK" && break
 done
 
-ac_ext=c
+#prevent icc warnings about overriding optimization settings set by AC_PROG_CC
+if test "$CC" != "icc"; then
+   ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -3381,9 +3383,6 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-# default -g -O2 setting produces a warning in icc because it is overridden somewhere
-if test "$CC" = "icc"; then
-   CFLAGS="-g -O3"
 fi
 ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
