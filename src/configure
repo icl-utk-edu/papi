@@ -9299,6 +9299,7 @@ elif test "$MAKEVER" = "CLE-perfmon2"; then
       COMPILER=CRAYXT
       F77=gfortran
       CFLAGS='$(CFLAGS) -D __crayxt'
+      MISCSRCS=x86_cache_info.c
    fi
    SUBSTR=perfmon
 elif test "$MAKEVER" = "linux-acpi"; then
