@@ -17,6 +17,5 @@ CFLAGS		+= -D __crayxt
 
 endif
 
-MISCSRCS	= x86_cache_info.c
 SUBSTR		= perfmon
 include Rules.pfm_pcl
