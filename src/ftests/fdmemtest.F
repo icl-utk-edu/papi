@@ -7,9 +7,10 @@
       
       integer tests_quiet, get_quiet
       external get_quiet
+      real EventSet
 
       tests_quiet = get_quiet()
-      real EventSet = PAPI_NULL
+      EventSet = PAPI_NULL
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)

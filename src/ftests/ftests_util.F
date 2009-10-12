@@ -300,12 +300,12 @@ C     Print the content of an event set
       CHARACTER*(PAPI_MAX_STR_LEN)  vstring, mstring
       INTEGER ncpu,nnodes,totalcpus,vendor,model
       REAL revision, mhz
-      integer nchr
+      integer nchr,i
 
 C     Get PAPI h/w info
       call PAPIf_get_hardware_info( ncpu, nnodes, totalcpus, vendor,
      .   vstring, model, mstring, revision, mhz )
-      do integer i=len(mstring),1,-1
+      do i=len(mstring),1,-1
         if(mstring(i:i).NE.' ') goto 10
       end do
  10   if(i.LT.1)then
