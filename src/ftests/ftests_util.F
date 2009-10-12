@@ -189,6 +189,7 @@ C     And also to make the test code read cleaner
       implicit integer (p)      
       integer domain
       character*(PAPI_MAX_STR_LEN) str
+      integer idx
       
       if (domain .EQ. PAPI_DOM_ALL) then
         str = "PAPI_DOM_ALL"
@@ -299,11 +300,12 @@ C     Print the content of an event set
       CHARACTER*(PAPI_MAX_STR_LEN)  vstring, mstring
       INTEGER ncpu,nnodes,totalcpus,vendor,model
       REAL revision, mhz
+      integer nchr
 
 C     Get PAPI h/w info
       call PAPIf_get_hardware_info( ncpu, nnodes, totalcpus, vendor,
      .   vstring, model, mstring, revision, mhz )
-      do i=len(mstring),1,-1
+      do integer i=len(mstring),1,-1
         if(mstring(i:i).NE.' ') goto 10
       end do
  10   if(i.LT.1)then
