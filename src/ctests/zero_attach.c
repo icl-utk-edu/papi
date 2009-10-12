@@ -36,7 +36,7 @@ int main(int argc, char **argv)
    char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
    const PAPI_hw_info_t *hw_info;
    const PAPI_component_info_t *cmpinfo;
-   unsigned long pid;
+   pid_t pid;
 
    pid = fork();
    if (pid < 0)
