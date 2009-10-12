@@ -16,6 +16,7 @@
 
 #include "papi_test.h"
 #include <sys/ptrace.h>
+#include <inttypes.h>
 
 int wait_for_attach_and_loop(void)
 {
@@ -36,7 +37,7 @@ int main(int argc, char **argv)
    char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
    const PAPI_hw_info_t *hw_info;
    const PAPI_component_info_t *cmpinfo;
-   unsigned long pid, pid2;
+   pid_t pid, pid2;
 
    pid = fork();
    if (pid < 0)
@@ -262,13 +263,13 @@ int main(int argc, char **argv)
       printf
           ("-------------------------------------------------------------------------\n");
 
-      sprintf(add_event_str, "(PID %lu) %-12s : \t", pid,event_name);
+      sprintf(add_event_str, "(PID %jd) %-12s : \t", (intmax_t)pid,event_name);
       printf(TAB1, add_event_str, (values[0])[0]);
-      sprintf(add_event_str, "(PID %lu) PAPI_TOT_CYC : \t",pid);
+      sprintf(add_event_str, "(PID %jd) PAPI_TOT_CYC : \t",(intmax_t)pid);
       printf(TAB1, add_event_str, (values[0])[1]);
-      sprintf(add_event_str, "(PID %lu) %-12s : \t", pid2,event_name);
+      sprintf(add_event_str, "(PID %jd) %-12s : \t", (intmax_t)pid2,event_name);
       printf(TAB1, add_event_str, (values[1])[0]);
-      sprintf(add_event_str, "(PID %lu) PAPI_TOT_CYC : \t",pid2);
+      sprintf(add_event_str, "(PID %jd) PAPI_TOT_CYC : \t",(intmax_t)pid2);
       printf(TAB1, add_event_str, (values[1])[1]);
       printf(TAB1, "Real usec    : \t", elapsed_us);
       printf(TAB1, "Real cycles  : \t", elapsed_cyc);
