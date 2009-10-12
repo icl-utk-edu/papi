@@ -429,7 +429,7 @@ AC_PROG_AWK
 if test "$CC" != "icc"; then
    AC_PROG_CC
 else
-   CFLAGS="-wr188"
+   CFLAGS="-openmp -wr188"
 fi
 AC_PROG_F77
 if test "x$AR" = "x"; then
