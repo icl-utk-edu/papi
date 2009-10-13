@@ -41,28 +41,19 @@ typedef struct ppc64_reg_alloc {
    int ra_counter_cmd[MAX_COUNTERS];
 } ppc64_reg_alloc_t;
 
-/*typedef struct PWR4_register {*/
-  /* unsigned int event_code; */
-  /* register number the corespondent native event in the event lives on */
-  /* unsigned char pos[MAX_COUNTERS];  
-     } PWR4_register_t; */
-
 typedef struct ppc64_pmapi_context {
    /* this structure is a work in progress */
    ppc64_pmapi_control_t cntrl;
 } ppc64_pmapi_context_t;
 
+/* Override void* definitions from PAPI framework layer */
+/* typedefs to conform to hardware independent PAPI code. */
+#undef hwd_control_state_t
+#undef hwd_reg_alloc_t
+#undef hwd_context_t
 typedef ppc64_pmapi_control_t hwd_control_state_t;
-
-/*typedef ppc64_register_t hwd_register_t;*/
-
 typedef ppc64_reg_alloc_t hwd_reg_alloc_t;
-
 typedef ppc64_pmapi_context_t hwd_context_t;
-
-/* ... for PAPI3
-typedef ppc64_pmapi_event_t hwd_event_t;
-*/
 
 /*
 typedef struct hwd_groups {
@@ -72,9 +63,9 @@ typedef struct hwd_groups {
   unsigned char counter_cmd[POWER_MAX_COUNTERS];
 } hwd_groups_t;
 */
+
 /* prototypes */
-extern int set_domain(hwd_control_state_t * this_state, int domain);
-extern int set_granularity(hwd_control_state_t * this_state, int domain);
+extern int _aix_set_granularity ( hwd_control_state_t * this_state, int domain );
 extern int _papi_hwd_init_preset_search_map(hwd_pminfo_t * info);
 
 #endif                          /* _PAPI_PMAPI_PPC64 */

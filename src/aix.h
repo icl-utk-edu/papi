@@ -69,11 +69,15 @@ extern atomic_p lock[];
 }
 
 /* overflow */
+/* Override void* definitions from PAPI framework layer */
+/* with typedefs to conform to PAPI component layer code. */
+#undef hwd_siginfo_t
+#undef hwd_ucontext_t
 typedef siginfo_t hwd_siginfo_t;
 typedef struct sigcontext hwd_ucontext_t;
 
 #define GET_OVERFLOW_ADDRESS(ctx)  (void *)(((hwd_ucontext_t *)(ctx->ucontext))->sc_jmpbuf.jmp_context.iar)
 
-/* prototypes */
+#define MY_VECTOR _aix_vector
 
 #endif                          /* _PAPI_AIX */

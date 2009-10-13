@@ -4,11 +4,15 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
+#include "pmapi-ppc64.h"
+
+/* define the vector structure at the bottom of this file */
+extern papi_vector_t MY_VECTOR;
 
 extern hwd_groups_t group_map[];
 
 static hwi_search_t _papi_hwd_ppc64_preset_map[] = {
-#ifdef _POWER4
+#ifdef __POWER4
    {PAPI_L1_DCM, {DERIVED_ADD, {PNE_PM_LD_MISS_L1, PNE_PM_ST_MISS_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},      /*Level 1 data cache misses */
    {PAPI_L1_DCA, {DERIVED_ADD, {PNE_PM_LD_REF_L1, PNE_PM_ST_REF_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},        /*Level 1 data cache access */
    {PAPI_FXU_IDL, {0, {PNE_PM_FXU_IDLE, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}},      /*Cycles integer units are idle */
@@ -62,7 +66,7 @@ static hwi_search_t _papi_hwd_ppc64_preset_map[] = {
    
 /* Stop editing here */
    {0, {0, {PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, 0}}        /* end of list */
-#elif defined(_POWER5)
+#elif defined(__POWER5)
    {PAPI_L1_DCM, {DERIVED_ADD, {PNE_PM_LD_MISS_L1, PNE_PM_ST_MISS_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},      /*Level 1 data cache misses */
    {PAPI_L1_DCA, {DERIVED_ADD, {PNE_PM_LD_REF_L1, PNE_PM_ST_REF_L1, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0}}},        /*Level 1 data cache access */
    /* can't count level 1 data cache hits due to hardware limitations. */
@@ -122,7 +126,7 @@ static void copy_value(unsigned int val, char *nam, char *names, unsigned int *v
    names[len-1] = '\0';
 }
 
-int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
+int _aix_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                unsigned int *values, int name_len, int count)
 {
    int i = 0;
@@ -130,67 +134,6 @@ int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
    if (++i == count) return(i);
    copy_value((unsigned int)bits->counter_cmd, "PowerPC64 counter_cmd code", &names[i*name_len], &values[i], name_len);
    return(++i);
-}
-
-
-/*#define DEBUG_SETUP*/
-/* the following bpt functions are empty functions in POWER4 */
-/* This function examines the event to determine
-    if it can be mapped to counter ctr. 
-    Returns true if it can, false if it can't.
-*/
-int _papi_hwd_bpt_map_avail(hwd_reg_alloc_t * dst, int ctr)
-{
-}
-
-/* This function forces the event to
-    be mapped to only counter ctr. 
-    Returns nothing.
-*/
-void _papi_hwd_bpt_map_set(hwd_reg_alloc_t * dst, int ctr)
-{
-}
-
-/* This function examines the event to determine
-    if it has a single exclusive mapping. 
-    Returns true if exlusive, false if non-exclusive.
-*/
-int _papi_hwd_bpt_map_exclusive(hwd_reg_alloc_t * dst)
-{
-}
-
-/* This function compares the dst and src events
-    to determine if any counters are shared. Typically the src event
-    is exclusive, so this detects a conflict if true.
-    Returns true if conflict, false if no conflict.
-*/
-int _papi_hwd_bpt_map_shared(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
-{
-}
-
-/* This function removes the counters available to the src event
-    from the counters available to the dst event,
-    and reduces the rank of the dst event accordingly. Typically,
-    the src event will be exclusive, but the code shouldn't assume it.
-    Returns nothing.
-*/
-void _papi_hwd_bpt_map_preempt(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
-{
-}
-
-/* This function updates the selection status of 
-    the dst event based on information in the src event.
-    Returns nothing.
-*/
-void _papi_hwd_bpt_map_update(hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src)
-{
-}
-
-/* initialize preset_search_map table by type of CPU */
-int _papi_hwd_init_preset_search_map(hwd_pminfo_t * info)
-{
-   preset_search_map = _papi_hwd_ppc64_preset_map;
-   return 1;
 }
 
 /* this function recusively does Modified Bipartite Graph counter allocation 
@@ -236,9 +179,9 @@ static int do_counter_allocation(ppc64_reg_alloc_t * event_list, int size)
      success  return 1
         fail     return 0
 */
-int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
+int _aix_allocate_registers(EventSetInfo_t *ESI)
 {
-   hwd_control_state_t *this_state = &ESI->machdep;
+	hwd_control_state_t *this_state = ESI->ctl_state;
    unsigned char selector;
    int i, j, natNum, index;
    ppc64_reg_alloc_t event_list[MAX_COUNTERS];
@@ -289,17 +232,17 @@ int _papi_hwd_allocate_registers(EventSetInfo_t * ESI)
 /* This used to be init_config, static to the substrate.
    Now its exposed to the hwi layer and called when an EventSet is allocated.
 */
-int _papi_hwd_init_control_state(hwd_control_state_t * ptr)
+int _aix_init_control_state(hwd_control_state_t * ptr)
 {
    int i;
 
-   for (i = 0; i < _papi_hwi_system_info.sub_info.num_cntrs; i++) {
+   for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
       ptr->counter_cmd.events[i] = COUNT_NOTHING;
    }
    ptr->counter_cmd.mode.b.is_group = 1;
 
-   set_domain(ptr, _papi_hwi_system_info.sub_info.default_domain);
-   set_granularity(ptr, _papi_hwi_system_info.sub_info.default_granularity);
+   MY_VECTOR.set_domain(ptr, MY_VECTOR.cmp_info.default_domain);
+   _aix_set_granularity(ptr, MY_VECTOR.cmp_info.default_granularity);
    /*setup_native_table();*/
    return(PAPI_OK);
 }
@@ -307,7 +250,7 @@ int _papi_hwd_init_control_state(hwd_control_state_t * ptr)
 
 /* This function updates the control structure with whatever resources are allocated
     for all the native events in the native info structure array. */
-int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
+int _aix_update_control_state(hwd_control_state_t * this_state,
                                    NativeInfo_t * native, int count,
                                   hwd_context_t *context)
 {
@@ -315,7 +258,7 @@ int _papi_hwd_update_control_state(hwd_control_state_t * this_state,
    this_state->counter_cmd.events[0] = this_state->group_id;
    return PAPI_OK;
 }
-
+/*
 papi_svector_t _ppc64_mips_table[] = {
  { (void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE },
  { (void (*)())_papi_hwd_update_control_state, VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
@@ -329,7 +272,7 @@ papi_svector_t _ppc64_mips_table[] = {
  { (void (*)())_papi_hwd_ntv_bits_to_info, VEC_PAPI_HWD_NTV_BITS_TO_INFO},
  { NULL, VEC_PAPI_END}
 };
-                                                                                
+
 int ppc64_setup_vector_table(papi_vectors_t *vtable){
   int retval=PAPI_OK;
 #ifndef PAPI_NO_VECTOR
@@ -337,4 +280,4 @@ int ppc64_setup_vector_table(papi_vectors_t *vtable){
 #endif
   return(retval);
 }
-
+*/
