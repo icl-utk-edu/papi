@@ -2363,7 +2363,7 @@ case "$bitmode" in
       bitmode=32
       BM="-32bit" ;;
    default)
-      bitmode=default
+      bitmode=""
       BM="";;
     *)
       { { $as_echo "$as_me:$LINENO: error: The bitmode you specified is not supported" >&5

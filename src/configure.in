@@ -394,7 +394,7 @@ case "$bitmode" in
       bitmode=32 
       BM="-32bit" ;;
    default)
-      bitmode=default
+      bitmode=""
       BM="";;
     *)
       AC_MSG_ERROR([The bitmode you specified is not supported])
