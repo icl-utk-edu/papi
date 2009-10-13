@@ -131,7 +131,8 @@ void
 do_cycles(void)
 {
 	struct timeval start, last, now;
-	unsigned long x, sum;
+	unsigned long x;
+        long sum;
 
 	gettimeofday(&start, NULL);
 	last = start;
