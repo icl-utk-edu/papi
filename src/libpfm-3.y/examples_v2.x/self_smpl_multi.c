@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2008 Mark W. Krentel
  * Contributed by Mark W. Krentel <krentel@cs.rice.edu>
+ * Modified by Stephane Eranian <eranian@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +32,22 @@
  *  threads, print the number of interrupts per thread and per second,
  *  and look for anomalous interrupts.  Look for mismatched thread
  *  ids, bad message type, or failed pfm_restart().
+ *
+ *  self_smpl_multi is a test program to stress signal delivery in the context
+ *  of a multi-threaded self-sampling program which is common with PAPI and HPC.
+ *  There is an issue with existing (as of 2.6.30) kernel which do not provide
+ *  a reliable way of having the signal delivered to the thread in which the
+ *  counter overflow occurred. This is problematic for many self-monitoring
+ *  program.
+ *
+ *  This program demonstrates the issue by tracking the number of times
+ *  the signal goes to the wrong thread. The bad behavior is exacerbated
+ *  if the monitored threads, themselves, already use signals. Here we
+ *  use SIGLARM.
+ *
+ *  Note that kernel developers have been made aware of this problem and
+ *  a fix has been proposed. It introduces a new F_SETOWN_TID parameter to
+ *  fcntl().
  */
 #include <sys/time.h>
 #include <sys/types.h>
@@ -43,6 +60,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <getopt.h>
 
 #include <linux/unistd.h>
 #include <perfmon/perfmon.h>
@@ -55,102 +73,120 @@
 int program_time = PROGRAM_TIME;
 int threshold = THRESHOLD;
 int signum = SIGIO;
+pthread_barrier_t barrier;
 
-#define MAX_FD  20
+#define MAX_THR  128
+
+/*
+ *  the following definitions come
+ *  from the F_SETOWN_EX patch from Peter Zijlstra
+ * Check out: http://lkml.org/lkml/2009/8/4/128 
+ */
+#ifndef F_SETOWN_EX
+#define F_SETOWN_EX	12
+#define F_GETOWN_EX	13
+
+#define F_OWNER_TID	0
+#define F_OWNER_PID	1
+#define F_OWNER_GID	2
+
+struct f_owner_ex {
+	int	type;
+	pid_t	pid;
+};
+#endif
 
 struct over_args {
-	pfmlib_event_t ev;
-	pfmlib_input_param_t  inp;
-	pfmlib_output_param_t outp;
-	pfarg_pmc_t pc[PFMLIB_MAX_PMCS];
-	pfarg_pmd_t pd[PFMLIB_MAX_PMDS];
-	pfarg_ctx_t ctx;
-	pfarg_load_t load_arg;
 	int fd;
 	pid_t tid;
-	pthread_t self;
+	int id;
 };
 
-struct over_args *fd2ov[MAX_FD];
+struct over_args fd2ov[MAX_THR];
 
-long count[MAX_FD];
-long total[MAX_FD];
-long iter[MAX_FD];
-long mismatch[MAX_FD];
-long bad_msg[MAX_FD];
-long bad_restart[MAX_FD];
-long ser_no = 0;
+long count[MAX_THR];
+long total[MAX_THR];
+long iter[MAX_THR];
+long mismatch[MAX_THR];
+long bad_msg[MAX_THR];
+long bad_restart[MAX_THR];
+int fown;
+
+int __thread myid; /* TLS */
 
 pid_t
 gettid(void)
 {
-#ifdef SYS_gettid
-	return (pid_t)syscall(SYS_gettid);
-#elif defined(__NR_gettid)
 	return (pid_t)syscall(__NR_gettid);
-#else
-#error "Unable to implement gettid."
-#endif
 }
 
 void
-user_callback(int fd)
+user_callback(int m)
 {
-	count[fd]++;
-	total[fd]++;
-	ser_no++;
+	count[m]++;
+	total[m]++;
 }
 
 void
 do_cycles(void)
 {
 	struct timeval start, last, now;
-	double x, sum;
-	int fd;
-
-	for (fd = 0; fd < MAX_FD; fd++) {
-		if (fd2ov[fd] != NULL &&
-				pthread_equal(fd2ov[fd]->self, pthread_self())) {
-			break;
-		}
-	}
+	unsigned long x;
+        long sum;
 
 	gettimeofday(&start, NULL);
 	last = start;
-	count[fd] = 0;
-	total[fd] = 0;
-	iter[fd] = 0;
+	count[myid] = 0;
+	total[myid] = 0;
+	iter[myid] = 0;
 
 	do {
-		sum = 1.0;
-		for (x = 1.0; x < 250000.0; x += 1.0)
+
+		sum = 1;
+		for (x = 1; x < 250000; x++) {
+			/* signal pending to private queue because of
+			 * pthread_kill(), i.e., tkill()
+			 */
+			if ((x % 5000) == 0)
+				pthread_kill(pthread_self(), SIGUSR1);
 			sum += x;
-		if (sum < 0.0)
+		}
+		if (sum < 0)
 			printf("==>>  SUM IS NEGATIVE !!  <<==\n");
-		iter[fd]++;
+		iter[myid]++;
 
 		gettimeofday(&now, NULL);
 		if (now.tv_sec > last.tv_sec) {
-			printf("%ld: fd = %d, count = %4ld, iter = %4ld, rate = %ld/Kiter\n",
-					now.tv_sec - start.tv_sec, fd, count[fd], iter[fd],
-					(1000 * count[fd])/iter[fd]);
-			count[fd] = 0;
-			iter[fd] = 0;
+			printf("%ld: myid = %3d, fd = %3d, count = %4ld, iter = %4ld, rate = %ld/Kiter\n",
+				now.tv_sec - start.tv_sec,
+				myid,
+				fd2ov[myid].fd,
+				count[myid], iter[myid],
+				(1000 * count[myid])/iter[myid]);
+
+			count[myid] = 0;
+			iter[myid] = 0;
 			last = now;
 		}
 	} while (now.tv_sec < start.tv_sec + program_time);
 }
 
 #define DPRINT(str)   \
-printf("(%s) ser = %ld, fd = %d, tid = %d, self = %p\n",   \
-       str, ser_no, fd, tid, (void *)self)
+printf("(%s) si->fd = %d, ov->self = 0x%lx, self = 0x%lx\n",   \
+       str, fd, (unsigned long)ov->self, (unsigned long)self)
+void
+sigusr1_handler(int sig, siginfo_t *info, void *context)
+{
+}
 
+/*
+ * a signal handler cannot safely invoke printf()
+ */
 void
 sigio_handler(int sig, siginfo_t *info, void *context)
 {
-	int fd;
+	int fd, i;
 	pid_t tid;
-	pthread_t self;
 	struct over_args *ov;
 	pfarg_msg_t msg;
 
@@ -159,142 +195,169 @@ sigio_handler(int sig, siginfo_t *info, void *context)
 	 * to identify context from which the notification originated
 	 *
 	 * Depending on scheduling, the signal may not be processed by the
-	 * thread which posted it, i.e., the thread which had the nortification
+	 * thread which posted it, i.e., the thread which had the notification
 	 *
 	 * POSIX aysnchronous signals cannot be targeted to specific threads
 	 */
 	fd = info->si_fd;
- 	self = pthread_self();
  	tid = gettid();
- 	ov = fd2ov[fd];
 
-	if (fd < 0 || fd >= MAX_FD)
+
+	for(i=0; i < MAX_THR; i++)
+		if (fd2ov[i].fd == fd)
+			break;
+
+	if (i == MAX_THR)
 		errx(1, "bad info.si_fd: %d", fd);
+
+ 	ov = &fd2ov[i];
 
 	/*
  	 * current thread id may not always match the id associated with
- 	 * the dfile descriptor
+ 	 * the file descriptor
  	 */
-	if (tid != ov->tid || !pthread_equal(self, ov->self)) {
-		mismatch[fd]++;
-		DPRINT("bad thread");
-	}
+	if (tid != ov->tid)
+		mismatch[myid]++;
 
 	/*
  	 * extract notification message
  	 */
-	pfm_read_pmds(fd, &ov->pd[1], 1);
 	if (read(fd, &msg, sizeof(msg)) != sizeof(msg))
 		errx(1, "read from sigio fd failed");
 
-	/*
- 	 * cannot be PFM_END_MSG starting with perfmon v2.8
- 	 */
-	if (msg.type == PFM_MSG_END) {
-		DPRINT("pfm_msg_end");
-	} else if (msg.type != PFM_MSG_OVFL) {
-		bad_msg[fd]++;
-		DPRINT("bad msg type");
-	}
+	if (msg.type != PFM_MSG_OVFL)
+		bad_msg[myid]++;
 
-	user_callback(fd);
+	user_callback(myid);
 
 	/*
  	 * when context is not that of the current thread, pfm_restart() does
  	 * not guarante that upon return monitoring will be resumed. There
  	 * may be a delay due to scheduling.
  	 */
-	if (pfm_restart(fd) != 0) {
-		bad_restart[fd]++;
-		DPRINT("bad restart");
-	}
+	if (pfm_restart(fd) != 0)
+		bad_restart[myid]++;
 }
 
 void
-overflow_start(struct over_args *ov, char *name)
+overflow_start(char *name)
 {
+	pfmlib_input_param_t  inp;
+	pfmlib_output_param_t outp;
+	pfarg_pmc_t pc[PFMLIB_MAX_PMCS];
+	pfarg_pmd_t pd[PFMLIB_MAX_PMDS];
+	struct f_owner_ex fown_ex;
+	pfarg_ctx_t ctx;
+	pfarg_load_t load_arg;
+	struct over_args *ov;
 	int i, fd, flags;
+	int ret;
 
-	memset(ov, 0, sizeof(struct over_args));
+        memset(&ctx, 0, sizeof(ctx));
+        memset(&inp, 0, sizeof(inp));
+        memset(&outp, 0, sizeof(outp));
+        memset(pc, 0, sizeof(pc));
+        memset(pd, 0, sizeof(pd));
+        memset(&load_arg, 0, sizeof(load_arg));
 
-	if (pfm_get_cycle_event(&ov->ev) != PFMLIB_SUCCESS)
+	ov = &fd2ov[myid];
+
+	if (pfm_get_cycle_event(&inp.pfp_events[0]) != PFMLIB_SUCCESS)
 		errx(1, "pfm_get_cycle_event failed");
 
-	ov->inp.pfp_event_count = 1;
-	ov->inp.pfp_dfl_plm = PFM_PLM3;
-	ov->inp.pfp_flags = 0;
-	ov->inp.pfp_events[0] = ov->ev;
+	inp.pfp_event_count = 1;
+	inp.pfp_dfl_plm = PFM_PLM3;
+	inp.pfp_flags = 0;
 
-	fd = pfm_create_context(&ov->ctx, NULL, NULL, 0);
+	fd = pfm_create_context(&ctx, NULL, NULL, 0);
 	if (fd < 0)
-		errx(1, "pfm_create_context failed");
+		err(1, "pfm_create_context failed");
 
-	fd2ov[fd] = ov;
 	ov->fd = fd;
 	ov->tid = gettid();
-	ov->self = pthread_self();
+	ov->id = myid;
 
-	detect_unavail_pmcs(fd, &ov->inp.pfp_unavail_pmcs);
+	detect_unavail_pmcs(fd, &inp.pfp_unavail_pmcs);
 
-	if (pfm_dispatch_events(&ov->inp, NULL, &ov->outp, NULL) != PFMLIB_SUCCESS)
-		errx(1, "pfm_dispatch_events failed");
+	ret = pfm_dispatch_events(&inp, NULL, &outp, NULL);
+	if (ret != PFMLIB_SUCCESS)
+		errx(1, "pfm_dispatch_events failed: %s", pfm_strerror(ret));
 
-	for (i = 0; i < ov->outp.pfp_pmc_count; i++) {
-		ov->pc[i].reg_num =   ov->outp.pfp_pmcs[i].reg_num;
-		ov->pc[i].reg_value = ov->outp.pfp_pmcs[i].reg_value;
+	for (i = 0; i < outp.pfp_pmc_count; i++) {
+		pc[i].reg_num =   outp.pfp_pmcs[i].reg_num;
+		pc[i].reg_value = outp.pfp_pmcs[i].reg_value;
 	}
-	for (i = 0; i < ov->outp.pfp_pmd_count; i++) {
-		ov->pd[i].reg_num = ov->outp.pfp_pmds[i].reg_num;
+	for (i = 0; i < outp.pfp_pmd_count; i++) {
+		pd[i].reg_num = outp.pfp_pmds[i].reg_num;
 	}
 
-	ov->pd[0].reg_flags |= PFM_REGFL_OVFL_NOTIFY;
-	ov->pd[0].reg_value = - threshold;
-	ov->pd[0].reg_long_reset = - threshold;
-	ov->pd[0].reg_short_reset = - threshold;
+	pd[0].reg_flags |= PFM_REGFL_OVFL_NOTIFY;
+	pd[0].reg_value = - threshold;
+	pd[0].reg_long_reset = - threshold;
+	pd[0].reg_short_reset = - threshold;
 
-	if (pfm_write_pmcs(fd, ov->pc, ov->outp.pfp_pmc_count))
-		errx(1, "pfm_write_pmcs failed");
+	if (pfm_write_pmcs(fd, pc, outp.pfp_pmc_count))
+		err(1, "pfm_write_pmcs failed");
 
-	if (pfm_write_pmds(fd, ov->pd, ov->outp.pfp_pmd_count))
-		errx(1, "pfm_write_pmds failed");
+	if (pfm_write_pmds(fd, pd, outp.pfp_pmd_count))
+		err(1, "pfm_write_pmds failed");
 
-	ov->load_arg.load_pid = gettid();
-
-	if (pfm_load_context(fd, &ov->load_arg) != 0)
-		errx(1, "pfm_load_context failed");
+	load_arg.load_pid = gettid();
+	if (pfm_load_context(fd, &load_arg) != 0)
+		err(1, "pfm_load_context failed");
 
 	flags = fcntl(fd, F_GETFL, 0);
 	if (fcntl(fd, F_SETFL, flags | O_ASYNC) < 0)
-		errx(1, "fcntl SETFL failed");
+		err(1, "fcntl SETFL failed");
 
-	if (fcntl(fd, F_SETOWN, gettid()) < 0)
-		errx(1, "fcntl SETOWN failed");
+	fown_ex.type = F_OWNER_TID;
+	fown_ex.pid  = gettid();
+	ret = fcntl(fd,
+		    (fown ? F_SETOWN_EX : F_SETOWN), 
+		    (fown ? (unsigned long)&fown_ex: gettid()));
+	if (ret)
+		err(1, "fcntl SETOWN failed");
 
 	if (fcntl(fd, F_SETSIG, signum) < 0)
-		errx(1, "fcntl SETSIG failed");
+		err(1, "fcntl SETSIG failed");
 
-	pfm_self_start(fd);
-
-	printf("launch %s: fd: %d, tid: %d, self: %p\n",
-		name, fd, ov->tid, (void *)ov->self);
+	if (pfm_start(fd, NULL))
+		err(1, "pfm_start failed");
+		
+	printf("launch %s: fd: %d, tid: %d\n", name, fd, ov->tid);
 }
 
 void
-overflow_stop(struct over_args *ov)
+overflow_stop(void)
 {
-	pfm_self_stop(ov->fd);
+	pfm_self_stop(fd2ov[myid].fd);
 }
 
 void *
 my_thread(void *v)
 {
-	struct over_args ov;
+	int retval = 0;
+	
+	myid = (unsigned long)v;
 
-	overflow_start(&ov, "side");
+	pthread_barrier_wait(&barrier);
+
+	overflow_start("side");
 	do_cycles();
-	overflow_stop(&ov);
+	overflow_stop();
 
-	return (NULL);
+	pthread_exit((void *)&retval);
+}
+
+static void
+usage(void)
+{
+	printf("self_smpl_multi [-t secs] [-p period] [-s signal] [-f] [-n threads]\n"
+		"-t secs: duration of the run in seconds\n"
+		"-p period: sampling period in CPU cycles\n"
+		"-s signal: signal to use (default: SIGIO)\n"
+		"-n thread: number of threads to create (default: 1)\n"
+		"-f : use F_SETOWN_EX for correct delivery of signal to thread (default: off)\n");
 }
 
 /*
@@ -303,24 +366,43 @@ my_thread(void *v)
 int
 main(int argc, char **argv)
 {
-	pthread_t thr;
-	struct over_args ov;
 	struct sigaction sa;
+	pthread_t allthr[MAX_THR];
 	sigset_t set;
-	int i;
+	int i, ret, max_thr = 1;
 
-	if (argc < 2 || sscanf(argv[1], "%d", &program_time) < 1)
-		program_time = PROGRAM_TIME;
-	if (argc < 3 || sscanf(argv[2], "%d", &threshold) < 1)
-		threshold = THRESHOLD;
-	if (argc < 4 || sscanf(argv[3], "%d", &signum) < 1)
-		signum = SIGIO;
+	while((i=getopt(argc, argv, "t:p:s:fhn:")) != EOF) {
+		switch(i) {
+		case 'h':
+			usage();
+			return 0;
+		case 't':
+			program_time = atoi(optarg);
+			break;
+		case 'p':
+			threshold = atoi(optarg);
+			break;
+		case 's':
+			signum = atoi(optarg);
+			break;
+		case 'f':
+			fown = 1;
+			break;
+		case 'n':
+			max_thr = atoi(optarg);
+			if (max_thr >= MAX_THR)
+				errx(1, "no more than %d threads", MAX_THR);
+			break;
+		default:
+			errx(1, "invalid option");
+		}
+	}
+	printf("program_time = %d, threshold = %d, signum = %d fcntl(%s), threads = %d\n",
+		program_time, threshold, signum,
+		fown ? "F_SETOWN_EX" : "F_SETOWN",
+		max_thr);
 
-	printf("program_time = %d, threshold = %d, signum = %d\n",
-		program_time, threshold, signum);
-
-	for (i = 0; i < MAX_FD; i++) {
-		fd2ov[i] = NULL;
+	for (i = 0; i < MAX_THR; i++) {
 		mismatch[i] = 0;
 		bad_msg[i] = 0;
 		bad_restart[i] = 0;
@@ -328,6 +410,17 @@ main(int argc, char **argv)
 
 	memset(&sa, 0, sizeof(sa));
 	sigemptyset(&set);
+
+	sa.sa_sigaction = sigusr1_handler;
+	sa.sa_mask = set;
+	sa.sa_flags = SA_SIGINFO;
+
+	if (sigaction(SIGUSR1, &sa, NULL) != 0)
+		errx(1, "sigaction failed");
+
+	memset(&sa, 0, sizeof(sa));
+	sigemptyset(&set);
+
 	sa.sa_sigaction = sigio_handler;
 	sa.sa_mask = set;
 	sa.sa_flags = SA_SIGINFO;
@@ -338,23 +431,34 @@ main(int argc, char **argv)
 	if (pfm_initialize() != PFMLIB_SUCCESS)
 		errx(1, "pfm_initialize failed");
 
-	printf("\n");
-	if (pthread_create(&thr, NULL, my_thread, NULL) != 0)
-		errx(1, "pthread_create failed");
+	/*
+ 	 * +1 because main thread is also using the barrier
+ 	 */
+	pthread_barrier_init(&barrier, 0, max_thr+1);
 
-	overflow_start(&ov, "main");
-	do_cycles();
-	overflow_stop(&ov);
-
-	printf("\n");
-	for (i = 0; i < MAX_FD; i++) {
-		if (fd2ov[i] != NULL) {
-			printf("total[%d] = %ld, mismatch[%d] = %ld, "
-				"bad_msg[%d] = %ld, bad_restart[%d] = %ld\n",
-				i, total[i], i, mismatch[i],
-				i, bad_msg[i], i, bad_restart[i]);
-		}
+	for(i=0; i < max_thr; i++) {
+		ret = pthread_create(allthr+i, NULL, my_thread, (void *)(unsigned long)i);
+		if (ret)
+			err(1, "pthread_create failed");
 	}
+	myid = i;
+	sigemptyset(&set);
+	sigaddset(&set, SIGIO);
+	if (pthread_sigmask(SIG_BLOCK, &set, NULL))
+		err(1, "cannot mask SIGIO in main thread");
 
+	pthread_barrier_wait(&barrier);
+	printf("\n\n");
+
+	for (i = 0; i < max_thr; i++) {
+		pthread_join(allthr[i], NULL);
+	}
+	printf("\n\n");
+	for (i = 0; i < max_thr; i++) {
+		printf("myid = %3d, fd = %3d, total = %4ld, mismatch = %ld, "
+			"bad_msg = %ld, bad_restart = %ld\n",
+			fd2ov[i].id, fd2ov[i].fd, total[i], mismatch[i],
+			bad_msg[i], bad_restart[i]);
+	}
 	return (0);
 }
