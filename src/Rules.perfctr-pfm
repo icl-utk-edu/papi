@@ -78,7 +78,7 @@ OMPCFLGS = -fopenmp
 endif
 
 CC_R    	:= $(CC) -pthread
-CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
+CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.3 -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
 
 ifeq (pgf77,$(F77))
     FFLAGS      += -Wall -Mextend $(BITFLAGS)
