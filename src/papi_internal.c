@@ -105,7 +105,7 @@ static int default_debug_handler(int errorCode)
       PAPIERROR(str);
 
       if (_papi_hwi_error_level == PAPI_VERB_ESTOP)
-         exit(-errorCode);
+         abort(); /* patch provided by will cohen of redhat */
       else
          return errorCode;
       break;
