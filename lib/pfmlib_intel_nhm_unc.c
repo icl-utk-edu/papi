@@ -190,8 +190,8 @@ pfm_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, in
 static int
 pfm_nhm_unc_get_event_perf_type(void *this, int pidx)
 {
-	/* XXX: fix once Core i7 uncore is supported by PCL */
-	return PERF_TYPE_RAW;
+	/* XXX: fix once Core i7 uncore is supported by perf_events */
+	return -1;
 }
 
 pfmlib_pmu_t intel_nhm_unc_support={
