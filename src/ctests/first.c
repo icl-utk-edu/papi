@@ -26,11 +26,11 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 int main(int argc, char **argv)
 {
    int retval, num_tests = 5, num_events, tmp;
-   long_long **values;
-   int EventSet;
-   int PAPI_event=PAPI_FP_INS, mask;
+   long long **values;
+   int EventSet=PAPI_NULL;
+   int PAPI_event, mask;
    char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
-   const PAPI_hw_info_t *hw_info = PAPI_get_hardware_info();
+   const PAPI_hw_info_t *hw_info;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
@@ -38,38 +38,19 @@ int main(int argc, char **argv)
    if (retval != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   if (!TESTS_QUIET) {
-      retval = PAPI_set_debug(PAPI_VERB_ECONT);
-      if (retval != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
-   }
-   if(!strncmp(hw_info->model_string, "UltraSPARC", 10) &&
-       !strncmp(hw_info->vendor_string, "SUN", 3)) {
-   /* query and set up the right instruction to monitor */
-      if (PAPI_query_event(PAPI_TOT_INS) == PAPI_OK) {
-         PAPI_event = PAPI_TOT_INS;
-         mask = MASK_TOT_INS | MASK_TOT_CYC;
-      } else {
-         test_fail(__FILE__, __LINE__, "PAPI_TOT_INS not available on this Sun platform!", 0);
-      }
-   } else {
-   /* query and set up the right instruction to monitor */
-      if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
-         PAPI_event = PAPI_FP_INS;
-         mask = MASK_FP_INS | MASK_TOT_CYC;
-      } else {
-         PAPI_event = PAPI_TOT_INS;
-         mask = MASK_TOT_INS | MASK_TOT_CYC;
-      }
-   }
+   hw_info = PAPI_get_hardware_info();
+   if (hw_info == NULL)
+     test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
+
+   /* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
+      PAPI_TOT_INS, depending on the availability of the event on the
+      platform */
+   EventSet = add_two_events(&num_events, &PAPI_event, hw_info, &mask);
 
    retval = PAPI_event_code_to_name(PAPI_event, event_name);
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
    sprintf(add_event_str, "PAPI_add_event[%s]", event_name);
-
-
-   EventSet = add_test_events(&num_events, &mask);
 
    values = allocate_test_space(num_tests, num_events);
 
@@ -115,7 +96,7 @@ int main(int argc, char **argv)
       printf("Test case 1: Non-overlapping start, stop, read.\n");
       printf("-----------------------------------------------\n");
       tmp = PAPI_get_opt(PAPI_DEFDOM, NULL);
-      printf("Default domain is: %d (%s)\n", tmp, stringify_domain(tmp));
+      printf("Default domain is: %d (%s)\n", tmp, stringify_all_domains(tmp));
       tmp = PAPI_get_opt(PAPI_DEFGRN, NULL);
       printf("Default granularity is: %d (%s)\n", tmp, stringify_granularity(tmp));
       printf("Using %d iterations of c += a*b\n", NUM_FLOPS);
@@ -129,10 +110,11 @@ int main(int argc, char **argv)
              (values[4])[0]);
       printf(TAB5, "PAPI_TOT_CYC:", (values[0])[1], (values[1])[1], (values[2])[1],
              (values[3])[1], (values[4])[1]);
-      printf
-          ("-------------------------------------------------------------------------\n");
-
+      printf ("-------------------------------------------------------------------------\n"); 
       printf("Verification:\n");
+      printf("Row 1 Column 1 at least 90%% of %d\n", 2*NUM_FLOPS);
+      printf("%% difference between %s 1 & 2: %.2f\n",add_event_str,100.0*(float)(values[0])[0]/(float)(values[1])[0]);
+      printf("%% difference between %s 1 & 2: %.2f\n","PAPI_TOT_CYC",100.0*(float)(values[0])[1]/(float)(values[1])[1]);
       printf("Column 1 approximately equals column 2\n");
       printf("Column 3 approximately equals 2 * column 2\n");
       printf("Column 4 approximately equals 3 * column 2\n");
@@ -140,14 +122,15 @@ int main(int argc, char **argv)
    }
 
    {
-      long_long min, max;
-      min = (long_long) (values[1][0] * .9);
-      max = (long_long) (values[1][0] * 1.1);
+      long long min, max;
+      min = (long long) (values[1][0] * .9);
+      max = (long long) (values[1][0] * 1.1);
 
       if (values[0][0] > max || values[0][0] < min || values[2][0] > (2 * max)
           || values[2][0] < (2 * min) || values[3][0] > (3 * max)
           || values[3][0] < (3 * min)
-          || values[3][0] != values[4][0]) {
+          || values[3][0] != values[4][0]
+          || values[0][0] < (long long)(1.8*NUM_FLOPS)) {
 /*
          printf("min: ");
          printf(LLDFMT, min);
@@ -167,8 +150,8 @@ int main(int argc, char **argv)
 */         test_fail(__FILE__, __LINE__, event_name, 1);
       }
 
-      min = (long_long) (values[1][1] * .8);
-      max = (long_long) (values[1][1] * 1.2);
+      min = (long long) (values[1][1] * .8);
+      max = (long long) (values[1][1] * 1.2);
       if (values[0][1] > max || values[0][1] < min || values[2][1] > (2 * max)
           || values[2][1] < (2 * min) || values[3][1] > (3 * max)
           || values[3][1] < (3 * min)
