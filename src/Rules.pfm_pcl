@@ -2,7 +2,7 @@
 
 DESCR   = "Linux with $(SUBSTR) kernel support and library"
 LIBRARY = libpapi.a
-SHLIB   = libpapi.so
+SHLIB   = libpapi.so.3
 TARGETS = ear serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads shared
 MEMSUBSTR = perfmon
 MEMSUBSTRC = $(MEMSUBSTR)-memory.c

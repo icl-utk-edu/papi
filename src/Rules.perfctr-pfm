@@ -8,7 +8,7 @@
 DESCR   = "Linux with PerfCtr $(VERSION) patch and library, and perfmon2 libpfm library"
 TARGETS = serial forkexec_tests overflow_tests profile_tests attach multiplex_and_pthreads shared
 LIBRARY = libpapi.a
-SHLIB   = libpapi.so
+SHLIB   = libpapi.so.3
 SUBSTR  = perfctr-$(CPU)
 ARCH	= $(shell uname -m)
 
