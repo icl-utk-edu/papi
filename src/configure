@@ -9225,6 +9225,11 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
    MEMSUBSTRO=aix-memory.o
    LIBS="static shared"
    TARGETS="serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads smp omp"
+   if test "${bitmode}" = "64"; then
+      bitmode=-q64
+   else
+      bitmode=""
+   fi
    FLAGS='-I$(PMAPI)/include -qmaxmem=-1 -qarch=$(cpu_option) -qtune=$(cpu_option) -qlanglvl=extended  $(BITS)'
    CFLAGS='$(DEBUGFLAGS) $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_AIX -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors -DSTATIC_PERFMON_EVENTS_TABLE'
    #CFLAGS="-DPAPI_NO_VECTOR"
@@ -9262,7 +9267,6 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
       cpu_option=pwr5
       MSUBSTR=power5
       DESCR="AIX 5.1.0 or greater with POWER5 64 bit build"
-      BITS=-q64
       ARG64=-X64
    elif test "$MAKEVER" = "aix-power6"; then
       LIBRARY=libpapi.a
@@ -9283,7 +9287,6 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
       cpu_option=pwr6
       MSUBSTR=power6
       DESCR="AIX 5.1.0 or greater with POWER6 64 bit build"
-      BITS=-q64
       ARG64=-X64
       CPPFLAGS="-qlanglvl=extended"
    fi
