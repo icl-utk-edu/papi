@@ -33,6 +33,14 @@
 #define MAX_NATIVE_EVENT PAPI_MAX_NATIVE_EVENTS
 #define MAX_NATIVE_EVENT_USII  22
 
+/* Defines in papi_internal.h cause compile warnings on solaris because typedefs are done here */
+#undef hwd_context_t	
+#undef hwd_control_state_t
+#undef hwd_reg_alloc_t	
+#undef hwd_register_t	
+#undef hwd_siginfo_t	
+#undef hwd_ucontext_t	
+
 typedef int hwd_reg_alloc_t;
 
 typedef struct US_register {
