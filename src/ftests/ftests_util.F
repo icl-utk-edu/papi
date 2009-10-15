@@ -4,13 +4,14 @@
 #if _WIN32
       use dflib
 #endif
-      implicit none
+      implicit integer (p)
       character*25 chbuf
-      common quiet
-#if defined(_CRAYT3E)
+#if defined(_CRAYT3E) || defined(__crayx1) || defined(__crayx2)
       integer ilen,ierror
 #endif
+      integer retval
       integer quiet
+      common quiet
 
 C     This routine tests for a command line argument
 C     that matches 'TESTS_QUIET'
@@ -18,21 +19,27 @@ C     If found, it returns 1 to set output to quiet
 C     The routine was placed her to hide the ugly
 C     Windows #if stuff from normal view
 C     And also to make the test code read cleaner
-      get_quiet=0
-#if defined(_CRAYT3E)
+#if defined(_CRAYT3E) || defined(__crayx1) || defined(__crayx2)
       call pxfgetarg(1,chbuf,ilen,ierror)
 #else 
       call getarg(1,chbuf)
 #endif
+      get_quiet = 0
       if (LGE(chbuf, 'TESTS_QUIET')) then
         get_quiet=1
+      else
+         call PAPIf_set_debug(PAPI_VERB_ECONT, retval)
+         if ( retval.NE.PAPI_OK) then
+            call ftest_fail(__FILE__, __LINE__,
+     .       'PAPIf_set_debug', retval)
+         end if
       end if
       quiet=get_quiet
       end
 
 
       integer function len_trim(string)
-      implicit none
+      implicit integer (p)
       character*(*) string
 
       do len_trim=len(string),1,-1
@@ -42,7 +49,7 @@ C     And also to make the test code read cleaner
       end
 
       subroutine ftests_warning(line,msg)
-      implicit none
+      implicit integer (p)
       character*(*) msg
       integer line
 
@@ -51,7 +58,7 @@ C     And also to make the test code read cleaner
       end
 
       subroutine ftests_fatal_error(line,msg)
-      implicit none
+      implicit integer (p)
       character*(*) msg
       integer line
 
@@ -61,7 +68,7 @@ C     And also to make the test code read cleaner
       end
 
       subroutine ftests_perror(line,msg)
-      implicit none
+      implicit integer (p)
       character*(*) msg
       integer line
 
@@ -72,7 +79,7 @@ C     And also to make the test code read cleaner
       end
       
       subroutine ftests_pass(test_str)
-      implicit none
+      implicit integer (p)
       character*(*) test_str
 
       write(*,100) test_str,' PASSED'
@@ -83,7 +90,7 @@ C     And also to make the test code read cleaner
       end
 
       subroutine ftests_skip(test_str,papiretval)
-      implicit none
+      implicit integer (p)
       character*(*) test_str
       character*(PAPI_MAX_STR_LEN) papi_errstr
       integer papiretval,iret
@@ -105,7 +112,7 @@ C     And also to make the test code read cleaner
       end
 
       subroutine ftest_fail(file, line, callstr, retval)
-      implicit none
+      implicit integer (p)
       character*(*) file
       integer line
       character*(*) callstr
@@ -115,7 +122,7 @@ C     And also to make the test code read cleaner
       external len_trim
 
       if ( retval.eq.PAPI_ESBSTR .OR. retval.eq.PAPI_ENOEVNT
-     &    .OR. retval.eq.PAPI_ECNFLCT ) then
+     &    .OR. retval.eq.PAPI_ECNFLCT .OR. retval.eq.PAPI_EPERM ) then
         call ftest_skip(file, line, callstr, retval)
       end if
       if ( retval.eq.PAPI_ENOEVNT ) then
@@ -147,7 +154,7 @@ C     And also to make the test code read cleaner
       end
 
       subroutine ftest_skip(file, line, callstr, retval)
-      implicit none
+      implicit integer (p)
       character*(*) file
       integer line
       character*(*) callstr
@@ -179,27 +186,47 @@ C     And also to make the test code read cleaner
       end
 
       subroutine stringify_domain(domain, str)
-      implicit none      
+      implicit integer (p)      
       integer domain
       character*(PAPI_MAX_STR_LEN) str
-
-      if (domain .EQ. PAPI_DOM_USER) then
-        str = "PAPI_DOM_USER"
-      else if (domain .EQ. PAPI_DOM_KERNEL) then
-        str = "PAPI_DOM_KERNEL"
-      else if (domain .EQ. PAPI_DOM_OTHER) then
-        str = "PAPI_DOM_OTHER"
-      else if (domain .EQ. PAPI_DOM_ALL) then
+      integer idx
+      
+      if (domain .EQ. PAPI_DOM_ALL) then
         str = "PAPI_DOM_ALL"
       else
-        print *, 'error in stringify_domain'
-        call pause()
-        stop
+        idx = 1
+C       Is there a better way to write this?
+        if (IAND(domain, PAPI_DOM_USER) .NE. 0) then
+          str(idx:idx+13) = "+PAPI_DOM_USER"
+          idx = idx + 14
+        end if
+        if (IAND(domain, PAPI_DOM_KERNEL) .NE. 0) then
+          str(idx:idx+15) = "+PAPI_DOM_KERNEL"
+          idx = idx + 16
+        end if
+        if (IAND(domain, PAPI_DOM_SUPERVISOR) .NE. 0) then
+          str(idx:idx+19) = "+PAPI_DOM_SUPERVISOR"
+          idx = idx + 20
+        end if
+        if (IAND(domain, PAPI_DOM_OTHER) .NE. 0) then
+          str(idx:idx+14) = "+PAPI_DOM_OTHER"
+          idx = idx + 15
+        end if
+        if (idx .NE. 1) then
+C         Eliminate the first + character
+          str = str(2:LEN(str))
+C         Blank-fill the rest of the string so len_trim works correctly
+          str(idx:) = ' '
+        else
+          print *, 'error in stringify_domain'
+          call pause()
+          stop
+        end if
       end if
       end
 
       subroutine stringify_granularity(granularity, str)
-      implicit none      
+      implicit integer (p)      
       integer granularity
       character*(PAPI_MAX_STR_LEN) str
 
@@ -226,7 +253,7 @@ C     For Windows, it links to a simple C routine
 C     that prompts the user for a keypress
 C     For every other platform it is a nop.
       subroutine pause()
-      implicit none      
+      implicit integer (p)      
       integer quiet
       common quiet
 
@@ -239,7 +266,7 @@ C     For every other platform it is a nop.
 
 C     Print the content of an event set
       subroutine PrintEventSet(ES)
-      IMPLICIT NONE
+      IMPLICIT integer (p)
       integer ES
       integer MAXEVENT
       parameter(MAXEVENT=64)
@@ -265,5 +292,45 @@ C     Print the content of an event set
   210 format(T1,i4,' (',i12.11,'): ',a40)
 
       write(*,*)
+      end
+
+      subroutine init_multiplex()
+      IMPLICIT integer (p)
+      integer retval
+      CHARACTER*(PAPI_MAX_STR_LEN)  vstring, mstring
+      INTEGER ncpu,nnodes,totalcpus,vendor,model
+      REAL revision, mhz
+      integer nchr,i
+
+C     Get PAPI h/w info
+      call PAPIf_get_hardware_info( ncpu, nnodes, totalcpus, vendor,
+     .   vstring, model, mstring, revision, mhz )
+      do i=len(mstring),1,-1
+        if(mstring(i:i).NE.' ') goto 10
+      end do
+ 10   if(i.LT.1)then
+        nchr=1
+      else
+        nchr=i
+      end if
+
+      if ( mstring(1:nchr).EQ."POWER6") then
+C     Setting domain to user+kernel+supervisor is really only necessary when
+C     using PAPI multiplexing on POWER6/perfctr.  But since the Fortran API
+C     does not include access to substrate info, we'll just set the domain
+C     in this manner for all substrates on POWER6.
+      call PAPIf_set_domain(PAPI_DOM_ALL, retval)
+      if ( retval.NE.PAPI_OK) then
+        call ftest_fail(__FILE__, __LINE__,
+     . 'PAPIf_set_domain', retval)
+      end if
+      end if
+
+      call PAPIf_multiplex_init(retval)
+      if ( retval.NE.PAPI_OK) then
+        call ftest_fail(__FILE__, __LINE__,
+     &      'papif_multiplex_init', retval)
+      end if
+
       end
 

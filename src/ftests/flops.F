@@ -6,6 +6,8 @@ C -Kevin London
 #include "fpapi_test.h"
 
       program flops
+      implicit integer (p)
+      integer index
 
       PARAMETER(index=100)
       REAL*4 matrixa(index,index),matrixb(index,index),mres(index,index)
