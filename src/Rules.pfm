@@ -22,7 +22,9 @@ CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,$(SHLIB) -Xlinker "-rpath" 
 ifeq (pgf77,$(F77))
 	FFLAGS      += -Mextend
 else
+   ifneq (ifort,$(F77))
 	FFLAGS     += -ffixed-line-length-132
+   endif
 endif
 
 CFLAGS		+= -Wall 

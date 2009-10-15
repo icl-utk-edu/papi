@@ -74,6 +74,9 @@ CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.3 -Xlinker "-rpa
 ifeq (pgf77,$(F77))
 	FFLAGS      += -Wall -Mextend $(BITFLAGS)
 else
+   ifeq (ifort,$(F77))
+      FFLAGS += -warn all $(BITFLAGS)
+   else
 	FFLAGS      += -Wall -ffixed-line-length-132 $(BITFLAGS)
 endif
 

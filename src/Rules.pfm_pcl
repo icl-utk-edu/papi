@@ -21,7 +21,9 @@ CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so.3 -Xlinker "-rpa
 ifeq (pgf77,$(F77))
 	FFLAGS      += -Mextend
 else
+   ifneq (ifort,$(F77))
 	FFLAGS     += -ffixed-line-length-132
+   endif
 endif
 
 CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) $(DEBUGFLAGS) -D_REENTRANT
