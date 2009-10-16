@@ -78,6 +78,7 @@ else
       FFLAGS += -warn all $(BITFLAGS)
    else
 	FFLAGS      += -Wall -ffixed-line-length-132 $(BITFLAGS)
+   endif
 endif
 
 CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(BITFLAGS)
