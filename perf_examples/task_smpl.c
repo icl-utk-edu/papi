@@ -268,19 +268,19 @@ process_smpl_buf(perf_event_desc_t *hw)
 			return; /* nothing to read */
 
 		switch(ehdr.type) {
-			case PERF_EVENT_SAMPLE:
+			case PERF_RECORD_SAMPLE:
 				display_sample(hw, ehdr.size - sizeof(ehdr));
 				break;
-			case PERF_EVENT_EXIT:
+			case PERF_RECORD_EXIT:
 				display_exit(hw);
 				break;
-			case PERF_EVENT_LOST:
+			case PERF_RECORD_LOST:
 				display_lost(hw);
 				break;
-			case PERF_EVENT_THROTTLE:
+			case PERF_RECORD_THROTTLE:
 				display_freq(1, hw);
 				break;
-			case PERF_EVENT_UNTHROTTLE:
+			case PERF_RECORD_UNTHROTTLE:
 				display_freq(0, hw);
 				break;
 			default:

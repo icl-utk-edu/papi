@@ -28,15 +28,16 @@ enum perf_type_id {
 	PERF_TYPE_HARDWARE		= 0,
 	PERF_TYPE_SOFTWARE		= 1,
 	PERF_TYPE_TRACEPOINT		= 2,
-        PERF_TYPE_HW_CACHE		= 3,
-        PERF_TYPE_RAW			= 4,
-        PERF_TYPE_MAX,			/* non-ABI */
+	PERF_TYPE_HW_CACHE		= 3,
+	PERF_TYPE_RAW			= 4,
+	PERF_TYPE_MAX,			/* non-ABI */
 };
 
 
 /*
- * Generalized performance event types, used by the hw_event.event_id
- * parameter of the sys_perf_event_open() syscall:
+ * Generalized performance event event_id types, used by the
+ * attr.event_id parameter of the sys_perf_event_open()
+ * syscall:
  */
 enum perf_hw_id {
 	/*
@@ -88,7 +89,7 @@ enum perf_hw_cache_op_result_id {
 
 /*
  * Special "software" events provided by the kernel, even if the hardware
- * does not support performance counters. These events measure various
+ * does not support performance events. These events measure various
  * physical and sw events of the kernel (and allow the profiling of them as
  * well):
  */
@@ -156,11 +157,20 @@ enum perf_event_read_format {
 #define PERF_ATTR_SIZE_VER0	64	/* sizeof first published struct */
 
 /*
- * Hardware event to monitor
+ * Hardware event_id to monitor via a performance monitoring event:
  */
 struct perf_event_attr {
+	/*
+	 * Major type: hardware/software/tracepoint/etc.
+	 */
 	uint32_t	type;
+	/*
+	 * Size of the attr structure, for fwd/bwd compat.
+	 */
 	uint32_t	size;
+	/*
+	 * Type specific configuration information.
+	 */
 	uint64_t	config;
 
 	union {
@@ -211,13 +221,17 @@ struct perf_event_mmap_page {
 	uint64_t	time_enabled;		/* time event active */
 	uint64_t	time_running;		/* time event on cpu */
 
+		/*
+		 * Hole for extension of the self monitor capabilities
+		 */
 	uint64_t	__reserved[123];	/* align to 1k */
 
 	/*
 	 * Control data for the mmap() data buffer.
 	 *
 	 * User-space reading the @data_head value should issue an rmb(), on
-	 * SMP capable platforms, after reading this value
+	 * SMP capable platforms, after reading this value -- see
+	 * perf_event_wakeup().
 	 *
 	 * When the mapping is PROT_WRITE the @data_tail value should be
 	 * written by userspace to reflect the last read data. In this case
@@ -255,7 +269,7 @@ enum perf_event_type {
 	 *	char				filename[];
 	 * };
 	 */
-	PERF_EVENT_MMAP			= 1,
+	PERF_RECORD_MMAP			= 1,
 
 	/*
 	 * struct {
@@ -264,7 +278,7 @@ enum perf_event_type {
 	 * 	u64				lost;
 	 * };
 	 */
-	PERF_EVENT_LOST			= 2,
+	PERF_RECORD_LOST			= 2,
 
 	/*
 	 * struct {
@@ -274,7 +288,7 @@ enum perf_event_type {
 	 *	char				comm[];
 	 * };
 	 */
-	PERF_EVENT_COMM			= 3,
+	PERF_RECORD_COMM			= 3,
 
 	/*
 	 * struct {
@@ -284,7 +298,7 @@ enum perf_event_type {
 	 *	u64				time;
 	 * };
 	 */
-	PERF_EVENT_EXIT			= 4,
+	PERF_RECORD_EXIT			= 4,
 
 	/*
 	 * struct {
@@ -294,8 +308,8 @@ enum perf_event_type {
 	 *	u64				stream_id;
 	 * };
 	 */
-	PERF_EVENT_THROTTLE		= 5,
-	PERF_EVENT_UNTHROTTLE		= 6,
+	PERF_RECORD_THROTTLE		= 5,
+	PERF_RECORD_UNTHROTTLE		= 6,
 
 	/*
 	 * struct {
@@ -305,7 +319,7 @@ enum perf_event_type {
 	 *	{ u64				time;     } && PERF_SAMPLE_TIME
 	 * };
 	 */
-	PERF_EVENT_FORK			= 7,
+	PERF_RECORD_FORK			= 7,
 
 	/*
 	 * struct {
@@ -317,7 +331,7 @@ enum perf_event_type {
 	 * 	{ u64		parent_id;	} && PERF_FORMAT_ID
 	 * };
 	 */
-	PERF_EVENT_READ			= 8,
+	PERF_RECORD_READ			= 8,
 
 	/*
 	 * struct {
@@ -352,9 +366,9 @@ enum perf_event_type {
 	 *	  char                  data[size];}&& PERF_SAMPLE_RAW
 	 * };
 	 */
-	PERF_EVENT_SAMPLE		= 9,
+	PERF_RECORD_SAMPLE		= 9,
 
-	PERF_EVENT_MAX,			/* non-ABI */
+	PERF_RECORD_MAX,			/* non-ABI */
 };
 
 enum perf_callchain_context {
@@ -396,6 +410,7 @@ enum perf_callchain_context {
 #define PERF_EVENT_IOC_RESET		_IO ('$', 3)
 #define PERF_EVENT_IOC_PERIOD		_IOW('$', 4, u64)
 #define PERF_EVENT_IOC_SET_OUTPUT	_IO ('$', 5)
+#define PERF_EVENT_IOC_SET_FILTER	_IOW('$', 6, char *)
 
 static inline int
 perf_event_open(

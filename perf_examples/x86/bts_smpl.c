@@ -206,13 +206,13 @@ process_smpl_buf(perf_event_desc_t *hw)
 		if (ret)
 			return; /* nothing to read */
 		switch(ehdr.type) {
-			case PERF_EVENT_SAMPLE:
+			case PERF_RECORD_SAMPLE:
 				display_sample(hw, ehdr.size - sizeof(ehdr));
 				break;
-			case PERF_EVENT_EXIT:
+			case PERF_RECORD_EXIT:
 				display_exit(hw);
 				break;
-			case PERF_EVENT_LOST:
+			case PERF_RECORD_LOST:
 				display_lost(hw);
 				break;
 			default:

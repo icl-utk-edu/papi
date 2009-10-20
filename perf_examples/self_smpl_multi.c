@@ -252,7 +252,7 @@ sigio_handler(int sig, siginfo_t *info, void *context)
 	/*
 	 * message we do not handle
 	 */
-	if (ehdr.type != PERF_EVENT_SAMPLE) {
+	if (ehdr.type != PERF_RECORD_SAMPLE) {
 		bad_msg[myid]++;
 		goto skip;
 	}

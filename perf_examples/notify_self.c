@@ -126,7 +126,7 @@ sigio_handler(int n, struct siginfo *info, void *uc)
 	if (ret)
 		errx(1, "cannot read event header");
 
-	if (ehdr.type != PERF_EVENT_SAMPLE) {
+	if (ehdr.type != PERF_RECORD_SAMPLE) {
 		warnx("unexpected sample type=%d, skipping\n", ehdr.type);
 		perf_skip_buffer(fds[id].buf, ehdr.size);
 		goto skip;
