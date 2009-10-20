@@ -6736,24 +6736,29 @@ if test "${with_pcl+set}" = set; then
 else
   pcl="no"
 			if test "$perfctr" = "no"; then
-            { $as_echo "$as_me:$LINENO: checking for /sys/devices/system/cpu/perf_counters" >&5
-$as_echo_n "checking for /sys/devices/system/cpu/perf_counters... " >&6; }
-if test "${ac_cv_file__sys_devices_system_cpu_perf_counters+set}" = set; then
+            as_ac_File=`$as_echo "ac_cv_file_/lib/modules/$OSVER/source/include/linux/perf_counter.h" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for /lib/modules/$OSVER/source/include/linux/perf_counter.h" >&5
+$as_echo_n "checking for /lib/modules/$OSVER/source/include/linux/perf_counter.h... " >&6; }
+if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
   $as_echo_n "(cached) " >&6
 else
   test "$cross_compiling" = yes &&
   { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
 $as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
    { (exit 1); exit 1; }; }
-if test -r "/sys/devices/system/cpu/perf_counters"; then
-  ac_cv_file__sys_devices_system_cpu_perf_counters=yes
+if test -r "/lib/modules/$OSVER/source/include/linux/perf_counter.h"; then
+  eval "$as_ac_File=yes"
 else
-  ac_cv_file__sys_devices_system_cpu_perf_counters=no
+  eval "$as_ac_File=no"
 fi
 fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_file__sys_devices_system_cpu_perf_counters" >&5
-$as_echo "$ac_cv_file__sys_devices_system_cpu_perf_counters" >&6; }
-if test "x$ac_cv_file__sys_devices_system_cpu_perf_counters" = x""yes; then
+ac_res=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+as_val=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+   if test "x$as_val" = x""yes; then
    pcl="yes"
 fi
 
@@ -6765,10 +6770,9 @@ else
    pcl="no"
 fi
 
-# It appears that for linux kernel 2.6.31, the /usr/include/linux dir
-# does not include perf_counter.h. Since this dir is populated by the
-# kernel-headers package, we'll have to wait for an update.
-# For know, we use the workaround:
+# If we are running a perf_events (PCL) kernel, the include file will be
+# found in /lib/modules/`uname -r`/source/include/linux.  However, allow the
+# user to override that location if they wish.
 
 # looking for perf_counter header file
 if test "$pcl" = "yes"; then
@@ -6778,25 +6782,30 @@ if test "${with_pcl_incdir+set}" = set; then
   withval=$with_pcl_incdir; pcl_incdir=$withval
 else
   pcl_incdir="no"
-			{ $as_echo "$as_me:$LINENO: checking for /usr/include/linux/perf_counter.h" >&5
-$as_echo_n "checking for /usr/include/linux/perf_counter.h... " >&6; }
-if test "${ac_cv_file__usr_include_linux_perf_counter_h+set}" = set; then
+			as_ac_File=`$as_echo "ac_cv_file_/lib/modules/$OSVER/source/include/linux/perf_counter.h" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for /lib/modules/$OSVER/source/include/linux/perf_counter.h" >&5
+$as_echo_n "checking for /lib/modules/$OSVER/source/include/linux/perf_counter.h... " >&6; }
+if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
   $as_echo_n "(cached) " >&6
 else
   test "$cross_compiling" = yes &&
   { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
 $as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
    { (exit 1); exit 1; }; }
-if test -r "/usr/include/linux/perf_counter.h"; then
-  ac_cv_file__usr_include_linux_perf_counter_h=yes
+if test -r "/lib/modules/$OSVER/source/include/linux/perf_counter.h"; then
+  eval "$as_ac_File=yes"
 else
-  ac_cv_file__usr_include_linux_perf_counter_h=no
+  eval "$as_ac_File=no"
 fi
 fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_file__usr_include_linux_perf_counter_h" >&5
-$as_echo "$ac_cv_file__usr_include_linux_perf_counter_h" >&6; }
-if test "x$ac_cv_file__usr_include_linux_perf_counter_h" = x""yes; then
-  pcl_incdir="/usr/include/linux"
+ac_res=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+as_val=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+   if test "x$as_val" = x""yes; then
+  pcl_incdir="/lib/modules/$OSVER/source/include/linux"
 else
   { { $as_echo "$as_me:$LINENO: error: perf_counter.h could not be found. See --with-pcl-incdir" >&5
 $as_echo "$as_me: error: perf_counter.h could not be found. See --with-pcl-incdir" >&2;}

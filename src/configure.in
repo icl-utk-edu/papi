@@ -1014,17 +1014,16 @@ AC_ARG_WITH(pcl,
             [pcl=$withval],
             [pcl="no"
 			if test "$perfctr" = "no"; then
-            AC_CHECK_FILE(/sys/devices/system/cpu/perf_counters, [ pcl="yes" ])
+            AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/perf_counter.h, [ pcl="yes" ])
 			fi ]
             )
 else
    pcl="no"
 fi
 
-# It appears that for linux kernel 2.6.31, the /usr/include/linux dir
-# does not include perf_counter.h. Since this dir is populated by the
-# kernel-headers package, we'll have to wait for an update. 
-# For know, we use the workaround:
+# If we are running a perf_events (PCL) kernel, the include file will be
+# found in /lib/modules/`uname -r`/source/include/linux.  However, allow the
+# user to override that location if they wish.
 
 # looking for perf_counter header file
 if test "$pcl" = "yes"; then
@@ -1032,7 +1031,7 @@ AC_ARG_WITH(pcl_incdir,
 			[  --with-pcl-incdir=<path>	Specify directory of perf_counter header file],
 			[pcl_incdir=$withval],
 			[pcl_incdir="no"
-			AC_CHECK_FILE(/usr/include/linux/perf_counter.h, [pcl_incdir="/usr/include/linux"], 
+			AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/perf_counter.h, [pcl_incdir="/lib/modules/$OSVER/source/include/linux"], 
 			[AC_MSG_ERROR([perf_counter.h could not be found. See --with-pcl-incdir])]) ]
 			)
 fi
