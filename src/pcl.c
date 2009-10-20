@@ -1956,7 +1956,7 @@ inline static int close_pcl_evts(hwd_context_t * ctx)
       for (i = 0; i < ctx->num_pcl_evts; i++)
         {
           if (ctx->pcl_evt[i].group_leader == i) {
-            ret = ioctl(ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_DISABLE);
+            ret = ioctl(ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_DISABLE, NULL);
             if (ret == -1)
               {
                 /* Never should happen */
@@ -2374,7 +2374,7 @@ static int pcl_enable_counters (hwd_context_t * ctx, hwd_control_state_t * ctl)
     {
       if (ctx->pcl_evt[i].group_leader == i)
         {
-          ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_ENABLE);
+          ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_ENABLE, NULL);
 
           if (ret == -1)
             {
@@ -2388,33 +2388,42 @@ static int pcl_enable_counters (hwd_context_t * ctx, hwd_control_state_t * ctl)
   return PAPI_OK;
 }
 
+int _papi_pcl_stop (hwd_context_t * ctx, hwd_control_state_t * ctl);
+
 /* reset the hardware counters */
 int _papi_hwd_reset (hwd_context_t * ctx, hwd_control_state_t * ctl)
 {
-  int ret;
+  int i, ret;
+
+  #undef SYNCHRONIZED_RESET
+  #ifdef SYNCHRONIZED_RESET
   int saved_state;
 
   /*
-   * The only way to actually reset the event counters using PCL is to
-   * close and re-open all of the events.
-   *
-   *  Another way would be maintain virtual counter values, and not mess
-   *  with the actual counters.  I will leave this for a future
-   *  optimization.
+   * Stop the counters so that when they start up again, they will be a
+   * little better synchronized.  I'm not sure this is really necessary,
+   * though, so I'm turning this code off by default for performance reasons.
    */
   saved_state = ctx->state;
+  _papi_pcl_stop (ctx, ctl);
+#endif
 
-  ret = close_pcl_evts(ctx);
-  if (ret)
-    return ret;
+  /* We need to reset all of the events, not just the group leaders */
+  for (i = 0; i < ctx->num_pcl_evts; i++)
+    {
+      ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_RESET, NULL);
+      if (ret == -1)
+        {
+          PAPIERROR ("ioctl(%d, PERF_COUNTER_IOC_RESET, NULL) returned error, Linux says: %s", ctx->pcl_evt[i].event_fd, strerror(errno));
+          return PAPI_EBUG;
+        }
+    }
 
-  ret = open_pcl_evts(ctx, ctl);
-  if (ret)
-    return ret;
-
+#ifdef SYNCHRONIZED_RESET
   if (saved_state & PCL_RUNNING) {
     return pcl_enable_counters (ctx, ctl);
   }
+#endif
 
   return PAPI_OK;
 }
@@ -2459,7 +2468,7 @@ int _papi_hwd_read (hwd_context_t * ctx, hwd_control_state_t * ctl, long long **
         /* disable only the group leaders */
         if (ctx->pcl_evt[i].group_leader == i)
           {
-            ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_DISABLE);
+            ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_DISABLE, NULL);
             if (ret == -1)
               {
                 /* Never should happen */
@@ -2524,7 +2533,7 @@ int _papi_hwd_read (hwd_context_t * ctx, hwd_control_state_t * ctl, long long **
       for (i = 0; i < ctx->num_pcl_evts; i++)
         if (ctx->pcl_evt[i].group_leader == i)
           {
-            ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_ENABLE);
+            ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_ENABLE, NULL);
             if (ret == -1)
               {
                 /* Never should happen */
@@ -2563,10 +2572,10 @@ int _papi_hwd_stop (hwd_context_t * ctx, hwd_control_state_t * ctl)
   for (i = 0; i < ctx->num_pcl_evts; i++)
     if (ctx->pcl_evt[i].group_leader == i)
       {
-        ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_DISABLE);
+        ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_DISABLE, NULL);
         if (ret == -1)
           {
-            PAPIERROR ("ioctl(%d, PERF_COUNTER_IOC_DISABLE) returned error, Linux says: %s", ctx->pcl_evt[i].event_fd, strerror(errno));
+            PAPIERROR ("ioctl(%d, PERF_COUNTER_IOC_DISABLE, NULL) returned error, Linux says: %s", ctx->pcl_evt[i].event_fd, strerror(errno));
             return PAPI_EBUG;
           }
       }
