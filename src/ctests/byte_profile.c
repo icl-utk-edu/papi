@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 
 /* profile the cleara and my_main address space */
    start = (caddr_t)cleara;
-   end = (caddr_t)dummy;
+   end = (caddr_t)my_dummy;
 
 /* Itanium and PowerPC64 processors return function descriptors instead
  * of function addresses. You must dereference the descriptor to get the address.
