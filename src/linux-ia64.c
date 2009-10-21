@@ -2321,9 +2321,19 @@ int _ia64_update_control_state(hwd_control_state_t * this_state,
 int _ia64_update_shlib_info(void)
 {
    char fname[PAPI_HUGE_STR_LEN];
+   char buf[PAPI_HUGE_STR_LEN+PAPI_HUGE_STR_LEN], perm[5], dev[6];
+   char mapname[PATH_MAX], lastmapname[PAPI_HUGE_STR_LEN];
+   unsigned long begin, end, size, inode, foo;
    unsigned long t_index = 0, d_index = 0, b_index = 0, counting = 1;
    PAPI_address_map_t *tmp = NULL;
    FILE *f;
+
+   memset(fname,0x0,sizeof(fname));
+   memset(buf,0x0,sizeof(buf));
+   memset(perm,0x0,sizeof(perm));
+   memset(dev,0x0,sizeof(dev));
+   memset(mapname,0x0,sizeof(mapname));
+   memset(lastmapname,0x0,sizeof(lastmapname));
 
    sprintf(fname, "/proc/%ld/maps", (long) _papi_hwi_system_info.pid);
    f = fopen(fname, "r");
@@ -2336,15 +2346,15 @@ int _ia64_update_shlib_info(void)
 
  again:
    while (!feof(f)) {
-      char buf[PAPI_HUGE_STR_LEN+PAPI_HUGE_STR_LEN], perm[5], dev[6], mapname[PATH_MAX], lastmapname[PAPI_HUGE_STR_LEN];
-      unsigned long begin, end, size, inode, foo;
-
+      begin = end = size = inode = foo = 0;
       if (fgets(buf, sizeof(buf), f) == 0)
          break;
+      /* If mapname is null in the string to be scanned, we need to detect that */
       if (strlen(mapname))
         strcpy(lastmapname,mapname);
       else
         lastmapname[0] = '\0';
+      /* If mapname is null in the string to be scanned, we need to detect that */
       mapname[0] = '\0';
       sscanf(buf, "%lx-%lx %4s %lx %5s %ld %s", &begin, &end, perm,
              &foo, dev, &inode, mapname);

@@ -499,12 +499,20 @@ int _linux_get_system_info(void)
 int _linux_update_shlib_info(void)
 {
    char fname[PAPI_HUGE_STR_LEN];
-   PAPI_address_map_t *tmp, *tmp2;
-   FILE *f;
    char find_data_mapname[PAPI_HUGE_STR_LEN] = "";
    int upper_bound = 0, i, index = 0, find_data_index = 0, count = 0;
-   char buf[PAPI_HUGE_STR_LEN + PAPI_HUGE_STR_LEN], perm[5], dev[6], mapname[PAPI_HUGE_STR_LEN];
+   char buf[PAPI_HUGE_STR_LEN + PAPI_HUGE_STR_LEN], perm[5], dev[6];
+   char mapname[PAPI_HUGE_STR_LEN];
    unsigned long begin, end, size, inode, foo;
+   PAPI_address_map_t *tmp, *tmp2;
+   FILE *f;
+
+   memset(fname,0x0,sizeof(fname));
+   memset(buf,0x0,sizeof(buf));
+   memset(perm,0x0,sizeof(perm));
+   memset(dev,0x0,sizeof(dev));
+   memset(mapname,0x0,sizeof(mapname));
+   memset(find_data_mapname,0x0,sizeof(find_data_mapname));
 
    sprintf(fname, "/proc/%ld/maps", (long)_papi_hwi_system_info.pid);
    f = fopen(fname, "r");
