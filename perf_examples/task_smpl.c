@@ -296,7 +296,7 @@ mainloop(char **arg)
 	static uint64_t ovfl_count; /* static to avoid setjmp issue */
 	struct pollfd pollfds[1];
 	uint64_t *val;
-	size_t sz;
+	size_t sz, pgsz;
 	size_t map_size = 0;
 	pid_t pid;
 	int status, ret;
@@ -305,7 +305,8 @@ mainloop(char **arg)
 	if (pfm_initialize() != PFM_SUCCESS)
 		errx(1, "libpfm initialization failed\n");
 
-	map_size = (options.mmap_pages+1)*getpagesize();
+	pgsz = getpagesize();
+	map_size = (options.mmap_pages+1)*pgsz;
 
 	/*
 	 * does allocate fds
@@ -339,6 +340,13 @@ mainloop(char **arg)
 	for(i=0; i < num_events; i++) {
 
 		fds[i].hw.disabled = 0; /* start immediately */
+
+		/*
+		 * set notification threshold to be halfway through the buffer
+		 * (header page removed)
+		 */
+		fds[i].hw.wakeup_watermark = (options.mmap_pages*pgsz) / 2; 
+		fds[i].hw.watermark = 1;
 
 		if (options.opt_inherit)
 			fds[i].hw.inherit = 1;
@@ -396,6 +404,9 @@ mainloop(char **arg)
 		fds[i].id = val[2*i+1+3];
 		printf("%"PRIu64"  %s\n", fds[i].id, fds[i].name);
 	}
+
+	pollfds[0].fd = fds[0].fd;
+	pollfds[0].events = POLLIN;
 	
 	/*
 	 * effectively activate monitoring
@@ -403,9 +414,6 @@ mainloop(char **arg)
 	ptrace(PTRACE_DETACH, pid, NULL, 0);
 
 	signal(SIGCHLD, cld_handler);
-
-	pollfds[0].fd = fds[0].fd;
-	pollfds[0].events = POLLIN;
 
 	if (setjmp(jbuf) == 1)
 		goto terminate_session;
