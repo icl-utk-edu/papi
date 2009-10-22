@@ -146,7 +146,7 @@ int main(int argc, char **argv)
 
 					/* if unit masks exist but none are specified, process all */
 					if (!strchr(name, ':')) {
-						PAPI_component_info_t *c = PAPI_get_component_info(PAPI_COMPONENT_INDEX(i));
+					  PAPI_component_info_t *c = (PAPI_component_info_t*)PAPI_get_component_info(PAPI_COMPONENT_INDEX(i));
 						if (c->cntr_umasks) {
 							if (PAPI_enum_event(&i, PAPI_NTV_ENUM_UMASKS) == PAPI_OK) {
 								printf ("\nUnit Masks:\n");
