@@ -687,7 +687,7 @@ SETPATH
 tests
 pfm_events_table
 pfm_events
-PCLPATH
+PEPATH
 OS
 compobjs
 comphdrs
@@ -794,8 +794,8 @@ with_pfm_root
 with_pfm_prefix
 with_pfm_incdir
 with_pfm_libdir
-with_pcl
-with_pcl_incdir
+with_perf_events
+with_pe_incdir
 with_pmapi
 with_pfm_events
 with_with_semaphores
@@ -1473,8 +1473,8 @@ Optional Packages:
   --with-pfm-prefix=<path>	Specify prefix to installed pfm distribution
   --with-pfm-incdir=<path>	Specify directory of perfmon header files
   --with-pfm-libdir=<path>	Specify directory of pfm library
-  --with-pcl=<yes,no>		Specify existence of Performance Counters for Linux
-  --with-pcl-incdir=<path>	Specify directory of perf_counter header file
+  --with-perf-events=<yes,no>  Specify use of Linux Performance Event Subsystem
+  --with-pe-incdir=<path>  Specify directory of perf_counter header file
   --with-pmapi=<path>		Specify path of pmapi on aix system
   --with-pfm-events=<static,file>	Specify source of events for pfmlib-based systems
   --with-semaphores Use semaphores instead of atomic locks (IA64)
@@ -6780,16 +6780,15 @@ else
 fi
 
 
-# set PCL only when manually set with --with-pcl,
+# set perf events only when manually set with --with-perf-events,
 # or by default if perfctr is not available
-
 if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
 
-# Check whether --with-pcl was given.
-if test "${with_pcl+set}" = set; then
-  withval=$with_pcl; pcl=$withval
+# Check whether --with-perf_events was given.
+if test "${with_perf_events+set}" = set; then
+  withval=$with_perf_events; perf_events=$withval
 else
-  pcl="no"
+  perf_events="no"
 			if test "$perfctr" = "no"; then
             as_ac_File=`$as_echo "ac_cv_file_/lib/modules/$OSVER/source/include/linux/perf_counter.h" | $as_tr_sh`
 { $as_echo "$as_me:$LINENO: checking for /lib/modules/$OSVER/source/include/linux/perf_counter.h" >&5
@@ -6814,7 +6813,7 @@ $as_echo "$ac_res" >&6; }
 as_val=`eval 'as_val=${'$as_ac_File'}
 		 $as_echo "$as_val"'`
    if test "x$as_val" = x""yes; then
-   pcl="yes"
+   perf_events="yes"
 fi
 
 			fi
@@ -6822,21 +6821,20 @@ fi
 fi
 
 else
-   pcl="no"
+   perf_events="no"
 fi
 
-# If we are running a perf_events (PCL) kernel, the include file will be
+# If we are running a perf_events kernel, the include file will be
 # found in /lib/modules/`uname -r`/source/include/linux.  However, allow the
 # user to override that location if they wish.
-
 # looking for perf_counter header file
-if test "$pcl" = "yes"; then
+if test "$perf_events" = "yes"; then
 
-# Check whether --with-pcl_incdir was given.
-if test "${with_pcl_incdir+set}" = set; then
-  withval=$with_pcl_incdir; pcl_incdir=$withval
+# Check whether --with-pe_incdir was given.
+if test "${with_pe_incdir+set}" = set; then
+  withval=$with_pe_incdir; pe_incdir=$withval
 else
-  pcl_incdir="no"
+  pe_incdir="no"
 			as_ac_File=`$as_echo "ac_cv_file_/lib/modules/$OSVER/source/include/linux/perf_counter.h" | $as_tr_sh`
 { $as_echo "$as_me:$LINENO: checking for /lib/modules/$OSVER/source/include/linux/perf_counter.h" >&5
 $as_echo_n "checking for /lib/modules/$OSVER/source/include/linux/perf_counter.h... " >&6; }
@@ -6860,10 +6858,10 @@ $as_echo "$ac_res" >&6; }
 as_val=`eval 'as_val=${'$as_ac_File'}
 		 $as_echo "$as_val"'`
    if test "x$as_val" = x""yes; then
-  pcl_incdir="/lib/modules/$OSVER/source/include/linux"
+  pe_incdir="/lib/modules/$OSVER/source/include/linux"
 else
-  { { $as_echo "$as_me:$LINENO: error: perf_counter.h could not be found. See --with-pcl-incdir" >&5
-$as_echo "$as_me: error: perf_counter.h could not be found. See --with-pcl-incdir" >&2;}
+  { { $as_echo "$as_me:$LINENO: error: perf_counter.h could not be found. See --with-pe-incdir" >&5
+$as_echo "$as_me: error: perf_counter.h could not be found. See --with-pe-incdir" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -6872,8 +6870,8 @@ fi
 
 fi
 
-if test "$pcl_incdir" != "no"; then
-			PCLPATH="$pcl_incdir"
+if test "$pe_incdir" != "no"; then
+			PEPATH="$pe_incdir"
 fi
 # workaround end
 
@@ -7429,7 +7427,7 @@ $as_echo "$as_me: error: Perfctr 2.7.x only works on PPC64 machines. Please repa
    { (exit 1); exit 1; }; }
 fi
 
-if test $perfmon != 0 -o $pcl = "yes"; then
+if test $perfmon != 0 -o $perf_events = "yes"; then
       dotest=0
    if test "$pfm_root" != ""; then
       LIBS="-L$pfm_root/lib -lpfm"
@@ -8656,8 +8654,8 @@ $as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
        MAKEVER="$OS"-"$CPU""$BM"
        ;;
    linux)
-       if test $pcl = "yes" ; then
-         MAKEVER="$OS"-pcl
+       if test $perf_events = "yes" ; then
+         MAKEVER="$OS"-pe
        else
 	if test $perfmon -gt 20 ; then
 		    MAKEVER="$OS"-perfmon2
@@ -8788,7 +8786,7 @@ case "$MAKEVER" in
     linux-perfctr-POWER4|linux-perfctr-POWER5|linux-perfctr-POWER5+|linux-perfctr-POWER6|linux-perfctr-PPC970|linux-perfctr-PPC32);;
     linux-perfctr-POWER4-64bit|linux-perfctr-POWER5-64bit|linux-perfctr-POWER5+-64bit|linux-perfctr-POWER6-64bit|linux-perfctr-PPC970-64bit);;
     linux-perfmon2);;
-    linux-pcl);;
+    linux-pe);;
     freebsd);;
     *)
     echo Platform $MAKEVER is not supported
@@ -9300,7 +9298,7 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
       CPPFLAGS="-qlanglvl=extended"
    fi
 elif test "$MAKEVER" = "CLE-perfmon2"; then
-   FILENAME=Rules.pfm_pcl
+   FILENAME=Rules.pfm_pe
    PE="$(shell echo $${CRAY_PE_TARGET})"
    if test "$PE" = "cray-x2"; then
       COMPILER=CRAYX2
@@ -9382,9 +9380,9 @@ elif test "$MAKEVER" = "linux-mx"; then
    CC_SHR='$(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
    CFLAGS="-Wall -g -DDEBUG"
    FFLAGS="-Wall -g"
-elif test "$MAKEVER" = "linux-pcl"; then
-   FILENAME=Rules.pfm_pcl
-   SUBSTR=pcl
+elif test "$MAKEVER" = "linux-pe"; then
+   FILENAME=Rules.pfm_pe
+   SUBSTR=perf_events
 elif test "$MAKEVER" = "linux-perfctr-athlon"; then
    FILENAME=Rules.perfctr
    if test "x$VERSION" = "x"; then
@@ -9464,7 +9462,7 @@ elif (test "$MAKEVER" = "linux-perfctr-PPC970" || test "$MAKEVER" = "linux-perfc
    CFLAGS='-D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
    FFLAGS='-D_$(CPU_MODEL)'
 elif test "$MAKEVER" = "linux-perfmon2"; then
-   FILENAME=Rules.pfm_pcl
+   FILENAME=Rules.pfm_pe
    SUBSTR=perfmon
 elif (test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-itanium3"); then
    FILENAME=Rules.pfm

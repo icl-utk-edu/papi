@@ -38,7 +38,7 @@
  does not include perf_counter.h. Since this dir is populated by the
  kernel-headers package, we'll have to wait for an update. 
  For know, we use the workaround: */
-#include PCLINCLUDE
+#include PEINCLUDE
 #include "syscalls.h"
 
 /* Take a guess at this value for now - FIXME */

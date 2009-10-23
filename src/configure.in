@@ -997,39 +997,37 @@ AC_ARG_WITH(pfm_libdir,
            [pfm_libdir=""]
             )
 
-# set PCL only when manually set with --with-pcl, 
+# set perf events only when manually set with --with-perf-events, 
 # or by default if perfctr is not available
-
 if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
-AC_ARG_WITH(pcl,
-            [  --with-pcl=<yes,no>		Specify existence of Performance Counters for Linux],
-            [pcl=$withval],
-            [pcl="no"
+AC_ARG_WITH(perf_events,
+            [  --with-perf-events=<yes,no>  Specify use of Linux Performance Event Subsystem],
+            [perf_events=$withval],
+            [perf_events="no"
 			if test "$perfctr" = "no"; then
-            AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/perf_counter.h, [ pcl="yes" ])
+            AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/perf_counter.h, [ perf_events="yes" ])
 			fi ]
             )
 else
-   pcl="no"
+   perf_events="no"
 fi
 
-# If we are running a perf_events (PCL) kernel, the include file will be
+# If we are running a perf_events kernel, the include file will be
 # found in /lib/modules/`uname -r`/source/include/linux.  However, allow the
 # user to override that location if they wish.
-
 # looking for perf_counter header file
-if test "$pcl" = "yes"; then
-AC_ARG_WITH(pcl_incdir,
-			[  --with-pcl-incdir=<path>	Specify directory of perf_counter header file],
-			[pcl_incdir=$withval],
-			[pcl_incdir="no"
-			AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/perf_counter.h, [pcl_incdir="/lib/modules/$OSVER/source/include/linux"], 
-			[AC_MSG_ERROR([perf_counter.h could not be found. See --with-pcl-incdir])]) ]
+if test "$perf_events" = "yes"; then
+AC_ARG_WITH(pe_incdir,
+			[  --with-pe-incdir=<path>  Specify directory of perf_counter header file],
+			[pe_incdir=$withval],
+			[pe_incdir="no"
+			AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/perf_counter.h, [pe_incdir="/lib/modules/$OSVER/source/include/linux"], 
+			[AC_MSG_ERROR([perf_counter.h could not be found. See --with-pe-incdir])]) ]
 			)
 fi
 	  
-if test "$pcl_incdir" != "no"; then
-			PCLPATH="$pcl_incdir"
+if test "$pe_incdir" != "no"; then
+			PEPATH="$pe_incdir"
 fi
 # workaround end
 
@@ -1187,7 +1185,7 @@ if test "$perfctr" = 7 -a "$arch" != "ppc64"; then
    AC_MSG_ERROR([Perfctr 2.7.x only works on PPC64 machines. Please repatch your kernel with 2.6.x.])
 fi
 
-if test $perfmon != 0 -o $pcl = "yes"; then
+if test $perfmon != 0 -o $perf_events = "yes"; then
       dotest=0
    if test "$pfm_root" != ""; then
       LIBS="-L$pfm_root/lib -lpfm"
@@ -1368,8 +1366,8 @@ case "$OS" in
        MAKEVER="$OS"-"$CPU""$BM"
        ;;
    linux)
-       if test $pcl = "yes" ; then
-         MAKEVER="$OS"-pcl
+       if test $perf_events = "yes" ; then
+         MAKEVER="$OS"-pe
        else
 	if test $perfmon -gt 20 ; then
 		    MAKEVER="$OS"-perfmon2
@@ -1487,7 +1485,7 @@ case "$MAKEVER" in
     linux-perfctr-POWER4|linux-perfctr-POWER5|linux-perfctr-POWER5+|linux-perfctr-POWER6|linux-perfctr-PPC970|linux-perfctr-PPC32);;
     linux-perfctr-POWER4-64bit|linux-perfctr-POWER5-64bit|linux-perfctr-POWER5+-64bit|linux-perfctr-POWER6-64bit|linux-perfctr-PPC970-64bit);;
     linux-perfmon2);;
-    linux-pcl);;
+    linux-pe);;
     freebsd);;
     *)
     echo Platform $MAKEVER is not supported
@@ -1734,7 +1732,7 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
       CPPFLAGS="-qlanglvl=extended"
    fi
 elif test "$MAKEVER" = "CLE-perfmon2"; then   
-   FILENAME=Rules.pfm_pcl
+   FILENAME=Rules.pfm_pe
    PE="$(shell echo $${CRAY_PE_TARGET})"
    if test "$PE" = "cray-x2"; then
       COMPILER=CRAYX2
@@ -1816,9 +1814,9 @@ elif test "$MAKEVER" = "linux-mx"; then
    CC_SHR='$(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
    CFLAGS="-Wall -g -DDEBUG" 
    FFLAGS="-Wall -g"
-elif test "$MAKEVER" = "linux-pcl"; then
-   FILENAME=Rules.pfm_pcl
-   SUBSTR=pcl 
+elif test "$MAKEVER" = "linux-pe"; then
+   FILENAME=Rules.pfm_pe
+   SUBSTR=perf_events
 elif test "$MAKEVER" = "linux-perfctr-athlon"; then
    FILENAME=Rules.perfctr
    if test "x$VERSION" = "x"; then
@@ -1898,7 +1896,7 @@ elif (test "$MAKEVER" = "linux-perfctr-PPC970" || test "$MAKEVER" = "linux-perfc
    CFLAGS='-D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
    FFLAGS='-D_$(CPU_MODEL)'
 elif test "$MAKEVER" = "linux-perfmon2"; then
-   FILENAME=Rules.pfm_pcl
+   FILENAME=Rules.pfm_pe
    SUBSTR=perfmon
 elif (test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-itanium3"); then
    FILENAME=Rules.pfm
@@ -2015,7 +2013,7 @@ AC_SUBST(OS)
 AC_SUBST(CFLAGS)
 AC_SUBST(FFLAGS)
 AC_SUBST(CPPFLAGS)
-AC_SUBST(PCLPATH)
+AC_SUBST(PEPATH)
 AC_SUBST(pfm_events)
 AC_SUBST(pfm_events_table)
 AC_SUBST(tests)
