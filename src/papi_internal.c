@@ -831,21 +831,30 @@ int remove_native_events(EventSetInfo_t * ESI, int *nevt, int size)
 
       if (native[i].ni_owners == 0) {
          int copy = 0;
+         int sz = _papi_hwd[ESI->CmpIdx]->size.reg_value;
          for (j = ESI->NativeCount - 1; j > i; j--) {
             if (native[j].ni_event == 0 || native[j].ni_owners == 0)
                continue;
             else {
-               memcpy(native + i, native + j, sizeof(NativeInfo_t));
-               memset(native + j, 0, sizeof(NativeInfo_t));
+               /* copy j into i */
+               native[i].ni_event = native[j].ni_event;
+               native[i].ni_position = native[j].ni_position;
+               native[i].ni_owners = native[j].ni_owners;
+               /* copy opaque [j].ni_bits to [i].ni_bits */
+               memcpy(native[i].ni_bits, native[j].ni_bits, sz);
+               /* reset j to initialized state */
+               native[j].ni_event = -1;
                native[j].ni_position = -1;
+               native[j].ni_owners = 0;
                copy++;
                break;
             }
          }
+
          if (copy == 0) {
-            hwd_register_t *bits = native[i].ni_bits; /* save pointer to bits */
-            memset(native + i, 0, sizeof(NativeInfo_t));
-            native[i].ni_bits = bits; /* restore pointer to bits */
+            /* set this structure back to empty state */
+            /* ni_owners is already 0 and contents of ni_bits doesn't matter */
+            native[i].ni_event = -1;
             native[i].ni_position = -1;
          }
       }
@@ -1121,7 +1130,7 @@ int _papi_hwi_init_global_internal(void)
    _papi_hwi_system_info.hw_info.model_string[0] = '\0';        /* model_string */
    _papi_hwi_system_info.hw_info.revision = 0.0;        /* revision */
    _papi_hwi_system_info.hw_info.mhz = 0.0;     /* mhz */
- 
+
    return (PAPI_OK);
 }
 
