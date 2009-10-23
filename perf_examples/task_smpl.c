@@ -343,7 +343,6 @@ mainloop(char **arg)
 
 		/*
 		 * set notification threshold to be halfway through the buffer
-		 * (header page removed)
 		 */
 		fds[i].hw.wakeup_watermark = (options.mmap_pages*pgsz) / 2; 
 		fds[i].hw.watermark = 1;
@@ -369,13 +368,15 @@ mainloop(char **arg)
 			err(1, "cannot attach event %s", fds[i].name);
 	}
 
-
+	/*
+	 * kernel adds the header page to the size of the mmapped region
+	 */
 	fds[0].buf = mmap(NULL, map_size, PROT_READ|PROT_WRITE, MAP_SHARED, fds[0].fd, 0);
 	if (fds[0].buf == MAP_FAILED)
 		err(1, "cannot mmap buffer");
 
 	/* does not include header page */
-	fds[0].pgmsk = (options.mmap_pages*getpagesize())-1;
+	fds[0].pgmsk = (options.mmap_pages*pgsz)-1;
 
 	/*
 	 * we are using PERF_FORMAT_GROUP, therefore the structure
@@ -502,5 +503,8 @@ main(int argc, char **argv)
 	if (!options.mmap_pages)
 		options.mmap_pages = 1;
 	
+	if (options.mmap_pages > 1 && ((options.mmap_pages) & 0x1))
+		errx(1, "number of pages must be power of 2\n");
+
 	return mainloop(argv+optind);
 }

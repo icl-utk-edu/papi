@@ -42,7 +42,7 @@ static volatile unsigned long notification_received;
 static perf_event_desc_t *fds;
 static int num_events;
 
-static int buffer_pages = 1; /* size of buffer payload */
+static int buffer_pages = 1; /* size of buffer payload (must be power of 2)*/
 
 static void
 print_sample(int id)
@@ -163,12 +163,14 @@ main(int argc, char **argv)
 {
 	struct sigaction act;
 	uint64_t *val;
-	size_t sz;
+	size_t sz, pgsz;
 	int ret, i;
 
 	ret = pfm_initialize();
 	if (ret != PFM_SUCCESS)
 		errx(1, "Cannot initialize library: %s", pfm_strerror(ret));
+
+	pgsz = getpagesize();
 
 	/*
 	 * Install the signal handler (SIGIO)
@@ -245,11 +247,11 @@ main(int argc, char **argv)
 		printf("%"PRIu64"  %s\n", fds[i].id, fds[i].name);
 	}
 	 
-	fds[0].buf = mmap(NULL, (buffer_pages+1)*getpagesize(), PROT_READ|PROT_WRITE, MAP_SHARED, fds[0].fd, 0);
+	fds[0].buf = mmap(NULL, (buffer_pages+1)*pgsz, PROT_READ|PROT_WRITE, MAP_SHARED, fds[0].fd, 0);
 	if (fds[0].buf == MAP_FAILED)
 		err(1, "cannot mmap buffer");
 	
- 	fds[0].pgmsk = (buffer_pages * getpagesize()) - 1;
+	fds[0].pgmsk = (buffer_pages * pgsz) - 1;
 
 	/*
 	 * setup asynchronous notification on the file descriptor

@@ -274,12 +274,14 @@ overflow_start(char *name)
 {
 	struct f_owner_ex fown_ex;
 	struct over_args *ov;
+	size_t pgsz;
 	int ret, fd, flags;
 
 	num_events = perf_setup_list_events("PERF_COUNT_HW_CPU_CYCLES", &fds);
 	if (num_events != 1)
 		errx(1, "cannot monitor event");
 
+	pgsz = getpagesize();
 	ov = &fd2ov[myid];
 
 	/* do not enable now */
@@ -315,11 +317,11 @@ overflow_start(char *name)
 	if (fcntl(fd, F_SETSIG, signum) < 0)
 		err(1, "fcntl SETSIG failed");
 
-	fds[0].buf = mmap(NULL, (buffer_pages+1)*getpagesize(), PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+	fds[0].buf = mmap(NULL, (buffer_pages + 1)* pgsz, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
 	if (fds[0].buf == MAP_FAILED)
 		err(1, "cannot mmap buffer");
 	
- 	fds[0].pgmsk = (buffer_pages * getpagesize()) - 1;
+	fds[0].pgmsk = (buffer_pages * pgsz) - 1;
 
 	printf("launch %s: fd: %d, tid: %d\n", name, fd, ov->tid);
 

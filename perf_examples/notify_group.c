@@ -46,7 +46,7 @@ static volatile unsigned long notification_received;
 static perf_event_desc_t *fds;
 static int num_events;
 
-static int buffer_pages = 1; /* size of buffer payload */
+static int buffer_pages = 1; /* size of buffer payload  (must be power of 2) */
 
 static void
 sigio_handler(int n, struct siginfo *info, struct sigcontext *sc)
@@ -109,11 +109,14 @@ int
 main(int argc, char **argv)
 {
 	struct sigaction act;
+	size_t pgsz;
 	int ret, i;
 
 	ret = pfm_initialize();
 	if (ret != PFM_SUCCESS)
 		errx(1, "Cannot initialize library: %s", pfm_strerror(ret));
+
+	pgsz = getpagesize();
 
 	/*
 	 * Install the signal handler (SIGIO)
@@ -149,7 +152,7 @@ main(int argc, char **argv)
 			goto error;
 		}
 
-		fds[i].buf = mmap(NULL, (buffer_pages+1)*getpagesize(), PROT_READ|PROT_WRITE, MAP_SHARED, fds[i].fd, 0);
+		fds[i].buf = mmap(NULL, (buffer_pages + 1)*pgsz, PROT_READ|PROT_WRITE, MAP_SHARED, fds[i].fd, 0);
 		if (fds[i].buf == MAP_FAILED)
 			err(1, "cannot mmap buffer");
 		/*
@@ -175,7 +178,7 @@ main(int argc, char **argv)
 		if (ret == -1)
 			err(1, "cannot setown");
 
- 		fds[i].pgmsk = (buffer_pages * getpagesize()) - 1;
+		fds[i].pgmsk = (buffer_pages * pgsz) - 1;
 	}
 
 	for(i=0; i < num_events; i++) {
