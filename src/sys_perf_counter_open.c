@@ -9,6 +9,7 @@
 #include PEINCLUDE
 
 // Temporarily need this definition from arch/powerpc/include/asm/unistd.h in the PCL kernel
+#undef __NR_perf_counter_open
 #ifdef __powerpc__
 #define __NR_perf_counter_open	319
 #elif defined(__x86_64__)
