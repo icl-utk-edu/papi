@@ -143,6 +143,7 @@ static const intel_x86_entry_t intel_atom_pe[]={
 	},
 	{.name = "MISPREDICTED_BRANCH_RETIRED",
 	.code  = 0xc5,
+	.flags = INTEL_X86_PEBS,
 	.cntmsk = 0x3,
 	  .modmsk  = INTEL_V3_ATTRS,
 	  .desc  = "Mispredicted branch instruction retired"
