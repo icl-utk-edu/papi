@@ -7,7 +7,9 @@
 *          london@cs.utk.edu
 * Mods:    Min Zhou
 *          min@cs.utk.edu
-* Mods:    Larry Meadows(helped us to build the native table dynamically)  
+* Mods:    Larry Meadows(helped us to build the native table dynamically) 
+* Mods:    Brian Sheely
+*          bsheely@eecs.utk.edu 
 *              
 */
 
@@ -123,10 +125,9 @@ static void dispatch_emt(int signal, siginfo_t * sip, void *arg)
 {
    int event_counter;
    _papi_hwi_context_t ctx;
-
+   caddr_t address;
    ctx.si = sip;
    ctx.ucontext = arg;
-
    SUBDBG("%d, %p, %p\n",signal,sip,arg);
 
    if (sip->si_code == EMT_CPCOVF) {
@@ -137,6 +138,7 @@ static void dispatch_emt(int signal, siginfo_t * sip, void *arg)
 
       thread = _papi_hwi_lookup_thread();
       ESI = (EventSetInfo_t *) thread->running_eventset;
+      int cidx = ESI->CmpIdx;
 
       if ((ESI == NULL) || ((ESI->state & PAPI_OVERFLOWING) == 0))
 	{
@@ -151,7 +153,7 @@ static void dispatch_emt(int signal, siginfo_t * sip, void *arg)
 	}
 
       event_counter = ESI->overflow.event_counter;
-      sample = &(ESI->machdep.counter_cmd);
+      sample = &(ESI->ctl_state->counter_cmd);
 
       /* GROSS! This is a hack to 'push' the correct values 
          back into the hardware, such that when PAPI handles
@@ -211,7 +213,13 @@ static void dispatch_emt(int signal, siginfo_t * sip, void *arg)
       }
 
       /* Call the regular overflow function in extras.c */
-      _papi_hwi_dispatch_overflow_signal(&ctx, NULL, overflow_vector, 0, &thread);
+      if (thread->running_eventset[cidx]->overflow.flags & PAPI_OVERFLOW_FORCE_SW) {
+	//address = GET_OVERFLOW_ADDRESS(ctx);
+         _papi_hwi_dispatch_overflow_signal((void*)&ctx, address, NULL, overflow_vector, 0, &thread, cidx);
+      }
+      else {
+	PAPIERROR("Additional implementation needed in dispatch_emt!");
+      }
 
 #if DEBUG
       dump_cmd(sample);
@@ -877,16 +885,40 @@ int _papi_hwd_shutdown_global(void)
 void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
 {
    _papi_hwi_context_t ctx;
-   ThreadInfo_t *t = NULL;
-
+   ThreadInfo_t *t = _papi_hwi_lookup_thread();
+   caddr_t address;
    ctx.si = si;
-   ctx.ucontext = info;
-   _papi_hwi_dispatch_overflow_signal((void *) &ctx, NULL, 0, 0, &t);
+   ctx.ucontext = (hwd_ucontext_t *)info;
+   int cidx;//HACK this needs to be set
+   int fd = si->si_fd;
+
+   if (t == NULL) {
+      PAPIERROR("t == NULL in _papi_hwd_dispatch_timer for fd %d!", fd);
+      return;
+    }
+
+   if (t->running_eventset[cidx] == NULL) {
+      PAPIERROR("t->running_eventset == NULL in _papi_hwd_dispatch_timer for fd %d!", fd);
+      return;
+    }
+
+   if (t->running_eventset[cidx]->overflow.flags == 0) {
+      PAPIERROR("t->running_eventset->overflow.flags == 0 in _papi_hwd_dispatch_timer for fd %d!", fd);
+      return;
+    }
+
+   if (t->running_eventset[cidx]->overflow.flags & PAPI_OVERFLOW_FORCE_SW) {
+      address = GET_OVERFLOW_ADDRESS(ctx);
+      _papi_hwi_dispatch_overflow_signal((void *)&ctx, address, NULL, 0, 0, &t, cidx);
+   }
+   else {
+     PAPIERROR("Need to implement additional code in _papi_hwd_dispatch_timer!");
+   }
 }
 
 int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 {
-   hwd_control_state_t *this_state = &ESI->machdep;
+   hwd_control_state_t *this_state = ESI->ctl_state;
    papi_cpc_event_t *arg = &this_state->counter_cmd;
    int hwcntr;
 

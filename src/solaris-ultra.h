@@ -73,7 +73,7 @@ typedef struct _native_info {
 typedef siginfo_t hwd_siginfo_t;
 typedef ucontext_t hwd_ucontext_t;
 
-#define GET_OVERFLOW_ADDRESS(ctx)  (void*)(ctx->ucontext->uc_mcontext.gregs[REG_PC])
+#define GET_OVERFLOW_ADDRESS(ctx)  (void*)(ctx.ucontext->uc_mcontext.gregs[REG_PC])
 
 typedef int hwd_context_t;
 
