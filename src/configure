@@ -1987,6 +1987,7 @@ get_bitmode()
 # checking for Makefile argument, if not specified, check CPU, OS, OSVER and bitmode
 #
 
+perf_header=""
 FILENAME=NO_INCLUDE_FILE
 use_shared=yes
 use_static=yes
@@ -6782,7 +6783,14 @@ fi
 
 # set perf events only when manually set with --with-perf-events,
 # or by default if perfctr is not available
+# Version 2.6.31 of the kernel uses perf_counter.h
+# 2.6.32 and all subsequent versions should use perf_event.h
 if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
+if test "`uname -r | grep "2.6.31"`" != ""; then
+   perf_header="/lib/modules/$OSVER/source/include/linux/perf_counter.h"
+else
+   perf_header="/lib/modules/$OSVER/source/include/linux/perf_event.h"
+fi
 
 # Check whether --with-perf_events was given.
 if test "${with_perf_events+set}" = set; then
@@ -6790,9 +6798,9 @@ if test "${with_perf_events+set}" = set; then
 else
   perf_events="no"
 			if test "$perfctr" = "no"; then
-            as_ac_File=`$as_echo "ac_cv_file_/lib/modules/$OSVER/source/include/linux/perf_counter.h" | $as_tr_sh`
-{ $as_echo "$as_me:$LINENO: checking for /lib/modules/$OSVER/source/include/linux/perf_counter.h" >&5
-$as_echo_n "checking for /lib/modules/$OSVER/source/include/linux/perf_counter.h... " >&6; }
+            as_ac_File=`$as_echo "ac_cv_file_$perf_header" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for $perf_header" >&5
+$as_echo_n "checking for $perf_header... " >&6; }
 if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
   $as_echo_n "(cached) " >&6
 else
@@ -6800,7 +6808,7 @@ else
   { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
 $as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
    { (exit 1); exit 1; }; }
-if test -r "/lib/modules/$OSVER/source/include/linux/perf_counter.h"; then
+if test -r "$perf_header"; then
   eval "$as_ac_File=yes"
 else
   eval "$as_ac_File=no"
@@ -6835,9 +6843,9 @@ if test "${with_pe_incdir+set}" = set; then
   withval=$with_pe_incdir; pe_incdir=$withval
 else
   pe_incdir="no"
-			as_ac_File=`$as_echo "ac_cv_file_/lib/modules/$OSVER/source/include/linux/perf_counter.h" | $as_tr_sh`
-{ $as_echo "$as_me:$LINENO: checking for /lib/modules/$OSVER/source/include/linux/perf_counter.h" >&5
-$as_echo_n "checking for /lib/modules/$OSVER/source/include/linux/perf_counter.h... " >&6; }
+			as_ac_File=`$as_echo "ac_cv_file_$perf_header" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for $perf_header" >&5
+$as_echo_n "checking for $perf_header... " >&6; }
 if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
   $as_echo_n "(cached) " >&6
 else
@@ -6845,7 +6853,7 @@ else
   { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
 $as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
    { (exit 1); exit 1; }; }
-if test -r "/lib/modules/$OSVER/source/include/linux/perf_counter.h"; then
+if test -r "$perf_header"; then
   eval "$as_ac_File=yes"
 else
   eval "$as_ac_File=no"
@@ -6858,10 +6866,10 @@ $as_echo "$ac_res" >&6; }
 as_val=`eval 'as_val=${'$as_ac_File'}
 		 $as_echo "$as_val"'`
    if test "x$as_val" = x""yes; then
-  pe_incdir="/lib/modules/$OSVER/source/include/linux"
+  pe_incdir="$perf_header"
 else
-  { { $as_echo "$as_me:$LINENO: error: perf_counter.h could not be found. See --with-pe-incdir" >&5
-$as_echo "$as_me: error: perf_counter.h could not be found. See --with-pe-incdir" >&2;}
+  { { $as_echo "$as_me:$LINENO: error: $perf_header could not be found. See --with-pe-incdir" >&5
+$as_echo "$as_me: error: $perf_header could not be found. See --with-pe-incdir" >&2;}
    { (exit 1); exit 1; }; }
 fi
 

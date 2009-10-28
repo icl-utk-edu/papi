@@ -80,6 +80,7 @@ get_bitmode()
 # checking for Makefile argument, if not specified, check CPU, OS, OSVER and bitmode
 #
 
+perf_header=""
 FILENAME=NO_INCLUDE_FILE
 use_shared=yes
 use_static=yes
@@ -999,13 +1000,20 @@ AC_ARG_WITH(pfm_libdir,
 
 # set perf events only when manually set with --with-perf-events, 
 # or by default if perfctr is not available
+# Version 2.6.31 of the kernel uses perf_counter.h
+# 2.6.32 and all subsequent versions should use perf_event.h
 if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
+if test "`uname -r | grep "2.6.31"`" != ""; then
+   perf_header="/lib/modules/$OSVER/source/include/linux/perf_counter.h"
+else
+   perf_header="/lib/modules/$OSVER/source/include/linux/perf_event.h"
+fi
 AC_ARG_WITH(perf_events,
             [  --with-perf-events=<yes,no>  Specify use of Linux Performance Event Subsystem],
             [perf_events=$withval],
             [perf_events="no"
 			if test "$perfctr" = "no"; then
-            AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/perf_counter.h, [ perf_events="yes" ])
+            AC_CHECK_FILE($perf_header, [ perf_events="yes" ])
 			fi ]
             )
 else
@@ -1021,8 +1029,8 @@ AC_ARG_WITH(pe_incdir,
 			[  --with-pe-incdir=<path>  Specify directory of perf_counter header file],
 			[pe_incdir=$withval],
 			[pe_incdir="no"
-			AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/perf_counter.h, [pe_incdir="/lib/modules/$OSVER/source/include/linux"], 
-			[AC_MSG_ERROR([perf_counter.h could not be found. See --with-pe-incdir])]) ]
+			AC_CHECK_FILE($perf_header, [pe_incdir="$perf_header"], 
+			[AC_MSG_ERROR([$perf_header could not be found. See --with-pe-incdir])]) ]
 			)
 fi
 	  
