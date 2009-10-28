@@ -243,13 +243,15 @@ int main(int argc, char **argv)
 	PAPI_enum_event(&i, PAPI_ENUM_FIRST);
 
 	do {
-		j++;
 		memset(&info,0,sizeof(info));
 		retval = PAPI_get_event_info(i, &info);
 
 		/* This event may not exist */
 		if (retval == PAPI_ENOEVNT)
 			continue;
+		
+        /* count only events that as supported by host cpu */
+		j++;
 
 		print_event(&info, 0);
 

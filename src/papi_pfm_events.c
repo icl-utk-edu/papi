@@ -795,7 +795,10 @@ int _papi_pfm_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len)
     {
       char tmp[PAPI_2MAX_STR_LEN];
       pfm_get_event_name(gete.event,tmp,sizeof(tmp));
-      PAPIERROR("pfm_get_full_event_name(%p(event %d,%s,%d masks),%p,%d): %d -- %s",
+      /* Skip error message if event is not supported by host cpu;
+	   * we don't need to give this info away for papi_native_avail util */
+	  if ( ret != PFMLIB_ERR_BADHOST )			
+	  PAPIERROR("pfm_get_full_event_name(%p(event %d,%s,%d masks),%p,%d): %d -- %s",
 		&gete,gete.event,tmp,gete.num_masks,ntv_name,len,ret,pfm_strerror(ret));
       if (ret == PFMLIB_ERR_FULL) return(PAPI_EBUF);
       return(PAPI_ESBSTR);
