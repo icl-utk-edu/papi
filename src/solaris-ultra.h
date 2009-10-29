@@ -89,4 +89,6 @@ extern rwlock_t lock[PAPI_MAX_LOCK];
 
 #define _papi_hwd_unlock(lck)   rw_unlock(&lock[lck]);
 
+#define MY_VECTOR _solaris_vector
+
 #endif

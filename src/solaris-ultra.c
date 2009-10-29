@@ -416,6 +416,11 @@ static int get_system_info(void)
    if ((retval = build_tables()) != PAPI_OK)
       return retval;
 
+   ThreadInfo_t *thread = _papi_hwi_lookup_thread();
+   EventSetInfo_t *ESI = (EventSetInfo_t *)thread->running_eventset;
+
+   /****** NOTE: The use of _papi_hwd[ESI->CmpIdx] in the following code may not be the correct implementation *****/
+
    preset_search_map = preset_table;
    if (cpuver <= CPC_ULTRA2) {
       SUBDBG("cpuver (==%d) <= CPC_ULTRA2 (==%d)\n", cpuver, CPC_ULTRA2);
@@ -425,8 +430,8 @@ static int get_system_info(void)
       SUBDBG("cpuver (==%d) <= CPC_ULTRA3x (==%d)\n", cpuver, LASTULTRA3);
       pcr_shift[0] = CPC_ULTRA_PCR_PIC0_SHIFT;
       pcr_shift[1] = CPC_ULTRA_PCR_PIC1_SHIFT;
-      _papi_hwi_system_info.sub_info.hardware_intr = 1;
-      _papi_hwi_system_info.sub_info.hardware_intr_sig = SIGEMT;
+      _papi_hwd[ESI->CmpIdx]->cmp_info.hardware_intr = 1;
+      _papi_hwd[ESI->CmpIdx]->cmp_info.hardware_intr_sig = SIGEMT;
    } else
       return (PAPI_ESBSTR);
 
@@ -511,11 +516,11 @@ static int get_system_info(void)
    if (retval < 0)
       return (PAPI_ESBSTR);
 
-   _papi_hwi_system_info.sub_info.num_cntrs = retval;
-   _papi_hwi_system_info.sub_info.fast_real_timer = 1;
-   _papi_hwi_system_info.sub_info.fast_virtual_timer = 1;
-   _papi_hwi_system_info.sub_info.default_domain = PAPI_DOM_USER;
-   _papi_hwi_system_info.sub_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
+   _papi_hwd[ESI->CmpIdx]->cmp_info.num_cntrs = retval;
+   _papi_hwd[ESI->CmpIdx]->cmp_info.fast_real_timer = 1;
+   _papi_hwd[ESI->CmpIdx]->cmp_info.fast_virtual_timer = 1;
+   _papi_hwd[ESI->CmpIdx]->cmp_info.default_domain = PAPI_DOM_USER;
+   _papi_hwd[ESI->CmpIdx]->cmp_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
 
    /* Setup presets */
 
@@ -775,7 +780,7 @@ static void lock_init(void)
   memset(lock,0x0,sizeof(rwlock_t)*PAPI_MAX_LOCK);
 }
 
-#ifndef PAPI_NO_VECTOR
+#ifndef PAPI_NO_VECTOR /*
 papi_svector_t _solaris_ultra_table[] = {
  {(void (*)())_papi_hwd_get_overflow_address,VEC_PAPI_HWD_GET_OVERFLOW_ADDRESS},
  {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
@@ -800,16 +805,71 @@ papi_svector_t _solaris_ultra_table[] = {
  {(void (*)())_papi_hwd_ntv_code_to_bits, VEC_PAPI_HWD_NTV_CODE_TO_BITS},
  {(void (*)())_papi_hwd_ntv_bits_to_info, VEC_PAPI_HWD_NTV_BITS_TO_INFO},
  {NULL, VEC_PAPI_END}
-};
+}; */
 #endif
 
-int _papi_hwd_init_substrate(papi_vectors_t *vtable)
+/* This implementation may not be correct */
+papi_vector_t _solaris_vector = {
+	.cmp_info = {
+		/* default component information (unspecified values are initialized to 0) */
+		.num_cntrs = MAX_COUNTERS, /* Number of counters the substrate supports */
+		.num_mpx_cntrs = PAPI_MPX_DEF_DEG,
+		.default_domain = PAPI_DOM_USER,
+		.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL,
+		.default_granularity = PAPI_GRN_THR,
+		.available_granularities = PAPI_GRN_THR,
+		.hardware_intr_sig = PAPI_INT_SIGNAL,
+
+		/* component specific cmp_info initializations */
+		.fast_real_timer = 1,
+		.fast_virtual_timer = 1,
+		.attach = 1,
+		.attach_must_ptrace = 1,
+	},
+
+	/* sizes of framework-opaque component-private structures */
+	.size = {
+		.context = sizeof(hwd_context_t),
+		.control_state = sizeof(hwd_control_state_t),
+		.reg_value = sizeof(hwd_register_t),
+		.reg_alloc = sizeof(hwd_reg_alloc_t),
+	},
+
+	/* function pointers in this component */
+	.init_control_state = _papi_hwd_init_control_state,
+	.start = _papi_hwd_start,
+	.stop =	_papi_hwd_stop,
+	.read =	_papi_hwd_read,
+	.shutdown_global = _papi_hwd_shutdown_global,
+	.ctl = _papi_hwd_ctl,
+	.update_control_state =	_papi_hwd_update_control_state,
+	.reset = _papi_hwd_reset,
+	.set_overflow =	_papi_hwd_set_overflow,
+	/*.stop_profiling = _papi_hwd_stop_profiling,*/
+	.ntv_enum_events = _papi_hwd_ntv_enum_events,
+	.ntv_code_to_name = _papi_hwd_ntv_code_to_name,
+	.ntv_code_to_descr = _papi_hwd_ntv_code_to_descr,
+	.ntv_code_to_bits = _papi_hwd_ntv_code_to_bits,
+	.ntv_bits_to_info = _papi_hwd_ntv_bits_to_info,
+	.init_substrate = _papi_hwd_init_substrate,
+	.dispatch_timer = _papi_hwd_dispatch_timer,
+	.get_real_usec = _papi_hwd_get_real_usec,
+	.get_real_cycles = _papi_hwd_get_real_cycles,
+	.get_virt_cycles = _papi_hwd_get_virt_cycles,
+	.get_virt_usec = _papi_hwd_get_virt_usec,
+
+	/* OS dependent local routines */
+	.update_shlib_info = _papi_hwd_update_shlib_info,
+	.get_system_info = get_system_info
+};
+
+int _papi_hwd_init_substrate(int cidx)
 {
    int retval;
 
-#ifndef PAPI_NO_VECTOR
+#ifndef PAPI_NO_VECTOR /*
    retval = _papi_hwi_setup_vector_table(vtable, _solaris_ultra_table);
-   if ( retval != PAPI_OK ) return(retval);
+   if ( retval != PAPI_OK ) return(retval); */
 #endif
 
    /* Fill in what we can of the papi_system_info. */
@@ -862,15 +922,15 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 
    switch (code) {
    case PAPI_DEFDOM:
-      return (set_default_domain(&option->domain.ESI->machdep, option->domain.domain));
+      return (set_default_domain(option->domain.ESI->ctl_state, option->domain.domain));
    case PAPI_DOMAIN:
-      return (set_domain(&option->domain.ESI->machdep, option->domain.domain));
+      return (set_domain(option->domain.ESI->ctl_state, option->domain.domain));
    case PAPI_DEFGRN:
       return (set_default_granularity
-              (&option->domain.ESI->machdep, option->granularity.granularity));
+              (option->domain.ESI->ctl_state, option->granularity.granularity));
    case PAPI_GRANUL:
       return (set_granularity
-              (&option->granularity.ESI->machdep, option->granularity.granularity));
+              (option->granularity.ESI->ctl_state, option->granularity.granularity));
    default:
       return (PAPI_EINVAL);
    }
@@ -925,7 +985,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
    if (threshold == 0) {
       if (this_state->overflow_num == 1) {
          arg->flags ^= CPC_BIND_EMT_OVF;
-         if (sigaction(_papi_hwi_system_info.sub_info.hardware_intr_sig, NULL, NULL) == -1)
+   if (sigaction(_papi_hwd[ESI->CmpIdx]->cmp_info.hardware_intr_sig, NULL, NULL) == -1)
             return (PAPI_ESYS);
          this_state->overflow_num = 0;
       } else this_state->overflow_num--;
@@ -938,7 +998,7 @@ int _papi_hwd_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
       act.sa_sigaction = dispatch_emt;
       memset(&act.sa_mask, 0x0, sizeof(act.sa_mask));
       act.sa_flags = SA_RESTART | SA_SIGINFO;
-      if (sigaction(_papi_hwi_system_info.sub_info.hardware_intr_sig, &act, NULL) == -1)
+      if (sigaction(_papi_hwd[ESI->CmpIdx]->cmp_info.hardware_intr_sig, &act, NULL) == -1)
          return (PAPI_ESYS);
 
       arg->flags |= CPC_BIND_EMT_OVF;
@@ -1024,19 +1084,21 @@ int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifer)
    return (PAPI_ENOEVNT);
 }
 
-char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
+int _papi_hwd_ntv_code_to_name(unsigned int EventCode, char *hwd_name, int len)
 {
+  /* HACK This implementation probably isn't correct! */
    int nidx;
 
    nidx = EventCode ^ PAPI_NATIVE_MASK;
    if (nidx >= 0 && nidx < PAPI_MAX_NATIVE_EVENTS)
-      return (native_table[nidx].name);
-   return NULL;
+     return (native_table[nidx].encoding[0]);
+
+   return -1;
 }
 
-char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
+int _papi_hwd_ntv_code_to_descr(unsigned int EventCode, char *hwd_descr, int len)
 {
-   return (_papi_hwd_ntv_code_to_name(EventCode));
+  return (_papi_hwd_ntv_code_to_name(EventCode, hwd_descr, len));
 }
 
 static void copy_value(unsigned int val, char *nam, char *names, unsigned int *values, int len)
@@ -1082,8 +1144,11 @@ int _papi_hwd_init_control_state(hwd_control_state_t * ptr)
    ptr->counter_cmd.cmd.ce_pcr = 0x0;
    ptr->counter_cmd.cmd.ce_pic[0] = 0;
    ptr->counter_cmd.cmd.ce_pic[1] = 0;
-   set_domain(ptr, _papi_hwi_system_info.sub_info.default_domain);
-   set_granularity(ptr, _papi_hwi_system_info.sub_info.default_granularity);
+
+   ThreadInfo_t *thread = _papi_hwi_lookup_thread();
+   EventSetInfo_t *ESI = (EventSetInfo_t *) thread->running_eventset;
+   set_domain(ptr, _papi_hwd[ESI->CmpIdx]->cmp_info.default_domain);
+   set_granularity(ptr, _papi_hwd[ESI->CmpIdx]->cmp_info.default_granularity);
    return PAPI_OK;
 }
 
