@@ -38,6 +38,10 @@
 #error When USE_FORMAT_GROUP is defined, USE_FORMAT_ID must be defined also
 #endif
 
+
+
+
+
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
@@ -2018,7 +2022,7 @@ inline static int close_pcl_evts(pcl_context_t * ctx)
       for (i = 0; i < ctx->num_pcl_evts; i++)
         {
           if (ctx->pcl_evt[i].group_leader == i) {
-            ret = ioctl(ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_DISABLE, NULL);
+            ret = ioctl(ctx->pcl_evt[i].event_fd, PERF_EVENT_IOC_DISABLE, NULL);
             if (ret == -1)
               {
                 /* Never should happen */
@@ -2426,7 +2430,7 @@ static int pcl_enable_counters (pcl_context_t * ctx, pcl_control_state_t * ctl)
     {
       if (ctx->pcl_evt[i].group_leader == i)
         {
-          ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_ENABLE, NULL);
+          ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL);
 
           if (ret == -1)
             {
@@ -2465,10 +2469,10 @@ int _papi_pcl_reset (hwd_context_t * ctx, hwd_control_state_t * ctl)
   /* We need to reset all of the events, not just the group leaders */
   for (i = 0; i < pcl_ctx->num_pcl_evts; i++)
     {
-      ret = ioctl (pcl_ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_RESET, NULL);
+      ret = ioctl (pcl_ctx->pcl_evt[i].event_fd, PERF_EVENT_IOC_RESET, NULL);
       if (ret == -1)
         {
-          PAPIERROR ("ioctl(%d, PERF_COUNTER_IOC_RESET, NULL) returned error, Linux says: %s", pcl_ctx->pcl_evt[i].event_fd, strerror(errno));
+          PAPIERROR ("ioctl(%d, PERF_EVENT_IOC_RESET, NULL) returned error, Linux says: %s", pcl_ctx->pcl_evt[i].event_fd, strerror(errno));
           return PAPI_EBUG;
         }
     }
@@ -2569,7 +2573,7 @@ int _papi_pcl_read (hwd_context_t * ctx, hwd_control_state_t * ctl, long long **
         /* disable only the group leaders */
         if (pcl_ctx->pcl_evt[i].group_leader == i)
           {
-            ret = ioctl (pcl_ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_DISABLE, NULL);
+            ret = ioctl (pcl_ctx->pcl_evt[i].event_fd, PERF_EVENT_IOC_DISABLE, NULL);
             if (ret == -1)
               {
                 /* Never should happen */
@@ -2643,7 +2647,7 @@ int _papi_pcl_read (hwd_context_t * ctx, hwd_control_state_t * ctl, long long **
       for (i = 0; i < pcl_ctx->num_pcl_evts; i++)
         if (pcl_ctx->pcl_evt[i].group_leader == i)
           {
-            ret = ioctl (pcl_ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_ENABLE, NULL);
+            ret = ioctl (pcl_ctx->pcl_evt[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL);
             if (ret == -1)
               {
                 /* Never should happen */
@@ -2686,10 +2690,10 @@ int _papi_pcl_stop (hwd_context_t * ctx, hwd_control_state_t * ctl)
   for (i = 0; i < pcl_ctx->num_pcl_evts; i++)
     if (pcl_ctx->pcl_evt[i].group_leader == i)
       {
-        ret = ioctl (pcl_ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_DISABLE, NULL);
+        ret = ioctl (pcl_ctx->pcl_evt[i].event_fd, PERF_EVENT_IOC_DISABLE, NULL);
         if (ret == -1)
           {
-            PAPIERROR ("ioctl(%d, PERF_COUNTER_IOC_DISABLE, NULL) returned error, Linux says: %s", pcl_ctx->pcl_evt[i].event_fd, strerror(errno));
+            PAPIERROR ("ioctl(%d, PERF_EVENT_IOC_DISABLE, NULL) returned error, Linux says: %s", pcl_ctx->pcl_evt[i].event_fd, strerror(errno));
             return PAPI_EBUG;
           }
       }
@@ -2961,10 +2965,10 @@ static void mmap_read (ThreadInfo_t ** thr, pcl_evt_t * pe, int pcl_evt_index, i
 
       switch (event->header.type)
         {
-        case PERF_EVENT_SAMPLE:
+        case PERF_RECORD_SAMPLE:
           _papi_hwi_dispatch_profile ((*thr)->running_eventset[cidx], (caddr_t) event->ip.ip, 0, profile_index);
           break;
-        case PERF_EVENT_LOST:
+        case PERF_RECORD_LOST:
           SUBDBG ("Warning: because of a PCL mmap buffer overrun, %"PRId64
                       " events were lost.\nLoss was recorded when counter id 0x%"PRIx64" overflowed.\n",
             event->lost.lost, event->lost.id);
@@ -3323,7 +3327,7 @@ int _papi_pcl_update_control_state (hwd_control_state_t * ctl, NativeInfo_t * na
 
   if (pcl_ctx->cookie != PCL_CTX_INITIALIZED)
     {
-      memset (pcl_ctl->events, 0, sizeof (struct perf_counter_attr) * PCL_MAX_MPX_EVENTS);
+      memset (pcl_ctl->events, 0, sizeof (struct perf_event_attr) * PCL_MAX_MPX_EVENTS);
       memset (pcl_ctx, 0, sizeof (pcl_context_t));
       pcl_ctx->cookie = PCL_CTX_INITIALIZED;
     }

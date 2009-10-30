@@ -41,6 +41,45 @@
 #include PEINCLUDE
 #include "syscalls.h"
 
+
+/* The following block of defines should only be true for kernel 2.6.31 */
+/* I don't know what macro we're using to tell which kernel we're on */
+
+	#define perf_event_sample_format	perf_counter_sample_format
+	#define perf_event_read_format	perf_counter_read_format
+	#define perf_event_attr			perf_counter_attr
+
+	#define PERF_EVENT_IOC_ENABLE		PERF_COUNTER_IOC_ENABLE
+	#define PERF_EVENT_IOC_DISABLE	PERF_COUNTER_IOC_DISABLE
+	#define PERF_EVENT_IOC_REFRESH	PERF_COUNTER_IOC_REFRESH
+	#define PERF_EVENT_IOC_RESET		PERF_COUNTER_IOC_RESET
+	#define PERF_EVENT_IOC_PERIOD		PERF_COUNTER_IOC_PERIOD
+	#define PERF_EVENT_IOC_SET_OUTPUT	PERF_COUNTER_IOC_SET_OUTPUT
+
+	#define perf_event_ioc_flags		perf_counter_ioc_flags
+	#define perf_event_mmap_page		perf_counter_mmap_page
+	#define perf_event_wakeup		perf_counter_wakeup
+
+	#define PERF_RECORD_MISC_CPUMODE_MASK	PERF_EVENT_MISC_CPUMODE_MASK
+	#define PERF_RECORD_MISC_CPUMODE_UNKNOWN PERF_EVENT_MISC_CPUMODE_UNKNOWN
+	#define PERF_RECORD_MISC_KERNEL	PERF_EVENT_MISC_KERNEL
+	#define PERF_RECORD_MISC_USER		PERF_EVENT_MISC_USER
+	#define PERF_RECORD_MISC_HYPERVISOR	PERF_EVENT_MISC_HYPERVISOR
+
+	#define PERF_RECORD_MMAP		PERF_EVENT_MMAP
+	#define PERF_RECORD_LOST		PERF_EVENT_LOST
+	#define PERF_RECORD_COMM		PERF_EVENT_COMM
+	#define PERF_RECORD_EXIT		PERF_EVENT_EXIT
+	#define PERF_RECORD_THROTTLE		PERF_EVENT_THROTTLE
+	#define PERF_RECORD_UNTHROTTLE	PERF_EVENT_UNTHROTTLE
+	#define PERF_RECORD_FORK		PERF_EVENT_FORK
+	#define PERF_RECORD_READ		PERF_EVENT_READ
+	#define PERF_RECORD_SAMPLE		PERF_EVENT_SAMPLE
+	#define PERF_RECORD_MAX			PERF_EVENT_MAX
+
+/* End of block of defines for 2.6.31 */
+
+
 /* Take a guess at this value for now - FIXME */
 #define PCL_MAX_MPX_EVENTS 64
 
