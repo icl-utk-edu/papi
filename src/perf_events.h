@@ -37,14 +37,13 @@
 /* It appears that for linux kernel 2.6.31, the /usr/include/linux dir
  does not include perf_counter.h. Since this dir is populated by the
  kernel-headers package, we'll have to wait for an update. 
- For know, we use the workaround: */
+ For now, we use the workaround: */
 #include PEINCLUDE
 #include "syscalls.h"
 
 
 /* The following block of defines should only be true for kernel 2.6.31 */
-/* I don't know what macro we're using to tell which kernel we're on */
-
+#ifdef KERNEL31
 	#define perf_event_sample_format	perf_counter_sample_format
 	#define perf_event_read_format	perf_counter_read_format
 	#define perf_event_attr			perf_counter_attr
@@ -77,7 +76,7 @@
 	#define PERF_RECORD_SAMPLE		PERF_EVENT_SAMPLE
 	#define PERF_RECORD_MAX			PERF_EVENT_MAX
 
-/* End of block of defines for 2.6.31 */
+#endif
 
 
 /* Take a guess at this value for now - FIXME */
@@ -95,7 +94,7 @@ typedef struct {
   int num_groups;
   unsigned domain;
   unsigned multiplexed;
-  struct perf_counter_attr events[PCL_MAX_MPX_EVENTS];
+  struct perf_event_attr events[PCL_MAX_MPX_EVENTS];
   pcl_per_event_info_t pcl_per_event_info[PCL_MAX_MPX_EVENTS];
   /* Buffer to gather counters */
   long long counts[PFMLIB_MAX_PMDS];

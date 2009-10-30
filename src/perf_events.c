@@ -2873,7 +2873,7 @@ static inline int find_profile_index (EventSetInfo_t * ESI, int pcl_evt_idx, int
 
 static uint64_t mmap_read_head(pcl_evt_t *pe)
 {
-  struct perf_counter_mmap_page *pc = pe->mmap_buf;
+  struct perf_event_mmap_page *pc = pe->mmap_buf;
   int head;
 
   head = pc->data_head;
@@ -2884,7 +2884,7 @@ static uint64_t mmap_read_head(pcl_evt_t *pe)
 
 static void mmap_write_tail(pcl_evt_t *pe, uint64_t tail)
 {
-  struct perf_counter_mmap_page *pc = pe->mmap_buf;
+  struct perf_event_mmap_page *pc = pe->mmap_buf;
 
   /*
    * ensure all reads are done before we write the tail out.

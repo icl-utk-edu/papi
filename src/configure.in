@@ -1005,6 +1005,7 @@ AC_ARG_WITH(pfm_libdir,
 if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
 if test "`uname -r | grep "2.6.31"`" != ""; then
    perf_header="/lib/modules/$OSVER/source/include/linux/perf_counter.h"
+   CFLAGS="$CFLAGS -DKERNEL31"
 else
    perf_header="/lib/modules/$OSVER/source/include/linux/perf_event.h"
 fi

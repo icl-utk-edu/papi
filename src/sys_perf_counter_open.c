@@ -5,7 +5,7 @@
 /* It appears that for linux kernel 2.6.31, the /usr/include/linux dir
  does not include perf_counter.h. Since this dir is populated by the
  kernel-headers package, we'll have to wait for an update. 
- For know, we use the workaround: */
+ For now, we use the workaround: */
 #include PEINCLUDE
 
 // Temporarily need this definition from arch/powerpc/include/asm/unistd.h in the PCL kernel
@@ -18,7 +18,7 @@
 #define __NR_perf_counter_open	336
 #endif
 
-/* asmlinkage */ long sys_perf_counter_open(struct perf_counter_attr *hw_event,
+/* asmlinkage */ long sys_perf_counter_open(struct perf_event_attr *hw_event,
 				     pid_t pid, int cpu, int group_fd, unsigned long flags)
 {
 	int ret;
