@@ -9,6 +9,35 @@
 */
 
 
+/*
+ * Define this to work around kernel bug 14489 (see bugzilla.kernel.org).
+ * Unfortunately, this causes a slow down of PAPI_read()
+ */
+#define SYNC_READ
+
+/*
+ * The following defines are used for a somewhat experimental optimization
+ * of PAPI_read for the perf_events substrate.
+ *
+ * The following combinations are allowed:
+ *   define USE_FORMAT_GROUP and define USE_FORMAT_ID
+ *   undef USE_FORMAT_GROUP and define USE_FORMAT_ID
+ *   undef USE_FORMAT_GROUP and undef USE_FORMAT_ID 
+ *
+ * For performance purposes, you should either define both of them or neither
+ * of them.
+ *
+ * The best PAPI_read performance should be achieved with them both defined,
+ * but only for event sets with more than one counter.
+ *
+ */
+#define USE_FORMAT_GROUP
+#define USE_FORMAT_ID
+
+#if defined(USE_FORMAT_GROUP) && !defined(USE_FORMAT_ID)
+#error When USE_FORMAT_GROUP is defined, USE_FORMAT_ID must be defined also
+#endif
+
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
@@ -1743,7 +1772,21 @@ inline static int partition_events (pcl_context_t * ctx, pcl_control_state_t * c
       for (i = 0; i < ctl->num_events; i++)
         {
           ctx->pcl_evt[i].group_leader = 0;
-	  ctl->events[i].disabled = (i == 0);
+#ifdef USE_FORMAT_ID
+          ctl->events[i].read_format = PERF_FORMAT_ID;
+#else
+          ctl->events[i].read_format = 0;
+#endif
+          if (i == 0)
+            {
+              ctl->events[i].disabled = 1;
+#ifdef USE_FORMAT_GROUP
+              ctl->events[i].read_format |= PERF_FORMAT_GROUP;
+#endif
+            } else
+            {
+              ctl->events[i].disabled = 0;
+            }
         }
     }
   else
@@ -1765,8 +1808,17 @@ inline static int partition_events (pcl_context_t * ctx, pcl_control_state_t * c
           for (j = i; j < ctl->num_events; j++)
             {
               ctx->pcl_evt[j].group_leader = i;
-              /* enable all counters except the group leader */
-              ctl->events[i].disabled = (j == i);
+
+              /* Enable all counters except the group leader, and request that we read
+               * up all counters in the group when reading the group leader. */
+              if (j == i) {
+                ctl->events[i].disabled = 1;
+#ifdef USE_FORMAT_GROUP
+                ctl->events[i].read_format |= PERF_FORMAT_GROUP;
+#endif
+              } else {
+        	ctl->events[i].disabled = 0;
+              }
               ctx->pcl_evt[j].event_fd = sys_perf_counter_open (&ctl->events[j], 0, -1, ctx->pcl_evt[i].event_fd, 0);
               if (ctx->pcl_evt[j].event_fd == -1)
                 {
@@ -1891,6 +1943,31 @@ inline static int open_pcl_evts (pcl_context_t * ctx, pcl_control_state_t * ctl)
           ret = PAPI_ECNFLCT;
           goto cleanup;
         }
+
+#ifdef USE_FORMAT_ID
+      /* obtain the id of this event assigned by the kernel */
+      {
+	uint64_t buffer[MAX_COUNTERS * 4]; /* max size needed */
+        int id_idx = 1; /* position of the id within the buffer for a non-group leader */
+        int cnt;
+
+	cnt = read(ctx->pcl_evt[i].event_fd, buffer, sizeof(buffer));
+	if (cnt == -1) {
+          PAPIERROR("read of event %d to obtain id returned %d", cnt);
+          fflush (stdout);
+          ret = PAPI_ESBSTR;
+          goto cleanup;
+	}
+        if (i == ctx->pcl_evt[i].group_leader)
+          id_idx = 2;
+        else
+          id_idx = 1;
+        if (ctl->multiplexed) {
+          id_idx += 2; /* account for the time running and enabled fields */
+        }
+	ctx->pcl_evt[i].event_id = buffer[id_idx];
+      }
+#endif
       if (ctl->events[i].sample_period)
         {
           ret = tune_up_fd(ctx, i);
@@ -2417,15 +2494,59 @@ int _papi_pcl_write (hwd_context_t * ctx, hwd_control_state_t * ctl, long long *
 }
 
 /*
- * Note that although the values for PCL_TOTAL_TIME_ENABLED and
- * PCL_TOTAL_TIME_RUNNING are the same as the enum values
- * PERF_FORMAT_TOTAL_TIME_ENABLED and PERF_FORMAT_TOTAL_TIME_RUNNING, this
- * is only by coincidence, because the ones in the perf_counter.h are bit
- * masks, while the values below are array indexes.
+ * These are functions which define the indexes in the read buffer of the
+ * various fields.  See include/linux/perf_counter.h for more details about
+ * the layout.
  */
-#define PCL_COUNT 0
-#define PCL_TOTAL_TIME_ENABLED 1
-#define PCL_TOTAL_TIME_RUNNING 2
+
+#define get_nr_idx() 0
+#define get_total_time_enabled_idx() 1
+#define get_total_time_running_idx() 2
+
+/* Get the index of the id of the n'th counter in the buffer */
+static int get_id_idx(int multiplexed, int n)
+{
+#ifdef USE_FORMAT_GROUP
+  if (multiplexed)
+    return 3 + (n * 2) + 1;
+  else
+    return 1 + (n * 2) + 1;
+#else
+  return 1;
+#endif
+}
+
+/* Get the index of the n'th counter in the buffer */
+static int get_count_idx(int multiplexed, int n)
+{
+#ifdef USE_FORMAT_GROUP
+  if (multiplexed)
+    return 3 + (n * 2);
+  else
+    return 1 + (n * 2);
+#else
+  return 0;
+#endif
+}
+
+/* Return the count index for the event with the given id */
+static uint64_t get_count_idx_by_id(uint64_t *buf, int multiplexed, uint64_t id)
+{
+#ifdef USE_FORMAT_GROUP
+  int i;
+  for (i = 0; i < buf[get_nr_idx()]; i++)
+    {
+      if (buf[get_id_idx(multiplexed, i)] == id) {
+        return get_count_idx(multiplexed, i);
+      }
+    }
+  PAPIERROR("Did not find id %d in the buffer!", id);
+  return -1;
+#else
+  return 0;
+#endif
+}
+
 
 int _papi_pcl_read (hwd_context_t * ctx, hwd_control_state_t * ctl, long long **events, int flags)
 {
@@ -2441,6 +2562,7 @@ int _papi_pcl_read (hwd_context_t * ctx, hwd_control_state_t * ctl, long long **
    * read them up, then re-enable the group leader.
    */
 
+#ifdef SYNC_READ
   if (pcl_ctx->state & PCL_RUNNING)
     {
       for (i = 0; i < pcl_ctx->num_pcl_evts; i++)
@@ -2455,58 +2577,67 @@ int _papi_pcl_read (hwd_context_t * ctx, hwd_control_state_t * ctl, long long **
               }
           }
     }
+#endif
+
   for (i = 0; i < pcl_ctl->num_events; i++)
     {
-      uint64_t counter[3];
-      int read_size;
 
-      read_size = sizeof (uint64_t);
-      if (pcl_ctl->multiplexed)
+/* event count, time_enabled, time_running, (count value, count id) * MAX_COUNTERS */
+#define READ_BUFFER_SIZE (1 + 1 + 1 + 2 * MAX_COUNTERS)
+      uint64_t buffer[READ_BUFFER_SIZE];
+
+#ifdef USE_FORMAT_GROUP
+      if (i == pcl_ctx->pcl_evt[i].group_leader)
+#endif
         {
-          /* Read the enabled and running times as well as the count */
-          read_size *= 3;
+          ret = read(pcl_ctx->pcl_evt[i].event_fd, buffer, sizeof(buffer));
+          if (ret == -1)
+            {
+              /* We should get exactly how many bytes we asked for */
+              PAPIERROR("Read of perf_events fd returned an error:", strerror(
+                  errno));
+              return PAPI_ESBSTR;
+            }
         }
 
-      ret = read (pcl_ctx->pcl_evt[i].event_fd, counter, read_size);
-      if (ret < read_size)
-        {
-          /* We should get exactly how many bytes we asked for */
-          PAPIERROR ("Requested %d bytes, but read %d bytes.", read_size, ret);
-          return PAPI_ESBSTR;
-        }
-
+      int count_idx = get_count_idx_by_id(buffer, pcl_ctl->multiplexed, pcl_ctx->pcl_evt[i].event_id);
+      if (count_idx == -1) {
+        PAPIERROR("get_count_idx_by_id failed for event num %d, id %d", i, pcl_ctx->pcl_evt[i].event_id);
+        return PAPI_ESBSTR;
+      }
       if (pcl_ctl->events[i].sample_period != 0)
         {
           /*
            * Calculate how many counts up it's gone since its most recent
            * sample_period overflow
            */
-          counter[PCL_COUNT] -= ~0ULL - pcl_ctl->events[i].sample_period;
+          buffer[count_idx] -= ~0ULL - pcl_ctl->events[i].sample_period;
         }
       if (pcl_ctl->multiplexed)
         {
-          if (counter[PCL_TOTAL_TIME_RUNNING])
+          if (buffer[get_total_time_running_idx()])
             {
               pcl_ctl->counts[i] =
-                (__u64) ((double) counter[PCL_COUNT] * (double) counter[PCL_TOTAL_TIME_ENABLED] /
-                         (double) counter[PCL_TOTAL_TIME_RUNNING]);
+                (__u64) ((double) buffer[count_idx] * (double) buffer[get_total_time_enabled_idx()] /
+                         (double) buffer[get_total_time_running_idx()]);
             }
           else
             {
               /* If the total time running is 0, the count should be zero too! */
-              if (counter[PCL_COUNT])
+              if (buffer[count_idx])
                 {
-                  return PAPI_EBUG;
+                  return PAPI_ESBSTR;
                 }
               pcl_ctl->counts[i] = 0;
             }
         }
       else
         {
-          pcl_ctl->counts[i] = counter[PCL_COUNT];
+          pcl_ctl->counts[i] = buffer[count_idx];
         }
     }
 
+#ifdef SYNC_READ
   if (pcl_ctx->state & PCL_RUNNING)
     {
       for (i = 0; i < pcl_ctx->num_pcl_evts; i++)
@@ -2520,6 +2651,7 @@ int _papi_pcl_read (hwd_context_t * ctx, hwd_control_state_t * ctl, long long **
               }
           }
     }
+#endif
 
   *events = pcl_ctl->counts;
 
@@ -3175,7 +3307,7 @@ int _papi_pcl_allocate_registers (EventSetInfo_t * ESI)
   return 1;
 bail:
   for (j = 0; j < i; j++)
-    memset (&ESI->NativeInfoArray[j].ni_bits, 0x0, sizeof (ESI->NativeInfoArray[j].ni_bits));
+    memset (ESI->NativeInfoArray[j].ni_bits, 0x0, sizeof (pfm_register_t));
   return 0;
 }
 
@@ -3302,6 +3434,13 @@ int _papi_pcl_update_control_state (hwd_control_state_t * ctl, NativeInfo_t * na
        * scaling purposes.
        */
       pcl_ctl->events[i].read_format = pcl_ctl->multiplexed ? PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_TOTAL_TIME_RUNNING : 0;
+      /*
+       * Cause the kernel to assign an id to each event so that we can keep track of which
+       * event is which when we read up an entire group of counters.
+       */
+#ifdef USE_FORMAT_ID
+      pcl_ctl->events[i].read_format |= PERF_FORMAT_ID;
+#endif
       if (native)
         {
           native[i].ni_position = i;
