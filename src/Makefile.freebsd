@@ -1,10 +1,10 @@
 LIBRARY   	= libpapi.a
-SHLIB     	= libpapi.so
+SHLIB     	= libpapi.so.3
 SUBSTR      = freebsd
 MEMSUBSTR 	= any-null
 DESCR       = "FreeBSD -over libpmc- substrate"
 LIBS        = static shared
-TARGETS     = serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads
+TARGETS     = serial multiplex_and_pthreads
 POST_BUILD  =
 SPECIAL_REMOVE =
 
@@ -17,8 +17,8 @@ FFLAGS      += -Wall -g -O
 
 CPU	      = 
 
-MISCHDRS = freebsd/map-unknown.h freebsd/map.h freebsd/map-p6.h freebsd/map-p6-m.h freebsd/map-p6-3.h freebsd/map-p6-2.h freebsd/map-p6-c.h freebsd/map-k7.h freebsd/map-k8.h freebsd/map-p4.h freebsd/map-atom.h freebsd/map-core.h freebsd/map-core2.h freebsd/map-core2-extreme.h
-MISCSRCS = freebsd/map-unknown.c freebsd/map.c freebsd/map-p6.c freebsd/map-p6-m.c freebsd/map-p6-3.c freebsd/map-p6-2.c freebsd/map-p6-c.c freebsd/map-k7.c freebsd/map-k8.c freebsd/map-p4.c freebsd/map-atom.c freebsd/map-core.c freebsd/map-core2.c freebsd/map-core2-extreme.c
+MISCHDRS = freebsd/map-unknown.h freebsd/map.h freebsd/map-p6.h freebsd/map-p6-m.h freebsd/map-p6-3.h freebsd/map-p6-2.h freebsd/map-p6-c.h freebsd/map-k7.h freebsd/map-k8.h freebsd/map-p4.h freebsd/map-atom.h freebsd/map-core.h freebsd/map-core2.h freebsd/map-core2-extreme.h freebsd/map-i7.h
+MISCSRCS = freebsd/map-unknown.c freebsd/map.c freebsd/map-p6.c freebsd/map-p6-m.c freebsd/map-p6-3.c freebsd/map-p6-2.c freebsd/map-p6-c.c freebsd/map-k7.c freebsd/map-k8.c freebsd/map-p4.c freebsd/map-atom.c freebsd/map-core.c freebsd/map-core2.c freebsd/map-core2-extreme.c freebsd/map-i7.c
 MISCOBJS = $(MISCSRCS:.c=.o)
 SHLIBDEPS =
 
@@ -64,6 +64,9 @@ freebsd/map-core2.o: freebsd/map-core2.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) -c $< -o $@
 
 freebsd/map-core2-extreme.o: freebsd/map-core2-extreme.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-i7.o: freebsd/map-i7.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) -c $< -o $@
 
 freebsd.o: freebsd.c $(HEADERS)
