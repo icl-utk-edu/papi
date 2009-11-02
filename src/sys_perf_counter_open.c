@@ -18,8 +18,11 @@
 #define __NR_perf_counter_open	336
 #endif
 
-/* asmlinkage */ long sys_perf_counter_open(struct perf_event_attr *hw_event,
-				     pid_t pid, int cpu, int group_fd, unsigned long flags)
+#ifdef KERNEL31
+long sys_perf_counter_open(struct perf_counter_attr *hw_event, pid_t pid, int cpu, int group_fd, unsigned long flags)
+#else
+long sys_perf_counter_open(struct perf_event_attr *hw_event, pid_t pid, int cpu, int group_fd, unsigned long flags)
+#endif
 {
 	int ret;
 
