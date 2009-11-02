@@ -1,7 +1,7 @@
 #ifndef _PAPI_PERFMON_H
 #define _PAPI_PERFMON_H
 /*
-* File:    pcl.h
+* File:    perf_events.h
 * CVS:     $Idl.h$
 * Author:  Corey Ashford
 *          cjashfor@us.ibm.com
@@ -80,32 +80,32 @@
 
 
 /* Take a guess at this value for now - FIXME */
-#define PCL_MAX_MPX_EVENTS 64
+#define MAX_MPX_EVENTS 64
 
 #define WAKEUP_MODE_COUNTER_OVERFLOW 0
 #define WAKEUP_MODE_PROFILING 1
 
 typedef struct {
   unsigned char wakeup_mode;
-} pcl_per_event_info_t;
+} per_event_info_t;
 
 typedef struct {
   int num_events;
   int num_groups;
   unsigned domain;
   unsigned multiplexed;
-  struct perf_event_attr events[PCL_MAX_MPX_EVENTS];
-  pcl_per_event_info_t pcl_per_event_info[PCL_MAX_MPX_EVENTS];
+  struct perf_event_attr events[MAX_MPX_EVENTS];
+  per_event_info_t per_event_info[MAX_MPX_EVENTS];
   /* Buffer to gather counters */
   long long counts[PFMLIB_MAX_PMDS];
-} pcl_control_state_t;
+} control_state_t;
 
-/* PCL uses an FD per event counter */
+/* Perf events uses an FD per event counter */
 
 /* just an unlikely magic cookie */
-#define PCL_CTX_INITIALIZED 0xdc1dc1
+#define CTX_INITIALIZED 0xdc1dc1
 
-#define PCL_RUNNING 0x01
+#define PERF_EVENTS_RUNNING 0x01
 
 typedef struct {
   int group_leader;       /* index of leader */
@@ -115,15 +115,15 @@ typedef struct {
   void * mmap_buf; /* used to contain profiling data samples as well as control */
   uint64_t tail; /* current location in the mmap buffer to read from */
   uint64_t mask; /* mask used for wrapping the pages */
-} pcl_evt_t;
+} evt_t;
 
 typedef struct {
-  /* Array of event fd's, PCL event group leader is event_fd[0] */
+  /* Array of event fd's, event group leader is event_fd[0] */
   int cookie;
   int state;
-  int num_pcl_evts;
-  pcl_evt_t pcl_evt[PCL_MAX_MPX_EVENTS];
-} pcl_context_t;
+  int num_evts;
+  evt_t evt[MAX_MPX_EVENTS];
+} context_t;
 
 #if defined(DEBUG)
 #define DEBUGCALL(a,b) { if (ISLEVEL(a)) { b; } }
@@ -134,9 +134,9 @@ typedef struct {
 #define inline_static inline static
 
 typedef pfmlib_event_t pfm_register_t;
-typedef int pcl_reg_alloc_t;
+typedef int reg_alloc_t;
 
-#define MY_VECTOR _papi_pcl_vector
+#define MY_VECTOR _papi_pe_vector
 
 /* Native events consist of a flag field, an event field, and a unit mask field.
  * The next 4 macros define the characteristics of the event and unit mask fields.
