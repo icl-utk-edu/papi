@@ -42,6 +42,20 @@ static void print_help(char **argv)
 	printf("PAPI preset event filters can be combined in a logical OR.\n");
 }
 
+static int parse_unit_masks(PAPI_event_info_t *info) {
+	char *pmask;
+
+	if ((pmask = strchr (info->symbol, ':')) == NULL) {
+		return(0);
+	}
+	memmove(info->symbol, pmask, (strlen(pmask)+1)*sizeof(char));
+	pmask = strchr(info->long_descr, ':');
+	if (pmask == NULL)
+		info->long_descr[0] = 0;
+	else
+		memmove(info->long_descr, pmask+sizeof(char), (strlen(pmask)+1)*sizeof(char));
+	return(1);
+}
 
 int main(int argc, char **argv)
 {
@@ -153,11 +167,11 @@ int main(int argc, char **argv)
 								do {
 									retval = PAPI_get_event_info(i, &info);
 									if (retval == PAPI_OK) {
-										strcpy(info.symbol, strchr(info.symbol, ':'));
-										strcpy(info.long_descr, strchr(info.long_descr, ':')+1);
-										printf("%-29s|%s|%s|\n", " Mask Info:", info.symbol, info.long_descr);
-										for (k=0;k<(int)info.count;k++)
-											printf("  Register[%2d]:  0x%08x  |%s|\n",k, info.code[k], info.name[k]);
+										if (parse_unit_masks(&info)) {
+											printf("%-29s|%s|%s|\n", " Mask Info:", info.symbol, info.long_descr);
+											for (k=0;k<(int)info.count;k++)
+												printf("  Register[%2d]:  0x%08x  |%s|\n",k, info.code[k], info.name[k]);
+										}
 									}
 								} while (PAPI_enum_event(&i, PAPI_NTV_ENUM_UMASKS) == PAPI_OK);
 							}
