@@ -126,6 +126,8 @@ pfm_core_detect(void)
 static int
 pfm_core_init(void)
 {
+	int i;
+
 	pfm_regmask_set(&core_impl_pmcs, 0);
 	pfm_regmask_set(&core_impl_pmcs, 1);
 	pfm_regmask_set(&core_impl_pmcs, 16);
@@ -136,6 +138,11 @@ pfm_core_init(void)
 	pfm_regmask_set(&core_impl_pmds, 16);
 	pfm_regmask_set(&core_impl_pmds, 17);
 	pfm_regmask_set(&core_impl_pmds, 18);
+
+	/* lbr */
+	pfm_regmask_set(&core_impl_pmds, 19);
+	for(i=0; i < 8; i++)
+		pfm_regmask_set(&core_impl_pmds, i);
 
 	highest_counter = 18;
 
@@ -776,8 +783,11 @@ pfm_core_get_impl_pmds(pfmlib_regmask_t *impl_pmds)
 static void
 pfm_core_get_impl_counters(pfmlib_regmask_t *impl_counters)
 {
-	/* all pmds are counters */
-	*impl_counters = core_impl_pmds;
+	pfm_regmask_set(impl_counters, 0);
+	pfm_regmask_set(impl_counters, 1);
+	pfm_regmask_set(impl_counters, 16);
+	pfm_regmask_set(impl_counters, 17);
+	pfm_regmask_set(impl_counters, 18);
 }
 
 /*
@@ -895,7 +905,7 @@ pfm_pmu_support_t core_support={
 	.pmu_type		= PFMLIB_CORE_PMU,
 	.pme_count		= PME_CORE_EVENT_COUNT,
 	.pmc_count		= 4,
-	.pmd_count		= 5,
+	.pmd_count		= 14,
 	.num_cnt		= 5,
 	.get_event_code		= pfm_core_get_event_code,
 	.get_event_name		= pfm_core_get_event_name,

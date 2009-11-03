@@ -4543,7 +4543,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_MRK_ST_CMPL ] = {
 		.pme_name = "PM_MRK_ST_CMPL",
-		.pme_code = 0x1003,
+		.pme_code = 0x100006,
 		.pme_short_desc = "Marked store instruction completed",
 		.pme_long_desc = "A sampled store has completed (data home)",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_MRK_ST_CMPL],
@@ -4599,7 +4599,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FPU_SINGLE ] = {
 		.pme_name = "PM_FPU_SINGLE",
-		.pme_code = 0x5120,
+		.pme_code = 0x4c1030,
 		.pme_short_desc = "FPU executed single precision instruction",
 		.pme_long_desc = "FPU is executing single precision instruction. Combined Unit 0 + Unit 1",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FPU_SINGLE],
@@ -4639,7 +4639,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_EXT_INT ] = {
 		.pme_name = "PM_EXT_INT",
-		.pme_code = 0x8002,
+		.pme_code = 0x2000f8,
 		.pme_short_desc = "External interrupts",
 		.pme_long_desc = "An external interrupt occurred",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_EXT_INT],
@@ -4647,7 +4647,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_LSU1_LDF ] = {
 		.pme_name = "PM_LSU1_LDF",
-		.pme_code = 0x734,
+		.pme_code = 0x8008c,
 		.pme_short_desc = "LSU1 executed Floating Point load instruction",
 		.pme_long_desc = "A floating point load was executed from LSU unit 1",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_LSU1_LDF],
@@ -4743,7 +4743,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_DSLB_MISS ] = {
 		.pme_name = "PM_DSLB_MISS",
-		.pme_code = 0x705,
+		.pme_code = 0x830e8,
 		.pme_short_desc = "Data SLB misses",
 		.pme_long_desc = "A SLB miss for a data request occurred. SLB misses trap to the operating system to resolve",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_DSLB_MISS],
@@ -4871,7 +4871,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_PMC1_OVERFLOW ] = {
 		.pme_name = "PM_PMC1_OVERFLOW",
-		.pme_code = 0x200a,
+		.pme_code = 0x200014,
 		.pme_short_desc = "PMC1 Overflow",
 		.pme_long_desc = "PMC1 Overflow",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_PMC1_OVERFLOW],
@@ -4919,7 +4919,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_INST_CMPL ] = {
 		.pme_name = "PM_INST_CMPL",
-		.pme_code = 0x1,
+		.pme_code = 0x2,
 		.pme_short_desc = "Instructions completed",
 		.pme_long_desc = "Number of PPC instructions completed. ",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_INST_CMPL],
@@ -4927,7 +4927,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FXU_IDLE ] = {
 		.pme_name = "PM_FXU_IDLE",
-		.pme_code = 0x5002,
+		.pme_code = 0x100050,
 		.pme_short_desc = "FXU idle",
 		.pme_long_desc = "FXU0 and FXU1 are both idle",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FXU_IDLE],
@@ -5023,7 +5023,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FXU1_BUSY_FXU0_IDLE ] = {
 		.pme_name = "PM_FXU1_BUSY_FXU0_IDLE",
-		.pme_code = 0x4002,
+		.pme_code = 0x400050,
 		.pme_short_desc = "FXU1 busy FXU0 idle",
 		.pme_long_desc = "FXU0 was idle while FXU1 was busy",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FXU1_BUSY_FXU0_IDLE],
@@ -5151,7 +5151,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_PMC3_OVERFLOW ] = {
 		.pme_name = "PM_PMC3_OVERFLOW",
-		.pme_code = 0x400a,
+		.pme_code = 0x400014,
 		.pme_short_desc = "PMC3 Overflow",
 		.pme_long_desc = "PMC3 Overflow",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_PMC3_OVERFLOW],
@@ -5215,7 +5215,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_ISLB_MISS ] = {
 		.pme_name = "PM_ISLB_MISS",
-		.pme_code = 0x701,
+		.pme_code = 0x830e0,
 		.pme_short_desc = "Instruction SLB misses",
 		.pme_long_desc = "A SLB miss for an instruction fetch as occurred",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_ISLB_MISS],
@@ -5223,7 +5223,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_CYC ] = {
 		.pme_name = "PM_CYC",
-		.pme_code = 0x7,
+		.pme_code = 0x1e,
 		.pme_short_desc = "Processor cycles",
 		.pme_long_desc = "Processor cycles",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_CYC],
@@ -5263,7 +5263,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_1PLUS_PPC_CMPL ] = {
 		.pme_name = "PM_1PLUS_PPC_CMPL",
-		.pme_code = 0x5003,
+		.pme_code = 0x100004,
 		.pme_short_desc = "One or more PPC instruction completed",
 		.pme_long_desc = "A group containing at least one PPC instruction completed. For microcoded instructions that span multiple groups, this will only occur once.",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_1PLUS_PPC_CMPL],
@@ -5287,7 +5287,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_GCT_FULL_CYC ] = {
 		.pme_name = "PM_GCT_FULL_CYC",
-		.pme_code = 0x300,
+		.pme_code = 0x40086,
 		.pme_short_desc = "Cycles GCT full",
 		.pme_long_desc = "The ISU sends a signal indicating the gct is full. ",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_GCT_FULL_CYC],
@@ -5295,7 +5295,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_INST_FROM_L25_SHR ] = {
 		.pme_name = "PM_INST_FROM_L25_SHR",
-		.pme_code = 0x5426,
+		.pme_code = 0x442046,
 		.pme_short_desc = "Instruction fetched from L2.5 shared",
 		.pme_long_desc = "Instruction fetched from L2.5 shared",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_INST_FROM_L25_SHR],
@@ -5311,7 +5311,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_DC_PREF_STREAM_ALLOC ] = {
 		.pme_name = "PM_DC_PREF_STREAM_ALLOC",
-		.pme_code = 0x737,
+		.pme_code = 0x810a2,
 		.pme_short_desc = "D cache new prefetch stream allocated",
 		.pme_long_desc = "A new Prefetch Stream was allocated",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_DC_PREF_STREAM_ALLOC],
@@ -5319,7 +5319,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FPU1_FIN ] = {
 		.pme_name = "PM_FPU1_FIN",
-		.pme_code = 0x117,
+		.pme_code = 0xd0088,
 		.pme_short_desc = "FPU1 produced a result",
 		.pme_long_desc = "fp1 finished, produced a result. This only indicates finish, not completion. ",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FPU1_FIN],
@@ -5327,7 +5327,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_BR_MPRED_TA ] = {
 		.pme_name = "PM_BR_MPRED_TA",
-		.pme_code = 0x433,
+		.pme_code = 0x410ac,
 		.pme_short_desc = "Branch mispredictions due to target address",
 		.pme_long_desc = "branch miss predict due to a target address prediction. This signal will be asserted each time the branch execution unit detects an incorrect target address prediction. This signal will be asserted after a valid branch execution unit issue and will cause a branch mispredict flush unless a flush is detected from an older instruction.",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_BR_MPRED_TA],
@@ -5351,7 +5351,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_GCT_EMPTY_CYC ] = {
 		.pme_name = "PM_GCT_EMPTY_CYC",
-		.pme_code = 0x1004,
+		.pme_code = 0x1000f8,
 		.pme_short_desc = "Cycles GCT empty",
 		.pme_long_desc = "The Global Completion Table is completely empty",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_GCT_EMPTY_CYC],
@@ -5439,7 +5439,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_IC_PREF_REQ ] = {
 		.pme_name = "PM_IC_PREF_REQ",
-		.pme_code = 0x426,
+		.pme_code = 0x4008c,
 		.pme_short_desc = "Instruction prefetch requests",
 		.pme_long_desc = "Asserted when a non-canceled prefetch is made to the cache interface unit (CIU).",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_IC_PREF_REQ],
@@ -5527,7 +5527,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_TB_BIT_TRANS ] = {
 		.pme_name = "PM_TB_BIT_TRANS",
-		.pme_code = 0x8005,
+		.pme_code = 0x100026,
 		.pme_short_desc = "Time Base bit transition",
 		.pme_long_desc = "When the selected time base bit (as specified in MMCR0[TBSEL])transitions from 0 to 1 ",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_TB_BIT_TRANS],
@@ -5543,7 +5543,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FPU0_STF ] = {
 		.pme_name = "PM_FPU0_STF",
-		.pme_code = 0x122,
+		.pme_code = 0xc10a4,
 		.pme_short_desc = "FPU0 executed store instruction",
 		.pme_long_desc = "This signal is active for one cycle when fp0 is executing a store instruction.",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FPU0_STF],
@@ -5551,7 +5551,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FPU1_FMA ] = {
 		.pme_name = "PM_FPU1_FMA",
-		.pme_code = 0x105,
+		.pme_code = 0xc008a,
 		.pme_short_desc = "FPU1 executed multiply-add instruction",
 		.pme_long_desc = "This signal is active for one cycle when fp1 is executing multiply-add kind of instruction. This could be fmadd*, fnmadd*, fmsub*, fnmsub* where XYZ* means XYZ, XYZs, XYZ., XYZs.",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FPU1_FMA],
@@ -5671,7 +5671,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_LSU_DERAT_MISS ] = {
 		.pme_name = "PM_LSU_DERAT_MISS",
-		.pme_code = 0x6700,
+		.pme_code = 0x20000e,
 		.pme_short_desc = "DERAT misses",
 		.pme_long_desc = "Total DERAT Misses (Unit 0 + Unit 1). Requests that miss the Derat are rejected and retried until the request hits in the Erat. This may result in multiple erat misses for the same instruction.",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_LSU_DERAT_MISS],
@@ -5679,7 +5679,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FPU0_SINGLE ] = {
 		.pme_name = "PM_FPU0_SINGLE",
-		.pme_code = 0x123,
+		.pme_code = 0xc10a6,
 		.pme_short_desc = "FPU0 executed single precision instruction",
 		.pme_long_desc = "This signal is active for one cycle when fp0 is executing single precision instruction.",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FPU0_SINGLE],
@@ -5735,7 +5735,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_MRK_ST_CMPL_INT ] = {
 		.pme_name = "PM_MRK_ST_CMPL_INT",
-		.pme_code = 0x3003,
+		.pme_code = 0x300006,
 		.pme_short_desc = "Marked store completed with intervention",
 		.pme_long_desc = "A marked store previously sent to the memory subsystem completed (data home) after requiring intervention",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_MRK_ST_CMPL_INT],
@@ -5759,7 +5759,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FPU_STF ] = {
 		.pme_name = "PM_FPU_STF",
-		.pme_code = 0x6120,
+		.pme_code = 0x3c1030,
 		.pme_short_desc = "FPU executed store instruction",
 		.pme_long_desc = "FPU is executing a store instruction. Combined Unit 0 + Unit 1",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FPU_STF],
@@ -5823,7 +5823,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_MRK_DATA_FROM_L25_SHR ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L25_SHR",
-		.pme_code = 0x193d,
+		.pme_code = 0x40304e,
 		.pme_short_desc = "Marked data loaded from L2.5 shared",
 		.pme_long_desc = "DL1 was reloaded with shared (T or SL) data from the L2 of a chip on this MCM due to a marked demand load",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_MRK_DATA_FROM_L25_SHR],
@@ -5951,7 +5951,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FPU0_FEST ] = {
 		.pme_name = "PM_FPU0_FEST",
-		.pme_code = 0x112,
+		.pme_code = 0xd10a6,
 		.pme_short_desc = "FPU0 executed FEST instruction",
 		.pme_long_desc = "This signal is active for one cycle when fp0 is executing one of the estimate instructions. This could be fres* or frsqrte* where XYZ* means XYZ or XYZ. ",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FPU0_FEST],
@@ -5991,7 +5991,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_0INST_FETCH ] = {
 		.pme_name = "PM_0INST_FETCH",
-		.pme_code = 0x442d,
+		.pme_code = 0x40080,
 		.pme_short_desc = "No instructions fetched",
 		.pme_long_desc = "No instructions were fetched this cycles (due to IFU hold, redirect, or icache miss)",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_0INST_FETCH],
@@ -6007,7 +6007,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_L1_PREF ] = {
 		.pme_name = "PM_L1_PREF",
-		.pme_code = 0x731,
+		.pme_code = 0x810a4,
 		.pme_short_desc = "L1 cache data prefetches",
 		.pme_long_desc = "A request to prefetch data into the L1 was made",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_L1_PREF],
@@ -6039,7 +6039,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_PMC2_OVERFLOW ] = {
 		.pme_name = "PM_PMC2_OVERFLOW",
-		.pme_code = 0x300a,
+		.pme_code = 0x300014,
 		.pme_short_desc = "PMC2 Overflow",
 		.pme_long_desc = "PMC2 Overflow",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_PMC2_OVERFLOW],
@@ -6055,7 +6055,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FPU0_DENORM ] = {
 		.pme_name = "PM_FPU0_DENORM",
-		.pme_code = 0x120,
+		.pme_code = 0xc10a2,
 		.pme_short_desc = "FPU0 received denormalized data",
 		.pme_long_desc = "This signal is active for one cycle when one of the operands is denormalized.",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FPU0_DENORM],
@@ -6063,7 +6063,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_INST_FETCH_CYC ] = {
 		.pme_name = "PM_INST_FETCH_CYC",
-		.pme_code = 0x424,
+		.pme_code = 0x420c8,
 		.pme_short_desc = "Cycles at least 1 instruction fetched",
 		.pme_long_desc = "Asserted each cycle when the IFU sends at least one instruction to the IDU. ",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_INST_FETCH_CYC],
@@ -6071,7 +6071,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_LSU_LDF ] = {
 		.pme_name = "PM_LSU_LDF",
-		.pme_code = 0x8730,
+		.pme_code = 0x280032,
 		.pme_short_desc = "LSU executed Floating Point load instruction",
 		.pme_long_desc = "LSU executed Floating Point load instruction",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_LSU_LDF],
@@ -6103,7 +6103,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FPU_FMA ] = {
 		.pme_name = "PM_FPU_FMA",
-		.pme_code = 0x2100,
+		.pme_code = 0x2c0030,
 		.pme_short_desc = "FPU executed multiply-add instruction",
 		.pme_long_desc = "This signal is active for one cycle when FPU is executing multiply-add kind of instruction. This could be fmadd*, fnmadd*, fmsub*, fnmsub* where XYZ* means XYZ, XYZs, XYZ., XYZs. Combined Unit 0 + Unit 1",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FPU_FMA],
@@ -6127,7 +6127,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_INST_FROM_L25_MOD ] = {
 		.pme_name = "PM_INST_FROM_L25_MOD",
-		.pme_code = 0x6426,
+		.pme_code = 0x342046,
 		.pme_short_desc = "Instruction fetched from L2.5 modified",
 		.pme_long_desc = "Instruction fetched from L2.5 modified",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_INST_FROM_L25_MOD],
@@ -6335,7 +6335,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FPU1_STF ] = {
 		.pme_name = "PM_FPU1_STF",
-		.pme_code = 0x126,
+		.pme_code = 0xc10ac,
 		.pme_short_desc = "FPU1 executed store instruction",
 		.pme_long_desc = "This signal is active for one cycle when fp1 is executing a store instruction.",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FPU1_STF],
@@ -6399,7 +6399,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FPU0_FPSCR ] = {
 		.pme_name = "PM_FPU0_FPSCR",
-		.pme_code = 0x130,
+		.pme_code = 0xd0084,
 		.pme_short_desc = "FPU0 executed FPSCR instruction",
 		.pme_long_desc = "This signal is active for one cycle when fp0 is executing fpscr move related instruction. This could be mtfsfi*, mtfsb0*, mtfsb1*. mffs*, mtfsf*, mcrsf* where XYZ* means XYZ, XYZs, XYZ., XYZs",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FPU0_FPSCR],
@@ -6407,7 +6407,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_DATA_FROM_L2 ] = {
 		.pme_name = "PM_DATA_FROM_L2",
-		.pme_code = 0x1837,
+		.pme_code = 0x100058,
 		.pme_short_desc = "Data loaded from L2",
 		.pme_long_desc = "DL1 was reloaded from the local L2 due to a demand load",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_DATA_FROM_L2],
@@ -6439,7 +6439,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_LD_REF_L1 ] = {
 		.pme_name = "PM_LD_REF_L1",
-		.pme_code = 0x8810,
+		.pme_code = 0x80082,
 		.pme_short_desc = "L1 D cache load references",
 		.pme_long_desc = "Total DL1 Load references",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_LD_REF_L1],
@@ -6455,7 +6455,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_DC_PREF_OUT_OF_STREAMS ] = {
 		.pme_name = "PM_DC_PREF_OUT_OF_STREAMS",
-		.pme_code = 0x732,
+		.pme_code = 0x810a0,
 		.pme_short_desc = "D cache out of streams",
 		.pme_long_desc = "out of streams",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_DC_PREF_OUT_OF_STREAMS],
@@ -6503,7 +6503,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_BR_MPRED_CR ] = {
 		.pme_name = "PM_BR_MPRED_CR",
-		.pme_code = 0x432,
+		.pme_code = 0x410a8,
 		.pme_short_desc = "Branch mispredictions due to CR bit setting",
 		.pme_long_desc = "This signal is asserted when the branch execution unit detects a branch mispredict because the CR value is opposite of the predicted value. This signal is asserted after a branch issue event and will result in a branch redirect flush if not overridden by a flush of an older instruction.",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_BR_MPRED_CR],
@@ -6535,7 +6535,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_LD_MISS_L1 ] = {
 		.pme_name = "PM_LD_MISS_L1",
-		.pme_code = 0x3810,
+		.pme_code = 0x80080,
 		.pme_short_desc = "L1 D cache load misses",
 		.pme_long_desc = "Total DL1 Load references that miss the DL1",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_LD_MISS_L1],
@@ -6543,7 +6543,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_DC_INV_L2 ] = {
 		.pme_name = "PM_DC_INV_L2",
-		.pme_code = 0x817,
+		.pme_code = 0x150632,
 		.pme_short_desc = "L1 D cache entries invalidated from L2",
 		.pme_long_desc = "A dcache invalidated was received from the L2 because a line in L2 was castout.",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_DC_INV_L2],
@@ -6559,7 +6559,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FPU_FIN ] = {
 		.pme_name = "PM_FPU_FIN",
-		.pme_code = 0x4110,
+		.pme_code = 0x1d0030,
 		.pme_short_desc = "FPU produced a result",
 		.pme_long_desc = "FPU finished, produced a result This only indicates finish, not completion. Combined Unit 0 + Unit 1",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FPU_FIN],
@@ -6567,7 +6567,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FXU0_FIN ] = {
 		.pme_name = "PM_FXU0_FIN",
-		.pme_code = 0x332,
+		.pme_code = 0x300016,
 		.pme_short_desc = "FXU0 produced a result",
 		.pme_long_desc = "The Fixed Point unit 0 finished an instruction and produced a result",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FXU0_FIN],
@@ -6607,7 +6607,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_PMC5_OVERFLOW ] = {
 		.pme_name = "PM_PMC5_OVERFLOW",
-		.pme_code = 0x600a,
+		.pme_code = 0x100024,
 		.pme_short_desc = "PMC5 Overflow",
 		.pme_long_desc = "PMC5 Overflow",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_PMC5_OVERFLOW],
@@ -6687,7 +6687,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FPU1_SINGLE ] = {
 		.pme_name = "PM_FPU1_SINGLE",
-		.pme_code = 0x127,
+		.pme_code = 0xc10ae,
 		.pme_short_desc = "FPU1 executed single precision instruction",
 		.pme_long_desc = "This signal is active for one cycle when fp1 is executing single precision instruction.",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FPU1_SINGLE],
@@ -6743,7 +6743,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FPU0_FMA ] = {
 		.pme_name = "PM_FPU0_FMA",
-		.pme_code = 0x101,
+		.pme_code = 0xc0082,
 		.pme_short_desc = "FPU0 executed multiply-add instruction",
 		.pme_long_desc = "This signal is active for one cycle when fp0 is executing multiply-add kind of instruction. This could be fmadd*, fnmadd*, fmsub*, fnmsub* where XYZ* means XYZ, XYZs, XYZ., XYZs.",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FPU0_FMA],
@@ -6759,7 +6759,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_MRK_ST_GPS ] = {
 		.pme_name = "PM_MRK_ST_GPS",
-		.pme_code = 0x6003,
+		.pme_code = 0x200006,
 		.pme_short_desc = "Marked store sent to GPS",
 		.pme_long_desc = "A sampled store has been sent to the memory subsystem",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_MRK_ST_GPS],
@@ -6887,7 +6887,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_MRK_STCX_FAIL ] = {
 		.pme_name = "PM_MRK_STCX_FAIL",
-		.pme_code = 0x726,
+		.pme_code = 0x830e4,
 		.pme_short_desc = "Marked STCX failed",
 		.pme_long_desc = "A marked stcx (stwcx or stdcx) failed",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_MRK_STCX_FAIL],
@@ -6975,7 +6975,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_THRESH_TIMEO ] = {
 		.pme_name = "PM_THRESH_TIMEO",
-		.pme_code = 0x2003,
+		.pme_code = 0x300018,
 		.pme_short_desc = "Threshold timeout",
 		.pme_long_desc = "The threshold timer expired",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_THRESH_TIMEO],
@@ -7015,7 +7015,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FPU_FEST ] = {
 		.pme_name = "PM_FPU_FEST",
-		.pme_code = 0x3110,
+		.pme_code = 0x4d1030,
 		.pme_short_desc = "FPU executed FEST instruction",
 		.pme_long_desc = "This signal is active for one cycle when executing one of the estimate instructions. This could be fres* or frsqrte* where XYZ* means XYZ or XYZ. Combined Unit 0 + Unit 1.",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FPU_FEST],
@@ -7231,7 +7231,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FXU1_FIN ] = {
 		.pme_name = "PM_FXU1_FIN",
-		.pme_code = 0x336,
+		.pme_code = 0x400016,
 		.pme_short_desc = "FXU1 produced a result",
 		.pme_long_desc = "The Fixed Point unit 1 finished an instruction and produced a result",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FXU1_FIN],
@@ -7311,7 +7311,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_LSU_LMQ_FULL_CYC ] = {
 		.pme_name = "PM_LSU_LMQ_FULL_CYC",
-		.pme_code = 0x837,
+		.pme_code = 0x810ac,
 		.pme_short_desc = "Cycles LMQ full",
 		.pme_long_desc = "The LMQ was full",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_LSU_LMQ_FULL_CYC],
@@ -7399,7 +7399,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_ST_REF_L1 ] = {
 		.pme_name = "PM_ST_REF_L1",
-		.pme_code = 0x7810,
+		.pme_code = 0x80086,
 		.pme_short_desc = "L1 D cache store references",
 		.pme_long_desc = "Total DL1 Store references",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_ST_REF_L1],
@@ -7423,7 +7423,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_RUN_CYC ] = {
 		.pme_name = "PM_RUN_CYC",
-		.pme_code = 0x1005,
+		.pme_code = 0x10000a,
 		.pme_short_desc = "Run cycles",
 		.pme_long_desc = "Processor Cycles gated by the run latch",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_RUN_CYC],
@@ -7439,7 +7439,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_LSU0_LDF ] = {
 		.pme_name = "PM_LSU0_LDF",
-		.pme_code = 0x730,
+		.pme_code = 0x80084,
 		.pme_short_desc = "LSU0 executed Floating Point load instruction",
 		.pme_long_desc = "A floating point load was executed from LSU unit 0",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_LSU0_LDF],
@@ -7447,7 +7447,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_ST_MISS_L1 ] = {
 		.pme_name = "PM_ST_MISS_L1",
-		.pme_code = 0x813,
+		.pme_code = 0x80088,
 		.pme_short_desc = "L1 D cache store misses",
 		.pme_long_desc = "A store missed the dcache",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_ST_MISS_L1],
@@ -7487,7 +7487,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_MRK_DATA_FROM_L25_MOD ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L25_MOD",
-		.pme_code = 0x393d,
+		.pme_code = 0x30304e,
 		.pme_short_desc = "Marked data loaded from L2.5 modified",
 		.pme_long_desc = "DL1 was reloaded with modified (M) data from the L2 of a chip on this MCM due to a marked demand load",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_MRK_DATA_FROM_L25_MOD],
@@ -7535,7 +7535,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_EE_OFF_EXT_INT ] = {
 		.pme_name = "PM_EE_OFF_EXT_INT",
-		.pme_code = 0x337,
+		.pme_code = 0x230ee,
 		.pme_short_desc = "Cycles MSR(EE) bit off and external interrupt pending",
 		.pme_long_desc = "Cycles MSR(EE) bit off and external interrupt pending",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_EE_OFF_EXT_INT],
@@ -7551,7 +7551,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_PMC6_OVERFLOW ] = {
 		.pme_name = "PM_PMC6_OVERFLOW",
-		.pme_code = 0x700a,
+		.pme_code = 0x300024,
 		.pme_short_desc = "PMC6 Overflow",
 		.pme_long_desc = "PMC6 Overflow",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_PMC6_OVERFLOW],
@@ -7567,7 +7567,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FXU_BUSY ] = {
 		.pme_name = "PM_FXU_BUSY",
-		.pme_code = 0x6002,
+		.pme_code = 0x200050,
 		.pme_short_desc = "FXU busy",
 		.pme_long_desc = "FXU0 and FXU1 are both busy",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FXU_BUSY],
@@ -7639,7 +7639,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_MRK_FPU_FIN ] = {
 		.pme_name = "PM_MRK_FPU_FIN",
-		.pme_code = 0x7004,
+		.pme_code = 0x2d0030,
 		.pme_short_desc = "Marked instruction FPU processing finished",
 		.pme_long_desc = "One of the Floating Point Units finished a marked instruction. Instructions that finish may not necessary complete",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_MRK_FPU_FIN],
@@ -7735,7 +7735,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FPU_DENORM ] = {
 		.pme_name = "PM_FPU_DENORM",
-		.pme_code = 0x1120,
+		.pme_code = 0x2c1034,
 		.pme_short_desc = "FPU received denormalized data",
 		.pme_long_desc = "This signal is active for one cycle when one of the operands is denormalized. Combined Unit 0 + Unit 1",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FPU_DENORM],
@@ -7871,7 +7871,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_MRK_INST_FIN ] = {
 		.pme_name = "PM_MRK_INST_FIN",
-		.pme_code = 0x7005,
+		.pme_code = 0x30000a,
 		.pme_short_desc = "Marked instruction finished",
 		.pme_long_desc = "One of the execution units finished a marked instruction. Instructions that finish may not necessary complete",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_MRK_INST_FIN],
@@ -7935,7 +7935,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FPU1_FEST ] = {
 		.pme_name = "PM_FPU1_FEST",
-		.pme_code = 0x116,
+		.pme_code = 0xd10ae,
 		.pme_short_desc = "FPU1 executed FEST instruction",
 		.pme_long_desc = "This signal is active for one cycle when fp1 is executing one of the estimate instructions. This could be fres* or frsqrte* where XYZ* means XYZ or XYZ. ",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FPU1_FEST],
@@ -8031,7 +8031,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FXU0_BUSY_FXU1_IDLE ] = {
 		.pme_name = "PM_FXU0_BUSY_FXU1_IDLE",
-		.pme_code = 0x7002,
+		.pme_code = 0x300050,
 		.pme_short_desc = "FXU0 busy FXU1 idle",
 		.pme_long_desc = "FXU0 is busy while FXU1 was idle",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FXU0_BUSY_FXU1_IDLE],
@@ -8151,7 +8151,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FPU0_FIN ] = {
 		.pme_name = "PM_FPU0_FIN",
-		.pme_code = 0x113,
+		.pme_code = 0xd0080,
 		.pme_short_desc = "FPU0 produced a result",
 		.pme_long_desc = "fp0 finished, produced a result This only indicates finish, not completion. ",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FPU0_FIN],
@@ -8239,7 +8239,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_DATA_FROM_L25_MOD ] = {
 		.pme_name = "PM_DATA_FROM_L25_MOD",
-		.pme_code = 0x383d,
+		.pme_code = 0x30005a,
 		.pme_short_desc = "Data loaded from L2.5 modified",
 		.pme_long_desc = "DL1 was reloaded with modified (M) data from the L2 of a chip on this MCM due to a demand load",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_DATA_FROM_L25_MOD],
@@ -8255,7 +8255,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_LSU_LMQ_SRQ_EMPTY_CYC ] = {
 		.pme_name = "PM_LSU_LMQ_SRQ_EMPTY_CYC",
-		.pme_code = 0x2002,
+		.pme_code = 0x20001c,
 		.pme_short_desc = "Cycles LMQ and SRQ empty",
 		.pme_long_desc = "Cycles when both the LMQ and SRQ are empty (LSU is idle)",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_LSU_LMQ_SRQ_EMPTY_CYC],
@@ -8303,7 +8303,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_INST_FROM_L2 ] = {
 		.pme_name = "PM_INST_FROM_L2",
-		.pme_code = 0x1426,
+		.pme_code = 0x142040,
 		.pme_short_desc = "Instructions fetched from L2",
 		.pme_long_desc = "An instruction fetch group was fetched from L2. Fetch Groups can contain up to 8 instructions",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_INST_FROM_L2],
@@ -8311,7 +8311,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_INST_DISP ] = {
 		.pme_name = "PM_INST_DISP",
-		.pme_code = 0x320,
+		.pme_code = 0x200012,
 		.pme_short_desc = "Instructions dispatched",
 		.pme_long_desc = "The ISU sends the number of instructions dispatched.",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_INST_DISP],
@@ -8319,7 +8319,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_DATA_FROM_L25_SHR ] = {
 		.pme_name = "PM_DATA_FROM_L25_SHR",
-		.pme_code = 0x183d,
+		.pme_code = 0x40005a,
 		.pme_short_desc = "Data loaded from L2.5 shared",
 		.pme_long_desc = "DL1 was reloaded with shared (T or SL) data from the L2 of a chip on this MCM due to a demand load",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_DATA_FROM_L25_SHR],
@@ -8327,7 +8327,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_L1_DCACHE_RELOAD_VALID ] = {
 		.pme_name = "PM_L1_DCACHE_RELOAD_VALID",
-		.pme_code = 0x834,
+		.pme_code = 0x3000f6,
 		.pme_short_desc = "L1 reload data source valid",
 		.pme_long_desc = "The data source information is valid",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_L1_DCACHE_RELOAD_VALID],
@@ -8351,7 +8351,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_MRK_FXU_FIN ] = {
 		.pme_name = "PM_MRK_FXU_FIN",
-		.pme_code = 0x6004,
+		.pme_code = 0x20001a,
 		.pme_short_desc = "Marked instruction FXU processing finished",
 		.pme_long_desc = "The fixed point units (Unit 0 + Unit 1) finished a marked instruction. Instructions that finish may not necessary complete.",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_MRK_FXU_FIN],
@@ -8367,7 +8367,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_PMC4_OVERFLOW ] = {
 		.pme_name = "PM_PMC4_OVERFLOW",
-		.pme_code = 0x500a,
+		.pme_code = 0x100014,
 		.pme_short_desc = "PMC4 Overflow",
 		.pme_long_desc = "PMC4 Overflow",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_PMC4_OVERFLOW],
@@ -8439,7 +8439,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_LSU0_DERAT_MISS ] = {
 		.pme_name = "PM_LSU0_DERAT_MISS",
-		.pme_code = 0x702,
+		.pme_code = 0x910a6,
 		.pme_short_desc = "LSU0 DERAT misses",
 		.pme_long_desc = "A data request (load or store) from LSU Unit 0 missed the ERAT and resulted in an ERAT reload. Multiple instructions may miss the ERAT entry for the same 4K page, but only one reload will occur.",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_LSU0_DERAT_MISS],
@@ -8455,7 +8455,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_MRK_DATA_FROM_L2 ] = {
 		.pme_name = "PM_MRK_DATA_FROM_L2",
-		.pme_code = 0x1937,
+		.pme_code = 0x103048,
 		.pme_short_desc = "Marked data loaded from L2",
 		.pme_long_desc = "DL1 was reloaded from the local L2 due to a marked demand load",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_MRK_DATA_FROM_L2],
@@ -8495,7 +8495,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_LSU_SRQ_EMPTY_CYC ] = {
 		.pme_name = "PM_LSU_SRQ_EMPTY_CYC",
-		.pme_code = 0x4003,
+		.pme_code = 0x40001c,
 		.pme_short_desc = "Cycles SRQ empty",
 		.pme_long_desc = "The Store Request Queue is empty",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_LSU_SRQ_EMPTY_CYC],
@@ -8559,7 +8559,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_STCX_FAIL ] = {
 		.pme_name = "PM_STCX_FAIL",
-		.pme_code = 0x721,
+		.pme_code = 0x830ee,
 		.pme_short_desc = "STCX failed",
 		.pme_long_desc = "A stcx (stwcx or stdcx) failed",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_STCX_FAIL],
@@ -8567,7 +8567,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_FPU1_DENORM ] = {
 		.pme_name = "PM_FPU1_DENORM",
-		.pme_code = 0x124,
+		.pme_code = 0xc10aa,
 		.pme_short_desc = "FPU1 received denormalized data",
 		.pme_long_desc = "This signal is active for one cycle when one of the operands is denormalized.",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_FPU1_DENORM],
@@ -8639,7 +8639,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_INST_FROM_L1 ] = {
 		.pme_name = "PM_INST_FROM_L1",
-		.pme_code = 0x142d,
+		.pme_code = 0x40082,
 		.pme_short_desc = "Instruction fetched from L1",
 		.pme_long_desc = "An instruction fetch group was fetched from L1. Fetch Groups can contain up to 8 instructions",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_INST_FROM_L1],
@@ -8687,7 +8687,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_MRK_LD_MISS_L1 ] = {
 		.pme_name = "PM_MRK_LD_MISS_L1",
-		.pme_code = 0x1720,
+		.pme_code = 0x200056,
 		.pme_short_desc = "Marked L1 D cache load misses",
 		.pme_long_desc = "Marked L1 D cache load misses",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_MRK_LD_MISS_L1],
@@ -8695,7 +8695,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_L1_WRITE_CYC ] = {
 		.pme_name = "PM_L1_WRITE_CYC",
-		.pme_code = 0x434,
+		.pme_code = 0x430e2,
 		.pme_short_desc = "Cycles writing to instruction L1",
 		.pme_long_desc = "This signal is asserted each cycle a cache write is active.",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_L1_WRITE_CYC],
@@ -8799,7 +8799,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_HV_CYC ] = {
 		.pme_name = "PM_HV_CYC",
-		.pme_code = 0x3004,
+		.pme_code = 0x200016,
 		.pme_short_desc = "Hypervisor Cycles",
 		.pme_long_desc = "Cycles when the processor is executing in Hypervisor (MSR[HV] = 1 and MSR[PR]=0)",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_HV_CYC],
@@ -8807,7 +8807,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_LSU1_DERAT_MISS ] = {
 		.pme_name = "PM_LSU1_DERAT_MISS",
-		.pme_code = 0x706,
+		.pme_code = 0x910ae,
 		.pme_short_desc = "LSU1 DERAT misses",
 		.pme_long_desc = "A data request (load or store) from LSU Unit 1 missed the ERAT and resulted in an ERAT reload. Multiple instructions may miss the ERAT entry for the same 4K page, but only one reload will occur.",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_LSU1_DERAT_MISS],
@@ -8823,7 +8823,7 @@ static const pme_power_entry_t power6_pe[] = {
 	},
 	[ POWER6_PME_PM_MRK_LSU_FIN ] = {
 		.pme_name = "PM_MRK_LSU_FIN",
-		.pme_code = 0x8004,
+		.pme_code = 0x40001a,
 		.pme_short_desc = "Marked instruction LSU processing finished",
 		.pme_long_desc = "One of the Load/Store Units finished a marked instruction. Instructions that finish may not necessary complete",
 		.pme_event_ids = power6_event_ids[POWER6_PME_PM_MRK_LSU_FIN],

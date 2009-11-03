@@ -2391,8 +2391,37 @@ static pme_amd64_entry_t amd64_fam10h_pe[]={
 		},
 	 },
 	},
+/* 123 */{.pme_name = "IBSOP_EVENT",
+       .pme_code  = 0xFF,
+       .pme_desc  = "Enable IBS OP mode (pseudo event)",
+       .pme_flags = 0,
+       .pme_numasks = 1,
+       .pme_umasks  = {
+               { .pme_uname = "CYCLES",
+                 .pme_udesc = "sample cycles",
+                 .pme_ucode = 0x01,
+               },
+        },
+       },
+/* 124 */{.pme_name = "IBSFETCH_EVENT",
+       .pme_code  = 0xFF,
+       .pme_desc  = "Enable IBS Fetch mode (pseudo event)",
+       .pme_flags = 0,
+       .pme_numasks = 2,
+       .pme_umasks  = {
+               { .pme_uname = "RANDOM",
+                 .pme_udesc = "randomize period",
+                 .pme_ucode = 0x01,
+               },
+               { .pme_uname = "NO_RANDOM",
+                 .pme_udesc = "do not randomize period",
+               }
+        },
+       },
 };
 
 #define PME_AMD64_FAM10H_EVENT_COUNT		(sizeof(amd64_fam10h_pe)/sizeof(pme_amd64_entry_t))
 #define PME_AMD64_FAM10H_CPU_CLK_UNHALTED	36
 #define PME_AMD64_FAM10H_RETIRED_INSTRUCTIONS	54
+#define PME_AMD64_IBSOP				123
+#define PME_AMD64_IBSFETCH			124
