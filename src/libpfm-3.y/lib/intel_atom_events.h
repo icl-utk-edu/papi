@@ -112,6 +112,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 	},
 /* 6  */{.pme_name = "MISPREDICTED_BRANCH_RETIRED",
 	.pme_code  = 0xc5,
+	.pme_flags = PFMLIB_INTEL_ATOM_PEBS,
 	.pme_desc  = "Mispredicted branch instruction retired"
 	},
 	
@@ -263,7 +264,7 @@ static pme_intel_atom_entry_t intel_atom_pe[]={
 		INTEL_ATOM_CORE,
 		INTEL_ATOM_AGENT
 	  },
-	  .pme_numasks = 3
+	  .pme_numasks = 4
 	}, 
 	{ .pme_name   = "BUS_TRANS_RFO",
 	  .pme_desc   = "RFO bus transactions.",

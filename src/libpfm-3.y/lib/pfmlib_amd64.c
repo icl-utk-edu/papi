@@ -439,47 +439,95 @@ pfm_amd64_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_amd64_input_param_
 
 			umask |= pfm_amd64_get_event_entry(e[j].event)->pme_umasks[e[j].unit_masks[k]].pme_ucode;
 		}
-		reg.sel_unit_mask  = umask;
-		reg.sel_usr        = plm & PFM_PLM3 ? 1 : 0;
-		reg.sel_os         = plm & PFM_PLM0 ? 1 : 0;
-		reg.sel_en         = 1; /* force enable bit to 1 */
-		reg.sel_int        = 1; /* force APIC int to 1 */
-		if (cntrs) {
-			reg.sel_cnt_mask = cntrs[j].cnt_mask;
-			reg.sel_edge	 = cntrs[j].flags & PFM_AMD64_SEL_EDGE ? 1 : 0;
-			reg.sel_inv	 = cntrs[j].flags & PFM_AMD64_SEL_INV ? 1 : 0;
-			reg.sel_guest	 = cntrs[j].flags & PFM_AMD64_SEL_GUEST ? 1 : 0;
-			reg.sel_host	 = cntrs[j].flags & PFM_AMD64_SEL_HOST ? 1 : 0;
-		}
-		pc[j].reg_num   = assign[j];
-		if ((IS_FAM10H_ONLY(reg)) && !IS_FAMILY_10H())
-			return PFMLIB_ERR_BADHOST;
-		pc[j].reg_value = reg.val;
-		pc[j].reg_addr	= AMD64_SEL_BASE+assign[j];
-		pc[j].reg_alt_addr = AMD64_SEL_BASE+assign[j];
+               if (e[j].event == PME_AMD64_IBSOP) {
+                       ibsopctl_t ibsopctl;
+
+                       ibsopctl.val = 0;
+                       ibsopctl.reg.ibsopen = 1;
+
+                       pc[j].reg_value = ibsopctl.val;
+                       pc[j].reg_num   = PMU_AMD64_IBSOPCTL_PMC;
+                       pc[j].reg_addr  = 0xc0011033;
+
+                       __pfm_vbprintf("[IBSOPCTL(pmc%u)=0x%llx en=%d maxcnt=0x%x]\n",
+                                       PMU_AMD64_IBSOPCTL_PMD,
+                                       ibsopctl.val,
+                                       ibsopctl.reg.ibsopen,
+                                       ibsopctl.reg.ibsopmaxcnt);
+
+                       pd[j].reg_num   = PMU_AMD64_IBSOPCTL_PMD;
+                       pd[j].reg_addr  = 0xc0011033;
+                       __pfm_vbprintf("[IBSOPCTL(pmd%u)]\n", PMU_AMD64_IBSOPCTL_PMD);
+
+               } else if (e[j].event == PME_AMD64_IBSFETCH) {
+                       ibsfetchctl_t ibsfetchctl;
+
+                       ibsfetchctl.val = 0;
+                       ibsfetchctl.reg.ibsfetchen = 1;
+                       ibsfetchctl.reg.ibsranden = umask == 0x1 ? 1 : 0;
+
+                       pc[j].reg_value = ibsfetchctl.val;
+                       pc[j].reg_num   = PMU_AMD64_IBSFETCHCTL_PMC;
+                       pc[j].reg_addr  = 0xc0011031;
+
+                       pd[j].reg_num   = PMU_AMD64_IBSFETCHCTL_PMD;
+                       pd[j].reg_addr  = 0xc0011031;
+
+                       __pfm_vbprintf("[IBSFETCHCTL(pmc%u)=0x%llx en=%d maxcnt=0x%x rand=%u]\n",
+                                       PMU_AMD64_IBSFETCHCTL_PMD,
+                                       ibsfetchctl.val,
+                                       ibsfetchctl.reg.ibsfetchen,
+                                       ibsfetchctl.reg.ibsfetchmaxcnt,
+                                       ibsfetchctl.reg.ibsranden);
+
+                       __pfm_vbprintf("[IBSOPFETCH(pmd%u)]\n", PMU_AMD64_IBSFETCHCTL_PMD);
+
+               } else {
+                       reg.sel_unit_mask  = umask;
+                       reg.sel_usr        = plm & PFM_PLM3 ? 1 : 0;
+                       reg.sel_os         = plm & PFM_PLM0 ? 1 : 0;
+                       reg.sel_en         = 1; /* force enable bit to 1 */
+                       reg.sel_int        = 1; /* force APIC int to 1 */
+                       if (cntrs) {
+                               reg.sel_cnt_mask = cntrs[j].cnt_mask;
+                               reg.sel_edge     = cntrs[j].flags & PFM_AMD64_SEL_EDGE ? 1 : 0;
+                               reg.sel_inv      = cntrs[j].flags & PFM_AMD64_SEL_INV ? 1 : 0;
+                               reg.sel_guest    = cntrs[j].flags & PFM_AMD64_SEL_GUEST ? 1 : 0;
+                               reg.sel_host     = cntrs[j].flags & PFM_AMD64_SEL_HOST ? 1 : 0;
+                       }
+                       pc[j].reg_num   = assign[j];
+
+                       if ((IS_FAM10H_ONLY(reg)) && !IS_FAMILY_10H())
+                               return PFMLIB_ERR_BADHOST;
+
+                       pc[j].reg_value = reg.val;
+                       pc[j].reg_addr  = AMD64_SEL_BASE+assign[j];
+                       pc[j].reg_alt_addr = AMD64_SEL_BASE+assign[j];
 
 
-		pd[j].reg_num  = assign[j];
-		pd[j].reg_addr = AMD64_CTR_BASE+assign[j];
-		/* index to use with RDPMC */
-		pd[j].reg_alt_addr = assign[j];
+                       pd[j].reg_num  = assign[j];
+                       pd[j].reg_addr = AMD64_CTR_BASE+assign[j];
+                       /* index to use with RDPMC */
+                       pd[j].reg_alt_addr = assign[j];
 
-		__pfm_vbprintf("[PERFSEL%u(pmc%u)=0x%llx emask=0x%x umask=0x%x os=%d usr=%d inv=%d en=%d int=%d edge=%d cnt_mask=%d] %s\n",
-			assign[j],
-			assign[j],
-			reg.val,
-			reg.sel_event_mask,
-			reg.sel_unit_mask,
-			reg.sel_os,
-			reg.sel_usr,
-			reg.sel_inv,
-			reg.sel_en,
-			reg.sel_int,
-			reg.sel_edge,
-			reg.sel_cnt_mask,
-			pfm_amd64_get_event_entry(e[j].event)->pme_name);
+                       __pfm_vbprintf("[PERFSEL%u(pmc%u)=0x%llx emask=0x%x umask=0x%x os=%d usr=%d inv=%d en=%d int=%d edge=%d cnt_mask=%d] %s\n",
+                                       assign[j],
+                                       assign[j],
+                                       reg.val,
+                                       reg.sel_event_mask,
+                                       reg.sel_unit_mask,
+                                       reg.sel_os,
+                                       reg.sel_usr,
+                                       reg.sel_inv,
+                                       reg.sel_en,
+                                       reg.sel_int,
+                                       reg.sel_edge,
+                                       reg.sel_cnt_mask,
+                                       pfm_amd64_get_event_entry(e[j].event)->pme_name);
 
-		__pfm_vbprintf("[PERFCTR%u(pmd%u)]\n", pd[j].reg_num, pd[j].reg_num);
+                       __pfm_vbprintf("[PERFCTR%u(pmd%u)]\n", pd[j].reg_num, pd[j].reg_num);
+               }
+
 	}
 	/* number of evtsel/ctr registers programmed */
 	outp->pfp_pmc_count = cnt;

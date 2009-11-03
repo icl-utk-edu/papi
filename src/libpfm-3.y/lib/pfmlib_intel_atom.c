@@ -123,6 +123,8 @@ pfm_intel_atom_detect(void)
 static int
 pfm_intel_atom_init(void)
 {
+	int i;
+
 	/* generic counters */
 	pfm_regmask_set(&intel_atom_impl_pmcs, 0);
 	pfm_regmask_set(&intel_atom_impl_pmds, 0);
@@ -136,6 +138,11 @@ pfm_intel_atom_init(void)
 	pfm_regmask_set(&intel_atom_impl_pmds, 16);
 	pfm_regmask_set(&intel_atom_impl_pmds, 17);
 	pfm_regmask_set(&intel_atom_impl_pmds, 18);
+
+	/* lbr */
+	pfm_regmask_set(&intel_atom_impl_pmds, 19);
+	for(i=0; i < 16; i++)
+		pfm_regmask_set(&intel_atom_impl_pmds, i);
 
 	highest_counter = 18;
 
@@ -649,8 +656,11 @@ pfm_intel_atom_get_impl_pmds(pfmlib_regmask_t *impl_pmds)
 static void
 pfm_intel_atom_get_impl_counters(pfmlib_regmask_t *impl_counters)
 {
-	/* all pmds are counters */
-	*impl_counters = intel_atom_impl_pmds;
+	pfm_regmask_set(impl_counters, 0);
+	pfm_regmask_set(impl_counters, 1);
+	pfm_regmask_set(impl_counters, 16);
+	pfm_regmask_set(impl_counters, 17);
+	pfm_regmask_set(impl_counters, 18);
 }
 
 /*
@@ -772,7 +782,7 @@ pfm_pmu_support_t intel_atom_support={
 	.pmu_type		= PFMLIB_INTEL_ATOM_PMU,
 	.pme_count		= PME_INTEL_ATOM_EVENT_COUNT,
 	.pmc_count		= 4,
-	.pmd_count		= 5,
+	.pmd_count		= 22,
 	.num_cnt		= 5,
 	.get_event_code		= pfm_intel_atom_get_event_code,
 	.get_event_name		= pfm_intel_atom_get_event_name,

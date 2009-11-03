@@ -54,6 +54,7 @@ HEADERS += perfmon/pfmlib_os_x86_64.h   \
 	   perfmon/pfmlib_i386_p6.h	\
 	   perfmon/perfmon_pebs_p4_smpl.h  \
 	   perfmon/perfmon_pebs_core_smpl.h  \
+	   perfmon/perfmon_pebs_smpl.h  \
 	   perfmon/pfmlib_amd64.h	\
 	   perfmon/pfmlib_pentium4.h	\
 	   perfmon/pfmlib_core.h	\
@@ -68,8 +69,9 @@ ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
 HEADERS += perfmon/pfmlib_os_i386.h   	\
 	   perfmon/pfmlib_comp_i386.h 	\
 	   perfmon/perfmon_i386.h     	\
-	   perfmon/perfmon_pebs_p4_smpl.h	\
-	   perfmon/perfmon_pebs_core_smpl.h	\
+	   perfmon/perfmon_pebs_p4_smpl.h \
+	   perfmon/perfmon_pebs_core_smpl.h \
+	   perfmon/perfmon_pebs_smpl.h  \
 	   perfmon/pfmlib_amd64.h       \
 	   perfmon/pfmlib_pentium4.h    \
 	   perfmon/pfmlib_core.h        \

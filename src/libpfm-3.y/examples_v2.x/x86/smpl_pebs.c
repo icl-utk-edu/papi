@@ -1,8 +1,8 @@
 /*
- * smpl_core_pebs.c - Intel Core processor PEBS example
+ * smpl_pebs.c - Unified Intel PEBS sampling example
  *
- * Copyright (c) 2006 Hewlett-Packard Development Company, L.P.
- * Contributed by Stephane Eranian <eranian@hpl.hp.com>
+ * Copyright (c) 2009 Google, Inc
+ * Contributed by Stephane Eranian <eranian@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,52 +38,32 @@
 #include <sys/wait.h>
 #include <sys/ptrace.h>
 #include <sys/mman.h>
+#include <err.h>
 #include <perfmon/perfmon.h>
-#include <perfmon/perfmon_pebs_core_smpl.h>
+#include <perfmon/perfmon_pebs_smpl.h>
 
 #include <perfmon/pfmlib.h>
 #include <perfmon/pfmlib_core.h>
-#include <perfmon/pfmlib_intel_atom.h>
+#include <perfmon/pfmlib_intel_nhm.h>
 
 #include "../detect_pmcs.h"
 
-#define SMPL_EVENT	"INST_RETIRED:ANY_P" /* not all events support PEBS */
+#define SMPL_EVENT	"INST_RETIRED:ANY_P" /* PEBS event on all processors */
 
 #define NUM_PMCS	16
 #define NUM_PMDS	16
 
-#define SMPL_PERIOD	100000ULL	 /* must not use more bits than actual HW counter width */
+#define SMPL_PERIOD	240000ULL /* must not use more bits than actual HW counter width */
 
-typedef pfm_pebs_core_smpl_hdr_t	smpl_hdr_t;
-typedef pfm_pebs_core_smpl_entry_t	smpl_entry_t;
-typedef pfm_pebs_core_smpl_arg_t	smpl_arg_t;
-#define FMT_NAME			PFM_PEBS_CORE_SMPL_NAME
+typedef pfm_pebs_smpl_hdr_t	smpl_hdr_t;
+typedef pfm_pebs_smpl_arg_t	smpl_arg_t;
+#define FMT_NAME		PFM_PEBS_SMPL_NAME
 
 static uint64_t collected_samples;
+static uint64_t last_overflow = ~0; /* initialize to biggest value possible */
 
-static void fatal_error(char *fmt,...) __attribute__((noreturn));
-
-static void
-fatal_error(char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-
-	exit(1);
-}
-
-static void
-warning(char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-}
+static void (*print_entry)(uint64_t entry, void *addr);
+static int maxpebs = 1; /* 1=Atom/Core, up to 4 on Nehalem */
 
 int
 child(char **arg)
@@ -100,18 +80,58 @@ child(char **arg)
 }
 
 static void
+print_p4_entry(uint64_t entry, void *addr)
+{
+	pfm_pebs_p4_smpl_entry_t *ent = addr;
+
+	printf("entry %06"PRIu64" eflags:0x%08llx EAX:0x%08llx ESP:0x%08llx IP:0x%08llx\n",
+		entry,
+		(unsigned long long)ent->eflags,
+		(unsigned long long)ent->eax,
+		(unsigned long long)ent->esp,
+		(unsigned long long)ent->ip);
+}
+
+
+static void
+print_core_entry(uint64_t entry, void *addr)
+{
+	pfm_pebs_core_smpl_entry_t *ent = addr;
+
+	printf("entry %06"PRIu64" eflags:0x%08llx EAX:0x%08llx ESP:0x%08llx IP:0x%08llx\n",
+		entry,
+		(unsigned long long)ent->eflags,
+		(unsigned long long)ent->eax,
+		(unsigned long long)ent->esp,
+		(unsigned long long)ent->ip);
+}
+
+static void
+print_nhm_entry(uint64_t entry, void *addr)
+{
+	pfm_pebs_nhm_smpl_entry_t *ent = addr;
+
+	printf("entry %06"PRIu64" eflags:0x%08llx EAX:0x%08llx ESP:0x%08llx IP:0x%08llx OVFL:0x%08llx\n",
+		entry,
+		(unsigned long long)ent->eflags,
+		(unsigned long long)ent->eax,
+		(unsigned long long)ent->esp,
+		(unsigned long long)ent->ip,
+		(unsigned long long)ent->ia32_perf_global_status);
+}
+
+static void
 process_smpl_buf(smpl_hdr_t *hdr)
 {
-	static uint64_t last_overflow = ~0; /* initialize to biggest value possible */
 	static uint64_t last_count;
-	smpl_entry_t *ent;
+	void *ent;
 	uint64_t entry;
 	unsigned long count;
 
-	count = (hdr->ds.pebs_index - hdr->ds.pebs_buf_base)/sizeof(*ent);
+	count = hdr->count;
 
 	if (hdr->overflows == last_overflow && last_count == count) {
-		warning("skipping identical set of samples %"PRIu64" = %"PRIu64"\n",
+		warnx("skipping identical set of samples %"PRIu64" = %"PRIu64"\n",
 			hdr->overflows, last_overflow);
 		return;	
 	}
@@ -122,20 +142,12 @@ process_smpl_buf(smpl_hdr_t *hdr)
 	 * the beginning of the buffer does not necessarily follow the header
 	 * due to alignement.
 	 */
-	ent   = (smpl_entry_t *)((unsigned long)(hdr+1)+ hdr->start_offs);
+	ent   = (hdr+1);
 	entry = collected_samples;
 
 	while(count--) {
-		/*
-		 * print some of the machine registers of each sample
-		 */
-		printf("entry %06"PRIu64" eflags:0x%08llx EAX:0x%08llx ESP:0x%08llx IP:0x%08llx\n",
-			entry,
-			(unsigned long long)ent->eflags,
-			(unsigned long long)ent->eax,
-			(unsigned long long)ent->esp,
-			(unsigned long long)ent->ip);
-		ent++;
+		(*print_entry)(entry, ent);
+		ent += hdr->entry_size;
 		entry++;
 	}
 	collected_samples = entry;
@@ -147,7 +159,9 @@ main(int argc, char **argv)
 {
 	pfmlib_input_param_t inp;
 	pfmlib_output_param_t outp;
-	pfmlib_core_input_param_t mod_inp;
+	pfmlib_core_input_param_t core_inp;
+	pfmlib_nhm_input_param_t nhm_inp;
+	void *mod_inp = NULL;
 	pfmlib_options_t pfmlib_options;
 	pfarg_pmd_t pd[NUM_PMDS];
 	pfarg_pmc_t pc[NUM_PMCS];
@@ -162,17 +176,36 @@ main(int argc, char **argv)
 	unsigned int i;
 
 	if (argc < 2)
-		fatal_error("you need to pass a program to sample\n");
+		errx(1, "you need to pass a program to sample");
 
 	if (pfm_initialize() != PFMLIB_SUCCESS)
-		fatal_error("libpfm intialization failed\n");
+		errx(1, "libpfm intialization failed");
+
+	memset(&core_inp, 0, sizeof(core_inp));
+	memset(&nhm_inp, 0, sizeof(nhm_inp));
 
 	/*
 	 * check we are on an Intel Core PMU
 	 */
 	pfm_get_pmu_type(&type);
-	if (type != PFMLIB_INTEL_CORE_PMU && type != PFMLIB_INTEL_ATOM_PMU)
-		fatal_error("This program only works with an Intel Core processor\n");
+	switch(type) {
+		case PFMLIB_INTEL_CORE_PMU:
+		case PFMLIB_INTEL_ATOM_PMU:
+			print_entry = print_core_entry;
+			core_inp.pfp_core_pebs.pebs_used = 1;
+			mod_inp = &core_inp;
+			break;
+		case PFMLIB_INTEL_NHM_PMU:
+			print_entry = print_nhm_entry;
+			nhm_inp.pfp_nhm_pebs.pebs_used = 1;
+			mod_inp = &nhm_inp;
+			break;
+		case PFMLIB_PENTIUM4_PMU:
+			print_entry = print_p4_entry;
+			break;
+		default:
+			errx(1, "PMU model does not have PEBS support");
+	}
 
 	/*
 	 * pass options to library (optional)
@@ -186,7 +219,6 @@ main(int argc, char **argv)
 	memset(pc, 0, sizeof(pc));
 	memset(&inp, 0, sizeof(inp));
 	memset(&outp, 0, sizeof(outp));
-	memset(&mod_inp, 0, sizeof(mod_inp));
 
 	memset(&ctx, 0, sizeof(ctx));
 	memset(&buf_arg, 0, sizeof(buf_arg));
@@ -196,30 +228,21 @@ main(int argc, char **argv)
 	 * search for our sampling event
 	 */
 	if (pfm_find_full_event(SMPL_EVENT, &inp.pfp_events[0]) != PFMLIB_SUCCESS)
-		fatal_error("cannot find sampling event %s\n", SMPL_EVENT);
+		errx(1, "cannot find sampling event %s", SMPL_EVENT);
 
-	inp.pfp_event_count = 1;
+	for(i=1; i < maxpebs; i++)
+		inp.pfp_events[i] = inp.pfp_events[0];
+
+	inp.pfp_event_count = i;
 	inp.pfp_dfl_plm = PFM_PLM3|PFM_PLM0;
-
-	/*
-	 * important: inform libpfm we do use PEBS
-	 */
-	mod_inp.pfp_core_pebs.pebs_used = 1;
 
 	/*
 	 * sampling buffer parameters
 	 */
-	buf_arg.buf_size = 4*getpagesize();
+	buf_arg.buf_size = 2 * getpagesize();
 
-	/*
-	 * sampling period cannot use more bits than HW counter can supoprt
-	 */
-	buf_arg.cnt_reset = -SMPL_PERIOD;
-
-	/*
-	 * trigger notification (interrupt) when reached 90% of buffer
-	 */
-	buf_arg.intr_thres = (buf_arg.buf_size/sizeof(smpl_entry_t))*90/100;
+	for(i=0; i < maxpebs; i++)
+		buf_arg.cnt_reset[i] = -SMPL_PERIOD;
 
 	/*
 	 * create context and sampling buffer
@@ -227,35 +250,36 @@ main(int argc, char **argv)
 	fd = pfm_create_context(&ctx, FMT_NAME, &buf_arg, sizeof(buf_arg));
 	if (fd == -1) {
 		if (errno == ENOSYS) {
-			fatal_error("Your kernel does not have performance monitoring support!\n");
+			errx(1, "Your kernel does not have performance monitoring support!\n");
 		}
-		fatal_error("cannot create PFM context %s, maybe you do not have the PEBS sampling format in the kernel.\nCheck /sys/kernel/perfmon/formats\n", strerror(errno));
+		err(1, "cannot create session, maybe you do not have the PEBS"
+		       " sampling format in the kernel. You need perfmon_pebs_smpl."
+		       "\nCheck /sys/kernel/perfmon/formats");
 	}
 
 	/*
 	 * map buffer into our address space
 	 */
 	buf_addr = mmap(NULL, (size_t)buf_arg.buf_size, PROT_READ, MAP_PRIVATE, fd, 0);
-	printf("context [%d] buffer mapped @%p\n", fd, buf_addr);
 	if (buf_addr == MAP_FAILED)
-		fatal_error("cannot mmap sampling buffer errno %d\n", errno);
+		err(1, "cannot mmap sampling buffer");
+
+	printf("context [%d] buffer mapped @%p\n", fd, buf_addr);
 
 	hdr = (smpl_hdr_t *)buf_addr;
 
-	printf("pebs_base=0x%llx pebs_end=0x%llx index=0x%llx\n"
-	       "intr=0x%llx version=%u.%u\n"
-	       "entry_size=%zu ds_size=%zu\n",
-			(unsigned long long)hdr->ds.pebs_buf_base,
-			(unsigned long long)hdr->ds.pebs_abs_max,
-			(unsigned long long)hdr->ds.pebs_index,
-			(unsigned long long)hdr->ds.pebs_intr_thres,
-			PFM_VERSION_MAJOR(hdr->version),
-			PFM_VERSION_MINOR(hdr->version),
-			sizeof(smpl_entry_t),
-			sizeof(hdr->ds));
+	printf("pebs_start=%p pebs_end=%p version=%u.%u.%u entry_size=%u\n",
+		hdr+1,
+		hdr+1,
+		(hdr->version >> 16) & 0xff,
+		(hdr->version >> 8) & 0xff, 
+		hdr->version & 0xff, 
+		hdr->entry_size);
 
-	if (PFM_VERSION_MAJOR(hdr->version) < 1)
-		fatal_error("invalid buffer format version\n");
+	printf("max PEBS entries: %zu\n", (size_t)hdr->pebs_size / hdr->entry_size);
+
+	if (((hdr->version >> 16) & 0xff) < 1)
+		errx(1, "invalid buffer format version");
 
 	/*
 	 * get which PMC registers are available
@@ -265,8 +289,8 @@ main(int argc, char **argv)
 	/*
 	 * let libpfm figure out how to assign event onto PMU registers
 	 */
-	if (pfm_dispatch_events(&inp, &mod_inp, &outp, NULL) != PFMLIB_SUCCESS)
-		fatal_error("cannot assign event %s\n", SMPL_EVENT);
+	if (pfm_dispatch_events(&inp, mod_inp, &outp, NULL) != PFMLIB_SUCCESS)
+		errx(1, "cannot assign event %s\n", SMPL_EVENT);
 
 
 	/*
@@ -281,8 +305,6 @@ main(int argc, char **argv)
 		 * PMC0 is the only counter useable with PEBS. We must disable
 		 * 64-bit emulation to avoid getting interrupts for each
 		 * sampling period, PEBS takes care of this part.
-		 *
-		 * This is obsolete with 2.6.30
 		 */
 		if (pc[i].reg_num == 0)
 			pc[i].reg_flags = PFM_REGFL_NO_EMUL64;
@@ -298,25 +320,28 @@ main(int argc, char **argv)
 	 * setup sampling period for first counter
 	 * we want notification on overflow, i.e., when buffer is full
 	 */
-	pd[0].reg_flags = PFM_REGFL_OVFL_NOTIFY;
-	pd[0].reg_value = -SMPL_PERIOD;
-	pd[0].reg_long_reset = -SMPL_PERIOD;
-	pd[0].reg_short_reset = -SMPL_PERIOD;
+	for(i=0; i < maxpebs; i++) {
+		pd[i].reg_flags = PFM_REGFL_OVFL_NOTIFY;
+		pd[i].reg_value = -SMPL_PERIOD;
+		pd[i].reg_long_reset = -SMPL_PERIOD;
+		pd[i].reg_short_reset = -SMPL_PERIOD;
+	}
 	
 	/*
 	 * Now program the registers
 	 */
 	if (pfm_write_pmcs(fd, pc, outp.pfp_pmc_count) == -1)
-		fatal_error("pfm_write_pmcs error errno %d\n",errno);
+		err(1, "pfm_write_pmcs error");
 
 	if (pfm_write_pmds(fd, pd, outp.pfp_pmd_count) == -1)
-		fatal_error("pfm_write_pmds error errno %d\n",errno);
+		err(1, "pfm_write_pmds error");
 
 	signal(SIGCHLD, SIG_IGN);
 	/*
 	 * Create the child task
 	 */
-	if ((pid=fork()) == -1) fatal_error("Cannot fork process\n");
+	if ((pid=fork()) == -1)
+		err(1, "cannot fork process");
 
 	/*
 	 * In order to get the PFM_END_MSG message, it is important
@@ -340,7 +365,7 @@ main(int argc, char **argv)
 	 * process is stopped at this point
 	 */
 	if (WIFEXITED(status)) {
-		warning("task %s [%d] exited already status %d\n", argv[1], pid, WEXITSTATUS(status));
+		warnx("task %s [%d] exited already status %d\n", argv[1], pid, WEXITSTATUS(status));
 		goto terminate_session;
 	}
 
@@ -349,13 +374,13 @@ main(int argc, char **argv)
 	 */
 	load_args.load_pid = pid;
 	if (pfm_load_context(fd, &load_args) == -1)
-		fatal_error("pfm_load_context error errno %d\n",errno);
+		err(1, "pfm_load_context error");
 
 	/*
 	 * start monitoring
 	 */
 	if (pfm_start(fd, NULL) == -1)
-		fatal_error("pfm_start error errno %d\n",errno);
+		err(1, "pfm_start error");
 
 	/*
 	 * detach child. Side effect includes
@@ -373,10 +398,10 @@ main(int argc, char **argv)
 		ret = read(fd, &msg, sizeof(msg));
 		if (ret == -1) {
 			if(ret == -1 && errno == EINTR) {
-				warning("read interrupted, retrying\n");
+				warnx("read interrupted, retrying");
 				continue;
 			}
-			fatal_error("cannot read perfmon msg: %s\n", strerror(errno));
+			err(1, "cannot read perfmon msg");
 		}
 		switch(msg.type) {
 			case PFM_MSG_OVFL: /* the sampling buffer is full */
@@ -390,15 +415,16 @@ main(int argc, char **argv)
 				 */
 				if (pfm_restart(fd) == -1) {
 					if (errno != EBUSY)
-						fatal_error("pfm_restart error errno %d\n",errno);
+						err(1, "pfm_restart error");
 					else
-						warning("pfm_restart: task has probably terminated \n");
+						warnx("pfm_restart: task has probably terminated \n");
 				}
 				break;
 			case PFM_MSG_END: /* monitored task terminated */
-				warning("task terminated\n");
+				warnx("TASK terminated");
 				goto terminate_session;
-			default: fatal_error("unknown message type %d\n", msg.type);
+			default:
+				errx(1, "unknown message type %d", msg.type);
 		}
 	}
 terminate_session:
@@ -412,7 +438,8 @@ terminate_session:
 	 */
 	process_smpl_buf(hdr);
 
-	printf("collected samples %"PRIu64"n", collected_samples);
+	printf("collected samples %"PRIu64", %"PRIu64" overflows\n",
+		collected_samples, last_overflow);
 
 	/*
 	 * close context
