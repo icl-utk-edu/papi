@@ -2029,14 +2029,7 @@ case "$OS" in
   cygwin*) OS=cygwin;;
   SunOS)   OS=solaris ;;
   sunos)   OS=solaris ;;
-  irix64)  OS=irix ;;
-  "unicos/mp") OS=unicos;;
 esac
-
-T3EOS="`uname -a | tr 'A-Z' 'a-z' | grep unicos`"
-if test "$T3EOS" != ""; then
-   OS=unicos
-fi
 
 # XTOS_VERSION exists only on Cray systems supporting XT and hence CLE OS
 if test "$XTOS_VERSION"; then
@@ -2051,37 +2044,11 @@ if test "$XTOS_VERSION"; then
 	virtualtimer=times
 fi
 
-/bin/rm -f ckcat
-cc ckcatamount.c 2>&1 | cat > ckcat
-if test "`cat ckcat | grep "IS_CATAMOUNT"`" != ""; then
-OS=catamount
-fi
-/bin/rm -f ckcat
-
 fi
 
 { $as_echo "$as_me:$LINENO: result: $OS" >&5
 $as_echo "$OS" >&6; }
-if test "$OS" = "catamount"; then
-   pfm_events=static
-   if test "x$CC" = "x"; then
-      CC=qk-gcc
-   fi
-   if test "x$F77" = "x"; then
-      F77=ftn
-   fi
-   walltimer=cycle
-   virtualtimer=perfctr
-   bitmode=64
-   tls=no
-   host=x86_64
-   ffsll=yes
-   cross_compiling=yes
-   perfctr=5
-   use_shared=no
-   use_static=yes
-   use_static_tests=yes
-elif test "$OS" = "bgl"; then
+if test "$OS" = "bgl"; then
    if test "x$CC" = "x"; then
       CC=powerpc-bgl-blrts-gnu-gcc
       CFLAGS="-D_BGL -gdwarf-2 -O2 -Wall"
@@ -2112,10 +2079,8 @@ if test "${with_OSVER+set}" = set; then
 else
 
 case "$OS" in
-  aix) OSVER="`uname -v`";;
-  osf1) OSVER="`uname -r | sed -e 's/^V//'`" ;;
-  bgl|catamount) OSVER=irrelevant ;;
-  *|solaris|netbsd|linux|irix) OSVER="`uname -r`";;
+  bgl) OSVER=irrelevant ;;
+  *|solaris|netbsd|linux) OSVER="`uname -r`";;
 esac
 
 fi
@@ -2186,8 +2151,6 @@ case "$OS" in
 	       CPU=montecito
 	   elif test "$family" = "31"; then
 	       CPU=itanium2
-	   elif test "$family" = "7"; then
-	       CPU=itanium
            fi
            if test "$CPU" = "" ; then
              if test "`cat /proc/cpuinfo | grep "Pentium${R} 4"`" != ""; then
@@ -2195,13 +2158,9 @@ case "$OS" in
                MISCSRCS=x86_cache_info.c
              elif test "`cat /proc/cpuinfo | grep -i "Itanium 2"`" != ""; then
                CPU=itanium2
-             elif test "`cat /proc/cpuinfo | grep -i Itanium`" != ""; then
-               CPU=itanium
              elif test "`cat /proc/cpuinfo | grep -i "Pentium III"`" != ""; then
                CPU=p3
                MISCSRCS=x86_cache_info.c
-             elif test "`cat /proc/cpuinfo | grep -i "Pentium II"`" != ""; then
-               CPU=p2
 	     else CPU=p3
                MISCSRCS=x86_cache_info.c
              fi
@@ -2233,7 +2192,6 @@ case "$OS" in
              CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
              case "$CPU_info" in
                PPC970*) CPU="PPC970";;
-               POWER4*) CPU="POWER4";;
                POWER5) CPU="POWER5";;
                POWER5+) CPU="POWER5+";;
                POWER6) CPU="POWER6";;
@@ -2264,20 +2222,6 @@ $as_echo "$as_me: error: Sorry but for Solaris you need to have an Ultrasparc fo
            fi
          fi
          ;;
-  irix) CPU=`hinv -t cpu | cut -d ' ' -f 2 | tr 'A-Z' 'a-z' | uniq`;;
-  osf1) CPU=`uname -p`;;
-  unicos)
-        if test "`uname -a | tr 'A-Z' 'a-z' | grep crayx1`" != ""; then
-          CPU=x1-msp
-        fi
-        if test "`uname -a | tr 'A-Z' 'a-z' | grep t3e`" != ""; then
-          CPU=t3e
-        fi
-        ;;
-  catamount)
-	CPU=opteron
-        MISCSRCS=x86_cache_info.c
-	;;
   bgl)
 	CPU=bgl
 	;;
@@ -6602,16 +6546,8 @@ case "$perfctr" in
    yes)
    if test "$arch" = "ppc64"; then
       perfctr=7
-   elif test "$OS" = "catamount"; then
-      perfctr=5
    else
       perfctr=6
-   fi ;;
-   5)
-   if test "$OS" != "catamount"; then
-   	{ { $as_echo "$as_me:$LINENO: error: Perfctr 2.5.x is only supported on Catamount systems" >&5
-$as_echo "$as_me: error: Perfctr 2.5.x is only supported on Catamount systems" >&2;}
-   { (exit 1); exit 1; }; }
    fi ;;
    7)
    if test "$arch" != "ppc64"; then
@@ -8286,14 +8222,6 @@ fi
 if test "$OS" = "aix"; then
    if test "$pmapi" = "default"; then
       case "$CPU" in
-      power3)
-	if test "${OSVER}" = "4"; then
-	   PMAPI="/usr/lpp/pmtoolkit"
-	else
-	   PMAPI="/usr/pmapi"
-	fi
-	;;
-      power4) PMAPI="/usr/pmapi" ;;
       power5) PMAPI="/usr/pmapi" ;;
       power6) PMAPI="/usr/pmapi" ;;
       esac
@@ -8621,33 +8549,12 @@ $as_echo "$as_me: error: pmc_npmc info returned 0. Please check you have HWPMC m
        echo "#endif" >> freebsd-config.h
    ;;
    aix)
-      if test "${OSVER}" = "5"; then
-         if test "${CPU}" = "power3"; then
-               MAKEVER="$OS""$OSVER"-"$CPU""$BM"
-         else
-               MAKEVER="$OS"-"$CPU""$BM"
-         fi
-      else
-         if test "${CPU}" = "power3"; then
-            if test "${bitmode}" = "64"; then
-              { { $as_echo "$as_me:$LINENO: error: The bitmode you specified is not supported" >&5
-$as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
-   { (exit 1); exit 1; }; }
-            fi
-            MAKEVER="$OS"-"$CPU"
-         else
-               MAKEVER="$OS"-"$CPU""$BM"
-         fi
-   fi
+      MAKEVER="$OS"-"$CPU""$BM"
    ;;
    bgl)
 	   MAKEVER=linux-bgl
        tests=bgl_tests
    ;;
-   catamount)
-	   MAKEVER="$OS"-perfctr-opteron
-	   ;;
-
    CLE)
 	   MAKEVER="$OS"-perfmon2
 	   ;;
@@ -8670,14 +8577,7 @@ $as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
 		    MAKEVER="$OS"-perfmon2
        else
        case "$CPU" in
-            alpha)
-                 if test "${bitmode}" = "64"; then
-                   { { $as_echo "$as_me:$LINENO: error: The bitmode you specified is not supported" >&5
-$as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
-   { (exit 1); exit 1; }; }
-                 fi
-                 MAKEVER="$OS"-"$CPU" ;;
-            itanium|itanium2|montecito)
+            itanium2|montecito)
                  if test "${with_bitmode}" = "32"; then
                    { { $as_echo "$as_me:$LINENO: error: The bitmode you specified is not supported" >&5
 $as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
@@ -8712,14 +8612,6 @@ $as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
 			MAKEVER="$OS"-perfctr-"$CPU"
 		fi
 		 ;;
-            p2)
-                if test "${bitmode}" = "64"; then
-                   { { $as_echo "$as_me:$LINENO: error: The bitmode you specified is not supported" >&5
-$as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
-   { (exit 1); exit 1; }; }
-                fi
-			MAKEVER="$OS"-perfctr-"$CPU"
-		;;
             PPC32)
                  if test "${bitmode}" = "64"; then
                    { { $as_echo "$as_me:$LINENO: error: The bitmode you specified is not supported" >&5
@@ -8727,7 +8619,7 @@ $as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
    { (exit 1); exit 1; }; }
                  fi
                  MAKEVER="$OS"-perfctr-"$CPU" ;;
-            POWER4|POWER5|POWER5+|POWER6|PPC970)
+            POWER5|POWER5+|POWER6|PPC970)
                  MAKEVER="$OS"-perfctr-"$CPU""$BM" ;;
 	    mips64)
 		 MAKEVER="$OS"-perfmon2 ;;
@@ -8739,17 +8631,6 @@ $as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
        fi
        fi
        ;;
-  irix)
-       MAKEVER="$OS"-"$CPU""$BM"
-       ;;
-  osf1)
-       case "$CPU" in
-            alpha)
-                 MAKEVER=tru64-"$CPU" ;;
-esac
-       ;;
-  unicos)
-                 MAKEVER="$OS"-"$CPU" ;;
   *)
                  MAKEVER="$OS"-"$CPU" ;;
 esac
@@ -8759,43 +8640,27 @@ $as_echo "$MAKEVER" >&6; }
 
 #echo $MAKEVER
 case "$MAKEVER" in
-    aix-power3);;
-    aix-power4);;
-    aix-power4-64bit);;
     aix-power5);;
     aix-power5-64bit);;
     aix-power6);;
     aix-power6-64bit);;
-    aix5-power3);;
-    aix5-power3-64bit);;
     any-null);;
-    catamount-perfctr-opteron);;
     CLE-perfmon2);;
-    dadd-alpha);;
-    irix-mips);;
-    irix-mips-64bit);;
-    linux-alpha);;
-    linux-bgl);;
     linux-acpi);;
+    linux-bgl);;
     linux-mx);;
+    linux-pe);;
     linux-perfctr-athlon);;
-    linux-perfctr-p2);;
     linux-perfctr-p3);;
     linux-perfctr-p4);;
     linux-perfctr-em64t);;
-    linux-pfm-itanium);;
-    linux-pfm-itanium2);;
-    linux-pfm-itanium3);;
     solaris-ultra);;
     solaris-ultra-64bit);;
-    tru64-alpha);;
-    unicos-t3e);;
-    unicos-x1-msp);;
-    unicos-x1-ssp);;
-    linux-perfctr-POWER4|linux-perfctr-POWER5|linux-perfctr-POWER5+|linux-perfctr-POWER6|linux-perfctr-PPC970|linux-perfctr-PPC32);;
-    linux-perfctr-POWER4-64bit|linux-perfctr-POWER5-64bit|linux-perfctr-POWER5+-64bit|linux-perfctr-POWER6-64bit|linux-perfctr-PPC970-64bit);;
+    linux-perfctr-POWER5|linux-perfctr-POWER5+|linux-perfctr-POWER6|linux-perfctr-PPC970|linux-perfctr-PPC32);;
+    linux-perfctr-POWER5-64bit|linux-perfctr-POWER5+-64bit|linux-perfctr-POWER6-64bit|linux-perfctr-PPC970-64bit);;
     linux-perfmon2);;
-    linux-pe);;
+    linux-pfm-itanium2);;
+    linux-pfm-itanium3);;
     freebsd);;
     *)
     echo Platform $MAKEVER is not supported
