@@ -3203,6 +3203,11 @@ bail:
 int _papi_hwd_update_control_state (hwd_control_state_t * ctl, NativeInfo_t * native, int count, hwd_context_t * ctx)
 {
   int i = 0, ret;
+#ifndef __powerpc__
+  pfmlib_input_param_t inp;
+  pfmlib_output_param_t outp;
+#endif
+  __u64 pe_event;
 
   if (ctx->cookie != PCL_CTX_INITIALIZED)
     {
@@ -3222,6 +3227,12 @@ int _papi_hwd_update_control_state (hwd_control_state_t * ctl, NativeInfo_t * na
       return PAPI_OK;
     }
 
+#ifndef __powerpc__
+  inp.pfp_event_count = 1;
+  inp.pfp_dfl_plm = ctl->domain;
+  pfm_regmask_set(&inp.pfp_unavail_pmcs, 16); // mark fixed counters as unavailable
+#endif
+
   for (i = 0; i < count; i++)
     {
       /*
@@ -3231,6 +3242,7 @@ int _papi_hwd_update_control_state (hwd_control_state_t * ctl, NativeInfo_t * na
        */
       if (native)
         {
+#if defined(__powerpc__)
           int code;
           ret = pfm_get_event_code_counter (native[i].ni_bits.event, 0, &code);
           if (ret)
@@ -3238,11 +3250,19 @@ int _papi_hwd_update_control_state (hwd_control_state_t * ctl, NativeInfo_t * na
               /* Unrecognized code, but should never happen */
               return PAPI_EBUG;
             }
+          pe_event = code;
           SUBDBG ("Stuffing native event index %d (code 0x%x, raw code 0x%x) into events array.\n", i,
                   native[i].ni_bits.event, code);
+#else
+//		  inp.pfp_events[0] = *((pfmlib_event_t)native[i].ni_bits);
+		  inp.pfp_events[0] = native[i].ni_bits;
+		  ret = pfm_dispatch_events(&inp, NULL, &outp, NULL);
+		  pe_event = outp.pfp_pmcs[0].reg_value;
+		  SUBDBG("pe_event: 0x%llx\n", outp.pfp_pmcs[0].reg_value);
+#endif
           /* use raw event types, not the predefined ones */
           ctl->events[i].type = PERF_TYPE_RAW;
-          ctl->events[i].config = (__u64) code;
+          ctl->events[i].config = pe_event;
         }
       else
         {
