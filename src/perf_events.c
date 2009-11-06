@@ -434,7 +434,7 @@ static int get_cpu_info (PAPI_hw_info_t * hw_info)
     {
       sscanf (s + 1, "%d", &tmp);
       hw_info->model = tmp;
-    }
+  }
 #endif
   fclose (f);
 
@@ -3323,6 +3323,11 @@ int _papi_pe_update_control_state (hwd_control_state_t * ctl, NativeInfo_t * nat
   int i = 0, ret;
   context_t * pe_ctx  = (context_t *)ctx;
   control_state_t * pe_ctl = (control_state_t *)ctl;
+#ifndef __powerpc__
+  pfmlib_input_param_t inp;
+  pfmlib_output_param_t outp;
+#endif
+  __u64 pe_event;
 
   if (pe_ctx->cookie != CTX_INITIALIZED)
     {
@@ -3342,6 +3347,12 @@ int _papi_pe_update_control_state (hwd_control_state_t * ctl, NativeInfo_t * nat
       return PAPI_OK;
     }
 
+#ifndef __powerpc__
+  inp.pfp_event_count = 1;
+  inp.pfp_dfl_plm = pe_ctl->domain;
+  pfm_regmask_set(&inp.pfp_unavail_pmcs, 16); // mark fixed counters as unavailable
+#endif
+
   for (i = 0; i < count; i++)
     {
       /*
@@ -3351,6 +3362,7 @@ int _papi_pe_update_control_state (hwd_control_state_t * ctl, NativeInfo_t * nat
        */
       if (native)
         {
+#if defined(__powerpc__)
           int code;
           ret = pfm_get_event_code_counter (((pfm_register_t *)native[i].ni_bits)->event, 0, &code);
           if (ret)
@@ -3358,11 +3370,18 @@ int _papi_pe_update_control_state (hwd_control_state_t * ctl, NativeInfo_t * nat
               /* Unrecognized code, but should never happen */
               return PAPI_EBUG;
             }
+          pe_event = code;
           SUBDBG ("Stuffing native event index %d (code 0x%x, raw code 0x%x) into events array.\n", i,
                   ((pfm_register_t *)native[i].ni_bits)->event, code);
+#else
+		  inp.pfp_events[0] = *((pfm_register_t *)native[i].ni_bits);
+		  ret = pfm_dispatch_events(&inp, NULL, &outp, NULL);
+		  pe_event = outp.pfp_pmcs[0].reg_value;
+		  SUBDBG("pe_event: 0x%llx\n", outp.pfp_pmcs[0].reg_value);
+#endif
           /* use raw event types, not the predefined ones */
           pe_ctl->events[i].type = PERF_TYPE_RAW;
-          pe_ctl->events[i].config = (__u64) code;
+          pe_ctl->events[i].config = pe_event;
         }
       else
         {
