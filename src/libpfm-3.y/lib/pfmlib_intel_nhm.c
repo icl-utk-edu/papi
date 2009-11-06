@@ -441,6 +441,10 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 				DPRINT("OFFCORE_RSP0 register not available\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
+			if (!((umask & 0xff) && (umask & 0xff00))) {
+				DPRINT("OFFCORE_RESPONSE must have at least one request and response unit mask set\n");
+				return PFMLIB_ERR_INVAL;
+			}
 			/* lock-in offcore_value */
 			offcore_value = umask;
 		}
