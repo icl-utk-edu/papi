@@ -16,7 +16,7 @@ FHEADERS  = fpapi.h f77papi.h f90papi.h
 all: showconf $(LIBS) utils tests
 
 showconf:
-		@echo;
+		@echo "Host architecture: $(DESCR)";
 		@echo "Host architecture: $(DESCR)";
 		@echo "Host substrate   : $(SUBSTR).c"; 
 		@echo "Host examples    : $(TARGETS)";
