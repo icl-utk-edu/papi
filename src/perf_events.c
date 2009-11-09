@@ -74,6 +74,7 @@ extern int _papi_pfm_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, 
 extern int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits);
 extern int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                                                 unsigned int *values, int name_len, int count);
+extern int get_cpu_info(PAPI_hw_info_t * hwinfo);
 
 /* Forward function declarations */
 int _papi_pe_update_control_state (hwd_control_state_t * ctl, NativeInfo_t * native, int count, hwd_context_t * ctx);
@@ -198,25 +199,7 @@ inline_static long long get_cycles (void)
 
 
 /* BEGIN COMMON CODE */
-
-static void decode_vendor_string (char *s, int *vendor)
-{
-  if (strcasecmp (s, "GenuineIntel") == 0)
-    *vendor = PAPI_VENDOR_INTEL;
-  else if ((strcasecmp (s, "AMD") == 0) || (strcasecmp (s, "AuthenticAMD") == 0))
-    *vendor = PAPI_VENDOR_AMD;
-  else if (strcasecmp (s, "IBM") == 0)
-    *vendor = PAPI_VENDOR_IBM;
-  else if (strcasecmp (s, "MIPS") == 0)
-    *vendor = PAPI_VENDOR_MIPS;
-  else if (strcasecmp (s, "SiCortex") == 0)
-    *vendor = PAPI_VENDOR_SICORTEX;
-  else if (strcasecmp (s, "Cray") == 0)
-    *vendor = PAPI_VENDOR_CRAY;
-  else
-    *vendor = PAPI_VENDOR_UNKNOWN;
-}
-
+#if defined(mips) || defined(__sparc__) 
 static char *search_cpu_info (FILE * f, char *search_str, char *line)
 {
   /* This code courtesy of our friends in Germany. Thanks Rudolph Berrendorf! */
@@ -238,208 +221,7 @@ static char *search_cpu_info (FILE * f, char *search_str, char *line)
 
   /* End stolen code */
 }
-
-static int get_cpu_info (PAPI_hw_info_t * hw_info)
-{
-  int tmp, retval = PAPI_OK;
-  char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
-  float mhz = 0.0;
-  FILE *f;
-
-  if ((f = fopen ("/proc/cpuinfo", "r")) == NULL)
-    {
-      PAPIERROR ("fopen(/proc/cpuinfo) errno %d", errno);
-      return PAPI_ESYS;
-    }
-
-  /* All of this information maybe overwritten by the substrate */
-
-  /* MHZ */
-
-  rewind (f);
-  s = search_cpu_info (f, "cpu MHz", maxargs);
-  if (s)
-    {
-      sscanf (s + 1, "%f", &mhz);
-      hw_info->mhz = mhz;
-    }
-  else
-    {
-      rewind (f);
-      s = search_cpu_info (f, "BogoMIPS", maxargs);
-      if (s)
-        {
-          sscanf (s + 1, "%f", &mhz);
-          hw_info->mhz = mhz;
-        }
-      else
-        {
-          rewind (f);
-          s = search_cpu_info (f, "clock", maxargs);
-          if (s)
-            {
-              sscanf (s + 1, "%f", &mhz);
-              hw_info->mhz = mhz;
-            }
-        }
-    }
-
-  hw_info->clock_mhz = hw_info->mhz;
-  switch (_perfmon2_pfm_pmu_type)
-    {
-    case PFMLIB_MIPS_5KC_PMU:
-      hw_info->clock_mhz /= 2;
-      break;
-#if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
-    case PFMLIB_MIPS_ICE9A_PMU:
-    case PFMLIB_MIPS_ICE9B_PMU:
-      hw_info->clock_mhz = (hw_info->clock_mhz + 1.0) / 2.0;
-      hw_info->mhz = (float) 2.0 *hw_info->clock_mhz;
-      break;
 #endif
-    case PFMLIB_MONTECITO_PMU:
-      hw_info->clock_mhz /= 4;
-      break;
-    default:
-      break;
-    }
-
-  /* Vendor Name and Vendor Code */
-
-  rewind (f);
-  s = search_cpu_info (f, "vendor_id", maxargs);
-  if (s && (t = strchr (s + 2, '\n')))
-    {
-      *t = '\0';
-      strcpy (hw_info->vendor_string, s + 2);
-    }
-  else
-    {
-      rewind (f);
-      s = search_cpu_info (f, "vendor", maxargs);
-      if (s && (t = strchr (s + 2, '\n')))
-        {
-          *t = '\0';
-          strcpy (hw_info->vendor_string, s + 2);
-        }
-      else
-        {
-          rewind (f);
-          s = search_cpu_info (f, "system type", maxargs);
-          if (s && (t = strchr (s + 2, '\n')))
-            {
-              *t = '\0';
-              s = strtok (s + 2, " ");
-              strcpy (hw_info->vendor_string, s);
-            }
-
-          else
-            {
-              rewind (f);
-              s = search_cpu_info (f, "system type", maxargs);
-              if (s && (t = strchr (s + 2, '\n')))
-                {
-                  *t = '\0';
-                  s = strtok (s + 2, " ");
-                  strcpy (hw_info->vendor_string, s);
-                }
-              else
-                {
-                  rewind (f);
-                  s = search_cpu_info (f, "platform", maxargs);
-                  if (s && (t = strchr (s + 2, '\n')))
-                    {
-                      *t = '\0';
-                      s = strtok (s + 2, " ");
-                      if ((strcasecmp (s, "pSeries") == 0) || (strcasecmp (s, "PowerMac") == 0))
-                        {
-                          strcpy (hw_info->vendor_string, "IBM");
-                        }
-                    }
-                }
-            }
-        }
-    }
-  if (strlen (hw_info->vendor_string))
-    decode_vendor_string (hw_info->vendor_string, &hw_info->vendor);
-
-  /* Revision */
-
-  rewind (f);
-  s = search_cpu_info (f, "stepping", maxargs);
-  if (s)
-    {
-      sscanf (s + 1, "%d", &tmp);
-      hw_info->revision = (float) tmp;
-    }
-  else
-    {
-      rewind (f);
-      s = search_cpu_info (f, "revision", maxargs);
-      if (s)
-        {
-          sscanf (s + 1, "%d", &tmp);
-          hw_info->revision = (float) tmp;
-        }
-    }
-
-  /* Model Name */
-
-  rewind (f);
-  s = search_cpu_info (f, "model name", maxargs);
-  if (s && (t = strchr (s + 2, '\n')))
-    {
-      *t = '\0';
-      strcpy (hw_info->model_string, s + 2);
-    }
-  else
-    {
-      rewind (f);
-      s = search_cpu_info (f, "family", maxargs);
-      if (s && (t = strchr (s + 2, '\n')))
-        {
-          *t = '\0';
-          strcpy (hw_info->model_string, s + 2);
-        }
-      else
-        {
-          rewind (f);
-          s = search_cpu_info (f, "cpu model", maxargs);
-          if (s && (t = strchr (s + 2, '\n')))
-            {
-              *t = '\0';
-              s = strtok (s + 2, " ");
-              s = strtok (NULL, " ");
-              strcpy (hw_info->model_string, s);
-            }
-          else
-            {
-              rewind (f);
-              s = search_cpu_info (f, "cpu", maxargs);
-              if (s && (t = strchr (s + 2, '\n')))
-                {
-                  *t = '\0';
-                  /* get just the first token */
-                  s = strtok (s + 2, " ");
-                  strcpy (hw_info->model_string, s);
-                }
-            }
-        }
-    }
-
-#if 0
-  rewind (f);
-  s = search_cpu_info (f, "model", maxargs);
-  if (s)
-    {
-      sscanf (s + 1, "%d", &tmp);
-      hw_info->model = tmp;
-  }
-#endif
-  fclose (f);
-
-  return retval;
-}
 
 #if defined(__i386__)||defined(__x86_64__)
 static int x86_get_memory_info (PAPI_hw_info_t * hw_info)
@@ -850,8 +632,6 @@ static int mips_get_memory_info (PAPI_hw_info_t * hw_info)
     }
 
   /* All of this information maybe overwritten by the substrate */
-
-  /* MHZ */
 
   rewind (f);
   s = search_cpu_info (f, "default cache policy", maxargs);
@@ -1730,12 +1510,7 @@ static int get_system_info (papi_mdi_t * mdi)
   mdi->preload_info.lib_dir_sep = ':';
 
   /* Hardware info */
-
-  mdi->hw_info.ncpu = sysconf (_SC_NPROCESSORS_ONLN);
-  mdi->hw_info.nnodes = 1;
-  mdi->hw_info.totalcpus = sysconf (_SC_NPROCESSORS_CONF);
-
-  retval = get_cpu_info (&mdi->hw_info);
+  retval = get_cpu_info(&mdi->hw_info);
   if (retval)
     return retval;
 
@@ -2257,10 +2032,6 @@ int _papi_pe_init_substrate (int cidx)
   MY_VECTOR.cmp_info.profile_ear = 0;
   MY_VECTOR.cmp_info.num_mpx_cntrs = PFMLIB_MAX_PMDS;
   MY_VECTOR.cmp_info.hardware_intr_sig = SIGRTMIN + 2;
-
-  /* FIX: For now, use the pmu_type from Perfmon */
-
-  _papi_hwi_system_info.hw_info.model = _perfmon2_pfm_pmu_type;
 
   /* Setup presets */
   retval = _papi_pfm_setup_presets (pmu_name, _perfmon2_pfm_pmu_type);

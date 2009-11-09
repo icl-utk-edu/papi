@@ -29,6 +29,7 @@ volatile unsigned int lock[PAPI_MAX_LOCK];
 extern papi_vector_t _ia64_vector;
 extern int _ia64_get_memory_info(PAPI_hw_info_t * mem_info, int cpu_type);
 extern int _ia64_get_dmem_info(PAPI_dmem_info_t *d);
+extern int get_cpu_info(PAPI_hw_info_t * hwinfo);
 int _ia64_update_shlib_info(void);
 
 /* Static locals */
@@ -918,12 +919,10 @@ inline static int set_default_granularity(hwd_control_state_t * this_state,
 
 int _ia64_get_system_info(void)
 {
-   int tmp, retval;
-   char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
-   pid_t pid;
-   float mhz = 0.0;
-   FILE *f;
-   int ncnt, nnev;
+  int retval;
+  char maxargs[PAPI_HUGE_STR_LEN];
+  pid_t pid;
+  int ncnt, nnev;
                                                                                 
   retval = pfmw_get_num_events(&nnev);
   if (retval != PAPI_OK)
@@ -978,95 +977,8 @@ int _ia64_get_system_info(void)
           _papi_hwi_system_info.exe_info.address_info.bss_start));
                                                                                 
    /* Hardware info */
-                                                                                
-   _papi_hwi_system_info.hw_info.ncpu = sysconf(_SC_NPROCESSORS_ONLN);
-   _papi_hwi_system_info.hw_info.nnodes = 1;
-   _papi_hwi_system_info.hw_info.totalcpus = sysconf(_SC_NPROCESSORS_CONF);
-   _papi_hwi_system_info.hw_info.vendor = -1;
-                                                                                
-   if ((f = fopen("/proc/cpuinfo", "r")) == NULL)
-     { PAPIERROR("fopen(/proc/cpuinfo) errno %d",errno); return(PAPI_ESYS); }
-                                                                                
-   /* All of this information maybe overwritten by the substrate */
-                                                                                
-   /* MHZ */
-                                                                                
-   rewind(f);
-   s = search_cpu_info(f, "cpu MHz", maxargs);
-   if (s)
-      sscanf(s + 1, "%f", &mhz);
-   _papi_hwi_system_info.hw_info.mhz = mhz;
-   _papi_hwi_system_info.hw_info.clock_mhz = mhz;
-                                                              
-   /* Vendor Name */
-                                                                                
-   rewind(f);
-   s = search_cpu_info(f, "vendor_id", maxargs);
-   if (s && (t = strchr(s + 2, '\n')))
-     {
-      *t = '\0';
-      strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
-     }
-   else
-     {
-       rewind(f);
-       s = search_cpu_info(f, "vendor", maxargs);
-       if (s && (t = strchr(s + 2, '\n'))) {
-         *t = '\0';
-         strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
-       }
-     }
-                                                                                
-   /* Revision */
-                                                                                
-   rewind(f);
-   s = search_cpu_info(f, "stepping", maxargs);
-   if (s)
-      {
-        sscanf(s + 1, "%d", &tmp);
-        _papi_hwi_system_info.hw_info.revision = (float) tmp;
-      }
-   else
-     {
-       rewind(f);
-       s = search_cpu_info(f, "revision", maxargs);
-       if (s)
-         {
-           sscanf(s + 1, "%d", &tmp);
-           _papi_hwi_system_info.hw_info.revision = (float) tmp;
-         }
-     }
-                                                                                
-   /* Model Name */
-                                                                                
-   rewind(f);
-   s = search_cpu_info(f, "family", maxargs);
-   if (s && (t = strchr(s + 2, '\n')))
-     {
-       *t = '\0';
-       strcpy(_papi_hwi_system_info.hw_info.model_string, s + 2);
-     }
-   else
-     {
-       rewind(f);
-       s = search_cpu_info(f, "vendor", maxargs);
-       if (s && (t = strchr(s + 2, '\n')))
-         {
-           *t = '\0';
-           strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
-         }
-     }
-                                                                                
-   rewind(f);
-   s = search_cpu_info(f, "model", maxargs);
-   if (s)
-      {
-        sscanf(s + 1, "%d", &tmp);
-        _papi_hwi_system_info.hw_info.model = tmp;
-      }
-                                                                                
-   fclose(f);
-                                                                                
+   get_cpu_info(&_papi_hwi_system_info.hw_info);
+                                                     
    SUBDBG("Found %d %s(%d) %s(%d) CPU's at %f Mhz.\n",
           _papi_hwi_system_info.hw_info.totalcpus,
           _papi_hwi_system_info.hw_info.vendor_string,
@@ -1082,7 +994,7 @@ int _ia64_get_system_info(void)
   sprintf(MY_VECTOR.cmp_info.kernel_version,"%08x",2<<16); /* 2.0 */
   MY_VECTOR.cmp_info.num_native_events = nnev;  
   MY_VECTOR.cmp_info.num_cntrs = ncnt;
-  _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_INTEL;
+  /*_papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_INTEL;*/
   MY_VECTOR.cmp_info.hardware_intr = 1;
   MY_VECTOR.cmp_info.fast_real_timer = 1;
   MY_VECTOR.cmp_info.fast_virtual_timer = 0;

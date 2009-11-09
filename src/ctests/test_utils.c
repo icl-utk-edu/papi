@@ -26,10 +26,20 @@ int papi_print_header (char *prompt, int event_flag, const PAPI_hw_info_t **hwin
 	printf("Vendor string and code   : %s (%d)\n", (*hwinfo)->vendor_string, (*hwinfo)->vendor);
 	printf("Model string and code    : %s (%d)\n", (*hwinfo)->model_string, (*hwinfo)->model);
 	printf("CPU Revision             : %f\n", (*hwinfo)->revision);
+	if ((*hwinfo)->cpuid_family > 0)
+		printf("CPUID Info               : Family: %d  Model: %d  Stepping: %d\n", 
+			(*hwinfo)->cpuid_family, (*hwinfo)->cpuid_model, (*hwinfo)->cpuid_stepping);
 	printf("CPU Megahertz            : %f\n", (*hwinfo)->mhz);
 	printf("CPU Clock Megahertz      : %d\n", (*hwinfo)->clock_mhz);
-	printf("CPU's in this Node       : %d\n", (*hwinfo)->ncpu);
-	printf("Nodes in this System     : %d\n", (*hwinfo)->nnodes);
+	if ((*hwinfo)->threads > 0)
+		printf("Hdw Threads per core     : %d\n", (*hwinfo)->threads);
+	if ((*hwinfo)->cores > 0)
+		printf("Cores per Socket         : %d\n", (*hwinfo)->cores);
+	if ((*hwinfo)->sockets > 0)
+		printf("Sockets                  : %d\n", (*hwinfo)->sockets);
+	if ((*hwinfo)->nnodes > 0)
+	        printf("NUMA Nodes               : %d\n", (*hwinfo)->nnodes);
+	printf("CPU's per Node           : %d\n", (*hwinfo)->ncpu);
 	printf("Total CPU's              : %d\n", (*hwinfo)->totalcpus);
 	printf("Number Hardware Counters : %d\n", PAPI_get_opt(PAPI_MAX_HWCTRS, NULL));
 	printf("Max Multiplex Counters   : %d\n", PAPI_get_opt(PAPI_MAX_MPX_CTRS, NULL));
@@ -472,7 +482,9 @@ char *stringify_granularity(int granularity)
 
 void tests_quiet(int argc, char **argv)
 {
-  if ((argc > 1) && (strcasecmp(argv[1], "TESTS_QUIET") == 0))
+  if ((argc > 1) 
+	  && ((strcasecmp(argv[1], "TESTS_QUIET") == 0) 
+	  || (strcasecmp(argv[1], "-q") == 0)))
     {
       TESTS_QUIET = 1;
     }

@@ -7,6 +7,8 @@
 *          london@cs.utk.edu
 * Mods:    Maynard Johnson
 *          maynardj@us.ibm.com
+* Mods:    Brian Sheely
+*          bsheely@eecs.utk.edu
 */
 
 #include "papi.h"
@@ -14,6 +16,8 @@
 #include "papi_memory.h"
 
 extern papi_vector_t MY_VECTOR;
+extern int get_cpu_info(PAPI_hw_info_t * hwinfo);
+
 int _linux_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type);
 int _linux_get_system_info(void);
 
@@ -41,52 +45,6 @@ extern int setup_p3_presets(int cputype);
 #endif
 
 #if (!defined(PPC64) && !defined(PPC32))
-inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
-   switch (perfctr_cpu_type) {
-   case PERFCTR_X86_INTEL_P5:
-   case PERFCTR_X86_INTEL_P5MMX:
-   case PERFCTR_X86_INTEL_P6:
-   case PERFCTR_X86_INTEL_PII:
-   case PERFCTR_X86_INTEL_PIII:
-   case PERFCTR_X86_INTEL_P4:
-   case PERFCTR_X86_INTEL_P4M2:
-#ifdef PERFCTR_X86_INTEL_P4M3
-   case PERFCTR_X86_INTEL_P4M3:
-#endif
-#ifdef PERFCTR_X86_INTEL_PENTM
-   case PERFCTR_X86_INTEL_PENTM:
-#endif
-#ifdef PERFCTR_X86_INTEL_CORE
-   case PERFCTR_X86_INTEL_CORE:
-#endif
-#ifdef PERFCTR_X86_INTEL_CORE2
-   case PERFCTR_X86_INTEL_CORE2:
-#endif
-#ifdef PERFCTR_X86_INTEL_ATOM  /* family 6 model 28 */
-   case PERFCTR_X86_INTEL_ATOM:
-#endif
-#ifdef PERFCTR_X86_INTEL_COREI7  /* family 6 model 26 */
-   case PERFCTR_X86_INTEL_COREI7:
-#endif
-      return (PAPI_VENDOR_INTEL);
-#ifdef PERFCTR_X86_AMD_K8
-   case PERFCTR_X86_AMD_K8:
-#endif
-#ifdef PERFCTR_X86_AMD_K8C
-   case PERFCTR_X86_AMD_K8C:
-#endif
-#ifdef PERFCTR_X86_AMD_FAM10  /* this is defined in perfctr 2.6.29 */
-   case PERFCTR_X86_AMD_FAM10:
-#endif
-   case PERFCTR_X86_AMD_K7:
-      return (PAPI_VENDOR_AMD);
-   case PERFCTR_X86_CYRIX_MII:
-      return (PAPI_VENDOR_CYRIX);
-   default:
-      return (PAPI_VENDOR_UNKNOWN);
-   }
-}
-
 /* 
  * 1 if the processor is a P4, 0 otherwise
  */
@@ -225,34 +183,6 @@ int _linux_init_substrate(int cidx)
           MY_VECTOR.cmp_info.hardware_intr ? "does" : "does not");
    MY_VECTOR.cmp_info.itimer_ns = PAPI_INT_MPX_DEF_US * 1000;
    MY_VECTOR.cmp_info.clock_ticks = sysconf(_SC_CLK_TCK);
-
-   strcpy(_papi_hwi_system_info.hw_info.model_string, PERFCTR_CPU_NAME(&info));
-   _papi_hwi_system_info.hw_info.model = info.cpu_type;
-#if defined(PPC64)
-   _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_IBM;
-   if (strlen(_papi_hwi_system_info.hw_info.vendor_string) == 0)
-     strcpy(_papi_hwi_system_info.hw_info.vendor_string,"IBM");
-#elif defined(PPC32)
-   _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_FREESCALE;
-   if (strlen(_papi_hwi_system_info.hw_info.vendor_string) == 0)
-     strcpy(_papi_hwi_system_info.hw_info.vendor_string,"Freescale");
-#else
-   _papi_hwi_system_info.hw_info.vendor = xlate_cpu_type_to_vendor(info.cpu_type);
-
-#endif
-
-#ifdef __CATAMOUNT__
-   if (strstr(info.driver_version,"2.5") != info.driver_version) {
-      fprintf(stderr,"Version mismatch of perfctr: compiled 2.5 or higher vs. installed %s\n",info.driver_version);
-      return(PAPI_ESBSTR);
-    }
-   /* I think this was replaced by sub_info.kernel_profile
-   which is initialized to 0 in papi_internal:_papi_hwi_init_global_internal
-  _papi_hwi_system_info.supports_hw_profile = 0;
-  */
-  _papi_hwi_system_info.hw_info.mhz = (float) info.cpu_khz / 1000.0; 
-  SUBDBG("Detected MHZ is %f\n",_papi_hwi_system_info.hw_info.mhz);
-#endif
 
    /* Setup presets last. Some platforms depend on earlier info */
 #if (!defined(PPC64) && !defined(PPC32))
@@ -452,50 +382,6 @@ int _linux_init(hwd_context_t * ctx) {
    return (PAPI_OK);
 }
 
-#ifdef __CATAMOUNT__
-
-int _linux_get_system_info(void)
-{
-   pid_t pid;
-
-   /* Software info */
-
-   /* Path and args */
-
-   pid = getpid();
-   if (pid < 0)
-     { PAPIERROR("getpid() returned < 0"); return(PAPI_ESYS); }
-   _papi_hwi_system_info.pid = pid;
-
-   /* executable name is hardcoded for Catamount */
-   sprintf(_papi_hwi_system_info.exe_info.fullname,"/home/a.out");
-	sprintf(_papi_hwi_system_info.exe_info.address_info.name,"%s",
-                  basename(_papi_hwi_system_info.exe_info.fullname));
-	
-    /* Best guess at address space */
-    _papi_hwi_system_info.exe_info.address_info.text_start = (caddr_t) _start;
-    _papi_hwi_system_info.exe_info.address_info.text_end = (caddr_t) _etext;
-    _papi_hwi_system_info.exe_info.address_info.data_start = (caddr_t) _etext;
-    _papi_hwi_system_info.exe_info.address_info.data_end = (caddr_t) _edata;
-    _papi_hwi_system_info.exe_info.address_info.bss_start = (caddr_t) _edata;
-    _papi_hwi_system_info.exe_info.address_info.bss_end = (caddr_t) 
-    __stop___libc_freeres_ptrs;
-
-   /* Hardware info */
-
-  _papi_hwi_system_info.hw_info.ncpu = 1;
-  _papi_hwi_system_info.hw_info.nnodes = 1;
-  _papi_hwi_system_info.hw_info.totalcpus = 1;
-  _papi_hwi_system_info.hw_info.vendor = 2;
-
-	sprintf(_papi_hwi_system_info.hw_info.vendor_string,"AuthenticAMD");
-	_papi_hwi_system_info.hw_info.revision = 1;
-
-  return(PAPI_OK);
-}
-
-#else
-
 int _linux_update_shlib_info(void)
 {
    char fname[PAPI_HUGE_STR_LEN];
@@ -665,71 +551,11 @@ int _linux_update_shlib_info(void)
    return (PAPI_OK);
 }
 
-static char *search_cpu_info(FILE * f, char *search_str, char *line)
-{
-   /* This code courtesy of our friends in Germany. Thanks Rudolph Berrendorf! */
-   /* See the PCL home page for the German version of PAPI. */
-
-   char *s;
-
-   while (fgets(line, 256, f) != NULL) {
-      if (strncmp(line, search_str, strlen(search_str)) == 0) {
-         /* ignore all characters in line up to : */
-         for (s = line; *s && (*s != ':'); ++s);
-         if (*s)
-            return (s);
-      }
-   }
-   return (NULL);
-
-   /* End stolen code */
-}
-
-/* Pentium III
- * processor  : 1
- * vendor     : GenuineIntel
- * arch       : IA-64
- * family     : Itanium 2
- * model      : 0
- * revision   : 7
- * archrev    : 0
- * features   : branchlong
- * cpu number : 0
- * cpu regs   : 4
- * cpu MHz    : 900.000000
- * itc MHz    : 900.000000
- * BogoMIPS   : 1346.37
- * */
-/* IA64
- * processor       : 1
- * vendor_id       : GenuineIntel
- * cpu family      : 6
- * model           : 7
- * model name      : Pentium III (Katmai)
- * stepping        : 3
- * cpu MHz         : 547.180
- * cache size      : 512 KB
- * physical id     : 0
- * siblings        : 1
- * fdiv_bug        : no
- * hlt_bug         : no
- * f00f_bug        : no
- * coma_bug        : no
- * fpu             : yes
- * fpu_exception   : yes
- * cpuid level     : 2
- * wp              : yes
- * flags           : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 mmx fxsr sse
- * bogomips        : 1091.17
- * */
-
 int _linux_get_system_info(void)
 {
-   int tmp, retval;
-   char maxargs[PAPI_HUGE_STR_LEN], *t, *s;
+   int retval;
+   char maxargs[PAPI_HUGE_STR_LEN];
    pid_t pid;
-   float mhz = 0.0;
-   FILE *f;
 
    /* Software info */
 
@@ -783,98 +609,8 @@ int _linux_get_system_info(void)
           (int)(_papi_hwi_system_info.exe_info.address_info.bss_end -
           _papi_hwi_system_info.exe_info.address_info.bss_start));
 
-   /* Hardware info */
-
-   _papi_hwi_system_info.hw_info.ncpu = sysconf(_SC_NPROCESSORS_ONLN);
-   _papi_hwi_system_info.hw_info.nnodes = 1;
-   _papi_hwi_system_info.hw_info.totalcpus = sysconf(_SC_NPROCESSORS_CONF);
-   _papi_hwi_system_info.hw_info.vendor = -1;
-
-   if ((f = fopen("/proc/cpuinfo", "r")) == NULL)
-     { PAPIERROR("fopen(/proc/cpuinfo) errno %d",errno); return(PAPI_ESYS); }
-
-   /* All of this information maybe overwritten by the substrate */ 
-
-   /* MHZ */
-   rewind(f);
-   s = search_cpu_info(f, "clock", maxargs);
-   if (!s) {
-   rewind(f);
-   s = search_cpu_info(f, "cpu MHz", maxargs);
-   }
-   if (s)
-      sscanf(s + 1, "%f", &mhz);
-   _papi_hwi_system_info.hw_info.mhz = mhz;
-   _papi_hwi_system_info.hw_info.clock_mhz = mhz;
-
-   /* Vendor Name */
-
-   rewind(f);
-   s = search_cpu_info(f, "vendor_id", maxargs);
-   if (s && (t = strchr(s + 2, '\n'))) 
-     {
-      *t = '\0';
-      strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
-     }
-   else 
-     {
-       rewind(f);
-       s = search_cpu_info(f, "vendor", maxargs);
-       if (s && (t = strchr(s + 2, '\n'))) {
-	 *t = '\0';
-	 strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
-       }
-     }
-       
-   /* Revision */
-
-   rewind(f);
-   s = search_cpu_info(f, "stepping", maxargs);
-   if (s)
-      {
-	sscanf(s + 1, "%d", &tmp);
-	_papi_hwi_system_info.hw_info.revision = (float) tmp;
-      }
-   else
-     {
-       rewind(f);
-       s = search_cpu_info(f, "revision", maxargs);
-       if (s)
-	 {
-	   sscanf(s + 1, "%d", &tmp);
-	   _papi_hwi_system_info.hw_info.revision = (float) tmp;
-	 }
-     }
-
-   /* Model Name */
-
-   rewind(f);
-   s = search_cpu_info(f, "family", maxargs);
-   if (s && (t = strchr(s + 2, '\n'))) 
-     {
-       *t = '\0';
-       strcpy(_papi_hwi_system_info.hw_info.model_string, s + 2);
-     }
-   else 
-     {
-       rewind(f);
-       s = search_cpu_info(f, "vendor", maxargs);
-       if (s && (t = strchr(s + 2, '\n'))) 
-	 {
-	   *t = '\0';
-	   strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
-	 }
-     }
-
-   rewind(f);
-   s = search_cpu_info(f, "model", maxargs);
-   if (s)
-      {
-	sscanf(s + 1, "%d", &tmp);
-	_papi_hwi_system_info.hw_info.model = tmp;
-      }
-
-   fclose(f);
+   /* Hardware info */  
+   get_cpu_info(&_papi_hwi_system_info.hw_info);
 
    SUBDBG("Found %d %s(%d) %s(%d) CPU's at %f Mhz.\n",
           _papi_hwi_system_info.hw_info.totalcpus,
@@ -885,7 +621,6 @@ int _linux_get_system_info(void)
 
    return (PAPI_OK);
 }
-#endif /* __CATAMOUNT__ */
 
 /* Low level functions, should not handle errors, just return codes. */
 
@@ -953,3 +688,4 @@ int _linux_shutdown(hwd_context_t * ctx)
    memset(ctx, 0x0, sizeof(hwd_context_t));
    return (PAPI_OK);
 }
+

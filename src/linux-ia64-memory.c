@@ -3,14 +3,13 @@
 * Author:  Kevin London
 *          london@cs.utk.edu
 *
-* Mods:    <your name here>
-*          <your email address>
+* Mods:    <Brian Sheely>
+*          <bsheely@eecs.utk.edu>
 */
 
 #include "papi.h"
 #include "papi_internal.h"
 
-inline void get_cpu_info(unsigned int *rev, unsigned int *model, unsigned int *family, unsigned int *archrev);
 void fline ( FILE *fp, char *buf );
 int get_number(char *buf);
 
@@ -23,7 +22,6 @@ int get_number(char *buf);
 
 int _ia64_get_memory_info(PAPI_hw_info_t * mem_info, int cpu_type)
 {
-   unsigned int rev,model,family,archrev;
    int retval = 0;
    FILE *f;
    int clevel = 0, cindex = -1;
@@ -120,7 +118,6 @@ int _ia64_get_memory_info(PAPI_hw_info_t * mem_info, int cpu_type)
       }
    }
 
-   get_cpu_info(&rev,&model,&family,&archrev);
    return retval;
 }
 
@@ -263,19 +260,3 @@ void fline ( FILE *fp, char *rline ) {
   }
   return;
 } 
- 
-inline void get_cpu_info(unsigned int *rev, unsigned int *model, unsigned int *family, unsigned int *archrev)
-{
-        unsigned long r;
-
-#ifdef __INTEL_COMPILER
-	r = __getIndReg(_IA64_REG_INDR_CPUID, 0);
-#else
-        asm ("mov %0=cpuid[%r1]" : "=r"(r) : "rO"(3));
-#endif
-        *rev = (r>>8)&0xff;
-        *model = (r>>16)&0xff;
-        *family = (r>>24)&0xff;
-        *archrev = (r>>32)&0xff;
-}
-

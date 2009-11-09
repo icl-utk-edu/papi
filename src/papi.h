@@ -536,14 +536,20 @@ read the documentation carefully.  */
    } PAPI_mh_info_t;
 
    typedef struct _papi_hw_info {
-      int ncpu;                     /* Number of CPU's in an SMP Node */
-      int nnodes;                   /* Number of Nodes in the entire system */
+      int ncpu;                     /* Number of CPUs per NUMA Node */
+      int threads;                  /* Number of hdw threads per core */
+      int cores;                    /* Number of cores per socket */
+      int sockets;                  /* Number of sockets */
+      int nnodes;                   /* Total Number of NUMA Nodes */
       int totalcpus;                /* Total number of CPU's in the entire system */
       int vendor;                   /* Vendor number of CPU */
       char vendor_string[PAPI_MAX_STR_LEN];     /* Vendor string of CPU */
       int model;                    /* Model number of CPU */
       char model_string[PAPI_MAX_STR_LEN];      /* Model string of CPU */
       float revision;               /* Revision of CPU */
+      int cpuid_family;             /* cpuid family */
+      int cpuid_model;              /* cpuid model */
+      int cpuid_stepping;           /* cpuid stepping */
       float mhz;                    /* Cycle time of this CPU */
       int clock_mhz;                /* Cycle time of this CPU's cycle counter */
       PAPI_mh_info_t mem_hierarchy;  /* PAPI memory heirarchy description */

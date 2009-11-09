@@ -5,6 +5,7 @@
 #include <inttypes.h>
 #include "linux-mx.h"
 
+extern int get_cpu_info(PAPI_hw_info_t * hwinfo);
 void mx_init_mdi();
 int mx_init_presets();
 
@@ -595,12 +596,8 @@ int mx_init_presets(){
  * and used above the substrate level.
  */
 void mx_init_mdi(){
-/*   strcpy(_papi_hwi_system_info.hw_info.vendor_string,"linux-acpi");
-   strcpy(_papi_hwi_system_info.hw_info.model_string,"linux-acpi");
-   _papi_hwi_system_info.hw_info.mhz = 100.0;
-   _papi_hwi_system_info.hw_info.ncpu = 1;
-   _papi_hwi_system_info.hw_info.nnodes = 1;
-   _papi_hwi_system_info.hw_info.totalcpus = 1;
+/*  
+   get_cpu_info(&_papi_hwi_system_info.hw_info);
    _papi_hwi_system_info.num_cntrs = MAX_COUNTERS;
    _papi_hwi_system_info.supports_program = 0;
    _papi_hwi_system_info.supports_write = 0;

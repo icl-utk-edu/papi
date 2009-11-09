@@ -116,6 +116,9 @@ linux-lmsensors.o: linux-lmsensors.c $(HEADERS)
 x86_cache_info.o: x86_cache_info.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c x86_cache_info.c -o x86_cache_info.o
 
+hwinfo_linux.o: hwinfo_linux.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c hwinfo_linux.c -o hwinfo_linux.o
+
 $(PFM_EVENTS_TABLE):	perfmon_events.csv perfmon_events_table.sh
 	sh perfmon_events_table.sh > $@
 

@@ -19,6 +19,8 @@
 *          you@cs.utk.edu
 * Mods:    Maynard Johnson
 *          maynardj@us.ibm.com
+* Mods:    Brian Sheely
+*          bsheely@eecs.utk.edu
 * Mods:    <your name here>
 *          <your email address>
 */
@@ -1122,7 +1124,7 @@ int _papi_hwi_init_global_internal(void)
 
    /* The PAPI_hw_info_t struct defined in papi.h */
    _papi_hwi_system_info.hw_info.ncpu = 0;     /* ncpu */
-   _papi_hwi_system_info.hw_info.nnodes = 1;    /* nnodes */
+   _papi_hwi_system_info.hw_info.nnodes = 0;    /* nnodes */
    _papi_hwi_system_info.hw_info.totalcpus = 0;        /* totalcpus */
    _papi_hwi_system_info.hw_info.vendor = 0;   /* vendor */
    _papi_hwi_system_info.hw_info.vendor_string[0] = '\0';       /* vendor_string */
@@ -1130,6 +1132,12 @@ int _papi_hwi_init_global_internal(void)
    _papi_hwi_system_info.hw_info.model_string[0] = '\0';        /* model_string */
    _papi_hwi_system_info.hw_info.revision = 0.0;        /* revision */
    _papi_hwi_system_info.hw_info.mhz = 0.0;     /* mhz */
+   _papi_hwi_system_info.hw_info.threads = 0;         /* hdw threads per core */
+   _papi_hwi_system_info.hw_info.cores = 0;           /* cores per socket */
+   _papi_hwi_system_info.hw_info.sockets = 0;         /* sockets */
+   _papi_hwi_system_info.hw_info.cpuid_family = 0;    /* cpuid family */
+   _papi_hwi_system_info.hw_info.cpuid_model = 0;     /* cpuid model */
+   _papi_hwi_system_info.hw_info.cpuid_stepping = 0;  /* cpuid stepping */
 
    return (PAPI_OK);
 }

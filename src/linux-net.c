@@ -6,6 +6,7 @@
 
 #define NETITEMS 13
 
+extern int get_cpu_info(PAPI_hw_info_t * hwinfo);
 void net_init_mdi();
 int net_init_presets();
 
@@ -457,12 +458,8 @@ int net_init_presets(){
  * and used above the substrate level.
  */
 void net_init_mdi(){
-/*   strcpy(_papi_hwi_system_info.hw_info.vendor_string,"linux-net");
-   strcpy(_papi_hwi_system_info.hw_info.model_string,"linux-net");
-   _papi_hwi_system_info.hw_info.mhz = 100.0;
-   _papi_hwi_system_info.hw_info.ncpu = 1;
-   _papi_hwi_system_info.hw_info.nnodes = 1;
-   _papi_hwi_system_info.hw_info.totalcpus = 1;
+/* 
+   get_cpu_info(&_papi_hwi_system_info.hw_info);
    _papi_hwi_system_info.num_cntrs = MAX_COUNTERS;
    _papi_hwi_system_info.supports_program = 0;
    _papi_hwi_system_info.supports_write = 0;

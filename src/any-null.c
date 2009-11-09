@@ -7,6 +7,8 @@
 *          london@cs.utk.edu
 * Mods:    dan terpstra
 *          terpstra@eecs.utk.edu
+* Mods:    Brian Sheely
+*          bsheely@eecs.utk.edu
 */
 
 /* PAPI stuff */
@@ -16,6 +18,7 @@
 #include "papi_memory.h"
 
 extern papi_vector_t MY_VECTOR;
+extern int get_cpu_info(PAPI_hw_info_t * hwinfo);
 
 volatile unsigned int lock[PAPI_MAX_LOCK];
 
@@ -58,13 +61,9 @@ static int _any_init_substrate(int cidx)
 	/* Internal function, doesn't necessarily need to be a function */
 	MY_VECTOR.cmp_info.CmpIdx = cidx;
 
-	strcpy(_papi_hwi_system_info.hw_info.vendor_string,"Vendor");
-	strcpy(_papi_hwi_system_info.hw_info.model_string,"Model");
-	_papi_hwi_system_info.hw_info.mhz = 1;
-	_papi_hwi_system_info.hw_info.clock_mhz = 1;
-	_papi_hwi_system_info.hw_info.ncpu = 1;
-	_papi_hwi_system_info.hw_info.nnodes = 1;
-	_papi_hwi_system_info.hw_info.totalcpus = 1;
+	/* Hardware info */  
+	get_cpu_info(&_papi_hwi_system_info.hw_info);
+
 	strcpy(MY_VECTOR.cmp_info.name, "any-null");	/* Name of the substrate we're using, usually CVS RCS Id */
 	strcpy(MY_VECTOR.cmp_info.version, "$Revision$");	/* Version of this substrate, usually CVS Revision */
 //   strcpy(_papi_hwi_system_info.sub_info.name,"any-null");              /* Name of the substrate we're using, usually CVS RCS Id */
@@ -660,11 +659,7 @@ static int _linux_get_system_info(void)
 		_papi_hwi_system_info.exe_info.address_info.bss_start));
 
 	/* Hardware info */
-
-	_papi_hwi_system_info.hw_info.ncpu = sysconf(_SC_NPROCESSORS_ONLN);
-	_papi_hwi_system_info.hw_info.nnodes = 1;
-	_papi_hwi_system_info.hw_info.totalcpus = sysconf(_SC_NPROCESSORS_CONF);
-	_papi_hwi_system_info.hw_info.vendor = -1;
+	get_cpu_info(&_papi_hwi_system_info.hw_info);
 
    /* Multiplex info */
 /* This structure disappeared from the papi_mdi_t definition
@@ -673,92 +668,6 @@ static int _linux_get_system_info(void)
    _papi_hwi_system_info.mpx_info.timer_num = PAPI_ITIMER;
    _papi_hwi_system_info.mpx_info.timer_us = PAPI_MPX_DEF_US;
 */
-
-	if ((f = fopen("/proc/cpuinfo", "r")) == NULL)
-	{ PAPIERROR("fopen(/proc/cpuinfo) errno %d",errno); return(PAPI_ESYS); }
-
-	/* All of this information may be overwritten by the substrate */
-
-	/* MHZ */
-	rewind(f);
-	s = search_cpu_info(f, "clock", maxargs);
-	if (!s) {
-		rewind(f);
-		s = search_cpu_info(f, "cpu MHz", maxargs);
-	}
-	if (s)
-		sscanf(s + 1, "%f", &mhz);
-	_papi_hwi_system_info.hw_info.mhz = mhz;
-	_papi_hwi_system_info.hw_info.clock_mhz = mhz;
-
-	/* Vendor Name */
-
-	rewind(f);
-	s = search_cpu_info(f, "vendor_id", maxargs);
-	if (s && (t = strchr(s + 2, '\n')))
-	{
-		*t = '\0';
-		strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
-	}
-	else
-	{
-		rewind(f);
-		s = search_cpu_info(f, "vendor", maxargs);
-		if (s && (t = strchr(s + 2, '\n'))) {
-			*t = '\0';
-			strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
-		}
-	}
-
-	/* Revision */
-
-	rewind(f);
-	s = search_cpu_info(f, "stepping", maxargs);
-	if (s)
-	{
-		sscanf(s + 1, "%d", &tmp);
-		_papi_hwi_system_info.hw_info.revision = (float) tmp;
-	}
-	else
-	{
-		rewind(f);
-		s = search_cpu_info(f, "revision", maxargs);
-		if (s)
-		{
-			sscanf(s + 1, "%d", &tmp);
-			_papi_hwi_system_info.hw_info.revision = (float) tmp;
-		}
-	}
-
-	/* Model Name */
-
-	rewind(f);
-	s = search_cpu_info(f, "family", maxargs);
-	if (s && (t = strchr(s + 2, '\n')))
-	{
-		*t = '\0';
-		strcpy(_papi_hwi_system_info.hw_info.model_string, s + 2);
-	}
-	else
-	{
-		rewind(f);
-		s = search_cpu_info(f, "vendor", maxargs);
-		if (s && (t = strchr(s + 2, '\n')))
-		{
-			*t = '\0';
-			strcpy(_papi_hwi_system_info.hw_info.vendor_string, s + 2);
-		}
-	}
-
-	rewind(f);
-	s = search_cpu_info(f, "model", maxargs);
-	if (s)
-	{
-		sscanf(s + 1, "%d", &tmp);
-		_papi_hwi_system_info.hw_info.model = tmp;
-	}
-
-	fclose(f);
 
 	SUBDBG("Found %d %s(%d) %s(%d) CPU's at %f Mhz.\n",
 		_papi_hwi_system_info.hw_info.totalcpus,
