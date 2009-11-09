@@ -1580,14 +1580,32 @@ if test "$OS" = "linux" -a "$bitmode" = "64"; then
    fi
 fi
 
-AC_MSG_CHECKING(for library to link)
+AC_MSG_CHECKING(for link test cases with shared library)
 AC_ARG_WITH(shlib,
-	[  --with-shlib=<yes,no>	Specify static[no] or dynamic[yes] papi library to link with test cases and utilities],
-	[shlib=dynamic],
-	[shlib=static]
+	[  --with$-shlib=<yes,no>	Specify static[no] or dynamic[yes] papi library to link with test cases and utilities],
+	[shlib=$withval],
+	[shlib=either]
 	)
+if test "$shlib" = "either"; then
+   if test "$papiLIBS" = "shared static"; then
+      shlib=no
+   fi
+   if test "$papiLIBS" = "shared"; then
+      shlib=yes
+   else
+      shlib=no
+   fi
+   AC_MSG_RESULT($shlib)
+else
+if test "$papiLIBS" = "shared" -a "$shlib" = "no"; then
+                         AC_MSG_ERROR([Sorry, building shared but specified static linking])
+fi
+if test "$papiLIBS" = "static" -a "$shlib" = "yes"; then
+                         AC_MSG_ERROR([Sorry, building static but specified shared linking])
+fi
 AC_MSG_RESULT($shlib)
-if test "$shlib" = "dynamic"; then
+fi
+if test "$shlib" = "yes"; then
 	SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib:$(PWD)/libpfm-2.x/libpfm;export LIBPATH=.:./libpfm-3.y/lib:./libpfm-2.x/libpfm;'   
     LINKLIB='../$(SHLIB)'
 else

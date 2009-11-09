@@ -16,8 +16,8 @@ FHEADERS  = fpapi.h f77papi.h f90papi.h
 all: showconf $(LIBS) utils tests
 
 showconf:
-		@echo; 
-		@echo "Host architecture: $(DESCR)"; 
+		@echo;
+		@echo "Host architecture: $(DESCR)";
 		@echo "Host substrate   : $(SUBSTR).c"; 
 		@echo "Host examples    : $(TARGETS)";
 		@echo "Installation DESTDIR: $(DESTDIR)"; 
@@ -127,13 +127,13 @@ fulltest: tests
 
 tests: $(TESTS)
 
-utils: $(LIBRARY) null
+utils: $(LIBS) null
 	$(SETPATH) cd utils; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. $(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY=$(LINKLIB) util
 
-ctests: $(LIBRARY) null
+ctests: $(LIBS) null
 	$(SETPATH) cd ctests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. $(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY=$(LINKLIB) $(TARGETS)
 
-ftests: $(LIBRARY) null
+ftests: $(LIBS) null
 	$(SETPATH) cd ftests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" F77="$(F77)" CFLAGS="-I.. $(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" FTOPTFLAGS="$(FTOPTFLAGS)" FFLAGS="-I.. $(FFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY=$(LINKLIB) $(TARGETS)
 
 clean: native_clean
@@ -169,10 +169,11 @@ install-lib: native_install
 	@echo "Libraries (LIBDIR) being installed in: \"$(DESTDIR)$(LIBDIR)\""; 
 	-mkdir -p $(DESTDIR)$(LIBDIR)
 	-chmod go+rx $(DESTDIR)$(LIBDIR)
-	cp $(LIBRARY) $(DESTDIR)$(LIBDIR)
-	chmod go+r $(DESTDIR)$(LIBDIR)/$(LIBRARY)
-# copy SHLIB conditionally, since it isn't always made
-	if [[ -r $(SHLIB) ]] ; then \
+	if test -r $(LIBRARY) ; then \
+	   cp $(LIBRARY) $(DESTDIR)$(LIBDIR); \
+	   chmod go+r $(DESTDIR)$(LIBDIR)/$(LIBRARY); \
+	fi
+	if test -r $(SHLIB) ; then \
 		cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE); \
 		chmod go+r $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) ; \
 		cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so.$(PAPIVER); \
@@ -180,8 +181,8 @@ install-lib: native_install
 	fi
 
 # the man pages and doc files have been deprecated and replaced by web documentation
-#install-man: 
-#	cd ../man && $(MAKE) DOCDIR=$(DESTDIR)$(DOCDIR) MANDIR=$(DESTDIR)$(MANDIR) install
+install-man: 
+	cd ../man && $(MAKE) DOCDIR=$(DESTDIR)$(DOCDIR) MANDIR=$(DESTDIR)$(MANDIR) install
 
 install-utils: 
 	$(SETPATH) cd utils; $(MAKE) BINDIR="$(DESTDIR)$(BINDIR)" CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. $(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" TOPTFLAGS="$(TOPTFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY=$(LINKLIB) install

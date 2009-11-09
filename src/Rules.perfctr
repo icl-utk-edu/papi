@@ -81,7 +81,7 @@ else
    endif
 endif
 
-CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(BITFLAGS)
+CFLAGS		+= -D_REENTRANT -D_GNU_SOURCE -Wall $(NOTLS) $(BITFLAGS)
 
 # 
 # Catamount section
@@ -247,10 +247,6 @@ else
 endif
 endif
 endif
-	mkdir -p $(DESTDIR)$(LIBDIR)
-	cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE)
-	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so.$(PAPIVER)
-	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so
 
 native_clobber:
 ifneq (,${PERFCTR_ROOT})

@@ -80,9 +80,9 @@ endif
 endif
 
 OPTIM := $(CFLAGS)
-CFLAGS-2.x := -DPFM20 -D_GNU_SOURCE
-CFLAGS-3.y := -DPFM30 -D_GNU_SOURCE  
-CFLAGS	+= -I$(PFM_INC_PATH) -DITANIUM$(CPU) $(NOTLS) $(ALTIX) $(CFLAGS-$(VERSION))
+CFLAGS-2.x := -DPFM20 
+CFLAGS-3.y := -DPFM30 
+CFLAGS	+= -D_GNU_SOURCE -D_REENTRANT -I$(PFM_INC_PATH) -DITANIUM$(CPU) $(NOTLS) $(ALTIX) $(CFLAGS-$(VERSION))
 
 ifeq (y,$(PFM_OLD_PFMV2))
 	CFLAGS		 += -DPFMLIB_OLD_PFMV2
@@ -129,9 +129,6 @@ else
 	$(MAKE) -C $(PFM_ROOT) DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
 endif
-	cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE)
-	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so.$(PAPIVER)
-	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so
 
 native_clobber:
 ifneq (,${PFM_ROOT})

@@ -1,9 +1,9 @@
 # $Id$
 
 DESCR   = "Linux with $(SUBSTR) kernel support and library"
+TARGETS = ear serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads shared
 LIBRARY = libpapi.a
 SHLIB   = libpapi.so
-TARGETS = ear serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads shared
 MEMSUBSTR = perfmon
 
 #
@@ -26,7 +26,7 @@ else
    endif
 endif
 
-CFLAGS		+= -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) $(DEBUGFLAGS) -D_REENTRANT
+CFLAGS		+= -D_REENTRANT -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) $(DEBUGFLAGS)
 TOPTFLAGS	:= -g -O
 FTOPTFLAGS	:= $(FTOPTFLAGS)
 
@@ -123,17 +123,11 @@ ifeq (static,$(PFM_EVENTS))
 endif
 
 native_install:
+	-install -d $(DESTDIR)$(DATADIR)
+	-cp -f ./perfmon_events.csv $(DESTDIR)$(DATADIR)
 ifneq (,${PFM_ROOT})
 	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
-	-install -d $(DESTDIR)$(LIBDIR)
-ifneq (,$(findstring shared,$(LIBS)))
-	cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE)
-	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so.$(PAPIVER)
-	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so
-endif
-	-install -d $(DESTDIR)$(DATADIR)
-	cp -f ./perfmon_events.csv $(DESTDIR)$(DATADIR)
 
 native_clobber:
 ifneq (,${PFM_ROOT})
