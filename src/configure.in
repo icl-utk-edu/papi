@@ -1618,20 +1618,10 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
    fi
 elif test "$MAKEVER" = "CLE-perfmon2"; then   
    FILENAME=Rules.pfm_pe
-   PE="$(shell echo $${CRAY_PE_TARGET})"
-   if test "$PE" = "cray-x2"; then
-      COMPILER=CRAYX2
-      CC=craynv-cray-linux-gnu-gcc
-      F77=craynv-cray-linux-gnu-gfortran
-      CPP='$(CC) -E'
-      LDFLAGS=-lpthread
-      TESTS=ctests
-   else
-      COMPILER=CRAYXT
-      F77=gfortran
-      CFLAGS='$(CFLAGS) -D __crayxt'
-      MISCSRCS=x86_cache_info.c
-   fi
+   COMPILER=CRAYXT
+   F77=gfortran
+   CFLAGS='-D__crayxt'
+   MISCSRCS=x86_cache_info.c
    SUBSTR=perfmon
 elif test "$MAKEVER" = "linux-acpi"; then
    FILENAME=Makefile.inc

@@ -260,11 +260,6 @@ inline_static long long get_cycles(void) {
 #endif
    return ret;
 }
-#elif defined(__crayx2)						/* CRAY X2 */
-inline_static long long get_cycles (void)
-{
-	return _rtc ( );
-}
 /* SiCortex only code, which works on V2.3 R81 or above
    anything below, must use gettimeofday() */
 #elif defined(HAVE_CYCLE) && defined(mips)
@@ -1333,13 +1328,6 @@ int ppc64_get_memory_info(PAPI_hw_info_t * hw_info)
 }
 #endif
 
-#if defined(__crayx2)						/* CRAY X2 */
-static int crayx2_get_memory_info(PAPI_hw_info_t *hw_info)
-{
-	return 0;
-}
-#endif
-
 #if defined(__sparc__)
 static int sparc_sysfs_cpu_attr(char *name, char **result)
 {
@@ -1543,8 +1531,6 @@ int _papi_pfm_get_memory_info(PAPI_hw_info_t * hwinfo, int unused)
   ia64_get_memory_info(hwinfo);
 #elif defined(__powerpc__)
   ppc64_get_memory_info(hwinfo);
-#elif defined(__crayx2)						/* CRAY X2 */
-  crayx2_get_memory_info(hwinfo);
 #elif defined(__sparc__)
   sparc_get_memory_info(hwinfo);
 #else
@@ -2362,10 +2348,6 @@ int _papi_pfm_init_substrate(int cidx)
    if (retval)
      return(retval);
 
-#if defined(__crayx2)						/* CRAY X2 */
-  _papi_hwd_lock_init ( );
-#endif
-
 #ifdef WIN32
   for (i = 0; i < PAPI_MAX_LOCK; i++)
      InitializeCriticalSection(&_papi_hwd_lock_data[i]);
@@ -2674,9 +2656,9 @@ int _papi_pfm_read(hwd_context_t * ctx0, hwd_control_state_t * ctl0,
    return PAPI_OK;
 }
 
-#if defined(__crayxt) || defined(__crayx2)
+#if defined(__crayxt)
 int _papi_hwd_start_create_context = 0;	/* CrayPat checkpoint support */
-#endif /* XT/X2 */
+#endif /* XT */
 
 int _papi_pfm_start(hwd_context_t * ctx0, hwd_control_state_t * ctl0)
 {
@@ -2684,7 +2666,7 @@ int _papi_pfm_start(hwd_context_t * ctx0, hwd_control_state_t * ctl0)
   pfm_control_state_t *ctl = (pfm_control_state_t *) ctl0;
   pfm_context_t *ctx = (pfm_context_t *)ctx0;
 
-#if defined(__crayxt) || defined(__crayx2)
+#if defined(__crayxt)
   if (_papi_hwd_start_create_context) {
     pfarg_ctx_t tmp;
 
@@ -2697,7 +2679,7 @@ int _papi_pfm_start(hwd_context_t * ctx0, hwd_control_state_t * ctl0)
     tune_up_fd(ret);
     ctl->ctx_fd = ctx->ctx_fd = ret;
   }
-#endif /* XT/X2 */
+#endif /* XT */
 
   if (ctl->num_sets > 1)
     {

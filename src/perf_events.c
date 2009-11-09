@@ -155,12 +155,6 @@ inline_static long long get_cycles (void)
 #endif
   return ret;
 }
-#elif defined(__crayx2)         /* CRAY X2 */
-inline_static long long get_cycles (void)
-{
-  return _rtc ();
-}
-
 /* SiCortex only code, which works on V2.3 R81 or above
    anything below, must use gettimeofday() */
 #elif defined(HAVE_CYCLE) && defined(mips)
@@ -1096,13 +1090,6 @@ int ppc64_get_memory_info (PAPI_hw_info_t * hw_info)
 }
 #endif
 
-#if defined(__crayx2)           /* CRAY X2 */
-static int crayx2_get_memory_info (PAPI_hw_info_t * hw_info)
-{
-  return 0;
-}
-#endif
-
 #if defined(__sparc__)
 static int sparc_sysfs_cpu_attr (char *name, char **result)
 {
@@ -1311,8 +1298,6 @@ int _papi_pe_get_memory_info (PAPI_hw_info_t * hwinfo, int unused)
   ia64_get_memory_info (hwinfo);
 #elif defined(__powerpc__)
   ppc64_get_memory_info (hwinfo);
-#elif defined(__crayx2)         /* CRAY X2 */
-  crayx2_get_memory_info (hwinfo);
 #elif defined(__sparc__)
   sparc_get_memory_info (hwinfo);
 #else
@@ -2038,9 +2023,6 @@ int _papi_pe_init_substrate (int cidx)
   if (retval)
     return retval;
 
-#if defined(__crayx2)           /* CRAY X2 */
-  _papi_hwd_lock_init ();
-#endif
   for (i = 0; i < PAPI_MAX_LOCK; i++)
     _papi_hwd_lock_data[i] = MUTEX_OPEN;
 
@@ -2434,9 +2416,9 @@ int _papi_pe_read (hwd_context_t * ctx, hwd_control_state_t * ctl, long long **e
 
 }
 
-#if defined(__crayxt) || defined(__crayx2)
+#if defined(__crayxt)
 int _papi_pe_start_create_context = 0; /* CrayPat checkpoint support */
-#endif /* XT/X2 */
+#endif /* XT */
 
 int _papi_pe_start (hwd_context_t * ctx, hwd_control_state_t * ctl)
 {
