@@ -1,4 +1,4 @@
-#                                               -*- Autoconf -*-
+v#                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 # File: configure.in
 
@@ -1056,8 +1056,12 @@ fi
 if test "$use_static" = "yes"; then
    papiLIBS="$papiLIBS static"
 fi
+if test "$use_static" = "no" -a "$use_shared" = "no"; then
+   AC_MSG_ERROR(you can't disable both shared and static libs)
+else
 # Override architectural defaults
-AC_MSG_RESULT($papiLIBS)
+  AC_MSG_RESULT($papiLIBS)
+fi
 #
 #
 #
@@ -1528,14 +1532,37 @@ if test "$OS" = "linux" -a "$bitmode" = "64"; then
 fi
 
 #AC_DEFINE_UNQUOTED(PAPI_DATADIR, "$PAPI_DATADIR", [package data directory])
-AC_MSG_CHECKING(for library to link)
+AC_MSG_CHECKING(for link test cases with shared library)
 AC_ARG_WITH(shlib,
 	[  --with-shlib=<yes,no>	Specify static[no] or dynamic[yes] papi library to link with test cases and utilities],
-	[shlib=dynamic],
-	[shlib=static]
+ 	[shlib=$withval],
+ 	[shlib=either]
 	)
+if test "$shlib" = "either"; then
+   if test "shared static"; then
+      shlib=no
+   fi
+   if test "$papiLIBS" = "shared"; then
+      shlib=yes
+   else
+      shlib=no
+   fi
+fi
+if test "$papiLIBS" != "shared static"; then
+if test "$shlib" = "yes"; then
+AC_MSG_RESULT(papiLIBS $papiLIBS shlib $shlib)
+   if echo "x$papiLIBS" | grep static > /dev/null; then
+                         AC_MSG_ERROR([Sorry, building static but specified shared linking])
+   fi
+fi
+if test "$shlib" = "no"; then
+   if echo "x$papiLIBS" | grep shared > /dev/null; then
+                         AC_MSG_ERROR([Sorry, building shared but specified static linking])
+   fi
+fi
+fi
 AC_MSG_RESULT($shlib)
-if test "$shlib" = "dynamic"; then
+if test "$shlib" = "yes"; then
 	SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib:$(PWD)/libpfm-2.x/libpfm;export LIBPATH=.:./libpfm-3.y/lib:./libpfm-2.x/libpfm;'   
     LINKLIB='../$(SHLIB)'
 else
