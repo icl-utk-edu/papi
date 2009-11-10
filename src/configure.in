@@ -83,6 +83,7 @@ get_bitmode()
 use_shared=yes
 use_static=yes
 use_static_tests=no
+use_x86_cache_info=no
 AC_MSG_CHECKING(for architecture)
 AC_ARG_WITH(arch,
 	   [  --with-arch=<arch>		Specify architecture (uname -m)],
@@ -221,30 +222,30 @@ case "$OS" in
              # model 14 is an ancient Core
              if test "$model" = "14"; then
                CPU=core
-               MISCSRCS=x86_cache_info.c
+               use_x86_cache_info=yes
              fi
              # models 15, 22, 23 are Core2 variants
              if (test "$model" = "15" || test "$model" = "22" || test "$model" = "23"); then
                CPU=core2
-               MISCSRCS=x86_cache_info.c
+               use_x86_cache_info=yes
              fi
              # model 26 is Nehalem
              if test "$model" = "26"; then
                CPU=i7
-               MISCSRCS=x86_cache_info.c
+               use_x86_cache_info=yes
              fi
              # model 28 is Atom
              if test "$model" = "28"; then
                CPU=atom
-               MISCSRCS=x86_cache_info.c
+               use_x86_cache_info=yes
              fi
            elif test "$family" = "15"; then
              if (test "$model" = "3" || test "$model" = "4" || test "$model" = "6"); then
                CPU=em64t
-               MISCSRCS=x86_cache_info.c
+               use_x86_cache_info=yes
              elif (test "$model" = "1" || test "$model" = "2"); then
                CPU=p4
-               MISCSRCS=x86_cache_info.c
+               use_x86_cache_info=yes
              fi
            elif test "$family" = "32"; then
 	       CPU=montecito
@@ -256,28 +257,28 @@ case "$OS" in
            if test "$CPU" = "" ; then       
              if test "`cat /proc/cpuinfo | grep "Pentium${R} 4"`" != ""; then
                CPU=p4
-               MISCSRCS=x86_cache_info.c
+               use_x86_cache_info=yes
              elif test "`cat /proc/cpuinfo | grep -i "Itanium 2"`" != ""; then
                CPU=itanium2 
              elif test "`cat /proc/cpuinfo | grep -i Itanium`" != ""; then
                CPU=itanium
              elif test "`cat /proc/cpuinfo | grep -i "Pentium III"`" != ""; then
                CPU=p3
-               MISCSRCS=x86_cache_info.c
+               use_x86_cache_info=yes
              elif test "`cat /proc/cpuinfo | grep -i "Pentium II"`" != ""; then
                CPU=p2
-               MISCSRCS=x86_cache_info.c
+               use_x86_cache_info=yes
 	     else CPU=p3
-               MISCSRCS=x86_cache_info.c
+               use_x86_cache_info=yes
              fi
            fi 
          elif test "`cat /proc/cpuinfo | grep AuthenticAMD`" != ""; then
            made=AuthenticAMD
-		   if test "`cat /proc/cpuinfo | grep "Athlon${tm}[[:space:]]*64"`" != ""; then
+           if test "`cat /proc/cpuinfo | grep "Athlon${tm}[[:space:]]*64"`" != ""; then
              CPU=opteron
-               MISCSRCS=x86_cache_info.c
+               use_x86_cache_info=yes
            else CPU=athlon
-               MISCSRCS=x86_cache_info.c
+               use_x86_cache_info=yes
            fi
            family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
            model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
@@ -287,7 +288,7 @@ case "$OS" in
 # see AMD Opteron Revision Guide, pub 25759, Table 1 for details
 #             if (test "$model" = "5" || test "$model" = "65"); then
                CPU=opteron
-               MISCSRCS=x86_cache_info.c
+               use_x86_cache_info=yes
 #             fi
            fi
          else
@@ -350,7 +351,7 @@ case "$OS" in
         ;;
   catamount)
 	CPU=opteron
-        MISCSRCS=x86_cache_info.c
+        use_x86_cache_info=yes
 	;;
   bgl)
 	CPU=bgl
@@ -383,6 +384,9 @@ if test "$OS" = "CLE"; then
    use_shared=no
    use_static=yes
    use_static_tests=yes
+fi
+if test "$use_x86_cache_info" = "yes"; then
+  MISCSRCS="x86_cache_info.c"
 fi
          
 #
