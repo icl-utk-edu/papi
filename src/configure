@@ -1316,7 +1316,7 @@ Optional Packages:
   --with-semaphores Use semaphores instead of atomic locks (IA64)
   --with-tests=<ctests,ftests,"ctests ftests">	Specify which tests to run on install
   --with-nativecc=<path>	Specify native C compiler for header generation
-  --with$-shlib=<yes,no>	Specify staticno or dynamicyes papi library to link with test cases and utilities
+  --with-shlib=<yes,no>	Specify staticno or dynamicyes papi library to link with test cases and utilities
 
 Some influential environment variables:
   CC          C compiler command
@@ -6262,9 +6262,15 @@ fi
 if test "$use_static" = "yes"; then
    papiLIBS="$papiLIBS static"
 fi
+if test "$use_static" = "no" -a "$use_shared" = "no"; then
+   { { echo "$as_me:$LINENO: error: you can't disable both shared and static libs" >&5
+echo "$as_me: error: you can't disable both shared and static libs" >&2;}
+   { (exit 1); exit 1; }; }
+else
 # Override architectural defaults
-{ echo "$as_me:$LINENO: result: $papiLIBS" >&5
+  { echo "$as_me:$LINENO: result: $papiLIBS" >&5
 echo "${ECHO_T}$papiLIBS" >&6; }
+fi
 #
 #
 #
@@ -8362,7 +8368,7 @@ else
 fi
 
 if test "$shlib" = "either"; then
-   if test "$papiLIBS" = "shared static"; then
+   if test "shared static"; then
       shlib=no
    fi
    if test "$papiLIBS" = "shared"; then
@@ -8370,22 +8376,27 @@ if test "$shlib" = "either"; then
    else
       shlib=no
    fi
-   { echo "$as_me:$LINENO: result: $shlib" >&5
-echo "${ECHO_T}$shlib" >&6; }
-else
-if test "$papiLIBS" = "shared" -a "$shlib" = "no"; then
-                         { { echo "$as_me:$LINENO: error: Sorry, building shared but specified static linking" >&5
-echo "$as_me: error: Sorry, building shared but specified static linking" >&2;}
-   { (exit 1); exit 1; }; }
 fi
-if test "$papiLIBS" = "static" -a "$shlib" = "yes"; then
+if test "$papiLIBS" != "shared static"; then
+if test "$shlib" = "yes"; then
+{ echo "$as_me:$LINENO: result: papiLIBS $papiLIBS shlib $shlib" >&5
+echo "${ECHO_T}papiLIBS $papiLIBS shlib $shlib" >&6; }
+   if echo "x$papiLIBS" | grep static; then
                          { { echo "$as_me:$LINENO: error: Sorry, building static but specified shared linking" >&5
 echo "$as_me: error: Sorry, building static but specified shared linking" >&2;}
    { (exit 1); exit 1; }; }
+   fi
+fi
+if test "$shlib" = "no"; then
+   if echo "x$papiLIBS" | grep shared; then
+                         { { echo "$as_me:$LINENO: error: Sorry, building shared but specified static linking" >&5
+echo "$as_me: error: Sorry, building shared but specified static linking" >&2;}
+   { (exit 1); exit 1; }; }
+   fi
+fi
 fi
 { echo "$as_me:$LINENO: result: $shlib" >&5
 echo "${ECHO_T}$shlib" >&6; }
-fi
 if test "$shlib" = "yes"; then
 	SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib:$(PWD)/libpfm-2.x/libpfm;export LIBPATH=.:./libpfm-3.y/lib:./libpfm-2.x/libpfm;'
     LINKLIB='../$(SHLIB)'
