@@ -173,7 +173,6 @@ int main(int argc, char **argv)
 	const PAPI_hw_info_t *hwinfo = NULL;
 	command_flags_t flags;
 	int enum_modifier;
-	char *pmask;
 
 	tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
