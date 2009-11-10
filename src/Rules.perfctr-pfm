@@ -111,22 +111,7 @@ ifeq (icc, $(CC))
 TARGETS	  	+= omp
 endif
 
-ifeq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))
-ifeq ($(ARCH),ppc64)
-#Workaround to gcc bug (see gcc bug #20611)
-OPTFLAGS        += -O2 $(DEBUGFLAGS)
-else
-ifneq ($(CC),icc)
-OPTFLAGS	+= -O3 $(DEBUGFLAGS)
-endif
-endif
-else
-OPTFLAGS	+= -g -O $(DEBUGFLAGS)
-endif
-
 FFLAGS        	+= -Dlinux $(FARGS)
-TOPTFLAGS	+= -g -O  
-FTOPTFLAGS	= $(TOPTFLAGS)
 
 ifeq (static,$(PFM_EVENTS))
 	CFLAGS		 += -DSTATIC_PERFMON_EVENTS_TABLE

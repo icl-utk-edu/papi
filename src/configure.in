@@ -356,6 +356,11 @@ fi
 AC_MSG_RESULT($bitmode)
 ])
 
+# Prevent AC_PROG_CC from defaulting optimization to -O2 because it causes compile warnings.
+# CFLAGS is overwritten throughout this file, and appended to by Rules files,
+# but consider moving this below AC_PROG_CC and using AX_CHECK_COMPILER_FLAGS
+CFLAGS="-g -O"
+
 AC_MSG_CHECKING(for debugging build)
 AC_ARG_WITH(debug,
             [  --with-debug=<no,yes,memory>	Build a debugging version of the library ],
@@ -364,6 +369,7 @@ AC_ARG_WITH(debug,
             )
 case "$debug" in
    yes)
+      CFLAGS="-g3 -O0"
       DEBUGFLAGS="-DDEBUG" ;;
    memory)
       DEBUGFLAGS="" ;;
@@ -1593,7 +1599,6 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
    OPTFLAGS='-O3 -qstrict $(PMINIT)'
    FFLAGS='$(FLAGS) -WF,-D_$(CPU_MODEL) -WF,-DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
    FOPTFLAGS='$(OPTFLAGS)'
-   FTOPTFLAGS='$(TOPTFLAGS)'
    SMPCFLGS=-qsmp
    OMPCFLGS='-qsmp=omp'
    LDFLAGS='-L$(PMAPI)/lib -lpmapi'
@@ -1681,7 +1686,6 @@ elif test "$MAKEVER" = "linux-bgl"; then
    #FFLAGS='-g -gdwarf-2 -O2 -Wall -I$(BGLSYS_ROOT)/include -Dlinux' 
    OPTFLAGS='-g -O3 -I$(BGLSYS_ROOT)/include'
    FOPTFLAGS='$(OPTFLAGS)'
-   FTOPTFLAGS='$(TOPTFLAGS)'
    LDFLAGS='-L$(BGLSYS_ROOT)/lib -lbgl_perfctr.rts -lmpich.rts -lmsglayer.rts -lrts.rts -ldevices.rts'
    LIBRARY=libpapi.a
    SHLIB=libpapi.so
@@ -1742,7 +1746,7 @@ elif test "$MAKEVER" = "linux-perfctr-p4"; then
       VERSION=2.6.x
    fi
    CPU=p4
-   TOPTFLAGS="-DPENTIUM4"
+   CFLAGS="$CFLAGS -DPENTIUM4"
    EVENTFLAGS="-DPAPI_PENTIUM4_FP_X87_SSE_DP -DPAPI_PENTIUM4_VEC_SSE"
 elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfctr-POWER5-64bit"); then
    FILENAME=Rules.perfctr
@@ -1845,7 +1849,6 @@ elif (test "$MAKEVER" = "solaris-ultra" || test "$MAKEVER" = "solaris-ultra-64")
       OMPCFLGS=-xopenmp
       F77=f90
       FFLAGS=$CFLAGS
-      TOPTFLAGS= 
       NOOPT=-xO0 
       OPTFLAGS="-g -fast -xtarget=ultra3 -xarch=v8plusa" 
    fi
@@ -1928,7 +1931,6 @@ AC_SUBST(LINKLIB)
 AC_SUBST(VERSION)
 AC_SUBST(CPU)
 AC_SUBST(FARGS)
-AC_SUBST(TOPTFLAGS)
 AC_SUBST(EVENTFLAGS)
 AC_SUBST(FILENAME)
 AC_SUBST(LIBRARY)
@@ -1958,7 +1960,6 @@ AC_SUBST(CPU_MODEL)
 AC_SUBST(cpu_option)
 AC_SUBST(ARG64)
 AC_SUBST(FLAGS)
-AC_SUBST(FTOPTFLAGS)
 AC_SUBST(MPICC)
 AC_SUBST(MISCHDRS)
 AC_SUBST(SHRFLAGS)

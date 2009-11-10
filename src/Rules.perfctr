@@ -106,20 +106,7 @@ ifeq (icc, $(CC))
 TARGETS	  	+= omp
 endif
 
-ifeq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))
-ifeq ($(ARCH),ppc64)
-#Workaround to gcc bug (see gcc bug #20611)
-OPTFLAGS        += -O2 $(DEBUGFLAGS)
-else
-OPTFLAGS	+= -O3 $(DEBUGFLAGS)
-endif
-else
-OPTFLAGS	+= -g -O $(DEBUGFLAGS)
-endif
-
 FFLAGS        	+= -Dlinux $(FARGS)
-TOPTFLAGS	+= -g -O  
-FTOPTFLAGS	= $(TOPTFLAGS)
 
 #
 # DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
