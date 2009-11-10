@@ -8379,16 +8379,14 @@ if test "$shlib" = "either"; then
 fi
 if test "$papiLIBS" != "shared static"; then
 if test "$shlib" = "yes"; then
-{ echo "$as_me:$LINENO: result: papiLIBS $papiLIBS shlib $shlib" >&5
-echo "${ECHO_T}papiLIBS $papiLIBS shlib $shlib" >&6; }
-   if echo "x$papiLIBS" | grep static; then
+   if echo "x$papiLIBS" | grep static > /dev/null; then
                          { { echo "$as_me:$LINENO: error: Sorry, building static but specified shared linking" >&5
 echo "$as_me: error: Sorry, building static but specified shared linking" >&2;}
    { (exit 1); exit 1; }; }
    fi
 fi
 if test "$shlib" = "no"; then
-   if echo "x$papiLIBS" | grep shared; then
+   if echo "x$papiLIBS" | grep shared > /dev/null; then
                          { { echo "$as_me:$LINENO: error: Sorry, building shared but specified static linking" >&5
 echo "$as_me: error: Sorry, building shared but specified static linking" >&2;}
    { (exit 1); exit 1; }; }

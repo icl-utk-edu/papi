@@ -1602,13 +1602,12 @@ if test "$shlib" = "either"; then
 fi
 if test "$papiLIBS" != "shared static"; then
 if test "$shlib" = "yes"; then
-AC_MSG_RESULT(papiLIBS $papiLIBS shlib $shlib)
-   if echo "x$papiLIBS" | grep static; then
+   if echo "x$papiLIBS" | grep static > /dev/null; then
                          AC_MSG_ERROR([Sorry, building static but specified shared linking])
    fi
 fi
 if test "$shlib" = "no"; then
-   if echo "x$papiLIBS" | grep shared; then
+   if echo "x$papiLIBS" | grep shared > /dev/null; then
                          AC_MSG_ERROR([Sorry, building shared but specified static linking])
    fi
 fi
