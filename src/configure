@@ -6764,6 +6764,10 @@ as_val=`eval 'as_val=${'$as_ac_File'}
 		 $as_echo "$as_val"'`
    if test "x$as_val" = x""yes; then
    pcl="yes"
+else
+  { { $as_echo "$as_me:$LINENO: error: perf_counter.h could not be found. Specify --with-pcl and --with-pcl-incdir" >&5
+$as_echo "$as_me: error: perf_counter.h could not be found. Specify --with-pcl and --with-pcl-incdir" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
 			fi

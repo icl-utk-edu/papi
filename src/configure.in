@@ -1018,7 +1018,8 @@ AC_ARG_WITH(pcl,
             [pcl=$withval],
             [pcl="no"
 			if test "$perfctr" = "no"; then
-            AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/perf_counter.h, [ pcl="yes" ])
+            AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/perf_counter.h, [ pcl="yes" ],
+                     [AC_MSG_ERROR([perf_counter.h could not be found. Specify --with-pcl and --with-pcl-incdir])])
 			fi ]
             )
 else
