@@ -4,7 +4,7 @@ v#                                               -*- Autoconf -*-
 
 
 AC_PREREQ(2.61)
-AC_INIT(PAPI, 3.7.0, ptools-perfapi@eecs.utk.edu)
+AC_INIT(PAPI, 3.7.1, ptools-perfapi@eecs.utk.edu)
 AC_CONFIG_SRCDIR([papi.c])
 AC_CONFIG_HEADER([config.h])
 
