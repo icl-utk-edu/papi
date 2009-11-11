@@ -46,9 +46,7 @@
 #include <sys/time.h>
 
 #ifndef __BSD__ /* #include <linux/unistd.h> */
-  #ifndef __CATAMOUNT__
-    #include <linux/unistd.h>	
-  #endif
+  #include <linux/unistd.h>
 #endif
 
 #ifndef CONFIG_SMP
@@ -109,11 +107,7 @@ typedef ucontext_t hwd_ucontext_t;
 
 /* Overflow macros */
 #ifdef __x86_64__
-  #ifdef __CATAMOUNT__
-    #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)(((struct sigcontext *)(&ctx->ucontext->uc_mcontext))->sc_rip)
-  #else
-    #define GET_OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.gregs[REG_RIP]
-  #endif
+  #define GET_OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.gregs[REG_RIP]
 #else
   #define GET_OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.gregs[REG_EIP]
 #endif
@@ -235,13 +229,6 @@ extern hwi_search_t *preset_search_map;
 
 #define MY_VECTOR _p3_vector
 
-
-#if __CATAMOUNT__
-  extern void _start ( );
-  extern caddr_t _etext[ ], _edata[ ];
-  extern caddr_t __stop___libc_freeres_ptrs[ ];
-#else
-  extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
-#endif
+extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
 
 #endif /* _PAPI_PENTIUM3 */

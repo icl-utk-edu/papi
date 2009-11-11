@@ -35,9 +35,7 @@
 #endif
 
 #ifndef __BSD__ /* #include <linux/unistd.h> */
-  #ifndef __CATAMOUNT__
-    #include <linux/unistd.h>
-  #endif
+  #include <linux/unistd.h>
 #endif
 
 #ifndef CONFIG_SMP

@@ -43,13 +43,6 @@ int _linux_get_dmem_info(PAPI_dmem_info_t *d)
   
    return PAPI_OK;
 }
-
-#else
-#ifdef __CATAMOUNT__
-int _linux_get_dmem_info(PAPI_dmem_info_t *d)
-{
-	return( PAPI_EINVAL );
-}
 #else
 int _linux_get_dmem_info(PAPI_dmem_info_t *d)
 {
@@ -139,7 +132,5 @@ int _linux_get_dmem_info(PAPI_dmem_info_t *d)
 
   return PAPI_OK;
 }
-
-#endif /* __CATAMOUNT__ */
 #endif /* _WIN32 */
 

@@ -16,38 +16,21 @@ void do_reads(int n)
    char buf;
 
    if (fd == -1) {
-#if defined(_CRAYT3E) || defined(__CATAMOUNT__)
-      fd = open("./p3_events.c", O_RDONLY);
-      if (fd == -1) {
-         fd = open("../p3_events.c", O_RDONLY);
-         if (fd == -1) {
-            perror("open(./p3_events.c)");
-         }
-      }
-#else
       fd = open("/dev/zero", O_RDONLY);
       if (fd == -1) {
          perror("open(/dev/zero)");
          exit(1);
       }
-#endif
    }
 
    for (i = 0; i < n; i++) {
       retval = read(fd, &buf, sizeof(buf));
       if (retval != sizeof(buf))
         {
-#if defined(_CRAYT3E) || defined(__CATAMOUNT__)
-          if (retval < 0)
-            perror("p3_events.c cannot be read");
-          else
-            fprintf(stderr,"p3_events.c cannot be read: only got %d bytes.\n",retval);
-#else
           if (retval < 0)
             perror("/dev/zero cannot be read");
           else
             fprintf(stderr,"/dev/zero cannot be read: only got %d bytes.\n",retval);
-#endif
           exit(1);
         }
    }

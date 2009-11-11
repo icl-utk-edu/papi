@@ -83,7 +83,7 @@ int main(int argc, char **argv)
    int retval;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
-# if (defined(__ALPHA) && defined(__osf__) || defined(__CATAMOUNT__))
+# if (defined(__ALPHA) && defined(__osf__))
    test_skip(__FILE__, __LINE__, "main: fork not supported.", 0);
 #endif
 

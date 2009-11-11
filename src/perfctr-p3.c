@@ -18,10 +18,6 @@
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
 
-#ifdef __CATAMOUNT__
-#include <asm/cpufunc.h>
-#endif
-
 /* PAPI stuff */
 #include "papi.h"
 #include "papi_internal.h"
@@ -33,9 +29,7 @@ extern int _linux_init_substrate(int);
 extern int _linux_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option);
 extern void _linux_dispatch_timer(int signal, siginfo_t * si, void *context);
 extern int _linux_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type);
-#ifndef __CATAMOUNT__
 extern int _linux_update_shlib_info(void);
-#endif
 extern int _linux_get_system_info(void);
 extern int _linux_get_dmem_info(PAPI_dmem_info_t *d);
 extern int _linux_init(hwd_context_t * ctx);
@@ -464,14 +458,6 @@ static void swap_events(EventSetInfo_t * ESI, struct hwd_pmc_control *contr, int
 static int _p3_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) {
    struct hwd_pmc_control *contr = &ESI->ctl_state->control;
    int i, ncntrs, nricntrs = 0, nracntrs = 0, retval = 0;
-
-#ifdef __CATAMOUNT__
-   if(contr->cpu_control.nrictrs  && (threshold != 0)) { 
-      OVFDBG("Catamount can't overflow on more than one event.\n");
-      return PAPI_EINVAL;
-   }
-#endif
-
    OVFDBG("EventIndex=%d\n", EventIndex);
 
    /* The correct event to overflow is EventIndex */
@@ -636,9 +622,7 @@ papi_vector_t _p3_vector = {
     .ntv_bits_to_info =		_p3_ntv_bits_to_info,
 
     /* from OS */
- #ifndef __CATAMOUNT__
     .update_shlib_info = _linux_update_shlib_info,
- #endif
     .get_memory_info =	_linux_get_memory_info,
     .get_system_info =	_linux_get_system_info,
     .init_substrate =	_linux_init_substrate,

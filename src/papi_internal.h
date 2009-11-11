@@ -109,15 +109,9 @@ extern int papi_num_components;
   #define PAPI_INT_SIGNAL 1
   #define PAPI_INT_ITIMER 1
 #else
-  #ifdef __CATAMOUNT__ /* Catamount only defines ITIMER_REAL with a 1 sec(!) resolution */
-    #define PAPI_INT_MPX_SIGNAL SIGALRM
-    #define PAPI_INT_SIGNAL SIGPROF
-    #define PAPI_INT_ITIMER ITIMER_REAL
-  #else
-    #define PAPI_INT_MPX_SIGNAL SIGPROF
-    #define PAPI_INT_SIGNAL SIGPROF
-    #define PAPI_INT_ITIMER ITIMER_PROF
-  #endif
+  #define PAPI_INT_MPX_SIGNAL SIGPROF
+  #define PAPI_INT_SIGNAL SIGPROF
+  #define PAPI_INT_ITIMER ITIMER_PROF
 #endif
 
 #define PAPI_INT_ITIMER_MS 1

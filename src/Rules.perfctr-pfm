@@ -93,20 +93,8 @@ endif
 CFLAGS += -D_GNU_SOURCE -Wall $(NOTLS) $(BITFLAGS)
 
 # 
-# Catamount section
-# 
-
-ifeq (CATAMOUNT, $(COMPILER))
-LIBS    	= static
-TARGETS 	= serial forkexec_tests overflow_tests profile_tests multiplex
-MEMSUBSTR	= linux
-FFLAGS		= $(BITFLAGS)
-endif
-
-# 
 # Portland Group section
 # 
-
 ifeq (icc, $(CC))
 TARGETS	  	+= omp
 endif
@@ -173,18 +161,14 @@ ifneq (,${PERFCTR_ROOT})
  ifeq (ppc64,${ARCH})
 	$(MAKE) CC='$(CC) $(BITFLAGS)' -C $(PERFCTR_ROOT)
  endif
- ifeq (CATAMOUNT, $(COMPILER))
-	$(MAKE) CC='$(CC)' -C $(PERFCTR_ROOT)
- else
-  ifeq (x86_64,${ARCH})
+ ifeq (x86_64,${ARCH})
    ifeq (32,${BITS})
 	$(MAKE) CC='$(CC) $(BITFLAGS)' LD_FLAGS="-melf_i386" ARCH="i386" -C $(PERFCTR_ROOT)
    else
 	$(MAKE) -C $(PERFCTR_ROOT)
    endif
-  else
+ else
 	$(MAKE) -C $(PERFCTR_ROOT)
-  endif
  endif
 else
 	@echo '$@ not installed!'; exit 1
@@ -309,12 +293,10 @@ else
 endif
 endif
 endif
-  ifneq (CATAMOUNT, $(COMPILER))
 	mkdir -p $(DESTDIR)$(LIBDIR)
 	cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE)
 	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so.$(PAPIVER)
 	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so
-  endif
 
 native_clobber:
 ifneq (,${PERFCTR_ROOT})

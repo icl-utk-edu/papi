@@ -117,15 +117,9 @@ long long vec_dummy_get_virt_usec (const hwd_context_t *zero)
     }
     else return(PAPI_ESBSTR);
 #else
-
   struct tms buffer;
-
-#ifdef __CATAMOUNT__
-  retval = 0;
-#else
   times(&buffer);
   retval = (long long)buffer.tms_utime*(long long)(1000000/sysconf(_SC_CLK_TCK));
-#endif
 #endif
   return(retval);
 }
