@@ -3101,6 +3101,8 @@ int _papi_pe_update_control_state (hwd_control_state_t * ctl, NativeInfo_t * nat
     }
 
 #ifndef __powerpc__
+  memset(&inp, 0, sizeof(inp));
+  memset(&outp, 0, sizeof(outp));
   inp.pfp_event_count = 1;
   inp.pfp_dfl_plm = pe_ctl->domain;
   pfm_regmask_set(&inp.pfp_unavail_pmcs, 16); // mark fixed counters as unavailable
