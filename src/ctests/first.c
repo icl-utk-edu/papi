@@ -112,7 +112,7 @@ int main(int argc, char **argv)
              (values[3])[1], (values[4])[1]);
       printf ("-------------------------------------------------------------------------\n"); 
       printf("Verification:\n");
-      printf("Row 1 Column 1 at least 90%% of %d\n", 2*NUM_FLOPS);
+      printf("Row 1 Column 1 at least %d\n", NUM_FLOPS);
       printf("%% difference between %s 1 & 2: %.2f\n",add_event_str,100.0*(float)(values[0])[0]/(float)(values[1])[0]);
       printf("%% difference between %s 1 & 2: %.2f\n","PAPI_TOT_CYC",100.0*(float)(values[0])[1]/(float)(values[1])[1]);
       printf("Column 1 approximately equals column 2\n");
@@ -130,7 +130,7 @@ int main(int argc, char **argv)
           || values[2][0] < (2 * min) || values[3][0] > (3 * max)
           || values[3][0] < (3 * min)
           || values[3][0] != values[4][0]
-          || values[0][0] < (long long)(1.8*NUM_FLOPS)) {
+          || values[0][0] < (long long)NUM_FLOPS) {
 /*
          printf("min: ");
          printf(LLDFMT, min);
