@@ -24,10 +24,6 @@
       real*4 csec
 #endif
 
-#if defined(_CRAYT3E) || defined(__crayx1)
-      integer ilen, ierror
-#endif
-
       tests_quiet = get_quiet()
       es = PAPI_NULL
 
@@ -44,20 +40,6 @@
         call ftest_fail(__FILE__, __LINE__, 'PAPIf_create_eventset', 
      *retval)
       end if
-
-#if defined(_CRAYT3E)
-      eventname(1) = 'MACHINE_CYCLES'
-      eventname(2) = 'DCACHE_ACCESSES'
-      eventname(3) = 'CPU_CYC'
-      n = 3
-#endif
-
-#if defined(__crayx1)
-      eventname(1) = 'X1_P_EV_INST_S_FP'
-      eventname(2) = 'X1_E_EV_REQUESTS'
-      eventname(3) = 'X1_M_EV_REQUESTS'
-      n = 3
-#endif
 
 #if defined(PPC32)
       eventname(1) = 'CPU_CLK'
@@ -212,12 +194,7 @@ C     call sleep(1)
       if (tests_quiet .EQ. 0) then
       print *, "Real Elapsed Time in sec.  : ", rsec
 
-#if defined(_CRAYT3E)
-      print *, "Machine Cycles                    : ",values(1)
-      print *, "DCache accesses                   : ",values(2)
-      print *, "CPU Cycles                        : ",values(3)
-
-#elif defined(_POWER5) || defined(_POWER5p)
+#if defined(_POWER5) || defined(_POWER5p)
       csec = values(5)/ (mhz*1000000.0)
       print *, "CPU Elapsed Time in sec.   : ", csec
       print *, "PM_FPU_FDIV operations     : ", values(1)

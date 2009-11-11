@@ -369,17 +369,6 @@ int main(int argc, char **argv)
 {
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
-/* Skip Alpha till multiplex is fixed. -KSL */
-#if defined(__ALPHA) && defined(__osf__)
-   test_pass(__FILE__, NULL, 0);
-#endif
-
-/* This test is causing grief on the Cray X1... */
-#ifdef __crayx1
-  test_skip(__FILE__, __LINE__, "This test causes instability on Cray X1.", 0);
-#endif
-
-
    printf("%s: Using %d threads\n\n", argv[0], NUM_THREADS);
 
    printf("case1: Does PAPI_multiplex_init() not break regular operation?\n");

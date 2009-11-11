@@ -34,9 +34,6 @@ Master pthread:
 #include <sys/types.h>
 #include <memory.h>
 #include <malloc.h>
-#ifdef _CRAYT3E
-#include <intrinsics.h>
-#endif
 #include "papi_test.h"
 
 void Thread(int n)

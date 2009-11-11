@@ -627,11 +627,7 @@ int add_two_events(int *num_events, int *papi_event,
   while ((i < 3) && (!event_found)) {
     if (PAPI_query_event(potential_evt_to_add[i][0]) == PAPI_OK) {
       if (PAPI_get_event_info(potential_evt_to_add[i][0], &info) == PAPI_OK) {
-#if defined(__crayx2)					/* CRAY X2 */
-	if ((info.count > 0) && (counters > info.count) && !strcmp(info.derived,"NOT_DERIVED")) event_found = 1;
-#else
 	if ((info.count > 0) && (counters > info.count)) event_found = 1;
-#endif
       }
     }
     if (!event_found)

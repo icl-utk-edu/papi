@@ -9,11 +9,7 @@
 
 #include "papi_test.h"
 
-#ifdef _CRAYT3E
-#define OVER_FMT	"handler(%d) Overflow at %x! vector=0x%llx\n"
-#define OUT_FMT		"%-12s : %16lld%16lld\n"
-#define INDEX_FMT   "Overflows vector 0x%llx: \n"
-#elif defined(_WIN32)
+#if defined(_WIN32)
 #define OVER_FMT	"handler(%d) Overflow at %p! vector=0x%llx\n"
 #define OUT_FMT		"%-12s : %16I64d%16I64d\n"
 #define INDEX_FMT   "Overflows vector 0x%llx: \n"

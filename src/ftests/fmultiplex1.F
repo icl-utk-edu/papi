@@ -229,11 +229,7 @@ C     Tests that PAPI_set_multiplex() works after adding events
      &      'PAPIf_add_event', retval)
       end if
 
-#ifdef _CRAYT3E
-      call PAPIf_add_event( EventSet, PAPI_TLB_DM, retval )
-#else
       call PAPIf_add_event( EventSet, PAPI_TOT_CYC, retval )
-#endif
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      &      'PAPIf_add_event', retval)
@@ -309,11 +305,7 @@ C     PAPI_add_event()/PAPI_set_multiplex()
      &      'PAPIf_add_event', retval)
       end if
 
-#ifdef _CRAYT3E
-      call PAPIf_add_event( EventSet, PAPI_TLB_DM, retval )
-#else
       call PAPIf_add_event( EventSet, PAPI_TOT_CYC, retval )
-#endif
       if ( retval .NE. PAPI_OK ) then
         call PAPIf_add_event( EventSet, PAPI_TOT_IIS, retval )
         if ( retval .NE. PAPI_OK ) then
@@ -338,7 +330,7 @@ C     PAPI_add_event()/PAPI_set_multiplex()
         call PrintEventSet(EventSet)
       endif
 
-#if (defined(i386)&&defined(linux))||defined(mips) || defined(_CRAYT3E) || (defined(__ia64__) && defined(linux)) || (SUBSTR==aix-power)
+#if (defined(i386)&&defined(linux))||defined(mips) || (defined(__ia64__) && defined(linux)) || (SUBSTR==aix-power)
 
       call PAPIf_add_event( EventSet, PAPI_L1_DCM, retval )
 C Try alternative event if the above is not possible to use...

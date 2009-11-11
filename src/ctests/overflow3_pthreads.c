@@ -28,13 +28,8 @@ void *thread_fn(void *dummy)
 void handler(int EventSet, void *address, long long overflow_vector, void *context)
 {
    if (!TESTS_QUIET) {
-#ifdef _CRAYT3E
-      fprintf(stderr, "handler(%d ) Overflow at %x, thread 0x%x!\n",
-              EventSet, address, PAPI_thread_id());
-#else
       fprintf(stderr, "handler(%d ) Overflow at %p, thread 0x%lux!\n",
               EventSet, address, PAPI_thread_id());
-#endif
    }
    total++;
 }

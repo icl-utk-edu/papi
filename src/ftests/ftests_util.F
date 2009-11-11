@@ -6,9 +6,6 @@
 #endif
       implicit integer (p)
       character*25 chbuf
-#if defined(_CRAYT3E) || defined(__crayx1) || defined(__crayx2)
-      integer ilen,ierror
-#endif
       integer retval
       integer quiet
       common quiet
@@ -19,11 +16,7 @@ C     If found, it returns 1 to set output to quiet
 C     The routine was placed her to hide the ugly
 C     Windows #if stuff from normal view
 C     And also to make the test code read cleaner
-#if defined(_CRAYT3E) || defined(__crayx1) || defined(__crayx2)
-      call pxfgetarg(1,chbuf,ilen,ierror)
-#else 
       call getarg(1,chbuf)
-#endif
       get_quiet = 0
       if (LGE(chbuf, 'TESTS_QUIET')) then
         get_quiet=1

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
-#if defined(_AIX) || defined(_CRAYT3E)
+#if defined(_AIX)
 #include <sys/wait.h>           /* ARGH! */
 #else
 #include <wait.h>

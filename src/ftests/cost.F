@@ -55,11 +55,7 @@
      . 'PAPIf_add_event', retval)
       end if
 
-#ifdef _CRAYT3E
-      call PAPIf_add_event( es, PAPI_TOT_IIS, retval )
-#else
       call PAPIf_add_event( es, PAPI_TOT_INS, retval )
-#endif
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_add_event', retval)

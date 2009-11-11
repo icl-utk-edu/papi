@@ -24,10 +24,7 @@
 
 #include "papi_test.h"
 
-#ifdef _CRAYT3E
-#define OVER_FMT	"handler(%d ) Overflow at %x! overflow_vector=0x%x!\n"
-#define OUT_FMT		"%-12s : %16lld%16lld\n"
-#elif defined(_WIN32)
+#if defined(_WIN32)
 #define OVER_FMT	"handler(%d ) Overflow at %p! overflow_vector=0x%x!\n"
 #define OUT_FMT		"%-12s : %16I64d%16I64d\n"
 #else
@@ -130,7 +127,7 @@ int main(int argc, char **argv)
    if (retval != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-#if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_CRAYT3E) || defined(_POWER4) || defined (__crayx1)
+#if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_POWER4)
    num_flops *= 2;
 #endif
 

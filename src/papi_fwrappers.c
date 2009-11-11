@@ -295,20 +295,14 @@ PAPI_FCALL(papif_set_multiplex, PAPIF_SET_MULTIPLEX, (int *EventSet, int *check)
    *check = PAPI_set_multiplex(*EventSet);
 }
 
-#if defined ( _CRAYT3E )
-PAPI_FCALL(papif_perror, PAPIF_PERROR, (int *code, _fcd destination_fcd, int *check))
-#elif defined(_FORTRAN_STRLEN_AT_END)
+#if defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL(papif_perror, PAPIF_PERROR, (int *code, char *destination_str, int *check,
                                         int destination_len))
 #else
 PAPI_FCALL(papif_perror, PAPIF_PERROR, (int *code, char *destination, int *check))
 #endif
 {
-#if defined( _CRAYT3E ) || defined(_FORTRAN_STRLEN_AT_END)
-#if defined( _CRAYT3E )
-   int destination_len = _fcdlen(destination_fcd);
-   char *destination_str = _fcdtocp(destination_fcd);
-#endif
+#if defined(_FORTRAN_STRLEN_AT_END)
    int i;
    char tmp[PAPI_MAX_STR_LEN];
 
@@ -338,12 +332,7 @@ PAPI_FCALL(papif_query_event, PAPIF_QUERY_EVENT, (int *EventCode, int *check))
    *check = PAPI_query_event(*EventCode);
 }
 
-#if defined ( _CRAYT3E )
-PAPI_FCALL(papif_get_event_info, PAPIF_GET_EVENT_INFO,
-           (unsigned int *EventCode, _fcd symbol_fcd, _fcd long_descr_fcd,
-            _fcd short_descr_fcd, int *count, _fcd event_note_fcd, int *flags,
-            unsigned *check))
-#elif defined(_FORTRAN_STRLEN_AT_END)
+#if defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL(papif_get_event_info, PAPIF_GET_EVENT_INFO,
            (int *EventCode, char *symbol, char *long_descr, char *short_descr, int *count,
             char *event_note, int *flags, int *check, int symbol_len, int long_descr_len,
@@ -355,22 +344,8 @@ PAPI_FCALL(papif_get_event_info, PAPIF_GET_EVENT_INFO,
 #endif
 {
    PAPI_event_info_t info;
-
-#if defined( _CRAYT3E )
-   int symbol_len = _fcdlen(symbol_fcd);
-   char *symbol = _fcdtocp(symbol_fcd);
-   int long_descr_len = _fcdlen(long_descr_fcd);
-   char *long_descr = _fcdtocp(long_descr_fcd);
-   int short_descr_len = _fcdlen(short_descr_fcd);
-   char *short_descr = _fcdtocp(short_descr_fcd);
-   int event_note_len = _fcdlen(event_note_fcd);
-   char *event_note = _fcdtocp(event_note_fcd);
-#endif
-#if defined( _CRAYT3E ) || defined(_FORTRAN_STRLEN_AT_END)
+#if defined(_FORTRAN_STRLEN_AT_END)
    int i;
-#endif
-
-#if defined( _CRAYT3E ) || defined(_FORTRAN_STRLEN_AT_END)
    if ((*check = PAPI_get_event_info(*EventCode, &info)) == PAPI_OK) {
       strncpy(symbol, info.symbol, symbol_len);
       for (i = strlen(info.symbol); i < symbol_len; symbol[i++] = ' ');
@@ -395,10 +370,7 @@ PAPI_FCALL(papif_get_event_info, PAPIF_GET_EVENT_INFO,
 #endif
 }
 
-#if defined ( _CRAYT3E )
-PAPI_FCALL(papif_event_code_to_name, PAPIF_EVENT_CODE_TO_NAME,
-           (int *EventCode, _fcd out_fcd, int *check))
-#elif defined(_FORTRAN_STRLEN_AT_END)
+#if defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL(papif_event_code_to_name, PAPIF_EVENT_CODE_TO_NAME,
            (int *EventCode, char *out_str, int *check, int out_len))
 #else
@@ -406,11 +378,7 @@ PAPI_FCALL(papif_event_code_to_name, PAPIF_EVENT_CODE_TO_NAME,
            (int *EventCode, char *out, int *check))
 #endif
 {
-#if defined( _CRAYT3E ) || defined( _FORTRAN_STRLEN_AT_END )
-#if defined( _CRAYT3E )
-   char *out_str = _fcdtocp(out_fcd);
-   int out_len = _fcdlen(out_fcd);
-#endif
+#if defined( _FORTRAN_STRLEN_AT_END )
    char tmp[PAPI_MAX_STR_LEN];
    int i;
    *check = PAPI_event_code_to_name(*EventCode, tmp);
@@ -424,10 +392,7 @@ PAPI_FCALL(papif_event_code_to_name, PAPIF_EVENT_CODE_TO_NAME,
 #endif
 }
 
-#if defined ( _CRAYT3E )
-PAPI_FCALL(papif_event_name_to_code, PAPIF_EVENT_NAME_TO_CODE,
-           (_fcd in_fcd, int *out, int *check))
-#elif defined(_FORTRAN_STRLEN_AT_END)
+#if defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL(papif_event_name_to_code, PAPIF_EVENT_NAME_TO_CODE,
            (char *in_str, int *out, int *check, int in_len))
 #else
@@ -435,11 +400,7 @@ PAPI_FCALL(papif_event_name_to_code, PAPIF_EVENT_NAME_TO_CODE,
            (char *in, int *out, int *check))
 #endif
 {
-#if defined( _CRAYT3E ) || defined( _FORTRAN_STRLEN_AT_END )
-#if defined( _CRAYT3E )
-   int in_len = _fcdlen(in_fcd);        /* Get the string and length */
-   char *in_str = _fcdtocp(in_fcd);
-#endif
+#if defined( _FORTRAN_STRLEN_AT_END )
    int slen, i;
    char tmpin[PAPI_MAX_STR_LEN];
 
@@ -603,9 +564,7 @@ PAPI_FCALL(papif_get_clockrate, PAPIF_GET_CLOCKRATE, (int *cr))
    *cr = PAPI_get_opt(PAPI_CLOCKRATE, NULL);
 }
 
-#if defined ( _CRAYT3E )
-PAPI_FCALL(papif_get_preload, PAPIF_GET_PRELOAD, (_fcd lib_preload_env_fcd, int *check))
-#elif defined(_FORTRAN_STRLEN_AT_END)
+#if defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL(papif_get_preload, PAPIF_GET_PRELOAD,
            (char *lib_preload_env, int *check, int lib_preload_env_len))
 #else
@@ -613,11 +572,7 @@ PAPI_FCALL(papif_get_preload, PAPIF_GET_PRELOAD, (char *lib_preload_env, int *ch
 #endif
 {
    PAPI_option_t p;
-#if defined( _CRAYT3E ) || defined(_FORTRAN_STRLEN_AT_END)
-#if defined( _CRAYT3E )
-   int lib_preload_env_len = _fcdlen(lib_preload_env_fcd);
-   char *lib_preload_env = _fcdtocp(lib_preload_env_fcd);
-#endif
+#if defined(_FORTRAN_STRLEN_AT_END)
    int i;
 
    if ((*check = PAPI_get_opt(PAPI_PRELOAD, &p)) == PAPI_OK) {

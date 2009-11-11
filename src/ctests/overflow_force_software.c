@@ -34,10 +34,7 @@ The Eventset contains:
 
 #include "papi_test.h"
 
-#ifdef _CRAYT3E
-#define OVER_FMT "handler(%d) Overflow at %x! overflow_vector=0x%x!\n"
-#define OUT_FMT		"%-12s : %16lld%16d%16lld\n"
-#elif defined(_WIN32)
+#if defined(_WIN32)
 #define OVER_FMT "handler(%d) Overflow at %p! overflow_vector=0x%x!\n"
 #define OUT_FMT		"%-12s : %16I64d%16d%16I64d\n"
 #else

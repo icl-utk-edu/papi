@@ -458,17 +458,10 @@ int _papi_hwi_start_signal(int signal, int need_context, int cidx)
 
    memset(&action, 0x00, sizeof(struct sigaction));
    action.sa_flags = SA_RESTART;
-#if defined(__ALPHA) && defined(__osf__)
-   action.sa_handler = (void (*)(int)) _papi_hwd[cidx]->dispatch_timer;
-#elif defined(_BGL)
+#if defined(_BGL)
    action.sa_sigaction = (void (*)(int, siginfo_t *, void *)) _papi_hwd[cidx]->dispatch_timer;
    if (need_context)
      action.sa_flags |= SIGPWR;
-#elif defined(__crayx1)
-   action.sa_handler = (void (*)(int)) _papi_hwd[cidx]->dispatch_timer;
-   if (need_context)
-      action.sa_flags |= SA_SIGINFO;
-#else
    action.sa_sigaction = (void (*)(int, siginfo_t *, void *)) _papi_hwd[cidx]->dispatch_timer;
    if (need_context)
      action.sa_flags |= SA_SIGINFO;

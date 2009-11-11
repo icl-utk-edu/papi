@@ -53,15 +53,6 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
       "PM_FPU0_CMPL", "PM_CYC", "PM_TLB_MISS", NULL
    };
 
-#elif defined (__crayx1)
-  /* arbitrarily code 1 event from p, e and m chips */
-  static char *native_name[] = 
-    {"X1_P_EV_INST_S_FP", "X1_E_EV_REQUESTS", "X1_M_EV_REQUESTS", NULL
-  };
-
-#elif defined (_CRAYT3E)
-  static char *native_name[] = {"MACHINE_CYCLES", "DCACHE_ACCESSES", "CPU_CYC", NULL};
-
 #elif defined(__ia64__)
     #ifdef ITANIUM2
        static char *native_name[] = 

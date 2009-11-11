@@ -33,10 +33,6 @@ int main( int argc, char* argv[] )
   int ret;
   long nthr;
 
-#ifdef __crayx1
-  test_skip(__FILE__, __LINE__, "This test causes instability on Cray X1.", 0);
-#endif
-
   tests_quiet(argc, argv);     /*Set TESTS_QUIET variable */
   
   ret=PAPI_library_init(PAPI_VER_CURRENT);

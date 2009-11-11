@@ -24,10 +24,7 @@
 
 #include "papi_test.h"
 
-#ifdef _CRAYT3E
-#define OVER_FMT	"handler(%d ) Overflow at %x! bit=0x%llx \n"
-#define OUT_FMT		"%-12s : %16lld%16lld\n"
-#elif defined(_WIN32)
+#if defined(_WIN32)
 #define OVER_FMT	"handler(%d ) Overflow at %p! bit=0x%llx \n"
 #define OUT_FMT		"%-12s : %16I64d%16I64d\n"
 #else
@@ -135,15 +132,11 @@ int main(int argc, char **argv)
 
    if (!TESTS_QUIET) {
       printf("Verification:\n");
-#if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_CRAYT3E) || defined(_POWER4) || defined (__crayx1)
+#if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_POWER4)
    num_flops *= 2;
 #endif
       if (PAPI_event == PAPI_FP_INS || PAPI_event == PAPI_FP_OPS){
-#if defined(__crayx1)
-         printf("Row 1 approximately equals %d %d\n", num_flops, 0);
-#else
          printf("Row 1 approximately equals %d %d\n", num_flops, num_flops);
-#endif
       }
       printf("Column 1 approximately equals column 2\n");
       printf("Row 3 approximately equals %u +- %u %%\n",

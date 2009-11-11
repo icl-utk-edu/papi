@@ -24,10 +24,7 @@
 
 #include "papi_test.h"
 
-#ifdef _CRAYT3E
-#define OVER_FMT    "handler(%d ) Overflow at %x! bit=0x%llx \n"
-#define OUT_FMT     "%-12s : %16lld%16lld\n"
-#elif defined(_WIN32)
+#if defined(_WIN32)
 #define OVER_FMT    "handler(%d ) Overflow at %p! bit=0x%llx \n"
 #define OUT_FMT     "%-12s : %16I64d%16I64d\n"
 #else
@@ -66,7 +63,7 @@ int main(int argc, char **argv)
    if (hw_info == NULL)
      test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
 
-#if defined(POWER3) || defined(__crayx2) || defined(__sparc__)
+#if defined(POWER3) || defined(__sparc__)
    PAPI_event = PAPI_TOT_INS;
 #else
    /* query and set up the right instruction to monitor */
@@ -129,7 +126,7 @@ int main(int argc, char **argv)
       test_fail(__FILE__, __LINE__, "PAPI_overflow", retval);
 
    num_flops = NUM_FLOPS;
-#if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_CRAYT3E) || defined(_POWER4)
+#if defined(linux) || defined(__ia64__) || defined(_WIN32) || defined(_POWER4)
    num_flops *= 2;
 #endif
 
