@@ -965,7 +965,8 @@ AC_ARG_WITH(perf_events,
             [perf_events=$withval],
             [perf_events="no"
 			if test "$perfctr" = "no"; then
-            AC_CHECK_FILE($perf_header, [ perf_events="yes" ])
+            AC_CHECK_FILE($perf_header, [ perf_events="yes" ], 
+						  [AC_MSG_ERROR([$perf_header could not be found. Specify --with-perf-events and --with-pe-incdir])])
 			fi ]
             )
 else
