@@ -134,7 +134,7 @@ static int pme_cycles, pme_instr;
 static inline pme_nhm_entry_t *
 get_nhm_entry(unsigned int i)
 {
-        return i >= num_pe ? pe+i : unc_pe+i-num_pe;
+        return i < num_pe ? pe+i : unc_pe+(i-num_pe);
 }
 
 static int
