@@ -30,9 +30,9 @@ endif
 
 CFLAGS += -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) $(DEBUGFLAGS) -D_REENTRANT
 
-ifeq (static,$(PFM_EVENTS))
-	CFLAGS		 += -DSTATIC_PERFMON_EVENTS_TABLE
-	PFM_EVENTS_TABLE := perfmon_events_table.h
+ifeq (static,$(PAPI_EVENTS))
+	CFLAGS += -DSTATIC_PAPI_EVENTS_TABLE
+	PAPI_EVENTS_TABLE := papi_events_table.h
 endif
 
 ifeq (y,$(PFM_OLD_PFMV2))
@@ -77,7 +77,7 @@ endif
 CFLAGS	+= -DSUBSTRATE_USES_LIBPFM
 
 # MISCSRCS can be set in configure.in and that value should not be overwritten by a Rules file
-MISCHDRS = perfmon.h papi_pfm_events.h $(PFM_EVENTS_TABLE)
+MISCHDRS = perfmon.h papi_pfm_events.h $(PAPI_EVENTS_TABLE)
 MISCSRCS += papi_pfm_events.c
 
 ifeq (perf_events, $(SUBSTR))
@@ -109,7 +109,7 @@ config.h:
 $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
 	$(AR) xv $<
 
-papi_pfm_events.o: papi_pfm_events.c $(HEADERS) $(PFM_EVENTS_TABLE)
+papi_pfm_events.o: papi_pfm_events.c $(HEADERS) $(PAPI_EVENTS_TABLE)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_pfm_events.c -o $@
 
 native_clean:
@@ -117,8 +117,8 @@ native_clean:
 ifneq (,${PFM_ROOT})
 	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" clean
 endif
-ifeq (static,$(PFM_EVENTS))
-	-rm -f $(PFM_EVENTS_TABLE)
+ifeq (static,$(PAPI_EVENTS))
+	-rm -f $(PAPI_EVENTS_TABLE)
 endif
 
 native_install:

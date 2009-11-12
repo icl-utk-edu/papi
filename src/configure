@@ -683,8 +683,8 @@ VERSION
 LINKLIB
 SETPATH
 tests
-pfm_events_table
-pfm_events
+papi_events_table
+papi_events
 PEPATH
 OS
 compobjs
@@ -795,7 +795,7 @@ with_pfm_libdir
 with_perf_events
 with_pe_incdir
 with_pmapi
-with_pfm_events
+with_papi_events
 with_with_semaphores
 with_tests
 enable_static_tests
@@ -1474,7 +1474,7 @@ Optional Packages:
   --with-perf-events=<yes,no>  Specify use of Linux Performance Event Subsystem
   --with-pe-incdir=<path>  Specify directory of perf_counter header file
   --with-pmapi=<path>		Specify path of pmapi on aix system
-  --with-pfm-events=<static,file>	Specify source of events for pfmlib-based systems
+  --with-papi-events=<static,file>	Specify source of events
   --with-semaphores Use semaphores instead of atomic locks (IA64)
   --with-tests=<ctests,ftests,"ctests ftests">	Specify which tests to run on install
   --with-nativecc=<path>	Specify native C compiler for header generation
@@ -2034,7 +2034,7 @@ esac
 if test "$XTOS_VERSION"; then
 	use_shared=no
 	use_static=yes
-	pfm_events=static
+	papi_events=static
 	cross_compiling=yes
 # ffsll, tls, walltimer, virtualtimer must be sprecified for cross-compiling
 	ffsll=yes
@@ -2281,7 +2281,7 @@ if test "$OS" = "CLE"; then
    tls=__thread
    walltimer=cycle
    ffsll=yes
-   pfm_events=static
+   papi_events=static
    cross_compiling=yes
    use_shared=no
    use_static=yes
@@ -6844,13 +6844,13 @@ else
 
 fi
 
-if test "x$pfm_events" = "x"; then
+if test "x$papi_events" = "x"; then
 
-# Check whether --with-pfm_events was given.
-if test "${with_pfm_events+set}" = set; then
-  withval=$with_pfm_events; pfm_events=$withval
+# Check whether --with-papi_events was given.
+if test "${with_papi_events+set}" = set; then
+  withval=$with_papi_events; papi_events=$withval
 else
-  pfm_events="static"
+  papi_events="static"
 
 fi
 
@@ -6879,12 +6879,12 @@ fi
 
 fi
 
-if test "$pfm_events" = "static"; then
-   pfm_events_table="perfmon_events_table.h"
-   CFLAGS="$CFLAGS -DSTATIC_PERFMON_EVENTS_TABLE"
-{ $as_echo "$as_me:$LINENO: Generating perfmon_events_table.h" >&5
-$as_echo "$as_me: Generating perfmon_events_table.h" >&6;}
-sh perfmon_events_table.sh > perfmon_events_table.h
+if test "$papi_events" = "static"; then
+   papi_events_table="papi_events_table.h"
+   CFLAGS="$CFLAGS -DSTATIC_PAPI_EVENTS_TABLE"
+{ $as_echo "$as_me:$LINENO: Generating papi_events_table.h" >&5
+$as_echo "$as_me: Generating papi_events_table.h" >&6;}
+sh papi_events_table.sh > papi_events_table.h
 fi
 
 old_pfmv2="n"
@@ -9161,7 +9161,7 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
       bitmode=""
    fi
    FLAGS='-I$(PMAPI)/include -qmaxmem=-1 -qarch=$(cpu_option) -qtune=$(cpu_option) -qlanglvl=extended  $(BITS)'
-   CFLAGS='$(DEBUGFLAGS) $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_AIX -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors -DSTATIC_PERFMON_EVENTS_TABLE'
+   CFLAGS='$(DEBUGFLAGS) $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_AIX -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors -DSTATIC_PAPI_EVENTS_TABLE'
    #CFLAGS="-DPAPI_NO_VECTOR"
    OPTFLAGS='-O3 -qstrict $(PMINIT)'
    FFLAGS='$(FLAGS) -WF,-D_$(CPU_MODEL) -WF,-DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
@@ -9175,7 +9175,7 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
    MPICC=mpcc
    F77=xlf
    CPP='xlc -E $(CPPFLAGS)'
-   MISCHDRS="aix.h ppc64_events.h pmapi-ppc64.h perfmon_events_table.h"
+   MISCHDRS="aix.h ppc64_events.h pmapi-ppc64.h papi_events_table.h"
    MISCSRCS="aix.c pmapi-ppc64_events.c"
    MISCOBJS="aix.o pmapi-ppc64_events.o"
    if test "$MAKEVER" = "aix-power5"; then

@@ -1,4 +1,4 @@
-v#                                               -*- Autoconf -*-
+#                   -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 # File: configure.in
 
@@ -117,7 +117,7 @@ esac
 if test "$XTOS_VERSION"; then
 	use_shared=no
 	use_static=yes
-	pfm_events=static
+	papi_events=static
 	cross_compiling=yes
 # ffsll, tls, walltimer, virtualtimer must be sprecified for cross-compiling
 	ffsll=yes
@@ -320,7 +320,7 @@ if test "$OS" = "CLE"; then
    tls=__thread
    walltimer=cycle
    ffsll=yes
-   pfm_events=static
+   papi_events=static
    cross_compiling=yes
    use_shared=no
    use_static=yes
@@ -997,11 +997,11 @@ AC_ARG_WITH(pmapi,
             [pmapi=$withval],
             [pmapi=default]
             )
-if test "x$pfm_events" = "x"; then
-AC_ARG_WITH(pfm_events,
-            [  --with-pfm-events=<static,file>	Specify source of events for pfmlib-based systems ],
-            [pfm_events=$withval],
-            [pfm_events="static"]
+if test "x$papi_events" = "x"; then
+AC_ARG_WITH(papi_events,
+            [  --with-papi-events=<static,file>	Specify source of events ],
+            [papi_events=$withval],
+            [papi_events="static"]
             )
 fi
 
@@ -1020,11 +1020,11 @@ AC_ARG_WITH(tests,
             )
 fi
 
-if test "$pfm_events" = "static"; then
-   pfm_events_table="perfmon_events_table.h"
-   CFLAGS="$CFLAGS -DSTATIC_PERFMON_EVENTS_TABLE"
-AC_MSG_NOTICE(Generating perfmon_events_table.h)
-sh perfmon_events_table.sh > perfmon_events_table.h
+if test "$papi_events" = "static"; then
+   papi_events_table="papi_events_table.h"
+   CFLAGS="$CFLAGS -DSTATIC_PAPI_EVENTS_TABLE"
+AC_MSG_NOTICE(Generating papi_events_table.h)
+sh papi_events_table.sh > papi_events_table.h
 fi
 
 old_pfmv2="n"
@@ -1595,7 +1595,7 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
       bitmode=""
    fi
    FLAGS='-I$(PMAPI)/include -qmaxmem=-1 -qarch=$(cpu_option) -qtune=$(cpu_option) -qlanglvl=extended  $(BITS)'
-   CFLAGS='$(DEBUGFLAGS) $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_AIX -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors -DSTATIC_PERFMON_EVENTS_TABLE'
+   CFLAGS='$(DEBUGFLAGS) $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_AIX -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors -DSTATIC_PAPI_EVENTS_TABLE'
    #CFLAGS="-DPAPI_NO_VECTOR"
    OPTFLAGS='-O3 -qstrict $(PMINIT)'
    FFLAGS='$(FLAGS) -WF,-D_$(CPU_MODEL) -WF,-DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
@@ -1609,7 +1609,7 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
    MPICC=mpcc
    F77=xlf
    CPP='xlc -E $(CPPFLAGS)'
-   MISCHDRS="aix.h ppc64_events.h pmapi-ppc64.h perfmon_events_table.h"
+   MISCHDRS="aix.h ppc64_events.h pmapi-ppc64.h papi_events_table.h"
    MISCSRCS="aix.c pmapi-ppc64_events.c"
    MISCOBJS="aix.o pmapi-ppc64_events.o"
    if test "$MAKEVER" = "aix-power5"; then
@@ -1924,8 +1924,8 @@ AC_SUBST(CFLAGS)
 AC_SUBST(FFLAGS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(PEPATH)
-AC_SUBST(pfm_events)
-AC_SUBST(pfm_events_table)
+AC_SUBST(papi_events)
+AC_SUBST(papi_events_table)
 AC_SUBST(tests)
 AC_SUBST(SETPATH)
 AC_SUBST(LINKLIB)

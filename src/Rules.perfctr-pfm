@@ -101,9 +101,9 @@ endif
 
 FFLAGS        	+= -Dlinux $(FARGS)
 
-ifeq (static,$(PFM_EVENTS))
-	CFLAGS		 += -DSTATIC_PERFMON_EVENTS_TABLE
-	PFM_EVENTS_TABLE := perfmon_events_table.h
+ifeq (static,$(PAPI_EVENTS))
+	CFLAGS	+= -DSTATIC_PAPI_EVENTS_TABLE
+	PAPI_EVENTS_TABLE := papi_events_table.h
 endif
 
 ifeq (y,$(PFM_OLD_PFMV2))
@@ -146,7 +146,7 @@ CFLAGS-2.7.x := $(CFLAGS-2.6.x)
 CFLAGS += $(EVENTFLAGS) $(CFLAGS-$(VERSION))
 
 # MISCSRCS can be set in configure.in and that value should not be overwritten by a Rules file
-MISCHDRS = perfctr-$(CPU).h $(PFM_EVENTS_TABLE)
+MISCHDRS = perfctr-$(CPU).h $(PAPI_EVENTS_TABLE)
 MISCSRCS +=  linux.c $(ARCH_SPEC_EVTS)
 
 # Pentium 4 no longer needs a p4_events.c file
@@ -249,7 +249,7 @@ $(CPU_EVENTS).o: $(CPU_EVENTS).c $(HEADERS)
 linux.o: linux.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
 
-papi_pfm_events.o: papi_pfm_events.c $(HEADERS) $(PFM_EVENTS_TABLE)
+papi_pfm_events.o: papi_pfm_events.c $(HEADERS) $(PAPI_EVENTS_TABLE)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_pfm_events.c -o $@
 
 native_clean:
@@ -260,8 +260,8 @@ endif
 ifneq (,${PFM_ROOT})
 	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" clean
 endif
-ifeq (static,$(PFM_EVENTS))
-	-rm -f $(PFM_EVENTS_TABLE)
+ifeq (static,$(PAPI_EVENTS))
+	-rm -f $(PAPI_EVENTS_TABLE)
 endif
 
 native_install: 

@@ -119,14 +119,14 @@ x86_cache_info.o: x86_cache_info.c $(HEADERS)
 hwinfo_linux.o: hwinfo_linux.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c hwinfo_linux.c -o hwinfo_linux.o
 
-$(PFM_EVENTS_TABLE):	perfmon_events.csv perfmon_events_table.sh
-	sh perfmon_events_table.sh > $@
+$(PAPI_EVENTS_TABLE):	papi_events.csv papi_events_table.sh
+	sh papi_events_table.sh > $@
 
 $(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c  $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(ARCH_EVENTS)_map.c -o $(ARCH_EVENTS)_map.o
 
 # Required for AIX PowerPC configurations
-pmapi-ppc64_events.o: pmapi-ppc64_events.c  $(HEADERS) perfmon_events_table.h
+pmapi-ppc64_events.o: pmapi-ppc64_events.c  $(HEADERS) papi_events_table.h
 	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c pmapi-ppc64_events.c -o pmapi-ppc64_events.o
 
 aix.o: aix.c  $(HEADERS)
@@ -183,7 +183,7 @@ ftests: $(LIBRARY) null
 	$(SETPATH) cd ftests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" F77="$(F77)" CFLAGS="-I.. $(CFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" FFLAGS="-I.. $(FFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="$(LINKLIB)" $(TARGETS)
 
 clean: native_clean
-	-rm -rf $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c	papi_fwrappers__.c PAPI_FWRAPPERS.c perfmon_events_table.h
+	-rm -rf $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c	papi_fwrappers__.c PAPI_FWRAPPERS.c papi_events_table.h
 	-cd ctests; $(MAKE) clean
 	-cd ftests; $(MAKE) clean
 	-cd utils;  $(MAKE) clean

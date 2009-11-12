@@ -71,7 +71,7 @@ typedef struct PPC64_native_map {
    int index;
 } PPC64_native_map_t;
 
-#define PERFMON_EVENT_FILE "perfmon_events.csv"
+#define PAPI_EVENT_FILE "papi_events.csv"
 
 typedef struct {
    int preset; /* Preset code */

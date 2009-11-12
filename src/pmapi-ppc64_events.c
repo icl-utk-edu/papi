@@ -97,14 +97,14 @@ static FILE *open_event_table(char *name)
   table = fopen(name,"r");
   if (table == NULL)
   {
-    SUBDBG("Open %s failed, trying ./%s.\n",name,PERFMON_EVENT_FILE);
-    sprintf(name,"%s",PERFMON_EVENT_FILE);
+    SUBDBG("Open %s failed, trying ./%s.\n",name,PAPI_EVENT_FILE);
+    sprintf(name,"%s",PAPI_EVENT_FILE);
     table = fopen(name,"r");
   }
   if (table == NULL)
   {
-    SUBDBG("Open ./%s failed, trying ../%s.\n",name,PERFMON_EVENT_FILE);
-    sprintf(name,"../%s",PERFMON_EVENT_FILE);
+    SUBDBG("Open ./%s failed, trying ../%s.\n",name,PAPI_EVENT_FILE);
+    sprintf(name,"../%s",PAPI_EVENT_FILE);
     table = fopen(name,"r");
   }
   if (table) SUBDBG("Open %s succeeded.\n",name);
@@ -227,11 +227,11 @@ static int find_preset_code(char *tmp, int *code)
   return(PAPI_EINVAL);
 }
 
-/* Static version of the perfmon csv file. */
-#if defined(STATIC_PERFMON_EVENTS_TABLE)
-#include "perfmon_events_table.h"
+/* Static version of the events file. */
+#if defined(STATIC_PAPI_EVENTS_TABLE)
+#include "papi_events_table.h"
 #else
-  static char *perfmon_events_table = NULL;
+  static char *papi_events_table = NULL;
 #endif
 
 /*#define SHOW_LOADS */
@@ -242,8 +242,8 @@ static int find_preset_code(char *tmp, int *code)
 static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_entry_t *here)
 {
   char line[LINE_MAX];
-  char name[PATH_MAX] = "builtin perfmon_events_table";
-  char *tmp_perfmon_events_table = NULL;
+  char name[PATH_MAX] = "builtin papi_events_table";
+  char *tmp_papi_events_table = NULL;
   char *tmpn;
   FILE *table;
   int line_no = 1, derived = 0, insert = 0, preset = 0;
@@ -266,27 +266,27 @@ static int load_preset_table(char *pmu_name, int pmu_type, pfm_preset_search_ent
     table = fopen(name,"r");
   }
   /* if no valid environment variable, look for built-in table */
-  else if (perfmon_events_table) {
-	  tmp_perfmon_events_table = perfmon_events_table;
+  else if (papi_events_table) {
+	  tmp_papi_events_table = papi_events_table;
 	  table = NULL;
   }
   /* if no env var and no built-in, search for default file */
   else {
 #ifdef PAPI_DATADIR
-    sprintf(name,"%s/%s",PAPI_DATADIR,PERFMON_EVENT_FILE);
+    sprintf(name,"%s/%s",PAPI_DATADIR,PAPI_EVENT_FILE);
 #else
-    sprintf(name,"%s",PERFMON_EVENT_FILE);
+    sprintf(name,"%s",PAPI_EVENT_FILE);
 #endif
 	table = open_event_table(name);
   }
   /* if no valid file or built-in table, bail */
-  if (table == NULL && tmp_perfmon_events_table == NULL) {
+  if (table == NULL && tmp_papi_events_table == NULL) {
     PAPIERROR("fopen(%s): %s, please set the PAPI_PERFMON_EVENT_FILE env. variable",name,strerror(errno));
     return(PAPI_ESYS);
   }
 
   /* at this point either a valid file pointer or built-in table pointer */
-  while (get_event_line(line, table, &tmp_perfmon_events_table)) {
+  while (get_event_line(line, table, &tmp_papi_events_table)) {
       char *t;
 	  int i;
       t = trim_string(strtok(line,","));
@@ -594,7 +594,7 @@ static int generate_preset_search_map(hwi_search_t **maploc, hwi_dev_notes_t **n
     }
    if (i != j) 
      {
-       PAPIERROR("%d of %d events in %s were not valid",i-j,i,PERFMON_EVENT_FILE);
+       PAPIERROR("%d of %d events in %s were not valid",i-j,i,PAPI_EVENT_FILE);
      }
    SUBDBG("generate_preset_search_map(%p,%p,%p) %d actual presets\n",maploc,noteloc,strmap,j);
    *maploc = psmap;
