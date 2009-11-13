@@ -6843,13 +6843,21 @@ $as_echo "$ac_res" >&6; }
 as_val=`eval 'as_val=${'$as_ac_File'}
 		 $as_echo "$as_val"'`
    if test "x$as_val" = x""yes; then
-  PCLPATH="$pcl_incdir"
+  pcl="yes"
+              PCLPATH="$pcl_incdir"
 else
   { { $as_echo "$as_me:$LINENO: error: perf_counter.h could not be found and no patch is installed." >&5
 $as_echo "$as_me: error: perf_counter.h could not be found and no patch is installed." >&2;}
    { (exit 1); exit 1; }; }
 fi
 
+
+else
+  if test "$perfctr" = "no" -a "$perfmon" = "0"; then
+            { { $as_echo "$as_me:$LINENO: error: perf_counter.h could not be found and no patch is installed." >&5
+$as_echo "$as_me: error: perf_counter.h could not be found and no patch is installed." >&2;}
+   { (exit 1); exit 1; }; }
+            fi
 
 fi
 

@@ -1043,8 +1043,13 @@ if test "$pcl" = "no"; then
 AC_ARG_WITH(pcl_incdir,
 	   [  --with-pcl-incdir=<path>	Specify directory of perf_counter header file],
 	   [pcl_incdir=$withval
-	     AC_CHECK_FILE($pcl_incdir/perf_counter.h, [PCLPATH="$pcl_incdir"], 
+	     AC_CHECK_FILE($pcl_incdir/perf_counter.h, [pcl="yes"
+              PCLPATH="$pcl_incdir"], 
 		[AC_MSG_ERROR([perf_counter.h could not be found and no patch is installed.])])
+           ],
+           [if test "$perfctr" = "no" -a "$perfmon" = "0"; then
+            AC_MSG_ERROR([perf_counter.h could not be found and no patch is installed.])
+            fi
            ])
 fi
 fi
