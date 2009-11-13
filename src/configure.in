@@ -1027,6 +1027,12 @@ AC_ARG_WITH(pcl,
              AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/perf_counter.h, [ pcl="yes"
                PCLPATH="/lib/modules/$OSVER/source/include/linux"],
                 [ pcl="no" ])
+            ],
+            [if test "$perfctr" = "no" -a "$perfmon" = "0"; then
+              AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/perf_counter.h, [ pcl="yes"
+               PCLPATH="/lib/modules/$OSVER/source/include/linux"],
+                [ pcl="no" ])
+             fi
             ])
 fi
 
