@@ -6729,10 +6729,17 @@ else
 fi
 
 
+# PCL start
+if test "`uname -r | grep "2.6."`"; then
+# gives the position in $OSVER of *first* character in substring "2.6."
+POS1=`expr index "$OSVER" "2.6."`
+POS2=`expr $POS1 + 4`
+VERS=`expr substr "$OSVER" "$POS2" 2`
+
 # set PCL only when manually set with --with-pcl,
 # or by default if perfctr is not available
-
-if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
+# but only if linux kernel version is >= 31
+if test "$cross_compiling" = "no" -a "$OS" = "linux" -a "${VERS}" -ge 31; then
 
 # Check whether --with-pcl was given.
 if test "${with_pcl+set}" = set; then
@@ -6829,6 +6836,8 @@ if test "$pcl_incdir" != "no"; then
 			PCLPATH="$pcl_incdir"
 fi
 # workaround end
+fi
+# PCL end
 
 
 # Check whether --with-pmapi was given.
