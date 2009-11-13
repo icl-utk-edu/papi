@@ -1,4 +1,76 @@
 ===============================================================================
+PAPI 3.7.1 RELEASE NOTES                                            13 Nov 2009
+===============================================================================
+
+This file documents changes in recent PAPI releases in inverse chronological
+order.
+
+For details on installing PAPI on your machine, consult the INSTALL.txt file
+in this directory.
+
+For specific and detailed information on changes made in this release, grep
+the ChangeLogP371.txt file for keywords of interest or go directly to the PAPI
+cvs tree.
+
+
+GENERAL NOTES
+===============================================================================
+This release is an incremental upgrade to PAPI 3.7.0. It cleans up several 
+issues found in the 3.7.0 release and provides better support for the 
+perf_counter interface introduced in Linux kernel 2.6.31.
+
+As always, if you identify strange behavior or reproducible bugs, please
+contact the PAPI team or visit the PAPI User Forum.
+
+And visit the PAPI website for the latest updates:
+http://icl.cs.utk.edu/papi/
+
+NOTE: If you are looking for the man pages and other user documentation, look
+online. We decided we could provide better and more timely support by 
+maintaining just the online documentation. Let us know if you think this is a
+bad decision.
+
+
+CHANGES IN PAPI 3.7.1 SINCE PAPI 3.7.0
+===============================================================================
+Bug Fixes:
+----------
+- fixed long standing subtle multiplexing bug in which TIDs and PIDs would get
+  confused. TIDs would then get lost leading to long term instability.
+- fixed unit mask handling in perf_counters
+- fixed uninitialized string issue in /proc/cpuinfo parsing
+- fixed event reporting errors for various Opteron Family 10h models
+
+Enhancements:
+-------------
+- FreeBSD support for Intel i7
+- cleaned up libpapi.so naming for RedHat rpms
+- cleaned up various other issues for rpms per RedHat
+- autodetection of 2.6.31 perf_counter interface (in most cases)
+- enhanced packaging options in configure to support building either static or 
+  shared libraries independently
+
+New Platforms:
+-------------
+- Support for the perf_counters (PCL: Performance Counters for Linux) interface
+  for Linux kernel 2.6.31 and later has been more completely tested on a 
+  broader range of platforms, including Opteron, Core2, i7, and POWER.
+  It successfully performs basic counting operations and handles many multiplex,
+  overflow and profiling situations. It is still not as extensivelytested as the
+  perfmon or perfctr interfaces, but is ready for work. Caveat Emptor.
+
+Major Issues:
+-------------
+- see 3.7.0
+
+Experimental:
+-------------
+
+Known Bugs:
+-----------
+- see 3.7.0
+
+===============================================================================
 PAPI 3.7.0 RELEASE NOTES                                            08 Sep 2009
 ===============================================================================
 
