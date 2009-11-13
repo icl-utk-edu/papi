@@ -1024,7 +1024,8 @@ if test "$cross_compiling" = "no" -a "$OS" = "linux" -a "${VERS}" -ge 31; then
 AC_ARG_WITH(pcl,
             [  --with-pcl=<yes,no>		Specify existence of Performance Counters for Linux],
             [pcl=$withval
-             AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/perf_counter.h, [ pcl="yes" ],
+             AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/perf_counter.h, [ pcl="yes"
+               PCLPATH="/lib/modules/$OSVER/source/include/linux"],
                 [ pcl="no" ])
             ])
 fi

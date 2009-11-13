@@ -6769,6 +6769,7 @@ as_val=`eval 'as_val=${'$as_ac_File'}
 		 $as_echo "$as_val"'`
    if test "x$as_val" = x""yes; then
    pcl="yes"
+               PCLPATH="/lib/modules/$OSVER/source/include/linux"
 else
    pcl="no"
 fi
