@@ -478,7 +478,7 @@ didcheck=1
 AC_CHECK_FUNC(ffsll,[ffsll=yes],[ffsll=no])
 ])
 fi
-if test $didcheck = 0; then
+if test "$didcheck" = "0"; then
 AC_MSG_CHECKING(for ffsll)
 case "$ffsll" in
    yes)
@@ -972,7 +972,7 @@ AC_ARG_WITH(perfmon,
 	    fi]
 )
 
-if test "$perfmon" != 0; then
+if test "$perfmon" != "0"; then
    AC_MSG_CHECKING(for perfmon version)
 #   AC_MSG_RESULT("x${perfmon}x")
    perfmon=`echo ${perfmon} | sed 's/^[ \t]*//;s/[ \t]*$//'`
@@ -1012,9 +1012,9 @@ AC_ARG_WITH(pfm_libdir,
 # PCL start
 # set PCL manually set with --with-pcl, 
 # or by default if perfctr and perfmon are not available
-# but only if linux kernel version is >= 31
+# and linux kernel version is >= 31
 
-if test "$perfctr" = "no" -a "$perfmon" = 0 -a "`uname -r | grep "2.6."`"; then
+if test "`uname -r | grep "2.6."`"; then
 # gives the position in $OSVER of *first* character in substring "2.6."
 POS1=`expr index "$OSVER" "2.6."`
 POS2=`expr $POS1 + 4`
@@ -1023,11 +1023,10 @@ VERS=`expr substr "$OSVER" "$POS2" 2`
 if test "$cross_compiling" = "no" -a "$OS" = "linux" -a "${VERS}" -ge 31; then
 AC_ARG_WITH(pcl,
             [  --with-pcl=<yes,no>		Specify existence of Performance Counters for Linux],
-            [pcl=$withval],
-            [pcl="no"
+            [pcl=$withval
              AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/perf_counter.h, [ pcl="yes" ],
                 [ pcl="no" ])
-	    ])
+            ])
 fi
 
 # If we are running a PCL kernel, perf_counter.h should have been found in 
@@ -1080,7 +1079,7 @@ sh perfmon_events_table.sh > perfmon_events_table.h
 fi
 
 old_pfmv2="n"
-if test $perfmon != 0; then
+if test "$perfmon" != "0"; then
    if test $perfmon -lt 25; then
       old_pfmv2="y"
    fi
@@ -1246,7 +1245,7 @@ if test "$perfctr" = 7 -a "$arch" != "ppc64"; then
    AC_MSG_ERROR([Perfctr 2.7.x only works on PPC64 machines. Please repatch your kernel with 2.6.x.])
 fi
 
-if test $perfmon != 0 -o $pcl = "yes"; then
+if test "$perfmon" != "0" -o "$pcl" = "yes"; then
       dotest=0
    if test "$pfm_root" != ""; then
       LIBS="-L$pfm_root/lib -lpfm"
@@ -1434,7 +1433,7 @@ case "$OS" in
        fi
        ;;
    linux)
-       if test $pcl = "yes" ; then
+       if test "$pcl" = "yes" ; then
          MAKEVER="$OS"-pcl
        else
 	if test $perfmon -gt 20 ; then
