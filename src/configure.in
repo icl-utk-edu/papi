@@ -1010,48 +1010,37 @@ AC_ARG_WITH(pfm_libdir,
             )
 
 # PCL start
-if test "`uname -r | grep "2.6."`"; then
+# set PCL manually set with --with-pcl, 
+# or by default if perfctr and perfmon are not available
+# but only if linux kernel version is >= 31
+
+if test "$perfctr" = "no" -a "$perfmon" = 0 -a "`uname -r | grep "2.6."`"; then
 # gives the position in $OSVER of *first* character in substring "2.6."
 POS1=`expr index "$OSVER" "2.6."`
 POS2=`expr $POS1 + 4`
 VERS=`expr substr "$OSVER" "$POS2" 2`
 
-# set PCL only when manually set with --with-pcl, 
-# or by default if perfctr is not available
-# but only if linux kernel version is >= 31
 if test "$cross_compiling" = "no" -a "$OS" = "linux" -a "${VERS}" -ge 31; then
 AC_ARG_WITH(pcl,
             [  --with-pcl=<yes,no>		Specify existence of Performance Counters for Linux],
             [pcl=$withval],
             [pcl="no"
-			if test "$perfctr" = "no"; then
-            AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/perf_counter.h, [ pcl="yes" ],
-                     [AC_MSG_ERROR([perf_counter.h could not be found. Specify --with-pcl and --with-pcl-incdir])])
-			fi ]
-            )
-else
-   pcl="no"
+             AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/perf_counter.h, [ pcl="yes" ],
+                [ pcl="no" ])
+	    ])
 fi
 
-# If we are running a perf_events (PCL) kernel, the include file will be
-# found in /lib/modules/`uname -r`/source/include/linux.  However, allow the
-# user to override that location if they wish.
-
-# looking for perf_counter header file
-if test "$pcl" = "yes"; then
+# If we are running a PCL kernel, perf_counter.h should have been found in 
+# /lib/modules/$OSVER/source/include/linux. If the file was not found
+# see if the user has set a path and ensure it can be found there
+if test "$pcl" = "no"; then
 AC_ARG_WITH(pcl_incdir,
-			[  --with-pcl-incdir=<path>	Specify directory of perf_counter header file],
-			[pcl_incdir=$withval],
-			[pcl_incdir="no"
-			AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/perf_counter.h, [pcl_incdir="/lib/modules/$OSVER/source/include/linux"], 
-			[AC_MSG_ERROR([perf_counter.h could not be found. See --with-pcl-incdir])]) ]
-			)
+	   [  --with-pcl-incdir=<path>	Specify directory of perf_counter header file],
+	   [pcl_incdir=$withval
+	     AC_CHECK_FILE($pcl_incdir/perf_counter.h, [PCLPATH="$pcl_incdir"], 
+		[AC_MSG_ERROR([perf_counter.h could not be found and no patch is installed.])])
+           ])
 fi
-	  
-if test "$pcl_incdir" != "no"; then
-			PCLPATH="$pcl_incdir"
-fi
-# workaround end
 fi
 # PCL end
 

@@ -6730,15 +6730,16 @@ fi
 
 
 # PCL start
-if test "`uname -r | grep "2.6."`"; then
+# set PCL manually set with --with-pcl,
+# or by default if perfctr and perfmon are not available
+# but only if linux kernel version is >= 31
+
+if test "$perfctr" = "no" -a "$perfmon" = 0 -a "`uname -r | grep "2.6."`"; then
 # gives the position in $OSVER of *first* character in substring "2.6."
 POS1=`expr index "$OSVER" "2.6."`
 POS2=`expr $POS1 + 4`
 VERS=`expr substr "$OSVER" "$POS2" 2`
 
-# set PCL only when manually set with --with-pcl,
-# or by default if perfctr is not available
-# but only if linux kernel version is >= 31
 if test "$cross_compiling" = "no" -a "$OS" = "linux" -a "${VERS}" -ge 31; then
 
 # Check whether --with-pcl was given.
@@ -6746,8 +6747,7 @@ if test "${with_pcl+set}" = set; then
   withval=$with_pcl; pcl=$withval
 else
   pcl="no"
-			if test "$perfctr" = "no"; then
-            as_ac_File=`$as_echo "ac_cv_file_/lib/modules/$OSVER/source/include/linux/perf_counter.h" | $as_tr_sh`
+             as_ac_File=`$as_echo "ac_cv_file_/lib/modules/$OSVER/source/include/linux/perf_counter.h" | $as_tr_sh`
 { $as_echo "$as_me:$LINENO: checking for /lib/modules/$OSVER/source/include/linux/perf_counter.h" >&5
 $as_echo_n "checking for /lib/modules/$OSVER/source/include/linux/perf_counter.h... " >&6; }
 if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
@@ -6772,34 +6772,25 @@ as_val=`eval 'as_val=${'$as_ac_File'}
    if test "x$as_val" = x""yes; then
    pcl="yes"
 else
-  { { $as_echo "$as_me:$LINENO: error: perf_counter.h could not be found. Specify --with-pcl and --with-pcl-incdir" >&5
-$as_echo "$as_me: error: perf_counter.h could not be found. Specify --with-pcl and --with-pcl-incdir" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-			fi
-
-fi
-
-else
    pcl="no"
 fi
 
-# If we are running a perf_events (PCL) kernel, the include file will be
-# found in /lib/modules/`uname -r`/source/include/linux.  However, allow the
-# user to override that location if they wish.
 
-# looking for perf_counter header file
-if test "$pcl" = "yes"; then
+fi
+
+fi
+
+# If we are running a PCL kernel, perf_counter.h should have been found in
+# /lib/modules/$OSVER/source/include/linux. If the file was not found
+# see if the user has set a path and ensure it can be found there
+if test "$pcl" = "no"; then
 
 # Check whether --with-pcl_incdir was given.
 if test "${with_pcl_incdir+set}" = set; then
   withval=$with_pcl_incdir; pcl_incdir=$withval
-else
-  pcl_incdir="no"
-			as_ac_File=`$as_echo "ac_cv_file_/lib/modules/$OSVER/source/include/linux/perf_counter.h" | $as_tr_sh`
-{ $as_echo "$as_me:$LINENO: checking for /lib/modules/$OSVER/source/include/linux/perf_counter.h" >&5
-$as_echo_n "checking for /lib/modules/$OSVER/source/include/linux/perf_counter.h... " >&6; }
+	     as_ac_File=`$as_echo "ac_cv_file_$pcl_incdir/perf_counter.h" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for $pcl_incdir/perf_counter.h" >&5
+$as_echo_n "checking for $pcl_incdir/perf_counter.h... " >&6; }
 if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
   $as_echo_n "(cached) " >&6
 else
@@ -6807,7 +6798,7 @@ else
   { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
 $as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
    { (exit 1); exit 1; }; }
-if test -r "/lib/modules/$OSVER/source/include/linux/perf_counter.h"; then
+if test -r "$pcl_incdir/perf_counter.h"; then
   eval "$as_ac_File=yes"
 else
   eval "$as_ac_File=no"
@@ -6820,10 +6811,10 @@ $as_echo "$ac_res" >&6; }
 as_val=`eval 'as_val=${'$as_ac_File'}
 		 $as_echo "$as_val"'`
    if test "x$as_val" = x""yes; then
-  pcl_incdir="/lib/modules/$OSVER/source/include/linux"
+  PCLPATH="$pcl_incdir"
 else
-  { { $as_echo "$as_me:$LINENO: error: perf_counter.h could not be found. See --with-pcl-incdir" >&5
-$as_echo "$as_me: error: perf_counter.h could not be found. See --with-pcl-incdir" >&2;}
+  { { $as_echo "$as_me:$LINENO: error: perf_counter.h could not be found and no patch is installed." >&5
+$as_echo "$as_me: error: perf_counter.h could not be found and no patch is installed." >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -6831,11 +6822,6 @@ fi
 fi
 
 fi
-
-if test "$pcl_incdir" != "no"; then
-			PCLPATH="$pcl_incdir"
-fi
-# workaround end
 fi
 # PCL end
 
