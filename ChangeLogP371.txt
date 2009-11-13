@@ -1,0 +1,367 @@
+2009-11-13	bsheely
+	* src/configure [papi-3-7-0] 1.107.2.18:
+	* src/configure.in [papi-3-7-0] 1.107.2.17:
+		configure only looks for PCL if perfctr and perfmon are not 
+		installed
+
+2009-11-13	jagode
+	* src/configure [papi-3-7-0] 1.107.2.17:
+	* src/configure.in [papi-3-7-0] 1.107.2.16:
+		Ensure that perf_events stuff is only used for kernel versions 
+		2.6.31. and higher.
+
+2009-11-12	terpstra
+	* src/libpfm-3.y/lib/pfmlib_intel_nhm.c [papi-3-7-0] 1.1.1.5.2.3:
+		Fix for Nehalem ternary operator bug identified by Rick K @ 
+		Illinois.
+
+2009-11-11	terpstra
+	* src/ctests/first.c [papi-3-7-0] 1.47.4.2:
+		Fix overly restrictive verification of results. In verifying 
+		that FP_INS/FP_OPS/TOT_INS was non-zero, we were requiring it to 
+		be near theoretical FP_OPS which caused false verification 
+		failures in some edge cases. Now we just require count >= 
+		iterations.
+
+	* src/pcl.c [papi-3-7-0] 1.5.2.5:
+		Initialize the inp and outp structures to 0 in the 
+		update_control_state routine. This is overkill but should 
+		eliminate the complaints valgrind is generating about an 
+		uninitialized structure.
+
+	* src/perfmon_events.csv [papi-3-7-0] 1.53.2.2:
+		Remove OP_TYPE expansion of packed operations from AMD Family 
+		10h definition of FP_INS per suggestion from John McCalpin.
+
+	* src/Makefile.in [papi-3-7-0] 1.26.2.3:
+	* src/configure [papi-3-7-0] 1.107.2.15:
+	* src/configure.in [papi-3-7-0] 1.107.2.14:
+	* src/papi.h [papi-3-7-0] 1.188.2.1:
+		Bump version number to 3.7.1.0.
+
+2009-11-11	jagode
+	* src/configure [papi-3-7-0] 1.107.2.16:
+	* src/configure.in [papi-3-7-0] 1.107.2.15:
+		It appears that Ubuntu/perf_events cannot find the perf_events 
+		include files where they should be. Added additional workaround 
+		for this problem.
+
+2009-11-10	mucci
+	* src/configure [papi-3-7-0] 1.107.2.13:
+	* src/configure.in [papi-3-7-0] 1.107.2.12:
+		Note, when you grep strings in configure, you need to redirect to /dev/null
+		to avoid output.
+
+	* src/configure [papi-3-7-0] 1.107.2.12:
+	* src/configure.in [papi-3-7-0] 1.107.2.11:
+		Handle the case where --disable-static and --disable-shared are 
+		erroneously specified
+
+2009-11-10	terpstra
+	* src/perfctr-p3.h [papi-3-7-0] 1.48.4.1:
+		Update from 5 counters(Core2) to 7 counters (i7).
+
+	* src/utils/native_avail.c [papi-3-7-0] 1.39.4.3:
+		Remove unused variable.
+
+2009-11-10	bsheely
+	* src/configure [papi-3-7-0] 1.107.2.14:
+	* src/configure.in [papi-3-7-0] 1.107.2.13:
+		modified configure so that x86_cache_info.c cannot be included 
+		more than once
+
+2009-11-09	mucci
+	* src/Makefile.inc [papi-3-7-0] 1.132.2.6:
+		Added a space by accident
+
+	* src/Makefile.inc [papi-3-7-0] 1.132.2.5:
+	* src/Rules.perfctr [papi-3-7-0] 1.44.2.5:
+	* src/Rules.perfctr-pfm [papi-3-7-0] 1.26.2.4:
+	* src/Rules.pfm [papi-3-7-0] 1.39.2.3:
+	* src/Rules.pfm_pcl [papi-3-7-0] 1.3.2.5:
+	* src/configure [papi-3-7-0] 1.107.2.11:
+	* src/configure.in [papi-3-7-0] 1.107.2.10:
+		This file addresses the packaging issue reported by SUSE and RedHat where
+		PAPI always builds both shared and static libraries.
+		
+		Now, the options to configure all do the proper thing.
+		
+		--disable-shared
+		--disable-static
+		--with-shlib=yes/no
+		
+		The latter says which tests should link with. Of course, it also does checking
+		in case you request one which it cannot provide.
+		
+		In addition, some other fixes:
+		
+		-D_REENTRANT added to Linux builds. THIS IS IMPORTANT.
+		- install-man uncommented to allow people to install outdated man pages
+		- The test operator [[ ]] deprecated to use the test command. Remember folks,
+		  some people may not be running bash, which means you get errors when you run
+		  this. If you use the test command, you are always safe.
+		
+		This patch should apply cleanly to PAPI HEAD, which I will submit to the papi
+		group independently.
+
+2009-11-06	terpstra
+	* src/pcl.c [papi-3-7-0] 1.5.2.4:
+		Fix for including unit masks in event codes for perf_events.
+
+2009-11-02	terpstra
+	* src/utils/avail.c [papi-3-7-0] 1.45.4.1:
+	* src/utils/native_avail.c [papi-3-7-0] 1.39.4.2:
+		Fixes to eliminate strcpy on overlapping strings The offending 
+		calls were replaced with memmoves and encapsulated in a single 
+		function for better maintenance.
+
+2009-10-31	servat
+	* src/Makefile.freebsd [papi-3-7-0] 1.8.4.3:
+	* src/freebsd.c [papi-3-7-0] 1.6.4.1:
+	* src/freebsd/map-i7.c [papi-3-7-0] 1.1.2.1:
+	* src/freebsd/map-i7.h [papi-3-7-0] 1.1.2.1:
+	* src/freebsd/map.c [papi-3-7-0] 1.4.4.1:
+	* src/freebsd/map.h [papi-3-7-0] 1.4.4.1:
+		
+		Added Intel Core i7 support to FreeBSD substrate (thanks to George Neville-Neil).
+
+2009-10-28	jagode
+	* src/papi_pfm_events.c [papi-3-7-0] 1.31.2.1:
+	* src/utils/native_avail.c [papi-3-7-0] 1.39.4.1:
+		List events only that are supported by host CPU. (Problems on 
+		AMD family 10 processors)
+
+2009-10-27	bsheely
+	* src/sys_perf_counter_open.c [papi-3-7-0] 1.2.2.4:
+		roll back to previous version
+
+	* src/sys_perf_counter_open.c [papi-3-7-0] 1.2.2.3:
+		removed defines for __NR_perf_counter_open
+
+2009-10-23	bsheely
+	* src/sys_perf_counter_open.c [papi-3-7-0] 1.2.2.2:
+		Resolved issue with __NR_perf_counter_open already defined in 
+		kernel 2.6.32
+
+2009-10-21	terpstra
+	* src/linux-ia64.c [papi-3-7-0] 1.173.4.1:
+	* src/linux.c [papi-3-7-0] 1.64.2.1:
+	* src/pcl.c [papi-3-7-0] 1.5.2.3:
+	* src/perfmon.c [papi-3-7-0] 1.91.2.1:
+		Apply Phil's fix to initialize strings in _update_shlib_info. Thanks to Will Cohen for first identifying this.
+		This code is poorly factored and badly needs a refactoring...
+
+2009-10-20	terpstra
+	* src/pcl.c [papi-3-7-0] 1.5.2.2:
+		Changes in pcl reset from Corey Ashford.
+
+2009-10-20	jagode
+	* src/configure [papi-3-7-0] 1.107.2.10:
+	* src/configure.in [papi-3-7-0] 1.107.2.9:
+		Improved configuration of perf_events substrate. Thanks to Corey 
+		Ashford and Anton Blanchard.
+
+2009-10-16	bsheely
+	* src/Rules.perfctr [papi-3-7-0] 1.44.2.4:
+		added missed endif statement
+
+2009-10-15	bsheely
+	* src/Rules.perfctr [papi-3-7-0] 1.44.2.3:
+	* src/Rules.pfm [papi-3-7-0] 1.39.2.2:
+	* src/Rules.pfm_pcl [papi-3-7-0] 1.3.2.4:
+		modified for ifort
+
+	* src/ftests/fdmemtest.F [papi-3-7-0] 1.3.10.1:
+	* src/ftests/flops.F [papi-3-7-0] 1.13.34.1:
+	* src/ftests/ftests_util.F [papi-3-7-0] 1.44.2.1:
+		resolved icc warnings
+
+	* src/perfctr-p3.c [papi-3-7-0] 1.88.4.1:
+	* src/perfctr-ppc32.c [papi-3-7-0] 1.7.4.1:
+		corrected possible init error
+
+2009-10-14	terpstra
+	* src/ctests/first.c [papi-3-7-0] 1.47.4.1:
+		Beef up error checking to report undercounts of flops or instructions.
+		Zero shouldn't be a valid count!
+
+	* src/papi_internal.c [papi-3-7-0] 1.130.2.1:
+		Convert an exit() into an abort() per Will Cohen of Redhat.
+
+	* src/Rules.perfctr [papi-3-7-0] 1.44.2.2:
+	* src/Rules.perfctr-pfm [papi-3-7-0] 1.26.2.3:
+	* src/Rules.pfm_pcl [papi-3-7-0] 1.3.2.3:
+		Change libpapi.so to libpapi.so.3 per Will Cohen of Redhat.
+
+	* src/ctests/calibrate.c [papi-3-7-0] 1.38.4.1:
+		Error checking was missing undercount conditions.
+
+2009-10-13	bsheely
+	* src/libpfm-3.y/examples_v2.x/self_smpl_multi.c [papi-3-7-0] 1.1.1.2.2.1:
+		corrected icc error
+
+2009-10-12	bsheely
+	* src/configure [papi-3-7-0] 1.107.2.8:
+	* src/configure.in [papi-3-7-0] 1.107.2.7:
+		ignore icc warning #188
+
+	* src/ctests/multiattach.c [papi-3-7-0] 1.3.4.1:
+	* src/ctests/zero_attach.c [papi-3-7-0] 1.3.4.1:
+		corrected logic error with pid type
+
+	* src/configure [papi-3-7-0] 1.107.2.9:
+	* src/configure.in [papi-3-7-0] 1.107.2.8:
+		added openmp compile flag for icc
+
+2009-10-09	sbk
+	* src/Makefile.CLE-perfmon2 [papi-3-7-0] 1.6.2.2:
+		
+		Remove previous change now that configure works properly in producing a
+		correct Makefile for Cray XT/CLE.
+
+2009-10-09	bsheely
+	* src/Rules.perfctr-pfm [papi-3-7-0] 1.26.2.2:
+	* src/configure [papi-3-7-0] 1.107.2.7:
+	* src/configure.in [papi-3-7-0] 1.107.2.6:
+		resolved icc command line warnings
+
+	* src/configure [papi-3-7-0] 1.107.2.6:
+	* src/configure.in [papi-3-7-0] 1.107.2.5:
+		compile issue on Cray XT/CLE related to x86_cache_info
+
+2009-10-05	bsheely
+	* src/configure.in [papi-3-7-0] 1.107.2.4:
+		Added AC_SUBST(MISCSRCS) macro. Didn't get checked-in along with 
+		the updated configure script
+
+2009-10-03	sbk
+	* src/Makefile.CLE-perfmon2 [papi-3-7-0] 1.6.2.1:
+		Cray XT CLE builds were failing with:
+		
+		...
+		ar xv /ptmp/sbk/3.7.0.2-xt-cle/papi/src/libpfm-3.y/lib/libpfm.a
+		x - pfmlib_common.o
+		x - pfmlib_priv.o
+		x - pfmlib_os_linux.o
+		x - pfmlib_os_linux_v2.o
+		x - pfmlib_pentium4.o
+		x - pfmlib_amd64.o
+		x - pfmlib_core.o
+		x - pfmlib_gen_ia32.o
+		x - pfmlib_intel_atom.o
+		x - pfmlib_intel_nhm.o
+		make[2]: *** No rule to make target `@MISCSRCS@', needed by `libpapi.a'.  Stop.
+		
+		However, trying to recognize "CLE" to set MISCSRCS in the main case statement
+		never worked, so hardcode it into CLE's make file. THis allows the build
+		to work again.
+
+2009-10-02	bsheely
+	* src/Makefile.inc [papi-3-7-0] 1.132.2.3:
+		reverting back to version 1.132.2.1 to undo last change
+
+	* src/configure [papi-3-7-0] 1.107.2.5:
+		recompiled just in case latest Makefile.in change is not 
+		included
+
+	* src/Makefile.inc [papi-3-7-0] 1.132.2.4:
+		removed ifeq conditional to build on AIX
+
+2009-10-01	jagode
+	* src/configure [papi-3-7-0] 1.107.2.4:
+	* src/configure.in [papi-3-7-0] 1.107.2.3:
+		Configure mod: Use perfctr by default if available; otherwise 
+		pcl. Also, use pcl if manually specified during configure time (
+		independently if perfctr is available or not).
+
+2009-10-01	bsheely
+	* src/Makefile.aix-power3 [papi-3-7-0] 1.16.4.1:
+	* src/Makefile.aix-powerpc.common [papi-3-7-0] 1.12.4.1:
+	* src/Makefile.aix5-power3 [papi-3-7-0] 1.26.4.1:
+	* src/Makefile.aix5-power3-64bit [papi-3-7-0] 1.16.4.1:
+	* src/Makefile.dadd-alpha [papi-3-7-0] 1.20.4.1:
+	* src/Makefile.freebsd [papi-3-7-0] 1.8.4.1:
+	* src/Rules.pfm2 [papi-3-7-0] 1.37.2.1:
+		removed deprecated file
+
+	* src/Makefile.any-null [papi-3-7-0] 1.24.4.1:
+	* src/Makefile.in [papi-3-7-0] 1.26.2.2:
+	* src/Makefile.inc [papi-3-7-0] 1.132.2.1:
+	* src/Rules.perfctr [papi-3-7-0] 1.44.2.1:
+	* src/Rules.perfctr-pfm [papi-3-7-0] 1.26.2.1:
+	* src/Rules.pfm [papi-3-7-0] 1.39.2.1:
+	* src/Rules.pfm_pcl [papi-3-7-0] 1.3.2.2:
+	* src/configure.in [papi-3-7-0] 1.107.2.2:
+		x86_cache_info makefile proceduresredesigned
+
+	* src/configure [papi-3-7-0] 1.107.2.2:
+		updated to reflect x86_cache_info changes
+
+	* src/Makefile.aix-power3 [papi-3-7-0] 1.16.4.2:
+	* src/Makefile.aix-powerpc.common [papi-3-7-0] 1.12.4.2:
+	* src/Makefile.aix5-power3 [papi-3-7-0] 1.26.4.2:
+	* src/Makefile.aix5-power3-64bit [papi-3-7-0] 1.16.4.2:
+	* src/Makefile.dadd-alpha [papi-3-7-0] 1.20.4.2:
+	* src/Makefile.freebsd [papi-3-7-0] 1.8.4.2:
+		rolling back unintended changes
+
+	* src/Makefile.inc [papi-3-7-0] 1.132.2.2:
+		removed ifeq statement that would not compile on AIX
+
+	* src/configure [papi-3-7-0] 1.107.2.3:
+		configure built using version 2.63
+
+2009-09-25	you
+	* src/multiplex.c [papi-3-7-0] 1.73.4.1:
+		bug fix from Tushar:
+		
+		 The problem is a bug in PAPI. What happens is that
+		 if process event counting using PAPI is started before the program
+		 spawns threads, then PAPI:multiplex.c uses the PID in place of the TID
+		 for the head tag. This is in mpx_add_event:
+		
+		     /* If we're actually threaded, fill the
+		      * field with the thread_id otherwise
+		      * use getpid() as a placeholder. */
+		
+		     if (_papi_hwi_thread_id_fn) {
+		        MPXDBG("New thread at %p\n", t);
+		        t->tid = _papi_hwi_thread_id_fn();
+		     } else {
+		        MPXDBG("New process at %p\n", t);
+		        t->tid = getpid();
+		     }
+		
+		 Now, when the program spawns threads later, and later
+		 get_my_threads_master_event_list is invoked, it is able to obtain
+		 the real thread ID (0x0) for the master thread. Obviously, this will
+		 never be found in the event list.
+
+2009-09-23	terpstra
+	* src/pcl.c [papi-3-7-0] 1.5.2.1:
+		Remove a #if 0 from _papi_pcl_start. This was preventing 
+		counters from being reset.
+
+2009-09-21	jagode
+	* src/perfmon_events.csv [papi-3-7-0] 1.53.2.1:
+		Added definition for 2 of the 4 new presets (SP_OPS, DP_OPS) for 
+		Opteron
+
+2009-09-17	jagode
+	* src/Makefile.in [papi-3-7-0] 1.26.2.1:
+	* src/Rules.pfm_pcl [papi-3-7-0] 1.3.2.1:
+	* src/configure [papi-3-7-0] 1.107.2.1:
+	* src/configure.in [papi-3-7-0] 1.107.2.1:
+	* src/pcl.h [papi-3-7-0] 1.1.6.1:
+	* src/sys_perf_counter_open.c [papi-3-7-0] 1.2.2.1:
+		Added workaround for missing perf_counter header files.
+
+2009-09-15	you
+	* src/aix.c [papi-3-7-0] 1.82.4.1:
+		fix round_requested_ns()
+
+2009-09-10	you
+	* src/papi.c [papi-3-7-0] 1.332.2.1:
+		current implementation of PAPI_read_ts() does not support 
+		multiplexing. replace _papi_hwi_read with PAPI_read.
+
