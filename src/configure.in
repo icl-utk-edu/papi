@@ -1034,6 +1034,8 @@ AC_ARG_WITH(pcl,
                 [ pcl="no" ])
              fi
             ])
+elif test "$cross_compiling" = "no" -a "$OS" = "linux" -a "${VERS}" -lt "31" -a "$perfctr" = "no" -a "$perfmon" = "0"; then
+AC_MSG_ERROR([No patch is installed.])
 fi
 
 # If we are running a PCL kernel, perf_counter.h should have been found in 
@@ -1054,6 +1056,7 @@ AC_ARG_WITH(pcl_incdir,
 fi
 fi
 # PCL end
+
 
 AC_ARG_WITH(pmapi,
             [  --with-pmapi=<path>		Specify path of pmapi on aix system ],

@@ -6810,6 +6810,10 @@ fi
 
 fi
 
+elif test "$cross_compiling" = "no" -a "$OS" = "linux" -a "${VERS}" -lt "31" -a "$perfctr" = "no" -a "$perfmon" = "0"; then
+{ { $as_echo "$as_me:$LINENO: error: No patch is installed." >&5
+$as_echo "$as_me: error: No patch is installed." >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
 # If we are running a PCL kernel, perf_counter.h should have been found in
@@ -6864,6 +6868,7 @@ fi
 fi
 fi
 # PCL end
+
 
 
 # Check whether --with-pmapi was given.
