@@ -949,7 +949,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 5
 	},
 	{ .name   = "L1D_PREFETCH",
-		.desc   = "L1D hardware prefetch misses",
+		.desc   = "L1D hardware prefetch",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0x3,
 		.code   = 0x4E,
