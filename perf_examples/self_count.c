@@ -66,15 +66,35 @@ void sig_handler(int n)
 
 #define barrier() __asm__ __volatile__("": : :"memory")
 
-static inline unsigned long long rdpmc(int counter)
+static inline int rdpmc(struct perf_event_mmap_page *hdr, uint64_t *value)
 {
+	int counter = hdr->index - 1;
 	DECLARE_ARGS(val, low, high);
 
+	if (counter < 0)
+		return -1;
+
 	asm volatile("rdpmc" : EAX_EDX_RET(val, low, high) : "c" (counter));
-	return EAX_EDX_VAL(val, low, high);
+	*value = EAX_EDX_VAL(val, low, high);
+	return 0;
 }
 #else
-#error "need to define rdpmc()"
+/*
+ *  Default function to read counter directly from user level mode.
+ *  Given this is architecture specific, it must be defined when
+ *  libpfm is ported to new architecture. The default routine below
+ *  simply fails and the caller falls backs to syscall.
+ */
+static inline int rdpmc(struct perf_event_mmap_page *hdr, uint64_t *value)
+{
+	int counter = hdr->index - 1;
+
+	if (counter < 0)
+		return -1;
+
+	printf("your architecture does not have a way to read counters from user mode\n");
+	return -1;
+}
 #endif
 
 /*
@@ -106,10 +126,9 @@ read_count(perf_event_desc_t *fds)
 	do {
 		seq = hdr->lock;
 		barrier();
-		/* event is curerntly on cpu? */
-		idx = hdr->index - 1;
-		if (idx >= 0) {
-			values[0] = rdpmc(idx);
+
+		/* try reading directly from user mode */
+		if (!rdpmc(hdr, &values[0])) {
 			offset = hdr->offset;
 			values[1] = hdr->time_enabled;
 			values[2] = hdr->time_running;
