@@ -1472,7 +1472,7 @@ Optional Packages:
   --with-pfm-incdir=<path>	Specify directory of perfmon header files
   --with-pfm-libdir=<path>	Specify directory of pfm library
   --with-perf-events=<yes,no>  Specify use of Linux Performance Event Subsystem
-  --with-pe-incdir=<path>  Specify directory of perf_counter header file
+  --with-pe-incdir=<path>	Specify path to perf event header file
   --with-pmapi=<path>		Specify path of pmapi on aix system
   --with-papi-events=<static,file>	Specify source of events
   --with-semaphores Use semaphores instead of atomic locks (IA64)
@@ -6729,34 +6729,27 @@ fi
 
 
 # perf_events start
-if test "`uname -r | grep "2.6."`"; then
-# gives the position in $OSVER of *first* character in substring "2.6."
-POS1=`expr index "$OSVER" "2.6."`
-POS2=`expr $POS1 + 4`
-VERS=`expr substr "$OSVER" "$POS2" 2`
+if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
+major_version=`echo $OSVER | sed 's/\([^.][^.]*\).*/\1/'`
+minor_version=`echo $OSVER | sed 's/[^.][^.]*.\([^.][^.]*\).*/\1/'`
+point_version=`echo $OSVER | sed -e 's/[^.][^.]*.[^.][^.]*.\(.*\)/\1/' -e 's/[^0-9].*//'`
 
-# set perf events only when manually set with --with-perf-events,
-# or by default if perfctr is not available
-# but only if linux kernel version is >= 31
-# Version 2.6.31 of the kernel uses perf_counter.h
-# 2.6.32 and all subsequent versions should use perf_event.h
-if test "$cross_compiling" = "no" -a "$OS" = "linux" -a "${VERS}" -ge 31; then
-if test "`uname -r | grep "2.6.31"`" != ""; then
-   perf_header="/lib/modules/$OSVER/source/include/linux/perf_counter.h"
-   CFLAGS="$CFLAGS -DKERNEL31"
-else
-   perf_header="/lib/modules/$OSVER/source/include/linux/perf_event.h"
+# Version 2.6.31 of the kernel uses perf_counter.h and all subsequent versions use perf_event.h
+if test "$major_version" = "2" -a "$minor_version" = "6" -a "$point_version" = "31"; then
+  perf_header="perf_counter.h"
+  CFLAGS="$CFLAGS -DKERNEL31"
+elif test "$major_version" -ge 2 -a "$minor_version" -ge 6 -a "$point_version" -gt 31; then
+  perf_header="perf_event.h"
 fi
+
+if test "$perf_header" != ""; then
 
 # Check whether --with-perf_events was given.
 if test "${with_perf_events+set}" = set; then
   withval=$with_perf_events; perf_events=$withval
-else
-  perf_events="no"
-			if test "$perfctr" = "no"; then
-            as_ac_File=`$as_echo "ac_cv_file_$perf_header" | $as_tr_sh`
-{ $as_echo "$as_me:$LINENO: checking for $perf_header" >&5
-$as_echo_n "checking for $perf_header... " >&6; }
+             as_ac_File=`$as_echo "ac_cv_file_/lib/modules/$OSVER/source/include/linux/$perf_header" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for /lib/modules/$OSVER/source/include/linux/$perf_header" >&5
+$as_echo_n "checking for /lib/modules/$OSVER/source/include/linux/$perf_header... " >&6; }
 if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
   $as_echo_n "(cached) " >&6
 else
@@ -6764,7 +6757,7 @@ else
   { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
 $as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
    { (exit 1); exit 1; }; }
-if test -r "$perf_header"; then
+if test -r "/lib/modules/$OSVER/source/include/linux/$perf_header"; then
   eval "$as_ac_File=yes"
 else
   eval "$as_ac_File=no"
@@ -6778,34 +6771,17 @@ as_val=`eval 'as_val=${'$as_ac_File'}
 		 $as_echo "$as_val"'`
    if test "x$as_val" = x""yes; then
    perf_events="yes"
-else
-  { { $as_echo "$as_me:$LINENO: error: $perf_header could not be found. Specify --with-perf-events and --with-pe-incdir" >&5
-$as_echo "$as_me: error: $perf_header could not be found. Specify --with-perf-events and --with-pe-incdir" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-			fi
-
-fi
-
+               PEPATH="/lib/modules/$OSVER/source/include/linux"
 else
    perf_events="no"
 fi
 
-# If we are running a perf_events kernel, the include file will be
-# found in /lib/modules/`uname -r`/source/include/linux.  However, allow the
-# user to override that location if they wish.
-# looking for perf_counter header file
-if test "$perf_events" = "yes"; then
 
-# Check whether --with-pe_incdir was given.
-if test "${with_pe_incdir+set}" = set; then
-  withval=$with_pe_incdir; pe_incdir=$withval
 else
-  pe_incdir="no"
-			as_ac_File=`$as_echo "ac_cv_file_$perf_header" | $as_tr_sh`
-{ $as_echo "$as_me:$LINENO: checking for $perf_header" >&5
-$as_echo_n "checking for $perf_header... " >&6; }
+  if test "$perfctr" = "no" -a "$perfmon" = "0"; then
+              as_ac_File=`$as_echo "ac_cv_file_/lib/modules/$OSVER/source/include/linux/$perf_header" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for /lib/modules/$OSVER/source/include/linux/$perf_header" >&5
+$as_echo_n "checking for /lib/modules/$OSVER/source/include/linux/$perf_header... " >&6; }
 if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
   $as_echo_n "(cached) " >&6
 else
@@ -6813,7 +6789,7 @@ else
   { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
 $as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
    { (exit 1); exit 1; }; }
-if test -r "$perf_header"; then
+if test -r "/lib/modules/$OSVER/source/include/linux/$perf_header"; then
   eval "$as_ac_File=yes"
 else
   eval "$as_ac_File=no"
@@ -6826,22 +6802,71 @@ $as_echo "$ac_res" >&6; }
 as_val=`eval 'as_val=${'$as_ac_File'}
 		 $as_echo "$as_val"'`
    if test "x$as_val" = x""yes; then
-  pe_incdir="$perf_header"
+   perf_events="yes"
+               PEPATH="/lib/modules/$OSVER/source/include/linux"
 else
-  { { $as_echo "$as_me:$LINENO: error: $perf_header could not be found. See --with-pe-incdir" >&5
-$as_echo "$as_me: error: $perf_header could not be found. See --with-pe-incdir" >&2;}
+   perf_events="no"
+fi
+
+             fi
+
+fi
+
+elif test "$perfctr" = "no" -a "$perfmon" = "0"; then
+  { { $as_echo "$as_me:$LINENO: error: PAPI requires a patch for any kernel older than 2.6.31" >&5
+$as_echo "$as_me: error: PAPI requires a patch for any kernel older than 2.6.31" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+# If we are running a perf event kernel, the correct include file should have been found in
+# /lib/modules/$OSVER/source/include/linux. If it was not found, see if the user set a valid path
+if test "$perf_events" = "no"; then
+
+# Check whether --with-pe_incdir was given.
+if test "${with_pe_incdir+set}" = set; then
+  withval=$with_pe_incdir; pe_incdir=$withval
+	     as_ac_File=`$as_echo "ac_cv_file_$pe_incdir/$perf_header" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for $pe_incdir/$perf_header" >&5
+$as_echo_n "checking for $pe_incdir/$perf_header... " >&6; }
+if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "$pe_incdir/$perf_header"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+ac_res=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+as_val=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+   if test "x$as_val" = x""yes; then
+  perf_events="yes"
+              PEPATH="$pe_incdir"
+else
+  { { $as_echo "$as_me:$LINENO: error: $perf_header could not be found at $pe_incdir" >&5
+$as_echo "$as_me: error: $perf_header could not be found at $pe_incdir" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
 
-fi
+else
+  if test "$perfctr" = "no" -a "$perfmon" = "0"; then
+            { { $as_echo "$as_me:$LINENO: error: $perf_header could not be found and no patch is installed." >&5
+$as_echo "$as_me: error: $perf_header could not be found and no patch is installed." >&2;}
+   { (exit 1); exit 1; }; }
+            fi
 
 fi
 
-if test "$pe_incdir" != "no"; then
-			PEPATH="$pe_incdir"
 fi
-# workaround end
 fi
 # perf_events end
 
@@ -6898,7 +6923,7 @@ sh papi_events_table.sh > papi_events_table.h
 fi
 
 old_pfmv2="n"
-if test $perfmon != 0; then
+if test "$perfmon" != "0"; then
    if test $perfmon -lt 25; then
       old_pfmv2="y"
    fi
@@ -7403,7 +7428,7 @@ $as_echo "$as_me: error: Perfctr 2.7.x only works on PPC64 machines. Please repa
    { (exit 1); exit 1; }; }
 fi
 
-if test $perfmon != 0 -o $perf_events = "yes"; then
+if test "$perfmon" != "0" -o "$perf_events" = "yes"; then
       dotest=0
    if test "$pfm_root" != ""; then
       LIBS="-L$pfm_root/lib -lpfm"
@@ -8601,7 +8626,7 @@ $as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
        MAKEVER="$OS"-"$CPU""$BM"
        ;;
    linux)
-       if test $perf_events = "yes" ; then
+       if test "$perf_events" = "yes" ; then
          MAKEVER="$OS"-pe
        else
 	if test $perfmon -gt 20 ; then
