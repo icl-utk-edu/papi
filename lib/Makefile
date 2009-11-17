@@ -83,7 +83,7 @@ endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_POWERPC),y)
 INCARCH = $(INC_POWERPC)
-#SRCS   += pfmlib_gen_powerpc.c
+SRCS   += pfmlib_gen_powerpc.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_POWERPC
 endif
 

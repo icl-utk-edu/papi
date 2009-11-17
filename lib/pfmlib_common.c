@@ -77,7 +77,6 @@ pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_x86_arch_support, /* must always be last for i386 */
 #endif
 
-#if 0
 #ifdef CONFIG_PFMLIB_ARCH_MIPS64
 	&generic_mips64_support,
 #endif
@@ -100,7 +99,6 @@ pfmlib_pmu_t *pfmlib_pmus[]=
 
 #ifdef CONFIG_PFMLIB_CELL
 	&cell_support,
-#endif
 #endif
 
 #ifdef __linux__
