@@ -60,14 +60,6 @@ CONFIG_PFMLIB_SHARED=y
 CONFIG_PFMLIB_DEBUG=y
 
 #
-# Cray-X2 is cross-compiled. Check the programming environment
-#
-PE := $(shell echo $${CRAY_PE_TARGET})
-ifeq (cray-x2,$(PE))
-override ARCH=crayx2
-endif
-
-#
 # Cell Broadband Engine is reported as PPC but needs special handling.
 #
 ifeq ($(SYS),Linux)
@@ -140,12 +132,6 @@ CONFIG_PFMLIB_SHARED=n
 CONFIG_PFMLIB_OLD_PFMV2=y
 endif
 
-ifeq ($(ARCH),crayx2)
-CONFIG_PFMLIB_ARCH_CRAYX2=y
-CONFIG_PFMLIB_SHARED=n
-CONFIG_PFMLIB_OLD_PFMV2=y
-endif
-
 ifeq ($(ARCH),cell)
 CONFIG_PFMLIB_CELL=y
 endif
@@ -185,13 +171,6 @@ PFMLIB=$(PFMLIBDIR)/libpfm.a
 
 # Reset options for Cray XT
 ifeq ($(CONFIG_PFMLIB_ARCH_CRAYXT),y)
-LDFLAGS+=-static
-CONFIG_PFMLIB_OLD_PFMV2=y
-endif
-
-# Reset the compiler for Cray-X2 (load x2-gcc module)
-ifeq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
-CC=craynv-cray-linux-gnu-gcc
 LDFLAGS+=-static
 CONFIG_PFMLIB_OLD_PFMV2=y
 endif

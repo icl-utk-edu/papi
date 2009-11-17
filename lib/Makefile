@@ -93,12 +93,6 @@ INCARCH = $(INC_SPARC)
 CFLAGS += -DCONFIG_PFMLIB_ARCH_SPARC
 endif
 
-ifeq ($(CONFIG_PFMLIB_ARCH_CRAYX2),y)
-INCARCH = $(INC_CRAYX2)
-#SRCS   += pfmlib_crayx2.c
-CFLAGS += -DCONFIG_PFMLIB_ARCH_CRAYX2
-endif
-
 ifeq ($(CONFIG_PFMLIB_ARCH_CRAYXT),y)
 CFLAGS += -DCONFIG_PFMLIB_ARCH_CRAYXT
 endif
@@ -174,9 +168,6 @@ INC_SPARC=events/ultra12_events.h	\
 	events/ultra4plus_events.h	\
 	events/niagara1_events.h	\
 	events/niagara2_events.h
-
-INC_CRAYX2= pfmlib_crayx2_priv.h	\
-	cevents/rayx2_events.h
 
 INC_CELL=events/cell_events.h
 
