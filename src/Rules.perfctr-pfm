@@ -217,7 +217,7 @@ CFLAGS	+= -DPERFCTR_PFM_EVENTS
 
 PFM_OBJS=$(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
 ifeq (,$(PFM_OBJS))
-  $(PFM_LIB_PATH)/libpfm.a:
+$(PFM_LIB_PATH)/libpfm.a:
 	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC)" DIRS=lib CONFIG_PFMLIB_OLD_PFMV2="$(PFM_OLD_PFMV2)"
 	$(MAKE)
 endif
