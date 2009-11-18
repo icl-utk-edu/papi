@@ -356,10 +356,11 @@ fi
 AC_MSG_RESULT($bitmode)
 ])
 
-# Prevent AC_PROG_CC from defaulting optimization to -O2 because it causes compile warnings.
-# CFLAGS is overwritten throughout this file, and appended to by Rules files,
-# but consider moving this below AC_PROG_CC and using AX_CHECK_COMPILER_FLAGS
-CFLAGS="-g -O"
+# Set FFLAGS to null to prevent AC_PROG_F77 from defaulting it to -g -O2
+CFLAGS="-g"
+FFLAGS=""
+OPTFLAGS="-O2" 
+TOPTFLAGS="-O0" 
 
 AC_MSG_CHECKING(for debugging build)
 AC_ARG_WITH(debug,
@@ -369,11 +370,12 @@ AC_ARG_WITH(debug,
             )
 case "$debug" in
    yes)
-      CFLAGS="-g3 -O0"
+      CFLAGS="-g3"
+      OPTFLAGS="-O0"
       DEBUGFLAGS="-DDEBUG" ;;
    memory)
       DEBUGFLAGS="" ;;
-   no)
+   no)  
       DEBUGFLAGS="-DPAPI_NO_MEMORY_MANAGEMENT" ;;
    *)					     
       AC_MSG_ERROR([The debug option you specified is not supported])
@@ -1997,6 +1999,7 @@ AC_SUBST(BGLSYS_ROOT)
 AC_SUBST(SHLIBDEPS)
 AC_SUBST(BGL_TESTS)
 AC_SUBST(CPU_TYPE)
+AC_SUBST(TOPTFLAGS)
 
 if test "$cross_compiling" = "yes" ; then
    AC_MSG_NOTICE(Compiling genpapifdef with $nativecc because cross compiling)
