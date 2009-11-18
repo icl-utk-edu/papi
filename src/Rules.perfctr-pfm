@@ -90,7 +90,7 @@ else
    endif
 endif
 
-CFLAGS += -D_GNU_SOURCE -Wall $(NOTLS) $(BITFLAGS)
+CFLAGS		+= -D_REENTRANT -D_GNU_SOURCE -Wall $(NOTLS) $(BITFLAGS)
 
 # 
 # Portland Group section
@@ -153,8 +153,8 @@ MISCSRCS +=  linux.c $(ARCH_SPEC_EVTS)
 ifneq (,$(CPU_EVENTS))
   MISCSRCS +=  $(CPU_EVENTS).c
 endif
-PERFCTR_OBJS = $(shell $(AR) t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
 
+PERFCTR_OBJS = $(shell $(AR) t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
 ifeq (,$(PERFCTR_OBJS))
 $(PERFCTR_LIB_PATH)/libperfctr.a:
 ifneq (,${PERFCTR_ROOT})
@@ -238,10 +238,10 @@ config.h:
 	@echo 'Please clobber your build and run ./configure. Direct Makefile access has been deprecated.'
 
 $(PERFCTR_OBJS): $(PERFCTR_LIB_PATH)/libperfctr.a
-	ar xv $<
+	$(AR) xv $<
 
 $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
-	ar xv $<
+	$(AR) xv $<
 
 $(CPU_EVENTS).o: $(CPU_EVENTS).c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPU_EVENTS).c -o $@
@@ -265,8 +265,7 @@ ifeq (static,$(PAPI_EVENTS))
 endif
 
 native_install: 
-	-mkdir -p $(DESTDIR)$(DATADIR)
-	-chmod go+rx $(DESTDIR)$(DATADIR)
+	-install -d $(DESTDIR)$(DATADIR)
 	-cp -f ./perfmon_events.csv $(DESTDIR)$(DATADIR)
 ifeq ($(ARCH),ppc64)
 	cp -Rf ./event_data $(DESTDIR)$(DATADIR)
@@ -293,10 +292,6 @@ else
 endif
 endif
 endif
-	mkdir -p $(DESTDIR)$(LIBDIR)
-	cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE)
-	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so.$(PAPIVER)
-	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so
 
 native_clobber:
 ifneq (,${PERFCTR_ROOT})
