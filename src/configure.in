@@ -441,6 +441,25 @@ AC_MSG_RESULT($ffsll)
 fi
 
 #
+# Look for working gettid
+#
+AC_MSG_CHECKING(for working gettid)
+AC_LINK_IFELSE([
+#include <sys/types.h>
+main() { pid_t a = gettid(); }
+],[AC_MSG_RESULT(yes)
+AC_DEFINE(HAVE_GETTID, 1, [Full gettid function])],[
+AC_MSG_RESULT(no)
+AC_MSG_CHECKING(for working syscall(SYS_gettid))
+AC_LINK_IFELSE([
+#include <sys/types.h>
+#include <sys/syscall.h>
+main() { pid_t a = syscall(SYS_gettid); }
+],[AC_MSG_RESULT(yes)
+AC_DEFINE(HAVE_SYSCALL_GETTID, 1, [gettid syscall function])],[
+AC_MSG_RESULT(no)])])
+
+#
 # Look for good real time clocks
 #
 if test "x$walltimer" = "x"; then
@@ -554,7 +573,7 @@ else
    AC_MSG_ERROR([Unknown value for walltimer])
 fi
 AC_MSG_RESULT($walltimer)
-	   
+   
 #
 # Only thread tests after here
 # Should use this macro for PTHREADS

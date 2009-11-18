@@ -3,6 +3,9 @@
 /* cpu type */
 #undef CPU
 
+/* system has ACPI component */
+#undef HAVE_ACPI
+
 /* POSIX 1b realtime clock */
 #undef HAVE_CLOCK_GETTIME_REALTIME
 
@@ -14,6 +17,9 @@
 
 /* This platform has the ffsll() function */
 #undef HAVE_FFSLL
+
+/* Full gettid function */
+#undef HAVE_GETTID
 
 /* Normal gettimeofday timer */
 #undef HAVE_GETTIMEOFDAY
@@ -27,6 +33,12 @@
 /* perfctr header file */
 #undef HAVE_LIBPERFCTR_H
 
+/* Define to 1 if you have the `sensors' library (-lsensors). */
+#undef HAVE_LIBSENSORS
+
+/* system has lm-sensors component */
+#undef HAVE_LMSENSORS
+
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
@@ -36,14 +48,8 @@
 /* system has myrinet mx component */
 #undef HAVE_MX
 
-/* system has net(ifconfig) component */
+/* system has net (ifconfig) component */
 #undef HAVE_NET
-
-/* system has ACPI component */
-#undef HAVE_ACPI
-
-/* system has lm-sensors component */
-#undef HAVE_LMSENSORS
 
 /* Define to 1 if you have the <perfmon/pfmlib.h> header file. */
 #undef HAVE_PERFMON_PFMLIB_H
@@ -69,6 +75,9 @@
 /* old reg_evt_idx */
 #undef HAVE_PFM_REG_EVT_IDX
 
+/* lm-sensors header */
+#undef HAVE_SENSORS_H
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
@@ -80,6 +89,9 @@
 
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
+
+/* gettid syscall function */
+#undef HAVE_SYSCALL_GETTID
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
@@ -114,8 +126,8 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* package data directory */
-#undef PAPI_DATADIR
+/* Do not use indirect substrate functions */
+#undef PAPI_NO_VECTOR
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
@@ -125,6 +137,9 @@
 
 /* Use /proc for per-thread times */
 #undef USE_PROC_PTTIMER
+
+/* Use semaphores for locking */
+#undef USE_SEMAPHORES
 
 /* Enable GNU extensions on systems that have them.  */
 #ifndef _GNU_SOURCE
