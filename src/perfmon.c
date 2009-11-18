@@ -50,51 +50,6 @@ extern int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
 
 int _papi_pfm_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold);
 
-/*
-extern papi_svector_t _papi_pfm_event_vectors[];
-
-
-papi_svector_t _linux_pfm_table[] = {
-  {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
-  {(void (*)())_papi_hwd_init, VEC_PAPI_HWD_INIT},
-#ifdef WIN32
-  {(void (*)())_papi_hwd_shutdown_global, VEC_PAPI_HWD_SHUTDOWN_GLOBAL},
-#endif
-  {(void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE},
-#ifdef WIN32
-    {(void (*)())_papi_hwd_timer_callback, VEC_PAPI_HWD_DISPATCH_TIMER},
-#else
-  {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
-#endif
-  {(void (*)())_papi_hwd_ctl, VEC_PAPI_HWD_CTL},
-  {(void (*)())_papi_hwd_get_real_usec, VEC_PAPI_HWD_GET_REAL_USEC},
-  {(void (*)())_papi_hwd_get_real_cycles, VEC_PAPI_HWD_GET_REAL_CYCLES},
-  {(void (*)())_papi_hwd_get_virt_cycles, VEC_PAPI_HWD_GET_VIRT_CYCLES},
-  {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
-  {(void (*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
-  {(void (*)())_papi_hwd_allocate_registers,VEC_PAPI_HWD_ALLOCATE_REGISTERS},
-  {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
-  {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
-  {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
-  {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
-  {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
-  {(void (*)())_papi_hwd_write, VEC_PAPI_HWD_WRITE},
-#ifndef WIN32
-  {(void (*)())_papi_hwd_set_profile, VEC_PAPI_HWD_SET_PROFILE},
-  {(void (*)())_papi_hwd_stop_profiling, VEC_PAPI_HWD_STOP_PROFILING},
-#endif
-  {(void (*)())_papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
-  {(void (*)())_papi_hwd_get_memory_info, VEC_PAPI_HWD_GET_MEMORY_INFO},
-  {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
-//  {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
-//  {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
-//  {(void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
-//  {(void (*)())_papi_hwd_ntv_code_to_bits, VEC_PAPI_HWD_NTV_CODE_TO_BITS},
-//  {(void (*)())_papi_hwd_ntv_bits_to_info, VEC_PAPI_HWD_NTV_BITS_TO_INFO},
- {NULL, VEC_PAPI_END}
-};
-*/
-
 /* Static locals */
 
 int _perfmon2_pfm_pmu_type = -1;
@@ -2358,16 +2313,16 @@ int _papi_pfm_init_substrate(int cidx)
    return (PAPI_OK);
 }
 
-#ifdef WIN32
-int _papi_hwd_shutdown_global()
+int _papi_pfm_shutdown_substrate()
 {
+#ifdef WIN32
   int i;
   CloseWinPMCDriver();
   for (i = 0; i < PAPI_MAX_LOCK; i++)
     DeleteCriticalSection(&_papi_hwd_lock_data[i]);
+#endif
   return PAPI_OK;
 }
-#endif
 
 #if defined(USE_PROC_PTTIMER)
 static int init_proc_thread_timer(hwd_context_t *thr_ctx)
@@ -3787,7 +3742,8 @@ papi_vector_t _papi_pfm_vector = {
     .start =			_papi_pfm_start,
     .stop =			_papi_pfm_stop,
     .read =			_papi_pfm_read,
-    .shutdown =		_papi_pfm_shutdown,
+    .shutdown =		        _papi_pfm_shutdown,
+    .shutdown_substrate =       _papi_pfm_shutdown_substrate,
     .ctl =			_papi_pfm_ctl,
     .update_control_state =	_papi_pfm_update_control_state,
     .update_shlib_info =	_papi_pfm_update_shlib_info,

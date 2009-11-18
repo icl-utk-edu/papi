@@ -212,7 +212,7 @@ int _papi_hwi_innoculate_vector(papi_vector_t *v){
  if(!v->bpt_map_update) v->bpt_map_update=		(void (*) (hwd_reg_alloc_t *, hwd_reg_alloc_t *)) vec_void_dummy;
  if(!v->get_dmem_info) v->get_dmem_info=		(int (*) (PAPI_dmem_info_t *)) vec_int_dummy;
  if(!v->shutdown) v->shutdown=				(int (*) (hwd_context_t *)) vec_int_dummy;
- if(!v->shutdown_global) v->shutdown_global=		(int (*) (void)) vec_int_ok_dummy;
+ if(!v->shutdown_substrate) v->shutdown_substrate=		(int (*) (void)) vec_int_ok_dummy;
  if(!v->user) v->user=					(int (*) (int, void *, void *)) vec_int_dummy;
   return PAPI_OK;
 }
@@ -333,6 +333,6 @@ void vector_print_table(papi_vector_t *v, int print_func){
  vector_print_routine((void *)v->bpt_map_update, "_papi_hwd_bpt_map_update",print_func);
  vector_print_routine((void *)v->get_dmem_info, "_papi_hwd_get_dmem_info",print_func);
  vector_print_routine((void *)v->shutdown, "_papi_hwd_shutdown",print_func);
- vector_print_routine((void *)v->shutdown_global, "_papi_hwd_shutdown_global",print_func);
+ vector_print_routine((void *)v->shutdown_substrate, "_papi_hwd_shutdown_substrate",print_func);
  vector_print_routine((void *)v->user, "_papi_hwd_user",print_func);
 }

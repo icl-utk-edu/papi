@@ -134,7 +134,7 @@ int _papi_hwd_init(hwd_context_t *ctx)
 }
 
 /* Called once per process. */
-int _papi_hwd_shutdown_global(void) {
+int _papi_hwd_shutdown_substrate(void) {
   pmc_close(pmc_dev);
   lock_release();
    return (PAPI_OK);

@@ -347,7 +347,7 @@ int PAPI_library_init(int version)
       init_retval = tmp;
       _papi_hwi_shutdown_global_internal();
       for (i=0;i<papi_num_components; i++) {
-	    _papi_hwd[i]->shutdown_global();
+	    _papi_hwd[i]->shutdown_substrate();
       }
       _in_papi_library_init_cnt--;
      _papi_hwi_error_level = tmpel;
@@ -1976,7 +1976,7 @@ void PAPI_shutdown(void)
    _papi_hwi_shutdown_global_internal();
    _papi_hwi_shutdown_global_threads();
    for(i=0;i<papi_num_components;i++) {
-      _papi_hwd[i]->shutdown_global();
+      _papi_hwd[i]->shutdown_substrate();
    }
 
    /* Now it is safe to call re-init */

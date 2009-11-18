@@ -780,34 +780,6 @@ static void lock_init(void)
   memset(lock,0x0,sizeof(rwlock_t)*PAPI_MAX_LOCK);
 }
 
-#ifndef PAPI_NO_VECTOR /*
-papi_svector_t _solaris_ultra_table[] = {
- {(void (*)())_papi_hwd_get_overflow_address,VEC_PAPI_HWD_GET_OVERFLOW_ADDRESS},
- {(void (*)())_papi_hwd_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
- {(void (*)())_papi_hwd_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
- {(void (*)())_papi_hwd_ctl, VEC_PAPI_HWD_CTL},
- {(void (*)())_papi_hwd_get_real_usec, VEC_PAPI_HWD_GET_REAL_USEC},
- {(void (*)())_papi_hwd_get_real_cycles, VEC_PAPI_HWD_GET_REAL_CYCLES},
- {(void (*)())_papi_hwd_get_virt_cycles, VEC_PAPI_HWD_GET_VIRT_CYCLES},
- {(void (*)())_papi_hwd_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
- {(void (*)())_papi_hwd_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE },
- {(void (*)())_papi_hwd_start, VEC_PAPI_HWD_START },
- {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
- {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
- {(void (*)())_papi_hwd_shutdown_global, VEC_PAPI_HWD_SHUTDOWN_GLOBAL},
- {(void (*)())_papi_hwd_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
- {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
- {(void (*)())_papi_hwd_get_dmem_info, VEC_PAPI_HWD_GET_DMEM_INFO},
- {(void (*)())_papi_hwd_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
- {(void (*)())_papi_hwd_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
- {(void (*)())_papi_hwd_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
- {(void (*)())_papi_hwd_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
- {(void (*)())_papi_hwd_ntv_code_to_bits, VEC_PAPI_HWD_NTV_CODE_TO_BITS},
- {(void (*)())_papi_hwd_ntv_bits_to_info, VEC_PAPI_HWD_NTV_BITS_TO_INFO},
- {NULL, VEC_PAPI_END}
-}; */
-#endif
-
 /* This implementation may not be correct */
 papi_vector_t _solaris_vector = {
 	.cmp_info = {
@@ -840,7 +812,7 @@ papi_vector_t _solaris_vector = {
 	.start = _papi_hwd_start,
 	.stop =	_papi_hwd_stop,
 	.read =	_papi_hwd_read,
-	.shutdown_global = _papi_hwd_shutdown_global,
+	.shutdown_substrate = _papi_hwd_shutdown_substrate,
 	.ctl = _papi_hwd_ctl,
 	.update_control_state =	_papi_hwd_update_control_state,
 	.reset = _papi_hwd_reset,
@@ -936,7 +908,7 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
    }
 }
 
-int _papi_hwd_shutdown_global(void)
+int _papi_hwd_shutdown_substrate(void)
 {
    (void) cpc_rele();
    return (PAPI_OK);

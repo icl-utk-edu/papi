@@ -67,7 +67,7 @@ typedef struct papi_vectors {
     void	(*bpt_map_update)	(hwd_reg_alloc_t *, hwd_reg_alloc_t *);
     int		(*get_dmem_info)	(PAPI_dmem_info_t *);
     int		(*shutdown)		(hwd_context_t *);
-    int		(*shutdown_global)	(void);
+    int		(*shutdown_substrate)	(void);
     int		(*user)			(int, void *, void *);
 }papi_vector_t;
 

@@ -104,7 +104,7 @@ static int _any_shutdown(hwd_context_t *ctx)
 	return(PAPI_OK);
 }
 
-static int _any_shutdown_global(void)
+static int _any_shutdown_substrate(void)
 {
 	return(PAPI_OK);
 }
@@ -734,7 +734,7 @@ papi_vector_t _any_vector = {
 	.read =					_any_read,
 	.write =				_any_write,
 	.shutdown =				_any_shutdown,
-	.shutdown_global =		_any_shutdown_global,
+	.shutdown_substrate =		_any_shutdown_substrate,
 	.ctl =					_any_ctl,
 	.bpt_map_set =			_any_bpt_map_set,
 	.bpt_map_avail =		_any_bpt_map_avail,

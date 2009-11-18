@@ -411,7 +411,7 @@ int _papi_hwd_init_global(void)
 }
 
 /* Called once per process. */
-int _papi_hwd_shutdown_global(void) 
+int _papi_hwd_shutdown_substrate(void) 
 {
   return PAPI_OK;
 }
@@ -936,7 +936,7 @@ papi_svector_t _bgl_svector_table[] = {
  {(void (*)())_papi_hwd_stop, VEC_PAPI_HWD_STOP },
  {(void (*)())_papi_hwd_read, VEC_PAPI_HWD_READ },
  {(void (*)())_papi_hwd_shutdown, VEC_PAPI_HWD_SHUTDOWN },
- {(void (*)())_papi_hwd_shutdown_global, VEC_PAPI_HWD_SHUTDOWN_GLOBAL},
+ {(void (*)())_papi_hwd_shutdown_substrate, VEC_PAPI_HWD_SHUTDOWN_GLOBAL},
  {(void (*)())_papi_hwd_reset, VEC_PAPI_HWD_RESET},
  {(void (*)())_papi_hwd_write, VEC_PAPI_HWD_WRITE},
  {(void (*)())_papi_hwd_stop_profiling, VEC_PAPI_HWD_STOP_PROFILING},
