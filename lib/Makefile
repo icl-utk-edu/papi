@@ -158,8 +158,7 @@ INC_POWERPC=events/ppc970_events.h	\
 	events/power4_events.h	\
 	events/power5_events.h		\
 	events/power5+_events.h	\
-	events/power6_events.h		\
-	events/powerpc_reg.h
+	events/power6_events.h
 
 INC_SPARC=events/ultra12_events.h	\
 	events/ultra3_events.h		\
