@@ -132,7 +132,7 @@ ifneq (,$(findstring shared,$(LIBS)))
 	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so
 endif
 	-install -d $(DESTDIR)$(DATADIR)
-	cp -f ./perfmon_events.csv $(DESTDIR)$(DATADIR)
+	cp -f ./papi_events.cvs $(DESTDIR)$(DATADIR)
 
 native_clobber:
 ifneq (,${PFM_ROOT})

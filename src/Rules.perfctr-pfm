@@ -266,7 +266,7 @@ endif
 
 native_install: 
 	-install -d $(DESTDIR)$(DATADIR)
-	-cp -f ./perfmon_events.csv $(DESTDIR)$(DATADIR)
+	-cp -f ./papi_events.cvs $(DESTDIR)$(DATADIR)
 ifeq ($(ARCH),ppc64)
 	cp -Rf ./event_data $(DESTDIR)$(DATADIR)
 endif
