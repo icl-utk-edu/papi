@@ -87,19 +87,27 @@ int papi_xml_hwinfo(FILE *f)
   
   fprintf(f, "<hardware>\n");
   xml_string = xmlize(hwinfo->vendor_string);
-  fprintf(f, "  <vendor string=\"%s\" code=\"%d\"/>\n", 
-	  xml_string, hwinfo->vendor);
+  fprintf(f, "  <vendor=\"%s\"/>\n", xml_string);
   free (xml_string);
+  fprintf(f, "  <vendorCode=\"%d\"/>\n", hwinfo->vendor);
   xml_string = xmlize(hwinfo->model_string);
-  fprintf(f, "  <model string=\"%s\" code=\"%d\"/>\n",
-	  hwinfo->model_string, hwinfo->model);
+  fprintf(f, "  <model=\"%s\"/>\n", hwinfo->model_string);
   free (xml_string);
-  fprintf(f, "  <system nodes=\"%d\" totalCPUs=\"%d\"/>\n",
-	  hwinfo->nnodes, hwinfo->totalcpus);
-  fprintf(f, "  <node CPUs=\"%d\"/>\n",
-	  hwinfo->ncpu);
-  fprintf(f, "  <CPU revision=\"%f\" clockrate=\"%f\" />\n",
-	  hwinfo->revision, hwinfo->mhz);
+  fprintf(f, "  <modelCode=\"%d\"/>\n", hwinfo->model);
+  fprintf(f, "  <cpuRevision=\"%f\"/>\n", hwinfo->revision);
+  fprintf(f, "  <cpuID>\n");
+  fprintf(f, "    <family=\"%d\"/>\n", hwinfo->cpuid_family);
+  fprintf(f, "    <model=\"%d\"/>\n", hwinfo->cpuid_model);
+  fprintf(f, "    <stepping=\"%d\"/>\n", hwinfo->cpuid_stepping);
+  fprintf(f, "  </cpuID>\n");
+  fprintf(f, "  <cpuMegahertz=\"%f\"/>\n", hwinfo->mhz);
+  fprintf(f, "  <cpuClockMegahertz=\"%d\"/>\n", hwinfo->clock_mhz);
+  fprintf(f, "  <threads=\"%d\"/>\n", hwinfo->threads);
+  fprintf(f, "  <cores=\"%d\"/>\n", hwinfo->cores);
+  fprintf(f, "  <sockets=\"%d\"/>\n", hwinfo->sockets);
+  fprintf(f, "  <nodes=\"%d\"/>\n", hwinfo->nnodes);
+  fprintf(f, "  <cpuPerNode=\"%d\"/>\n", hwinfo->ncpu);
+  fprintf(f, "  <totalCPUs=\"%d\"/>\n", hwinfo->totalcpus);
   fprintf(f, "</hardware>\n");
 
   return (PAPI_OK);
