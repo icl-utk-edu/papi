@@ -6928,7 +6928,9 @@ $as_echo "$as_me: error: PAPI requires a patch for any kernel older than 2.6.31"
 fi
 
 # If we are running a perf event kernel, the correct include file should have been found in
-# /lib/modules/$OSVER/source/include/linux. If it was not found, see if the user set a valid path
+# /lib/modules/$OSVER/source/include/linux. If it was not found, see if the user set a path
+# Test both the path to the file with the file not included as part the path and
+# the path to the file with the file included as part of the path.
 if test "$perf_events" = "no"; then
 
 # Check whether --with-pe_incdir was given.
@@ -6958,11 +6960,40 @@ as_val=`eval 'as_val=${'$as_ac_File'}
 		 $as_echo "$as_val"'`
    if test "x$as_val" = x""yes; then
   perf_events="yes"
-              PEPATH="$pe_incdir"
+              PEPATH="$pe_incdir/$perf_header"
+else
+  as_ac_File=`$as_echo "ac_cv_file_$pe_incdir" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for $pe_incdir" >&5
+$as_echo_n "checking for $pe_incdir... " >&6; }
+if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "$pe_incdir"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+ac_res=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+as_val=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+   if test "x$as_val" = x""yes; then
+  perf_events="yes"
+                                            PEPATH="$pe_incdir"
 else
   { { $as_echo "$as_me:$LINENO: error: $perf_header could not be found at $pe_incdir" >&5
 $as_echo "$as_me: error: $perf_header could not be found at $pe_incdir" >&2;}
    { (exit 1); exit 1; }; }
+fi
+
+
 fi
 
 

@@ -1003,7 +1003,9 @@ elif test "$perfctr" = "no" -a "$perfmon" = "0"; then
 fi
 
 # If we are running a perf event kernel, the correct include file should have been found in
-# /lib/modules/$OSVER/source/include/linux. If it was not found, see if the user set a valid path
+# /lib/modules/$OSVER/source/include/linux. If it was not found, see if the user set a path
+# Test both the path to the file with the file not included as part the path and
+# the path to the file with the file included as part of the path. 
 if test "$perf_events" = "no"; then
 AC_ARG_WITH(pe_incdir,
 	   [if test "$perf_header" = "perf_event.h"; then
@@ -1014,8 +1016,11 @@ AC_ARG_WITH(pe_incdir,
            ],
 	   [pe_incdir=$withval
 	     AC_CHECK_FILE($pe_incdir/$perf_header, [perf_events="yes"
-              PEPATH="$pe_incdir"], 
-		[AC_MSG_ERROR([$perf_header could not be found at $pe_incdir])])
+              PEPATH="$pe_incdir/$perf_header"], 
+		[AC_CHECK_FILE($pe_incdir, [perf_events="yes"
+                                            PEPATH="$pe_incdir"], 
+		              [AC_MSG_ERROR([$perf_header could not be found at $pe_incdir])])
+                ])
            ],
            [if test "$perfctr" = "no" -a "$perfmon" = "0"; then
             AC_MSG_ERROR([$perf_header could not be found and no patch is installed.])
