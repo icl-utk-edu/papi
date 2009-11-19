@@ -989,12 +989,12 @@ AC_ARG_WITH(perf_events,
             [  --with-perf-events=<yes,no>  Specify use of Linux Performance Event Subsystem],
             [perf_events=$withval
              AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/$perf_header, [ perf_events="yes"
-               PEPATH="/lib/modules/$OSVER/source/include/linux"],
+               PEPATH="/lib/modules/$OSVER/source/include/linux/$perf_header"],
                 [ perf_events="no" ])
             ],
             [if test "$perfctr" = "no" -a "$perfmon" = "0"; then
               AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/$perf_header, [ perf_events="yes"
-               PEPATH="/lib/modules/$OSVER/source/include/linux"],
+               PEPATH="/lib/modules/$OSVER/source/include/linux/$perf_header"],
                 [ perf_events="no" ])
              fi
             ])
@@ -1006,7 +1006,12 @@ fi
 # /lib/modules/$OSVER/source/include/linux. If it was not found, see if the user set a valid path
 if test "$perf_events" = "no"; then
 AC_ARG_WITH(pe_incdir,
-	   [  --with-pe-incdir=<path>	Specify path to perf event header file],
+	   [if test "$perf_header" = "perf_event.h"; then
+              --with-pe-incdir=<path>	Specify path to perf_event.h
+            else
+              --with-pe-incdir=<path>	Specify path to perf_counter.h
+            fi
+           ],
 	   [pe_incdir=$withval
 	     AC_CHECK_FILE($pe_incdir/$perf_header, [perf_events="yes"
               PEPATH="$pe_incdir"], 

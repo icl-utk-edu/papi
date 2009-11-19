@@ -1473,7 +1473,12 @@ Optional Packages:
   --with-pfm-incdir=<path>	Specify directory of perfmon header files
   --with-pfm-libdir=<path>	Specify directory of pfm library
   --with-perf-events=<yes,no>  Specify use of Linux Performance Event Subsystem
-  --with-pe-incdir=<path>	Specify path to perf event header file
+if test "$perf_header" = "perf_event.h"; then
+              --with-pe-incdir=<path>	Specify path to perf_event.h
+            else
+              --with-pe-incdir=<path>	Specify path to perf_counter.h
+            fi
+
   --with-pmapi=<path>		Specify path of pmapi on aix system
   --with-papi-events=<static,file>	Specify source of events
   --with-semaphores Use semaphores instead of atomic locks (IA64)
@@ -6875,7 +6880,7 @@ as_val=`eval 'as_val=${'$as_ac_File'}
 		 $as_echo "$as_val"'`
    if test "x$as_val" = x""yes; then
    perf_events="yes"
-               PEPATH="/lib/modules/$OSVER/source/include/linux"
+               PEPATH="/lib/modules/$OSVER/source/include/linux/$perf_header"
 else
    perf_events="no"
 fi
@@ -6907,7 +6912,7 @@ as_val=`eval 'as_val=${'$as_ac_File'}
 		 $as_echo "$as_val"'`
    if test "x$as_val" = x""yes; then
    perf_events="yes"
-               PEPATH="/lib/modules/$OSVER/source/include/linux"
+               PEPATH="/lib/modules/$OSVER/source/include/linux/$perf_header"
 else
    perf_events="no"
 fi
