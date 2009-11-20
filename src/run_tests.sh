@@ -17,7 +17,9 @@ else
   export TESTS_QUIET
 fi
 
-CTESTS=`find ctests -perm -u+x -type f`;
+chmod -x ctests/*.[ch]
+chmod -x ftests/*.[Fch]
+CTESTS=`find ctests -maxdepth 1 -perm -u+x -type f`;
 FTESTS=`find ftests -perm -u+x -type f`;
 EXCLUDE=`grep --regexp=^# --invert-match run_tests_exclude.txt`
 ALLTESTS="$CTESTS $FTESTS";
@@ -41,6 +43,9 @@ do
       break
     fi;
   done
+  if [ `basename $i` = "Makefile" ]; then
+    MATCH=1
+  fi;
   if [ $MATCH -ne 1 ]; then
     echo -n "$i "
   fi;
@@ -78,6 +83,9 @@ do
       break
     fi;
   done
+  if [ `basename $i` = "Makefile" ]; then
+    MATCH=1
+  fi;
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
       if [ "$i" = "ctests/timer_overflow" ]; then
@@ -104,6 +112,9 @@ do
       break
     fi;
   done
+  if [ `basename $i` = "Makefile" ]; then
+    MATCH=1
+  fi;
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
     echo -n "Running $i: ";
