@@ -988,14 +988,20 @@ if test "$perf_header" != ""; then
 AC_ARG_WITH(perf_events,
             [  --with-perf-events=<yes,no>  Specify use of Linux Performance Event Subsystem],
             [perf_events=$withval
-             AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/$perf_header, [ perf_events="yes"
-               PEPATH="/lib/modules/$OSVER/source/include/linux/$perf_header"],
-                [ perf_events="no" ])
+             AC_CHECK_FILE(/usr/include/linux/$perf_header, [ perf_events="yes"
+               PEPATH="/usr/include/linux/$perf_header" ],
+               [AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/$perf_header, [ perf_events="yes"
+                   PEPATH="/lib/modules/$OSVER/source/include/linux/$perf_header" ],
+                   [perf_events="no"])
+               ])
             ],
             [if test "$perfctr" = "no" -a "$perfmon" = "0"; then
-              AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/$perf_header, [ perf_events="yes"
-               PEPATH="/lib/modules/$OSVER/source/include/linux/$perf_header"],
-                [ perf_events="no" ])
+             AC_CHECK_FILE(/usr/include/linux/$perf_header, [ perf_events="yes"
+               PEPATH="/usr/include/linux/$perf_header" ],
+               [AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/$perf_header, [ perf_events="yes"
+                   PEPATH="/lib/modules/$OSVER/source/include/linux/$perf_header" ],
+                   [perf_events="no"])
+               ])
              fi
             ])
 elif test "$perfctr" = "no" -a "$perfmon" = "0"; then

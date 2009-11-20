@@ -6856,7 +6856,33 @@ if test "$perf_header" != ""; then
 # Check whether --with-perf_events was given.
 if test "${with_perf_events+set}" = set; then
   withval=$with_perf_events; perf_events=$withval
-             as_ac_File=`$as_echo "ac_cv_file_/lib/modules/$OSVER/source/include/linux/$perf_header" | $as_tr_sh`
+             as_ac_File=`$as_echo "ac_cv_file_/usr/include/linux/$perf_header" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for /usr/include/linux/$perf_header" >&5
+$as_echo_n "checking for /usr/include/linux/$perf_header... " >&6; }
+if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "/usr/include/linux/$perf_header"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+ac_res=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+as_val=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+   if test "x$as_val" = x""yes; then
+   perf_events="yes"
+               PEPATH="/usr/include/linux/$perf_header"
+else
+  as_ac_File=`$as_echo "ac_cv_file_/lib/modules/$OSVER/source/include/linux/$perf_header" | $as_tr_sh`
 { $as_echo "$as_me:$LINENO: checking for /lib/modules/$OSVER/source/include/linux/$perf_header" >&5
 $as_echo_n "checking for /lib/modules/$OSVER/source/include/linux/$perf_header... " >&6; }
 if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
@@ -6880,15 +6906,44 @@ as_val=`eval 'as_val=${'$as_ac_File'}
 		 $as_echo "$as_val"'`
    if test "x$as_val" = x""yes; then
    perf_events="yes"
-               PEPATH="/lib/modules/$OSVER/source/include/linux/$perf_header"
+                   PEPATH="/lib/modules/$OSVER/source/include/linux/$perf_header"
 else
-   perf_events="no"
+  perf_events="no"
+fi
+
+
 fi
 
 
 else
   if test "$perfctr" = "no" -a "$perfmon" = "0"; then
-              as_ac_File=`$as_echo "ac_cv_file_/lib/modules/$OSVER/source/include/linux/$perf_header" | $as_tr_sh`
+             as_ac_File=`$as_echo "ac_cv_file_/usr/include/linux/$perf_header" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for /usr/include/linux/$perf_header" >&5
+$as_echo_n "checking for /usr/include/linux/$perf_header... " >&6; }
+if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "/usr/include/linux/$perf_header"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+ac_res=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+as_val=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+   if test "x$as_val" = x""yes; then
+   perf_events="yes"
+               PEPATH="/usr/include/linux/$perf_header"
+else
+  as_ac_File=`$as_echo "ac_cv_file_/lib/modules/$OSVER/source/include/linux/$perf_header" | $as_tr_sh`
 { $as_echo "$as_me:$LINENO: checking for /lib/modules/$OSVER/source/include/linux/$perf_header" >&5
 $as_echo_n "checking for /lib/modules/$OSVER/source/include/linux/$perf_header... " >&6; }
 if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
@@ -6912,9 +6967,12 @@ as_val=`eval 'as_val=${'$as_ac_File'}
 		 $as_echo "$as_val"'`
    if test "x$as_val" = x""yes; then
    perf_events="yes"
-               PEPATH="/lib/modules/$OSVER/source/include/linux/$perf_header"
+                   PEPATH="/lib/modules/$OSVER/source/include/linux/$perf_header"
 else
-   perf_events="no"
+  perf_events="no"
+fi
+
+
 fi
 
              fi
