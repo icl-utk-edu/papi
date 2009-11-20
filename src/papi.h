@@ -126,9 +126,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_TLS_HIGH_LEVEL     PAPI_HIGH_LEVEL_TLS
 #define PAPI_TLS_NUM		PAPI_NUM_TLS
 #define PAPI_TLS_ALL_THREADS	0x10
+
 /* Locking Mechanisms defines 
- * This can never go over 31, because of the Cray T3E uses
- * _semt which has a max index of 31 
  */
 
 #define PAPI_USR1_LOCK          	0x0    /* User controlled locks */

@@ -115,33 +115,9 @@ WARNING: ./configure might fail if the cross compiler is not in your path.
 	 In that is the case, just add it to your path 
 	 and everything should work.
 
-Catamount - Cray XT3 Opteron
+CLE - Cray XT4/XT5 Opteron
 *****************************************************************************
-The Cray XT3 is also a cross-compiled environment. In this case, configure
-can automatically detect that fact and make appropriate default assignments.
-Please note that although Catamount contains the necessary PerfCtr patches
-to access the hardware counters, a customzed copy of the Perfctr 2.5.4 source
-is necessary to compile and link PAPI. Contact Cray for a copy of these sources.
-
-The testing targets in the make file will not work in the Catamount 
-environment. It is necessary to log into an interactive session and run the 
-tests manually through the job submission system. For example, instead of:
-	% make test
-use:
-	% yod -sz 1 ctests/zero
-and instead of:
-	% make fulltest
-use:
-	% ./run_cat_tests.sh
-
-PLATFORM NOTES:
-PAPI on Catamount currently supports single event overflow. It does not 
-support multiple event overflow or profiling. Many of the overflow and
-profile tests in the PAPI distribution WILL SEGFAULT in this release.
-
-CLE - Cray XT3/XT4/XT5 Opteron
-*****************************************************************************
-The Cray XT3/4/5 is a cross-compiled environment. You must specify the
+The Cray XT4/5 is a cross-compiled environment. You must specify the
 perfmon version to configure as shown below.
 
 Before running configure to create the makefile that supports a Cray XT CLE
@@ -254,8 +230,7 @@ directory.
 
 PAPI on x86 assumes PerfCtr 2.6.x. You can change this with the 
 '--with-perfctr=<5,6,7> option to ./configure. THIS IS NOT ADVISED.
-PerfCtr version 2.5.4 is specific for Cray XT3, and PerfCtr 2.7.x is
-supported only for PPC64.
+PerfCtr 2.7.x is supported only for PPC64.
 NOTE: THE VERSIONS OF PERFCTR DO NOT CORRESPOND TO LINUX KERNEL VERSIONS.
 
 *- IF YOU HAVE ALREADY PATCHED YOUR KERNEL AND/OR INSTALLED PERFCTR -*
@@ -365,15 +340,6 @@ This event is neither as accurate as the native events, nor it should be
 used for anything else than the multiplexing mode, which needs the cycle
 count in order to work. Therefore multiplexing and the preset PAPI_TOT_CYC
 should be only used with caution. BEWARE OF WRONG COUNTER RESULTS!
-
-Unicos - Cray X1
-*****************************************************************************
-No additional steps are required to get PAPI working on Unicos.
-Follow the general installation guide, and everything should work.
-
-PLATFORM NOTES:
-Cray X1 currently fails on ctests/overflow_force_software.
-
 
 Windows XP/2000/Server 2003 - Intel Pentium III or AMD Athlon / Opteron
 *****************************************************************************

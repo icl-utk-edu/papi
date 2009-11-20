@@ -22,10 +22,6 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
-#if defined ( _CRAYT3E )
-#include  <stdlib.h>
-#include  <fortran.h>
-#endif
 #include "papi.h"
 
 /* Lets use defines to rename all the files */
@@ -42,7 +38,7 @@
 
 /* Many Unix systems passes Fortran string lengths as extra arguments */
 /* Compaq Visual Fortran on Windows also supports this convention */
-#if defined ( __crayx1 ) || defined(_AIX) || defined(sun) || defined(mips) || defined(_WIN32) || defined(linux) || ( defined(__ALPHA) && defined(__osf__)) 
+#if defined(_AIX) || defined(sun) || defined(mips) || defined(_WIN32) || defined(linux) || ( defined(__ALPHA) && defined(__osf__)) 
 #define _FORTRAN_STRLEN_AT_END
 #endif
 /* The Low Level Wrappers */
@@ -88,13 +84,7 @@ PAPI_FCALL(papif_get_dmem_info, PAPIF_GET_DMEM_INFO, (long long *dest, int *chec
   *check = PAPI_get_dmem_info((PAPI_dmem_info_t *)dest);
 }
 
-#if defined ( _CRAYT3E )
-PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO,
-           (_fcd fullname_fcd, _fcd name_fcd, long long * text_start,
-            long long * text_end, long long * data_start, long long * data_end,
-            long long * bss_start, long long * bss_end, _fcd lib_preload_env_fcd,
-            int *check))
-#elif defined(_FORTRAN_STRLEN_AT_END)
+#if defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO,
            (char *fullname, char *name, long long * text_start, long long * text_end,
             long long * data_start, long long * data_end, long long * bss_start,
@@ -113,15 +103,7 @@ PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO,
     to get rid of those pesky gcc warnings. If you find a 64-bit system,
     conditionalize the cast with (yet another) #ifdef...
 */
-#if defined( _CRAYT3E ) || defined(_FORTRAN_STRLEN_AT_END)
-#if defined( _CRAYT3E )
-   int fullname_len = _fcdlen(fullname_fcd);
-   char *fullname = _fcdtocp(fullname_fcd);
-   int name_len = _fcdlen(name_fcd);
-   char *name = _fcdtocp(name_fcd);
-   int lib_preload_env_len = _fcdlen(lib_preload_env_fcd);
-   char *lib_preload_env = _fcdtocp(lib_preload_env_fcd);
-#endif
+#if defined(_FORTRAN_STRLEN_AT_END)
    int i;
    if ((*check = PAPI_get_opt(PAPI_EXEINFO, &e)) == PAPI_OK) {
       strncpy(fullname, e.exe_info->fullname, fullname_len);
@@ -149,13 +131,7 @@ PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO,
 #endif
 }
 
-#if defined ( _CRAYT3E )
-PAPI_FCALL(papif_get_hardware_info, PAPIF_GET_HARDWARE_INFO, (int *ncpu,
-                                                          int *nnodes, int *totalcpus,
-                                                          int *vendor, _fcd vendor_fcd,
-                                                          int *model, _fcd model_fcd,
-                                                          double *revision, double *mhz))
-#elif defined(_FORTRAN_STRLEN_AT_END)
+#if defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL(papif_get_hardware_info, PAPIF_GET_HARDWARE_INFO, (int *ncpu,
                                                           int *nnodes, int *totalcpus,
                                                           int *vendor, char *vendor_str,
@@ -172,13 +148,7 @@ PAPI_FCALL(papif_get_hardware_info, PAPIF_GET_HARDWARE_INFO, (int *ncpu,
 #endif
 {
    const PAPI_hw_info_t *hwinfo;
-#if defined(_FORTRAN_STRLEN_AT_END)
    int i;
-#elif defined(_CRAYT3E)
-   int i;
-   char *vendor_str = _fcdtocp(vendor_fcd), *model_str = _fcdtocp(model_fcd);
-   int vendor_len = _fcdlen(vendor_fcd), model_len = _fcdlen(model_fcd);
-#endif
    hwinfo = PAPI_get_hardware_info();
    if (hwinfo == NULL) {
       *ncpu = 0;
@@ -196,7 +166,7 @@ PAPI_FCALL(papif_get_hardware_info, PAPIF_GET_HARDWARE_INFO, (int *ncpu,
       *model = hwinfo->model;
       *revision = hwinfo->revision;
       *mhz = hwinfo->mhz;
-#if defined ( _CRAYT3E ) ||  defined(_FORTRAN_STRLEN_AT_END)
+#if defined(_FORTRAN_STRLEN_AT_END)
       strncpy(vendor_str, hwinfo->vendor_string, vendor_len);
       for (i = strlen(hwinfo->vendor_string); i < vendor_len; vendor_str[i++] = ' ');
       strncpy(model_str, hwinfo->model_string, model_len);
@@ -378,7 +348,7 @@ PAPI_FCALL(papif_event_code_to_name, PAPIF_EVENT_CODE_TO_NAME,
            (int *EventCode, char *out, int *check))
 #endif
 {
-#if defined( _FORTRAN_STRLEN_AT_END )
+#if defined(_FORTRAN_STRLEN_AT_END)
    char tmp[PAPI_MAX_STR_LEN];
    int i;
    *check = PAPI_event_code_to_name(*EventCode, tmp);
@@ -400,7 +370,7 @@ PAPI_FCALL(papif_event_name_to_code, PAPIF_EVENT_NAME_TO_CODE,
            (char *in, int *out, int *check))
 #endif
 {
-#if defined( _FORTRAN_STRLEN_AT_END )
+#if defined(_FORTRAN_STRLEN_AT_END)
    int slen, i;
    char tmpin[PAPI_MAX_STR_LEN];
 

@@ -26,10 +26,6 @@
 #include <sys/time.h>
 #include <math.h>
 
-#if defined ( _CRAYT3E )
-#include  <fortran.h>
-#endif
-
 #include "papiStdEventDefs.h"
 #include "papi.h"
 #include "test_utils.h"

@@ -180,7 +180,7 @@ static void define_val(const char *val_string, int val, enum deftype_t deftype)
       Because of that definition, the largest possible 2's complement negative
       number cannot be legally expressed in Fortran. Compiler behavior is undefined
       and unpredictable on this issue.
-      Several FORTRAN compilers (Cray Unicos, GNU Fortran (GCC) > 4.2.3, others?)
+      Several FORTRAN compilers (GNU Fortran (GCC) > 4.2.3, others?)
       will throw errors or warnings for an explicit numeric value of -2147483648,
       However, they don't object to an arithmetic evaluation that produces the
       desired value. This value happens to be used for the PAPI preset
