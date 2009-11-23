@@ -110,7 +110,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 3
 	},
 	{ .name   = "BACLEAR",
-		.desc   = "BACLEAR asserted with bad target address",
+		.desc   = "Branch address calculator",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0xE6,
@@ -144,7 +144,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.flags  = 0,
 	},
 	{ .name   = "BPU_CLEARS",
-		.desc   = "Early Branch Prediciton Unit clears",
+		.desc   = "Branch prediction Unit clears",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0xE8,
@@ -169,7 +169,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 3
 	},
 	{ .name   = "BPU_MISSED_CALL_RET",
-		.desc   = "Branch prediction unit missed call or retur",
+		.desc   = "Branch prediction unit missed call or return",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x01E5,
@@ -343,7 +343,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 1
 	},
 	{ .name   = "CACHE_LOCK_CYCLES",
-		.desc   = "Cycles L1D locked",
+		.desc   = "Cache lock cycles",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0x3,
 		.code   = 0x63,
@@ -363,7 +363,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 2
 	},
 	{ .name   = "CPU_CLK_UNHALTED",
-		.desc   = "Cycles when thread is not halted",
+		.desc   = "Cycles when processor is not in halted state",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x3C,
@@ -383,7 +383,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 2
 	},
 	{ .name   = "DTLB_LOAD_MISSES",
-		.desc   = "DTLB load misses",
+		.desc   = "Data TLB load misses",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x08,
@@ -423,7 +423,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 6
 	},
 	{ .name   = "DTLB_MISSES",
-		.desc   = "DTLB misses",
+		.desc   = "Data TLB misses",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x49,
@@ -463,7 +463,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 6
 	},
 	{ .name   = "EPT",
-		.desc   = "Extended Page Directory Entry miss",
+		.desc   = "Extended Page Directory",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x4F,
@@ -520,7 +520,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 3
 	},
 	{ .name   = "FP_COMP_OPS_EXE",
-		.desc   = "MMX Uops",
+		.desc   = "MMX computational micro-ops",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x10,
@@ -570,7 +570,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 8
 	},
 	{ .name   = "FP_MMX_TRANS",
-		.desc   = "All Floating Point to and from MMX transitions",
+		.desc   = "Floating Point to and from MMX transitions",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0xCC,
@@ -595,7 +595,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 3
 	},
 	{ .name   = "HW_INT",
-		.desc   = "Count Interrupts Received",
+		.desc   = "hardware interrupts",
 		.code   = 0x1D,
 		.flags  = 0,
 		.modmsk = INTEL_V3_ATTRS,
@@ -620,7 +620,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 3
 	},
 	{ .name   = "IFU_IVC",
-		.desc   = "Count Instruction Fetch Cache Activity",
+		.desc   = "Instruction Fetch unit victim cache",
 		.code   = 0x81,
 		.flags  = 0,
 		.cntmsk = 0xf,
@@ -640,7 +640,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 2
 	},
 	{ .name   = "ILD_STALL",
-		.desc   = "Any Instruction Length Decoder stall cycles",
+		.desc   = "Instruction Length Decoder stalls",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x87,
@@ -675,7 +675,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 5
 	},
 	{ .name   = "INST_DECODED",
-		.desc   = "Instructions that must be decoded by decoder 0",
+		.desc   = "Instructions decoded",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x18,
@@ -738,7 +738,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.cntmsk = 0xf,
 	},
 	{ .name   = "ITLB_MISSES",
-		.desc   = "ITLB miss",
+		.desc   = "Instruction TLB misses",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x85,
@@ -785,7 +785,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.flags  = INTEL_X86_PEBS,
 	},
 	{ .name   = "L1D",
-		.desc   = "L1D cache lines replaced in M state",
+		.desc   = "L1D cache",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0x3,
 		.code   = 0x51,
@@ -815,7 +815,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 4
 	},
 	{ .name   = "L1D_ALL_REF",
-		.desc   = "All references to the L1 data cache",
+		.desc   = "L1D references",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0x3,
 		.code   = 0x43,
@@ -835,7 +835,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 2
 	},
 	{ .name   = "L1D_CACHE_LD",
-		.desc   = "L1 data cache read in E state",
+		.desc   = "L1D  cacheable loads. WARNING: event may overcount loads",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0x3,
 		.code   = 0x40,
@@ -870,7 +870,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 5
 	},
 	{ .name   = "L1D_CACHE_LOCK",
-		.desc   = "L1 data cache load locks in E state",
+		.desc   = "L1 data cache load lock",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0x3,
 		.code   = 0x42,
@@ -914,7 +914,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.flags  = 0,
 	},
 	{ .name   = "L1D_CACHE_ST",
-		.desc   = "L1 data cache store RFO requests.",
+		.desc   = "L1 data cache stores",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0x3,
 		.code   = 0x41,
@@ -974,7 +974,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 3
 	},
 	{ .name   = "L1D_WB_L2",
-		.desc   = "L1 writebacks to L2 in E state",
+		.desc   = "L1 writebacks to L2",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x28,
@@ -1009,7 +1009,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 5
 	},
 	{ .name   = "L1I",
-		.desc   = "L1I instruction fetch stall cycles",
+		.desc   = "L1I instruction fetches",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x80,
@@ -1046,7 +1046,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.cntmsk = 0xf,
 	},
 	{ .name   = "L2_DATA_RQSTS",
-		.desc   = "All L2 data requests",
+		.desc   = "L2 data requests",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x26,
@@ -1111,7 +1111,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 11
 	},
 	{ .name   = "L2_HW_PREFETCH",
-		.desc   = "Count L2 HW Prefetcher Activity",
+		.desc   = "L2 HW prefetches",
 		.code   = 0xF3,
 		.flags  = 0,
 		.modmsk = INTEL_V3_ATTRS,
@@ -1211,7 +1211,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 5
 	},
 	{ .name   = "L2_RQSTS",
-		.desc   = "All L2 misses",
+		.desc   = "L2 requests",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x24,
@@ -1291,7 +1291,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 14
 	},
 	{ .name   = "L2_TRANSACTIONS",
-		.desc   = "All L2 transactions",
+		.desc   = "L2 transactions",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0xF0,
@@ -1341,7 +1341,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 8
 	},
 	{ .name   = "L2_WRITE",
-		.desc   = "L2 demand lock/store RFOs",
+		.desc   = "L2 demand lock/store RFO",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x27,
@@ -1411,7 +1411,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 12
 	},
 	{ .name   = "LARGE_ITLB",
-		.desc   = "Large ITLB hit",
+		.desc   = "Large instruction TLB",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x82,
@@ -1426,7 +1426,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 1
 	},
 	{ .name   = "LOAD_DISPATCH",
-		.desc   = "All loads dispatched",
+		.desc   = "Loads dispatched",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x13,
@@ -1483,7 +1483,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 2
 	},
 	{ .name   = "LSD",
-		.desc   = "Cycles when uops were delivered by the loop stream detector (LSD)",
+		.desc   = "Loop stream detector",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0xA8,
@@ -1503,7 +1503,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 2
 	},
 	{ .name   = "MACHINE_CLEARS",
-		.desc   = "Self-Modifying Code detected",
+		.desc   = "Machine Clear",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0xC3,
@@ -1533,7 +1533,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 4
 	},
 	{ .name   = "MACRO_INSTS",
-		.desc   = "Instructions decoded",
+		.desc   = "Macro-fused instructions",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0xD0,
@@ -1553,7 +1553,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 2
 	},
 	{ .name   = "MEMORY_DISAMBIGUATION",
-		.desc   = "Counts Memory Disambiguation Activity",
+		.desc   = "Memory Disambiguation Activity",
 		.code   = 0x09,
 		.flags  = 0,
 		.modmsk = INTEL_V3_ATTRS,
@@ -1578,7 +1578,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 3
 	},
 	{ .name   = "MEM_INST_RETIRED",
-		.desc   = "Memory instructions retired above programmed clocks",
+		.desc   = "Memory instructions retired",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x0B,
@@ -1603,7 +1603,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 3
 	},
 	{ .name   = "MEM_LOAD_RETIRED",
-		.desc   = "Retired loads that miss the DTLB",
+		.desc   = "Retired loads",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0xCB,
@@ -1658,7 +1658,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 9
 	},
 	{ .name   = "MEM_STORE_RETIRED",
-		.desc   = "Retired stores that miss the DTLB",
+		.desc   = "Retired stores",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x0C,
@@ -1673,7 +1673,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 1
 	},
 	{ .name   = "MEM_UNCORE_RETIRED",
-		.desc   = "Load instructions retired that HIT modified data in sibling core",
+		.desc   = "Load instructions retired which hit offcore",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x0F,
@@ -1703,7 +1703,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 4
 	},
 	{ .name   = "OFFCORE_REQUESTS",
-		.desc   = "All offcore requests",
+		.desc   = "offcore memory requests",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0xB0,
@@ -1767,7 +1767,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.flags  = 0,
 	},
 	{ .name   = "PIC_ACCESSES",
-		.desc   = "Count TPR reads and writes",
+		.desc   = "Programmable interrupt controller",
 		.code   = 0xBA,
 		.flags  = 0,
 		.modmsk = INTEL_V3_ATTRS,
@@ -1787,7 +1787,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 2
 	},
 	{ .name   = "RAT_STALLS",
-		.desc   = "Flag stall cycles",
+		.desc   = "Register allocation table stalls",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0xD2,
@@ -1822,7 +1822,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 5
 	},
 	{ .name   = "RESOURCE_STALLS",
-		.desc   = "FPU control word write stall cycles",
+		.desc   = "Processor stalls",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0xA2,
@@ -1886,7 +1886,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.cntmsk = 0xf,
 	},
 	{ .name   = "SIMD_INT_128",
-		.desc   = "128 bit SIMD integer pack operations",
+		.desc   = "128 bit SIMD integer operations",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x12,
@@ -1931,7 +1931,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 7
 	},
 	{ .name   = "SIMD_INT_64",
-		.desc   = "SIMD integer 64 bit pack operations",
+		.desc   = "SIMD integer 64 bit operations",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0xFD,
@@ -1976,7 +1976,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 7
 	},
 	{ .name   = "SNOOP_RESPONSE",
-		.desc   = "Thread responded HIT to snoop",
+		.desc   = "Snoop",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0xB8,
@@ -2008,7 +2008,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.flags  = 0,
 	},
 	{ .name   = "SQ_MISC",
-		.desc   = "Count Super Queue Activity Related to L2 Cache Access",
+		.desc   = "Super Queue Activity Related to L2 Cache Access",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0xF4,
@@ -2043,7 +2043,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 5
 	},
 	{ .name   = "SSE_MEM_EXEC",
-		.desc   = "Streaming SIMD L1D NTA prefetch miss",
+		.desc   = "Streaming SIMD executed",
 		.code   = 0x4B,
 		.flags  = 0,
 		.modmsk = INTEL_V3_ATTRS,
@@ -2058,7 +2058,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 1
 	},
 	{ .name   = "SSEX_UOPS_RETIRED",
-		.desc   = "SIMD Packed-Double Uops retired",
+		.desc   = "SIMD micro-ops retired",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0xC7,
@@ -2093,7 +2093,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 5
 	},
 	{ .name   = "STORE_BLOCKS",
-		.desc   = "Loads delayed with at-Retirement block code",
+		.desc   = "Delayed loads",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x06,
@@ -2123,20 +2123,20 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 4
 	},
 	{ .name   = "TWO_UOP_INSTS_DECODED",
-		.desc   = "Two Uop instructions decoded",
+		.desc   = "Two micr-ops instructions decoded",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x0119,
 		.flags  = 0,
 	},
 	{ .name   = "UOPS_DECODED_DEC0",
-		.desc   = "Counts micro-ops decoded by decoder 0",
+		.desc   = "Micro-ops decoded by decoder 0",
 		.cntmsk = 0xf,
 		.code   = 0x013D,
 		.flags  = 0,
 	},
 	{ .name   = "UOPS_DECODED",
-		.desc   = "Uops decoded by Microcode Sequencer",
+		.desc   = "Micro-ops decoded",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0xD1,
@@ -2161,7 +2161,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 3
 	},
 	{ .name   = "UOPS_EXECUTED",
-		.desc   = "Uops executed",
+		.desc   = "Micro-ops executed",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0xB1,
@@ -2216,7 +2216,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 9
 	},
 	{ .name   = "UOPS_ISSUED",
-		.desc   = "Uops issued",
+		.desc   = "Micro-ops issued",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x0E,
@@ -2241,7 +2241,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 3
 	},
 	{ .name   = "UOPS_RETIRED",
-		.desc   = "Uops retired",
+		.desc   = "Micro-ops retired",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0xC2,
@@ -2276,7 +2276,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 5
 	},
 	{ .name   = "UOP_UNFUSION",
-		.desc   = "Uop unfusions due to FP exceptions",
+		.desc   = "Micro-ops unfusions due to FP exceptions",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x01DB,
