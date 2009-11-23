@@ -30,6 +30,7 @@ enum perf_type_id {
 	PERF_TYPE_TRACEPOINT		= 2,
 	PERF_TYPE_HW_CACHE		= 3,
 	PERF_TYPE_RAW			= 4,
+	PERF_TYPE_BREAKPOINT		= 5,
 	PERF_TYPE_MAX,			/* non-ABI */
 };
 
@@ -101,6 +102,8 @@ enum perf_sw_ids {
 	PERF_COUNT_SW_CPU_MIGRATIONS		= 4,
 	PERF_COUNT_SW_PAGE_FAULTS_MIN		= 5,
 	PERF_COUNT_SW_PAGE_FAULTS_MAJ		= 6,
+	PERF_COUNT_SW_ALIGNMENT_FAULTS		= 7,
+	PERF_COUNT_SW_EMULATION_FAULTS		= 8,
 
 	PERF_COUNT_SW_MAX,			/* non-ABI */
 };
@@ -201,6 +204,15 @@ struct perf_event_attr {
 		uint32_t	wakeup_events;		/* wakeup every n events */
 		uint32_t	wakeup_watermark;	/* bytes before wakeup */
 	};
+
+	union {
+		struct { /* Hardware breakpoint info */
+			uint64_t	bp_addr;
+			uint32_t	bp_type;
+			uint32_t	bp_len;
+		};
+	};
+
 	uint32_t	reserved_2;
 	uint64_t	__reserved_3;
 };
@@ -325,10 +337,7 @@ enum perf_event_type {
 	 * struct {
 	 * 	struct perf_event_header	header;
 	 * 	u32				pid, tid;
-	 * 	u64				value;
-	 * 	{ u64		time_enabled; 	} && PERF_FORMAT_ENABLED
-	 * 	{ u64		time_running; 	} && PERF_FORMAT_RUNNING
-	 * 	{ u64		parent_id;	} && PERF_FORMAT_ID
+	 * 	struct read_format		values;
 	 * };
 	 */
 	PERF_RECORD_READ			= 8,
