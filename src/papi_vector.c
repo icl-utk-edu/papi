@@ -185,7 +185,7 @@ int _papi_hwi_innoculate_vector(papi_vector_t *v){
  if(!v->get_virt_cycles) v->get_virt_cycles=		vec_dummy_get_virt_cycles;
  if(!v->get_virt_usec) v->get_virt_usec=		vec_dummy_get_virt_usec;
  if(!v->stop_profiling) v->stop_profiling=		(int (*) (ThreadInfo_t *, EventSetInfo_t *)) vec_int_dummy;
- if(!v->init) v->init_substrate=			(int (*) (int)) vec_int_ok_dummy;
+ if(!v->init_substrate) v->init_substrate=              (int (*) (int)) vec_int_ok_dummy;
  if(!v->init) v->init=					(int (*) (hwd_context_t *)) vec_int_ok_dummy;
  if(!v->init_control_state) v->init_control_state=	(int (*) (hwd_control_state_t * ptr)) vec_void_dummy;
  if(!v->update_shlib_info) v->update_shlib_info=	(int (*) (void)) vec_int_dummy;
