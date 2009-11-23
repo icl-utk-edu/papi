@@ -780,6 +780,12 @@ static void lock_init(void)
   memset(lock,0x0,sizeof(rwlock_t)*PAPI_MAX_LOCK);
 }
 
+int _papi_hwd_shutdown_substrate(void)
+{
+   (void) cpc_rele();
+   return (PAPI_OK);
+}
+
 /* This implementation may not be correct */
 papi_vector_t _solaris_vector = {
 	.cmp_info = {
@@ -906,12 +912,6 @@ int _papi_hwd_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
    default:
       return (PAPI_EINVAL);
    }
-}
-
-int _papi_hwd_shutdown_substrate(void)
-{
-   (void) cpc_rele();
-   return (PAPI_OK);
 }
 
 void _papi_hwd_dispatch_timer(int signal, siginfo_t * si, void *info)
