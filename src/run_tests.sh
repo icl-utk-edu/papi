@@ -19,6 +19,12 @@ fi
 
 chmod -x ctests/*.[ch]
 chmod -x ftests/*.[Fch]
+
+# Uncomment the following line to run tests using modified version of valgrind 
+# Requires this patch: http://people.redhat.com/wcohen/papi/valgrind-3.5.0-3.papi.src.rpm
+#VALGRIND="valgrind --leak-check=full";
+VALGRIND="";
+
 CTESTS=`find ctests -maxdepth 1 -perm -u+x -type f`;
 FTESTS=`find ftests -perm -u+x -type f`;
 EXCLUDE=`grep --regexp=^# --invert-match run_tests_exclude.txt`
@@ -30,7 +36,11 @@ echo "Platform:"
 uname -a
 
 echo ""
-echo "The following test cases will be run:";
+if ["$VALGRIND" = ""]; then
+  echo "The following test cases will be run:";
+else
+  echo "The following test cases will be run using valgrind:";
+fi
 echo ""
 
 MATCH=0
@@ -92,7 +102,7 @@ do
         echo Skipping test $i, it takes too long...
       else
       echo -n "Running $i: ";
-      ./$i $TESTS_QUIET
+      $VALGRIND ./$i $TESTS_QUIET
       fi;
     fi;
   fi;
@@ -118,7 +128,7 @@ do
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
     echo -n "Running $i: ";
-    ./$i $TESTS_QUIET
+    $VALGRIND ./$i $TESTS_QUIET
     fi;
   fi;
   MATCH=0
