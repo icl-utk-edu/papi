@@ -61,21 +61,18 @@ setup_cpu(int cpu)
 	for(i=0; i < num; i++) {
 		fds[i].hw.disabled = options.group ? !i : 1;
 
-		if (options.excl && !options.group)
+		if (options.excl && ((options.group && !i) || (!options.group)))
 			fds[i].hw.exclusive = 1;
 			
 		fds[i].hw.disabled = options.group ? !i : 1;
 
 		/* request timing information necessary for scaling counts */
 		fds[i].hw.read_format = PERF_FORMAT_SCALE;
-
+printf("CPU=%d grp=%d\n", cpu, fds[0].fd);
 		fds[i].fd = perf_event_open(&fds[i].hw, -1, cpu, (options.group ? fds[0].fd : -1), 0);
 		if (fds[i].fd == -1)
 			err(1, "cannot attach event to CPU%d %s", cpu, fds[i].name);
 	}
-
-	if (options.excl && options.group)
-		fds[0].hw.exclusive = 1;
 }
 
 void
