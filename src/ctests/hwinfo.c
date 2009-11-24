@@ -31,9 +31,6 @@ int main(int argc, char **argv)
   if (hwinfo->ncpu < 1)
     test_fail(__FILE__,__LINE__,"ncpu < 1",0);
 
-  if (hwinfo->nnodes < 1)
-    test_fail(__FILE__,__LINE__,"ncpu < 1",0);
-
   if (hwinfo->totalcpus < 1)
     test_fail(__FILE__,__LINE__,"totalcpus < 1",0);
 
