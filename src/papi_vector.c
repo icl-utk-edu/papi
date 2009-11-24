@@ -221,32 +221,32 @@ int PAPI_user(int func_num, void * input, void * output, int cidx){
   return (_papi_hwd[cidx]->user(func_num, input, output));
 }
 
-char * find_dummy(void * func, char **buf){
+void * vector_find_dummy(void * func, char **buf){
   void * ptr=NULL;
 
   if ( vec_int_ok_dummy == (int (*)())func){
     ptr = ( void *)vec_int_ok_dummy;
-    *buf = papi_strdup("vec_int_ok_dummy");
+    if (buf != NULL) *buf = papi_strdup("vec_int_ok_dummy");
   }
   else if ( vec_int_one_dummy == (int (*)())func ){
     ptr = ( void *)vec_int_one_dummy;
-    *buf = papi_strdup("vec_int_one_dummy");
+    if (buf != NULL) *buf = papi_strdup("vec_int_one_dummy");
   }
   else if ( vec_int_dummy == (int (*)())func ){
     ptr = ( void *)vec_int_dummy;
-    *buf = papi_strdup("vec_int_dummy");
+    if (buf != NULL) *buf = papi_strdup("vec_int_dummy");
   }
   else if ( vec_void_dummy == (void (*)())func ){
     ptr = (void *)vec_void_dummy;
-    *buf = papi_strdup("vec_void_dummy");
+    if (buf != NULL) *buf = papi_strdup("vec_void_dummy");
   }
   else if ( vec_void_star_dummy == (void *(*)())func ){
     ptr = (void *)vec_void_star_dummy;
-    *buf = papi_strdup("vec_void_star_dummy");
+    if (buf != NULL) *buf = papi_strdup("vec_void_star_dummy");
   }
   else if ( vec_long_long_dummy == (long long (*)())func ){
     ptr = (void *)vec_long_long_dummy;
-    *buf = papi_strdup("vec_long_long_dummy");
+    if (buf != NULL) *buf = papi_strdup("vec_long_long_dummy");
   }
   else if ( vec_char_star_dummy == (char*(*)())func ){
     ptr = (void *)vec_char_star_dummy;
@@ -254,23 +254,23 @@ char * find_dummy(void * func, char **buf){
   }
   else if ( vec_long_dummy == (long (*)())func ){
     ptr = (void *)vec_long_dummy;  
-    *buf = papi_strdup("vec_long_dummy");
+    if (buf != NULL) *buf = papi_strdup("vec_long_dummy");
   }
   else if ( vec_dummy_get_real_usec == (long long(*)(void))func ) {
     ptr = (void *)vec_dummy_get_real_usec;
-    *buf = papi_strdup("vec_dummy_get_real_usec");
+    if (buf != NULL) *buf = papi_strdup("vec_dummy_get_real_usec");
   }
   else if ( vec_dummy_get_real_cycles == (long long(*)(void))func ) {
     ptr = (void *)vec_dummy_get_real_cycles;
-    *buf = papi_strdup("vec_dummy_get_real_cycles");
+    if (buf != NULL) *buf = papi_strdup("vec_dummy_get_real_cycles");
   }
   else if ( vec_dummy_get_virt_usec == (long long(*)(const hwd_context_t *))func ) {
     ptr = (void *)vec_dummy_get_virt_usec;
-    *buf = papi_strdup("vec_dummy_get_virt_usec");
+    if (buf != NULL) *buf = papi_strdup("vec_dummy_get_virt_usec");
   }
   else if ( vec_dummy_get_virt_cycles == (long long(*)(const hwd_context_t *))func ) {
     ptr = (void *)vec_dummy_get_virt_cycles;
-    *buf = papi_strdup("vec_dummy_get_virt_cycles");
+    if (buf != NULL) *buf = papi_strdup("vec_dummy_get_virt_cycles");
   }
   else {
     ptr = NULL;
@@ -282,7 +282,7 @@ void vector_print_routine( void*func, char *fname, int pfunc){
   void * ptr=NULL;
   char  *buf=NULL;
 
-  ptr = find_dummy(func, &buf);
+  ptr = vector_find_dummy(func, &buf);
   if ( ptr ){
     printf("%s: %s is mapped to %s.\n", (ptr?"DUMMY":"function"),fname, buf);
     papi_free(buf);

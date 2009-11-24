@@ -458,12 +458,11 @@ int _papi_hwi_start_signal(int signal, int need_context, int cidx)
 
    memset(&action, 0x00, sizeof(struct sigaction));
    action.sa_flags = SA_RESTART;
-#if defined(_BGL)
    action.sa_sigaction = (void (*)(int, siginfo_t *, void *)) _papi_hwd[cidx]->dispatch_timer;
    if (need_context)
+#if (defined(_BGL) /*|| defined (_BGP)*/)
      action.sa_flags |= SIGPWR;
-   action.sa_sigaction = (void (*)(int, siginfo_t *, void *)) _papi_hwd[cidx]->dispatch_timer;
-   if (need_context)
+#else
      action.sa_flags |= SA_SIGINFO;
 #endif
 
@@ -559,41 +558,38 @@ int _papi_hwi_query_native_event(unsigned int EventCode)
    This allows for sparse native event arrays */
 int _papi_hwi_native_name_to_code(char *in, int *out)
 {
-   int retval = PAPI_ENOEVNT;
+	int retval = PAPI_ENOEVNT;
+	char name[PAPI_HUGE_STR_LEN]; /* make sure it's big enough */
+	unsigned int i, j;
 
-// XXX This is from PAPI Classic; we should check the vector table for
-// an implemented version of name_to_code.
-//#if ((defined PERFCTR_PFM_EVENTS) | (defined SUBSTRATE_USES_LIBPFM))
-//   extern unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code);
-//   retval = _papi_pfm_ntv_name_to_code(in, out);
-//#else
-
-   char name[PAPI_HUGE_STR_LEN]; /* make sure it's big enough */
-   unsigned int i, j;
-
-   for (j=0,i = 0 | PAPI_NATIVE_MASK;j<papi_num_components; j++,i = 0 | PAPI_NATIVE_MASK) {
-     _papi_hwd[j]->ntv_enum_events(&i, PAPI_ENUM_FIRST);
-     _papi_hwi_lock(INTERNAL_LOCK);
-     do {
-        /* first check each component for name_to_code */
-        retval = _papi_hwd[j]->ntv_code_to_name(i, name, sizeof(name));
-/*      printf("name =|%s|\ninput=|%s|\n", name, in); */
-        if (retval == PAPI_OK) {
-           if (strcasecmp(name, in) == 0) {
-              *out = i | PAPI_COMPONENT_MASK(j);;
-              break;
-	        } else {
-              retval = PAPI_ENOEVNT;
-           }
-        } else {
-           *out = 0;
-           retval = PAPI_ENOEVNT;
-           break;
-        }
-     } while ((_papi_hwd[j]->ntv_enum_events(&i, PAPI_ENUM_EVENTS) == PAPI_OK));
-     _papi_hwi_unlock(INTERNAL_LOCK);
-   }
-   return (retval);
+	for (j=0,i = 0 | PAPI_NATIVE_MASK;j<papi_num_components; j++,i = 0 | PAPI_NATIVE_MASK) {
+		/* first check each component for name_to_code */
+		if (vector_find_dummy(_papi_hwd[j]->ntv_name_to_code, NULL) == NULL)
+			retval = _papi_hwd[j]->ntv_name_to_code(in, out);
+		else {
+			_papi_hwd[j]->ntv_enum_events(&i, PAPI_ENUM_FIRST);
+			_papi_hwi_lock(INTERNAL_LOCK);
+			do {
+				retval = _papi_hwd[j]->ntv_code_to_name(i, name, sizeof(name));
+/*				printf("name =|%s|\ninput=|%s|\n", name, in); */
+				if (retval == PAPI_OK) {
+					if (strcasecmp(name, in) == 0) {
+						*out = i | PAPI_COMPONENT_MASK(j);;
+						break;
+					} else {
+						retval = PAPI_ENOEVNT;
+					}
+				} else {
+					*out = 0;
+					retval = PAPI_ENOEVNT;
+					break;
+				}
+			} while ((_papi_hwd[j]->ntv_enum_events(&i, PAPI_ENUM_EVENTS) == PAPI_OK));
+			_papi_hwi_unlock(INTERNAL_LOCK);
+			if (retval == PAPI_OK) return(retval);
+		}
+	}
+	return (retval);
 }
 
 
