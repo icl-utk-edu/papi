@@ -520,7 +520,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 3
 	},
 	{ .name   = "FP_COMP_OPS_EXE",
-		.desc   = "MMX computational micro-ops",
+		.desc   = "Floating poing computational micro-ops",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x10,
@@ -595,7 +595,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 3
 	},
 	{ .name   = "HW_INT",
-		.desc   = "hardware interrupts",
+		.desc   = "Hardware interrupts",
 		.code   = 0x1D,
 		.flags  = 0,
 		.modmsk = INTEL_V3_ATTRS,
@@ -1703,7 +1703,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 4
 	},
 	{ .name   = "OFFCORE_REQUESTS",
-		.desc   = "offcore memory requests",
+		.desc   = "Offcore memory requests",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0xB0,
@@ -1931,7 +1931,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 7
 	},
 	{ .name   = "SIMD_INT_64",
-		.desc   = "SIMD integer 64 bit operations",
+		.desc   = "64 bit SIMD integer operations",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0xFD,
@@ -2123,7 +2123,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 		.numasks = 4
 	},
 	{ .name   = "TWO_UOP_INSTS_DECODED",
-		.desc   = "Two micr-ops instructions decoded",
+		.desc   = "Two micro-ops instructions decoded",
 		.modmsk = INTEL_V3_ATTRS,
 		.cntmsk = 0xf,
 		.code   = 0x0119,
