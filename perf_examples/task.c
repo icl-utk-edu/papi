@@ -38,6 +38,7 @@ typedef struct {
 	int inherit;
 	int group;
 	int print;
+	int pin;
 } options_t;
 
 static options_t options;
@@ -82,7 +83,6 @@ print_counts(perf_event_desc_t *fds, int num, int do_delta)
 		ratio = perf_scale_ratio(values);
 
 		val = do_delta ? (val - fds[i].prev_value): val;
-
 		if (ratio == 1.0)
 			printf("%20"PRIu64" %s\n", val, fds[i].name);
 		else
@@ -170,6 +170,9 @@ parent(char **arg)
 		if (options.inherit)
 			fds[i].hw.inherit = 1;
 
+		if (options.pin && ((options.group && i== 0) || (!options.group)))
+			fds[i].hw.pinned = 1;
+
 		fds[i].fd = perf_event_open(&fds[i].hw, pid, -1, options.group ? fds[0].fd : -1, 0);
 		if (fds[i].fd == -1) {
 			warn("cannot attach event%d %s", i, fds[i].name);
@@ -203,7 +206,14 @@ error:
 static void
 usage(void)
 {
-	printf("usage: task [-h] [-i] [-g] [-p] [-e event1,event2,...] cmd\n");
+	printf("usage: task [-h] [-i] [-g] [-p] [-P] [-e event1,event2,...] cmd\n"
+		"-h\t\tget help\n"
+		"-i\t\tinherit across fork\n"
+		"-g\t\tgroup events\n"
+		"-p\t\tprint counts every second\n"
+		"-P\t\tpin events\n"
+		"-e ev,ev\tlist of events to measure\n"
+		);
 }
 
 int
@@ -211,7 +221,7 @@ main(int argc, char **argv)
 {
 	int c;
 
-	while ((c=getopt(argc, argv,"he:igp")) != -1) {
+	while ((c=getopt(argc, argv,"he:igpP")) != -1) {
 		switch(c) {
 			case 'e':
 				options.events = optarg;
@@ -221,6 +231,9 @@ main(int argc, char **argv)
 				break;
 			case 'p':
 				options.print = 1;
+				break;
+			case 'P':
+				options.pin = 1;
 				break;
 			case 'i':
 				options.inherit = 1;
