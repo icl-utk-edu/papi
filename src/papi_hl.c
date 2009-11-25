@@ -401,10 +401,9 @@ int PAPI_stop_counters(long long * values, int array_len)
    if (retval==PAPI_OK) {
       _internal_cleanup_hl_info(state);
       PAPI_cleanup_eventset(state->EventSet);
-      return retval;
    }
    APIDBG("PAPI_stop_counters returns %d\n", retval);
-   return (PAPI_OK);
+   return retval;
 }
 
 void _papi_hwi_shutdown_highlevel(){
