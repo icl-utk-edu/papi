@@ -195,13 +195,16 @@ int get_cpu_info(PAPI_hw_info_t * hwinfo)
     hwinfo->ncpu++;
 
   /* Number of threads per core */
-  hwinfo->threads = path_sibling(_PATH_SYS_CPU0 "/topology/thread_siblings");
+  if (path_exist(_PATH_SYS_CPU0 "/topology/thread_siblings"))
+    hwinfo->threads = path_sibling(_PATH_SYS_CPU0 "/topology/thread_siblings");
 
   /* Number of cores per socket */
-  hwinfo->cores = path_sibling(_PATH_SYS_CPU0 "/topology/core_siblings") / hwinfo->threads;
+  if (path_exist(_PATH_SYS_CPU0 "/topology/core_siblings") && hwinfo->threads > 0)
+    hwinfo->cores = path_sibling(_PATH_SYS_CPU0 "/topology/core_siblings") / hwinfo->threads;
 
   /* Number of sockets */
-  hwinfo->sockets = hwinfo->ncpu / hwinfo->cores / hwinfo->threads;
+  if (hwinfo->threads > 0 && hwinfo->cores > 0)
+    hwinfo->sockets = hwinfo->ncpu / hwinfo->cores / hwinfo->threads;
 
   /* Number of NUMA nodes */
   /* The following line assumes nnodes was initialized to zero! */
