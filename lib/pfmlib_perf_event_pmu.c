@@ -422,8 +422,10 @@ static int
 pfm_perf_detect(void *this)
 {
 	/* ought to find a better way of detecting PERF */
+#define PERF_OLD_PROC_FILE "/proc/sys/kernel/perf_counter_paranoid"
 #define PERF_PROC_FILE "/proc/sys/kernel/perf_event_paranoid"
-	return !access(PERF_PROC_FILE, F_OK) ? PFM_SUCCESS: PFM_ERR_NOTSUPP;
+	return !(access(PERF_PROC_FILE, F_OK)
+		  && access(PERF_OLD_PROC_FILE, F_OK)) ? PFM_SUCCESS: PFM_ERR_NOTSUPP;
 }
 
 static int
