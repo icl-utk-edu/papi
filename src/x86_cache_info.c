@@ -1192,28 +1192,6 @@ static int init_intel(PAPI_mh_info_t * mh_info)
 	return(last_level);
 }
 
-#ifdef _WIN32
-static void cpuid(unsigned int *a, unsigned int *b,
-                         unsigned int *c, unsigned int *d)
-{
-   volatile unsigned long tmp, tmp2, tmp3, tmp4;
-   volatile unsigned long in_tmp;
-
-   in_tmp = *a;
-   __asm {
-      mov eax, in_tmp;
-      cpuid;
-      mov tmp, eax;
-      mov tmp2, ebx;
-      mov tmp3, ecx;
-      mov tmp4, edx;
-   }
-   *a = tmp;
-   *b = tmp2;
-   *c = tmp3;
-   *d = tmp4;
-}
-#else
 inline_static void cpuid(unsigned int *a, unsigned int *b,
                   unsigned int *c, unsigned int *d)
 {
@@ -1229,5 +1207,4 @@ inline_static void cpuid(unsigned int *a, unsigned int *b,
 		 "=d" (*d)
        : "a" (op));
 }
-#endif
 
