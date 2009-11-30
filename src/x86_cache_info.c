@@ -262,7 +262,7 @@ static int init_amd(PAPI_mh_info_t * mh_info)
    /* AMD Level 3 cache info (shared across cores) */
 	if (reg.e.dx) {
 		L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED | PAPI_MH_TYPE_WT | PAPI_MH_TYPE_PSEUDO_LRU;
-		L[2].cache[0].size = reg.e.dx & 0xfffc0000; /* in blocks of 512KB (2^18) */
+		L[2].cache[0].size = (reg.e.dx & 0xfffc0000) << 1; /* in blocks of 512KB (2^19) */
 		L[2].cache[0].associativity = _amd_L2_L3_assoc((reg.byt[13]&0xF0)>>4);
 		L[2].cache[0].line_size = reg.byt[12];
 /*		L[2].cache[0].num_lines = reg.byt[13]&0xF; */
@@ -284,9 +284,10 @@ static int init_amd(PAPI_mh_info_t * mh_info)
    /*
 	* "Intel® Processor Identification and the CPUID Instruction",
 	* Application Note, AP-485, Nov 2008, 241618-033
+	* Updated to AP-485, Aug 2009, 241618-036
 	*
 	* The following data structure and its instantiation trys to
-	* capture all the information in Section 3.1.3 of the above
+	* capture all the information in Section 2.1.3 of the above
 	* document. Not all of it is used by PAPI, but it could be.
 	* As the above document is revised, this table should be
 	* updated.
@@ -975,7 +976,7 @@ static struct _intel_cache_info intel_cache[] = {
 	{	.descriptor = 0xDC,
 		.level = 3,
 		.type = PAPI_MH_TYPE_UNIFIED,
-		.size[0] = 2048,
+		.size[0] = 1536,
 		.associativity = 12,
 		.line_size = 64,
 	},
@@ -983,7 +984,7 @@ static struct _intel_cache_info intel_cache[] = {
 	{	.descriptor = 0xDD,
 		.level = 3,
 		.type = PAPI_MH_TYPE_UNIFIED,
-		.size[0] = 4096,
+		.size[0] = 3072,
 		.associativity = 12,
 		.line_size = 64,
 	},
@@ -991,7 +992,7 @@ static struct _intel_cache_info intel_cache[] = {
 	{	.descriptor = 0xDE,
 		.level = 3,
 		.type = PAPI_MH_TYPE_UNIFIED,
-		.size[0] = 8192,
+		.size[0] = 6144,
 		.associativity = 12,
 		.line_size = 64,
 	},
@@ -1017,6 +1018,30 @@ static struct _intel_cache_info intel_cache[] = {
 		.type = PAPI_MH_TYPE_UNIFIED,
 		.size[0] = 8192,
 		.associativity = 16,
+		.line_size = 64,
+	},
+// 0xEA
+	{	.descriptor = 0xEA,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 12288,
+		.associativity = 24,
+		.line_size = 64,
+	},
+// 0xEB
+	{	.descriptor = 0xEB,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 18432,
+		.associativity = 24,
+		.line_size = 64,
+	},
+// 0xEC
+	{	.descriptor = 0xEC,
+		.level = 3,
+		.type = PAPI_MH_TYPE_UNIFIED,
+		.size[0] = 24576,
+		.associativity = 24,
 		.line_size = 64,
 	},
 // 0xF0
