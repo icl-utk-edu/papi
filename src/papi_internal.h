@@ -601,4 +601,9 @@ inline_static int _papi_hwi_is_sw_multiplex(EventSetInfo_t *ESI)
     return(1);
 }
 
+inline_static int _papi_hwi_invalid_cmp(cidx)
+{
+	return(cidx < 0 || cidx >= papi_num_components);
+}
+
 #endif                          /* PAPI_INTERNAL_H */

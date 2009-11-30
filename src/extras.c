@@ -547,7 +547,7 @@ int _papi_hwi_query_native_event(unsigned int EventCode)
    char name[PAPI_HUGE_STR_LEN]; /* probably overkill, but should always be big enough */
    int cidx = PAPI_COMPONENT_INDEX(EventCode);
 
-   if ( cidx < 0 || cidx > papi_num_components)
+   if (_papi_hwi_invalid_cmp(cidx))
       return (PAPI_ENOCMP);
 
    return(_papi_hwd[cidx]->ntv_code_to_name(EventCode, name, sizeof(name)));
@@ -599,7 +599,7 @@ int _papi_hwi_native_code_to_name(unsigned int EventCode, char *hwi_name, int le
 {
    int cidx = PAPI_COMPONENT_INDEX(EventCode);
 
-   if ( cidx < 0 || cidx > papi_num_components)
+   if (_papi_hwi_invalid_cmp(cidx))
       return (PAPI_ENOCMP);
 
    if (EventCode & PAPI_NATIVE_MASK) {
@@ -616,7 +616,7 @@ int _papi_hwi_native_code_to_descr(unsigned int EventCode, char *hwi_descr, int 
    int retval = PAPI_ENOEVNT;
    int cidx = PAPI_COMPONENT_INDEX(EventCode);
 
-   if ( cidx < 0 || cidx > papi_num_components)
+   if (_papi_hwi_invalid_cmp(cidx))
       return (PAPI_ENOCMP);
 
    if (EventCode & PAPI_NATIVE_MASK) {
@@ -635,7 +635,7 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
 	int retval;
 	int cidx = PAPI_COMPONENT_INDEX(EventCode);
 
-	if ( cidx < 0 || cidx > papi_num_components)
+	if (_papi_hwi_invalid_cmp(cidx))
 		return (PAPI_ENOCMP);
 
 	if (EventCode & PAPI_NATIVE_MASK) {

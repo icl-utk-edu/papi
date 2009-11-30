@@ -489,7 +489,7 @@ int _papi_hwi_add_native_precheck(EventSetInfo_t * ESI, int nevt)
    int i;
    int cidx = PAPI_COMPONENT_INDEX(nevt);
 
-   if ( cidx < 0 || cidx > papi_num_components)
+   if (_papi_hwi_invalid_cmp(cidx))
       return -1;
 
    /* to find the native event from the native events list */
@@ -558,7 +558,7 @@ static int add_native_fail_clean(EventSetInfo_t * ESI, int nevt)
    int i, max_counters;
    int cidx = PAPI_COMPONENT_INDEX(nevt);
 
-   if ( cidx < 0 || cidx > papi_num_components)
+   if (_papi_hwi_invalid_cmp(cidx))
       return -1;
 
    max_counters = _papi_hwd[cidx]->cmp_info.num_mpx_cntrs; 

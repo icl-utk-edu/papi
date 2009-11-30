@@ -69,7 +69,7 @@ extern hwi_preset_data_t _papi_hwi_preset_data[];
 
 inline_static int valid_component(int cidx)
 {
-    if (cidx < 0 || cidx >= papi_num_components) return (PAPI_ENOCMP);
+    if (_papi_hwi_invalid_cmp(cidx)) return (PAPI_ENOCMP);
     return (cidx);
 }
 
@@ -382,7 +382,7 @@ int PAPI_query_event(int EventCode)
 
 const PAPI_component_info_t *PAPI_get_component_info(int cidx)
 {
-  if ( cidx < 0 || cidx >= papi_num_components )
+  if (_papi_hwi_invalid_cmp(cidx))
     return(NULL);
   else return(&(_papi_hwd[cidx]->cmp_info));
 }
@@ -630,7 +630,7 @@ int PAPI_enum_event(int *EventCode, int modifier)
    int i = *EventCode;
    int cidx = PAPI_COMPONENT_INDEX(*EventCode);
 
-   if ( cidx < 0 || cidx > papi_num_components ||
+   if ( _papi_hwi_invalid_cmp(cidx) ||
 	((i & PAPI_PRESET_MASK)&&cidx>0 ) )
      return (PAPI_ENOCMP);
    
