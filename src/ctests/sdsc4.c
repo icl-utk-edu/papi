@@ -14,8 +14,8 @@
 #include <math.h>
 #include <assert.h>
 
-#define REPEATS 5
 #define MAXEVENTS 9
+#define REPEATS (MAXEVENTS * 4)
 #define SLEEPTIME 100
 #define MINCOUNTS 100000
 
@@ -28,21 +28,23 @@ int main(int argc, char **argv)
    int i, j, retval, idx, repeats;
    int iters = NUM_FLOPS;
    double x = 1.1, y, dtmp;
-   long_long t1, t2;
-   long_long values[MAXEVENTS], refvals[MAXEVENTS];
+   long long t1, t2;
+   long long values[MAXEVENTS], refvals[MAXEVENTS];
    int nsamples[MAXEVENTS], truelist[MAXEVENTS], ntrue;
 #ifdef STARTSTOP
-   long_long dummies[MAXEVENTS];
+   long long dummies[MAXEVENTS];
 #endif
    int sleep_time = SLEEPTIME;
-   double valsqsum[MAXEVENTS];
+   double valsample[MAXEVENTS][REPEATS];
    double valsum[MAXEVENTS];
+   double avg[MAXEVENTS];
    double spread[MAXEVENTS];
    int nevents = MAXEVENTS, nev1;
    int eventset = PAPI_NULL;
    int events[MAXEVENTS];
    int eventidx[MAXEVENTS];
    int eventmap[MAXEVENTS];
+   int fails;
 
    events[0] = PAPI_FP_INS;
    events[1] = PAPI_TOT_CYC;
@@ -56,7 +58,6 @@ int main(int argc, char **argv)
 
    for (i = 0; i < MAXEVENTS; i++) {
       values[i] = 0;
-      valsqsum[i] = 0;
       valsum[i] = 0;
       nsamples[i] = 0;
    }
@@ -79,13 +80,13 @@ int main(int argc, char **argv)
    if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
+#ifdef MPX
+   init_multiplex();
+#endif
    if ((retval = PAPI_create_eventset(&eventset)))
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
 
 #ifdef MPX
-   if ((retval = PAPI_multiplex_init()))
-      test_fail(__FILE__, __LINE__, "PAPI_multiplex_init", retval);
-
    if ((retval = PAPI_set_multiplex(eventset)))
       test_fail(__FILE__, __LINE__, "PAPI_set_multiplex", retval);
 #endif
@@ -127,16 +128,6 @@ int main(int argc, char **argv)
    assert(j == 0);
    for (i = 0; i < nevents; i++)
       eventmap[i] = i;
-
-   if (argc > 1) {
-      if (!strcmp(argv[1], "TESTS_QUIET"))
-         tests_quiet(argc, argv);
-      else {
-         sleep_time = atoi(argv[1]);
-         if (sleep_time <= 0)
-            sleep_time = SLEEPTIME;
-      }
-   }
 
    x = 1.0;
 
@@ -244,7 +235,7 @@ int main(int argc, char **argv)
                                               name2) ? "*** MISMATCH ***" : "");
          dtmp = (double) values[j];
          valsum[idx] += dtmp;
-         valsqsum[idx] += dtmp * dtmp;
+         valsample[idx][nsamples[idx]] = dtmp;
          nsamples[idx]++;
       }
       if (!TESTS_QUIET)
@@ -259,34 +250,40 @@ int main(int argc, char **argv)
       printf("\n");
    }
 
-   i = nevents;
+   fails = nevents;
+   /* Due to limited precision of floating point cannot really use
+      typical standard deviation compuation for large numbers with
+      very small variations. Instead compute the std devation
+      problems with precision.
+   */
    for (j = 0; j < nev1; j++) {
-      spread[j] = valsqsum[j];
-      spread[j] -= (valsum[j] * valsum[j]) / nsamples[j];
-      spread[j] = sqrt(spread[j] / (nsamples[j] - 1));
-      if (valsum[j] > 0.9)
-         spread[j] = nsamples[j] * spread[j] / valsum[j];
-      values[j] = (long_long)(valsum[j] / nsamples[j]);
+      avg[j] = valsum[j] / nsamples[j];
+      spread[j] = 0;
+      for (i=0; i < nsamples[j]; ++i) {
+         double diff = (valsample[j][i] - avg[j]);
+         spread[j] += diff * diff;
+      }
+      spread[j] = sqrt(spread[j] / nsamples[j]) / avg[j];
       if (!TESTS_QUIET)
          printf("%9.2g  ", spread[j]);
       /* Make sure that NaN get counted as errors */
       if (spread[j] < MPX_TOLERANCE)
-         i--;
+         fails--;
       else if (values[j] < MINCOUNTS)   /* Neglect inprecise results with low counts */
-         i--;
+         fails--;
    }
    if (!TESTS_QUIET) {
       printf("\n\n");
       for (j = 0; j < nev1; j++) {
          PAPI_get_event_info(events[j], &info);
-         printf("Event %.2d: mean=%10lld, sdev/mean=%7.2g nrpt=%2d -- %s\n",
-                j, values[j], spread[j], nsamples[j], info.short_descr);
+         printf("Event %.2d: mean=%10.0f, sdev/mean=%7.2g nrpt=%2d -- %s\n",
+                j, avg[j], spread[j], nsamples[j], info.short_descr);
       }
       printf("\n\n");
    }
 
-   if (i)
-      test_fail(__FILE__, __LINE__, "Values differ from reference", i);
+   if (fails)
+      test_fail(__FILE__, __LINE__, "Values differ from reference", fails);
    else
       test_pass(__FILE__, NULL, 0);
 
