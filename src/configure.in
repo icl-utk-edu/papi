@@ -80,6 +80,7 @@ get_bitmode()
 # checking for Makefile argument, if not specified, check CPU, OS, OSVER and bitmode
 #
 
+SHOW_CONF=showconf
 perf_header=""
 FILENAME=NO_INCLUDE_FILE
 use_shared=yes
@@ -130,12 +131,27 @@ AC_MSG_RESULT($OS)
 if test "$OS" = "bgl"; then
    if test "x$CC" = "x"; then
       CC=powerpc-bgl-blrts-gnu-gcc
-      CFLAGS="-D_BGL -gdwarf-2 -O2 -Wall"
    fi
    if test "x$F77" = "x"; then
       F77=powerpc-bgl-blrts-gnu-g77
-      FFLAGS="-gdwarf-2 -O2 -Wall -Dlinux"
    fi
+   walltimer=cycle
+   virtualtimer=perfctr
+   bitmode=32
+   tls=no
+   host=x86_64
+   ffsll=yes
+   cross_compiling=yes
+   perfctr=6
+fi
+if test "$OS" = "bgp"; then
+   if test "x$CC" = "x"; then
+      CC=powerpc-bgp-linux-gcc
+   fi
+   if test "x$F77" = "x"; then
+      F77=powerpc-bgp-linux-gfortran
+   fi
+   # NOTE: The following values are the same ones used for bgl which may or may not be correct
    walltimer=cycle
    virtualtimer=perfctr
    bitmode=32
@@ -159,6 +175,7 @@ AC_ARG_WITH(OSVER,
 	    [
 case "$OS" in
   bgl) OSVER=irrelevant ;;
+  bgp) OSVER=irrelevant ;;
   *|solaris|netbsd|linux) OSVER="`uname -r`";;
 esac
 ])
@@ -295,6 +312,9 @@ case "$OS" in
          ;;
   bgl)
 	CPU=bgl
+	;;
+  bgp)
+	CPU=bgp
 	;;
 esac 
 ])
@@ -1332,8 +1352,10 @@ case "$OS" in
       MAKEVER="$OS"-"$CPU""$BM"
    ;;
    bgl)
-	   MAKEVER=linux-bgl
-       tests=bgl_tests
+       MAKEVER=bgl
+   ;;
+   bgp)
+       MAKEVER=bgp
    ;;
    CLE)
 	   MAKEVER="$OS"-perfmon2
@@ -1414,9 +1436,10 @@ case "$MAKEVER" in
     aix-power6);;
     aix-power6-64bit);;
     any-null);;
+    bgl);;
+    bgp);;
     CLE-perfmon2);;
     linux-acpi);;
-    linux-bgl);;
     linux-mx);;
     linux-pe);;
     linux-perfctr-athlon);;
@@ -1643,7 +1666,6 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
    #CFLAGS="-DPAPI_NO_VECTOR"
    OPTFLAGS='-O3 -qstrict $(PMINIT)'
    FFLAGS='$(FLAGS) -WF,-D_$(CPU_MODEL) -WF,-DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
-   FOPTFLAGS='$(OPTFLAGS)'
    SMPCFLGS=-qsmp
    OMPCFLGS='-qsmp=omp'
    LDFLAGS='-L$(PMAPI)/lib -lpmapi'
@@ -1721,16 +1743,19 @@ elif test "$MAKEVER" = "linux-acpi"; then
    CC_SHR='$(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
    CFLAGS="-Wall -g -DDEBUG -DACPI"
    FFLAGS="-Wall -g"
-elif test "$MAKEVER" = "linux-bgl"; then
+elif test "$MAKEVER" = "bgl"; then
    FILENAME=Makefile.inc
    BLRTS_GNU_ROOT="/bgl/BlueLight/ppcfloor/blrts-gnu"
    BGLSYS_ROOT="/bgl/BlueLight/ppcfloor/bglsys" 
    #CC='$(SILENT) $(BLRTS_GNU_ROOT)/bin/powerpc-bgl-blrts-gnu-gcc'
    #F77='$(SILENT) $(BLRTS_GNU_ROOT)/bin/powerpc-bgl-blrts-gnu-g77'
    #CFLAGS='-D_BGL -g -gdwarf-2 -O2 -Wall -I$(BGLSYS_ROOT)/include'
-   #FFLAGS='-g -gdwarf-2 -O2 -Wall -I$(BGLSYS_ROOT)/include -Dlinux' 
+   #FFLAGS='-g -gdwarf-2 -O2 -Wall -I$(BGLSYS_ROOT)/include -Dlinux'
+   # Some nice flags to add to CFLAGS when debugging PAPI library itself
+   # -DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER 
+   CFLAGS="-D_BGL -gdwarf-2 -O2 -Wall -I. -DCOMP_VECTOR=_bgl_vectors"
+   FFLAGS="-gdwarf-2 -O2 -Wall -Dlinux"
    OPTFLAGS='-g -O3 -I$(BGLSYS_ROOT)/include'
-   FOPTFLAGS='$(OPTFLAGS)'
    LDFLAGS='-L$(BGLSYS_ROOT)/lib -lbgl_perfctr.rts -lmpich.rts -lmsglayer.rts -lrts.rts -ldevices.rts'
    LIBRARY=libpapi.a
    SHLIB=libpapi.so
@@ -1745,12 +1770,39 @@ elif test "$MAKEVER" = "linux-bgl"; then
    TARGETS=serial
    CC_SHR='$(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
    CC_R='$(CC) -pthread'
-   CFLAGS='$(CFLAGS) -I. -DCOMP_VECTOR=_bgl_vectors'
-   # Some nice flags to add to CFLAGS when debugging PAPI library itself
-   # -DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
    MISCSRCS="$MISCSRCS linux-bgl-events.c"
    MISCOBJS='$(MISCSRCS:.c=.o)'
-   BGL_TESTS=bgl_tests
+   tests=bgl_tests
+elif test "$MAKEVER" = "bgp"; then
+   SHOW_CONF=show_bgp_conf
+   BGP_SYSDIR=/bgsys/drivers/ppcfloor
+   BGP_INSTALLDIR='${BGP_SYSDIR}'
+   BGP_GNU_LINUX_PATH='${BGP_SYSDIR}/gnu-linux'
+   BGP_ARCH_PATH='${BGP_INSTALLDIR}/arch'
+   BGP_RUNTIME_PATH='${BGP_INSTALLDIR}/runtime'
+   BGP_PAPI_PATH=/bgusr/ngoracke/papi-10-17-patched
+   PREFIX='${BGP_PAPI_PATH}'
+   LDFLAGS='-L$(BGP_INSTALLDIR)/runtime/SPI -lSPI.cna'
+   CFLAGS='-D_BGP -g -gdwarf-2 -O2 -Wall -I$(BGP_ARCH_PATH)/include -I. -DCOMP_VECTOR=_bgp_vectors'
+   # Some nice flags to add to CFLAGS when debugging 
+   #CFLAGS='$(CFLAGS) -DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER'
+   FFLAGS='-g -gdwarf-2 -O2 -Wall -I$(BGP_ARCH_PATH)/include -Dlinux'
+   OPTFLAGS="-g -Wall -O3"
+   TOPTFLAGS="-g -Wall -O0"
+   LIBRARY=libpapi.a
+   SHLIB=libpapi.so
+   SUBSTR=linux-bgp
+   MEMSUBSTR=linux-bgp
+   MSUBSTR=linux-bgp
+   DESCR="Linux for BlueGene/P"
+   LIBS=static
+   TARGETS=serial
+   CC_SHR='$(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
+   CC_R='$(CC) -pthread'
+   MISCSRCS=linux-bgp-preset-events.c
+   MISCOBJS='$(MISCSRCS:.c=.o)'
+   SUBSTR_HEADERS=linux-bgp-native-events.h
+   tests=bgp_tests
 elif test "$MAKEVER" = "linux-mx"; then
    FILENAME=Makefile.inc
    LIBRARY=libpapi.a
@@ -1897,7 +1949,6 @@ elif (test "$MAKEVER" = "solaris-ultra" || test "$MAKEVER" = "solaris-ultra-64")
       NOOPT=-xO0 
       OPTFLAGS="-g -fast -xtarget=ultra3 -xarch=v8plusa" 
    fi
-   FOPTFLAGS=$OPTFLAGS
    LDFLAGS="$LDFLAGS -lcpc" 
    if test "$MAKEVER" = "solaris-ultra-64"; then
       LIBRARY=libpapi64.a
@@ -1995,7 +2046,6 @@ AC_SUBST(ORY_MANAGEMENT)
 AC_SUBST(SMPCFLGS)
 AC_SUBST(OMPCFLGS)
 AC_SUBST(NOOPT)
-AC_SUBST(FOPTFLAGS)
 AC_SUBST(MISCSRCS)
 AC_SUBST(MISCOBJS)
 AC_SUBST(POST_BUILD)
@@ -2013,9 +2063,18 @@ AC_SUBST(COMPILER)
 AC_SUBST(BLRTS_GNU_ROOT)
 AC_SUBST(BGLSYS_ROOT)
 AC_SUBST(SHLIBDEPS)
-AC_SUBST(BGL_TESTS)
 AC_SUBST(CPU_TYPE)
 AC_SUBST(TOPTFLAGS)
+AC_SUBST(BGP_ARCH_PATH)
+AC_SUBST(BGP_GNU_LINUX_PATH)
+AC_SUBST(BGP_INSTALLDIR)
+AC_SUBST(BGP_PAPI_PATH)
+AC_SUBST(BGP_RUNTIME_PATH)
+AC_SUBST(BGP_SYSDIR)
+AC_SUBST(DESTDIR)
+AC_SUBST(PREFIX)
+AC_SUBST(TESTS)
+AC_SUBST(SHOW_CONF)
 
 if test "$cross_compiling" = "yes" ; then
    AC_MSG_NOTICE(Compiling genpapifdef with $nativecc because cross compiling)

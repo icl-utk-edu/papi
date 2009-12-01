@@ -13,7 +13,7 @@ HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h \
 LIBCFLAGS += -I. $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" 
 FHEADERS  = fpapi.h f77papi.h f90papi.h
 
-all: showconf $(LIBS) utils tests
+all: $(SHOW_CONF) $(LIBS) utils tests
 
 showconf:
 		@echo "Host architecture: $(DESCR)";
@@ -29,6 +29,15 @@ showconf:
 		@echo "Installation DOCDIR : $(DOCDIR)"; 
 		@echo "Installation DATADIR: $(DATADIR)"; 
 		@echo
+
+show_bgp_conf:
+	@echo;
+	@echo "BG/P System Path   :  $(BGP_SYSDIR)";
+	@echo "BG/P Install Path  :  $(BGP_INSTALLDIR)";
+	@echo "BG/P GNU/Linux Path:  $(BGP_GNU_LINUX_PATH)";
+	@echo "BG/P ARCH Path     :  $(BGP_ARCH_PATH)";
+	@echo "BG/P Runtime Path  :  $(BGP_RUNTIME_PATH)";
+	@echo
 
 static: $(LIBRARY)
 
@@ -138,31 +147,39 @@ acpi_events.o: acpi_events.c  $(HEADERS)
 acpi.o: acpi.c  $(HEADERS)
 	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c acpi.c -o acpi.o
 
-# Required for Linux-BGL
+# Required for BGL and BGP
 .SUFFIXES: .rts.o
 .c.rts.o:
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Required for BGL
 linux-bgl-events.o: linux-bgl-events.c  $(HEADERS)
 	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" -DCOMP_VECTOR=_bgl_vectors $(OPTFLAGS) -c linux-bgl-events.c -o linux-bgl-events.o
 
-bgl_tests:$(LIBRARY) null 
-	cd ctests/bgl_tests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-DSUBSTRATE=\\\"$(SUBSTR).h\\\" $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" bgl_test
+bgl_tests:$(LIBRARY) null
+	$(SETPATH) cd ctests/bgl_tests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-DSUBSTRATE=\\\"$(SUBSTR).h\\\" $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" bgl_test
 
-#
-# This is all done by configure now
-#
-genpapifdef: genpapifdef.c papi.h papi_preset.h papi_data.c
-	$(CC) -I. genpapifdef.c -o genpapifdef
+# Required for BGP
+linux-bgp-preset-events.o: linux-bgp-preset-events.c  $(HEADERS)
+	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" -DCOMP_VECTOR=_bgp_vectors $(OPTFLAGS) -c linux-bgp-preset-events.c -o linux-bgp-preset-events.o
 
-fpapi.h: papi.h
-	./genpapifdef -c > fpapi.h
+bgp_tests:$(LIBRARY) null
+	$(SETPATH) cd ctests/bgp; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-DSUBSTRATE=\\\"$(SUBSTR).h\\\" $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" bgp_test
 
-f77papi.h: papi.h
-	./genpapifdef -f77 > f77papi.h
 
-f90papi.h: papi.h
-	./genpapifdef -f90 > f90papi.h
+# This is done by configure now
+#genpapifdef: genpapifdef.c papi.h papi_preset.h papi_data.c
+#	$(CC) -I. genpapifdef.c -o genpapifdef
+
+#fpapi.h: papi.h
+#	./genpapifdef -c > fpapi.h
+
+#f77papi.h: papi.h
+#	./genpapifdef -f77 > f77papi.h
+
+#f90papi.h: papi.h
+#	./genpapifdef -f90 > f90papi.h
+
 
 test: ctests
 	$(SETPATH) ctests/zero
