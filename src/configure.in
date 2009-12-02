@@ -1,6 +1,8 @@
-#                                               -*- Autoconf -*-
+
+#                     -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 # File: configure.in
+# CVS:  $Id$
 
 
 AC_PREREQ(2.61)
@@ -80,6 +82,7 @@ get_bitmode()
 # checking for Makefile argument, if not specified, check CPU, OS, OSVER and bitmode
 #
 
+perf_header=""
 use_shared=yes
 use_static=yes
 use_static_tests=no
@@ -1014,43 +1017,55 @@ AC_ARG_WITH(pfm_libdir,
 # or by default if perfctr and perfmon are not available
 # and linux kernel version is >= 31
 
-if test "`uname -r | grep "2.6."`"; then
+if test "$cross_compiling" = "no" -a "$OS" = "linux" -a "`uname -r | grep "2.6."`"; then
 # gives the position in $OSVER of *first* character in substring "2.6."
 POS1=`expr index "$OSVER" "2.6."`
 POS2=`expr $POS1 + 4`
 VERS=`expr substr "$OSVER" "$POS2" 2`
 
-if test "$cross_compiling" = "no" -a "$OS" = "linux" -a "${VERS}" -ge 31; then
+# Version 2.6.31 of the kernel uses perf_counter.h and all subsequent versions use perf_event.h
+if test "$VERS" = "31"; then
+  perf_header="perf_counter.h"
+  CFLAGS="$CFLAGS -DKERNEL31"
+elif test "$VERS" -gt 31; then
+  perf_header="perf_event.h"
+fi
+
+if test "${VERS}" -ge 31; then
 AC_ARG_WITH(pcl,
             [  --with-pcl=<yes,no>		Specify existence of Performance Counters for Linux],
             [pcl=$withval
-             AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/perf_counter.h, [ pcl="yes"
-               PCLPATH="/lib/modules/$OSVER/source/include/linux"],
+             AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/$perf_header, [ pcl="yes"
+               PCLPATH="/lib/modules/$OSVER/source/include/linux/$perf_header"],
                 [ pcl="no" ])
             ],
             [if test "$perfctr" = "no" -a "$perfmon" = "0"; then
-              AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/perf_counter.h, [ pcl="yes"
-               PCLPATH="/lib/modules/$OSVER/source/include/linux"],
+              AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/$perf_header, [ pcl="yes"
+               PCLPATH="/lib/modules/$OSVER/source/include/linux/$perf_header"],
                 [ pcl="no" ])
              fi
             ])
-elif test "$cross_compiling" = "no" -a "$OS" = "linux" -a "${VERS}" -lt "31" -a "$perfctr" = "no" -a "$perfmon" = "0"; then
-AC_MSG_ERROR([No patch is installed.])
+elif test "$perfctr" = "no" -a "$perfmon" = "0"; then
+AC_MSG_ERROR([PAPI requires a patch for any kernel older than 2.6.31])
 fi
 
-# If we are running a PCL kernel, perf_counter.h should have been found in 
+# If we are running a PCL kernel, the correct include file should have been found in 
 # /lib/modules/$OSVER/source/include/linux. If the file was not found
 # see if the user has set a path and ensure it can be found there
 if test "$pcl" = "no"; then
 AC_ARG_WITH(pcl_incdir,
-	   [  --with-pcl-incdir=<path>	Specify directory of perf_counter header file],
+	   [if test "$perf_header" = "perf_event.h"; then
+              --with-pcl-incdir=<path>	Specify directory of perf_event.h header file
+            else
+              --with-pcl-incdir=<path>	Specify directory of perf_counter.h header file
+           ],
 	   [pcl_incdir=$withval
-	     AC_CHECK_FILE($pcl_incdir/perf_counter.h, [pcl="yes"
-              PCLPATH="$pcl_incdir"], 
-		[AC_MSG_ERROR([perf_counter.h could not be found and no patch is installed.])])
+	     AC_CHECK_FILE($pcl_incdir/$perf_header, [pcl="yes"
+              PCLPATH="$pcl_incdir/$perf_header"], 
+		[AC_MSG_ERROR([$perf_header could not be found at $pcl_incdir])])
            ],
            [if test "$perfctr" = "no" -a "$perfmon" = "0"; then
-            AC_MSG_ERROR([perf_counter.h could not be found and no patch is installed.])
+            AC_MSG_ERROR([$perf_header could not be found and no patch is installed.])
             fi
            ])
 fi
