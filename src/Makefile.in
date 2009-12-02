@@ -1,6 +1,6 @@
 PAPIVER=3
 PAPIREV=7
-PAPIAGE=1
+PAPIAGE=2
 ARCH	  = @arch@
 MAKEVER   = @MAKEVER@
 PREFIX    = @prefix@
