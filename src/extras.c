@@ -564,7 +564,7 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
 
 	for (j=0,i = 0 | PAPI_NATIVE_MASK;j<papi_num_components; j++,i = 0 | PAPI_NATIVE_MASK) {
 		/* first check each component for name_to_code */
-		if (vector_find_dummy(_papi_hwd[j]->ntv_name_to_code, NULL) == NULL)
+		if (vector_find_dummy( (void*) _papi_hwd[j]->ntv_name_to_code, NULL) == NULL)
 		  retval = _papi_hwd[j]->ntv_name_to_code(in, (unsigned *)out);
 		else {
 			_papi_hwd[j]->ntv_enum_events(&i, PAPI_ENUM_FIRST);
