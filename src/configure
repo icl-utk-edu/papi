@@ -641,7 +641,6 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 SHOW_CONF
 TESTS
-PREFIX
 DESTDIR
 BGP_SYSDIR
 BGP_RUNTIME_PATH
@@ -9543,7 +9542,7 @@ elif test "$MAKEVER" = "bgp"; then
    BGP_ARCH_PATH='${BGP_INSTALLDIR}/arch'
    BGP_RUNTIME_PATH='${BGP_INSTALLDIR}/runtime'
    BGP_PAPI_PATH=/bgusr/ngoracke/papi-10-17-patched
-   PREFIX='${BGP_PAPI_PATH}'
+   prefix='${BGP_PAPI_PATH}'
    LDFLAGS='-L$(BGP_INSTALLDIR)/runtime/SPI -lSPI.cna'
    CFLAGS='-D_BGP -g -gdwarf-2 -O2 -Wall -I$(BGP_ARCH_PATH)/include -I. -DCOMP_VECTOR=_bgp_vectors'
    # Some nice flags to add to CFLAGS when debugging
@@ -9737,7 +9736,6 @@ else
    echo "Unable to create generic build for non-GNU compiler"
    exit -1
 fi
-
 
 
 

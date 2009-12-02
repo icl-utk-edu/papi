@@ -1,6 +1,7 @@
 #                   -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 # File: configure.in
+# CVS:  $Id$
 
 
 AC_PREREQ(2.61)
@@ -1781,7 +1782,7 @@ elif test "$MAKEVER" = "bgp"; then
    BGP_ARCH_PATH='${BGP_INSTALLDIR}/arch'
    BGP_RUNTIME_PATH='${BGP_INSTALLDIR}/runtime'
    BGP_PAPI_PATH=/bgusr/ngoracke/papi-10-17-patched
-   PREFIX='${BGP_PAPI_PATH}'
+   prefix='${BGP_PAPI_PATH}'
    LDFLAGS='-L$(BGP_INSTALLDIR)/runtime/SPI -lSPI.cna'
    CFLAGS='-D_BGP -g -gdwarf-2 -O2 -Wall -I$(BGP_ARCH_PATH)/include -I. -DCOMP_VECTOR=_bgp_vectors'
    # Some nice flags to add to CFLAGS when debugging 
@@ -2072,7 +2073,6 @@ AC_SUBST(BGP_PAPI_PATH)
 AC_SUBST(BGP_RUNTIME_PATH)
 AC_SUBST(BGP_SYSDIR)
 AC_SUBST(DESTDIR)
-AC_SUBST(PREFIX)
 AC_SUBST(TESTS)
 AC_SUBST(SHOW_CONF)
 
