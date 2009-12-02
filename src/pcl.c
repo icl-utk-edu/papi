@@ -1883,7 +1883,7 @@ static int tune_up_fd (hwd_context_t * ctx, int evt_idx)
       return (PAPI_ESYS);
     }
   SUBDBG ("Sample buffer for fd %d is located at %p\n", fd, buf_addr);
-  ctx->pcl_evt[evt_idx].mmap_buf = (struct perf_counter_mmap_page *) buf_addr;
+  ctx->pcl_evt[evt_idx].mmap_buf = (struct perf_event_mmap_page *) buf_addr;
   ctx->pcl_evt[evt_idx].tail = 0;
   ctx->pcl_evt[evt_idx].mask = (ctx->pcl_evt[evt_idx].nr_mmap_pages - 1) * getpagesize () - 1;
 
@@ -1965,7 +1965,7 @@ inline static int close_pcl_evts(hwd_context_t * ctx)
       for (i = 0; i < ctx->num_pcl_evts; i++)
         {
           if (ctx->pcl_evt[i].group_leader == i) {
-            ret = ioctl(ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_DISABLE, NULL);
+            ret = ioctl(ctx->pcl_evt[i].event_fd, PERF_EVENT_IOC_DISABLE, NULL);
             if (ret == -1)
               {
                 /* Never should happen */
@@ -2383,7 +2383,7 @@ static int pcl_enable_counters (hwd_context_t * ctx, hwd_control_state_t * ctl)
     {
       if (ctx->pcl_evt[i].group_leader == i)
         {
-          ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_ENABLE, NULL);
+          ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL);
 
           if (ret == -1)
             {
@@ -2420,10 +2420,10 @@ int _papi_hwd_reset (hwd_context_t * ctx, hwd_control_state_t * ctl)
   /* We need to reset all of the events, not just the group leaders */
   for (i = 0; i < ctx->num_pcl_evts; i++)
     {
-      ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_RESET, NULL);
+      ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_EVENT_IOC_RESET, NULL);
       if (ret == -1)
         {
-          PAPIERROR ("ioctl(%d, PERF_COUNTER_IOC_RESET, NULL) returned error, Linux says: %s", ctx->pcl_evt[i].event_fd, strerror(errno));
+          PAPIERROR ("ioctl(%d, PERF_EVENT_IOC_RESET, NULL) returned error, Linux says: %s", ctx->pcl_evt[i].event_fd, strerror(errno));
           return PAPI_EBUG;
         }
     }
@@ -2477,7 +2477,7 @@ int _papi_hwd_read (hwd_context_t * ctx, hwd_control_state_t * ctl, long long **
         /* disable only the group leaders */
         if (ctx->pcl_evt[i].group_leader == i)
           {
-            ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_DISABLE, NULL);
+            ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_EVENT_IOC_DISABLE, NULL);
             if (ret == -1)
               {
                 /* Never should happen */
@@ -2542,7 +2542,7 @@ int _papi_hwd_read (hwd_context_t * ctx, hwd_control_state_t * ctl, long long **
       for (i = 0; i < ctx->num_pcl_evts; i++)
         if (ctx->pcl_evt[i].group_leader == i)
           {
-            ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_ENABLE, NULL);
+            ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL);
             if (ret == -1)
               {
                 /* Never should happen */
@@ -2581,10 +2581,10 @@ int _papi_hwd_stop (hwd_context_t * ctx, hwd_control_state_t * ctl)
   for (i = 0; i < ctx->num_pcl_evts; i++)
     if (ctx->pcl_evt[i].group_leader == i)
       {
-        ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_COUNTER_IOC_DISABLE, NULL);
+        ret = ioctl (ctx->pcl_evt[i].event_fd, PERF_EVENT_IOC_DISABLE, NULL);
         if (ret == -1)
           {
-            PAPIERROR ("ioctl(%d, PERF_COUNTER_IOC_DISABLE, NULL) returned error, Linux says: %s", ctx->pcl_evt[i].event_fd, strerror(errno));
+            PAPIERROR ("ioctl(%d, PERF_EVENT_IOC_DISABLE, NULL) returned error, Linux says: %s", ctx->pcl_evt[i].event_fd, strerror(errno));
             return PAPI_EBUG;
           }
       }
@@ -2760,7 +2760,7 @@ static inline int find_profile_index (EventSetInfo_t * ESI, int pcl_evt_idx, int
 
 static uint64_t mmap_read_head(pcl_evt_t *pe)
 {
-  struct perf_counter_mmap_page *pc = pe->mmap_buf;
+  struct perf_event_mmap_page *pc = pe->mmap_buf;
   int head;
 
   head = pc->data_head;
@@ -2771,7 +2771,7 @@ static uint64_t mmap_read_head(pcl_evt_t *pe)
 
 static void mmap_write_tail(pcl_evt_t *pe, uint64_t tail)
 {
-  struct perf_counter_mmap_page *pc = pe->mmap_buf;
+  struct perf_event_mmap_page *pc = pe->mmap_buf;
 
   /*
    * ensure all reads are done before we write the tail out.
@@ -2851,10 +2851,10 @@ static void mmap_read (ThreadInfo_t * thr, pcl_evt_t * pe, int pcl_evt_index, in
 
       switch (event->header.type)
         {
-        case PERF_EVENT_SAMPLE:
+        case PERF_RECORD_SAMPLE:
           _papi_hwi_dispatch_profile (thr->running_eventset, (unsigned long) event->ip.ip, 0, profile_index);
           break;
-        case PERF_EVENT_LOST:
+        case PERF_RECORD_LOST:
           SUBDBG ("Warning: because of a PCL mmap buffer overrun, %"PRId64
                       " events were lost.\nLoss was recorded when counter id 0x%"PRIx64" overflowed.\n",
             event->lost.lost, event->lost.id);
@@ -3211,7 +3211,7 @@ int _papi_hwd_update_control_state (hwd_control_state_t * ctl, NativeInfo_t * na
 
   if (ctx->cookie != PCL_CTX_INITIALIZED)
     {
-      memset (ctl->events, 0, sizeof (struct perf_counter_attr) * PCL_MAX_MPX_EVENTS);
+      memset (ctl->events, 0, sizeof (struct perf_event_attr) * PCL_MAX_MPX_EVENTS);
       memset (ctx, 0, sizeof (hwd_context_t));
       ctx->cookie = PCL_CTX_INITIALIZED;
     }
