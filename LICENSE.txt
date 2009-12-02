@@ -1,66 +1,33 @@
-                         Copyright 1997-2001 PAPI Team,
-                           Innovative Computing Labs
-                          Computer Science Department, 
+                           Copyright (c) 2005 - 2009
+                        Innovative Computing Laboratory
+               Dept of Electrical Engineering & Computer Science
                             University of Tennessee, 
                                  Knoxville, TN. 
                               All Rights Reserved. 
 
-ALLOWED USAGE:
 
-Users may use PAPI in any capacity they wish. We only ask that proper credit 
-and citations be used when the PAPI system is being leveraged in other 
-software systems.
+Redistribution and use in source and binary forms, with or without modification, 
+are permitted provided that the following conditions are met:
 
-REDISTRIBUTION:
+    * Redistributions of source code must retain the above copyright notice, 
+      this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright notice, 
+      this list of conditions and the following disclaimer in the documentation 
+      and/or other materials provided with the distribution.
+    * Neither the name of the University of Tennessee nor the names of its 
+      contributors may be used to endorse or promote products derived from this
+      software without specific prior written permission.
 
-Users are allowed to freely distribute the PAPI system in unmodified form. At 
-no time is a user to accept monetary or other compensation for redistributing 
-parts or all of the PAPI system.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR 
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-MODIFICATION OF CODE:
 
-Users are free to make whatever changes they wish to the PAPI system to suit 
-their individual needs. We mandate, however, that you clearly highlight which 
-portions are of the original system and which are a result of the third-party 
-modification.
-
-WARRANTY DISCLAIMER:
-
-USER ACKNOWLEDGES AND AGREES THAT: 
-	(A) NEITHER THE PAPI TEAM NOR THE BOARD OF REGENTS OF THE UNIVERSITY OF 
-	    TENNESSEE SYSTEM (REGENTS) MAKE ANY REPRESENTATIONS OR WARRANTIES 
-	    WHATSOEVER ABOUT THE SUITABILITY OF PAPI FOR ANY PURPOSE; 
-	(B) PAPI IS PROVIDED ON AN "AS IS, WITH ALL DEFECTS" BASIS WITHOUT 
-	    EXPRESS OR IMPLIED WARRANTIES, INCLUDING WARRANTIES OF MERCHANT- 
-	    ABILITY AND FITNESS FOR A PARTICULAR PURPOSE OR NONINFRINGEMENT; 
-	(C) NEITHER THE PAPI TEAM NOR THE REGENTS SHALL BE LIABLE FOR ANY 
-	    DAMAGE OR LOSS OF ANY KIND ARISING OUT OF OR RESULTING FROM USER'S 
-	    POSSESSION OR USE OF PAPI (INCLUDING DATA LOSS OR CORRUPTION), 
-	    REGARDLESS OF WHETHER SUCH LIABILITY IS BASED IN TORT, CONTRACT, 
-	    OR OTHERWISE; AND 
-	(D) NEITHER THE PAPI TEAM NOR THE REGENTS HAVE AN OBLIGATION TO PROVIDE 
-	    DEBUGGING, MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR 
-	    MODIFICATIONS EXCEPT WHERE EXPLICIT WRITTEN ARRANGEMENTS HAVE BEEN 
-	    PRE-ARRANGED. 
-
-DAMAGES DISCLAIMER:
-
-USER ACKNOWLEDGES AND AGREES THAT IN NO EVENT WILL THE PAPI TEAM OR THE REGENTS 
-BE LIABLE TO USER FOR ANY SPECIAL, CONSEQUENTIAL, INDIRECT OR SIMILAR DAMAGES, 
-INCLUDING ANY LOST PROFITS OR LOST DATA ARISING OUT OF THE USE OR INABILITY TO 
-USE PAPI EVEN IF THE PAPI TEAM OR THE REGENTS HAVE BEEN ADVISED OF THE 
-POSSIBILITY OF SUCH DAMAGES. 
-
-ATTRIBUTION REQUIREMENT:
-
-User agrees that any reports, publications, or other disclosure of results 
-obtained with PAPI will attribute its use by an appropriate citation. The 
-appropriate reference for PAPI is "The PAPI Library (PAPI) was developed by 
-the PAPI Team at the Computer Science Department of the University of 
-Tennessee, Knoxville. All rights, title, and interest in PAPI are owned by 
-the PAPI Team." 
-
-COMPLIANCE WITH APPLICABLE LAWS:
-
-User agrees to abide by copyright law and all other applicable laws of the 
-United States including, but not limited to, export control laws.
+This open source software license conforms to the BSD License template.
