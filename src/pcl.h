@@ -91,7 +91,7 @@ typedef struct {
   int num_groups;
   unsigned domain;
   unsigned multiplexed;
-  struct perf_counter_attr events[PCL_MAX_MPX_EVENTS];
+  struct perf_event_attr events[PCL_MAX_MPX_EVENTS];
   pcl_per_event_info_t pcl_per_event_info[PCL_MAX_MPX_EVENTS];
   /* Buffer to gather counters */
   long long counts[PFMLIB_MAX_PMDS];
