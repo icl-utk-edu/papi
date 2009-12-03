@@ -1035,12 +1035,7 @@ fi
 # the path to the file with the file included as part of the path. 
 if test "$perf_events" = "no"; then
 AC_ARG_WITH(pe_incdir,
-	   [if test "$perf_header" = "perf_event.h"; then
-              --with-pe-incdir=<path>	Specify path to perf_event.h
-            else
-              --with-pe-incdir=<path>	Specify path to perf_counter.h
-            fi
-           ],
+	   [  --with-pe-incdir=<path>	Specify path to the correct perf event header file],
 	   [pe_incdir=$withval
 	     AC_CHECK_FILE($pe_incdir/$perf_header, [perf_events="yes"
               PEPATH="$pe_incdir/$perf_header"], 
