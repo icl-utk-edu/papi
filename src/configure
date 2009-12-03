@@ -1419,11 +1419,7 @@ Optional Packages:
   --with-pfm-incdir=<path>	Specify directory of perfmon header files
   --with-pfm-libdir=<path>	Specify directory of pfm library
   --with-pcl=<yes,no>		Specify existence of Performance Counters for Linux
-if test "$perf_header" = "perf_event.h"; then
-              --with-pcl-incdir=<path>	Specify directory of perf_event.h header file
-            else
-              --with-pcl-incdir=<path>	Specify directory of perf_counter.h header file
-
+  --with-pcl-incdir=<path>	Specify path to the correct perf event header file
   --with-pmapi=<path>		Specify path of pmapi on aix system
   --with-pfm-events=<static,file>	Specify source of events for pfmlib-based systems
   --with-semaphores Use semaphores instead of atomic locks (IA64)

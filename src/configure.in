@@ -1054,11 +1054,7 @@ fi
 # see if the user has set a path and ensure it can be found there
 if test "$pcl" = "no"; then
 AC_ARG_WITH(pcl_incdir,
-	   [if test "$perf_header" = "perf_event.h"; then
-              --with-pcl-incdir=<path>	Specify directory of perf_event.h header file
-            else
-              --with-pcl-incdir=<path>	Specify directory of perf_counter.h header file
-           ],
+	   [  --with-pcl-incdir=<path>	Specify path to the correct perf event header file],
 	   [pcl_incdir=$withval
 	     AC_CHECK_FILE($pcl_incdir/$perf_header, [pcl="yes"
               PCLPATH="$pcl_incdir/$perf_header"], 
