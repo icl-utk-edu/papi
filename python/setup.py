@@ -4,7 +4,7 @@ from distutils.core import setup, Extension
 from distutils.command.install_data import install_data
 
 setup(name='perfmon',
-      version='0.1',
+      version='4.0',
       author='Arun Sharma',
       author_email='arun.sharma@google.com',
       description='libpfm wrapper',
