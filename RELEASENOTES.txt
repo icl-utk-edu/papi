@@ -1,4 +1,52 @@
 ===============================================================================
+PAPI 3.7.2 RELEASE NOTES                                            02 Dec 2009
+===============================================================================
+
+This file documents changes in recent PAPI releases in inverse chronological
+order.
+
+For details on installing PAPI on your machine, consult the INSTALL.txt file
+in this directory.
+
+For specific and detailed information on changes made in this release, grep
+the ChangeLogP372.txt file for keywords of interest or go directly to the PAPI
+cvs tree.
+
+
+GENERAL NOTES
+===============================================================================
+This release is an incremental upgrade to PAPI 3.7.1. It fixes a mistake in 
+the 3.7.1 release by updating configure to better detect the proper counter
+interface in linux kernels. Along the way, it also cleans up a few issues 
+found in the 3.7.1 release.
+
+As always, if you identify strange behavior or reproducible bugs, please
+contact the PAPI team or visit the PAPI User Forum.
+
+And visit the PAPI website for the latest updates:
+http://icl.cs.utk.edu/papi/
+
+
+CHANGES IN PAPI 3.7.2 SINCE PAPI 3.7.1
+===============================================================================
+Bug Fixes:
+----------
+- fixed L3 cache size reporting for AMD Family 10h processors
+- fixed std deviation underflow in sdsc2 and sdsc4 tests
+- fixed bug in counter assignment for FreeBSD Atom implementation
+
+Enhancements:
+-------------
+- updated cache tables for Intel Nehalem i7 processors
+- configure provides better autodetection of 2.6.31 or 2.6.32 kernels and
+  perf_counter interface (in most cases)
+- configure provides better detection and autoselection of perfctr or perfmon 
+  drivers for linux
+- configure and sources have been modified to support perf_counter on
+  kernel 2.6.31 and perf_event on kernel 2.6.32
+- a papi.spec file has been added to simplify creation of rpms
+
+===============================================================================
 PAPI 3.7.1 RELEASE NOTES                                            13 Nov 2009
 ===============================================================================
 

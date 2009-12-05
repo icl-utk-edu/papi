@@ -1,0 +1,69 @@
+Release Procedure for PAPI  December 04, 2009
+
+Below is a step-wise procedure for making a PAPI release.
+This is a living document and may not be totally current or accurate.
+It is an attempt to capture current practice in making a PAPI release.
+Please update it as appropriate.
+
+One way to use this procedure is to print a copy and check off
+the lines as they are completed to avoid confusion.
+================================================================================
+__ 1. Notify developers that a release is imminent and the repository should be
+	considered frozen.
+
+__ 2. Check/Change the version number in: papi.spec, papi.h, configure.in, Makefile.in;
+	and commit to cvs if needed.
+
+__ 2a. If configure.in is changed, run autoconf (2.61) 
+	and commit the resulting configure.
+
+__ 3. Create a ChangeLog for the current release. 
+	- One handy way to do this is to use the python script that comes with
+	WinCVS:
+	  Macros->CVS->Build ChangeLog (advanced).
+	Use the -r<branch>: command to log commit messages from the previous 
+	branch point to the present.
+
+__ 4. Scan the ChangeLog to remove extraneous fluff, like perfctr or perfmon imports.
+
+__ 5. Modify RELEASENOTES.txt to summarize the major changes listed in the log.
+
+__ 6. Add ChangeLogXYZ.txt to cvs and commit both ChangeLogXYZ.txt and 
+	RELEASENOTES.txt.
+
+__ 7. Update any documentation that may have changed.
+
+__ 8. Tag cvs: papi-X-Y-Z-t.
+
+__ 8a. If this is not an incremental release, also branch cvs: papi-X-Y-Z-b.
+
+__ 9. Export the tag to a clean working directory:
+	> cvs export -r <tag> <module> ex:
+	> cvs export -r papi-3-7-2-t papi
+
+__ 10. Delete any unneccessary files or directories
+		particularly .doc and .pdf files in the /doc directory
+
+__ 11. Rename the directory from papi to papi-X.Y.Z
+
+__ 12. tar the directory:
+	> tar -cvf papi-X.Y.Z.tar papi-X.Y.Z
+
+__ 13. zip the tarball:
+	gzip papi-X.Y.Z.tar
+
+__ 14. Copy the tarball to icl:/sw/www/icl/projects/papi/downloads
+
+__ 15. Check permissions on the tarball. 664 is good. 
+
+__ 16. Create a link with supporting text on the PAPI software web page.
+
+__ 17. Create a News item on the PAPI Web page.
+
+__ 18. Email the papi developer and discussion lists with an announcement.
+
+__ 19. Post the announcement on the PAPI User Forum.
+
+
+
+	
