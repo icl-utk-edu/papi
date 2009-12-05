@@ -374,25 +374,31 @@ libpfm's Makefile.
 Linux/x86 - Intel Pentium, Core, Core2, Atom, i7 and AMD Athlon, Opteron
 *****************************************************************************
 Linux/x86 kernels prior to 2.6.31 must be patched with either Perfctr or
-Perfmon and recompiled to support access to hardware counters. Kernels 
-including 2.6.31 and following include built-in support for the perf_counters
-or PCL (Performance Counters for Linux) interface. PAPI supports all three of
-these interfaces.
+Perfmon and recompiled to support access to hardware counters. Linux kernel
+2.6.31 includes built-in support for the perf_counter interface, also called
+PCL (Performance Counters for Linux). This interface was renamed to Perf_event
+in kernel 2.6.32 and above. PAPI supports all of these interfaces.
 
-PCL :
+PCL:
 If you are running Linux kernel 2.6.31 or later, your system has built-in 
-support for hardware counters through the perf_counters interface. No kernel 
+support for hardware counters through the perf_counter interface. No kernel 
 patch is required. The current version of configure for PAPI attempts to 
-automatically detect the presence of perf_counters, but if it fails, you may
+automatically detect the presence of perf_counter, but if it fails, you may
 need to specify
 	% ./configure --with-pcl=yes
 on the configure command line. Additionally, if the perf_counter.h file is 
 not found in an expected location you may need to specify a path with:
 	% ./configure  --with-pcl-incdir=<path>
 NOTE: The PERFCTR patch (see below) can be applied to a 2.6.3x kernel with 
-perf_counters enabled. In this case, configure will attempt to build PAPI 
+perf_counter enabled. In this case, configure will attempt to build PAPI 
 for PERFCTR instead of PCL. If you want to build for PCL, follow the above
 instructions to force a PCL build.
+
+PERF_EVENT:
+For Linux kernel 2.6.32 and higher, the name of the built-in interface to
+performance counters was renamed from perf_counter to perf_event. In this
+case, PAPI will automatically look for perf_event.h instead of perf_counter.h.
+All other instructions shown above for perf_event still apply.
 
 PERFMON2:
 Make sure that your Linux/PPC64 kernel is patched with the newest perfmon2
