@@ -209,9 +209,9 @@ static void stuff_regs(pfmlib_event_t *e, int plm, pfmlib_reg_t *pc, pfmlib_reg_
 	reg.sel_event_mask = (gen_mips64_pe[e[j].event].pme_code >> (cntr*8)) & 0xff;
 	pc[j].reg_value   = reg.val;
 	pc[j].reg_addr    = cntr*2;
-  pc[j].reg_num     = cntr;
+	pc[j].reg_num     = cntr;
 
-	__pfm_vbprintf("[CP0_25_%u(pmc%u)=0x%"PRIx64" event_mask=0x%x usr=%d os=%d sup=%d exl=%d int=1] %s\n",
+	__pfm_vbprintf("[CP0_25_%"PRIx64"(pmc%u)=0x%"PRIx64" event_mask=0x%x usr=%d os=%d sup=%d exl=%d int=1] %s\n",
 			pc[j].reg_addr,
 			pc[j].reg_num,
 			pc[j].reg_value,
