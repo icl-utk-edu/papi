@@ -45,6 +45,52 @@ extern int setup_p3_presets(int cputype);
 #endif
 
 #if (!defined(PPC64) && !defined(PPC32))
+inline_static int xlate_cpu_type_to_vendor(unsigned perfctr_cpu_type) {
+   switch (perfctr_cpu_type) {
+   case PERFCTR_X86_INTEL_P5:
+   case PERFCTR_X86_INTEL_P5MMX:
+   case PERFCTR_X86_INTEL_P6:
+   case PERFCTR_X86_INTEL_PII:
+   case PERFCTR_X86_INTEL_PIII:
+   case PERFCTR_X86_INTEL_P4:
+   case PERFCTR_X86_INTEL_P4M2:
+#ifdef PERFCTR_X86_INTEL_P4M3
+   case PERFCTR_X86_INTEL_P4M3:
+#endif
+#ifdef PERFCTR_X86_INTEL_PENTM
+   case PERFCTR_X86_INTEL_PENTM:
+#endif
+#ifdef PERFCTR_X86_INTEL_CORE
+   case PERFCTR_X86_INTEL_CORE:
+#endif
+#ifdef PERFCTR_X86_INTEL_CORE2
+   case PERFCTR_X86_INTEL_CORE2:
+#endif
+#ifdef PERFCTR_X86_INTEL_ATOM  /* family 6 model 28 */
+   case PERFCTR_X86_INTEL_ATOM:
+#endif
+#ifdef PERFCTR_X86_INTEL_COREI7  /* family 6 model 26 */
+   case PERFCTR_X86_INTEL_COREI7:
+#endif
+      return (PAPI_VENDOR_INTEL);
+#ifdef PERFCTR_X86_AMD_K8
+   case PERFCTR_X86_AMD_K8:
+#endif
+#ifdef PERFCTR_X86_AMD_K8C
+   case PERFCTR_X86_AMD_K8C:
+#endif
+#ifdef PERFCTR_X86_AMD_FAM10  /* this is defined in perfctr 2.6.29 */
+   case PERFCTR_X86_AMD_FAM10:
+#endif
+   case PERFCTR_X86_AMD_K7:
+      return (PAPI_VENDOR_AMD);
+   case PERFCTR_X86_CYRIX_MII:
+      return (PAPI_VENDOR_CYRIX);
+   default:
+      return (PAPI_VENDOR_UNKNOWN);
+   }
+}
+
 /* 
  * 1 if the processor is a P4, 0 otherwise
  */
@@ -183,6 +229,20 @@ int _linux_init_substrate(int cidx)
           MY_VECTOR.cmp_info.hardware_intr ? "does" : "does not");
    MY_VECTOR.cmp_info.itimer_ns = PAPI_INT_MPX_DEF_US * 1000;
    MY_VECTOR.cmp_info.clock_ticks = sysconf(_SC_CLK_TCK);
+
+   strcpy(_papi_hwi_system_info.hw_info.model_string, PERFCTR_CPU_NAME(&info));
+   _papi_hwi_system_info.hw_info.model = info.cpu_type;
+#if defined(PPC64)
+   _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_IBM;
+   if (strlen(_papi_hwi_system_info.hw_info.vendor_string) == 0)
+     strcpy(_papi_hwi_system_info.hw_info.vendor_string,"IBM");
+#elif defined(PPC32)
+   _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_FREESCALE;
+   if (strlen(_papi_hwi_system_info.hw_info.vendor_string) == 0)
+     strcpy(_papi_hwi_system_info.hw_info.vendor_string,"Freescale");
+#else
+   _papi_hwi_system_info.hw_info.vendor = xlate_cpu_type_to_vendor(info.cpu_type);
+#endif
 
    /* Setup presets last. Some platforms depend on earlier info */
 #if (!defined(PPC64) && !defined(PPC32))
