@@ -48,9 +48,10 @@ $(LIBRARY): $(OBJECTS)
 	$(AR) $(ARG64) ruv $(LIBRARY) $(OBJECTS) 
 
 $(SHLIB): $(SOURCES) $(SHLIBOBJS) 
-	rm -f $(SHLIB)
+	rm -f $(SHLIB) libpapi.so
 	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(LDFLAGS) $(SHLIBDEPS) 
 	-$(POST_BUILD)
+	-ln -sf $(SHLIB) libpapi.so  
 
 papi_fwrappers_.c: papi_fwrappers.c $(HEADERS)
 	$(CPP) -DFORTRANUNDERSCORE papi_fwrappers.c > papi_fwrappers_.c 
@@ -167,19 +168,6 @@ bgp_tests:$(LIBRARY) null
 	$(SETPATH) cd ctests/bgp; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-DSUBSTRATE=\\\"$(SUBSTR).h\\\" $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" bgp_test
 
 
-# This is done by configure now
-#genpapifdef: genpapifdef.c papi.h papi_preset.h papi_data.c
-#	$(CC) -I. genpapifdef.c -o genpapifdef
-
-#fpapi.h: papi.h
-#	./genpapifdef -c > fpapi.h
-
-#f77papi.h: papi.h
-#	./genpapifdef -f77 > f77papi.h
-
-#f90papi.h: papi.h
-#	./genpapifdef -f90 > f90papi.h
-
 
 test: ctests
 	$(SETPATH) ctests/zero
@@ -199,7 +187,7 @@ ftests: null
 	$(SETPATH) cd ftests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" F77="$(F77)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" FFLAGS="-I.. $(FFLAGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="$(LINKLIB)" $(TARGETS)
 
 clean: native_clean
-	-rm -rf $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c	papi_fwrappers__.c PAPI_FWRAPPERS.c papi_events_table.h
+	-rm -rf $(LIBRARY) $(SHLIB) libpapi.so $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c papi_events_table.h
 	-cd ctests; $(MAKE) clean
 	-cd ftests; $(MAKE) clean
 	-cd utils;  $(MAKE) clean
