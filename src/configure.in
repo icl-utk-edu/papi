@@ -1751,7 +1751,7 @@ elif test "$MAKEVER" = "bgl"; then
    # -DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER 
    CFLAGS="-D_BGL -gdwarf-2 -O2 -Wall -I. -DCOMP_VECTOR=_bgl_vectors"
    FFLAGS="-gdwarf-2 -O2 -Wall -Dlinux"
-   OPTFLAGS='-g -O3 -I$(BGLSYS_ROOT)/include'
+   OPTFLAGS="-g -O3"
    LDFLAGS='-L$(BGLSYS_ROOT)/lib -lbgl_perfctr.rts -lmpich.rts -lmsglayer.rts -lrts.rts -ldevices.rts'
    LIBRARY=libpapi.a
    SHLIB=libpapi.so
@@ -1770,19 +1770,16 @@ elif test "$MAKEVER" = "bgl"; then
    MISCOBJS='$(MISCSRCS:.c=.o)'
    tests=bgl_tests
 elif test "$MAKEVER" = "bgp"; then
+   FILENAME=Makefile.inc
    SHOW_CONF=show_bgp_conf
    BGP_SYSDIR=/bgsys/drivers/ppcfloor
-   BGP_INSTALLDIR='${BGP_SYSDIR}'
    BGP_GNU_LINUX_PATH='${BGP_SYSDIR}/gnu-linux'
-   BGP_ARCH_PATH='${BGP_INSTALLDIR}/arch'
-   BGP_RUNTIME_PATH='${BGP_INSTALLDIR}/runtime'
-   BGP_PAPI_PATH=/bgusr/ngoracke/papi-10-17-patched
-   prefix='${BGP_PAPI_PATH}'
-   LDFLAGS='-L$(BGP_INSTALLDIR)/runtime/SPI -lSPI.cna'
-   CFLAGS='-D_BGP -g -gdwarf-2 -O2 -Wall -I$(BGP_ARCH_PATH)/include -I. -DCOMP_VECTOR=_bgp_vectors'
+   #CC='$(BGP_GNU_LINUX_PATH)/bin/powerpc-bgp-linux-gcc'
+   LDFLAGS='-L$(BGP_SYSDIR)/runtime/SPI -lSPI.cna'
+   CFLAGS='-D_BGP -g -gdwarf-2 -O2 -Wall -I. -DCOMP_VECTOR=_bgp_vectors'
    # Some nice flags to add to CFLAGS when debugging 
    #CFLAGS='$(CFLAGS) -DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER'
-   FFLAGS='-g -gdwarf-2 -O2 -Wall -I$(BGP_ARCH_PATH)/include -Dlinux'
+   FFLAGS='-g -gdwarf-2 -O2 -Wall -I. -Dlinux'
    OPTFLAGS="-g -Wall -O3"
    TOPTFLAGS="-g -Wall -O0"
    LIBRARY=libpapi.a
@@ -1936,8 +1933,7 @@ elif (test "$MAKEVER" = "solaris-ultra" || test "$MAKEVER" = "solaris-ultra-64")
       CPP="$CC -E"
       CC_R="$CC -mt"
       CC_SHR="$CC -ztext -G -Kpic"  
-      CFLAGS="-xtarget=ultra3 -xarch=v8plusa -DNO_VARARG_MACRO -D__EXTENSIONS__ -DPAPI_NO_MEMORY_MANAGEMENT  -DCOMP_VECTOR=_solaris_vectors"
-      ORY_MANAGEMENT="-DCOMP_VECTOR=_solaris_vectors"
+      CFLAGS="-xtarget=ultra3 -xarch=v8plusa -DNO_VARARG_MACRO -D__EXTENSIONS__ -DPAPI_NO_MEMORY_MANAGEMENT -DCOMP_VECTOR=_solaris_vectors"
       SMPCFLGS=-xexplicitpar
       OMPCFLGS=-xopenmp
       F77=f90
@@ -2038,7 +2034,6 @@ AC_SUBST(LIBS)
 AC_SUBST(TARGETS)
 AC_SUBST(CC_R)
 AC_SUBST(CC_SHR)
-AC_SUBST(ORY_MANAGEMENT)
 AC_SUBST(SMPCFLGS)
 AC_SUBST(OMPCFLGS)
 AC_SUBST(NOOPT)
@@ -2056,20 +2051,13 @@ AC_SUBST(MISCHDRS)
 AC_SUBST(SHRFLAGS)
 AC_SUBST(PE)
 AC_SUBST(COMPILER)
-AC_SUBST(BLRTS_GNU_ROOT)
-AC_SUBST(BGLSYS_ROOT)
 AC_SUBST(SHLIBDEPS)
 AC_SUBST(CPU_TYPE)
 AC_SUBST(TOPTFLAGS)
-AC_SUBST(BGP_ARCH_PATH)
-AC_SUBST(BGP_GNU_LINUX_PATH)
-AC_SUBST(BGP_INSTALLDIR)
-AC_SUBST(BGP_PAPI_PATH)
-AC_SUBST(BGP_RUNTIME_PATH)
-AC_SUBST(BGP_SYSDIR)
-AC_SUBST(DESTDIR)
 AC_SUBST(TESTS)
 AC_SUBST(SHOW_CONF)
+AC_SUBST(BGLSYS_ROOT)
+AC_SUBST(BGP_SYSDIR)
 
 if test "$cross_compiling" = "yes" ; then
    AC_MSG_NOTICE(Compiling genpapifdef with $nativecc because cross compiling)
