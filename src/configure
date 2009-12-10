@@ -9503,7 +9503,7 @@ elif test "$MAKEVER" = "bgl"; then
    # -DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER
    CFLAGS="-D_BGL -gdwarf-2 -O2 -Wall -I. -DCOMP_VECTOR=_bgl_vectors"
    FFLAGS="-gdwarf-2 -O2 -Wall -Dlinux"
-   OPTFLAGS="-g -O3"
+   OPTFLAGS='-g -O3 -I$(BGLSYS_ROOT)/include'
    LDFLAGS='-L$(BGLSYS_ROOT)/lib -lbgl_perfctr.rts -lmpich.rts -lmsglayer.rts -lrts.rts -ldevices.rts'
    LIBRARY=libpapi.a
    SHLIB=libpapi.so

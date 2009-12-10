@@ -166,7 +166,11 @@ extern int papi_num_components;
     Now it's defined globally as 8 for everything. Mainly applies to max terms in
     derived events.
 */
+#ifdef _BGP
+#define PAPI_MAX_COUNTER_TERMS	19
+#else
 #define PAPI_MAX_COUNTER_TERMS	8
+#endif
 
 /* these vestigial pointers are to structures defined in the components
     they are opaque to the framework and defined as void at this level

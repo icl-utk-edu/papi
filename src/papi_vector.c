@@ -88,7 +88,7 @@ long long vec_dummy_get_real_cycles (void)
   return((long long)cyc);
 }
 
-#ifdef _BGL
+#if ((defined _BGL) || (defined _BGP))
    #include <stdlib.h>
    #include <sys/time.h>
    #include <sys/resource.h>
@@ -97,7 +97,7 @@ long long vec_dummy_get_real_cycles (void)
 long long vec_dummy_get_virt_usec (const hwd_context_t *zero)
 {
   long long retval;
-#ifdef _BGL
+#if ((defined _BGL) || (defined _BGP))
       struct rusage ruse;
       getrusage(RUSAGE_SELF, &ruse);
       retval = (long long)(ruse.ru_utime.tv_sec * 1000000 + ruse.ru_utime.tv_usec);
