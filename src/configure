@@ -2062,7 +2062,6 @@ if test "$OS" = "bgl"; then
    host=x86_64
    ffsll=yes
    cross_compiling=yes
-   perfctr=6
 fi
 if test "$OS" = "bgp"; then
    if test "x$CC" = "x"; then
@@ -2079,7 +2078,6 @@ if test "$OS" = "bgp"; then
    host=x86_64
    ffsll=yes
    cross_compiling=yes
-   perfctr=6
 fi
 if test "$OS" = "linux"; then
    MISCSRCS=hwinfo_linux.c
@@ -9528,7 +9526,7 @@ elif test "$MAKEVER" = "bgp"; then
    BGP_GNU_LINUX_PATH='${BGP_SYSDIR}/gnu-linux'
    #CC='$(BGP_GNU_LINUX_PATH)/bin/powerpc-bgp-linux-gcc'
    LDFLAGS='-L$(BGP_SYSDIR)/runtime/SPI -lSPI.cna'
-   CFLAGS='-D_BGP -g -gdwarf-2 -O2 -Wall -I. -DCOMP_VECTOR=_bgp_vectors'
+   CFLAGS='-D_BGP -g -gdwarf-2 -O2 -Wall -I. -I$(BGP_SYSDIR)/arch/include -DCOMP_VECTOR=_bgp_vectors'
    # Some nice flags to add to CFLAGS when debugging
    #CFLAGS='$(CFLAGS) -DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER'
    FFLAGS='-g -gdwarf-2 -O2 -Wall -I. -Dlinux'

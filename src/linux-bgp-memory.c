@@ -24,7 +24,7 @@ int init_bgp( PAPI_mh_info_t* pMem_Info );
  *
  * Fills in memory information - effectively set to all 0x00's
  */
-extern int _papi_bgp_get_memory_info( PAPI_hw_info_t* pHwInfo, int pCPU_Type ){
+extern int _bgp_get_memory_info( PAPI_hw_info_t* pHwInfo, int pCPU_Type ){
   int retval = 0;
 
   switch ( pCPU_Type ) {
@@ -42,7 +42,7 @@ extern int _papi_bgp_get_memory_info( PAPI_hw_info_t* pHwInfo, int pCPU_Type ){
  *
  * NOTE:  Currently, all values set to -1
  */
-extern int _papi_bgp_get_dmem_info(PAPI_dmem_info_t* pDmemInfo) {
+extern int _bgp_get_dmem_info(PAPI_dmem_info_t* pDmemInfo) {
 //  pid_t xPID = getpid();
 //  prpsinfo_t xInfo;
 //  char xFile[256];

@@ -38,10 +38,10 @@
 /* Defined in papa_data.c */
 extern papi_mdi_t _papi_hwi_system_info;
 /* Defined in linux-bgp-preset-events.c */
-extern hwi_search_t* _papi_bgp_preset_map;
+extern hwi_search_t* _bgp_preset_map;
 /* Defined in linux-bgp-memory.c */
-extern int _papi_bgp_get_memory_info( PAPI_hw_info_t* pHwInfo, int pCPU_Type );
-extern int _papi_bgp_get_dmem_info(PAPI_dmem_info_t* pDmemInfo);
+extern int _bgp_get_memory_info( PAPI_hw_info_t* pHwInfo, int pCPU_Type );
+extern int _bgp_get_dmem_info(PAPI_dmem_info_t* pDmemInfo);
 
 // BG/P globals
 hwi_search_t* preset_search_map;
@@ -90,7 +90,7 @@ void _papi_hwd_unlock(int lock) {
  *        of the map file will fail.    We just short circuit this code and return
  *        PAPI_OK.  Commented out code is carry-over from BG/L.
  */
-int _papi_bgp_update_shlib_info() {
+int _bgp_update_shlib_info() {
 //  char fname[PAPI_HUGE_STR_LEN];
 //  PAPI_address_map_t *tmp, *tmp2;
 //  FILE *f;
@@ -230,7 +230,7 @@ int _papi_bgp_update_shlib_info() {
  *
  * Initialize system information structure
  */
-int _papi_bgp_get_system_info(void) {
+int _bgp_get_system_info(void) {
   _BGP_Personality_t bgp;
   int tmp;
   unsigned utmp;
@@ -238,9 +238,9 @@ int _papi_bgp_get_system_info(void) {
 
   // NOTE:  Executable regions, require reading the /proc/pid/maps file
   //        and the pid is not filled in the system_info structure.
-  //        Basically, _papi_bgp_update_shlib_info() simply returns
+  //        Basically, _bgp_update_shlib_info() simply returns
   //        with PAPI_OK
-  _papi_bgp_update_shlib_info();
+  _bgp_update_shlib_info();
 
   /* Hardware info */
   if((tmp=Kernel_GetPersonality(&bgp, sizeof bgp))) {
@@ -280,12 +280,12 @@ int _papi_bgp_get_system_info(void) {
   }
 
   _papi_hwi_system_info.hw_info.mhz = (float) BGP_Personality_clockMHz(&bgp);
-  SUBDBG("_papi_bgp_get_system_info:  Detected MHZ is %f\n",_papi_hwi_system_info.hw_info.mhz);
+  SUBDBG("_bgp_get_system_info:  Detected MHZ is %f\n",_papi_hwi_system_info.hw_info.mhz);
 
   // Memory information structure not filled in - same as BG/L
   // _papi_hwi_system_info.hw_info.mem_hierarchy = ???;
-
-  _papi_hwi_system_info.mpx_info.timer_sig = PAPI_NULL;
+  // The mpx_info structure disappeared in PAPI-C
+  //_papi_hwi_system_info.mpx_info.timer_sig = PAPI_NULL;
 
   return(PAPI_OK);
 }
@@ -300,7 +300,7 @@ inline_static int setup_bgp_presets(int cpu_type) {
   switch ( cpu_type ) {
     default:
       SUBDBG("Before setting preset_search_map...\n");
-      preset_search_map = (hwi_search_t*)&_papi_bgp_preset_map;
+      preset_search_map = (hwi_search_t*)&_bgp_preset_map;
       SUBDBG("After setting preset_search_map...\n");
   }
   SUBDBG("Before calling _papi_hwi_setup_all_presets...\n");
@@ -312,7 +312,7 @@ inline_static int setup_bgp_presets(int cpu_type) {
  *
  * All state is kept in BG/P UPC structures
  */
-int _papi_bgp_init_control_state(hwd_control_state_t * ptr) {
+int _bgp_init_control_state(hwd_control_state_t * ptr) {
   int i;
   for (i=1; i<BGP_UPC_MAX_MONITORED_EVENTS; i++)
     ptr->counters[i] = 0;
@@ -325,7 +325,7 @@ int _papi_bgp_init_control_state(hwd_control_state_t * ptr) {
  *
  * Error condition, as no program events can be added
  */
-int _papi_bgp_add_prog_event(hwd_control_state_t * state, unsigned int code, void *tmp, EventInfo_t *tmp2) {
+int _bgp_add_prog_event(hwd_control_state_t * state, unsigned int code, void *tmp, EventInfo_t *tmp2) {
 
   return (PAPI_ESBSTR);
 }
@@ -335,7 +335,7 @@ int _papi_bgp_add_prog_event(hwd_control_state_t * state, unsigned int code, voi
  *
  * All state is kept in BG/P UPC structures
  */
-int _papi_bgp_set_domain(hwd_control_state_t * cntrl, int domain) {
+int _bgp_set_domain(hwd_control_state_t * cntrl, int domain) {
 
   return(PAPI_OK);
 }
@@ -345,7 +345,7 @@ int _papi_bgp_set_domain(hwd_control_state_t * cntrl, int domain) {
  *
  * All state is kept in BG/P UPC structures
  */
-int _papi_bgp_init(hwd_context_t *ctx) {
+int _bgp_init(hwd_context_t *ctx) {
 
   return(PAPI_OK);
 
@@ -392,15 +392,15 @@ int _papi_bgp_init(hwd_context_t *ctx) {
  * Global initialization - does initial PAPI setup and
  *                         calls BGP_UPC_Initialize()
  */
-int _papi_bgp_init_global(void) {
+int _bgp_init_global(void) {
   int retval;
 
   /*
    * Fill in what we can of the papi_system_info
    */
-  SUBDBG("Before _papi_bgp_get_system_info()...\n");
-  retval = _papi_bgp_get_system_info();
-  SUBDBG("After _papi_bgp_get_system_info(), retval=%d...\n", retval);
+  SUBDBG("Before _bgp_get_system_info()...\n");
+  retval = _bgp_get_system_info();
+  SUBDBG("After _bgp_get_system_info(), retval=%d...\n", retval);
   if (retval != PAPI_OK)
     return (retval);
 
@@ -416,10 +416,10 @@ int _papi_bgp_init_global(void) {
   /*
    * Setup memory info
    */
-  SUBDBG("Before _papi_bgp_get_memory_info...\n");
-  retval = _papi_bgp_get_memory_info(&_papi_hwi_system_info.hw_info,
+  SUBDBG("Before _bgp_get_memory_info...\n");
+  retval = _bgp_get_memory_info(&_papi_hwi_system_info.hw_info,
                                      (int) _papi_hwi_system_info.hw_info.model);
-  SUBDBG("After _papi_bgp_get_memory_info, retval=%d...\n", retval);
+  SUBDBG("After _bgp_get_memory_info, retval=%d...\n", retval);
   if (retval)
     return (retval);
 
@@ -443,7 +443,7 @@ int _papi_bgp_init_global(void) {
  *
  * Called once per process - nothing to do
  */
-int _papi_bgp_shutdown_global(void) {
+int _bgp_shutdown_global(void) {
 
   return PAPI_OK;
 }
@@ -457,8 +457,8 @@ int _papi_bgp_shutdown_global(void) {
  * can be mapped to the specified counter location.
  * Otherwise, the event cannot be mapped.
  */
-int _papi_bgp_bpt_map_avail(hwd_reg_alloc_t* dst, int ctr) {
-  // printf("_papi_bgp_bpt_map_avail: Counter = %d\n", ctr);
+int _bgp_bpt_map_avail(hwd_reg_alloc_t* dst, int ctr) {
+  // printf("_bgp_bpt_map_avail: Counter = %d\n", ctr);
   if ((int)get_bgp_native_event_id(dst->id)%BGP_UPC_MAX_MONITORED_EVENTS == ctr)
     return(1);
 
@@ -472,8 +472,8 @@ int _papi_bgp_bpt_map_avail(hwd_reg_alloc_t* dst, int ctr) {
  * Since all events are already exclusively mapped for counter mode 0,
  * there is nothing to do.  Returns nothing.
  */
-void _papi_bgp_bpt_map_set(hwd_reg_alloc_t *dst, int ctr) {
-  // printf("_papi_bgp_bpt_map_set: Counter = %d\n", ctr);
+void _bgp_bpt_map_set(hwd_reg_alloc_t *dst, int ctr) {
+  // printf("_bgp_bpt_map_set: Counter = %d\n", ctr);
 
   return;
 }
@@ -486,8 +486,8 @@ void _papi_bgp_bpt_map_set(hwd_reg_alloc_t *dst, int ctr) {
  * user mode 0 and 1, all events have an exclusive mapping.
  * Always returns true.
  */
-int _papi_bgp_bpt_map_exclusive(hwd_reg_alloc_t * dst) {
-  // printf("_papi_bgp_bpt_map_exclusive:\n");
+int _bgp_bpt_map_exclusive(hwd_reg_alloc_t * dst) {
+  // printf("_bgp_bpt_map_exclusive:\n");
 
   return (1);
 }
@@ -505,8 +505,8 @@ int _papi_bgp_bpt_map_exclusive(hwd_reg_alloc_t * dst) {
  *
  * Always return false, as there are no 'shared' resources.
  */
-int _papi_bgp_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
-  // printf("_papi_bgp_bpt_map_shared:\n");
+int _bgp_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
+  // printf("_bgp_bpt_map_shared:\n");
 
   return (0);
 }
@@ -523,8 +523,8 @@ int _papi_bgp_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
  * this routine should never get called because all events are
  * exclusively mapped and no resource are shared.
  */
-void _papi_bgp_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
-  // printf("_papi_bgp_bpt_map_preempt:\n");
+void _bgp_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
+  // printf("_bgp_bpt_map_preempt:\n");
 
   return;
 }
@@ -534,8 +534,8 @@ void _papi_bgp_bpt_map_preempt(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
  *
  * Simply returns, as there is nothing to do.
  */
-void _papi_bgp_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
-  // printf("_papi_bgp_bpt_map_update:\n");
+void _bgp_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
+  // printf("_bgp_bpt_map_update:\n");
 
   return;
 }
@@ -546,7 +546,7 @@ void _papi_bgp_bpt_map_update(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
  * Sets up the UPC configuration to monitor those events
  * as identified in the event set.
  */
-int _papi_bgp_allocate_registers(EventSetInfo_t *ESI) {
+int _bgp_allocate_registers(EventSetInfo_t *ESI) {
   int i, natNum;
   BGP_UPC_Event_Id_t xEventId;
 
@@ -554,7 +554,7 @@ int _papi_bgp_allocate_registers(EventSetInfo_t *ESI) {
    * If an active UPC unit, return error
    */
   if (BGP_UPC_Check_Active()) {
-    SUBDBG("_papi_bgp_allocate_registers:  UPC is active...\n");
+    SUBDBG("_bgp_allocate_registers:  UPC is active...\n");
     return PAPI_ESBSTR;
   }
 
@@ -562,7 +562,7 @@ int _papi_bgp_allocate_registers(EventSetInfo_t *ESI) {
    * If a counter mode of 1, return error
    */
   if (BGP_UPC_Get_Counter_Mode()) {
-    SUBDBG("_papi_bgp_allocate_registers:  Inconsistent counter mode...\n");
+    SUBDBG("_bgp_allocate_registers:  Inconsistent counter mode...\n");
     return PAPI_ESBSTR;
   }
 
@@ -570,10 +570,10 @@ int _papi_bgp_allocate_registers(EventSetInfo_t *ESI) {
    * Start monitoring the events...
    */
   natNum = ESI->NativeCount;
-//  printf("_papi_bgp_allocate_registers:  natNum=%d\n", natNum);
+//  printf("_bgp_allocate_registers:  natNum=%d\n", natNum);
   for (i = 0; i < natNum; i++) {
     xEventId = get_bgp_native_event_id(ESI->NativeInfoArray[i].ni_event);
-//    printf("_papi_bgp_allocate_registers:  xEventId = %d\n", xEventId);
+//    printf("_bgp_allocate_registers:  xEventId = %d\n", xEventId);
     if (!BGP_UPC_Check_Active_Event(xEventId)) {
       // NOTE:  We do not have to start monitoring for elapsed time...  It is always being
       //        monitored at location 255...
@@ -583,9 +583,9 @@ int _papi_bgp_allocate_registers(EventSetInfo_t *ESI) {
          * for the event.  This will automatically zero the counter and turn off any
          * threshold value...
          */
-//        printf("_papi_bgp_allocate_registers:  Event id %d not being monitored...\n", xEventId);
+//        printf("_bgp_allocate_registers:  Event id %d not being monitored...\n", xEventId);
         if (BGP_UPC_Monitor_Event(xEventId, BGP_UPC_CFG_EDGE_DEFAULT) < 0) {
-//          printf("_papi_bgp_allocate_registers:  Monitor_Event failed...\n");
+//          printf("_bgp_allocate_registers:  Monitor_Event failed...\n");
           return PAPI_ESBSTR;
         }
       }
@@ -598,24 +598,24 @@ int _papi_bgp_allocate_registers(EventSetInfo_t *ESI) {
        * started monitoring the event.  So, simply zero the counter and turn
        * off any threshold value...
        */
-//      printf("_papi_bgp_allocate_registers:  Event id %d is already being monitored...\n", xEventId);
+//      printf("_bgp_allocate_registers:  Event id %d is already being monitored...\n", xEventId);
       // NOTE:  Can't zero the counter or reset the threshold for the timestamp counter...
       if (ESI->NativeInfoArray[i].ni_event != PNE_BGP_IC_TIMESTAMP) {
         if (BGP_UPC_Zero_Counter_Value(xEventId) < 0) {
-//          printf("_papi_bgp_allocate_registers:  Zero_Counter failed...\n");
+//          printf("_bgp_allocate_registers:  Zero_Counter failed...\n");
           return PAPI_ESBSTR;
         }
         if (BGP_UPC_Set_Counter_Threshold_Value(xEventId, 0) < 0) {
-//          printf("_papi_bgp_allocate_registers:  Set_Counter_Threshold_Value failed...\n");
+//          printf("_bgp_allocate_registers:  Set_Counter_Threshold_Value failed...\n");
           return PAPI_ESBSTR;
         }
       }
     }
     ESI->NativeInfoArray[i].ni_position = xEventId%BGP_UPC_MAX_MONITORED_EVENTS;
-//    printf("_papi_bgp_allocate_registers:  ESI->NativeInfoArray[i].ni_position=%d\n", ESI->NativeInfoArray[i].ni_position);
+//    printf("_bgp_allocate_registers:  ESI->NativeInfoArray[i].ni_position=%d\n", ESI->NativeInfoArray[i].ni_position);
   }
 
-//  printf("_papi_bgp_allocate_registers:  Exiting normally...\n");
+//  printf("_bgp_allocate_registers:  Exiting normally...\n");
   // NOTE:  For some unknown reason, a successful return from this routine is
   //        indicated with a non-zero value...  We choose 1...
   return 1;
@@ -631,7 +631,7 @@ int _papi_bgp_allocate_registers(EventSetInfo_t *ESI) {
  * Since no BGP specific state is kept at the PAPI level, there is
  * nothing to update and we simply return.
  */
-int _papi_bgp_update_control_state(hwd_control_state_t *this_state,
+int _bgp_update_control_state(hwd_control_state_t *this_state,
                                    NativeInfo_t *native, int count, hwd_context_t * ctx) {
 
   return PAPI_OK;
@@ -642,7 +642,7 @@ int _papi_bgp_update_control_state(hwd_control_state_t *this_state,
  *
  * Start UPC unit(s)
  */
-int _papi_bgp_start(hwd_context_t *ctx, hwd_control_state_t *ctrlstate) {
+int _bgp_start(hwd_context_t *ctx, hwd_control_state_t *ctrlstate) {
   sigset_t mask_set;
   sigset_t old_set;
   sigemptyset(&mask_set);
@@ -658,7 +658,7 @@ int _papi_bgp_start(hwd_context_t *ctx, hwd_control_state_t *ctrlstate) {
  *
  * Stop UPC unit(s)
  */
-int _papi_bgp_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
+int _bgp_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
   sigset_t mask_set;
   sigset_t old_set;
   sigemptyset(&mask_set);
@@ -674,11 +674,11 @@ int _papi_bgp_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
  *
  * Read the counters into local storage
  */
-int _papi_bgp_read(hwd_context_t *ctx, hwd_control_state_t *this_state, long_long **dp, int flags)
+int _bgp_read(hwd_context_t *ctx, hwd_control_state_t *this_state, long_long **dp, int flags)
 {
-//  printf("_papi_bgp_read:  this_state* = %p\n", this_state);
-//  printf("_papi_bgp_read:  (long_long*)&this_state->counters[0] = %p\n", (long_long*)&this_state->counters[0]);
-//  printf("_papi_bgp_read:  (long_long*)&this_state->counters[1] = %p\n", (long_long*)&this_state->counters[1]);
+//  printf("_bgp_read:  this_state* = %p\n", this_state);
+//  printf("_bgp_read:  (long_long*)&this_state->counters[0] = %p\n", (long_long*)&this_state->counters[0]);
+//  printf("_bgp_read:  (long_long*)&this_state->counters[1] = %p\n", (long_long*)&this_state->counters[1]);
     sigset_t mask_set;
   sigset_t old_set;
   sigemptyset(&mask_set);
@@ -692,15 +692,15 @@ int _papi_bgp_read(hwd_context_t *ctx, hwd_control_state_t *this_state, long_lon
    sigprocmask(SIG_UNBLOCK, &mask_set, NULL);
   *dp = (long_long*)&this_state->counters[0];
  
-//  printf("_papi_bgp_read:  dp = %p\n", dp);
-//  printf("_papi_bgp_read:  *dp = %p\n", *dp);
-//  printf("_papi_bgp_read:  (*dp)[0]* = %p\n", &((*dp)[0]));
-//  printf("_papi_bgp_read:  (*dp)[1]* = %p\n", &((*dp)[1]));
-//  printf("_papi_bgp_read:  (*dp)[2]* = %p\n", &((*dp)[2]));
+//  printf("_bgp_read:  dp = %p\n", dp);
+//  printf("_bgp_read:  *dp = %p\n", *dp);
+//  printf("_bgp_read:  (*dp)[0]* = %p\n", &((*dp)[0]));
+//  printf("_bgp_read:  (*dp)[1]* = %p\n", &((*dp)[1]));
+//  printf("_bgp_read:  (*dp)[2]* = %p\n", &((*dp)[2]));
 //  int i;
 //  for (i=0; i<256; i++)
 //    if ((*dp)[i])
-//      printf("_papi_bgp_read: i=%d, (*dp)[i]=%lld\n", i, (*dp)[i]);
+//      printf("_bgp_read: i=%d, (*dp)[i]=%lld\n", i, (*dp)[i]);
 
   return PAPI_OK;
 }
@@ -710,7 +710,7 @@ int _papi_bgp_read(hwd_context_t *ctx, hwd_control_state_t *this_state, long_lon
  *
  * Zero the counter values
  */
-int _papi_bgp_reset(hwd_context_t *ctx, hwd_control_state_t *ctrlstate) {
+int _bgp_reset(hwd_context_t *ctx, hwd_control_state_t *ctrlstate) {
 // NOTE:  PAPI can reset the counters with the UPC running.  One way it happens
 //        is with PAPI_accum.  In that case, stop and restart the UPC, resetting
 //        the counters.
@@ -720,13 +720,13 @@ int _papi_bgp_reset(hwd_context_t *ctx, hwd_control_state_t *ctrlstate) {
   sigaddset(&mask_set, SIGXCPU);
   sigprocmask(SIG_BLOCK, &mask_set, &old_set);
   if (BGP_UPC_Check_Active()) {
-    // printf("_papi_bgp_reset:  BGP_UPC_Stop()\n");
+    // printf("_bgp_reset:  BGP_UPC_Stop()\n");
     BGP_UPC_Stop();
-    // printf("_papi_bgp_reset:  BGP_UPC_Start(BGP_UPC_RESET_COUNTERS)\n");
+    // printf("_bgp_reset:  BGP_UPC_Start(BGP_UPC_RESET_COUNTERS)\n");
     BGP_UPC_Start(BGP_UPC_RESET_COUNTERS);
   }
   else {
-    // printf("_papi_bgp_reset:  BGP_UPC_Zero_Counter_Values()\n");
+    // printf("_bgp_reset:  BGP_UPC_Zero_Counter_Values()\n");
     BGP_UPC_Zero_Counter_Values();
   }
   sigprocmask(SIG_UNBLOCK, &mask_set, NULL);
@@ -740,7 +740,7 @@ int _papi_bgp_reset(hwd_context_t *ctx, hwd_control_state_t *ctrlstate) {
  * including the master thread.
  * Effectively a no-op, same as BG/L...
  */
-int _papi_bgp_shutdown(hwd_context_t * ctx) {
+int _bgp_shutdown(hwd_context_t * ctx) {
 
   return(PAPI_OK);
 }
@@ -751,7 +751,7 @@ int _papi_bgp_shutdown(hwd_context_t * ctx) {
  * Write counter values
  * NOTE:  Could possible support, but signal error as BG/L does...
  */
-int _papi_bgp_write(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long * from) {
+int _bgp_write(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long * from) {
 
   return(PAPI_ESBSTR);
 }
@@ -761,7 +761,7 @@ int _papi_bgp_write(hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long 
  *
  * Same as BG/L - simple return
  */
-void _papi_bgp_dispatch_timer(int signal, hwd_siginfo_t * si, void *context) {
+void _bgp_dispatch_timer(int signal, hwd_siginfo_t * si, void *context) {
 
   return;
 }
@@ -769,22 +769,24 @@ void _papi_bgp_dispatch_timer(int signal, hwd_siginfo_t * si, void *context) {
 
 
 
-void user_signal_handler(int signum, siginfo_t *siginfo, void *mycontext) {
+void user_signal_handler(int signum, hwd_siginfo_t *siginfo, void *mycontext) {
 
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread = NULL;
 	int isHardware = 1;
-	caddr_t pc;	
+	caddr_t pc;
 	_papi_hwi_context_t ctx;
 	BGP_UPC_Event_Id_t xEventId;
-	int thresh, event_index, i;
+//	int thresh;
+	int event_index, i;
 	long_long overflow_bit;
 	int64_t threshold;
+
 	ctx.si = siginfo;
 	ctx.ucontext = (ucontext_t*)mycontext;
 
 	ucontext_t *context = (ucontext_t*)mycontext;
-	pc=context->uc_mcontext.regs->nip;
+	pc = (caddr_t)context->uc_mcontext.regs->nip;
 	thread = _papi_hwi_lookup_thread();
 	//int cidx = (int) &thread;
 	ESI = thread->running_eventset[0];
@@ -808,7 +810,7 @@ void user_signal_handler(int signum, siginfo_t *siginfo, void *mycontext) {
 		}
 		overflow_bit ^= 1 << xEventId;
 		//ESI->overflow.handler(ESI->EventSetIndex, pc, 0, (void *) &ctx); 
-		_papi_hwi_dispatch_overflow_signal((void *) &ctx, &isHardware, overflow_bit, 0, &thread, pc, 0);
+		_papi_hwi_dispatch_overflow_signal((void *) &ctx, pc, &isHardware, overflow_bit, 0, &thread, 0);
 		//thresh = (int)(*ESI->overflow.threshold + BGP_UPC_Read_Counter_Value(xEventId, 1)); //(int)BGP_UPC_Get_Counter_Threshold_Value(xEventId));
 		//printf("thresh %llu val %llu\n", (int64_t)*ESI->overflow.threshold, BGP_UPC_Read_Counter_Value(xEventId, 1));
 		threshold = (int64_t)*ESI->overflow.threshold + BGP_UPC_Read_Counter_Value(xEventId, 1);
@@ -828,7 +830,7 @@ void user_signal_handler(int signum, siginfo_t *siginfo, void *mycontext) {
  *
  * Commented out code is carry-over from BG/L...
  */
-int _papi_bgp_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) {
+int _bgp_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) {
         int rc = 0;
 	BGP_UPC_Event_Id_t xEventId; // = get_bgp_native_event_id(EventCode);
         xEventId = get_bgp_native_event_id(ESI->NativeInfoArray[EventIndex].ni_event);
@@ -924,7 +926,7 @@ int _papi_bgp_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) 
  *
  * Same as for BG/L, routine not used and returns error
  */
-int _papi_bgp_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold) {
+int _bgp_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold) {
    /* This function is not used and shouldn't be called. */
 
    return (PAPI_ESBSTR);
@@ -935,9 +937,7 @@ int _papi_bgp_set_profile(EventSetInfo_t * ESI, int EventIndex, int threshold) {
  *
  * Same as for BG/L...
  */
-int _papi_bgp_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI) {
-  ESI->profile.overflowcount = 0;
-
+int _bgp_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI) {
   return (PAPI_OK);
 }
 
@@ -946,8 +946,8 @@ int _papi_bgp_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI) {
  *
  * Same as for BG/L - initialize the domain
  */
-int _papi_bgp_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option) {
-//  extern int _papi_bgp_set_domain(hwd_control_state_t * cntrl, int domain);
+int _bgp_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option) {
+//  extern int _bgp_set_domain(hwd_control_state_t * cntrl, int domain);
 
   switch (code) {
     case PAPI_DOMAIN:
@@ -956,7 +956,7 @@ int _papi_bgp_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option) {
 //    Commented out code is carry-over from BG/L, but
 //    does not compile, as machdep does not exist in ESI
 //    for 3.9.0 ...
-//      return (_papi_bgp_set_domain(&option->domain.ESI->machdep, option->domain.domain));
+//      return (_bgp_set_domain(&option->domain.ESI->machdep, option->domain.domain));
       return (PAPI_OK);
     case PAPI_GRANUL:
     case PAPI_DEFGRN:
@@ -969,17 +969,17 @@ int _papi_bgp_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option) {
 /*
  * Get Real Micro-seconds
  */
-long long _papi_bgp_get_real_usec (void) {
+long long _bgp_get_real_usec (void) {
   /*
    * NOTE:  _papi_hwi_system_info.hw_info.mhz is really a representation of unit of time per cycle.
    *        On BG/P, it's value is 8.5e-4.  Therefore, to get cycles per sec, we have to multiply
    *        by 1.0e12.  To then convert to usec, we have to divide by 1.0e-3.
    */
 
-//  SUBDBG("_papi_bgp_get_real_usec:  _papi_hwi_system_info.hw_info.mhz=%e\n",(_papi_hwi_system_info.hw_info.mhz));
+//  SUBDBG("_bgp_get_real_usec:  _papi_hwi_system_info.hw_info.mhz=%e\n",(_papi_hwi_system_info.hw_info.mhz));
 //  float x = (float)get_cycles();
 //  float y = (_papi_hwi_system_info.hw_info.mhz)*(1.0e9);
-//  SUBDBG("_papi_bgp_get_real_usec: _papi_hwi_system_info.hw_info.mhz=%e, x=%e, y=%e, x/y=%e, (long long)(x/y) = %lld\n",
+//  SUBDBG("_bgp_get_real_usec: _papi_hwi_system_info.hw_info.mhz=%e, x=%e, y=%e, x/y=%e, (long long)(x/y) = %lld\n",
 //         (_papi_hwi_system_info.hw_info.mhz), x, y, x/y, (long long)(x/y));
 //  return (long long)(x/y);
 
@@ -991,7 +991,7 @@ long long _papi_bgp_get_real_usec (void) {
  *
  * Same for BG/L, using native function...
  */
-long long _papi_bgp_get_real_cycles (void) {
+long long _bgp_get_real_cycles (void) {
 
   return(get_cycles());
 }
@@ -1001,9 +1001,9 @@ long long _papi_bgp_get_real_cycles (void) {
  *
  * Same calc as for BG/L, returns real usec...
  */
-long long _papi_bgp_get_virt_usec (const hwd_context_t *zero) {
+long long _bgp_get_virt_usec (const hwd_context_t *zero) {
 
-  return _papi_bgp_get_real_usec();
+  return _bgp_get_real_usec();
 }
 
 /*
@@ -1011,9 +1011,9 @@ long long _papi_bgp_get_virt_usec (const hwd_context_t *zero) {
  *
  * Same calc as for BG/L, returns real cycles...
  */
-long long _papi_bgp_get_virt_cycles (const hwd_context_t *zero) {
+long long _bgp_get_virt_cycles (const hwd_context_t *zero) {
 
-  return _papi_bgp_get_real_cycles();
+  return _bgp_get_real_cycles();
 }
 
 /*
@@ -1023,7 +1023,7 @@ long long _papi_bgp_get_virt_cycles (const hwd_context_t *zero) {
  * and get hardware information, this routine is called when the
  * PAPI process is initialized (IE PAPI_library_init)
  */
-int _papi_bgp_init_substrate(int cidx) {
+int _bgp_init_substrate(int cidx) {
   int retval;
 
   /*
@@ -1038,7 +1038,7 @@ int _papi_bgp_init_substrate(int cidx) {
 #endif
 #endif
 
-  retval = _papi_bgp_init_global();
+  retval = _bgp_init_global();
 
   return (retval);
 }
@@ -1047,44 +1047,27 @@ int _papi_bgp_init_substrate(int cidx) {
 /*************************************/
 /* CODE TO SUPPORT OPAQUE NATIVE MAP */
 /*************************************/
-
-/* **NOT THREAD SAFE STATIC!!**
- * The name and description strings below are both declared static.
- *
- * This is NOT thread-safe, because these values are returned
- * for use by the calling program, and could be trashed by another thread
- * before they are used.  To prevent this, any call to routines using these
- * variables (_papi_hwd_code_to_{name,descr}) should be wrapped in
- * _papi_hwi_{lock,unlock} calls.
- *
- * They are declared static to reserve non-volatile space for constructed strings.
- */
-static char xEventName[BGP_UPC_MAXIMUM_LENGTH_EVENT_NAME+5];
-static char xEventDesc[BGP_UPC_MAXIMUM_LENGTH_EVENT_DESCRIPTION];
-
 /*
  * Native Code to Event Name
  *
  * Given a native event code, returns the short text label
  */
-char* _papi_bgp_ntv_code_to_name(unsigned int EventCode) {
+int _bgp_ntv_code_to_name(unsigned int EventCode, char *name, int len) {
 
-  strcpy(xEventName,"PNE_");
   char xNativeEventName[BGP_UPC_MAXIMUM_LENGTH_EVENT_NAME];
   BGP_UPC_Event_Id_t xEventId = get_bgp_native_event_id(EventCode);
   /*
    * NOTE:  We do not return the event name for a user mode 2 or 3 event...
    */
   if ((int)xEventId < 0 || (int)xEventId > 511)
-    return (NULL);
+    return (PAPI_ENOEVNT);
 
   if (BGP_UPC_Get_Event_Name(xEventId, BGP_UPC_MAXIMUM_LENGTH_EVENT_NAME, xNativeEventName) != BGP_UPC_SUCCESS)
-    return (NULL);
-  else
-    strcat(xEventName, xNativeEventName);
-  SUBDBG("_papi_bgp_ntv_code_to_name:  EventCode = %d\n, xEventName = %s\n", EventCode, xEventName);
+    return (PAPI_ENOEVNT);
 
-  return (xEventName);
+  SUBDBG("_bgp_ntv_code_to_name:  EventCode = %d\n, xEventName = %s\n", EventCode, xEventName);
+  strncpy(name, xNativeEventName, len);
+  return (PAPI_OK);
 }
 
 /*
@@ -1092,19 +1075,21 @@ char* _papi_bgp_ntv_code_to_name(unsigned int EventCode) {
  *
  * Given a native event code, returns the longer native event description
  */
-char* _papi_bgp_ntv_code_to_descr(unsigned int EventCode) {
+int _bgp_ntv_code_to_descr(unsigned int EventCode, char *name, int len) {
 
-  *xEventDesc = 0;
+  char xNativeEventDesc[BGP_UPC_MAXIMUM_LENGTH_EVENT_DESCRIPTION];
+
   BGP_UPC_Event_Id_t xEventId = get_bgp_native_event_id(EventCode);
   /*
    * NOTE:  We do not return the event name for a user mode 2 or 3 event...
    */
   if ((int)xEventId < 0 || (int)xEventId > 511)
-    return (NULL);
-  else if (BGP_UPC_Get_Event_Description(xEventId, BGP_UPC_MAXIMUM_LENGTH_EVENT_DESCRIPTION, xEventDesc) != BGP_UPC_SUCCESS)
-    return (NULL);
+    return (PAPI_ENOEVNT);
+  else if (BGP_UPC_Get_Event_Description(xEventId, BGP_UPC_MAXIMUM_LENGTH_EVENT_DESCRIPTION, xNativeEventDesc) != BGP_UPC_SUCCESS)
+    return (PAPI_ENOEVNT);
 
-  return (xEventDesc);
+  strncpy(name, xNativeEventDesc, len);
+  return (PAPI_OK);
 }
 
 /*
@@ -1117,7 +1102,7 @@ char* _papi_bgp_ntv_code_to_descr(unsigned int EventCode) {
  * NOTE: For BG/P, the bit configuration is not needed,
  *       as the native SPI is used to configure events.
  */
-int _papi_bgp_ntv_code_to_bits(unsigned int EventCode, hwd_register_t* bits) {
+int _bgp_ntv_code_to_bits(unsigned int EventCode, hwd_register_t* bits) {
 
   return (PAPI_OK);
 }
@@ -1134,11 +1119,11 @@ int _papi_bgp_ntv_code_to_bits(unsigned int EventCode, hwd_register_t* bits) {
  *
  * We only support enumerating all or available events.
  */
-int _papi_bgp_ntv_enum_events(unsigned int* EventCode, int modifier) {
+int _bgp_ntv_enum_events(unsigned int* EventCode, int modifier) {
   /*
    * Check for a valid EventCode and we only process a modifier of 'all events'...
    */
-//  printf("_papi_bgp_ntv_enum_events:  EventCode=%8.8x\n", *EventCode);
+//  printf("_bgp_ntv_enum_events:  EventCode=%8.8x\n", *EventCode);
   if (*EventCode < 0x40000000 || *EventCode > 0x400001FF || (modifier != PAPI_ENUM_ALL && modifier != PAPI_PRESET_ENUM_AVAIL))
     return (PAPI_ESBSTR);
 
@@ -1149,9 +1134,9 @@ int _papi_bgp_ntv_enum_events(unsigned int* EventCode, int modifier) {
   int32_t xNativeEventId = ((*EventCode)&PAPI_NATIVE_AND_MASK) + 0x00000001;
   while (xNativeEventId <= 0x000001FF) {
     xRC = BGP_UPC_Get_Event_Name(xNativeEventId, BGP_UPC_MAXIMUM_LENGTH_EVENT_NAME, xNativeEventName);
-//    printf("_papi_bgp_ntv_enum_events:  xNativeEventId = %8.8x, xRC=%d\n", xNativeEventId, xRC);
+//    printf("_bgp_ntv_enum_events:  xNativeEventId = %8.8x, xRC=%d\n", xNativeEventId, xRC);
     if ((xRC == BGP_UPC_SUCCESS) && (strlen(xNativeEventName) > 0)) {
-//      printf("_papi_bgp_ntv_enum_events:  len(xNativeEventName)=%d, xNativeEventName=%s\n", strlen(xNativeEventName), xNativeEventName);
+//      printf("_bgp_ntv_enum_events:  len(xNativeEventName)=%d, xNativeEventName=%s\n", strlen(xNativeEventName), xNativeEventName);
       break;
     }
     xNativeEventId++;
@@ -1171,51 +1156,11 @@ int _papi_bgp_ntv_enum_events(unsigned int* EventCode, int modifier) {
  *
  * No-op for BG/P and simply returns 0
  */
-int _papi_bgp_ntv_bits_to_info(hwd_register_t *bits, char *names,
+int _bgp_ntv_bits_to_info(hwd_register_t *bits, char *names,
                                unsigned int *values, int name_len, int count) {
   return(0);
 
 }
-
-/*
- * PAPI svector table - not used anymore with versoin 3.9.0
- */
-//papi_svector_t _bgp_svector_table[] = {
-// {(void (*)())_papi_bgp_update_shlib_info, VEC_PAPI_HWD_UPDATE_SHLIB_INFO},
-// {(void (*)())_papi_bgp_init, VEC_PAPI_HWD_INIT},
-// {(void (*)())_papi_bgp_dispatch_timer, VEC_PAPI_HWD_DISPATCH_TIMER},
-// {(void (*)())_papi_bgp_ctl, VEC_PAPI_HWD_CTL},
-// {(void (*)())_papi_bgp_get_real_usec, VEC_PAPI_HWD_GET_REAL_USEC},
-// {(void (*)())_papi_bgp_get_real_cycles, VEC_PAPI_HWD_GET_REAL_CYCLES},
-// {(void (*)())_papi_bgp_get_virt_cycles, VEC_PAPI_HWD_GET_VIRT_CYCLES},
-// {(void (*)())_papi_bgp_get_virt_usec, VEC_PAPI_HWD_GET_VIRT_USEC},
-// {(void (*)())_papi_bgp_init_control_state, VEC_PAPI_HWD_INIT_CONTROL_STATE },
-// {(void (*)())_papi_bgp_update_control_state,VEC_PAPI_HWD_UPDATE_CONTROL_STATE},
-// {(void (*)())_papi_bgp_start, VEC_PAPI_HWD_START },
-// {(void (*)())_papi_bgp_stop, VEC_PAPI_HWD_STOP },
-// {(void (*)())_papi_bgp_read, VEC_PAPI_HWD_READ },
-// {(void (*)())_papi_bgp_shutdown, VEC_PAPI_HWD_SHUTDOWN },
-// {(void (*)())_papi_bgp_shutdown_global, VEC_PAPI_HWD_SHUTDOWN_GLOBAL},
-// {(void (*)())_papi_bgp_reset, VEC_PAPI_HWD_RESET},
-// {(void (*)())_papi_bgp_write, VEC_PAPI_HWD_WRITE},
-// {(void (*)())_papi_bgp_stop_profiling, VEC_PAPI_HWD_STOP_PROFILING},
-// {(void (*)())_papi_bgp_set_overflow, VEC_PAPI_HWD_SET_OVERFLOW},
-// {(void (*)())_papi_bgp_set_profile, VEC_PAPI_HWD_SET_PROFILE},
-// {(void (*)())_papi_bgp_ntv_enum_events, VEC_PAPI_HWD_NTV_ENUM_EVENTS},
-// {(void (*)())_papi_bgp_add_prog_event, VEC_PAPI_HWD_ADD_PROG_EVENT},
-// {(void (*)())_papi_bgp_ntv_code_to_name, VEC_PAPI_HWD_NTV_CODE_TO_NAME},
-// {(void (*)())_papi_bgp_ntv_code_to_descr, VEC_PAPI_HWD_NTV_CODE_TO_DESCR},
-// {(void (*)())_papi_bgp_ntv_code_to_bits, VEC_PAPI_HWD_NTV_CODE_TO_BITS},
-// {(void (*)())_papi_bgp_ntv_bits_to_info, VEC_PAPI_HWD_NTV_BITS_TO_INFO},
-// {(void (*)())_papi_bgp_bpt_map_set, VEC_PAPI_HWD_BPT_MAP_SET },
-// {(void (*)())_papi_bgp_bpt_map_avail, VEC_PAPI_HWD_BPT_MAP_AVAIL },
-// {(void (*)())_papi_bgp_bpt_map_exclusive, VEC_PAPI_HWD_BPT_MAP_EXCLUSIVE },
-// {(void (*)())_papi_bgp_bpt_map_shared, VEC_PAPI_HWD_BPT_MAP_SHARED },
-// {(void (*)())_papi_bgp_bpt_map_preempt, VEC_PAPI_HWD_BPT_MAP_PREEMPT },
-// {(void (*)())_papi_bgp_bpt_map_update, VEC_PAPI_HWD_BPT_MAP_UPDATE },
-// {(void (*)())_papi_bgp_allocate_registers, VEC_PAPI_HWD_ALLOCATE_REGISTERS },
-// {NULL, VEC_PAPI_END}
-//};
 
 /*
  * PAPI Vector Table for BG/P
@@ -1232,7 +1177,10 @@ papi_vector_t _bgp_vectors = {
     .available_domains       = PAPI_DOM_USER|PAPI_DOM_KERNEL,
     .default_granularity     = PAPI_GRN_THR,
     .available_granularities = PAPI_GRN_THR,
-    .hardware_intr_sig       = PAPI_SIGNAL,
+    .itimer_sig              = PAPI_INT_MPX_SIGNAL,
+    .itimer_num              = PAPI_INT_ITIMER,
+    .itimer_res_ns           = 1,
+    .hardware_intr_sig       = PAPI_INT_SIGNAL,
     .hardware_intr           = 1,
 
     /* component specific cmp_info initializations */
@@ -1248,44 +1196,44 @@ papi_vector_t _bgp_vectors = {
     .reg_alloc      = sizeof(bgp_reg_alloc_t),
   },
   /* Function pointers in this component */
-  .dispatch_timer       = _papi_bgp_dispatch_timer,
+  .dispatch_timer       = _bgp_dispatch_timer,
 //   .get_overflow_address =
-  .start                = _papi_bgp_start,
-  .stop                 = _papi_bgp_stop,
-  .read                 = _papi_bgp_read,
-  .reset                = _papi_bgp_reset,
-  .write                = _papi_bgp_write,
-  .get_real_cycles      = _papi_bgp_get_real_cycles,
-  .get_real_usec        = _papi_bgp_get_real_usec,
-  .get_virt_cycles      = _papi_bgp_get_virt_cycles,
-  .get_virt_usec        = _papi_bgp_get_virt_usec,
-  .stop_profiling       = _papi_bgp_stop_profiling,
-  .init_substrate       = _papi_bgp_init_substrate,
-  .init                 = _papi_bgp_init,
-  .init_control_state   = _papi_bgp_init_control_state,
-  .update_shlib_info    = _papi_bgp_update_shlib_info,
-  .get_system_info      = _papi_bgp_get_system_info,
-  .get_memory_info      = _papi_bgp_get_memory_info,
-  .update_control_state = _papi_bgp_update_control_state,
-  .ctl                  = _papi_bgp_ctl,
-  .set_overflow         = _papi_bgp_set_overflow,
-  .set_profile          = _papi_bgp_set_profile,
-  .add_prog_event       = _papi_bgp_add_prog_event,
-  .set_domain           = _papi_bgp_set_domain,
-  .ntv_enum_events      = _papi_bgp_ntv_enum_events,
-  .ntv_code_to_name     = _papi_bgp_ntv_code_to_name,
-  .ntv_code_to_descr    = _papi_bgp_ntv_code_to_descr,
-  .ntv_code_to_bits     = _papi_bgp_ntv_code_to_bits,
-  .ntv_bits_to_info     = _papi_bgp_ntv_bits_to_info,
-  .allocate_registers   = _papi_bgp_allocate_registers,
-  .bpt_map_avail        = _papi_bgp_bpt_map_avail,
-  .bpt_map_set          = _papi_bgp_bpt_map_set,
-  .bpt_map_exclusive    = _papi_bgp_bpt_map_exclusive,
-  .bpt_map_shared       = _papi_bgp_bpt_map_shared,
-  .bpt_map_preempt      = _papi_bgp_bpt_map_preempt,
-  .bpt_map_update       = _papi_bgp_bpt_map_update,
-  .get_dmem_info        = _papi_bgp_get_dmem_info,
-  .shutdown             = _papi_bgp_shutdown
+  .start                = _bgp_start,
+  .stop                 = _bgp_stop,
+  .read                 = _bgp_read,
+  .reset                = _bgp_reset,
+  .write                = _bgp_write,
+  .get_real_cycles      = _bgp_get_real_cycles,
+  .get_real_usec        = _bgp_get_real_usec,
+  .get_virt_cycles      = _bgp_get_virt_cycles,
+  .get_virt_usec        = _bgp_get_virt_usec,
+  .stop_profiling       = _bgp_stop_profiling,
+  .init_substrate       = _bgp_init_substrate,
+  .init                 = _bgp_init,
+  .init_control_state   = _bgp_init_control_state,
+  .update_shlib_info    = _bgp_update_shlib_info,
+  .get_system_info      = _bgp_get_system_info,
+  .get_memory_info      = _bgp_get_memory_info,
+  .update_control_state = _bgp_update_control_state,
+  .ctl                  = _bgp_ctl,
+  .set_overflow         = _bgp_set_overflow,
+  .set_profile          = _bgp_set_profile,
+  .add_prog_event       = _bgp_add_prog_event,
+  .set_domain           = _bgp_set_domain,
+  .ntv_enum_events      = _bgp_ntv_enum_events,
+  .ntv_code_to_name     = _bgp_ntv_code_to_name,
+  .ntv_code_to_descr    = _bgp_ntv_code_to_descr,
+  .ntv_code_to_bits     = _bgp_ntv_code_to_bits,
+  .ntv_bits_to_info     = _bgp_ntv_bits_to_info,
+  .allocate_registers   = _bgp_allocate_registers,
+  .bpt_map_avail        = _bgp_bpt_map_avail,
+  .bpt_map_set          = _bgp_bpt_map_set,
+  .bpt_map_exclusive    = _bgp_bpt_map_exclusive,
+  .bpt_map_shared       = _bgp_bpt_map_shared,
+  .bpt_map_preempt      = _bgp_bpt_map_preempt,
+  .bpt_map_update       = _bgp_bpt_map_update,
+  .get_dmem_info        = _bgp_get_dmem_info,
+  .shutdown             = _bgp_shutdown
 //  .shutdown_global      =
 //  .user                 =
 
