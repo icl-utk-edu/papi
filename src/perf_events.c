@@ -2653,6 +2653,7 @@ static void mmap_read (ThreadInfo_t ** thr, evt_t * pe, int evt_index, int profi
   uint64_t old = pe->tail;
   unsigned char *data = pe->mmap_buf + getpagesize ();
   int diff;
+  caddr_t address;
 
   diff = head - old;
   if (diff < 0)
@@ -2715,10 +2716,15 @@ static void mmap_read (ThreadInfo_t ** thr, evt_t * pe, int evt_index, int profi
 
       dump_event_header (&event->header);
 
+      if (sizeof(void *) == sizeof(unsigned long))
+        address = ((caddr_t)(unsigned long)event->ip.ip);
+      else
+        address = ((caddr_t)(unsigned int)event->ip.ip);
+
       switch (event->header.type)
         {
         case PERF_RECORD_SAMPLE:
-          _papi_hwi_dispatch_profile ((*thr)->running_eventset[cidx], (caddr_t) event->ip.ip, 0, profile_index);
+          _papi_hwi_dispatch_profile((*thr)->running_eventset[cidx], address, 0, profile_index);
           break;
         case PERF_RECORD_LOST:
           SUBDBG ("Warning: because of a mmap buffer overrun, %"PRId64
@@ -2822,6 +2828,7 @@ void _papi_pe_dispatch_timer (int n, hwd_siginfo_t * info, void *uc)
       unsigned int head;
       evt_t *pe = &((context_t *)thread->context[cidx])->evt[found_evt_idx];
       unsigned char *data = pe->mmap_buf + getpagesize ();
+      caddr_t address;
 
       /*
        * Read up the most recent IP from the sample in the mmap buffer.  To
@@ -2868,7 +2875,12 @@ void _papi_pe_dispatch_timer (int n, hwd_siginfo_t * info, void *uc)
        * user level (the kernel event dispatcher hides that info).
        */
 
-      _papi_hwi_dispatch_overflow_signal ((void *) &ctx, (caddr_t)ip, NULL, (1 << found_evt_idx), 0, &thread, cidx);
+      if (sizeof(void *) == sizeof(unsigned long))
+        address = ((caddr_t)(unsigned long)ip);
+      else
+        address = ((caddr_t)(unsigned int)ip);
+
+      _papi_hwi_dispatch_overflow_signal((void *)&ctx, address, NULL, (1 << found_evt_idx), 0, &thread, cidx);
 
     }
 
