@@ -9,7 +9,6 @@
 #ifdef __LINUX__
 #include <limits.h>
 #endif
-#include SUBSTRATE
 #include <stdio.h>
 
 /*

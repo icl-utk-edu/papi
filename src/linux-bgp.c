@@ -776,10 +776,10 @@ void user_signal_handler(int signum, hwd_siginfo_t *siginfo, void *mycontext) {
 	int isHardware = 1;
 	caddr_t pc;
 	_papi_hwi_context_t ctx;
-	BGP_UPC_Event_Id_t xEventId;
+	BGP_UPC_Event_Id_t xEventId = 0;
 //	int thresh;
 	int event_index, i;
-	long_long overflow_bit;
+	long_long overflow_bit = 0;
 	int64_t threshold;
 
 	ctx.si = siginfo;
@@ -848,7 +848,7 @@ int _bgp_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold) {
 
 	struct sigaction new_action;
 	sigemptyset (&new_action.sa_mask);
-	new_action.sa_sigaction = user_signal_handler;
+	new_action.sa_sigaction = (void *)user_signal_handler;
 	new_action.sa_flags = SA_RESTART | SA_SIGINFO;
 	sigaction(SIGXCPU, &new_action, NULL); 
         //signal(SIGXCPU, user_signal_handler); 

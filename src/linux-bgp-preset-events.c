@@ -11,7 +11,7 @@
 #include "linux-bgp-native-events.h"
 
 /* PAPI PRESETS */
-const hwi_search_t _papi_bgp_preset_map[] = {
+const hwi_search_t _bgp_preset_map[] = {
 
   /*************************************************************************/
   /*                                                                       */
