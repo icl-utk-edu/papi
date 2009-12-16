@@ -402,7 +402,14 @@ AC_ARG_WITH(debug,
             )
 case "$debug" in
    yes)
-      CFLAGS="-g3"
+      # CHANGE PROPOSAL:
+      #
+      # At least for Sun Studio 12 -g3 is not usable as the linker does not
+      # understand this switch.
+      #
+      # CFLAGS="-g3"
+      #
+      CFLAGS="-g"
       OPTFLAGS="-O0"
       DEBUGFLAGS="-DDEBUG" ;;
    memory)
