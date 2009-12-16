@@ -302,13 +302,24 @@ case "$OS" in
          ;;
   solaris) 
          processor=`uname -p`
-           #this determines if its an Ultrasparc I,II,or III
-         if test "$processor" = "sparc"; then
-           CPU=`/bin/uname -a | egrep sun4u`
-           if test "$CPU" = ""; then
-             AC_MSG_ERROR([Sorry but for Solaris you need to have an Ultrasparc for PAPI to work])
-           else CPU=ultra
-           fi
+         machinetype=`uname -m`
+
+         #this determines if its an Ultrasparc I,II,or III
+         if test "$processor" = "sparc"
+         then
+           case "$machinetype" in
+                sun4u)
+                    CPU=ultra
+                    ;;
+                sun4v)
+                    CPU=niagara2
+                    ;;
+                *)
+                    AC_MSG_ERROR([Sorry, machine type ($machinetype) not supported])
+                    ;;
+           esac
+         else
+            AC_MSG_ERROR([Sorry, only SPARC-machines on Solaris are supported.])
          fi
          ;;
   bgl)
@@ -1148,9 +1159,48 @@ fi
  
 # Checks for libraries.
 if test "$OS" = "solaris"; then
-AC_CHECK_LIB([cpc], [cpc_take_sample], [], [
-      AC_MSG_ERROR([libcpc.a is needed on solaris])
-      ])
+   AC_CHECK_HEADER([libcpc.h],[
+                                CFLAGS="$CFLAGS -lcpc"
+        AC_TRY_RUN([
+        #include <stdlib.h>
+        #include <libcpc.h>
+
+        int main()
+        {
+            // Check for libcpc 2
+            if(CPC_VER_CURRENT == 2)
+            {
+                exit(0);
+            }
+
+            exit(1);
+        }
+       ], [cpc_version=2], [cpc_version=0])],
+       [AC_MSG_ERROR([libcpc is needed for running PAPI on Solaris])
+   ])
+    echo '====================================================================='
+    echo '         PAPI is available for the following Sun platforms:'
+    echo '---------------------------------------------------------------------'
+    echo
+    echo '    - UltraSPARC I, II & III on Solaris 8 & 9 using libcpc 1'
+    echo '      --> PAPI substrate: solaris-ultra'
+    echo
+    echo '    - UltraSPARC T2          on Solaris 10    using libcpc 2'
+    echo '      --> PAPI substrate: solaris-niagara2'
+    echo
+    echo "    - Your substrate will be: $OS-$CPU-$BM"
+    echo '====================================================================='
+    if test "$CPU" = "niagara2"
+    then
+        if test "$cpc_version" != "2"
+        then
+            AC_MSG_ERROR([libcpc2 needed for Niagara 2])
+        fi
+    else
+        AC_CHECK_LIB([cpc], [cpc_take_sample], [], [
+              AC_MSG_ERROR([libcpc.a is needed on Solaris, install SUNWcpc])
+            ])
+    fi
 fi
 
 if test "$perfctr" != "no"; then
@@ -1357,7 +1407,7 @@ case "$OS" in
 	   MAKEVER="$OS"-perfmon2
 	   ;;
 	   
-   solaris)
+   solaris|sunos)
        if test "${bitmode}" = "64"; then
           if test "`isainfo -v | grep "64"`" = ""; then
              AC_MSG_ERROR([The bitmode you specified is not supported])
@@ -1444,6 +1494,8 @@ case "$MAKEVER" in
     linux-perfctr-em64t);;
     solaris-ultra);;
     solaris-ultra-64bit);;
+    solaris-niagara2|solaris-niagara2-32bit);;
+    solaris-niagara2-64bit);;
     linux-perfctr-POWER5|linux-perfctr-POWER5+|linux-perfctr-POWER6|linux-perfctr-PPC970|linux-perfctr-PPC32);;
     linux-perfctr-POWER5-64bit|linux-perfctr-POWER5+-64bit|linux-perfctr-POWER6-64bit|linux-perfctr-PPC970-64bit);;
     linux-perfmon2);;
@@ -1947,6 +1999,38 @@ elif (test "$MAKEVER" = "solaris-ultra" || test "$MAKEVER" = "solaris-ultra-64")
       SHLIB=libpapi64.so
       CFLAGS="-xtarget=ultra3 -xarch=v9a -DNO_VARARG_MACRO -D__EXTENSIONS__ -DPAPI_NO_MEMORY_MANAGEMENT  -DCOMP_VECTOR=_solaris_vectors"
       OPTFLAGS="-g -fast -xtarget=ultra3 -xarch=v9a"
+   fi
+elif (test "$MAKEVER" = "solaris-niagara2" || test "$MAKEVER" = "solaris-niagara2-32bit" || test "$MAKEVER" = "solaris-niagara2-64bit"); then
+   FILENAME=Makefile.inc
+   LIBRARY=libpapi.a
+   SHLIB=libpapi.so
+   SUBSTR=solaris-niagara2
+   MSUBSTR=solaris-niagara2
+   MEMSUBSTR=solaris-niagara2
+   MEMSUBSTRC="solaris-niagara2-memory.c"
+   MEMSUBSTRO="solaris-niagara2-memory.o"
+   DESCR="Solaris 10 with libcpc2 and UltraSPARC T2 (Niagara 2)"
+   LIBS="static shared" 
+   TARGETS="serial shared forkexec_tests smp omp overflow_tests profile_tests multiplex multiplex_and_pthreads mpi"
+   CPP="$CC -E"
+   CC_R="$CC -mt"
+   CC_SHR="$CC -ztext -G -Kpic"  
+   CFLAGS="-xtarget=native -xarch=native -DNO_VARARG_MACRO -D__EXTENSIONS__ -DCOMP_VECTOR=_niagara2_vector"
+   ORY_MANAGEMENT="-DCOMP_VECTOR=_solaris_vector"
+   SMPCFLGS=-xexplicitpar
+   OMPCFLGS=-xopenmp
+   F77=f90
+   FFLAGS=$CFLAGS
+   NOOPT=-xO0 
+   OPTFLAGS="-fast" 
+   FOPTFLAGS=$OPTFLAGS
+   LDFLAGS="$LDFLAGS -lcpc" 
+   if test "$MAKEVER" = "solaris-niagara2-64" || test "$MAKEVER" = "solaris-niagara2-64bit"
+   then
+      LIBRARY=libpapi64.a
+      SHLIB=libpapi64.so
+      CFLAGS="$CFLAGS -m64"
+      FFLAGS="$FFLAGS -m64"
    fi
 elif test "$CC" = "gcc"; then
    # any-null configuration
