@@ -1608,23 +1608,31 @@ case "$lmsensors" in
                   [sensors_incdir=$withval],
                   [sensors_incdir=""]
                  )
-	  CFLAGS="$CFLAGS -I$sensors_incdir"
-      AC_CHECK_HEADER([sensors.h],
-                      [AC_DEFINE([HAVE_SENSORS_H], [1], [lm-sensors header] )],
-                      [AC_MSG_ERROR([sensors.h could not be found. See --with-sensors_incdir ])],
-                      [#include <sensors.h>])
-
+				 
+      if test "$sensors_incdir" != ""; then
+	     CFLAGS="$CFLAGS -I$sensors_incdir"
+         AC_CHECK_HEADER([sensors.h],
+                         [AC_DEFINE([HAVE_SENSORS_H], [1], [lm-sensors header] )],
+                         [AC_MSG_ERROR([sensors.h could not be found. See --with-sensors_incdir ])],
+                         [#include <sensors.h>])
+      fi
+	  
 # looking for lm-sensors lib
 	  AC_ARG_WITH(sensors_libdir,
                   [  --with-sensors_libdir=<path>  Specify directory of lm-sensors library ],
                   [sensors_libdir=$withval],
                   [AC_MSG_ERROR([libsensors.a is needed for the PAPI lm-sensors component. See --with-sensors_libdir ])]
 			     )
-	  AC_CHECK_LIB([sensors], [sensors_init], [],
-				   [AC_MSG_ERROR([libsensors.a is needed for the PAPI lm-sensors component])])
-				   
-# libsensors.a needed to compile with papi utilities and tests	  
-	  LINK_SENSORS_LIB="$sensors_libdir/libsensors.a -lm"
+				 
+      if test "$sensors_libdir" != ""; then
+         LDFLAGS="$LDFLAGS -L$sensors_libdir -lsensors"
+	     AC_CHECK_LIB([sensors], [sensors_init], [],
+				      [AC_MSG_ERROR([libsensors.a is needed for the PAPI lm-sensors component])])
+	  				   
+         # libsensors.a needed to compile with papi utilities and tests	  
+	     LINK_SENSORS_LIB="$sensors_libdir/libsensors.a -lm"
+	  fi
+	  
       ;;
    no)
       lmsensorsval="" ;;
