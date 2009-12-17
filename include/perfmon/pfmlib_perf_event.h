@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-extern pfm_err_t pfm_get_perf_event_encoding(const char *str, struct perf_event_attr *hw, int *idx);
+extern pfm_err_t pfm_get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *hw, char **fstr, int *idx);
 
 #ifdef __cplusplus /* extern C */
 }

@@ -154,6 +154,23 @@ __pfm_vbprintf(const char *fmt, ...)
 	va_end(ap);
 }
 
+/*
+ * append fmt+args to str such that the string is no
+ * more than max characters incl. null termination
+ */
+void
+strconcat(char *str, size_t max, const char *fmt, ...)
+{
+	va_list ap;
+	size_t len, todo;
+
+	len = strlen(str);
+	todo = max - strlen(str);
+	va_start(ap, fmt);
+	vsnprintf(str+len, todo, fmt, ap);
+	va_end(ap);
+}
+
 static inline int
 pfmlib_pmu_active(pfmlib_pmu_t *pmu)
 {
@@ -193,7 +210,7 @@ pfmlib_idx2pidx(int idx, int *pidx)
 	pmu_id = (idx >> PFMLIB_PMU_SHIFT) & PFMLIB_PMU_MASK;
 
 	pmu = pmu2pmuidx(pmu_id);
- 	if (!pfmlib_pmu_active(pmu))
+	if (!pfmlib_pmu_active(pmu))
 		return NULL;
 
 	*pidx = idx & PFMLIB_PMU_PIDX_MASK;
@@ -226,7 +243,7 @@ pfmlib_valid_attr(pfmlib_pmu_t *pmu, int pidx, int attr)
 
 	modmsk = pmu->get_event_modifiers(pmu, pidx);
 
- 	nu = pmu->get_event_numasks(pmu, pidx);
+	nu = pmu->get_event_numasks(pmu, pidx);
 	nm = pfmlib_popcnt((unsigned long)modmsk);
 
 	return attr >= 0 && attr < (nu+nm);
@@ -298,8 +315,17 @@ pfmlib_pmu_activate(pfmlib_pmu_t *p)
 static inline int
 pfmlib_match_forced_pmu(const char *name)
 {
-	int n = strlen(name);
-	return !strncasecmp(name, pfmlib_forced_pmu, n);
+	const char *p;
+	size_t l;
+
+	/* skip any lower level specifier */
+	p = strchr(pfmlib_forced_pmu, ',');
+	if (p)
+		l = p - pfmlib_forced_pmu;
+	else
+		l = strlen(pfmlib_forced_pmu);
+
+	return !strncasecmp(name, pfmlib_forced_pmu, l);
 }
 
 static int
@@ -367,8 +393,8 @@ pfm_initialize(void)
 		return PFM_SUCCESS;
 
 	/*
- 	 * generic sanity checks
- 	 */
+	 * generic sanity checks
+	 */
 	if (PFM_PMU_MAX & (~PFMLIB_PMU_MASK)) {
 		DPRINT("PFM_PMU_MAX exceeds PFMLIB_PMU_MASK\n");	
 		return PFM_ERR_NOTSUPP;
@@ -402,21 +428,24 @@ pfm_find_event(const char *str)
 	return ret;
 }
 
-static void
+static int
 pfmlib_sanitize_event(pfmlib_event_desc_t *d)
 {
 	pfmlib_event_desc_t d2;
 	int i, j = 0, k;
 
 	/*
- 	 * remove duplicates
- 	 */
+	 * remove duplicates
+	 * fail if same modifier passed with two distinct values
+	 */
 	for(i=0; i < d->nattrs; i++) {
 		for(k=0; k < j; k++) {
 			if (d->attrs[i].id == d2.attrs[k].id
-			   && d->attrs[i].type == d2.attrs[k].type
-			   && d->attrs[i].ival == d2.attrs[k].ival)
+			   && d->attrs[i].type == d2.attrs[k].type) {
+				if (d->attrs[i].ival != d2.attrs[k].ival)
+					return PFM_ERR_ATTR_SET;
 				break;
+			}
 		}
 		if (k == j) {
 			d2.attrs[j] = d->attrs[i];
@@ -427,6 +456,7 @@ pfmlib_sanitize_event(pfmlib_event_desc_t *d)
 		d->attrs[i] = d2.attrs[i];
 
 	d->nattrs = j;
+	return PFM_SUCCESS;
 }
 
 int
@@ -446,16 +476,16 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 	memset(d, 0, sizeof(*d));
 
 	/*
- 	 * create copy because it's const
- 	 */
+	 * create copy because it's const
+	 */
 	s = str = strdup(event);
 	if (!str)
 		return PFM_ERR_NOMEM;
 
 	/*
- 	 * ingore eveything passed the comma
- 	 * (simplify dealing with const event list)
- 	 */
+	 * ingore eveything passed the comma
+	 * (simplify dealing with const event list)
+	 */
 	p = strchr(s, ',');
 	if (p)
 		*p = '\0';
@@ -505,8 +535,8 @@ found:
 		type = PFM_ATTR_UMASK;
 
 		/*
- 		 * first try the unit masks
- 		 */
+		 * first try the unit masks
+		 */
 		for_each_pmu_event_umask(a, pmu, i) {
 			n = pmu->get_event_umask_name(pmu, i, a);
 			DPRINT("n=%s s=%s a=%d\n", n, s, a);
@@ -590,19 +620,14 @@ handle_bool:
 		s = p;
 	}
 	d->nattrs = na;
-	ret = PFM_SUCCESS;
-
-	if (!nu && pmu->event_has_dfl_umask)
-		ret = pmu->event_has_dfl_umask(pmu, i);
-
-	pfmlib_sanitize_event(d);
+	ret = pfmlib_sanitize_event(d);
 error:
 	free(str);
 	return ret;
 }
 
-const char *
-pfm_get_event_name(int idx)
+static const char *
+pfmlib_get_event_name(int idx)
 {
 	pfmlib_pmu_t *pmu;
 	int pidx;
@@ -614,8 +639,8 @@ pfm_get_event_name(int idx)
 	return pmu->get_event_name(pmu, pidx);
 }
 
-int
-pfm_get_event_code(int idx, uint64_t *code)
+static int
+pfmlib_get_event_code(int idx, uint64_t *code)
 {
 	pfmlib_pmu_t *pmu;
 	int pidx;
@@ -628,19 +653,6 @@ pfm_get_event_code(int idx, uint64_t *code)
 		return PFM_ERR_INVAL;
 
 	return pmu->get_event_code(pmu, pidx, code);
-}
-
-pfm_pmu_t
-pfm_get_event_pmu(int idx)
-{
-	pfmlib_pmu_t *pmu;
-	int pidx;
-
-	pmu = pfmlib_idx2pidx(idx, &pidx);
-	if (!pmu)
-		return PFM_PMU_NONE;
-
-	return pmu->pmu;
 }
 
 /*
@@ -674,9 +686,10 @@ static const char *pfmlib_err_list[]=
 	"out of memory",
 	"invalid event attribute",
 	"invalid event attribute value",
-	"attribute value hardcoded, cannot change",
+	"attribute value already set, cannot change",
 	"too many parameters",
 	"parameter is too small"
+	"attribute hardwired, cannot change"
 };
 static size_t pfmlib_err_count = sizeof(pfmlib_err_list)/sizeof(char *);
 
@@ -696,8 +709,8 @@ pfm_get_version(void)
 	return LIBPFM_VERSION;
 }
 
-const char *
-pfm_get_event_desc(int idx)
+static const char *
+pfmlib_get_event_desc(int idx)
 {
 	pfmlib_pmu_t *pmu;
 	int pidx;
@@ -712,8 +725,8 @@ pfm_get_event_desc(int idx)
 	return pmu->get_event_desc(pmu, pidx);
 }
 
-int
-pfm_get_event_attr_code(int idx, int attr, uint64_t *code)
+static int
+pfmlib_get_event_attr_code(int idx, int attr, uint64_t *code)
 {
 	pfmlib_pmu_t *pmu;
 	pfmlib_modmsk_t modmsk;
@@ -746,8 +759,8 @@ pfm_get_event_attr_code(int idx, int attr, uint64_t *code)
 	return PFM_ERR_INVAL;
 }
 
-const char *
-pfm_get_event_attr_name(int idx, int attr)
+static const char *
+pfmlib_get_event_attr_name(int idx, int attr)
 {
 	pfmlib_pmu_t *pmu;
 	pfmlib_modmsk_t modmsk;
@@ -777,8 +790,8 @@ pfm_get_event_attr_name(int idx, int attr)
 }
 
 
-const char *
-pfm_get_event_attr_desc(int idx, int attr)
+static const char *
+pfmlib_get_event_attr_desc(int idx, int attr)
 {
 	pfmlib_pmu_t *pmu;
 	pfmlib_modmsk_t modmsk;
@@ -809,8 +822,8 @@ pfm_get_event_attr_desc(int idx, int attr)
 	return NULL;
 }
 
-pfm_attr_t
-pfm_get_event_attr_type(int idx, int attr)
+static pfm_attr_t
+pfmlib_get_event_attr_type(int idx, int attr)
 {
 	pfmlib_pmu_t *pmu;
 	pfmlib_modmsk_t modmsk;
@@ -875,7 +888,8 @@ pfm_get_pmu_name(pfm_pmu_t pmu_id)
 	return pmu->name;
 }
 
-int pfm_get_event_next(int idx)
+int
+pfm_get_event_next(int idx)
 {
 	pfmlib_pmu_t *pmu;
 	int pidx, pmu_id;
@@ -889,8 +903,8 @@ int pfm_get_event_next(int idx)
 		return pfmlib_pidx2idx(pmu, pidx);
 
 	/*
- 	 * ran out of event, move to next PMU
- 	 */
+	 * ran out of event, move to next PMU
+	 */
 	pmu_id = pfmlib_get_pmu_next(idx2pmu(idx));
 	if (pmu_id == -1)
 		return -1;
@@ -918,10 +932,10 @@ pfm_get_event_first(void)
 	return -1;
 }
 
-int
-pfm_get_event_nattrs(int idx)
+static int
+pfmlib_get_event_nattrs(int idx)
 {
- 	pfmlib_pmu_t *pmu;
+	pfmlib_pmu_t *pmu;
 	pfmlib_modmsk_t modmsk;
 	int pidx, nu, nm;
 
@@ -953,8 +967,8 @@ pfmlib_get_event_encoding(pfmlib_event_desc_t *e, uint64_t **codes, int *count, 
 	uint64_t *local_codes;
 	int ret, local_count;
 	/*
- 	 * too small, must reallocate
- 	 */
+	 * too small, must reallocate
+	 */
 	if (*codes && *count < pmu->max_encoding)
 		return PFM_ERR_TOOSMALL;
 
@@ -987,28 +1001,52 @@ pfmlib_get_event_encoding(pfmlib_event_desc_t *e, uint64_t **codes, int *count, 
 }
 
 int
-pfm_get_event_encoding(const char *str, int *idx, uint64_t **codes, int *count)
+pfm_get_event_encoding(const char *str, int dfl_plm, char **fstr, int *idx, uint64_t **codes, int *count)
 {
 	pfmlib_event_desc_t e;
+	uint64_t **orig_codes = NULL;
+	int orig_count;
 	int ret;
 
 	if (PFMLIB_INITIALIZED() == 0)
 		return PFM_ERR_NOINIT;
 
-	if (!str)
+	if (!(str || count || codes))
 		return PFM_ERR_INVAL;
 
+	/* must provide default priv level */
+	if (dfl_plm < 1)
+		return PFM_ERR_INVAL;
+	
 	ret = pfmlib_parse_event(str, &e);
 	if (ret != PFM_SUCCESS)
 		return ret;
+	
+	orig_count = *count;
+	if (codes)
+		*orig_codes = *codes;
 
+	ret = pfmlib_get_event_encoding(&e, codes, count, NULL);
+	if (ret != PFM_SUCCESS)
+		return ret;
 	/*
- 	 * return opaque event identifier
- 	 */
+	 * return opaque event identifier
+	 */
 	if (idx)
 		*idx = pfmlib_pidx2idx(e.pmu, e.event);
 
-	return pfmlib_get_event_encoding(&e, codes, count, NULL);
+	if (fstr) {
+		*fstr = strdup(e.fstr);
+		if (!fstr) {
+			if (orig_codes != codes) {
+				free(codes);
+				*count = orig_count;
+				*codes = *orig_codes;
+			}
+			return PFM_ERR_NOMEM;
+		}
+	}
+	return PFM_SUCCESS;
 }
 
 int
@@ -1044,7 +1082,83 @@ pfm_pmu_validate_events(pfm_pmu_t pmu_id, FILE *fp)
 	}
 
 	if (!pmu->validate_table)
-		return PFM_SUCCESS;
+		return PFM_ERR_NOTSUPP;
 
 	return pmu->validate_table(pmu, fp);
+}
+
+int
+pfm_get_event_info(int idx, pfm_event_info_t *info)
+{
+	pfmlib_pmu_t *pmu;
+	int pidx;
+
+	pmu = pfmlib_idx2pidx(idx, &pidx);
+	if (!pmu)
+		return PFM_ERR_INVAL;
+
+	if (!info)
+		return PFM_ERR_INVAL;
+
+	if (info->size && info->size != sizeof(*info))
+		return PFM_ERR_INVAL;
+
+	info->name = pfmlib_get_event_name(idx);
+	info->desc = pfmlib_get_event_desc(idx);
+	info->nattrs = pfmlib_get_event_nattrs(idx);
+	info->pmu = pmu->pmu;
+	info->idx = idx;
+	info->code = 0;
+	pfmlib_get_event_code(idx, &info->code);
+
+	return PFM_SUCCESS;
+}
+
+int
+pfm_get_event_attr_info(int idx, int attr_idx, pfm_event_attr_info_t *info)
+{
+	pfmlib_pmu_t *pmu;
+	pfmlib_attr_info_t attr_info;
+	int pidx;
+
+	pmu = pfmlib_idx2pidx(idx, &pidx);
+	if (!pmu)
+		return PFM_ERR_INVAL;
+
+	if (!info)
+		return PFM_ERR_INVAL;
+
+	if (info->size && info->size != sizeof(*info))
+		return PFM_ERR_INVAL;
+
+	if (!pfmlib_valid_attr(pmu, pidx, attr_idx))
+		return PFM_ERR_INVAL;
+
+	info->name = pfmlib_get_event_attr_name(idx, attr_idx);
+	info->desc = pfmlib_get_event_attr_desc(idx, attr_idx);
+	info->idx = attr_idx;
+	info->code = 0;
+	info->type = pfmlib_get_event_attr_type(idx, attr_idx);
+	pfmlib_get_event_attr_code(idx, attr_idx, &info->code);
+
+	info->is_dfl = 0;
+	info->dfl_val64 = 0;
+
+	if (pmu->get_event_attr_info) {
+		info->is_dfl = pmu->get_event_attr_info(pmu, pidx, attr_idx, &attr_info);
+		switch(info->type) {
+		case PFM_ATTR_UMASK:
+			info->dfl_val64 = info->code;
+			break;
+		case PFM_ATTR_MOD_BOOL:
+			info->dfl_bool = attr_info.dfl_bool;
+			break;
+		case PFM_ATTR_MOD_INTEGER:
+			info->dfl_int = attr_info.dfl_int;
+			break;
+		default:
+			info->dfl_val64 = 0;
+		}
+	}
+	return PFM_SUCCESS;
 }

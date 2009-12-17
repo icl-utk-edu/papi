@@ -144,6 +144,7 @@ pfmlib_pmu_t intel_pii_support={
 	.get_event_perf_type	= pfm_intel_x86_get_event_perf_type,
 	.get_event_modifiers	= pfm_intel_x86_get_event_modifiers,
 	.validate_table		= pfm_intel_x86_validate_table,
+	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
 };
 
 pfmlib_pmu_t intel_p6_support={
@@ -171,6 +172,7 @@ pfmlib_pmu_t intel_p6_support={
 	.get_event_perf_type	= pfm_intel_x86_get_event_perf_type,
 	.get_event_modifiers	= pfm_intel_x86_get_event_modifiers,
 	.validate_table		= pfm_intel_x86_validate_table,
+	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
 };
 
 pfmlib_pmu_t intel_ppro_support={
@@ -199,6 +201,7 @@ pfmlib_pmu_t intel_ppro_support={
 	.get_event_perf_type	= pfm_intel_x86_get_event_perf_type,
 	.get_event_modifiers	= pfm_intel_x86_get_event_modifiers,
 	.validate_table		= pfm_intel_x86_validate_table,
+	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
 };
 
 /* Pentium M support */
@@ -228,4 +231,5 @@ pfmlib_pmu_t intel_pm_support={
 	.get_event_perf_type	= pfm_intel_x86_get_event_perf_type,
 	.get_event_modifiers	= pfm_intel_x86_get_event_modifiers,
 	.validate_table		= pfm_intel_x86_validate_table,
+	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
 };

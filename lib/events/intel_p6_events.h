@@ -111,6 +111,7 @@
 	 .desc = "Number of MMX instructions executed by type",\
 	 .flags   = 0, \
 	 .numasks = 6, \
+	 .ngrp = 1, \
 	 .umasks = { \
 		{ .uname = "MUL", \
 		  .udesc = "MMX packed multiply instructions executed", \
@@ -144,14 +145,16 @@
 	 .modmsk = INTEL_X86_ATTRS, \
 	 .desc = "Number of MMX transitions",\
 	 .numasks = 2, \
-	 .flags = INTEL_X86_UMASK_NCOMBO, \
+	 .ngrp = 1, \
 	 .umasks = { \
 		{ .uname = "TO_FP", \
 		  .udesc = "from MMX instructions to floating-point instructions", \
+		  .uflags = INTEL_X86_NCOMBO, \
 		  .ucode = 0x00 \
 		}, \
 		{ .uname = "TO_MMX", \
 		  .udesc = "from floating-point instructions to MMX instructions", \
+		  .uflags = INTEL_X86_NCOMBO, \
 		  .ucode = 0x01 \
 		}\
 	 }\
@@ -169,6 +172,7 @@
 	 .desc = "Number of Segment Register Renaming Stalls", \
 	 .flags   = 0, \
 	 .numasks = 4, \
+	 .ngrp = 1, \
 	 .umasks = { \
 		{ .uname = "ES", \
 		  .udesc = "Segment register ES", \
@@ -195,6 +199,7 @@
 	 .desc = "Number of Segment Register Renames", \
 	 .flags   = 0, \
 	 .numasks = 4, \
+	 .ngrp = 1, \
 	 .umasks = { \
 		{ .uname = "ES", \
 		  .udesc = "Segment register ES", \
@@ -228,23 +233,27 @@
 	 .modmsk = INTEL_X86_ATTRS, \
 	 .desc = "Number of Streaming SIMD extensions prefetch/weakly-ordered instructions dispatched " \
 		     "(speculative prefetches are included in counting). Pentium III and later",\
-	 .flags = INTEL_X86_UMASK_NCOMBO, \
 	 .numasks = 4, \
+	 .ngrp = 1, \
 	 .umasks = { \
 		{ .uname = "NTA", \
 		  .udesc = "prefetch NTA", \
+		  .uflags = INTEL_X86_NCOMBO, \
 		  .ucode = 0x00 \
 		}, \
 		{ .uname = "T1", \
 		  .udesc = "prefetch T1", \
+		  .uflags = INTEL_X86_NCOMBO, \
 		  .ucode = 0x01 \
 		}, \
 		{ .uname = "T2", \
 		  .udesc = "prefetch T2", \
+		  .uflags = INTEL_X86_NCOMBO, \
 		  .ucode = 0x02 \
 		}, \
 		{ .uname = "WEAK", \
 		  .udesc = "weakly ordered stores", \
+		  .uflags = INTEL_X86_NCOMBO, \
 		  .ucode = 0x03 \
 		} \
 	 } \
@@ -254,23 +263,27 @@
 	 .code = 0x4b,\
 	 .modmsk = INTEL_X86_ATTRS, \
 	 .desc = "Number of prefetch/weakly-ordered instructions that miss all caches. Pentium III and later",\
-	 .flags = INTEL_X86_UMASK_NCOMBO, \
 	 .numasks = 4, \
+	 .ngrp = 1, \
 	 .umasks = { \
 		{ .uname = "NTA", \
 		  .udesc = "prefetch NTA", \
+		  .uflags = INTEL_X86_NCOMBO, \
 		  .ucode = 0x00 \
 		}, \
 		{ .uname = "T1", \
 		  .udesc = "prefetch T1", \
+		  .uflags = INTEL_X86_NCOMBO, \
 		  .ucode = 0x01 \
 		}, \
 		{ .uname = "T2", \
 		  .udesc = "prefetch T2", \
+		  .uflags = INTEL_X86_NCOMBO, \
 		  .ucode = 0x02 \
 		}, \
 		{ .uname = "WEAK", \
 		  .udesc = "weakly ordered stores", \
+		  .uflags = INTEL_X86_NCOMBO, \
 		  .ucode = 0x03 \
 		} \
 	 } \
@@ -291,6 +304,7 @@
 	 .cntmsk = 0x3, \
 	 .code = 0x29,\
 	 .modmsk = INTEL_X86_ATTRS, \
+	 .ngrp = 1, \
 	 .desc =  "Number of L2 data loads. This event indicates that a normal, unlocked, load memory access "\
 		"was received by the L2. It includes only L2 cacheable memory accesses; it does not include I/O "\
 		"accesses, other non-memory accesses, or memory accesses such as UC/WT memory accesses. It does include "\
@@ -323,15 +337,17 @@
 	 .code = 0xd8,\
 	 .modmsk = INTEL_X86_ATTRS, \
 	 .desc = "Number of SSE instructions retired. Pentium III and later",\
-	 .flags = INTEL_X86_UMASK_NCOMBO, \
 	 .numasks = 2, \
+	 .ngrp = 1, \
 	 .umasks = { \
 		{ .uname = "PACKED_SCALAR", \
 		  .udesc = "packed and scalar instructions", \
+		  .uflags  = INTEL_X86_NCOMBO, \
 		  .ucode = 0x00 \
 		}, \
 		{ .uname = "SCALAR", \
 		  .udesc = "scalar only", \
+		  .uflags  = INTEL_X86_NCOMBO, \
 		  .ucode = 0x01 \
 		} \
 	 } \
@@ -341,15 +357,17 @@
 	 .code = 0xd9,\
 	 .modmsk = INTEL_X86_ATTRS, \
 	 .desc = "Number of SSE computation instructions retired. Pentium III and later",\
-	 .flags = INTEL_X86_UMASK_NCOMBO, \
 	 .numasks = 2, \
+	 .ngrp = 1, \
 	 .umasks = { \
 		{ .uname = "PACKED_SCALAR", \
 		  .udesc = "packed and scalar instructions", \
+		  .uflags  = INTEL_X86_NCOMBO, \
 		  .ucode = 0x00 \
 		}, \
 		{ .uname = "SCALAR", \
 		  .udesc = "scalar only", \
+		  .uflags  = INTEL_X86_NCOMBO, \
 		  .ucode = 0x01 \
 		} \
 	 } \
@@ -439,6 +457,7 @@
 	 .cntmsk = 0x3, \
 	 .code = 0x28,\
 	 .modmsk = INTEL_X86_ATTRS, \
+	 .ngrp = 1, \
 	 .desc =  "Number of L2 instruction fetches. This event indicates that a normal instruction fetch was received by"\
 		" the L2. The count includes only L2 cacheable instruction fetches: it does not include UC instruction fetches"\
 		" It does not include ITLB miss accesses",\
@@ -448,6 +467,7 @@
 	 .cntmsk = 0x3, \
 	 .code = 0x2a,\
 	 .modmsk = INTEL_X86_ATTRS, \
+	 .ngrp = 1, \
 	 .desc =  "Number of L2 data stores. This event indicates that a normal, unlocked, store memory access "\
 		"was received by the L2. Specifically, it indictes that the DCU sent a read-for ownership request to " \
 		"the L2. It also includes Invalid to Modified reqyests sent by the DCU to the L2. " \
@@ -467,6 +487,7 @@
 	 .code = 0x2e,\
 	 .modmsk = INTEL_X86_ATTRS, \
 	 .desc = "Total number of L2 requests",\
+	 .ngrp = 1, \
 	 I386_P6_MESI_UMASKS \
 	},\
 	{.name = "L2_ADS",\
@@ -493,15 +514,17 @@
 	 .modmsk = INTEL_X86_ATTRS, \
 	 .desc = "Number of clocks during which DRDY# is asserted. " \
 		     "Utilization of the external system data bus during data transfers", \
-	 .flags = INTEL_X86_UMASK_NCOMBO, \
 	 .numasks = 2, \
+	 .ngrp = 1, \
 	 .umasks = { \
 		{ .uname = "SELF", \
 		  .udesc = "clocks when processor is driving bus", \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		  .ucode = 0x00 \
 		}, \
 		{ .uname = "ANY", \
 		  .udesc = "clocks when any agent is driving bus", \
+		  .uflags  = INTEL_X86_NCOMBO, \
 		  .ucode = 0x20 \
 		} \
 	 } \
@@ -511,15 +534,17 @@
 	 .code = 0x63,\
 	 .modmsk = INTEL_X86_ATTRS, \
 	 .desc = "Number of clocks during which LOCK# is asserted on the external system bus", \
-	 .flags = INTEL_X86_UMASK_NCOMBO, \
 	 .numasks = 2, \
+	 .ngrp = 1, \
 	 .umasks = { \
 		{ .uname = "SELF", \
 		  .udesc = "clocks when processor is driving bus", \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		  .ucode = 0x00 \
 		}, \
 		{ .uname = "ANY", \
 		  .udesc = "clocks when any agent is driving bus", \
+		  .uflags  = INTEL_X86_NCOMBO, \
 		  .ucode = 0x20 \
 		} \
 	 } \
@@ -536,15 +561,17 @@
 	 .code = 0x65,\
 	 .modmsk = INTEL_X86_ATTRS, \
 	 .desc = "Number of burst read transactions", \
-	 .flags = INTEL_X86_UMASK_NCOMBO, \
 	 .numasks = 2, \
+	 .ngrp = 1, \
 	 .umasks = { \
 		{ .uname = "SELF", \
 		  .udesc = "clocks when processor is driving bus", \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		  .ucode = 0x00 \
 		}, \
 		{ .uname = "ANY", \
 		  .udesc = "clocks when any agent is driving bus", \
+		  .uflags  = INTEL_X86_NCOMBO, \
 		  .ucode = 0x20 \
 		} \
 	 } \
@@ -554,15 +581,17 @@
 	 .code = 0x66,\
 	 .modmsk = INTEL_X86_ATTRS, \
 	 .desc = "Number of completed read for ownership transactions",\
-	 .flags = INTEL_X86_UMASK_NCOMBO, \
 	 .numasks = 2, \
+	 .ngrp = 1, \
 	 .umasks = { \
 		{ .uname = "SELF", \
 		  .udesc = "clocks when processor is driving bus", \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		  .ucode = 0x00 \
 		}, \
 		{ .uname = "ANY", \
 		  .udesc = "clocks when any agent is driving bus", \
+		  .uflags  = INTEL_X86_NCOMBO, \
 		  .ucode = 0x20 \
 		} \
 	 } \
@@ -572,15 +601,17 @@
 	 .code = 0x67,\
 	 .modmsk = INTEL_X86_ATTRS, \
 	 .desc = "Number of completed write back transactions",\
-	 .flags = INTEL_X86_UMASK_NCOMBO, \
 	 .numasks = 2, \
+	 .ngrp = 1, \
 	 .umasks = { \
 		{ .uname = "SELF", \
 		  .udesc = "clocks when processor is driving bus", \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		  .ucode = 0x00 \
 		}, \
 		{ .uname = "ANY", \
 		  .udesc = "clocks when any agent is driving bus", \
+		  .uflags  = INTEL_X86_NCOMBO, \
 		  .ucode = 0x20 \
 		} \
 	 } \
@@ -590,15 +621,17 @@
 	 .code = 0x68,\
 	 .modmsk = INTEL_X86_ATTRS, \
 	 .desc = "Number of completed instruction fetch transactions",\
-	 .flags = INTEL_X86_UMASK_NCOMBO, \
 	 .numasks = 2, \
+	 .ngrp = 1, \
 	 .umasks = { \
 		{ .uname = "SELF", \
 		  .udesc = "clocks when processor is driving bus", \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		  .ucode = 0x00 \
 		}, \
 		{ .uname = "ANY", \
 		  .udesc = "clocks when any agent is driving bus", \
+		  .uflags  = INTEL_X86_NCOMBO, \
 		  .ucode = 0x20 \
 		} \
 	 } \
@@ -608,15 +641,17 @@
 	 .code = 0x69,\
 	 .modmsk = INTEL_X86_ATTRS, \
 	 .desc = "Number of completed invalidate transactions",\
-	 .flags = INTEL_X86_UMASK_NCOMBO, \
 	 .numasks = 2, \
+	 .ngrp = 1, \
 	 .umasks = { \
 		{ .uname = "SELF", \
 		  .udesc = "clocks when processor is driving bus", \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		  .ucode = 0x00 \
 		}, \
 		{ .uname = "ANY", \
 		  .udesc = "clocks when any agent is driving bus", \
+		  .uflags  = INTEL_X86_NCOMBO, \
 		  .ucode = 0x20 \
 		} \
 	 } \
@@ -626,15 +661,17 @@
 	 .code = 0x6a,\
 	 .modmsk = INTEL_X86_ATTRS, \
 	 .desc = "Number of completed partial write transactions",\
-	 .flags = INTEL_X86_UMASK_NCOMBO, \
 	 .numasks = 2, \
+	 .ngrp = 1, \
 	 .umasks = { \
 		{ .uname = "SELF", \
 		  .udesc = "clocks when processor is driving bus", \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		  .ucode = 0x00 \
 		}, \
 		{ .uname = "ANY", \
 		  .udesc = "clocks when any agent is driving bus", \
+		  .uflags  = INTEL_X86_NCOMBO, \
 		  .ucode = 0x20 \
 		} \
 	 } \
@@ -644,15 +681,17 @@
 	 .code = 0x6b,\
 	 .modmsk = INTEL_X86_ATTRS, \
 	 .desc = "Number of completed partial transactions",\
-	 .flags = INTEL_X86_UMASK_NCOMBO, \
 	 .numasks = 2, \
+	 .ngrp = 1, \
 	 .umasks = { \
 		{ .uname = "SELF", \
 		  .udesc = "clocks when processor is driving bus", \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		  .ucode = 0x00 \
 		}, \
 		{ .uname = "ANY", \
 		  .udesc = "clocks when any agent is driving bus", \
+		  .uflags  = INTEL_X86_NCOMBO, \
 		  .ucode = 0x20 \
 		} \
 	 } \
@@ -662,15 +701,17 @@
 	 .code = 0x6c,\
 	 .modmsk = INTEL_X86_ATTRS, \
 	 .desc = "Number of completed I/O transactions",\
-	 .flags = INTEL_X86_UMASK_NCOMBO, \
 	 .numasks = 2, \
+	 .ngrp = 1, \
 	 .umasks = { \
 		{ .uname = "SELF", \
 		  .udesc = "clocks when processor is driving bus", \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		  .ucode = 0x00 \
 		}, \
 		{ .uname = "ANY", \
 		  .udesc = "clocks when any agent is driving bus", \
+		  .uflags  = INTEL_X86_NCOMBO, \
 		  .ucode = 0x20 \
 		} \
 	 } \
@@ -680,15 +721,17 @@
 	 .code = 0x6d,\
 	 .modmsk = INTEL_X86_ATTRS, \
 	 .desc = "Number of completed deferred transactions",\
-	 .flags = INTEL_X86_UMASK_NCOMBO, \
 	 .numasks = 2, \
+	 .ngrp = 1, \
 	 .umasks = { \
 		{ .uname = "SELF", \
 		  .udesc = "clocks when processor is driving bus", \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		  .ucode = 0x1 \
 		}, \
 		{ .uname = "ANY", \
 		  .udesc = "clocks when any agent is driving bus", \
+		  .uflags  = INTEL_X86_NCOMBO, \
 		  .ucode = 0x2 \
 		} \
 	 } \
@@ -698,15 +741,17 @@
 	 .code = 0x6e,\
 	 .modmsk = INTEL_X86_ATTRS, \
 	 .desc = "Number of completed burst transactions",\
-	 .flags = INTEL_X86_UMASK_NCOMBO, \
 	 .numasks = 2, \
+	 .ngrp = 1, \
 	 .umasks = { \
 		{ .uname = "SELF", \
 		  .udesc = "clocks when processor is driving bus", \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		  .ucode = 0x00 \
 		}, \
 		{ .uname = "ANY", \
 		  .udesc = "clocks when any agent is driving bus", \
+		 .uflags  = INTEL_X86_NCOMBO, \
 		  .ucode = 0x20 \
 		} \
 	 } \
@@ -717,15 +762,17 @@
 	 .modmsk = INTEL_X86_ATTRS, \
 	 .desc = "Number of all completed bus transactions. Address bus utilization " \
 		"can be calculated knowing the minimum address bus occupancy. Includes special cycles, etc.",\
-	 .flags = INTEL_X86_UMASK_NCOMBO, \
 	 .numasks = 2, \
+	 .ngrp = 1, \
 	 .umasks = { \
 		{ .uname = "SELF", \
 		  .udesc = "clocks when processor is driving bus", \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		  .ucode = 0x00 \
 		}, \
 		{ .uname = "ANY", \
 		  .udesc = "clocks when any agent is driving bus", \
+		  .uflags  = INTEL_X86_NCOMBO, \
 		  .ucode = 0x20 \
 		} \
 	 } \
@@ -735,15 +782,17 @@
 	 .code = 0x6f,\
 	 .modmsk = INTEL_X86_ATTRS, \
 	 .desc = "Number of completed memory transactions",\
-	 .flags = INTEL_X86_UMASK_NCOMBO, \
 	 .numasks = 2, \
+	 .ngrp = 1, \
 	 .umasks = { \
 		{ .uname = "SELF", \
 		  .udesc = "clocks when processor is driving bus", \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		  .ucode = 0x00 \
 		}, \
 		{ .uname = "ANY", \
 		  .udesc = "clocks when any agent is driving bus", \
+		  .uflags  = INTEL_X86_NCOMBO, \
 		  .ucode = 0x20 \
 		} \
 	 } \
@@ -1025,6 +1074,7 @@ static const intel_x86_entry_t i386_pm_pe []={
 	 .modmsk = INTEL_X86_ATTRS,
 	 .desc = "Number of Enhanced Intel SpeedStep technology transitions",
 	 .numasks = 2,
+	 .ngrp = 1,
 	 .umasks = {
 		{ .uname = "ALL",
 		  .udesc = "All transitions",
@@ -1145,6 +1195,7 @@ static const intel_x86_entry_t i386_pm_pe []={
 	 .desc = "Total number of micro-ops",
 	 .flags = 0,
 	 .numasks = 3,
+	 .ngrp = 1,
 	 .umasks = {
 		{ .uname = "ALL",
 		  .udesc = "All fused micro-ops",
@@ -1184,21 +1235,26 @@ static const intel_x86_entry_t i386_pm_pe []={
 	 .modmsk = INTEL_X86_ATTRS,
 	 .desc =  "Streaming SIMD extensions instructions retired",
 	 .numasks = 4,
+	 .ngrp = 1,
 	 .umasks = {
 		{ .uname = "SSE_PACKED_SCALAR_SINGLE",
 		  .udesc = "SSE Packed Single and Scalar Single",
+		  .uflags= INTEL_X86_NCOMBO,
 		  .ucode = 0x0
 		},
 		{ .uname = "SSE_SCALAR_SINGLE",
 		  .udesc = "SSE Scalar Single",
+		  .uflags= INTEL_X86_NCOMBO,
 		  .ucode = 0x1
 		},
 		{ .uname = "SSE2_PACKED_DOUBLE",
 		  .udesc = "SSE2 Packed Double",
+		  .uflags= INTEL_X86_NCOMBO,
 		  .ucode = 0x2
 		},
 		{ .uname = "SSE2_SCALAR_DOUBLE",
 		  .udesc = "SSE2 Scalar Double",
+		  .uflags= INTEL_X86_NCOMBO,
 		  .ucode = 0x3
 		}
 	 }
@@ -1209,21 +1265,26 @@ static const intel_x86_entry_t i386_pm_pe []={
 	 .modmsk = INTEL_X86_ATTRS,
 	 .desc =  "Computational SSE instructions retired",
 	 .numasks = 4,
+	 .ngrp = 1,
 	 .umasks = {
 		{ .uname = "SSE_PACKED_SINGLE",
 		  .udesc = "SSE Packed Single",
+		  .uflags= INTEL_X86_NCOMBO,
 		  .ucode = 0x0
 		},
 		{ .uname = "SSE_SCALAR_SINGLE",
 		  .udesc = "SSE Scalar Single",
+		  .uflags= INTEL_X86_NCOMBO,
 		  .ucode = 0x1
 		},
 		{ .uname = "SSE2_PACKED_DOUBLE",
 		  .udesc = "SSE2 Packed Double",
+		  .uflags= INTEL_X86_NCOMBO,
 		  .ucode = 0x2
 		},
 		{ .uname = "SSE2_SCALAR_DOUBLE",
 		  .udesc = "SSE2 Scalar Double",
+		  .uflags= INTEL_X86_NCOMBO,
 		  .ucode = 0x3
 		}
 	 }
@@ -1233,6 +1294,7 @@ static const intel_x86_entry_t i386_pm_pe []={
 	 .code = 0x29,
 	 .modmsk = INTEL_X86_ATTRS,
 	 .desc =  "Number of L2 data loads",
+	 .ngrp = 1,
 	 I386_PM_MESI_PREFETCH_UMASKS
 	},
 	{.name = "L2_LINES_IN",
@@ -1240,6 +1302,7 @@ static const intel_x86_entry_t i386_pm_pe []={
 	 .code = 0x24,
 	 .modmsk = INTEL_X86_ATTRS,
 	 .desc =  "Number of L2 lines allocated",
+	 .ngrp = 1,
 	 I386_PM_MESI_PREFETCH_UMASKS
 	},
 	{.name = "L2_LINES_OUT",
@@ -1247,6 +1310,7 @@ static const intel_x86_entry_t i386_pm_pe []={
 	 .code = 0x26,
 	 .modmsk = INTEL_X86_ATTRS,
 	 .desc =  "Number of L2 lines evicted",
+	 .ngrp = 1,
 	 I386_PM_MESI_PREFETCH_UMASKS
 	},
 	{.name = "L2_M_LINES_OUT",
@@ -1254,6 +1318,7 @@ static const intel_x86_entry_t i386_pm_pe []={
 	 .code = 0x27,
 	 .modmsk = INTEL_X86_ATTRS,
 	 .desc =  "Number of L2 M-state lines evicted",
+	 .ngrp = 1,
 	 I386_PM_MESI_PREFETCH_UMASKS
 	}
 };

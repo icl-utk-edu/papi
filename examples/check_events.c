@@ -39,6 +39,7 @@ main(int argc, const char **argv)
 {
 	const char *arg[3];
 	const char **p, *name;
+	pfm_event_info_t info;
 	uint64_t *codes;
 	int count;
 	int i, j;
@@ -94,7 +95,7 @@ main(int argc, const char **argv)
 		 * and the function:
 		 * pfm_get_perf_event_encoding()
 		 */
-		ret = pfm_get_event_encoding(*p, &idx, &codes, &count);
+		ret = pfm_get_event_encoding(*p, PFM_PLM3, NULL, &idx, &codes, &count);
 		if (ret != PFM_SUCCESS) {
 			/*
 			 * codes is too small for this event
@@ -108,9 +109,12 @@ main(int argc, const char **argv)
 			}
 			errx(1, "cannot encode event %s: %s", *p, pfm_strerror(ret));
 		}
+		ret = pfm_get_event_info(idx, &info);
+		if (ret != PFM_SUCCESS)
+			errx(1, "cannot get event info: %s", pfm_strerror(ret));
 
 		printf("Event %s:\n", *p);
-		printf("\tPMU: %s\n", pfm_get_pmu_desc(pfm_get_event_pmu(idx)));
+		printf("\tPMU: %s\n", pfm_get_pmu_desc(info.pmu));
 		printf("\tIDX: %d\n", idx);
 		for(j=0; j < count; j++)
 			printf("\tcodes[%d]=0x%"PRIx64"\n", j, codes[j]);

@@ -332,7 +332,7 @@ gen_tracepoint_table(void)
 		p->id = -1;
 		p->type = PERF_TYPE_TRACEPOINT;
 		p->umask_ovfl_idx = 0;
-		p->modifiers = PERF_ATTR_SW;
+		p->modifiers = 0,
 
 		numasks = 0;
 		reuse_event = 0;
@@ -481,6 +481,8 @@ pfmlib_perf_encode_tp(pfmlib_event_desc_t *e, uint64_t *codes, int *count)
 	pfmlib_attr_t *a;
 	int i, nu = 0;
 
+	e->fstr[0] = '\0';
+	evt_strcat(e->fstr, "%s", perf_pe[e->event].name);
 	/*
 	 * look for tracepoints
 	 */
@@ -493,11 +495,13 @@ pfmlib_perf_encode_tp(pfmlib_event_desc_t *e, uint64_t *codes, int *count)
 			if (++nu > 1)
 				return PFM_ERR_FEATCOMB;
 
-			if (a->id < PERF_MAX_UMASKS)
+			if (a->id < PERF_MAX_UMASKS) {
 				*codes = perf_pe[e->event].umasks[a->id].uid;
-			else {
+				evt_strcat(e->fstr, ":%s", perf_pe[e->event].umasks[a->id].uname);
+			} else {
 				um = perf_get_ovfl_umask(e->event);
 				*codes = um[a->id - PERF_MAX_UMASKS].uid;
+				evt_strcat(e->fstr, ":%s", um[a->id - PERF_MAX_UMASKS].uname);
 			}
 		}
 	}
@@ -513,13 +517,15 @@ pfmlib_perf_encode_hw_cache(pfmlib_event_desc_t *e, uint64_t *codes, int *count)
 	*codes = perf_pe[e->event].id;
 	*count = 1;
 
-	/*
-	 * look for tracepoints
-	 */
+	e->fstr[0] = '\0';
+	evt_strcat(e->fstr, "%s", perf_pe[e->event].name);
+
 	for(i=0; i < e->nattrs; i++) {
 		a = e->attrs+i;
-		if (a->type == PFM_ATTR_UMASK)
+		if (a->type == PFM_ATTR_UMASK) {
 			*codes |= perf_pe[e->event].umasks[a->id].uid;
+			evt_strcat(e->fstr, ":%s", perf_pe[e->event].umasks[a->id].uname);
+		}
 	}
 	return PFM_SUCCESS;
 }
@@ -537,17 +543,28 @@ pfm_perf_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *
 	case PERF_TYPE_HW_CACHE:
 		ret = pfmlib_perf_encode_hw_cache(e, codes, count);
 		break;
-	default:
+	case PERF_TYPE_HARDWARE:
+	case PERF_TYPE_SOFTWARE:
 		ret = PFM_SUCCESS;
 		*codes = perf_pe[e->event].id;
 		*count = 1;
+		e->fstr[0] = '\0';
+		evt_strcat(e->fstr, "%s", perf_pe[e->event].name);
+		break;
+	default:
+		DPRINT("unsupported event type=%d\n", perf_pe[e->event].type);
+		return PFM_ERR_NOTSUPP;
 	}
+
 	if (ret != PFM_SUCCESS)
 		return ret;
 
 	if (!attrs)
 		return PFM_SUCCESS;
 
+	/*
+	 * propagate priv level to caller attrs struct
+	 */
 	for(i=0; i < e->nattrs; i++) {
 		a = e->attrs+i;
 

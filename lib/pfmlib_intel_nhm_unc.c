@@ -55,6 +55,7 @@ static const pfmlib_attr_desc_t nhm_unc_mods[]={
 	PFM_ATTR_B("o", "queue occupancy"),			/* queue occupancy */
 	PFM_ATTR_NULL
 };
+#define mod_name(a) intel_x86_mods[(a)].name
 
 static int
 pfm_nhm_unc_detect(void *this)
@@ -90,16 +91,22 @@ intel_nhm_unc_encode_fixed(void *this, pfmlib_event_desc_t *e,  pfm_intel_x86_re
 static int
 intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *reg, pfmlib_perf_attr_t *attrs)
 {
-	const intel_x86_entry_t *pe = this_pe(this);
 	pfmlib_attr_t *a;
-	uint64_t umask, val;
-	int k;
+	const intel_x86_entry_t *pe = this_pe(this);
+	unsigned int grpmsk, ugrpmsk = 0;
+	uint64_t val;
+	unsigned int umask;
+	unsigned int modhw = 0;
+	int k, ret, grpid, last_grpid = -1;
+	int grpcounts[INTEL_X86_NUM_GRP];
+	int ncombo[INTEL_X86_NUM_GRP];
+	char umask_str[PFMLIB_EVT_MAX_NAME_LEN];
 
-	/*
- 	 * uncore measures always user+kernel
- 	 */
-	if (attrs)
-		attrs->plm |= (PFM_PLM0|PFM_PLM3);
+	memset(grpcounts, 0, sizeof(grpcounts));
+	memset(ncombo, 0, sizeof(ncombo));
+
+	pe = this_pe(this);
+	umask_str[0] = e->fstr[0] = '\0';
 
 	/*
 	 * XXX: does not work with perf kernel
@@ -107,8 +114,18 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 	if (pe[e->event].cntmsk == 0x100000)
 		return intel_nhm_unc_encode_fixed(this, e, reg);
 
+	/*
+	 * uncore only measure user+kernel, so ensure default is setup
+	 * accordingly
+	 */
+	if ((e->dfl_plm & (PFM_PLM0|PFM_PLM3)) != (PFM_PLM0|PFM_PLM3)) {
+		DPRINT("dfl_plm must be PLM0|PLM3 with Intel Nehalem uncore PMU\n");
+		return PFM_ERR_INVAL;
+	}
+
 	val = pe[e->event].code;
 
+	grpmsk = (1 << pe[e->event].ngrp)-1;
 	reg->val |= val; /* preset some filters from code */
 
 	/* take into account hardcoded umask */
@@ -117,43 +134,139 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 	for(k=0; k < e->nattrs; k++) {
 		a = e->attrs+k;
 		if (a->type == PFM_ATTR_UMASK) {
-			if (umask && intel_x86_eflag(this, e, INTEL_X86_UMASK_NCOMBO)) {
-				DPRINT("event does not support unit mask combination\n");
+			grpid = pe[e->event].umasks[a->id].grpid;
+
+			/*
+			 * cfor certain events groups are meant to be
+			 * exclusive, i.e., only unit masks of one group
+			 * can be used
+			 */
+			if (last_grpid != -1 && grpid != last_grpid
+			    && intel_x86_eflag(this, e, INTEL_X86_GRP_EXCL)) {
+				DPRINT("exclusive unit mask group error\n");
 				return PFM_ERR_FEATCOMB;
 			}
-			umask |= pe[e->event].umasks[a->id].ucode;
+			/*
+			 * upper layer has removed duplicates
+			 * so if we come here more than once, it is for two
+			 * disinct umasks
+			 *
+			 * NCOMBO=no combination of unit masks within the same
+			 * umask group
+			 */
+			++grpcounts[grpid];
+
+			if (intel_x86_uflag(this, e, a->id, INTEL_X86_NCOMBO))
+				ncombo[grpid] = 1;
+
+			if (grpcounts[grpid] > 1 && ncombo[grpid])  {
+				DPRINT("event does not support unit mask combination within a group\n");
+				return PFM_ERR_FEATCOMB;
+			}
+
+			if (pe[e->event].umasks[a->id].ufrom)
+				evt_strcat(umask_str, ":%s", pe[e->event].umasks[a->id].ufrom);
+			else
+				evt_strcat(umask_str, ":%s", pe[e->event].umasks[a->id].uname);
+
+			last_grpid = grpid;
+			modhw    |= pe[e->event].umasks[a->id].modhw;
+			umask    |= pe[e->event].umasks[a->id].ucode;
+			ugrpmsk  |= 1 << pe[e->event].umasks[a->id].grpid;
+
+			reg->val |= umask << 8;
 		} else {
 			switch(a->id) {
 				case NHM_UNC_ATTR_I: /* invert */
-					if (reg->nhm_unc.usel_inv)
-						return PFM_ERR_ATTR_SET;
 					reg->nhm_unc.usel_inv = !!a->ival;
 					break;
 				case NHM_UNC_ATTR_E: /* edge */
-					if (reg->nhm_unc.usel_edge)
-						return PFM_ERR_ATTR_SET;
 					reg->nhm_unc.usel_edge = !!a->ival;
 					break;
 				case NHM_UNC_ATTR_C: /* counter-mask */
 					/* already forced, cannot overwrite */
-					if (reg->nhm_unc.usel_cnt_mask)
-						return PFM_ERR_ATTR_SET;
 					if (a->ival > 255)
 						return PFM_ERR_INVAL;
 					reg->nhm_unc.usel_cnt_mask = a->ival;
 					break;
 				case NHM_UNC_ATTR_O: /* occupancy */
-					if (reg->nhm_unc.usel_occ)
-						return PFM_ERR_ATTR_SET;
 					reg->nhm_unc.usel_occ = !!a->ival;
 					break;
 			}
 		}
 	}
 
-	reg->nhm_unc.usel_umask = umask;
+	if ((modhw & _NHM_UNC_ATTR_I) && reg->nhm_unc.usel_inv)
+		return PFM_ERR_ATTR_HW;
+	if ((modhw & _NHM_UNC_ATTR_E) && reg->nhm_unc.usel_edge)
+		return PFM_ERR_ATTR_HW;
+	if ((modhw & _NHM_UNC_ATTR_C) && reg->nhm_unc.usel_cnt_mask)
+		return PFM_ERR_ATTR_HW;
+	if ((modhw & _NHM_UNC_ATTR_O) && reg->nhm_unc.usel_occ)
+		return PFM_ERR_ATTR_HW;
+
+	/*
+	 * check that there is at least of unit mask in each unit
+	 * mask group
+	 */
+	if (ugrpmsk != grpmsk) {
+		ugrpmsk ^= grpmsk;
+		ret = intel_x86_add_defaults(pe+e->event, umask_str, ugrpmsk, &umask);
+		if (ret != PFM_SUCCESS)
+			return ret;
+	}
+
 	reg->nhm_unc.usel_en    = 1; /* force enable bit to 1 */
 	reg->nhm_unc.usel_int   = 1; /* force APIC int to 1 */
+
+	if (pe[e->event].from)
+		evt_strcat(e->fstr, "%s", pe[e->event].from);
+	else
+		evt_strcat(e->fstr, "%s", pe[e->event].name);
+
+	umask = reg->nhm_unc.usel_umask;
+	for(k=0; k < pe[e->event].numasks; k++) {
+		unsigned int um, msk;
+		/*
+		 * skip alias unit mask, it means there is an equivalent
+		 * unit mask.
+		 */
+		if (pe[e->event].umasks[k].ufrom)
+			continue;
+
+		um = pe[e->event].umasks[k].ucode & 0xff;
+		/*
+		 * extract grp bitfield mask used to exclude groups
+		 * of bits
+		 */
+		msk = pe[e->event].umasks[k].grpmsk;
+		if (!msk)
+			msk = 0xff;
+		/*
+		 * if umasks is NCOMBO, then it means the umask code must match
+		 * exactly (is the only one allowed) and therefore it consumes
+		 * the full bit width of the group.
+		 *
+		 * Otherwise, we match individual bits, ane we only remove the
+		 * matching bits, because there can be combinations.
+		 */
+		if (intel_x86_uflag(this, e, k, INTEL_X86_NCOMBO)) {
+			if ((umask & msk) == um) {
+				evt_strcat(e->fstr, ":%s", pe[e->event].umasks[k].uname);
+				umask &= ~msk;
+			}
+		} else {
+			if (umask & msk) {
+				evt_strcat(e->fstr, ":%s", pe[e->event].umasks[k].uname);
+				umask &= ~um;
+			}
+		}
+	}
+
+	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(NHM_UNC_ATTR_E), reg->nhm_unc.usel_edge);
+	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(NHM_UNC_ATTR_I), reg->nhm_unc.usel_inv);
+	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(NHM_UNC_ATTR_C), reg->nhm_unc.usel_cnt_mask);
+	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(NHM_UNC_ATTR_O), reg->nhm_unc.usel_occ);
 
 	__pfm_vbprintf("[UNC_PERFEVTSEL=0x%"PRIx64" event=0x%x umask=0x%x en=%d int=%d inv=%d edge=%d occ=%d cnt_msk=%d] %s\n",
 		reg->val,
@@ -219,4 +332,5 @@ pfmlib_pmu_t intel_nhm_unc_support={
 	.get_event_perf_type	= pfm_nhm_unc_get_event_perf_type,
 	.get_event_modifiers	= pfm_intel_x86_get_event_modifiers,
 	.validate_table		= pfm_intel_x86_validate_table,
+	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
 };

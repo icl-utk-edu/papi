@@ -1,5 +1,4 @@
-/*
- * pfmlib_intel_x86.c : common code for Intel X86 processors
+/* pfmlib_intel_x86.c : common code for Intel X86 processors
  *
  * Copyright (c) 2009 Google, Inc
  * Contributed by Stephane Eranian <eranian@gmail.com>
@@ -27,6 +26,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 /* private headers */
 #include "pfmlib_priv.h"
@@ -39,8 +39,9 @@ const pfmlib_attr_desc_t intel_x86_mods[]={
 	PFM_ATTR_B("e", "edge level"),				/* edge */
 	PFM_ATTR_I("c", "counter-mask in range [0-255]"),	/* counter-mask */
 	PFM_ATTR_B("t", "measure any thread"),			/* montor on both threads */
-	PFM_ATTR_NULL
+	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
 };
+#define mod_name(a) intel_x86_mods[(a)].name
 
 static int intel_x86_arch_version;
 
@@ -75,19 +76,68 @@ intel_x86_detect(int *family, int *model)
 }
 
 int
+intel_x86_add_defaults(const intel_x86_entry_t *ent, char *umask_str, unsigned int msk, unsigned int *umask)
+{
+	int i, j, added;
+
+	for(i=0; msk; msk >>=1, i++) {
+
+		if (!(msk & 0x1))
+			continue;
+
+		added = 0;
+
+		for(j=0; j < ent->numasks; j++) {
+
+			if (ent->umasks[j].grpid != i)
+				continue;
+
+			if (ent->umasks[j].uflags & INTEL_X86_DFL) {
+				DPRINT("added default %s for group %d\n", ent->umasks[j].uname, i);
+
+				*umask |= ent->umasks[j].ucode;
+
+				evt_strcat(umask_str, ":%s", ent->umasks[j].uname);
+
+				added++;
+			}
+		}
+		if (!added) {
+			DPRINT("no default found for event %s unit mask group %d\n", ent->name, i);
+			return PFM_ERR_UMASK;
+		}
+	}
+	return PFM_SUCCESS;
+}
+
+int
 intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *reg)
 {
 	pfmlib_attr_t *a;
 	const intel_x86_entry_t *pe;
+	unsigned int grpmsk, ugrpmsk = 0;
 	uint64_t val;
-	int umask, k, uc = 0;
+	unsigned int umask;
+	unsigned int modhw = 0;
+	unsigned int plmmsk = 0;
+	int k, ret, grpid, last_grpid = -1;
+	int grpcounts[INTEL_X86_NUM_GRP];
+	int ncombo[INTEL_X86_NUM_GRP];
+	char umask_str[PFMLIB_EVT_MAX_NAME_LEN];
+
+	memset(grpcounts, 0, sizeof(grpcounts));
+	memset(ncombo, 0, sizeof(ncombo));
 
 	pe = this_pe(this);
+
+	umask_str[0] = e->fstr[0] = '\0';
 
 	/*
 	 * preset certain fields from event code
 	 */
-	val = pe[e->event].code;
+	val   = pe[e->event].code;
+
+	grpmsk = (1 << pe[e->event].ngrp)-1;
 	reg->val |= val;
 
 	/* take into account hardcoded umask */
@@ -96,41 +146,79 @@ intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *re
 	for(k=0; k < e->nattrs; k++) {
 		a = e->attrs+k;
 		if (a->type == PFM_ATTR_UMASK) {
+			grpid = pe[e->event].umasks[a->id].grpid;
+
 			/*
-		 	 * upper layer has removed duplicates
-		 	 * so if we come here more than once, it is for two
-		 	 * diinct umasks
-		 	 */
-			if (++uc > 1 && intel_x86_eflag(this, e, INTEL_X86_UMASK_NCOMBO)) {
-				DPRINT("event does not support unit mask combination\n");
+			 * certain event groups are meant to be
+			 * exclusive, i.e., only unit masks of one group
+			 * can be used
+			 */
+			if (last_grpid != -1 && grpid != last_grpid
+			    && intel_x86_eflag(this, e, INTEL_X86_GRP_EXCL)) {
+				DPRINT("exclusive unit mask group error\n");
 				return PFM_ERR_FEATCOMB;
 			}
-			umask |= pe[e->event].umasks[a->id].ucode;
+
+			/*
+			 * upper layer has removed duplicates
+			 * so if we come here more than once, it is for two
+			 * disinct umasks
+			 *
+			 * NCOMBO=no combination of unit masks within the same
+			 * umask group
+			 */
+			++grpcounts[grpid];
+
+			/* mark that we have a umask with NCOMBO in this group */
+			if (intel_x86_uflag(this, e, a->id, INTEL_X86_NCOMBO))
+				ncombo[grpid] = 1;
+
+			/*
+			 * if more than one umask in this group but one is marked
+			 * with ncombo, then fail. It is okay to combine umask within
+			 * a group as long as none is tagged with NCOMBO
+			 */
+			if (grpcounts[grpid] > 1 && ncombo[grpid])  {
+				DPRINT("event does not support unit mask combination within a group\n");
+				return PFM_ERR_FEATCOMB;
+			}
+
+			/*
+			 * if umask is derivative of another one, use the original
+			 */
+			if (pe[e->event].umasks[a->id].ufrom)
+				evt_strcat(umask_str, ":%s", pe[e->event].umasks[a->id].ufrom);
+			else
+				evt_strcat(umask_str, ":%s", pe[e->event].umasks[a->id].uname);
+
+			last_grpid = grpid;
+			modhw    |= pe[e->event].umasks[a->id].modhw;
+			umask    |= pe[e->event].umasks[a->id].ucode;
+			ugrpmsk  |= 1 << pe[e->event].umasks[a->id].grpid;
+
+			reg->val |= umask << 8;
+
+			
 		} else {
 			switch(a->id) {
 				case INTEL_X86_ATTR_I: /* invert */
-					if (reg->sel_inv)
-						return PFM_ERR_ATTR_SET;
 					reg->sel_inv = !!a->ival;
 					break;
 				case INTEL_X86_ATTR_E: /* edge */
-					if (reg->sel_edge)
-						return PFM_ERR_ATTR_SET;
 					reg->sel_edge = !!a->ival;
 					break;
 				case INTEL_X86_ATTR_C: /* counter-mask */
-					/* already forced, cannot overwrite */
-					if (reg->sel_cnt_mask)
-						return PFM_ERR_ATTR_SET;
 					if (a->ival > 255)
 						return PFM_ERR_ATTR_VAL;
 					reg->sel_cnt_mask = a->ival;
 					break;
 				case INTEL_X86_ATTR_U: /* USR */
 					reg->sel_usr = !!a->ival;
+					plmmsk |= _INTEL_X86_ATTR_U;
 					break;
 				case INTEL_X86_ATTR_K: /* OS */
 					reg->sel_os = !!a->ival;
+					plmmsk |= _INTEL_X86_ATTR_K;
 					break;
 				case INTEL_X86_ATTR_T: /* anythread (v3 and above) */
 					if (reg->sel_anythr)
@@ -141,35 +229,104 @@ intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *re
 		}
 	}
 
+	if ((modhw & _INTEL_X86_ATTR_I) && reg->sel_inv)
+		return PFM_ERR_ATTR_HW;
+	if ((modhw & _INTEL_X86_ATTR_E) && reg->sel_edge)
+		return PFM_ERR_ATTR_HW;
+	if ((modhw & _INTEL_X86_ATTR_C) && reg->sel_cnt_mask)
+		return PFM_ERR_ATTR_HW;
+	if ((modhw & _INTEL_X86_ATTR_T) && reg->sel_anythr)
+		return PFM_ERR_ATTR_HW;
+	if ((modhw & _INTEL_X86_ATTR_U) && reg->sel_usr)
+		return PFM_ERR_ATTR_HW;
+	if ((modhw & _INTEL_X86_ATTR_K) && reg->sel_os)
+		return PFM_ERR_ATTR_HW;
+
 	/*
-	 * if event has unit masks, then ensure at least one is passed
+	 * handle case where no priv level mask was passed.
+	 * then we use the dfl_plm
 	 */
-	if (pe[e->event].numasks && !uc) {
-		DPRINT("missing unit masks for %s\n", pe[e->event].name);
-		return PFM_ERR_UMASK;
+	if (!(plmmsk & (_INTEL_X86_ATTR_K|_INTEL_X86_ATTR_U))) {
+		if (e->dfl_plm & PFM_PLM0)
+			reg->sel_os = 1;
+		if (e->dfl_plm & PFM_PLM3)
+			reg->sel_usr = 1;
 	}
 
 	/*
-	 * for events supporting Core specificity (self, both), a value
-	 * of 0 for bits 15:14 (7:6 in our umask) is reserved, therefore we
-	 * force to SELF if user did not specify anything
+	 * check that there is at least of unit mask in each unit
+	 * mask group
 	 */
-	if (intel_x86_eflag(this, e, INTEL_X86_CSPEC) && ((umask & (0x3 << 6)) == 0))
-		umask |= 1 << 6;
-
-	/*
-	 * for events supporting MESI, a value
-	 * of 0 for bits 11:8 (0-3 in our umask) means nothing will be
-	 * counted. Therefore, we force a default of 0xf (M,E,S,I).
-	 *
-	 * Assume MESI bits in bit positions 0-3 in unit mask
-	 */
-	if (intel_x86_eflag(this, e, INTEL_X86_MESI) && !(umask & 0xf))
-		umask |= 0xf;
-
-	reg->sel_unit_mask = umask;
+	if (ugrpmsk != grpmsk) {
+		ugrpmsk ^= grpmsk;
+		ret = intel_x86_add_defaults(pe+e->event, umask_str, ugrpmsk, &umask);
+		if (ret != PFM_SUCCESS)
+			return ret;
+	}
 	reg->sel_en        = 1; /* force enable bit to 1 */
 	reg->sel_int       = 1; /* force APIC int to 1 */
+
+	if (pe[e->event].from)
+		evt_strcat(e->fstr, "%s", pe[e->event].from);
+	else
+		evt_strcat(e->fstr, "%s", pe[e->event].name);
+
+	/*
+	 * decode unit masks
+	 */
+	umask = reg->sel_unit_mask;
+	for(k=0; k < pe[e->event].numasks; k++) {
+		unsigned int um, msk;
+		/*
+		 * skip alias unit mask, it means there is an equivalent
+		 * unit mask.
+		 */
+		if (pe[e->event].umasks[k].ufrom)
+			continue;
+
+		/* just the unit mask  and none of the hardwired modifiers */
+		um = pe[e->event].umasks[k].ucode & 0xff;
+
+		/*
+		 * extract grp bitfield mask used to exclude groups
+		 * of bits
+		 */
+		msk = pe[e->event].umasks[k].grpmsk;
+		if (!msk)
+			msk = 0xff;
+		/*
+		 * if umasks is NCOMBO, then it means the umask code must match
+		 * exactly (is the only one allowed) and therefore it consumes
+		 * the full bit width of the group.
+		 *
+		 * Otherwise, we match individual bits, ane we only remove the
+		 * matching bits, because there can be combinations.
+		 */
+		if (intel_x86_uflag(this, e, k, INTEL_X86_NCOMBO)) {
+			if ((umask & msk) == um) {
+				evt_strcat(e->fstr, ":%s", pe[e->event].umasks[k].uname);
+				umask &= ~msk;
+			}
+		} else {
+			if (umask & msk) {
+				evt_strcat(e->fstr, ":%s", pe[e->event].umasks[k].uname);
+				umask &= ~um;
+			}
+		}
+	}
+	/*
+	 * decode modifiers
+	 */
+	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(INTEL_X86_ATTR_K), reg->sel_os);
+	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(INTEL_X86_ATTR_U), reg->sel_usr);
+	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(INTEL_X86_ATTR_E), reg->sel_edge);
+	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(INTEL_X86_ATTR_I), reg->sel_inv);
+	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(INTEL_X86_ATTR_C), reg->sel_cnt_mask);
+
+	if (intel_x86_arch_version > 2)
+		evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(INTEL_X86_ATTR_T), reg->sel_anythr);
+
+
 	return PFM_SUCCESS;
 }
 
@@ -225,9 +382,9 @@ pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, 
 	int ret;
 
 	/*
- 	 * If event requires special encoding, then invoke
- 	 * model specific encoding function
- 	 */
+	 * If event requires special encoding, then invoke
+	 * model specific encoding function
+	 */
 	if (intel_x86_eflag(this, e, INTEL_X86_ENCODER))
 		return pe[e->event].encoder(this, e, codes, count, attrs);
 
@@ -259,7 +416,7 @@ pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, 
 			reg.sel_inv,
 			reg.sel_edge,
 			reg.sel_cnt_mask,
-			pe[e->event].name);
+			e->fstr);
 
 	return PFM_SUCCESS;
 }
@@ -313,9 +470,9 @@ pfm_event_supports_pebs(const char *str)
 		return ret;
 
 	/*
- 	 * check event-level first
- 	 * if no unit masks, then we are done
- 	 */
+	 * check event-level first
+	 * if no unit masks, then we are done
+	 */
 	if (intel_x86_eflag(e.pmu, &e, INTEL_X86_PEBS) && e.nattrs == 0)
 		return PFM_SUCCESS;
 
@@ -381,44 +538,114 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 {
 	pfmlib_pmu_t *pmu = this;
 	const intel_x86_entry_t *pe = this_pe(this);
-	int i, j;
-	int ret = PFM_ERR_INVAL;
+	int i, j, k, error = 0;
 
 	for(i=0; i < pmu->pme_count; i++) {
+
 		if (!pe[i].name) {
 			fprintf(fp, "pmu: %s event%d: :: no name\n", pmu->name, i);
-			goto error;
+			error++;
 		}
+
 		if (!pe[i].desc) {
 			fprintf(fp, "pmu: %s event%d: %s :: no description\n", pmu->name, i, pe[i].name);
-			goto error;
+			error++;
 		}
+
 		if (!pe[i].cntmsk) {
 			fprintf(fp, "pmu: %s event%d: %s :: cntmsk=0\n", pmu->name, i, pe[i].name);
-			goto error;
+			error++;
 		}
+
 		if (pe[i].numasks >= INTEL_X86_NUM_UMASKS) {
 			fprintf(fp, "pmu: %s event%d: %s :: numasks too big (<%d)\n", pmu->name, i, pe[i].name, INTEL_X86_NUM_UMASKS);
-			goto error;
+			error++;
 		}
+
+		if (pe[i].numasks && pe[i].ngrp == 0) {
+			fprintf(fp, "pmu: %s event%d: %s :: ngrp cannot be zero\n", pmu->name, i, pe[i].name);
+			error++;
+		}
+
+		if (pe[i].ngrp >= INTEL_X86_NUM_GRP) {
+			fprintf(fp, "pmu: %s event%d: %s :: ngrp too big (max=%d)\n", pmu->name, i, pe[i].name, INTEL_X86_NUM_GRP);
+			error++;
+		}
+
 		for(j=0; j < pe[i].numasks; j++) {
+
 			if (!pe[i].umasks[j].uname) {
 				fprintf(fp, "pmu: %s event%d: umask%d :: no name\n", pmu->name, i, j);
-				goto error;
+				error++;
 			}
+			if (pe[i].umasks[j].modhw && (pe[i].umasks[j].modhw | pe[i].modmsk) != pe[i].modmsk) {
+				fprintf(fp, "pmu: %s event%d: %s umask%d: %s :: modhw not subset of modmsk\n", pmu->name, i, pe[i].name, j, pe[i].umasks[j].uname);
+				error++;
+			}
+
 			if (!pe[i].umasks[j].udesc) {
 				fprintf(fp, "pmu: %s event%d: umask%d: %s :: no description\n", pmu->name, i, j, pe[i].umasks[j].uname);
-				goto error;
+				error++;
+			}
+
+			if (pe[i].ngrp && pe[i].umasks[j].grpid >= pe[i].ngrp) {
+				fprintf(fp, "pmu: %s event%d: %s umask%d: %s :: invalid grpid %d (must be < %d)\n", pmu->name, i, pe[i].name, j, pe[i].umasks[j].uname, pe[i].umasks[j].grpid, pe[i].ngrp);
+				error++;
+			}
+			if (pe[i].ngrp > 1 && (!pe[i].umasks[j].grpmsk || pe[i].umasks[j].grpmsk > 0xff)) {
+				fprintf(fp, "pmu: %s event%d: %s umask%d: %s :: invalid grmsk=0x%x\n", pmu->name, i, pe[i].name, j, pe[i].umasks[j].uname, pe[i].umasks[j].grpmsk);
+				error++;
 			}
 		}
+
+		/* heck for excess unit masks */
 		for(; j < INTEL_X86_NUM_UMASKS; j++) {
 			if (pe[i].umasks[j].uname || pe[i].umasks[j].udesc) {
 				fprintf(fp, "pmu: %s event%d: %s :: numasks (%d) invalid more events exists\n", pmu->name, i, pe[i].name, pe[i].numasks);
-				goto error;
+				error++;
 			}
-		}	
+		}
+
+		if (pe[i].flags & INTEL_X86_NCOMBO) {
+			fprintf(fp, "pmu: %s event%d: %s :: NCOMBO is unit mask only flag\n", pmu->name, i, pe[i].name);
+			error++;
+		}
+
+		for(j=0; j < pe[i].numasks; j++) {
+
+			if (pe[i].umasks[j].ufrom)
+				continue;
+
+			if (pe[i].umasks[j].uflags & INTEL_X86_NCOMBO)
+				continue;
+
+			for(k=j+1; k < pe[i].numasks; k++) {
+				if (pe[i].umasks[k].ufrom)
+					continue;
+				if (pe[i].umasks[k].uflags & INTEL_X86_NCOMBO)
+					continue;
+				if (pe[i].umasks[k].grpid != pe[i].umasks[j].grpid)
+					continue;
+				if ((pe[i].umasks[j].ucode &  pe[i].umasks[k].ucode)) {
+					fprintf(fp, "pmu: %s event%d: %s :: umask %s and %s have overlapping code bits\n", pmu->name, i, pe[i].name, pe[i].umasks[j].uname, pe[i].umasks[k].uname);
+					error++;
+				}
+			}
+		}
 	}
-	ret = PFM_SUCCESS;
-error:
+	return error ? PFM_ERR_INVAL : PFM_SUCCESS;
+}
+
+int pfm_intel_x86_get_event_attr_info(void *this, int idx, int attr_idx, pfmlib_attr_info_t *info)
+{
+	const intel_x86_entry_t *pe = this_pe(this);
+	int ret;
+
+	if (attr_idx > pe[idx].numasks)
+		return 0;
+
+	ret = !!(pe[idx].umasks[attr_idx].uflags & INTEL_X86_DFL);
+	if (ret)
+		info->dfl_val64 = 0;
 	return ret;
 }

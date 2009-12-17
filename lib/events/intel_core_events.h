@@ -23,58 +23,94 @@
  * applications on Linux.
  */
 
-#define INTEL_CORE_MESI_UMASKS \
+#define INTEL_CORE_MESI_UMASKS(g) \
 		{ .uname = "MESI",\
 		  .udesc = "Any cacheline access",\
-		  .ucode = 0xf\
-		},\
+		  .ucode = 0xf,\
+		  .grpid = (g), \
+		  .grpmsk= 0xf, \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
+		  .ufrom = "M_STATE:E_STATE:S_STATE:I_STATE", \
+		}, \
 		{ .uname = "I_STATE",\
 		  .udesc = "Invalid cacheline",\
+		  .grpmsk= 0xf, \
+		  .grpid = (g), \
 		  .ucode = 0x1\
 		},\
 		{ .uname = "S_STATE",\
 		  .udesc = "Shared cacheline",\
+		  .grpid = (g), \
+		  .grpmsk= 0xf, \
 		  .ucode = 0x2\
 		},\
 		{ .uname = "E_STATE",\
 		  .udesc = "Exclusive cacheline",\
+		  .grpid = (g), \
+		  .grpmsk= 0xf, \
 		  .ucode = 0x4\
 		},\
 		{ .uname = "M_STATE",\
 		  .udesc = "Modified cacheline",\
+		  .grpid = (g), \
+		  .grpmsk= 0xf, \
 		  .ucode = 0x8\
 		}
 
-#define INTEL_CORE_SPECIFICITY_UMASKS \
+#define INTEL_CORE_SPECIFICITY_UMASKS(g) \
 		{ .uname = "SELF",\
 		  .udesc = "This core",\
-		  .ucode = 0x40\
+		  .ucode = 0x40,\
+		  .grpid = (g), \
+		  .grpmsk= 0xc0, \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		},\
 		{ .uname = "BOTH_CORES",\
 		  .udesc = "Both cores",\
+		  .grpid = (g), \
+		  .grpmsk= 0xc0, \
+		  .uflags = INTEL_X86_NCOMBO, \
 		  .ucode = 0xc0\
 		}
 
-#define INTEL_CORE_HW_PREFETCH_UMASKS \
+#define INTEL_CORE_HW_PREFETCH_UMASKS(g) \
 		{ .uname = "ANY",\
 		  .udesc = "All inclusive",\
+		  .grpid = (g), \
+		  .grpmsk= 0x30, \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		  .ucode = 0x30\
 		},\
 		{ .uname = "PREFETCH",\
 		  .udesc = "Hardware prefetch only",\
+		  .grpid = (g), \
+		  .grpmsk= 0x30, \
+		  .uflags = INTEL_X86_NCOMBO, \
 		  .ucode = 0x10\
+		}, \
+		{ .uname = "EXCL_PREFETCH",\
+		  .udesc = "Exclude hardware prefetch",\
+		  .grpid = (g), \
+		  .grpmsk= 0x30, \
+		  .uflags = INTEL_X86_NCOMBO, \
+		  .ucode = 0x00\
 		}
 
-#define INTEL_CORE_AGENT_UMASKS \
+#define INTEL_CORE_AGENT_UMASKS(g) \
 		{ .uname = "THIS_AGENT",\
 		  .udesc = "This agent",\
-		  .ucode = 0x00\
+		  .ucode = 0x00, \
+		  .grpid = (g), \
+		  .grpmsk= 0x20, \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		},\
 		{ .uname = "ALL_AGENTS",\
 		  .udesc = "Any agent on the bus",\
+		  .grpid = (g), \
+		  .grpmsk= 0x20, \
+		  .uflags = INTEL_X86_NCOMBO, \
 		  .ucode = 0x20\
 		}
-
 
 static const intel_x86_entry_t intel_core_pe[]={
 	/*
@@ -98,7 +134,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	 .code = 0x00c0,
 	 .cntmsk = 0x100000003ull,
 	 .modmsk = INTEL_V2_ATTRS, /* because we can fallback to generic counter */
-	 .desc =  "This is an alias for INSTRUCTION_RETIRED",
+	 .desc =  "This is an from for INSTRUCTION_RETIRED",
 	},
 	{.name = "UNHALTED_REFERENCE_CYCLES",
 	 .code = 0x013c,
@@ -116,7 +152,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	 .code = 0x4f2e,
 	 .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
-	 .desc =  "This is an alias for LLC_REFERENCES",
+	 .desc =  "This is an from for LLC_REFERENCES",
 	},
 	{.name = "LLC_MISSES",
 	 .code = 0x412e,
@@ -128,7 +164,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	 .code = 0x412e,
 	 .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
-	 .desc =  "This is an alias for LLC_MISSES",
+	 .desc =  "This is an from for LLC_MISSES",
 	},
 	{.name = "BRANCH_INSTRUCTIONS_RETIRED",
 	 .code = 0x00c4,
@@ -153,6 +189,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .cntmsk = 0x1,
 	  .modmsk = INTEL_V2_ATTRS,
 	  .desc =  "Cycles micro-ops dispatched for execution",
+	  .ngrp = 1,
 	  .umasks = {
 		{ .uname = "PORT_0",
 		  .udesc = "on port 0",
@@ -180,7 +217,9 @@ static const intel_x86_entry_t intel_core_pe[]={
 		},
 		{ .uname = "ANY",
 		  .udesc = "on any port",
-		  .ucode = 0x3f
+		  .ucode = 0x3f,
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
+		  .ufrom = "PORT_0:PORT_1:PORT_2:PORT_3:PORT_4:PORT_5"
 		},
 	   },	
 	   .numasks = 7
@@ -193,16 +232,18 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .desc =  "Number of micro-ops dispatched for execution",
 	},
 	{ .name = "RS_UOPS_DISPATCHED_NONE",
-	  .code = 0xa0 | (1 << 23 | 1 << 24),
+	  .code = 0xa0 | (1 << 23) | (1 << 24),
 	  .cntmsk = 0x3,
-	 .modmsk = _INTEL_X86_ATTR_U|_INTEL_X86_ATTR_K,
+	  .modmsk = _INTEL_X86_ATTR_U|_INTEL_X86_ATTR_K,
+	  .from = "RS_UOPS_DISPATCHED",
 	  .desc =  "Number of of cycles in which no micro-ops is dispatched for execution",
 	},
 	{ .name = "LOAD_BLOCK",
 	  .code = 0x3,
 	  .flags = 0,
 	  .cntmsk = 0x3,
-	 .modmsk = INTEL_V2_ATTRS,
+	  .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Loads blocked",
 	  .umasks = {
 		{ .uname = "STA",
@@ -214,7 +255,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 		  .ucode = 0x4
 		},
 		{ .uname = "OVERLAP_STORE",
-		  .udesc = "Loads that partially overlap an earlier store, or 4K aliased with a previous store",
+		  .udesc = "Loads that partially overlap an earlier store, or 4K fromed with a previous store",
 		  .ucode = 0x8
 		},
 		{ .uname = "UNTIL_RETIRE",
@@ -240,6 +281,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Cycles while store is waiting",
 	  .umasks = {
 		{ .uname = "ORDER",
@@ -262,25 +304,29 @@ static const intel_x86_entry_t intel_core_pe[]={
 	},
 	{ .name = "SSE_PRE_EXEC",
 	  .code = 0x7,
-	  .flags = 0,
 	  .cntmsk = 0x3,
-	 .modmsk = INTEL_V2_ATTRS,
+	  .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Streaming SIMD Extensions (SSE) Prefetch instructions executed",
 	  .umasks = {
 		{ .uname = "NTA",
 		  .udesc = "Streaming SIMD Extensions (SSE) Prefetch NTA instructions executed",
+		  .uflags = INTEL_X86_NCOMBO,
 		  .ucode = 0x0
 		},
 		{ .uname = "L1",
 		  .udesc = "Streaming SIMD Extensions (SSE) PrefetchT0 instructions executed",
+		  .uflags = INTEL_X86_NCOMBO,
 		  .ucode = 0x1
 		},
 		{ .uname = "L2",
 		  .udesc = "Streaming SIMD Extensions (SSE) PrefetchT1 and PrefetchT2 instructions executed",
+		  .uflags = INTEL_X86_NCOMBO,
 		  .ucode = 0x2
 		},
 		{ .uname = "STORES",
 		  .udesc = "Streaming SIMD Extensions (SSE) Weakly-ordered store instructions executed",
+		  .uflags = INTEL_X86_NCOMBO,
 		  .ucode = 0x3
 		}
 	   },
@@ -290,12 +336,14 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .code = 0x8,
 	  .flags = 0,
 	  .cntmsk = 0x3,
-	 .modmsk = INTEL_V2_ATTRS,
+	  .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Memory accesses that missed the DTLB",
 	  .umasks = {
 		{ .uname = "ANY",
 		  .udesc = "Any memory access that missed the DTLB",
-		  .ucode = 0x1
+		  .ucode = 0x1,
+		  .uflags = INTEL_X86_DFL,
 		},
 		{ .uname = "MISS_LD",
 		  .udesc = "DTLB misses due to load operations",
@@ -316,7 +364,8 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .code = 0x9,
 	  .flags = 0,
 	  .cntmsk = 0x3,
-	 .modmsk = INTEL_V2_ATTRS,
+	  .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Memory disambiguation",
 	  .umasks = {
 		{ .uname = "RESET",
@@ -334,7 +383,8 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .code = 0xc,
 	  .flags = 0,
 	  .cntmsk = 0x3,
-	 .modmsk = INTEL_V2_ATTRS,
+	  .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Number of page-walks executed",
 	  .umasks = {
 		{ .uname = "COUNT",
@@ -387,7 +437,8 @@ static const intel_x86_entry_t intel_core_pe[]={
 	{ .name = "DELAYED_BYPASS",
 	  .code = 0x19,
 	  .cntmsk = 0x2,
-	 .modmsk = INTEL_V2_ATTRS,
+	  .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Delayed bypass",
 	  .umasks = {
 		{ .uname = "FP",
@@ -407,156 +458,156 @@ static const intel_x86_entry_t intel_core_pe[]={
 	},
 	{ .name = "L2_ADS",
 	  .code = 0x21,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Cycles L2 address bus is in use",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0)
 	   },
 	   .numasks = 2
 	},
 	{ .name = "L2_DBUS_BUSY_RD",
 	  .code = 0x23,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Cycles the L2 transfers data to the core",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0)
 	   },
 	   .numasks = 2
 	},
 	{ .name = "L2_LINES_IN",
 	  .code = 0x24,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "L2 cache misses",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS,
-		INTEL_CORE_HW_PREFETCH_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_HW_PREFETCH_UMASKS(1)
 	   },
-	   .numasks = 4
+	   .numasks = 5
 	},
 	{ .name = "L2_M_LINES_IN",
 	  .code = 0x25,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "L2 cache line modifications",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0)
 	   },
 	   .numasks = 2
 	},
 	{ .name = "L2_LINES_OUT",
 	  .code = 0x26,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "L2 cache lines evicted",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS,
-		INTEL_CORE_HW_PREFETCH_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_HW_PREFETCH_UMASKS(1)
 	   },
-	   .numasks = 4
+	   .numasks = 5
 	},
 	{ .name = "L2_M_LINES_OUT",
 	  .code = 0x27,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "Modified lines evicted from the L2 cache",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS,
-		INTEL_CORE_HW_PREFETCH_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_HW_PREFETCH_UMASKS(1)
 	   },
-	   .numasks = 4
+	   .numasks = 5
 	},
 	{ .name = "L2_IFETCH",
 	  .code = 0x28,
-	  .flags = INTEL_X86_CSPEC|INTEL_X86_MESI,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "L2 cacheable instruction fetch requests",
 	  .umasks = {
-		INTEL_CORE_MESI_UMASKS,
-		INTEL_CORE_SPECIFICITY_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_MESI_UMASKS(1),
 	   },
 	   .numasks = 7
 	},
 	{ .name = "L2_LD",
 	  .code = 0x29,
-	  .flags = INTEL_X86_CSPEC|INTEL_X86_MESI,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 3,
 	  .desc =  "L2 cache reads",
 	  .umasks = {
-		INTEL_CORE_MESI_UMASKS,
-		INTEL_CORE_SPECIFICITY_UMASKS,
-		INTEL_CORE_HW_PREFETCH_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_HW_PREFETCH_UMASKS(1),
+		INTEL_CORE_MESI_UMASKS(2)
 	   },
-	   .numasks = 9
+	   .numasks = 10
 	},
 	{ .name = "L2_ST",
 	  .code = 0x2a,
-	  .flags = INTEL_X86_CSPEC|INTEL_X86_MESI,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "L2 store requests",
 	  .umasks = {
-		INTEL_CORE_MESI_UMASKS,
-		INTEL_CORE_SPECIFICITY_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_MESI_UMASKS(1)
 	   },
 	   .numasks = 7
 	},
 	{ .name = "L2_LOCK",
 	  .code = 0x2b,
-	  .flags = INTEL_X86_CSPEC|INTEL_X86_MESI,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "L2 locked accesses",
 	  .umasks = {
-		INTEL_CORE_MESI_UMASKS,
-		INTEL_CORE_SPECIFICITY_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_MESI_UMASKS(1),
 	   },
 	   .numasks = 7
 	},
 	{ .name = "L2_RQSTS",
 	  .code = 0x2e,
-	  .flags = INTEL_X86_CSPEC|INTEL_X86_MESI,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 3,
 	  .desc =  "L2 cache requests",
 	  .umasks = {
-		INTEL_CORE_MESI_UMASKS,
-		INTEL_CORE_SPECIFICITY_UMASKS,
-		INTEL_CORE_HW_PREFETCH_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_HW_PREFETCH_UMASKS(1),
+		INTEL_CORE_MESI_UMASKS(2),
 	   },
-	   .numasks = 9
+	   .numasks = 10
 	},
 	{ .name = "L2_REJECT_BUSQ",
 	  .code = 0x30,
-	  .flags = INTEL_X86_CSPEC|INTEL_X86_MESI,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 3,
 	  .desc =  "Rejected L2 cache requests",
 	  .umasks = {
-		INTEL_CORE_MESI_UMASKS,
-		INTEL_CORE_SPECIFICITY_UMASKS,
-		INTEL_CORE_HW_PREFETCH_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_HW_PREFETCH_UMASKS(1),
+		INTEL_CORE_MESI_UMASKS(2),
 	   },
-	   .numasks = 9
+	   .numasks = 10
 	},
 	{ .name = "L2_NO_REQ",
 	  .code = 0x32,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Cycles no L2 cache requests are pending",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0)
 	   },
 	   .numasks = 2
 	},
@@ -576,21 +627,24 @@ static const intel_x86_entry_t intel_core_pe[]={
 	},
 	{ .name = "CPU_CLK_UNHALTED",
 	  .code = 0x3c,
-	  .flags = INTEL_X86_UMASK_NCOMBO,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Core cycles when core is not halted",
 	  .umasks = {
 		{ .uname = "CORE_P",
 		  .udesc = "Core cycles when core is not halted",
 		  .ucode = 0x0,
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		},
 		{ .uname = "BUS",
 		  .udesc = "Bus cycles when core is not halted. This event can give a measurement of the elapsed time. This events has a constant ratio with CPU_CLK_UNHALTED:REF event, which is the maximum bus to processor frequency ratio",
+		  .uflags = INTEL_X86_NCOMBO,
 		  .ucode = 0x1,
 		},
 		{ .uname = "NO_OTHER",
 		  .udesc = "Bus cycles when core is active and the other is halted",
+		  .uflags = INTEL_X86_NCOMBO,
 		  .ucode = 0x2
 		}
 	   },
@@ -598,34 +652,34 @@ static const intel_x86_entry_t intel_core_pe[]={
 	},
 	{ .name = "L1D_CACHE_LD",
 	  .code = 0x40,
-	  .flags = INTEL_X86_MESI,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "L1 cacheable data reads",
 	  .umasks = {
-		INTEL_CORE_MESI_UMASKS
+		INTEL_CORE_MESI_UMASKS(0)
 	   },
 	   .numasks = 5
 	},
 	{ .name = "L1D_CACHE_ST",
 	  .code = 0x41,
-	  .flags = INTEL_X86_MESI,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "L1 cacheable data writes",
 	  .umasks = {
-		INTEL_CORE_MESI_UMASKS
+		INTEL_CORE_MESI_UMASKS(0)
 	   },
 	   .numasks = 5
 	},
 	{ .name = "L1D_CACHE_LOCK",
 	  .code = 0x42,
-	  .flags = INTEL_X86_MESI,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "L1 data cacheable locked reads",
 	  .umasks = {
-		INTEL_CORE_MESI_UMASKS
+		INTEL_CORE_MESI_UMASKS(0)
 	   },
 	   .numasks = 5
 	},
@@ -676,6 +730,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Cache line split from L1 data cache",
 	  .umasks = {
 		{ .uname = "LOADS",
@@ -694,6 +749,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Streaming SIMD Extensions (SSE) instructions missing all cache levels",
 	  .umasks = {
 		{ .uname = "NTA",
@@ -723,6 +779,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "L1 data cache prefetch",
 	  .umasks = {
 		{ .uname = "REQUESTS",
@@ -734,13 +791,13 @@ static const intel_x86_entry_t intel_core_pe[]={
 	},
 	{ .name = "BUS_REQUEST_OUTSTANDING",
 	  .code = 0x60,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "Number of pending full cache line read transactions on the bus occurring in each cycle",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS,
-		INTEL_CORE_AGENT_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_AGENT_UMASKS(1)
 	   },
 	   .numasks = 4
 	},
@@ -749,9 +806,10 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Number of Bus Not Ready signals asserted",
 	  .umasks = {
-		INTEL_CORE_AGENT_UMASKS
+		INTEL_CORE_AGENT_UMASKS(0)
 	   },
 	   .numasks = 2
 	},
@@ -760,176 +818,177 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Bus cycles when data is sent on the bus",
 	  .umasks = {
-		INTEL_CORE_AGENT_UMASKS
+		INTEL_CORE_AGENT_UMASKS(0)
 	   },
 	   .numasks = 2
 	},
 	{ .name = "BUS_LOCK_CLOCKS",
 	  .code = 0x63,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "Bus cycles when a LOCK signal is asserted",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS,
-		INTEL_CORE_AGENT_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_AGENT_UMASKS(1)
 	   },
 	   .numasks = 4
 	},
 	{ .name = "BUS_DATA_RCV",
 	  .code = 0x64,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Bus cycles while processor receives data",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0)
 	   },
 	   .numasks = 2
 	},
 	{ .name = "BUS_TRANS_BRD",
 	  .code = 0x65,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "Burst read bus transactions",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS,
-		INTEL_CORE_AGENT_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_AGENT_UMASKS(1)
 	   },
 	   .numasks = 4
 	},
 	{ .name = "BUS_TRANS_RFO",
 	  .code = 0x66,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "RFO bus transactions",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS,
-		INTEL_CORE_AGENT_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_AGENT_UMASKS(1)
 	   },
 	   .numasks = 4
 	},
 	{ .name = "BUS_TRANS_WB",
 	  .code = 0x67,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "Explicit writeback bus transactions",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS,
-		INTEL_CORE_AGENT_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_AGENT_UMASKS(1)
 	   },
 	   .numasks = 4
 	},
 	{ .name = "BUS_TRANS_IFETCH",
 	  .code = 0x68,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "Instruction-fetch bus transactions",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS,
-		INTEL_CORE_AGENT_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_AGENT_UMASKS(1)
 	   },
 	   .numasks = 4
 	},
 	{ .name = "BUS_TRANS_INVAL",
 	  .code = 0x69,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "Invalidate bus transactions",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS,
-		INTEL_CORE_AGENT_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_AGENT_UMASKS(1)
 	   },
 	   .numasks = 4
 	},
 	{ .name = "BUS_TRANS_PWR",
 	  .code = 0x6a,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "Partial write bus transaction",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS,
-		INTEL_CORE_AGENT_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_AGENT_UMASKS(1)
 	   },
 	   .numasks = 4
 	},
 	{ .name = "BUS_TRANS_P",
 	  .code = 0x6b,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "Partial bus transactions",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS,
-		INTEL_CORE_AGENT_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_AGENT_UMASKS(1)
 	   },
 	   .numasks = 4
 	},
 	{ .name = "BUS_TRANS_IO",
 	  .code = 0x6c,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "IO bus transactions",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS,
-		INTEL_CORE_AGENT_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_AGENT_UMASKS(1)
 	   },
 	   .numasks = 4
 	},
 	{ .name = "BUS_TRANS_DEF",
 	  .code = 0x6d,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "Deferred bus transactions",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS,
-		INTEL_CORE_AGENT_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_AGENT_UMASKS(1)
 	   },
 	   .numasks = 4
 	},
 	{ .name = "BUS_TRANS_BURST",
 	  .code = 0x6e,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "Burst (full cache-line) bus transactions",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS,
-		INTEL_CORE_AGENT_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_AGENT_UMASKS(1)
 	   },
 	   .numasks = 4
 	},
 	{ .name = "BUS_TRANS_MEM",
 	  .code = 0x6f,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "Memory bus transactions",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS,
-		INTEL_CORE_AGENT_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_AGENT_UMASKS(1)
 	   },
 	   .numasks = 4
 	},
 	{ .name = "BUS_TRANS_ANY",
 	  .code = 0x70,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "All bus transactions",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS,
-		INTEL_CORE_AGENT_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_AGENT_UMASKS(1)
 	   },
 	   .numasks = 4
 	},
@@ -938,48 +997,58 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "External snoops responses",
 	  .umasks = {
-		INTEL_CORE_AGENT_UMASKS,
 		{ .uname = "ANY",
 		  .udesc = "Any external snoop response",
-		  .ucode = 0xb
+		  .ucode = 0xb,
+		  .grpmsk= 0xb,
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		},
 		{ .uname = "CLEAN",
 		  .udesc = "External snoop CLEAN response",
+		  .grpmsk= 0xb,
 		  .ucode = 0x1
 		},
 		{ .uname = "HIT",
 		  .udesc = "External snoop HIT response",
+		  .grpmsk= 0xb,
 		  .ucode = 0x2
 		},
 		{ .uname = "HITM",
 		  .udesc = "External snoop HITM response",
+		  .grpmsk= 0xb,
 		  .ucode = 0x8
-		}
+		},
+		INTEL_CORE_AGENT_UMASKS(1)
 	   },
 	   .numasks = 6
 	},
 	{ .name = "CMP_SNOOP",
 	  .code = 0x78,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "L1 data cache is snooped by other core",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS,
 		{ .uname = "ANY",
 		  .udesc = "L1 data cache is snooped by other core",
-		  .ucode = 0x03
+		  .ucode = 0x03,
+		  .grpmsk= 0x3,
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		},
 		{ .uname = "SHARE",
 		  .udesc = "L1 data cache is snooped for sharing by other core",
+		  .grpmsk= 0x3,
 		  .ucode = 0x01
 		},
 		{ .uname = "INVALIDATE",
 		  .udesc = "L1 data cache is snooped for Invalidation by other core",
+		  .grpmsk= 0x3,
 		  .ucode = 0x02
-		}
+		},
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
 	   },
 	   .numasks = 5
 	},
@@ -988,9 +1057,10 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "HIT signal asserted",
 	  .umasks = {
-		INTEL_CORE_AGENT_UMASKS
+		INTEL_CORE_AGENT_UMASKS(0)
 	   },
 	   .numasks = 2
 	},
@@ -999,9 +1069,10 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "HITM signal asserted",
 	  .umasks = {
-		INTEL_CORE_AGENT_UMASKS
+		INTEL_CORE_AGENT_UMASKS(0)
 	   },
 	   .numasks = 2
 	},
@@ -1010,32 +1081,33 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Bus queue is empty",
 	  .umasks = {
-		INTEL_CORE_AGENT_UMASKS
+		INTEL_CORE_AGENT_UMASKS(0)
 	   },
 	   .numasks = 2
 	},
 	{ .name = "SNOOP_STALL_DRV",
 	  .code = 0x7e,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 2,
 	  .desc =  "Bus stalled for snoops",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS,
-		INTEL_CORE_AGENT_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0),
+		INTEL_CORE_AGENT_UMASKS(1)
 	   },
 	   .numasks = 4
 	},
 	{ .name = "BUS_IO_WAIT",
 	  .code = 0x7f,
-	  .flags = INTEL_X86_CSPEC,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "IO requests waiting in the bus queue",
 	  .umasks = {
-		INTEL_CORE_SPECIFICITY_UMASKS
+		INTEL_CORE_SPECIFICITY_UMASKS(0)
 	   },
 	   .numasks = 2
 	},
@@ -1058,6 +1130,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "ITLB small page misses",
 	  .umasks = {
 		{ .uname = "SMALL_MISS",
@@ -1074,6 +1147,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 		},
 		{ .uname = "MISSES",
 		  .udesc = "ITLB misses",
+		  .uflags= INTEL_X86_NCOMBO,
 		  .ucode = 0x12
 		}
 	   },
@@ -1084,6 +1158,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Cycles during which the instruction queue is full",
 	  .umasks = {
 		{ .uname = "FULL",
@@ -1229,6 +1304,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Instructions decoded",
 	  .umasks = {
 		{ .uname = "DECODED",
@@ -1247,6 +1323,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "ESP register content synchronization",
 	  .umasks = {
 		{ .uname = "SYNCH",
@@ -1279,6 +1356,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "SIMD packed multiply micro-ops executed",
 	  .umasks = {
 		{ .uname = "MUL",
@@ -1312,12 +1390,13 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .code = 0xc0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Instructions retired",
 	  .umasks = {
 		{ .uname = "ANY_P",
 		  .udesc = "Instructions retired (precise event)",
 		  .ucode = 0x0,
-		  .uflags = INTEL_X86_PEBS
+		  .uflags = INTEL_X86_PEBS|INTEL_X86_DFL,
 		},
 		{ .uname = "LOADS",
 		  .udesc = "Instructions retired, which contain a load",
@@ -1339,6 +1418,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "FXCH instructions retired",
 	  .umasks = {
 		{ .uname = "FXCH",
@@ -1348,7 +1428,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 		{ .uname = "ANY",
 		  .udesc = "Retired floating-point computational operations (precise event)",
 		  .ucode = 0xfe,
-		  .uflags = INTEL_X86_PEBS
+		  .uflags = INTEL_X86_PEBS|INTEL_X86_DFL,
 		}
 	   },
 	   .numasks = 2
@@ -1358,6 +1438,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Fused load+op or load+indirect branch retired",
 	  .umasks = {
 		{ .uname = "LD_IND_BR",
@@ -1378,11 +1459,13 @@ static const intel_x86_entry_t intel_core_pe[]={
 		},
 		{ .uname = "FUSED",
 		  .udesc = "Fused micro-ops retired",
+		  .uflags= INTEL_X86_NCOMBO,
 		  .ucode = 0x7
 		},
 		{ .uname = "ANY",
 		  .udesc = "Micro-ops retired",
-		  .ucode = 0xf
+		  .ucode = 0xf,
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		}
 	   },
 	   .numasks = 6
@@ -1392,6 +1475,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Self-Modifying Code detected",
 	  .umasks = {
 		{ .uname = "SMC",
@@ -1410,11 +1494,13 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Retired branch instructions",
 	  .umasks = {
 		{ .uname = "ANY",
 		  .udesc = "Retired branch instructions",
-		  .ucode = 0x0
+		  .ucode = 0x0,
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		},
 		{ .uname = "PRED_NOT_TAKEN",
 		  .udesc = "Retired branch instructions that were predicted not-taken",
@@ -1434,6 +1520,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 		},
 		{ .uname = "TAKEN",
 		  .udesc = "Retired taken branch instructions",
+		  .uflags= INTEL_X86_NCOMBO,
 		  .ucode = 0xc
 		}
 	   },
@@ -1465,6 +1552,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Retired Streaming SIMD Extensions (SSE) packed-single instructions",
 	  .umasks = {
 		{ .uname = "PACKED_SINGLE",
@@ -1490,7 +1578,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 		{ .uname = "ANY",
 		  .udesc = "Retired Streaming SIMD instructions (precise event)",
 		  .ucode = 0x1f,
-		  .uflags = INTEL_X86_PEBS
+		  .uflags = INTEL_X86_PEBS|INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		}
 	   },
 	   .numasks = 6
@@ -1513,6 +1601,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Retired computational Streaming SIMD Extensions (SSE) packed-single instructions",
 	  .umasks = {
 		{ .uname = "PACKED_SINGLE",
@@ -1538,6 +1627,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .code = 0xcb,
 	  .cntmsk = 0x1,
 	  .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Retired loads that miss the L1 data cache",
 	  .umasks = {
 		{ .uname = "L1D_MISS",
@@ -1573,6 +1663,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = INTEL_X86_PEBS,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Transitions from MMX (TM) Instructions to Floating Point Instructions",
 	  .umasks = {
 		{ .uname = "TO_FP",
@@ -1612,6 +1703,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "ROB read port stalls cycles",
 	  .umasks = {
 		{ .uname = "ROB_READ_PORT",
@@ -1632,7 +1724,8 @@ static const intel_x86_entry_t intel_core_pe[]={
 		},
 		{ .uname = "ANY",
 		  .udesc = "All RAT stall cycles",
-		  .ucode = 0xf
+		  .ucode = 0xf,
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		}
 	   },
 	   .numasks = 5
@@ -1642,6 +1735,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Segment rename stalls - ES ",
 	  .umasks = {
 		{ .uname = "ES",
@@ -1662,7 +1756,8 @@ static const intel_x86_entry_t intel_core_pe[]={
 		},
 		{ .uname = "ANY",
 		  .udesc = "Any (ES/DS/FS/GS) segment rename stall",
-		  .ucode = 0xf
+		  .ucode = 0xf,
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		}
 	   },
 	   .numasks = 5
@@ -1672,6 +1767,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Segment renames - ES",
 	  .umasks = {
 		{ .uname = "ES",
@@ -1692,7 +1788,8 @@ static const intel_x86_entry_t intel_core_pe[]={
 		},
 		{ .uname = "ANY",
 		  .udesc = "Any (ES/DS/FS/GS) segment rename",
-		  .ucode = 0xf
+		  .ucode = 0xf,
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		}
 	   },
 	   .numasks = 5
@@ -1702,6 +1799,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .flags = 0,
 	  .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
+	  .ngrp = 1,
 	  .desc =  "Cycles during which the ROB is full",
 	  .umasks = {
 		{ .uname = "ROB_FULL",
@@ -1726,7 +1824,8 @@ static const intel_x86_entry_t intel_core_pe[]={
 		},
 		{ .uname = "ANY",
 		  .udesc = "Resource related stalls",
-		  .ucode = 0x1f
+		  .ucode = 0x1f,
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
 		}
 	   },
 	   .numasks = 6

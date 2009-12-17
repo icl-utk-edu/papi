@@ -35,9 +35,6 @@
 #include "pfmlib_amd64_priv.h"		/* architecture private */
 #include "events/amd64_events.h"	/* PMU private */
 
-#define AMD64_HAS_COMBO(_e) \
-	((amd64_events[(_e)].flags & PFMLIB_AMD64_UMASK_COMBO) != 0)
-
 #define IS_FAMILY_10H() (amd64_revision >= AMD64_FAM10H)
 
 static const pfmlib_attr_desc_t amd64_mods[]={
@@ -50,8 +47,9 @@ static const pfmlib_attr_desc_t amd64_mods[]={
 	PFM_ATTR_I("c", "counter-mask in range [0-255]"),	/* counter-mask */
 	PFM_ATTR_B("r", "sampling period randomization"),	/* randomization */
 	PFM_ATTR_I("p", "sampling period"),			/* sampling period */
-	PFM_ATTR_NULL
+	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
 };
+#define mod_name(a) amd64_mods[(a)].name
 
 static struct {
         amd64_rev_t     	revision;
@@ -95,13 +93,13 @@ static int pfm_amd64_get_event_next(void *this, int idx);
 static inline int
 amd64_event_ibsfetch(int idx)
 {
-	return amd64_events[idx].flags & PFMLIB_AMD64_IBSFE;
+	return amd64_events[idx].flags & AMD64_FL_IBSFE;
 }
 
 static inline int
 amd64_event_ibsop(int idx)
 {
-	return amd64_events[idx].flags & PFMLIB_AMD64_IBSOP;
+	return amd64_events[idx].flags & AMD64_FL_IBSOP;
 }
 
 static inline int
@@ -283,11 +281,10 @@ pfm_amd64_detect(void *this)
 	return PFM_SUCCESS;
 }
 
-static void
+void
 pfm_amd64_force(void)
 {
         char *str;
-
         /* parses LIBPFM_FORCE_PMU=amd64,<family>,<model>,<stepping> */
 	str = strchr(pfmlib_forced_pmu, ',');
         if (!str || *str++ != ',')
@@ -333,11 +330,47 @@ pfm_amd64_init(void *this)
 }
 
 static int
+amd64_add_defaults(int idx, char *umask_str, uint64_t *umask)
+{
+	const amd64_entry_t *ent;
+	int j, ret = PFM_ERR_UMASK;
+
+	ent = amd64_events+idx;
+
+	for(j=0; j < ent->numasks; j++) {
+printf("u=%d valid=%d\n", j, amd64_umask_valid(idx, j));
+		/* skip umasks for other revisions */
+		if (!amd64_umask_valid(idx, j))
+			continue;
+
+		if (ent->umasks[j].uflags & AMD64_FL_DFL) {
+
+			DPRINT("added default %s\n", ent->umasks[j].uname);
+
+			*umask |= ent->umasks[j].ucode;
+
+			evt_strcat(umask_str, ":%s", ent->umasks[j].uname);
+
+			ret = PFM_SUCCESS;
+		}
+	}
+	if (ret != PFM_SUCCESS)
+		DPRINT("no default found for event %s\n", ent->name);
+
+	return ret;
+}
+
+static int
 amd64_encode(pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 {
 	pfmlib_attr_t *a;
-	int umask, k;
+	uint64_t umask = 0;
+	unsigned int plmmsk = 0;
+	int k, ret, ncombo = 0;
 	int numasks, uc = 0;
+	char umask_str[PFMLIB_EVT_MAX_NAME_LEN];
+
+	umask_str[0] = e->fstr[0] = '\0';
 
 	reg->val = 0; /* assume reserved bits are zerooed */
 
@@ -353,7 +386,7 @@ amd64_encode(pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 	}
 
 	numasks = amd64_events[e->event].numasks;
-	umask = 0;
+
 	for(k=0; k < e->nattrs; k++) {
 		a = e->attrs+k;
 		if (a->type == PFM_ATTR_UMASK) {
@@ -362,41 +395,45 @@ amd64_encode(pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 		 	 * so if we come here more than once, it is for two
 		 	 * diinct umasks
 		 	 */
-			if (++uc > 1 && !AMD64_HAS_COMBO(e->event)) {
+			if (amd64_events[e->event].umasks[a->id].uflags & AMD64_FL_NCOMBO)
+				ncombo = 1;
+
+			if (++uc > 1 && ncombo) {
 				DPRINT("event does not support unit mask combination\n");
 				return PFM_ERR_FEATCOMB;
 			}
+
+			evt_strcat(umask_str, ":%s", amd64_events[e->event].umasks[a->id].uname);
+
 			umask |= amd64_events[e->event].umasks[a->id].ucode;
 		} else {
 			switch(a->id) {
 				case AMD64_ATTR_I: /* invert */
-					if (reg->sel_inv)
-						return PFM_ERR_ATTR_SET;
 					reg->sel_inv = !!a->ival;
 					break;
 				case AMD64_ATTR_E: /* edge */
-					if (reg->sel_edge)
-						return PFM_ERR_ATTR_SET;
 					reg->sel_edge = !!a->ival;
 					break;
 				case AMD64_ATTR_C: /* counter-mask */
-					if (reg->sel_cnt_mask)
-						return PFM_ERR_ATTR_SET;
 					if (a->ival > 255)
 						return PFM_ERR_ATTR_VAL;
 					reg->sel_cnt_mask = a->ival;
 					break;
 				case AMD64_ATTR_U: /* USR */
 					reg->sel_usr = !!a->ival;
+					plmmsk |= _AMD64_ATTR_U;
 					break;
 				case AMD64_ATTR_K: /* OS */
 					reg->sel_os = !!a->ival;
+					plmmsk |= _AMD64_ATTR_K;
 					break;
 				case AMD64_ATTR_G: /* GUEST */
 					reg->sel_guest = !!a->ival;
+					plmmsk |= _AMD64_ATTR_G;
 					break;
 				case AMD64_ATTR_H: /* HOST */
 					reg->sel_host = !!a->ival;
+					plmmsk |= _AMD64_ATTR_H;
 					break;
 				case AMD64_ATTR_R: /* IBS RANDOM */
 					reg->ibsfetch.randen = !!a->ival;
@@ -412,16 +449,51 @@ amd64_encode(pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 			}
 		}
 	}
+
 	/*
-	 * if event has unit masks, then ensure at least one is passed
+	 * handle case where no priv level mask was passed.
+	 * then we use the dfl_plm
 	 */
-	if (amd64_events[e->event].numasks && !uc) {
-		DPRINT("missing unit masks for %s\n", amd64_events[e->event].name);
-		return PFM_ERR_UMASK;
+	if (!(plmmsk & (_AMD64_ATTR_K|_AMD64_ATTR_U|_AMD64_ATTR_H))) {
+		if (e->dfl_plm & PFM_PLM0)
+			reg->sel_os = 1;
+		if (e->dfl_plm & PFM_PLM3)
+			reg->sel_usr = 1;
+		if (e->dfl_plm & PFM_PLMH)
+			reg->sel_host = 1;
 	}
 
-	if (umask)
-		reg->sel_unit_mask = umask;
+	/*
+	 * if no unit mask specified, then try defaults
+	 */
+	if (amd64_events[e->event].numasks && !uc) {
+		ret = amd64_add_defaults(e->event, umask_str, &umask);
+		if (ret != PFM_SUCCESS)
+			return ret;
+	}
+
+	evt_strcat(e->fstr, "%s", amd64_events[e->event].name);
+	evt_strcat(e->fstr, "%s", umask_str);
+
+	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(AMD64_ATTR_K), reg->sel_os);
+	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(AMD64_ATTR_U), reg->sel_usr);
+	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(AMD64_ATTR_E), reg->sel_edge);
+	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(AMD64_ATTR_I), reg->sel_inv);
+	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(AMD64_ATTR_C), reg->sel_cnt_mask);
+
+	if (IS_FAMILY_10H()) {
+		evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(AMD64_ATTR_H), reg->sel_host);
+		evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(AMD64_ATTR_G), reg->sel_guest);
+		if (amd64_event_ibsfetch(e->event)) {
+			evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(AMD64_ATTR_R), reg->ibsfetch.randen);
+			evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(AMD64_ATTR_P), reg->ibsfetch.maxcnt);
+		} else if (amd64_event_ibsop(e->event)) {
+			evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(AMD64_ATTR_P), reg->ibsop.maxcnt);
+		}
+	}
+
+	reg->sel_unit_mask = umask;
+
 	return PFM_SUCCESS;
 }
 
@@ -591,6 +663,21 @@ pfm_amd64_get_event_modifiers(void *this, int pidx)
 	return amd64_events[pidx].attrmsk;
 }
 
+static int
+pfm_amd64_get_event_attr_info(void *this, int idx, int attr_idx, pfmlib_attr_info_t *info)
+{
+	const amd64_entry_t *pe = this_pe(this);
+	int ret;
+
+	if (attr_idx > pe[idx].numasks)
+		return 0;
+
+	ret = !!(amd64_events[idx].umasks[attr_idx].uflags & AMD64_FL_DFL);
+	if (ret)
+		info->dfl_val64 = 0;
+	return ret;
+}
+
 pfmlib_pmu_t amd64_support = {
 	.desc			= "AMD64",
 	.name			= "amd64",
@@ -616,4 +703,5 @@ pfmlib_pmu_t amd64_support = {
 	.event_is_valid		= pfm_amd64_event_is_valid,
 	.get_event_perf_type	= pfm_amd64_get_event_perf_type,
 	.get_event_modifiers	= pfm_amd64_get_event_modifiers,
+	.get_event_attr_info	= pfm_amd64_get_event_attr_info,
 };

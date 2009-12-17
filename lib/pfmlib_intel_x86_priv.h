@@ -33,7 +33,11 @@
 /*
  * maximum number of unit masks/event
  */
-#define INTEL_X86_NUM_UMASKS 32
+#define INTEL_X86_NUM_UMASKS	32
+/*
+ * maximum number of unit masks groups per event
+ */
+#define INTEL_X86_NUM_GRP	8
 
 /*
  * unit mask description
@@ -43,6 +47,10 @@ typedef struct {
 	char			*udesc; /* unit umask description */
 	unsigned int		ucode;  /* unit mask code */
 	unsigned int		uflags;	/* unit mask flags */
+	unsigned int		grpid;	/* unit mask group id */
+	unsigned int		grpmsk; /* indicate which umask bits used by group */
+	unsigned int		modhw;	/* hardwired modifiers, cannot be changed */
+	char			*ufrom;	/* name of unit mask from which this one is derived, NULL if none */
 } intel_x86_umask_t;
 
 /*
@@ -56,11 +64,13 @@ typedef int (*intel_x86_encoder_t)(void *this, pfmlib_event_desc_t *e, uint64_t 
 typedef struct {
 	char				*name;	/* event name */
 	char				*desc;	/* event description */
+	char				*from;	/* name of event from which this one is derived, NULL if none */
 	uint64_t			cntmsk;	/* supported counters */
 	unsigned int			code; 	/* event code */
 	unsigned int			numasks;/* number of umasks */
 	unsigned int			flags;	/* flags */
-	unsigned int			modmsk;/* bitmask of attr for this event */
+	unsigned int			modmsk;	/* bitmask of modifiers for this event */
+	unsigned int			ngrp;	/* number of unit masks groups */
 	intel_x86_encoder_t		encoder; /* event-specific encoder (optional) */
 	intel_x86_umask_t		umasks[INTEL_X86_NUM_UMASKS]; /* umask desc */
 } intel_x86_entry_t;
@@ -68,12 +78,12 @@ typedef struct {
 /*
  * pme_flags value (event and unit mask)
  */
-#define INTEL_X86_UMASK_NCOMBO	0x01	/* unit mask cannot be combined (default: combination ok) */
-#define INTEL_X86_FALLBACK_GEN	0x02	/* fallback from fixed to generic counter possible */
-#define INTEL_X86_CSPEC		0x04 	/* requires a intel_x86 core specification */
-#define INTEL_X86_PEBS		0x08 	/* event support PEBS */
-#define INTEL_X86_ENCODER	0x10 	/* event requires model-specific encoding */
-#define INTEL_X86_MESI		0x20 	/* requires MESI bits to be set */
+#define INTEL_X86_NCOMBO		0x01	/* unit masks with group cannot be combined */
+#define INTEL_X86_FALLBACK_GEN		0x02	/* fallback from fixed to generic counter possible */
+#define INTEL_X86_PEBS			0x04 	/* event support PEBS */
+#define INTEL_X86_ENCODER		0x08 	/* event requires model-specific encoding */
+#define INTEL_X86_DFL			0x10	/* unit mask is default choice */
+#define INTEL_X86_GRP_EXCL		0x20	/* only one unit mask group can be selected */
 
 typedef union pfm_intel_x86_reg {
 	unsigned long long val;			/* complete register value */
@@ -201,6 +211,7 @@ extern const pfmlib_attr_desc_t intel_x86_mods[];
 extern int intel_x86_detect(int *family, int *model);
 extern int intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *reg);
 extern void intel_x86_display_reg(void *this, pfm_intel_x86_reg_t reg, int c, int event);
+extern int intel_x86_add_defaults(const intel_x86_entry_t *ent, char *umask_str, unsigned int msk, unsigned int *umask);
 
 extern int pfm_intel_x86_event_is_valid(void *this, int pidx);
 extern int pfm_intel_x86_get_event_code(void *this, int i, uint64_t *code);
@@ -221,4 +232,6 @@ extern int pfm_intel_x86_get_event_umask_next(void *this, int idx, int attr);
 extern int pfm_intel_x86_get_event_perf_type(void *this, int pidx);
 extern int pfm_intel_x86_get_event_modifiers(void *this, int pidx);
 extern int pfm_intel_x86_validate_table(void *this, FILE *fp);
+extern int pfm_intel_x86_validate_table(void *this, FILE *fp);
+extern int pfm_intel_x86_get_event_attr_info(void *this, int idx, int attr_idx, pfmlib_attr_info_t *info);
 #endif /* __PFMLIB_INTEL_X86_PRIV_H__ */

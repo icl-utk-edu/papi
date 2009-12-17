@@ -97,15 +97,20 @@ main(int argc, char **argv)
 	/*
  	 * enable all counters attached to this thread and created by it
  	 */
-	prctl(PR_TASK_PERF_EVENTS_ENABLE);
+	ret = prctl(PR_TASK_PERF_EVENTS_ENABLE);
+	if (ret)
+		err(1, "prctl(enable) failed");
 
 	alarm(10);
+
 	noploop();
 
 	/*
  	 * disable all counters attached to this thread
  	 */
-	prctl(PR_TASK_PERF_EVENTS_DISABLE);
+	ret = prctl(PR_TASK_PERF_EVENTS_DISABLE);
+	if (ret)
+		err(1, "prctl(disable) failed");
 
 	/*
 	 * now read the results. We use pfp_event_count because

@@ -28,19 +28,11 @@
 #include <perfmon/pfmlib.h>
 #include <perfmon/pfmlib_perf_event.h>
 
-/*
- * priv level values
- */
-#define PFM_PLMH	0x10
-#define PFM_PLM3	0x8 /* priv level 3, 2, 1 (x86) */
-#define PFM_PLM2	0x4 /* not yet used */
-#define PFM_PLM1	0x2 /* not yet used */
-#define PFM_PLM0	0x1 /* kernel */
-
 #define PFM_ATTR_I(y, d) { .name = (y), .type = PFM_ATTR_MOD_INTEGER, .desc = (d) }
 #define PFM_ATTR_B(y, d) { .name = (y), .type = PFM_ATTR_MOD_BOOL, .desc = (d) }
 #define PFM_ATTR_NULL	{ .name = NULL }
 
+#define PFMLIB_EVT_MAX_NAME_LEN	128
 /*
  * modifier mask
  */
@@ -74,7 +66,6 @@ typedef struct {
 	};					/* attribute value */
 } pfmlib_attr_t;
 
-
 /*
  * perf_event specific attributes that needs to be communicated
  * back up to match perf_event_attr with hardware settings
@@ -84,14 +75,26 @@ typedef struct {
 	/* more to be added in the future */
 } pfmlib_perf_attr_t;
 
+typedef union {
+	uint64_t dfl_val64;
+	const char *dfl_str;
+	int dfl_bool;
+	int dfl_int;
+} pfmlib_attr_info_t;
+
+/*
+ * must be big enough to hold all possible priv level attributes
+ */
 #define PFMLIB_MAX_EVENT_ATTRS	64 /* max attributes per event desc */
 
 struct pfmlib_pmu;
 typedef struct {
-	struct pfmlib_pmu	*pmu;	/* pmu */
-	int			event;	/* pidx */
-	int			nattrs;	/* number of attrs in attrs[] */
-	pfmlib_attr_t		attrs[PFMLIB_MAX_EVENT_ATTRS];
+	struct pfmlib_pmu	*pmu;				/* pmu */
+	char			fstr[PFMLIB_EVT_MAX_NAME_LEN];	/* fully qualified event string */
+	int			dfl_plm;			/* default priv level mask */
+	int			event;				/* pidx */
+	int			nattrs;				/* number of attrs in attrs[] */
+	pfmlib_attr_t		attrs[PFMLIB_MAX_EVENT_ATTRS];	/* list of attributes */
 } pfmlib_event_desc_t;
 
 typedef struct pfmlib_pmu {
@@ -120,9 +123,9 @@ typedef struct pfmlib_pmu {
 	const char	*(*get_event_umask_desc)(void *this, int pidx, int umask_idx);
 	int		 (*get_event_umask_code)(void *this, int pidx, int umask_idx, uint64_t *code);
 	int		 (*get_event_encoding)(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs);
-	int		 (*event_has_dfl_umask)(void *this, int idx); /* optional */
 	int		 (*event_is_valid)(void *this, int pidx);
 	int		 (*validate_table)(void *this, FILE *fp);
+	int		 (*get_event_attr_info)(void *this, int pidx, int umask_idx, pfmlib_attr_info_t *info);
 } pfmlib_pmu_t;
 
 /*
@@ -141,6 +144,9 @@ typedef struct {
 extern pfmlib_config_t pfm_config;
 
 extern void __pfm_vbprintf(const char *fmt,...);
+extern void strconcat(char *str, size_t max, const char *fmt, ...);
+#define evt_strcat(str, fmt, a...) strconcat(str, PFMLIB_EVT_MAX_NAME_LEN, fmt, a)
+
 
 extern int pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d);
 extern int pfmlib_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen);

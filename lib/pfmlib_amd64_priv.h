@@ -46,7 +46,7 @@ typedef struct {
 
 #define AMD64_FAM10H AMD64_FAM10H_REV_B
 typedef enum {
-        AMD64_CPU_UN,
+        AMD64_CPU_UN = 0,
         AMD64_K7,
         AMD64_K8_REV_B,
         AMD64_K8_REV_C,
@@ -60,23 +60,29 @@ typedef enum {
 } amd64_rev_t;
 
 /* 
- * flags values
+ * flags values (bottom 8 bits only)
+ * bits 00-07: flags
+ * bits 08-15: from revision
+ * bits 16-23: till revision
  */
-#define PFMLIB_AMD64_UMASK_COMBO        0x1 /* unit mask can be combined */
-#define PFMLIB_AMD64_IBSFE		0x2 /* IBS fetch */
-#define PFMLIB_AMD64_IBSOP		0x4 /* IBS op */
-#define PFMLIB_AMD64_FROM_REV(rev)      ((rev)<<8)
-#define PFMLIB_AMD64_TILL_REV(rev)      ((rev)<<16)
-#define PFMLIB_AMD64_NOT_SUPP           0x1ff00
-#define PFMLIB_AMD64_TILL_K8_REV_C      PFMLIB_AMD64_TILL_REV(AMD64_K8_REV_C)
-#define PFMLIB_AMD64_K8_REV_D           PFMLIB_AMD64_FROM_REV(AMD64_K8_REV_D)
-#define PFMLIB_AMD64_K8_REV_E           PFMLIB_AMD64_FROM_REV(AMD64_K8_REV_E)
-#define PFMLIB_AMD64_TILL_K8_REV_E      PFMLIB_AMD64_TILL_REV(AMD64_K8_REV_E)
-#define PFMLIB_AMD64_K8_REV_F           PFMLIB_AMD64_FROM_REV(AMD64_K8_REV_F)
-#define PFMLIB_AMD64_TILL_FAM10H_REV_B  PFMLIB_AMD64_TILL_REV(AMD64_FAM10H_REV_B)
-#define PFMLIB_AMD64_FAM10H_REV_C       PFMLIB_AMD64_FROM_REV(AMD64_FAM10H_REV_C)
-#define PFMLIB_AMD64_TILL_FAM10H_REV_C  PFMLIB_AMD64_TILL_REV(AMD64_FAM10H_REV_C)
-#define PFMLIB_AMD64_FAM10H_REV_D       PFMLIB_AMD64_FROM_REV(AMD64_FAM10H_REV_D)
+#define AMD64_FROM_REV(rev)	((rev)<<8)
+#define AMD64_TILL_REV(rev)	((rev)<<16)
+#define AMD64_NOT_SUPP		0x1ff00
+
+#define AMD64_FL_NCOMBO        	0x1 /* unit mask can be combined */
+#define AMD64_FL_IBSFE		0x2 /* IBS fetch */
+#define AMD64_FL_IBSOP		0x4 /* IBS op */
+#define AMD64_FL_DFL		0x8 /* unit mask is default choice */
+
+#define AMD64_FL_TILL_K8_REV_C		AMD64_TILL_REV(AMD64_K8_REV_C)
+#define AMD64_FL_K8_REV_D		AMD64_FROM_REV(AMD64_K8_REV_D)
+#define AMD64_FL_K8_REV_E		AMD64_FROM_REV(AMD64_K8_REV_E)
+#define AMD64_FL_TILL_K8_REV_E		AMD64_TILL_REV(AMD64_K8_REV_E)
+#define AMD64_FL_K8_REV_F		AMD64_FROM_REV(AMD64_K8_REV_F)
+#define AMD64_FL_TILL_FAM10H_REV_B	AMD64_TILL_REV(AMD64_FAM10H_REV_B)
+#define AMD64_FL_FAM10H_REV_C		AMD64_FROM_REV(AMD64_FAM10H_REV_C)
+#define AMD64_FL_TILL_FAM10H_REV_C	AMD64_TILL_REV(AMD64_FAM10H_REV_C)
+#define AMD64_FL_FAM10H_REV_D		AMD64_FROM_REV(AMD64_FAM10H_REV_D)
 
 #define AMD64_ATTR_U	0
 #define AMD64_ATTR_K	1
@@ -111,7 +117,6 @@ typedef enum {
 /*
  * AMD64 MSR definitions
  */
-
 typedef union {
 	uint64_t val;				/* complete register value */
 	struct {

@@ -76,4 +76,5 @@ pfmlib_pmu_t intel_atom_support={
 	.get_event_perf_type	= pfm_intel_x86_get_event_perf_type,
 	.get_event_modifiers	= pfm_intel_x86_get_event_modifiers,
 	.validate_table		= pfm_intel_x86_validate_table,
+	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
 };

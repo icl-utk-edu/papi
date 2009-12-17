@@ -36,6 +36,15 @@ extern "C" {
 #define PFM_MIN_VERSION(v)	((v) & 0xffff)
 
 /*
+ * priv level mask (for dfl_plm)
+ */
+#define PFM_PLM0	0x01 /* kernel */
+#define PFM_PLM1	0x02 /* not yet used */
+#define PFM_PLM2	0x04 /* not yet used */
+#define PFM_PLM3	0x08 /* priv level 3, 2, 1 (x86) */
+#define PFM_PLMH	0x10 /* hypervisor */
+
+/*
  * Performance Event Source
  *
  * The source is what is providing events.
@@ -128,6 +137,37 @@ typedef enum {
  */
 typedef int pfm_err_t;		/* error if !PFM_SUCCESS */
 
+typedef struct {
+	const char		*name;	/* event name */
+	const char		*desc;	/* event description */
+	uint64_t		code;	/* event raw code (not encoding) */
+	pfm_pmu_t		pmu;	/* which PMU */
+	int			idx;	/* unique event identifier */
+	int			nattrs;	/* number of attributes */
+	int			size;	/* for struct extension, 0 for now */
+	uint64_t		reserved[3];
+} pfm_event_info_t;
+
+typedef struct {
+	const char		*name;	/* attribute symbolic name */
+	const char		*desc;	/* attribute description */
+	uint64_t		code;	/* attribute code */
+	pfm_attr_t		type;	/* attribute type */
+	int			idx;	/* attribute opaque index */
+	int			size;	/* size for extension, =0 for now */
+	struct {
+		int		is_dfl:1;	/* is default umask */
+		int		reserved:31;
+	};
+	union {
+		uint64_t	dfl_val64;	/* default 64-bit value */
+		const char	*dfl_str;	/* default string value */
+		int		dfl_bool;	/* default boolean value */
+		int		dfl_int;	/* default integer value */
+	};
+	uint64_t		reserved[4];
+} pfm_event_attr_info_t;
+
 /*
  * initialization, configuration
  */
@@ -148,22 +188,10 @@ extern const char *pfm_get_pmu_name(pfm_pmu_t pmu);
 extern int pfm_get_nevents(void);
 extern int pfm_get_event_first(void);
 extern int pfm_get_event_next(int idx);
-extern const char *pfm_get_event_name(int idx);
-extern const char *pfm_get_event_desc(int idx);
 extern int pfm_find_event(const char *str);
-extern pfm_pmu_t pfm_get_event_pmu(int idx);
-extern pfm_err_t pfm_get_event_code(int idx, uint64_t *code);
-extern pfm_err_t pfm_get_event_encoding(const char *str, int *idx, uint64_t **codes, int *count);
-
-/*
- * event attribute API
- */
-extern int pfm_get_event_nattrs(int idx);
-extern const char *pfm_get_event_attr_name(int idx, int attr_idx);
-extern const char *pfm_get_event_attr_desc(int idx, int attr_idx);
-extern pfm_err_t pfm_get_event_attr_code(int idx, int attr_idx, uint64_t *code);
-extern pfm_attr_t pfm_get_event_attr_type(int idx, int attr_idx);
-
+extern pfm_err_t pfm_get_event_encoding(const char *str, int dfl_plm, char **fstr, int *idx, uint64_t **codes, int *count);
+extern pfm_err_t pfm_get_event_info(int eidx, pfm_event_info_t *info);
+extern pfm_err_t pfm_get_event_attr_info(int eidx, int aidx, pfm_event_attr_info_t *info);
 
 /*
  * error codes
@@ -181,6 +209,7 @@ extern pfm_attr_t pfm_get_event_attr_type(int idx, int attr_idx);
 #define PFM_ERR_ATTR_SET	-10	/* attribute value hardcoded */
 #define PFM_ERR_TOOMANY		-11	/* too many parameters */
 #define PFM_ERR_TOOSMALL	-12	/* parameter is too small */
+#define PFM_ERR_ATTR_HW		-13	/* attribute hardwired, cannot change*/
 
 /*
  * event, attribute iterators
@@ -193,7 +222,7 @@ extern pfm_attr_t pfm_get_event_attr_type(int idx, int attr_idx);
 	for((x)=pfm_get_event_first(); (x) != -1; (x) = pfm_get_event_next((x)))
 
 #define pfm_for_each_event_attr(x, z) \
-	for((x)=0; (x) < pfm_get_event_nattrs((z)); (x) = (x)+1)
+	for((x)=0; (x) < (z)->nattrs; (x) = (x)+1)
 
 #ifdef __cplusplus /* extern C */
 }

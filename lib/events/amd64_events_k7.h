@@ -45,7 +45,6 @@ static const amd64_entry_t amd64_k7_pe[]={
 	.code  = 0x42,
 	.attrmsk = AMD64_BASIC_ATTRS,
 	.desc  = "Data Cache Refills from L2",
-	.flags = PFMLIB_AMD64_UMASK_COMBO,
 	.numasks = 6,
 	.umasks  = {
 		{ .uname = "L2_INVALID",
@@ -71,6 +70,7 @@ static const amd64_entry_t amd64_k7_pe[]={
 		{ .uname = "ALL",
 		  .udesc = "Shared, Exclusive, Owned, Modified State Refills",
 		  .ucode = 0x1F,
+		  .uflags = AMD64_FL_DFL|AMD64_FL_NCOMBO,
 		},
 	 },
 	},
@@ -78,7 +78,6 @@ static const amd64_entry_t amd64_k7_pe[]={
 	.code  = 0x43,
 	.attrmsk = AMD64_BASIC_ATTRS,
 	.desc  = "Data Cache Refills from System",
-	.flags = PFMLIB_AMD64_UMASK_COMBO,
 	.numasks = 6,
 	.umasks  = {
 		{ .uname = "INVALID",
@@ -104,6 +103,7 @@ static const amd64_entry_t amd64_k7_pe[]={
 		{ .uname = "ALL",
 		  .udesc = "Invalid, Shared, Exclusive, Owned, Modified",
 		  .ucode = 0x1F,
+		  .uflags = AMD64_FL_DFL|AMD64_FL_NCOMBO,
 		},
 	 },
 	},
@@ -111,7 +111,6 @@ static const amd64_entry_t amd64_k7_pe[]={
 	.code  = 0x44,
 	.attrmsk = AMD64_BASIC_ATTRS,
 	.desc  = "Data Cache Lines Evicted",
-	.flags = PFMLIB_AMD64_UMASK_COMBO,
 	.numasks = 6,
 	.umasks  = {
 		{ .uname = "INVALID",
@@ -137,6 +136,7 @@ static const amd64_entry_t amd64_k7_pe[]={
 		{ .uname = "ALL",
 		  .udesc = "Invalid, Shared, Exclusive, Owned, Modified",
 		  .ucode = 0x1F,
+		  .uflags = AMD64_FL_DFL|AMD64_FL_NCOMBO,
 		},
 	 },
 	},

@@ -29,55 +29,84 @@
  */
 
 
-#define INTEL_COREDUO_MESI_UMASKS \
+#define INTEL_COREDUO_MESI_UMASKS(g) \
 	{ .uname = "MESI",\
 		  .udesc = "Any cacheline access",\
+		  .grpid = (g), \
+		  .grpmsk= 0xf, \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,\
 		  .ucode = 0xf\
 		},\
 	{ .uname = "I_STATE",\
 		  .udesc = "Invalid cacheline",\
+		  .grpid = (g), \
+		  .grpmsk= 0xf, \
 		  .ucode = 0x1\
 		},\
 	{ .uname = "S_STATE",\
 		  .udesc = "Shared cacheline",\
+		  .grpid = (g), \
+		  .grpmsk= 0xf, \
 		  .ucode = 0x2\
 		},\
 	{ .uname = "E_STATE",\
 		  .udesc = "Exclusive cacheline",\
+		  .grpid = (g), \
+		  .grpmsk= 0xf, \
 		  .ucode = 0x4\
 		},\
 	{ .uname = "M_STATE",\
 		  .udesc = "Modified cacheline",\
+		  .grpid = (g), \
+		  .grpmsk= 0xf, \
 		  .ucode = 0x8\
 		}
 
-#define INTEL_COREDUO_SPECIFICITY_UMASKS \
+#define INTEL_COREDUO_SPECIFICITY_UMASKS(g) \
 	{ .uname = "SELF",\
 		  .udesc = "This core",\
+		  .grpid = (g), \
+		  .grpmsk= 0xc0, \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,\
 		  .ucode = 0x40\
 		},\
 	{ .uname = "BOTH_CORES",\
 		  .udesc = "Both cores",\
+		  .grpid = (g), \
+		  .grpmsk= 0xc0, \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,\
 		  .ucode = 0xc0\
 		}
 
-#define INTEL_COREDUO_HW_PREFETCH_UMASKS \
+#define INTEL_COREDUO_HW_PREFETCH_UMASKS(g) \
 	{ .uname = "ANY",\
 		  .udesc = "All inclusive",\
+		  .grpid = (g), \
+		  .grpmsk= 0x30, \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		  .ucode = 0x30\
 		},\
 	{ .uname = "PREFETCH",\
 		  .udesc = "Hardware prefetch only",\
+		  .grpid = (g), \
+		  .grpmsk= 0x30, \
+		  .uflags = INTEL_X86_NCOMBO, \
 		  .ucode = 0x10\
 		}
 
-#define INTEL_COREDUO_AGENT_UMASKS \
+#define INTEL_COREDUO_AGENT_UMASKS(g) \
 	{ .uname = "THIS_AGENT",\
 		  .udesc = "This agent",\
+		  .grpid = (g), \
+		  .grpmsk= 0x20, \
+		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
 		  .ucode = 0x00\
 		},\
 	{ .uname = "ALL_AGENTS",\
 		  .udesc = "Any agent on the bus",\
+		  .grpid = (g), \
+		  .grpmsk= 0x20, \
+		  .uflags = INTEL_X86_NCOMBO, \
 		  .ucode = 0x20\
 		}
 
@@ -169,6 +198,7 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.name = "SSE_PREFETCH",
 	.flags = 0,
 	.desc = "Streaming SIMD Extensions (SSE) Prefetch instructions executed",
+	.ngrp = 1,
 	.umasks = {
 	{ .uname = "NTA",
 		.udesc =  "Streaming SIMD Extensions (SSE) Prefetch NTA instructions executed",
@@ -229,10 +259,10 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x21,
 	.name = "L2_ADS",
-	.flags = INTEL_X86_CSPEC,
 	.desc = "L2 Address strobes ",
+	.ngrp = 1,
 	.umasks = {
-	  INTEL_COREDUO_SPECIFICITY_UMASKS
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0)
 	},
 	.numasks = 2
   },
@@ -240,10 +270,10 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x22,
 	.name = "DBUS_BUSY",
-	.flags = INTEL_X86_CSPEC,
 	.desc = "Core cycle during which data buswas busy (increments by 4)",
+	.ngrp = 1,
 	.umasks = {
-	  INTEL_COREDUO_SPECIFICITY_UMASKS
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0)
 	},
 	.numasks = 2
   },
@@ -251,10 +281,10 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x23,
 	.name = "DBUS_BUSY_RD",
-	.flags = INTEL_X86_CSPEC,
 	.desc = "Cycles data bus is busy transferring data to a core (increments by 4) ",
+	.ngrp = 1,
 	.umasks = {
-	  INTEL_COREDUO_SPECIFICITY_UMASKS
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0)
 	},
 	.numasks = 2
   },
@@ -262,11 +292,11 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x24,
 	.name = "L2_LINES_IN",
-	.flags = INTEL_X86_CSPEC,
 	.desc = "L2 cache lines allocated",
+	.ngrp = 2,
 	.umasks = {
-	  INTEL_COREDUO_SPECIFICITY_UMASKS,
-	  INTEL_COREDUO_HW_PREFETCH_UMASKS
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0),
+	  INTEL_COREDUO_HW_PREFETCH_UMASKS(1)
 	},
 	.numasks = 4
   },
@@ -274,10 +304,10 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x25,
 	.name = "L2_M_LINES_IN",
-	.flags = INTEL_X86_CSPEC,
 	.desc = "L2 Modified-state cache lines allocated",
+	.ngrp = 1,
 	.umasks = {
-	  INTEL_COREDUO_SPECIFICITY_UMASKS
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0)
 	},
 	.numasks = 2
   },
@@ -285,11 +315,11 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x26,
 	.name = "L2_LINES_OUT",
-	.flags = INTEL_X86_CSPEC,
 	.desc = "L2 cache lines evicted ",
+	.ngrp = 2,
 	.umasks = {
-	  INTEL_COREDUO_SPECIFICITY_UMASKS,
-	  INTEL_COREDUO_HW_PREFETCH_UMASKS
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0),
+	  INTEL_COREDUO_HW_PREFETCH_UMASKS(1)
 	},
 	.numasks = 4
   },
@@ -297,11 +327,11 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x27,
 	.name = "L2_M_LINES_OUT",
-	.flags = INTEL_X86_CSPEC,
 	.desc = "L2 Modified-state cache lines evicted ",
+	.ngrp = 2,
 	.umasks = {
-	  INTEL_COREDUO_SPECIFICITY_UMASKS,
-	  INTEL_COREDUO_HW_PREFETCH_UMASKS
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0),
+	  INTEL_COREDUO_HW_PREFETCH_UMASKS(1)
 	},
 	.numasks = 4
   },
@@ -309,11 +339,11 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x28,
 	.name = "L2_IFETCH",
-	.flags = INTEL_X86_CSPEC|INTEL_X86_MESI,
 	.desc = "L2 instruction fetches from nstruction fetch unit (includes speculative fetches) ",
+	.ngrp = 2,
 	.umasks = {
-	  INTEL_COREDUO_MESI_UMASKS,
-	  INTEL_COREDUO_SPECIFICITY_UMASKS
+	  INTEL_COREDUO_MESI_UMASKS(0),
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0)
 	},
 	.numasks = 7
   },
@@ -322,10 +352,10 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.code = 0x29,
 	.name = "L2_LD",
 	.desc = "L2 cache reads (includes speculation) ",
-	.flags = INTEL_X86_CSPEC|INTEL_X86_MESI,
+	.ngrp = 2,
 	.umasks = {
-	  INTEL_COREDUO_MESI_UMASKS,
-	  INTEL_COREDUO_SPECIFICITY_UMASKS
+	  INTEL_COREDUO_MESI_UMASKS(0),
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0)
 	},
 	.numasks = 7
   },
@@ -333,11 +363,11 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x2A,
 	.name = "L2_ST",
-	.flags = INTEL_X86_CSPEC|INTEL_X86_MESI,
 	.desc = "L2 cache writes (includes speculation)",
+	.ngrp = 2,
 	.umasks = {
-	  INTEL_COREDUO_MESI_UMASKS,
-	  INTEL_COREDUO_SPECIFICITY_UMASKS
+	  INTEL_COREDUO_MESI_UMASKS(0),
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0)
 	},
 	.numasks = 7
   },
@@ -345,12 +375,12 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x2E,
 	.name = "L2_RQSTS",
-	.flags = INTEL_X86_CSPEC|INTEL_X86_MESI,
 	.desc = "L2 cache reference requests ",
+	.ngrp = 3,
 	.umasks = {
-	  INTEL_COREDUO_MESI_UMASKS,
-	  INTEL_COREDUO_SPECIFICITY_UMASKS,
-	  INTEL_COREDUO_HW_PREFETCH_UMASKS
+	  INTEL_COREDUO_MESI_UMASKS(0),
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0),
+	  INTEL_COREDUO_HW_PREFETCH_UMASKS(1)
 	},
 	.numasks = 9
   },
@@ -358,12 +388,12 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x30,
 	.name = "L2_REJECT_CYCLES",
-	.flags = INTEL_X86_CSPEC|INTEL_X86_MESI,
 	.desc = "Cycles L2 is busy and rejecting new requests.",
+	.ngrp = 3,
 	.umasks = {
-	  INTEL_COREDUO_MESI_UMASKS,
-	  INTEL_COREDUO_SPECIFICITY_UMASKS,
-	  INTEL_COREDUO_HW_PREFETCH_UMASKS
+	  INTEL_COREDUO_MESI_UMASKS(0),
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0),
+	  INTEL_COREDUO_HW_PREFETCH_UMASKS(2)
 	},
 	.numasks = 9
   },
@@ -371,12 +401,12 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x32,
 	.name = "L2_NO_REQUEST_CYCLES",
-	.flags = INTEL_X86_CSPEC|INTEL_X86_MESI,
 	.desc = "Cycles there is no request to access L2.",
+	.ngrp = 3,
 	.umasks = {
-	  INTEL_COREDUO_MESI_UMASKS,
-	  INTEL_COREDUO_SPECIFICITY_UMASKS,
-	  INTEL_COREDUO_HW_PREFETCH_UMASKS
+	  INTEL_COREDUO_MESI_UMASKS(0),
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0),
+	  INTEL_COREDUO_HW_PREFETCH_UMASKS(2)
 	},
 	.numasks = 9
   },
@@ -397,13 +427,17 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.code = 0x3B,
 	.name = "THERMAL_TRIP",
 	.desc = "Duration in a thermal trip based on the current core clock ",
+	.ngrp = 1,
 	.umasks = {
 	{ .uname = "CYCLES",
 		.udesc = "Duration in a thermal trip based on the current core clock",
+		.uflags= INTEL_X86_NCOMBO,
 		.ucode = 0xC0
 	  },
 	{ .uname = "TRIPS",
 		.udesc = "Number of thermal trips",
+		.uflags= INTEL_X86_NCOMBO,
+		.modhw = _INTEL_X86_ATTR_E,
 		.ucode = 0xC0 | (1<<10) /* Edge detect pin (Figure 18-13) */
 	  }
 	},
@@ -415,6 +449,7 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x3c,
 	.desc = "Core cycles when core is not halted",
+	.ngrp = 1,
 	.umasks = {
 	{ .uname = "NONHLT_REF_CYCLES",
 		.udesc = "Non-halted bus cycles",
@@ -432,8 +467,9 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.code = 0x40,
 	.name = "DCACHE_CACHE_LD",
 	.desc = "L1 cacheable data read operations",
+	.ngrp = 1,
 	.umasks = {
-	  INTEL_COREDUO_MESI_UMASKS
+	  INTEL_COREDUO_MESI_UMASKS(0)
 	},
 	.numasks = 5
   },
@@ -442,8 +478,9 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.code = 0x41,
 	.name = "DCACHE_CACHE_ST",
 	.desc = "L1 cacheable data write operations",
+	.ngrp = 1,
 	.umasks = {
-	  INTEL_COREDUO_MESI_UMASKS
+	  INTEL_COREDUO_MESI_UMASKS(0)
 	},
 	.numasks = 5
   },
@@ -452,8 +489,9 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.code = 0x42,
 	.name = "DCACHE_CACHE_LOCK",
 	.desc = "L1 cacheable lock read operations to invalid state",
+	.ngrp = 1,
 	.umasks = {
-	  INTEL_COREDUO_MESI_UMASKS
+	  INTEL_COREDUO_MESI_UMASKS(0)
 	},
 	.numasks = 5
   },
@@ -505,21 +543,26 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.name = "SSE_PRE_MISS",
 	.flags = 0,
 	.desc = "Streaming SIMD Extensions (SSE) instructions missing all cache levels",
+	.ngrp = 1,
 	.umasks = {
 	{ .uname = "NTA_MISS",
 		.udesc = "PREFETCHNTA missed all caches",
+		.uflags= INTEL_X86_NCOMBO,
 		.ucode = 0x00
 	  },
 	{ .uname = "T1_MISS",
 		.udesc = "PREFETCHT1 missed all caches",
+		.uflags= INTEL_X86_NCOMBO,
 		.ucode = 0x01
 	  },
 	{ .uname = "T2_MISS",
 		.udesc = "PREFETCHT2 missed all caches",
+		.uflags= INTEL_X86_NCOMBO,
 		.ucode = 0x02
 	  },
 	{ .uname = "STORES_MISS",
 		.udesc = "SSE streaming store instruction missed all caches",
+		.uflags= INTEL_X86_NCOMBO,
 		.ucode = 0x03
 	  }
 	},
@@ -535,11 +578,11 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x60,
 	.name = "BUS_REQ_OUTSTANDING",
-	.flags = INTEL_X86_CSPEC,
 	.desc = "Weighted cycles of cacheable bus data read requests. This event counts full-line read request from DCU or HW prefetcher, but not RFO, write, instruction fetches, or others.",
+	.ngrp = 2,
 	.umasks = {
-	  INTEL_COREDUO_SPECIFICITY_UMASKS,
-	  INTEL_COREDUO_AGENT_UMASKS
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0),
+	  INTEL_COREDUO_AGENT_UMASKS(1)
 	},
 	.numasks = 4
 	/* TODO: umasks bit 12 to include HWP or exclude HWP separately. */,
@@ -555,8 +598,9 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.code = 0x62,
 	.name = "BUS_DRDY_CLOCKS",
 	.desc = "External bus cycles while DRDY asserted",
+	.ngrp = 1,
 	.umasks = {
-	  INTEL_COREDUO_AGENT_UMASKS
+	  INTEL_COREDUO_AGENT_UMASKS(0)
 	},
 	.numasks = 2
   },
@@ -564,10 +608,10 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x63,
 	.name = "BUS_LOCKS_CLOCKS",
-	.flags = INTEL_X86_CSPEC,
 	.desc = "External bus cycles while bus lock signal asserted",
+	.ngrp = 1,
 	.umasks = {
-	  INTEL_COREDUO_SPECIFICITY_UMASKS,
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0),
 	},
 	.numasks = 2
   },
@@ -581,10 +625,10 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x65,
 	.name = "BUS_TRANS_BRD",
-	.flags = INTEL_X86_CSPEC,
 	.desc = "Burst read bus transactions (data or code)",
+	.ngrp = 1,
 	.umasks = {
-	  INTEL_COREDUO_SPECIFICITY_UMASKS,
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0),
 	},
 	.numasks = 2
   },
@@ -592,11 +636,11 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x66,
 	.name = "BUS_TRANS_RFO",
-	.flags = INTEL_X86_CSPEC,
 	.desc = "Completed read for ownership ",
+	.ngrp = 2,
 	.umasks = {
-	  INTEL_COREDUO_SPECIFICITY_UMASKS,
-	  INTEL_COREDUO_AGENT_UMASKS
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0),
+	  INTEL_COREDUO_AGENT_UMASKS(1)
 	},
 	.numasks = 4
   },
@@ -604,11 +648,11 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x68,
 	.name = "BUS_TRANS_IFETCH",
-	.flags = INTEL_X86_CSPEC,
 	.desc = "Completed instruction fetch transactions",
+	.ngrp = 2,
 	.umasks = {
-	  INTEL_COREDUO_SPECIFICITY_UMASKS,
-	  INTEL_COREDUO_AGENT_UMASKS
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0),
+	  INTEL_COREDUO_AGENT_UMASKS(1)
 	},
 	.numasks = 4
 
@@ -616,12 +660,12 @@ static const intel_x86_entry_t coreduo_pe[]={
   { .modmsk = INTEL_V1_ATTRS,
 	.cntmsk = 0x3,
 	.code = 0x69,
-	.flags = INTEL_X86_CSPEC,
 	.name = "BUS_TRANS_INVAL",
 	.desc = "Completed invalidate transactions",
+	.ngrp = 2,
 	.umasks = {
-	  INTEL_COREDUO_SPECIFICITY_UMASKS,
-	  INTEL_COREDUO_AGENT_UMASKS
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0),
+	  INTEL_COREDUO_AGENT_UMASKS(1)
 	},
 	.numasks = 4
   },
@@ -629,11 +673,11 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x6A,
 	.name = "BUS_TRANS_PWR",
-	.flags = INTEL_X86_CSPEC,
 	.desc = "Completed partial write transactions",
+	.ngrp = 2,
 	.umasks = {
-	  INTEL_COREDUO_SPECIFICITY_UMASKS,
-	  INTEL_COREDUO_AGENT_UMASKS
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0),
+	  INTEL_COREDUO_AGENT_UMASKS(1)
 	},
 	.numasks = 4
   },
@@ -641,11 +685,11 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x6B,
 	.name = "BUS_TRANS_P",
-	.flags = INTEL_X86_CSPEC,
 	.desc = "Completed partial transactions (include partial read + partial write + line write)",
+	.ngrp = 2,
 	.umasks = {
-	  INTEL_COREDUO_SPECIFICITY_UMASKS,
-	  INTEL_COREDUO_AGENT_UMASKS
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0),
+	  INTEL_COREDUO_AGENT_UMASKS(1)
 	},
 	.numasks = 4
   },
@@ -653,11 +697,11 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x6C,
 	.name = "BUS_TRANS_IO",
-	.flags = INTEL_X86_CSPEC,
 	.desc = "Completed I/O transactions (read and write)",
+	.ngrp = 2,
 	.umasks = {
-	  INTEL_COREDUO_SPECIFICITY_UMASKS,
-	  INTEL_COREDUO_AGENT_UMASKS
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0),
+	  INTEL_COREDUO_AGENT_UMASKS(1)
 	},
 	.numasks = 4
   },
@@ -665,10 +709,10 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x206D,
 	.name = "BUS_TRANS_DEF",
-	.flags = INTEL_X86_CSPEC,
 	.desc = "Completed defer transactions ",
+	.ngrp = 1,
 	.umasks = {
-	  INTEL_COREDUO_SPECIFICITY_UMASKS
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0)
 	},
 	.numasks = 2
   },
@@ -677,8 +721,9 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.code = 0xc067,
 	.name = "BUS_TRANS_WB",
 	.desc = "Completed writeback transactions from DCU (does not include L2 writebacks)",
+	.ngrp = 1,
 	.umasks = {
-	  INTEL_COREDUO_AGENT_UMASKS
+	  INTEL_COREDUO_AGENT_UMASKS(0)
 	},
 	.numasks = 2
   },
@@ -687,9 +732,10 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.code = 0xc06E,
 	.name = "BUS_TRANS_BURST",
 	.desc = "Completed burst transactions (full line transactions include reads, write, RFO, and writebacks) ",
+	.ngrp = 1,
 	/* TODO .umasks = 0xC0, */
 	.umasks = {
-	  INTEL_COREDUO_AGENT_UMASKS
+	  INTEL_COREDUO_AGENT_UMASKS(0)
 	},
 	.numasks = 2
   },
@@ -697,10 +743,10 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0xc06F,
 	.name = "BUS_TRANS_MEM",
-	.flags = INTEL_X86_CSPEC,
 	.desc = "Completed memory transactions. This includes Bus_Trans_Burst + Bus_Trans_P + Bus_Trans_Inval.",
+	.ngrp = 1,
 	.umasks = {
-	  INTEL_COREDUO_AGENT_UMASKS
+	  INTEL_COREDUO_AGENT_UMASKS(0)
 	},
 	.numasks = 2
   },
@@ -709,8 +755,9 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.code = 0xc070,
 	.name = "BUS_TRANS_ANY",
 	.desc = "Any completed bus transactions",
+	.ngrp = 1,
 	.umasks = {
-	  INTEL_COREDUO_AGENT_UMASKS
+	  INTEL_COREDUO_AGENT_UMASKS(0)
 	},
 	.numasks = 2
   },
@@ -719,10 +766,10 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.code = 0x77,
 	.name = "BUS_SNOOPS",
 	.desc = "External bus cycles while bus lock signal asserted",
-	.flags = INTEL_X86_MESI,
+	.ngrp = 2,
 	.umasks = {
-	  INTEL_COREDUO_MESI_UMASKS,
-	  INTEL_COREDUO_AGENT_UMASKS
+	  INTEL_COREDUO_MESI_UMASKS(0),
+	  INTEL_COREDUO_AGENT_UMASKS(1)
 	},
 	.numasks = 7
   },
@@ -731,9 +778,9 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.code = 0x0178,
 	.name = "DCU_SNOOP_TO_SHARE",
 	.desc = "DCU snoops to share-state L1 cache line due to L1 misses ",
-	.flags = INTEL_X86_CSPEC,
+	.ngrp = 1,
 	.umasks = {
-	  INTEL_COREDUO_SPECIFICITY_UMASKS
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0)
 	},
 	.numasks = 2
   },
@@ -741,10 +788,10 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.cntmsk = 0x3,
 	.code = 0x7D,
 	.name = "BUS_NOT_IN_USE",
-	.flags = INTEL_X86_CSPEC,
 	.desc = "Number of cycles there is no transaction from the core",
+	.ngrp = 1,
 	.umasks = {
-	  INTEL_COREDUO_SPECIFICITY_UMASKS
+	  INTEL_COREDUO_SPECIFICITY_UMASKS(0)
 	},
 	.numasks = 2
   },
@@ -885,6 +932,7 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.code = 0xB3,
 	.name = "SIMD_INT_INSTRUCTIONS",
 	.desc = "Number of SIMD Integer instructions executed",
+	.ngrp = 1,
 	.umasks = {
 	{ .uname = "MUL",
 		.udesc = "Number of SIMD Integer packed multiply instructions executed",
@@ -986,6 +1034,7 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.name = "FP_MMX_TRANS",
 	.name = "MMX_FP_TRANS",
 	.desc = "Transitions from MMX (TM) Instructions to Floating Point Instructions",
+	.ngrp = 1,
 	.umasks = {
 	{ .uname = "TO_FP",
 		.udesc = "Number of transitions from MMX to X87",
@@ -1027,25 +1076,31 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.code = 0xD8,
 	.name = "SSE_INSTRUCTIONS_RETIRED",
 	.desc = "Number of SSE/SSE2 instructions retired (packed and scalar)",
+	.ngrp = 1,
 	.umasks = {
 	{ .uname = "SINGLE",
 		.udesc = "Number of SSE/SSE2 single precision instructions retired (packed and scalar)",
+		.uflags= INTEL_X86_NCOMBO,
 		.ucode = 0x00
 	  },
 	{ .uname = "SCALAR_SINGLE",
 		.udesc = "Number of SSE/SSE2 scalar single precision instructions retired",
+		.uflags= INTEL_X86_NCOMBO,
 		.ucode = 0x01,
 	  },
 	{ .uname = "PACKED_DOUBLE",
 		.udesc = "Number of SSE/SSE2 packed double percision instructions retired",
+		.uflags= INTEL_X86_NCOMBO,
 		.ucode = 0x02,
 	  },
 	{ .uname = "DOUBLE",
 		.udesc = "Number of SSE/SSE2 scalar double percision instructions retired",
+		.uflags= INTEL_X86_NCOMBO,
 		.ucode = 0x03,
 	  },
 	{ .uname = "INT_128",
 		.udesc = "Number of SSE2 128 bit integer  instructions retired",
+		.uflags= INTEL_X86_NCOMBO,
 		.ucode = 0x04,
 	 },
 	},
@@ -1056,6 +1111,7 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.code = 0xD9,
 	.name = "SSE_COMP_INSTRUCTIONS_RETIRED",
 	.desc = "Number of computational SSE/SSE2 instructions retired (does not include AND, OR, XOR)",
+	.ngrp = 1,
 	.umasks = {
 	{ .uname = "PACKED_SINGLE",
 		.udesc = "Number of SSE/SSE2 packed single precision compute instructions retired (does not include AND, OR, XOR)",
@@ -1071,6 +1127,7 @@ static const intel_x86_entry_t coreduo_pe[]={
 	  },
 	{ .uname = "SCALAR_DOUBLE",
 		.udesc = "Number of SSE/SSE2 scalar double precision compute instructions retired (does not include AND, OR, XOR)",
+		.uflags= INTEL_X86_NCOMBO,
 		.ucode = 0x03
 	  }
 	},
@@ -1081,6 +1138,7 @@ static const intel_x86_entry_t coreduo_pe[]={
 	.code = 0xDA,
 	.name = "FUSED_UOPS",
 	.desc = "fused uops retired",
+	.ngrp = 1,
 	.umasks = {
   	{ .uname = "ALL",
 		.udesc = "All fused uops retired",
