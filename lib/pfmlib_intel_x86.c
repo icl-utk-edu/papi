@@ -79,7 +79,6 @@ int
 intel_x86_add_defaults(const intel_x86_entry_t *ent, char *umask_str, unsigned int msk, unsigned int *umask)
 {
 	int i, j, added;
-
 	for(i=0; msk; msk >>=1, i++) {
 
 		if (!(msk & 0x1))
@@ -229,19 +228,6 @@ intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *re
 		}
 	}
 
-	if ((modhw & _INTEL_X86_ATTR_I) && reg->sel_inv)
-		return PFM_ERR_ATTR_HW;
-	if ((modhw & _INTEL_X86_ATTR_E) && reg->sel_edge)
-		return PFM_ERR_ATTR_HW;
-	if ((modhw & _INTEL_X86_ATTR_C) && reg->sel_cnt_mask)
-		return PFM_ERR_ATTR_HW;
-	if ((modhw & _INTEL_X86_ATTR_T) && reg->sel_anythr)
-		return PFM_ERR_ATTR_HW;
-	if ((modhw & _INTEL_X86_ATTR_U) && reg->sel_usr)
-		return PFM_ERR_ATTR_HW;
-	if ((modhw & _INTEL_X86_ATTR_K) && reg->sel_os)
-		return PFM_ERR_ATTR_HW;
-
 	/*
 	 * handle case where no priv level mask was passed.
 	 * then we use the dfl_plm
@@ -263,8 +249,24 @@ intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *re
 		if (ret != PFM_SUCCESS)
 			return ret;
 	}
+
+	reg->val |= umask << 8;
 	reg->sel_en        = 1; /* force enable bit to 1 */
 	reg->sel_int       = 1; /* force APIC int to 1 */
+
+	if ((modhw & _INTEL_X86_ATTR_I) && reg->sel_inv)
+		return PFM_ERR_ATTR_HW;
+	if ((modhw & _INTEL_X86_ATTR_E) && reg->sel_edge)
+		return PFM_ERR_ATTR_HW;
+	if ((modhw & _INTEL_X86_ATTR_C) && reg->sel_cnt_mask)
+		return PFM_ERR_ATTR_HW;
+	if ((modhw & _INTEL_X86_ATTR_T) && reg->sel_anythr)
+		return PFM_ERR_ATTR_HW;
+	if ((modhw & _INTEL_X86_ATTR_U) && reg->sel_usr)
+		return PFM_ERR_ATTR_HW;
+	if ((modhw & _INTEL_X86_ATTR_K) && reg->sel_os)
+		return PFM_ERR_ATTR_HW;
+
 
 	if (pe[e->event].from)
 		evt_strcat(e->fstr, "%s", pe[e->event].from);

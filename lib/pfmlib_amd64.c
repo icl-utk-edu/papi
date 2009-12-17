@@ -467,10 +467,15 @@ amd64_encode(pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 	 * if no unit mask specified, then try defaults
 	 */
 	if (amd64_events[e->event].numasks && !uc) {
+		/* XXX: fix for IBS */
 		ret = amd64_add_defaults(e->event, umask_str, &umask);
 		if (ret != PFM_SUCCESS)
 			return ret;
 	}
+	/*
+	 * XXX: fix for IBS
+	 */
+	reg->sel_unit_mask = umask;
 
 	evt_strcat(e->fstr, "%s", amd64_events[e->event].name);
 	evt_strcat(e->fstr, "%s", umask_str);
@@ -491,8 +496,6 @@ amd64_encode(pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 			evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(AMD64_ATTR_P), reg->ibsop.maxcnt);
 		}
 	}
-
-	reg->sel_unit_mask = umask;
 
 	return PFM_SUCCESS;
 }

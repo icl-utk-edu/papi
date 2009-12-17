@@ -215,6 +215,7 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 		if (ret != PFM_SUCCESS)
 			return ret;
 	}
+	reg->val |= umask << 8;
 
 	reg->nhm_unc.usel_en    = 1; /* force enable bit to 1 */
 	reg->nhm_unc.usel_int   = 1; /* force APIC int to 1 */
