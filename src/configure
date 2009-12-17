@@ -6883,6 +6883,7 @@ if test "$major_version" = "2" -a "$minor_version" = "6" -a "$point_version" = "
   CFLAGS="$CFLAGS -DKERNEL31"
 elif test "$major_version" -ge 2 -a "$minor_version" -ge 6 -a "$point_version" -gt 31; then
   perf_header="perf_event.h"
+  CFLAGS="$CFLAGS -DPERF_EVENT"
 fi
 
 if test "$perf_header" != ""; then
