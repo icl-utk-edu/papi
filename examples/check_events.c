@@ -35,10 +35,22 @@
 #include <perfmon/pfmlib.h>
 
 int
+pmu_is_present(pfm_pmu_t p)
+{
+	pfm_pmu_info_t pinfo;
+	int ret;
+
+	memset(&pinfo, 0, sizeof(pinfo));
+	ret = pfm_get_pmu_info(p, &pinfo);
+	return ret == PFM_SUCCESS ? pinfo.is_present : 0;
+}
+
+int
 main(int argc, const char **argv)
 {
+	pfm_pmu_info_t pinfo;
 	const char *arg[3];
-	const char **p, *name;
+	const char **p;
 	pfm_event_info_t info;
 	uint64_t *codes;
 	int count;
@@ -52,19 +64,24 @@ main(int argc, const char **argv)
 	if (ret != PFM_SUCCESS)
 		errx(1, "cannot initialize library: %s\n", pfm_strerror(ret));
 
+	memset(&pinfo, 0, sizeof(pinfo));
+
 	printf("Supported PMU models:\n");
 	for(i=0; i < PFM_PMU_MAX; i++) {
-		name = pfm_get_pmu_name(i);
-		if (!name)
+		ret = pfm_get_pmu_info(i, &pinfo);
+		if (ret != PFM_SUCCESS)
 			continue;
 		
-		printf("\t[%d, %s, \"%s\"]\n", i, pfm_get_pmu_name(i), pfm_get_pmu_desc(i));
+		printf("\t[%d, %s, \"%s\"]\n", i, pinfo.name, pinfo.desc);
 	}
 
 	printf("Detected PMU models:\n");
 	for(i=0; i < PFM_PMU_MAX; i++) {
-		if (pfm_pmu_present(i))
-			printf("\t[%d, %s, \"%s\"]\n", i, pfm_get_pmu_name(i), pfm_get_pmu_desc(i));
+		ret = pfm_get_pmu_info(i, &pinfo);
+		if (ret != PFM_SUCCESS)
+			continue;
+		if (pinfo.is_present)
+			printf("\t[%d, %s, \"%s\"]\n", i, pinfo.name, pinfo.desc);
 	}
 
 	printf("Total events: %d\n", pfm_get_nevents());
@@ -72,7 +89,7 @@ main(int argc, const char **argv)
 	/*
 	 * be nice to user!
 	 */
-	if (argc < 2  && pfm_pmu_present(PFM_PMU_PERF_EVENT)) {
+	if (argc < 2  && pmu_is_present(PFM_PMU_PERF_EVENT)) {
 		arg[0] = "PERF_COUNT_HW_CPU_CYCLES";
 		arg[1] = "PERF_COUNT_HW_INSTRUCTIONS";
 		arg[2] = NULL;
@@ -113,8 +130,12 @@ main(int argc, const char **argv)
 		if (ret != PFM_SUCCESS)
 			errx(1, "cannot get event info: %s", pfm_strerror(ret));
 
+		ret = pfm_get_pmu_info(info.pmu, &pinfo);
+		if (ret != PFM_SUCCESS)
+			errx(1, "cannot get PMU info: %s", pfm_strerror(ret));
+
 		printf("Event %s:\n", *p);
-		printf("\tPMU: %s\n", pfm_get_pmu_desc(info.pmu));
+		printf("\tPMU: %s\n", pinfo.desc);
 		printf("\tIDX: %d\n", idx);
 		for(j=0; j < count; j++)
 			printf("\tcodes[%d]=0x%"PRIx64"\n", j, codes[j]);

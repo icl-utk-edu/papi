@@ -864,30 +864,6 @@ pfmlib_get_pmu_next(pfm_pmu_t i)
 	return -1;
 }
 
-const char *
-pfm_get_pmu_desc(pfm_pmu_t pmu_id)
-{
-	pfmlib_pmu_t *pmu;
-
-	pmu = pmu2pmuidx(pmu_id);
-	if (!pmu)
-		return NULL;
-
-	return pmu->desc;
-}
-
-const char *
-pfm_get_pmu_name(pfm_pmu_t pmu_id)
-{
-	pfmlib_pmu_t *pmu;
-
-	pmu = pmu2pmuidx(pmu_id);
-	if (!pmu)
-		return NULL;
-
-	return pmu->name;
-}
-
 int
 pfm_get_event_next(int idx)
 {
@@ -950,15 +926,6 @@ pfmlib_get_event_nattrs(int idx)
 	return (nu+nm);
 }
 
-
-int
-pfm_pmu_present(pfm_pmu_t p)
-{
-	if ((p < 0 || p >= PFM_PMU_MAX) || !pfmlib_pmus_map[p])
-		return 0;
-
-	return !!(pfmlib_pmus_map[p]->flags & PFMLIB_PMU_FL_ACTIVE);
-}
 
 int
 pfmlib_get_event_encoding(pfmlib_event_desc_t *e, uint64_t **codes, int *count, pfmlib_perf_attr_t *attrs)
@@ -1162,3 +1129,41 @@ pfm_get_event_attr_info(int idx, int attr_idx, pfm_event_attr_info_t *info)
 	}
 	return PFM_SUCCESS;
 }
+
+int
+pfm_get_pmu_info(pfm_pmu_t pmuid, pfm_pmu_info_t *info)
+{
+	pfmlib_pmu_t *pmu;
+
+	if (!PFMLIB_INITIALIZED())
+		return PFM_ERR_NOINIT;
+
+	if (pmuid < PFM_PMU_NONE || pmuid >= PFM_PMU_MAX)
+		return PFM_ERR_INVAL;
+
+	if (!info)
+		return PFM_ERR_INVAL;
+
+	if (info->size && info->size != sizeof(*info))
+		return PFM_ERR_INVAL;
+
+	pmu = pfmlib_pmus_map[pmuid];
+	if (!pmu)
+		return PFM_ERR_NOTSUPP;
+
+	info->name = pmu->name;
+	info->desc = pmu->desc;
+	info->pmu = pmuid;
+	/*
+	 * pme_count only valid when PMU is detected
+	 */
+	if (pfmlib_pmu_active(pmu)) {
+		info->is_present = 1;
+		info->nevents = pmu->pme_count;
+	} else {
+		info->is_present = 0;
+		info->nevents = 0;
+	}
+	return PFM_SUCCESS;
+}
+

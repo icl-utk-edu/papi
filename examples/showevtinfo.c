@@ -47,19 +47,20 @@ static void
 show_event_info_compact(pfm_event_info_t *info)
 {
 	pfm_event_attr_info_t ainfo;
-	const char *pmu_name;
+	pfm_pmu_info_t pinfo;
 	int i, ret;
 
 	memset(&ainfo, 0, sizeof(ainfo));
+	memset(&pinfo, 0, sizeof(pinfo));
 
-	pmu_name = pfm_get_pmu_name(info->pmu);
+	pfm_get_pmu_info(info->pmu, &pinfo);
 
 	pfm_for_each_event_attr(i, info) {
 		ret = pfm_get_event_attr_info(info->idx, i, &ainfo);
 		if (ret != PFM_SUCCESS)
 			err(1, "cannot get attribute info: %s", pfm_strerror(ret));
 
-		printf("%s::%s:%s\n", pmu_name, info->name, ainfo.name);
+		printf("%s::%s:%s\n", pinfo.name, info->name, ainfo.name);
 	}
 }
 
@@ -67,18 +68,24 @@ static void
 show_event_info(pfm_event_info_t *info)
 {
 	pfm_event_attr_info_t ainfo;
+	pfm_pmu_info_t pinfo;
 	int mod = 0, um = 0;
 	int i, ret;
 
 	memset(&ainfo, 0, sizeof(ainfo));
+	memset(&pinfo, 0, sizeof(pinfo));
+
+	ret = pfm_get_pmu_info(info->pmu, &pinfo);
+	if (ret)
+		errx(1, "cannot get pmu info: %s", pfm_strerror(ret));
 
 	printf("#-----------------------------\n"
 	       "IDX	 : %d\n"
 	       "PMU name : %s (%s)\n"
 	       "Name     : %s\n",
 		info->idx,
-		pfm_get_pmu_name(info->pmu),
-		pfm_get_pmu_desc(info->pmu),
+		pinfo.name,
+		pinfo.desc,
 		info->name);
 
 	printf("Desc     : %s\n", info->desc ? info->desc : "no description available");
@@ -122,15 +129,17 @@ usage(void)
 static int
 validate_event_tables(void)
 {
-	const char *name;
+	pfm_pmu_info_t pinfo;
 	int i, ret, retval = 0;
 
+	memset(&pinfo, 0, sizeof(pinfo));
+
 	for(i=0; i < PFM_PMU_MAX; i++) {
-		name = pfm_get_pmu_name(i);
-		if (!name)
+		ret = pfm_get_pmu_info(i, &pinfo);
+		if (ret != PFM_SUCCESS)
 			continue;
 
-		printf("Checking %s: ", name); fflush(stdout);
+		printf("Checking %s: ", pinfo.name); fflush(stdout);
 		ret = pfm_pmu_validate_events(i, stdout);
 		if (ret != PFM_SUCCESS && ret != PFM_ERR_NOTSUPP)
 			retval = 1;
@@ -143,8 +152,8 @@ validate_event_tables(void)
 int
 main(int argc, char **argv)
 {
+	pfm_pmu_info_t pinfo;
 	pfm_event_info_t info;
-	const char *name, *pname;
 	int i, match;
 	regex_t preg;
 	char *fullname = NULL;
@@ -152,6 +161,7 @@ main(int argc, char **argv)
 	int ret, c, validate = 0;
 
 	memset(&info, 0, sizeof(info));
+	memset(&pinfo, 0, sizeof(pinfo));
 
 	while ((c=getopt(argc, argv,"hCL")) != -1) {
 		switch(c) {
@@ -184,19 +194,22 @@ main(int argc, char **argv)
 	if (!options.compact) {
 		printf("Supported PMU models:\n");
 		for(i=0; i < PFM_PMU_MAX; i++) {
-			name = pfm_get_pmu_name(i);
-			if (!name)
+			ret = pfm_get_pmu_info(i, &pinfo);
+			if (ret != PFM_SUCCESS)
 				continue;
 
-			printf("\t[%d, %s, \"%s\"]\n", i, pfm_get_pmu_name(i), pfm_get_pmu_desc(i));
+			printf("\t[%d, %s, \"%s\"]\n", i, pinfo.name,  pinfo.desc);
 		}
 
 		printf("Detected PMU models:\n");
 		for(i=0; i < PFM_PMU_MAX; i++) {
-			if (pfm_pmu_present(i))
-				printf("\t[%d, %s, \"%s\"]\n", i, pfm_get_pmu_name(i), pfm_get_pmu_desc(i));
-		}
+			ret = pfm_get_pmu_info(i, &pinfo);
+			if (ret != PFM_SUCCESS)
+				continue;
 
+			if (pinfo.is_present)
+				printf("\t[%d, %s, \"%s\", %d events]\n", i, pinfo.name, pinfo.desc, pinfo.nevents);
+		}
 		printf("Total events: %d\n", pfm_get_nevents());
 	}
 
@@ -212,18 +225,18 @@ main(int argc, char **argv)
 			if (ret != PFM_SUCCESS)
 				errx(1, "cannot get event info: %s", pfm_strerror(ret));
 
-			pname = pfm_get_pmu_name(info.pmu);
-			if (!pname)
-				errx(1, "cannot get PMU name");
+			ret = pfm_get_pmu_info(info.pmu, &pinfo);
+			if (ret != PFM_SUCCESS)
+				errx(1, "cannot get PMU name: %s", pfm_strerror(ret));
 
-			len = strlen(info.name) + strlen(pname) + 1 + 2;
+			len = strlen(info.name) + strlen(pinfo.name) + 1 + 2;
 			if (len > l) {
 				l = len;
 				fullname = realloc(fullname, l);
 				if (!fullname)
 					err(1, "cannot allocate memory");
 			}
-			sprintf(fullname, "%s::%s", pname, info.name);
+			sprintf(fullname, "%s::%s", pinfo.name, info.name);
 
 			if (regexec(&preg, fullname, 0, NULL, 0) == 0) {
 				if (options.compact)

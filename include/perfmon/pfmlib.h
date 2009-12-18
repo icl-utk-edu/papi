@@ -140,6 +140,19 @@ typedef int pfm_err_t;		/* error if !PFM_SUCCESS */
 typedef struct {
 	const char		*name;	/* event name */
 	const char		*desc;	/* event description */
+	pfm_pmu_t		pmu;	/* PMU identification */
+	int			size;	/* for struct extension, 0 for now */
+	int			nevents;/* how many events for this PMU */
+	struct {
+		int		is_present:1;	/* present on host system */
+		int		reserved:31;
+	};
+	uint64_t		reserved[3];
+} pfm_pmu_info_t;
+
+typedef struct {
+	const char		*name;	/* event name */
+	const char		*desc;	/* event description */
 	uint64_t		code;	/* event raw code (not encoding) */
 	pfm_pmu_t		pmu;	/* which PMU */
 	int			idx;	/* unique event identifier */
@@ -169,7 +182,7 @@ typedef struct {
 } pfm_event_attr_info_t;
 
 /*
- * initialization, configuration
+ * initialization, configuration, errors
  */
 extern pfm_err_t pfm_initialize(void);
 extern const char *pfm_strerror(int code);
@@ -178,9 +191,7 @@ extern int pfm_get_version(void);
 /*
  * PMU API
  */
-extern int pfm_pmu_present(pfm_pmu_t p);
-extern const char *pfm_get_pmu_desc(pfm_pmu_t pmu);
-extern const char *pfm_get_pmu_name(pfm_pmu_t pmu);
+extern pfm_err_t pfm_get_pmu_info(pfm_pmu_t pmu, pfm_pmu_info_t *info);
 
 /*
  * event API
@@ -191,6 +202,9 @@ extern int pfm_get_event_next(int idx);
 extern int pfm_find_event(const char *str);
 extern pfm_err_t pfm_get_event_encoding(const char *str, int dfl_plm, char **fstr, int *idx, uint64_t **codes, int *count);
 extern pfm_err_t pfm_get_event_info(int eidx, pfm_event_info_t *info);
+/*
+ * attribute API
+ */
 extern pfm_err_t pfm_get_event_attr_info(int eidx, int aidx, pfm_event_attr_info_t *info);
 
 /*
@@ -216,7 +230,7 @@ extern pfm_err_t pfm_get_event_attr_info(int eidx, int aidx, pfm_event_attr_info
  * must be used because no guarante indexes are contiguous
  *
  * for pmu, simply iterate over pfm_pmu_t enum and use
- * pfm_pmu_present().
+ * pfm_get_pmu_info() and the is_present field
  */
 #define pfm_for_each_event(x) \
 	for((x)=pfm_get_event_first(); (x) != -1; (x) = pfm_get_event_next((x)))
