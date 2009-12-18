@@ -1050,6 +1050,12 @@ int PAPI_reset(int EventSet)
 
       }
    } else {
+#ifdef _BGP
+   //  For BG/P, we always want to reset the 'real' hardware counters.  The counters
+   //  can be controlled via multiple interfaces, and we need to ensure that the values
+   //  are truly zero...
+      retval = _papi_hwd[cidx]->reset(thread->context[cidx], ESI->ctl_state);
+#endif
       memset(ESI->sw_stop, 0x00, ESI->NumberOfEvents * sizeof(long long));
    }
 

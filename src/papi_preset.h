@@ -22,7 +22,11 @@ typedef struct hwi_preset_data {  /* preset event data for each defined preset *
    unsigned int mask;
    unsigned int count; */
    int native[PAPI_MAX_COUNTER_TERMS];    /* array of native event code(s) for this preset event */
+#ifdef _BGP
+   char operation[PAPI_2MAX_STR_LEN]; /* operation string: +,-,*,/,@(number of metrics), $(constant Mhz), %(1000000.0) */
+#else
    char operation[PAPI_MIN_STR_LEN]; /* operation string: +,-,*,/,@(number of metrics), $(constant Mhz), %(1000000.0) */
+#endif
 } hwi_preset_data_t;
 
 typedef struct hwi_search {   /* search element for preset events defined for each platform */

@@ -646,7 +646,12 @@ read the documentation carefully.  */
 */
 /* MAX_TERMS is the current max value of MAX_COUNTER_TERMS as defined in SUBSTRATEs */
 /* This definition also is HORRIBLE and should be replaced by a dynamic value. -pjm */
+#ifdef _BGP
+#define PAPI_MAX_INFO_TERMS  19 /* should match PAPI_MAX_COUNTER_TERMS defined in papi_internal.h */
+#else
 #define PAPI_MAX_INFO_TERMS 12
+#endif
+
    typedef struct event_info {
       unsigned int event_code;               /* preset (0x8xxxxxxx) or native (0x4xxxxxxx) event code */
       unsigned int event_type;               /* event type or category for preset events only */

@@ -229,7 +229,7 @@ void _papi_hwd_dispatch_timer(int signal, hwd_siginfo_t * info, void *tmp);
 /* papi_internal.c global papi error function */
 void PAPIERROR(char *format, ...);
 
-#if !defined(HAVE_FFSLL)
+#if (!defined(HAVE_FFSLL) || defined(_BGP))
  int ffsll(long long lli);
 #endif
 
