@@ -809,59 +809,7 @@ _niagara2_get_system_info (void)
   strcpy (_niagara2_vector.cmp_info.support_version, "libcpc2");
   strcpy (_niagara2_vector.cmp_info.kernel_version, "libcpc2");
 
-  // _niagara2_vector.cmp_info.num_cntrs = MAX_COUNTERS;
-  /* Use the PAPI default value as libcpc2 imposes no multiplexing limit */
-  // _niagara2_vector.cmp_info.num_mpx_cntrs
-  // _niagara2_vector.cmp_info.num_preset_events -> __cpc_build_pst_table
-  // _niagara2_vector.cmp_info.num_native_events -> __cpc_build_ntv_table
-
-  /* By default the userspace is monitored */
-  _niagara2_vector.cmp_info.default_domain = PAPI_DOM_USER;
-  /* In addition to the userspace the kernel space could be monitored */
-  _niagara2_vector.cmp_info.available_domains =
-  (PAPI_DOM_USER | PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR);
-
-  /* Just one default granularity might be chosen, otherwise mpx is broken! */
-  _niagara2_vector.cmp_info.default_granularity = PAPI_GRN_THR;
-  /* The substrate supports only thread-wide monitoring, a monitoring based on
-     other granularites should be possible, but requires high permissions */
-  _niagara2_vector.cmp_info.available_granularities = PAPI_GRN_THR;
-
-  /* Set by PAPI, see papi_internal.c, starting at line 1028 */
-  _niagara2_vector.cmp_info.itimer_sig = SIGPROF;
-  // _niagara2_vector.cmp_info.itimer_num
-  // _niagara2_vector.cmp_info.itimer_ns
-  // _niagara2_vector.cmp_info.itimer_res_ns
-
   /* libcpc2 uses SIGEMT using real hardware signals, no sw emu */
-   _niagara2_vector.cmp_info.hardware_intr = 1;
-   _niagara2_vector.cmp_info.hardware_intr_sig = SIGEMT;
-
-  // _niagara2_vector.cmp_info.clock_ticks
-  // _niagara2_vector.cmp_info.opcode_match_width
-  // _niagara2_vector.cmp_info.precise_intr = 1;
-  // _niagara2_vector.cmp_info.posix1b_timers
-  // _niagara2_vector.cmp_info.kernel_profile
-  // _niagara2_vector.cmp_info.kernel_multiplex
-  // _niagara2_vector.cmp_info.data_address_range
-  // _niagara2_vector.cmp_info.instr_address_range
-  // _niagara2_vector.cmp_info.fast_counter_read
-
-  /* gethrtime and gethrvtime provide fast results, especially for performance
-     measurement. */
-  _niagara2_vector.cmp_info.fast_real_timer = 1;
-  _niagara2_vector.cmp_info.fast_virtual_timer = 1;
-
-  // _niagara2_vector.cmp_info.attach
-  // _niagara2_vector.cmp_info.attach_must_ptrace
-  // _niagara2_vector.cmp_info.edge_detect
-  // _niagara2_vector.cmp_info.invert
-  // _niagara2_vector.cmp_info.profile_ear
-  // _niagara2_vector.cmp_info.cntr_groups
-  // _niagara2_vector.cmp_info.cntr_umasks
-  // _niagara2_vector.cmp_info.cntr_IEAR_events
-  // _niagara2_vector.cmp_info.cntr_DEAR_events
-  // _niagara2_vector.cmp_info.cntr_OPCM_events
 
 #ifdef DEBUG
   SUBDBG ("LEAVING FUNCTION  >>%s<< at %s:%d\n", __func__, __FILE__, __LINE__);
@@ -2558,25 +2506,35 @@ __int_walk_synthetic_events_action_store (void)
 #endif
 
 papi_vector_t _niagara2_vector = {
+/************* SUBSTRATE CAPABILITIES/INFORMATION/ETC *************************/    
   .cmp_info = {
-	       .num_cntrs               = MAX_COUNTERS,	
-	       .num_mpx_cntrs           = PAPI_MPX_DEF_DEG,
-	       .default_domain          = PAPI_DOM_USER,
-	       .available_domains       = PAPI_DOM_USER | PAPI_DOM_KERNEL,
-	       .default_granularity     = PAPI_GRN_THR,
-	       .available_granularities = PAPI_GRN_THR,
-	       .hardware_intr_sig       = PAPI_INT_SIGNAL,
-	       .fast_real_timer     = 1,
-	       .fast_virtual_timer  = 1,
-	       .attach              = 1,
-	       .attach_must_ptrace  = 1,
-	       },
+    .num_cntrs               = MAX_COUNTERS,	
+    .num_mpx_cntrs           = PAPI_MPX_DEF_DEG,
+    .default_domain          = PAPI_DOM_USER,
+    .available_domains       = (PAPI_DOM_USER | PAPI_DOM_KERNEL 
+                                                        | PAPI_DOM_SUPERVISOR),
+    .default_granularity     = PAPI_GRN_THR,
+    .available_granularities = PAPI_GRN_THR,
+    .fast_real_timer     = 1,
+    .fast_virtual_timer  = 1,
+    .attach              = 1,
+    .attach_must_ptrace  = 1,
+    .itimer_sig = PAPI_INT_MPX_SIGNAL,
+    .itimer_num = PAPI_INT_ITIMER,
+    .itimer_ns = PAPI_INT_MPX_DEF_US * 1000,
+    .itimer_res_ns = 1,
+    .hardware_intr = 1,
+    .hardware_intr_sig = SIGEMT,
+    .precise_intr = 1,
+  },
+/************* SUBSTRATE DATA STRUCTURE SIZES *********************************/
   .size = {
-	   .context         = sizeof (hwd_context_t),
-	   .control_state   = sizeof (hwd_control_state_t),
-	   .reg_value       = sizeof (hwd_register_t),
-	   .reg_alloc       = sizeof (niagara2_reg_alloc_t),
-	   },
+    .context         = sizeof (hwd_context_t),
+    .control_state   = sizeof (hwd_control_state_t),
+    .reg_value       = sizeof (hwd_register_t),
+    .reg_alloc       = sizeof (niagara2_reg_alloc_t),
+  },
+/************* SUBSTRATE INTERFACE FUNCTIONS **********************************/  
   .init_control_state       = _niagara2_init_control_state,
   .start                    = _niagara2_start,
   .stop                     = _niagara2_stop,
