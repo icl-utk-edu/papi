@@ -792,8 +792,8 @@ with_pfm_root
 with_pfm_prefix
 with_pfm_incdir
 with_pfm_libdir
-with_perf_events
 with_pe_incdir
+with_perf_events
 with_pmapi
 with_papi_events
 with_with_semaphores
@@ -1471,8 +1471,8 @@ Optional Packages:
   --with-pfm-prefix=<path>	Specify prefix to installed pfm distribution
   --with-pfm-incdir=<path>	Specify directory of perfmon header files
   --with-pfm-libdir=<path>	Specify directory of pfm library
+  --with-pe-incdir=<path>	Specify path to the correct perf header file
   --with-perf-events=<yes,no>  Specify use of Linux Performance Event Subsystem
-  --with-pe-incdir=<path>	Specify path to the correct perf event header file
   --with-pmapi=<path>		Specify path of pmapi on aix system
   --with-papi-events=<static,file>	Specify source of events
   --with-semaphores Use semaphores instead of atomic locks (IA64)
@@ -6869,29 +6869,100 @@ else
 fi
 
 
-# perf_events start
+# PE start
 if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
-major_version=`echo $OSVER | sed 's/\([^.][^.]*\).*/\1/'`
-minor_version=`echo $OSVER | sed 's/[^.][^.]*.\([^.][^.]*\).*/\1/'`
-point_version=`echo $OSVER | sed -e 's/[^.][^.]*.[^.][^.]*.\(.*\)/\1/' -e 's/[^0-9].*//'`
 
-# Version 2.6.31 of the kernel uses perf_counter.h and all subsequent versions use perf_event.h
-if test "$major_version" = "2" -a "$minor_version" = "6" -a "$point_version" = "31"; then
-  perf_header="perf_counter.h"
-  CFLAGS="$CFLAGS -DKERNEL31"
-elif test "$major_version" -ge 2 -a "$minor_version" -ge 6 -a "$point_version" -gt 31; then
-  perf_header="perf_event.h"
-  CFLAGS="$CFLAGS -DPERF_EVENT"
+# Look for perf_event.h or perf_counter.h in user specified path else default to /usr/include/linux
+
+# Check whether --with-pe_incdir was given.
+if test "${with_pe_incdir+set}" = set; then
+  withval=$with_pe_incdir; case "$with_pe_incdir" in
+               yes|''|no) { { $as_echo "$as_me:$LINENO: error: --with-pe-incdir requires a path" >&5
+$as_echo "$as_me: error: --with-pe-incdir requires a path" >&2;}
+   { (exit 1); exit 1; }; } ;;
+               *) pe_incdir=$with_pe_incdir
+                  perf_events="yes" ;;
+            esac
+else
+  pe_incdir="/usr/include/linux"
 fi
 
-if test "$perf_header" != ""; then
+
+# Linux 2.6.32 and newer check
+as_ac_File=`$as_echo "ac_cv_file_$pe_incdir/perf_event.h" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for $pe_incdir/perf_event.h" >&5
+$as_echo_n "checking for $pe_incdir/perf_event.h... " >&6; }
+if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "$pe_incdir/perf_event.h"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+ac_res=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+as_val=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+   if test "x$as_val" = x""yes; then
+  PEPATH="$pe_incdir/perf_event.h"
+           CFLAGS="$CFLAGS -DPERF_EVENT"
+fi
+
+
+# Linux 2.6.31 check
+if test "x$PEPATH" = "x"; then
+as_ac_File=`$as_echo "ac_cv_file_$pe_incdir/perf_counter.h" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for $pe_incdir/perf_counter.h" >&5
+$as_echo_n "checking for $pe_incdir/perf_counter.h... " >&6; }
+if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "$pe_incdir/perf_counter.h"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+ac_res=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+as_val=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+   if test "x$as_val" = x""yes; then
+  PEPATH="$pe_incdir/perf_counter.h"
+	   CFLAGS="$CFLAGS -DKERNEL31"
+fi
+
+fi
+
 
 # Check whether --with-perf_events was given.
 if test "${with_perf_events+set}" = set; then
   withval=$with_perf_events; perf_events=$withval
-             as_ac_File=`$as_echo "ac_cv_file_/usr/include/linux/$perf_header" | $as_tr_sh`
-{ $as_echo "$as_me:$LINENO: checking for /usr/include/linux/$perf_header" >&5
-$as_echo_n "checking for /usr/include/linux/$perf_header... " >&6; }
+fi
+
+
+# perf_event.h or perf_counter.h path was either not found using default path or path not specified
+if test "x$PEPATH" = "x"; then
+pe_incdir="/lib/modules/$OSVER/source/include/linux"
+
+# Linux 2.6.32 and newer check
+as_ac_File=`$as_echo "ac_cv_file_$pe_incdir/perf_event.h" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for $pe_incdir/perf_event.h" >&5
+$as_echo_n "checking for $pe_incdir/perf_event.h... " >&6; }
 if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
   $as_echo_n "(cached) " >&6
 else
@@ -6899,7 +6970,7 @@ else
   { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
 $as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
    { (exit 1); exit 1; }; }
-if test -r "/usr/include/linux/$perf_header"; then
+if test -r "$pe_incdir/perf_event.h"; then
   eval "$as_ac_File=yes"
 else
   eval "$as_ac_File=no"
@@ -6912,12 +6983,16 @@ $as_echo "$ac_res" >&6; }
 as_val=`eval 'as_val=${'$as_ac_File'}
 		 $as_echo "$as_val"'`
    if test "x$as_val" = x""yes; then
-   perf_events="yes"
-               PEPATH="/usr/include/linux/$perf_header"
-else
-  as_ac_File=`$as_echo "ac_cv_file_/lib/modules/$OSVER/source/include/linux/$perf_header" | $as_tr_sh`
-{ $as_echo "$as_me:$LINENO: checking for /lib/modules/$OSVER/source/include/linux/$perf_header" >&5
-$as_echo_n "checking for /lib/modules/$OSVER/source/include/linux/$perf_header... " >&6; }
+  PEPATH="$pe_incdir/perf_event.h"
+           CFLAGS="$CFLAGS -DPERF_EVENT"
+fi
+
+
+# Linux 2.6.31 check
+if test "x$PEPATH" = "x"; then
+as_ac_File=`$as_echo "ac_cv_file_$pe_incdir/perf_counter.h" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for $pe_incdir/perf_counter.h" >&5
+$as_echo_n "checking for $pe_incdir/perf_counter.h... " >&6; }
 if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
   $as_echo_n "(cached) " >&6
 else
@@ -6925,7 +7000,7 @@ else
   { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
 $as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
    { (exit 1); exit 1; }; }
-if test -r "/lib/modules/$OSVER/source/include/linux/$perf_header"; then
+if test -r "$pe_incdir/perf_counter.h"; then
   eval "$as_ac_File=yes"
 else
   eval "$as_ac_File=no"
@@ -6938,168 +7013,27 @@ $as_echo "$ac_res" >&6; }
 as_val=`eval 'as_val=${'$as_ac_File'}
 		 $as_echo "$as_val"'`
    if test "x$as_val" = x""yes; then
-   perf_events="yes"
-                   PEPATH="/lib/modules/$OSVER/source/include/linux/$perf_header"
-else
+  PEPATH="$pe_incdir/perf_counter.h"
+	   CFLAGS="$CFLAGS -DKERNEL31"
+fi
+
+fi
+
+if test "x$PEPATH" = "x"; then
   perf_events="no"
-fi
-
-
-fi
-
-
-else
-  if test "$perfctr" = "no" -a "$perfmon" = "0"; then
-             as_ac_File=`$as_echo "ac_cv_file_/usr/include/linux/$perf_header" | $as_tr_sh`
-{ $as_echo "$as_me:$LINENO: checking for /usr/include/linux/$perf_header" >&5
-$as_echo_n "checking for /usr/include/linux/$perf_header... " >&6; }
-if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
-  $as_echo_n "(cached) " >&6
-else
-  test "$cross_compiling" = yes &&
-  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "/usr/include/linux/$perf_header"; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
-fi
-fi
-ac_res=`eval 'as_val=${'$as_ac_File'}
-		 $as_echo "$as_val"'`
-	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-as_val=`eval 'as_val=${'$as_ac_File'}
-		 $as_echo "$as_val"'`
-   if test "x$as_val" = x""yes; then
-   perf_events="yes"
-               PEPATH="/usr/include/linux/$perf_header"
-else
-  as_ac_File=`$as_echo "ac_cv_file_/lib/modules/$OSVER/source/include/linux/$perf_header" | $as_tr_sh`
-{ $as_echo "$as_me:$LINENO: checking for /lib/modules/$OSVER/source/include/linux/$perf_header" >&5
-$as_echo_n "checking for /lib/modules/$OSVER/source/include/linux/$perf_header... " >&6; }
-if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
-  $as_echo_n "(cached) " >&6
-else
-  test "$cross_compiling" = yes &&
-  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "/lib/modules/$OSVER/source/include/linux/$perf_header"; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
-fi
-fi
-ac_res=`eval 'as_val=${'$as_ac_File'}
-		 $as_echo "$as_val"'`
-	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-as_val=`eval 'as_val=${'$as_ac_File'}
-		 $as_echo "$as_val"'`
-   if test "x$as_val" = x""yes; then
-   perf_events="yes"
-                   PEPATH="/lib/modules/$OSVER/source/include/linux/$perf_header"
-else
-  perf_events="no"
-fi
-
-
-fi
-
-             fi
-
-fi
-
-elif test "$perfctr" = "no" -a "$perfmon" = "0"; then
-  { { $as_echo "$as_me:$LINENO: error: PAPI requires a patch for any kernel older than 2.6.31" >&5
-$as_echo "$as_me: error: PAPI requires a patch for any kernel older than 2.6.31" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-# If we are running a perf event kernel, the correct include file should have been found in
-# /lib/modules/$OSVER/source/include/linux. If it was not found, see if the user set a path
-# Test both the path to the file with the file not included as part the path and
-# the path to the file with the file included as part of the path.
-if test "$perf_events" = "no"; then
-
-# Check whether --with-pe_incdir was given.
-if test "${with_pe_incdir+set}" = set; then
-  withval=$with_pe_incdir; pe_incdir=$withval
-	     as_ac_File=`$as_echo "ac_cv_file_$pe_incdir/$perf_header" | $as_tr_sh`
-{ $as_echo "$as_me:$LINENO: checking for $pe_incdir/$perf_header" >&5
-$as_echo_n "checking for $pe_incdir/$perf_header... " >&6; }
-if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
-  $as_echo_n "(cached) " >&6
-else
-  test "$cross_compiling" = yes &&
-  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "$pe_incdir/$perf_header"; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
-fi
-fi
-ac_res=`eval 'as_val=${'$as_ac_File'}
-		 $as_echo "$as_val"'`
-	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-as_val=`eval 'as_val=${'$as_ac_File'}
-		 $as_echo "$as_val"'`
-   if test "x$as_val" = x""yes; then
+elif test "$perf_events" != "no" -a "$perfctr" = "no" -a "$perfmon" = "0"; then
   perf_events="yes"
-              PEPATH="$pe_incdir/$perf_header"
-else
-  as_ac_File=`$as_echo "ac_cv_file_$pe_incdir" | $as_tr_sh`
-{ $as_echo "$as_me:$LINENO: checking for $pe_incdir" >&5
-$as_echo_n "checking for $pe_incdir... " >&6; }
-if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
-  $as_echo_n "(cached) " >&6
-else
-  test "$cross_compiling" = yes &&
-  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "$pe_incdir"; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
+fi
+
 fi
 fi
-ac_res=`eval 'as_val=${'$as_ac_File'}
-		 $as_echo "$as_val"'`
-	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-as_val=`eval 'as_val=${'$as_ac_File'}
-		 $as_echo "$as_val"'`
-   if test "x$as_val" = x""yes; then
-  perf_events="yes"
-                                            PEPATH="$pe_incdir"
-else
-  { { $as_echo "$as_me:$LINENO: error: $perf_header could not be found at $pe_incdir" >&5
-$as_echo "$as_me: error: $perf_header could not be found at $pe_incdir" >&2;}
+# PE end
+
+if test "$perf_events" = "no" -a "$perfctr" = "no" -a "$perfmon" = "0"; then
+  { { $as_echo "$as_me:$LINENO: error: No performance monitoring interface available" >&5
+$as_echo "$as_me: error: No performance monitoring interface available" >&2;}
    { (exit 1); exit 1; }; }
 fi
-
-
-fi
-
-
-else
-  if test "$perfctr" = "no" -a "$perfmon" = "0"; then
-            { { $as_echo "$as_me:$LINENO: error: $perf_header could not be found and no patch is installed." >&5
-$as_echo "$as_me: error: $perf_header could not be found and no patch is installed." >&2;}
-   { (exit 1); exit 1; }; }
-            fi
-
-fi
-
-fi
-fi
-# perf_events end
 
 
 # Check whether --with-pmapi was given.

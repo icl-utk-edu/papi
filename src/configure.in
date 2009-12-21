@@ -1007,67 +1007,64 @@ AC_ARG_WITH(pfm_libdir,
            [pfm_libdir=""]
             )
 
-# perf_events start
-if test "$cross_compiling" = "no" -a "$OS" = "linux"; then  
-major_version=`echo $OSVER | sed 's/\([[^.]][[^.]]*\).*/\1/'`
-minor_version=`echo $OSVER | sed 's/[[^.]][[^.]]*.\([[^.]][[^.]]*\).*/\1/'`
-point_version=`echo $OSVER | sed -e 's/[[^.]][[^.]]*.[[^.]][[^.]]*.\(.*\)/\1/' -e 's/[[^0-9]].*//'`
+# PE start
+if test "$cross_compiling" = "no" -a "$OS" = "linux"; then 
+ 
+# Look for perf_event.h or perf_counter.h in user specified path else default to /usr/include/linux
+AC_ARG_WITH(pe_incdir,
+	   [  --with-pe-incdir=<path>	Specify path to the correct perf header file],
+           [case "$with_pe_incdir" in
+               yes|''|no) AC_MSG_ERROR([--with-pe-incdir requires a path]) ;;
+               *) pe_incdir=$with_pe_incdir 
+                  perf_events="yes" ;;
+            esac],
+           [pe_incdir="/usr/include/linux"])
 
-# Version 2.6.31 of the kernel uses perf_counter.h and all subsequent versions use perf_event.h
-if test "$major_version" = "2" -a "$minor_version" = "6" -a "$point_version" = "31"; then
-  perf_header="perf_counter.h"
-  CFLAGS="$CFLAGS -DKERNEL31"
-elif test "$major_version" -ge 2 -a "$minor_version" -ge 6 -a "$point_version" -gt 31; then
-  perf_header="perf_event.h"
-  CFLAGS="$CFLAGS -DPERF_EVENT"
+# Linux 2.6.32 and newer check
+AC_CHECK_FILE($pe_incdir/perf_event.h,
+	[PEPATH="$pe_incdir/perf_event.h"           
+           CFLAGS="$CFLAGS -DPERF_EVENT"])
+
+# Linux 2.6.31 check
+if test "x$PEPATH" = "x"; then
+AC_CHECK_FILE($pe_incdir/perf_counter.h,
+	[PEPATH="$pe_incdir/perf_counter.h"
+	   CFLAGS="$CFLAGS -DKERNEL31"])
 fi
 
-if test "$perf_header" != ""; then
 AC_ARG_WITH(perf_events,
             [  --with-perf-events=<yes,no>  Specify use of Linux Performance Event Subsystem],
-            [perf_events=$withval
-             AC_CHECK_FILE(/usr/include/linux/$perf_header, [ perf_events="yes"
-               PEPATH="/usr/include/linux/$perf_header" ],
-               [AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/$perf_header, [ perf_events="yes"
-                   PEPATH="/lib/modules/$OSVER/source/include/linux/$perf_header" ],
-                   [perf_events="no"])
-               ])
-            ],
-            [if test "$perfctr" = "no" -a "$perfmon" = "0"; then
-             AC_CHECK_FILE(/usr/include/linux/$perf_header, [ perf_events="yes"
-               PEPATH="/usr/include/linux/$perf_header" ],
-               [AC_CHECK_FILE(/lib/modules/$OSVER/source/include/linux/$perf_header, [ perf_events="yes"
-                   PEPATH="/lib/modules/$OSVER/source/include/linux/$perf_header" ],
-                   [perf_events="no"])
-               ])
-             fi
-            ])
-elif test "$perfctr" = "no" -a "$perfmon" = "0"; then
-  AC_MSG_ERROR([PAPI requires a patch for any kernel older than 2.6.31])
+            [perf_events=$withval])
+
+# perf_event.h or perf_counter.h path was either not found using default path or path not specified
+if test "x$PEPATH" = "x"; then
+pe_incdir="/lib/modules/$OSVER/source/include/linux"
+
+# Linux 2.6.32 and newer check
+AC_CHECK_FILE($pe_incdir/perf_event.h,
+	[PEPATH="$pe_incdir/perf_event.h" 
+           CFLAGS="$CFLAGS -DPERF_EVENT"])
+
+# Linux 2.6.31 check
+if test "x$PEPATH" = "x"; then
+AC_CHECK_FILE($pe_incdir/perf_counter.h,
+	[PEPATH="$pe_incdir/perf_counter.h"
+	   CFLAGS="$CFLAGS -DKERNEL31"])
 fi
 
-# If we are running a perf event kernel, the correct include file should have been found in
-# /lib/modules/$OSVER/source/include/linux. If it was not found, see if the user set a path
-# Test both the path to the file with the file not included as part the path and
-# the path to the file with the file included as part of the path. 
-if test "$perf_events" = "no"; then
-AC_ARG_WITH(pe_incdir,
-	   [  --with-pe-incdir=<path>	Specify path to the correct perf event header file],
-	   [pe_incdir=$withval
-	     AC_CHECK_FILE($pe_incdir/$perf_header, [perf_events="yes"
-              PEPATH="$pe_incdir/$perf_header"], 
-		[AC_CHECK_FILE($pe_incdir, [perf_events="yes"
-                                            PEPATH="$pe_incdir"], 
-		              [AC_MSG_ERROR([$perf_header could not be found at $pe_incdir])])
-                ])
-           ],
-           [if test "$perfctr" = "no" -a "$perfmon" = "0"; then
-            AC_MSG_ERROR([$perf_header could not be found and no patch is installed.])
-            fi
-           ])
+if test "x$PEPATH" = "x"; then
+  perf_events="no"
+elif test "$perf_events" != "no" -a "$perfctr" = "no" -a "$perfmon" = "0"; then
+  perf_events="yes"
+fi
+
 fi
 fi
-# perf_events end
+# PE end
+
+if test "$perf_events" = "no" -a "$perfctr" = "no" -a "$perfmon" = "0"; then
+  AC_MSG_ERROR([No performance monitoring interface available])
+fi
 
 AC_ARG_WITH(pmapi,
             [  --with-pmapi=<path>		Specify path of pmapi on aix system ],
