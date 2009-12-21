@@ -745,8 +745,8 @@ with_pfm_root
 with_pfm_prefix
 with_pfm_incdir
 with_pfm_libdir
-with_pcl
 with_pcl_incdir
+with_pcl
 with_pmapi
 with_pfm_events
 with_with_semaphores
@@ -1418,8 +1418,8 @@ Optional Packages:
   --with-pfm-prefix=<path>	Specify prefix to installed pfm distribution
   --with-pfm-incdir=<path>	Specify directory of perfmon header files
   --with-pfm-libdir=<path>	Specify directory of pfm library
-  --with-pcl=<yes,no>		Specify existence of Performance Counters for Linux
-  --with-pcl-incdir=<path>	Specify path to the correct perf event header file
+  --with-pcl-incdir=<path>	Specify path to the correct perf header file
+  --with-pcl=<yes,no>	Specify use of Performance Counters for Linux
   --with-pmapi=<path>		Specify path of pmapi on aix system
   --with-pfm-events=<static,file>	Specify source of events for pfmlib-based systems
   --with-semaphores Use semaphores instead of atomic locks (IA64)
@@ -6731,32 +6731,98 @@ fi
 
 
 # PCL start
-# set PCL manually set with --with-pcl,
-# or by default if perfctr and perfmon are not available
-# and linux kernel version is >= 31
+if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
 
-if test "$cross_compiling" = "no" -a "$OS" = "linux" -a "`uname -r | grep "2.6."`"; then
-# gives the position in $OSVER of *first* character in substring "2.6."
-POS1=`expr index "$OSVER" "2.6."`
-POS2=`expr $POS1 + 4`
-VERS=`expr substr "$OSVER" "$POS2" 2`
+# Look for perf_event.h or perf_counter.h in user specified path else default to /usr/include/linux
 
-# Version 2.6.31 of the kernel uses perf_counter.h and all subsequent versions use perf_event.h
-if test "$VERS" = "31"; then
-  perf_header="perf_counter.h"
-  CFLAGS="$CFLAGS -DKERNEL31"
-elif test "$VERS" -gt 31; then
-  perf_header="perf_event.h"
+# Check whether --with-pcl_incdir was given.
+if test "${with_pcl_incdir+set}" = set; then
+  withval=$with_pcl_incdir; case "$with_pcl_incdir" in
+               yes|''|no) { { $as_echo "$as_me:$LINENO: error: --with-pcl-incdir requires a path" >&5
+$as_echo "$as_me: error: --with-pcl-incdir requires a path" >&2;}
+   { (exit 1); exit 1; }; } ;;
+               *) pcl_incdir=$with_pcl_incdir
+                  pcl="yes" ;;
+            esac
+else
+  pcl_incdir="/usr/include/linux"
 fi
 
-if test "${VERS}" -ge 31; then
+
+# Linux 2.6.32 and newer check
+as_ac_File=`$as_echo "ac_cv_file_$pcl_incdir/perf_event.h" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for $pcl_incdir/perf_event.h" >&5
+$as_echo_n "checking for $pcl_incdir/perf_event.h... " >&6; }
+if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "$pcl_incdir/perf_event.h"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+ac_res=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+as_val=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+   if test "x$as_val" = x""yes; then
+  PCLPATH="$pcl_incdir/perf_event.h"
+fi
+
+
+# Linux 2.6.31 check
+if test "x$PCLPATH" = "x"; then
+as_ac_File=`$as_echo "ac_cv_file_$pcl_incdir/perf_counter.h" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for $pcl_incdir/perf_counter.h" >&5
+$as_echo_n "checking for $pcl_incdir/perf_counter.h... " >&6; }
+if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "$pcl_incdir/perf_counter.h"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+ac_res=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+as_val=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+   if test "x$as_val" = x""yes; then
+  PCLPATH="$pcl_incdir/perf_counter.h"
+	   CFLAGS="$CFLAGS -DKERNEL31"
+fi
+
+fi
+
 
 # Check whether --with-pcl was given.
 if test "${with_pcl+set}" = set; then
   withval=$with_pcl; pcl=$withval
-             as_ac_File=`$as_echo "ac_cv_file_/lib/modules/$OSVER/source/include/linux/$perf_header" | $as_tr_sh`
-{ $as_echo "$as_me:$LINENO: checking for /lib/modules/$OSVER/source/include/linux/$perf_header" >&5
-$as_echo_n "checking for /lib/modules/$OSVER/source/include/linux/$perf_header... " >&6; }
+fi
+
+
+# perf_event.h or perf_counter.h path was either not found using default path or path not specified
+if test "x$PCLPATH" = "x"; then
+pcl_incdir="/lib/modules/$OSVER/source/include/linux"
+
+# Linux 2.6.32 and newer check
+as_ac_File=`$as_echo "ac_cv_file_$pcl_incdir/perf_event.h" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for $pcl_incdir/perf_event.h" >&5
+$as_echo_n "checking for $pcl_incdir/perf_event.h... " >&6; }
 if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
   $as_echo_n "(cached) " >&6
 else
@@ -6764,7 +6830,7 @@ else
   { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
 $as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
    { (exit 1); exit 1; }; }
-if test -r "/lib/modules/$OSVER/source/include/linux/$perf_header"; then
+if test -r "$pcl_incdir/perf_event.h"; then
   eval "$as_ac_File=yes"
 else
   eval "$as_ac_File=no"
@@ -6777,18 +6843,15 @@ $as_echo "$ac_res" >&6; }
 as_val=`eval 'as_val=${'$as_ac_File'}
 		 $as_echo "$as_val"'`
    if test "x$as_val" = x""yes; then
-   pcl="yes"
-               PCLPATH="/lib/modules/$OSVER/source/include/linux/$perf_header"
-else
-   pcl="no"
+  PCLPATH="$pcl_incdir/perf_event.h"
 fi
 
 
-else
-  if test "$perfctr" = "no" -a "$perfmon" = "0"; then
-              as_ac_File=`$as_echo "ac_cv_file_/lib/modules/$OSVER/source/include/linux/$perf_header" | $as_tr_sh`
-{ $as_echo "$as_me:$LINENO: checking for /lib/modules/$OSVER/source/include/linux/$perf_header" >&5
-$as_echo_n "checking for /lib/modules/$OSVER/source/include/linux/$perf_header... " >&6; }
+# Linux 2.6.31 check
+if test "x$PCLPATH" = "x"; then
+as_ac_File=`$as_echo "ac_cv_file_$pcl_incdir/perf_counter.h" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for $pcl_incdir/perf_counter.h" >&5
+$as_echo_n "checking for $pcl_incdir/perf_counter.h... " >&6; }
 if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
   $as_echo_n "(cached) " >&6
 else
@@ -6796,7 +6859,7 @@ else
   { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
 $as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
    { (exit 1); exit 1; }; }
-if test -r "/lib/modules/$OSVER/source/include/linux/$perf_header"; then
+if test -r "$pcl_incdir/perf_counter.h"; then
   eval "$as_ac_File=yes"
 else
   eval "$as_ac_File=no"
@@ -6809,75 +6872,27 @@ $as_echo "$ac_res" >&6; }
 as_val=`eval 'as_val=${'$as_ac_File'}
 		 $as_echo "$as_val"'`
    if test "x$as_val" = x""yes; then
-   pcl="yes"
-               PCLPATH="/lib/modules/$OSVER/source/include/linux/$perf_header"
-else
-   pcl="no"
+  PCLPATH="$pcl_incdir/perf_counter.h"
+	   CFLAGS="$CFLAGS -DKERNEL31"
 fi
-
-             fi
 
 fi
 
-elif test "$perfctr" = "no" -a "$perfmon" = "0"; then
-{ { $as_echo "$as_me:$LINENO: error: PAPI requires a patch for any kernel older than 2.6.31" >&5
-$as_echo "$as_me: error: PAPI requires a patch for any kernel older than 2.6.31" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-# If we are running a PCL kernel, the correct include file should have been found in
-# /lib/modules/$OSVER/source/include/linux. If the file was not found
-# see if the user has set a path and ensure it can be found there
-if test "$pcl" = "no"; then
-
-# Check whether --with-pcl_incdir was given.
-if test "${with_pcl_incdir+set}" = set; then
-  withval=$with_pcl_incdir; pcl_incdir=$withval
-	     as_ac_File=`$as_echo "ac_cv_file_$pcl_incdir/$perf_header" | $as_tr_sh`
-{ $as_echo "$as_me:$LINENO: checking for $pcl_incdir/$perf_header" >&5
-$as_echo_n "checking for $pcl_incdir/$perf_header... " >&6; }
-if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
-  $as_echo_n "(cached) " >&6
-else
-  test "$cross_compiling" = yes &&
-  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "$pcl_incdir/$perf_header"; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
-fi
-fi
-ac_res=`eval 'as_val=${'$as_ac_File'}
-		 $as_echo "$as_val"'`
-	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-as_val=`eval 'as_val=${'$as_ac_File'}
-		 $as_echo "$as_val"'`
-   if test "x$as_val" = x""yes; then
+if test "x$PCLPATH" = "x"; then
+  pcl="no"
+elif test "$pcl" != "no" -a "$perfctr" = "no" -a "$perfmon" = "0"; then
   pcl="yes"
-              PCLPATH="$pcl_incdir/$perf_header"
-else
-  { { $as_echo "$as_me:$LINENO: error: $perf_header could not be found at $pcl_incdir" >&5
-$as_echo "$as_me: error: $perf_header could not be found at $pcl_incdir" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-
-else
-  if test "$perfctr" = "no" -a "$perfmon" = "0"; then
-            { { $as_echo "$as_me:$LINENO: error: $perf_header could not be found and no patch is installed." >&5
-$as_echo "$as_me: error: $perf_header could not be found and no patch is installed." >&2;}
-   { (exit 1); exit 1; }; }
-            fi
-
 fi
 
 fi
 fi
 # PCL end
 
+if test "x$pcl" != "xyes" -a "x$perfctr" != "xyes" -a "$perfmon" = "0"; then
+  { { $as_echo "$as_me:$LINENO: error: No performance monitoring interface available" >&5
+$as_echo "$as_me: error: No performance monitoring interface available" >&2;}
+   { (exit 1); exit 1; }; }
+fi
 
 
 # Check whether --with-pmapi was given.
