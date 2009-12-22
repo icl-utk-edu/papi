@@ -1065,7 +1065,7 @@ fi
 fi
 # PCL end
 
-if test "x$pcl" != "xyes" -a "x$perfctr" != "xyes" -a "$perfmon" = "0"; then
+if test "$pcl" = "no" -a "$perfctr" = "no" -a "$perfmon" = "0"; then
   AC_MSG_ERROR([No performance monitoring interface available])
 fi
 

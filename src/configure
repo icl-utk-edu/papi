@@ -6888,7 +6888,7 @@ fi
 fi
 # PCL end
 
-if test "x$pcl" != "xyes" -a "x$perfctr" != "xyes" -a "$perfmon" = "0"; then
+if test "$pcl" = "no" -a "$perfctr" = "no" -a "$perfmon" = "0"; then
   { { $as_echo "$as_me:$LINENO: error: No performance monitoring interface available" >&5
 $as_echo "$as_me: error: No performance monitoring interface available" >&2;}
    { (exit 1); exit 1; }; }
