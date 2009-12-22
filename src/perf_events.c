@@ -90,6 +90,7 @@ int _papi_pe_set_overflow (EventSetInfo_t * ESI, int EventIndex, int threshold);
 	_min1 < _min2 ? _min1 : _min2; })
 
 /* Static locals */
+static int READ_BUFFER_SIZE = (1 + 1 + 1 + 2 * MAX_COUNTERS);
 static int MMAP_BUFF_NULL = 0;
 int _perfmon2_pfm_pmu_type = -1;
 
@@ -2293,9 +2294,17 @@ static uint64_t get_count_idx_by_id(uint64_t *buf, int multiplexed, uint64_t id)
 {
 #ifdef USE_FORMAT_GROUP
   int i;
+
   for (i = 0; i < buf[get_nr_idx()]; i++)
     {
-      if (buf[get_id_idx(multiplexed, i)] == id) {
+      unsigned long index = get_id_idx(multiplexed, i);
+
+      if (index > READ_BUFFER_SIZE) {
+        PAPIERROR("Attempting access beyond buffer");
+        return -1;
+      }
+
+      if (buf[index] == id) {
         return get_count_idx(multiplexed, i);
       }
     }
@@ -2342,7 +2351,6 @@ int _papi_pe_read (hwd_context_t * ctx, hwd_control_state_t * ctl, long long **e
     {
 
 /* event count, time_enabled, time_running, (count value, count id) * MAX_COUNTERS */
-#define READ_BUFFER_SIZE (1 + 1 + 1 + 2 * MAX_COUNTERS)
       uint64_t buffer[READ_BUFFER_SIZE];
 
 #ifdef USE_FORMAT_GROUP
