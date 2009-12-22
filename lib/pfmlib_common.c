@@ -1060,6 +1060,9 @@ pfm_get_event_info(int idx, pfm_event_info_t *info)
 	pfmlib_pmu_t *pmu;
 	int pidx;
 
+	if (!PFMLIB_INITIALIZED())
+		return PFM_ERR_NOINIT;
+
 	pmu = pfmlib_idx2pidx(idx, &pidx);
 	if (!pmu)
 		return PFM_ERR_INVAL;
@@ -1087,6 +1090,9 @@ pfm_get_event_attr_info(int idx, int attr_idx, pfm_event_attr_info_t *info)
 	pfmlib_pmu_t *pmu;
 	pfmlib_attr_info_t attr_info;
 	int pidx;
+
+	if (!PFMLIB_INITIALIZED())
+		return PFM_ERR_NOINIT;
 
 	pmu = pfmlib_idx2pidx(idx, &pidx);
 	if (!pmu)
