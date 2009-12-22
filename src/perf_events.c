@@ -90,7 +90,7 @@ int _papi_pe_set_overflow (EventSetInfo_t * ESI, int EventIndex, int threshold);
 	_min1 < _min2 ? _min1 : _min2; })
 
 /* Static locals */
-
+static int MMAP_BUFF_NULL = 0;
 int _perfmon2_pfm_pmu_type = -1;
 
 /* Debug functions */
@@ -2631,6 +2631,12 @@ static uint64_t mmap_read_head(evt_t *pe)
   struct perf_event_mmap_page *pc = pe->mmap_buf;
   int head;
 
+  if (pc == NULL) {
+    PAPIERROR("perf_event_mmap_page is NULL");
+    MMAP_BUFF_NULL = 1;
+    return 0;
+  }
+
   head = pc->data_head;
   rmb();
 
@@ -2649,7 +2655,7 @@ static void mmap_write_tail(evt_t *pe, uint64_t tail)
 }
 
 static void mmap_read (ThreadInfo_t ** thr, evt_t * pe, int evt_index, int profile_index)
-{ 
+{
   int cidx = MY_VECTOR.cmp_info.CmpIdx;
   uint64_t head = mmap_read_head (pe);
   uint64_t old = pe->tail;
@@ -2794,8 +2800,7 @@ void _papi_pe_dispatch_timer (int n, hwd_siginfo_t * info, void *uc)
     }
   if (thread->running_eventset[cidx]->overflow.flags != PAPI_OVERFLOW_HARDWARE)
     {
-      PAPIERROR
-        ("thread->running_eventset->overflow.flags is set to something other than PAPI_OVERFLOW_HARDWARE or PAPI_OVERFLOW_FORCE_SW for fd %d", fd);
+      PAPIERROR("thread->running_eventset->overflow.flags is set to something other than PAPI_OVERFLOW_HARDWARE or PAPI_OVERFLOW_FORCE_SW for fd %d", fd);
     }
   {
     int i;
@@ -2823,6 +2828,7 @@ void _papi_pe_dispatch_timer (int n, hwd_siginfo_t * info, void *uc)
       __u64 ip;
       unsigned int head;
       evt_t *pe = &((context_t *)thread->context[cidx])->evt[found_evt_idx];
+
       unsigned char *data = pe->mmap_buf + getpagesize ();
 
       /*
@@ -2838,6 +2844,12 @@ void _papi_pe_dispatch_timer (int n, hwd_siginfo_t * info, void *uc)
        * by AND'ing this offset with the buffer mask.
        */
      head = mmap_read_head(pe);
+
+     if (MMAP_BUFF_NULL) {
+       PAPIERROR("Attempting to access memory which may be inaccessable");
+       return;
+     }
+
      ip = *(__u64 *)(data + ((head - 8) & pe->mask));
       /*
        * Update the tail to the current head pointer. 
