@@ -626,35 +626,6 @@ error:
 	return ret;
 }
 
-static const char *
-pfmlib_get_event_name(int idx)
-{
-	pfmlib_pmu_t *pmu;
-	int pidx;
-
-	pmu = pfmlib_idx2pidx(idx, &pidx);
-	if (!pmu)
-		return NULL;
-
-	return pmu->get_event_name(pmu, pidx);
-}
-
-static int
-pfmlib_get_event_code(int idx, uint64_t *code)
-{
-	pfmlib_pmu_t *pmu;
-	int pidx;
-
-	if (!code)
-		return PFM_ERR_INVAL;
-
-	pmu = pfmlib_idx2pidx(idx, &pidx);
-	if (!pmu)
-		return PFM_ERR_INVAL;
-
-	return pmu->get_event_code(pmu, pidx, code);
-}
-
 /*
  * total number of events
  */
@@ -707,148 +678,6 @@ int
 pfm_get_version(void)
 {
 	return LIBPFM_VERSION;
-}
-
-static const char *
-pfmlib_get_event_desc(int idx)
-{
-	pfmlib_pmu_t *pmu;
-	int pidx;
-
-	pmu = pfmlib_idx2pidx(idx, &pidx);
-	if (!pmu)
-		return NULL;
-
-	if (!pmu->get_event_desc)
-		return "no description available";
-
-	return pmu->get_event_desc(pmu, pidx);
-}
-
-static int
-pfmlib_get_event_attr_code(int idx, int attr, uint64_t *code)
-{
-	pfmlib_pmu_t *pmu;
-	pfmlib_modmsk_t modmsk;
-	int pidx;
-	int nu, x;
-
-	if (!code)
-		return PFM_ERR_INVAL;
-
-	pmu = pfmlib_idx2pidx(idx, &pidx);
-	if (!pmu)
-		return PFM_ERR_INVAL;
-		
-	if (!pfmlib_valid_attr(pmu, pidx, attr))
-		return PFM_ERR_ATTR;
-
-	nu = pmu->get_event_numasks(pmu, pidx);
-	if (attr < nu)
-		return pmu->get_event_umask_code(pmu, pidx, attr, code);
-
-	modmsk = pmu->get_event_modifiers(pmu, pidx);
-	nu = attr - nu;
-	pfmlib_for_each_modifier(x, modmsk) {
-		if (nu == 0) {
-			*code = x;
-			return PFM_SUCCESS;
-		}
-		nu--;
-	}
-	return PFM_ERR_INVAL;
-}
-
-static const char *
-pfmlib_get_event_attr_name(int idx, int attr)
-{
-	pfmlib_pmu_t *pmu;
-	pfmlib_modmsk_t modmsk;
-	int nu, x;
-	int pidx;
-
-	pmu = pfmlib_idx2pidx(idx, &pidx);
-	if (!pmu)
-		return NULL;
-
-	
-	if (!pfmlib_valid_attr(pmu, pidx, attr))
-		return NULL;
-
-	nu = pmu->get_event_numasks(pmu, pidx);
-	if (attr < nu)
-		return pmu->get_event_umask_name(pmu, pidx, attr);
-
-	modmsk = pmu->get_event_modifiers(pmu, pidx);
-	nu = attr - nu;
-	pfmlib_for_each_modifier(x, modmsk) {
-		if (nu == 0)
-			return pmu->modifiers[x].name;
-		nu--;
-	}
-	return NULL;
-}
-
-
-static const char *
-pfmlib_get_event_attr_desc(int idx, int attr)
-{
-	pfmlib_pmu_t *pmu;
-	pfmlib_modmsk_t modmsk;
-	int nu, x;
-	int pidx;
-
-	pmu = pfmlib_idx2pidx(idx, &pidx);
-	if (!pmu)
-		return NULL;
-
-	if (!pfmlib_valid_attr(pmu, pidx, attr))
-		return NULL;
-
-	nu = pmu->get_event_numasks(pmu, pidx);
-	if (attr < nu) {
-		if (!pmu->get_event_umask_desc)
-			return "no description available";
-		return pmu->get_event_umask_desc(pmu, pidx, attr);
-	}
-
-	modmsk = pmu->get_event_modifiers(pmu, pidx);
-	nu = attr - nu;
-	pfmlib_for_each_modifier(x, modmsk) {
-		if (nu == 0)
-			return pmu->modifiers[x].desc;
-		nu--;
-	}
-	return NULL;
-}
-
-static pfm_attr_t
-pfmlib_get_event_attr_type(int idx, int attr)
-{
-	pfmlib_pmu_t *pmu;
-	pfmlib_modmsk_t modmsk;
-	int nu, pidx, x;
-
-	pmu = pfmlib_idx2pidx(idx, &pidx);
-	if (!pmu)
-		return PFM_ERR_INVAL;
-
-	if (!pfmlib_valid_attr(pmu, pidx, attr))
-		return PFM_ERR_ATTR;
-
-	nu = pmu->get_event_numasks(pmu, pidx);
-
-	if (attr < nu)
-		return PFM_ATTR_UMASK;
-
-	modmsk = pmu->get_event_modifiers(pmu, pidx);
-	nu = attr - nu;
-	pfmlib_for_each_modifier(x, modmsk) {
-		if (nu == 0)
-			return pmu->modifiers[x].type;
-		nu--;
-	}
-	return PFM_ERR_ATTR;
 }
 
 static pfm_pmu_t
@@ -907,25 +736,6 @@ pfm_get_event_first(void)
 	}
 	return -1;
 }
-
-static int
-pfmlib_get_event_nattrs(int idx)
-{
-	pfmlib_pmu_t *pmu;
-	pfmlib_modmsk_t modmsk;
-	int pidx, nu, nm;
-
-	pmu = pfmlib_idx2pidx(idx, &pidx);
-	if (!pmu)
-		return -1;
-
-	nu = pmu->get_event_numasks(pmu, pidx);
-	modmsk = pmu->get_event_modifiers(pmu, pidx);
-	nm = pfmlib_popcnt((unsigned long)modmsk);
-	
-	return (nu+nm);
-}
-
 
 int
 pfmlib_get_event_encoding(pfmlib_event_desc_t *e, uint64_t **codes, int *count, pfmlib_perf_attr_t *attrs)
@@ -1058,7 +868,8 @@ int
 pfm_get_event_info(int idx, pfm_event_info_t *info)
 {
 	pfmlib_pmu_t *pmu;
-	int pidx;
+	pfmlib_modmsk_t modmsk;
+	int pidx, nu, nm;
 
 	if (!PFMLIB_INITIALIZED())
 		return PFM_ERR_NOINIT;
@@ -1073,13 +884,22 @@ pfm_get_event_info(int idx, pfm_event_info_t *info)
 	if (info->size && info->size != sizeof(*info))
 		return PFM_ERR_INVAL;
 
-	info->name = pfmlib_get_event_name(idx);
-	info->desc = pfmlib_get_event_desc(idx);
-	info->nattrs = pfmlib_get_event_nattrs(idx);
+	info->name = pmu->get_event_name(pmu, pidx);
+	if (!pmu->get_event_desc)
+		info->desc = "no description available";
+	else
+		info->desc = pmu->get_event_desc(pmu, pidx);
+
+	pmu->get_event_code(pmu, pidx, &info->code);
+
 	info->pmu = pmu->pmu;
 	info->idx = idx;
-	info->code = 0;
-	pfmlib_get_event_code(idx, &info->code);
+
+	nu = pmu->get_event_numasks(pmu, pidx);
+	modmsk = pmu->get_event_modifiers(pmu, pidx);
+	nm = pfmlib_popcnt((unsigned long)modmsk);
+
+	info->nattrs = nu + nm;
 
 	return PFM_SUCCESS;
 }
@@ -1089,7 +909,8 @@ pfm_get_event_attr_info(int idx, int attr_idx, pfm_event_attr_info_t *info)
 {
 	pfmlib_pmu_t *pmu;
 	pfmlib_attr_info_t attr_info;
-	int pidx;
+	pfmlib_modmsk_t modmsk;
+	int nu, nm, pidx, x;
 
 	if (!PFMLIB_INITIALIZED())
 		return PFM_ERR_NOINIT;
@@ -1105,17 +926,39 @@ pfm_get_event_attr_info(int idx, int attr_idx, pfm_event_attr_info_t *info)
 		return PFM_ERR_INVAL;
 
 	if (!pfmlib_valid_attr(pmu, pidx, attr_idx))
-		return PFM_ERR_INVAL;
+		return PFM_ERR_ATTR;
 
-	info->name = pfmlib_get_event_attr_name(idx, attr_idx);
-	info->desc = pfmlib_get_event_attr_desc(idx, attr_idx);
+	nu = pmu->get_event_numasks(pmu, pidx);
+	modmsk = pmu->get_event_modifiers(pmu, pidx);
+	nm = pfmlib_popcnt((unsigned long)modmsk);
+
 	info->idx = attr_idx;
-	info->code = 0;
-	info->type = pfmlib_get_event_attr_type(idx, attr_idx);
-	pfmlib_get_event_attr_code(idx, attr_idx, &info->code);
-
 	info->is_dfl = 0;
 	info->dfl_val64 = 0;
+
+	if (attr_idx < nu) {
+		info->type = PFM_ATTR_UMASK;
+
+		if (!pmu->get_event_umask_desc)
+			info->desc = "no description available";
+		else
+			info->desc = pmu->get_event_umask_desc(pmu, pidx, attr_idx);
+
+		info->name = pmu->get_event_umask_name(pmu, pidx, attr_idx);
+		pmu->get_event_umask_code(pmu, pidx, attr_idx, &info->code);
+	} else {
+		/* this is a modifier */
+		nu = attr_idx - nu;
+		pfmlib_for_each_modifier(x, modmsk) {
+			if (nu == 0)
+				break;
+			nu--;
+		}
+		info->name = pmu->modifiers[x].name;
+		info->desc = pmu->modifiers[x].desc;
+		info->type =  pmu->modifiers[x].type;
+		info->code = x;
+	}
 
 	if (pmu->get_event_attr_info) {
 		info->is_dfl = pmu->get_event_attr_info(pmu, pidx, attr_idx, &attr_info);
