@@ -82,11 +82,13 @@ show_event_info(pfm_event_info_t *info)
 	printf("#-----------------------------\n"
 	       "IDX	 : %d\n"
 	       "PMU name : %s (%s)\n"
-	       "Name     : %s\n",
+	       "Name     : %s\n"
+	       "Equiv	 : %s\n",
 		info->idx,
 		pinfo.name,
 		pinfo.desc,
-		info->name);
+		info->name,
+		info->equiv ? info->equiv : "None");
 
 	printf("Desc     : %s\n", info->desc ? info->desc : "no description available");
 	printf("Code     : 0x%"PRIx64"\n", info->code);

@@ -74,7 +74,7 @@
 		  .udesc = "Both cores",\
 		  .grpid = (g), \
 		  .grpmsk= 0xc0, \
-		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,\
+		  .uflags = INTEL_X86_NCOMBO,\
 		  .ucode = 0xc0\
 		}
 
@@ -114,49 +114,74 @@ static const intel_x86_entry_t coreduo_pe[]={
   /*
    * BEGIN architectural perfmon events
    */
-  /* 0 */{
+  {
 	.name = "UNHALTED_CORE_CYCLES",
 	.modmsk = INTEL_V1_ATTRS,
 	.cntmsk = 0x3,
 	.code    = 0x003c,
 	.desc    = "Unhalted core cycles",
   },
-  /* 1 */{
+  {
 	.name = "UNHALTED_REFERENCE_CYCLES",
 	.modmsk = INTEL_V1_ATTRS,
 	.cntmsk = 0x3,
 	.code = 0x013c,
 	.desc = "Unhalted reference cycles. Measures bus cycles"
   },
-  /* 2 */{
-	.name = "INSTRUCTIONS_RETIRED",
+  {
+	.name = "INSTRUCTION_RETIRED",
 	.modmsk = INTEL_V1_ATTRS,
 	.cntmsk = 0x3,
 	.code = 0xc0,
 	.desc = "Instructions retired"
   },
-  /* 3 */{
-	.name = "LAST_LEVEL_CACHE_REFERENCES",
+
+  {
+	.name = "INSTRUCTIONS_RETIRED",
+	.modmsk = INTEL_V1_ATTRS,
+	.cntmsk = 0x3,
+	.code = 0xc0,
+	.desc = "this is an alias for INSTRUCTION_RETIRED",
+	.equiv = "INSTRUCTION_RETIRED",
+  },
+  {
+	.name = "LLC_REFERENCES",
 	.modmsk = INTEL_V1_ATTRS,
 	.cntmsk = 0x3,
 	.code = 0x4f2e,
 	.desc = "Last level of cache references"
   },
-  /* 4 */{
-	.name = "LAST_LEVEL_CACHE_MISSES",
+  {
+	.name = "LAST_LEVEL_CACHE_REFERENCES",
+	.modmsk = INTEL_V1_ATTRS,
+	.cntmsk = 0x3,
+	.code = 0x4f2e,
+	.desc = "this is an alias for LLC_REFERENCES",
+	.equiv= "LLC_REFERENCES",
+  },
+  {
+	.name = "LLC_MISSES",
 	.modmsk = INTEL_V1_ATTRS,
 	.cntmsk = 0x3,
 	.code = 0x412e,
 	.desc = "Last level of cache misses",
   },
-  /* 5  */{
+  {
+	.name = "LAST_LEVEL_CACHE_MISSES",
+	.modmsk = INTEL_V1_ATTRS,
+	.cntmsk = 0x3,
+	.code = 0x412e,
+	.desc = "this is an alias for LLC_MISSES",
+	.equiv= "LLC_MISSES",
+  },
+  {
 	.name = "BRANCH_INSTRUCTIONS_RETIRED",
 	.modmsk = INTEL_V1_ATTRS,
 	.cntmsk = 0x3,
 	.code = 0xc4,
 	.desc = "Branch instructions retired"
   },
-  /* 6  */{
+  {
 	.name = "MISPREDICTED_BRANCH_RETIRED",
 	.modmsk = INTEL_V1_ATTRS,
 	.cntmsk = 0x3,

@@ -55,7 +55,7 @@ static const pfmlib_attr_desc_t nhm_unc_mods[]={
 	PFM_ATTR_B("o", "queue occupancy"),			/* queue occupancy */
 	PFM_ATTR_NULL
 };
-#define mod_name(a) intel_x86_mods[(a)].name
+#define modx(a, z) (nhm_unc_mods[(a)].z)
 
 static int
 pfm_nhm_unc_detect(void *this)
@@ -164,10 +164,7 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 				return PFM_ERR_FEATCOMB;
 			}
 
-			if (pe[e->event].umasks[a->id].ufrom)
-				evt_strcat(umask_str, ":%s", pe[e->event].umasks[a->id].ufrom);
-			else
-				evt_strcat(umask_str, ":%s", pe[e->event].umasks[a->id].uname);
+			evt_strcat(umask_str, ":%s", pe[e->event].umasks[a->id].uname);
 
 			last_grpid = grpid;
 			modhw    |= pe[e->event].umasks[a->id].modhw;
@@ -176,7 +173,7 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 
 			reg->val |= umask << 8;
 		} else {
-			switch(a->id) {
+			switch(a->id - pe[e->event].numasks) {
 				case NHM_UNC_ATTR_I: /* invert */
 					reg->nhm_unc.usel_inv = !!a->ival;
 					break;
@@ -220,10 +217,7 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 	reg->nhm_unc.usel_en    = 1; /* force enable bit to 1 */
 	reg->nhm_unc.usel_int   = 1; /* force APIC int to 1 */
 
-	if (pe[e->event].from)
-		evt_strcat(e->fstr, "%s", pe[e->event].from);
-	else
-		evt_strcat(e->fstr, "%s", pe[e->event].name);
+	evt_strcat(e->fstr, "%s", pe[e->event].name);
 
 	umask = reg->nhm_unc.usel_umask;
 	for(k=0; k < pe[e->event].numasks; k++) {
@@ -232,7 +226,7 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 		 * skip alias unit mask, it means there is an equivalent
 		 * unit mask.
 		 */
-		if (pe[e->event].umasks[k].ufrom)
+		if (pe[e->event].umasks[k].uequiv)
 			continue;
 
 		um = pe[e->event].umasks[k].ucode & 0xff;
@@ -257,17 +251,17 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 				umask &= ~msk;
 			}
 		} else {
-			if (umask & msk) {
+			if (umask & um) {
 				evt_strcat(e->fstr, ":%s", pe[e->event].umasks[k].uname);
 				umask &= ~um;
 			}
 		}
 	}
 
-	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(NHM_UNC_ATTR_E), reg->nhm_unc.usel_edge);
-	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(NHM_UNC_ATTR_I), reg->nhm_unc.usel_inv);
-	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(NHM_UNC_ATTR_C), reg->nhm_unc.usel_cnt_mask);
-	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(NHM_UNC_ATTR_O), reg->nhm_unc.usel_occ);
+	evt_strcat(e->fstr, ":%s=%lu", modx(NHM_UNC_ATTR_E, name), reg->nhm_unc.usel_edge);
+	evt_strcat(e->fstr, ":%s=%lu", modx(NHM_UNC_ATTR_I, name), reg->nhm_unc.usel_inv);
+	evt_strcat(e->fstr, ":%s=%lu", modx(NHM_UNC_ATTR_C, name), reg->nhm_unc.usel_cnt_mask);
+	evt_strcat(e->fstr, ":%s=%lu", modx(NHM_UNC_ATTR_O, name), reg->nhm_unc.usel_occ);
 
 	__pfm_vbprintf("[UNC_PERFEVTSEL=0x%"PRIx64" event=0x%x umask=0x%x en=%d int=%d inv=%d edge=%d occ=%d cnt_msk=%d] %s\n",
 		reg->val,
@@ -315,23 +309,15 @@ pfmlib_pmu_t intel_nhm_unc_support={
 	.pmu			= PFM_PMU_INTEL_NHM_UNC,
 	.pme_count		= PME_NHM_UNC_EVENT_COUNT,
 	.max_encoding		= 1,
-	.modifiers		= nhm_unc_mods,
 	.pe			= intel_nhm_unc_pe,
 
-	.get_event_code		= pfm_intel_x86_get_event_code,
-	.get_event_name		= pfm_intel_x86_get_event_name,
 	.pmu_detect		= pfm_nhm_unc_detect,
-	.get_event_desc         = pfm_intel_x86_get_event_desc,
-	.get_event_numasks	= pfm_intel_x86_get_event_numasks,
-	.get_event_umask_name	= pfm_intel_x86_get_event_umask_name,
-	.get_event_umask_code	= pfm_intel_x86_get_event_umask_code,
-	.get_event_umask_desc	= pfm_intel_x86_get_event_umask_desc,
 	.get_event_encoding	= pfm_nhm_unc_get_encoding,
 	.get_event_first	= pfm_intel_x86_get_event_first,
 	.get_event_next		= pfm_intel_x86_get_event_next,
 	.event_is_valid		= pfm_intel_x86_event_is_valid,
 	.get_event_perf_type	= pfm_nhm_unc_get_event_perf_type,
-	.get_event_modifiers	= pfm_intel_x86_get_event_modifiers,
 	.validate_table		= pfm_intel_x86_validate_table,
+	.get_event_info		= pfm_intel_x86_get_event_info,
 	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
 };

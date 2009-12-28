@@ -37,9 +37,9 @@ get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *hw
 	int count = 0;
 	int ret;
 
-	/*
-	 * does initialize e
-	 */
+
+	memset(&e, 0, sizeof(e));
+
 	ret = pfmlib_parse_event(str, &e);
 	if (ret != PFM_SUCCESS)
 		return ret;

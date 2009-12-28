@@ -32,7 +32,7 @@
 #include "pfmlib_priv.h"
 #include "pfmlib_intel_x86_priv.h"
 
-const pfmlib_attr_desc_t intel_x86_mods[]={
+static const pfmlib_attr_desc_t intel_x86_mods[]={
 	PFM_ATTR_B("u", "monitor at priv level 1, 2, 3"),	/* monitor priv level 1, 2, 3 */
 	PFM_ATTR_B("k", "monitor at priv level 0"),		/* monitor priv level 0 */
 	PFM_ATTR_B("i", "invert"),				/* invert */
@@ -41,9 +41,25 @@ const pfmlib_attr_desc_t intel_x86_mods[]={
 	PFM_ATTR_B("t", "measure any thread"),			/* montor on both threads */
 	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
 };
-#define mod_name(a) intel_x86_mods[(a)].name
+#define modx(a, z) (intel_x86_mods[(a)].z)
 
 static int intel_x86_arch_version;
+
+static inline int
+intel_x86_attr2mod(void *this, int pidx, int attr_idx)
+{
+	const intel_x86_entry_t *pe = this_pe(this);
+	int x, n;
+
+	n = attr_idx - pe[pidx].numasks;
+
+	pfmlib_for_each_bit(x, pe[pidx].modmsk) {
+		if (n == 0)
+			break;
+		n--;
+	}
+	return x;
+}
 
 int
 intel_x86_detect(int *family, int *model)
@@ -182,13 +198,7 @@ intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *re
 				return PFM_ERR_FEATCOMB;
 			}
 
-			/*
-			 * if umask is derivative of another one, use the original
-			 */
-			if (pe[e->event].umasks[a->id].ufrom)
-				evt_strcat(umask_str, ":%s", pe[e->event].umasks[a->id].ufrom);
-			else
-				evt_strcat(umask_str, ":%s", pe[e->event].umasks[a->id].uname);
+			evt_strcat(umask_str, ":%s", pe[e->event].umasks[a->id].uname);
 
 			last_grpid = grpid;
 			modhw    |= pe[e->event].umasks[a->id].modhw;
@@ -199,7 +209,7 @@ intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *re
 
 			
 		} else {
-			switch(a->id) {
+			switch(a->id - pe[e->event].numasks) {
 				case INTEL_X86_ATTR_I: /* invert */
 					reg->sel_inv = !!a->ival;
 					break;
@@ -267,11 +277,7 @@ intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *re
 	if ((modhw & _INTEL_X86_ATTR_K) && reg->sel_os)
 		return PFM_ERR_ATTR_HW;
 
-
-	if (pe[e->event].from)
-		evt_strcat(e->fstr, "%s", pe[e->event].from);
-	else
-		evt_strcat(e->fstr, "%s", pe[e->event].name);
+	evt_strcat(e->fstr, "%s", pe[e->event].name);
 
 	/*
 	 * decode unit masks
@@ -283,19 +289,12 @@ intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *re
 		 * skip alias unit mask, it means there is an equivalent
 		 * unit mask.
 		 */
-		if (pe[e->event].umasks[k].ufrom)
+		if (pe[e->event].umasks[k].uequiv)
 			continue;
 
-		/* just the unit mask  and none of the hardwired modifiers */
+		/* just the unit mask and none of the hardwired modifiers */
 		um = pe[e->event].umasks[k].ucode & 0xff;
 
-		/*
-		 * extract grp bitfield mask used to exclude groups
-		 * of bits
-		 */
-		msk = pe[e->event].umasks[k].grpmsk;
-		if (!msk)
-			msk = 0xff;
 		/*
 		 * if umasks is NCOMBO, then it means the umask code must match
 		 * exactly (is the only one allowed) and therefore it consumes
@@ -305,12 +304,20 @@ intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *re
 		 * matching bits, because there can be combinations.
 		 */
 		if (intel_x86_uflag(this, e, k, INTEL_X86_NCOMBO)) {
+			/*
+			 * extract grp bitfield mask used to exclude groups
+			 * of bits
+			 */
+			msk = pe[e->event].umasks[k].grpmsk;
+			if (!msk)
+				msk = 0xff;
+
 			if ((umask & msk) == um) {
 				evt_strcat(e->fstr, ":%s", pe[e->event].umasks[k].uname);
 				umask &= ~msk;
 			}
 		} else {
-			if (umask & msk) {
+			if (umask & um) {
 				evt_strcat(e->fstr, ":%s", pe[e->event].umasks[k].uname);
 				umask &= ~um;
 			}
@@ -319,60 +326,15 @@ intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *re
 	/*
 	 * decode modifiers
 	 */
-	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(INTEL_X86_ATTR_K), reg->sel_os);
-	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(INTEL_X86_ATTR_U), reg->sel_usr);
-	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(INTEL_X86_ATTR_E), reg->sel_edge);
-	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(INTEL_X86_ATTR_I), reg->sel_inv);
-	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(INTEL_X86_ATTR_C), reg->sel_cnt_mask);
+	evt_strcat(e->fstr, ":%s=%lu", modx(INTEL_X86_ATTR_K, name), reg->sel_os);
+	evt_strcat(e->fstr, ":%s=%lu", modx(INTEL_X86_ATTR_U, name), reg->sel_usr);
+	evt_strcat(e->fstr, ":%s=%lu", modx(INTEL_X86_ATTR_E, name), reg->sel_edge);
+	evt_strcat(e->fstr, ":%s=%lu", modx(INTEL_X86_ATTR_I, name), reg->sel_inv);
+	evt_strcat(e->fstr, ":%s=%lu", modx(INTEL_X86_ATTR_C, name), reg->sel_cnt_mask);
 
 	if (intel_x86_arch_version > 2)
-		evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(INTEL_X86_ATTR_T), reg->sel_anythr);
+		evt_strcat(e->fstr, ":%s=%lu", modx(INTEL_X86_ATTR_T, name), reg->sel_anythr);
 
-
-	return PFM_SUCCESS;
-}
-
-int
-pfm_intel_x86_get_event_code(void *this, int i, uint64_t *code)
-{
-	const intel_x86_entry_t *pe = this_pe(this);
-	*code = pe[i].code;
-	return PFM_SUCCESS;
-}
-
-const char *
-pfm_intel_x86_get_event_name(void *this, int i)
-{
-	const intel_x86_entry_t *pe = this_pe(this);
-	return pe[i].name;
-}
-
-const char *
-pfm_intel_x86_get_event_desc(void *this, int ev)
-{
-	const intel_x86_entry_t *pe = this_pe(this);
-	return pe[ev].desc;
-}
-
-const char *
-pfm_intel_x86_get_event_umask_name(void *this, int e, int attr)
-{
-	const intel_x86_entry_t *pe = this_pe(this);
-	return pe[e].umasks[attr].uname;
-}
-
-const char *
-pfm_intel_x86_get_event_umask_desc(void *this, int e, int attr)
-{
-	const intel_x86_entry_t *pe = this_pe(this);
-	return pe[e].umasks[attr].udesc;
-}
-
-int
-pfm_intel_x86_get_event_umask_code(void *this, int e, int attr, uint64_t *code)
-{
-	const intel_x86_entry_t *pe = this_pe(this);
-	*code = pe[e].umasks[attr].ucode;
 	return PFM_SUCCESS;
 }
 
@@ -421,13 +383,6 @@ pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, 
 			e->fstr);
 
 	return PFM_SUCCESS;
-}
-
-int
-pfm_intel_x86_get_event_numasks(void *this, int idx)
-{
-	const intel_x86_entry_t *pe = this_pe(this);
-	return pe[idx].numasks;
 }
 
 int
@@ -527,14 +482,6 @@ pfm_intel_x86_get_event_perf_type(void *this, int pidx)
 	return PERF_TYPE_RAW;
 }
 
-pfmlib_modmsk_t
-pfm_intel_x86_get_event_modifiers(void *this, int pidx)
-{
-	const intel_x86_entry_t *pe = this_pe(this);
-
-	return pe[pidx].modmsk;
-}
-
 int
 pfm_intel_x86_validate_table(void *this, FILE *fp)
 {
@@ -615,14 +562,14 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 
 		for(j=0; j < pe[i].numasks; j++) {
 
-			if (pe[i].umasks[j].ufrom)
+			if (pe[i].umasks[j].uequiv)
 				continue;
 
 			if (pe[i].umasks[j].uflags & INTEL_X86_NCOMBO)
 				continue;
 
 			for(k=j+1; k < pe[i].numasks; k++) {
-				if (pe[i].umasks[k].ufrom)
+				if (pe[i].umasks[k].uequiv)
 					continue;
 				if (pe[i].umasks[k].uflags & INTEL_X86_NCOMBO)
 					continue;
@@ -638,16 +585,47 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 	return error ? PFM_ERR_INVAL : PFM_SUCCESS;
 }
 
-int pfm_intel_x86_get_event_attr_info(void *this, int idx, int attr_idx, pfmlib_attr_info_t *info)
+int
+pfm_intel_x86_get_event_attr_info(void *this, int idx, int attr_idx, pfm_event_attr_info_t *info)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
-	int ret;
+	int m;
 
-	if (attr_idx > pe[idx].numasks)
-		return 0;
+	if (attr_idx < pe[idx].numasks) {
+		info->name = pe[idx].umasks[attr_idx].uname;
+		info->desc = pe[idx].umasks[attr_idx].udesc;
+		info->equiv= pe[idx].umasks[attr_idx].uequiv;
+		info->code = pe[idx].umasks[attr_idx].ucode;
+		info->type = PFM_ATTR_UMASK;
+		info->is_dfl = !!(pe[idx].umasks[attr_idx].uflags & INTEL_X86_DFL);
+	} else {
+		m = intel_x86_attr2mod(this, idx, attr_idx);
+		info->name = modx(m, name);
+		info->desc = modx(m, desc);
+		info->equiv= NULL;
+		info->code = m;
+		info->type = modx(m, type);
+		info->is_dfl = 0;
+	}
+	info->idx = attr_idx;
+	info->dfl_val64 = 0;
 
-	ret = !!(pe[idx].umasks[attr_idx].uflags & INTEL_X86_DFL);
-	if (ret)
-		info->dfl_val64 = 0;
-	return ret;
+	return PFM_SUCCESS;
+}
+
+int
+pfm_intel_x86_get_event_info(void *this, int idx, pfm_event_info_t *info)
+{
+	const intel_x86_entry_t *pe = this_pe(this);
+
+	info->name  = pe[idx].name;
+	info->desc  = pe[idx].desc;
+	info->code  = pe[idx].code;
+	info->equiv = pe[idx].equiv;
+
+	/* unit masks + modifiers */
+	info->nattrs  = pe[idx].numasks;
+	info->nattrs += pfmlib_popcnt((unsigned long)pe[idx].modmsk);
+
+	return PFM_SUCCESS;
 }

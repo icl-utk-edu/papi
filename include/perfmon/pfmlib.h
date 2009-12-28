@@ -153,17 +153,19 @@ typedef struct {
 typedef struct {
 	const char		*name;	/* event name */
 	const char		*desc;	/* event description */
+	const char		*equiv;	/* event is equivalent to */
 	uint64_t		code;	/* event raw code (not encoding) */
 	pfm_pmu_t		pmu;	/* which PMU */
 	int			idx;	/* unique event identifier */
 	int			nattrs;	/* number of attributes */
 	int			size;	/* for struct extension, 0 for now */
-	uint64_t		reserved[3];
+	uint64_t		reserved[2];
 } pfm_event_info_t;
 
 typedef struct {
 	const char		*name;	/* attribute symbolic name */
 	const char		*desc;	/* attribute description */
+	const char		*equiv;	/* attribute is equivalent to */
 	uint64_t		code;	/* attribute code */
 	pfm_attr_t		type;	/* attribute type */
 	int			idx;	/* attribute opaque index */
@@ -178,7 +180,7 @@ typedef struct {
 		int		dfl_bool;	/* default boolean value */
 		int		dfl_int;	/* default integer value */
 	};
-	uint64_t		reserved[4];
+	uint64_t		reserved[5];
 } pfm_event_attr_info_t;
 
 /*
@@ -201,7 +203,7 @@ extern int pfm_get_event_first(void);
 extern int pfm_get_event_next(int idx);
 extern int pfm_find_event(const char *str);
 extern pfm_err_t pfm_get_event_encoding(const char *str, int dfl_plm, char **fstr, int *idx, uint64_t **codes, int *count);
-extern pfm_err_t pfm_get_event_info(int eidx, pfm_event_info_t *info);
+extern pfm_err_t pfm_get_event_info(int idx, pfm_event_info_t *info);
 /*
  * attribute API
  */

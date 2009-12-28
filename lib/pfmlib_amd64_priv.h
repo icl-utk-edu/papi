@@ -37,11 +37,11 @@ typedef struct {
 typedef struct {
 	const char		*name;	/* event name */
 	const char		*desc;	/* event description */
-	amd64_umask_t	umasks[PFMLIB_AMD64_MAX_UMASK]; /* umask desc */
+	amd64_umask_t		umasks[PFMLIB_AMD64_MAX_UMASK]; /* umask desc */
 	unsigned int		code; 	/* event code */
-	unsigned int		numasks;	/* number of umasks */
+	unsigned int		numasks;/* number of umasks */
 	unsigned int		flags;	/* flags */
-	unsigned int		attrmsk;/* which attr group */
+	unsigned int		modmsk;	/* modifiers bitmask */
 } amd64_entry_t;
 
 #define AMD64_FAM10H AMD64_FAM10H_REV_B

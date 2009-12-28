@@ -49,7 +49,7 @@ static const pfmlib_attr_desc_t amd64_mods[]={
 	PFM_ATTR_I("p", "sampling period"),			/* sampling period */
 	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
 };
-#define mod_name(a) amd64_mods[(a)].name
+#define modx(a, z) (amd64_mods[(a)].z)
 
 static struct {
         amd64_rev_t     	revision;
@@ -89,6 +89,21 @@ pfmlib_pmu_t amd64_support;
 #define amd64_stepping    amd64_pmu.stepping
 
 static int pfm_amd64_get_event_next(void *this, int idx);
+
+static inline int
+amd64_attr2mod(int pidx, int attr_idx)
+{
+	int x, n;
+
+	n = attr_idx - amd64_events[pidx].numasks;
+
+	pfmlib_for_each_bit(x, amd64_events[pidx].modmsk) {
+		if (n == 0)
+			break;
+		n--;
+	}
+	return x;
+}
 
 static inline int
 amd64_event_ibsfetch(int idx)
@@ -338,7 +353,6 @@ amd64_add_defaults(int idx, char *umask_str, uint64_t *umask)
 	ent = amd64_events+idx;
 
 	for(j=0; j < ent->numasks; j++) {
-printf("u=%d valid=%d\n", j, amd64_umask_valid(idx, j));
 		/* skip umasks for other revisions */
 		if (!amd64_umask_valid(idx, j))
 			continue;
@@ -407,7 +421,7 @@ amd64_encode(pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 
 			umask |= amd64_events[e->event].umasks[a->id].ucode;
 		} else {
-			switch(a->id) {
+			switch(a->id - numasks) {
 				case AMD64_ATTR_I: /* invert */
 					reg->sel_inv = !!a->ival;
 					break;
@@ -480,78 +494,23 @@ amd64_encode(pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 	evt_strcat(e->fstr, "%s", amd64_events[e->event].name);
 	evt_strcat(e->fstr, "%s", umask_str);
 
-	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(AMD64_ATTR_K), reg->sel_os);
-	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(AMD64_ATTR_U), reg->sel_usr);
-	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(AMD64_ATTR_E), reg->sel_edge);
-	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(AMD64_ATTR_I), reg->sel_inv);
-	evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(AMD64_ATTR_C), reg->sel_cnt_mask);
+	evt_strcat(e->fstr, ":%s=%lu", modx(AMD64_ATTR_K, name), reg->sel_os);
+	evt_strcat(e->fstr, ":%s=%lu", modx(AMD64_ATTR_U, name), reg->sel_usr);
+	evt_strcat(e->fstr, ":%s=%lu", modx(AMD64_ATTR_E, name), reg->sel_edge);
+	evt_strcat(e->fstr, ":%s=%lu", modx(AMD64_ATTR_I, name), reg->sel_inv);
+	evt_strcat(e->fstr, ":%s=%lu", modx(AMD64_ATTR_C, name), reg->sel_cnt_mask);
 
 	if (IS_FAMILY_10H()) {
-		evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(AMD64_ATTR_H), reg->sel_host);
-		evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(AMD64_ATTR_G), reg->sel_guest);
+		evt_strcat(e->fstr, ":%s=%lu", modx(AMD64_ATTR_H, name), reg->sel_host);
+		evt_strcat(e->fstr, ":%s=%lu", modx(AMD64_ATTR_G, name), reg->sel_guest);
 		if (amd64_event_ibsfetch(e->event)) {
-			evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(AMD64_ATTR_R), reg->ibsfetch.randen);
-			evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(AMD64_ATTR_P), reg->ibsfetch.maxcnt);
+			evt_strcat(e->fstr, ":%s=%lu", modx(AMD64_ATTR_R, name), reg->ibsfetch.randen);
+			evt_strcat(e->fstr, ":%s=%lu", modx(AMD64_ATTR_P, name), reg->ibsfetch.maxcnt);
 		} else if (amd64_event_ibsop(e->event)) {
-			evt_strcat(e->fstr, ":%s=%"PRIu64, mod_name(AMD64_ATTR_P), reg->ibsop.maxcnt);
+			evt_strcat(e->fstr, ":%s=%lu", modx(AMD64_ATTR_P, name), reg->ibsop.maxcnt);
 		}
 	}
-
 	return PFM_SUCCESS;
-}
-
-static int
-pfm_amd64_get_event_code(void *this, int i, uint64_t *code)
-{
-	*code = amd64_events[i].code;
-	return PFM_SUCCESS;
-}
-
-static const char *
-pfm_amd64_get_event_name(void *this, int i)
-{
-	return amd64_events[i].name;
-}
-
-static const char *
-pfm_amd64_get_event_desc(void *this, int i)
-{
-	return amd64_events[i].desc;
-}
-
-static const char *
-pfm_amd64_get_event_umask_name(void *this, int e, int attr)
-{
-	int i;
-
-	for(i=0; i < amd64_events[e].numasks; i++)
-		if (amd64_umask_valid(e, i) && attr-- == 0)
-			return amd64_events[e].umasks[i].uname;
-	return NULL;
-}
-
-static const char *
-pfm_amd64_get_event_umask_desc(void *this, int e, int attr)
-{
-	int i;
-
-	for(i=0; i < amd64_events[e].numasks; i++)
-		if (amd64_umask_valid(e, i) && attr-- == 0)
-			return amd64_events[e].umasks[i].udesc;
-	return NULL;
-}
-
-static int
-pfm_amd64_get_event_umask_code(void *this, int e, int attr, uint64_t *code)
-{
-	int i;
-
-	for(i=0; i < amd64_events[e].numasks; i++)
-		if (amd64_umask_valid(e, i) && attr-- == 0) {
-			*code = amd64_events[e].umasks[i].ucode;
-			return PFM_SUCCESS;
-		}
-	return PFM_ERR_INVAL;
 }
 
 static int
@@ -608,17 +567,6 @@ pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int 
 }
 
 static int
-pfm_amd64_get_event_numasks(void *this, int idx)
-{
-	int num = 0, i;
-
-	for(i=0; i < amd64_events[idx].numasks; i++)
-		if (amd64_umask_valid(idx, i))
-			num++;
-	return num;
-}
-
-static int
 pfm_amd64_get_event_first(void *this)
 {
 	int idx;
@@ -654,31 +602,51 @@ pfm_amd64_event_is_valid(void *this, int idx)
 	return amd64_event_valid(idx);
 }
 
-int
+static int
 pfm_amd64_get_event_perf_type(void *this, int pidx)
 {
 	return PERF_TYPE_RAW;
 }
 
-pfmlib_modmsk_t
-pfm_amd64_get_event_modifiers(void *this, int pidx)
+static int
+pfm_amd64_get_event_attr_info(void *this, int idx, int attr_idx, pfm_event_attr_info_t *info)
 {
-	return amd64_events[pidx].attrmsk;
+	int m;
+
+	if (attr_idx < amd64_events[idx].numasks) {
+		info->name = amd64_events[idx].umasks[attr_idx].uname;
+		info->desc = amd64_events[idx].umasks[attr_idx].udesc;
+		info->equiv= NULL;
+		info->code = amd64_events[idx].umasks[attr_idx].ucode;
+		info->type = PFM_ATTR_UMASK;
+		info->is_dfl = !!(amd64_events[idx].umasks[attr_idx].uflags & AMD64_FL_DFL);
+	} else {
+		m = amd64_attr2mod(idx, attr_idx);
+		info->name = modx(m, name);
+		info->desc = modx(m, desc);
+		info->equiv= NULL;
+		info->code = m;
+		info->type = modx(m, type);
+		info->is_dfl = 0;
+	}
+	info->idx = attr_idx;
+	info->dfl_val64 = 0;
+
+	return PFM_SUCCESS;
 }
 
 static int
-pfm_amd64_get_event_attr_info(void *this, int idx, int attr_idx, pfmlib_attr_info_t *info)
+pfm_amd64_get_event_info(void *this, int idx, pfm_event_info_t *info)
 {
-	const amd64_entry_t *pe = this_pe(this);
-	int ret;
+	info->name  = amd64_events[idx].name;
+	info->desc  = amd64_events[idx].desc;
+	info->code  = amd64_events[idx].code;
 
-	if (attr_idx > pe[idx].numasks)
-		return 0;
+	/* unit masks + modifiers */
+	info->nattrs  = amd64_events[idx].numasks;
+	info->nattrs += pfmlib_popcnt((unsigned long)amd64_events[idx].modmsk);
 
-	ret = !!(amd64_events[idx].umasks[attr_idx].uflags & AMD64_FL_DFL);
-	if (ret)
-		info->dfl_val64 = 0;
-	return ret;
+	return PFM_SUCCESS;
 }
 
 pfmlib_pmu_t amd64_support = {
@@ -686,25 +654,17 @@ pfmlib_pmu_t amd64_support = {
 	.name			= "amd64",
 	.pmu			= PFM_PMU_AMD64,
 	.pme_count		= 0, /* set at runtime */
-	.modifiers		= amd64_mods,
 	.pe			= NULL, /* set at runtime */
 
 	.max_encoding		= 1,
-	.get_event_code		= pfm_amd64_get_event_code,
-	.get_event_name		= pfm_amd64_get_event_name,
 	.pmu_detect		= pfm_amd64_detect,
 	.pmu_init		= pfm_amd64_init,
 
-	.get_event_desc         = pfm_amd64_get_event_desc,
-	.get_event_numasks	= pfm_amd64_get_event_numasks,
-	.get_event_umask_name	= pfm_amd64_get_event_umask_name,
-	.get_event_umask_code	= pfm_amd64_get_event_umask_code,
-	.get_event_umask_desc	= pfm_amd64_get_event_umask_desc,
 	.get_event_encoding	= pfm_amd64_get_encoding,
 	.get_event_first	= pfm_amd64_get_event_first,
 	.get_event_next		= pfm_amd64_get_event_next,
 	.event_is_valid		= pfm_amd64_event_is_valid,
 	.get_event_perf_type	= pfm_amd64_get_event_perf_type,
-	.get_event_modifiers	= pfm_amd64_get_event_modifiers,
+	.get_event_info		= pfm_amd64_get_event_info,
 	.get_event_attr_info	= pfm_amd64_get_event_attr_info,
 };

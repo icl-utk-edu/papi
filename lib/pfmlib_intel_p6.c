@@ -124,26 +124,18 @@ pfmlib_pmu_t intel_pii_support={
 	.name			= "pii",
 	.pmu			= PFM_PMU_INTEL_PII,
 	.pme_count		= I386_PII_EVENT_COUNT,
-	.modifiers		= intel_x86_mods,
 	.pe			= i386_pII_pe,
 
 	.pmu_detect		= pfm_p6_detect_pii,
 	.max_encoding		= 1,
 
-	.get_event_code		= pfm_intel_x86_get_event_code,
-	.get_event_name		= pfm_intel_x86_get_event_name,
-	.get_event_desc         = pfm_intel_x86_get_event_desc,
-	.get_event_numasks	= pfm_intel_x86_get_event_numasks,
-	.get_event_umask_name	= pfm_intel_x86_get_event_umask_name,
-	.get_event_umask_code	= pfm_intel_x86_get_event_umask_code,
-	.get_event_umask_desc	= pfm_intel_x86_get_event_umask_desc,
 	.get_event_encoding	= pfm_intel_x86_get_encoding,
 	.get_event_first	= pfm_intel_x86_get_event_first,
 	.get_event_next		= pfm_intel_x86_get_event_next,
 	.event_is_valid		= pfm_intel_x86_event_is_valid,
 	.get_event_perf_type	= pfm_intel_x86_get_event_perf_type,
-	.get_event_modifiers	= pfm_intel_x86_get_event_modifiers,
 	.validate_table		= pfm_intel_x86_validate_table,
+	.get_event_info		= pfm_intel_x86_get_event_info,
 	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
 };
 
@@ -152,26 +144,18 @@ pfmlib_pmu_t intel_p6_support={
 	.name			= "p6",
 	.pmu			= PFM_PMU_I386_P6,
 	.pme_count		= I386_PIII_EVENT_COUNT,
-	.modifiers		= intel_x86_mods,
 	.pe			= i386_pIII_pe,
 
 	.pmu_detect		= pfm_p6_detect_piii,
 	.max_encoding		= 1,
 
-	.get_event_code		= pfm_intel_x86_get_event_code,
-	.get_event_name		= pfm_intel_x86_get_event_name,
-	.get_event_desc         = pfm_intel_x86_get_event_desc,
-	.get_event_numasks	= pfm_intel_x86_get_event_numasks,
-	.get_event_umask_name	= pfm_intel_x86_get_event_umask_name,
-	.get_event_umask_code	= pfm_intel_x86_get_event_umask_code,
-	.get_event_umask_desc	= pfm_intel_x86_get_event_umask_desc,
 	.get_event_encoding	= pfm_intel_x86_get_encoding,
 	.get_event_first	= pfm_intel_x86_get_event_first,
 	.get_event_next		= pfm_intel_x86_get_event_next,
 	.event_is_valid		= pfm_intel_x86_event_is_valid,
 	.get_event_perf_type	= pfm_intel_x86_get_event_perf_type,
-	.get_event_modifiers	= pfm_intel_x86_get_event_modifiers,
 	.validate_table		= pfm_intel_x86_validate_table,
+	.get_event_info		= pfm_intel_x86_get_event_info,
 	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
 };
 
@@ -180,27 +164,19 @@ pfmlib_pmu_t intel_ppro_support={
 	.name			= "ppro",
 	.pmu			= PFM_PMU_INTEL_PPRO,
 	.pme_count		= I386_PPRO_EVENT_COUNT,
-	.modifiers		= intel_x86_mods,
 	.pe			= i386_ppro_pe,
 
 	.pmu_detect		= pfm_p6_detect_ppro,
 
 	.max_encoding		= 1,
 
-	.get_event_code		= pfm_intel_x86_get_event_code,
-	.get_event_name		= pfm_intel_x86_get_event_name,
-	.get_event_desc         = pfm_intel_x86_get_event_desc,
-	.get_event_numasks	= pfm_intel_x86_get_event_numasks,
-	.get_event_umask_name	= pfm_intel_x86_get_event_umask_name,
-	.get_event_umask_code	= pfm_intel_x86_get_event_umask_code,
-	.get_event_umask_desc	= pfm_intel_x86_get_event_umask_desc,
 	.get_event_encoding	= pfm_intel_x86_get_encoding,
 	.get_event_first	= pfm_intel_x86_get_event_first,
 	.get_event_next		= pfm_intel_x86_get_event_next,
 	.event_is_valid		= pfm_intel_x86_event_is_valid,
 	.get_event_perf_type	= pfm_intel_x86_get_event_perf_type,
-	.get_event_modifiers	= pfm_intel_x86_get_event_modifiers,
 	.validate_table		= pfm_intel_x86_validate_table,
+	.get_event_info		= pfm_intel_x86_get_event_info,
 	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
 };
 
@@ -209,7 +185,6 @@ pfmlib_pmu_t intel_pm_support={
 	.desc			= "Intel Pentium M",
 	.name			= "pm",
 	.pmu			= PFM_PMU_I386_PM,
-	.modifiers		= intel_x86_mods,
 	.pe			= i386_pm_pe,
 
 	.pmu_detect		= pfm_p6_detect_pm,
@@ -217,19 +192,12 @@ pfmlib_pmu_t intel_pm_support={
 
 	.max_encoding		= 1,
 
-	.get_event_code		= pfm_intel_x86_get_event_code,
-	.get_event_name		= pfm_intel_x86_get_event_name,
-	.get_event_desc         = pfm_intel_x86_get_event_desc,
-	.get_event_numasks	= pfm_intel_x86_get_event_numasks,
-	.get_event_umask_name	= pfm_intel_x86_get_event_umask_name,
-	.get_event_umask_code	= pfm_intel_x86_get_event_umask_code,
-	.get_event_umask_desc	= pfm_intel_x86_get_event_umask_desc,
 	.get_event_encoding	= pfm_intel_x86_get_encoding,
 	.get_event_first	= pfm_intel_x86_get_event_first,
 	.get_event_next		= pfm_intel_x86_get_event_next,
 	.event_is_valid		= pfm_intel_x86_event_is_valid,
 	.get_event_perf_type	= pfm_intel_x86_get_event_perf_type,
-	.get_event_modifiers	= pfm_intel_x86_get_event_modifiers,
 	.validate_table		= pfm_intel_x86_validate_table,
+	.get_event_info		= pfm_intel_x86_get_event_info,
 	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
 };

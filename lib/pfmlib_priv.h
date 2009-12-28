@@ -33,10 +33,6 @@
 #define PFM_ATTR_NULL	{ .name = NULL }
 
 #define PFMLIB_EVT_MAX_NAME_LEN	128
-/*
- * modifier mask
- */
-typedef int pfmlib_modmsk_t;
 
 /*
  * event identifier encoding:
@@ -75,13 +71,6 @@ typedef struct {
 	/* more to be added in the future */
 } pfmlib_perf_attr_t;
 
-typedef union {
-	uint64_t dfl_val64;
-	const char *dfl_str;
-	int dfl_bool;
-	int dfl_int;
-} pfmlib_attr_info_t;
-
 /*
  * must be big enough to hold all possible priv level attributes
  */
@@ -104,28 +93,21 @@ typedef struct pfmlib_pmu {
 	int		pme_count;			/* number of events */
 	int		max_encoding;			/* max number of uint64_t to encode an event */
 	int		flags;				/* PMU flags */
-	const pfmlib_attr_desc_t *modifiers;		/* array of possible modifiers for PMU */
 	const void	*pe;				/* pointer to event table */
 
 	int 		 (*pmu_detect)(void *this);
 	int 		 (*pmu_init)(void *this);	/* optional */
 
-	const char	*(*get_event_desc)(void *this, int pidx);
-	const char	*(*get_event_name)(void *this, int pidx);
-	int		 (*get_event_code)(void *this, int pidx, uint64_t *code);
 	int		 (*get_event_first)(void *this);
 	int		 (*get_event_next)(void *this, int pidx);
-	int		 (*get_event_numasks)(void *this, int pidx);
-	pfmlib_modmsk_t	 (*get_event_modifiers)(void *this, int pidx);
 	int		 (*get_event_perf_type)(void *this, int pidx);
-
-	const char	*(*get_event_umask_name)(void *this, int pidx, int umask_idx);
-	const char	*(*get_event_umask_desc)(void *this, int pidx, int umask_idx);
-	int		 (*get_event_umask_code)(void *this, int pidx, int umask_idx, uint64_t *code);
-	int		 (*get_event_encoding)(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs);
+	int		 (*get_event_info)(void *this, int pidx, pfm_event_info_t *info);
 	int		 (*event_is_valid)(void *this, int pidx);
+
+	int		 (*get_event_attr_info)(void *this, int pidx, int umask_idx, pfm_event_attr_info_t *info);
+	int		 (*get_event_encoding)(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs);
+
 	int		 (*validate_table)(void *this, FILE *fp);
-	int		 (*get_event_attr_info)(void *this, int pidx, int umask_idx, pfmlib_attr_info_t *info);
 } pfmlib_pmu_t;
 
 /*
@@ -223,4 +205,8 @@ pfmlib_fnb(unsigned long value, size_t nbits, int p)
 	}
 	return i;
 }
+
+#define pfmlib_for_each_bit(x, m) \
+	for((x) = pfmlib_fnb((m), (sizeof(m)<<3), 0); (x) < (sizeof(m)<<3); (x) = pfmlib_fnb((m), (sizeof(m)<<3), (x)+1))
+
 #endif /* __PFMLIB_PRIV_H__ */

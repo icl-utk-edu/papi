@@ -30,7 +30,7 @@
 		  .grpid = (g), \
 		  .grpmsk= 0xf, \
 		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO, \
-		  .ufrom = "M_STATE:E_STATE:S_STATE:I_STATE", \
+		  .uequiv = "M_STATE:E_STATE:S_STATE:I_STATE", \
 		}, \
 		{ .uname = "I_STATE",\
 		  .udesc = "Invalid cacheline",\
@@ -134,7 +134,8 @@ static const intel_x86_entry_t intel_core_pe[]={
 	 .code = 0x00c0,
 	 .cntmsk = 0x100000003ull,
 	 .modmsk = INTEL_V2_ATTRS, /* because we can fallback to generic counter */
-	 .desc =  "This is an from for INSTRUCTION_RETIRED",
+	 .desc =  "This is an alias from INSTRUCTION_RETIRED",
+	 .equiv = "INSTRUCTION_RETIRED",
 	},
 	{.name = "UNHALTED_REFERENCE_CYCLES",
 	 .code = 0x013c,
@@ -146,13 +147,14 @@ static const intel_x86_entry_t intel_core_pe[]={
 	 .code = 0x4f2e,
 	 .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
-	 .desc =  "count each request originating from the core to reference a cache line in the last level cache. The count may include speculation, but excludes cache line fills due to hardware prefetch. Alias to L2_RQSTS:SELF_DEMAND_MESI",
+	 .desc =  "count each request originating equiv the core to reference a cache line in the last level cache. The count may include speculation, but excludes cache line fills due to hardware prefetch. Alias to L2_RQSTS:SELF_DEMAND_MESI",
 	},
 	{.name = "LAST_LEVEL_CACHE_REFERENCES",
 	 .code = 0x4f2e,
 	 .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
-	 .desc =  "This is an from for LLC_REFERENCES",
+	 .desc =  "This is an alias for LLC_REFERENCES",
+	 .equiv = "LLC_REFERENCES",
 	},
 	{.name = "LLC_MISSES",
 	 .code = 0x412e,
@@ -164,7 +166,8 @@ static const intel_x86_entry_t intel_core_pe[]={
 	 .code = 0x412e,
 	 .cntmsk = 0x3,
 	 .modmsk = INTEL_V2_ATTRS,
-	 .desc =  "This is an from for LLC_MISSES",
+	 .desc =  "This is an alias for LLC_MISSES",
+	 .equiv = "LLC_MISSES",
 	},
 	{.name = "BRANCH_INSTRUCTIONS_RETIRED",
 	 .code = 0x00c4,
@@ -219,7 +222,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 		  .udesc = "on any port",
 		  .ucode = 0x3f,
 		  .uflags = INTEL_X86_DFL|INTEL_X86_NCOMBO,
-		  .ufrom = "PORT_0:PORT_1:PORT_2:PORT_3:PORT_4:PORT_5"
+		  .uequiv = "PORT_0:PORT_1:PORT_2:PORT_3:PORT_4:PORT_5"
 		},
 	   },	
 	   .numasks = 7
@@ -235,7 +238,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 	  .code = 0xa0 | (1 << 23) | (1 << 24),
 	  .cntmsk = 0x3,
 	  .modmsk = _INTEL_X86_ATTR_U|_INTEL_X86_ATTR_K,
-	  .from = "RS_UOPS_DISPATCHED",
+	  .equiv = "RS_UOPS_DISPATCHED:i=1:c=1",
 	  .desc =  "Number of of cycles in which no micro-ops is dispatched for execution",
 	},
 	{ .name = "LOAD_BLOCK",
@@ -255,7 +258,7 @@ static const intel_x86_entry_t intel_core_pe[]={
 		  .ucode = 0x4
 		},
 		{ .uname = "OVERLAP_STORE",
-		  .udesc = "Loads that partially overlap an earlier store, or 4K fromed with a previous store",
+		  .udesc = "Loads that partially overlap an earlier store, or 4K equived with a previous store",
 		  .ucode = 0x8
 		},
 		{ .uname = "UNTIL_RETIRE",
