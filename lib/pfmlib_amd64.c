@@ -638,8 +638,12 @@ pfm_amd64_get_event_attr_info(void *this, int idx, int attr_idx, pfm_event_attr_
 static int
 pfm_amd64_get_event_info(void *this, int idx, pfm_event_info_t *info)
 {
+	/*
+	 * pmu and idx filled out by caller
+	 */
 	info->name  = amd64_events[idx].name;
 	info->desc  = amd64_events[idx].desc;
+	info->equiv = NULL;
 	info->code  = amd64_events[idx].code;
 
 	/* unit masks + modifiers */

@@ -618,6 +618,9 @@ pfm_intel_x86_get_event_info(void *this, int idx, pfm_event_info_t *info)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
 
+	/*
+	 * pmu and idx filled out by caller
+	 */
 	info->name  = pe[idx].name;
 	info->desc  = pe[idx].desc;
 	info->code  = pe[idx].code;
