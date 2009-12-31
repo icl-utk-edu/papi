@@ -1,0 +1,76 @@
+.TH LIBPFM 4  "December, 2009" "" "Linux Programmer's Manual"
+.SH NAME
+pfm_get_pmu_info \- get PMU information
+.SH SYNOPSIS
+.nf
+.B #include <perfmon/pfmlib.h>
+.sp
+.BI "int pfm_get_pmu_info(pfm_pmu_t " pmu ", pfm_pmu_info_t *" info ");"
+.sp
+.SH DESCRIPTION
+This function returns in \fBinfo\fR information about a PMU model
+designated by its identifier in \fBpmu\fR.
+
+The \fBpfm_pmu_info\fR structure is defined as follows:
+.nf
+typedef struct {
+        const char              *name;
+        const char              *desc;
+        pfm_pmu_t               pmu;
+        int                     size;
+        int                     nevents;
+        struct {
+                int             is_present:1;
+                int             reserved:31;
+        };
+        uint64_t                reserved[3];
+} pfm_pmu_info_t;
+.fi
+
+The fields of this structure are defined as follows:
+.TP
+.B name
+This is the symbolic name of the PMU. This name
+can be used as a prefix in an event string. This is a read-only
+string.
+.TP
+.B desc
+This is the description of PMU. This is a read-only string. 
+.TP
+.B pmu
+This is the unique PMU identification code. It is identical to the value
+passed in \fBpmu\fR and it provided only for completeness.
+.TP
+.B nevents
+This is the number of available events for this PMU model based on the
+host processor. It is \fBonly\fR valid is the \fBis_present\fR field
+is set to 1.
+.TP
+.B is_present
+This field is set to one is the PMU model has been detected on the
+host system.
+.TP
+.B size
+This field must be set to zero for now. It will be used in case the
+\fBpfm_pmu_info\fR structure is expanded.
+.PP
+The \fBreserved\fR field must be set to zero.
+
+.SH RETURN
+
+If successful, the function returns \fBPFM_SUCCESS\fR and PMU information
+in \fBinfo\fR, otherwise it returns an error code.
+.SH ERRORS
+.TP
+.B PFMLIB_ERR_NOINIT
+Library has not been initialized properly.
+.TP
+.B PFMLIB_ERR_NOTSUPP
+PMU model is not supported by the library.
+.TP
+.B PFMLIB_ERR_INVAL
+The \fBpmu\fR argument is invalid or \fBinfo\fR is \fBNULL\fR or \fBsize\fR
+is not zero.
+.SH AUTHOR
+Stephane Eranian <eranian@gmail.com>
+.PP

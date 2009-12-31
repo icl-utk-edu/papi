@@ -36,10 +36,12 @@ ARCH_X86=libpfm_intel_core.3	\
 	 libpfm_amd64.3		\
 	 libpfm_intel_atom.3	\
 	 libpfm_intel_nhm.3	\
-	 libpfm_intel_nhm_unc.3
+	 libpfm_intel_nhm_unc.3 \
+	 libpfm_intel_p6.3	\
+	 libpfm_intel_coreduo.3
 
 ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
-ARCH_MAN=libpfm_intel_p6.3 libpfm_intel_coreduo.3 $(ARCH_X86)
+ARCH_MAN=$(ARCH_X86)
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_X86_64),y)
@@ -61,22 +63,14 @@ endif
 
 GEN_MAN= libpfm.3 \
 	pfm_find_event.3 \
-	pfm_get_event_attr_code.3 \
-	pfm_get_event_attr_desc.3 \
-	pfm_get_event_attr_name.3 \
-	pfm_get_event_attr_type.3 \
-	pfm_get_event_code.3 \
-	pfm_get_event_desc.3 \
+	pfm_get_event_attr_info.3 \
+	pfm_get_event_info.3 \
 	pfm_get_event_encoding.3 \
 	pfm_get_event_first.3 \
-	pfm_get_event_name.3 \
-	pfm_get_event_nattrs.3 \
 	pfm_get_event_next.3 \
-	pfm_get_event_pmu.3 \
+	pfm_get_pmu_info.3 \
 	pfm_get_nevents.3 \
 	pfm_get_perf_event_encoding.3 \
-	pfm_get_pmu_desc.3 \
-	pfm_get_pmu_name.3 \
 	pfm_get_version.3 \
 	pfm_initialize.3 \
 	pfm_pmu_present.3 \

@@ -5,14 +5,45 @@ pfm_get_perf_event_encoding \- encode event for perf_event API
 .nf
 .B #include <perfmon/pfmlib_perf_event.h>
 .sp
-.BI "int pfm_get_perf_event_encoding(const char *" str ", struct perf_event_attr *" attr ", int *" idx ");"
+.BI "int pfm_get_perf_event_encoding(const char *" str ", int " dfl_plm ", struct perf_event_attr *" attr ", char **" fstr ", int *" idx ");"
 .sp
 .SH DESCRIPTION
 This function can be used in conjunction with the perf_events Linux kernel API which
-provides access to hardware performance counters and also some kernel software counters.
-It takes an event string in \fBstr\fR and fills out the relevant parts of the perf_events
-specific data structure in \fBattr\fR. If \fBidx\fR is not NULL, it also returns the
-corresponding unique event identifier.
+provides access to hardware performance counters, kernel software counters and tracepoints.
+The function takes an event string in \fBstr\fR and a default privilege level mask in \fBdfl_plm\fR
+and fills out the relevant parts of the perf_events specific data structure in \fBattr\fR.
+
+The \fBdfl_plm\fR cannot be zero, though it may not necessarily be used by the event.
+Depending on the event, combination of the following privilege levels may be used:
+.TP
+.B PFM_PLM3
+Measure at privilege level 3. This usually corresponds to user level. On X86, it corresponds
+to privilege levels 3, 2, 1. Check the PMU specific man page to verify if this level
+is supported by your PMU model.
+.TP
+.B PFM_PLM2
+Measure at privilege level 2. Check the PMU specific man page to verify if this level
+is supported by your PMU model.
+.TP
+.B PFM_PLM1
+Measure at privilege level 1. Check the PMU specific man page to verify if this level
+is supported by your PMU model.
+.TP
+.B PFM_PLM0
+Measure at privilege level 0. This usually corresponds to kernel level. Check the PMU
+specific man page to verify if this level is supported by your PMU model.
+.TP
+.B PFM_PLMH
+Measure at hypervisor privilege level. This is used in conjunction with hardware virtualization.
+Check the PMU specific man page to verify if this level is supported by your PMU model.
+.PP
+
+If \fBfstr\fR is not NULL, the function will make it point to the fully qualified event string,
+i.e., a string with the event name, all unit masks set, and the value of all modifiers.
+The library will allocate memory to store the event string but it is the responsibility of the
+caller to eventually free that string using free().
+
+If \fBidx\fR is not NULL, it returns the corresponding unique event identifier.
 
 Only select fields are modified by the function, the others are untouched.
 The following fields in \fBattr\fR are modified:
