@@ -73,7 +73,6 @@ GEN_MAN= libpfm.3 \
 	pfm_get_perf_event_encoding.3 \
 	pfm_get_version.3 \
 	pfm_initialize.3 \
-	pfm_pmu_present.3 \
 	pfm_strerror.3
 
 MAN=$(GEN_MAN) $(ARCH_MAN)
