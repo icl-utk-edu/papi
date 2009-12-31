@@ -301,7 +301,7 @@ pfm_amd64_force(void)
 {
         char *str;
         /* parses LIBPFM_FORCE_PMU=amd64,<family>,<model>,<stepping> */
-	str = strchr(pfmlib_forced_pmu, ',');
+	str = strchr(pfm_cfg.forced_pmu, ',');
         if (!str || *str++ != ',')
                 goto failed;
         amd64_family = strtol(str, &str, 10);
@@ -327,7 +327,7 @@ done:
 static int
 pfm_amd64_init(void *this)
 {
-        if (pfmlib_forced_pmu)
+        if (pfm_cfg.forced_pmu)
                 pfm_amd64_force();
 
         __pfm_vbprintf("AMD family=%d model=0x%x stepping=0x%x rev=%s, %s\n",

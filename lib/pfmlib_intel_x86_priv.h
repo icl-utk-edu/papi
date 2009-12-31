@@ -206,10 +206,10 @@ intel_x86_uflag(void *this, pfmlib_event_desc_t *e, int attr, int flag)
 	return !!(pe[e->event].umasks[attr].uflags & flag);
 }
 
-extern int intel_x86_detect(int *family, int *model);
-extern int intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *reg);
-extern void intel_x86_display_reg(void *this, pfm_intel_x86_reg_t reg, int c, int event);
-extern int intel_x86_add_defaults(const intel_x86_entry_t *ent, char *umask_str, unsigned int msk, unsigned int *umask);
+extern int pfm_intel_x86_detect(int *family, int *model);
+extern int pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *reg);
+extern void pfm_intel_x86_display_reg(pfm_intel_x86_reg_t reg, char *fstr);
+extern int pfm_intel_x86_add_defaults(const intel_x86_entry_t *ent, char *umask_str, unsigned int msk, unsigned int *umask);
 
 extern int pfm_intel_x86_event_is_valid(void *this, int pidx);
 extern int pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs);

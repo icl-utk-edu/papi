@@ -43,10 +43,10 @@ static const pfmlib_attr_desc_t intel_x86_mods[]={
 };
 #define modx(a, z) (intel_x86_mods[(a)].z)
 
-static int intel_x86_arch_version;
+static int pfm_intel_x86_arch_version;
 
 static inline int
-intel_x86_attr2mod(void *this, int pidx, int attr_idx)
+pfm_intel_x86_attr2mod(void *this, int pidx, int attr_idx)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
 	int x, n;
@@ -62,7 +62,7 @@ intel_x86_attr2mod(void *this, int pidx, int attr_idx)
 }
 
 int
-intel_x86_detect(int *family, int *model)
+pfm_intel_x86_detect(int *family, int *model)
 {
 	int ret;
 	char buffer[128];
@@ -92,7 +92,7 @@ intel_x86_detect(int *family, int *model)
 }
 
 int
-intel_x86_add_defaults(const intel_x86_entry_t *ent, char *umask_str, unsigned int msk, unsigned int *umask)
+pfm_intel_x86_add_defaults(const intel_x86_entry_t *ent, char *umask_str, unsigned int msk, unsigned int *umask)
 {
 	int i, j, added;
 	for(i=0; msk; msk >>=1, i++) {
@@ -126,7 +126,7 @@ intel_x86_add_defaults(const intel_x86_entry_t *ent, char *umask_str, unsigned i
 }
 
 int
-intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *reg)
+pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *reg)
 {
 	pfmlib_attr_t *a;
 	const intel_x86_entry_t *pe;
@@ -255,7 +255,7 @@ intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *re
 	 */
 	if (ugrpmsk != grpmsk) {
 		ugrpmsk ^= grpmsk;
-		ret = intel_x86_add_defaults(pe+e->event, umask_str, ugrpmsk, &umask);
+		ret = pfm_intel_x86_add_defaults(pe+e->event, umask_str, ugrpmsk, &umask);
 		if (ret != PFM_SUCCESS)
 			return ret;
 	}
@@ -332,7 +332,7 @@ intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *re
 	evt_strcat(e->fstr, ":%s=%lu", modx(INTEL_X86_ATTR_I, name), reg->sel_inv);
 	evt_strcat(e->fstr, ":%s=%lu", modx(INTEL_X86_ATTR_C, name), reg->sel_cnt_mask);
 
-	if (intel_x86_arch_version > 2)
+	if (pfm_intel_x86_arch_version > 2)
 		evt_strcat(e->fstr, ":%s=%lu", modx(INTEL_X86_ATTR_T, name), reg->sel_anythr);
 
 	return PFM_SUCCESS;
@@ -355,7 +355,7 @@ pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, 
 
 	reg.val = 0; /* not initialized by encode function */
 
-	ret = intel_x86_encode_gen(this, e, &reg);
+	ret = pfm_intel_x86_encode_gen(this, e, &reg);
 	if (ret != PFM_SUCCESS)
 		return ret;
 
@@ -368,20 +368,7 @@ pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, 
 		if (reg.sel_usr)
 			attrs->plm |= PFM_PLM3;
 	}
-
-	__pfm_vbprintf("[0x%"PRIx64" event_sel=0x%x umask=0x%x os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d] %s\n",
-			reg.val,
-			reg.sel_event_select,
-			reg.sel_unit_mask,
-			reg.sel_os,
-			reg.sel_usr,
-			reg.sel_en,
-			reg.sel_int,
-			reg.sel_inv,
-			reg.sel_edge,
-			reg.sel_cnt_mask,
-			e->fstr);
-
+	pfm_intel_x86_display_reg(reg, e->fstr);
 	return PFM_SUCCESS;
 }
 
@@ -413,8 +400,9 @@ pfm_intel_x86_event_is_valid(void *this, int pidx)
  * The following functions are specific to this PMU and are exposed directly
  * to the user
  */
+#if 0
 int
-pfm_event_supports_pebs(const char *str)
+pfm_intel_x86_event_pebs(const char *str)
 {
 	int i, ret, umask_pebs = 1;
 	pfmlib_event_desc_t e;
@@ -442,18 +430,16 @@ pfm_event_supports_pebs(const char *str)
 	
 	return umask_pebs ? PFM_SUCCESS : PFM_ERR_NOTSUPP;
 }
+#endif
 
 void
-intel_x86_display_reg(void *this, pfm_intel_x86_reg_t reg, int c, int event)
+pfm_intel_x86_display_reg(pfm_intel_x86_reg_t reg, char *fstr)
 {
-	const intel_x86_entry_t *pe = this_pe(this);
-
 	/*
 	 * handle generic counters
 	 */
-	__pfm_vbprintf("[PERFEVTSEL%u=0x%"PRIx64" event_sel=0x%x umask=0x%x os=%d usr=%d "
+	__pfm_vbprintf("[0x%"PRIx64" event_sel=0x%x umask=0x%x os=%d usr=%d "
 		       "en=%d int=%d inv=%d edge=%d cnt_mask=%d",
-			c,
 			reg.val,
 			reg.sel_event_select,
 			reg.sel_unit_mask,
@@ -465,7 +451,7 @@ intel_x86_display_reg(void *this, pfm_intel_x86_reg_t reg, int c, int event)
 			reg.sel_edge,
 			reg.sel_cnt_mask);
 
-	switch(intel_x86_arch_version) {
+	switch(pfm_intel_x86_arch_version) {
 	case 3:
 		/* v3 adds anythread */
 		__pfm_vbprintf(" any=%d", reg.sel_anythr);
@@ -473,7 +459,7 @@ intel_x86_display_reg(void *this, pfm_intel_x86_reg_t reg, int c, int event)
 	default:
 		break;
 	}
-	__pfm_vbprintf("] %s\n", pe[event].name);
+	__pfm_vbprintf("] %s\n", fstr);
 }
 
 int
@@ -599,7 +585,7 @@ pfm_intel_x86_get_event_attr_info(void *this, int idx, int attr_idx, pfm_event_a
 		info->type = PFM_ATTR_UMASK;
 		info->is_dfl = !!(pe[idx].umasks[attr_idx].uflags & INTEL_X86_DFL);
 	} else {
-		m = intel_x86_attr2mod(this, idx, attr_idx);
+		m = pfm_intel_x86_attr2mod(this, idx, attr_idx);
 		info->name = modx(m, name);
 		info->desc = modx(m, desc);
 		info->equiv= NULL;

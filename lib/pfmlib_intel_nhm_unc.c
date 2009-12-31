@@ -63,7 +63,7 @@ pfm_nhm_unc_detect(void *this)
 	int ret;
 	int family, model;
 
-	ret = intel_x86_detect(&family, &model);
+	ret = pfm_intel_x86_detect(&family, &model);
 	if (ret != PFM_SUCCESS)
 
 	if (family != 6)
@@ -208,7 +208,7 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 	 */
 	if (ugrpmsk != grpmsk) {
 		ugrpmsk ^= grpmsk;
-		ret = intel_x86_add_defaults(pe+e->event, umask_str, ugrpmsk, &umask);
+		ret = pfm_intel_x86_add_defaults(pe+e->event, umask_str, ugrpmsk, &umask);
 		if (ret != PFM_SUCCESS)
 			return ret;
 	}

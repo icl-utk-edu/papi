@@ -152,7 +152,7 @@ pfm_intel_x86_arch_detect(void *this)
 {
 	int ret, family;
 
-	ret = intel_x86_detect(&family, NULL);
+	ret = pfm_intel_x86_detect(&family, NULL);
 	if (ret != PFM_SUCCESS)
 		return ret;
 
@@ -171,7 +171,7 @@ pfm_intel_x86_arch_init(void *this)
 	/*
 	 * extract architected PMU information
 	 */
-	if (!pfmlib_forced_pmu) {
+	if (!pfm_cfg.forced_pmu) {
 		cpuid(0xa, &eax.val, &ebx.val, &ecx.val, &edx.val);
 	} else {
 		eax.eax.version = 3;

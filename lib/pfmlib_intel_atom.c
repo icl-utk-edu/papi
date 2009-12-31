@@ -42,7 +42,7 @@ pfm_intel_atom_detect(void *this)
 {
 	int ret, family, model;
 
-	ret = intel_x86_detect(&family, &model);
+	ret = pfm_intel_x86_detect(&family, &model);
 	if (ret != PFM_SUCCESS)
 		return ret;
 	/*

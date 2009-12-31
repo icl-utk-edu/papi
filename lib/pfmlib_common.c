@@ -40,7 +40,7 @@
 
 #include "pfmlib_priv.h"
 
-pfmlib_pmu_t *pfmlib_pmus[]=
+static pfmlib_pmu_t *pfmlib_pmus[]=
 {
 
 #ifdef CONFIG_PFMLIB_ARCH_IA64
@@ -121,33 +121,31 @@ static pfmlib_pmu_t *pfmlib_pmus_map[PFM_PMU_MAX];
 #define pfmlib_for_all_pmu(x) \
 	for((x)= 0 ; (x) < PFM_PMU_MAX; (x)++)
 
-pfmlib_config_t pfm_config;
-char *pfmlib_forced_pmu;
-/*
- * file for all libpfm verbose and debug output
- *
- * By default, it is set to stderr, unless the
- * PFMLIB_DEBUG_STDOUT environment variable is set
- */
-FILE *libpfm_fp;
+pfmlib_config_t pfm_cfg;
 
-/*
- * by convention all internal utility function must be prefixed by __
- */
+void
+__pfm_dbprintf(const char *fmt, ...)
+{
+	va_list ap;
 
-/*
- * debug printf
- */
+	if (pfm_cfg.debug == 0)
+		return;
+
+	va_start(ap, fmt);
+	vfprintf(pfm_cfg.fp, fmt, ap);
+	va_end(ap);
+}
+
 void
 __pfm_vbprintf(const char *fmt, ...)
 {
 	va_list ap;
 
-	if (pfm_config.verbose == 0)
+	if (pfm_cfg.verbose == 0)
 		return;
 
 	va_start(ap, fmt);
-	vfprintf(libpfm_fp, fmt, ap);
+	vfprintf(pfm_cfg.fp, fmt, ap);
 	va_end(ap);
 }
 
@@ -156,7 +154,7 @@ __pfm_vbprintf(const char *fmt, ...)
  * more than max characters incl. null termination
  */
 void
-strconcat(char *str, size_t max, const char *fmt, ...)
+pfmlib_strconcat(char *str, size_t max, const char *fmt, ...)
 {
 	va_list ap;
 	size_t len, todo;
@@ -192,7 +190,7 @@ pmu2pmuidx(pfm_pmu_t pmu)
 /*
  * external opaque idx -> PMU + internal idx
  */
-pfmlib_pmu_t *
+static pfmlib_pmu_t *
 pfmlib_idx2pidx(int idx, int *pidx)
 {
 	pfmlib_pmu_t *pmu;
@@ -216,20 +214,6 @@ pfmlib_idx2pidx(int idx, int *pidx)
 		return NULL;
 
 	return pmu;
-}
-
-/*
- * PMU + internal idx -> external opaque idx
- */
-int
-pfmlib_pidx2idx(pfmlib_pmu_t *pmu, int pidx)
-{
-	int idx;
-
-	idx = pmu->pmu << PFMLIB_PMU_SHIFT;
-	idx |= pidx;
-
-	return  idx;
 }
 
 static int
@@ -256,21 +240,21 @@ pfmlib_init_debug_env(void)
 {
 	char *str;
 
-	libpfm_fp = stderr;
+	pfm_cfg.fp = stderr;
 
 	str = getenv("LIBPFM_VERBOSE");
 	if (str && isdigit(*str))
-		pfm_config.verbose = *str - '0';
+		pfm_cfg.verbose = *str - '0';
 
 	str = getenv("LIBPFM_DEBUG");
 	if (str && isdigit(*str))
-		pfm_config.debug = *str - '0';
+		pfm_cfg.debug = *str - '0';
 
 	str = getenv("LIBPFM_DEBUG_STDOUT");
 	if (str)
-		libpfm_fp = stdout;
+		pfm_cfg.fp = stdout;
 
-	pfmlib_forced_pmu = getenv("LIBPFM_FORCE_PMU");
+	pfm_cfg.forced_pmu = getenv("LIBPFM_FORCE_PMU");
 }
 
 static int
@@ -316,13 +300,13 @@ pfmlib_match_forced_pmu(const char *name)
 	size_t l;
 
 	/* skip any lower level specifier */
-	p = strchr(pfmlib_forced_pmu, ',');
+	p = strchr(pfm_cfg.forced_pmu, ',');
 	if (p)
-		l = p - pfmlib_forced_pmu;
+		l = p - pfm_cfg.forced_pmu;
 	else
-		l = strlen(pfmlib_forced_pmu);
+		l = strlen(pfm_cfg.forced_pmu);
 
-	return !strncasecmp(name, pfmlib_forced_pmu, l);
+	return !strncasecmp(name, pfm_cfg.forced_pmu, l);
 }
 
 static int
@@ -335,10 +319,10 @@ pfmlib_init_pmus(void)
 	for(i=0; i < PFM_PMU_MAX; i++)
 		pfmlib_pmus_map[i] = NULL;
 
-	if (pfmlib_forced_pmu) {
+	if (pfm_cfg.forced_pmu) {
 		char *p;
-		p = strchr(pfmlib_forced_pmu, ',');
-		n = p ? p - pfmlib_forced_pmu : strlen(pfmlib_forced_pmu);
+		p = strchr(pfm_cfg.forced_pmu, ',');
+		n = p ? p - pfm_cfg.forced_pmu : strlen(pfm_cfg.forced_pmu);
 	}
 
 	/*
@@ -354,7 +338,7 @@ pfmlib_init_pmus(void)
 
 		ret = PFM_SUCCESS;
 
-		if (!pfmlib_forced_pmu)
+		if (!pfm_cfg.forced_pmu)
 			ret = p->pmu_detect(p);
 		else if (!pfmlib_match_forced_pmu(p->name))
 			ret = PFM_ERR_NOTSUPP;
@@ -368,7 +352,7 @@ pfmlib_init_pmus(void)
 		if (ret == PFM_SUCCESS)
 			nsuccess++;
 
-		if (pfmlib_forced_pmu) {
+		if (pfm_cfg.forced_pmu) {
 			__pfm_vbprintf("PMU forced to %s %s\n",
 					p->desc,
 					ret == PFM_SUCCESS ? "succeeded" : "failed");
@@ -382,11 +366,10 @@ int
 pfm_initialize(void)
 {
 	int ret;
-
 	/*
 	 * not atomic
 	 */
-	if (pfm_config.initdone)
+	if (pfm_cfg.initdone)
 		return PFM_SUCCESS;
 
 	/*
@@ -401,7 +384,7 @@ pfm_initialize(void)
 
 	ret = pfmlib_init_pmus();
 	if (ret == PFM_SUCCESS)
-		pfm_config.initdone = 1;
+		pfm_cfg.initdone = 1;
 
 	return ret;
 }

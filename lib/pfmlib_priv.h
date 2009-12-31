@@ -119,27 +119,28 @@ typedef struct {
 	int	initdone;
 	int	verbose;
 	int	debug;
+	char	*forced_pmu;
+	FILE 	*fp;	/* verbose and debug file descriptor, default stderr or PFMLIB_DEBUG_STDOUT */
 } pfmlib_config_t;	
 
-#define PFMLIB_INITIALIZED()	(pfm_config.initdone)
+#define PFMLIB_INITIALIZED()	(pfm_cfg.initdone)
 
-extern pfmlib_config_t pfm_config;
+extern pfmlib_config_t pfm_cfg;
 
 extern void __pfm_vbprintf(const char *fmt,...);
-extern void strconcat(char *str, size_t max, const char *fmt, ...);
-#define evt_strcat(str, fmt, a...) strconcat(str, PFMLIB_EVT_MAX_NAME_LEN, fmt, a)
+extern void __pfm_dbprintf(const char *fmt,...);
+extern void pfmlib_strconcat(char *str, size_t max, const char *fmt, ...);
+#define evt_strcat(str, fmt, a...) pfmlib_strconcat(str, PFMLIB_EVT_MAX_NAME_LEN, fmt, a)
 
 
 extern int pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d);
 extern int pfmlib_getcpuinfo_attr(const char *attr, char *ret_buf, size_t maxlen);
 extern int pfmlib_get_event_encoding(pfmlib_event_desc_t *e, uint64_t **codes, int *count, pfmlib_perf_attr_t *attrs);
-extern int pfmlib_pidx2idx(pfmlib_pmu_t *pmu, int pidx);
 
 #ifdef CONFIG_PFMLIB_DEBUG
 #define DPRINT(fmt, a...) \
 	do { \
-		if (pfm_config.debug) { \
-			fprintf(libpfm_fp, "%s (%s.%d): " fmt, __FILE__, __func__, __LINE__, ## a); } \
+		__pfm_dbprintf("%s (%s.%d): " fmt, __FILE__, __func__, __LINE__, ## a); \
 	} while (0)
 #else
 #define DPRINT(fmt, a...)
@@ -169,8 +170,6 @@ extern pfmlib_pmu_t sparc_support;
 extern pfmlib_pmu_t cell_support;
 extern pfmlib_pmu_t perf_event_support;
 
-extern FILE *libpfm_fp;
-extern pfmlib_pmu_t *pfmlib_pmus[];
 extern char *pfmlib_forced_pmu;
 
 #define this_pe(t)	(((pfmlib_pmu_t *)t)->pe)
@@ -204,6 +203,20 @@ pfmlib_fnb(unsigned long value, size_t nbits, int p)
 			return i;
 	}
 	return i;
+}
+
+/*
+ * PMU + internal idx -> external opaque idx
+ */
+static inline int
+pfmlib_pidx2idx(pfmlib_pmu_t *pmu, int pidx)
+{
+	int idx;
+
+	idx = pmu->pmu << PFMLIB_PMU_SHIFT;
+	idx |= pidx;
+
+	return  idx;
 }
 
 #define pfmlib_for_each_bit(x, m) \

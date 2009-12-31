@@ -40,7 +40,7 @@ pfm_nhm_detect(void *this)
 	int family, model;
 	int ret;
 
-	ret = intel_x86_detect(&family, &model);
+	ret = pfm_intel_x86_detect(&family, &model);
 	if (ret != PFM_SUCCESS)
 		return ret;
 
