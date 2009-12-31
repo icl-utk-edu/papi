@@ -40,6 +40,13 @@ pfm_coreduo_detect(void *this)
 	return family == 6 && model == 14 ? PFM_SUCCESS : PFM_ERR_NOTSUPP;
 }
 
+static int
+pfm_coreduo_init(void *this)
+{
+	pfm_intel_x86_cfg.arch_version = 1;
+	return PFM_SUCCESS;
+}
+
 pfmlib_pmu_t intel_coreduo_support={
 	.desc			= "Intel Core Duo/Core Solo",
 	.name			= "coreduo",
@@ -48,6 +55,7 @@ pfmlib_pmu_t intel_coreduo_support={
 	.pe			= coreduo_pe,
 
 	.pmu_detect		= pfm_coreduo_detect,
+	.pmu_init		= pfm_coreduo_init,
 
 	.get_event_encoding	= pfm_intel_x86_get_encoding,
 	.get_event_first	= pfm_intel_x86_get_event_first,

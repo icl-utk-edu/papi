@@ -43,7 +43,7 @@ static const pfmlib_attr_desc_t intel_x86_mods[]={
 };
 #define modx(a, z) (intel_x86_mods[(a)].z)
 
-static int pfm_intel_x86_arch_version;
+pfm_intel_x86_config_t pfm_intel_x86_cfg;
 
 static inline int
 pfm_intel_x86_attr2mod(void *this, int pidx, int attr_idx)
@@ -332,7 +332,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 	evt_strcat(e->fstr, ":%s=%lu", modx(INTEL_X86_ATTR_I, name), reg->sel_inv);
 	evt_strcat(e->fstr, ":%s=%lu", modx(INTEL_X86_ATTR_C, name), reg->sel_cnt_mask);
 
-	if (pfm_intel_x86_arch_version > 2)
+	if (pfm_intel_x86_cfg.arch_version > 2)
 		evt_strcat(e->fstr, ":%s=%lu", modx(INTEL_X86_ATTR_T, name), reg->sel_anythr);
 
 	return PFM_SUCCESS;
@@ -451,7 +451,7 @@ pfm_intel_x86_display_reg(pfm_intel_x86_reg_t reg, char *fstr)
 			reg.sel_edge,
 			reg.sel_cnt_mask);
 
-	switch(pfm_intel_x86_arch_version) {
+	switch(pfm_intel_x86_cfg.arch_version) {
 	case 3:
 		/* v3 adds anythread */
 		__pfm_vbprintf(" any=%d", reg.sel_anythr);

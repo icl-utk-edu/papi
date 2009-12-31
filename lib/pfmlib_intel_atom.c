@@ -51,6 +51,13 @@ pfm_intel_atom_detect(void *this)
 	return family == 6 && model == 28 ? PFM_SUCCESS : PFM_ERR_NOTSUPP;
 }
 
+static int
+pfm_intel_atom_init(void *this)
+{
+	pfm_intel_x86_cfg.arch_version = 3;
+	return PFM_SUCCESS;
+}
+
 pfmlib_pmu_t intel_atom_support={
 	.desc			= "Intel Atom",
 	.name			= "atom",
@@ -60,6 +67,7 @@ pfmlib_pmu_t intel_atom_support={
 	.pe			= intel_atom_pe,
 
 	.pmu_detect		= pfm_intel_atom_detect,
+	.pmu_init		= pfm_intel_atom_init,
 
 	.get_event_encoding	= pfm_intel_x86_get_encoding,
 	.get_event_first	= pfm_intel_x86_get_event_first,

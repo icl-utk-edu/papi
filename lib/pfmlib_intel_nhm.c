@@ -58,6 +58,13 @@ pfm_nhm_detect(void *this)
 	return PFM_SUCCESS;
 }
 
+static int
+pfm_nhm_init(void *this)
+{
+	pfm_intel_x86_cfg.arch_version = 3;
+	return PFM_SUCCESS;
+}
+
 /*
  * the following function implement the model
  * specific API directly available to user
@@ -119,6 +126,7 @@ pfmlib_pmu_t intel_nhm_support={
 	.max_encoding		= 2, /* because of OFFCORE_RESPONSE */
 	.pe			= intel_nhm_pe,
 	.pmu_detect		= pfm_nhm_detect,
+	.pmu_init		= pfm_nhm_init,
 	.get_event_encoding	= pfm_intel_x86_get_encoding,
 	.get_event_first	= pfm_intel_x86_get_event_first,
 	.get_event_next		= pfm_intel_x86_get_event_next,

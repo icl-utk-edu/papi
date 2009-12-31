@@ -57,6 +57,13 @@ pfm_core_detect(void *this)
 	return PFM_SUCCESS;
 }
 
+static int
+pfm_core_init(void *this)
+{
+	pfm_intel_x86_cfg.arch_version = 2;
+	return PFM_SUCCESS;
+}
+
 pfmlib_pmu_t intel_core_support={
 	.desc			= "Intel Core",
 	.name			= "core",
@@ -66,6 +73,7 @@ pfmlib_pmu_t intel_core_support={
 	.pe			= intel_core_pe,
 
 	.pmu_detect		= pfm_core_detect,
+	.pmu_init		= pfm_core_init,
 	.get_event_encoding	= pfm_intel_x86_get_encoding,
 	.get_event_first	= pfm_intel_x86_get_event_first,
 	.get_event_next		= pfm_intel_x86_get_event_next,

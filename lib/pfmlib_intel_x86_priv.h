@@ -192,6 +192,12 @@ typedef struct {
 	unsigned int reserved:25;
 } intel_x86_pmu_ebx_t;
 
+typedef struct {
+	int arch_version;
+} pfm_intel_x86_config_t;
+
+extern pfm_intel_x86_config_t pfm_intel_x86_cfg;
+
 static inline int
 intel_x86_eflag(void *this, pfmlib_event_desc_t *e, int flag)
 {
