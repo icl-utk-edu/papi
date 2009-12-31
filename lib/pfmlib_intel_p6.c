@@ -32,7 +32,7 @@ pfm_p6_detect_pii(void *this)
 {
 	int ret, family, model;
 
-	ret = intel_x86_detect(&family, &model);
+	ret = pfm_intel_x86_detect(&family, &model);
 	if (ret != PFM_SUCCESS)
 		return ret;
 
@@ -55,7 +55,7 @@ pfm_p6_detect_ppro(void *this)
 {
 	int ret, family, model;
 
-	ret = intel_x86_detect(&family, &model);
+	ret = pfm_intel_x86_detect(&family, &model);
 	if (ret != PFM_SUCCESS)
 		return ret;
 
@@ -77,7 +77,7 @@ pfm_p6_detect_piii(void *this)
 {
 	int ret, family, model;
 
-	ret = intel_x86_detect(&family, &model);
+	ret = pfm_intel_x86_detect(&family, &model);
 	if (ret != PFM_SUCCESS)
 		return ret;
 
@@ -101,7 +101,7 @@ pfm_p6_detect_pm(void *this)
 {
 	int ret, family, model;
 
-	ret = intel_x86_detect(&family, &model);
+	ret = pfm_intel_x86_detect(&family, &model);
 	if (ret != PFM_SUCCESS)
 		return ret;
 
