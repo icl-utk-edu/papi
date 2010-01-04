@@ -9334,7 +9334,9 @@ _ACEOF
 if test "${with_sensors_incdir+set}" = set; then
   withval=$with_sensors_incdir; sensors_incdir=$withval
 else
-  sensors_incdir=""
+  { { $as_echo "$as_me:$LINENO: error: sensors.h could not be found. See --with-sensors_incdir " >&5
+$as_echo "$as_me: error: sensors.h could not be found. See --with-sensors_incdir " >&2;}
+   { (exit 1); exit 1; }; }
 
 fi
 
@@ -9393,8 +9395,8 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 else
-  { { $as_echo "$as_me:$LINENO: error: sensors.h could not be found. See --with-sensors_incdir " >&5
-$as_echo "$as_me: error: sensors.h could not be found. See --with-sensors_incdir " >&2;}
+  { { $as_echo "$as_me:$LINENO: error: sensors.h could not be found. " >&5
+$as_echo "$as_me: error: sensors.h could not be found. " >&2;}
    { (exit 1); exit 1; }; }
 fi
 

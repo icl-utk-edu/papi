@@ -1599,14 +1599,14 @@ case "$lmsensors" in
 	  AC_ARG_WITH(sensors_incdir,
                   [  --with-sensors_incdir=<path>  Specify directory of lm-sensors header files ],
                   [sensors_incdir=$withval],
-                  [sensors_incdir=""]
+                  [AC_MSG_ERROR([sensors.h could not be found. See --with-sensors_incdir ])]
                  )
 				 
       if test "$sensors_incdir" != ""; then
 	     CFLAGS="$CFLAGS -I$sensors_incdir"
          AC_CHECK_HEADER([sensors.h],
                          [AC_DEFINE([HAVE_SENSORS_H], [1], [lm-sensors header] )],
-                         [AC_MSG_ERROR([sensors.h could not be found. See --with-sensors_incdir ])],
+                         [AC_MSG_ERROR([sensors.h could not be found. ])],
                          [#include <sensors.h>])
       fi
 	  
