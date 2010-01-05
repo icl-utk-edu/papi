@@ -82,8 +82,7 @@ int _papi_pe_set_overflow (EventSetInfo_t * ESI, int EventIndex, int threshold);
 	_min1 < _min2 ? _min1 : _min2; })
 
 /* Static locals */
-static int READ_BUFFER_SIZE = (1 + 1 + 1 + 2 * MAX_COUNTERS);
-static int MMAP_BUFF_NULL = 0;
+#define READ_BUFFER_SIZE (1 + 1 + 1 + 2 * MAX_COUNTERS)
 int _perfmon2_pfm_pmu_type = -1;
 
 /* Debug functions */
@@ -2633,7 +2632,6 @@ static uint64_t mmap_read_head(evt_t *pe)
 
   if (pc == NULL) {
     PAPIERROR("perf_event_mmap_page is NULL");
-    MMAP_BUFF_NULL = 1;
     return 0;
   }
 
@@ -2845,7 +2843,7 @@ void _papi_pe_dispatch_timer (int n, hwd_siginfo_t * info, void *uc)
        */
      head = mmap_read_head(pe);
 
-     if (MMAP_BUFF_NULL) {
+     if (head == 0) {
        PAPIERROR("Attempting to access memory which may be inaccessable");
        return;
      }
