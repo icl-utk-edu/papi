@@ -6,8 +6,6 @@ SHLIB   = libpapi.so.3
 TARGETS = serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads shared ear range
 SUBSTR  = linux-ia64
 MEMSUBSTR= linux-ia64
-MEMSUBSTRC = $(MEMSUBSTR)-memory.c
-MEMSUBSTRO = $(MEMSUBSTR)-memory.o
 
 #
 # GNU G77/GCC section

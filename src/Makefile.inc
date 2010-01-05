@@ -2,14 +2,14 @@ PAPI_SRCDIR = $(PWD)
 SOURCES	  = $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c multiplex.c \
     papi_fwrappers.c papi_fwrappers_.c papi_fwrappers__.c PAPI_FWRAPPERS.c \
     papi_data.c threads.c $(MEMSUBSTR)-memory.c $(SUBSTR).c papi_preset.c \
-    papi_vector.c papi_memory.c $(COMPSRCS)
+    papi_vector.c papi_memory.c
 OBJECTS   = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o PAPI_FWRAPPERS.o \
     papi_data.o threads.o $(MEMSUBSTR)-memory.o $(SUBSTR).o papi_preset.o \
-    papi_vector.o papi_memory.o $(COMPOBJS)
+    papi_vector.o papi_memory.o
 HEADERS   = $(MISCHDRS) papi.h papi_internal.h papiStdEventDefs.h $(SUBSTR).h \
     papi_preset.h threads.h papi_protos.h papi_vector.h \
-    papi_memory.h config.h $(COMPHDRS)
+    papi_memory.h config.h
 LIBCFLAGS += -I. $(CFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" 
 FHEADERS  = fpapi.h f77papi.h f90papi.h
 
@@ -193,7 +193,7 @@ clean: native_clean
 	-cd utils;  $(MAKE) clean
 
 clobber distclean: clean native_clobber
-	-rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) $(SPECIAL_REMOVE) Makefile config.h libpapi.so
+	-rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) Makefile config.h libpapi.so
 	-cd utils;  $(MAKE) clobber
 	-rm -f config.log config.status f77papi.h f90papi.h fpapi.h
 

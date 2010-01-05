@@ -640,23 +640,14 @@ ac_includes_default="\
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
 BGP_SYSDIR
-BGLSYS_ROOT
 SHOW_CONF
 TESTS
 TOPTFLAGS
-CPU_TYPE
 SHLIBDEPS
-COMPILER
-PE
-SHRFLAGS
 MISCHDRS
 MPICC
-FLAGS
 ARG64
-cpu_option
-CPU_MODEL
 ARCH_EVENTS
-SPECIAL_REMOVE
 POST_BUILD
 MISCOBJS
 MISCSRCS
@@ -667,10 +658,7 @@ CC_SHR
 CC_R
 TARGETS
 DESCR
-MEMSUBSTRO
-MEMSUBSTRC
 MEMSUBSTR
-MSUBSTR
 SUBSTR
 OPTFLAGS
 SHLIB
@@ -701,13 +689,11 @@ perfctr_libdir
 perfctr_incdir
 perfctr_prefix
 perfctr_root
-PMINIT
 altix
 NOTLS
 STATIC
 papiLIBS
 AR
-PMAPI
 MAKEVER
 DEBUGFLAGS
 arch
@@ -9594,8 +9580,6 @@ LINKLIB="$LINKLIB $LINK_SENSORS_LIB"
 if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || test "$MAKEVER" = "aix-power6" || test "$MAKEVER" = "aix-power6-64bit"); then
    FILENAME=Makefile.inc
    MEMSUBSTR=aix
-   MEMSUBSTRC=aix-memory.c
-   MEMSUBSTRO=aix-memory.o
    LIBS="static shared"
    TARGETS="serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads smp omp"
    if test "${bitmode}" = "64"; then
@@ -9627,7 +9611,6 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
       ARCH_EVENTS=power5_events
       CPU_MODEL=POWER5
       cpu_option=pwr5
-      MSUBSTR=power5
       DESCR="AIX 5.1.0 or greater with POWER5"
    elif test "$MAKEVER" = "aix-power5-64bit"; then
       LIBRARY=libpapi64.a
@@ -9636,7 +9619,6 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
       ARCH_EVENTS=power5_events
       CPU_MODEL=POWER5
       cpu_option=pwr5
-      MSUBSTR=power5
       DESCR="AIX 5.1.0 or greater with POWER5 64 bit build"
       ARG64=-X64
    elif test "$MAKEVER" = "aix-power6"; then
@@ -9646,7 +9628,6 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
       ARCH_EVENTS=power6_events
       CPU_MODEL=POWER6
       cpu_option=pwr6
-      MSUBSTR=power6
       DESCR="AIX 5.1.0 or greater with POWER6"
       CPPFLAGS="-qlanglvl=extended"
    else
@@ -9656,14 +9637,12 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
       ARCH_EVENTS=power6_events
       CPU_MODEL=POWER6
       cpu_option=pwr6
-      MSUBSTR=power6
       DESCR="AIX 5.1.0 or greater with POWER6 64 bit build"
       ARG64=-X64
       CPPFLAGS="-qlanglvl=extended"
    fi
 elif test "$MAKEVER" = "CLE-perfmon2"; then
    FILENAME=Rules.pfm_pe
-   COMPILER=CRAYXT
    F77=gfortran
    CFLAGS='-D__crayxt'
    MISCSRCS="hwinfo_linux.c x86_cache_info.c"
@@ -9674,8 +9653,6 @@ elif test "$MAKEVER" = "linux-acpi"; then
    #SHLIB=libpapi.so
    SUBSTR=linux-acpi
    MEMSUBSTR=linux-acpi
-   MEMSUBSTRC=linux-acpi-memory.c
-   MEMSUBSTRO=linux-acpi-memory.o
    DESCR="Sample substrate: Any hardware platform with GNU compilers"
    LIBS="static shared"
    TARGETS="serial multiplex_and_pthreads acpi_test"
@@ -9703,9 +9680,6 @@ elif test "$MAKEVER" = "bgl"; then
    SHLIB=libpapi.so
    SUBSTR=linux-bgl
    MEMSUBSTR=linux-bgl
-   MEMSUBSTRC=linux-bgl-memory.c
-   MEMSUBSTRO=linux-bgl-memory.o
-   MSUBSTR=linux-bgl
    DESCR="Linux for BlueGene/L"
    LIBS=static
    #TARGETS="serial multiplex_and_pthreads"
@@ -9732,7 +9706,6 @@ elif test "$MAKEVER" = "bgp"; then
    SHLIB=libpapi.so
    SUBSTR=linux-bgp
    MEMSUBSTR=linux-bgp
-   MSUBSTR=linux-bgp
    DESCR="Linux for BlueGene/P"
    LIBS=static
    TARGETS=serial
@@ -9748,8 +9721,6 @@ elif test "$MAKEVER" = "linux-mx"; then
    #SHLIB=libpapi.so
    SUBSTR=linux-mx
    MEMSUBSTR=linux-mx
-   MEMSUBSTRC=linux-mx-memory.c
-   MEMSUBSTRO=linux-mx-memory.o
    DESCR="Sample substrate: Any hardware platform with GNU compilers"
    LIBS="static shared"
    TARGETS="serial mpi"
@@ -9790,7 +9761,6 @@ elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfc
    CPU=ppc64
    CPU_MODEL=POWER5
    ARCH_EVENTS=power5_events
-   CPU_TYPE=ppc64
    # for Debian, comment the BITS macro out
    if test "$MAKEVER" = "linux-perfctr-POWER5-64bit"; then
       BITS=64
@@ -9805,7 +9775,6 @@ elif (test "$MAKEVER" = "linux-perfctr-POWER5+" || test "$MAKEVER" = "linux-perf
    CPU=ppc64
    CPU_MODEL=POWER5p
    ARCH_EVENTS=power5+_events
-   CPU_TYPE=ppc64
    SHRFLAGS=-fPIC
    # for Debian, comment the BITS macro out
    if test "$MAKEVER" = "linux-perfctr-POWER5+-64bit"; then
@@ -9822,7 +9791,6 @@ elif test "$MAKEVER" = "linux-perfctr-PPC32"; then
    CPU=ppc32
    CPU_MODEL=PPC32
    ARCH_EVENTS=ppc32_events
-   CPU_TYPE=ppc32
    BITS=32
    CFLAGS='-D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
    FFLAGS='-D$(CPU_MODEL)'
@@ -9832,7 +9800,6 @@ elif (test "$MAKEVER" = "linux-perfctr-PPC970" || test "$MAKEVER" = "linux-perfc
    CPU=ppc64
    CPU_MODEL=PPC970
    ARCH_EVENTS=ppc970_events
-   CPU_TYPE=ppc64
    # for Debian, comment the BITS macro out
    if test "$MAKEVER" = "linux-perfctr-PPC970-64bit"; then
       BITS=64
@@ -9847,7 +9814,6 @@ elif test "$MAKEVER" = "linux-perfmon2"; then
 elif (test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-itanium3"); then
    FILENAME=Rules.pfm
    VERSION=3.y
-   #COMPILER=INTEL
    if test "$MAKEVER" = "linux-pfm-itanium2"; then
       CPU=2
    else
@@ -9858,10 +9824,7 @@ elif (test "$MAKEVER" = "solaris-ultra" || test "$MAKEVER" = "solaris-ultra-64")
    LIBRARY=libpapi.a
    SHLIB=libpapi.so
    SUBSTR=solaris-ultra
-   MSUBSTR=solaris-ultra
    MEMSUBSTR=solaris
-   MEMSUBSTRC="solaris-memory.c"
-   MEMSUBSTRO="solaris-memory.o"
    DESCR="Solaris 5.8 or greater with UltraSPARC I, II or III"
    LIBS="static shared"
    TARGETS="serial multiplex_and_pthreads shared"
@@ -9899,10 +9862,7 @@ elif (test "$MAKEVER" = "solaris-niagara2" || test "$MAKEVER" = "solaris-niagara
    LIBRARY=libpapi.a
    SHLIB=libpapi.so
    SUBSTR=solaris-niagara2
-   MSUBSTR=solaris-niagara2
    MEMSUBSTR=solaris-niagara2
-   MEMSUBSTRC="solaris-niagara2-memory.c"
-   MEMSUBSTRO="solaris-niagara2-memory.o"
    DESCR="Solaris 10 with libcpc2 and UltraSPARC T2 (Niagara 2)"
    LIBS="static shared"
    TARGETS="serial shared forkexec_tests smp omp overflow_tests profile_tests multiplex multiplex_and_pthreads mpi"
@@ -9945,20 +9905,6 @@ else
    echo "Unable to create generic build for non-GNU compiler"
    exit -1
 fi
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

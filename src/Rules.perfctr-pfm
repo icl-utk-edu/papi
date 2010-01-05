@@ -188,7 +188,6 @@ ifeq ($(VERSION),2.6.x)
 endif
 endif
 POST_BUILD = cp $(PERFCTR_LIB_PATH)/libperfctr.so .;ln -fs libperfctr.so libperfctr.so.$(SO_ABIVER)
-SPECIAL_REMOVE = rm -f libperfctr.so*
 
 ####################################################################
 # This section builds libpfm to get at its support for native events
@@ -253,7 +252,7 @@ papi_pfm_events.o: papi_pfm_events.c $(HEADERS) $(PAPI_EVENTS_TABLE)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_pfm_events.c -o $@
 
 native_clean:
-	-rm -f $(MISCOBJS)
+	-rm -f $(MISCOBJS) libperfctr.so*
 ifneq (,${PERFCTR_ROOT})
 	$(MAKE) -C $(PERFCTR_ROOT) clean
 endif
