@@ -6852,8 +6852,18 @@ else
 fi
 
 
-# PE start
+# Linux perf event start
 if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
+
+major_version=`echo $OSVER | sed 's/\([^.][^.]*\).*/\1/'`
+minor_version=`echo $OSVER | sed 's/[^.][^.]*.\([^.][^.]*\).*/\1/'`
+point_version=`echo $OSVER | sed -e 's/[^.][^.]*.[^.][^.]*.\(.*\)/\1/' -e 's/[^0-9].*//'`
+
+# Define SYNC_READ for all kernel versions older than 2.6.33 as a workaround for kernel bug 14489 (see bugzilla.kernel.org)
+
+if test "$major_version" -le 2 -a "$minor_version" -le 6 -a "$point_version" -le 32; then
+   CFLAGS="$CFLAGS -DSYNC_READ"
+fi
 
 # Look for perf_event.h or perf_counter.h in user specified path else default to /usr/include/linux
 
@@ -6896,7 +6906,6 @@ as_val=`eval 'as_val=${'$as_ac_File'}
 		 $as_echo "$as_val"'`
    if test "x$as_val" = x""yes; then
   PEPATH="$pe_incdir/perf_event.h"
-           CFLAGS="$CFLAGS -DPERF_EVENT"
 fi
 
 
@@ -6967,7 +6976,6 @@ as_val=`eval 'as_val=${'$as_ac_File'}
 		 $as_echo "$as_val"'`
    if test "x$as_val" = x""yes; then
   PEPATH="$pe_incdir/perf_event.h"
-           CFLAGS="$CFLAGS -DPERF_EVENT"
 fi
 
 
@@ -7010,7 +7018,7 @@ fi
 
 fi
 fi
-# PE end
+# Linux perf event end
 
 if test "$perf_events" = "no" -a "$perfctr" = "no" -a "$perfmon" = "0"; then
   { { $as_echo "$as_me:$LINENO: error: No performance monitoring interface available" >&5

@@ -10,14 +10,6 @@
 
 
 /*
- * Define this to work around kernel bug 14489 (see bugzilla.kernel.org).
- * Unfortunately, this causes a slow down of PAPI_read()
- */
-#ifndef PERF_EVENT
-#define SYNC_READ
-#endif
-
-/*
  * The following defines are used for a somewhat experimental optimization
  * of PAPI_read for the perf_events substrate.
  *

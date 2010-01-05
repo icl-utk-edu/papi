@@ -1004,8 +1004,18 @@ AC_ARG_WITH(pfm_libdir,
            [pfm_libdir=""]
             )
 
-# PE start
+# Linux perf event start
 if test "$cross_compiling" = "no" -a "$OS" = "linux"; then 
+
+major_version=`echo $OSVER | sed 's/\([[^.]][[^.]]*\).*/\1/'`
+minor_version=`echo $OSVER | sed 's/[[^.]][[^.]]*.\([[^.]][[^.]]*\).*/\1/'`
+point_version=`echo $OSVER | sed -e 's/[[^.]][[^.]]*.[[^.]][[^.]]*.\(.*\)/\1/' -e 's/[[^0-9]].*//'`
+
+# Define SYNC_READ for all kernel versions older than 2.6.33 as a workaround for kernel bug 14489 (see bugzilla.kernel.org)
+
+if test "$major_version" -le 2 -a "$minor_version" -le 6 -a "$point_version" -le 32; then
+   CFLAGS="$CFLAGS -DSYNC_READ"
+fi 
  
 # Look for perf_event.h or perf_counter.h in user specified path else default to /usr/include/linux
 AC_ARG_WITH(pe_incdir,
@@ -1019,8 +1029,7 @@ AC_ARG_WITH(pe_incdir,
 
 # Linux 2.6.32 and newer check
 AC_CHECK_FILE($pe_incdir/perf_event.h,
-	[PEPATH="$pe_incdir/perf_event.h"           
-           CFLAGS="$CFLAGS -DPERF_EVENT"])
+	[PEPATH="$pe_incdir/perf_event.h"])
 
 # Linux 2.6.31 check
 if test "x$PEPATH" = "x"; then
@@ -1039,8 +1048,7 @@ pe_incdir="/lib/modules/$OSVER/source/include/linux"
 
 # Linux 2.6.32 and newer check
 AC_CHECK_FILE($pe_incdir/perf_event.h,
-	[PEPATH="$pe_incdir/perf_event.h" 
-           CFLAGS="$CFLAGS -DPERF_EVENT"])
+	[PEPATH="$pe_incdir/perf_event.h"])
 
 # Linux 2.6.31 check
 if test "x$PEPATH" = "x"; then
@@ -1057,7 +1065,7 @@ fi
 
 fi
 fi
-# PE end
+# Linux perf event end
 
 if test "$perf_events" = "no" -a "$perfctr" = "no" -a "$perfmon" = "0"; then
   AC_MSG_ERROR([No performance monitoring interface available])
