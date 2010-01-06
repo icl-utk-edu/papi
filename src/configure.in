@@ -95,11 +95,6 @@ AC_ARG_WITH(arch,
 	   [arch=`uname -m`])
 AC_MSG_RESULT($arch)
 
-AC_ARG_WITH(makefile,
-            [  --with-makefile=<suffix>	Specify Makefile.<suffix> to use (soon deprecated)],
-            [MAKEVER=$withval
-	     AC_WARN([This option will be deprecated soon])],
-	    [
 #
 #checking for OS
 #
@@ -127,7 +122,7 @@ if test "$XTOS_VERSION"; then
 	walltimer=cycle
 	virtualtimer=times
 fi
-])
+
 AC_MSG_RESULT($OS)
 if test "$OS" = "bgl"; then
    if test "x$CC" = "x"; then
@@ -935,8 +930,13 @@ case "$perfctr" in
       ;;
 esac
 
+# --with-perfctr-incdir and --with-perfctr-libdir are used when someone has built and installed 
+# in a non-standard location (i.e. headers in /usr/src/include, libs in /usr/lib64).
+# --with-perfctr-prefix is for those who have build and installed in a standard location.
+# --with-perfctr-root is for testers and developers who need to build perfctr in a separate source tree.  
+
 AC_ARG_WITH(perfctr_root,
-            [  --with-perfctr-root=<path>	Specify path to prebuilt perfctr distribution ],
+            [  --with-perfctr-root=<path>	Specify path to source tree (for use by developers only) ],
             [perfctr_root=$withval],
             [perfctr_root=""]
             )
@@ -946,15 +946,16 @@ AC_ARG_WITH(perfctr_prefix,
             [perfctr_prefix=""]
             )
 AC_ARG_WITH(perfctr_incdir,
-           [  --with-perfctr-incdir=<path>	Specify directory of perfctr header files ],
+           [  --with-perfctr-incdir=<path>	Specify directory of perfctr header files in non-standard location ],
            [perfctr_incdir=$withval],
            [perfctr_incdir=""]
             )
 AC_ARG_WITH(perfctr_libdir,
-           [  --with-perfctr-libdir=<path>	Specify directory of perfctr library ],
+           [  --with-perfctr-libdir=<path>	Specify directory of perfctr library in non-standard location ],
            [perfctr_libdir=$withval],
            [perfctr_libdir=""]
             )
+
 AC_ARG_WITH(perfmon,
             [  --with-perfmon=<x.y>		Specify perfmon version number ],
             [perfmon=$withval],
@@ -983,8 +984,13 @@ if test "$perfmon" != 0; then
    perfmon=`echo ${perfmon} | sed 's/\.//'`
 fi
 
+# --with-pfm-incdir and --with-pfm-libdir are used when someone has built and installed 
+# in a non-standard location (i.e. headers in /usr/src/include, libs in /usr/lib64).
+# --with-pfm-prefix is for those who have build and installed in a standard location.
+# --with-pfm-root is for testers and developers who need to build pfm in a separate source tree.  
+
 AC_ARG_WITH(pfm_root,
-           [  --with-pfm-root=<path>	Specify path to prebuilt pfm distribution ],
+           [  --with-pfm-root=<path>	Specify path to source tree (for use by developers only) ],
            [pfm_root=$withval],
            [pfm_root=""]
             )
@@ -994,12 +1000,12 @@ AC_ARG_WITH(pfm_prefix,
            [pfm_prefix=""]
             )
 AC_ARG_WITH(pfm_incdir,
-           [  --with-pfm-incdir=<path>	Specify directory of perfmon header files ],
+           [  --with-pfm-incdir=<path>	Specify directory of pfm header files in non-standard location ],
            [pfm_incdir=$withval],
            [pfm_incdir=""]
             )
 AC_ARG_WITH(pfm_libdir,
-           [  --with-pfm-libdir=<path>	Specify directory of pfm library ],
+           [  --with-pfm-libdir=<path>	Specify directory of pfm library in non-standard location ],
            [pfm_libdir=$withval],
            [pfm_libdir=""]
             )
