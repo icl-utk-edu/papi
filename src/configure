@@ -7009,13 +7009,12 @@ as_val=`eval 'as_val=${'$as_ac_File'}
 fi
 
 fi
+fi
 
 if test "x$PEPATH" = "x"; then
   perf_events="no"
 elif test "$perf_events" != "no" -a "$perfctr" = "no" -a "$perfmon" = "0"; then
   perf_events="yes"
-fi
-
 fi
 fi
 # Linux perf event end
