@@ -1054,13 +1054,12 @@ AC_CHECK_FILE($pcl_incdir/perf_counter.h,
 	[PCLPATH="$pcl_incdir/perf_counter.h"
 	   CFLAGS="$CFLAGS -DKERNEL31"])
 fi
+fi
 
 if test "x$PCLPATH" = "x"; then
   pcl="no"
 elif test "$pcl" != "no" -a "$perfctr" = "no" -a "$perfmon" = "0"; then
   pcl="yes"
-fi
-
 fi
 fi
 # PCL end

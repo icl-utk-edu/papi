@@ -6877,13 +6877,12 @@ as_val=`eval 'as_val=${'$as_ac_File'}
 fi
 
 fi
+fi
 
 if test "x$PCLPATH" = "x"; then
   pcl="no"
 elif test "$pcl" != "no" -a "$perfctr" = "no" -a "$perfmon" = "0"; then
   pcl="yes"
-fi
-
 fi
 fi
 # PCL end
