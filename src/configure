@@ -646,7 +646,10 @@ TOPTFLAGS
 SHLIBDEPS
 MISCHDRS
 MPICC
+FLAGS
 ARG64
+cpu_option
+CPU_MODEL
 ARCH_EVENTS
 POST_BUILD
 MISCOBJS
@@ -694,6 +697,8 @@ NOTLS
 STATIC
 papiLIBS
 AR
+PMINIT
+PMAPI
 MAKEVER
 DEBUGFLAGS
 arch
@@ -9911,6 +9916,11 @@ else
    echo "Unable to create generic build for non-GNU compiler"
    exit -1
 fi
+
+
+
+
+
 
 
 
