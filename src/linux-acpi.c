@@ -6,7 +6,7 @@
 
 int init_presets();
 
-enum native_name {
+enum native_name_acpi {
 	PNE_ACPI_STAT = 0x40000000,
 	PNE_ACPI_TEMP,
 };

@@ -9,7 +9,7 @@ extern int get_cpu_info(PAPI_hw_info_t * hwinfo);
 void mx_init_mdi();
 int mx_init_presets();
 
-enum native_name {
+enum native_name_mx {
    PNE_LANAI_UPTIME = 0x40000000,
    PNE_COUNTERS_UPTIME,
    PNE_BAD_CRC8,

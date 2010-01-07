@@ -10,7 +10,7 @@ extern int get_cpu_info(PAPI_hw_info_t * hwinfo);
 void net_init_mdi();
 int net_init_presets();
 
-enum native_name {
+enum native_name_net {
    PNE_LO_RX_PACKETS = 0x40000000,
    PNE_LO_RX_ERRORS,
    PNE_LO_RX_DROPPED,
