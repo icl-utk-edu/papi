@@ -91,6 +91,7 @@ else
 endif
 
 CFLAGS		+= -D_REENTRANT -D_GNU_SOURCE -Wall $(NOTLS) $(BITFLAGS)
+OPTFLAGS += $(DEBUGFLAGS)
 
 # 
 # Portland Group section
