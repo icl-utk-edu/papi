@@ -9617,6 +9617,7 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
       ARCH_EVENTS=power5_events
       CPU_MODEL=POWER5
       cpu_option=pwr5
+      MSUBSTR=power5
       DESCR="AIX 5.1.0 or greater with POWER5"
    elif test "$MAKEVER" = "aix-power5-64bit"; then
       LIBRARY=libpapi64.a
@@ -9625,6 +9626,7 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
       ARCH_EVENTS=power5_events
       CPU_MODEL=POWER5
       cpu_option=pwr5
+      MSUBSTR=power5
       DESCR="AIX 5.1.0 or greater with POWER5 64 bit build"
       ARG64=-X64
    elif test "$MAKEVER" = "aix-power6"; then
@@ -9634,6 +9636,7 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
       ARCH_EVENTS=power6_events
       CPU_MODEL=POWER6
       cpu_option=pwr6
+      MSUBSTR=power6
       DESCR="AIX 5.1.0 or greater with POWER6"
       CPPFLAGS="-qlanglvl=extended"
    else
@@ -9643,6 +9646,7 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
       ARCH_EVENTS=power6_events
       CPU_MODEL=POWER6
       cpu_option=pwr6
+      MSUBSTR=power6
       DESCR="AIX 5.1.0 or greater with POWER6 64 bit build"
       ARG64=-X64
       CPPFLAGS="-qlanglvl=extended"
