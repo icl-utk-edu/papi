@@ -387,31 +387,6 @@ FFLAGS=""
 OPTFLAGS="-O2" 
 TOPTFLAGS="-O0" 
 
-AC_MSG_CHECKING(for debugging build)
-AC_ARG_WITH(debug,
-            [  --with-debug=<no,yes,memory>	Build a debugging version of the library ],
-            [debug=$withval],
-            [debug=no]
-            )
-case "$debug" in
-   yes)
-    if test "$CC" = "gcc"; then
-      CFLAGS="-g3"
-    else
-      CFLAGS="-g"
-    fi
-      OPTFLAGS="-O0"
-      DEBUGFLAGS="-DDEBUG" ;;
-   memory)
-      DEBUGFLAGS="" ;;
-   no)  
-      DEBUGFLAGS="-DPAPI_NO_MEMORY_MANAGEMENT" ;;
-   *)					     
-      AC_MSG_ERROR([The debug option you specified is not supported])
-      ;;
-esac
-AC_MSG_RESULT($debug)
-
 # Checks for programs.
 AC_PROG_AWK
 #prevent icc warnings about overriding optimization settings set by AC_PROG_CC
@@ -431,7 +406,31 @@ fi
 AC_PROG_CPP
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-AC_PROG_RANLIB
+AC_PROG_RANLIB   
+
+AC_MSG_CHECKING(for debug build)
+AC_ARG_WITH(debug,
+            [  --with-debug=<no,yes,memory>	Build a debug version of the library ],
+            [debug=$withval],
+            [debug=no]
+            )
+case "$debug" in
+   yes)
+    if test "$CC" = "gcc"; then
+      CFLAGS="-g3"
+    fi
+      OPTFLAGS="-O0"
+      DEBUGFLAGS="-DDEBUG" ;;
+   memory)
+      DEBUGFLAGS="" ;;
+   no)  
+      DEBUGFLAGS="-DPAPI_NO_MEMORY_MANAGEMENT" ;;
+   *)					     
+      AC_MSG_ERROR([The debug option you specified is not supported])
+      ;;
+esac
+AC_MSG_RESULT($debug)
+
 # Check for GNU extensions
 AC_GNU_SOURCE
 # Check for standard headers

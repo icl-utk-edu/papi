@@ -1445,7 +1445,7 @@ Optional Packages:
   --with-OSVER=<ver>		Specify operating system version
   --with-CPU=<cpu>		Specify CPU type
   --with-bitmode=<32,64>	Specify bit mode of library
-  --with-debug=<no,yes,memory>	Build a debugging version of the library
+  --with-debug=<no,yes,memory>	Build a debug version of the library
   --with-ffsll			This platform has the ffsll() function
   --with-walltimer=<gettimeofday,mmtimer,clock_realtime_hr,clock_realtime,cycle>     Specify realtime timer
   --with-tls=<keyword>		This platform supports thread local storage with a keyword
@@ -2343,39 +2343,6 @@ CFLAGS="-g"
 FFLAGS=""
 OPTFLAGS="-O2"
 TOPTFLAGS="-O0"
-
-{ $as_echo "$as_me:$LINENO: checking for debugging build" >&5
-$as_echo_n "checking for debugging build... " >&6; }
-
-# Check whether --with-debug was given.
-if test "${with_debug+set}" = set; then
-  withval=$with_debug; debug=$withval
-else
-  debug=no
-
-fi
-
-case "$debug" in
-   yes)
-    if test "$CC" = "gcc"; then
-      CFLAGS="-g3"
-    else
-      CFLAGS="-g"
-    fi
-      OPTFLAGS="-O0"
-      DEBUGFLAGS="-DDEBUG" ;;
-   memory)
-      DEBUGFLAGS="" ;;
-   no)
-      DEBUGFLAGS="-DPAPI_NO_MEMORY_MANAGEMENT" ;;
-   *)
-      { { $as_echo "$as_me:$LINENO: error: The debug option you specified is not supported" >&5
-$as_echo "$as_me: error: The debug option you specified is not supported" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-esac
-{ $as_echo "$as_me:$LINENO: result: $debug" >&5
-$as_echo "$debug" >&6; }
 
 # Checks for programs.
 for ac_prog in gawk mawk nawk awk
@@ -4755,6 +4722,38 @@ esac
 else
   RANLIB="$ac_cv_prog_RANLIB"
 fi
+
+
+{ $as_echo "$as_me:$LINENO: checking for debug build" >&5
+$as_echo_n "checking for debug build... " >&6; }
+
+# Check whether --with-debug was given.
+if test "${with_debug+set}" = set; then
+  withval=$with_debug; debug=$withval
+else
+  debug=no
+
+fi
+
+case "$debug" in
+   yes)
+    if test "$CC" = "gcc"; then
+      CFLAGS="-g3"
+    fi
+      OPTFLAGS="-O0"
+      DEBUGFLAGS="-DDEBUG" ;;
+   memory)
+      DEBUGFLAGS="" ;;
+   no)
+      DEBUGFLAGS="-DPAPI_NO_MEMORY_MANAGEMENT" ;;
+   *)
+      { { $as_echo "$as_me:$LINENO: error: The debug option you specified is not supported" >&5
+$as_echo "$as_me: error: The debug option you specified is not supported" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+esac
+{ $as_echo "$as_me:$LINENO: result: $debug" >&5
+$as_echo "$debug" >&6; }
 
 # Check for GNU extensions
 
