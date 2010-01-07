@@ -121,7 +121,7 @@ endif
 
 native_install:
 ifneq (,${PFM_ROOT})
-	-$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
+	-$(MAKE) -C $(PFM_ROOT) CONFIG_PFMLIB_OLD_PFMV2="$(PFM_OLD_PFMV2)" ARCH="$(ARCH)" DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
 	-install -d $(DESTDIR)$(LIBDIR)
 ifneq (,$(findstring shared,$(LIBS)))

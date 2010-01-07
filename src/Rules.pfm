@@ -123,9 +123,9 @@ native_install:
 ifneq (,${PFM_ROOT})
 ifeq (2.x,$(VERSION))
 # This version has a very old makefile	
-	$(MAKE) -C $(PFM_ROOT) DESTDIR=$(DESTDIR)$(PREFIX) MANDIR=$(DESTDIR)$(MANDIR)/man3 install
+	$(MAKE) -C $(PFM_ROOT) CONFIG_PFMLIB_OLD_PFMV2="$(PFM_OLD_PFMV2)" DESTDIR=$(DESTDIR)$(PREFIX) MANDIR=$(DESTDIR)$(MANDIR)/man3 install
 else
-	$(MAKE) -C $(PFM_ROOT) DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
+	$(MAKE) -C $(PFM_ROOT) CONFIG_PFMLIB_OLD_PFMV2="$(PFM_OLD_PFMV2)" DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
 endif
 endif
 
