@@ -1440,7 +1440,7 @@ case "$OS" in
    
    CLE)
 	   MAKEVER="$OS"-perfmon2
-           PE="$(shell echo $${CRAY_PE_TARGET})"
+           PE="$(echo $${CRAY_PE_TARGET})"
            if test "$PE" != "cray-x2"; then
               MISCSRCS=x86_cache_info.c
            fi
