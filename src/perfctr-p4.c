@@ -270,9 +270,9 @@ static void print_bits(_p4_register_t * b)
 }
 #endif
 
-static void print_alloc(_p4_reg_alloc_t * a)
+static void print_alloc(P4_reg_alloc_t * a)
 {
-   SUBDBG("_p4_reg_alloc:\n");
+   SUBDBG("P4_reg_alloc:\n");
 //    print_bits(&(a->ra_bits));
    SUBDBG("  selector: 0x%x\n", a->ra_selector);
    SUBDBG("  rank: 0x%x\n", a->ra_rank);
