@@ -717,7 +717,7 @@ int enum_add_native_events(int *num_events, int **evtcodes)
 					}
 					else {
 						if (!TESTS_QUIET)
-							fprintf(stdout, "%d is not available.\n", event_code);
+							fprintf(stdout, "0x%x is not available.\n", event_code);
 					}
 				} while (PAPI_enum_event(&k, PAPI_NTV_ENUM_UMASKS) == PAPI_OK && event_found<counters);
 			} else {
@@ -739,7 +739,7 @@ int enum_add_native_events(int *num_events, int **evtcodes)
 			}
 			else {
 				if (!TESTS_QUIET)
-					fprintf(stdout, "%d is not available.\n", event_code);
+					fprintf(stdout, "0x%x is not available.\n", event_code);
 			}
 		}
 	} while (PAPI_enum_event(&i, PAPI_ENUM_EVENTS) == PAPI_OK && event_found<counters);
