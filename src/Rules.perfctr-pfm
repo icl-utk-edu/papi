@@ -14,7 +14,6 @@ ARCH	= $(shell uname -m)
 
 ifeq (p4,$(CPU))
 TARGETS += p4
-CFLAGS 		+= -DPENTIUM4
 else
 ifeq (p3,$(CPU))
 CPU_EVENTS	:= p3_pfm_events
@@ -103,7 +102,6 @@ endif
 FFLAGS        	+= -Dlinux $(FARGS)
 
 ifeq (static,$(PAPI_EVENTS))
-	CFLAGS	+= -DSTATIC_PAPI_EVENTS_TABLE
 	PAPI_EVENTS_TABLE := papi_events_table.h
 endif
 

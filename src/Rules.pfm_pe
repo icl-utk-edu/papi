@@ -29,7 +29,6 @@ endif
 CFLAGS += -D_REENTRANT -D_GNU_SOURCE -Wall $(NOTLS) $(ALTIX) $(DEBUGFLAGS)
 
 ifeq (static,$(PAPI_EVENTS))
-	CFLAGS += -DSTATIC_PAPI_EVENTS_TABLE
 	PAPI_EVENTS_TABLE := papi_events_table.h
 endif
 
