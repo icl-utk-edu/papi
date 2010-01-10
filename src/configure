@@ -1971,7 +1971,7 @@ get_bitmode()
 }
 
 #
-# checking for Makefile argument, if not specified, check CPU, OS, OSVER and bitmode
+# checking for CPU, OS, OSVER and bitmode
 #
 
 SHOW_CONF=showconf
@@ -2023,6 +2023,8 @@ if test "$XTOS_VERSION"; then
 	tls=__thread
 	walltimer=cycle
 	virtualtimer=times
+fi
+
 fi
 
 { $as_echo "$as_me:$LINENO: result: $OS" >&5
@@ -2334,9 +2336,6 @@ esac
 fi
 { $as_echo "$as_me:$LINENO: result: $bitmode" >&5
 $as_echo "$bitmode" >&6; }
-
-fi
-
 
 # Set FFLAGS to null to prevent AC_PROG_F77 from defaulting it to -g -O2
 CFLAGS="-g"
