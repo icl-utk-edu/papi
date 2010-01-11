@@ -65,6 +65,7 @@ main(int argc, const char **argv)
 		errx(1, "cannot initialize library: %s\n", pfm_strerror(ret));
 
 	memset(&pinfo, 0, sizeof(pinfo));
+	memset(&info, 0, sizeof(info));
 
 	printf("Supported PMU models:\n");
 	for(i=0; i < PFM_PMU_MAX; i++) {
