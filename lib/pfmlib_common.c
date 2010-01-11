@@ -793,14 +793,14 @@ int
 pfm_get_event_encoding(const char *str, int dfl_plm, char **fstr, int *idx, uint64_t **codes, int *count)
 {
 	pfmlib_event_desc_t e;
-	uint64_t **orig_codes = NULL;
+	uint64_t *orig_codes = NULL;
 	int orig_count;
 	int ret;
 
 	if (PFMLIB_INITIALIZED() == 0)
 		return PFM_ERR_NOINIT;
 
-	if (!(str || count || codes))
+	if (!(str && count && codes))
 		return PFM_ERR_INVAL;
 
 	/* must provide default priv level */
@@ -815,7 +815,7 @@ pfm_get_event_encoding(const char *str, int dfl_plm, char **fstr, int *idx, uint
 	
 	orig_count = *count;
 	if (codes)
-		*orig_codes = *codes;
+		orig_codes = *codes;
 
 	ret = pfmlib_get_event_encoding(&e, codes, count, NULL);
 	if (ret != PFM_SUCCESS)
@@ -829,10 +829,10 @@ pfm_get_event_encoding(const char *str, int dfl_plm, char **fstr, int *idx, uint
 	if (fstr) {
 		*fstr = strdup(e.fstr);
 		if (!fstr) {
-			if (orig_codes != codes) {
+			if (orig_codes != *codes) {
 				free(codes);
 				*count = orig_count;
-				*codes = *orig_codes;
+				*codes = orig_codes;
 			}
 			return PFM_ERR_NOMEM;
 		}
