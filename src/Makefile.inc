@@ -48,11 +48,15 @@ $(LIBRARY): $(OBJECTS)
 	$(AR) $(ARG64) ruv $(LIBRARY) $(OBJECTS) 
 
 $(SHLIB): $(SOURCES) $(SHLIBOBJS) 
-	rm -f $(SHLIB) libpapi.so
+	if test "$(SHLIB)" != "libpapi.so" ; then \
+	    rm -f $(SHLIB) libpapi.so; \
+	fi
 	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(LDFLAGS) $(SHLIBDEPS) 
 	-$(POST_BUILD)
-	-ln -sf $(SHLIB) libpapi.so  
-
+	if test "$(SHLIB)" != "libpapi.so" ; then \
+		ln -sf $(SHLIB) libpapi.so; \
+	fi
+							
 papi_fwrappers_.c: papi_fwrappers.c $(HEADERS)
 	$(CPP) -DFORTRANUNDERSCORE papi_fwrappers.c > papi_fwrappers_.c 
 
