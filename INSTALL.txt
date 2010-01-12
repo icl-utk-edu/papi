@@ -123,24 +123,34 @@ BG/P environment as shown below:
 
 	% ./configure --with-OS=bgp
 	% make
+	
+NOTE: ./configure might fail if the cross compiler is not in your path.
+	 If that is the case, just add it to your path and everything should work:
 
-The testing targets in the make file will not work in the BG/P environment.
-Since BG/P supports multiple queueing systems, you must manually execute
-programs in the ctests and ftests directories to check for successful
-library creation. You can also manually edit the run_tests.sh script to
-automate testing for your installation.
+	% export PATH=$PATH:/bgsys/drivers/ppcfloor/gnu-linux/bin
+
+By default this will make a subset of tests in the ctests directory and all
+ tests in the ftests directory.
 
 There is an additional C test program provided for the BG/P environment
 that exercises the specific BG/P events and demonstrates how to
-intermix the PAPI and BG/P UPC native calls.  This test program can be
-built after the PAPI library is built as shown below:
+intermix the PAPI and BG/P UPC native calls. This test program is built with
+the normal make sequence and can be found in the ctests/bgp directory.
 
-	% cd ctests/bgp
-	% make bgp_tests
+The testing targets in the make file will not work in the BG/P environment.
+Since BG/P supports multiple queueing systems, you must manually execute
+individual programs in the ctests and ftests directories to check for successful
+library creation. You can also manually edit the run_tests.sh script to
+automate testing for your installation.
 
-WARNING: ./configure might fail if the cross compiler is not in your path.
-	 If that is the case, just add it to your path
-	 and everything should work.
+Most papi utilities work for BGP, including papi_avail, papi_native_avail, and
+papi_command_line. Many ctests pass for BGP, but many others produce errors due
+to the non-traditional architecture of BGP. In particular, PAPI_TOT_CYC always
+seems to produce 0 counts, although papi_get_virt_usec and papi_get_real_usec
+appear to work.
+
+The IBM RedPaper: http://www.redbooks.ibm.com/abstracts/redp4256.html provides
+further discussion about PAPI on BGP along with other performance issues.
 
 CLE - Cray XT4/XT5 Opteron
 *****************************************************************************
