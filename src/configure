@@ -2040,7 +2040,6 @@ if test "$OS" = "bgl"; then
    virtualtimer=perfctr
    bitmode=32
    tls=no
-   host=x86_64
    ffsll=yes
    cross_compiling=yes
 fi
@@ -2056,7 +2055,6 @@ if test "$OS" = "bgp"; then
    virtualtimer=perfctr
    bitmode=32
    tls=no
-   host=x86_64
    ffsll=yes
    cross_compiling=yes
 fi
@@ -9703,7 +9701,6 @@ elif test "$MAKEVER" = "bgp"; then
    SHOW_CONF=show_bgp_conf
    BGP_SYSDIR=/bgsys/drivers/ppcfloor
    BGP_GNU_LINUX_PATH='${BGP_SYSDIR}/gnu-linux'
-   #CC='$(BGP_GNU_LINUX_PATH)/bin/powerpc-bgp-linux-gcc'
    LDFLAGS='-L$(BGP_SYSDIR)/runtime/SPI -lSPI.cna'
    CFLAGS='-D_BGP -g -gdwarf-2 -O2 -Wall -I. -I$(BGP_SYSDIR)/arch/include -DCOMP_VECTOR=_bgp_vectors'
    # Some nice flags to add to CFLAGS when debugging
@@ -9723,7 +9720,7 @@ elif test "$MAKEVER" = "bgp"; then
    MISCSRCS=linux-bgp-preset-events.c
    MISCOBJS='$(MISCSRCS:.c=.o)'
    SUBSTR_HEADERS=linux-bgp-native-events.h
-   tests=bgp_tests
+   tests="$tests bgp_tests"
 elif test "$MAKEVER" = "linux-mx"; then
    FILENAME=Makefile.inc
    LIBRARY=libpapi.a
