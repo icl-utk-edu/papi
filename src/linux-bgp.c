@@ -1066,7 +1066,8 @@ int _bgp_ntv_code_to_name(unsigned int EventCode, char *name, int len) {
     return (PAPI_ENOEVNT);
 
   SUBDBG("_bgp_ntv_code_to_name:  EventCode = %d\n, xEventName = %s\n", EventCode, xEventName);
-  strncpy(name, xNativeEventName, len);
+  strncpy(name,"PNE_",len);
+  strncat(name, xNativeEventName, len - strlen(name));
   return (PAPI_OK);
 }
 
