@@ -1,4 +1,4 @@
-Release Procedure for PAPI  December 04, 2009
+Release Procedure for PAPI  January 13, 2010
 
 Below is a step-wise procedure for making a PAPI release.
 This is a living document and may not be totally current or accurate.
