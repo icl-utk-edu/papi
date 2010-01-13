@@ -469,9 +469,11 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 	for(i=0; i < PMU_NHM_NUM_COUNTERS; i++)
 		assign_pc[i] = -1;
 
+	next_gen = 0; /* first generic counter */
+	last_gen = 3; /* last generic counter */
 
 	/*
-	 * strongest constraint: only uncore_fixed_ctr0
+	 * strongest constraint: only uncore_fixed_ctr0 or PMC0-only
 	 */
 	if (nuf || npmc0) {
 		for(i=0; i < n; i++) {
@@ -480,6 +482,7 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 				if (pfm_regmask_isset(r_pmcs, 0))
 					return PFMLIB_ERR_NOASSIGN;
 				assign_pc[i] = 0;
+				next_gen = 1;
 			}
 			if (ne->pme_flags & PFMLIB_NHM_UNC_FIXED) {
 				if (pfm_regmask_isset(r_pmcs, 20))
@@ -488,9 +491,6 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 			}
 		}
 	}
-	next_gen = 0; /* first generic counter */
-	last_gen = 3; /* last generic counter */
-
 	/*
 	 * 2nd strongest constraint first: works only on PMC0 or PMC1
 	 * On Nehalem, this constraint applies at the event-level
@@ -1154,8 +1154,9 @@ pfm_nhm_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 	 */
 	if (!pfm_regmask_isset(counters, 18)) {
 		pfm_regmask_set(counters, 0);
-		pfm_regmask_set(counters, 1);
-		if (!(ne->pme_flags & PFMLIB_NHM_PMC01)) {
+		if (!(ne->pme_flags & PFMLIB_NHM_PMC0))
+			pfm_regmask_set(counters, 1);
+		if (!(ne->pme_flags & (PFMLIB_NHM_PMC01|PFMLIB_NHM_PMC0))) {
 			pfm_regmask_set(counters, 2);
 			pfm_regmask_set(counters, 3);
 		}
