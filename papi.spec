@@ -1,7 +1,7 @@
 Summary: Performance Application Programming Interface
 Name: papi
 Version: 4.0.0
-Release: 4%{?dist}
+Release: 1%{?dist}
 License: BSD
 Group: Development/System
 URL: http://icl.cs.utk.edu/papi/
@@ -68,55 +68,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/perfmon
 %{_libdir}/*.so
 %doc %{_mandir}/man3/*
+%doc %{_mandir}/man1/*
 
 %changelog
-* Thu Nov 19 2009 William Cohen <wcohen@redhat.com> - 3.7.1-4
-- Exclude s390 and s390x.
-
-* Mon Nov 16 2009 William Cohen <wcohen@redhat.com> - 3.7.1-3
-- Adjust configure.
-
-* Mon Nov 16 2009 William Cohen <wcohen@redhat.com> - 3.7.1-2
-- Bump version.
-
-* Mon Nov 16 2009 William Cohen <wcohen@redhat.com> - 3.7.1-1
-- Import papi-3.7.1.
-
-* Mon Oct 26 2009 William Cohen <wcohen@redhat.com> - 3.7.0-11
-- Add distro to release.
-
-* Fri Oct 09 2009 William Cohen <wcohen@redhat.com> - 3.7.0-10
-- Eliminate the papi-static subpackage.
-
-* Fri Oct 09 2009 Richard W.M. Jones <rjones@redhat.com> - 3.7.0-9
-- Fix defattr definitions.
-
-* Fri Oct 09 2009 Richard W.M. Jones <rjones@redhat.com> - 3.7.0-8
-- Fix URL and Source0.
-- Grammatical corrections to the description sections.
-- Remove RPATHs from shared libraries.
-- RPM shouldn't own directories.
-- Add soname patch so soname is libpapi.so.3.
-- Add exit patch so library doesn't call exit directly.
-
-* Thu Oct 01 2009 William Cohen <wcohen@redhat.com> - 3.7.0-7
-- URL point to place to get download of release.
-- Requires for -devel RPM.
-
-* Tue Sep 29 2009 William Cohen <wcohen@redhat.com> - 3.7.0-6
-- Remove the check section from the spec file.
-
-* Tue Sep 29 2009 William Cohen <wcohen@redhat.com> - 3.7.0-5
-- Compile x86_cache_info.c only on x86 machines.
-
-* Fri Sep 25 2009 William Cohen <wcohen@redhat.com> - 3.7.0-4
-- Add patch for multiplex.c.
-
-* Thu Sep 24 2009 William Cohen <wcohen@redhat.com> - 3.7.0-3
-- Add testing for C and Fortran.
-
-* Thu Sep 24 2009 William Cohen <wcohen@redhat.com> - 3.7.0-2
-- Split out the static libraries into separate sub package.
-
-* Wed Sep 23 2009 William Cohen <wcohen@redhat.com> - 3.7.0-1
-- Initial build.
+* Wed Jan 13 2010 William Cohen <wcohen@redhat.com> - 4.0.0-1
+- Generate papi.spec file for papi-4.0.0.
