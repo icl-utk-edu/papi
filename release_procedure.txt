@@ -1,4 +1,4 @@
-Release Procedure for PAPI  November 07, 2006
+Release Procedure for PAPI  December 04, 2009
 
 Below is a step-wise procedure for making a PAPI release.
 This is a living document and may not be totally current or accurate.
@@ -10,41 +10,60 @@ the lines as they are completed to avoid confusion.
 ================================================================================
 __ 1. Notify developers that a release is imminent and the repository should be
 	considered frozen.
-__ 2. Create a ChangeLog for the current release. 
+
+__ 2. Update any documentation that may have changed. Pay particular attention
+	to INSTALL.txt.
+
+__ 3. Check/Change the version number in: papi.spec, papi.h, configure.in, Makefile.in;
+	and commit to cvs if needed.
+
+__ 4. If configure.in is changed, run autoconf (2.61) 
+	and commit the resulting configure.
+
+__ 5. Create a ChangeLog for the current release. 
 	- One handy way to do this is to use the python script that comes with
 	WinCVS:
 	  Macros->CVS->Build ChangeLog (advanced).
 	Use the -r<branch>: command to log commit messages from the previous 
 	branch point to the present.
-__ 3. Scan the ChangeLog to remove extraneous fluff, like perfctr imports.
 
-__ 4. Modfy RELEASENOTES.txt to summarize the major changes listed in the log.
+__ 6. Scan the ChangeLog to remove extraneous fluff, like perfctr imports.
 
-__ 5. Check/Change the version number in papi.h, and commit to cvs if needed.
+__ 7. Modfy RELEASENOTES.txt to summarize the major changes listed in the log.
 
-__ 6. Add ChangeLogXYZ.txt to cvs and commit both ChangeLogXYZ.txt and 
+__ 8. Add ChangeLogXYZ.txt to cvs and commit both ChangeLogXYZ.txt and 
 	RELEASENOTES.txt.
-__ 7. Branch cvs.
 
-__ 8. Export the branch to a clean working directory:
-	> cvs export -r <branch> <module> ex:
-	> cvs export -r papi-3-2-0 papi
-__ 9. Rename the directory from papi to papi-X.Y.Z
+__ 9. Tag cvs: papi-X-Y-Z-t.
 
-__ 10. tar the directory:
+__ 10. If this is not an incremental release, also branch cvs: papi-X-Y-Z-b.
+
+__ 11. Export the tag to a clean working directory:
+	> cvs export -r <tag> <module> ex:
+	> cvs export -r papi-3-7-2-t papi
+
+__ 12. Delete any unneccessary files or directories
+		particularly .doc and .pdf files in the /doc directory
+
+__ 13. Rename the directory from papi to papi-X.Y.Z
+
+__ 14. tar the directory:
 	> tar -cvf papi-X.Y.Z.tar papi-X.Y.Z
-__ 11. zip the tarball:
+
+__ 15. zip the tarball:
 	gzip papi-X.Y.Z.tar
-__ 12. Copy the tarball to icl:/sw/www/icl/projects/papi/downloads
 
-__ 13. Check permissions on the tarball. 664 is good. 
+__ 16. Copy the tarball to icl:/sw/www/icl/projects/papi/downloads
 
-__ 14. Create a link with supporting text on the PAPI software web page.
+__ 17. Check permissions on the tarball. 664 is good. 
 
-__ 15. Create a News item on the PAPI Web page.
+__ 18. Create a link with supporting text on the PAPI software web page.
 
-__ 16. Email the papi developer and discussion lists with an announcement.
+__ 19. Create a News item on the PAPI Web page.
+
+__ 20. Email the papi developer and discussion lists with an announcement.
+
+__ 21. Post the announcement on the PAPI User Forum.
 
 
 
-	
