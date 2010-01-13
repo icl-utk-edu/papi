@@ -9,7 +9,7 @@ Source0: http://icl.cs.utk.edu/projects/papi/downloads/%{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildRequires: ncurses-devel
 BuildRequires: gcc-gfortran
-BuildRequires: kernel-devel >= 2.6.31
+BuildRequires: kernel-headers >= 2.6.31
 BuildRequires: chrpath
 #Right now libpfm does not know anything about s390 and will fail
 ExcludeArch: s390, s390x
@@ -32,10 +32,8 @@ that uses PAPI.
 
 %build
 cd src
-PERF_HEAD=`ls /usr/src/kernels/*/include/linux/perf_counter.h|sort |tail -n 1` || exit 1
-PERF_HEADER=`dirname $PERF_HEAD`
-%configure --with-pcl=yes --with-pcl-incdir=$PERF_HEADER --disable-static
-make %{?_smp_mflags}
+%configure --disable-static
+make
 
 #%check
 #cd src
