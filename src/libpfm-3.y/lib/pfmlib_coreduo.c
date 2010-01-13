@@ -115,16 +115,11 @@ pfm_coreduo_init(void)
 {
 	pfm_regmask_set(&coreduo_impl_pmcs, 0);
 	pfm_regmask_set(&coreduo_impl_pmcs, 1);
-	pfm_regmask_set(&coreduo_impl_pmcs, 16);
-	pfm_regmask_set(&coreduo_impl_pmcs, 17);
 
 	pfm_regmask_set(&coreduo_impl_pmds, 0);
 	pfm_regmask_set(&coreduo_impl_pmds, 1);
-	pfm_regmask_set(&coreduo_impl_pmds, 16);
-	pfm_regmask_set(&coreduo_impl_pmds, 17);
-	pfm_regmask_set(&coreduo_impl_pmds, 18);
 
-	highest_counter = 18;
+	highest_counter = 1;
 
 	return PFMLIB_SUCCESS;
 }
@@ -499,9 +494,9 @@ pfm_pmu_support_t coreduo_support={
 	.pmu_name		= "Intel Core Duo/Solo",
 	.pmu_type		= PFMLIB_COREDUO_PMU,
 	.pme_count		= PME_COREDUO_EVENT_COUNT,
-	.pmc_count		= 4,
-	.pmd_count		= 5,
-	.num_cnt		= 5,
+	.pmc_count		= 2,
+	.pmd_count		= 2,
+	.num_cnt		= 2,
 	.get_event_code		= pfm_coreduo_get_event_code,
 	.get_event_name		= pfm_coreduo_get_event_name,
 	.get_event_counters	= pfm_coreduo_get_event_counters,

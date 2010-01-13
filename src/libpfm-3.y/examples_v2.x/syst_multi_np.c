@@ -175,12 +175,9 @@ main(int argc, char **argv)
 	if (!fds)
 		err(1, "cannot allocate fds");
 
-	pdo = malloc(ncpus * outp.pfp_pmd_count *sizeof(uint64_t));
+	pdo = calloc(ncpus * outp.pfp_pmd_count, sizeof(uint64_t));
 	if (!pdo)
 		err(1, "cannot allocate pdo");
-
-	memset(pdo, 0, ncpus * outp.pfp_pmd_count * sizeof(uint64_t));
-
 
 	printf("ncpus=%ld pmd=%d\n", ncpus, outp.pfp_pmd_count);
 	/*
@@ -234,9 +231,9 @@ main(int argc, char **argv)
 			}
 		}
 	}
-	for(n=0; n < ncpus; n++) {
+	for(n=0; n < ncpus; n++)
 		close(fds[n]);
-	}
+
 	free(fds);
 	free(pdo);
 	return 0;

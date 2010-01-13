@@ -168,12 +168,7 @@ INSTALL=install
 LN?=ln -sf
 PFMINCDIR=$(TOPDIR)/include
 PFMLIBDIR=$(TOPDIR)/lib
-ifneq ($(CC),c99)
 DBG?=-g -Wall -Werror
-else
-DBG?=-g
-endif
-
 # gcc/mips64 bug
 ifeq ($(CONFIG_PFMLIB_ARCH_SICORTEX),y)
 OPTIM?=-O
