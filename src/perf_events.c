@@ -32,9 +32,22 @@
 #error When USE_FORMAT_GROUP is defined, USE_FORMAT_ID must be defined also
 #endif
 
-
-
-
+/* KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN is a work-around for kernel arch
+ * implementations (e.g. x86) which don't do a static event scheduability
+ * check in sys_perf_counter_open.  Note, this code should be morphed into
+ * configure.in code as soon as we know how to characterize a kernel properly
+ * (e.g. 2.6.33 kernels check scheduability upon open).
+ */
+#if defined(__powerpc__)
+#  define KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN
+#elif defined(__x86_64__) || defined(__i386__)
+/* This might get fixed in the 2.6.33 kernel, if Stephane's patch makes it
+ * in.
+ */
+#  undef KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN
+#else
+#  error Unrecognized arch.  Please add a clause for your arch here.
+#endif
 
 #include "papi.h"
 #include "papi_internal.h"
@@ -1677,9 +1690,54 @@ static int tune_up_fd (context_t * ctx, int evt_idx)
 }
 
 
+#if KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN
+inline static int check_scheduability (context_t * ctx, control_state_t * ctl, int idx)
+{
+  return PAPI_OK;
+}
+#else
+static int check_scheduability(context_t * ctx, control_state_t * ctl, int idx)
+{
+#define MAX_READ 8192
+  uint8_t buffer[MAX_READ];
+
+  /* This will cause the events in the group to be scheduled onto the counters
+   * by the kernel, and so will force an error condition if the events are not
+   * compatible.
+   */
+  ioctl(ctx->evt[ctx->evt[idx].group_leader].event_fd, PERF_EVENT_IOC_ENABLE,
+      NULL);
+  ioctl(ctx->evt[ctx->evt[idx].group_leader].event_fd, PERF_EVENT_IOC_DISABLE,
+      NULL);
+  int cnt = read(ctx->evt[ctx->evt[idx].group_leader].event_fd, buffer,
+      MAX_READ);
+  if (cnt == -1)
+    {
+      INTDBG("read returned an error!  Should never happen.");
+      return PAPI_EBUG;
+    }
+  if (cnt == 0)
+    {
+      return PAPI_ECNFLCT;
+    } else
+    {
+      /* Reset all of the counters (opened so far) back to zero from the
+       * above brief enable/disable call pair.  I wish we didn't have to to do
+       * this, because it hurts performance, but I don't see any alternative.
+       */
+      int j;
+      for (j = 0; j <= idx; j++)
+	{
+	  ioctl(ctx->evt[j].event_fd, PERF_EVENT_IOC_RESET, NULL);
+	}
+    }
+  return PAPI_OK;
+}
+#endif
+
 inline static int open_pe_evts (context_t * ctx, control_state_t * ctl)
 {
-  int i, j = 0, ret = PAPI_OK;
+  int i, ret = PAPI_OK;
 
   /*
    * Partition events into groups that are countable on a set of hardware
@@ -1702,6 +1760,12 @@ inline static int open_pe_evts (context_t * ctx, control_state_t * ctl)
           goto cleanup;
         }
 
+      ret = check_scheduability(ctx, ctl, i);
+      if (ret != PAPI_OK) {
+        i++; /* the last event did open, so we need to bump the counter before doing the cleanup */
+        goto cleanup;
+      }
+
 #ifdef USE_FORMAT_ID
       /* obtain the id of this event assigned by the kernel */
       {
@@ -1713,7 +1777,8 @@ inline static int open_pe_evts (context_t * ctx, control_state_t * ctl)
 	if (cnt == -1) {
           PAPIERROR("read of event %d to obtain id returned %d", cnt);
           fflush (stdout);
-          ret = PAPI_ESBSTR;
+          ret = PAPI_EBUG;
+          i++; /* the last event did open, so we need to bump the counter before doing the cleanup */
           goto cleanup;
 	}
         if (i == ctx->evt[i].group_leader)
@@ -1751,12 +1816,6 @@ cleanup:
    * We encountered an error, close up the fd's we successfully opened, if
    * any.
    */
-  while (j > 0)
-    {
-      j--;
-      close (ctx->evt[j].event_fd);
-    }
-
   while (i > 0)
     {
       i--;

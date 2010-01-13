@@ -587,7 +587,7 @@ size: number of native events to add
 static int add_native_events(EventSetInfo_t * ESI, int *nevt, int size, EventInfo_t * out)
 {
    int nidx, i, j, remap = 0;
-   int retval;
+   int retval, retval2;
    int max_counters;
 
    if(_papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex)
@@ -637,6 +637,13 @@ static int add_native_events(EventSetInfo_t * ESI, int *nevt, int size, EventInf
 		 continue;
 	       }
 	       INTDBG("should not happen!\n");
+	     }
+	     /* re-establish the control state after the previous error */
+	     retval2 = _papi_hwd[ESI->CmpIdx]->update_control_state(ESI->ctl_state, ESI->NativeInfoArray,
+			ESI->NativeCount,ESI->master->context[ESI->CmpIdx]);
+	     if (retval2 != PAPI_OK) {
+	       PAPIERROR("update_control_state failed to re-establish working events!");
+	       return retval2;
 	     }
 	     return (retval);
 	   }
