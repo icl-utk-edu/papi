@@ -48,12 +48,12 @@ $(LIBRARY): $(OBJECTS)
 	$(AR) $(ARG64) ruv $(LIBRARY) $(OBJECTS) 
 
 $(SHLIB): $(SOURCES) $(SHLIBOBJS) 
-	if test "$(SHLIB)" != "libpapi.so" ; then \
+	@if test "$(SHLIB)" != "libpapi.so" ; then \
 	    rm -f $(SHLIB) libpapi.so; \
 	fi
 	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(LDFLAGS) $(SHLIBDEPS) 
 	-$(POST_BUILD)
-	if test "$(SHLIB)" != "libpapi.so" ; then \
+	@if test "$(SHLIB)" != "libpapi.so" ; then \
 		ln -sf $(SHLIB) libpapi.so; \
 	fi
 							
@@ -223,11 +223,11 @@ install-lib: native_install
 	@echo "Libraries (LIBDIR) being installed in: \"$(DESTDIR)$(LIBDIR)\""; 
 	-mkdir -p $(DESTDIR)$(LIBDIR)
 	-chmod go+rx $(DESTDIR)$(LIBDIR)
-	if test -r $(LIBRARY) ; then \
+	@if test -r $(LIBRARY) ; then \
 	   cp $(LIBRARY) $(DESTDIR)$(LIBDIR); \
 	   chmod go+r $(DESTDIR)$(LIBDIR)/$(LIBRARY); \
 	fi
-	if test -r $(SHLIB) ; then \
+	@if test -r $(SHLIB) ; then \
 		cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE); \
 		chmod go+r $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) ; \
 		cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE) libpapi.so.$(PAPIVER); \
