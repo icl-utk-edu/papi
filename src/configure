@@ -9651,7 +9651,7 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
 elif test "$MAKEVER" = "CLE-perfmon2"; then
    FILENAME=Rules.pfm_pe
    F77=gfortran
-   CFLAGS='-D__crayxt'
+   CFLAGS="$CFLAGS -D__crayxt"
    MISCSRCS="hwinfo_linux.c x86_cache_info.c"
    SUBSTR=perfmon
 elif test "$MAKEVER" = "linux-acpi"; then
