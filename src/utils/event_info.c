@@ -5,10 +5,12 @@
 #include "papi.h"
 #include "papi_test.h"
 
-#if PAPI_VERSION_MAJOR(PAPI_VERSION)>=3 && \
-    PAPI_VERSION_MINOR(PAPI_VERSION)>=9
+/* if version >= 3.9.x, it's PAPI-C */
+#if (PAPI_VERSION_MAJOR(PAPI_VERSION)>=4 || \
+	(PAPI_VERSION_MAJOR(PAPI_VERSION)==3 && \
+	 PAPI_VERSION_MINOR(PAPI_VERSION)>=9))
 
-#define MAX_COMPONENTS 8
+#define MAX_COMPONENTS 16
 
 #else
 
