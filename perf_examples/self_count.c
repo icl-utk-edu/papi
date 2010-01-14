@@ -172,10 +172,12 @@ int
 main(int argc, char **argv)
 {
 	perf_event_desc_t *fds;
+	size_t pgsz;
 	uint64_t val;
 	int i, ret, num;
 	int n = 30;
 
+	pgsz = sysconf(_SC_PAGESIZE);
 	/*
 	 * Initialize pfm library (required before we can use it)
 	 */
@@ -197,7 +199,7 @@ main(int argc, char **argv)
 		if (fds[i].fd == -1)
 			err(1, "cannot open event %d", i);
 
-		fds[i].buf = mmap(NULL, getpagesize(), PROT_READ, MAP_SHARED, fds[i].fd, 0);
+		fds[i].buf = mmap(NULL, pgsz, PROT_READ, MAP_SHARED, fds[i].fd, 0);
 		if (fds[i].buf == MAP_FAILED)
 			err(1, "cannot mmap page");
 
@@ -228,7 +230,7 @@ main(int argc, char **argv)
 	ioctl(fds[0].fd, PERF_EVENT_IOC_DISABLE, 0);
 
 	for (i=0; i < num; i++) {
-		munmap(fds[i].buf, getpagesize());
+		munmap(fds[i].buf, pgsz);
 		close(fds[i].fd);
 	}
 	free(fds);

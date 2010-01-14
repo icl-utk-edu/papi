@@ -132,7 +132,7 @@ perf_read_buffer(struct perf_event_mmap_page *hdr, size_t pgmsk, void *buf, size
  	 * data ipoint to start of buffer payload
  	 * first page is buffer header
  	 */
-	data = (char *)(((unsigned long)hdr)+getpagesize());
+	data = (char *)(((unsigned long)hdr)+sysconf(_SC_PAGESIZE));
 
 	/*
  	 * position of head and tail within the buffer payload

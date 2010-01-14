@@ -281,7 +281,7 @@ overflow_start(char *name)
 	if (num_events != 1)
 		errx(1, "cannot monitor event");
 
-	pgsz = getpagesize();
+	pgsz = sysconf(_SC_PAGESIZE);
 	ov = &fd2ov[myid];
 
 	/* do not enable now */

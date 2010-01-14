@@ -116,7 +116,7 @@ main(int argc, char **argv)
 	if (ret != PFM_SUCCESS)
 		errx(1, "Cannot initialize library: %s", pfm_strerror(ret));
 
-	pgsz = getpagesize();
+	pgsz = sysconf(_SC_PAGESIZE);
 
 	/*
 	 * Install the signal handler (SIGIO)

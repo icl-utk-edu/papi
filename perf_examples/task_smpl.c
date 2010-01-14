@@ -305,7 +305,7 @@ mainloop(char **arg)
 	if (pfm_initialize() != PFM_SUCCESS)
 		errx(1, "libpfm initialization failed\n");
 
-	pgsz = getpagesize();
+	pgsz = sysconf(_SC_PAGESIZE);
 	map_size = (options.mmap_pages+1)*pgsz;
 
 	/*
