@@ -1529,9 +1529,54 @@ inline_static pid_t mygettid (void)
 #endif
 }
 
+#ifdef KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN
+inline static int check_scheduability (context_t * ctx, control_state_t * ctl, int idx)
+{
+  return PAPI_OK;
+}
+#else
+static int check_scheduability(context_t * ctx, control_state_t * ctl, int idx)
+{
+#define MAX_READ 8192
+  uint8_t buffer[MAX_READ];
+
+  /* This will cause the events in the group to be scheduled onto the counters
+   * by the kernel, and so will force an error condition if the events are not
+   * compatible.
+   */
+  ioctl(ctx->evt[ctx->evt[idx].group_leader].event_fd, PERF_EVENT_IOC_ENABLE,
+      NULL);
+  ioctl(ctx->evt[ctx->evt[idx].group_leader].event_fd, PERF_EVENT_IOC_DISABLE,
+      NULL);
+  int cnt = read(ctx->evt[ctx->evt[idx].group_leader].event_fd, buffer,
+      MAX_READ);
+  if (cnt == -1)
+    {
+      INTDBG("read returned an error!  Should never happen.");
+      return PAPI_EBUG;
+    }
+  if (cnt == 0)
+    {
+      return PAPI_ECNFLCT;
+    } else
+    {
+      /* Reset all of the counters (opened so far) back to zero from the
+       * above brief enable/disable call pair.  I wish we didn't have to to do
+       * this, because it hurts performance, but I don't see any alternative.
+       */
+      int j;
+      for (j = ctx->evt[idx].group_leader; j <= idx; j++)
+	{
+	  ioctl(ctx->evt[j].event_fd, PERF_EVENT_IOC_RESET, NULL);
+	}
+    }
+  return PAPI_OK;
+}
+#endif
+
 inline static int partition_events (context_t * ctx, control_state_t * ctl)
 {
-  int i;
+  int i, ret;
 
   if (!ctl->multiplexed)
     {
@@ -1588,10 +1633,14 @@ inline static int partition_events (context_t * ctx, control_state_t * ctl)
                 ctl->events[i].read_format |= PERF_FORMAT_GROUP;
 #endif
               } else {
-        	ctl->events[i].disabled = 0;
+                ctl->events[i].disabled = 0;
               }
               ctx->evt[j].event_fd = sys_perf_counter_open (&ctl->events[j], 0, -1, ctx->evt[i].event_fd, 0);
-              if (ctx->evt[j].event_fd == -1)
+              ret = PAPI_OK;
+              if (ctx->evt[j].event_fd > -1)
+                ret = check_scheduability(ctx, ctl, i);
+
+              if ((ctx->evt[j].event_fd == -1) || (ret != PAPI_OK))
                 {
                   int k;
                   /*
@@ -1689,52 +1738,6 @@ static int tune_up_fd (context_t * ctx, int evt_idx)
   return PAPI_OK;
 }
 
-
-#if KERNEL_CHECKS_SCHEDUABILITY_UPON_OPEN
-inline static int check_scheduability (context_t * ctx, control_state_t * ctl, int idx)
-{
-  return PAPI_OK;
-}
-#else
-static int check_scheduability(context_t * ctx, control_state_t * ctl, int idx)
-{
-#define MAX_READ 8192
-  uint8_t buffer[MAX_READ];
-
-  /* This will cause the events in the group to be scheduled onto the counters
-   * by the kernel, and so will force an error condition if the events are not
-   * compatible.
-   */
-  ioctl(ctx->evt[ctx->evt[idx].group_leader].event_fd, PERF_EVENT_IOC_ENABLE,
-      NULL);
-  ioctl(ctx->evt[ctx->evt[idx].group_leader].event_fd, PERF_EVENT_IOC_DISABLE,
-      NULL);
-  int cnt = read(ctx->evt[ctx->evt[idx].group_leader].event_fd, buffer,
-      MAX_READ);
-  if (cnt == -1)
-    {
-      INTDBG("read returned an error!  Should never happen.");
-      return PAPI_EBUG;
-    }
-  if (cnt == 0)
-    {
-      return PAPI_ECNFLCT;
-    } else
-    {
-      /* Reset all of the counters (opened so far) back to zero from the
-       * above brief enable/disable call pair.  I wish we didn't have to to do
-       * this, because it hurts performance, but I don't see any alternative.
-       */
-      int j;
-      for (j = 0; j <= idx; j++)
-	{
-	  ioctl(ctx->evt[j].event_fd, PERF_EVENT_IOC_RESET, NULL);
-	}
-    }
-  return PAPI_OK;
-}
-#endif
-
 inline static int open_pe_evts (context_t * ctx, control_state_t * ctl)
 {
   int i, ret = PAPI_OK;
@@ -1765,7 +1768,6 @@ inline static int open_pe_evts (context_t * ctx, control_state_t * ctl)
         i++; /* the last event did open, so we need to bump the counter before doing the cleanup */
         goto cleanup;
       }
-
 #ifdef USE_FORMAT_ID
       /* obtain the id of this event assigned by the kernel */
       {
@@ -1791,19 +1793,30 @@ inline static int open_pe_evts (context_t * ctx, control_state_t * ctl)
 	ctx->evt[i].event_id = buffer[id_idx];
       }
 #endif
+    }
+
+  /* Now that we've successfully opened all of the events, do whatever
+   * "tune-up" is needed to attach the mmap'd buffers, signal handlers,
+   * and so on.
+   */
+  for (i = 0; i < ctl->num_events; i++)
+    {
       if (ctl->events[i].sample_period)
-        {
-          ret = tune_up_fd(ctx, i);
-          if (ret != PAPI_OK)
-            {
-              goto cleanup;
-            }
-        }
-      else
-        {
-          /* Null is used as a sentinel in pe_close_evts, since it doesn't have access to the ctl array */
-          ctx->evt[i].mmap_buf = NULL;
-        }
+		{
+		  ret = tune_up_fd(ctx, i);
+		  if (ret != PAPI_OK)
+		    {
+		      /* All of the fds are open, so we need to clean up all of them */
+		      i = ctl->num_events;
+		      goto cleanup;
+		    }
+		} else
+		{
+		  /* Null is used as a sentinel in pe_close_evts, since it doesn't
+		   * have access to the ctl array
+		   */
+		  ctx->evt[i].mmap_buf = NULL;
+		}
     }
 
   /* Set num_evts only if completely successful */
