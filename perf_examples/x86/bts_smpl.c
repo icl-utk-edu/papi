@@ -145,7 +145,7 @@ display_sample(perf_event_desc_t *hw, uint32_t sz)
 		if (ret)
 			errx(1, "cannot read addr");
 
-		printf("0x%016"PRIu64" -> 0x%016"PRIx64" ", src, dst);
+		printf("0x%016"PRIx64" -> 0x%016"PRIx64" ", src, dst);
 		sz -= sizeof(dst);
 	}
 
