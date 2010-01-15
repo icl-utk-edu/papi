@@ -189,10 +189,10 @@ int get_cpu_info(PAPI_hw_info_t * hwinfo)
   fclose (f);
   /* The following new members are set using the same methodology used in lscpu.*/
 
-  /* Number of CPUs per node */
-  /* The following line assumes ncpu was initialized to zero! */
-  while(path_exist(_PATH_SYS_SYSTEM "/cpu/cpu%d", hwinfo->ncpu))
-    hwinfo->ncpu++;
+  /* Total number of CPUs */
+  /* The following line assumes totalcpus was initialized to zero! */
+  while(path_exist(_PATH_SYS_SYSTEM "/cpu/cpu%d", hwinfo->totalcpus))
+    hwinfo->totalcpus++;
 
   /* Number of threads per core */
   if (path_exist(_PATH_SYS_CPU0 "/topology/thread_siblings"))
@@ -211,8 +211,8 @@ int get_cpu_info(PAPI_hw_info_t * hwinfo)
   while (path_exist(_PATH_SYS_SYSTEM "/node/node%d", hwinfo->nnodes))
     hwinfo->nnodes++;
 
-  /* Total number of CPUs */
-  hwinfo->totalcpus = hwinfo->nnodes > 0 ? hwinfo->ncpu * hwinfo->nnodes : hwinfo->ncpu;
+  /* Number of CPUs per node */
+  hwinfo->ncpu = hwinfo->nnodes > 1 ? hwinfo->totalcpus / hwinfo->nnodes : hwinfo->totalcpus;
 
   /* cpumap data is not currently part of the _papi_hw_info struct */
   int *nodecpu = (int*)malloc(hwinfo->nnodes * sizeof(int));
