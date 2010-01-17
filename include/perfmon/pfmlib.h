@@ -127,6 +127,13 @@ typedef enum {
 	PFM_ATTR_MAX		/* end-marker */
 } pfm_attr_t;
 
+/* SWIG doesn't deal well with anonymous nested structures */
+#ifdef SWIG
+#define SWIG_NAME(x) x
+#else
+#define SWIG_NAME(x)
+#endif /* SWIG */
+
 /*
  * special data type for libpfm error value used to help
  * with Python support and in particular for SWIG. By using
@@ -145,8 +152,8 @@ typedef struct {
 	int			nevents;/* how many events for this PMU */
 	struct {
 		int		is_present:1;	/* present on host system */
-		int		reserved:31;
-	};
+		int		reserved_bits:31;
+	} SWIG_NAME(flags);
 	uint64_t		reserved[3];
 } pfm_pmu_info_t;
 
@@ -172,14 +179,14 @@ typedef struct {
 	int			size;	/* size for extension, =0 for now */
 	struct {
 		int		is_dfl:1;	/* is default umask */
-		int		reserved:31;
-	};
+		int		reserved_bits:31;
+	} SWIG_NAME(flags);
 	union {
 		uint64_t	dfl_val64;	/* default 64-bit value */
 		const char	*dfl_str;	/* default string value */
 		int		dfl_bool;	/* default boolean value */
 		int		dfl_int;	/* default integer value */
-	};
+	} SWIG_NAME(defaults);
 	uint64_t		reserved[5];
 } pfm_event_attr_info_t;
 
@@ -193,7 +200,7 @@ extern int pfm_get_version(void);
 /*
  * PMU API
  */
-extern pfm_err_t pfm_get_pmu_info(pfm_pmu_t pmu, pfm_pmu_info_t *info);
+extern pfm_err_t pfm_get_pmu_info(pfm_pmu_t pmu, pfm_pmu_info_t *output);
 
 /*
  * event API
@@ -203,11 +210,11 @@ extern int pfm_get_event_first(void);
 extern int pfm_get_event_next(int idx);
 extern int pfm_find_event(const char *str);
 extern pfm_err_t pfm_get_event_encoding(const char *str, int dfl_plm, char **fstr, int *idx, uint64_t **codes, int *count);
-extern pfm_err_t pfm_get_event_info(int idx, pfm_event_info_t *info);
+extern pfm_err_t pfm_get_event_info(int idx, pfm_event_info_t *output);
 /*
  * attribute API
  */
-extern pfm_err_t pfm_get_event_attr_info(int eidx, int aidx, pfm_event_attr_info_t *info);
+extern pfm_err_t pfm_get_event_attr_info(int eidx, int aidx, pfm_event_attr_info_t *output);
 
 /*
  * error codes

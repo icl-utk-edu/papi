@@ -159,6 +159,13 @@ enum perf_event_read_format {
 
 #define PERF_ATTR_SIZE_VER0	64	/* sizeof first published struct */
 
+/* SWIG doesn't deal well with anonymous nested structures */
+#ifdef SWIG
+#define SWIG_NAME(x) x
+#else
+#define SWIG_NAME(x)
+#endif /* SWIG */
+
 /*
  * Hardware event_id to monitor via a performance monitoring event:
  */
@@ -179,7 +186,7 @@ struct perf_event_attr {
 	union {
 		uint64_t	sample_period;
 		uint64_t	sample_freq;
-	};
+	} SWIG_NAME(sample);
 	uint64_t	sample_type;
 	uint64_t	read_format;
 
@@ -203,15 +210,15 @@ struct perf_event_attr {
 	union {
 		uint32_t	wakeup_events;		/* wakeup every n events */
 		uint32_t	wakeup_watermark;	/* bytes before wakeup */
-	};
+	} SWIG_NAME(wakeup);
 
 	union {
 		struct { /* Hardware breakpoint info */
 			uint64_t	bp_addr;
 			uint32_t	bp_type;
 			uint32_t	bp_len;
-		};
-	};
+	        } SWIG_NAME(bps);
+	} SWIG_NAME(bp);
 
 	uint32_t	reserved_2;
 	uint64_t	__reserved_3;
