@@ -2,7 +2,7 @@
 
 DESCR   = "Linux with PFM $(VERSION) kernel support and library"
 LIBRARY = libpapi.a
-SHLIB   = libpapi.so.3
+SHLIB   = libpapi.so.$(PAPIVER)
 TARGETS = serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads shared ear range
 SUBSTR  = linux-ia64
 MEMSUBSTR= linux-ia64
