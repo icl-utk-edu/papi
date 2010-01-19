@@ -1,5 +1,5 @@
 ===============================================================================
-PAPI 3.9.0 TECHNOLOGY PRE-RELEASE NOTES                             05 Apr 2007
+PAPI 4.0.0 RELEASE NOTES                                            19 Jan 2010
 ===============================================================================
 
 This file documents changes in recent PAPI releases in inverse chronological
@@ -9,449 +9,276 @@ For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 
 For specific and detailed information on changes made in this release, grep
-the ChangeLogP390.txt file for keywords of interest or go directly to the PAPI
+the ChangeLogP400.txt file for keywords of interest or go directly to the PAPI
 cvs tree.
 
 
 GENERAL NOTES
 ===============================================================================
-PAPI 3.9.0 marks the first release of PAPI-C or component PAPI.
-This release has been labeled a technology pre-release. It is *not* ready for
-prime-time and only works on a limited number of platforms. It is also not 
-intended for general consumption, but as a means to evaluate a new technology
-thrust for the PAPI library.
+This is the inaugural release of Component PAPI, or PAPI-C. It represents a 
+significant architectural change from PAPI 3.7.x and earlier. As such, your 
+application must be recompiled and relinked to libpapi, the PAPI library for 
+this version to work.
+PAPI-C is backward compatible with earlier versions of PAPI. All new library 
+features are supported through new APIs and all old APIs still work as expected.
+Applications instrumented for PAPI should continue to work as expected with no
+changes.
+The major change in PAPI-C is the support of multiple components, or counting 
+domains, in addition to the traditional hardware counters found in the cpu. The
+goal of this first release of PAPI-C is to provide a stable technology platform
+within which to explore the development and implementation of additional
+components.
+Although a small number of components are provided with this release, the major
+objective has been to guarantee that PAPI-C works at least as well as earlier
+PAPI releases and on the same range of hardware platforms. We think we have 
+achieved that goal.
+Visit the PAPI Reference pages for more information at:
+http://icl.cs.utk.edu/projects/papi/wiki/Main_Page
+And visit the PAPI website for the latest updates:
+http://icl.cs.utk.edu/papi/
 
-If you are currently using anything prior to PAPI 3.5.0, upgrade to PAPI 3.5.0.
-If you are already a happy user of PAPI 3.5.0, there is no need to upgrade to 
-this version.
-If you are a technophile who loves to play with new stuff, consider installing
-this version on a non-critical system.
 
-This release runs on:
----------------------
-Pentium III
-Pentium 4
-Opteron
-Itanium
-If you are not running on one of these systems *do not upgrade*
+CHANGES IN PAPI 4.0.0 SINCE PAPI 3.7.2
+===============================================================================
+Bug Fixes:
+----------
 
-As always, if you identify strange behavior or demonstrable bugs, please
-contact the PAPI team or one of the PAPI development lists.
+Enhancements:
+-------------
+- The perf_events linux kernel interface is supported for POWER and x86 in 
+  linux kernels 2.6.31 and above.
+- PAPI info now includes information on multicore heirarchy. This is reported
+  in the header of many tests.
+
+New Platforms:
+-------------
+- IBM Blue Gene P has been fully integrated into the code base. It still
+  suffers the same quirks and limitations as the earlier pre-release.
+
+Open Issues:
+-------------
+- Components are invoked from the configure line; Requires PAPI source code
+  modifications to add new components.
+
+Experimental:
+-------------
+
+Known Bugs:
+-----------
+- some tests involving overflow and profiling fail with linux perf_events
+- multiple event overflow only works for last event enabled on (at least)
+  Intel Core2 and Itanium architectures.
+- clock speeds on variable speed Intel systems can be misreported, leading to 
+  incorrect calculations of mflops
+- memory leaks may lead to (rare) seg faults on Pentium4 systems
+
+
+===============================================================================
+PAPI 3.7.2 RELEASE NOTES                                            02 Dec 2009
+===============================================================================
+
+This file documents changes in recent PAPI releases in inverse chronological
+order.
+
+For details on installing PAPI on your machine, consult the INSTALL.txt file
+in this directory.
+
+For specific and detailed information on changes made in this release, grep
+the ChangeLogP372.txt file for keywords of interest or go directly to the PAPI
+cvs tree.
+
+
+GENERAL NOTES
+===============================================================================
+This release is an incremental upgrade to PAPI 3.7.1. It fixes a mistake in 
+the 3.7.1 release by updating configure to better detect the proper counter
+interface in linux kernels. Along the way, it also cleans up a few issues 
+found in the 3.7.1 release.
+
+As always, if you identify strange behavior or reproducible bugs, please
+contact the PAPI team or visit the PAPI User Forum.
 
 And visit the PAPI website for the latest updates:
 http://icl.cs.utk.edu/papi/
 
 
-CHANGES IN PAPI 3.9.0 SINCE PAPI 3.5.0
-===============================================================================
-Experimental:
--------------
-This is an experimental release.
-Virtually all of the changes since PAPI 3.5.0 are intended to allow PAPI to run
-multiple concurrent components or substrates to collect performance data from
-multiple sources. See the Change Log (ChangeLog390.txt) for specific details.
-See also /doc/PAPI-C.html for a description of the changes to PAPI-C.
-
-
-CHANGES IN PAPI 3.5.0 SINCE PAPI 3.2.1
+CHANGES IN PAPI 3.7.2 SINCE PAPI 3.7.1
 ===============================================================================
 Bug Fixes:
 ----------
-- too numerous to enumerate...
+- fixed L3 cache size reporting for AMD Family 10h processors
+- fixed std deviation underflow in sdsc2 and sdsc4 tests
+- fixed bug in counter assignment for FreeBSD Atom implementation
 
 Enhancements:
 -------------
-- Massive changes to 'configure' to support a wide range of customization.
-  ./configure is now *required* for all builds
-  See:
-    % ./configure --help 
-  for details.
-- Data Address Range and Instruction Address Range support for Itanium
-  (see documentation for PAPI_set_opt).
-- PAPI_dmem_info has been resurrected to provide dynamic memory information.
-- PAPI_attach and PAPI_detach for monitoring other threads.
-- PAPI_get_substrate_info for detailed information on substrate features.
-- PAPI_list_threads for enumerating all threads known to PAPI.
-- Hypervisor domain support -- see PAPI_set_domain.
-- Imported perfctr-2.6.25 to support Intel Core2Duo and Pentium D.
-- Imported perfctr-2.7.20.2 to support Linux/PPC substrates on current kernels.
+- updated cache tables for Intel Nehalem i7 processors
+- configure provides better autodetection of 2.6.31 or 2.6.32 kernels and
+  perf_counter interface (in most cases)
+- configure provides better detection and autoselection of perfctr or perfmon 
+  drivers for linux
+- configure and sources have been modified to support perf_counter on
+  kernel 2.6.31 and perf_event on kernel 2.6.32
+- a papi.spec file has been added to simplify creation of rpms
+
+===============================================================================
+PAPI 3.7.1 RELEASE NOTES                                            13 Nov 2009
+===============================================================================
+
+This file documents changes in recent PAPI releases in inverse chronological
+order.
+
+For details on installing PAPI on your machine, consult the INSTALL.txt file
+in this directory.
+
+For specific and detailed information on changes made in this release, grep
+the ChangeLogP371.txt file for keywords of interest or go directly to the PAPI
+cvs tree.
+
+
+GENERAL NOTES
+===============================================================================
+This release is an incremental upgrade to PAPI 3.7.0. It cleans up several 
+issues found in the 3.7.0 release and provides better support for the 
+perf_counter interface introduced in Linux kernel 2.6.31.
+
+As always, if you identify strange behavior or reproducible bugs, please
+contact the PAPI team or visit the PAPI User Forum.
+
+And visit the PAPI website for the latest updates:
+http://icl.cs.utk.edu/papi/
+
+NOTE: If you are looking for the man pages and other user documentation, look
+online. We decided we could provide better and more timely support by 
+maintaining just the online documentation. Let us know if you think this is a
+bad decision.
+
+
+CHANGES IN PAPI 3.7.1 SINCE PAPI 3.7.0
+===============================================================================
+Bug Fixes:
+----------
+- fixed long standing subtle multiplexing bug in which TIDs and PIDs would get
+  confused. TIDs would then get lost leading to long term instability.
+- fixed unit mask handling in perf_counters
+- fixed uninitialized string issue in /proc/cpuinfo parsing
+- fixed event reporting errors for various Opteron Family 10h models
+
+Enhancements:
+-------------
+- FreeBSD support for Intel i7
+- cleaned up libpapi.so naming for RedHat rpms
+- cleaned up various other issues for rpms per RedHat
+- autodetection of 2.6.31 perf_counter interface (in most cases)
+- enhanced packaging options in configure to support building either static or 
+  shared libraries independently
 
 New Platforms:
 -------------
-- Intel Core2Duo
-- Intel Pentium D
-- IBM PPC32
-- Windows Server 2003 64-bit / Opteron
-- IBM Blue Gene -- major update 
-- Cray XT3 -- major update; now supports limited event overflows
+- Support for the perf_counters (PCL: Performance Counters for Linux) interface
+  for Linux kernel 2.6.31 and later has been more completely tested on a 
+  broader range of platforms, including Opteron, Core2, i7, and POWER.
+  It successfully performs basic counting operations and handles many multiplex,
+  overflow and profiling situations. It is still not as extensivelytested as the
+  perfmon or perfctr interfaces, but is ready for work. Caveat Emptor.
 
 Major Issues:
 -------------
-- Floating Point Operations on Opteron varied widely depending on code 
-  constructs. This was found to be due to speculative counting in some
-  cases, and counting FP loads in other cases. We modified the Opteron
-  substrate to support buildtime and runtime redefinition of the FP_OPS.
-  event. See the PAPI FAQ for details.
+- see 3.7.0
 
 Experimental:
 -------------
-- Experimental support for Itanium Montecito.
-- Experimental support has been added for perfmon2 (requires a kernel patch;
-  currently only implemented for Montecito).
-- Experimental support for IBM PPC970MP as found in Mare Nostrum.
 
 Known Bugs:
 -----------
-- Itanium -- earprofile now requires perfmon2 to run. The earprofile
-  test will fail on standard perfmon installations.
-- Cray XT3 -- seg faults on several overflow and profile tests.
-- Cray X1 fails software_overflow test.
-- Problems unresolved with OpenMP on Itanium SMP. See:
-  http://icl.cs.utk.edu/projects/papi/bugz/show_bug.cgi?id=66
-  This bug could not be readily duplicated on machines at UTK.
+- see 3.7.0
+
+===============================================================================
+PAPI 3.7.0 RELEASE NOTES                                            08 Sep 2009
+===============================================================================
+
+This file documents changes in recent PAPI releases in inverse chronological
+order.
+
+For details on installing PAPI on your machine, consult the INSTALL.txt file
+in this directory.
+
+For specific and detailed information on changes made in this release, grep
+the ChangeLogP370.txt file for keywords of interest or go directly to the PAPI
+cvs tree.
 
 
-CHANGES IN PAPI 3.2.1 SINCE PAPI 3.2.0
+GENERAL NOTES
+===============================================================================
+This release is a recommended upgrade to PAPI 3.6.x. It addresses a number of 
+open issues and introduces support for several new platforms, including Intel
+Nehalem (Core i7), Atom, POWER7 and Niagara2.
+
+If you are currently using PAPI 3.6.x or earlier, it is recommended that you 
+upgrade to this version.
+
+As always, if you identify strange behavior or reproducible bugs, please
+contact the PAPI team or the PAPI User Forum.
+
+And visit the PAPI website for the latest updates:
+http://icl.cs.utk.edu/papi/
+
+NOTE: If you are looking for the man pages and other user documentation, look
+online. We decided we could provide better and more timely support by 
+maintaining just the online documentation. Let us know if you think this is a
+bad decision.
+
+
+CHANGES IN PAPI 3.7.0 SINCE PAPI 3.6.2
 ===============================================================================
 Bug Fixes:
 ----------
-- Bumped version number per Rick Kufrin
-- rebuilt f*.h files to synchronize with new version number per Maynard Johnson
+- many minor bugs fixed in tests and in specific cpu components
+- fixed support for Intel CoreDuo (not Core2) broken in PAPI 3.6.x
+- fixed library init failure on AIX Power6 when executable names > 32 char long
+- fixed avail.F construct that was crashing some versions of gfortran
 
 Enhancements:
 -------------
-- Imported perfctr-2.7.19 for better support of Linux/PPC substrates
+- A new utility has been added: papi_version
+- Added 4 new PRESET events to better handle SIMD instructions on Intel cpus:
+  PAPI_DP_OPS - counts double precision scalar and vector FP operations
+  PAPI_SP_OPS - counts single precision scalar and vector FP operations
+  PAPI_VEC_DP - counts double precision vector instructions
+  PAPI_VEC_SP - counts single precision vector instructions
+- FreeBSD support upgrade and new support for Atom and Intel Core2
 
-
-CHANGES IN PAPI 3.2.0 SINCE PAPI 3.1.0
-===============================================================================
 New Platforms:
 -------------
-- Introduced support for AIX/POWER5 (i.e. ASCI PURPLE)
-- Enhanced support for Cray XT3 Catamount/Opteron
+- Intel Core i7 (Nehalem) support for 7 core counters; no support for 
+  Uncore counters
+- Intel Atom 
+- AMD Opteron Barcelona, Shanghai, Istanbul event table support
+- POWER7 support for Linux thanks to IBM
+- Sun Niagara2 support thanks to Aachen University, Germany
+- Resurrected support for PAPI on Windows; now supports Intel Core2 and Core i7
 
 Major Issues:
 -------------
-- Further hardening and testing of the vectorized substrate interface. 
-  This is the harbinger of a  componentized PAPI that will allow
-  support for multiple simultaneous substrates.
-  	
-Bug Fixes:
-----------
-- Modified Rules.pfm to fix build problem on Itanium/Altix
-- Made installation of SHLIB conditional, since it isn't always built
-- Fixed compilation problems in papi_memory.c on IRIX, Cray X1
-- src/irix-mips.c :
-		Fix mis-assignment in vector table that caused real time counts to fail;
-		modified Dl_info structure reference per Sameer's suggestion.
-- src/Makefile.catamount-perfctr-opteron :
-		Force NOTLS = -DNO_TLS for Catamount, since threads aren't 
-		supported.
-- src/ctests/byte_profile.c, src/ctests/test_utils.c
-		Code rearrangement to satisfy Cray X1. Definitions must occur 
-		before executable code in functions.
-- src/papi_memory.c , src/papi_memory.h, src/papi_preset.c :
-		Modified papi_valid_free to return true or false depending on if the pointer was freed;
-		Use this value when cleaning up to decide if event info pointers should be set to null.
-		This eliminates problem with corrupted strings in multiplex1 reported by Steve Kaufmann @ Cray
-
-Enhancements:
--------------
-- libpfm 2.1 support added
-- perfctr 2.6.17 support added for Dual Core Pentium D
+- PAPI for Windows does not support 64-bit versions due to compiler issues.
 
 Experimental:
 -------------
-- Hardened the vectorized interface between hardware independent and substrate layers
-- Reworked and hardened papi_memory interface for better malloc and free control
+- Support for the perf_counters (PCL: Performance Counters for Linux) interface
+  is available as a technology pre-release for Linux kernel 2.6.31 and later.
+  This has been tested on IBM POWER and Intel Core2 and successfully performs 
+  basic counting operations. It has not been stress tested. Caveat Emptor.
 
 Known Bugs:
 -----------
-- Solaris-ultra generates a segfault in _papi_hwd_init_control_state only when using
-	the gcc compiler.
+- clock speeds are occasionally not reported correctly for systems with
+  SpeedStep technology.
+- Intel Atom crashes on a small number of standard tests. 
 
-
-CHANGES IN PAPI 3.1.0 SINCE PAPI 3.0.8
 ===============================================================================
-New Platforms:
--------------
-- Introduced substrates for Linux/POWER4/POWER5/PPC970
-- perfctr 2.7.x added to support above substrates
-- Introduced preliminary support for Cray XT3 Catamount/Opteron
-
-Major Issues:
--------------
-- Retstructured interface between hardware independent layer and substrates to
-  isolate the interface. This is the first step in componentizing PAPI to allow
-  support for multiple simultaneous substrates.
-  	
-Bug Fixes:
-----------
-- Modifications to make genpapifdef independent of libpapi.
-  This should make it easier to implement on platforms like RedStorm and BGL
-  where the compute node is different from the compile node.
-- Modified Matlab support for Pentium M SSE flops counting
-- Added java support for mem_info
-- ctests/test_utils.c:
-  Modified add_two_events() to do_the_right_thing (TM).
-  Submitted by Maynard Johnson of IBM.
-- Fixed a bug in AIX 5.2.0.30 pmapi that causes failures in pm_init
-  for complex mpi programs. Thanks to Bernd Kallies.
-- Fixed various fopen and dlopen problems on aix and solaris
-- All strings now use PAPI definitions that match their 
-  declarations in papi.h, no more PATH_MAX
-- linux.c: New version of update_SHLIB_info that now does the 'right' thing on
-  all systems including IA64, PPC/32/64 and x86, x86_64.
-- linux.c: BSS is now deprecated!
-- various fixes to libpfm 3 for Itanium
-
-Enhancements:
--------------
-- perfctr 2.7.x added to support above substrates
-- perfctr 2.6.15 support added
-- Addition of papi memory calls.  This allows papi to track memory
-  and free up all memory in a shutdown call.  All calls should now
-  be papi_free, papi_malloc, papi_realloc and papi_calloc
-  By default papi tracks memory and frees things up.  If:
-  PAPI_DEBUG_MEMORY is defined then in addition it tracks where the
-  memory was allocated from and if there is a memory leak at shutdown
-  prints out the file and line it came from and how many bytes it was.
-  Grep the change log for 'PAPI_DEBUG_MEMORY' for more details.
-- Added two new entry points to the API:
-		- PAPI_set_event_info() is symmetric with PAPI_get_event_info().
-		  It allows a user to add or modify the definition of a preset event for a given platform.
-		  The scope of the modification is only for the duration of that invokation of PAPI.
-		- PAPI_encode_events() reads a csv (comma separated values) file containing
-		  event definition information and loads it into the preset table.
-		  In conjunction with a decode utility, this provides the user (or toolmaker) with
-		  the ability to support custom event definitions or overrides on specific platforms.
-- Two new tests to exercise the new APIs introduced to PAPI.
-		encode.c exercises PAPI_set_event_info
-		encode2.c exercises PAPI_encode_events
-		Both require properly formatted csv files to function.
-		See utils/decode to create such files.
-			* utils/decode.c 1.1:
-- New utility that uses PAPI_get_event_info() to create csv formatted output
-		suitable for use by PAPI_encode_events().
-		Such output can be viewed and edited in a csv-compatible spreadsheet,
-		such as Excel, an can be used as input to the encode and encode2 test programs.
-
-
-Experimental:
--------------
-- Added substrate support for the Linux ACPI interface
-- Added substrate support for the Myricom MX network card interface
-- Added optional support for XML definition of events on PIII only.
-  This feature is off by default and may never make it to a release.
-
-Known Bugs:
------------
-
-
-CHANGES IN PAPI 3.0.8 SINCE PAPI 3.0.7
+PAPI 3.6.2 RELEASE NOTES                                            03 Oct 2008
+NOTE: For releases prior to PAPI 3.7.0, please reference the tarball for an earlier
+release, or use the on-line cvs viewer at: 
+http://icl.cs.utk.edu/viewcvs/viewcvs.cgi/PAPI/papi/
+to see earlier versions of this file.
 ===============================================================================
-
-Major Issues:
--------------	
-* src/Rules.perfctr:
-  - add configure switch --with-tls=<yes|no>. By default, it is '
-    yes' and running the checking code. When it is 'no', -DNO_TLS
-    passed to gcc.
-
-* src/linux-ia64.c, src/linux-ia64.h, src/pfmwrap.h:
-  - Fixes for SGI Propack 3 on Altix...
-    This happens because it's a Perfmon 2 platform + NPTL threads. Got
-    rid of those pesky, pesky pids instead of nice little tids.
-  - Added code to use the MM timer on the Altix. This provides synchronized
-    RTC's across the system.
-
-* src/linux.c:
-  - Fixed a bug that showed up on the Nocona. A string was being used
-    as HUGE but declared as MAX. This bug also later showed up on other
-    linux systems.
-  - When PAPI is run as SUID, often links in /proc are inaccessible.
-    The fix is simply to tolerate inaccessible /proc information since 
-    this doesn't affect library operation at all. In this case, the 
-    exe_name and full_name are NULL strings, and the memory map is empty. 
-    Debug error messages are still raised.
-    The executable name can be empty, as can the memory map.
-
-
-Bug Fixes:
-----------
-* src/extras.c, src/p4_events.c, src/papi.c, src/papi_protos.h:
-  - Changes to address the thread-unsafe behavior of _papi_hwd_code_to_{name,descr}().
-    Rather than change the calling sequence of these routines in every substrate,
-    I changed the way the routines are called from extras.c, wrapping them in PAPI_lock/unlock pairs.
-    Pentium 4 was the only substrate that posed a thread risk. That hole has now been plugged.
-
-* src/extras.c:
-  - Ensure that _papi_hwi_using_signal is always incremented.
-
-* src/multiplex.c:
- - Prevent the PAPI_EINVAL error if MPX_cleanup is called multiple times
-   for a given set of MPX events (which happens in ctests/multiplex1).
-
-* src/papi_internal.c:
-  - Ensure that all native events that we fail to add during a given call 
-    to add_native_events() get cleaned out of the NativeInfoArray. 
-    This change makes sure we examine all NativeInfoArray event entries 
-    to see if they failed and need to be removed.
-
-* src/x1-presets.h:
-  - Deprecated PAPI_TOT_IIS for X1. Previous definition was giving random 
-    results from 0 to very large.
-
-* src/linux-ia64.c:
-  - Fix for not compiling using libpfm 3.0
-  - Fix for software overflowing using PFM 3.0
-
-* src/irix-mips.c:
-  - Fix for software overflow on irix
-
-* src/extras.c, src/linux-ia64.c, src/papi.c:
-  - Fixes for forced overflow, first we had no default for a sigaction so in some
-    cases a sigaction wasn't getting setup, and ia64 didn't have dispatch_timer
-    routine implemented at all. Added better debugging messages.
-
-* src/genpapifdef.c:
-  - Modifications to work around Cray Fortran bug with maximum negative integer values.
-
-* src/papi_fwrappers.c:
-  - Modified fwrappers to support Cray X1 'string length at end' convention.
-
-* src/Rules.pfm:
-  - Fixed build for ALTIX. This was building with PFM in our directory,
-    but there should be always building with the pfm in /usr.
-
-* src/Makefile.solaris-ultra, src/Makefile.solaris-ultra-64bit:
-  - Removed -R argument to shared link, which was putting the wrong path
-    in to the run-time loader.
-  - Removed the -h flag to the shared link, which was (in the 64 bit case)
-    setting the wrong name of the library.
-    Neither is required.
-
-* src/Makefile.linux-perfctr-{athlon, p3}, src/papi_internal.c:
-  - Created a work-around for a situation found on PIII in which
-    DERIVED_SUB events would occasionally generate small negative results.
-    Now, for PIII only, small negatives (>= -3) are trapped and 
-    forced to zero. This bug was causing occasional failures in ctests/memory.c
-
-* src/ctests/overflow.c, src/ctests/overflow2.c:
-  - For cases where software overflow is used on PAPI_TOT_INS, care must be
-    taken to ensure that the sampling rate is faster than the overflow rate.
-    Since for linux the sampling rate is fixed at 10 msec, the overflow threshold
-    is now set to: mythreshold = hw_info->mhz*10000*2 for software overflow 
-    when using TOT_INS.
-
-* src/ftests/native.F:
-  - Added native events for Cray X1.
-
-* src/ftests/ftests_util.F:
-  - Modified ftest_fail to match test_fail.
-    Now skips on PAPI_EPERM so that second.F will skip the same as second.c
-
-* src/ctests/overflow_force_software.c:
-  - Changed the verification to check overflows and removed the printing of
-    the event when hardware overflowing is enabled as reading an event that
-    is on hardware overflow doesn't mean anything.
-  - Changes to check for derived events, and to get rid of the need for strcmp
-    on os names.
-  - Fix to check for compound derived events which CAN be used to overflow
-    on in hardware (Currently only p4 has them).  This allows P4 to use
-    FP_INS instead of TOT_INS
-
-
-Enhancements:
--------------
-* src/utils:
-  - Added a utils directory with an initial collection of useful tools.
-    These tools are repurposed from the ctests directory, but are generally
-    useful enough to warrant their own directory and installation option.
-    Man pages and html pages are available for each utility.
-
-* src/perfctr-2.6.13:
-  - Added Perfctr-2.6.13 to the repository. Please, don't use perfctr-2.4
-    unless perfctr-2.6.x doesn't work for you. There is NO linkage between 
-    perfctr versions and linux kernel versions. Perfctr 2.6.x works just fine
-    with linux 2.4.
-
-*src/libpfm-3.x:
-  - Updated (Itanium) libpfm to 3.1, current as of 2004-12-21.
-
-* src/configure, src/configure.in:
-  - Allowed configure to detect the Altix.
-
-* src/linux-ia64.{c,h}:
-  - Added MMTIMER support on Altix for good global timing.
-
-* src/power4.c:
-  - Add 20 cache and branch events contributed by Brian Wylie.
-    This nearly doubles the number of events available on POWER4.
-
-* src/p3_events.c, src/perfctr-p3.c, src/perfctr-p3.h:
-  - Modifications to native event tables for Pentium II, III, Athlon and Opteron to
-    dynamically generate all combinations of events that support MESI (Intel) or
-    MOESI (AMD) bits. Similar to the way that Pentium 4 supports groups and
-    modifiers, but MUCH simpler.
-
-* src/p3_events.c:
-  - Added / modified a number of events to Opteron per Brian Wylie's suggestions:
-	PAPI_L2_TCH, PAPI_L1_ICH, PAPI_L2_DCW, PAPI_L1_LDM, PAPI_L2_LDM
-  - Added six new undocumented native events to Opteron event table per Phil's request.
-    These measure NUMA HyperTransport memory and IO transfers.
-    Run utils/native_avail on Opteron and look at the last six entries.
-
-* src/p4_events.c:
-  - Implemented PAPI_L1_ICA and PAPI_L1_ICM per suggestions from Brinkley Sprunt.
-
-* src/Makefile.linux-perfctr-{em64t-32bit, opteron-32bit}:
-  - Added 32 bit library support for 64 bit platforms. This has been tested on
-    an Opteron. All tests pass. Configure script works also.
-
-* src/any-null.{c,h}:
-  - This seems to be working again.
-
-* src/papi_internal.h:
-  - If you set PAPI_DEBUG to ALL or THREADS and compile with -DDEBUG,
-    now the internal eventset lookup routine will return NULL if you
-    lookup another threads eventset. This should help debug possible
-    problems on architectures where signals may be delivered to any threads.
-    Under normal operation, this is not turned on for performance reasons.
-
-* src/power3.h, src/power4.h:
-  - Added pm_data_t to hwd_control_state_t. This contains per thread
-    space for the counters!
-
-
-Known Bugs:
------------
-* src/x1.c:
-  - A subtle bug was uncovered in the use of hardware event overflow on the 
-    X1 P-chip. It appears that once overflow is turned on, it cannot be turned
-    off without exiting the application. This affects the 
-    overflow_force_software() test on X1.
-
-* src/linux-ia64.c:
-  - On many Redhat IA64 systems, and this includes SGI's Propack 3 and 4,
-    there is a bug in the pfmon code (the kernel counter subsystem) that
-    causes interrupts to stop being delivered to the user code. This can
-    be seen by repeatedly running the profile_pthreads test case. You will
-    either get an error message from PFM_RESTART or you will see that the
-    PAPI_FP_OPS counter has gone to 0 or a positive value. This does not
-    happen on stock 2.4 kernels that have been properly patched with Bjorn's
-    IA64 update. 2.6 kernels do not have this issue. If you have a kernel
-    that exhibits this problem, please send the name to us.
-
-* src/ctests/profile_pthreads.c:
-  - On Athlon only, this test fails to generate any profile data about 40% 
-    of the time. We haven't yet been able to figure out why.
-
-* src/ctests/kufrin.c
-  - Unexplained failures on some POWER3 machines. Please contact us if you
-    experience this.
-
-* src/ctests/multiplex3_pthreads.c
-  - Unexplained failures on some POWER4 machines. Please contact us if you
-    experience this.
-
