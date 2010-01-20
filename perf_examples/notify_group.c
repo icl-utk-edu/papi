@@ -131,7 +131,6 @@ main(int argc, char **argv)
  	 */
 	num_events = perf_setup_list_events("PERF_COUNT_HW_CPU_CYCLES,"
 				       "PERF_COUNT_HW_CPU_CYCLES,"
-				       "PERF_COUNT_HW_CPU_CYCLES,"
 					"PERF_COUNT_HW_CPU_CYCLES",
 				        &fds);
 	if (num_events < 1)
