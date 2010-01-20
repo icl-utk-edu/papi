@@ -1349,13 +1349,10 @@ int PAPI_set_multiplex(int EventSet)
    if (ESI == NULL)
       papi_return(PAPI_ENOEVST);
 
-   /* if the eventset has no index and no events, return OK
-      otherwise return NOCMP */
+   /* if the eventset has no index return NOCMP */
    cidx = valid_ESI_component(ESI);
-   if (cidx < 0) {
-       if (ESI->NumberOfEvents) papi_return(cidx);
-       papi_return(PAPI_OK);
-   }
+   if (cidx < 0) papi_return(cidx);
+
    if ((ret = mpx_check(EventSet)) != PAPI_OK)
 	papi_return(ret);
 
