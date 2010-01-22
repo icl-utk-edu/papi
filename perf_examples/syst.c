@@ -68,7 +68,6 @@ setup_cpu(int cpu)
 
 		/* request timing information necessary for scaling counts */
 		fds[i].hw.read_format = PERF_FORMAT_SCALE;
-printf("CPU=%d grp=%d\n", cpu, fds[0].fd);
 		fds[i].fd = perf_event_open(&fds[i].hw, -1, cpu, (options.group ? fds[0].fd : -1), 0);
 		if (fds[i].fd == -1)
 			err(1, "cannot attach event to CPU%d %s", cpu, fds[i].name);
