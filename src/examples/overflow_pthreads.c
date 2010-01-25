@@ -17,6 +17,7 @@
    - disable overflow
 */
 #include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include "papi.h"
 
@@ -109,12 +110,9 @@ void *Thread(void *arg)
 
     printf("Thread 0x%x PAPI_TOT_INS : \t%lld\n",(int)PAPI_thread_id(),
 	 values[0]);
-    printf("Thread 0x%x PAPI_TOT_CYC: \t%lld\n",pthread_self(),
-	 (values[1]));
-    printf("Thread 0x%x Real usec   : \t%lld\n",pthread_self(),
-	 elapsed_us);
-    printf("Thread 0x%x Real cycles : \t%lld\n",pthread_self(),
-	 elapsed_cyc);
+    printf("            PAPI_TOT_CYC: \t%lld\n", values[1]);
+    printf("            Real usec   : \t%lld\n", elapsed_us);
+    printf("            Real cycles : \t%lld\n", elapsed_cyc);
 
     pthread_exit(NULL);
 }

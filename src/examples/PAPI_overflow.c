@@ -4,6 +4,7 @@
 ******************************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "papi.h"		/* This needs to be included every time you use PAPI */
 #include <pthread.h>
 
