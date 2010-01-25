@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <string.h>
 
 #include "papi.h" /* This needs to be included every time you use PAPI */
 
@@ -97,14 +98,14 @@ int main(int argc, char **argv)
    sprof[0].pr_base = profbuf;
    sprof[0].pr_size = length / 2;
    sprof[0].pr_off = DO_FLOPS2;
-      fprintf(stderr, "do_flops is at %p %lx\n", &do_flops2, sprof[0].pr_off);
+   fprintf(stderr, "do_flops is at %p %lx\n", &do_flops2, strtoul(sprof[0].pr_off,NULL,0));
 
    sprof[0].pr_scale = 65536;  /* constant needed by PAPI_sprofil */
    /* Second half */
    sprof[1].pr_base = profbuf2;
    sprof[1].pr_size = length / 2;
    sprof[1].pr_off = DO_FLOPS1;
-      fprintf(stderr, "do_flops1 is at %p %lx\n", &do_flops1, sprof[1].pr_off);
+   fprintf(stderr, "do_flops1 is at %p %lx\n", &do_flops1, strtoul(sprof[1].pr_off,NULL,0));
    sprof[1].pr_scale = 65536; /* constant needed by PAPI_sprofil */
 
    /* Overflow bin */
@@ -152,13 +153,13 @@ int main(int argc, char **argv)
    for (i = 0; i < length / 2; i++) 
    {
       if (profbuf[i])
-         printf("0x%lx\t%d\n", DO_FLOPS2 + 2 * i, profbuf[i]);
+	printf("0x%lx\t%d\n", strtoul(DO_FLOPS2,NULL,0) + 2 * i, profbuf[i]);
    }
    printf("---------Buffer 2--------\n");
    for (i = 0; i < length / 2; i++) 
    {
       if (profbuf2[i])
-         printf("0x%lx\t%d\n", DO_FLOPS1 + 2 * i, profbuf2[i]);
+	printf("0x%lx\t%d\n", strtoul(DO_FLOPS1,NULL,0) + 2 * i, profbuf2[i]);
    }
    printf("-------------------------\n");
    printf("%u samples fell outside the regions.\n", *profbuf3);
