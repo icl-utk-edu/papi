@@ -6,13 +6,7 @@
 * Mods:    <your name here>
 *          <your email address>
 */
-#include <stdlib.h>
-#include <stdio.h>
 #include "papi_test.h"
-
-#ifndef NO_DLFCN
-#include <dlfcn.h>
-#endif
 
 int main(int argc, char **argv)
 {
@@ -26,10 +20,6 @@ int main(int argc, char **argv)
 
    if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
-
-   if (!TESTS_QUIET)
-      if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
 
    if ((shinfo = PAPI_get_shared_lib_info()) == NULL) {
       test_skip(__FILE__, __LINE__, "PAPI_get_shared_lib_info", 1);
@@ -52,6 +42,7 @@ int main(int argc, char **argv)
        if ((map->text_start == 0x0) || (map->text_end == 0x0) ||
 	   (map->text_start >= map->text_end))
 	 test_fail(__FILE__, __LINE__, "PAPI_get_shared_lib_info",1);
+/*
        if ((map->data_start == 0x0) || (map->data_end == 0x0) ||
 	   (map->data_start >= map->data_end))
 	 test_fail(__FILE__, __LINE__, "PAPI_get_shared_lib_info",1);
@@ -59,6 +50,7 @@ int main(int argc, char **argv)
 	   ((!map->bss_start) && (map->bss_end)) ||
 	   (map->bss_start > map->bss_end))
 	 test_fail(__FILE__, __LINE__, "PAPI_get_shared_lib_info",1);
+*/
 
        map++;
      }
@@ -67,33 +59,27 @@ int main(int argc, char **argv)
 
 #ifndef NO_DLFCN
    {
-     char *libname = 
-#ifdef _AIX
-       "libm.a";
-#else
-     "libm.so";
-#endif     
-     void *handle = dlopen("libm.so", RTLD_LAZY);
-     double (*cosine)(double);
-     char *error;
+     char *_libname =
+	   "libm.so";
+     void *handle ;
+	 double (*pow)(double,double);
      int oldcount;
+     int my_dlerror = 0;
 
-     printf("\nLoading %s with dlopen().\n",libname);
-
-     handle = dlopen (libname, RTLD_NOW);
+     handle = dlopen (_libname, RTLD_NOW);
      if (!handle) {
-       test_fail(__FILE__, __LINE__, "dlopen", 1);
+	 printf("dlopen: %s\n",dlerror());
+          printf("Did you forget to set the environmental variable LIBPATH (in AIX) or LD_LIBRARY_PATH (in linux) ?\n");
+          test_fail(__FILE__, __LINE__, "dlopen", 1);
      }
      
-     printf("Looking up cos() function with dlsym().\n");
+	 pow = (double(*)(double,double)) dlsym(handle, "pow");
+	 if (pow == NULL) {
+	   printf("dlsym: %s\n", dlerror());
+	   test_fail(__FILE__,__LINE__,"dlsym",1);
+	 }
+	 printf("2^2 = %lf \n",(*pow)(2,2));
 
-     cosine = dlsym(handle, "cos");
-     if ((error = dlerror()) != NULL)  {
-       test_fail(__FILE__, __LINE__, "dlsym", 1);
-     }
-     
-     printf ("cos(2.0) = %f\n\n", (*cosine)(2.0));
- 
    oldcount = shinfo->count;
 
    if ((shinfo = PAPI_get_shared_lib_info()) == NULL) {
@@ -123,6 +109,7 @@ int main(int argc, char **argv)
        if ((map->text_start == 0x0) || (map->text_end == 0x0) ||
 	   (map->text_start >= map->text_end))
 	 test_fail(__FILE__, __LINE__, "PAPI_get_shared_lib_info",1);
+/*
        if ((map->data_start == 0x0) || (map->data_end == 0x0) ||
 	   (map->data_start >= map->data_end))
 	 test_fail(__FILE__, __LINE__, "PAPI_get_shared_lib_info",1);
@@ -130,6 +117,7 @@ int main(int argc, char **argv)
 	   ((!map->bss_start) && (map->bss_end)) ||
 	   (map->bss_start > map->bss_end))
 	 test_fail(__FILE__, __LINE__, "PAPI_get_shared_lib_info",1);
+*/
 
        map++;
      }
