@@ -562,6 +562,11 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
 	char name[PAPI_HUGE_STR_LEN]; /* make sure it's big enough */
 	unsigned int i, j;
 
+#if ((defined PERFCTR_PFM_EVENTS) | (defined SUBSTRATE_USES_LIBPFM))
+	   extern unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code);
+	         retval = _papi_pfm_ntv_name_to_code(in, out);
+#else
+
 	for (j=0,i = 0 | PAPI_NATIVE_MASK;j<papi_num_components; j++,i = 0 | PAPI_NATIVE_MASK) {
 		/* first check each component for name_to_code */
 		if (vector_find_dummy( (void*) _papi_hwd[j]->ntv_name_to_code, NULL) == NULL)
@@ -589,6 +594,7 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
 			if (retval == PAPI_OK) return(retval);
 		}
 	}
+#endif /* PERFCTR_PFM_EVENTS */
 	return (retval);
 }
 
