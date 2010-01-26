@@ -199,7 +199,6 @@ case "$OS" in
            made=GenuineIntel
            family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
            model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
-           # family 15 is always P4; model 1 is vanilla pre-HT, model 2 is vanilla; model 3 is em64t, 4 is Pentium D, 6 is Xeon D
            if test "$family" = "6"; then
              # model 14 is an ancient Core
              if test "$model" = "14"; then
@@ -221,14 +220,10 @@ case "$OS" in
                CPU=atom
                use_x86_cache_info=yes
              fi
+           # family 15 is always P4
            elif test "$family" = "15"; then
-             if (test "$model" = "3" || test "$model" = "4" || test "$model" = "6"); then
-               CPU=em64t
-               use_x86_cache_info=yes
-             elif (test "$model" = "1" || test "$model" = "2"); then
                CPU=p4
                use_x86_cache_info=yes
-             fi
            elif test "$family" = "32"; then
 	       CPU=montecito
 	   elif test "$family" = "31"; then
@@ -243,7 +238,8 @@ case "$OS" in
              elif test "`cat /proc/cpuinfo | grep -i "Pentium III"`" != ""; then
                CPU=p3
                use_x86_cache_info=yes
-	     else CPU=p3
+	     else 
+               CPU=p3
                use_x86_cache_info=yes
              fi
            fi 
@@ -1441,7 +1437,7 @@ case "$OS" in
 		    else
 		    MAKEVER="$OS"-pfm-"$CPU"
 		 fi ;;
-            opteron|core|core2|i7|atom|em64t|p3)
+            opteron|core|core2|i7|atom|p3)
 		if test "$arch" = "x86_64"; then
 			MAKEVER="$OS"-perfctr-p3
 		else
@@ -1500,7 +1496,6 @@ case "$MAKEVER" in
     linux-perfctr-athlon);;
     linux-perfctr-p3);;
     linux-perfctr-p4);;
-    linux-perfctr-em64t);;
     solaris-ultra);;
     solaris-ultra-64bit);;
     solaris-niagara2|solaris-niagara2-32bit);;
