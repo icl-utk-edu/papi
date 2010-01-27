@@ -559,48 +559,53 @@ int _papi_hwi_query_native_event(unsigned int EventCode)
 int _papi_hwi_native_name_to_code(char *in, int *out)
 {
 	int retval = PAPI_ENOEVNT;
-#if 0
 	char name[PAPI_HUGE_STR_LEN]; /* make sure it's big enough */
 	unsigned int i, j;
-#endif
 
-//#if ((defined PERFCTR_PFM_EVENTS) | (defined SUBSTRATE_USES_LIBPFM))
-	   extern unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code);
-	         retval = _papi_pfm_ntv_name_to_code(in, out);
-
-#if 0 // HJ: This part is actually not used any longer. Let's run builtbot for a night to see if this is true :)			 
-//#else
-
-	for (j=0,i = 0 | PAPI_NATIVE_MASK;j<papi_num_components; j++,i = 0 | PAPI_NATIVE_MASK) {
+	
+	for ( j = 0, i = 0 | PAPI_NATIVE_MASK; j<papi_num_components; j++, i = 0 | PAPI_NATIVE_MASK )
+	{
 		/* first check each component for name_to_code */
-		if (vector_find_dummy( (void*) _papi_hwd[j]->ntv_name_to_code, NULL) == NULL)
-		  retval = _papi_hwd[j]->ntv_name_to_code(in, (unsigned *)out);
-		else {
-			_papi_hwd[j]->ntv_enum_events(&i, PAPI_ENUM_FIRST);
-			_papi_hwi_lock(INTERNAL_LOCK);
-			do {
+		if ( vector_find_dummy( ( void* ) _papi_hwd[j]->ntv_name_to_code, NULL ) == NULL )
+		{
+			/* if ntv_name_to_code is set and != NULL */
+			retval = _papi_hwd[j]->ntv_name_to_code( in, ( unsigned * ) out );
+		}
+		else 
+		{
+			_papi_hwd[j]->ntv_enum_events( &i, PAPI_ENUM_FIRST );
+			_papi_hwi_lock( INTERNAL_LOCK );
+			
+			do 
+			{
 				retval = _papi_hwd[j]->ntv_code_to_name(i, name, sizeof(name));
 /*				printf("name =|%s|\ninput=|%s|\n", name, in); */
-				if (retval == PAPI_OK) {
-					if (strcasecmp(name, in) == 0) {
+				if (retval == PAPI_OK) 
+				{
+					if (strcasecmp(name, in) == 0) 
+					{
 						*out = i | PAPI_COMPONENT_MASK(j);;
 						break;
-					} else {
+					} 
+					else
 						retval = PAPI_ENOEVNT;
-					}
-				} else {
+				} 
+				else 
+				{
 					*out = 0;
 					retval = PAPI_ENOEVNT;
 					break;
 				}
-			} while ((_papi_hwd[j]->ntv_enum_events(&i, PAPI_ENUM_EVENTS) == PAPI_OK));
+			} 
+			while ( ( _papi_hwd[j]->ntv_enum_events( &i, PAPI_ENUM_EVENTS ) == PAPI_OK ) );
+			
 			_papi_hwi_unlock(INTERNAL_LOCK);
-			if (retval == PAPI_OK) return(retval);
 		}
+		
+		if ( retval == PAPI_OK ) 
+			return( retval );
 	}
-//#endif /* PERFCTR_PFM_EVENTS */
-#endif
-	return (retval);
+	return ( retval );
 }
 
 

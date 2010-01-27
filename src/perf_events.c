@@ -76,6 +76,7 @@ extern papi_vector_t _papi_pe_vector;
 
 extern int _papi_pfm_setup_presets(char *name, int type);
 extern int _papi_pfm_ntv_enum_events(unsigned int *EventCode, int modifier);
+extern int _papi_pfm_ntv_name_to_code(char *ntv_name, unsigned int *EventCode);
 extern int _papi_pfm_ntv_code_to_name(unsigned int EventCode, char *ntv_name, int len);
 extern int _papi_pfm_ntv_code_to_descr(unsigned int EventCode, char *ntv_descr, int len);
 extern int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits);
@@ -3383,6 +3384,7 @@ papi_vector_t _papi_pe_vector = {
     .allocate_registers =	_papi_pe_allocate_registers,
     .write =	_papi_pe_write,
     .ntv_enum_events =	_papi_pfm_ntv_enum_events,
+	.ntv_name_to_code = _papi_pfm_ntv_name_to_code,
     .ntv_code_to_name =	_papi_pfm_ntv_code_to_name,
     .ntv_code_to_descr =	_papi_pfm_ntv_code_to_descr,
     .ntv_code_to_bits =	_papi_pfm_ntv_code_to_bits,
