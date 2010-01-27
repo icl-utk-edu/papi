@@ -64,7 +64,6 @@ int main(int argc, char **argv)
      void *handle ;
 	 double (*pow)(double,double);
      int oldcount;
-     int my_dlerror = 0;
 
      handle = dlopen (_libname, RTLD_NOW);
      if (!handle) {
