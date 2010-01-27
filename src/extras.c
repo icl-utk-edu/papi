@@ -559,13 +559,17 @@ int _papi_hwi_query_native_event(unsigned int EventCode)
 int _papi_hwi_native_name_to_code(char *in, int *out)
 {
 	int retval = PAPI_ENOEVNT;
+#if 0
 	char name[PAPI_HUGE_STR_LEN]; /* make sure it's big enough */
 	unsigned int i, j;
+#endif
 
-#if ((defined PERFCTR_PFM_EVENTS) | (defined SUBSTRATE_USES_LIBPFM))
+//#if ((defined PERFCTR_PFM_EVENTS) | (defined SUBSTRATE_USES_LIBPFM))
 	   extern unsigned int _papi_pfm_ntv_name_to_code(char *name, int *event_code);
 	         retval = _papi_pfm_ntv_name_to_code(in, out);
-#else
+
+#if 0 // HJ: This part is actually not used any longer. Let's run builtbot for a night to see if this is true :)			 
+//#else
 
 	for (j=0,i = 0 | PAPI_NATIVE_MASK;j<papi_num_components; j++,i = 0 | PAPI_NATIVE_MASK) {
 		/* first check each component for name_to_code */
@@ -594,7 +598,8 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
 			if (retval == PAPI_OK) return(retval);
 		}
 	}
-#endif /* PERFCTR_PFM_EVENTS */
+//#endif /* PERFCTR_PFM_EVENTS */
+#endif
 	return (retval);
 }
 
