@@ -212,16 +212,11 @@ struct perf_event_attr {
 		uint32_t	wakeup_watermark;	/* bytes before wakeup */
 	} SWIG_NAME(wakeup);
 
-	union {
-		struct { /* Hardware breakpoint info */
-			uint64_t	bp_addr;
-			uint32_t	bp_type;
-			uint32_t	bp_len;
-	        } SWIG_NAME(bps);
-	} SWIG_NAME(bp);
-
 	uint32_t	reserved_2;
-	uint64_t	__reserved_3;
+
+	uint64_t        bp_addr;
+	uint32_t        bp_type;
+	uint32_t        bp_len;
 };
 
 enum perf_event_ioc_flags {
