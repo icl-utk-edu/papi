@@ -65,5 +65,51 @@ __ 20. Email the papi developer and discussion lists with an announcement.
 
 __ 21. Post the announcement on the PAPI User Forum.
 
+================================================================================
+
+Patch Procedure for PAPI  January 29, 2010
+
+Below is a step-wise procedure for making a PAPI patch.
+
+One way to use this procedure is to print a copy and check off
+the lines as they are completed to avoid confusion.
+================================================================================
+__ 1. Export the tagged version of PAPI that you want to patch against:
+	> cvs export -r <tag> <module> ex:
+	> cvs export -r papi-4-0-0-t papi
+	Exporting eliminates the cvs directories that will change between versions.
+
+__ 2. Rename the tagged directory:
+	mv papi papi400t
+
+__ 3. Export the branch of PAPI that you want to patch with:
+	> cvs export -r <branch> <module> ex:
+	> cvs export -r papi-4-0-0-b papi
+
+__ 4. Rename the branch directory:
+	mv papi papi400b
+
+__ 5. Diff the two directories:
+	> diff -rupN <original> <new> > <output.diff> ex:
+	> diff -rupN papi 400t papi400b > papi400patch1.diff
+	
+	The flags for diff are:
+	-r: recursive
+	-u: unified
+	-p: show function names
+	-N: treat absent files as empty
+
+__ 6. Copy the diff file to icl:/sw/www/icl/projects/papi/downloads/patches
+
+__ 7. Check permissions on the diff. 644 is good. 
+
+__ 8. Create a link with supporting text on the PAPI software web page.
+
+__ 9. Create a News item on the PAPI Web page.
+
+__ 10. Email the papi discussion list with an announcement.
+
+
+
 
 
