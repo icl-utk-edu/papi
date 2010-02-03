@@ -925,7 +925,7 @@ pfm_get_event_info(int idx, pfm_event_info_t *info)
 		return PFM_ERR_INVAL;
 
 	/* default data type is uint64 */
-	info->dtype = PFM_DATA_UINT64;
+	info->dtype = PFM_DTYPE_UINT64;
 
 	ret = pmu->get_event_info(pmu, pidx, info);
 	if (ret == PFM_SUCCESS) {
