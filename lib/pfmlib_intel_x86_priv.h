@@ -46,6 +46,7 @@ typedef struct {
 	char			*uname; /* unit mask name */
 	char			*udesc; /* unit umask description */
 	char			*uequiv;/* name of event from which this one is derived, NULL if none */
+	uint64_t		ucntmsk;/* supported counters for umask (if set, supersedes cntmsk) */
 	unsigned int		ucode;  /* unit mask code */
 	unsigned int		uflags;	/* unit mask flags */
 	unsigned int		grpid;	/* unit mask group id */
