@@ -143,6 +143,7 @@ typedef enum {
  * the return value.
  */
 typedef int pfm_err_t;		/* error if !PFM_SUCCESS */
+typedef int os_err_t;		/* error if a syscall fails */
 
 typedef struct {
 	const char		*name;	/* event name */

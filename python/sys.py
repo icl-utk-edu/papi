@@ -29,6 +29,7 @@ import sys
 import os
 from optparse import OptionParser
 import time 
+import struct
 from perfmon import *
 
 if __name__ == '__main__':
@@ -37,31 +38,26 @@ if __name__ == '__main__':
 		       action="store", dest="events")
     parser.add_option("-c", "--cpulist", help="CPUs to monitor",
 		       action="store", dest="cpulist")
-    parser.set_defaults(cpu=0)
+    parser.set_defaults(cpulist="0")
+    parser.set_defaults(events="PERF_COUNT_HW_CPU_CYCLES")
     (options, args) = parser.parse_args()
 
     cpus = options.cpulist.split(',')
     cpus = [ int(c) for c in cpus ] 
-try:
-    s = SystemWideSession(cpus)
 
     if options.events:
       events = options.events.split(",")
     else:
       raise "You need to specify events to monitor"
 
-    s.dispatch_events(events)
-    s.load()
+    s = SystemWideSession(cpus, events)
 
+    s.start()
     # Measuring loop
-    for i in range(1, 10):
-      s.start()
+    while 1:
       time.sleep(1)
-      s.stop()
-      # Print the counts
-      for cpu in xrange(len(cpus)):
-	for i in xrange(s.npmds):
-	  print "CPU%d.PMD%d\t%lu""" % (cpu, s.pmds[cpu][i].reg_num, 
-				        s.pmds[cpu][i].reg_value)
-finally:
-    s.cleanup()
+      # read the counts
+      for c in cpus:
+        for i in range(0, len(events)):
+          count = struct.unpack("L", s.read(c, i))[0]
+          print """CPU%d: %s\t%lu""" % (c, events[i], count)
