@@ -502,6 +502,11 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 			error++;
 		}
 
+		if (pe[i].numasks == 0 && pe[i].ngrp) {
+			fprintf(fp, "pmu: %s event%d: %s :: ngrp must be zero\n", pmu->name, i, pe[i].name);
+			error++;
+		}
+
 		if (pe[i].ngrp >= INTEL_X86_NUM_GRP) {
 			fprintf(fp, "pmu: %s event%d: %s :: ngrp too big (max=%d)\n", pmu->name, i, pe[i].name, INTEL_X86_NUM_GRP);
 			error++;
