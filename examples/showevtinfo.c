@@ -100,12 +100,19 @@ show_event_info(pfm_event_info_t *info)
 
 		switch(ainfo.type) {
 		case PFM_ATTR_UMASK:
-			printf("Umask-%02u : 0x%02"PRIx64" : [%s] : %s%s\n",
+			printf("Umask-%02u : 0x%02"PRIx64" : [%s] : ",
 				um,
 				ainfo.code,
-				ainfo.name,
-				ainfo.desc,
-				ainfo.is_dfl ? " (DEFAULT)" : "");
+				ainfo.name);
+
+			if (ainfo.equiv)
+				printf(" Alias to %s", ainfo.equiv);
+			else
+				printf(" %s", ainfo.desc);
+
+			if (ainfo.is_dfl)
+				printf(" (DEFAULT)");
+				putchar('\n');
 			um++;
 			break;
 		case PFM_ATTR_MOD_BOOL:
