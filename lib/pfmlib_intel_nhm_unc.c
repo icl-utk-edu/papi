@@ -116,9 +116,10 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 
 	/*
 	 * uncore only measure user+kernel, so ensure default is setup
-	 * accordingly
+	 * accordingly even though we are not using it, this avoids
+	 * possible mistakes by user
 	 */
-	if ((e->dfl_plm & (PFM_PLM0|PFM_PLM3)) != (PFM_PLM0|PFM_PLM3)) {
+	if (e->dfl_plm != (PFM_PLM0|PFM_PLM3)) {
 		DPRINT("dfl_plm must be PLM0|PLM3 with Intel Nehalem uncore PMU\n");
 		return PFM_ERR_INVAL;
 	}
