@@ -55,7 +55,6 @@ static const pfmlib_attr_desc_t nhm_unc_mods[]={
 	PFM_ATTR_B("o", "queue occupancy"),			/* queue occupancy */
 	PFM_ATTR_NULL
 };
-#define modx(a, z) (nhm_unc_mods[(a)].z)
 
 static int
 pfm_nhm_unc_detect(void *this)
@@ -259,10 +258,10 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 		}
 	}
 
-	evt_strcat(e->fstr, ":%s=%lu", modx(NHM_UNC_ATTR_E, name), reg->nhm_unc.usel_edge);
-	evt_strcat(e->fstr, ":%s=%lu", modx(NHM_UNC_ATTR_I, name), reg->nhm_unc.usel_inv);
-	evt_strcat(e->fstr, ":%s=%lu", modx(NHM_UNC_ATTR_C, name), reg->nhm_unc.usel_cnt_mask);
-	evt_strcat(e->fstr, ":%s=%lu", modx(NHM_UNC_ATTR_O, name), reg->nhm_unc.usel_occ);
+	evt_strcat(e->fstr, ":%s=%lu", modx(nhm_unc_mods, NHM_UNC_ATTR_E, name), reg->nhm_unc.usel_edge);
+	evt_strcat(e->fstr, ":%s=%lu", modx(nhm_unc_mods, NHM_UNC_ATTR_I, name), reg->nhm_unc.usel_inv);
+	evt_strcat(e->fstr, ":%s=%lu", modx(nhm_unc_mods, NHM_UNC_ATTR_C, name), reg->nhm_unc.usel_cnt_mask);
+	evt_strcat(e->fstr, ":%s=%lu", modx(nhm_unc_mods, NHM_UNC_ATTR_O, name), reg->nhm_unc.usel_occ);
 
 	__pfm_vbprintf("[UNC_PERFEVTSEL=0x%"PRIx64" event=0x%x umask=0x%x en=%d int=%d inv=%d edge=%d occ=%d cnt_msk=%d] %s\n",
 		reg->val,
@@ -311,6 +310,7 @@ pfmlib_pmu_t intel_nhm_unc_support={
 	.pme_count		= PME_NHM_UNC_EVENT_COUNT,
 	.max_encoding		= 1,
 	.pe			= intel_nhm_unc_pe,
+	.atdesc			= nhm_unc_mods,
 
 	.pmu_detect		= pfm_nhm_unc_detect,
 	.get_event_encoding	= pfm_nhm_unc_get_encoding,

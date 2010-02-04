@@ -199,6 +199,8 @@ typedef struct {
 
 extern pfm_intel_x86_config_t pfm_intel_x86_cfg;
 
+extern const pfmlib_attr_desc_t intel_x86_mods[];
+
 static inline int
 intel_x86_eflag(void *this, pfmlib_event_desc_t *e, int flag)
 {

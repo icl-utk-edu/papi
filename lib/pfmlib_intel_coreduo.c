@@ -53,6 +53,7 @@ pfmlib_pmu_t intel_coreduo_support={
 	.pmu			= PFM_PMU_COREDUO,
 	.pme_count		= PME_COREDUO_EVENT_COUNT,
 	.pe			= coreduo_pe,
+	.atdesc			= intel_x86_mods,
 
 	.pmu_detect		= pfm_coreduo_detect,
 	.pmu_init		= pfm_coreduo_init,

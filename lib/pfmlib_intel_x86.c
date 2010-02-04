@@ -32,7 +32,7 @@
 #include "pfmlib_priv.h"
 #include "pfmlib_intel_x86_priv.h"
 
-static const pfmlib_attr_desc_t intel_x86_mods[]={
+const pfmlib_attr_desc_t intel_x86_mods[]={
 	PFM_ATTR_B("u", "monitor at priv level 1, 2, 3"),	/* monitor priv level 1, 2, 3 */
 	PFM_ATTR_B("k", "monitor at priv level 0"),		/* monitor priv level 0 */
 	PFM_ATTR_B("i", "invert"),				/* invert */
@@ -41,7 +41,6 @@ static const pfmlib_attr_desc_t intel_x86_mods[]={
 	PFM_ATTR_B("t", "measure any thread"),			/* montor on both threads */
 	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
 };
-#define modx(a, z) (intel_x86_mods[(a)].z)
 
 pfm_intel_x86_config_t pfm_intel_x86_cfg;
 
@@ -130,6 +129,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 {
 	pfmlib_attr_t *a;
 	const intel_x86_entry_t *pe;
+	const pfmlib_attr_desc_t *atdesc;
 	unsigned int grpmsk, ugrpmsk = 0;
 	uint64_t val;
 	unsigned int umask;
@@ -143,7 +143,8 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 	memset(grpcounts, 0, sizeof(grpcounts));
 	memset(ncombo, 0, sizeof(ncombo));
 
-	pe = this_pe(this);
+	pe     = this_pe(this);
+	atdesc = this_atdesc(this);
 
 	umask_str[0] = e->fstr[0] = '\0';
 
@@ -326,14 +327,14 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 	/*
 	 * decode modifiers
 	 */
-	evt_strcat(e->fstr, ":%s=%lu", modx(INTEL_X86_ATTR_K, name), reg->sel_os);
-	evt_strcat(e->fstr, ":%s=%lu", modx(INTEL_X86_ATTR_U, name), reg->sel_usr);
-	evt_strcat(e->fstr, ":%s=%lu", modx(INTEL_X86_ATTR_E, name), reg->sel_edge);
-	evt_strcat(e->fstr, ":%s=%lu", modx(INTEL_X86_ATTR_I, name), reg->sel_inv);
-	evt_strcat(e->fstr, ":%s=%lu", modx(INTEL_X86_ATTR_C, name), reg->sel_cnt_mask);
+	evt_strcat(e->fstr, ":%s=%lu", modx(atdesc, INTEL_X86_ATTR_K, name), reg->sel_os);
+	evt_strcat(e->fstr, ":%s=%lu", modx(atdesc, INTEL_X86_ATTR_U, name), reg->sel_usr);
+	evt_strcat(e->fstr, ":%s=%lu", modx(atdesc, INTEL_X86_ATTR_E, name), reg->sel_edge);
+	evt_strcat(e->fstr, ":%s=%lu", modx(atdesc, INTEL_X86_ATTR_I, name), reg->sel_inv);
+	evt_strcat(e->fstr, ":%s=%lu", modx(atdesc, INTEL_X86_ATTR_C, name), reg->sel_cnt_mask);
 
 	if (pfm_intel_x86_cfg.arch_version > 2)
-		evt_strcat(e->fstr, ":%s=%lu", modx(INTEL_X86_ATTR_T, name), reg->sel_anythr);
+		evt_strcat(e->fstr, ":%s=%lu", modx(atdesc, INTEL_X86_ATTR_T, name), reg->sel_anythr);
 
 	return PFM_SUCCESS;
 }
@@ -475,6 +476,11 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 	const intel_x86_entry_t *pe = this_pe(this);
 	int i, j, k, error = 0;
 
+	if (!pmu->atdesc) {
+		fprintf(fp, "pmu: %s missing attr_desc\n", pmu->name);
+		error++;
+	}
+
 	for(i=0; i < pmu->pme_count; i++) {
 
 		if (!pe[i].name) {
@@ -580,6 +586,7 @@ int
 pfm_intel_x86_get_event_attr_info(void *this, int idx, int attr_idx, pfm_event_attr_info_t *info)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
+	const pfmlib_attr_desc_t *atdesc = this_atdesc(this);
 	int m;
 
 	if (attr_idx < pe[idx].numasks) {
@@ -591,11 +598,11 @@ pfm_intel_x86_get_event_attr_info(void *this, int idx, int attr_idx, pfm_event_a
 		info->is_dfl = !!(pe[idx].umasks[attr_idx].uflags & INTEL_X86_DFL);
 	} else {
 		m = pfm_intel_x86_attr2mod(this, idx, attr_idx);
-		info->name = modx(m, name);
-		info->desc = modx(m, desc);
+		info->name = modx(atdesc, m, name);
+		info->desc = modx(atdesc, m, desc);
 		info->equiv= NULL;
 		info->code = m;
-		info->type = modx(m, type);
+		info->type = modx(atdesc, m, type);
 		info->is_dfl = 0;
 	}
 	info->idx = attr_idx;

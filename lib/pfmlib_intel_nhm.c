@@ -125,6 +125,7 @@ pfmlib_pmu_t intel_nhm_support={
 	.pme_count		= PME_NHM_EVENT_COUNT,
 	.max_encoding		= 2, /* because of OFFCORE_RESPONSE */
 	.pe			= intel_nhm_pe,
+	.atdesc			= intel_x86_mods,
 	.pmu_detect		= pfm_nhm_detect,
 	.pmu_init		= pfm_nhm_init,
 	.get_event_encoding	= pfm_intel_x86_get_encoding,

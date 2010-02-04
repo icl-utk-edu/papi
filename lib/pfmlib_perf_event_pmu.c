@@ -85,7 +85,6 @@ static const pfmlib_attr_desc_t perf_mods[]={
 	PFM_ATTR_B("h", "monitor in hypervisor"),		/* virtualization host */
 	PFM_ATTR_NULL
 };
-#define modx(a, z) (perf_mods[(a)].z)
 
 #define PERF_ATTR_HW (_PERF_ATTR_U|_PERF_ATTR_K|_PERF_ATTR_H)
 #define PERF_ATTR_SW (_PERF_ATTR_U|_PERF_ATTR_K)
@@ -619,11 +618,11 @@ pfm_perf_get_event_attr_info(void *this, int idx, int attr_idx, pfm_event_attr_i
 		info->type = PFM_ATTR_UMASK;
 	} else {
 		m = perf_attr2mod(idx, attr_idx);
-		info->name = modx(m, name);
-		info->desc = modx(m, desc);
+		info->name = modx(perf_mods, m, name);
+		info->desc = modx(perf_mods, m, desc);
 		info->equiv= NULL;
 		info->code = m;
-		info->type = modx(m, type);
+		info->type = modx(perf_mods, m, type);
 	}
 	info->is_dfl = 0;
 	info->idx = attr_idx;
