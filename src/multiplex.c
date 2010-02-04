@@ -329,6 +329,7 @@ static MasterEvent *get_my_threads_master_event_list(void)
 {
    Threadlist *t = tlist;
    unsigned long tid;
+   unsigned long pid;
 
    MPXDBG("tlist is %p\n",tlist);
    if (tlist == NULL)
@@ -338,7 +339,7 @@ static MasterEvent *get_my_threads_master_event_list(void)
       return (tlist->head);
 
    tid = _papi_hwi_thread_id_fn();
-   unsigned long pid = getpid();
+   pid = getpid();
 
    while (t) {
       if (t->tid == tid || ((tid==0) && (t->tid==pid)))
