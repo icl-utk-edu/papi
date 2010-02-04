@@ -88,6 +88,7 @@ use_shared=yes
 use_static=yes
 use_static_tests=no
 use_x86_cache_info=no
+distributed_build=no
 AC_MSG_CHECKING(for architecture)
 AC_ARG_WITH(arch,
 	   [  --with-arch=<arch>		Specify architecture (uname -m)],
@@ -897,7 +898,8 @@ AC_MSG_RESULT($virtualtimer)
 if test "x$perfctr" = "x"; then
 AC_ARG_WITH(perfctr,
             [  --with-perfctr=<5,6,7>	Specify perfctr version number ],
-            [perfctr=$withval],
+            [perfctr=$withval
+             distributed_build=yes],
             [perfctr="no"
 if test "$cross_compiling" = "no" ; then
 	    AC_CHECK_FILE(/sys/class/perfctr,[perfctr=7],[AC_CHECK_FILE(/dev/perfctr,[perfctr=6])])
@@ -929,28 +931,33 @@ esac
 
 AC_ARG_WITH(perfctr_root,
             [  --with-perfctr-root=<path>	Specify path to source tree (for use by developers only) ],
-            [perfctr_root=$withval],
+            [perfctr_root=$withval
+             distributed_build=yes],
             [perfctr_root=""]
             )
 AC_ARG_WITH(perfctr_prefix,
             [  --with-perfctr-prefix=<path>	Specify prefix to installed perfctr distribution ],
-            [perfctr_prefix=$withval],
+            [perfctr_prefix=$withval
+             distributed_build=yes],
             [perfctr_prefix=""]
             )
 AC_ARG_WITH(perfctr_incdir,
            [  --with-perfctr-incdir=<path>	Specify directory of perfctr header files in non-standard location ],
-           [perfctr_incdir=$withval],
+           [perfctr_incdir=$withval
+            distributed_build=yes],
            [perfctr_incdir=""]
             )
 AC_ARG_WITH(perfctr_libdir,
            [  --with-perfctr-libdir=<path>	Specify directory of perfctr library in non-standard location ],
-           [perfctr_libdir=$withval],
+           [perfctr_libdir=$withval
+            distributed_build=yes],
            [perfctr_libdir=""]
             )
 
 AC_ARG_WITH(perfmon,
             [  --with-perfmon=<x.y>		Specify perfmon version number ],
-            [perfmon=$withval],
+            [perfmon=$withval
+             distributed_build=yes],
             [perfmon=0
 	    if test "$cross_compiling" = "no" ; then
 	       AC_CHECK_FILE(/sys/kernel/perfmon/version,[
@@ -983,22 +990,26 @@ fi
 
 AC_ARG_WITH(pfm_root,
            [  --with-pfm-root=<path>	Specify path to source tree (for use by developers only) ],
-           [pfm_root=$withval],
+           [pfm_root=$withval
+            distributed_build=yes],
            [pfm_root=""]
             )
 AC_ARG_WITH(pfm_prefix,
            [  --with-pfm-prefix=<path>	Specify prefix to installed pfm distribution ],
-           [pfm_prefix=$withval],
+           [pfm_prefix=$withval
+            distributed_build=yes],
            [pfm_prefix=""]
             )
 AC_ARG_WITH(pfm_incdir,
            [  --with-pfm-incdir=<path>	Specify directory of pfm header files in non-standard location ],
-           [pfm_incdir=$withval],
+           [pfm_incdir=$withval
+            distributed_build=yes],
            [pfm_incdir=""]
             )
 AC_ARG_WITH(pfm_libdir,
            [  --with-pfm-libdir=<path>	Specify directory of pfm library in non-standard location ],
-           [pfm_libdir=$withval],
+           [pfm_libdir=$withval
+            distributed_build=yes],
            [pfm_libdir=""]
             )
 
@@ -1064,7 +1075,7 @@ fi
 fi
 # Linux perf event end
 
-if test "$perf_events" = "no" -a "$perfctr" = "no" -a "$perfmon" = "0"; then
+if test "$distributed_build" = "no" -a "$perf_events" = "no" -a "$perfctr" = "no" -a "$perfmon" = "0"; then
   AC_MSG_ERROR([No performance monitoring interface available])
 fi
 

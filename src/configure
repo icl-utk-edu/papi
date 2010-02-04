@@ -1981,6 +1981,7 @@ use_shared=yes
 use_static=yes
 use_static_tests=no
 use_x86_cache_info=no
+distributed_build=no
 { $as_echo "$as_me:$LINENO: checking for architecture" >&5
 $as_echo_n "checking for architecture... " >&6; }
 
@@ -6611,6 +6612,7 @@ if test "x$perfctr" = "x"; then
 # Check whether --with-perfctr was given.
 if test "${with_perfctr+set}" = set; then
   withval=$with_perfctr; perfctr=$withval
+             distributed_build=yes
 else
   perfctr="no"
 if test "$cross_compiling" = "no" ; then
@@ -6693,6 +6695,7 @@ esac
 # Check whether --with-perfctr_root was given.
 if test "${with_perfctr_root+set}" = set; then
   withval=$with_perfctr_root; perfctr_root=$withval
+             distributed_build=yes
 else
   perfctr_root=""
 
@@ -6702,6 +6705,7 @@ fi
 # Check whether --with-perfctr_prefix was given.
 if test "${with_perfctr_prefix+set}" = set; then
   withval=$with_perfctr_prefix; perfctr_prefix=$withval
+             distributed_build=yes
 else
   perfctr_prefix=""
 
@@ -6711,6 +6715,7 @@ fi
 # Check whether --with-perfctr_incdir was given.
 if test "${with_perfctr_incdir+set}" = set; then
   withval=$with_perfctr_incdir; perfctr_incdir=$withval
+            distributed_build=yes
 else
   perfctr_incdir=""
 
@@ -6720,6 +6725,7 @@ fi
 # Check whether --with-perfctr_libdir was given.
 if test "${with_perfctr_libdir+set}" = set; then
   withval=$with_perfctr_libdir; perfctr_libdir=$withval
+            distributed_build=yes
 else
   perfctr_libdir=""
 
@@ -6730,6 +6736,7 @@ fi
 # Check whether --with-perfmon was given.
 if test "${with_perfmon+set}" = set; then
   withval=$with_perfmon; perfmon=$withval
+             distributed_build=yes
 else
   perfmon=0
 	    if test "$cross_compiling" = "no" ; then
@@ -6815,6 +6822,7 @@ fi
 # Check whether --with-pfm_root was given.
 if test "${with_pfm_root+set}" = set; then
   withval=$with_pfm_root; pfm_root=$withval
+            distributed_build=yes
 else
   pfm_root=""
 
@@ -6824,6 +6832,7 @@ fi
 # Check whether --with-pfm_prefix was given.
 if test "${with_pfm_prefix+set}" = set; then
   withval=$with_pfm_prefix; pfm_prefix=$withval
+            distributed_build=yes
 else
   pfm_prefix=""
 
@@ -6833,6 +6842,7 @@ fi
 # Check whether --with-pfm_incdir was given.
 if test "${with_pfm_incdir+set}" = set; then
   withval=$with_pfm_incdir; pfm_incdir=$withval
+            distributed_build=yes
 else
   pfm_incdir=""
 
@@ -6842,6 +6852,7 @@ fi
 # Check whether --with-pfm_libdir was given.
 if test "${with_pfm_libdir+set}" = set; then
   withval=$with_pfm_libdir; pfm_libdir=$withval
+            distributed_build=yes
 else
   pfm_libdir=""
 
@@ -7015,7 +7026,7 @@ fi
 fi
 # Linux perf event end
 
-if test "$perf_events" = "no" -a "$perfctr" = "no" -a "$perfmon" = "0"; then
+if test "$distributed_build" = "no" -a "$perf_events" = "no" -a "$perfctr" = "no" -a "$perfmon" = "0"; then
   { { $as_echo "$as_me:$LINENO: error: No performance monitoring interface available" >&5
 $as_echo "$as_me: error: No performance monitoring interface available" >&2;}
    { (exit 1); exit 1; }; }
