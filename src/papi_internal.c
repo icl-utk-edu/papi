@@ -580,6 +580,22 @@ static int add_native_fail_clean(EventSetInfo_t * ESI, int nevt)
    return -1;
 }
 
+/* since update_control_state trashes overflow settings, this puts things
+   back into balance. */
+static int update_overflow(EventSetInfo_t * ESI)
+{
+	int i, retval = PAPI_OK;
+
+	if (ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE) {
+		for (i=0; i<ESI->overflow.event_counter; i++) {
+			retval = _papi_hwd[ESI->CmpIdx]->set_overflow(ESI, 
+				ESI->overflow.EventIndex[i], ESI->overflow.threshold[i]);
+			if (retval != PAPI_OK) break;
+		}
+	}
+	return (retval);
+}
+
 /* this function is called by _papi_hwi_add_event when adding native events 
 nix: pointer to array of native event table indexes from the preset entry
 size: number of native events to add
@@ -622,38 +638,41 @@ static int add_native_events(EventSetInfo_t * ESI, int *nevt, int size, EventInf
       }
    }
 
-   /* if remap!=0, we need reallocate counters */
-   if (remap) {
-      if (_papi_hwd[ESI->CmpIdx]->allocate_registers(ESI)) {
-         retval =
-             _papi_hwd[ESI->CmpIdx]->update_control_state(ESI->ctl_state, ESI->NativeInfoArray,
-		ESI->NativeCount,ESI->master->context[ESI->CmpIdx]);
-         if (retval != PAPI_OK)
-	   {
-	   clean:
-	     for (i = 0; i < size; i++) {
-	       if ((nidx = add_native_fail_clean(ESI, nevt[i])) >= 0) {
-		 out->pos[i] = -1;
-		 continue;
-	       }
-	       INTDBG("should not happen!\n");
-	     }
-	     /* re-establish the control state after the previous error */
-	     retval2 = _papi_hwd[ESI->CmpIdx]->update_control_state(ESI->ctl_state, ESI->NativeInfoArray,
-			ESI->NativeCount,ESI->master->context[ESI->CmpIdx]);
-	     if (retval2 != PAPI_OK) {
-	       PAPIERROR("update_control_state failed to re-establish working events!");
-	       return retval2;
-	     }
-	     return (retval);
-	   }
-         return 1;
-      } else {
-	  retval = -1;
-	  goto clean;
-      }
-   }
-   return 0;
+	/* if remap!=0, we need reallocate counters */
+	if (remap) {
+		if (_papi_hwd[ESI->CmpIdx]->allocate_registers(ESI)) {
+			retval = _papi_hwd[ESI->CmpIdx]->update_control_state(
+				ESI->ctl_state, ESI->NativeInfoArray, ESI->NativeCount,
+				ESI->master->context[ESI->CmpIdx]);
+			if (retval != PAPI_OK) {
+clean:
+				for (i = 0; i < size; i++) {
+					if ((nidx = add_native_fail_clean(ESI, nevt[i])) >= 0) {
+						out->pos[i] = -1;
+						continue;
+					}
+					INTDBG("should not happen!\n");
+				}
+				/* re-establish the control state after the previous error */
+				retval2 = _papi_hwd[ESI->CmpIdx]->update_control_state(ESI->ctl_state, ESI->NativeInfoArray,
+					ESI->NativeCount,ESI->master->context[ESI->CmpIdx]);
+				if (retval2 != PAPI_OK) {
+					PAPIERROR("update_control_state failed to re-establish working events!");
+					return retval2;
+				}
+				retval2 = update_overflow(ESI);
+				if (retval2 != PAPI_OK)
+					PAPIERROR("update_overflow failed to re-establish overflows!");
+				return (retval);
+			}
+			update_overflow(ESI);
+			return 1;
+		} else {
+			retval = -1;
+			goto clean;
+		}
+	}
+	return 0;
 }
 
 
@@ -875,14 +894,14 @@ int remove_native_events(EventSetInfo_t * ESI, int *nevt, int size)
    /* If we removed any elements, 
       clear the now empty slots, reinitialize the index, and update the count.
       Then send the info down to the substrate to update the hwd control structure. */
+   retval = PAPI_OK;
    if (zero) {
       retval = _papi_hwd[ESI->CmpIdx]->update_control_state(ESI->ctl_state, native, ESI->NativeCount,
 		ESI->master->context[ESI->CmpIdx]);
-      if (retval != PAPI_OK)
-         return (retval);
+      if (retval == PAPI_OK)
+         retval = update_overflow(ESI);
    }
-
-   return (PAPI_OK);
+   return (retval);
 }
 
 int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode)
