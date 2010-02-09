@@ -1031,7 +1031,8 @@ int _papi_hwi_cleanup_eventset(EventSetInfo_t * ESI)
             return (retval);
       }
    }
-
+   
+   free_EventSet(ESI);
    return (PAPI_OK);
 }
 

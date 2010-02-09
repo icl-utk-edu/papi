@@ -1107,6 +1107,10 @@ int MPX_cleanup(MPX_EventSet ** mpx_events)
 
    *mpx_events = NULL;
 
+   if(tlist)
+     papi_free(tlist);
+
+   tlist = NULL;
    return PAPI_OK;
 }
 
