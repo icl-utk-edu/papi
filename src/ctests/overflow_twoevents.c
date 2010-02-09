@@ -32,8 +32,6 @@ typedef struct {
 ocount_t overflow_counts[2][3] = {{{0,0}, {0,0}, {0,0}},{{0,0}, {0,0}, {0,0}}};
 int total_unknown = 0;
 
-static const PAPI_hw_info_t *hw_info = NULL;
-
 void handler(int mode, void *address, long long overflow_vector, void *context)
 {
   int i;
