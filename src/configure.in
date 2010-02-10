@@ -211,8 +211,9 @@ case "$OS" in
                CPU=core2
                use_x86_cache_info=yes
              fi
-             # model 26 is Nehalem
-             if test "$model" = "26"; then
+             # models 26, 30, 37, 44, 46 are Nehalem variants
+             if (test "$model" = "26" || test "$model" = "30" || test "$model" = "37" || 
+                 test "$model" = "44" || test "$model" = "46"); then
                CPU=i7
                use_x86_cache_info=yes
              fi
