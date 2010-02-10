@@ -36,9 +36,9 @@
 #include "pfmlib_priv.h"
 #include "pfmlib_intel_nhm_priv.h"
 
-#include "intel_nehalem_events.h"
-
-#define is_pebs(i)	(nhm_pe[i].pme_flags & PFMLIB_NHM_PEBS)
+/* Intel Core i7 event tables */
+#include "intel_corei7_events.h"
+#include "intel_corei7_unc_events.h"
 
 /* let's define some handy shortcuts! */
 #define usel_event	unc_perfevtsel.usel_event
@@ -122,13 +122,26 @@
 #define PFMLIB_NHM_ALL_FLAGS \
 	(PFM_NHM_SEL_INV|PFM_NHM_SEL_EDGE|PFM_NHM_SEL_ANYTHR)
 
+pfm_pmu_support_t intel_nhm_support;
+
 static pfmlib_regmask_t nhm_impl_pmcs, nhm_impl_pmds;
+static pfmlib_regmask_t nhm_impl_unc_pmcs, nhm_impl_unc_pmds;
+static pme_nhm_entry_t *pe, *unc_pe;
+static unsigned int num_pe, num_unc_pe;
+static int cpu_model;
+static int pme_cycles, pme_instr;
+
+static inline pme_nhm_entry_t *
+get_nhm_entry(unsigned int i)
+{
+        return i < num_pe ? pe+i : unc_pe+(i-num_pe);
+}
 
 static int
 pfm_nhm_detect(void)
 {
 	int ret;
-	int family, model;
+	int family;
 	char buffer[128];
 
 	ret = __pfm_getcpuinfo_attr("vendor_id", buffer, sizeof(buffer));
@@ -148,7 +161,7 @@ pfm_nhm_detect(void)
 	if (ret == -1)
 		return PFMLIB_ERR_NOTSUPP;
 
-	model = atoi(buffer);
+	cpu_model = atoi(buffer);
 	/*
 	 * XXX: is there a way to identify a Core-based processor?
 	 * So for now, look for Core 2 only
@@ -156,20 +169,53 @@ pfm_nhm_detect(void)
 	if (family != 6)
 		return PFMLIB_ERR_NOTSUPP;
 
-	switch(model) {
-		case 26: /* Nehalem*/
-			  break;
+	switch(cpu_model) {
+		case 26: /* Nehalem Core i7 */
+		case 30: /* Nehalem Core i5 */
+	        case 37:
+	        case 44:
+                case 46:
+		  break;
 		default:
 			return PFMLIB_ERR_NOTSUPP;
 	}
 	return PFMLIB_SUCCESS;
 }
 
+static inline void setup_nhm_impl_unc_regs(void)
+{
+	pfm_regmask_set(&nhm_impl_unc_pmds, 20);
+	pfm_regmask_set(&nhm_impl_unc_pmds, 21);
+	pfm_regmask_set(&nhm_impl_unc_pmds, 22);
+	pfm_regmask_set(&nhm_impl_unc_pmds, 23);
+	pfm_regmask_set(&nhm_impl_unc_pmds, 24);
+	pfm_regmask_set(&nhm_impl_unc_pmds, 25);
+	pfm_regmask_set(&nhm_impl_unc_pmds, 26);
+	pfm_regmask_set(&nhm_impl_unc_pmds, 27);
+	pfm_regmask_set(&nhm_impl_unc_pmds, 28);
+
+	/* uncore */
+	pfm_regmask_set(&nhm_impl_unc_pmcs, 20);
+	pfm_regmask_set(&nhm_impl_unc_pmcs, 21);
+	pfm_regmask_set(&nhm_impl_unc_pmcs, 22);
+	pfm_regmask_set(&nhm_impl_unc_pmcs, 23);
+	pfm_regmask_set(&nhm_impl_unc_pmcs, 24);
+	pfm_regmask_set(&nhm_impl_unc_pmcs, 25);
+	pfm_regmask_set(&nhm_impl_unc_pmcs, 26);
+	pfm_regmask_set(&nhm_impl_unc_pmcs, 27);
+	pfm_regmask_set(&nhm_impl_unc_pmcs, 28);
+	/* unnhm_addrop_match */
+	pfm_regmask_set(&nhm_impl_unc_pmcs, 29);
+
+}
+
 static int
 pfm_nhm_init(void)
 {
 	int i;
+	int num_unc_cnt = 0;
 
+	/* core */
 	pfm_regmask_set(&nhm_impl_pmcs, 0);
 	pfm_regmask_set(&nhm_impl_pmcs, 1);
 	pfm_regmask_set(&nhm_impl_pmcs, 2);
@@ -178,19 +224,6 @@ pfm_nhm_init(void)
 	pfm_regmask_set(&nhm_impl_pmcs, 17);
 	pfm_regmask_set(&nhm_impl_pmcs, 18);
 	pfm_regmask_set(&nhm_impl_pmcs, 19);
-	pfm_regmask_set(&nhm_impl_pmcs, 20);
-	pfm_regmask_set(&nhm_impl_pmcs, 21);
-	pfm_regmask_set(&nhm_impl_pmcs, 22);
-	pfm_regmask_set(&nhm_impl_pmcs, 23);
-	pfm_regmask_set(&nhm_impl_pmcs, 24);
-	pfm_regmask_set(&nhm_impl_pmcs, 25);
-	pfm_regmask_set(&nhm_impl_pmcs, 26);
-	pfm_regmask_set(&nhm_impl_pmcs, 27);
-	pfm_regmask_set(&nhm_impl_pmcs, 28);
-	/* unnhm_addrop_match */
-	pfm_regmask_set(&nhm_impl_pmcs, 29);
-	/* lbr select */
-	pfm_regmask_set(&nhm_impl_pmcs, 30);
 
 	pfm_regmask_set(&nhm_impl_pmds, 0);
 	pfm_regmask_set(&nhm_impl_pmds, 1);
@@ -199,19 +232,45 @@ pfm_nhm_init(void)
 	pfm_regmask_set(&nhm_impl_pmds, 16);
 	pfm_regmask_set(&nhm_impl_pmds, 17);
 	pfm_regmask_set(&nhm_impl_pmds, 18);
-	/* pmd19 undefined */
-	pfm_regmask_set(&nhm_impl_pmds, 20);
-	pfm_regmask_set(&nhm_impl_pmds, 21);
-	pfm_regmask_set(&nhm_impl_pmds, 22);
-	pfm_regmask_set(&nhm_impl_pmds, 23);
-	pfm_regmask_set(&nhm_impl_pmds, 24);
-	pfm_regmask_set(&nhm_impl_pmds, 25);
-	pfm_regmask_set(&nhm_impl_pmds, 26);
-	pfm_regmask_set(&nhm_impl_pmds, 27);
-	pfm_regmask_set(&nhm_impl_pmds, 28);
+
 	/* lbr */
+ 	pfm_regmask_set(&nhm_impl_pmcs, 30);
 	for(i=31; i < 64; i++)
 		pfm_regmask_set(&nhm_impl_pmds, i);
+
+	switch(cpu_model) {
+	case 26:
+	case 30:
+	case 37:
+	case 44:
+        case 46:
+		num_pe = PME_COREI7_EVENT_COUNT;
+		num_unc_pe = PME_COREI7_UNC_EVENT_COUNT;
+		pe = corei7_pe;
+		unc_pe = corei7_unc_pe;
+		pme_cycles = PME_COREI7_UNHALTED_CORE_CYCLES;
+		pme_instr = PME_COREI7_INSTRUCTIONS_RETIRED;
+ 		setup_nhm_impl_unc_regs();
+ 		num_unc_cnt = 9; /* one fixed + 8 generic */
+		break;
+	default:
+		return PFMLIB_ERR_NOTSUPP;
+	}
+ 	intel_nhm_support.num_cnt = 4 + 3 + num_unc_cnt;
+ 	/*
+ 	 * propagate uncore registers to impl bitmaps
+ 	 */
+ 	pfm_regmask_or(&nhm_impl_pmds, &nhm_impl_pmds, &nhm_impl_unc_pmds);
+ 	pfm_regmask_or(&nhm_impl_pmcs, &nhm_impl_pmcs, &nhm_impl_unc_pmcs);
+
+ 	/*
+ 	 * compute number of registers available
+ 	 * not all CPUs may have uncore
+ 	 */
+ 	pfm_regmask_weight(&nhm_impl_pmds, &intel_nhm_support.pmd_count);
+ 	pfm_regmask_weight(&nhm_impl_pmcs, &intel_nhm_support.pmc_count);
+ 
+	intel_nhm_support.pme_count = num_pe + num_unc_pe;
 
 	return PFMLIB_SUCCESS;
 }
@@ -220,10 +279,12 @@ pfm_nhm_init(void)
 static int
 pfm_nhm_is_fixed(pfmlib_event_t *e, unsigned int f)
 {
+	pme_nhm_entry_t *ne;
 	unsigned int fl, flc, i;
 	unsigned int mask = 0;
 
-	fl = nhm_pe[e->event].pme_flags;
+	ne = get_nhm_entry(e->event);
+	fl = ne->pme_flags;
 
 	/*
 	 * first pass: check if event as a whole supports fixed counters
@@ -251,7 +312,7 @@ pfm_nhm_is_fixed(pfmlib_event_t *e, unsigned int f)
 	 */
 	flc = 0;
 	for(i=0; i < e->num_masks; i++) {
-		fl = nhm_pe[e->event].pme_umasks[e->unit_masks[i]].pme_uflags;
+		fl = ne->pme_umasks[e->unit_masks[i]].pme_uflags;
 		if (fl & mask)
 			flc++;
 	}
@@ -279,14 +340,14 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 	uint64_t pebs_mask, ld_mask;
 	unsigned long long fixed_ctr;
 	unsigned int plm;
-	unsigned int npc, npmc01, nf2, nuf;
+	unsigned int npc, npmc01, npmc0, nf2, nuf;
 	unsigned int i, n, k, j, umask, use_pebs = 0;
 	unsigned int assign_pc[PMU_NHM_NUM_COUNTERS];
 	unsigned int next_gen, last_gen, u_flags;
 	unsigned int next_unc_gen, last_unc_gen, lat;
 	unsigned int offcore_value = 0;
 
-	npc = npmc01 = nf2 = nuf = 0;
+	npc = npmc01 = npmc0 = nf2 = nuf = 0;
 	unc_global_ctrl = 0;
 
 	e      = inp->pfp_events;
@@ -312,7 +373,7 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 		if (e[i].plm & (PFM_PLM1|PFM_PLM2))
 			return PFMLIB_ERR_INVAL;
 
-		ne = nhm_pe+e[i].event;
+		ne = get_nhm_entry(e[i].event);
 
 		/*
 		 * check for valid flags
@@ -338,13 +399,20 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 				return PFMLIB_ERR_NOASSIGN;
 			}
 		}
+		if (ne->pme_flags & PFMLIB_NHM_PMC0) {
+			if (++npmc0 > 1) {
+				DPRINT("two events compete for a PMC0\n");
+				return PFMLIB_ERR_NOASSIGN;
+			}
+		}
+
 		/*
 		 * check event-level single register constraint (PMC0/1 only)
 		 * fail if more than two events requested for the same counter pair
 		 */
 		if (ne->pme_flags & PFMLIB_NHM_PMC01) {
 			if (++npmc01 > 2) {
-				DPRINT("two events compete for a PMC0\n");
+				DPRINT("more than two events compete for a PMC0 and PMC1\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
 		}
@@ -357,7 +425,7 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 				DPRINT("two events compete for FIXED_CTR2\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
-			if (cntrs && ((cntrs[i].flags != PFM_NHM_SEL_ANYTHR) || cntrs[i].cnt_mask)) {
+			if (cntrs && ((cntrs[i].flags & (PFM_NHM_SEL_INV|PFM_NHM_SEL_EDGE)) || cntrs[i].cnt_mask)) {
 				DPRINT("UNHALTED_REFERENCE_CYCLES only accepts anythr filter\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
@@ -379,6 +447,10 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 				DPRINT("OFFCORE_RSP0 register not available\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
+			if (!((umask & 0xff) && (umask & 0xff00))) {
+				DPRINT("OFFCORE_RESPONSE must have at least one request and response unit mask set\n");
+				return PFMLIB_ERR_INVAL;
+			}
 			/* lock-in offcore_value */
 			offcore_value = umask;
 		}
@@ -389,8 +461,8 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 		 * they are doing
 		 */
 		if (ne->pme_flags & (PFMLIB_NHM_UNC|PFMLIB_NHM_UNC_FIXED)) {
-			if ((e[i].plm && e[i].plm != (PFM_PLM0|PFM_PLM3))
-			    || (inp->pfp_dfl_plm != (PFM_PLM0|PFM_PLM3))) {
+			if (inp->pfp_dfl_plm != (PFM_PLM0|PFM_PLM3)
+			    && e[i].plm != (PFM_PLM0|PFM_PLM3)) {
 				DPRINT("uncore events must have PLM0|PLM3\n");
 				return PFMLIB_ERR_NOASSIGN;
 			}
@@ -403,13 +475,21 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 	for(i=0; i < PMU_NHM_NUM_COUNTERS; i++)
 		assign_pc[i] = -1;
 
+	next_gen = 0; /* first generic counter */
+	last_gen = 3; /* last generic counter */
 
 	/*
-	 * strongest constraint: only uncore_fixed_ctr0
+	 * strongest constraint: only uncore_fixed_ctr0 or PMC0-only
 	 */
-	if (nuf) {
+	if (nuf || npmc0) {
 		for(i=0; i < n; i++) {
-			ne = nhm_pe+e[i].event;
+			ne = get_nhm_entry(e[i].event);
+			if (ne->pme_flags & PFMLIB_NHM_PMC0) {
+				if (pfm_regmask_isset(r_pmcs, 0))
+					return PFMLIB_ERR_NOASSIGN;
+				assign_pc[i] = 0;
+				next_gen = 1;
+			}
 			if (ne->pme_flags & PFMLIB_NHM_UNC_FIXED) {
 				if (pfm_regmask_isset(r_pmcs, 20))
 					return PFMLIB_ERR_NOASSIGN;
@@ -417,9 +497,6 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 			}
 		}
 	}
-	next_gen = 0; /* first generic counter */
-	last_gen = 3; /* last generic counter */
-
 	/*
 	 * 2nd strongest constraint first: works only on PMC0 or PMC1
 	 * On Nehalem, this constraint applies at the event-level
@@ -432,7 +509,7 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 	 */
 	if (npmc01) {
 		for(i=0; i < n; i++) {
-			ne = nhm_pe+e[i].event;
+			ne = get_nhm_entry(e[i].event);
 			if (ne->pme_flags & PFMLIB_NHM_PMC01) {
 				while (next_gen < 2 && pfm_regmask_isset(r_pmcs, next_gen))
 					next_gen++;
@@ -487,7 +564,7 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 	next_unc_gen = 21; /* first generic uncore counter config */
 	last_unc_gen = 28; /* last generic uncore counter config */
 	for(i=0; i < n; i++) {
-		ne = nhm_pe+e[i].event;
+		ne = get_nhm_entry(e[i].event);
 		if (ne->pme_flags & PFMLIB_NHM_UNC) {
 			for(; next_unc_gen <= last_unc_gen; next_unc_gen++) {
 				if (!pfm_regmask_isset(r_pmcs, next_unc_gen))
@@ -535,7 +612,7 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 			val |= 1ULL;
 		if (plm & PFM_PLM3)
 			val |= 2ULL;
-		if (cntrs[i].flags & PFM_NHM_SEL_ANYTHR)
+		if (cntrs && cntrs[i].flags & PFM_NHM_SEL_ANYTHR)
 			val |= 4ULL;
 		val |= 1ULL << 3;	 /* force APIC int (kernel may force it anyway) */
 
@@ -589,17 +666,24 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 		/* if plm is 0, then assume not specified per-event and use default */
 		plm = e[i].plm ? e[i].plm : inp->pfp_dfl_plm;
 
-		val = nhm_pe[e[i].event].pme_code;
+		ne = get_nhm_entry(e[i].event);
+		val = ne->pme_code;
 
 		reg.sel_event = val & 0xff;
 
 		umask = (val >> 8) & 0xff;
 
 		u_flags = 0;
-		for(k=0; k < e[i].num_masks; k++) {
-			umask |= nhm_pe[e[i].event].pme_umasks[e[i].unit_masks[k]].pme_ucode;
-			u_flags |= nhm_pe[e[i].event].pme_umasks[e[i].unit_masks[k]].pme_uflags;
-		}
+		/*
+ 		 * for OFFCORE_RESPONSE, the unit masks are all in the
+		 * dedicated OFFCORE_RSP MSR and event unit mask must be
+		 * 0x1 (extracted from pme_code
+		 */
+		if (!(ne->pme_flags & PFMLIB_NHM_OFFCORE_RSP0))
+			for(k=0; k < e[i].num_masks; k++) {
+				umask |= ne->pme_umasks[e[i].unit_masks[k]].pme_ucode;
+				u_flags |= ne->pme_umasks[e[i].unit_masks[k]].pme_uflags;
+			}
 		val |= umask << 8;
 
 		reg.sel_umask  = umask;
@@ -639,7 +723,7 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 				reg.sel_anythr = cntrs[i].flags & PFM_NHM_SEL_ANYTHR ? 1 : 0;
 		}
 
-		if (u_flags || (nhm_pe[e[i].event].pme_flags & PFMLIB_NHM_PEBS))
+		if (u_flags || (ne->pme_flags & PFMLIB_NHM_PEBS))
 				pebs_mask |= 1ULL << assign_pc[i];
 
 		/*
@@ -669,7 +753,7 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 				reg.sel_inv,
 				reg.sel_edge,
 				reg.sel_cnt_mask,
-				nhm_pe[e[i].event].pme_name);
+				ne->pme_name);
 
 		__pfm_vbprintf("[PMC%u(pmd%u)]\n",
 				pc[npc].reg_num,
@@ -701,14 +785,15 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 
 		reg.val = 0; /* assume reserved bits are zerooed */
 
-		val = nhm_pe[e[i].event].pme_code;
+		ne = get_nhm_entry(e[i].event);
+		val = ne->pme_code;
 
 		reg.usel_event = val & 0xff;
 
 		umask = (val >> 8) & 0xff;
 
 		for(k=0; k < e[i].num_masks; k++)
-			umask |= nhm_pe[e[i].event].pme_umasks[e[i].unit_masks[k]].pme_ucode;
+			umask |= ne->pme_umasks[e[i].unit_masks[k]].pme_ucode;
 
 		val |= umask << 8;
 
@@ -769,7 +854,7 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 				reg.usel_edge,
 				reg.usel_occ,
 				reg.usel_cnt_mask,
-				nhm_pe[e[i].event].pme_name);
+				ne->pme_name);
 
 		__pfm_vbprintf("[UNC_PMC%u(pmd%u)]\n",
 				pc[npc].reg_num - 21,
@@ -899,7 +984,7 @@ pfm_nhm_dispatch_lbr(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *param,
 
 	reg.val = 0; /* capture everything */
 
-	plm = param->pfm_nhm_lbr.lbr_plm;
+	plm = param->pfp_nhm_lbr.lbr_plm;
 	if (!plm)
 		plm = inp->pfp_dfl_plm;
 
@@ -916,7 +1001,7 @@ pfm_nhm_dispatch_lbr(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *param,
 	if (lbr_plm_map[i] & 0x2)
 		reg.lbr_select.cpl_neq0 = 1;
 
-	filter = param->pfm_nhm_lbr.lbr_filter;
+	filter = param->pfp_nhm_lbr.lbr_filter;
 
 	if (filter & PFM_NHM_LBR_JCC)
 		reg.lbr_select.jcc = 1;
@@ -996,7 +1081,7 @@ pfm_nhm_dispatch_events(pfmlib_input_param_t *inp, void *model_in, pfmlib_output
 	if (ret != PFMLIB_SUCCESS)
 		return ret;
 
-	if (mod_in && mod_in->pfm_nhm_lbr.lbr_used)
+	if (mod_in && mod_in->pfp_nhm_lbr.lbr_used)
 		ret = pfm_nhm_dispatch_lbr(inp, mod_in, outp);
 
 	return ret;
@@ -1014,7 +1099,7 @@ pfm_nhm_get_event_code(unsigned int i, unsigned int cnt, int *code)
 		!pfm_regmask_isset(&cnts, cnt)))
 		return PFMLIB_ERR_INVAL;
 
-	*code = nhm_pe[i].pme_code;
+	*code = get_nhm_entry(i)->pme_code;
 
 	return PFMLIB_SUCCESS;
 }
@@ -1022,17 +1107,19 @@ pfm_nhm_get_event_code(unsigned int i, unsigned int cnt, int *code)
 static void
 pfm_nhm_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 {
+	pme_nhm_entry_t *ne;
 	unsigned int i;
 
 	memset(counters, 0, sizeof(*counters));
 
+	ne = get_nhm_entry(j);
 
-	if (nhm_pe[j].pme_flags & PFMLIB_NHM_UNC_FIXED) {
-		pfm_regmask_set(counters, 19);
+	if (ne->pme_flags & PFMLIB_NHM_UNC_FIXED) {
+		pfm_regmask_set(counters, 20);
 		return;
 	}
 
-	if (nhm_pe[j].pme_flags & PFMLIB_NHM_UNC) {
+	if (ne->pme_flags & PFMLIB_NHM_UNC) {
 		pfm_regmask_set(counters, 20);
 		pfm_regmask_set(counters, 21);
 		pfm_regmask_set(counters, 22);
@@ -1046,24 +1133,24 @@ pfm_nhm_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 	/*
 	 * fixed counter events have no unit mask
 	 */
-	if (nhm_pe[j].pme_flags & PFMLIB_NHM_FIXED0)
+	if (ne->pme_flags & PFMLIB_NHM_FIXED0)
 		pfm_regmask_set(counters, 16);
 
-	if (nhm_pe[j].pme_flags & PFMLIB_NHM_FIXED1)
+	if (ne->pme_flags & PFMLIB_NHM_FIXED1)
 		pfm_regmask_set(counters, 17);
 
-	if (nhm_pe[j].pme_flags & PFMLIB_NHM_FIXED2_ONLY)
+	if (ne->pme_flags & PFMLIB_NHM_FIXED2_ONLY)
 		pfm_regmask_set(counters, 18);
 
 	/*
 	 * extract from unit mask level
 	 */
-	for (i=0; i < nhm_pe[j].pme_numasks; i++) {
-		if (nhm_pe[j].pme_umasks[i].pme_uflags & PFMLIB_NHM_FIXED0)
+	for (i=0; i < ne->pme_numasks; i++) {
+		if (ne->pme_umasks[i].pme_uflags & PFMLIB_NHM_FIXED0)
 			pfm_regmask_set(counters, 16);
-		if (nhm_pe[j].pme_umasks[i].pme_uflags & PFMLIB_NHM_FIXED1)
+		if (ne->pme_umasks[i].pme_uflags & PFMLIB_NHM_FIXED1)
 			pfm_regmask_set(counters, 17);
-		if (nhm_pe[j].pme_umasks[i].pme_uflags & PFMLIB_NHM_FIXED2_ONLY)
+		if (ne->pme_umasks[i].pme_uflags & PFMLIB_NHM_FIXED2_ONLY)
 			pfm_regmask_set(counters, 18);
 	}
 
@@ -1073,8 +1160,9 @@ pfm_nhm_get_event_counters(unsigned int j, pfmlib_regmask_t *counters)
 	 */
 	if (!pfm_regmask_isset(counters, 18)) {
 		pfm_regmask_set(counters, 0);
-		pfm_regmask_set(counters, 1);
-		if (!(nhm_pe[j].pme_flags & PFMLIB_NHM_PMC01)) {
+		if (!(ne->pme_flags & PFMLIB_NHM_PMC0))
+			pfm_regmask_set(counters, 1);
+		if (!(ne->pme_flags & (PFMLIB_NHM_PMC01|PFMLIB_NHM_PMC0))) {
 			pfm_regmask_set(counters, 2);
 			pfm_regmask_set(counters, 3);
 		}
@@ -1096,8 +1184,6 @@ pfm_nhm_get_impl_pmds(pfmlib_regmask_t *impl_pmds)
 static void
 pfm_nhm_get_impl_counters(pfmlib_regmask_t *impl_counters)
 {
-	int i;
-
 	/* core generic */
 	pfm_regmask_set(impl_counters, 0);
 	pfm_regmask_set(impl_counters, 1);
@@ -1108,9 +1194,8 @@ pfm_nhm_get_impl_counters(pfmlib_regmask_t *impl_counters)
 	pfm_regmask_set(impl_counters, 17);
 	pfm_regmask_set(impl_counters, 18);
 
-	/* uncore counters (generic, fixed) */
-	for (i=20; i < 29; i++)
-		pfm_regmask_set(impl_counters, i);
+	/* uncore pmd registers all counters */
+	pfm_regmask_or(impl_counters, impl_counters, &nhm_impl_unc_pmds);
 }
 
 /*
@@ -1136,14 +1221,14 @@ pfm_nhm_get_hw_counter_width(unsigned int *width)
 static char *
 pfm_nhm_get_event_name(unsigned int i)
 {
-	return nhm_pe[i].pme_name;
+	return get_nhm_entry(i)->pme_name;
 }
 
 static int
 pfm_nhm_get_event_description(unsigned int ev, char **str)
 {
 	char *s;
-	s = nhm_pe[ev].pme_desc;
+	s = get_nhm_entry(ev)->pme_desc;
 	if (s) {
 		*str = strdup(s);
 	} else {
@@ -1155,7 +1240,7 @@ pfm_nhm_get_event_description(unsigned int ev, char **str)
 static char *
 pfm_nhm_get_event_mask_name(unsigned int ev, unsigned int midx)
 {
-	return nhm_pe[ev].pme_umasks[midx].pme_uname;
+	return get_nhm_entry(ev)->pme_umasks[midx].pme_uname;
 }
 
 static int
@@ -1163,7 +1248,7 @@ pfm_nhm_get_event_mask_desc(unsigned int ev, unsigned int midx, char **str)
 {
 	char *s;
 
-	s = nhm_pe[ev].pme_umasks[midx].pme_udesc;
+	s = get_nhm_entry(ev)->pme_umasks[midx].pme_udesc;
 	if (s) {
 		*str = strdup(s);
 	} else {
@@ -1175,27 +1260,27 @@ pfm_nhm_get_event_mask_desc(unsigned int ev, unsigned int midx, char **str)
 static unsigned int
 pfm_nhm_get_num_event_masks(unsigned int ev)
 {
-	return nhm_pe[ev].pme_numasks;
+	return get_nhm_entry(ev)->pme_numasks;
 }
 
 static int
 pfm_nhm_get_event_mask_code(unsigned int ev, unsigned int midx, unsigned int *code)
 {
-	*code =nhm_pe[ev].pme_umasks[midx].pme_ucode;
+	*code =get_nhm_entry(ev)->pme_umasks[midx].pme_ucode;
 	return PFMLIB_SUCCESS;
 }
 
 static int
 pfm_nhm_get_cycle_event(pfmlib_event_t *e)
 {
-	e->event = PME_NHM_UNHALTED_CORE_CYCLES;
+	e->event = pme_cycles;
 	return PFMLIB_SUCCESS;
 }
 
 static int
 pfm_nhm_get_inst_retired(pfmlib_event_t *e)
 {
-	e->event = PME_NHM_INSTRUCTIONS_RETIRED;
+	e->event = pme_instr;;
 	return PFMLIB_SUCCESS;
 }
 
@@ -1216,12 +1301,14 @@ pfm_nhm_get_inst_retired(pfmlib_event_t *e)
 int
 pfm_nhm_is_pebs(pfmlib_event_t *e)
 {
+	pme_nhm_entry_t *ne;
 	unsigned int i, n=0;
 
-	if (e == NULL || e->event >= PME_NHM_EVENT_COUNT)
+	if (e == NULL || e->event >= intel_nhm_support.pme_count)
 		return PFMLIB_ERR_INVAL;
 
-	if (nhm_pe[e->event].pme_flags & PFMLIB_NHM_PEBS)
+	ne = get_nhm_entry(e->event);
+	if (ne->pme_flags & PFMLIB_NHM_PEBS)
 		return 1;
 
 	/*
@@ -1229,9 +1316,9 @@ pfm_nhm_is_pebs(pfmlib_event_t *e)
 	 */
 	for(i=0; i < e->num_masks; i++) {
 		/* check for valid unit mask */
-		if (e->unit_masks[i] >= nhm_pe[e->event].pme_numasks)
+		if (e->unit_masks[i] >= ne->pme_numasks)
 			return PFMLIB_ERR_INVAL;
-		if (nhm_pe[e->event].pme_umasks[e->unit_masks[i]].pme_uflags & PFMLIB_NHM_PEBS)
+		if (ne->pme_umasks[e->unit_masks[i]].pme_uflags & PFMLIB_NHM_PEBS)
 			n++;
 	}
 	return n > 0 && n == e->num_masks;
@@ -1247,27 +1334,27 @@ pfm_nhm_is_pebs(pfmlib_event_t *e)
 int
 pfm_nhm_is_uncore(pfmlib_event_t *e)
 {
-	if (e == NULL || e->event >= PME_NHM_EVENT_COUNT)
+	if (e == NULL || e->event >= intel_nhm_support.pme_count)
 		return PFMLIB_ERR_INVAL;
 
-	return !!(nhm_pe[e->event].pme_flags & (PFMLIB_NHM_UNC|PFMLIB_NHM_UNC_FIXED));
+	return !!(get_nhm_entry(e->event)->pme_flags & (PFMLIB_NHM_UNC|PFMLIB_NHM_UNC_FIXED));
 }
 
 static const char *data_src_encodings[]={
-/*  0 */	"unknown LLC cache miss",
-/*  1 */	"minimal latency core cache hit. Request was satisfied by data cache",
+/*  0 */	"unknown L3 cache miss",
+/*  1 */	"minimal latency core cache hit. Request was satisfied by L1 data cache",
 /*  2 */	"pending core cache HIT. Outstanding core cache miss to same cacheline address already underway",
-/*  3 */	"data request satisfied by the MLC",
-/*  4 */	"LLC HIT. Local or remote home request that hit LLC in the uncore with no coherency actions required (snooping)",
-/*  5 */	"LLC HIT. Local or remote home request that hit LLC and was serviced by another core with a cross core snoop where no modified copy was found (clean)",
-/*  6 */	"LLC HIT. Local or remote home request that hit LLC and was serviced by another core with a cross core snoop where modified copy was found (HITM)",
+/*  3 */	"data request satisfied by the L2",
+/*  4 */	"L3 HIT. Local or remote home request that hit L3 in the uncore with no coherency actions required (snooping)",
+/*  5 */	"L3 HIT. Local or remote home request that hit L3 and was serviced by another core with a cross core snoop where no modified copy was found (clean)",
+/*  6 */	"L3 HIT. Local or remote home request that hit L3 and was serviced by another core with a cross core snoop where modified copies were found (HITM)",
 /*  7 */	"reserved",
-/*  8 */	"LLC MISS. Local homed request that missed LLC and was serviced by forwarded data following a cross package snoop where no modified copy was found (remote home request are not counted)",
-/*  9 */	"LLC MISS. Local homed request that missed LLC and was serviced by forwarded data following a cross package snoop where no modified copy was found and coherency actions taken",
-/* 10 */	"LLC MISS. Local homed request that missed LLC and was serviced by local DRAM (go to shared state)",
-/* 11 */	"LLC MISS. Remote homed request that missed LLC and was serviced by remote DRAM (go to shared state)",
-/* 12 */	"LLC MISS. Local homed request that missed LLC and was serviced by local DRAM (go to exclusive state)",
-/* 13 */	"LLC MISS. Remote homed request that missed LLC and was serviced by remote DRAM (go to exclusive state)",
+/*  8 */	"L3 MISS. Local homed request that missed L3 and was serviced by forwarded data following a cross package snoop where no modified copy was found (remote home requests are not counted)",
+/*  9 */	"reserved",
+/* 10 */	"L3 MISS. Local homed request that missed L3 and was serviced by local DRAM (go to shared state)",
+/* 11 */	"L3 MISS. Remote homed request that missed L3 and was serviced by remote DRAM (go to shared state)",
+/* 12 */	"L3 MISS. Local homed request that missed L3 and was serviced by local DRAM (go to exclusive state)",
+/* 13 */	"L3 MISS. Remote homed request that missed L3 and was serviced by remote DRAM (go to exclusive state)",
 /* 14 */	"reserved",
 /* 15 */	"request to uncacheable memory"
 };
@@ -1292,10 +1379,10 @@ int pfm_nhm_data_src_desc(unsigned int val, char **desc)
 pfm_pmu_support_t intel_nhm_support={
 	.pmu_name		= "Intel Nehalem",
 	.pmu_type		= PFMLIB_INTEL_NHM_PMU,
-	.pme_count		= PME_NHM_EVENT_COUNT,
-	.pmc_count		= 18,
-	.pmd_count		= 16,
-	.num_cnt		= 16,
+	.pme_count		= 0,/* patched at runtime */
+	.pmc_count		= 0,/* patched at runtime */
+	.pmd_count		= 0,/* patched at runtime */
+	.num_cnt		= 0,/* patched at runtime */
 	.get_event_code		= pfm_nhm_get_event_code,
 	.get_event_name		= pfm_nhm_get_event_name,
 	.get_event_counters	= pfm_nhm_get_event_counters,
