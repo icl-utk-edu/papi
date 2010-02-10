@@ -1032,7 +1032,11 @@ int _papi_hwi_cleanup_eventset(EventSetInfo_t * ESI)
       }
    }
    
+   /* NOTE: One whould assume that any function named cleanup_eventset should free 
+            allocated memory in the EventSet. And doing so will prevent some of the 
+            memory leaks in several of the tests, but it will also cause other tests to fail. 
    free_EventSet(ESI);
+   */
    return (PAPI_OK);
 }
 
