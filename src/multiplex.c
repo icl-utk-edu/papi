@@ -1106,11 +1106,6 @@ int MPX_cleanup(MPX_EventSet ** mpx_events)
    papi_free(tmp);
 
    *mpx_events = NULL;
-
-   if(tlist)
-     papi_free(tlist);
-
-   tlist = NULL;
    return PAPI_OK;
 }
 
@@ -1119,8 +1114,12 @@ void MPX_shutdown(void)
   MPXDBG("%d\n",getpid());
   mpx_shutdown_itimer();
   mpx_restore_signal();
-}
 
+  if(tlist)
+    papi_free(tlist);
+
+  tlist = NULL;
+}
 
 int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
 {
