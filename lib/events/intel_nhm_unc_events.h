@@ -626,7 +626,6 @@ static const intel_x86_entry_t intel_nhm_unc_pe[]={
 		.desc   = "Cycles QHL Tracker is not empty",
 		.code   = 0x22,
 		.cntmsk = 0x1fe00000,
-		.code   = 0x21,
 		.flags  = 0,
 		.ngrp = 1,
 		.umasks = {
