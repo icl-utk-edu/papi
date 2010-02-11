@@ -37,6 +37,8 @@ ARCH_X86=libpfm_intel_core.3	\
 	 libpfm_intel_atom.3	\
 	 libpfm_intel_nhm.3	\
 	 libpfm_intel_nhm_unc.3 \
+	 libpfm_intel_wsm.3	\
+	 libpfm_intel_wsm_unc.3 \
 	 libpfm_intel_p6.3	\
 	 libpfm_intel_coreduo.3
 
