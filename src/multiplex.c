@@ -1115,10 +1115,14 @@ void MPX_shutdown(void)
   mpx_shutdown_itimer();
   mpx_restore_signal();
 
+  /* NOTE: One would think that in a function named shutdown you could free all memory allocated 
+           in any of these functions. However, tlist (or some pointer pointing to the same memory) 
+           is accessed after this function is called which causes a seg fault.
   if(tlist)
     papi_free(tlist);
 
   tlist = NULL;
+  */
 }
 
 int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
