@@ -172,7 +172,10 @@ pfm_nhm_detect(void)
 	switch(cpu_model) {
 		case 26: /* Nehalem Core i7 */
 		case 30: /* Nehalem Core i5 */
-			  break;
+	        case 37:
+	        case 44:
+                case 46:
+		        break;
 		default:
 			return PFMLIB_ERR_NOTSUPP;
 	}
@@ -238,6 +241,9 @@ pfm_nhm_init(void)
 	switch(cpu_model) {
 	case 26:
 	case 30:
+	case 37:
+	case 44:
+        case 46:
 		num_pe = PME_COREI7_EVENT_COUNT;
 		num_unc_pe = PME_COREI7_UNC_EVENT_COUNT;
 		pe = corei7_pe;
