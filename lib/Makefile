@@ -55,14 +55,16 @@ endif
 ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
 INCARCH = $(INC_IA32)
 SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c pfmlib_intel_x86_arch.c pfmlib_intel_atom.c \
-	  pfmlib_intel_nhm_unc.c pfmlib_intel_coreduo.c pfmlib_intel_p6.c pfmlib_intel_nhm.c
+	  pfmlib_intel_nhm_unc.c pfmlib_intel_coreduo.c pfmlib_intel_p6.c pfmlib_intel_nhm.c \
+	  pfmlib_intel_wsm.c
+
 CFLAGS += -DCONFIG_PFMLIB_ARCH_I386
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_X86_64),y)
 INCARCH = $(INC_X86_64)
 SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c pfmlib_intel_x86_arch.c pfmlib_intel_atom.c \
-	  pfmlib_intel_nhm.c pfmlib_intel_nhm_unc.c
+	  pfmlib_intel_nhm.c pfmlib_intel_nhm_unc.c pfmlib_intel_wsm.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_X86_64
 endif
 

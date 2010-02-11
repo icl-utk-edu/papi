@@ -112,6 +112,8 @@ typedef enum {
 	PFM_PMU_POWER7,			/* IBM POWER7 */
 
 	PFM_PMU_PERF_EVENT,		/* perf_event PMU */
+	PFM_PMU_INTEL_WSM,		/* Intel Westmere */
+	PFM_PMU_INTEL_WSM_UNC,		/* Intel Westmere uncore PMU */
 
 	/* MUST ADD NEW PMU MODELS HERE */
 

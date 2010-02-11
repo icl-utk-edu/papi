@@ -59,6 +59,8 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_atom_support,
 	&intel_nhm_support,
 	&intel_nhm_unc_support,
+	&intel_wsm_support,
+	&intel_wsm_unc_support,
 	&intel_x86_arch_support, /* must always be last for x86-64 */
 #endif
 
@@ -74,6 +76,8 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_atom_support,
 	&intel_nhm_support,
 	&intel_nhm_unc_support,
+	&intel_wsm_support,
+	&intel_wsm_unc_support,
 	&intel_x86_arch_support, /* must always be last for i386 */
 #endif
 

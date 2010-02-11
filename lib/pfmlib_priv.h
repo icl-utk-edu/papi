@@ -172,6 +172,8 @@ extern pfmlib_pmu_t gen_powerpc_support;
 extern pfmlib_pmu_t sparc_support;
 extern pfmlib_pmu_t cell_support;
 extern pfmlib_pmu_t perf_event_support;
+extern pfmlib_pmu_t intel_wsm_support;
+extern pfmlib_pmu_t intel_wsm_unc_support;
 
 extern char *pfmlib_forced_pmu;
 
