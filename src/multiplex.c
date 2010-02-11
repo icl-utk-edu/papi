@@ -999,8 +999,8 @@ int MPX_stop(MPX_EventSet * mpx_events, long long * values)
    long long dummy_value[2];
    long long dummy_mpx_values[PAPI_MPX_DEF_DEG];
    /* long long cycles_this_slice, total_cycles; */
-   MasterEvent *cur_event, *head;
-   Threadlist *thr;
+   MasterEvent *cur_event = NULL, *head;
+   Threadlist *thr = NULL;
 
    if (mpx_events == NULL)
       return PAPI_EINVAL;
@@ -1021,8 +1021,10 @@ int MPX_stop(MPX_EventSet * mpx_events, long long * values)
    head = get_my_threads_master_event_list();
 
    /* Get this threads data structure */
-   thr = head->mythr;
-   cur_event = thr->cur_event;
+   if(head) {
+     thr = head->mythr;
+     cur_event = thr->cur_event;
+   }
 
    /* This would be a good spot to "hold" the counter and then restart
     * it at the end, but PAPI_start resets counters so it is not possible
@@ -1115,14 +1117,10 @@ void MPX_shutdown(void)
   mpx_shutdown_itimer();
   mpx_restore_signal();
 
-  /* NOTE: One would think that in a function named shutdown you could free all memory allocated 
-           in any of these functions. However, tlist (or some pointer pointing to the same memory) 
-           is accessed after this function is called which causes a seg fault.
   if(tlist)
     papi_free(tlist);
 
   tlist = NULL;
-  */
 }
 
 int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
