@@ -89,7 +89,7 @@ else
    endif
 endif
 
-CFLAGS		+= -D_REENTRANT -D_GNU_SOURCE -Wall $(NOTLS) $(BITFLAGS)
+CFLAGS	+= -D_REENTRANT -D_GNU_SOURCE -Wall -Wextra -Wconversion $(NOTLS) $(BITFLAGS)
 OPTFLAGS += $(DEBUGFLAGS)
 
 # 

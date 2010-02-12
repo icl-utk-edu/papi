@@ -27,7 +27,7 @@ else
    endif
 endif
 
-CFLAGS += -Wall 
+CFLAGS += -Wall -Wextra -Wconversion  
 KERNMINVER	= $(shell uname -r | cut -f2 -d.)
 POST_BUILD	=
 SPECIAL_REMOVE =
