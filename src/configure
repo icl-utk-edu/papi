@@ -2094,6 +2094,10 @@ $as_echo_n "checking for CPU type... " >&6; }
 # Check whether --with-CPU was given.
 if test "${with_CPU+set}" = set; then
   withval=$with_CPU; CPU=$withval
+             case "$CPU" in
+               core | core2 | i7 | atom | p4 | p3 | opteron | athlon)
+                 use_x86_cache_info=yes;;
+             esac
 else
 
 
