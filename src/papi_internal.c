@@ -329,7 +329,7 @@ int _papi_hwi_assign_eventset(EventSetInfo_t *ESI, int cidx)
 /* The calling function should check  for ESI==NULL.                      */
 /*========================================================================*/
 
-static void free_EventSet(EventSetInfo_t * ESI)
+void _papi_hwi_free_EventSet(EventSetInfo_t * ESI)
 {
    if (ESI->EventInfoArray)	papi_free(ESI->EventInfoArray);
    if ( ESI->NativeInfoArray)	papi_free(ESI->NativeInfoArray);
@@ -403,7 +403,7 @@ int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle)
 
    retval = add_EventSet(ESI, handle);
    if (retval < PAPI_OK) {
-      free_EventSet(ESI);
+      _papi_hwi_free_EventSet(ESI);
       return (retval);
    }
 
@@ -464,7 +464,7 @@ int _papi_hwi_remove_EventSet(EventSetInfo_t * ESI)
 
    i = ESI->EventSetIndex;
 
-   free_EventSet(ESI);
+   _papi_hwi_free_EventSet(ESI);
 
    /* do bookkeeping for PAPI_EVENTSET_MAP */
 
@@ -1031,12 +1031,7 @@ int _papi_hwi_cleanup_eventset(EventSetInfo_t * ESI)
             return (retval);
       }
    }
-   
-   /* NOTE: One whould assume that any function named cleanup_eventset should free 
-            allocated memory in the EventSet. And doing so will prevent some of the 
-            memory leaks in several of the tests, but it will also cause other tests to fail. 
-   free_EventSet(ESI);
-   */
+ 
    return (PAPI_OK);
 }
 

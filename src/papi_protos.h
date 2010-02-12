@@ -21,6 +21,7 @@
                           long long * values);
  int _papi_hwi_create_eventset(int *EventSet, ThreadInfo_t * handle);
  int _papi_hwi_assign_eventset(EventSetInfo_t *ESI, int cidx);
+ void _papi_hwi_free_EventSet(EventSetInfo_t * ESI);
  int _papi_hwi_add_event(EventSetInfo_t * ESI, int index);
  int _papi_hwi_add_pevent(EventSetInfo_t * ESI, int EventCode, void *inout);
  int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode);

@@ -1956,6 +1956,7 @@ void PAPI_shutdown(void)
          if (ESI->state & PAPI_RUNNING) 
            PAPI_stop(i, NULL);
          PAPI_cleanup_eventset(i);
+         _papi_hwi_free_EventSet(ESI);
        } else if (ESI->state & PAPI_RUNNING) 
        j++;
      }
