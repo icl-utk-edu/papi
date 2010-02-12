@@ -533,10 +533,9 @@ pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int 
 	}
 
 	if (IS_FAMILY_10H())
-		__pfm_vbprintf("[0x%"PRIx64" event_sel=0x%x event_sel2=0x%x umask=0x%x os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d guest=%d host=%d] %s\n",
+		__pfm_vbprintf("[0x%"PRIx64" event_sel=0x%x umask=0x%x os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d guest=%d host=%d] %s\n",
 			reg.val,
-			reg.sel_event_mask,
-			reg.sel_event_mask2,
+			reg.sel_event_mask | (reg.sel_event_mask2 << 8),
 			reg.sel_unit_mask,
 			reg.sel_os,
 			reg.sel_usr,
