@@ -180,7 +180,11 @@ AC_MSG_RESULT($OSVER)
 AC_MSG_CHECKING(for CPU type)
 AC_ARG_WITH(CPU,
             [  --with-CPU=<cpu>		Specify CPU type],
-            [CPU=$withval],
+            [CPU=$withval
+             case "$CPU" in
+               core | core2 | i7 | atom | p4 | p3 | opteron | athlon)      
+                 use_x86_cache_info=yes;;
+             esac],
 	    [
 
 #checking for CPU
