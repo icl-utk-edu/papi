@@ -16,7 +16,7 @@ SHARED  = shlib
 SERIAL  = hwinfo code2name reset subinfo realtime virttime first exeinfo \
 	zero branches dmem_info all_native_events all_events derived high-level2 describe memory  \
 	zero_flip low-level high-level eventname case1 case2 \
-	calibrate flops second johnmay2 matrix-hl tenth encode encode2 ipc
+	calibrate flops second johnmay2 matrix-hl tenth ipc
 FORKEXEC  = fork fork2 exec exec2 forkexec forkexec2 forkexec3 forkexec4 fork_overflow exec_overflow \
 	child_overflow system_child_overflow system_overflow burn zero_fork
 OVERFLOW  = fork_overflow exec_overflow child_overflow system_child_overflow system_overflow burn \
@@ -282,12 +282,6 @@ tenth: tenth.c $(UTILOBJS) $(PAPILIB)
 
 eventname: eventname.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) eventname.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o eventname
-
-encode: encode.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) encode.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o encode
-
-encode2: encode2.c $(UTILOBJS) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) encode2.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o encode2
 
 case1: case1.c $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) case1.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o case1
