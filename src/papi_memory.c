@@ -77,7 +77,7 @@ static int set_epilog(pmem_t *mem_ptr);
  * Checks for NULL pointers and returns NULL if error.
  */
 void *_papi_realloc(char *file, int line, void *ptr, int size){
-  int nsize = size + MEM_PROLOG;
+  unsigned int nsize = size + MEM_PROLOG;
   pmem_t *mem_ptr; 
   void *nptr;
 
@@ -109,7 +109,7 @@ void *_papi_calloc(char *file, int line, int nmemb, int size){
   void *ptr = _papi_malloc(file, line, size*nmemb);
 
   if ( !ptr ) return(NULL);
-  memset(ptr, 0, size*nmemb);
+  memset(ptr, 0, (unsigned int)size*nmemb);
   return(ptr);
 }
 
@@ -117,7 +117,7 @@ void *_papi_malloc(char *file, int line, int size){
   void *ptr;
   void **tmp;
   pmem_t *mem_ptr;
-  int nsize = size + MEM_PROLOG;
+  unsigned int nsize = size + MEM_PROLOG;
 
 #ifdef DEBUG
   nsize += MEM_EPILOG;
@@ -162,7 +162,7 @@ char * _papi_strdup(char *file, int line, const char *s){
 
   if ( !ptr ) return(NULL);
 
-  memcpy(ptr, s, size);
+  memcpy(ptr, s, (unsigned int)size);
   return(ptr);
 }
 
