@@ -104,7 +104,7 @@ unsigned long PAPI_thread_id(void)
    if (_papi_hwi_thread_id_fn != NULL)
      return ((*_papi_hwi_thread_id_fn) ());
    else
-     papi_return (PAPI_EMISC);
+     papi_return ((unsigned long)PAPI_EMISC);
 }
 
 /* Thread Functions */
@@ -374,7 +374,7 @@ int PAPI_query_event(int EventCode)
    }
 
    if (EventCode & PAPI_NATIVE_MASK) {
-      papi_return(_papi_hwi_query_native_event(EventCode));
+      papi_return(_papi_hwi_query_native_event((unsigned int)EventCode));
    }
 
    papi_return(PAPI_ENOTPRESET);
@@ -408,7 +408,7 @@ int PAPI_get_event_info(int EventCode, PAPI_event_info_t * info)
    }
  
    if (EventCode & PAPI_NATIVE_MASK) {
-      papi_return(_papi_hwi_get_native_event_info(EventCode, info));
+      papi_return(_papi_hwi_get_native_event_info((unsigned int)EventCode, info));
    }
 
    papi_return(PAPI_ENOTPRESET);
@@ -431,7 +431,7 @@ int PAPI_event_code_to_name(int EventCode, char *out)
    }
 
    if (EventCode & PAPI_NATIVE_MASK) {
-      return(_papi_hwi_native_code_to_name(EventCode, out, PAPI_MAX_STR_LEN));
+      return(_papi_hwi_native_code_to_name((unsigned int)EventCode, out, PAPI_MAX_STR_LEN));
    }
 
    papi_return(PAPI_ENOEVNT);
@@ -1846,7 +1846,7 @@ int PAPI_perror(int code, char *destination, int length)
       papi_return(PAPI_EINVAL);
 
    if (destination && (length >= 0))
-      strncpy(destination, foo, length);
+      strncpy(destination, foo, (unsigned int)length);
    else
       fprintf(stderr, "%s\n", foo);
 
@@ -1880,7 +1880,7 @@ int PAPI_overflow(int EventSet, int EventCode, int threshold, int flags,
    if (ESI->state & PAPI_ATTACHED)
       papi_return(PAPI_EINVAL);
 
-   if ((index = _papi_hwi_lookup_EventCodeIndex(ESI, EventCode)) < 0)
+   if ((index = _papi_hwi_lookup_EventCodeIndex(ESI, (unsigned int)EventCode)) < 0)
       papi_return(PAPI_ENOEVNT);
 
    if (threshold < 0)
@@ -2008,7 +2008,7 @@ int PAPI_sprofil(PAPI_sprofil_t * prof, int profcnt, int EventSet,
    cidx = valid_ESI_component(ESI);
    if (cidx < 0) papi_return(cidx);
 
-   if ((index = _papi_hwi_lookup_EventCodeIndex(ESI, EventCode)) < 0)
+   if ((index = _papi_hwi_lookup_EventCodeIndex(ESI, (unsigned int)EventCode)) < 0)
       papi_return(PAPI_ENOEVNT);
 
    /* We do not support derived events in overflow */
@@ -2307,7 +2307,7 @@ int PAPI_list_events(int EventSet, int *Events, int *number)
 
    for (i=0,j=0; j < ESI->NumberOfEvents; i++) 
      {
-       if (ESI->EventInfoArray[i].event_code != PAPI_NULL)
+       if ((int)ESI->EventInfoArray[i].event_code != PAPI_NULL)
 	 {
 	   Events[j] = ESI->EventInfoArray[i].event_code;
 	   j++;
