@@ -5,5 +5,3 @@
 # this file must have UNIX line endings
 
 # these tests haven't been implemented
-ctests/encode
-ctests/encode2

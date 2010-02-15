@@ -112,27 +112,6 @@ int _papi_hwi_cleanup_all_presets(void)
    int preset_index;
 
    for (preset_index = 0; preset_index < PAPI_MAX_PRESET_EVENTS; preset_index++) {
-       /* There's currently a debate over the use of papi_xxx memory functions.
-	  One camp says they should always be used; the other says they're only
-	  for debug. Meanwhile, our code had better not rely on their function...
-       */
-#ifndef PAPI_NO_MEMORY_MANAGEMENT
-      /* free the names and descriptions only if they were malloc'd by PAPI
-       * Generally, this info is statically allocated at compile time.
-       * However, it is possible to override existing info, or append new
-       * info to the table. In these cases, papi_valid_free can prevent
-       * pointers from being stranded.
-       */
-  #ifdef PAPI_MOD_EVENTS /* this can only happen if events are modifiable */
-      if (papi_valid_free(_papi_hwi_presets.info[preset_index].symbol))
-         _papi_hwi_presets.info[preset_index].symbol = NULL;
-      if (papi_valid_free(_papi_hwi_presets.info[preset_index].long_descr))
-         _papi_hwi_presets.info[preset_index].long_descr = NULL;
-      if (papi_valid_free(_papi_hwi_presets.info[preset_index].short_descr))
-         _papi_hwi_presets.info[preset_index].short_descr = NULL;
-  #endif
-#endif
-
       /* free the data and or note string if they exist */
       if (_papi_hwi_presets.data[preset_index] != NULL) {
          papi_free(_papi_hwi_presets.data[preset_index]);

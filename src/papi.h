@@ -701,9 +701,7 @@ read the documentation carefully.  */
    int   PAPI_event_code_to_name(int EventCode, char *out);
    int   PAPI_event_name_to_code(char *in, int *out);
    int  PAPI_get_dmem_info(PAPI_dmem_info_t *dest);
-   int   PAPI_encode_events(char * event_file, int replace);
    int   PAPI_get_event_info(int EventCode, PAPI_event_info_t * info);
-   int   PAPI_set_event_info(PAPI_event_info_t * info, int *EventCode, int replace);
    const PAPI_exe_info_t *PAPI_get_executable_info(void);
    const PAPI_hw_info_t *PAPI_get_hardware_info(void);
    const PAPI_component_info_t *PAPI_get_component_info(int cidx);
