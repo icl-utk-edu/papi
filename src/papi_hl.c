@@ -50,7 +50,7 @@ typedef struct _HighLevelInfo {
 
 extern int init_level;
 int _hl_rate_calls(float *real_time, float *proc_time, long long * ins, float *rate,
-                   int EVENT, HighLevelInfo * state);
+                   unsigned int EVENT, HighLevelInfo * state);
 void _internal_cleanup_hl_info(HighLevelInfo * state);
 int _internal_check_state(HighLevelInfo ** state);
 int _internal_start_hl_counters(HighLevelInfo * state);
@@ -207,7 +207,7 @@ int PAPI_ipc(float *rtime, float *ptime, long long * ins, float *ipc)
 }
 
 int _hl_rate_calls(float *real_time, float *proc_time, long long * ins, float *rate,
-                   int EVENT, HighLevelInfo * state)
+                   unsigned int EVENT, HighLevelInfo * state)
 {
    long long values[2] = { 0, 0 };
    int retval = 0;
@@ -225,19 +225,19 @@ int _hl_rate_calls(float *real_time, float *proc_time, long long * ins, float *r
       return (PAPI_EINVAL);
 
    if (state->running == 0) {
-      if (PAPI_query_event(EVENT) != PAPI_OK)
+      if (PAPI_query_event((int)EVENT) != PAPI_OK)
          return (PAPI_ENOEVNT);
 
-      if ((retval = PAPI_add_event(state->EventSet, EVENT)) != PAPI_OK) {
+      if ((retval = PAPI_add_event(state->EventSet, (int)EVENT)) != PAPI_OK) {
          _internal_cleanup_hl_info(state);
          PAPI_cleanup_eventset(state->EventSet);
          return (retval);
       }
 
-      if (PAPI_query_event(PAPI_TOT_CYC) != PAPI_OK)
+      if (PAPI_query_event((int)PAPI_TOT_CYC) != PAPI_OK)
          return (PAPI_ENOEVNT);
 
-      if ((retval = PAPI_add_event(state->EventSet, PAPI_TOT_CYC)) != PAPI_OK) {
+      if ((retval = PAPI_add_event(state->EventSet, (int)PAPI_TOT_CYC)) != PAPI_OK) {
          _internal_cleanup_hl_info(state);
          PAPI_cleanup_eventset(state->EventSet);
          return (retval);
