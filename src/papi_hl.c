@@ -174,7 +174,7 @@ int PAPI_flips(float *rtime, float *ptime, long long * flpins, float *mflips)
       return (retval);
 
    if ((retval =
-        _hl_rate_calls(rtime, ptime, flpins, mflips, PAPI_FP_INS, state)) != PAPI_OK)
+        _hl_rate_calls(rtime, ptime, flpins, mflips, (unsigned int)PAPI_FP_INS, state)) != PAPI_OK)
       return (retval);
 
    return (PAPI_OK);
@@ -189,7 +189,7 @@ int PAPI_flops(float *rtime, float *ptime, long long * flpops, float *mflops)
       return (retval);
 
    if ((retval =
-        _hl_rate_calls(rtime, ptime, flpops, mflops, PAPI_FP_OPS, state)) != PAPI_OK)
+        _hl_rate_calls(rtime, ptime, flpops, mflops, (unsigned int)PAPI_FP_OPS, state)) != PAPI_OK)
       return (retval);
 
    return (PAPI_OK);
@@ -203,7 +203,7 @@ int PAPI_ipc(float *rtime, float *ptime, long long * ins, float *ipc)
    if ((retval = _internal_check_state(&state)) != PAPI_OK)
       return (retval);
 
-   return(_hl_rate_calls(rtime,ptime,ins,ipc,PAPI_TOT_INS,state));
+   return _hl_rate_calls(rtime, ptime, ins, ipc, (unsigned int)PAPI_TOT_INS, state);
 }
 
 int _hl_rate_calls(float *real_time, float *proc_time, long long * ins, float *rate,
@@ -214,11 +214,11 @@ int _hl_rate_calls(float *real_time, float *proc_time, long long * ins, float *r
    int level = 0;
 
 
-   if (EVENT == PAPI_FP_INS)
+   if (EVENT == (unsigned int)PAPI_FP_INS)
       level = HL_FLIPS;
-   else if (EVENT == PAPI_TOT_INS)
+   else if (EVENT == (unsigned int)PAPI_TOT_INS)
       level = HL_IPC;
-   else if (EVENT == PAPI_FP_OPS)
+   else if (EVENT == (unsigned int)PAPI_FP_OPS)
       level = HL_FLOPS;
 
    if (state->running != 0 && state->running != level)
@@ -254,7 +254,7 @@ int _hl_rate_calls(float *real_time, float *proc_time, long long * ins, float *r
       *real_time = (float)((double)(PAPI_get_real_usec() - state->initial_time) * .000001);
       *proc_time = (float)((double)values[1]*.000001/((_papi_hwi_system_info.hw_info.mhz==0)?1:_papi_hwi_system_info.hw_info.mhz));
       if (*proc_time > 0)
-	*rate = (float)((float)values[0]*(EVENT==PAPI_TOT_INS?1:_papi_hwi_system_info.hw_info.mhz)/(float)(values[1]==0?1:values[1]));
+	*rate = (float)((float)values[0]*(EVENT==(unsigned int)PAPI_TOT_INS?1:_papi_hwi_system_info.hw_info.mhz)/(float)(values[1]==0?1:values[1]));
       state->total_proc_time += *proc_time;
       state->total_ins += (float)values[0];
       *proc_time = state->total_proc_time;
