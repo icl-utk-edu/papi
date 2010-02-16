@@ -204,8 +204,11 @@ int _linux_init_substrate(int cidx)
    strcpy(MY_VECTOR.cmp_info.support_version, abiv);
    strcpy(MY_VECTOR.cmp_info.kernel_version, info.driver_version);
    MY_VECTOR.cmp_info.CmpIdx = cidx;
-   MY_VECTOR.cmp_info.num_cntrs = PERFCTR_CPU_NRCTRS(&info);
-   MY_VECTOR.cmp_info.fast_counter_read = (info.cpu_features & PERFCTR_FEATURE_RDPMC) ? 1 : 0;
+   MY_VECTOR.cmp_info.num_cntrs = (int)PERFCTR_CPU_NRCTRS(&info);
+   if (info.cpu_features & PERFCTR_FEATURE_RDPMC)
+     MY_VECTOR.cmp_info.fast_counter_read = 1;
+   else
+     MY_VECTOR.cmp_info.fast_counter_read = 0;
    MY_VECTOR.cmp_info.fast_real_timer = 1;
    MY_VECTOR.cmp_info.fast_virtual_timer = 1;
    MY_VECTOR.cmp_info.attach = 1;
@@ -221,17 +224,18 @@ int _linux_init_substrate(int cidx)
    MY_VECTOR.cmp_info.available_domains = PAPI_DOM_USER|PAPI_DOM_KERNEL;
 #endif
    MY_VECTOR.cmp_info.default_granularity = PAPI_GRN_THR;
-   MY_VECTOR.cmp_info.available_granularities = PAPI_GRN_THR;
-   MY_VECTOR.cmp_info.hardware_intr =
-       (info.cpu_features & PERFCTR_FEATURE_PCINT) ? 1 : 0;
-
+   MY_VECTOR.cmp_info.available_granularities = PAPI_GRN_THR; 
+   if (info.cpu_features & PERFCTR_FEATURE_PCINT)
+     MY_VECTOR.cmp_info.hardware_intr = 1;
+   else
+     MY_VECTOR.cmp_info.hardware_intr = 0;
    SUBDBG("Hardware/OS %s support counter generated interrupts\n",
           MY_VECTOR.cmp_info.hardware_intr ? "does" : "does not");
    MY_VECTOR.cmp_info.itimer_ns = PAPI_INT_MPX_DEF_US * 1000;
-   MY_VECTOR.cmp_info.clock_ticks = sysconf(_SC_CLK_TCK);
+   MY_VECTOR.cmp_info.clock_ticks = (int)sysconf(_SC_CLK_TCK);
 
    strcpy(_papi_hwi_system_info.hw_info.model_string, PERFCTR_CPU_NAME(&info));
-   _papi_hwi_system_info.hw_info.model = info.cpu_type;
+   _papi_hwi_system_info.hw_info.model = (int)info.cpu_type;
 #if defined(PPC64)
    _papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_IBM;
    if (strlen(_papi_hwi_system_info.hw_info.vendor_string) == 0)
@@ -246,15 +250,15 @@ int _linux_init_substrate(int cidx)
 
    /* Setup presets last. Some platforms depend on earlier info */
 #if (!defined(PPC64) && !defined(PPC32))
-   if ( check_p4(info.cpu_type) ){
+   if ( check_p4((int)info.cpu_type) ){
 //     retval = setup_p4_vector_table(vtable);
      if (!retval)
-     	retval = setup_p4_presets(info.cpu_type);
+       retval = setup_p4_presets((int)info.cpu_type);
    }
    else{
 //     retval = setup_p3_vector_table(vtable);
      if (!retval)
-     	retval = setup_p3_presets(info.cpu_type);
+       retval = setup_p3_presets((int)info.cpu_type);
    }
 #elif (defined(PPC64))
 	/* Setup native and preset events */
@@ -284,7 +288,7 @@ static int attach( hwd_control_state_t * ctl, unsigned long tid ) {
 	tmp.flags = VPERFCTR_CONTROL_CLOEXEC;
 #endif
 
-	ctl->rvperfctr = rvperfctr_open( tid );
+	ctl->rvperfctr = rvperfctr_open((int)tid);
 	if( ctl->rvperfctr == NULL ) {
 		PAPIERROR( VOPEN_ERROR ); return (PAPI_ESYS);
 		}
@@ -300,12 +304,12 @@ static int attach( hwd_control_state_t * ctl, unsigned long tid ) {
 		}
 
 	return (PAPI_OK);
-	} /* end attach() */
+} /* end attach() */
 
-static int detach( hwd_control_state_t * ctl, unsigned long tid ) {
+static int detach( hwd_control_state_t * ctl) {
 	rvperfctr_close( ctl->rvperfctr );
 	return (PAPI_OK);
-	} /* end detach() */
+} /* end detach() */
 
 inline_static int round_requested_ns(int ns)
 {
@@ -319,6 +323,11 @@ inline_static int round_requested_ns(int ns)
 
 int _linux_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
+  if(ctx == NULL && code < 0 && option == NULL)
+    PAPIERROR("Invalid values passed to _linux_ctl");
+  /*NOTE The lines above were added because ctx is an unused parameter and 
+         the design makes removing it from the signature too difficut.*/
+
    switch (code) {
    case PAPI_DOMAIN:
    case PAPI_DEFDOM:
@@ -333,7 +342,7 @@ int _linux_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
    case PAPI_ATTACH:
       return (attach(option->attach.ESI->ctl_state, option->attach.tid));
    case PAPI_DETACH:
-      return (detach(option->attach.ESI->ctl_state, option->attach.tid));
+      return (detach(option->attach.ESI->ctl_state));
   case PAPI_DEF_ITIMER:
     {
       /* flags are currently ignored, eventually the flags will be able
@@ -355,7 +364,7 @@ int _linux_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
     }
   case PAPI_DEF_MPX_NS:
     { 
-      option->multiplex.ns = round_requested_ns(option->multiplex.ns);
+      option->multiplex.ns = (unsigned long)round_requested_ns((int)option->multiplex.ns);
       return(PAPI_OK);
     }
   case PAPI_DEF_ITIMER_NS:
@@ -369,6 +378,11 @@ int _linux_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 }
 
 void _linux_dispatch_timer(int signal, siginfo_t * si, void *context) {
+  if(signal < 0 && si == NULL && context == NULL)
+    PAPIERROR("Invalid values passed to _linux_dispatch_timer");
+  /*NOTE The lines above were added because signal is an unused parameter and 
+         the design makes removing it from the signature too difficut.*/
+
    _papi_hwi_context_t ctx;
    ThreadInfo_t *master = NULL;
    int isHardware = 0;
@@ -496,10 +510,10 @@ int _linux_update_shlib_info(void)
 
    /* Alloc our temporary space */
 
-   tmp = (PAPI_address_map_t *) papi_calloc(upper_bound, sizeof(PAPI_address_map_t));
+   tmp = (PAPI_address_map_t *) papi_calloc((size_t)upper_bound, sizeof(PAPI_address_map_t));
    if (tmp == NULL)
      {
-       PAPIERROR("calloc(%d) failed", upper_bound*sizeof(PAPI_address_map_t));
+       PAPIERROR("calloc(%d) failed", upper_bound*(int)sizeof(PAPI_address_map_t));
        fclose(f);
        return(PAPI_OK);
      }
@@ -568,10 +582,10 @@ int _linux_update_shlib_info(void)
    fclose(f);
 
    /* Now condense the list and update exe_info */
-   tmp2 = (PAPI_address_map_t *) papi_calloc(count, sizeof(PAPI_address_map_t));
+   tmp2 = (PAPI_address_map_t *) papi_calloc((size_t)count, sizeof(PAPI_address_map_t));
    if (tmp2 == NULL)
      {
-       PAPIERROR("calloc(%d) failed", count*sizeof(PAPI_address_map_t));
+       PAPIERROR("calloc(%d) failed", count*(int)sizeof(PAPI_address_map_t));
        papi_free(tmp);
        fclose(f);
        return(PAPI_OK);
