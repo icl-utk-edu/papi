@@ -126,7 +126,7 @@ int setup_p3_presets(int cputype) {
 static void copy_value(unsigned int val, char *nam, char *names, unsigned int *values, int len)
 {
    *values = val;
-   strncpy(names, nam, len);
+   strncpy(names, nam, (size_t)len);
    names[len-1] = 0;
 }
 
@@ -136,7 +136,7 @@ int _papi_pfm_ntv_bits_to_info(hwd_register_t *bits, char *names,
    int i = 0;
    copy_value(bits->selector, "Event Selector", &names[i*name_len], &values[i], name_len);
    if (++i == count) return(i);
-   copy_value(bits->counter_cmd, "Event Code", &names[i*name_len], &values[i], name_len);
+   copy_value((unsigned int)bits->counter_cmd, "Event Code", &names[i*name_len], &values[i], name_len);
    return(++i);
 }
 
@@ -154,7 +154,7 @@ int _papi_pfm_ntv_code_to_bits(unsigned int EventCode, hwd_register_t *bits)
     if ((ret = _pfm_get_counter_info(event, &bits->selector, &code)) != PAPI_OK)
       return(ret);
 
-    bits->counter_cmd = code | ((_pfm_convert_umask(event, umask)) << 8);
+    bits->counter_cmd = (int)(code | ((_pfm_convert_umask(event, umask)) << 8));
 
     SUBDBG("selector: 0x%x\n", bits->selector);
     SUBDBG("event: 0x%x; umask: 0x%x; code: 0x%x; cmd: 0x%x\n",event, umask, code, ((hwd_register_t *)bits)->counter_cmd);

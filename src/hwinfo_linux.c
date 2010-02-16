@@ -47,7 +47,7 @@ int get_cpu_info(PAPI_hw_info_t * hwinfo)
   if (s)
     sscanf(s + 1, "%f", &mhz);
   hwinfo->mhz = mhz;
-  hwinfo->clock_mhz = mhz;
+  hwinfo->clock_mhz = (int)mhz;
 
   /* Vendor Name and Vendor Code */
   rewind(f);
@@ -215,7 +215,7 @@ int get_cpu_info(PAPI_hw_info_t * hwinfo)
   hwinfo->ncpu = hwinfo->nnodes > 1 ? hwinfo->totalcpus / hwinfo->nnodes : hwinfo->totalcpus;
 
   /* cpumap data is not currently part of the _papi_hw_info struct */
-  int *nodecpu = (int*)malloc(hwinfo->nnodes * sizeof(int));
+  int *nodecpu = (int*)malloc((unsigned int)hwinfo->nnodes * sizeof(int));
 
   if (nodecpu) {
     int i;
@@ -244,7 +244,8 @@ static FILE * path_vfopen(const char *mode, const char *path, va_list ap)
 
 static int path_sibling(const char *path, ...) 
 {
-  int c, n;
+  int c;
+  long n;
   int result = 0;
   char s[2];
   FILE *fp;
@@ -255,7 +256,7 @@ static int path_sibling(const char *path, ...)
 
   while ((c = fgetc(fp)) != EOF) {
     if (isxdigit(c)) {
-      s[0] = c;
+      s[0] = (char)c;
       s[1] = '\0';
       for (n = strtol(s, NULL, 16); n > 0; n /= 2) {
 	if (n % 2)

@@ -250,7 +250,7 @@ static int init_amd(PAPI_mh_info_t * mh_info)
 	/* AMD Level 2 cache info */
 	if (reg.e.cx) {
 		L[1].cache[0].type = PAPI_MH_TYPE_UNIFIED | PAPI_MH_TYPE_WT | PAPI_MH_TYPE_PSEUDO_LRU;
-		L[1].cache[0].size = ((reg.e.cx & 0xffff0000) >> 6); /* right shift by 16; multiply by 2^10 */
+		L[1].cache[0].size = (int)((reg.e.cx & 0xffff0000) >> 6); /* right shift by 16; multiply by 2^10 */
 		L[1].cache[0].associativity = _amd_L2_L3_assoc((reg.byt[9]&0xF0)>>4);
 		L[1].cache[0].line_size = reg.byt[8];
 /*		L[1].cache[0].num_lines = reg.byt[9]&0xF; */
@@ -262,7 +262,7 @@ static int init_amd(PAPI_mh_info_t * mh_info)
    /* AMD Level 3 cache info (shared across cores) */
 	if (reg.e.dx) {
 		L[2].cache[0].type = PAPI_MH_TYPE_UNIFIED | PAPI_MH_TYPE_WT | PAPI_MH_TYPE_PSEUDO_LRU;
-		L[2].cache[0].size = (reg.e.dx & 0xfffc0000) << 1; /* in blocks of 512KB (2^19) */
+		L[2].cache[0].size = (int)(reg.e.dx & 0xfffc0000) << 1; /* in blocks of 512KB (2^19) */
 		L[2].cache[0].associativity = _amd_L2_L3_assoc((reg.byt[13]&0xF0)>>4);
 		L[2].cache[0].line_size = reg.byt[12];
 /*		L[2].cache[0].num_lines = reg.byt[13]&0xF; */
