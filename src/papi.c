@@ -454,7 +454,7 @@ int PAPI_event_name_to_code(char *in, int *out)
    for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++) {
       if ((_papi_hwi_presets.info[i].symbol)
             && (strcasecmp(_papi_hwi_presets.info[i].symbol, in) == 0)) {
-         *out = (i | PAPI_PRESET_MASK);
+	*out = (int)(i | PAPI_PRESET_MASK);
          papi_return(PAPI_OK);
       }
    }
@@ -475,7 +475,7 @@ int PAPI_enum_event(int *EventCode, int modifier)
    
    if (i & PAPI_PRESET_MASK) {
 	   if (modifier == PAPI_ENUM_FIRST) {
-			 *EventCode = PAPI_PRESET_MASK;
+	     *EventCode = (int)PAPI_PRESET_MASK;
 			 return (PAPI_OK);
 	   }
        i &= PAPI_PRESET_AND_MASK;
@@ -488,7 +488,7 @@ int PAPI_enum_event(int *EventCode, int modifier)
 	       if (_papi_hwi_presets.count[i] == 0)
 		 continue;
 	     }
-	   *EventCode = i | PAPI_PRESET_MASK;
+	   *EventCode = (int)(i | PAPI_PRESET_MASK);
 	   return (PAPI_OK);
          }
    }
@@ -812,7 +812,7 @@ int PAPI_stop(int EventSet, long long * values)
    if (retval != PAPI_OK)
       papi_return(retval);
    if (values)
-      memcpy(values, ESI->sw_stop, ESI->NumberOfEvents * sizeof(long long));
+     memcpy(values, ESI->sw_stop, (size_t)ESI->NumberOfEvents * sizeof(long long));
 
    /* If kernel profiling is in use, flush and process the kernel buffer */
 
@@ -895,7 +895,7 @@ int PAPI_reset(int EventSet)
    //  are truly zero...
       retval = _papi_hwd[cidx]->reset(thread->context[cidx], ESI->ctl_state);
 #endif
-      memset(ESI->sw_stop, 0x00, ESI->NumberOfEvents * sizeof(long long));
+      memset(ESI->sw_stop, 0x00, (size_t)ESI->NumberOfEvents * sizeof(long long));
    }
 
    APIDBG("PAPI_reset returns %d\n", retval);
@@ -927,7 +927,7 @@ int PAPI_read(int EventSet, long long * values)
       if (retval != PAPI_OK)
          papi_return(retval);
    } else {
-      memcpy(values, ESI->sw_stop, ESI->NumberOfEvents * sizeof(long long));
+      memcpy(values, ESI->sw_stop, (size_t)ESI->NumberOfEvents * sizeof(long long));
    }
 
 #if defined(DEBUG)
@@ -968,7 +968,7 @@ int PAPI_read_ts(int EventSet, long long * values, long long *cyc)
       if (retval != PAPI_OK)
          papi_return(retval);
    } else {
-      memcpy(values, ESI->sw_stop, ESI->NumberOfEvents * sizeof(long long));
+      memcpy(values, ESI->sw_stop, (size_t)ESI->NumberOfEvents * sizeof(long long));
    }
 
    *cyc = _papi_hwd[cidx]->get_real_cycles();
@@ -1048,7 +1048,7 @@ int PAPI_write(int EventSet, long long * values)
          return (retval);
    }
 
-   memcpy(ESI->hw_start, values, _papi_hwd[cidx]->cmp_info.num_cntrs * sizeof(long long));
+   memcpy(ESI->hw_start, values, (size_t)_papi_hwd[cidx]->cmp_info.num_cntrs * sizeof(long long));
 
    return (retval);
 }
@@ -1280,13 +1280,13 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 	 papi_return(PAPI_EINVAL);
        /* We should check the resolution here with the system, either
 	  substrate if kernel multiplexing or PAPI if SW multiplexing. */
-       internal.multiplex.ns = ptr->multiplex.ns;
+       internal.multiplex.ns = (unsigned long)ptr->multiplex.ns;
        /* Low level just checks/adjusts the args for this substrate */
        retval = _papi_hwd[cidx]->ctl(thread->context[cidx], PAPI_DEF_MPX_NS, &internal);
        if (retval == PAPI_OK)
 	 {
-	   _papi_hwd[cidx]->cmp_info.itimer_ns = internal.multiplex.ns;
-	   ptr->multiplex.ns = internal.multiplex.ns;
+	   _papi_hwd[cidx]->cmp_info.itimer_ns = (int)internal.multiplex.ns;
+	   ptr->multiplex.ns = (int)internal.multiplex.ns;
 	 }
        papi_return(retval);
      }
@@ -1342,7 +1342,7 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
 	 if (ptr->multiplex.ns < 0)
 	   papi_return(PAPI_EINVAL);
 	 internal.multiplex.ESI = ESI;
-	 internal.multiplex.ns = ptr->multiplex.ns;
+	 internal.multiplex.ns = (unsigned long)ptr->multiplex.ns;
 	 internal.multiplex.flags = ptr->multiplex.flags;
 	 if ((_papi_hwd[cidx]->cmp_info.kernel_multiplex) && ((ptr->multiplex.flags & PAPI_MULTIPLEX_FORCE_SW) == 0))
 	   {
@@ -1350,7 +1350,7 @@ int PAPI_set_opt(int option, PAPI_option_t * ptr)
             retval = _papi_hwd[cidx]->ctl(thread->context[cidx], PAPI_MULTIPLEX, &internal);
 	}
 	 /* Kernel or PAPI may have changed this value so send it back out to the user */
-	 ptr->multiplex.ns = internal.multiplex.ns;
+	 ptr->multiplex.ns = (int)internal.multiplex.ns;
 	    if (retval == PAPI_OK)
 	   	papi_return(_papi_hwi_convert_eventset_to_multiplex(&internal.multiplex));
 		return(retval);
@@ -2309,7 +2309,7 @@ int PAPI_list_events(int EventSet, int *Events, int *number)
      {
        if ((int)ESI->EventInfoArray[i].event_code != PAPI_NULL)
 	 {
-	   Events[j] = ESI->EventInfoArray[i].event_code;
+	   Events[j] = (int)ESI->EventInfoArray[i].event_code;
 	   j++;
 	   if (j == *number)
 	     break;
