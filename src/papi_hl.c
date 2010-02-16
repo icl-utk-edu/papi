@@ -246,17 +246,17 @@ int _hl_rate_calls(float *real_time, float *proc_time, long long * ins, float *r
       state->initial_time = PAPI_get_real_usec();
       if ((retval = PAPI_start(state->EventSet)) != PAPI_OK)
          return (retval);
-      state->running = level;
+      state->running = (short)level;
    } else {
       if ((retval = PAPI_stop(state->EventSet, values)) != PAPI_OK)
          return (retval);
       /* Use Multiplication because it is much faster */
-      *real_time = (float) ((long long)(PAPI_get_real_usec() - state->initial_time) * .000001);
-      *proc_time = (float) (values[1]*.000001/((_papi_hwi_system_info.hw_info.mhz==0)?1:_papi_hwi_system_info.hw_info.mhz));
+      *real_time = (float)((double)(PAPI_get_real_usec() - state->initial_time) * .000001);
+      *proc_time = (float)((double)values[1]*.000001/((_papi_hwi_system_info.hw_info.mhz==0)?1:_papi_hwi_system_info.hw_info.mhz));
       if (*proc_time > 0)
-	*rate = (float) ((float) values[0]*(EVENT==PAPI_TOT_INS?1:_papi_hwi_system_info.hw_info.mhz)/(values[1]==0?1:values[1]));
+	*rate = (float)((float)values[0]*(EVENT==PAPI_TOT_INS?1:_papi_hwi_system_info.hw_info.mhz)/(float)(values[1]==0?1:values[1]));
       state->total_proc_time += *proc_time;
-      state->total_ins += values[0];
+      state->total_ins += (float)values[0];
       *proc_time = state->total_proc_time;
       *ins = (long long)state->total_ins;
       if ((retval = PAPI_start(state->EventSet)) != PAPI_OK) {
@@ -324,7 +324,7 @@ int PAPI_start_counters(int *events, int array_len)
    /* start the EventSet */
    if ((retval = _internal_start_hl_counters(state)) == PAPI_OK) {
       state->running = HL_START_COUNTERS;
-      state->num_evts = array_len;
+      state->num_evts = (short)array_len;
    }
    return (retval);
 }
