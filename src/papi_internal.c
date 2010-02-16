@@ -154,7 +154,7 @@ static int expand_dynamic_array(DynamicArray_t * DA)
    /*realloc existing PAPI_EVENTSET_MAP.dataSlotArray */
 
    number = DA->totalSlots * 2;
-   n = (EventSetInfo_t **) papi_realloc(DA->dataSlotArray, number * sizeof(EventSetInfo_t *));
+   n = (EventSetInfo_t **) papi_realloc(DA->dataSlotArray, (unsigned int)number * sizeof(EventSetInfo_t *));
    if (n == NULL)
       return(PAPI_ENOMEM);
 
@@ -163,7 +163,7 @@ static int expand_dynamic_array(DynamicArray_t * DA)
    DA->dataSlotArray = n;
 
    memset(DA->dataSlotArray + DA->totalSlots, 0x00,
-          DA->totalSlots * sizeof(EventSetInfo_t *));
+          (size_t)DA->totalSlots * sizeof(EventSetInfo_t *));
 
    DA->totalSlots = number;
    DA->availSlots = number - DA->fullSlots;
@@ -197,7 +197,7 @@ static void initialize_EventInfoArray(EventSetInfo_t * ESI)
    /* This is an optimization */
 
    memset(&tmp,0x0,sizeof(tmp));
-   tmp.event_code = PAPI_NULL;
+   tmp.event_code = (unsigned int)PAPI_NULL;
    tmp.ops = NULL;
    tmp.derived = NOT_DERIVED;
    for (j = 0; j < MAX_COUNTER_TERMS; j++)
@@ -219,7 +219,7 @@ static void initialize_NativeInfoArray(EventSetInfo_t * ESI)
 
    max_counters = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
    sz = _papi_hwd[ESI->CmpIdx]->size.reg_value;
-   ptr = (((char *)ESI->NativeInfoArray)+(max_counters*sizeof(NativeInfo_t)));
+   ptr = (((char *)ESI->NativeInfoArray)+((size_t)max_counters*sizeof(NativeInfo_t)));
 
    for (i = 0; i < max_counters; i++) {
       ESI->NativeInfoArray[i].ni_event = -1;
@@ -250,19 +250,19 @@ static int create_EventSet(EventSetInfo_t **here)
 
 int _papi_hwi_assign_eventset(EventSetInfo_t *ESI, int cidx)
 {
-   int max_counters;
+   size_t max_counters;
    char *ptr;
 
    ESI->CmpIdx = cidx;
 
-   max_counters = _papi_hwd[cidx]->cmp_info.num_mpx_cntrs; 
-   ESI->ctl_state = (hwd_control_state_t *)papi_malloc(_papi_hwd[cidx]->size.control_state);
+   max_counters = (size_t)_papi_hwd[cidx]->cmp_info.num_mpx_cntrs; 
+   ESI->ctl_state = (hwd_control_state_t *)papi_malloc((size_t)_papi_hwd[cidx]->size.control_state);
    ESI->sw_stop = (long long *) papi_malloc(max_counters * sizeof(long long));
    ESI->hw_start = (long long *) papi_malloc(max_counters * sizeof(long long));
    ESI->EventInfoArray = (EventInfo_t *) papi_malloc(max_counters * sizeof(EventInfo_t));
 /* allocate room for the native events and for the component-private register structures */
 /* xxxx should these arrays be num_mpx_cntrs or num_cntrs in size?? */
-   ESI->NativeInfoArray = (NativeInfo_t *) papi_malloc(max_counters * sizeof(NativeInfo_t)+max_counters*_papi_hwd[cidx]->size.reg_value);
+   ESI->NativeInfoArray = (NativeInfo_t *) papi_malloc(max_counters * sizeof(NativeInfo_t)+max_counters*(size_t)_papi_hwd[cidx]->size.reg_value);
 
    /* NOTE: the next two malloc allocate blocks of memory that are later parcelled into overflow and profile arrays */
    ESI->overflow.deadline = (long long *) papi_malloc((sizeof(long long)+sizeof(int)*3)*max_counters);
@@ -284,7 +284,7 @@ int _papi_hwi_assign_eventset(EventSetInfo_t *ESI, int cidx)
    }
    memset(ESI->sw_stop, 0x00, max_counters * sizeof(long long));
    memset(ESI->hw_start, 0x00, max_counters * sizeof(long long));
-   memset(ESI->ctl_state, 0x00,_papi_hwd[cidx]->size.control_state);
+   memset(ESI->ctl_state, 0x00,(size_t)_papi_hwd[cidx]->size.control_state);
 
    /* Carve up the overflow block into separate arrays */
    ptr = (char *) ESI->overflow.deadline;
@@ -430,7 +430,7 @@ static int get_free_EventCodeIndex(const EventSetInfo_t * ESI, unsigned int Even
       if (ESI->EventInfoArray[k].event_code == EventCode)
          return(PAPI_ECNFLCT);
       /*if ((ESI->EventInfoArray[k].event_code == PAPI_NULL) && (lowslot == PAPI_ECNFLCT)) */
-      if (ESI->EventInfoArray[k].event_code == PAPI_NULL) {
+      if (ESI->EventInfoArray[k].event_code == (unsigned int)PAPI_NULL) {
          lowslot = k;
          break;
       }
@@ -520,11 +520,11 @@ static void remap_event_position(EventSetInfo_t * ESI, int thisindex)
    for (i = 0; i <= total_events; i++) {
 
       /* find the added event in EventInfoArray */
-      while (head[j].event_code == PAPI_NULL)
+      while (head[j].event_code == (unsigned int)PAPI_NULL)
          j++;
       /* fill in the new information */
       if (head[j].event_code & PAPI_PRESET_MASK) {
-         preset_index = head[j].event_code & PAPI_PRESET_AND_MASK;
+	preset_index = (int)head[j].event_code & PAPI_PRESET_AND_MASK;
          for (k = 0; k < MAX_COUNTER_TERMS; k++) {
             nevt = _papi_hwi_presets.data[preset_index]->native[k];
             if (nevt == PAPI_NULL)
@@ -539,7 +539,7 @@ static void remap_event_position(EventSetInfo_t * ESI, int thisindex)
          /*head[j].pos[k]=-1; */
       } else {
 
-         nevt = head[j].event_code;
+	nevt = (int)head[j].event_code;
          for (n = 0; n < ESI->NativeCount; n++) {
             if (nevt == ESI->NativeInfoArray[n].ni_event) {
                head[j].pos[0] = ESI->NativeInfoArray[n].ni_position;
@@ -691,7 +691,7 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
 
    /* Make sure the event is not present and get the next
       free slot. */
-   thisindex = get_free_EventCodeIndex(ESI, EventCode);
+   thisindex = get_free_EventCodeIndex(ESI, (unsigned int)EventCode);
    if (thisindex < PAPI_OK)
       return (thisindex);
 
@@ -702,7 +702,7 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
 
       if (EventCode & PAPI_PRESET_MASK) {
          int count;
-         int preset_index = EventCode & PAPI_PRESET_AND_MASK & PAPI_COMPONENT_AND_MASK;
+         int preset_index = EventCode & (int)PAPI_PRESET_AND_MASK & (int)PAPI_COMPONENT_AND_MASK;
 
 
          /* Check if it's within the valid range */
@@ -710,7 +710,7 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
             return (PAPI_EINVAL);
 
          /* count the number of native events in this preset */
-         count = _papi_hwi_presets.count[preset_index];
+         count = (int)_papi_hwi_presets.count[preset_index];
 
          /* Check if event exists */
          if (!count)
@@ -737,7 +737,7 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
          else {
             /* Fill in the EventCode (machine independent) information */
 
-            ESI->EventInfoArray[thisindex].event_code = EventCode;
+	   ESI->EventInfoArray[thisindex].event_code = (unsigned int)EventCode;
             ESI->EventInfoArray[thisindex].derived =
                 _papi_hwi_presets.data[preset_index]->derived;
             ESI->EventInfoArray[thisindex].ops =
@@ -747,7 +747,7 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
          }
       } else if (EventCode & PAPI_NATIVE_MASK) {
          /* Check if native event exists */
-         if (_papi_hwi_query_native_event(EventCode) != PAPI_OK)
+         if (_papi_hwi_query_native_event((unsigned int)EventCode) != PAPI_OK)
             return (PAPI_ENOEVNT);
 
          /* check if the native events have been used as overflow
@@ -768,7 +768,7 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
          else {
             /* Fill in the EventCode (machine independent) information */
 
-            ESI->EventInfoArray[thisindex].event_code = EventCode;
+            ESI->EventInfoArray[thisindex].event_code = (unsigned int)EventCode;
             if (remap)
                remap_event_position(ESI, thisindex);
          }
@@ -783,7 +783,8 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
      retval = mpx_add_event(&ESI->multiplex.mpx_evset, EventCode, ESI->domain.domain, ESI->granularity.granularity, ESI->CmpIdx);
       if (retval < PAPI_OK)
          return (retval);
-      ESI->EventInfoArray[thisindex].event_code = EventCode;    /* Relevant */
+
+      ESI->EventInfoArray[thisindex].event_code = (unsigned int)EventCode;    /* Relevant */
       ESI->EventInfoArray[thisindex].derived = NOT_DERIVED;
 
    }
@@ -807,15 +808,14 @@ int _papi_hwi_add_pevent(EventSetInfo_t * ESI, int EventCode, void *inout)
 
    /* Make sure the event is not present and get a free slot. */
 
-   thisindex = get_free_EventCodeIndex(ESI, EventCode);
+   thisindex = get_free_EventCodeIndex(ESI, (unsigned int)EventCode);
    if (thisindex < PAPI_OK)
       return (thisindex);
 
    /* Fill in machine depending info including the EventInfoArray. */
 
-   retval =
-       _papi_hwd[ESI->CmpIdx]->add_prog_event(ESI->ctl_state, EventCode, inout,
-                                &ESI->EventInfoArray[thisindex]);
+   retval = _papi_hwd[ESI->CmpIdx]->add_prog_event(ESI->ctl_state, (unsigned int)EventCode, inout,
+                                                   &ESI->EventInfoArray[thisindex]);
    if (retval < PAPI_OK)
       return (retval);
 
@@ -869,7 +869,7 @@ int remove_native_events(EventSetInfo_t * ESI, int *nevt, int size)
                native[i].ni_position = native[j].ni_position;
                native[i].ni_owners = native[j].ni_owners;
                /* copy opaque [j].ni_bits to [i].ni_bits */
-               memcpy(native[i].ni_bits, native[j].ni_bits, sz);
+               memcpy(native[i].ni_bits, native[j].ni_bits, (size_t)sz);
                /* reset j to initialized state */
                native[j].ni_event = -1;
                native[j].ni_position = -1;
@@ -909,7 +909,7 @@ int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode)
    int j = 0, retval, thisindex;
    EventInfo_t *array;
 
-   thisindex = _papi_hwi_lookup_EventCodeIndex(ESI, EventCode);
+   thisindex = _papi_hwi_lookup_EventCodeIndex(ESI, (unsigned int)EventCode);
    if (thisindex < PAPI_OK)
       return (thisindex);
 
@@ -942,7 +942,7 @@ int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode)
             return (retval);
       } else if (EventCode & PAPI_NATIVE_MASK) {
          /* Check if native event exists */
-         if (_papi_hwi_query_native_event(EventCode) != PAPI_OK)
+         if (_papi_hwi_query_native_event((unsigned int)EventCode) != PAPI_OK)
             return (PAPI_ENOEVNT);
 
          /* Remove the native event. */
@@ -959,7 +959,8 @@ int _papi_hwi_remove_event(EventSetInfo_t * ESI, int EventCode)
       for(;thisindex<ESI->NumberOfEvents-1;thisindex++)
          array[thisindex] = array[thisindex+1];
 
-      array[thisindex].event_code = PAPI_NULL;
+
+      array[thisindex].event_code = (unsigned int)PAPI_NULL;
       for (j = 0; j < MAX_COUNTER_TERMS; j++)
          array[thisindex].pos[j] = -1;
       array[thisindex].ops = NULL;
@@ -1025,8 +1026,8 @@ int _papi_hwi_cleanup_eventset(EventSetInfo_t * ESI)
    tmp = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
    
    for (i = (tmp - 1); i >= 0; i--) {
-      if (ESI->EventInfoArray[i].event_code != PAPI_NULL) {
-         retval = _papi_hwi_remove_event(ESI, ESI->EventInfoArray[i].event_code);
+      if (ESI->EventInfoArray[i].event_code != (unsigned int)PAPI_NULL) {
+	retval = _papi_hwi_remove_event(ESI, (int)ESI->EventInfoArray[i].event_code);
          if (retval != PAPI_OK)
             return (retval);
       }
@@ -1046,7 +1047,8 @@ int _papi_hwi_convert_eventset_to_multiplex(_papi_int_multiplex_t *mpx)
 
    if (ESI->NumberOfEvents)
      {											  
-       mpxlist = (int *) papi_malloc(sizeof(int) * ESI->NumberOfEvents);
+
+       mpxlist = (int *) papi_malloc(sizeof(int) * (size_t)ESI->NumberOfEvents);
        if (mpxlist == NULL) 
 	   return (PAPI_ENOMEM);
 
@@ -1055,9 +1057,10 @@ int _papi_hwi_convert_eventset_to_multiplex(_papi_int_multiplex_t *mpx)
        /* Remember the EventInfoArray can be sparse
 	  and the data can be non-contiguous */
 
+
        for (i = 0; i < EventInfoArrayLength(ESI); i++)
-         if (ESI->EventInfoArray[i].event_code != PAPI_NULL)
-	   mpxlist[j++] = ESI->EventInfoArray[i].event_code;
+         if (ESI->EventInfoArray[i].event_code != (unsigned int)PAPI_NULL)
+	   mpxlist[j++] = (int)ESI->EventInfoArray[i].event_code;
 
        /* Resize the EventInfo_t array */
        
@@ -1080,7 +1083,7 @@ int _papi_hwi_convert_eventset_to_multiplex(_papi_int_multiplex_t *mpx)
    ESI->state |= PAPI_MULTIPLEXING;
    if (_papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex && (flags & PAPI_MULTIPLEX_FORCE_SW))
      ESI->multiplex.flags = PAPI_MULTIPLEX_FORCE_SW;
-   ESI->multiplex.ns = mpx->ns;
+   ESI->multiplex.ns = (int)mpx->ns;
  
    return (PAPI_OK);
 }
@@ -1181,7 +1184,10 @@ void _papi_hwi_shutdown_global_internal(void)
 void _papi_hwi_dummy_handler(int EventSet, void *address, long long  overflow_vector, void * context)
 {
    /* This function is not used and shouldn't be called. */
+  if (EventSet > 0 || overflow_vector > 0 || address == NULL || context == NULL)
    return;
+
+  return;
 }
 
 static long long handle_derived_add(int *position, long long * from)
@@ -1430,8 +1436,8 @@ int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t * event_list, int count, int cidx)
       char * rest_event_list;
       char * copy_rest_event_list;
       int remainder;
-      rest_event_list = (char *) papi_malloc(size*_papi_hwd[cidx]->cmp_info.num_cntrs);
-      copy_rest_event_list = (char *) papi_malloc(size*_papi_hwd[cidx]->cmp_info.num_cntrs);
+      rest_event_list = (char *) papi_malloc((size_t)size*(size_t)_papi_hwd[cidx]->cmp_info.num_cntrs);
+      copy_rest_event_list = (char *) papi_malloc((size_t)size*(size_t)_papi_hwd[cidx]->cmp_info.num_cntrs);
       if ( !rest_event_list || !copy_rest_event_list ) {
         if(rest_event_list) papi_free(rest_event_list);
         if(copy_rest_event_list) papi_free(copy_rest_event_list);
@@ -1441,12 +1447,12 @@ int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t * event_list, int count, int cidx)
       /* copy all unmapped events to a second list and make a backup */
       for (i = 0, j = 0; i < count; i++) {
          if (map_q[i] == 0) {
-            memcpy(&copy_rest_event_list[size*j++], &ptr[size*i], size);
+	   memcpy(&copy_rest_event_list[size*j++], &ptr[size*i], (size_t)size);
          }
       }
       remainder = j;
 
-      memcpy(rest_event_list, copy_rest_event_list, size * remainder);
+      memcpy(rest_event_list, copy_rest_event_list, (size_t)size * (size_t)remainder);
 
       /* try each possible mapping until you fail or find one that works */
       for (i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++) {
@@ -1463,7 +1469,7 @@ int _papi_hwi_bipartite_alloc(hwd_reg_alloc_t * event_list, int count, int cidx)
                break;
 
             /* recursive mapping failed; copy the backup list and try the next combination */
-            memcpy(rest_event_list, copy_rest_event_list, size * remainder);
+            memcpy(rest_event_list, copy_rest_event_list, (size_t)size * (size_t)remainder);
          }
       }
       if (i == _papi_hwd[cidx]->cmp_info.num_cntrs) {
@@ -1494,7 +1500,7 @@ int _papi_hwi_get_event_info(int EventCode, PAPI_event_info_t * info)
 
    if (_papi_hwi_presets.info[i].symbol) { /* if the event is in the preset table */
      memset(info,0,sizeof(*info));
-      info->event_code = EventCode;
+     info->event_code = (unsigned int)EventCode;
       info->event_type = _papi_hwi_presets.type[i];
       info->count = _papi_hwi_presets.count[i];
       strcpy(info->symbol, _papi_hwi_presets.info[i].symbol);
@@ -1508,7 +1514,7 @@ int _papi_hwi_get_event_info(int EventCode, PAPI_event_info_t * info)
          strncpy(info->postfix, _papi_hwi_presets.data[i]->operation, sizeof(info->postfix));
          _papi_hwi_derived_string(_papi_hwi_presets.data[i]->derived, info->derived, sizeof(info->derived));
          for (j=0; j < (int)info->count; j++) {
-            info->code[j] = _papi_hwi_presets.data[i]->native[j];
+	   info->code[j] = (unsigned int)_papi_hwi_presets.data[i]->native[j];
             _papi_hwi_native_code_to_name(info->code[j], info->name[j], sizeof(info->name[j]));
          }
       }
