@@ -26,7 +26,7 @@ platform's documentation carefully.
    functions, etc.
 */
 
-#define PAPI_PRESET_MASK 0x80000000
+#define PAPI_PRESET_MASK ((int)0x80000000)
 #define PAPI_NATIVE_MASK 0x40000000
 #define PAPI_PRESET_AND_MASK 0x7FFFFFFF
 /*#define PAPI_NATIVE_AND_MASK 0x3FFFFFFF*/ /* this masks both native and preset bits */
