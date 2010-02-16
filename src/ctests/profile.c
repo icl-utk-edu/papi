@@ -78,11 +78,11 @@ int main(int argc, char **argv)
 
    prof_print_address("Test case profile: POSIX compatible profiling with hardware counters.\n",prginfo);
    prof_print_prof_info(start,end,mythreshold,event_name);
-   retval = do_profile(start, length, FULL_SCALE, mythreshold, PAPI_PROFIL_BUCKET_16);
+   retval = do_profile(start, (unsigned long)length, FULL_SCALE, mythreshold, PAPI_PROFIL_BUCKET_16);
    if (retval)
-      retval = do_profile(start, length, FULL_SCALE, mythreshold, PAPI_PROFIL_BUCKET_32);
+      retval = do_profile(start, (unsigned long)length, FULL_SCALE, mythreshold, PAPI_PROFIL_BUCKET_32);
    if (retval)
-      retval = do_profile(start, length, FULL_SCALE, mythreshold, PAPI_PROFIL_BUCKET_64);
+      retval = do_profile(start, (unsigned long)length, FULL_SCALE, mythreshold, PAPI_PROFIL_BUCKET_64);
 
    remove_test_events(&EventSet, mask);
 

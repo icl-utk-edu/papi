@@ -1,5 +1,5 @@
 /* 
-* File:    profile.c
+* File:    sprofile.c
 * CVS:     $Id$
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -101,12 +101,12 @@ int main(int argc, char **argv)
    if (!TESTS_QUIET) {
       printf("Test case: PAPI_sprofil()\n");
       printf("---------Buffer 1--------\n");
-      for (i = 0; i < length / 2; i++) {
+      for (i = 0; i < (int)length / 2; i++) {
          if (buf[0][i])
             printf("0x%lx\t%d\n", DO_FLOPS + 2 * i, buf[0][i]);
       }
       printf("---------Buffer 2--------\n");
-      for (i = 0; i < length / 2; i++) {
+      for (i = 0; i < (int)length / 2; i++) {
          if (buf[1][i])
             printf("0x%lx\t%d\n", DO_READS + 2 * i, buf[1][i]);
       }

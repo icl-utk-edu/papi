@@ -46,7 +46,7 @@ int main(int argc, char **argv)
    for (i = 0; i <= 20; i++) {
       if (timer < 0)
          break;
-      sleep(sleep_time);
+      sleep((unsigned int)sleep_time);
       timer = PAPI_get_real_usec();
    }
    if (timer < 0)

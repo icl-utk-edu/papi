@@ -24,7 +24,7 @@ static void cleara(double a[]);
 static void my_main();
 static int my_dummy(int i);
 
-const static PAPI_hw_info_t *hw_info;
+static const PAPI_hw_info_t *hw_info;
 
 int main(int argc, char **argv)
 {
@@ -78,7 +78,7 @@ int main(int argc, char **argv)
    prof_print_address("Test case byte_profile: Multi-event profiling at byte resolution.\n",prginfo);
    prof_print_prof_info(start,end,THRESHOLD,event_name);
    
-   retval = do_profile(start, length, FULL_SCALE*2, THRESHOLD, PAPI_PROFIL_BUCKET_32);
+   retval = do_profile(start, (unsigned)length, FULL_SCALE*2, THRESHOLD, PAPI_PROFIL_BUCKET_32);
 
    remove_test_events(&EventSet, mask);
 
@@ -94,25 +94,25 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
    unsigned long blength;
    int num_buckets;
 
-   const unsigned int *events;
+   const int *events;
 #if defined(__powerpc__)
-   const unsigned int power6_events[] = {PAPI_TOT_CYC, PAPI_FP_INS };
+   const int power6_events[] = {PAPI_TOT_CYC, PAPI_FP_INS };
    int power6_num_events = 2;
-   unsigned int std_events[] = {PAPI_TOT_CYC, PAPI_TOT_INS, PAPI_FP_INS };
+   int std_events[] = {PAPI_TOT_CYC, PAPI_TOT_INS, PAPI_FP_INS };
    int num_events = 3;
    char * header =  "address\t\t\tcyc\tins\tfp_ins\n";
 #else
-   const unsigned int power6_events[] = { };
+   const int power6_events[] = { };
    int power6_num_events = 0;
   #if defined(ITANIUM2)
-   const unsigned int std_events[] = {PAPI_TOT_CYC, PAPI_FP_OPS, PAPI_L2_TCM, PAPI_L1_DCM };
+   const int std_events[] = {PAPI_TOT_CYC, PAPI_FP_OPS, PAPI_L2_TCM, PAPI_L1_DCM };
   #else
-   const unsigned int std_events[] = {PAPI_TOT_CYC, PAPI_TOT_INS, PAPI_FP_OPS, PAPI_L2_TCM };
+   const int std_events[] = {PAPI_TOT_CYC, PAPI_TOT_INS, PAPI_FP_OPS, PAPI_L2_TCM };
   #endif
    int num_events = 4;
    char * header =  "address\t\t\tcyc\tins\tfp_ops\tl2_tcm\n";
 #endif
-   const unsigned int p3_events[] = {PAPI_TOT_CYC, PAPI_TOT_INS};
+   const int p3_events[] = {PAPI_TOT_CYC, PAPI_TOT_INS};
 
    if (strcmp(hw_info->model_string, "POWER6") == 0) {
       events = power6_events;

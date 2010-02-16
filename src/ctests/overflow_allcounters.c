@@ -65,15 +65,15 @@ int main(int argc, char **argv)
       PAPI_TOT_INS, depending on the availability of the event on the
       platform */
    EventSet = enum_add_native_events(&num_events, &events);
-   names = (char **)calloc(num_events, sizeof(char *));
+   names = (char **)calloc((unsigned int)num_events, sizeof(char *));
    for(i=0;i<num_events;i++){
      if (PAPI_event_code_to_name(events[i], name) != PAPI_OK) 
        test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
      else
        names[i] = strdup(name);
    }
-   values = (long long *)calloc(num_events*(num_events+1), sizeof(long long));
-   ovt = (int *)calloc(num_events, sizeof(int));
+   values = (long long *)calloc((unsigned int)(num_events*(num_events+1)), sizeof(long long));
+   ovt = (int *)calloc((unsigned int)num_events, sizeof(int));
 
 #if defined(linux)
      {

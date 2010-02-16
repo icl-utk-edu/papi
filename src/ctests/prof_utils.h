@@ -31,7 +31,7 @@ void prof_print_address(char *title, const PAPI_exe_info_t *prginfo);
 void prof_print_prof_info(caddr_t start, caddr_t end, int threshold, char *event_name);
 void prof_alloc(int num, unsigned long plength);
 void prof_head(unsigned long blength, int bucket_size, int num_buckets, char *header);
-void prof_out(caddr_t start, int n, int bucket, int num_buckets, int scale);
+void prof_out(caddr_t start, int n, int bucket, int num_buckets, unsigned int scale);
 unsigned long prof_size(unsigned long plength, unsigned scale, int bucket, int *num_buckets);
 int prof_check(int n, int bucket, int num_buckets);
 int prof_buckets(int bucket);

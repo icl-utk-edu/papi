@@ -182,7 +182,7 @@ void prof_head(unsigned long blength, int bucket, int num_buckets, char *header)
    address with at least one non-zero bucket.
    Assumes global profbuf[] array pointers.
 */
-void prof_out(caddr_t start, int n, int bucket, int num_buckets, int scale) {
+void prof_out(caddr_t start, int n, int bucket, int num_buckets, unsigned int scale) {
    int i,j;
    unsigned short buf_16;
    unsigned int   buf_32;
