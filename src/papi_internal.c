@@ -1500,7 +1500,7 @@ int _papi_hwi_get_event_info(int EventCode, PAPI_event_info_t * info)
 
    if (_papi_hwi_presets.info[i].symbol) { /* if the event is in the preset table */
      memset(info,0,sizeof(*info));
-     info->event_code = (unsigned int)EventCode;
+     info->event_code = EventCode;
       info->event_type = _papi_hwi_presets.type[i];
       info->count = _papi_hwi_presets.count[i];
       strcpy(info->symbol, _papi_hwi_presets.info[i].symbol);
