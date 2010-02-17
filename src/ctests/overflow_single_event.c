@@ -36,6 +36,8 @@ static int total = 0;                  /* total overflows */
 
 void handler(int EventSet, void *address, long long overflow_vector, void *context)
 {
+   (void) context;
+
    if (!TESTS_QUIET) {
       fprintf(stderr, OVER_FMT, EventSet, address, overflow_vector);
    }

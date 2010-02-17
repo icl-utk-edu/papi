@@ -37,6 +37,8 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
 void handler(int EventSet, void *address, long long overflow_vector, void *context)
 {
+   (void) context;
+
    if (!TESTS_QUIET) {
       fprintf(stderr, OVER_FMT, EventSet, address, overflow_vector);
    }

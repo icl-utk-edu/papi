@@ -8,7 +8,7 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 #define THR 1000000
 #define FLOPS 100000000
 
-unsigned long length;
+unsigned int length;
 caddr_t my_start, my_end;
 
 void *Thread(void *arg)
@@ -80,16 +80,16 @@ void *Thread(void *arg)
 
       printf("Test case: PAPI_profil() for pthreads\n");
       printf("----Profile buffer for Thread 0x%x---\n", (int) pthread_self());
-      for (i = 0; i < length; i++) {
+      for (i = 0; i < (int)length; i++) {
          if (profbuf[i])
             printf("0x%lx\t%d\n", (unsigned long) my_start + 2 * i, profbuf[i]);
       }
    }
-   for (i = 0; i < length; i++)
+   for (i = 0; i < (int)length; i++)
       if (profbuf[i])
          break;
 
-   if (i >= length)
+   if (i >= (int)length)
       test_fail(__FILE__, __LINE__, "No information in buffers", 1);
    free_test_space(values, num_tests);
 

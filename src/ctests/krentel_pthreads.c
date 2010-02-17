@@ -23,6 +23,11 @@ struct timeval start;
 void
 my_handler(int EventSet, void *pc, long long ovec, void *context)
 {
+	(void) EventSet;
+	(void) pc;
+	(void) ovec;
+	(void) context;
+
     long num = (long)pthread_getspecific(key);
 
     if (num < 0 || num > num_threads)

@@ -35,6 +35,8 @@ void handler(int EventSet, void *address, long long overflow_vector, void *conte
 {
   int i;
 
+   (void) context;
+
    if (!TESTS_QUIET) {
       fprintf(stderr, OVER_FMT, EventSet, address, overflow_vector);
    }

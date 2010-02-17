@@ -9,6 +9,8 @@ void *Thread(void *data)
 {
   int i, ret, evtset;
 
+    (void) data;
+
   for( i=0; i<NITER; i++ )
     {
       if ((ret=PAPI_register_thread()) != PAPI_OK)

@@ -30,6 +30,10 @@ void handler(int EventSet, void *address, long long overflow_vector, void * cont
 	   EventSet,(unsigned long)address,overflow_vector,
 	   total[EventSet],PAPI_thread_id());
     printf("%lx vs %lx\n",myid[EventSet],PAPI_thread_id());
+#else /* eliminate unused parameter warning message */
+	(void) address;
+	(void) overflow_vector;
+	(void) context;
 #endif
     total[EventSet]++;
 }

@@ -19,6 +19,7 @@ int total = 0;
 
 void *thread_fn(void *dummy)
 {
+   (void) dummy;
    while (1){
      do_stuff();
    }
@@ -27,6 +28,8 @@ void *thread_fn(void *dummy)
 
 void handler(int EventSet, void *address, long long overflow_vector, void *context)
 {
+	(void) overflow_vector;
+	(void) context;
    if (!TESTS_QUIET) {
       fprintf(stderr, "handler(%d ) Overflow at %p, thread 0x%lux!\n",
               EventSet, address, PAPI_thread_id());
@@ -44,6 +47,8 @@ void mainloop(int arg)
    const PAPI_hw_info_t *hw_info;
    int PAPI_event;
    char event_name[PAPI_MAX_STR_LEN];
+
+   (void) arg;
 
    if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);

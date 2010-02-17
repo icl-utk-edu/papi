@@ -22,6 +22,7 @@
  */
 void *thread_fn(void *dummy)
 {
+	(void) dummy;
    while (1){
      do_stuff();
    }
@@ -37,6 +38,8 @@ void mainloop(int arg)
   int EventSet = PAPI_NULL;
   int retval, i, j = 2;
   PAPI_event_info_t pset;
+
+  (void) arg;
 
    /* Initialize the library */
 

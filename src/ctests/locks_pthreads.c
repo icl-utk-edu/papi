@@ -24,6 +24,8 @@ void *Slave(void *arg)
 {
    long long duration;
 
+   (void) arg;
+
    sleep(1);
    duration = PAPI_get_real_usec();
    lockloop(10000,&tmpcount);

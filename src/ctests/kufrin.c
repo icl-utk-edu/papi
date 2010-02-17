@@ -31,6 +31,8 @@ void *thread(void *arg)
     int eventset, ret;
     long long values[PAPI_MPX_DEF_DEG];
 
+	(void) arg;
+
     eventset = PAPI_NULL;
     ret = PAPI_create_eventset(&eventset);
     if ( ret != PAPI_OK ) {

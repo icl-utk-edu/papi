@@ -10,6 +10,7 @@ extern void clockcore(void);    /* Declared in clockcore.c */
 
 void *pthread_main(void *arg)
 {
+	(void) arg;
 #if 0
    struct vperfctr *ptr = vperfctr_open();
    long long *lcyca;

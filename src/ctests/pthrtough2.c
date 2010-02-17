@@ -9,6 +9,8 @@ void *Thread(void *data)
 {
   int ret, evtset;
 
+  (void) data;
+
   if ((ret=PAPI_register_thread()) != PAPI_OK)
     test_fail(__FILE__, __LINE__, "PAPI_thread_init", ret);
   

@@ -35,6 +35,11 @@ long count, total;
 void
 my_handler(int EventSet, void *pc, long long ovec, void *context)
 {
+  (void) EventSet;
+  (void) pc;
+  (void) ovec;
+  (void) context;
+
     count++;
     total++;
 }

@@ -55,6 +55,9 @@ void check_values(int eventset, int *events, int nevents, long long *values, lon
       }
       printf("\n");
    }
+#else
+	  (void) eventset;
+	  (void) events;
 #endif
 
    if (i)
