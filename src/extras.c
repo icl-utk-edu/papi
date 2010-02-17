@@ -125,7 +125,7 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t * prof,
          - dividing by implicit 2 (2^^1 for a total of 2^^17), for even addresses
          NOTE: 131072 is a valid scale value. It produces byte resolution of addresses
       */
-      lloffset = (address - prof->pr_off) * prof->pr_scale;
+     lloffset = (unsigned long long)((address - prof->pr_off) * prof->pr_scale);
       indx = (unsigned long)(lloffset >> 17);
    }
 
@@ -134,8 +134,9 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t * prof,
       /* test first for 16-bit buckets; this should be the fast case */
       if (flags & PAPI_PROFIL_BUCKET_16) {
          if ((indx * sizeof(short)) < prof->pr_size) {
-            buf16 = prof->pr_base;
-            buf16[indx] += profil_increment(buf16[indx], flags, excess, threshold);
+	    buf16 = prof->pr_base;
+            buf16[indx] = (unsigned short)((unsigned short)buf16[indx] + 
+                                           profil_increment(buf16[indx], flags, excess, threshold));
             PRFDBG("posix_profil_16() bucket %lu = %u\n", indx, buf16[indx]);
          }
       }
@@ -143,7 +144,8 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t * prof,
       else if (flags & PAPI_PROFIL_BUCKET_32) {
          if ((indx * sizeof(int)) < prof->pr_size) {
             buf32 = prof->pr_base;
-            buf32[indx] += profil_increment(buf32[indx], flags, excess, threshold);
+            buf32[indx] = (unsigned int)buf32[indx] + 
+                          (unsigned int)profil_increment(buf32[indx], flags, excess, threshold);
             PRFDBG("posix_profil_32() bucket %lu = %u\n", indx, buf32[indx]);
          }
       }
@@ -151,7 +153,8 @@ static void posix_profil(caddr_t address, PAPI_sprofil_t * prof,
       else {
          if ((indx * sizeof(long long)) < prof->pr_size) {
             buf64 = prof->pr_base;
-            buf64[indx] += profil_increment(buf64[indx], flags, excess, threshold);
+            buf64[indx] = (unsigned long long)buf64[indx] +
+	                  (unsigned long long)profil_increment((long long)buf64[indx], flags, excess, threshold);
             PRFDBG("posix_profil_64() bucket %lu = %lld\n", indx, buf64[indx]);
          }
       }
@@ -412,6 +415,11 @@ int _papi_hwi_using_signal[PAPI_NSIG];
 
 int _papi_hwi_start_timer(int timer, int signal, int ns)
 {
+  /* NOTE compiler needs to think signal is not unused when
+          ANY_THREAD_GETS_SIGNAL is not defined. */
+  if (timer < 0 && signal < 0 && ns < 0)
+    return (PAPI_ESYS);
+
    struct itimerval value;
    int us = ns / 1000;
 
@@ -502,6 +510,11 @@ int _papi_hwi_stop_signal(int signal)
 
 int _papi_hwi_stop_timer(int timer, int signal)
 {
+  /* NOTE compiler needs to think signal is not unused when
+          ANY_THREAD_GETS_SIGNAL is not defined. */
+  if (timer < 0 && signal < 0)
+    return (PAPI_ESYS);
+
 #ifdef ANY_THREAD_GETS_SIGNAL
    _papi_hwi_lock(INTERNAL_LOCK);
    if (_papi_hwi_using_signal[signal] > 1)
@@ -545,7 +558,7 @@ int _papi_hwi_stop_timer(int timer, int signal)
 int _papi_hwi_query_native_event(unsigned int EventCode)
 {
    char name[PAPI_HUGE_STR_LEN]; /* probably overkill, but should always be big enough */
-   int cidx = PAPI_COMPONENT_INDEX(EventCode);
+   int cidx = (int)PAPI_COMPONENT_INDEX(EventCode);
 
    if (_papi_hwi_invalid_cmp(cidx))
       return (PAPI_ENOCMP);
@@ -563,7 +576,7 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
 	unsigned int i, j;
 
 	
-	for ( j = 0, i = 0 | PAPI_NATIVE_MASK; j<papi_num_components; j++, i = 0 | PAPI_NATIVE_MASK )
+	for ( j = 0, i = 0 | PAPI_NATIVE_MASK; j<(unsigned int)papi_num_components; j++, i = 0 | PAPI_NATIVE_MASK )
 	{
 		/* first check each component for name_to_code */
 		if ( vector_find_dummy( ( void* ) _papi_hwd[j]->ntv_name_to_code, NULL ) == NULL )
@@ -584,7 +597,7 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
 				{
 					if (strcasecmp(name, in) == 0) 
 					{
-						*out = i | PAPI_COMPONENT_MASK(j);;
+					  *out = (int)(i | PAPI_COMPONENT_MASK(j));
 						break;
 					} 
 					else
@@ -613,7 +626,7 @@ int _papi_hwi_native_name_to_code(char *in, int *out)
    Returns NULL if name not found */
 int _papi_hwi_native_code_to_name(unsigned int EventCode, char *hwi_name, int len)
 {
-   int cidx = PAPI_COMPONENT_INDEX(EventCode);
+  int cidx = (int)PAPI_COMPONENT_INDEX(EventCode);
 
    if (_papi_hwi_invalid_cmp(cidx))
       return (PAPI_ENOCMP);
@@ -630,7 +643,7 @@ int _papi_hwi_native_code_to_name(unsigned int EventCode, char *hwi_name, int le
 int _papi_hwi_native_code_to_descr(unsigned int EventCode, char *hwi_descr, int len)
 {
    int retval = PAPI_ENOEVNT;
-   int cidx = PAPI_COMPONENT_INDEX(EventCode);
+   int cidx = (int)PAPI_COMPONENT_INDEX(EventCode);
 
    if (_papi_hwi_invalid_cmp(cidx))
       return (PAPI_ENOCMP);
@@ -649,7 +662,7 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
 {
 	hwd_register_t *bits = NULL;
 	int retval;
-	int cidx = PAPI_COMPONENT_INDEX(EventCode);
+	int cidx = (int)PAPI_COMPONENT_INDEX(EventCode);
 
 	if (_papi_hwi_invalid_cmp(cidx))
 		return (PAPI_ENOCMP);
@@ -670,7 +683,7 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
 				/* Convert the register bits structure for this EventCode into
 				arrays of names and values (substrate dependent).
 				*/
-				bits = papi_malloc(_papi_hwd[cidx]->size.reg_value);
+				bits = papi_malloc((size_t)_papi_hwd[cidx]->size.reg_value);
 				if ( bits == NULL ){
 					info->count = 0;
 					return(PAPI_ENOMEM);
@@ -681,7 +694,7 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
 				if (retval < 0) 
                   info->count = 0;
 				else
-                  info->count = retval;
+				  info->count = (unsigned int)retval;
 				if ( bits ) papi_free(bits);
 				return (PAPI_OK);
 			}

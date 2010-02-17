@@ -148,7 +148,7 @@ static unsigned int randomseed;
 #ifndef _WIN32
 static sigset_t sigreset;
 static struct itimerval itime;
-const static struct itimerval itimestop = { { 0, 0 }, { 0, 0 } };
+static const struct itimerval itimestop = { { 0, 0 }, { 0, 0 } };
 static struct sigaction oaction;
 #else
 static MMRESULT mpxTimerID;     /* unique ID for referencing this timer */
@@ -342,7 +342,7 @@ static MasterEvent *get_my_threads_master_event_list(void)
       return (tlist->head);
 
    tid = _papi_hwi_thread_id_fn();
-   unsigned long pid = getpid();
+   unsigned long pid = (unsigned long)getpid();
 
    while (t) {
       if (t->tid == tid || ((tid==0) && (t->tid==pid)))
@@ -363,7 +363,7 @@ static MPX_EventSet *mpx_malloc(Threadlist * t)
    return (newset);
 }
 
-int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode, int domain, int granularity, int cidx)
+int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode, int domain, int granularity)
 {
    MPX_EventSet *newset = *mpx_events;
    int retval, alloced_thread = 0, alloced_newset = 0;
@@ -393,7 +393,7 @@ int mpx_add_event(MPX_EventSet ** mpx_events, int EventCode, int domain, int gra
          t->tid = _papi_hwi_thread_id_fn();
       } else {
          MPXDBG("New process at %p\n", t);
-         t->tid = getpid();
+         t->tid = (unsigned long)getpid();
       }
 
       /* Fill in the fields */
@@ -623,7 +623,7 @@ static void mpx_handler(int signal)
                if (cycles >= MPX_MINCYC)        /* Only update current rate on a decent slice */
                   cur_event->rate_estimate = (double) counts[0] / (double) cycles;
                cur_event->count_estimate +=
-                   (long long) (total_cycles * cur_event->rate_estimate);
+		 (long long)((double)total_cycles * cur_event->rate_estimate);
             } else {
                /* Make sure we ran long enough to get a useful measurement (otherwise
                 * potentially inaccurate rate measurements get averaged in with
@@ -716,12 +716,12 @@ static void mpx_handler(int signal)
 #endif
 }
 
-int MPX_add_events(MPX_EventSet ** mpx_events, int *event_list, int num_events, int domain, int granularity, int cidx)
+int MPX_add_events(MPX_EventSet ** mpx_events, int *event_list, int num_events, int domain, int granularity)
 {
    int i, retval = PAPI_OK;
 
    for (i = 0; i < num_events; i++) {
-      retval = mpx_add_event(mpx_events, event_list[i], domain, granularity, cidx);
+      retval = mpx_add_event(mpx_events, event_list[i], domain, granularity);
 
       if (retval != PAPI_OK)
          return (retval);
@@ -1121,86 +1121,6 @@ void MPX_shutdown(void)
     papi_free(tlist);
 
   tlist = NULL;
-}
-
-int MPX_set_opt(int option, PAPI_option_t * ptr, MPX_EventSet * mpx_events)
-{
-#ifdef PTHREADS
-   int retval;
-#endif
-#ifdef OLD
-   int i;
-   int granularity, domain;
-   int *event_list;
-#endif
-
-   return (PAPI_EINVAL);
-
-#ifdef OLD
-   if (ptr == NULL || mpx_events == NULL)
-      return PAPI_EINVAL;
-
-   switch (option) {
-      /* options that are not per-eventset */
-   case PAPI_INHERIT:
-      return PAPI_set_opt(option, ptr);
-      break;
-
-      /* options that are per-eventset */
-      /* Changing domain or granularity causes the events
-       * in the set to be measured differently.  Conceivably,
-       * one might want to accumulate events measured
-       * differently into the same counter, but it's easier
-       * not to allow it.  So we'll handle new options by
-       * removing the old events and adding new ones with
-       * the new options.
-       */
-   case PAPI_DOMAIN:
-   case PAPI_GRANUL:
-      /* Event set must not be running */
-      if (mpx_events->status == MPX_RUNNING)
-         return PAPI_EINVAL;
-
-      /* Determine the option values to use */
-      if (option == PAPI_DOMAIN) {
-         domain = ptr->domain.domain;
-         granularity = mpx_events->mev[0]->pi.granularity;
-      } else if (option == PAPI_GRANUL) {
-         domain = mpx_events->mev[0]->pi.domain;
-         granularity = ptr->granularity.granularity;
-      }
-
-      /* If no change needed, just return */
-      if (mpx_events->mev[0]->pi.domain == domain
-          && mpx_events->mev[0]->pi.granularity == granularity)
-         return PAPI_OK;
-
-      /* Make a list of the events in the current set */
-      event_list = (int *) papi_malloc(mpx_events->num_events * sizeof(int));
-      if (event_list == NULL)
-	return PAPI_ENOMEM;
-
-      for (i = 0; i < mpx_events->num_events; i++)
-        event_list[i] = mpx_events->mev[i]->pi.event_type;
-
-      mpx_hold();
-
-      /* Remove the events from the master list and the current set */
-      mpx_delete_events(mpx_events);
-
-      /* Put the events back in the event set with the
-       * new options.
-       */
-      mpx_insert_events(mpx_events, event_list, i, domain, granularity);
-
-      mpx_release();
-
-      papi_free(event_list);
-
-      break;
-   }
-   return PAPI_OK;
-#endif
 }
 
 int mpx_check(int EventSet)

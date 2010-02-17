@@ -54,9 +54,9 @@ int _xml_papi_hwi_setup_all_presets(char *arch, hwi_dev_notes_t *notes);
 
  int mpx_check(int EventSet);
  int mpx_init(int);
- int mpx_add_event(MPX_EventSet **, int EventCode, int domain, int granularity, int cidx);
+ int mpx_add_event(MPX_EventSet **, int EventCode, int domain, int granularity);
  int mpx_remove_event(MPX_EventSet **, int EventCode);
- int MPX_add_events(MPX_EventSet ** mpx_events, int *event_list, int num_events, int domain, int granularity, int cidx);
+ int MPX_add_events(MPX_EventSet ** mpx_events, int *event_list, int num_events, int domain, int granularity);
  int MPX_stop(MPX_EventSet * mpx_events, long long * values);
  int MPX_cleanup(MPX_EventSet ** mpx_events);
  void MPX_shutdown(void);

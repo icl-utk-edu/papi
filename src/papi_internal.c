@@ -780,7 +780,7 @@ int _papi_hwi_add_event(EventSetInfo_t * ESI, int EventCode)
 
    } else {
       /* Multiplexing is special. See multiplex.c */
-     retval = mpx_add_event(&ESI->multiplex.mpx_evset, EventCode, ESI->domain.domain, ESI->granularity.granularity, ESI->CmpIdx);
+     retval = mpx_add_event(&ESI->multiplex.mpx_evset, EventCode, ESI->domain.domain, ESI->granularity.granularity);
       if (retval < PAPI_OK)
          return (retval);
 
@@ -1068,7 +1068,7 @@ int _papi_hwi_convert_eventset_to_multiplex(_papi_int_multiplex_t *mpx)
 	   ((_papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex) && 
 	    (flags & PAPI_MULTIPLEX_FORCE_SW))) 
 	 {
-	   retval = MPX_add_events(&ESI->multiplex.mpx_evset, mpxlist, j, ESI->domain.domain, ESI->granularity.granularity, ESI->CmpIdx);
+	   retval = MPX_add_events(&ESI->multiplex.mpx_evset, mpxlist, j, ESI->domain.domain, ESI->granularity.granularity);
 	   if (retval != PAPI_OK) 
 	     {
 	       papi_free(mpxlist);
