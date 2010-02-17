@@ -653,7 +653,8 @@ read the documentation carefully.  */
 #endif
 
    typedef struct event_info {
-      unsigned int event_code;               /* preset (0x8xxxxxxx) or native (0x4xxxxxxx) event code */
+      int event_code;                        /* preset (0x8xxxxxxx) or native (0x4xxxxxxx) event code */
+                                             /* declared as signed because that's what's exposed thru the API */
       unsigned int event_type;               /* event type or category for preset events only */
       unsigned int count;                    /* number of terms (usually 1) in the code and name fields
                                                 - for presets, these terms are native events
