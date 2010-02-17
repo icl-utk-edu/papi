@@ -410,7 +410,7 @@ int _papi_hwi_derived_string(int type, char *derived, int len) {
 
    for(j = 0; _papi_hwi_derived[j].value != -1; j++) {
       if (_papi_hwi_derived[j].value == type) {
-         strncpy(derived, _papi_hwi_derived[j].name, len);
+	strncpy(derived, _papi_hwi_derived[j].name, (size_t)len);
          return(PAPI_OK);
       }
    }

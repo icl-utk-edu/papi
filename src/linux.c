@@ -18,7 +18,6 @@
 extern papi_vector_t MY_VECTOR;
 extern int get_cpu_info(PAPI_hw_info_t * hwinfo);
 
-int _linux_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type);
 int _linux_get_system_info(void);
 
 #ifdef PPC64

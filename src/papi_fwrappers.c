@@ -88,8 +88,8 @@ PAPI_FCALL(papif_get_dmem_info, PAPIF_GET_DMEM_INFO, (long long *dest, int *chec
 PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO,
            (char *fullname, char *name, long long * text_start, long long * text_end,
             long long * data_start, long long * data_end, long long * bss_start,
-            long long * bss_end, char *lib_preload_env, int *check, int fullname_len,
-            int name_len, int lib_preload_env_len))
+            long long * bss_end, int *check, int fullname_len,
+            int name_len))
 #else
 PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO,
            (char *fullname, char *name, long long * text_start, long long * text_end,
@@ -106,10 +106,10 @@ PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO,
 #if defined(_FORTRAN_STRLEN_AT_END)
    int i;
    if ((*check = PAPI_get_opt(PAPI_EXEINFO, &e)) == PAPI_OK) {
-      strncpy(fullname, e.exe_info->fullname, fullname_len);
-      for (i = strlen(e.exe_info->fullname); i < fullname_len; fullname[i++] = ' ');
-      strncpy(name, e.exe_info->address_info.name, name_len);
-      for (i = strlen(e.exe_info->address_info.name); i < name_len; name[i++] = ' ');
+     strncpy(fullname, e.exe_info->fullname, (size_t)fullname_len);
+     for (i = (int)strlen(e.exe_info->fullname); i < fullname_len; fullname[i++] = ' ');
+      strncpy(name, e.exe_info->address_info.name, (size_t)name_len);
+      for (i = (int)strlen(e.exe_info->address_info.name); i < name_len; name[i++] = ' ');
       *text_start = (long) e.exe_info->address_info.text_start;
       *text_end = (long) e.exe_info->address_info.text_end;
       *data_start = (long) e.exe_info->address_info.data_start;
@@ -167,10 +167,10 @@ PAPI_FCALL(papif_get_hardware_info, PAPIF_GET_HARDWARE_INFO, (int *ncpu,
       *revision = hwinfo->revision;
       *mhz = hwinfo->mhz;
 #if defined(_FORTRAN_STRLEN_AT_END)
-      strncpy(vendor_str, hwinfo->vendor_string, vendor_len);
-      for (i = strlen(hwinfo->vendor_string); i < vendor_len; vendor_str[i++] = ' ');
-      strncpy(model_str, hwinfo->model_string, model_len);
-      for (i = strlen(hwinfo->model_string); i < model_len; model_str[i++] = ' ');
+      strncpy(vendor_str, hwinfo->vendor_string, (size_t)vendor_len);
+      for (i = (int)strlen(hwinfo->vendor_string); i < vendor_len; vendor_str[i++] = ' ');
+      strncpy(model_str, hwinfo->model_string, (size_t)model_len);
+      for (i = (int)strlen(hwinfo->model_string); i < model_len; model_str[i++] = ' ');
 #else
       /* This case needs the passed strings to be of sufficient size *
        * and will include the NULL character in the target string    */
@@ -278,9 +278,9 @@ PAPI_FCALL(papif_perror, PAPIF_PERROR, (int *code, char *destination, int *check
 
    *check = PAPI_perror(*code, tmp, PAPI_MAX_STR_LEN);
    /* tmp has \0 within PAPI_MAX_STR_LEN chars so strncpy is safe */
-   strncpy(destination_str, tmp, destination_len);
+   strncpy(destination_str, tmp, (size_t)destination_len);
    /* overwrite any NULLs and trailing garbage in destination_str */
-   for (i = strlen(tmp); i < destination_len; destination_str[i++] = ' ');
+   for (i = (int)strlen(tmp); i < destination_len; destination_str[i++] = ' ');
 #else
    /* Assume that the underlying Fortran implementation 
       can handle \0 terminated strings and that the 
@@ -305,7 +305,7 @@ PAPI_FCALL(papif_query_event, PAPIF_QUERY_EVENT, (int *EventCode, int *check))
 #if defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL(papif_get_event_info, PAPIF_GET_EVENT_INFO,
            (int *EventCode, char *symbol, char *long_descr, char *short_descr, int *count,
-            char *event_note, int *flags, int *check, int symbol_len, int long_descr_len,
+            char *event_note, int *check, int symbol_len, int long_descr_len,
             int short_descr_len, int event_note_len))
 #else
 PAPI_FCALL(papif_get_event_info, PAPIF_GET_EVENT_INFO,
@@ -317,15 +317,15 @@ PAPI_FCALL(papif_get_event_info, PAPIF_GET_EVENT_INFO,
 #if defined(_FORTRAN_STRLEN_AT_END)
    int i;
    if ((*check = PAPI_get_event_info(*EventCode, &info)) == PAPI_OK) {
-      strncpy(symbol, info.symbol, symbol_len);
-      for (i = strlen(info.symbol); i < symbol_len; symbol[i++] = ' ');
-      strncpy(long_descr, info.long_descr, long_descr_len);
-      for (i = strlen(info.long_descr); i < long_descr_len; long_descr[i++] = ' ');
-      strncpy(short_descr, info.short_descr, short_descr_len);
-      for (i = strlen(info.short_descr); i < short_descr_len; short_descr[i++] = ' ');
-      *count = info.count;
-      strncpy(event_note, info.note, event_note_len);
-      for(i=strlen(info.note);i<event_note_len;event_note[i++]=' ');
+     strncpy(symbol, info.symbol, (size_t)symbol_len);
+     for (i = (int)strlen(info.symbol); i < symbol_len; symbol[i++] = ' ');
+     strncpy(long_descr, info.long_descr, (size_t)long_descr_len);
+     for (i = (int)strlen(info.long_descr); i < long_descr_len; long_descr[i++] = ' ');
+      strncpy(short_descr, info.short_descr, (size_t)short_descr_len);
+      for (i = (int)strlen(info.short_descr); i < short_descr_len; short_descr[i++] = ' ');
+      *count = (int)info.count;
+      strncpy(event_note, info.note, (size_t)event_note_len);
+      for(i = (int)strlen(info.note); i < event_note_len; event_note[i++]=' ');
    }
 #else
 /* printf("EventCode: %d\n", *EventCode ); -KSL */
@@ -353,9 +353,9 @@ PAPI_FCALL(papif_event_code_to_name, PAPIF_EVENT_CODE_TO_NAME,
    int i;
    *check = PAPI_event_code_to_name(*EventCode, tmp);
    /* tmp has \0 within PAPI_MAX_STR_LEN chars so strncpy is safe */
-   strncpy(out_str, tmp, out_len);
+   strncpy(out_str, tmp, (size_t)out_len);
    /* overwrite any NULLs and trailing garbage in out_str */
-   for (i = strlen(tmp); i < out_len; out_str[i++] = ' ');
+   for (i = (int)strlen(tmp); i < out_len; out_str[i++] = ' ');
 #else
    /* The array "out" passed by the user must be sufficiently long */
    *check = PAPI_event_code_to_name(*EventCode, out);
@@ -376,7 +376,7 @@ PAPI_FCALL(papif_event_name_to_code, PAPIF_EVENT_NAME_TO_CODE,
 
    /* What is the maximum number of chars to copy ? */
    slen = in_len < PAPI_MAX_STR_LEN ? in_len : PAPI_MAX_STR_LEN;
-   strncpy(tmpin, in_str, slen);
+   strncpy(tmpin, in_str, (size_t)slen);
 
    /* Remove trailing blanks from initial Fortran string */
    for (i = slen - 1; i > -1 && tmpin[i] == ' '; tmpin[i--] = '\0');
@@ -546,8 +546,8 @@ PAPI_FCALL(papif_get_preload, PAPIF_GET_PRELOAD, (char *lib_preload_env, int *ch
    int i;
 
    if ((*check = PAPI_get_opt(PAPI_PRELOAD, &p)) == PAPI_OK) {
-      strncpy(lib_preload_env, p.preload.lib_preload_env, lib_preload_env_len);
-      for (i = strlen(p.preload.lib_preload_env); i < lib_preload_env_len;
+      strncpy(lib_preload_env, p.preload.lib_preload_env, (size_t)lib_preload_env_len);
+      for (i = (int)strlen(p.preload.lib_preload_env); i < lib_preload_env_len;
            lib_preload_env[i++] = ' ');
    }
 #else

@@ -102,13 +102,13 @@ static ThreadInfo_t *allocate_thread(void)
       return (NULL);
    memset(thread, 0x00, sizeof(ThreadInfo_t));
 
-   thread->context = (hwd_context_t **) papi_malloc(sizeof(hwd_context_t *)*papi_num_components);
+   thread->context = (hwd_context_t **)papi_malloc(sizeof(hwd_context_t *) * (size_t)papi_num_components);
    if ( !thread->context ){
      papi_free(thread);
      return(NULL);
    }
 
-   thread->running_eventset = (EventSetInfo_t **) papi_malloc(sizeof(EventSetInfo_t *)*papi_num_components);
+   thread->running_eventset = (EventSetInfo_t **)papi_malloc(sizeof(EventSetInfo_t *) * (size_t)papi_num_components);
    if ( !thread->running_eventset ){
      papi_free(thread->context);
      papi_free(thread);
@@ -116,7 +116,7 @@ static ThreadInfo_t *allocate_thread(void)
    }
 
    for(i=0;i<papi_num_components;i++ ){
-     thread->context[i] = (void *) papi_malloc(_papi_hwd[i]->size.context);
+     thread->context[i] = (void *)papi_malloc((size_t)_papi_hwd[i]->size.context);
      thread->running_eventset[i] = NULL;
      if ( thread->context[i] == NULL ){
        for(i--;i>=0;i--)
@@ -125,14 +125,14 @@ static ThreadInfo_t *allocate_thread(void)
        papi_free(thread);
        return(NULL);
      }
-     memset(thread->context[i], 0x00, _papi_hwd[i]->size.context);
+     memset(thread->context[i], 0x00, (size_t)_papi_hwd[i]->size.context);
     }
 
 
    if (_papi_hwi_thread_id_fn)
      thread->tid = (*_papi_hwi_thread_id_fn)();
    else
-     thread->tid = getpid();
+     thread->tid = (unsigned long)getpid();
 
    THRDBG("Allocated thread 0x%lx at %p\n",thread->tid,thread);
 
@@ -343,7 +343,7 @@ int _papi_hwi_set_thread_id_fn(unsigned long (*id_fn) (void))
   if (id_fn)
     _papi_hwi_thread_head->tid = (*_papi_hwi_thread_id_fn)();
   else
-    _papi_hwi_thread_head->tid = getpid();
+    _papi_hwi_thread_head->tid = (unsigned long)getpid();
 
   THRDBG("New master tid is 0x%lx\n",_papi_hwi_thread_head->tid);
 #else
@@ -362,7 +362,7 @@ int _papi_hwi_shutdown_thread(ThreadInfo_t *thread)
    if (_papi_hwi_thread_id_fn)
      tid = (*_papi_hwi_thread_id_fn)();
    else
-     tid = getpid();
+     tid = (unsigned long)getpid();
 
    if (thread->tid == tid)
      {
