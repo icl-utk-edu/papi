@@ -96,6 +96,7 @@ long long vec_dummy_get_real_cycles (void)
 
 long long vec_dummy_get_virt_usec (const hwd_context_t *zero)
 {
+  (void)zero; /*unused*/
   long long retval;
 #if ((defined _BGL) || (defined _BGP))
       struct rusage ruse;

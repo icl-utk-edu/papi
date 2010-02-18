@@ -23,7 +23,8 @@ extern hwi_presets_t _papi_hwi_presets;
 */
 int _papi_hwi_setup_all_presets(hwi_search_t *findem, hwi_dev_notes_t *notes)
 {
-   int i, j, pnum, preset_index, did_something = 0;
+   int i, pnum, did_something = 0;
+   unsigned int preset_index, j;
 
    /* dense array of events is terminated with a 0 preset.
       don't do anything if NULL pointer. This allows just notes to be loaded.
