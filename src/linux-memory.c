@@ -21,7 +21,8 @@ extern int x86_cache_info(PAPI_mh_info_t * mh_info);
 
 int _linux_get_memory_info(PAPI_hw_info_t * hw_info, int cpu_type)
 {
-	return (x86_cache_info(&hw_info->mem_hierarchy));
+   (void)cpu_type; /*unused*/
+   return (x86_cache_info(&hw_info->mem_hierarchy));
 }
 
 #ifdef _WIN32
@@ -44,6 +45,22 @@ int _linux_get_dmem_info(PAPI_dmem_info_t *d)
    return PAPI_OK;
 }
 #else
+static size_t _strspn(const char *s1, const char *s2)
+{
+  size_t i, j;
+
+  for (i=0; *s1; ++i, ++s1) {
+    for (j=0; s2[j]; ++j)
+      if (*s1 == s2[j])
+        break;
+
+    if (!s2[j])
+      break;
+  }
+  
+  return i;
+}
+
 int _linux_get_dmem_info(PAPI_dmem_info_t *d)
 {
   char fn[PATH_MAX], tmp[PATH_MAX];
@@ -60,51 +77,54 @@ int _linux_get_dmem_info(PAPI_dmem_info_t *d)
     }
   while (1)
     {
+      /* NOTE: Passing tmp to strspn results in a compiler warning that seems to be
+               impossible to resolve. Thus, _strspn was implemented and used below.
+      */
       if (fgets(tmp,PATH_MAX,f) == NULL)
 	break;
-      if (strspn(tmp,"VmSize:") == strlen("VmSize:"))
+      if (_strspn(tmp,"VmSize:") == strlen("VmSize:"))
 	{
 	  sscanf(tmp+strlen("VmSize:"),"%lld",&sz);
 	  d->size = sz;
 	  continue;
 	}
-      if (strspn(tmp,"VmHWM:") == strlen("VmHWM:"))
+      if (_strspn(tmp,"VmHWM:") == strlen("VmHWM:"))
 	{
 	  sscanf(tmp+strlen("VmHWM:"),"%lld",&hwm);
 	  d->high_water_mark = hwm;
 	  continue;
 	}
-      if (strspn(tmp,"VmLck:") == strlen("VmLck:"))
+      if (_strspn(tmp,"VmLck:") == strlen("VmLck:"))
 	{
 	  sscanf(tmp+strlen("VmLck:"),"%lld",&lck);
 	  d->locked = lck;
 	  continue;
 	}
-      if (strspn(tmp,"VmRSS:") == strlen("VmRSS:"))
+      if (_strspn(tmp,"VmRSS:") == strlen("VmRSS:"))
 	{
 	  sscanf(tmp+strlen("VmRSS:"),"%lld",&res);
 	  d->resident = res;
 	  continue;
 	}
-      if (strspn(tmp,"VmData:") == strlen("VmData:"))
+      if (_strspn(tmp,"VmData:") == strlen("VmData:"))
 	{
 	  sscanf(tmp+strlen("VmData:"),"%lld",&dat);
 	  d->heap = dat;
 	  continue;
 	}
-      if (strspn(tmp,"VmStk:") == strlen("VmStk:"))
+      if (_strspn(tmp,"VmStk:") == strlen("VmStk:"))
 	{
 	  sscanf(tmp+strlen("VmStk:"),"%lld",&stk);
 	  d->stack = stk;
 	  continue;
 	}
-      if (strspn(tmp,"VmExe:") == strlen("VmExe:"))
+      if (_strspn(tmp,"VmExe:") == strlen("VmExe:"))
 	{
 	  sscanf(tmp+strlen("VmExe:"),"%lld",&txt);
 	  d->text = txt;
 	  continue;
 	}
-      if (strspn(tmp,"VmLib:") == strlen("VmLib:"))
+      if (_strspn(tmp,"VmLib:") == strlen("VmLib:"))
 	{
 	  sscanf(tmp+strlen("VmLib:"),"%lld",&lib);
 	  d->library = lib;
