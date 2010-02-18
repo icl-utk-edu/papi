@@ -88,8 +88,8 @@ PAPI_FCALL(papif_get_dmem_info, PAPIF_GET_DMEM_INFO, (long long *dest, int *chec
 PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO,
            (char *fullname, char *name, long long * text_start, long long * text_end,
             long long * data_start, long long * data_end, long long * bss_start,
-            long long * bss_end, int *check, int fullname_len,
-            int name_len))
+            long long * bss_end, char *lib_preload_env, int *check, int fullname_len,
+            int name_len, int lib_preload_env_len))
 #else
 PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO,
            (char *fullname, char *name, long long * text_start, long long * text_end,
@@ -104,6 +104,8 @@ PAPI_FCALL(papif_get_exe_info, PAPIF_GET_EXE_INFO,
     conditionalize the cast with (yet another) #ifdef...
 */
 #if defined(_FORTRAN_STRLEN_AT_END)
+   (void)lib_preload_env;     /*Unused*/
+   (void)lib_preload_env_len; /*Unused*/
    int i;
    if ((*check = PAPI_get_opt(PAPI_EXEINFO, &e)) == PAPI_OK) {
      strncpy(fullname, e.exe_info->fullname, (size_t)fullname_len);
@@ -305,7 +307,7 @@ PAPI_FCALL(papif_query_event, PAPIF_QUERY_EVENT, (int *EventCode, int *check))
 #if defined(_FORTRAN_STRLEN_AT_END)
 PAPI_FCALL(papif_get_event_info, PAPIF_GET_EVENT_INFO,
            (int *EventCode, char *symbol, char *long_descr, char *short_descr, int *count,
-            char *event_note, int *check, int symbol_len, int long_descr_len,
+            char *event_note, int *flags, int *check, int symbol_len, int long_descr_len,
             int short_descr_len, int event_note_len))
 #else
 PAPI_FCALL(papif_get_event_info, PAPIF_GET_EVENT_INFO,
@@ -315,6 +317,7 @@ PAPI_FCALL(papif_get_event_info, PAPIF_GET_EVENT_INFO,
 {
    PAPI_event_info_t info;
 #if defined(_FORTRAN_STRLEN_AT_END)
+   (void)flags; /*Unused*/
    int i;
    if ((*check = PAPI_get_event_info(*EventCode, &info)) == PAPI_OK) {
      strncpy(symbol, info.symbol, (size_t)symbol_len);
