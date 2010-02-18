@@ -116,7 +116,7 @@ static int _p3_init_control_state(hwd_control_state_t * ptr) {
       ptr->control.cpu_control.evntsel[0] |= PERF_ENABLE;
       for(i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
          ptr->control.cpu_control.evntsel[i] |= def_mode;
-         ptr->control.cpu_control.pmc_map[i] = i;
+         ptr->control.cpu_control.pmc_map[i] = (unsigned int)i;
       }
       break;
 #ifdef PERFCTR_X86_INTEL_CORE2
@@ -140,7 +140,7 @@ static int _p3_init_control_state(hwd_control_state_t * ptr) {
    case PERFCTR_X86_AMD_K7:
       for (i = 0; i < MY_VECTOR.cmp_info.num_cntrs; i++) {
          ptr->control.cpu_control.evntsel[i] |= PERF_ENABLE | def_mode;
-         ptr->control.cpu_control.pmc_map[i] = i;
+         ptr->control.cpu_control.pmc_map[i] = (unsigned int)i;
       }
       break;
    }
@@ -187,14 +187,14 @@ int _p3_set_domain(hwd_control_state_t * cntrl, int domain) {
     if it can be mapped to counter ctr.
     Returns true if it can, false if it can't. */
 static int _p3_bpt_map_avail(hwd_reg_alloc_t *dst, int ctr) {
-   return(dst->ra_selector & (1 << ctr));
+  return (int)(dst->ra_selector & (1 << ctr));
 }
 
 /* This function forces the event to
     be mapped to only counter ctr.
     Returns nothing.  */
 static void _p3_bpt_map_set(hwd_reg_alloc_t *dst, int ctr) {
-   dst->ra_selector = 1 << ctr;
+  dst->ra_selector = (unsigned int)(1 << ctr);
    dst->ra_rank = 1;
 }
 
@@ -210,7 +210,7 @@ static int _p3_bpt_map_exclusive(hwd_reg_alloc_t * dst) {
     is exclusive, so this detects a conflict if true.
     Returns true if conflict, false if no conflict.  */
 static int _p3_bpt_map_shared(hwd_reg_alloc_t *dst, hwd_reg_alloc_t *src) {
-   return (dst->ra_selector & src->ra_selector);
+  return (int)(dst->ra_selector & src->ra_selector);
 }
 
 /* This function removes shared resources available to the src event
@@ -245,7 +245,7 @@ static int _p3_allocate_registers(EventSetInfo_t *ESI) {
    natNum = ESI->NativeCount;
    for(i = 0; i < natNum; i++) {
       /* retrieve the mapping information about this native event */
-      _p3_ntv_code_to_bits(ESI->NativeInfoArray[i].ni_event, &event_list[i].ra_bits);
+     _p3_ntv_code_to_bits((unsigned int)ESI->NativeInfoArray[i].ni_event, &event_list[i].ra_bits);
 
       /* make sure register allocator only looks at legal registers */
       event_list[i].ra_selector = event_list[i].ra_bits.selector & ALLCNTRS;
@@ -281,7 +281,7 @@ static int _p3_allocate_registers(EventSetInfo_t *ESI) {
 }
 
 static void clear_cs_events(hwd_control_state_t *this_state) {
-   int i,j;
+   unsigned int i,j;
 
    /* total counters is sum of accumulating (nractrs) and interrupting (nrictrs) */
    j = this_state->control.cpu_control.nractrs + this_state->control.cpu_control.nrictrs;
@@ -305,7 +305,8 @@ static void clear_cs_events(hwd_control_state_t *this_state) {
    in the native info structure array. */
 static int _p3_update_control_state(hwd_control_state_t *this_state,
                                    NativeInfo_t *native, int count, hwd_context_t * ctx) {
-   int i, k;
+  (void)ctx; /*unused*/
+   unsigned int i, k;
 
    /* clear out the events from the control state */
    clear_cs_events(this_state);
@@ -314,7 +315,7 @@ static int _p3_update_control_state(hwd_control_state_t *this_state,
      #ifdef PERFCTR_X86_INTEL_CORE2
      case PERFCTR_X86_INTEL_CORE2:
        /* fill the counters we're using */
-       for (i = 0; i < count; i++) {
+       for (i = 0; i < (unsigned int)count; i++) {
          for(k=0;k<MAX_COUNTERS;k++)
            if(native[i].ni_bits->selector & (1 << k)) {
              break;
@@ -331,12 +332,12 @@ static int _p3_update_control_state(hwd_control_state_t *this_state,
      #endif
      default:
        /* fill the counters we're using */
-       for (i = 0; i < count; i++) {
+       for (i = 0; i < (unsigned int)count; i++) {
          /* Add counter control command values to eventset */
          this_state->control.cpu_control.evntsel[i] |= native[i].ni_bits->counter_cmd;
        }
    }
-   this_state->control.cpu_control.nractrs = count;
+   this_state->control.cpu_control.nractrs = (unsigned int)count;
    return (PAPI_OK);
 }
 
@@ -385,7 +386,7 @@ static int _p3_stop(hwd_context_t *ctx, hwd_control_state_t *state) {
 static int _p3_read(hwd_context_t * ctx, hwd_control_state_t * spc, long long ** dp, int flags) {
    if ( flags & PAPI_PAUSED ) {
      vperfctr_read_state(ctx->perfctr, &spc->state, NULL);
-     int i=0;
+     unsigned int i=0;
      for ( i=0;i<spc->control.cpu_control.nractrs+spc->control.cpu_control.nrictrs; i++) {
        SUBDBG("vperfctr_read_state: counter %d =  %lld\n", i, spc->state.pmc[i]);
      }
@@ -479,8 +480,8 @@ static int _p3_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
       contr->cpu_control.evntsel[i] |= PERF_INT_ENABLE;
       contr->cpu_control.nrictrs++;
       contr->cpu_control.nractrs--;
-      nricntrs = contr->cpu_control.nrictrs;
-      nracntrs = contr->cpu_control.nractrs;
+      nricntrs = (int)contr->cpu_control.nrictrs;
+      nracntrs = (int)contr->cpu_control.nractrs;
       contr->si_signo = MY_VECTOR.cmp_info.hardware_intr_sig;
 
       /* move this event to the bottom part of the list if needed */
@@ -494,8 +495,9 @@ static int _p3_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
          contr->cpu_control.nrictrs--;
          contr->cpu_control.nractrs++;
       }
-      nricntrs = contr->cpu_control.nrictrs;
-      nracntrs = contr->cpu_control.nractrs;
+
+      nricntrs = (int)contr->cpu_control.nrictrs;
+      nracntrs = (int)contr->cpu_control.nractrs;
 
       /* move this event to the top part of the list if needed */
       if (i >= nracntrs)
@@ -513,6 +515,8 @@ static int _p3_set_overflow(EventSetInfo_t * ESI, int EventIndex, int threshold)
 }
 
 static int _p3_stop_profiling(ThreadInfo_t * master, EventSetInfo_t * ESI) {
+  (void)master; /*unused*/
+  (void)ESI;    /*unused*/
    return (PAPI_OK);
 }
 
@@ -565,6 +569,7 @@ int setup_p3_vector_table(papi_vectors_t * vtable){
 //}
 //
 int setup_p4_presets(int cputype){
+  (void)cputype; /*unused*/
   return ( PAPI_OK );
 }
 
