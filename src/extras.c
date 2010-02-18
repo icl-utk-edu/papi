@@ -415,11 +415,6 @@ int _papi_hwi_using_signal[PAPI_NSIG];
 
 int _papi_hwi_start_timer(int timer, int signal, int ns)
 {
-  /* NOTE compiler needs to think signal is not unused when
-          ANY_THREAD_GETS_SIGNAL is not defined. */
-  if (timer < 0 && signal < 0 && ns < 0)
-    return (PAPI_ESYS);
-
    struct itimerval value;
    int us = ns / 1000;
 
@@ -434,6 +429,8 @@ int _papi_hwi_start_timer(int timer, int signal, int ns)
        return(PAPI_OK);
      }
    _papi_hwi_unlock(INTERNAL_LOCK);
+#else
+  (void)signal; /*unused*/
 #endif
 
    value.it_interval.tv_sec = 0;
@@ -510,11 +507,6 @@ int _papi_hwi_stop_signal(int signal)
 
 int _papi_hwi_stop_timer(int timer, int signal)
 {
-  /* NOTE compiler needs to think signal is not unused when
-          ANY_THREAD_GETS_SIGNAL is not defined. */
-  if (timer < 0 && signal < 0)
-    return (PAPI_ESYS);
-
 #ifdef ANY_THREAD_GETS_SIGNAL
    _papi_hwi_lock(INTERNAL_LOCK);
    if (_papi_hwi_using_signal[signal] > 1)
@@ -524,6 +516,8 @@ int _papi_hwi_stop_timer(int timer, int signal)
        return(PAPI_OK);
      }
    _papi_hwi_unlock(INTERNAL_LOCK);
+#else
+   (void)signal; /*unused*/
 #endif
 
    INTDBG("turning off timer\n");

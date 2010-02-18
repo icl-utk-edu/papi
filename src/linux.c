@@ -322,11 +322,7 @@ inline_static int round_requested_ns(int ns)
 
 int _linux_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
-  if(ctx == NULL && code < 0 && option == NULL)
-    PAPIERROR("Invalid values passed to _linux_ctl");
-  /*NOTE The lines above were added because ctx is an unused parameter and 
-         the design makes removing it from the signature too difficut.*/
-
+   (void)ctx; /*unused*/
    switch (code) {
    case PAPI_DOMAIN:
    case PAPI_DEFDOM:
@@ -377,11 +373,7 @@ int _linux_ctl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 }
 
 void _linux_dispatch_timer(int signal, siginfo_t * si, void *context) {
-  if(signal < 0 && si == NULL && context == NULL)
-    PAPIERROR("Invalid values passed to _linux_dispatch_timer");
-  /*NOTE The lines above were added because signal is an unused parameter and 
-         the design makes removing it from the signature too difficut.*/
-
+   (void)signal; /*unused*/
    _papi_hwi_context_t ctx;
    ThreadInfo_t *master = NULL;
    int isHardware = 0;

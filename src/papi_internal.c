@@ -1184,9 +1184,10 @@ void _papi_hwi_shutdown_global_internal(void)
 void _papi_hwi_dummy_handler(int EventSet, void *address, long long  overflow_vector, void * context)
 {
    /* This function is not used and shouldn't be called. */
-  if (EventSet > 0 || overflow_vector > 0 || address == NULL || context == NULL)
-   return;
-
+  (void)EventSet;        /*unused*/
+  (void)address;         /*unused*/
+  (void)overflow_vector; /*unused*/
+  (void)context;         /*unused*/
   return;
 }
 
