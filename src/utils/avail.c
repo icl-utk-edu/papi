@@ -144,7 +144,7 @@ int main(int argc, char **argv)
 						"Derived Type:", info.derived, "Postfix Processing String:", info.postfix);
 					for (j=0;j<(int)info.count;j++) {
 						printf(" Native Code[%d]: 0x%x |%s|\n",j,info.code[j], info.name[j]);
-						PAPI_get_event_info(info.code[j], &n_info);
+						PAPI_get_event_info((int)info.code[j], &n_info);
 						printf(" Number of Register Values: %d\n", n_info.count);
 						for (k=0;k<(int)n_info.count;k++)
 							printf(" Register[%2d]: 0x%08x |%s|\n",k, n_info.code[k], n_info.name[k]);

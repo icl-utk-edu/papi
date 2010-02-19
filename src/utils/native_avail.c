@@ -124,7 +124,7 @@ static void space_pad(char *str, int spaces) {
 }
 
 static void print_event(PAPI_event_info_t *info, int offset) {
-	int i, j = 0;
+	unsigned int i, j = 0;
 	char str[EVT_LINE + EVT_LINE];
 
 	/* indent by offset */
@@ -139,13 +139,13 @@ static void print_event(PAPI_event_info_t *info, int offset) {
 
 	while (j <= strlen(info->long_descr))
 	{
-		i = EVT_LINE - strlen(str) - 2;
+	  i = EVT_LINE - (unsigned int)strlen(str) - 2;
 		if (i > 0)
 		{
-			strncat(str, &info->long_descr[j], i);
+		  strncat(str, &info->long_descr[j], i);
 			j +=i;
-			i = strlen(str);
-			space_pad(str, EVT_LINE - i - 1);
+			i = (unsigned int)strlen(str);
+			space_pad(str, EVT_LINE - (int)i - 1);
 			strcat(str, "|");
 		}
 		printf("%s\n",str);

@@ -198,6 +198,7 @@ void xmlize_event(FILE *f, PAPI_event_info_t *info, int num) {
 void enum_preset_events(FILE *f, int cidx, 
 		 const PAPI_component_info_t *comp)
 {
+  (void)comp; /*unused*/
 	int i, num;
 	int retval;
 	PAPI_event_info_t info;
@@ -280,7 +281,7 @@ void enum_native_events(FILE *f, int cidx,
 	fprintf(f, "  </eventset>\n");
 }
 
-void usage( int argc, char *argv[] )
+void usage(char *argv[])
 {
   fprintf(stderr, "Usage: %s [options] [[event1] event2 ...]\n", argv[0]);
   fprintf(stderr, "     options: -h     print help message\n");
@@ -318,7 +319,7 @@ int main( int argc, char *argv[] )
 		{
 		  fprintf(stderr, "Error: component index %d out of bounds (0..%d)\n",
 			  cidx, numc-1);
-		  usage(argc, argv);
+		  usage(argv);
 		  return 1;
 		}
 	      break;
@@ -334,13 +335,13 @@ int main( int argc, char *argv[] )
 	      break;
 	      
 	    case 'h':
-	      usage(argc, argv);
+	      usage(argv);
 	      return 0;
 	      break;
 
 	    default:
 	      fprintf(stderr, "Error: unknown option: %s\n", argv[i]);
-	      usage(argc, argv);
+	      usage(argv);
 	      return 1;
 	    }
 	}
@@ -354,7 +355,7 @@ int main( int argc, char *argv[] )
 	  if( retval!=PAPI_OK )
 	    {
 	      fprintf(stderr, "Error: unknown event: %s\n", argv[i]);
-	      usage(argc, argv);
+	      usage(argv);
 	      return 1;
 	    }
 
@@ -363,7 +364,7 @@ int main( int argc, char *argv[] )
 	  if ( retval != PAPI_OK )
 	    {
 	      fprintf(stderr, "Error: event %s cannot be counted with others\n", argv[i]);
-	      usage(argc, argv);
+	      usage(argv);
 	      return 1;
 	    }
 	  else

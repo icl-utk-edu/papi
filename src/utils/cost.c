@@ -25,14 +25,14 @@ static double do_stats(long long *array, long long *min, long long *max, double 
    *min = *max = array[0]; 
    *average = 0;
    for(i=0; i < num_iters; i++ ) {
-      *average += array[i]; 
+     *average += (double)array[i]; 
       if (*min > array[i]) *min = array[i];
       if (*max < array[i]) *max = array[i];
    }
-   *average = (long) (*average/num_iters); 
+   *average = *average/(double)num_iters; 
    std=0;
    for(i=0; i < num_iters; i++ ) {
-      tmp = array[i]-(*average); 
+     tmp = (double)array[i]-(*average); 
       std += tmp * tmp;
    }
    std = sqrt(std/(num_iters-1));
@@ -50,7 +50,8 @@ static void do_std_dev(long long *a, int *s, double std, double ave) {
 
    for(i=0; i < num_iters; i++ ) {
       for(j=0;j<10;j++) {
-         if ((a[i] - dev[j]) > ave) s[j]++;
+	if (((double)a[i] - dev[j]) > ave) 
+          s[j]++;
       }
    }
 }
@@ -127,7 +128,7 @@ static void do_output(int test_type, long long *array, int bins, int show_std_de
 
    if (show_dist) {
       int *d;
-      d = malloc(bins*sizeof(int));
+      d = malloc((size_t)bins*sizeof(int));
       do_dist(array, min, max, bins, d);
       print_dist(min, max, bins, d);
       free(d);
@@ -165,7 +166,7 @@ int main(int argc, char **argv)
          if (strstr(argv[i], "-s"))
             show_std_dev = 1;
          if (strstr(argv[i], "-t")) {
-            num_iters = atol(argv[i+1]);
+	   num_iters = (int)atol(argv[i+1]);
             if (num_iters) i++;
             else {
                printf ("-t requires a threshold value!\n");
@@ -204,7 +205,7 @@ int main(int argc, char **argv)
    if ((retval = PAPI_stop(EventSet, NULL)) != PAPI_OK)
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 
-   array = (long long *)malloc(num_iters*sizeof(long long));
+   array = (long long *)malloc((size_t)num_iters*sizeof(long long));
    if (array == NULL ) 
       test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
 

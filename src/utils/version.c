@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include "papi.h"
 
-int main(int argc, char **argv)
+int main()
 {
 	printf("PAPI Version: %d.%d.%d.%d\n", PAPI_VERSION_MAJOR(PAPI_VERSION),
 		PAPI_VERSION_MINOR(PAPI_VERSION), PAPI_VERSION_REVISION(PAPI_VERSION),

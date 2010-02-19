@@ -35,8 +35,8 @@ int main(int argc, char **argv)
    if ( num_events == 0 ) 
      test_pass(__FILE__, NULL, 0);
 
-   values = (long long *) malloc(sizeof(long long)*num_events);
-   success = (char *) malloc(argc);
+   values = (long long *) malloc(sizeof(long long)*(size_t)num_events);
+   success = (char *) malloc((size_t)argc);
 
    if ( success == NULL || values == NULL ) 
       test_fail(__FILE__, __LINE__, "malloc", PAPI_ESYS);
