@@ -48,13 +48,13 @@ void dump_and_verify(int test_case, long long **values)
 	      printf("Both rows equal 'n  N  N' where n << N\n");
 	      return;
       } else if (test_case == CHANGE) {
-		      min = (long long) (values[0][0] * (1.0 - TOLERANCE));
-		      max = (long long) (values[0][0] * (1.0 + TOLERANCE));
+	min = (long long)((double)values[0][0] * (1 - TOLERANCE));
+		      max = (long long)((double)values[0][0] * (1 + TOLERANCE));
 		      if (values[1][0] > max || values[1][0] < min)
 		         test_fail(__FILE__, __LINE__, "PAPI_TOT_INS", 1);
 		
-		      min = (long long) (values[1][1] * (1.0 - TOLERANCE));
-		      max = (long long) (values[1][1] * (1.0 + TOLERANCE));
+		      min = (long long)((double)values[1][1] * (1 - TOLERANCE));
+		      max = (long long)((double)values[1][1] * (1 + TOLERANCE));
 		      if ((values[2][1] + values[0][1]) > max || (values[2][1] + values[0][1]) < min)
 		         test_fail(__FILE__, __LINE__, "PAPI_TOT_CYC", 1);		
 		
@@ -77,11 +77,11 @@ void dump_and_verify(int test_case, long long **values)
       printf("Column 1 approximately equals column 2 plus column 3\n");
       } 
       else {	  
-		      min = (long long) (values[2][0] * (1.0 - TOLERANCE));
-		      max = (long long) (values[2][0] * (1.0 + TOLERANCE));
+		      min = (long long)((double)values[2][0] * (1 - TOLERANCE));
+		      max = (long long)((double)values[2][0] * (1 + TOLERANCE));
 		
-		      min2 = (long long) (values[0][1] * (1.0 - TOLERANCE));
-		      max2 = (long long) (values[0][1] * (1.0 + TOLERANCE));
+		      min2 = (long long)((double)values[0][1] * (1 - TOLERANCE));
+		      max2 = (long long)((double)(double)values[0][1] * (1 + TOLERANCE));
 		
       		printf("Test type   :   PAPI_DOM_ALL  PAPI_DOM_KERNEL  PAPI_DOM_USER\n");
 		      printf(TAB_DOM, "PAPI_TOT_INS: ", (values[0])[0], (values[1])[0], (values[2])[0]);

@@ -28,7 +28,7 @@ int main(int argc, char **argv)
    int retval;
 #define NUM_EVENTS 2
    long long values[NUM_EVENTS], dummyvalues[NUM_EVENTS];
-   unsigned int Events[NUM_EVENTS];
+   int Events[NUM_EVENTS];
    int EventSet = PAPI_NULL;
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */

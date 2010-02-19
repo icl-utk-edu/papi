@@ -2,7 +2,7 @@
 
 #include "papi_test.h"
 
-static void test_continue(char *file, int line, char *call, int retval)
+static void test_continue(char *call, int retval)
 {
       char errstring[PAPI_MAX_STR_LEN];
       PAPI_perror(retval, errstring, PAPI_MAX_STR_LEN);
@@ -12,7 +12,7 @@ static void test_continue(char *file, int line, char *call, int retval)
 int main(int argc, char **argv)
 {
   int retval;
-  unsigned int code = PAPI_TOT_CYC;
+  int code = PAPI_TOT_CYC;
   char event_name[PAPI_MAX_STR_LEN];
   const PAPI_hw_info_t *hwinfo = NULL;
   const PAPI_component_info_t *cmp_info;
@@ -43,14 +43,14 @@ int main(int argc, char **argv)
   printf("Looking for highest allocated preset event: 0x%x...\n", code);
   retval = PAPI_event_code_to_name(code, event_name);
   if (retval != PAPI_OK)
-    test_continue(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
+    test_continue("PAPI_event_code_to_name", retval);
   else printf("Found |%s|\n", event_name);
   
-  code = PAPI_PRESET_MASK | PAPI_NATIVE_AND_MASK;
+  code = PAPI_PRESET_MASK | (int)PAPI_NATIVE_AND_MASK;
   printf("Looking for highest possible preset event: 0x%x...\n", code);
   retval = PAPI_event_code_to_name(code, event_name);
   if (retval != PAPI_OK)
-    test_continue(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
+    test_continue("PAPI_event_code_to_name", retval);
   else printf("Found |%s|\n", event_name);
 
   /* Find the first defined native event */
@@ -78,7 +78,7 @@ int main(int argc, char **argv)
   printf("Looking for highest definable native event: 0x%x...\n", code);
   retval = PAPI_event_code_to_name(code, event_name);
   if (retval != PAPI_OK)
-    test_continue(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
+    test_continue("PAPI_event_code_to_name", retval);
   else printf("Found |%s|\n", event_name);
   if ((retval == PAPI_ENOEVNT) || (retval == PAPI_OK))
    test_pass(__FILE__, 0, 0);

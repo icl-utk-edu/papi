@@ -73,7 +73,7 @@ int main(int argc, char **argv)
 
    length = end - start;
    if (length < 0)
-      test_fail(__FILE__, __LINE__, "Profile length < 0!", length);
+     test_fail(__FILE__, __LINE__, "Profile length < 0!", (int)length);
 
    prof_print_address("Test case byte_profile: Multi-event profiling at byte resolution.\n",prginfo);
    prof_print_prof_info(start,end,THRESHOLD,event_name);
@@ -136,7 +136,7 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
       printf("Overall event counts:\n");
 
    for (i=0;i<num_events;i++) {
-      if ((retval = PAPI_profil(profbuf[i], blength, start, scale,
+      if ((retval = PAPI_profil(profbuf[i], (unsigned int)blength, start, scale,
             EventSet, events[i], thresh, PAPI_PROFIL_POSIX | bucket)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
    }
@@ -165,7 +165,7 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
    }
 
    for (i=0;i<num_events;i++) {
-      if ((retval = PAPI_profil(profbuf[i], blength, start, scale,
+      if ((retval = PAPI_profil(profbuf[i], (unsigned int)blength, start, scale,
             EventSet, events[i], 0, PAPI_PROFIL_POSIX)) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
    }

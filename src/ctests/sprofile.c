@@ -42,14 +42,14 @@ int main(int argc, char **argv)
    end = prginfo->address_info.text_end;
    if (start > end)
       test_fail(__FILE__, __LINE__, "Profile length < 0!", PAPI_ESBSTR);
-   length = end - start;
+   length = (unsigned long)(end - start);
    prof_print_address("Test case sprofile: POSIX compatible profiling over multiple regions.\n",prginfo);
    blength = prof_size(length, FULL_SCALE, PAPI_PROFIL_BUCKET_16, &num_buckets);
    prof_alloc(3, blength);
 
    /* First half */
    sprof[0].pr_base = buf[0];
-   sprof[0].pr_size = blength;
+   sprof[0].pr_size = (unsigned int)blength;
    sprof[0].pr_off = (caddr_t) DO_FLOPS;
 #if defined(linux) && defined(__ia64__)
    if (!TESTS_QUIET)
@@ -58,7 +58,7 @@ int main(int argc, char **argv)
    sprof[0].pr_scale = FULL_SCALE;
    /* Second half */
    sprof[1].pr_base = buf[1];
-   sprof[1].pr_size = blength;
+   sprof[1].pr_size = (unsigned int)blength;
    sprof[1].pr_off = (caddr_t) DO_READS;
 #if defined(linux) && defined(__ia64__)
    if (!TESTS_QUIET)
@@ -103,12 +103,12 @@ int main(int argc, char **argv)
       printf("---------Buffer 1--------\n");
       for (i = 0; i < (int)length / 2; i++) {
          if (buf[0][i])
-            printf("0x%lx\t%d\n", DO_FLOPS + 2 * i, buf[0][i]);
+	   printf("0x%lx\t%d\n", DO_FLOPS + 2 * (unsigned long)i, buf[0][i]);
       }
       printf("---------Buffer 2--------\n");
       for (i = 0; i < (int)length / 2; i++) {
          if (buf[1][i])
-            printf("0x%lx\t%d\n", DO_READS + 2 * i, buf[1][i]);
+	   printf("0x%lx\t%d\n", DO_READS + 2 * (unsigned long)i, buf[1][i]);
       }
       printf("-------------------------\n");
       printf("%u samples fell outside the regions.\n", *buf[2]);

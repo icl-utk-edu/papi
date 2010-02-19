@@ -34,6 +34,7 @@ int total_unknown = 0;
 
 void handler(int mode, void *address, long long overflow_vector, void *context)
 {
+  (void)context; /*unused*/
   int i;
 
    if (!TESTS_QUIET) {
@@ -70,11 +71,13 @@ void handler(int mode, void *address, long long overflow_vector, void *context)
 
 void handler_batch(int EventSet, void *address, long long overflow_vector, void *context)
 {
+  (void)EventSet; /*unused*/
 	handler(0, address, overflow_vector, context);
 }
 
 void handler_interleaf(int EventSet, void *address, long long overflow_vector, void *context)
 {
+  (void)EventSet; /*unused*/
 	handler(1, address, overflow_vector, context);
 }
 
@@ -82,7 +85,7 @@ static int find_nonderived_event(void)
 {
   /* query and set up the right event to monitor */
   PAPI_event_info_t info;
-  unsigned int potential_evt_to_add[3] = {PAPI_FP_OPS, PAPI_FP_INS, PAPI_TOT_INS};
+  int potential_evt_to_add[3] = {PAPI_FP_OPS, PAPI_FP_INS, PAPI_TOT_INS};
   int i;
   
   for (i=0; i < 3; i++) {

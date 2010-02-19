@@ -125,7 +125,7 @@ int main(int argc, char **argv)
 
    if (!TESTS_QUIET) {
       printf("\tOperations= %.1f Mflop", y * 1e-6);
-      printf("\t(%g Mflop/s)\n\n", ((float) y / (t2 - t1)));
+      printf("\t(%g Mflop/s)\n\n", (y / (double)(t2 - t1)));
       printf("PAPI grouped measurement:\n");
    }
    for (j = 0; j < nevents; j++) {
@@ -170,7 +170,7 @@ int main(int argc, char **argv)
 
       if (!TESTS_QUIET) {
          printf("\tOperations= %.1f Mflop", y * 1e-6);
-         printf("\t(%g Mflop/s)\n\n", ((float) y / (t2 - t1)));
+         printf("\t(%g Mflop/s)\n\n", (y / (double)(t2 - t1)));
       }
       PAPI_get_event_info(events[i], &info);
       if (!TESTS_QUIET) {

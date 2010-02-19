@@ -84,7 +84,7 @@ int main(int argc, char **argv)
        if (tmp) 
 	     mythreshold = atoi(tmp);
        else
-	     mythreshold = hw_info->mhz*10000*2;
+	 mythreshold = (int)hw_info->mhz*20000;
      }
 #else
       mythreshold = THRESHOLD;

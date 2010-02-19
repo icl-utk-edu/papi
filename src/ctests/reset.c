@@ -216,19 +216,19 @@ int main(int argc, char **argv)
 
    for (i=0;i<=1;i++)
      {
-       if (!approx_equals(values[0][i],values[1][i]))
+       if (!approx_equals((double)values[0][i],(double)values[1][i]))
          test_fail(__FILE__, __LINE__, ((i == 0) ? add_event_str : "PAPI_TOT_CYC"), 1);
-       if (!approx_equals(values[1][i],values[2][i]))
+       if (!approx_equals((double)values[1][i],(double)values[2][i]))
          test_fail(__FILE__, __LINE__, ((i == 0) ? add_event_str : "PAPI_TOT_CYC"), 1);
-       if (!approx_equals(values[2][i],values[3][i]*2.0))
+       if (!approx_equals((double)values[2][i],(double)values[3][i]*2.0))
          test_fail(__FILE__, __LINE__, ((i == 0) ? add_event_str : "PAPI_TOT_CYC"), 1);
-       if (!approx_equals(values[2][i],values[4][i]))
+       if (!approx_equals((double)values[2][i],(double)values[4][i]))
          test_fail(__FILE__, __LINE__, ((i == 0) ? add_event_str : "PAPI_TOT_CYC"), 1);
-       if (!approx_equals(values[5][i],values[3][i]*6.0))
+       if (!approx_equals((double)values[5][i],(double)values[3][i]*6.0))
          test_fail(__FILE__, __LINE__, ((i == 0) ? add_event_str : "PAPI_TOT_CYC"), 1);
-       if (!approx_equals(values[6][i],values[3][i]))
+       if (!approx_equals((double)values[6][i],(double)values[3][i]))
          test_fail(__FILE__, __LINE__, ((i == 0) ? add_event_str : "PAPI_TOT_CYC"), 1);
-       if (!approx_equals(values[7][i],values[3][i]))
+       if (!approx_equals((double)values[7][i],(double)values[3][i]))
          test_fail(__FILE__, __LINE__, ((i == 0) ? add_event_str : "PAPI_TOT_CYC"), 1);
        if (values[8][i] != 0LL)
          test_fail(__FILE__, __LINE__, ((i == 0) ? add_event_str : "PAPI_TOT_CYC"), 1);

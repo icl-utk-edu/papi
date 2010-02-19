@@ -74,7 +74,7 @@ int main(int argc, char **argv)
 
    length = end - start;
    if (length < 0)
-      test_fail(__FILE__, __LINE__, "Profile length < 0!", length);
+     test_fail(__FILE__, __LINE__, "Profile length < 0!", (int)length);
 
    prof_print_address("Test case profile: POSIX compatible profiling with hardware counters.\n",prginfo);
    prof_print_prof_info(start,end,mythreshold,event_name);
@@ -120,13 +120,13 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
          printf("Test type   : \t%s\n", profstr[i]);
 
 #ifndef SWPROFILE
-      if ((retval = PAPI_profil(profbuf[i], blength, start, scale,
+      if ((retval = PAPI_profil(profbuf[i], (unsigned int)blength, start, scale,
                               EventSet, PAPI_event, thresh,
-                              profflags[i] | bucket)) != PAPI_OK) {
+			      profflags[i] | bucket)) != PAPI_OK) {
          test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
       }
 #else
-      if ((retval = PAPI_profil(profbuf[i], blength, start, scale,
+      if ((retval = PAPI_profil(profbuf[i], (unsigned int)blength, start, scale,
                               EventSet, PAPI_event, thresh,
                               profflags[i] | bucket | PAPI_PROFIL_FORCE_SW)) != PAPI_OK) {
          test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
@@ -144,7 +144,7 @@ static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int 
          printf(TAB1, event_name, (values[1])[0]);
          printf(TAB1, "PAPI_TOT_CYC", (values[1])[1]);
       }
-      if ((retval = PAPI_profil(profbuf[i], blength, start, scale,
+      if ((retval = PAPI_profil(profbuf[i], (unsigned int)blength, start, scale,
                               EventSet, PAPI_event, 0, profflags[i])) != PAPI_OK)
          test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
    }

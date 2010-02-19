@@ -113,7 +113,7 @@ int main(int argc, char **argv)
       mythreshold = THRESHOLD ;
    else 
 #if defined(linux)
-      mythreshold = hw_info->mhz*10000*2;
+     mythreshold = (int)hw_info->mhz*20000;
 #else
       mythreshold = THRESHOLD*2;
 #endif
@@ -262,10 +262,10 @@ int main(int argc, char **argv)
 		printf("Overflow in Columns 3, 4, 5 greater than 0\n");
 	}
 
-	hard_min = (long long) ((values[0] * (1.0 - HARD_TOLERANCE)) / (long long) mythreshold);
-	hard_max = (long long) ((values[0] * (1.0 + HARD_TOLERANCE)) / (long long) mythreshold);
-	soft_min = (long long) ((values[0] * (1.0 - SOFT_TOLERANCE)) / (long long) mythreshold);
-	soft_max = (long long) ((values[0] * (1.0 + SOFT_TOLERANCE)) / (long long) mythreshold);
+	hard_min = (long long)(((double)values[0] * (1.0 - HARD_TOLERANCE)) / (double)mythreshold);
+	hard_max = (long long)(((double)values[0] * (1.0 + HARD_TOLERANCE)) / (double)mythreshold);
+	soft_min = (long long)(((double)values[0] * (1.0 - SOFT_TOLERANCE)) / (double)mythreshold);
+	soft_max = (long long)(((double)values[0] * (1.0 + SOFT_TOLERANCE)) / (double)mythreshold);
 	if (total[1] > hard_max || total[1] < hard_min)
 		test_fail(__FILE__, __LINE__, "Hardware Overflows outside limits", 1);
 

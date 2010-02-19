@@ -79,7 +79,7 @@ print_rate(char *str)
 		exit(1);
 	}
     }
-    last_count = count;
+    last_count = (int)count;
     count = 0;
     last = now;
 }

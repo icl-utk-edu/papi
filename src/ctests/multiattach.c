@@ -101,11 +101,11 @@ int main(int argc, char **argv)
 	test_fail(__FILE__, __LINE__, "Child process didnt return true to WIFSTOPPED", 0);
     }
 
-   retval = PAPI_attach(EventSet1, pid);
+  retval = PAPI_attach(EventSet1, (unsigned long)pid);
    if (retval != PAPI_OK)
      test_fail(__FILE__, __LINE__, "PAPI_attach", retval);
 
-   retval = PAPI_attach(EventSet2, pid2);
+   retval = PAPI_attach(EventSet2, (unsigned long)pid2);
    if (retval != PAPI_OK)
      test_fail(__FILE__, __LINE__, "PAPI_attach", retval);
 

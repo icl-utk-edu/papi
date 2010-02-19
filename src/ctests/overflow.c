@@ -75,7 +75,7 @@ int main(int argc, char **argv)
       mythreshold = THRESHOLD ;
    else 
 #if defined(linux)
-      mythreshold = hw_info->mhz*10000*2;
+     mythreshold = (int)hw_info->mhz*20000;
 #else
       mythreshold = THRESHOLD*2;
 #endif
@@ -152,8 +152,8 @@ int main(int argc, char **argv)
   	test_fail(__FILE__, __LINE__, event_name, 1);
 */
 
-   min = (long long) (((values[0])[0] * (1.0 - OVR_TOLERANCE)) / (long long) mythreshold);
-   max = (long long) (((values[0])[0] * (1.0 + OVR_TOLERANCE)) / (long long) mythreshold);
+   min = (long long)(((double)values[0][0] * (1.0 - OVR_TOLERANCE)) / (double)mythreshold);
+   max = (long long)(((double)values[0][0] * (1.0 + OVR_TOLERANCE)) / (double)mythreshold);
    printf("Overflows: total(%d) > max(%lld) || total(%d) < min(%lld) ", total, max, total, min);
    if (total > max || total < min)
       test_fail(__FILE__, __LINE__, "Overflows", 1);

@@ -123,8 +123,8 @@ int main(int argc, char **argv)
 
    {
       long long min, max;
-      min = (long long) (values[1][0] * .9);
-      max = (long long) (values[1][0] * 1.1);
+      min = (long long)((double)values[1][0] * .9);
+      max = (long long)((double)values[1][0] * 1.1);
 
       if (values[0][0] > max || values[0][0] < min || values[2][0] > (2 * max)
           || values[2][0] < (2 * min) || values[3][0] > (3 * max)
@@ -150,8 +150,8 @@ int main(int argc, char **argv)
 */         test_fail(__FILE__, __LINE__, event_name, 1);
       }
 
-      min = (long long) (values[1][1] * .8);
-      max = (long long) (values[1][1] * 1.2);
+      min = (long long)((double)values[1][1] * .8);
+      max = (long long)((double)values[1][1] * 1.2);
       if (values[0][1] > max || values[0][1] < min || values[2][1] > (2 * max)
           || values[2][1] < (2 * min) || values[3][1] > (3 * max)
           || values[3][1] < (3 * min)

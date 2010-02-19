@@ -23,7 +23,7 @@ int main(int argc, char **argv)
    int EventSet=PAPI_NULL;
    int retval;
    long long g1[2];
-   unsigned int eventcode = PAPI_TOT_INS;
+   int eventcode = PAPI_TOT_INS;
    char eventname[PAPI_MAX_STR_LEN];
    PAPI_event_info_t info, info1, info2;
 

@@ -30,7 +30,7 @@ int main(int argc, char **argv)
    PAPI_mh_level_t *L;
 
 
-   const unsigned int eventlist[] = {
+   const int eventlist[] = {
       PAPI_L1_DCA,
       PAPI_L1_DCM,
       PAPI_L1_DCH,

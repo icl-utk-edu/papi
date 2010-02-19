@@ -16,7 +16,7 @@
 
 #define QUIETPRINTF if (!TESTS_QUIET) printf
 unsigned int PAPI_events[PAPI_MPX_DEF_DEG] = { 0, 0 };
-const static int PAPI_events_len = 1;
+static const int PAPI_events_len = 1;
 extern int TESTS_QUIET;
 
 int main(int argc, char **argv)
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
    do {
       if (PAPI_get_event_info(i, &info) == PAPI_OK){
          if (info.count>1){
-            PAPI_events[0]=info.event_code;
+	   PAPI_events[0] = (unsigned int)info.event_code;
             break;
          }
       }
@@ -63,10 +63,10 @@ int main(int argc, char **argv)
       CPP_TEST_FAIL("PAPI_create_eventset", retval);
 
    for (i = 0; i < PAPI_events_len; i++) {
-      PAPI_event_code_to_name(PAPI_events[i], event_name);
+     PAPI_event_code_to_name((int)PAPI_events[i], event_name);
       if (!TESTS_QUIET)
          QUIETPRINTF("Adding %s\n", event_name);
-      retval = PAPI_add_event(EventSet, PAPI_events[i]);
+      retval = PAPI_add_event(EventSet, (int)PAPI_events[i]);
       if (retval != PAPI_OK)
          CPP_TEST_FAIL("PAPI_add_event", retval);
    }

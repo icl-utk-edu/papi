@@ -18,7 +18,7 @@ int main(int argc, char **argv)
    int retval;
    long long values[NUM_EVENTS], dummyvalues[NUM_EVENTS];
    long long myvalues[NUM_EVENTS];
-   unsigned int Events[NUM_EVENTS];
+   int Events[NUM_EVENTS];
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
@@ -90,8 +90,8 @@ int main(int argc, char **argv)
 
    {
       long long min, max;
-      min = (long long) (myvalues[0] * .9);
-      max = (long long) (myvalues[0] * 1.1);
+      min = (long long)((double)myvalues[0] * .9);
+      max = (long long)((double)myvalues[0] * 1.1);
       if (values[0] < (3 * min) || values[0] > (3 * max)) {
          retval = 1;
          if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
@@ -100,8 +100,8 @@ int main(int argc, char **argv)
             test_fail(__FILE__, __LINE__, "PAPI_TOT_INS", 1);
          }
       }
-      min = (long long) (myvalues[1] * .9);
-      max = (long long) (myvalues[1] * 1.1);
+      min = (long long)((double)myvalues[1] * .9);
+      max = (long long)((double)myvalues[1] * 1.1);
       if (values[1] < (3 * min) || values[1] > (3 * max)) {
          retval = 1;
          test_fail(__FILE__, __LINE__, "PAPI_TOT_CYC", 1);

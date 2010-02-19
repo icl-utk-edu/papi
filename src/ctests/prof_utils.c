@@ -276,8 +276,8 @@ unsigned long prof_size(unsigned long plength, unsigned scale, int bucket, int *
    unsigned long blength;
    long long llength = ((long long)plength * scale);
    int bucket_size = prof_buckets(bucket);
-   *num_buckets = (llength / 65536) / 2;
-   blength = (unsigned long)(*num_buckets) * bucket_size;
+   *num_buckets = (int)(llength / 65536 / 2);
+   blength = (unsigned long)(*num_buckets * bucket_size);
    return(blength);
 }
 

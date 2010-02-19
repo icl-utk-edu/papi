@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
    int vector = 0;
    int matrix = 0;
    int double_precision = 0;
-   int element_size;
+   size_t element_size;
    int retval = PAPI_OK;
    char papi_event_str[PAPI_MIN_STR_LEN] = "PAPI_FP_OPS";
    int papi_event;
@@ -226,8 +226,8 @@ int main(int argc, char *argv[])
 		   }
 		} else {
 		   for (i = 0; i <= n; i++) {
-		      x[i] = rand() * (float) 1.1;
-		      y[i] = rand() * (float) 1.1;
+		     x[i] = (float)rand() * (float)1.1;
+		     y[i] = (float)rand() * (float)1.1;
 		   }
 		}
 
@@ -280,9 +280,9 @@ int main(int argc, char *argv[])
 		} else {
 		   for (i = 0; i <= n; i++) {
 		      y[i] = 0.0;
-		      x[i] = rand() * (float) 1.1;
+		      x[i] = (float)rand() * (float)1.1;
 		      for (j = 0; j <= n; j++)
-			 a[i * n + j] = rand() * (float) 1.1;
+			a[i * n + j] = (float)rand() * (float)1.1;
 		   }
 		}
 
@@ -335,8 +335,8 @@ int main(int argc, char *argv[])
 		} else {
 		    for (i = 0; i <= n * n + n; i++) {
 		      c[i] = 0.0;
-		      a[i] = rand() * (float) 1.1;
-		      b[i] = rand() * (float) 1.1;
+		      a[i] = (float)rand() * (float)1.1;
+		      b[i] = (float)rand() * (float)1.1;
 		    }
 		}
 

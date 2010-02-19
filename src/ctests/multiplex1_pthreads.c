@@ -12,11 +12,11 @@
 #include <pthread.h>
 #include "papi_test.h"
 
-unsigned int power6_preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
+int power6_preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
    PAPI_FP_INS, PAPI_TOT_CYC, PAPI_L1_DCM, PAPI_L1_ICM, 0 };
-unsigned int preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
+int preset_PAPI_events[PAPI_MPX_DEF_DEG] = {
    PAPI_FP_INS, PAPI_TOT_INS, PAPI_L1_DCM, PAPI_L1_ICM, 0 };
-static unsigned int PAPI_events[PAPI_MPX_DEF_DEG] = { 0, };
+static int PAPI_events[PAPI_MPX_DEF_DEG] = { 0, };
 static int PAPI_events_len = 0;
 
 #define CPP_TEST_FAIL(string, retval) test_fail(__FILE__, __LINE__, string, retval)
