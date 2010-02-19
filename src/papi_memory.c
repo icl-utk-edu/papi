@@ -77,7 +77,7 @@ static int set_epilog(pmem_t *mem_ptr);
  * Checks for NULL pointers and returns NULL if error.
  */
 void *_papi_realloc(char *file, int line, void *ptr, int size){
-  unsigned int nsize = size + MEM_PROLOG;
+  unsigned int nsize = (unsigned int)size + (unsigned int)MEM_PROLOG;
   pmem_t *mem_ptr; 
   void *nptr;
 
@@ -109,7 +109,7 @@ void *_papi_calloc(char *file, int line, int nmemb, int size){
   void *ptr = _papi_malloc(file, line, size*nmemb);
 
   if ( !ptr ) return(NULL);
-  memset(ptr, 0, (unsigned int)size*nmemb);
+  memset(ptr, 0, (unsigned int)(size*nmemb));
   return(ptr);
 }
 
@@ -117,7 +117,7 @@ void *_papi_malloc(char *file, int line, int size){
   void *ptr;
   void **tmp;
   pmem_t *mem_ptr;
-  unsigned int nsize = size + MEM_PROLOG;
+  unsigned int nsize = (unsigned int)size + (unsigned int)MEM_PROLOG;
 
 #ifdef DEBUG
   nsize += MEM_EPILOG;
@@ -157,7 +157,7 @@ char * _papi_strdup(char *file, int line, const char *s){
   if ( !s ) return(NULL);
 
   /* String Length +1 for \0 */
-  size = strlen(s)+1;
+  size = (int)strlen(s)+1;
   ptr = (char *) _papi_malloc(file, line, size);
 
   if ( !ptr ) return(NULL);
@@ -190,7 +190,11 @@ int _papi_valid_free(char *file, int line, void *ptr){
 void _papi_free(char *file, int line, void *ptr){
   pmem_t *mem_ptr = get_mem_ptr(ptr);
 
-  if ( !mem_ptr ) return;
+  if ( !mem_ptr ) {
+    (void)file;
+    (void)line;
+    return;
+  }
 
   MEMDBG("%p: Freeing %d bytes from File: %s  Line: %d\n", mem_ptr->ptr, mem_ptr->size, file, line);
 
@@ -242,15 +246,15 @@ int _papi_mem_overhead(int type){
     if ( type&PAPI_MEM_LIB_OVERHEAD )
        size+=ptr->size;
     if ( type & PAPI_MEM_OVERHEAD ){
-       size+=sizeof(pmem_t);
-       size+=MEM_PROLOG;
+      size+=(int)sizeof(pmem_t);
+      size+=(int)MEM_PROLOG;
 #ifdef DEBUG
-       size+=MEM_EPILOG;
+      size+=(int)MEM_EPILOG;
 #endif
     }
   }
   _papi_hwi_unlock(MEMORY_LOCK);
-  return(size);
+  return size;
 }
 
 /* Clean all memory up and print out memory leak information to stderr */
@@ -315,6 +319,9 @@ pmem_t * init_mem_ptr(void *ptr, int size, char *file, int line){
  strncpy(mem_ptr->file, file, DEBUG_FILE_LEN);
  mem_ptr->file[DEBUG_FILE_LEN-1] = '\0';
  mem_ptr->line = line;
+#else
+ (void)file; /*unused*/
+ (void)line; /*unused*/
 #endif
  return(mem_ptr);
 }
@@ -363,6 +370,7 @@ static int set_epilog(pmem_t *mem_ptr) {
   *chptr++ = MEM_EPILOG_4;
   return(_papi_mem_check_all_overflow());
 #else
+  (void)mem_ptr; /*unused*/
   return(0);
 #endif
 }
