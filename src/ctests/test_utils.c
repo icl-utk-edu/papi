@@ -77,16 +77,16 @@ long long **allocate_test_space(int num_tests, int num_events)
    long long **values;
    int i;
 
-   values = (long long **) malloc(num_tests * sizeof(long long *));
+   values = (long long **) malloc((size_t)num_tests * sizeof(long long *));
    if (values == NULL)
       exit(1);
-   memset(values, 0x0, num_tests * sizeof(long long *));
+   memset(values, 0x0, (size_t)num_tests * sizeof(long long *));
 
    for (i = 0; i < num_tests; i++) {
-      values[i] = (long long *) malloc(num_events * sizeof(long long));
+      values[i] = (long long *) malloc((size_t)num_events * sizeof(long long));
       if (values[i] == NULL)
          exit(1);
-      memset(values[i], 0x00, num_events * sizeof(long long));
+      memset(values[i], 0x00, (size_t)num_events * sizeof(long long));
    }
    return (values);
 }
@@ -615,18 +615,19 @@ void test_print_event_header(char *call, int evset)
 int add_two_events(int *num_events, int *papi_event, 
                const PAPI_hw_info_t *hw_info, int *mask)
 {
+  (void)hw_info; /*unused parameter*/
   /* query and set up the right event to monitor */
    int EventSet = PAPI_NULL;
   PAPI_event_info_t info;
-  unsigned int potential_evt_to_add[3][2] = {{ PAPI_FP_INS, MASK_FP_INS},{ PAPI_FP_OPS, MASK_FP_OPS}, { PAPI_TOT_INS, MASK_TOT_INS}};
+  unsigned int potential_evt_to_add[3][2] = {{(unsigned int)PAPI_FP_INS, MASK_FP_INS},{(unsigned int)PAPI_FP_OPS, MASK_FP_OPS}, {(unsigned int)PAPI_TOT_INS, MASK_TOT_INS}};
   int i = 0;
   unsigned int counters, event_found = 0;
   
   *mask = 0;
   counters = (unsigned int)PAPI_num_hwctrs();
   while ((i < 3) && (!event_found)) {
-    if (PAPI_query_event(potential_evt_to_add[i][0]) == PAPI_OK) {
-      if (PAPI_get_event_info(potential_evt_to_add[i][0], &info) == PAPI_OK) {
+    if (PAPI_query_event((int)potential_evt_to_add[i][0]) == PAPI_OK) {
+      if (PAPI_get_event_info((int)potential_evt_to_add[i][0], &info) == PAPI_OK) {
 	if ((info.count > 0) && (counters > info.count)) event_found = 1;
       }
     }
@@ -634,8 +635,8 @@ int add_two_events(int *num_events, int *papi_event,
       i++;
   }
   if (event_found) {
-    *papi_event = potential_evt_to_add[i][0];
-    *mask =  potential_evt_to_add[i][1] | MASK_TOT_CYC;
+    *papi_event = (int)potential_evt_to_add[i][0];
+    *mask =  (int)potential_evt_to_add[i][1] | MASK_TOT_CYC;
    EventSet = add_test_events(num_events, mask);
   } else {
     test_fail(__FILE__, __LINE__, "Not enough room to add an event!", 0);
@@ -646,18 +647,19 @@ int add_two_events(int *num_events, int *papi_event,
 int add_two_nonderived_events(int *num_events, int *papi_event, 
                const PAPI_hw_info_t *hw_info, int *mask)
 {
+  (void)hw_info; /*unused parameter*/
   /* query and set up the right event to monitor */
    int EventSet = PAPI_NULL;
   PAPI_event_info_t info;
-  unsigned int potential_evt_to_add[3][2] = {{ PAPI_FP_INS, MASK_FP_INS},{ PAPI_FP_OPS, MASK_FP_OPS}, { PAPI_TOT_INS, MASK_TOT_INS}};
+  unsigned int potential_evt_to_add[3][2] = {{(unsigned int)PAPI_FP_INS, MASK_FP_INS},{(unsigned int)PAPI_FP_OPS, MASK_FP_OPS}, {(unsigned int)PAPI_TOT_INS, MASK_TOT_INS}};
   int i = 0;
   unsigned int counters, event_found = 0;
   
   *mask = 0;
   counters = (unsigned int)PAPI_num_hwctrs();
   while ((i < 3) && (!event_found)) {
-    if (PAPI_query_event(potential_evt_to_add[i][0]) == PAPI_OK) {
-      if (PAPI_get_event_info(potential_evt_to_add[i][0], &info) == PAPI_OK) {
+    if (PAPI_query_event((int)potential_evt_to_add[i][0]) == PAPI_OK) {
+      if (PAPI_get_event_info((int)potential_evt_to_add[i][0], &info) == PAPI_OK) {
 	    if ((info.count > 0) && (counters > info.count) && !strcmp(info.derived,"NOT_DERIVED")) 
           event_found = 1;
       }
@@ -666,8 +668,8 @@ int add_two_nonderived_events(int *num_events, int *papi_event,
       i++;
   }
   if (event_found) {
-    *papi_event = potential_evt_to_add[i][0];
-    *mask =  potential_evt_to_add[i][1] | MASK_TOT_CYC;
+    *papi_event = (int)potential_evt_to_add[i][0];
+    *mask =  (int)potential_evt_to_add[i][1] | MASK_TOT_CYC;
    EventSet = add_test_events(num_events, mask);
   } else {
     test_fail(__FILE__, __LINE__, "Not enough room to add an event!", 0);
@@ -744,7 +746,7 @@ int enum_add_native_events(int *num_events, int **evtcodes)
 		}
 	} while (PAPI_enum_event(&i, PAPI_ENUM_EVENTS) == PAPI_OK && event_found<counters);
 
-	*num_events = event_found;
+	*num_events = (int)event_found;
 	return(EventSet);
 }
 

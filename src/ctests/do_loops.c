@@ -24,7 +24,7 @@ void do_reads(int n)
    }
 
    for (i = 0; i < n; i++) {
-      retval = read(fd, &buf, sizeof(buf));
+     retval = (int)read(fd, &buf, sizeof(buf));
       if (retval != sizeof(buf))
         {
           if (retval < 0)
@@ -100,7 +100,7 @@ void _FDO_FLOPS(int *n)
 
 void do_misses(int n, int bytes)
 {
-  register int i, j, tmp = buf_dummy, len = bytes / sizeof(int);
+  register int i, j, tmp = buf_dummy, len = bytes / (int)sizeof(int);
   dummy((void *)buf);
   dummy((void *)&buf_dummy);
   assert (len <= CACHE_FLUSH_BUFFER_SIZE_INTS);
