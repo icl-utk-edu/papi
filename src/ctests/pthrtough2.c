@@ -61,7 +61,7 @@ int main( int argc, char* argv[] )
   printf("\tdestroy_eventset\n");
   printf("\tunregister\n");
    }
-  th = (pthread_t *)malloc(nthr*sizeof(pthread_t *));
+   th = (pthread_t *)malloc((size_t)nthr*sizeof(pthread_t *));
   if (th == NULL)
     test_fail(__FILE__,__LINE__,"malloc",PAPI_ESYS);
 
@@ -74,7 +74,7 @@ int main( int argc, char* argv[] )
 			test_fail(__FILE__, __LINE__, "pthread_create", PAPI_ESYS);
 		printf("Continuing test with %d threads.\n",j-1);
 		nthr = j-1;
-		th = (pthread_t *)realloc(th, nthr*sizeof(pthread_t *));
+		th = (pthread_t *)realloc(th, (size_t)nthr*sizeof(pthread_t *));
 		break;
 	  }
     }

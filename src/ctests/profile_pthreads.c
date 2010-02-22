@@ -82,7 +82,7 @@ void *Thread(void *arg)
       printf("----Profile buffer for Thread 0x%x---\n", (int) pthread_self());
       for (i = 0; i < (int)length; i++) {
          if (profbuf[i])
-            printf("0x%lx\t%d\n", (unsigned long) my_start + 2 * i, profbuf[i]);
+	   printf("0x%lx\t%d\n", (unsigned long)(my_start + 2 * i), profbuf[i]);
       }
    }
    for (i = 0; i < (int)length; i++)
@@ -124,7 +124,7 @@ int main(int argc, char **argv)
    }
    my_start = prginfo->address_info.text_start;
    my_end = prginfo->address_info.text_end;
-   length = my_end - my_start;
+   length = (unsigned int)(my_end - my_start);
 
    elapsed_us = PAPI_get_real_usec();
 

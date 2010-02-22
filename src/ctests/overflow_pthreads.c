@@ -130,7 +130,7 @@ int main(int argc, char **argv)
    }
 
 #if defined(linux)
-      mythreshold = hw_info->mhz*10000*2;
+   mythreshold = (int)hw_info->mhz*10000*2;
 #else
       mythreshold = THRESHOLD*2;
 #endif

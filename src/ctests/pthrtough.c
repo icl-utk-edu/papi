@@ -68,7 +68,7 @@ if ((ret = PAPI_thread_init((unsigned long (*)(void)) (pthread_self)))!=PAPI_OK)
   printf("\tunregister\n");
    }
   
-  th = (pthread_t *)malloc(nthr*sizeof(pthread_t *));
+   th = (pthread_t *)malloc((size_t)nthr*sizeof(pthread_t *));
   if (th == NULL)
     test_fail(__FILE__,__LINE__,"malloc",PAPI_ESYS);
 

@@ -207,7 +207,7 @@ int main(int argc, char **argv)
 
    if (t1 < 1000000)                 /* Scale up execution time to match t2 */
      {
-       iters = iters * (1000000/t1);
+       iters = iters * (int)(1000000/t1);
        printf("Modified iteration count to %d\n\n",iters);
      }
 

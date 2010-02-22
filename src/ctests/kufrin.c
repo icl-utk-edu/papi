@@ -151,7 +151,7 @@ int main(int argc, char **argv)
 
     printf("Creating %d threads:\n", nthreads);
 
-    threads = (pthread_t *) malloc(nthreads * sizeof(pthread_t));
+    threads = (pthread_t *)malloc((size_t)nthreads * sizeof(pthread_t));
     if ( threads == NULL ) {
       test_fail(__FILE__, __LINE__, "malloc", PAPI_ENOMEM);
     }

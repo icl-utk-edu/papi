@@ -35,7 +35,7 @@ void *Slave(void *arg)
    PAPI_lock(PAPI_USR2_LOCK);
    if (num_iters == 0) {
      printf("10000 iterations took %lld us.\n",duration);
-     num_iters = 10*(TIME_LIMIT_IN_US/duration);
+     num_iters = (int)(10*(TIME_LIMIT_IN_US/duration));
      printf("Running %d iterations\n",num_iters);
    }
    PAPI_unlock(PAPI_USR2_LOCK);

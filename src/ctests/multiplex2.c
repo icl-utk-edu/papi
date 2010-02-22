@@ -76,11 +76,11 @@ int case1(void)
 		}
 	} while ((PAPI_enum_event(&i, PAPI_PRESET_ENUM_AVAIL) == PAPI_OK) && (j < max_mux));
 
-	events = (int *) malloc(j * sizeof(int));
+	events = (int *)malloc((size_t)j * sizeof(int));
 	if (events == NULL)
 		test_fail(__FILE__, __LINE__, "malloc events", 0);
 
-	values = (long long *) malloc(j * sizeof(long long));
+	values = (long long *)malloc((size_t)j * sizeof(long long));
 	if (values == NULL)
 		test_fail(__FILE__, __LINE__, "malloc values", 0);
 

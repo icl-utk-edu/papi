@@ -21,11 +21,11 @@ static int PAPI_events_len = 0;
 
 #define CPP_TEST_FAIL(string, retval) test_fail(__FILE__, __LINE__, string, retval)
 
-void init_papi_pthreads(unsigned int *out_events, int *len)
+void init_papi_pthreads(int *out_events, int *len)
 {
    int retval;
    int i, real_len = 0;
-   unsigned int *in_events = preset_PAPI_events;
+   int *in_events = preset_PAPI_events;
    const PAPI_hw_info_t *hw_info;
 
    /* Initialize the library */
@@ -116,6 +116,7 @@ int do_pthreads(void *(*fn) (void *))
 
 void *case1_pthreads(void *arg)
 {
+  (void)arg; /*unused*/
    int retval, i, EventSet = PAPI_NULL;
    long long values[2];
 
@@ -160,6 +161,7 @@ void *case1_pthreads(void *arg)
 
 void *case2_pthreads(void *arg)
 {
+  (void)arg; /*unused*/
    int retval, i, EventSet = PAPI_NULL;
    long long values[2];
 
@@ -215,6 +217,7 @@ void *case2_pthreads(void *arg)
 
 void *case3_pthreads(void *arg)
 {
+  (void)arg; /*unused*/
    int retval, i, EventSet = PAPI_NULL;
    long long values[2];
 
@@ -262,6 +265,7 @@ void *case3_pthreads(void *arg)
 
 void *case4_pthreads(void *arg)
 {
+  (void)arg; /*unused*/
    int retval, i, EventSet = PAPI_NULL;
    long long values[4];
    char out[PAPI_MAX_STR_LEN];

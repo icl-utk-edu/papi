@@ -94,8 +94,8 @@ int main(int argc, char **argv)
    pthread_join(e_th, NULL);
 
    data.num = 10;
-   data.id = (unsigned long *)malloc(data.num*sizeof(unsigned long));
-   data.data = (void **)malloc(data.num*sizeof(void *));
+   data.id = (unsigned long *)malloc((size_t)data.num*sizeof(unsigned long));
+   data.data = (void **)malloc((size_t)data.num*sizeof(void *));
    
    retval = PAPI_get_thr_specific(PAPI_USR1_TLS|PAPI_TLS_ALL_THREADS,(void **)&data);
    if (retval != PAPI_OK)

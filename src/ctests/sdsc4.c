@@ -153,7 +153,7 @@ int main(int argc, char **argv)
    PAPI_list_events(eventset, truelist, &ntrue);
    if (!TESTS_QUIET) {
       printf("\tOperations= %.1f Mflop", y * 1e-6);
-      printf("\t(%g Mflop/s)\n\n", ((float) y / (t2 - t1)));
+      printf("\t(%g Mflop/s)\n\n", (y / (double)(t2 - t1)));
       printf("%20s   %16s   %-15s %-15s\n", "PAPI measurement:",
              "Acquired count", "Expected event", "PAPI_list_events");
    }
@@ -225,7 +225,7 @@ int main(int argc, char **argv)
       if (!TESTS_QUIET) {
          printf("\n(calculated independent of PAPI)\n");
          printf("\tOperations= %.1f Mflop", y * 1e-6);
-         printf("\t(%g Mflop/s)\n\n", ((float) y / (t2 - t1)));
+         printf("\t(%g Mflop/s)\n\n", (y / (double)(t2 - t1)));
          printf("%20s   %16s   %-15s %-15s\n", "PAPI measurement:",
                 "Acquired count", "Expected event", "PAPI_list_events");
       }
