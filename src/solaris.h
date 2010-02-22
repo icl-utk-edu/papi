@@ -11,8 +11,8 @@
 
 /* Assembler prototypes */
 
-extern void cpu_sync(void);
-extern unsigned long long get_tick(void);
+extern void cpu_sync( void );
+extern unsigned long long get_tick( void );
 extern caddr_t _start, _end, _etext, _edata;
 
 extern rwlock_t lock[PAPI_MAX_LOCK];
@@ -24,4 +24,3 @@ extern rwlock_t lock[PAPI_MAX_LOCK];
 #define inline_static inline static
 
 #endif
-

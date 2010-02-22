@@ -31,7 +31,7 @@
  * This is usually the size of a pointer, but in some cases needs to be bigger
  * to preserve data alignment.
  */
-#define MEM_PROLOG (2*sizeof(void *)) 
+#define MEM_PROLOG (2*sizeof(void *))
 
 /* If you are tracing memory, then DEBUG must be set also. */
 #ifdef DEBUG
@@ -46,14 +46,14 @@
 #endif
 
 /* Local global variables */
-static pmem_t *mem_head=NULL;
+static pmem_t *mem_head = NULL;
 
 /* Local Prototypes */
-static pmem_t * get_mem_ptr(void * ptr);
-static pmem_t * init_mem_ptr(void *, int, char *, int);
-static void insert_mem_ptr(pmem_t *);
-static void remove_mem_ptr(pmem_t *);
-static int set_epilog(pmem_t *mem_ptr);
+static pmem_t *get_mem_ptr( void *ptr );
+static pmem_t *init_mem_ptr( void *, int, char *, int );
+static void insert_mem_ptr( pmem_t * );
+static void remove_mem_ptr( pmem_t * );
+static int set_epilog( pmem_t * mem_ptr );
 
 /**********************************************************************
  * Exposed papi versions of std memory management routines:           *
@@ -76,159 +76,190 @@ static int set_epilog(pmem_t *mem_ptr);
  * to the related pmem_t structure describing this pointer.
  * Checks for NULL pointers and returns NULL if error.
  */
-void *_papi_realloc(char *file, int line, void *ptr, int size){
-  unsigned int nsize = (unsigned int)size + (unsigned int)MEM_PROLOG;
-  pmem_t *mem_ptr; 
-  void *nptr;
+void *
+_papi_realloc( char *file, int line, void *ptr, int size )
+{
+	unsigned int nsize = ( unsigned int ) size + ( unsigned int ) MEM_PROLOG;
+	pmem_t *mem_ptr;
+	void *nptr;
 
 #ifdef DEBUG
-  nsize += MEM_EPILOG;
-  _papi_mem_check_all_overflow();
+	nsize += MEM_EPILOG;
+	_papi_mem_check_all_overflow(  );
 #endif
 
-  if ( !ptr ) return(_papi_malloc(file, line, size));
+	if ( !ptr )
+		return ( _papi_malloc( file, line, size ) );
 
-  mem_ptr = get_mem_ptr(ptr);
-  nptr = (pmem_t *) realloc(((char *)ptr - MEM_PROLOG), nsize);
+	mem_ptr = get_mem_ptr( ptr );
+	nptr = ( pmem_t * ) realloc( ( ( char * ) ptr - MEM_PROLOG ), nsize );
 
-  if ( !nptr ) return(NULL);
+	if ( !nptr )
+		return ( NULL );
 
-  mem_ptr->size = size;
-  mem_ptr->ptr = (char *)nptr + MEM_PROLOG;
+	mem_ptr->size = size;
+	mem_ptr->ptr = ( char * ) nptr + MEM_PROLOG;
 #ifdef DEBUG
-  strncpy(mem_ptr->file, file, DEBUG_FILE_LEN);
-  mem_ptr->file[DEBUG_FILE_LEN-1] = '\0';
-  mem_ptr->line = line;
-  set_epilog(mem_ptr);
+	strncpy( mem_ptr->file, file, DEBUG_FILE_LEN );
+	mem_ptr->file[DEBUG_FILE_LEN - 1] = '\0';
+	mem_ptr->line = line;
+	set_epilog( mem_ptr );
 #endif
-  MEMDBG("%p: Re-allocated: %d bytes from File: %s  Line: %d\n", mem_ptr->ptr, size, file, line);
-  return(mem_ptr->ptr);
+	MEMDBG( "%p: Re-allocated: %d bytes from File: %s  Line: %d\n",
+			mem_ptr->ptr, size, file, line );
+	return ( mem_ptr->ptr );
 }
 
-void *_papi_calloc(char *file, int line, int nmemb, int size){
-  void *ptr = _papi_malloc(file, line, size*nmemb);
+void *
+_papi_calloc( char *file, int line, int nmemb, int size )
+{
+	void *ptr = _papi_malloc( file, line, size * nmemb );
 
-  if ( !ptr ) return(NULL);
-  memset(ptr, 0, (unsigned int)(size*nmemb));
-  return(ptr);
+	if ( !ptr )
+		return ( NULL );
+	memset( ptr, 0, ( unsigned int ) ( size * nmemb ) );
+	return ( ptr );
 }
 
-void *_papi_malloc(char *file, int line, int size){
-  void *ptr;
-  void **tmp;
-  pmem_t *mem_ptr;
-  unsigned int nsize = (unsigned int)size + (unsigned int)MEM_PROLOG;
+void *
+_papi_malloc( char *file, int line, int size )
+{
+	void *ptr;
+	void **tmp;
+	pmem_t *mem_ptr;
+	unsigned int nsize = ( unsigned int ) size + ( unsigned int ) MEM_PROLOG;
 
 #ifdef DEBUG
-  nsize += MEM_EPILOG;
+	nsize += MEM_EPILOG;
 #endif
 
-  if ( size == 0 ){
-    MEMDBG("Attempting to allocate %d bytes from File: %s  Line: %d\n", size, file, line);
-    return(NULL);
-  }
-  ptr = (void *) malloc(nsize);
+	if ( size == 0 ) {
+		MEMDBG( "Attempting to allocate %d bytes from File: %s  Line: %d\n",
+				size, file, line );
+		return ( NULL );
+	}
+	ptr = ( void * ) malloc( nsize );
 
-  if ( !ptr ) return(NULL);
-  else{
-    if ( (mem_ptr = init_mem_ptr((char *)ptr + MEM_PROLOG, size, file, line))==NULL) {
-      free(ptr);
-      return(NULL);
-    }    
-    tmp = ptr;
-    *tmp = mem_ptr;
-    ptr = mem_ptr->ptr;
-    mem_ptr->ptr = ptr;
-    _papi_hwi_lock(MEMORY_LOCK);
-    insert_mem_ptr(mem_ptr);
-    _papi_hwi_unlock(MEMORY_LOCK);
-    set_epilog(mem_ptr);
+	if ( !ptr )
+		return ( NULL );
+	else {
+		if ( ( mem_ptr =
+			   init_mem_ptr( ( char * ) ptr + MEM_PROLOG, size, file,
+							 line ) ) == NULL ) {
+			free( ptr );
+			return ( NULL );
+		}
+		tmp = ptr;
+		*tmp = mem_ptr;
+		ptr = mem_ptr->ptr;
+		mem_ptr->ptr = ptr;
+		_papi_hwi_lock( MEMORY_LOCK );
+		insert_mem_ptr( mem_ptr );
+		_papi_hwi_unlock( MEMORY_LOCK );
+		set_epilog( mem_ptr );
 
-    MEMDBG("%p: Allocated %d bytes from File: %s  Line: %d\n", mem_ptr->ptr, size, file, line);
-    return(ptr);
-  }
-  return(NULL);
+		MEMDBG( "%p: Allocated %d bytes from File: %s  Line: %d\n",
+				mem_ptr->ptr, size, file, line );
+		return ( ptr );
+	}
+	return ( NULL );
 }
 
-char * _papi_strdup(char *file, int line, const char *s){
-  int size;
-  char *ptr;
+char *
+_papi_strdup( char *file, int line, const char *s )
+{
+	int size;
+	char *ptr;
 
-  if ( !s ) return(NULL);
+	if ( !s )
+		return ( NULL );
 
-  /* String Length +1 for \0 */
-  size = (int)strlen(s)+1;
-  ptr = (char *) _papi_malloc(file, line, size);
+	/* String Length +1 for \0 */
+	size = ( int ) strlen( s ) + 1;
+	ptr = ( char * ) _papi_malloc( file, line, size );
 
-  if ( !ptr ) return(NULL);
+	if ( !ptr )
+		return ( NULL );
 
-  memcpy(ptr, s, (unsigned int)size);
-  return(ptr);
+	memcpy( ptr, s, ( unsigned int ) size );
+	return ( ptr );
 }
 
 /* Only frees the memory if PAPI malloced it */
 /* returns 1 if pointer was valid; 0 if not */
-int _papi_valid_free(char *file, int line, void *ptr){
-  pmem_t *tmp;
-  int valid = 0;
+int
+_papi_valid_free( char *file, int line, void *ptr )
+{
+	pmem_t *tmp;
+	int valid = 0;
 
-  if ( !ptr ) return(0);
+	if ( !ptr )
+		return ( 0 );
 
-  _papi_hwi_lock(MEMORY_LOCK);
-  for(tmp = mem_head; tmp; tmp = tmp->next ){
-    if ( ptr == tmp->ptr ){
-      _papi_free(file, line, ptr);
-      valid = 1;
-      break;
-    }
-  }
-  _papi_hwi_unlock(MEMORY_LOCK);
-  return(valid);
+	_papi_hwi_lock( MEMORY_LOCK );
+	for ( tmp = mem_head; tmp; tmp = tmp->next ) {
+		if ( ptr == tmp->ptr ) {
+			_papi_free( file, line, ptr );
+			valid = 1;
+			break;
+		}
+	}
+	_papi_hwi_unlock( MEMORY_LOCK );
+	return ( valid );
 }
 
 /* Frees up the ptr */
-void _papi_free(char *file, int line, void *ptr){
-  pmem_t *mem_ptr = get_mem_ptr(ptr);
+void
+_papi_free( char *file, int line, void *ptr )
+{
+	pmem_t *mem_ptr = get_mem_ptr( ptr );
 
-  if ( !mem_ptr ) {
-    (void)file;
-    (void)line;
-    return;
-  }
+	if ( !mem_ptr ) {
+		( void ) file;
+		( void ) line;
+		return;
+	}
 
-  MEMDBG("%p: Freeing %d bytes from File: %s  Line: %d\n", mem_ptr->ptr, mem_ptr->size, file, line);
+	MEMDBG( "%p: Freeing %d bytes from File: %s  Line: %d\n", mem_ptr->ptr,
+			mem_ptr->size, file, line );
 
 #ifdef DEBUG
-  _papi_mem_check_all_overflow();
+	_papi_mem_check_all_overflow(  );
 #endif
-  _papi_hwi_lock(MEMORY_LOCK);
-  remove_mem_ptr(mem_ptr);
-  _papi_hwi_unlock(MEMORY_LOCK);
+	_papi_hwi_lock( MEMORY_LOCK );
+	remove_mem_ptr( mem_ptr );
+	_papi_hwi_unlock( MEMORY_LOCK );
 }
 
 /* Print information about the memory including file and location it came from */
-void _papi_mem_print_info(void *ptr) {
-  pmem_t *mem_ptr = get_mem_ptr(ptr);
+void
+_papi_mem_print_info( void *ptr )
+{
+	pmem_t *mem_ptr = get_mem_ptr( ptr );
 
-  if ( !mem_ptr ) return;
- 
+	if ( !mem_ptr )
+		return;
+
 #ifdef DEBUG
-  fprintf(stderr,"%p: Allocated %d bytes from File: %s  Line: %d\n", ptr, mem_ptr->size, mem_ptr->file, mem_ptr->line);
+	fprintf( stderr, "%p: Allocated %d bytes from File: %s  Line: %d\n", ptr,
+			 mem_ptr->size, mem_ptr->file, mem_ptr->line );
 #else
-  fprintf(stderr,"%p: Allocated %d bytes\n", ptr, mem_ptr->size);
+	fprintf( stderr, "%p: Allocated %d bytes\n", ptr, mem_ptr->size );
 #endif
-  return;
+	return;
 }
 
 /* Print out all memory information */
-void _papi_mem_print_stats(){
-  pmem_t *tmp = NULL;
+void
+_papi_mem_print_stats(  )
+{
+	pmem_t *tmp = NULL;
 
-  _papi_hwi_lock(MEMORY_LOCK);
-  for(tmp=mem_head;tmp;tmp = tmp->next){
-     _papi_mem_print_info(tmp->ptr);
-  }
-  _papi_hwi_unlock(MEMORY_LOCK);
+	_papi_hwi_lock( MEMORY_LOCK );
+	for ( tmp = mem_head; tmp; tmp = tmp->next ) {
+		_papi_mem_print_info( tmp->ptr );
+	}
+	_papi_hwi_unlock( MEMORY_LOCK );
 }
 
 /* Return the amount of memory overhead of the PAPI library and the memory system
@@ -237,49 +268,53 @@ void _papi_mem_print_stats(){
  * They both can be | together
  * This only includes "malloc'd memory"
  */
-int _papi_mem_overhead(int type){
-  pmem_t *ptr=NULL;
-  int size = 0;
+int
+_papi_mem_overhead( int type )
+{
+	pmem_t *ptr = NULL;
+	int size = 0;
 
-  _papi_hwi_lock(MEMORY_LOCK);
-  for(ptr=mem_head;ptr;ptr = ptr->next){
-    if ( type&PAPI_MEM_LIB_OVERHEAD )
-       size+=ptr->size;
-    if ( type & PAPI_MEM_OVERHEAD ){
-      size+=(int)sizeof(pmem_t);
-      size+=(int)MEM_PROLOG;
+	_papi_hwi_lock( MEMORY_LOCK );
+	for ( ptr = mem_head; ptr; ptr = ptr->next ) {
+		if ( type & PAPI_MEM_LIB_OVERHEAD )
+			size += ptr->size;
+		if ( type & PAPI_MEM_OVERHEAD ) {
+			size += ( int ) sizeof ( pmem_t );
+			size += ( int ) MEM_PROLOG;
 #ifdef DEBUG
-      size+=(int)MEM_EPILOG;
+			size += ( int ) MEM_EPILOG;
 #endif
-    }
-  }
-  _papi_hwi_unlock(MEMORY_LOCK);
-  return size;
+		}
+	}
+	_papi_hwi_unlock( MEMORY_LOCK );
+	return size;
 }
 
 /* Clean all memory up and print out memory leak information to stderr */
-void _papi_mem_cleanup_all()
+void
+_papi_mem_cleanup_all(  )
 {
-   pmem_t *ptr=NULL, *tmp=NULL;
+	pmem_t *ptr = NULL, *tmp = NULL;
 #ifdef DEBUG
-   int cnt = 0;
+	int cnt = 0;
 #endif
 
-   _papi_mem_check_all_overflow();
-   _papi_hwi_lock(MEMORY_LOCK);
-   for(ptr=mem_head;ptr;ptr=tmp){
-     tmp = ptr->next;
+	_papi_mem_check_all_overflow(  );
+	_papi_hwi_lock( MEMORY_LOCK );
+	for ( ptr = mem_head; ptr; ptr = tmp ) {
+		tmp = ptr->next;
 #ifdef DEBUG
-     LEAKDBG("MEMORY LEAK: %p of %d bytes, from File: %s Line: %d\n", ptr->ptr, ptr->size, ptr->file, ptr->line);
-     cnt += ptr->size;
+		LEAKDBG( "MEMORY LEAK: %p of %d bytes, from File: %s Line: %d\n",
+				 ptr->ptr, ptr->size, ptr->file, ptr->line );
+		cnt += ptr->size;
 #endif
-     
-     remove_mem_ptr(ptr);
-   }
-   _papi_hwi_unlock(MEMORY_LOCK);
+
+		remove_mem_ptr( ptr );
+	}
+	_papi_hwi_unlock( MEMORY_LOCK );
 #ifdef DEBUG
-   if ( cnt )
-     LEAKDBG("TOTAL MEMORY LEAK: %d bytes.\n", cnt);
+	if ( cnt )
+		LEAKDBG( "TOTAL MEMORY LEAK: %d bytes.\n", cnt );
 #endif
 }
 
@@ -295,125 +330,147 @@ void _papi_mem_cleanup_all()
  * to the related pmem_t structure describing this pointer.
  * Checks for NULL pointers and returns NULL if error.
  */
-static pmem_t * get_mem_ptr(void * ptr){
-  pmem_t **tmp_ptr = (pmem_t **) ((char*)ptr - MEM_PROLOG);
-  pmem_t *mem_ptr;
+static pmem_t *
+get_mem_ptr( void *ptr )
+{
+	pmem_t **tmp_ptr = ( pmem_t ** ) ( ( char * ) ptr - MEM_PROLOG );
+	pmem_t *mem_ptr;
 
-  if ( !tmp_ptr || !ptr ) return(NULL);
+	if ( !tmp_ptr || !ptr )
+		return ( NULL );
 
-  mem_ptr = *tmp_ptr;
-  return (mem_ptr);
+	mem_ptr = *tmp_ptr;
+	return ( mem_ptr );
 }
 
 /* Allocate and initialize a memory pointer */
-pmem_t * init_mem_ptr(void *ptr, int size, char *file, int line){
- pmem_t *mem_ptr=NULL;
- if ((mem_ptr = (pmem_t *) malloc(sizeof(pmem_t)))==NULL)
-   return(NULL);
+pmem_t *
+init_mem_ptr( void *ptr, int size, char *file, int line )
+{
+	pmem_t *mem_ptr = NULL;
+	if ( ( mem_ptr = ( pmem_t * ) malloc( sizeof ( pmem_t ) ) ) == NULL )
+		return ( NULL );
 
- mem_ptr->ptr = ptr;
- mem_ptr->size = size;
- mem_ptr->next = NULL;
- mem_ptr->prev = NULL;
+	mem_ptr->ptr = ptr;
+	mem_ptr->size = size;
+	mem_ptr->next = NULL;
+	mem_ptr->prev = NULL;
 #ifdef DEBUG
- strncpy(mem_ptr->file, file, DEBUG_FILE_LEN);
- mem_ptr->file[DEBUG_FILE_LEN-1] = '\0';
- mem_ptr->line = line;
+	strncpy( mem_ptr->file, file, DEBUG_FILE_LEN );
+	mem_ptr->file[DEBUG_FILE_LEN - 1] = '\0';
+	mem_ptr->line = line;
 #else
- (void)file; /*unused*/
- (void)line; /*unused*/
+	( void ) file;			 /*unused */
+	( void ) line;			 /*unused */
 #endif
- return(mem_ptr);
+	return ( mem_ptr );
 }
 
 /* Insert the memory information 
  * Do not lock these routines, but lock in routines using these
  */
-static void insert_mem_ptr(pmem_t *ptr){
-  if ( !ptr ) return;
- 
-  if ( !mem_head ) {
-     mem_head = ptr;
-     ptr->next = NULL;
-     ptr->prev = NULL;
-  }
-  else {
-     mem_head->prev = ptr;
-     ptr->next = mem_head;
-     mem_head = ptr;
-  }
-  return; 
+static void
+insert_mem_ptr( pmem_t * ptr )
+{
+	if ( !ptr )
+		return;
+
+	if ( !mem_head ) {
+		mem_head = ptr;
+		ptr->next = NULL;
+		ptr->prev = NULL;
+	} else {
+		mem_head->prev = ptr;
+		ptr->next = mem_head;
+		mem_head = ptr;
+	}
+	return;
 }
 
 /* Remove the memory information pointer and free the memory 
  * Do not using locking in this routine, instead lock around 
  * the sections of code that use this call.
  */
-static void remove_mem_ptr(pmem_t *ptr){
-  if ( !ptr ) return;
+static void
+remove_mem_ptr( pmem_t * ptr )
+{
+	if ( !ptr )
+		return;
 
-  if ( ptr->prev )
-    ptr->prev->next = ptr->next;
-  if ( ptr->next )
-    ptr->next->prev = ptr->prev;
-  if ( ptr == mem_head )
-      mem_head = ptr->next;
-  free(ptr);
+	if ( ptr->prev )
+		ptr->prev->next = ptr->next;
+	if ( ptr->next )
+		ptr->next->prev = ptr->prev;
+	if ( ptr == mem_head )
+		mem_head = ptr->next;
+	free( ptr );
 }
 
-static int set_epilog(pmem_t *mem_ptr) {
+static int
+set_epilog( pmem_t * mem_ptr )
+{
 #ifdef DEBUG
-  char *chptr = (char *)mem_ptr->ptr + mem_ptr->size;
-  *chptr++ = MEM_EPILOG_1;
-  *chptr++ = MEM_EPILOG_2;
-  *chptr++ = MEM_EPILOG_3;
-  *chptr++ = MEM_EPILOG_4;
-  return(_papi_mem_check_all_overflow());
+	char *chptr = ( char * ) mem_ptr->ptr + mem_ptr->size;
+	*chptr++ = MEM_EPILOG_1;
+	*chptr++ = MEM_EPILOG_2;
+	*chptr++ = MEM_EPILOG_3;
+	*chptr++ = MEM_EPILOG_4;
+	return ( _papi_mem_check_all_overflow(  ) );
 #else
-  (void)mem_ptr; /*unused*/
-  return(0);
+	( void ) mem_ptr;		 /*unused */
+	return ( 0 );
 #endif
 }
 
 /* Check for memory buffer overflows */
 #ifdef DEBUG
-static int _papi_mem_check_buf_overflow(pmem_t *tmp){
-  int fnd = 0;
-  char *ptr;
-  char *tptr;
+static int
+_papi_mem_check_buf_overflow( pmem_t * tmp )
+{
+	int fnd = 0;
+	char *ptr;
+	char *tptr;
 
-  if ( !tmp ) return(0);
+	if ( !tmp )
+		return ( 0 );
 
-  tptr = tmp->ptr;
-  tptr += tmp->size;
+	tptr = tmp->ptr;
+	tptr += tmp->size;
 
-  /* Move to the buffer overflow padding */
-  ptr = ((char *)tmp->ptr)+tmp->size;
-  if ( *ptr++ != MEM_EPILOG_1 ) fnd=1;
-  else if ( *ptr++ != MEM_EPILOG_2 ) fnd = 2;
-  else if ( *ptr++ != MEM_EPILOG_3 ) fnd = 3;
-  else if ( *ptr++ != MEM_EPILOG_4 ) fnd = 4;
+	/* Move to the buffer overflow padding */
+	ptr = ( ( char * ) tmp->ptr ) + tmp->size;
+	if ( *ptr++ != MEM_EPILOG_1 )
+		fnd = 1;
+	else if ( *ptr++ != MEM_EPILOG_2 )
+		fnd = 2;
+	else if ( *ptr++ != MEM_EPILOG_3 )
+		fnd = 3;
+	else if ( *ptr++ != MEM_EPILOG_4 )
+		fnd = 4;
 
-  if ( fnd ) {
-    LEAKDBG("Buffer Overflow[%d] for %p allocated from %s at line %d\n", fnd, tmp->ptr, tmp->file, tmp->line);
-  }
-  return(fnd);
+	if ( fnd ) {
+		LEAKDBG( "Buffer Overflow[%d] for %p allocated from %s at line %d\n",
+				 fnd, tmp->ptr, tmp->file, tmp->line );
+	}
+	return ( fnd );
 }
 #endif
 
-int _papi_mem_check_all_overflow()
+int
+_papi_mem_check_all_overflow(  )
 {
-   int fnd = 0;
+	int fnd = 0;
 #ifdef DEBUG
-   pmem_t *tmp;
+	pmem_t *tmp;
 
-   _papi_hwi_lock(MEMORY_LOCK);
-   for(tmp = mem_head; tmp; tmp = tmp->next){
-     if ( _papi_mem_check_buf_overflow(tmp) ) fnd++;
-   }
-   if ( fnd )
-     LEAKDBG("%d Total Buffer overflows detected!\n", fnd);
-   _papi_hwi_unlock(MEMORY_LOCK);
+	_papi_hwi_lock( MEMORY_LOCK );
+	for ( tmp = mem_head; tmp; tmp = tmp->next ) {
+		if ( _papi_mem_check_buf_overflow( tmp ) )
+			fnd++;
+	}
+	if ( fnd )
+		LEAKDBG( "%d Total Buffer overflows detected!\n", fnd );
+	_papi_hwi_unlock( MEMORY_LOCK );
 #endif
-   return(fnd);
+	return ( fnd );
 }

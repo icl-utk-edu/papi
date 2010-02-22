@@ -1,33 +1,35 @@
 #include "papi_test.h"
 
-int main(int argc, char **argv)
+int
+main( int argc, char **argv )
 {
-   int retval;
-   long long elapsed_us, elapsed_cyc;
-   const PAPI_hw_info_t *hw_info;
+	int retval;
+	long long elapsed_us, elapsed_cyc;
+	const PAPI_hw_info_t *hw_info;
 
-   tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
+	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
-   retval = PAPI_library_init(PAPI_VER_CURRENT);
-   if (retval != PAPI_VER_CURRENT)
-      test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if ( retval != PAPI_VER_CURRENT )
+		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 
-   hw_info = PAPI_get_hardware_info();
-   if (hw_info == NULL)
-     test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
+	hw_info = PAPI_get_hardware_info(  );
+	if ( hw_info == NULL )
+		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
 
-   elapsed_us = PAPI_get_virt_usec();
-   elapsed_cyc = PAPI_get_virt_cyc();
+	elapsed_us = PAPI_get_virt_usec(  );
+	elapsed_cyc = PAPI_get_virt_cyc(  );
 
-   printf("Testing virt time clock. (CLOCK %d MHz, CPU %f MHz)\n",hw_info->clock_mhz,hw_info->mhz);
-   printf("Sleeping for 10 seconds.\n");
+	printf( "Testing virt time clock. (CLOCK %d MHz, CPU %f MHz)\n",
+			hw_info->clock_mhz, hw_info->mhz );
+	printf( "Sleeping for 10 seconds.\n" );
 
-   sleep(10);
+	sleep( 10 );
 
-   elapsed_us = PAPI_get_virt_usec() - elapsed_us;
-   elapsed_cyc = PAPI_get_virt_cyc() - elapsed_cyc;
+	elapsed_us = PAPI_get_virt_usec(  ) - elapsed_us;
+	elapsed_cyc = PAPI_get_virt_cyc(  ) - elapsed_cyc;
 
-   printf("%lld us. %lld cyc.\n",elapsed_us,elapsed_cyc);
+	printf( "%lld us. %lld cyc.\n", elapsed_us, elapsed_cyc );
 
 /* Elapsed microseconds and elapsed cycles are not as unambiguous as they appear.
    On Pentium III and 4, for example, cycles is a measured value, while useconds 
@@ -42,11 +44,12 @@ int main(int argc, char **argv)
    one instance of Pentium 4 (torc17@utk) are on the order of one part per thousand.
 */
 
-   /* We'll accept 1.5 part per thousand error here (to allow Pentium 4 
-      and Alpha to pass) */
-   if (elapsed_us > 100000)
-     test_fail(__FILE__, __LINE__, "Virt time greater than .1 seconds!", PAPI_EMISC);
+	/* We'll accept 1.5 part per thousand error here (to allow Pentium 4 
+	   and Alpha to pass) */
+	if ( elapsed_us > 100000 )
+		test_fail( __FILE__, __LINE__, "Virt time greater than .1 seconds!",
+				   PAPI_EMISC );
 
-   test_pass(__FILE__, NULL, 0);
-   exit(1);
+	test_pass( __FILE__, NULL, 0 );
+	exit( 1 );
 }

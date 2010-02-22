@@ -21,155 +21,162 @@
 
 #include "papi_test.h"
 
-extern int TESTS_QUIET;         /* Declared in test_utils.c */
+extern int TESTS_QUIET;				   /* Declared in test_utils.c */
 
-int main(int argc, char **argv)
+int
+main( int argc, char **argv )
 {
-   int retval;
+	int retval;
 #define NUM_EVENTS 2
-   long long values[NUM_EVENTS], dummyvalues[NUM_EVENTS];
-   int Events[NUM_EVENTS];
-   int EventSet = PAPI_NULL;
+	long long values[NUM_EVENTS], dummyvalues[NUM_EVENTS];
+	int Events[NUM_EVENTS];
+	int EventSet = PAPI_NULL;
 
-   tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
+	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
 
-   if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
-      test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+	if ( ( retval =
+		   PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
+		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 
-   /* query and set up the right events to monitor */
-   if (PAPI_query_event(PAPI_FP_INS) == PAPI_OK) {
-      Events[0] = PAPI_FP_INS;
-      Events[1] = PAPI_TOT_CYC;
-   } else {
-      Events[0] = PAPI_TOT_INS;
-      Events[1] = PAPI_TOT_CYC;
-   }
+	/* query and set up the right events to monitor */
+	if ( PAPI_query_event( PAPI_FP_INS ) == PAPI_OK ) {
+		Events[0] = PAPI_FP_INS;
+		Events[1] = PAPI_TOT_CYC;
+	} else {
+		Events[0] = PAPI_TOT_INS;
+		Events[1] = PAPI_TOT_CYC;
+	}
 
-   if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
+	if ( ( retval = PAPI_create_eventset( &EventSet ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
 
-   if ((retval = PAPI_add_events(EventSet, (int *) Events, NUM_EVENTS)) < PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_add_events", retval);
+	if ( ( retval =
+		   PAPI_add_events( EventSet, ( int * ) Events,
+							NUM_EVENTS ) ) < PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_add_events", retval );
 
-   if (!TESTS_QUIET) {
-      printf("\n   Incorrect usage of read and accum.\n");
-      printf("   Some cycles are counted twice\n");
-   }
-   if ((retval = PAPI_start(EventSet)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_start", retval);
+	if ( !TESTS_QUIET ) {
+		printf( "\n   Incorrect usage of read and accum.\n" );
+		printf( "   Some cycles are counted twice\n" );
+	}
+	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
 
-   /* Loop 1 */
-   do_flops(NUM_FLOPS);
+	/* Loop 1 */
+	do_flops( NUM_FLOPS );
 
-   if ((retval = PAPI_read(EventSet, values)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_read", retval);
+	if ( ( retval = PAPI_read( EventSet, values ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_read", retval );
 
-   if (!TESTS_QUIET)
-      printf(TWO12, values[0], values[1], "(Counters continuing...)\n");
+	if ( !TESTS_QUIET )
+		printf( TWO12, values[0], values[1], "(Counters continuing...)\n" );
 
-   /* Loop 2 */
-   do_flops(NUM_FLOPS);
+	/* Loop 2 */
+	do_flops( NUM_FLOPS );
 
-   /* Using PAPI_accum here is incorrect. The result is that Loop 1 *
-    * is being counted twice                                        */
-   if ((retval = PAPI_accum(EventSet, values)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_accum", retval);
+	/* Using PAPI_accum here is incorrect. The result is that Loop 1 *
+	 * is being counted twice                                        */
+	if ( ( retval = PAPI_accum( EventSet, values ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_accum", retval );
 
-   if (!TESTS_QUIET)
-      printf(TWO12, values[0], values[1], "(Counters being accumulated)\n");
+	if ( !TESTS_QUIET )
+		printf( TWO12, values[0], values[1], "(Counters being accumulated)\n" );
 
-   /* Loop 3 */
-   do_flops(NUM_FLOPS);
+	/* Loop 3 */
+	do_flops( NUM_FLOPS );
 
-   if ((retval = PAPI_stop(EventSet, dummyvalues)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+	if ( ( retval = PAPI_stop( EventSet, dummyvalues ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 
-   if ((retval = PAPI_read(EventSet, dummyvalues)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_read", retval);
+	if ( ( retval = PAPI_read( EventSet, dummyvalues ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_read", retval );
 
-   if (!TESTS_QUIET) {
-      printf(TWO12, dummyvalues[0], dummyvalues[1], "(Reading stopped counters)\n");
+	if ( !TESTS_QUIET ) {
+		printf( TWO12, dummyvalues[0], dummyvalues[1],
+				"(Reading stopped counters)\n" );
 
-      printf(TWO12, values[0], values[1], "");
+		printf( TWO12, values[0], values[1], "" );
 
-      printf("\n   Incorrect usage of read and accum.\n");
-      printf("   Another incorrect use\n");
-   }
-   if ((retval = PAPI_start(EventSet)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_start", retval);
+		printf( "\n   Incorrect usage of read and accum.\n" );
+		printf( "   Another incorrect use\n" );
+	}
+	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
 
-   /* Loop 1 */
-   do_flops(NUM_FLOPS);
+	/* Loop 1 */
+	do_flops( NUM_FLOPS );
 
-   if ((retval = PAPI_read(EventSet, values)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_read", retval);
+	if ( ( retval = PAPI_read( EventSet, values ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_read", retval );
 
-   if (!TESTS_QUIET)
-      printf(TWO12, values[0], values[1], "(Counters continuing...)\n");
+	if ( !TESTS_QUIET )
+		printf( TWO12, values[0], values[1], "(Counters continuing...)\n" );
 
-   /* Loop 2 */
-   /* Code that should not be counted */
-   do_flops(NUM_FLOPS);
+	/* Loop 2 */
+	/* Code that should not be counted */
+	do_flops( NUM_FLOPS );
 
-   if ((retval = PAPI_read(EventSet, dummyvalues)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_read", retval);
+	if ( ( retval = PAPI_read( EventSet, dummyvalues ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_read", retval );
 
-   if (!TESTS_QUIET)
-      printf(TWO12, dummyvalues[0], dummyvalues[1], "(Intermediate counts...)\n");
+	if ( !TESTS_QUIET )
+		printf( TWO12, dummyvalues[0], dummyvalues[1],
+				"(Intermediate counts...)\n" );
 
-   /* Loop 3 */
-   do_flops(NUM_FLOPS);
+	/* Loop 3 */
+	do_flops( NUM_FLOPS );
 
-   /* Since PAPI_read does not reset the counters it's use above after    *
-    * loop 2 is incorrect. Instead Loop1 will in effect be counted twice. *
-    * and the counts in loop 2 are included in the total counts           */
-   if ((retval = PAPI_accum(EventSet, values)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_accum", retval);
-   if (!TESTS_QUIET)
-      printf(TWO12, values[0], values[1], "");
+	/* Since PAPI_read does not reset the counters it's use above after    *
+	 * loop 2 is incorrect. Instead Loop1 will in effect be counted twice. *
+	 * and the counts in loop 2 are included in the total counts           */
+	if ( ( retval = PAPI_accum( EventSet, values ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_accum", retval );
+	if ( !TESTS_QUIET )
+		printf( TWO12, values[0], values[1], "" );
 
-   if ((retval = PAPI_stop(EventSet, dummyvalues)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+	if ( ( retval = PAPI_stop( EventSet, dummyvalues ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 
-   if (!TESTS_QUIET) {
-      printf("\n   Correct usage of read and accum.\n");
-      printf("   PAPI_reset and PAPI_accum used to skip counting\n");
-      printf("   a section of the code.\n");
-   }
-   if ((retval = PAPI_start(EventSet)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_start", retval);
+	if ( !TESTS_QUIET ) {
+		printf( "\n   Correct usage of read and accum.\n" );
+		printf( "   PAPI_reset and PAPI_accum used to skip counting\n" );
+		printf( "   a section of the code.\n" );
+	}
+	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
 
-   do_flops(NUM_FLOPS);
+	do_flops( NUM_FLOPS );
 
-   if ((retval = PAPI_read(EventSet, values)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_read", retval);
-   if (!TESTS_QUIET)
-      printf(TWO12, values[0], values[1], "(Counters continuing)\n");
+	if ( ( retval = PAPI_read( EventSet, values ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_read", retval );
+	if ( !TESTS_QUIET )
+		printf( TWO12, values[0], values[1], "(Counters continuing)\n" );
 
-   /* Code that should not be counted */
-   do_flops(NUM_FLOPS);
+	/* Code that should not be counted */
+	do_flops( NUM_FLOPS );
 
-   if ((retval = PAPI_reset(EventSet)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_reset", retval);
+	if ( ( retval = PAPI_reset( EventSet ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_reset", retval );
 
-   if (!TESTS_QUIET)
-      printf("%12s %12s  (Counters reset)\n", "", "");
+	if ( !TESTS_QUIET )
+		printf( "%12s %12s  (Counters reset)\n", "", "" );
 
-   do_flops(NUM_FLOPS);
+	do_flops( NUM_FLOPS );
 
-   if ((retval = PAPI_accum(EventSet, values)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_accum", retval);
+	if ( ( retval = PAPI_accum( EventSet, values ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_accum", retval );
 
-   if (!TESTS_QUIET)
-      printf(TWO12, values[0], values[1], "");
+	if ( !TESTS_QUIET )
+		printf( TWO12, values[0], values[1], "" );
 
-   if (!TESTS_QUIET) {
-      printf("----------------------------------\n");
-      printf("Verification: The last line in each experiment should be\n");
-      printf("approximately twice the value of the first line.\n");
-      printf("The third case illustrates one possible way to accomplish this.\n");
-   }
-   test_pass(__FILE__, NULL, 0);
-   exit(1);
+	if ( !TESTS_QUIET ) {
+		printf( "----------------------------------\n" );
+		printf( "Verification: The last line in each experiment should be\n" );
+		printf( "approximately twice the value of the first line.\n" );
+		printf
+			( "The third case illustrates one possible way to accomplish this.\n" );
+	}
+	test_pass( __FILE__, NULL, 0 );
+	exit( 1 );
 }

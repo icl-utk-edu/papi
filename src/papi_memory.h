@@ -6,15 +6,16 @@
 /* this line should be deleted for the papi 4.0 head */
 #define _papi_cleanup_all_memory _papi_mem_cleanup_all
 
-typedef struct pmem {
-  void *ptr;
-  int size;
+typedef struct pmem
+{
+	void *ptr;
+	int size;
 #ifdef DEBUG
-  char file[DEBUG_FILE_LEN];
-  int  line;
+	char file[DEBUG_FILE_LEN];
+	int line;
 #endif
-  struct pmem *next;
-  struct pmem *prev;
+	struct pmem *next;
+	struct pmem *prev;
 } pmem_t;
 
 #ifndef IN_MEM_FILE
@@ -45,18 +46,18 @@ typedef struct pmem {
 #endif
 #endif
 
-void *_papi_malloc(char *, int, int);
-void _papi_free(char *, int, void *);
-void *_papi_realloc(char *, int, void *, int);
-void *_papi_calloc(char *, int, int, int);
-int _papi_valid_free(char *, int, void *);
-char *_papi_strdup(char *, int, const char *s);
-void _papi_mem_cleanup_all();
-void _papi_mem_print_info(void *ptr);
-void _papi_mem_print_stats();
-int _papi_mem_overhead(int);
-int _papi_mem_check_all_overflow();
+void *_papi_malloc( char *, int, int );
+void _papi_free( char *, int, void * );
+void *_papi_realloc( char *, int, void *, int );
+void *_papi_calloc( char *, int, int, int );
+int _papi_valid_free( char *, int, void * );
+char *_papi_strdup( char *, int, const char *s );
+void _papi_mem_cleanup_all(  );
+void _papi_mem_print_info( void *ptr );
+void _papi_mem_print_stats(  );
+int _papi_mem_overhead( int );
+int _papi_mem_check_all_overflow(  );
 
-#define PAPI_MEM_LIB_OVERHEAD	1   /* PAPI Library Overhead */
-#define PAPI_MEM_OVERHEAD	2   /* Memory Overhead */
+#define PAPI_MEM_LIB_OVERHEAD	1	/* PAPI Library Overhead */
+#define PAPI_MEM_OVERHEAD	2	/* Memory Overhead */
 #endif

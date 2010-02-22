@@ -1,4 +1,4 @@
-#ifndef _PAPI_AIX_H               /* _PAPI_AIX */
+#ifndef _PAPI_AIX_H			 /* _PAPI_AIX */
 #define _PAPI_AIX_H
 
 #include <stdlib.h>
@@ -80,4 +80,4 @@ typedef struct sigcontext hwd_ucontext_t;
 
 #define MY_VECTOR _aix_vector
 
-#endif                          /* _PAPI_AIX */
+#endif /* _PAPI_AIX */

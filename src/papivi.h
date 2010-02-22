@@ -43,7 +43,7 @@
 #define PAPI_VI_VERSION  			PAPI_VERSION_NUMBER(3,0,6)
 
 /* PAPI 3 has an error code not defined for PAPI 2 */
-#define PAPI_EPERM   PAPI_EMISC        /* You lack the necessary permissions */
+#define PAPI_EPERM   PAPI_EMISC	/* You lack the necessary permissions */
 
 /*
 * These are defined in papi_internal.h for PAPI 2.
@@ -105,52 +105,55 @@
 * They MUST stay synchronized with their counterparts in papi.h
 */
 #define PAPI_MAX_INFO_TERMS 8
-typedef struct event_info {
-   unsigned int event_code;
-   unsigned int count;
-   char symbol[PAPI_MAX_STR_LEN+3];
-   char short_descr[PAPI_MIN_STR_LEN];
-   char long_descr[PAPI_HUGE_STR_LEN];
-   char derived[PAPI_MIN_STR_LEN];
-   char postfix[PAPI_MIN_STR_LEN]; 
-   unsigned int code[PAPI_MAX_INFO_TERMS];
-   char name[PAPI_MAX_INFO_TERMS]
-            [PAPI_MIN_STR_LEN];
-   char note[PAPI_HUGE_STR_LEN];
+typedef struct event_info
+{
+	unsigned int event_code;
+	unsigned int count;
+	char symbol[PAPI_MAX_STR_LEN + 3];
+	char short_descr[PAPI_MIN_STR_LEN];
+	char long_descr[PAPI_HUGE_STR_LEN];
+	char derived[PAPI_MIN_STR_LEN];
+	char postfix[PAPI_MIN_STR_LEN];
+	unsigned int code[PAPI_MAX_INFO_TERMS];
+	char name[PAPI_MAX_INFO_TERMS]
+		[PAPI_MIN_STR_LEN];
+	char note[PAPI_HUGE_STR_LEN];
 } PAPI_event_info_t;
 
 /* Possible values for the 'modifier' parameter of the PAPI_enum_event call.
    This enumeration is new in PAPI 3. It will act as a nop in PAPI 2, but
    must be defined for code compatibility.
 */
-enum {
-   PAPI_ENUM_ALL = 0,			/* Always enumerate all events */
-   PAPI_PRESET_ENUM_AVAIL, 		/* Enumerate events that exist here */
+enum
+{
+	PAPI_ENUM_ALL = 0,				   /* Always enumerate all events */
+	PAPI_PRESET_ENUM_AVAIL,	 /* Enumerate events that exist here */
 
-   /* PAPI PRESET section */
-   PAPI_PRESET_ENUM_INS,		/* Instruction related preset events */
-   PAPI_PRESET_ENUM_BR,			/* branch related preset events */
-   PAPI_PRESET_ENUM_MEM,		/* memory related preset events */
-   PAPI_PRESET_ENUM_TLB,		/* Translation Lookaside Buffer events */
-   PAPI_PRESET_ENUM_FP,			/* Floating Point related preset events */
+	/* PAPI PRESET section */
+	PAPI_PRESET_ENUM_INS,	 /* Instruction related preset events */
+	PAPI_PRESET_ENUM_BR,	 /* branch related preset events */
+	PAPI_PRESET_ENUM_MEM,	 /* memory related preset events */
+	PAPI_PRESET_ENUM_TLB,	 /* Translation Lookaside Buffer events */
+	PAPI_PRESET_ENUM_FP,	 /* Floating Point related preset events */
 
-   /* Pentium 4 specific section */
-   PAPI_PENT4_ENUM_GROUPS = 0x100,      /* 45 groups + custom + user */
-   PAPI_PENT4_ENUM_COMBOS,		/* all combinations of mask bits for given group */
-   PAPI_PENT4_ENUM_BITS,		/* all individual bits for given group */
+	/* Pentium 4 specific section */
+	PAPI_PENT4_ENUM_GROUPS = 0x100,	/* 45 groups + custom + user */
+	PAPI_PENT4_ENUM_COMBOS,	 /* all combinations of mask bits for given group */
+	PAPI_PENT4_ENUM_BITS,	 /* all individual bits for given group */
 
-   /* POWER 4 specific section */
-   PAPI_PWR4_ENUM_GROUPS = 0x200	/* Enumerate groups an event belongs to */
+	/* POWER 4 specific section */
+	PAPI_PWR4_ENUM_GROUPS = 0x200	/* Enumerate groups an event belongs to */
 };
 
-typedef struct _papi_address_map {
-   char mapname[PAPI_HUGE_STR_LEN];
-   caddr_t text_start;       /* Start address of program text segment */
-   caddr_t text_end;         /* End address of program text segment */
-   caddr_t data_start;       /* Start address of program data segment */
-   caddr_t data_end;         /* End address of program data segment */
-   caddr_t bss_start;        /* Start address of program bss segment */
-   caddr_t bss_end;          /* End address of program bss segment */
+typedef struct _papi_address_map
+{
+	char mapname[PAPI_HUGE_STR_LEN];
+	caddr_t text_start;				   /* Start address of program text segment */
+	caddr_t text_end;				   /* End address of program text segment */
+	caddr_t data_start;				   /* Start address of program data segment */
+	caddr_t data_end;				   /* End address of program data segment */
+	caddr_t bss_start;				   /* Start address of program bss segment */
+	caddr_t bss_end;				   /* End address of program bss segment */
 } PAPI_address_map_t;
 
 /*
@@ -170,28 +173,32 @@ typedef struct _papi_address_map {
 #define PAPI_MH_TYPE_DATA     0x2
 #define PAPI_MH_TYPE_UNIFIED  PAPI_MH_TYPE_INST|PAPI_MH_TYPE_DATA
 
-typedef struct _papi_mh_tlb_info {
-   int type; /* Empty, unified, data, instr */
-   int num_entries;
-   int associativity;
+typedef struct _papi_mh_tlb_info
+{
+	int type;						   /* Empty, unified, data, instr */
+	int num_entries;
+	int associativity;
 } PAPI_mh_tlb_info_t;
 
-typedef struct _papi_mh_cache_info {
-   int type; /* Empty, unified, data, instr */
-   int size;
-   int line_size;
-   int num_lines;
-   int associativity;
+typedef struct _papi_mh_cache_info
+{
+	int type;						   /* Empty, unified, data, instr */
+	int size;
+	int line_size;
+	int num_lines;
+	int associativity;
 } PAPI_mh_cache_info_t;
 
-typedef struct _papi_mh_level_info {
-   PAPI_mh_tlb_info_t   tlb[2];
-   PAPI_mh_cache_info_t cache[2];
+typedef struct _papi_mh_level_info
+{
+	PAPI_mh_tlb_info_t tlb[2];
+	PAPI_mh_cache_info_t cache[2];
 } PAPI_mh_level_t;
 
-typedef struct _papi_mh_info { /* mh for mem hierarchy maybe? */
-   int levels;
-   PAPI_mh_level_t level[PAPI_MAX_MEM_HIERARCHY_LEVELS];
+typedef struct _papi_mh_info
+{									   /* mh for mem hierarchy maybe? */
+	int levels;
+	PAPI_mh_level_t level[PAPI_MAX_MEM_HIERARCHY_LEVELS];
 } PAPI_mh_info_t;
 
 /*
@@ -205,33 +212,36 @@ typedef struct _papi_mh_info { /* mh for mem hierarchy maybe? */
 * To avoid namespace collisions, these structures have been renamed
 * to PAPIvi_xxx, and must also be renamed in your code.
 */
-typedef struct _papi3_hw_info {
-   int ncpu;                 /* Number of CPU's in an SMP Node */
-   int nnodes;               /* Number of Nodes in the entire system */
-   int totalcpus;            /* Total number of CPU's in the entire system */
-   int vendor;               /* Vendor number of CPU */
-   char vendor_string[PAPI_MAX_STR_LEN];     /* Vendor string of CPU */
-   int model;                /* Model number of CPU */
-   char model_string[PAPI_MAX_STR_LEN];      /* Model string of CPU */
-   float revision;           /* Revision of CPU */
-   float mhz;                /* Cycle time of this CPU, *may* be estimated at 
-                                init time with a quick timing routine */
+typedef struct _papi3_hw_info
+{
+	int ncpu;						   /* Number of CPU's in an SMP Node */
+	int nnodes;						   /* Number of Nodes in the entire system */
+	int totalcpus;					   /* Total number of CPU's in the entire system */
+	int vendor;						   /* Vendor number of CPU */
+	char vendor_string[PAPI_MAX_STR_LEN];	/* Vendor string of CPU */
+	int model;						   /* Model number of CPU */
+	char model_string[PAPI_MAX_STR_LEN];	/* Model string of CPU */
+	float revision;					   /* Revision of CPU */
+	float mhz;						   /* Cycle time of this CPU, *may* be estimated at 
+									      init time with a quick timing routine */
 
-   PAPI_mh_info_t mem_hierarchy;
+	PAPI_mh_info_t mem_hierarchy;
 } PAPIvi_hw_info_t;
 
-typedef struct _papi3_preload_option {
-   char lib_preload_env[PAPI_MAX_STR_LEN];   /* Model string of CPU */
-   char lib_preload_sep;
-   char lib_dir_env[PAPI_MAX_STR_LEN];
-   char lib_dir_sep;
+typedef struct _papi3_preload_option
+{
+	char lib_preload_env[PAPI_MAX_STR_LEN];	/* Model string of CPU */
+	char lib_preload_sep;
+	char lib_dir_env[PAPI_MAX_STR_LEN];
+	char lib_dir_sep;
 } PAPIvi_preload_option_t;
 
-typedef struct _papi3_program_info {
-   char fullname[PAPI_MAX_STR_LEN];  /* path+name */
-   char name[PAPI_MAX_STR_LEN];      /* name */
-   PAPI_address_map_t address_info;
-   PAPIvi_preload_option_t preload_info;
+typedef struct _papi3_program_info
+{
+	char fullname[PAPI_MAX_STR_LEN];   /* path+name */
+	char name[PAPI_MAX_STR_LEN];	   /* name */
+	PAPI_address_map_t address_info;
+	PAPIvi_preload_option_t preload_info;
 } PAPIvi_exe_info_t;
 
 
@@ -295,100 +305,132 @@ typedef struct _papi3_program_info {
           PAPI_unlock()
 
  /* Modified Functons: New functionality */
-static const PAPIvi_exe_info_t *PAPIvi_get_executable_info(void)
+static const PAPIvi_exe_info_t *
+PAPIvi_get_executable_info( void )
 {
-   static PAPIvi_exe_info_t prginfo3;
-   const PAPI_exe_info_t *prginfo2 = PAPI_get_executable_info();
+	static PAPIvi_exe_info_t prginfo3;
+	const PAPI_exe_info_t *prginfo2 = PAPI_get_executable_info(  );
 
-   if (prginfo2 == NULL) return(NULL);
+	if ( prginfo2 == NULL )
+		return ( NULL );
 
-   strcpy(prginfo3.fullname, prginfo2->fullname);
-   strcpy(prginfo3.name, prginfo2->name);
-   prginfo3.address_info.mapname[0] = 0;
-   prginfo3.address_info.text_start = prginfo2->text_start;
-   prginfo3.address_info.text_end = prginfo2->text_end;
-   prginfo3.address_info.data_start = prginfo2->data_start;
-   prginfo3.address_info.data_end = prginfo2->data_end;
-   prginfo3.address_info.bss_start = prginfo2->bss_start;
-   prginfo3.address_info.bss_end = prginfo2->bss_end;
-   strcpy(prginfo3.preload_info.lib_preload_env, prginfo2->lib_preload_env);
+	strcpy( prginfo3.fullname, prginfo2->fullname );
+	strcpy( prginfo3.name, prginfo2->name );
+	prginfo3.address_info.mapname[0] = 0;
+	prginfo3.address_info.text_start = prginfo2->text_start;
+	prginfo3.address_info.text_end = prginfo2->text_end;
+	prginfo3.address_info.data_start = prginfo2->data_start;
+	prginfo3.address_info.data_end = prginfo2->data_end;
+	prginfo3.address_info.bss_start = prginfo2->bss_start;
+	prginfo3.address_info.bss_end = prginfo2->bss_end;
+	strcpy( prginfo3.preload_info.lib_preload_env, prginfo2->lib_preload_env );
 
-   return(&prginfo3);
+	return ( &prginfo3 );
 }
 
-static const PAPIvi_hw_info_t *PAPIvi_get_hardware_info(void)
+static const PAPIvi_hw_info_t *
+PAPIvi_get_hardware_info( void )
 {
-   static PAPIvi_hw_info_t papi3_hw_info;
-   const PAPI_hw_info_t *papi2_hw_info = PAPI_get_hardware_info();
-   const PAPI_mem_info_t *papi2_mem_info = PAPI_get_memory_info();
+	static PAPIvi_hw_info_t papi3_hw_info;
+	const PAPI_hw_info_t *papi2_hw_info = PAPI_get_hardware_info(  );
+	const PAPI_mem_info_t *papi2_mem_info = PAPI_get_memory_info(  );
 
-   /* Copy the basic hardware info (same in both structures */
-   memcpy(&papi3_hw_info, papi2_hw_info, sizeof(PAPI_hw_info_t));
+	/* Copy the basic hardware info (same in both structures */
+	memcpy( &papi3_hw_info, papi2_hw_info, sizeof ( PAPI_hw_info_t ) );
 
-   memset(&papi3_hw_info.mem_hierarchy, 0, sizeof(PAPI_mh_info_t));
-   /* check for a unified tlb */
-   if (papi2_mem_info->total_tlb_size && 
-      papi2_mem_info->itlb_size == 0 &&
-      papi2_mem_info->dtlb_size == 0) {
-      papi3_hw_info.mem_hierarchy.level[0].tlb[0].type = PAPI_MH_TYPE_UNIFIED;
-      papi3_hw_info.mem_hierarchy.level[0].tlb[0].num_entries = papi2_mem_info->total_tlb_size;
-   } else {
-      if (papi2_mem_info->itlb_size) {
-         papi3_hw_info.mem_hierarchy.level[0].tlb[0].type = PAPI_MH_TYPE_INST;
-         papi3_hw_info.mem_hierarchy.level[0].tlb[0].num_entries = papi2_mem_info->itlb_size;
-         papi3_hw_info.mem_hierarchy.level[0].tlb[0].associativity = papi2_mem_info->itlb_assoc;
-      }
-      if (papi2_mem_info->dtlb_size) {
-         papi3_hw_info.mem_hierarchy.level[0].tlb[1].type = PAPI_MH_TYPE_DATA;
-         papi3_hw_info.mem_hierarchy.level[0].tlb[1].num_entries = papi2_mem_info->dtlb_size;
-         papi3_hw_info.mem_hierarchy.level[0].tlb[1].associativity = papi2_mem_info->dtlb_assoc;
-      }
-   }
-   /* check for a unified level 1 cache */
-   if (papi2_mem_info->total_L1_size) papi3_hw_info.mem_hierarchy.levels = 1;
-   if (papi2_mem_info->total_L1_size && 
-      papi2_mem_info->L1_icache_size == 0 &&
-      papi2_mem_info->L1_dcache_size == 0) {
-      papi3_hw_info.mem_hierarchy.level[0].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-      papi3_hw_info.mem_hierarchy.level[0].cache[0].size = papi2_mem_info->total_L1_size << 10;
-   } else {
-      if (papi2_mem_info->L1_icache_size) {
-         papi3_hw_info.mem_hierarchy.level[0].cache[0].type = PAPI_MH_TYPE_INST;
-         papi3_hw_info.mem_hierarchy.level[0].cache[0].size = papi2_mem_info->L1_icache_size << 10;
-         papi3_hw_info.mem_hierarchy.level[0].cache[0].associativity = papi2_mem_info->L1_icache_assoc;
-         papi3_hw_info.mem_hierarchy.level[0].cache[0].num_lines = papi2_mem_info->L1_icache_lines;
-         papi3_hw_info.mem_hierarchy.level[0].cache[0].line_size = papi2_mem_info->L1_icache_linesize;
-      }
-      if (papi2_mem_info->L1_dcache_size) {
-         papi3_hw_info.mem_hierarchy.level[0].cache[1].type = PAPI_MH_TYPE_DATA;
-         papi3_hw_info.mem_hierarchy.level[0].cache[1].size = papi2_mem_info->L1_dcache_size << 10;
-         papi3_hw_info.mem_hierarchy.level[0].cache[1].associativity = papi2_mem_info->L1_dcache_assoc;
-         papi3_hw_info.mem_hierarchy.level[0].cache[1].num_lines = papi2_mem_info->L1_dcache_lines;
-         papi3_hw_info.mem_hierarchy.level[0].cache[1].line_size = papi2_mem_info->L1_dcache_linesize;
-      }
-   }
+	memset( &papi3_hw_info.mem_hierarchy, 0, sizeof ( PAPI_mh_info_t ) );
+	/* check for a unified tlb */
+	if ( papi2_mem_info->total_tlb_size &&
+		 papi2_mem_info->itlb_size == 0 && papi2_mem_info->dtlb_size == 0 ) {
+		papi3_hw_info.mem_hierarchy.level[0].tlb[0].type = PAPI_MH_TYPE_UNIFIED;
+		papi3_hw_info.mem_hierarchy.level[0].tlb[0].num_entries =
+			papi2_mem_info->total_tlb_size;
+	} else {
+		if ( papi2_mem_info->itlb_size ) {
+			papi3_hw_info.mem_hierarchy.level[0].tlb[0].type =
+				PAPI_MH_TYPE_INST;
+			papi3_hw_info.mem_hierarchy.level[0].tlb[0].num_entries =
+				papi2_mem_info->itlb_size;
+			papi3_hw_info.mem_hierarchy.level[0].tlb[0].associativity =
+				papi2_mem_info->itlb_assoc;
+		}
+		if ( papi2_mem_info->dtlb_size ) {
+			papi3_hw_info.mem_hierarchy.level[0].tlb[1].type =
+				PAPI_MH_TYPE_DATA;
+			papi3_hw_info.mem_hierarchy.level[0].tlb[1].num_entries =
+				papi2_mem_info->dtlb_size;
+			papi3_hw_info.mem_hierarchy.level[0].tlb[1].associativity =
+				papi2_mem_info->dtlb_assoc;
+		}
+	}
+	/* check for a unified level 1 cache */
+	if ( papi2_mem_info->total_L1_size )
+		papi3_hw_info.mem_hierarchy.levels = 1;
+	if ( papi2_mem_info->total_L1_size &&
+		 papi2_mem_info->L1_icache_size == 0 &&
+		 papi2_mem_info->L1_dcache_size == 0 ) {
+		papi3_hw_info.mem_hierarchy.level[0].cache[0].type =
+			PAPI_MH_TYPE_UNIFIED;
+		papi3_hw_info.mem_hierarchy.level[0].cache[0].size =
+			papi2_mem_info->total_L1_size << 10;
+	} else {
+		if ( papi2_mem_info->L1_icache_size ) {
+			papi3_hw_info.mem_hierarchy.level[0].cache[0].type =
+				PAPI_MH_TYPE_INST;
+			papi3_hw_info.mem_hierarchy.level[0].cache[0].size =
+				papi2_mem_info->L1_icache_size << 10;
+			papi3_hw_info.mem_hierarchy.level[0].cache[0].associativity =
+				papi2_mem_info->L1_icache_assoc;
+			papi3_hw_info.mem_hierarchy.level[0].cache[0].num_lines =
+				papi2_mem_info->L1_icache_lines;
+			papi3_hw_info.mem_hierarchy.level[0].cache[0].line_size =
+				papi2_mem_info->L1_icache_linesize;
+		}
+		if ( papi2_mem_info->L1_dcache_size ) {
+			papi3_hw_info.mem_hierarchy.level[0].cache[1].type =
+				PAPI_MH_TYPE_DATA;
+			papi3_hw_info.mem_hierarchy.level[0].cache[1].size =
+				papi2_mem_info->L1_dcache_size << 10;
+			papi3_hw_info.mem_hierarchy.level[0].cache[1].associativity =
+				papi2_mem_info->L1_dcache_assoc;
+			papi3_hw_info.mem_hierarchy.level[0].cache[1].num_lines =
+				papi2_mem_info->L1_dcache_lines;
+			papi3_hw_info.mem_hierarchy.level[0].cache[1].line_size =
+				papi2_mem_info->L1_dcache_linesize;
+		}
+	}
 
-   /* check for level 2 cache info */
-   if (papi2_mem_info->L2_cache_size) {
-      papi3_hw_info.mem_hierarchy.levels = 2;
-      papi3_hw_info.mem_hierarchy.level[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-      papi3_hw_info.mem_hierarchy.level[1].cache[0].size = papi2_mem_info->L2_cache_size << 10;
-      papi3_hw_info.mem_hierarchy.level[1].cache[0].associativity = papi2_mem_info->L2_cache_assoc;
-      papi3_hw_info.mem_hierarchy.level[1].cache[0].num_lines = papi2_mem_info->L2_cache_lines;
-      papi3_hw_info.mem_hierarchy.level[1].cache[0].line_size = papi2_mem_info->L2_cache_linesize;
-   }
+	/* check for level 2 cache info */
+	if ( papi2_mem_info->L2_cache_size ) {
+		papi3_hw_info.mem_hierarchy.levels = 2;
+		papi3_hw_info.mem_hierarchy.level[1].cache[0].type =
+			PAPI_MH_TYPE_UNIFIED;
+		papi3_hw_info.mem_hierarchy.level[1].cache[0].size =
+			papi2_mem_info->L2_cache_size << 10;
+		papi3_hw_info.mem_hierarchy.level[1].cache[0].associativity =
+			papi2_mem_info->L2_cache_assoc;
+		papi3_hw_info.mem_hierarchy.level[1].cache[0].num_lines =
+			papi2_mem_info->L2_cache_lines;
+		papi3_hw_info.mem_hierarchy.level[1].cache[0].line_size =
+			papi2_mem_info->L2_cache_linesize;
+	}
 
-   /* check for level 3 cache info */
-   if (papi2_mem_info->L3_cache_size) {
-      papi3_hw_info.mem_hierarchy.levels = 3;
-      papi3_hw_info.mem_hierarchy.level[2].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-      papi3_hw_info.mem_hierarchy.level[2].cache[0].size = papi2_mem_info->L3_cache_size << 10;
-      papi3_hw_info.mem_hierarchy.level[2].cache[0].associativity = papi2_mem_info->L3_cache_assoc;
-      papi3_hw_info.mem_hierarchy.level[2].cache[0].num_lines = papi2_mem_info->L3_cache_lines;
-      papi3_hw_info.mem_hierarchy.level[2].cache[0].line_size = papi2_mem_info->L3_cache_linesize;
-   }
+	/* check for level 3 cache info */
+	if ( papi2_mem_info->L3_cache_size ) {
+		papi3_hw_info.mem_hierarchy.levels = 3;
+		papi3_hw_info.mem_hierarchy.level[2].cache[0].type =
+			PAPI_MH_TYPE_UNIFIED;
+		papi3_hw_info.mem_hierarchy.level[2].cache[0].size =
+			papi2_mem_info->L3_cache_size << 10;
+		papi3_hw_info.mem_hierarchy.level[2].cache[0].associativity =
+			papi2_mem_info->L3_cache_assoc;
+		papi3_hw_info.mem_hierarchy.level[2].cache[0].num_lines =
+			papi2_mem_info->L3_cache_lines;
+		papi3_hw_info.mem_hierarchy.level[2].cache[0].line_size =
+			papi2_mem_info->L3_cache_linesize;
+	}
 
-   return(&papi3_hw_info);
+	return ( &papi3_hw_info );
 }
 
 /*
@@ -401,47 +443,57 @@ static const PAPIvi_hw_info_t *PAPIvi_get_hardware_info(void)
 */
 
  /* New Supported Functions */
-static int PAPIvi_enum_event(int *EventCode, int modifier)
+static int
+PAPIvi_enum_event( int *EventCode, int modifier )
 {
-   int i = *EventCode;
-   const PAPI_preset_info_t *presets = PAPI_query_all_events_verbose();
-   i &= PAPI_PRESET_AND_MASK;
-   while (++i < PAPI_MAX_PRESET_EVENTS) {
-      if ((!modifier) || (presets[i].avail)) {
-         *EventCode = i | PAPI_PRESET_MASK;
-         if (presets[i].event_name != NULL)
-            return (PAPI_OK);
-         else
-            return (PAPI_ENOEVNT);
-      }
-   }
-   return (PAPI_ENOEVNT);
+	int i = *EventCode;
+	const PAPI_preset_info_t *presets = PAPI_query_all_events_verbose(  );
+	i &= PAPI_PRESET_AND_MASK;
+	while ( ++i < PAPI_MAX_PRESET_EVENTS ) {
+		if ( ( !modifier ) || ( presets[i].avail ) ) {
+			*EventCode = i | PAPI_PRESET_MASK;
+			if ( presets[i].event_name != NULL )
+				return ( PAPI_OK );
+			else
+				return ( PAPI_ENOEVNT );
+		}
+	}
+	return ( PAPI_ENOEVNT );
 }
 
-static int PAPIvi_get_event_info(int EventCode, PAPI_event_info_t * info)
+static int
+PAPIvi_get_event_info( int EventCode, PAPI_event_info_t * info )
 {
-   int i;
-   const PAPI_preset_info_t *info2 = PAPI_query_all_events_verbose();
+	int i;
+	const PAPI_preset_info_t *info2 = PAPI_query_all_events_verbose(  );
 
-   i = EventCode & PAPI_PRESET_AND_MASK;
-   if ((i >= PAPI_MAX_PRESET_EVENTS) || (info2[i].event_name == NULL))
-      return(PAPI_ENOTPRESET);
+	i = EventCode & PAPI_PRESET_AND_MASK;
+	if ( ( i >= PAPI_MAX_PRESET_EVENTS ) || ( info2[i].event_name == NULL ) )
+		return ( PAPI_ENOTPRESET );
 
-   info->event_code = info2[i].event_code;
-   info->count = info2[i].avail;
-   if (info2[i].flags & PAPI_DERIVED) {
-      info->count++;
-      strcpy(info->derived, "DERIVED");
-   }
-   if (info2[i].event_name == NULL)  info->symbol[0] = 0;
-   else strcpy(info->symbol, info2[i].event_name);
-   if (info2[i].event_label == NULL)  info->short_descr[0] = 0;
-   else strcpy(info->short_descr, info2[i].event_label);
-   if (info2[i].event_descr == NULL)  info->long_descr[0] = 0;
-   else strcpy(info->long_descr, info2[i].event_descr);
-   if (info2[i].event_note == NULL)  info->note[0] = 0;
-   else strcpy(info->note, info2[i].event_note);
-   return(PAPI_OK);
+	info->event_code = info2[i].event_code;
+	info->count = info2[i].avail;
+	if ( info2[i].flags & PAPI_DERIVED ) {
+		info->count++;
+		strcpy( info->derived, "DERIVED" );
+	}
+	if ( info2[i].event_name == NULL )
+		info->symbol[0] = 0;
+	else
+		strcpy( info->symbol, info2[i].event_name );
+	if ( info2[i].event_label == NULL )
+		info->short_descr[0] = 0;
+	else
+		strcpy( info->short_descr, info2[i].event_label );
+	if ( info2[i].event_descr == NULL )
+		info->long_descr[0] = 0;
+	else
+		strcpy( info->long_descr, info2[i].event_descr );
+	if ( info2[i].event_note == NULL )
+		info->note[0] = 0;
+	else
+		strcpy( info->note, info2[i].event_note );
+	return ( PAPI_OK );
 }
 
 /*

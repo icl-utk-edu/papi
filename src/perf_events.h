@@ -46,37 +46,37 @@
 
 /* The following block of defines should only be true for kernel 2.6.31 */
 #ifdef KERNEL31
-	#define perf_event_sample_format	perf_counter_sample_format
-	#define perf_event_read_format	perf_counter_read_format
-	#define perf_event_attr			perf_counter_attr
+#define perf_event_sample_format	perf_counter_sample_format
+#define perf_event_read_format	perf_counter_read_format
+#define perf_event_attr			perf_counter_attr
 
-	#define PERF_EVENT_IOC_ENABLE		PERF_COUNTER_IOC_ENABLE
-	#define PERF_EVENT_IOC_DISABLE	PERF_COUNTER_IOC_DISABLE
-	#define PERF_EVENT_IOC_REFRESH	PERF_COUNTER_IOC_REFRESH
-	#define PERF_EVENT_IOC_RESET		PERF_COUNTER_IOC_RESET
-	#define PERF_EVENT_IOC_PERIOD		PERF_COUNTER_IOC_PERIOD
-	#define PERF_EVENT_IOC_SET_OUTPUT	PERF_COUNTER_IOC_SET_OUTPUT
+#define PERF_EVENT_IOC_ENABLE		PERF_COUNTER_IOC_ENABLE
+#define PERF_EVENT_IOC_DISABLE	PERF_COUNTER_IOC_DISABLE
+#define PERF_EVENT_IOC_REFRESH	PERF_COUNTER_IOC_REFRESH
+#define PERF_EVENT_IOC_RESET		PERF_COUNTER_IOC_RESET
+#define PERF_EVENT_IOC_PERIOD		PERF_COUNTER_IOC_PERIOD
+#define PERF_EVENT_IOC_SET_OUTPUT	PERF_COUNTER_IOC_SET_OUTPUT
 
-	#define perf_event_ioc_flags		perf_counter_ioc_flags
-	#define perf_event_mmap_page		perf_counter_mmap_page
-	#define perf_event_wakeup		perf_counter_wakeup
+#define perf_event_ioc_flags		perf_counter_ioc_flags
+#define perf_event_mmap_page		perf_counter_mmap_page
+#define perf_event_wakeup		perf_counter_wakeup
 
-	#define PERF_RECORD_MISC_CPUMODE_MASK	PERF_EVENT_MISC_CPUMODE_MASK
-	#define PERF_RECORD_MISC_CPUMODE_UNKNOWN PERF_EVENT_MISC_CPUMODE_UNKNOWN
-	#define PERF_RECORD_MISC_KERNEL	PERF_EVENT_MISC_KERNEL
-	#define PERF_RECORD_MISC_USER		PERF_EVENT_MISC_USER
-	#define PERF_RECORD_MISC_HYPERVISOR	PERF_EVENT_MISC_HYPERVISOR
+#define PERF_RECORD_MISC_CPUMODE_MASK	PERF_EVENT_MISC_CPUMODE_MASK
+#define PERF_RECORD_MISC_CPUMODE_UNKNOWN PERF_EVENT_MISC_CPUMODE_UNKNOWN
+#define PERF_RECORD_MISC_KERNEL	PERF_EVENT_MISC_KERNEL
+#define PERF_RECORD_MISC_USER		PERF_EVENT_MISC_USER
+#define PERF_RECORD_MISC_HYPERVISOR	PERF_EVENT_MISC_HYPERVISOR
 
-	#define PERF_RECORD_MMAP		PERF_EVENT_MMAP
-	#define PERF_RECORD_LOST		PERF_EVENT_LOST
-	#define PERF_RECORD_COMM		PERF_EVENT_COMM
-	#define PERF_RECORD_EXIT		PERF_EVENT_EXIT
-	#define PERF_RECORD_THROTTLE		PERF_EVENT_THROTTLE
-	#define PERF_RECORD_UNTHROTTLE	PERF_EVENT_UNTHROTTLE
-	#define PERF_RECORD_FORK		PERF_EVENT_FORK
-	#define PERF_RECORD_READ		PERF_EVENT_READ
-	#define PERF_RECORD_SAMPLE		PERF_EVENT_SAMPLE
-	#define PERF_RECORD_MAX			PERF_EVENT_MAX
+#define PERF_RECORD_MMAP		PERF_EVENT_MMAP
+#define PERF_RECORD_LOST		PERF_EVENT_LOST
+#define PERF_RECORD_COMM		PERF_EVENT_COMM
+#define PERF_RECORD_EXIT		PERF_EVENT_EXIT
+#define PERF_RECORD_THROTTLE		PERF_EVENT_THROTTLE
+#define PERF_RECORD_UNTHROTTLE	PERF_EVENT_UNTHROTTLE
+#define PERF_RECORD_FORK		PERF_EVENT_FORK
+#define PERF_RECORD_READ		PERF_EVENT_READ
+#define PERF_RECORD_SAMPLE		PERF_EVENT_SAMPLE
+#define PERF_RECORD_MAX			PERF_EVENT_MAX
 
 #endif
 
@@ -87,19 +87,21 @@
 #define WAKEUP_MODE_COUNTER_OVERFLOW 0
 #define WAKEUP_MODE_PROFILING 1
 
-typedef struct {
-  unsigned char wakeup_mode;
+typedef struct
+{
+	unsigned char wakeup_mode;
 } per_event_info_t;
 
-typedef struct {
-  int num_events;
-  int num_groups;
-  unsigned domain;
-  unsigned multiplexed;
-  struct perf_event_attr events[MAX_MPX_EVENTS];
-  per_event_info_t per_event_info[MAX_MPX_EVENTS];
-  /* Buffer to gather counters */
-  long long counts[PFMLIB_MAX_PMDS];
+typedef struct
+{
+	int num_events;
+	int num_groups;
+	unsigned domain;
+	unsigned multiplexed;
+	struct perf_event_attr events[MAX_MPX_EVENTS];
+	per_event_info_t per_event_info[MAX_MPX_EVENTS];
+	/* Buffer to gather counters */
+	long long counts[PFMLIB_MAX_PMDS];
 } control_state_t;
 
 /* Perf events uses an FD per event counter */
@@ -109,22 +111,24 @@ typedef struct {
 
 #define PERF_EVENTS_RUNNING 0x01
 
-typedef struct {
-  int group_leader;       /* index of leader */
-  int event_fd;
-  int event_id;
-  uint32_t nr_mmap_pages; /* number pages in the mmap buffer */
-  void * mmap_buf; /* used to contain profiling data samples as well as control */
-  uint64_t tail; /* current location in the mmap buffer to read from */
-  uint64_t mask; /* mask used for wrapping the pages */
+typedef struct
+{
+	int group_leader;				   /* index of leader */
+	int event_fd;
+	int event_id;
+	uint32_t nr_mmap_pages;			   /* number pages in the mmap buffer */
+	void *mmap_buf;					   /* used to contain profiling data samples as well as control */
+	uint64_t tail;					   /* current location in the mmap buffer to read from */
+	uint64_t mask;					   /* mask used for wrapping the pages */
 } evt_t;
 
-typedef struct {
-  /* Array of event fd's, event group leader is event_fd[0] */
-  int cookie;
-  int state;
-  int num_evts;
-  evt_t evt[MAX_MPX_EVENTS];
+typedef struct
+{
+	/* Array of event fd's, event group leader is event_fd[0] */
+	int cookie;
+	int state;
+	int num_evts;
+	evt_t evt[MAX_MPX_EVENTS];
 } context_t;
 
 #if defined(DEBUG)
@@ -146,7 +150,7 @@ typedef int reg_alloc_t;
 #define PAPI_NATIVE_EVENT_AND_MASK 0x000003ff	/* 10 bits == 1024 max events */
 #define PAPI_NATIVE_EVENT_SHIFT 0
 #define PAPI_NATIVE_UMASK_AND_MASK 0x03fffc00	/* 16 bits for unit masks */
-#define PAPI_NATIVE_UMASK_MAX 16				/* 16 possible unit masks */
+#define PAPI_NATIVE_UMASK_MAX 16	/* 16 possible unit masks */
 #define PAPI_NATIVE_UMASK_SHIFT 10
 
 #define MAX_COUNTERS PFMLIB_MAX_PMCS
@@ -162,7 +166,7 @@ extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 #ifdef __INTEL_COMPILER
 #define _papi_hwd_lock(lck) { while(_InterlockedCompareExchange_acq(&_papi_hwd_lock_data[lck],MUTEX_CLOSED,MUTEX_OPEN) != MUTEX_OPEN) { ; } }
 #define _papi_hwd_unlock(lck) { _InterlockedExchange((volatile int *)&_papi_hwd_lock_data[lck], MUTEX_OPEN); }
-#else                           /* GCC */
+#else  /* GCC */
 #define _papi_hwd_lock(lck)			 			      \
    { int res = 0;							      \
     do {								      \
@@ -188,70 +192,63 @@ do                                              \
    __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(_papi_hwd_lock_data[lck]), "0"(MUTEX_OPEN) : "memory");                                \
 } while(0)
 #elif defined(mips)
-static inline void __raw_spin_lock(volatile unsigned int *lock)
+static inline void
+__raw_spin_lock( volatile unsigned int *lock )
 {
-  unsigned int tmp;
-  extern int _perfmon2_pfm_pmu_type;
-  if (_perfmon2_pfm_pmu_type == PFMLIB_MIPS_R10000_PMU)
-    {
-		__asm__ __volatile__(
-		"	.set	noreorder	# __raw_spin_lock	\n"
-		"1:	ll	%1, %2					\n"
-		"	bnez	%1, 1b					\n"
-		"	 li	%1, 1					\n"
-		"	sc	%1, %0					\n"
-		"	beqzl	%1, 1b					\n"
-		"	 nop						\n"
-		"	sync						\n"
-		"	.set	reorder					\n"
-		: "=m" (*lock), "=&r" (tmp)
-		: "m" (*lock)
-		: "memory");
-    }
-  else if (_perfmon2_pfm_pmu_type == PFMLIB_MIPS_ICE9A_PMU)
-    {
-		__asm__ __volatile__(
-		"	.set	noreorder	# __raw_spin_lock	\n"
-		"1:	ll	%1, %2					\n"
-		"  	ll	%1, %2					\n"
-		"	bnez	%1, 1b					\n"
-		"	 li	%1, 1					\n"
-		"	sc	%1, %0					\n"
-		"	beqz	%1, 1b					\n"
-		"	 sync						\n"
-		"	.set	reorder					\n"
-		: "=m" (*lock), "=&r" (tmp)
-		: "m" (*lock)
-		: "memory");
-    }
-  else
-    {
-		__asm__ __volatile__(
-		"	.set	noreorder	# __raw_spin_lock	\n"
-		"1:	ll	%1, %2					\n"
-		"	bnez	%1, 1b					\n"
-		"	 li	%1, 1					\n"
-		"	sc	%1, %0					\n"
-		"	beqz	%1, 1b					\n"
-		"	 sync						\n"
-		"	.set	reorder					\n"
-		: "=m" (*lock), "=&r" (tmp)
-		: "m" (*lock)
-		: "memory");
-    }
+	unsigned int tmp;
+	extern int _perfmon2_pfm_pmu_type;
+	if ( _perfmon2_pfm_pmu_type == PFMLIB_MIPS_R10000_PMU ) {
+		__asm__ __volatile__( "	.set	noreorder	# __raw_spin_lock	\n"
+							  "1:	ll	%1, %2					\n"
+							  "	bnez	%1, 1b					\n"
+							  "	 li	%1, 1					\n"
+							  "	sc	%1, %0					\n"
+							  "	beqzl	%1, 1b					\n"
+							  "	 nop						\n"
+							  "	sync						\n"
+							  "	.set	reorder					\n":"=m"
+							  ( *lock ), "=&r"( tmp )
+							  :"m"( *lock )
+							  :"memory" );
+	} else if ( _perfmon2_pfm_pmu_type == PFMLIB_MIPS_ICE9A_PMU ) {
+		__asm__ __volatile__( "	.set	noreorder	# __raw_spin_lock	\n"
+							  "1:	ll	%1, %2					\n"
+							  "  	ll	%1, %2					\n"
+							  "	bnez	%1, 1b					\n"
+							  "	 li	%1, 1					\n"
+							  "	sc	%1, %0					\n"
+							  "	beqz	%1, 1b					\n"
+							  "	 sync						\n"
+							  "	.set	reorder					\n":"=m"
+							  ( *lock ), "=&r"( tmp )
+							  :"m"( *lock )
+							  :"memory" );
+	} else {
+		__asm__ __volatile__( "	.set	noreorder	# __raw_spin_lock	\n"
+							  "1:	ll	%1, %2					\n"
+							  "	bnez	%1, 1b					\n"
+							  "	 li	%1, 1					\n"
+							  "	sc	%1, %0					\n"
+							  "	beqz	%1, 1b					\n"
+							  "	 sync						\n"
+							  "	.set	reorder					\n":"=m"
+							  ( *lock ), "=&r"( tmp )
+							  :"m"( *lock )
+							  :"memory" );
+	}
 }
 
-static inline void __raw_spin_unlock(volatile unsigned int *lock)
+static inline void
+__raw_spin_unlock( volatile unsigned int *lock )
 {
-	__asm__ __volatile__(
-	"	.set	noreorder	# __raw_spin_unlock	\n"
-	"	sync						\n"
-	"	sw	$0, %0					\n"
-	"	.set\treorder					\n"
-	: "=m" (*lock)
-	: "m" (*lock)
-	: "memory");
+	__asm__ __volatile__( "	.set	noreorder	# __raw_spin_unlock	\n"
+						  "	sync						\n"
+						  "	sw	$0, %0					\n"
+						  "	.set\treorder					\n":"=m"( *lock )
+						  :"m"( *lock )
+						  :"memory" );
 }
+
 #define  _papi_hwd_lock(lck) __raw_spin_lock(&_papi_hwd_lock_data[lck]);
 #define  _papi_hwd_unlock(lck) __raw_spin_unlock(&_papi_hwd_lock_data[lck])
 #elif defined(__powerpc__)
@@ -265,21 +262,21 @@ static inline void __raw_spin_unlock(volatile unsigned int *lock)
  */
 
 static __inline__ unsigned long
-papi_xchg_u32(volatile void *p, unsigned long val)
+papi_xchg_u32( volatile void *p, unsigned long val )
 {
-        unsigned long prev;
+	unsigned long prev;
 
-        __asm__ __volatile__ ("\n\
+	__asm__ __volatile__( "\n\
         sync \n\
 1:      lwarx   %0,0,%2 \n\
         stwcx.  %3,0,%2 \n\
         bne-    1b \n\
-        isync"
-        : "=&r" (prev), "=m" (*(volatile unsigned long *)p)
-        : "r" (p), "r" (val), "m" (*(volatile unsigned long *)p)
-        : "cc", "memory");
+        isync":"=&r"( prev ), "=m"( *( volatile unsigned long * ) p )
+						  :"r"( p ), "r"( val ),
+						  "m"( *( volatile unsigned long * ) p )
+						  :"cc", "memory" );
 
-        return prev;
+	return prev;
 }
 
 /*
@@ -298,29 +295,19 @@ do {                                                    \
   retval = papi_xchg_u32(&_papi_hwd_lock_data[lck],MUTEX_OPEN); \
 } while(0)
 #elif defined(__sparc__)
-static inline void __raw_spin_lock(volatile unsigned int *lock)
+static inline void
+__raw_spin_lock( volatile unsigned int *lock )
 {
-	__asm__ __volatile__(
-	"\n1:\n\t"
-	"ldstub	[%0], %%g2\n\t"
-	"orcc	%%g2, 0x0, %%g0\n\t"
-	"bne,a	2f\n\t"
-	" ldub	[%0], %%g2\n\t"
-	".subsection	2\n"
-	"2:\n\t"
-	"orcc	%%g2, 0x0, %%g0\n\t"
-	"bne,a	2b\n\t"
-	" ldub	[%0], %%g2\n\t"
-	"b,a	1b\n\t"
-	".previous\n"
-	: /* no outputs */
-	: "r" (lock)
-	: "g2", "memory", "cc");
+	__asm__ __volatile__( "\n1:\n\t" "ldstub	[%0], %%g2\n\t" "orcc	%%g2, 0x0, %%g0\n\t" "bne,a	2f\n\t" " ldub	[%0], %%g2\n\t" ".subsection	2\n" "2:\n\t" "orcc	%%g2, 0x0, %%g0\n\t" "bne,a	2b\n\t" " ldub	[%0], %%g2\n\t" "b,a	1b\n\t" ".previous\n":	/* no outputs */
+						  :"r"( lock )
+						  :"g2", "memory", "cc" );
 }
-static inline void __raw_spin_unlock(volatile unsigned int *lock)
+static inline void
+__raw_spin_unlock( volatile unsigned int *lock )
 {
-	__asm__ __volatile__("stb %%g0, [%0]" : : "r" (lock) : "memory");
+	__asm__ __volatile__( "stb %%g0, [%0]"::"r"( lock ):"memory" );
 }
+
 #define  _papi_hwd_lock(lck) __raw_spin_lock(&_papi_hwd_lock_data[lck]);
 #define  _papi_hwd_unlock(lck) __raw_spin_unlock(&_papi_hwd_lock_data[lck])
 #else

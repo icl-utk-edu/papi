@@ -36,67 +36,73 @@ Master pthread:
 #include <malloc.h>
 #include "papi_test.h"
 
-void Thread(int n)
+void
+Thread( int n )
 {
-   int retval, num_tests = 1, tmp;
-   int EventSet1=PAPI_NULL;
-   int mask1 = 0x5;
-   int num_events1;
-   long long **values;
-   long long elapsed_us, elapsed_cyc;
+	int retval, num_tests = 1, tmp;
+	int EventSet1 = PAPI_NULL;
+	int mask1 = 0x5;
+	int num_events1;
+	long long **values;
+	long long elapsed_us, elapsed_cyc;
 
-   EventSet1 = add_test_events(&num_events1, &mask1);
+	EventSet1 = add_test_events( &num_events1, &mask1 );
 
-   /* num_events1 is greater than num_events2 so don't worry. */
+	/* num_events1 is greater than num_events2 so don't worry. */
 
-   values = allocate_test_space(num_tests, num_events1);
+	values = allocate_test_space( num_tests, num_events1 );
 
-   elapsed_us = PAPI_get_real_usec();
+	elapsed_us = PAPI_get_real_usec(  );
 
-   elapsed_cyc = PAPI_get_real_cyc();
+	elapsed_cyc = PAPI_get_real_cyc(  );
 
-   retval = PAPI_start(EventSet1);
-   if (retval >= PAPI_OK)
-      exit(1);
+	retval = PAPI_start( EventSet1 );
+	if ( retval >= PAPI_OK )
+		exit( 1 );
 
-   do_flops(n);
+	do_flops( n );
 
-   retval = PAPI_stop(EventSet1, values[0]);
-   if (retval >= PAPI_OK)
-      exit(1);
+	retval = PAPI_stop( EventSet1, values[0] );
+	if ( retval >= PAPI_OK )
+		exit( 1 );
 
-   elapsed_us = PAPI_get_real_usec() - elapsed_us;
+	elapsed_us = PAPI_get_real_usec(  ) - elapsed_us;
 
-   elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
+	elapsed_cyc = PAPI_get_real_cyc(  ) - elapsed_cyc;
 
-   remove_test_events(&EventSet1, mask1);
+	remove_test_events( &EventSet1, mask1 );
 
-   printf("Thread 0x%x PAPI_FP_INS : \t%lld\n", pthread_self(), (values[0])[0]);
-   printf("Thread 0x%x PAPI_TOT_CYC: \t%lld\n", pthread_self(), (values[0])[1]);
-   printf("Thread 0x%x Real usec   : \t%lld\n", pthread_self(), elapsed_us);
-   printf("Thread 0x%x Real cycles : \t%lld\n", pthread_self(), elapsed_cyc);
+	printf( "Thread 0x%x PAPI_FP_INS : \t%lld\n", pthread_self(  ),
+			( values[0] )[0] );
+	printf( "Thread 0x%x PAPI_TOT_CYC: \t%lld\n", pthread_self(  ),
+			( values[0] )[1] );
+	printf( "Thread 0x%x Real usec   : \t%lld\n", pthread_self(  ),
+			elapsed_us );
+	printf( "Thread 0x%x Real cycles : \t%lld\n", pthread_self(  ),
+			elapsed_cyc );
 
-   free_test_space(values, num_tests);
+	free_test_space( values, num_tests );
 }
 
-int main()
+int
+main(  )
 {
-   int i, rc;
-   long long elapsed_us, elapsed_cyc;
+	int i, rc;
+	long long elapsed_us, elapsed_cyc;
 
-   elapsed_us = PAPI_get_real_usec();
+	elapsed_us = PAPI_get_real_usec(  );
 
-   elapsed_cyc = PAPI_get_real_cyc();
+	elapsed_cyc = PAPI_get_real_cyc(  );
 
-   start_pes(2);
-   Thread(1000000 * (_my_pe() + 1));
+	start_pes( 2 );
+	Thread( 1000000 * ( _my_pe(  ) + 1 ) );
 
-   elapsed_cyc = PAPI_get_real_cyc() - elapsed_cyc;
+	elapsed_cyc = PAPI_get_real_cyc(  ) - elapsed_cyc;
 
-   elapsed_us = PAPI_get_real_usec() - elapsed_us;
+	elapsed_us = PAPI_get_real_usec(  ) - elapsed_us;
 
-   printf("Master real usec   : \t%lld\n", elapsed_us);
-   printf("Master real cycles : \t%lld\n", elapsed_cyc);
+	printf( "Master real usec   : \t%lld\n", elapsed_us );
+	printf( "Master real cycles : \t%lld\n", elapsed_cyc );
 
-   exit(0);
+	exit( 0 );
 }

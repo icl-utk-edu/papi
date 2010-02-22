@@ -72,7 +72,7 @@ typedef int niagara2_reg_alloc_t;
 /* libcpc 2 does not need any bit masks */
 typedef struct _niagara2_register
 {
-  int event_code;
+	int event_code;
 } _niagara2_register_t;
 
 
@@ -86,42 +86,42 @@ typedef struct _niagara2_register
 /* This structured bundles everything needed for sampling up to MAX_COUNTERS */
 typedef struct _niagara2_control_state
 {
-  /* A set instruments the hardware counters */
-  cpc_set_t *set;
+	/* A set instruments the hardware counters */
+	cpc_set_t *set;
 
-  /* A buffer stores the events counted. For measuring a start of measurment
-     and an end is needed as measurement does not always start from 0. This is
-     done by using an array of bufs, accessed by the indexes BUF_T0 as start
-     and BUF_T1 as end. */
-  cpc_buf_t *counter_buffer;
+	/* A buffer stores the events counted. For measuring a start of measurment
+	   and an end is needed as measurement does not always start from 0. This is
+	   done by using an array of bufs, accessed by the indexes BUF_T0 as start
+	   and BUF_T1 as end. */
+	cpc_buf_t *counter_buffer;
 
-  /* The indexes are needed for accessing the single counter events, if the
-     value of these indexes is equal to EVENT_NOT_SET this means it is unused */
-  int idx[MAX_COUNTERS];
+	/* The indexes are needed for accessing the single counter events, if the
+	   value of these indexes is equal to EVENT_NOT_SET this means it is unused */
+	int idx[MAX_COUNTERS];
 
-  /* The event codes applied to this set */
-  _niagara2_register_t code[MAX_COUNTERS];
+	/* The event codes applied to this set */
+	_niagara2_register_t code[MAX_COUNTERS];
 
-  /* The total number of events being counted */
-  int count;
+	/* The total number of events being counted */
+	int count;
 
-  /* The values retrieved from the counter */
-  uint64_t result[MAX_COUNTERS];
+	/* The values retrieved from the counter */
+	uint64_t result[MAX_COUNTERS];
 
-  /* Flags for controlling overflow handling and binding, see
-     cpc_set_create(3CPC) for more details on this topic. */
-  uint_t flags[MAX_COUNTERS];
+	/* Flags for controlling overflow handling and binding, see
+	   cpc_set_create(3CPC) for more details on this topic. */
+	uint_t flags[MAX_COUNTERS];
 
-  /* Preset values for the counters */
-  uint64_t preset[MAX_COUNTERS];
+	/* Preset values for the counters */
+	uint64_t preset[MAX_COUNTERS];
 
-  /* Memory to store values when an overflow occours */
-  long_long threshold[MAX_COUNTERS];
-  long_long hangover[MAX_COUNTERS];
+	/* Memory to store values when an overflow occours */
+	long_long threshold[MAX_COUNTERS];
+	long_long hangover[MAX_COUNTERS];
 
 #ifdef SYNTHETIC_EVENTS_SUPPORTED
-  int syn_count;
-  uint64_t syn_hangover[MAX_COUNTERS];
+	int syn_count;
+	uint64_t syn_hangover[MAX_COUNTERS];
 #endif
 } _niagara2_control_state_t;
 

@@ -30,131 +30,146 @@
 #undef THRESHOLD
 #define THRESHOLD 1000
 
-static void ear_no_profile (void) {
-   int retval;
-
-   if ((retval = PAPI_start(EventSet)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_start", retval);
-
-   do_l1misses(10000);
-
-   if ((retval = PAPI_stop(EventSet, values[0])) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
-
-   printf("Test type   : \tNo profiling\n");
-   printf(TAB1, event_name, (values[0])[0]);
-   printf(TAB1, "PAPI_TOT_CYC:", (values[0])[1]);
-}
-
-static int do_profile(caddr_t start, unsigned long plength, unsigned scale, int thresh, int bucket) {
-   int i, retval;
-   unsigned long blength;
-   int num_buckets;
-   char *profstr[2] = {"PAPI_PROFIL_POSIX", "PAPI_PROFIL_INST_EAR"};
-   int profflags[2] = {PAPI_PROFIL_POSIX, PAPI_PROFIL_POSIX|PAPI_PROFIL_INST_EAR};
-   int num_profs;
-
-   do_stuff();
-
-   num_profs = sizeof(profflags)/sizeof(int);
-   ear_no_profile();
-   blength = prof_size(plength, scale, bucket, &num_buckets);
-   prof_alloc(num_profs, blength);
-
-   for (i=0;i<num_profs;i++) {
-      if (!TESTS_QUIET)
-         printf("Test type   : \t%s\n", profstr[i]);
-
-      if ((retval = PAPI_profil(profbuf[i], blength, start, scale,
-                              EventSet, PAPI_event, thresh,
-                              profflags[i] | bucket)) != PAPI_OK) {
-         test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
-      }
-      if ((retval = PAPI_start(EventSet)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_start", retval);
-
-      do_stuff();
-
-      if ((retval = PAPI_stop(EventSet, values[1])) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
-
-      if (!TESTS_QUIET) {
-         printf(TAB1, event_name, (values[1])[0]);
-         printf(TAB1, "PAPI_TOT_CYC:", (values[1])[1]);
-      }
-      if ((retval = PAPI_profil(profbuf[i], blength, start, scale,
-                              EventSet, PAPI_event, 0, profflags[i])) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_profil", retval);
-   }
-
-   prof_head(blength, bucket, num_buckets, 
-      "address\t\t\tPOSIX\tINST_DEAR\n");
-   prof_out(start,num_profs, bucket, num_buckets, scale);
-
-   retval = prof_check(num_profs, bucket, num_buckets);
-
-   for (i=0;i<num_profs;i++) {
-      free(profbuf[i]);
-   }
-
-   return(retval);
-}
-
-
-int main(int argc, char **argv)
+static void
+ear_no_profile( void )
 {
-   int num_events, num_tests = 6;
-   long length;
-   int retval, retval2;
-   const PAPI_hw_info_t *hw_info;
-   const PAPI_exe_info_t *prginfo;
-   caddr_t start, end;
+	int retval;
 
-   prof_init(argc, argv, &hw_info, &prginfo);
+	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
 
-   if ((strncasecmp(hw_info->model_string,"Itanium",strlen("Itanium")) != 0) &&
-       (strncasecmp(hw_info->model_string,"32",strlen("32")) != 0))
-     test_skip(__FILE__, __LINE__, "Test unsupported", PAPI_ESBSTR);
+	do_l1misses( 10000 );
 
-   if (TESTS_QUIET)
-	   test_skip(__FILE__, __LINE__, "Test deprecated in quite mode for PAPI 3.6", PAPI_ESBSTR);
+	if ( ( retval = PAPI_stop( EventSet, values[0] ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 
-   sprintf(event_name, "DATA_EAR_CACHE_LAT4");
-   if ((retval = PAPI_event_name_to_code(event_name, &PAPI_event)) != PAPI_OK)
-     test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", retval);
+	printf( "Test type   : \tNo profiling\n" );
+	printf( TAB1, event_name, ( values[0] )[0] );
+	printf( TAB1, "PAPI_TOT_CYC:", ( values[0] )[1] );
+}
 
-   if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
+static int
+do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
+			int bucket )
+{
+	int i, retval;
+	unsigned long blength;
+	int num_buckets;
+	char *profstr[2] = { "PAPI_PROFIL_POSIX", "PAPI_PROFIL_INST_EAR" };
+	int profflags[2] =
+		{ PAPI_PROFIL_POSIX, PAPI_PROFIL_POSIX | PAPI_PROFIL_INST_EAR };
+	int num_profs;
 
-   if ((retval = PAPI_add_event(EventSet, PAPI_event)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+	do_stuff(  );
 
-   if ((retval = PAPI_add_event(EventSet, PAPI_TOT_CYC)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+	num_profs = sizeof ( profflags ) / sizeof ( int );
+	ear_no_profile(  );
+	blength = prof_size( plength, scale, bucket, &num_buckets );
+	prof_alloc( num_profs, blength );
 
-   num_events = 2;
-   values = allocate_test_space(num_tests, num_events);
+	for ( i = 0; i < num_profs; i++ ) {
+		if ( !TESTS_QUIET )
+			printf( "Test type   : \t%s\n", profstr[i] );
+
+		if ( ( retval = PAPI_profil( profbuf[i], blength, start, scale,
+									 EventSet, PAPI_event, thresh,
+									 profflags[i] | bucket ) ) != PAPI_OK ) {
+			test_fail( __FILE__, __LINE__, "PAPI_profil", retval );
+		}
+		if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
+			test_fail( __FILE__, __LINE__, "PAPI_start", retval );
+
+		do_stuff(  );
+
+		if ( ( retval = PAPI_stop( EventSet, values[1] ) ) != PAPI_OK )
+			test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+
+		if ( !TESTS_QUIET ) {
+			printf( TAB1, event_name, ( values[1] )[0] );
+			printf( TAB1, "PAPI_TOT_CYC:", ( values[1] )[1] );
+		}
+		if ( ( retval = PAPI_profil( profbuf[i], blength, start, scale,
+									 EventSet, PAPI_event, 0,
+									 profflags[i] ) ) != PAPI_OK )
+			test_fail( __FILE__, __LINE__, "PAPI_profil", retval );
+	}
+
+	prof_head( blength, bucket, num_buckets,
+			   "address\t\t\tPOSIX\tINST_DEAR\n" );
+	prof_out( start, num_profs, bucket, num_buckets, scale );
+
+	retval = prof_check( num_profs, bucket, num_buckets );
+
+	for ( i = 0; i < num_profs; i++ ) {
+		free( profbuf[i] );
+	}
+
+	return ( retval );
+}
+
+
+int
+main( int argc, char **argv )
+{
+	int num_events, num_tests = 6;
+	long length;
+	int retval, retval2;
+	const PAPI_hw_info_t *hw_info;
+	const PAPI_exe_info_t *prginfo;
+	caddr_t start, end;
+
+	prof_init( argc, argv, &hw_info, &prginfo );
+
+	if ( ( strncasecmp( hw_info->model_string, "Itanium", strlen( "Itanium" ) )
+		   != 0 ) &&
+		 ( strncasecmp( hw_info->model_string, "32", strlen( "32" ) ) != 0 ) )
+		test_skip( __FILE__, __LINE__, "Test unsupported", PAPI_ESBSTR );
+
+	if ( TESTS_QUIET )
+		test_skip( __FILE__, __LINE__,
+				   "Test deprecated in quite mode for PAPI 3.6", PAPI_ESBSTR );
+
+	sprintf( event_name, "DATA_EAR_CACHE_LAT4" );
+	if ( ( retval =
+		   PAPI_event_name_to_code( event_name, &PAPI_event ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_event_name_to_code", retval );
+
+	if ( ( retval = PAPI_create_eventset( &EventSet ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
+
+	if ( ( retval = PAPI_add_event( EventSet, PAPI_event ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_add_event", retval );
+
+	if ( ( retval = PAPI_add_event( EventSet, PAPI_TOT_CYC ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_add_event", retval );
+
+	num_events = 2;
+	values = allocate_test_space( num_tests, num_events );
 
 /* use these lines to profile entire code address space */
-   start = prginfo->address_info.text_start;
-   end = prginfo->address_info.text_end;
-   length = end - start;
-   if (length < 0)
-      test_fail(__FILE__, __LINE__, "Profile length < 0!", length);
+	start = prginfo->address_info.text_start;
+	end = prginfo->address_info.text_end;
+	length = end - start;
+	if ( length < 0 )
+		test_fail( __FILE__, __LINE__, "Profile length < 0!", length );
 
-   prof_print_address("Test earprofile: POSIX compatible event address register profiling.\n",prginfo);
-   prof_print_prof_info(start,end,THRESHOLD,event_name);
-   retval = do_profile(start,length,FULL_SCALE,THRESHOLD,PAPI_PROFIL_BUCKET_16);
+	prof_print_address
+		( "Test earprofile: POSIX compatible event address register profiling.\n",
+		  prginfo );
+	prof_print_prof_info( start, end, THRESHOLD, event_name );
+	retval =
+		do_profile( start, length, FULL_SCALE, THRESHOLD,
+					PAPI_PROFIL_BUCKET_16 );
 
-   retval2 = PAPI_remove_event(EventSet, PAPI_event);
-   if (retval2 == PAPI_OK)
-      retval2 = PAPI_remove_event(EventSet, PAPI_TOT_CYC);
-   if (retval2 != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "Can't remove events", retval2);
+	retval2 = PAPI_remove_event( EventSet, PAPI_event );
+	if ( retval2 == PAPI_OK )
+		retval2 = PAPI_remove_event( EventSet, PAPI_TOT_CYC );
+	if ( retval2 != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "Can't remove events", retval2 );
 
-   if (retval)
-      test_pass(__FILE__, values, num_tests);
-   else
-      test_fail(__FILE__, __LINE__, "No information in buffers", 1);
-   exit(1);
+	if ( retval )
+		test_pass( __FILE__, values, num_tests );
+	else
+		test_fail( __FILE__, __LINE__, "No information in buffers", 1 );
+	exit( 1 );
 }

@@ -56,53 +56,55 @@ typedef int pfm_reg_alloc_t;
 #define PAPI_NATIVE_EVENT_AND_MASK 0x000003ff	/* 12 bits == 4096 max events */
 #define PAPI_NATIVE_EVENT_SHIFT 0
 #define PAPI_NATIVE_UMASK_AND_MASK 0x03fffc00	/* 16 bits for unit masks */
-#define PAPI_NATIVE_UMASK_MAX 16				/* 16 possible unit masks */
+#define PAPI_NATIVE_UMASK_MAX 16	/* 16 possible unit masks */
 #define PAPI_NATIVE_UMASK_SHIFT 10
 
 #define MAX_COUNTERS PFMLIB_MAX_PMCS
 #define MAX_COUNTER_TERMS PFMLIB_MAX_PMCS
 
-typedef struct {
-  /* Context structure to kernel, different for attached */
-  int ctx_fd;
-  pfarg_ctx_t *ctx;
-  /* Load structure to kernel, different for attached */
-  pfarg_load_t *load;
-  /* Which counters to use? Bits encode counters to use, may be duplicates */
-  pfm_register_map_t bits;
-  /* Buffer to pass to library to control the counters */
-  pfmlib_input_param_t in;
-  /* Buffer to pass from the library to control the counters */
-  pfmlib_output_param_t out;
-  /* Is this eventset multiplexed? Actually it holds the microseconds of the switching interval, 0 if not mpx. */
-  int multiplexed;
-  /* Arguments to kernel for multiplexing, first number of sets */
-  int num_sets;
-  /* Arguments to kernel to set up the sets */
-  pfarg_setdesc_t set[PFMLIB_MAX_PMDS];
-  /* Buffer to get information out of the sets when reading */
-  pfarg_setinfo_t setinfo[PFMLIB_MAX_PMDS];
-  /* Arguments to the kernel */
-  pfarg_pmc_t pc[PFMLIB_MAX_PMCS];
-  /* Arguments to the kernel */
-  pfarg_pmd_t pd[PFMLIB_MAX_PMDS];
-  /* Buffer to gather counters */
-  long long counts[PFMLIB_MAX_PMDS];
+typedef struct
+{
+	/* Context structure to kernel, different for attached */
+	int ctx_fd;
+	pfarg_ctx_t *ctx;
+	/* Load structure to kernel, different for attached */
+	pfarg_load_t *load;
+	/* Which counters to use? Bits encode counters to use, may be duplicates */
+	pfm_register_map_t bits;
+	/* Buffer to pass to library to control the counters */
+	pfmlib_input_param_t in;
+	/* Buffer to pass from the library to control the counters */
+	pfmlib_output_param_t out;
+	/* Is this eventset multiplexed? Actually it holds the microseconds of the switching interval, 0 if not mpx. */
+	int multiplexed;
+	/* Arguments to kernel for multiplexing, first number of sets */
+	int num_sets;
+	/* Arguments to kernel to set up the sets */
+	pfarg_setdesc_t set[PFMLIB_MAX_PMDS];
+	/* Buffer to get information out of the sets when reading */
+	pfarg_setinfo_t setinfo[PFMLIB_MAX_PMDS];
+	/* Arguments to the kernel */
+	pfarg_pmc_t pc[PFMLIB_MAX_PMCS];
+	/* Arguments to the kernel */
+	pfarg_pmd_t pd[PFMLIB_MAX_PMDS];
+	/* Buffer to gather counters */
+	long long counts[PFMLIB_MAX_PMDS];
 } pfm_control_state_t;
 
-typedef struct {
+typedef struct
+{
 #if defined(USE_PROC_PTTIMER)
-   int stat_fd;
+	int stat_fd;
 #endif
-  /* Main context structure to kernel */
-  int ctx_fd;
-  pfarg_ctx_t ctx;
-  /* Main load structure to kernel */
-  pfarg_load_t load;
-  /* Structure to inform the kernel about sampling */
-  pfm_dfl_smpl_arg_t smpl;
-  /* Address of mmap()'ed sample buffer */
-  void *smpl_buf;
+	/* Main context structure to kernel */
+	int ctx_fd;
+	pfarg_ctx_t ctx;
+	/* Main load structure to kernel */
+	pfarg_load_t load;
+	/* Structure to inform the kernel about sampling */
+	pfm_dfl_smpl_arg_t smpl;
+	/* Address of mmap()'ed sample buffer */
+	void *smpl_buf;
 } pfm_context_t;
 
 /* typedefs to conform to PAPI component layer code. */
@@ -122,9 +124,9 @@ extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 
 #if defined(__ia64__)
 #ifdef __INTEL_COMPILER
-#define _papi_hwd_lock(lck) { while(_InterlockedCompareExchange_acq(&_papi_hwd_lock_data[lck],MUTEX_CLOSED,MUTEX_OPEN) != MUTEX_OPEN) { ; } } 
+#define _papi_hwd_lock(lck) { while(_InterlockedCompareExchange_acq(&_papi_hwd_lock_data[lck],MUTEX_CLOSED,MUTEX_OPEN) != MUTEX_OPEN) { ; } }
 #define _papi_hwd_unlock(lck) { _InterlockedExchange((volatile int *)&_papi_hwd_lock_data[lck], MUTEX_OPEN); }
-#else                           /* GCC */
+#else  /* GCC */
 #define _papi_hwd_lock(lck)			 			      \
    { int res = 0;							      \
     do {								      \
@@ -150,70 +152,63 @@ do                                              \
    __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(_papi_hwd_lock_data[lck]), "0"(MUTEX_OPEN) : "memory");                                \
 } while(0)
 #elif defined(mips)
-static inline void __raw_spin_lock(volatile unsigned int *lock)
+static inline void
+__raw_spin_lock( volatile unsigned int *lock )
 {
-  unsigned int tmp;
-  extern int _perfmon2_pfm_pmu_type;
-  if (_perfmon2_pfm_pmu_type == PFMLIB_MIPS_R10000_PMU)
-    {
-		__asm__ __volatile__(
-		"	.set	noreorder	# __raw_spin_lock	\n"
-		"1:	ll	%1, %2					\n"
-		"	bnez	%1, 1b					\n"
-		"	 li	%1, 1					\n"
-		"	sc	%1, %0					\n"
-		"	beqzl	%1, 1b					\n"
-		"	 nop						\n"
-		"	sync						\n"
-		"	.set	reorder					\n"
-		: "=m" (*lock), "=&r" (tmp)
-		: "m" (*lock)
-		: "memory");
-    } 
-  else if (_perfmon2_pfm_pmu_type == PFMLIB_MIPS_ICE9A_PMU) 
-    {
-		__asm__ __volatile__(
-		"	.set	noreorder	# __raw_spin_lock	\n"
-		"1:	ll	%1, %2					\n"
-		"  	ll	%1, %2					\n"
-		"	bnez	%1, 1b					\n"
-		"	 li	%1, 1					\n"
-		"	sc	%1, %0					\n"
-		"	beqz	%1, 1b					\n"
-		"	 sync						\n"
-		"	.set	reorder					\n"
-		: "=m" (*lock), "=&r" (tmp)
-		: "m" (*lock)
-		: "memory");
-    } 
-  else 
-    {
-		__asm__ __volatile__(
-		"	.set	noreorder	# __raw_spin_lock	\n"
-		"1:	ll	%1, %2					\n"
-		"	bnez	%1, 1b					\n"
-		"	 li	%1, 1					\n"
-		"	sc	%1, %0					\n"
-		"	beqz	%1, 1b					\n"
-		"	 sync						\n"
-		"	.set	reorder					\n"
-		: "=m" (*lock), "=&r" (tmp)
-		: "m" (*lock)
-		: "memory");
-    }
+	unsigned int tmp;
+	extern int _perfmon2_pfm_pmu_type;
+	if ( _perfmon2_pfm_pmu_type == PFMLIB_MIPS_R10000_PMU ) {
+		__asm__ __volatile__( "	.set	noreorder	# __raw_spin_lock	\n"
+							  "1:	ll	%1, %2					\n"
+							  "	bnez	%1, 1b					\n"
+							  "	 li	%1, 1					\n"
+							  "	sc	%1, %0					\n"
+							  "	beqzl	%1, 1b					\n"
+							  "	 nop						\n"
+							  "	sync						\n"
+							  "	.set	reorder					\n":"=m"
+							  ( *lock ), "=&r"( tmp )
+							  :"m"( *lock )
+							  :"memory" );
+	} else if ( _perfmon2_pfm_pmu_type == PFMLIB_MIPS_ICE9A_PMU ) {
+		__asm__ __volatile__( "	.set	noreorder	# __raw_spin_lock	\n"
+							  "1:	ll	%1, %2					\n"
+							  "  	ll	%1, %2					\n"
+							  "	bnez	%1, 1b					\n"
+							  "	 li	%1, 1					\n"
+							  "	sc	%1, %0					\n"
+							  "	beqz	%1, 1b					\n"
+							  "	 sync						\n"
+							  "	.set	reorder					\n":"=m"
+							  ( *lock ), "=&r"( tmp )
+							  :"m"( *lock )
+							  :"memory" );
+	} else {
+		__asm__ __volatile__( "	.set	noreorder	# __raw_spin_lock	\n"
+							  "1:	ll	%1, %2					\n"
+							  "	bnez	%1, 1b					\n"
+							  "	 li	%1, 1					\n"
+							  "	sc	%1, %0					\n"
+							  "	beqz	%1, 1b					\n"
+							  "	 sync						\n"
+							  "	.set	reorder					\n":"=m"
+							  ( *lock ), "=&r"( tmp )
+							  :"m"( *lock )
+							  :"memory" );
+	}
 }
 
-static inline void __raw_spin_unlock(volatile unsigned int *lock)
+static inline void
+__raw_spin_unlock( volatile unsigned int *lock )
 {
-	__asm__ __volatile__(
-	"	.set	noreorder	# __raw_spin_unlock	\n"
-	"	sync						\n"
-	"	sw	$0, %0					\n"
-	"	.set\treorder					\n"
-	: "=m" (*lock)
-	: "m" (*lock)
-	: "memory");
+	__asm__ __volatile__( "	.set	noreorder	# __raw_spin_unlock	\n"
+						  "	sync						\n"
+						  "	sw	$0, %0					\n"
+						  "	.set\treorder					\n":"=m"( *lock )
+						  :"m"( *lock )
+						  :"memory" );
 }
+
 #define  _papi_hwd_lock(lck) __raw_spin_lock(&_papi_hwd_lock_data[lck]);
 #define  _papi_hwd_unlock(lck) __raw_spin_unlock(&_papi_hwd_lock_data[lck])
 #elif defined(__powerpc__)
@@ -227,21 +222,21 @@ static inline void __raw_spin_unlock(volatile unsigned int *lock)
  */
 
 static __inline__ unsigned long
-papi_xchg_u32(volatile void *p, unsigned long val)
+papi_xchg_u32( volatile void *p, unsigned long val )
 {
-        unsigned long prev;
+	unsigned long prev;
 
-        __asm__ __volatile__ ("\n\
+	__asm__ __volatile__( "\n\
         sync \n\
 1:      lwarx   %0,0,%2 \n\
         stwcx.  %3,0,%2 \n\
         bne-    1b \n\
-        isync"
-        : "=&r" (prev), "=m" (*(volatile unsigned long *)p)
-        : "r" (p), "r" (val), "m" (*(volatile unsigned long *)p)
-        : "cc", "memory");
+        isync":"=&r"( prev ), "=m"( *( volatile unsigned long * ) p )
+						  :"r"( p ), "r"( val ),
+						  "m"( *( volatile unsigned long * ) p )
+						  :"cc", "memory" );
 
-        return prev;
+	return prev;
 }
 
 /*
@@ -260,29 +255,19 @@ do {                                                    \
   retval = papi_xchg_u32(&_papi_hwd_lock_data[lck],MUTEX_OPEN); \
 } while(0)
 #elif defined(__sparc__)
-static inline void __raw_spin_lock(volatile unsigned int *lock)
+static inline void
+__raw_spin_lock( volatile unsigned int *lock )
 {
-	__asm__ __volatile__(
-	"\n1:\n\t"
-	"ldstub	[%0], %%g2\n\t"
-	"orcc	%%g2, 0x0, %%g0\n\t"
-	"bne,a	2f\n\t"
-	" ldub	[%0], %%g2\n\t"
-	".subsection	2\n"
-	"2:\n\t"
-	"orcc	%%g2, 0x0, %%g0\n\t"
-	"bne,a	2b\n\t"
-	" ldub	[%0], %%g2\n\t"
-	"b,a	1b\n\t"
-	".previous\n"
-	: /* no outputs */
-	: "r" (lock)
-	: "g2", "memory", "cc");
+	__asm__ __volatile__( "\n1:\n\t" "ldstub	[%0], %%g2\n\t" "orcc	%%g2, 0x0, %%g0\n\t" "bne,a	2f\n\t" " ldub	[%0], %%g2\n\t" ".subsection	2\n" "2:\n\t" "orcc	%%g2, 0x0, %%g0\n\t" "bne,a	2b\n\t" " ldub	[%0], %%g2\n\t" "b,a	1b\n\t" ".previous\n":	/* no outputs */
+						  :"r"( lock )
+						  :"g2", "memory", "cc" );
 }
-static inline void __raw_spin_unlock(volatile unsigned int *lock)
+static inline void
+__raw_spin_unlock( volatile unsigned int *lock )
 {
-	__asm__ __volatile__("stb %%g0, [%0]" : : "r" (lock) : "memory");
+	__asm__ __volatile__( "stb %%g0, [%0]"::"r"( lock ):"memory" );
 }
+
 #define  _papi_hwd_lock(lck) __raw_spin_lock(&_papi_hwd_lock_data[lck]);
 #define  _papi_hwd_unlock(lck) __raw_spin_unlock(&_papi_hwd_lock_data[lck])
 #else

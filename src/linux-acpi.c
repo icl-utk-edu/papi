@@ -4,22 +4,23 @@
 #include "linux-acpi.h"
 #include "papi_memory.h"
 
-int init_presets();
+int init_presets(  );
 
-enum native_name_acpi {
+enum native_name_acpi
+{
 	PNE_ACPI_STAT = 0x40000000,
 	PNE_ACPI_TEMP,
 };
 
 ACPI_native_event_entry_t acpi_native_table[] = {
-	{{ 1, {"/proc/stat"}},
-	"ACPI_STAT",
-	"kernel statistics",
-	},
-	{{ 2, {"/proc/acpi"}},
-	"ACPI_TEMP",
-	"ACPI temperature",
-	},
+	{{1, {"/proc/stat"}},
+	 "ACPI_STAT",
+	 "kernel statistics",
+	 },
+	{{2, {"/proc/acpi"}},
+	 "ACPI_TEMP",
+	 "ACPI temperature",
+	 },
 	{{0, {NULL}}, NULL, NULL},
 };
 
@@ -31,11 +32,12 @@ ACPI_native_event_entry_t acpi_native_table[] = {
  * and get hardware information, this routine is called when the 
  * PAPI process is initialized (IE PAPI_library_init)
  */
-int ACPI_init_substrate()
+int
+ACPI_init_substrate(  )
 {
-	int retval=PAPI_OK;
+	int retval = PAPI_OK;
 
-  /* retval = _papi_hwi_setup_vector_table( vtable, &_acpi_vectors);*/
+	/* retval = _papi_hwi_setup_vector_table( vtable, &_acpi_vectors); */
 
 #ifdef DEBUG
 	/* This prints out which functions are mapped to dummy routines
@@ -43,12 +45,12 @@ int ACPI_init_substrate()
 	 * The 0 argument will print out only dummy routines, change
 	 * it to a 1 to print out all routines.
 	 */
-	vector_print_table(_acpi_vectors, 0);
+	vector_print_table( _acpi_vectors, 0 );
 #endif
 	/* Internal function, doesn't necessarily need to be a function */
-	init_presets();
+	init_presets(  );
 
-	return(retval);
+	return ( retval );
 }
 
 /*
@@ -57,220 +59,253 @@ int ACPI_init_substrate()
  * for the presets are setup here.
  */
 hwi_search_t acpi_preset_map[] = {
-	{0, {0, {PAPI_NULL, PAPI_NULL}, {0,}}}
+	{0, {0, {PAPI_NULL, PAPI_NULL}
+		 , {0,}
+		 }
+	 }
 };
 
 
-int init_presets(){
-	return (_papi_hwi_setup_all_presets(acpi_preset_map, NULL));
+int
+init_presets(  )
+{
+	return ( _papi_hwi_setup_all_presets( acpi_preset_map, NULL ) );
 }
 
 
 /*
  * This is called whenever a thread is initialized
  */
-int ACPI_init(hwd_context_t *ctx)
+int
+ACPI_init( hwd_context_t * ctx )
 {
-	init_presets();
-	return(PAPI_OK);
+	init_presets(  );
+	return ( PAPI_OK );
 }
 
-int ACPI_shutdown(hwd_context_t *ctx)
+int
+ACPI_shutdown( hwd_context_t * ctx )
 {
-	return(PAPI_OK);
+	return ( PAPI_OK );
 }
 
 /*
  * Control of counters (Reading/Writing/Starting/Stopping/Setup)
  * functions
  */
-int ACPI_init_control_state(hwd_control_state_t *ptr){
+int
+ACPI_init_control_state( hwd_control_state_t * ptr )
+{
 	return PAPI_OK;
 }
 
-int ACPI_update_control_state(hwd_control_state_t *ptr, NativeInfo_t *native, int count, hwd_context_t *ctx){
+int
+ACPI_update_control_state( hwd_control_state_t * ptr, NativeInfo_t * native,
+						   int count, hwd_context_t * ctx )
+{
 	int i, index;
 
-	for (i = 0; i < count; i++) {
-		index = native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
-		native[i].ni_position = acpi_native_table[index].resources.selector-1;
+	for ( i = 0; i < count; i++ ) {
+		index =
+			native[i].ni_event & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
+		native[i].ni_position = acpi_native_table[index].resources.selector - 1;
 	}
-	return(PAPI_OK);
+	return ( PAPI_OK );
 }
 
-int ACPI_start(hwd_context_t *ctx, hwd_control_state_t *ctrl){
-	return(PAPI_OK);
+int
+ACPI_start( hwd_context_t * ctx, hwd_control_state_t * ctrl )
+{
+	return ( PAPI_OK );
 }
 
-int get_load_value() {
+int
+get_load_value(  )
+{
 	char txt[256];
 	char *p;
-	static int ct[2][4] = { { 0, 0, 0, 0 }, { 0, 0, 0, 0 } };
+	static int ct[2][4] = { {0, 0, 0, 0}, {0, 0, 0, 0} };
 	static int n = 0;
 	int d[4];
 	int i, t, fd;
 	float v;
 	static FILE *f = NULL;
 
-	if (!f && !(f = fopen("/proc/stat", "r"))) {
-		printf("Unable to open kernel statistics file.");
+	if ( !f && !( f = fopen( "/proc/stat", "r" ) ) ) {
+		printf( "Unable to open kernel statistics file." );
 		goto fail;
 	}
-	
-	if (!(p = fgets(txt, sizeof(txt), f))) {
-		printf("Unable to read from kernel statistics file.");
-		goto fail;
-	}
-	
-	fd = dup(fileno(f));
-	fclose(f);
-	f = fdopen(fd, "r");
-	assert(f);
-	fseek(f, 0, SEEK_SET);
 
-	if (strlen(p) <= 5) {
-		printf("Parse failure");
+	if ( !( p = fgets( txt, sizeof ( txt ), f ) ) ) {
+		printf( "Unable to read from kernel statistics file." );
 		goto fail;
 	}
-		
-	sscanf(p+5, "%u %u %u %u", &ct[n][0], &ct[n][1], &ct[n][2], &ct[n][3]);
+
+	fd = dup( fileno( f ) );
+	fclose( f );
+	f = fdopen( fd, "r" );
+	assert( f );
+	fseek( f, 0, SEEK_SET );
+
+	if ( strlen( p ) <= 5 ) {
+		printf( "Parse failure" );
+		goto fail;
+	}
+
+	sscanf( p + 5, "%u %u %u %u", &ct[n][0], &ct[n][1], &ct[n][2], &ct[n][3] );
 
 	t = 0;
-	
-	for (i = 0; i < 4; i++)
-		t += (d[i] = abs(ct[n][i] - ct[1-n][i]));
 
-	v = (t - d[3])/(float) t;
-	
-	n = 1-n;
+	for ( i = 0; i < 4; i++ )
+		t += ( d[i] = abs( ct[n][i] - ct[1 - n][i] ) );
 
-	return (int) (v*100);
+	v = ( t - d[3] ) / ( float ) t;
 
-fail:
-	if (f) {
-		fclose(f);
+	n = 1 - n;
+
+	return ( int ) ( v * 100 );
+
+  fail:
+	if ( f ) {
+		fclose( f );
 		f = NULL;
 	}
 
 	return -1;
 }
 
-FILE * fopen_first(const char *pfx, const char *sfx, const char *m) {
-	assert(pfx);
-	assert(sfx);
-	assert(m);
+FILE *
+fopen_first( const char *pfx, const char *sfx, const char *m )
+{
+	assert( pfx );
+	assert( sfx );
+	assert( m );
 
 	DIR *dir;
 	struct dirent *de;
 	char fn[PATH_MAX];
-	
-	if (!(dir = opendir(pfx)))
+
+	if ( !( dir = opendir( pfx ) ) )
 		return NULL;
 
-	while ((de = readdir(dir))) {
-		if (de->d_name[0] != '.') {
+	while ( ( de = readdir( dir ) ) ) {
+		if ( de->d_name[0] != '.' ) {
 			FILE *f;
-			snprintf(fn, sizeof(fn), "%s/%s/%s", pfx, de->d_name, sfx);
+			snprintf( fn, sizeof ( fn ), "%s/%s/%s", pfx, de->d_name, sfx );
 
-			if ((f = fopen(fn, m))) {
-				closedir(dir);
+			if ( ( f = fopen( fn, m ) ) ) {
+				closedir( dir );
 				return f;
 			}
-			
+
 			break;
 		}
 	}
 
-	closedir(dir);
+	closedir( dir );
 	return NULL;
 }
 
-int get_temperature_value() {
+int
+get_temperature_value(  )
+{
 	char txt[256];
-	char*p;
+	char *p;
 	int v, fd;
-	static FILE*f = NULL;
+	static FILE *f = NULL;
 	static int old_acpi = 0;
 
-	if (!f) {
-		if (!(f = fopen_first("/proc/acpi/thermal_zone", "temperature", "r"))) {
-			if (!(f = fopen_first("/proc/acpi/thermal", "status", "r"))) {
-				printf("Unable to open ACPI temperature file.");
+	if ( !f ) {
+		if ( !
+			 ( f =
+			   fopen_first( "/proc/acpi/thermal_zone", "temperature",
+							"r" ) ) ) {
+			if ( !( f = fopen_first( "/proc/acpi/thermal", "status", "r" ) ) ) {
+				printf( "Unable to open ACPI temperature file." );
 				goto fail;
 			}
-			
+
 			old_acpi = 1;
 		}
 	}
-	
-	if (!(p = fgets(txt, sizeof(txt), f))) {
-		printf("Unable to read data from ACPI temperature file.");
+
+	if ( !( p = fgets( txt, sizeof ( txt ), f ) ) ) {
+		printf( "Unable to read data from ACPI temperature file." );
 		goto fail;
 	}
-	
-	fd = dup(fileno(f));
-	fclose(f);
-	f = fdopen(fd, "r");
-	assert(f);
-	fseek(f, 0, SEEK_SET);
 
-	if (!old_acpi) {
-		if (strlen(p) > 20)
-			v = atoi(p+20);
+	fd = dup( fileno( f ) );
+	fclose( f );
+	f = fdopen( fd, "r" );
+	assert( f );
+	fseek( f, 0, SEEK_SET );
+
+	if ( !old_acpi ) {
+		if ( strlen( p ) > 20 )
+			v = atoi( p + 20 );
 		else
 			v = 0;
 	} else {
-		if (strlen(p) > 15)
-			v = atoi(p+15);
+		if ( strlen( p ) > 15 )
+			v = atoi( p + 15 );
 		else
 			v = 0;
-		v=((v-2732)/10); /* convert from deciKelvin to degrees Celcius */
+		v = ( ( v - 2732 ) / 10 );	/* convert from deciKelvin to degrees Celcius */
 	}
 
-	if (v > 100) v = 100;
-	if (v < 0) v = 0;
+	if ( v > 100 )
+		v = 100;
+	if ( v < 0 )
+		v = 0;
 
 	return v;
 
-fail:
-	if (f) {
-		fclose(f);
+  fail:
+	if ( f ) {
+		fclose( f );
 		f = NULL;
 	}
-	
+
 	return -1;
 }
 
-int ACPI_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long **events, int flags)
+int
+ACPI_read( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long **events,
+		   int flags )
 {
 	static int failed = 0;
 
-	if (failed ||
-		(((ACPI_control_state_t *)ctrl)->counts[0] = (long long)get_load_value()) < 0 ||
-		(((ACPI_control_state_t *)ctrl)->counts[1] = (long long)get_temperature_value()) < 0)
+	if ( failed ||
+		 ( ( ( ACPI_control_state_t * ) ctrl )->counts[0] =
+		   ( long long ) get_load_value(  ) ) < 0 ||
+		 ( ( ( ACPI_control_state_t * ) ctrl )->counts[1] =
+		   ( long long ) get_temperature_value(  ) ) < 0 )
 		goto fail;
-	
-	*events=((ACPI_control_state_t *)ctrl)->counts;
+
+	*events = ( ( ACPI_control_state_t * ) ctrl )->counts;
 	return 0;
 
-fail:
+  fail:
 	failed = 1;
 	return -1;
 }
 
-int ACPI_stop(hwd_context_t *ctx, hwd_control_state_t *ctrl)
+int
+ACPI_stop( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
-	return(PAPI_OK);
+	return ( PAPI_OK );
 }
 
-int ACPI_reset(hwd_context_t *ctx, hwd_control_state_t *ctrl)
+int
+ACPI_reset( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 {
-	return(PAPI_OK);
+	return ( PAPI_OK );
 }
 
-int ACPI_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long *from)
+int
+ACPI_write( hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *from )
 {
-	return(PAPI_OK);
+	return ( PAPI_OK );
 }
 
 /*
@@ -281,9 +316,10 @@ int ACPI_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long *from)
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
-int ACPI_ctl(hwd_context_t *ctx, int code, _papi_int_option_t *option)
+int
+ACPI_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 {
-	return(PAPI_OK);
+	return ( PAPI_OK );
 }
 
 /*
@@ -296,21 +332,22 @@ int ACPI_ctl(hwd_context_t *ctx, int code, _papi_int_option_t *option)
  * PAPI_DOM_OTHER  is Exception/transient mode (like user TLB misses)
  * PAPI_DOM_ALL   is all of the domains
  */
-int ACPI_set_domain(hwd_control_state_t *cntrl, int domain) 
+int
+ACPI_set_domain( hwd_control_state_t * cntrl, int domain )
 {
 	int found = 0;
-	if ( PAPI_DOM_USER & domain ){
+	if ( PAPI_DOM_USER & domain ) {
 		found = 1;
 	}
-	if ( PAPI_DOM_KERNEL & domain ){
+	if ( PAPI_DOM_KERNEL & domain ) {
 		found = 1;
 	}
-	if ( PAPI_DOM_OTHER & domain ){
+	if ( PAPI_DOM_OTHER & domain ) {
 		found = 1;
 	}
 	if ( !found )
-		return(PAPI_EINVAL);
-	return(PAPI_OK);
+		return ( PAPI_EINVAL );
+	return ( PAPI_OK );
 }
 
 /* 
@@ -340,50 +377,59 @@ long long _papi_hwd_get_virt_cycles(const hwd_context_t * ctx)
 /*
  * Native Event functions
  */
-int ACPI_ntv_enum_events(unsigned int *EventCode, int modifier)
+int
+ACPI_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
-	int cidx = PAPI_COMPONENT_INDEX(*EventCode);
+	int cidx = PAPI_COMPONENT_INDEX( *EventCode );
 
-	if (modifier == PAPI_ENUM_FIRST) {
+	if ( modifier == PAPI_ENUM_FIRST ) {
 		/* assumes first native event is always 0x4000000 */
-		*EventCode = PAPI_NATIVE_MASK|PAPI_COMPONENT_MASK(cidx);
-		return (PAPI_OK);
+		*EventCode = PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cidx );
+		return ( PAPI_OK );
 	}
 
-	if (modifier == PAPI_ENUM_EVENTS) {
+	if ( modifier == PAPI_ENUM_EVENTS ) {
 		int index = *EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK;
 
-		if (acpi_native_table[index + 1].resources.selector) {
+		if ( acpi_native_table[index + 1].resources.selector ) {
 			*EventCode = *EventCode + 1;
-			return (PAPI_OK);
+			return ( PAPI_OK );
 		} else
-			return (PAPI_ENOEVNT);
-	}
-	else
-		return (PAPI_EINVAL);
+			return ( PAPI_ENOEVNT );
+	} else
+		return ( PAPI_EINVAL );
 }
 
-int ACPI_ntv_code_to_name(unsigned int EventCode, char *name, int len)
+int
+ACPI_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
-	strncpy(name, acpi_native_table[EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK].name, len);
-	return(PAPI_OK);
+	strncpy( name,
+			 acpi_native_table[EventCode & PAPI_NATIVE_AND_MASK &
+							   PAPI_COMPONENT_AND_MASK].name, len );
+	return ( PAPI_OK );
 }
 
-int ACPI_ntv_code_to_descr(unsigned int EventCode, char *name, int len)
+int
+ACPI_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
-	strncpy(name, acpi_native_table[EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK].description, len);
-	return(PAPI_OK);
+	strncpy( name,
+			 acpi_native_table[EventCode & PAPI_NATIVE_AND_MASK &
+							   PAPI_COMPONENT_AND_MASK].description, len );
+	return ( PAPI_OK );
 }
 
-int ACPI_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
+int
+ACPI_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 {
-	memcpy(( ACPI_register_t *) bits, &(acpi_native_table[EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK].resources), sizeof(ACPI_register_t)); /* it is not right, different type */
-	return (PAPI_OK);
+	memcpy( ( ACPI_register_t * ) bits, &( acpi_native_table[EventCode & PAPI_NATIVE_AND_MASK & PAPI_COMPONENT_AND_MASK].resources ), sizeof ( ACPI_register_t ) );	/* it is not right, different type */
+	return ( PAPI_OK );
 }
 
-int ACPI_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *values, int name_len, int count)
+int
+ACPI_ntv_bits_to_info( hwd_register_t * bits, char *names, unsigned int *values,
+					   int name_len, int count )
 {
-	return(1);
+	return ( 1 );
 }
 
 
@@ -397,51 +443,52 @@ int ACPI_ntv_bits_to_info(hwd_register_t *bits, char *names, unsigned int *value
 
 papi_vector_t _acpi_vector = {
 	.cmp_info = {
-	/* default component information (unspecified values are initialized to 0) */
-	.name = "$Id$",
-	.version = "$Revision$",
-	.num_mpx_cntrs =	PAPI_MPX_DEF_DEG,
-	.num_cntrs =	ACPI_MAX_COUNTERS,
-	.default_domain =	PAPI_DOM_USER,
-	.available_domains =	PAPI_DOM_USER,
-	.default_granularity =	PAPI_GRN_THR,
-	.available_granularities = PAPI_GRN_THR,
-	.hardware_intr_sig =	PAPI_INT_SIGNAL,
+				 /* default component information (unspecified values are initialized to 0) */
+				 .name =
+				 "$Id$",
+				 .version = "$Revision$",
+				 .num_mpx_cntrs = PAPI_MPX_DEF_DEG,
+				 .num_cntrs = ACPI_MAX_COUNTERS,
+				 .default_domain = PAPI_DOM_USER,
+				 .available_domains = PAPI_DOM_USER,
+				 .default_granularity = PAPI_GRN_THR,
+				 .available_granularities = PAPI_GRN_THR,
+				 .hardware_intr_sig = PAPI_INT_SIGNAL,
 
-	/* component specific cmp_info initializations */
-	.fast_real_timer =	0,
-	.fast_virtual_timer =	0,
-	.attach =		0,
-	.attach_must_ptrace =	0,
-	.available_domains =	PAPI_DOM_USER|PAPI_DOM_KERNEL,
-	},
+				 /* component specific cmp_info initializations */
+				 .fast_real_timer = 0,
+				 .fast_virtual_timer = 0,
+				 .attach = 0,
+				 .attach_must_ptrace = 0,
+				 .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
+				 }
+	,
 
 	/* sizes of framework-opaque component-private structures */
 	.size = {
-	.context =		sizeof(ACPI_context_t),
-	.control_state =	sizeof(ACPI_control_state_t),
-	.reg_value =		sizeof(ACPI_register_t),
-	.reg_alloc =		sizeof(ACPI_reg_alloc_t),
-	},
+			 .context = sizeof ( ACPI_context_t ),
+			 .control_state = sizeof ( ACPI_control_state_t ),
+			 .reg_value = sizeof ( ACPI_register_t ),
+			 .reg_alloc = sizeof ( ACPI_reg_alloc_t ),
+			 }
+	,
 	/* function pointers in this component */
-	.init =	ACPI_init,
-	.init_substrate =	ACPI_init_substrate,
-	.init_control_state =	ACPI_init_control_state,
-	.start =			ACPI_start,
-	.stop =			ACPI_stop,
-	.read =			ACPI_read,
-	.shutdown =			ACPI_shutdown,
-	.ctl =			ACPI_ctl,
-	.update_control_state =	ACPI_update_control_state,
-	.set_domain =		ACPI_set_domain,
-	.reset =			ACPI_reset,
+	.init = ACPI_init,
+	.init_substrate = ACPI_init_substrate,
+	.init_control_state = ACPI_init_control_state,
+	.start = ACPI_start,
+	.stop = ACPI_stop,
+	.read = ACPI_read,
+	.shutdown = ACPI_shutdown,
+	.ctl = ACPI_ctl,
+	.update_control_state = ACPI_update_control_state,
+	.set_domain = ACPI_set_domain,
+	.reset = ACPI_reset,
 /*	.set_overflow =		_p3_set_overflow,
 	.stop_profiling =		_p3_stop_profiling,*/
-	.ntv_enum_events =		ACPI_ntv_enum_events,
-	.ntv_code_to_name =		ACPI_ntv_code_to_name,
-	.ntv_code_to_descr =	ACPI_ntv_code_to_descr,
-	.ntv_code_to_bits =		ACPI_ntv_code_to_bits,
-	.ntv_bits_to_info =		ACPI_ntv_bits_to_info
+	.ntv_enum_events = ACPI_ntv_enum_events,
+	.ntv_code_to_name = ACPI_ntv_code_to_name,
+	.ntv_code_to_descr = ACPI_ntv_code_to_descr,
+	.ntv_code_to_bits = ACPI_ntv_code_to_bits,
+	.ntv_bits_to_info = ACPI_ntv_bits_to_info
 };
-
-

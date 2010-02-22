@@ -36,32 +36,37 @@
 #define NETLINELEN 128
 /*#define GMPATH "/usr/gm/bin/gm_counters"*/
 
-typedef struct NET_register {
-   /* indicate which counters this event can live on */
-   unsigned int selector;
-   /* Buffers containing counter cmds for each possible metric */
-   char *counter_cmd[PAPI_MAX_STR_LEN];
+typedef struct NET_register
+{
+	/* indicate which counters this event can live on */
+	unsigned int selector;
+	/* Buffers containing counter cmds for each possible metric */
+	char *counter_cmd[PAPI_MAX_STR_LEN];
 } NET_register_t;
 
-typedef struct NET_native_event_entry {
-   /* description of the resources required by this native event */
-   NET_register_t resources;
-   /* If it exists, then this is the name of this event */
-   char *name;
-   /* If it exists, then this is the description of this event */
-   char *description;
+typedef struct NET_native_event_entry
+{
+	/* description of the resources required by this native event */
+	NET_register_t resources;
+	/* If it exists, then this is the name of this event */
+	char *name;
+	/* If it exists, then this is the description of this event */
+	char *description;
 } NET_native_event_entry_t;
 
-typedef struct NET_reg_alloc {
-  NET_register_t ra_bits;
+typedef struct NET_reg_alloc
+{
+	NET_register_t ra_bits;
 } NET_reg_alloc_t;
 
-typedef struct NET_control_state {
-  long long counts[NET_MAX_COUNTERS];
+typedef struct NET_control_state
+{
+	long long counts[NET_MAX_COUNTERS];
 } NET_control_state_t;
 
-typedef struct NET_context {
-  NET_control_state_t state; 
+typedef struct NET_context
+{
+	NET_control_state_t state;
 } NET_context_t;
 
 #endif /* _PAPI_NET_H */

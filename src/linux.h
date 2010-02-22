@@ -1,5 +1,5 @@
 #ifndef _PAPI_LINUX_H
-#define _PAPI_LINUX_H 
+#define _PAPI_LINUX_H
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
@@ -16,7 +16,7 @@
 
 #include "papi_sys_headers.h"
 
-#ifndef __BSD__ /* #include <malloc.h> */
+#ifndef __BSD__				 /* #include <malloc.h> */
 #include <malloc.h>
 #endif
 
@@ -34,8 +34,8 @@
 #include <sys/ucontext.h>
 #endif
 
-#ifndef __BSD__ /* #include <linux/unistd.h> */
-  #include <linux/unistd.h>
+#ifndef __BSD__				 /* #include <linux/unistd.h> */
+#include <linux/unistd.h>
 #endif
 
 #ifndef CONFIG_SMP
@@ -57,7 +57,7 @@ extern volatile unsigned int lock[PAPI_MAX_LOCK];
 #ifdef __INTEL_COMPILER
 #define _papi_hwd_lock(lck) { while(_InterlockedCompareExchange_acq(&lock[lck],MUTEX_CLOSED,MUTEX_OPEN) != MUTEX_OPEN) { ; } }
 #define _papi_hwd_unlock(lck) { _InterlockedExchange((volatile int *)&lock[lck], MUTEX_OPEN); }
-#else                           /* GCC */
+#else  /* GCC */
 #define _papi_hwd_lock(lck)                                                   \
    { uint64_t res = 0;                                                        \
     do {                                                                      \

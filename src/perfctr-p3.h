@@ -16,7 +16,7 @@
 #include <stdarg.h>
 #include <signal.h>
 
-#ifndef __BSD__ /* #include <malloc.h> */
+#ifndef __BSD__				 /* #include <malloc.h> */
 #include <malloc.h>
 #endif
 
@@ -45,8 +45,8 @@
 #include <sys/times.h>
 #include <sys/time.h>
 
-#ifndef __BSD__ /* #include <linux/unistd.h> */
-  #include <linux/unistd.h>
+#ifndef __BSD__				 /* #include <linux/unistd.h> */
+#include <linux/unistd.h>
 #endif
 
 #ifndef CONFIG_SMP
@@ -64,7 +64,7 @@
 #define PAPI_NATIVE_EVENT_AND_MASK 0x000003ff	/* 10 bits == 1024 max events */
 #define PAPI_NATIVE_EVENT_SHIFT 0
 #define PAPI_NATIVE_UMASK_AND_MASK 0x03fffc00	/* 16 bits for unit masks */
-#define PAPI_NATIVE_UMASK_MAX 16				/* 16 possible unit masks */
+#define PAPI_NATIVE_UMASK_MAX 16	/* 16 possible unit masks */
 #define PAPI_NATIVE_UMASK_SHIFT 10
 
 #define PERF_MAX_COUNTERS 7
@@ -107,47 +107,51 @@ typedef ucontext_t hwd_ucontext_t;
 
 /* Overflow macros */
 #ifdef __x86_64__
-  #define GET_OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.gregs[REG_RIP]
+#define GET_OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.gregs[REG_RIP]
 #else
-  #define GET_OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.gregs[REG_EIP]
+#define GET_OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.gregs[REG_EIP]
 #endif
 
 /* Linux DOES support hardware overflow */
 #define HW_OVERFLOW 1
 
-typedef struct P3_register {
-   unsigned int selector;       /* Mask for which counters in use */
-   int counter_cmd;             /* The event code */
+typedef struct P3_register
+{
+	unsigned int selector;			   /* Mask for which counters in use */
+	int counter_cmd;				   /* The event code */
 } P3_register_t;
 
-typedef struct P3_reg_alloc {
-   P3_register_t ra_bits;       /* Info about this native event mapping */
-   unsigned ra_selector;        /* Bit mask showing which counters can carry this metric */
-   unsigned ra_rank;            /* How many counters can carry this metric */
+typedef struct P3_reg_alloc
+{
+	P3_register_t ra_bits;			   /* Info about this native event mapping */
+	unsigned ra_selector;			   /* Bit mask showing which counters can carry this metric */
+	unsigned ra_rank;				   /* How many counters can carry this metric */
 } P3_reg_alloc_t;
 
 /* Per eventset data structure for thread level counters */
 
-typedef struct hwd_native {
-   /* index in the native table, required */
-   int index;
-   /* Which counters can be used?  */
-   unsigned int selector;
-   /* Rank determines how many counters carry each metric */
-   unsigned char rank;
-   /* which counter this native event stays */
-   int position;
-   int mod;
-   int link;
+typedef struct hwd_native
+{
+	/* index in the native table, required */
+	int index;
+	/* Which counters can be used?  */
+	unsigned int selector;
+	/* Rank determines how many counters carry each metric */
+	unsigned char rank;
+	/* which counter this native event stays */
+	int position;
+	int mod;
+	int link;
 } hwd_native_t;
 
-typedef struct native_event_entry {
-   /* If it exists, then this is the name of this event */
-   char name[PAPI_MAX_STR_LEN];
-   /* If it exists, then this is the description of this event */
-   char *description;
-   /* description of the resources required by this native event */
-   P3_register_t resources;
+typedef struct native_event_entry
+{
+	/* If it exists, then this is the name of this event */
+	char name[PAPI_MAX_STR_LEN];
+	/* If it exists, then this is the description of this event */
+	char *description;
+	/* description of the resources required by this native event */
+	P3_register_t resources;
 } native_event_entry_t;
 
 /* typedefs to conform to hardware independent PAPI code. */
@@ -156,19 +160,21 @@ typedef P3_reg_alloc_t hwd_reg_alloc_t;
 #undef hwd_register_t
 typedef P3_register_t hwd_register_t;
 
-typedef struct P3_perfctr_control {
-   hwd_native_t native[MAX_COUNTERS];
-   int native_idx;
-   unsigned char master_selector;
-   P3_register_t allocated_registers;
-   struct vperfctr_control control;
-   struct perfctr_sum_ctrs state;
-   /* Allow attach to be per-eventset. */
-   struct rvperfctr * rvperfctr;
+typedef struct P3_perfctr_control
+{
+	hwd_native_t native[MAX_COUNTERS];
+	int native_idx;
+	unsigned char master_selector;
+	P3_register_t allocated_registers;
+	struct vperfctr_control control;
+	struct perfctr_sum_ctrs state;
+	/* Allow attach to be per-eventset. */
+	struct rvperfctr *rvperfctr;
 } P3_perfctr_control_t;
 
-typedef struct P3_perfctr_context {
-   struct vperfctr *perfctr;
+typedef struct P3_perfctr_context
+{
+	struct vperfctr *perfctr;
 /*  P3_perfctr_control_t start; */
 } P3_perfctr_context_t;
 
@@ -189,7 +195,7 @@ typedef P3_perfctr_context_t hwd_context_t;
 #define CNTRS12 (CNTR1|CNTR2)
 #define ALLCNTRS (CNTR1|CNTR2|CNTR3|CNTR4|CNTR5)
 
-#define HAS_MESI	  0x0100 /* indicates this event supports MESI modifiers */ 
+#define HAS_MESI	  0x0100 /* indicates this event supports MESI modifiers */
 #define HAS_MOESI	  0x0200 /* indicates this event supports MOESI modifiers */
 #define HAS_UMASK	  0x0400 /* indicates this event has defined unit mask bits */
 #define MOESI_M		  0x1000 /* Modified bit */
@@ -197,9 +203,9 @@ typedef P3_perfctr_context_t hwd_context_t;
 #define MOESI_E		  0x0400 /* Exclusive bit */
 #define MOESI_S		  0x0200 /* Shared bit */
 #define MOESI_I		  0x0100 /* Invalid bit */
-#define MOESI_M_INTEL	  MOESI_O /* Modified bit on Intel processors */
+#define MOESI_M_INTEL	  MOESI_O	/* Modified bit on Intel processors */
 #define MOESI_ALL	  0x1F00 /* mask for MOESI bits in event code or counter_cmd */
-#define UNIT_MASK_ALL	  0xFF00 /* mask for unit mask bits in event code or counter_cmd */
+#define UNIT_MASK_ALL	  0xFF00	/* mask for unit mask bits in event code or counter_cmd */
 
 /* Masks to craft an eventcode to perfctr's liking */
 #define PERF_CTR_MASK          0xFF000000

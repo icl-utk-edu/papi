@@ -18,155 +18,161 @@ static int EventSet = PAPI_NULL;
 
 #include "papi_test.h"
 
-extern int TESTS_QUIET;         /* Declared in test_utils.c */
+extern int TESTS_QUIET;				   /* Declared in test_utils.c */
 
-int main(argc, argv)
+int
+main( argc, argv )
 int argc;
 char *argv[];
 {
-   int i, retval;
-   double a[MAX], b[MAX];
-   void funcX(), funcA();
+	int i, retval;
+	double a[MAX], b[MAX];
+	void funcX(  ), funcA(  );
 
-   tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
+	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
-   for (i = 0; i < MAX; i++) {
-      a[i] = 0.0;
-      b[i] = 0.;
-   }
+	for ( i = 0; i < MAX; i++ ) {
+		a[i] = 0.0;
+		b[i] = 0.;
+	}
 
-   for (i = 0; i < PAPI_MAX_EVENTS; i++)
-      PAPI_values1[i] = PAPI_values2[i] = 0;
+	for ( i = 0; i < PAPI_MAX_EVENTS; i++ )
+		PAPI_values1[i] = PAPI_values2[i] = 0;
 
-   retval = PAPI_library_init(PAPI_VER_CURRENT);
-   if (retval != PAPI_VER_CURRENT)
-      test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
-
-#ifdef MULTIPLEX
-   if (!TESTS_QUIET) {
-      printf("Activating PAPI Multiplex\n");
-   }
-   init_multiplex();
-#endif
-
-   retval = PAPI_create_eventset(&EventSet);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI set event fail\n", retval);
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
+	if ( retval != PAPI_VER_CURRENT )
+		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 
 #ifdef MULTIPLEX
-      /* In Component PAPI, EventSets must be assigned a component index
-      before you can fiddle with their internals.
-      0 is always the cpu component */
-   retval = PAPI_assign_eventset_component(EventSet, 0);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_assign_eventset_component", retval);
-
-   retval = PAPI_set_multiplex(EventSet);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_set_multiplex fails \n", retval);
+	if ( !TESTS_QUIET ) {
+		printf( "Activating PAPI Multiplex\n" );
+	}
+	init_multiplex(  );
 #endif
 
-   retval = PAPI_add_event(EventSet, PAPI_FP_INS);
-   if (retval < PAPI_OK) {
-      retval = PAPI_add_event(EventSet, PAPI_TOT_INS);
-      if (retval < PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI add PAPI_FP_INS or PAPI_TOT_INS fail\n",
-                   retval);
-      else if (!TESTS_QUIET) {
-         printf("PAPI_TOT_INS\n");
-      }
-   } else if (!TESTS_QUIET) {
-      printf("PAPI_FP_INS\n");
-   }
+	retval = PAPI_create_eventset( &EventSet );
+	if ( retval != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI set event fail\n", retval );
 
-   retval = PAPI_add_event(EventSet, PAPI_TOT_CYC);
-   if (retval < PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI add PAPI_TOT_CYC  fail\n", retval);
-   if (!TESTS_QUIET) {
-      printf("PAPI_TOT_CYC\n");
-   }
+#ifdef MULTIPLEX
+	/* In Component PAPI, EventSets must be assigned a component index
+	   before you can fiddle with their internals.
+	   0 is always the cpu component */
+	retval = PAPI_assign_eventset_component( EventSet, 0 );
+	if ( retval != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_assign_eventset_component",
+				   retval );
 
-   retval = PAPI_start(EventSet);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI start fail\n", retval);
+	retval = PAPI_set_multiplex( EventSet );
+	if ( retval != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_set_multiplex fails \n", retval );
+#endif
 
-   funcX(a, b, MAX);
+	retval = PAPI_add_event( EventSet, PAPI_FP_INS );
+	if ( retval < PAPI_OK ) {
+		retval = PAPI_add_event( EventSet, PAPI_TOT_INS );
+		if ( retval < PAPI_OK )
+			test_fail( __FILE__, __LINE__,
+					   "PAPI add PAPI_FP_INS or PAPI_TOT_INS fail\n", retval );
+		else if ( !TESTS_QUIET ) {
+			printf( "PAPI_TOT_INS\n" );
+		}
+	} else if ( !TESTS_QUIET ) {
+		printf( "PAPI_FP_INS\n" );
+	}
 
-   retval = PAPI_read(EventSet, PAPI_values1);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI read fail \n", retval);
+	retval = PAPI_add_event( EventSet, PAPI_TOT_CYC );
+	if ( retval < PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI add PAPI_TOT_CYC  fail\n",
+				   retval );
+	if ( !TESTS_QUIET ) {
+		printf( "PAPI_TOT_CYC\n" );
+	}
 
-   funcX(a, b, MAX);
+	retval = PAPI_start( EventSet );
+	if ( retval != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI start fail\n", retval );
 
-   retval = PAPI_read(EventSet, PAPI_values2);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI read fail \n", retval);
+	funcX( a, b, MAX );
+
+	retval = PAPI_read( EventSet, PAPI_values1 );
+	if ( retval != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI read fail \n", retval );
+
+	funcX( a, b, MAX );
+
+	retval = PAPI_read( EventSet, PAPI_values2 );
+	if ( retval != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI read fail \n", retval );
 
 #ifdef RESET
-   retval = PAPI_reset(EventSet);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI read fail \n", retval);
+	retval = PAPI_reset( EventSet );
+	if ( retval != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI read fail \n", retval );
 #endif
 
-   funcA(a, b, MAX);
+	funcA( a, b, MAX );
 
-   retval = PAPI_stop(EventSet, PAPI_values3);
-   if (retval != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI read fail \n", retval);
+	retval = PAPI_stop( EventSet, PAPI_values3 );
+	if ( retval != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI read fail \n", retval );
 
-   if (!TESTS_QUIET) {
-      printf("values1 is:\n");
-      for (i = 0; i < PAPI_MAX_EVENTS; i++)
-         printf(LLDFMT15, PAPI_values1[i]);
+	if ( !TESTS_QUIET ) {
+		printf( "values1 is:\n" );
+		for ( i = 0; i < PAPI_MAX_EVENTS; i++ )
+			printf( LLDFMT15, PAPI_values1[i] );
 
-      printf("\nvalues2 is:\n");
-      for (i = 0; i < PAPI_MAX_EVENTS; i++)
-         printf(LLDFMT15, PAPI_values2[i]);
-      printf("\nvalues3 is:\n");
-      for (i = 0; i < PAPI_MAX_EVENTS; i++)
-         printf(LLDFMT15, PAPI_values3[i]);
+		printf( "\nvalues2 is:\n" );
+		for ( i = 0; i < PAPI_MAX_EVENTS; i++ )
+			printf( LLDFMT15, PAPI_values2[i] );
+		printf( "\nvalues3 is:\n" );
+		for ( i = 0; i < PAPI_MAX_EVENTS; i++ )
+			printf( LLDFMT15, PAPI_values3[i] );
 
 #ifndef RESET
-      printf("\nPAPI value (2-1) is : \n");
-      for (i = 0; i < PAPI_MAX_EVENTS; i++)
-         printf(LLDFMT15, PAPI_values2[i] - PAPI_values1[i]);
-      printf("\nPAPI value (3-2) is : \n");
-      for (i = 0; i < PAPI_MAX_EVENTS; i++)
-         printf(LLDFMT15, PAPI_values3[i] - PAPI_values2[i]);
+		printf( "\nPAPI value (2-1) is : \n" );
+		for ( i = 0; i < PAPI_MAX_EVENTS; i++ )
+			printf( LLDFMT15, PAPI_values2[i] - PAPI_values1[i] );
+		printf( "\nPAPI value (3-2) is : \n" );
+		for ( i = 0; i < PAPI_MAX_EVENTS; i++ )
+			printf( LLDFMT15, PAPI_values3[i] - PAPI_values2[i] );
 #endif
 
-      printf("\n\nVerification:\n");
-      printf("From start to first PAPI_read %d fp operations are made.\n",
-             2 * MAX * TIMES);
-      printf("Between 1st and 2nd PAPI_read %d fp operations are made.\n",
-             2 * MAX * TIMES);
-      printf("Between 2nd and 3rd PAPI_read %d fp operations are made.\n", 0);
-      printf("\n");
-   }
-   test_pass(__FILE__, NULL, 0);
-   exit(1);
+		printf( "\n\nVerification:\n" );
+		printf( "From start to first PAPI_read %d fp operations are made.\n",
+				2 * MAX * TIMES );
+		printf( "Between 1st and 2nd PAPI_read %d fp operations are made.\n",
+				2 * MAX * TIMES );
+		printf( "Between 2nd and 3rd PAPI_read %d fp operations are made.\n",
+				0 );
+		printf( "\n" );
+	}
+	test_pass( __FILE__, NULL, 0 );
+	exit( 1 );
 }
 
-void funcX(a, b, n)
+void
+funcX( a, b, n )
 double a[MAX], b[MAX];
 int n;
 {
-   int i, k;
-   for (k = 0; k < TIMES; k++)
-      for (i = 0; i < n; i++)
-         a[i] = a[i] * b[i] + 1.;
+	int i, k;
+	for ( k = 0; k < TIMES; k++ )
+		for ( i = 0; i < n; i++ )
+			a[i] = a[i] * b[i] + 1.;
 }
 
-void funcA(a, b, n)
+void
+funcA( a, b, n )
 double a[MAX], b[MAX];
 int n;
 {
-   int i, k;
-   double t[MAX];
-   for (k = 0; k < TIMES; k++)
-      for (i = 0; i < n; i++) {
-         t[i] = b[n - i];
-         b[i] = a[n - i];
-         a[i] = t[i];
-      }
+	int i, k;
+	double t[MAX];
+	for ( k = 0; k < TIMES; k++ )
+		for ( i = 0; i < n; i++ ) {
+			t[i] = b[n - i];
+			b[i] = a[n - i];
+			a[i] = t[i];
+		}
 }

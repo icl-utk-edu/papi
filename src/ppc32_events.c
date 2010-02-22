@@ -22,7 +22,8 @@ hwi_search_t *preset_search_map;
 
 /* PowerPC 7xx enumerations */
 //guanglei
-enum {
+enum
+{
 	PNE_PPC750_CPU_CLK = 0x40000000,
 	PNE_PPC750_FLOPS,
 	PNE_PPC750_INST_RETIRED,
@@ -50,25 +51,78 @@ enum {
 //guanglei
 ///PAPI_TOT_INS is only for test purpose
 const hwi_search_t _papi_hwd_ppc750_preset_map[] = {
-   {PAPI_TOT_CYC, {0, {PNE_PPC750_CPU_CLK, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-	{PAPI_FP_INS, {0, {PNE_PPC750_FLOPS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_TOT_INS, {0, {PNE_PPC750_INST_RETIRED, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_BR_MSP, {0, {PNE_PPC750_BR_MSP, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_BR_NTK, {0, {PNE_PPC750_BR_NTK, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_BR_TKN, {0, {PNE_PPC750_BR_TKN, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_INT_INS, {0, {PNE_PPC750_INT_INS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_TOT_IIS, {0, {PNE_PPC750_TOT_IIS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_L1_DCM, {0, {PNE_PPC750_L1_DCM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_L1_ICM, {0, {PNE_PPC750_L1_ICM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_L2_DCM, {0, {PNE_PPC750_L2_DCM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_L2_TCH, {0, {PNE_PPC750_L2_TCH, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_LST_INS, {0, {PNE_PPC750_LST_INS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_TLB_DM, {0, {PNE_PPC750_TLB_DM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_TLB_IM, {0, {PNE_PPC750_TLB_IM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_TLB_TL, {DERIVED_ADD, {PNE_PPC750_TLB_IM, PNE_PPC750_TLB_DM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_L1_LDM, {0, {PNE_PPC750_L1_LDM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
+	{PAPI_TOT_CYC,
+	 {0,
+	  {PNE_PPC750_CPU_CLK, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_FP_INS,
+	 {0,
+	  {PNE_PPC750_FLOPS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL},
+	  {0,}}},
+	{PAPI_TOT_INS,
+	 {0,
+	  {PNE_PPC750_INST_RETIRED, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_BR_MSP,
+	 {0,
+	  {PNE_PPC750_BR_MSP, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_BR_NTK,
+	 {0,
+	  {PNE_PPC750_BR_NTK, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_BR_TKN,
+	 {0,
+	  {PNE_PPC750_BR_TKN, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_INT_INS,
+	 {0,
+	  {PNE_PPC750_INT_INS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_TOT_IIS,
+	 {0,
+	  {PNE_PPC750_TOT_IIS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_L1_DCM,
+	 {0,
+	  {PNE_PPC750_L1_DCM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_L1_ICM,
+	 {0,
+	  {PNE_PPC750_L1_ICM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_L2_DCM,
+	 {0,
+	  {PNE_PPC750_L2_DCM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_L2_TCH,
+	 {0,
+	  {PNE_PPC750_L2_TCH, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_LST_INS,
+	 {0,
+	  {PNE_PPC750_LST_INS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_TLB_DM,
+	 {0,
+	  {PNE_PPC750_TLB_DM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_TLB_IM,
+	 {0,
+	  {PNE_PPC750_TLB_IM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_TLB_TL,
+	 {DERIVED_ADD,
+	  {PNE_PPC750_TLB_IM, PNE_PPC750_TLB_DM, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_L1_LDM,
+	 {0,
+	  {PNE_PPC750_L1_LDM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
 
-   {0, {0, {PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}}
+	{0,
+	 {0, {PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL},
+	  {0,}}}
 
 };
 
@@ -85,75 +139,76 @@ const hwi_search_t _papi_hwd_ppc750_preset_map[] = {
 //TOT_INS is for test purpose only
 const native_event_entry_t _papi_hwd_ppc750_native_map[] = {
 	{"CPU_CLK",
-	"Number of CPU cycles",
-	{CNTRS1234, 0x01}},
+	 "Number of CPU cycles",
+	 {CNTRS1234, 0x01}},
 
 	{"FLOPS",
-	"Number of instructions completed from the FPU",
-	{CNTR3, 0x0b}},
+	 "Number of instructions completed from the FPU",
+	 {CNTR3, 0x0b}},
 
 	{"TOT_INS",
-	"Number of completed instructions, not including folded branches",
-	{CNTRS1234, 0x02}},
+	 "Number of completed instructions, not including folded branches",
+	 {CNTRS1234, 0x02}},
 
 	{"BR_MSP",
-	"Number of mispredicted branches",
-	{CNTR4, 0x08}},
+	 "Number of mispredicted branches",
+	 {CNTR4, 0x08}},
 
 	{"BR_NTK",
-	"Number of branches that were predicted not taken",
-	{CNTR2, 0x08}},
+	 "Number of branches that were predicted not taken",
+	 {CNTR2, 0x08}},
 
 	{"BR_TKN",
-	"Number of predicted branches that were taken",
-	{CNTR3, 0x08}},
+	 "Number of predicted branches that were taken",
+	 {CNTR3, 0x08}},
 
 	{"INT_INS",
-	"Number of completed integer operations",
-	{CNTR4, 0x0d}},
+	 "Number of completed integer operations",
+	 {CNTR4, 0x0d}},
 
 	{"TOT_IIS",
-	"Number of instructions dispatched, 0, 1, or 2 per cycle",
-	{CNTRS1234, 0x04}},
+	 "Number of instructions dispatched, 0, 1, or 2 per cycle",
+	 {CNTRS1234, 0x04}},
 
 	{"L1_DCM",
-	"Number of L1 data cache misses. Does not include cache ops",
-	{CNTR3, 0x05}},
+	 "Number of L1 data cache misses. Does not include cache ops",
+	 {CNTR3, 0x05}},
 
 	{"L1_ICM",
-	"Indicates the number of times an instruction fetch missed the L1 instruction cache",
-	{CNTR2, 0x05}},
+	 "Indicates the number of times an instruction fetch missed the L1 instruction cache",
+	 {CNTR2, 0x05}},
 
 	{"L2_DCM",
-	"Number of L2 data cache misses",
-	{CNTR3, 0x07}},
+	 "Number of L2 data cache misses",
+	 {CNTR3, 0x07}},
 
 	{"L2_TCH",
-	"Number of accesses that hits L2. This event includes cache ops(i.e, dcbz)",
-	{CNTR1, 0x07}},
-	
+	 "Number of accesses that hits L2. This event includes cache ops(i.e, dcbz)",
+	 {CNTR1, 0x07}},
+
 	{"LST_INS",
-	"Number of load and store instructions completed",
-	{CNTR2, 0x0b}},
+	 "Number of load and store instructions completed",
+	 {CNTR2, 0x0b}},
 
 	{"TLB_DM",
-	"Number of DTLB misses",
-	{CNTR3, 0x06}},
+	 "Number of DTLB misses",
+	 {CNTR3, 0x06}},
 
 	{"TLB_IM",
-	"Number of ITLB misses",
-	{CNTR2, 0x06}},
+	 "Number of ITLB misses",
+	 {CNTR2, 0x06}},
 
 	{"L1_LDM",
-	"Number of loads that miss the L1 with latencies that exceeded the threshold value",
-	{CNTR1, 0x0a}},
+	 "Number of loads that miss the L1 with latencies that exceeded the threshold value",
+	 {CNTR1, 0x0a}},
 
 	{"", "", {0, 0}}
 };
 
 /* PPC7450 Defs */
 
-enum {
+enum
+{
 	PNE_PPC7450_CPU_CLK = 0x40000000,
 	PNE_PPC7450_FLOPS,
 	PNE_PPC7450_INST_RETIRED,
@@ -189,33 +244,113 @@ enum {
 */
 
 const hwi_search_t _papi_hwd_ppc7450_preset_map[] = {
-   {PAPI_TOT_CYC, {0, {PNE_PPC7450_CPU_CLK, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_FP_INS, {0, {PNE_PPC7450_FLOPS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_TOT_INS, {0, {PNE_PPC7450_INST_RETIRED, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_BR_INS, {0, {PNE_PPC7450_BR_INS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_BR_MSP, {0, {PNE_PPC7450_BR_MSP, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_INT_INS, {DERIVED_ADD, {PNE_PPC7450_INT_INS_IU1, PNE_PPC7450_INT_INS_IU2, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_TOT_IIS, {0, {PNE_PPC7450_TOT_IIS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_L1_DCM, {0, {PNE_PPC7450_L1_DCM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_L1_DCH, {0, {PNE_PPC7450_L1_DCH, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_L1_ICM, {0, {PNE_PPC7450_L1_ICM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_L1_ICA, {0, {PNE_PPC7450_L1_ICA, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_L2_DCM, {0, {PNE_PPC7450_L2_DCM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_L2_ICM, {0, {PNE_PPC7450_L2_ICM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_L2_TCM, {0, {PNE_PPC7450_L2_TCM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_L2_TCH, {0, {PNE_PPC7450_L2_TCH, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_L3_DCM, {0, {PNE_PPC7450_L3_DCM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_L3_ICM, {0, {PNE_PPC7450_L3_ICM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_L3_TCM, {0, {PNE_PPC7450_L3_TCM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_L3_TCH, {0, {PNE_PPC7450_L3_TCH, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_LD_INS, {0, {PNE_PPC7450_LD_INS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_SR_INS, {0, {PNE_PPC7450_SR_INS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_LST_INS, {DERIVED_ADD, {PNE_PPC7450_LD_INS, PNE_PPC7450_SR_INS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_TLB_DM, {0, {PNE_PPC7450_TLB_DM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_TLB_IM, {0, {PNE_PPC7450_TLB_IM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_TLB_TL, {DERIVED_ADD, {PNE_PPC7450_TLB_IM, PNE_PPC7450_TLB_DM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {PAPI_L1_LDM, {0, {PNE_PPC7450_L1_LDM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}},
-   {0, {0, {PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL}, {0,}}}
+	{PAPI_TOT_CYC,
+	 {0,
+	  {PNE_PPC7450_CPU_CLK, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_FP_INS,
+	 {0,
+	  {PNE_PPC7450_FLOPS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_TOT_INS,
+	 {0,
+	  {PNE_PPC7450_INST_RETIRED, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_BR_INS,
+	 {0,
+	  {PNE_PPC7450_BR_INS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_BR_MSP,
+	 {0,
+	  {PNE_PPC7450_BR_MSP, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_INT_INS,
+	 {DERIVED_ADD,
+	  {PNE_PPC7450_INT_INS_IU1, PNE_PPC7450_INT_INS_IU2, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL, PAPI_NULL}, {0,}}},
+	{PAPI_TOT_IIS,
+	 {0,
+	  {PNE_PPC7450_TOT_IIS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_L1_DCM,
+	 {0,
+	  {PNE_PPC7450_L1_DCM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_L1_DCH,
+	 {0,
+	  {PNE_PPC7450_L1_DCH, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_L1_ICM,
+	 {0,
+	  {PNE_PPC7450_L1_ICM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_L1_ICA,
+	 {0,
+	  {PNE_PPC7450_L1_ICA, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_L2_DCM,
+	 {0,
+	  {PNE_PPC7450_L2_DCM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_L2_ICM,
+	 {0,
+	  {PNE_PPC7450_L2_ICM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_L2_TCM,
+	 {0,
+	  {PNE_PPC7450_L2_TCM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_L2_TCH,
+	 {0,
+	  {PNE_PPC7450_L2_TCH, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_L3_DCM,
+	 {0,
+	  {PNE_PPC7450_L3_DCM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_L3_ICM,
+	 {0,
+	  {PNE_PPC7450_L3_ICM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_L3_TCM,
+	 {0,
+	  {PNE_PPC7450_L3_TCM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_L3_TCH,
+	 {0,
+	  {PNE_PPC7450_L3_TCH, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_LD_INS,
+	 {0,
+	  {PNE_PPC7450_LD_INS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_SR_INS,
+	 {0,
+	  {PNE_PPC7450_SR_INS, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_LST_INS,
+	 {DERIVED_ADD,
+	  {PNE_PPC7450_LD_INS, PNE_PPC7450_SR_INS, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_TLB_DM,
+	 {0,
+	  {PNE_PPC7450_TLB_DM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_TLB_IM,
+	 {0,
+	  {PNE_PPC7450_TLB_IM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_TLB_TL,
+	 {DERIVED_ADD,
+	  {PNE_PPC7450_TLB_IM, PNE_PPC7450_TLB_DM, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{PAPI_L1_LDM,
+	 {0,
+	  {PNE_PPC7450_L1_LDM, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL,
+	   PAPI_NULL}, {0,}}},
+	{0,
+	 {0, {PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL, PAPI_NULL},
+	  {0,}}}
 
 };
 
@@ -522,104 +657,104 @@ P ev
 
 const native_event_entry_t _papi_hwd_ppc7450_native_map[] = {
 	{"CPU_CLK",
-	"Number of CPU cycles",
-	{ALLCNTRS_PPC7450, 0x01}},
+	 "Number of CPU cycles",
+	 {ALLCNTRS_PPC7450, 0x01}},
 
 	{"FLOPS",
-	"Number of completed FPU instructions",
-	{CNTR3, 0x0e}},
+	 "Number of completed FPU instructions",
+	 {CNTR3, 0x0e}},
 
 	{"TOT_INS",
-	"Number of completed instructions",
-	{CNTRS1234, 0x02}},
+	 "Number of completed instructions",
+	 {CNTRS1234, 0x02}},
 
 	{"BR_TKN",
-	"Number of completed branch instructions",
-	{CNTR1, 0x22}},
+	 "Number of completed branch instructions",
+	 {CNTR1, 0x22}},
 
 	{"BR_MSP",
-	"Number of branches mispredicted",
-	{CNTR4, 0x1c}},
+	 "Number of branches mispredicted",
+	 {CNTR4, 0x1c}},
 
 	{"INT_INS_IU1",
-	"Number of completed integer operations on IU1",
-	{CNTR4, 0x12}},
+	 "Number of completed integer operations on IU1",
+	 {CNTR4, 0x12}},
 
 	{"INT_INS_IU2",
-	"Number of completed integer operations on IU2",
-	{CNTR1, 0x21}},
+	 "Number of completed integer operations on IU2",
+	 {CNTR1, 0x21}},
 
 	{"TOT_IIS",
-	"Number of instructions issued",
-	{CNTRS1234, 0x04}},
+	 "Number of instructions issued",
+	 {CNTRS1234, 0x04}},
 
 	{"L1_DCM",
-	"Number of L1 data cache misses",
-	{CNTRS23, 0x17}},
+	 "Number of L1 data cache misses",
+	 {CNTRS23, 0x17}},
 
 	{"L1_DCH",
-	"Number of L1 data cache hits",
-	{CNTR1, 0x38}},
+	 "Number of L1 data cache hits",
+	 {CNTR1, 0x38}},
 
 	{"L1_ICM",
-	"Number of L1 instruction cache misses",
-	{CNTRS12, 0x15}},
+	 "Number of L1 instruction cache misses",
+	 {CNTRS12, 0x15}},
 
 	{"L1_ICA",
-	"Number of L1 instruction cache accesses",
-	{CNTR1, 0x29}},
+	 "Number of L1 instruction cache accesses",
+	 {CNTR1, 0x29}},
 
 	{"L2_DCM",
-	"Number of L2 data cache misses",
-	{CNTRS56, 0x06}},
+	 "Number of L2 data cache misses",
+	 {CNTRS56, 0x06}},
 
 	{"L2_ICM",
-	"Number of L2 instruction cache misses",
-	{CNTRS56, 0x04}},
+	 "Number of L2 instruction cache misses",
+	 {CNTRS56, 0x04}},
 
 	{"L2_TCM",
-	"Number of L2 cache misses",
-	{CNTR5, 0x13}},
+	 "Number of L2 cache misses",
+	 {CNTR5, 0x13}},
 
 	{"L2_TCH",
-	"Number of L2 cache hits",
-	{CNTRS56, 0x02}},
+	 "Number of L2 cache hits",
+	 {CNTRS56, 0x02}},
 
 	{"L3_DCM",
-	"Number of L3 data cache misses",
-	{CNTRS56, 0x07}},
+	 "Number of L3 data cache misses",
+	 {CNTRS56, 0x07}},
 
 	{"L3_ICM",
-	"Number of L3 instruction cache misses",
-	{CNTRS56, 0x05}},
+	 "Number of L3 instruction cache misses",
+	 {CNTRS56, 0x05}},
 
 	{"L3_TCM",
-	"Number of L3 cache misses",
-	{CNTR5, 0x14}},
+	 "Number of L3 cache misses",
+	 {CNTR5, 0x14}},
 
 	{"L3_TCH",
-	"Number of L3 cache hits",
-	{CNTRS56, 0x03}},
-	
+	 "Number of L3 cache hits",
+	 {CNTRS56, 0x03}},
+
 	{"LD_INS",
-	"Number of load instructions",
-	{CNTR2, 0x1a}},
+	 "Number of load instructions",
+	 {CNTR2, 0x1a}},
 
 	{"SR_INS",
-	"Number of store instructions",
-	{CNTRS12, 0x14}},
+	 "Number of store instructions",
+	 {CNTRS12, 0x14}},
 
 	{"TLB_DM",
-	"Number of DTLB misses",
-	{CNTR3, 0x12}},
+	 "Number of DTLB misses",
+	 {CNTR3, 0x12}},
 
 	{"TLB_IM",
-	"Number of ITLB misses",
-	{CNTR2, 0x23}},
+	 "Number of ITLB misses",
+	 {CNTR2, 0x23}},
 
 	{"L1_LDM",
-	"Number of loads that miss the L1 with latencies that exceeded the threshold value",
-	{CNTR1, 0x2b}},
+	 "Number of loads that miss the L1 with latencies that exceeded the threshold value",
+	 {CNTR1, 0x2b}},
 
 	{"", "", {0, 0}}
 };
@@ -630,16 +765,18 @@ const native_event_entry_t _papi_hwd_ppc7450_native_map[] = {
 /*************************************/
 
 /* Given a native event code, returns the short text label. */
-char *_papi_hwd_ntv_code_to_name(unsigned int EventCode)
+char *
+_papi_hwd_ntv_code_to_name( unsigned int EventCode )
 {
-   return (native_table[EventCode & PAPI_NATIVE_AND_MASK].name);
+	return ( native_table[EventCode & PAPI_NATIVE_AND_MASK].name );
 }
 
 /* Given a native event code, returns the longer native event
    description. */
-char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
+char *
+_papi_hwd_ntv_code_to_descr( unsigned int EventCode )
 {
-   return (native_table[EventCode & PAPI_NATIVE_AND_MASK].description);
+	return ( native_table[EventCode & PAPI_NATIVE_AND_MASK].description );
 }
 
 /* Given a native event code, assigns the native event's 
@@ -647,43 +784,53 @@ char *_papi_hwd_ntv_code_to_descr(unsigned int EventCode)
    NOTE: the info must be COPIED to the provided pointer,
    not just referenced!
 */
-int _papi_hwd_ntv_code_to_bits(unsigned int EventCode, hwd_register_t * bits)
+int
+_papi_hwd_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 {
-   if(native_table[(EventCode & PAPI_NATIVE_AND_MASK)].resources.selector == 0) {
-      return (PAPI_ENOEVNT);
-   }
-   *bits = native_table[EventCode & PAPI_NATIVE_AND_MASK].resources;
-   return (PAPI_OK);
+	if ( native_table[( EventCode & PAPI_NATIVE_AND_MASK )].resources.
+		 selector == 0 ) {
+		return ( PAPI_ENOEVNT );
+	}
+	*bits = native_table[EventCode & PAPI_NATIVE_AND_MASK].resources;
+	return ( PAPI_OK );
 }
 
 /* Given a native event code, looks for the next event in the table
    if the next one exists.  If not, returns the proper error code. */
-int _papi_hwd_ntv_enum_events(unsigned int *EventCode, int modifier)
+int
+_papi_hwd_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
-   if (native_table[(*EventCode & PAPI_NATIVE_AND_MASK) + 1].resources.selector) {
-      *EventCode = *EventCode + 1;
-      return (PAPI_OK);
-   } else {
-      return (PAPI_ENOEVNT);
-   }
+	if ( native_table[( *EventCode & PAPI_NATIVE_AND_MASK ) + 1].resources.
+		 selector ) {
+		*EventCode = *EventCode + 1;
+		return ( PAPI_OK );
+	} else {
+		return ( PAPI_ENOEVNT );
+	}
 }
 
 /* Reports the elements of the hwd_register_t struct as an array of names and a matching array of values.
    Maximum string length is name_len; Maximum number of values is count.
 */
-static void copy_value(unsigned int val, char *nam, char *names, unsigned int *values, int len)
+static void
+copy_value( unsigned int val, char *nam, char *names, unsigned int *values,
+			int len )
 {
-   *values = val;
-   strncpy(names, nam, len);
-   names[len-1] = 0;
+	*values = val;
+	strncpy( names, nam, len );
+	names[len - 1] = 0;
 }
 
-int _papi_hwd_ntv_bits_to_info(hwd_register_t *bits, char *names,
-                               unsigned int *values, int name_len, int count)
+int
+_papi_hwd_ntv_bits_to_info( hwd_register_t * bits, char *names,
+							unsigned int *values, int name_len, int count )
 {
-   int i = 0;
-   copy_value(bits->selector, "PowerPC event code", &names[i*name_len], &values[i], name_len);
-   if (++i == count) return(i);
-   copy_value(bits->counter_cmd, "PowerPC counter_cmd code", &names[i*name_len], &values[i], name_len);
-   return(++i);
+	int i = 0;
+	copy_value( bits->selector, "PowerPC event code", &names[i * name_len],
+				&values[i], name_len );
+	if ( ++i == count )
+		return ( i );
+	copy_value( bits->counter_cmd, "PowerPC counter_cmd code",
+				&names[i * name_len], &values[i], name_len );
+	return ( ++i );
 }

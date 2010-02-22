@@ -23,31 +23,37 @@
 
 #define inline_static inline static
 
-typedef struct _any_reg_alloc {
-  int placeholder;
+typedef struct _any_reg_alloc
+{
+	int placeholder;
 } _any_reg_alloc_t;
 
-typedef struct _any_register {
-  int placeholder;
+typedef struct _any_register
+{
+	int placeholder;
 } _any_register_t;
 
-typedef struct _any_control_state {
-  int placeholder;
+typedef struct _any_control_state
+{
+	int placeholder;
 } _any_control_state_t;
 
-typedef struct _any_context {
+typedef struct _any_context
+{
 #if defined(USE_PROC_PTTIMER)
-  int stat_fd;
+	int stat_fd;
 #endif
-  int placeholder; 
+	int placeholder;
 } _any_context_t;
 
-typedef struct _any_siginfo {
-  int placeholder;
+typedef struct _any_siginfo
+{
+	int placeholder;
 } _any_siginfo_t;
 
-typedef struct _any_ucontext {
-  int placeholder; 
+typedef struct _any_ucontext
+{
+	int placeholder;
 } _any_ucontext_t;
 
 #define GET_OVERFLOW_ADDRESS(ctx) (ctx)
@@ -55,4 +61,3 @@ typedef struct _any_ucontext {
 #define MY_VECTOR _any_vector
 
 #endif /* _PAPI_ANY_NULL_H */
-

@@ -29,23 +29,27 @@
 #define MY_VECTOR _bgp_vectors
 
 // Context structure not used...
-typedef struct bgp_context {
-  int reserved;
+typedef struct bgp_context
+{
+	int reserved;
 } bgp_context_t;
 
 // Control state structure...  Holds local copy of read counters...
-typedef struct bgp_control_state {
-  long_long counters[BGP_UPC_MAX_MONITORED_EVENTS];
+typedef struct bgp_control_state
+{
+	long_long counters[BGP_UPC_MAX_MONITORED_EVENTS];
 } bgp_control_state_t;
 
 // Register allocation structure
-typedef struct bgp_reg_alloc {
-  _papi_hwd_bgp_native_event_id_t id;
+typedef struct bgp_reg_alloc
+{
+	_papi_hwd_bgp_native_event_id_t id;
 } bgp_reg_alloc_t;
 
 // Register structure not used...
-typedef struct bgp_register {
-  int reserved;
+typedef struct bgp_register
+{
+	int reserved;
 } bgp_register_t;
 
 /* Override void* definitions from PAPI framework layer */
@@ -60,8 +64,8 @@ typedef bgp_register_t hwd_register_t;
 typedef bgp_control_state_t hwd_control_state_t;
 typedef bgp_context_t hwd_context_t;
 
-extern void _papi_hwd_lock(int);
-extern void _papi_hwd_unlock(int);
+extern void _papi_hwd_lock( int );
+extern void _papi_hwd_unlock( int );
 
 /* Signal handling functions */
 #undef hwd_siginfo_t
@@ -69,6 +73,6 @@ extern void _papi_hwd_unlock(int);
 typedef int hwd_siginfo_t;
 typedef ucontext_t hwd_ucontext_t;
 
-extern hwi_search_t* preset_search_map;
+extern hwi_search_t *preset_search_map;
 
 #endif

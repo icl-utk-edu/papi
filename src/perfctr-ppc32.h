@@ -62,12 +62,13 @@
 /* union semun is defined by including <sys/sem.h> */
 #else
 /* according to X/OPEN we have to define it ourselves */
-union semun {
- int val;		       /* value for SETVAL */
- struct semid_ds *buf;     /* buffer for IPC_STAT, IPC_SET */
- unsigned short *array;    /* array for GETALL, SETALL */
-			   /* Linux specific part: */
- struct seminfo *__buf;    /* buffer for IPC_INFO */
+union semun
+{
+	int val;						   /* value for SETVAL */
+	struct semid_ds *buf;			   /* buffer for IPC_STAT, IPC_SET */
+	unsigned short *array;			   /* array for GETALL, SETALL */
+	/* Linux specific part: */
+	struct seminfo *__buf;			   /* buffer for IPC_INFO */
 };
 #endif
 
@@ -110,7 +111,7 @@ if (semop(sem_set, &sem_unlock, 1) == -1 ) {     \
 abort(); } }
 // PAPIERROR("semop errno %d",errno); abort(); } }
 
-#endif  // #if 0
+#endif // #if 0
 
 typedef siginfo_t hwd_siginfo_t;
 typedef ucontext_t hwd_ucontext_t;
@@ -121,58 +122,64 @@ typedef ucontext_t hwd_ucontext_t;
 /* Linux DOES support hardware overflow */
 #define HW_OVERFLOW 1
 
-typedef struct ppc32_register {
-   unsigned int selector;       /* Mask for which counters in use */
-   int counter_cmd;             /* The event code */
+typedef struct ppc32_register
+{
+	unsigned int selector;			   /* Mask for which counters in use */
+	int counter_cmd;				   /* The event code */
 } ppc32_register_t;
 
-typedef struct ppc32_reg_alloc {
-   ppc32_register_t ra_bits;       /* Info about this native event mapping */
-   unsigned ra_selector;        /* Bit mask showing which counters can carry this metric */
-   unsigned ra_rank;            /* How many counters can carry this metric */
+typedef struct ppc32_reg_alloc
+{
+	ppc32_register_t ra_bits;		   /* Info about this native event mapping */
+	unsigned ra_selector;			   /* Bit mask showing which counters can carry this metric */
+	unsigned ra_rank;				   /* How many counters can carry this metric */
 } ppc32_reg_alloc_t;
 
 /* Per eventset data structure for thread level counters */
 
-typedef struct hwd_native {
-   /* index in the native table, required */
-   int index;
-   /* Which counters can be used?  */
-   unsigned int selector;
-   /* Rank determines how many counters carry each metric */
-   unsigned char rank;
-   /* which counter this native event stays */
-   int position;
-   int mod;
-   int link;
+typedef struct hwd_native
+{
+	/* index in the native table, required */
+	int index;
+	/* Which counters can be used?  */
+	unsigned int selector;
+	/* Rank determines how many counters carry each metric */
+	unsigned char rank;
+	/* which counter this native event stays */
+	int position;
+	int mod;
+	int link;
 } hwd_native_t;
 
-typedef struct native_event_entry {
-   /* If it exists, then this is the name of this event */
-   char name[PAPI_MAX_STR_LEN];
-   /* If it exists, then this is the description of this event */
-   char *description;
-   /* description of the resources required by this native event */
-   ppc32_register_t resources;
+typedef struct native_event_entry
+{
+	/* If it exists, then this is the name of this event */
+	char name[PAPI_MAX_STR_LEN];
+	/* If it exists, then this is the description of this event */
+	char *description;
+	/* description of the resources required by this native event */
+	ppc32_register_t resources;
 } native_event_entry_t;
 
 /* typedefs to conform to hardware independent PAPI code. */
 typedef ppc32_reg_alloc_t hwd_reg_alloc_t;
 typedef ppc32_register_t hwd_register_t;
 
-typedef struct ppc32_perfctr_control {
-   hwd_native_t native[MAX_COUNTERS];
-   int native_idx;
-   unsigned char master_selector;
-   ppc32_register_t allocated_registers;
-   struct vperfctr_control control;
-   struct perfctr_sum_ctrs state;
-   /* Allow attach to be per-eventset. */
-   struct rvperfctr * rvperfctr;
+typedef struct ppc32_perfctr_control
+{
+	hwd_native_t native[MAX_COUNTERS];
+	int native_idx;
+	unsigned char master_selector;
+	ppc32_register_t allocated_registers;
+	struct vperfctr_control control;
+	struct perfctr_sum_ctrs state;
+	/* Allow attach to be per-eventset. */
+	struct rvperfctr *rvperfctr;
 } ppc32_perfctr_control_t;
 
-typedef struct ppc32_perfctr_context {
-   struct vperfctr *perfctr;
+typedef struct ppc32_perfctr_context
+{
+	struct vperfctr *perfctr;
 /*  ppc32_perfctr_control_t start; */
 } ppc32_perfctr_context_t;
 
@@ -198,7 +205,7 @@ typedef ppc32_perfctr_context_t hwd_context_t;
 #define PMC_OVFL	       0x80000000
 #define PERF_USR_ONLY          (1<<(31-1))
 #define PERF_OS_ONLY           (1<<(31-2))
-#define PERF_MODE_MASK         ~(PERF_USR_ONLY|PERF_OS_ONLY) 
+#define PERF_MODE_MASK         ~(PERF_USR_ONLY|PERF_OS_ONLY)
 #define PERF_INT_ENABLE        (1<<(31-5))
 #define PERF_INT_PMC1EN        (1<<(31-16))
 #define PERF_INT_PMCxEN        (1<<(31-17))
@@ -227,22 +234,22 @@ extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
 
 /* PPC7450 same as PPC750 */
 #if 0
-AO_test_and_set_full(volatile AO_TS_t *addr) {
-  int oldval;
-  int temp = 1; /* locked value */
+AO_test_and_set_full( volatile AO_TS_t * addr )
+{
+	int oldval;
+	int temp = 1;					   /* locked value */
 
-  __asm__ __volatile__(
-               "1:\tlwarx %0,0,%3\n"   /* load and reserve               */
-               "\tcmpwi %0, 0\n"       /* if load is                     */
-               "\tbne 2f\n"            /*   non-zero, return already set */
-               "\tstwcx. %2,0,%1\n"    /* else store conditional         */
-               "\tbne- 1b\n"           /* retry if lost reservation      */
-               "2:\t\n"                /* oldval is zero if we set       */
-              : "=&r"(oldval), "=p"(addr)
-              : "r"(temp), "1"(addr)
-              : "memory");
+	__asm__ __volatile__( "1:\tlwarx %0,0,%3\n"	/* load and reserve               */
+						  "\tcmpwi %0, 0\n"	/* if load is                     */
+						  "\tbne 2f\n" /*   non-zero, return already set */
+						  "\tstwcx. %2,0,%1\n"	/* else store conditional         */
+						  "\tbne- 1b\n"	/* retry if lost reservation      */
+						  "2:\t\n"	   /* oldval is zero if we set       */
+						  :"=&r"( oldval ), "=p"( addr )
+						  :"r"( temp ), "1"( addr )
+						  :"memory" );
 
-  return oldval;
+	return oldval;
 }
 #endif
 #endif /* _PAPI_PERFCTR_PPC32_H */

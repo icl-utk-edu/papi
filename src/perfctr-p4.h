@@ -49,7 +49,7 @@
 #define PAPI_NATIVE_EVENT_SHIFT 0
 #define PAPI_NATIVE_UMASK_AND_MASK 0x0fffff00	/* 20 bits for unit masks */
 /* top 4 bits (16 - 19) encode tags for execution_event tagging */
-#define PAPI_NATIVE_UMASK_MAX 16				/* 16 possible unit masks */
+#define PAPI_NATIVE_UMASK_MAX 16	/* 16 possible unit masks */
 #define PAPI_NATIVE_UMASK_SHIFT 8
 
 #define MAX_COUNTERS		18
@@ -57,13 +57,14 @@
 
 /* Per event data structure for each event */
 
-typedef struct P4_perfctr_event {
-   unsigned pmc_map;
-   unsigned evntsel;
-   unsigned evntsel_aux;
-   unsigned pebs_enable;
-   unsigned pebs_matrix_vert;
-   unsigned ireset;
+typedef struct P4_perfctr_event
+{
+	unsigned pmc_map;
+	unsigned evntsel;
+	unsigned evntsel_aux;
+	unsigned pebs_enable;
+	unsigned pebs_matrix_vert;
+	unsigned ireset;
 } P4_perfctr_event_t;
 
 /*
@@ -92,54 +93,61 @@ and bit 41 of escr_selector must be set. These resources are then not available 
 any other native event.
 */
 
-typedef struct P4_perfctr_codes {
-   P4_perfctr_event_t data[MAX_COUNTER_TERMS];
+typedef struct P4_perfctr_codes
+{
+	P4_perfctr_event_t data[MAX_COUNTER_TERMS];
 } P4_perfctr_preset_t;
 
-typedef struct P4_register {
-   unsigned counter[2];         // bitmap of valid counters for each escr
-   unsigned escr[2];            // bit offset for each of 2 valid escrs
-   unsigned cccr;               // value to be loaded into cccr register
-   unsigned event;              // value defining event to be loaded into escr register
-   unsigned pebs_enable;        // flag for PEBS counting
-   unsigned pebs_matrix_vert;   // flag for PEBS_MATRIX_VERT, whatever that is 
-   unsigned ireset;             // I don't really know what this does
+typedef struct P4_register
+{
+	unsigned counter[2];			   // bitmap of valid counters for each escr
+	unsigned escr[2];				   // bit offset for each of 2 valid escrs
+	unsigned cccr;					   // value to be loaded into cccr register
+	unsigned event;					   // value defining event to be loaded into escr register
+	unsigned pebs_enable;			   // flag for PEBS counting
+	unsigned pebs_matrix_vert;		   // flag for PEBS_MATRIX_VERT, whatever that is 
+	unsigned ireset;				   // I don't really know what this does
 } P4_register_t;
 
 /* defines the fields needed by _papi_hwd_allocate_registers
    to map the counter set */
-typedef struct P4_reg_alloc {
-   P4_register_t ra_bits;       /* Info about this native event mapping */
-   unsigned ra_selector;        /* Bit mask showing which counters can carry this metric */
-   unsigned ra_rank;            /* How many counters can carry this metric */
-   unsigned ra_escr[2];         /* Bit field array showing which (of 45) esc registers can carry this metric */
+typedef struct P4_reg_alloc
+{
+	P4_register_t ra_bits;			   /* Info about this native event mapping */
+	unsigned ra_selector;			   /* Bit mask showing which counters can carry this metric */
+	unsigned ra_rank;				   /* How many counters can carry this metric */
+	unsigned ra_escr[2];			   /* Bit field array showing which (of 45) esc registers can carry this metric */
 } P4_reg_alloc_t;
 
-typedef struct hwd_p4_native_map {
-   char *name;                  // ASCII name of the native event
-   char *description;           // ASCII description of the native event
-   P4_register_t bits;          // description of resources needed by this event
-   int mask;                    // contains all valid mask bits for this event group
-   int synonym;                 // index of next synonym if event can be multiply encoded 
+typedef struct hwd_p4_native_map
+{
+	char *name;						   // ASCII name of the native event
+	char *description;				   // ASCII description of the native event
+	P4_register_t bits;				   // description of resources needed by this event
+	int mask;						   // contains all valid mask bits for this event group
+	int synonym;					   // index of next synonym if event can be multiply encoded 
 } hwd_p4_native_map_t;
 
-typedef struct hwd_p4_mask {
-   int bit_pos;                 // bit position of mask bit
-   char *name;                  // ASCII name of the native event
-   char *description;           // ASCII description of the native event
+typedef struct hwd_p4_mask
+{
+	int bit_pos;					   // bit position of mask bit
+	char *name;						   // ASCII name of the native event
+	char *description;				   // ASCII description of the native event
 } hwd_p4_mask_t;
 
-typedef struct P4_perfctr_control {
-   struct vperfctr_control control;
-   struct perfctr_sum_ctrs state;
-   /* Allow attach to be per-eventset. */
-   struct rvperfctr * rvperfctr;
+typedef struct P4_perfctr_control
+{
+	struct vperfctr_control control;
+	struct perfctr_sum_ctrs state;
+	/* Allow attach to be per-eventset. */
+	struct rvperfctr *rvperfctr;
 } P4_perfctr_control_t;
 
 /* Per thread data structure for thread level counters */
 
-typedef struct P4_perfctr_context {
-   struct vperfctr *perfctr;
+typedef struct P4_perfctr_context
+{
+	struct vperfctr *perfctr;
 /*  P4_perfctr_control_t start; */
 } P4_perfctr_context_t;
 
@@ -175,9 +183,9 @@ typedef siginfo_t hwd_siginfo_t;
 typedef ucontext_t hwd_ucontext_t;
 
 #ifdef __x86_64__
-  #define GET_OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.gregs[REG_RIP]
+#define GET_OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.gregs[REG_RIP]
 #else
-  #define GET_OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.gregs[REG_EIP]
+#define GET_OVERFLOW_ADDRESS(ctx) ctx->ucontext->uc_mcontext.gregs[REG_EIP]
 #endif
 
 /* Linux DOES support hardware overflow */
@@ -210,8 +218,8 @@ __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(lock[lck]), "0"(MUTEX_OPEN)
 }while(0)
 
 
-extern int sighold(int);
-extern int sigrelse(int);
+extern int sighold( int );
+extern int sigrelse( int );
 
 
 #define MY_VECTOR _p4_vector
@@ -219,6 +227,6 @@ extern int sigrelse(int);
 /* Undefined identifiers in executable */
 
 extern caddr_t _start, _init, _etext, _fini, _end, _edata, __bss_start;
-extern int _papi_hwd_get_system_info(void);
+extern int _papi_hwd_get_system_info( void );
 
 #endif

@@ -1,4 +1,4 @@
-#ifndef _PAPI_PMAPI_PPC64              /* _PAPI_PMAPI_PPC64 */
+#ifndef _PAPI_PMAPI_PPC64	 /* _PAPI_PMAPI_PPC64 */
 #define _PAPI_PMAPI_PPC64
 
 /****************************/
@@ -27,23 +27,26 @@ typedef pm_events_t hwd_pmevents_t;
 
 #include "ppc64_events.h"
 
-typedef struct ppc64_pmapi_control {
-   /* Buffer to pass to the kernel to control the counters */
-   pm_prog_t counter_cmd;
-   int group_id;
-   /* Space to read the counters */
-   pm_data_t state;
+typedef struct ppc64_pmapi_control
+{
+	/* Buffer to pass to the kernel to control the counters */
+	pm_prog_t counter_cmd;
+	int group_id;
+	/* Space to read the counters */
+	pm_data_t state;
 } ppc64_pmapi_control_t;
 
-typedef struct ppc64_reg_alloc {
-   int ra_position;
-   unsigned int ra_group[GROUP_INTS];
-   int ra_counter_cmd[MAX_COUNTERS];
+typedef struct ppc64_reg_alloc
+{
+	int ra_position;
+	unsigned int ra_group[GROUP_INTS];
+	int ra_counter_cmd[MAX_COUNTERS];
 } ppc64_reg_alloc_t;
 
-typedef struct ppc64_pmapi_context {
-   /* this structure is a work in progress */
-   ppc64_pmapi_control_t cntrl;
+typedef struct ppc64_pmapi_context
+{
+	/* this structure is a work in progress */
+	ppc64_pmapi_control_t cntrl;
 } ppc64_pmapi_context_t;
 
 /* Override void* definitions from PAPI framework layer */
@@ -65,7 +68,7 @@ typedef struct hwd_groups {
 */
 
 /* prototypes */
-extern int _aix_set_granularity ( hwd_control_state_t * this_state, int domain );
-extern int _papi_hwd_init_preset_search_map(hwd_pminfo_t * info);
+extern int _aix_set_granularity( hwd_control_state_t * this_state, int domain );
+extern int _papi_hwd_init_preset_search_map( hwd_pminfo_t * info );
 
-#endif                          /* _PAPI_PMAPI_PPC64 */
+#endif /* _PAPI_PMAPI_PPC64 */

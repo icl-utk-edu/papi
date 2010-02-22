@@ -1,10 +1,10 @@
 /* Redfine the calls to vector table lookups */
 
 /* Component specific data structure */
-//#define _papi_hwd_cmp_info		_papi_hwi_current_vector->cmp_info /* See definition in papi.h */
+//#define _papi_hwd_cmp_info        _papi_hwi_current_vector->cmp_info /* See definition in papi.h */
 
 /* Private structure sizes for this component */
-//#define _papi_hwd_cmp_size		_papi_hwi_current_vector->size
+//#define _papi_hwd_cmp_size        _papi_hwi_current_vector->size
 
 /* List of exposed function pointers for this component */
 /*

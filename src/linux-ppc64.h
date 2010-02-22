@@ -10,7 +10,7 @@
 *          <your email address>
 */
 
-#ifndef _LINUX_PPC64_H               /* _LINUX_PPC64_H */
+#ifndef _LINUX_PPC64_H		 /* _LINUX_PPC64_H */
 #define _LINUX_PPC64_H
 
 
@@ -51,4 +51,4 @@ typedef ucontext_t hwd_ucontext_t;
 #define GET_OVERFLOW_ADDRESS(ctx) (caddr_t)ctx->ucontext->uc_mcontext.regs->nip
 
 
-#endif                          /* _LINUX_PPC64_H */
+#endif /* _LINUX_PPC64_H */

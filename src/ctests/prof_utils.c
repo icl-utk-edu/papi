@@ -35,20 +35,24 @@ void *profbuf[5];
    - getting hardware and executable info.
    It assumes that prginfo and hw_info are global to the parent routine.
 */
-void prof_init(int argc, char **argv, const PAPI_hw_info_t **hw_info, const PAPI_exe_info_t **prginfo) {
-   int retval;
+void
+prof_init( int argc, char **argv, const PAPI_hw_info_t ** hw_info,
+		   const PAPI_exe_info_t ** prginfo )
+{
+	int retval;
 
-   tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
+	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
-   if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
-      test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
+	if ( ( retval =
+		   PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
+		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 
-   *hw_info = PAPI_get_hardware_info();
-   if (hw_info == NULL)
-     test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", 2);
+	*hw_info = PAPI_get_hardware_info(  );
+	if ( hw_info == NULL )
+		test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
 
-   if ((*prginfo = PAPI_get_executable_info()) == NULL)
-      test_fail(__FILE__, __LINE__, "PAPI_get_executable_info", 1);
+	if ( ( *prginfo = PAPI_get_executable_info(  ) ) == NULL )
+		test_fail( __FILE__, __LINE__, "PAPI_get_executable_info", 1 );
 }
 
 /* Many profiling tests count one of {FP_INS, FP_OPS, TOT_INS} and TOT_CYC.
@@ -56,71 +60,90 @@ void prof_init(int argc, char **argv, const PAPI_hw_info_t **hw_info, const PAPI
    It also initializes the global event_name string to the event selected.
    Assumed globals: EventSet, PAPI_event, hw_info, event_name.
 */
-int prof_events(int num_tests, const PAPI_hw_info_t *hw_info) {
-   int retval;
-   int num_events, mask;
+int
+prof_events( int num_tests, const PAPI_hw_info_t * hw_info )
+{
+	int retval;
+	int num_events, mask;
 
-  /* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
-      PAPI_TOT_INS, depends on the availability of the event on the
-      platform */
-   EventSet = add_two_nonderived_events(&num_events, &PAPI_event, hw_info, &mask);
+	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
+	   PAPI_TOT_INS, depends on the availability of the event on the
+	   platform */
+	EventSet =
+		add_two_nonderived_events( &num_events, &PAPI_event, hw_info, &mask );
 
-   values = allocate_test_space(num_tests, num_events);
+	values = allocate_test_space( num_tests, num_events );
 
-   if ((retval = PAPI_event_code_to_name(PAPI_event, event_name)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", retval);
+	if ( ( retval =
+		   PAPI_event_code_to_name( PAPI_event, event_name ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
 
-   return (mask);
+	return ( mask );
 }
 
 /* This function displays info from the prginfo structure in a standardized format.
 */
-void prof_print_address(char *title, const PAPI_exe_info_t *prginfo) {
-   printf("%s\n", title);
-   printf("----------------------------------------------------------------\n");
-   printf("Text start: %p, Text end: %p, Text length: 0x%x\n",
-            prginfo->address_info.text_start, prginfo->address_info.text_end,
-            (unsigned int)(prginfo->address_info.text_end - prginfo->address_info.text_start));
-   printf("Data start: %p, Data end: %p\n",
-            prginfo->address_info.data_start, prginfo->address_info.data_end);
-   printf("BSS start : %p, BSS end : %p\n",
-            prginfo->address_info.bss_start, prginfo->address_info.bss_end);
+void
+prof_print_address( char *title, const PAPI_exe_info_t * prginfo )
+{
+	printf( "%s\n", title );
+	printf
+		( "----------------------------------------------------------------\n" );
+	printf( "Text start: %p, Text end: %p, Text length: 0x%x\n",
+			prginfo->address_info.text_start, prginfo->address_info.text_end,
+			( unsigned int ) ( prginfo->address_info.text_end -
+							   prginfo->address_info.text_start ) );
+	printf( "Data start: %p, Data end: %p\n", prginfo->address_info.data_start,
+			prginfo->address_info.data_end );
+	printf( "BSS start : %p, BSS end : %p\n", prginfo->address_info.bss_start,
+			prginfo->address_info.bss_end );
 
-   printf("----------------------------------------------------------------\n");
+	printf
+		( "----------------------------------------------------------------\n" );
 }
+
 /* This function displays profining information useful for several profile tests.
    It (probably inappropriately) assumes use of a common THRESHOLD. This should
    probably be a passed parameter.
    Assumed globals: event_name, start, stop.
 */
-void prof_print_prof_info(caddr_t start, caddr_t end, int threshold, char *event_name)
+void
+prof_print_prof_info( caddr_t start, caddr_t end, int threshold,
+					  char *event_name )
 {
-   printf("Profiling event  : %s\n", event_name);
-   printf("Profile Threshold: %d\n", threshold);
-   printf("Profile Iters    : %d\n",(getenv("NUM_ITERS") ? atoi(getenv("NUM_ITERS")) : NUM_ITERS));
-   printf("Profile Range    : %p to %p\n",start,end);
-   printf("----------------------------------------------------------------\n");
-   printf("\n");
+	printf( "Profiling event  : %s\n", event_name );
+	printf( "Profile Threshold: %d\n", threshold );
+	printf( "Profile Iters    : %d\n",
+			( getenv( "NUM_ITERS" ) ? atoi( getenv( "NUM_ITERS" ) ) :
+			  NUM_ITERS ) );
+	printf( "Profile Range    : %p to %p\n", start, end );
+	printf
+		( "----------------------------------------------------------------\n" );
+	printf( "\n" );
 }
+
 /* Most profile tests begin by counting the eventset with no profiling enabled.
    This function does that work. It assumes that the 'work' routine is do_both().
    A better implementation would pass a pointer to the work function.
    Assumed globals: EventSet, values, event_name.
 */
-void do_no_profile (void) {
-   int retval;
+void
+do_no_profile( void )
+{
+	int retval;
 
-   if ((retval = PAPI_start(EventSet)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_start", retval);
+	if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_start", retval );
 
-   do_flops(getenv("NUM_ITERS") ? atoi(getenv("NUM_ITERS")) : NUM_ITERS);
+	do_flops( getenv( "NUM_ITERS" ) ? atoi( getenv( "NUM_ITERS" ) ) :
+			  NUM_ITERS );
 
-   if ((retval = PAPI_stop(EventSet, values[0])) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+	if ( ( retval = PAPI_stop( EventSet, values[0] ) ) != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
 
-   printf("Test type   : \t%s\n", "No profiling");
-   printf(TAB1, event_name, (values[0])[0]);
-   printf(TAB1, "PAPI_TOT_CYC", (values[0])[1]);
+	printf( "Test type   : \t%s\n", "No profiling" );
+	printf( TAB1, event_name, ( values[0] )[0] );
+	printf( TAB1, "PAPI_TOT_CYC", ( values[0] )[1] );
 }
 
 /* This routine allocates and initializes up to 5 equal sized profiling buffers.
@@ -129,16 +152,18 @@ void do_no_profile (void) {
    The profbuf[] array of void * pointers is an assumed global.
    It should be cast to the required type by the parent routine.
 */
-void prof_alloc(int num, unsigned long blength) {
-   int i;
+void
+prof_alloc( int num, unsigned long blength )
+{
+	int i;
 
-   for (i=0;i<num;i++) {
-      profbuf[i] = malloc(blength);
-      if (profbuf[i] == NULL) {
-         test_fail(__FILE__, __LINE__, "malloc", PAPI_ESYS);
-      }
-      memset(profbuf[i], 0x00, blength );
-   }
+	for ( i = 0; i < num; i++ ) {
+		profbuf[i] = malloc( blength );
+		if ( profbuf[i] == NULL ) {
+			test_fail( __FILE__, __LINE__, "malloc", PAPI_ESYS );
+		}
+		memset( profbuf[i], 0x00, blength );
+	}
 }
 
 /* Given the profiling type (16, 32, or 64) this function returns the 
@@ -147,34 +172,41 @@ void prof_alloc(int num, unsigned long blength) {
    This is necessary because the posix_profile routine in extras.c relies on
    the data types and sizes produced by the compiler.
 */
-int prof_buckets(int bucket) {
-   int bucket_size;
-   switch (bucket) {
-      case PAPI_PROFIL_BUCKET_16:
-         bucket_size = sizeof(short);
-         break;
-      case PAPI_PROFIL_BUCKET_32:
-         bucket_size = sizeof(int);
-         break;
-      case PAPI_PROFIL_BUCKET_64:
-         bucket_size = sizeof(unsigned long long);
-         break;
-      default:
-         bucket_size = 0;
-         break;
-   }
-   return(bucket_size);
+int
+prof_buckets( int bucket )
+{
+	int bucket_size;
+	switch ( bucket ) {
+	case PAPI_PROFIL_BUCKET_16:
+		bucket_size = sizeof ( short );
+		break;
+	case PAPI_PROFIL_BUCKET_32:
+		bucket_size = sizeof ( int );
+		break;
+	case PAPI_PROFIL_BUCKET_64:
+		bucket_size = sizeof ( unsigned long long );
+		break;
+	default:
+		bucket_size = 0;
+		break;
+	}
+	return ( bucket_size );
 }
 
 /* A standardized header printing routine. No assumed globals.
 */
-void prof_head(unsigned long blength, int bucket, int num_buckets, char *header) {
-   int bucket_size = prof_buckets(bucket);
-   printf("\n------------------------------------------------------------\n");
-   printf("PAPI_profil() hash table, Bucket size: %d bits.\n", bucket_size*8);
-   printf("Number of buckets: %d.\nLength of buffer: %ld bytes.\n", num_buckets, blength);
-   printf("------------------------------------------------------------\n");
-   printf("%s\n", header);
+void
+prof_head( unsigned long blength, int bucket, int num_buckets, char *header )
+{
+	int bucket_size = prof_buckets( bucket );
+	printf
+		( "\n------------------------------------------------------------\n" );
+	printf( "PAPI_profil() hash table, Bucket size: %d bits.\n",
+			bucket_size * 8 );
+	printf( "Number of buckets: %d.\nLength of buffer: %ld bytes.\n",
+			num_buckets, blength );
+	printf( "------------------------------------------------------------\n" );
+	printf( "%s\n", header );
 }
 
 /* This function prints a standardized profile output based on the bucket size.
@@ -182,85 +214,101 @@ void prof_head(unsigned long blength, int bucket, int num_buckets, char *header)
    address with at least one non-zero bucket.
    Assumes global profbuf[] array pointers.
 */
-void prof_out(caddr_t start, int n, int bucket, int num_buckets, unsigned int scale) {
-   int i,j;
-   unsigned short buf_16;
-   unsigned int   buf_32;
-   unsigned long long  buf_64;
-   unsigned short **buf16 = (unsigned short **)profbuf;
-   unsigned int   **buf32 = (unsigned int **)profbuf;
-   unsigned long long    **buf64 = (unsigned long long **)profbuf;
+void
+prof_out( caddr_t start, int n, int bucket, int num_buckets,
+		  unsigned int scale )
+{
+	int i, j;
+	unsigned short buf_16;
+	unsigned int buf_32;
+	unsigned long long buf_64;
+	unsigned short **buf16 = ( unsigned short ** ) profbuf;
+	unsigned int **buf32 = ( unsigned int ** ) profbuf;
+	unsigned long long **buf64 = ( unsigned long long ** ) profbuf;
 
-   if (!TESTS_QUIET) {
-      /* printf("0x%lx\n",(unsigned long) start + (unsigned long) (2 * i)); */
-      /* printf("start: %p; i: %x; scale: %x; i*scale: %x; i*scale >>15: %x\n", start, i, scale, i*scale, (i*scale)>>15); */
-      switch (bucket) {
-         case PAPI_PROFIL_BUCKET_16:
-            for (i = 0; i < num_buckets; i++) {
-               for(j=0,buf_16=0;j<n;j++) buf_16 |= (buf16[j])[i];
-               if (buf_16) {
-                  printf("%-16p", start + (int)(((long long)i * scale)>>15)); 
-                  for(j=0,buf_16=0;j<n;j++)
-                     printf("\t%d", (buf16[j])[i]);
-                  printf("\n");
-              }
-            }
-            break;
-         case PAPI_PROFIL_BUCKET_32:
-            for (i = 0; i < num_buckets; i++) {
-               for(j=0,buf_32=0;j<n;j++) buf_32 |= (buf32[j])[i];
-               if (buf_32) {
-                  printf("%-16p", start + (int)(((long long)i * scale)>>15));
-                  for(j=0,buf_32=0;j<n;j++)
-                     printf("\t%d", (buf32[j])[i]);
-                  printf("\n");
-               }
-            }
-            break;
-         case PAPI_PROFIL_BUCKET_64:
-            for (i = 0; i < num_buckets; i++) {
-               for(j=0,buf_64=0;j<n;j++) buf_64 |= (buf64[j])[i];
-               if (buf_64) {
-                  printf("%-16p", start + (int)(((long long)i * scale)>>15));
-                  for(j=0,buf_64=0;j<n;j++)
-                     printf("\t%lld", (buf64[j])[i]);
-                  printf("\n");
-              }
-            }
-            break;
-      }
-      printf("------------------------------------------------------------\n\n");
-   }
+	if ( !TESTS_QUIET ) {
+		/* printf("0x%lx\n",(unsigned long) start + (unsigned long) (2 * i)); */
+		/* printf("start: %p; i: %x; scale: %x; i*scale: %x; i*scale >>15: %x\n", start, i, scale, i*scale, (i*scale)>>15); */
+		switch ( bucket ) {
+		case PAPI_PROFIL_BUCKET_16:
+			for ( i = 0; i < num_buckets; i++ ) {
+				for ( j = 0, buf_16 = 0; j < n; j++ )
+					buf_16 |= ( buf16[j] )[i];
+				if ( buf_16 ) {
+					printf( "%-16p",
+							start +
+							( int ) ( ( ( long long ) i * scale ) >> 15 ) );
+					for ( j = 0, buf_16 = 0; j < n; j++ )
+						printf( "\t%d", ( buf16[j] )[i] );
+					printf( "\n" );
+				}
+			}
+			break;
+		case PAPI_PROFIL_BUCKET_32:
+			for ( i = 0; i < num_buckets; i++ ) {
+				for ( j = 0, buf_32 = 0; j < n; j++ )
+					buf_32 |= ( buf32[j] )[i];
+				if ( buf_32 ) {
+					printf( "%-16p",
+							start +
+							( int ) ( ( ( long long ) i * scale ) >> 15 ) );
+					for ( j = 0, buf_32 = 0; j < n; j++ )
+						printf( "\t%d", ( buf32[j] )[i] );
+					printf( "\n" );
+				}
+			}
+			break;
+		case PAPI_PROFIL_BUCKET_64:
+			for ( i = 0; i < num_buckets; i++ ) {
+				for ( j = 0, buf_64 = 0; j < n; j++ )
+					buf_64 |= ( buf64[j] )[i];
+				if ( buf_64 ) {
+					printf( "%-16p",
+							start +
+							( int ) ( ( ( long long ) i * scale ) >> 15 ) );
+					for ( j = 0, buf_64 = 0; j < n; j++ )
+						printf( "\t%lld", ( buf64[j] )[i] );
+					printf( "\n" );
+				}
+			}
+			break;
+		}
+		printf
+			( "------------------------------------------------------------\n\n" );
+	}
 }
+
 /* This function checks to make sure that some buffer value somewhere is nonzero.
    If all buffers are empty, zero is returned. This usually indicates a profiling
    failure. Assumes global profbuf[].
 */
-int prof_check(int n, int bucket, int num_buckets) {
-   int i,j;
-   int retval = 0;
-   unsigned short **buf16 = (unsigned short **)profbuf;
-   unsigned int   **buf32 = (unsigned int **)profbuf;
-   unsigned long long    **buf64 = (unsigned long long **)profbuf;
+int
+prof_check( int n, int bucket, int num_buckets )
+{
+	int i, j;
+	int retval = 0;
+	unsigned short **buf16 = ( unsigned short ** ) profbuf;
+	unsigned int **buf32 = ( unsigned int ** ) profbuf;
+	unsigned long long **buf64 = ( unsigned long long ** ) profbuf;
 
-   switch (bucket) {
-      case PAPI_PROFIL_BUCKET_16:
-         for (i = 0; i < num_buckets; i++)
-            for (j=0;j<n;j++)
-               retval = retval || buf16[j][i];
-         break;
-      case PAPI_PROFIL_BUCKET_32:
-            for (i = 0; i < num_buckets; i++)
-            for (j=0;j<n;j++)
-               retval = retval || buf32[j][i];
-         break;
-      case PAPI_PROFIL_BUCKET_64:
-            for (i = 0; i < num_buckets; i++)
-            for (j=0;j<n;j++)
-               retval = retval || buf64[j][i];
-         break;
-   }
-   return(retval);
+	switch ( bucket ) {
+	case PAPI_PROFIL_BUCKET_16:
+		for ( i = 0; i < num_buckets; i++ )
+			for ( j = 0; j < n; j++ )
+				retval = retval || buf16[j][i];
+		break;
+	case PAPI_PROFIL_BUCKET_32:
+		for ( i = 0; i < num_buckets; i++ )
+			for ( j = 0; j < n; j++ )
+				retval = retval || buf32[j][i];
+		break;
+	case PAPI_PROFIL_BUCKET_64:
+		for ( i = 0; i < num_buckets; i++ )
+			for ( j = 0; j < n; j++ )
+				retval = retval || buf64[j][i];
+		break;
+	}
+	return ( retval );
 }
 
 /* Computes the length (in bytes) of the buffer required for profiling.
@@ -272,12 +320,13 @@ int prof_check(int n, int bucket, int num_buckets) {
    Thus, the number of profile buckets is (plength/2) * (scale/65536),
    and the length (in bytes) of the profile buffer is buckets * bucket size.
    */
-unsigned long prof_size(unsigned long plength, unsigned scale, int bucket, int *num_buckets) {
-   unsigned long blength;
-   long long llength = ((long long)plength * scale);
-   int bucket_size = prof_buckets(bucket);
-   *num_buckets = (int)(llength / 65536 / 2);
-   blength = (unsigned long)(*num_buckets * bucket_size);
-   return(blength);
+unsigned long
+prof_size( unsigned long plength, unsigned scale, int bucket, int *num_buckets )
+{
+	unsigned long blength;
+	long long llength = ( ( long long ) plength * scale );
+	int bucket_size = prof_buckets( bucket );
+	*num_buckets = ( int ) ( llength / 65536 / 2 );
+	blength = ( unsigned long ) ( *num_buckets * bucket_size );
+	return ( blength );
 }
-

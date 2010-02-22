@@ -443,4 +443,5 @@ PPC64_native_map_t native_name_map[MAX_NATNAME_MAP_INDEX] = {
 	,
 	{"PM_PMC7_OVERFLOW", -1}
 	,
-	{"PM_TB_BIT_TRANS", -1}};
+	{"PM_TB_BIT_TRANS", -1}
+};

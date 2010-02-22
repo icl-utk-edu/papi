@@ -4,65 +4,66 @@ extern int sem_set;
 /* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
  * else val = MUTEX_CLOSED */
 
-inline void _papi_hwd_lock_init(void) 
+inline void
+_papi_hwd_lock_init( void )
 {
-  union semun val; 
-  val.val=1;
-  
-  if ((retval = semget(IPC_PRIVATE,PAPI_MAX_LOCK,0666)) == -1)
-    {
-      PAPIERROR("semget errno %d",errno); return(PAPI_ESYS); 
-    }
-  sem_set = retval;
-  for (i=0;i<PAPI_MAX_LOCK;i++)
-    {
-      if ((retval = semctl(sem_set,i,SETVAL,val)) == -1)
-	{
-	  abort();
+	union semun val;
+	val.val = 1;
+
+	if ( ( retval = semget( IPC_PRIVATE, PAPI_MAX_LOCK, 0666 ) ) == -1 ) {
+		PAPIERROR( "semget errno %d", errno );
+		return ( PAPI_ESYS );
 	}
-    }
+	sem_set = retval;
+	for ( i = 0; i < PAPI_MAX_LOCK; i++ ) {
+		if ( ( retval = semctl( sem_set, i, SETVAL, val ) ) == -1 ) {
+			abort(  );
+		}
+	}
 }
 
-inline void _papi_hwd_lock_fini(void)
+inline void
+_papi_hwd_lock_fini( void )
 {
-  if ((retval = semctl(sem_set,0,IPC_RMID,0)) == -1)
-    {
-      abort();
-    }
+	if ( ( retval = semctl( sem_set, 0, IPC_RMID, 0 ) ) == -1 ) {
+		abort(  );
+	}
 }
 
-inline void _papi_hwd_lock(int lck)
-{                                    
-  struct sembuf sem_lock = { lck, -1, 0 }; 
-  if (semop(sem_set, &sem_lock, 1) == -1 ) 
-    {
-      abort();
-    }
+inline void
+_papi_hwd_lock( int lck )
+{
+	struct sembuf sem_lock = { lck, -1, 0 };
+	if ( semop( sem_set, &sem_lock, 1 ) == -1 ) {
+		abort(  );
+	}
 }
 
-inline void _papi_hwd_unlock(int lck)                
-{                                                
-  struct sembuf sem_unlock = { lck, 1, 0 }; 
-  if (semop(sem_set, &sem_unlock, 1) == -1 ) 
-    {    
-      abort(); 
-    } 
+inline void
+_papi_hwd_unlock( int lck )
+{
+	struct sembuf sem_unlock = { lck, 1, 0 };
+	if ( semop( sem_set, &sem_unlock, 1 ) == -1 ) {
+		abort(  );
+	}
 }
 
 #else
 
 extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 
-inline void _papi_hwd_lock_init(void) 
+inline void
+_papi_hwd_lock_init( void )
 {
-  for (i=0;i<PAPI_MAX_LOCK;i++)
-    _papi_hwd_lock_data[i] = MUTEX_OPEN;
+	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
+		_papi_hwd_lock_data[i] = MUTEX_OPEN;
 }
 
-inline void _papi_hwd_lock_fini(void)
+inline void
+_papi_hwd_lock_fini( void )
 {
-  for (i=0;i<PAPI_MAX_LOCK;i++)
-    _papi_hwd_lock_data[i] = MUTEX_OPEN;
+	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
+		_papi_hwd_lock_data[i] = MUTEX_OPEN;
 }
 
 #define MUTEX_OPEN 0
@@ -71,10 +72,10 @@ inline void _papi_hwd_lock_fini(void)
 #ifdef __ia64__
 
 #ifdef __INTEL_COMPILER
-#define _papi_hwd_lock(lck) { while(_InterlockedCompareExchange_acq(&_papi_hwd_lock_data[lck],MUTEX_CLOSED,MUTEX_OPEN) != MUTEX_OPEN) { ; } } 
+#define _papi_hwd_lock(lck) { while(_InterlockedCompareExchange_acq(&_papi_hwd_lock_data[lck],MUTEX_CLOSED,MUTEX_OPEN) != MUTEX_OPEN) { ; } }
 
 #define _papi_hwd_unlock(lck) { _InterlockedExchange((volatile int *)&_papi_hwd_lock_data[lck], MUTEX_OPEN); }
-#else                           /* GCC */
+#else  /* GCC */
 #define _papi_hwd_lock(lck)			 			      \
    { int res = 0;							      \
     do {								      \
@@ -102,70 +103,63 @@ do                                              \
 } while(0)
 
 #elif defined(mips)
-static inline void __raw_spin_lock(volatile unsigned int *lock)
+static inline void
+__raw_spin_lock( volatile unsigned int *lock )
 {
-  unsigned int tmp;
-  extern int _perfmon2_pfm_pmu_type;
-  if (_perfmon2_pfm_pmu_type == PFMLIB_MIPS_R10000_PMU)
-    {
-		__asm__ __volatile__(
-		"	.set	noreorder	# __raw_spin_lock	\n"
-		"1:	ll	%1, %2					\n"
-		"	bnez	%1, 1b					\n"
-		"	 li	%1, 1					\n"
-		"	sc	%1, %0					\n"
-		"	beqzl	%1, 1b					\n"
-		"	 nop						\n"
-		"	sync						\n"
-		"	.set	reorder					\n"
-		: "=m" (*lock), "=&r" (tmp)
-		: "m" (*lock)
-		: "memory");
-    } 
-  else if (_perfmon2_pfm_pmu_type == PFMLIB_MIPS_ICE9A_PMU) 
-    {
-		__asm__ __volatile__(
-		"	.set	noreorder	# __raw_spin_lock	\n"
-		"1:	ll	%1, %2					\n"
-		"  	ll	%1, %2					\n"
-		"	bnez	%1, 1b					\n"
-		"	 li	%1, 1					\n"
-		"	sc	%1, %0					\n"
-		"	beqz	%1, 1b					\n"
-		"	 sync						\n"
-		"	.set	reorder					\n"
-		: "=m" (*lock), "=&r" (tmp)
-		: "m" (*lock)
-		: "memory");
-    } 
-  else 
-    {
-		__asm__ __volatile__(
-		"	.set	noreorder	# __raw_spin_lock	\n"
-		"1:	ll	%1, %2					\n"
-		"	bnez	%1, 1b					\n"
-		"	 li	%1, 1					\n"
-		"	sc	%1, %0					\n"
-		"	beqz	%1, 1b					\n"
-		"	 sync						\n"
-		"	.set	reorder					\n"
-		: "=m" (*lock), "=&r" (tmp)
-		: "m" (*lock)
-		: "memory");
-    }
+	unsigned int tmp;
+	extern int _perfmon2_pfm_pmu_type;
+	if ( _perfmon2_pfm_pmu_type == PFMLIB_MIPS_R10000_PMU ) {
+		__asm__ __volatile__( "	.set	noreorder	# __raw_spin_lock	\n"
+							  "1:	ll	%1, %2					\n"
+							  "	bnez	%1, 1b					\n"
+							  "	 li	%1, 1					\n"
+							  "	sc	%1, %0					\n"
+							  "	beqzl	%1, 1b					\n"
+							  "	 nop						\n"
+							  "	sync						\n"
+							  "	.set	reorder					\n":"=m"
+							  ( *lock ), "=&r"( tmp )
+							  :"m"( *lock )
+							  :"memory" );
+	} else if ( _perfmon2_pfm_pmu_type == PFMLIB_MIPS_ICE9A_PMU ) {
+		__asm__ __volatile__( "	.set	noreorder	# __raw_spin_lock	\n"
+							  "1:	ll	%1, %2					\n"
+							  "  	ll	%1, %2					\n"
+							  "	bnez	%1, 1b					\n"
+							  "	 li	%1, 1					\n"
+							  "	sc	%1, %0					\n"
+							  "	beqz	%1, 1b					\n"
+							  "	 sync						\n"
+							  "	.set	reorder					\n":"=m"
+							  ( *lock ), "=&r"( tmp )
+							  :"m"( *lock )
+							  :"memory" );
+	} else {
+		__asm__ __volatile__( "	.set	noreorder	# __raw_spin_lock	\n"
+							  "1:	ll	%1, %2					\n"
+							  "	bnez	%1, 1b					\n"
+							  "	 li	%1, 1					\n"
+							  "	sc	%1, %0					\n"
+							  "	beqz	%1, 1b					\n"
+							  "	 sync						\n"
+							  "	.set	reorder					\n":"=m"
+							  ( *lock ), "=&r"( tmp )
+							  :"m"( *lock )
+							  :"memory" );
+	}
 }
 
-static inline void __raw_spin_unlock(volatile unsigned int *lock)
+static inline void
+__raw_spin_unlock( volatile unsigned int *lock )
 {
-	__asm__ __volatile__(
-	"	.set	noreorder	# __raw_spin_unlock	\n"
-	"	sync						\n"
-	"	sw	$0, %0					\n"
-	"	.set\treorder					\n"
-	: "=m" (*lock)
-	: "m" (*lock)
-	: "memory");
+	__asm__ __volatile__( "	.set	noreorder	# __raw_spin_unlock	\n"
+						  "	sync						\n"
+						  "	sw	$0, %0					\n"
+						  "	.set\treorder					\n":"=m"( *lock )
+						  :"m"( *lock )
+						  :"memory" );
 }
+
 #define  _papi_hwd_lock(lck) __raw_spin_lock(&_papi_hwd_lock_data[lck]);
 #define  _papi_hwd_unlock(lck) __raw_spin_unlock(&_papi_hwd_lock_data[lck])
 
@@ -180,21 +174,21 @@ static inline void __raw_spin_unlock(volatile unsigned int *lock)
  */
 
 static __inline__ unsigned long
-papi_xchg_u32(volatile void *p, unsigned long val)
+papi_xchg_u32( volatile void *p, unsigned long val )
 {
-        unsigned long prev;
+	unsigned long prev;
 
-        __asm__ __volatile__ ("\n\
+	__asm__ __volatile__( "\n\
         sync \n\
 1:      lwarx   %0,0,%2 \n\
         stwcx.  %3,0,%2 \n\
         bne-    1b \n\
-        isync"
-        : "=&r" (prev), "=m" (*(volatile unsigned long *)p)
-        : "r" (p), "r" (val), "m" (*(volatile unsigned long *)p)
-        : "cc", "memory");
+        isync":"=&r"( prev ), "=m"( *( volatile unsigned long * ) p )
+						  :"r"( p ), "r"( val ),
+						  "m"( *( volatile unsigned long * ) p )
+						  :"cc", "memory" );
 
-        return prev;
+	return prev;
 }
 
 /*
@@ -214,29 +208,19 @@ do {                                                    \
 } while(0)
 
 #elif defined(__sparc__)
-static inline void __raw_spin_lock(volatile unsigned int *lock)
+static inline void
+__raw_spin_lock( volatile unsigned int *lock )
 {
-	__asm__ __volatile__(
-	"\n1:\n\t"
-	"ldstub	[%0], %%g2\n\t"
-	"orcc	%%g2, 0x0, %%g0\n\t"
-	"bne,a	2f\n\t"
-	" ldub	[%0], %%g2\n\t"
-	".subsection	2\n"
-	"2:\n\t"
-	"orcc	%%g2, 0x0, %%g0\n\t"
-	"bne,a	2b\n\t"
-	" ldub	[%0], %%g2\n\t"
-	"b,a	1b\n\t"
-	".previous\n"
-	: /* no outputs */
-	: "r" (lock)
-	: "g2", "memory", "cc");
+	__asm__ __volatile__( "\n1:\n\t" "ldstub	[%0], %%g2\n\t" "orcc	%%g2, 0x0, %%g0\n\t" "bne,a	2f\n\t" " ldub	[%0], %%g2\n\t" ".subsection	2\n" "2:\n\t" "orcc	%%g2, 0x0, %%g0\n\t" "bne,a	2b\n\t" " ldub	[%0], %%g2\n\t" "b,a	1b\n\t" ".previous\n":	/* no outputs */
+						  :"r"( lock )
+						  :"g2", "memory", "cc" );
 }
-static inline void __raw_spin_unlock(volatile unsigned int *lock)
+static inline void
+__raw_spin_unlock( volatile unsigned int *lock )
 {
-	__asm__ __volatile__("stb %%g0, [%0]" : : "r" (lock) : "memory");
+	__asm__ __volatile__( "stb %%g0, [%0]"::"r"( lock ):"memory" );
 }
+
 #define  _papi_hwd_lock(lck) __raw_spin_lock(&_papi_hwd_lock_data[lck]);
 #define  _papi_hwd_unlock(lck) __raw_spin_unlock(&_papi_hwd_lock_data[lck])
 #else
@@ -244,4 +228,3 @@ static inline void __raw_spin_unlock(volatile unsigned int *lock)
 #endif
 
 #endif /* USE_SEMAPHORES */
-

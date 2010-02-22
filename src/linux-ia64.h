@@ -67,88 +67,95 @@ typedef int ia64_register_map_t;
 typedef int ia64_reg_alloc_t;
 
 
-   #define NUM_PMCS PFMLIB_MAX_PMCS
-   #define NUM_PMDS PFMLIB_MAX_PMDS
-   
+#define NUM_PMCS PFMLIB_MAX_PMCS
+#define NUM_PMDS PFMLIB_MAX_PMDS
+
    /* Native events consist of a flag field, an event field, and a unit mask field.
     * The next 4 macros define the characteristics of the event and unit mask fields.
     * Unit Masks are only supported on Montecito and above.
     */
-   #define PAPI_NATIVE_EVENT_AND_MASK 0x00000fff	/* 12 bits == 4096 max events */
-   #define PAPI_NATIVE_EVENT_SHIFT 0
-   #define PAPI_NATIVE_UMASK_AND_MASK 0x0ffff000	/* 16 bits for unit masks */
-   #define PAPI_NATIVE_UMASK_MAX 16				/* 16 possible unit masks */
-   #define PAPI_NATIVE_UMASK_SHIFT 12
+#define PAPI_NATIVE_EVENT_AND_MASK 0x00000fff	/* 12 bits == 4096 max events */
+#define PAPI_NATIVE_EVENT_SHIFT 0
+#define PAPI_NATIVE_UMASK_AND_MASK 0x0ffff000	/* 16 bits for unit masks */
+#define PAPI_NATIVE_UMASK_MAX 16	/* 16 possible unit masks */
+#define PAPI_NATIVE_UMASK_SHIFT 12
 
-   typedef struct param_t {
-      pfarg_reg_t pd[NUM_PMDS];
-      pfarg_reg_t pc[NUM_PMCS];
-      pfmlib_input_param_t inp;
-      pfmlib_output_param_t outp;
-      void *mod_inp;	/* model specific input parameters to libpfm    */
-      void *mod_outp;	/* model specific output parameters from libpfm */
-   } pfmw_param_t;
+typedef struct param_t
+{
+	pfarg_reg_t pd[NUM_PMDS];
+	pfarg_reg_t pc[NUM_PMCS];
+	pfmlib_input_param_t inp;
+	pfmlib_output_param_t outp;
+	void *mod_inp;					   /* model specific input parameters to libpfm    */
+	void *mod_outp;					   /* model specific output parameters from libpfm */
+} pfmw_param_t;
 //   #ifdef ITANIUM3
-   typedef struct mont_param_t {
-      pfmlib_mont_input_param_t mont_input_param;
-      pfmlib_mont_output_param_t  mont_output_param;
-   } pfmw_mont_param_t;
+typedef struct mont_param_t
+{
+	pfmlib_mont_input_param_t mont_input_param;
+	pfmlib_mont_output_param_t mont_output_param;
+} pfmw_mont_param_t;
 //   typedef pfmw_mont_param_t pfmw_ita_param_t;
 //   #elif defined(ITANIUM2)
-   typedef struct ita2_param_t {
-      pfmlib_ita2_input_param_t ita2_input_param;
-      pfmlib_ita2_output_param_t ita2_output_param;
-   } pfmw_ita2_param_t;
+typedef struct ita2_param_t
+{
+	pfmlib_ita2_input_param_t ita2_input_param;
+	pfmlib_ita2_output_param_t ita2_output_param;
+} pfmw_ita2_param_t;
 //   typedef pfmw_ita2_param_t pfmw_ita_param_t;
 //   #else
-   typedef int pfmw_ita1_param_t;
+typedef int pfmw_ita1_param_t;
 //   #endif
 
-   #define PMU_FIRST_COUNTER  4
+#define PMU_FIRST_COUNTER  4
 
-   typedef union {
-     pfmw_ita1_param_t ita_param;
-     pfmw_ita2_param_t ita2_param;
-     pfmw_mont_param_t mont_param;
-   } pfmw_ita_param_t;
+typedef union
+{
+	pfmw_ita1_param_t ita_param;
+	pfmw_ita2_param_t ita2_param;
+	pfmw_mont_param_t mont_param;
+} pfmw_ita_param_t;
 
 
 #define MAX_COUNTERS 12
 #define MAX_COUNTER_TERMS MAX_COUNTERS
 
-typedef struct ia64_control_state {
-   /* Which counters to use? Bits encode counters to use, may be duplicates */
-   ia64_register_map_t bits;
+typedef struct ia64_control_state
+{
+	/* Which counters to use? Bits encode counters to use, may be duplicates */
+	ia64_register_map_t bits;
 
-   pfmw_ita_param_t ita_lib_param;
+	pfmw_ita_param_t ita_lib_param;
 
-   /* Buffer to pass to kernel to control the counters */
-   pfmw_param_t evt;
+	/* Buffer to pass to kernel to control the counters */
+	pfmw_param_t evt;
 
-   long long counters[MAX_COUNTERS];
-   pfarg_reg_t pd[NUM_PMDS];
+	long long counters[MAX_COUNTERS];
+	pfarg_reg_t pd[NUM_PMDS];
 
 /* sampling buffer address */
-   void *smpl_vaddr;
-   /* Buffer to pass to library to control the counters */
+	void *smpl_vaddr;
+	/* Buffer to pass to library to control the counters */
 } ia64_control_state_t;
 
 
-typedef struct itanium_preset_search {
-   /* Preset code */
-   int preset;
-   /* Derived code */
-   int derived;
-   /* Strings to look for */
-   char *(findme[MAX_COUNTERS]);
-   char operation[MAX_COUNTERS*5];
+typedef struct itanium_preset_search
+{
+	/* Preset code */
+	int preset;
+	/* Derived code */
+	int derived;
+	/* Strings to look for */
+	char *( findme[MAX_COUNTERS] );
+	char operation[MAX_COUNTERS * 5];
 } itanium_preset_search_t;
 
-typedef struct Itanium_context {
-   int fd;  /* file descriptor */
-   pid_t tid;  /* thread id */
+typedef struct Itanium_context
+{
+	int fd;							   /* file descriptor */
+	pid_t tid;						   /* thread id */
 #if defined(USE_PROC_PTTIMER)
-   int stat_fd;
+	int stat_fd;
 #endif
 } ia64_context_t;
 
@@ -156,7 +163,7 @@ typedef struct Itanium_context {
 
 /* for _papi_hwi_context_t */
 #undef hwd_siginfo_t
-typedef struct siginfo  hwd_siginfo_t;
+typedef struct siginfo hwd_siginfo_t;
 
 #undef  hwd_ucontext_t
 typedef struct sigcontext hwd_ucontext_t;
@@ -214,10 +221,10 @@ extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 #define MUTEX_CLOSED 1
 
 #ifdef __INTEL_COMPILER
-#define _papi_hwd_lock(lck) { while(_InterlockedCompareExchange_acq(&_papi_hwd_lock_data[lck],MUTEX_CLOSED,MUTEX_OPEN) != MUTEX_OPEN) { ; } } 
+#define _papi_hwd_lock(lck) { while(_InterlockedCompareExchange_acq(&_papi_hwd_lock_data[lck],MUTEX_CLOSED,MUTEX_OPEN) != MUTEX_OPEN) { ; } }
 
 #define _papi_hwd_unlock(lck) { _InterlockedExchange((volatile int *)&_papi_hwd_lock_data[lck], MUTEX_OPEN); }
-#else                           /* GCC */
+#else  /* GCC */
 #define _papi_hwd_lock(lck)			 			      \
    { int res = 0;							      \
     do {								      \

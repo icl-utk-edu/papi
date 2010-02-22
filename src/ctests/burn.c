@@ -1,6 +1,7 @@
 #include "papi_test.h"
-int main()
+int
+main(  )
 {
-  do_stuff();
-  exit(0);
+	do_stuff(  );
+	exit( 0 );
 }

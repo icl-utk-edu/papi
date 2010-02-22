@@ -14,7 +14,7 @@
 /*
  * Prototypes...
  */
-int init_bgp( PAPI_mh_info_t* pMem_Info );
+int init_bgp( PAPI_mh_info_t * pMem_Info );
 
 // inline void cpuid(unsigned int *, unsigned int *,unsigned int *,unsigned int *);
 
@@ -23,17 +23,19 @@ int init_bgp( PAPI_mh_info_t* pMem_Info );
  *
  * Fills in memory information - effectively set to all 0x00's
  */
-extern int _bgp_get_memory_info( PAPI_hw_info_t* pHwInfo, int pCPU_Type ){
-  int retval = 0;
+extern int
+_bgp_get_memory_info( PAPI_hw_info_t * pHwInfo, int pCPU_Type )
+{
+	int retval = 0;
 
-  switch ( pCPU_Type ) {
-  default:
-    //fprintf(stderr,"Default CPU type in %s (%d)\n",__FUNCTION__,__LINE__);
-    retval = init_bgp(&pHwInfo->mem_hierarchy);
-    break;
-  }
+	switch ( pCPU_Type ) {
+	default:
+		//fprintf(stderr,"Default CPU type in %s (%d)\n",__FUNCTION__,__LINE__);
+		retval = init_bgp( &pHwInfo->mem_hierarchy );
+		break;
+	}
 
-  return retval;
+	return retval;
 }
 
 /*
@@ -41,7 +43,9 @@ extern int _bgp_get_memory_info( PAPI_hw_info_t* pHwInfo, int pCPU_Type ){
  *
  * NOTE:  Currently, all values set to -1
  */
-extern int _bgp_get_dmem_info(PAPI_dmem_info_t* pDmemInfo) {
+extern int
+_bgp_get_dmem_info( PAPI_dmem_info_t * pDmemInfo )
+{
 //  pid_t xPID = getpid();
 //  prpsinfo_t xInfo;
 //  char xFile[256];
@@ -57,26 +61,28 @@ extern int _bgp_get_dmem_info(PAPI_dmem_info_t* pDmemInfo) {
 //  }
 //  close(xFD);
 
-  pDmemInfo->size = PAPI_EINVAL;
-  pDmemInfo->resident = PAPI_EINVAL;
-  pDmemInfo->high_water_mark = PAPI_EINVAL;
-  pDmemInfo->shared = PAPI_EINVAL;
-  pDmemInfo->text = PAPI_EINVAL;
-  pDmemInfo->library = PAPI_EINVAL;
-  pDmemInfo->heap = PAPI_EINVAL;
-  pDmemInfo->locked = PAPI_EINVAL;
-  pDmemInfo->stack = PAPI_EINVAL;
-  pDmemInfo->pagesize = PAPI_EINVAL;
+	pDmemInfo->size = PAPI_EINVAL;
+	pDmemInfo->resident = PAPI_EINVAL;
+	pDmemInfo->high_water_mark = PAPI_EINVAL;
+	pDmemInfo->shared = PAPI_EINVAL;
+	pDmemInfo->text = PAPI_EINVAL;
+	pDmemInfo->library = PAPI_EINVAL;
+	pDmemInfo->heap = PAPI_EINVAL;
+	pDmemInfo->locked = PAPI_EINVAL;
+	pDmemInfo->stack = PAPI_EINVAL;
+	pDmemInfo->pagesize = PAPI_EINVAL;
 
-  return PAPI_OK;
+	return PAPI_OK;
 }
 
 /*
  * Cache configuration for BG/P
  */
-int init_bgp( PAPI_mh_info_t * pMem_Info ) {
-  memset(pMem_Info, 0x0, sizeof(*pMem_Info));
-  //fprintf(stderr,"mem_info not est up [%s (%d)]\n",__FUNCTION__,__LINE__);
+int
+init_bgp( PAPI_mh_info_t * pMem_Info )
+{
+	memset( pMem_Info, 0x0, sizeof ( *pMem_Info ) );
+	//fprintf(stderr,"mem_info not est up [%s (%d)]\n",__FUNCTION__,__LINE__);
 
-  return PAPI_OK;
+	return PAPI_OK;
 }

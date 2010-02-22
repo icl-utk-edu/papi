@@ -26,12 +26,13 @@
 
 #define PAPI_EVENT_FILE "papi_events.csv"
 
-typedef struct {
-   int preset; /* Preset code */
-   int derived; /* Derived code */
-   char *(findme[MAX_COUNTER_TERMS]); /* Strings to look for, more than 1 means derived */
-   char *operation; /* PostFix operations between terms */
-   char *note; /* In case a note is included with a preset */
+typedef struct
+{
+	int preset;						   /* Preset code */
+	int derived;					   /* Derived code */
+	char *( findme[MAX_COUNTER_TERMS] );	/* Strings to look for, more than 1 means derived */
+	char *operation;				   /* PostFix operations between terms */
+	char *note;						   /* In case a note is included with a preset */
 } pfm_preset_search_entry_t;
 
 #endif // _PAPI_PFM_EVENTS_H

@@ -945,4 +945,5 @@ PPC64_native_map_t native_name_map[MAX_NATNAME_MAP_INDEX] = {
 	,
 	{"PM_PMC3_OVERFLOW", -1}
 	,
-	{"PM_WORK_HELD", -1}};
+	{"PM_WORK_HELD", -1}
+};

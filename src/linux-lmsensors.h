@@ -52,10 +52,10 @@
 typedef struct LM_SENSORS_register
 {
 	/* This is used by the framework.It likes it to be !=0 to do somehting */
-	unsigned int    selector;
+	unsigned int selector;
 	/* These are the only information needed to locate a libsensors event */
 	const sensors_chip_name *name;
-	int             subfeat_nr;
+	int subfeat_nr;
 } LM_SENSORS_register_t;
 
 /*
@@ -68,9 +68,9 @@ typedef struct LM_SENSORS_register
 typedef struct LM_SENSORS_native_event_entry
 {
 	LM_SENSORS_register_t resources;
-	char            name[PAPI_MAX_STR_LEN];
-	char            description[PAPI_MAX_STR_LEN];
-	unsigned int    count;
+	char name[PAPI_MAX_STR_LEN];
+	char description[PAPI_MAX_STR_LEN];
+	unsigned int count;
 } LM_SENSORS_native_event_entry_t;
 
 
@@ -82,8 +82,8 @@ typedef struct LM_SENSORS_reg_alloc
 
 typedef struct LM_SENSORS_control_state
 {
-	long_long       counts[LM_SENSORS_MAX_COUNTERS];	// used for caching
-	long_long       lastupdate;
+	long_long counts[LM_SENSORS_MAX_COUNTERS];	// used for caching
+	long_long lastupdate;
 } LM_SENSORS_control_state_t;
 
 
