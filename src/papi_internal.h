@@ -2,19 +2,17 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
-* File:    papi_internal.h
-* CVS:     $Id$
-* Author:  Philip Mucci
+/** 
+* @file    papi_internal.h
+* @author  Philip Mucci
 *          mucci@cs.utk.edu
-* Mods:    dan terpstra
+* @author  Dan Terpstra
 *          terpstra.utk.edu
-* Mods:    Kevin London
-*	   london@cs.utk.edu
-*          Haihang You
+* @author  Kevin London
+*	       london@cs.utk.edu
+* @author  Haihang You
 *          you@cs.utk.edu
-* Mods:    <your name here>
-*          <your email address>
+* CVS:     $Id$
 */
 
 #ifndef _PAPI_INTERNAL_H
@@ -127,13 +125,13 @@ extern int papi_num_components;
 
 /* Commands used to compute derived events */
 
-#define NOT_DERIVED      0x0 /* Do nothing */
-#define DERIVED_ADD      0x1 /* Add counters */
-#define DERIVED_PS       0x2 /* Divide by the cycle counter and convert to seconds */
-#define DERIVED_ADD_PS   0x4 /* Add 2 counters then divide by the cycle counter and xl8 to secs. */
-#define DERIVED_CMPD     0x8 /* Event lives in operand index but takes 2 or more codes */
-#define DERIVED_SUB      0x10	/* Sub all counters from counter with operand_index */
-#define DERIVED_POSTFIX  0x20	/* Process counters based on specified postfix string */
+#define NOT_DERIVED      0x0    /**< Do nothing */
+#define DERIVED_ADD      0x1    /**< Add counters */
+#define DERIVED_PS       0x2    /**< Divide by the cycle counter and convert to seconds */
+#define DERIVED_ADD_PS   0x4    /**< Add 2 counters then divide by the cycle counter and xl8 to secs. */
+#define DERIVED_CMPD     0x8    /**< Event lives in operand index but takes 2 or more codes */
+#define DERIVED_SUB      0x10   /**< Sub all counters from counter with operand_index */
+#define DERIVED_POSTFIX  0x20   /**< Process counters based on specified postfix string */
 
 /* Thread related: thread local storage */
 
@@ -192,30 +190,30 @@ extern int papi_num_components;
 #include SUBSTRATE
 #include "papi_preset.h"
 
-typedef struct _EventSetDomainInfo
-{
-	int domain;
+/** @struct _EventSetDomainInfo */
+typedef struct _EventSetDomainInfo {
+   int domain;
 } EventSetDomainInfo_t;
 
-typedef struct _EventSetGranularityInfo
-{
-	int granularity;
+/** @struct _EventSetGranularityInfo */
+typedef struct _EventSetGranularityInfo {
+   int granularity;
 } EventSetGranularityInfo_t;
 
-typedef struct _EventSetOverflowInfo
-{
-	int flags;
-	int event_counter;
-	PAPI_overflow_handler_t handler;
-	long long *deadline;
-	int *threshold;
-	int *EventIndex;
-	int *EventCode;
+/** @struct _EventSetOverflowInfo */
+typedef struct _EventSetOverflowInfo {
+   int flags;
+   int event_counter;
+   PAPI_overflow_handler_t handler;
+   long long *deadline;
+   int *threshold;
+   int *EventIndex;
+   int *EventCode;
 } EventSetOverflowInfo_t;
 
-typedef struct _EventSetAttachInfo
-{
-	unsigned long tid;
+/** @struct _EventSetAttachInfo */
+typedef struct _EventSetAttachInfo {
+  unsigned long tid;
 } EventSetAttachInfo_t;
 
 #if 0
@@ -225,93 +223,91 @@ typedef struct _EventSetInheritInfo
 } EventSetInheritInfo_t;
 #endif
 
-typedef struct _EventSetProfileInfo
-{
-	PAPI_sprofil_t **prof;
-	int *count;						   /* Number of buffers */
-	int *threshold;
-	int *EventIndex;
-	int *EventCode;
-	int flags;
-	int event_counter;
+/** @struct _EventSetProfileInfo */
+typedef struct _EventSetProfileInfo {
+   PAPI_sprofil_t **prof;
+   int *count;     /**< Number of buffers */
+   int *threshold;
+   int *EventIndex;
+   int *EventCode;
+   int flags;
+   int event_counter;
 } EventSetProfileInfo_t;
 
-/* This contains info about an individual event added to the EventSet.
-   The event can be either PRESET or NATIVE, and either simple or derived.
-   If derived, it can consist of up to MAX_COUNTER_TERMS native events.
-   An EventSet contains a pointer to an array of these structures to define
-   each added event.
+/** @struct _EventInfo
+  @brief	This contains info about an individual event added to the EventSet.
+			The event can be either PRESET or NATIVE, and either simple or derived.
+			If derived, it can consist of up to MAX_COUNTER_TERMS native events.
+			An EventSet contains a pointer to an array of these structures to define
+			each added event.
  */
 
-typedef struct _EventInfo
-{
-	unsigned int event_code;		   /* Preset or native code for this event as passed to PAPI_add_event() */
-	/* should this be MAX_COUNTER_TERMS instead of MAX_COUNTERS ?? (dkt 10/9/03) */
-	int pos[MAX_COUNTER_TERMS];		   /* position in the counter array for this events components */
-	char *ops;						   /* operation string of preset */
-	int derived;					   /* Counter derivation command used for derived events */
+typedef struct _EventInfo {
+   unsigned int event_code;     /**< Preset or native code for this event as passed to PAPI_add_event() */
+   /* should this be MAX_COUNTER_TERMS instead of MAX_COUNTERS ?? (dkt 10/9/03) */
+   int pos[MAX_COUNTER_TERMS];   /**< position in the counter array for this events components */
+   char *ops;                   /**< operation string of preset */
+   int derived;                 /**< Counter derivation command used for derived events */
 } EventInfo_t;
 
-/* This contains info about each native event added to the EventSet.
-   An EventSet contains an array of MAX_COUNTERS of these structures 
-   to define each native event in the set.
+/** @struct _NativeInfo
+    @brief	This contains info about each native event added to the EventSet.
+			An EventSet contains an array of MAX_COUNTERS of these structures 
+			to define each native event in the set.
  */
-
-typedef struct _NativeInfo
-{
-	int ni_event;					   /* native event code; always non-zero unless empty */
-	int ni_position;				   /* counter array position where this native event lives */
-	int ni_owners;					   /* specifies how many owners share this native event */
-	hwd_register_t *ni_bits;		   /* Substrate defined resources used by this native event */
+typedef struct _NativeInfo {
+   int ni_event;                /**< native event code; always non-zero unless empty */
+   int ni_position;             /**< counter array position where this native event lives */
+   int ni_owners;               /**< specifies how many owners share this native event */
+   hwd_register_t *ni_bits;     /**< Substrate defined resources used by this native event */
 } NativeInfo_t;
 
 
 /* Multiplex definitions */
 
-/* This contains only the information about an event that
- * would cause two events to be counted separately.  Options
- * that don't affect an event aren't included here.
+/** @struct _papi_info 
+ *  @brief	This contains only the information about an event that
+ *			would cause two events to be counted separately.  Options
+ *			that don't affect an event aren't included here.
  */
-
-typedef struct _papi_info
-{
-	int event_type;
-	int domain;
-	int granularity;
+typedef struct _papi_info {
+   int event_type;
+   int domain;
+   int granularity;
 } PapiInfo;
 
-typedef struct _masterevent
-{
-	int uses;
-	int active;
-	int is_a_rate;
-	int papi_event;
-	PapiInfo pi;
-	long long count;
-	long long cycles;
-	long long handler_count;
-	long long prev_total_c;
-	long long count_estimate;
-	double rate_estimate;
-	struct _threadlist *mythr;
-	struct _masterevent *next;
+/** @struct _masterevent */
+typedef struct _masterevent {
+   int uses;
+   int active;
+   int is_a_rate;
+   int papi_event;
+   PapiInfo pi;
+   long long count;
+   long long cycles;
+   long long handler_count;
+   long long prev_total_c;
+   long long count_estimate;
+   double rate_estimate;
+   struct _threadlist *mythr;
+   struct _masterevent *next;
 } MasterEvent;
 
-typedef struct _threadlist
-{
+/** @struct _threadlist */
+typedef struct _threadlist {
 #ifdef PTHREADS
 	pthread_t thr;
 #else
 	unsigned long int tid;
 #endif
-	/* Total cycles for this thread */
-	long long total_c;
-	/* Pointer to event in use */
-	MasterEvent *cur_event;
-	/* List of multiplexing events for this thread */
-	MasterEvent *head;
-	/* Pointer to next thread */
-	struct _threadlist *next;
+   /** Total cycles for this thread */
+   long long total_c;
+   /** Pointer to event in use */
+   MasterEvent *cur_event;
+   /** List of multiplexing events for this thread */
+   MasterEvent *head;
+   /** Pointer to next thread */
+   struct _threadlist *next;
 } Threadlist;
 
 /* Structure contained in the EventSet structure that
@@ -320,131 +316,131 @@ typedef struct _threadlist
 typedef enum
 { MPX_STOPPED, MPX_RUNNING } MPX_status;
 
-typedef struct _MPX_EventSet
-{
-	MPX_status status;
-	/* Pointer to this thread's structure */
-	struct _threadlist *mythr;
-	/* Pointers to this EventSet's MPX entries in the master list for this thread */
-	struct _masterevent *( mev[PAPI_MPX_DEF_DEG] );
-	/* Number of entries in above list */
-	int num_events;
-	/* Not sure... */
-	long long start_c, stop_c;
-	long long start_values[PAPI_MPX_DEF_DEG];
-	long long stop_values[PAPI_MPX_DEF_DEG];
-	long long start_hc[PAPI_MPX_DEF_DEG];
+/** @struct _MPX_EventSet 
+	@brief  Structure contained in the EventSet structure that
+    holds information about multiplexing.*/
+typedef struct _MPX_EventSet {
+   MPX_status status;
+   /** Pointer to this thread's structure */
+   struct _threadlist *mythr;
+   /** Pointers to this EventSet's MPX entries in the master list for this thread */
+   struct _masterevent *(mev[PAPI_MPX_DEF_DEG]);
+   /** Number of entries in above list */
+   int num_events;
+   /** Not sure... */
+   long long start_c, stop_c;
+   long long start_values[PAPI_MPX_DEF_DEG];
+   long long stop_values[PAPI_MPX_DEF_DEG];
+   long long start_hc[PAPI_MPX_DEF_DEG];
 } MPX_EventSet;
 
-typedef struct EventSetMultiplexInfo
-{
-	MPX_EventSet *mpx_evset;
-	int ns;
-	int flags;
+/** @struct EventSetMultiplexInfo */
+typedef struct EventSetMultiplexInfo {
+  MPX_EventSet *mpx_evset;
+  int ns;
+  int flags; 
 } EventSetMultiplexInfo_t;
 
-/* Opaque struct, not defined yet...due to threads.h <-> papi_internal.h */
-
+/** Opaque struct, not defined yet...due to threads.h <-> papi_internal.h */
 struct _ThreadInfo;
 
-/* Fields below are ordered by access in PAPI_read for performance */
+/** @struct _EventSetInfo
+ *  @brief Fields below are ordered by access in PAPI_read for performance */
+typedef struct _EventSetInfo {
+  struct _ThreadInfo *master;  /**< Pointer to the thread that owns this EventSet */
+  
+  int state;                   /**< The state of this entire EventSet; can be
+				  PAPI_RUNNING or PAPI_STOPPED plus flags */
+  
+  EventInfo_t *EventInfoArray; /**< This array contains the mapping from 
+				  events added into the API into hardware 
+				  specific encoding as returned by the 
+				  kernel or the code that directly 
+				  accesses the counters. */
+  
+  hwd_control_state_t *ctl_state; /**< This contains the encoding necessary for the 
+                                   hardware to set the counters to the appropriate
+                                   conditions */
 
-typedef struct _EventSetInfo
-{
-	struct _ThreadInfo *master;		   /* Pointer to the thread that owns this EventSet */
+  unsigned long int tid;       /**< Thread ID, only used if PAPI_thread_init() is called  */
+  
+  int EventSetIndex;           /**< Index of the EventSet in the array  */
 
-	int state;						   /* The state of this entire EventSet; can be
-									      PAPI_RUNNING or PAPI_STOPPED plus flags */
-
-	EventInfo_t *EventInfoArray;	   /* This array contains the mapping from 
-									      events added into the API into hardware 
-									      specific encoding as returned by the 
-									      kernel or the code that directly 
-									      accesses the counters. */
-
-	hwd_control_state_t *ctl_state;	   /* This contains the encoding necessary for the 
-									      hardware to set the counters to the appropriate
-									      conditions */
-
-	unsigned long int tid;			   /* Thread ID, only used if PAPI_thread_init() is called  */
-
-	int EventSetIndex;				   /* Index of the EventSet in the array  */
-
-	int CmpIdx;						   /* Which Component this EventSet Belongs to */
-
-	int NumberOfEvents;				   /* Number of events added to EventSet */
-
-	long long *hw_start;			   /* Array of length _papi_hwi_system_info.num_cntrs that contains
-									      unprocessed, out of order, long long counter registers */
-
-	long long *sw_stop;				   /* Array of length ESI->NumberOfCounters that contains
-									      processed, in order, PAPI counter values when used or stopped */
-
-	int NativeCount;				   /* How many native events in the array below. */
-
-	NativeInfo_t *NativeInfoArray;	   /* Info about each native event in the set */
-
-	EventSetDomainInfo_t domain;
-	EventSetGranularityInfo_t granularity;
-	EventSetOverflowInfo_t overflow;
-	EventSetMultiplexInfo_t multiplex;
-	EventSetAttachInfo_t attach;
-	EventSetProfileInfo_t profile;
+   int CmpIdx;		    /**< Which Component this EventSet Belongs to */
+  
+  int NumberOfEvents;          /**< Number of events added to EventSet */
+  
+  long long *hw_start;         /**< Array of length _papi_hwi_system_info.num_cntrs that contains
+				  unprocessed, out of order, long long counter registers */
+  
+  long long *sw_stop;          /**< Array of length ESI->NumberOfCounters that contains
+				  processed, in order, PAPI counter values when used or stopped */
+  
+  int NativeCount;             /**< How many native events in the array below. */
+  
+  NativeInfo_t *NativeInfoArray;  /**< Info about each native event in the set */
+  
+  EventSetDomainInfo_t domain;
+  EventSetGranularityInfo_t granularity;
+  EventSetOverflowInfo_t overflow;
+  EventSetMultiplexInfo_t multiplex;
+  EventSetAttachInfo_t attach;
+  EventSetProfileInfo_t profile;
 } EventSetInfo_t;
 
-typedef struct _dynamic_array
-{
-	EventSetInfo_t **dataSlotArray;	   /* array of ptrs to EventSets */
-	int totalSlots;					   /* number of slots in dataSlotArrays      */
-	int availSlots;					   /* number of open slots in dataSlotArrays */
-	int fullSlots;					   /* number of full slots in dataSlotArray    */
-	int lowestEmptySlot;			   /* index of lowest empty dataSlotArray    */
+/** @struct _dynamic_array */
+typedef struct _dynamic_array {
+   EventSetInfo_t **dataSlotArray;      /**< array of ptrs to EventSets */
+   int totalSlots;              /**< number of slots in dataSlotArrays      */
+   int availSlots;              /**< number of open slots in dataSlotArrays */
+   int fullSlots;               /**< number of full slots in dataSlotArray    */
+   int lowestEmptySlot;         /**< index of lowest empty dataSlotArray    */
 } DynamicArray_t;
 
 /* Substrate option types for _papi_hwd_ctl. */
 
-typedef struct _papi_int_attach
-{
-	unsigned long tid;
-	EventSetInfo_t *ESI;
+/** @struct _papi_int_attach */
+typedef struct _papi_int_attach {
+   unsigned long tid;
+   EventSetInfo_t *ESI;
 } _papi_int_attach_t;
 
-typedef struct _papi_int_multiplex
-{
-	int flags;
-	unsigned long ns;
-	EventSetInfo_t *ESI;
+/** @struct _papi_int_multiplex */
+typedef struct _papi_int_multiplex {
+   int flags;
+   unsigned long ns;
+   EventSetInfo_t *ESI;
 } _papi_int_multiplex_t;
 
-typedef struct _papi_int_defdomain
-{
-	int defdomain;
+/** @struct _papi_int_defdomain  */
+typedef struct _papi_int_defdomain {
+   int defdomain;
 } _papi_int_defdomain_t;
 
-typedef struct _papi_int_domain
-{
-	int domain;
-	int eventset;
-	EventSetInfo_t *ESI;
+/** @struct _papi_int_domain */
+typedef struct _papi_int_domain {
+   int domain;
+   int eventset;
+   EventSetInfo_t *ESI;
 } _papi_int_domain_t;
 
-typedef struct _papi_int_granularity
-{
-	int granularity;
-	int eventset;
-	EventSetInfo_t *ESI;
+/** @struct _papi_int_granularity */
+typedef struct _papi_int_granularity {
+   int granularity;
+   int eventset;
+   EventSetInfo_t *ESI;
 } _papi_int_granularity_t;
 
-typedef struct _papi_int_overflow
-{
-	EventSetInfo_t *ESI;
-	EventSetOverflowInfo_t overflow;
+/** @struct _papi_int_overflow */
+typedef struct _papi_int_overflow {
+   EventSetInfo_t *ESI;
+   EventSetOverflowInfo_t overflow;
 } _papi_int_overflow_t;
 
-typedef struct _papi_int_profile
-{
-	EventSetInfo_t *ESI;
-	EventSetProfileInfo_t profile;
+/** @struct _papi_int_profile */
+typedef struct _papi_int_profile {
+   EventSetInfo_t *ESI;
+   EventSetProfileInfo_t profile;
 } _papi_int_profile_t;
 
 typedef PAPI_itimer_option_t _papi_int_itimer_t;
@@ -461,25 +457,25 @@ typedef struct _papi_int_inherit
 } _papi_int_inherit_t;
 #endif
 
-typedef struct _papi_int_addr_range
-{									   /* if both are zero, range is disabled */
-	EventSetInfo_t *ESI;
-	int domain;
-	caddr_t start;					   /* start address of an address range */
-	caddr_t end;					   /* end address of an address range */
-	int start_off;					   /* offset from start address as programmed in hardware */
-	int end_off;					   /* offset from end address as programmed in hardware */
-	/* if offsets are undefined, they are both set to -1 */
+/** @struct _papi_int_addr_range */
+typedef struct _papi_int_addr_range { /* if both are zero, range is disabled */
+   EventSetInfo_t *ESI;
+   int domain;
+   caddr_t start;                /**< start address of an address range */
+   caddr_t end;                  /**< end address of an address range */
+   int start_off;                /**< offset from start address as programmed in hardware */
+   int end_off;                  /**< offset from end address as programmed in hardware */
+                                 /**< if offsets are undefined, they are both set to -1 */
 } _papi_int_addr_range_t;
 
-typedef union _papi_int_option_t
-{
-	_papi_int_overflow_t overflow;
-	_papi_int_profile_t profile;
-	_papi_int_domain_t domain;
-	_papi_int_attach_t attach;
-	_papi_int_multiplex_t multiplex;
-	_papi_int_itimer_t itimer;
+/** @union _papi_int_option_t */
+typedef union _papi_int_option_t {
+   _papi_int_overflow_t overflow;
+   _papi_int_profile_t profile;
+   _papi_int_domain_t domain;
+   _papi_int_attach_t attach;
+   _papi_int_multiplex_t multiplex;
+   _papi_int_itimer_t itimer;
 #if 0
 	_papi_int_inherit_t inherit;
 #endif
@@ -487,22 +483,22 @@ typedef union _papi_int_option_t
 	_papi_int_addr_range_t address_range;
 } _papi_int_option_t;
 
-typedef struct
-{
-	hwd_siginfo_t *si;
-	hwd_ucontext_t *ucontext;
+/** Hardware independent context */
+typedef struct {
+   hwd_siginfo_t *si;
+   hwd_ucontext_t *ucontext;
 } _papi_hwi_context_t;
 
-typedef struct _papi_mdi
-{
-	DynamicArray_t global_eventset_map;	/* Global structure to maintain int<->EventSet mapping */
-	pid_t pid;						   /* Process identifier */
-	/*   PAPI_substrate_info_t sub_info; *//* See definition in papi.h */
-	PAPI_hw_info_t hw_info;			   /* See definition in papi.h */
-	PAPI_exe_info_t exe_info;		   /* See definition in papi.h */
-	/*   PAPI_mpx_info_t mpx_info; *//* See definition in papi.h */
-	PAPI_shlib_info_t shlib_info;	   /* See definition in papi.h */
-	PAPI_preload_info_t preload_info;  /* See definition in papi.h */
+/** @struct _papi_mdi */
+typedef struct _papi_mdi {
+   DynamicArray_t global_eventset_map;  /**< Global structure to maintain int<->EventSet mapping */
+   pid_t pid;                   /**< Process identifier */
+/*   PAPI_substrate_info_t sub_info; *//* See definition in papi.h */
+   PAPI_hw_info_t hw_info;      /**< See definition in papi.h */
+   PAPI_exe_info_t exe_info;    /**< See definition in papi.h */
+/*   PAPI_mpx_info_t mpx_info; */   /* See definition in papi.h */
+   PAPI_shlib_info_t shlib_info;    /**< See definition in papi.h */
+   PAPI_preload_info_t preload_info; /**< See definition in papi.h */ 
 } papi_mdi_t;
 
 extern papi_mdi_t _papi_hwi_system_info;

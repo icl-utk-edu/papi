@@ -3350,6 +3350,7 @@ _papi_pe_update_control_state( hwd_control_state_t * ctl, NativeInfo_t * native,
 	return PAPI_OK;
 }
 
+/** */
 papi_vector_t _papi_pe_vector = {
 	.cmp_info = {
 				 /* default component information (unspecified values are initialized to 0) */

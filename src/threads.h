@@ -1,3 +1,6 @@
+/** @file threads.h
+ *  @author ??
+ */
 #ifndef PAPI_THREADS_H
 #define PAPI_THREADS_H
 
@@ -11,17 +14,17 @@
 #error "lookup_and_set_thread_symbols and _papi_hwi_broadcast_signal have only been tested on AIX"
 #endif
 
-typedef struct _ThreadInfo
-{
-	unsigned long int tid;
-	struct _ThreadInfo *next;
-	hwd_context_t **context;
-	void *thread_storage[PAPI_MAX_TLS];
-	EventSetInfo_t **running_eventset;
-	int wants_signal;
+/** @struct _ThreadInfo */
+typedef struct _ThreadInfo {
+  unsigned long int tid;
+  struct _ThreadInfo *next;
+  hwd_context_t **context;
+  void *thread_storage[PAPI_MAX_TLS];
+  EventSetInfo_t **running_eventset;
+  int wants_signal;
 } ThreadInfo_t;
 
-/* The list of threads, gets initialized to master process with TID of getpid() */
+/** The list of threads, gets initialized to master process with TID of getpid() */
 
 extern volatile ThreadInfo_t *_papi_hwi_thread_head;
 
@@ -31,11 +34,11 @@ extern volatile ThreadInfo_t *_papi_hwi_thread_head;
 extern THREAD_LOCAL_STORAGE_KEYWORD ThreadInfo_t *_papi_hwi_my_thread;
 #endif
 
-/* Function that returns and unsigned long int thread identifier */
+/** Function that returns and unsigned long int thread identifier */
 
 extern unsigned long int ( *_papi_hwi_thread_id_fn ) ( void );
 
-/* Function that sends a signal to other threads */
+/** Function that sends a signal to other threads */
 
 extern int ( *_papi_hwi_thread_kill_fn ) ( int, int );
 

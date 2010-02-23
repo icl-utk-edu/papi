@@ -2,27 +2,26 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
- * File:    multiplex.c
+/** 
+ * @file    multiplex.c
  * CVS:     $Id$
- * Author:  John May
- * Mods:    Philip Mucci
+ * @author  Philip Mucci
  *          mucci@cs.utk.edu
- *          John May
+ * @author  John May
  *          johnmay@llnl.gov
- *          Nils Smeds
+ * @author  Nils Smeds
  *          smeds@pdc.kth.se
- *          Haihang You
+ * @author  Haihang You
  *          you@cs.utk.edu 
- *	        Kevin London
+ * @author  Kevin London
  *	        london@cs.utk.edu
- *          Maynard Johnson
+ * @author  Maynard Johnson
  *          maynardj@us.ibm.com
- *	        Dan Terpstra
+ * @author  Dan Terpstra
  *	        terpstra@cs.utk.edu
  */
 
-/* xxxx Will this stuff run unmodified on multiple components?
+/** xxxx Will this stuff run unmodified on multiple components?
     What happens when several components are counting multiplexed?
 */
 
@@ -138,7 +137,7 @@ for advertising or product endorsement purposes.
 
 /* Globals for this file. */
 
-/* List of threads that are multiplexing. */
+/** List of threads that are multiplexing. */
 
 static Threadlist *tlist = NULL;
 static unsigned int randomseed;
@@ -151,14 +150,14 @@ static struct itimerval itime;
 static const struct itimerval itimestop = { {0, 0}, {0, 0} };
 static struct sigaction oaction;
 #else
-static MMRESULT mpxTimerID;			   /* unique ID for referencing this timer */
+static MMRESULT mpxTimerID;     /**< unique ID for referencing this timer */
 static int mpx_time;
 #endif
 
 /* END Globals */
 
 #ifdef PTHREADS
-/* Number of threads that have been signaled */
+/** Number of threads that have been signaled */
 static int threads_responding = 0;
 
 static pthread_once_t mpx_once_control = PTHREAD_ONCE_INIT;
@@ -1221,10 +1220,9 @@ mpx_init( int interval_ns )
 	return ( PAPI_OK );
 }
 
-/* Inserts a list of events into the master event list, 
-   and add's new mev pointers to the MPX_EventSet. */
-
-/* MUST BE CALLED WITH THE TIMER INTERRUPT DISABLED */
+/** Inserts a list of events into the master event list, 
+   and add's new mev pointers to the MPX_EventSet. 
+   MUST BE CALLED WITH THE TIMER INTERRUPT DISABLED */
 
 static int
 mpx_insert_events( MPX_EventSet * mpx_events, int *event_list,
@@ -1362,7 +1360,7 @@ mpx_insert_events( MPX_EventSet * mpx_events, int *event_list,
 	return ( retval );
 }
 
-/* Remove events from an mpx event set (and from the
+/** Remove events from an mpx event set (and from the
  * master event set for this thread, if the events are unused).
  * MUST BE CALLED WITH THE SIGNAL HANDLER DISABLED
  */
@@ -1387,7 +1385,7 @@ mpx_delete_events( MPX_EventSet * mpx_events )
 	mpx_remove_unused( &mpx_events->mythr->head );
 }
 
-/* Remove one event from an mpx event set (and from the
+/** Remove one event from an mpx event set (and from the
  * master event set for this thread, if the events are unused).
  * MUST BE CALLED WITH THE SIGNAL HANDLER DISABLED
  */
@@ -1429,7 +1427,7 @@ mpx_delete_one_event( MPX_EventSet * mpx_events, int Event )
 
 }
 
-/* Remove events that are not used any longer from the run 
+/** Remove events that are not used any longer from the run 
  * list of events to multiplex by the handler
  * MUST BE CALLED WITH THE SIGNAL HANDLER DISABLED
  */

@@ -1,13 +1,9 @@
-/*
- * File:    papi_memory.c
+/**
+ * @file    papi_memory.c
  * CVS:     $Id$
- * Author:  Kevin London
+ * @author  Kevin London
  *          london@cs.utk.edu
- * Mods:    <Your name here>
- *          <Your email here>
- */
-
-/* PAPI memory allocation provides for checking and maintenance of all memory
+ * PAPI memory allocation provides for checking and maintenance of all memory
  * allocated through this interface. Implemented as a series of wrappers around
  * standard C memory allocation routines, _papi_malloc and associated functions
  * add a prolog and optional epilog to each malloc'd pointer.
@@ -27,7 +23,7 @@
 #include "papi_internal.h"
 #include "papi_memory.h"
 
-/* Define the amount of extra memory at the beginning of the alloc'd pointer.
+/** Define the amount of extra memory at the beginning of the alloc'd pointer.
  * This is usually the size of a pointer, but in some cases needs to be bigger
  * to preserve data alignment.
  */
@@ -35,7 +31,7 @@
 
 /* If you are tracing memory, then DEBUG must be set also. */
 #ifdef DEBUG
-/* Define the amount of extra memory at the end of the alloc'd pointer.
+/** Define the amount of extra memory at the end of the alloc'd pointer.
  * Also define the contents: 0xCACA
  */
 #define MEM_EPILOG 4
@@ -72,7 +68,7 @@ static int set_epilog( pmem_t * mem_ptr );
  *  _papi_mem_check_all_overflow                                      *
  **********************************************************************/
 
-/* _papi_realloc -- given a pointer returned by _papi_malloc, returns a pointer
+/** _papi_realloc -- given a pointer returned by _papi_malloc, returns a pointer
  * to the related pmem_t structure describing this pointer.
  * Checks for NULL pointers and returns NULL if error.
  */
@@ -110,10 +106,9 @@ _papi_realloc( char *file, int line, void *ptr, int size )
 	return ( mem_ptr->ptr );
 }
 
-void *
-_papi_calloc( char *file, int line, int nmemb, int size )
-{
-	void *ptr = _papi_malloc( file, line, size * nmemb );
+/** */
+void *_papi_calloc(char *file, int line, int nmemb, int size){
+  void *ptr = _papi_malloc(file, line, size*nmemb);
 
 	if ( !ptr )
 		return ( NULL );
@@ -121,55 +116,48 @@ _papi_calloc( char *file, int line, int nmemb, int size )
 	return ( ptr );
 }
 
-void *
-_papi_malloc( char *file, int line, int size )
-{
-	void *ptr;
-	void **tmp;
-	pmem_t *mem_ptr;
-	unsigned int nsize = ( unsigned int ) size + ( unsigned int ) MEM_PROLOG;
+/** */
+void *_papi_malloc(char *file, int line, int size){
+  void *ptr;
+  void **tmp;
+  pmem_t *mem_ptr;
+  int nsize = size + MEM_PROLOG;
 
 #ifdef DEBUG
-	nsize += MEM_EPILOG;
+  nsize += MEM_EPILOG;
 #endif
 
-	if ( size == 0 ) {
-		MEMDBG( "Attempting to allocate %d bytes from File: %s  Line: %d\n",
-				size, file, line );
-		return ( NULL );
-	}
-	ptr = ( void * ) malloc( nsize );
+  if ( size == 0 ){
+    MEMDBG("Attempting to allocate %d bytes from File: %s  Line: %d\n", size, file, line);
+    return(NULL);
+  }
+  ptr = (void *) malloc(nsize);
 
-	if ( !ptr )
-		return ( NULL );
-	else {
-		if ( ( mem_ptr =
-			   init_mem_ptr( ( char * ) ptr + MEM_PROLOG, size, file,
-							 line ) ) == NULL ) {
-			free( ptr );
-			return ( NULL );
-		}
-		tmp = ptr;
-		*tmp = mem_ptr;
-		ptr = mem_ptr->ptr;
-		mem_ptr->ptr = ptr;
-		_papi_hwi_lock( MEMORY_LOCK );
-		insert_mem_ptr( mem_ptr );
-		_papi_hwi_unlock( MEMORY_LOCK );
-		set_epilog( mem_ptr );
+  if ( !ptr ) return(NULL);
+  else{
+    if ( (mem_ptr = init_mem_ptr((char *)ptr + MEM_PROLOG, size, file, line))==NULL) {
+      free(ptr);
+      return(NULL);
+    }    
+    tmp = ptr;
+    *tmp = mem_ptr;
+    ptr = mem_ptr->ptr;
+    mem_ptr->ptr = ptr;
+    _papi_hwi_lock(MEMORY_LOCK);
+    insert_mem_ptr(mem_ptr);
+    _papi_hwi_unlock(MEMORY_LOCK);
+    set_epilog(mem_ptr);
 
-		MEMDBG( "%p: Allocated %d bytes from File: %s  Line: %d\n",
-				mem_ptr->ptr, size, file, line );
-		return ( ptr );
-	}
-	return ( NULL );
+    MEMDBG("%p: Allocated %d bytes from File: %s  Line: %d\n", mem_ptr->ptr, size, file, line);
+    return(ptr);
+  }
+  return(NULL);
 }
 
-char *
-_papi_strdup( char *file, int line, const char *s )
-{
-	int size;
-	char *ptr;
+/** */
+char * _papi_strdup(char *file, int line, const char *s){
+  int size;
+  char *ptr;
 
 	if ( !s )
 		return ( NULL );
@@ -185,34 +173,29 @@ _papi_strdup( char *file, int line, const char *s )
 	return ( ptr );
 }
 
-/* Only frees the memory if PAPI malloced it */
-/* returns 1 if pointer was valid; 0 if not */
-int
-_papi_valid_free( char *file, int line, void *ptr )
-{
-	pmem_t *tmp;
-	int valid = 0;
+/** Only frees the memory if PAPI malloced it 
+  * returns 1 if pointer was valid; 0 if not */
+int _papi_valid_free(char *file, int line, void *ptr){
+  pmem_t *tmp;
+  int valid = 0;
 
-	if ( !ptr )
-		return ( 0 );
+  if ( !ptr ) return(0);
 
-	_papi_hwi_lock( MEMORY_LOCK );
-	for ( tmp = mem_head; tmp; tmp = tmp->next ) {
-		if ( ptr == tmp->ptr ) {
-			_papi_free( file, line, ptr );
-			valid = 1;
-			break;
-		}
-	}
-	_papi_hwi_unlock( MEMORY_LOCK );
-	return ( valid );
+  _papi_hwi_lock(MEMORY_LOCK);
+  for(tmp = mem_head; tmp; tmp = tmp->next ){
+    if ( ptr == tmp->ptr ){
+      _papi_free(file, line, ptr);
+      valid = 1;
+      break;
+    }
+  }
+  _papi_hwi_unlock(MEMORY_LOCK);
+  return(valid);
 }
 
-/* Frees up the ptr */
-void
-_papi_free( char *file, int line, void *ptr )
-{
-	pmem_t *mem_ptr = get_mem_ptr( ptr );
+/** Frees up the ptr */
+void _papi_free(char *file, int line, void *ptr){
+  pmem_t *mem_ptr = get_mem_ptr(ptr);
 
 	if ( !mem_ptr ) {
 		( void ) file;
@@ -231,14 +214,9 @@ _papi_free( char *file, int line, void *ptr )
 	_papi_hwi_unlock( MEMORY_LOCK );
 }
 
-/* Print information about the memory including file and location it came from */
-void
-_papi_mem_print_info( void *ptr )
-{
-	pmem_t *mem_ptr = get_mem_ptr( ptr );
-
-	if ( !mem_ptr )
-		return;
+/** Print information about the memory including file and location it came from */
+void _papi_mem_print_info(void *ptr) {
+  pmem_t *mem_ptr = get_mem_ptr(ptr);
 
 #ifdef DEBUG
 	fprintf( stderr, "%p: Allocated %d bytes from File: %s  Line: %d\n", ptr,
@@ -249,11 +227,9 @@ _papi_mem_print_info( void *ptr )
 	return;
 }
 
-/* Print out all memory information */
-void
-_papi_mem_print_stats(  )
-{
-	pmem_t *tmp = NULL;
+/** Print out all memory information */
+void _papi_mem_print_stats(){
+  pmem_t *tmp = NULL;
 
 	_papi_hwi_lock( MEMORY_LOCK );
 	for ( tmp = mem_head; tmp; tmp = tmp->next ) {
@@ -262,7 +238,7 @@ _papi_mem_print_stats(  )
 	_papi_hwi_unlock( MEMORY_LOCK );
 }
 
-/* Return the amount of memory overhead of the PAPI library and the memory system
+/** Return the amount of memory overhead of the PAPI library and the memory system
  * PAPI_MEM_LIB_OVERHEAD is the library overhead
  * PAPI_MEM_OVERHEAD is the memory overhead
  * They both can be | together
@@ -290,9 +266,8 @@ _papi_mem_overhead( int type )
 	return size;
 }
 
-/* Clean all memory up and print out memory leak information to stderr */
-void
-_papi_mem_cleanup_all(  )
+/** Clean all memory up and print out memory leak information to stderr */
+void _papi_mem_cleanup_all()
 {
 	pmem_t *ptr = NULL, *tmp = NULL;
 #ifdef DEBUG

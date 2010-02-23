@@ -5,15 +5,13 @@
 #ifndef PAPI_PROTOS_H
 #define PAPI_PROTOS_H
 
-/* 
-* File:    papi_protos.h
+/** 
+* @file    papi_protos.h
 * CVS:     $Id$
-* Author:  Philip Mucci
+* @author  Philip Mucci
 *          mucci@cs.utk.edu
-* Mods:    Haihang You
+* @author  Haihang You
 *          you@cs.utk.edu
-*          <your name here>
-*          <your email address>
 */
 
 /* The following PAPI internal functions are defined by the papi_internal.c file. */
