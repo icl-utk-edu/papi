@@ -1096,7 +1096,9 @@ static struct _intel_cache_info intel_cache[] = {
 static void
 print_intel_cache_table(  )
 {
-  int i, j, k = (int)(sizeof ( intel_cache ) / sizeof ( struct _intel_cache_info ));
+	int i, j, k =
+		( int ) ( sizeof ( intel_cache ) /
+				  sizeof ( struct _intel_cache_info ) );
 	for ( i = 0; i < k; i++ ) {
 		printf( "%d.\tDescriptor: 0x%x\n", i, intel_cache[i].descriptor );
 		printf( "\t  Level:     %d\n", intel_cache[i].level );
@@ -1248,9 +1250,8 @@ cpuid( unsigned int *a, unsigned int *b, unsigned int *c, unsigned int *d )
 	// .byte 0x5b == pop ebx.
 	// Some gcc's (4.1.2 on Core2) object to pairing push/pop and ebx in 64 bit mode.
 	// Using the opcode directly avoids this problem.
-	__asm__
-		__volatile__
-		( ".byte 0x53\n\tcpuid\n\tmovl %%ebx, %%esi\n\t.byte 0x5b":"=a"( *a ),
-		  "=S"( *b ), "=c"( *c ), "=d"( *d )
-		  :"a"( op ) );
+  __asm__ __volatile__( ".byte 0x53\n\tcpuid\n\tmovl %%ebx, %%esi\n\t.byte 0x5b":"=a"( *a ), "=S"( *b ), "=c"( *c ),
+						  "=d"
+						  ( *d )
+  :					  "a"( op ) );
 }
