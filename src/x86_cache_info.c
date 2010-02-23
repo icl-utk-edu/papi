@@ -1096,10 +1096,8 @@ static struct _intel_cache_info intel_cache[] = {
 static void
 print_intel_cache_table(  )
 {
-	int i, j;
-	for ( i = 0;
-		  i < ( sizeof ( intel_cache ) / sizeof ( struct _intel_cache_info ) );
-		  i++ ) {
+  int i, j, k = (int)(sizeof ( intel_cache ) / sizeof ( struct _intel_cache_info ));
+	for ( i = 0; i < k; i++ ) {
 		printf( "%d.\tDescriptor: 0x%x\n", i, intel_cache[i].descriptor );
 		printf( "\t  Level:     %d\n", intel_cache[i].level );
 		printf( "\t  Type:      %d\n", intel_cache[i].type );
