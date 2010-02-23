@@ -34,7 +34,7 @@ main( int argc, char **argv )
 		if ( !( info.count ) )
 			continue;
 		printf( "Adding %-14s", info.symbol );
-		retval = PAPI_add_event( EventSet, info.event_code );
+		retval = PAPI_add_event( EventSet, ( int ) info.event_code );
 		if ( retval != PAPI_OK ) {
 			PAPI_perror( retval, errstring, PAPI_MAX_STR_LEN );
 			fprintf( stdout, "Error: %s\n", errstring );
@@ -56,7 +56,7 @@ main( int argc, char **argv )
 					count++;
 				}
 			}
-			retval = PAPI_remove_event( EventSet, info.event_code );
+			retval = PAPI_remove_event( EventSet, ( int ) info.event_code );
 			if ( retval != PAPI_OK )
 				test_fail( __FILE__, __LINE__, "PAPI_remove_event", retval );
 		}

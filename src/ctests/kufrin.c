@@ -136,7 +136,7 @@ main( int argc, char **argv )
 	do {
 		if ( PAPI_get_event_info( i, &info ) == PAPI_OK ) {
 			if ( info.count == 1 ) {
-				events[numevents++] = info.event_code;
+				events[numevents++] = ( int ) info.event_code;
 				printf( "Added %s\n", info.symbol );
 			} else {
 				printf( "Skipping derived event %s\n", info.symbol );

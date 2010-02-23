@@ -109,7 +109,11 @@ PAPI_thread_id( void )
 	if ( _papi_hwi_thread_id_fn != NULL )
 		return ( ( *_papi_hwi_thread_id_fn ) (  ) );
 	else
-		papi_return( ( unsigned long ) PAPI_EMISC );
+#ifdef DEBUG
+	if ( _papi_hwi_debug_handler )
+		return ( unsigned long ) _papi_hwi_debug_handler( PAPI_EMISC );
+#endif
+	return ( unsigned long ) PAPI_EMISC;
 }
 
 /* Thread Functions */

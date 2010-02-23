@@ -165,7 +165,7 @@ expand_dynamic_array( DynamicArray_t * DA )
 
 	number = DA->totalSlots * 2;
 	n = ( EventSetInfo_t ** ) papi_realloc( DA->dataSlotArray,
-											( unsigned int ) number *
+											( size_t ) number *
 											sizeof ( EventSetInfo_t * ) );
 	if ( n == NULL )
 		return ( PAPI_ENOMEM );
@@ -279,28 +279,30 @@ _papi_hwi_assign_eventset( EventSetInfo_t * ESI, int cidx )
 		( hwd_control_state_t * ) papi_malloc( ( size_t ) _papi_hwd[cidx]->size.
 											   control_state );
 	ESI->sw_stop =
-		( long long * ) papi_malloc( max_counters * sizeof ( long long ) );
+		( long long * ) papi_malloc( ( size_t ) max_counters *
+									 sizeof ( long long ) );
 	ESI->hw_start =
-		( long long * ) papi_malloc( max_counters * sizeof ( long long ) );
+		( long long * ) papi_malloc( ( size_t ) max_counters *
+									 sizeof ( long long ) );
 	ESI->EventInfoArray =
-		( EventInfo_t * ) papi_malloc( max_counters * sizeof ( EventInfo_t ) );
+		( EventInfo_t * ) papi_malloc( ( size_t ) max_counters *
+									   sizeof ( EventInfo_t ) );
 /* allocate room for the native events and for the component-private register structures */
 /* xxxx should these arrays be num_mpx_cntrs or num_cntrs in size?? */
 	ESI->NativeInfoArray =
-		( NativeInfo_t * ) papi_malloc( max_counters * sizeof ( NativeInfo_t ) +
-										max_counters *
+		( NativeInfo_t * ) papi_malloc( ( size_t ) max_counters *
+										sizeof ( NativeInfo_t ) +
+										( size_t ) max_counters *
 										( size_t ) _papi_hwd[cidx]->size.
 										reg_value );
 
 	/* NOTE: the next two malloc allocate blocks of memory that are later parcelled into overflow and profile arrays */
-	ESI->overflow.deadline =
-		( long long * )
+	ESI->overflow.deadline = ( long long * )
 		papi_malloc( ( sizeof ( long long ) +
-					   sizeof ( int ) * 3 ) * max_counters );
-	ESI->profile.prof =
-		( PAPI_sprofil_t ** )
-		papi_malloc( ( sizeof ( PAPI_sprofil_t * ) * max_counters +
-					   max_counters * sizeof ( int ) * 4 ) );
+					   sizeof ( int ) * 3 ) * ( size_t ) max_counters );
+	ESI->profile.prof = ( PAPI_sprofil_t ** )
+		papi_malloc( ( sizeof ( PAPI_sprofil_t * ) * ( size_t ) max_counters +
+					   ( size_t ) max_counters * sizeof ( int ) * 4 ) );
 
 	if ( ( ESI->ctl_state == NULL ) ||
 		 ( ESI->sw_stop == NULL ) || ( ESI->hw_start == NULL ) ||
@@ -1694,7 +1696,7 @@ _papi_hwi_get_event_info( int EventCode, PAPI_event_info_t * info )
 
 	if ( _papi_hwi_presets.info[i].symbol ) {	/* if the event is in the preset table */
 		memset( info, 0, sizeof ( *info ) );
-		info->event_code = EventCode;
+		info->event_code = ( unsigned int ) EventCode;
 		info->event_type = _papi_hwi_presets.type[i];
 		info->count = _papi_hwi_presets.count[i];
 		strcpy( info->symbol, _papi_hwi_presets.info[i].symbol );

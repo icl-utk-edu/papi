@@ -607,9 +607,10 @@ wait( char *prompt )
 	hStdIn = GetStdHandle( STD_INPUT_HANDLE );
 	do {
 		bSuccess = ReadConsoleInput( hStdIn, &inputBuffer, 1, &dwInputEvents );
-	} while ( !
-			  ( inputBuffer.EventType == KEY_EVENT &&
-				inputBuffer.Event.KeyEvent.bKeyDown ) );
+	}
+	while ( !
+			( inputBuffer.EventType == KEY_EVENT &&
+			  inputBuffer.Event.KeyEvent.bKeyDown ) );
 }
 
 int
@@ -657,8 +658,9 @@ add_two_events( int *num_events, int *papi_event,
 	PAPI_event_info_t info;
 	unsigned int potential_evt_to_add[3][2] =
 		{ {( unsigned int ) PAPI_FP_INS, MASK_FP_INS},
-		{( unsigned int ) PAPI_FP_OPS, MASK_FP_OPS},
-		{( unsigned int ) PAPI_TOT_INS, MASK_TOT_INS} };
+	{( unsigned int ) PAPI_FP_OPS, MASK_FP_OPS},
+	{( unsigned int ) PAPI_TOT_INS, MASK_TOT_INS}
+	};
 	int i = 0;
 	unsigned int counters, event_found = 0;
 
@@ -695,8 +697,9 @@ add_two_nonderived_events( int *num_events, int *papi_event,
 	PAPI_event_info_t info;
 	unsigned int potential_evt_to_add[3][2] =
 		{ {( unsigned int ) PAPI_FP_INS, MASK_FP_INS},
-		{( unsigned int ) PAPI_FP_OPS, MASK_FP_OPS},
-		{( unsigned int ) PAPI_TOT_INS, MASK_TOT_INS} };
+	{( unsigned int ) PAPI_FP_OPS, MASK_FP_OPS},
+	{( unsigned int ) PAPI_TOT_INS, MASK_TOT_INS}
+	};
 	int i = 0;
 	unsigned int counters, event_found = 0;
 
@@ -759,7 +762,7 @@ enum_add_native_events( int *num_events, int **evtcodes )
 			if ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK ) {
 				do {
 					retval = PAPI_get_event_info( k, &info );
-					event_code = info.event_code;
+					event_code = ( int ) info.event_code;
 					retval = PAPI_add_event( EventSet, event_code );
 					if ( retval == PAPI_OK ) {
 						( *evtcodes )[event_found] = event_code;
@@ -769,10 +772,11 @@ enum_add_native_events( int *num_events, int **evtcodes )
 							fprintf( stdout, "0x%x is not available.\n",
 									 event_code );
 					}
-				} while ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK
-						  && event_found < counters );
+				}
+				while ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK
+						&& event_found < counters );
 			} else {
-				event_code = info.event_code;
+				event_code = ( int ) info.event_code;
 				retval = PAPI_add_event( EventSet, event_code );
 				if ( retval == PAPI_OK ) {
 					( *evtcodes )[event_found] = event_code;
@@ -782,7 +786,7 @@ enum_add_native_events( int *num_events, int **evtcodes )
 			if ( !TESTS_QUIET && retval == PAPI_OK )
 				printf( "\n" );
 		} else {
-			event_code = info.event_code;
+			event_code = ( int ) info.event_code;
 			retval = PAPI_add_event( EventSet, event_code );
 			if ( retval == PAPI_OK ) {
 				( *evtcodes )[event_found] = event_code;
@@ -792,8 +796,9 @@ enum_add_native_events( int *num_events, int **evtcodes )
 					fprintf( stdout, "0x%x is not available.\n", event_code );
 			}
 		}
-	} while ( PAPI_enum_event( &i, PAPI_ENUM_EVENTS ) == PAPI_OK &&
-			  event_found < counters );
+	}
+	while ( PAPI_enum_event( &i, PAPI_ENUM_EVENTS ) == PAPI_OK &&
+			event_found < counters );
 
 	*num_events = ( int ) event_found;
 	return ( EventSet );

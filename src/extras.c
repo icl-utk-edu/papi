@@ -701,7 +701,7 @@ _papi_hwi_get_native_event_info( unsigned int EventCode,
 		if ( retval == PAPI_OK || retval == PAPI_EBUF ) {
 
 			/* Fill in the info structure */
-			info->event_code = ( int ) EventCode;
+			info->event_code = ( unsigned int ) EventCode;
 			retval =
 				_papi_hwd[cidx]->ntv_code_to_descr( EventCode, info->long_descr,
 													sizeof ( info->

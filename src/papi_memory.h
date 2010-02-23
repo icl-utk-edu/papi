@@ -46,10 +46,10 @@ typedef struct pmem
 #endif
 #endif
 
-void *_papi_malloc( char *, int, int );
+void *_papi_malloc( char *, int, size_t );
 void _papi_free( char *, int, void * );
-void *_papi_realloc( char *, int, void *, int );
-void *_papi_calloc( char *, int, int, int );
+void *_papi_realloc( char *, int, void *, size_t );
+void *_papi_calloc( char *, int, size_t, size_t );
 int _papi_valid_free( char *, int, void * );
 char *_papi_strdup( char *, int, const char *s );
 void _papi_mem_cleanup_all(  );

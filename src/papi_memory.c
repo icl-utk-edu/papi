@@ -73,9 +73,9 @@ static int set_epilog( pmem_t * mem_ptr );
  * Checks for NULL pointers and returns NULL if error.
  */
 void *
-_papi_realloc( char *file, int line, void *ptr, int size )
+_papi_realloc( char *file, int line, void *ptr, size_t size )
 {
-	unsigned int nsize = ( unsigned int ) size + ( unsigned int ) MEM_PROLOG;
+	size_t nsize = size + MEM_PROLOG;
 	pmem_t *mem_ptr;
 	void *nptr;
 
@@ -93,7 +93,7 @@ _papi_realloc( char *file, int line, void *ptr, int size )
 	if ( !nptr )
 		return ( NULL );
 
-	mem_ptr->size = size;
+	mem_ptr->size = ( int ) size;
 	mem_ptr->ptr = ( char * ) nptr + MEM_PROLOG;
 #ifdef DEBUG
 	strncpy( mem_ptr->file, file, DEBUG_FILE_LEN );
@@ -101,101 +101,117 @@ _papi_realloc( char *file, int line, void *ptr, int size )
 	mem_ptr->line = line;
 	set_epilog( mem_ptr );
 #endif
-	MEMDBG( "%p: Re-allocated: %d bytes from File: %s  Line: %d\n",
-			mem_ptr->ptr, size, file, line );
+	MEMDBG( "%p: Re-allocated: %lu bytes from File: %s  Line: %d\n",
+			mem_ptr->ptr, ( unsigned long ) size, file, line );
 	return ( mem_ptr->ptr );
 }
 
 /** */
-void *_papi_calloc(char *file, int line, int nmemb, int size){
-  void *ptr = _papi_malloc(file, line, size*nmemb);
+void *
+_papi_calloc( char *file, int line, size_t nmemb, size_t size )
+{
+	void *ptr = _papi_malloc( file, line, size * nmemb );
 
 	if ( !ptr )
 		return ( NULL );
-	memset( ptr, 0, ( unsigned int ) ( size * nmemb ) );
+	memset( ptr, 0, size * nmemb );
 	return ( ptr );
 }
 
 /** */
-void *_papi_malloc(char *file, int line, int size){
-  void *ptr;
-  void **tmp;
-  pmem_t *mem_ptr;
-  int nsize = size + MEM_PROLOG;
+void *
+_papi_malloc( char *file, int line, size_t size )
+{
+	void *ptr;
+	void **tmp;
+	pmem_t *mem_ptr;
+	size_t nsize = size + MEM_PROLOG;
 
 #ifdef DEBUG
-  nsize += MEM_EPILOG;
+	nsize += MEM_EPILOG;
 #endif
 
-  if ( size == 0 ){
-    MEMDBG("Attempting to allocate %d bytes from File: %s  Line: %d\n", size, file, line);
-    return(NULL);
-  }
-  ptr = (void *) malloc(nsize);
+	if ( size == 0 ) {
+		MEMDBG( "Attempting to allocate %lu bytes from File: %s  Line: %d\n",
+				( unsigned long ) size, file, line );
+		return ( NULL );
+	}
+	ptr = ( void * ) malloc( nsize );
 
-  if ( !ptr ) return(NULL);
-  else{
-    if ( (mem_ptr = init_mem_ptr((char *)ptr + MEM_PROLOG, size, file, line))==NULL) {
-      free(ptr);
-      return(NULL);
-    }    
-    tmp = ptr;
-    *tmp = mem_ptr;
-    ptr = mem_ptr->ptr;
-    mem_ptr->ptr = ptr;
-    _papi_hwi_lock(MEMORY_LOCK);
-    insert_mem_ptr(mem_ptr);
-    _papi_hwi_unlock(MEMORY_LOCK);
-    set_epilog(mem_ptr);
+	if ( !ptr )
+		return ( NULL );
+	else {
+		if ( ( mem_ptr =
+			   init_mem_ptr( ( char * ) ptr + MEM_PROLOG, ( int ) size, file,
+							 line ) ) == NULL ) {
+			free( ptr );
+			return ( NULL );
+		}
+		tmp = ptr;
+		*tmp = mem_ptr;
+		ptr = mem_ptr->ptr;
+		mem_ptr->ptr = ptr;
+		_papi_hwi_lock( MEMORY_LOCK );
+		insert_mem_ptr( mem_ptr );
+		_papi_hwi_unlock( MEMORY_LOCK );
+		set_epilog( mem_ptr );
 
-    MEMDBG("%p: Allocated %d bytes from File: %s  Line: %d\n", mem_ptr->ptr, size, file, line);
-    return(ptr);
-  }
-  return(NULL);
+		MEMDBG( "%p: Allocated %lu bytes from File: %s  Line: %d\n",
+				mem_ptr->ptr, ( unsigned long ) size, file, line );
+		return ( ptr );
+	}
+	return ( NULL );
 }
 
 /** */
-char * _papi_strdup(char *file, int line, const char *s){
-  int size;
-  char *ptr;
+char *
+_papi_strdup( char *file, int line, const char *s )
+{
+	size_t size;
+	char *ptr;
 
 	if ( !s )
 		return ( NULL );
 
 	/* String Length +1 for \0 */
-	size = ( int ) strlen( s ) + 1;
+	size = strlen( s ) + 1;
 	ptr = ( char * ) _papi_malloc( file, line, size );
 
 	if ( !ptr )
 		return ( NULL );
 
-	memcpy( ptr, s, ( unsigned int ) size );
+	memcpy( ptr, s, size );
 	return ( ptr );
 }
 
 /** Only frees the memory if PAPI malloced it 
   * returns 1 if pointer was valid; 0 if not */
-int _papi_valid_free(char *file, int line, void *ptr){
-  pmem_t *tmp;
-  int valid = 0;
+int
+_papi_valid_free( char *file, int line, void *ptr )
+{
+	pmem_t *tmp;
+	int valid = 0;
 
-  if ( !ptr ) return(0);
+	if ( !ptr )
+		return ( 0 );
 
-  _papi_hwi_lock(MEMORY_LOCK);
-  for(tmp = mem_head; tmp; tmp = tmp->next ){
-    if ( ptr == tmp->ptr ){
-      _papi_free(file, line, ptr);
-      valid = 1;
-      break;
-    }
-  }
-  _papi_hwi_unlock(MEMORY_LOCK);
-  return(valid);
+	_papi_hwi_lock( MEMORY_LOCK );
+	for ( tmp = mem_head; tmp; tmp = tmp->next ) {
+		if ( ptr == tmp->ptr ) {
+			_papi_free( file, line, ptr );
+			valid = 1;
+			break;
+		}
+	}
+	_papi_hwi_unlock( MEMORY_LOCK );
+	return ( valid );
 }
 
 /** Frees up the ptr */
-void _papi_free(char *file, int line, void *ptr){
-  pmem_t *mem_ptr = get_mem_ptr(ptr);
+void
+_papi_free( char *file, int line, void *ptr )
+{
+	pmem_t *mem_ptr = get_mem_ptr( ptr );
 
 	if ( !mem_ptr ) {
 		( void ) file;
@@ -215,8 +231,10 @@ void _papi_free(char *file, int line, void *ptr){
 }
 
 /** Print information about the memory including file and location it came from */
-void _papi_mem_print_info(void *ptr) {
-  pmem_t *mem_ptr = get_mem_ptr(ptr);
+void
+_papi_mem_print_info( void *ptr )
+{
+	pmem_t *mem_ptr = get_mem_ptr( ptr );
 
 #ifdef DEBUG
 	fprintf( stderr, "%p: Allocated %d bytes from File: %s  Line: %d\n", ptr,
@@ -228,8 +246,10 @@ void _papi_mem_print_info(void *ptr) {
 }
 
 /** Print out all memory information */
-void _papi_mem_print_stats(){
-  pmem_t *tmp = NULL;
+void
+_papi_mem_print_stats(  )
+{
+	pmem_t *tmp = NULL;
 
 	_papi_hwi_lock( MEMORY_LOCK );
 	for ( tmp = mem_head; tmp; tmp = tmp->next ) {
@@ -267,7 +287,8 @@ _papi_mem_overhead( int type )
 }
 
 /** Clean all memory up and print out memory leak information to stderr */
-void _papi_mem_cleanup_all()
+void
+_papi_mem_cleanup_all(  )
 {
 	pmem_t *ptr = NULL, *tmp = NULL;
 #ifdef DEBUG

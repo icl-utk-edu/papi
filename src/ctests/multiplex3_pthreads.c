@@ -103,7 +103,7 @@ mainloop( int arg )
 		if ( pset.count ) {
 			printf( "Adding %s\n", pset.symbol );
 
-			retval = PAPI_add_event( EventSet, pset.event_code );
+			retval = PAPI_add_event( EventSet, ( int ) pset.event_code );
 			if ( ( retval != PAPI_OK ) && ( retval != PAPI_ECNFLCT ) )
 				test_fail( __FILE__, __LINE__, "PAPI_add_event", retval );
 
@@ -130,7 +130,8 @@ mainloop( int arg )
 					if ( ++j >= MAX_TO_ADD )
 						break;
 				} else {
-					retval = PAPI_remove_event( EventSet, pset.event_code );
+					retval =
+						PAPI_remove_event( EventSet, ( int ) pset.event_code );
 					if ( retval == PAPI_OK )
 						printf( "Removed %s\n", pset.symbol );
 				}

@@ -115,7 +115,7 @@ main( int argc, char **argv )
 				if ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK ) {
 					do {
 						retval = PAPI_get_event_info( k, &info1 );
-						event_code = info1.event_code;
+						event_code = ( int ) info1.event_code;
 						if ( add_remove_event
 							 ( EventSet, event_code, info1.symbol ) )
 							add_count++;
@@ -124,14 +124,14 @@ main( int argc, char **argv )
 					} while ( PAPI_enum_event( &k, PAPI_NTV_ENUM_UMASKS ) ==
 							  PAPI_OK );
 				} else {
-					event_code = info.event_code;
+					event_code = ( int ) info.event_code;
 					if ( add_remove_event( EventSet, event_code, info.symbol ) )
 						add_count++;
 					else
 						err_count++;
 				}
 			} else {
-				event_code = info.event_code;
+				event_code = ( int ) info.event_code;
 				if ( s->cntr_groups )
 					event_code &= ~PAPI_NTV_GROUP_AND_MASK;
 				if ( add_remove_event( EventSet, event_code, info.symbol ) )

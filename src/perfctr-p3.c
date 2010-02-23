@@ -452,7 +452,7 @@ _p3_read( hwd_context_t * ctx, hwd_control_state_t * spc, long long **dp,
 #ifdef DEBUG
 	{
 		if ( ISLEVEL( DEBUG_SUBSTRATE ) ) {
-			int i;
+			unsigned int i;
 			for ( i = 0;
 				  i <
 				  spc->control.cpu_control.nractrs +
