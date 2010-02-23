@@ -371,6 +371,9 @@ read the documentation carefully.  */
      void **data;
    } PAPI_all_thr_spec_t;
 
+  typedef void (*PAPI_overflow_handler_t) (int EventSet, void *address,
+                                long long overflow_vector, void *context);
+
 	/* All caddr_t's should become unsigned long's eventually. */
 
 #ifdef C99
