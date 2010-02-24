@@ -67,7 +67,7 @@ print_counts(perf_event_desc_t *fds, int num, int do_delta)
 		double ratio;
 
 		ret = read(fds[i].fd, values, sizeof(values));
-		if (ret < sizeof(values)) {
+		if (ret != sizeof(values)) { /* unsigned */
 			if (ret == -1)
 				err(1, "cannot read values event %s", fds[i].name);
 			else	/* likely pinned and could not be loaded */
