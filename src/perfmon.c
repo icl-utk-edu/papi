@@ -120,7 +120,7 @@ dump_setinfo( pfarg_setinfo_t * setinfo, int num_sets )
 static void
 dump_pmc( pfm_control_state_t * ctl )
 {
-	int i;
+	unsigned int i;
 	pfarg_pmc_t *pc = ctl->pc;
 
 	for ( i = 0; i < ctl->out.pfp_pmc_count; i++ ) {
@@ -136,7 +136,7 @@ dump_pmc( pfm_control_state_t * ctl )
 static void
 dump_pmd( pfm_control_state_t * ctl )
 {
-	int i;
+	unsigned int i;
 	pfarg_pmd_t *pd = ctl->pd;
 
 	for ( i = 0; i < ctl->in.pfp_event_count; i++ ) {
