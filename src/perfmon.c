@@ -299,7 +299,9 @@ get_cycles( void )
 int
 _papi_pfm_write_pmcs( pfm_context_t * ctx, pfm_control_state_t * ctl )
 {
-	int i = 0, ret;
+	( void ) ctx;			 /*unused */
+	unsigned int i = 0;
+	int ret;
 
 	SUBDBG( "PFM_WRITE_PMCS(%d,%p,%d)\n", ctl->ctx_fd, ctl->pc,
 			ctl->out.pfp_pmc_count );
@@ -333,7 +335,9 @@ _papi_pfm_write_pmcs( pfm_context_t * ctx, pfm_control_state_t * ctl )
 int
 _papi_pfm_write_pmds( pfm_context_t * ctx, pfm_control_state_t * ctl )
 {
-	int i = 0, ret;
+	( void ) ctx;			 /*unused */
+	unsigned int i = 0;
+	int ret;
 
 	SUBDBG( "PFM_WRITE_PMDS(%d,%p,%d)\n", ctl->ctx_fd, ctl->pd,
 			ctl->in.pfp_event_count );
@@ -370,7 +374,9 @@ _papi_pfm_write_pmds( pfm_context_t * ctx, pfm_control_state_t * ctl )
 int
 _papi_pfm_read_pmds( pfm_context_t * ctx, pfm_control_state_t * ctl )
 {
-	int i = 0, ret;
+	( void ) ctx;			 /*unused */
+	unsigned int i = 0;
+	int ret;
 
 	SUBDBG( "PFM_READ_PMDS(%d,%p,%d)\n", ctl->ctx_fd, ctl->pd,
 			ctl->in.pfp_event_count );
@@ -447,7 +453,8 @@ detect_timeout_and_unavail_pmu_regs( pfmlib_regmask_t * r_pmcs,
 {
 	pfarg_ctx_t ctx;
 	pfarg_setinfo_t setf;
-	int ret, i, j, myfd;
+	unsigned int i;
+	int ret, j, myfd;
 
 	memset( r_pmcs, 0, sizeof ( *r_pmcs ) );
 	memset( r_pmds, 0, sizeof ( *r_pmds ) );
@@ -1616,6 +1623,7 @@ sparc_get_memory_info( PAPI_hw_info_t * hw_info )
 int
 _papi_pfm_get_memory_info( PAPI_hw_info_t * hwinfo, int unused )
 {
+	( void ) unused;		 /*unused */
 	int retval = PAPI_OK;
 
 #if defined(mips)
@@ -1913,9 +1921,10 @@ compute_kernel_args( hwd_control_state_t * ctl0 )
 	pfarg_setdesc_t *sets = ctl->set;
 	pfarg_setinfo_t *setinfos = ctl->setinfo;
 	int *num_sets = &ctl->num_sets;
-	int set = 0, donepc = 0, donepd = 0, ret, i, j;
-	int togo = inp->pfp_event_count, dispatch_count =
-		inp->pfp_event_count, done = 0;
+	unsigned int set = 0;
+	int donepc = 0, donepd = 0, ret, j;
+	unsigned int i, dispatch_count = inp->pfp_event_count;
+	int togo = inp->pfp_event_count, done = 0;
 
 	/* Save old PD array so we can reconstruct certain flags. This can be removed
 	   when we have higher level code call set_profile,set_overflow etc when there
@@ -1926,7 +1935,8 @@ compute_kernel_args( hwd_control_state_t * ctl0 )
 		  ctl->multiplexed, inp->pfp_event_count, MY_VECTOR.cmp_info.num_cntrs,
 		  *num_sets );
 	if ( ( ctl->multiplexed ) &&
-		 ( inp->pfp_event_count > MY_VECTOR.cmp_info.num_cntrs ) ) {
+		 ( inp->pfp_event_count >
+		   ( unsigned int ) MY_VECTOR.cmp_info.num_cntrs ) ) {
 		dispatch_count = MY_VECTOR.cmp_info.num_cntrs;
 	}
 
@@ -2201,6 +2211,7 @@ set_domain( hwd_control_state_t * ctl0, int domain )
 inline static int
 set_granularity( hwd_control_state_t * this_state, int domain )
 {
+	( void ) this_state;	 /*unused */
 	switch ( domain ) {
 	case PAPI_GRN_PROCG:
 	case PAPI_GRN_SYS:
@@ -2222,6 +2233,7 @@ set_granularity( hwd_control_state_t * this_state, int domain )
 inline static int
 set_inherit( int arg )
 {
+	( void ) arg;			 /*unused */
 	return ( PAPI_ESBSTR );
 }
 
@@ -2247,6 +2259,7 @@ get_string_from_file( char *file, char *str, int len )
 int
 _papi_pfm_init_substrate( int cidx )
 {
+	( void ) cidx;			 /*unused */
 	int i, retval;
 	unsigned int ncnt;
 	unsigned int version;
@@ -2599,6 +2612,9 @@ _papi_pfm_get_real_cycles( void )
 long long
 _papi_pfm_get_virt_usec( const hwd_context_t * zero )
 {
+#ifndef USE_PROC_PTTIMER
+	( void ) zero;			 /*unused */
+#endif
 	long long retval;
 #if defined(USE_PROC_PTTIMER)
 	{
@@ -2706,7 +2722,8 @@ _papi_pfm_get_virt_cycles( const hwd_context_t * zero )
 int
 _papi_pfm_reset( hwd_context_t * ctx, hwd_control_state_t * ctl )
 {
-	int i, ret;
+	unsigned int i;
+	int ret;
 
 	/* Read could have clobbered the values */
 	for ( i = 0; i < ( ( pfm_control_state_t * ) ctl )->in.pfp_event_count;
@@ -2733,7 +2750,8 @@ int
 _papi_pfm_write( hwd_context_t * ctx, hwd_control_state_t * ctl,
 				 long long *from )
 {
-	int i, ret;
+	unsigned int i;
+	int ret;
 
 	/* Read could have clobbered the values */
 	for ( i = 0; i < ( ( pfm_control_state_t * ) ctl )->in.pfp_event_count;
@@ -2761,7 +2779,9 @@ int
 _papi_pfm_read( hwd_context_t * ctx0, hwd_control_state_t * ctl0,
 				long long **events, int flags )
 {
-	int i, ret;
+	( void ) flags;			 /*unused */
+	unsigned int i;
+	int ret;
 	long long tot_runs = 0LL;
 	pfm_control_state_t *ctl = ( pfm_control_state_t * ) ctl0;
 	pfm_context_t *ctx = ( pfm_context_t * ) ctx0;
@@ -2805,7 +2825,7 @@ _papi_pfm_read( hwd_context_t * ctx0, hwd_control_state_t * ctl0,
 
 	/* Add up the number of total runs */
 
-	for ( i = 0; i < ctl->num_sets; i++ )
+	for ( i = 0; i < ( unsigned int ) ctl->num_sets; i++ )
 		tot_runs += ctl->setinfo[i].set_runs;
 
 	/* Now scale the values */
@@ -2838,7 +2858,8 @@ int _papi_hwd_start_create_context = 0;	/* CrayPat checkpoint support */
 int
 _papi_pfm_start( hwd_context_t * ctx0, hwd_control_state_t * ctl0 )
 {
-	int i, ret;
+	unsigned int i;
+	int ret;
 	pfm_control_state_t *ctl = ( pfm_control_state_t * ) ctl0;
 	pfm_context_t *ctx = ( pfm_context_t * ) ctx0;
 
@@ -2920,6 +2941,7 @@ _papi_pfm_start( hwd_context_t * ctx0, hwd_control_state_t * ctl0 )
 int
 _papi_pfm_stop( hwd_context_t * ctx0, hwd_control_state_t * ctl0 )
 {
+	( void ) ctx0;			 /*unused */
 	int ret;
 	pfm_control_state_t *ctl = ( pfm_control_state_t * ) ctl0;
 //  pfm_context_t *ctx = (pfm_context_t *)ctx0;
@@ -2930,7 +2952,7 @@ _papi_pfm_stop( hwd_context_t * ctx0, hwd_control_state_t * ctl0 )
 		   has exited, we can safely discard the error here. */
 
 		if ( ( ret == PFMLIB_ERR_NOTSUPP ) &&
-			 ( ctl->load->load_pid != mygettid(  ) ) )
+			 ( ctl->load->load_pid != ( unsigned int ) mygettid(  ) ) )
 			return ( PAPI_OK );
 
 		PAPIERROR( "pfm_stop(%d): %s", ctl->ctx_fd, strerror( ret ) );
@@ -2945,7 +2967,7 @@ _papi_pfm_stop( hwd_context_t * ctx0, hwd_control_state_t * ctl0 )
 	}
 
 	if ( ctl->num_sets > 1 ) {
-		static pfarg_setdesc_t set = { 0, 0, 0, 0 };
+		static pfarg_setdesc_t set = { 0, 0, 0, 0, {0, 0, 0, 0, 0, 0} };
 		/* Delete the high sets */
 		SUBDBG( "PFM_DELETE_EVTSETS(%d,%p,%d)\n", ctl->ctx_fd, &ctl->set[1],
 				ctl->num_sets - 1 );
@@ -3107,7 +3129,7 @@ find_profile_index( EventSetInfo_t * ESI, int pmd, int *flags,
 	pfm_control_state_t *ctl = ( pfm_control_state_t * ) ESI->ctl_state;
 	pfarg_pmd_t *pd;
 	pfarg_pmc_t *pc;
-	int i;
+	unsigned int i;
 
 	pd = ctl->pd;
 	pc = ctl->pc;
@@ -3199,6 +3221,7 @@ pfm_bv_set( uint64_t * bv, uint16_t rnum )
 static inline int
 setup_ear_event( unsigned int native_index, pfarg_pmd_t * pd, int flags )
 {
+	( void ) flags;			 /*unused */
 #if defined(__ia64__)
 	if ( _perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU ) {
 		if ( pfm_mont_is_dear( native_index ) ) {	/* 2,3,17 */
@@ -3229,6 +3252,9 @@ setup_ear_event( unsigned int native_index, pfarg_pmd_t * pd, int flags )
 		}
 		return ( 0 );
 	}
+#else
+	( void ) native_index;	 /*unused */
+	( void ) pd;			 /*unused */
 #endif
 	return ( 0 );
 }
@@ -3237,6 +3263,10 @@ static inline int
 process_smpl_entry( unsigned int native_pfm_index, int flags,
 					pfm_dfl_smpl_entry_t ** ent, caddr_t * pc )
 {
+#ifndef __ia64__
+	( void ) native_pfm_index;	/*unused */
+	( void ) flags;			 /*unused */
+#endif
 	SUBDBG( "process_smpl_entry(%d,%d,%p,%p)\n", native_pfm_index, flags, ent,
 			pc );
 
@@ -3474,6 +3504,8 @@ process_smpl_entry( unsigned int native_pfm_index, int flags,
 static inline int
 process_smpl_buf( int num_smpl_pmds, int entry_size, ThreadInfo_t ** thr )
 {
+	( void ) num_smpl_pmds;	 /*unused */
+	( void ) entry_size;	 /*unused */
 	int cidx = MY_VECTOR.cmp_info.CmpIdx;
 	pfm_dfl_smpl_entry_t *ent;
 	size_t pos;
@@ -3660,6 +3692,7 @@ _papi_pfm_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 int
 _papi_pfm_stop_profiling( ThreadInfo_t * thread, EventSetInfo_t * ESI )
 {
+	( void ) ESI;			 /*unused */
 	/* Process any remaining samples in the sample buffer */
 	return ( process_smpl_buf( 0, sizeof ( pfm_dfl_smpl_entry_t ), &thread ) );
 }
@@ -4033,8 +4066,6 @@ papi_vector_t _papi_pfm_vector = {
 				 .available_granularities = PAPI_GRN_THR,
 
 				 .hardware_intr = 1,
-				 .attach = 1,
-				 .attach_must_ptrace = 1,
 				 .kernel_multiplex = 1,
 				 .kernel_profile = 1,
 				 .profile_ear = 1,
