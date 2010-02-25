@@ -1152,7 +1152,8 @@ _papi_pfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
 				return ( PAPI_EBUG );
 			}
 			/* Overflow check */
-			if ( ( did_something * name_len + strlen( _pmc_name( j ) ) + 1 ) >=
+			if ( ( int )
+				 ( did_something * name_len + strlen( _pmc_name( j ) ) + 1 ) >=
 				 count * name_len ) {
 				SUBDBG( "Would overflow register name array." );
 				return ( did_something );

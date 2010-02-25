@@ -1265,6 +1265,7 @@ sparc_get_memory_info( PAPI_hw_info_t * hw_info )
 int
 _papi_pe_get_memory_info( PAPI_hw_info_t * hwinfo, int unused )
 {
+	( void ) unused;		 /*unused */
 	int retval = PAPI_OK;
 
 #if defined(mips)
@@ -1516,6 +1517,7 @@ check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 static int
 check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 {
+	( void ) ctl;			 /*unused */
 #define MAX_READ 8192
 	uint8_t buffer[MAX_READ];
 
@@ -1860,18 +1862,20 @@ close_pe_evts( context_t * ctx )
 static int
 attach( control_state_t * ctl, unsigned long tid )
 {
+	( void ) ctl;			 /*unused */
+	( void ) tid;			 /*unused */
 	/* NYI!  FIXME */
 	SUBDBG( "attach is unimplemented!" );
-
 	return PAPI_OK;
 }
 
 static int
 detach( context_t * ctx, control_state_t * ctl )
 {
+	( void ) ctx;			 /*unused */
+	( void ) ctl;			 /*unused */
 	/* NYI!  FIXME */
 	SUBDBG( "detach is unimplemented!" );
-
 	return PAPI_OK;
 }
 
@@ -1895,6 +1899,7 @@ set_domain( hwd_control_state_t * ctl, int domain )
 inline static int
 set_granularity( control_state_t * this_state, int domain )
 {
+	( void ) this_state;	 /*unused */
 	switch ( domain ) {
 	case PAPI_GRN_PROCG:
 	case PAPI_GRN_SYS:
@@ -1916,12 +1921,14 @@ set_granularity( control_state_t * this_state, int domain )
 inline static int
 set_inherit( int arg )
 {
+	( void ) arg;			 /*unused */
 	return PAPI_ESBSTR;
 }
 
 int
 _papi_pe_init_substrate( int cidx )
 {
+	( void ) cidx;			 /*unused */
 	int i, retval;
 	unsigned int ncnt;
 	unsigned int version;
@@ -2082,6 +2089,7 @@ init_proc_thread_timer( context_t * thr_ctx )
 int
 _papi_sub_pe_init( hwd_context_t * thr_ctx )
 {
+	( void ) thr_ctx;		 /*unused */
 	/* No initialization is needed */
 	return PAPI_OK;
 }
@@ -2127,6 +2135,9 @@ _papi_pe_get_real_cycles( void )
 long long
 _papi_pe_get_virt_usec( const hwd_context_t * zero )
 {
+#ifndef USE_PROC_PTTIMER
+	( void ) zero;			 /*unused */
+#endif
 	long long retval;
 #if defined(USE_PROC_PTTIMER)
 	{
@@ -2261,6 +2272,8 @@ _papi_pe_reset( hwd_context_t * ctx, hwd_control_state_t * ctl )
 	 */
 	saved_state = pe_ctx->state;
 	_papi_pe_stop( ctx, ctl );
+#else
+	( void ) ctl;			 /*unused */
 #endif
 
 	/* We need to reset all of the events, not just the group leaders */
@@ -2288,6 +2301,9 @@ int
 _papi_pe_write( hwd_context_t * ctx, hwd_control_state_t * ctl,
 				long long *from )
 {
+	( void ) ctx;			 /*unused */
+	( void ) ctl;			 /*unused */
+	( void ) from;			 /*unused */
 	/*
 	 * Counters cannot be written.  Do we need to virtualize the
 	 * counters so that they can be written, or perhaps modify code so that
@@ -2339,7 +2355,7 @@ static uint64_t
 get_count_idx_by_id( uint64_t * buf, int multiplexed, uint64_t id )
 {
 #ifdef USE_FORMAT_GROUP
-	int i;
+	unsigned int i;
 
 	for ( i = 0; i < buf[get_nr_idx(  )]; i++ ) {
 		unsigned long index = get_id_idx( multiplexed, i );
@@ -2365,6 +2381,7 @@ int
 _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 			   long long **events, int flags )
 {
+	( void ) flags;			 /*unused */
 	int i, ret;
 	context_t *pe_ctx = ( context_t * ) ctx;
 	control_state_t *pe_ctl = ( control_state_t * ) ctl;
@@ -2411,9 +2428,8 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 			}
 		}
 
-		int count_idx =
-			get_count_idx_by_id( buffer, pe_ctl->multiplexed,
-								 pe_ctx->evt[i].event_id );
+		int count_idx = get_count_idx_by_id( buffer, pe_ctl->multiplexed,
+											 pe_ctx->evt[i].event_id );
 		if ( count_idx == -1 ) {
 			PAPIERROR( "get_count_idx_by_id failed for event num %d, id %d", i,
 					   pe_ctx->evt[i].event_id );
@@ -2429,8 +2445,7 @@ _papi_pe_read( hwd_context_t * ctx, hwd_control_state_t * ctl,
 		if ( pe_ctl->multiplexed ) {
 			if ( buffer[get_total_time_running_idx(  )] ) {
 				pe_ctl->counts[i] =
-					( __u64 ) ( ( double ) buffer[count_idx] *
-								( double )
+					( __u64 ) ( ( double ) buffer[count_idx] * ( double )
 								buffer[get_total_time_enabled_idx(  )] /
 								( double )
 								buffer[get_total_time_running_idx(  )] );
@@ -2488,6 +2503,7 @@ _papi_pe_start( hwd_context_t * ctx, hwd_control_state_t * ctl )
 int
 _papi_pe_stop( hwd_context_t * ctx, hwd_control_state_t * ctl )
 {
+	( void ) ctl;			 /*unused */
 	int ret;
 	int i;
 	context_t *pe_ctx = ( context_t * ) ctx;
@@ -2739,6 +2755,7 @@ mmap_write_tail( evt_t * pe, uint64_t tail )
 static void
 mmap_read( ThreadInfo_t ** thr, evt_t * pe, int evt_index, int profile_index )
 {
+	( void ) evt_index;		 /*unused */
 	int cidx = MY_VECTOR.cmp_info.CmpIdx;
 	uint64_t head = mmap_read_head( pe );
 	uint64_t old = pe->tail;
@@ -2856,6 +2873,7 @@ process_smpl_buf( int evt_idx, ThreadInfo_t ** thr )
 void
 _papi_pe_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 {
+	( void ) n;				 /*unused */
 	_papi_hwi_context_t ctx;
 	int found_evt_idx = -1, fd = info->si_fd;
 	caddr_t address;
@@ -2992,6 +3010,7 @@ _papi_pe_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 int
 _papi_pe_stop_profiling( ThreadInfo_t * thread, EventSetInfo_t * ESI )
 {
+	( void ) ESI;			 /*unused */
 	int i, ret = PAPI_OK;
 	int cidx = MY_VECTOR.cmp_info.CmpIdx;
 
@@ -3360,8 +3379,6 @@ papi_vector_t _papi_pe_vector = {
 				 .available_granularities = PAPI_GRN_THR,
 
 				 .hardware_intr = 1,
-				 .attach = 1,
-				 .attach_must_ptrace = 1,
 				 .kernel_multiplex = 1,
 				 .kernel_profile = 1,
 				 .profile_ear = 1,
