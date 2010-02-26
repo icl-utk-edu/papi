@@ -751,9 +751,9 @@ PAPI_mh_info_t sys_mem_info[5] = {
 	 {
 	  {						 // level 1 begins
 	   {					 // tlb's begin
-		{PAPI_MH_TYPE_UNIFIED, 1024, 4}
+		{PAPI_MH_TYPE_UNIFIED, 1024, 4, 0}
 		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
+		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
 		}
 	   ,
 	   {					 // caches begin
@@ -765,9 +765,9 @@ PAPI_mh_info_t sys_mem_info[5] = {
 	  ,
 	  {						 // level 2 begins
 	   {					 // tlb's begin
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
+		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
 		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
+		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
 		}
 	   ,
 	   {					 // caches begin
@@ -779,9 +779,9 @@ PAPI_mh_info_t sys_mem_info[5] = {
 	  ,
 	  {						 // level 3 begins
 	   {					 // tlb's begin
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
+		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
 		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
+		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
 		}
 	   ,
 	   {					 // caches begin
@@ -798,9 +798,9 @@ PAPI_mh_info_t sys_mem_info[5] = {
 	 {
 	  {						 // level 1 begins
 	   {					 // tlb's begin
-		{PAPI_MH_TYPE_UNIFIED, 1024, 4}
+		{PAPI_MH_TYPE_UNIFIED, 1024, 4, 0}
 		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
+		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
 		}
 	   ,
 	   {					 // caches begin
@@ -812,9 +812,9 @@ PAPI_mh_info_t sys_mem_info[5] = {
 	  ,
 	  {						 // level 2 begins
 	   {					 // tlb's begin
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
+		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
 		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
+		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
 		}
 	   ,
 	   {					 // caches begin
@@ -831,9 +831,9 @@ PAPI_mh_info_t sys_mem_info[5] = {
 	 {
 	  {						 // level 1 begins
 	   {					 // tlb's begin
-		{PAPI_MH_TYPE_UNIFIED, 1024, 4}
+		{PAPI_MH_TYPE_UNIFIED, 1024, 4, 0}
 		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
+		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
 		}
 	   ,
 	   {					 // caches begin
@@ -845,9 +845,9 @@ PAPI_mh_info_t sys_mem_info[5] = {
 	  ,
 	  {						 // level 2 begins
 	   {					 // tlb's begin
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
+		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
 		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
+		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
 		}
 	   ,
 	   {					 // caches begin
@@ -859,9 +859,9 @@ PAPI_mh_info_t sys_mem_info[5] = {
 	  ,
 	  {						 // level 3 begins
 	   {					 // tlb's begin
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
+		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
 		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
+		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
 		}
 	   ,
 	   {					 // caches begin
@@ -881,9 +881,9 @@ PAPI_mh_info_t sys_mem_info[5] = {
 		/// POWER6 has an ERAT (Effective to Real Address
 		/// Translation) instead of a TLB.  For the purposes of this
 		/// data, we will treat it like a TLB.
-		{PAPI_MH_TYPE_INST, 128, 2}
+		{PAPI_MH_TYPE_INST, 128, 2, 0}
 		,
-		{PAPI_MH_TYPE_DATA, 128, 128}
+		{PAPI_MH_TYPE_DATA, 128, 128, 0}
 		}
 	   ,
 	   {					 // caches begin
@@ -895,9 +895,9 @@ PAPI_mh_info_t sys_mem_info[5] = {
 	  ,
 	  {						 // level 2 begins
 	   {					 // tlb's begin
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
+		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
 		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
+		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
 		}
 	   ,
 	   {					 // caches begin
@@ -909,9 +909,9 @@ PAPI_mh_info_t sys_mem_info[5] = {
 	  ,
 	  {						 // level 3 begins
 	   {					 // tlb's begin
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
+		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
 		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
+		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
 		}
 	   ,
 	   {					 // caches begin
@@ -934,9 +934,9 @@ PAPI_mh_info_t sys_mem_info[5] = {
 		/// POWER6 has an ERAT (Effective to Real Address
 		/// Translation) instead of a TLB.  For the purposes of this
 		/// data, we will treat it like a TLB.
-		{PAPI_MH_TYPE_INST, 128, 2}
+		{PAPI_MH_TYPE_INST, 128, 2, 0}
 		,
-		{PAPI_MH_TYPE_DATA, 128, 128}
+		{PAPI_MH_TYPE_DATA, 128, 128, 0}
 		}
 	   ,
 	   {					 // caches begin
@@ -948,9 +948,9 @@ PAPI_mh_info_t sys_mem_info[5] = {
 	  ,
 	  {						 // level 2 begins
 	   {					 // tlb's begin
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
+		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
 		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
+		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
 		}
 	   ,
 	   {					 // caches begin
@@ -962,9 +962,9 @@ PAPI_mh_info_t sys_mem_info[5] = {
 	  ,
 	  {						 // level 3 begins
 	   {					 // tlb's begin
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
+		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
 		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
+		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
 		}
 	   ,
 	   {					 // caches begin
@@ -1511,6 +1511,9 @@ mygettid( void )
 inline static int
 check_scheduability( context_t * ctx, control_state_t * ctl, int idx )
 {
+	( void ) ctx;			 /*unused */
+	( void ) ctl;			 /*unused */
+	( void ) idx;			 /*unused */
 	return PAPI_OK;
 }
 #else
