@@ -102,7 +102,7 @@ setup_p3_presets( int cputype )
 		return ( PAPI_ESBSTR );
 	}
 	SUBDBG( "Number of native events: %d\n",
-			_papi_hwi_system_info.sub_info.num_native_events );
+			MY_VECTOR.cmp_info.num_native_events );
 	retval = _papi_hwi_setup_all_presets( preset_search_map, NULL );
 	return ( retval );
 }
