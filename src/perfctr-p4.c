@@ -266,7 +266,7 @@ _p4_read( hwd_context_t * ctx, hwd_control_state_t * spc,
 #ifdef DEBUG
 	{
 		if ( ISLEVEL( DEBUG_SUBSTRATE ) ) {
-			int i;
+			unsigned int i;
 			for ( i = 0; i < spc->control.cpu_control.nractrs; i++ ) {
 				SUBDBG( "raw val hardware index %d is %lld\n", i,
 						( long long ) spc->state.pmc[i] );
@@ -355,9 +355,9 @@ _p4_bpt_map_shared( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
 	retval1 = ( ( dst->ra_selector & src->ra_selector ) ||
 				/* or escrs must equal each other and not be set to -1 */
 				( ( dst->ra_escr[0] == src->ra_escr[0] ) &&
-				  ( dst->ra_escr[0] != -1 ) ) ||
+				  ( ( int ) dst->ra_escr[0] != -1 ) ) ||
 				( ( dst->ra_escr[1] == src->ra_escr[1] ) &&
-				  ( dst->ra_escr[1] != -1 ) ) );
+				  ( ( int ) dst->ra_escr[1] != -1 ) ) );
 	/* Pentium 4 also needs to check for conflict on pebs registers */
 	/* pebs enables must both be non-zero */
 	retval2 = ( ( ( dst->ra_bits.pebs_enable && src->ra_bits.pebs_enable ) &&
@@ -411,12 +411,12 @@ _p4_bpt_map_preempt( hwd_reg_alloc_t * dst, hwd_reg_alloc_t * src )
 	} else {
 		/* remove counters referenced by any shared escrs */
 		if ( ( dst->ra_escr[0] == src->ra_escr[0] ) &&
-			 ( dst->ra_escr[0] != -1 ) ) {
+			 ( ( int ) dst->ra_escr[0] != -1 ) ) {
 			dst->ra_selector &= ~dst->ra_bits.counter[0];
 			dst->ra_escr[0] = -1;
 		}
 		if ( ( dst->ra_escr[1] == src->ra_escr[1] ) &&
-			 ( dst->ra_escr[1] != -1 ) ) {
+			 ( ( int ) dst->ra_escr[1] != -1 ) ) {
 			dst->ra_selector &= ~dst->ra_bits.counter[1];
 			dst->ra_escr[1] = -1;
 		}
@@ -560,6 +560,7 @@ _p4_update_control_state( hwd_control_state_t * this_state,
 						  NativeInfo_t * native, int count,
 						  hwd_context_t * ctx )
 {
+	( void ) ctx;			 /*unused */
 	int i, retval = PAPI_OK;
 
 	hwd_register_t *bits;
@@ -840,50 +841,50 @@ prepare_umask( unsigned int foo, unsigned int *values )
 #define P4_REPLAY_VIRT_MASK 0x00000FFC
 
 static pentium4_replay_regs_t p4_replay_regs[] = {
-							 /* 0 */ {.enb = 0,
-							 /* dummy */
-									  .mat_vert = 0,
-									  },
-							 /* 1 */ {.enb = 0,
-							 /* dummy */
-									  .mat_vert = 0,
-									  },
-								/* 2 */ {.enb = 0x01000001,
-								/* 1stL_cache_load_miss_retired */
-										 .mat_vert = 0x00000001,
-										 },
-								/* 3 */ {.enb = 0x01000002,
-								/* 2ndL_cache_load_miss_retired */
-										 .mat_vert = 0x00000001,
-										 },
-								/* 4 */ {.enb = 0x01000004,
-								/* DTLB_load_miss_retired */
-										 .mat_vert = 0x00000001,
-										 },
-								/* 5 */ {.enb = 0x01000004,
-								/* DTLB_store_miss_retired */
-										 .mat_vert = 0x00000002,
-										 },
-								/* 6 */ {.enb = 0x01000004,
-								/* DTLB_all_miss_retired */
-										 .mat_vert = 0x00000003,
-										 },
-								/* 7 */ {.enb = 0x01018001,
-								/* Tagged_mispred_branch */
-										 .mat_vert = 0x00000010,
-										 },
-								/* 8 */ {.enb = 0x01000200,
-								/* MOB_load_replay_retired */
-										 .mat_vert = 0x00000001,
-										 },
-								/* 9 */ {.enb = 0x01000400,
-								/* split_load_retired */
-										 .mat_vert = 0x00000001,
-										 },
-									/* 10 */ {.enb = 0x01000400,
-									/* split_store_retired */
-											  .mat_vert = 0x00000002,
-											  },
+	/* 0 */ {.enb = 0,
+			 /* dummy */
+			 .mat_vert = 0,
+			 },
+	/* 1 */ {.enb = 0,
+			 /* dummy */
+			 .mat_vert = 0,
+			 },
+	/* 2 */ {.enb = 0x01000001,
+			 /* 1stL_cache_load_miss_retired */
+			 .mat_vert = 0x00000001,
+			 },
+	/* 3 */ {.enb = 0x01000002,
+			 /* 2ndL_cache_load_miss_retired */
+			 .mat_vert = 0x00000001,
+			 },
+	/* 4 */ {.enb = 0x01000004,
+			 /* DTLB_load_miss_retired */
+			 .mat_vert = 0x00000001,
+			 },
+	/* 5 */ {.enb = 0x01000004,
+			 /* DTLB_store_miss_retired */
+			 .mat_vert = 0x00000002,
+			 },
+	/* 6 */ {.enb = 0x01000004,
+			 /* DTLB_all_miss_retired */
+			 .mat_vert = 0x00000003,
+			 },
+	/* 7 */ {.enb = 0x01018001,
+			 /* Tagged_mispred_branch */
+			 .mat_vert = 0x00000010,
+			 },
+	/* 8 */ {.enb = 0x01000200,
+			 /* MOB_load_replay_retired */
+			 .mat_vert = 0x00000001,
+			 },
+	/* 9 */ {.enb = 0x01000400,
+			 /* split_load_retired */
+			 .mat_vert = 0x00000001,
+			 },
+	/* 10 */ {.enb = 0x01000400,
+			  /* split_store_retired */
+			  .mat_vert = 0x00000002,
+			  },
 };
 
 /* this maps the arbitrary pmd index in libpfm/pentium4_events.h to the intel documentation */
@@ -898,8 +899,8 @@ _papi_pfm_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 	unsigned int umask, num_masks, replay_mask, unit_masks[12];
 	unsigned int event, event_mask;
 	unsigned int tag_value, tag_enable;
-
-	int i, j, escr, cccr, pmd;
+	unsigned int i;
+	int j, escr, cccr, pmd;
 
 	if ( _pfm_decode_native_event( EventCode, &event, &umask ) != PAPI_OK )
 		return ( PAPI_ENOEVNT );
@@ -1097,6 +1098,7 @@ _papi_hwd_fixup_vec( void )
 int
 setup_p3_presets( int cputype )
 {
+	( void ) cputype;		 /*unused */
 	int retval = PAPI_OK;
 	return ( retval );
 }
@@ -1104,6 +1106,8 @@ setup_p3_presets( int cputype )
 static int
 _p4_stop_profiling( ThreadInfo_t * master, EventSetInfo_t * ESI )
 {
+	( void ) master;		 /*unused */
+	( void ) ESI;			 /*unused */
 	return ( PAPI_OK );
 }
 
