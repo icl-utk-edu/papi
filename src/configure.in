@@ -432,7 +432,7 @@ AC_MSG_RESULT($debug)
 
 # -Wextra was not supported until gcc version 3.4
 if test "$CC" = "gcc"; then
-   gcc_version := `gcc --version | head -1 | awk -F" " '{ printf $3 }'`
+   gcc_version := `gcc -v 2>&1 | tail -n 1 | awk '{printf $3}'`
    major=`echo $gcc_version | sed 's/\([[^.]][[^.]]*\).*/\1/'`
    minor=`echo $gcc_version | sed 's/[[^.]][[^.]]*.\([[^.]][[^.]]*\).*/\1/'`
    if test "$major" -ge 3 -a "$minor" -ge 4; then
