@@ -27,7 +27,8 @@ else
    endif
 endif
 
-CFLAGS += -Wall -Wextra
+#NOTE: adding -Wextra to an itanium build causes libpfm to fail compile
+CFLAGS += -Wall
 KERNMINVER	= $(shell uname -r | cut -f2 -d.)
 POST_BUILD	=
 SPECIAL_REMOVE =
