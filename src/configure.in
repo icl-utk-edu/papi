@@ -430,6 +430,18 @@ case "$debug" in
 esac
 AC_MSG_RESULT($debug)
 
+# -Wextra was not supported until gcc version 3.4
+if test "$CC" = "gcc"; then
+   gcc_version := `gcc --version | head -1 | awk -F" " '{ printf $3 }'`
+   major=`echo $gcc_version | sed 's/\([[^.]][[^.]]*\).*/\1/'`
+   minor=`echo $gcc_version | sed 's/[[^.]][[^.]]*.\([[^.]][[^.]]*\).*/\1/'`
+   if test "$major" -ge 3 -a "$minor" -ge 4; then
+      EXTRA_CFLAGS="-Wextra"
+   else
+      EXTRA_CFLAGS="-W"
+   fi  
+fi
+
 # Check for GNU extensions
 AC_GNU_SOURCE
 # Check for standard headers
@@ -2134,6 +2146,7 @@ AC_SUBST(TOPTFLAGS)
 AC_SUBST(TESTS)
 AC_SUBST(SHOW_CONF)
 AC_SUBST(BGP_SYSDIR)
+AC_SUBST(EXTRA_CFLAGS)
 
 if test "$cross_compiling" = "yes" ; then
    AC_MSG_NOTICE(Compiling genpapifdef with $nativecc because cross compiling)

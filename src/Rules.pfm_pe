@@ -26,7 +26,7 @@ else
    endif
 endif
 
-CFLAGS += -D_REENTRANT -D_GNU_SOURCE -Wall -Wextra $(NOTLS) $(ALTIX) $(DEBUGFLAGS)
+CFLAGS += -D_REENTRANT -D_GNU_SOURCE -Wall $(EXTRA_CFLAGS) $(NOTLS) $(ALTIX) $(DEBUGFLAGS)
 
 ifeq (static,$(PAPI_EVENTS))
 	PAPI_EVENTS_TABLE := papi_events_table.h
