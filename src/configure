@@ -4760,13 +4760,13 @@ if test "$CC" = "gcc"; then
    gcc_version=`gcc -v 2>&1 | tail -n 1 | awk '{printf $3}'`
    major=`echo $gcc_version | sed 's/\([^.][^.]*\).*/\1/'`
    minor=`echo $gcc_version | sed 's/[^.][^.]*.\([^.][^.]*\).*/\1/'`
-   if (test major -ge 4 || test "$major" = 3 -a "$minor" -ge 4); then
+   if (test "$major" -ge 4 || test "$major" = 3 -a "$minor" -ge 4); then
       EXTRA_CFLAGS="-Wextra"
    else
       EXTRA_CFLAGS="-W"
    fi
-   { $as_echo "$as_me:$LINENO: Using gcc $gcc_version and compiling with $EXTRA_CFLAGS" >&5
-$as_echo "$as_me: Using gcc $gcc_version and compiling with $EXTRA_CFLAGS" >&6;}
+   { $as_echo "$as_me:$LINENO: Using gcc $gcc_version... Compile with $EXTRA_CFLAGS" >&5
+$as_echo "$as_me: Using gcc $gcc_version... Compile with $EXTRA_CFLAGS" >&6;}
 fi
 
 # Check for GNU extensions
