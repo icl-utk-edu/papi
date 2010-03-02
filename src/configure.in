@@ -435,10 +435,10 @@ if test "$CC" = "gcc"; then
    gcc_version=`gcc -v 2>&1 | tail -n 1 | awk '{printf $3}'`
    major=`echo $gcc_version | sed 's/\([[^.]][[^.]]*\).*/\1/'`
    minor=`echo $gcc_version | sed 's/[[^.]][[^.]]*.\([[^.]][[^.]]*\).*/\1/'`
-   if test "$major" -lt 3 -a "$minor" -lt 4; then
-      EXTRA_CFLAGS="-W"
-   else
+   if (test major -ge 4 || test "$major" = 3 -a "$minor" -ge 4); then
       EXTRA_CFLAGS="-Wextra"
+   else
+      EXTRA_CFLAGS="-W"
    fi  
 fi
 
@@ -1039,7 +1039,7 @@ point_version=`echo $OSVER | sed -e 's/[[^.]][[^.]]*.[[^.]][[^.]]*.\(.*\)/\1/' -
 
 # Define SYNC_READ for all kernel versions older than 2.6.33 as a workaround for kernel bug 14489 (see bugzilla.kernel.org)
 
-if test "$major_version" -le 2 -a "$minor_version" -le 6 -a "$point_version" -le 32; then
+if (test "$major_version" -lt 2 || test "$major_version" = 2 -a "$minor_version" -lt 6 || test "$major_version" = 2 -a "$minor_version" = 6 -a "$point_version" -lt 33); then
    CFLAGS="$CFLAGS -DSYNC_READ"
 fi 
  
