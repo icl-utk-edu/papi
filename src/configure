@@ -4765,6 +4765,8 @@ if test "$CC" = "gcc"; then
    else
       EXTRA_CFLAGS="-W"
    fi
+   { $as_echo "$as_me:$LINENO: Using gcc $gcc_version and compiling with $EXTRA_CFLAGS" >&5
+$as_echo "$as_me: Using gcc $gcc_version and compiling with $EXTRA_CFLAGS" >&6;}
 fi
 
 # Check for GNU extensions

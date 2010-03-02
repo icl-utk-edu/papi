@@ -439,7 +439,8 @@ if test "$CC" = "gcc"; then
       EXTRA_CFLAGS="-Wextra"
    else
       EXTRA_CFLAGS="-W"
-   fi  
+   fi
+   AC_MSG_NOTICE(Using gcc $gcc_version and compiling with $EXTRA_CFLAGS)  
 fi
 
 # Check for GNU extensions
