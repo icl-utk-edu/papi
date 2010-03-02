@@ -13,16 +13,14 @@
 #include "papi_internal.h"
 
 /*  This file implements the event mapping code specific to P3 architectures 
-    for use with libpfm and papi_pfm_events.c for P3, PM, Core, and Opteron 
-    architectures.
-    Pentium II and Athlon are not supported by libpfm.
+    for use with libpfm and papi_events.c for P2, P3, PM, Core, 
+    Athlon and Opteron architectures.
     For Pentium 4, see perfctr_p4.c.
 */
 
 extern int _papi_pfm_init(  );
 extern int _papi_pfm_setup_presets( char *name, int type );
-extern int _papi_pfm_ntv_code_to_bits( unsigned int EventCode,
-									   hwd_register_t * bits );
+extern int _papi_pfm_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits );
 extern inline int _pfm_decode_native_event( unsigned int EventCode,
 											unsigned int *event,
 											unsigned int *umask );
@@ -55,18 +53,27 @@ setup_p3_presets( int cputype )
 	case PERFCTR_X86_VIA_C3:
 	case PERFCTR_X86_INTEL_P5:
 	case PERFCTR_X86_INTEL_P5MMX:
-	case PERFCTR_X86_INTEL_PII:
-	case PERFCTR_X86_AMD_K7:
 		SUBDBG( "This cpu is supported by the perfctr-p3 substrate\n" );
 		PAPIERROR( MODEL_ERROR );
 		return ( PAPI_ESBSTR );
 
 	case PERFCTR_X86_INTEL_P6:
+		retval = _papi_pfm_init(  );
+		_papi_pfm_setup_presets( "Intel P6", 0 );	/* base events */
+		break;
+
+	case PERFCTR_X86_INTEL_PII:
+		retval = _papi_pfm_init(  );
+		_papi_pfm_setup_presets( "Intel P6", 0 );	/* base events */
+		break;
+
+
 	case PERFCTR_X86_INTEL_PIII:
 		retval = _papi_pfm_init(  );
 		_papi_pfm_setup_presets( "Intel P6", 0 );	/* base events */
 		_papi_pfm_setup_presets( "Intel PentiumIII", 0 );	/* events that differ from Pentium M */
 		break;
+
 #ifdef PERFCTR_X86_INTEL_PENTM
 	case PERFCTR_X86_INTEL_PENTM:
 		retval = _papi_pfm_init(  );
@@ -86,6 +93,13 @@ setup_p3_presets( int cputype )
 		_papi_pfm_setup_presets( "Intel Core2", 0 );
 		break;
 #endif
+
+
+	case PERFCTR_X86_AMD_K7:
+		retval = _papi_pfm_init(  );
+		_papi_pfm_setup_presets( "AMD64 (K7)", 0 );
+		break;
+
 #ifdef PERFCTR_X86_AMD_K8	 /* this is defined in perfctr 2.5.x */
 	case PERFCTR_X86_AMD_K8:
 		retval = _papi_pfm_init(  );

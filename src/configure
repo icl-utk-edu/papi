@@ -9767,7 +9767,7 @@ elif test "$MAKEVER" = "linux-pe"; then
    FILENAME=Rules.pfm_pe
    SUBSTR=perf_events
 elif test "$MAKEVER" = "linux-perfctr-athlon"; then
-   FILENAME=Rules.perfctr
+   FILENAME=Rules.perfctr-pfm
    if test "x$VERSION" = "x"; then
       VERSION=2.6.x
    fi
