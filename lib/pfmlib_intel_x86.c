@@ -44,7 +44,7 @@ const pfmlib_attr_desc_t intel_x86_mods[]={
 
 pfm_intel_x86_config_t pfm_intel_x86_cfg;
 
-static inline int
+int
 pfm_intel_x86_attr2mod(void *this, int pidx, int attr_idx)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
@@ -210,7 +210,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 
 			
 		} else {
-			switch(a->id - pe[e->event].numasks) {
+			switch(pfm_intel_x86_attr2mod(this, e->event, a->id)) {
 				case INTEL_X86_ATTR_I: /* invert */
 					reg->sel_inv = !!a->ival;
 					break;

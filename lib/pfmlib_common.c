@@ -551,7 +551,7 @@ handle_bool:
 				goto error;
 			}
 		}
-		DPRINT("na=%d id=%d type=%d\n", na, a, type);
+		DPRINT("na=%d id=%d type=%d idx=%d nattrs=%d name=%s\n", na, a, type, ainfo.idx, nattrs, ainfo.name);
 		d->attrs[na].id = a;
 		d->attrs[na].type = type;
 		d->nattrs++;

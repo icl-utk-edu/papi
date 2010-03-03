@@ -175,7 +175,7 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 
 			reg->val |= umask << 8;
 		} else {
-			switch(a->id - pe[e->event].numasks) {
+			switch(pfm_intel_x86_attr2mod(this, e->event, a->id)) {
 				case NHM_UNC_ATTR_I: /* invert */
 					reg->nhm_unc.usel_inv = !!a->ival;
 					break;

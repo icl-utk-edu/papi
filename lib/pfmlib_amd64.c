@@ -420,7 +420,7 @@ amd64_encode(pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 
 			umask |= amd64_events[e->event].umasks[a->id].ucode;
 		} else {
-			switch(a->id - numasks) {
+			switch(amd64_attr2mod(e->event, a->id)) {
 				case AMD64_ATTR_I: /* invert */
 					reg->sel_inv = !!a->ival;
 					break;

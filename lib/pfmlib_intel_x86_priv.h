@@ -230,4 +230,5 @@ extern int pfm_intel_x86_get_event_perf_type(void *this, int pidx);
 extern int pfm_intel_x86_validate_table(void *this, FILE *fp);
 extern int pfm_intel_x86_get_event_attr_info(void *this, int idx, int attr_idx, pfm_event_attr_info_t *info);
 extern int pfm_intel_x86_get_event_info(void *this, int idx, pfm_event_info_t *info);
+extern int pfm_intel_x86_attr2mod(void *this, int pidx, int attr_idx);
 #endif /* __PFMLIB_INTEL_X86_PRIV_H__ */
