@@ -219,7 +219,6 @@ main( int argc, char **argv )
 			/*
 			 * Child process.
 			 */
-			PAPI_shutdown(  );
 			zero_count(  );
 			my_papi_init(  );
 			my_papi_start(  );
