@@ -9,6 +9,9 @@ Thread( void *arg )
 {
 	int retval;
 	void *arg2;
+	retval = PAPI_register_thread(  );
+	if ( retval != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_register_thread", retval );
 
 	printf( "Thread 0x%x started, specific data is at %p\n",
 			( int ) pthread_self(  ), arg );
@@ -24,6 +27,9 @@ Thread( void *arg )
 	if ( arg != arg2 )
 		test_fail( __FILE__, __LINE__, "set vs get specific", 0 );
 
+	retval = PAPI_unregister_thread(  );
+	if ( retval != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", retval );
 	return ( NULL );
 }
 
