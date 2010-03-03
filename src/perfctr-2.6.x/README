@@ -13,7 +13,7 @@ many modern processors. Supported processors are:
 - All Intel x86 family 5, 6, and 15 processors, i.e., Pentium,
   Pentium MMX, Pentium Pro, Pentium II, Pentium III, Pentium M,
   Pentium 4, Core, Core 2, Atom, and Core i7, including Celeron and Xeon versions.
-- The AMD K7, K8, and Family 10h processor families.
+- The AMD K7, K8, Family 10h, and Family 11h processor families.
 - Cyrix 6x86MX, MII, and III.
 - VIA C3 (Cyrix III).
 - Centaur WinChip C6/2/3.
@@ -99,7 +99,7 @@ and its usage. To subscribe to perfctr-devel, visit
 
 Licensing
 ---------
-Copyright (C) 1999-2009  Mikael Pettersson <mikpe@it.uu.se>
+Copyright (C) 1999-2010  Mikael Pettersson <mikpe@it.uu.se>
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public

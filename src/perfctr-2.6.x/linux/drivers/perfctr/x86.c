@@ -1,7 +1,7 @@
 /* $Id$
  * x86/x86_64 performance-monitoring counters driver.
  *
- * Copyright (C) 1999-2009  Mikael Pettersson
+ * Copyright (C) 1999-2010  Mikael Pettersson
  */
 #include <linux/version.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
@@ -1009,7 +1009,11 @@ static int p4_check_control(struct perfctr_cpu_state *state, cpumask_t *cpumask)
 		return -EPERM;
 	state->k1.id = new_id();
 	if (nrctrs != 0 && cpumask != NULL)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,32)
+		cpumask_complement(cpumask, &perfctr_cpus_forbidden_mask);
+#else
 		cpus_complement(*cpumask, perfctr_cpus_forbidden_mask);
+#endif
 	return 0;
 }
 
@@ -1656,6 +1660,8 @@ static int __init intel_p6_init(void)
 	case 26:	/* Core i7 */
 	case 28:	/* Atom */
 	case 29:	/* Core 2 based Xeon 7400 */
+	case 44:	/* Core i7-980X (Gulftown) */
+	case 46:	/* Nehalem-based Xeon 7500 */
 		rdmsr_low(MSR_IA32_MISC_ENABLE, misc_enable);
 		if (!(misc_enable & MSR_IA32_MISC_ENABLE_PERF_AVAIL))
 			return -ENODEV;
@@ -1678,6 +1684,8 @@ static int __init intel_p6_init(void)
 		p6_nr_ffcs = 3;
 		break;
 	case 26:	/* Core i7 */
+	case 44:	/* Core i7-980X (Gulftown) */
+	case 46:	/* Nehalem-based Xeon 7500 */
 		perfctr_cpu_name = corei7_name;
 		p6_has_separate_enables = 1;
 		p6_nr_ffcs = 3;
@@ -1771,6 +1779,8 @@ static int __init intel_p6_init(void)
 		perfctr_info.cpu_type = PERFCTR_X86_INTEL_CORE2;
 		break;
 	case 26:	/* Core i7 */
+	case 44:	/* Core i7-980X (Gulftown) */
+	case 46:	/* Nehalem-based Xeon 7500 */
 		perfctr_info.cpu_type = PERFCTR_X86_INTEL_COREI7;
 		break;
 	case 28:	/* Atom */
@@ -1806,6 +1816,8 @@ static int __init intel_p6_init(void)
 		case 26:	/* Core i7 */
 		case 28:	/* Atom */
 		case 29:	/* Core 2 based Xeon 7400 */
+		case 44:	/* Core i7-980X (Gulftown) */
+		case 46:	/* Nehalem-based Xeon 7500 */
 			lvtpc_reinit_needed = 1;
 		}
 	}
@@ -1921,7 +1933,7 @@ static int __init amd_multicore_init(void)
 
 static int __init amd_init(void)
 {
-	static char amd_name[] __initdata = "AMD K7/K8/Fam10h";
+	static char amd_name[] __initdata = "AMD K7/K8/Fam10h/Fam11h";
 
 	if (!cpu_has_tsc)
 		return -ENODEV;
@@ -1940,6 +1952,7 @@ static int __init amd_init(void)
 			return -ENODEV;
 		break;
 	case 16:
+	case 17:
 		is_fam10h = 1;
 		perfctr_info.cpu_type = PERFCTR_X86_AMD_FAM10H;
 		if (amd_multicore_init() < 0)
@@ -2340,7 +2353,7 @@ static void release_lapic_nmi(void)
 	on_each_cpu(setup_apic_nmi_watchdog, NULL, 1);
 #endif
 }
-#endif
+#endif	/* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,19) */
 
 #else	/* CONFIG_X86_LOCAL_APIC */
 static inline int reserve_lapic_nmi(void) { return 0; }

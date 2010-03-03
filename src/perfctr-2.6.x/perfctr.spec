@@ -1,6 +1,6 @@
 Name: perfctr
 Summary: Linux performance monitoring counters software
-Version: 2.6.39
+Version: 2.6.40
 Release: 1
 License: LGPL
 Group: Development/Tools

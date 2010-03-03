@@ -3,6 +3,13 @@ $Id$
 RELEASE NOTES
 =============
 
+Version 2.6.40, 2010-01-30
+- x86: add comment after #endif terminating big kernel >= 2.6.19 block
+- x86: handle cpumask API change in kernel 2.6.32
+- x86: recognize Intel Family 6 Model 2Eh processors (Nehalem Xeon 7500).
+- x86: recognize Intel Family 6 Model 2Ch processors (i7-980X, Gulftown).
+- x86: recognize AMD Family 11h processors, support them as 10h ones.
+
 Version 2.6.39, 2009-06-11
 - ppc and arm: updates to match perfctr_cpu_update_control() changes,
   add missing #include <asm/cputype.h> to arm.c

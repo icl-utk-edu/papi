@@ -6,6 +6,13 @@ $Id$
 [High-level changes in reverse chronological order. Detailed
  driver changes are in linux/drivers/perfctr/RELEASE-NOTES.]
 
+Version 2.6.40, 2010-01-30
+- Preliminary support for Intel Xeon 7500 (Nehalem-based) processors.
+- Preliminary support for Intel i7-980X Gulftown processors.
+- Added support for AMD Family 11h processors (compatible with fam 10h).
+- Updated kernel support: 2.6.32, 2.6.31, 2.6.18-164.11.1.el5 and
+  2.6.18-164.el5 (RHEL5), 2.6.9-89.0.19.EL (RHEL4).
+
 Version 2.6.39, 2009-06-11
 - Updated driver's AMD multicore detection code to actually work.
   Tested on Istanbul and Shanghai Opterons.
