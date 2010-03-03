@@ -44,6 +44,9 @@ Thread( void *arg )
 	long long **values;
 	long long elapsed_us, elapsed_cyc;
 	char event_name[PAPI_MAX_STR_LEN];
+	retval = PAPI_register_thread(  );
+	if ( retval != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_register_thread", retval );
 
 	printf( "Thread 0x%x started\n", ( int ) pthread_self(  ) );
 
@@ -91,12 +94,9 @@ Thread( void *arg )
 
 	free_test_space( values, num_tests );
 
-#ifdef TEST_UNREGISTER
 	retval = PAPI_unregister_thread(  );
 	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
-#endif
-
+		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", retval );
 	return ( NULL );
 }
 
