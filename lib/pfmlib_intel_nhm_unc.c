@@ -71,7 +71,27 @@ pfm_nhm_unc_detect(void *this)
 	switch(model) {
 		case 26: /* Nehalem */
 		case 30:
+		case 31:
 			  break;
+		default:
+			return PFM_ERR_NOTSUPP;
+	}
+	return PFM_SUCCESS;
+}
+
+static int
+pfm_wsm_unc_detect(void *this)
+{
+	int ret;
+	int family, model;
+
+	ret = pfm_intel_x86_detect(&family, &model);
+	if (ret != PFM_SUCCESS)
+
+	if (family != 6)
+		return PFM_ERR_NOTSUPP;
+
+	switch(model) {
 		case 37: /* Westmere */
 		case 44:
 			  break;
@@ -335,7 +355,7 @@ pfmlib_pmu_t intel_wsm_unc_support={
 	.pe			= intel_wsm_unc_pe,
 	.atdesc			= nhm_unc_mods,
 
-	.pmu_detect		= pfm_nhm_unc_detect,
+	.pmu_detect		= pfm_wsm_unc_detect,
 	.get_event_encoding	= pfm_nhm_unc_get_encoding,
 	.get_event_first	= pfm_intel_x86_get_event_first,
 	.get_event_next		= pfm_intel_x86_get_event_next,
