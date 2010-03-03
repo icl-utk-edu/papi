@@ -93,7 +93,6 @@ typedef enum {
 #define AMD64_ATTR_C	6
 #define AMD64_ATTR_R	7
 #define AMD64_ATTR_P	8
-#define AMD64_ATTR_F	9
 
 #define _AMD64_ATTR_U  (1 << AMD64_ATTR_U)
 #define _AMD64_ATTR_K  (1 << AMD64_ATTR_K)
@@ -104,7 +103,6 @@ typedef enum {
 #define _AMD64_ATTR_G  (1 << AMD64_ATTR_G)
 #define _AMD64_ATTR_R  (1 << AMD64_ATTR_R)
 #define _AMD64_ATTR_P  (1 << AMD64_ATTR_P)
-#define _AMD64_ATTR_F  (1 << AMD64_ATTR_F)
 
 #define AMD64_BASIC_ATTRS \
 	(_AMD64_ATTR_I|_AMD64_ATTR_E|_AMD64_ATTR_C|_AMD64_ATTR_U|_AMD64_ATTR_K)
