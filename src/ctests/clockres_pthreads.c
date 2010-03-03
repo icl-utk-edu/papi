@@ -12,6 +12,9 @@ void *
 pthread_main( void *arg )
 {
 	( void ) arg;
+	int retval = PAPI_register_thread(  );
+	if ( retval != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_register_thread", retval );
 #if 0
 	struct vperfctr *ptr = vperfctr_open(  );
 	long long *lcyca;
@@ -40,6 +43,9 @@ pthread_main( void *arg )
 			abort(  );
 #endif
 	clockcore(  );
+	retval = PAPI_unregister_thread(  );
+	if ( retval != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", retval );
 	return ( NULL );
 }
 
