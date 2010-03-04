@@ -120,6 +120,7 @@ extern pfm_pmu_support_t sparc_support;
 extern pfm_pmu_support_t cell_support;
 extern pfm_pmu_support_t intel_atom_support;
 extern pfm_pmu_support_t intel_nhm_support;
+extern pfm_pmu_support_t intel_wsm_support;
 
 static inline unsigned int pfm_num_masks(int e)
 {
