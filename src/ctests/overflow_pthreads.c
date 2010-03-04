@@ -52,6 +52,10 @@ Thread( void *arg )
 	long long elapsed_us, elapsed_cyc;
 	char event_name[PAPI_MAX_STR_LEN];
 
+	retval = PAPI_register_thread(  );
+	if ( retval != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_register_thread", retval );
+
 	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
 	   PAPI_TOT_INS, depends on the availability of the event on the 
 	   platform */
@@ -106,7 +110,9 @@ Thread( void *arg )
 				elapsed_cyc );
 	}
 	free_test_space( values, num_tests );
-	pthread_exit( NULL );
+	retval = PAPI_unregister_thread(  );
+	if ( retval != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", retval );
 	return ( NULL );
 }
 
