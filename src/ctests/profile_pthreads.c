@@ -23,6 +23,9 @@ Thread( void *arg )
 	const PAPI_hw_info_t *hw_info = PAPI_get_hardware_info(  );
 	char event_name[PAPI_MAX_STR_LEN];
 
+	retval = PAPI_register_thread(  );
+	if ( retval != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_register_thread", retval );
 	profbuf = ( unsigned short * ) malloc( length * sizeof ( unsigned short ) );
 	if ( profbuf == NULL )
 		exit( 1 );
@@ -102,8 +105,9 @@ Thread( void *arg )
 		test_fail( __FILE__, __LINE__, "No information in buffers", 1 );
 	free_test_space( values, num_tests );
 
-	pthread_exit( NULL );
-
+	retval = PAPI_unregister_thread(  );
+	if ( retval != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", retval );
 	return ( NULL );
 }
 
