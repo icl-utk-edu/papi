@@ -30,16 +30,16 @@ loop( long n )
 void *
 thread( void *arg )
 {
-	int eventset, ret;
+	( void ) arg;			 /*unused */
+	int eventset = PAPI_NULL;
 	long long values[PAPI_MPX_DEF_DEG];
 
-	( void ) arg;
-
-	eventset = PAPI_NULL;
+	int ret = PAPI_register_thread(  );
+	if ( ret != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_register_thread", ret );
 	ret = PAPI_create_eventset( &eventset );
-	if ( ret != PAPI_OK ) {
+	if ( ret != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", ret );
-	}
 
 	printf( "Event set %d created\n", eventset );
 
@@ -83,7 +83,10 @@ thread( void *arg )
 		test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", ret );
 	}
 
-	pthread_exit( NULL );
+	ret = PAPI_unregister_thread(  );
+	if ( ret != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", ret );
+	return ( NULL );
 }
 
 int
@@ -174,8 +177,7 @@ main( int argc, char **argv )
 	}
 
 	printf( "Done." );
-
 	test_pass( __FILE__, NULL, 0 );
-
+	pthread_exit( NULL );
 	exit( 0 );
 }

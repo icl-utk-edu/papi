@@ -150,7 +150,7 @@ static struct itimerval itime;
 static const struct itimerval itimestop = { {0, 0}, {0, 0} };
 static struct sigaction oaction;
 #else
-static MMRESULT mpxTimerID;     /**< unique ID for referencing this timer */
+static MMRESULT mpxTimerID;		/**< unique ID for referencing this timer */
 static int mpx_time;
 #endif
 
@@ -1164,10 +1164,13 @@ MPX_shutdown( void )
 	mpx_shutdown_itimer(  );
 	mpx_restore_signal(  );
 
-	if ( tlist )
-		papi_free( tlist );
-
-	tlist = NULL;
+	if ( tlist ) {
+		Threadlist *t;
+		for ( t = tlist; t != NULL; t = t->next ) {
+			papi_free( t );
+		}
+		tlist = NULL;
+	}
 }
 
 int
