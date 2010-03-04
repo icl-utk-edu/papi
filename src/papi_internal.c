@@ -746,13 +746,8 @@ add_native_events( EventSetInfo_t * ESI, int *nevt, int size,
 						( "update_control_state failed to re-establish working events!" );
 					return retval2;
 				}
-				retval2 = update_overflow( ESI );
-				if ( retval2 != PAPI_OK )
-					PAPIERROR
-						( "update_overflow failed to re-establish overflows!" );
 				return ( retval );
 			}
-			update_overflow( ESI );
 			return 1;
 		} else {
 			retval = -1;
@@ -892,6 +887,8 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 
 	/* Bump the number of events */
 	ESI->NumberOfEvents++;
+	/* reinstate the overflows if any */
+	update_overflow( ESI );
 
 	return ( retval );
 }
