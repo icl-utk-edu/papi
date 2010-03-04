@@ -29,6 +29,7 @@ main( int argc, char **argv )
 		retval = PAPI_library_init( PAPI_VER_CURRENT );
 		if ( retval != PAPI_VER_CURRENT )
 			test_fail( __FILE__, __LINE__, "forked PAPI_library_init", retval );
+		exit( 0 );
 	} else {
 		wait( &status );
 		if ( WEXITSTATUS( status ) != 0 )
