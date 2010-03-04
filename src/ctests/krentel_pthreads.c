@@ -85,9 +85,6 @@ do_cycles( long num, int len )
 void
 launch_timer( int *EventSet )
 {
-	if ( PAPI_register_thread(  ) != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_register_thread failed", 1 );
-
 	if ( PAPI_create_eventset( EventSet ) != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_create_eventset failed", 1 );
 
@@ -110,6 +107,9 @@ my_thread( void *v )
 	int EventSet = PAPI_NULL;
 	long long value;
 
+	int retval = PAPI_register_thread(  );
+	if ( retval != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_register_thread", retval );
 	pthread_setspecific( key, v );
 
 	count[num] = 0;
@@ -125,6 +125,11 @@ my_thread( void *v )
 	}
 
 	PAPI_stop( EventSet, &value );
+	PAPI_remove_event( EventSet, EVENT );
+	PAPI_destroy_eventset( &EventSet );
+	retval = PAPI_unregister_thread(  );
+	if ( retval != PAPI_OK )
+		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", retval );
 	return ( NULL );
 }
 
@@ -168,5 +173,6 @@ main( int argc, char **argv )
 	printf( "done\n" );
 
 	test_pass( __FILE__, NULL, 0 );
+	pthread_exit( NULL );
 	return ( 0 );
 }
