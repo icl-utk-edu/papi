@@ -4,6 +4,8 @@ functionality for 2 slave pthreads */
 #include <pthread.h>
 #include "papi_test.h"
 
+static int processing = 1;
+
 void *
 Thread( void *arg )
 {
@@ -27,6 +29,36 @@ Thread( void *arg )
 	if ( arg != arg2 )
 		test_fail( __FILE__, __LINE__, "set vs get specific", 0 );
 
+	while ( processing ) {
+		if ( *( ( int * ) arg ) == 500000 ) {
+			sleep( 1 );
+			int i;
+			PAPI_all_thr_spec_t data;
+			data.num = 10;
+			data.id =
+				( unsigned long * ) malloc( ( size_t ) data.num *
+											sizeof ( unsigned long ) );
+			data.data =
+				( void ** ) malloc( ( size_t ) data.num * sizeof ( void * ) );
+
+			retval =
+				PAPI_get_thr_specific( PAPI_USR1_TLS | PAPI_TLS_ALL_THREADS,
+									   ( void ** ) &data );
+			if ( retval != PAPI_OK )
+				test_fail( __FILE__, __LINE__, "PAPI_get_thr_specific",
+						   retval );
+
+			if ( data.num != 5 )
+				test_fail( __FILE__, __LINE__, "data.num != 5", 0 );
+
+			for ( i = 0; i < data.num; i++ )
+				printf( "Entry %d, Thread 0x%lx, Data Pointer %p, Value %d\n",
+						i, data.id[i], data.data[i], *( int * ) data.data[i] );
+
+			processing = 0;
+		}
+	}
+
 	retval = PAPI_unregister_thread(  );
 	if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", retval );
@@ -37,10 +69,9 @@ int
 main( int argc, char **argv )
 {
 	pthread_t e_th, f_th, g_th, h_th;
-	int i, flops1, flops2, flops3, flops4, flops5;
+	int flops1, flops2, flops3, flops4, flops5;
 	int retval, rc;
 	pthread_attr_t attr;
-	PAPI_all_thr_spec_t data;
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
@@ -101,26 +132,6 @@ main( int argc, char **argv )
 	pthread_join( g_th, NULL );
 	pthread_join( f_th, NULL );
 	pthread_join( e_th, NULL );
-
-	data.num = 10;
-	data.id =
-		( unsigned long * ) malloc( ( size_t ) data.num *
-									sizeof ( unsigned long ) );
-	data.data = ( void ** ) malloc( ( size_t ) data.num * sizeof ( void * ) );
-
-	retval =
-		PAPI_get_thr_specific( PAPI_USR1_TLS | PAPI_TLS_ALL_THREADS,
-							   ( void ** ) &data );
-	if ( retval != PAPI_OK )
-		test_fail( __FILE__, __LINE__, "PAPI_get_thr_specific", retval );
-
-	if ( data.num != 5 )
-		test_fail( __FILE__, __LINE__, "data.num != 5", 0 );
-
-	for ( i = 0; i < data.num; i++ ) {
-		printf( "Entry %d, Thread 0x%lx, Data Pointer %p, Value %d\n",
-				i, data.id[i], data.data[i], *( int * ) data.data[i] );
-	}
 
 	test_pass( __FILE__, NULL, 0 );
 	pthread_exit( NULL );
