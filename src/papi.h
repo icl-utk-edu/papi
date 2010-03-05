@@ -21,6 +21,55 @@
 #ifndef _PAPI
 #define _PAPI
 
+/**
+ * @mainpage PAPI
+ *  
+ * @section papi_intro Introduction
+ * The PAPI Performance Application Programming Interface provides machine and 
+ * operating system independent access to hardware performance counters found 
+ * on most modern processors. 
+ * Any of over 100 preset events can be counted through either a simple high 
+ * level programming interface or a more complete low level interface from 
+ * either C or Fortran. 
+ * A list of the function calls in these interfaces is given below, 
+ * with references to other pages for more complete details. 
+ * For general information on the Fortran interface see:  PAPIF(3)
+ *
+ * @section papi_high_api High Level Functions
+ * A simple interface for instrumenting end-user applications. 
+ * Fully supported on both C and Fortran. 
+ * See individual functions for details on usage.
+ * 
+ *	@ref high_api
+ * 
+ * Note that the high-level interface is self-initializing. 
+ * You can mix high and low level calls, but you @b must call either 
+ * @ref PAPI_library_init() or a high level routine before calling a low level routine.
+ *
+ * @section papi_low_api Low Level Functions
+ * Advanced interface for all applications and performance tools.
+ * Some functions may be implemented only for C or Fortran.
+ * See individual functions for details on usage and support.
+ * 
+ * @ref low_api
+ * 
+ * @section papi_util PAPI Utility Commands
+ * <ul> 
+ *		<li> @ref papi_avail - provides availability and detail information for PAPI preset events
+ *		<li> @ref papi_clockres - provides availability and detail information for PAPI preset events
+ *		<li> @ref papi_cost - provides availability and detail information for PAPI preset events
+ *		<li> @ref papi_command_line - executes PAPI preset or native events from the command line
+ *		<li> @ref papi_decode -	decodes PAPI preset events into a csv format suitable for 
+ *							PAPI_encode_events
+ *		<li> @ref papi_event_chooser -	given a list of named events, lists other events 
+ *										that can be counted with them
+ *		<li> @ref papi_mem_info -	provides information on the memory architecture 
+									of the current processor
+ *		<li> @ref papi_native_avail - provides detailed information for PAPI native events 
+ * </ul>
+ * @see The PAPI Website http://icl.cs.utk.edu/papi
+ */
+
 /* Definition of PAPI_VERSION format.  Note that each of the four 
  * components _must_ be less than 256.  Also, the PAPI_VER_CURRENT
  * masks out the revision and increment.  Any revision change is supposed 
@@ -51,7 +100,8 @@ extern "C"
 #include <limits.h>
 #include "papiStdEventDefs.h"
 
-/** @defgroup ret_codes Return Codes
+/** @internal 
+	@defgroup ret_codes Return Codes
 	
 All of the functions contained in the PerfAPI return standardized error codes.
 Values greater than or equal to zero indicate success, less than zero indicates
@@ -90,15 +140,17 @@ failure.
 #define PAPI_THREAD_LEVEL_INITED 4      /* Threads have been inited */
 /* @} */
 
-/** @defgroup consts Constants
+/** @internal 
+@defgroup consts Constants
 All of the functions in the PerfAPI should use the following set of constants.
 @{
 */
 
 #define PAPI_NULL       -1      /**<A nonexistent hardware event used as a placeholder */
 
-/** @defgroup domain_defns Domain definitions 
- * @{ */
+/** @internal  
+	@defgroup domain_defns Domain definitions 
+ 	@{ */
 
 #define PAPI_DOM_USER    0x1    /**< User context counted */
 #define PAPI_DOM_MIN     PAPI_DOM_USER
@@ -113,7 +165,8 @@ All of the functions in the PerfAPI should use the following set of constants.
                                            meaningful. i.e. SGI HUB counters */
 /* @} */
 
-/** @defgroup thread_defns Thread Definitions 
+/** @internal 
+ *	@defgroup thread_defns Thread Definitions 
  *		We define other levels in papi_internal.h
  *		for internal PAPI use, so if you change anything
  *		make sure to look at both places -KSL
@@ -129,7 +182,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_TLS_ALL_THREADS	0x10
 /* @} */
 
-/** @defgroup locking_defns Locking Mechanisms defines 
+/** @internal 
+ *	@defgroup locking_defns Locking Mechanisms defines 
  *	@{ */
 #define PAPI_USR1_LOCK          	0x0    /**< User controlled locks */
 #define PAPI_USR2_LOCK          	0x1    /**< User controlled locks */
@@ -142,7 +196,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 /* You really shouldn't use this, use PAPI_get_opt(PAPI_MAX_MPX_CTRS) */
 #define PAPI_MPX_DEF_DEG 32			   /* Maximum number of counters we can mpx */
 
-/** @defgroup papi_vendors  Vendor definitions 
+/**	@internal 
+	@defgroup papi_vendors  Vendor definitions 
 	@{ */
 #define PAPI_VENDOR_UNKNOWN 0
 #define PAPI_VENDOR_INTEL   1
@@ -156,8 +211,9 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_VENDOR_SICORTEX 9
 /* @} */
 
-/** @defgroup granularity_defns Granularity definitions 
- * @{ */
+/** @internal 
+ *	@defgroup granularity_defns Granularity definitions 
+ *	@{ */
 
 #define PAPI_GRN_THR     0x1    /**< PAPI counters for each individual thread */
 #define PAPI_GRN_MIN     PAPI_GRN_THR
@@ -183,7 +239,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 									      handler randomized */
 #endif
 
-/** @defgroup evt_states States of an EventSet 
+/** @internal 
+	@defgroup evt_states States of an EventSet 
 	@{ */
 #define PAPI_STOPPED      0x01  /**< EventSet stopped */
 #define PAPI_RUNNING      0x02  /**< EventSet running */
@@ -195,14 +252,16 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_ATTACHED	  0x80  /**< EventSet is attached to another thread/process */
 /* @} */
 
-/** @defgroup error_predef Error predefines 
+/** @internal 
+	@defgroup error_predef Error predefines 
 	@{ */
 #define PAPI_QUIET       0      /**< Option to turn off automatic reporting of return codes < 0 to stderr. */
 #define PAPI_VERB_ECONT  1      /**< Option to automatically report any return codes < 0 to stderr and continue. */
 #define PAPI_VERB_ESTOP  2      /**< Option to automatically report any return codes < 0 to stderr and exit. */
 /* @} */
 
-/** @defgroup profile_defns Profile definitions 
+/** @internal 
+	@defgroup profile_defns Profile definitions 
 	@{ */
 #define PAPI_PROFIL_POSIX     0x0        /**< Default type of profiling, similar to 'man profil'. */
 #define PAPI_PROFIL_RANDOM    0x1        /**< Drop a random 25% of the samples. */
@@ -223,14 +282,16 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_OVERFLOW_HARDWARE 0x80	/**< Using Hardware */
 /* @} */
 
-/** @defgroup mpx_defns Multiplex flags definitions 
+/** @internal 
+  *	@defgroup mpx_defns Multiplex flags definitions 
   * @{ */
 #define PAPI_MULTIPLEX_DEFAULT	0x0	/**< Use whatever method is available, prefer kernel of course. */
 #define PAPI_MULTIPLEX_FORCE_SW 0x1	/**< Force PAPI multiplexing instead of kernel */
 /* @} */
 
-/** @defgroup option_defns Option definitions 
- @{ */
+/** @internal 
+	@defgroup option_defns Option definitions 
+	@{ */
 #define PAPI_INHERIT_ALL  1     /**< The flag to this to inherit all children's counters */
 #define PAPI_INHERIT_NONE 0     /**< The flag to this to inherit none of the children's counters */
 
@@ -364,8 +425,8 @@ read the documentation carefully.  */
 
 	typedef unsigned long PAPI_thread_id_t;
 
-/** */
-   typedef struct _papi_all_thr_spec {
+	/** */
+	typedef struct _papi_all_thr_spec {
      int num;
      PAPI_thread_id_t *id;
      void **data;
@@ -380,7 +441,7 @@ read the documentation carefully.  */
 	typedef char *caddr_t;
 #endif
 
-/** */
+	/** */
    typedef struct _papi_sprofil {
       void *pr_base;          /**< buffer base */
       unsigned pr_size;       /**< buffer size */
@@ -481,7 +542,7 @@ read the documentation carefully.  */
 
    typedef int (*PAPI_debug_handler_t) (int code);
 
-/** */
+   /** */
    typedef struct _papi_debug_option {
       int level;
       PAPI_debug_handler_t handler;
@@ -504,7 +565,7 @@ read the documentation carefully.  */
       PAPI_address_map_t address_info;
    } PAPI_exe_info_t;
 
-/** */
+   /** */
    typedef struct _papi_shared_lib_info {
       PAPI_address_map_t *map;
       int count;
@@ -566,7 +627,7 @@ read the documentation carefully.  */
       PAPI_mh_level_t level[PAPI_MAX_MEM_HIERARCHY_LEVELS];
    } PAPI_mh_info_t;
 
-/** */
+/** Hardware info structure */
    typedef struct _papi_hw_info {
       int ncpu;                     /**< Number of CPUs per NUMA Node */
       int threads;                  /**< Number of hdw threads per core */
@@ -587,21 +648,20 @@ read the documentation carefully.  */
       PAPI_mh_info_t mem_hierarchy;  /**< PAPI memory heirarchy description */
    } PAPI_hw_info_t;
 
-/** @struct _papi_attach_option */
+/** */
    typedef struct _papi_attach_option {
       int eventset;
       unsigned long tid;
    } PAPI_attach_option_t;
 
-/** @struct _papi_multiplex_option */
+/** */
    typedef struct _papi_multiplex_option {
       int eventset;
       int ns;
       int flags;
    } PAPI_multiplex_option_t;
 
-   /** @struct _papi_addr_range_option
-	   @brief address range specification for range restricted counting 
+   /** address range specification for range restricted counting 
 	   if both are zero, range is disabled  */
    typedef struct _papi_addr_range_option { 
       int eventset;           /**< eventset to restrict */
@@ -635,8 +695,7 @@ read the documentation carefully.  */
 		PAPI_addr_range_option_t addr;
 	} PAPI_option_t;
 
-/** @struct _dmem_t
-    @brief A pointer to the following is passed to PAPI_get_dmem_info() */
+/** A pointer to the following is passed to PAPI_get_dmem_info() */
 	typedef struct _dmem_t {
 	  long long peak;
 	  long long size;
@@ -668,8 +727,14 @@ read the documentation carefully.  */
 #define PAPIF_DMEM_PTE        12
 #define PAPIF_DMEM_MAXVAL     12
 
-/** @struct event_info
-    @brief This structure is the event information that is exposed to the user through the API.
+/* MAX_TERMS is the current max value of MAX_COUNTER_TERMS as defined in SUBSTRATEs */
+/* This definition also is HORRIBLE and should be replaced by a dynamic value. -pjm */
+#ifdef _BGP
+#define PAPI_MAX_INFO_TERMS  19		   /* should match PAPI_MAX_COUNTER_TERMS defined in papi_internal.h */
+#else
+#define PAPI_MAX_INFO_TERMS 12
+#endif
+/** @brief This structure is the event information that is exposed to the user through the API.
 
    The same structure is used to describe both preset and native events.
    WARNING: This structure is very large. With current definitions, it is about 2660 bytes.
@@ -685,14 +750,6 @@ read the documentation carefully.  */
       and presenting information for each native event in turn.
    The various fields and their usage is discussed below.
 */
-/* MAX_TERMS is the current max value of MAX_COUNTER_TERMS as defined in SUBSTRATEs */
-/* This definition also is HORRIBLE and should be replaced by a dynamic value. -pjm */
-#ifdef _BGP
-#define PAPI_MAX_INFO_TERMS  19		   /* should match PAPI_MAX_COUNTER_TERMS defined in papi_internal.h */
-#else
-#define PAPI_MAX_INFO_TERMS 12
-#endif
-
    typedef struct event_info {
       unsigned int event_code;               /**< preset (0x8xxxxxxx) or native (0x4xxxxxxx) event code */
       unsigned int event_type;               /**< event type or category for preset events only */
@@ -810,7 +867,7 @@ read the documentation carefully.  */
    int PAPI_save(void);
    */
 
-   /** @defgroup high_api  The High Level API
+/**@defgroup high_api  The High Level API 
 
    The simple interface implemented by the following eight routines
    allows the user to access and count specific hardware events from

@@ -1,4 +1,31 @@
-/* This file performs the following test: hardware info and which events are available */
+/**
+  * @file avail.c
+  * @page papi_avail
+  *	@section Name
+  *	papi_avail - provides availability and detail information for PAPI preset events. 
+  * 
+  *	@section Synopsis
+  *	papi_avail [-adht] [-e event] 
+  *
+  *	@section Description
+  *	papi_avail is a PAPI utility program that reports information about the 
+  *	current PAPI installation and supported preset events. 
+  *	Using the -e option, it will also display information about specific native events. 
+  *
+  *	@section Options
+  * <ul>
+  *		<li>-a	 Display only the available PAPI preset events.
+  *		<li>-d	Display PAPI preset event information in a more detailed format.
+  *		<li>-h	Display help information about this utility.
+  *		<li>-t	Display the PAPI preset event information in a tabular format. This is the default.
+  *		<li>-e <event>	Display detailed event information for the named event. 
+  *			This event can be either a preset or a native event. 
+  *	</ul>
+  *
+  *	@section Bugs
+  *	There are no known bugs in this utility. 
+  *	If you find a bug, it should be reported to the PAPI Mailing List at <ptools-perfapi@ptools.org>.
+  */
 
 #include "papi_test.h"
 extern int TESTS_QUIET;				   /* Declared in test_utils.c */

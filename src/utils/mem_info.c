@@ -4,6 +4,27 @@
  * Author: Kevin London
  *         london@cs.utk.edu
  */
+/** @file mem_info.c
+  *	@page papi_mem_info
+  *	@section NAME
+  *		papi_mem_info - provides information on the memory architecture of the current processor. 
+  *
+  *	@section Synopsis
+  *
+  *	@section Description
+  *		papi_mem_info is a PAPI utility program that reports information about 
+  *		the cache memory architecture of the current processor, including number, 
+  *		types, sizes and associativities of instruction and data caches and 
+  *		Translation Lookaside Buffers.
+  *
+  *	@section Options
+  *		This utility has no command line options.
+  *
+  *	@section Bugs
+  *		There are no known bugs in this utility. 
+  *		If you find a bug, it should be reported to the 
+  *		PAPI Mailing List at <ptools-perfapi@ptools.org>. 
+  */
 #include "papi_test.h"
 extern int TESTS_QUIET;				   /*Declared in test_utils.c */
 

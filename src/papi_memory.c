@@ -106,7 +106,6 @@ _papi_realloc( char *file, int line, void *ptr, size_t size )
 	return ( mem_ptr->ptr );
 }
 
-/** */
 void *
 _papi_calloc( char *file, int line, size_t nmemb, size_t size )
 {
@@ -118,7 +117,6 @@ _papi_calloc( char *file, int line, size_t nmemb, size_t size )
 	return ( ptr );
 }
 
-/** */
 void *
 _papi_malloc( char *file, int line, size_t size )
 {
@@ -163,7 +161,6 @@ _papi_malloc( char *file, int line, size_t size )
 	return ( NULL );
 }
 
-/** */
 char *
 _papi_strdup( char *file, int line, const char *s )
 {

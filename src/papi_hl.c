@@ -2,17 +2,15 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
-* File:    papi_hl.c
-* CVS:     $Id$
-* Author:  Philip Mucci
-*          mucci@cs.utk.edu
-* Mods:      Kevin London
+/** 
+* @file		papi_hl.c
+* CVS:		$Id$
+* @author	Philip Mucci
+*			mucci@cs.utk.edu
+* @author	Kevin London
 *           london@cs.utk.edu
-* Mods:    dan terpstra
-*          terpstra@cs.utk.edu
-* Mods:    <your name here>
-*          <your email address>
+* @author	dan terpstra
+*			terpstra@cs.utk.edu
 */
 
 /* This file contains the 'high level' interface to PAPI. 
@@ -162,19 +160,44 @@ _internal_cleanup_hl_info( HighLevelInfo * state )
 	return;
 }
 
-/*
- * The next three calls all use _hl_rate_calls() to return an instruction rate value.
- * PAPI_flips returns information related to floating point instructions using 
- * the PAPI_FP_INS event. This is intended to measure instruction rate through the 
- * floating point pipe with no massaging.
- * PAPI_flops return information related to theoretical floating point operations
- * rather than simple instructions. It uses the PAPI_FP_OPS event which attempts to 
- * 'correctly' account for, e.g., FMA undercounts and FP Store overcounts, etc.
- * PAPI_ipc returns information on the instruction rate using the PAPI_TOT_INS event.
+/** @brief simplified call to get Mflips/s (floating point instruction rate), real and processor time 
+  *
+  * @param *rtime
+  *		total realtime since the first PAPI_flips() call
+  *	@param *ptime
+  *		total process time since the first PAPI_flips() call
+  *	@param *flpins
+  *		total floating point instructions since the first call
+  *  
+  *	@retval PAPI_EINVAL 
+  *		The counters were already started by something other than: PAPI_flips() or PAPI_flops().
+  *	@retval PAPI_ENOEVNT 
+  *		The floating point operations, floating point instructions or total cycles 
+  *		event does not exist.
+  *	@retval PAPI_ENOMEM 
+  *		Insufficient memory to complete the operation. 
+  *
+  * The first call to PAPI_flips() will initialize the PAPI High Level interface, 
+  * set up the counters to monitor @ref PAPI_FP_INS and @ref PAPI_TOT_CYC events 
+  * and start the counters. 
+  * Subsequent calls will read the counters and return total real time, 
+  * total process time, total floating point instructions since the start of the 
+  * measurement and the Mflip/s rate since latest call to PAPI_flips(). 
+  * A call to PAPI_stop_counters()  will stop the counters from running and then 
+  * calls such as PAPI_start_counters()  can safely be used. 
+  *
+  * @internal
+  * The next three calls all use _hl_rate_calls() to return an instruction rate value.
+  * PAPI_flips returns information related to floating point instructions using 
+  * the PAPI_FP_INS event. This is intended to measure instruction rate through the 
+  * floating point pipe with no massaging.
+  * PAPI_flops return information related to theoretical floating point operations
+  * rather than simple instructions. It uses the PAPI_FP_OPS event which attempts to 
+  * 'correctly' account for, e.g., FMA undercounts and FP Store overcounts, etc.
+  *
+  * @see PAPI_stop_counters() PAPI_ipc() PAPI_set_opt()
  */
-int
-PAPI_flips( float *rtime, float *ptime, long long *flpins, float *mflips )
-{
+int PAPI_flips( float *rtime, float *ptime, long long *flpins, float *mflips ) {
 	HighLevelInfo *state = NULL;
 	int retval;
 
@@ -189,9 +212,44 @@ PAPI_flips( float *rtime, float *ptime, long long *flpins, float *mflips )
 	return ( PAPI_OK );
 }
 
-int
-PAPI_flops( float *rtime, float *ptime, long long *flpops, float *mflops )
-{
+/** @brief simplified call to get Mflops/s (floating point instruction rate), real and processor time 
+  *
+  * @param *rtime
+  *		total realtime since the first PAPI_flops() call
+  *	@param *ptime
+  *		total process time since the first PAPI_flops() call
+  *	@param *flpins
+  *		total floating point instructions since the first call
+  * 
+  *	@retval PAPI_EINVAL 
+  *		The counters were already started by something other than: PAPI_flips() or PAPI_flops().
+  *	@retval PAPI_ENOEVNT 
+  *		The floating point operations, floating point instructions or total cycles 
+  *		event does not exist.
+  *	@retval PAPI_ENOMEM 
+  *		Insufficient memory to complete the operation. 
+  *
+  * The first call to PAPI_flops() will initialize the PAPI High Level interface, 
+  * set up the counters to monitor @ref PAPI_FP_INS and @ref PAPI_TOT_CYC events 
+  * and start the counters. 
+  * Subsequent calls will read the counters and return total real time, 
+  * total process time, total floating point instructions since the start of the 
+  * measurement and the Mflip/s rate since latest call to PAPI_flops(). 
+  * A call to PAPI_stop_counters()  will stop the counters from running and then 
+  * calls such as PAPI_start_counters()  can safely be used. 
+  *
+  * @internal
+  * The next three calls all use _hl_rate_calls() to return an instruction rate value.
+  * PAPI_flops returns information related to floating point instructions using 
+  * the PAPI_FP_INS event. This is intended to measure instruction rate through the 
+  * floating point pipe with no massaging.
+  * PAPI_flops return information related to theoretical floating point operations
+  * rather than simple instructions. It uses the PAPI_FP_OPS event which attempts to 
+  * 'correctly' account for, e.g., FMA undercounts and FP Store overcounts, etc.
+  *
+  * @see PAPI_stop_counters() PAPI_ipc() PAPI_set_opt()
+ */
+int PAPI_flops( float *rtime, float *ptime, long long *flpops, float *mflops ) {
 	HighLevelInfo *state = NULL;
 	int retval;
 
@@ -206,9 +264,35 @@ PAPI_flops( float *rtime, float *ptime, long long *flpops, float *mflops )
 	return ( PAPI_OK );
 }
 
-int
-PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )
-{
+/** @brief gets instructions per cycle, real and processor time 
+ * @param *rtime
+ *		total realtime since the first PAPI_flops() call
+ *	@param *ptime
+ *		total process time since the first PAPI_flops() call
+ *	@param *ins
+ *		total instructions since the first call
+ *	@param *ipc
+ *		instructions per cycle achieved since the previous call
+ *
+ *	@retval PAPI_EINVAL 
+ *		The counters were already started by something other than: PAPI_ipc()
+ *	@retval PAPI_ENOEVNT 
+ *		The total instructions or total cycles event does not exist.
+ *	@retval PAPI_ENOMEM 
+ *		Insufficient memory to complete the operation. 
+ *
+ * The first call to PAPI_ipc() will initialize the PAPI High Level interface,
+ * set up the counters to monitor PAPI_TOT_INS and PAPI_TOT_CYC events 
+ * and start the counters. 
+ * Subsequent calls will read the counters and return total real time, 
+ * total process time, total instructions since the start of the measurement 
+ * and the instructions per cycle rate since latest call to PAPI_ipc(). 
+ * A call to PAPI_stop_counters()  will stop the counters from running and then 
+ * calls such as PAPI_start_counters()  can safely be used. 
+ *
+ * @see PAPI_flops() PAPI_stop_counters() PAPI_set_opt() PAPI_flips()
+ */
+int PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc ) {
 	HighLevelInfo *state = NULL;
 	int retval;
 
@@ -295,9 +379,21 @@ _hl_rate_calls( float *real_time, float *proc_time, long long *ins, float *rate,
 	return PAPI_OK;
 }
 
-/*
- * How many hardware counters does this platform support?
- */
+/** @brief get the number of hardware counters available on the system
+  * 
+  * @post 
+  *		Initializes the library to PAPI_HIGH_LEVEL_INITED if necessary.
+  *
+  *	@retval PAPI_EINVAL 
+  *		papi.h is different from the version used to compile the PAPI library.
+  *	@retval PAPI_ENOMEM 
+  *		Insufficient memory to complete the operation.
+  *	@retval PAPI_ESYS 
+  *		A system or C library call failed inside PAPI, see the errno variable. 
+  *
+  * PAPI_num_counters() returns the optimal length of the values array for the high level functions. 
+  * This value corresponds to the number of hardware counters supported by the current substrate. 
+  */
 int
 PAPI_num_counters( void )
 {
@@ -311,22 +407,40 @@ PAPI_num_counters( void )
 	return ( PAPI_get_opt( PAPI_MAX_HWCTRS, NULL ) );
 }
 
-/*========================================================================*/
-/* int PAPI_start_counters(int *events, int array_len)                    */
-/* from draft standard:                                                   */
-/* Start counting the events named in the events array.                   */
-/* If the events array is already running, then you must call             */
-/* PAPI_stop_counters to stop the events before you call this function    */
-/* again. It is the user's                                                */
-/* responsibility to choose events that can be counted simultaneously     */
-/* by reading the vendor's documentation. The length of this array        */
-/* should be no longer than PAPI_num_counters()                           */
-/* This will fail if flips or ipc is already running			  */
-/*========================================================================*/
-
-int
-PAPI_start_counters( int *events, int array_len )
-{
+/** @brief start counting hardware events 
+ *
+ * @param *events
+ *		an array of codes for events such as PAPI_INT_INS or a native event code 
+ * @param array_len
+ *		the number of items in the *events array 
+ *
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid.
+ *	@retval PAPI_EISRUN 
+ *		Counters have already been started, you must call PAPI_stop_counters() 
+ *		before you call this function again.
+ *	@retval PAPI_ESYS 
+ *		A system or C library call failed inside PAPI, see the errno variable.
+ *	@retval PAPI_ENOMEM 
+ *		Insufficient memory to complete the operation.
+ *	@retval PAPI_ECNFLCT 
+ *		The underlying counter hardware cannot count this event and other events 
+ *		in the EventSet simultaneously.
+ *	@retval PAPI_ENOEVNT 
+ *		The PAPI preset is not available on the underlying hardware. 
+ *
+ * PAPI_start_counters() starts counting the events named in the *events array. 
+ * This function cannot be called if the counters have already been started. 
+ * The user must call PAPI_stop_counters() to stop the events explicitly if 
+ * he/she wants to call this function again. 
+ * It is the user's responsibility to choose events that can be counted 
+ * simultaneously by reading the vendor's documentation. 
+ * The length of the *events array should be no longer than the value returned 
+ * by PAPI_num_counters(). 
+ *
+ * @see PAPI_stop_counters() PAPI_add_event() PAPI_create_eventset()
+ */
+int PAPI_start_counters( int *events, int array_len ) {
 	int i, retval;
 	HighLevelInfo *state = NULL;
 
@@ -391,26 +505,82 @@ _internal_hl_read_cnts( long long *values, int array_len, int flag )
 	return ( PAPI_EINVAL );
 }
 
-int
-PAPI_read_counters( long long *values, int array_len )
-{
+/** @brief read and reset counters 
+ *
+ * @param *values
+ *		an array to hold the counter values of the counting events
+ * @param arry_len
+ *		the number of items in the *events array
+ *
+ * @pre 
+ *		These calls assume an initialized PAPI library and a properly added event set.
+ *
+ * @post 
+ *		The counters are reset and left running after the call.
+ *
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid.
+ *	@retval PAPI_ESYS 
+ *		A system or C library call failed inside PAPI, see the errno variable. 
+ *
+ * PAPI_read_counters() copies the event counters into the array *values. 
+ *
+ * @see PAPI_set_opt() PAPI_start_counters()
+ */
+int PAPI_read_counters( long long *values, int array_len ) {
 	return ( _internal_hl_read_cnts( values, array_len, PAPI_HL_READ ) );
 }
 
-int
-PAPI_accum_counters( long long *values, int array_len )
-{
+
+/** @brief accumulate and reset counters 
+ *
+ * @param *values
+ *		an array to hold the counter values of the counting events
+ * @param arry_len
+ *		the number of items in the *events array
+ *
+ * @pre 
+ *		These calls assume an initialized PAPI library and a properly added event set.
+ *
+ * @post 
+ *		The counters are reset and left running after the call.
+ * 
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid.
+ *	@retval PAPI_ESYS 
+ *		A system or C library call failed inside PAPI, see the errno variable. 
+ *
+ * PAPI_accum_counters() adds the event counters into the array *values. 
+ *
+ * @see PAPI_set_opt() PAPI_start_counters()
+ */
+int PAPI_accum_counters( long long *values, int array_len ) {
 	return ( _internal_hl_read_cnts( values, array_len, PAPI_HL_ACCUM ) );
 }
 
-
-/*========================================================================*/
-/* int PAPI_stop_counters(long long *values, int array_len)               */
-/*                                                                        */
-/* Stop the running counters and copy the counts into the values array.   */
-/* Reset the counters to 0.                                               */
-/*========================================================================*/
-
+/** @brief stop counting hardware events and reset values to zero
+ *
+ * @param *values
+ *		an array where to put the counter values
+ * @param array_len
+ *		the number of items in the *values array 
+ *
+ * @post 
+ *	After this function is called, the values are reset to zero. 
+ *
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid.
+ *	@retval PAPI_ENOTRUN 
+ *		The EventSet is not started yet.
+ *	@retval PAPI_ENOEVST 
+ *		The EventSet has not been added yet. 
+ *
+ * The PAPI_stop_counters() function stops the counters and copies the counts 
+ * into the *values array. 
+ * The counters must have been started by a previous call to PAPI_start_counters(). 
+ * 
+ * @see PAPI_read_counters() PAPI_start_counters() PAPI_set_opt()
+ */
 int
 PAPI_stop_counters( long long *values, int array_len )
 {

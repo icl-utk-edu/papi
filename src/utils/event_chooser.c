@@ -1,3 +1,24 @@
+/** @file event_chooser.c
+  *	@page papi_event_chooser
+  *	@section NAME
+  *		papi_event_chooser - given a list of named events, 
+  *		lists other events that can be counted with them. 
+  *
+  *	@section Synopsis
+  *		papi_event_chooser NATIVE | PRESET <event> <event> ...
+  *
+  *	@section Description
+  *		papi_event_chooser is a PAPI utility program that reports information 
+  *		about the current PAPI installation and supported preset events.
+  *
+  *	@section Options
+  *		This utility has no command line options.
+  *
+  *	@section Bugs
+  *		There are no known bugs in this utility. 
+  *		If you find a bug, it should be reported to the 
+  *		PAPI Mailing List at <ptools-perfapi@ptools.org>. 
+ */
 #include "papi_test.h"
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,3 +1,23 @@
+/** @file clockres.c
+  *
+  * @page papi_clockres
+  *	@section Name
+  * papi_clockres - measures and reports clock latency and resolution for PAPI timers. 
+  *
+  * @section Synopsis
+  *	@section Description
+  *	papi_clockres is a PAPI utility program that measures and reports the 
+  *	latency and resolution of the four PAPI timer functions: 
+  *	PAPI_get_real_cyc(), PAPI_get_virt_cyc(), PAPI_get_real_usec() and PAPI_get_virt_usec().
+  * 
+  *	@section Options
+  *		This utility has no command line options.
+  *
+  *	@section Bugs
+  *	There are no known bugs in this utility. 
+  *	If you find a bug, it should be reported to the PAPI Mailing List at <ptools-perfapi@ptools.org>. 
+  *
+  */
 #include "papi_test.h"
 
 extern int TESTS_QUIET;				   /* Declared in test_utils.c */

@@ -1,18 +1,18 @@
 /**
   * @file papi_vector.h
-*/
+  */
 #ifndef _PAPI_VECTOR_H
 #define _PAPI_VECTOR_H
 
-/** @struct cmp_id
-    @brief Identifier for each component */
+/** Identifier for each component 
+ *	@internal */
 typedef struct cmp_id {
 	char name[PAPI_MAX_STR_LEN];
 	char descr[PAPI_MAX_STR_LEN];
 } cmp_id_t;
 
-/** @struct cmp_struct_sizes
-    @brief Sies of structure private to each component */
+/** Sizes of structure private to each component 
+ *	@internal */
 typedef struct cmp_struct_sizes {
     int		context;
     int		control_state;
@@ -20,8 +20,8 @@ typedef struct cmp_struct_sizes {
     int		reg_alloc;
 } cmp_struct_sizes_t;
 
-/** @struct papi_vectors
-    @brief Vector Table Stuff */
+/** Vector Table Stuff 
+ *	@internal */
 typedef struct papi_vectors {
 /** Substrate specific data structure @see papi.h */
     PAPI_component_info_t   cmp_info;
@@ -29,7 +29,7 @@ typedef struct papi_vectors {
 /** Substrate specific structure sizes*/
     cmp_struct_sizes_t size;
 
-/** List of exposed function pointers for this component */
+/* List of exposed function pointers for this component */
 #ifdef _WIN32 /* Windows requires a different callback format */
     void	(*timer_callback)	(UINT, UINT, DWORD, DWORD, DWORD);
 #else

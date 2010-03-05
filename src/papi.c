@@ -2,21 +2,19 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
-* File:    papi.c
+/** 
+* @file:    papi.c
 * CVS:     $Id$
-* Author:  Philip Mucci
+* @author:  Philip Mucci
 *          mucci@cs.utk.edu
-* Mods:    dan terpstra
+* @author    dan terpstra
 *          terpstra@cs.utk.edu
-* Mods:    Min Zhou
+* @author    Min Zhou
 *          min@cs.utk.edu
-* Mods:    Kevin London
+* @author  Kevin London
 *	   london@cs.utk.edu
-* Mods:    Per Ekman
+* @author  Per Ekman
 *          pek@pdc.kth.se
-* Mods:    <your name here>
-*          <your email address>
 */
 
 #include "papi.h"
@@ -519,9 +517,34 @@ PAPI_enum_event( int *EventCode, int modifier )
 	papi_return( PAPI_EINVAL );
 }
 
-int
-PAPI_create_eventset( int *EventSet )
-{
+/** @brief create a new empty PAPI event set 
+  * 
+  * @param EventSet
+  *		Address of an integer location to store the new EventSet handle
+  *
+  *	@exception PAPI_EINVAL 
+  *		The argument handle has not been initialized to PAPI_NULL or the argument is a NULL pointer.
+  *
+  *	@exception PAPI_ENOMEM 
+  *		Insufficient memory to complete the operation. 
+  *
+  * PAPI_create_eventset() creates a new EventSet pointed to by EventSet, 
+  * which must be initialized to PAPI_NULL before calling this routine. 
+  * The user may then add hardware events to the event set by calling 
+  * @ref PAPI_add_event() or similar routines. 
+  * NOTE: PAPI-C uses a late binding model to bind EventSets to components. 
+  * When an EventSet is first created it is not bound to a component. 
+  * This will cause some API calls that modify EventSet options to fail. 
+  * An EventSet can be bound to a component explicitly by calling 
+  * @ref PAPI_assign_eventset_component() or implicitly by calling 
+  * @ref PAPI_add_event() or similar routines. 
+  *
+  * @see PAPI_add_event() 
+  * @see PAPI_assign_eventset_component()
+  * @see PAPI_destroy_eventset()
+  * @see PAPI_cleanup_eventset()
+  */
+int PAPI_create_eventset( int *EventSet ) {
 	ThreadInfo_t *master;
 	int retval;
 
@@ -534,9 +557,32 @@ PAPI_create_eventset( int *EventSet )
 	papi_return( _papi_hwi_create_eventset( EventSet, master ) );
 }
 
-int
-PAPI_assign_eventset_component( int EventSet, int cidx )
-{
+/** @brief assign a component index to an existing but empty EventSet 
+ *	
+ *	@param EventSet 
+ *		An integer identifier for an existing EventSet 
+ *	@param cidx 
+ *		An integer identifier for a component. 
+ *		By convention, component 0 is always the cpu component. 
+ *
+ *	@retval PAPI_ENOCMP 
+ *		The argument cidx is not a valid component.
+ *	@retval PAPI_ENOEVST 
+ *		The EventSet doesn't exist.
+ *	@retval PAPI_ENOMEM 
+ *		Insufficient memory to complete the operation. 
+ *
+ * PAPI_assign_eventset_component() assigns a specific component index, 
+ * as specified by cidx, to a new EventSet identified by EventSet, as obtained 
+ * from PAPI_create_eventset(). 
+ * EventSets are ordinarily automatically bound to components when the first 
+ * event is added. 
+ * This routine is useful to explicitly bind an EventSet to a component before 
+ * setting component related options.
+ *
+ * @see PAPI_set_opt() PAPI_create_eventset() PAPI_add_events() PAPI_set_multiplex()
+ */
+int PAPI_assign_eventset_component( int EventSet, int cidx ) {
 	EventSetInfo_t *ESI;
 	int retval;
 
@@ -578,9 +624,43 @@ PAPI_add_pevent( int EventSet, int code, void *inout )
 	papi_return( _papi_hwi_add_pevent( ESI, code, inout ) );
 }
 
-int
-PAPI_add_event( int EventSet, int EventCode )
-{
+/** @brief add PAPI preset or native hardware event to an event set 
+ *
+ *	@param EventSet
+ *		an integer handle for a PAPI Event Set as created by PAPI_create_eventset()
+ *	@param EventCode 
+ *		a defined event such as PAPI_TOT_INS. 
+ *
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid.
+ *	@retval PAPI_ENOMEM 
+ *		Insufficient memory to complete the operation.
+ *	@retval PAPI_ENOEVST 
+ *		The event set specified does not exist.
+ *	@retval PAPI_EISRUN 
+ *		The event set is currently counting events.
+ *	@retval PAPI_ECNFLCT 
+ *		The underlying counter hardware can not count this event and other events 
+ *		in the event set simultaneously.
+ *	@retval PAPI_ENOEVNT 
+ *		The PAPI preset is not available on the underlying hardware.
+ *	@retval PAPI_EBUG 
+ *		Internal error, please send mail to the developers. 
+ *
+ *	PAPI_add_event() adds one event to a PAPI Event Set.
+ *	A hardware event can be either a PAPI preset or a native hardware event code. 
+ *	For a list of PAPI preset events, see PAPI_presets() or run the avail test 
+ *	case in the PAPI distribution. 
+ *	PAPI presets can be passed to PAPI_query_event() to see if they exist on 
+ *	the underlying architecture. 
+ *	For a list of native events available on current platform, run native_avail 
+ *	test case in the PAPI distribution. 
+ *	For the encoding of native events, see PAPI_event_name_to_code() to learn 
+ *	how to generate native code for the supported native event on the underlying architecture. 
+ *
+ * @see PAPI_cleanup_eventset() PAPI_destroy_eventset() PAPI_event_code_to_name() PAPI_remove_events() PAPI_query_event() PAPI_presets() PAPI_native() PAPI_remove_event()
+ */
+int PAPI_add_event( int EventSet, int EventCode ) {
 	EventSetInfo_t *ESI;
 
 	/* Is the EventSet already in existence? */
@@ -657,9 +737,27 @@ PAPI_remove_event( int EventSet, int EventCode )
 	papi_return( _papi_hwi_remove_event( ESI, EventCode ) );
 }
 
-int
-PAPI_destroy_eventset( int *EventSet )
-{
+/** @brief deallocates memory associated with an empty PAPI event set 
+ *  
+ *	@param *EventSet 
+ *		a pointer to the integer handle for a PAPI event set as created by PAPI_create_eventset(). 
+ *		The value pointed to by EventSet is then set to PAPI_NULL on success. 
+ *
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid. 
+ *		Attempting to destroy a non-empty event set or passing in a null 
+ *		pointer to be destroyed.
+ *
+ *	@retval PAPI_ENOEVST 
+ *		The EventSet specified does not exist.
+ *
+ *	@retval PAPI_EISRUN 
+ *		The EventSet is currently counting events.
+ *
+ *	@retval PAPI_EBUG 
+ *		Internal error, send mail to ptools-perfapi@ptools.org and complain. 
+ */
+int PAPI_destroy_eventset( int *EventSet ) {
 	EventSetInfo_t *ESI;
 
 	/* check for pre-existing ESI */
@@ -1029,9 +1127,30 @@ PAPI_read_ts( int EventSet, long long *values, long long *cyc )
 	return ( PAPI_OK );
 }
 
-int
-PAPI_accum( int EventSet, long long *values )
-{
+/** @brief accumulate and reset counters in an event set 
+ *	
+ *	@param EventSet
+ *		an integer handle for a PAPI Event Set 
+ *		as created by PAPI_create_eventset
+ *	@param values 
+ *		an array to hold the counter values of the counting events 
+ *
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid.
+ *	@retval PAPI_ESYS 
+ *		A system or C library call failed inside PAPI, see the errno variable.
+ *	@retval PAPI_ENOEVST 
+ *		The event set specified does not exist. 
+ *
+ * These calls assume an initialized PAPI library and a properly added event set. 
+ * PAPI_accum() adds the counters of the indicated event set into the array values. 
+ * The counters are zeroed and continue counting after the operation.
+ * Note the differences between PAPI_read() and PAPI_accum(), specifically 
+ * that PAPI_accum() resets the values array to zero. 
+ *
+ * @see  PAPI_start PAPI PAPIF PAPI_set_opt PAPI_reset
+ */
+int PAPI_accum( int EventSet, long long *values ) {
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
 	int i, cidx, retval;
@@ -1104,11 +1223,28 @@ PAPI_write( int EventSet, long long *values )
 	return ( retval );
 }
 
-/*  The function PAPI_cleanup removes a stopped EventSet from existence. */
-
-int
-PAPI_cleanup_eventset( int EventSet )
-{
+/** @brief empty and destroy an EventSet 
+ *
+ *	@param EventSet
+ *		an integer handle for a PAPI event set as created by PAPI_create_eventset
+ *
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid. 
+ *		Attempting to destroy a non-empty event set or passing in a null pointer to be destroyed.
+ *	@retval PAPI_ENOEVST 
+ *		The EventSet specified does not exist.
+ *	@retval PAPI_EISRUN 
+ *		The EventSet is currently counting events.
+ *	@retval PAPI_EBUG 
+ *		Internal error, send mail to ptools-perfapi@ptools.org and complain. 
+ *
+ * PAPI_cleanup_eventset removes all events from a PAPI event set and turns 
+ * off profiling and overflow for all events in the eventset. 
+ * This can not be called if the EventSet is not stopped.
+ *
+ * @see PAPI_profil PAPI_create_eventset PAPI_add_event PAPI_stop
+ */
+int PAPI_cleanup_eventset( int EventSet ) {
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
 	int i, cidx, total, retval;
@@ -1223,9 +1359,30 @@ _papi_set_attach( int option, int EventSet, unsigned long tid )
 	return ( PAPI_set_opt( option, &attach ) );
 }
 
-int
-PAPI_attach( int EventSet, unsigned long tid )
-{
+/** @brief attach PAPI event set to the specified thread id 
+ *	
+ *	@param EventSet 
+ *		an integer handle for a PAPI Event Set as created by PAPI_create_eventset)
+ *	@param tid 
+ *		a thread id as obtained from, for example, PAPI_list_threads or PAPI_thread_id . 
+ *
+ *	@retval PAPI_ESBSTR 
+ *		This feature is unsupported on this substrate.
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid.
+ *	@retval PAPI_ENOEVST 
+ *		The event set specified does not exist.
+ *	@retval PAPI_EISRUN 
+ *		The event set is currently counting events. 
+ *
+ * PAPI_attach() is a wrapper function that calls PAPI_set_opt to allow PAPI 
+ * to monitor performance counts on a thread other than the one currently executing. 
+ * This is sometimes referred to as third party monitoring. 
+ * PAPI_attach() connects the specified EventSet to the specifed thread
+ *
+ * @see PAPI_set_opt PAPI_list_threads PAPI_thread_id PAPI_thread_init
+ */
+int PAPI_attach( int EventSet, unsigned long tid ) {
 	return ( _papi_set_attach( PAPI_ATTACH, EventSet, tid ) );
 }
 
@@ -1835,15 +1992,27 @@ PAPI_get_cmp_opt( int option, PAPI_option_t * ptr, int cidx )
 	return ( PAPI_OK );
 }
 
-int
-PAPI_num_components( void )
-{
+/** @brief Get the number of components available on the system 
+  *
+  * @post 
+  *		initializes the library to PAPI_HIGH_LEVEL_INITED if necessary
+  *
+  * @return 
+  *		Number of components available on the system
+  */
+int PAPI_num_components( void ) {
 	return ( papi_num_components );
 }
 
-int
-PAPI_num_events( int EventSet )
-{
+/** @brief return the number of events in an event set.
+  * 
+  * @param EventSet 
+  *   an integer handle for a PAPI event set created by PAPI_create_eventset.
+  *
+  * PAPI_num_events() returns the number of preset events contained in an event set. 
+  * The event set should be created by @ref PAPI_create_eventset() .
+  */
+int PAPI_num_events( int EventSet ) {
 	EventSetInfo_t *ESI;
 
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
@@ -1859,6 +2028,13 @@ PAPI_num_events( int EventSet )
 	return ( ESI->NumberOfEvents );
 }
 
+/** @brief finish using PAPI and free all related resources. 
+  *
+  * PAPI_shutdown() is an exit function used by the PAPI Library 
+  * to free resources and shut down when certain error conditions arise. 
+  * It is not necessary for the user to call this function, 
+  * but doing so allows the user to have the capability to free memory 
+  * and resources used by the PAPI Library. */
 void
 PAPI_shutdown( void )
 {
@@ -1950,15 +2126,61 @@ PAPI_perror( int code, char *destination, int length )
 	return ( PAPI_OK );
 }
 
-/* This function sets up an EventSet such that when it is PAPI_start()'ed, it
-   begins to register overflows. This EventSet may only have multiple events
-   in it and can set multiple events to register overflow, but need to call 
-   this function multiple times. To turn off overflow, set the threshold to 0 */
-
-int
-PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
-			   PAPI_overflow_handler_t handler )
-{
+/** @brief set up an event set to begin registering overflows 
+ *
+ * @param EventSet
+ *		an integer handle to a PAPI event set as created by @ref PAPI_create_eventset()
+ * @param EventCode
+ *		the preset or native event code to be set for overflow detection. 
+ *		This event must have already been added to the EvenSet.
+ * @param threshold
+ *		the overflow threshold value for this EventCode.
+ * @param flags
+ *		bit map that controls the overflow mode of operation. 
+ *		Set to @ref PAPI_OVERFLOW_FORCE_SW to force software overflowing, 
+ *		even if hardware overflow support is available. 
+ *		If hardware overflow support is available on a given system, it will be 
+ *		the default mode of operation. 
+ *		There are situations where it is advantageous to use software overflow instead. 
+ *		Although software overflow is inherently less accurate, with more latency 
+ *		and processing overhead, it does allow for overflowing on derived events, 
+ *		and for the accurate recording of overflowing event counts. 
+ *		These two features are typically not available with hardware overflow. 
+ *		Only one type of overflow is allowed per event set, so setting one event 
+ *		to hardware overflow and another to forced software overflow will result in an error being returned.
+ * @param handler
+ *		pointer to the user supplied handler function to call upon overflow 
+ * @param address
+ *		the Program Counter address at the time of the overflow 
+ * @param overflow_vector
+ *		a long_long word containing flag bits to indicate which hardware counter(s) caused the overflow 
+ * @param *context
+ *		pointer to a machine specific structure that defines the register context at the time of overflow. 
+ *		This parameter is often unused and can be ignored in the user function.
+ *
+ * PAPI_overflow() marks a specific EventCode in an EventSet to generate an 
+ * overflow signal after every threshold events are counted. 
+ * More than one event in an event set can be used to trigger overflows. 
+ * In such cases, the user must call this function once for each overflowing event. 
+ * To turn off overflow on a specified event, call this function with a 
+ * threshold value of 0.
+ *
+ * Overflows can be implemented in either software or hardware, but the scope 
+ * is the entire event set. 
+ * PAPI defaults to hardware overflow if it is available. 
+ * In the case of software overflow, a periodic timer interrupt causes PAPI 
+ * to compare the event counts against the threshold values and call the overflow 
+ * handler if one or more events have exceeded their threshold. 
+ * In the case of hardware overflow, the counters are typically set to the 
+ * negative of the threshold value and count up to 0. 
+ * This zero-crossing triggers a hardware interrupt that calls the overflow handler. 
+ * Because of this counter interrupt, the counter values for overflowing counters 
+ * may be very small or even negative numbers, and cannot be relied upon as accurate. 
+ * In such cases the overflow handler can approximate the counts by supplying 
+ * the threshold value whenever an overflow occurs. 
+ */
+int PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
+			   PAPI_overflow_handler_t handler ) {
 	int retval, cidx, index, i;
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
@@ -2381,9 +2603,47 @@ PAPI_set_cmp_domain( int domain, int cidx )
 	papi_return( PAPI_set_opt( PAPI_DEFDOM, &ptr ) );
 }
 
-int
-PAPI_add_events( int EventSet, int *Events, int number )
-{
+/** @brief add PAPI presets or native hardware events to an event set 
+ *  
+ *	@param EventSet
+ *		an integer handle for a PAPI Event Set as created by PAPI_create_eventset ()
+ *	@param *EventCode 
+ *		an array of defined events
+ *	@param number 
+ *		an integer indicating the number of events in the array *EventCode 
+ *		It should be noted that PAPI_add_events can partially succeed, 
+ *		exactly like PAPI_remove_events. 
+ *
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid.
+ *	@retval PAPI_ENOMEM 
+ *		Insufficient memory to complete the operation.
+ *	@retval PAPI_ENOEVST 
+ *		The event set specified does not exist.
+ *	@retval PAPI_EISRUN 
+ *		The event set is currently counting events.
+ *	@retval PAPI_ECNFLCT 
+ *		The underlying counter hardware can not count this event and other events 
+ *		in the event set simultaneously.
+ *	@retval PAPI_ENOEVNT 
+ *		The PAPI preset is not available on the underlying hardware.
+ *	@retval PAPI_EBUG 
+ *		Internal error, please send mail to the developers. 
+ *
+ *	PAPI_add_event() adds one event to a PAPI Event Set.
+ *	A hardware event can be either a PAPI preset or a native hardware event code. 
+ *	For a list of PAPI preset events, see PAPI_presets() or run the avail test 
+ *	case in the PAPI distribution. 
+ *	PAPI presets can be passed to PAPI_query_event() to see if they exist on 
+ *	the underlying architecture. 
+ *	For a list of native events available on current platform, run native_avail 
+ *	test case in the PAPI distribution. 
+ *	For the encoding of native events, see PAPI_event_name_to_code() to learn 
+ *	how to generate native code for the supported native event on the underlying architecture. 
+ *
+ * @see PAPI_cleanup_eventset() PAPI_destroy_eventset() PAPI_event_code_to_name() PAPI_remove_events() PAPI_query_event() PAPI_presets() PAPI_native() PAPI_remove_event()
+ */
+int PAPI_add_events( int EventSet, int *Events, int number ) {
 	int i, retval;
 
 	if ( ( Events == NULL ) || ( number <= 0 ) )
