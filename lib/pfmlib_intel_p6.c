@@ -30,16 +30,16 @@
 static int
 pfm_p6_detect_pii(void *this)
 {
-	int ret, family, model;
+	int ret;
 
-	ret = pfm_intel_x86_detect(&family, &model);
+	ret = pfm_intel_x86_detect();
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	if (family != 6)
+	if (pfm_intel_x86_cfg.family != 6)
 		return PFM_ERR_NOTSUPP;
 
-	switch(model) {
+	switch (pfm_intel_x86_cfg.model) {
 		case 3: /* Pentium II */
 		case 5: /* Pentium II Deschutes */
 		case 6: /* Pentium II Mendocino */
@@ -53,16 +53,16 @@ pfm_p6_detect_pii(void *this)
 static int
 pfm_p6_detect_ppro(void *this)
 {
-	int ret, family, model;
+	int ret;
 
-	ret = pfm_intel_x86_detect(&family, &model);
+	ret = pfm_intel_x86_detect();
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	if (family != 6)
+	if (pfm_intel_x86_cfg.family != 6)
 		return PFM_ERR_NOTSUPP;
 
-	switch(model) {
+	switch (pfm_intel_x86_cfg.model) {
 		case 1: /* Pentium Pro */
 			break;
 		default:
@@ -75,16 +75,16 @@ pfm_p6_detect_ppro(void *this)
 static int
 pfm_p6_detect_piii(void *this)
 {
-	int ret, family, model;
+	int ret;
 
-	ret = pfm_intel_x86_detect(&family, &model);
+	ret = pfm_intel_x86_detect();
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	if (family != 6)
+	if (pfm_intel_x86_cfg.family != 6)
 		return PFM_ERR_NOTSUPP;
 
-	switch(model) {
+	switch (pfm_intel_x86_cfg.model) {
 		case 7: /* Pentium III Katmai */
 		case 8: /* Pentium III Coppermine */
 		case 10:/* Pentium III Cascades */
@@ -99,16 +99,16 @@ pfm_p6_detect_piii(void *this)
 static int
 pfm_p6_detect_pm(void *this)
 {
-	int ret, family, model;
+	int ret;
 
-	ret = pfm_intel_x86_detect(&family, &model);
+	ret = pfm_intel_x86_detect();
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	if (family != 6)
+	if (pfm_intel_x86_cfg.family != 6)
 		return PFM_ERR_NOTSUPP;
 
-	switch(model) {
+	switch (pfm_intel_x86_cfg.model) {
 		case 9: /* Pentium M */
 		case 13:/* Pentium M */
 			break;

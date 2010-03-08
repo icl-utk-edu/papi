@@ -61,7 +61,7 @@ pfm_intel_x86_attr2mod(void *this, int pidx, int attr_idx)
 }
 
 int
-pfm_intel_x86_detect(int *family, int *model)
+pfm_intel_x86_detect(void)
 {
 	int ret;
 	char buffer[128];
@@ -78,15 +78,14 @@ pfm_intel_x86_detect(int *family, int *model)
 	if (ret == -1)
 		return PFM_ERR_NOTSUPP;
 
-	if (family)
-		*family = atoi(buffer);
+	pfm_intel_x86_cfg.family = atoi(buffer);
 
 	ret = pfmlib_getcpuinfo_attr("model", buffer, sizeof(buffer));
 	if (ret == -1)
 		return PFM_ERR_NOTSUPP;
 
-	if (model)
-		*model = atoi(buffer);
+	pfm_intel_x86_cfg.model = atoi(buffer);
+
 	return PFM_SUCCESS;
 }
 

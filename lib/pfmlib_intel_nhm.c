@@ -37,20 +37,19 @@ static int pfm_nhm_offcore_encode(void *this, pfmlib_event_desc_t *e, uint64_t *
 static int
 pfm_nhm_detect(void *this)
 {
-	int family, model;
 	int ret;
 
-	ret = pfm_intel_x86_detect(&family, &model);
+	ret = pfm_intel_x86_detect();
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	if (family != 6)
+	if (pfm_intel_x86_cfg.family != 6)
 		return PFM_ERR_NOTSUPP;
 
-	switch(model) {
-		case 26: /* Core i7 */
-			break;
-		case 30: /* Core i5 */
+	switch(pfm_intel_x86_cfg.model) {
+		case 26:
+		case 30:
+		case 31:
 			break;
 		default:
 			return PFM_ERR_NOTSUPP;

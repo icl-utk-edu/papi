@@ -29,17 +29,16 @@
 static int
 pfm_wsm_detect(void *this)
 {
-	int family, model;
 	int ret;
 
-	ret = pfm_intel_x86_detect(&family, &model);
+	ret = pfm_intel_x86_detect();
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	if (family != 6)
+	if (pfm_intel_x86_cfg.family != 6)
 		return PFM_ERR_NOTSUPP;
 
-	switch(model) {
+	switch (pfm_intel_x86_cfg.model) {
 		case 37: /* Clarkdale */
 			break;
 		case 44: /* Gulftown */

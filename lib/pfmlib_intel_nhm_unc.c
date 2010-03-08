@@ -60,15 +60,14 @@ static int
 pfm_nhm_unc_detect(void *this)
 {
 	int ret;
-	int family, model;
 
-	ret = pfm_intel_x86_detect(&family, &model);
+	ret = pfm_intel_x86_detect();
 	if (ret != PFM_SUCCESS)
 
-	if (family != 6)
+	if (pfm_intel_x86_cfg.family != 6)
 		return PFM_ERR_NOTSUPP;
 
-	switch(model) {
+	switch(pfm_intel_x86_cfg.model) {
 		case 26: /* Nehalem */
 		case 30:
 		case 31:
@@ -83,15 +82,15 @@ static int
 pfm_wsm_unc_detect(void *this)
 {
 	int ret;
-	int family, model;
 
-	ret = pfm_intel_x86_detect(&family, &model);
+	ret = pfm_intel_x86_detect();
 	if (ret != PFM_SUCCESS)
+		return ret;
 
-	if (family != 6)
+	if (pfm_intel_x86_cfg.family != 6)
 		return PFM_ERR_NOTSUPP;
 
-	switch(model) {
+	switch (pfm_intel_x86_cfg.model) {
 		case 37: /* Westmere */
 		case 44:
 			  break;

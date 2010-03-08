@@ -150,13 +150,13 @@ check_arch_pmu(int family)
 static int
 pfm_intel_x86_arch_detect(void *this)
 {
-	int ret, family;
+	int ret;
 
-	ret = pfm_intel_x86_detect(&family, NULL);
+	ret = pfm_intel_x86_detect();
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	return check_arch_pmu(family);
+	return check_arch_pmu(pfm_intel_x86_cfg.family);
 }
 
 static int

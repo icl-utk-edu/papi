@@ -29,15 +29,21 @@
 static int
 pfm_coreduo_detect(void *this)
 {
-	int ret, family, model;
+	int ret;
 
-	ret = pfm_intel_x86_detect(&family, &model);
+	ret = pfm_intel_x86_detect();
 	if (ret != PFM_SUCCESS)
 		return ret;
 	/*
 	 * check for core solo/core duo
 	 */
-	return family == 6 && model == 14 ? PFM_SUCCESS : PFM_ERR_NOTSUPP;
+	if (pfm_intel_x86_cfg.family != 6)
+		return PFM_ERR_NOTSUPP;
+
+	if (pfm_intel_x86_cfg.model != 14)
+		return PFM_ERR_NOTSUPP;
+
+	return PFM_SUCCESS;
 }
 
 static int

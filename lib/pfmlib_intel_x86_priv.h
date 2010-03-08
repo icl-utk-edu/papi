@@ -194,6 +194,8 @@ typedef struct {
 } intel_x86_pmu_ebx_t;
 
 typedef struct {
+	int model;
+	int family;
 	int arch_version;
 } pfm_intel_x86_config_t;
 
@@ -215,7 +217,7 @@ intel_x86_uflag(void *this, pfmlib_event_desc_t *e, int attr, int flag)
 	return !!(pe[e->event].umasks[attr].uflags & flag);
 }
 
-extern int pfm_intel_x86_detect(int *family, int *model);
+extern int pfm_intel_x86_detect(void);
 extern int pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *reg);
 extern void pfm_intel_x86_display_reg(pfm_intel_x86_reg_t reg, char *fstr);
 extern int pfm_intel_x86_add_defaults(const intel_x86_entry_t *ent, char *umask_str, unsigned int msk, unsigned int *umask);
