@@ -1712,7 +1712,7 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 				.ucode  = 0x08,
 				.uflags = INTEL_X86_NCOMBO,
 			},
-			{ .uname  = "REMOTE_DRAM",
+					{ .uname  = "REMOTE_DRAM",
 				.udesc  = "Load instructions retired remote DRAM and remote home-remote cache HITM (Precise Event)",
 				.ucode  = 0x10,
 				.uflags = INTEL_X86_NCOMBO,
@@ -1722,8 +1722,22 @@ static const intel_x86_entry_t intel_nhm_pe[]={
 				.ucode  = 0x20,
 				.uflags = INTEL_X86_NCOMBO,
 			},
+			/* Model 46 only */
+			{ .uname  = "L3_DATA_MISS_UNKNOWN",
+				.udesc  = "Load instructions retired where the memory reference missed L3 and data source is unknown (Model 46 only, Precise Event)",
+				.ucode  = 0x01,
+				.umodel = 46,
+				.uflags = INTEL_X86_NCOMBO,
+			},
+			/* Model 46 only */
+			{ .uname  = "UNCACHEABLE",
+				.udesc  = "Load instructions retired where the memory reference missed L1, L2, L3 caches and to perform I/O (Model 46 only, Precise Event)",
+				.ucode  = 0x80,
+				.umodel = 46,
+				.uflags = INTEL_X86_NCOMBO,
+			},
 		},
-		.numasks = 4
+		.numasks = 6
 	},
 	{ .name   = "OFFCORE_REQUESTS",
 		.desc   = "Offcore memory requests",
