@@ -85,8 +85,8 @@
 #define PAPI_VERSION_INCREMENT(x)((x)          & 0xff)
 
 /* This is the official PAPI version */
-/* Big increment for PAPI-C technology pre-release */
-#define PAPI_VERSION  			PAPI_VERSION_NUMBER(4,0,0,0)
+/* The final digit represents the patch count */
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(4,0,0,2)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
 
 #ifdef __cplusplus
