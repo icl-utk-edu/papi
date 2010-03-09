@@ -12,7 +12,7 @@ BuildRequires: gcc-gfortran
 BuildRequires: kernel-devel >= 2.6.31
 BuildRequires: chrpath
 #Right now libpfm does not know anything about s390 and will fail
-ExcludeArch: s390, s390x
+ExcludeArch: s390 s390x
 
 %description
 PAPI provides a programmer interface to monitor the performance of
