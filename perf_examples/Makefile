@@ -54,7 +54,7 @@ TARGET_GEN=
 
 ifeq ($(SYS),Linux)
 LPC_UTILS=perf_util.o
-TARGET_LINUX +=self self_count task task_attach_timeout syst \
+TARGET_LINUX +=self self_basic self_count task task_attach_timeout syst \
 	notify_self notify_group task_smpl self_smpl_multi \
 	self_pipe
 
