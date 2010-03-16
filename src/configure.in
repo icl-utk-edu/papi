@@ -1351,18 +1351,19 @@ if test "$OS" = "aix"; then
       power5) PMAPI="/usr/pmapi" ;;
       power6) PMAPI="/usr/pmapi" ;;
       esac
-      PMINIT=""
-      LIBS="-L$PMAPI/lib -lpmapi"
-      CPPFLAGS="$CPPFLAGS -I$PMAPI/include"
-      AC_CHECK_LIB([pmapi], [pm_initialize], [
-			    PMINIT="-DPM_INITIALIZE"], [
-			    AC_CHECK_LIB([pmapi], [pm_init], [
-			    PMINIT="-DPM_INIT"], [
-			    AC_MSG_ERROR([libpmapi.a is needed on AIX, please examine config.log and rerun configure with different flags])
-			    ])],[])
-   else
-	PMAPI="$pmapi"
-   fi
+	else
+	  PMAPI="$pmapi"
+	fi
+
+	PMINIT=""
+	LIBS="-L$PMAPI/lib -lpmapi"
+	CPPFLAGS="$CPPFLAGS -I$PMAPI/include"
+	AC_CHECK_LIB([pmapi], [pm_initialize], [
+			PMINIT="-DPM_INITIALIZE"], [
+			AC_CHECK_LIB([pmapi], [pm_init], [
+			PMINIT="-DPM_INIT"], [
+			AC_MSG_ERROR([libpmapi.a is needed on AIX, please examine config.log and rerun configure with different flags])
+			])],[])
 else
       case "$pmapi" in
          default) ;;

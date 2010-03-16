@@ -8695,10 +8695,14 @@ if test "$OS" = "aix"; then
       power5) PMAPI="/usr/pmapi" ;;
       power6) PMAPI="/usr/pmapi" ;;
       esac
-      PMINIT=""
-      LIBS="-L$PMAPI/lib -lpmapi"
-      CPPFLAGS="$CPPFLAGS -I$PMAPI/include"
-      { $as_echo "$as_me:$LINENO: checking for pm_initialize in -lpmapi" >&5
+	else
+	  PMAPI="$pmapi"
+	fi
+
+	PMINIT=""
+	LIBS="-L$PMAPI/lib -lpmapi"
+	CPPFLAGS="$CPPFLAGS -I$PMAPI/include"
+	{ $as_echo "$as_me:$LINENO: checking for pm_initialize in -lpmapi" >&5
 $as_echo_n "checking for pm_initialize in -lpmapi... " >&6; }
 if test "${ac_cv_lib_pmapi_pm_initialize+set}" = set; then
   $as_echo_n "(cached) " >&6
@@ -8765,10 +8769,10 @@ fi
 $as_echo "$ac_cv_lib_pmapi_pm_initialize" >&6; }
 if test "x$ac_cv_lib_pmapi_pm_initialize" = x""yes; then
 
-			    PMINIT="-DPM_INITIALIZE"
+			PMINIT="-DPM_INITIALIZE"
 else
 
-			    { $as_echo "$as_me:$LINENO: checking for pm_init in -lpmapi" >&5
+			{ $as_echo "$as_me:$LINENO: checking for pm_init in -lpmapi" >&5
 $as_echo_n "checking for pm_init in -lpmapi... " >&6; }
 if test "${ac_cv_lib_pmapi_pm_init+set}" = set; then
   $as_echo_n "(cached) " >&6
@@ -8835,10 +8839,10 @@ fi
 $as_echo "$ac_cv_lib_pmapi_pm_init" >&6; }
 if test "x$ac_cv_lib_pmapi_pm_init" = x""yes; then
 
-			    PMINIT="-DPM_INIT"
+			PMINIT="-DPM_INIT"
 else
 
-			    { { $as_echo "$as_me:$LINENO: error: libpmapi.a is needed on AIX, please examine config.log and rerun configure with different flags" >&5
+			{ { $as_echo "$as_me:$LINENO: error: libpmapi.a is needed on AIX, please examine config.log and rerun configure with different flags" >&5
 $as_echo "$as_me: error: libpmapi.a is needed on AIX, please examine config.log and rerun configure with different flags" >&2;}
    { (exit 1); exit 1; }; }
 
@@ -8846,9 +8850,6 @@ fi
 
 fi
 
-   else
-	PMAPI="$pmapi"
-   fi
 else
       case "$pmapi" in
          default) ;;
