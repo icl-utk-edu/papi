@@ -20,18 +20,6 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_memory.h"
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-
-unsigned char PENTIUM4 = 0;
-/* Native events consist of a flag field, an event field, and a unit mask field.
- * These variables define the characteristics of the event and unit mask fields. */
-unsigned int PAPI_NATIVE_EVENT_AND_MASK = 0x000003ff;
-unsigned int PAPI_NATIVE_EVENT_SHIFT = 0;
-unsigned int PAPI_NATIVE_UMASK_AND_MASK = 0x03fffc00;
-unsigned int PAPI_NATIVE_UMASK_MAX = 16;
-unsigned int PAPI_NATIVE_UMASK_SHIFT = 10;
 
 /*******************************/
 /* BEGIN EXTERNAL DECLARATIONS */
@@ -64,6 +52,18 @@ extern int init_level;
 
 /* Defined by the substrate */
 extern hwi_preset_data_t _papi_hwi_preset_data[];
+
+/*****************************/
+/* END EXTERNAL DECLARATIONS */
+/*****************************/
+
+/********************/
+/*  BEGIN LOCALS    */
+/********************/
+
+/********************/
+/*    END LOCALS    */
+/********************/
 
 inline_static int
 valid_component( int cidx )
@@ -428,7 +428,6 @@ PAPI_library_init( int version )
 
 	tmpel = _papi_hwi_error_level;
 	_papi_hwi_error_level = PAPI_VERB_ECONT;
-	set_runtime_config(  );
 
 	/* Initialize internal globals */
 
