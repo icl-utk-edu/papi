@@ -3,7 +3,6 @@
 # File: configure.in
 # CVS:  $Id$
 
-
 AC_PREREQ(2.61)
 AC_INIT(PAPI, 4.0.0, ptools-perfapi@eecs.utk.edu)
 AC_CONFIG_SRCDIR([papi.c])
@@ -1469,22 +1468,22 @@ case "$OS" in
 		 fi ;;
             opteron|core|core2|i7|atom|p3)
 		if test "$arch" = "x86_64"; then
-			MAKEVER="$OS"-perfctr-p3
+			MAKEVER="$OS"-perfctr-x86
 		else
 			if test "${bitmode}" = "64"; then
 				AC_MSG_ERROR([The bitmode you specified is not supported])
 			fi
-			MAKEVER="$OS"-perfctr-p3
+			MAKEVER="$OS"-perfctr-x86
 		fi
 		 ;; 
             athlon|p4)
 		if test "$arch" = "x86_64"; then
-			MAKEVER="$OS"-perfctr-"$CPU"
+			MAKEVER="$OS"-perfctr-x86
 		else
 			if test "${bitmode}" = "64"; then
 				AC_MSG_ERROR([The bitmode you specified is not supported])
 			fi
-			MAKEVER="$OS"-perfctr-"$CPU"
+			MAKEVER="$OS"-perfctr-x86
 		fi
 		 ;;
             PPC32)
@@ -1523,9 +1522,7 @@ case "$MAKEVER" in
     linux-acpi);;
     linux-mx);;
     linux-pe);;
-    linux-perfctr-athlon);;
-    linux-perfctr-p3);;
-    linux-perfctr-p4);;
+    linux-perfctr-x86);;
     solaris-ultra);;
     solaris-ultra-64bit);;
     solaris-niagara2|solaris-niagara2-32bit);;
@@ -1895,27 +1892,11 @@ elif test "$MAKEVER" = "linux-mx"; then
 elif test "$MAKEVER" = "linux-pe"; then
    FILENAME=Rules.pfm_pe
    SUBSTR=perf_events
-elif test "$MAKEVER" = "linux-perfctr-athlon"; then
+elif test "$MAKEVER" = "linux-perfctr-x86"; then
    FILENAME=Rules.perfctr-pfm
    if test "x$VERSION" = "x"; then
       VERSION=2.6.x
    fi
-   CPU=p3
-   FARGS="-D__athlon__"
-elif test "$MAKEVER" = "linux-perfctr-p3"; then
-   FILENAME=Rules.perfctr-pfm
-   if test "x$VERSION" = "x"; then
-      VERSION=2.6.x
-   fi
-   CPU=p3
-elif test "$MAKEVER" = "linux-perfctr-p4"; then
-   FILENAME=Rules.perfctr-pfm
-   if test "x$VERSION" = "x"; then
-      VERSION=2.6.x
-   fi
-   CPU=p4
-   CFLAGS="$CFLAGS -DPENTIUM4"
-   EVENTFLAGS="-DPAPI_PENTIUM4_FP_X87_SSE_DP -DPAPI_PENTIUM4_VEC_SSE"
 elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfctr-POWER5-64bit"); then
    FILENAME=Rules.perfctr
    VERSION=2.7.x
@@ -2118,7 +2099,6 @@ AC_SUBST(LINKLIB)
 AC_SUBST(VERSION)
 AC_SUBST(CPU)
 AC_SUBST(FARGS)
-AC_SUBST(EVENTFLAGS)
 AC_SUBST(FILENAME)
 AC_SUBST(LIBRARY)
 AC_SUBST(SHLIB)
