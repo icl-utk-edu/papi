@@ -205,7 +205,8 @@ struct perf_event_attr {
 			enable_on_exec :  1, /* next exec enables     */
 			task           :  1, /* trace fork/exit       */
 			watermark      :  1, /* wakeup_watermark      */
-			__reserved_1   : 49;
+			precise        :  1, /* OoO invariant counter */
+			__reserved_1   : 48;
 
 	union {
 		uint32_t	wakeup_events;		/* wakeup every n events */
@@ -216,6 +217,17 @@ struct perf_event_attr {
 	uint64_t        bp_addr;
 	uint64_t        bp_len;
 };
+
+/*
+ * Ioctls that can be done on a perf event fd:
+ */
+#define PERF_EVENT_IOC_ENABLE		_IO ('$', 0)
+#define PERF_EVENT_IOC_DISABLE		_IO ('$', 1)
+#define PERF_EVENT_IOC_REFRESH		_IO ('$', 2)
+#define PERF_EVENT_IOC_RESET		_IO ('$', 3)
+#define PERF_EVENT_IOC_PERIOD		_IOW('$', 4, u64)
+#define PERF_EVENT_IOC_SET_OUTPUT	_IO ('$', 5)
+#define PERF_EVENT_IOC_SET_FILTER	_IOW('$', 6, char *)
 
 enum perf_event_ioc_flags {
 	PERF_IOC_FLAG_GROUP		= 1U << 0,
@@ -258,6 +270,12 @@ struct perf_event_mmap_page {
 #define PERF_EVENT_MISC_KERNEL		(1 << 0)
 #define PERF_EVENT_MISC_USER		(2 << 0)
 #define PERF_EVENT_MISC_HYPERVISOR	(3 << 0)
+
+#define PERF_RECORD_MISC_EXACT			(1 << 14)
+/*
+ * Reserve the last bit to indicate some extended misc field
+ */
+#define PERF_RECORD_MISC_EXT_RESERVED		(1 << 15)
 
 struct perf_event_header {
 	uint32_t	type;
@@ -412,14 +430,6 @@ enum perf_callchain_context {
 #ifdef __powerpc__
 #define __NR_perf_event_open 319
 #endif
-
-#define PERF_EVENT_IOC_ENABLE		_IO ('$', 0)
-#define PERF_EVENT_IOC_DISABLE	_IO ('$', 1)
-#define PERF_EVENT_IOC_REFRESH	_IO ('$', 2)
-#define PERF_EVENT_IOC_RESET		_IO ('$', 3)
-#define PERF_EVENT_IOC_PERIOD		_IOW('$', 4, u64)
-#define PERF_EVENT_IOC_SET_OUTPUT	_IO ('$', 5)
-#define PERF_EVENT_IOC_SET_FILTER	_IOW('$', 6, char *)
 
 static inline int
 perf_event_open(
