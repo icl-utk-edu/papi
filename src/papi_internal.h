@@ -202,7 +202,7 @@ typedef struct _EventSetOverflowInfo {
    long long *deadline;
    int *threshold;
    int *EventIndex;
-   long long *EventCode;
+   int *EventCode;
 } EventSetOverflowInfo_t;
 
 typedef struct _EventSetAttachInfo {
@@ -222,7 +222,7 @@ typedef struct _EventSetProfileInfo {
    int *count;     /**< Number of buffers */
    int *threshold;
    int *EventIndex;
-   long long *EventCode;
+   int *EventCode;
    int flags;
    int event_counter;
 } EventSetProfileInfo_t;
