@@ -20,6 +20,18 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_memory.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+unsigned char PENTIUM4 = 0;
+/* Native events consist of a flag field, an event field, and a unit mask field.
+ * These variables define the characteristics of the event and unit mask fields. */
+unsigned int PAPI_NATIVE_EVENT_AND_MASK = 0x000003ff;
+unsigned int PAPI_NATIVE_EVENT_SHIFT = 0;
+unsigned int PAPI_NATIVE_UMASK_AND_MASK = 0x03fffc00;
+unsigned int PAPI_NATIVE_UMASK_MAX = 16;
+unsigned int PAPI_NATIVE_UMASK_SHIFT = 10;
 
 /*******************************/
 /* BEGIN EXTERNAL DECLARATIONS */
@@ -53,18 +65,6 @@ extern int init_level;
 /* Defined by the substrate */
 extern hwi_preset_data_t _papi_hwi_preset_data[];
 
-/*****************************/
-/* END EXTERNAL DECLARATIONS */
-/*****************************/
-
-/********************/
-/*  BEGIN LOCALS    */
-/********************/
-
-/********************/
-/*    END LOCALS    */
-/********************/
-
 inline_static int
 valid_component( int cidx )
 {
@@ -77,6 +77,48 @@ inline_static int
 valid_ESI_component( EventSetInfo_t * ESI )
 {
 	return ( valid_component( ESI->CmpIdx ) );
+}
+
+static void
+set_runtime_config(  )
+{
+	enum Vendors
+	{ INTEL };
+	FILE *file;
+	char line[256];
+	char *token;
+	char *delim = ":";
+	int vendor = -1, family = -1;
+
+	if ( ( file = fopen( "/proc/cpuinfo", "r" ) ) != NULL ) {
+		while ( fgets( line, sizeof ( line ), file ) != NULL ) {
+			if ( strstr( line, "vendor_id" ) ) {
+				if ( strstr( line, "GenuineIntel" ) )
+					vendor = INTEL;
+				else
+					return;
+			}
+
+			if ( strstr( line, "cpu family" ) ) {
+				token = strtok( line, delim );
+				token = strtok( NULL, delim );
+				family = atoi( token );
+			}
+		}
+
+		if ( vendor == INTEL ) {
+			if ( family == 15 ) {	//Pentium4
+				PENTIUM4 = 1;
+				PAPI_NATIVE_EVENT_AND_MASK = 0x000000ff;
+				PAPI_NATIVE_UMASK_AND_MASK = 0x0fffff00;
+				PAPI_NATIVE_UMASK_SHIFT = 8;
+			} else if ( family == 31 || family == 32 ) {	//Itanium2
+				PAPI_NATIVE_EVENT_AND_MASK = 0x00000fff;
+				PAPI_NATIVE_UMASK_AND_MASK = 0x0ffff000;
+				PAPI_NATIVE_UMASK_SHIFT = 12;
+			}
+		}
+	}
 }
 
 /** @brief initialize thread support in the PAPI library 
@@ -386,6 +428,7 @@ PAPI_library_init( int version )
 
 	tmpel = _papi_hwi_error_level;
 	_papi_hwi_error_level = PAPI_VERB_ECONT;
+	set_runtime_config(  );
 
 	/* Initialize internal globals */
 
