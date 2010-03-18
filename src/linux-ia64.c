@@ -27,6 +27,11 @@ volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 #endif
 volatile unsigned int lock[PAPI_MAX_LOCK];
 extern papi_vector_t _ia64_vector;
+extern unsigned int PAPI_NATIVE_EVENT_AND_MASK;
+extern unsigned int PAPI_NATIVE_EVENT_SHIFT;
+extern unsigned int PAPI_NATIVE_UMASK_AND_MASK;
+extern unsigned int PAPI_NATIVE_UMASK_MAX;
+extern unsigned int PAPI_NATIVE_UMASK_SHIFT;
 extern int _ia64_get_memory_info( PAPI_hw_info_t * mem_info, int cpu_type );
 extern int _ia64_get_dmem_info( PAPI_dmem_info_t * d );
 extern int get_cpu_info( PAPI_hw_info_t * hwinfo );

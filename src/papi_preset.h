@@ -4,6 +4,8 @@
 *          you@cs.utk.edu
 */
 
+#include "papi.h"
+
 #ifndef _PAPI_PRESET		 /* _PAPI_PRESET */
 #define _PAPI_PRESET
 

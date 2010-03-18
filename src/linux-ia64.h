@@ -70,16 +70,6 @@ typedef int ia64_reg_alloc_t;
 #define NUM_PMCS PFMLIB_MAX_PMCS
 #define NUM_PMDS PFMLIB_MAX_PMDS
 
-   /* Native events consist of a flag field, an event field, and a unit mask field.
-    * The next 4 macros define the characteristics of the event and unit mask fields.
-    * Unit Masks are only supported on Montecito and above.
-    */
-#define PAPI_NATIVE_EVENT_AND_MASK 0x00000fff	/* 12 bits == 4096 max events */
-#define PAPI_NATIVE_EVENT_SHIFT 0
-#define PAPI_NATIVE_UMASK_AND_MASK 0x0ffff000	/* 16 bits for unit masks */
-#define PAPI_NATIVE_UMASK_MAX 16	/* 16 possible unit masks */
-#define PAPI_NATIVE_UMASK_SHIFT 12
-
 typedef struct param_t
 {
 	pfarg_reg_t pd[NUM_PMDS];

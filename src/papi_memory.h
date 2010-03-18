@@ -1,5 +1,8 @@
 #ifndef _PAPI_MALLOC
 #define _PAPI_MALLOC
+
+#include <stdlib.h>
+
 #define DEBUG_FILE_LEN  20
 
 /* define an alternate entry point for compatibility with papi.c for 3.1.x*/

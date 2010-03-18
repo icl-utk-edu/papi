@@ -2,9 +2,16 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
+<<<<<<< papi_internal.h
 /** 
 * @file    papi_internal.h
 * @author  Philip Mucci
+=======
+/* 
+* File:    papi_internal.h
+* CVS:     $Id$
+* Author:  Philip Mucci
+>>>>>>> 1.178.2.1
 *          mucci@cs.utk.edu
 * @author  Dan Terpstra
 *          terpstra.utk.edu
@@ -148,8 +155,6 @@ extern int papi_num_components;
 #define MEMORY_LOCK		PAPI_NUM_LOCK+4	/* papi_memory.c */
 #define SUBSTRATE_LOCK          PAPI_NUM_LOCK+5	/* <substrate.c> */
 #define GLOBAL_LOCK          	PAPI_NUM_LOCK+6	/* papi.c for global variable (static and non) initialization/shutdown */
-#define NUM_INNER_LOCK         	7
-#define PAPI_MAX_LOCK         	(NUM_INNER_LOCK+PAPI_NUM_LOCK)
 
 /* extras related */
 
@@ -205,7 +210,7 @@ typedef struct _EventSetOverflowInfo {
    long long *deadline;
    int *threshold;
    int *EventIndex;
-   int *EventCode;
+   long long *EventCode;
 } EventSetOverflowInfo_t;
 
 typedef struct _EventSetAttachInfo {
@@ -225,7 +230,7 @@ typedef struct _EventSetProfileInfo {
    int *count;     /**< Number of buffers */
    int *threshold;
    int *EventIndex;
-   int *EventCode;
+   long long *EventCode;
    int flags;
    int event_counter;
 } EventSetProfileInfo_t;
@@ -238,7 +243,11 @@ typedef struct _EventSetProfileInfo {
   @internal
  */
 typedef struct _EventInfo {
+<<<<<<< papi_internal.h
    unsigned int event_code;     /**< Preset or native code for this event as passed to PAPI_add_event() */
+=======
+   PAPI_event_code_t ec;     /* Preset or native code for this event as passed to PAPI_add_event() */
+>>>>>>> 1.178.2.1
    /* should this be MAX_COUNTER_TERMS instead of MAX_COUNTERS ?? (dkt 10/9/03) */
    int pos[MAX_COUNTER_TERMS];   /**< position in the counter array for this events components */
    char *ops;                   /**< operation string of preset */
@@ -251,10 +260,17 @@ typedef struct _EventInfo {
   @internal 
  */
 typedef struct _NativeInfo {
+<<<<<<< papi_internal.h
    int ni_event;                /**< native event code; always non-zero unless empty */
    int ni_position;             /**< counter array position where this native event lives */
    int ni_owners;               /**< specifies how many owners share this native event */
    hwd_register_t *ni_bits;     /**< Substrate defined resources used by this native event */
+=======
+   long long ni_event;          /* native event code; always non-zero unless empty */
+   int ni_position;             /* counter array position where this native event lives */
+   int ni_owners;               /* specifies how many owners share this native event */
+   hwd_register_t *ni_bits;      /* Substrate defined resources used by this native event */
+>>>>>>> 1.178.2.1
 } NativeInfo_t;
 
 
@@ -266,7 +282,7 @@ typedef struct _NativeInfo {
  *	@internal 
  */
 typedef struct _papi_info {
-   int event_type;
+   long long event_type;
    int domain;
    int granularity;
 } PapiInfo;

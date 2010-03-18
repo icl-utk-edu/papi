@@ -143,16 +143,6 @@ typedef pfmlib_event_t pfm_register_t;
 typedef int reg_alloc_t;
 
 #define MY_VECTOR _papi_pe_vector
-
-/* Native events consist of a flag field, an event field, and a unit mask field.
- * The next 4 macros define the characteristics of the event and unit mask fields.
- */
-#define PAPI_NATIVE_EVENT_AND_MASK 0x000003ff	/* 10 bits == 1024 max events */
-#define PAPI_NATIVE_EVENT_SHIFT 0
-#define PAPI_NATIVE_UMASK_AND_MASK 0x03fffc00	/* 16 bits for unit masks */
-#define PAPI_NATIVE_UMASK_MAX 16	/* 16 possible unit masks */
-#define PAPI_NATIVE_UMASK_SHIFT 10
-
 #define MAX_COUNTERS PFMLIB_MAX_PMCS
 #define MAX_COUNTER_TERMS PFMLIB_MAX_PMCS
 

@@ -1,7 +1,7 @@
 # This is a -*- makefile -*-
 # $Id$
 
-# File: Rules.perfctr
+# File: Rules.perfctr-pfm
 # Mods: Maynard Johnson
 #       maynardj@us.ibm.com
 
@@ -9,19 +9,9 @@ DESCR   = "Linux with PerfCtr $(VERSION) patch and library, and perfmon2 libpfm 
 TARGETS = serial forkexec_tests overflow_tests profile_tests attach multiplex_and_pthreads shared
 LIBRARY = libpapi.a
 SHLIB   = libpapi.so.$(PAPIVER)
-SUBSTR  = perfctr-$(CPU)
+SUBSTR  = perfctr-x86
 ARCH	= $(shell uname -m)
-
-ifeq (p4,$(CPU))
 TARGETS += p4
-else
-ifeq (p3,$(CPU))
-CPU_EVENTS	:= p3_pfm_events
-else
-CPU_EVENTS	:= $(CPU)_events
-endif
-endif
-
 
 ifeq (i686,$(ARCH))
 ARCH = i386
@@ -142,16 +132,11 @@ endif
 CFLAGS-2.5.4 := -DPERFCTR25
 CFLAGS-2.6.x := -DPERFCTR26
 CFLAGS-2.7.x := $(CFLAGS-2.6.x)
-CFLAGS += $(EVENTFLAGS) $(CFLAGS-$(VERSION))
+CFLAGS += $(CFLAGS-$(VERSION))
 
 # MISCSRCS can be set in configure.in and that value should not be overwritten by a Rules file
-MISCHDRS = perfctr-$(CPU).h $(PAPI_EVENTS_TABLE)
+MISCHDRS = perfctr-x86.h $(PAPI_EVENTS_TABLE)
 MISCSRCS +=  linux.c $(ARCH_SPEC_EVTS)
-
-# Pentium 4 no longer needs a p4_events.c file
-ifneq (,$(CPU_EVENTS))
-  MISCSRCS +=  $(CPU_EVENTS).c
-endif
 
 PERFCTR_OBJS = $(shell $(AR) t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
 ifeq (,$(PERFCTR_OBJS))
@@ -240,9 +225,6 @@ $(PERFCTR_OBJS): $(PERFCTR_LIB_PATH)/libperfctr.a
 
 $(PFM_OBJS): $(PFM_LIB_PATH)/libpfm.a
 	$(AR) xv $<
-
-$(CPU_EVENTS).o: $(CPU_EVENTS).c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPU_EVENTS).c -o $@
 
 linux.o: linux.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@

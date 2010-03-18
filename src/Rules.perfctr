@@ -132,7 +132,7 @@ endif
 CFLAGS-2.5.4 := -DPERFCTR25
 CFLAGS-2.6.x := -DPERFCTR26
 CFLAGS-2.7.x := $(CFLAGS-2.6.x)
-CFLAGS += $(EVENTFLAGS) $(CFLAGS-$(VERSION))
+CFLAGS += $(CFLAGS-$(VERSION))
 
 # MISCSRCS can be set in configure.in and that value should not be overwritten by a Rules file
 MISCHDRS = perfctr-$(CPU).h

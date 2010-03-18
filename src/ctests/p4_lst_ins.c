@@ -7,6 +7,7 @@
 #include "papi_test.h"
 
 extern int TESTS_QUIET;				   /* Declared in test_utils.c */
+extern unsigned char PENTIUM4;
 
 int
 main( int argc, char **argv )
@@ -16,16 +17,15 @@ main( int argc, char **argv )
 	int EventSet = PAPI_NULL;
 	const PAPI_hw_info_t *hw_info;
 
-#ifndef PENTIUM4
-	test_skip( __FILE__, __LINE__, "This test is intended only for Pentium 4.",
-			   1 );
-#endif
-
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 	if ( retval != PAPI_VER_CURRENT )
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
+
+	if ( !PENTIUM4 )
+		test_skip( __FILE__, __LINE__,
+				   "This test is intended only for Pentium 4.", 1 );
 
 	hw_info = PAPI_get_hardware_info(  );
 	if ( hw_info == NULL )

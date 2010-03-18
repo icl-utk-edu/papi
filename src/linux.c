@@ -25,8 +25,7 @@ extern int setup_ppc64_presets( int cputype );
 #elif defined(PPC32)
 extern int setup_ppc32_presets( int cputype );
 #else
-extern int setup_p4_presets( int cputype );
-extern int setup_p3_presets( int cputype );
+extern int setup_x86_presets( int cputype );
 #endif
 
 /* This should be in a linux.h header file maybe. */
@@ -90,25 +89,6 @@ xlate_cpu_type_to_vendor( unsigned perfctr_cpu_type )
 	default:
 		return ( PAPI_VENDOR_UNKNOWN );
 	}
-}
-
-/* 
- * 1 if the processor is a P4, 0 otherwise
- */
-int
-check_p4( int cputype )
-{
-	switch ( cputype ) {
-	case PERFCTR_X86_INTEL_P4:
-	case PERFCTR_X86_INTEL_P4M2:
-#ifdef PERFCTR_X86_INTEL_P4M3
-	case PERFCTR_X86_INTEL_P4M3:
-#endif
-		return ( 1 );
-	default:
-		return ( 0 );
-	}
-	return ( 0 );
 }
 #endif
 
@@ -270,15 +250,9 @@ _linux_init_substrate( int cidx )
 
 	/* Setup presets last. Some platforms depend on earlier info */
 #if (!defined(PPC64) && !defined(PPC32))
-	if ( check_p4( ( int ) info.cpu_type ) ) {
-//     retval = setup_p4_vector_table(vtable);
-		if ( !retval )
-			retval = setup_p4_presets( ( int ) info.cpu_type );
-	} else {
 //     retval = setup_p3_vector_table(vtable);
 		if ( !retval )
-			retval = setup_p3_presets( ( int ) info.cpu_type );
-	}
+			retval = setup_x86_presets( ( int ) info.cpu_type );
 #elif (defined(PPC64))
 	/* Setup native and preset events */
 //  retval = ppc64_setup_vector_table(vtable);
