@@ -59,6 +59,7 @@ static uint64_t collected_samples, lost_samples;
 static perf_event_desc_t *fds;
 static int num_events;
 static options_t options;
+static uint64_t sum_period;
 
 static struct option the_options[]={
 	{ "help", 0, 0,  1},
@@ -197,6 +198,16 @@ display_sample(perf_event_desc_t *hw, size_t sz)
 		}
 	}
 
+	if (type & PERF_SAMPLE_PERIOD) {
+		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
+		if (ret)
+			errx(1, "cannot read time");
+
+		printf("\tPERIOD:%"PRIu64" ", val64);
+		sz -= sizeof(val64);
+		sum_period += val64;
+	}
+
 	/*
 	 * if we have some data left, it is because there is more
 	 * than what we know about. In fact, it is more complicated
@@ -204,7 +215,7 @@ display_sample(perf_event_desc_t *hw, size_t sz)
 	 * that's the best we can do.
 	 */
 	if (sz)
-		err(1, "did not correctly parse sample");
+		err(1, "did not correctly parse sample leftover=%zu", sz);
 
 	putchar('\n');
 }
@@ -351,7 +362,7 @@ mainloop(char **arg)
 			fds[i].hw.inherit = 1;
 
 		if (!i) {
-			fds[i].hw.sample_type = PERF_SAMPLE_IP|PERF_SAMPLE_TID|PERF_SAMPLE_READ|PERF_SAMPLE_TIME;
+			fds[i].hw.sample_type = PERF_SAMPLE_IP|PERF_SAMPLE_TID|PERF_SAMPLE_READ|PERF_SAMPLE_TIME|PERF_SAMPLE_PERIOD;
 
 			if (options.opt_freq)
 				fds[i].hw.freq = 1;
@@ -448,6 +459,8 @@ terminate_session:
 	printf("%"PRIu64" samples collected in %"PRIu64" poll events, %"PRIu64" lost samples\n",
 		collected_samples,
 		ovfl_count, lost_samples);
+	if (collected_samples)
+		printf("avg period=%"PRIu64"\n", sum_period / collected_samples);
 	return 0;
 }
 
