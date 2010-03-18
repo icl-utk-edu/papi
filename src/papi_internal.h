@@ -1,17 +1,9 @@
 /****************************/
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
-
-<<<<<<< papi_internal.h
 /** 
 * @file    papi_internal.h
 * @author  Philip Mucci
-=======
-/* 
-* File:    papi_internal.h
-* CVS:     $Id$
-* Author:  Philip Mucci
->>>>>>> 1.178.2.1
 *          mucci@cs.utk.edu
 * @author  Dan Terpstra
 *          terpstra.utk.edu
