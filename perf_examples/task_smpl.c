@@ -110,9 +110,10 @@ display_sample(perf_event_desc_t *hw, size_t sz)
 	collected_samples++;
 	printf("%4"PRIu64" ", collected_samples);
 	/*
-	 * information laid out by increasing index in the
-	 * perf_event.record_format enum therefore we MUST
-	 * check in the same order.
+	 * the sample_type information is laid down
+	 * based on the PERF_RECORD_SAMPLE format specified
+	 * in the perf_event.h header file.
+	 * That order is different from the enum perf_event_sample_format
 	 */
 	if (type & PERF_SAMPLE_IP) {
 		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
@@ -139,6 +140,53 @@ display_sample(perf_event_desc_t *hw, size_t sz)
 
 		printf("TIME:%"PRIu64" ", val64);
 		sz -= sizeof(val64);
+	}
+
+	if (type & PERF_SAMPLE_ADDR) {
+		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
+		if (ret)
+			errx(1, "cannot read addr");
+
+		printf("ADDR:%"PRIu64" ", val64);
+		sz -= sizeof(val64);
+	}
+
+	if (type & PERF_SAMPLE_ID) {
+		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
+		if (ret)
+			errx(1, "cannot read id");
+
+		printf("ID:%"PRIu64" ", val64);
+		sz -= sizeof(val64);
+	}
+
+	if (type & PERF_SAMPLE_STREAM_ID) {
+		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
+		if (ret)
+			errx(1, "cannot read stream_id");
+
+		printf("STREAM_ID:%"PRIu64" ", val64);
+		sz -= sizeof(val64);
+	}
+
+	if (type & PERF_SAMPLE_CPU) {
+		struct { uint32_t cpu, res; } cpu;
+		ret = perf_read_buffer(hw->buf, hw->pgmsk, &cpu, sizeof(cpu));
+		if (ret)
+			errx(1, "cannot read cpu");
+
+		printf("CPU:%u CPU_RES:%u ", cpu.cpu, cpu.res);
+		sz -= sizeof(cpu);
+	}
+
+	if (type & PERF_SAMPLE_PERIOD) {
+		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
+		if (ret)
+			errx(1, "cannot read period");
+
+		printf("PERIOD:%"PRIu64" ", val64);
+		sz -= sizeof(val64);
+		sum_period += val64;
 	}
 
 	/*
@@ -198,14 +246,24 @@ display_sample(perf_event_desc_t *hw, size_t sz)
 		}
 	}
 
-	if (type & PERF_SAMPLE_PERIOD) {
-		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val64);
-		if (ret)
-			errx(1, "cannot read time");
+	if (type & PERF_SAMPLE_CALLCHAIN) {
+		uint64_t nr, ip;
 
-		printf("\tPERIOD:%"PRIu64" ", val64);
-		sz -= sizeof(val64);
-		sum_period += val64;
+		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &nr);
+		if (ret)
+			errx(1, "cannot read callchain nr");
+
+		sz -= sizeof(nr);
+
+		while(nr--) {
+			ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &ip);
+			if (ret)
+				errx(1, "cannot read ip");
+
+			sz -= sizeof(ip);
+
+			printf("\t0x%"PRIx64"\n", ip);
+		}
 	}
 
 	/*
@@ -214,8 +272,10 @@ display_sample(perf_event_desc_t *hw, size_t sz)
 	 * because we may have the right size but wrong layout. But
 	 * that's the best we can do.
 	 */
-	if (sz)
-		err(1, "did not correctly parse sample leftover=%zu", sz);
+	if (sz) {
+		warnx("did not correctly parse sample leftover=%zu", sz);
+		perf_skip_buffer(hw->buf, sz);
+	}
 
 	putchar('\n');
 }
