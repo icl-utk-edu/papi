@@ -65,18 +65,6 @@ extern int init_level;
 /* Defined by the substrate */
 extern hwi_preset_data_t _papi_hwi_preset_data[];
 
-/*****************************/
-/* END EXTERNAL DECLARATIONS */
-/*****************************/
-
-/********************/
-/*  BEGIN LOCALS    */
-/********************/
-
-/********************/
-/*    END LOCALS    */
-/********************/
-
 inline_static int
 valid_component( int cidx )
 {
@@ -185,7 +173,9 @@ PAPI_thread_init( unsigned long int ( *id_fn ) ( void ) )
  *
  *	@see PAPI_thread_init
  */
-unsigned long PAPI_thread_id( void ) {
+unsigned long
+PAPI_thread_id( void )
+{
 	if ( _papi_hwi_thread_id_fn != NULL )
 		return ( ( *_papi_hwi_thread_id_fn ) (  ) );
 	else
@@ -446,10 +436,10 @@ PAPI_library_init( int version )
 
 	tmpel = _papi_hwi_error_level;
 	_papi_hwi_error_level = PAPI_VERB_ECONT;
+	set_runtime_config(  )
 
-	/* Initialize internal globals */
-
-	if ( _papi_hwi_init_global_internal(  ) != PAPI_OK ) {
+		/* Initialize internal globals */
+		if ( _papi_hwi_init_global_internal(  ) != PAPI_OK ) {
 		_in_papi_library_init_cnt--;
 		_papi_hwi_error_level = tmpel;
 		papi_return( PAPI_EINVAL );
@@ -790,7 +780,9 @@ PAPI_enum_event( int *EventCode, int modifier )
   * @see PAPI_destroy_eventset()
   * @see PAPI_cleanup_eventset()
   */
-int PAPI_create_eventset( int *EventSet ) {
+int
+PAPI_create_eventset( int *EventSet )
+{
 	ThreadInfo_t *master;
 	int retval;
 
@@ -828,7 +820,9 @@ int PAPI_create_eventset( int *EventSet ) {
  *
  * @see PAPI_set_opt() PAPI_create_eventset() PAPI_add_events() PAPI_set_multiplex()
  */
-int PAPI_assign_eventset_component( int EventSet, int cidx ) {
+int
+PAPI_assign_eventset_component( int EventSet, int cidx )
+{
 	EventSetInfo_t *ESI;
 	int retval;
 
@@ -906,7 +900,9 @@ PAPI_add_pevent( int EventSet, int code, void *inout )
  *
  * @see PAPI_cleanup_eventset() PAPI_destroy_eventset() PAPI_event_code_to_name() PAPI_remove_events() PAPI_query_event() PAPI_presets() PAPI_native() PAPI_remove_event()
  */
-int PAPI_add_event( int EventSet, int EventCode ) {
+int
+PAPI_add_event( int EventSet, int EventCode )
+{
 	EventSetInfo_t *ESI;
 
 	/* Is the EventSet already in existence? */
@@ -1003,7 +999,9 @@ PAPI_remove_event( int EventSet, int EventCode )
  *	@retval PAPI_EBUG 
  *		Internal error, send mail to ptools-perfapi@ptools.org and complain. 
  */
-int PAPI_destroy_eventset( int *EventSet ) {
+int
+PAPI_destroy_eventset( int *EventSet )
+{
 	EventSetInfo_t *ESI;
 
 	/* check for pre-existing ESI */
@@ -1444,7 +1442,9 @@ PAPI_read_ts( int EventSet, long long *values, long long *cyc )
  *
  * @see  PAPI_start PAPI PAPIF PAPI_set_opt PAPI_reset
  */
-int PAPI_accum( int EventSet, long long *values ) {
+int
+PAPI_accum( int EventSet, long long *values )
+{
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
 	int i, cidx, retval;
@@ -1561,7 +1561,9 @@ PAPI_write( int EventSet, long long *values )
  *
  * @see PAPI_profil PAPI_create_eventset PAPI_add_event PAPI_stop
  */
-int PAPI_cleanup_eventset( int EventSet ) {
+int
+PAPI_cleanup_eventset( int EventSet )
+{
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
 	int i, cidx, total, retval;
@@ -1725,7 +1727,9 @@ _papi_set_attach( int option, int EventSet, unsigned long tid )
  *
  * @see PAPI_set_opt PAPI_list_threads PAPI_thread_id PAPI_thread_init
  */
-int PAPI_attach( int EventSet, unsigned long tid ) {
+int
+PAPI_attach( int EventSet, unsigned long tid )
+{
 	return ( _papi_set_attach( PAPI_ATTACH, EventSet, tid ) );
 }
 
@@ -2386,7 +2390,9 @@ PAPI_get_cmp_opt( int option, PAPI_option_t * ptr, int cidx )
   * @return 
   *		Number of components available on the system
   */
-int PAPI_num_components( void ) {
+int
+PAPI_num_components( void )
+{
 	return ( papi_num_components );
 }
 
@@ -2398,7 +2404,9 @@ int PAPI_num_components( void ) {
   * PAPI_num_events() returns the number of preset events contained in an event set. 
   * The event set should be created by @ref PAPI_create_eventset() .
   */
-int PAPI_num_events( int EventSet ) {
+int
+PAPI_num_events( int EventSet )
+{
 	EventSetInfo_t *ESI;
 
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
@@ -2609,8 +2617,10 @@ PAPI_perror( int code, char *destination, int length )
  * In such cases the overflow handler can approximate the counts by supplying 
  * the threshold value whenever an overflow occurs. 
  */
-int PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
-			   PAPI_overflow_handler_t handler ) {
+int
+PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
+			   PAPI_overflow_handler_t handler )
+{
 	int retval, cidx, index, i;
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
@@ -3106,7 +3116,9 @@ PAPI_set_cmp_domain( int domain, int cidx )
  *
  * @see PAPI_cleanup_eventset() PAPI_destroy_eventset() PAPI_event_code_to_name() PAPI_remove_events() PAPI_query_event() PAPI_presets() PAPI_native() PAPI_remove_event()
  */
-int PAPI_add_events( int EventSet, int *Events, int number ) {
+int
+PAPI_add_events( int EventSet, int *Events, int number )
+{
 	int i, retval;
 
 	if ( ( Events == NULL ) || ( number <= 0 ) )
