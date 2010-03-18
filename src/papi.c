@@ -436,7 +436,7 @@ PAPI_library_init( int version )
 
 	tmpel = _papi_hwi_error_level;
 	_papi_hwi_error_level = PAPI_VERB_ECONT;
-	set_runtime_config(  )
+	set_runtime_config(  );
 
 		/* Initialize internal globals */
 		if ( _papi_hwi_init_global_internal(  ) != PAPI_OK ) {
