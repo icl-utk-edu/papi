@@ -235,11 +235,7 @@ typedef struct _EventSetProfileInfo {
   @internal
  */
 typedef struct _EventInfo {
-<<<<<<< papi_internal.h
    unsigned int event_code;     /**< Preset or native code for this event as passed to PAPI_add_event() */
-=======
-   PAPI_event_code_t ec;     /* Preset or native code for this event as passed to PAPI_add_event() */
->>>>>>> 1.178.2.1
    /* should this be MAX_COUNTER_TERMS instead of MAX_COUNTERS ?? (dkt 10/9/03) */
    int pos[MAX_COUNTER_TERMS];   /**< position in the counter array for this events components */
    char *ops;                   /**< operation string of preset */
@@ -252,17 +248,10 @@ typedef struct _EventInfo {
   @internal 
  */
 typedef struct _NativeInfo {
-<<<<<<< papi_internal.h
    int ni_event;                /**< native event code; always non-zero unless empty */
    int ni_position;             /**< counter array position where this native event lives */
    int ni_owners;               /**< specifies how many owners share this native event */
    hwd_register_t *ni_bits;     /**< Substrate defined resources used by this native event */
-=======
-   long long ni_event;          /* native event code; always non-zero unless empty */
-   int ni_position;             /* counter array position where this native event lives */
-   int ni_owners;               /* specifies how many owners share this native event */
-   hwd_register_t *ni_bits;      /* Substrate defined resources used by this native event */
->>>>>>> 1.178.2.1
 } NativeInfo_t;
 
 
