@@ -137,6 +137,13 @@ parent(char **arg)
 
 		/*
 		 * and launch the child code
+		 *
+		 * The pipe is used to avoid a race condition
+		 * between for() and exec(). We need the pid
+		 * of the new tak but we want to start measuring
+		 * at the first user level instruction. Thus we
+		 * need to prevent exec until we have attached
+		 * the events.
 		 */
 		if (pid == 0) {
 			close(ready[0]);
