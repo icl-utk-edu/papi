@@ -668,7 +668,6 @@ OPTFLAGS
 SHLIB
 LIBRARY
 FILENAME
-EVENTFLAGS
 FARGS
 CPU
 VERSION
@@ -9063,26 +9062,26 @@ $as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
 		 fi ;;
             opteron|core|core2|i7|atom|p3)
 		if test "$arch" = "x86_64"; then
-			MAKEVER="$OS"-perfctr-p3
+			MAKEVER="$OS"-perfctr-x86
 		else
 			if test "${bitmode}" = "64"; then
 				{ { $as_echo "$as_me:$LINENO: error: The bitmode you specified is not supported" >&5
 $as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
    { (exit 1); exit 1; }; }
 			fi
-			MAKEVER="$OS"-perfctr-p3
+			MAKEVER="$OS"-perfctr-x86
 		fi
 		 ;;
             athlon|p4)
 		if test "$arch" = "x86_64"; then
-			MAKEVER="$OS"-perfctr-"$CPU"
+			MAKEVER="$OS"-perfctr-x86
 		else
 			if test "${bitmode}" = "64"; then
 				{ { $as_echo "$as_me:$LINENO: error: The bitmode you specified is not supported" >&5
 $as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
    { (exit 1); exit 1; }; }
 			fi
-			MAKEVER="$OS"-perfctr-"$CPU"
+			MAKEVER="$OS"-perfctr-x86
 		fi
 		 ;;
             PPC32)
@@ -9124,9 +9123,7 @@ case "$MAKEVER" in
     linux-acpi);;
     linux-mx);;
     linux-pe);;
-    linux-perfctr-athlon);;
-    linux-perfctr-p3);;
-    linux-perfctr-p4);;
+    linux-perfctr-x86);;
     solaris-ultra);;
     solaris-ultra-64bit);;
     solaris-niagara2|solaris-niagara2-32bit);;
@@ -9767,27 +9764,11 @@ elif test "$MAKEVER" = "linux-mx"; then
 elif test "$MAKEVER" = "linux-pe"; then
    FILENAME=Rules.pfm_pe
    SUBSTR=perf_events
-elif test "$MAKEVER" = "linux-perfctr-athlon"; then
+elif test "$MAKEVER" = "linux-perfctr-x86"; then
    FILENAME=Rules.perfctr-pfm
    if test "x$VERSION" = "x"; then
       VERSION=2.6.x
    fi
-   CPU=p3
-   FARGS="-D__athlon__"
-elif test "$MAKEVER" = "linux-perfctr-p3"; then
-   FILENAME=Rules.perfctr-pfm
-   if test "x$VERSION" = "x"; then
-      VERSION=2.6.x
-   fi
-   CPU=p3
-elif test "$MAKEVER" = "linux-perfctr-p4"; then
-   FILENAME=Rules.perfctr-pfm
-   if test "x$VERSION" = "x"; then
-      VERSION=2.6.x
-   fi
-   CPU=p4
-   CFLAGS="$CFLAGS -DPENTIUM4"
-   EVENTFLAGS="-DPAPI_PENTIUM4_FP_X87_SSE_DP -DPAPI_PENTIUM4_VEC_SSE"
 elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfctr-POWER5-64bit"); then
    FILENAME=Rules.perfctr
    VERSION=2.7.x
@@ -9938,7 +9919,6 @@ else
    echo "Unable to create generic build for non-GNU compiler"
    exit -1
 fi
-
 
 
 
