@@ -3,6 +3,7 @@
 # File: configure.in
 # CVS:  $Id$
 
+
 AC_PREREQ(2.61)
 AC_INIT(PAPI, 4.0.0, ptools-perfapi@eecs.utk.edu)
 AC_CONFIG_SRCDIR([papi.c])
