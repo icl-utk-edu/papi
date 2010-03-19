@@ -43,6 +43,7 @@
 #include PEINCLUDE
 #include "syscalls.h"
 
+#include "papi_defines.h"
 
 /* The following block of defines should only be true for kernel 2.6.31 */
 #ifdef KERNEL31

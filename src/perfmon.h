@@ -38,6 +38,8 @@
 #include "perfmon/pfmlib_montecito.h"
 #endif
 
+#include "papi_defines.h"
+
 #if defined(DEBUG)
 #define DEBUGCALL(a,b) { if (ISLEVEL(a)) { b; } }
 #else

@@ -25,6 +25,8 @@
 #include <dlfcn.h>
 #include <sys/stat.h>
 
+#include "papi_defines.h"
+
 #define inline_static inline static
 
 #define MAX_COUNTERS 2

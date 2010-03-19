@@ -52,6 +52,7 @@
 #include <ia64regs.h>
 #endif
 
+#include "papi_defines.h"
 #include "config.h"
 #include "perfmon/pfmlib.h"
 #include "perfmon/perfmon.h"
