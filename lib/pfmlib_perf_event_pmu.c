@@ -26,6 +26,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <syscall.h> /* for openat() */
