@@ -50,6 +50,7 @@ pfm_nhm_detect(void *this)
 		case 26:
 		case 30:
 		case 31:
+		case 46:
 			break;
 		default:
 			return PFM_ERR_NOTSUPP;
