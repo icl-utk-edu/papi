@@ -123,7 +123,7 @@ set_runtime_config(  )
 
 /** @brief initialize thread support in the PAPI library 
  *
- *	@param handle 
+ *	@param *id_fn 
  *		Pointer to a function that returns current thread ID. 
  *
  *	PAPI_thread_init initializes thread support in the PAPI library. 
@@ -138,9 +138,7 @@ set_runtime_config(  )
  *
  *	@see PAPI_register_thread PAPI_unregister_thread PAPI_get_thr_specific PAPI_set_thr_specific PAPI_thread_id PAPI_list_threads
  */
-int
-PAPI_thread_init( unsigned long int ( *id_fn ) ( void ) )
-{
+int PAPI_thread_init( unsigned long int ( *id_fn ) ( void ) ) {
 	/* Thread support not implemented on Alpha/OSF because the OSF pfm
 	 * counter device driver does not support per-thread counters.
 	 * When this is updated, we can remove this if statement
@@ -210,9 +208,7 @@ PAPI_thread_id( void )
  *
  *	@see PAPI_thread_id PAPI_thread_init
  */
-int
-PAPI_register_thread( void )
-{
+int PAPI_register_thread( void ) {
 	ThreadInfo_t *thread;
 
 	if ( init_level == PAPI_NOT_INITED )
@@ -245,9 +241,7 @@ PAPI_register_thread( void )
  *	the counters for that new thread. 
  *	This is accomplished by calling this function. 
  */
-int
-PAPI_unregister_thread( void )
-{
+int PAPI_unregister_thread( void ) {
 	ThreadInfo_t *thread = _papi_hwi_lookup_thread(  );
 
 	if ( thread )
@@ -256,9 +250,25 @@ PAPI_unregister_thread( void )
 	papi_return( PAPI_EMISC );
 }
 
-int
-PAPI_list_threads( PAPI_thread_id_t * id, int *num )
-{
+/** @brief list the registered thread ids 
+ *
+ *	@param *id
+ *		A pointer to a preallocated array. 
+ *		This may be NULL to only return a count of threads. 
+ *		No more than *number codes will be stored in the array.
+ *	@param *num
+ *		An input and output parameter, input specifies the number of allocated 
+ *		elements in *id (if non-NULL) and output specifies the number of threads. 
+ *
+ *	@retval PAPI_EINVAL
+ *	
+ *	PAPI_list_threads() returns to the caller a list of all thread ID's known to PAPI.
+ *	This call assumes an initialized PAPI library. 
+ *
+ *	@see  PAPI_get_thr_specific PAPI_set_thr_specific PAPI_register_thread 
+ *			PAPI_unregister_thread PAPI_thread_init PAPI_thread_id
+ */
+int PAPI_list_threads( PAPI_thread_id_t * id, int *num ) {
 	PAPI_all_thr_spec_t tmp;
 	int retval;
 
@@ -287,9 +297,29 @@ PAPI_list_threads( PAPI_thread_id_t * id, int *num )
 /*
  * Return a pointer to the stored thread information.
  */
-int
-PAPI_get_thr_specific( int tag, void **ptr )
-{
+
+/** @brief retrieve a pointer to a thread specific data structure 
+ *
+ *	@param tag
+ *		An identifier, the value of which is either PAPI_USR1_TLS or 
+ *		PAPI_USR2_TLS. This identifier indicates which of several data 
+ *		structures associated with this thread is to be accessed.
+ *	@param ptr
+ *		A pointer to the memory containing the data structure. 
+ *
+ *	@retval PAPI_EINVAL 
+ *		The tag argument is out of range. 
+ *
+ *	PAPI_get_thr_specific will retrieve the pointer from the array with index tag. 
+ *	There are 2 user available locations and tag can be either 
+ *	PAPI_USR1_TLS or PAPI_USR2_TLS. 
+ *	The array mentioned above is managed by PAPI and allocated to each 
+ *	thread which has called PAPI_thread_init. 
+ *	There is no Fortran equivalent function. 
+ *
+ *	@see PAPI_register_thread PAPI_thread_init PAPI_thread_id
+ */
+int PAPI_get_thr_specific( int tag, void **ptr ) {
 	ThreadInfo_t *thread;
 	int doall = 0, retval = PAPI_OK;
 
@@ -318,9 +348,29 @@ PAPI_get_thr_specific( int tag, void **ptr )
 /*
  * Store a pointer to memory provided by the thread
  */
-int
-PAPI_set_thr_specific( int tag, void *ptr )
-{
+
+/** @brief Store to a pointer to a thread specific data structure 
+ *
+ *	@param tag
+ *		An identifier, the value of which is either PAPI_USR1_TLS or 
+ *		PAPI_USR2_TLS. This identifier indicates which of several data 
+ *		structures associated with this thread is to be accessed.
+ *	@param ptr
+ *		A pointer to the memory containing the data structure. 
+ *
+ *	@retval PAPI_EINVAL 
+ *		The tag argument is out of range. 
+ *
+ *	In C, PAPI_set_thr_specific will save ptr into an array indexed by tag. 
+ *	There are 2 user available locations and tag can be either 
+ *	PAPI_USR1_TLS or PAPI_USR2_TLS. 
+ *	The array mentioned above is managed by PAPI and allocated to each 
+ *	thread which has called PAPI_thread_init. 
+ *	There is no Fortran equivalent function. 
+ *
+ *	@see PAPI_register_thread PAPI_thread_init PAPI_thread_id
+ */
+int PAPI_set_thr_specific( int tag, void *ptr ) {
 	ThreadInfo_t *thread;
 	int retval = PAPI_OK;
 
@@ -339,9 +389,31 @@ PAPI_set_thr_specific( int tag, void *ptr )
 }
 
 
-int
-PAPI_library_init( int version )
-{
+/** @brief initialize the PAPI library. 
+ *
+ *	@param version 
+ *		upon initialization, PAPI checks the argument against the internal 
+ *		value of PAPI_VER_CURRENT when the library was compiled. 
+ *		This guards against portability problems when updating the PAPI shared 
+ *		libraries on your system. 
+ *
+ *	@retval PAPI_EINVAL 
+ *		papi.h is different from the version used to compile the PAPI library.
+ *	@retval PAPI_ENOMEM 
+ *		Insufficient memory to complete the operation.
+ *	@retval PAPI_ESBSTR 
+ *		This substrate does not support the underlying hardware.
+ *	@retval PAPI_ESYS 
+ *		A system or C library call failed inside PAPI, see the errno variable. 
+ *
+ *	PAPI_library_init() initializes the PAPI library. 
+ *	It must be called before any low level PAPI functions can be used. 
+ *	If your application is making use of threads PAPI_thread_init must also be 
+ *	called prior to making any calls to the library other than PAPI_library_init() . 
+ *	
+ *	@see PAPI_thread_init
+ */
+int PAPI_library_init( int version ) {
 	int tmp = 0, tmpel;
 	/* This is a poor attempt at a lock. 
 	   For 3.1 this should be replaced with a 
@@ -478,9 +550,27 @@ PAPI_library_init( int version )
 	return ( init_retval = PAPI_VER_CURRENT );
 }
 
-int
-PAPI_query_event( int EventCode )
-{
+/** @brief query if PAPI event exists 
+ *
+ *	@param EventCode
+ *		a defined event such as PAPI_TOT_INS. 
+ *
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid.
+ *	@retval PAPI_ENOTPRESET 
+ *		The hardware event specified is not a valid PAPI preset.
+ *	@retval PAPI_ENOEVNT 
+ *		The PAPI preset is not available on the underlying hardware. 
+ *
+ *	PAPI_query_event() asks the PAPI library if the PAPI Preset event can be 
+ *	counted on this architecture. 
+ *	If the event CAN be counted, the function returns PAPI_OK. 
+ *	If the event CANNOT be counted, the function returns an error code. 
+ *	This function also can be used to check the syntax of a native event. 
+ *
+ *	@see PAPI_remove_event PAPI_remove_event PAPI_presets PAPI_native
+ */
+int PAPI_query_event( int EventCode ) {
 	if ( EventCode & PAPI_PRESET_MASK ) {
 		EventCode &= PAPI_PRESET_AND_MASK;
 		if ( EventCode >= PAPI_MAX_PRESET_EVENTS )
@@ -550,9 +640,7 @@ PAPI_get_component_info( int cidx )
  *
  *	@see PAPI_event_name_to_code PAPI_set_event_info
  */
-int
-PAPI_get_event_info( int EventCode, PAPI_event_info_t * info )
-{
+int PAPI_get_event_info( int EventCode, PAPI_event_info_t * info ) {
 	int i = EventCode & PAPI_PRESET_AND_MASK;
 
 	if ( info == NULL )
@@ -575,12 +663,10 @@ PAPI_get_event_info( int EventCode, PAPI_event_info_t * info )
 
 /** @brief convert a numeric hardware event code to a name.
  *
- *	
- *	@param EventName 
- *		a string containing the event name as listed in 
- *		PAPI_presets() or discussed in PAPI_native()
  *	@param EventCode 
  *		the numeric code for the event 
+ *	@param out
+ *		string for the name to be placed in
  *
  *	@retval PAPI_EINVAL 
  8		One or more of the arguments is invalid.
@@ -596,9 +682,7 @@ PAPI_get_event_info( int EventCode, PAPI_event_info_t * info )
  *
  *	@see PAPI_remove_event PAPI_get_event_info PAPI_enum_events PAPI_add_event PAPI_presets PAPI_native
  */
-int
-PAPI_event_code_to_name( int EventCode, char *out )
-{
+int PAPI_event_code_to_name( int EventCode, char *out ) {
 	if ( out == NULL )
 		papi_return( PAPI_EINVAL );
 
@@ -623,14 +707,13 @@ PAPI_event_code_to_name( int EventCode, char *out )
 
 /** @brief convert a name to a numeric hardware event code. 
  *
- *	@param EventName 
- *		a string containing the event name as listed in 
- *		PAPI_presets() or discussed in PAPI_native()
- *	@param EventCode 
- *		the numeric code for the event 
+ *	@param in
+ *		Name to convert
+ *	@param out
+ *		code
  *
  *	@retval PAPI_EINVAL 
- 8		One or more of the arguments is invalid.
+ *		One or more of the arguments is invalid.
  *	@retval PAPI_ENOTPRESET 
  *		The hardware event specified is not a valid PAPI preset.
  *	@retval PAPI_ENOEVNT 
@@ -641,9 +724,7 @@ PAPI_event_code_to_name( int EventCode, char *out )
  *
  *	@see PAPI_remove_event PAPI_get_event_info PAPI_enum_events PAPI_add_event PAPI_presets PAPI_native
  */
-int
-PAPI_event_name_to_code( char *in, int *out )
-{
+int PAPI_event_name_to_code( char *in, int *out ) {
 	int i;
 
 	if ( ( in == NULL ) || ( out == NULL ) )
@@ -719,9 +800,7 @@ PAPI_event_name_to_code( char *in, int *out )
  *
  *	@see PAPI_get_event_info PAPI_event_name_to_code PAPI_preset PAPI_native
  */
-int
-PAPI_enum_event( int *EventCode, int modifier )
-{
+int PAPI_enum_event( int *EventCode, int modifier ) {
 	int i = *EventCode;
 	int cidx = PAPI_COMPONENT_INDEX( *EventCode );
 
@@ -780,9 +859,7 @@ PAPI_enum_event( int *EventCode, int modifier )
   * @see PAPI_destroy_eventset()
   * @see PAPI_cleanup_eventset()
   */
-int
-PAPI_create_eventset( int *EventSet )
-{
+int PAPI_create_eventset( int *EventSet ) {
 	ThreadInfo_t *master;
 	int retval;
 
@@ -820,9 +897,7 @@ PAPI_create_eventset( int *EventSet )
  *
  * @see PAPI_set_opt() PAPI_create_eventset() PAPI_add_events() PAPI_set_multiplex()
  */
-int
-PAPI_assign_eventset_component( int EventSet, int cidx )
-{
+int PAPI_assign_eventset_component( int EventSet, int cidx ) {
 	EventSetInfo_t *ESI;
 	int retval;
 
@@ -838,9 +913,8 @@ PAPI_assign_eventset_component( int EventSet, int cidx )
 	return ( _papi_hwi_assign_eventset( ESI, cidx ) );
 }
 
-int
-PAPI_add_pevent( int EventSet, int code, void *inout )
-{
+
+int PAPI_add_pevent( int EventSet, int code, void *inout ) {
 	EventSetInfo_t *ESI;
 
 	/* Is the EventSet already in existence? */
@@ -900,9 +974,7 @@ PAPI_add_pevent( int EventSet, int code, void *inout )
  *
  * @see PAPI_cleanup_eventset() PAPI_destroy_eventset() PAPI_event_code_to_name() PAPI_remove_events() PAPI_query_event() PAPI_presets() PAPI_native() PAPI_remove_event()
  */
-int
-PAPI_add_event( int EventSet, int EventCode )
-{
+int PAPI_add_event( int EventSet, int EventCode ) {
 	EventSetInfo_t *ESI;
 
 	/* Is the EventSet already in existence? */
@@ -927,9 +999,33 @@ PAPI_add_event( int EventSet, int EventCode )
 	papi_return( _papi_hwi_add_event( ESI, EventCode ) );
 }
 
-int
-PAPI_remove_event( int EventSet, int EventCode )
-{
+/** @brief remove PAPI preset or native hardware event from an EventSet 
+ *
+ *	@param EventSet
+ *		an integer handle for a PAPI event set as created by PAPI_create_eventset
+ *	@param EventCode
+ *		a defined event such as PAPI_TOT_INS or a native event. 
+ *
+ *	@retval Positive integer 
+ *		The number of consecutive elements that succeeded before the error.
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid.
+ *	@retval PAPI_ENOEVST 
+ *		The EventSet specified does not exist.
+ *	@retval PAPI_EISRUN 
+ *		The EventSet is currently counting events.
+ *	@retval PAPI_ECNFLCT 
+ *		The underlying counter hardware can not count this event and other 
+ *		events in the EventSet simultaneously.
+ *	@retval PAPI_ENOEVNT 
+ *		The PAPI preset is not available on the underlying hardware. 
+ *
+ *	PAPI_remove_event() removes a hardware event to a PAPI event set.
+ *
+ *	@see PAPI_cleanup_eventset PAPI_destroy_eventset PAPI_event_name_to_code 
+ *		PAPI_presets PAPI_add_event PAPI_add_events
+ */
+int PAPI_remove_event( int EventSet, int EventCode ) {
 	EventSetInfo_t *ESI;
 	int i;
 
@@ -999,9 +1095,7 @@ PAPI_remove_event( int EventSet, int EventCode )
  *	@retval PAPI_EBUG 
  *		Internal error, send mail to ptools-perfapi@ptools.org and complain. 
  */
-int
-PAPI_destroy_eventset( int *EventSet )
-{
+int PAPI_destroy_eventset( int *EventSet ) {
 	EventSetInfo_t *ESI;
 
 	/* check for pre-existing ESI */
@@ -1030,8 +1124,6 @@ PAPI_destroy_eventset( int *EventSet )
  *
  *	@param EventSet
  *		an integer handle for a PAPI event set as created by PAPI_create_eventset
- *	@param values
- *		an array to hold the counter values of the counting events 
  *
  *	@retval PAPI_EINVAL 
  *		One or more of the arguments is invalid.
@@ -1052,9 +1144,7 @@ PAPI_destroy_eventset( int *EventSet )
  *
  *	@see  PAPI_create_eventset PAPI_add_event
  */
-int
-PAPI_start( int EventSet )
-{
+int PAPI_start( int EventSet ) {
 	int retval;
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
@@ -1187,9 +1277,7 @@ PAPI_start( int EventSet )
  *
  *	@see  PAPI_create_eventset PAPI_add_event
  */
-int
-PAPI_stop( int EventSet, long long *values )
-{
+int PAPI_stop( int EventSet, long long *values ) {
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
 	int cidx, retval;
@@ -1285,9 +1373,22 @@ PAPI_stop( int EventSet, long long *values )
 	return ( PAPI_OK );
 }
 
-int
-PAPI_reset( int EventSet )
-{
+/** @brief reset the hardware event counts in an event set 
+ *
+ *	@param EventSet
+ *		an integer handle for a PAPI event set as created by PAPI_create_eventset 
+ *
+ *	@retval PAPI_ESYS 
+ *		A system or C library call failed inside PAPI, see the errno variable.
+ *	@retval PAPI_ENOEVST 
+ *		The EventSet specified does not exist. 
+ *
+ *	PAPI_reset() zeroes the values of the counters contained in EventSet . 
+ *	This call assumes an initialized PAPI library and a properly added event set 
+ *
+ *	@see PAPI_create_eventset
+ */
+int PAPI_reset( int EventSet ) {
 	int retval = PAPI_OK;
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
@@ -1331,9 +1432,28 @@ PAPI_reset( int EventSet )
 	papi_return( retval );
 }
 
-int
-PAPI_read( int EventSet, long long *values )
-{
+/** @brief read hardware counters from an event set 
+ *
+ *	@param EventSet
+ *		an integer handle for a PAPI Event Set 
+ *		as created by PAPI_create_eventset
+ *	@param values 
+ *		an array to hold the counter values of the counting events 
+ *
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid.
+ *	@retval PAPI_ESYS 
+ *		A system or C library call failed inside PAPI, see the errno variable.
+ *	@retval PAPI_ENOEVST 
+ *		The event set specified does not exist. 
+ *	
+ *	These calls assume an initialized PAPI library and a properly added event set. 
+ *	PAPI_read() copies the counters of the indicated event set into the array values. 
+ *	The counters continue counting after the read. 
+ *
+ * @see  PAPI_start PAPI PAPIF PAPI_set_opt PAPI_reset
+ */	
+int PAPI_read( int EventSet, long long *values ) {
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
 	int cidx, retval = PAPI_OK;
@@ -1374,9 +1494,7 @@ PAPI_read( int EventSet, long long *values )
 	return ( PAPI_OK );
 }
 
-int
-PAPI_read_ts( int EventSet, long long *values, long long *cyc )
-{
+int PAPI_read_ts( int EventSet, long long *values, long long *cyc ) {
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
 	int cidx, retval = PAPI_OK;
@@ -1442,9 +1560,7 @@ PAPI_read_ts( int EventSet, long long *values, long long *cyc )
  *
  * @see  PAPI_start PAPI PAPIF PAPI_set_opt PAPI_reset
  */
-int
-PAPI_accum( int EventSet, long long *values )
-{
+int PAPI_accum( int EventSet, long long *values ) {
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
 	int i, cidx, retval;
@@ -1505,9 +1621,7 @@ PAPI_accum( int EventSet, long long *values )
  *
  *	@see PAPI_read
  */
-int
-PAPI_write( int EventSet, long long *values )
-{
+int PAPI_write( int EventSet, long long *values ) {
 	int cidx, retval = PAPI_OK;
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
@@ -1561,9 +1675,7 @@ PAPI_write( int EventSet, long long *values )
  *
  * @see PAPI_profil PAPI_create_eventset PAPI_add_event PAPI_stop
  */
-int
-PAPI_cleanup_eventset( int EventSet )
-{
+int PAPI_cleanup_eventset( int EventSet ) {
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
 	int i, cidx, total, retval;
@@ -1625,9 +1737,16 @@ PAPI_cleanup_eventset( int EventSet )
 	papi_return( _papi_hwi_cleanup_eventset( ESI ) );
 }
 
-int
-PAPI_multiplex_init( void )
-{
+/** @brief initialize multiplex support in the PAPI library 
+ *
+ *	PAPI_multiplex_init enables and initializes multiplex support in the PAPI library. 
+ *	Multiplexing allows a user to count more events than total physical counters 
+ *	by time sharing the existing counters at some loss in precision. 
+ *	Applications that make no use of multiplexing do not need to call this routine. 
+ *
+ *	@see PAPI_set_multiplex PAPI_get_multiplex
+ */
+int PAPI_multiplex_init( void ) {
 	int retval;
 
 	retval = mpx_init( _papi_hwd[0]->cmp_info.itimer_ns );
@@ -1660,9 +1779,7 @@ PAPI_multiplex_init( void )
  *
  *	@see PAPI_stop PAPI_start
  */
-int
-PAPI_state( int EventSet, int *status )
-{
+int PAPI_state( int EventSet, int *status ) {
 	EventSetInfo_t *ESI;
 
 	if ( status == NULL )
@@ -1681,9 +1798,41 @@ PAPI_state( int EventSet, int *status )
 	return ( PAPI_OK );
 }
 
-int
-PAPI_set_debug( int level )
-{
+/** @brief set the current debug level for PAPI 
+ *
+ *	@param level
+ *		one of the constants shown in the table below and defined in the papi.h 
+ *		header file. 
+ *		
+ *	@retval PAPI_EINVAL The debuglevel is invalid. 
+ *
+ *	The current debug level is used by both the internal error and debug message 
+ *	handler subroutines. 
+ *	The debug handler is only used if the library was compiled with -DDEBUG. 
+ *	The debug handler is called when there is an error upon a call to the PAPI API. 
+ *	The error handler is always active and it's behavior cannot be modified except 
+ *	for whether or not it prints anything. 
+ *	
+ *	NOTE: This is the ONLY function that may be called BEFORE PAPI_library_init(). 
+ *	The PAPI error handler prints out messages in the following form: 
+ *				PAPI Error: message. 
+ *
+ *	The default PAPI debug handler prints out messages in the following form:
+ *		PAPI Error: Error Code code,symbol,description 
+ *
+ *	If the error was caused from a system call and the return code is PAPI_ESYS, 
+ *	the message will have a colon space and the error string as reported by 
+ *	strerror() appended to the end. 
+ *	The possible debug levels for debugging are shown in the table below.
+ *	<ul>
+ *		<li>PAPI_QUIET	Do not print anything, just return the error code
+ *		<li>PAPI_VERB_ECONT	Print error message and continue
+ *		<li>PAPI_VERB_ESTOP	Print error message and exit 
+ *	</ul>
+ *
+ *	@see  PAPI_library_init PAPI_get_opt PAPI_set_opt
+ */
+int PAPI_set_debug( int level ) {
 	PAPI_option_t option;
 
 	memset( &option, 0x0, sizeof ( option ) );
@@ -1727,18 +1876,14 @@ _papi_set_attach( int option, int EventSet, unsigned long tid )
  *
  * @see PAPI_set_opt PAPI_list_threads PAPI_thread_id PAPI_thread_init
  */
-int
-PAPI_attach( int EventSet, unsigned long tid )
-{
+int PAPI_attach( int EventSet, unsigned long tid ) {
 	return ( _papi_set_attach( PAPI_ATTACH, EventSet, tid ) );
 }
 
 /** @brief detach PAPI event set from previously specified thread id and restore to executing thread 
  *	
  *	@param EventSet 
- *		an integer handle for a PAPI Event Set as created by PAPI_create_eventset)
- *	@param tid 
- *		a thread id as obtained from, for example, PAPI_list_threads or PAPI_thread_id . 
+ *		an integer handle for a PAPI Event Set as created by PAPI_create_eventset
  *
  *	@retval PAPI_ESBSTR 
  *		This feature is unsupported on this substrate.
@@ -1756,15 +1901,38 @@ PAPI_attach( int EventSet, unsigned long tid )
  *
  * @see PAPI_set_opt PAPI_list_threads PAPI_thread_id PAPI_thread_init
  */
-int
-PAPI_detach( int EventSet )
-{
+int PAPI_detach( int EventSet ) {
 	return ( _papi_set_attach( PAPI_DETACH, EventSet, 0 ) );
 }
 
-int
-PAPI_set_multiplex( int EventSet )
-{
+/** @brief convert a standard event set to a multiplexed event set 
+ *
+ *	@param EventSet
+ *		an integer handle for a PAPI event set as created by PAPI_create_eventset
+ *
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid, or the EventSet 
+ *		is already multiplexed.
+ *	@retval PAPI_ENOEVST 
+ *		The EventSet specified does not exist.
+ *	@retval PAPI_EISRUN 
+ *		The EventSet is currently counting events.
+ *	@retval PAPI_ENOMEM 
+ *		Insufficient memory to complete the operation. 
+ *
+ *	PAPI_set_multiplex converts a standard PAPI event set created by a call to 
+ *	PAPI_create_eventset into an event set capable of handling multiplexed events. 
+ *	This must be done after calling PAPI_multiplex_init  , 
+ *	but prior to calling PAPI_start(). 
+ *	
+ *	Events can be added to an event set either before or after converting it 
+ *	into a multiplexed set, but the conversion must be done prior to using it 
+ *	as a multiplexed set. 
+ *
+ *	@see  PAPI_multiplex_init PAPI_set_opt PAPI_create_eventset
+ */
+
+int PAPI_set_multiplex( int EventSet ) {
 	PAPI_option_t mpx;
 	EventSetInfo_t *ESI;
 	int cidx;
@@ -1792,9 +1960,43 @@ PAPI_set_multiplex( int EventSet )
 	return ( PAPI_set_opt( PAPI_MULTIPLEX, &mpx ) );
 }
 
-int
-PAPI_set_opt( int option, PAPI_option_t * ptr )
-{
+/** @brief set PAPI library or event set options 
+ *
+ *	@param	option
+ *		is an input parameter describing the course of action. 
+ *		Possible values are defined in papi.h and briefly described in the table below. 
+ *		The Fortran calls are implementations of specific options.
+ *
+ *	@param ptr
+ *		is a pointer to a structure that acts as both an input and output parameter.
+ *
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid. 
+ *
+ *	PAPI_get_opt() and PAPI_set_opt() query or change the options of the PAPI 
+ *	library or a specific event set created by PAPI_create_eventset . 
+ *	Some options may require that the eventset be bound to a component before 
+ *	they can execute successfully. 
+ *	This can be done either by adding an event or by explicitly calling 
+ *	PAPI_assign_eventset_component . 
+ *	
+ *	The C interface for these functions passes a pointer to the PAPI_option_t structure. 
+ *	Not all options require or return information in this structure, and not all 
+ *	options are implemented for both get and set. 
+ *	Some options require a component index to be provided. 
+ *	These options are handled explicitly by the PAPI_get_cmp_opt() call for 'get' 
+ *	and implicitly through the option structure for 'set'. 
+ *	The Fortran interface is a series of calls implementing various subsets of 
+ *	the C interface. Not all options in C are available in Fortran.
+ *	NOTE: Some options, such as PAPI_DOMAIN and PAPI_MULTIPLEX, 
+ *	are also available as separate entry points in both C and Fortran.
+ *
+ *	The reader is urged to see the example code in the PAPI distribution for usage of PAPI_get_opt. 
+ *	The file papi.h contains definitions for the structures unioned in the PAPI_option_t structure. 
+ *
+ *	@see PAPI_set_debug PAPI_set_multiplex PAPI_set_domain PAPI_option_t
+ */
+int PAPI_set_opt( int option, PAPI_option_t * ptr ) {
 	_papi_int_option_t internal;
 	int retval = PAPI_OK;
 	ThreadInfo_t *thread = NULL;
@@ -2161,15 +2363,29 @@ PAPI_set_opt( int option, PAPI_option_t * ptr )
 }
 
 /* Preserves API compatibility with older versions */
-int
-PAPI_num_hwctrs( void )
-{
+/** @brief return the number of hardware counters on the cpu 
+ *
+ *	This is included to preserve backwards compatibility.
+ */
+int PAPI_num_hwctrs( void ) {
 	return ( PAPI_num_cmp_hwctrs( 0 ) );
 }
 
-int
-PAPI_num_cmp_hwctrs( int cidx )
-{
+/** @brief return the number of hardware counters for the specified component 
+ *
+ *	@param cidx
+ *		An integer identifier for a component. By convention, component 0 is always 
+ *		the cpu component.
+ *
+ *	PAPI_num_cmp_hwctrs() returns the number of counters present in the 
+ *	specified component. 
+ *	By convention, component 0 is always the cpu. 
+ *	This count does not include any special purpose registers or 
+ *	other performance hardware. 
+ *	PAPI_library_init must be called in order for this function to return 
+ *	anything greater than 0. 
+ */
+int PAPI_num_cmp_hwctrs( int cidx ) {
 	return ( PAPI_get_cmp_opt( PAPI_MAX_HWCTRS, NULL, cidx ) );
 }
 
@@ -2193,9 +2409,7 @@ PAPI_num_cmp_hwctrs( int cidx )
  *
  *	@see  PAPI_multiplex_init PAPI_set_opt PAPI_create_eventset
  */
-int
-PAPI_get_multiplex( int EventSet )
-{
+int PAPI_get_multiplex( int EventSet ) {
 	PAPI_option_t popt;
 	int retval;
 
@@ -2206,9 +2420,43 @@ PAPI_get_multiplex( int EventSet )
 	return retval;
 }
 
-int
-PAPI_get_opt( int option, PAPI_option_t * ptr )
-{
+/** @brief get PAPI library or event set options 
+  *
+  *	@param	option
+  *		is an input parameter describing the course of action. 
+  *		Possible values are defined in papi.h and briefly described in the table below. 
+  *		The Fortran calls are implementations of specific options.
+  *
+  *	@param ptr
+  *		is a pointer to a structure that acts as both an input and output parameter.
+  *
+  *	@retval PAPI_EINVAL 
+  *		One or more of the arguments is invalid. 
+  *
+  *	PAPI_get_opt() and PAPI_set_opt() query or change the options of the PAPI 
+  *	library or a specific event set created by PAPI_create_eventset . 
+  *	Some options may require that the eventset be bound to a component before 
+  *	they can execute successfully. 
+  *	This can be done either by adding an event or by explicitly calling 
+  *	PAPI_assign_eventset_component . 
+  *	
+  *	The C interface for these functions passes a pointer to the PAPI_option_t structure. 
+  *	Not all options require or return information in this structure, and not all 
+  *	options are implemented for both get and set. 
+  *	Some options require a component index to be provided. 
+  *	These options are handled explicitly by the PAPI_get_cmp_opt() call for 'get' 
+  *	and implicitly through the option structure for 'set'. 
+  *	The Fortran interface is a series of calls implementing various subsets of 
+  *	the C interface. Not all options in C are available in Fortran.
+  *	NOTE: Some options, such as PAPI_DOMAIN and PAPI_MULTIPLEX, 
+  *	are also available as separate entry points in both C and Fortran.
+  *
+  *	The reader is urged to see the example code in the PAPI distribution for usage of PAPI_get_opt. 
+  *	The file papi.h contains definitions for the structures unioned in the PAPI_option_t structure. 
+  *
+  *	@see PAPI_set_debug PAPI_set_multiplex PAPI_set_domain PAPI_option_t
+  */
+int PAPI_get_opt( int option, PAPI_option_t * ptr ) {
 	EventSetInfo_t *ESI;
 
 	if ( ( option != PAPI_DEBUG ) && ( init_level == PAPI_NOT_INITED ) )
@@ -2347,9 +2595,46 @@ PAPI_get_opt( int option, PAPI_option_t * ptr )
 	return ( PAPI_OK );
 }
 
-int
-PAPI_get_cmp_opt( int option, PAPI_option_t * ptr, int cidx )
-{
+/** @brief get component specific PAPI options 
+ *
+ *	@param	option
+ *		is an input parameter describing the course of action. 
+ *		Possible values are defined in papi.h and briefly described in the table below. 
+ *		The Fortran calls are implementations of specific options.
+ *	@param ptr
+ *		is a pointer to a structure that acts as both an input and output parameter.
+ *	@param cidx
+ *		An integer identifier for a component. 
+ *		By convention, component 0 is always the cpu component. 
+ *
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid. 
+ *
+ *	PAPI_get_opt() and PAPI_set_opt() query or change the options of the PAPI 
+ *	library or a specific event set created by PAPI_create_eventset . 
+ *	Some options may require that the eventset be bound to a component before 
+ *	they can execute successfully. 
+ *	This can be done either by adding an event or by explicitly calling 
+ *	PAPI_assign_eventset_component . 
+ *	
+ *	The C interface for these functions passes a pointer to the PAPI_option_t structure. 
+ *	Not all options require or return information in this structure, and not all 
+ *	options are implemented for both get and set. 
+ *	Some options require a component index to be provided. 
+ *	These options are handled explicitly by the PAPI_get_cmp_opt() call for 'get' 
+ *	and implicitly through the option structure for 'set'. 
+ *	The Fortran interface is a series of calls implementing various subsets of 
+ *	the C interface. Not all options in C are available in Fortran.
+ *	NOTE: Some options, such as PAPI_DOMAIN and PAPI_MULTIPLEX, 
+ *	are also available as separate entry points in both C and Fortran.
+ *
+ *	The reader is urged to see the example code in the PAPI distribution for usage of PAPI_get_opt. 
+ *	The file papi.h contains definitions for the structures unioned in the PAPI_option_t structure. 
+ *
+ *	@see PAPI_set_debug PAPI_set_multiplex PAPI_set_domain PAPI_option_t
+ */
+
+int PAPI_get_cmp_opt( int option, PAPI_option_t * ptr, int cidx ) {
 	switch ( option ) {
 		/* For now, MAX_HWCTRS and MAX CTRS are identical.
 		   At some future point, they may map onto different values.
@@ -2390,9 +2675,7 @@ PAPI_get_cmp_opt( int option, PAPI_option_t * ptr, int cidx )
   * @return 
   *		Number of components available on the system
   */
-int
-PAPI_num_components( void )
-{
+int PAPI_num_components( void ) {
 	return ( papi_num_components );
 }
 
@@ -2404,9 +2687,7 @@ PAPI_num_components( void )
   * PAPI_num_events() returns the number of preset events contained in an event set. 
   * The event set should be created by @ref PAPI_create_eventset() .
   */
-int
-PAPI_num_events( int EventSet )
-{
+int PAPI_num_events( int EventSet ) {
 	EventSetInfo_t *ESI;
 
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
@@ -2496,12 +2777,8 @@ PAPI_shutdown( void )
 
 /** @brief convert PAPI error codes to strings, and return the error string to user. 
  *
- *	@param code 
+ *	@param errorCode 
  *		the error code to interpret
- *	@param destination 
- *		"the error message in quotes"
- *	@param length
- *		either 0 or strlen(destination) 
  *
  *	@retval PAPI_EINVAL 
  *		One or more of the arguments to PAPI_perror() is invalid.
@@ -2515,9 +2792,7 @@ PAPI_shutdown( void )
  *
  *	@see  PAPI_set_opt PAPI_get_opt PAPI_shutdown PAPI_set_debug
  */
-char *
-PAPI_strerror( int errorCode )
-{
+char * PAPI_strerror( int errorCode ) {
 	if ( ( errorCode > 0 ) || ( -errorCode > PAPI_NUM_ERRORS ) )
 		return ( NULL );
 
@@ -2526,7 +2801,7 @@ PAPI_strerror( int errorCode )
 
 /** @brief convert PAPI error codes to strings, and print error message to stderr. 
  *
- *	@param @param code  
+ *	@param code  
  *      the error code to interpret 
  *  @param destination  
  *      "the error message in quotes"
@@ -2547,9 +2822,7 @@ PAPI_strerror( int errorCode )
  *
  *	@see  PAPI_set_opt PAPI_get_opt PAPI_shutdown PAPI_set_debug
  */
-int
-PAPI_perror( int code, char *destination, int length )
-{
+int PAPI_perror( int code, char *destination, int length ) {
 	char *foo;
 
 	foo = PAPI_strerror( code );
@@ -2586,15 +2859,8 @@ PAPI_perror( int code, char *destination, int length )
  *		These two features are typically not available with hardware overflow. 
  *		Only one type of overflow is allowed per event set, so setting one event 
  *		to hardware overflow and another to forced software overflow will result in an error being returned.
- * @param handler
+ *	@param handler
  *		pointer to the user supplied handler function to call upon overflow 
- * @param address
- *		the Program Counter address at the time of the overflow 
- * @param overflow_vector
- *		a long_long word containing flag bits to indicate which hardware counter(s) caused the overflow 
- * @param *context
- *		pointer to a machine specific structure that defines the register context at the time of overflow. 
- *		This parameter is often unused and can be ignored in the user function.
  *
  * PAPI_overflow() marks a specific EventCode in an EventSet to generate an 
  * overflow signal after every threshold events are counted. 
@@ -2617,10 +2883,8 @@ PAPI_perror( int code, char *destination, int length )
  * In such cases the overflow handler can approximate the counts by supplying 
  * the threshold value whenever an overflow occurs. 
  */
-int
-PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
-			   PAPI_overflow_handler_t handler )
-{
+int PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
+			   PAPI_overflow_handler_t handler ) {
 	int retval, cidx, index, i;
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
@@ -2786,14 +3050,12 @@ PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
  *	initiates profiling based on the values contained in the array. 
  *	Each structure in the array defines the profiling parameters that are 
  *	normally passed to PAPI_profil(). 
- *	For more information on profiling, @ref PAPI_pofil
+ *	For more information on profiling, @ref PAPI_profil
  *
  *	@see PAPI_overflow PAPI_get_executable_info PAPI_profil
  */
-int
-PAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet,
-			  int EventCode, int threshold, int flags )
-{
+int PAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet,
+			  int EventCode, int threshold, int flags ) {
 	EventSetInfo_t *ESI;
 	int retval, index, i, buckets;
 	int forceSW = 0;
@@ -2970,11 +3232,123 @@ PAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet,
 	return ( PAPI_OK );
 }
 
-int
-PAPI_profil( void *buf, unsigned bufsiz, caddr_t offset,
+/** @brief generate a histogram of hardware counter overflows vs. PC addresses 
+ *
+ *	@param *buf
+ *		pointer to a buffer of bufsiz bytes in which the histogram counts are 
+ *		stored in an array of unsigned short, unsigned int, or 
+ *		unsigned long long values, or 'buckets'. 
+ *		The size of the buckets is determined by values in the flags argument.
+ *	@param bufsiz
+ *		the size of the histogram buffer in bytes. 
+ *		It is computed from the length of the code region to be profiled, 
+ *		the size of the buckets, and the scale factor as discussed below.
+ *	@param offset
+ *		the start address of the region to be profiled.
+ *	@param scale
+ *		broadly and historically speaking, a contraction factor that indicates 
+ *		how much smaller the histogram buffer is than the region to be profiled. 
+ *		More precisely, scale is interpreted as an unsigned 16-bit fixed-point 
+ *		fraction with the decimal point implied on the left. 
+ *		Its value is the reciprocal of the number of addresses in a subdivision, 
+ *		per counter of histogram buffer. 
+ *		Below is a table of representative values for scale: 
+ *	@param EventSet
+ *		The PAPI EventSet to profile. This EventSet is marked as profiling-ready, 
+ *		but profiling doesn't actually start until a PAPI_start() call is issued.
+ *	@param EventCode
+ *		Code of the Event in the EventSet to profile. 
+ *		This event must already be a member of the EventSet.
+ *	@param threshold
+ *		minimum number of events that must occur before the PC is sampled. 
+ *		If hardware overflow is supported for your substrate, this threshold 
+ *		will trigger an interrupt when reached. 
+ *		Otherwise, the counters will be sampled periodically and the PC will be 
+ *		recorded for the first sample that exceeds the threshold. 
+ *		If the value of threshold is 0, profiling will be disabled for this event.
+ *	@param flags
+ *		bit pattern to control profiling behavior. 
+ *		Defined values are shown in the table below
+ *
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid.
+ *	@retval PAPI_ENOMEM 
+ *		Insufficient memory to complete the operation.
+ *	@retval   PAPI_ENOEVST 
+ *		The EventSet specified does not exist.
+ *	@retval PAPI_EISRUN 
+ *		The EventSet is currently counting events.
+ *	@retval PAPI_ECNFLCT 
+ *		The underlying counter hardware can not count this event and other 
+ *		events in the EventSet simultaneously.
+ *	@retval PAPI_ENOEVNT 
+ *		The PAPI preset is not available on the underlying hardware. 
+ *
+ *	PAPI_profil() provides hardware event statistics by profiling the occurence
+ *	of specified hardware counter events. 
+ *	It is designed to mimic the UNIX SVR4 profil call. 
+ *	
+ *	The statistics are generated by creating a histogram of hardware counter 
+ *	event overflows vs. program counter addresses for the current process. 
+ *	The histogram is defined for a specific region of program code to be 
+ *	profiled, and the identified region is logically broken up into a set of 
+ *	equal size subdivisions, each of which corresponds to a count in the histogram. 
+ *	
+ *	With each hardware event overflow, the current subdivision is identified 
+ *	and its corresponding histogram count is incremented. 
+ *	These counts establish a relative measure of how many hardware counter 
+ *	events are occuring in each code subdivision. 
+ *	
+ *	The resulting histogram counts for a profiled region can be used to 
+ *	identify those program addresses that generate a disproportionately 
+ *	high percentage of the event of interest.
+ *
+ *	Events to be profiled are specified with the EventSet and EventCode parameters. 
+ *	More than one event can be simultaneously profiled by calling PAPI_profil 
+ *	several times with different EventCode values. 
+ *	Profiling can be turned off for a given event by calling PAPI_profil 
+ *	with a threshold value of 0. 
+ *
+ *	 Representative values for the scale variable
+ *	HEX	DECIMAL		DEFININTION
+ *	0x20000	131072	Maps precisely one instruction address to a unique bucket in buf.
+ *	0x10000	65536	Maps precisely two instruction addresses to a unique bucket in buf.
+ *	0xFFFF	65535	Maps approximately two instruction addresses to a unique bucket in buf.
+ *	0x8000	32768	Maps every four instruction addresses to a bucket in buf.
+ *	0x4000	16384	Maps every eight instruction addresses to a bucket in buf.
+ *	0x0002	2	Maps all instruction addresses to the same bucket in buf.
+ *	0x0001	1	Undefined.
+ *	0x0000	0	Undefined. 
+ *
+ *
+ *	Historically, the scale factor was introduced to allow the allocation of 
+ *	buffers smaller than the code size to be profiled. 
+ *	Data and instruction sizes were assumed to be multiples of 16-bits. 
+ *	These assumptions are no longer necessarily true. 
+ *	PAPI_profil has preserved the traditional definition of scale where appropriate, 
+ *	but deprecated the definitions for 0 and 1 (disable scaling) and extended 
+ *	the range of scale to include 65536 and 131072 to allow for exactly two 
+ *	addresses and exactly one address per profiling bucket.
+ *
+ *	The value of bufsiz is computed as follows:
+ *	
+ *	bufsiz = (end - start)*(bucket_size/2)*(scale/65536) where
+ *
+ *	Defined bits for the flags variable
+ *	PAPI_PROFIL_POSIX	Default type of profiling, similar to profil (3).
+ *	PAPI_PROFIL_RANDOM		Drop a random 25% of the samples.
+ *	PAPI_PROFIL_WEIGHTED	Weight the samples by their value.
+ *	PAPI_PROFIL_COMPRESS	Ignore samples as values in the hash buckets get big.
+ *	PAPI_PROFIL_BUCKET_16	Use unsigned short (16 bit) buckets, This is the default bucket.
+ *	PAPI_PROFIL_BUCKET_32	Use unsigned int (32 bit) buckets.
+ *	PAPI_PROFIL_BUCKET_64	Use unsigned long long (64 bit) buckets.
+ *	PAPI_PROFIL_FORCE_SW	Force software overflow in profiling. 
+ *
+ *	@see PAPI_get_executable_info PAPI_overflow PAPI_sprofil
+ */
+int PAPI_profil( void *buf, unsigned bufsiz, caddr_t offset,
 			 unsigned scale, int EventSet, int EventCode, int threshold,
-			 int flags )
-{
+			 int flags ) {
 	EventSetInfo_t *ESI;
 	int i;
 	int retval;
@@ -3037,15 +3411,77 @@ PAPI_profil( void *buf, unsigned bufsiz, caddr_t offset,
    preserves API compatibility and assumes component 0;
    The second function takes a component argument. */
 
-int
-PAPI_set_granularity( int granularity )
-{
+/** @brief set the default counting granularity for eventsets bound to the cpu component 
+ *
+ *	@param granularity
+ *		one of the following constants as defined in the papi.h header file:
+ *		<ul>
+ *			<li> PAPI_GRN_THR	Count each individual thread
+ *			<li> PAPI_GRN_PROC	Count each individual process
+ *			<li> PAPI_GRN_PROCG	Count each individual process group
+ *			<li> PAPI_GRN_SYS	Count the current CPU
+ *			<li> PAPI_GRN_SYS_CPU	Count all CPU's individually
+ *			<li> PAPI_GRN_MIN	The finest available granularity
+ *			<li>PAPI_GRN_MAX	The coarsest available granularity 
+ *		</ul>
+ *
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid.
+ *	@retval PAPI_ENOEVST 
+ *		The event set specified does not exist.
+ *	@retval PAPI_ENOCMP 
+ *		The argument cidx is not a valid component.
+ *	@retval PAPI_EISRUN 
+ *		The event set is currently counting events. 
+ *
+ *	PAPI_set_granularity sets the default counting granularity for all new 
+ *	event sets created by PAPI_create_eventset . 
+ *	This call implicitly sets the granularity for the cpu component 
+ *	(component 0) and is included to preserve backward compatibility. 
+ *
+ *	@see  PAPI_set_domain PAPI_set_opt PAPI_get_opt
+ */
+int PAPI_set_granularity( int granularity ) {
 	return ( PAPI_set_cmp_granularity( granularity, 0 ) );
 }
 
-int
-PAPI_set_cmp_granularity( int granularity, int cidx )
-{
+/** @brief set the default counting granularity for eventsets bound to the specified component 
+ *
+ *	@param cidx
+ *		An integer identifier for a component. 
+ *		By convention, component 0 is always the cpu component. 
+ *	@param granularity
+ *		one of the following constants as defined in the papi.h header file:
+ *		<ul>
+ *			<li> PAPI_GRN_THR	Count each individual thread
+ *			<li> PAPI_GRN_PROC	Count each individual process
+ *			<li> PAPI_GRN_PROCG	Count each individual process group
+ *			<li> PAPI_GRN_SYS	Count the current CPU
+ *			<li> PAPI_GRN_SYS_CPU	Count all CPU's individually
+ *			<li> PAPI_GRN_MIN	The finest available granularity
+ *			<li>PAPI_GRN_MAX	The coarsest available granularity 
+ *		</ul>
+ *
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid.
+ *	@retval PAPI_ENOEVST 
+ *		The event set specified does not exist.
+ *	@retval PAPI_ENOCMP 
+ *		The argument cidx is not a valid component.
+ *	@retval PAPI_EISRUN 
+ *		The event set is currently counting events. 
+ *
+ *	PAPI_set_cmp_granularity sets the default counting granularity for all new 
+ *	event sets, and requires an explicit component argument. 
+ *	Event sets that are already in existence are not affected. 
+ *
+ *	To change the granularity of an existing event set, please see PAPI_set_opt. 
+ *	The reader should note that the granularity of an event set affects only 
+ *	the mode in which the counter continues to run. 
+ *
+ *	@see  PAPI_set_domain PAPI_set_opt PAPI_get_opt
+ */
+int PAPI_set_cmp_granularity( int granularity, int cidx ) {
 	PAPI_option_t ptr;
 
 	memset( &ptr, 0, sizeof ( ptr ) );
@@ -3059,15 +3495,81 @@ PAPI_set_cmp_granularity( int granularity, int cidx )
    preserves API compatibility and assumes component 0;
    The second function takes a component argument. */
 
-int
-PAPI_set_domain( int domain )
-{
+/** @brief set the default counting domain for new event sets bound to the cpu component 
+ *
+ *	@param domain
+ *		one of the following constants as defined in the papi.h header file:
+ *		<ul>
+ *			<li> PAPI_DOM_USER	User context counted
+ *			<li> PAPI_DOM_KERNEL	Kernel/OS context counted
+ *			<li> PAPI_DOM_OTHER	Exception/transient mode counted
+ *			<li> PAPI_DOM_SUPERVISOR	Supervisor/hypervisor context counted
+ *			<li> PAPI_DOM_ALL	All above contexts counted
+ *			<li> PAPI_DOM_MIN	The smallest available context
+ *			<li> PAPI_DOM_MAX	The largest available context 
+ *		</ul>
+ *
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid.
+ *	@retval PAPI_ENOEVST 
+ *		The event set specified does not exist.
+ *	@retval PAPI_ENOCMP 
+ *		The argument cidx is not a valid component.
+ *	@retval PAPI_EISRUN 
+ *		The event set is currently counting events. 
+ *
+ *	PAPI_set_domain sets the default counting domain for all new event sets 
+ *	created by PAPI_create_eventset in all threads. 
+ *	This call implicitly sets the domain for the cpu component (component 0) 
+ *	and is included to preserve backward compatibility. 
+ *
+ *	@see PAPI_set_granularity PAPI_set_opt PAPI_get_opt
+ */
+int PAPI_set_domain( int domain ) {
 	return ( PAPI_set_cmp_domain( domain, 0 ) );
 }
 
-int
-PAPI_set_cmp_domain( int domain, int cidx )
-{
+/** @brief set the default counting domain for new event sets bound to the specified component
+ *
+ *	@param cidx
+ *		An integer identifier for a component. 
+ *		By convention, component 0 is always the cpu component. 
+ *	@param domain
+ *		one of the following constants as defined in the papi.h header file:
+ *		<ul>
+ *			<li> PAPI_DOM_USER	User context counted
+ *			<li> PAPI_DOM_KERNEL	Kernel/OS context counted
+ *			<li> PAPI_DOM_OTHER	Exception/transient mode counted
+ *			<li> PAPI_DOM_SUPERVISOR	Supervisor/hypervisor context counted
+ *			<li> PAPI_DOM_ALL	All above contexts counted
+ *			<li> PAPI_DOM_MIN	The smallest available context
+ *			<li> PAPI_DOM_MAX	The largest available context 
+ *		</ul>
+ *
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid.
+ *	@retval PAPI_ENOEVST 
+ *		The event set specified does not exist.
+ *	@retval PAPI_ENOCMP 
+ *		The argument cidx is not a valid component.
+ *	@retval PAPI_EISRUN 
+ *		The event set is currently counting events. 
+ *
+ *	PAPI_set_cmp_domain sets the default counting domain for all new event sets 
+ *	in all threads, and requires an explicit component argument. 
+ *	Event sets that are already in existence are not affected. 
+ *	To change the domain of an existing event set, please see PAPI_set_opt.
+ *	The reader should note that the domain of an event set affects only the 
+ *	mode in which the counter continues to run. 
+ *	Counts are still aggregated for the current process, and not for any other 
+ *	processes in the system. 
+ *
+ *	Thus when requesting PAPI_DOM_KERNEL , the user is asking for events that 
+ *	occur on behalf of the process, inside the kernel. 
+ *
+ *	@see PAPI_set_granularity PAPI_set_opt PAPI_get_opt
+ */
+int PAPI_set_cmp_domain( int domain, int cidx ) {
 	PAPI_option_t ptr;
 
 	memset( &ptr, 0, sizeof ( ptr ) );
@@ -3080,7 +3582,7 @@ PAPI_set_cmp_domain( int domain, int cidx )
  *  
  *	@param EventSet
  *		an integer handle for a PAPI Event Set as created by PAPI_create_eventset ()
- *	@param *EventCode 
+ *	@param *Events 
  *		an array of defined events
  *	@param number 
  *		an integer indicating the number of events in the array *EventCode 
@@ -3116,9 +3618,7 @@ PAPI_set_cmp_domain( int domain, int cidx )
  *
  * @see PAPI_cleanup_eventset() PAPI_destroy_eventset() PAPI_event_code_to_name() PAPI_remove_events() PAPI_query_event() PAPI_presets() PAPI_native() PAPI_remove_event()
  */
-int
-PAPI_add_events( int EventSet, int *Events, int number )
-{
+int PAPI_add_events( int EventSet, int *Events, int number ) {
 	int i, retval;
 
 	if ( ( Events == NULL ) || ( number <= 0 ) )
@@ -3136,9 +3636,37 @@ PAPI_add_events( int EventSet, int *Events, int number )
 	return ( PAPI_OK );
 }
 
-int
-PAPI_remove_events( int EventSet, int *Events, int number )
-{
+/** @brief remove PAPI presets or native hardware events from an EventSet  
+ *
+ *	@param EventSet
+ *		an integer handle for a PAPI event set as created by PAPI_create_eventset
+ *	@param *Events
+ *		an array of defined events
+ *	@param number
+ *		an integer indicating the number of events in the array *EventCode 
+ *
+ *	@retval Positive integer 
+ *		The number of consecutive elements that succeeded before the error.
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid.
+ *	@retval PAPI_ENOEVST 
+ *		The EventSet specified does not exist.
+ *	@retval PAPI_EISRUN 
+ *		The EventSet is currently counting events.
+ *	@retval PAPI_ECNFLCT 
+ *		The underlying counter hardware can not count this event and other 
+ *		events in the EventSet simultaneously.
+ *	@retval PAPI_ENOEVNT 
+ *		The PAPI preset is not available on the underlying hardware. 
+ *
+ *	PAPI_remove_events() does the same, but for an array of hardware event codes. 
+ *	It should be noted that PAPI_remove_events can partially succeed, exactly 
+ *	like PAPI_add_events. 
+ *
+ *	@see PAPI_cleanup_eventset PAPI_destroy_eventset PAPI_event_name_to_code 
+ *		PAPI_presets PAPI_add_event PAPI_add_events
+ */
+int PAPI_remove_events( int EventSet, int *Events, int number ) {
 	int i, retval;
 
 	if ( ( Events == NULL ) || ( number <= 0 ) )
@@ -3156,9 +3684,29 @@ PAPI_remove_events( int EventSet, int *Events, int number )
 	return ( PAPI_OK );
 }
 
-int
-PAPI_list_events( int EventSet, int *Events, int *number )
-{
+/** @brief list the events in an event set 
+ *
+ *	@param EventSet
+ *		An integer handle for a PAPI event set as created by PAPI_create_eventset 
+ *	@param *Events 
+ *		An array of codes for events, such as PAPI_INT_INS. 
+ *		No more than *number codes will be stored into the array.
+ *	@param *number 
+ *		On input the variable determines the size of the Events array. 
+ *		On output the variable contains the number of counters in the event set.
+ *		Note that if the given array Events is too short to hold all the counters 
+ *		in the event set the *number variable will be greater than the actually 
+ *		stored number of counter codes. 
+ *
+ *	@retval PAPI_EINVAL
+ *	@retval PAPI_ENOEVST
+ *
+ *	PAPI_list_events() decomposes an event set into the hardware events it contains.
+ *	This call assumes an initialized PAPI library and a successfully added event set. 
+ *
+ *	@see PAPI_event_code_to_name PAPI_event_name_to_code PAPI_add_event PAPI_create_eventset
+ */
+int PAPI_list_events( int EventSet, int *Events, int *number ) {
 	EventSetInfo_t *ESI;
 	int i, j;
 
@@ -3204,9 +3752,7 @@ PAPI_list_events( int EventSet, int *Events, int *number )
  *
  *	@see PAPI_get_executable_info PAPI_get_hardware_info PAPI_get_opt PAPI_library_init
  */
-int
-PAPI_get_dmem_info( PAPI_dmem_info_t * dest )
-{
+int PAPI_get_dmem_info( PAPI_dmem_info_t * dest ) {
 	if ( dest == NULL )
 		return PAPI_EINVAL;
 
@@ -3239,9 +3785,15 @@ PAPI_get_executable_info( void )
 		return ( NULL );
 }
 
-const PAPI_shlib_info_t *
-PAPI_get_shared_lib_info( void )
-{
+/** @brief get address info about the shared libraries used by the process 
+ *
+ *	In C, this function returns a pointer to a structure containing information 
+ *	about the shared library used by the program. 
+ *	There is no Fortran equivalent call. 
+ *	
+ *	@see PAPI_get_hardware_info PAPI_get_executable_info PAPI_get_dmem_info PAPI_get_opt PAPI_library_init
+ */
+const PAPI_shlib_info_t * PAPI_get_shared_lib_info( void ) {
 	PAPI_option_t ptr;
 	int retval;
 
@@ -3270,28 +3822,69 @@ PAPI_get_hardware_info( void )
 
 /* The next 4 timing functions always use component 0 */
 
-long long
-PAPI_get_real_cyc( void )
-{
+/** @brief get real time counter value in clock cycles 
+ *
+ *	Returns the total real time passed since some arbitrary starting point. 
+ *	The time is returned in clock cycles. 
+ *	This call is equivalent to wall clock time.
+ *
+ *	@see PAPI_get_virt_usec PAPI_get_virt_cyc PAPI_library_init
+ */
+long long PAPI_get_real_cyc( void ) {
 	return ( _papi_hwd[0]->get_real_cycles(  ) );
 }
 
-long long
-PAPI_get_real_nsec( void )
-{
+/** @brief get real time counter value in nanoseconds 
+ *
+ *	This function returns the total real time passed since some arbitrary 
+ *	starting point. 
+ *	The time is returned in nanoseconds. 
+ *	This call is equivalent to wall clock time.
+ *
+ *	@see PAPI_get_virt_usec PAPI_get_virt_cyc PAPI_library_init
+ */
+
+long long PAPI_get_real_nsec( void ) {
 	return ( ( _papi_hwd[0]->get_real_cycles(  ) * 1000LL ) /
 			 ( long long ) _papi_hwi_system_info.hw_info.mhz );
 }
 
-long long
-PAPI_get_real_usec( void )
-{
+/** @brief get real time counter value in microseconds 
+ *
+ *	This function returns the total real time passed since some arbitrary 
+ *	starting point. 
+ *	The time is returned in microseconds. 
+ *	This call is equivalent to wall clock time.
+ *
+ *	@see PAPI_get_virt_usec PAPI_get_virt_cyc PAPI_library_init
+ */
+long long PAPI_get_real_usec( void ) {
 	return ( _papi_hwd[0]->get_real_usec(  ) );
 }
 
-long long
-PAPI_get_virt_cyc( void )
-{
+/** @brief get virtual time counter value in clock cycles 
+ *
+ *	@retval PAPI_ECNFLCT 
+ *		If there is no master event set. 
+ *		This will happen if the library has not been initialized, or for threaded 
+ *		applications, if there has been no thread id function defined by the 
+ *		PAPI_thread_init function.
+ *	@retval PAPI_ENOMEM
+ *		For threaded applications, if there has not yet been any thread specific
+ *		master event created for the current thread, and if the allocation of 
+ *		such an event set fails, the call will return PAPI_ENOMEM or PAPI_ESYS . 
+ *
+ *	This function returns the total number of virtual units from some 
+ *	arbitrary starting point. 
+ *	Virtual units accrue every time the process is running in user-mode on 
+ *	behalf of the process. 
+ *	Like the real time counters, this count is guaranteed to exist on every platform 
+ *	PAPI supports. 
+ *	However on some platforms, the resolution can be as bad as 1/Hz as defined 
+ *	by the operating system. 
+ *
+ */
+long long PAPI_get_virt_cyc( void ) {
 	ThreadInfo_t *master;
 	int retval;
 
@@ -3304,9 +3897,29 @@ PAPI_get_virt_cyc( void )
 			 get_virt_cycles( master->context[0] ) );
 }
 
-long long
-PAPI_get_virt_nsec( void )
-{
+/** @brief get virtual time counter values in microseconds 
+ *
+ *	@retval PAPI_ECNFLCT 
+ *		If there is no master event set. 
+ *		This will happen if the library has not been initialized, or for threaded 
+ *		applications, if there has been no thread id function defined by the 
+ *		PAPI_thread_init function.
+ *	@retval PAPI_ENOMEM
+ *		For threaded applications, if there has not yet been any thread specific
+ *		master event created for the current thread, and if the allocation of 
+ *		such an event set fails, the call will return PAPI_ENOMEM or PAPI_ESYS . 
+ *
+ *	This function returns the total number of virtual units from some 
+ *	arbitrary starting point. 
+ *	Virtual units accrue every time the process is running in user-mode on 
+ *	behalf of the process. 
+ *	Like the real time counters, this count is guaranteed to exist on every platform 
+ *	PAPI supports. 
+ *	However on some platforms, the resolution can be as bad as 1/Hz as defined 
+ *	by the operating system. 
+ *
+ */
+long long PAPI_get_virt_nsec( void ) {
 	ThreadInfo_t *master;
 	int retval;
 
@@ -3319,9 +3932,29 @@ PAPI_get_virt_nsec( void )
 			 ( long long ) _papi_hwi_system_info.hw_info.mhz );
 }
 
-long long
-PAPI_get_virt_usec( void )
-{
+/** @brief get virtual time counter values in microseconds 
+ *
+ *	@retval PAPI_ECNFLCT 
+ *		If there is no master event set. 
+ *		This will happen if the library has not been initialized, or for threaded 
+ *		applications, if there has been no thread id function defined by the 
+ *		PAPI_thread_init function.
+ *	@retval PAPI_ENOMEM
+ *		For threaded applications, if there has not yet been any thread specific
+ *		master event created for the current thread, and if the allocation of 
+ *		such an event set fails, the call will return PAPI_ENOMEM or PAPI_ESYS . 
+ *
+ *	This function returns the total number of virtual units from some 
+ *	arbitrary starting point. 
+ *	Virtual units accrue every time the process is running in user-mode on 
+ *	behalf of the process. 
+ *	Like the real time counters, this count is guaranteed to exist on every platform 
+ *	PAPI supports. 
+ *	However on some platforms, the resolution can be as bad as 1/Hz as defined 
+ *	by the operating system. 
+ *
+ */
+long long PAPI_get_virt_usec( void ) {
 	ThreadInfo_t *master;
 	int retval;
 
@@ -3345,27 +3978,56 @@ PAPI_save( void )
 	return ( PAPI_ESBSTR );
 }
 
-int
-PAPI_lock( int lck )
-{
+/** @brief Lock one of two mutex variables defined in papi.h 
+ *
+ *	@param lck
+ *		an integer value specifying one of the two user locks: PAPI_USR1_LOCK or PAPI_USR2_LOCK 
+ *
+ *	PAPI_lock() Grabs access to one of the two PAPI mutex variables. 
+ *	This function is provided to the user to have a platform independent call 
+ *	to (hopefully) efficiently implemented mutex.
+ *
+ *	@see PAPI_thread_init
+ */
+int PAPI_lock( int lck ) {
 	if ( ( lck < 0 ) || ( lck >= PAPI_NUM_LOCK ) )
 		papi_return( PAPI_EINVAL );
 
 	papi_return( _papi_hwi_lock( lck ) );
 }
 
-int
-PAPI_unlock( int lck )
-{
+/** @brief Unlock one of the mutex variables defined in papi.h 
+ *
+ *	@param lck
+ *		an integer value specifying one of the two user locks: PAPI_USR1_LOCK 
+ *		or PAPI_USR2_LOCK 
+ *
+ *	PAPI_unlock() unlocks the mutex acquired by a call to PAPI_lock .
+ *
+ *	@see PAPI_thread_init
+ */
+int PAPI_unlock( int lck ) {
 	if ( ( lck < 0 ) || ( lck >= PAPI_NUM_LOCK ) )
 		papi_return( PAPI_EINVAL );
 
 	papi_return( _papi_hwi_unlock( lck ) );
 }
 
-int
-PAPI_is_initialized( void )
-{
+/** @brief check for initialization
+ *
+ *	@retval PAPI_NOT_INITED
+ *		Library has not been initialized
+ *	@retval PAPI_LOW_LEVEL_INITED
+ *		Low level has called library init
+ *	@retval PAPI_HIGH_LEVEL_INITED
+ *		High level has called library init 
+ *	@retval PAPI_THREAD_LEVEL_INITED	
+ *		Threads have been inited 
+ *
+ *	PAPI_is_initialized() returns the status of the PAPI library. 
+ *	The PAPI library can be in one of four states, as described under RETURN VALUES. 
+ */
+int PAPI_is_initialized( void ) {
 	return ( init_level );
 }
 
@@ -3378,10 +4040,43 @@ PAPI_is_initialized( void )
                   is executed, the number of indexes in *array is written
                   to this parameter
 */
-int
-PAPI_get_overflow_event_index( int EventSet, long long overflow_vector,
-							   int *array, int *number )
-{
+
+/** @brief converts an overflow vector into an array of indexes to overflowing events 
+ *
+ *	@param EventSet
+ *		an integer handle to a PAPI event set as created by PAPI_create_eventset
+ *	@param overflow_vector
+ *		a vector with bits set for each counter that overflowed. 
+ *		This vector is passed by the system to the overflow handler routine.
+ *	@param array
+ *		an array of indexes for events in EventSet. 
+ *		No more than *number indexes will be stored into the array.
+ *	@param number 
+ *		On input the variable determines the size of the array. 
+ *		On output the variable contains the number of indexes in the array. 
+ *
+ *	@retval PAPI_EINVAL 
+ *		One or more of the arguments is invalid. 
+ *		This could occur if the overflow_vector is empty (zero), if the array or 
+ *		number pointers are NULL, if the value of number is less than one, 
+ *		or if the EventSet is empty.
+ *	@retval PAPI_ENOEVST 
+ *		The EventSet specified does not exist. 
+ *	
+ *	PAPI_get_overflow_event_index decomposes an overflow_vector into an event 
+ *	index array in which the first element corresponds to the least significant
+ *	set bit in overflow_vector and so on. Based on overflow_vector, 
+ *	the user can only tell which physical counters overflowed. 
+ *	Using this function, the user can map overflowing counters to specific 
+ *	events in the event set. 
+ *
+ *	An array is used in this function to support the possibility of 
+ *	multiple simultaneous overflow events.
+ *
+ *	@see PAPI_overflow
+ */
+int PAPI_get_overflow_event_index( int EventSet, long long overflow_vector,
+							   int *array, int *number ) {
 	EventSetInfo_t *ESI;
 	int set_bit, j, pos;
 	int count = 0, k;
