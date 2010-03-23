@@ -134,6 +134,7 @@ _papi_malloc( char *file, int line, size_t size )
 				( unsigned long ) size, file, line );
 		return ( NULL );
 	}
+
 	ptr = ( void * ) malloc( nsize );
 
 	if ( !ptr )
@@ -219,12 +220,13 @@ _papi_free( char *file, int line, void *ptr )
 	MEMDBG( "%p: Freeing %d bytes from File: %s  Line: %d\n", mem_ptr->ptr,
 			mem_ptr->size, file, line );
 
-#ifdef DEBUG
-	_papi_mem_check_all_overflow(  );
-#endif
 	_papi_hwi_lock( MEMORY_LOCK );
 	remove_mem_ptr( mem_ptr );
 	_papi_hwi_unlock( MEMORY_LOCK );
+
+#ifdef DEBUG
+	_papi_mem_check_all_overflow(  );
+#endif
 }
 
 /** Print information about the memory including file and location it came from */
@@ -411,8 +413,8 @@ set_epilog( pmem_t * mem_ptr )
 	return ( _papi_mem_check_all_overflow(  ) );
 #else
 	( void ) mem_ptr;		 /*unused */
-	return ( 0 );
 #endif
+	return ( 0 );
 }
 
 /* Check for memory buffer overflows */
