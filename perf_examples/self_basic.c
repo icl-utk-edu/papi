@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
+#include <locale.h>
 #include <err.h>
 
 #include <perfmon/pfmlib_perf_event.h>
@@ -55,6 +56,8 @@ main(int argc, char **argv)
 	struct perf_event_attr attr;
 	int fd, ret;
 	uint64_t count = 0, values[3];
+
+	setlocale(LC_ALL, "");
 
 	/*
 	 * Initialize libpfm library (required before we can use it)
@@ -131,7 +134,7 @@ main(int argc, char **argv)
 	if (values[2])
 		count = (uint64_t)((double)values[0] * values[1]/values[2]);
 
-	printf("count=%"PRIu64"\n", count);
+	printf("count=%'"PRIu64"\n", count);
 
 	close(fd);
 

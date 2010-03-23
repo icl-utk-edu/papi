@@ -30,6 +30,7 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <locale.h>
 #include <err.h>
 
 #include "perf_util.h"
@@ -87,12 +88,12 @@ print_counts(perf_event_desc_t *fds, int num)
 
 		val = val - fds[i].prev_value;
 		if (ratio == 1.0)
-			printf("%20"PRIu64" %s\n", val, fds[i].name);
+			printf("%'20"PRIu64" %s\n", val, fds[i].name);
 		else
 			if (ratio == 0.0)
-				printf("%20"PRIu64" %s (did not run: incompatible events, too many events in a group, competing session)\n", val, fds[i].name);
+				printf("%'20"PRIu64" %s (did not run: incompatible events, too many events in a group, competing session)\n", val, fds[i].name);
 			else
-				printf("%20"PRIu64" %s (scaled from %.2f%% of time)\n", val, fds[i].name, ratio*100.0);
+				printf("%'20"PRIu64" %s (scaled from %.2f%% of time)\n", val, fds[i].name, ratio*100.0);
 
 	}
 }
@@ -253,6 +254,8 @@ int
 main(int argc, char **argv)
 {
 	int c;
+
+	setlocale(LC_ALL, "");
 
 	while ((c=getopt(argc, argv,"he:igpPt:")) != -1) {
 		switch(c) {
