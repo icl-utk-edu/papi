@@ -32,40 +32,15 @@
 # include <ctype.h>			 /* isdigit */
 #endif
 
-/********************/
-/* BEGIN PROTOTYPES */
-/********************/
-
 static int default_debug_handler( int errorCode );
 static long long handle_derived( EventInfo_t * evi, long long *from );
 
 extern unsigned long int ( *_papi_hwi_thread_id_fn ) ( void );
-
-
-/********************/
-/*  END PROTOTYPES  */
-/********************/
-
-/********************/
-/*  BEGIN GLOBALS   */
-/********************/
-
-/* Defined in papi_data.c */
-extern hwi_presets_t _papi_hwi_presets;
-
-/* Machine dependent info structure */
-extern papi_mdi_t _papi_hwi_system_info;
-
-/********************/
-/*  BEGIN LOCALS    */
-/********************/
+extern hwi_presets_t _papi_hwi_presets;	/* Defined in papi_data.c */
+extern papi_mdi_t _papi_hwi_system_info;	/* Machine dependent info structure */
 
 int _papi_hwi_error_level = PAPI_QUIET;
 PAPI_debug_handler_t _papi_hwi_debug_handler = default_debug_handler;
-
-/********************/
-/*    END LOCALS    */
-/********************/
 
 /* Utility functions */
 
@@ -183,18 +158,15 @@ expand_dynamic_array( DynamicArray_t * DA )
 	return ( PAPI_OK );
 }
 
-/*========================================================================*/
-/* This function allocates space for one EventSetInfo_t structure and for */
-/* all of the pointers in this structure.  If any malloc in this function */
-/* fails, all memory malloced to the point of failure is freed, and NULL  */
-/* is returned.  Upon success, a pointer to the EventSetInfo_t data       */
-/* structure is returned.                                                 */
-/*========================================================================*/
-
 static int
 EventInfoArrayLength( const EventSetInfo_t * ESI )
 {
-	if ( ESI->state & PAPI_MULTIPLEXING )
+	/* NOTE: The _papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex 
+	   conditional was used in add_native_event. Its use may
+	   or may not be correct here. */
+
+	if ( ESI->state & PAPI_MULTIPLEXING ||
+		 _papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex )
 		return ( _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs );
 	else
 		return ( _papi_hwd[ESI->CmpIdx]->cmp_info.num_cntrs );
@@ -206,7 +178,7 @@ initialize_EventInfoArray( EventSetInfo_t * ESI )
 	int i, j, limit;
 	EventInfo_t tmp;
 
-	limit = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
+	limit = EventInfoArrayLength( ESI );
 
 	/* This is an optimization */
 
@@ -222,17 +194,13 @@ initialize_EventInfoArray( EventSetInfo_t * ESI )
 	}
 }
 
-
 static void
 initialize_NativeInfoArray( EventSetInfo_t * ESI )
 {
 	int i;
-	/* xxxx should these arrays be num_mpx_cntrs or num_cntrs in size?? */
-	int max_counters;
 	int sz;
 	char *ptr;
-
-	max_counters = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
+	int max_counters = EventInfoArrayLength( ESI );
 	sz = _papi_hwd[ESI->CmpIdx]->size.reg_value;
 	ptr =
 		( ( ( char * ) ESI->NativeInfoArray ) +
@@ -274,7 +242,7 @@ _papi_hwi_assign_eventset( EventSetInfo_t * ESI, int cidx )
 
 	ESI->CmpIdx = cidx;
 
-	max_counters = ( size_t ) _papi_hwd[cidx]->cmp_info.num_mpx_cntrs;
+	max_counters = ( size_t ) EventInfoArrayLength( ESI );
 	ESI->ctl_state =
 		( hwd_control_state_t * ) papi_malloc( ( size_t ) _papi_hwd[cidx]->size.
 											   control_state );
@@ -288,7 +256,6 @@ _papi_hwi_assign_eventset( EventSetInfo_t * ESI, int cidx )
 		( EventInfo_t * ) papi_malloc( ( size_t ) max_counters *
 									   sizeof ( EventInfo_t ) );
 /* allocate room for the native events and for the component-private register structures */
-/* xxxx should these arrays be num_mpx_cntrs or num_cntrs in size?? */
 	ESI->NativeInfoArray =
 		( NativeInfo_t * ) papi_malloc( ( size_t ) max_counters *
 										sizeof ( NativeInfo_t ) +
@@ -376,7 +343,6 @@ _papi_hwi_assign_eventset( EventSetInfo_t * ESI, int cidx )
 /* structure, *ESI.                                                       */
 /* The calling function should check  for ESI==NULL.                      */
 /*========================================================================*/
-
 void
 _papi_hwi_free_EventSet( EventSetInfo_t * ESI )
 {
@@ -473,7 +439,6 @@ _papi_hwi_create_eventset( int *EventSet, ThreadInfo_t * handle )
 /* This function returns the index of the the next free slot
    in the EventInfoArray. If EventCode is already in the list,
    it returns PAPI_ECNFLCT. */
-
 static int
 get_free_EventCodeIndex( const EventSetInfo_t * ESI, unsigned int EventCode )
 {
@@ -498,7 +463,6 @@ get_free_EventCodeIndex( const EventSetInfo_t * ESI, unsigned int EventCode )
 /* This function returns the index of the EventCode or error */
 /* Index to what? The index to everything stored EventCode in the */
 /* EventSet. */
-
 int
 _papi_hwi_lookup_EventCodeIndex( const EventSetInfo_t * ESI,
 								 unsigned int EventCode )
@@ -515,7 +479,6 @@ _papi_hwi_lookup_EventCodeIndex( const EventSetInfo_t * ESI,
 }
 
 /* This function only removes empty EventSets */
-
 int
 _papi_hwi_remove_EventSet( EventSetInfo_t * ESI )
 {
@@ -584,6 +547,7 @@ remap_event_position( EventSetInfo_t * ESI, int thisindex )
 		/* find the added event in EventInfoArray */
 		while ( head[j].event_code == ( unsigned int ) PAPI_NULL )
 			j++;
+
 		/* fill in the new information */
 		if ( head[j].event_code & PAPI_PRESET_MASK ) {
 			preset_index = ( int ) head[j].event_code & PAPI_PRESET_AND_MASK;
@@ -614,7 +578,6 @@ remap_event_position( EventSetInfo_t * ESI, int thisindex )
 	}						 /* end of for loop */
 }
 
-
 static int
 add_native_fail_clean( EventSetInfo_t * ESI, int nevt )
 {
@@ -624,7 +587,7 @@ add_native_fail_clean( EventSetInfo_t * ESI, int nevt )
 	if ( _papi_hwi_invalid_cmp( cidx ) )
 		return -1;
 
-	max_counters = _papi_hwd[cidx]->cmp_info.num_mpx_cntrs;
+	max_counters = EventInfoArrayLength( ESI );
 
 	/* to find the native event from the native events list */
 	for ( i = 0; i < max_counters; i++ ) {
@@ -676,12 +639,8 @@ add_native_events( EventSetInfo_t * ESI, int *nevt, int size,
 {
 	int nidx, i, j, remap = 0;
 	int retval, retval2;
-	int max_counters;
+	int max_counters = EventInfoArrayLength( ESI );
 
-	if ( _papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex )
-		max_counters = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
-	else
-		max_counters = _papi_hwd[ESI->CmpIdx]->cmp_info.num_cntrs;
 	/* if the native event is already mapped, fill in */
 	for ( i = 0; i < size; i++ ) {
 		if ( ( nidx = _papi_hwi_add_native_precheck( ESI, nevt[i] ) ) >= 0 ) {
@@ -757,7 +716,6 @@ add_native_events( EventSetInfo_t * ESI, int *nevt, int size,
 	return 0;
 }
 
-
 int
 _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 {
@@ -817,7 +775,6 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 			}
 
 			/* Try to add the preset. */
-
 			remap =
 				add_native_events( ESI,
 								   _papi_hwi_presets.data[preset_index]->native,
@@ -893,7 +850,6 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 	return ( retval );
 }
 
-
 int
 _papi_hwi_add_pevent( EventSetInfo_t * ESI, int EventCode, void *inout )
 {
@@ -933,7 +889,6 @@ _papi_hwi_add_pevent( EventSetInfo_t * ESI, int EventCode, void *inout )
 	ESI->NumberOfEvents++;
 	return ( retval );
 }
-
 
 int
 remove_native_events( EventSetInfo_t * ESI, int *nevt, int size )
@@ -1079,10 +1034,11 @@ _papi_hwi_remove_event( EventSetInfo_t * ESI, int EventCode )
 	for ( ; thisindex < ESI->NumberOfEvents - 1; thisindex++ )
 		array[thisindex] = array[thisindex + 1];
 
-
 	array[thisindex].event_code = ( unsigned int ) PAPI_NULL;
+
 	for ( j = 0; j < MAX_COUNTER_TERMS; j++ )
 		array[thisindex].pos[j] = -1;
+
 	array[thisindex].ops = NULL;
 	array[thisindex].derived = NOT_DERIVED;
 	ESI->NumberOfEvents--;
@@ -1120,7 +1076,6 @@ _papi_hwi_read( hwd_context_t * context, EventSetInfo_t * ESI,
 		INTDBG( "Event index %d, position is 0x%x\n", j, index );
 
 		/* If this is not a derived event */
-
 		if ( ESI->EventInfoArray[i].derived == NOT_DERIVED ) {
 			INTDBG( "counter index is %d\n", index );
 			values[j] = dp[index];
@@ -1145,7 +1100,7 @@ _papi_hwi_cleanup_eventset( EventSetInfo_t * ESI )
 	int retval, i, tmp;
 	/* Always clean the whole thing */
 
-	tmp = _papi_hwd[ESI->CmpIdx]->cmp_info.num_mpx_cntrs;
+	tmp = EventInfoArrayLength( ESI );
 
 	for ( i = ( tmp - 1 ); i >= 0; i-- ) {
 		if ( ESI->EventInfoArray[i].event_code != ( unsigned int ) PAPI_NULL ) {
@@ -1203,8 +1158,8 @@ _papi_hwi_convert_eventset_to_multiplex( _papi_int_multiplex_t * mpx )
 				papi_free( mpxlist );
 				return ( retval );
 			}
-			papi_free( mpxlist );
 		}
+		papi_free( mpxlist );
 	}
 
 	/* Update the state before initialization! */
@@ -1318,8 +1273,8 @@ _papi_hwi_shutdown_global_internal( void )
 }
 
 void
-_papi_hwi_dummy_handler( int EventSet, void *address, long long overflow_vector,
-						 void *context )
+_papi_hwi_dummy_handler( int EventSet, void *address,
+						 long long overflow_vector, void *context )
 {
 	/* This function is not used and shouldn't be called. */
 	( void ) EventSet;		 /*unused */
@@ -1497,38 +1452,38 @@ handle_derived( EventInfo_t * evi, long long *from )
 void
 print_state( EventSetInfo_t * ESI, int cidx )
 {
-	int i;
+	int i, length = EventInfoArrayLength( ESI );
 
 	APIDBG( "\n\n-----------------------------------------\n" );
 	APIDBG( "numEvent: %d    numNative: %d\n", ESI->NumberOfEvents,
 			ESI->NativeCount );
 
 	APIDBG( "\nnative_event code       " );
-	for ( i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++ )
+	for ( i = 0; i < length; i++ )
 		APIDBG( "0x%15x", ESI->NativeInfoArray[i].ni_event );
 	APIDBG( "\n" );
 
 	APIDBG( "native_event_position     " );
-	for ( i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++ )
+	for ( i = 0; i < length; i++ )
 		APIDBG( "%15d", ESI->NativeInfoArray[i].ni_position );
 	APIDBG( "\n" );
 
 #if 0						 /* This code is specific to POWER */
 	APIDBG( "native_event_selectors    " );
-	for ( i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++ )
+	for ( i = 0; i < length; i++ )
 		APIDBG( "%15d",
 				native_table[ESI->NativeInfoArray[i].ni_event].resources.
 				selector );
 	APIDBG( "\n" );
 
 	APIDBG( "counter_cmd               " );
-	for ( i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++ )
+	for ( i = 0; i < length; i++ )
 		APIDBG( "%15d", ESI->ctl_state->counter_cmd.events[i] );
 	APIDBG( "\n" );
 #endif
 
 	APIDBG( "native links              " );
-	for ( i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++ )
+	for ( i = 0; i < length; i++ )
 		APIDBG( "%15d", ESI->NativeInfoArray[i].ni_owners );
 	APIDBG( "\n" );
 
@@ -1581,9 +1536,8 @@ _papi_hwi_bipartite_alloc( hwd_reg_alloc_t * event_list, int count, int cidx )
 						_papi_hwd[cidx]->
 							bpt_map_preempt( ( hwd_reg_alloc_t * ) &
 											 ptr[size * i],
-											 ( hwd_reg_alloc_t * ) & ptr[size *
-																		 idx_q
-																		 [head]] );
+											 ( hwd_reg_alloc_t * ) &
+											 ptr[size * idx_q[head]] );
 						if ( _papi_hwd[cidx]->
 							 bpt_map_exclusive( ( hwd_reg_alloc_t * ) &
 												ptr[size * i] ) )
@@ -1601,14 +1555,16 @@ _papi_hwi_bipartite_alloc( hwd_reg_alloc_t * event_list, int count, int cidx )
 		char *rest_event_list;
 		char *copy_rest_event_list;
 		int remainder;
+		/* NOTE: The conditional may need to be something like...
+		   (ESI->state & PAPI_MULTIPLEXING || _papi_hwd[ESI->CmpIdx]->cmp_info.kernel_multiplex) */
+		int length = ( _papi_hwd[cidx]->cmp_info.kernel_multiplex ) ?
+			_papi_hwd[cidx]->cmp_info.num_mpx_cntrs :
+			_papi_hwd[cidx]->cmp_info.num_cntrs;
 		rest_event_list =
-			( char * ) papi_malloc( ( size_t ) size *
-									( size_t ) _papi_hwd[cidx]->cmp_info.
-									num_cntrs );
+			( char * ) papi_malloc( ( size_t ) size * ( size_t ) length );
 		copy_rest_event_list =
-			( char * ) papi_malloc( ( size_t ) size *
-									( size_t ) _papi_hwd[cidx]->cmp_info.
-									num_cntrs );
+			( char * ) papi_malloc( ( size_t ) size * ( size_t ) length );
+
 		if ( !rest_event_list || !copy_rest_event_list ) {
 			if ( rest_event_list )
 				papi_free( rest_event_list );
@@ -1630,7 +1586,7 @@ _papi_hwi_bipartite_alloc( hwd_reg_alloc_t * event_list, int count, int cidx )
 				( size_t ) size * ( size_t ) remainder );
 
 		/* try each possible mapping until you fail or find one that works */
-		for ( i = 0; i < _papi_hwd[cidx]->cmp_info.num_cntrs; i++ ) {
+		for ( i = 0; i < length; i++ ) {
 			/* for the first unmapped event, try every possible counter */
 			if ( _papi_hwd[cidx]->
 				 bpt_map_avail( ( hwd_reg_alloc_t * ) rest_event_list, i ) ) {
@@ -1660,7 +1616,7 @@ _papi_hwi_bipartite_alloc( hwd_reg_alloc_t * event_list, int count, int cidx )
 						( size_t ) size * ( size_t ) remainder );
 			}
 		}
-		if ( i == _papi_hwd[cidx]->cmp_info.num_cntrs ) {
+		if ( i == length ) {
 			papi_free( rest_event_list );
 			papi_free( copy_rest_event_list );
 			return 0;		 /* fail to find mapping */
@@ -1669,9 +1625,8 @@ _papi_hwi_bipartite_alloc( hwd_reg_alloc_t * event_list, int count, int cidx )
 			if ( map_q[i] == 0 )
 				_papi_hwd[cidx]->
 					bpt_map_update( ( hwd_reg_alloc_t * ) & ptr[size * i],
-									( hwd_reg_alloc_t * ) & rest_event_list[size
-																			*
-																			j++] );
+									( hwd_reg_alloc_t * ) &
+									rest_event_list[size * j++] );
 		}
 		papi_free( rest_event_list );
 		papi_free( copy_rest_event_list );
@@ -1698,7 +1653,8 @@ _papi_hwi_get_event_info( int EventCode, PAPI_event_info_t * info )
 		info->count = _papi_hwi_presets.count[i];
 		strcpy( info->symbol, _papi_hwi_presets.info[i].symbol );
 		if ( _papi_hwi_presets.info[i].short_descr != NULL )
-			strncpy( info->short_descr, _papi_hwi_presets.info[i].short_descr,
+			strncpy( info->short_descr,
+					 _papi_hwi_presets.info[i].short_descr,
 					 sizeof ( info->short_descr ) );
 		if ( _papi_hwi_presets.info[i].long_descr != NULL )
 			strncpy( info->long_descr, _papi_hwi_presets.info[i].long_descr,
