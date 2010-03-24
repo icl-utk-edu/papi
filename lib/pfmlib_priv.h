@@ -67,7 +67,8 @@ typedef struct {
  * back up to match perf_event_attr with hardware settings
  */
 typedef struct {
-	int plm;
+	int plm;	/* privilege level mask */
+	int precise;	/* enable precise sampling */
 	/* more to be added in the future */
 } pfmlib_perf_attr_t;
 

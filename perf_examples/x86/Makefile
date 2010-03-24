@@ -36,7 +36,7 @@ TARGETS=
 
 ifeq ($(SYS),Linux)
 LPC_UTILS=../perf_util.o
-TARGETS += bts_smpl
+TARGETS += bts_smpl pebs_smpl
 endif
 
 all: $(TARGETS)

@@ -38,7 +38,8 @@ const pfmlib_attr_desc_t intel_x86_mods[]={
 	PFM_ATTR_B("i", "invert"),				/* invert */
 	PFM_ATTR_B("e", "edge level"),				/* edge */
 	PFM_ATTR_I("c", "counter-mask in range [0-255]"),	/* counter-mask */
-	PFM_ATTR_B("t", "measure any thread"),			/* montor on both threads */
+	PFM_ATTR_B("t", "measure any thread"),			/* monitor on both threads */
+	PFM_ATTR_B("p", "enable PEBS"),				/* enable PEBS */
 	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
 };
 
@@ -185,8 +186,8 @@ pfm_intel_x86_add_defaults(void *this, int pidx, char *umask_str, unsigned int m
 	return PFM_SUCCESS;
 }
 
-int
-pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *reg)
+static int
+pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *reg, pfmlib_perf_attr_t *attrs)
 {
 	pfmlib_attr_t *a;
 	const intel_x86_entry_t *pe;
@@ -195,7 +196,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 	uint64_t val;
 	unsigned int umask;
 	unsigned int modhw = 0;
-	unsigned int plmmsk = 0;
+	unsigned int plmmsk = 0, pebs_umasks = 0;
 	int k, ret, grpid, last_grpid = -1;
 	int grpcounts[INTEL_X86_NUM_GRP];
 	int ncombo[INTEL_X86_NUM_GRP];
@@ -219,6 +220,9 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 
 	/* take into account hardcoded umask */
 	umask = (val >> 8) & 0xff;
+
+	if (intel_x86_eflag(this, e, INTEL_X86_PEBS))
+		pebs_umasks++;
 
 	for(k=0; k < e->nattrs; k++) {
 		a = e->attrs+k;
@@ -269,6 +273,8 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 
 			reg->val |= umask << 8;
 
+			if (intel_x86_uflag(this, e, a->id, INTEL_X86_PEBS))
+				pebs_umasks++;
 			
 		} else {
 			switch(pfm_intel_x86_attr2mod(this, e->event, a->id)) {
@@ -295,6 +301,13 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 					if (reg->sel_anythr)
 						return PFM_ERR_ATTR_SET;
 					reg->sel_anythr = !!a->ival;
+					break;
+				case INTEL_X86_ATTR_P: /* PEBS */
+					if (!pebs_umasks) {
+						DPRINT("no unit mask with PEBS support\n");
+						return PFM_ERR_ATTR;
+					}
+					attrs->precise = 1;
 					break;
 			}
 		}
@@ -420,7 +433,7 @@ pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, 
 
 	reg.val = 0; /* not initialized by encode function */
 
-	ret = pfm_intel_x86_encode_gen(this, e, &reg);
+	ret = pfm_intel_x86_encode_gen(this, e, &reg, attrs);
 	if (ret != PFM_SUCCESS)
 		return ret;
 

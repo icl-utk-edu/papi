@@ -89,13 +89,15 @@ get_perf_event_encoding(const char *str, int dfl_plm, struct perf_event_attr *hw
 		hw->exclude_kernel = !(dfl_plm & PFM_PLM0);
 		hw->exclude_hv = !(dfl_plm & PFM_PLMH);
 	}
+	hw->precise = perf_attrs.precise;
 
-	__pfm_vbprintf("PERF[type=%x val=0x%"PRIx64" e_u=%d e_k=%d e_hv=%d] %s\n",
+	__pfm_vbprintf("PERF[type=%x val=0x%"PRIx64" e_u=%d e_k=%d e_hv=%d precise=%d] %s\n",
 			hw->type,
 			hw->config,
 			hw->exclude_user,
 			hw->exclude_kernel,
 			hw->exclude_hv,
+			hw->precise,
 			e.fstr);
 
 	free(codes);

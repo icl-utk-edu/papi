@@ -1,12 +1,9 @@
 /*
- * task_smpl.c - example of a task sampling another one using a randomized sampling period
+ * pebs_smpl.c - PEBS samping example (based on task_smpl.c)
+ * requires 2.6.34-rc2 or more recent
  *
- * Copyright (c) 2009 Google, Inc
+ * Copyright (c) 2010 Google, Inc
  * Contributed by Stephane Eranian <eranian@gmail.com>
- *
- * Based on:
- * Copyright (c) 2003-2006 Hewlett-Packard Development Company, L.P.
- * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -67,7 +64,10 @@ static struct option the_options[]={
 	{ 0, 0, 0, 0}
 };
 
-static char *gen_events = "PERF_COUNT_HW_CPU_CYCLES,PERF_COUNT_HW_INSTRUCTIONS";
+/*
+ * instructions_retired known to support PEBS on all CPUs
+ */
+static char *gen_events = "PERF_COUNT_HW_INSTRUCTIONS";
 
 static void
 cld_handler(int n)
@@ -91,10 +91,92 @@ child(char **arg)
 
 struct timeval last_read, this_read;
 
+struct pebs_record_core {
+	uint64_t flags, ip;
+	uint64_t ax, bx, cx, dx;
+	uint64_t si, di, bp, sp;
+	uint64_t r8,  r9,  r10, r11;
+	uint64_t r12, r13, r14, r15;
+};
+
+struct pebs_record_nhm {
+	uint64_t flags, ip;
+	uint64_t ax, bx, cx, dx;
+	uint64_t si, di, bp, sp;
+	uint64_t r8,  r9,  r10, r11;
+	uint64_t r12, r13, r14, r15;
+	uint64_t status, dla, dse, lat;
+};
+
+static void
+display_pebs_core(void *addr)
+{
+	struct pebs_record_core *pebs = addr;
+
+	printf("\tFL:0x%"PRIx64" EIP:0x%"PRIx64"\n"
+	       "\tEAX:0x%"PRIx64" EBX:0x%"PRIx64" ECX:0x%"PRIx64" EDX:0x%"PRIx64"\n"
+	       "\tESI:0x%"PRIx64" EDI:0x%"PRIx64" EBP:0x%"PRIx64" ESP:0x%"PRIx64"\n"
+	       "\tR08:0x%"PRIx64" R09:0x%"PRIx64" R10:0x%"PRIx64" R11:0x%"PRIx64"\n"
+	       "\tR12:0x%"PRIx64" R13:0x%"PRIx64" R14:0x%"PRIx64" R15:0x%"PRIx64"\n",
+		pebs->flags,
+		pebs->ip,
+		pebs->ax, pebs->bx, pebs->cx, pebs->dx,
+		pebs->si, pebs->di, pebs->bp, pebs->sp,
+		pebs->r8, pebs->r9, pebs->r10, pebs->r11,
+		pebs->r12, pebs->r13, pebs->r14, pebs->r15);
+	       
+}
+
+static void
+display_pebs_nhm(void *addr)
+{
+	struct pebs_record_nhm *pebs = addr;
+
+	printf("\tFL:0x%"PRIx64" EIP:0x%"PRIx64"\n"
+	       "\tEAX:0x%"PRIx64" EBX:0x%"PRIx64" ECX:0x%"PRIx64" EDX:0x%"PRIx64"\n"
+	       "\tESI:0x%"PRIx64" EDI:0x%"PRIx64" EBP:0x%"PRIx64" ESP:0x%"PRIx64"\n"
+	       "\tR08:0x%"PRIx64" R09:0x%"PRIx64" R10:0x%"PRIx64" R11:0x%"PRIx64"\n"
+	       "\tR12:0x%"PRIx64" R13:0x%"PRIx64" R14:0x%"PRIx64" R15:0x%"PRIx64"\n"
+	       "\tSTA:0x%"PRIx64" LDA:0x%"PRIx64" DSE:0x%"PRIx64" LAT:0x%"PRIx64"\n",
+		pebs->flags,
+		pebs->ip,
+		pebs->ax, pebs->bx, pebs->cx, pebs->dx,
+		pebs->si, pebs->di, pebs->bp, pebs->sp,
+		pebs->r8, pebs->r9, pebs->r10, pebs->r11,
+		pebs->r12, pebs->r13, pebs->r14, pebs->r15,
+		pebs->status, pebs->dla, pebs->dse, pebs->lat);
+	       
+}
+
+static void
+display_raw(void *addr, size_t sz)
+{
+	char *buf = addr;
+	size_t i;
+
+	if (sz)
+		putchar('\t');
+	for(i=0; i < sz; i++) {
+		printf("0x%02x ", buf[i] & 0xff );
+		if (((i+1) % 16)  == 0)
+			printf("\n\t");
+	}
+}
+
+static void display_pebs(void *addr, size_t sz)
+{
+	if (sz == sizeof(struct pebs_record_core))
+		display_pebs_core(addr);
+	else if (sz == sizeof(struct pebs_record_nhm))
+		display_pebs_nhm(addr);
+	else
+		display_raw(addr, sz);
+}
+
 static size_t handle_raw(perf_event_desc_t *hw)
 {
 	size_t sz = 0;
-	uint32_t raw_sz, i;
+	uint32_t raw_sz;
 	char *buf;
 	int ret;
 
@@ -104,24 +186,19 @@ static size_t handle_raw(perf_event_desc_t *hw)
 
 	sz += sizeof(raw_sz);
 
-	printf("\n\tRAWSZ:%u\n", raw_sz);
-
 	buf = malloc(raw_sz);
 	if (!buf)
 		err(1, "cannot allocate raw buffer");
 
-
+	
 	ret = perf_read_buffer(hw->buf, hw->pgmsk, buf, raw_sz);
 	if (ret)
 		errx(1, "cannot read raw data");
 
-	if (raw_sz)
-		putchar('\t');
-	for(i=0; i < raw_sz; i++) {
-		printf("0x%02x ", buf[i] & 0xff );
-		if (((i+1) % 16)  == 0)
-			printf("\n\t");
-	}
+	if (hw->hw.precise)
+		display_pebs(buf, raw_sz);
+	else
+		display_raw(buf, raw_sz);
 	free(buf);
 	return sz + raw_sz;
 }
@@ -314,11 +391,7 @@ display_sample(perf_event_desc_t *hw, struct perf_event_header *ehdr)
 	}
 
 	if (type & PERF_SAMPLE_RAW) {
-		if (hw->hw.precise)
-			ret = handle_raw(hw);
-		else
-			ret = handle_raw(hw);
-
+		ret = handle_raw(hw);
 		sz -= ret;
 	}
 	/*
@@ -587,7 +660,7 @@ terminate_session:
 static void
 usage(void)
 {
-	printf("usage: task_smpl [-h] [--help] [-i] [-m mmap_pages] [-f] [-e event1,...,eventn] [-p period] cmd\n");
+	printf("usage: pebs_smpl [-h] [--help] [-i] [-m mmap_pages] [-f] [-e event1,...,eventn] [-p period] cmd\n");
 }
 
 int

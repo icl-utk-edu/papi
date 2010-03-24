@@ -80,7 +80,7 @@ typedef struct {
 /*
  * pme_flags value (event and unit mask)
  */
-#define INTEL_X86_NCOMBO		0x01	/* unit masks with group cannot be combined */
+#define INTEL_X86_NCOMBO		0x01	/* unit masks within group cannot be combined */
 #define INTEL_X86_FALLBACK_GEN		0x02	/* fallback from fixed to generic counter possible */
 #define INTEL_X86_PEBS			0x04 	/* event support PEBS */
 #define INTEL_X86_ENCODER		0x08 	/* event requires model-specific encoding */
@@ -140,6 +140,7 @@ typedef union pfm_intel_x86_reg {
 #define INTEL_X86_ATTR_E	3 /* edge */
 #define INTEL_X86_ATTR_C	4 /* counter mask */
 #define INTEL_X86_ATTR_T	5 /* any thread */
+#define INTEL_X86_ATTR_P	6 /* request PEBS */
 
 #define _INTEL_X86_ATTR_U  (1 << INTEL_X86_ATTR_U)
 #define _INTEL_X86_ATTR_K  (1 << INTEL_X86_ATTR_K)
@@ -147,15 +148,18 @@ typedef union pfm_intel_x86_reg {
 #define _INTEL_X86_ATTR_E  (1 << INTEL_X86_ATTR_E)
 #define _INTEL_X86_ATTR_C  (1 << INTEL_X86_ATTR_C)
 #define _INTEL_X86_ATTR_T  (1 << INTEL_X86_ATTR_T)
+#define _INTEL_X86_ATTR_P  (1 << INTEL_X86_ATTR_P)
 
 #define INTEL_X86_ATTRS \
 	(_INTEL_X86_ATTR_I|_INTEL_X86_ATTR_E|_INTEL_X86_ATTR_C|_INTEL_X86_ATTR_U|_INTEL_X86_ATTR_K)
 
 #define INTEL_V1_ATTRS 		INTEL_X86_ATTRS
 #define INTEL_V2_ATTRS 		INTEL_X86_ATTRS
+#define INTEL_V2_PEBS_ATTRS 	(INTEL_V2_ATTRS|_INTEL_X86_ATTR_P)
 #define INTEL_FIXED2_ATTRS	(_INTEL_X86_ATTR_U|_INTEL_X86_ATTR_K)
 #define INTEL_FIXED3_ATTRS	(INTEL_FIXED2_ATTRS|_INTEL_X86_ATTR_T)
 #define INTEL_V3_ATTRS 		(INTEL_V2_ATTRS|_INTEL_X86_ATTR_T)
+#define INTEL_V3_PEBS_ATTRS 	(INTEL_V3_ATTRS|_INTEL_X86_ATTR_P)
 
 /* let's define some handy shortcuts! */
 #define sel_event_select perfevtsel.sel_event_select
@@ -219,7 +223,6 @@ intel_x86_uflag(void *this, pfmlib_event_desc_t *e, int attr, int flag)
 }
 
 extern int pfm_intel_x86_detect(void);
-extern int pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *reg);
 extern void pfm_intel_x86_display_reg(pfm_intel_x86_reg_t reg, char *fstr);
 extern int pfm_intel_x86_add_defaults(void *this, int pidx, char *umask_str, unsigned int msk, unsigned int *umask);
 
