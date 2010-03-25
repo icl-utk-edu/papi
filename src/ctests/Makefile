@@ -8,7 +8,7 @@ CFLAGS	= -g -O -Wall
 OMP	= zero_omp omptough
 SMP	= zero_smp
 SHMEM	= zero_shmem
-PTHREADS= pthrtough pthrtough2 thrspecific profile_pthreads overflow_pthreads zero_pthreads unregister_pthreads clockres_pthreads overflow3_pthreads locks_pthreads krentel_pthreads
+PTHREADS= pthrtough pthrtough2 thrspecific profile_pthreads overflow_pthreads zero_pthreads clockres_pthreads overflow3_pthreads locks_pthreads krentel_pthreads
 MPX	= multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx sdsc4-mpx
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpifirst
@@ -147,9 +147,6 @@ overflow_pthreads: overflow_pthreads.c $(UTILOBJS) $(PAPILIB)
 
 zero_pthreads: zero_pthreads.c $(UTILOBJS) $(PAPILIB)
 	$(CC_R) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) zero_pthreads.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero_pthreads -lpthread
-
-unregister_pthreads: zero_pthreads.c $(UTILOBJS) $(PAPILIB)
-	$(CC_R) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DTEST_UNREGISTER zero_pthreads.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o $@ -lpthread
 
 zero_smp: zero_smp.c $(UTILOBJS) $(PAPILIB)
 	$(CC_R) $(INCLUDE) $(SMPCFLGS) $(CFLAGS) $(TOPTFLAGS) zero_smp.c $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -o zero_smp $(SMPLIBS)
@@ -381,7 +378,7 @@ dummy.o: dummy.c
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c dummy.c
 
 clean:
-	rm -f *.o *.stderr *.stdout core *~ $(TESTS)
+	rm -f *.o *.stderr *.stdout core *~ $(TESTS) unregister_pthreads
 
 install: $(TARGETS)
 	@echo "C tests (DATADIR) being installed in: \"$(DATADIR)\""; 
