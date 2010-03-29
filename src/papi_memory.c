@@ -83,7 +83,6 @@ _papi_realloc( char *file, int line, void *ptr, size_t size )
 	nsize += MEM_EPILOG;
 	_papi_hwi_lock( MEMORY_LOCK );
 	_papi_mem_check_all_overflow(  );
-	_papi_hwi_unlock( MEMORY_LOCK );
 #endif
 
 	if ( !ptr )
@@ -101,7 +100,6 @@ _papi_realloc( char *file, int line, void *ptr, size_t size )
 	strncpy( mem_ptr->file, file, DEBUG_FILE_LEN );
 	mem_ptr->file[DEBUG_FILE_LEN - 1] = '\0';
 	mem_ptr->line = line;
-	_papi_hwi_lock( MEMORY_LOCK );
 	set_epilog( mem_ptr );
 	_papi_hwi_unlock( MEMORY_LOCK );
 #endif
