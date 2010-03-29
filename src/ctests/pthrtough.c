@@ -25,10 +25,6 @@ Thread( void *data )
 
 		if ( ( ret = PAPI_unregister_thread(  ) ) != PAPI_OK )
 			test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", ret );
-
-#ifdef DEBUG
-        usleep(250000);
-#endif
 	}
 	return ( NULL );
 }

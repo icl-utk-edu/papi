@@ -81,7 +81,9 @@ _papi_realloc( char *file, int line, void *ptr, size_t size )
 
 #ifdef DEBUG
 	nsize += MEM_EPILOG;
+	_papi_hwi_lock( MEMORY_LOCK );
 	_papi_mem_check_all_overflow(  );
+	_papi_hwi_unlock( MEMORY_LOCK );
 #endif
 
 	if ( !ptr )
@@ -99,7 +101,9 @@ _papi_realloc( char *file, int line, void *ptr, size_t size )
 	strncpy( mem_ptr->file, file, DEBUG_FILE_LEN );
 	mem_ptr->file[DEBUG_FILE_LEN - 1] = '\0';
 	mem_ptr->line = line;
+	_papi_hwi_lock( MEMORY_LOCK );
 	set_epilog( mem_ptr );
+	_papi_hwi_unlock( MEMORY_LOCK );
 #endif
 	MEMDBG( "%p: Re-allocated: %lu bytes from File: %s  Line: %d\n",
 			mem_ptr->ptr, ( unsigned long ) size, file, line );
@@ -152,8 +156,8 @@ _papi_malloc( char *file, int line, size_t size )
 		mem_ptr->ptr = ptr;
 		_papi_hwi_lock( MEMORY_LOCK );
 		insert_mem_ptr( mem_ptr );
-		_papi_hwi_unlock( MEMORY_LOCK );
 		set_epilog( mem_ptr );
+		_papi_hwi_unlock( MEMORY_LOCK );
 
 		MEMDBG( "%p: Allocated %lu bytes from File: %s  Line: %d\n",
 				mem_ptr->ptr, ( unsigned long ) size, file, line );
@@ -222,11 +226,8 @@ _papi_free( char *file, int line, void *ptr )
 
 	_papi_hwi_lock( MEMORY_LOCK );
 	remove_mem_ptr( mem_ptr );
-	_papi_hwi_unlock( MEMORY_LOCK );
-
-#ifdef DEBUG
 	_papi_mem_check_all_overflow(  );
-#endif
+	_papi_hwi_unlock( MEMORY_LOCK );
 }
 
 /** Print information about the memory including file and location it came from */
@@ -294,8 +295,9 @@ _papi_mem_cleanup_all(  )
 	int cnt = 0;
 #endif
 
-	_papi_mem_check_all_overflow(  );
 	_papi_hwi_lock( MEMORY_LOCK );
+	_papi_mem_check_all_overflow(  );
+
 	for ( ptr = mem_head; ptr; ptr = tmp ) {
 		tmp = ptr->next;
 #ifdef DEBUG
@@ -458,14 +460,13 @@ _papi_mem_check_all_overflow(  )
 #ifdef DEBUG
 	pmem_t *tmp;
 
-	_papi_hwi_lock( MEMORY_LOCK );
 	for ( tmp = mem_head; tmp; tmp = tmp->next ) {
 		if ( _papi_mem_check_buf_overflow( tmp ) )
 			fnd++;
 	}
+
 	if ( fnd )
 		LEAKDBG( "%d Total Buffer overflows detected!\n", fnd );
-	_papi_hwi_unlock( MEMORY_LOCK );
 #endif
 	return ( fnd );
 }
