@@ -284,6 +284,23 @@ static inline void setup_nhm_impl_unc_regs(void)
 
 }
 
+static void
+fixup_mem_uncore_retired(void)
+{
+	size_t i;
+
+	for(i=0; i < PME_COREI7_EVENT_COUNT; i++) {
+		if (corei7_pe[i].pme_code != 0xf)
+			continue;
+		
+		/*
+ 		 * assume model46 umasks are at the end
+ 		 */
+		corei7_pe[i].pme_numasks = 6;
+		break;
+	}
+}
+
 static int
 pfm_nhm_init(void)
 {
@@ -322,8 +339,18 @@ pfm_nhm_init(void)
 		pfm_regmask_set(&nhm_impl_pmds, i);
 
 	switch(cpu_model) {
-	case 26: /* Nehalem */
 	case 46:
+		num_pe = PME_COREI7_EVENT_COUNT;
+		num_unc_pe = 0;
+		pe = corei7_pe;
+		unc_pe = NULL;
+		pme_cycles = PME_COREI7_UNHALTED_CORE_CYCLES;
+		pme_instr = PME_COREI7_INSTRUCTIONS_RETIRED;
+		num_unc_cnt = 0;
+		fixup_mem_uncore_retired();
+		supp = &intel_nhm_support;
+		break;
+	case 26: /* Nehalem */
 		num_pe = PME_COREI7_EVENT_COUNT;
 		num_unc_pe = PME_COREI7_UNC_EVENT_COUNT;
 		pe = corei7_pe;
@@ -417,6 +444,33 @@ pfm_nhm_is_fixed(pfmlib_event_t *e, unsigned int f)
 }
 
 /*
+ * Allow combination of events when cnt_mask > 0 AND unit mask codes do
+ * not overlap (otherwise, we do not know what is actually measured)
+ */
+static int
+pfm_nhm_check_cmask(pfmlib_event_t *e, pme_nhm_entry_t *ne, pfmlib_nhm_counter_t *cntr)
+{
+	unsigned int ref, ucode;
+	int i, j;
+
+	if (!cntr)
+		return -1;
+
+	if (cntr->cnt_mask == 0)
+		return -1;
+
+	for(i=0; i < e->num_masks; i++) {
+		ref =  ne->pme_umasks[e->unit_masks[i]].pme_ucode;
+		for(j=i+1; j < e->num_masks; j++) {
+			ucode = ne->pme_umasks[e->unit_masks[j]].pme_ucode;
+			if (ref & ucode)
+				return -1;
+		}
+	}
+	return 0;
+}
+ 
+/*
  * IMPORTANT: the interface guarantees that pfp_pmds[] elements are returned in the order the events
  *	      were submitted.
  */
@@ -486,7 +540,7 @@ pfm_nhm_dispatch_counters(pfmlib_input_param_t *inp, pfmlib_nhm_input_param_t *p
 			return PFMLIB_ERR_INVAL;
 
 		if (ne->pme_flags & PFMLIB_NHM_UMASK_NCOMBO
-		    && e[i].num_masks > 1) {
+		    && e[i].num_masks > 1 && pfm_nhm_check_cmask(e, ne, cntrs ? cntrs+i : NULL)) {
 			DPRINT("events does not support unit mask combination\n");
 				return PFMLIB_ERR_NOASSIGN;
 		}
