@@ -8539,16 +8539,20 @@ if test "$OS" = "aix"; then
    if test "$pmapi" = "default"; then
       case "$CPU" in
       power3)
-	if test "${OSVER}" = "4"; then
-	   PMAPI="/usr/lpp/pmtoolkit"
-	else
-	   PMAPI="/usr/pmapi"
-	fi
-	;;
+	  if test "${OSVER}" = "4"; then
+		PMAPI="/usr/lpp/pmtoolkit"
+	  else
+		PMAPI="/usr/pmapi"
+	  fi
+	  ;;
       power4) PMAPI="/usr/pmapi" ;;
       power5) PMAPI="/usr/pmapi" ;;
       power6) PMAPI="/usr/pmapi" ;;
       esac
+	else
+	  PMAPI="$pmapi"
+	fi
+
       PMINIT=""
       LIBS="-L$PMAPI/lib -lpmapi"
       CPPFLAGS="$CPPFLAGS -I$PMAPI/include"
@@ -8700,9 +8704,6 @@ fi
 
 fi
 
-   else
-	PMAPI="$pmapi"
-   fi
 else
       case "$pmapi" in
          default) ;;
