@@ -3,8 +3,8 @@
 * CVS:     
 * Author:  Haihang You
 *          you@cs.utk.edu
-* Mods:    <your name here>
-*          <your email address>
+* Mods:    Brian Sheely
+*          bsheely@eecs.utk.edu
 */
 
 #include "papi.h"
@@ -37,7 +37,6 @@ _papi_hwi_setup_all_presets( hwi_search_t * findem, hwi_dev_notes_t * notes )
 			  ( findem[pnum].event_code != 0 ); pnum++ ) {
 			/* find the index for the event to be initialized */
 			preset_index = ( findem[pnum].event_code & PAPI_PRESET_AND_MASK );
-
 			/* count and set the number of native terms in this event, these items are contiguous.
 			   PAPI_MAX_COUNTER_TERMS is arbitrarily defined in the high level to be a reasonable
 			   number of terms to use in a derived event linear expression, currently 8.
@@ -83,7 +82,7 @@ _papi_hwi_setup_all_presets( hwi_search_t * findem, hwi_dev_notes_t * notes )
 			/* otherwise malloc a data istructure for the sparse array and copy 
 			   the event data into it. Kevin assures me that the data won't 
 			   *actually* be duplicated unless it is modified */
-			else {
+			else if ( _papi_hwi_presets.data[preset_index] == NULL ) {
 				_papi_hwi_presets.data[preset_index] =
 					papi_malloc( sizeof ( hwi_preset_data_t ) );
 				memcpy( _papi_hwi_presets.data[preset_index],
