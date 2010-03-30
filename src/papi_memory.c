@@ -196,13 +196,23 @@ _papi_valid_free( char *file, int line, void *ptr )
 		return ( 0 );
 
 	_papi_hwi_lock( MEMORY_LOCK );
+
 	for ( tmp = mem_head; tmp; tmp = tmp->next ) {
 		if ( ptr == tmp->ptr ) {
-			_papi_free( file, line, ptr );
+			pmem_t *mem_ptr = get_mem_ptr( ptr );
+
+			if ( mem_ptr ) {
+				MEMDBG( "%p: Freeing %d bytes from File: %s  Line: %d\n",
+						mem_ptr->ptr, mem_ptr->size, file, line );
+				remove_mem_ptr( mem_ptr );
+				_papi_mem_check_all_overflow(  );
+			}
+
 			valid = 1;
 			break;
 		}
 	}
+
 	_papi_hwi_unlock( MEMORY_LOCK );
 	return ( valid );
 }
