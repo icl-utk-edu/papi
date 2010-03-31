@@ -1184,7 +1184,6 @@ _papi_hwi_convert_eventset_to_multiplex( _papi_int_multiplex_t * mpx )
 		/* Remember the EventInfoArray can be sparse
 		   and the data can be non-contiguous */
 
-
 		for ( i = 0; i < EventInfoArrayLength( ESI ); i++ )
 			if ( ESI->EventInfoArray[i].event_code !=
 				 ( unsigned int ) PAPI_NULL )
@@ -1203,8 +1202,9 @@ _papi_hwi_convert_eventset_to_multiplex( _papi_int_multiplex_t * mpx )
 				papi_free( mpxlist );
 				return ( retval );
 			}
-			papi_free( mpxlist );
 		}
+
+		papi_free( mpxlist );
 	}
 
 	/* Update the state before initialization! */
