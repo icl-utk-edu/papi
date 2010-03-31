@@ -618,6 +618,7 @@ generate_preset_search_map( hwi_search_t ** maploc,
 			if ( cnt == MAX_COUNTER_TERMS ) {
 				PAPIERROR( "Count (%d) == MAX_COUNTER_TERMS (%d)\n", cnt,
 						   MAX_COUNTER_TERMS );
+				papi_free( psmap );
 				return ( PAPI_EBUG );
 			}
 			if ( _perfmon2_pfm_pmu_type == PFMLIB_MONTECITO_PMU ) {
@@ -627,6 +628,7 @@ generate_preset_search_map( hwi_search_t ** maploc,
 					 PAPI_OK ) {
 					PAPIERROR( "_papi_pfm_ntv_name_to_code(%s) failed\n",
 							   *findme );
+					papi_free( psmap );
 					return ( PAPI_EBUG );
 				} else
 					psmap[i].data.native[cnt] ^= PAPI_NATIVE_MASK;
@@ -636,6 +638,7 @@ generate_preset_search_map( hwi_search_t ** maploc,
 					   ( unsigned int * ) &psmap[i].data.native[cnt] ) !=
 					 PFMLIB_SUCCESS ) {
 					PAPIERROR( "pfm_find_event_byname(%s) failed\n", *findme );
+					papi_free( psmap );
 					return ( PAPI_EBUG );
 				} else
 					psmap[i].data.native[cnt] ^= PAPI_NATIVE_MASK;

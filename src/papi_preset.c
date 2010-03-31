@@ -130,6 +130,12 @@ _papi_hwi_cleanup_all_presets( void )
 	}
 	/* xxxx right now presets are only cpu, component 0 */
 	_papi_hwd[0]->cmp_info.num_preset_events = 0;
+
+	if ( preset_search_map != NULL ) {
+		papi_free( preset_search_map );
+		preset_search_map = NULL;
+	}
+
 	return ( PAPI_OK );
 }
 
