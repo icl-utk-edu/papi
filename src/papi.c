@@ -138,7 +138,9 @@ set_runtime_config(  )
  *
  *	@see PAPI_register_thread PAPI_unregister_thread PAPI_get_thr_specific PAPI_set_thr_specific PAPI_thread_id PAPI_list_threads
  */
-int PAPI_thread_init( unsigned long int ( *id_fn ) ( void ) ) {
+int
+PAPI_thread_init( unsigned long int ( *id_fn ) ( void ) )
+{
 	/* Thread support not implemented on Alpha/OSF because the OSF pfm
 	 * counter device driver does not support per-thread counters.
 	 * When this is updated, we can remove this if statement
@@ -208,7 +210,9 @@ PAPI_thread_id( void )
  *
  *	@see PAPI_thread_id PAPI_thread_init
  */
-int PAPI_register_thread( void ) {
+int
+PAPI_register_thread( void )
+{
 	ThreadInfo_t *thread;
 
 	if ( init_level == PAPI_NOT_INITED )
@@ -241,7 +245,9 @@ int PAPI_register_thread( void ) {
  *	the counters for that new thread. 
  *	This is accomplished by calling this function. 
  */
-int PAPI_unregister_thread( void ) {
+int
+PAPI_unregister_thread( void )
+{
 	ThreadInfo_t *thread = _papi_hwi_lookup_thread(  );
 
 	if ( thread )
@@ -268,7 +274,9 @@ int PAPI_unregister_thread( void ) {
  *	@see  PAPI_get_thr_specific PAPI_set_thr_specific PAPI_register_thread 
  *			PAPI_unregister_thread PAPI_thread_init PAPI_thread_id
  */
-int PAPI_list_threads( PAPI_thread_id_t * id, int *num ) {
+int
+PAPI_list_threads( PAPI_thread_id_t * id, int *num )
+{
 	PAPI_all_thr_spec_t tmp;
 	int retval;
 
@@ -319,7 +327,9 @@ int PAPI_list_threads( PAPI_thread_id_t * id, int *num ) {
  *
  *	@see PAPI_register_thread PAPI_thread_init PAPI_thread_id
  */
-int PAPI_get_thr_specific( int tag, void **ptr ) {
+int
+PAPI_get_thr_specific( int tag, void **ptr )
+{
 	ThreadInfo_t *thread;
 	int doall = 0, retval = PAPI_OK;
 
@@ -370,7 +380,9 @@ int PAPI_get_thr_specific( int tag, void **ptr ) {
  *
  *	@see PAPI_register_thread PAPI_thread_init PAPI_thread_id
  */
-int PAPI_set_thr_specific( int tag, void *ptr ) {
+int
+PAPI_set_thr_specific( int tag, void *ptr )
+{
 	ThreadInfo_t *thread;
 	int retval = PAPI_OK;
 
@@ -413,7 +425,9 @@ int PAPI_set_thr_specific( int tag, void *ptr ) {
  *	
  *	@see PAPI_thread_init
  */
-int PAPI_library_init( int version ) {
+int
+PAPI_library_init( int version )
+{
 	int tmp = 0, tmpel;
 	/* This is a poor attempt at a lock. 
 	   For 3.1 this should be replaced with a 
@@ -510,8 +524,8 @@ int PAPI_library_init( int version ) {
 	_papi_hwi_error_level = PAPI_VERB_ECONT;
 	set_runtime_config(  );
 
-		/* Initialize internal globals */
-		if ( _papi_hwi_init_global_internal(  ) != PAPI_OK ) {
+	/* Initialize internal globals */
+	if ( _papi_hwi_init_global_internal(  ) != PAPI_OK ) {
 		_in_papi_library_init_cnt--;
 		_papi_hwi_error_level = tmpel;
 		papi_return( PAPI_EINVAL );
@@ -570,7 +584,9 @@ int PAPI_library_init( int version ) {
  *
  *	@see PAPI_remove_event PAPI_remove_event PAPI_presets PAPI_native
  */
-int PAPI_query_event( int EventCode ) {
+int
+PAPI_query_event( int EventCode )
+{
 	if ( EventCode & PAPI_PRESET_MASK ) {
 		EventCode &= PAPI_PRESET_AND_MASK;
 		if ( EventCode >= PAPI_MAX_PRESET_EVENTS )
@@ -640,7 +656,9 @@ PAPI_get_component_info( int cidx )
  *
  *	@see PAPI_event_name_to_code PAPI_set_event_info
  */
-int PAPI_get_event_info( int EventCode, PAPI_event_info_t * info ) {
+int
+PAPI_get_event_info( int EventCode, PAPI_event_info_t * info )
+{
 	int i = EventCode & PAPI_PRESET_AND_MASK;
 
 	if ( info == NULL )
@@ -682,7 +700,9 @@ int PAPI_get_event_info( int EventCode, PAPI_event_info_t * info ) {
  *
  *	@see PAPI_remove_event PAPI_get_event_info PAPI_enum_events PAPI_add_event PAPI_presets PAPI_native
  */
-int PAPI_event_code_to_name( int EventCode, char *out ) {
+int
+PAPI_event_code_to_name( int EventCode, char *out )
+{
 	if ( out == NULL )
 		papi_return( PAPI_EINVAL );
 
@@ -724,7 +744,9 @@ int PAPI_event_code_to_name( int EventCode, char *out ) {
  *
  *	@see PAPI_remove_event PAPI_get_event_info PAPI_enum_events PAPI_add_event PAPI_presets PAPI_native
  */
-int PAPI_event_name_to_code( char *in, int *out ) {
+int
+PAPI_event_name_to_code( char *in, int *out )
+{
 	int i;
 
 	if ( ( in == NULL ) || ( out == NULL ) )
@@ -800,7 +822,9 @@ int PAPI_event_name_to_code( char *in, int *out ) {
  *
  *	@see PAPI_get_event_info PAPI_event_name_to_code PAPI_preset PAPI_native
  */
-int PAPI_enum_event( int *EventCode, int modifier ) {
+int
+PAPI_enum_event( int *EventCode, int modifier )
+{
 	int i = *EventCode;
 	int cidx = PAPI_COMPONENT_INDEX( *EventCode );
 
@@ -859,7 +883,9 @@ int PAPI_enum_event( int *EventCode, int modifier ) {
   * @see PAPI_destroy_eventset()
   * @see PAPI_cleanup_eventset()
   */
-int PAPI_create_eventset( int *EventSet ) {
+int
+PAPI_create_eventset( int *EventSet )
+{
 	ThreadInfo_t *master;
 	int retval;
 
@@ -897,7 +923,9 @@ int PAPI_create_eventset( int *EventSet ) {
  *
  * @see PAPI_set_opt() PAPI_create_eventset() PAPI_add_events() PAPI_set_multiplex()
  */
-int PAPI_assign_eventset_component( int EventSet, int cidx ) {
+int
+PAPI_assign_eventset_component( int EventSet, int cidx )
+{
 	EventSetInfo_t *ESI;
 	int retval;
 
@@ -914,7 +942,9 @@ int PAPI_assign_eventset_component( int EventSet, int cidx ) {
 }
 
 
-int PAPI_add_pevent( int EventSet, int code, void *inout ) {
+int
+PAPI_add_pevent( int EventSet, int code, void *inout )
+{
 	EventSetInfo_t *ESI;
 
 	/* Is the EventSet already in existence? */
@@ -974,7 +1004,9 @@ int PAPI_add_pevent( int EventSet, int code, void *inout ) {
  *
  * @see PAPI_cleanup_eventset() PAPI_destroy_eventset() PAPI_event_code_to_name() PAPI_remove_events() PAPI_query_event() PAPI_presets() PAPI_native() PAPI_remove_event()
  */
-int PAPI_add_event( int EventSet, int EventCode ) {
+int
+PAPI_add_event( int EventSet, int EventCode )
+{
 	EventSetInfo_t *ESI;
 
 	/* Is the EventSet already in existence? */
@@ -1025,7 +1057,9 @@ int PAPI_add_event( int EventSet, int EventCode ) {
  *	@see PAPI_cleanup_eventset PAPI_destroy_eventset PAPI_event_name_to_code 
  *		PAPI_presets PAPI_add_event PAPI_add_events
  */
-int PAPI_remove_event( int EventSet, int EventCode ) {
+int
+PAPI_remove_event( int EventSet, int EventCode )
+{
 	EventSetInfo_t *ESI;
 	int i;
 
@@ -1095,7 +1129,9 @@ int PAPI_remove_event( int EventSet, int EventCode ) {
  *	@retval PAPI_EBUG 
  *		Internal error, send mail to ptools-perfapi@ptools.org and complain. 
  */
-int PAPI_destroy_eventset( int *EventSet ) {
+int
+PAPI_destroy_eventset( int *EventSet )
+{
 	EventSetInfo_t *ESI;
 
 	/* check for pre-existing ESI */
@@ -1144,7 +1180,9 @@ int PAPI_destroy_eventset( int *EventSet ) {
  *
  *	@see  PAPI_create_eventset PAPI_add_event
  */
-int PAPI_start( int EventSet ) {
+int
+PAPI_start( int EventSet )
+{
 	int retval;
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
@@ -1277,7 +1315,9 @@ int PAPI_start( int EventSet ) {
  *
  *	@see  PAPI_create_eventset PAPI_add_event
  */
-int PAPI_stop( int EventSet, long long *values ) {
+int
+PAPI_stop( int EventSet, long long *values )
+{
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
 	int cidx, retval;
@@ -1388,7 +1428,9 @@ int PAPI_stop( int EventSet, long long *values ) {
  *
  *	@see PAPI_create_eventset
  */
-int PAPI_reset( int EventSet ) {
+int
+PAPI_reset( int EventSet )
+{
 	int retval = PAPI_OK;
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
@@ -1452,8 +1494,10 @@ int PAPI_reset( int EventSet ) {
  *	The counters continue counting after the read. 
  *
  * @see  PAPI_start PAPI PAPIF PAPI_set_opt PAPI_reset
- */	
-int PAPI_read( int EventSet, long long *values ) {
+ */
+int
+PAPI_read( int EventSet, long long *values )
+{
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
 	int cidx, retval = PAPI_OK;
@@ -1494,7 +1538,9 @@ int PAPI_read( int EventSet, long long *values ) {
 	return ( PAPI_OK );
 }
 
-int PAPI_read_ts( int EventSet, long long *values, long long *cyc ) {
+int
+PAPI_read_ts( int EventSet, long long *values, long long *cyc )
+{
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
 	int cidx, retval = PAPI_OK;
@@ -1560,7 +1606,9 @@ int PAPI_read_ts( int EventSet, long long *values, long long *cyc ) {
  *
  * @see  PAPI_start PAPI PAPIF PAPI_set_opt PAPI_reset
  */
-int PAPI_accum( int EventSet, long long *values ) {
+int
+PAPI_accum( int EventSet, long long *values )
+{
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
 	int i, cidx, retval;
@@ -1621,7 +1669,9 @@ int PAPI_accum( int EventSet, long long *values ) {
  *
  *	@see PAPI_read
  */
-int PAPI_write( int EventSet, long long *values ) {
+int
+PAPI_write( int EventSet, long long *values )
+{
 	int cidx, retval = PAPI_OK;
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
@@ -1675,7 +1725,9 @@ int PAPI_write( int EventSet, long long *values ) {
  *
  * @see PAPI_profil PAPI_create_eventset PAPI_add_event PAPI_stop
  */
-int PAPI_cleanup_eventset( int EventSet ) {
+int
+PAPI_cleanup_eventset( int EventSet )
+{
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
 	int i, cidx, total, retval;
@@ -1746,7 +1798,9 @@ int PAPI_cleanup_eventset( int EventSet ) {
  *
  *	@see PAPI_set_multiplex PAPI_get_multiplex
  */
-int PAPI_multiplex_init( void ) {
+int
+PAPI_multiplex_init( void )
+{
 	int retval;
 
 	retval = mpx_init( _papi_hwd[0]->cmp_info.itimer_ns );
@@ -1779,7 +1833,9 @@ int PAPI_multiplex_init( void ) {
  *
  *	@see PAPI_stop PAPI_start
  */
-int PAPI_state( int EventSet, int *status ) {
+int
+PAPI_state( int EventSet, int *status )
+{
 	EventSetInfo_t *ESI;
 
 	if ( status == NULL )
@@ -1832,7 +1888,9 @@ int PAPI_state( int EventSet, int *status ) {
  *
  *	@see  PAPI_library_init PAPI_get_opt PAPI_set_opt
  */
-int PAPI_set_debug( int level ) {
+int
+PAPI_set_debug( int level )
+{
 	PAPI_option_t option;
 
 	memset( &option, 0x0, sizeof ( option ) );
@@ -1876,7 +1934,9 @@ _papi_set_attach( int option, int EventSet, unsigned long tid )
  *
  * @see PAPI_set_opt PAPI_list_threads PAPI_thread_id PAPI_thread_init
  */
-int PAPI_attach( int EventSet, unsigned long tid ) {
+int
+PAPI_attach( int EventSet, unsigned long tid )
+{
 	return ( _papi_set_attach( PAPI_ATTACH, EventSet, tid ) );
 }
 
@@ -1901,7 +1961,9 @@ int PAPI_attach( int EventSet, unsigned long tid ) {
  *
  * @see PAPI_set_opt PAPI_list_threads PAPI_thread_id PAPI_thread_init
  */
-int PAPI_detach( int EventSet ) {
+int
+PAPI_detach( int EventSet )
+{
 	return ( _papi_set_attach( PAPI_DETACH, EventSet, 0 ) );
 }
 
@@ -1932,7 +1994,9 @@ int PAPI_detach( int EventSet ) {
  *	@see  PAPI_multiplex_init PAPI_set_opt PAPI_create_eventset
  */
 
-int PAPI_set_multiplex( int EventSet ) {
+int
+PAPI_set_multiplex( int EventSet )
+{
 	PAPI_option_t mpx;
 	EventSetInfo_t *ESI;
 	int cidx;
@@ -1996,7 +2060,9 @@ int PAPI_set_multiplex( int EventSet ) {
  *
  *	@see PAPI_set_debug PAPI_set_multiplex PAPI_set_domain PAPI_option_t
  */
-int PAPI_set_opt( int option, PAPI_option_t * ptr ) {
+int
+PAPI_set_opt( int option, PAPI_option_t * ptr )
+{
 	_papi_int_option_t internal;
 	int retval = PAPI_OK;
 	ThreadInfo_t *thread = NULL;
@@ -2367,7 +2433,9 @@ int PAPI_set_opt( int option, PAPI_option_t * ptr ) {
  *
  *	This is included to preserve backwards compatibility.
  */
-int PAPI_num_hwctrs( void ) {
+int
+PAPI_num_hwctrs( void )
+{
 	return ( PAPI_num_cmp_hwctrs( 0 ) );
 }
 
@@ -2385,7 +2453,9 @@ int PAPI_num_hwctrs( void ) {
  *	PAPI_library_init must be called in order for this function to return 
  *	anything greater than 0. 
  */
-int PAPI_num_cmp_hwctrs( int cidx ) {
+int
+PAPI_num_cmp_hwctrs( int cidx )
+{
 	return ( PAPI_get_cmp_opt( PAPI_MAX_HWCTRS, NULL, cidx ) );
 }
 
@@ -2409,7 +2479,9 @@ int PAPI_num_cmp_hwctrs( int cidx ) {
  *
  *	@see  PAPI_multiplex_init PAPI_set_opt PAPI_create_eventset
  */
-int PAPI_get_multiplex( int EventSet ) {
+int
+PAPI_get_multiplex( int EventSet )
+{
 	PAPI_option_t popt;
 	int retval;
 
@@ -2456,7 +2528,9 @@ int PAPI_get_multiplex( int EventSet ) {
   *
   *	@see PAPI_set_debug PAPI_set_multiplex PAPI_set_domain PAPI_option_t
   */
-int PAPI_get_opt( int option, PAPI_option_t * ptr ) {
+int
+PAPI_get_opt( int option, PAPI_option_t * ptr )
+{
 	EventSetInfo_t *ESI;
 
 	if ( ( option != PAPI_DEBUG ) && ( init_level == PAPI_NOT_INITED ) )
@@ -2634,7 +2708,9 @@ int PAPI_get_opt( int option, PAPI_option_t * ptr ) {
  *	@see PAPI_set_debug PAPI_set_multiplex PAPI_set_domain PAPI_option_t
  */
 
-int PAPI_get_cmp_opt( int option, PAPI_option_t * ptr, int cidx ) {
+int
+PAPI_get_cmp_opt( int option, PAPI_option_t * ptr, int cidx )
+{
 	switch ( option ) {
 		/* For now, MAX_HWCTRS and MAX CTRS are identical.
 		   At some future point, they may map onto different values.
@@ -2675,7 +2751,9 @@ int PAPI_get_cmp_opt( int option, PAPI_option_t * ptr, int cidx ) {
   * @return 
   *		Number of components available on the system
   */
-int PAPI_num_components( void ) {
+int
+PAPI_num_components( void )
+{
 	return ( papi_num_components );
 }
 
@@ -2687,7 +2765,9 @@ int PAPI_num_components( void ) {
   * PAPI_num_events() returns the number of preset events contained in an event set. 
   * The event set should be created by @ref PAPI_create_eventset() .
   */
-int PAPI_num_events( int EventSet ) {
+int
+PAPI_num_events( int EventSet )
+{
 	EventSetInfo_t *ESI;
 
 	ESI = _papi_hwi_lookup_EventSet( EventSet );
@@ -2792,7 +2872,9 @@ PAPI_shutdown( void )
  *
  *	@see  PAPI_set_opt PAPI_get_opt PAPI_shutdown PAPI_set_debug
  */
-char * PAPI_strerror( int errorCode ) {
+char *
+PAPI_strerror( int errorCode )
+{
 	if ( ( errorCode > 0 ) || ( -errorCode > PAPI_NUM_ERRORS ) )
 		return ( NULL );
 
@@ -2822,7 +2904,9 @@ char * PAPI_strerror( int errorCode ) {
  *
  *	@see  PAPI_set_opt PAPI_get_opt PAPI_shutdown PAPI_set_debug
  */
-int PAPI_perror( int code, char *destination, int length ) {
+int
+PAPI_perror( int code, char *destination, int length )
+{
 	char *foo;
 
 	foo = PAPI_strerror( code );
@@ -2883,8 +2967,10 @@ int PAPI_perror( int code, char *destination, int length ) {
  * In such cases the overflow handler can approximate the counts by supplying 
  * the threshold value whenever an overflow occurs. 
  */
-int PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
-			   PAPI_overflow_handler_t handler ) {
+int
+PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
+			   PAPI_overflow_handler_t handler )
+{
 	int retval, cidx, index, i;
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread;
@@ -3054,8 +3140,10 @@ int PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
  *
  *	@see PAPI_overflow PAPI_get_executable_info PAPI_profil
  */
-int PAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet,
-			  int EventCode, int threshold, int flags ) {
+int
+PAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet,
+			  int EventCode, int threshold, int flags )
+{
 	EventSetInfo_t *ESI;
 	int retval, index, i, buckets;
 	int forceSW = 0;
@@ -3346,9 +3434,11 @@ int PAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet,
  *
  *	@see PAPI_get_executable_info PAPI_overflow PAPI_sprofil
  */
-int PAPI_profil( void *buf, unsigned bufsiz, caddr_t offset,
+int
+PAPI_profil( void *buf, unsigned bufsiz, caddr_t offset,
 			 unsigned scale, int EventSet, int EventCode, int threshold,
-			 int flags ) {
+			 int flags )
+{
 	EventSetInfo_t *ESI;
 	int i;
 	int retval;
@@ -3380,6 +3470,10 @@ int PAPI_profil( void *buf, unsigned bufsiz, caddr_t offset,
 				PAPI_sprofil( prof, 1, EventSet, EventCode, threshold, flags );
 			if ( retval != PAPI_OK )
 				papi_free( prof );
+			else {
+				papi_free( ESI->profile.prof[i] );
+				ESI->profile.prof[i] = NULL;
+			}
 		} else {
 			prof = ESI->profile.prof[i];
 			prof->pr_base = buf;
@@ -3441,7 +3535,9 @@ int PAPI_profil( void *buf, unsigned bufsiz, caddr_t offset,
  *
  *	@see  PAPI_set_domain PAPI_set_opt PAPI_get_opt
  */
-int PAPI_set_granularity( int granularity ) {
+int
+PAPI_set_granularity( int granularity )
+{
 	return ( PAPI_set_cmp_granularity( granularity, 0 ) );
 }
 
@@ -3481,7 +3577,9 @@ int PAPI_set_granularity( int granularity ) {
  *
  *	@see  PAPI_set_domain PAPI_set_opt PAPI_get_opt
  */
-int PAPI_set_cmp_granularity( int granularity, int cidx ) {
+int
+PAPI_set_cmp_granularity( int granularity, int cidx )
+{
 	PAPI_option_t ptr;
 
 	memset( &ptr, 0, sizeof ( ptr ) );
@@ -3525,7 +3623,9 @@ int PAPI_set_cmp_granularity( int granularity, int cidx ) {
  *
  *	@see PAPI_set_granularity PAPI_set_opt PAPI_get_opt
  */
-int PAPI_set_domain( int domain ) {
+int
+PAPI_set_domain( int domain )
+{
 	return ( PAPI_set_cmp_domain( domain, 0 ) );
 }
 
@@ -3569,7 +3669,9 @@ int PAPI_set_domain( int domain ) {
  *
  *	@see PAPI_set_granularity PAPI_set_opt PAPI_get_opt
  */
-int PAPI_set_cmp_domain( int domain, int cidx ) {
+int
+PAPI_set_cmp_domain( int domain, int cidx )
+{
 	PAPI_option_t ptr;
 
 	memset( &ptr, 0, sizeof ( ptr ) );
@@ -3618,7 +3720,9 @@ int PAPI_set_cmp_domain( int domain, int cidx ) {
  *
  * @see PAPI_cleanup_eventset() PAPI_destroy_eventset() PAPI_event_code_to_name() PAPI_remove_events() PAPI_query_event() PAPI_presets() PAPI_native() PAPI_remove_event()
  */
-int PAPI_add_events( int EventSet, int *Events, int number ) {
+int
+PAPI_add_events( int EventSet, int *Events, int number )
+{
 	int i, retval;
 
 	if ( ( Events == NULL ) || ( number <= 0 ) )
@@ -3666,7 +3770,9 @@ int PAPI_add_events( int EventSet, int *Events, int number ) {
  *	@see PAPI_cleanup_eventset PAPI_destroy_eventset PAPI_event_name_to_code 
  *		PAPI_presets PAPI_add_event PAPI_add_events
  */
-int PAPI_remove_events( int EventSet, int *Events, int number ) {
+int
+PAPI_remove_events( int EventSet, int *Events, int number )
+{
 	int i, retval;
 
 	if ( ( Events == NULL ) || ( number <= 0 ) )
@@ -3706,7 +3812,9 @@ int PAPI_remove_events( int EventSet, int *Events, int number ) {
  *
  *	@see PAPI_event_code_to_name PAPI_event_name_to_code PAPI_add_event PAPI_create_eventset
  */
-int PAPI_list_events( int EventSet, int *Events, int *number ) {
+int
+PAPI_list_events( int EventSet, int *Events, int *number )
+{
 	EventSetInfo_t *ESI;
 	int i, j;
 
@@ -3752,7 +3860,9 @@ int PAPI_list_events( int EventSet, int *Events, int *number ) {
  *
  *	@see PAPI_get_executable_info PAPI_get_hardware_info PAPI_get_opt PAPI_library_init
  */
-int PAPI_get_dmem_info( PAPI_dmem_info_t * dest ) {
+int
+PAPI_get_dmem_info( PAPI_dmem_info_t * dest )
+{
 	if ( dest == NULL )
 		return PAPI_EINVAL;
 
@@ -3793,7 +3903,9 @@ PAPI_get_executable_info( void )
  *	
  *	@see PAPI_get_hardware_info PAPI_get_executable_info PAPI_get_dmem_info PAPI_get_opt PAPI_library_init
  */
-const PAPI_shlib_info_t * PAPI_get_shared_lib_info( void ) {
+const PAPI_shlib_info_t *
+PAPI_get_shared_lib_info( void )
+{
 	PAPI_option_t ptr;
 	int retval;
 
@@ -3830,7 +3942,9 @@ PAPI_get_hardware_info( void )
  *
  *	@see PAPI_get_virt_usec PAPI_get_virt_cyc PAPI_library_init
  */
-long long PAPI_get_real_cyc( void ) {
+long long
+PAPI_get_real_cyc( void )
+{
 	return ( _papi_hwd[0]->get_real_cycles(  ) );
 }
 
@@ -3844,7 +3958,9 @@ long long PAPI_get_real_cyc( void ) {
  *	@see PAPI_get_virt_usec PAPI_get_virt_cyc PAPI_library_init
  */
 
-long long PAPI_get_real_nsec( void ) {
+long long
+PAPI_get_real_nsec( void )
+{
 	return ( ( _papi_hwd[0]->get_real_cycles(  ) * 1000LL ) /
 			 ( long long ) _papi_hwi_system_info.hw_info.mhz );
 }
@@ -3858,7 +3974,9 @@ long long PAPI_get_real_nsec( void ) {
  *
  *	@see PAPI_get_virt_usec PAPI_get_virt_cyc PAPI_library_init
  */
-long long PAPI_get_real_usec( void ) {
+long long
+PAPI_get_real_usec( void )
+{
 	return ( _papi_hwd[0]->get_real_usec(  ) );
 }
 
@@ -3884,7 +4002,9 @@ long long PAPI_get_real_usec( void ) {
  *	by the operating system. 
  *
  */
-long long PAPI_get_virt_cyc( void ) {
+long long
+PAPI_get_virt_cyc( void )
+{
 	ThreadInfo_t *master;
 	int retval;
 
@@ -3919,7 +4039,9 @@ long long PAPI_get_virt_cyc( void ) {
  *	by the operating system. 
  *
  */
-long long PAPI_get_virt_nsec( void ) {
+long long
+PAPI_get_virt_nsec( void )
+{
 	ThreadInfo_t *master;
 	int retval;
 
@@ -3954,7 +4076,9 @@ long long PAPI_get_virt_nsec( void ) {
  *	by the operating system. 
  *
  */
-long long PAPI_get_virt_usec( void ) {
+long long
+PAPI_get_virt_usec( void )
+{
 	ThreadInfo_t *master;
 	int retval;
 
@@ -3989,7 +4113,9 @@ PAPI_save( void )
  *
  *	@see PAPI_thread_init
  */
-int PAPI_lock( int lck ) {
+int
+PAPI_lock( int lck )
+{
 	if ( ( lck < 0 ) || ( lck >= PAPI_NUM_LOCK ) )
 		papi_return( PAPI_EINVAL );
 
@@ -4006,7 +4132,9 @@ int PAPI_lock( int lck ) {
  *
  *	@see PAPI_thread_init
  */
-int PAPI_unlock( int lck ) {
+int
+PAPI_unlock( int lck )
+{
 	if ( ( lck < 0 ) || ( lck >= PAPI_NUM_LOCK ) )
 		papi_return( PAPI_EINVAL );
 
@@ -4027,7 +4155,9 @@ int PAPI_unlock( int lck ) {
  *	PAPI_is_initialized() returns the status of the PAPI library. 
  *	The PAPI library can be in one of four states, as described under RETURN VALUES. 
  */
-int PAPI_is_initialized( void ) {
+int
+PAPI_is_initialized( void )
+{
 	return ( init_level );
 }
 
@@ -4075,8 +4205,10 @@ int PAPI_is_initialized( void ) {
  *
  *	@see PAPI_overflow
  */
-int PAPI_get_overflow_event_index( int EventSet, long long overflow_vector,
-							   int *array, int *number ) {
+int
+PAPI_get_overflow_event_index( int EventSet, long long overflow_vector,
+							   int *array, int *number )
+{
 	EventSetInfo_t *ESI;
 	int set_bit, j, pos;
 	int count = 0, k;
