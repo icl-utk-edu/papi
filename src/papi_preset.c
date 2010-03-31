@@ -10,6 +10,7 @@
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_memory.h"
+#include "papi_preset.h"
 
 /* Defined in papi_data.c */
 extern hwi_presets_t _papi_hwi_presets;
@@ -131,10 +132,13 @@ _papi_hwi_cleanup_all_presets( void )
 	/* xxxx right now presets are only cpu, component 0 */
 	_papi_hwd[0]->cmp_info.num_preset_events = 0;
 
+#if defined(ITANIUM2) || defined(ITANIUM3)
+	/* NOTE: This memory may need to be freed for BG/P builds as well */
 	if ( preset_search_map != NULL ) {
 		papi_free( preset_search_map );
 		preset_search_map = NULL;
 	}
+#endif
 
 	return ( PAPI_OK );
 }
