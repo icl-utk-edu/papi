@@ -3468,12 +3468,9 @@ PAPI_profil( void *buf, unsigned bufsiz, caddr_t offset,
 
 			retval =
 				PAPI_sprofil( prof, 1, EventSet, EventCode, threshold, flags );
+
 			if ( retval != PAPI_OK )
 				papi_free( prof );
-			else {
-				papi_free( ESI->profile.prof[i] );
-				ESI->profile.prof[i] = NULL;
-			}
 		} else {
 			prof = ESI->profile.prof[i];
 			prof->pr_base = buf;
