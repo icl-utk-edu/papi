@@ -6,10 +6,14 @@ static char *func_name[] = {
 	"PAPI_get_virt_cyc",
 	"PAPI_get_virt_usec"
 };
+static int CLOCK_ERROR = 0;
 
 void
 clock_res_check( int flag )
 {
+	if ( CLOCK_ERROR )
+		return;
+
 	long long *elapsed_cyc, total_cyc = 0, uniq_cyc = 0, diff_cyc = 0;
 	int i;
 	double min, max, average, std, tmp;
@@ -40,11 +44,15 @@ clock_res_check( int flag )
 	}
 
 	min = max = ( double ) ( elapsed_cyc[1] - elapsed_cyc[0] );
+
 	for ( i = 1; i < NUM_ITERS; i++ ) {
 		if ( elapsed_cyc[i] - elapsed_cyc[i - 1] < 0 ) {
-			test_fail( __FILE__, __LINE__, "Negative elapsed time, bailing",
-					   -1 );
+			CLOCK_ERROR = 1;
+			test_fail( __FILE__, __LINE__, "Negative elapsed time", -1 );
+			free( elapsed_cyc );
+			return;
 		}
+
 		diff_cyc = elapsed_cyc[i] - elapsed_cyc[i - 1];
 		if ( min > diff_cyc )
 			min = ( double ) diff_cyc;
@@ -54,16 +62,20 @@ clock_res_check( int flag )
 			uniq_cyc++;
 		total_cyc += diff_cyc;
 	}
+
 	average = ( double ) total_cyc / ( NUM_ITERS - 1 );
 	std = 0;
+
 	for ( i = 1; i < NUM_ITERS; i++ ) {
 		tmp = ( double ) ( elapsed_cyc[i] - elapsed_cyc[i - 1] );
 		tmp = tmp - average;
 		std += tmp * tmp;
 	}
+
 	std = sqrt( std / ( NUM_ITERS - 2 ) );
 	printf( "%s: min %.3lf  max %.3lf \n", func_name[flag], min, max );
 	printf( "                   average %.3lf std %.3lf\n", average, std );
+
 	if ( !TESTS_QUIET ) {
 		if ( uniq_cyc == NUM_ITERS - 1 ) {
 			printf( "%s : %7.3f   <%7.3f\n", func_name[flag],
