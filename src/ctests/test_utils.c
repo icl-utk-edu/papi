@@ -7,6 +7,7 @@
 	declared here so it can be available globally
 */
 int TESTS_QUIET = 0;
+static int TEST_FAIL = 0;
 
 /*  Support routine to display header information to the screen
 	from the hardware info data structure. The same code was duplicated
@@ -525,21 +526,31 @@ tests_quiet( int argc, char **argv )
 void
 test_pass( char *file, long long **values, int num_tests )
 {
-	fprintf( stdout, "%-40s PASSED\n", file );
+	if ( !TEST_FAIL )
+		fprintf( stdout, "%-40s PASSED\n", file );
+
 	if ( values )
 		free_test_space( values, num_tests );
+
 	if ( PAPI_is_initialized(  ) )
 		PAPI_shutdown(  );
-	exit( 0 );
+
+	if ( !TEST_FAIL )
+		exit( 0 );
+	else
+		exit( 1 );
 }
 
 void
 test_fail( char *file, int line, char *call, int retval )
 {
-	char buf[128];
+	if ( TEST_FAIL )		 //Prevent duplicate output
+		return;
 
+	char buf[128];
 	memset( buf, '\0', sizeof ( buf ) );
 	fprintf( stdout, "%-40s FAILED\nLine # %d\n", file, line );
+
 	if ( retval == PAPI_ESYS ) {
 		sprintf( buf, "System error in %s", call );
 		perror( buf );
@@ -556,10 +567,14 @@ test_fail( char *file, int line, char *call, int retval )
 		PAPI_perror( retval, errstring, PAPI_MAX_STR_LEN );
 		fprintf( stdout, "Error in %s: %s\n", call, errstring );
 	}
+
 	fprintf( stdout, "\n" );
-	if ( PAPI_is_initialized(  ) )
-		PAPI_shutdown(  );
-	exit( 1 );
+	TEST_FAIL = 1;
+
+	/* NOTE: Because test_fail is called from thread functions, 
+	   calling PAPI_shutdown here could prevent some threads
+	   from being able to free memory they have allocated.
+	 */
 }
 
 void
