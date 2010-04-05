@@ -85,21 +85,17 @@ main( int argc, char **argv )
 	retval =
 		do_profile( start, ( unsigned long ) length, FULL_SCALE, mythreshold,
 					PAPI_PROFIL_BUCKET_16 );
-	if ( retval )
+	if ( retval == PAPI_OK )
 		retval =
 			do_profile( start, ( unsigned long ) length, FULL_SCALE,
 						mythreshold, PAPI_PROFIL_BUCKET_32 );
-	if ( retval )
+	if ( retval == PAPI_OK )
 		retval =
 			do_profile( start, ( unsigned long ) length, FULL_SCALE,
 						mythreshold, PAPI_PROFIL_BUCKET_64 );
 
 	remove_test_events( &EventSet, mask );
-
-	if ( retval )
-		test_pass( __FILE__, values, num_tests );
-	else
-		test_fail( __FILE__, __LINE__, "No information in buffers", 1 );
+	test_pass( __FILE__, values, num_tests );
 	exit( 1 );
 }
 
@@ -150,6 +146,10 @@ do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
 			test_fail( __FILE__, __LINE__, "PAPI_profil", retval );
 		}
 #endif
+
+		if ( retval != PAPI_OK )
+			break;
+
 		if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
 			test_fail( __FILE__, __LINE__, "PAPI_start", retval );
 
@@ -170,11 +170,12 @@ do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
 			test_fail( __FILE__, __LINE__, "PAPI_profil", retval );
 	}
 
-	prof_head( blength, bucket, num_buckets,
-			   "address\t\t\tflat\trandom\tweight\tcomprs\tall\n" );
-	prof_out( start, 5, bucket, num_buckets, scale );
-
-	retval = prof_check( 5, bucket, num_buckets );
+	if ( retval == PAPI_OK ) {
+		prof_head( blength, bucket, num_buckets,
+				   "address\t\t\tflat\trandom\tweight\tcomprs\tall\n" );
+		prof_out( start, 5, bucket, num_buckets, scale );
+		retval = prof_check( 5, bucket, num_buckets );
+	}
 
 	for ( i = 0; i < 5; i++ ) {
 		free( profbuf[i] );
