@@ -69,7 +69,7 @@ extern papi_mdi_t _papi_hwi_system_info;
 
 extern papi_vector_t MY_VECTOR;
 
-#if defined(PERFCTR26) || defined (PERFCTR25)
+#if defined(PERFCTR26)
 #define evntsel_aux p4.escr
 #endif
 

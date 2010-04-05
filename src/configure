@@ -1450,7 +1450,7 @@ Optional Packages:
   --with-walltimer=<gettimeofday,mmtimer,clock_realtime_hr,clock_realtime,cycle>     Specify realtime timer
   --with-tls=<keyword>		This platform supports thread local storage with a keyword
   --with-virtualtimer=<clock_thread_cputime_id,times,proc,getrusage,perfctr>      Specify per-thread virtual timer
-  --with-perfctr=<5,6,7>	Specify perfctr version number
+  --with-perfctr=<6,7>	Specify perfctr version number
   --with-perfctr-root=<path>	Specify path to source tree (for use by developers only)
   --with-perfctr-prefix=<path>	Specify prefix to installed perfctr distribution
   --with-perfctr-incdir=<path>	Specify directory of perfctr header files in non-standard location

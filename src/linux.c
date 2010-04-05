@@ -34,9 +34,6 @@ extern int setup_x86_presets( int cputype );
 #if defined(PERFCTR26)
 #define PERFCTR_CPU_NAME(pi)    perfctr_info_cpu_name(pi)
 #define PERFCTR_CPU_NRCTRS(pi)  perfctr_info_nrctrs(pi)
-#elif defined(PERFCTR25)
-#define PERFCTR_CPU_NAME        perfctr_info_cpu_name
-#define PERFCTR_CPU_NRCTRS      perfctr_info_nrctrs
 #else
 #define PERFCTR_CPU_NAME        perfctr_cpu_name
 #define PERFCTR_CPU_NRCTRS      perfctr_cpu_nrctrs

@@ -915,7 +915,7 @@ AC_MSG_RESULT($virtualtimer)
 
 if test "x$perfctr" = "x"; then
 AC_ARG_WITH(perfctr,
-            [  --with-perfctr=<5,6,7>	Specify perfctr version number ],
+            [  --with-perfctr=<6,7>	Specify perfctr version number ],
             [perfctr=$withval
              distributed_build=yes],
             [perfctr="no"
