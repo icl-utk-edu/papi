@@ -192,8 +192,11 @@ _papi_valid_free( char *file, int line, void *ptr )
 	pmem_t *tmp;
 	int valid = 0;
 
-	if ( !ptr )
+	if ( !ptr ) {
+		( void ) file;
+		( void ) line;
 		return ( 0 );
+	}
 
 	_papi_hwi_lock( MEMORY_LOCK );
 
