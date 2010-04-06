@@ -29,20 +29,9 @@ endif
 
 #NOTE: adding -Wextra to an itanium build causes libpfm to fail compile
 CFLAGS += -Wall
-KERNMINVER	= $(shell uname -r | cut -f2 -d.)
 POST_BUILD	=
 SPECIAL_REMOVE =
 
-ifeq (4,$(KERNMINVER)) 
-VERSION	?= 2.x
-else
-ifeq (2,$(KERNMINVER))
-VERSION	?= 2.x
-else
-VERSION ?= 3.y
-endif
-endif
-	
 ifneq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))
 OPTFLAGS	+= $(DEBUGFLAGS)
 endif
@@ -64,11 +53,7 @@ ifeq (,$(PFM_LIB_PATH))
 ifeq (,$(PFM_ROOT))
         PFM_ROOT := ./libpfm-$(VERSION)
 endif
-ifeq (2.x,$(VERSION))
-	PFM_LIB_PATH := $(PFM_ROOT)/libpfm
-else
 	PFM_LIB_PATH := $(PFM_ROOT)/lib
-endif
 endif
 ifeq (,$(PFM_INC_PATH))
 ifeq (,$(PFM_ROOT))
@@ -78,7 +63,6 @@ endif
 endif
 
 OPTIM := $(CFLAGS)
-CFLAGS-2.x := -DPFM20 
 CFLAGS-3.y := -DPFM30 
 CFLAGS	+= -D_REENTRANT -D_GNU_SOURCE -I$(PFM_INC_PATH) -DITANIUM$(CPU) $(NOTLS) $(ALTIX) $(CFLAGS-$(VERSION))
 
@@ -122,12 +106,7 @@ endif
 
 native_install:
 ifneq (,${PFM_ROOT})
-ifeq (2.x,$(VERSION))
-# This version has a very old makefile	
-	$(MAKE) -C $(PFM_ROOT) CONFIG_PFMLIB_OLD_PFMV2="$(PFM_OLD_PFMV2)" DESTDIR=$(DESTDIR)$(PREFIX) MANDIR=$(DESTDIR)$(MANDIR)/man3 install
-else
 	$(MAKE) -C $(PFM_ROOT) CONFIG_PFMLIB_OLD_PFMV2="$(PFM_OLD_PFMV2)" DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
-endif
 endif
 
 native_clobber:

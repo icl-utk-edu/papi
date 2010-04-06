@@ -1070,9 +1070,4 @@ pfmw_get_num_events( int *num )
 	return ( PAPI_OK );
 }
 
-
-/* These routines are the same in PFM20 and PFM30
-   The wrappers hide differences between ITANIUM and ITANIUM2
-*/
-
 #endif /* _PFMWRAP_H */

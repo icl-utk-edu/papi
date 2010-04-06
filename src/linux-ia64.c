@@ -1888,79 +1888,61 @@ ia64_dispatch_sigprof( int n, hwd_siginfo_t * info, struct sigcontext *sc )
 											0, &thread, cidx );
 		return;
 	}
-#if !defined(PFM20)
-	{
-		pfm_msg_t msg;
-		int ret, fd;
-		fd = info->si_fd;
-	  retry:
-		ret = read( fd, &msg, sizeof ( msg ) );
-		if ( ret == -1 ) {
-			if ( errno == EINTR ) {
-				SUBDBG( "read(%d) interrupted, retrying\n", fd );
-				goto retry;
-			} else {
-				PAPIERROR( "read(%d): errno %d", fd, errno );
-			}
-		} else if ( ret != sizeof ( msg ) ) {
-			PAPIERROR( "read(%d): short %d vs. %d bytes", fd, ret,
-					   sizeof ( msg ) );
-			ret = -1;
+
+	pfm_msg_t msg;
+	int ret, fd;
+	fd = info->si_fd;
+  retry:
+	ret = read( fd, &msg, sizeof ( msg ) );
+	if ( ret == -1 ) {
+		if ( errno == EINTR ) {
+			SUBDBG( "read(%d) interrupted, retrying\n", fd );
+			goto retry;
+		} else {
+			PAPIERROR( "read(%d): errno %d", fd, errno );
 		}
+	} else if ( ret != sizeof ( msg ) ) {
+		PAPIERROR( "read(%d): short %d vs. %d bytes", fd, ret, sizeof ( msg ) );
+		ret = -1;
+	}
 #if defined(HAVE_PFM_MSG_TYPE)
-		if ( msg.type == PFM_MSG_END ) {
-			SUBDBG( "PFM_MSG_END\n" );
-			return;
-		}
-		if ( msg.type != PFM_MSG_OVFL ) {
-			PAPIERROR( "unexpected msg type %d", msg.type );
-			return;
-		}
-#else
-		if ( msg.pfm_gen_msg.msg_type == PFM_MSG_END ) {
-			SUBDBG( "PFM_MSG_END\n" );
-			return;
-		}
-		if ( msg.pfm_gen_msg.msg_type != PFM_MSG_OVFL ) {
-			PAPIERROR( "unexpected msg type %d", msg.pfm_gen_msg.msg_type );
-			return;
-		}
-#endif
-		if ( ret != -1 ) {
-			if ( ( thread->running_eventset[cidx]->state & PAPI_PROFILING ) &&
-				 !( thread->running_eventset[cidx]->profile.
-					flags & PAPI_PROFIL_FORCE_SW ) )
-				ia64_process_profile_buffer( thread,
-											 thread->running_eventset[cidx] );
-			else
-				_papi_hwi_dispatch_overflow_signal( ( void * ) &ctx, address,
-													NULL,
-													msg.pfm_ovfl_msg.
-													msg_ovfl_pmds[0] >>
-													PMU_FIRST_COUNTER, 0,
-													&thread, cidx );
-		}
-		if ( pfmw_perfmonctl( 0, fd, PFM_RESTART, 0, 0 ) == -1 ) {
-			PAPIERROR( "perfmonctl(PFM_RESTART) errno %d, %s", errno,
-					   strerror( errno ) );
-			return;
-		}
+	if ( msg.type == PFM_MSG_END ) {
+		SUBDBG( "PFM_MSG_END\n" );
+		return;
+	}
+	if ( msg.type != PFM_MSG_OVFL ) {
+		PAPIERROR( "unexpected msg type %d", msg.type );
+		return;
 	}
 #else
-	if ( ( thread->running_eventset[cidx]->state & PAPI_PROFILING ) &&
-		 !( thread->running_eventset[cidx]->profile.
-			flags & PAPI_PROFIL_FORCE_SW ) )
-		ia64_process_profile_buffer( thread, thread->running_eventset[cidx] );
-	else
-		_papi_hwi_dispatch_overflow_signal( ( void * ) &ctx, address, NULL,
-											info->
-											sy_pfm_ovfl[0] >> PMU_FIRST_COUNTER,
-											0, &thread, cidx );
-	if ( pfmw_perfmonctl( info->sy_pid, 0, PFM_RESTART, 0, 0 ) == -1 ) {
-		PAPIERROR( "perfmonctl(PFM_RESTART) errno %d", errno );
+	if ( msg.pfm_gen_msg.msg_type == PFM_MSG_END ) {
+		SUBDBG( "PFM_MSG_END\n" );
+		return;
+	}
+	if ( msg.pfm_gen_msg.msg_type != PFM_MSG_OVFL ) {
+		PAPIERROR( "unexpected msg type %d", msg.pfm_gen_msg.msg_type );
 		return;
 	}
 #endif
+	if ( ret != -1 ) {
+		if ( ( thread->running_eventset[cidx]->state & PAPI_PROFILING ) &&
+			 !( thread->running_eventset[cidx]->profile.
+				flags & PAPI_PROFIL_FORCE_SW ) )
+			ia64_process_profile_buffer( thread,
+										 thread->running_eventset[cidx] );
+		else
+			_papi_hwi_dispatch_overflow_signal( ( void * ) &ctx, address,
+												NULL,
+												msg.pfm_ovfl_msg.
+												msg_ovfl_pmds[0] >>
+												PMU_FIRST_COUNTER, 0,
+												&thread, cidx );
+	}
+	if ( pfmw_perfmonctl( 0, fd, PFM_RESTART, 0, 0 ) == -1 ) {
+		PAPIERROR( "perfmonctl(PFM_RESTART) errno %d, %s", errno,
+				   strerror( errno ) );
+		return;
+	}
 }
 
 void
