@@ -23,6 +23,7 @@
 
 #include "papi.h"
 #include "papi_preset.h"
+#include "papi_defines.h"
 #include "linux-bgp-native-events.h"
 
 #define GET_OVERFLOW_ADDRESS(ctx) 0x0
