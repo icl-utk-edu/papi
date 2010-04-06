@@ -694,7 +694,7 @@ _papi_hwi_get_native_event_info( unsigned int EventCode,
 		return ( PAPI_ENOCMP );
 
 	if ( EventCode & PAPI_NATIVE_MASK ) {
-		memset( info, 0, sizeof ( *info ) );
+		// memset( info, 0, sizeof ( *info ) );  /* causes stack corruption on BGP */
 		retval =
 			_papi_hwd[cidx]->ntv_code_to_name( EventCode, info->symbol,
 											   sizeof ( info->symbol ) );
