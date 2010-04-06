@@ -1,6 +1,0 @@
-TODO list:
-----------
-- write documentation for library (libpfm)
-- add some more examples and tests
-- add perfmon support to GNU libc
-- add library interface to help setup system-wide mode SMP

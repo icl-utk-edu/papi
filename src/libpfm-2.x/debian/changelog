@@ -1,7 +1,0 @@
-libpfm (2.0) unstable; urgency=low
-
-  * Initial debian package release (thanks to Peter Chubb for the Debian
-    packaging)
-  * initial release of this library as a separate package from pfmon
-
- --  <eranian@hpl.hp.com>  Tue, 12 Nov 2002 10:07:14 -0800
