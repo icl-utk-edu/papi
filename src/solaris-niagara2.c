@@ -35,7 +35,6 @@
 #include "papi_internal.h"
 #include "solaris-niagara2.h"
 #include "papi_memory.h"
-#include "papi_defines.h"
 
 #include <libcpc.h>
 #include <procfs.h>
