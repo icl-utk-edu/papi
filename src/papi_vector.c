@@ -41,6 +41,11 @@ extern papi_vector_t _net_vector;
 extern papi_vector_t _lmsensors_vector;
 #endif
 
+#define HAVE_LUSTRE 1
+#ifdef HAVE_LUSTRE
+extern papi_vector_t _Lustre_vector;
+#endif	
+
 
 papi_vector_t *_papi_hwd[] = {
 	&MY_VECTOR,
@@ -54,8 +59,11 @@ papi_vector_t *_papi_hwd[] = {
 	&_net_vector,
 #endif
 #ifdef HAVE_LMSENSORS
-	&_lmsensors_vector,
-#endif
+    &_lmsensors_vector,
+#endif	
+#ifdef HAVE_LUSTRE
+    &_Lustre_vector,
+#endif	
 	NULL
 };
 int papi_num_components = ( sizeof ( _papi_hwd ) / sizeof ( *_papi_hwd ) ) - 1;
