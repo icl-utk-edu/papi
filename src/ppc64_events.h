@@ -14,9 +14,7 @@
 #include ARCH_EVTS
 #else
 #define GROUP_INTS 8
-#ifdef _POWER4
-#define PAPI_MAX_NATIVE_EVENTS 256
-#elif defined(_POWER5)
+#if defined(_POWER5)
 #define PAPI_MAX_NATIVE_EVENTS 512
 #elif defined(_POWER6)
 #define PAPI_MAX_NATIVE_EVENTS 1024

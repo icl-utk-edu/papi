@@ -4,7 +4,6 @@
 
 /* 
 * File:    ppc64_events.c
-* 	   (based on power4_events.c)
 * Author:  Maynard Johnson
 *          maynardj@us.ibm.com
 * Mods:    <your name here>
@@ -217,8 +216,6 @@ open_file( const char *fname )
 	char *dot_dot = "..";
 #ifdef _POWER5p
 	cpu = "power5+";
-#elif defined(_POWER4)
-	cpu = "power4";
 #elif defined(_POWER5)
 	cpu = "power5";
 #elif defined(_PPC970)

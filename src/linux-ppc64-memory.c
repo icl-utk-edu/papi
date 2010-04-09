@@ -16,54 +16,7 @@
 #include <sys/mman.h>
 #include <stdio.h>
 
-PAPI_mh_info_t sys_mem_info[3] = {
-	{3,
-	 {
-	  {						 // level 1 begins
-	   {					 // tlb's begin
-		{PAPI_MH_TYPE_UNIFIED, 1024, 4}
-		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
-		}
-	   ,
-	   {					 // caches begin
-		{PAPI_MH_TYPE_INST, 65536, 128, 512, 1}
-		,
-		{PAPI_MH_TYPE_DATA, 32768, 128, 256, 2}
-		}
-	   }
-	  ,
-	  {						 // level 2 begins
-	   {					 // tlb's begin
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
-		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
-		}
-	   ,
-	   {					 // caches begin
-		{PAPI_MH_TYPE_UNIFIED, 1474560, 128, 11520, 8}
-		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
-		}
-	   }
-	  ,
-	  {						 // level 3 begins
-	   {					 // tlb's begin
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
-		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1}
-		}
-	   ,
-	   {					 // caches begin
-		{PAPI_MH_TYPE_UNIFIED, 33554432, 512, 65536, 8}
-		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
-		}
-	   }
-	  ,
-	  }
-	 }
-	,						 // POWER4 end
+PAPI_mh_info_t sys_mem_info[2] = {
 	{2,						 // 970 begin
 	 {
 	  {						 // level 1 begins
@@ -166,17 +119,13 @@ _papi_hwd_get_memory_info( PAPI_hw_info_t * hw_info, int cpu_type )
 
 	int index;
 	switch ( pvr ) {
-	case 0x35:
-	case 0x38:
-		index = 0;
-		break;
 	case 0x39:
 	case 0x3C:
 		index = 1;
 		break;
 	case 0x3A:
 	case 0x3B:
-		index = 2;
+		index = 1;
 		break;
 	default:
 		index = -1;

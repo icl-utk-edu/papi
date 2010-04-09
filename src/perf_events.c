@@ -202,10 +202,10 @@ get_cycles( void )
 }
 #elif defined(__powerpc__)
 /*
- * It's not possible to read the cycles from user space on ppc970 and
- * POWER4/4+.  There is a 64-bit time-base register (TBU|TBL), but its
+ * It's not possible to read the cycles from user space on ppc970.
+ * There is a 64-bit time-base register (TBU|TBL), but its
  * update rate is implementation-specific and cannot easily be translated
- * into a cycle count.  So don't implement get_cycles for POWER for now,
+ * into a cycle count.  So don't implement get_cycles for now,
  * but instead, rely on the definition of HAVE_CLOCK_GETTIME_REALTIME in
  * _papi_hwd_get_real_usec() for the needed functionality.
 */
@@ -746,54 +746,7 @@ mips_get_memory_info( PAPI_hw_info_t * hw_info )
 
 #if defined(__powerpc__)
 
-PAPI_mh_info_t sys_mem_info[5] = {
-	{3,
-	 {
-	  {						 // level 1 begins
-	   {					 // tlb's begin
-		{PAPI_MH_TYPE_UNIFIED, 1024, 4, 0}
-		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
-		}
-	   ,
-	   {					 // caches begin
-		{PAPI_MH_TYPE_INST, 65536, 128, 512, 1}
-		,
-		{PAPI_MH_TYPE_DATA, 32768, 128, 256, 2}
-		}
-	   }
-	  ,
-	  {						 // level 2 begins
-	   {					 // tlb's begin
-		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
-		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
-		}
-	   ,
-	   {					 // caches begin
-		{PAPI_MH_TYPE_UNIFIED, 1474560, 128, 11520, 8}
-		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
-		}
-	   }
-	  ,
-	  {						 // level 3 begins
-	   {					 // tlb's begin
-		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
-		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1, -1}
-		}
-	   ,
-	   {					 // caches begin
-		{PAPI_MH_TYPE_UNIFIED, 33554432, 512, 65536, 8}
-		,
-		{PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
-		}
-	   }
-	  ,
-	  }
-	 }
-	,						 // POWER4 end
+PAPI_mh_info_t sys_mem_info[4] = {
 	{2,						 // 970 begin
 	 {
 	  {						 // level 1 begins
@@ -1000,25 +953,21 @@ ppc64_get_memory_info( PAPI_hw_info_t * hw_info )
 
 	int index;
 	switch ( pvr ) {
-	case 0x35:				 /* POWER4 */
-	case 0x38:				 /* POWER4p */
-		index = 0;
-		break;
 	case 0x39:				 /* PPC970 */
 	case 0x3C:				 /* PPC970FX */
 	case 0x44:				 /* PPC970MP */
 	case 0x45:				 /* PPC970GX */
-		index = 1;
+		index = 0;
 		break;
 	case 0x3A:				 /* POWER5 */
 	case 0x3B:				 /* POWER5+ */
-		index = 2;
+		index = 1;
 		break;
 	case 0x3E:				 /* POWER6 */
-		index = 3;
+		index = 2;
 		break;
 	case 0x3F:				 /* POWER7 */
-		index = 4;
+		index = 3;
 		break;
 	default:
 		index = -1;

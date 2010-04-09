@@ -27,17 +27,6 @@
 #else
 #define MAX_COUNTERS 8
 #define NUM_COUNTER_MASKS	MAX_COUNTERS+1
-#ifdef _POWER4
-#define PMC1_SEL_MASK	0xFFFFE0FFUL
-#define PMC2_SEL_MASK	0xFFFFFFC1UL
-#define PMC3_SEL_MASK	0xFFFFFFFF07FFFFFFULL
-#define PMC4_SEL_MASK	0xFFFFFFFFF83FFFFFULL
-#define PMC5_SEL_MASK	0xFFFFFFFFFFC1FFFFULL
-#define PMC6_SEL_MASK	0xFFFFFFFFFFFE0FFFULL
-#define PMC7_SEL_MASK	0xFFFFFFFFFFFFF07FULL
-#define PMC8_SEL_MASK	0xFFFFFFFFFFFFFF83ULL
-#define PMC8a_SEL_MASK	0xFFFDFFFFUL
-#else
 /* assume ppc970 for now */
 #define PMC1_SEL_MASK	0xFFFFF0FFUL
 #define PMC2_SEL_MASK	0xFFFFFFE1UL
@@ -48,7 +37,6 @@
 #define PMC7_SEL_MASK	0xFFFFFFFFFFFFF87FULL
 #define PMC8_SEL_MASK	0xFFFFFFFFFFFFFFC3ULL
 #define PMC8a_SEL_MASK	0xFFFDFFFFUL
-#endif
 #endif
 
 
@@ -147,13 +135,10 @@ typedef ppc64_reg_alloc_t hwd_reg_alloc_t;
 
 typedef struct ppc64_perfctr_control
 {
-
-// the members below are from power4.h  
 	/* Buffer to pass to the kernel to control the counters */
 	int group_id;
 	/* Interrupt interval */
 	int timer_ms;
-
 
 // the members below are from perfctr-p3.h  
 	hwd_native_t native[MAX_COUNTERS];

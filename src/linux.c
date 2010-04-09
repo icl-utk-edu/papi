@@ -22,8 +22,6 @@ int _linux_get_system_info( void );
 
 #ifdef PPC64
 extern int setup_ppc64_presets( int cputype );
-#elif defined(PPC32)
-extern int setup_ppc32_presets( int cputype );
 #else
 extern int setup_x86_presets( int cputype );
 #endif
@@ -39,7 +37,7 @@ extern int setup_x86_presets( int cputype );
 #define PERFCTR_CPU_NRCTRS      perfctr_cpu_nrctrs
 #endif
 
-#if (!defined(PPC64) && !defined(PPC32))
+#if !defined(PPC64) 
 inline_static int
 xlate_cpu_type_to_vendor( unsigned perfctr_cpu_type )
 {
@@ -95,27 +93,6 @@ volatile unsigned int lock[PAPI_MAX_LOCK];
 
 long long tb_scale_factor = ( long long ) 1;	/* needed to scale get_cycles on PPC series */
 
-#if (defined(PPC32))
-static int
-lock_init( void )
-{
-	int retval, i;
-	union semun val;
-	val.val = 1;
-	if ( ( retval = semget( IPC_PRIVATE, PAPI_MAX_LOCK, 0666 ) ) == -1 ) {
-		PAPIERROR( "semget errno %d", errno );
-		return ( PAPI_ESYS );
-	}
-	sem_set = retval;
-	for ( i = 0; i < PAPI_MAX_LOCK; i++ ) {
-		if ( ( retval = semctl( sem_set, i, SETVAL, val ) ) == -1 ) {
-			PAPIERROR( "semctl errno %d", errno );
-			return ( PAPI_ESYS );
-		}
-	}
-	return ( PAPI_OK );
-}
-#else
 static void
 lock_init( void )
 {
@@ -124,7 +101,6 @@ lock_init( void )
 		lock[i] = MUTEX_OPEN;
 	}
 }
-#endif
 
 int
 _linux_init_substrate( int cidx )
@@ -208,7 +184,7 @@ _linux_init_substrate( int cidx )
 	MY_VECTOR.cmp_info.attach = 1;
 	MY_VECTOR.cmp_info.attach_must_ptrace = 1;
 	MY_VECTOR.cmp_info.default_domain = PAPI_DOM_USER;
-#if (!defined(PPC64) && !defined(PPC32))
+#if !defined(PPC64)
 	/* AMD and Intel ia386 processors all support unit mask bits */
 	MY_VECTOR.cmp_info.cntr_umasks = 1;
 #endif
@@ -236,32 +212,23 @@ _linux_init_substrate( int cidx )
 	_papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_IBM;
 	if ( strlen( _papi_hwi_system_info.hw_info.vendor_string ) == 0 )
 		strcpy( _papi_hwi_system_info.hw_info.vendor_string, "IBM" );
-#elif defined(PPC32)
-	_papi_hwi_system_info.hw_info.vendor = PAPI_VENDOR_FREESCALE;
-	if ( strlen( _papi_hwi_system_info.hw_info.vendor_string ) == 0 )
-		strcpy( _papi_hwi_system_info.hw_info.vendor_string, "Freescale" );
 #else
 	_papi_hwi_system_info.hw_info.vendor =
 		xlate_cpu_type_to_vendor( info.cpu_type );
 #endif
 
 	/* Setup presets last. Some platforms depend on earlier info */
-#if (!defined(PPC64) && !defined(PPC32))
+#if !defined(PPC64)
 //     retval = setup_p3_vector_table(vtable);
 		if ( !retval )
 			retval = setup_x86_presets( ( int ) info.cpu_type );
-#elif (defined(PPC64))
+#else
 	/* Setup native and preset events */
 //  retval = ppc64_setup_vector_table(vtable);
 	if ( !retval )
 		retval = setup_ppc64_native_table(  );
 	if ( !retval )
 		retval = setup_ppc64_presets( info.cpu_type );
-#elif (defined(PPC32))
-	/* Setup native and preset events */
-//  retval = ppc32_setup_vector_table(vtable);
-	if ( !retval )
-		retval = setup_ppc32_presets( info.cpu_type );
 #endif
 	if ( retval )
 		return ( retval );
@@ -702,7 +669,7 @@ _linux_get_system_info( void )
 
 /* Low level functions, should not handle errors, just return codes. */
 
-#if (!defined(PPC64) && !defined(PPC32))
+#if !defined(PPC64)
 inline_static long long
 get_cycles( void )
 {
@@ -719,7 +686,7 @@ get_cycles( void )
 #endif
 	return ret;
 }
-#elif defined(PPC32) || defined(PPC64)
+#else
 inline_static long long
 get_cycles( void )
 {

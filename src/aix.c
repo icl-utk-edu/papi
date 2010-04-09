@@ -1,7 +1,7 @@
 /* This substrate should never malloc anything. All allocation should be
    done by the high level API. */
 
-/* This file handles the OS dependent part of the POWER3 and POWER4 architectures.
+/* This file handles the OS dependent part of the POWER5 and POWER6 architectures.
   It supports both AIX 4 and AIX 5. The switch between AIX 4 and 5 is driven by the 
   system defined value _AIX_VERSION_510.
   Other routines also include minor conditionally compiled differences.
@@ -145,7 +145,7 @@ _aix_ntv_enum_events( unsigned int *EventCode, int modifier )
 		} else
 			return ( PAPI_ENOEVNT );
 	} else if ( modifier == PAPI_NTV_ENUM_GROUPS ) {
-#if defined(_POWER4) || defined(_POWER5) || defined(_POWER6)
+#if defined(_POWER5) || defined(_POWER6)
 		unsigned int group =
 			( *EventCode & PAPI_NTV_GROUP_AND_MASK ) >> PAPI_NTV_GROUP_SHIFT;
 		int index = *EventCode & 0x000000FF;
@@ -358,9 +358,7 @@ _aix_get_system_info( void )
 #ifdef _AIXVERSION_510
 #ifdef PM_INITIALIZE
 	SUBDBG( "Calling AIX 5 version of pm_initialize...\n" );
-/*#ifdef _POWER4
-    retval = pm_initialize(PM_INIT_FLAGS, &pminfo, &pmgroups,PM_CURRENT);
-#elif defined(_POWER5)
+/*#if defined(_POWER5)
     retval = pm_initialize(PM_INIT_FLAGS, &pminfo, &pmgroups, PM_POWER5);
 #endif*/
 	retval = pm_initialize( PM_INIT_FLAGS, &pminfo, &pmgroups, PM_CURRENT );
@@ -522,36 +520,20 @@ _aix_init_substrate( int cidx )
 			_papi_hwi_system_info.hw_info.mhz );
 
 	MY_VECTOR.cmp_info.CmpIdx = cidx;
-
-/* This ifndef should be removed and switched to a cpu check for Power 3 or
- * power 4 when we merge substrates.
- */
-#if !(defined(_POWER4) || defined(_POWER5) || defined(_POWER6))
-	MY_VECTOR.cmp_info.num_native_events = power3_setup_native_table(  );
-#else
 	MY_VECTOR.cmp_info.num_native_events = ppc64_setup_native_table(  );
-#endif
 
-/*#if !defined(_POWER4) && !defined(_POWER5)
+/*#if !defined(_POWER5)
    if (!_papi_hwd_init_preset_search_map(&pminfo)){ 
       return (PAPI_ESBSTR);}
 
    retval = _papi_hwi_setup_all_presets(preset_search_map, NULL);
-#elif defined(_POWER4)
-   _papi_pmapi_setup_presets("POWER4", 0);
-#elif defined(_POWER5)
+#else
    _papi_pmapi_setup_presets("POWER5", 0);
 #endif*/
-#if defined(POWER3)
-	MY_VECTOR.cmp_info.num_native_events = power3_setup_native_table( vtable );
-#else
 	procidx = pm_get_procindex(  );
 	switch ( procidx ) {
 	case PM_POWER5:
 		_papi_pmapi_setup_presets( "POWER5", 0 );
-		break;
-	case PM_POWER4:
-		_papi_pmapi_setup_presets( "POWER4", 0 );
 		break;
 	case PM_POWER5_II:
 		_papi_pmapi_setup_presets( "POWER5+", 0 );
@@ -566,7 +548,6 @@ _aix_init_substrate( int cidx )
 		fprintf( stderr, "%s is not supported!\n", pminfo.proc_name );
 		return ( PAPI_ESBSTR );
 	}
-#endif
 
 	_aix_lock_init(  );
 
