@@ -31,6 +31,7 @@
 typedef struct {
 	struct perf_event_attr hw;
 	uint64_t value, prev_value;
+	uint64_t enabled, running;
 	char *name;
 	uint64_t id; /* event id kernel */
 	void *buf;

@@ -39,6 +39,7 @@
 #include <sys/wait.h>
 #include <sys/poll.h>
 #include <sys/mman.h>
+#include <locale.h>
 #include <err.h>
 
 #include "perf_util.h"
@@ -122,6 +123,8 @@ static size_t handle_raw(perf_event_desc_t *hw)
 		if (((i+1) % 16)  == 0)
 			printf("\n\t");
 	}
+	if (raw_sz)
+		putchar('\n');
 	free(buf);
 	return sz + raw_sz;
 }
@@ -136,7 +139,7 @@ display_sample(perf_event_desc_t *hw, struct perf_event_header *ehdr)
 	struct { uint64_t value, id; } grp;
 	uint64_t time_enabled, time_running;
 	size_t sz;
-	uint64_t type;
+	uint64_t type, fmt;
 	uint64_t val64;
 	char *str;
 	int ret, e;
@@ -144,6 +147,7 @@ display_sample(perf_event_desc_t *hw, struct perf_event_header *ehdr)
 	sz = ehdr->size - sizeof(*ehdr);
 
 	type = hw->hw.sample_type;
+	fmt  = hw->hw.read_format;
 
 	collected_samples++;
 	printf("%4"PRIu64" ", collected_samples);
@@ -185,7 +189,7 @@ display_sample(perf_event_desc_t *hw, struct perf_event_header *ehdr)
 		if (ret)
 			errx(1, "cannot read time");
 
-		printf("TIME:%"PRIu64" ", val64);
+		printf("TIME:%'"PRIu64" ", val64);
 		sz -= sizeof(val64);
 	}
 
@@ -231,65 +235,113 @@ display_sample(perf_event_desc_t *hw, struct perf_event_header *ehdr)
 		if (ret)
 			errx(1, "cannot read period");
 
-		printf("PERIOD:%"PRIu64" ", val64);
+		printf("PERIOD:%'"PRIu64" ", val64);
 		sz -= sizeof(val64);
 		sum_period += val64;
 	}
 
-	/*
-	 *      { u64           nr;
-	 *        { u64         time_enabled; } && PERF_FORMAT_ENABLED
-	 *        { u64         time_running; } && PERF_FORMAT_RUNNING
-	 *        { u64         value;
-	 *          { u64       id;           } && PERF_FORMAT_ID
-	 *        }             cntr[nr];
-	 */ 
+	/* struct read_format {
+	 * 	{ u64		value;
+	 * 	  { u64		time_enabled; } && PERF_FORMAT_ENABLED
+	 * 	  { u64		time_running; } && PERF_FORMAT_RUNNING
+	 * 	  { u64		id;           } && PERF_FORMAT_ID
+	 * 	} && !PERF_FORMAT_GROUP
+	 *
+	 * 	{ u64		nr;
+	 * 	  { u64		time_enabled; } && PERF_FORMAT_ENABLED
+	 * 	  { u64		time_running; } && PERF_FORMAT_RUNNING
+	 * 	  { u64		value;
+	 * 	    { u64	id;           } && PERF_FORMAT_ID
+	 * 	  }		cntr[nr];
+	 * 	} && PERF_FORMAT_GROUP
+	 * };
+	 */
 	if (type & PERF_SAMPLE_READ) {
 		uint64_t nr;
 
-		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &nr);
-		if (ret)
-			errx(1, "cannot read nr");
-
-		sz -= sizeof(nr);
-
-		time_enabled = time_running = 1;
-
-		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &time_enabled);
-		if (ret)
-			errx(1, "cannot read timing info");
-
-		sz -= sizeof(time_enabled);
-
-		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &time_running);
-		if (ret)
-			errx(1, "cannot read timing info");
-
-		sz -= sizeof(time_running);
-
-		printf("ENA=%"PRIu64" RUN=%"PRIu64" NR=%"PRIu64"\n", time_enabled, time_running, nr);
-
-		while(nr--) {
-			ret = perf_read_buffer(hw->buf, hw->pgmsk, &grp, sizeof(grp));
+		if (fmt & PERF_FORMAT_GROUP) {
+			ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &nr);
 			if (ret)
-				errx(1, "cannot read grp");
+				errx(1, "cannot read nr");
 
-			sz -= sizeof(grp);
+			sz -= sizeof(nr);
 
-			e = perf_id2event(fds, num_events, grp.id);
-			if (e == -1)
-				str = "unknown sample event";
-			else
-				str = fds[e].name;
+			time_enabled = time_running = 1;
 
+			if (fmt & PERF_FORMAT_TOTAL_TIME_ENABLED) {
+				ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &time_enabled);
+				if (ret)
+					errx(1, "cannot read timing info");
+
+				sz -= sizeof(time_enabled);
+			}
+
+			if (fmt & PERF_FORMAT_TOTAL_TIME_RUNNING) {
+				ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &time_running);
+				if (ret)
+					errx(1, "cannot read timing info");
+
+				sz -= sizeof(time_running);
+			}
+
+			printf("ENA=%'"PRIu64" RUN=%'"PRIu64" NR=%"PRIu64"\n", time_enabled, time_running, nr);
+
+			while(nr--) {
+				ret = perf_read_buffer(hw->buf, hw->pgmsk, &grp, sizeof(grp));
+				if (ret)
+					errx(1, "cannot read grp");
+
+				sz -= sizeof(grp);
+
+				e = perf_id2event(fds, num_events, grp.id);
+				if (e == -1)
+					str = "unknown sample event";
+				else
+					str = fds[e].name;
+
+				if (time_running)
+					grp.value = grp.value * time_enabled / time_running;
+
+				printf("\t%'"PRIu64" %s (%"PRIu64"%s)\n",
+						grp.value, str,
+						grp.id,
+						time_running != time_enabled ? ", scaled":"");
+
+			}
+		} else {
+			uint64_t val;
+			/*
+			 * this program does not use FORMAT_GROUP when there is only one event
+			 */
+			ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val);
+			if (ret)
+				errx(1, "cannot read value");
+
+			sz -= sizeof(val);
+
+			if (fmt & PERF_FORMAT_TOTAL_TIME_ENABLED) {
+				ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &time_enabled);
+				if (ret)
+					errx(1, "cannot read timing info");
+
+				sz -= sizeof(time_enabled);
+			}
+
+			if (fmt & PERF_FORMAT_TOTAL_TIME_RUNNING) {
+				ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &time_running);
+				if (ret)
+					errx(1, "cannot read timing info");
+
+				sz -= sizeof(time_running);
+			}
+
+			printf("ENA=%"PRIu64" RUN=%"PRIu64"\n", time_enabled, time_running);
 			if (time_running)
-				grp.value = grp.value * time_enabled / time_running;
+				val = val * time_enabled / time_running;
 
-			printf("\t%"PRIu64" %s (%"PRIu64"%s)\n",
-				grp.value, str,
-				grp.id,
-				time_running != time_enabled ? ", scaled":"");
-
+				printf("\t%'"PRIu64" %s %s\n",
+					val, fds[0].name,
+					time_running != time_enabled ? ", scaled":"");
 		}
 	}
 
@@ -314,13 +366,10 @@ display_sample(perf_event_desc_t *hw, struct perf_event_header *ehdr)
 	}
 
 	if (type & PERF_SAMPLE_RAW) {
-		if (hw->hw.precise)
-			ret = handle_raw(hw);
-		else
-			ret = handle_raw(hw);
-
+		ret = handle_raw(hw);
 		sz -= ret;
 	}
+
 	/*
 	 * if we have some data left, it is because there is more
 	 * than what we know about. In fact, it is more complicated
@@ -477,7 +526,7 @@ mainloop(char **arg)
 			fds[i].hw.inherit = 1;
 
 		if (!i) {
-			fds[i].hw.sample_type = PERF_SAMPLE_IP|PERF_SAMPLE_TID|PERF_SAMPLE_READ|PERF_SAMPLE_TIME|PERF_SAMPLE_PERIOD;
+			fds[i].hw.sample_type = PERF_SAMPLE_IP|PERF_SAMPLE_TID|PERF_SAMPLE_READ|PERF_SAMPLE_TIME|PERF_SAMPLE_PERIOD|PERF_SAMPLE_STREAM_ID;
 			if (fds[i].hw.precise)
 				fds[i].hw.sample_type |= PERF_SAMPLE_RAW;
 
@@ -488,7 +537,9 @@ mainloop(char **arg)
 			printf("period=%"PRIu64" freq=%d\n", options.period, options.opt_freq);
 
 			/* must get event id for SAMPLE_GROUP */
-			fds[i].hw.read_format = PERF_FORMAT_GROUP|PERF_FORMAT_ID|PERF_FORMAT_SCALE;
+			fds[i].hw.read_format = PERF_FORMAT_SCALE;
+			if (num_events > 1)
+				fds[i].hw.read_format |= PERF_FORMAT_GROUP|PERF_FORMAT_ID;
 		}
 
 		fds[i].fd = perf_event_open(&fds[i].hw, pid, -1, fds[0].fd, 0);
@@ -594,6 +645,8 @@ int
 main(int argc, char **argv)
 {
 	int c;
+
+	setlocale(LC_ALL, "");
 
 	while ((c=getopt_long(argc, argv,"he:m:p:if", the_options, 0)) != -1) {
 		switch(c) {

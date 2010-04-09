@@ -59,16 +59,60 @@ child(char **arg)
 }
 
 static void
-print_counts(perf_event_desc_t *fds, int num)
+read_group(perf_event_desc_t *fds, int num)
+{
+	uint64_t *values;
+	size_t sz;
+	int i, ret;
+
+	/*
+	 * 	{ u64		nr;
+	 * 	  { u64		time_enabled; } && PERF_FORMAT_ENABLED
+	 * 	  { u64		time_running; } && PERF_FORMAT_RUNNING
+	 * 	  { u64		value;
+	 * 	    { u64	id;           } && PERF_FORMAT_ID
+	 * 	  }		cntr[nr];
+	 * 	} && PERF_FORMAT_GROUP
+	 *
+	 * we do not use FORMAT_ID in this program
+	 */
+	sz = sizeof(uint64_t) * (3 + num);
+	values = malloc(sz);
+	if (!values)
+		err(1, "cannot allocate memory for values\n");
+
+	ret = read(fds[0].fd, values, sz);
+	if (ret != sz) { /* unsigned */
+		if (ret == -1)
+			err(1, "cannot read values event %s", fds[0].name);
+		else	/* likely pinned and could not be loaded */
+			warnx("could not read event0 ret=%d", ret);
+	}
+
+	/*
+	 * propagate to save area
+	 */
+	for(i=0; i < num; i++) {
+		values[0] = values[3+i];
+		/*
+		 * scaling because we may be sharing the PMU and
+		 * thus may be multiplexed
+		 */
+		fds[i].prev_value = fds[i].value;
+		fds[i].value = perf_scale(values);
+		fds[i].enabled = values[1];
+		fds[i].running = values[2];
+	}
+	free(values);
+}
+
+static void
+read_single(perf_event_desc_t *fds, int num)
 {
 	uint64_t values[3];
 	int i, ret;
-	/*
-	 * now simply read the results.
-	 */
+
 	for(i=0; i < num; i++) {
-		uint64_t val;
-		double ratio;
 
 		ret = read(fds[i].fd, values, sizeof(values));
 		if (ret != sizeof(values)) { /* unsigned */
@@ -77,18 +121,35 @@ print_counts(perf_event_desc_t *fds, int num)
 			else	/* likely pinned and could not be loaded */
 				warnx("could not read event%d", i);
 		}
-
-		/*
-		 * scaling because we may be sharing the PMU and
-		 * thus may be multiplexed
-		 */
 		fds[i].prev_value = fds[i].value;
-		fds[i].value = val = perf_scale(values);
-		ratio = perf_scale_ratio(values);
+		fds[i].value = perf_scale(values);
+		fds[i].enabled = values[1];
+		fds[i].running = values[2];
+	}
+}
 
-		val = val - fds[i].prev_value;
+static void
+print_counts(perf_event_desc_t *fds, int num)
+{
+	int i;
+
+	if (options.group)
+		read_group(fds, num);
+	else
+		read_single(fds, num);
+
+	for(i=0; i < num; i++) {
+		double ratio;
+		uint64_t val;
+
+		val = fds[i].value - fds[i].prev_value;
+
+		ratio = 0.0;
+		if (fds[i].enabled)
+			ratio = 1.0 * fds[i].running / fds[i].enabled;
+
 		if (ratio == 1.0)
-			printf("%'20"PRIu64" %s\n", val, fds[i].name);
+			printf("%'20"PRIu64" %s (%'"PRIu64" : %'"PRIu64")\n", val, fds[i].name, fds[i].enabled, fds[i].running);
 		else
 			if (ratio == 0.0)
 				printf("%'20"PRIu64" %s (did not run: incompatible events, too many events in a group, competing session)\n", val, fds[i].name);
@@ -185,8 +246,10 @@ parent(char **arg)
 			}
 		}
 
-		/* request timing information necessary for scaling counts */
 		fds[i].hw.read_format = PERF_FORMAT_SCALE;
+		/* request timing information necessary for scaling counts */
+		if (!i && options.group)
+			fds[0].hw.read_format |= PERF_FORMAT_GROUP;
 
 		if (options.inherit)
 			fds[i].hw.inherit = 1;
