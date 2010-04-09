@@ -1,53 +1,6 @@
 # $Id$
 
-DESCR   = "Linux with $(SUBSTR) kernel support and library"
-LIBRARY = libpapi.a
-SHLIB   = libpapi.so.$(PAPIVER)
-TARGETS = ear serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads shared
-MEMSUBSTR = perfmon
-
-#
-# GNU G77/GCC section
-#
-
-ifneq (,$(shell $(CC) -v 2>&1 | grep version | cut -f3 -d" " | grep "^4.2"))
-TARGETS += omp
-OMPCFLGS = -fopenmp
-endif
-
-CC_R    	:= $(CC) -pthread
-CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
-
-ifeq (pgf77,$(F77))
-	FFLAGS += -Mextend
-else
-   ifneq (ifort,$(F77))
-	FFLAGS += -ffixed-line-length-132
-   endif
-endif
-
-CFLAGS += -D_REENTRANT -D_GNU_SOURCE -Wall $(EXTRA_CFLAGS) $(NOTLS) $(ALTIX) $(DEBUGFLAGS)
-
-ifeq (static,$(PAPI_EVENTS))
-	PAPI_EVENTS_TABLE := papi_events_table.h
-endif
-
-ifeq (y,$(PFM_OLD_PFMV2))
-	CFLAGS		 += -DPFMLIB_OLD_PFMV2
-endif
-
-# It appears that for linux kernel 2.6.31, the /usr/include/linux dir
-# does not include perf_counter.h. Since this dir is populated by the
-# kernel-headers package, we'll have to wait for an update.
-# Kernel 2.6.32 and later need to include perf_event.h 
-CFLAGS += -DPEINCLUDE=\"$(PEPATH)\"
-
-
-#
-# DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
-#
-
-# The next section avoids setting BAD things like -I/usr/include -L/usr/lib.
+DESCR = "Linux with $(SUBSTR) kernel support and library"
 
 ifneq (/usr,$(PFM_PREFIX))
 PWD = $(shell pwd)
@@ -69,24 +22,13 @@ CFLAGS	+= -I$(PFM_INC_PATH)
 endif
 endif
 
-# I hate these platform dependencies, but this id's the existence of
-# _ntv_name_to_code in perfmon for extras optimization.
-CFLAGS	+= -DSUBSTRATE_USES_LIBPFM
-
-# MISCSRCS can be set in configure.in and that value should not be overwritten by a Rules file
+CFLAGS += -DSUBSTRATE_USES_LIBPFM
 MISCHDRS = perfmon.h papi_pfm_events.h $(PAPI_EVENTS_TABLE)
 MISCSRCS += papi_pfm_events.c
-
-ifeq (perf_events, $(SUBSTR))
-  MISCSRCS += sys_perf_counter_open.c
-endif
-
-# This is necessary to avoid text relocations. You cannot do -Lxx -lx because
-# it will attempt to use the static library if a shared library ending in
-# .so does not exist
 SHLIBDEPS = -Bdynamic -L$(PFM_LIB_PATH) -lpfm
-
 PFM_OBJS=$(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
+MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
+
 ifeq (,$(PFM_OBJS))
 $(PFM_LIB_PATH)/libpfm.a:
 ifneq (,${PFM_ROOT})
@@ -96,7 +38,6 @@ else
 endif
 	$(MAKE)
 endif
-MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
 
 include Makefile.inc
 

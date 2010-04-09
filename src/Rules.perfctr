@@ -1,107 +1,6 @@
 # $Id$
 
-# File: Rules.perfctr
-# Mods: Maynard Johnson
-#       maynardj@us.ibm.com
-
-DESCR   = "Linux with PerfCtr $(VERSION) patch and library"
-TARGETS = serial forkexec_tests overflow_tests profile_tests attach multiplex_and_pthreads shared
-LIBRARY = libpapi.a
-SHLIB   = libpapi.so.$(PAPIVER)
-SUBSTR  = perfctr-$(CPU)
-ARCH	= $(shell uname -m)
-COMP    = -DCOMP_VECTOR=_p3_vector
-
-ifeq (p4,$(CPU))
-TARGETS += p4
-COMP    = -DCOMP_VECTOR=_p4_vector
-endif
-
-ifeq (i686,$(ARCH))
-ARCH = i386
-endif
-
-ifeq (i586,$(ARCH))
-ARCH = i386
-endif
-
-ifeq (i486,$(ARCH))
-ARCH = i386
-endif
-
-#
-# GNU G77/GCC section
-#
-
-ifeq (x86_64,$(ARCH))
-ifeq (32,$(BITS))
-BITFLAGS	?= -m32 
-else
-LIB_SUFFIX	:= 64
-endif
-MEMSUBSTR	:= linux
-endif
-
-ifeq (i386,$(ARCH))
-MEMSUBSTR	:= linux
-endif
-
-ifeq (ppc,$(ARCH))
-CFLAGS 		+= -DPPC32
-COMP       = -DCOMP_VECTOR=_ppc32_vectors
-MEMSUBSTR 	= linux-ppc64
-endif
-
-ifeq ($(ARCH),ppc64)
-ifeq (32,$(BITS))
-BITFLAGS	?= -m32
-else
-LIB_SUFFIX	:= 64
-ifeq (64,$(BITS))
-BITFLAGS	?= -m64
-endif
-endif
-CFLAGS 		+= -DPPC64
-COMP = -DCOMP_VECTOR=_ppc64_vectors
-ARCH_SPEC_EVTS	:= $(ARCH_EVENTS)_map.c
-MEMSUBSTR 	= linux-ppc64
-endif
-
-ifneq (,$(shell $(CC) -v 2>&1 | grep version | cut -f3 -d" " | grep "^4.2"))
-TARGETS += omp
-OMPCFLGS = -fopenmp
-endif
-
-CC_R    	:= $(CC) -pthread
-CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
-
-ifeq (pgf77,$(F77))
-    FFLAGS      += -Wall -Mextend $(BITFLAGS)
-else
-   ifeq (ifort,$(F77))
-      FFLAGS += -warn all $(BITFLAGS)
-   else
-      FFLAGS += -Wall -ffixed-line-length-132 $(BITFLAGS)
-   endif
-endif
-
-CFLAGS += -D_REENTRANT -D_GNU_SOURCE -Wall $(EXTRA_CFLAGS) $(COMP) $(NOTLS) $(BITFLAGS)
-OPTFLAGS += $(DEBUGFLAGS)
-
-# 
-# Portland Group section
-# 
-ifeq (icc, $(CC))
-TARGETS	  	+= omp
-endif
-
-FFLAGS        	+= -Dlinux $(FARGS)
-
-#
-# DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
-#
-
-# The next section avoids setting BAD things like -I/usr/include -L/usr/lib. 
+DESCR = "Linux with PerfCtr $(VERSION) patch and library"
 
 ifneq (/usr,$(PERFCTR_PREFIX))
 PWD = $(shell pwd)
@@ -132,13 +31,12 @@ endif
 CFLAGS-2.6.x := -DPERFCTR26
 CFLAGS-2.7.x := $(CFLAGS-2.6.x)
 CFLAGS += $(CFLAGS-$(VERSION))
-
-# MISCSRCS can be set in configure.in and that value should not be overwritten by a Rules file
 MISCHDRS = perfctr-$(CPU).h
 MISCSRCS +=  $(CPU)_events.c linux.c $(ARCH_SPEC_EVTS)
-
 SHLIBDEPS = -Bdynamic -L$(PERFCTR_LIB_PATH) -lperfctr
 PERFCTR_OBJS = $(shell $(AR) t $(PERFCTR_LIB_PATH)/libperfctr.a 2> /dev/null)
+MISCOBJS = $(PERFCTR_OBJS) $(MISCSRCS:.c=.o) 
+
 ifeq (,$(PERFCTR_OBJS))
 $(PERFCTR_LIB_PATH)/libperfctr.a:
 ifneq (,${PERFCTR_ROOT})
@@ -159,7 +57,6 @@ else
 endif
 	$(MAKE)
 endif
-MISCOBJS = $(PERFCTR_OBJS) $(MISCSRCS:.c=.o) 
 
 #Dynamic linking loader needs correct version of libperfctr
 ifeq ($(VERSION),2.7.x)
@@ -172,6 +69,7 @@ ifeq ($(VERSION),2.6.x)
 	SO_ABIVER=$($(ARCH)_ABIVER)
 endif
 endif
+
 POST_BUILD = cp $(PERFCTR_LIB_PATH)/libperfctr.so .;ln -fs libperfctr.so libperfctr.so.$(SO_ABIVER)
 
 include Makefile.inc
@@ -201,12 +99,8 @@ ifeq ($(ARCH),ppc64)
 	cp -Rf ./event_data $(DESTDIR)$(DATADIR)
 endif
 ifneq (,${PERFCTR_ROOT})
-ifeq (x86_64,${ARCH})
 ifeq (32,${BITS})
 	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(DESTDIR)$(PREFIX) DESTDIR=$(DESTDIR) BINDIR=$(DESTDIR)$(BINDIR) LIBDIR=$(DESTDIR)$(LIBDIR) INCLDIR=$(DESTDIR)$(INCDIR) ARCH="i386" install
-else
-	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(DESTDIR)$(PREFIX) DESTDIR=$(DESTDIR) BINDIR=$(DESTDIR)$(BINDIR) LIBDIR=$(DESTDIR)$(LIBDIR) INCLDIR=$(DESTDIR)$(INCDIR) install
-endif
 else
 	$(MAKE) -C $(PERFCTR_ROOT) PREFIX=$(DESTDIR)$(PREFIX) DESTDIR=$(DESTDIR) BINDIR=$(DESTDIR)$(BINDIR) LIBDIR=$(DESTDIR)$(LIBDIR) INCLDIR=$(DESTDIR)$(INCDIR) install
 endif

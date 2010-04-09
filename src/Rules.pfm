@@ -1,48 +1,6 @@
 # $Id$
 
-DESCR   = "Linux with PFM $(VERSION) kernel support and library"
-LIBRARY = libpapi.a
-SHLIB   = libpapi.so.$(PAPIVER)
-TARGETS = serial forkexec_tests overflow_tests profile_tests multiplex_and_pthreads shared ear range
-SUBSTR  = linux-ia64
-MEMSUBSTR= linux-ia64
-
-#
-# GNU G77/GCC section
-#
-
-ifneq (,$(shell $(CC) -v 2>&1 | grep version | cut -f3 -d" " | grep "^4.2"))
-TARGETS += omp
-OMPCFLGS = -fopenmp
-endif
-
-CC_R    	= $(CC) -pthread
-CC_SHR		:= $(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,$(SHLIB) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"
-
-ifeq (pgf77,$(F77))
-    FFLAGS      += -Mextend
-else
-   ifneq (ifort,$(F77))
-      FFLAGS += -ffixed-line-length-132
-   endif
-endif
-
-#NOTE: adding -Wextra to an itanium build causes libpfm to fail compile
-CFLAGS += -Wall
-POST_BUILD	=
-SPECIAL_REMOVE =
-
-ifneq (,$(findstring -DDEBUG,$(DEBUGFLAGS)))
-OPTFLAGS	+= $(DEBUGFLAGS)
-endif
-FFLAGS        	+= -Dlinux -DITANIUM$(CPU)
-
-#
-# DO NOT TOUCH BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
-#
-
-# If Altix, always build with PFM provided by the system
-# unless forced to override
+DESCR = "Linux with PFM $(VERSION) kernel support and library"
 
 ifneq (,$(wildcard /etc/sgi-release))
 	PFM_PREFIX ?= /usr
@@ -64,21 +22,12 @@ endif
 
 OPTIM := $(CFLAGS)
 CFLAGS-3.y := -DPFM30 
-CFLAGS	+= -D_REENTRANT -D_GNU_SOURCE -I$(PFM_INC_PATH) -DITANIUM$(CPU) $(NOTLS) $(ALTIX) $(CFLAGS-$(VERSION))
-
-ifeq (y,$(PFM_OLD_PFMV2))
-	CFLAGS		 += -DPFMLIB_OLD_PFMV2
-endif
-
-# MISCSRCS can be set in configure.in and that value should not be overwritten by a Rules file
+CFLAGS += -I$(PFM_INC_PATH) $(ALTIX) $(CFLAGS-$(VERSION))
 MISCHDRS = pfmwrap.h
-#MISCSRCS = 
-# This is necessary to avoid text relocations. You cannot do -Lxx -lx because
-# it will attempt to use the static library if a shared library ending in
-# .so does not exist
 SHLIBDEPS = -Bdynamic -L$(PFM_LIB_PATH) -lpfm
-
 PFM_OBJS = $(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
+MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
+
 ifeq (,$(PFM_OBJS))
 $(PFM_LIB_PATH)/libpfm.a:
 ifneq (,${PFM_ROOT})
@@ -88,7 +37,6 @@ else
 endif
 	$(MAKE)
 endif
-MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
 
 include Makefile.inc
 
