@@ -229,7 +229,7 @@ static unsigned int
 check_inst_retired_events(pfmlib_input_param_t *inp, unsigned long *retired_mask)
 {
 	int code;
-	int c;
+	int c, ret;
 	unsigned int i, count, found = 0;
 	unsigned long umask, mask;
 
@@ -238,9 +238,11 @@ check_inst_retired_events(pfmlib_input_param_t *inp, unsigned long *retired_mask
 	count = inp->pfp_event_count;
 	mask  = 0;
 	for(i=0; i < count; i++) {
-		pfm_get_event_code(inp->pfp_events[i].event, &c);
+		ret = pfm_get_event_code(inp->pfp_events[i].event, &c);
 		if (c == code)  {
-			pfm_ita2_get_event_umask(inp->pfp_events[i].event, &umask);
+			ret = pfm_ita2_get_event_umask(inp->pfp_events[i].event, &umask);
+			if (ret != PFMLIB_SUCCESS)
+				break;
 			switch(umask) {
 				case 0: mask |= 1;
 					break;
@@ -556,7 +558,7 @@ done:
 		pc[j].reg_addr    = pc[j].reg_alt_addr = assign[j];
 
 		pd[j].reg_num  = assign[j];
-		pd[j].reg_addr = pd[j].reg_addr = assign[j];
+		pd[j].reg_addr = pd[j].reg_alt_addr = assign[j];
 
 		__pfm_vbprintf("[PMC%u(pmc%u)=0x%06lx thres=%d es=0x%02x plm=%d umask=0x%x pm=%d ism=0x%x oi=%d] %s\n",
 				assign[j],
@@ -813,7 +815,7 @@ pfm_dispatch_opcm(pfmlib_input_param_t *inp, pfmlib_ita2_input_param_t *mod_in, 
 
 		pc[pos].reg_num     = 8;
 		pc[pos].reg_value   = reg.pmc_val;
-		pc[pos].reg_addr  = pc[pos].reg_addr = 8;
+		pc[pos].reg_addr  = pc[pos].reg_alt_addr = 8;
 		pos++;
 
 		/*

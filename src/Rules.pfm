@@ -1,59 +1,63 @@
+# $Id$
 
-# Uncomment below and comment out the lines above to use a 
-# natively installed libpfm
-#PFM_LIB_PATH = /usr/lib
-#PFM_INC_PATH = /usr/include/perfmon
-#MISCOBJS= 
-#NATIVE_CLEAN = 
+DESCR = "Linux with PFM $(VERSION) kernel support and library"
 
-#
-# Don't touch below here
-#
-LIBRARY   = libpapi.a
-SHLIB     = libpapi.so
-SUBSTR  = linux-ia64
-MEMSUBSTR= linux-ia64
-LIBS	= static shared
-# shared
-TARGETS = serial multiplex_and_pthreads
+ifneq (,$(wildcard /etc/sgi-release))
+	PFM_PREFIX ?= /usr
+	ALTIX ?= -DALTIX
+endif
 
-MISCSRCS= linux.c
-PFMOBJS += pfmlib_itanium.o pfmlib_itanium2.o pfmlib_common.o 
-MISCOBJS +=  linux.o $(PFMOBJS)  
-NATIVE_CLEAN = rm -f $(MISCOBJS); cd $(PFM_LIB_PATH); $(MAKE) clean
+ifeq (,$(PFM_LIB_PATH))
+ifeq (,$(PFM_ROOT))
+        PFM_ROOT := ./libpfm-$(VERSION)
+endif
+	PFM_LIB_PATH := $(PFM_ROOT)/lib
+endif
+ifeq (,$(PFM_INC_PATH))
+ifeq (,$(PFM_ROOT))
+        PFM_ROOT := ./libpfm-$(VERSION)
+endif
+        PFM_INC_PATH := $(PFM_ROOT)/include
+endif
 
-CFLAGS  += -I$(PFM_INC_PATH)  -I. -Wall  -DPAPI3 -g -DDEBUG 
-TOOLPATH = ../$(LIBPFMHOME)
-# -DDEBUG
-OPTFLAGS= -O3
-TOPTFLAGS = -O0
-FFLAGS	+=
-#  -Vaxlib
-LDFLAGS = 
-#LDFLAGS = -lPEPCF90 -lIEPCF90 -lF90 -lintrins
-FOPTFLAGS= $(OPTFLAGS)
-FTOPTFLAGS= $(TOPTFLAGS)
-CC_SHR  = gcc -shared -fpic -DCONFIG_PFMLIB_GENERIC -DCONFIG_PFMLIB_ITANIUM -DCONFIG_PFMLIB_ITANIUM2
-CC_R	= gcc -pthread
-CC	= gcc
-#F77	= /usr/local/intel/compiler50/ia64/bin/efc
-F77     = g77
-MISCHDRS= 
-SHLIBDEPS = -L$(PFM_LIB_PATH) -lpfm
+OPTIM := $(CFLAGS)
+CFLAGS-3.y := -DPFM30 
+CFLAGS += -I$(PFM_INC_PATH) $(ALTIX) $(CFLAGS-$(VERSION))
+MISCHDRS = pfmwrap.h
+SHLIBDEPS = -Bdynamic -L$(PFM_LIB_PATH) -lpfm
+PFM_OBJS = $(shell $(AR) t $(PFM_LIB_PATH)/libpfm.a 2>/dev/null)
+MISCOBJS = $(PFM_OBJS) $(MISCSRCS:.c=.o)
+
+ifeq (,$(PFM_OBJS))
+$(PFM_LIB_PATH)/libpfm.a:
+ifneq (,${PFM_ROOT})
+	$(MAKE) -C $(PFM_ROOT) CC="$(CC)" OPTIM="$(OPTIM)"  CONFIG_PFMLIB_OLD_PFMV2="$(PFM_OLD_PFMV2)"
+else
+	@echo '$@ not installed!'; exit 1
+endif
+	$(MAKE)
+endif
 
 include Makefile.inc
 
-linux.o: linux.c
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux.c -o $@
+config.h:
+	@echo 'Please clobber your build and run ./configure."
 
-$(PFMOBJS):
-	-cd $(PFM_LIB_PATH); $(MAKE)
-	ar xv $(PFM_LIB_PATH)/libpfm.a
+$(PFM_OBJS): 
+	$(AR) xv $(PFM_LIB_PATH)/libpfm.a
 
 native_clean:
-	rm -f $(MISCOBJS); cd $(PFM_LIB_PATH); $(MAKE) clean
+	-rm -f $(MISCOBJS) 
+ifneq (,${PFM_ROOT})
+	$(MAKE) -C $(PFM_ROOT) clean
+endif
 
 native_install:
-	-cp -p $(PFM_LIB_PATH)/libpfm.so.2 $(PREFIX)/lib
-	-cp -p $(PFM_INC_PATH)/*.h $(PREFIX)/include
+ifneq (,${PFM_ROOT})
+	$(MAKE) -C $(PFM_ROOT) CONFIG_PFMLIB_OLD_PFMV2="$(PFM_OLD_PFMV2)" DESTDIR=$(DESTDIR) PREFIX=$(PREFIX) install_prefix=$(PREFIX) LIBDIR=$(LIBDIR) INCDIR=$(INCDIR) MANDIR=$(MANDIR) install
+endif
 
+native_clobber:
+ifneq (,${PFM_ROOT})
+	 $(MAKE) -C $(PFM_ROOT) distclean
+endif
