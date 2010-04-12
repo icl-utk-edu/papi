@@ -126,6 +126,14 @@ linux-net.o: linux-net.c $(HEADERS)
 linux-lmsensors.o: linux-lmsensors.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-lmsensors.c -o linux-lmsensors.o 
 
+#Required for Lustre component
+linux-lustre.o: linux-lustre.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-lustre.c -o linux-lustre.o 
+
+host_counter.o: host_counter.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c host_counter.c -o host_counter.o 
+#end Lustre
+
 x86_cache_info.o: x86_cache_info.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c x86_cache_info.c -o x86_cache_info.o
 

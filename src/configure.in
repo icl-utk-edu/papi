@@ -1649,9 +1649,22 @@ case "$lmsensors" in
 esac
 
 
-
-
-#echo $compnts
+AC_ARG_WITH(lustre,
+            [  --with-lustre=<no,yes>	        Build a Lustre component in the library ],
+            [lustre=$withval],
+            [lustre=no])
+case "$lustre" in
+   yes)
+      lustreval="Luster" 
+      compnts="${compnts} ${lustreval}" 
+      compsrcs="${compsrcs} linux-lustre.c host_counter.c" 
+      comphdrs="${comphdrs} linux-lustre.h" 
+      compobjs="${compobjs} linux-lustre.o host_counter.o" 
+      AC_DEFINE(HAVE_LUSTRE, 1, [system has Lustre component])
+      ;;
+   no)
+      lustreval="" ;;
+esac
 
 #
 # Fix up: put inside papi in share directory

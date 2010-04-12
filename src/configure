@@ -797,6 +797,7 @@ with_acpi
 with_lmsensors
 with_sensors_incdir
 with_sensors_libdir
+with_lustre
 with_shlib
 '
       ac_precious_vars='build_alias
@@ -1472,6 +1473,7 @@ Optional Packages:
   --with-lmsensors=<no,yes>     Build an lm-sensors component in the library
   --with-sensors_incdir=<path>  Specify directory of lm-sensors header files
   --with-sensors_libdir=<path>  Specify directory of lm-sensors library
+  --with-lustre=<no,yes>	        Build a Lustre component in the library
   --with-shlib=<yes,no>	Specify staticno or dynamicyes papi library to link with test cases and utilities
 
 Some influential environment variables:
@@ -9508,8 +9510,29 @@ esac
 
 
 
+# Check whether --with-lustre was given.
+if test "${with_lustre+set}" = set; then
+  withval=$with_lustre; lustre=$withval
+else
+  lustre=no
+fi
 
-#echo $compnts
+case "$lustre" in
+   yes)
+      lustreval="Luster"
+      compnts="${compnts} ${lustreval}"
+      compsrcs="${compsrcs} linux-lustre.c host_counter.c"
+      comphdrs="${comphdrs} linux-lustre.h"
+      compobjs="${compobjs} linux-lustre.o host_counter.o"
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LUSTRE 1
+_ACEOF
+
+      ;;
+   no)
+      lustreval="" ;;
+esac
 
 #
 # Fix up: put inside papi in share directory
