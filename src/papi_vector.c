@@ -40,12 +40,9 @@ extern papi_vector_t _net_vector;
 #ifdef HAVE_LMSENSORS
 extern papi_vector_t _lmsensors_vector;
 #endif
-
-#define HAVE_LUSTRE 1
 #ifdef HAVE_LUSTRE
 extern papi_vector_t _Lustre_vector;
-#endif	
-
+#endif
 
 papi_vector_t *_papi_hwd[] = {
 	&MY_VECTOR,
@@ -59,13 +56,14 @@ papi_vector_t *_papi_hwd[] = {
 	&_net_vector,
 #endif
 #ifdef HAVE_LMSENSORS
-    &_lmsensors_vector,
-#endif	
+	&_lmsensors_vector,
+#endif
 #ifdef HAVE_LUSTRE
-    &_Lustre_vector,
-#endif	
+	&_Lustre_vector,
+#endif
 	NULL
 };
+
 int papi_num_components = ( sizeof ( _papi_hwd ) / sizeof ( *_papi_hwd ) ) - 1;
 
 void
@@ -223,21 +221,17 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 		v->get_overflow_address =
 			( void *( * )( int, char *, int ) ) vec_void_star_dummy;
 	if ( !v->start )
-		v->start =
-			( int ( * )( hwd_context_t *, hwd_control_state_t * ) )
+		v->start = ( int ( * )( hwd_context_t *, hwd_control_state_t * ) )
 			vec_int_dummy;
 	if ( !v->stop )
-		v->stop =
-			( int ( * )( hwd_context_t *, hwd_control_state_t * ) )
+		v->stop = ( int ( * )( hwd_context_t *, hwd_control_state_t * ) )
 			vec_int_dummy;
 	if ( !v->read )
-		v->read =
-			( int ( * )
-			  ( hwd_context_t *, hwd_control_state_t *, long long **,
-				int ) ) vec_int_dummy;
+		v->read = ( int ( * )
+					( hwd_context_t *, hwd_control_state_t *, long long **,
+					  int ) ) vec_int_dummy;
 	if ( !v->reset )
-		v->reset =
-			( int ( * )( hwd_context_t *, hwd_control_state_t * ) )
+		v->reset = ( int ( * )( hwd_context_t *, hwd_control_state_t * ) )
 			vec_int_dummy;
 	if ( !v->write )
 		v->write =
@@ -269,13 +263,11 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 		v->get_memory_info =
 			( int ( * )( PAPI_hw_info_t *, int ) ) vec_int_dummy;
 	if ( !v->update_control_state )
-		v->update_control_state =
-			( int ( * )
-			  ( hwd_control_state_t *, NativeInfo_t *, int,
-				hwd_context_t * ) ) vec_int_dummy;
+		v->update_control_state = ( int ( * )
+									( hwd_control_state_t *, NativeInfo_t *,
+									  int, hwd_context_t * ) ) vec_int_dummy;
 	if ( !v->ctl )
-		v->ctl =
-			( int ( * )( hwd_context_t *, int, _papi_int_option_t * ) )
+		v->ctl = ( int ( * )( hwd_context_t *, int, _papi_int_option_t * ) )
 			vec_int_dummy;
 	if ( !v->set_overflow )
 		v->set_overflow =
@@ -284,10 +276,9 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 		v->set_profile =
 			( int ( * )( EventSetInfo_t *, int, int ) ) vec_int_dummy;
 	if ( !v->add_prog_event )
-		v->add_prog_event =
-			( int ( * )
-			  ( hwd_control_state_t *, unsigned int, void *,
-				EventInfo_t * ) ) vec_int_dummy;
+		v->add_prog_event = ( int ( * )
+							  ( hwd_control_state_t *, unsigned int, void *,
+								EventInfo_t * ) ) vec_int_dummy;
 	if ( !v->set_domain )
 		v->set_domain =
 			( int ( * )( hwd_control_state_t *, int ) ) vec_int_dummy;

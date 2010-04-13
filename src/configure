@@ -797,6 +797,7 @@ with_acpi
 with_lmsensors
 with_sensors_incdir
 with_sensors_libdir
+with_lustre
 with_shlib
 '
       ac_precious_vars='build_alias
@@ -1472,6 +1473,7 @@ Optional Packages:
   --with-lmsensors=<no,yes>     Build an lm-sensors component in the library
   --with-sensors_incdir=<path>  Specify directory of lm-sensors header files
   --with-sensors_libdir=<path>  Specify directory of lm-sensors library
+  --with-lustre=<no,yes>	        Build a Lustre component in the library
   --with-shlib=<yes,no>	Specify staticno or dynamicyes papi library to link with test cases and utilities
 
 Some influential environment variables:
@@ -2192,13 +2194,6 @@ case "$OS" in
                POWER5) CPU="POWER5";;
                POWER5+) CPU="POWER5+";;
                POWER6) CPU="POWER6";;
-             esac
-          elif test "$family" = "ppc"; then
-             CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
-             case "$CPU_info" in
-               744*) CPU="PPC32";;
-	       745*) CPU="PPC32";;
-               750) CPU="PPC32";;
              esac
           elif test "$family" = "mips" -o "$family" = "mips64"; then
 	       CPU=mips
@@ -9081,13 +9076,6 @@ $as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
 			 MAKEVER="$OS"-perfctr-x86
 		     fi
 		     ;;
-          PPC32)
-             if test "${bitmode}" = "64"; then
-                { { $as_echo "$as_me:$LINENO: error: The bitmode you specified is not supported" >&5
-$as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
-   { (exit 1); exit 1; }; }
-             fi
-             MAKEVER="$OS"-perfctr-"$CPU" ;;
           POWER5|POWER5+|POWER6|PPC970)
              MAKEVER="$OS"-perfctr-"$CPU""$BM" ;;
 	      mips64)
@@ -9124,7 +9112,7 @@ case "$MAKEVER" in
     solaris-ultra-64bit);;
     solaris-niagara2|solaris-niagara2-32bit);;
     solaris-niagara2-64bit);;
-    linux-perfctr-POWER5|linux-perfctr-POWER5+|linux-perfctr-POWER6|linux-perfctr-PPC970|linux-perfctr-PPC32);;
+    linux-perfctr-POWER5|linux-perfctr-POWER5+|linux-perfctr-POWER6|linux-perfctr-PPC970);;
     linux-perfctr-POWER5-64bit|linux-perfctr-POWER5+-64bit|linux-perfctr-POWER6-64bit|linux-perfctr-PPC970-64bit);;
     linux-perfmon2);;
     linux-pfm-itanium2);;
@@ -9522,8 +9510,29 @@ esac
 
 
 
+# Check whether --with-lustre was given.
+if test "${with_lustre+set}" = set; then
+  withval=$with_lustre; lustre=$withval
+else
+  lustre=no
+fi
 
-#echo $compnts
+case "$lustre" in
+   yes)
+      lustreval="Luster"
+      compnts="${compnts} ${lustreval}"
+      compsrcs="${compsrcs} linux-lustre.c host_counter.c"
+      comphdrs="${comphdrs} linux-lustre.h"
+      compobjs="${compobjs} linux-lustre.o host_counter.o"
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LUSTRE 1
+_ACEOF
+
+      ;;
+   no)
+      lustreval="" ;;
+esac
 
 #
 # Fix up: put inside papi in share directory
@@ -9699,10 +9708,6 @@ elif test "$MAKEVER" = "CLE-perfmon2"; then
    CFLAGS="$CFLAGS -D__crayxt"
    MISCSRCS="hwinfo_linux.c x86_cache_info.c"
    SUBSTR=perfmon
-   #NOTE: old_pfmv2 stuff can probably be removed!
-   if test "$old_pfmv2" = "y"; then
-	CFLAGS="$CFLAGS -DPFMLIB_OLD_PFMV2"
-   fi
 elif test "$MAKEVER" = "linux-acpi"; then
    FILENAME=Makefile.inc
    LIBRARY=libpapi.a
@@ -9787,10 +9792,6 @@ elif test "$MAKEVER" = "linux-pe"; then
    SUBSTR=perf_events
    MEMSUBSTR=perfmon
    MISCSRCS="$MISCSRCS sys_perf_counter_open.c"
-   #NOTE: old_pfmv2 stuff can probably be removed!
-   if test "$old_pfmv2" = "y"; then
-	CFLAGS="$CFLAGS -DPFMLIB_OLD_PFMV2"
-   fi
 elif test "$MAKEVER" = "linux-perfctr-x86"; then
    FILENAME=Rules.perfctr-pfm
    SUBSTR=perfctr-x86
@@ -9798,10 +9799,6 @@ elif test "$MAKEVER" = "linux-perfctr-x86"; then
    VERSION=2.6.x
    if test "$CPU" = "p4"; then
      TARGETS='$(TARGETS) p4'
-   fi
-   #NOTE: old_pfmv2 stuff can probably be removed!
-   if test "$old_pfmv2" = "y"; then
-	CFLAGS="$CFLAGS -DPFMLIB_OLD_PFMV2"
    fi
 elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfctr-POWER5-64bit"); then
    FILENAME=Rules.perfctr
@@ -9826,15 +9823,6 @@ elif (test "$MAKEVER" = "linux-perfctr-POWER5+" || test "$MAKEVER" = "linux-perf
    SHRFLAGS=-fPIC
    CFLAGS="$CFLAGS -DPPC64 -DCOMP_VECTOR=_ppc64_vectors"
    FFLAGS="-D_$(CPU_MODEL)"
-elif test "$MAKEVER" = "linux-perfctr-PPC32"; then
-   FILENAME=Rules.perfctr
-   VERSION=2.6.x
-   CPU=ppc32
-   CPU_MODEL=PPC32
-   ARCH_EVENTS=ppc32_events
-   BITS=32
-   CFLAGS='-D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
-   FFLAGS='-D$(CPU_MODEL)'
 elif (test "$MAKEVER" = "linux-perfctr-PPC970" || test "$MAKEVER" = "linux-perfctr-PPC970-64bit"); then
    FILENAME=Rules.perfctr
    SUBSTR=perfctr-ppc64
@@ -9850,10 +9838,6 @@ elif test "$MAKEVER" = "linux-perfmon2"; then
    FILENAME=Rules.pfm_pe
    SUBSTR=perfmon
    MEMSUBSTR=perfmon
-   #NOTE: old_pfmv2 stuff can probably be removed!
-   if test "$old_pfmv2" = "y"; then
-	CFLAGS="$CFLAGS -DPFMLIB_OLD_PFMV2"
-   fi
 elif (test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-itanium3"); then
    FILENAME=Rules.pfm
    SUBSTR=linux-ia64
@@ -9867,7 +9851,6 @@ elif (test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-ita
    TARGETS="$TARGETS range"
    CFLAGS="$CFLAGS -DITANIUM$CPU"
    FFLAGS="$FFLAGS -DITANIUM$CPU"
-   #NOTE: old_pfmv2 stuff can probably be removed!
    if test "$old_pfmv2" = "y"; then
 	CFLAGS="$CFLAGS -DPFMLIB_OLD_PFMV2"
    fi

@@ -1,6 +1,10 @@
 /* 
 * File:    multiplex.c
+<<<<<<< multiplex1.c
 * CVS:     $Id$
+=======
+* CVS:     $Id$
+>>>>>>> 1.53
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    <your name here>
