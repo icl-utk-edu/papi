@@ -1,0 +1,70 @@
+.TH LIBPFM 4  "April, 2009" "" "Linux Programmer's Manual"
+.SH NAME
+libpfm_amd64 - support for AMD64 processors
+.SH SYNOPSIS
+.nf
+.B #include <perfmon/pfmlib.h>
+.sp
+.B PMU name: amd64
+.B PMU desc: AMD64
+.sp
+.SH DESCRIPTION
+The library supports AMD K7, K8, Fam10h, Fam11h AMD64 processors in both 32 and 64-bit modes.
+
+The PMU name is "amd64" for all models. The PMU description is adjusted dynamically to show
+the model name, e.g. Barcelona, and the revision, e.g., RevC.
+
+.SH MODIFIERS
+The following modifiers are supported on AMD64 processors (subject to revision restriction shown):
+.TP
+.B u
+Measure at user level which includes privilege levels 1, 2, 3. This corresponds to \fBPFM_PLM3\fR.
+This is a boolean modifier.
+.TP
+.B k
+Measure at kernel level which includes privilege level 0. This corresponds to \fBPFM_PLM0\fR.
+This is a boolean modifier.
+.TP
+.B h
+Measure at while executing in host mode (when using virtualization). This corresponds to \fBPFM_PLMH\fR.
+This modifier is available starting with Fam10h. This is a boolean modifier.
+.TP
+.B g
+Measure at while executing in guest mode (when using virtualization). This modifier is available
+starting with Fam10h. This is a boolean modifier.
+.TP
+.B i
+Invert the meaning of the event. The counter will now count cycles in which the event is \fBnot\fR
+occurring. This is a boolean modifier
+.TP
+.B e
+Enable edge detection, i.e., count only when there is a state transition. This is a boolean modifier.
+.TP
+.B c
+Set the counter mask value. The mask acts as a threshold. The counter will count the number of cycles
+in which the number of occurrences of the event is greater or equal to the threshold. This is an integer
+modifier with values in the range [0:255].
+.SH ENVIRONMENT VARIABLES
+It is possible to force activation of the AMD64 support using the \fBLIBPFM_FORCE_PMU\fR variable.
+The PMU name, amd64, must be passed. But the library supports additional options which can be
+expressed as follows:
+.ce
+.B LIBPFM_FORCE_PMU=amd64,family,model,stepping
+
+Where the components are defined as follows:
+.TP
+.B family
+The family number: 6, 15, 16.
+.TP
+.B model
+The model number with the family.
+.TP
+.B stepping
+The stepping for the model.
+
+.SH AUTHORS
+.nf
+Stephane Eranian <eranian@gmail.com>
+Robert Richter <robert.richter@amd.com>
+.if
+.PP
