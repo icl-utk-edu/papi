@@ -161,7 +161,7 @@ extern int papi_num_components;
     Now it's defined globally as 8 for everything. Mainly applies to max terms in
     derived events.
 */
-#ifdef _BGP
+#ifdef __bgp__
 #define PAPI_MAX_COUNTER_TERMS	19
 #else
 #define PAPI_MAX_COUNTER_TERMS	8

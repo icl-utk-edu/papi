@@ -250,7 +250,7 @@ const hwi_preset_info_t _papi_hwi_preset_info[PAPI_MAX_PRESET_EVENTS] = {
 			  "BGL special event: Tree 256 byte packets"},
 	/*111 */ {"PAPI_BGL_TR_FULL", "UPC cycles (CLOCKx2) tree rcv is full",
 			  "BGL special event: UPC cycles (CLOCKx2) tree rcv is full"},
-#elif defined (_BGP)
+#elif defined (__bgp__)
 	/*107 */ {"PAPI_BGL_TS_32B", "Torus 32B chunks sent",
 			  "BGL special event: Torus 32B chunks sent"},
 	/*108 */ {"PAPI_BGL_TR_DPKT", "Tree 256 byte packets",
@@ -413,7 +413,7 @@ const unsigned int _papi_hwi_preset_type[] = {
 	/*109: PAPI_BGL_TS_FULL */ PAPI_PRESET_BIT_MSC,
 	/*110: PAPI_BGL_TR_DPKT */ PAPI_PRESET_BIT_MSC,
 	/*111: PAPI_BGL_TR_FULL */ PAPI_PRESET_BIT_MSC,
-#elif defined (_BGP)
+#elif defined (__bgp__)
 	/*107: PAPI_BGL_TS_32B */ PAPI_PRESET_BIT_MSC,
 	/*108: PAPI_BGL_TR_DPKT */ PAPI_PRESET_BIT_MSC,
 	/*109 */ 0,

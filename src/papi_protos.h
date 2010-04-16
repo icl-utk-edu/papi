@@ -243,7 +243,7 @@ int _papi_hwd_get_memory_info( PAPI_hw_info_t *, int );
 /* papi_internal.c global papi error function */
 void PAPIERROR( char *format, ... );
 
-#if (!defined(HAVE_FFSLL) || defined(_BGP))
+#if (!defined(HAVE_FFSLL) || defined(__bgp__))
 int ffsll( long long lli );
 #endif
 

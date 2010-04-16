@@ -9753,7 +9753,7 @@ elif test "$MAKEVER" = "bgp"; then
    BGP_SYSDIR=/bgsys/drivers/ppcfloor
    BGP_GNU_LINUX_PATH='${BGP_SYSDIR}/gnu-linux'
    LDFLAGS='-L$(BGP_SYSDIR)/runtime/SPI -lSPI.cna'
-   CFLAGS='-D_BGP -g -gdwarf-2 -O2 -Wall -I. -I$(BGP_SYSDIR)/arch/include -DCOMP_VECTOR=_bgp_vectors'
+   CFLAGS='-g -gdwarf-2 -O2 -Wall -I. -I$(BGP_SYSDIR)/arch/include -DCOMP_VECTOR=_bgp_vectors'
    # Some nice flags to add to CFLAGS when debugging
    #CFLAGS='$(CFLAGS) -DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER'
    FFLAGS='-g -gdwarf-2 -O2 -Wall -I. -Dlinux'

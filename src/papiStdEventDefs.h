@@ -173,7 +173,7 @@ enum
 	PAPI_BGL_TR_DPKT_idx,	 /*Tree 256 byte packets */
 	PAPI_BGL_TR_FULL_idx,	 /*UPC cycles (CLOCKx2) tree rcv is full */
 #endif
-#ifdef _BGP
+#ifdef __bgp__
 	/* 0x67 */
 	PAPI_BGP_TS_32B_idx,	 /*Torus 32B chunks sent */
 	PAPI_BGP_TS_DPKT_idx,	 /*Torus data packets sent */
@@ -297,7 +297,7 @@ enum
 #define PAPI_BGL_TR_FULL (PAPI_BGL_TR_FULL_idx | PAPI_PRESET_MASK)
 #endif
 
-#ifdef _BGP
+#ifdef __bgp__
 #define PAPI_BGP_TS_32B (PAPI_BGP_TS_32B_idx | PAPI_PRESET_MASK)
 #define PAPI_BGP_TS_DPKT (PAPI_BGP_TS_DPKT_idx | PAPI_PRESET_MASK)
 #endif

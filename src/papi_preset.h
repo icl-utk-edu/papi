@@ -25,7 +25,7 @@ typedef struct hwi_preset_data {
    unsigned int mask;
    unsigned int count; */
    int native[PAPI_MAX_COUNTER_TERMS];    /**< array of native event code(s) for this preset event */
-#ifdef _BGP
+#ifdef __bgp__
    char operation[PAPI_2MAX_STR_LEN]; /**< operation string: +,-,*,/,@(number of metrics), $(constant Mhz), %(1000000.0) */
 #else
    char operation[PAPI_MIN_STR_LEN]; /**< operation string: +,-,*,/,@(number of metrics), $(constant Mhz), %(1000000.0) */

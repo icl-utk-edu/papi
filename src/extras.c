@@ -493,7 +493,7 @@ _papi_hwi_start_signal( int signal, int need_context, int cidx )
 		( void ( * )( int, siginfo_t *, void * ) ) _papi_hwd[cidx]->
 		dispatch_timer;
 	if ( need_context )
-#if (defined(_BGL) /*|| defined (_BGP)*/)
+#if (defined(_BGL) /*|| defined (__bgp__)*/)
 		action.sa_flags |= SIGPWR;
 #else
 		action.sa_flags |= SA_SIGINFO;
@@ -694,7 +694,7 @@ _papi_hwi_get_native_event_info( unsigned int EventCode,
 		return ( PAPI_ENOCMP );
 
 	if ( EventCode & PAPI_NATIVE_MASK ) {
-		// memset( info, 0, sizeof ( *info ) );  /* causes stack corruption on BGP */
+		memset( info, 0, sizeof ( *info ) );
 		retval =
 			_papi_hwd[cidx]->ntv_code_to_name( EventCode, info->symbol,
 											   sizeof ( info->symbol ) );
@@ -744,7 +744,7 @@ _papi_hwi_get_native_event_info( unsigned int EventCode,
 	return ( PAPI_ENOEVNT );
 }
 
-#if (!defined(HAVE_FFSLL) || defined(_BGP))
+#if (!defined(HAVE_FFSLL) || defined(__bgp__))
 /* find the first set bit in long long */
 
 int
