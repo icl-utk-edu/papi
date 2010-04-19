@@ -576,7 +576,7 @@ mainloop(char **arg)
 	sz = (3+2*num_events)*sizeof(uint64_t);
 	val = malloc(sz);
 	if (!val)
-		err(1, "cannot allocated memory");
+		err(1, "cannot allocate memory");
 
 	ret = read(fds[0].fd, val, sz);
 	if (ret == -1)
