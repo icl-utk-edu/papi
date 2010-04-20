@@ -307,7 +307,8 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t
 						DPRINT("no unit mask with PEBS support\n");
 						return PFM_ERR_ATTR;
 					}
-					attrs->precise = 1;
+					if (attrs)
+						attrs->precise = 1;
 					break;
 			}
 		}
