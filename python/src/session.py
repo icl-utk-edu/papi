@@ -59,7 +59,7 @@ class SystemWideSession(Session):
       self.cpu_fds.append([])
       cur_cpu_fds = self.cpu_fds[-1]
       for e in self.events:
-        cur_cpu_fds.append(perf_event_open(e, 0, c, -1, 0))
+        cur_cpu_fds.append(perf_event_open(e, -1, c, -1, 0))
 
   def read(self, c, i):
     index = self.cpus.index(c)
