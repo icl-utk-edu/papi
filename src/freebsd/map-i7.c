@@ -327,6 +327,9 @@ Native_Event_LabelDescription_t i7Processor_info[] =
 	{"SIMD_INT_64.PACKED_LOGICAL", "Counts number of SID integer 64 bit logical operations."},
 	{"SIMD_INT_64.PACKED_ARITH", "Counts number of SID integer 64 bit arithmetic operations."},
 	{"SIMD_INT_64.SHUFFLE_MOVE", "Counts number of SID integer 64 bit shift or move operations."},
+	{"INSTR_RETIRED_ANY", "Instructions retired (IAF)"},
+	{"CPU_CLK_UNHALTED_CORE", "Unhalted core cycles (IAF)"},
+	{"CPU_CLK_UNHALTED_REF", "Unhalted reference cycles (IAF)"},
 	{ NULL, NULL } 
 };
 
@@ -334,8 +337,12 @@ Native_Event_LabelDescription_t i7Processor_info[] =
 hwi_search_t i7Processor_map[] = {
 	{PAPI_BR_INS, {0, {PNE_I7_BR_INST_RETIRED_ALL_BRANCHES, PAPI_NULL}, {0,}}},
 	{PAPI_RES_STL, {0, {PNE_I7_RESOURCE_STALLS_ANY, PAPI_NULL}, {0,}}},
+/*
 	{PAPI_TOT_CYC, {0, {PNE_I7_CPU_CLK_UNHALTED_REF_P, PAPI_NULL}, {0,}}},
 	{PAPI_TOT_INS, {0, {PNE_I7_INST_RETIRED_ANY_P, PAPI_NULL}, {0,}}},
+*/
+	{PAPI_TOT_CYC, {0, {PNE_I7_CPU_CLK_UNHALTED_CORE, PAPI_NULL}, {0,}}},
+	{PAPI_TOT_INS, {0, {PNE_I7_INSTR_RETIRED_ANY, PAPI_NULL}, {0,}}},
 	{PAPI_HW_INT, {0, {PNE_I7_HW_INT_RCV, PAPI_NULL}, {0,}}},
 	{PAPI_BR_TKN, {0, {PNE_I7_BR_MISP_EXEC_TAKEN, PAPI_NULL}, {0,}}},
 	{PAPI_BR_MSP, {0, {PNE_I7_BR_MISP_EXEC_ANY, PAPI_NULL}, {0,}}},
