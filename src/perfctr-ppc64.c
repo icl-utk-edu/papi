@@ -874,8 +874,5 @@ int
 ppc64_setup_vector_table( papi_vectors_t * vtable )
 {
 	int retval = PAPI_OK;
-#ifndef PAPI_NO_VECTOR
 	retval = _papi_hwi_setup_vector_table( vtable, _ppc64_vector_table );
-#endif
-	return ( retval );
 }

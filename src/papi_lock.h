@@ -1,54 +1,3 @@
-#ifdef USE_SEMAPHORES
-extern int sem_set;
-
-/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
- * else val = MUTEX_CLOSED */
-
-inline void
-_papi_hwd_lock_init( void )
-{
-	union semun val;
-	val.val = 1;
-
-	if ( ( retval = semget( IPC_PRIVATE, PAPI_MAX_LOCK, 0666 ) ) == -1 ) {
-		PAPIERROR( "semget errno %d", errno );
-		return ( PAPI_ESYS );
-	}
-	sem_set = retval;
-	for ( i = 0; i < PAPI_MAX_LOCK; i++ ) {
-		if ( ( retval = semctl( sem_set, i, SETVAL, val ) ) == -1 ) {
-			abort(  );
-		}
-	}
-}
-
-inline void
-_papi_hwd_lock_fini( void )
-{
-	if ( ( retval = semctl( sem_set, 0, IPC_RMID, 0 ) ) == -1 ) {
-		abort(  );
-	}
-}
-
-inline void
-_papi_hwd_lock( int lck )
-{
-	struct sembuf sem_lock = { lck, -1, 0 };
-	if ( semop( sem_set, &sem_lock, 1 ) == -1 ) {
-		abort(  );
-	}
-}
-
-inline void
-_papi_hwd_unlock( int lck )
-{
-	struct sembuf sem_unlock = { lck, 1, 0 };
-	if ( semop( sem_set, &sem_unlock, 1 ) == -1 ) {
-		abort(  );
-	}
-}
-
-#else
 
 extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 
@@ -102,67 +51,6 @@ do                                              \
    __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(_papi_hwd_lock_data[lck]), "0"(MUTEX_OPEN) : "memory");                                \
 } while(0)
 
-#elif defined(mips)
-static inline void
-__raw_spin_lock( volatile unsigned int *lock )
-{
-	unsigned int tmp;
-	extern int _perfmon2_pfm_pmu_type;
-	if ( _perfmon2_pfm_pmu_type == PFMLIB_MIPS_R10000_PMU ) {
-		__asm__ __volatile__( "	.set	noreorder	# __raw_spin_lock	\n"
-							  "1:	ll	%1, %2					\n"
-							  "	bnez	%1, 1b					\n"
-							  "	 li	%1, 1					\n"
-							  "	sc	%1, %0					\n"
-							  "	beqzl	%1, 1b					\n"
-							  "	 nop						\n"
-							  "	sync						\n"
-							  "	.set	reorder					\n":"=m"
-							  ( *lock ), "=&r"( tmp )
-							  :"m"( *lock )
-							  :"memory" );
-	} else if ( _perfmon2_pfm_pmu_type == PFMLIB_MIPS_ICE9A_PMU ) {
-		__asm__ __volatile__( "	.set	noreorder	# __raw_spin_lock	\n"
-							  "1:	ll	%1, %2					\n"
-							  "  	ll	%1, %2					\n"
-							  "	bnez	%1, 1b					\n"
-							  "	 li	%1, 1					\n"
-							  "	sc	%1, %0					\n"
-							  "	beqz	%1, 1b					\n"
-							  "	 sync						\n"
-							  "	.set	reorder					\n":"=m"
-							  ( *lock ), "=&r"( tmp )
-							  :"m"( *lock )
-							  :"memory" );
-	} else {
-		__asm__ __volatile__( "	.set	noreorder	# __raw_spin_lock	\n"
-							  "1:	ll	%1, %2					\n"
-							  "	bnez	%1, 1b					\n"
-							  "	 li	%1, 1					\n"
-							  "	sc	%1, %0					\n"
-							  "	beqz	%1, 1b					\n"
-							  "	 sync						\n"
-							  "	.set	reorder					\n":"=m"
-							  ( *lock ), "=&r"( tmp )
-							  :"m"( *lock )
-							  :"memory" );
-	}
-}
-
-static inline void
-__raw_spin_unlock( volatile unsigned int *lock )
-{
-	__asm__ __volatile__( "	.set	noreorder	# __raw_spin_unlock	\n"
-						  "	sync						\n"
-						  "	sw	$0, %0					\n"
-						  "	.set\treorder					\n":"=m"( *lock )
-						  :"m"( *lock )
-						  :"memory" );
-}
-
-#define  _papi_hwd_lock(lck) __raw_spin_lock(&_papi_hwd_lock_data[lck]);
-#define  _papi_hwd_unlock(lck) __raw_spin_unlock(&_papi_hwd_lock_data[lck])
-
 #elif defined(__powerpc__)
 
 /*
@@ -191,9 +79,6 @@ papi_xchg_u32( volatile void *p, unsigned long val )
 	return prev;
 }
 
-/*
- * The two defines below are taken directly from the MIPS implementation.
- */
 #define  _papi_hwd_lock(lck)                          \
 do {                                                    \
   unsigned int retval;                                 \
@@ -227,4 +112,3 @@ __raw_spin_unlock( volatile unsigned int *lock )
 #error "_papi_hwd_lock/unlock undefined!"
 #endif
 
-#endif /* USE_SEMAPHORES */

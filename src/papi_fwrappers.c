@@ -38,7 +38,7 @@
 
 /* Many Unix systems passes Fortran string lengths as extra arguments */
 /* Compaq Visual Fortran on Windows also supports this convention */
-#if defined(_AIX) || defined(sun) || defined(mips) || defined(_WIN32) || defined(linux) || ( defined(__ALPHA) && defined(__osf__))
+#if defined(_AIX) || defined(sun) || defined(_WIN32) || defined(linux)
 #define _FORTRAN_STRLEN_AT_END
 #endif
 /* The Low Level Wrappers */

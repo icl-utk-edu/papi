@@ -79,8 +79,6 @@ xlate_cpu_type_to_vendor( unsigned perfctr_cpu_type )
 #endif
 	case PERFCTR_X86_AMD_K7:
 		return ( PAPI_VENDOR_AMD );
-	case PERFCTR_X86_CYRIX_MII:
-		return ( PAPI_VENDOR_CYRIX );
 	default:
 		return ( PAPI_VENDOR_UNKNOWN );
 	}

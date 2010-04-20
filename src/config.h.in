@@ -126,9 +126,6 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* Do not use indirect substrate functions */
-#undef PAPI_NO_VECTOR
-
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
@@ -137,9 +134,6 @@
 
 /* Use /proc for per-thread times */
 #undef USE_PROC_PTTIMER
-
-/* Use semaphores for locking */
-#undef USE_SEMAPHORES
 
 /* Enable GNU extensions on systems that have them.  */
 #ifndef _GNU_SOURCE

@@ -290,10 +290,6 @@ decode_vendor_string( char *s, int *vendor )
 		*vendor = PAPI_VENDOR_AMD;
 	else if ( strcasecmp( s, "IBM" ) == 0 )
 		*vendor = PAPI_VENDOR_IBM;
-	else if ( strcasecmp( s, "MIPS" ) == 0 )
-		*vendor = PAPI_VENDOR_MIPS;
-	else if ( strcasecmp( s, "SiCortex" ) == 0 )
-		*vendor = PAPI_VENDOR_SICORTEX;
 	else if ( strcasecmp( s, "Cray" ) == 0 )
 		*vendor = PAPI_VENDOR_CRAY;
 	else

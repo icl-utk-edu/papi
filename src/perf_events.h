@@ -182,66 +182,6 @@ do                                              \
    unsigned int res = 0;                       \
    __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(_papi_hwd_lock_data[lck]), "0"(MUTEX_OPEN) : "memory");                                \
 } while(0)
-#elif defined(mips)
-static inline void
-__raw_spin_lock( volatile unsigned int *lock )
-{
-	unsigned int tmp;
-	extern int _perfmon2_pfm_pmu_type;
-	if ( _perfmon2_pfm_pmu_type == PFMLIB_MIPS_R10000_PMU ) {
-		__asm__ __volatile__( "	.set	noreorder	# __raw_spin_lock	\n"
-							  "1:	ll	%1, %2					\n"
-							  "	bnez	%1, 1b					\n"
-							  "	 li	%1, 1					\n"
-							  "	sc	%1, %0					\n"
-							  "	beqzl	%1, 1b					\n"
-							  "	 nop						\n"
-							  "	sync						\n"
-							  "	.set	reorder					\n":"=m"
-							  ( *lock ), "=&r"( tmp )
-							  :"m"( *lock )
-							  :"memory" );
-	} else if ( _perfmon2_pfm_pmu_type == PFMLIB_MIPS_ICE9A_PMU ) {
-		__asm__ __volatile__( "	.set	noreorder	# __raw_spin_lock	\n"
-							  "1:	ll	%1, %2					\n"
-							  "  	ll	%1, %2					\n"
-							  "	bnez	%1, 1b					\n"
-							  "	 li	%1, 1					\n"
-							  "	sc	%1, %0					\n"
-							  "	beqz	%1, 1b					\n"
-							  "	 sync						\n"
-							  "	.set	reorder					\n":"=m"
-							  ( *lock ), "=&r"( tmp )
-							  :"m"( *lock )
-							  :"memory" );
-	} else {
-		__asm__ __volatile__( "	.set	noreorder	# __raw_spin_lock	\n"
-							  "1:	ll	%1, %2					\n"
-							  "	bnez	%1, 1b					\n"
-							  "	 li	%1, 1					\n"
-							  "	sc	%1, %0					\n"
-							  "	beqz	%1, 1b					\n"
-							  "	 sync						\n"
-							  "	.set	reorder					\n":"=m"
-							  ( *lock ), "=&r"( tmp )
-							  :"m"( *lock )
-							  :"memory" );
-	}
-}
-
-static inline void
-__raw_spin_unlock( volatile unsigned int *lock )
-{
-	__asm__ __volatile__( "	.set	noreorder	# __raw_spin_unlock	\n"
-						  "	sync						\n"
-						  "	sw	$0, %0					\n"
-						  "	.set\treorder					\n":"=m"( *lock )
-						  :"m"( *lock )
-						  :"memory" );
-}
-
-#define  _papi_hwd_lock(lck) __raw_spin_lock(&_papi_hwd_lock_data[lck]);
-#define  _papi_hwd_unlock(lck) __raw_spin_unlock(&_papi_hwd_lock_data[lck])
 #elif defined(__powerpc__)
 
 /*
@@ -270,9 +210,6 @@ papi_xchg_u32( volatile void *p, unsigned long val )
 	return prev;
 }
 
-/*
- * The two defines below are taken directly from the MIPS implementation.
- */
 #define  _papi_hwd_lock(lck)                          \
 do {                                                    \
   unsigned int retval;                                 \
@@ -318,8 +255,6 @@ typedef ucontext_t hwd_ucontext_t;
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.gregs[REG_EIP]
 #elif defined(__x86_64__)
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.gregs[REG_RIP]
-#elif defined(mips)
-#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.pc
 #elif defined(__powerpc__) && !defined(__powerpc64__)
 /*
  * The index of the Next IP (REG_NIP) was obtained by looking at kernel

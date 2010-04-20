@@ -1095,27 +1095,8 @@ _papi_pfm_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 static char *
 _pmc_name( int i )
 {
-	/* Should get this from /sys */
-	extern int _perfmon2_pfm_pmu_type;
-
-	switch ( _perfmon2_pfm_pmu_type ) {
-#if defined(PFMLIB_MIPS_ICE9A_PMU)
-		/* All the counters after the 2 CPU counters, the 4 sample counters are SCB registers. */
-	case PFMLIB_MIPS_ICE9A_PMU:
-	case PFMLIB_MIPS_ICE9B_PMU:
-		switch ( i ) {
-		case 0:
-			return "Core counter 0";
-		case 1:
-			return "Core counter 1";
-		default:
-			return "SCB counter";
-		}
-		break;
-#endif
-	default:
-		return "Event Code";
-	}
+	( void ) i;				 /*unused */
+	return "Event Code";
 }
 
 int
@@ -1136,19 +1117,6 @@ _papi_pfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
 				   pfm_strerror( ret ) );
 		return ( PAPI_ESBSTR );
 	}
-#if defined(PFMLIB_MIPS_ICE9A_PMU)
-	extern int _perfmon2_pfm_pmu_type;
-	switch ( _perfmon2_pfm_pmu_type ) {
-		/* All the counters after the 2 CPU counters, the 4 sample counters are SCB registers. */
-	case PFMLIB_MIPS_ICE9A_PMU:
-	case PFMLIB_MIPS_ICE9B_PMU:
-		if ( n > 7 )
-			n = 7;
-		break;
-	default:
-		break;
-	}
-#endif
 
 	for ( j = 0; n; j++ ) {
 		if ( pfm_regmask_isset( &selector, j ) ) {
@@ -1194,50 +1162,50 @@ _papi_pfm_ntv_bits_to_info( hwd_register_t * bits, char *names,
 #else
 
 static pentium4_replay_regs_t p4_replay_regs[] = {
-							 /* 0 */ {.enb = 0,
-							 /* dummy */
-									  .mat_vert = 0,
-									  },
-							 /* 1 */ {.enb = 0,
-							 /* dummy */
-									  .mat_vert = 0,
-									  },
-								/* 2 */ {.enb = 0x01000001,
-								/* 1stL_cache_load_miss_retired */
-										 .mat_vert = 0x00000001,
-										 },
-								/* 3 */ {.enb = 0x01000002,
-								/* 2ndL_cache_load_miss_retired */
-										 .mat_vert = 0x00000001,
-										 },
-								/* 4 */ {.enb = 0x01000004,
-								/* DTLB_load_miss_retired */
-										 .mat_vert = 0x00000001,
-										 },
-								/* 5 */ {.enb = 0x01000004,
-								/* DTLB_store_miss_retired */
-										 .mat_vert = 0x00000002,
-										 },
-								/* 6 */ {.enb = 0x01000004,
-								/* DTLB_all_miss_retired */
-										 .mat_vert = 0x00000003,
-										 },
-								/* 7 */ {.enb = 0x01018001,
-								/* Tagged_mispred_branch */
-										 .mat_vert = 0x00000010,
-										 },
-								/* 8 */ {.enb = 0x01000200,
-								/* MOB_load_replay_retired */
-										 .mat_vert = 0x00000001,
-										 },
-								/* 9 */ {.enb = 0x01000400,
-								/* split_load_retired */
-										 .mat_vert = 0x00000001,
-										 },
-									/* 10 */ {.enb = 0x01000400,
-									/* split_store_retired */
-											  .mat_vert = 0x00000002,
-											  },
+	/* 0 */ {.enb = 0,
+			 /* dummy */
+			 .mat_vert = 0,
+			 },
+	/* 1 */ {.enb = 0,
+			 /* dummy */
+			 .mat_vert = 0,
+			 },
+	/* 2 */ {.enb = 0x01000001,
+			 /* 1stL_cache_load_miss_retired */
+			 .mat_vert = 0x00000001,
+			 },
+	/* 3 */ {.enb = 0x01000002,
+			 /* 2ndL_cache_load_miss_retired */
+			 .mat_vert = 0x00000001,
+			 },
+	/* 4 */ {.enb = 0x01000004,
+			 /* DTLB_load_miss_retired */
+			 .mat_vert = 0x00000001,
+			 },
+	/* 5 */ {.enb = 0x01000004,
+			 /* DTLB_store_miss_retired */
+			 .mat_vert = 0x00000002,
+			 },
+	/* 6 */ {.enb = 0x01000004,
+			 /* DTLB_all_miss_retired */
+			 .mat_vert = 0x00000003,
+			 },
+	/* 7 */ {.enb = 0x01018001,
+			 /* Tagged_mispred_branch */
+			 .mat_vert = 0x00000010,
+			 },
+	/* 8 */ {.enb = 0x01000200,
+			 /* MOB_load_replay_retired */
+			 .mat_vert = 0x00000001,
+			 },
+	/* 9 */ {.enb = 0x01000400,
+			 /* split_load_retired */
+			 .mat_vert = 0x00000001,
+			 },
+	/* 10 */ {.enb = 0x01000400,
+			  /* split_store_retired */
+			  .mat_vert = 0x00000002,
+			  },
 };
 
 /* this maps the arbitrary pmd index in libpfm/pentium4_events.h to the intel documentation */

@@ -202,13 +202,10 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_VENDOR_UNKNOWN 0
 #define PAPI_VENDOR_INTEL   1
 #define PAPI_VENDOR_AMD     2
-#define PAPI_VENDOR_CYRIX   3
-#define PAPI_VENDOR_IBM     4
-#define PAPI_VENDOR_MIPS    5
-#define PAPI_VENDOR_CRAY    6
-#define PAPI_VENDOR_SUN     7
-#define PAPI_VENDOR_FREESCALE 8
-#define PAPI_VENDOR_SICORTEX 9
+#define PAPI_VENDOR_IBM     3
+#define PAPI_VENDOR_CRAY    4
+#define PAPI_VENDOR_SUN     5
+#define PAPI_VENDOR_FREESCALE 6
 /* @} */
 
 /** @internal 

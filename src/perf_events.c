@@ -174,21 +174,6 @@ get_cycles( void )
 	return ret;
 }
 
-/* SiCortex only code, which works on V2.3 R81 or above
-   anything below, must use gettimeofday() */
-#elif defined(HAVE_CYCLE) && defined(mips)
-inline_static long long
-get_cycles( void )
-{
-	long long count;
-
-	__asm__ __volatile__( ".set  push      \n"
-						  ".set  mips32r2  \n"
-						  "rdhwr $3, $30   \n" ".set  pop       \n"
-						  "move  %0, $3    \n":"=r"( count )::"$3" );
-	return count * 2;
-}
-
 /* #define get_cycles _rtc ?? */
 #elif defined(__sparc__)
 inline_static long long
@@ -215,7 +200,7 @@ get_cycles( void )
 
 
 /* BEGIN COMMON CODE */
-#if defined(mips) || defined(__sparc__)
+#if defined(__sparc__)
 static char *
 search_cpu_info( FILE * f, char *search_str, char *line )
 {
@@ -522,224 +507,6 @@ ia64_get_memory_info( PAPI_hw_info_t * hw_info )
 				meminfo->levels = i + 1;
 		}
 	}
-	return retval;
-}
-#endif
-
-#if defined(mips)
-/* system type             : MIPS Malta
-processor               : 0
-cpu model               : MIPS 20Kc V2.0  FPU V2.0
-BogoMIPS                : 478.20
-wait instruction        : no
-microsecond timers      : yes
-tlb_entries             : 48 64K pages
-icache size             : 32K sets 256 ways 4 linesize 32
-dcache size             : 32K sets 256 ways 4 linesize 32
-scache....
-default cache policy    : cached write-back
-extra interrupt vector  : yes
-hardware watchpoint     : yes
-ASEs implemented        : mips3d
-VCED exceptions         : not available
-VCEI exceptions         : not available
-*/
-
-static int
-mips_get_cache( char *entry, int *sizeB, int *assoc, int *lineB )
-{
-	int retval, dummy;
-
-	retval =
-		sscanf( entry, "%dK sets %d ways %d linesize %d", sizeB, &dummy, assoc,
-				lineB );
-	*sizeB *= 1024;
-
-	if ( retval != 4 )
-		PAPIERROR
-			( "Could not get 4 integers from %s\nPlease send this line to ptools-perfapi@cs.utk.edu",
-			  entry );
-
-	SUBDBG( "Got cache %d, %d, %d\n", *sizeB, *assoc, *lineB );
-	return PAPI_OK;
-}
-
-static int
-mips_get_policy( char *s, int *cached, int *policy )
-{
-	if ( strstr( s, "cached" ) )
-		*cached = 1;
-	if ( strstr( s, "write-back" ) )
-		*policy = PAPI_MH_TYPE_WB | PAPI_MH_TYPE_LRU;
-	if ( strstr( s, "write-through" ) )
-		*policy = PAPI_MH_TYPE_WT | PAPI_MH_TYPE_LRU;
-
-	if ( *policy == 0 )
-		PAPIERROR
-			( "Could not get cache policy from %s\nPlease send this line to ptools-perfapi@cs.utk.edu",
-			  s );
-
-	SUBDBG( "Got policy 0x%x, cached 0x%x\n", *policy, *cached );
-	return PAPI_OK;
-}
-
-static int
-mips_get_tlb( char *s, int *u, int *size2 )
-{
-	int retval;
-
-	retval = sscanf( s, "%d %dK", u, size2 );
-	*size2 *= 1024;
-
-	if ( retval <= 0 )
-		PAPIERROR
-			( "Could not get tlb entries from %s\nPlease send this line to ptools-perfapi@cs.utk.edu",
-			  s );
-	else if ( retval >= 1 ) {
-		if ( *size2 == 0 )
-			*size2 = getpagesize(  );
-	}
-	SUBDBG( "Got tlb %d %d pages\n", *u, *size2 );
-	return PAPI_OK;
-}
-
-static int
-mips_get_memory_info( PAPI_hw_info_t * hw_info )
-{
-	char *s;
-	int retval = PAPI_OK;
-	int i = 0, cached = 0, policy = 0, num = 0, pagesize = 0, maxlevel = 0;
-	int sizeB, assoc, lineB;
-	char maxargs[PAPI_HUGE_STR_LEN];
-	PAPI_mh_info_t *mh_info = &hw_info->mem_hierarchy;
-
-	FILE *f;
-
-	if ( ( f = fopen( "/proc/cpuinfo", "r" ) ) == NULL ) {
-		PAPIERROR( "fopen(/proc/cpuinfo) errno %d", errno );
-		return PAPI_ESYS;
-	}
-
-	/* All of this information maybe overwritten by the substrate */
-
-	rewind( f );
-	s = search_cpu_info( f, "default cache policy", maxargs );
-	if ( s && strlen( s ) ) {
-		mips_get_policy( s + 2, &cached, &policy );
-		if ( cached == 0 ) {
-			SUBDBG
-				( "Uncached default policy detected, reporting zero cache entries.\n" );
-			goto nocache;
-		}
-	} else {
-		PAPIERROR
-			( "Could not locate 'default cache policy' in /proc/cpuinfo\nPlease send the contents of this file to ptools-perfapi@cs.utk.edu" );
-	}
-
-	rewind( f );
-	s = search_cpu_info( f, "icache size", maxargs );
-	if ( s ) {
-		mips_get_cache( s + 2, &sizeB, &assoc, &lineB );
-		mh_info->level[0].cache[i].size = sizeB;
-		mh_info->level[0].cache[i].line_size = lineB;
-		mh_info->level[0].cache[i].num_lines = sizeB / lineB;
-		mh_info->level[0].cache[i].associativity = assoc;
-		mh_info->level[0].cache[i].type = PAPI_MH_TYPE_INST | policy;
-		i++;
-		if ( !maxlevel )
-			maxlevel++;
-	} else {
-		PAPIERROR
-			( "Could not locate 'icache size' in /proc/cpuinfo\nPlease send the contents of this file to ptools-perfapi@cs.utk.edu" );
-	}
-
-	rewind( f );
-	s = search_cpu_info( f, "dcache size", maxargs );
-	if ( s ) {
-		mips_get_cache( s + 2, &sizeB, &assoc, &lineB );
-		mh_info->level[0].cache[i].size = sizeB;
-		mh_info->level[0].cache[i].line_size = lineB;
-		mh_info->level[0].cache[i].num_lines = sizeB / lineB;
-		mh_info->level[0].cache[i].associativity = assoc;
-		mh_info->level[0].cache[i].type = PAPI_MH_TYPE_DATA | policy;
-		i++;
-		if ( !maxlevel )
-			maxlevel++;
-	} else {
-		PAPIERROR
-			( "Could not locate 'dcache size' in /proc/cpuinfo\nPlease send the contents of this file to ptools-perfapi@cs.utk.edu" );
-	}
-
-	rewind( f );
-	s = search_cpu_info( f, "scache size", maxargs );
-	if ( s ) {
-		mips_get_cache( s + 2, &sizeB, &assoc, &lineB );
-		mh_info->level[1].cache[0].size = sizeB;
-		mh_info->level[1].cache[0].line_size = lineB;
-		mh_info->level[1].cache[0].num_lines = sizeB / lineB;
-		mh_info->level[1].cache[0].associativity = assoc;
-		mh_info->level[1].cache[0].type = PAPI_MH_TYPE_UNIFIED | policy;
-		maxlevel++;
-	} else {
-#if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
-		switch ( _perfmon2_pfm_pmu_type ) {
-		case PFMLIB_MIPS_ICE9A_PMU:
-		case PFMLIB_MIPS_ICE9B_PMU:
-			mh_info->level[1].cache[0].size = 256 * 1024;
-			mh_info->level[1].cache[0].line_size = 64;
-			mh_info->level[1].cache[0].num_lines = 256 * 1024 / 64;
-			mh_info->level[1].cache[0].associativity = 2;
-			mh_info->level[1].cache[0].type = PAPI_MH_TYPE_UNIFIED;
-			maxlevel++;
-			break;
-		default:
-			break;
-		}
-#endif
-		/* Hey, it's ok not to have an L2. Slow, but ok. */
-	}
-
-
-	/* Currently only reports on the JTLB. This is in-fact missing the dual 4-entry uTLB
-	   that only works on systems with 4K pages. */
-
-  nocache:
-
-	rewind( f );
-	s = search_cpu_info( f, "tlb_entries", maxargs );
-	if ( s && strlen( s ) ) {
-		int i = 0;
-		switch ( _perfmon2_pfm_pmu_type ) {
-		case PFMLIB_MIPS_5KC_PMU:
-#if defined(PFMLIB_MIPS_ICE9A_PMU)&&defined(PFMLIB_MIPS_ICE9A_PMU)
-		case PFMLIB_MIPS_ICE9A_PMU:
-		case PFMLIB_MIPS_ICE9B_PMU:
-#endif
-			mh_info->level[i].tlb[0].num_entries = 4;
-			mh_info->level[i].tlb[0].associativity = 4;
-			mh_info->level[i].tlb[0].type = PAPI_MH_TYPE_INST;
-			mh_info->level[i].tlb[1].num_entries = 4;
-			mh_info->level[i].tlb[1].associativity = 4;
-			mh_info->level[i].tlb[1].type = PAPI_MH_TYPE_DATA;
-			i = 1;
-		default:
-			break;
-		}
-
-		mips_get_tlb( s + 2, &num, &pagesize );
-		mh_info->level[i].tlb[0].num_entries = num;
-		mh_info->level[i].tlb[0].associativity = num;
-		mh_info->level[i].tlb[0].type = PAPI_MH_TYPE_UNIFIED;
-		if ( maxlevel < i + i )
-			maxlevel = i + 1;
-	} else {
-		PAPIERROR
-			( "Could not locate 'tlb_entries' in /proc/cpuinfo\nPlease send the contents of this file to ptools-perfapi@cs.utk.edu" );
-	}
-
-	fclose( f );
-
-	mh_info->levels = maxlevel;
 	return retval;
 }
 #endif
@@ -1217,9 +984,7 @@ _papi_pe_get_memory_info( PAPI_hw_info_t * hwinfo, int unused )
 	( void ) unused;		 /*unused */
 	int retval = PAPI_OK;
 
-#if defined(mips)
-	mips_get_memory_info( hwinfo );
-#elif defined(__i386__)||defined(__x86_64__)
+#if defined(__i386__)||defined(__x86_64__)
 	x86_get_memory_info( hwinfo );
 #elif defined(__ia64__)
 	ia64_get_memory_info( hwinfo );
@@ -1953,11 +1718,7 @@ _papi_pe_init_substrate( int cidx )
 	retval = get_system_info( &_papi_hwi_system_info );
 	if ( retval )
 		return retval;
-	if ( ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_MIPS )
-		 || ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_SICORTEX ) )
-		MY_VECTOR.cmp_info.available_domains |=
-			PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR | PAPI_DOM_OTHER;
-	else if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM ) {
+	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM ) {
 		/* powerpc */
 		MY_VECTOR.cmp_info.available_domains |=
 			PAPI_DOM_KERNEL | PAPI_DOM_SUPERVISOR;
@@ -1993,10 +1754,6 @@ _papi_pe_init_substrate( int cidx )
 	if ( ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_INTEL ) ||
 		 ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_AMD ) ) {
 		MY_VECTOR.cmp_info.fast_counter_read = 1;
-		MY_VECTOR.cmp_info.fast_real_timer = 1;
-		MY_VECTOR.cmp_info.cntr_umasks = 1;
-	}
-	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_SICORTEX ) {
 		MY_VECTOR.cmp_info.fast_real_timer = 1;
 		MY_VECTOR.cmp_info.cntr_umasks = 1;
 	}
@@ -2074,7 +1831,7 @@ long long
 _papi_pe_get_real_cycles( void )
 {
 	long long retval;
-#if defined(HAVE_GETTIMEOFDAY)||defined(__powerpc__)||(defined(mips)&&!defined(HAVE_CYCLE))
+#if defined(HAVE_GETTIMEOFDAY)||defined(__powerpc__)
 	retval =
 		_papi_pe_get_real_usec(  ) *
 		( long long ) _papi_hwi_system_info.hw_info.mhz;
