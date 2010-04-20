@@ -675,7 +675,7 @@ static const char *pfmlib_err_list[]=
 	"invalid event attribute value",
 	"attribute value already set, cannot change",
 	"too many parameters",
-	"parameter is too small"
+	"parameter is too small",
 	"attribute hardwired, cannot change"
 };
 static size_t pfmlib_err_count = sizeof(pfmlib_err_list)/sizeof(char *);
