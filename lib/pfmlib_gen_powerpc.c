@@ -51,71 +51,22 @@ static const int event_count[] = {
 	[PFM_PMU_POWER7 - FIRST_POWER_PMU] = POWER7_PME_EVENT_COUNT
 };
 
-static inline const char *
-get_event_name(const pme_power_entry_t *pe, int event) {
-	return pe[event].pme_name;
-}
-
-static inline const char *
-get_long_desc(const pme_power_entry_t *pe, int event) {
-	return pe[event].pme_long_desc;
-}
-
-/**
- * pfm_gen_powerpc_get_event_code
- *
- * Return the event-select value for the specified event as
- * needed for the specified PMD counter.
- **/
 static int
-pfm_gen_powerpc_get_event_code(void *this, int event,
-                uint64_t *code)
+pfm_gen_powerpc_get_event_info(void *this, int pidx, pfm_event_info_t *info)
 {
 	const pme_power_entry_t *pe = this_pe(this);
 
-	if (event < event_count[gen_powerpc_support.pmu - FIRST_POWER_PMU]) {
-		*code = pe[event].pme_code;
-		return PFM_SUCCESS;
-	} else
-		return PFM_ERR_INVAL;
+	info->code = pe[pidx].pme_code;
+	info->desc = pe[pidx].pme_long_desc;
+	info->dtype = PFM_DTYPE_UINT64;
+	info->equiv = NULL;
+	info->idx = pidx;
+	info->name = pe[pidx].pme_name;
+	info->nattrs = 0;
+	info->pmu = gen_powerpc_support.pmu;
+	info->size = 0; /* no extensions yet */
+	return PFM_SUCCESS;
 }
-
-/**
- * pfm_gen_powerpc_get_event_name
- *
- * Return the name of the specified event.
- **/
-static const char *
-pfm_gen_powerpc_get_event_name(void *this, int event)
-{
-	const pme_power_entry_t *pe = this_pe(this);
-
-	return get_event_name(pe, event);
-}
-
-/**
- * pfm_gen_powerpc_get_event_umask_name
- *
- * Return the name of the specified event-mask.
- **/
-static const char *
-pfm_gen_powerpc_get_event_umask_name(void *this, int event, int attr)
-{
-	return "";
-}
-
-/**
- * pfm_gen_powerpc_get_event_numasks
- *
- * Count the number of available event-masks for the specified event.
- **/
-static int
-pfm_gen_powerpc_get_event_numasks(void *this, int event)
-{
-        /* Power arch doesn't use event masks */
-	return 0;
-}
-
 
 /**
  * pfm_gen_powerpc_pmu_detect
@@ -186,41 +137,11 @@ pfm_gen_powerpc_pmu_detect(void* this)
 	return PFM_ERR_NOTSUPP;
 }
 
-/**
- * pfm_gen_powerpc_get_event_desc
- *
- * Return the description for the specified event (if it has one).
- **/
-static const char *
-pfm_gen_powerpc_get_event_desc(void *this, int event)
-{
-	const pme_power_entry_t *pe = this_pe(this);
-	return get_long_desc(pe, event);
-}
-
-/**
- * pfm_gen_powerpc_get_event_umask_desc
- *
- * Return the description for the specified event-mask (if it has one).
- **/
-static const char *
-pfm_gen_powerpc_get_event_umask_desc(void *this, int event,
-					int attr)
-{
-	return "";
-}
-
-/**
- * pfm_gen_powerpc_get_event_umask_code
- *
- * Return the code for the specified event-mask (if it has one).
- **/
 static int
-pfm_gen_powerpc_get_event_umask_code(void *this, int event, int attr,
-                uint64_t *code)
+pfm_gen_powerpc_get_event_attr_info(void *this, int pidx, int umask_idx, pfm_event_attr_info_t *info)
 {
-	*code = 0;
-	return 0;
+	/* No attributes are supported */
+	return PFM_ERR_ATTR;
 }
 
 static int
@@ -268,14 +189,8 @@ pfm_gen_powerpc_event_is_valid(void *this, int pidx)
 	return pidx >= 0 && pidx < p->pme_count;
 }
 
-static pfmlib_modmsk_t
-pfm_gen_powerpc_get_event_modifiers(void *this, int pidx)
-{
-	/* Power arch doesn't use a modifier mask */
-	return 0;
-}
 
-int
+static int
 pfm_gen_powerpc_validate_table(void *this, FILE *fp)
 {
 	pfmlib_pmu_t *pmu = this;
@@ -311,19 +226,12 @@ pfmlib_pmu_t gen_powerpc_support = {
 
 	.pmu_detect		= pfm_gen_powerpc_pmu_detect,
 	.max_encoding		= 1,
-	.get_event_code		= pfm_gen_powerpc_get_event_code,
-	.get_event_name		= pfm_gen_powerpc_get_event_name,
-	.get_event_desc         = pfm_gen_powerpc_get_event_desc,
-	.get_event_numasks	= pfm_gen_powerpc_get_event_numasks,
-	.get_event_umask_name	= pfm_gen_powerpc_get_event_umask_name,
-	.get_event_umask_code	= pfm_gen_powerpc_get_event_umask_code,
-	.get_event_umask_desc	= pfm_gen_powerpc_get_event_umask_desc,
-
-	.get_event_encoding	= pfm_gen_powerpc_get_encoding,
+	.get_event_info		= pfm_gen_powerpc_get_event_info,
 	.get_event_first	= pfm_gen_powerpc_get_event_first,
 	.get_event_next		= pfm_gen_powerpc_get_event_next,
 	.event_is_valid		= pfm_gen_powerpc_event_is_valid,
 	.get_event_perf_type	= pfm_gen_powerpc_get_event_perf_type,
-	.get_event_modifiers	= pfm_gen_powerpc_get_event_modifiers,
+	.get_event_attr_info	= pfm_gen_powerpc_get_event_attr_info,
+	.get_event_encoding	= pfm_gen_powerpc_get_encoding,
 	.validate_table		= pfm_gen_powerpc_validate_table
 };
