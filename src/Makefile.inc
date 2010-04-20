@@ -114,26 +114,6 @@ multiplex.o: multiplex.c $(HEADERS)
 $(SUBSTR).o: $(SUBSTR).c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(SUBSTR).c -o $(SUBSTR).o 
 
-linux-mx.o: linux-mx.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-mx.c -o linux-mx.o 
-
-linux-acpi.o: linux-acpi.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-acpi.c -o linux-acpi.o 
-
-linux-net.o: linux-net.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-net.c -o linux-net.o 
-
-linux-lmsensors.o: linux-lmsensors.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-lmsensors.c -o linux-lmsensors.o 
-
-#Required for Lustre component
-linux-lustre.o: linux-lustre.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-lustre.c -o linux-lustre.o 
-
-host_counter.o: host_counter.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c host_counter.c -o host_counter.o 
-#end Lustre
-
 x86_cache_info.o: x86_cache_info.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c x86_cache_info.c -o x86_cache_info.o
 
@@ -153,33 +133,101 @@ pmapi-ppc64_events.o: pmapi-ppc64_events.c  $(HEADERS) papi_events_table.h
 aix.o: aix.c  $(HEADERS)
 	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c aix.c -o aix.o
 
-# Required for Linux-ACPI
+# Required for BGP
+.SUFFIXES: .rts.o
+.c.rts.o:
+	$(CC) $(CFLAGS) -c $< -o $@
+
+linux-bgp-preset-events.o: linux-bgp-preset-events.c  $(HEADERS)
+	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" -DCOMP_VECTOR=_bgp_vectors $(OPTFLAGS) -c linux-bgp-preset-events.c -o linux-bgp-preset-events.o
+
+bgp_tests:$(LIBRARY) null
+	$(SETPATH) cd ctests/bgp; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. -I../.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../$(LINKLIB)" bgp_tests
+ 
+#Required for freebsd
+@if test "$(OS)" = "freebsd" ; then \
+  MISCHDRS = freebsd/map-unknown.h freebsd/map.h freebsd/map-p6.h freebsd/map-p6-m.h freebsd/map-p6-3.h freebsd/map-p6-2.h freebsd/map-p6-c.h freebsd/map-k7.h freebsd/map-k8.h freebsd/map-p4.h freebsd/map-atom.h freebsd/map-core.h freebsd/map-core2.h freebsd/map-core2-extreme.h freebsd/map-i7.h \
+  MISCSRCS = freebsd/map-unknown.c freebsd/map.c freebsd/map-p6.c freebsd/map-p6-m.c freebsd/map-p6-3.c freebsd/map-p6-2.c freebsd/map-p6-c.c freebsd/map-k7.c freebsd/map-k8.c freebsd/map-p4.c freebsd/map-atom.c freebsd/map-core.c freebsd/map-core2.c freebsd/map-core2-extreme.c freebsd/map-i7.c \
+fi
+
+freebsd/map.o: freebsd/map.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-unknown.o: freebsd/map-unknown.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-p6.o: freebsd/map-p6.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-p6-m.o: freebsd/map-p6-m.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-p6-3.o: freebsd/map-p6-3.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-p6-2.o: freebsd/map-p6-2.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-p6-c.o: freebsd/map-p6-c.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-k7.o: freebsd/map-k7.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-k8.o: freebsd/map-k8.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-p4.o: freebsd/map-p4.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-atom.o: freebsd/map-atom.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-core.o: freebsd/map-core.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-core2.o: freebsd/map-core2.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-core2-extreme.o: freebsd/map-core2-extreme.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd/map-i7.o: freebsd/map-i7.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+freebsd.o: freebsd.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) -c $< -o $@
+
+#Required for Lustre component
+linux-lustre.o: linux-lustre.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-lustre.c -o linux-lustre.o 
+
+host_counter.o: host_counter.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c host_counter.c -o host_counter.o 
+
+#Required for mx component
+linux-mx.o: linux-mx.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-mx.c -o linux-mx.o 
+
+#Required for acpi component
+linux-acpi.o: linux-acpi.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-acpi.c -o linux-acpi.o 
+
 acpi_events.o: acpi_events.c  $(HEADERS)
 	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c acpi_events.c -o acpi_events.o
 
 acpi.o: acpi.c  $(HEADERS)
 	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" $(OPTFLAGS) -c acpi.c -o acpi.o
 
-# Required for BGL and BGP
-.SUFFIXES: .rts.o
-.c.rts.o:
-	$(CC) $(CFLAGS) -c $< -o $@
+#Required for net component
+linux-net.o: linux-net.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-net.c -o linux-net.o 
 
-# Required for BGL
-linux-bgl-events.o: linux-bgl-events.c  $(HEADERS)
-	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" -DCOMP_VECTOR=_bgl_vectors $(OPTFLAGS) -c linux-bgl-events.c -o linux-bgl-events.o
+#Required for lmsensors component
+linux-lmsensors.o: linux-lmsensors.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c linux-lmsensors.c -o linux-lmsensors.o 
 
-bgl_tests:$(LIBRARY) null
-	$(SETPATH) cd ctests/bgl_tests; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-DSUBSTRATE=\\\"$(SUBSTR).h\\\" $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS)" LIBRARY="$(LIBRARY)" bgl_test
-
-# Required for BGP
-linux-bgp-preset-events.o: linux-bgp-preset-events.c  $(HEADERS)
-	$(CC) $(LIBCFLAGS) -DSUBSTRATE=\"$(SUBSTR).h\" -DCOMP_VECTOR=_bgp_vectors $(OPTFLAGS) -c linux-bgp-preset-events.c -o linux-bgp-preset-events.o
-
-bgp_tests:$(LIBRARY) null
-	$(SETPATH) cd ctests/bgp; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. -I../.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../$(LINKLIB)" bgp_tests
-
-
+#########################
 
 test: ctests
 	$(SETPATH) ctests/zero
@@ -187,7 +235,7 @@ test: ctests
 fulltest: tests
 	sh run_tests.sh
 
-tests: $(TESTS)
+tests: $(TESTS) 
 
 utils: $(LIBRARY) null
 	$(SETPATH) cd utils; $(MAKE) CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. $(CFLAGS)" OPTFLAGS="$(OPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="$(LINKLIB)" util
