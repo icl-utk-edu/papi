@@ -212,6 +212,38 @@ amd64_umask_valid(int i, int attr)
         return 1;
 }
 
+void amd64_display_reg(pfm_amd64_reg_t reg, char *fstr)
+{
+	if (IS_FAMILY_10H())
+		__pfm_vbprintf("[0x%"PRIx64" event_sel=0x%x umask=0x%x os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d guest=%d host=%d] %s\n",
+			reg.val,
+			reg.sel_event_mask | (reg.sel_event_mask2 << 8),
+			reg.sel_unit_mask,
+			reg.sel_os,
+			reg.sel_usr,
+			reg.sel_en,
+			reg.sel_int,
+			reg.sel_inv,
+			reg.sel_edge,
+			reg.sel_cnt_mask,
+			reg.sel_guest,
+			reg.sel_host,
+			fstr);
+	else
+		__pfm_vbprintf("[0x%"PRIx64" event_sel=0x%x umask=0x%x os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d] %s\n",
+			reg.val,
+			reg.sel_event_mask,
+			reg.sel_unit_mask,
+			reg.sel_os,
+			reg.sel_usr,
+			reg.sel_en,
+			reg.sel_int,
+			reg.sel_inv,
+			reg.sel_edge,
+			reg.sel_cnt_mask,
+			fstr);
+}
+
 static void
 amd64_setup(amd64_rev_t revision)
 {
@@ -515,34 +547,7 @@ pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int 
 			attrs->plm |= PFM_PLM3;
 	}
 
-	if (IS_FAMILY_10H())
-		__pfm_vbprintf("[0x%"PRIx64" event_sel=0x%x umask=0x%x os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d guest=%d host=%d] %s\n",
-			reg.val,
-			reg.sel_event_mask | (reg.sel_event_mask2 << 8),
-			reg.sel_unit_mask,
-			reg.sel_os,
-			reg.sel_usr,
-			reg.sel_en,
-			reg.sel_int,
-			reg.sel_inv,
-			reg.sel_edge,
-			reg.sel_cnt_mask,
-			reg.sel_guest,
-			reg.sel_host,
-			amd64_events[e->event].name);
-	else
-		__pfm_vbprintf("[0x%"PRIx64" event_sel=0x%x umask=0x%x os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d] %s\n",
-			reg.val,
-			reg.sel_event_mask,
-			reg.sel_unit_mask,
-			reg.sel_os,
-			reg.sel_usr,
-			reg.sel_en,
-			reg.sel_int,
-			reg.sel_inv,
-			reg.sel_edge,
-			reg.sel_cnt_mask,
-			amd64_events[e->event].name);
+	amd64_display_reg(reg, e->fstr);
 
 	return PFM_SUCCESS;
 }
