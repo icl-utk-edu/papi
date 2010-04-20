@@ -50,16 +50,6 @@ static const pfmlib_attr_desc_t amd64_mods[]={
 	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
 };
 
-static struct {
-        amd64_rev_t     	revision;
-        char            	*name;
-        int             	family;
-        int             	model;
-        int             	stepping;
-	int			num_events; /* total number of events in table */
-        const amd64_entry_t	*events;
-} amd64_pmu;
-
 static const char *amd64_rev_strs[]= {
         "?", "?", "B", "C", "D", "E", "F", "G", "B", "C", "D"
 };
@@ -79,13 +69,6 @@ static const char *amd64_cpu_strs[] = {
 };
 
 pfmlib_pmu_t amd64_support;
-
-#define amd64_revision    amd64_pmu.revision
-#define amd64_num_events  amd64_pmu.num_events
-#define amd64_events      amd64_pmu.events
-#define amd64_family      amd64_pmu.family
-#define amd64_model       amd64_pmu.model
-#define amd64_stepping    amd64_pmu.stepping
 
 static int pfm_amd64_get_event_next(void *this, int idx);
 
@@ -107,13 +90,13 @@ amd64_attr2mod(int pidx, int attr_idx)
 static inline int
 amd64_event_ibsfetch(int idx)
 {
-	return amd64_events[idx].flags & AMD64_FL_IBSFE;
+	return amd64_eflag(idx, AMD64_FL_IBSFE);
 }
 
 static inline int
 amd64_event_ibsop(int idx)
 {
-	return amd64_events[idx].flags & AMD64_FL_IBSOP;
+	return amd64_eflag(idx, AMD64_FL_IBSOP);
 }
 
 static inline int
@@ -356,7 +339,7 @@ amd64_add_defaults(int idx, char *umask_str, uint64_t *umask)
 		if (!amd64_umask_valid(idx, j))
 			continue;
 
-		if (ent->umasks[j].uflags & AMD64_FL_DFL) {
+		if (amd64_uflag(idx, j, AMD64_FL_DFL)) {
 
 			DPRINT("added default %s\n", ent->umasks[j].uname);
 
@@ -408,7 +391,7 @@ amd64_encode(pfmlib_event_desc_t *e, pfm_amd64_reg_t *reg)
 		 	 * so if we come here more than once, it is for two
 		 	 * diinct umasks
 		 	 */
-			if (amd64_events[e->event].umasks[a->id].uflags & AMD64_FL_NCOMBO)
+			if (amd64_uflag(e->event, a->id, AMD64_FL_NCOMBO))
 				ncombo = 1;
 
 			if (++uc > 1 && ncombo) {
@@ -617,7 +600,7 @@ pfm_amd64_get_event_attr_info(void *this, int idx, int attr_idx, pfm_event_attr_
 		info->equiv= NULL;
 		info->code = amd64_events[idx].umasks[attr_idx].ucode;
 		info->type = PFM_ATTR_UMASK;
-		info->is_dfl = !!(amd64_events[idx].umasks[attr_idx].uflags & AMD64_FL_DFL);
+		info->is_dfl = amd64_uflag(idx, attr_idx, AMD64_FL_DFL);
 	} else {
 		m = amd64_attr2mod(idx, attr_idx);
 		info->name = modx(amd64_mods, m, name);
