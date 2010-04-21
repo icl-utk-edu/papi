@@ -1975,14 +1975,6 @@ _papi_pfm_init_substrate( int cidx )
 	pfmlib_options_t pfmlib_options;
 #endif
 	char buf[PAPI_HUGE_STR_LEN];
-
-  // Setup the vector entries that the OS knows about 
-  retval = _papi_hwi_setup_vector_table( vtable, _linux_pfm_table);
-  if ( retval != PAPI_OK ) return(retval);
-  // And the vector entries for native event control 
-  retval = _papi_hwi_setup_vector_table( vtable, _papi_pfm_event_vectors);
-  if ( retval != PAPI_OK ) return(retval);
-*/
 	/* The following checks the PFMLIB version 
 	   against the perfmon2 kernel version... */
 	strncpy( MY_VECTOR.cmp_info.support_version, buf,
