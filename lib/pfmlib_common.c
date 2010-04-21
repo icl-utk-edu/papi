@@ -448,6 +448,7 @@ pfmlib_parse_event_attr(char *str, pfmlib_pmu_t *pmu, int idx, int nattrs, pfmli
 {
 	pfm_event_attr_info_t ainfo;
 	char *s, *p, *q, *endptr;
+	char yes[2] = "y";
 	pfm_attr_t type;
 	int a, has_val;
 	int na, ret;
@@ -506,7 +507,7 @@ found_attr:
 		if (type != PFM_ATTR_UMASK && !has_val) {
 			if (type != PFM_ATTR_MOD_BOOL)
 				return PFM_ERR_ATTR_VAL;
-			has_val = 1; s = "y";
+			has_val = 1; s = yes; /* no const */
 			goto handle_bool;
 		}
 
