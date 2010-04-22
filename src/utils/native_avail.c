@@ -298,29 +298,31 @@ main( int argc, char **argv )
 					}
 				}
 			}
-		} else
+		} else {
 			printf
 				( "Sorry, an event by the name '%s' could not be found.\n Is it typed correctly?\n\n",
 				  flags.name );
-		exit( 1 );
+		        exit( 1 );
+		}
 	}
+        else {
 
-	printf( "%-12s %s  | %s |\n", "Event Code", "Symbol", "Long Description" );
-	printf
+	   printf( "%-12s %s  | %s |\n", "Event Code", "Symbol", "Long Description" );
+	   printf
 		( "--------------------------------------------------------------------------------\n" );
 
-	numcmp = PAPI_num_components(  );
+	   numcmp = PAPI_num_components(  );
 
-	j = 0;
+	   j = 0;
 
-	for ( cid = 0; cid < numcmp; cid++ ) {
+	      for ( cid = 0; cid < numcmp; cid++ ) {
 
-		/* For platform independence, always ASK FOR the first event */
-		/* Don't just assume it'll be the first numeric value */
-		i = 0 | PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cid );
-		PAPI_enum_event( &i, PAPI_ENUM_FIRST );
+		   /* For platform independence, always ASK FOR the first event */
+		   /* Don't just assume it'll be the first numeric value */
+		   i = 0 | PAPI_NATIVE_MASK | PAPI_COMPONENT_MASK( cid );
+		   PAPI_enum_event( &i, PAPI_ENUM_FIRST );
 
-		do {
+		   do {
 			memset( &info, 0, sizeof ( info ) );
 			retval = PAPI_get_event_info( i, &info );
 
@@ -382,11 +384,13 @@ main( int argc, char **argv )
 					( "--------------------------------------------------------------------------------\n" );
 			}
 		} while ( PAPI_enum_event( &i, enum_modifier ) == PAPI_OK );
-	}
-
-	printf
+	      }
+	
+	
+	      printf
 		( "--------------------------------------------------------------------------------\n" );
-	printf( "Total events reported: %d\n", j );
+	      printf( "Total events reported: %d\n", j );
+	}
 	test_pass( __FILE__, NULL, 0 );
 	exit( 0 );
 }
