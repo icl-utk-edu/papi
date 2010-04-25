@@ -1,12 +1,8 @@
 /*
- * pfmlib_intel_atom.c : Intel Atom PMU
+ * pfmlib_intel_wsm.c : Intel Westmere core PMU
  *
- * Copyright (c) 2008 Google, Inc
+ * Copyright (c) 2009 Google, Inc
  * Contributed by Stephane Eranian <eranian@gmail.com>
- *
- * Based on work:
- * Copyright (c) 2006 Hewlett-Packard Development Company, L.P.
- * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,57 +20,52 @@
  * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- *
- * This file implements support for Intel Core PMU as specified in the following document:
- * 	"IA-32 Intel Architecture Software Developer's Manual - Volume 3B: System
- * 	Programming Guide"
- *
- * Intel Atom = architectural v3 + PEBS
  */
 /* private headers */
 #include "pfmlib_priv.h"
 #include "pfmlib_intel_x86_priv.h"
-#include "events/intel_atom_events.h"
+#include "events/intel_wsm_events.h"
 
 static int
-pfm_intel_atom_detect(void *this)
+pfm_wsm_detect(void *this)
 {
 	int ret;
 
 	ret = pfm_intel_x86_detect();
 	if (ret != PFM_SUCCESS)
 		return ret;
-	/*
-	 * Atom : family 6 model 28
-	 */
+
 	if (pfm_intel_x86_cfg.family != 6)
 		return PFM_ERR_NOTSUPP;
 
-	if (pfm_intel_x86_cfg.model != 28)
-		return PFM_ERR_NOTSUPP;
+	switch (pfm_intel_x86_cfg.model) {
+		case 37: /* Clarkdale */
+			break;
+		case 44: /* Gulftown */
+			break;
+		default:
+			return PFM_ERR_NOTSUPP;
+	}
 	return PFM_SUCCESS;
 }
 
 static int
-pfm_intel_atom_init(void *this)
+pfm_wsm_init(void *this)
 {
 	pfm_intel_x86_cfg.arch_version = 3;
 	return PFM_SUCCESS;
 }
 
-pfmlib_pmu_t intel_atom_support={
-	.desc			= "Intel Atom",
-	.name			= "atom",
-	.pmu			= PFM_PMU_INTEL_ATOM,
-	.pme_count		= PME_INTEL_ATOM_EVENT_COUNT,
+pfmlib_pmu_t intel_wsm_support={
+	.desc			= "Intel Westmere",
+	.name			= "wsm",
+	.pmu			= PFM_PMU_INTEL_WSM,
+	.pme_count		= PME_WSM_EVENT_COUNT,
 	.max_encoding		= 1,
-	.pe			= intel_atom_pe,
+	.pe			= intel_wsm_pe,
 	.atdesc			= intel_x86_mods,
-
-	.pmu_detect		= pfm_intel_atom_detect,
-	.pmu_init		= pfm_intel_atom_init,
-
+	.pmu_detect		= pfm_wsm_detect,
+	.pmu_init		= pfm_wsm_init,
 	.get_event_encoding	= pfm_intel_x86_get_encoding,
 	.get_event_first	= pfm_intel_x86_get_event_first,
 	.get_event_next		= pfm_intel_x86_get_event_next,

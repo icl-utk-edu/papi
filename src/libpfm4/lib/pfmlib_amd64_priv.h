@@ -93,7 +93,6 @@ typedef enum {
 #define AMD64_ATTR_C	6
 #define AMD64_ATTR_R	7
 #define AMD64_ATTR_P	8
-#define AMD64_ATTR_F	9
 
 #define _AMD64_ATTR_U  (1 << AMD64_ATTR_U)
 #define _AMD64_ATTR_K  (1 << AMD64_ATTR_K)
@@ -104,7 +103,6 @@ typedef enum {
 #define _AMD64_ATTR_G  (1 << AMD64_ATTR_G)
 #define _AMD64_ATTR_R  (1 << AMD64_ATTR_R)
 #define _AMD64_ATTR_P  (1 << AMD64_ATTR_P)
-#define _AMD64_ATTR_F  (1 << AMD64_ATTR_F)
 
 #define AMD64_BASIC_ATTRS \
 	(_AMD64_ATTR_I|_AMD64_ATTR_E|_AMD64_ATTR_C|_AMD64_ATTR_U|_AMD64_ATTR_K)
@@ -177,5 +175,34 @@ typedef union {
 #define sel_guest	perfsel.sel_guest
 #define sel_host	perfsel.sel_host
 
+static struct {
+        amd64_rev_t     	revision;
+        char            	*name;
+        int             	family;
+        int             	model;
+        int             	stepping;
+	int			num_events; /* total number of events in table */
+        const amd64_entry_t	*events;
+} amd64_pmu;
+
+
+#define amd64_revision    amd64_pmu.revision
+#define amd64_num_events  amd64_pmu.num_events
+#define amd64_events      amd64_pmu.events
+#define amd64_family      amd64_pmu.family
+#define amd64_model       amd64_pmu.model
+#define amd64_stepping    amd64_pmu.stepping
+
+static inline int
+amd64_eflag(int idx, int flag)
+{
+	return !!(amd64_events[idx].flags & flag);
+}
+
+static inline int
+amd64_uflag(int idx, int attr, int flag)
+{
+	return !!(amd64_events[idx].umasks[attr].uflags & flag);
+}
 
 #endif /* __PFMLIB_AMD64_PRIV_H__ */

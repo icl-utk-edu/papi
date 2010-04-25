@@ -27,32 +27,32 @@ import os
 from optparse import OptionParser
 import random
 import errno
+import struct
 from perfmon import *
 
 if __name__ == '__main__':
   parser = OptionParser()
   parser.add_option("-e", "--events", help="Events to use",
                     action="store", dest="events")
+  parser.set_defaults(events="PERF_COUNT_HW_CPU_CYCLES")
   (options, args) = parser.parse_args()
 
-  s = PerThreadSession(int(os.getpid()))
   if options.events:
     events = options.events.split(",")
   else:
     raise "You need to specify events to monitor"
-  s.dispatch_events(events)
-  s.load()
+
+  s = PerThreadSession(int(os.getpid()), events)
   s.start()
 
   # code to be measured
   #
   # note that this is not identical to what examples/self.c does
   # thus counts will be different in the end
-  for i in range(1, 10000000):
+  for i in range(1, 1000000):
     random.random()
 
-  s.stop()
-
   # read the counts
-  for i in xrange(s.npmds):
-    print """PMD%d\t%lu""" % (s.pmds[0][i].reg_num, s.pmds[0][i].reg_value)
+  for i in range(0, len(events)):
+    count = struct.unpack("L", s.read(i))[0]
+    print """%s\t%lu""" % (events[i], count)

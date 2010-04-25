@@ -31,6 +31,7 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <err.h>
+#include <locale.h>
 #include <sys/mman.h>
 
 #include "perf_util.h"
@@ -89,7 +90,7 @@ print_sample(int id)
 		else
 			grp.value = 0;
 
-		printf("\t%"PRIu64" %s (%"PRIu64"%s)\n",
+		printf("\t%'"PRIu64" %s (%"PRIu64"%s)\n",
 			grp.value, str,
 			grp.id,
 			time_running != time_enabled ? ", scaled":"");
@@ -165,6 +166,8 @@ main(int argc, char **argv)
 	uint64_t *val;
 	size_t sz, pgsz;
 	int ret, i;
+
+	setlocale(LC_ALL, "");
 
 	ret = pfm_initialize();
 	if (ret != PFM_SUCCESS)

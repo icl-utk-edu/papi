@@ -150,13 +150,13 @@ check_arch_pmu(int family)
 static int
 pfm_intel_x86_arch_detect(void *this)
 {
-	int ret, family;
+	int ret;
 
-	ret = pfm_intel_x86_detect(&family, NULL);
+	ret = pfm_intel_x86_detect();
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	return check_arch_pmu(family);
+	return check_arch_pmu(pfm_intel_x86_cfg.family);
 }
 
 static int
@@ -190,6 +190,7 @@ pfmlib_pmu_t intel_x86_arch_support={
 	.pmu			= PFM_PMU_INTEL_X86_ARCH,
 	.pme_count		= 0,
 	.pe			= NULL,
+	.atdesc			= intel_x86_mods,
 	.max_encoding		= 1,
 
 	.pmu_detect		= pfm_intel_x86_arch_detect,

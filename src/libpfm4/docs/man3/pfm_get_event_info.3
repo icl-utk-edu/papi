@@ -19,6 +19,7 @@ typedef struct {
         const char              *equiv;
         uint64_t                code;
         pfm_pmu_t               pmu;
+	pfm_dtype_t		dtype
         int                     idx;
         int                     nattrs;
         int                     size;
@@ -50,6 +51,10 @@ This is the identification of the PMU model this event belongs to. It is
 of type \fBpfm_pmu_t\fR. Using this value and the \fBpfm_get_pmu_info\fR
 function, it is possible to get PMU information.
 .TP
+.B dtype
+This field returns the representation of the event data. By default, it
+is \fBPFM_DATA_UINT64\fR.
+
 .B idx
 This is the event unique opaque identifier. It is identical to the idx
 passed to the call and is provided for completeness.

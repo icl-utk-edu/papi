@@ -1,21 +1,21 @@
 .TH LIBPFM 4  "September, 2009" "" "Linux Programmer's Manual"
 .SH NAME
-libpfm_intel_nhm - support for Intel Nehalem core PMU
+libpfm_intel_wsm - support for Intel Westmere core PMU
 .SH SYNOPSIS
 .nf
 .B #include <perfmon/pfmlib.h>
 .sp
-.B PMU name: nhm
-.B PMU desc: Intel Nehalem
+.B PMU name: wsm
+.B PMU desc: Intel Westmere
 .sp
 .SH DESCRIPTION
-The library supports the Intel Nehalem core PMU. It should be noted that
+The library supports the Intel Westmere core PMU. It should be noted that
 this PMU model only covers the each core's PMU and not the socket level
 PMU. It is provided separately. Support is provided for the Intel Core i7
-and Core i5 processors.
+and Core i5 processors (models 37, 44).
 
 .SH MODIFIERS
-The following modifiers are supported on Intel Nehalem processors:
+The following modifiers are supported on Intel Westmere processors:
 .TP
 .B u
 Measure at user level which includes privilege levels 1, 2, 3. This corresponds to \fBPFM_PLM3\fR.
@@ -39,13 +39,9 @@ modifier with values in the range [0:255].
 .TP
 .B t
 Measure on both threads at the same time assuming hyper-threading is enabled. This is a boolean modifier.
-.TP
-.B p
-Enable Precise Event Based Sampling (PEBS) mode for this event. Not all events support this mode. Sometimes
-only some unit masks of an event do.
 
 .SH ENVIRONMENT VARIABLES
-It is possible to force activation of the Intel Nehalem support using the \fBLIBPFM_FORCE_PMU\fR variable.
+It is possible to force activation of the Intel Westmere support using the \fBLIBPFM_FORCE_PMU\fR variable.
 The PMU name, nhm, must be passed. No additional options are supported.
 .SH AUTHORS
 .nf

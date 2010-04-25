@@ -38,6 +38,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
+#include <locale.h>
 #include <err.h>
 
 #include <perfmon/pfmlib_perf_event.h>
@@ -68,6 +69,7 @@ main(int argc, char **argv)
 	uint64_t values[3];
 	int i, ret, num;
 
+	setlocale(LC_ALL, "");
 	/*
 	 * Initialize pfm library (required before we can use it)
 	 */
@@ -138,12 +140,12 @@ main(int argc, char **argv)
 		ratio = perf_scale_ratio(values);
 
 		if (ratio == 1.0)
-			printf("%20"PRIu64" %s\n", val, fds[i].name);
+			printf("%'20"PRIu64" %s\n", val, fds[i].name);
 		else
 			if (ratio == 0.0)
-				printf("%20"PRIu64" %s (did not run: competing session)\n", val, fds[i].name);
+				printf("%'20"PRIu64" %s (did not run: competing session)\n", val, fds[i].name);
 			else
-				printf("%20"PRIu64" %s (scaled from %.2f%% of time)\n", val, fds[i].name, ratio*100.0);
+				printf("%'20"PRIu64" %s (scaled from %.2f%% of time)\n", val, fds[i].name, ratio*100.0);
 
 		close(fds[i].fd);
 	}

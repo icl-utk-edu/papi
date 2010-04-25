@@ -112,6 +112,8 @@ typedef enum {
 	PFM_PMU_POWER7,			/* IBM POWER7 */
 
 	PFM_PMU_PERF_EVENT,		/* perf_event PMU */
+	PFM_PMU_INTEL_WSM,		/* Intel Westmere */
+	PFM_PMU_INTEL_WSM_UNC,		/* Intel Westmere uncore PMU */
 
 	/* MUST ADD NEW PMU MODELS HERE */
 
@@ -126,6 +128,22 @@ typedef enum {
 
 	PFM_ATTR_MAX		/* end-marker */
 } pfm_attr_t;
+
+/*
+ * define additional event data types beyond historic uint64
+ * what else can fit in 64 bits?
+ */
+typedef enum {
+	PFM_DTYPE_UNKNOWN=0,	/* unkown */
+	PFM_DTYPE_UINT64,	/* uint64 */
+	PFM_DTYPE_INT64,	/* int64 */
+	PFM_DTYPE_DOUBLE,	/* IEEE double precision float */
+	PFM_DTYPE_FIXED,	/* 32.32 fixed point */
+	PFM_DTYPE_RATIO,	/* 32/32 integer ratio */
+	PFM_DTYPE_CHAR8,	/* 8 char unterminated string */
+
+	PFM_DTYPE_MAX		/* end-marker */
+} pfm_dtype_t;
 
 /* SWIG doesn't deal well with anonymous nested structures */
 #ifdef SWIG
@@ -143,6 +161,7 @@ typedef enum {
  * the return value.
  */
 typedef int pfm_err_t;		/* error if !PFM_SUCCESS */
+typedef int os_err_t;		/* error if a syscall fails */
 
 typedef struct {
 	const char		*name;	/* event name */
@@ -163,6 +182,7 @@ typedef struct {
 	const char		*equiv;	/* event is equivalent to */
 	uint64_t		code;	/* event raw code (not encoding) */
 	pfm_pmu_t		pmu;	/* which PMU */
+	pfm_dtype_t		dtype;	/* data type of event value */
 	int			idx;	/* unique event identifier */
 	int			nattrs;	/* number of attributes */
 	int			size;	/* for struct extension, 0 for now */

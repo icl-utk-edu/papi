@@ -46,8 +46,10 @@ typedef struct {
 	char			*uname; /* unit mask name */
 	char			*udesc; /* unit umask description */
 	char			*uequiv;/* name of event from which this one is derived, NULL if none */
+	uint64_t		ucntmsk;/* supported counters for umask (if set, supersedes cntmsk) */
 	unsigned int		ucode;  /* unit mask code */
 	unsigned int		uflags;	/* unit mask flags */
+	unsigned int		umodel; /* only available on this PMU model */
 	unsigned int		grpid;	/* unit mask group id */
 	unsigned int		grpmsk; /* indicate which umask bits used by group */
 	unsigned int		modhw;	/* hardwired modifiers, cannot be changed */
@@ -78,7 +80,7 @@ typedef struct {
 /*
  * pme_flags value (event and unit mask)
  */
-#define INTEL_X86_NCOMBO		0x01	/* unit masks with group cannot be combined */
+#define INTEL_X86_NCOMBO		0x01	/* unit masks within group cannot be combined */
 #define INTEL_X86_FALLBACK_GEN		0x02	/* fallback from fixed to generic counter possible */
 #define INTEL_X86_PEBS			0x04 	/* event support PEBS */
 #define INTEL_X86_ENCODER		0x08 	/* event requires model-specific encoding */
@@ -138,6 +140,7 @@ typedef union pfm_intel_x86_reg {
 #define INTEL_X86_ATTR_E	3 /* edge */
 #define INTEL_X86_ATTR_C	4 /* counter mask */
 #define INTEL_X86_ATTR_T	5 /* any thread */
+#define INTEL_X86_ATTR_P	6 /* request PEBS */
 
 #define _INTEL_X86_ATTR_U  (1 << INTEL_X86_ATTR_U)
 #define _INTEL_X86_ATTR_K  (1 << INTEL_X86_ATTR_K)
@@ -145,15 +148,18 @@ typedef union pfm_intel_x86_reg {
 #define _INTEL_X86_ATTR_E  (1 << INTEL_X86_ATTR_E)
 #define _INTEL_X86_ATTR_C  (1 << INTEL_X86_ATTR_C)
 #define _INTEL_X86_ATTR_T  (1 << INTEL_X86_ATTR_T)
+#define _INTEL_X86_ATTR_P  (1 << INTEL_X86_ATTR_P)
 
 #define INTEL_X86_ATTRS \
 	(_INTEL_X86_ATTR_I|_INTEL_X86_ATTR_E|_INTEL_X86_ATTR_C|_INTEL_X86_ATTR_U|_INTEL_X86_ATTR_K)
 
 #define INTEL_V1_ATTRS 		INTEL_X86_ATTRS
 #define INTEL_V2_ATTRS 		INTEL_X86_ATTRS
+#define INTEL_V2_PEBS_ATTRS 	(INTEL_V2_ATTRS|_INTEL_X86_ATTR_P)
 #define INTEL_FIXED2_ATTRS	(_INTEL_X86_ATTR_U|_INTEL_X86_ATTR_K)
 #define INTEL_FIXED3_ATTRS	(INTEL_FIXED2_ATTRS|_INTEL_X86_ATTR_T)
 #define INTEL_V3_ATTRS 		(INTEL_V2_ATTRS|_INTEL_X86_ATTR_T)
+#define INTEL_V3_PEBS_ATTRS 	(INTEL_V3_ATTRS|_INTEL_X86_ATTR_P)
 
 /* let's define some handy shortcuts! */
 #define sel_event_select perfevtsel.sel_event_select
@@ -193,10 +199,14 @@ typedef struct {
 } intel_x86_pmu_ebx_t;
 
 typedef struct {
+	int model;
+	int family;
 	int arch_version;
 } pfm_intel_x86_config_t;
 
 extern pfm_intel_x86_config_t pfm_intel_x86_cfg;
+
+extern const pfmlib_attr_desc_t intel_x86_mods[];
 
 static inline int
 intel_x86_eflag(void *this, pfmlib_event_desc_t *e, int flag)
@@ -212,10 +222,9 @@ intel_x86_uflag(void *this, pfmlib_event_desc_t *e, int attr, int flag)
 	return !!(pe[e->event].umasks[attr].uflags & flag);
 }
 
-extern int pfm_intel_x86_detect(int *family, int *model);
-extern int pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg_t *reg);
+extern int pfm_intel_x86_detect(void);
 extern void pfm_intel_x86_display_reg(pfm_intel_x86_reg_t reg, char *fstr);
-extern int pfm_intel_x86_add_defaults(const intel_x86_entry_t *ent, char *umask_str, unsigned int msk, unsigned int *umask);
+extern int pfm_intel_x86_add_defaults(void *this, int pidx, char *umask_str, unsigned int msk, unsigned int *umask);
 
 extern int pfm_intel_x86_event_is_valid(void *this, int pidx);
 extern int pfm_intel_x86_get_encoding(void *this, pfmlib_event_desc_t *e, uint64_t *codes, int *count, pfmlib_perf_attr_t *attrs);
@@ -227,4 +236,5 @@ extern int pfm_intel_x86_get_event_perf_type(void *this, int pidx);
 extern int pfm_intel_x86_validate_table(void *this, FILE *fp);
 extern int pfm_intel_x86_get_event_attr_info(void *this, int idx, int attr_idx, pfm_event_attr_info_t *info);
 extern int pfm_intel_x86_get_event_info(void *this, int idx, pfm_event_info_t *info);
+extern int pfm_intel_x86_attr2mod(void *this, int pidx, int attr_idx);
 #endif /* __PFMLIB_INTEL_X86_PRIV_H__ */

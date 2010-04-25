@@ -56,8 +56,8 @@ endif
 # CONFIG_PFMLIB_SHARED: y=compile static and shared versions, n=static only
 # CONFIG_PFMON_DEBUG: enable debugging output support
 #
-CONFIG_PFMLIB_SHARED=y
-CONFIG_PFMLIB_DEBUG=y
+CONFIG_PFMLIB_SHARED?=y
+CONFIG_PFMLIB_DEBUG?=y
 
 #
 # Cell Broadband Engine is reported as PPC but needs special handling.

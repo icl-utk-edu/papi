@@ -36,6 +36,10 @@ modifier with values in the range [0:255].
 .TP
 .B t
 Measure on both threads at the same time assuming hyper-threading is enabled. This is a boolean modifier.
+.TP
+.B p
+Enable Precise Event Based Sampling (PEBS) mode for this event. Not all events support this mode. Sometimes
+only some unit masks of an event do.
 
 .SH ENVIRONMENT VARIABLES
 It is possible to force activation of the Intel Atom support using the \fBLIBPFM_FORCE_PMU\fR variable.

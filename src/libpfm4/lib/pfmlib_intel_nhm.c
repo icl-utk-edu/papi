@@ -37,20 +37,20 @@ static int pfm_nhm_offcore_encode(void *this, pfmlib_event_desc_t *e, uint64_t *
 static int
 pfm_nhm_detect(void *this)
 {
-	int family, model;
 	int ret;
 
-	ret = pfm_intel_x86_detect(&family, &model);
+	ret = pfm_intel_x86_detect();
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	if (family != 6)
+	if (pfm_intel_x86_cfg.family != 6)
 		return PFM_ERR_NOTSUPP;
 
-	switch(model) {
-		case 26: /* Core i7 */
-			break;
-		case 30: /* Core i5 */
+	switch(pfm_intel_x86_cfg.model) {
+		case 26:
+		case 30:
+		case 31:
+		case 46:
 			break;
 		default:
 			return PFM_ERR_NOTSUPP;
@@ -125,6 +125,7 @@ pfmlib_pmu_t intel_nhm_support={
 	.pme_count		= PME_NHM_EVENT_COUNT,
 	.max_encoding		= 2, /* because of OFFCORE_RESPONSE */
 	.pe			= intel_nhm_pe,
+	.atdesc			= intel_x86_mods,
 	.pmu_detect		= pfm_nhm_detect,
 	.pmu_init		= pfm_nhm_init,
 	.get_event_encoding	= pfm_intel_x86_get_encoding,

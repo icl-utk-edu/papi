@@ -30,16 +30,16 @@
 static int
 pfm_p6_detect_pii(void *this)
 {
-	int ret, family, model;
+	int ret;
 
-	ret = pfm_intel_x86_detect(&family, &model);
+	ret = pfm_intel_x86_detect();
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	if (family != 6)
+	if (pfm_intel_x86_cfg.family != 6)
 		return PFM_ERR_NOTSUPP;
 
-	switch(model) {
+	switch (pfm_intel_x86_cfg.model) {
 		case 3: /* Pentium II */
 		case 5: /* Pentium II Deschutes */
 		case 6: /* Pentium II Mendocino */
@@ -53,16 +53,16 @@ pfm_p6_detect_pii(void *this)
 static int
 pfm_p6_detect_ppro(void *this)
 {
-	int ret, family, model;
+	int ret;
 
-	ret = pfm_intel_x86_detect(&family, &model);
+	ret = pfm_intel_x86_detect();
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	if (family != 6)
+	if (pfm_intel_x86_cfg.family != 6)
 		return PFM_ERR_NOTSUPP;
 
-	switch(model) {
+	switch (pfm_intel_x86_cfg.model) {
 		case 1: /* Pentium Pro */
 			break;
 		default:
@@ -75,16 +75,16 @@ pfm_p6_detect_ppro(void *this)
 static int
 pfm_p6_detect_piii(void *this)
 {
-	int ret, family, model;
+	int ret;
 
-	ret = pfm_intel_x86_detect(&family, &model);
+	ret = pfm_intel_x86_detect();
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	if (family != 6)
+	if (pfm_intel_x86_cfg.family != 6)
 		return PFM_ERR_NOTSUPP;
 
-	switch(model) {
+	switch (pfm_intel_x86_cfg.model) {
 		case 7: /* Pentium III Katmai */
 		case 8: /* Pentium III Coppermine */
 		case 10:/* Pentium III Cascades */
@@ -99,16 +99,16 @@ pfm_p6_detect_piii(void *this)
 static int
 pfm_p6_detect_pm(void *this)
 {
-	int ret, family, model;
+	int ret;
 
-	ret = pfm_intel_x86_detect(&family, &model);
+	ret = pfm_intel_x86_detect();
 	if (ret != PFM_SUCCESS)
 		return ret;
 
-	if (family != 6)
+	if (pfm_intel_x86_cfg.family != 6)
 		return PFM_ERR_NOTSUPP;
 
-	switch(model) {
+	switch (pfm_intel_x86_cfg.model) {
 		case 9: /* Pentium M */
 		case 13:/* Pentium M */
 			break;
@@ -125,6 +125,7 @@ pfmlib_pmu_t intel_pii_support={
 	.pmu			= PFM_PMU_INTEL_PII,
 	.pme_count		= I386_PII_EVENT_COUNT,
 	.pe			= i386_pII_pe,
+	.atdesc			= intel_x86_mods,
 
 	.pmu_detect		= pfm_p6_detect_pii,
 	.max_encoding		= 1,
@@ -145,6 +146,7 @@ pfmlib_pmu_t intel_p6_support={
 	.pmu			= PFM_PMU_I386_P6,
 	.pme_count		= I386_PIII_EVENT_COUNT,
 	.pe			= i386_pIII_pe,
+	.atdesc			= intel_x86_mods,
 
 	.pmu_detect		= pfm_p6_detect_piii,
 	.max_encoding		= 1,
@@ -165,6 +167,7 @@ pfmlib_pmu_t intel_ppro_support={
 	.pmu			= PFM_PMU_INTEL_PPRO,
 	.pme_count		= I386_PPRO_EVENT_COUNT,
 	.pe			= i386_ppro_pe,
+	.atdesc			= intel_x86_mods,
 
 	.pmu_detect		= pfm_p6_detect_ppro,
 
@@ -186,6 +189,7 @@ pfmlib_pmu_t intel_pm_support={
 	.name			= "pm",
 	.pmu			= PFM_PMU_I386_PM,
 	.pe			= i386_pm_pe,
+	.atdesc			= intel_x86_mods,
 
 	.pmu_detect		= pfm_p6_detect_pm,
 	.pme_count		= I386_PM_EVENT_COUNT,

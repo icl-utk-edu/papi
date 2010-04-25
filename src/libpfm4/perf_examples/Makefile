@@ -51,10 +51,11 @@ CFLAGS+= -pthread
 endif
 
 TARGET_GEN=
+PERF_EVENT_HDR=$(TOPDIR)/include/perfmon/perf_event.h
 
 ifeq ($(SYS),Linux)
 LPC_UTILS=perf_util.o
-TARGET_LINUX +=self self_count task task_attach_timeout syst \
+TARGET_LINUX +=self self_basic self_count task task_attach_timeout syst \
 	notify_self notify_group task_smpl self_smpl_multi \
 	self_pipe
 
@@ -67,7 +68,7 @@ all: $(TARGET_GEN) $(TARGET_LINUX) $(XTRA)
 rtop: rtop.o $(PFMLIB)
 	-$(CC) $(CFLAGS) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^ $(LIBS)  -lpthread -lncurses
 
-$(TARGET_LINUX):  %:%.o $(LPC_UTILS) $(PFMLIB) 
+$(TARGET_LINUX):  %:%.o $(LPC_UTILS) $(PFMLIB) $(PERF_EVENT_HDR)
 	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS) 
 
 $(TARGET_GEN):  %:%.o $(PFMLIB)

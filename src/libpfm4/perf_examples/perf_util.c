@@ -69,6 +69,8 @@ perf_setup_argv_events(char **argv, perf_event_desc_t **fd)
 			warnx("event %s: %s\n", *argv, pfm_strerror(ret));
 			goto error;
 		}
+		/* ABI compatibility */
+		fdt[num].hw.size = sizeof(struct perf_event_attr);
 		fdt[num].name = *argv;
 		num++;
 		argv++;

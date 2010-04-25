@@ -1,12 +1,9 @@
 /*
- * task_smpl.c - example of a task sampling another one using a randomized sampling period
+ * pebs_smpl.c - PEBS samping example (based on task_smpl.c)
+ * requires 2.6.34-rc2 or more recent
  *
- * Copyright (c) 2009 Google, Inc
+ * Copyright (c) 2010 Google, Inc
  * Contributed by Stephane Eranian <eranian@gmail.com>
- *
- * Based on:
- * Copyright (c) 2003-2006 Hewlett-Packard Development Company, L.P.
- * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,7 +36,6 @@
 #include <sys/wait.h>
 #include <sys/poll.h>
 #include <sys/mman.h>
-#include <locale.h>
 #include <err.h>
 
 #include "perf_util.h"
@@ -68,7 +64,10 @@ static struct option the_options[]={
 	{ 0, 0, 0, 0}
 };
 
-static char *gen_events = "PERF_COUNT_HW_CPU_CYCLES,PERF_COUNT_HW_INSTRUCTIONS";
+/*
+ * instructions_retired known to support PEBS on all CPUs
+ */
+static char *gen_events = "PERF_COUNT_HW_INSTRUCTIONS";
 
 static void
 cld_handler(int n)
@@ -92,10 +91,92 @@ child(char **arg)
 
 struct timeval last_read, this_read;
 
+struct pebs_record_core {
+	uint64_t flags, ip;
+	uint64_t ax, bx, cx, dx;
+	uint64_t si, di, bp, sp;
+	uint64_t r8,  r9,  r10, r11;
+	uint64_t r12, r13, r14, r15;
+};
+
+struct pebs_record_nhm {
+	uint64_t flags, ip;
+	uint64_t ax, bx, cx, dx;
+	uint64_t si, di, bp, sp;
+	uint64_t r8,  r9,  r10, r11;
+	uint64_t r12, r13, r14, r15;
+	uint64_t status, dla, dse, lat;
+};
+
+static void
+display_pebs_core(void *addr)
+{
+	struct pebs_record_core *pebs = addr;
+
+	printf("\tFL:0x%"PRIx64" EIP:0x%"PRIx64"\n"
+	       "\tEAX:0x%"PRIx64" EBX:0x%"PRIx64" ECX:0x%"PRIx64" EDX:0x%"PRIx64"\n"
+	       "\tESI:0x%"PRIx64" EDI:0x%"PRIx64" EBP:0x%"PRIx64" ESP:0x%"PRIx64"\n"
+	       "\tR08:0x%"PRIx64" R09:0x%"PRIx64" R10:0x%"PRIx64" R11:0x%"PRIx64"\n"
+	       "\tR12:0x%"PRIx64" R13:0x%"PRIx64" R14:0x%"PRIx64" R15:0x%"PRIx64"\n",
+		pebs->flags,
+		pebs->ip,
+		pebs->ax, pebs->bx, pebs->cx, pebs->dx,
+		pebs->si, pebs->di, pebs->bp, pebs->sp,
+		pebs->r8, pebs->r9, pebs->r10, pebs->r11,
+		pebs->r12, pebs->r13, pebs->r14, pebs->r15);
+	       
+}
+
+static void
+display_pebs_nhm(void *addr)
+{
+	struct pebs_record_nhm *pebs = addr;
+
+	printf("\tFL:0x%"PRIx64" EIP:0x%"PRIx64"\n"
+	       "\tEAX:0x%"PRIx64" EBX:0x%"PRIx64" ECX:0x%"PRIx64" EDX:0x%"PRIx64"\n"
+	       "\tESI:0x%"PRIx64" EDI:0x%"PRIx64" EBP:0x%"PRIx64" ESP:0x%"PRIx64"\n"
+	       "\tR08:0x%"PRIx64" R09:0x%"PRIx64" R10:0x%"PRIx64" R11:0x%"PRIx64"\n"
+	       "\tR12:0x%"PRIx64" R13:0x%"PRIx64" R14:0x%"PRIx64" R15:0x%"PRIx64"\n"
+	       "\tSTA:0x%"PRIx64" LDA:0x%"PRIx64" DSE:0x%"PRIx64" LAT:0x%"PRIx64"\n",
+		pebs->flags,
+		pebs->ip,
+		pebs->ax, pebs->bx, pebs->cx, pebs->dx,
+		pebs->si, pebs->di, pebs->bp, pebs->sp,
+		pebs->r8, pebs->r9, pebs->r10, pebs->r11,
+		pebs->r12, pebs->r13, pebs->r14, pebs->r15,
+		pebs->status, pebs->dla, pebs->dse, pebs->lat);
+	       
+}
+
+static void
+display_raw(void *addr, size_t sz)
+{
+	char *buf = addr;
+	size_t i;
+
+	if (sz)
+		putchar('\t');
+	for(i=0; i < sz; i++) {
+		printf("0x%02x ", buf[i] & 0xff );
+		if (((i+1) % 16)  == 0)
+			printf("\n\t");
+	}
+}
+
+static void display_pebs(void *addr, size_t sz)
+{
+	if (sz == sizeof(struct pebs_record_core))
+		display_pebs_core(addr);
+	else if (sz == sizeof(struct pebs_record_nhm))
+		display_pebs_nhm(addr);
+	else
+		display_raw(addr, sz);
+}
+
 static size_t handle_raw(perf_event_desc_t *hw)
 {
 	size_t sz = 0;
-	uint32_t raw_sz, i;
+	uint32_t raw_sz;
 	char *buf;
 	int ret;
 
@@ -105,26 +186,19 @@ static size_t handle_raw(perf_event_desc_t *hw)
 
 	sz += sizeof(raw_sz);
 
-	printf("\n\tRAWSZ:%u\n", raw_sz);
-
 	buf = malloc(raw_sz);
 	if (!buf)
 		err(1, "cannot allocate raw buffer");
 
-
+	
 	ret = perf_read_buffer(hw->buf, hw->pgmsk, buf, raw_sz);
 	if (ret)
 		errx(1, "cannot read raw data");
 
-	if (raw_sz)
-		putchar('\t');
-	for(i=0; i < raw_sz; i++) {
-		printf("0x%02x ", buf[i] & 0xff );
-		if (((i+1) % 16)  == 0)
-			printf("\n\t");
-	}
-	if (raw_sz)
-		putchar('\n');
+	if (hw->hw.precise)
+		display_pebs(buf, raw_sz);
+	else
+		display_raw(buf, raw_sz);
 	free(buf);
 	return sz + raw_sz;
 }
@@ -139,7 +213,7 @@ display_sample(perf_event_desc_t *hw, struct perf_event_header *ehdr)
 	struct { uint64_t value, id; } grp;
 	uint64_t time_enabled, time_running;
 	size_t sz;
-	uint64_t type, fmt;
+	uint64_t type;
 	uint64_t val64;
 	char *str;
 	int ret, e;
@@ -147,7 +221,6 @@ display_sample(perf_event_desc_t *hw, struct perf_event_header *ehdr)
 	sz = ehdr->size - sizeof(*ehdr);
 
 	type = hw->hw.sample_type;
-	fmt  = hw->hw.read_format;
 
 	collected_samples++;
 	printf("%4"PRIu64" ", collected_samples);
@@ -189,7 +262,7 @@ display_sample(perf_event_desc_t *hw, struct perf_event_header *ehdr)
 		if (ret)
 			errx(1, "cannot read time");
 
-		printf("TIME:%'"PRIu64" ", val64);
+		printf("TIME:%"PRIu64" ", val64);
 		sz -= sizeof(val64);
 	}
 
@@ -235,113 +308,65 @@ display_sample(perf_event_desc_t *hw, struct perf_event_header *ehdr)
 		if (ret)
 			errx(1, "cannot read period");
 
-		printf("PERIOD:%'"PRIu64" ", val64);
+		printf("PERIOD:%"PRIu64" ", val64);
 		sz -= sizeof(val64);
 		sum_period += val64;
 	}
 
-	/* struct read_format {
-	 * 	{ u64		value;
-	 * 	  { u64		time_enabled; } && PERF_FORMAT_ENABLED
-	 * 	  { u64		time_running; } && PERF_FORMAT_RUNNING
-	 * 	  { u64		id;           } && PERF_FORMAT_ID
-	 * 	} && !PERF_FORMAT_GROUP
-	 *
-	 * 	{ u64		nr;
-	 * 	  { u64		time_enabled; } && PERF_FORMAT_ENABLED
-	 * 	  { u64		time_running; } && PERF_FORMAT_RUNNING
-	 * 	  { u64		value;
-	 * 	    { u64	id;           } && PERF_FORMAT_ID
-	 * 	  }		cntr[nr];
-	 * 	} && PERF_FORMAT_GROUP
-	 * };
-	 */
+	/*
+	 *      { u64           nr;
+	 *        { u64         time_enabled; } && PERF_FORMAT_ENABLED
+	 *        { u64         time_running; } && PERF_FORMAT_RUNNING
+	 *        { u64         value;
+	 *          { u64       id;           } && PERF_FORMAT_ID
+	 *        }             cntr[nr];
+	 */ 
 	if (type & PERF_SAMPLE_READ) {
 		uint64_t nr;
 
-		if (fmt & PERF_FORMAT_GROUP) {
-			ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &nr);
+		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &nr);
+		if (ret)
+			errx(1, "cannot read nr");
+
+		sz -= sizeof(nr);
+
+		time_enabled = time_running = 1;
+
+		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &time_enabled);
+		if (ret)
+			errx(1, "cannot read timing info");
+
+		sz -= sizeof(time_enabled);
+
+		ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &time_running);
+		if (ret)
+			errx(1, "cannot read timing info");
+
+		sz -= sizeof(time_running);
+
+		printf("ENA=%"PRIu64" RUN=%"PRIu64" NR=%"PRIu64"\n", time_enabled, time_running, nr);
+
+		while(nr--) {
+			ret = perf_read_buffer(hw->buf, hw->pgmsk, &grp, sizeof(grp));
 			if (ret)
-				errx(1, "cannot read nr");
+				errx(1, "cannot read grp");
 
-			sz -= sizeof(nr);
+			sz -= sizeof(grp);
 
-			time_enabled = time_running = 1;
+			e = perf_id2event(fds, num_events, grp.id);
+			if (e == -1)
+				str = "unknown sample event";
+			else
+				str = fds[e].name;
 
-			if (fmt & PERF_FORMAT_TOTAL_TIME_ENABLED) {
-				ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &time_enabled);
-				if (ret)
-					errx(1, "cannot read timing info");
-
-				sz -= sizeof(time_enabled);
-			}
-
-			if (fmt & PERF_FORMAT_TOTAL_TIME_RUNNING) {
-				ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &time_running);
-				if (ret)
-					errx(1, "cannot read timing info");
-
-				sz -= sizeof(time_running);
-			}
-
-			printf("ENA=%'"PRIu64" RUN=%'"PRIu64" NR=%"PRIu64"\n", time_enabled, time_running, nr);
-
-			while(nr--) {
-				ret = perf_read_buffer(hw->buf, hw->pgmsk, &grp, sizeof(grp));
-				if (ret)
-					errx(1, "cannot read grp");
-
-				sz -= sizeof(grp);
-
-				e = perf_id2event(fds, num_events, grp.id);
-				if (e == -1)
-					str = "unknown sample event";
-				else
-					str = fds[e].name;
-
-				if (time_running)
-					grp.value = grp.value * time_enabled / time_running;
-
-				printf("\t%'"PRIu64" %s (%"PRIu64"%s)\n",
-						grp.value, str,
-						grp.id,
-						time_running != time_enabled ? ", scaled":"");
-
-			}
-		} else {
-			uint64_t val;
-			/*
-			 * this program does not use FORMAT_GROUP when there is only one event
-			 */
-			ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &val);
-			if (ret)
-				errx(1, "cannot read value");
-
-			sz -= sizeof(val);
-
-			if (fmt & PERF_FORMAT_TOTAL_TIME_ENABLED) {
-				ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &time_enabled);
-				if (ret)
-					errx(1, "cannot read timing info");
-
-				sz -= sizeof(time_enabled);
-			}
-
-			if (fmt & PERF_FORMAT_TOTAL_TIME_RUNNING) {
-				ret = perf_read_buffer_64(hw->buf, hw->pgmsk, &time_running);
-				if (ret)
-					errx(1, "cannot read timing info");
-
-				sz -= sizeof(time_running);
-			}
-
-			printf("ENA=%"PRIu64" RUN=%"PRIu64"\n", time_enabled, time_running);
 			if (time_running)
-				val = val * time_enabled / time_running;
+				grp.value = grp.value * time_enabled / time_running;
 
-				printf("\t%'"PRIu64" %s %s\n",
-					val, fds[0].name,
-					time_running != time_enabled ? ", scaled":"");
+			printf("\t%"PRIu64" %s (%"PRIu64"%s)\n",
+				grp.value, str,
+				grp.id,
+				time_running != time_enabled ? ", scaled":"");
+
 		}
 	}
 
@@ -369,7 +394,6 @@ display_sample(perf_event_desc_t *hw, struct perf_event_header *ehdr)
 		ret = handle_raw(hw);
 		sz -= ret;
 	}
-
 	/*
 	 * if we have some data left, it is because there is more
 	 * than what we know about. In fact, it is more complicated
@@ -526,7 +550,7 @@ mainloop(char **arg)
 			fds[i].hw.inherit = 1;
 
 		if (!i) {
-			fds[i].hw.sample_type = PERF_SAMPLE_IP|PERF_SAMPLE_TID|PERF_SAMPLE_READ|PERF_SAMPLE_TIME|PERF_SAMPLE_PERIOD|PERF_SAMPLE_STREAM_ID;
+			fds[i].hw.sample_type = PERF_SAMPLE_IP|PERF_SAMPLE_TID|PERF_SAMPLE_READ|PERF_SAMPLE_TIME|PERF_SAMPLE_PERIOD;
 			if (fds[i].hw.precise)
 				fds[i].hw.sample_type |= PERF_SAMPLE_RAW;
 
@@ -537,9 +561,7 @@ mainloop(char **arg)
 			printf("period=%"PRIu64" freq=%d\n", options.period, options.opt_freq);
 
 			/* must get event id for SAMPLE_GROUP */
-			fds[i].hw.read_format = PERF_FORMAT_SCALE;
-			if (num_events > 1)
-				fds[i].hw.read_format |= PERF_FORMAT_GROUP|PERF_FORMAT_ID;
+			fds[i].hw.read_format = PERF_FORMAT_GROUP|PERF_FORMAT_ID|PERF_FORMAT_SCALE;
 		}
 
 		fds[i].fd = perf_event_open(&fds[i].hw, pid, -1, fds[0].fd, 0);
@@ -576,7 +598,7 @@ mainloop(char **arg)
 	sz = (3+2*num_events)*sizeof(uint64_t);
 	val = malloc(sz);
 	if (!val)
-		err(1, "cannot allocate memory");
+		err(1, "cannot allocated memory");
 
 	ret = read(fds[0].fd, val, sz);
 	if (ret == -1)
@@ -638,15 +660,13 @@ terminate_session:
 static void
 usage(void)
 {
-	printf("usage: task_smpl [-h] [--help] [-i] [-m mmap_pages] [-f] [-e event1,...,eventn] [-p period] cmd\n");
+	printf("usage: pebs_smpl [-h] [--help] [-i] [-m mmap_pages] [-f] [-e event1,...,eventn] [-p period] cmd\n");
 }
 
 int
 main(int argc, char **argv)
 {
 	int c;
-
-	setlocale(LC_ALL, "");
 
 	while ((c=getopt_long(argc, argv,"he:m:p:if", the_options, 0)) != -1) {
 		switch(c) {

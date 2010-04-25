@@ -1,5 +1,5 @@
 /*
- * pfmlib_intel_nhm_unc.c : Intel Nehalem uncore PMU
+ * pfmlib_intel_nhm_unc.c : Intel Nehalem/Westmere uncore PMU
  *
  * Copyright (c) 2008 Google, Inc
  * Contributed by Stephane Eranian <eranian@gmail.com>
@@ -44,9 +44,9 @@
 #define NHM_UNC_ATTRS \
 	(_NHM_UNC_ATTR_I|_NHM_UNC_ATTR_E|_NHM_UNC_ATTR_C|_NHM_UNC_ATTR_O)
 
-/* Intel Core i7 uncore event tables */
+/* Intel Nehalem/Westmere uncore event table */
 #include "events/intel_nhm_unc_events.h"
-
+#include "events/intel_wsm_unc_events.h"
 
 static const pfmlib_attr_desc_t nhm_unc_mods[]={
 	PFM_ATTR_B("i", "invert"),				/* invert */
@@ -55,24 +55,44 @@ static const pfmlib_attr_desc_t nhm_unc_mods[]={
 	PFM_ATTR_B("o", "queue occupancy"),			/* queue occupancy */
 	PFM_ATTR_NULL
 };
-#define modx(a, z) (nhm_unc_mods[(a)].z)
 
 static int
 pfm_nhm_unc_detect(void *this)
 {
 	int ret;
-	int family, model;
 
-	ret = pfm_intel_x86_detect(&family, &model);
+	ret = pfm_intel_x86_detect();
 	if (ret != PFM_SUCCESS)
 
-	if (family != 6)
+	if (pfm_intel_x86_cfg.family != 6)
 		return PFM_ERR_NOTSUPP;
 
-	switch(model) {
-		case 26: /* Core i7 */
+	switch(pfm_intel_x86_cfg.model) {
+		case 26: /* Nehalem */
+		case 30:
+		case 31:
 			  break;
-		case 30: /* Core i5 */
+		default:
+			return PFM_ERR_NOTSUPP;
+	}
+	return PFM_SUCCESS;
+}
+
+static int
+pfm_wsm_unc_detect(void *this)
+{
+	int ret;
+
+	ret = pfm_intel_x86_detect();
+	if (ret != PFM_SUCCESS)
+		return ret;
+
+	if (pfm_intel_x86_cfg.family != 6)
+		return PFM_ERR_NOTSUPP;
+
+	switch (pfm_intel_x86_cfg.model) {
+		case 37: /* Westmere */
+		case 44:
 			  break;
 		default:
 			return PFM_ERR_NOTSUPP;
@@ -116,10 +136,11 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 
 	/*
 	 * uncore only measure user+kernel, so ensure default is setup
-	 * accordingly
+	 * accordingly even though we are not using it, this avoids
+	 * possible mistakes by user
 	 */
-	if ((e->dfl_plm & (PFM_PLM0|PFM_PLM3)) != (PFM_PLM0|PFM_PLM3)) {
-		DPRINT("dfl_plm must be PLM0|PLM3 with Intel Nehalem uncore PMU\n");
+	if (e->dfl_plm != (PFM_PLM0|PFM_PLM3)) {
+		DPRINT("dfl_plm must be PLM0|PLM3 with Intel uncore PMU\n");
 		return PFM_ERR_INVAL;
 	}
 
@@ -173,7 +194,7 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 
 			reg->val |= umask << 8;
 		} else {
-			switch(a->id - pe[e->event].numasks) {
+			switch(pfm_intel_x86_attr2mod(this, e->event, a->id)) {
 				case NHM_UNC_ATTR_I: /* invert */
 					reg->nhm_unc.usel_inv = !!a->ival;
 					break;
@@ -208,7 +229,7 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 	 */
 	if (ugrpmsk != grpmsk) {
 		ugrpmsk ^= grpmsk;
-		ret = pfm_intel_x86_add_defaults(pe+e->event, umask_str, ugrpmsk, &umask);
+		ret = pfm_intel_x86_add_defaults(this, e->event, umask_str, ugrpmsk, &umask);
 		if (ret != PFM_SUCCESS)
 			return ret;
 	}
@@ -258,10 +279,10 @@ intel_nhm_unc_get_encoding(void *this, pfmlib_event_desc_t *e, pfm_intel_x86_reg
 		}
 	}
 
-	evt_strcat(e->fstr, ":%s=%lu", modx(NHM_UNC_ATTR_E, name), reg->nhm_unc.usel_edge);
-	evt_strcat(e->fstr, ":%s=%lu", modx(NHM_UNC_ATTR_I, name), reg->nhm_unc.usel_inv);
-	evt_strcat(e->fstr, ":%s=%lu", modx(NHM_UNC_ATTR_C, name), reg->nhm_unc.usel_cnt_mask);
-	evt_strcat(e->fstr, ":%s=%lu", modx(NHM_UNC_ATTR_O, name), reg->nhm_unc.usel_occ);
+	evt_strcat(e->fstr, ":%s=%lu", modx(nhm_unc_mods, NHM_UNC_ATTR_E, name), reg->nhm_unc.usel_edge);
+	evt_strcat(e->fstr, ":%s=%lu", modx(nhm_unc_mods, NHM_UNC_ATTR_I, name), reg->nhm_unc.usel_inv);
+	evt_strcat(e->fstr, ":%s=%lu", modx(nhm_unc_mods, NHM_UNC_ATTR_C, name), reg->nhm_unc.usel_cnt_mask);
+	evt_strcat(e->fstr, ":%s=%lu", modx(nhm_unc_mods, NHM_UNC_ATTR_O, name), reg->nhm_unc.usel_occ);
 
 	__pfm_vbprintf("[UNC_PERFEVTSEL=0x%"PRIx64" event=0x%x umask=0x%x en=%d int=%d inv=%d edge=%d occ=%d cnt_msk=%d] %s\n",
 		reg->val,
@@ -310,8 +331,30 @@ pfmlib_pmu_t intel_nhm_unc_support={
 	.pme_count		= PME_NHM_UNC_EVENT_COUNT,
 	.max_encoding		= 1,
 	.pe			= intel_nhm_unc_pe,
+	.atdesc			= nhm_unc_mods,
 
 	.pmu_detect		= pfm_nhm_unc_detect,
+	.get_event_encoding	= pfm_nhm_unc_get_encoding,
+	.get_event_first	= pfm_intel_x86_get_event_first,
+	.get_event_next		= pfm_intel_x86_get_event_next,
+	.event_is_valid		= pfm_intel_x86_event_is_valid,
+	.get_event_perf_type	= pfm_nhm_unc_get_event_perf_type,
+	.validate_table		= pfm_intel_x86_validate_table,
+	.get_event_info		= pfm_intel_x86_get_event_info,
+	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
+};
+
+pfmlib_pmu_t intel_wsm_unc_support={
+	.desc			= "Intel Westmere uncore",
+	.name			= "wsm_unc",
+
+	.pmu			= PFM_PMU_INTEL_WSM_UNC,
+	.pme_count		= PME_WSM_UNC_EVENT_COUNT,
+	.max_encoding		= 1,
+	.pe			= intel_wsm_unc_pe,
+	.atdesc			= nhm_unc_mods,
+
+	.pmu_detect		= pfm_wsm_unc_detect,
 	.get_event_encoding	= pfm_nhm_unc_get_encoding,
 	.get_event_first	= pfm_intel_x86_get_event_first,
 	.get_event_next		= pfm_intel_x86_get_event_next,

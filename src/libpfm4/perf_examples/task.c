@@ -28,7 +28,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdarg.h>
+#include <signal.h>
 #include <sys/wait.h>
+#include <locale.h>
 #include <err.h>
 
 #include "perf_util.h"
@@ -39,9 +41,11 @@ typedef struct {
 	int group;
 	int print;
 	int pin;
+	pid_t pid;
 } options_t;
 
 static options_t options;
+static volatile int quit;
 
 int
 child(char **arg)
@@ -55,45 +59,110 @@ child(char **arg)
 }
 
 static void
-print_counts(perf_event_desc_t *fds, int num, int do_delta)
+read_group(perf_event_desc_t *fds, int num)
 {
-	uint64_t values[3];
+	uint64_t *values;
+	size_t sz;
 	int i, ret;
+
 	/*
-	 * now simply read the results.
+	 * 	{ u64		nr;
+	 * 	  { u64		time_enabled; } && PERF_FORMAT_ENABLED
+	 * 	  { u64		time_running; } && PERF_FORMAT_RUNNING
+	 * 	  { u64		value;
+	 * 	    { u64	id;           } && PERF_FORMAT_ID
+	 * 	  }		cntr[nr];
+	 * 	} && PERF_FORMAT_GROUP
+	 *
+	 * we do not use FORMAT_ID in this program
+	 */
+	sz = sizeof(uint64_t) * (3 + num);
+	values = malloc(sz);
+	if (!values)
+		err(1, "cannot allocate memory for values\n");
+
+	ret = read(fds[0].fd, values, sz);
+	if (ret != sz) { /* unsigned */
+		if (ret == -1)
+			err(1, "cannot read values event %s", fds[0].name);
+		else	/* likely pinned and could not be loaded */
+			warnx("could not read event0 ret=%d", ret);
+	}
+
+	/*
+	 * propagate to save area
 	 */
 	for(i=0; i < num; i++) {
-		uint64_t val;
-		double ratio;
-
-		ret = read(fds[i].fd, values, sizeof(values));
-		if (ret < sizeof(values)) {
-			if (ret == -1)
-				err(1, "cannot read values event %s", fds[i].name);
-			else	/* likely pinned and could not be loaded */
-				warnx("could not read event%d", i);
-		}
-
+		values[0] = values[3+i];
 		/*
 		 * scaling because we may be sharing the PMU and
 		 * thus may be multiplexed
 		 */
 		fds[i].prev_value = fds[i].value;
-		fds[i].value = val = perf_scale(values);
-		ratio = perf_scale_ratio(values);
+		fds[i].value = perf_scale(values);
+		fds[i].enabled = values[1];
+		fds[i].running = values[2];
+	}
+	free(values);
+}
 
-		val = do_delta ? (val - fds[i].prev_value): val;
+static void
+read_single(perf_event_desc_t *fds, int num)
+{
+	uint64_t values[3];
+	int i, ret;
+
+	for(i=0; i < num; i++) {
+
+		ret = read(fds[i].fd, values, sizeof(values));
+		if (ret != sizeof(values)) { /* unsigned */
+			if (ret == -1)
+				err(1, "cannot read values event %s", fds[i].name);
+			else	/* likely pinned and could not be loaded */
+				warnx("could not read event%d", i);
+		}
+		fds[i].prev_value = fds[i].value;
+		fds[i].value = perf_scale(values);
+		fds[i].enabled = values[1];
+		fds[i].running = values[2];
+	}
+}
+
+static void
+print_counts(perf_event_desc_t *fds, int num)
+{
+	int i;
+
+	if (options.group)
+		read_group(fds, num);
+	else
+		read_single(fds, num);
+
+	for(i=0; i < num; i++) {
+		double ratio;
+		uint64_t val;
+
+		val = fds[i].value - fds[i].prev_value;
+
+		ratio = 0.0;
+		if (fds[i].enabled)
+			ratio = 1.0 * fds[i].running / fds[i].enabled;
+
 		if (ratio == 1.0)
-			printf("%20"PRIu64" %s\n", val, fds[i].name);
+			printf("%'20"PRIu64" %s (%'"PRIu64" : %'"PRIu64")\n", val, fds[i].name, fds[i].enabled, fds[i].running);
 		else
 			if (ratio == 0.0)
-				printf("%20"PRIu64" %s (did not run: incompatible events, too many events in a group, competing session)\n", val, fds[i].name);
+				printf("%'20"PRIu64" %s (did not run: incompatible events, too many events in a group, competing session)\n", val, fds[i].name);
 			else
-				printf("%20"PRIu64" %s (scaled from %.2f%% of time)\n", val, fds[i].name, ratio*100.0);
+				printf("%'20"PRIu64" %s (scaled from %.2f%% of time)\n", val, fds[i].name, ratio*100.0);
 
 	}
 }
 
+static void sig_handler(int n)
+{
+	quit = 1;
+}
 
 int
 parent(char **arg)
@@ -107,65 +176,80 @@ parent(char **arg)
 	if (pfm_initialize() != PFM_SUCCESS)
 		errx(1, "libpfm initialization failed");
 
-	ret = pipe(ready);
-	if (ret)
-		err(1, "cannot create pipe ready");
-
-	ret = pipe(go);
-	if (ret)
-		err(1, "cannot create pipe go");
-
 	num = perf_setup_list_events(options.events, &fds);
 	if (num < 1)
 		exit(1);
 
-	/*
-	 * Create the child task
-	 */
-	if ((pid=fork()) == -1)
-		err(1, "Cannot fork process");
+	pid = options.pid;
+	if (!pid) {
+		ret = pipe(ready);
+		if (ret)
+			err(1, "cannot create pipe ready");
 
-	/*
-	 * and launch the child code
-	 */
-	if (pid == 0) {
-		close(ready[0]);
-		close(go[1]);
+		ret = pipe(go);
+		if (ret)
+			err(1, "cannot create pipe go");
+
 
 		/*
-		 * let the parent know we exist
+		 * Create the child task
 		 */
-               close(ready[1]);
-               if (read(go[0], &buf, 1) == -1)
-                       err(1, "unable to read go_pipe");
+		if ((pid=fork()) == -1)
+			err(1, "Cannot fork process");
+
+		/*
+		 * and launch the child code
+		 *
+		 * The pipe is used to avoid a race condition
+		 * between for() and exec(). We need the pid
+		 * of the new tak but we want to start measuring
+		 * at the first user level instruction. Thus we
+		 * need to prevent exec until we have attached
+		 * the events.
+		 */
+		if (pid == 0) {
+			close(ready[0]);
+			close(go[1]);
+
+			/*
+			 * let the parent know we exist
+			 */
+			close(ready[1]);
+			if (read(go[0], &buf, 1) == -1)
+				err(1, "unable to read go_pipe");
 
 
-		exit(child(arg));
+			exit(child(arg));
+		}
+
+		close(ready[1]);
+		close(go[0]);
+
+		if (read(ready[0], &buf, 1) == -1)
+			err(1, "unable to read child_ready_pipe");
+
+		close(ready[0]);
 	}
-
-	close(ready[1]);
-	close(go[0]);
-
-	if (read(ready[0], &buf, 1) == -1)
-               err(1, "unable to read child_ready_pipe");
-
-	close(ready[0]);
 
 	fds[0].fd = -1;
 	for(i=0; i < num; i++) {
 		/*
 		 * create leader disabled with enable_on-exec
 		 */
-		if (options.group) {
-			fds[i].hw.disabled = !i;
-			fds[i].hw.enable_on_exec = !i;
-		} else {
-			fds[i].hw.disabled = 1;
-			fds[i].hw.enable_on_exec = 1;
+		if (!options.pid) {
+			if (options.group) {
+				fds[i].hw.disabled = !i;
+				fds[i].hw.enable_on_exec = !i;
+			} else {
+				fds[i].hw.disabled = 1;
+				fds[i].hw.enable_on_exec = 1;
+			}
 		}
 
-		/* request timing information necessary for scaling counts */
 		fds[i].hw.read_format = PERF_FORMAT_SCALE;
+		/* request timing information necessary for scaling counts */
+		if (!i && options.group)
+			fds[0].hw.read_format |= PERF_FORMAT_GROUP;
 
 		if (options.inherit)
 			fds[i].hw.inherit = 1;
@@ -180,16 +264,27 @@ parent(char **arg)
 		}
 	}	
 
-	close(go[1]);
+	if (!options.pid)
+		close(go[1]);
 
 	if (options.print) {
-		while(waitpid(pid, &status, WNOHANG) == 0) {
-			print_counts(fds, num, 1);
-			sleep(1);
+		if (!options.pid) {
+			while(waitpid(pid, &status, WNOHANG) == 0) {
+				sleep(1);
+				print_counts(fds, num);
+			}
+		} else {
+			while(quit == 0) {
+				sleep(1);
+				print_counts(fds, num);
+			}
 		}
 	} else {
-		waitpid(pid, &status, 0);
-		print_counts(fds, num, 0);
+		if (!options.pid)
+			waitpid(pid, &status, 0);
+		else
+			pause();
+		print_counts(fds, num);
 	}
 
 	for(i=0; i < num; i++)
@@ -199,19 +294,21 @@ parent(char **arg)
 	return 0;
 error:
 	free(fds);
-	kill(SIGKILL, pid);
+	if (!options.pid)
+		kill(SIGKILL, pid);
 	return -1;
 }
 
 static void
 usage(void)
 {
-	printf("usage: task [-h] [-i] [-g] [-p] [-P] [-e event1,event2,...] cmd\n"
+	printf("usage: task [-h] [-i] [-g] [-p] [-P] [-t pid] [-e event1,event2,...] cmd\n"
 		"-h\t\tget help\n"
 		"-i\t\tinherit across fork\n"
 		"-g\t\tgroup events\n"
 		"-p\t\tprint counts every second\n"
 		"-P\t\tpin events\n"
+		"-t pid\tmeasure existing pid\n"
 		"-e ev,ev\tlist of events to measure\n"
 		);
 }
@@ -221,7 +318,9 @@ main(int argc, char **argv)
 {
 	int c;
 
-	while ((c=getopt(argc, argv,"he:igpP")) != -1) {
+	setlocale(LC_ALL, "");
+
+	while ((c=getopt(argc, argv,"he:igpPt:")) != -1) {
 		switch(c) {
 			case 'e':
 				options.events = optarg;
@@ -238,6 +337,9 @@ main(int argc, char **argv)
 			case 'i':
 				options.inherit = 1;
 				break;
+			case 't':
+				options.pid = atoi(optarg);
+				break;
 			case 'h':
 				usage();
 				exit(0);
@@ -248,8 +350,10 @@ main(int argc, char **argv)
 	if (!options.events)
 		options.events = "PERF_COUNT_HW_CPU_CYCLES,PERF_COUNT_HW_INSTRUCTIONS";
 
-	if (!argv[optind])
-		errx(1, "you must specify a command to execute\n");
+	if (!argv[optind] && !options.pid)
+		errx(1, "you must specify a command to execute or a thread to attach to\n");
 	
+	signal(SIGINT, sig_handler);
+
 	return parent(argv+optind);
 }

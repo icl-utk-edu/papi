@@ -67,7 +67,8 @@ typedef struct {
  * back up to match perf_event_attr with hardware settings
  */
 typedef struct {
-	int plm;
+	int plm;	/* privilege level mask */
+	int precise;	/* enable precise sampling */
 	/* more to be added in the future */
 } pfmlib_perf_attr_t;
 
@@ -85,15 +86,18 @@ typedef struct {
 	int			nattrs;				/* number of attrs in attrs[] */
 	pfmlib_attr_t		attrs[PFMLIB_MAX_EVENT_ATTRS];	/* list of attributes */
 } pfmlib_event_desc_t;
+#define modx(atdesc, a, z) (atdesc[(a)].z)
 
 typedef struct pfmlib_pmu {
-	const char 	*desc;				/* PMU description */
-	const char 	*name;				/* pmu short name */
-	pfm_pmu_t	pmu;				/* PMU model */
-	int		pme_count;			/* number of events */
-	int		max_encoding;			/* max number of uint64_t to encode an event */
-	int		flags;				/* PMU flags */
-	const void	*pe;				/* pointer to event table */
+	const char 	*desc;			/* PMU description */
+	const char 	*name;			/* pmu short name */
+	pfm_pmu_t	pmu;			/* PMU model */
+	int		pme_count;		/* number of events */
+	int		max_encoding;		/* max number of uint64_t to encode an event */
+	int		flags;			/* PMU flags */
+	const void	*pe;			/* pointer to event table */
+
+	const pfmlib_attr_desc_t *atdesc;	/* pointer to attrs table */
 
 	int 		 (*pmu_detect)(void *this);
 	int 		 (*pmu_init)(void *this);	/* optional */
@@ -169,10 +173,13 @@ extern pfmlib_pmu_t gen_powerpc_support;
 extern pfmlib_pmu_t sparc_support;
 extern pfmlib_pmu_t cell_support;
 extern pfmlib_pmu_t perf_event_support;
+extern pfmlib_pmu_t intel_wsm_support;
+extern pfmlib_pmu_t intel_wsm_unc_support;
 
 extern char *pfmlib_forced_pmu;
 
-#define this_pe(t)	(((pfmlib_pmu_t *)t)->pe)
+#define this_pe(t)		(((pfmlib_pmu_t *)t)->pe)
+#define this_atdesc(t)		(((pfmlib_pmu_t *)t)->atdesc)
 
 /*
  * population count (number of bits set)

@@ -33,6 +33,10 @@ Enable edge detection, i.e., count only when there is a state transition. This i
 Set the counter mask value. The mask acts as a threshold. The counter will count the number of cycles
 in which the number of occurrences of the event is greater or equal to the threshold. This is an integer
 modifier with values in the range [0:255].
+.TP
+.B p
+Enable Precise Event Based Sampling (PEBS) mode for this event. Not all events support this mode. Sometimes
+only some unit masks of an event do.
 
 .SH ENVIRONMENT VARIABLES
 It is possible to force activation of the Intel Core support using the \fBLIBPFM_FORCE_PMU\fR variable.

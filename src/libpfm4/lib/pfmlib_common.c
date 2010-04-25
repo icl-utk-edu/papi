@@ -59,6 +59,8 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_atom_support,
 	&intel_nhm_support,
 	&intel_nhm_unc_support,
+	&intel_wsm_support,
+	&intel_wsm_unc_support,
 	&intel_x86_arch_support, /* must always be last for x86-64 */
 #endif
 
@@ -74,6 +76,8 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_atom_support,
 	&intel_nhm_support,
 	&intel_nhm_unc_support,
+	&intel_wsm_support,
+	&intel_wsm_unc_support,
 	&intel_x86_arch_support, /* must always be last for i386 */
 #endif
 
@@ -444,6 +448,7 @@ pfmlib_parse_event_attr(char *str, pfmlib_pmu_t *pmu, int idx, int nattrs, pfmli
 {
 	pfm_event_attr_info_t ainfo;
 	char *s, *p, *q, *endptr;
+	char yes[2] = "y";
 	pfm_attr_t type;
 	int a, has_val;
 	int na, ret;
@@ -502,7 +507,7 @@ found_attr:
 		if (type != PFM_ATTR_UMASK && !has_val) {
 			if (type != PFM_ATTR_MOD_BOOL)
 				return PFM_ERR_ATTR_VAL;
-			has_val = 1; s = "y";
+			has_val = 1; s = yes; /* no const */
 			goto handle_bool;
 		}
 
@@ -547,7 +552,7 @@ handle_bool:
 				goto error;
 			}
 		}
-		DPRINT("na=%d id=%d type=%d\n", na, a, type);
+		DPRINT("na=%d id=%d type=%d idx=%d nattrs=%d name=%s\n", na, a, type, ainfo.idx, nattrs, ainfo.name);
 		d->attrs[na].id = a;
 		d->attrs[na].type = type;
 		d->nattrs++;
@@ -671,7 +676,7 @@ static const char *pfmlib_err_list[]=
 	"invalid event attribute value",
 	"attribute value already set, cannot change",
 	"too many parameters",
-	"parameter is too small"
+	"parameter is too small",
 	"attribute hardwired, cannot change"
 };
 static size_t pfmlib_err_count = sizeof(pfmlib_err_list)/sizeof(char *);
@@ -923,6 +928,9 @@ pfm_get_event_info(int idx, pfm_event_info_t *info)
 
 	if (info->size && info->size != sizeof(*info))
 		return PFM_ERR_INVAL;
+
+	/* default data type is uint64 */
+	info->dtype = PFM_DTYPE_UINT64;
 
 	ret = pmu->get_event_info(pmu, pidx, info);
 	if (ret == PFM_SUCCESS) {

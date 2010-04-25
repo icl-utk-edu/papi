@@ -39,9 +39,16 @@
 
 static struct {
 	int compact;
+	int sort;
+	uint64_t mask;
 } options;
 
 extern int pfm_pmu_validate_events(pfm_pmu_t pmu, FILE *fp);
+
+typedef struct {
+	uint64_t code;
+	int idx;
+} code_info_t;
 
 static void
 show_event_info_compact(pfm_event_info_t *info)
@@ -62,6 +69,19 @@ show_event_info_compact(pfm_event_info_t *info)
 
 		printf("%s::%s:%s\n", pinfo.name, info->name, ainfo.name);
 	}
+}
+
+int compare_codes(const void *a, const void *b)
+{
+	const code_info_t *aa = a;
+	const code_info_t *bb = b;
+	uint64_t m = options.mask;
+
+	if ((aa->code & m) < (bb->code &m))
+		return -1;
+	if ((aa->code & m) == (bb->code & m))
+		return 0;
+	return 1;
 }
 
 static void
@@ -100,12 +120,19 @@ show_event_info(pfm_event_info_t *info)
 
 		switch(ainfo.type) {
 		case PFM_ATTR_UMASK:
-			printf("Umask-%02u : 0x%02"PRIx64" : [%s] : %s%s\n",
+			printf("Umask-%02u : 0x%02"PRIx64" : [%s] : ",
 				um,
 				ainfo.code,
-				ainfo.name,
-				ainfo.desc,
-				ainfo.is_dfl ? " (DEFAULT)" : "");
+				ainfo.name);
+
+			if (ainfo.equiv)
+				printf("Alias to %s", ainfo.equiv);
+			else
+				printf("%s", ainfo.desc);
+
+			if (ainfo.is_dfl)
+				printf(" (DEFAULT)");
+				putchar('\n');
 			um++;
 			break;
 		case PFM_ATTR_MOD_BOOL:
@@ -122,10 +149,128 @@ show_event_info(pfm_event_info_t *info)
 	}
 }
 
+
+static int
+show_info(regex_t *preg)
+{
+	pfm_pmu_info_t pinfo;
+	pfm_event_info_t info;
+	int i, ret, match = 0;
+	size_t len, l = 0;
+	char *fullname = NULL;
+
+	memset(&pinfo, 0, sizeof(pinfo));
+	memset(&info, 0, sizeof(info));
+
+	pfm_for_each_event(i) {
+
+		ret = pfm_get_event_info(i, &info);
+		if (ret != PFM_SUCCESS)
+			errx(1, "cannot get event info: %s", pfm_strerror(ret));
+
+		ret = pfm_get_pmu_info(info.pmu, &pinfo);
+		if (ret != PFM_SUCCESS)
+			errx(1, "cannot get PMU name: %s", pfm_strerror(ret));
+
+		len = strlen(info.name) + strlen(pinfo.name) + 1 + 2;
+		if (len > l) {
+			l = len;
+			fullname = realloc(fullname, l);
+			if (!fullname)
+				err(1, "cannot allocate memory");
+		}
+		sprintf(fullname, "%s::%s", pinfo.name, info.name);
+
+		if (regexec(preg, fullname, 0, NULL, 0) == 0) {
+			if (options.compact)
+				show_event_info_compact(&info);
+			else
+				show_event_info(&info);
+			match++;
+		}
+	}
+	if (fullname)
+		free(fullname);
+
+	return match;
+}
+
+static int
+show_info_sorted(regex_t *preg)
+{
+	pfm_pmu_info_t pinfo;
+	pfm_event_info_t info;
+	int i, j, ret, n, match = 0;
+	size_t len, l = 0;
+	char *fullname = NULL;
+	code_info_t *codes;
+
+	memset(&pinfo, 0, sizeof(pinfo));
+	memset(&info, 0, sizeof(info));
+
+	for(j=0; j < PFM_PMU_MAX; j++) {
+
+		ret = pfm_get_pmu_info(j, &pinfo);
+		if (ret != PFM_SUCCESS)
+			continue;
+
+		codes = malloc(pinfo.nevents * sizeof(*codes));
+		if (!codes)
+			err(1, "cannot allocate memory\n");
+
+		n = 0;
+		pfm_for_each_event(i) {
+
+			ret = pfm_get_event_info(i, &info);
+			if (ret != PFM_SUCCESS)
+				errx(1, "cannot get event info: %s", pfm_strerror(ret));
+
+			if (info.pmu != j)
+				continue;
+
+			codes[n].idx = info.idx;
+			codes[n].code = info.code;
+			n++;
+		}
+		qsort(codes, n, sizeof(*codes), compare_codes);
+		for(i=0; i < n; i++) {
+			ret = pfm_get_event_info(codes[i].idx, &info);
+			if (ret != PFM_SUCCESS)
+				errx(1, "cannot get event info: %s", pfm_strerror(ret));
+
+			len = strlen(info.name) + strlen(pinfo.name) + 1 + 2;
+			if (len > l) {
+				l = len;
+				fullname = realloc(fullname, l);
+				if (!fullname)
+					err(1, "cannot allocate memory");
+			}
+			sprintf(fullname, "%s::%s", pinfo.name, info.name);
+
+			if (regexec(preg, fullname, 0, NULL, 0) == 0) {
+				if (options.compact)
+					show_event_info_compact(&info);
+				else
+					show_event_info(&info);
+				match++;
+			}
+		}
+		free(codes);
+	}
+	if (fullname)
+		free(fullname);
+
+	return match;
+}
+
 static void
 usage(void)
 {
-	printf("showevtinfo [-L] [-h]\n");
+	printf("showevtinfo [-L] [-h] [-s] [-C] [-m mask]\n"
+		"-L\t\tlist one event per line\n"
+		"-h\t\tget help\n"
+		"-s\t\tsort event by PMU and by code based on -m mask\n"
+		"-m mask\t\thexadecimal event code mask, bits to match when sorting\n");
 }
 
 static int
@@ -154,24 +299,31 @@ validate_event_tables(void)
 int
 main(int argc, char **argv)
 {
+	static char *argv_all[2] = { ".*", NULL };
 	pfm_pmu_info_t pinfo;
-	pfm_event_info_t info;
+	char *endptr = NULL;
+	char **args;
 	int i, match;
 	regex_t preg;
-	char *fullname = NULL;
-	size_t len, l = 0;
 	int ret, c, validate = 0;
 
-	memset(&info, 0, sizeof(info));
 	memset(&pinfo, 0, sizeof(pinfo));
 
-	while ((c=getopt(argc, argv,"hCL")) != -1) {
+	while ((c=getopt(argc, argv,"hCLsm:")) != -1) {
 		switch(c) {
 			case 'L':
 				options.compact = 1;
 				break;
+			case 's':
+				options.sort = 1;
+				break;
 			case 'C':
 				validate = 1;
+				break;
+			case 'm':
+				options.mask = strtoull(optarg, &endptr, 16);
+				if (*endptr)
+					errx(1, "mask must be in hexadecimal\n");
 				break;
 			case 'h':
 				usage();
@@ -187,11 +339,14 @@ main(int argc, char **argv)
 	if (validate)
 		exit(validate_event_tables());
 
+	if (options.mask == 0)
+		options.mask = ~0;
+
 	if (optind == argc) {
-		argv[0] = ".*"; /* match everything */
-		argv[1] = NULL;
-	} else
-		argv++;
+		args = argv_all;
+	} else {
+		args = argv + optind;
+	}
 
 	if (!options.compact) {
 		printf("Supported PMU models:\n");
@@ -215,49 +370,22 @@ main(int argc, char **argv)
 		printf("Total events: %d\n", pfm_get_nevents());
 	}
 
-	while(*argv) {
-		if (regcomp(&preg, *argv, REG_ICASE|REG_NOSUB))
+	while(*args) {
+		if (regcomp(&preg, *args, REG_ICASE|REG_NOSUB))
 			errx(1, "error in regular expression for event \"%s\"", *argv);
 
-		match = 0;
+		if (options.sort)
+			match = show_info_sorted(&preg);
+		else
+			match = show_info(&preg);
 
-		pfm_for_each_event(i) {
-
-			ret = pfm_get_event_info(i, &info);
-			if (ret != PFM_SUCCESS)
-				errx(1, "cannot get event info: %s", pfm_strerror(ret));
-
-			ret = pfm_get_pmu_info(info.pmu, &pinfo);
-			if (ret != PFM_SUCCESS)
-				errx(1, "cannot get PMU name: %s", pfm_strerror(ret));
-
-			len = strlen(info.name) + strlen(pinfo.name) + 1 + 2;
-			if (len > l) {
-				l = len;
-				fullname = realloc(fullname, l);
-				if (!fullname)
-					err(1, "cannot allocate memory");
-			}
-			sprintf(fullname, "%s::%s", pinfo.name, info.name);
-
-			if (regexec(&preg, fullname, 0, NULL, 0) == 0) {
-				if (options.compact)
-					show_event_info_compact(&info);
-				else
-					show_event_info(&info);
-				match++;
-			}
-		}
 		if (match == 0)
 			errx(1, "event %s not found", *argv);
 
-		argv++;
+		args++;
 	}
 
 	regfree(&preg);
-
-	if (fullname)
-		free(fullname);
 
 	return 0;
 }
