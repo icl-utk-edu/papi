@@ -1,10 +1,6 @@
 /* 
 * File:    multiplex1_pthreads.c
-<<<<<<< multiplex1_pthreads.c
 * CVS:     $Id$
-=======
-* CVS:     $Id$
->>>>>>> 1.54
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    <your name here>

@@ -1459,7 +1459,7 @@ PAPI_reset( int EventSet )
 
 		}
 	} else {
-#ifdef _BGP
+#ifdef __bgp__
 		//  For BG/P, we always want to reset the 'real' hardware counters.  The counters
 		//  can be controlled via multiple interfaces, and we need to ensure that the values
 		//  are truly zero...

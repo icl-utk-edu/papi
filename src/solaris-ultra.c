@@ -828,11 +828,8 @@ int
 _ultra_hwd_init_substrate( int cidx )
 {
 	int retval;
-
-#ifndef PAPI_NO_VECTOR		 /*
-							    retval = _papi_hwi_setup_vector_table(vtable, _solaris_ultra_table);
-							    if ( retval != PAPI_OK ) return(retval); */
-#endif
+ /* retval = _papi_hwi_setup_vector_table(vtable, _solaris_ultra_table);
+	if ( retval != PAPI_OK ) return(retval); */
 
 	/* Fill in what we can of the papi_system_info. */
 	retval = get_system_info(  );

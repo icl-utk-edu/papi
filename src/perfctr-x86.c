@@ -239,7 +239,6 @@ setup_x86_presets( int cputype )
 	} else {
 		switch ( cputype ) {
 		case PERFCTR_X86_GENERIC:
-		case PERFCTR_X86_CYRIX_MII:
 		case PERFCTR_X86_WINCHIP_C6:
 		case PERFCTR_X86_WINCHIP_2:
 		case PERFCTR_X86_VIA_C3:
@@ -358,7 +357,6 @@ _x86_init_control_state( hwd_control_state_t * ptr )
 		ptr->allocated_registers.selector = 0;
 		switch ( _papi_hwi_system_info.hw_info.model ) {
 		case PERFCTR_X86_GENERIC:
-		case PERFCTR_X86_CYRIX_MII:
 		case PERFCTR_X86_WINCHIP_C6:
 		case PERFCTR_X86_WINCHIP_2:
 		case PERFCTR_X86_VIA_C3:

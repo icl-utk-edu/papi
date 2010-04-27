@@ -34,9 +34,6 @@
 #include <sys/ucontext.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
-#ifdef USE_SEMAPHORES
-#include <sys/sem.h>
-#endif
 
 #if defined(HAVE_MMTIMER)
 #include <sys/ioctl.h>
@@ -185,28 +182,6 @@ typedef ia64_context_t hwd_context_t;
 
 
 #define MY_VECTOR _ia64_vector
-
-#ifdef USE_SEMAPHORES
-extern int sem_set;
-
-/* If lock == MUTEX_OPEN, lock = MUTEX_CLOSED, val = MUTEX_OPEN
- * else val = MUTEX_CLOSED */
-
-#define  _papi_hwd_lock(lck)                    \
-{                                               \
-struct sembuf sem_lock = { lck, -1, 0 }; \
-if (semop(sem_set, &sem_lock, 1) == -1 ) {      \
-abort(); } }
-// PAPIERROR("semop errno %d",errno); abort(); } }
-
-#define  _papi_hwd_unlock(lck)                   \
-{                                                \
-struct sembuf sem_unlock = { lck, 1, 0 }; \
-if (semop(sem_set, &sem_unlock, 1) == -1 ) {     \
-abort(); } }
-// PAPIERROR("semop errno %d",errno); abort(); } }
-
-#else
 extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 #define MUTEX_OPEN 0
 #define MUTEX_CLOSED 1
@@ -225,5 +200,4 @@ extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 
 #define _papi_hwd_unlock(lck) {  __asm__ __volatile__ ("st4.rel [%0]=%1" : : "r"(&_papi_hwd_lock_data[lck]), "r"(MUTEX_OPEN) : "memory"); }
 #endif /* __INTEL_COMPILER */
-#endif /* USE_SEMAPHORES */
 #endif /* _PAPI_LINUX_IA64_H */

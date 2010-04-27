@@ -639,7 +639,12 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+<<<<<<< configure
 BITFLAGS
+=======
+tests
+BITFLAGS
+>>>>>>> 1.185
 BGP_SYSDIR
 SHOW_CONF
 TESTS
@@ -672,7 +677,6 @@ CPU
 VERSION
 LINKLIB
 SETPATH
-tests
 papi_events_table
 papi_events
 PEPATH
@@ -681,7 +685,6 @@ compobjs
 comphdrs
 compsrcs
 compnts
-bitmode
 pfm_libdir
 pfm_incdir
 pfm_prefix
@@ -761,16 +764,24 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 with_arch
+with_bitmode
 with_OS
 with_OSVER
-with_CPU
-with_bitmode
+with_nativecc
+with_tests
+with_generic
 with_debug
+with_CPU
 with_ffsll
 with_walltimer
 with_tls
-enable_papi_vector
 with_virtualtimer
+with_pmapi
+with_papi_events
+enable_static_tests
+enable_shared
+enable_static
+with_shlib
 with_perfctr
 with_perfctr_root
 with_perfctr_prefix
@@ -781,24 +792,20 @@ with_pfm_root
 with_pfm_prefix
 with_pfm_incdir
 with_pfm_libdir
-with_pe_incdir
 with_perf_events
-with_pmapi
-with_papi_events
-with_with_semaphores
-with_tests
-enable_static_tests
-enable_shared
-enable_static
-with_nativecc
+with_pe_incdir
 with_mx
 with_net
 with_acpi
 with_lmsensors
 with_sensors_incdir
 with_sensors_libdir
+<<<<<<< configure
 with_lustre
 with_shlib
+=======
+with_lustre
+>>>>>>> 1.185
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1432,7 +1439,6 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --disable-papi-vector	Disable indirect substrate functions
   --enable-static-tests   Enable tests built static
   --disable-shared        Disable the use of shared library
   --disable-static        Disable the use of static library
@@ -1441,14 +1447,18 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-arch=<arch>		Specify architecture (uname -m)
+  --with-bitmode=<32,64>		Specify bit mode of library
   --with-OS=<os>       		Specify operating system
   --with-OSVER=<ver>		Specify operating system version
+  --with-nativecc=<path>		Specify native C compiler for header generation
+ --with-tests=<ctests,ftests,"ctests ftests"> Specify which tests to run on install
+  --with-generic		Specify a generic build for any hardware platform
+  --with-debug=<yes,memory>		Yes builds a debug version of the library and memory disables PAPI_NO_MEMORY_MANAGEMENT
   --with-CPU=<cpu>		Specify CPU type
-  --with-bitmode=<32,64>	Specify bit mode of library
-  --with-debug=<no,yes,memory>	Build a debug version of the library
-  --with-ffsll			This platform has the ffsll() function
-  --with-walltimer=<gettimeofday,mmtimer,clock_realtime_hr,clock_realtime,cycle>     Specify realtime timer
+  --with-ffsll		Specify use of the ffsll() function
+  --with-walltimer=<gettimeofday,mmtimer,clock_realtime_hr,clock_realtime,cycle>		Specify realtime timer
   --with-tls=<keyword>		This platform supports thread local storage with a keyword
+<<<<<<< configure
   --with-virtualtimer=<clock_thread_cputime_id,times,proc,getrusage,perfctr>      Specify per-thread virtual timer
   --with-perfctr=<6,7>	Specify perfctr version number
   --with-perfctr-root=<path>	Specify path to source tree (for use by developers only)
@@ -1462,7 +1472,11 @@ Optional Packages:
   --with-pfm-libdir=<path>	Specify directory of pfm library in non-standard location
   --with-pe-incdir=<path>	Specify path to the correct perf header file
   --with-perf-events=<yes,no>  Specify use of Linux Performance Event Subsystem
+=======
+  --with-virtualtimer=<clock_thread_cputime_id,times,proc,getrusage,perfctr>		Specify per-thread virtual timer
+>>>>>>> 1.185
   --with-pmapi=<path>		Specify path of pmapi on aix system
+<<<<<<< configure
   --with-papi-events=<static,file>	Specify source of events
   --with-semaphores Use semaphores instead of atomic locks (IA64)
   --with-tests=<ctests,ftests,"ctests ftests">	Specify which tests to run on install
@@ -1475,6 +1489,29 @@ Optional Packages:
   --with-sensors_libdir=<path>  Specify directory of lm-sensors library
   --with-lustre=<no,yes>	        Build a Lustre component in the library
   --with-shlib=<yes,no>	Specify staticno or dynamicyes papi library to link with test cases and utilities
+=======
+  --with-papi-events=<file>		Specify events file to use
+  --with-shlib		Specify dynamic linking of papi library with test cases and utilities
+  --with-perfctr		Specify perfctr as the performance interface
+  --with-perfctr-root=<path>		Specify path to source tree (for use by developers only)
+  --with-perfctr-prefix=<path>		Specify prefix to installed perfctr distribution
+  --with-perfctr-incdir=<path>		Specify directory of perfctr header files in non-standard location
+  --with-perfctr-libdir=<path>		Specify directory of perfctr library in non-standard location
+  --with-perfmon		Specify perfmon as the performance interface
+  --with-pfm-root=<path>		Specify path to source tree (for use by developers only)
+  --with-pfm-prefix=<path>		Specify prefix to installed pfm distribution
+  --with-pfm-incdir=<path>		Specify directory of pfm header files in non-standard location
+  --with-pfm-libdir=<path>		Specify directory of pfm library in non-standard location
+  --with-perf-events		Specify use of Linux Performance Event (requires kernel 2.6.31 or greater)
+  --with-pe-incdir=<path>		Specify path to the correct perf header file
+  --with-mx		Build a MX component in the library
+  --with-net		Build a net (ifconfig) component in the library
+  --with-acpi		Build an ACPI component in the library
+  --with-lmsensors		Build an lm-sensors component in the library
+  --with-sensors_incdir=<path>		Specify directory of lm-sensors header files
+  --with-sensors_libdir=<path>		Specify directory of lm-sensors library
+  --with-lustre		Build a Lustre component in the library
+>>>>>>> 1.185
 
 Some influential environment variables:
   CC          C compiler command
@@ -1942,47 +1979,6 @@ ac_config_headers="$ac_config_headers config.h"
 
 
 
-
-get_bitmode()
-{
- input="bad"
- while  test "${input}" != "ok"
- do
-   input="ok"
-   echo
-   echo "Do you want to install 64bit mode library?"
-   echo
-   echo -n "Choice is required yes/no: "
-   read num
-   case "${num}" in
-     yes)
-        bitmode=64
-        ;;
-     no)
-        bitmode=""
-        ;;
-     *)
-        echo
-        echo Warning: invalid choice \'$num\'. Type again.
-        echo
-        input="bad"
-        ;;
-   esac
- done
-}
-
-#
-# checking for CPU, OS, OSVER and bitmode
-#
-
-SHOW_CONF=showconf
-perf_header=""
-FILENAME=NO_INCLUDE_FILE
-use_shared=yes
-use_static=yes
-use_static_tests=no
-use_x86_cache_info=no
-distributed_build=no
 { $as_echo "$as_me:$LINENO: checking for architecture" >&5
 $as_echo_n "checking for architecture... " >&6; }
 
@@ -1996,9 +1992,13 @@ fi
 { $as_echo "$as_me:$LINENO: result: $arch" >&5
 $as_echo "$arch" >&6; }
 
-#
-#checking for OS
-#
+
+# Check whether --with-bitmode was given.
+if test "${with_bitmode+set}" = set; then
+  withval=$with_bitmode; bitmode=$withval
+fi
+
+
 { $as_echo "$as_me:$LINENO: checking for OS" >&5
 $as_echo_n "checking for OS... " >&6; }
 
@@ -2006,67 +2006,45 @@ $as_echo_n "checking for OS... " >&6; }
 if test "${with_OS+set}" = set; then
   withval=$with_OS; OS=$withval
 else
-
-OS="`uname | tr 'A-Z' 'a-z'`"
-case "$OS" in
-  cygwin*) OS=cygwin;;
-  SunOS)   OS=solaris ;;
-  sunos)   OS=solaris ;;
-esac
-
-# XTOS_VERSION exists only on Cray systems supporting XT and hence CLE OS
-if test "$XTOS_VERSION"; then
-	use_shared=no
-	use_static=yes
-	papi_events=static
-	cross_compiling=yes
-# ffsll, tls, walltimer, virtualtimer must be sprecified for cross-compiling
-	ffsll=yes
-	tls=__thread
-	walltimer=cycle
-	virtualtimer=times
-fi
-
+  OS="`uname | tr 'A-Z' 'a-z'`"
+            if (test "$OS" = "SunOS" || test "$OS" = "sunos"); then
+              OS=solaris
+            fi
 fi
 
 { $as_echo "$as_me:$LINENO: result: $OS" >&5
 $as_echo "$OS" >&6; }
-if test "$OS" = "bgl"; then
-   if test "x$CC" = "x"; then
-      CC=powerpc-bgl-blrts-gnu-gcc
-   fi
-   if test "x$F77" = "x"; then
-      F77=powerpc-bgl-blrts-gnu-g77
-   fi
-   walltimer=cycle
-   virtualtimer=perfctr
-   bitmode=32
-   tls=no
-   ffsll=yes
-   cross_compiling=yes
-fi
-if test "$OS" = "bgp"; then
-   if test "x$CC" = "x"; then
-      CC=powerpc-bgp-linux-gcc
-   fi
-   if test "x$F77" = "x"; then
-      F77=powerpc-bgp-linux-gfortran
-   fi
-   # NOTE: The following values are the same ones used for bgl which may or may not be correct
-   walltimer=cycle
-   virtualtimer=perfctr
-   bitmode=32
-   tls=no
-   ffsll=yes
-   cross_compiling=yes
-fi
-if test "$OS" = "linux"; then
-   MISCSRCS=hwinfo_linux.c
+
+if test "$OS" = "CLE"; then
+  virtualtimer=times
+  tls=__thread
+  walltimer=cycle
+  ffsll=yes
+  cross_compiling=yes
+  disable_shared=no
+  disable_static=yes
+  use_static_tests=yes
+elif test "$OS" = "bgp"; then
+  if test "x$CC" = "x"; then
+     CC=powerpc-bgp-linux-gcc
+  fi
+  if test "x$F77" = "x"; then
+     F77=powerpc-bgp-linux-gfortran
+  fi
+  walltimer=cycle
+  virtualtimer=perfctr
+  tls=no
+  ffsll=yes
+  cross_compiling=yes
+elif test "$OS" = "linux"; then
+  MISCSRCS=hwinfo_linux.c
+  if test "$arch" = "ppc64" -o "$arch" = "x86_64"; then
+    if test "$bitmode" = "64" -a "$libdir" = '${exec_prefix}/lib'; then
+      libdir='${exec_prefix}/lib64'
+    fi
+  fi
 fi
 
-#
-#checking for OS version number
-#
 { $as_echo "$as_me:$LINENO: checking for OS version" >&5
 $as_echo_n "checking for OS version... " >&6; }
 
@@ -2074,18 +2052,15 @@ $as_echo_n "checking for OS version... " >&6; }
 if test "${with_OSVER+set}" = set; then
   withval=$with_OSVER; OSVER=$withval
 else
-
-case "$OS" in
-  bgl) OSVER=irrelevant ;;
-  bgp) OSVER=irrelevant ;;
-  *|solaris|netbsd|linux) OSVER="`uname -r`";;
-esac
-
+  if test "$OS" != "bgp"; then
+              OSVER="`uname -r`"
+            fi
 fi
 
 { $as_echo "$as_me:$LINENO: result: $OSVER" >&5
 $as_echo "$OSVER" >&6; }
 
+<<<<<<< configure
 #
 # checking for CPU type
 #
@@ -2331,13 +2306,14 @@ fi
 { $as_echo "$as_me:$LINENO: result: $bitmode" >&5
 $as_echo "$bitmode" >&6; }
 
+=======
+>>>>>>> 1.185
 # Set FFLAGS to null to prevent AC_PROG_F77 from defaulting it to -g -O2
 CFLAGS="-g"
 FFLAGS=""
 OPTFLAGS="-O2"
 TOPTFLAGS="-O0"
 
-# Checks for programs.
 for ac_prog in gawk mawk nawk awk
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
@@ -2382,7 +2358,7 @@ done
 
 #prevent icc warnings about overriding optimization settings set by AC_PROG_CC
 if test "$CC" != "icc"; then
-   ac_ext=c
+  ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -3316,7 +3292,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 else
-   CFLAGS="-openmp -wr188"
+  CFLAGS="-openmp -wr188"
 fi
 ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
@@ -3585,10 +3561,10 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 if test "x$AR" = "x"; then
-   AR=ar
+  AR=ar
 fi
 if test "$OS" != "linux"; then
-   ac_ext=c
+  ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -4079,7 +4055,7 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-   ac_ext=f
+  ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
@@ -4717,6 +4693,7 @@ else
 fi
 
 
+<<<<<<< configure
 { $as_echo "$as_me:$LINENO: checking for debug build" >&5
 $as_echo_n "checking for debug build... " >&6; }
 
@@ -4769,6 +4746,8 @@ fi
 
 # Check for GNU extensions
 
+=======
+>>>>>>> 1.185
 
 { $as_echo "$as_me:$LINENO: checking for grep that handles long lines and -e" >&5
 $as_echo_n "checking for grep that handles long lines and -e... " >&6; }
@@ -5389,7 +5368,6 @@ _ACEOF
 _ACEOF
 
 
-# Check for standard headers
 { $as_echo "$as_me:$LINENO: checking for ANSI C header files" >&5
 $as_echo_n "checking for ANSI C header files... " >&6; }
 if test "${ac_cv_header_stdc+set}" = set; then
@@ -5568,28 +5546,471 @@ _ACEOF
 
 fi
 
-# defines inline keyword to be inline keyword
-# This breaks for some dumb reason on PPC64
-# AC_C_INLINE
-# defines const keyword to be inline keyword
-# This breaks for some dumb reason on PPC64
-# AC_C_CONST
 
-didcheck=0
+if test "$cross_compiling" = "yes" ; then
+  { $as_echo "$as_me:$LINENO: checking for native compiler for header generation" >&5
+$as_echo_n "checking for native compiler for header generation... " >&6; }
+
+# Check whether --with-nativecc was given.
+if test "${with_nativecc+set}" = set; then
+  withval=$with_nativecc; nativecc=$withval
+else
+  nativecc=gcc
+fi
+
+  { $as_echo "$as_me:$LINENO: result: $nativecc" >&5
+$as_echo "$nativecc" >&6; }
+fi
+
+
+# Check whether --with-tests was given.
+if test "${with_tests+set}" = set; then
+  withval=$with_tests; tests=$withval
+else
+  tests="ctests ftests"
+fi
+
+
+
+# Check whether --with-generic was given.
+if test "${with_generic+set}" = set; then
+  withval=$with_generic; if test "$OS" != "linux"; then
+               { { $as_echo "$as_me:$LINENO: error: PAPI requires Linux for a generic build" >&5
+$as_echo "$as_me: error: PAPI requires Linux for a generic build" >&2;}
+   { (exit 1); exit 1; }; }
+             fi
+             MAKEVER=generic
+fi
+
+
+{ $as_echo "$as_me:$LINENO: checking for debug build" >&5
+$as_echo_n "checking for debug build... " >&6; }
+
+# Check whether --with-debug was given.
+if test "${with_debug+set}" = set; then
+  withval=$with_debug; debug=$withval
+fi
+
+if test "$debug" = "yes"; then
+  if test "$CC" = "gcc"; then
+    CFLAGS="-g3"
+  fi
+  OPTFLAGS="-O0"
+  DEBUGFLAGS="-DDEBUG"
+elif test "$debug" = "memory"; then
+  DEBUGFLAGS=""
+else
+  DEBUGFLAGS="-DPAPI_NO_MEMORY_MANAGEMENT"
+fi
+{ $as_echo "$as_me:$LINENO: result: $debug" >&5
+$as_echo "$debug" >&6; }
+
+if test "$CC" = "gcc"; then
+  gcc_version=`gcc -v 2>&1 | tail -n 1 | awk '{printf $3}'`
+  major=`echo $gcc_version | sed 's/\([^.][^.]*\).*/\1/'`
+  minor=`echo $gcc_version | sed 's/[^.][^.]*.\([^.][^.]*\).*/\1/'`
+  if test "$arch" = "ia64"; then
+    #Adding -Wextra to an Itanium build causes libpfm to fail compile
+    EXTRA_CFLAGS=""
+  elif (test "$major" -ge 4 || test "$major" = 3 -a "$minor" -ge 4); then
+    EXTRA_CFLAGS="-Wextra"
+  else
+    EXTRA_CFLAGS="-W"
+  fi
+fi
+
+{ $as_echo "$as_me:$LINENO: checking for CPU type" >&5
+$as_echo_n "checking for CPU type... " >&6; }
+
+# Check whether --with-CPU was given.
+if test "${with_CPU+set}" = set; then
+  withval=$with_CPU; CPU=$withval
+             case "$CPU" in
+               core|core2|i7|atom|p4|p3|opteron|athlon)
+                 MISCSRCS="$MISCSRCS x86_cache_info.c" ;;
+             esac
+else
+  case "$OS" in
+               aix)
+                 CPU="`/usr/sbin/lsattr -E -l proc0 | grep type | cut -d '_' -f 2 | cut -d ' ' -f 1 | tr 'A-Z' 'a-z'`"
+                 if test "$CPU" = ""; then
+                   CPU="`/usr/sbin/lsattr -E -l proc1 | grep type | cut -d '_' -f 2 | cut -d ' ' -f 1 | tr 'A-Z' 'a-z'`"
+                 fi ;;
+               linux)
+                 if test "`cat /proc/cpuinfo | grep GenuineIntel`" != "" ; then
+                   family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
+                   model="`cat /proc/cpuinfo | grep model | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
+                   if test "$family" = "6"; then
+                     if test "$model" = "14"; then
+                       CPU=core
+                     fi
+                     if (test "$model" = "15" || test "$model" = "22" || test "$model" = "23"); then
+                       CPU=core2
+                     fi
+                     if (test "$model" = "26" || test "$model" = "30" || test "$model" = "37" || test "$model" = "44" || test "$model" = "46"); then
+                       CPU=i7
+                     fi
+                     if test "$model" = "28"; then
+                       CPU=atom
+                     fi
+                     MISCSRCS="$MISCSRCS x86_cache_info.c"
+                   elif test "$family" = "15"; then
+                     CPU=p4
+                     MISCSRCS="$MISCSRCS x86_cache_info.c"
+                   elif test "$family" = "32"; then
+	                 CPU=montecito
+	               elif test "$family" = "31"; then
+	                 CPU=itanium2
+                   fi
+                 elif test "`cat /proc/cpuinfo | grep AuthenticAMD`" != ""; then
+                   family="`cat /proc/cpuinfo | grep family | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
+                   if (test "$family" = "15" || test "$family" = "16"); then
+                     CPU=opteron
+                   elif test "$family" = "6"; then
+                     CPU=athlon
+                   fi
+                   MISCSRCS="$MISCSRCS x86_cache_info.c"
+                 else
+                   family=`uname -m`
+                   if test "$family" = "ppc64"; then
+                     CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
+                     case "$CPU_info" in
+                       PPC970*) CPU="PPC970";;
+                       POWER5)  CPU="POWER5";;
+                       POWER5+) CPU="POWER5+";;
+                       POWER6)  CPU="POWER6";;
+                     esac
+	               fi
+                 fi ;;
+               solaris)
+                 if test "${ac_cv_header_libcpc_h+set}" = set; then
+  { $as_echo "$as_me:$LINENO: checking for libcpc.h" >&5
+$as_echo_n "checking for libcpc.h... " >&6; }
+if test "${ac_cv_header_libcpc_h+set}" = set; then
+  $as_echo_n "(cached) " >&6
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_header_libcpc_h" >&5
+$as_echo "$ac_cv_header_libcpc_h" >&6; }
+else
+  # Is the header compilable?
+{ $as_echo "$as_me:$LINENO: checking libcpc.h usability" >&5
+$as_echo_n "checking libcpc.h usability... " >&6; }
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <libcpc.h>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+  ac_header_compiler=yes
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_header_compiler=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+{ $as_echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+$as_echo "$ac_header_compiler" >&6; }
+
+# Is the header present?
+{ $as_echo "$as_me:$LINENO: checking libcpc.h presence" >&5
+$as_echo_n "checking libcpc.h presence... " >&6; }
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <libcpc.h>
+_ACEOF
+if { (ac_try="$ac_cpp conftest.$ac_ext"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null && {
+	 test -z "$ac_c_preproc_warn_flag$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       }; then
+  ac_header_preproc=yes
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+
+rm -f conftest.err conftest.$ac_ext
+{ $as_echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+$as_echo "$ac_header_preproc" >&6; }
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
+  yes:no: )
+    { $as_echo "$as_me:$LINENO: WARNING: libcpc.h: accepted by the compiler, rejected by the preprocessor!" >&5
+$as_echo "$as_me: WARNING: libcpc.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: libcpc.h: proceeding with the compiler's result" >&5
+$as_echo "$as_me: WARNING: libcpc.h: proceeding with the compiler's result" >&2;}
+    ac_header_preproc=yes
+    ;;
+  no:yes:* )
+    { $as_echo "$as_me:$LINENO: WARNING: libcpc.h: present but cannot be compiled" >&5
+$as_echo "$as_me: WARNING: libcpc.h: present but cannot be compiled" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: libcpc.h:     check for missing prerequisite headers?" >&5
+$as_echo "$as_me: WARNING: libcpc.h:     check for missing prerequisite headers?" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: libcpc.h: see the Autoconf documentation" >&5
+$as_echo "$as_me: WARNING: libcpc.h: see the Autoconf documentation" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: libcpc.h:     section \"Present But Cannot Be Compiled\"" >&5
+$as_echo "$as_me: WARNING: libcpc.h:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: libcpc.h: proceeding with the preprocessor's result" >&5
+$as_echo "$as_me: WARNING: libcpc.h: proceeding with the preprocessor's result" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: libcpc.h: in the future, the compiler will take precedence" >&5
+$as_echo "$as_me: WARNING: libcpc.h: in the future, the compiler will take precedence" >&2;}
+    ( cat <<\_ASBOX
+## ------------------------------------------ ##
+## Report this to ptools-perfapi@eecs.utk.edu ##
+## ------------------------------------------ ##
+_ASBOX
+     ) | sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+{ $as_echo "$as_me:$LINENO: checking for libcpc.h" >&5
+$as_echo_n "checking for libcpc.h... " >&6; }
+if test "${ac_cv_header_libcpc_h+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  ac_cv_header_libcpc_h=$ac_header_preproc
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_header_libcpc_h" >&5
+$as_echo "$ac_cv_header_libcpc_h" >&6; }
+
+fi
+if test "x$ac_cv_header_libcpc_h" = x""yes; then
+  CFLAGS="$CFLAGS -lcpc"
+                                  if test "$cross_compiling" = yes; then
+  { { $as_echo "$as_me:$LINENO: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+{ { $as_echo "$as_me:$LINENO: error: cannot run test program while cross compiling
+See \`config.log' for more details." >&5
+$as_echo "$as_me: error: cannot run test program while cross compiling
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }; }
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <stdlib.h>
+                                              #include <libcpc.h>
+                                              int main() {
+                                              // Check for libcpc 2
+                                              if(CPC_VER_CURRENT == 2)
+                                                exit(0);
+                                              exit(1);
+                                              }
+_ACEOF
+rm -f conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_link") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  cpc_version=2
+else
+  $as_echo "$as_me: program exited with status $ac_status" >&5
+$as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+( exit $ac_status )
+cpc_version=0
+fi
+rm -rf conftest.dSYM
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+
+
+else
+  { { $as_echo "$as_me:$LINENO: error: libcpc is needed for running PAPI on Solaris" >&5
+$as_echo "$as_me: error: libcpc is needed for running PAPI on Solaris" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+
+                 processor=`uname -p`
+                 machinetype=`uname -m`
+                 if test "$processor" = "sparc"; then
+                   if test "$machinetype" = "sun4u"; then
+                     CPU=ultra
+
+{ $as_echo "$as_me:$LINENO: checking for cpc_take_sample in -lcpc" >&5
+$as_echo_n "checking for cpc_take_sample in -lcpc... " >&6; }
+if test "${ac_cv_lib_cpc_cpc_take_sample+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcpc  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char cpc_take_sample ();
+int
+main ()
+{
+return cpc_take_sample ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then
+  ac_cv_lib_cpc_cpc_take_sample=yes
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_cpc_cpc_take_sample=no
+fi
+
+rm -rf conftest.dSYM
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_cpc_cpc_take_sample" >&5
+$as_echo "$ac_cv_lib_cpc_cpc_take_sample" >&6; }
+if test "x$ac_cv_lib_cpc_cpc_take_sample" = x""yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBCPC 1
+_ACEOF
+
+  LIBS="-lcpc $LIBS"
+
+else
+  { { $as_echo "$as_me:$LINENO: error: libcpc.a is needed on Solaris, install SUNWcpc" >&5
+$as_echo "$as_me: error: libcpc.a is needed on Solaris, install SUNWcpc" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+                   elif test "$machinetype" = "sun4v"; then
+                     CPU=niagara2
+                     if test "$cpc_version" != "2"; then
+                       { { $as_echo "$as_me:$LINENO: error: libcpc2 needed for Niagara 2" >&5
+$as_echo "$as_me: error: libcpc2 needed for Niagara 2" >&2;}
+   { (exit 1); exit 1; }; }
+                     fi
+                   else
+                     { { $as_echo "$as_me:$LINENO: error: $machinetype not supported" >&5
+$as_echo "$as_me: error: $machinetype not supported" >&2;}
+   { (exit 1); exit 1; }; }
+                   fi
+                 else
+                   { { $as_echo "$as_me:$LINENO: error: Only SPARC processors are supported on Solaris" >&5
+$as_echo "$as_me: error: Only SPARC processors are supported on Solaris" >&2;}
+   { (exit 1); exit 1; }; }
+                 fi ;;
+               bgp)
+	             CPU=bgp ;;
+               esac
+fi
+
+{ $as_echo "$as_me:$LINENO: result: $CPU" >&5
+$as_echo "$CPU" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define CPU $CPU
+_ACEOF
+
+
 if test "x$ffsll" = "x"; then
 
 # Check whether --with-ffsll was given.
 if test "${with_ffsll+set}" = set; then
   withval=$with_ffsll; ffsll=$withval
 else
-  ffsll=""
-if test "$cross_compiling" = "yes" ; then
-   { { $as_echo "$as_me:$LINENO: error: ffsll must be specified for cross compile." >&5
-$as_echo "$as_me: error: ffsll must be specified for cross compile." >&2;}
+  if test "$cross_compiling" = "yes" ; then
+                 { { $as_echo "$as_me:$LINENO: error: ffsll must be specified for cross compile" >&5
+$as_echo "$as_me: error: ffsll must be specified for cross compile" >&2;}
    { (exit 1); exit 1; }; }
-		  fi
-didcheck=1
-{ $as_echo "$as_me:$LINENO: checking for ffsll" >&5
+		       fi
+               didcheck=1
+               { $as_echo "$as_me:$LINENO: checking for ffsll" >&5
 $as_echo_n "checking for ffsll... " >&6; }
 if test "${ac_cv_func_ffsll+set}" = set; then
   $as_echo_n "(cached) " >&6
@@ -5680,43 +6101,28 @@ else
   ffsll=no
 fi
 
-
 fi
 
 fi
-if test $didcheck = 0; then
-{ $as_echo "$as_me:$LINENO: checking for ffsll" >&5
+if test $didcheck != 1; then
+  { $as_echo "$as_me:$LINENO: checking for ffsll" >&5
 $as_echo_n "checking for ffsll... " >&6; }
-case "$ffsll" in
-   yes)
+  if test "$ffsll" = "yes" ; then
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_FFSLL 1
 _ACEOF
 
-		  ;;
-   no)
-      ;;
-   *)
-     { { $as_echo "$as_me:$LINENO: error: Unknown value for ffsll" >&5
-$as_echo "$as_me: error: Unknown value for ffsll" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-esac
-{ $as_echo "$as_me:$LINENO: result: $ffsll" >&5
+  fi
+  { $as_echo "$as_me:$LINENO: result: $ffsll" >&5
 $as_echo "$ffsll" >&6; }
 fi
 
-#
-# Look for working gettid
-#
 { $as_echo "$as_me:$LINENO: checking for working gettid" >&5
 $as_echo_n "checking for working gettid... " >&6; }
 cat >conftest.$ac_ext <<_ACEOF
-
 #include <sys/types.h>
-main() { pid_t a = gettid(); }
-
+                main() { pid_t a = gettid(); }
 _ACEOF
 rm -f conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
@@ -5750,17 +6156,14 @@ else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-
-{ $as_echo "$as_me:$LINENO: result: no" >&5
+	{ $as_echo "$as_me:$LINENO: result: no" >&5
 $as_echo "no" >&6; }
-{ $as_echo "$as_me:$LINENO: checking for working syscall(SYS_gettid)" >&5
+                { $as_echo "$as_me:$LINENO: checking for working syscall(SYS_gettid)" >&5
 $as_echo_n "checking for working syscall(SYS_gettid)... " >&6; }
-cat >conftest.$ac_ext <<_ACEOF
-
+                cat >conftest.$ac_ext <<_ACEOF
 #include <sys/types.h>
-#include <sys/syscall.h>
-main() { pid_t a = syscall(SYS_gettid); }
-
+                                #include <sys/syscall.h>
+                                main() { pid_t a = syscall(SYS_gettid); }
 _ACEOF
 rm -f conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
@@ -5794,8 +6197,7 @@ else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-
-{ $as_echo "$as_me:$LINENO: result: no" >&5
+	{ $as_echo "$as_me:$LINENO: result: no" >&5
 $as_echo "no" >&6; }
 fi
 
@@ -5808,24 +6210,20 @@ rm -rf conftest.dSYM
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 
-#
-# Look for good real time clocks
-#
 if test "x$walltimer" = "x"; then
 
 # Check whether --with-walltimer was given.
 if test "${with_walltimer+set}" = set; then
   withval=$with_walltimer; walltimer=$withval
 else
-  walltimer=""
-if test "$cross_compiling" = "yes" ; then
-   { { $as_echo "$as_me:$LINENO: error: walltimer must be specified for cross compile." >&5
-$as_echo "$as_me: error: walltimer must be specified for cross compile." >&2;}
+  if test "$cross_compiling" = "yes" ; then
+               { { $as_echo "$as_me:$LINENO: error: walltimer must be specified for cross compile" >&5
+$as_echo "$as_me: error: walltimer must be specified for cross compile" >&2;}
    { (exit 1); exit 1; }; }
-         fi
-{ $as_echo "$as_me:$LINENO: checking for working MMTIMER" >&5
+             fi
+             { $as_echo "$as_me:$LINENO: checking for working MMTIMER" >&5
 $as_echo_n "checking for working MMTIMER... " >&6; }
-if test "$cross_compiling" = yes; then
+             if test "$cross_compiling" = yes; then
   { { $as_echo "$as_me:$LINENO: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 { { $as_echo "$as_me:$LINENO: error: cannot run test program while cross compiling
@@ -5840,32 +6238,25 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-
 #include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <sys/ioctl.h>
-#include <linux/mmtimer.h>
-#ifndef MMTIMER_FULLNAME
-#define MMTIMER_FULLNAME "/dev/mmtimer"
-#endif
-
-int main()
-{
-  int offset;
-  int fd;
-
-     if((fd = open(MMTIMER_FULLNAME, O_RDONLY)) == -1) {
-       exit(1);
-     }
-     if ((offset = ioctl(fd, MMTIMER_GETOFFSET, 0)) < 0) {
-       exit(1);
-     }
-     close(fd);
-     exit(0);
-}
-
+                         #include <fcntl.h>
+                         #include <errno.h>
+                         #include <stdlib.h>
+                         #include <sys/ioctl.h>
+                         #include <linux/mmtimer.h>
+                         #ifndef MMTIMER_FULLNAME
+                         #define MMTIMER_FULLNAME "/dev/mmtimer"
+                         #endif
+                         int main() {
+                           int offset;
+                           int fd;
+                           if((fd = open(MMTIMER_FULLNAME, O_RDONLY)) == -1)
+                             exit(1);
+                           if ((offset = ioctl(fd, MMTIMER_GETOFFSET, 0)) < 0)
+                             exit(1);
+                           close(fd);
+                           exit(0);
+                         }
 _ACEOF
 rm -f conftest$ac_exeext
 if { (ac_try="$ac_link"
@@ -5889,23 +6280,20 @@ $as_echo "$ac_try_echo") >&5
   ac_status=$?
   $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-
-	walltimer="mmtimer"
-	{ $as_echo "$as_me:$LINENO: result: yes" >&5
+  walltimer="mmtimer"
+	                     { $as_echo "$as_me:$LINENO: result: yes" >&5
 $as_echo "yes" >&6; }
-
 else
   $as_echo "$as_me: program exited with status $ac_status" >&5
 $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
 ( exit $ac_status )
-
 { $as_echo "$as_me:$LINENO: result: no" >&5
 $as_echo "no" >&6; }
-{ $as_echo "$as_me:$LINENO: checking for working CLOCK_REALTIME_HR POSIX 1b timer" >&5
+                         { $as_echo "$as_me:$LINENO: checking for working CLOCK_REALTIME_HR POSIX 1b timer" >&5
 $as_echo_n "checking for working CLOCK_REALTIME_HR POSIX 1b timer... " >&6; }
-if test "$cross_compiling" = yes; then
+                         if test "$cross_compiling" = yes; then
   { { $as_echo "$as_me:$LINENO: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 { { $as_echo "$as_me:$LINENO: error: cannot run test program while cross compiling
@@ -5920,28 +6308,23 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-
 #include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-#include <syscall.h>
-
-main()
-{
-  struct timespec t1, t2;
-  double seconds;
-
-  if (syscall(__NR_clock_gettime,CLOCK_REALTIME_HR,&t1) == -1) exit(1);
-  sleep(1);
-  if (syscall(__NR_clock_gettime,CLOCK_REALTIME_HR,&t2) == -1) exit(1);
-  seconds = ((double)t2.tv_sec + (double)t2.tv_nsec/1000000000.0) - ((double)t1.tv_sec + (double)t1.tv_nsec/1000000000.0);
-  if (seconds > 1.0)
-    exit(0);
-      else
-    exit(1);
-}
-
+                                     #include <stdlib.h>
+                                     #include <stdio.h>
+                                     #include <time.h>
+                                     #include <syscall.h>
+                                     main() {
+                                       struct timespec t1, t2;
+                                       double seconds;
+                                       if (syscall(__NR_clock_gettime,CLOCK_REALTIME_HR,&t1) == -1) exit(1);
+                                         sleep(1);
+                                       if (syscall(__NR_clock_gettime,CLOCK_REALTIME_HR,&t2) == -1) exit(1);
+                                         seconds = ((double)t2.tv_sec + (double)t2.tv_nsec/1000000000.0) - ((double)t1.tv_sec + (double)t1.tv_nsec/1000000000.0);
+                                       if (seconds > 1.0)
+                                         exit(0);
+                                       else
+                                         exit(1);
+                                     }
 _ACEOF
 rm -f conftest$ac_exeext
 if { (ac_try="$ac_link"
@@ -5965,23 +6348,20 @@ $as_echo "$ac_try_echo") >&5
   ac_status=$?
   $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-
-	walltimer="clock_realtime_hr"
-	{ $as_echo "$as_me:$LINENO: result: yes" >&5
+  walltimer="clock_realtime_hr"
+	                                 { $as_echo "$as_me:$LINENO: result: yes" >&5
 $as_echo "yes" >&6; }
-
 else
   $as_echo "$as_me: program exited with status $ac_status" >&5
 $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
 ( exit $ac_status )
-
 { $as_echo "$as_me:$LINENO: result: no" >&5
 $as_echo "no" >&6; }
-{ $as_echo "$as_me:$LINENO: checking for working CLOCK_REALTIME POSIX 1b timer" >&5
+                                     { $as_echo "$as_me:$LINENO: checking for working CLOCK_REALTIME POSIX 1b timer" >&5
 $as_echo_n "checking for working CLOCK_REALTIME POSIX 1b timer... " >&6; }
-if test "$cross_compiling" = yes; then
+                                     if test "$cross_compiling" = yes; then
   { { $as_echo "$as_me:$LINENO: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 { { $as_echo "$as_me:$LINENO: error: cannot run test program while cross compiling
@@ -5996,28 +6376,23 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-
 #include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-#include <syscall.h>
-
-main()
-{
-  struct timespec t1, t2;
-  double seconds;
-
-  if (syscall(__NR_clock_gettime,CLOCK_REALTIME,&t1) == -1) exit(1);
-  sleep(1);
-  if (syscall(__NR_clock_gettime,CLOCK_REALTIME,&t2) == -1) exit(1);
-  seconds = ((double)t2.tv_sec + (double)t2.tv_nsec/1000000000.0) - ((double)t1.tv_sec + (double)t1.tv_nsec/1000000000.0);
-  if (seconds > 1.0)
-    exit(0);
-         else
-    exit(1);
-}
-
+                                                 #include <stdlib.h>
+                                                 #include <stdio.h>
+                                                 #include <time.h>
+                                                 #include <syscall.h>
+                                                 main() {
+                                                   struct timespec t1, t2;
+                                                   double seconds;
+                                                   if (syscall(__NR_clock_gettime,CLOCK_REALTIME,&t1) == -1) exit(1);
+                                                     sleep(1);
+                                                   if (syscall(__NR_clock_gettime,CLOCK_REALTIME,&t2) == -1) exit(1);
+                                                     seconds = ((double)t2.tv_sec + (double)t2.tv_nsec/1000000000.0) - ((double)t1.tv_sec + (double)t1.tv_nsec/1000000000.0);
+                                                   if (seconds > 1.0)
+                                                     exit(0);
+                                                   else
+                                                     exit(1);
+                                                 }
 _ACEOF
 rm -f conftest$ac_exeext
 if { (ac_try="$ac_link"
@@ -6041,20 +6416,17 @@ $as_echo "$ac_try_echo") >&5
   ac_status=$?
   $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-
-	walltimer="clock_realtime"
-	{ $as_echo "$as_me:$LINENO: result: yes" >&5
+  walltimer="clock_realtime"
+	                                             { $as_echo "$as_me:$LINENO: result: yes" >&5
 $as_echo "yes" >&6; }
-
 else
   $as_echo "$as_me: program exited with status $ac_status" >&5
 $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
 ( exit $ac_status )
-
-	walltimer="cycle"
-	{ $as_echo "$as_me:$LINENO: result: no" >&5
+walltimer="cycle"
+	                                             { $as_echo "$as_me:$LINENO: result: no" >&5
 $as_echo "no" >&6; }
 fi
 rm -rf conftest.dSYM
@@ -6076,7 +6448,7 @@ fi
 
 fi
 
-         fi
+fi
 { $as_echo "$as_me:$LINENO: checking for real time clock or cycle counter" >&5
 $as_echo_n "checking for real time clock or cycle counter... " >&6; }
 if test "$walltimer" = "gettimeofday"; then
@@ -6091,7 +6463,7 @@ cat >>confdefs.h <<\_ACEOF
 #define HAVE_MMTIMER 1
 _ACEOF
 
-   altix="-DALTIX"
+  altix="-DALTIX"
 elif test "$walltimer" = "clock_realtime_hr"; then
 
 cat >>confdefs.h <<\_ACEOF
@@ -6111,42 +6483,34 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 else
-   { { $as_echo "$as_me:$LINENO: error: Unknown value for walltimer" >&5
+  { { $as_echo "$as_me:$LINENO: error: Unknown value for walltimer" >&5
 $as_echo "$as_me: error: Unknown value for walltimer" >&2;}
    { (exit 1); exit 1; }; }
 fi
 { $as_echo "$as_me:$LINENO: result: $walltimer" >&5
 $as_echo "$walltimer" >&6; }
 
-#
-# Only thread tests after here
-# Should use this macro for PTHREADS
-# http://autoconf-archive.cryp.to/acx_pthread.html
-# That can detect the correct flags for pthreads (and whether they exist)
-#
+SAVED_LIBS=$LIBS
+SAVED_LDFLAGS=$LDFLAGS
+SAVED_CFLAGS=$CFLAGS
+LIBS=""
+LDFLAGS=""
+CFLAGS="-pthread"
 
-OLDLIBS=$LIBS
-      OLDLDFLAGS=$LDFLAGS
-      OLDCFLAGS=$CFLAGS
-      LDFLAGS=""
-      CFLAGS="-pthread"
-      LIBS=""
 if test "x$tls" = "x"; then
 
 # Check whether --with-tls was given.
 if test "${with_tls+set}" = set; then
   withval=$with_tls; tls=$withval
 else
-
-if test "$cross_compiling" = "yes" ; then
-   { { $as_echo "$as_me:$LINENO: error: tls must be specified for cross compile." >&5
-$as_echo "$as_me: error: tls must be specified for cross compile." >&2;}
+  if test "$cross_compiling" = "yes" ; then
+                 { { $as_echo "$as_me:$LINENO: error: tls must be specified for cross compile" >&5
+$as_echo "$as_me: error: tls must be specified for cross compile" >&2;}
    { (exit 1); exit 1; }; }
-fi
-      { $as_echo "$as_me:$LINENO: checking for working __thread" >&5
+               fi
+               { $as_echo "$as_me:$LINENO: checking for working __thread" >&5
 $as_echo_n "checking for working __thread... " >&6; }
-      #echo $with_tls
-      if test "$cross_compiling" = yes; then
+               if test "$cross_compiling" = yes; then
   { { $as_echo "$as_me:$LINENO: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 { { $as_echo "$as_me:$LINENO: error: cannot run test program while cross compiling
@@ -6161,39 +6525,28 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-
-             #include <pthread.h>
-             #include <unistd.h>
-             extern __thread int i;
-             static int res1, res2;
-
-             void thread_main (void *arg)
-             {
-               i = (int)arg;
-               sleep (1);
-               if ((int)arg == 1)
-		 res1 = (i == (int)arg);
-               else
-		 res2 = (i == (int)arg);
-             }
-
-	     __thread int i;
-
-             int main ()
-             {
-               pthread_t t1, t2;
-
-               i = 5;
-
-               pthread_create (&t1, NULL, thread_main, (void *)1);
-               pthread_create (&t2, NULL, thread_main, (void *)2);
-
-               pthread_join (t1, NULL);
-               pthread_join (t2, NULL);
-
-               return !(res1 + res2 == 2);
-             }
-
+#include <pthread.h>
+                           #include <unistd.h>
+                           extern __thread int i;
+                           static int res1, res2;
+                           void thread_main (void *arg) {
+                             i = (int)arg;
+                             sleep (1);
+                             if ((int)arg == 1)
+		                       res1 = (i == (int)arg);
+                             else
+		                       res2 = (i == (int)arg);
+                           }
+	                       __thread int i;
+                           int main () {
+                             pthread_t t1, t2;
+                             i = 5;
+                             pthread_create (&t1, NULL, thread_main, (void *)1);
+                             pthread_create (&t2, NULL, thread_main, (void *)2);
+                             pthread_join (t1, NULL);
+                             pthread_join (t2, NULL);
+                             return !(res1 + res2 == 2);
+                           }
 _ACEOF
 rm -f conftest$ac_exeext
 if { (ac_try="$ac_link"
@@ -6217,61 +6570,52 @@ $as_echo "$ac_try_echo") >&5
   ac_status=$?
   $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-
-            { $as_echo "$as_me:$LINENO: result: yes" >&5
+  { $as_echo "$as_me:$LINENO: result: yes" >&5
 $as_echo "yes" >&6; }
-	    tls="__thread"
-
+	                       tls="__thread"
 else
   $as_echo "$as_me: program exited with status $ac_status" >&5
 $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
 ( exit $ac_status )
-
-            { $as_echo "$as_me:$LINENO: result: no" >&5
+{ $as_echo "$as_me:$LINENO: result: no" >&5
 $as_echo "no" >&6; }
-            tls="no"
-
+                           tls="no"
 fi
 rm -rf conftest.dSYM
 rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
 
 
-     #if test "x$TARGET" = "xAMD64" -o "x$TARGET" = "xX86"; then
-     if test "$OS" = "linux"; then
-        if test "x$tls" = "x__thread"; then
-                #
-                # On some linux distributions, TLS works in executables, but linking
-                # against a shared library containing TLS fails with:
-                # undefined reference to `__tls_get_addr'
-                #
-                rm -f conftest.c conftest.so conftest
-                echo "static __thread int foo; void main () { foo = 5; }" > conftest.c
-                gcc -fPIC --shared -o conftest.so conftest.c > /dev/null 2>&1
-                gcc -o conftest conftest.so > /dev/null 2>&1
-                if test ! -f conftest; then
-                   { $as_echo "$as_me:$LINENO: WARNING: Disabling usage of __thread." >&5
+               if test "$OS" = "linux"; then
+                 if test "x$tls" = "x__thread"; then
+                   # On some linux distributions, TLS works in executables, but linking against
+                   # a shared library containing TLS fails with: undefined reference to `__tls_get_addr'
+                   rm -f conftest.c conftest.so conftest
+                   echo "static __thread int foo; void main () { foo = 5; }" > conftest.c
+                   gcc -fPIC --shared -o conftest.so conftest.c > /dev/null 2>&1
+                   gcc -o conftest conftest.so > /dev/null 2>&1
+                     if test ! -f conftest; then
+                       { $as_echo "$as_me:$LINENO: WARNING: Disabling usage of __thread." >&5
 $as_echo "$as_me: WARNING: Disabling usage of __thread." >&2;};
-                   tls="no"
-                fi
-                rm -f conftest.c conftest.so conftest
-        fi
-     fi
-
+                       tls="no"
+                     fi
+                   rm -f conftest.c conftest.so conftest
+                 fi
+               fi
 fi
 
 fi
 { $as_echo "$as_me:$LINENO: checking for high performance thread local storage" >&5
 $as_echo_n "checking for high performance thread local storage... " >&6; }
 if test "$tls" = "no"; then
-        NOTLS="-DNO_TLS"
+  NOTLS="-DNO_TLS"
 elif test "x$tls" != "x"; then
-   if test "$tls" = "yes"; then
-      tls="__thread"
-     fi
-   NOTLS="-DUSE_COMPILER_TLS"
+  if test "$tls" = "yes"; then
+    tls="__thread"
+  fi
+  NOTLS="-DUSE_COMPILER_TLS"
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_THREAD_LOCAL_STORAGE $tls
@@ -6281,34 +6625,20 @@ fi
 { $as_echo "$as_me:$LINENO: result: $tls" >&5
 $as_echo "$tls" >&6; }
 
-# Check whether --enable-papi-vector was given.
-if test "${enable_papi_vector+set}" = set; then
-  enableval=$enable_papi_vector;
-	if test "$enableval" != "yes" ; then
-
-cat >>confdefs.h <<\_ACEOF
-#define PAPI_NO_VECTOR 1
-_ACEOF
-
-	fi
-fi
-
-
 if test "x$virtualtimer" = "x"; then
 
 # Check whether --with-virtualtimer was given.
 if test "${with_virtualtimer+set}" = set; then
   withval=$with_virtualtimer; virtualtimer=$withval
 else
-
-if test "$cross_compiling" = "yes" ; then
-   { { $as_echo "$as_me:$LINENO: error: virtualtimer must be specified for cross compile." >&5
-$as_echo "$as_me: error: virtualtimer must be specified for cross compile." >&2;}
+  if test "$cross_compiling" = "yes" ; then
+                 { { $as_echo "$as_me:$LINENO: error: virtualtimer must be specified for cross compile" >&5
+$as_echo "$as_me: error: virtualtimer must be specified for cross compile" >&2;}
    { (exit 1); exit 1; }; }
-fi
-{ $as_echo "$as_me:$LINENO: checking for working CLOCK_THREAD_CPUTIME_ID POSIX 1b timer" >&5
+               fi
+               { $as_echo "$as_me:$LINENO: checking for working CLOCK_THREAD_CPUTIME_ID POSIX 1b timer" >&5
 $as_echo_n "checking for working CLOCK_THREAD_CPUTIME_ID POSIX 1b timer... " >&6; }
-      if test "$cross_compiling" = yes; then
+               if test "$cross_compiling" = yes; then
   { { $as_echo "$as_me:$LINENO: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 { { $as_echo "$as_me:$LINENO: error: cannot run test program while cross compiling
@@ -6323,209 +6653,66 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-
-        #include <pthread.h>
-        #include <sys/signal.h>
-        #include <sys/times.h>
-        #include <assert.h>
-        #include <stdio.h>
-        #include <sys/types.h>
-        #include <unistd.h>
-        #include <sys/unistd.h>
-        #include <syscall.h>
-        #include <stdlib.h>
-
-        #if ! defined( SYS_gettid )
-        #define SYS_gettid 1105
-        #endif
-
-struct timespec threadone = { 0, 0 };
-struct timespec threadtwo = { 0, 0 };
-        pthread_t threadOne, threadTwo;
-        volatile int done = 0;
-
-        int gettid() {
-            return syscall( SYS_gettid );
-        }
-
-void *doThreadOne( void * v ) {
-            while (!done)
-	          sleep(1);
-
-  if (syscall(__NR_clock_gettime,CLOCK_THREAD_CPUTIME_ID,&threadone) == -1)
-    {
-      perror("clock_gettime(CLOCK_THREAD_CPUTIME_ID)");
-      exit(1);
-    }
-
-            return 0;
-        }
-
-void *doThreadTwo( void * v ) {
-            long i;
-	    long j = 0xdeadbeef;
-
-            for( i = 0; i < 0xFFFFFFF; ++i ) { j = j ^ i; }
-
-  if (syscall(__NR_clock_gettime,CLOCK_THREAD_CPUTIME_ID,&threadtwo) == -1)
-    {
-      perror("clock_gettime(CLOCK_THREAD_CPUTIME_ID)");
-      exit(1);
-    }
-
-            done = 1;
-	        return j;
-        }
-
-        int main( int argc, char ** argv ) {
-            int status;
-
-
-            status = pthread_create( & threadOne, NULL, doThreadOne, NULL );
-            assert( status == 0 );
-            status = pthread_create( & threadTwo, NULL, doThreadTwo, NULL );
-            assert( status == 0 );
-
-
-            status = pthread_join( threadTwo, NULL );
-            assert( status == 0 );
-            status = pthread_join( threadOne, NULL );
-            assert( status == 0 );
-
-    if ((threadone.tv_sec != threadtwo.tv_sec) || (threadone.tv_nsec != threadtwo.tv_nsec))
-       exit(0);
-    else
-	{	fprintf(stderr,"T1 %ld %ld T2 %ld %ld\n",threadone.tv_sec,threadone.tv_nsec,threadtwo.tv_sec,threadtwo.tv_nsec);
-	exit(1); }
-        }
-
-_ACEOF
-rm -f conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_link") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_try") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-
-            { $as_echo "$as_me:$LINENO: result: yes" >&5
-$as_echo "yes" >&6; }
-    virtualtimer="clock_thread_cputime_id"
-
-else
-  $as_echo "$as_me: program exited with status $ac_status" >&5
-$as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-( exit $ac_status )
-
-      { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
-      #       NOTLS="" ;;
-                        { $as_echo "$as_me:$LINENO: checking for working per-thread times() timer" >&5
-$as_echo_n "checking for working per-thread times() timer... " >&6; }
-if test "$cross_compiling" = yes; then
-  { { $as_echo "$as_me:$LINENO: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-{ { $as_echo "$as_me:$LINENO: error: cannot run test program while cross compiling
-See \`config.log' for more details." >&5
-$as_echo "$as_me: error: cannot run test program while cross compiling
-See \`config.log' for more details." >&2;}
-   { (exit 1); exit 1; }; }; }
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
 #include <pthread.h>
-#include <sys/signal.h>
-#include <sys/times.h>
-#include <assert.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <sys/unistd.h>
-#include <syscall.h>
-#include <stdlib.h>
+                           #include <sys/signal.h>
+                           #include <sys/times.h>
+                           #include <assert.h>
+                           #include <stdio.h>
+                           #include <sys/types.h>
+                           #include <unistd.h>
+                           #include <sys/unistd.h>
+                           #include <syscall.h>
+                           #include <stdlib.h>
+                           #if !defined( SYS_gettid )
+                           #define SYS_gettid 1105
+                           #endif
+                           struct timespec threadone = { 0, 0 };
+                           struct timespec threadtwo = { 0, 0 };
+                           pthread_t threadOne, threadTwo;
+                           volatile int done = 0;
 
-#if ! defined( SYS_gettid )
-#define SYS_gettid 1105
-#endif
+                           int gettid() {
+                             return syscall( SYS_gettid );
+                           }
 
-        long threadone = 0;
-        long threadtwo = 0;
-pthread_t threadOne, threadTwo;
-volatile int done = 0;
+                           void *doThreadOne( void * v ) {
+                             while (!done)
+	                           sleep(1);
+                             if (syscall(__NR_clock_gettime,CLOCK_THREAD_CPUTIME_ID,&threadone) == -1) {
+                               perror("clock_gettime(CLOCK_THREAD_CPUTIME_ID)");
+                               exit(1);
+                             }
+                             return 0;
+                           }
 
-int gettid() {
-    return syscall( SYS_gettid );
-}
+                           void *doThreadTwo( void * v ) {
+                             long i, j = 0xdeadbeef;
+                             for( i = 0; i < 0xFFFFFFF; ++i ) { j = j ^ i; }
 
-        int doThreadOne( void * v ) {
-            struct tms tm;
-            int status;
+                             if (syscall(__NR_clock_gettime,CLOCK_THREAD_CPUTIME_ID,&threadtwo) == -1) {
+                               perror("clock_gettime(CLOCK_THREAD_CPUTIME_ID)");
+                               exit(1);
+                             }
+                             done = 1;
+	                         return j;
+                           }
 
-     while (!done)
-	  sleep(1);
-
-            status = times( & tm );
-            assert( status != -1 );
-            threadone = tm.tms_utime;
-
-    return 0;
-}
-
-        int doThreadTwo( void * v ) {
-            struct tms tm;
-    long i;
-    long j = 0xdeadbeef;
-            int status;
-
-    for( i = 0; i < 0xFFFFFFF; ++i ) { j = j ^ i; }
-
-            status = times( & tm );
-            assert( status != -1 );
-
-            threadtwo = tm.tms_utime;
-    done = 1;
-	return j;
-}
-
-int main( int argc, char ** argv ) {
-    int status;
-
-
-    status = pthread_create( & threadOne, NULL, doThreadOne, NULL );
-    assert( status == 0 );
-    status = pthread_create( & threadTwo, NULL, doThreadTwo, NULL );
-    assert( status == 0 );
-
-
-    status = pthread_join( threadTwo, NULL );
-    assert( status == 0 );
-    status = pthread_join( threadOne, NULL );
-    assert( status == 0 );
-	        return (threadone == threadtwo);
-        }
-
+                           int main( int argc, char ** argv ) {
+                             int status = pthread_create( & threadOne, NULL, doThreadOne, NULL );
+                             assert( status == 0 );
+                             status = pthread_create( & threadTwo, NULL, doThreadTwo, NULL );
+                             assert( status == 0 );
+                             status = pthread_join( threadTwo, NULL );
+                             assert( status == 0 );
+                             status = pthread_join( threadOne, NULL );
+                             assert( status == 0 );
+                             if ((threadone.tv_sec != threadtwo.tv_sec) || (threadone.tv_nsec != threadtwo.tv_nsec))
+                               exit(0);
+                             else {
+                               fprintf(stderr,"T1 %ld %ld T2 %ld %ld\n",threadone.tv_sec,threadone.tv_nsec,threadtwo.tv_sec,threadtwo.tv_nsec);
+	                           exit(1);
+                             }
+                           }
 _ACEOF
 rm -f conftest$ac_exeext
 if { (ac_try="$ac_link"
@@ -6549,22 +6736,122 @@ $as_echo "$ac_try_echo") >&5
   ac_status=$?
   $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-
-	{ $as_echo "$as_me:$LINENO: result: yes" >&5
+  { $as_echo "$as_me:$LINENO: result: yes" >&5
 $as_echo "yes" >&6; }
-	virtualtimer="times"
-
+                           virtualtimer="clock_thread_cputime_id"
 else
   $as_echo "$as_me: program exited with status $ac_status" >&5
 $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
 ( exit $ac_status )
-
-        { $as_echo "$as_me:$LINENO: result: no" >&5
+{ $as_echo "$as_me:$LINENO: result: no" >&5
 $as_echo "no" >&6; }
-	virtualtimer="default"
+                           # *** Checks for working per thread timer***
+                           { $as_echo "$as_me:$LINENO: checking for working per-thread times() timer" >&5
+$as_echo_n "checking for working per-thread times() timer... " >&6; }
+                           if test "$cross_compiling" = yes; then
+  { { $as_echo "$as_me:$LINENO: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+{ { $as_echo "$as_me:$LINENO: error: cannot run test program while cross compiling
+See \`config.log' for more details." >&5
+$as_echo "$as_me: error: cannot run test program while cross compiling
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }; }
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <pthread.h>
+                                       #include <sys/signal.h>
+                                       #include <sys/times.h>
+                                       #include <assert.h>
+                                       #include <stdio.h>
+                                       #include <sys/types.h>
+                                       #include <unistd.h>
+                                       #include <sys/unistd.h>
+                                       #include <syscall.h>
+                                       #include <stdlib.h>
+                                       #if !defined( SYS_gettid )
+                                       #define SYS_gettid 1105
+                                       #endif
+                                       long threadone = 0, threadtwo = 0;
+                                       pthread_t threadOne, threadTwo;
+                                       volatile int done = 0;
 
+                                       int gettid() {
+                                         return syscall( SYS_gettid );
+                                       }
+                                       int doThreadOne( void * v ) {
+                                         struct tms tm;
+                                         int status;
+                                         while (!done)
+	                                       sleep(1);
+                                         status = times( & tm );
+                                         assert( status != -1 );
+                                         threadone = tm.tms_utime;
+                                         return 0;
+                                       }
+                                       int doThreadTwo( void * v ) {
+                                         struct tms tm;
+                                         long i, j = 0xdeadbeef;
+                                         int status;
+                                         for( i = 0; i < 0xFFFFFFF; ++i ) { j = j ^ i; }
+                                         status = times( & tm );
+                                         assert( status != -1 );
+                                         threadtwo = tm.tms_utime;
+                                         done = 1;
+	                                     return j;
+                                       }
+                                       int main( int argc, char ** argv ) {
+                                         int status = pthread_create( & threadOne, NULL, doThreadOne, NULL );
+                                         assert( status == 0 );
+                                         status = pthread_create( & threadTwo, NULL, doThreadTwo, NULL );
+                                         assert( status == 0 );
+                                         status = pthread_join( threadTwo, NULL );
+                                         assert( status == 0 );
+                                         status = pthread_join( threadOne, NULL );
+                                         assert( status == 0 );
+	                                     return (threadone == threadtwo);
+                                       }
+_ACEOF
+rm -f conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_link") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  { $as_echo "$as_me:$LINENO: result: yes" >&5
+$as_echo "yes" >&6; }
+	                                   virtualtimer="times"
+else
+  $as_echo "$as_me: program exited with status $ac_status" >&5
+$as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+( exit $ac_status )
+{ $as_echo "$as_me:$LINENO: result: no" >&5
+$as_echo "no" >&6; }
+	                                   virtualtimer="default"
 fi
 rm -rf conftest.dSYM
 rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
@@ -6581,35 +6868,32 @@ fi
 
 fi
 
-LDFLAGS=$OLDLDFLAGS
-CFLAGS=$OLDCFLAGS
-LIBS=$OLDLIBS
+LDFLAGS=$SAVED_LDFLAGS
+CFLAGS=$SAVED_CFLAGS
+LIBS=$SAVED_LIBS
 
 { $as_echo "$as_me:$LINENO: checking for thread virtual clock or cycle counter" >&5
 $as_echo_n "checking for thread virtual clock or cycle counter... " >&6; }
 case "$virtualtimer" in
-   times)
+  times)
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_PER_THREAD_TIMES 1
 _ACEOF
-
-   ;;
-   getrusage)
+ ;;
+  getrusage)
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_PER_THREAD_GETRUSAGE 1
 _ACEOF
-
-   ;;
-   clock_thread_cputime_id)
+ ;;
+  clock_thread_cputime_id)
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_CLOCK_GETTIME_THREAD CLOCK_THREAD_CPUTIME_ID
 _ACEOF
-
-   ;;
-   proc|default|perfctr)
+ ;;
+  proc|default|perfctr)
 
 cat >>confdefs.h <<\_ACEOF
 #define USE_PROC_PTTIMER 1
@@ -6619,22 +6903,266 @@ _ACEOF
 cat >>confdefs.h <<\_ACEOF
 #define USE_PERFCTR_PTTIMER 1
 _ACEOF
-
-   ;;
+ ;;
 esac
 { $as_echo "$as_me:$LINENO: result: $virtualtimer" >&5
 $as_echo "$virtualtimer" >&6; }
 
-if test "x$perfctr" = "x"; then
+if test "$OS" = "aix"; then
+
+# Check whether --with-pmapi was given.
+if test "${with_pmapi+set}" = set; then
+  withval=$with_pmapi; PMAPI=$withval
+else
+  PMAPI="/usr/pmapi"
+fi
+
+  LIBS="-L$PMAPI/lib -lpmapi"
+  CPPFLAGS="$CPPFLAGS -I$PMAPI/include"
+  { $as_echo "$as_me:$LINENO: checking for pm_initialize in -lpmapi" >&5
+$as_echo_n "checking for pm_initialize in -lpmapi... " >&6; }
+if test "${ac_cv_lib_pmapi_pm_initialize+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpmapi  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char pm_initialize ();
+int
+main ()
+{
+return pm_initialize ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then
+  ac_cv_lib_pmapi_pm_initialize=yes
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_pmapi_pm_initialize=no
+fi
+
+rm -rf conftest.dSYM
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_pmapi_pm_initialize" >&5
+$as_echo "$ac_cv_lib_pmapi_pm_initialize" >&6; }
+if test "x$ac_cv_lib_pmapi_pm_initialize" = x""yes; then
+  PMINIT="-DPM_INITIALIZE"
+else
+  { $as_echo "$as_me:$LINENO: checking for pm_init in -lpmapi" >&5
+$as_echo_n "checking for pm_init in -lpmapi... " >&6; }
+if test "${ac_cv_lib_pmapi_pm_init+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpmapi  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char pm_init ();
+int
+main ()
+{
+return pm_init ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then
+  ac_cv_lib_pmapi_pm_init=yes
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_pmapi_pm_init=no
+fi
+
+rm -rf conftest.dSYM
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_pmapi_pm_init" >&5
+$as_echo "$ac_cv_lib_pmapi_pm_init" >&6; }
+if test "x$ac_cv_lib_pmapi_pm_init" = x""yes; then
+  PMINIT="-DPM_INIT"
+else
+  { { $as_echo "$as_me:$LINENO: error: libpmapi.a not found, rerun configure with different flags" >&5
+$as_echo "$as_me: error: libpmapi.a not found, rerun configure with different flags" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+fi
+
+fi
+
+
+# Check whether --with-papi_events was given.
+if test "${with_papi_events+set}" = set; then
+  withval=$with_papi_events; papi_events=$withval
+else
+  papi_events="static"
+             papi_events_table="papi_events_table.h"
+             CFLAGS="$CFLAGS -DSTATIC_PAPI_EVENTS_TABLE"
+             { $as_echo "$as_me:$LINENO: Generating papi_events_table.h" >&5
+$as_echo "$as_me: Generating papi_events_table.h" >&6;}
+             sh papi_events_table.sh > papi_events_table.h
+fi
+
+
+{ $as_echo "$as_me:$LINENO: checking for building tests static" >&5
+$as_echo_n "checking for building tests static... " >&6; }
+# Check whether --enable-static-tests was given.
+if test "${enable_static_tests+set}" = set; then
+  enableval=$enable_static_tests; use_static_tests=$enableval
+fi
+
+{ $as_echo "$as_me:$LINENO: result: $use_static_tests" >&5
+$as_echo "$use_static_tests" >&6; }
+if test "$use_static_tests" = "yes"; then
+  STATIC="-static"
+fi
+
+{ $as_echo "$as_me:$LINENO: checking for which libraries to build" >&5
+$as_echo_n "checking for which libraries to build... " >&6; }
+# Check whether --enable-shared was given.
+if test "${enable_shared+set}" = set; then
+  enableval=$enable_shared; disable_shared=$enableval
+fi
+
+# Check whether --enable-static was given.
+if test "${enable_static+set}" = set; then
+  enableval=$enable_static; disable_static=$enableval
+fi
+
+if test "$disable_shared" != "yes"; then
+  papiLIBS="shared"
+fi
+if test "$disable_static" != "yes"; then
+  papiLIBS="$papiLIBS static"
+fi
+if test "$disable_static" = "yes" -a "$disable_shared" = "yes"; then
+  { { $as_echo "$as_me:$LINENO: error: Both shared and static libs are disabled" >&5
+$as_echo "$as_me: error: Both shared and static libs are disabled" >&2;}
+   { (exit 1); exit 1; }; }
+else
+  { $as_echo "$as_me:$LINENO: result: $papiLIBS" >&5
+$as_echo "$papiLIBS" >&6; }
+fi
+
+{ $as_echo "$as_me:$LINENO: checking for link test cases with shared library" >&5
+$as_echo_n "checking for link test cases with shared library... " >&6; }
+
+# Check whether --with-shlib was given.
+if test "${with_shlib+set}" = set; then
+  withval=$with_shlib; shlib=yes
+             SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib:$(PWD)/libpfm-2.x/libpfm;export LIBPATH=.:./libpfm-3.y/lib:./libpfm-2.x/libpfm;'
+             LINKLIB='../$(SHLIB)'
+else
+  if test "$papiLIBS" = "shared"; then
+               shlib=yes
+               SETPATH='export LD_LIBRARY_PATH=$(PWD):$(PWD)/libpfm-3.y/lib:$(PWD)/libpfm-2.x/libpfm;export LIBPATH=.:./libpfm-3.y/lib:./libpfm-2.x/libpfm;'
+               LINKLIB='../$(SHLIB)'
+             else
+               LINKLIB='../$(LIBRARY)'
+             fi
+fi
+
+if test "$papiLIBS" != "shared static"; then
+  if test "$shlib" = "yes"; then
+    if echo "x$papiLIBS" | grep static > /dev/null; then
+      { { $as_echo "$as_me:$LINENO: error: Building static but specified shared linking" >&5
+$as_echo "$as_me: error: Building static but specified shared linking" >&2;}
+   { (exit 1); exit 1; }; }
+    fi
+  elif echo "x$papiLIBS" | grep shared > /dev/null; then
+    { { $as_echo "$as_me:$LINENO: error: Building shared but specified static linking" >&5
+$as_echo "$as_me: error: Building shared but specified static linking" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+fi
+{ $as_echo "$as_me:$LINENO: result: $shlib" >&5
+$as_echo "$shlib" >&6; }
+
+##################################################
+#          perfctr
+##################################################
 
 # Check whether --with-perfctr was given.
 if test "${with_perfctr+set}" = set; then
-  withval=$with_perfctr; perfctr=$withval
-             distributed_build=yes
+  withval=$with_perfctr; user_specified_interface=yes
 else
-  perfctr="no"
-if test "$cross_compiling" = "no" ; then
-	    { $as_echo "$as_me:$LINENO: checking for /sys/class/perfctr" >&5
+  perfctr=no
+             if test "$cross_compiling" = "no" ; then
+	           { $as_echo "$as_me:$LINENO: checking for /sys/class/perfctr" >&5
 $as_echo_n "checking for /sys/class/perfctr... " >&6; }
 if test "${ac_cv_file__sys_class_perfctr+set}" = set; then
   $as_echo_n "(cached) " >&6
@@ -6677,294 +7205,7 @@ fi
 
 fi
 
-fi
-
-fi
-
-fi
-case "$perfctr" in
-   yes)
-   if test "$arch" = "ppc64"; then
-      perfctr=7
-   else
-      perfctr=6
-   fi ;;
-   7)
-   if test "$arch" != "ppc64"; then
-   	{ { $as_echo "$as_me:$LINENO: error: Perfctr 2.7.x is only supported on PPC64 systems" >&5
-$as_echo "$as_me: error: Perfctr 2.7.x is only supported on PPC64 systems" >&2;}
-   { (exit 1); exit 1; }; }
-   fi ;;
-   6|no)
-      ;;
-   *)
-      { { $as_echo "$as_me:$LINENO: error: The perfctr option you specified is not supported" >&5
-$as_echo "$as_me: error: The perfctr option you specified is not supported" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-esac
-
-# --with-perfctr-incdir and --with-perfctr-libdir are used when someone has built and installed
-# in a non-standard location (i.e. headers in /usr/src/include, libs in /usr/lib64).
-# --with-perfctr-prefix is for those who have build and installed in a standard location.
-# --with-perfctr-root is for testers and developers who need to build perfctr in a separate source tree.
-
-
-# Check whether --with-perfctr_root was given.
-if test "${with_perfctr_root+set}" = set; then
-  withval=$with_perfctr_root; perfctr_root=$withval
-             distributed_build=yes
-else
-  perfctr_root=""
-
-fi
-
-
-# Check whether --with-perfctr_prefix was given.
-if test "${with_perfctr_prefix+set}" = set; then
-  withval=$with_perfctr_prefix; perfctr_prefix=$withval
-             distributed_build=yes
-else
-  perfctr_prefix=""
-
-fi
-
-
-# Check whether --with-perfctr_incdir was given.
-if test "${with_perfctr_incdir+set}" = set; then
-  withval=$with_perfctr_incdir; perfctr_incdir=$withval
-            distributed_build=yes
-else
-  perfctr_incdir=""
-
-fi
-
-
-# Check whether --with-perfctr_libdir was given.
-if test "${with_perfctr_libdir+set}" = set; then
-  withval=$with_perfctr_libdir; perfctr_libdir=$withval
-            distributed_build=yes
-else
-  perfctr_libdir=""
-
-fi
-
-
-
-# Check whether --with-perfmon was given.
-if test "${with_perfmon+set}" = set; then
-  withval=$with_perfmon; perfmon=$withval
-             distributed_build=yes
-else
-  perfmon=0
-	    if test "$cross_compiling" = "no" ; then
-	       { $as_echo "$as_me:$LINENO: checking for /sys/kernel/perfmon/version" >&5
-$as_echo_n "checking for /sys/kernel/perfmon/version... " >&6; }
-if test "${ac_cv_file__sys_kernel_perfmon_version+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  test "$cross_compiling" = yes &&
-  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "/sys/kernel/perfmon/version"; then
-  ac_cv_file__sys_kernel_perfmon_version=yes
-else
-  ac_cv_file__sys_kernel_perfmon_version=no
-fi
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_file__sys_kernel_perfmon_version" >&5
-$as_echo "$ac_cv_file__sys_kernel_perfmon_version" >&6; }
-if test "x$ac_cv_file__sys_kernel_perfmon_version" = x""yes; then
-
-	       perfmon=`cat /sys/kernel/perfmon/version`
-
-else
-  { $as_echo "$as_me:$LINENO: checking for /proc/perfmon" >&5
-$as_echo_n "checking for /proc/perfmon... " >&6; }
-if test "${ac_cv_file__proc_perfmon+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  test "$cross_compiling" = yes &&
-  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "/proc/perfmon"; then
-  ac_cv_file__proc_perfmon=yes
-else
-  ac_cv_file__proc_perfmon=no
-fi
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_file__proc_perfmon" >&5
-$as_echo "$ac_cv_file__proc_perfmon" >&6; }
-if test "x$ac_cv_file__proc_perfmon" = x""yes; then
-
-	       perfmon=`cat /proc/perfmon | grep version | cut -d: -f2`
-
-else
-  perfmon=0
-fi
-
-fi
-
-	    fi
-
-fi
-
-
-if test "$perfmon" != 0; then
-   { $as_echo "$as_me:$LINENO: checking for perfmon version" >&5
-$as_echo_n "checking for perfmon version... " >&6; }
-#   AC_MSG_RESULT("x${perfmon}x")
-   perfmon=`echo ${perfmon} | sed 's/^ \t*//;s/ \t*$//'`
-#   AC_MSG_RESULT($perfmon)
-   perfmon=`echo ${perfmon} | grep -e '[1-9]\.[0-9][0-9]*'`
-#   AC_MSG_RESULT($perfmon)
-   if test "x$perfmon" = "x"; then
-      { { $as_echo "$as_me:$LINENO: error: \"Badly formed perfmon version string\"" >&5
-$as_echo "$as_me: error: \"Badly formed perfmon version string\"" >&2;}
-   { (exit 1); exit 1; }; }
-      perfmon=0
-   fi
-   { $as_echo "$as_me:$LINENO: result: $perfmon" >&5
-$as_echo "$perfmon" >&6; }
-   perfmon=`echo ${perfmon} | sed 's/\.//'`
-fi
-
-# --with-pfm-incdir and --with-pfm-libdir are used when someone has built and installed
-# in a non-standard location (i.e. headers in /usr/src/include, libs in /usr/lib64).
-# --with-pfm-prefix is for those who have build and installed in a standard location.
-# --with-pfm-root is for testers and developers who need to build pfm in a separate source tree.
-
-
-# Check whether --with-pfm_root was given.
-if test "${with_pfm_root+set}" = set; then
-  withval=$with_pfm_root; pfm_root=$withval
-            distributed_build=yes
-else
-  pfm_root=""
-
-fi
-
-
-# Check whether --with-pfm_prefix was given.
-if test "${with_pfm_prefix+set}" = set; then
-  withval=$with_pfm_prefix; pfm_prefix=$withval
-            distributed_build=yes
-else
-  pfm_prefix=""
-
-fi
-
-
-# Check whether --with-pfm_incdir was given.
-if test "${with_pfm_incdir+set}" = set; then
-  withval=$with_pfm_incdir; pfm_incdir=$withval
-            distributed_build=yes
-else
-  pfm_incdir=""
-
-fi
-
-
-# Check whether --with-pfm_libdir was given.
-if test "${with_pfm_libdir+set}" = set; then
-  withval=$with_pfm_libdir; pfm_libdir=$withval
-            distributed_build=yes
-else
-  pfm_libdir=""
-
-fi
-
-
-# Linux perf event start
-if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
-
-major_version=`echo $OSVER | sed 's/\([^.][^.]*\).*/\1/'`
-minor_version=`echo $OSVER | sed 's/[^.][^.]*.\([^.][^.]*\).*/\1/'`
-point_version=`echo $OSVER | sed -e 's/[^.][^.]*.[^.][^.]*.\(.*\)/\1/' -e 's/[^0-9].*//'`
-
-# Define SYNC_READ for all kernel versions older than 2.6.33 as a workaround for kernel bug 14489 (see bugzilla.kernel.org)
-
-if (test "$major_version" -lt 2 || test "$major_version" = 2 -a "$minor_version" -lt 6 || test "$major_version" = 2 -a "$minor_version" = 6 -a "$point_version" -lt 33); then
-   CFLAGS="$CFLAGS -DSYNC_READ"
-fi
-
-# Look for perf_event.h or perf_counter.h in user specified path else default to /usr/include/linux
-
-# Check whether --with-pe_incdir was given.
-if test "${with_pe_incdir+set}" = set; then
-  withval=$with_pe_incdir; case "$with_pe_incdir" in
-               yes|''|no) { { $as_echo "$as_me:$LINENO: error: --with-pe-incdir requires a path" >&5
-$as_echo "$as_me: error: --with-pe-incdir requires a path" >&2;}
-   { (exit 1); exit 1; }; } ;;
-               *) pe_incdir=$with_pe_incdir
-                  perf_events="yes" ;;
-            esac
-else
-  pe_incdir="/usr/include/linux"
-fi
-
-
-# Linux 2.6.32 and newer check
-as_ac_File=`$as_echo "ac_cv_file_$pe_incdir/perf_event.h" | $as_tr_sh`
-{ $as_echo "$as_me:$LINENO: checking for $pe_incdir/perf_event.h" >&5
-$as_echo_n "checking for $pe_incdir/perf_event.h... " >&6; }
-if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
-  $as_echo_n "(cached) " >&6
-else
-  test "$cross_compiling" = yes &&
-  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "$pe_incdir/perf_event.h"; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
-fi
-fi
-ac_res=`eval 'as_val=${'$as_ac_File'}
-		 $as_echo "$as_val"'`
-	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-as_val=`eval 'as_val=${'$as_ac_File'}
-		 $as_echo "$as_val"'`
-   if test "x$as_val" = x""yes; then
-  PEPATH="$pe_incdir/perf_event.h"
-fi
-
-
-# Linux 2.6.31 check
-if test "x$PEPATH" = "x"; then
-as_ac_File=`$as_echo "ac_cv_file_$pe_incdir/perf_counter.h" | $as_tr_sh`
-{ $as_echo "$as_me:$LINENO: checking for $pe_incdir/perf_counter.h" >&5
-$as_echo_n "checking for $pe_incdir/perf_counter.h... " >&6; }
-if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
-  $as_echo_n "(cached) " >&6
-else
-  test "$cross_compiling" = yes &&
-  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "$pe_incdir/perf_counter.h"; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
-fi
-fi
-ac_res=`eval 'as_val=${'$as_ac_File'}
-		 $as_echo "$as_val"'`
-	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-as_val=`eval 'as_val=${'$as_ac_File'}
-		 $as_echo "$as_val"'`
-   if test "x$as_val" = x""yes; then
-  PEPATH="$pe_incdir/perf_counter.h"
-	   CFLAGS="$CFLAGS -DKERNEL31"
-fi
-
-fi
-
+<<<<<<< configure
 
 # Check whether --with-perf_events was given.
 if test "${with_perf_events+set}" = set; then
@@ -7230,300 +7471,77 @@ else
 sed 's/^/| /' conftest.$ac_ext >&5
 
 	ac_header_compiler=no
+=======
+             fi
+>>>>>>> 1.185
 fi
 
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-{ $as_echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
-$as_echo "$ac_header_compiler" >&6; }
-
-# Is the header present?
-{ $as_echo "$as_me:$LINENO: checking libcpc.h presence" >&5
-$as_echo_n "checking libcpc.h presence... " >&6; }
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <libcpc.h>
-_ACEOF
-if { (ac_try="$ac_cpp conftest.$ac_ext"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } >/dev/null && {
-	 test -z "$ac_c_preproc_warn_flag$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       }; then
-  ac_header_preproc=yes
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-  ac_header_preproc=no
-fi
-
-rm -f conftest.err conftest.$ac_ext
-{ $as_echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
-$as_echo "$ac_header_preproc" >&6; }
-
-# So?  What about this header?
-case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
-  yes:no: )
-    { $as_echo "$as_me:$LINENO: WARNING: libcpc.h: accepted by the compiler, rejected by the preprocessor!" >&5
-$as_echo "$as_me: WARNING: libcpc.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { $as_echo "$as_me:$LINENO: WARNING: libcpc.h: proceeding with the compiler's result" >&5
-$as_echo "$as_me: WARNING: libcpc.h: proceeding with the compiler's result" >&2;}
-    ac_header_preproc=yes
-    ;;
-  no:yes:* )
-    { $as_echo "$as_me:$LINENO: WARNING: libcpc.h: present but cannot be compiled" >&5
-$as_echo "$as_me: WARNING: libcpc.h: present but cannot be compiled" >&2;}
-    { $as_echo "$as_me:$LINENO: WARNING: libcpc.h:     check for missing prerequisite headers?" >&5
-$as_echo "$as_me: WARNING: libcpc.h:     check for missing prerequisite headers?" >&2;}
-    { $as_echo "$as_me:$LINENO: WARNING: libcpc.h: see the Autoconf documentation" >&5
-$as_echo "$as_me: WARNING: libcpc.h: see the Autoconf documentation" >&2;}
-    { $as_echo "$as_me:$LINENO: WARNING: libcpc.h:     section \"Present But Cannot Be Compiled\"" >&5
-$as_echo "$as_me: WARNING: libcpc.h:     section \"Present But Cannot Be Compiled\"" >&2;}
-    { $as_echo "$as_me:$LINENO: WARNING: libcpc.h: proceeding with the preprocessor's result" >&5
-$as_echo "$as_me: WARNING: libcpc.h: proceeding with the preprocessor's result" >&2;}
-    { $as_echo "$as_me:$LINENO: WARNING: libcpc.h: in the future, the compiler will take precedence" >&5
-$as_echo "$as_me: WARNING: libcpc.h: in the future, the compiler will take precedence" >&2;}
-    ( cat <<\_ASBOX
-## ------------------------------------------ ##
-## Report this to ptools-perfapi@eecs.utk.edu ##
-## ------------------------------------------ ##
-_ASBOX
-     ) | sed "s/^/$as_me: WARNING:     /" >&2
-    ;;
-esac
-{ $as_echo "$as_me:$LINENO: checking for libcpc.h" >&5
-$as_echo_n "checking for libcpc.h... " >&6; }
-if test "${ac_cv_header_libcpc_h+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  ac_cv_header_libcpc_h=$ac_header_preproc
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_header_libcpc_h" >&5
-$as_echo "$ac_cv_header_libcpc_h" >&6; }
-
-fi
-if test "x$ac_cv_header_libcpc_h" = x""yes; then
-
-                                CFLAGS="$CFLAGS -lcpc"
-        if test "$cross_compiling" = yes; then
-  { { $as_echo "$as_me:$LINENO: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-{ { $as_echo "$as_me:$LINENO: error: cannot run test program while cross compiling
-See \`config.log' for more details." >&5
-$as_echo "$as_me: error: cannot run test program while cross compiling
-See \`config.log' for more details." >&2;}
-   { (exit 1); exit 1; }; }; }
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-        #include <stdlib.h>
-        #include <libcpc.h>
-
-        int main()
-        {
-            // Check for libcpc 2
-            if(CPC_VER_CURRENT == 2)
-            {
-                exit(0);
-            }
-
-            exit(1);
-        }
-
-_ACEOF
-rm -f conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_link") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_try") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  cpc_version=2
-else
-  $as_echo "$as_me: program exited with status $ac_status" >&5
-$as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-( exit $ac_status )
-cpc_version=0
-fi
-rm -rf conftest.dSYM
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
-fi
-
-
-else
-  { { $as_echo "$as_me:$LINENO: error: libcpc is needed for running PAPI on Solaris" >&5
-$as_echo "$as_me: error: libcpc is needed for running PAPI on Solaris" >&2;}
-   { (exit 1); exit 1; }; }
-
-fi
-
-
-    echo '====================================================================='
-    echo '         PAPI is available for the following Sun platforms:'
-    echo '---------------------------------------------------------------------'
-    echo
-    echo '    - UltraSPARC I, II & III on Solaris 8 & 9 using libcpc 1'
-    echo '      --> PAPI substrate: solaris-ultra'
-    echo
-    echo '    - UltraSPARC T2          on Solaris 10    using libcpc 2'
-    echo '      --> PAPI substrate: solaris-niagara2'
-    echo
-    echo "    - Your substrate will be: $OS-$CPU-$BM"
-    echo '====================================================================='
-    if test "$CPU" = "niagara2"
-    then
-        if test "$cpc_version" != "2"
-        then
-            { { $as_echo "$as_me:$LINENO: error: libcpc2 needed for Niagara 2" >&5
-$as_echo "$as_me: error: libcpc2 needed for Niagara 2" >&2;}
-   { (exit 1); exit 1; }; }
-        fi
-    else
-
-{ $as_echo "$as_me:$LINENO: checking for cpc_take_sample in -lcpc" >&5
-$as_echo_n "checking for cpc_take_sample in -lcpc... " >&6; }
-if test "${ac_cv_lib_cpc_cpc_take_sample+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lcpc  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char cpc_take_sample ();
-int
-main ()
-{
-return cpc_take_sample ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-	 test "$cross_compiling" = yes ||
-	 $as_test_x conftest$ac_exeext
-       }; then
-  ac_cv_lib_cpc_cpc_take_sample=yes
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_cpc_cpc_take_sample=no
-fi
-
-rm -rf conftest.dSYM
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_cpc_cpc_take_sample" >&5
-$as_echo "$ac_cv_lib_cpc_cpc_take_sample" >&6; }
-if test "x$ac_cv_lib_cpc_cpc_take_sample" = x""yes; then
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBCPC 1
-_ACEOF
-
-  LIBS="-lcpc $LIBS"
-
-else
-
-              { { $as_echo "$as_me:$LINENO: error: libcpc.a is needed on Solaris, install SUNWcpc" >&5
-$as_echo "$as_me: error: libcpc.a is needed on Solaris, install SUNWcpc" >&2;}
-   { (exit 1); exit 1; }; }
-
-fi
-
-    fi
-fi
 
 if test "$perfctr" != "no"; then
-   dotest=0
-if test "$perfctr_root" != ""; then
-   LIBS="-L$perfctr_root/usr.lib -lperfctr"
-   CPPFLAGS="-I$perfctr_root/usr.lib -I$perfctr_root/linux/include"
-   dotest=1
-elif test "$perfctr_prefix" != ""; then
-   LIBS="-L$perfctr_prefix/lib -lperfctr"
-   CPPFLAGS="-I$perfctr_prefix/include"
-   perfctr_libdir="$perfctr_prefix/lib"
-   perfctr_incdir="$perfctr_prefix/include"
-   dotest=1
-else
-   if test "$perfctr_libdir" != ""; then
+  { $as_echo "$as_me:$LINENO: checking for perfctr version" >&5
+$as_echo_n "checking for perfctr version... " >&6; }
+  if test "$perfctr" = 7 -a "$arch" != "ppc64"; then
+    { { $as_echo "$as_me:$LINENO: error: Perfctr 2.7.x only works on PPC64 machines. Patch kernel with 2.6.x." >&5
+$as_echo "$as_me: error: Perfctr 2.7.x only works on PPC64 machines. Patch kernel with 2.6.x." >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+  { $as_echo "$as_me:$LINENO: result: 2.$perfctr" >&5
+$as_echo "2.$perfctr" >&6; }
+fi
+
+
+# Check whether --with-perfctr_root was given.
+if test "${with_perfctr_root+set}" = set; then
+  withval=$with_perfctr_root; perfctr_root=$withval
+             user_specified_interface=yes
+fi
+
+
+# Check whether --with-perfctr_prefix was given.
+if test "${with_perfctr_prefix+set}" = set; then
+  withval=$with_perfctr_prefix; perfctr_prefix=$withval
+             user_specified_interface=yes
+fi
+
+
+# Check whether --with-perfctr_incdir was given.
+if test "${with_perfctr_incdir+set}" = set; then
+  withval=$with_perfctr_incdir; perfctr_incdir=$withval
+            user_specified_interface=yes
+fi
+
+
+# Check whether --with-perfctr_libdir was given.
+if test "${with_perfctr_libdir+set}" = set; then
+  withval=$with_perfctr_libdir; perfctr_libdir=$withval
+            user_specified_interface=yes
+fi
+
+
+if test "$perfctr" != "no"; then
+  dotest=0
+  if test "x$perfctr_root" != "x"; then
+    LIBS="-L$perfctr_root/usr.lib -lperfctr"
+    CPPFLAGS="-I$perfctr_root/usr.lib -I$perfctr_root/linux/include"
+    dotest=1
+  elif test "x$perfctr_prefix" != "x"; then
+    LIBS="-L$perfctr_prefix/lib -lperfctr"
+    CPPFLAGS="-I$perfctr_prefix/include"
+    perfctr_libdir="$perfctr_prefix/lib"
+    perfctr_incdir="$perfctr_prefix/include"
+    dotest=1
+  else
+    if test "x$perfctr_libdir" != "x"; then
       LIBS="-L$perfctr_libdir -lperfctr"
       dotest=1
-   fi
-   if test "$perfctr_incdir" != ""; then
+    fi
+    if test "x$perfctr_incdir" != "x"; then
       CPPFLAGS="-I$perfctr_incdir"
       dotest=1
-   fi
-fi
-if test "$dotest" = 1; then
-{ $as_echo "$as_me:$LINENO: checking for vperfctr_open in -lperfctr" >&5
+    fi
+  fi
+  if test "$dotest" = 1; then
+    { $as_echo "$as_me:$LINENO: checking for vperfctr_open in -lperfctr" >&5
 $as_echo_n "checking for vperfctr_open in -lperfctr... " >&6; }
 if test "${ac_cv_lib_perfctr_vperfctr_open+set}" = set; then
   $as_echo_n "(cached) " >&6
@@ -7589,7 +7607,6 @@ fi
 { $as_echo "$as_me:$LINENO: result: $ac_cv_lib_perfctr_vperfctr_open" >&5
 $as_echo "$ac_cv_lib_perfctr_vperfctr_open" >&6; }
 if test "x$ac_cv_lib_perfctr_vperfctr_open" = x""yes; then
-
 
 for ac_header in libperfctr.h
 do
@@ -7736,10 +7753,9 @@ as_val=`eval 'as_val=${'$as_ac_Header'}
   cat >>confdefs.h <<_ACEOF
 #define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
 _ACEOF
-
-	oCFLAGS=$CFLAGS
-	CFLAGS="$CFLAGS -static"
-	if test "$cross_compiling" = yes; then
+ oCFLAGS=$CFLAGS
+	                                CFLAGS="$CFLAGS -static"
+	                                if test "$cross_compiling" = yes; then
   { { $as_echo "$as_me:$LINENO: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 { { $as_echo "$as_me:$LINENO: error: cannot run test program while cross compiling
@@ -7754,15 +7770,13 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-
-	#include <stdlib.h>
-	#include "libperfctr.h"
-	int main()
-	{
-		if ((PERFCTR_ABI_VERSION >> 24) != 5) { exit(1); }
-       exit(0);
-	}
-
+#include <stdlib.h>
+	                                            #include "libperfctr.h"
+	                                            int main() {
+		                                          if ((PERFCTR_ABI_VERSION >> 24) != 5)
+                                                    exit(1);
+                                                  exit(0);
+	                                            }
 _ACEOF
 rm -f conftest$ac_exeext
 if { (ac_try="$ac_link"
@@ -7800,78 +7814,324 @@ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext conftest.$a
 fi
 
 
-	CFLAGS=$oCFLAGS
-
+	                                CFLAGS=$oCFLAGS
 else
-
-	{ { $as_echo "$as_me:$LINENO: error: libperfctr.h could not be found, please examine config.log and rerun configure with different flags" >&5
-$as_echo "$as_me: error: libperfctr.h could not be found, please examine config.log and rerun configure with different flags" >&2;}
+  { { $as_echo "$as_me:$LINENO: error: libperfctr.h not found, rerun configure with different flags" >&5
+$as_echo "$as_me: error: libperfctr.h not found, rerun configure with different flags" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
 done
 
 else
-
-{ { $as_echo "$as_me:$LINENO: error: libperfctr.a could not be found, please examine config.log and rerun configure with different flags" >&5
-$as_echo "$as_me: error: libperfctr.a could not be found, please examine config.log and rerun configure with different flags" >&2;}
+  { { $as_echo "$as_me:$LINENO: error: libperfctr.a not found, rerun configure with different flags" >&5
+$as_echo "$as_me: error: libperfctr.a not found, rerun configure with different flags" >&2;}
    { (exit 1); exit 1; }; }
-
 fi
 
-    else
+  else
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBPERFCTR_H 1
 _ACEOF
 
-fi
+  fi
 fi
 
-{ $as_echo "$as_me:$LINENO: checking for perfctr version" >&5
-$as_echo_n "checking for perfctr version... " >&6; }
-if test "$perfctr" = "no"; then
-   { $as_echo "$as_me:$LINENO: result: none" >&5
-$as_echo "none" >&6; }
+##################################################
+#          perfmon
+##################################################
+#CONFIG_PFMLIB_OLD_PFMV2 is used in Rules.pfm
+old_pfmv2="n"
+
+
+# Check whether --with-perfmon was given.
+if test "${with_perfmon+set}" = set; then
+  withval=$with_perfmon; user_specified_interface=yes
 else
-   { $as_echo "$as_me:$LINENO: result: 2.$perfctr" >&5
-$as_echo "2.$perfctr" >&6; }
-fi
-
-if test "$perfctr" = 7 -a "$arch" != "ppc64"; then
-   { { $as_echo "$as_me:$LINENO: error: Perfctr 2.7.x only works on PPC64 machines. Please repatch your kernel with 2.6.x." >&5
-$as_echo "$as_me: error: Perfctr 2.7.x only works on PPC64 machines. Please repatch your kernel with 2.6.x." >&2;}
+  perfmon=no
+	         if test "$cross_compiling" = "no" ; then
+	           { $as_echo "$as_me:$LINENO: checking for /sys/kernel/perfmon/version" >&5
+$as_echo_n "checking for /sys/kernel/perfmon/version... " >&6; }
+if test "${ac_cv_file__sys_kernel_perfmon_version+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
    { (exit 1); exit 1; }; }
+if test -r "/sys/kernel/perfmon/version"; then
+  ac_cv_file__sys_kernel_perfmon_version=yes
+else
+  ac_cv_file__sys_kernel_perfmon_version=no
+fi
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_file__sys_kernel_perfmon_version" >&5
+$as_echo "$ac_cv_file__sys_kernel_perfmon_version" >&6; }
+if test "x$ac_cv_file__sys_kernel_perfmon_version" = x""yes; then
+  perfmon=`cat /sys/kernel/perfmon/version`
+else
+  { $as_echo "$as_me:$LINENO: checking for /proc/perfmon" >&5
+$as_echo_n "checking for /proc/perfmon... " >&6; }
+if test "${ac_cv_file__proc_perfmon+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "/proc/perfmon"; then
+  ac_cv_file__proc_perfmon=yes
+else
+  ac_cv_file__proc_perfmon=no
+fi
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_file__proc_perfmon" >&5
+$as_echo "$ac_cv_file__proc_perfmon" >&6; }
+if test "x$ac_cv_file__proc_perfmon" = x""yes; then
+  perfmon=`cat /proc/perfmon | grep version | cut -d: -f2`
 fi
 
-if test "$perfmon" != "0" -o "$perf_events" = "yes"; then
-      dotest=0
-   if test "$pfm_root" != ""; then
-      LIBS="-L$pfm_root/lib -lpfm"
-      CPPFLAGS="-I$pfm_root/include"
+fi
+
+	         fi
+fi
+
+
+if test "$perfmon" != no; then
+  { $as_echo "$as_me:$LINENO: checking for perfmon version" >&5
+$as_echo_n "checking for perfmon version... " >&6; }
+  perfmon=`echo ${perfmon} | sed 's/^ \t*//;s/ \t*$//'`
+  perfmon=`echo ${perfmon} | grep -e '[1-9]\.[0-9][0-9]*'`
+  if test "x$perfmon" = "x"; then
+    { { $as_echo "$as_me:$LINENO: error: \"Badly formed perfmon version string\"" >&5
+$as_echo "$as_me: error: \"Badly formed perfmon version string\"" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+  { $as_echo "$as_me:$LINENO: result: $perfmon" >&5
+$as_echo "$perfmon" >&6; }
+  perfmon=`echo ${perfmon} | sed 's/\.//'`
+  if test $perfmon -lt 25; then
+    old_pfmv2="y"
+  fi
+fi
+
+
+# Check whether --with-pfm_root was given.
+if test "${with_pfm_root+set}" = set; then
+  withval=$with_pfm_root; pfm_root=$withval
+            user_specified_interface=yes
+fi
+
+
+# Check whether --with-pfm_prefix was given.
+if test "${with_pfm_prefix+set}" = set; then
+  withval=$with_pfm_prefix; pfm_prefix=$withval
+            user_specified_interface=yes
+fi
+
+
+# Check whether --with-pfm_incdir was given.
+if test "${with_pfm_incdir+set}" = set; then
+  withval=$with_pfm_incdir; pfm_incdir=$withval
+            user_specified_interface=yes
+fi
+
+
+# Check whether --with-pfm_libdir was given.
+if test "${with_pfm_libdir+set}" = set; then
+  withval=$with_pfm_libdir; pfm_libdir=$withval
+            user_specified_interface=yes
+fi
+
+
+##################################################
+#          Linux perf_event/perf_counter
+##################################################
+if test "$cross_compiling" = "no" -a "$OS" = "linux"; then
+  major_version=`echo $OSVER | sed 's/\([^.][^.]*\).*/\1/'`
+  minor_version=`echo $OSVER | sed 's/[^.][^.]*.\([^.][^.]*\).*/\1/'`
+  point_version=`echo $OSVER | sed -e 's/[^.][^.]*.[^.][^.]*.\(.*\)/\1/' -e 's/[^0-9].*//'`
+
+  # Define SYNC_READ for all kernel versions older than 2.6.33 as a workaround for kernel bug 14489
+  if (test "$major_version" -lt 2 || test "$major_version" = 2 -a "$minor_version" -lt 6 || test "$major_version" = 2 -a "$minor_version" = 6 -a "$point_version" -lt 33); then
+    CFLAGS="$CFLAGS -DSYNC_READ"
+  fi
+
+
+# Check whether --with-perf_events was given.
+if test "${with_perf_events+set}" = set; then
+  withval=$with_perf_events; perf_events=yes
+fi
+
+
+
+# Check whether --with-pe_incdir was given.
+if test "${with_pe_incdir+set}" = set; then
+  withval=$with_pe_incdir; pe_incdir=$with_pe_incdir
+               perf_events="yes"
+else
+  pe_incdir="/usr/include/linux"
+fi
+
+
+  # Linux 2.6.32 and newer check
+  as_ac_File=`$as_echo "ac_cv_file_$pe_incdir/perf_event.h" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for $pe_incdir/perf_event.h" >&5
+$as_echo_n "checking for $pe_incdir/perf_event.h... " >&6; }
+if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "$pe_incdir/perf_event.h"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+ac_res=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+as_val=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+   if test "x$as_val" = x""yes; then
+  PEPATH="$pe_incdir/perf_event.h"
+fi
+
+
+  # Linux 2.6.31 check
+  if test "x$PEPATH" = "x"; then
+    as_ac_File=`$as_echo "ac_cv_file_$pe_incdir/perf_counter.h" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for $pe_incdir/perf_counter.h" >&5
+$as_echo_n "checking for $pe_incdir/perf_counter.h... " >&6; }
+if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "$pe_incdir/perf_counter.h"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+ac_res=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+as_val=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+   if test "x$as_val" = x""yes; then
+  PEPATH="$pe_incdir/perf_counter.h"
+	               CFLAGS="$CFLAGS -DKERNEL31"
+fi
+
+  fi
+
+  if test "x$PEPATH" = "x"; then
+    pe_incdir="/lib/modules/$OSVER/source/include/linux"
+    as_ac_File=`$as_echo "ac_cv_file_$pe_incdir/perf_event.h" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for $pe_incdir/perf_event.h" >&5
+$as_echo_n "checking for $pe_incdir/perf_event.h... " >&6; }
+if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "$pe_incdir/perf_event.h"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+ac_res=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+as_val=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+   if test "x$as_val" = x""yes; then
+  PEPATH="$pe_incdir/perf_event.h"
+fi
+
+    if test "x$PEPATH" = "x"; then
+      as_ac_File=`$as_echo "ac_cv_file_$pe_incdir/perf_counter.h" | $as_tr_sh`
+{ $as_echo "$as_me:$LINENO: checking for $pe_incdir/perf_counter.h" >&5
+$as_echo_n "checking for $pe_incdir/perf_counter.h... " >&6; }
+if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  { { $as_echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+$as_echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "$pe_incdir/perf_counter.h"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+ac_res=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+as_val=`eval 'as_val=${'$as_ac_File'}
+		 $as_echo "$as_val"'`
+   if test "x$as_val" = x""yes; then
+  PEPATH="$pe_incdir/perf_counter.h"
+	                 CFLAGS="$CFLAGS -DKERNEL31"
+fi
+
+    fi
+  fi
+
+  if test "x$PEPATH" = "x"; then
+    perf_events="no"
+  else
+    PEINCFLAG='-DPEINCLUDE=\"$(PEPATH)\"'
+    CFLAGS="$CFLAGS $PEINCFLAG"
+    if test "$perf_events" != "no" -a "$perfctr" = "no" -a "$perfmon" = "no"; then
+      perf_events="yes"
+    fi
+  fi
+fi
+
+if test "$perfmon" != "no" -o "$perf_events" = "yes"; then
+  dotest=0
+  if test "x$pfm_root" != "x"; then
+    LIBS="-L$pfm_root/lib -lpfm"
+    CPPFLAGS="-I$pfm_root/include"
+    dotest=1
+  elif test "x$pfm_prefix" != "x"; then
+    LIBS="-L$pfm_prefix/lib -lpfm"
+    CPPFLAGS="-I$pfm_prefix/include"
+    if test "x$pfm_libdir" = "x"; then
+      pfm_libdir="$pfm_prefix/lib"
+    fi
+    if test "x$pfm_prefix" = "x"; then
+      pfm_incdir="$pfm_prefix/include"
+    fi
+    dotest=1
+  else
+    if test "x$pfm_libdir" != "x"; then
+      LIBS="-L$pfm_libdir -lpfm"
       dotest=1
-   elif test "$pfm_prefix" != ""; then
-      LIBS="-L$pfm_prefix/lib -lpfm"
-      CPPFLAGS="-I$pfm_prefix/include"
-      if test "$pfm_libdir" = ""; then
-         pfm_libdir="$pfm_prefix/lib"
-      fi
-      if test "$pfm_prefix" = ""; then
-         pfm_incdir="$pfm_prefix/include"
-      fi
+    fi
+    if test "x$pfm_incdir" != "x"; then
+      CPPFLAGS="-I$pfm_incdir"
       dotest=1
-   else
-      if test "$pfm_libdir" != ""; then
-         LIBS="-L$pfm_libdir -lpfm"
-         dotest=1
-      fi
-      if test "$pfm_incdir" != ""; then
-         CPPFLAGS="-I$pfm_incdir"
-         dotest=1
-      fi
-   fi
-   if test "$dotest" = 1; then
-   { $as_echo "$as_me:$LINENO: checking for pfm_initialize in -lpfm" >&5
+    fi
+  fi
+  if test "$dotest" = 1; then
+    { $as_echo "$as_me:$LINENO: checking for pfm_initialize in -lpfm" >&5
 $as_echo_n "checking for pfm_initialize in -lpfm... " >&6; }
 if test "${ac_cv_lib_pfm_pfm_initialize+set}" = set; then
   $as_echo_n "(cached) " >&6
@@ -7937,7 +8197,6 @@ fi
 { $as_echo "$as_me:$LINENO: result: $ac_cv_lib_pfm_pfm_initialize" >&5
 $as_echo "$ac_cv_lib_pfm_pfm_initialize" >&6; }
 if test "x$ac_cv_lib_pfm_pfm_initialize" = x""yes; then
-
 
 for ac_header in perfmon/pfmlib.h
 do
@@ -8084,8 +8343,7 @@ as_val=`eval 'as_val=${'$as_ac_Header'}
   cat >>confdefs.h <<_ACEOF
 #define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
 _ACEOF
-
-   	if test "$arch" = "ia64"; then
+ if test "$arch" = "ia64"; then
 
 for ac_header in perfmon/pfmlib_montecito.h
 do
@@ -8237,8 +8495,8 @@ fi
 
 done
 
-           fi
-   	{ $as_echo "$as_me:$LINENO: checking for pfm_get_event_description" >&5
+                                    fi
+   	                                { $as_echo "$as_me:$LINENO: checking for pfm_get_event_description" >&5
 $as_echo_n "checking for pfm_get_event_description... " >&6; }
 if test "${ac_cv_func_pfm_get_event_description+set}" = set; then
   $as_echo_n "(cached) " >&6
@@ -8331,7 +8589,7 @@ _ACEOF
 
 fi
 
-   	{ $as_echo "$as_me:$LINENO: checking for pfmlib_reg_t.reg_evt_idx" >&5
+   	                                { $as_echo "$as_me:$LINENO: checking for pfmlib_reg_t.reg_evt_idx" >&5
 $as_echo_n "checking for pfmlib_reg_t.reg_evt_idx... " >&6; }
 if test "${ac_cv_member_pfmlib_reg_t_reg_evt_idx+set}" = set; then
   $as_echo_n "(cached) " >&6
@@ -8436,7 +8694,7 @@ _ACEOF
 
 fi
 
-   	{ $as_echo "$as_me:$LINENO: checking for pfmlib_output_param_t.pfp_pmd_count" >&5
+   	                                { $as_echo "$as_me:$LINENO: checking for pfmlib_output_param_t.pfp_pmd_count" >&5
 $as_echo_n "checking for pfmlib_output_param_t.pfp_pmd_count... " >&6; }
 if test "${ac_cv_member_pfmlib_output_param_t_pfp_pmd_count+set}" = set; then
   $as_echo_n "(cached) " >&6
@@ -8541,7 +8799,7 @@ _ACEOF
 
 fi
 
-   	{ $as_echo "$as_me:$LINENO: checking for pfm_msg_t.type" >&5
+   	                                { $as_echo "$as_me:$LINENO: checking for pfm_msg_t.type" >&5
 $as_echo_n "checking for pfm_msg_t.type... " >&6; }
 if test "${ac_cv_member_pfm_msg_t_type+set}" = set; then
   $as_echo_n "(cached) " >&6
@@ -8593,6 +8851,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
+<<<<<<< configure
 #include "perfmon/perfmon.h"
 
 int
@@ -8787,31 +9046,29 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
+=======
+#include "perfmon/perfmon.h"
+>>>>>>> 1.185
 
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char pm_init ();
 int
 main ()
 {
-return pm_init ();
+static pfm_msg_t ac_aggr;
+if (sizeof ac_aggr.type)
+return 0;
   ;
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
   *) ac_try_echo=$ac_try;;
 esac
 eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
 $as_echo "$ac_try_echo") >&5
-  (eval "$ac_link") 2>conftest.er1
+  (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
   rm -f conftest.er1
@@ -8820,49 +9077,59 @@ $as_echo "$ac_try_echo") >&5
   (exit $ac_status); } && {
 	 test -z "$ac_c_werror_flag" ||
 	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-	 test "$cross_compiling" = yes ||
-	 $as_test_x conftest$ac_exeext
-       }; then
-  ac_cv_lib_pmapi_pm_init=yes
+       } && test -s conftest.$ac_objext; then
+  ac_cv_member_pfm_msg_t_type=yes
 else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_lib_pmapi_pm_init=no
+	ac_cv_member_pfm_msg_t_type=no
 fi
 
-rm -rf conftest.dSYM
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_pmapi_pm_init" >&5
-$as_echo "$ac_cv_lib_pmapi_pm_init" >&6; }
-if test "x$ac_cv_lib_pmapi_pm_init" = x""yes; then
 
+<<<<<<< configure
 			PMINIT="-DPM_INIT"
 else
+=======
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_member_pfm_msg_t_type" >&5
+$as_echo "$ac_cv_member_pfm_msg_t_type" >&6; }
+if test "x$ac_cv_member_pfm_msg_t_type" = x""yes; then
+>>>>>>> 1.185
 
+<<<<<<< configure
 			{ { $as_echo "$as_me:$LINENO: error: libpmapi.a is needed on AIX, please examine config.log and rerun configure with different flags" >&5
 $as_echo "$as_me: error: libpmapi.a is needed on AIX, please examine config.log and rerun configure with different flags" >&2;}
    { (exit 1); exit 1; }; }
-
-fi
+=======
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_PFM_MSG_TYPE 1
+_ACEOF
+>>>>>>> 1.185
 
 fi
 
 else
-      case "$pmapi" in
-         default) ;;
-         *)
-	 { { $as_echo "$as_me:$LINENO: error: pmapi is not needed on this platform" >&5
-$as_echo "$as_me: error: pmapi is not needed on this platform" >&2;}
+  { { $as_echo "$as_me:$LINENO: error: perfmon/pfmlib.h not found, rerun configure with different flags" >&5
+$as_echo "$as_me: error: perfmon/pfmlib.h not found, rerun configure with different flags" >&2;}
    { (exit 1); exit 1; }; }
-	     ;;
-      esac
 fi
 
+<<<<<<< configure
+=======
+done
+
+>>>>>>> 1.185
+else
+  { { $as_echo "$as_me:$LINENO: error: libpfm.a not found, rerun configure with different flags" >&5
+$as_echo "$as_me: error: libpfm.a not found, rerun configure with different flags" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+<<<<<<< configure
 { $as_echo "$as_me:$LINENO: checking for platform description used to generate Makefile" >&5
 $as_echo_n "checking for platform description used to generate Makefile... " >&6; }
 if test "x$MAKEVER" = "x"; then
@@ -8890,13 +9157,76 @@ $as_echo "$as_me: error: Error! HWPMC module seems not to be on the kernel. Have
        echo "#define _FREEBSD_CONFIG_H_" >> freebsd-config.h
        echo "" >> freebsd-config.h
        cat >conftest.$ac_ext <<_ACEOF
+=======
+  else
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_PERFMON_PFMLIB_MONTECITO_H 1
+_ACEOF
+
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_PFM_GET_EVENT_DESCRIPTION 1
+_ACEOF
+
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT 1
+_ACEOF
+
+  fi
+fi
+
+if test "$user_specified_interface" != "yes" -a "$perf_events" = "no" -a "$perfctr" = "no" -a "$perfmon" = "no"; then
+  { { $as_echo "$as_me:$LINENO: error: No performance monitoring interface available" >&5
+$as_echo "$as_me: error: No performance monitoring interface available" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+##################################################
+#          Checking platform
+##################################################
+{ $as_echo "$as_me:$LINENO: checking platform" >&5
+$as_echo_n "checking platform... " >&6; }
+if test "$MAKEVER" != "generic"; then
+  case "$OS" in
+    aix)
+      MAKEVER="$OS"-"$CPU" ;;
+    bgp)
+      MAKEVER=bgp ;;
+    CLE)
+      MAKEVER="$OS"-perfmon2 ;;
+    freebsd)
+      MAKEVER="freebsd"
+      LDFLAGS="-lpmc"
+      # HWPMC driver is available for FreeBSD >= 6
+      FREEBSD_VERSION=`uname -r | cut -c 1`
+      if test "${FREEBSD_VERSION}" -lt 6 ; then
+        { { $as_echo "$as_me:$LINENO: error: PAPI requires FreeBSD 6 or greater" >&5
+$as_echo "$as_me: error: PAPI requires FreeBSD 6 or greater" >&2;}
+   { (exit 1); exit 1; }; }
+      fi
+      # Determine if HWPMC module is on the kernel
+      dmesg | grep hwpmc 2> /dev/null > /dev/null
+      if test "$?" != "0" ; then
+        { { $as_echo "$as_me:$LINENO: error: HWPMC module not found. (see INSTALL.TXT)" >&5
+$as_echo "$as_me: error: HWPMC module not found. (see INSTALL.TXT)" >&2;}
+   { (exit 1); exit 1; }; }
+      fi
+      # Determine the number of counters
+      echo "/* Automatically generated file by configure */" > freebsd-config.h
+      echo "#ifndef _FREEBSD_CONFIG_H_" >> freebsd-config.h
+      echo "#define _FREEBSD_CONFIG_H_" >> freebsd-config.h
+      echo "" >> freebsd-config.h
+      cat >conftest.$ac_ext <<_ACEOF
+>>>>>>> 1.185
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #include <unistd.h>
-        #include <pmc.h>
+                   #include <pmc.h>
 int
 main ()
 {
@@ -8937,12 +9267,22 @@ fi
 rm -rf conftest.dSYM
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
+<<<<<<< configure
        if test "${pmc_init_linked}" = "no" ; then
           { { $as_echo "$as_me:$LINENO: error: Failed to link hwpmc example" >&5
+=======
+      if test "${pmc_init_linked}" = "no" ; then
+        { { $as_echo "$as_me:$LINENO: error: Failed to link hwpmc example" >&5
+>>>>>>> 1.185
 $as_echo "$as_me: error: Failed to link hwpmc example" >&2;}
    { (exit 1); exit 1; }; }
+<<<<<<< configure
        fi
        if test "$cross_compiling" = yes; then
+=======
+      fi
+      if test "$cross_compiling" = yes; then
+>>>>>>> 1.185
   { { $as_echo "$as_me:$LINENO: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 { { $as_echo "$as_me:$LINENO: error: cannot run test program while cross compiling
@@ -8957,6 +9297,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
+<<<<<<< configure
  #include <unistd.h>
          #include <pmc.h>
          int main() {
@@ -8966,6 +9307,16 @@ cat >>conftest.$ac_ext <<_ACEOF
            return info->pm_npmc-1;
          }
 
+=======
+#include <unistd.h>
+                  #include <pmc.h>
+                  int main() {
+                    const struct pmc_cpuinfo *info;
+                    if (pmc_init() < 0) return 0;
+                    if (pmc_cpuinfo (&info) < 0) return 0;
+                    return info->pm_npmc-1;
+                  }
+>>>>>>> 1.185
 _ACEOF
 rm -f conftest$ac_exeext
 if { (ac_try="$ac_link"
@@ -9003,6 +9354,7 @@ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext conftest.$a
 fi
 
 
+<<<<<<< configure
        if test "${num_counters}" = "0" ; then
           { { $as_echo "$as_me:$LINENO: error: pmc_npmc info returned 0. Please check you have HWPMC module loaded into the kernel (see hwpmc(4))" >&5
 $as_echo "$as_me: error: pmc_npmc info returned 0. Please check you have HWPMC module loaded into the kernel (see hwpmc(4))" >&2;}
@@ -9029,7 +9381,13 @@ $as_echo "$as_me: error: pmc_npmc info returned 0. Please check you have HWPMC m
           if test "`isainfo -v | grep "64"`" = ""; then
              { { $as_echo "$as_me:$LINENO: error: The bitmode you specified is not supported" >&5
 $as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
+=======
+      if test "${num_counters}" = "0" ; then
+        { { $as_echo "$as_me:$LINENO: error: pmc_npmc info returned 0. Determine if the HWPMC module is loaded (see hwpmc(4))" >&5
+$as_echo "$as_me: error: pmc_npmc info returned 0. Determine if the HWPMC module is loaded (see hwpmc(4))" >&2;}
+>>>>>>> 1.185
    { (exit 1); exit 1; }; }
+<<<<<<< configure
           fi
        fi
        MAKEVER="$OS"-"$CPU""$BM"
@@ -9044,8 +9402,25 @@ $as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
           itanium2|montecito)
              if test "${with_bitmode}" = "32"; then
                 { { $as_echo "$as_me:$LINENO: error: The bitmode you specified is not supported" >&5
+=======
+      fi
+      echo "#define HWPMC_NUM_COUNTERS ${num_counters}" >> freebsd-config.h
+      echo "" >> freebsd-config.h
+      echo "#endif" >> freebsd-config.h ;;
+    linux)
+      if test "$perf_events" = "yes" ; then
+        MAKEVER="$OS"-pe
+      elif test "$perfmon" != "no" ; then
+        MAKEVER="$OS"-perfmon2
+      else
+        case "$CPU" in
+          itanium2|montecito)
+            if test "$bitmode" = "32"; then
+              { { $as_echo "$as_me:$LINENO: error: The bitmode you specified is not supported" >&5
+>>>>>>> 1.185
 $as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
    { (exit 1); exit 1; }; }
+<<<<<<< configure
              fi
 		     if test "$CPU" = "montecito"; then
 		        MAKEVER="$OS"-pfm-itanium3
@@ -9058,8 +9433,26 @@ $as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
 		     else
 			 if test "${bitmode}" = "64"; then
 				{ { $as_echo "$as_me:$LINENO: error: The bitmode you specified is not supported" >&5
+=======
+            fi
+	        if test "$CPU" = "montecito"; then
+		      MAKEVER="$OS"-pfm-itanium3
+		    else
+		      MAKEVER="$OS"-pfm-"$CPU"
+		    fi ;;
+          athlon|opteron|atom|core|core2|p3|p4|i7)
+	          MAKEVER="$OS"-perfctr-x86 ;;
+          POWER5|POWER5+|POWER6|PPC970)
+            MAKEVER="$OS"-perfctr-"$CPU" ;;
+       esac
+      fi ;;
+    solaris)
+      if test "$bitmode" = "64" -a "`isainfo -v | grep "64"`" = ""; then
+        { { $as_echo "$as_me:$LINENO: error: The bitmode you specified is not supported" >&5
+>>>>>>> 1.185
 $as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
    { (exit 1); exit 1; }; }
+<<<<<<< configure
 			 fi
 			 MAKEVER="$OS"-perfctr-x86
 		     fi
@@ -9071,7 +9464,22 @@ $as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
 			 if test "${bitmode}" = "64"; then
 				{ { $as_echo "$as_me:$LINENO: error: The bitmode you specified is not supported" >&5
 $as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
+=======
+      fi
+      MAKEVER="$OS"-"$CPU" ;;
+  esac
+fi
+if test "x$MAKEVER" = "x"; then
+  if test "$OS" = "linux"; then
+    { $as_echo "$as_me:$LINENO: This platform is not directly supported but a generic build can be used" >&5
+$as_echo "$as_me: This platform is not directly supported but a generic build can be used" >&6;}
+    MAKEVER="generic"
+  else
+    { { $as_echo "$as_me:$LINENO: error: This platform is not supported" >&5
+$as_echo "$as_me: error: This platform is not supported" >&2;}
+>>>>>>> 1.185
    { (exit 1); exit 1; }; }
+<<<<<<< configure
 			 fi
 			 MAKEVER="$OS"-perfctr-x86
 		     fi
@@ -9090,10 +9498,14 @@ $as_echo "$as_me: error: The bitmode you specified is not supported" >&2;}
    *)
        MAKEVER="$OS"-"$CPU" ;;
 esac
+=======
+  fi
+>>>>>>> 1.185
 fi
 { $as_echo "$as_me:$LINENO: result: $MAKEVER" >&5
 $as_echo "$MAKEVER" >&6; }
 
+<<<<<<< configure
 #echo $MAKEVER
 case "$MAKEVER" in
     aix-power5);;
@@ -9128,19 +9540,17 @@ esac
 
 #compnts="$MAKEVER"
 #echo $compnts
+=======
+##################################################
+#          Build specified components
+##################################################
+{ $as_echo "$as_me:$LINENO: checking for component: MX" >&5
+$as_echo_n "checking for component: MX... " >&6; }
+>>>>>>> 1.185
 
 # Check whether --with-mx was given.
 if test "${with_mx+set}" = set; then
-  withval=$with_mx; mx=$withval
-else
-  mx=no
-
-fi
-
-case "$mx" in
-   yes)
-      MXPATH=""
-      # Extract the first word of "mx_counters", so it can be a program name with args.
+  withval=$with_mx; # Extract the first word of "mx_counters", so it can be a program name with args.
 set dummy mx_counters; ac_word=$2
 { $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
@@ -9180,42 +9590,39 @@ $as_echo "no" >&6; }
 fi
 
 
-      if test "$MXPATH" = ""; then
-        echo "PAPI needs to know the path to mx_counters"
-        exit 1
-      fi
+             if test "$MXPATH" = ""; then
+               { { $as_echo "$as_me:$LINENO: error: PAPI needs to know the path to mx_counters" >&5
+$as_echo "$as_me: error: PAPI needs to know the path to mx_counters" >&2;}
+   { (exit 1); exit 1; }; }
+             fi
 
 cat >>confdefs.h <<_ACEOF
 #define MXPATH "$MXPATH"
 _ACEOF
 
-
-      mxval="MX"
-      compnts="${compnts} ${mxval}"
-      compsrcs="${compsrcs} linux-mx.c"
-      comphdrs="${comphdrs} linux-mx.h"
-      compobjs="${compobjs} linux-mx.o"
+             compnts="$compnts MX"
+             compsrcs="$compsrcs linux-mx.c"
+             comphdrs="$comphdrs linux-mx.h"
+             compobjs="$compobjs linux-mx.o"
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_MX 1
 _ACEOF
 
-      ;;
-esac
+             { $as_echo "$as_me:$LINENO: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:$LINENO: result: no" >&5
+$as_echo "no" >&6; }
+fi
 
+
+{ $as_echo "$as_me:$LINENO: checking for component: NET" >&5
+$as_echo_n "checking for component: NET... " >&6; }
 
 # Check whether --with-net was given.
 if test "${with_net+set}" = set; then
-  withval=$with_net; net=$withval
-else
-  net=no
-
-fi
-
-case "$net" in
-   yes)
-      NETPATH=""
-      # Extract the first word of "ifconfig", so it can be a program name with args.
+  withval=$with_net; # Extract the first word of "ifconfig", so it can be a program name with args.
 set dummy ifconfig; ac_word=$2
 { $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
@@ -9255,96 +9662,83 @@ $as_echo "no" >&6; }
 fi
 
 
-      if test "$NETPATH" = ""; then
-        echo "PAPI needs to know the path to ifconfig"
-        exit 1
-      fi
+             if test "$NETPATH" = ""; then
+               { { $as_echo "$as_me:$LINENO: error: PAPI needs to know the path to ifconfig" >&5
+$as_echo "$as_me: error: PAPI needs to know the path to ifconfig" >&2;}
+   { (exit 1); exit 1; }; }
+             fi
 
 cat >>confdefs.h <<_ACEOF
 #define NETPATH "$NETPATH"
 _ACEOF
 
-
-      netval="NET"
-      compnts="${compnts} ${netval}"
-      compsrcs="${compsrcs} linux-net.c"
-      comphdrs="${comphdrs} linux-net.h"
-      compobjs="${compobjs} linux-net.o"
+             compnts="$compnts NET"
+             compsrcs="$compsrcs linux-net.c"
+             comphdrs="$comphdrs linux-net.h"
+             compobjs="$compobjs linux-net.o"
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_NET 1
 _ACEOF
 
-      ;;
-esac
-#echo $compnts
+             { $as_echo "$as_me:$LINENO: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:$LINENO: result: no" >&5
+$as_echo "no" >&6; }
+fi
 
+
+{ $as_echo "$as_me:$LINENO: checking for component: ACPI" >&5
+$as_echo_n "checking for component: ACPI... " >&6; }
 
 # Check whether --with-acpi was given.
 if test "${with_acpi+set}" = set; then
-  withval=$with_acpi; acpi=$withval
-else
-  acpi=no
-
-fi
-
-case "$acpi" in
-   yes)
-      acpival="ACPI"
-      compnts="${compnts} ${acpival}"
-      compsrcs="${compsrcs} linux-acpi.c"
-      comphdrs="${comphdrs} linux-acpi.h"
-      compobjs="${compobjs} linux-acpi.o"
+  withval=$with_acpi; compnts="$compnts ACPI"
+             compsrcs="$compsrcs linux-acpi.c"
+             comphdrs="$comphdrs linux-acpi.h"
+             compobjs="$compobjs linux-acpi.o"
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_ACPI 1
 _ACEOF
 
-      ;;
-   no)
-      acpival="" ;;
-esac
+             { $as_echo "$as_me:$LINENO: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:$LINENO: result: no" >&5
+$as_echo "no" >&6; }
+fi
 
 
+{ $as_echo "$as_me:$LINENO: checking for component: LMSENSORS" >&5
+$as_echo_n "checking for component: LMSENSORS... " >&6; }
 
 # Check whether --with-lmsensors was given.
 if test "${with_lmsensors+set}" = set; then
-  withval=$with_lmsensors; lmsensors=$withval
-else
-  lmsensors=no
-
-fi
-
-case "$lmsensors" in
-   yes)
-      lmsensorsval="LMSENSORS"
-      compnts="${compnts} ${lmsensorsval}"
-      compsrcs="${compsrcs} linux-lmsensors.c"
-      comphdrs="${comphdrs} linux-lmsensors.h"
-      compobjs="${compobjs} linux-lmsensors.o"
-
+  withval=$with_lmsensors; compnts="$compnts LMSENSORS"
+             compsrcs="$compsrcs linux-lmsensors.c"
+             comphdrs="$comphdrs linux-lmsensors.h"
+             compobjs="$compobjs linux-lmsensors.o"
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_LMSENSORS 1
 _ACEOF
 
-
-# looking for lm-sensors header files
+             # looking for lm-sensors header files
 
 # Check whether --with-sensors_incdir was given.
 if test "${with_sensors_incdir+set}" = set; then
   withval=$with_sensors_incdir; sensors_incdir=$withval
 else
-  { { $as_echo "$as_me:$LINENO: error: sensors.h could not be found. See --with-sensors_incdir " >&5
-$as_echo "$as_me: error: sensors.h could not be found. See --with-sensors_incdir " >&2;}
+  { { $as_echo "$as_me:$LINENO: error: sensors.h not found. See --with-sensors_incdir" >&5
+$as_echo "$as_me: error: sensors.h not found. See --with-sensors_incdir" >&2;}
    { (exit 1); exit 1; }; }
-
 fi
 
-
-      if test "$sensors_incdir" != ""; then
-	     CFLAGS="$CFLAGS -I$sensors_incdir"
-         { $as_echo "$as_me:$LINENO: checking for sensors.h" >&5
+             if test "$sensors_incdir" != ""; then
+	           CFLAGS="$CFLAGS -I$sensors_incdir"
+               { $as_echo "$as_me:$LINENO: checking for sensors.h" >&5
 $as_echo_n "checking for sensors.h... " >&6; }
 if test "${ac_cv_header_sensors_h+set}" = set; then
   $as_echo_n "(cached) " >&6
@@ -9396,29 +9790,26 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 else
-  { { $as_echo "$as_me:$LINENO: error: sensors.h could not be found. " >&5
-$as_echo "$as_me: error: sensors.h could not be found. " >&2;}
+  { { $as_echo "$as_me:$LINENO: error: sensors.h not found" >&5
+$as_echo "$as_me: error: sensors.h not found" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
 
-      fi
-
-# looking for lm-sensors lib
+             fi
+             # looking for lm-sensors lib
 
 # Check whether --with-sensors_libdir was given.
 if test "${with_sensors_libdir+set}" = set; then
   withval=$with_sensors_libdir; sensors_libdir=$withval
 else
-  { { $as_echo "$as_me:$LINENO: error: libsensors.a is needed for the PAPI lm-sensors component. See --with-sensors_libdir " >&5
-$as_echo "$as_me: error: libsensors.a is needed for the PAPI lm-sensors component. See --with-sensors_libdir " >&2;}
+  { { $as_echo "$as_me:$LINENO: error: libsensors.a not found. See --with-sensors_libdir" >&5
+$as_echo "$as_me: error: libsensors.a not found. See --with-sensors_libdir" >&2;}
    { (exit 1); exit 1; }; }
-
 fi
 
-
-      if test "$sensors_libdir" != ""; then
-         LDFLAGS="$LDFLAGS -L$sensors_libdir -lsensors"
+             if test "$sensors_libdir" != ""; then
+               LDFLAGS="$LDFLAGS -L$sensors_libdir -lsensors"
 
 { $as_echo "$as_me:$LINENO: checking for sensors_init in -lsensors" >&5
 $as_echo_n "checking for sensors_init in -lsensors... " >&6; }
@@ -9493,23 +9884,37 @@ _ACEOF
   LIBS="-lsensors $LIBS"
 
 else
-  { { $as_echo "$as_me:$LINENO: error: libsensors.a is needed for the PAPI lm-sensors component" >&5
-$as_echo "$as_me: error: libsensors.a is needed for the PAPI lm-sensors component" >&2;}
+  { { $as_echo "$as_me:$LINENO: error: libsensors.a not found" >&5
+$as_echo "$as_me: error: libsensors.a not found" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
+               # libsensors.a needed to compile with papi utilities and tests
+               LINKLIB="$LINKLIB $sensors_libdir/libsensors.a -lm"
+	         fi
+             { $as_echo "$as_me:$LINENO: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:$LINENO: result: no" >&5
+$as_echo "no" >&6; }
+fi
 
-         # libsensors.a needed to compile with papi utilities and tests
-	     LINK_SENSORS_LIB="$sensors_libdir/libsensors.a -lm"
-	  fi
 
-      ;;
-   no)
-      lmsensorsval="" ;;
-esac
+{ $as_echo "$as_me:$LINENO: checking for component: LUSTRE" >&5
+$as_echo_n "checking for component: LUSTRE... " >&6; }
 
+# Check whether --with-lustre was given.
+if test "${with_lustre+set}" = set; then
+  withval=$with_lustre; compnts="$compnts LUSTRE"
+             compsrcs="$compsrcs linux-lustre.c host_counter.c"
+             comphdrs="$comphdrs linux-lustre.h"
+             compobjs="$compobjs linux-lustre.o host_counter.o"
 
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LUSTRE 1
+_ACEOF
 
+<<<<<<< configure
 # Check whether --with-lustre was given.
 if test "${with_lustre+set}" = set; then
   withval=$with_lustre; lustre=$withval
@@ -9561,12 +9966,17 @@ if test "$OS" = "linux" -a "$bitmode" = "64"; then
         libdir='${exec_prefix}/lib64'
       fi
    fi
+=======
+             { $as_echo "$as_me:$LINENO: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:$LINENO: result: no" >&5
+$as_echo "no" >&6; }
+>>>>>>> 1.185
 fi
 
-#AC_DEFINE_UNQUOTED(PAPI_DATADIR, "$PAPI_DATADIR", [package data directory])
-{ $as_echo "$as_me:$LINENO: checking for link test cases with shared library" >&5
-$as_echo_n "checking for link test cases with shared library... " >&6; }
 
+<<<<<<< configure
 # Check whether --with-shlib was given.
 if test "${with_shlib+set}" = set; then
   withval=$with_shlib; shlib=$withval
@@ -9701,7 +10111,105 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power5-64bit" || te
       ARG64=-X64
       CPPFLAGS="-qlanglvl=extended"
    fi
+=======
+##################################################
+#          Set build macros
+##################################################
+FILENAME=NO_INCLUDE_FILE
+SHOW_CONF=showconf
+TARGETS="serial forkexec_tests overflow_tests profile_tests attach multiplex_and_pthreads shared ear omp"
+LIBRARY=libpapi.a
+SHLIB='libpapi.so.$(PAPIVER)'
+OMPCFLGS=-fopenmp
+CC_R='$(CC) -pthread'
+CC_SHR='$(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,libpapi.so -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
+if test "$bitmode" = "32"; then
+  BITFLAGS=-m32
+elif test "$bitmode" = "64"; then
+  BITFLAGS=-m64
+fi
+OPTFLAGS="$OPTFLAGS $DEBUGFLAGS"
+CFLAGS="$CFLAGS -D_REENTRANT -D_GNU_SOURCE -Wall $EXTRA_CFLAGS $NOTLS $BITFLAGS"
+if test "$F77" = "pgf77"; then
+  FFLAGS="$FFLAGS -Wall -Mextend"
+elif test "$F77" = "ifort"; then
+  FFLAGS="$FFLAGS -warn all"
+else
+  FFLAGS="$FFLAGS -Wall -ffixed-line-length-132"
+fi
+FFLAGS="$FFLAGS $BITFLAGS -Dlinux"
+
+if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6"); then
+  FILENAME=Makefile.inc
+  SUBSTR=pmapi-ppc64
+  MEMSUBSTR=aix
+  if test "$bitmode" = "64"; then
+    LIBRARY=libpapi64.a
+    SHLIB=libpapi64.so
+    BITFLAGS=-q64
+    ARG64=-X64
+  else
+    SHLIB=libpapi.so
+    BITFLAGS=""
+  fi
+  FLAGS='-I$(PMAPI)/include -qmaxmem=-1 -qarch=$(cpu_option) -qtune=$(cpu_option) -qlanglvl=extended $(BITFLAGS)'
+  CFLAGS='$(DEBUGFLAGS) $(FLAGS) -qenum=4 -DNO_VARARG_MACRO -D_AIX -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors -DSTATIC_PAPI_EVENTS_TABLE'
+  OPTFLAGS='-O3 -qstrict $(PMINIT)'
+  FFLAGS='$(FLAGS) -WF,-D_$(CPU_MODEL) -WF,-DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
+  SMPCFLGS=-qsmp
+  OMPCFLGS='-qsmp=omp'
+  LDFLAGS='-L$(PMAPI)/lib -lpmapi'
+  CC_R=xlc_r
+  CC=xlc
+  CC_SHR="xlc -G -bnoentry"
+  MPICC=mpcc
+  F77=xlf
+  CPP='xlc -E $(CPPFLAGS)'
+  MISCHDRS="aix.h ppc64_events.h pmapi-ppc64.h papi_events_table.h"
+  MISCSRCS="aix.c pmapi-ppc64_events.c"
+  MISCOBJS="aix.o pmapi-ppc64_events.o"
+  if test "$MAKEVER" = "aix-power5"; then
+    ARCH_EVENTS=power5_events
+    CPU_MODEL=POWER5
+    cpu_option=pwr5
+    DESCR="AIX 5.1.0 or greater with POWER5"
+    if test "$bitmode" = "64"; then
+      DESCR="$DESCR 64 bit build"
+    fi
+  elif test "$MAKEVER" = "aix-power6"; then
+    ARCH_EVENTS=power6_events
+    CPU_MODEL=POWER6
+    cpu_option=pwr6
+    DESCR="AIX 5.1.0 or greater with POWER6"
+    CPPFLAGS="-qlanglvl=extended"
+    if test "$bitmode" = "64"; then
+      DESCR="$DESCR 64 bit build"
+    fi
+  fi
+elif test "$MAKEVER" = "bgp"; then
+  FILENAME=Makefile.inc
+  SHOW_CONF=show_bgp_conf
+  BGP_SYSDIR=/bgsys/drivers/ppcfloor
+  BGP_GNU_LINUX_PATH='${BGP_SYSDIR}/gnu-linux'
+  LDFLAGS='-L$(BGP_SYSDIR)/runtime/SPI -lSPI.cna'
+  CFLAGS='-g -gdwarf-2 -O2 -Wall -I. -I$(BGP_SYSDIR)/arch/include -DCOMP_VECTOR=_bgp_vectors'
+  FFLAGS='-g -gdwarf-2 -O2 -Wall -I. -Dlinux'
+  OPTFLAGS="-g -Wall -O3"
+  TOPTFLAGS="-g -Wall -O0"
+  SHLIB=libpapi.so
+  SUBSTR=linux-bgp
+  MEMSUBSTR=linux-bgp
+  DESCR="Linux for BlueGene/P"
+  LIBS=static
+  CC_SHR='$(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
+  MISCSRCS=linux-bgp-preset-events.c
+  MISCOBJS='$(MISCSRCS:.c=.o)'
+  SUBSTR_HEADERS=linux-bgp-native-events.h
+  tests="$tests bgp_tests"
+  OMPCFLGS=""
+>>>>>>> 1.185
 elif test "$MAKEVER" = "CLE-perfmon2"; then
+<<<<<<< configure
    FILENAME=Rules.pfm_pe
    MEMSUBSTR=perfmon
    F77=gfortran
@@ -9787,7 +10295,22 @@ elif test "$MAKEVER" = "linux-mx"; then
    CC_SHR='$(CC) $(SHRFLAGS) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
    CFLAGS="-Wall -g -DDEBUG"
    FFLAGS="-Wall -g"
+=======
+  FILENAME=Rules.pfm_pe
+  MEMSUBSTR=perfmon
+  F77=gfortran
+  CFLAGS="$CFLAGS -D__crayxt"
+  MISCSRCS="hwinfo_linux.c x86_cache_info.c"
+  SUBSTR=perfmon
+elif test "$MAKEVER" = "freebsd"; then
+  FILENAME=Makefile.inc
+  SUBSTR=freebsd
+  DESCR="FreeBSD -over libpmc- substrate"
+  CFLAGS="$CFLAGS -I. -Ifreebsd -DPIC -fPIC $DEBUGFLAGS"
+  CC_SHR='$(CC) -shared -Xlinker "-soname" -Xlinker "libpapi.so" -Xlinker "-rpath" -Xlinker "$(LIBDIR)" -DPIC -fPIC -I. -Ifreebsd'
+>>>>>>> 1.185
 elif test "$MAKEVER" = "linux-pe"; then
+<<<<<<< configure
    FILENAME=Rules.pfm_pe
    SUBSTR=perf_events
    MEMSUBSTR=perfmon
@@ -9834,11 +10357,53 @@ elif (test "$MAKEVER" = "linux-perfctr-PPC970" || test "$MAKEVER" = "linux-perfc
    ARCH_SPEC_EVTS=ppc970_events_map.c
    CFLAGS='$CFLAGS -DPPC64 -D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors'
    FFLAGS="-D_$(CPU_MODEL)"
+=======
+  FILENAME=Rules.pfm_pe
+  SUBSTR=perf_events
+  MEMSUBSTR=perfmon
+  MISCSRCS="$MISCSRCS sys_perf_counter_open.c"
+elif test "$MAKEVER" = "linux-perfctr-x86"; then
+  FILENAME=Rules.perfctr-pfm
+  SUBSTR=perfctr-x86
+  MEMSUBSTR=linux
+  VERSION=2.6.x
+  if test "$CPU" = "p4"; then
+    TARGETS='$(TARGETS) p4'
+  fi
+elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfctr-POWER5+" || test "$MAKEVER" = "linux-perfctr-PPC970"); then
+  FILENAME=Rules.perfctr
+  SUBSTR=perfctr-ppc64
+  MEMSUBSTR=linux-ppc64
+  VERSION=2.7.x
+  CPU=ppc64
+  if test "$MAKEVER" = "linux-perfctr-POWER5"; then
+    CPU_MODEL=POWER5
+    ARCH_EVENTS=power5_events
+    ARCH_SPEC_EVTS=power5_events_map.c
+  elif test "$MAKEVER" = "linux-perfctr-POWER5+"; then
+    CPU_MODEL=POWER5p
+    ARCH_EVENTS=power5+_events
+    ARCH_SPEC_EVTS=power5+_events_map.c
+  elif test "$MAKEVER" = "linux-perfctr-PPC970"; then
+    CPU_MODEL=PPC970
+    ARCH_EVENTS=ppc970_events
+    ARCH_SPEC_EVTS=ppc970_events_map.c
+  fi
+  CFLAGS='$CFLAGS -DPPC64 -D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors'
+  FFLAGS='-D_$(CPU_MODEL)'
+>>>>>>> 1.185
 elif test "$MAKEVER" = "linux-perfmon2"; then
+<<<<<<< configure
    FILENAME=Rules.pfm_pe
    SUBSTR=perfmon
    MEMSUBSTR=perfmon
+=======
+  FILENAME=Rules.pfm_pe
+  SUBSTR=perfmon
+  MEMSUBSTR=perfmon
+>>>>>>> 1.185
 elif (test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-itanium3"); then
+<<<<<<< configure
    FILENAME=Rules.pfm
    SUBSTR=linux-ia64
    MEMSUBSTR=linux-ia64
@@ -9939,6 +10504,88 @@ elif test "$CC" = "gcc"; then
 else
    echo "Unable to create generic build for non-GNU compiler"
    exit -1
+=======
+  FILENAME=Rules.pfm
+  SUBSTR=linux-ia64
+  MEMSUBSTR=linux-ia64
+  VERSION=3.y
+  if test "$MAKEVER" = "linux-pfm-itanium2"; then
+    CPU=2
+  else
+    CPU=3
+  fi
+  TARGETS="$TARGETS range"
+  CFLAGS="$CFLAGS -DITANIUM$CPU"
+  FFLAGS="$FFLAGS -DITANIUM$CPU"
+  if test "$old_pfmv2" = "y"; then
+    CFLAGS="$CFLAGS -DPFMLIB_OLD_PFMV2"
+  fi
+  CC_SHR='$(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,$(SHLIB) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
+elif test "$MAKEVER" = "solaris-ultra"; then
+  FILENAME=Makefile.inc
+  SUBSTR=solaris-ultra
+  MEMSUBSTR=solaris
+  DESCR="Solaris 5.8 or greater with UltraSPARC I, II or III"
+  if test "$CC" = "gcc"; then
+    F77=g77
+    CPP="$CC -E"
+    CC_R="$CC"
+    CC_SHR="$CC -shared -fpic"
+    OPTFLAGS=-O3
+    CFLAGS="-DNEED_FFSLL"
+    FFLAGS=$CFLAGS
+  else
+    # Sun Workshop compilers: V5.0 and V6.0 R2
+    TARGETS="$TARGETS smp omp"
+    CPP="$CC -E"
+    CC_R="$CC -mt"
+    CC_SHR="$CC -ztext -G -Kpic"
+    CFLAGS="-xtarget=ultra3 -xarch=v8plusa -DNO_VARARG_MACRO -D__EXTENSIONS__ -DPAPI_NO_MEMORY_MANAGEMENT -DCOMP_VECTOR=_solaris_vectors"
+    SMPCFLGS=-xexplicitpar
+    OMPCFLGS=-xopenmp
+    F77=f90
+    FFLAGS=$CFLAGS
+    NOOPT=-xO0
+    OPTFLAGS="-g -fast -xtarget=ultra3 -xarch=v8plusa"
+  fi
+  LDFLAGS="$LDFLAGS -lcpc"
+  TARGETS="serial multiplex_and_pthreads shared"
+  if test "$bitmode" = "64"; then
+    LIBRARY=libpapi64.a
+    SHLIB=libpapi64.so
+    CFLAGS="-xtarget=ultra3 -xarch=v9a -DNO_VARARG_MACRO -D__EXTENSIONS__ -DPAPI_NO_MEMORY_MANAGEMENT  -DCOMP_VECTOR=_solaris_vectors"
+    OPTFLAGS="-g -fast -xtarget=ultra3 -xarch=v9a"
+  fi
+elif test "$MAKEVER" = "solaris-niagara2"; then
+  FILENAME=Makefile.inc
+  SUBSTR=solaris-niagara2
+  MEMSUBSTR=solaris-niagara2
+  DESCR="Solaris 10 with libcpc2 and UltraSPARC T2 (Niagara 2)"
+  TARGETS="serial shared forkexec_tests smp omp overflow_tests profile_tests multiplex multiplex_and_pthreads mpi"
+  CPP="$CC -E"
+  CC_R="$CC -mt"
+  CC_SHR="$CC -ztext -G -Kpic"
+  CFLAGS="-xtarget=native -xarch=native -DNO_VARARG_MACRO -D__EXTENSIONS__ -DCOMP_VECTOR=_niagara2_vector"
+  ORY_MANAGEMENT="-DCOMP_VECTOR=_solaris_vector"
+  SMPCFLGS=-xexplicitpar
+  OMPCFLGS=-xopenmp
+  F77=f90
+  FFLAGS=$CFLAGS
+  NOOPT=-xO0
+  OPTFLAGS="-fast"
+  FOPTFLAGS=$OPTFLAGS
+  LDFLAGS="$LDFLAGS -lcpc"
+  if test "$bitmode" = "64";  then
+    LIBRARY=libpapi64.a
+    SHLIB=libpapi64.so
+    CFLAGS="$CFLAGS -m64"
+    FFLAGS="$FFLAGS -m64"
+  fi
+elif test "$MAKEVER" = "generic"; then
+  FILENAME=Makefile.inc
+  SUBSTR=any-null
+  DESCR="Sample substrate: Any hardware platform with GNU compilers"
+>>>>>>> 1.185
 fi
 
 
@@ -10021,15 +10668,18 @@ fi
 
 
 
+<<<<<<< configure
 
+=======
+>>>>>>> 1.185
 if test "$cross_compiling" = "yes" ; then
-   { $as_echo "$as_me:$LINENO: Compiling genpapifdef with $nativecc because cross compiling" >&5
+  { $as_echo "$as_me:$LINENO: Compiling genpapifdef with $nativecc because cross compiling" >&5
 $as_echo "$as_me: Compiling genpapifdef with $nativecc because cross compiling" >&6;}
-   $nativecc -I. genpapifdef.c -o genpapifdef
+  $nativecc -I. genpapifdef.c -o genpapifdef
 else
-   { $as_echo "$as_me:$LINENO: Compiling genpapifdef with $CC" >&5
+  { $as_echo "$as_me:$LINENO: Compiling genpapifdef with $CC" >&5
 $as_echo "$as_me: Compiling genpapifdef with $CC" >&6;}
-   $CC -I. genpapifdef.c -o genpapifdef
+  $CC -I. genpapifdef.c -o genpapifdef
 fi
 
 { $as_echo "$as_me:$LINENO: Generating fpapi.h" >&5
@@ -10043,7 +10693,7 @@ $as_echo "$as_me: Generating f90papi.h" >&6;}
 ./genpapifdef -f90 > f90papi.h
 
 if test "$FILENAME" != "NO_INCLUDE_FILE" ; then
-   { $as_echo "$as_me:$LINENO: $FILENAME will be included in the generated Makefile" >&5
+  { $as_echo "$as_me:$LINENO: $FILENAME will be included in the generated Makefile" >&5
 $as_echo "$as_me: $FILENAME will be included in the generated Makefile" >&6;}
 fi
 

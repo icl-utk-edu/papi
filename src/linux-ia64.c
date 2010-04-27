@@ -22,9 +22,7 @@
 /* Globals declared extern elsewhere */
 
 hwi_search_t *preset_search_map;
-#ifndef USE_SEMAPHORES
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
-#endif
 volatile unsigned int lock[PAPI_MAX_LOCK];
 extern papi_vector_t _ia64_vector;
 extern unsigned int PAPI_NATIVE_EVENT_AND_MASK;
@@ -1074,8 +1072,13 @@ _ia64_get_system_info( void )
 
 	/* Name of the substrate we're using */
 	strcpy( MY_VECTOR.cmp_info.name,
+<<<<<<< linux-ia64.c
 			"$Id$" );
 	strcpy( MY_VECTOR.cmp_info.version, "$Revision$" );
+=======
+			"$Id$" );
+	strcpy( MY_VECTOR.cmp_info.version, "$Revision$" );
+>>>>>>> 1.181
 	sprintf( MY_VECTOR.cmp_info.support_version, "%08x", PFMLIB_VERSION );
 	sprintf( MY_VECTOR.cmp_info.kernel_version, "%08x", 2 << 16 );	/* 2.0 */
 	MY_VECTOR.cmp_info.num_native_events = nnev;
@@ -1106,21 +1109,6 @@ _ia64_get_system_info( void )
 	return ( PAPI_OK );
 }
 
-#if defined(USE_SEMAPHORES)
-int sem_set;
-#if defined(__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)
-	   /* union semun is defined by including <sys/sem.h> */
-#else
-union semun
-{
-	int val;						   /* value for SETVAL */
-	struct semid_ds *buf;			   /* buffer for IPC_STAT, IPC_SET */
-	unsigned short int *array;		   /* array for GETALL, SETALL */
-	struct seminfo *__buf;			   /* buffer for IPC_INFO */
-};
-#endif
-#endif
-
 int
 _ia64_init_substrate( int cidx )
 {
@@ -1132,36 +1120,16 @@ _ia64_init_substrate( int cidx )
 	/* Always initialize globals dynamically to handle forks properly. */
 
 	preset_search_map = NULL;
-#ifdef USE_SEMAPHORES
-	{
-		union semun val;
-		val.val = 1;
-
-		if ( ( retval = semget( IPC_PRIVATE, PAPI_MAX_LOCK, 0666 ) ) == -1 ) {
-			PAPIERROR( "semget errno %d", errno );
-			return ( PAPI_ESYS );
-		}
-		sem_set = retval;
-		for ( i = 0; i < PAPI_MAX_LOCK; i++ ) {
-			if ( ( retval = semctl( sem_set, i, SETVAL, val ) ) == -1 ) {
-				PAPIERROR( "semctl errno %d", errno );
-				return ( PAPI_ESYS );
-			}
-		}
-	}
-#else
 	for ( i = 0; i < PAPI_MAX_LOCK; i++ )
 		_papi_hwd_lock_data[PAPI_MAX_LOCK] = MUTEX_OPEN;
-#endif
 
 	/* Setup the vector entries that the OS knows about */
-/*#ifndef PAPI_NO_VECTOR
-  retval = _papi_hwi_setup_vector_table( vtable, _linux_ia64_table);
-  if ( retval != PAPI_OK ) return(retval);
-#endif
-*/
-	/* Opened once for all threads. */
-	if ( pfm_initialize(  ) != PFMLIB_SUCCESS )
+	retval = _papi_hwi_setup_vector_table( vtable, _linux_ia64_table );
+	if ( retval != PAPI_OK )
+		return ( retval );
+	*/
+		/* Opened once for all threads. */
+		if ( pfm_initialize(  ) != PFMLIB_SUCCESS )
 		return ( PAPI_ESYS );
 
 	if ( pfm_get_version( &version ) != PFMLIB_SUCCESS )
@@ -1571,29 +1539,6 @@ _ia64_shutdown( hwd_context_t * ctx )
 
 	return ( pfmw_destroy_context( ctx ) );
 }
-
-#if defined(USE_SEMAPHORES)
-/* Runs when the process exits */
-static void cleanup_semaphores( void ) __attribute__ ( ( destructor ) );
-static void
-cleanup_semaphores( void )
-{
-	struct semid_ds semid_ds_buf;
-	union semun val;
-	int retval;
-
-	val.buf = &semid_ds_buf;
-	if ( ( retval = semctl( sem_set, 0, GETALL, val ) ) == -1 ) {
-		PAPIERROR( "semctl errno %d", errno );
-	}
-
-	if ( ( retval = semctl( sem_set, 0, IPC_RMID, val ) ) == -1 ) {
-		PAPIERROR( "semctl errno %d", errno );
-	}
-
-	return ( pfmw_destroy_context( ctx ) );
-}
-#endif
 
 static int
 ia64_ita_process_profile_buffer( ThreadInfo_t * thread, EventSetInfo_t * ESI )

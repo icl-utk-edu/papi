@@ -1,10 +1,6 @@
 /* 
 * File:    profile.c
-<<<<<<< profile.c
 * CVS:     $Id$
-=======
-* CVS:     $Id$
->>>>>>> 1.60
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
 * Mods:    Dan Terpstra
