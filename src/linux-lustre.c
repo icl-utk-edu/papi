@@ -114,11 +114,14 @@ LUSTRE_init( hwd_context_t * ctx )
 
 	host_initialize(  );
 	counter_list = host_listCounter(  );
+	
 	for ( i = 0; i < counter_list->count; i++ )
 		host_subscribe( counter_list->data[i] );
-	host_deleteStringList( counter_list );
+
 	( ( LUSTRE_context_t * ) ctx )->state.ncounter = counter_list->count;
 
+	host_deleteStringList( counter_list );
+	
 	//lustre_native_table = subscriptions;
 //   for(i=0;i<counter_list->count;i++)
 //    printf("%d   %s\n", i, subscriptions[i]->name);
@@ -183,7 +186,7 @@ LUSTRE_read( hwd_context_t * ctx, hwd_control_state_t * ctrl,
 	int i;
 
 	host_read_values( _papi_hwd_lustre_register );
-	for ( i = 0; i < ( ( LUSTRE_control_state_t * ) ctrl )->ncounter; i++ ) {
+	for ( i = 0; i < ( ( LUSTRE_context_t * ) ctx )->state.ncounter; i++ ) {
 		( ( LUSTRE_control_state_t * ) ctrl )->counts[i] =
 			_papi_hwd_lustre_register[i] - _papi_hwd_lustre_register_start[i];
 		/*printf("%d  %lld\n", i, ctrl->counts[i]); */
@@ -199,7 +202,7 @@ LUSTRE_stop( hwd_context_t * ctx, hwd_control_state_t * ctrl )
 	int i;
 
 	host_read_values( _papi_hwd_lustre_register );
-	for ( i = 0; i < ( ( LUSTRE_control_state_t * ) ctrl )->ncounter; i++ ) {
+	for ( i = 0; i < ( ( LUSTRE_context_t * ) ctx )->state.ncounter; i++ ) {
 		( ( LUSTRE_control_state_t * ) ctrl )->counts[i] =
 			_papi_hwd_lustre_register[i] - _papi_hwd_lustre_register_start[i];
 /*      printf("%d  %lld\n", i, ctrl->counts[i]);*/
