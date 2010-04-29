@@ -90,13 +90,15 @@ __ 4. Rename the branch directory:
 	mv papi papi400b
 
 __ 5. Diff the two directories:
-	> diff -rupN <original> <new> > <output.diff> ex:
-	> diff -rupN papi 400t papi400b > papi400patch1.diff
+	> diff -rupwBN <original> <new> > <output.diff> ex:
+	> diff -rupwBN papi 400t papi400b > papi400patch1.diff
 	
 	The flags for diff are:
 	-r: recursive
 	-u: unified
 	-p: show function names
+	-w: ignore all white space
+	-B: ignore changes whose lines are blank
 	-N: treat absent files as empty
 
 __ 6. Copy the diff file to icl:/sw/www/icl/projects/papi/downloads/patches
