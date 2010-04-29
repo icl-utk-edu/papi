@@ -460,7 +460,7 @@ int _papi_hwi_start_signal(int signal, int need_context, int cidx)
    action.sa_flags = SA_RESTART;
    action.sa_sigaction = (void (*)(int, siginfo_t *, void *)) _papi_hwd[cidx]->dispatch_timer;
    if (need_context)
-#if (defined(_BGL) /*|| defined (_BGP)*/)
+#if (defined(_BGL) /*|| defined (__bgp__)*/)
      action.sa_flags |= SIGPWR;
 #else
      action.sa_flags |= SA_SIGINFO;
@@ -691,7 +691,7 @@ int _papi_hwi_get_native_event_info(unsigned int EventCode, PAPI_event_info_t * 
 	return (PAPI_ENOEVNT);
 }
 
-#if (!defined(HAVE_FFSLL) || defined(_BGP))
+#if (!defined(HAVE_FFSLL) || defined(__bgp__))
 /* find the first set bit in long long */
 
 int ffsll(long long lli)

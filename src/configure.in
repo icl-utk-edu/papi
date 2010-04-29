@@ -1338,6 +1338,9 @@ if test "$OS" = "aix"; then
       power5) PMAPI="/usr/pmapi" ;;
       power6) PMAPI="/usr/pmapi" ;;
       esac
+   else
+	PMAPI="$pmapi"
+   fi
       PMINIT=""
       LIBS="-L$PMAPI/lib -lpmapi"
       CPPFLAGS="$CPPFLAGS -I$PMAPI/include"
@@ -1347,9 +1350,6 @@ if test "$OS" = "aix"; then
 			    PMINIT="-DPM_INIT"], [
 			    AC_MSG_ERROR([libpmapi.a is needed on AIX, please examine config.log and rerun configure with different flags])
 			    ])],[])
-   else
-	PMAPI="$pmapi"
-   fi
 else
       case "$pmapi" in
          default) ;;
@@ -1843,7 +1843,7 @@ elif test "$MAKEVER" = "bgp"; then
    BGP_SYSDIR=/bgsys/drivers/ppcfloor
    BGP_GNU_LINUX_PATH='${BGP_SYSDIR}/gnu-linux'
    LDFLAGS='-L$(BGP_SYSDIR)/runtime/SPI -lSPI.cna'
-   CFLAGS='-D_BGP -g -gdwarf-2 -O2 -Wall -I. -I$(BGP_SYSDIR)/arch/include -DCOMP_VECTOR=_bgp_vectors'
+   CFLAGS='-g -gdwarf-2 -O2 -Wall -I. -I$(BGP_SYSDIR)/arch/include -DCOMP_VECTOR=_bgp_vectors'
    # Some nice flags to add to CFLAGS when debugging 
    #CFLAGS='$(CFLAGS) -DDEBUG -DMPX_DEBUG -DMPX_DEBUG_TIMER'
    FFLAGS='-g -gdwarf-2 -O2 -Wall -I. -Dlinux'

@@ -1,265 +1,165 @@
 /*
-   This test needs to be reworked for all platforms.
-   Now that each substrate contains a native event table,
-   the custom code in this file can be constrained to the 
-   native event name arrays.
-   Also, we can no longer add raw native bit patterns.
-   Further, the output can be driven from the native name array
-   by either printing the names directly, or printing the descriptions.
-   See Pentium4 code for examples.
+* File:    	native.c
+* Mods: 	Maynard Johnson
+*		maynardj@us.ibm.com
 */
+
+/*
+   This test defines an array of native event names, either at compile time
+   or at run time (some x86 platforms). It then:
+   - add the table of events to an event set;
+   - starts counting
+   - does a little work
+   - stops counting;
+   - reports the results.
+*/
+
 #include "papi_test.h"
 
-
-#if defined(__ALPHA) && defined(__osf__)
-#include <machine/hal/cpuconf.h>
-#include <sys/pfcntr.h>
-
-long get_instr()
-{
-   int cpu;
-   GET_CPU_FAMILY(&cpu);
-   if (cpu == EV6_CPU)
-      return (PF6_MUX0_RET_INSTRUCTIONS << 8 | 0);
-   else
-      abort();
-}
-
-long get_cyc()
-{
-   int cpu;
-   GET_CPU_FAMILY(&cpu);
-   if (cpu == EV6_CPU)
-      return (PF6_MUX1_CYCLES << 8 | 1);
-   else
-      abort();
-}
-#endif
-
-static int point = 0;
 static int EventSet = PAPI_NULL;
-static long_long us;
-static const PAPI_hw_info_t *hwinfo;
 extern int TESTS_QUIET;         /* Declared in test_utils.c */
 
-#if defined(_AIX)
-#if defined(_POWER4)
+
+#if (defined(PPC32))
+   /* Select 4 events common to both ppc750 and ppc7450*/
+   static char *native_name[] =
+       { "CPU_CLK", "FLOPS", "TOT_INS", "BR_MSP", NULL
+   };
+
+#elif defined(_POWER4) || defined(_PPC970)
    /* arbitrarily code events from group 28: pm_fpu3 - Floating point events by unit */
    static char *native_name[] =
        { "PM_FPU0_FDIV", "PM_FPU1_FDIV", "PM_FPU0_FRSP_FCONV", "PM_FPU1_FRSP_FCONV",
       "PM_FPU0_FMA", "PM_FPU1_FMA", "PM_INST_CMPL", "PM_CYC", NULL
    };
-#else
-#ifdef PMTOOLKIT_1_2
-   static char *native_name[] = { "PM_IC_MISS", "PM_FPU1_CMPL", "PM_LD_MISS_L1", "PM_LD_CMPL",
-      "PM_FPU0_CMPL", "PM_CYC", "PM_FPU_FMA", "PM_TLB_MISS", NULL
+
+#elif defined(_POWER5p)
+/* arbitrarily code events from group 33: pm_fpustall - Floating Point Unit stalls */
+   static char *native_name[] =
+       { "PM_FPU_FULL_CYC", "PM_CMPLU_STALL_FDIV", "PM_CMPLU_STALL_FPU",
+       "PM_RUN_INST_CMPL", "PM_RUN_CYC", NULL
    };
-#else
+
+
+#elif defined(_POWER5)
+   /* arbitrarily code events from group 78: pm_fpu1 - Floating Point events */
+   static char *native_name[] =
+       { "PM_FPU_FDIV", "PM_FPU_FMA", "PM_FPU_FMOV_FEST", "PM_FPU_FEST",
+       "PM_INST_CMPL", "PM_RUN_CYC", NULL
+   };
+
+#elif defined(POWER3)
    static char *native_name[] = { "PM_IC_MISS", "PM_FPU1_CMPL", "PM_LD_MISS_L1", "PM_LD_CMPL",
       "PM_FPU0_CMPL", "PM_CYC", "PM_TLB_MISS", NULL
    };
-#endif
-#endif
-#endif
 
-#ifdef PENTIUM4
-   static char *native_name[] = { "retired_mispred_branch_type_CONDITIONAL", "resource_stall_SBFULL",
-      "tc_ms_xfer_CISC", "instr_retired_BOGUSNTAG_BOGUSTAG", "BSQ_cache_reference_RD_2ndL_HITS", NULL
-   };
+#elif defined(__ia64__)
+    #ifdef ITANIUM2
+       static char *native_name[] = 
+	  { "CPU_CYCLES", "L1I_READS", "L1D_READS_SET0","IA64_INST_RETIRED", NULL
+       };
+    #else
+       static char *native_name[] = { "DEPENDENCY_SCOREBOARD_CYCLE", "DEPENDENCY_ALL_CYCLE",
+	  "UNSTALLED_BACKEND_CYCLE", "MEMORY_CYCLE", NULL
+       };
+    #endif
+
 #elif ((defined(linux) && (defined(__i386__) || (defined __x86_64__))) || defined(_WIN32))
-   static char *native_name[5] = { "DATA_MEM_REFS", "DCU_LINES_IN", NULL };
-#endif
+   static char *p3_native_name[] = { "DATA_MEM_REFS", "DCU_LINES_IN", NULL };
+   static char *core_native_name[] = { "UnhltCore_Cycles", "Instr_Retired", NULL };
+   static char *k7_native_name[] = { "TOT_CYC", "IC_MISSES", "DC_ACCESSES", "DC_MISSES", NULL };
+//   static char *k8_native_name[] = { "FP_ADD_PIPE", "FP_MULT_PIPE", "FP_ST_PIPE", "FP_NONE_RET", NULL };
+   static char *k8_native_name[] = { "DISPATCHED_FPU:OPS_ADD", "DISPATCHED_FPU:OPS_MULTIPLY", "DISPATCHED_FPU:OPS_STORE", "CYCLES_NO_FPU_OPS_RETIRED", NULL };
+   static char *p4_native_name[] = { "retired_mispred_branch_type:CONDITIONAL", "resource_stall:SBFULL", 
+       "tc_ms_xfer:CISC", "instr_retired:BOGUSNTAG:BOGUSTAG", "BSQ_cache_reference:RD_2ndL_HITS", NULL };
+   static char **native_name = p3_native_name;
 
-#if defined(linux) && defined(__ia64__)
-#ifdef ITANIUM2
-   static char *native_name[] = { "CPU_CYCLES", "L1I_READS", "L1D_READS_SET0",
-      "IA64_INST_RETIRED", NULL
-   };
-#else
-   static char *native_name[] = { "DEPENDENCY_SCOREBOARD_CYCLE", "DEPENDENCY_ALL_CYCLE", 
-      "UNSTALLED_BACKEND_CYCLE", "MEMORY_CYCLE", NULL
-   };
-#endif
-#endif
-
-#if ( defined(mips) && defined(sgi) && defined(unix) )
-   static char *native_name[] = { "Primary_instruction_cache_misses", 
+#elif defined(mips) && defined(sgi)
+   static char *native_name[] = { "Primary_instruction_cache_misses",
       "Primary_data_cache_misses", NULL
    };
-#endif
-
-#if defined(sun) && defined(sparc)
+#elif defined(mips) && defined(linux)
+   static char *native_name[] = { "CYCLES", NULL };
+#elif defined(sun) && defined(sparc)
    static char *native_name[] = { "Cycle_cnt", "Instr_cnt", NULL };
-#endif
 
-#if defined(__ALPHA) && defined(__osf__)
-   static char *native_name[] = { "cycles", "retinst", NULL };
-#endif
+#elif defined(_BGL)
+   static char *native_name[] = { "BGL_UPC_PU0_PREF_STREAM_HIT", "BGL_PAPI_TIMEBASE", "BGL_UPC_PU1_PREF_STREAM_HIT", NULL };
 
-void papimon_start(void)
-{
-   int retval;
-   int native;
-   int i;
-
-   if (EventSet == PAPI_NULL) {
-      if ((hwinfo = PAPI_get_hardware_info()) == NULL)
-         test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", PAPI_EMISC);
-      if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
-      if(!strncmp(hwinfo->model_string, "AMD K7", 6)) {
-         native_name[0] = "TOT_CYC";
-         native_name[1] = "IC_MISSES";
-         native_name[2] = "DC_ACCESSES";
-         native_name[3] = "DC_MISSES";
-         native_name[4] = NULL;
-      }
-      else if(!strncmp(hwinfo->model_string, "AMD K8", 6)) {
-         native_name[0] = "FP_ADD_PIPE";
-         native_name[1] = "FP_MULT_PIPE";
-         native_name[2] = "FP_ST_PIPE";
-         native_name[3] = "FP_NONE_RET";
-         native_name[4] = NULL;
-      }
-#if defined(_CRAYT3E)
-      native = 0 | 0x0 << 8 | 0;        /* Machine cyc */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      native = 0 | 0xe << 8 | 1;        /* Dcache acc. */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      native = 0 | 0xC << 8 | 2;        /* CPU cyc */
-      if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-#elif ((defined(_AIX)) || \
-       (defined(linux) && ( defined(__i386__) || ( defined __x86_64__) )) || \
-       (defined(_WIN32)) || \
-       (defined(linux) && defined(__ia64__)) || \
-       (defined(mips) && defined(sgi) && defined(unix)) || \
-       (defined(sun) && defined(sparc)) || \
-       (defined(__ALPHA) && defined(__osf__)))
-
-      for (i = 0; native_name[i] != NULL; i++) {
-         retval = PAPI_event_name_to_code(native_name[i], &native);
-         /* printf("native_name[%d] = %s; native = 0x%x\n", i, native_name[i], native); */
-         if (retval != PAPI_OK)
-            test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", retval);
-         if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
-            test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
-      }
+#elif defined(__bgp__)
+   static char *native_name[] = { "PNE_BGP_PU0_JPIPE_LOGICAL_OPS", "PNE_BGP_PU0_JPIPE_LOGICAL_OPS", "PNE_BGP_PU2_IPIPE_INSTRUCTIONS", NULL };
 
 #else
-#error "Architecture not included in this test file yet."
-#endif
-   }
-
-   us = PAPI_get_real_usec();
-   if ((retval = PAPI_start(EventSet)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_start", retval);
-   point++;
-}
-
-void papimon_stop(void)
-{
-   int i, retval;
-   long_long values[8];
-   float rsec;
-#if defined(_AIX)
-   float csec;
+#error "Architecture not supported in test file."
 #endif
 
-   if ((retval = PAPI_stop(EventSet, values)) != PAPI_OK)
-      test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
-   us = PAPI_get_real_usec() - us;
-
-   if (!TESTS_QUIET) {
-      fprintf(stderr, "-------------Monitor Point %d-------------\n", point);
-      rsec = (float)(us / 1000000.0);
-      fprintf(stderr, "Real Elapsed Time in sec.  : %f\n", rsec);
-#if defined(_AIX)
-#if defined(_POWER4)
-      csec = (float) values[7] / (hwinfo->mhz * 1000000.0);
-      fprintf(stderr, "CPU Elapsed Time in sec.   : %f\n", csec);
-      fprintf(stderr, "FPU0 DIV Instructions      : %lld\n", values[0]);
-      fprintf(stderr, "FPU1 DIV Instructions      : %lld\n", values[1]);
-      fprintf(stderr, "FPU0 FRSP & FCONV Instr.   : %lld\n", values[2]);
-      fprintf(stderr, "FPU1 FRSP & FCONV Instr.   : %lld\n", values[3]);
-      fprintf(stderr, "FPU0 FMA Instructions      : %lld\n", values[4]);
-      fprintf(stderr, "FPU1 FMA Instructions      : %lld\n", values[5]);
-      fprintf(stderr, "Instructions Completed     : %lld\n", values[6]);
-      fprintf(stderr, "CPU Cycles                 : %lld\n", values[7]);
-      fprintf(stderr, "------------------------------------------\n");
-      fprintf(stderr, "CPU MFLOPS                 : %.2f\n",
-              (((float) values[4] + (float) values[5]) / 500000.0) / csec);
-      fprintf(stderr, "%% FMA Instructions         : %.2f\n",
-              100.0 * ((float) values[4] + (float) values[5]) / (float) values[6]);
-#else
-      csec = (float) values[5] / (hwinfo->mhz * 1000000.0);
-      fprintf(stderr, "CPU Elapsed Time in sec.   : %f\n", csec);
-      fprintf(stderr, "L1 Instruction Cache Misses: %lld\n", values[0]);
-      fprintf(stderr, "FPU1 Instructions          : %lld\n", values[1]);
-      fprintf(stderr, "L1 Data Cache Load Misses  : %lld\n", values[2]);
-      fprintf(stderr, "Load Instructions          : %lld\n", values[3]);
-      fprintf(stderr, "FPU0 Instructions          : %lld\n", values[4]);
-      fprintf(stderr, "CPU Cycles                 : %lld\n", values[5]);
-#ifdef PMTOOLKIT_1_2
-      fprintf(stderr, "FMA Instructions           : %lld\n", values[6]);
-      fprintf(stderr, "TLB Misses                 : %lld\n", values[7]);
-#else
-      fprintf(stderr, "TLB Misses                 : %lld\n", values[6]);
-#endif
-      fprintf(stderr, "------------------------------------------\n");
-      fprintf(stderr, "CPU MFLOPS                 : %.2f\n",
-              (((float) values[4] + (float) values[1]) / 1000000.0) / csec);
-      fprintf(stderr, "Real MFLOPS                : %.2f\n",
-              (((float) values[4] + (float) values[1]) / 1000000.0) / rsec);
-      fprintf(stderr, "%% L1 Load Hit Rate         : %.2f\n",
-              100.0 * (1.0 - ((float) values[2] / (float) values[3])));
-      fprintf(stderr, "%% FMA Instructions         : %.2f\n",
-              100.0 * (float) values[6] / ((float) values[1] + (float) values[4]));
-#endif
-#elif ((defined(linux) && ( defined(__i386__) || defined(__x86_64__) )) || \
-       (defined(_WIN32)) || \
-       (defined(linux) && defined(__ia64__)) || \
-       (defined(mips) && defined(sgi)) || \
-       (defined(sun) && defined(sparc)) || \
-       (defined(__ALPHA) && defined(__osf__)))
-      for (i = 0; native_name[i] != NULL; i++) {
-         fprintf(stderr, "%-40s: ", native_name[i]);
-         fprintf(stderr, LLDFMT, values[i]);
-         fprintf(stderr, "\n");
-      }
-#elif defined(_CRAYT3E)
-      fprintf(stderr, "Machine Cycles                    : %lld\n", values[0]);
-      fprintf(stderr, "DCache accesses                   : %lld\n", values[1]);
-      fprintf(stderr, "CPU Cycles                        : %lld\n", values[2]);
-      fprintf(stderr, "Load_use                   : %lld\n", values[0]);
-      fprintf(stderr, "DC_wr_hit                  : %lld\n", values[1]);
-      fprintf(stderr, "Retired Instructions       : %lld\n", values[0]);
-      fprintf(stderr, "Cycles                     : %lld\n", values[1]);
-#endif
-   }
-   test_pass(__FILE__, NULL, 0);
-}
 
 int main(int argc, char **argv)
 {
-   int retval;
+   int i, retval, native;
+   const PAPI_hw_info_t *hwinfo;
+   long long values[8];
 
    tests_quiet(argc, argv);     /* Set TESTS_QUIET variable */
 
    if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT)
       test_fail(__FILE__, __LINE__, "PAPI_library_init", retval);
 
-   if (!TESTS_QUIET)
-      if ((retval = PAPI_set_debug(PAPI_VERB_ECONT)) != PAPI_OK)
-         test_fail(__FILE__, __LINE__, "PAPI_set_debug", retval);
+   if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
+     test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
+   
+   if ((hwinfo = PAPI_get_hardware_info()) == NULL)
+     test_fail(__FILE__, __LINE__, "PAPI_get_hardware_info", PAPI_EMISC);
 
-   papimon_start();
+   printf("Architecture %s, %d\n",hwinfo->model_string, hwinfo->model);
 
-   /*sleep(1); */
+#if ((defined(linux) && (defined(__i386__) || (defined __x86_64__))) || defined(_WIN32))
+   if(!strncmp(hwinfo->model_string, "Intel Pentium 4", 15)) {
+         native_name = p4_native_name;
+   }
+   else if(!strncmp(hwinfo->model_string, "AMD K7", 6)) {
+     native_name = k7_native_name;
+   }
+   else if(!strncmp(hwinfo->model_string, "AMD K8", 6)) {
+     native_name = k8_native_name;
+   }
+   else if(!strncmp(hwinfo->model_string, "Intel Core", 17) || !strncmp(hwinfo->model_string, "Intel Core 2", 17)) {
+     native_name = core_native_name;
+   }
+#endif
+
+   for (i = 0; native_name[i] != NULL; i++) {
+     retval = PAPI_event_name_to_code(native_name[i], &native);
+     if (retval != PAPI_OK)
+       test_fail(__FILE__, __LINE__, "PAPI_event_name_to_code", retval);
+     printf("Adding %s\n",native_name[i]);
+     if ((retval = PAPI_add_event(EventSet, native)) != PAPI_OK)
+       test_fail(__FILE__, __LINE__, "PAPI_add_event", retval);
+   }
+
+   if ((retval = PAPI_start(EventSet)) != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_start", retval);
+
    do_both(1000);
 
-   papimon_stop();
+   if ((retval = PAPI_stop(EventSet, values)) != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
+
+   if (!TESTS_QUIET) {
+      for (i = 0; native_name[i] != NULL; i++) {
+         fprintf(stderr, "%-40s: ", native_name[i]);
+         fprintf(stderr, LLDFMT, values[i]);
+         fprintf(stderr, "\n");
+      }
+   }
+
+   retval = PAPI_cleanup_eventset(EventSet);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_cleanup", retval);
+   retval = PAPI_destroy_eventset(&EventSet);
+   if (retval != PAPI_OK)
+      test_fail(__FILE__, __LINE__, "PAPI_destroy_eventset", retval);
+
+   test_pass(__FILE__, NULL, 0);
    exit(0);
 }

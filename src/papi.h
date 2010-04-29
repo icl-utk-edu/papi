@@ -37,7 +37,7 @@
 
 /* This is the official PAPI version */
 /* The final digit represents the patch count */
-#define PAPI_VERSION  			PAPI_VERSION_NUMBER(4,0,0,2)
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(4,0,0,3)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
 
 #ifdef __cplusplus
@@ -646,7 +646,7 @@ read the documentation carefully.  */
 */
 /* MAX_TERMS is the current max value of MAX_COUNTER_TERMS as defined in SUBSTRATEs */
 /* This definition also is HORRIBLE and should be replaced by a dynamic value. -pjm */
-#ifdef _BGP
+#ifdef __bgp__
 #define PAPI_MAX_INFO_TERMS  19 /* should match PAPI_MAX_COUNTER_TERMS defined in papi_internal.h */
 #else
 #define PAPI_MAX_INFO_TERMS 12
