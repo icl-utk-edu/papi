@@ -86,7 +86,7 @@
 
 /* This is the official PAPI version */
 /* The final digit represents the patch count */
-#define PAPI_VERSION  			PAPI_VERSION_NUMBER(4,0,0,2)
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(4,0,0,3)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
 
 #ifdef __cplusplus
