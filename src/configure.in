@@ -130,7 +130,7 @@ if test "$cross_compiling" = "yes" ; then
 fi
 
 AC_ARG_WITH(tests,
-        	[ --with-tests=<ctests,ftests,"ctests ftests"> Specify which tests to run on install ],
+        	[ --with-tests=<ctests,ftests,"ctests ftests">		Specify which tests to run on install ],
         	[tests=$withval],
         	[tests="ctests ftests"]) 
 
@@ -140,6 +140,16 @@ AC_ARG_WITH(generic,
                AC_MSG_ERROR([PAPI requires Linux for a generic build])
              fi
              MAKEVER=generic])
+
+AC_MSG_CHECKING(for components to build)
+AC_ARG_WITH(components,
+        	[ --with-components=<"component1 component2">		Specify which components to build ],
+        	[components=$withval
+             COMPONENT_RULES=components/Rules.components]) 
+for comp in $components; do
+  COMPONENT_RULES="$COMPONENT_RULES components/$comp/Rules.$comp"
+done
+AC_MSG_RESULT($components)
 
 AC_MSG_CHECKING(for debug build)
 AC_ARG_WITH(debug,
@@ -1016,93 +1026,6 @@ fi
 AC_MSG_RESULT($MAKEVER)
 
 ##################################################
-#          Build specified components
-##################################################
-AC_MSG_CHECKING(for component: MX)
-AC_ARG_WITH(mx,
-            [  --with-mx		Build a MX component in the library ],
-            [AC_PATH_PROG(MXPATH, mx_counters)
-             if test "$MXPATH" = ""; then
-               AC_MSG_ERROR([PAPI needs to know the path to mx_counters])
-             fi
-             AC_DEFINE_UNQUOTED(MXPATH, "$MXPATH", [The path of mx_counters])
-             compnts="$compnts MX" 
-             compsrcs="$compsrcs linux-mx.c" 
-             comphdrs="$comphdrs linux-mx.h" 
-             compobjs="$compobjs linux-mx.o" 
-             AC_DEFINE(HAVE_MX, 1, [system has myrinet mx component]) 
-             AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)])
-
-AC_MSG_CHECKING(for component: NET)
-AC_ARG_WITH(net,
-            [  --with-net		Build a net (ifconfig) component in the library ],
-            [AC_PATH_PROG(NETPATH, ifconfig)
-             if test "$NETPATH" = ""; then
-               AC_MSG_ERROR([PAPI needs to know the path to ifconfig])
-             fi
-             AC_DEFINE_UNQUOTED(NETPATH, "$NETPATH", [The path of ifconfig])
-             compnts="$compnts NET" 
-             compsrcs="$compsrcs linux-net.c" 
-             comphdrs="$comphdrs linux-net.h" 
-             compobjs="$compobjs linux-net.o" 
-             AC_DEFINE(HAVE_NET, 1, [system has net (ifconfig) component]) 
-             AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)])
-
-AC_MSG_CHECKING(for component: ACPI)
-AC_ARG_WITH(acpi,
-            [  --with-acpi		Build an ACPI component in the library ],
-            [compnts="$compnts ACPI" 
-             compsrcs="$compsrcs linux-acpi.c" 
-             comphdrs="$comphdrs linux-acpi.h" 
-             compobjs="$compobjs linux-acpi.o" 
-             AC_DEFINE(HAVE_ACPI, 1, [system has ACPI component])
-             AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)])
-
-AC_MSG_CHECKING(for component: LMSENSORS)
-AC_ARG_WITH(lmsensors,
-            [  --with-lmsensors		Build an lm-sensors component in the library ],
-            [compnts="$compnts LMSENSORS"
-             compsrcs="$compsrcs linux-lmsensors.c"
-             comphdrs="$comphdrs linux-lmsensors.h"
-             compobjs="$compobjs linux-lmsensors.o"	  
-             AC_DEFINE(HAVE_LMSENSORS, 1, [system has lm-sensors component])
-             # looking for lm-sensors header files
-	         AC_ARG_WITH(sensors_incdir,
-                         [  --with-sensors_incdir=<path>		Specify directory of lm-sensors header files ],
-                         [sensors_incdir=$withval],
-                         [AC_MSG_ERROR([sensors.h not found. See --with-sensors_incdir]) ])				 
-             if test "$sensors_incdir" != ""; then
-	           CFLAGS="$CFLAGS -I$sensors_incdir"
-               AC_CHECK_HEADER([sensors.h],
-                               [AC_DEFINE([HAVE_SENSORS_H], [1], [lm-sensors header] )],
-                               [AC_MSG_ERROR([sensors.h not found]) ],
-                               [#include <sensors.h>])
-             fi	  
-             # looking for lm-sensors lib
-	         AC_ARG_WITH(sensors_libdir,
-                         [  --with-sensors_libdir=<path>		Specify directory of lm-sensors library ],
-                         [sensors_libdir=$withval],
-                         [AC_MSG_ERROR([libsensors.a not found. See --with-sensors_libdir]) ])			 
-             if test "$sensors_libdir" != ""; then
-               LDFLAGS="$LDFLAGS -L$sensors_libdir -lsensors"
-	           AC_CHECK_LIB([sensors], [sensors_init], [],
-				          [AC_MSG_ERROR([libsensors.a not found]) ])				   
-               # libsensors.a needed to compile with papi utilities and tests
-               LINKLIB="$LINKLIB $sensors_libdir/libsensors.a -lm"
-	         fi
-             AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)])
-
-AC_MSG_CHECKING(for component: LUSTRE)
-AC_ARG_WITH(lustre,
-            [  --with-lustre		Build a Lustre component in the library ],
-            [compnts="$compnts LUSTRE" 
-             compsrcs="$compsrcs linux-lustre.c host_counter.c" 
-             comphdrs="$comphdrs linux-lustre.h" 
-             compobjs="$compobjs linux-lustre.o host_counter.o" 
-             AC_DEFINE(HAVE_LUSTRE, 1, [system has Lustre component])
-             AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)])
-
-##################################################
 #          Set build macros 
 ##################################################
 FILENAME=NO_INCLUDE_FILE
@@ -1364,10 +1287,6 @@ AC_SUBST(old_pfmv2)
 AC_SUBST(pfm_prefix)
 AC_SUBST(pfm_incdir)
 AC_SUBST(pfm_libdir)
-AC_SUBST(compnts)
-AC_SUBST(compsrcs)
-AC_SUBST(comphdrs)
-AC_SUBST(compobjs)
 AC_SUBST(OS)
 AC_SUBST(CFLAGS)
 AC_SUBST(FFLAGS)
@@ -1406,10 +1325,11 @@ AC_SUBST(MISCHDRS)
 AC_SUBST(SHLIBDEPS)
 AC_SUBST(TOPTFLAGS)
 AC_SUBST(TESTS)
+AC_SUBST(tests)
 AC_SUBST(SHOW_CONF)
 AC_SUBST(BGP_SYSDIR)
 AC_SUBST(BITFLAGS)
-AC_SUBST(tests)
+AC_SUBST(COMPONENT_RULES)
 
 if test "$cross_compiling" = "yes" ; then
   AC_MSG_NOTICE(Compiling genpapifdef with $nativecc because cross compiling)

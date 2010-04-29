@@ -1,0 +1,10 @@
+# $Id$
+
+include components/net/Makefile.net
+
+COMPSRCS += components/net/linux-net.c
+COMPOBJS += linux-net.o
+CFLAGS += -DHAVE_NET -DNETPATH=\"$(NETPATH)\"
+
+linux-net.o: components/net/linux-net.c components/net/linux-net.h $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/net/linux-net.c -o linux-net.o 

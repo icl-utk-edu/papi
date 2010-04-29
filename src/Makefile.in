@@ -19,10 +19,7 @@ CC_SHR = @CC_SHR@
 CFLAGS    = @CFLAGS@
 CPP	  = @CPP@
 CPPFLAGS   = @CPPFLAGS@
-COMPNTS = @compnts@
-COMPHDRS = @comphdrs@
-COMPOBJS = @compobjs@
-COMPSRCS = @compsrcs@
+COMPONENT_RULES = @COMPONENT_RULES@
 CPU = @CPU@
 CPU_MODEL = @CPU_MODEL@
 cpu_option = @cpu_option@
@@ -80,5 +77,5 @@ TESTS = @tests@
 TOPTFLAGS = @TOPTFLAGS@
 VERSION = @VERSION@
 
-include ./$(FILENAME)
+include $(FILENAME)
 

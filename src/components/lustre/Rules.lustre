@@ -1,0 +1,11 @@
+# $Id$
+
+COMPSRCS += components/lustre/linux-lustre.c components/lustre/host_counter.c
+COMPOBJS += linux-lustre.o host_counter.o
+CFLAGS += -DHAVE_LUSTRE
+
+linux-lustre.o: components/lustre/linux-lustre.c components/lustre/linux-lustre.h $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/lustre/linux-lustre.c -o linux-lustre.o 
+
+host_counter.o: components/lustre/host_counter.c components/lustre/host_counter.h $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/lustre/host_counter.c -o host_counter.o 
