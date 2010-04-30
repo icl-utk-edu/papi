@@ -74,6 +74,10 @@ Below is a step-wise procedure for making a PAPI patch.
 One way to use this procedure is to print a copy and check off
 the lines as they are completed to avoid confusion.
 ================================================================================
+__ 0. Make sure that the version of cvs that you are using to create the patch is the same 
+        as the version used to create the tarball to be patched. Versions before 1.12.9 use
+        backslashes in date strings; versions after that use hyphens. The two don't mix!
+
 __ 1. Export the tagged version of PAPI that you want to patch against:
 	> cvs export -r <tag> <module> ex:
 	> cvs export -r papi-4-0-0-t papi
