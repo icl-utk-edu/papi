@@ -43,9 +43,9 @@
  * unit mask description
  */
 typedef struct {
-	char			*uname; /* unit mask name */
-	char			*udesc; /* unit umask description */
-	char			*uequiv;/* name of event from which this one is derived, NULL if none */
+	const char		*uname; /* unit mask name */
+	const char		*udesc; /* unit umask description */
+	const char		*uequiv;/* name of event from which this one is derived, NULL if none */
 	uint64_t		ucntmsk;/* supported counters for umask (if set, supersedes cntmsk) */
 	unsigned int		ucode;  /* unit mask code */
 	unsigned int		uflags;	/* unit mask flags */
@@ -64,9 +64,9 @@ typedef int (*intel_x86_encoder_t)(void *this, pfmlib_event_desc_t *e, uint64_t 
  * event description
  */
 typedef struct {
-	char				*name;	/* event name */
-	char				*desc;	/* event description */
-	char				*equiv;	/* name of event from which this one is derived, NULL if none */
+	const char			*name;	/* event name */
+	const char			*desc;	/* event description */
+	const char			*equiv;	/* name of event from which this one is derived, NULL if none */
 	uint64_t			cntmsk;	/* supported counters */
 	unsigned int			code; 	/* event code */
 	unsigned int			numasks;/* number of umasks */

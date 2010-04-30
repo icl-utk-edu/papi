@@ -44,14 +44,14 @@
 #define PERF_MAX_UMASKS	8
 
 typedef struct {
-	char		*uname;	/* unit mask name */
-	char		*udesc;	/* unit mask desc */
+	const char	*uname;	/* unit mask name */
+	const char	*udesc;	/* unit mask desc */
 	uint64_t	uid;	/* unit mask id */
 } perf_umask_t;
 	
 typedef struct {
-	char		*name;			/* name */
-	char		*desc;			/* description */
+	const char	*name;			/* name */
+	const char	*desc;			/* description */
 	uint64_t	id;			/* perf_hw_id or equivalent */
 	int		modmsk;			/* modifiers bitmask */
 	int		type;			/* perf_type_id */
@@ -294,6 +294,7 @@ gen_tracepoint_table(void)
 	int fd, err;
 	int dir2_fd, reuse_event = 0;
 	int numasks;
+	char *tracepoint_name;
 
 	err = get_debugfs_mnt();
 	if (err == -1)
@@ -330,13 +331,13 @@ gen_tracepoint_table(void)
 		/*
  		 * if a subdir did not fit our expected
  		 * tracepoint format, then we reuse the
- 		 * allocatoed space (with have no free)
+		 * allocated space (with have no free)
  		 */
 		if (!reuse_event)
 			p = perf_table_alloc_event();
 
 		if (p)
-			p->name = strdup(d1->d_name);
+			p->name = tracepoint_name = strdup(d1->d_name);
 
 		if (!(p && p->name)) {
 			closedir(dir2);
@@ -418,7 +419,7 @@ gen_tracepoint_table(void)
 		 * to a tree structure we know about
 		 */
 		if (!numasks) {
-			free(p->name);
+			free(tracepoint_name);
 			reuse_event =1;
 			continue;
 		}
